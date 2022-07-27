@@ -1185,9 +1185,17 @@ CParagraphContentWithContentBase.prototype.ProcessNotInlineObjectCheck = functio
 };
 CParagraphContentWithContentBase.prototype.OnContentChange = function()
 {
-	let oParagraph = this.GetParagraph();
-	if (oParagraph)
-		oParagraph.OnContentChange();
+	let oParent = this.GetParent();
+	if (oParent)
+	{
+		oParent.OnContentChange();
+	}
+	else
+	{
+		let oParagraph = this.GetParagraph();
+		if (oParagraph)
+			oParagraph.OnContentChange();
+	}
 };
 
 /**
@@ -4271,6 +4279,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Is_UseInDocument = function(
 {
 	return (this.Paragraph && true === this.Paragraph.Is_UseInDocument() && true === this.Is_UseInParagraph() ? true : false);
 };
+
 CParagraphContentWithParagraphLikeContent.prototype.Is_UseInParagraph = function()
 {
 	if (!this.Paragraph)

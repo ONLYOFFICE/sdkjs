@@ -12193,7 +12193,7 @@ IdList.prototype.readChildXml = function(name, reader) {
     oEntry.fromXml(reader);
     this.list.push(oEntry);
 };
-IdList.prototype.writeChildren = function(writer) {
+IdList.prototype.writeChildrenXml = function(writer) {
     for(let nEntry = 0; nEntry < this.list.length; ++nEntry) {
         this.list[nEntry].toXml(writer, this.list[nEntry].name);
     }

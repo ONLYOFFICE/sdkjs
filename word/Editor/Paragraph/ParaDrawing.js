@@ -1271,6 +1271,25 @@ ParaDrawing.prototype.Measure = function()
 		}
 	}
 };
+ParaDrawing.prototype.GetScaleCoefficient = function ()
+{
+	let oParagraph = this.GetParagraph();
+	let oLogicDocument;
+
+	if (oParagraph
+		&& (oLogicDocument = oParagraph.GetLogicDocument())
+		&& oLogicDocument.IsDocumentEditor())
+	{
+		let oLayout = oLogicDocument.Layout;
+		oLogicDocument.Layout = oLogicDocument.Layouts.Print;
+		let oSectPr = oParagraph.Get_SectPr();
+		oLogicDocument.Layout = oLayout;
+
+		return oLogicDocument.GetDocumentLayout().GetScaleBySection(oSectPr);
+	}
+
+	return 1;
+};
 ParaDrawing.prototype.IsNeedSaveRecalculateObject = function()
 {
 	return true;
@@ -1424,6 +1443,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 
 	var OtherFlowObjects = editor.WordControl.m_oLogicDocument.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
 	var bInline          = this.Is_Inline();
+	this.Internal_Position.SetScaleFactor(this.GetScaleCoefficient());
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
@@ -1541,7 +1561,8 @@ ParaDrawing.prototype.deselect = function()
 
 ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 {
-	var _x = x, _y = y;
+	let _x = x;
+	let _y = y;
 
 	this.graphicObjects.removeById(pageIndex, this.Get_Id());
 	if (AscFormat.isRealNumber(oldPageNum))
@@ -3229,6 +3250,11 @@ ParaDrawing.prototype.GetPicture = function()
 {
 	return this.GraphicObj.getObjectType() === AscDFH.historyitem_type_ImageShape ? this.GraphicObj : null;
 };
+ParaDrawing.prototype.GetPictureUrl = function()
+{
+	let oPicture = this.GetPicture();
+	return (oPicture ? oPicture.getImageUrl() : null);
+};
 /**
  * Является ли объект фигурой
  * @returns {boolean}
@@ -3300,11 +3326,16 @@ function CParagraphLayout(X, Y, PageNum, LastItemW, ColumnStartX, ColumnEndX, Le
 	this.ParagraphTop  = ParagraphTop;
 }
 /**
- * Класс, описывающий позицию автофигуры на странице.
+ * Класс, описывающий позицию автофигуры на странице
  * @constructor
  */
 function CAnchorPosition()
 {
+	// Данный коэффициент говорит нам насколько изменены все относительные позиции
+	// Используется в режиме чтения, когда реальный размер страницы, на которой мы рисуем, меньшее, чем тот,
+	// что задан в настройках
+	this.ScaleFactor   = 1;
+
 	// Рассчитанные координаты
 	this.CalcX         = 0;
 	this.CalcY         = 0;
@@ -3334,6 +3365,10 @@ function CAnchorPosition()
 	this.Page_X        = 0;
 	this.Page_Y        = 0;
 }
+CAnchorPosition.prototype.SetScaleFactor = function(nScale)
+{
+	this.ScaleFactor = nScale;
+};
 CAnchorPosition.prototype.Set = function(W, H, Rot, EffectExtent, YOffset, ParaLayout, PageLimits)
 {
 	this.W = W;
@@ -3473,7 +3508,9 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					}
 				}
 				else
-					this.CalcX = this.ColumnStartX + Value;
+				{
+					this.CalcX = this.ColumnStartX + Value * this.ScaleFactor;
+				}
 
 				break;
 			}
@@ -3553,7 +3590,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else
 				{
-					this.CalcX = this.Margin_H + Value;
+					this.CalcX = this.Margin_H + Value * this.ScaleFactor;
 				}
 
 				break;
@@ -3592,7 +3629,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else
 				{
-					this.CalcX = Value + this.Page_X;
+					this.CalcX = Value * this.ScaleFactor + this.Page_X;
 				}
 
 				break;
@@ -3783,7 +3820,7 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				}
 				else
 				{
-					this.CalcY = this.Margin_V + Value;
+					this.CalcY = this.Margin_V + Value * this.ScaleFactor;
 				}
 
 				break;
@@ -3824,7 +3861,7 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				}
 				else
 				{
-					this.CalcY = Value + this.Page_Y;
+					this.CalcY = Value * this.ScaleFactor + this.Page_Y;
 				}
 
 				break;
@@ -3881,7 +3918,9 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 						this.CalcY = this.Top_Margin * Value / 100 + Shift;
 				}
 				else
-					this.CalcY = Y_s + Value;
+				{
+					this.CalcY = Y_s + Value * this.ScaleFactor;
+				}
 
 				break;
 			}

@@ -1394,8 +1394,8 @@ CShape.prototype.createTextBody = function () {
     tx_body.setContent(new AscFormat.CDrawingDocContent(tx_body, this.getDrawingDocument(), 0, 0, 0, 20000, false, false, true));
     var oBodyPr = new AscFormat.CBodyPr();
     if(this.worksheet){
-        oBodyPr.vertOverflow = AscFormat.nOTClip;
-        oBodyPr.horzOverflow = AscFormat.nOTClip;
+        oBodyPr.vertOverflow = AscFormat.nVOTClip;
+        oBodyPr.horzOverflow = AscFormat.nHOTClip;
     }
     tx_body.setBodyPr(oBodyPr);
     tx_body.content.Content[0].Set_DocumentIndex(0);
@@ -2505,7 +2505,7 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
                 _vertical_shift = 0;
             }
             else {
-                if ((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nOTOwerflow) || _content_height < _text_rect_height) {
+                if ((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nVOTOverflow) || _content_height < _text_rect_height) {
                     switch (oBodyPr.anchor) {
                         case 0: //b
                         { // (Text Anchor Enum ( Bottom ))
@@ -2540,7 +2540,7 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
                 else {
 
 
-                    if((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nOTClip)
+                    if((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nVOTClip)
                         && oContent.Content[0] && oContent.Content[0].Lines[0]  && oContent.Content[0].Lines[0].Bottom > _text_rect_height )
                     {
                         var _content_first_line = oContent.Content[0].Lines[0].Bottom;
@@ -2605,7 +2605,7 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
                 _vertical_shift = 0;
             }
             else {
-                if ((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nOTOwerflow) || _content_height <= _text_rect_width) {
+                if ((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nVOTOverflow) || _content_height <= _text_rect_width) {
                     switch (oBodyPr.anchor) {
                         case 0: //b
                         { // (Text Anchor Enum ( Bottom ))
@@ -3418,6 +3418,8 @@ CShape.prototype.recalculateLocalTransform = function(transform)
 {
     AscFormat.ExecuteNoHistory(function(){
         var bNotesShape = false;
+
+        let oParaDrawing = getParaDrawing(this);
         if (!isRealObject(this.group))
         {
             var bUserShape = false;
@@ -3546,113 +3548,95 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 this.rot = AscFormat.isRealNumber(xfrm.rot) ? xfrm.rot : 0;
                 this.flipH = xfrm.flipH === true;
                 this.flipV = xfrm.flipV === true;
-                if(this.extX < 0.01 && this.extY < 0.01)
+
+                if(oParaDrawing)
                 {
-                    if(this.parent && this.parent.Extent && AscFormat.isRealNumber(this.parent.Extent.W) && AscFormat.isRealNumber(this.parent.Extent.H))
+                    if(oParaDrawing.Extent && AscFormat.isRealNumber(oParaDrawing.Extent.W) && AscFormat.isRealNumber(oParaDrawing.Extent.H))
                     {
-                        // this.x = 0;
-                        // this.y = 0;
-                        this.extX = this.parent.Extent.W;
-                        this.extY = this.parent.Extent.H;
+                        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+                        this.extX = oParaDrawing.Extent.W * dScaleCoefficient;
+                        this.extY = oParaDrawing.Extent.H * dScaleCoefficient;
                     }
-                }
-                else
-                {
-                    var oParaDrawing = getParaDrawing(this);
-                    if(oParaDrawing)
+                    if(oParaDrawing.SizeRelH || oParaDrawing.SizeRelV)
                     {
-                        // this.x = 0;
-                        // this.y = 0;
+                        this.m_oSectPr = null;
+                        var oParentParagraph = oParaDrawing.Get_ParentParagraph();
+                        if(oParentParagraph)
+                        {
 
-                        if(oParaDrawing.Extent && AscFormat.isRealNumber(oParaDrawing.Extent.W) && AscFormat.isRealNumber(oParaDrawing.Extent.H))
-                        {
-                            // this.x = 0;
-                            // this.y = 0;
-                            this.extX = oParaDrawing.Extent.W;
-                            this.extY = oParaDrawing.Extent.H;
-                        }
-                        if(oParaDrawing.SizeRelH || oParaDrawing.SizeRelV)
-                        {
-                            this.m_oSectPr = null;
-                            var oParentParagraph = oParaDrawing.Get_ParentParagraph();
-                            if(oParentParagraph)
+                            var oSectPr = oParentParagraph.Get_SectPr();
+                            if(oSectPr)
                             {
-
-                                var oSectPr = oParentParagraph.Get_SectPr();
-                                if(oSectPr)
+                                if(oParaDrawing.SizeRelH && oParaDrawing.SizeRelH.Percent > 0)
                                 {
-                                    if(oParaDrawing.SizeRelH && oParaDrawing.SizeRelH.Percent > 0)
+                                    switch(oParaDrawing.SizeRelH.RelativeFrom)
                                     {
-                                        switch(oParaDrawing.SizeRelH.RelativeFrom)
+                                        case c_oAscSizeRelFromH.sizerelfromhMargin:
                                         {
-                                            case c_oAscSizeRelFromH.sizerelfromhMargin:
-                                            {
-                                                this.extX = oSectPr.GetContentFrameWidth();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromH.sizerelfromhPage:
-                                            {
-                                                this.extX = oSectPr.GetPageWidth();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromH.sizerelfromhLeftMargin:
-                                            {
-                                                this.extX = oSectPr.GetPageMarginLeft();
-                                                break;
-                                            }
+                                            this.extX = oSectPr.GetContentFrameWidth();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromH.sizerelfromhPage:
+                                        {
+                                            this.extX = oSectPr.GetPageWidth();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromH.sizerelfromhLeftMargin:
+                                        {
+                                            this.extX = oSectPr.GetPageMarginLeft();
+                                            break;
+                                        }
 
-                                            case c_oAscSizeRelFromH.sizerelfromhRightMargin:
-                                            {
-                                                this.extX = oSectPr.GetPageMarginRight();
-                                                break;
-                                            }
-                                            default:
-                                            {
-                                                this.extX = oSectPr.GetPageMarginLeft();
-                                                break;
-                                            }
-                                        }
-                                        this.extX *= oParaDrawing.SizeRelH.Percent;
-                                    }
-                                    if(oParaDrawing.SizeRelV && oParaDrawing.SizeRelV.Percent > 0)
-                                    {
-                                        switch(oParaDrawing.SizeRelV.RelativeFrom)
+                                        case c_oAscSizeRelFromH.sizerelfromhRightMargin:
                                         {
-                                            case c_oAscSizeRelFromV.sizerelfromvMargin:
-                                            {
-                                                this.extY = oSectPr.GetContentFrameHeight();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromV.sizerelfromvPage:
-                                            {
-                                                this.extY = oSectPr.GetPageHeight();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromV.sizerelfromvTopMargin:
-                                            {
-                                                this.extY = oSectPr.GetPageMarginTop();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromV.sizerelfromvBottomMargin:
-                                            {
-                                                this.extY = oSectPr.GetPageMarginBottom();
-                                                break;
-                                            }
-                                            default:
-                                            {
-                                                this.extY = oSectPr.GetPageMarginTop();
-                                                break;
-                                            }
+                                            this.extX = oSectPr.GetPageMarginRight();
+                                            break;
                                         }
-                                        this.extY *= oParaDrawing.SizeRelV.Percent;
+                                        default:
+                                        {
+                                            this.extX = oSectPr.GetPageMarginLeft();
+                                            break;
+                                        }
                                     }
-                                    this.m_oSectPr = new CSectionPr();
-                                    this.m_oSectPr.Copy(oSectPr);
+                                    this.extX *= oParaDrawing.SizeRelH.Percent;
                                 }
+                                if(oParaDrawing.SizeRelV && oParaDrawing.SizeRelV.Percent > 0)
+                                {
+                                    switch(oParaDrawing.SizeRelV.RelativeFrom)
+                                    {
+                                        case c_oAscSizeRelFromV.sizerelfromvMargin:
+                                        {
+                                            this.extY = oSectPr.GetContentFrameHeight();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromV.sizerelfromvPage:
+                                        {
+                                            this.extY = oSectPr.GetPageHeight();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromV.sizerelfromvTopMargin:
+                                        {
+                                            this.extY = oSectPr.GetPageMarginTop();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromV.sizerelfromvBottomMargin:
+                                        {
+                                            this.extY = oSectPr.GetPageMarginBottom();
+                                            break;
+                                        }
+                                        default:
+                                        {
+                                            this.extY = oSectPr.GetPageMarginTop();
+                                            break;
+                                        }
+                                    }
+                                    this.extY *= oParaDrawing.SizeRelV.Percent;
+                                }
+                                this.m_oSectPr = new CSectionPr();
+                                this.m_oSectPr.Copy(oSectPr);
                             }
                         }
                     }
-
                 }
             }
             else
@@ -3690,12 +3674,13 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 else
                 {
                     var extX, extY;
-                    if(this.parent && this.parent.Extent)
+                    if(oParaDrawing && oParaDrawing.Extent)
                     {
                         this.x = 0;
                         this.y = 0;
-                        extX = this.parent.Extent.W;
-                        extY = this.parent.Extent.H;
+                        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+                        extX = oParaDrawing.Extent.W * dScaleCoefficient;
+                        extY = oParaDrawing.Extent.H * dScaleCoefficient;
                     }
                     else
                     {
@@ -4085,7 +4070,6 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 global_MatrixTransformer.MultiplyAppend(transform, this.parent.parent.localTransform);
             }
         }
-        var oParaDrawing = getParaDrawing(this);
         if(oParaDrawing) {
             this.m_oSectPr = null;
             var oParentParagraph = oParaDrawing.Get_ParentParagraph();
@@ -5423,7 +5407,7 @@ CShape.prototype.clipTextRect = function(graphics, transform, transformText, pag
         var oBodyPr = this.getBodyPr();
         if(!this.bWordShape)
         {
-            if(oBodyPr.vertOverflow === AscFormat.nOTOwerflow)
+            if(oBodyPr.vertOverflow === AscFormat.nVOTOverflow)
             {
                 return;
             }
@@ -6990,7 +6974,7 @@ CShape.prototype.getColumnNumber = function(){
         {
             return oBodyPr.vertOverflow;
         }
-        return AscFormat.nOTOwerflow;
+        return AscFormat.nVOTOverflow;
     };
 
 
@@ -7229,6 +7213,10 @@ CShape.prototype.getColumnNumber = function(){
                 //this.setUseBgFill(reader.GetValueBool());
                 break;
             }
+            case "modelId": {
+                this.setModelId(reader.GetValue());
+                break;
+            }
         }
     };
     CShape.prototype.readChildXml = function(name, reader) {
@@ -7284,6 +7272,12 @@ CShape.prototype.getColumnNumber = function(){
                 let oBodyPr = new AscFormat.CBodyPr();
                 oBodyPr.fromXml(reader);
                 this.setBodyPr(oBodyPr);
+                break;
+            }
+            case "txXfrm": {
+                let oTxXfrm = new AscFormat.CXfrm();
+                oTxXfrm.fromXml(reader);
+                this.setTxXfrm(oTxXfrm);
                 break;
             }
         }
@@ -7409,7 +7403,7 @@ CShape.prototype.getColumnNumber = function(){
 
         if (this.txXfrm && oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)
         {
-            this.txXfrm.toXml(writer);
+            this.txXfrm.toXml(writer, "dsp:txXfrm");
         }
         writer.WriteXmlNodeEnd(name_);
     };

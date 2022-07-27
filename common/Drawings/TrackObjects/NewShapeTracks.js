@@ -712,7 +712,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 var bNeedCheckExtents = false;
                 if(drawingObjects){
                     if(!drawingObjects.cSld){
-                        body_pr.vertOverflow = AscFormat.nOTClip;
+                        body_pr.vertOverflow = AscFormat.nVOTClip;
                     }
                     else{
                         body_pr.textFit = new AscFormat.CTextFit();

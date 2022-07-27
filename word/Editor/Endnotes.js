@@ -1047,6 +1047,17 @@ CEndnotesController.prototype.GetNumberingInfo = function(oPara, oNumPr, oEndnot
 
 	return oNumberingEngine.GetNumInfo();
 };
+CEndnotesController.prototype.CheckRunContent = function(fCheck)
+{
+	for (var sId in this.Endnote)
+	{
+		let oEndnote = this.Endnote[sId];
+		if (oEndnote.CheckRunContent(fCheck))
+			return true;
+	}
+
+	return false;
+};
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Private area
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

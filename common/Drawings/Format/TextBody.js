@@ -555,6 +555,12 @@
         this.bEmptyCell = true;
         CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
         this.cellContent = undefined;
+        if(!this.content) {
+            if(!this.content) {
+                let oDrawingDocument = reader.context.DrawingDocument;
+                this.setContent(new AscFormat.CDrawingDocContent(this, oDrawingDocument, 0, 0, 0, 20000));
+            }
+        }
     };
     CTextBody.prototype.readChildXml = function (name, reader) {
         let oPr;

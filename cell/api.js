@@ -1458,6 +1458,9 @@ var editor;
   		this.VersionHistory.changes = file.changes;
 	}
 	this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(file.data);
+	if (this.isOpenOOXInBrowser) {
+		this.openOOXInBrowserZip = file.data;
+	}
 	this._openDocument(file.data);
 	this._openOnClient();
   };
@@ -1506,13 +1509,15 @@ var editor;
 		var initOpenManager = xmlParserContext.InitOpenManager = AscCommonExcel.InitOpenManager ? new AscCommonExcel.InitOpenManager(null, wb) : null;
 		var wbPart = null;
 		var wbXml = null;
-		if (!window.nativeZlibEngine || !window.nativeZlibEngine.open(data)) {
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(data)) {
 			return false;
 		}
-		xmlParserContext.zip = window.nativeZlibEngine;
+		xmlParserContext.zip = jsZlib;
 
 		AscCommonExcel.executeInR1C1Mode(false, function () {
-			var doc = new openXml.OpenXmlPackage(window.nativeZlibEngine, null);
+			var doc = new openXml.OpenXmlPackage(jsZlib, null);
+			var reader, i, j;
 
 			//core
 			var coreXmlPart = doc.getPartByRelationshipType(openXml.Types.coreFileProperties.relationType);
@@ -1540,11 +1545,10 @@ var editor;
 			wbPart = doc.getPartByRelationshipType(openXml.Types.workbook.relationType);
 			var contentWorkbook = wbPart.getDocumentContent();
 			wbXml = new AscCommonExcel.CT_Workbook(wb);
-			var reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
+			reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
 			wbXml.fromXml(reader);
 
 
-			var reader, i, j;
 			if (t.isOpenOOXInBrowser) {
 
 				//theme
@@ -1768,7 +1772,7 @@ var editor;
 				//TODO проверить когда несколько ссылок на customXml
 				var customXmlParts = wbPart.getPartsByRelationshipType(openXml.Types.customXml.relationType);
 				if (customXmlParts) {
-					for (var i = 0; i < customXmlParts.length; i++) {
+					for (i = 0; i < customXmlParts.length; i++) {
 						var customXmlPart = customXmlParts[i];
 						var customXml = customXmlPart.getDocumentContent("string");
 						var customXmlPropsPart = customXmlPart.getPartByRelationshipType(openXml.Types.customXmlProps.relationType);
@@ -1785,9 +1789,8 @@ var editor;
 			}
 
 			//sheets
+			var wsParts = [];
 			if (t.isOpenOOXInBrowser && wbXml.sheets) {
-				var wsParts = [];
-
 				//вначале беру все листы, потом запрашиваю контент каждого из них.
 				//связано с проблемой внтури парсера, на примере файла Read_Only_part_of_lists.xlsx
 				wbXml.sheets.forEach(function (wbSheetXml) {
@@ -1889,284 +1892,6 @@ var editor;
 								}
 
 								//COMMENTS
-								var m_mapComments = {};
-								var PrepareComments = function () {
-									var pVmlDrawing = xmlParserContext.InitOpenManager.legacyDrawing;
-									if (!pVmlDrawing || !comments) {
-										return;
-									}
-
-
-									var mapCheckCopyThreadedComments = [];
-									var arAuthors = comments.authors && comments.authors.arr;
-
-									var i, j, nRow, nCol, nAuthorId, pCommentItem;
-									if (comments.commentList) {
-										var aComments = comments.commentList.arr;
-
-										for (i = 0; i < aComments.length; ++i) {
-											var pComment = aComments[i];
-											if (!pComment) {
-												continue;
-											}
-
-
-											var bThreadedCommentCopy = false;
-											var pThreadedComment = null;
-											if (pThreadedComments) {
-												var pFind;
-
-												var isPlaceholder = false;
-												if (pComment.authorId) {
-													nAuthorId = parseInt(pComment.authorId);
-
-													if (nAuthorId >= 0 && nAuthorId < arAuthors.length) {
-														var sAuthor = arAuthors[nAuthorId];
-														if ("tc=" === sAuthor.substring(0, 3)) {
-															isPlaceholder = true;
-															var sGUID = sAuthor.substr(3);
-															//todo IsZero() is added to fix comments with zero ids(5.4.0)(bug 42947). Remove after few releases
-															if ("{00000000-0000-0000-0000-000000000000}" === sGUID && pComment.ref) {
-																for (j in pThreadedComments.m_mapTopLevelThreadedComments) {
-																	var it = pThreadedComments.m_mapTopLevelThreadedComments[j];
-																	if (it.ref && pComment.ref === it.ref) {
-																		pFind = it;
-																		break;
-																	}
-																}
-															} else {
-																pFind = pThreadedComments.m_mapTopLevelThreadedComments[sGUID];
-															}
-
-														}
-													}
-												}
-
-												if (pFind) {
-													pThreadedComment = pFind;
-													if (mapCheckCopyThreadedComments[pThreadedComment.id]) {
-														bThreadedCommentCopy = true;
-													} else {
-														mapCheckCopyThreadedComments[pThreadedComment.id + ""] = 1;
-													}
-												} else if (isPlaceholder) {
-													continue;
-												}
-											}
-
-
-											if (pComment.ref && pComment.authorId) {
-												var sRef = AscCommonExcel.g_oRangeCache.getAscRange(pComment.ref);
-												if (sRef) {
-													nRow = sRef.r1;
-													nCol = sRef.c1;
-													pCommentItem = new Asc.asc_CCommentData();
-													pCommentItem.asc_putDocumentFlag(false);
-													pCommentItem.nRow = nRow;
-													pCommentItem.nCol = nCol;
-
-													//TODO флаг всегда будет false
-													/*if (pCommentItem.asc_getDocumentFlag()) {
-														pCommentItem.nId = "doc_" + (this.wb.aComments.length + 1);
-													} else {
-														pCommentItem.wsId = ws.Id;
-														pCommentItem.nId = "sheet" + pCommentItem.wsId + "_" + (ws.aComments.length + 1);
-													}*/
-
-													nAuthorId = parseInt(pComment.authorId);
-													if (nAuthorId >= 0 && nAuthorId < arAuthors.length) {
-														pCommentItem.asc_putUserName(arAuthors[nAuthorId]);
-													}
-
-													var pSi = pComment.oText;
-													if (pSi) {
-														pCommentItem.asc_putText(pSi.getText());
-													}
-
-													pCommentItem.threadedComment = pThreadedComment;//c_oSer_Comments.ThreadedComment
-													pCommentItem.ThreadedCommentCopy = bThreadedCommentCopy;//bool m_bThreadedCommentCopy
-
-													var sNewId = nRow + "-" + nCol;
-													m_mapComments[sNewId] = pCommentItem;
-												}
-											}
-										}
-									}
-
-
-									for (i = 0; i < pVmlDrawing.items.length; ++i) {
-										var pShape = pVmlDrawing.items[i];
-										if (!pShape || AscDFH.historyitem_type_VMLShape !== pShape.getObjectType()) {
-											continue;
-										}
-
-										/*if (pShape.sId)
-										{//mark shape as used
-											boost::unordered_map<std::wstring, OOX::CVmlDrawing::_vml_shape>::iterator pFind = pVmlDrawing->m_mapShapes.find(pShape->m_sId.get());
-											if (pFind != pVmlDrawing->m_mapShapes.end())
-											{
-												pFind->second.bUsed = true;
-											}
-										}*/
-
-										for (j = 0; j < pShape.items.length; ++j) {
-											var pElem = pShape.items[j];
-
-											if (!pElem) {
-												continue;
-											}
-
-											if (AscDFH.historyitem_type_VMLClientData === pElem.getObjectType()) {
-												var pClientData = pElem;
-												if (null != pClientData.m_oRow && null != pClientData.m_oColumn) {
-													nRow = parseInt(pClientData.m_oRow);
-													nCol = parseInt(pClientData.m_oColumn);
-													var sId = nRow + "" + "-" + nCol + "";
-
-													pCommentItem = m_mapComments[sId];
-													if (pCommentItem) {
-														/*if(pShape->m_sGfxData.IsInit())
-															pCommentItem->m_sGfxdata = *pShape->m_sGfxData;*/
-
-														var oCommentCoords = new AscCommonExcel.asc_CCommentCoords();
-														var m_aAnchor = [];
-														pClientData.getAnchorArray(m_aAnchor);
-														if (8 <= m_aAnchor.length) {
-															oCommentCoords.nLeft = Math.abs(m_aAnchor[0]);
-															oCommentCoords.nLeftOffset = Math.abs(m_aAnchor[1]);
-															oCommentCoords.nTop = Math.abs(m_aAnchor[2]);
-															oCommentCoords.nTopOffset = Math.abs(m_aAnchor[3]);
-															oCommentCoords.nRight = Math.abs(m_aAnchor[4]);
-															oCommentCoords.nRightOffset = Math.abs(m_aAnchor[5]);
-															oCommentCoords.nBottom = Math.abs(m_aAnchor[6]);
-															oCommentCoords.nBottomOffset = Math.abs(m_aAnchor[7]);
-														}
-														oCommentCoords.bMoveWithCells = pClientData.m_oMoveWithCells;
-														oCommentCoords.bSizeWithCells = pClientData.m_oSizeWithCells;
-
-														oCommentCoords.nCol = nCol;
-														oCommentCoords.nRow = nRow;
-
-														pCommentItem.coords = oCommentCoords;
-
-														//todo bHidden ?
-														//oCommentCoords->m_bVisible = pClientData->m_oVisible;
-														//pCommentItem.bHidden = !pClientData.m_oVisible;
-
-														//pCommentItem.coords = oCommentCoords;
-
-														if (pShape.m_oFillColor) {
-															/*BYTE r = pShape->m_oFillColor->Get_R();
-															BYTE g = pShape->m_oFillColor->Get_G();
-															BYTE b = pShape->m_oFillColor->Get_B();
-
-															std::wstringstream sstream;
-															sstream << boost::wformat( L"%02X%02X%02X" ) % r % g % b;
-
-															pCommentItem->m_sFillColorRgb = sstream.str();*/
-														}
-
-														var oPoint = new AscFormat.CPoint(), oUCssValue;
-														for (var k = 0; k < pShape.m_oStyle.m_arrProperties.length; ++k) {
-															if (!pShape.m_oStyle.m_arrProperties[i]) {
-																continue;
-															}
-
-															var oProperty = pShape.m_oStyle.m_arrProperties[k];
-															if (AscFormat.ECssPropertyType.cssptMarginLeft === oProperty.get_Type()) {
-																oUCssValue = oProperty.m_oValue;
-																if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
-																	oPoint.FromPoints(oUCssValue.oValue.dValue);
-																	pCommentItem.coords.dLeftMM = oPoint.ToMm();
-																}
-															} else if (AscFormat.ECssPropertyType.cssptMarginTop === oProperty.get_Type()) {
-																oUCssValue = oProperty.m_oValue;
-																if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
-																	oPoint.FromPoints(oUCssValue.oValue.dValue);
-																	pCommentItem.coords.dTopMM = oPoint.ToMm();
-																}
-															} else if (AscFormat.ECssPropertyType.cssptWidth === oProperty.get_Type()) {
-																oUCssValue = oProperty.m_oValue;
-																if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
-																	oPoint.FromPoints(oUCssValue.oValue.dValue);
-																	pCommentItem.coords.dWidthMM = oPoint.ToMm();
-																}
-															} else if (AscFormat.ECssPropertyType.cssptHeight === oProperty.get_Type()) {
-																oUCssValue = oProperty.m_oValue;
-																if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
-																	oPoint.FromPoints(oUCssValue.oValue.dValue);
-																	pCommentItem.coords.dHeightMM = oPoint.ToMm();
-																}
-															}
-														}
-													}
-												}
-											}
-										}
-									}
-
-
-									var applyThreadedComment = function (_commentData, _threadedComment) {
-										oAdditionalData.isThreadedComment = true;
-										_commentData.asc_putSolved(false);
-										_commentData.aReplies = [];
-
-										if (_threadedComment.dT != null) {
-											_commentData.asc_putTime("");
-											var dateMs = AscCommon.getTimeISO8601(_threadedComment.dT);
-											if (!isNaN(dateMs)) {
-												_commentData.asc_putOnlyOfficeTime(dateMs + "");
-											}
-										}
-
-										if (_threadedComment.personId != null) {
-											var person = personList.getByGuid(_threadedComment.personId);
-											if (person) {
-												_commentData.asc_putUserName(person.displayName);
-												_commentData.asc_putUserId(person.userId);
-												_commentData.asc_putProviderId(person.providerId);
-											}
-										}
-
-										if (_threadedComment.id != null) {
-											_commentData.asc_putGuid(_threadedComment.id);
-										}
-
-										if (_threadedComment.done != null) {
-											_commentData.asc_putSolved(_threadedComment.done === "1");
-										}
-
-										if (_threadedComment.text != null) {
-											_commentData.asc_putText(_threadedComment.text);
-										}
-
-										if (_threadedComment.m_arrReplies && _threadedComment.m_arrReplies.length) {
-											for (var j = 0; j < _threadedComment.m_arrReplies.length; j++) {
-												var reply = new Asc.asc_CCommentData();
-												applyThreadedComment(reply, _threadedComment.m_arrReplies[j]);
-												_commentData.asc_addReply(reply);
-											}
-										}
-									};
-
-									for (i in m_mapComments) {
-
-										if (m_mapComments[i].asc_getDocumentFlag()) {
-											m_mapComments[i].nId = "doc_" + (wb.aComments.length + 1);
-										} else {
-											m_mapComments[i].wsId = ws.Id;
-											m_mapComments[i].nId = "sheet" + m_mapComments[i].wsId + "_" + (ws.aComments.length + 1);
-										}
-
-										var oAdditionalData = {isThreadedComment: false};
-										if (m_mapComments[i].threadedComment) {
-											applyThreadedComment(m_mapComments[i], m_mapComments[i].threadedComment);
-
-										}
-										xmlParserContext.InitOpenManager.prepareComments(ws, m_mapComments[i].coords, [m_mapComments[i]], oAdditionalData);
-									}
-								};
-
 								//буду читать по формату, далее преобразовывать
 								var comments, pThreadedComments;
 								var commentsFile = wsPart.getPartsByRelationshipType(openXml.Types.worksheetComments.relationType);
@@ -2185,13 +1910,13 @@ var editor;
 									pThreadedComments.fromXml(reader);
 								}
 
-								PrepareComments();
+								AscCommonExcel.PrepareComments(ws, xmlParserContext, comments, pThreadedComments);
 							}
 						}
 					}
 				});
 			} else if(wbXml.sheets) {
-				var wsParts = [];
+				wsParts = [];
 
 				//вначале беру все листы, потом запрашиваю контент каждого из них.
 				//связано с проблемой внтури парсера, на примере файла Read_Only_part_of_lists.xlsx
@@ -2204,7 +1929,7 @@ var editor;
 
 				wsParts.forEach(function(wbSheetXml, wsIndex) {
 					var ws = t.wbModel.getWorksheet(wsIndex);
-					if (null !== wbSheetXml.id && wbSheetXml.name) {
+					if (ws && null !== wbSheetXml.id && wbSheetXml.name) {
 						var wsPart = wbSheetXml.wsPart;
 						if (wsPart) {
 							//pivot
@@ -2312,12 +2037,14 @@ var editor;
 				}
 			}
 
-			initOpenManager.readDefStyles(wb, wb.CellStyles.DefaultStyles);
+			if (t.isOpenOOXInBrowser) {
+				initOpenManager.readDefStyles(wb, wb.CellStyles.DefaultStyles);
+			}
 
 			wb.initPostOpenZip(pivotCaches, xmlParserContext);
 		});
 
-		window.nativeZlibEngine.close();
+		jsZlib.close();
 		//clean up
 		openXml.SaxParserDataTransfer = {};
 		return true;
@@ -4287,6 +4014,14 @@ var editor;
 		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowZeros, value);
 	};
 
+	spreadsheet_api.prototype.asc_setDate1904 = function (value) {
+		this.wb.setDate1904(value);
+	};
+
+	spreadsheet_api.prototype.asc_getDate1904 = function () {
+		return AscCommon.bDate1904;
+	};
+
   // Images & Charts
 
   spreadsheet_api.prototype.asc_drawingObjectsExist = function() {
@@ -6179,9 +5914,16 @@ var editor;
       AscCommon.CurFileVersion = version;
     }
 
+	  let xlsxData;
 	  this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
+	  if (this.isOpenOOXInBrowser) {
+		  //slice because array contains garbage after end of function
+		  this.openOOXInBrowserZip = base64File.slice();
+	  } else if (xlsxPath && window["native"]["GetFileBinary"]) {
+		  xlsxData = xlsxPath && window["native"]["GetFileBinary"] && window["native"]["GetFileBinary"](xlsxPath);
+	  }
 	  this._openDocument(base64File);
-	  if (this.openDocumentFromZip(t.wbModel, xlsxPath)) {
+	  if (this.openDocumentFromZip(t.wbModel, xlsxData)) {
 		  Asc.ReadDefTableStyles(t.wbModel);
 		  g_oIdCounter.Set_Load(false);
 		  AscCommon.checkCultureInfoFontPicker();
@@ -8507,6 +8249,11 @@ var editor;
   prot["getPrintOptionsJson"] = prot.getPrintOptionsJson;
 
   prot["asc_EditSelectAll"] = prot.asc_EditSelectAll;
+
+  prot["asc_setDate1904"] = prot.asc_setDate1904;
+  prot["asc_getDate1904"] = prot.asc_getDate1904;
+
+
 
   prot["asc_addCellWatches"]               = prot.asc_addCellWatches;
   prot["asc_deleteCellWatches"]            = prot.asc_deleteCellWatches;

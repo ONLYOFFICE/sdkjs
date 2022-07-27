@@ -2448,6 +2448,9 @@ function (window, undefined) {
 				wrapper.readData(worksheetSource);
 				worksheetSource.fromWorksheetSource(worksheetSource, true);
 			}
+		}  else if(AscCH.historyitem_Workbook_Date1904 === Type) {
+			wb.setDate1904(bUndo ? Data.from : Data.to);
+			AscCommon.oNumFormatCache.cleanCache();
 		} else if (AscCH.historyitem_Workbook_ChangeExternalReference === Type) {
 			var from = bUndo ? Data.from : Data.to;
 			var to = bUndo ? Data.to : Data.from;

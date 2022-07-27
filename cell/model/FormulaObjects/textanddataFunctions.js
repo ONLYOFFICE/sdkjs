@@ -1701,11 +1701,13 @@ function (window, undefined) {
 		}
 
 
-		var res = string2.substring(arg2.getValue() - 1).search(valueForSearching) + arg2.getValue() - 1;
+		var res = string2.substring(arg2.getValue() - 1).search(valueForSearching);
 
 		if (res < 0) {
 			return new cError(cErrorType.wrong_value_type);
 		}
+
+		res += arg2.getValue() - 1;
 
 		return new cNumber(res + 1);
 

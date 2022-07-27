@@ -187,7 +187,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 	this.ParaId = null;//for comment xml serialization
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
     if(bFromPresentation === true && History.Is_On())
     {
         this.Save_StartState();
@@ -1818,6 +1818,30 @@ Paragraph.prototype.GetLineBounds = function(nCurLine)
 
 	return new CDocumentBounds(oPage.X, nTop, oPage.XLimit, nBottom);
 };
+Paragraph.prototype.GetTextOnLine = function(nCurLine)
+{
+	if (!this.IsRecalculated() || this.GetLinesCount() <= nCurLine)
+		return "";
+
+	let oLine =  this.Lines[nCurLine];
+
+	let oState = this.SaveSelectionState();
+
+	let oStartPos = this.Get_StartRangePos2(nCurLine, 0);
+	let oEndPos   = this.Get_EndRangePos2(nCurLine, oLine.Ranges.length - 1);
+
+	this.Selection.Use = true;
+	this.SetSelectionContentPos(oStartPos, oEndPos);
+
+	this.Selection.Use   = true;
+	this.Selection.Start = false;
+	this.SetSelectionContentPos(oStartPos, oEndPos);
+	let sResult = this.GetSelectedText(false, {Numbering : false});
+
+	this.LoadSelectionState(oState);
+
+	return sResult;
+};
 Paragraph.prototype.Reset_RecalculateCache = function()
 {
 
@@ -2294,7 +2318,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						var oFormShdColor     = oFormShd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
 						var oFormShdColorDark = new CDocumentColor(oFormShdColor.r * (201 / 255) | 0, oFormShdColor.g * (225 / 255) | 0, oFormShdColor.b, 255);
 
-						if (oInlineSdt.IsCurrent() || !isDrawFormHighlight)
+						if (oInlineSdt.IsCurrentComplexForm() || !isDrawFormHighlight)
 						{
 							if (!oPrevColor.IsEqualRGB(oFormShdColor))
 							{
@@ -2322,7 +2346,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						if (oInlineSdt.IsFixedForm())
 							oSdtBounds = oInlineSdt.GetFixedFormBounds();
 					}
-					else if (isForm && FormsHighlight && !oInlineSdt.IsCurrent())
+					else if (isForm && FormsHighlight && !oInlineSdt.IsCurrentComplexForm())
 					{
 						if (!oPrevColor.IsEqualRGB(FormsHighlight))
 						{
@@ -3272,7 +3296,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 			for (var PolygonIndex = 0, PolygonsCount = PolygonPaths.length; PolygonIndex < PolygonsCount; ++PolygonIndex)
 			{
 				var Path = PolygonPaths[PolygonIndex];
-				pGraphics.DrawPolygon(Path, 0, 0);
+				pGraphics.DrawPolygon(Path, 1, 0);
 			}
 		}
 
@@ -7095,6 +7119,10 @@ Paragraph.prototype.IsSelectionUse = function()
 Paragraph.prototype.IsSelectionToEnd = function()
 {
 	return this.Selection_CheckParaEnd();
+};
+Paragraph.prototype.IsSelectedOnlyParagraphMark = function()
+{
+	return (this.Selection_CheckParaEnd() && this.IsSelectionEmpty(false));
 };
 /**
  * Функция определяет начальную позицию курсора в параграфе
@@ -11762,7 +11790,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	var oHyperlink      = oInfo.GetHyperlink();
 	if (oContentControl)
 	{
-		oContentControl.DrawContentControlsTrack(true, X, Y, CurPage);
+		oContentControl.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, CurPage);
 		isCheckBox = oContentControl.IsCheckBox() && oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage), false);
 	}
 
@@ -18037,6 +18065,8 @@ CDocumentBounds.prototype.Copy = function()
 	return new CDocumentBounds(this.Left, this.Top, this.Right, this.Bottom);
 };
 
+AscWord.CDocumentBounds = CDocumentBounds;
+
 function CParagraphPageEndInfo()
 {
     this.Comments      = []; // Массив незакрытых комментариев на данной странице
@@ -18501,6 +18531,15 @@ CParagraphContentPos.prototype.SetDepth = function(nDepth)
 CParagraphContentPos.prototype.DecreaseDepth = function(nCount)
 {
 	this.Depth = Math.max(0, this.Depth - nCount);
+};
+/**
+ * Проверяем позиции на совпадение
+ * @param {CParagraphContentPos} oPos
+ * @returns {boolean}
+ */
+CParagraphContentPos.prototype.IsEqual = function(oPos)
+{
+	return (oPos && 0 === this.Compare(oPos));
 };
 
 function CComplexFieldStatePos(oComplexField, isFieldCode)
@@ -20119,3 +20158,5 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].Paragraph = Paragraph;
 window['AscCommonWord'].UnknownValue = UnknownValue;
 window['AscCommonWord'].type_Paragraph = type_Paragraph;
+
+window['AscWord'].CParagraph = Paragraph;

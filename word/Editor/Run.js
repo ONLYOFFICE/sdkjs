@@ -141,7 +141,7 @@ function ParaRun(Paragraph, bMathRun)
 	this.CompositeInput = null;
 
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-	g_oTableId.Add(this, this.Id);
+	AscCommon.g_oTableId.Add(this, this.Id);
 	if (this.Paragraph && !this.Paragraph.bFromDocument && History.CanAddChanges())
 	{
 		this.Save_StartState();
@@ -948,6 +948,9 @@ ParaRun.prototype.private_CheckMathBreakOperatorBeforeAdd = function(oNewRun)
  */
 ParaRun.prototype.CheckRunBeforeAdd = function(oItem)
 {
+	if (this.GetParentForm())
+		return null;
+
 	var oNewRun        = null;
 	var oLogicDocument = this.GetLogicDocument();
 
@@ -3285,7 +3288,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	var oTheme  = this.Paragraph.GetTheme();
 
 	let _oTextPr = oTextPr;
-	if (this.private_IsUseAscFont(oTextPr))
+	if (this.IsUseAscFont(oTextPr))
 	{
 		_oTextPr = oTextPr.Copy();
 		_oTextPr.RFonts.SetAll("ASCW3");
@@ -3731,7 +3734,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						GraphemeLen = 0;
 						WordLen     = Para.GetContentWidthInRange(PRS.LineBreakPos, oCurrentPos);
 
-						if (X + WordLen > XEnd)
+						if (X + WordLen > XEnd && (Word || !Para.IsSingleRangeOnLine(ParaLine, ParaRange)))
 						{
 							// Слово оказалось единственным элементом в промежутке, и, все равно,
 							// не умещается целиком. Делаем следующее:
@@ -3740,28 +3743,42 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							// 2) Если у нас строка без вырезов, тогда мы ищем перенос строки, начиная с текущего
 							//    места в обратном направлении, при этом решейпим текст в заданном промежутке
 
+							let isBreak = true;
 							if (Para.IsSingleRangeOnLine(ParaLine, ParaRange))
 							{
 								let oLineStartPos = PRS.LineBreakPos.Copy();
 								PRS.LineBreakPos  = Para.FindLineBreakInLongWord(XEnd - X, PRS.LineBreakPos, oCurrentPos);
 
-								this.protected_FillRange(CurLine, CurRange, RangeStartPos, RangeStartPos);
-								Para.Recalculate_SetRangeBounds(ParaLine, ParaRange, oLineStartPos, PRS.LineBreakPos);
+								if (PRS.LineBreakPos.IsEqual(oLineStartPos) || PRS.LineBreakPos.IsEqual(oCurrentPos))
+								{
+									PRS.LineBreakPos = oLineStartPos;
+									LetterLen        = WordLen;
+									WordLen          = 0;
+									isBreak          = false;
+								}
+								else
+								{
+									this.protected_FillRange(CurLine, CurRange, RangeStartPos, RangeStartPos);
+									Para.Recalculate_SetRangeBounds(ParaLine, ParaRange, oLineStartPos, PRS.LineBreakPos);
 
-								isSkipFillRange = true;
+									isSkipFillRange = true;
 
-								PRS.LongWord = true;
+									PRS.LongWord = true;
 
-								EmptyLine  = false;
-								TextOnLine = true;
+									EmptyLine  = false;
+									TextOnLine = true;
 
-								X += WordLen;
-								WordLen = 0;
+									X += WordLen;
+									WordLen = 0;
+								}
 							}
 
-							MoveToLBP = true;
-							NewRange  = true;
-							break;
+							if (isBreak)
+							{
+								MoveToLBP = true;
+								NewRange  = true;
+								break;
+							}
 						}
 						else if (!Word)
 						{
@@ -5486,22 +5503,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             }
             case para_End:
             {
-                var SectPr = PRSA.Paragraph.Get_SectionPr();
-                if (!PRSA.Paragraph.LogicDocument || PRSA.Paragraph.LogicDocument !== PRSA.Paragraph.Parent || !PRSA.Paragraph.bFromDocument)
-                    SectPr = undefined;
-
-				if (undefined !== SectPr)
-				{
-					// Нас интересует тип следующей секции
-					var LogicDocument = PRSA.Paragraph.LogicDocument;
-					var NextSectPr    = LogicDocument.SectionsInfo.Get_SectPr(PRSA.Paragraph.Index + 1).SectPr;
-					Item.UpdateSectionEnd(NextSectPr.Type, PRSA.XEnd - PRSA.X, LogicDocument);
-				}
-				else
-				{
-					Item.ClearSectionEnd();
-				}
-
+				Item.CheckMark(PRSA.Paragraph, PRSA.XEnd - PRSA.X);
                 PRSA.X += Item.GetWidth();
 
                 break;
@@ -6414,7 +6416,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
 
     var CurTextPr = this.Get_CompiledPr( false );
 
-    if (this.private_IsUseAscFont(CurTextPr))
+    if (this.IsUseAscFont(CurTextPr))
 	{
 		var oFontTextPr = CurTextPr.Copy();
 		oFontTextPr.RFonts.SetAll("ASCW3", -1);
@@ -7266,7 +7268,7 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 	if (true === this.Pr.HavePrChange() && para_Math_Run !== this.Type)
     {
         var ReviewColor = this.GetPrReviewColor();
-        PDSL.RunReview.Add(0, 0, PDSL.X, X, 0, ReviewColor.r, ReviewColor.g, ReviewColor.b, {RunPr: this.Pr});
+        PDSL.RunReview.Add(0, 0, PDSL.X, X, 0, ReviewColor.r, ReviewColor.g, ReviewColor.b, {RunPr: this.Get_CompiledPr(false)});
     }
 
     var CollPrChangeColor = this.private_GetCollPrChangeOther();
@@ -8701,6 +8703,17 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 
 	if (this.Paragraph.IsInFixedForm())
 		TextPr.Position = 0;
+
+	let oLogicDocument = this.Paragraph.GetLogicDocument();
+	let oLayout;
+	if (oLogicDocument
+		&& oLogicDocument.IsDocumentEditor()
+		&& (oLayout = oLogicDocument.GetDocumentLayout()))
+	{
+		let nFontCoef = oLayout.GetFontScale();
+		TextPr.FontSize   *= nFontCoef;
+		TextPr.FontSizeCS *= nFontCoef;
+	}
 
 	return TextPr;
 };
@@ -12754,12 +12767,12 @@ ParaRun.prototype.GetTextFormAutoWidth = function()
 	this.Recalculate_MeasureContent();
 	return this.TextAscent;
 };
-ParaRun.prototype.CheckParentFormKey = function(oPr)
+ParaRun.prototype.CheckParentFormKey = function()
 {
-	var sKey = this.Parent instanceof CInlineLevelSdt && this.Parent.IsForm() ? this.Parent.GetFormKey() : null;
-	var oLogicDocument = this.GetLogicDocument();
-	if (sKey && oLogicDocument && oLogicDocument.OnChangeForm)
-		oLogicDocument.OnChangeForm(sKey, this.Parent, oPr);
+	let oForm = this.GetParentForm();
+	let oLogicDocument = this.GetLogicDocument();
+	if (oForm && oLogicDocument && oLogicDocument.IsDocumentEditor())
+		oLogicDocument.OnChangeForm(oForm);
 };
 ParaRun.prototype.GetParentForm = function()
 {
@@ -12993,7 +13006,7 @@ ParaRun.prototype.CalculateTextToTable = function(oEngine)
 		}
 	}
 };
-ParaRun.prototype.private_IsUseAscFont = function(oTextPr)
+ParaRun.prototype.IsUseAscFont = function(oTextPr)
 {
 	return (1 === this.Content.length
 		&& para_Text === this.Content[0].Type
@@ -13671,3 +13684,4 @@ window['AscCommonWord'].CanUpdatePosition = CanUpdatePosition;
 
 window['AscWord'] = window['AscWord'] || {};
 window['AscWord'].ParaRun = ParaRun;
+window['AscWord'].CRun = ParaRun;

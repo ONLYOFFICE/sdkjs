@@ -1580,13 +1580,15 @@ background-repeat: no-repeat;\
 		var StaxParser = AscCommon.StaxParser;
 		var xmlParserContext = new AscCommon.XmlParserContext();
 		xmlParserContext.DrawingDocument = this.WordControl.m_oDrawingDocument;
-		if (!window.nativeZlibEngine || !window.nativeZlibEngine.open(data)) {
+
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(data)) {
 			return false;
 		}
 
 		var reader;
-		xmlParserContext.zip = window.nativeZlibEngine;
-		var doc = new openXml.OpenXmlPackage(window.nativeZlibEngine, null);
+		xmlParserContext.zip = jsZlib;
+		var doc = new openXml.OpenXmlPackage(jsZlib, null);
 
 		let oTableStylesPart = doc.getPartByUri("/ppt/tableStyles.xml");
 		if(oTableStylesPart) {
@@ -1652,10 +1654,7 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oLogicDocument.ImageMap[_cur_ind++] = path;
 				let data = context.zip.getFile(path);
 				if (data) {
-					if (window["NATIVE_EDITOR_ENJINE"]) {
-						//slice because array contains garbage after zip.close
-						this.isOpenOOXInBrowserDoctImages[path] = data.slice();
-					} else {
+					if (!window["NATIVE_EDITOR_ENJINE"]) {
 						let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
 						let blob = new Blob([data], {type: mime});
 						let url = window.URL.createObjectURL(blob);
@@ -1667,7 +1666,7 @@ background-repeat: no-repeat;\
 				}
 			}
 		}
-		window.nativeZlibEngine.close();
+		jsZlib.close();
 		return true;
 	};
 
@@ -5801,6 +5800,7 @@ background-repeat: no-repeat;\
 		}
 		this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(file.data);
 		if (this.isOpenOOXInBrowser) {
+			this.openOOXInBrowserZip = file.data;
 			this.OpenDocumentFromZip(file.data);
 		} else {
 			this.OpenDocumentFromBin(file.url, file.data);
@@ -7972,6 +7972,8 @@ background-repeat: no-repeat;\
 
 		this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
 		if (this.isOpenOOXInBrowser) {
+			//slice because array contains garbage after end of function
+			this.openOOXInBrowserZip = base64File.slice();
 			this.OpenDocumentFromZipNoInit(base64File);
 		} else {
 			var _loader = new AscCommon.BinaryPPTYLoader();

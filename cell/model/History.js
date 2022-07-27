@@ -50,7 +50,8 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_DefinedNamesChangeUndo = 8;
 	window['AscCH'].historyitem_Workbook_Calculate = 9;
 	window['AscCH'].historyitem_Workbook_PivotWorksheetSource = 10;
-	window['AscCH'].historyitem_Workbook_ChangeExternalReference = 11;
+	window['AscCH'].historyitem_Workbook_Date1904 = 11;
+	window['AscCH'].historyitem_Workbook_ChangeExternalReference = 12;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;

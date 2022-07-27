@@ -84,7 +84,10 @@
 		window['AscFonts'].onError = onError;
 
 		if (window["NATIVE_EDITOR_ENJINE"] === true || window["IS_NATIVE_EDITOR"] === true || window["Native"] !== undefined)
+		{
+			window['AscFonts'].onSuccess && window['AscFonts'].onSuccess.call(window['AscFonts'].api);
 			return;
+		}
 
 		var url = "../../../../sdkjs/common/libfont/engine/";
 		var useWasm = false;

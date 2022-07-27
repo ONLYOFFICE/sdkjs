@@ -4501,6 +4501,7 @@ var GLOBAL_PATH_COUNT = 0;
             }
 
 
+
             oCurAxis.labels = oLabelsBox;
             oCurAxis.posX = null;
             oCurAxis.posY = null;
@@ -4563,6 +4564,15 @@ var GLOBAL_PATH_COUNT = 0;
             }
             else {//vertical axis
                 fDistance = -fDistance;
+                let oView3D = this.chart.getView3d();
+                if(oView3D) {
+                    let nRotY = oView3D.rotY;
+                    if(AscFormat.isRealNumber(nRotY)) {
+                        if(nRotY >= 90 && nRotY < 270) {
+                            fDistance = -fDistance;
+                        }
+                    }
+                }
                 oCurAxis.posX = fAxisPos;
                 oCurAxis.yPoints = [];
                 aPoints = oCurAxis.yPoints;

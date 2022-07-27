@@ -1496,6 +1496,13 @@
         }
         return null;
     };
+    CGraphicObjectBase.prototype.getFormatIdString = function(){
+        let nId = this.getFormatId();
+        if(nId !== null) {
+            return nId + "";
+        }
+        return "";
+    };
     CGraphicObjectBase.prototype.getNvProps = function(){
         var oUniNvPr = this.getUniNvProps();
         if(oUniNvPr){
@@ -2984,6 +2991,38 @@
     CGraphicObjectBase.prototype.GetHeight = function() {
         if (this.spPr && this.spPr.xfrm)
             return this.spPr.xfrm.extY;
+    };
+    CGraphicObjectBase.prototype.checkEmptySpPrAndXfrm = function(_xfrm) {
+        if(!this.spPr)
+        {
+            this.setSpPr(new AscFormat.CSpPr());
+            this.spPr.setParent(this);
+        }
+        this.bEmptyTransform = !AscCommon.isRealObject(this.spPr.xfrm) || undefined;
+        if(!_xfrm){
+            _xfrm = new AscFormat.CXfrm();
+            _xfrm.setOffX(0);
+            _xfrm.setOffY(0);
+            _xfrm.setExtX(0);
+            _xfrm.setExtY(0);
+        }
+        if(this.getObjectType() === AscDFH.historyitem_type_GroupShape ||
+            this.getObjectType() === AscDFH.historyitem_type_SmartArt) {
+            if(_xfrm.chOffX === null) {
+                _xfrm.setChOffX(0);
+            }
+            if(_xfrm.chOffY === null) {
+                _xfrm.setChOffY(0);
+            }
+            if(_xfrm.chExtX === null) {
+                _xfrm.setChExtX(_xfrm.extX);
+            }
+            if(_xfrm.chExtX === null) {
+                _xfrm.setChExtY(_xfrm.extY);
+            }
+        }
+        this.spPr.setXfrm(_xfrm);
+        _xfrm.setParent(this.spPr);
     };
 
     var ANIM_LABEL_WIDTH_PIX = 22;

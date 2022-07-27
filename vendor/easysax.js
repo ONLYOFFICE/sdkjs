@@ -1406,6 +1406,12 @@ StaxParser.prototype.GetDouble = function (val, def) {
     var num = parseFloat(val);
     return !isNaN(num) ? num : def;
 };
+StaxParser.prototype.GetDoubleOrNaN = function (val, def) {
+    if(val === "NaN") {
+        return NaN;
+    }
+    return this.GetDouble(val, def);
+};
 StaxParser.prototype.GetValueBool = function () {
     return this.GetBool(this.GetValue());
 };
@@ -1429,6 +1435,9 @@ StaxParser.prototype.GetValueUInt64 = function (def, radix) {
 };
 StaxParser.prototype.GetValueDouble = function (def) {
     return this.GetDouble(this.GetValue(), def);
+};
+StaxParser.prototype.GetValueDoubleOrNaN = function (def) {
+    return this.GetDoubleOrNaN(this.GetValue(), def);
 };
 StaxParser.prototype.GetValueDecodeXml = function () {
     return this.DecodeXml(this.text);
@@ -1591,6 +1600,9 @@ StaxParser.prototype.readXmlArray = function(childName, func) {
             indexChild++;
         }
     }
+};
+StaxParser.prototype.AddConnectedObject = function(object) {
+    this.context.addConnectorsPr(object);
 };
 
 function XmlParserContext(){
@@ -1759,6 +1771,15 @@ XmlWriterContext.prototype.getImageRId = function(sRasterImageId) {
         }
     }
     return this.currentPartImageMap[sRasterImageId] ? this.currentPartImageMap[sRasterImageId] : "";
+};
+XmlWriterContext.prototype.getSpIdxId = function(sEditorId){
+    if(typeof sEditorId === "string" && sEditorId.length > 0) {
+        var oDrawing = AscCommon.g_oTableId.Get_ById(sEditorId);
+        if(oDrawing && oDrawing.getFormatId) {
+            return oDrawing.getFormatId();
+        }
+    }
+    return null;
 };
 function CT_XmlNode(opt_elemReader) {
     this.attributes = {};

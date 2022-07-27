@@ -24,9 +24,10 @@ jobs:
           npm install -g grunt-cli node-qunit-puppeteer
           npm install --prefix build
           grunt --gruntfile build/Gruntfile.js develop
-          node-qunit-puppeteer cell/.unit-tests/FormulaTests.html
-          node-qunit-puppeteer cell/.unit-tests/subdir/PivotTests.html
-          node-qunit-puppeteer cell/.unit-tests/CopyPasteTests.html
+          node-qunit-puppeteer tests/cell/spreadsheet-calculation/FormulaTests.html
+          node-qunit-puppeteer tests/cell/spreadsheet-calculation/PivotTests.html
+          node-qunit-puppeteer tests/cell/spreadsheet-calculation/CopyPasteTests.html
+          node-qunit-puppeteer tests/word/document-calculation/paragraph.html
   builder-tests:
     runs-on: ubuntu-latest
     steps:

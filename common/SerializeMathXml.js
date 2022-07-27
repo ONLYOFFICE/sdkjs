@@ -99,10 +99,9 @@
 
 	function CT_OMathPara() {
 		this.OMathParaPr = null;
-		this.OMath = null;
 		return this;
 	}
-	CT_OMathPara.prototype.fromXml = function (reader) {
+	CT_OMathPara.prototype.fromXml = function (reader, paragraphContent) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -112,39 +111,42 @@
 					break;
 				}
 				case "oMath" : {
-					this.OMath = new ParaMath();
-					this.OMath.fromXml(reader);
+					if (!paragraphContent) {
+						break;
+					}
+					let paraMath = new ParaMath();
+					paragraphContent.AddToContentToEnd(paraMath);
+					paraMath.fromXml(reader);
+					if (this.OMathParaPr) {
+						paraMath.Set_Align(this.OMathParaPr.jc);
+					}
 					break;
 				}
 			}
 		}
-		if (this.OMathParaPr && null !== this.OMathParaPr.jc) {
-			this.OMath.Set_Align(this.OMathParaPr.jc);
-		}
 	};
-	CT_OMathPara.prototype.toXml = function (writer, name) {
+	CT_OMathPara.prototype.toXml = function (writer, name, oMath) {
 		writer.WriteXmlNodeStart(name);
 		writer.WriteXmlAttributesEnd();
 		writer.WriteXmlNullable(this.OMathParaPr, "m:oMathParaPr");
-		writer.WriteXmlNullable(this.OMath, "m:oMath");
+		writer.WriteXmlNullable(oMath, "m:oMath");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CT_OMathPara.prototype.setMath = function (val) {
-		this.OMath = val;
-		if (undefined !== val.Jc) {
+	CT_OMathPara.prototype.initMathParaPr = function (oMath) {
+		if (oMath && undefined !== oMath.Jc) {
 			this.OMathParaPr = new CT_OMathParaPr();
-			this.OMathParaPr.jc = val.Jc;
+			this.OMathParaPr.jc = oMath.Jc;
 		}
 	};
 
 	ParaMath.prototype.fromXml = function(reader) {
-		this.Root.fromXml(reader);
+		this.Root.fromXml(reader, this.GetParent());
 		this.Root.Correct_Content(true);
 	};
 	ParaMath.prototype.toXml = function(writer, name) {
 		this.Root.toXml(writer, name);
 	};
-	CMathContent.prototype.fromXml = function(reader) {
+	CMathContent.prototype.fromXml = function(reader, opt_paragraphContent) {
 		let elem, depth = reader.GetDepth();
 		let oReadResult = reader.context.oReadResult;
 		while (reader.ReadNextSiblingNode(depth)) {
@@ -261,7 +263,7 @@
 				}
 				case "r" : {
 					elem = new ParaRun(this.Paragraph, true);
-					elem.fromXml(reader);
+					elem.fromXml(reader, opt_paragraphContent);
 					break;
 				}
 				case "del": {

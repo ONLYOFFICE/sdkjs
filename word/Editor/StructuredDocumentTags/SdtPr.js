@@ -72,6 +72,7 @@ function CSdtPr()
 
 	this.FormPr        = undefined;
 	this.PictureFormPr = undefined;
+	this.ComplexFormPr = undefined;
 }
 
 CSdtPr.prototype.Copy = function()
@@ -105,6 +106,9 @@ CSdtPr.prototype.Copy = function()
 
 	if (this.PictureFormPr)
 		oPr.PictureFormPr = this.PictureFormPr.Copy();
+
+	if (this.ComplexFormPr)
+		oPr.ComplexFormPr = this.ComplexFormPr.Copy();
 
 	oPr.TextPr = this.TextPr.Copy();
 
@@ -257,6 +261,12 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 		Flags |= 2097152;
 	}
 
+	if (this.ComplexFormPr)
+	{
+		this.ComplexFormPr.WriteToBinary(Writer);
+		Flags |= (1 << 22);
+	}
+
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
 	Writer.WriteLong(Flags);
@@ -347,13 +357,19 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 	if (Flags & 1048576)
 	{
 		this.TextForm = new AscWord.CSdtTextFormPr();
-		this.TextForm.ReadFromBinary(oReader);
+		this.TextForm.ReadFromBinary(Reader);
 	}
 
 	if (Flags & 2097152)
 	{
 		this.PictureFormPr = new AscWord.CSdtPictureFormPr();
-		this.PictureFormPr.ReadFromBinary(oReader);
+		this.PictureFormPr.ReadFromBinary(Reader);
+	}
+
+	if (Flags & (1 << 22))
+	{
+		this.ComplexFormPr = new AscWord.CSdtComplexFormPr();
+		this.ComplexFormPr.ReadFromBinary(Reader);
 	}
 };
 CSdtPr.prototype.IsBuiltInDocPart = function()
@@ -396,11 +412,21 @@ function CContentControlPr(nType)
 	this.DateTimePr    = undefined;
 	this.TextFormPr    = undefined;
 	this.PictureFormPr = undefined;
+	this.ComplexFormPr = undefined;
 
 	this.PlaceholderText = undefined;
 
 	this.FormPr = undefined;
 }
+CContentControlPr.prototype.GetEventObject = function()
+{
+	return {
+		"Tag"        : this.Tag,
+		"Id"         : this.Id,
+		"Lock"       : this.Lock,
+		"InternalId" : this.InternalId
+	};
+};
 CContentControlPr.prototype.FillFromObject = function(oPr)
 {
 	if (undefined !== oPr.Id)
@@ -454,6 +480,8 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 		this.TextFormPr = oContentControl.GetTextFormPr().Copy();
 	else if (oContentControl.IsPictureForm())
 		this.PictureFormPr = oContentControl.GetPictureFormPr().Copy();
+	else if (oContentControl.IsComplexForm())
+		this.ComplexFormPr = oContentControl.GetComplexFormPr().Copy();
 
 	this.PlaceholderText = oContentControl.GetPlaceholderText();
 
@@ -547,6 +575,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.SetPictureFormPr(this.PictureFormPr);
 		oContentControl.UpdatePictureFormLayout();
 	}
+
+	if (undefined !== this.ComplexFormPr)
+		oContentControl.SetComplexFormPr(this.ComplexFormPr);
 };
 CContentControlPr.prototype.GetId = function()
 {
@@ -701,6 +732,14 @@ CContentControlPr.prototype.GetPictureFormPr = function()
 {
 	return this.PictureFormPr;
 };
+CContentControlPr.prototype.SetComplexFormPr = function(oPr)
+{
+	this.ComplexFormPr = oPr;
+};
+CContentControlPr.prototype.GetComplexFormPr = function()
+{
+	return this.ComplexFormPr;
+};
 
 /**
  * Класс с глобальными настройками для всех контейнеров
@@ -805,236 +844,6 @@ CSpecialFormsGlobalSettings.prototype.Read_FromBinary = function(oReader)
 	}
 };
 
-function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
-{
-	this.Key      = sKey;
-	this.Label    = sLabel;
-	this.HelpText = sHelpText;
-	this.Required = isRequired;
-	this.Fixed    = false;
-	this.Border   = undefined;
-	this.Shd      = undefined;
-}
-CSdtFormPr.prototype.Copy = function()
-{
-	var oFormPr = new CSdtFormPr();
-
-	oFormPr.Key      = this.Key;
-	oFormPr.Label    = this.Label;
-	oFormPr.HelpText = this.HelpText;
-	oFormPr.Required = this.Required;
-
-	if (this.Border)
-		oFormPr.Border = this.Border.Copy();
-
-	if (this.Shd)
-		oFormPr.Shd = this.Shd.Copy();
-
-	return oFormPr;
-};
-CSdtFormPr.prototype.IsEqual = function(oOther)
-{
-	return (oOther
-		&& this.Key === oOther.Key
-		&& this.Label === oOther.Label
-		&& this.HelpText === oOther.HelpText
-		&& this.Required === oOther.Required
-		&& IsEqualStyleObjects(this.Border, oOther.Border)
-		&& IsEqualStyleObjects(this.Shd, oOther.Shd));
-};
-CSdtFormPr.prototype.WriteToBinary = function(oWriter)
-{
-	var nStartPos = oWriter.GetCurPosition();
-	oWriter.Skip(4);
-	var nFlags = 0;
-
-	if (undefined !== this.Key)
-	{
-		oWriter.WriteString2(this.Key);
-		nFlags |= 1;
-	}
-
-	if (undefined !== this.Label)
-	{
-		oWriter.WriteString2(this.Label);
-		nFlags |= 2;
-	}
-
-	if (undefined !== this.HelpText)
-	{
-		oWriter.WriteString2(this.HelpText);
-		nFlags |= 4;
-	}
-
-	if (undefined !== this.Required)
-	{
-		oWriter.WriteBool(this.Required);
-		nFlags |= 8;
-	}
-
-	if (undefined !== this.Border)
-	{
-		this.Border.WriteToBinary(oWriter);
-		nFlags |= 16;
-	}
-
-	if (undefined !== this.Shd)
-	{
-		this.Shd.WriteToBinary(oWriter)
-		nFlags |= 32;
-	}
-
-	var nEndPos = oWriter.GetCurPosition();
-	oWriter.Seek(nStartPos);
-	oWriter.WriteLong(nFlags);
-	oWriter.Seek(nEndPos);
-};
-CSdtFormPr.prototype.ReadFromBinary = function(oReader)
-{
-	var nFlags = oReader.GetLong();
-
-	if (nFlags & 1)
-		this.Key = oReader.GetString2();
-
-	if (nFlags & 2)
-		this.Label = oReader.GetString2();
-
-	if (nFlags & 4)
-		this.HelpText = oReader.GetString2();
-
-	if (nFlags & 8)
-		this.Required = oReader.GetBool();
-
-	if (nFlags & 16)
-	{
-		this.Border = new CDocumentBorder();
-		this.Border.ReadFromBinary(oReader);
-	}
-
-	if (nFlags & 32)
-	{
-		this.Shd = new CDocumentShd();
-		this.Shd.ReadFromBinary(oReader);
-	}
-};
-CSdtFormPr.prototype.Write_ToBinary = function(oWriter)
-{
-	this.WriteToBinary(oWriter);
-};
-CSdtFormPr.prototype.Read_FromBinary = function(oReader)
-{
-	this.ReadFromBinary(oReader);
-};
-CSdtFormPr.prototype.GetKey = function()
-{
-	return this.Key;
-};
-CSdtFormPr.prototype.SetKey = function(sKey)
-{
-	this.Key = sKey;
-};
-CSdtFormPr.prototype.GetLabel = function()
-{
-	return this.Label;
-};
-CSdtFormPr.prototype.SetLabel = function(sLabel)
-{
-	this.Label = sLabel;
-};
-CSdtFormPr.prototype.GetHelpText = function()
-{
-	return this.HelpText;
-};
-CSdtFormPr.prototype.SetHelpText = function(sText)
-{
-	this.HelpText = sText;
-};
-CSdtFormPr.prototype.GetRequired = function()
-{
-	return this.Required;
-};
-CSdtFormPr.prototype.SetRequired = function(isRequired)
-{
-	this.Required = isRequired;
-};
-CSdtFormPr.prototype.GetFixed = function()
-{
-	return this.Fixed;
-};
-CSdtFormPr.prototype.SetFixed = function(isFixed)
-{
-	this.Fixed = isFixed;
-};
-CSdtFormPr.prototype.GetBorder = function()
-{
-	return this.Border;
-};
-CSdtFormPr.prototype.GetAscBorder = function()
-{
-	if (!this.Border)
-		return undefined;
-
-	return (new Asc.asc_CTextBorder(this.Border));
-};
-CSdtFormPr.prototype.SetAscBorder = function(oAscBorder)
-{
-	if (!oAscBorder)
-	{
-		this.Border = undefined;
-	}
-	else
-	{
-		this.Border = new CDocumentBorder();
-		this.Border.Set_FromObject(oAscBorder);
-	}
-};
-CSdtFormPr.prototype.GetShd = function()
-{
-	return this.Shd;
-};
-CSdtFormPr.prototype.GetAscShd = function()
-{
-	if (!this.Shd)
-		return undefined;
-
-	return (new Asc.asc_CParagraphShd(this.Shd));
-};
-CSdtFormPr.prototype.SetAscShd = function(isShd, oAscColor)
-{
-	if (!isShd || !oAscColor)
-	{
-		this.Shd = undefined;
-	}
-	else
-	{
-		var oUnifill        = new AscFormat.CUniFill();
-		oUnifill.fill       = new AscFormat.CSolidFill();
-		oUnifill.fill.color = AscFormat.CorrectUniColor(oAscColor, oUnifill.fill.color, 1);
-
-		var oLogicDocument = editor.WordControl.m_oLogicDocument;
-		if (oLogicDocument && oLogicDocument.IsDocumentEditor())
-			oUnifill.check(oLogicDocument.GetTheme(), oLogicDocument.GetColorMap());
-
-		this.Shd = new CDocumentShd();
-		this.Shd.Set_FromObject({
-			Value: Asc.c_oAscShd.Clear,
-			Color: {
-				r: oAscColor.asc_getR(),
-				g: oAscColor.asc_getG(),
-				b: oAscColor.asc_getB(),
-				Auto: false
-			},
-			Fill: {
-				r: oAscColor.asc_getR(),
-				g: oAscColor.asc_getG(),
-				b: oAscColor.asc_getB(),
-				Auto: false
-			},
-			Unifill: oUnifill
-		});
-	}
-};
-
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord']        = window['AscCommonWord'] || {};
 window['AscCommonWord'].CSdtPr = CSdtPr;
@@ -1075,20 +884,5 @@ CContentControlPr.prototype['get_FormPr']             = CContentControlPr.protot
 CContentControlPr.prototype['put_FormPr']             = CContentControlPr.prototype.SetFormPr;
 CContentControlPr.prototype['get_PictureFormPr']      = CContentControlPr.prototype.GetPictureFormPr;
 CContentControlPr.prototype['put_PictureFormPr']      = CContentControlPr.prototype.SetPictureFormPr;
-
-window['AscCommon'].CSdtFormPr    = CSdtFormPr;
-window['AscCommon']['CSdtFormPr'] = CSdtFormPr;
-
-CSdtFormPr.prototype['get_Key']      = CSdtFormPr.prototype.GetKey;
-CSdtFormPr.prototype['put_Key']      = CSdtFormPr.prototype.SetKey;
-CSdtFormPr.prototype['get_Label']    = CSdtFormPr.prototype.GetLabel;
-CSdtFormPr.prototype['put_Label']    = CSdtFormPr.prototype.SetLabel;
-CSdtFormPr.prototype['get_HelpText'] = CSdtFormPr.prototype.GetHelpText;
-CSdtFormPr.prototype['put_HelpText'] = CSdtFormPr.prototype.SetHelpText;
-CSdtFormPr.prototype['get_Required'] = CSdtFormPr.prototype.GetRequired;
-CSdtFormPr.prototype['put_Required'] = CSdtFormPr.prototype.SetRequired;
-CSdtFormPr.prototype['get_Fixed']    = CSdtFormPr.prototype.GetFixed;
-CSdtFormPr.prototype['get_Border']   = CSdtFormPr.prototype.GetAscBorder;
-CSdtFormPr.prototype['put_Border']   = CSdtFormPr.prototype.SetAscBorder;
-CSdtFormPr.prototype['get_Shd']      = CSdtFormPr.prototype.GetAscShd;
-CSdtFormPr.prototype['put_Shd']      = CSdtFormPr.prototype.SetAscShd;
+CContentControlPr.prototype['get_ComplexFormPr']      = CContentControlPr.prototype.GetComplexFormPr;
+CContentControlPr.prototype['put_ComplexFormPr']      = CContentControlPr.prototype.SetComplexFormPr;

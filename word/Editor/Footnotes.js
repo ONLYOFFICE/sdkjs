@@ -1138,6 +1138,17 @@ CFootnotesController.prototype.GetNumberingInfo = function(oPara, oNumPr, oFootn
 
 	return oNumberingEngine.GetNumInfo();
 };
+CFootnotesController.prototype.CheckRunContent = function(fCheck)
+{
+	for (var sId in this.Footnote)
+	{
+		let oFootnote = this.Footnote[sId];
+		if (oFootnote.CheckRunContent(fCheck))
+			return true;
+	}
+
+	return false;
+};
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Private area
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1239,6 +1239,12 @@
 			case AscDFH.historydescription_Document_AddParagraphToTOC:
 				sString = "Document_AddParagraphToTOC";
 				break;
+			case AscDFH.historydescription_Document_FillFormsByTags:
+				sString = "Document_FillFormsByTags";
+				break;
+			case AscDFH.historydescription_Document_FillFormInPlugin:
+				sString = "Document_FillFormInPlugin";
+				break;
 		}
 		return sString;
 	}
@@ -2175,6 +2181,7 @@
 	window['AscDFH'].historyitem_SdtPr_TextForm         = window['AscDFH'].historyitem_type_SdtPr | 21;
 	window['AscDFH'].historyitem_SdtPr_FormPr           = window['AscDFH'].historyitem_type_SdtPr | 22;
 	window['AscDFH'].historyitem_SdtPr_PictureFormPr    = window['AscDFH'].historyitem_type_SdtPr | 23;
+	window['AscDFH'].historyitem_SdtPr_ComplexFormPr    = window['AscDFH'].historyitem_type_SdtPr | 24;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSdtPr
 	//------------------------------------------------------------------------------------------------------------------
@@ -4298,7 +4305,8 @@
 	window['AscDFH'].historydescription_Document_RemoveHdrFtr                       = 0x0191;
 	window['AscDFH'].historydescription_Document_AddParagraphToTOC                  = 0x0192;
 	window['AscDFH'].historydescription_Document_FillFormsByTags                    = 0x0193;
-	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0194;
+	window['AscDFH'].historydescription_Document_FillFormInPlugin                   = 0x0194;
+	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0195;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

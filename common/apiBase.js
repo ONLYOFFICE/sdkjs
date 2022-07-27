@@ -54,7 +54,7 @@
 		this.modulesLoaded = 0;
 		this.openResult    = null;
 		this.isOpenOOXInBrowser = false;
-		this.isOpenOOXInBrowserDoctImages = {};
+		this.openOOXInBrowserZip = null;
 
 		this.HtmlElementName = config['id-view'] || '';
 		this.HtmlElement     = null;
@@ -2275,21 +2275,28 @@
 	{
 		let t = this;
 		var context = new AscCommon.XmlWriterContext(editorType);
-		window.nativeZlibEngine.create();
-		model.toZip(window.nativeZlibEngine, context);
+		let jsZlibToSave = new AscCommon.ZLib();
+		jsZlibToSave.create();
+		model.toZip(jsZlibToSave, context);
+
+		let jsZlibOpened = new AscCommon.ZLib();
+		if (!jsZlibOpened.open(t.openOOXInBrowserZip)) {
+			jsZlibOpened = null;
+		}
+
 		var imageMapKeys = Object.keys(context.imageMap);
 		var downloadImages = function (imageMapKeys) {
 			if (imageMapKeys.length > 0) {
 				var elem = imageMapKeys.pop();
-				if (window["NATIVE_EDITOR_ENJINE"] === true && window["native"]["getImagesDirectory"] && window["native"]["GetFontBinary"]) {
-					if (t.isOpenOOXInBrowserDoctImages[elem]) {
-						context.imageMap[elem].part.setData(t.isOpenOOXInBrowserDoctImages[elem]);
-					} else {
-						let path = window["native"]["getImagesDirectory"]() + '/' + elem;
-						let data = window["native"]["GetFileBinary"](path);
-						if (data) {
-							context.imageMap[elem].part.setData(data);
-						}
+				let data = jsZlibOpened && jsZlibOpened.getFile(elem);
+				if (data) {
+					context.imageMap[elem].part.setData(data);
+					downloadImages(imageMapKeys);
+				} else if (window["NATIVE_EDITOR_ENJINE"] === true && window["native"]["getImagesDirectory"] && window["native"]["GetFileBinary"]) {
+					let path = window["native"]["getImagesDirectory"]() + '/' + elem;
+					let data = window["native"]["GetFileBinary"](path);
+					if (data) {
+						context.imageMap[elem].part.setData(data);
 					}
 					downloadImages(imageMapKeys);
 				} else {
@@ -2302,8 +2309,9 @@
 					}, "arraybuffer");
 				}
 			} else {
-				var data = window.nativeZlibEngine.save();
-				window.nativeZlibEngine.close();
+				jsZlibOpened && jsZlibOpened.close();
+				var data = jsZlibToSave.save();
+				jsZlibToSave.close();
 				callback(data);
 			}
 		};
@@ -3208,6 +3216,10 @@
 
 		//pdf viewer
 		if (this.isUseNativeViewer && this.isDocumentRenderer && this.isDocumentRenderer())
+			return 0;
+
+		//viewer
+		if (this.isViewMode)
 			return 0;
 
 		return new Date().getTime() - this.lastWorkTime;

@@ -60,6 +60,7 @@ AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Temporary]        = CChangesSdtPr
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_TextForm]         = CChangesSdtPrTextForm;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_FormPr]           = CChangesSdtPrFormPr;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_PictureFormPr]    = CChangesSdtPrPictureFormPr;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ComplexFormPr]    = CChangesSdtPrComplexFormPr;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
@@ -133,6 +134,9 @@ AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_FormPr] = [
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_PictureFormPr] = [
 	AscDFH.historyitem_SdtPr_PictureFormPr
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_ComplexFormPr] = [
+	AscDFH.historyitem_SdtPr_ComplexFormPr
 ];
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -674,14 +678,21 @@ CChangesSdtPrFormPr.prototype.private_SetValue = function(Value)
 {
 	this.Class.Pr.FormPr = Value;
 
-	var oLogicDocument = this.Class.GetLogicDocument();
+	let oLogicDocument = this.Class.GetLogicDocument();
 	if (oLogicDocument)
-		oLogicDocument.RegisterForm(this.Class);
+	{
+		let oFormsManager = oLogicDocument.GetFormsManager();
+
+		if (Value)
+			oFormsManager.Register(this.Class);
+		else
+			oFormsManager.Unregister(this.Class);
+	}
 
 };
 CChangesSdtPrFormPr.prototype.private_CreateObject = function()
 {
-	return new CSdtFormPr();
+	return new AscWord.CSdtFormPr();
 };
 /**
  * @constructor
@@ -701,4 +712,23 @@ CChangesSdtPrPictureFormPr.prototype.private_SetValue = function(Value)
 CChangesSdtPrPictureFormPr.prototype.private_CreateObject = function()
 {
 	return new AscWord.CSdtPictureFormPr();
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesSdtPrComplexFormPr(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrComplexFormPr.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesSdtPrComplexFormPr.prototype.constructor = CChangesSdtPrComplexFormPr;
+CChangesSdtPrComplexFormPr.prototype.Type = AscDFH.historyitem_SdtPr_ComplexFormPr;
+CChangesSdtPrComplexFormPr.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.ComplexFormPr = Value;
+};
+CChangesSdtPrComplexFormPr.prototype.private_CreateObject = function()
+{
+	return new AscWord.CSdtComplexFormPr();
 };

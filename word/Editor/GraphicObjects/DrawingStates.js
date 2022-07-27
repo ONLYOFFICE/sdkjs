@@ -576,11 +576,8 @@ MoveInlineObject.prototype =
 					if (oDstPictureCC.IsPictureForm())
 						oDstPictureCC.UpdatePictureFormLayout();
 
-					var sKey = oDstPictureCC.GetFormKey();
-					if (arrParaDrawings[0].IsPicture() && sKey && oDstPictureCC.GetLogicDocument())
-					{
-						oDstPictureCC.GetLogicDocument().OnChangeForm(sKey, oDstPictureCC, arrParaDrawings[0].GraphicObj.getImageUrl());
-					}
+					if (arrParaDrawings[0].IsPicture() && oDstPictureCC.GetLogicDocument())
+						oDstPictureCC.GetLogicDocument().OnChangeForm(oDstPictureCC);
 
 					this.drawingObjects.resetSelection();
 					this.drawingObjects.selectObject(oDrawing, pageIndex);

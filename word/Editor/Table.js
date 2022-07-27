@@ -5735,22 +5735,27 @@ CTable.prototype.RemoveSelection = function()
 	if (false === this.Selection.Use)
 		return;
 
+	let arrCells = this.GetSelectionArray(true);
+	for (let nIndex = 0, nCount = arrCells.length; nIndex < nCount; ++nIndex)
+	{
+		let oPos  = arrCells[nIndex];
+		let oRow  = this.GetRow(oPos.Row);
+		if (!oRow)
+			continue;
+
+		let oCell = oRow.GetCell(oPos.Cell);
+		if (oCell)
+			oCell.GetContent().RemoveSelection();
+	}
+
 	this.CurCell = null;
 	if (this.GetRowsCount() > 0)
 	{
-
-		var oRow  = this.GetRow(this.Selection.EndPos.Pos.Row);
-		var oCell = null;
+		let oRow  = this.GetRow(this.Selection.EndPos.Pos.Row);
 		if (!oRow)
-			oCell = this.GetRow(0).GetCell(0);
+			this.CurCell = this.GetRow(0).GetCell(0);
 		else
-			oCell = oRow.GetCellsCount() > this.Selection.EndPos.Pos.Cell ? oRow.GetCell(this.Selection.EndPos.Pos.Cell) : oRow.GetCell(0);
-
-		if (oCell)
-		{
-			this.CurCell = oCell;
-			this.CurCell.GetContent().RemoveSelection();
-		}
+			this.CurCell = oRow.GetCellsCount() > this.Selection.EndPos.Pos.Cell ? oRow.GetCell(this.Selection.EndPos.Pos.Cell) : oRow.GetCell(0);
 	}
 
 	this.Selection.Use   = false;

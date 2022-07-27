@@ -897,10 +897,6 @@ CImageShape.prototype.Load_LinkData = function(linkData)
             }
         }
     };
-    CImageShape.prototype.writeChildren = function (writer) {
-        //TODO:Implement in children
-    };
-    
 
 	CImageShape.prototype.toXml = function(writer, name) {
         let namespace_ = "a";

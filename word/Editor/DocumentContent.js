@@ -143,7 +143,7 @@ function CDocumentContent(Parent, DrawingDocument, X, Y, XLimit, YLimit, Split, 
     this.ReindexStartPos = 0;
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 
     if(this.bPresentation)
     {
@@ -459,7 +459,7 @@ CDocumentContent.prototype.Is_PointInFlowTable = function(X, Y, PageAbs)
 };
 CDocumentContent.prototype.Get_Numbering = function()
 {
-	return this.Get_Numbering();
+	return this.GetNumbering();
 };
 CDocumentContent.prototype.GetNumbering = function()
 {
@@ -3624,6 +3624,9 @@ CDocumentContent.prototype.MoveCursorLeft = function(AddToSelect, Word)
 				{
 					if (0 !== this.Selection.EndPos)
 					{
+						if (this.Selection.EndPos > this.Selection.StartPos)
+							this.Content[this.Selection.EndPos].RemoveSelection();
+
 						this.Selection.EndPos--;
 						this.CurPos.ContentPos = this.Selection.EndPos;
 
@@ -3773,6 +3776,9 @@ CDocumentContent.prototype.MoveCursorRight = function(AddToSelect, Word, FromPas
 				{
 					if (this.Content.length - 1 !== this.Selection.EndPos)
 					{
+						if (this.Selection.EndPos < this.Selection.StartPos)
+							this.Content[this.Selection.EndPos].RemoveSelection();
+
 						this.Selection.EndPos++;
 						this.CurPos.ContentPos = this.Selection.EndPos;
 
@@ -9133,3 +9139,4 @@ CDocumentRecalculateObject.prototype =
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CDocumentContent = CDocumentContent;
+window['AscWord'].CDocumentContent = CDocumentContent;

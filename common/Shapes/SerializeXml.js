@@ -229,6 +229,11 @@
 									res.setChartColors(chartStyle);
 								}
 							}
+							let _xfrm = null;
+							if(graphicFrame) {
+								_xfrm = graphicFrame.spPr && graphicFrame.spPr.xfrm;
+							}
+							res.checkEmptySpPrAndXfrm(_xfrm);
 						} else {
 							res = null;
 						}
@@ -240,7 +245,19 @@
 			_table.fromDrawingML(reader);
 			if(graphicFrame) {
 				graphicFrame.setGraphicObject(_table);
+				let _xfrm = graphicFrame.spPr && graphicFrame.spPr.xfrm;
+				graphicFrame.checkEmptySpPrAndXfrm(_xfrm);
 			}
+
+		}
+		else if("relIds" === name) {
+			res = new AscFormat.SmartArt();
+			res.fromXml(reader);
+			let _xfrm = null;
+			if(graphicFrame) {
+				_xfrm = graphicFrame.spPr && graphicFrame.spPr.xfrm;
+			}
+			res.checkEmptySpPrAndXfrm(_xfrm);
 		}
 		return res;
 	};
@@ -603,8 +620,8 @@
 		writer.WriteXmlAttributesEnd();
 		if (paragraph.CheckMathPara(index)) {
 			let mathPara = new AscCommon.CT_OMathPara();
-			mathPara.setMath(this);
-			mathPara.toXml(writer, "m:oMathPara");
+			mathPara.initMathParaPr(this);
+			mathPara.toXml(writer, "m:oMathPara", this);
 		} else {
 			this.toXml(writer, "m:oMath");
 		}

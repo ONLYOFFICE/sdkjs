@@ -311,6 +311,13 @@
 		return false;
 	};
 	/**
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsCombiningMark = function()
+	{
+		return false;
+	};
+	/**
 	 * @return {number}
 	 */
 	CRunElementBase.prototype.GetCombWidth = function()
