@@ -1934,8 +1934,8 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                             writer.WriteXmlAttributeBool("moveWithCells", true);
                         }
                         writer.WriteXmlAttributesEnd();
-                        writer.WriteXmlNullable(this.from, "xdr:from");
-                        writer.WriteXmlNullable(this.to, "xdr:to");
+                        writer.WriteXmlNullable(this.from, "from");
+                        writer.WriteXmlNullable(this.to, "to");
                         writer.WriteXmlNodeEnd("anchor");
                     writer.WriteXmlNodeEnd("objectPr");
                 writer.WriteXmlNodeEnd("oleObject");
