@@ -34,6 +34,12 @@
 
 (function(window)
 {
+	// ВАЖНО: CheckArray - специальный массив-дублер для мапа CheckMap, для более быстрого выполнения функции
+	//        ContinueTrackRevisions. Заметим, что на функции CompleteTrackChangesForElements мы не выкидываем
+	//        элемент из CheckArray, но выкидываем из CheckMap. Это не страшно, т.к. при последующей проверке по
+	//        массиву CheckArray элемент в CheckMap просто не найдется, а из CheckArray мы его выкинем, и, тем самым,
+	//        CheckArray и CheckMap синхронизуются.
+
 	/**
 	 * Класс для отслеживания изменений в режиме рецензирования
 	 * @param {AscWord.CDocument} oLogicDocument
@@ -41,9 +47,11 @@
 	 */
 	function CTrackRevisionsManager(oLogicDocument)
 	{
-		this.LogicDocument  = oLogicDocument;
-		this.CheckElements  = {};   // Элементы, которые нужно проверить
-		this.CheckArray     = [];   // Дублирующий массив элементов, которые нужно проверить
+		this.LogicDocument = oLogicDocument;
+
+		this.CheckMap   = {};   // Элементы, которые нужно проверить
+		this.CheckArray = [];   // Дублирующий массив элементов, которые мы проверяем в ContinueTrackRevisions
+
 		this.Changes        = {};   // Объект с ключом - Id параграфа, в котором лежит массив изменений
 		this.ChangesOutline = [];   // Упорядоченный массив с объектами, в которых есть изменения в рецензировании
 		this.CurChange      = null; // Текущее изменение
@@ -53,7 +61,6 @@
 		this.PrevSelectedChanges = [];
 		this.PrevShowChanges     = true;
 
-
 		this.MoveId      = 1;
 		this.MoveMarks   = {};
 		this.ProcessMove = null;
@@ -61,19 +68,19 @@
 
 	/**
 	 * Отправляем элемент на проверку на наличие рецензирования
-	 * @param oElement {Paragraph | CTable}
+	 * @param oElement {AscWord.CParagraph | AscWord.CTable}
 	 */
 	CTrackRevisionsManager.prototype.CheckElement = function(oElement)
 	{
-		if (!(oElement instanceof Paragraph) && !(oElement instanceof CTable))
+		if (!(oElement instanceof AscWord.CParagraph) && !(oElement instanceof AscWord.CTable))
 			return;
 
-		for (var nIndex = 0, nCount = this.CheckArray.length; nIndex < nCount; ++nIndex)
+		let Id = oElement.GetId();
+		if (!this.CheckMap[Id])
 		{
-			if (this.CheckArray[nIndex] === oElement)
-				return;
+			this.CheckMap[Id] = oElement;
+			this.CheckArray.push(oElement);
 		}
-		this.CheckArray.push(oElement);
 	};
 	/**
 	 * Добавляем изменение в рецензировании по Id элемента
@@ -99,22 +106,22 @@
 	};
 	CTrackRevisionsManager.prototype.ContinueTrackRevisions = function(isComplete)
 	{
-		var nCount = this.CheckArray.length;
-		if (nCount <= 0)
+		if (this.IsAllChecked())
 			return;
 
 		var nStartTime = performance.now();
 
 		// За раз обрабатываем не больше 500 параграфов либо не больше 4мс по времени,
 		// чтобы не подвешивать клиент на открытии файлов
-		var nMaxCounter = 500,
-			nCounter    = 0;
+		const nMaxCounter = 500;
+		let nCounter      = 0;
 
 		var bNeedUpdate = false;
 
-		for (var nIndex = nCount - 1; nIndex >= 0; --nIndex)
+		let nIndex = this.CheckArray.length - 1;
+		for (; nIndex >= 0; --nIndex)
 		{
-			if (this.private_TrackChangesForSingleElement(nIndex))
+			if (this.private_TrackChangesForSingleElement(this.CheckArray[nIndex].GetId()))
 				bNeedUpdate = true;
 
 			if (true !== isComplete)
@@ -125,8 +132,10 @@
 			}
 		}
 
+		this.CheckArray.length = nIndex < 0 ? 0 : nIndex;
+
 		if (bNeedUpdate)
-			this.LogicDocument.Document_UpdateInterfaceState();
+			this.LogicDocument.UpdateInterface();
 	};
 	/**
 	 * Ищем следующее изменение
@@ -550,7 +559,7 @@
 	};
 	CTrackRevisionsManager.prototype.BeginCollectChanges = function(bSaveCurrentChange)
 	{
-		if (!this.private_IsAllParagraphsChecked())
+		if (!this.IsAllChecked())
 			return;
 
 		this.PrevSelectedChanges = this.SelectedChanges;
@@ -576,7 +585,7 @@
 	};
 	CTrackRevisionsManager.prototype.EndCollectChanges = function()
 	{
-		if (!this.private_IsAllParagraphsChecked())
+		if (!this.IsAllChecked())
 			return;
 
 		var oEditor = this.LogicDocument.GetApi();
@@ -801,7 +810,7 @@
 		this.CompleteTrackChanges();
 		return this.Changes;
 	};
-	CTrackRevisionsManager.prototype.private_IsAllParagraphsChecked = function()
+	CTrackRevisionsManager.prototype.IsAllChecked = function()
 	{
 		return (!this.CheckArray.length);
 	};
@@ -810,7 +819,7 @@
 	 */
 	CTrackRevisionsManager.prototype.CompleteTrackChanges = function()
 	{
-		while (!this.private_IsAllParagraphsChecked())
+		while (!this.IsAllChecked())
 			this.ContinueTrackRevisions();
 	};
 	/**
@@ -823,43 +832,30 @@
 		var isChecked = false;
 		for (var nIndex = 0, nCount = arrElements.length; nIndex < nCount; ++nIndex)
 		{
-			for (var nCheckIndex = 0, nCheckCount = this.CheckArray.length; nCheckIndex < nCheckCount; ++nCheckIndex)
-			{
-				if (this.CheckArray[nCheckIndex] === arrElements[nIndex])
-				{
-					if (this.private_TrackChangesForSingleElement(nCheckIndex))
-						isChecked = true;
-
-					break;
-				}
-			}
+			if (this.private_TrackChangesForSingleElement(arrElements[nIndex].GetId()))
+				isChecked = true;
 		}
 
 		return isChecked;
 	};
-	CTrackRevisionsManager.prototype.private_TrackChangesForSingleElement = function(nIndex)
+	CTrackRevisionsManager.prototype.private_TrackChangesForSingleElement = function(Id)
 	{
-		var oElement = this.CheckArray[nIndex];
-		if (oElement)
-		{
-			if (nIndex === this.CheckArray.length - 1)
-				this.CheckArray.length = this.CheckArray.length - 1;
-			else
-				this.CheckArray.splice(nIndex, 1);
+		if (!this.CheckMap[Id])
+			return false;
 
-			if (oElement.IsUseInDocument())
-			{
-				var sId = oElement.GetId();
-				var isHaveChanges = !!this.Changes[sId];
+		let oElement = this.CheckMap[Id];
 
-				this.private_RemoveChangeObject(sId);
-				oElement.CheckRevisionsChanges(this);
+		delete this.CheckMap[Id];
 
-				return !(!isHaveChanges && !this.Changes[sId]);
-			}
-		}
+		if (!oElement.IsUseInDocument())
+			return false;
 
-		return false;
+		let isHaveChanges = !!this.Changes[Id];
+
+		this.private_RemoveChangeObject(Id);
+		oElement.CheckRevisionsChanges(this);
+
+		return !(!isHaveChanges && !this.Changes[Id]);
 	};
 	/**
 	 * При чтении файла обновляем Id перетаскиваний в рецензировании
@@ -1227,14 +1223,9 @@
 					var oMark = oCurChange.GetValue();
 					if (sMoveId === oMark.GetMarkId())
 					{
-						if (oMark.IsFrom())
-							isDown = true;
-						else
-							isDown = false;
-
+						isDown = !!oMark.IsFrom();
 						break;
 					}
-
 				}
 			}
 
