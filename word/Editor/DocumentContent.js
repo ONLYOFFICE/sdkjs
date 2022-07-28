@@ -3624,6 +3624,9 @@ CDocumentContent.prototype.MoveCursorLeft = function(AddToSelect, Word)
 				{
 					if (0 !== this.Selection.EndPos)
 					{
+						if (this.Selection.EndPos > this.Selection.StartPos)
+							this.Content[this.Selection.EndPos].RemoveSelection();
+
 						this.Selection.EndPos--;
 						this.CurPos.ContentPos = this.Selection.EndPos;
 
@@ -3773,6 +3776,9 @@ CDocumentContent.prototype.MoveCursorRight = function(AddToSelect, Word, FromPas
 				{
 					if (this.Content.length - 1 !== this.Selection.EndPos)
 					{
+						if (this.Selection.EndPos < this.Selection.StartPos)
+							this.Content[this.Selection.EndPos].RemoveSelection();
+
 						this.Selection.EndPos++;
 						this.CurPos.ContentPos = this.Selection.EndPos;
 
@@ -9133,3 +9139,4 @@ CDocumentRecalculateObject.prototype =
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CDocumentContent = CDocumentContent;
+window['AscWord'].CDocumentContent = CDocumentContent;

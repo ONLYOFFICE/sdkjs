@@ -1818,6 +1818,30 @@ Paragraph.prototype.GetLineBounds = function(nCurLine)
 
 	return new CDocumentBounds(oPage.X, nTop, oPage.XLimit, nBottom);
 };
+Paragraph.prototype.GetTextOnLine = function(nCurLine)
+{
+	if (!this.IsRecalculated() || this.GetLinesCount() <= nCurLine)
+		return "";
+
+	let oLine =  this.Lines[nCurLine];
+
+	let oState = this.SaveSelectionState();
+
+	let oStartPos = this.Get_StartRangePos2(nCurLine, 0);
+	let oEndPos   = this.Get_EndRangePos2(nCurLine, oLine.Ranges.length - 1);
+
+	this.Selection.Use = true;
+	this.SetSelectionContentPos(oStartPos, oEndPos);
+
+	this.Selection.Use   = true;
+	this.Selection.Start = false;
+	this.SetSelectionContentPos(oStartPos, oEndPos);
+	let sResult = this.GetSelectedText(false, {Numbering : false});
+
+	this.LoadSelectionState(oState);
+
+	return sResult;
+};
 Paragraph.prototype.Reset_RecalculateCache = function()
 {
 
@@ -18037,6 +18061,8 @@ CDocumentBounds.prototype.Copy = function()
 	return new CDocumentBounds(this.Left, this.Top, this.Right, this.Bottom);
 };
 
+AscWord.CDocumentBounds = CDocumentBounds;
+
 function CParagraphPageEndInfo()
 {
     this.Comments      = []; // Массив незакрытых комментариев на данной странице
@@ -18501,6 +18527,15 @@ CParagraphContentPos.prototype.SetDepth = function(nDepth)
 CParagraphContentPos.prototype.DecreaseDepth = function(nCount)
 {
 	this.Depth = Math.max(0, this.Depth - nCount);
+};
+/**
+ * Проверяем позиции на совпадение
+ * @param {CParagraphContentPos} oPos
+ * @returns {boolean}
+ */
+CParagraphContentPos.prototype.IsEqual = function(oPos)
+{
+	return (oPos && 0 === this.Compare(oPos));
 };
 
 function CComplexFieldStatePos(oComplexField, isFieldCode)

@@ -14722,7 +14722,7 @@
 	 * Removes all the elements from the current inline text content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean} - returns false if control haven't elements.
+	 * @returns {boolean} - returns false if control has not elements.
 	 */
 	ApiInlineLvlSdt.prototype.RemoveAllElements = function()
 	{
@@ -15258,8 +15258,7 @@
 	 */
 	ApiBlockLvlSdt.prototype.RemoveAllElements = function()
 	{
-		this.Sdt.Content.ClearContent(true);
-
+		this.Sdt.ReplaceContentWithPlaceHolder(false);
 		return true;
 	};
 
@@ -15447,16 +15446,27 @@
 	 */
 	ApiBlockLvlSdt.prototype.AddText = function(sText)
 	{
-		if (typeof sText === "string")
-		{
-			var oParagraph = editor.CreateParagraph();
-			oParagraph.AddText(sText);
-			this.Sdt.Content.Internal_Content_Add(this.Sdt.Content.Content.length, oParagraph.private_GetImpl());
+		let _sText = GetStringParameter(sText, null);
+		if (null === _sText)
+			return false;
 
-			return true;
+		let oParagraph;
+		if (this.Sdt.IsPlaceHolder())
+		{
+			this.Sdt.ReplacePlaceHolderWithContent();
+			let oDocContent = this.GetContent();
+			if (oDocContent.GetElementsCount() && oDocContent.GetElement(0) instanceof ApiParagraph)
+				oParagraph = oDocContent.GetElement(0);
 		}
 
-		return false;
+		if (!oParagraph)
+		{
+			oParagraph = Api.prototype.CreateParagraph();
+			this.GetContent().Push(oParagraph);
+		}
+
+		oParagraph.AddText(_sText);
+		return true;
 	};
 
 	/**

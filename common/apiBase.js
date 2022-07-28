@@ -2304,7 +2304,7 @@
 				if (data) {
 					context.imageMap[elem].part.setData(data);
 					downloadImages(imageMapKeys);
-				} else if (window["NATIVE_EDITOR_ENJINE"] === true && window["native"]["getImagesDirectory"] && window["native"]["GetFontBinary"]) {
+				} else if (window["NATIVE_EDITOR_ENJINE"] === true && window["native"]["getImagesDirectory"] && window["native"]["GetFileBinary"]) {
 					let path = window["native"]["getImagesDirectory"]() + '/' + elem;
 					let data = window["native"]["GetFileBinary"](path);
 					if (data) {

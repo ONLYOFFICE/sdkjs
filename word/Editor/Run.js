@@ -936,6 +936,9 @@ ParaRun.prototype.private_CheckMathBreakOperatorBeforeAdd = function(oNewRun)
  */
 ParaRun.prototype.CheckRunBeforeAdd = function(oItem)
 {
+	if (this.GetParentForm())
+		return null;
+
 	var oNewRun        = null;
 	var oLogicDocument = this.GetLogicDocument();
 
@@ -3719,7 +3722,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						GraphemeLen = 0;
 						WordLen     = Para.GetContentWidthInRange(PRS.LineBreakPos, oCurrentPos);
 
-						if (X + WordLen > XEnd)
+						if (X + WordLen > XEnd && (Word || !Para.IsSingleRangeOnLine(ParaLine, ParaRange)))
 						{
 							// Слово оказалось единственным элементом в промежутке, и, все равно,
 							// не умещается целиком. Делаем следующее:
@@ -3728,28 +3731,42 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							// 2) Если у нас строка без вырезов, тогда мы ищем перенос строки, начиная с текущего
 							//    места в обратном направлении, при этом решейпим текст в заданном промежутке
 
+							let isBreak = true;
 							if (Para.IsSingleRangeOnLine(ParaLine, ParaRange))
 							{
 								let oLineStartPos = PRS.LineBreakPos.Copy();
 								PRS.LineBreakPos  = Para.FindLineBreakInLongWord(XEnd - X, PRS.LineBreakPos, oCurrentPos);
 
-								this.protected_FillRange(CurLine, CurRange, RangeStartPos, RangeStartPos);
-								Para.Recalculate_SetRangeBounds(ParaLine, ParaRange, oLineStartPos, PRS.LineBreakPos);
+								if (PRS.LineBreakPos.IsEqual(oLineStartPos) || PRS.LineBreakPos.IsEqual(oCurrentPos))
+								{
+									PRS.LineBreakPos = oLineStartPos;
+									LetterLen        = WordLen;
+									WordLen          = 0;
+									isBreak          = false;
+								}
+								else
+								{
+									this.protected_FillRange(CurLine, CurRange, RangeStartPos, RangeStartPos);
+									Para.Recalculate_SetRangeBounds(ParaLine, ParaRange, oLineStartPos, PRS.LineBreakPos);
 
-								isSkipFillRange = true;
+									isSkipFillRange = true;
 
-								PRS.LongWord = true;
+									PRS.LongWord = true;
 
-								EmptyLine  = false;
-								TextOnLine = true;
+									EmptyLine  = false;
+									TextOnLine = true;
 
-								X += WordLen;
-								WordLen = 0;
+									X += WordLen;
+									WordLen = 0;
+								}
 							}
 
-							MoveToLBP = true;
-							NewRange  = true;
-							break;
+							if (isBreak)
+							{
+								MoveToLBP = true;
+								NewRange  = true;
+								break;
+							}
 						}
 						else if (!Word)
 						{
@@ -5474,22 +5491,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             }
             case para_End:
             {
-                var SectPr = PRSA.Paragraph.Get_SectionPr();
-                if (!PRSA.Paragraph.LogicDocument || PRSA.Paragraph.LogicDocument !== PRSA.Paragraph.Parent || !PRSA.Paragraph.bFromDocument)
-                    SectPr = undefined;
-
-				if (undefined !== SectPr)
-				{
-					// Нас интересует тип следующей секции
-					var LogicDocument = PRSA.Paragraph.LogicDocument;
-					var NextSectPr    = LogicDocument.SectionsInfo.Get_SectPr(PRSA.Paragraph.Index + 1).SectPr;
-					Item.UpdateSectionEnd(NextSectPr.Type, PRSA.XEnd - PRSA.X, LogicDocument);
-				}
-				else
-				{
-					Item.ClearSectionEnd();
-				}
-
+				Item.CheckMark(PRSA.Paragraph, PRSA.XEnd - PRSA.X);
                 PRSA.X += Item.GetWidth();
 
                 break;

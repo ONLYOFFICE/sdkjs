@@ -1907,7 +1907,7 @@ var editor;
 
 				wsParts.forEach(function(wbSheetXml, wsIndex) {
 					var ws = t.wbModel.getWorksheet(wsIndex);
-					if (null !== wbSheetXml.id && wbSheetXml.name) {
+					if (ws && null !== wbSheetXml.id && wbSheetXml.name) {
 						var wsPart = wbSheetXml.wsPart;
 						if (wsPart) {
 							//pivot
@@ -5738,13 +5738,16 @@ var editor;
       AscCommon.CurFileVersion = version;
     }
 
+	  let xlsxData;
 	  this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
 	  if (this.isOpenOOXInBrowser) {
 		  //slice because array contains garbage after end of function
 		  this.openOOXInBrowserZip = base64File.slice();
+	  } else if (xlsxPath && window["native"]["GetFileBinary"]) {
+		  xlsxData = xlsxPath && window["native"]["GetFileBinary"] && window["native"]["GetFileBinary"](xlsxPath);
 	  }
 	  this._openDocument(base64File);
-	  if (this.openDocumentFromZip(t.wbModel, xlsxPath)) {
+	  if (this.openDocumentFromZip(t.wbModel, xlsxData)) {
 		  Asc.ReadDefTableStyles(t.wbModel);
 		  g_oIdCounter.Set_Load(false);
 		  AscCommon.checkCultureInfoFontPicker();
