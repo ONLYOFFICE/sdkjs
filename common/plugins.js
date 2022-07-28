@@ -1576,6 +1576,7 @@
             plugin["set_Name"](item["name"]);
             plugin["set_Guid"](item["guid"]);
             plugin["set_BaseUrl"](item["baseUrl"]);
+            plugin["set_Loader"](item["loader"]);
             var variations = item["variations"];
         	var variationsArr = [];
             variations.forEach(function(itemVar){
