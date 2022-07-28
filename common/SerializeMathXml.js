@@ -289,6 +289,7 @@
 					break;
 				}
 
+				case 's':
 				case 'u':
 				case 'span':
 				case 'b':
