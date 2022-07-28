@@ -1183,7 +1183,7 @@ var editor;
       dataContainer.data = last.data;
     } else {
 		var t = this;
-		if (c_oAscFileType.XLSX === fileType) {
+		if (c_oAscFileType.XLTX === fileType) {
 			var title = this.documentTitle;
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				t.saveDocumentToZip(t.wb.model, AscCommon.c_oEditorId.Spreadsheet, function(data) {

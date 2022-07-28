@@ -7674,7 +7674,7 @@ background-repeat: no-repeat;\
 		}
 		else
 		{
-			if (c_oAscFileType.PPTX === fileType) {
+			if (c_oAscFileType.POTX === fileType) {
 				var title = this.documentTitle;
 				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Presentation,
 					function(data) {
