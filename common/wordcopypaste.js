@@ -9561,6 +9561,12 @@ PasteProcessor.prototype =
 							oThis.startMsoAnnotation = true;
 						} else if (oThis.startMsoAnnotation && child.nodeValue === "[endif]") {
 							oThis.startMsoAnnotation = false;
+						} else if (-1 !== child.nodeValue.indexOf("[if gte msEquation 12]")) {
+							var mathContent = oThis._parseMathContent(child);
+							var oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument);
+							oPar.AddToContent(0, mathContent);
+
+							oThis.aContent.push(oPar)
 						}
 					}
 					return;
@@ -10006,6 +10012,25 @@ PasteProcessor.prototype =
 				oThis.bIsForFootEndnote = false;
 			}
 		return bAddParagraph;
+	},
+
+	_parseMathContent: function (node) {
+		//получаем строку, которая содержит необходимые данные для получения уравнения
+		var str = node.nodeValue;
+		str = str.replace('[if gte msEquation 12]>', '');
+		str = str.replace('<![endif]', '');
+
+		let xmlParserContext = new AscCommon.XmlParserContext();
+		var reader = new StaxParser(str, /*documentPart*/null, xmlParserContext);
+
+		if (!reader.ReadNextNode()) {
+			return;
+		}
+
+		var elem = new AscCommon.CT_OMathPara();
+		elem.fromXml(reader);
+		console.log(elem.OMath);
+		return elem.OMath
 	},
 
 	_commitCommentEnd: function () {

@@ -101,7 +101,7 @@
 		this.OMathParaPr = null;
 		return this;
 	}
-	CT_OMathPara.prototype.fromXml = function (reader, paragraphContent) {
+	CT_OMathPara.prototype.fromXml = function (reader) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -111,18 +111,14 @@
 					break;
 				}
 				case "oMath" : {
-					if (!paragraphContent) {
-						break;
-					}
-					let paraMath = new ParaMath();
-					paragraphContent.AddToContentToEnd(paraMath);
-					paraMath.fromXml(reader);
-					if (this.OMathParaPr) {
-						paraMath.Set_Align(this.OMathParaPr.jc);
-					}
+					this.OMath = new ParaMath();
+					this.OMath.fromXml(reader);
 					break;
 				}
 			}
+		}
+		if (this.OMathParaPr && null !== this.OMathParaPr.jc) {
+			this.OMath.Set_Align(this.OMathParaPr.jc);
 		}
 	};
 	CT_OMathPara.prototype.toXml = function (writer, name, oMath) {
@@ -292,6 +288,45 @@
 					}
 					break;
 				}
+
+				case 'u':
+				case 'span':
+				case 'b':
+				case 'i': {
+					//далее внутри нас интересуют два тега - m:r с текстом и настройками  в виде m:rPr
+					var htmlContent = new parseHtmlContent(this.Paragraph);
+					htmlContent.fromXml(reader);
+					if (htmlContent.paraRuns) {
+						elem = htmlContent.paraRuns;
+					}
+
+					/*var depth2 = reader.GetDepth();
+					elem = [];
+					while(reader.ReadNextSiblingNode(depth2))
+					{
+						var depth3 = reader.GetDepth();
+						while(reader.ReadNextSiblingNode(depth3)){
+							var paraRun = new ParaRun(this.Paragraph, true);
+							var txt = reader.GetTextDecodeXml();
+							for(var i = 0; i < txt.length; i++) {
+								var cMath = new CMathText();
+								cMath.addTxt(txt[i]);
+								paraRun.Add_ToContent(paraRun.GetElementsCount(), cMath, false);
+							}
+							var depth4 = reader.GetDepth();
+							paraRun.fromXml(reader);
+
+							elem.push(paraRun);
+						}
+
+						var depth4 = reader.GetDepth();
+					}*/
+
+					break;
+				}
+
+
+
 				// case "bookmarkStart" : {
 				// 	elem = new CParagraphBookmark(true);
 				// 	elem.fromXml(reader);
@@ -455,8 +490,17 @@
 				// }
 			}
 			if (elem) {
-				this.addElementToContent(elem);
-				elem.Paragraph = this.Paragraph;
+				if(Array.isArray(elem)) {
+					for(var i = 0; i < elem.length; i++) {
+						this.addElementToContent(elem[i]);
+						elem[i].Paragraph = this.Paragraph;
+					}
+				}
+
+				else {
+					this.addElementToContent(elem);
+					elem.Paragraph = this.Paragraph;
+				}
 			}
 		}
 	};
@@ -1970,6 +2014,50 @@
 		}
 		writer.WriteXmlNodeEnd(name);
 	};
+
+	function parseHtmlContent (paragraph) {
+		this.paraRuns = null;
+		this.paragraph = paragraph;
+	}
+	parseHtmlContent.prototype.fromXml = function(reader) {
+		var state = reader.getState();
+		this.getXmlRunsRecursive(reader);
+		reader.setState(state);
+	};
+
+	parseHtmlContent.prototype.getXmlRunsRecursive = function(reader) {
+		let depth = reader.GetDepth();
+		while (reader.ReadNextSiblingNode(depth)) {
+			let name = reader.GetNameNoNS();
+			switch (name) {
+				case "r": {
+
+					var paraRun = new ParaRun(this.paragraph, true);
+					var state = reader.getState();
+					paraRun.fromXml(reader);
+					reader.setState(state);
+
+					var txt = reader.GetTextDecodeXml();
+					for(var i = 0; i < txt.length; i++) {
+						var cMath = new CMathText();
+						cMath.addTxt(txt[i]);
+						paraRun.Add_ToContent(paraRun.GetElementsCount(), cMath, false);
+					}
+
+					if (!this.paraRuns) {
+						this.paraRuns = [];
+					}
+
+					this.paraRuns.push(paraRun);
+					break;
+				}
+				default:
+					this.getXmlRunsRecursive(reader);
+					break;
+			}
+		}
+	};
+
 
 	function fromXml_ST_Script(val, def) {
 		switch (val) {
