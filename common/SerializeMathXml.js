@@ -2016,7 +2016,8 @@
 		writer.WriteXmlNodeEnd(name);
 	};
 
-	function parseHtmlContent (paragraph) {
+	function parseHtmlContent (paragraph, buff) {
+		this.buff = buff;
 		this.paraRuns = null;
 		this.paragraph = paragraph;
 	}
@@ -2030,7 +2031,15 @@
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			let name = reader.GetNameNoNS();
+			console.log(name);
 			switch (name) {
+				case "u": {
+					var cText = new CTextPr();
+					cText.Underline = true;
+					this.buff = cText;
+					this.getXmlRunsRecursive(reader);
+					break;
+				}
 				case "r": {
 
 					var paraRun = new ParaRun(this.paragraph, true);
@@ -2045,12 +2054,26 @@
 						paraRun.Add_ToContent(paraRun.GetElementsCount(), cMath, false);
 					}
 
+					if(this.buff != null) {
+						paraRun.Set_Pr(this.buff);
+					}
+
 					if (!this.paraRuns) {
 						this.paraRuns = [];
 					}
-
 					this.paraRuns.push(paraRun);
 					break;
+				}
+				case "span": {
+					while (reader.MoveToNextAttribute()) {
+						switch (reader.GetNameNoNS()) {
+							case "style": {
+								var styles = reader.GetValue();
+								
+								break;
+							}
+						}
+					}
 				}
 				default:
 					this.getXmlRunsRecursive(reader);
@@ -2058,6 +2081,8 @@
 			}
 		}
 	};
+
+
 
 
 	function fromXml_ST_Script(val, def) {
