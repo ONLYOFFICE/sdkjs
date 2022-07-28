@@ -982,9 +982,17 @@ CImageShape.prototype.Load_LinkData = function(linkData)
 		// writer.WriteXmlNodeEnd(name);
 	};
     CImageShape.prototype.toXmlVML = function(writer, sMainCSS, sMainAttributes, sMainNodes, pId) {
+
+        let oContext = writer.context;
+        let nShapeId = oContext.m_lObjectIdVML;
+
+        let strId = "_x0000_i" + oContext.m_lObjectIdVML;
+        let strSpid = "_x0000_s" + oContext.m_lObjectIdVML;
+
+        let strObjectid	= "_152504" + oContext.m_lObjectIdVML;
+        oContext.m_lObjectIdVML++;
         let bOle = (this.getObjectType() === AscDFH.historyitem_type_OleObject);
         let sOleNodeName = "";
-        let oContext = writer.context;
 
         if (AscFormat.XMLWRITER_DOC_TYPE_XLSX !== oContext.docType)
         {
@@ -1006,13 +1014,6 @@ CImageShape.prototype.Load_LinkData = function(linkData)
             }
         }
 
-        let nShapeId = oContext.m_lObjectIdVML;
-
-        let strId = "_x0000_i" + oContext.m_lObjectIdVML;
-        let strSpid = "_x0000_s" + oContext.m_lObjectIdVML;
-
-        let strObjectid	= "_152504" + oContext.m_lObjectIdVML;
-        oContext.m_lObjectIdVML++;
 
         let dL = 0, dT = 0, dW = 0, dH = 0;
         let oXfrm = this.spPr.xfrm;
@@ -1129,7 +1130,6 @@ CImageShape.prototype.Load_LinkData = function(linkData)
         let strNodeVal;
 
         writer.WriteXmlAttributeString("stroked", "false");
-        //TODO: write
 
         writer.WriteXmlAttributesEnd();
 
@@ -1141,7 +1141,16 @@ CImageShape.prototype.Load_LinkData = function(linkData)
         if(sMainNodes) {
             writer.WriteXmlString(sMainNodes);
         }
-        let sRasterImageId = this.blipFill && this.blipFill.RasterImageId;
+        let sRasterImageId;
+        if(this.isImage() || this.isOleObject()) {
+            sRasterImageId = this.blipFill && this.blipFill.RasterImageId;
+        }
+        else if(this.isShape()) {
+            let oFill = this.spPr && this.spPr.Fill;
+            if(oFill && oFill.isBlipFill()) {
+                sRasterImageId = oFill.fill.RasterImageId;
+            }
+        }
         if (sRasterImageId)
         {
             writer.WriteXmlNodeStart("v:imagedata");
@@ -1157,6 +1166,16 @@ CImageShape.prototype.Load_LinkData = function(linkData)
             writer.WriteXmlAttributeString("o:title", "");
             writer.WriteXmlAttributesEnd();
             writer.WriteXmlNodeEnd( "v:imagedata");
+        }
+        if(this.isSignatureLine()) {
+            let oVMLSignatureLine = new AscFormat.CVMLSignatureLine();
+             oVMLSignatureLine.m_oId = this.signatureLine.id;
+            oVMLSignatureLine.m_sSuggestedSigner = this.signatureLine.signer;
+            oVMLSignatureLine.m_sSuggestedSigner2 = this.signatureLine.signer2;
+             oVMLSignatureLine.m_sSuggestedSignerEmail = this.signatureLine.email;
+            oVMLSignatureLine.m_oShowSignDate = this.signatureLine.showDate;
+            oVMLSignatureLine.m_sSigningInstructions = this.signatureLine.instructions;
+            oVMLSignatureLine.toXml(writer, "o:signatureline");
         }
         if(AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType && this.drawingBase) {
             let oClientData = new AscFormat.CVMLClientData();

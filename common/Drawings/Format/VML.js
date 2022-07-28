@@ -8979,6 +8979,18 @@
 		CVmlCommonElements.prototype.getFill = function() {
 			return this.findItemByConstructor(CFillVml);
 		};
+
+		CVmlCommonElements.prototype.isSignatureLine = function() {
+			if(this instanceof  CShape) {
+				let oSL = this.getSignatureLine();
+				if(oSL) {
+					if(oSL.m_oIsSignatureLine === true) {
+						return true;
+					}
+				}
+			}
+			return false;
+		};
 		CVmlCommonElements.prototype.getSignatureLine = function() {
 			return this.findItemByConstructor(CSignatureLine);
 		};
@@ -9259,10 +9271,19 @@
 					return null;
 				}
 			}
-
 			else {
 				oOOXMLDrawing = new AscFormat.CShape();
 				oOOXMLDrawing.setWordShape(true);
+				if(oSignatureLine && oSignatureLine.m_oIsSignatureLine) {
+					let oOOXMLSignatureLine = new AscFormat.CSignatureLine();
+					oOOXMLSignatureLine.id = oSignatureLine.m_oId;
+					oOOXMLSignatureLine.signer = oSignatureLine.m_sSuggestedSigner;
+					oOOXMLSignatureLine.signer2 = oSignatureLine.m_sSuggestedSigner2;
+					oOOXMLSignatureLine.email = oSignatureLine.m_sSuggestedSignerEmail;
+					oOOXMLSignatureLine.showDate = oSignatureLine.m_oShowSignDate;
+					oOOXMLSignatureLine.instructions = oSignatureLine.m_sSigningInstructions;
+					oOOXMLDrawing.setSignature(oOOXMLSignatureLine);
+				}
 			}
 			let oNvPr = new AscFormat.UniNvPr();
 			oOOXMLDrawing.setNvSpPr(oNvPr);
@@ -12820,6 +12841,26 @@
 		};
 		CVMLDrawing.prototype.write = function (writer) {
 			writer.WriteXmlString(this.getXmlString());
+		};
+		CVMLDrawing.prototype.getSignatureLines = function() {
+			let aSL = [];
+			for(let nItem = 0; nItem < this.items.length; ++nItem) {
+				let oItem = this.items[nItem];
+				if(oItem.isSignatureLine()){
+					aSL.push(oItem);
+				}
+			}
+			return aSL;
+		};
+		CVMLDrawing.prototype.convertSignatureLines = function(oContext) {
+			let aSL = this.getSignatureLines();
+			let aOOXMLSl = [];
+			for(let nSL = 0; nSL < aSL.length; ++nSL) {
+				let oSL = aSL[nSL];
+				let oOOXMLSL = oSL.convertToOOXML(this.items, null, oContext);
+				aOOXMLSl.push(oOOXMLSL);
+			}
+			return aOOXMLSl;
 		};
 
 
@@ -16950,6 +16991,7 @@
 		window['AscFormat'].CVMLToDrawingMLConverter = CVMLToDrawingMLConverter;
 		window['AscFormat'].COLEObject = COLEObject;
 		window['AscFormat'].CVMLClientData = CClientData;
+		window['AscFormat'].CVMLSignatureLine = CSignatureLine;
 		window['AscFormat'].EOLEDrawAspect = EOLEDrawAspect;
 		window['AscFormat'].EOLEType = EOLEType;
 		window['AscFormat'].EVmlClientDataObjectType = EVmlClientDataObjectType;

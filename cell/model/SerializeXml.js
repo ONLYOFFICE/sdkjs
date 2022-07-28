@@ -2958,6 +2958,13 @@
 
 		let objectRender = new AscFormat.DrawingObjects();
 		let bVmlReader = false;
+
+
+		let oOldReader;
+		if(oVmlDrawingReader) {
+			oOldReader = oVmlDrawingReader.context.reader;
+			oVmlDrawingReader.context.reader = oVmlDrawingReader;
+		}
 		for(let nOle = 0; nOle < aOleObjectsData.length; ++nOle) {
 			let oData = aOleObjectsData[nOle];
 			let oFrom, oTo;
@@ -3035,6 +3042,63 @@
 				oDrawing.to = oTo;
 				oDrawing.initAfterSerialize(this);
 			}
+		}
+		//signature lines
+		if(oVmlDrawing) {
+			let aSL = oVmlDrawing.getSignatureLines();
+			let aOOXMLSl = [];
+			for(let nSL = 0; nSL < aSL.length; ++nSL) {
+				let oSL = aSL[nSL];
+				let oOOXMLSL = oSL.convertToOOXML(oVmlDrawing.items, null, oVmlDrawingReader.context);
+				let oFrom, oTo;
+				let oClientData = oSL.getClientData();
+				if(oClientData) {
+					let sAnchor = oClientData.m_oAnchor;
+					if(sAnchor) {
+						let aCoords = sAnchor.split(",");
+						if(aCoords.length === 8) {
+							let nFromCol = parseInt(aCoords[0]);
+							let dFromColOff = AscFormat.Px_To_Mm(parseInt(aCoords[1]));
+							let nFromRow = parseInt(aCoords[2]);
+							let dFromRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[3]));
+							let nToCol = parseInt(aCoords[4]);
+							let dToColOff = AscFormat.Px_To_Mm(parseInt(aCoords[5]));
+							let nToRow = parseInt(aCoords[6]);
+							let dToRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[7]));
+							if(AscFormat.isRealNumber(nFromCol) && AscFormat.isRealNumber(dFromColOff) &&
+								AscFormat.isRealNumber(nFromRow) && AscFormat.isRealNumber(dFromRowOff) &&
+								AscFormat.isRealNumber(nToCol) && AscFormat.isRealNumber(dToColOff) &&
+								AscFormat.isRealNumber(nToRow) && AscFormat.isRealNumber(dToRowOff)) {
+								oFrom = new AscFormat.CCellObjectInfo();
+								oFrom.col = nFromCol;
+								oFrom.colOff = dFromColOff;
+								oFrom.row = nFromRow;
+								oFrom.rowOff = dFromRowOff;
+								oTo = new AscFormat.CCellObjectInfo();
+								oTo.col = nToCol;
+								oTo.colOff = dToColOff;
+								oTo.row = nToRow;
+								oTo.rowOff = dToRowOff;
+							}
+						}
+					}
+				}
+				if(oOOXMLSL && oOOXMLSL.isSignatureLine() && oFrom && oTo) {
+					let oDrawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+					let oSpPr = oOOXMLSL.spPr;
+					oOOXMLSL = oOOXMLSL.convertToPPTX(this.getDrawingDocument(), this, false);
+					oOOXMLSL.setSpPr(oSpPr);
+					oDrawing.graphicObject = oOOXMLSL;
+					oDrawing.from = oFrom;
+					oDrawing.to = oTo;
+					oDrawing.initAfterSerialize(this);
+				}
+			}
+			return aOOXMLSl;
+		}
+
+		if(oVmlDrawingReader) {
+			oVmlDrawingReader.context.reader = oOldReader;
 		}
 	};
 	//TOoDO PrepareToWrite делается в x2t, здесь не вижу необходиимости, но проверить нужно
@@ -3255,13 +3319,16 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 			}
 			vmlDrawingMemory.context.part = oldPart;
 		}
-		// if(context.signatureDrawings.length > 0) {
-		// 	let aDrawings = context.signatureDrawings;
-		// 	for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
-		// 		let oDrawing = aDrawings[nDrawing];
-		// 		oDrawing.graphicObject.toXmlVML(vmlDrawingMemory, "", "", "", "_x0000_s" + oDrawing.nShapeId)
-		// 	}
-		// }
+		if(context.signatureDrawings.length > 0) {
+			let oldPart = vmlDrawingMemory.context.part;
+			vmlDrawingMemory.context.part = vmldrawingPart.part;
+			let aDrawings = context.signatureDrawings;
+			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+				let oDrawing = aDrawings[nDrawing];
+				oDrawing.graphicObject.toXmlVML(vmlDrawingMemory, "", "", "")
+			}
+			vmlDrawingMemory.context.part = oldPart;
+		}
 
 		if(bVmlDrawing) {
 			vmlDrawingMemory.WriteXmlString("</xml>");
