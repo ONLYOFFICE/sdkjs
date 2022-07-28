@@ -1926,13 +1926,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                     writer.WriteXmlNullableAttributeString("r:id", sImageId);
                     writer.WriteXmlAttributesEnd();
                         writer.WriteXmlNodeStart("anchor");
-                        if(this.Type === c_oAscCellAnchorType.cellanchorTwoCell) {
-                            writer.WriteXmlAttributeBool("moveWithCells", true);
-                            writer.WriteXmlAttributeBool("sizeWithCells", true);
-                        }
-                        else if(this.Type === c_oAscCellAnchorType.cellanchorOneCell) {
-                            writer.WriteXmlAttributeBool("moveWithCells", true);
-                        }
+                        writer.WriteXmlAttributeBool("sizeWithCells", true);
                         writer.WriteXmlAttributesEnd();
                         writer.WriteXmlNullable(this.from, "from");
                         writer.WriteXmlNullable(this.to, "to");
@@ -1946,6 +1940,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             writer.WriteXmlAttributesEnd();
                 writer.WriteXmlNodeStart("oleObject");
                 writer.WriteXmlNullableAttributeString("progId", oGraphic.m_sApplicationId);
+                writer.WriteXmlAttributeString("dvAspect", "DVASPECT_CONTENT");
                 writer.WriteXmlAttributeInt("shapeId", nShapeId);
                 writer.WriteXmlNullableAttributeString("r:id", sRId);
                 writer.WriteXmlAttributesEnd(true);
@@ -1953,8 +1948,8 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         //-------------------------------------
         writer.WriteXmlNodeEnd("mc:AlternateContent");
 
+        this.nShapeId = nShapeId;
 
-        this.graphicObject.toXmlVML(oVMLWriter, "", "", "", nShapeId)
     };
 
     DrawingBase.prototype.toXmlSignature = function(oVMLWriter) {

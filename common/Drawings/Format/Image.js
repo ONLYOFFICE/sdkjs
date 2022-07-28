@@ -1101,7 +1101,7 @@ CImageShape.prototype.Load_LinkData = function(linkData)
             else
             {
                 writer.WriteXmlAttributeString("id", pId);
-                writer.WriteXmlAttributeString("o:spid", strSpid);
+                //writer.WriteXmlAttributeString("o:spid", strSpid);
             }
         }
         else
@@ -1176,15 +1176,15 @@ CImageShape.prototype.Load_LinkData = function(linkData)
             oleObject.m_sObjectId = strObjectid;
             oleObject.m_oDrawAspect = AscFormat.EOLEDrawAspect.oledrawaspectContent;
             //write data
-            oleObject.m_oId = writer.context.getDataRId(this.m_sDataLink);
             oleObject.m_sProgId = this.m_sApplicationId;
             oleObject.m_oType = AscFormat.EOLEType.oletypeEmbed;
             if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
             {
                 oleObject.m_sShapeId = "" + nShapeId;
             }
-        else
+            else
             {
+                oleObject.m_oId = writer.context.getDataRId(this.m_sDataLink);
                 oleObject.m_sShapeId = strId;
                 oleObject.toXml(writer, "o:OLEObject");
             }

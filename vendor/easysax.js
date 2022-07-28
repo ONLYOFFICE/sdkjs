@@ -1695,7 +1695,7 @@ function XmlWriterContext(editorId){
     this.currentPartImageMap = {};
     this.dataMap = {};
     this.currentPartDataMap = {};
-    this.m_lObjectIdVML = 1;
+    this.m_lObjectIdVML = 1025;
 
     this.oUriMap = {};
     this.objectId = 1;
@@ -1801,7 +1801,7 @@ XmlWriterContext.prototype.getImageRId = function(sRasterImageId) {
 };
 XmlWriterContext.prototype.getDataRId = function(sDataLink) {
     let dataPart = this.dataMap[sDataLink];
-    let type = AscCommon.openXml.Types.package;
+    let type = this.editorId === AscCommon.c_oEditorId.Word ? AscCommon.openXml.Types.wordPackage : AscCommon.openXml.Types.package;
     if (!dataPart) {
         if (this.part) {
             let ext = AscCommon.GetFileExtension(sDataLink);

@@ -3562,20 +3562,23 @@ function BinaryPPTYLoader()
         }
         blipFill.setRasterImageId(sReadPath);
 
-        // TEST version ---------------
-        var _s = sReadPath;
-        var indS = _s.lastIndexOf("emf");
-        if (indS == -1)
-            indS = _s.lastIndexOf("wmf");
+        let oApi = Asc.editor || editor;
+        if(!oApi.isOpenOOXInBrowser) {
+            // TEST version ---------------
+            var _s = sReadPath;
+            var indS = _s.lastIndexOf("emf");
+            if (indS == -1)
+                indS = _s.lastIndexOf("wmf");
 
-        if (indS != -1 && (indS == (_s.length - 3)))
-        {
-            _s = _s.substring(0, indS);
-            _s += "svg";
-            sReadPath = _s;
-            blipFill.setRasterImageId(_s);
+            if (indS != -1 && (indS == (_s.length - 3)))
+            {
+                _s = _s.substring(0, indS);
+                _s += "svg";
+                sReadPath = _s;
+                blipFill.setRasterImageId(_s);
+            }
+            // ----------------------------
         }
-        // ----------------------------
 
         if (this.IsThemeLoader)
         {
@@ -3587,7 +3590,7 @@ function BinaryPPTYLoader()
             this.ImageMapChecker[sReadPath] = true;
 
         if (this.IsUseFullUrl)
-            this.RebuildImages.push(new CBuilderImages(blipFill, sReadPath, oImageShape, oSpPr, oLn));
+            this.RebuildImages.push(new CBuilderImages(blipFill, sReadPath));
     }
     // ------------------------------------------
 

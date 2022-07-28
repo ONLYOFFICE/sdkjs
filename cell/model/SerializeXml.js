@@ -2749,6 +2749,7 @@
 		}
 
 		let t = this;
+		let oVmlDrawingReader = null;
 		if ("worksheet" === reader.GetNameNoNS()) {
 			var context = reader.GetContext();
 			context.aOleObjectsData = [];
@@ -2833,6 +2834,7 @@
 						oElement.fromXml(oReader, true);
 						context.InitOpenManager.legacyDrawing = oElement;
 					}
+					oVmlDrawingReader = oReader;
 				} else if ("legacyDrawingHF" === name) {
 					//do not support serialize - commented
 				} else if ("oleObjects" === name) {
@@ -2947,14 +2949,15 @@
 		}
 
 		this.prepareExtLst(extLst, context.InitOpenManager);
-		this.prepareLegacyDrawings(reader)
+		this.prepareLegacyDrawings(reader, oVmlDrawingReader)
 	};
-	AscCommonExcel.Worksheet.prototype.prepareLegacyDrawings = function(reader) {
+	AscCommonExcel.Worksheet.prototype.prepareLegacyDrawings = function(reader, oVmlDrawingReader) {
 		let context = reader.context;
 		let aOleObjectsData = context.aOleObjectsData;
 		let oVmlDrawing = context.InitOpenManager.legacyDrawing;
 
-		var objectRender = new AscFormat.DrawingObjects();
+		let objectRender = new AscFormat.DrawingObjects();
+		let bVmlReader = false;
 		for(let nOle = 0; nOle < aOleObjectsData.length; ++nOle) {
 			let oData = aOleObjectsData[nOle];
 			let oFrom, oTo;
@@ -3009,17 +3012,21 @@
 					if (oImageData.m_oRelId) sImageRId = oImageData.m_oRelId;
 					else if (oImageData.m_rId) sImageRId = oImageData.m_rId;
 					else if (oImageData.m_rPict) sImageRId = oImageData.m_rPict;
+					if(sImageRId) {
+						bVmlReader = !!oVmlDrawingReader;
+					}
 				}
 			}
 			if(!sImageRId) {
 				if(oPrNode) {
 					sImageRId = oPrNode.attributes["id"];
+					bVmlReader = false;
 				}
 			}
 			if(oFrom && oTo) {
 				let oOleObject = new AscFormat.COleObject();
 				AscFormat.fillImage(oOleObject, "", 0, 0, 50, 50);
-				AscFormat.fReadXmlRasterImageId(reader, sImageRId, oOleObject.blipFill);
+				AscFormat.fReadXmlRasterImageId(bVmlReader ? oVmlDrawingReader : reader, sImageRId, oOleObject.blipFill);
 				oOleObject.fillDataLink(sDataLinkId, reader);
 				oOleObject.setApplicationId(sProgId);
 				let oDrawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
@@ -3230,20 +3237,32 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 			let aDrawings = context.oleDrawings;
 			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
 				let oDrawing = aDrawings[nDrawing];
-				oDrawing.toXmlOle(writer, vmlDrawingMemory);
+				oDrawing.toXmlOle(writer);
 			}
 			writer.WriteXmlNodeEnd("oleObjects");
 		}
-		if(context.signatureDrawings.length > 0) {
-			writer.WriteXmlNodeStart("oleObjects");
-			writer.WriteXmlAttributesEnd();
-			let aDrawings = context.signatureDrawings;
+
+		if(vmlDrawingMemory) {
+			vmlDrawingMemory.context.clearCurrentPartDataMaps();
+		}
+		if(context.oleDrawings.length > 0) {
+			let oldPart = vmlDrawingMemory.context.part;
+			vmlDrawingMemory.context.part = vmldrawingPart.part;
+			let aDrawings = context.oleDrawings;
 			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
 				let oDrawing = aDrawings[nDrawing];
-				oDrawing.toXmlSignature(vmlDrawingMemory);
+				oDrawing.graphicObject.toXmlVML(vmlDrawingMemory, "", "", "", "_x0000_s" + oDrawing.nShapeId)
 			}
-			writer.WriteXmlNodeEnd("oleObjects");
+			vmlDrawingMemory.context.part = oldPart;
 		}
+		// if(context.signatureDrawings.length > 0) {
+		// 	let aDrawings = context.signatureDrawings;
+		// 	for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+		// 		let oDrawing = aDrawings[nDrawing];
+		// 		oDrawing.graphicObject.toXmlVML(vmlDrawingMemory, "", "", "", "_x0000_s" + oDrawing.nShapeId)
+		// 	}
+		// }
+
 		if(bVmlDrawing) {
 			vmlDrawingMemory.WriteXmlString("</xml>");
 			let vmlData = vmlDrawingMemory.GetDataUint8();
