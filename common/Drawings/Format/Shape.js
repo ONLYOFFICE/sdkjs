@@ -1248,152 +1248,152 @@ CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMat
     }
     return c;
 };
-    CShape.prototype.toXmlVML = function(writer, sMainCSS, sMainAttributes, sMainNodes, pId) {
-        if(this.isSignatureLine()) {
-            let oContext = writer.context;
-            let nShapeId = oContext.m_lObjectIdVML;
-            let strId = "_x0000_i" + oContext.m_lObjectIdVML;
-            let strSpid = "_x0000_s" + oContext.m_lObjectIdVML;
-            let strObjectid	= "_152504" + oContext.m_lObjectIdVML;
-            oContext.m_lObjectIdVML++;
-            let dL = 0, dT = 0, dW = 0, dH = 0;
-            let oXfrm = this.spPr.xfrm;
-            if (oXfrm)
+CShape.prototype.toXmlVML = function(writer, sMainCSS, sMainAttributes, sMainNodes, pId) {
+    if(this.isSignatureLine()) {
+        let oContext = writer.context;
+        let nShapeId = oContext.m_lObjectIdVML;
+        let strId = "_x0000_i" + oContext.m_lObjectIdVML;
+        let strSpid = "_x0000_s" + oContext.m_lObjectIdVML;
+        let strObjectid	= "_152504" + oContext.m_lObjectIdVML;
+        oContext.m_lObjectIdVML++;
+        let dL = 0, dT = 0, dW = 0, dH = 0;
+        let oXfrm = this.spPr.xfrm;
+        if (oXfrm)
+        {
+            if (oXfrm.offX !== null) dL = oXfrm.offX;
+            if (oXfrm.offY !== null) dT = oXfrm.offY;
+            if (oXfrm.extX !== null) dW = oXfrm.extX;
+            if (oXfrm.extY !== null) dH = oXfrm.extY;
+        }
+        let sCSS = "";
+        if(!sMainCSS)
+        {
+            sCSS += "position:absolute;";
+            if (this.group)
             {
-                if (oXfrm.offX !== null) dL = oXfrm.offX;
-                if (oXfrm.offY !== null) dT = oXfrm.offY;
-                if (oXfrm.extX !== null) dW = oXfrm.extX;
-                if (oXfrm.extY !== null) dH = oXfrm.extY;
+                sCSS += ("left:" +	(dL / 100 + 0.5 >> 0) + ";");
+                sCSS += ("top:" + (dT / 100 + 0.5 >> 0) + ";");
+                sCSS += ("width:" +	(dW / 100 + 0.5 >> 0) + ";");
+                sCSS += ("height:" + (dH / 100 + 0.5 >> 0) + ";");
             }
-            let sCSS = "";
-            if(!sMainCSS)
+            else
             {
-                sCSS += "position:absolute;";
-                if (this.group)
-                {
-                    sCSS += ("left:" +	(dL / 100 + 0.5 >> 0) + ";");
-                    sCSS += ("top:" + (dT / 100 + 0.5 >> 0) + ";");
-                    sCSS += ("width:" +	(dW / 100 + 0.5 >> 0) + ";");
-                    sCSS += ("height:" + (dH / 100 + 0.5 >> 0) + ";");
-                }
-                else
-                {
-                    sCSS += ("left:" +	(dL / 12700 + 0.5 >> 0) + "pt;");
-                    sCSS += ("top:" + (dT / 12700 + 0.5 >> 0) + "pt;");
-                    sCSS += ("width:" +	(dW / 12700 + 0.5 >> 0) + "pt;");
-                    sCSS += ("height:" + (dH / 12700 + 0.5 >> 0) + "pt;");
-                }
+                sCSS += ("left:" +	(dL / 12700 + 0.5 >> 0) + "pt;");
+                sCSS += ("top:" + (dT / 12700 + 0.5 >> 0) + "pt;");
+                sCSS += ("width:" +	(dW / 12700 + 0.5 >> 0) + "pt;");
+                sCSS += ("height:" + (dH / 12700 + 0.5 >> 0) + "pt;");
             }
-            if (oXfrm)
+        }
+        if (oXfrm)
+        {
+            if (oXfrm.rot !== null)
             {
-                if (oXfrm.rot !== null)
-                {
-                    let nRot = oXfrm.rot * 180 + 0.5 >> 0;
-                    sCSS += ("rotation:" + nRot + ";");
-                }
-                let bIsFH = oXfrm.flipH;
-                let bIsFV = oXfrm.flipV;
-                if (bIsFH && bIsFV)
-                {
-                    sCSS += "flip:xy;";
-                }
-                else if (bIsFH)
-                {
-                    sCSS += "flip:x;";
-                }
-                else if (bIsFV)
-                {
-                    sCSS += "flip:y;";
-                }
+                let nRot = oXfrm.rot * 180 + 0.5 >> 0;
+                sCSS += ("rotation:" + nRot + ";");
             }
-            writer.WriteXmlNodeStart("v:shape");
+            let bIsFH = oXfrm.flipH;
+            let bIsFV = oXfrm.flipV;
+            if (bIsFH && bIsFV)
+            {
+                sCSS += "flip:xy;";
+            }
+            else if (bIsFH)
+            {
+                sCSS += "flip:x;";
+            }
+            else if (bIsFV)
+            {
+                sCSS += "flip:y;";
+            }
+        }
+        writer.WriteXmlNodeStart("v:shape");
+        if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
+        {
+            if(!pId)
+            {
+                writer.WriteXmlAttributeString("id", strSpid);
+            }
+            else
+            {
+                writer.WriteXmlAttributeString("id", pId);
+                //writer.WriteXmlAttributeString("o:spid", strSpid);
+            }
+        }
+        else
+        {
+            writer.WriteXmlAttributeString("id", strId);
+            writer.WriteXmlAttributeString("o:spid", strSpid);
+        }
+        writer.WriteXmlAttributeString("type", "#_x0000_t75");
+        if (!sCSS)
+        {
+            writer.WriteXmlAttributeString("style", sMainCSS || "");
+        }
+        else
+        {
+            writer.WriteXmlAttributeString("style", (sMainCSS || "") + sCSS);
+        }
+        if (sMainAttributes)
+        {
+            writer.WriteXmlString(sMainAttributes);
+        }
+        writer.WriteXmlAttributeString("filled", "f");
+        let strNodeVal;
+        writer.WriteXmlAttributeString("stroked", "f");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNodeStart("v:path");
+        writer.WriteXmlAttributeString("textboxrect", "0,0,0,0");
+        writer.WriteXmlAttributesEnd(true);
+        if(sMainNodes) {
+            writer.WriteXmlString(sMainNodes);
+        }
+        let sRasterImageId;
+        let oFill = this.spPr && this.spPr.Fill;
+        if(oFill && oFill.isBlipFill()) {
+            sRasterImageId = oFill.fill.RasterImageId;
+        }
+        if (sRasterImageId)
+        {
+            writer.WriteXmlNodeStart("v:imagedata");
+
             if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
             {
-                if(!pId)
-                {
-                    writer.WriteXmlAttributeString("id", strSpid);
-                }
-                else
-                {
-                    writer.WriteXmlAttributeString("id", pId);
-                    //writer.WriteXmlAttributeString("o:spid", strSpid);
-                }
+                writer.WriteXmlAttributeString("o:relid", writer.context.getImageRId(sRasterImageId));
             }
             else
             {
-                writer.WriteXmlAttributeString("id", strId);
-                writer.WriteXmlAttributeString("o:spid", strSpid);
+                writer.WriteXmlAttributeString("r:id", writer.context.getImageRId(sRasterImageId));
             }
-            writer.WriteXmlAttributeString("type", "#_x0000_t75");
-            if (!sCSS)
-            {
-                writer.WriteXmlAttributeString("style", sMainCSS || "");
-            }
-            else
-            {
-                writer.WriteXmlAttributeString("style", (sMainCSS || "") + sCSS);
-            }
-            if (sMainAttributes)
-            {
-                writer.WriteXmlString(sMainAttributes);
-            }
-            writer.WriteXmlAttributeString("filled", "f");
-            let strNodeVal;
-            writer.WriteXmlAttributeString("stroked", "f");
+            writer.WriteXmlAttributeString("o:title", "");
             writer.WriteXmlAttributesEnd();
-            writer.WriteXmlNodeStart("v:path");
-            writer.WriteXmlAttributeString("textboxrect", "0,0,0,0");
-            writer.WriteXmlAttributesEnd(true);
-            if(sMainNodes) {
-                writer.WriteXmlString(sMainNodes);
-            }
-            let sRasterImageId;
-            let oFill = this.spPr && this.spPr.Fill;
-            if(oFill && oFill.isBlipFill()) {
-                sRasterImageId = oFill.fill.RasterImageId;
-            }
-            if (sRasterImageId)
-            {
-                writer.WriteXmlNodeStart("v:imagedata");
-
-                if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
-                {
-                    writer.WriteXmlAttributeString("o:relid", writer.context.getImageRId(sRasterImageId));
-                }
-                else
-                {
-                    writer.WriteXmlAttributeString("r:id", writer.context.getImageRId(sRasterImageId));
-                }
-                writer.WriteXmlAttributeString("o:title", "");
-                writer.WriteXmlAttributesEnd();
-                writer.WriteXmlNodeEnd( "v:imagedata");
-            }
-            let oVMLSignatureLine = new AscFormat.CVMLSignatureLine();
-            oVMLSignatureLine.m_oId = this.signatureLine.id;
-            oVMLSignatureLine.m_sSuggestedSigner = this.signatureLine.signer;
-            oVMLSignatureLine.m_sSuggestedSigner2 = this.signatureLine.signer2;
-            oVMLSignatureLine.m_sSuggestedSignerEmail = this.signatureLine.email;
-            oVMLSignatureLine.m_oShowSignDate = this.signatureLine.showDate;
-            oVMLSignatureLine.m_sSigningInstructions = this.signatureLine.instructions;
-            oVMLSignatureLine.m_oIsSignatureLine = true;
-            oVMLSignatureLine.m_sProvid = "{00000000-0000-0000-0000-000000000000}"
-            oVMLSignatureLine.toXml(writer, "o:signatureline");
-            if(AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType && this.drawingBase) {
-                let oClientData = new AscFormat.CVMLClientData();
-                oClientData.m_oObjectType = AscFormat.EVmlClientDataObjectType.vmlclientdataobjecttypePict;
-                oClientData.m_oSizeWithCells = true;
-                let sAnchor = "";
-                sAnchor += this.drawingBase.from.toVmlXml();
-                sAnchor += ",";
-                sAnchor += this.drawingBase.to.toVmlXml();
-                oClientData.m_oAnchor = sAnchor;
-                oClientData.toXml(writer, "x:ClientData");
-            }
-            writer.WriteXmlNodeEnd("v:shape");
-            return;
+            writer.WriteXmlNodeEnd( "v:imagedata");
         }
-        AscFormat.CImageShape.prototype.toXmlVML.call(this, writer, sMainCSS, sMainAttributes, sMainNodes, pId);
+        let oVMLSignatureLine = new AscFormat.CVMLSignatureLine();
+        oVMLSignatureLine.m_oId = this.signatureLine.id;
+        oVMLSignatureLine.m_sSuggestedSigner = this.signatureLine.signer;
+        oVMLSignatureLine.m_sSuggestedSigner2 = this.signatureLine.signer2;
+        oVMLSignatureLine.m_sSuggestedSignerEmail = this.signatureLine.email;
+        oVMLSignatureLine.m_oShowSignDate = this.signatureLine.showDate;
+        oVMLSignatureLine.m_sSigningInstructions = this.signatureLine.instructions;
+        oVMLSignatureLine.m_oIsSignatureLine = true;
+        oVMLSignatureLine.m_sProvid = "{00000000-0000-0000-0000-000000000000}"
+        oVMLSignatureLine.toXml(writer, "o:signatureline");
+        if(AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType && this.drawingBase) {
+            let oClientData = new AscFormat.CVMLClientData();
+            oClientData.m_oObjectType = AscFormat.EVmlClientDataObjectType.vmlclientdataobjecttypePict;
+            oClientData.m_oSizeWithCells = true;
+            let sAnchor = "";
+            sAnchor += this.drawingBase.from.toVmlXml();
+            sAnchor += ",";
+            sAnchor += this.drawingBase.to.toVmlXml();
+            oClientData.m_oAnchor = sAnchor;
+            oClientData.toXml(writer, "x:ClientData");
+        }
+        writer.WriteXmlNodeEnd("v:shape");
+        return;
     }
+    AscFormat.CImageShape.prototype.toXmlVML.call(this, writer, sMainCSS, sMainAttributes, sMainNodes, pId);
+};
 CShape.prototype.convertFromSmartArt = function(bForce) {
     if (AscFormat.SmartArt && !bForce) {
         return this;
@@ -7413,6 +7413,27 @@ CShape.prototype.getColumnNumber = function(){
         }
     };
     CShape.prototype.toXml = function(writer, sName) {
+        if(this.isSignatureLine()) {
+            writer.WriteXmlNodeStart("w:pict");
+            writer.WriteXmlAttributesEnd();
+            let oContext = writer.context;
+            let sMainCSS = "";
+            let sMainNodes = "";
+            let sMainAttributes = "";
+            let nDocType = oContext.docType;
+            if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_DOCX) {
+                if(!this.group && this.parent instanceof AscCommonWord.ParaDrawing) {
+                    let oMainProps = this.parent.GetVmlMainProps();
+                    sMainCSS = oMainProps.sMainCSS;
+                    sMainNodes = oMainProps.sMainNodes;
+                    sMainAttributes = oMainProps.sMainAttributes;
+                }
+            }
+            this.toXmlVML(writer, sMainCSS, sMainAttributes, sMainNodes, null)
+            writer.WriteXmlNodeEnd("w:pict");
+            return;
+        }
+
         let name_ = sName || "a:sp";
 
         let oContext = writer.context;
