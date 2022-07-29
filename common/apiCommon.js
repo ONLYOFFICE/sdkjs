@@ -5735,7 +5735,7 @@
 		_object["baseUrl"]    = this.baseUrl;
 		_object["minVersion"] = this.minVersion;
 		_object["isConnector"] = this.isConnector;
-		_object['loader']     = this.loader;
+		_object["loader"]     = this.loader;
 
 		if (this.group)
 		{
