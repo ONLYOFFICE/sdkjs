@@ -4782,9 +4782,10 @@
 		this.StopTextAround();
 		this.SendClearAllTextAround();
 	};
-	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container) {
+	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container, options) {
 
-		var dN = new Asc.Range(c, r, c, r, true);
+		var byCols = options && !options.scanByRows;
+		var dN = new Asc.Range(byCols ? r : c, byCols ? c : r, byCols ? r : c, byCols ? c : r, true);
 		var defName = cell.ws ? AscCommon.parserHelp.get3DRef(cell.ws.getName(), dN.getAbsName()) : null;
 		defName = defName && cell.ws ? cell.ws.workbook.findDefinesNames(defName, cell.ws.getId(), true) : null;
 

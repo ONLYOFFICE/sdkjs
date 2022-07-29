@@ -8686,7 +8686,7 @@
 					r = c;
 					c = tmp;
 				}
-				searchEngine ? searchEngine.Add(r, c, cell, !options.scanByRows ? result : null) : result.add(r, c, cell);
+				searchEngine ? searchEngine.Add(r, c, cell, !options.scanByRows ? result : null, options) : result.add(r, c, cell);
 			}
 		}]);
 		!options.scanByRows && searchEngine && searchEngine.endAdd(result);
