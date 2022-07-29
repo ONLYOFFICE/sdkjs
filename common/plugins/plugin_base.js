@@ -672,7 +672,7 @@
 				}
 				case "button":
 				{
-					var _buttonId = parseInt(pluginData.button);
+					var _buttonId = parseInt(pluginData.button) || pluginData.button;
 					if (!window.Asc.plugin.button && -1 == _buttonId)
 						window.Asc.plugin.executeCommand("close", "");
 					else

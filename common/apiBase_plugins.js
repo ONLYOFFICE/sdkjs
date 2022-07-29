@@ -1351,4 +1351,21 @@
 	{
 		return installPlugin(config, "Updated");
 	};
+
+	/**
+    * Show or hide buttons in header.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [id] - The id of the button.
+     * @param {boolean} [bShow] - The flag show or hide the button.
+     * @alias ShowButton 
+     */
+	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
+	{
+		if (bShow) {
+			this.sendEvent("asc_onPluginShowButton", id);
+		} else {
+			this.sendEvent("asc_onPluginHideButton", id);
+		}
+	};
 })(window);
