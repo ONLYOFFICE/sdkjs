@@ -59,9 +59,53 @@ const test_LETTER = {
 	z : 122
 };
 
-var editor = {};
+var drawingDocument = {
+	OnStartRecalculate : function(){},
+	UpdateTargetTransform : function(){},
+	SelectEnabled : function(){},
+	TargetStart : function(){},
+	TargetShow : function(){},
+	Set_RulerState_Start : function(){},
+	Set_RulerState_Paragraph : function(){},
+	Set_RulerState_End : function(){},
+	Update_MathTrack : function(){},
+	OnDrawContentControl : function(){},
+	Update_FieldTrack : function(){}
+};
+
+var editor = {
+	WordControl : drawingDocument
+};
+
+var XRegExp = XRegExp | new function(){};
+
+if (!AscCommon.g_oIdCounter)
+{
+	AscCommon.g_oIdCounter = {
+		Counter : 0,
+		Get_NewId : function()
+		{
+			return ++this.Counter;
+		}
+	};
+}
+
+function CreateLogicDocument()
+{
+	let logicDocument = new AscWord.CDocument(drawingDocument, true);
+	logicDocument.Api = null;
+	logicDocument.On_EndLoad();
+
+	drawingDocument.m_oLogicDocument = logicDocument;
+
+	return logicDocument;
+}
+
 AscCommon.g_oTableId = {
-	Add : function(c, id) {}
+	Add : function(c, id) {},
+
+	TurnOff : function(){},
+	TurnOn : function(){}
 };
 AscCommon.g_oIdCounter.m_bLoad = false;
 AscCommon.g_oIdCounter.m_bRead = false;

@@ -1117,7 +1117,9 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 			this.private_UpdateCommentPosition(this.m_arrCommentsById[sId], oChangedComments);
 		}
 
-		this.LogicDocument.GetApi().sync_ChangeCommentLogicalPosition(oChangedComments, this.GetCommentsPositionsCount());
+		let oApi = this.LogicDocument.GetApi();
+		if (oApi)
+			oApi.sync_ChangeCommentLogicalPosition(oChangedComments, this.GetCommentsPositionsCount());
 	};
 	/**
 	 * Получаем количество комментариев, у которых есть логическая позиция в документе
