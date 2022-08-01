@@ -7642,17 +7642,17 @@
 			sSepWith = "";
 
 		var oDocument = private_GetLogicDocument();
-		var oParaPos, oldSelectionInfo;
+		var oldSelectionInfo;
 
 		var allNumberedParas = oDocument.GetAllNumberedParagraphs();
 		for (var nPara = 0; nPara < allNumberedParas.length; nPara++)
 		{
 			if (allNumberedParas[nPara].Id === oParaTo.Paragraph.Id)
 			{
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow, sSepWith);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7708,10 +7708,10 @@
 			return false;
 
 		var oDocument = private_GetLogicDocument();
-		var oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 		var oldSelectionInfo = oDocument.SaveDocumentState();
 		oDocument.RemoveSelection();
-		oDocument.SetContentPosition(oParaPos, 0, 0);
+		this.Paragraph.Document_SetThisElementCurrent();
+		this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 		oDocument.AddRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow, undefined);
 		oDocument.LoadDocumentState(oldSelectionInfo);
 		return true;
@@ -7764,17 +7764,16 @@
 
 		var oDocument = private_GetLogicDocument();
 		var oManager = oDocument.GetBookmarksManager();
-		var oParaPos, sName, oldSelectionInfo;
+		var sName, oldSelectionInfo;
 		for (var nBookmark = 0, nCount = oManager.GetCount(); nBookmark < nCount; nBookmark++)
 		{
 			sName = oManager.GetName(nBookmark);
 			if (!oManager.IsInternalUseBookmark(sName) && !oManager.IsHiddenBookmark(sName) && sName === sBookmarkName)
 			{
-				
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddRefToBookmark(sBookmarkName, nRefTo, bLink, bAboveBelow, sSepWith);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7821,17 +7820,17 @@
 			bAboveBelow = false;
 
 		var oDocument = private_GetLogicDocument();
-		var oParaPos, oldSelectionInfo;
+		var oldSelectionInfo;
 
 		var aFirstFootnoteParas = oDocument.GetFootNotesFirstParagraphs();
 		for (var nPara = 0; nPara < aFirstFootnoteParas.length; nPara++)
 		{
 			if (aFirstFootnoteParas[nPara].Id === oParaTo.Paragraph.Id)
 			{
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddNoteRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7878,16 +7877,16 @@
 
 		var oDocument = private_GetLogicDocument();
 		var aFirstEndnoteParas = oDocument.GetEndNotesFirstParagraphs();
-		var oParaPos, oldSelectionInfo;
+		var oldSelectionInfo;
 		
 		for (var nPara = 0; nPara < aFirstEndnoteParas.length; nPara++)
 		{
 			if (aFirstEndnoteParas[nPara].Id === oParaTo.Paragraph.Id)
 			{
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddNoteRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7953,9 +7952,9 @@
 
 		var oDocument = private_GetLogicDocument();
 		var oldSelectionInfo = oDocument.SaveDocumentState();
-		var oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 		oDocument.RemoveSelection();
-		oDocument.SetContentPosition(oParaPos, 0, 0);
+		this.Paragraph.Document_SetThisElementCurrent();
+		this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 		oDocument.AddRefToCaption(sCaption[0].toUpperCase() + sCaption.slice(1), oParaTo, nRefTo, bLink, bAboveBelow);
 		oDocument.LoadDocumentState(oldSelectionInfo);
 		return true;
