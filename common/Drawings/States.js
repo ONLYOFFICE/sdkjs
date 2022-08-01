@@ -139,6 +139,7 @@ StartAddNewShape.prototype =
             var oTrack = this.drawingObjects.arrTrackObjects[0];
             if(oTrack instanceof AscFormat.PolyLine)
             {
+
                 if(!oTrack.canCreateShape())
                 {
                     this.drawingObjects.clearTrackObjects();
@@ -158,7 +159,62 @@ StartAddNewShape.prototype =
                     this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
                     return;
                 }
+                if(this.animCustomPath) {
+                    this.drawingObjects.clearTrackObjects();
+                    this.drawingObjects.clearPreTrackObjects();
+                    this.drawingObjects.updateOverlay();
+                    this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+                    let oApi = this.drawingObjects.getEditorApi();
+                    let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                    if(oPresentation) {
+                        let oCurSlide = oPresentation.GetCurrentSlide();
+                        if(oCurSlide) {
+                            if(oPresentation.IsSelectionLocked(AscCommon.changestype_Timing) === false) {
+                                oPresentation.StartAction(0);
+                                var aAddedEffects = oCurSlide.addAnimation(AscFormat.PRESET_CLASS_PATH, AscFormat.MOTION_SQUARE, 0, this.bReplace);
+                                if(!aAddedEffects[0]) {
+                                    return;
+                                }
+                                let oPathShape = null;
+                                aAddedEffects[0].traverse(function(oChild) {
+                                    if(oChild.getObjectType() === AscDFH.historyitem_type_AnimMotion) {
+                                        oPathShape = oChild.createPathShape();
+                                        return;
+                                    }
+                                });
+                                if(!oPathShape) {
+                                    return;
+                                }
+
+                                let oPolylineShape = AscFormat.ExecuteNoHistory(function () {
+                                    return oTrack.getShape(false, oPresentation.drawingDocument, oCurSlide.graphicObjects);
+                                }, this, []);
+                                if(!oPolylineShape) {
+                                    return;
+                                }
+                                let oSpPr = oPolylineShape.spPr;
+                                let oXfrm = oSpPr.xfrm;
+                                oPathShape.updateAnimation(oXfrm.offX, oXfrm.offY, oXfrm.extX, oXfrm.extY, oXfrm.rot, oSpPr.geometry)
+                                oPresentation.FinalizeAction();
+                                oPresentation.Document_UpdateInterfaceState();
+                                if(this.bPreview && aAddedEffects.length > 0) {
+                                    oCurSlide.graphicObjects.resetSelection();
+                                    oPresentation.GetCurTiming().resetSelection();
+                                    for(var nEffect = 0; nEffect < aAddedEffects.length; ++nEffect) {
+                                        aAddedEffects[nEffect].select();
+                                    }
+                                    oPresentation.StartAnimationPreview();
+                                }
+                                else {
+                                    oPresentation.DrawingDocument.OnRecalculatePage(oPresentation.CurPage, oCurSlide);
+                                }
+                            }
+                        }
+                    }
+                    return;
+                }
             }
+
             var callback = function(bLock, isClickMouseEvent){
 
                 if(bLock)
@@ -2401,11 +2457,13 @@ PolyLineAddState2.prototype =
 
 
 
-function AddPolyLine2State(drawingObjects)
+function AddPolyLine2State(drawingObjects, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
-
+    this.animCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 AddPolyLine2State.prototype =
 {
@@ -2415,12 +2473,14 @@ AddPolyLine2State.prototype =
             return {objectId: "1", bMarker: true, cursorType: "crosshair"};
         this.drawingObjects.startTrackPos = {x: x, y: y, pageIndex : pageIndex};
         this.drawingObjects.checkChartTextSelection();
-        this.drawingObjects.resetSelection();
+        if(!this.animCustomPath) {
+            this.drawingObjects.resetSelection();
+        }
         this.drawingObjects.updateOverlay();
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.addPreTrackObject(new AscFormat.PolyLine(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
         this.drawingObjects.arrPreTrackObjects[0].addPoint(x, y);
-        this.drawingObjects.changeCurrentState(new AddPolyLine2State2(this.drawingObjects, x, y));
+        this.drawingObjects.changeCurrentState(new AddPolyLine2State2(this.drawingObjects, x, y, this.animCustomPath, this.bReplace, this.bPreview));
     },
 
     onMouseMove: function(e, x, y, pageIndex)
@@ -2431,12 +2491,15 @@ AddPolyLine2State.prototype =
     }
 };
 
-function AddPolyLine2State2(drawingObjects, x, y)
+function AddPolyLine2State2(drawingObjects, x, y, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.X = x;
     this.Y = y;
     this.polylineFlag = true;
+    this.animCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 
 
 }
@@ -2480,7 +2543,7 @@ AddPolyLine2State2.prototype =
             }
             this.drawingObjects.swapTrackObjects();
             this.drawingObjects.arrTrackObjects[0].tryAddPoint(tr_x, tr_y);
-            this.drawingObjects.changeCurrentState(new AddPolyLine2State3(this.drawingObjects));
+            this.drawingObjects.changeCurrentState(new AddPolyLine2State3(this.drawingObjects, this.animCustomPath, this.bReplace, this.bPreview));
         }
     },
 
@@ -2489,7 +2552,7 @@ AddPolyLine2State2.prototype =
     }
 };
 
-function AddPolyLine2State3(drawingObjects)
+function AddPolyLine2State3(drawingObjects, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
 
@@ -2498,6 +2561,9 @@ function AddPolyLine2State3(drawingObjects)
 
 
     this.polylineFlag = true;
+    this.animCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 AddPolyLine2State3.prototype =
 {

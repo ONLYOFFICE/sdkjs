@@ -4024,7 +4024,7 @@ CPresentation.prototype.GetSlide = function(nIndex) {
     }
     return null;
 };
-CPresentation.prototype.GetSlidesCount = function(nIndex) {
+CPresentation.prototype.GetSlidesCount = function() {
     return this.Slides.length;
 };
 CPresentation.prototype.GetCurrentSlide = function() {
@@ -11002,6 +11002,10 @@ CPresentation.prototype.AddToLayout = function () {
 CPresentation.prototype.AddAnimation = function(nPresetClass, nPresetId, nPresetSubtype, bReplace, bPreview) {
     var oSlide = this.GetCurrentSlide();
     if(oSlide) {
+        if(nPresetClass === AscFormat.PRESET_CLASS_PATH && nPresetId === AscFormat.MOTION_CUSTOM_PATH) {
+            oSlide.graphicObjects.changeCurrentState(new AscFormat.AddPolyLine2State(oSlide.graphicObjects, true, bReplace, bPreview));
+            return;
+        }
         if(this.IsSelectionLocked(AscCommon.changestype_Timing) === false) {
             this.StartAction(0);
             var aAddedEffects = oSlide.addAnimation(nPresetClass, nPresetId, nPresetSubtype, bReplace);
