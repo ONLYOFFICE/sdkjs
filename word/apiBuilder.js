@@ -3703,62 +3703,62 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Available values of the "numbered" reference type:
-	 * * **"pageNum"** - the page number of the numbered item;
-     * * **"paraNum"** - the paragraph number of the numbered item;
-	 * * **"noCtxParaNum"** - an abbreviated paragraph number (the specific item of the numbered list only, e.g., instead of "4.1.1" you refer to "1" only);
-     * * **"fullCtxParaNum"** - a full paragraph number, e.g., "4.1.1";
-	 * * **"text"** - the text value of the paragraph, e.g., if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only;
+	 * Available values of the "numbered" reference type.
+	 * * **"pageNum"** - the page number of the numbered item.
+     * * **"paraNum"** - the paragraph number of the numbered item.
+	 * * **"noCtxParaNum"** - an abbreviated paragraph number (the specific item of the numbered list only, e.g., instead of "4.1.1" you refer to "1" only).
+     * * **"fullCtxParaNum"** - a full paragraph number, e.g., "4.1.1".
+	 * * **"text"** - the text value of the paragraph, e.g., if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only.
      * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
 	 * @typedef {"pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "text" | "aboveBelow"} numberedRefTo
 	 */
 
 	/**
-	 * Available values of the "heading" reference type:
-	 * * **"text"** - the entire text of the heading;
-	 * * **"pageNum"** - the page number of the heading;
-     * * **"headingNum"** - the sequence number of the heading;
-	 * * **"noCtxHeadingNum"** - an abbreviated heading number. Make sure the cursor point is in the section you are referencing to, e.g., you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only;
-     * * **"fullCtxHeadingNum"** - a full heading number even if the cursor point is in the same section;
+	 * Available values of the "heading" reference type.
+	 * * **"text"** - the entire text of the heading.
+	 * * **"pageNum"** - the page number of the heading.
+     * * **"headingNum"** - the sequence number of the heading.
+	 * * **"noCtxHeadingNum"** - an abbreviated heading number. Make sure the cursor point is in the section you are referencing to, e.g., you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only.
+     * * **"fullCtxHeadingNum"** - a full heading number even if the cursor point is in the same section.
      * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
 	 * @typedef {"text" | "pageNum" | "headingNum" | "noCtxHeadingNum" | "fullCtxHeadingNum" | "aboveBelow"} headingRefTo
 	 */
 
 	/**
-	 * Available values of the "bookmark" reference type:
-	 * * **"text"** - the entire text of the bookmark;
-	 * * **"pageNum"** - the page number of the bookmark;
-     * * **"paraNum"** - the paragraph number of the bookmark;
-	 * * **"noCtxParaNum"** - an abbreviated paragraph number (the specific item only, e.g., instead of "4.1.1" you refer to "1" only);
-     * * **"fullCtxParaNum"** - a full paragraph number, e.g., "4.1.1";
+	 * Available values of the "bookmark" reference type.
+	 * * **"text"** - the entire text of the bookmark.
+	 * * **"pageNum"** - the page number of the bookmark.
+     * * **"paraNum"** - the paragraph number of the bookmark.
+	 * * **"noCtxParaNum"** - an abbreviated paragraph number (the specific item only, e.g., instead of "4.1.1" you refer to "1" only).
+     * * **"fullCtxParaNum"** - a full paragraph number, e.g., "4.1.1".
      * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
 	 * @typedef {"text" | "pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "aboveBelow"} bookmarkRefTo
 	 */
 
 	/**
-	 * Available values of the "footnote" reference type:
-	 * * **"footnoteNum"** - the footnote number;
-	 * * **"pageNum"** - the page number of the footnote;
-     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item;
+	 * Available values of the "footnote" reference type.
+	 * * **"footnoteNum"** - the footnote number.
+	 * * **"pageNum"** - the page number of the footnote.
+     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
 	 * * **"formFootnoteNum"** - the number of the footnote formatted as a footnote. The numbering of the actual footnotes is not affected.
 	 * @typedef {"footnoteNum" | "pageNum" | "aboveBelow" | "formFootnoteNum"} footnoteRefTo
 	 */
 
 	/**
-	 * Available values of the "endnote" reference type:
-	 * * **"endnoteNum"** - the endnote number;
-	 * * **"pageNum"** - the page number of the endnote;
-     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item;
+	 * Available values of the "endnote" reference type.
+	 * * **"endnoteNum"** - the endnote number.
+	 * * **"pageNum"** - the page number of the endnote.
+     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
 	 * * **"formEndnoteNum"** - the number of the endnote formatted as an endnote. The numbering of the actual endnotes is not affected.
 	 * @typedef {"endnoteNum" | "pageNum" | "aboveBelow" | "formEndnoteNum"} endnoteRefTo
 	 */
 
 	/**
-	 * Available values of the "equation"/"figure"/"table" reference type:
-	 * * **"entireCaption"** - the full text of the caption;
-	 * * **"labelNumber"** - the label and object number only, e.g., "Table 1.1";
-     * * **"captionText"** - the text of the caption only;
-	 * * **"pageNum"** - the page number containing the referenced object;
+	 * Available values of the "equation"/"figure"/"table" reference type.
+	 * * **"entireCaption"** - the full text of the caption.
+	 * * **"labelNumber"** - the label and object number only, e.g., "Table 1.1".
+     * * **"captionText"** - the text of the caption only.
+	 * * **"pageNum"** - the page number containing the referenced object.
 	 * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
 	 * @typedef {"entireCaption" | "labelNumber" | "captionText" | "pageNum" | "aboveBelow"} captionRefTo
 	 */
