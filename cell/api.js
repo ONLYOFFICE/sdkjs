@@ -1670,10 +1670,11 @@ var editor;
 
 				//person list
 				var personListPart = wbPart.getPartByRelationshipType(openXml.Types.person.relationType);
+				var personList;
 				if (personListPart) {
 					var contentPersonList = personListPart.getDocumentContent();
 					if (contentPersonList) {
-						var personList = new AscCommonExcel.CT_PersonList();
+						personList = new AscCommonExcel.CT_PersonList();
 						reader = new StaxParser(contentPersonList, personListPart, xmlParserContext);
 						personList.fromXml(reader);
 					}
@@ -1888,7 +1889,7 @@ var editor;
 									pThreadedComments.fromXml(reader);
 								}
 
-								AscCommonExcel.PrepareComments(ws, xmlParserContext, comments, pThreadedComments);
+								AscCommonExcel.PrepareComments(ws, xmlParserContext, comments, pThreadedComments, personList);
 							}
 						}
 					}
