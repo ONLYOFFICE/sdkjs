@@ -56,18 +56,11 @@ $(function () {
 		oCC.SetFormPr(new AscWord.CSdtFormPr());
 	}
 
-	function Recalculate()
-	{
-		logicDocument.RecalculateFromStart();
-	}
-
 	QUnit.module("Check forms");
 
 
-	QUnit.test("Test: \"Forms\"", function (assert)
+	QUnit.test("Test: \"GetAllForms\"", function (assert)
 	{
-		// Recalculate();
-
 		let forms = formsManager.GetAllForms();
 		assert.strictEqual(forms.length, 0, "Check forms count (must be zero)");
 
