@@ -161,7 +161,7 @@
 	ApiChart.prototype.constructor = ApiChart;
 
 	 /**
-	 * Class representing an Ole-object.
+	 * Class representing an OLE object.
 	 * @constructor
 	 */
 	function ApiOleObject(OleObject)
@@ -228,7 +228,7 @@
 	 * | "textCurveDown" | "textCurveUp" | "textDeflate" | "textDeflateBottom" | "textDeflateInflate" | "textDeflateInflateDeflate" | "textDeflateTop"
 	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
 	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
-	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransofrm
+	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransform
 	 * */
 
 	/**
@@ -1465,12 +1465,12 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
 	 * @param {string} [sText="Your text here"] - The text for the Text Art object.
-	 * @param {TextTransofrm} [sTransform="textNoShape"] - Text transform type.
+	 * @param {TextTransform} [sTransform="textNoShape"] - Text transform type.
 	 * @param {ApiFill} [oFill=Api.CreateNoFill()] - The color or pattern used to fill the Text Art object.
 	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the Text Art object shadow.
 	 * @param {number} [nRotAngle=0] - Rotation angle.
-	 * @param {EMU} [nWidth=1828800] - Text Art width measured in English measure units.
-	 * @param {EMU} [nHeight=1828800] - Text Art heigth measured in English measure units.
+	 * @param {EMU} [nWidth=1828800] - The Text Art width measured in English measure units.
+	 * @param {EMU} [nHeight=1828800] - The Text Art heigth measured in English measure units.
 	 * @param {number} [nFromCol=0] - The column number where the beginning of the Text Art object will be placed.
 	 * @param {number} [nFromRow=0] - The row number where the beginning of the Text Art object will be placed.
      * @param {EMU} [nColOffset=0] - The offset from the nFromCol column to the left part of the Text Art object measured in English measure units.
@@ -1498,18 +1498,18 @@
 	};
 
 	/**
-	 * Adds an Ole-object with the parameters specified.
+	 * Adds an OLE object to the current sheet with the parameters specified.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
-	 * @param {EMU} nWidth - The Ole-object width in English measure units.
-	 * @param {EMU} nHeight - The Ole-object height in English measure units.
-	 * @param {string} sData - ole-object string data.
-	 * @param {string} sAppId - the application id associated with this object.
-	 * @param {number} nFromCol - The number of the column where the beginning of the Ole-object will be placed.
-	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the Ole-object measured in English measure units.
-	 * @param {number} nFromRow - The number of the row where the beginning of the Ole-object will be placed.
-	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the Ole-object measured in English measure units.
+	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} nWidth - The OLE object width in English measure units.
+	 * @param {EMU} nHeight - The OLE object height in English measure units.
+	 * @param {string} sData - The OLE object string data.
+	 * @param {string} sAppId - The application ID associated with the current OLE object.
+	 * @param {number} nFromCol - The number of the column where the beginning of the OLE object will be placed.
+	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the OLE object measured in English measure units.
+	 * @param {number} nFromRow - The number of the row where the beginning of the OLE object will be placed.
+	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the OLE object measured in English measure units.
 	 * @returns {ApiOleObject}
 	 */
 	ApiWorksheet.prototype.AddOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId, nFromCol, nColOffset, nFromRow, nRowOffset)
@@ -1692,7 +1692,7 @@
 	};
 
 	/**
-	 * Returns all ole-objects from the current sheet.
+	 * Returns all OLE objects from the current sheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiOleObject[]}.
@@ -3931,10 +3931,10 @@
 	};
 
 	/**
-	 * Sets the data to current Ole-object.
+	 * Sets the data to the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {string} sData - ole-object string data.
+	 * @param {string} sData - The OLE object string data.
 	 * @returns {boolean}
 	 */
 	ApiOleObject.prototype.SetData = function(sData)
@@ -3947,7 +3947,7 @@
 	};
 
 	/**
-	 * Gets the string data from current Ole-object.
+	 * Returns the string data from the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
@@ -3961,10 +3961,10 @@
 	};
 
 	/**
-	 * Sets the application id to current Ole-object.
+	 * Sets the application ID to the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {string} sAppId - the application id associated with this object.
+	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {boolean}
 	 */
 	ApiOleObject.prototype.SetApplicationId = function(sAppId)
@@ -3977,7 +3977,7 @@
 	};
 
 	/**
-	 * Gets the application id from current Ole-object.
+	 * Returns the application ID from the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
