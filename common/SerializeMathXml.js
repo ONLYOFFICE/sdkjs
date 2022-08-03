@@ -2020,6 +2020,8 @@
 		this.buff = buff;
 		this.paraRuns = null;
 		this.paragraph = paragraph;
+
+		this.cTextPr = new CTextPr();
 	}
 	parseHtmlContent.prototype.fromXml = function(reader) {
 		var state = reader.getState();
@@ -2028,18 +2030,18 @@
 	};
 
 	parseHtmlContent.prototype.getXmlRunsRecursive = function(reader) {
+		let cText = new CTextPr();
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			let name = reader.GetNameNoNS();
-			console.log(name);
 			switch (name) {
 				case "u": {
-					var cText = new CTextPr();
-					cText.Underline = true;
-					this.buff = cText;
+					this.cTextPr.Underline = true;
+					this.buff = this.cTextPr;
 					this.getXmlRunsRecursive(reader);
 					break;
 				}
+
 				case "r": {
 
 					var paraRun = new ParaRun(this.paragraph, true);
@@ -2064,23 +2066,70 @@
 					this.paraRuns.push(paraRun);
 					break;
 				}
+
 				case "span": {
 					while (reader.MoveToNextAttribute()) {
+						console.log(reader.GetNameNoNS());
 						switch (reader.GetNameNoNS()) {
 							case "style": {
-								var styles = reader.GetValue();
-								
+								var _styles = new parseHtmlStyle(reader.GetValue());
+								_styles.parseStyles();
+								_styles.applyStyles(this.cTextPr);
 								break;
 							}
 						}
 					}
 				}
+
 				default:
 					this.getXmlRunsRecursive(reader);
 					break;
 			}
 		}
 	};
+
+	function parseHtmlStyle(styles) {
+		this.styles = styles;
+		this.map = null;
+	}
+
+	parseHtmlStyle.prototype.parseStyles = function() {
+		if (!this.map) {
+			this.map = new Map();
+		}
+
+		var map = this.map;
+		var buff = this.styles.split(';');
+		var tagname = [];
+		var val = [];
+		for(var i = 0; i < buff.length; i++) {
+			tagname[i] = buff[i].substring(0,buff[i].indexOf(':')).replace(/\s/g,'');
+			val[i] = buff[i].substring(buff[i].indexOf(':') + 1).replace(/\s/g,'');
+		}
+		for(var i = 0; i < tagname.length; i++) {
+			map.set(tagname[i], val[i]);
+		}
+
+		return map;
+	};
+
+	parseHtmlStyle.prototype.applyStyles = function(textPr) {
+		if (!textPr || !this.map) {
+			return;
+		}
+
+		var map = this.map;
+
+		//color
+		var color = map.get('color');
+		if (color) {
+			var cDocColor = new CDocumentColor(0, 0, 0);
+			cDocColor.SetFromHexColor(color);
+			textPr.Color = cDocColor;
+		}
+
+	};
+
 
 
 

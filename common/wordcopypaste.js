@@ -10019,6 +10019,7 @@ PasteProcessor.prototype =
 		var str = node.nodeValue;
 		str = str.replace('[if gte msEquation 12]>', '');
 		str = str.replace('<![endif]', '');
+		str = str.replace(/lang=\w*-\w*/g, '');
 
 		let xmlParserContext = new AscCommon.XmlParserContext();
 		var reader = new StaxParser(str, /*documentPart*/null, xmlParserContext);
