@@ -295,7 +295,7 @@
 				case 'b':
 				case 'i': {
 					//далее внутри нас интересуют два тега - m:r с текстом и настройками  в виде m:rPr
-					var htmlContent = new parseHtmlContent(this.Paragraph);
+					var htmlContent = new ParseHtmlContent(this.Paragraph);
 					htmlContent.fromXml(reader);
 					if (htmlContent.paraRuns) {
 						elem = htmlContent.paraRuns;
@@ -2016,20 +2016,21 @@
 		writer.WriteXmlNodeEnd(name);
 	};
 
-	function parseHtmlContent (paragraph, buff) {
+	function ParseHtmlContent(paragraph, buff) {
 		this.buff = buff;
 		this.paraRuns = null;
 		this.paragraph = paragraph;
 
 		this.cTextPr = new CTextPr();
 	}
-	parseHtmlContent.prototype.fromXml = function(reader) {
+
+	ParseHtmlContent.prototype.fromXml = function (reader) {
 		var state = reader.getState();
 		this.getXmlRunsRecursive(reader);
 		reader.setState(state);
 	};
 
-	parseHtmlContent.prototype.getXmlRunsRecursive = function(reader) {
+	ParseHtmlContent.prototype.getXmlRunsRecursive = function (reader) {
 		let cText = new CTextPr();
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
@@ -2054,13 +2055,13 @@
 					reader.setState(state);
 
 					var txt = reader.GetTextDecodeXml();
-					for(var i = 0; i < txt.length; i++) {
+					for (var i = 0; i < txt.length; i++) {
 						var cMath = new CMathText();
 						cMath.addTxt(txt[i]);
 						paraRun.Add_ToContent(paraRun.GetElementsCount(), cMath, false);
 					}
 
-					if(this.buff != null) {
+					if (this.buff != null) {
 						paraRun.Set_Pr(this.buff);
 					}
 
@@ -2075,8 +2076,9 @@
 						console.log(reader.GetNameNoNS());
 						switch (reader.GetNameNoNS()) {
 							case "style": {
-								var _styles = new parseHtmlStyle(reader.GetValue());
+								var _styles = new ParseHtmlStyle(reader.GetValue());
 								_styles.parseStyles();
+								this.buff = this.cTextPr;
 								_styles.applyStyles(this.cTextPr);
 								break;
 							}
@@ -2091,32 +2093,31 @@
 		}
 	};
 
-	function parseHtmlStyle(styles) {
+	function ParseHtmlStyle(styles) {
 		this.styles = styles;
 		this.map = null;
 	}
 
-	parseHtmlStyle.prototype.parseStyles = function() {
+	ParseHtmlStyle.prototype.parseStyles = function () {
 		if (!this.map) {
 			this.map = new Map();
 		}
 
 		var map = this.map;
 		var buff = this.styles.split(';');
-		var tagname = [];
-		var val = [];
-		for(var i = 0; i < buff.length; i++) {
-			tagname[i] = buff[i].substring(0,buff[i].indexOf(':')).replace(/\s/g,'');
-			val[i] = buff[i].substring(buff[i].indexOf(':') + 1).replace(/\s/g,'');
-		}
-		for(var i = 0; i < tagname.length; i++) {
-			map.set(tagname[i], val[i]);
+		var tagname;
+		var val;
+		for (var i = 0; i < buff.length; i++) {
+			tagname = buff[i].substring(0, buff[i].indexOf(':')).replace(/\s/g, '');
+			val = buff[i].substring(buff[i].indexOf(':') + 1).replace(/\s/g, '');
+
+			map.set(tagname, val);
 		}
 
 		return map;
 	};
 
-	parseHtmlStyle.prototype.applyStyles = function(textPr) {
+	ParseHtmlStyle.prototype.applyStyles = function (textPr) {
 		if (!textPr || !this.map) {
 			return;
 		}
@@ -2183,7 +2184,7 @@
 		}
 
 
-		var text_decoration = map.get( "text-decoration");
+		var text_decoration = map.get("text-decoration");
 		if (text_decoration) {
 			if (-1 !== text_decoration.indexOf("underline")) {
 				textPr.Underline = true;
@@ -2193,13 +2194,13 @@
 			}
 		}
 
-		var background_color = map.get( "background");
+		var background_color = map.get("background");
 		if (background_color) {
 			textPr.HighLight = AscCommon.PasteProcessor.prototype._ParseColor(background_color);
 		}
 
 
-		var vertical_align = map.get( "vertical-align");
+		var vertical_align = map.get("vertical-align");
 		switch (vertical_align) {
 			case "sub":
 				rPr.VertAlign = AscCommon.vertalign_SubScript;
@@ -2209,7 +2210,6 @@
 				break;
 		}
 	};
-
 
 
 
