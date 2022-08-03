@@ -2872,10 +2872,10 @@
 		var sHorzOverflow = null;
 		switch(oBodyPr.horzOverflow)
 		{
-			case AscFormat.ST_TextHorzOverflowType.clip:
+			case AscFormat.nHOTClip:
 				sHorzOverflow = "clip";
 				break;
-			case AscFormat.ST_TextHorzOverflowType.overflow:
+			case AscFormat.nHOTOverflow:
 				sHorzOverflow = "overflow";
 				break;
 		}
@@ -14679,10 +14679,10 @@
 		switch(oParsedBodyPr["horzOverflow"])
 		{
 			case "clip":
-				nHorzOverflow = AscFormat.ST_TextHorzOverflowType.clip;
+				nHorzOverflow = AscFormat.nHOTClip;
 				break;
 			case "overflow":
-				nHorzOverflow = AscFormat.ST_TextHorzOverflowType.overflow;
+				nHorzOverflow = AscFormat.nHOTOverflow;
 				break;
 		}
 
