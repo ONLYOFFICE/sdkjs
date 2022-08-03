@@ -644,7 +644,7 @@
 		}
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathBase.prototype.fromHtmlCtrlPr = function(reader, mathElem, opt_textPr) {
+	CMathBase.prototype.fromHtmlCtrlPr = function(reader, opt_textPr) {
 		var rPr = opt_textPr ? opt_textPr : new CTextPr();
 		while (reader.MoveToNextAttribute()) {
 			switch (reader.GetNameNoNS()) {
@@ -2160,21 +2160,8 @@
 					break;
 				}
 				case "span": {
-					//this.buff = this.cTextPr;
-					//CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.cTextPr);
-
-					while (reader.MoveToNextAttribute()) {
-						console.log(reader.GetNameNoNS());
-						switch (reader.GetNameNoNS()) {
-							case "style": {
-								var _styles = new ParseHtmlStyle(reader.GetValue());
-								_styles.parseStyles();
-								this.buff = this.cTextPr;
-								_styles.applyStyles(this.cTextPr);
-								break;
-							}
-						}
-					}
+					CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.cTextPr);
+					this.buff = this.cTextPr;
 				}
 
 				default:
