@@ -500,6 +500,7 @@ MasterSlide.prototype.scale = function (kw, kh) {
 
 MasterSlide.prototype.fromXml = function(reader, bSkipFirstNode) {
     AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
+    reader.context.assignConnectors(this.cSld.spTree);
     //read theme
     var oThemePart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.theme.relationType);
     if(oThemePart) {
@@ -586,7 +587,6 @@ MasterSlide.prototype.toXml = function(writer) {
     writer.WriteXmlAttributesEnd();
     this.cSld.toXml(writer);
     writer.WriteXmlNullable(this.clrMap, "p:clrMap");
-    writer.WriteXmlNullable(this.transition, "p:transition");
     let oContext = writer.context;
     let aRId = [];
     for(let nId = 0; nId < oContext.sldLayoutIdLst.length; ++nId) {
@@ -594,6 +594,7 @@ MasterSlide.prototype.toXml = function(writer) {
     }
     oContext.sldLayoutsCount += (oContext.sldLayoutIdLst.length + 1);
     (new IdList("p:sldLayoutIdLst")).writeRIdList(writer, aRId, "p:sldLayoutId");
+    writer.WriteXmlNullable(this.transition, "p:transition");
     writer.WriteXmlNullable(this.timing, "p:timing");
     writer.WriteXmlNullable(this.hf, "p:hf");
     writer.WriteXmlNullable(this.txStyles, "p:txStyles");

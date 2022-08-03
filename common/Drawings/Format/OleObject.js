@@ -58,6 +58,7 @@ function (window, undefined) {
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetApplicationId] = AscDFH.CChangesDrawingsString;
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetPixSizes] = AscDFH.CChangesDrawingsObjectNoId;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetObjectFile] = AscDFH.CChangesDrawingsString;
+		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetDataLink] = AscDFH.CChangesDrawingsString;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetOleType] = AscDFH.CChangesDrawingsLong;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetMathObject] = AscDFH.CChangesDrawingsObject;
 
@@ -105,6 +106,7 @@ function (window, undefined) {
         };
         AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ImageShapeSetPixSizes] = COleSize;
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetObjectFile] = function(oClass, value){oClass.m_sObjectFile = value;};
+		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetDataLink] = function(oClass, value){oClass.m_sDataLink = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetOleType] = function(oClass, value){oClass.m_nOleType = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetMathObject] = function(oClass, value){oClass.m_oMathObject = value;};
 
@@ -119,6 +121,7 @@ function (window, undefined) {
         this.m_nOleType = null;
         this.m_aBinaryData = null;
         this.m_oMathObject = null;
+        this.m_sDataLink = null;
     }
 
     COleObject.prototype = Object.create(AscFormat.CImageShape.prototype);
@@ -147,10 +150,21 @@ function (window, undefined) {
         this.m_nPixWidth = nPixWidth;
         this.m_nPixHeight = nPixHeight;
     };
+    COleObject.prototype.setPixSizes = function(nPixWidth, nPixHeight)
+    {
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ImageShapeSetPixSizes, new COleSize(this.m_nPixWidth, this.m_nPixHeight), new COleSize(nPixWidth, nPixHeight)));
+        this.m_nPixWidth = nPixWidth;
+        this.m_nPixHeight = nPixHeight;
+    };
     COleObject.prototype.setObjectFile = function(sObjectFile)
     {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetObjectFile, this.m_sObjectFile, sObjectFile));
         this.m_sObjectFile = sObjectFile;
+    };
+    COleObject.prototype.setDataLink = function(sDataLink)
+    {
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetDataLink, this.m_sDataLink, sDataLink));
+        this.m_sDataLink = sDataLink;
     };
     COleObject.prototype.setOleType = function(nOleType)
     {
@@ -295,8 +309,8 @@ function (window, undefined) {
         var oBodyPr = oShape.getBodyPr().createDuplicate();
         oBodyPr.rot = 0;
         oBodyPr.spcFirstLastPara = false;
-        oBodyPr.vertOverflow = AscFormat.nOTOwerflow;
-        oBodyPr.horzOverflow = AscFormat.nOTOwerflow;
+        oBodyPr.vertOverflow = AscFormat.nVOTOverflow;
+        oBodyPr.horzOverflow = AscFormat.nHOTOverflow;
         oBodyPr.vert = AscFormat.nVertTThorz;
         oBodyPr.wrap = AscFormat.nTWTNone;
         oBodyPr.lIns = 2.54;
@@ -451,6 +465,41 @@ function (window, undefined) {
         return !!canEdit;
     };
 
+    COleObject.prototype.toXml = function(writer) {
+        let oContext = writer.context;
+        let sMainCSS = "";
+        let sMainNodes = "";
+        let sMainAttributes = "";
+        let nDocType = oContext.docType;
+        if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_DOCX) {
+            if(!this.group && this.parent instanceof AscCommonWord.ParaDrawing) {
+                let oMainProps = this.parent.GetVmlMainProps();
+                sMainCSS = oMainProps.sMainCSS;
+                sMainNodes = oMainProps.sMainNodes;
+                sMainAttributes = oMainProps.sMainAttributes;
+            }
+            this.toXmlVML(writer, sMainCSS, sMainAttributes, sMainNodes, null);
+        }
+        else if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_PPTX) {
+            AscFormat.CImageShape.prototype.toXml.call(this, writer);
+        }
+        else if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_XLSX) {
+            if(this.group) {
+                AscFormat.CImageShape.prototype.toXml.call(this, writer);
+            }
+        }
+    };
+    COleObject.prototype.fillDataLink = function(sId, reader) {
+        if(sId) {
+            let rel = reader.rels.getRelationship(sId);
+            if (rel) {
+                if ("Internal" === rel.targetMode && rel.targetFullName) {
+                    this.setDataLink(rel.targetFullName.slice(1));
+                }
+            }
+        }
+    };
+
     function asc_putBinaryDataToFrameFromTableOleObject(oleObject)
     {
         if (oleObject instanceof AscFormat.COleObject) {
@@ -464,7 +513,7 @@ function (window, undefined) {
         return {
             "binary": null
         };
-    };
+    }
     window['Asc'] = window['Asc'] || {};
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].COleObject = COleObject;

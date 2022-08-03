@@ -1164,7 +1164,6 @@ var GLOBAL_PATH_COUNT = 0;
     CChartSpace.prototype.checkDrawingBaseCoords = CShape.prototype.checkDrawingBaseCoords;
     CChartSpace.prototype.setDrawingBaseCoords = CShape.prototype.setDrawingBaseCoords;
     CChartSpace.prototype.changeSize = CShape.prototype.changeSize;
-    CChartSpace.prototype.isPlaceholder = CShape.prototype.isPlaceholder;
     CChartSpace.prototype.getBase64Img = CShape.prototype.getBase64Img;
     CChartSpace.prototype.getDataRefs = function() {
         if(!this.dataRefs) {
@@ -3722,15 +3721,6 @@ var GLOBAL_PATH_COUNT = 0;
     };
     CChartSpace.prototype.drawAdjustments = function() {
     };
-    CChartSpace.prototype.isChart = function() {
-        return true;
-    };
-    CChartSpace.prototype.isShape = function() {
-        return false;
-    };
-    CChartSpace.prototype.isGroup = function() {
-        return false;
-    };
     CChartSpace.prototype.setGroup = function(group) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartSpace_SetGroup, this.group, group));
         this.group = group;
@@ -4501,6 +4491,7 @@ var GLOBAL_PATH_COUNT = 0;
             }
 
 
+
             oCurAxis.labels = oLabelsBox;
             oCurAxis.posX = null;
             oCurAxis.posY = null;
@@ -4563,6 +4554,15 @@ var GLOBAL_PATH_COUNT = 0;
             }
             else {//vertical axis
                 fDistance = -fDistance;
+                let oView3D = this.chart.getView3d();
+                if(oView3D) {
+                    let nRotY = oView3D.rotY;
+                    if(AscFormat.isRealNumber(nRotY)) {
+                        if(nRotY >= 90 && nRotY < 270) {
+                            fDistance = -fDistance;
+                        }
+                    }
+                }
                 oCurAxis.posX = fAxisPos;
                 oCurAxis.yPoints = [];
                 aPoints = oCurAxis.yPoints;

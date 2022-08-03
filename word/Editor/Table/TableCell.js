@@ -125,6 +125,11 @@ CTableCell.prototype =
         return this.Id;
     },
 
+	GetId : function()
+	{
+		return this.Id;
+	},
+
     Get_Theme : function()
     {
         return this.Row.Table.Get_Theme();
@@ -558,12 +563,12 @@ CTableCell.prototype =
         return true;
     },
 
-    Is_UseInDocument : function(Id)
+	IsUseInDocument : function(Id)
     {
-        if ( null != this.Row )
-            return this.Row.Is_UseInDocument(this.Get_Id());
+		if (!this.Row)
+			return false;
 
-        return false;
+		return this.Row.IsUseInDocument(this.GetId());
     },
 
     Get_PageContentStartPos : function(PageNum)
@@ -2712,3 +2717,4 @@ CTableCellRecalculateObject.prototype =
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTableCell = CTableCell;
+window['AscWord'].CTableCell = CTableCell;

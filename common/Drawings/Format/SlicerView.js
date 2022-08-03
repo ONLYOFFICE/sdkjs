@@ -1234,8 +1234,8 @@
         this.bodyPr.rIns = HEADER_RIGHT_PADDING;
         this.bodyPr.tIns = HEADER_TOP_PADDING;
         this.bodyPr.bIns = HEADER_BOTTOM_PADDING;
-        this.bodyPr.horzOverflow = AscFormat.nOTClip;
-        this.bodyPr.vertOverflow = AscFormat.nOTClip;
+        this.bodyPr.horzOverflow = AscFormat.nHOTClip;
+        this.bodyPr.vertOverflow = AscFormat.nVOTClip;
 
         this.eventListener = null;
         this.startButton = null;
@@ -1841,8 +1841,8 @@
         this.bodyPr.tIns = 0;
         this.bodyPr.bIns = 0;
         this.bodyPr.bIns = 0;
-        this.bodyPr.horzOverflow = AscFormat.nOTClip;
-        this.bodyPr.vertOverflow = AscFormat.nOTClip;
+        this.bodyPr.horzOverflow = AscFormat.nHOTClip;
+        this.bodyPr.vertOverflow = AscFormat.nVOTClip;
     }
     CButton.prototype = Object.create(CButtonBase.prototype);
     CButton.prototype.getTxBodyType = function () {

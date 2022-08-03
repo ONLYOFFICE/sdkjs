@@ -51,7 +51,7 @@ CShape.prototype.Get_Numbering =  function()
     return new CNumbering();
 };
 
-CShape.prototype.Is_UseInDocument = function(){
+CShape.prototype.IsUseInDocument = function(){
     if(this.group)
     {
         var aSpTree = this.group.spTree;
@@ -59,7 +59,7 @@ CShape.prototype.Is_UseInDocument = function(){
         {
             if(aSpTree[i] === this)
             {
-                return this.group.Is_UseInDocument();
+                return this.group.IsUseInDocument();
             }
         }
         return false;

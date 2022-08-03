@@ -2883,13 +2883,13 @@
 		var sVertOverflow = null;
 		switch(oBodyPr.vertOverflow)
 		{
-			case AscFormat.nOTClip:
+			case AscFormat.nVOTClip:
 				sVertOverflow = "clip";
 				break;
-			case AscFormat.nOTEllipsis:
+			case AscFormat.nVOTEllipsis:
 				sVertOverflow = "ellipsis";
 				break;
-			case AscFormat.nOTOwerflow:
+			case AscFormat.nVOTOverflow:
 				sVertOverflow = "overflow";
 				break;
 		}
@@ -14690,13 +14690,13 @@
 		switch(oParsedBodyPr["vertOverflow"])
 		{
 			case "clip":
-				nVertOverflow = AscFormat.nOTClip;
+				nVertOverflow = AscFormat.nVOTClip;
 				break;
 			case "ellipsis":
-				nVertOverflow = AscFormat.nOTEllipsis;
+				nVertOverflow = AscFormat.nVOTEllipsis;
 				break;
 			case "overflow":
-				nVertOverflow = AscFormat.nOTOwerflow;
+				nVertOverflow = AscFormat.nVOTOverflow;
 				break;
 		}
 

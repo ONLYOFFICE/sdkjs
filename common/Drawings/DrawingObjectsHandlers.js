@@ -148,7 +148,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
     {
         if(selected_objects.length === 1)
         {
-            if(window["IS_NATIVE_EDITOR"] && e.ClickCount > 1)
+            if(window["IS_NATIVE_EDITOR"] && AscFormat.isLeftButtonDoubleClick(e))
             {
                 if(selected_objects[0].getObjectType() === AscDFH.historyitem_type_Shape)
                 {
@@ -210,7 +210,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
                 if(hit_to_handles > -1 && !oGeometryEditSelection)
                 {
 
-                    if(window["IS_NATIVE_EDITOR"] && e.ClickCount > 1)
+                    if(window["IS_NATIVE_EDITOR"] && AscFormat.isLeftButtonDoubleClick(e))
                     {
                         if(selected_objects[i].getObjectType() === AscDFH.historyitem_type_Shape)
                         {
@@ -440,7 +440,7 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
     {
         if(drawing.getObjectType() === AscDFH.historyitem_type_Shape && drawing.getDocContent && drawing.getDocContent())
         {
-            if(e.ClickCount > 1 && !e.ShiftKey && !e.CtrlKey && ((drawingObjectsController.selection.groupSelection && drawingObjectsController.selection.groupSelection.selectedObjects.length === 1) || drawingObjectsController.selectedObjects.length === 1))
+            if(AscFormat.isLeftButtonDoubleClick(e) && !e.ShiftKey && !e.CtrlKey && ((drawingObjectsController.selection.groupSelection && drawingObjectsController.selection.groupSelection.selectedObjects.length === 1) || drawingObjectsController.selectedObjects.length === 1))
             {
                 if(!hit_in_text_rect && (hit_in_inner_area || hit_in_path))
                 {
@@ -1928,7 +1928,7 @@ function handleInlineHitNoText(drawing, drawingObjects, e, x, y, pageIndex, bInS
             drawingObjects.resetSelection();
             drawing.select(drawingObjects, pageIndex);
             drawingObjects.changeCurrentState(new AscFormat.PreMoveInlineObject(drawingObjects, drawing, bIsSelected, !bInSelect, pageIndex, x, y));
-            if(e.ClickCount > 1 && !e.ShiftKey && !e.CtrlKey && ((drawingObjects.selection.groupSelection && drawingObjects.selection.groupSelection.selectedObjects.length === 1) || drawingObjects.selectedObjects.length === 1))
+            if(AscFormat.isLeftButtonDoubleClick(e) && !e.ShiftKey && !e.CtrlKey && ((drawingObjects.selection.groupSelection && drawingObjects.selection.groupSelection.selectedObjects.length === 1) || drawingObjects.selectedObjects.length === 1))
             {
                 if (drawing.getObjectType() === AscDFH.historyitem_type_ChartSpace && drawingObjects.handleChartDoubleClick)
                     drawingObjects.handleChartDoubleClick(drawing.parent, drawing, e, x, y, pageIndex);

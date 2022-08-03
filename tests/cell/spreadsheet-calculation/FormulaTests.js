@@ -3504,6 +3504,22 @@ $( function () {
         assert.ok( oParser.parse() );
         assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );
 
+		oParser = new parserFormula( "SEARCH(\"pe\",\"dEFabcdEF\",2)", "C2", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "SEARCH(\"de\",\"dEFabcdEF\",2)", "C2", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), 7 );
+
+		oParser = new parserFormula( "SEARCH(\"de\",\"dEFabcdEF\",0)", "C2", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "SEARCH(\"de\",\"dEFabcdEF\",-2)", "C2", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
 		testArrayFormula2(assert, "SEARCH", 2, 3);
     } );
 

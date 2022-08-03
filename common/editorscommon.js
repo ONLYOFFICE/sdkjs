@@ -660,12 +660,13 @@
 			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
 			return false;
 		}
-		if (!window.nativeZlibEngine || !window.nativeZlibEngine.open(stream)) {
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(stream)) {
 			return false;
 		}
-		let contentTypesBytes = window.nativeZlibEngine.getFile("[Content_Types].xml");
+		let contentTypesBytes = jsZlib.getFile("[Content_Types].xml");
 		let contentTypes = contentTypesBytes ? AscCommon.UTF8ArrayToString(contentTypesBytes, 0, contentTypesBytes.length) : "";
-		window.nativeZlibEngine.close();
+		jsZlib.close();
 
 		return -1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml") ||
@@ -736,19 +737,20 @@
 				onEndOpen();
 			}, function(data) {
 				oResult.changes = [];
-				if (window.nativeZlibEngine && window.nativeZlibEngine.open(data)) {
-					window.nativeZlibEngine.files.forEach(function(path){
-						let data = window.nativeZlibEngine.getFile(path);
+				let jsZlib = new AscCommon.ZLib();
+				if (jsZlib.open(data)) {
+					jsZlib.files.forEach(function(path){
+						let data = jsZlib.getFile(path);
 						if (data) {
 							if (path.endsWith('.json')) {
 								let text = AscCommon.UTF8ArrayToString(data, 0, data.length);
 								oResult.changes[parseInt(path.slice('changes'.length))] = JSON.parse(text);
 							} else {
-								oZipImages[path] = data;
+								oZipImages[path] = new Uint8Array(data);
 							}
 						}
 					});
-					window.nativeZlibEngine.close();
+					jsZlib.close();
 				} else {
 					nError = Asc.c_oAscError.ID.Unknown;
 				}
@@ -1760,7 +1762,7 @@
 							if (!window.g_asc_plugins)
 								return;
 
-							if (data["subType"] == "internalCommand")
+							if (data["subType"] === "internalCommand")
 							{
 								// такие команды перечисляем здесь и считаем их функционалом
 								switch (data.data.type)
@@ -1774,6 +1776,11 @@
 									default:
 										break;
 								}
+							}
+							if (data["subType"] === "connector")
+							{
+								window.g_asc_plugins.externalConnectorMessage(data["data"]);
+								return;
 							}
 
 							window.g_asc_plugins.sendToAllPlugins(event.data);

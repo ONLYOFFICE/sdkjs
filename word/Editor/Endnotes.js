@@ -202,7 +202,7 @@ CEndnotesController.prototype.GetEndnotePrPos = function()
  * @param {CFootEndnote.array} arrEndnotesList
  * @returns {boolean}
  */
-CEndnotesController.prototype.Is_UseInDocument = function(sEndnoteId, arrEndnotesList)
+CEndnotesController.prototype.IsUseInDocument = function(sEndnoteId, arrEndnotesList)
 {
 	if (!arrEndnotesList)
 		arrEndnotesList = this.private_GetEndnotesLogicRange(null, null);
@@ -987,7 +987,7 @@ CEndnotesController.prototype.GetFirstParagraphs = function()
 	{
 		var oEndnote = this.Endnote[sId];
 		var oParagrpaph = oEndnote.GetFirstParagraph();
-		if(oParagrpaph && oParagrpaph.Is_UseInDocument())
+		if(oParagrpaph && oParagrpaph.IsUseInDocument())
 		{
 			aParagraphs.push(oParagrpaph);
 		}
@@ -1046,6 +1046,17 @@ CEndnotesController.prototype.GetNumberingInfo = function(oPara, oNumPr, oEndnot
 		return [oNumberingEngine.GetNumInfo(), oNumberingEngine.GetNumInfo(false)];
 
 	return oNumberingEngine.GetNumInfo();
+};
+CEndnotesController.prototype.CheckRunContent = function(fCheck)
+{
+	for (var sId in this.Endnote)
+	{
+		let oEndnote = this.Endnote[sId];
+		if (oEndnote.CheckRunContent(fCheck))
+			return true;
+	}
+
+	return false;
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Private area
@@ -3027,7 +3038,7 @@ CEndnotesController.prototype.RestoreDocumentStateAfterLoadChanges = function(St
 	if (0 === State.EndnotesSelectDirection)
 	{
 		var oEndnote = State.CurEndnote;
-		if (oEndnote && true === this.Is_UseInDocument(oEndnote.GetId()))
+		if (oEndnote && true === this.IsUseInDocument(oEndnote.GetId()))
 		{
 			this.Selection.Start.Endnote = oEndnote;
 			this.Selection.End.Endnote   = oEndnote;
@@ -3080,7 +3091,7 @@ CEndnotesController.prototype.RestoreDocumentStateAfterLoadChanges = function(St
 		for (var nIndex = 0, nCount = arrEndnotesList.length; nIndex < nCount; ++nIndex)
 		{
 			var oEndnote = arrEndnotesList[nIndex];
-			if (true === this.Is_UseInDocument(oEndnote.GetId(), arrAllEndnotes))
+			if (true === this.IsUseInDocument(oEndnote.GetId(), arrAllEndnotes))
 			{
 				if (null === StartEndnote)
 					StartEndnote = oEndnote;

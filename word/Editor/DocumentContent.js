@@ -143,7 +143,7 @@ function CDocumentContent(Parent, DrawingDocument, X, Y, XLimit, YLimit, Split, 
     this.ReindexStartPos = 0;
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 
     if(this.bPresentation)
     {
@@ -459,7 +459,7 @@ CDocumentContent.prototype.Is_PointInFlowTable = function(X, Y, PageAbs)
 };
 CDocumentContent.prototype.Get_Numbering = function()
 {
-	return this.Get_Numbering();
+	return this.GetNumbering();
 };
 CDocumentContent.prototype.GetNumbering = function()
 {
@@ -646,30 +646,28 @@ CDocumentContent.prototype.Is_TopDocument = function(isReturnTopDocument)
 
 	return this.Parent.Is_TopDocument(isReturnTopDocument);
 };
-// Проверяем, используется ли данный элемент в документе
-CDocumentContent.prototype.Is_UseInDocument = function(Id)
+CDocumentContent.prototype.IsUseInDocument = function(Id)
 {
-	var bUse = false;
-
-	if (null != Id)
+	if (undefined !== Id && null !== Id)
 	{
-		var Count = this.Content.length;
-		for (var Index = 0; Index < Count; Index++)
+		let isFound = false;
+		for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 		{
-			if (Id === this.Content[Index].Get_Id())
+			if (this.Content[nIndex].Get_Id() === Id)
 			{
-				bUse = true;
+				isFound = true;
 				break;
 			}
 		}
+
+		if (!isFound)
+			return false;
 	}
-	else
-		bUse = true;
 
-	if (true === bUse && this.Parent && this.Parent.Is_UseInDocument)
-		return this.Parent.Is_UseInDocument(this.Get_Id());
+	if (!this.Parent || !this.Parent.IsUseInDocument)
+		return false;
 
-	return false;
+	return this.Parent.IsUseInDocument(this.GetId());
 };
 CDocumentContent.prototype.IsHdrFtr = function(bReturnHdrFtr)
 {
@@ -3624,6 +3622,9 @@ CDocumentContent.prototype.MoveCursorLeft = function(AddToSelect, Word)
 				{
 					if (0 !== this.Selection.EndPos)
 					{
+						if (this.Selection.EndPos > this.Selection.StartPos)
+							this.Content[this.Selection.EndPos].RemoveSelection();
+
 						this.Selection.EndPos--;
 						this.CurPos.ContentPos = this.Selection.EndPos;
 
@@ -3773,6 +3774,9 @@ CDocumentContent.prototype.MoveCursorRight = function(AddToSelect, Word, FromPas
 				{
 					if (this.Content.length - 1 !== this.Selection.EndPos)
 					{
+						if (this.Selection.EndPos < this.Selection.StartPos)
+							this.Content[this.Selection.EndPos].RemoveSelection();
+
 						this.Selection.EndPos++;
 						this.CurPos.ContentPos = this.Selection.EndPos;
 
@@ -9133,3 +9137,4 @@ CDocumentRecalculateObject.prototype =
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CDocumentContent = CDocumentContent;
+window['AscWord'].CDocumentContent = CDocumentContent;

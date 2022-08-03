@@ -2444,6 +2444,9 @@ function (window, undefined) {
 				wrapper.readData(worksheetSource);
 				worksheetSource.fromWorksheetSource(worksheetSource, true);
 			}
+		}  else if(AscCH.historyitem_Workbook_Date1904 === Type) {
+			wb.setDate1904(bUndo ? Data.from : Data.to);
+			AscCommon.oNumFormatCache.cleanCache();
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
@@ -3894,6 +3897,9 @@ function (window, undefined) {
 				break;
 			case AscCH.historyitem_PivotTable_SetGridDropZones:
 				pivotTable.asc_setGridDropZones(value);
+				break;
+			case AscCH.historyitem_PivotTable_UseAutoFormatting:
+				pivotTable.asc_setUseAutoFormatting(value);
 				break;
 			case AscCH.historyitem_PivotTable_SetFillDownLabelsDefault:
 				pivotTable.setFillDownLabelsDefault(value, false);

@@ -170,7 +170,7 @@ CParaRevisionMove.prototype.IsUseInDocument = function()
 	if (!oParagraph || !this.Paragraph.Get_PosByElement(this))
 		return false;
 
-	return oParagraph.Is_UseInDocument();
+	return oParagraph.IsUseInDocument();
 };
 CParaRevisionMove.prototype.GetReviewChange = function()
 {
@@ -315,7 +315,7 @@ CRunRevisionMove.prototype.PreDelete = function()
 CRunRevisionMove.prototype.IsUseInDocument = function()
 {
 	var oRun = this.GetRun();
-	return (oRun && -1 !== oRun.GetElementPosition(this) && oRun.Is_UseInDocument());
+	return (oRun && -1 !== oRun.GetElementPosition(this) && oRun.IsUseInDocument());
 };
 CRunRevisionMove.prototype.GetReviewChange = function()
 {

@@ -216,6 +216,32 @@ CSectionPr.prototype =
         return HdrFtrs;
     },
 
+	RemoveEmptyHdrFtrs : function()
+	{
+		function IsEmpty(oHeader)
+		{
+			return (oHeader && oHeader.GetContent().GetElementsCount() <= 0);
+		}
+
+		if (IsEmpty(this.HeaderFirst))
+			this.Set_Header_First(null);
+
+		if (IsEmpty(this.HeaderEven))
+			this.Set_Header_Even(null);
+
+		if (IsEmpty(this.HeaderDefault))
+			this.Set_Header_Default(null);
+
+		if (IsEmpty(this.FooterFirst))
+			this.Set_Footer_First(null);
+
+		if (IsEmpty(this.FooterEven))
+			this.Set_Footer_Even(null);
+
+		if (IsEmpty(this.FooterDefault))
+			this.Set_Footer_Default(null);
+	},
+
     Compare_PageSize : function(OtherSectionPr)
     {
         var ThisPS = this.PageSize;
@@ -422,6 +448,16 @@ CSectionPr.prototype =
     {
         return this.TitlePage;
     },
+
+	IsTitlePage : function()
+	{
+		return this.TitlePage;
+	},
+
+	IsEvenAndOdd : function()
+	{
+		return EvenAndOddHeaders;
+	},
     
     GetHdrFtr : function(bHeader, bFirst, bEven)
     {
@@ -1932,6 +1968,7 @@ CSectionLnNumType.prototype.GetRestart = function()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CSectionPr = CSectionPr;
+window['AscWord'].CSectionPr = CSectionPr;
 
 window['Asc']['CSectionLnNumType'] = window['Asc'].CSectionLnNumType = CSectionLnNumType;
 CSectionLnNumType.prototype["get_CountBy"]  = CSectionLnNumType.prototype.GetCountBy;

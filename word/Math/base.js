@@ -938,7 +938,7 @@ CMathBase.prototype.IsMathText = function()
 };
 CMathBase.prototype.GetParent = function()
 {
-    return (this.Parent.Type !== para_Math_Composition ? this : this.Parent.GetParent());
+    return (this.Parent ? (this.Parent.Type !== para_Math_Composition ? this.Parent : this.Parent.GetParent()) : null);
 };
 CMathBase.prototype.Get_TextPr = function(ContentPos, Depth)
 {

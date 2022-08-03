@@ -50,7 +50,7 @@ CImageShape.prototype.getDrawingObjectsController = CShape.prototype.getDrawingO
 CImageShape.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;
 CImageShape.prototype.getIsSingleBody = CShape.prototype.getIsSingleBody;
 CImageShape.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
-CImageShape.prototype.Is_UseInDocument = CShape.prototype.Is_UseInDocument;
+CImageShape.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 CImageShape.prototype.getEditorType = function()
 {
     return 0;

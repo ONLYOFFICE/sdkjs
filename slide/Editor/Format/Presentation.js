@@ -4096,7 +4096,9 @@ CPresentation.prototype.Begin_CompositeInput = function () {
         this.CompositeInput = {
             Run: oRun,
             Pos: oRun.State.ContentPos,
-            Length: 0
+            Length: 0,
+            CanUndo : true,
+            Check   : true
         };
 
         oRun.Set_CompositeInput(this.CompositeInput);
@@ -4197,6 +4199,8 @@ CPresentation.prototype.Replace_CompositeText = function (arrCharCodes) {
     this.Recalculate();
     this.RecalculateCurPos(true, true);
     this.Document_UpdateSelectionState();
+    if (!this.History.CheckUnionLastPoints())
+        this.CompositeInput.CanUndo = false;
 };
 CPresentation.prototype.Set_CursorPosInCompositeText = function (nPos) {
     if (null === this.CompositeInput)
@@ -4222,8 +4226,17 @@ CPresentation.prototype.End_CompositeInput = function () {
     if (null === this.CompositeInput)
         return;
 
+    var nLen = this.CompositeInput.Length;
+
     var oRun = this.CompositeInput.Run;
     oRun.Set_CompositeInput(null);
+
+    if (0 === nLen && true === this.History.CanRemoveLastPoint() && true === this.CompositeInput.CanUndo)
+    {
+        this.Document_Undo();
+        this.History.Clear_Redo();
+    }
+
     this.CompositeInput = null;
 
     var oController = this.GetCurrentController();
@@ -12193,7 +12206,7 @@ IdList.prototype.readChildXml = function(name, reader) {
     oEntry.fromXml(reader);
     this.list.push(oEntry);
 };
-IdList.prototype.writeChildren = function(writer) {
+IdList.prototype.writeChildrenXml = function(writer) {
     for(let nEntry = 0; nEntry < this.list.length; ++nEntry) {
         this.list[nEntry].toXml(writer, this.list[nEntry].name);
     }

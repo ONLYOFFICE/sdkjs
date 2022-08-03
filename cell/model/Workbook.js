@@ -2106,25 +2106,7 @@
 		if (xmlParserContext) {
 			AscCommon.pptx_content_loader.Reader.ImageMapChecker = AscCommon.pptx_content_loader.ImageMapChecker;
 			var context = xmlParserContext;
-			for (var path in context.imageMap) {
-				if (context.imageMap.hasOwnProperty(path)) {
-					var data = context.zip.getFile(path);
-					if (data) {
-						if (window["NATIVE_EDITOR_ENJINE"]) {
-							//slice because array contains garbage after zip.close
-							t.oApi.isOpenOOXInBrowserDoctImages[path] = data.slice();
-						} else {
-							let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
-							let blob = new Blob([data], {type: mime});
-							let url = window.URL.createObjectURL(blob);
-							AscCommon.g_oDocumentUrls.addImageUrl(path, url);
-						}
-						context.imageMap[path].forEach(function(blipFill) {
-							AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
-						});
-					}
-				}
-			}
+			context.loadDataLinks();
 		}
 	};
 	Workbook.prototype.preparePivotForSerialization=function(pivotCaches, isCopyPaste){
@@ -2955,7 +2937,9 @@
 				nCurOffset = oBinaryFileReader.getbase64DecodedData2(sChange, aIndexes[i], stream, nCurOffset);
 				var item = new UndoRedoItemSerializable();
 				item.Deserialize(stream);
-				aUndoRedoElems.push(item);
+				if (!oThis.needSkipChange(item)) {
+					aUndoRedoElems.push(item);
+				}
 			}
 			var wsViews = window["Asc"]["editor"].wb && window["Asc"]["editor"].wb.wsViews;
 			if(oThis.oApi.collaborativeEditing.getFast()){
@@ -3118,6 +3102,43 @@
 			this.bCollaborativeChanges = false;
 		}
 		return oRedoObjectParam;
+	};
+	Workbook.prototype.needSkipChange = function(change){
+		var res = false;
+		var aSkipChanges = [[AscCommonExcel.g_oUndoRedoWorkbook.getClassType(), AscCH.historyitem_Workbook_Date1904]];
+
+		//при десериализации пропускаем изменение, если такое же есть в списке текущих у данного юзера
+		var isNeededChange = function (_change, _actionType, _classType) {
+			if (_change && _change.oClass) {
+				if (_actionType === undefined || _classType === undefined) {
+					for (var j = 0; j < aSkipChanges.length; j++) {
+						if (aSkipChanges[j][0] === _change.oClass.getClassType() && aSkipChanges[j][1] === _change.nActionType) {
+							return true;
+						}
+					}
+				} else {
+					if (_change && _change.oClass && _change.oClass.getClassType() === _classType && _change.nActionType === _actionType) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		};
+
+		if (this.aCollaborativeActions && this.aCollaborativeActions.length) {
+			if (isNeededChange(change)) {
+				var actionType = change.nActionType;
+				var classType = change.oClass && change.oClass.getClassType();
+				for (var i = 0, length = this.aCollaborativeActions.length; i < length; ++i) {
+					if (isNeededChange(change, actionType, classType)) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return res;
 	};
 	Workbook.prototype.getTableRangeForFormula = function(name, objectParam){
 		var res = null;
@@ -3288,8 +3309,9 @@
 					} else {
 						i = end - 1;
 						start = active + 1;
+						inc *= -1;
 					}
-					inc *= -1;
+
 					for (; i < end && i >= start; i += inc) {
 						ws = this.getWorksheet(i);
 						if (ws.getHidden()) {
@@ -3882,6 +3904,24 @@
 		return res;
 	};
 
+	Workbook.prototype.setDate1904 = function (val, addToHistory) {
+		var oldVal = AscCommon.bDate1904;
+
+		AscCommon.bDate1904 = val;
+		AscCommonExcel.c_DateCorrectConst = AscCommon.bDate1904 ? AscCommonExcel.c_Date1904Const : AscCommonExcel.c_Date1900Const;
+		this.WorkbookPr.Date1904 = val;
+
+		if (addToHistory) {
+			var updateSheet = this.getActiveWs();
+			var updateRange = new Asc.Range(0, 0, updateSheet.getColsCount(), updateSheet.getRowsCount());
+
+			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Date1904,
+				updateSheet.getId(), updateRange, new UndoRedoData_FromTo(oldVal, val));
+		}
+	};
+
+
+//-------------------------------------------------------------------------------------------------
 	Workbook.prototype.getRangeAndSheetFromStr = function (sRange) {
 		var ws;
 		var range;
@@ -4630,7 +4670,7 @@
 		for (i = 0; i < this.aSparklineGroups.length; ++i) {
 			newSparkline = this.aSparklineGroups[i].clone();
 			newSparkline.setWorksheet(oNewWs, this);
-			oNewWs.aSparklineGroups.push(newSparkline);
+			oNewWs.addSparklineGroups(newSparkline);
 		}
 	};
 	Worksheet.prototype.initColumn = function (column) {
@@ -5716,14 +5756,14 @@
 		if(null == stop)
 			stop = start;
 		History.Create_NewPoint();
-		var oSelection = History.GetSelection();
+		/*var oSelection = History.GetSelection();
 		if(null != oSelection)
 		{
 			oSelection = oSelection.clone();
 			oSelection.assign(start, 0, stop, gc_nMaxRow0);
 			History.SetSelection(oSelection);
 			History.SetSelectionRedo(oSelection);
-		}
+		}*/
 
 		var bNotAddCollapsed = true == this.workbook.bUndoChanges || true == this.workbook.bRedoChanges || this.bExcludeCollapsed;
 		var _summaryRight = this.sheetPr ? this.sheetPr.SummaryRight : true;
@@ -6045,14 +6085,14 @@
 			stop = start;
 		History.Create_NewPoint();
 		var oThis = this, i;
-		var oSelection = History.GetSelection();
+		/*var oSelection = History.GetSelection();
 		if(null != oSelection)
 		{
 			oSelection = oSelection.clone();
 			oSelection.assign(0, start, gc_nMaxCol0, stop);
 			History.SetSelection(oSelection);
 			History.SetSelectionRedo(oSelection);
-		}
+		}*/
 		var prevRow;
 		var bNotAddCollapsed = true == this.workbook.bUndoChanges || true == this.workbook.bRedoChanges || this.bExcludeCollapsed;
 		var _summaryBelow = this.sheetPr ? this.sheetPr.SummaryBelow : true;
@@ -8711,11 +8751,11 @@
 	};
 	Worksheet.prototype._findAllCells = function (options, searchEngine) {
 		//***searchEngine
-		if (true !== options.isMatchCase) {
-			options.findWhat = options.findWhat.toLowerCase();
-		}
 		if (options.findWhat == null) {
 			options.findWhat = "";
+		}
+		if (true !== options.isMatchCase) {
+			options.findWhat = options.findWhat.toLowerCase();
 		}
 
 		var findEmptyStr = options.findWhat === "";
@@ -8810,9 +8850,12 @@
 		this.lastFindOptions.findRange = findRange.getBBox0().clone();
 		this.lastFindOptions.findResults = result;
 
-		if (!options.isReplaceAll && this.workbook.oApi.selectSearchingResults && (oldResults || result.isNotEmpty() || (searchEngine && searchEngine.isNotEmpty())) &&
+		if (!options.isReplaceAll && this.workbook.oApi.selectSearchingResults && (oldResults || result.isNotEmpty() || (searchEngine && (searchEngine._lastNotEmpty || searchEngine.isNotEmpty()))) &&
 			this === this.workbook.getActiveWs()) {
 			this.workbook.handlers.trigger("drawWS");
+			if (searchEngine) {
+				searchEngine._lastNotEmpty = null;
+			}
 		}
 	};
 	Worksheet.prototype.findCellText = function (options, searchEngine) {
@@ -9415,7 +9458,7 @@
 	Worksheet.prototype.getSlicerCachesBySourceName = function (name) {
 		var res = null
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			var cache = this.aSlicers[i].getSlicerCache();
+			var cache = this.aSlicers[i] && this.aSlicers[i].getSlicerCache();
 			if (cache && name === cache.sourceName) {
 				if (!res) {
 					res = [];
@@ -9431,7 +9474,7 @@
 		var res = [];
 
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			if (name === this.aSlicers[i].caption) {
+			if (this.aSlicers[i] && name === this.aSlicers[i].caption) {
 				res.push({obj: this.aSlicers[i], index: i});
 			}
 		}
@@ -9443,7 +9486,7 @@
 		var res = [];
 
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			var cache = this.aSlicers[i].getSlicerCache();
+			var cache = this.aSlicers[i] && this.aSlicers[i].getSlicerCache();
 			if (cache && name === cache.name) {
 				res.push(this.aSlicers[i]);
 			}
@@ -9454,7 +9497,7 @@
 
 	Worksheet.prototype.getSlicerCacheByCacheName = function (name) {
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			var cache = this.aSlicers[i].getSlicerCache();
+			var cache = this.aSlicers[i] && this.aSlicers[i].getSlicerCache();
 			if (cache && name === cache.name) {
 				return cache;
 			}
@@ -9467,7 +9510,7 @@
 		var res = null;
 
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			if (name === this.aSlicers[i].name) {
+			if (this.aSlicers[i] && name === this.aSlicers[i].name) {
 				res = this.aSlicers[i];
 				break;
 			}
@@ -9491,7 +9534,7 @@
 		var res = null;
 
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			if (name === this.aSlicers[i].name) {
+			if (this.aSlicers[i] && name === this.aSlicers[i].name) {
 				res = {obj: this.aSlicers[i], index: i};
 				break;
 			}
@@ -9502,7 +9545,7 @@
 
 	Worksheet.prototype.getSlicerCacheByName = function (name) {
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			var cache = this.aSlicers[i].getSlicerCache();
+			var cache = this.aSlicers[i] && this.aSlicers[i].getSlicerCache();
 			if (cache && name === cache.name) {
 				return cache;
 			}
@@ -9515,7 +9558,7 @@
 		var res = [];
 		for (var i = 0; i < this.aSlicers.length; i++) {
 			//пока сделал только для форматированных таблиц
-			var tableSlicerCache = this.aSlicers[i].getTableSlicerCache();
+			var tableSlicerCache = this.aSlicers[i] && this.aSlicers[i].getTableSlicerCache();
 			if (tableSlicerCache && tableSlicerCache.tableId === val) {
 				res.push(this.aSlicers[i]);
 			}
@@ -9527,7 +9570,7 @@
 		var res = [];
 		for (var i = 0; i < this.aSlicers.length; i++) {
 			//пока сделал только для форматированных таблиц
-			var tableSlicerCache = this.aSlicers[i].getTableSlicerCache();
+			var tableSlicerCache = this.aSlicers[i] && this.aSlicers[i].getTableSlicerCache();
 			if (tableSlicerCache && tableSlicerCache.tableId === tableName && tableSlicerCache.column === colName) {
 				res.push(this.aSlicers[i]);
 			}

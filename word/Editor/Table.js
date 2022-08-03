@@ -3455,28 +3455,28 @@ CTable.prototype.IsInnerTable = function()
 
 	return false;
 };
-CTable.prototype.Is_UseInDocument = function(Id)
+CTable.prototype.IsUseInDocument = function(Id)
 {
-	var bUse = false;
-	if (null != Id)
+	if (undefined !== Id && null !== Id)
 	{
-		var RowsCount = this.Content.length;
-		for (var Index = 0; Index < RowsCount; Index++)
+		let isFound = false;
+		for (let nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
 		{
-			if (Id === this.Content[Index].Get_Id())
+			if (Id === this.GetRow(nCurRow).GetId())
 			{
-				bUse = true;
+				isFound = true;
 				break;
 			}
 		}
+
+		if (!isFound)
+			return false;
 	}
-	else
-		bUse = true;
 
-	if (true === bUse && null != this.Parent)
-		return this.Parent.Is_UseInDocument(this.Get_Id());
+	if (-1 === this.GetIndex())
+		return false;
 
-	return false;
+	return this.Parent.IsUseInDocument();
 };
 CTable.prototype.Get_CurrentPage_Absolute = function()
 {
@@ -5735,22 +5735,27 @@ CTable.prototype.RemoveSelection = function()
 	if (false === this.Selection.Use)
 		return;
 
+	let arrCells = this.GetSelectionArray(true);
+	for (let nIndex = 0, nCount = arrCells.length; nIndex < nCount; ++nIndex)
+	{
+		let oPos  = arrCells[nIndex];
+		let oRow  = this.GetRow(oPos.Row);
+		if (!oRow)
+			continue;
+
+		let oCell = oRow.GetCell(oPos.Cell);
+		if (oCell)
+			oCell.GetContent().RemoveSelection();
+	}
+
 	this.CurCell = null;
 	if (this.GetRowsCount() > 0)
 	{
-
-		var oRow  = this.GetRow(this.Selection.EndPos.Pos.Row);
-		var oCell = null;
+		let oRow  = this.GetRow(this.Selection.EndPos.Pos.Row);
 		if (!oRow)
-			oCell = this.GetRow(0).GetCell(0);
+			this.CurCell = this.GetRow(0).GetCell(0);
 		else
-			oCell = oRow.GetCellsCount() > this.Selection.EndPos.Pos.Cell ? oRow.GetCell(this.Selection.EndPos.Pos.Cell) : oRow.GetCell(0);
-
-		if (oCell)
-		{
-			this.CurCell = oCell;
-			this.CurCell.GetContent().RemoveSelection();
-		}
+			this.CurCell = oRow.GetCellsCount() > this.Selection.EndPos.Pos.Cell ? oRow.GetCell(this.Selection.EndPos.Pos.Cell) : oRow.GetCell(0);
 	}
 
 	this.Selection.Use   = false;
@@ -14098,6 +14103,7 @@ CTable.prototype.RemoveTableCells = function()
 		return true;
 
 	var arrSelectedCells = this.GetSelectionArray(true);
+	this.RemoveSelection();
 
 	var arrDeleteInfo = [];
 	var arrRowsInfo   = [];
@@ -19696,3 +19702,4 @@ CTableRowsInfo.prototype.Init = function()
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTable = CTable;
 window['AscCommonWord'].type_Table = type_Table;
+window['AscWord'].CTable = CTable;

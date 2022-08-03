@@ -598,7 +598,7 @@
 		writer.WriteXmlNodeEnd(name);
 	};
 	CTable.prototype.fromXml = function(reader) {
-		let elem, oReadResult = reader.context.oReadResult;
+		let elem, t = this, oReadResult = reader.context.oReadResult;
 		var depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -1642,15 +1642,12 @@
 				break;
 			case "oMath":
 				elem = new ParaMath();
+				this.AddToContentToEnd(elem);
 				elem.fromXml(reader);
-				this.AddToContent(this.GetElementsCount(), elem);
 				break;
 			case "oMathPara":
 				elem = new AscCommon.CT_OMathPara();
-				elem.fromXml(reader);
-				if (elem.OMath) {
-					this.AddToContent(this.GetElementsCount(), elem.OMath);
-				}
+				elem.fromXml(reader, this);
 				break;
 			// case "permEnd":
 			// 	break;
@@ -1786,8 +1783,8 @@
 				case para_Math:
 					if (t.CheckMathPara(index)) {
 						let mathPara = new AscCommon.CT_OMathPara();
-						mathPara.setMath(item);
-						mathPara.toXml(writer, "m:oMathPara");
+						mathPara.initMathParaPr(item);
+						mathPara.toXml(writer, "m:oMathPara", item);
 					} else {
 						item.toXml(writer, "m:oMath");
 					}
@@ -1848,11 +1845,13 @@
 		}
 	};
 	Paragraph.prototype.fromXml = function(reader) {
+		let t = this, oReadResult = reader.context.oReadResult;
 		this.readAttr(reader);
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			var name = reader.GetNameNoNS();
 			if ("pPr" === name) {
+				this.Pr = new CParaPr();
 				this.Pr.fromXml(reader, this);
 			} else {
 				CParagraphContentWithParagraphLikeContent.prototype.fromXmlElem.call(this, reader, name);
@@ -1871,12 +1870,12 @@
 		writer.WriteXmlNodeEnd(name);
 	};
 	CParaPr.prototype.fromXml = function(reader, opt_paragraph) {
-		var depth = reader.GetDepth();
+		var depth = reader.GetDepth(), oReadResult = reader.context.oReadResult;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "pStyle" : {
 					this.PStyle = CT_StringW.prototype.toVal(reader, this.PStyle);
-					reader.context.oReadResult.paraStyles.push({pPr: this, style: this.PStyle});
+					oReadResult.paraStyles.push({pPr: this, style: this.PStyle});
 					break;
 				}
 				case "keepNext" : {
@@ -1904,7 +1903,9 @@
 					this.NumPr = new CNumPr();
 					this.NumPr.Set(undefined, undefined);
 					this.NumPr.fromXml(reader);
-					reader.context.oReadResult.paraNumPrs.push(this.NumPr);
+					if (null != this.NumPr.NumId) {
+						oReadResult.paraNumPrs.push(this.NumPr);
+					}
 					break;
 				}
 				case "suppressLineNumbers" : {
@@ -2046,6 +2047,7 @@
 				case "rPr" : {
 					if (opt_paragraph) {
 						let EndRun = opt_paragraph.GetParaEndRun();
+						opt_paragraph.TextPr.Value = new CTextPr();
 						opt_paragraph.TextPr.Value.fromXml(reader, EndRun);
 					}
 					break;
@@ -2059,7 +2061,7 @@
 					break;
 				}
 				case "pPrChange" : {
-					if (reader.context.oReadResult.checkReadRevisions()) {
+					if (oReadResult.checkReadRevisions()) {
 						let trackChange = new CT_TrackChange();
 						trackChange.fromXml(reader);
 						this.SetPrChange(trackChange.pPrChange, trackChange.ReviewInfo);
@@ -2600,7 +2602,7 @@
 		var oParagraph = this.GetParagraph();
 		var drawing = new ParaDrawing(0, 0, null, oParagraph.Parent.DrawingDocument, oParagraph.Parent, oParagraph);
 		drawing.fromXml(reader);
-		if (null != drawing.GraphicObj) {
+		if (drawing.GraphicObj) {
 			let newItem = drawing;
 			let oParaDrawing = drawing;
 			if (null != oParaDrawing.SimplePos)
@@ -2613,10 +2615,12 @@
 			// 	oParaDrawing.Set_ParaMath(oDrawing.ParaMath);
 
 			if (oParaDrawing.GraphicObj) {
+
 				// if (oParaDrawing.GraphicObj.setLocks && graphicFramePr.locks > 0) {
 				// 	oParaDrawing.GraphicObj.setLocks(graphicFramePr.locks);
 				// }
-				if (oParaDrawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_ChartSpace)//диаграммы могут быть без spPr
+				if (oParaDrawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_ChartSpace &&
+					oParaDrawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_SmartArt)
 				{
 					if (!oParaDrawing.GraphicObj.spPr) {
 						oParaDrawing.GraphicObj = null;
@@ -2625,8 +2629,9 @@
 				if (AscCommon.isRealObject(oParaDrawing.docPr) && oParaDrawing.docPr.isHidden) {
 					oParaDrawing.GraphicObj = null;
 				}
-				if (oParaDrawing.GraphicObj) {
-					if (oParaDrawing.GraphicObj.bEmptyTransform) {
+				let oGrObject = oParaDrawing.GraphicObj;
+				if (oGrObject) {
+					if (oGrObject.bEmptyTransform) {
 						var oXfrm = new AscFormat.CXfrm();
 						oXfrm.setOffX(0);
 						oXfrm.setOffY(0);
@@ -2637,10 +2642,10 @@
 						oXfrm.setChExtX(oParaDrawing.Extent.W);
 						oXfrm.setChExtY(oParaDrawing.Extent.H);
 						oXfrm.setParent(oParaDrawing.GraphicObj.spPr);
-						oParaDrawing.GraphicObj.spPr.setXfrm(oXfrm);
+						oGrObject.checkEmptySpPrAndXfrm(oXfrm);
 						delete oParaDrawing.GraphicObj.bEmptyTransform;
 					}
-					if (drawing_Anchor == oParaDrawing.DrawingType && typeof AscCommon.History.RecalcData_Add === "function")//TODO некорректная проверка typeof
+					if (drawing_Anchor === oParaDrawing.DrawingType && typeof AscCommon.History.RecalcData_Add === "function")//TODO некорректная проверка typeof
 						AscCommon.History.RecalcData_Add({
 							Type: AscDFH.historyitem_recalctype_Flow,
 							Data: oParaDrawing
@@ -2655,10 +2660,11 @@
 		let oVMLConverter = new AscFormat.CVMLToDrawingMLConverter();
 		return oVMLConverter.createParaDrawingMLFromVMLNode(reader, name, this.Paragraph);
 	};
-	ParaRun.prototype.fromXml = function(reader) {
+	ParaRun.prototype.fromXml = function(reader, opt_paragraphContent) {
 		let oReadResult = reader.context.oReadResult;
 		let footnotes = oReadResult.footnotes;
 		let endnotes = oReadResult.endnotes;
+		let isMathRun = this.IsMathRun();
 		var depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			var name = reader.GetNameNoNS();
@@ -2778,6 +2784,7 @@
 							continue;
 						}
 					}
+					this.Pr = new CTextPr();
 					this.Pr.fromXml(reader, this);
 					break;
 				case "ruby":
@@ -2822,7 +2829,13 @@
 				}
 			}
 			if (newItem) {
-				this.Add_ToContent(this.GetElementsCount(), newItem, false);
+				if (!isMathRun) {
+					this.Add_ToContent(this.GetElementsCount(), newItem, false);
+				} else if (opt_paragraphContent) {
+					let oNewRun = new ParaRun(opt_paragraphContent.GetParagraph());
+					oNewRun.Add_ToContent(0, newItem, false);
+					opt_paragraphContent.AddToContentToEnd(oNewRun);
+				}
 			}
 		}
 	};
@@ -4298,7 +4311,7 @@
 	};
 	CStyle.prototype.fromXml = function(reader, opt_addition) {
 		this.readAttr(reader, opt_addition);
-		var elem, depth = reader.GetDepth();
+		var elem, depth = reader.GetDepth(), oReadResult = reader.context.oReadResult;
 		let t = this;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -4392,22 +4405,27 @@
 				// 	break;
 				// }
 				case "pPr" : {
+					this.ParaPr = new CParaPr();
 					this.ParaPr.fromXml(reader);
 					break;
 				}
 				case "rPr" : {
+					this.TextPr = new CTextPr();
 					this.TextPr.fromXml(reader);
 					break;
 				}
 				case "tblPr" : {
+					this.TablePr = new CTablePr();
 					this.TablePr.fromXml(reader);
 					break;
 				}
 				case "trPr" : {
+					this.TableRowPr = new CTableRowPr();
 					this.TableRowPr.fromXml(reader);
 					break;
 				}
 				case "tcPr" : {
+					this.TableCellPr = new CTableCellPr();
 					this.TableCellPr.fromXml(reader);
 					break;
 				}
@@ -4501,9 +4519,10 @@
 						var ANum = aNumsMap[additional.aNumId];
 						if (ANum) {
 							elem.SetAbstractNumId(ANum.GetId());
-							oReadResult.numToANumClass[ANum.GetId()] = ANum;
+							oReadResult.logicDocument.Numbering.AddAbstractNum(ANum);
 						}
 						if (null !== additional.numId) {
+							oReadResult.logicDocument.Numbering.AddNum(elem);
 							oReadResult.numToNumClass[additional.numId] = elem;
 						}
 						break;
@@ -4609,11 +4628,6 @@
 						elem.fromXml(reader, additionalLvl);
 						index = additionalLvl.ilvl || index;
 						this.Lvl[index] = elem;
-						let postIndex = index;
-						let postElem = elem;
-						oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-							this.SetLvl(postIndex, postElem);
-						});
 						index++;
 					}
 					break;
@@ -4834,7 +4848,7 @@
 		writer.WriteXmlAttributesEnd();
 		writer.WriteXmlNullable(AbstractNumId, "w:abstractNumId");
 		for (var i = 0; i < this.LvlOverride.length; ++i) {
-			if (this.LvlOverride[nLvl]) {
+			if (this.LvlOverride[i]) {
 				this.LvlOverride[i].toXml(writer, "w:lvlOverride", i);
 			}
 		}
@@ -5071,8 +5085,223 @@
 			}
 		}
 	};
+	ParaDrawing.prototype.GetVmlMainProps = function() {
+		let sMainCSS = "";
+		let sMainNodes = "";
+		let sMainAttributes = "";
+
+		let oParaDrawing = this;
+		let dKoefMMToPT = 72.0 / 25.4;
+		let oDistance = oParaDrawing.Distance;
+		let oExtent = oParaDrawing.Extent;
+		let fAddDistanceToCSS = function () {
+			if (oDistance.L !== null)
+				sMainCSS += ("mso-wrap-distance-left:" + (dKoefMMToPT * oDistance.L).toFixed(2) + "pt;");
+			if (oDistance.T !== null)
+				sMainCSS += ("mso-wrap-distance-top:" + (dKoefMMToPT * oDistance.T).toFixed(2) + "pt;");
+			if (oDistance.R !== null)
+				sMainCSS += ("mso-wrap-distance-right:" + (dKoefMMToPT * oDistance.R).toFixed(2) + "pt;");
+			if (oDistance.B !== null)
+				sMainCSS += ("mso-wrap-distance-bottom:" + (dKoefMMToPT * oDistance.B).toFixed(2) + "pt;");
+		};
+		let fAddExtentToCSS = function() {
+			if (oExtent) {
+				sMainCSS += ("width:" + (dKoefMMToPT * oExtent.W).toFixed(2) + "pt;");
+				sMainCSS += ("height:" + (dKoefMMToPT * oExtent.H).toFixed(2) + "pt;");
+			}
+		};
+		if (oParaDrawing.IsInline())
+		{
+			fAddDistanceToCSS();
+			fAddExtentToCSS();
+		}
+		else
+		{
+			sMainCSS += ("position:absolute;");
+			fAddDistanceToCSS();
+
+			if (oParaDrawing.RelativeHeight !== null)
+			{
+				let z_index = oParaDrawing.RelativeHeight;
+
+				if (oParaDrawing.behindDoc)
+				{
+					z_index = -z_index;
+				}
+				sMainCSS += ("z-index:" + z_index + ";");
+			}
+
+			if (oParaDrawing.AllowOverlap !== null) {
+				sMainCSS += ("o:allowoverlap:" + (oParaDrawing.AllowOverlap  ? "true;" : "false;"));
+			}
+			if (oParaDrawing.LayoutInCell !== null) {
+				sMainCSS += ("o:allowincell:" + (oParaDrawing.LayoutInCell  ? "true;" : "false;"));
+			}
+
+			let oPositionH = oParaDrawing.PositionH;
+			if (oPositionH) {
+				if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.Character)
+					sMainCSS += ("mso-position-horizontal-relative:char;");
+				else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.Page)
+					sMainCSS += ("mso-position-horizontal-relative:page;");
+				else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.Margin)
+					sMainCSS += ("mso-position-horizontal-relative:margin;");
+				else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.LeftMargin)
+					sMainCSS += ("mso-position-horizontal-relative:left-margin-area;");
+				else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.RightMargin)
+					sMainCSS += ("mso-position-horizontal-relative:right-margin-area;");
+				else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.InsideMargin)
+					sMainCSS += ("mso-position-horizontal-relative:inner-margin-area;");
+				else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.OutsideMargin)
+					sMainCSS += ("mso-position-horizontal-relative:outer-margin-area;");
+				else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.Column)
+					sMainCSS += ("mso-position-horizontal-relative:text;");
+
+				if (!oPositionH.Align) {
+					sMainCSS += ("margin-left:" + (dKoefMMToPT * oPositionH.Value).toFixed(2) + "pt;");
+					sMainCSS += ("mso-position-horizontal:absolute;");
+				}
+				else {
+					switch (oPositionH.Value) {
+						case Asc.c_oAscAlignH.Center:
+						{
+							sMainCSS += ("mso-position-horizontal:center;");
+							break;
+						}
+						case Asc.c_oAscAlignH.Inside:
+						{
+							sMainCSS += ("mso-position-horizontal:inside;");
+							break;
+						}
+						case Asc.c_oAscAlignH.Outside:
+						{
+							sMainCSS += ("mso-position-horizontal:outside;");
+							break;
+						}
+						case Asc.c_oAscAlignH.Left:
+						{
+							sMainCSS += ("mso-position-horizontal:left;");
+							break;
+						}
+						case Asc.c_oAscAlignH.Right:
+						{
+							sMainCSS += ("mso-position-horizontal:right;");
+							break;
+						}
+					}
+				}
+			}
+
+			let oPositionV = oParaDrawing.PositionV;
+			if (oPositionV)
+			{
+				if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.Margin)
+					sMainCSS += ("mso-position-vertical-relative:margin;");
+				else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.Paragraph)
+					sMainCSS += ("mso-position-vertical-relative:text;");
+				else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.Page)
+					sMainCSS += ("mso-position-vertical-relative:page;");
+				else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.TopMargin)
+					sMainCSS += ("mso-position-vertical-relative:top-margin-area;");
+				else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.BottomMargin)
+					sMainCSS += ("mso-position-vertical-relative:bottom-margin-area;");
+				else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.InsideMargin)
+					sMainCSS += ("mso-position-vertical-relative:inner-margin-area;");
+				else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.OutsideMargin)
+					sMainCSS += ("mso-position-vertical-relative:outer-margin-area;");
+				else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.Line)
+					sMainCSS += ("mso-position-vertical-relative:line;");
+
+				if (!oPositionV.Align)
+				{
+					sMainCSS += ("margin-top:" + (dKoefMMToPT * oPositionV.Value).toFixed(2) + "pt;");
+					sMainCSS += ("mso-position-vertical:absolute");
+				}
+				else
+				{
+
+					switch (oPositionV.Value)
+					{
+						case c_oAscAlignV.Bottom:
+						{
+							sMainCSS += ("mso-position-vertical:bottom;");
+							break;
+						}
+						case c_oAscAlignV.Outside:
+						{
+							sMainCSS += ("mso-position-vertical:outside;");
+							break;
+						}
+						case c_oAscAlignV.Center:
+						{
+							sMainCSS += ("mso-position-vertical:center;");
+							break;
+						}
+
+						case c_oAscAlignV.Inside:
+						{
+							sMainCSS += ("mso-position-vertical:inside;");
+							break;
+						}
+						case c_oAscAlignV.Top:
+						{
+							sMainCSS += ("mso-position-vertical:top;");
+							break;
+						}
+					}
+				}
+			}
+			fAddExtentToCSS();
+			if(oParaDrawing.wrappingType === WRAPPING_TYPE_NONE) {
+
+			}
+			else if(oParaDrawing.wrappingType === WRAPPING_TYPE_SQUARE) {
+
+				sMainNodes += "<w10:wrap type=\"square\"/>";
+			}
+			else if(oParaDrawing.wrappingType === WRAPPING_TYPE_TOP_AND_BOTTOM) {
+				sMainNodes += "<w10:wrap type=\"topAndBottom\"/>";
+			}
+			else if(oParaDrawing.wrappingType === WRAPPING_TYPE_TIGHT) {
+				sMainNodes += "<w10:wrap type=\"tight\"/>";
+			}
+			else if(oParaDrawing.wrappingType === WRAPPING_TYPE_THROUGH) {
+				sMainNodes += "<w10:wrap type=\"through\"/>";
+			}
+			if(oParaDrawing.wrappingType === WRAPPING_TYPE_TIGHT ||
+				oParaDrawing.wrappingType === WRAPPING_TYPE_THROUGH) {
+				let oWrapPolygon = oParaDrawing.wrappingPolygon;
+				let dWrapKoef = 100000.0 / 21600.0;
+				if(oWrapPolygon) {
+					sMainAttributes += " wrapcoords=\"";
+					let aPoints = oWrapPolygon.relativeArrPoints;
+					let nCountP = aPoints.length;
+					for (let i = 0; i < nCountP; ++i)  {
+						let oPoint = aPoints[i];
+						let nX = (dWrapKoef * oPoint.x + 0.5) >> 0;
+						let nY = (dWrapKoef * oPoint.y + 0.5) >> 0;
+
+						sMainAttributes += (nX + " " + nY);
+
+						if (i < (nCountP - 1))
+							sMainAttributes += " ";
+					}
+					sMainAttributes += "\"";
+				}
+			}
+		}
+		return {sMainCSS: sMainCSS, sMainNodes: sMainNodes, sMainAttributes: sMainAttributes};
+	};
 	ParaDrawing.prototype.toXml = function(writer, name) {
-		if(drawing_Inline == this.DrawingType) {
+		let oGraphic = this.GraphicObj;
+		if(!oGraphic) {
+			return;
+		}
+		if(oGraphic.isOleObject() || oGraphic.isSignatureLine()) {
+			oGraphic.toXml(writer);
+			return;
+		}
+		if(drawing_Inline === this.DrawingType) {
 			writer.WriteXmlNodeStart(name);
 			writer.WriteXmlAttributesEnd();
 			var anchor = new CT_Inline(this);
@@ -5166,8 +5395,8 @@
 		};
 	}
 //settings
-	if(typeof CDocumentSettings !== "undefined") {
-		CDocumentSettings.prototype.fromXml = function(reader, doc) {
+	if(typeof AscWord.CDocumentSettings !== "undefined") {
+		AscWord.CDocumentSettings.prototype.fromXml = function(reader, doc) {
 			let name;
 			if (!reader.ReadNextNode()) {
 				return;
@@ -5253,7 +5482,7 @@
 				}
 			}
 		};
-		CDocumentSettings.prototype.toXml = function(writer) {
+		AscWord.CDocumentSettings.prototype.toXml = function(writer) {
 			let name = 'w:settings';
 			let doc = writer.context.document;
 
@@ -5282,7 +5511,7 @@
 			writer.WriteXmlNullable(CT_StringW.prototype.fromVal(this.ListSeparator), "w:listSeparator");
 			writer.WriteXmlNodeEnd(name);
 		};
-		CDocumentSettings.prototype.fromXmlCompat = function(reader) {
+		AscWord.CDocumentSettings.prototype.fromXmlCompat = function(reader) {
 			let elem, depth = reader.GetDepth();
 			while (reader.ReadNextSiblingNode(depth)) {
 				switch (reader.GetNameNoNS()) {
@@ -5317,7 +5546,7 @@
 				}
 			}
 		};
-		CDocumentSettings.prototype.toXmlCompat = function(writer, name) {
+		AscWord.CDocumentSettings.prototype.toXmlCompat = function(writer, name) {
 			let CompatibilityMode = false === writer.context.docSaveParams.isCompatible ? AscCommon.document_compatibility_mode_Word15 : this.CompatibilityMode;
 			writer.WriteXmlNodeStart(name);
 			writer.WriteXmlAttributesEnd();
@@ -7610,11 +7839,17 @@
 		else if (oDrawing instanceof AscFormat.CLockedCanvas) {
 			return "http://schemas.openxmlformats.org/drawingml/2006/lockedCanvas";
 		}
+		else if (oDrawing instanceof AscFormat.SmartArt) {
+			return "http://schemas.openxmlformats.org/drawingml/2006/diagram";
+		}
 		else if (oDrawing instanceof AscFormat.CGroupShape) {
 			return "http://schemas.microsoft.com/office/word/2010/wordprocessingGroup";
 		}
 		else if (oDrawing instanceof AscFormat.CImageShape) {
 			return "http://schemas.openxmlformats.org/drawingml/2006/picture";
+		}
+		else if (oDrawing instanceof AscFormat.CChartSpace) {
+			return "http://schemas.openxmlformats.org/drawingml/2006/chart";
 		}
 		else {
 			return "http://schemas.microsoft.com/office/word/2010/wordprocessingShape";

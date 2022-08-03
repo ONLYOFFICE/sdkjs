@@ -1095,11 +1095,11 @@
 	};
 	CConditionalFormattingRule.prototype.asc_getValue1 = function () {
 		var ruleElement = this.aRuleElements[0];
-		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.Text : null;
+		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.getFormulaStr(true) : null;
 	};
 	CConditionalFormattingRule.prototype.asc_getValue2 = function () {
 		var ruleElement = this.aRuleElements[1];
-		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.Text : null;
+		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.getFormulaStr(true) : null;
 	};
 	CConditionalFormattingRule.prototype.asc_getColorScaleOrDataBarOrIconSetRule = function () {
 		if ((Asc.ECfType.dataBar === this.type || Asc.ECfType.iconSet === this.type ||
@@ -1350,6 +1350,7 @@
 		//чищу всегда, поскольку от интерфейса всегда заново выставляются оба значения
 		this.aRuleElements = [];
 		val = correctFromInterface(val);
+
 
 		this.aRuleElements[0] = new CFormulaCF();
 		this.aRuleElements[0].Text = val;
@@ -2113,6 +2114,24 @@
 		//m_arrFormula[i]->isExtended() -> return (m_sNodeName == L"xm:f");
 		return true;
 	};
+	CFormulaCF.prototype.getFormulaStr = function (needBuild) {
+		var res = null;
+		if (this._f) {
+			res = this._f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+		} else if (needBuild) {
+			var oWB = Asc.editor && Asc.editor.wbModel;
+			if(oWB) {
+				var ws = oWB.getActiveWs();
+				if (ws) {
+					var _f = new AscCommonExcel.parserFormula(this.Text, null, ws);
+					_f.parse(true, true);
+					res = _f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+				}
+			}
+		}
+		return res ? res : this.Text;
+	};
+
 
 	function CIconSet() {
 		this.IconSet = EIconSetType.Traffic3Lights1;
@@ -2607,7 +2626,9 @@
 			return null;
 		};
 
+		var _parseResultArg;
 		var _doParseFormula = function (sFormula) {
+			_parseResultArg = null;
 			if(!(typeof sFormula === "string" && sFormula.length > 0)) {
 				return;
 			}
@@ -2624,7 +2645,7 @@
 			}
 
 			var _formulaParsed = new AscCommonExcel.parserFormula(sFormula, null, ws);
-			var _parseResultArg = new AscCommonExcel.ParseResult([], []);
+			_parseResultArg = new AscCommonExcel.ParseResult([], []);
 			_formulaParsed.parse(true, true, _parseResultArg, true);
 
 			return _formulaParsed;
@@ -2641,6 +2662,10 @@
 						_val = '"' + _val + '"';
 					} else {
 						fParser = _doParseFormula(_val);
+						if (_parseResultArg && _parseResultArg.error) {
+							return _parseResultArg.error;
+						}
+
 						//если внутри диапазон - проверяем его
 						_error = fParser && checkFormulaStack(fParser);
 						if (_error !== null) {
@@ -2655,6 +2680,10 @@
 						_val = '"' + _val + '"';
 					} else {
 						fParser = _doParseFormula(_val);
+						if (_parseResultArg && _parseResultArg.error) {
+							return _parseResultArg.error;
+						}
+
 						//если внутри диапазон - проверяем его
 						_error = fParser && checkFormulaStack(fParser);
 						if (_error !== null) {
@@ -2672,6 +2701,10 @@
 						_val = '"' + _val + '"';
 					} else {
 						fParser = _doParseFormula(_val);
+						if (_parseResultArg && _parseResultArg.error) {
+							return _parseResultArg.error;
+						}
+
 						//если внутри диапазон - проверяем его
 						_error = fParser && checkFormulaStack(fParser);
 						if (_error !== null) {
@@ -2796,6 +2829,16 @@
 
 			if (!isFormula) {
 				val = addQuotes(val);
+			} else {
+				var oWB = Asc.editor && Asc.editor.wbModel;
+				if(oWB) {
+					var ws = oWB.getActiveWs();
+					if (ws) {
+						var _f = new AscCommonExcel.parserFormula(val, null, ws);
+						_f.parse(true, true);
+						val = _f.assemble();
+					}
+				}
 			}
 		}
 

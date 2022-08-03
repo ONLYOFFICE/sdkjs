@@ -245,12 +245,12 @@
         }
         return null;
     };
-    var TIME_NODE_STATE_IDLE = 0;
-    var TIME_NODE_STATE_ACTIVE = 1;
-    var TIME_NODE_STATE_FROZEN = 2;
-    var TIME_NODE_STATE_FINISHED = 3;
+    const TIME_NODE_STATE_IDLE = 0;
+    const TIME_NODE_STATE_ACTIVE = 1;
+    const TIME_NODE_STATE_FROZEN = 2;
+    const TIME_NODE_STATE_FINISHED = 3;
 
-    var oSTATEDESCRMAP = {};
+    let oSTATEDESCRMAP = {};
 
     oSTATEDESCRMAP[TIME_NODE_STATE_IDLE] = 'IDLE';
     oSTATEDESCRMAP[TIME_NODE_STATE_ACTIVE] = 'ACTIVE';
@@ -261,7 +261,7 @@
 
 
 
-    var NODE_TYPE_MAP = {};
+    let NODE_TYPE_MAP = {};
     NODE_TYPE_MAP[AscFormat.NODE_TYPE_AFTEREFFECT	 ] = "AFTEREFFECT";
     NODE_TYPE_MAP[AscFormat.NODE_TYPE_AFTERGROUP	 ] = "AFTERGROUP";
     NODE_TYPE_MAP[AscFormat.NODE_TYPE_CLICKEFFECT	 ] = "CLICKEFFECT";
@@ -273,12 +273,12 @@
     NODE_TYPE_MAP[AscFormat.NODE_TYPE_WITHGROUP		 ] = "WITHGROUP";
 
 
-    var NODE_FILL_FREEZE = 0;
-    var NODE_FILL_HOLD = 1;
-    var NODE_FILL_REMOVE = 2;
-    var NODE_FILL_TRANSITION = 3;
+    const NODE_FILL_FREEZE = 0;
+    const NODE_FILL_HOLD = 1;
+    const NODE_FILL_REMOVE = 2;
+    const NODE_FILL_TRANSITION = 3;
 
-    var ANIM_TREE_LAVELS_COUNT = 5;
+    const ANIM_TREE_LAVELS_COUNT = 5;
 
 
     function CTimeNodeBase() {
@@ -1701,6 +1701,31 @@
             }
         }
     };
+    CTiming.prototype.readChildXml = function (name, reader) {
+        var oChild;
+        switch(name) {
+            case "tnLst": {
+                oChild = new CTnLst();
+                oChild.fromXml(reader);
+                this.setTnLst(oChild);
+                break;
+            }
+            case "bldLst": {
+                oChild = new CBldLst();
+                oChild.fromXml(reader);
+                this.setBldLst(oChild);
+                break;
+            }
+        }
+    };
+    CTiming.prototype.toXml = function (writer, name) {
+
+        writer.WriteXmlNodeStart("p:timing");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.tnLst);
+        writer.WriteXmlNullable(this.bldLst);
+        writer.WriteXmlNodeEnd("p:timing");
+    };
     
     CTiming.prototype.Refresh_RecalcData2 = function() {
         AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
@@ -2976,10 +3001,26 @@
             }
         }
     };
+    CCommonTimingList.prototype.readElementXml = function(name, reader) {
+        return null;
+    };
+    CCommonTimingList.prototype.readChildXml = function (name, reader) {
+        let oElement = this.readElementXml(name, reader);
+        if(oElement) {
+            this.addToLst(this.list.length, oElement);
+        }
+    };
+    CCommonTimingList.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart(name);
+        writer.WriteXmlAttributesEnd();
+        for(let idx = 0; idx < this.list.length; ++idx) {
+            this.list[idx].toXml(writer);
+        }
+        writer.WriteXmlNodeEnd(name);
+    };
     CCommonTimingList.prototype.getChildren = function() {
         return [].concat(this.list);
     };
-    
     CCommonTimingList.prototype.removeChild = function(oChild) {
         if(this.parent) {
             for(var nIdx = this.list.length - 1; nIdx > -1; --nIdx) {
@@ -3035,6 +3076,18 @@
         oElement.fromPPTY(pReader);
         return oElement;
     };
+    CAttrNameLst.prototype.readElementXml = function(name, reader) {
+        if(name === "attrName") {
+            let oElement = new CAttrName();
+            oElement.fromXml(reader);
+            return oElement;
+        }
+        return null;
+    };
+    CAttrNameLst.prototype.toXml = function (writer, name) {
+        CCommonTimingList.prototype.toXml.call(this, writer, "p:attrNameLst");
+    };
+
     function CBldLst() {
         CCommonTimingList.call(this);
     }
@@ -3075,6 +3128,23 @@
             pWriter.EndRecord();
         }
     };
+    CBldLst.prototype.readElementXml = function(name, reader) {
+        let oElement = null;
+        switch(name) {
+            case "bldDgm": oElement = new CBldDgm(); break;
+            case "bldOleChart": oElement = new CBldOleChart(); break;
+            case "bldGraphic": oElement = new CBldGraphic(); break;
+            case "bldP": oElement = new CBldP(); break;
+            default:break;
+        }
+        if(oElement) {
+            oElement.fromXml(reader);
+        }
+        return oElement;
+    };
+    CBldLst.prototype.toXml = function (writer, name) {
+        CCommonTimingList.prototype.toXml.call(this, writer, "p:bldLst");
+    };
 
     function CCondLst() {
         CCommonTimingList.call(this);
@@ -3085,6 +3155,14 @@
         pReader.stream.GetUChar(); //skip ..
         oElement.fromPPTY(pReader);
         return oElement;
+    };
+    CCondLst.prototype.readElementXml = function(name, reader) {
+        if(name === "cond") {
+            let oElement = new CCond();
+            oElement.fromXml(reader);
+            return oElement;
+        }
+        return null
     };
     CCondLst.prototype.createComplexTrigger = function(oPlayer) {
         var oComplexTrigger = new CAnimComplexTrigger();
@@ -3106,6 +3184,9 @@
     };
     CCondLst.prototype.isSpClick = function(sSpId) {
         return this.getSpClick() === sSpId;
+    };
+    CCondLst.prototype.toXml = function (writer, name) {
+        CCommonTimingList.prototype.toXml.call(this, writer, name || "p:condLst");
     };
 
     function CChildTnLst() {
@@ -3134,6 +3215,29 @@
         }
         if(oElement) {
             oElement.fromPPTY(pReader);
+        }
+        return oElement;
+    };
+    CChildTnLst.prototype.readElementXml = function(name, reader) {
+        let oElement = null;
+        switch(name) {
+            case "par": oElement = new CPar(); break;
+            case "seq": oElement = new CSeq(); break;
+            case "audio": oElement = new CAudio(); break;
+            case "video": oElement = new CVideo(); break;
+            case "excl": oElement = new CExcl(); break;
+            case "anim": oElement = new CAnim(); break;
+            case "animClr": oElement = new CAnimClr(); break;
+            case "animEffect": oElement = new CAnimEffect(); break;
+            case "animMotion": oElement = new CAnimMotion(); break;
+            case "animRot": oElement = new CAnimRot(); break;
+            case "animScale": oElement = new CAnimScale(); break;
+            case "cmd": oElement = new CCmd(); break;
+            case "set": oElement = new CSet(); break;
+            default:break;
+        }
+        if(oElement) {
+            oElement.fromXml(reader);
         }
         return oElement;
     };
@@ -3169,6 +3273,9 @@
     CChildTnLst.prototype.Refresh_RecalcData = function(oData) {
         this.Refresh_RecalcData2();
     };
+    CChildTnLst.prototype.toXml = function (writer, name) {
+        CCommonTimingList.prototype.toXml.call(this, writer, "p:childTnLst");
+    };
 
 
     function CTmplLst() {
@@ -3180,6 +3287,20 @@
         pReader.stream.GetUChar(); //skip ..
         oElement.fromPPTY(pReader);
         return oElement;
+    };
+    CTmplLst.prototype.readElementXml = function(name, reader) {
+        let oElement = null;
+        switch(name) {
+            case "tmpl": oElement = new CTmpl(); break;
+            default:break;
+        }
+        if(oElement) {
+            oElement.fromXml(reader);
+        }
+        return oElement;
+    };
+    CTmplLst.prototype.toXml = function (writer, name) {
+        CCommonTimingList.prototype.toXml.call(this, writer, "p:tmplLst");
     };
 
     function CTnLst() {
@@ -3200,6 +3321,9 @@
         }
         return true;
     };
+    CTnLst.prototype.toXml = function (writer, name) {
+        CCommonTimingList.prototype.toXml.call(this, writer, name || "p:tnLst");
+    };
 
     function CTavLst() {
         CCommonTimingList.call(this);
@@ -3210,6 +3334,20 @@
         pReader.stream.GetUChar(); //skip ..
         oElement.fromPPTY(pReader);
         return oElement;
+    };
+    CTavLst.prototype.readElementXml = function(name, reader) {
+        let oElement = null;
+        switch(name) {
+            case "tav": oElement = new CTav(); break;
+            default:break;
+        }
+        if(oElement) {
+            oElement.fromXml(reader);
+        }
+        return oElement;
+    };
+    CTavLst.prototype.toXml = function (writer, name) {
+        CCommonTimingList.prototype.toXml.call(this, writer, "p:tavLst");
     };
 
     changesFactory[AscDFH.historyitem_ObjectTargetSpid] = CChangeString;
@@ -3234,6 +3372,18 @@
             if(this.parent) {
                 this.parent.onRemoveChild(this);
             }
+        }
+    };
+    CObjectTarget.prototype.assignConnectors = function(aSpTree) {
+        for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
+            let oSp = aSpTree[nSp];
+            if(oSp.getFormatIdString() === this.spid) {
+                this.setSpid(oSp.Id);
+                return;
+            }
+        }
+        if(this.parent) {
+            this.parent.onRemoveChild(this);
         }
     };
     CObjectTarget.prototype.fillObject = function(oCopy, oIdMap) {
@@ -3283,6 +3433,18 @@
             if(this.parent) {
                 this.parent.onRemoveChild(this);
             }
+        }
+    };
+    CBldBase.prototype.assignConnectors = function(aSpTree) {
+        for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
+            let oSp = aSpTree[nSp];
+            if((oSp.getObjectType && oSp.getObjectType() === AscDFH.historyitem_type_ChartSpace) && oSp.getFormatIdString() === this.spid) {
+                this.setSpid(oSp.Id);
+                return;
+            }
+        }
+        if(this.parent) {
+            this.parent.onRemoveChild(this);
         }
     };
     CBldBase.prototype.setUiExpand = function(pr) {
@@ -3339,6 +3501,24 @@
     CBldDgm.prototype.readChild = function(nType, pReader) {
         pReader.stream.SkipRecord();
     };
+    CBldDgm.prototype.readAttrXml = function (name, reader) {
+        if ("bld" === name) {
+            this.setBld(0);
+        }
+        else if ("uiExpand" === name) this.setUiExpand(reader.GetValueBool());
+        else if ("spid" === name) this.setSpid(reader.GetValue(), reader);
+        else if ("grpId" === name) this.setGrpId(reader.GetValueInt());
+    };
+    CBldDgm.prototype.toXml = function (writer, name) {
+
+        writer.WriteXmlNodeStart("p:bldDgm");
+        writer.WriteXmlNullableAttributeString("spid", writer.context.getSpIdxId(this.spid));
+        writer.WriteXmlNullableAttributeInt("grpId", this.grpId);
+        writer.WriteXmlNullableAttributeBool("uiExpand", this.uiExpand);
+        writer.WriteXmlNullableAttributeString("bld", "whole");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNodeEnd("p:bldDgm");
+    };
 
     changesFactory[AscDFH.historyitem_BldGraphicBldAsOne] = CChangeObject;
     changesFactory[AscDFH.historyitem_BldGraphicBldSub] = CChangeObject;
@@ -3382,9 +3562,9 @@
     };
     CBldGraphic.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-        if (0 == nType) this.setUiExpand(oStream.GetBool());
-        else if (1 == nType) this.setSpid(oStream.GetString2(), pReader);
-        else if (2 == nType) this.setGrpId(oStream.GetLong());
+        if (0 === nType) this.setUiExpand(oStream.GetBool());
+        else if (1 === nType) this.setSpid(oStream.GetString2(), pReader);
+        else if (2 === nType) this.setGrpId(oStream.GetLong());
     };
     CBldGraphic.prototype.readChild = function(nType, pReader) {
         if(0 === nType) {
@@ -3394,6 +3574,31 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CBldGraphic.prototype.readAttrXml = function (name, reader) {
+        if ("uiExpand" === name) this.setUiExpand(reader.GetValueBool());
+        else if ("spid" === name) this.setSpid(reader.GetValue(), reader);
+        else if ("grpId" === name) this.setGrpId(reader.GetValueInt());
+    };
+    CBldGraphic.prototype.readChildXml = function (name, reader) {
+        if("bldSub" === name) {
+            this.setBldSub(new CBldSub());
+            this.bldSub.fromXml(reader);
+        }
+    };
+    CBldGraphic.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:bldGraphic");
+        writer.WriteXmlNullableAttributeString("spid", writer.context.getSpIdxId(this.spid));
+        writer.WriteXmlNullableAttributeInt("grpId", this.grpId);
+        writer.WriteXmlNullableAttributeBool("uiExpand", this.uiExpand);
+        writer.WriteXmlAttributesEnd();
+        if (!this.bldSub) {
+            writer.WriteXmlString("<p:bldAsOne/>");
+        }
+        else {
+            this.bldSub.toXml(writer);
+        }
+        writer.WriteXmlNodeEnd("p:bldGraphic");
     };
     CBldGraphic.prototype.getChildren = function() {
         return [this.bldSub];
@@ -3437,6 +3642,24 @@
     CBldOleChart.prototype.readChild = function(nType, pReader) {
         pReader.stream.SkipRecord();
     };
+    CBldOleChart.prototype.readAttrXml = function (name, reader) {
+        if ("bld" === name) this.setBld(0);
+        else if ("uiExpand" === name) this.setUiExpand(reader.GetValueBool());
+        else if ("spid" === name) this.setSpid(reader.GetValue(), reader);
+        else if ("grpId" === name) this.setGrpId(reader.GetValueInt());
+        else if ("animBg" === name) this.setAnimBg(reader.GetValueBool());
+    };
+
+    CBldOleChart.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:bldOleChart");
+        writer.WriteXmlNullableAttributeString("spid", writer.context.getSpIdxId(this.spid));
+        writer.WriteXmlNullableAttributeInt("grpId", this.grpId);
+        writer.WriteXmlNullableAttributeBool("uiExpand", this.uiExpand);
+        writer.WriteXmlNullableAttributeString("bld", "whole");
+        writer.WriteXmlNullableAttributeBool("animBg", this.animBg);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNodeEnd("p:bldOleChart");
+    };
 
 
     changesFactory[AscDFH.historyitem_BldPTmplLst] = CChangeObject;
@@ -3451,6 +3674,13 @@
     drawingsChangesMap[AscDFH.historyitem_BldPBldLvl] = function(oClass, value) {oClass.bldLvl = value;};
     drawingsChangesMap[AscDFH.historyitem_BldPBuild] = function(oClass, value) {oClass.build = value;};
     drawingsChangesMap[AscDFH.historyitem_BldPRev] = function(oClass, value) {oClass.rev = value;};
+
+
+
+    let ParaBuildType_allAtOnce = 0;
+    let ParaBuildType_cust = 1;
+    let ParaBuildType_p = 2;
+    let ParaBuildType_whole = 3;
 
     function CBldP() {
         CBldOleChart.call(this);
@@ -3539,6 +3769,48 @@
     CBldP.prototype.getChildren = function() {
         return [this.tmplLst];
     };
+    CBldP.prototype.readAttrXml = function (name, reader) {
+        if ("build" === name)  {
+            let sVal = reader.GetValue();
+            if ("allAtOnce" === sVal)	this.setBuild(ParaBuildType_allAtOnce);
+            if ("cust" === sVal)		this.setBuild(ParaBuildType_cust);
+            if ("p" === sVal)			this.setBuild(ParaBuildType_p);
+            if ("whole" === sVal)		this.setBuild(ParaBuildType_whole);
+        }
+        else if ("uiExpand" === name) this.setUiExpand(reader.GetValueBool());
+        else if ("spid" === name) this.setSpid(reader.GetValue(), reader);
+        else if ("grpId" === name) this.setGrpId(reader.GetValueInt());
+        else if ("bldLvl" === name) this.setBldLvl(reader.GetValueInt());
+        else if ("animBg" === name) this.setAnimBg(reader.GetValueBool());
+        else if ("autoUpdateAnimBg" === name) this.setAutoUpdateAnimBg(reader.GetValueBool());
+        else if ("rev" === name) this.setRev(reader.GetValueBool());
+        else if ("advAuto" === name) this.setAdvAuto(reader.GetValue());
+    };
+    CBldP.prototype.readChildXml = function (name, reader) {
+        if("tmplLst" === name) {
+            this.setTmplLst(new CTmplLst());
+            this.tmplLst.fromXml(reader);
+        }
+    };
+    CBldP.prototype.toXml = function (writer, name) {
+
+        writer.WriteXmlNodeStart("p:bldP");
+        writer.WriteXmlNullableAttributeString("spid", writer.context.getSpIdxId(this.spid));
+        writer.WriteXmlNullableAttributeInt("grpId", this.grpId);
+        writer.WriteXmlNullableAttributeBool("uiExpand", this.uiExpand);
+        if (ParaBuildType_allAtOnce === this.build)	writer.WriteXmlNullableAttributeString("build", "allAtOnce");
+        if (ParaBuildType_cust === this.build)		writer.WriteXmlNullableAttributeString("build", "cust");
+        if (ParaBuildType_p === this.build)			writer.WriteXmlNullableAttributeString("build", "p");
+        if (ParaBuildType_whole === this.build)		writer.WriteXmlNullableAttributeString("build", "whole");
+        writer.WriteXmlNullableAttributeInt("bldLvl", this.bldLvl);
+        writer.WriteXmlNullableAttributeBool("animBg", this.animBg);
+        writer.WriteXmlNullableAttributeBool("autoUpdateAnimBg", this.autoUpdateAnimBg);
+        writer.WriteXmlNullableAttributeBool("rev", this.rev);
+        writer.WriteXmlNullableAttributeString("advAuto", this.advAuto);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.tmplLst);
+        writer.WriteXmlNodeEnd("p:bldP");
+    };
 
 
     changesFactory[AscDFH.historyitem_BldSubChart] = CChangeBool;
@@ -3614,6 +3886,32 @@
         else if (4 === nType) this.setRev(oStream.GetBool());
     };
 
+    CBldSub.prototype.readAttrXml = function (name, reader) {
+        if ("chart" === name) this.setChart(reader.GetValueBool());
+        else if ("animBg" === name) this.setAnimBg(reader.GetValueBool());
+        else if ("bldChart" === name) this.setBldChart(reader.GetValue());
+        else if ("bldDgm" === name) this.setBldDgm(reader.GetValue());
+        else if ("rev" === name) this.setRev(reader.GetValueBool());
+    };
+    CBldSub.prototype.toXml = function (writer, name) {
+        if (this.chart !== null) {
+            writer.WriteXmlNodeStart("p:bldSub");
+            if (this.chart) {
+                writer.WriteXmlNullableAttributeString("bld", this.bldChart);
+                writer.WriteXmlNullableAttributeBool(("animBg"), this.animBg);
+                writer.WriteXmlAttributesEnd();
+            }
+            else {
+                writer.WriteXmlNullableAttributeString("bld", this.bldDgm);
+                writer.WriteXmlNullableAttributeBool("rev", this.rev);
+                writer.WriteXmlAttributesEnd();
+            }
+            writer.WriteXmlNullable(this.chart, "a:bldChart");
+            writer.WriteXmlNodeEnd("p:bldSub");
+        }
+        return writer.WriteXmlString("<p:bldSub/>");
+    };
+
     changesFactory[AscDFH.historyitem_DirTransitionDir] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_DirTransitionDir] = function(oClass, value) {oClass.dir = value;};
     function CDirTransition() {//CBlinds, checker, comb, cover, pull, push, randomBar, strips, wipe, zoom
@@ -3635,6 +3933,8 @@
     CDirTransition.prototype.readAttribute = function(nType, pReader) {
     };
     CDirTransition.prototype.readChild = function(nType, pReader) {
+    };
+    CDirTransition.prototype.toXml = function (writer, name) {
     };
 
 
@@ -3659,6 +3959,9 @@
     COptionalBlackTransition.prototype.readAttribute = function(nType, pReader) {
     };
     COptionalBlackTransition.prototype.readChild = function(nType, pReader) {
+    };
+
+    COptionalBlackTransition.prototype.toXml = function (writer, name) {
     };
 
     changesFactory[AscDFH.historyitem_GraphicElDgmId] = CChangeString;
@@ -3690,13 +3993,26 @@
         this.dgmId = pr;
     };
     CGraphicEl.prototype.assignConnection = function(oObjectsMap) {
-        if(AscCommon.isRealObject(oObjectsMap[this.spid])){
-            this.setSpid(oObjectsMap[this.spid].Id);
+        if(AscCommon.isRealObject(oObjectsMap[this.dgmId])){
+            this.setDgmId(oObjectsMap[this.dgmId].Id);
         }
         else {
             if(this.parent) {
                 this.parent.onRemoveChild(this);
             }
+        }
+    };
+
+    CGraphicEl.prototype.assignConnectors = function(aSpTree) {
+        for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
+            let oSp = aSpTree[nSp];
+            if(oSp.getFormatIdString() === this.dgmId) {
+                this.setDgmId(oSp.Id);
+                return;
+            }
+        }
+        if(this.parent) {
+            this.parent.onRemoveChild(this);
         }
     };
     CGraphicEl.prototype.setDgmBuildStep = function(pr) {
@@ -3759,6 +4075,63 @@
     CGraphicEl.prototype.readChild = function(nType, pReader) {
         pReader.stream.SkipRecord();
     };
+
+
+    CGraphicEl.prototype.readChildXml = function (name, reader) {
+        if(name === "chart") {
+            let oNode = new CT_XmlNode(function() {
+                return true;
+            });
+            oNode.fromXml(reader);
+            let sBldStep = oNode.attributes["bldStep"];
+            if(sBldStep !== undefined) {
+                this.setChartBuildStep(sBldStep);
+            }
+            let nSeriesIdx = parseInt(oNode.attributes["seriesIdx"]);
+            if(AscFormat.isRealNumber(nSeriesIdx)) {
+                this.setSeriesIdx(nSeriesIdx);
+            }
+            let nCatIdx = parseInt(oNode.attributes["categoryIdx"]);
+            if(AscFormat.isRealNumber(nCatIdx)) {
+                this.setCategoryIdx(nCatIdx);
+            }
+        }
+        else if(name === "dgm") {
+            let oNode = new CT_XmlNode(function() {
+                return true;
+            });
+            oNode.fromXml(reader);
+            let sBldStep = oNode.attributes["bldStep"];
+            if(sBldStep !== undefined) {
+                this.setDgmBuildStep(sBldStep);
+            }
+            let sDgmId = oNode.attributes["dgmId"];
+            if(sDgmId !== undefined) {
+                this.setDgmId(sDgmId, reader);
+            }
+        }
+    };
+
+    CGraphicEl.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:graphicEl");
+        writer.WriteXmlAttributesEnd();
+        if (this.chartBuildStep) {
+            writer.WriteXmlNodeStart("p:chart");
+            writer.WriteXmlNullableAttributeString("bldStep", this.chartBuildStep);
+            writer.WriteXmlNullableAttributeInt("seriesIdx", this.seriesIdx);
+            writer.WriteXmlNullableAttributeInt("categoryIdx", this.categoryIdx);
+            writer.WriteXmlAttributesEnd();
+            writer.WriteXmlNodeEnd("p:chart");
+        }
+        else {
+            writer.WriteXmlNodeStart("p:dgm");
+            writer.WriteXmlNullableAttributeString("id",writer.context.getSpIdxId(this.dgmId));
+            writer.WriteXmlNullableAttributeString("bldStep", this.dgmBuildStep);
+            writer.WriteXmlAttributesEnd();
+            writer.WriteXmlNodeEnd("p:dgm");
+        }
+        writer.WriteXmlNodeEnd("p:graphicEl");
+    };
     CGraphicEl.prototype.handleRemoveObject = function(sObjectId) {
         if(this.dgmId === sObjectId) {
             if(this.parent) {
@@ -3800,6 +4173,21 @@
     CIndexRg.prototype.readAttribute = function(nType, pReader) {
     };
     CIndexRg.prototype.readChild = function(nType, pReader) {
+    };
+    CIndexRg.prototype.readAttrXml = function (name, reader) {
+        if(name === "st") {
+            this.setSt(reader.GetValueInt());
+        }
+        else if(name === "end") {
+            this.setEnd(reader.GetValueInt());
+        }
+    };
+    CIndexRg.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart(name);
+        writer.WriteXmlNullableAttributeInt("st", this.st);
+        writer.WriteXmlNullableAttributeInt("end", this.end);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNodeEnd(name);
     };
 
     changesFactory[AscDFH.historyitem_TmplLvl] = CChangeLong;
@@ -3851,6 +4239,24 @@
             oStream.SkipRecord();
         }
     };
+    CTmpl.prototype.readAttrXml = function (name, reader) {
+        if("lvl" === name) {
+            this.setLvl(reader.GetValueInt())
+        }
+    };
+    CTmpl.prototype.readChildXml = function (name, reader) {
+        if("tmLst" === name) {
+            this.setTnLst(new CTnLst());
+            this.tnLst.fromXml(reader);
+        }
+    };
+    CTmpl.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:tmpl");
+        writer.WriteXmlNullableAttributeInt("lvl", this.lvl);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.tnLst);
+        writer.WriteXmlNodeEnd("p:tmpl");
+    };
     CTmpl.prototype.getChildren = function() {
         return [this.tnLst];
     };
@@ -3871,14 +4277,14 @@
     drawingsChangesMap[AscDFH.historyitem_AnimValueType] = function(oClass, value) {oClass.valueType = value;};
 
 
-    var VALUE_TYPE_NUM = 0;
-    var VALUE_TYPE_CLR = 1;
-    var VALUE_TYPE_STR = 2;
+    const VALUE_TYPE_NUM = 0;
+    const VALUE_TYPE_CLR = 1;
+    const VALUE_TYPE_STR = 2;
 
 
-    var CALCMODE_DISCRETE = 0;
-    var CALCMODE_LIN = 1;
-    var CALCMODE_FMLA = 2;
+    const CALCMODE_DISCRETE = 0;
+    const CALCMODE_LIN = 1;
+    const CALCMODE_FMLA = 2;
     function CAnim() {
         CTimeNodeBase.call(this);
         this.cBhvr = null;
@@ -3980,6 +4386,100 @@
                 break;
             }
         }
+    };
+    CAnim.prototype.readAttrXml = function (name, reader) {
+        if ("calcmode" === name) {
+            let sVal = reader.GetValue();
+            switch (sVal) {
+                case "discrete": {
+                    this.setCalcmode(CALCMODE_DISCRETE);
+                    break;
+                }
+                case "fmla": {
+                    this.setCalcmode(CALCMODE_FMLA);
+                    break;
+                }
+                case "lin": {
+                    this.setCalcmode(CALCMODE_LIN);
+                    break;
+                }
+            }
+        }
+        else if ("by" === name) this.setBy(reader.GetValue());
+        else if ("from" === name) this.setFrom(reader.GetValue());
+        else if ("to" === name) this.setTo(reader.GetValue());
+        else if ("valueType" === name) {
+            let sVal = reader.GetValue();
+            switch(sVal) {
+                case "clr": {
+                    this.setValueType(VALUE_TYPE_CLR);
+                    break;
+                }
+                case "num": {
+                    this.setValueType(VALUE_TYPE_NUM);
+                    break;
+                }
+                case "str": {
+                    this.setValueType(VALUE_TYPE_STR);
+                    break;
+                }
+            }
+        }
+    };
+    CAnim.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "cBhvr": {
+                this.setCBhvr(new CCBhvr());
+                this.cBhvr.fromXml(reader);
+                break;
+            }
+            case "tavLst": {
+                this.setTavLst(new CTavLst());
+                this.tavLst.fromXml(reader);
+                break;
+            }
+        }
+    };
+    CAnim.prototype.toXml = function (writer, name) {
+
+        writer.WriteXmlNodeStart("p:anim");
+        writer.WriteXmlNullableAttributeString("by", this.by);
+        writer.WriteXmlNullableAttributeString("from", this.from);
+        writer.WriteXmlNullableAttributeString("to", this.to);
+        switch (this.calcmode) {
+            case CALCMODE_DISCRETE: {
+                writer.WriteXmlNullableAttributeString("calcmode", "discrete");
+                break;
+            }
+            case CALCMODE_LIN: {
+                writer.WriteXmlNullableAttributeString("calcmode", "lin");
+                break;
+            }
+            case CALCMODE_FMLA: {
+                writer.WriteXmlNullableAttributeString("calcmode", "fmla");
+                break;
+            }
+        }
+        if(this.valueType !== null) {
+            switch(this.valueType) {
+                case VALUE_TYPE_CLR: {
+                    writer.WriteXmlNullableAttributeString("valueType", "clr");
+                    break;
+                }
+                case VALUE_TYPE_NUM: {
+                    writer.WriteXmlNullableAttributeString("valueType", "num");
+                    break;
+                }
+                case VALUE_TYPE_STR: {
+                    writer.WriteXmlNullableAttributeString("valueType", "str");
+                    break;
+                }
+            }
+        }
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cBhvr);
+        writer.WriteXmlNullable(this.tavLst);
+        writer.WriteXmlNodeEnd("p:anim");
     };
     CAnim.prototype.getChildren = function() {
         return [this.cBhvr, this.tavLst];
@@ -4302,6 +4802,22 @@
     drawingsChangesMap[AscDFH.historyitem_CBhvrRctx] = function(oClass, value) {oClass.rctx = value;};
     drawingsChangesMap[AscDFH.historyitem_CBhvrTo] = function(oClass, value) {oClass.to = value;};
     drawingsChangesMap[AscDFH.historyitem_CBhvrXfrmType] = function(oClass, value) {oClass.xfrmType = value;};
+
+    const TLAccumulateAlways = 0;
+    const TLAccumulateNone = 1;
+
+    const TLAdditiveBase = 0;
+    const TLAdditiveMult = 1;
+    const TLAdditiveNone = 2;
+    const TLAdditiveRepl = 3;
+    const TLAdditiveSum = 4;
+
+    const TLOverrideChildStyle = 0;
+    const TLOverrideNormal = 1;
+
+    const TLTransformImg = 0;
+    const TLTransformPt = 1;
+
     function CCBhvr() {
         CBaseAnimObject.call(this);
         this.attrNameLst = null;
@@ -4450,6 +4966,160 @@
             }
         }
     };
+    CCBhvr.prototype.readAttrXml = function (name, reader) {
+        if ("accumulate" === name) {
+            let sVal = reader.GetValue();
+            switch(sVal) {
+                case "always": {
+                    this.setAccumulate(TLAccumulateAlways);
+                    break;
+                }
+                case "none": {
+                    this.setAccumulate(TLAccumulateNone);
+                    break;
+                }
+            }
+        }
+        else if ("additive" === name) {
+            let sVal = reader.GetValue();
+            switch(sVal) {
+                case "base": {
+                    this.setAdditive(TLAdditiveBase);
+                    break;
+                }
+                case "mult": {
+                    this.setAdditive(TLAdditiveMult);
+                    break;
+                }
+                case "none": {
+                    this.setAdditive(TLAdditiveNone);
+                    break;
+                }
+                case "repl": {
+                    this.setAdditive(TLAdditiveRepl);
+                    break;
+                }
+                case "sum": {
+                    this.setAdditive(TLAdditiveSum);
+                    break;
+                }
+            }
+        }
+        else if ("by" === name) this.setBy(reader.GetValue());
+        else if ("from" === name) this.setFrom(reader.GetValue());
+        else if ("override" === name) {
+            let sVal = reader.GetValue();
+            switch(sVal) {
+                case "childStyle": {
+                    this.setOverride(TLOverrideChildStyle);
+                    break;
+                }
+                case "normal": {
+                    this.setOverride(TLOverrideNormal);
+                    break;
+                }
+            }
+        }
+        else if ("rctx" === name) this.setRctx(reader.GetValue());
+        else if ("to" === name) this.setTo(reader.GetValue());
+        else if ("xfrmType" === name) {
+            let sVal = reader.GetValue();
+            switch(sVal) {
+                case "img": {
+                    this.setXfrmType(TLTransformImg);
+                    break;
+                }
+                case "pt": {
+                    this.setXfrmType(TLTransformPt);
+                    break;
+                }
+            }
+        }
+    };
+    CCBhvr.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "cTn": {
+                this.setCTn(new CCTn());
+                this.cTn.fromXml(reader);
+                break;
+            }
+            case "tgtEl": {
+                this.setTgtEl(new CTgtEl());
+                this.tgtEl.fromXml(reader);
+                break;
+            }
+            case "attrNameLst": {
+                this.setAttrNameLst(new CAttrNameLst());
+                this.attrNameLst.fromXml(reader);
+                break;
+            }
+        }
+    };
+    CCBhvr.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:cBhvr");
+        switch (this.accumulate) {
+            case TLAccumulateAlways: {
+                writer.WriteXmlNullableAttributeString("accumulate", "always");
+                break;
+            }
+            case TLAccumulateNone: {
+                writer.WriteXmlNullableAttributeString("accumulate", "none");
+                break;
+            }
+        }
+
+        switch (this.additive) {
+            case TLAdditiveBase: {
+                writer.WriteXmlNullableAttributeString("additive", "base");
+                break;
+            }
+            case TLAdditiveMult: {
+                writer.WriteXmlNullableAttributeString("additive", "mult");
+                break;
+            }
+            case TLAdditiveNone: {
+                writer.WriteXmlNullableAttributeString("additive", "none");
+                break;
+            }
+            case TLAdditiveRepl: {
+                writer.WriteXmlNullableAttributeString("additive", "repl");
+                break;
+            }
+            case TLAdditiveSum: {
+                writer.WriteXmlNullableAttributeString("additive", "sum");
+                break;
+            }
+        }
+        writer.WriteXmlNullableAttributeString("by", this.by);
+        writer.WriteXmlNullableAttributeString("from", this.from);
+        switch (this.override) {
+            case TLOverrideChildStyle: {
+                writer.WriteXmlNullableAttributeString("override", "childStyle");
+                break;
+            }
+            case TLOverrideNormal: {
+                writer.WriteXmlNullableAttributeString("override", "normal");
+                break;
+            }
+        }
+        writer.WriteXmlNullableAttributeString("rctx", this.rctx);
+        writer.WriteXmlNullableAttributeString("to", this.to);
+        switch (this.xfrmType) {
+            case TLTransformImg: {
+                writer.WriteXmlNullableAttributeString("xfrmType", "img");
+                break;
+            }
+            case TLTransformPt: {
+                writer.WriteXmlNullableAttributeString("xfrmType", "pt");
+                break;
+            }
+        }
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cTn);
+        writer.WriteXmlNullable(this.tgtEl);
+        writer.WriteXmlNullable(this.attrNameLst);
+        writer.WriteXmlNodeEnd("p:cBhvr");
+    };
     CCBhvr.prototype.getChildren = function() {
         return [this.cTn, this.tgtEl, this.attrNameLst];
     };
@@ -4482,9 +5152,9 @@
     };
 
 
-    var RESTART_TYPE_ALWAYS = 0;
-    var RESTART_TYPE_NEVER = 1;
-    var RESTART_TYPE_WHEN_NOT_ACTIVE = 2;
+    const RESTART_TYPE_ALWAYS = 0;
+    const RESTART_TYPE_NEVER = 1;
+    const RESTART_TYPE_WHEN_NOT_ACTIVE = 2;
 
     changesFactory[AscDFH.historyitem_CTnChildTnLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_CTnEndCondLst] = CChangeObject;
@@ -4545,6 +5215,14 @@
     drawingsChangesMap[AscDFH.historyitem_CTnSpd] = function(oClass, value) {oClass.spd = value;};
     drawingsChangesMap[AscDFH.historyitem_CTnSyncBehavior] = function(oClass, value) {oClass.syncBehavior = value;};
     drawingsChangesMap[AscDFH.historyitem_CTnTmFilter] = function(oClass, value) {oClass.tmFilter = value;};
+
+    const TLMasterRelationLastClick = 0;
+    const TLMasterRelationNextClick = 1;
+    const TLMasterRelationSameClick = 2;
+
+    const TLSyncBehaviorCanSlip = 0;
+    const TLSyncBehaviorLocked = 1;
+
     function CCTn() {
         CBaseAnimObject.call(this);
         this.childTnLst = null;
@@ -4887,6 +5565,238 @@
                 break;
             }
         }
+    };
+    CCTn.prototype.readAttrXml = function (name, reader) {
+        if ("accel" === name) this.setAccel(reader.GetValueInt());
+        else if ("afterEffect" === name) this.setAfterEffect(reader.GetValueBool());
+        else if ("autoRev" === name) this.setAutoRev(reader.GetValueBool());
+        else if ("fill" === name) {
+            let sVal = reader.GetValue();
+            switch (sVal) {
+                case "freeze": {
+                    this.setFill(NODE_FILL_FREEZE);
+                    break;
+                }
+                case "hold": {
+                    this.setFill(NODE_FILL_HOLD);
+                    break;
+                }
+                case "remove": {
+                    this.setFill(NODE_FILL_REMOVE);
+                    break;
+                }
+                case "transition": {
+                    this.setFill(NODE_FILL_TRANSITION);
+                    break;
+                }
+            }
+        }
+        else if ("masterRel" === name) {
+            let sVal = reader.GetValue();
+            switch (sVal) {
+                case "lastClick": {
+                    this.setMasterRel(TLMasterRelationLastClick);
+                    break;
+                }
+                case "nextClick": {
+                    this.setMasterRel(TLMasterRelationNextClick);
+                    break;
+                }
+                case "sameClick": {
+                    this.setMasterRel(TLMasterRelationSameClick);
+                    break;
+                }
+            }
+        }
+        else if ("nodeType" === name) {
+            let sVal = reader.GetValue();
+            if ("afterEffect" === sVal)	this.setNodeType(AscFormat.NODE_TYPE_AFTEREFFECT);
+            if ("afterGroup" === sVal)	this.setNodeType(AscFormat.NODE_TYPE_AFTERGROUP);
+            if ("clickEffect" === sVal)	this.setNodeType(AscFormat.NODE_TYPE_CLICKEFFECT);
+            if ("clickPar" === sVal) this.setNodeType(AscFormat.NODE_TYPE_CLICKPAR);
+            if ("interactiveSeq" === sVal) this.setNodeType(AscFormat.NODE_TYPE_INTERACTIVESEQ);
+            if ("mainSeq" === sVal)	this.setNodeType(AscFormat.NODE_TYPE_MAINSEQ);
+            if ("tmRoot" === sVal) this.setNodeType(AscFormat.NODE_TYPE_TMROOT);
+            if ("withEffect" === sVal) this.setNodeType(AscFormat.NODE_TYPE_WITHEFFECT);
+            if ("withGroup" === sVal) this.setNodeType(AscFormat.NODE_TYPE_WITHGROUP);
+        }
+        else if ("presetClass" === name) {
+            let sVal = reader.GetValue();
+
+            if ("emph" === sVal) this.setPresetClass(AscFormat.PRESET_CLASS_EMPH);
+            if ("entr" === sVal) this.setPresetClass(AscFormat.PRESET_CLASS_ENTR);
+            if ("exit" === sVal) this.setPresetClass(AscFormat.PRESET_CLASS_EXIT);
+            if ("mediacall" === sVal) this.setPresetClass(AscFormat.PRESET_CLASS_MEDIACALL);
+            if ("path" === sVal) this.setPresetClass(AscFormat.PRESET_CLASS_PATH);
+            if ("verb" === sVal) this.setPresetClass(AscFormat.PRESET_CLASS_VERB);
+        }
+        else if ("restart" === name) {
+            let sVal = reader.GetValue();
+            if ("always" === sVal)	this.setRestart(RESTART_TYPE_ALWAYS);
+            if ("never" === sVal) this.setRestart(RESTART_TYPE_NEVER);
+            if ("whenNotActive" === sVal) this.setRestart(RESTART_TYPE_WHEN_NOT_ACTIVE);
+        }
+        else if ("syncBehavior" === name) {
+            let sVal = reader.GetValue();
+            if ("canSlip" === sVal)	this.setSyncBehavior(TLSyncBehaviorCanSlip);
+            if ("locked" === sVal)	this.setSyncBehavior(TLSyncBehaviorLocked);
+        }
+        else if ("display" === name) this.setDisplay(reader.GetValueBool());
+        else if ("nodePh" === name) this.setNodePh(reader.GetValueBool());
+        else if ("bldLvl" === name) this.setBldLvl(reader.GetValueInt());
+        else if ("decel" === name) this.setDecel(reader.GetValueInt());
+        else if ("grpId" === name) this.setGrpId(reader.GetValueInt());
+        else if ("id" === name) this.setId(reader.GetValueInt());
+        else if ("presetID" === name) this.setPresetID(reader.GetValueInt());
+        else if ("presetSubtype" === name) this.setPresetSubtype(reader.GetValueInt());
+        else if ("spd" === name) this.setSpd(reader.GetValueInt());
+        else if ("dur" === name) this.setDur(reader.GetValue());
+        else if ("evtFilter" === name) this.setEvtFilter(reader.GetValue());
+        else if ("repeatCount" === name) this.setRepeatCount(reader.GetValue());
+        else if ("repeatDur" === name) this.setRepeatDur(reader.GetValue());
+        else if ("tmFilter" === name) this.setTmFilter(reader.GetValue());
+    };
+    CCTn.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "stCondLst": {
+                this.setStCondLst(new CCondLst());
+                this.stCondLst.fromXml(reader);
+                break;
+            }
+            case "endCondLst": {
+                this.setEndCondLst(new CCondLst());
+                this.endCondLst.fromXml(reader);
+                break;
+            }
+            case "endSync": {
+                this.setEndSync(new CCond());
+                this.endSync.fromXml(reader);
+                break;
+            }
+            case "iterate": {
+                this.setIterate(new CIterateData());
+                this.iterate.fromXml(reader);
+                break;
+            }
+            case "childTnLst": {
+                this.setChildTnLst(new CChildTnLst());
+                this.childTnLst.fromXml(reader);
+                break;
+            }
+            case "subTnLst": {
+                this.setSubTnLst(new CTnLst());
+                this.subTnLst.fromXml(reader);
+                break;
+            }
+        }
+    };
+    CCTn.prototype.toXml = function (writer, name) {
+
+        writer.WriteXmlNodeStart("p:cTn");
+        writer.WriteXmlNullableAttributeInt("id", this.id);
+        writer.WriteXmlNullableAttributeInt("presetID", this.presetID);
+        switch (this.presetClass) {
+            case AscFormat.PRESET_CLASS_EMPH: {
+                writer.WriteXmlNullableAttributeString("presetClass", "emph");
+                break;
+            }
+            case AscFormat.PRESET_CLASS_ENTR: {
+                writer.WriteXmlNullableAttributeString("presetClass", "entr");
+                break;
+            }
+            case AscFormat.PRESET_CLASS_EXIT: {
+                writer.WriteXmlNullableAttributeString("presetClass", "exit");
+                break;
+            }
+            case AscFormat.PRESET_CLASS_MEDIACALL: {
+                writer.WriteXmlNullableAttributeString("presetClass", "mediacall");
+                break;
+            }
+            case AscFormat.PRESET_CLASS_PATH: {
+                writer.WriteXmlNullableAttributeString("presetClass", "path");
+                break;
+            }
+            case AscFormat.PRESET_CLASS_VERB: {
+                writer.WriteXmlNullableAttributeString("presetClass", "verb");
+                break;
+            }
+        }
+        writer.WriteXmlNullableAttributeInt("presetSubtype", this.presetSubtype);
+        writer.WriteXmlNullableAttributeString("dur", this.dur);
+        writer.WriteXmlNullableAttributeString("repeatCount", this.repeatCount);
+        writer.WriteXmlNullableAttributeString("repeatDur", this.repeatDur);
+        writer.WriteXmlNullableAttributeInt("spd", this.spd);
+        writer.WriteXmlNullableAttributeInt("accel", this.accel);
+        writer.WriteXmlNullableAttributeInt("decel", this.decel);
+        writer.WriteXmlNullableAttributeBool("autoRev", this.autoRev);
+
+        if (RESTART_TYPE_ALWAYS === this.restart) writer.WriteXmlNullableAttributeString("restart", "always");
+        if (RESTART_TYPE_NEVER === this.restart) writer.WriteXmlNullableAttributeString("restart", "never");
+        if (RESTART_TYPE_WHEN_NOT_ACTIVE === this.restart) writer.WriteXmlNullableAttributeString("restart", "active");
+
+        switch (this.fill) {
+            case NODE_FILL_FREEZE: {
+                writer.WriteXmlNullableAttributeString("fill", "freeze");
+                break;
+            }
+            case NODE_FILL_HOLD: {
+                writer.WriteXmlNullableAttributeString("fill", "hold");
+                break;
+            }
+            case NODE_FILL_REMOVE: {
+                writer.WriteXmlNullableAttributeString("fill", "remove");
+                break;
+            }
+            case NODE_FILL_TRANSITION: {
+                writer.WriteXmlNullableAttributeString("fill", "transition");
+                break;
+            }
+        }
+
+        if (TLSyncBehaviorCanSlip === this.syncBehavior)  writer.WriteXmlNullableAttributeString("syncBehavior", "canSlip");
+        if (TLSyncBehaviorLocked === this.syncBehavior)	 writer.WriteXmlNullableAttributeString("syncBehavior", "locked");
+
+        writer.WriteXmlNullableAttributeString("tmFilter", this.tmFilter);
+        writer.WriteXmlNullableAttributeString("evtFilter", this.evtFilter);
+        writer.WriteXmlNullableAttributeBool("display", this.display);
+        switch (this.masterRel) {
+            case TLMasterRelationLastClick: {
+                writer.WriteXmlNullableAttributeString("masterRel", "lastClick");
+                break;
+            }
+            case TLMasterRelationNextClick: {
+                writer.WriteXmlNullableAttributeString("masterRel", "nextClick");
+                break;
+            }
+            case TLMasterRelationSameClick: {
+                writer.WriteXmlNullableAttributeString("masterRel", "sameClick");
+                break;
+            }
+        }
+        writer.WriteXmlNullableAttributeInt("bldLvl", this.bldLvl);
+        writer.WriteXmlNullableAttributeInt("grpId", this.grpId);
+        writer.WriteXmlNullableAttributeBool("afterEffect", this.afterEffect);
+        if(this.nodeType !== null) {
+            if (AscFormat.NODE_TYPE_AFTEREFFECT === this.nodeType)	writer.WriteXmlNullableAttributeString("nodeType", "afterEffect");
+            if (AscFormat.NODE_TYPE_AFTERGROUP === this.nodeType)	writer.WriteXmlNullableAttributeString("nodeType", "afterGroup");
+            if (AscFormat.NODE_TYPE_CLICKEFFECT === this.nodeType)	writer.WriteXmlNullableAttributeString("nodeType", "clickEffect");
+            if (AscFormat.NODE_TYPE_CLICKPAR === this.nodeType) writer.WriteXmlNullableAttributeString("nodeType", "clickPar");
+            if (AscFormat.NODE_TYPE_INTERACTIVESEQ === this.nodeType) writer.WriteXmlNullableAttributeString("nodeType", "interactiveSeq");
+            if (AscFormat.NODE_TYPE_MAINSEQ === this.nodeType)	writer.WriteXmlNullableAttributeString("nodeType", "mainSeq");
+            if (AscFormat.NODE_TYPE_TMROOT === this.nodeType) writer.WriteXmlNullableAttributeString("nodeType", "tmRoot");
+            if (AscFormat.NODE_TYPE_WITHEFFECT === this.nodeType) writer.WriteXmlNullableAttributeString("nodeType", "withEffect");
+            if (AscFormat.NODE_TYPE_WITHGROUP === this.nodeType) writer.WriteXmlNullableAttributeString("nodeType", "withGroup");
+        }
+        writer.WriteXmlNullableAttributeBool("nodePh", this.nodePh);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.stCondLst, "p:stCondLst");
+        writer.WriteXmlNullable(this.endCondLst, "p:endCondLst");
+        writer.WriteXmlNullable(this.endSync, "p:endSync");
+        writer.WriteXmlNullable(this.iterate);
+        writer.WriteXmlNullable(this.childTnLst);
+        writer.WriteXmlNullable(this.subTnLst, "p:subTnLst");
+
+        writer.WriteXmlNodeEnd("p:cTn");
     };
     CCTn.prototype.getChildren = function() {
         return [this.stCondLst, this.endCondLst, this.endSync, this.iterate, this.childTnLst, this.subTnLst];
@@ -5323,19 +6233,19 @@
 
 
 
-    var COND_EVNT_BEGIN = 0;
-    var COND_EVNT_END = 1;
-    var COND_EVNT_ON_BEGIN = 2;
-    var COND_EVNT_ON_CLICK = 3;
-    var COND_EVNT_ON_DBLCLICK = 4;
-    var COND_EVNT_ON_END = 5;
-    var COND_EVNT_ON_MOUSEOUT = 6;
-    var COND_EVNT_ON_MOUSEOVER = 7;
-    var COND_EVNT_ON_NEXT = 8;
-    var COND_EVNT_ON_PREV = 9;
-    var COND_EVNT_ON_STOPAUDIO = 10;
+    const COND_EVNT_BEGIN = 0;
+    const COND_EVNT_END = 1;
+    const COND_EVNT_ON_BEGIN = 2;
+    const COND_EVNT_ON_CLICK = 3;
+    const COND_EVNT_ON_DBLCLICK = 4;
+    const COND_EVNT_ON_END = 5;
+    const COND_EVNT_ON_MOUSEOUT = 6;
+    const COND_EVNT_ON_MOUSEOVER = 7;
+    const COND_EVNT_ON_NEXT = 8;
+    const COND_EVNT_ON_PREV = 9;
+    const COND_EVNT_ON_STOPAUDIO = 10;
 
-    var EVENT_DESCR_MAP = {};
+    let EVENT_DESCR_MAP = {};
     EVENT_DESCR_MAP[COND_EVNT_BEGIN] = "BEGIN";
     EVENT_DESCR_MAP[COND_EVNT_END] = "END";
     EVENT_DESCR_MAP[COND_EVNT_ON_BEGIN] = "ON_BEGIN";
@@ -5348,9 +6258,9 @@
     EVENT_DESCR_MAP[COND_EVNT_ON_PREV] = "ON_PREV";
     EVENT_DESCR_MAP[COND_EVNT_ON_STOPAUDIO] = "ON_STOPAUDIO";
 
-    var RTN_ALL = 0;
-    var RTN_FIRST = 1;
-    var RTN_LAST = 2;
+    const RTN_ALL = 0;
+    const RTN_FIRST = 1;
+    const RTN_LAST = 2;
 
     function CCond() {
         CBaseAnimObject.call(this);
@@ -5425,6 +6335,167 @@
         else {
             oStream.SkipRecord();
         }
+    };
+    CCond.prototype.readAttrXml = function (name, reader) {
+        if ("evt" === name) {
+            let sVal = reader.GetValue();
+            switch(sVal) {
+                case "begin": {
+                    this.setEvt(COND_EVNT_BEGIN);
+                    break;
+                }
+                case "end": {
+                    this.setEvt(COND_EVNT_END);
+                    break;
+                }
+                case "onBegin": {
+                    this.setEvt(COND_EVNT_ON_BEGIN);
+                    break;
+                }
+                case "onClick": {
+                    this.setEvt(COND_EVNT_ON_CLICK);
+                    break;
+                }
+                case "onEnd": {
+                    this.setEvt(COND_EVNT_ON_END);
+                    break;
+                }
+                case "onMouseOut": {
+                    this.setEvt(COND_EVNT_ON_MOUSEOUT);
+                    break;
+                }
+                case "onMouseOver": {
+                    this.setEvt(COND_EVNT_ON_MOUSEOVER);
+                    break;
+                }
+                case "onNext": {
+                    this.setEvt(COND_EVNT_ON_NEXT);
+                    break;
+                }
+                case "onPrev": {
+                    this.setEvt(COND_EVNT_ON_PREV);
+                    break;
+                }
+                case "onStopAudio": {
+                    this.setEvt(COND_EVNT_ON_STOPAUDIO);
+                    break;
+                }
+
+            }
+        }
+        else if ("delay" === name) {
+            this.setDelay(reader.GetValue());
+        }
+    };
+    CCond.prototype.readChildXml = function (name, reader) {
+        if("tgtEl" === name) {
+            this.setTgtEl(new CTgtEl());
+            this.tgtEl.fromXml(reader);
+        }
+        else if("rtn" === name) {
+            let oNode = new CT_XmlNode(function(){return true});
+            oNode.fromXml(reader);
+            let sVal = oNode.attributes["val"];
+            switch (sVal) {
+                case "all": {
+                    this.setRtn(RTN_ALL);
+                    break;
+                }
+                case "first": {
+                    this.setRtn(RTN_FIRST);
+                    break;
+                }
+                case "last": {
+                    this.setRtn(RTN_LAST);
+                    break;
+                }
+            }
+        }
+        else if("tn" === name) {
+
+            let oNode = new CT_XmlNode(function(){return true});
+            oNode.fromXml(reader);
+            let nVal = parseInt(oNode.attributes["val"]);
+            if(AscFormat.isRealNumber(nVal)) {
+                this.setTn(nVal);
+            }
+        }
+    };
+    CCond.prototype.toXml = function (writer, name) {
+        let sName = name || "p:cond";
+        writer.WriteXmlNodeStart(sName);
+        if(this.evt !== null) {
+            switch(this.evt) {
+                case COND_EVNT_BEGIN: {
+                    writer.WriteXmlNullableAttributeString("evt", "begin");
+                    break;
+                }
+                case COND_EVNT_END: {
+                    writer.WriteXmlNullableAttributeString("evt", "end");
+                    break;
+                }
+                case COND_EVNT_ON_BEGIN: {
+                    writer.WriteXmlNullableAttributeString("evt", "onBegin");
+                    break;
+                }
+                case COND_EVNT_ON_CLICK: {
+                    writer.WriteXmlNullableAttributeString("evt", "onClick");
+                    break;
+                }
+                case COND_EVNT_ON_END: {
+                    writer.WriteXmlNullableAttributeString("evt", "onEnd");
+                    break;
+                }
+                case COND_EVNT_ON_MOUSEOUT: {
+                    writer.WriteXmlNullableAttributeString("evt", "onMouseOut");
+                    break;
+                }
+                case COND_EVNT_ON_MOUSEOVER: {
+                    writer.WriteXmlNullableAttributeString("evt", "onMouseOver");
+                    break;
+                }
+                case COND_EVNT_ON_NEXT: {
+                    writer.WriteXmlNullableAttributeString("evt", "onNext");
+                    break;
+                }
+                case COND_EVNT_ON_PREV: {
+                    writer.WriteXmlNullableAttributeString("evt", "onPrev");
+                    break;
+                }
+                case COND_EVNT_ON_STOPAUDIO: {
+                    writer.WriteXmlNullableAttributeString("evt", "onStopAudio");
+                    break;
+                }
+
+            }
+        }
+        writer.WriteXmlNullableAttributeString(("delay"), this.delay);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.tgtEl);
+        if (this.tn !== null) {
+            writer.WriteXmlNodeStart("p:tn");
+            writer.WriteXmlNullableAttributeString("val", this.tn);
+            writer.WriteXmlAttributesEnd(true);
+        }
+        else if (this.rtn !== null) {
+            writer.WriteXmlNodeStart("p:rtn");
+            switch (this.rtn) {
+                case RTN_ALL: {
+                    writer.WriteXmlNullableAttributeString("val", "all");
+                    break;
+                }
+                case RTN_FIRST: {
+                    writer.WriteXmlNullableAttributeString("val", "first");
+                    break;
+                }
+                case RTN_LAST: {
+                    writer.WriteXmlNullableAttributeString("val", "last");
+                    break;
+                }
+            }
+            writer.WriteXmlAttributesEnd(true);
+        }
+        writer.WriteXmlNodeEnd(sName);
     };
     CCond.prototype.getChildren = function() {
         return [this.tgtEl];
@@ -5569,29 +6640,6 @@
 
     changesFactory[AscDFH.historyitem_RtnVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_RtnVal] = function(oClass, value) {oClass.val = value;};
-    function CRtn() {
-        CBaseAnimObject.call(this);
-        this.val = null;
-    }
-    InitClass(CRtn, CBaseAnimObject, AscDFH.historyitem_type_Rtn);
-    CRtn.prototype.setVal = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RtnVal, this.val, pr));
-        this.val = pr;
-    };
-    CRtn.prototype.fillObject = function(oCopy, oIdMap) {
-        if(this.val !== null) {
-            oCopy.setVal(this.val);
-        }
-    };
-    CRtn.prototype.privateWriteAttributes = function(pWriter) {
-    };
-    CRtn.prototype.writeChildren = function(pWriter) {
-    };
-    CRtn.prototype.readAttribute = function(nType, pReader) {
-    };
-    CRtn.prototype.readChild = function(nType, pReader) {
-    };
-
 
     changesFactory[AscDFH.historyitem_TgtElInkTgt] = CChangeObject;
     changesFactory[AscDFH.historyitem_TgtElSldTgt] = CChangeObject;
@@ -5697,6 +6745,41 @@
             pReader.stream.SkipRecord();
         }
     };
+    CTgtEl.prototype.readChildXml = function (name, reader) {
+        if("spTgt" === name) {
+            this.setSpTgt(new CSpTgt());
+            this.spTgt.fromXml(reader);
+        }
+        else if("inkTgt" === name) {
+            if(!this.inkTgt) {
+                this.setInkTgt(new CObjectTarget());
+            }
+            this.inkTgt.fromXml(reader);
+        }
+        else if("sndTgt" === name) {
+            if(!this.sndTgt) {
+                this.setSndTgt(new CSndTgt());
+            }
+            this.sndTgt.fromXml(reader);
+        }
+    };
+    CTgtEl.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:tgtEl");
+        writer.WriteXmlAttributesEnd();
+        if(this.inkTgt) {
+            writer.WriteXmlNullable(this.inkTgt, "p:inkTgt");
+        }
+        else if(this.sndTgt) {
+            writer.WriteXmlNullable(this.sndTgt, "p:sndTgt");
+        }
+        else if(this.spTgt) {
+            writer.WriteXmlNullable(this.spTgt, "p:spTgt");
+        }
+        else {
+            writer.WriteXmlString("<p:sldTgt/>");
+        }
+        writer.WriteXmlNodeEnd("p:tgtEl");
+    };
     CTgtEl.prototype.getChildren = function() {
         return [this.spTgt];
     };
@@ -5756,6 +6839,25 @@
     CSndTgt.prototype.readAttribute = function(nType, pReader) {
     };
     CSndTgt.prototype.readChild = function(nType, pReader) {
+    };
+    CSndTgt.prototype.readAttrXml = function (name, reader) {
+        if(name === "embed") {
+            //TODO
+        }
+        else if(name === "name") {
+            this.setname(reader.GetValue());
+        }
+        else if(name === "builtIn") {
+            this.setBuiltIn(reader.GetValue());
+        }
+    };
+    CSndTgt.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:sndTgt");
+        writer.WriteXmlNullableAttributeString("embed", "");//TODO
+        writer.WriteXmlNullableAttributeString("name", this.name);
+        writer.WriteXmlNullableAttributeString("builtIn", this.builtIn);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNodeEnd("p:sndTgt");
     };
 
     changesFactory[AscDFH.historyitem_SpTgtBg] = CChangeBool;
@@ -5821,6 +6923,31 @@
             }
         }
     };
+    CSpTgt.prototype.assignConnectors = function(aSpTree) {
+        for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
+            let oSp = aSpTree[nSp];
+            if(oSp.getFormatIdString() === this.spid) {
+                this.setSpid(oSp.Id);
+                return;
+            }
+        }
+        if(this.parent) {
+            this.parent.onRemoveChild(this);
+        }
+
+        if(this.subSpId !== null) {
+            for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
+                let oSp = aSpTree[nSp];
+                if(oSp.getFormatIdString() === this.subSpId) {
+                    this.setSubSpId(oSp.Id);
+                    return;
+                }
+            }
+            if(this.parent) {
+                this.parent.onRemoveChild(this);
+            }
+        }
+    };
     CSpTgt.prototype.setTxEl = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SpTgtTxEl, this.txEl, pr));
         this.txEl = pr;
@@ -5870,7 +6997,7 @@
     CSpTgt.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
         if (0 === nType) this.setSpid(oStream.GetString2(), pReader);
-        else if (1 === nType) this.setSubSpId(oStream.GetString2());
+        else if (1 === nType) this.setSubSpId(oStream.GetString2(), pReader);
         else if (2 === nType) this.setBg(oStream.GetBool());
         else if (3 === nType) {
             if(!this.oleChartEl) {
@@ -5897,6 +7024,50 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CSpTgt.prototype.readAttrXml = function (name, reader) {
+        if ("spid" === name) this.setSpid(reader.GetValue(), reader);
+    };
+    CSpTgt.prototype.readChildXml = function (name, reader) {
+        if("txEl" === name) {
+            this.setTxEl(new CTxEl());
+            this.txEl.fromXml(reader);
+        }
+        else if("graphicEl" === name) {
+            this.setGraphicEl(new CGraphicEl());
+            this.graphicEl.fromXml(reader);
+        }
+        else if ("oleChartEl" === name) {
+            this.setOleChartEl(new COleChartEl());
+            this.oleChartEl.fromXml(reader);
+        }
+        else if ("bg" === name) this.setBg(true);
+        else if("subSp" === name) {
+            let oNode = new CT_XmlNode(function(){return true;});
+            oNode.fromXml(reader);
+            let sId = oNode.attributes["spid"];
+            if(sId) {
+                this.setSubSpId(sId, reader);
+            }
+        }
+    };
+    CSpTgt.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:spTgt");
+        writer.WriteXmlNullableAttributeString("spid", writer.context.getSpIdxId(this.spid));
+        writer.WriteXmlAttributesEnd();
+        if (this.bg) {
+            writer.WriteXmlNodeStart("p:bg");
+            writer.WriteXmlAttributesEnd(true);
+        }
+        if (this.subSpId) {
+            writer.WriteXmlNodeStart("p:subSp");
+            writer.WriteXmlNullableAttributeString("spid", writer.context.getSpIdxId(this.subSpId));
+            writer.WriteXmlAttributesEnd(true);
+        }
+        writer.WriteXmlNullable(this.oleChartEl);
+        writer.WriteXmlNullable(this.txEl);
+        writer.WriteXmlNullable(this.graphicEl);
+        writer.WriteXmlNodeEnd("p:spTgt");
     };
     CSpTgt.prototype.getChildren = function() {
         return [this.txEl, this.graphicEl];
@@ -5975,6 +7146,40 @@
     CIterateData.prototype.readChild = function(nType, pReader) {
         pReader.stream.SkipRecord();
     };
+    CIterateData.prototype.readAttrXml = function (name, reader) {
+        if ("type" === name) this.setType(reader.GetValue());
+        else if ("backwards" === name) this.setBackwards(reader.GetValueBool());
+    };
+    CIterateData.prototype.readChildXml = function (name, reader) {
+        if ("tmAbs" === name) {
+            let oNode = new CT_XmlNode(function(){return true});
+            oNode.fromXml(reader);
+            this.setTmAbs(oNode.attributes["val"]);
+        }
+        else if ("tmPct" === name) {
+            let oNode = new CT_XmlNode(function(){return true});
+            oNode.fromXml(reader);
+            this.setTmPct(parseInt(oNode.attributes["val"]));
+        }
+    };
+
+    CIterateData.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:iterate");
+        writer.WriteXmlNullableAttributeString("type", this.type);
+        writer.WriteXmlNullableAttributeString("backwards", this.backwards);
+        writer.WriteXmlAttributesEnd();
+        if(this.tmAbs !== null) {
+            writer.WriteXmlNodeStart("p:tmAbs");
+            writer.WriteXmlNullableAttributeString("val", this.tmAbs);
+            writer.WriteXmlAttributesEnd(true);
+        }
+        if(this.tmPct !== null) {
+            writer.WriteXmlNodeStart("p:tmPct");
+            writer.WriteXmlNullableAttributeInt("val", this.tmPct);
+            writer.WriteXmlAttributesEnd(true);
+        }
+        writer.WriteXmlNodeEnd("p:iterate");
+    };
 
     changesFactory[AscDFH.historyitem_TavVal] = CChangeObject;
     changesFactory[AscDFH.historyitem_TavFmla] = CChangeString;
@@ -6037,6 +7242,28 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CTav.prototype.readAttrXml = function (name, reader) {
+        if("tm" === name) {
+            this.setTm(reader.GetValue());
+        }
+        else if("fmla" === name) {
+            this.setFmla(reader.GetValue());
+        }
+    };
+    CTav.prototype.readChildXml = function (name, reader) {
+        if("val" === name) {
+            this.setVal(new CAnimVariant());
+            this.val.fromXml(reader);
+        }
+    };
+    CTav.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:tav");
+        writer.WriteXmlNullableAttributeString("tm", this.tm);
+        writer.WriteXmlNullableAttributeString("fmla", this.fmla);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.val, "p:val");
+        writer.WriteXmlNodeEnd("p:tav");
     };
     CTav.prototype.getChildren = function() {
         return [this.val];
@@ -6150,6 +7377,70 @@
             this.setClrVal(pReader.ReadUniColor());
         }
     };
+    CAnimVariant.prototype.readAttrXml = function (name, reader) {
+    };
+    CAnimVariant.prototype.readChildXml = function (name, reader) {
+        if("clrVal" === name) {
+            let oThis = this;
+            let oNode = new CT_XmlNode(function (reader, name){
+                if(AscFormat.CUniColor.prototype.isUnicolor(name)) {
+                    let oColor = new AscFormat.CUniColor();
+                    oColor.fromXml(reader, name);
+                    oThis.setClrVal(oColor);
+                }
+                return true;
+            });
+            oNode.fromXml(reader);
+        }
+        else if("boolVal" === name ||
+            "strVal" === name ||
+            "intVal" === name ||
+            "fltVal" === name) {
+            let oNode = new CT_XmlNode(function (reader, name){
+                return true;
+            });
+            oNode.fromXml(reader);
+            let sVal = oNode.attributes["val"];
+            if(sVal) {
+                if ("boolVal" === name) this.setBoolVal(reader.GetBool(sVal));
+                else if ("strVal" === name) this.setStrVal(sVal);
+                else if ("intVal" === name) this.setIntVal(reader.GetInt(sVal));
+                else if ("fltVal" === name) this.setFltVal(reader.GetDouble(sVal));
+            }
+        }
+    };
+    CAnimVariant.prototype.toXml = function (writer, name) {
+
+        writer.WriteXmlNodeStart(name);
+        writer.WriteXmlAttributesEnd();
+        if(this.strVal !== null) {
+            writer.WriteXmlNodeStart("p:strVal");
+            writer.WriteXmlNullableAttributeString("val", this.strVal);
+            writer.WriteXmlAttributesEnd(true);
+        }
+        if(this.boolVal !== null) {
+            writer.WriteXmlNodeStart("p:boolVal");
+            writer.WriteXmlNullableAttributeBool("val", this.boolVal);
+            writer.WriteXmlAttributesEnd(true);
+        }
+        if(this.intVal !== null) {
+            writer.WriteXmlNodeStart("p:intVal");
+            writer.WriteXmlNullableAttributeInt("val", this.intVal);
+            writer.WriteXmlAttributesEnd(true);
+        }
+        if(this.fltVal !== null) {
+            writer.WriteXmlNodeStart("p:fltVal");
+            writer.WriteXmlNullableAttributeDouble("val", this.fltVal);
+            writer.WriteXmlAttributesEnd(true);
+        }
+        if(this.clrVal !== null) {
+            writer.WriteXmlNodeStart("p:clrVal");
+            writer.WriteXmlAttributesEnd();
+            this.clrVal.toXml(writer);
+            writer.WriteXmlNodeEnd("p:clrVal");
+        }
+        writer.WriteXmlNodeEnd(name);
+    };
     CAnimVariant.prototype.getVal = function() {
         if(this.boolVal !== null) {
             return this.boolVal;
@@ -6260,8 +7551,13 @@
         return this.copy();
     };
 
-    var DIR_CCW = 0;
-    var DIR_CW = 1;
+    const DIR_CCW = 0;
+    const DIR_CW = 1;
+
+    const TLColorSpaceRGB = 0;
+    const TLColorSpaceHSL = 1;
+
+
 
     function CAnimClr() {
         CTimeNodeBase.call(this);
@@ -6408,6 +7704,123 @@
             }
         }
     };
+    CAnimClr.prototype.readAttrXml = function (name, reader) {
+        if ("clrSpc" === name) {
+            let sVal = reader.GetValue();
+            if(sVal === "rgb") this.setClrSpc(TLColorSpaceRGB);
+            else if(sVal === "hsl") this.setClrSpc(TLColorSpaceHSL);
+        }
+        else if ("dir" === name) {
+            let sVal = reader.GetValue();
+            if(sVal === "ccw") this.setDir(DIR_CCW);
+            else if(sVal === "cw") this.setDir(DIR_CW);
+        }
+    };
+    CAnimClr.prototype.readChildXml = function (name, reader) {
+        let oThis = this;
+        switch (name) {
+            case "cBhvr": {
+                this.setCBhvr(new CCBhvr());
+                this.cBhvr.fromXml(reader);
+                break;
+            }
+            case "from": {
+                let oNode = new CT_XmlNode(function (reader, name){
+                    if(AscFormat.CUniColor.prototype.isUnicolor(name)) {
+                        let oColor = new AscFormat.CUniColor();
+                        oColor.fromXml(reader, name);
+                        oThis.setFrom(oColor);
+                    }
+                    return true;
+                });
+                oNode.fromXml(reader);
+                break;
+            }
+            case "to": {
+                let oNode = new CT_XmlNode(function (reader, name){
+                    if(AscFormat.CUniColor.prototype.isUnicolor(name)) {
+                        let oColor = new AscFormat.CUniColor();
+                        oColor.fromXml(reader, name);
+                        oThis.setTo(oColor);
+                    }
+                    return true;
+                });
+                oNode.fromXml(reader);
+                break;
+            }
+            case "by": {
+                let oNode = new CT_XmlNode(function (reader, name){
+                    if(name === "hsl") {
+                        let oClrNode = new CT_XmlNode(function (reader, name){
+                            return true;
+                        });
+                        oClrNode.fromXml(reader);
+                        let oColor = new CColorPercentage();
+                        oColor.c1 = parseInt(oClrNode.attributes["h"]);
+                        oColor.c2 = parseInt(oClrNode.attributes["s"]);
+                        oColor.c3 = parseInt(oClrNode.attributes["l"]);
+                        this.setByHSL(oColor);
+                    }
+                    else if(name === "rgb") {
+                        let oClrNode = new CT_XmlNode(function (reader, name){
+                            return true;
+                        });
+                        oClrNode.fromXml(reader);
+                        let oColor = new CColorPercentage();
+                        oColor.c1 = parseInt(oClrNode.attributes["r"]);
+                        oColor.c2 = parseInt(oClrNode.attributes["g"]);
+                        oColor.c3 = parseInt(oClrNode.attributes["b"]);
+                        this.setByRGB(oColor);
+                    }
+                    return true;
+                });
+                oNode.fromXml(reader);
+            }
+        }
+    };
+    CAnimClr.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:animClr");
+        if(this.clrSpc === TLColorSpaceRGB) writer.WriteXmlNullableAttributeString("clrSpc", "rgb");
+        else if(this.clrSpc === TLColorSpaceHSL) writer.WriteXmlNullableAttributeString("clrSpc", "hsl");
+        if(this.dir === DIR_CW) writer.WriteXmlNullableAttributeString("dir", "cw");
+        else if(this.dir === DIR_CCW) writer.WriteXmlNullableAttributeString("dir", "Ccw");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cBhvr);
+        if(this.byHSL || this.byRGB) {
+            writer.WriteXmlNodeStart("p:by");
+            writer.WriteXmlAttributesEnd();
+            if(this.byHSL) {
+                writer.WriteXmlNodeStart("p:hsl");
+                writer.WriteXmlAttributeInt("h", this.byHSL.c1);
+                writer.WriteXmlAttributeInt("s", this.byHSL.c2);
+                writer.WriteXmlAttributeInt("l", this.byHSL.c3);
+                writer.WriteXmlAttributesEnd();
+                writer.WriteXmlNodeEnd("p:hsl");
+            }
+            else if(this.byRGB){
+                writer.WriteXmlNodeStart("p:rgb");
+                writer.WriteXmlAttributeInt("h", this.byRGB.c1);
+                writer.WriteXmlAttributeInt("s", this.byRGB.c2);
+                writer.WriteXmlAttributeInt("l", this.byRGB.c3);
+                writer.WriteXmlAttributesEnd();
+                writer.WriteXmlNodeEnd("p:rgb");
+            }
+            writer.WriteXmlNodeEnd("p:by");
+            if(this.from) {
+                writer.WriteXmlNodeStart("p:from");
+                writer.WriteXmlAttributesEnd();
+                writer.WriteXmlNullable(this.from);
+                writer.WriteXmlNodeEnd("p:from");
+            }
+            if(this.to) {
+                writer.WriteXmlNodeStart("p:to");
+                writer.WriteXmlAttributesEnd();
+                writer.WriteXmlNullable(this.to);
+                writer.WriteXmlNodeEnd("p:to");
+            }
+        }
+        writer.WriteXmlNodeEnd("p:animClr");
+    };
     CAnimClr.prototype.getChildren = function() {
         return [this.cBhvr];
     };
@@ -6551,9 +7964,9 @@
     drawingsChangesMap[AscDFH.historyitem_AnimEffectPrLst] = function(oClass, value) {oClass.prLst = value;};
     drawingsChangesMap[AscDFH.historyitem_AnimEffectTransition] = function(oClass, value) {oClass.transition = value;};
 
-    var TRANSITION_TYPE_IN = 0;
-    var TRANSITION_TYPE_OUT = 1;
-    var TRANSITION_TYPE_NONE = 2;
+    const TRANSITION_TYPE_IN = 0;
+    const TRANSITION_TYPE_OUT = 1;
+    const TRANSITION_TYPE_NONE = 2;
     function CAnimEffect() {
         CTimeNodeBase.call(this);
         this.cBhvr = null;
@@ -6613,9 +8026,9 @@
     };
     CAnimEffect.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-        if (0 == nType)       this.setTransition(oStream.GetUChar());
-        else if (1 == nType) this.setFilter(oStream.GetString2());
-        else if (2 == nType) this.setPrLst(oStream.GetString2());
+        if (0 === nType)       this.setTransition(oStream.GetUChar());
+        else if (1 === nType) this.setFilter(oStream.GetString2());
+        else if (2 === nType) this.setPrLst(oStream.GetString2());
     };
     CAnimEffect.prototype.readChild = function(nType, pReader) {
         var s = pReader.stream;
@@ -6634,6 +8047,41 @@
                 break;
             }
         }
+    };
+    CAnimEffect.prototype.readAttrXml = function (name, reader) {
+        if ("transition" === name)       {
+            let sVal = reader.GetValue();
+            if(sVal === "in") this.setTransition(TRANSITION_TYPE_IN);
+            if(sVal === "out") this.setTransition(TRANSITION_TYPE_OUT);
+            if(sVal === "none") this.setTransition(TRANSITION_TYPE_NONE);
+        }
+        else if ("filter" === name) this.setFilter(reader.GetValue());
+        else if ("prLst" === name) this.setPrLst(reader.GetValue());
+    };
+    CAnimEffect.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "cBhvr": {
+                this.setCBhvr(new CCBhvr());
+                this.cBhvr.fromXml(reader);break;
+            }
+            case "progress": {
+                this.setProgress(new CAnimVariant());
+                this.progress.fromXml(reader);
+                break;
+            }
+        }
+    };
+    CAnimEffect.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:animEffect");
+        if(this.transition === TRANSITION_TYPE_IN) writer.WriteXmlNullableAttributeString("transition", "in");
+        else if(this.transition === TRANSITION_TYPE_OUT) writer.WriteXmlNullableAttributeString("transition", "out");
+        else if(this.transition === TRANSITION_TYPE_NONE) writer.WriteXmlNullableAttributeString("transition", "none");
+        writer.WriteXmlNullableAttributeString("filter", this.filter);
+        writer.WriteXmlNullableAttributeString("prLst", this.prLst);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cBhvr);
+        writer.WriteXmlNullable(this.progress, "p:progress");
+        writer.WriteXmlNodeEnd("p:animEffect");
     };
     CAnimEffect.prototype.getChildren = function() {
         return [this.cBhvr, this.progress];
@@ -6725,8 +8173,11 @@
     drawingsChangesMap[AscDFH.historyitem_AnimMotionRAng] = function(oClass, value) {oClass.rAng = value;};
 
 
-    var ORIGIN_PARENT = 0;
-    var ORIGIN_LAYOUT = 1;
+    const ORIGIN_PARENT = 0;
+    const ORIGIN_LAYOUT = 1;
+
+    const TLPathEditModeFixed = 0;
+    const TLPathEditModeRelative = 1;
 
     function CAnimMotion() {
         CTimeNodeBase.call(this);
@@ -6911,6 +8362,77 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CAnimMotion.prototype.readAttrXml = function (name, reader) {
+        if ("origin" === name) {
+            let sVal = reader.GetValue();
+            if(sVal === "layout") this.setOrigin(ORIGIN_LAYOUT);
+            else if(sVal === "parent") this.setOrigin(ORIGIN_PARENT);
+        }
+        else if ("pathEditMode" === name) {
+            let sVal = reader.GetValue();
+            if(sVal === "fixed") this.setPathEditMode(TLPathEditModeFixed);
+            if(sVal === "relative") this.setPathEditMode(TLPathEditModeRelative);
+        }
+        else if ("path" === name) this.setPath(reader.GetValue());
+        else if ("ptsTypes" === name) this.setPtsTypes(reader.GetValue());
+        else if ("rAng" === name) this.setRAng(reader.GetValueInt());
+
+    };
+    CAnimMotion.prototype.readTLPointFromXml = function(reader) {
+        let oNode = new CT_XmlNode(function(){
+            return true;
+        });
+        oNode.fromXml(reader);
+        let oPt = new CTLPoint();
+        oPt.setX(parseInt(oNode.attributes["x"]));
+        oPt.setY(parseInt(oNode.attributes["y"]));
+        return oPt;
+    };
+    CAnimMotion.prototype.writeTLPointToXml = function(oPt, writer, name) {
+        if(oPt) {
+            writer.WriteXmlNodeStart(name);
+            writer.WriteXmlNullableAttributeInt("x", oPt.x);
+            writer.WriteXmlNullableAttributeInt("y", oPt.y);
+            writer.WriteXmlAttributesEnd(true);
+        }
+    };
+    CAnimMotion.prototype.readChildXml = function (name, reader) {
+        if("cBhvr" === name) {
+            this.setCBhvr(new CCBhvr());
+            this.cBhvr.fromXml(reader);
+        }
+        else if ("by" === name) {
+            this.setBy(this.readTLPointFromXml(reader));
+        }
+        else if ("from" === name) {
+            this.setFrom(this.readTLPointFromXml(reader));
+        }
+        else if ("to" === name) {
+            this.setTo(this.readTLPointFromXml(reader));
+        }
+        else if ("rCtr" === name) {
+            this.setRCtr(this.readTLPointFromXml(reader));
+        }
+    };
+    CAnimMotion.prototype.toXml = function (writer, name) {
+
+        writer.WriteXmlNodeStart("p:animMotion");
+        if(this.origin === ORIGIN_LAYOUT) writer.WriteXmlNullableAttributeString("origin", "layout");
+        else if(this.origin === ORIGIN_PARENT) writer.WriteXmlNullableAttributeString("origin", "fixed");
+
+        writer.WriteXmlNullableAttributeString("path", this.path);
+        if(this.pathEditMode === TLPathEditModeFixed) writer.WriteXmlNullableAttributeString("pathEditMode", "fixed");
+        if(this.pathEditMode === TLPathEditModeRelative) writer.WriteXmlNullableAttributeString("pathEditMode", "relative");
+        writer.WriteXmlNullableAttributeInt("rAng", this.rAng);
+        writer.WriteXmlNullableAttributeString("ptsTypes", this.ptsTypes);
+        writer.WriteXmlAttributesEnd();
+        this.writeTLPointToXml(this.by, writer, "p:by");
+        this.writeTLPointToXml(this.from, writer, "p:from");
+        this.writeTLPointToXml(this.to, writer, "p:to");
+        writer.WriteXmlNullable(this.cBhvr);
+        this.writeTLPointToXml(this.rCtr, writer, "p:rCtr");
+        writer.WriteXmlNodeEnd("p:animMotion");
     };
     CAnimMotion.prototype.getChildren = function() {
         return [this.cBhvr];
@@ -7423,6 +8945,32 @@
             pReader.stream.SkipRecord();
         }
     };
+    CAnimRot.prototype.readAttrXml = function (name, reader) {
+        if("by" === name) {
+            this.setBy(reader.GetValueInt());
+        }
+        else if("from" === name) {
+            this.setFrom(reader.GetValueInt());
+        }
+        else if("to" === name) {
+            this.setTo(reader.GetValueInt());
+        }
+    };
+    CAnimRot.prototype.readChildXml = function (name, reader) {
+        if("cBhvr" === name) {
+            this.setCBhvr(new CCBhvr());
+            this.cBhvr.fromXml(reader);
+        }
+    };
+    CAnimRot.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:animRot");
+        writer.WriteXmlNullableAttributeInt("by", this.by);
+        writer.WriteXmlNullableAttributeInt("from", this.from);
+        writer.WriteXmlNullableAttributeInt("to", this.to);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cBhvr);
+        writer.WriteXmlNodeEnd("p:animRot");
+    };
     CAnimRot.prototype.getChildren = function() {
         return [this.cBhvr];
     };
@@ -7593,6 +9141,37 @@
             pReader.stream.SkipRecord();
         }
     };
+    CAnimScale.prototype.readAttrXml = function (name, reader) {
+        if("zoomContents" === name) {
+            this.setZoomContents(reader.GetValueBool());
+        }
+    };
+    CAnimScale.prototype.readChildXml = function (name, reader) {
+        if("cBhvr" === name) {
+            this.setCBhvr(new CCBhvr());
+            this.cBhvr.fromXml(reader);
+        }
+        else if("by" === name) {
+            this.setBy(CAnimMotion.prototype.readTLPointFromXml.call(this, reader));
+        }
+        else if("from" === name) {
+            this.setFrom(CAnimMotion.prototype.readTLPointFromXml.call(this, reader));
+        }
+        else if("to" === name) {
+            this.setTo(CAnimMotion.prototype.readTLPointFromXml.call(this, reader));
+        }
+    };
+    CAnimScale.prototype.toXml = function (writer, name) {
+
+        writer.WriteXmlNodeStart("p:animScale");
+        writer.WriteXmlNullableAttributeBool("zoomContents", this.zoomContents);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cBhvr);
+        CAnimMotion.prototype.writeTLPointToXml.call(this, this.by, writer, "p:by");
+        CAnimMotion.prototype.writeTLPointToXml.call(this, this.from, writer, "p:from");
+        CAnimMotion.prototype.writeTLPointToXml.call(this, this.to, writer, "p:to");
+        writer.WriteXmlNodeEnd("p:animScale");
+    };
     CAnimScale.prototype.getChildren = function() {
         return [this.cBhvr];
     };
@@ -7678,6 +9257,24 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CAudio.prototype.readAttrXml = function (name, reader) {
+        if("isNarration" === name) {
+            this.setIsNarration(reader.GetValueBool());
+        }
+    };
+    CAudio.prototype.readChildXml = function (name, reader) {
+        if("cMediaNode" === name) {
+            this.setCMediaNode(new CCMediaNode());
+            this.cMediaNode.fromXml(reader);
+        }
+    };
+    CAudio.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:audio");
+        writer.WriteXmlNullableAttributeString(("isNarration"), this.isNarration);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cMediaNode);
+        writer.WriteXmlNodeEnd("p:audio");
     };
     CAudio.prototype.getChildren = function() {
         return [this.cMediaNode];
@@ -7784,6 +9381,33 @@
             pReader.stream.SkipRecord();
         }
     };
+    CCMediaNode.prototype.readAttrXml = function (name, reader) {
+        if ("numSld" === name) this.setNumSld(reader.GetValueInt());
+        else if ("vol" === name) this.setVol(reader.GetValueInt());
+        else if ("mute" === name) this.setMute(reader.GetValueBool());
+        else if ("showWhenStopped" === name) this.setShowWhenStopped(reader.GetValueBool());
+    };
+    CCMediaNode.prototype.readChildXml = function (name, reader) {
+        if("cTn" === name) {
+            this.setCTn(new CCTn());
+            this.cTn.fromXml(reader);
+        }
+        else if("tgtEl" === name) {
+            this.setTgtEl(new CTgtEl());
+            this.tgtEl.fromXml(reader);
+        }
+    };
+    CCMediaNode.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:cMediaNode");
+        writer.WriteXmlNullableAttributeString("mute", this.mute);
+        writer.WriteXmlNullableAttributeString("numSld", this.numSld);
+        writer.WriteXmlNullableAttributeString("showWhenStopped", this.showWhenStopped);
+        writer.WriteXmlNullableAttributeString("vol", this.vol);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cTn);
+        writer.WriteXmlNullable(this.tgtEl);
+        writer.WriteXmlNodeEnd("p:cMediaNode");
+    };
     CCMediaNode.prototype.getChildren = function() {
         return [this.cTn, this.tgtEl];
     };
@@ -7796,6 +9420,12 @@
     drawingsChangesMap[AscDFH.historyitem_CmdCBhvr] = function(oClass, value) {oClass.cBhvr = value;};
     drawingsChangesMap[AscDFH.historyitem_CmdCmd] = function(oClass, value) {oClass.cmd = value;};
     drawingsChangesMap[AscDFH.historyitem_CmdType] = function(oClass, value) {oClass.type = value;};
+
+
+    const TLCommandTypeCall = 0;
+    const TLCommandTypeEvt = 1;
+    const TLCommandTypeVerb = 2;
+
     function CCmd() {
         CTimeNodeBase.call(this);
         this.cBhvr = null;
@@ -7853,6 +9483,33 @@
             oStream.SkipRecord();
         }
     };
+    CCmd.prototype.readAttrXml = function (name, reader) {
+        if("type" === name) {
+            let sVal = reader.GetValue();
+            if(sVal === "call") this.setType(TLCommandTypeCall);
+            else if(sVal === "evt") this.setType(TLCommandTypeEvt);
+            else if(sVal === "verb") this.setType(TLCommandTypeVerb);
+        }
+        else if("cmd" === name) {
+            this.setCmd(reader.GetValue());
+        }
+    };
+    CCmd.prototype.readChildXml = function (name, reader) {
+        if("cBhvr" === name) {
+            this.setCBhvr(new CCBhvr());
+            this.cBhvr.fromXml(reader);
+        }
+    };
+    CCmd.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:cmd");
+        if(this.type === TLCommandTypeCall)  writer.WriteXmlNullableAttributeString("type", "call");
+        else if(this.type === TLCommandTypeEvt)  writer.WriteXmlNullableAttributeString("type", "evt");
+        else if(this.type === TLCommandTypeVerb)  writer.WriteXmlNullableAttributeString("type", "verb");
+        writer.WriteXmlNullableAttributeString("cmd", this.cmd);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cBhvr);
+        writer.WriteXmlNodeEnd("p:cmd");
+    };
     CCmd.prototype.getChildren = function() {
         return [this.cBhvr];
     };
@@ -7885,10 +9542,10 @@
 
 
 
-    var ANIM_LABEL_WIDTH_PIX = 22;
-    var ANIM_LABEL_HEIGHT_PIX = 17;
-    var HOR_LABEL_SPACE = 9;
-    var VERT_LABEL_SPACE = 4;
+    const ANIM_LABEL_WIDTH_PIX = 22;
+    const ANIM_LABEL_HEIGHT_PIX = 17;
+    const HOR_LABEL_SPACE = 9;
+    const VERT_LABEL_SPACE = 4;
 
     function CTimeNodeContainer() {//par, excl
         CTimeNodeBase.call(this);
@@ -7928,6 +9585,18 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CTimeNodeContainer.prototype.readChildXml = function (name, reader) {
+        if("cTn" === name) {
+            this.setCTn(new CCTn());
+            this.cTn.fromXml(reader);
+        }
+    };
+    CTimeNodeContainer.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart(name);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cTn);
+        writer.WriteXmlNodeEnd(name);
     };
     CTimeNodeContainer.prototype.getChildren = function() {
         return [this.cTn];
@@ -8013,12 +9682,12 @@
         if(!oObj) {
             return false;
         }
-        if(!oObj.checkCorrect() || !(oObj.Is_UseInDocument && oObj.Is_UseInDocument())) {
+        if(!oObj.checkCorrect() || !(oObj.IsUseInDocument && oObj.IsUseInDocument())) {
             return false;
         }
         return true;
     };
-    var ICON_TRIGGER = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxMSAxNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTEgMEg1TDAgN0g0TDAgMTRMMTEgNUg2TDExIDBaIiBmaWxsPSIjNDQ0NDQ0Ii8+PC9zdmc+";
+    const ICON_TRIGGER = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxMSAxNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTEgMEg1TDAgN0g0TDAgMTRMMTEgNUg2TDExIDBaIiBmaWxsPSIjNDQ0NDQ0Ii8+PC9zdmc+";
     
     CTimeNodeContainer.prototype.internalDrawEffectLabel = function(oGraphics) {
         var oRect = this.getLabelRect();
@@ -8557,6 +10226,9 @@
     };
     CPar.prototype.createEffect = function(sObjectId, nPresetClass, nPresetId, nPresetSubtype) {
     };
+    CPar.prototype.toXml = function (writer, name) {
+        CTimeNodeContainer.prototype.toXml.call(this, writer, "p:par");
+    };
 
     function CExcl() {//par, excl
         CTimeNodeContainer.call(this);
@@ -8572,12 +10244,15 @@
             aChildren[nChild].scheduleStart(oPlayer);
         }
     };
+    CExcl.prototype.toXml = function (writer, name) {
+        CTimeNodeContainer.prototype.toXml.call(this, writer, "p:excl");
+    };
 
-    var NEXT_AC_NONE = 0;
-    var NEXT_AC_SEEK = 1;
+    const NEXT_AC_NONE = 0;
+    const NEXT_AC_SEEK = 1;
 
-    var PREV_AC_NONE = 0;
-    var PREV_AC_SKIP_TIMED = 1;
+    const PREV_AC_NONE = 0;
+    const PREV_AC_SKIP_TIMED = 1;
 
     changesFactory[AscDFH.historyitem_SeqNextCondLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_SeqPrevCondLst] = CChangeObject;
@@ -8667,6 +10342,48 @@
             this.setCTn(new CCTn());
             this.cTn.fromPPTY(pReader);
         }
+    };
+    CSeq.prototype.readAttrXml = function (name, reader) {
+        if ("concurrent" === name) this.setConcurrent(reader.GetValueBool());
+        else if ("nextAc" === name) {
+            let sVal = reader.GetValue();
+            if(sVal === "seek") this.setNextAc(NEXT_AC_SEEK);
+            if(sVal === "none") this.setNextAc(NEXT_AC_NONE);
+        }
+        else if ("prevAc" === name) {
+            let sVal = reader.GetValue();
+            if(sVal === "skipTimed") this.setPrevAc(PREV_AC_SKIP_TIMED);
+            if(sVal === "none") this.setPrevAc(PREV_AC_NONE);
+        }
+    };
+    CSeq.prototype.readChildXml = function (name, reader) {
+        if("prevCondLst" === name) {
+            this.setPrevCondLst(new CCondLst());
+            this.prevCondLst.fromXml(reader);
+        }
+        else if("nextCondLst" === name) {
+            this.setNextCondLst(new CCondLst());
+            this.nextCondLst.fromXml(reader);
+        }
+        else if("cTn" === name) {
+            this.setCTn(new CCTn());
+            this.cTn.fromXml(reader);
+        }
+    };
+    CSeq.prototype.toXml = function (writer, name) {
+
+        writer.WriteXmlNodeStart("p:seq");
+        writer.WriteXmlNullableAttributeBool("concurrent", this.concurrent);
+        writer.WriteXmlNullableAttributeString("prevAc", this.prevAc);
+        if(this.prevAc === PREV_AC_SKIP_TIMED) writer.WriteXmlNullableAttributeString("prevAc", "skipTimed");
+        else if(this.prevAc === PREV_AC_NONE) writer.WriteXmlNullableAttributeString("prevAc", "none");
+        if(this.nextAc === NEXT_AC_SEEK) writer.WriteXmlNullableAttributeString("nextAc", "seek");
+        else if(this.nextAc === NEXT_AC_NONE) writer.WriteXmlNullableAttributeString("nextAc", "none");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cTn);
+        writer.WriteXmlNullable(this.prevCondLst, "p:prevCondLst");
+        writer.WriteXmlNullable(this.nextCondLst, "p:nextCondLst");
+        writer.WriteXmlNodeEnd("p:seq");
     };
     CSeq.prototype.getChildren = function() {
         return [this.prevCondLst, this.nextCondLst, this.cTn];
@@ -8839,6 +10556,23 @@
             this.to.fromPPTY(pReader);
         }
     };
+    CSet.prototype.readChildXml = function (name, reader) {
+        if("cBhvr" === name) {
+            this.setCBhvr(new CCBhvr());
+            this.cBhvr.fromXml(reader);
+        }
+        else if("to" === name) {
+            this.setTo(new CAnimVariant());
+            this.to.fromXml(reader);
+        }
+    };
+    CSet.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:set");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cBhvr);
+        writer.WriteXmlNullable(this.to, "p:to");
+        writer.WriteXmlNodeEnd("p:set");
+    };
     CSet.prototype.getChildren = function() {
         return [this.cBhvr, this.to];
     };
@@ -8951,6 +10685,24 @@
             pReader.stream.SkipRecord();
         }
     };
+    CVideo.prototype.readAttrXml = function (name, reader) {
+        if("fullScrn" === name) {
+            this.setFullScrn(reader.GetValueBool());
+        }
+    };
+    CVideo.prototype.readChildXml = function (name, reader) {
+        if("cMediaNode" === name) {
+            this.setCMediaNode(new CCMediaNode());
+            this.cMediaNode.fromXml(reader);
+        }
+    };
+    CVideo.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:video");
+        writer.WriteXmlNullableAttributeBool("fullScrn", this.fullScrn);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.cMediaNode);
+        writer.WriteXmlNodeEnd("p:video");
+    };
     CVideo.prototype.getChildren = function() {
         return [this.cMediaNode];
     };
@@ -8960,6 +10712,13 @@
     changesFactory[AscDFH.historyitem_OleChartElType] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_OleChartElLvl] = function(oClass, value) {oClass.lvl = value;};
     drawingsChangesMap[AscDFH.historyitem_OleChartElType] = function(oClass, value) {oClass.type = value;};
+
+    const TLChartSubElementCategory = 0;
+    const TLChartSubElementGridLegend = 1;
+    const TLChartSubElementPtInCategory = 2;
+    const TLChartSubElementPtInSeries = 3;
+    const TLChartSubElementSeries = 4;
+
     function COleChartEl() {
         CBaseAnimObject.call(this);
         this.lvl = null;
@@ -8989,6 +10748,28 @@
     COleChartEl.prototype.readAttribute = function(nType, pReader) {
     };
     COleChartEl.prototype.readChild = function(nType, pReader) {
+    };
+    COleChartEl.prototype.readAttrXml = function (name, reader) {
+        if ("lvl" === name) this.setLvl(reader.GetValueInt());
+        if ("type" === name) {
+            let sVal = reader.GetValue();
+            if ("category" === sVal) this.setType(TLChartSubElementCategory);
+            else if ("gridLegend" === sVal)	this.setType(TLChartSubElementGridLegend);
+            else if ("ptInCategory" === sVal) this.setType(TLChartSubElementPtInCategory);
+            else if ("ptInSeries" === sVal) this.setType(TLChartSubElementPtInSeries);
+            else if ("series" === sVal) this.setType(TLChartSubElementSeries);
+        }
+    };
+    COleChartEl.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:oleChartEl");
+        writer.WriteXmlNullableAttributeInt("lvl", this.lvl);
+        if (TLChartSubElementCategory === this.type)	writer.WriteXmlNullableAttributeString("type", "category");
+        else if (TLChartSubElementGridLegend === this.type)	writer.WriteXmlNullableAttributeString("type", "gridLegend");
+        else if (TLChartSubElementPtInCategory === this.type)	writer.WriteXmlNullableAttributeString("type", "ptInCategory");
+        else if (TLChartSubElementPtInSeries === this.type)	writer.WriteXmlNullableAttributeString("type", "ptInSeries");
+        else if (TLChartSubElementSeries === this.type)	writer.WriteXmlNullableAttributeString("type", "series");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNodeEnd("p:oleChartEl");
     };
 
     changesFactory[AscDFH.historyitem_TlPointX] = CChangeDouble2;
@@ -9024,6 +10805,12 @@
     CTLPoint.prototype.readAttribute = function(nType, pReader) {
     };
     CTLPoint.prototype.readChild = function(nType, pReader) {
+    };
+    CTLPoint.prototype.readAttrXml = function (name, reader) {
+        //TODO:Implement in children
+    };
+
+    CTLPoint.prototype.toXml = function (writer, name) {
     };
 
 
@@ -9061,6 +10848,14 @@
     };
     CSndAc.prototype.readChild = function(nType, pReader) {
     };
+    CSndAc.prototype.readAttrXml = function (name, reader) {
+        //TODO:Implement in children
+    };
+    CSndAc.prototype.readChildXml = function (name, reader) {
+        //TODO:Implement in children
+    };
+    CSndAc.prototype.toXml = function (writer, name) {
+    };
 
 
     changesFactory[AscDFH.historyitem_StSndSnd] = CChangeObject;
@@ -9096,6 +10891,14 @@
     CStSnd.prototype.readAttribute = function(nType, pReader) {
     };
     CStSnd.prototype.readChild = function(nType, pReader) {
+    };
+    CStSnd.prototype.readAttrXml = function (name, reader) {
+        //TODO:Implement in children
+    };
+    CStSnd.prototype.readChildXml = function (name, reader) {
+        //TODO:Implement in children
+    };
+    CStSnd.prototype.toXml = function (writer, name) {
     };
 
 
@@ -9144,7 +10947,7 @@
     };
     CTxEl.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-     if(nType === 0) {
+        if(nType === 0) {
             var bCharRg = oStream.GetBool();
             if(bCharRg) {
                 this.setCharRg(new CIndexRg())
@@ -9174,6 +10977,23 @@
     };
     CTxEl.prototype.readChild = function(nType, pReader) {
     };
+    CTxEl.prototype.readChildXml = function (name, reader) {
+        if(name === "charRg") {
+            this.setCharRg(new CIndexRg());
+            this.charRg.fromXml(reader);
+        }
+        else if(name === "pRg") {
+            this.setPRg(new CIndexRg());
+            this.pRg.fromXml(reader);
+        }
+    };
+    CTxEl.prototype.toXml = function (writer, name) {
+        writer.WriteXmlNodeStart("p:txEl");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.charRg, "p:charRg");
+        writer.WriteXmlNullable(this.pRg, "p:pRg");
+        writer.WriteXmlNodeEnd("p:txEl");
+    };
 
 
     changesFactory[AscDFH.historyitem_WheelSpokes] = CChangeLong;
@@ -9199,6 +11019,12 @@
     CWheel.prototype.readAttribute = function(nType, pReader) {
     };
     CWheel.prototype.readChild = function(nType, pReader) {
+    };
+    CWheel.prototype.readAttrXml = function (name, reader) {
+        //TODO:Implement in children
+    };
+
+    CWheel.prototype.toXml = function (writer, name) {
     };
 
 
@@ -9232,6 +11058,14 @@
     CAttrName.prototype.readChild = function(nType, pReader) {
         var oStream = pReader.stream;
         oStream.SkipRecord();
+    };
+    CAttrName.prototype.fromXml = function (reader) {
+        this.setText(reader.GetTextDecodeXml());
+    };
+    CAttrName.prototype.toXml = function (writer, name) {
+        writer.WriteXmlString("<p:attrName>");
+        writer.WriteXmlStringEncode(this.text);
+        writer.WriteXmlString("</p:attrName>");
     };
 
     function CExternalEvent(oEventsProcessor, type, target) {
@@ -9285,10 +11119,10 @@
         return this.event;
     };
 
-    var PLAYER_STATE_IDLE = 0;
-    var PLAYER_STATE_PLAYING = 1;
-    var PLAYER_STATE_PAUSING = 2;
-    var PLAYER_STATE_DONE = 3;
+    const PLAYER_STATE_IDLE = 0;
+    const PLAYER_STATE_PLAYING = 1;
+    const PLAYER_STATE_PAUSING = 2;
+    const PLAYER_STATE_DONE = 3;
 
     function CAnimationTimer(player) {
         this.player = player;
@@ -9533,8 +11367,8 @@
         }
     }
 
-    var RANDOM_BARS_ARRAY = [62, 4, 27, 42, 80, 34, 67, 20, 74, 32, 10, 54, 3, 77, 36, 55, 26, 53, 97, 90, 68, 65, 57, 12, 52, 70, 23, 64, 30, 73, 79, 22, 14, 51, 9, 0, 49, 1, 15, 71, 93, 86, 19, 28, 45, 41, 39, 60, 25, 7, 92, 46, 2, 98, 33, 40, 31, 72, 69, 24, 75, 84, 43, 47, 87, 50, 18, 56, 13, 61, 76, 17, 91, 37, 8, 11, 78, 6, 5, 48, 59, 95, 66, 63, 81, 96, 35, 88, 94, 89, 38, 99, 82, 29, 16, 83, 21, 58, 44, 85];
-    var STRIPS_COUNT = 16;
+    const RANDOM_BARS_ARRAY = [62, 4, 27, 42, 80, 34, 67, 20, 74, 32, 10, 54, 3, 77, 36, 55, 26, 53, 97, 90, 68, 65, 57, 12, 52, 70, 23, 64, 30, 73, 79, 22, 14, 51, 9, 0, 49, 1, 15, 71, 93, 86, 19, 28, 45, 41, 39, 60, 25, 7, 92, 46, 2, 98, 33, 40, 31, 72, 69, 24, 75, 84, 43, 47, 87, 50, 18, 56, 13, 61, 76, 17, 91, 37, 8, 11, 78, 6, 5, 48, 59, 95, 66, 63, 81, 96, 35, 88, 94, 89, 38, 99, 82, 29, 16, 83, 21, 58, 44, 85];
+    const STRIPS_COUNT = 16;
 
     function CBaseAnimTexture(oCanvas, fScale, nX, nY) {
         this.canvas = oCanvas;
@@ -11109,10 +12943,10 @@
         this.drawFrame(this.overlayCanvas, this.rect);
     };
 
-    var DEFAULT_SIMPLE_TRIGGER = function() {
+    const DEFAULT_SIMPLE_TRIGGER = function() {
         return true;
     };
-    var DEFAULT_NEVER_TRIGGER = function() {
+    const DEFAULT_NEVER_TRIGGER = function() {
         return false;
     };
 
@@ -11262,48 +13096,48 @@
     drawProgressAllAtOnce
     */
 
-    var FILTER_TYPE_BLINDS_HORIZONTAL = 0;
-    var FILTER_TYPE_BLINDS_VERTICAL = 1;
-    var FILTER_TYPE_BOX_IN = 2;
-    var FILTER_TYPE_BOX_OUT = 3;
-    var FILTER_TYPE_CHECKERBOARD_ACROSS = 4;
-    var FILTER_TYPE_CHECKERBOARD_DOWN = 5;
-    var FILTER_TYPE_CIRCLE = 6;
-    var FILTER_TYPE_CIRCLE_IN = 7;
-    var FILTER_TYPE_CIRCLE_OUT = 8;
-    var FILTER_TYPE_DIAMOND = 9;
-    var FILTER_TYPE_DIAMOND_IN = 10;
-    var FILTER_TYPE_DIAMOND_OUT = 11;
-    var FILTER_TYPE_DISSOLVE = 12;
-    var FILTER_TYPE_FADE = 13;
-    var FILTER_TYPE_SLIDE_FROM_TOP = 14;
-    var FILTER_TYPE_SLIDE_FROM_BOTTOM = 15;
-    var FILTER_TYPE_SLIDE_FROM_LEFT = 16;
-    var FILTER_TYPE_SLIDE_FROM_RIGHT = 17;
-    var FILTER_TYPE_PLUS_IN = 18;
-    var FILTER_TYPE_PLUS_OUT = 19;
-    var FILTER_TYPE_BARN_IN_VERTICAL = 20;
-    var FILTER_TYPE_BARN_IN_HORIZONTAL = 21;
-    var FILTER_TYPE_BARN_OUT_VERTICAL = 22;
-    var FILTER_TYPE_BARN_OUT_HORIZONTAL = 23;
-    var FILTER_TYPE_RANDOM_BARS_HORIZONTAL = 24;
-    var FILTER_TYPE_RANDOM_BARS_VERTICAL = 25;
-    var FILTER_TYPE_STRIPS_DOWN_LEFT = 26;
-    var FILTER_TYPE_STRIPS_UP_LEFT = 27;
-    var FILTER_TYPE_STRIPS_DOWN_RIGHT = 28;
-    var FILTER_TYPE_STRIPS_UP_RIGHT = 29;
-    var FILTER_TYPE_SLIDE_WEDGE = 30;
-    var FILTER_TYPE_WHEEL_1 = 31;
-    var FILTER_TYPE_WHEEL_2 = 32;
-    var FILTER_TYPE_WHEEL_3 = 33;
-    var FILTER_TYPE_WHEEL_4 = 34;
-    var FILTER_TYPE_WHEEL_8 = 35;
-    var FILTER_TYPE_WIPE_RIGHT = 36;
-    var FILTER_TYPE_WIPE_LEFT = 37;
-    var FILTER_TYPE_WIPE_DOWN = 38;
-    var FILTER_TYPE_WIPE_UP = 39;
+    const FILTER_TYPE_BLINDS_HORIZONTAL = 0;
+    const FILTER_TYPE_BLINDS_VERTICAL = 1;
+    const FILTER_TYPE_BOX_IN = 2;
+    const FILTER_TYPE_BOX_OUT = 3;
+    const FILTER_TYPE_CHECKERBOARD_ACROSS = 4;
+    const FILTER_TYPE_CHECKERBOARD_DOWN = 5;
+    const FILTER_TYPE_CIRCLE = 6;
+    const FILTER_TYPE_CIRCLE_IN = 7;
+    const FILTER_TYPE_CIRCLE_OUT = 8;
+    const FILTER_TYPE_DIAMOND = 9;
+    const FILTER_TYPE_DIAMOND_IN = 10;
+    const FILTER_TYPE_DIAMOND_OUT = 11;
+    const FILTER_TYPE_DISSOLVE = 12;
+    const FILTER_TYPE_FADE = 13;
+    const FILTER_TYPE_SLIDE_FROM_TOP = 14;
+    const FILTER_TYPE_SLIDE_FROM_BOTTOM = 15;
+    const FILTER_TYPE_SLIDE_FROM_LEFT = 16;
+    const FILTER_TYPE_SLIDE_FROM_RIGHT = 17;
+    const FILTER_TYPE_PLUS_IN = 18;
+    const FILTER_TYPE_PLUS_OUT = 19;
+    const FILTER_TYPE_BARN_IN_VERTICAL = 20;
+    const FILTER_TYPE_BARN_IN_HORIZONTAL = 21;
+    const FILTER_TYPE_BARN_OUT_VERTICAL = 22;
+    const FILTER_TYPE_BARN_OUT_HORIZONTAL = 23;
+    const FILTER_TYPE_RANDOM_BARS_HORIZONTAL = 24;
+    const FILTER_TYPE_RANDOM_BARS_VERTICAL = 25;
+    const FILTER_TYPE_STRIPS_DOWN_LEFT = 26;
+    const FILTER_TYPE_STRIPS_UP_LEFT = 27;
+    const FILTER_TYPE_STRIPS_DOWN_RIGHT = 28;
+    const FILTER_TYPE_STRIPS_UP_RIGHT = 29;
+    const FILTER_TYPE_SLIDE_WEDGE = 30;
+    const FILTER_TYPE_WHEEL_1 = 31;
+    const FILTER_TYPE_WHEEL_2 = 32;
+    const FILTER_TYPE_WHEEL_3 = 33;
+    const FILTER_TYPE_WHEEL_4 = 34;
+    const FILTER_TYPE_WHEEL_8 = 35;
+    const FILTER_TYPE_WIPE_RIGHT = 36;
+    const FILTER_TYPE_WIPE_LEFT = 37;
+    const FILTER_TYPE_WIPE_DOWN = 38;
+    const FILTER_TYPE_WIPE_UP = 39;
 
-    var FILTER_MAP = {};
+    let FILTER_MAP = {};
     FILTER_MAP["blinds(horizontal)"] = FILTER_TYPE_BLINDS_HORIZONTAL;
     FILTER_MAP["blinds(vertical)"] = FILTER_TYPE_BLINDS_VERTICAL;
     FILTER_MAP["box(in)"] = FILTER_TYPE_BOX_IN;
@@ -11904,7 +13738,7 @@
     };
 
 
-    var OPERATORS_MAP = {
+    const OPERATORS_MAP = {
         "+": true,
         "-": true,
         "*": true,
@@ -11913,23 +13747,23 @@
         "^": true
     };
 
-    var FUNC_REGEXPSTR = "(abs\|acos\|asin\|atan\|ceil\|cos\|cosh\|deg\|exp\|floor\|ln\|max\|min\|rad\|rand\|sin\|sinh\|sqrt\|tan\|tanh)";
-    var FUNC_REGEXP = new RegExp(FUNC_REGEXPSTR, "g");
+    const FUNC_REGEXPSTR = "(abs\|acos\|asin\|atan\|ceil\|cos\|cosh\|deg\|exp\|floor\|ln\|max\|min\|rad\|rand\|sin\|sinh\|sqrt\|tan\|tanh)";
+    const FUNC_REGEXP = new RegExp(FUNC_REGEXPSTR, "g");
 
-    var CONST_REGEXPSTR = "(pi\|e)";
-    var CONST_REGEXP = new RegExp(CONST_REGEXPSTR, "g");
+    const CONST_REGEXPSTR = "(pi\|e)";
+    const CONST_REGEXP = new RegExp(CONST_REGEXPSTR, "g");
 
-    var NUMBER_REGEXPSTR = "[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?";
-    var NUMBER_REGEXP = new RegExp(NUMBER_REGEXPSTR, "g");
+    const NUMBER_REGEXPSTR = "[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?";
+    const NUMBER_REGEXP = new RegExp(NUMBER_REGEXPSTR, "g");
 
 
-    var PARSER_FLAGS_CONSTVAR = 1;
-    var PARSER_FLAGS_FUNCTION = 2;
-    var PARSER_FLAGS_BINARYOP = 4;
-    var PARSER_FLAGS_UNARYOP  = 8;
-    var PARSER_FLAGS_LEFTPAR  = 16;
-    var PARSER_FLAGS_RIGHTPAR = 32;
-    var PARSER_FLAGS_ARGSEP   = 64;
+    const PARSER_FLAGS_CONSTVAR = 1;
+    const PARSER_FLAGS_FUNCTION = 2;
+    const PARSER_FLAGS_BINARYOP = 4;
+    const PARSER_FLAGS_UNARYOP  = 8;
+    const PARSER_FLAGS_LEFTPAR  = 16;
+    const PARSER_FLAGS_RIGHTPAR = 32;
+    const PARSER_FLAGS_ARGSEP   = 64;
     function CFormulaParser(sFormula, oVarMap) {
         this.formula = sFormula;
         var aVarNames = [];
@@ -12124,7 +13958,7 @@
     };
     CFormulaParser.prototype.parseCurrent = function() {
         //skip spaces
-        while(this.formula[this.pos] == " ") {
+        while(this.formula[this.pos] === " ") {
             ++this.pos;
         }
         if(this.pos >= this.formula.length) {
@@ -12218,29 +14052,29 @@
     //--------------------------------------------------------------------------
 
 
-    var STATE_FLAG_SELECTED = 1;
-    var STATE_FLAG_HOVERED = 2;
+    const STATE_FLAG_SELECTED = 1;
+    const STATE_FLAG_HOVERED = 2;
 
-    var CONTROL_TYPE_UNKNOWN = 0;
-    var CONTROL_TYPE_HEADER = 1;
-    var CONTROL_TYPE_TOOLBAR = 2;
-    var CONTROL_TYPE_SEQ_LIST_CONTAINER = 3;
-    var CONTROL_TYPE_SCROLL_VERT = 4;
-    var CONTROL_TYPE_SCROLL_HOR = 5;
-    var CONTROL_TYPE_SEQ_LIST = 6;
-    var CONTROL_TYPE_ANIM_SEQ = 7;
-    var CONTROL_TYPE_ANIM_GROUP_LIST = 8;
-    var CONTROL_TYPE_ANIM_GROUP = 9;
-    var CONTROL_TYPE_ANIM_ITEM = 10;
-    var CONTROL_TYPE_LABEL = 11;
-    var CONTROL_TYPE_BUTTON = 12;
-    var CONTROL_TYPE_IMAGE = 13;
-    var CONTROL_TYPE_TIMELINE_CONTAINER = 14;
-    var CONTROL_TYPE_TIMELINE = 15;
-    var CONTROL_TYPE_EFFECT_BAR = 16;
+    const CONTROL_TYPE_UNKNOWN = 0;
+    const CONTROL_TYPE_HEADER = 1;
+    const CONTROL_TYPE_TOOLBAR = 2;
+    const CONTROL_TYPE_SEQ_LIST_CONTAINER = 3;
+    const CONTROL_TYPE_SCROLL_VERT = 4;
+    const CONTROL_TYPE_SCROLL_HOR = 5;
+    const CONTROL_TYPE_SEQ_LIST = 6;
+    const CONTROL_TYPE_ANIM_SEQ = 7;
+    const CONTROL_TYPE_ANIM_GROUP_LIST = 8;
+    const CONTROL_TYPE_ANIM_GROUP = 9;
+    const CONTROL_TYPE_ANIM_ITEM = 10;
+    const CONTROL_TYPE_LABEL = 11;
+    const CONTROL_TYPE_BUTTON = 12;
+    const CONTROL_TYPE_IMAGE = 13;
+    const CONTROL_TYPE_TIMELINE_CONTAINER = 14;
+    const CONTROL_TYPE_TIMELINE = 15;
+    const CONTROL_TYPE_EFFECT_BAR = 16;
 
-    var LEFT_TIMELINE_INDENT = 14 * AscCommon.g_dKoef_pix_to_mm;
-    var LABEL_TIMELINE_WIDTH = 155 * AscCommon.g_dKoef_pix_to_mm;
+    const LEFT_TIMELINE_INDENT = 14 * AscCommon.g_dKoef_pix_to_mm;
+    const LABEL_TIMELINE_WIDTH = 155 * AscCommon.g_dKoef_pix_to_mm;
 
     function CControl(oParentControl) {
         AscFormat.ExecuteNoHistory(function() {
@@ -12932,7 +14766,7 @@
         return false;
     };
 
-    var SCROLL_TIMER_INTERVAL = 200;
+    const SCROLL_TIMER_INTERVAL = 200;
     function CScrollBase(oParentControl, oContainer, oChild) {
         CControlContainer.call(this, oParentControl);
         this.addControl(new CButton(this, function(e, x, y) {
@@ -13484,8 +15318,8 @@
             this.bodyPr.rIns = 0;
             this.bodyPr.tIns = 0;
             this.bodyPr.bIns = 0;
-            this.bodyPr.horzOverflow = AscFormat.nOTClip;
-            this.bodyPr.vertOverflow = AscFormat.nOTClip;
+            this.bodyPr.horzOverflow = AscFormat.nHOTClip;
+            this.bodyPr.vertOverflow = AscFormat.nVOTClip;
         }, this, []);
     }
     InitClass(CLabel, CControl, CONTROL_TYPE_LABEL);
@@ -13748,7 +15582,7 @@
     };
 
     //Time scales in seconds
-    var TIME_SCALES = [
+    const TIME_SCALES = [
         1,
         1,
         2,
@@ -13762,11 +15596,11 @@
         600
     ];
     //lengths
-    var SMALL_TIME_INTERVAL = 15;
-    var MIDDLE_1_TIME_INTERVAL = 20;
-    var MIDDLE_2_TIME_INTERVAL = 25;
-    var LONG_TIME_INTERVAL = 30;
-    var TIME_INTERVALS = [
+    const SMALL_TIME_INTERVAL = 15;
+    const MIDDLE_1_TIME_INTERVAL = 20;
+    const MIDDLE_2_TIME_INTERVAL = 25;
+    const LONG_TIME_INTERVAL = 30;
+    const TIME_INTERVALS = [
         LONG_TIME_INTERVAL, //1
         SMALL_TIME_INTERVAL, //1
         SMALL_TIME_INTERVAL, //2
@@ -13779,7 +15613,7 @@
         MIDDLE_2_TIME_INTERVAL,//600
         SMALL_TIME_INTERVAL//600
     ];
-    var LABEL_WIDTH = 100;
+    const LABEL_WIDTH = 100;
     function CTimeline(oParentControl) {
         CScrollHor.call(this, oParentControl);
         this.startTimePos = 0;
@@ -13997,24 +15831,24 @@
         return (fPos - oCoefs.b) / oCoefs.a;
     };
 
-    var HEADER_HEIGHT = 7.5;
-    var BUTTON_SIZE = HEADER_HEIGHT;
-    var TOOLBAR_HEIGHT = HEADER_HEIGHT;
-    var PADDING_LEFT = 3;
-    var PADDING_TOP = PADDING_LEFT;
-    var PADDING_RIGHT = PADDING_LEFT;
-    var PADDING_BOTTOM = PADDING_LEFT;
-    var VERTICAL_SPACE = PADDING_LEFT;
-    var HORIZONTAL_SPACE = PADDING_LEFT;
-    var SCROLL_THICKNESS = 15 * AscCommon.g_dKoef_pix_to_mm;
-    var SCROLL_BUTTON_SIZE = SCROLL_THICKNESS;
-    var TIMELINE_HEIGHT = SCROLL_THICKNESS + 1;
-    var BUTTON_SPACE = HORIZONTAL_SPACE / 2;
-    var TOOLBAR_WIDTH = 25;
-    var ANIM_LABEL_WIDTH = 40;
-    var ANIM_ITEM_HEIGHT = TIMELINE_HEIGHT;
-    var EFFECT_BAR_HEIGHT = 2*ANIM_ITEM_HEIGHT/3;
-    var SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
+    const HEADER_HEIGHT = 7.5;
+    const BUTTON_SIZE = HEADER_HEIGHT;
+    const TOOLBAR_HEIGHT = HEADER_HEIGHT;
+    const PADDING_LEFT = 3;
+    const PADDING_TOP = PADDING_LEFT;
+    const PADDING_RIGHT = PADDING_LEFT;
+    const PADDING_BOTTOM = PADDING_LEFT;
+    const VERTICAL_SPACE = PADDING_LEFT;
+    const HORIZONTAL_SPACE = PADDING_LEFT;
+    const SCROLL_THICKNESS = 15 * AscCommon.g_dKoef_pix_to_mm;
+    const SCROLL_BUTTON_SIZE = SCROLL_THICKNESS;
+    const TIMELINE_HEIGHT = SCROLL_THICKNESS + 1;
+    const BUTTON_SPACE = HORIZONTAL_SPACE / 2;
+    const TOOLBAR_WIDTH = 25;
+    const ANIM_LABEL_WIDTH = 40;
+    const ANIM_ITEM_HEIGHT = TIMELINE_HEIGHT;
+    const EFFECT_BAR_HEIGHT = 2*ANIM_ITEM_HEIGHT/3;
+    const SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
 
 
     function CAnimPane(oTiming) {
@@ -14159,7 +15993,6 @@
     window['AscFormat'].CCBhvr = CCBhvr;
     window['AscFormat'].CCTn = CCTn;
     window['AscFormat'].CCond = CCond;
-    window['AscFormat'].CRtn = CRtn;
     window['AscFormat'].CTgtEl = CTgtEl;
     window['AscFormat'].CSndTgt = CSndTgt;
     window['AscFormat'].CSpTgt = CSpTgt;
@@ -14337,7 +16170,7 @@
     }
     AscFormat.generate_preset_data = generate_preset_data;
 
-    var GEOMETRY_RECT_SIZE = 100000;
+    const GEOMETRY_RECT_SIZE = 100000;
     function MoveAnimationDrawObject(oAnim) {
         AscFormat.ExecuteNoHistory(function(){
             AscFormat.CShape.call(this);
@@ -14675,9 +16508,9 @@
     window['AscCommon'].CTimelineContainer = CTimelineContainer;
     window['AscCommon'].CColorPercentage = CColorPercentage;
     
-    var ANIMATION_PRESET_CLASSES = [];
-    var PRESET_TYPES;
-    var PRESET_SUBTYPES;
+    let ANIMATION_PRESET_CLASSES = [];
+    let PRESET_TYPES;
+    let PRESET_SUBTYPES;
     ANIMATION_PRESET_CLASSES[0] = [];
     PRESET_TYPES = ANIMATION_PRESET_CLASSES[0] = [];
     PRESET_TYPES[1] = [];

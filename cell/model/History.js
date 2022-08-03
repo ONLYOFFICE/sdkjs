@@ -50,6 +50,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_DefinedNamesChangeUndo = 8;
 	window['AscCH'].historyitem_Workbook_Calculate = 9;
 	window['AscCH'].historyitem_Workbook_PivotWorksheetSource = 10;
+	window['AscCH'].historyitem_Workbook_Date1904 = 11;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;
@@ -237,6 +238,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_WorksheetSource = 52;
 	window['AscCH'].historyitem_PivotTable_PivotCacheId = 53;
 	window['AscCH'].historyitem_PivotTable_PivotFieldVisible = 54;
+	window['AscCH'].historyitem_PivotTable_UseAutoFormatting = 55;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;

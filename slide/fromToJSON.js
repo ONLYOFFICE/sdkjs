@@ -1553,13 +1553,12 @@
 			"evt":   sEventType
 		}
 	};
-	WriterToJSON.prototype.SerRtn = function(oRtn)
+	WriterToJSON.prototype.SerRtn = function(nRtn)
 	{
-		if (!oRtn)
+		if (!AscFormat.isRealNumber(nRtn))
 			return undefined;
-
 		var sType = undefined;
-		switch (oRtn.val)
+		switch (nRtn)
 		{
 			case c_oAscSlideRuntimeTriggerType.All:
 				sType = "all";
@@ -2538,7 +2537,6 @@
 	};
 	ReaderFromJSON.prototype.RtnFromJSON = function(oParsedRtn)
 	{
-		var oRtn = new AscFormat.CRtn();
 
 		var nType = undefined;
 		switch (oParsedRtn["val"])
@@ -2554,9 +2552,7 @@
 				break;
 		}
 
-		nType != undefined && oRtn.setVal(nType);
-
-		return oRtn;
+		return nType || null;
 	};
 	ReaderFromJSON.prototype.TgtElFromJSON = function(oParsedTgtEl)
 	{

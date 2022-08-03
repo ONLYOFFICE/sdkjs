@@ -2618,7 +2618,7 @@ Paragraph.prototype.FindLineBreakInLongWord = function(nWidth, oLineStartPos, oC
 
 	let oBreakPosition = oCurPos;
 	let nLastPos       = arrPositions.length - 1;
-	while (nLastPos > 1)
+	while (nLastPos > 0)
 	{
 		// TODO: Возможно здесь проверку стоит изменить (или дополнить) на проверку может ли символ находится
 		//       в начале строки и может ли предыдущий находится в конце строки

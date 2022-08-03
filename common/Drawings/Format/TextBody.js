@@ -514,14 +514,14 @@
     CTextBody.prototype.GetPrevElementEndInfo = function(CurElement) {
         return null;
     };
-    CTextBody.prototype.Is_UseInDocument = function(Id) {
+    CTextBody.prototype.IsUseInDocument = function(Id) {
         if(Id != undefined) {
             if(!this.content || this.content.Get_Id() !== Id) {
                 return false;
             }
         }
-        if(this.parent && this.parent.Is_UseInDocument) {
-            return this.parent.Is_UseInDocument();
+        if(this.parent && this.parent.IsUseInDocument) {
+            return this.parent.IsUseInDocument();
         }
         return false;
     };
@@ -555,6 +555,12 @@
         this.bEmptyCell = true;
         CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
         this.cellContent = undefined;
+        if(!this.content) {
+            if(!this.content) {
+                let oDrawingDocument = reader.context.DrawingDocument;
+                this.setContent(new AscFormat.CDrawingDocContent(this, oDrawingDocument, 0, 0, 0, 20000));
+            }
+        }
     };
     CTextBody.prototype.readChildXml = function (name, reader) {
         let oPr;

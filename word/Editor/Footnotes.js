@@ -703,7 +703,7 @@ CFootnotesController.prototype.HaveContinuesFootnotes = function(nPageAbs, nColu
  * @param {CFootEndnote.array} arrFootnotesList
  * @returns {boolean}
  */
-CFootnotesController.prototype.Is_UseInDocument = function(sFootnoteId, arrFootnotesList)
+CFootnotesController.prototype.IsUseInDocument = function(sFootnoteId, arrFootnotesList)
 {
 	if (!arrFootnotesList)
 		arrFootnotesList = this.private_GetFootnotesLogicRange(null, null);
@@ -922,7 +922,7 @@ CFootnotesController.prototype.GetFirstParagraphs = function()
 	{
 		var oFootnote = this.Footnote[sId];
 		var oParagraph = oFootnote.GetFirstParagraph();
-		if(oParagraph && oParagraph.Is_UseInDocument())
+		if(oParagraph && oParagraph.IsUseInDocument())
 		{
 			aParagraphs.push(oParagraph);
 		}
@@ -1137,6 +1137,17 @@ CFootnotesController.prototype.GetNumberingInfo = function(oPara, oNumPr, oFootn
 		return [oNumberingEngine.GetNumInfo(), oNumberingEngine.GetNumInfo(false)];
 
 	return oNumberingEngine.GetNumInfo();
+};
+CFootnotesController.prototype.CheckRunContent = function(fCheck)
+{
+	for (var sId in this.Footnote)
+	{
+		let oFootnote = this.Footnote[sId];
+		if (oFootnote.CheckRunContent(fCheck))
+			return true;
+	}
+
+	return false;
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Private area
@@ -3095,7 +3106,7 @@ CFootnotesController.prototype.RestoreDocumentStateAfterLoadChanges = function(S
 	if (0 === State.FootnotesSelectDirection)
 	{
 		var oFootnote = State.CurFootnote;
-		if (oFootnote && true === this.Is_UseInDocument(oFootnote.Get_Id()))
+		if (oFootnote && true === this.IsUseInDocument(oFootnote.Get_Id()))
 		{
 			this.Selection.Start.Footnote = oFootnote;
 			this.Selection.End.Footnote   = oFootnote;
@@ -3148,7 +3159,7 @@ CFootnotesController.prototype.RestoreDocumentStateAfterLoadChanges = function(S
 		for (var nIndex = 0, nCount = arrFootnotesList.length; nIndex < nCount; ++nIndex)
 		{
 			var oFootnote = arrFootnotesList[nIndex];
-			if (true === this.Is_UseInDocument(oFootnote.Get_Id(), arrAllFootnotes))
+			if (true === this.IsUseInDocument(oFootnote.Get_Id(), arrAllFootnotes))
 			{
 				if (null === StartFootnote)
 					StartFootnote = oFootnote;

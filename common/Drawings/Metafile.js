@@ -1778,7 +1778,7 @@
 				_src = srcLocal;
 			}
 
-			this.Memory.WriteString(_src);
+			this.Memory.WriteString2(_src);
 			this.Memory.WriteByte(CommandType.ctBrushTextureMode);
 			this.Memory.WriteByte(mode);
 		},

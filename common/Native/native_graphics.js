@@ -350,10 +350,9 @@ CNativeGraphics.prototype =
     {
         this.Native["FillTextCode"](x, y, lUnicode);
     },
-    tg : function(text, x, y)
+    tg : function(code, x, y)
     {
-        var _code = text.charCodeAt(0);
-        this.Native["tg"](_code, x, y);
+        this.Native["tg"](code, x, y);
     },
     charspace : function(space)
     {

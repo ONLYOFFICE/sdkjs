@@ -253,7 +253,7 @@ function checkEmptyPlaceholderContent(content)
         var oBodyPr;
         if(oShape.getBodyPr){
             oBodyPr = oShape.getBodyPr();
-            if(oBodyPr.vertOverflow !== AscFormat.nOTOwerflow){
+            if(oBodyPr.vertOverflow !== AscFormat.nVOTOverflow){
                 return content;
             }
         }

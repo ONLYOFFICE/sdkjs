@@ -41,7 +41,7 @@ var CChartSpace = AscFormat.CChartSpace;
 CChartSpace.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
 CChartSpace.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
-CChartSpace.prototype.Is_UseInDocument = CShape.prototype.Is_UseInDocument;
+CChartSpace.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
     CChartSpace.prototype.getEditorType = function()
     {
         return 0;

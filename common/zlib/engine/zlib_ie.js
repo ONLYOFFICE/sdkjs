@@ -37,7 +37,7 @@
 var printErr = undefined;
 var print    = undefined;
 
-var fetch = self.fetch;
+var fetch = ("undefined" !== typeof window) ? window.fetch : (("undefined" !== typeof self) ? self.fetch : null);
 var getBinaryPromise = null;
 
 function internal_isLocal()
@@ -549,12 +549,13 @@ if(Module["preInit"]){if(typeof Module["preInit"]=="function")Module["preInit"]=
 		this.engine = 0;
 	};
 
-window.nativeZlibEngine = new ZLib();
-window.onZlibEngineInit = function()
-{
-	window.nativeZlibEngine.isModuleInit = true;
-	window["ZLibModule_onLoad"] && window["ZLibModule_onLoad"]();
-};
+	window.AscCommon = window.AscCommon || {};
+	window.AscCommon.CZLibEngineJS = ZLib;
+	window.onZlibEngineInit = function()
+	{
+		ZLib.prototype.isModuleInit = true;
+		window["ZLibModule_onLoad"] && window["ZLibModule_onLoad"]();
+	};
 
 })(window, undefined);
 

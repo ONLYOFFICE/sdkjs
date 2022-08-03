@@ -1248,7 +1248,152 @@ CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMat
     }
     return c;
 };
+CShape.prototype.toXmlVML = function(writer, sMainCSS, sMainAttributes, sMainNodes, pId) {
+    if(this.isSignatureLine()) {
+        let oContext = writer.context;
+        let nShapeId = oContext.m_lObjectIdVML;
+        let strId = "_x0000_i" + oContext.m_lObjectIdVML;
+        let strSpid = "_x0000_s" + oContext.m_lObjectIdVML;
+        let strObjectid	= "_152504" + oContext.m_lObjectIdVML;
+        oContext.m_lObjectIdVML++;
+        let dL = 0, dT = 0, dW = 0, dH = 0;
+        let oXfrm = this.spPr.xfrm;
+        if (oXfrm)
+        {
+            if (oXfrm.offX !== null) dL = oXfrm.offX;
+            if (oXfrm.offY !== null) dT = oXfrm.offY;
+            if (oXfrm.extX !== null) dW = oXfrm.extX;
+            if (oXfrm.extY !== null) dH = oXfrm.extY;
+        }
+        let sCSS = "";
+        if(!sMainCSS)
+        {
+            sCSS += "position:absolute;";
+            if (this.group)
+            {
+                sCSS += ("left:" +	(dL / 100 + 0.5 >> 0) + ";");
+                sCSS += ("top:" + (dT / 100 + 0.5 >> 0) + ";");
+                sCSS += ("width:" +	(dW / 100 + 0.5 >> 0) + ";");
+                sCSS += ("height:" + (dH / 100 + 0.5 >> 0) + ";");
+            }
+            else
+            {
+                sCSS += ("left:" +	(dL / 12700 + 0.5 >> 0) + "pt;");
+                sCSS += ("top:" + (dT / 12700 + 0.5 >> 0) + "pt;");
+                sCSS += ("width:" +	(dW / 12700 + 0.5 >> 0) + "pt;");
+                sCSS += ("height:" + (dH / 12700 + 0.5 >> 0) + "pt;");
+            }
+        }
+        if (oXfrm)
+        {
+            if (oXfrm.rot !== null)
+            {
+                let nRot = oXfrm.rot * 180 + 0.5 >> 0;
+                sCSS += ("rotation:" + nRot + ";");
+            }
+            let bIsFH = oXfrm.flipH;
+            let bIsFV = oXfrm.flipV;
+            if (bIsFH && bIsFV)
+            {
+                sCSS += "flip:xy;";
+            }
+            else if (bIsFH)
+            {
+                sCSS += "flip:x;";
+            }
+            else if (bIsFV)
+            {
+                sCSS += "flip:y;";
+            }
+        }
+        writer.WriteXmlNodeStart("v:shape");
+        if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
+        {
+            if(!pId)
+            {
+                writer.WriteXmlAttributeString("id", strSpid);
+            }
+            else
+            {
+                writer.WriteXmlAttributeString("id", pId);
+                //writer.WriteXmlAttributeString("o:spid", strSpid);
+            }
+        }
+        else
+        {
+            writer.WriteXmlAttributeString("id", strId);
+            writer.WriteXmlAttributeString("o:spid", strSpid);
+        }
+        writer.WriteXmlAttributeString("type", "#_x0000_t75");
+        if (!sCSS)
+        {
+            writer.WriteXmlAttributeString("style", sMainCSS || "");
+        }
+        else
+        {
+            writer.WriteXmlAttributeString("style", (sMainCSS || "") + sCSS);
+        }
+        if (sMainAttributes)
+        {
+            writer.WriteXmlString(sMainAttributes);
+        }
+        writer.WriteXmlAttributeString("filled", "f");
+        let strNodeVal;
+        writer.WriteXmlAttributeString("stroked", "f");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNodeStart("v:path");
+        writer.WriteXmlAttributeString("textboxrect", "0,0,0,0");
+        writer.WriteXmlAttributesEnd(true);
+        if(sMainNodes) {
+            writer.WriteXmlString(sMainNodes);
+        }
+        let sRasterImageId;
+        let oFill = this.spPr && this.spPr.Fill;
+        if(oFill && oFill.isBlipFill()) {
+            sRasterImageId = oFill.fill.RasterImageId;
+        }
+        if (sRasterImageId)
+        {
+            writer.WriteXmlNodeStart("v:imagedata");
 
+            if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
+            {
+                writer.WriteXmlAttributeString("o:relid", writer.context.getImageRId(sRasterImageId));
+            }
+            else
+            {
+                writer.WriteXmlAttributeString("r:id", writer.context.getImageRId(sRasterImageId));
+            }
+            writer.WriteXmlAttributeString("o:title", "");
+            writer.WriteXmlAttributesEnd();
+            writer.WriteXmlNodeEnd( "v:imagedata");
+        }
+        let oVMLSignatureLine = new AscFormat.CVMLSignatureLine();
+        oVMLSignatureLine.m_oId = this.signatureLine.id;
+        oVMLSignatureLine.m_sSuggestedSigner = this.signatureLine.signer;
+        oVMLSignatureLine.m_sSuggestedSigner2 = this.signatureLine.signer2;
+        oVMLSignatureLine.m_sSuggestedSignerEmail = this.signatureLine.email;
+        oVMLSignatureLine.m_oShowSignDate = this.signatureLine.showDate;
+        oVMLSignatureLine.m_sSigningInstructions = this.signatureLine.instructions;
+        oVMLSignatureLine.m_oIsSignatureLine = true;
+        oVMLSignatureLine.m_sProvid = "{00000000-0000-0000-0000-000000000000}"
+        oVMLSignatureLine.toXml(writer, "o:signatureline");
+        if(AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType && this.drawingBase) {
+            let oClientData = new AscFormat.CVMLClientData();
+            oClientData.m_oObjectType = AscFormat.EVmlClientDataObjectType.vmlclientdataobjecttypePict;
+            oClientData.m_oSizeWithCells = true;
+            let sAnchor = "";
+            sAnchor += this.drawingBase.from.toVmlXml();
+            sAnchor += ",";
+            sAnchor += this.drawingBase.to.toVmlXml();
+            oClientData.m_oAnchor = sAnchor;
+            oClientData.toXml(writer, "x:ClientData");
+        }
+        writer.WriteXmlNodeEnd("v:shape");
+        return;
+    }
+    AscFormat.CImageShape.prototype.toXmlVML.call(this, writer, sMainCSS, sMainAttributes, sMainNodes, pId);
+};
 CShape.prototype.convertFromSmartArt = function(bForce) {
     if (AscFormat.SmartArt && !bForce) {
         return this;
@@ -1394,8 +1539,8 @@ CShape.prototype.createTextBody = function () {
     tx_body.setContent(new AscFormat.CDrawingDocContent(tx_body, this.getDrawingDocument(), 0, 0, 0, 20000, false, false, true));
     var oBodyPr = new AscFormat.CBodyPr();
     if(this.worksheet){
-        oBodyPr.vertOverflow = AscFormat.nOTClip;
-        oBodyPr.horzOverflow = AscFormat.nOTClip;
+        oBodyPr.vertOverflow = AscFormat.nVOTClip;
+        oBodyPr.horzOverflow = AscFormat.nHOTClip;
     }
     tx_body.setBodyPr(oBodyPr);
     tx_body.content.Content[0].Set_DocumentIndex(0);
@@ -1715,17 +1860,6 @@ CShape.prototype.canFill = function () {
     return true;
 };
 
-CShape.prototype.isShape = function () {
-    return true;
-};
-
-CShape.prototype.isChart = function () {
-    return false;
-};
-
-CShape.prototype.isGroup = function () {
-    return false;
-};
 
 CShape.prototype.getHierarchy = function(bIsSingleBody, info)
 {
@@ -1990,10 +2124,6 @@ CShape.prototype.getCompiledTransparent = function () {
         this.recalcInfo.recalculateTransparent = false;
     }
     return this.compiledTransparent;
-};
-
-CShape.prototype.isPlaceholder = function () {
-    return isRealObject(this.nvSpPr) && isRealObject(this.nvSpPr.nvPr) && isRealObject(this.nvSpPr.nvPr.ph);
 };
 
 CShape.prototype.getPlaceholderType = function () {
@@ -2505,7 +2635,7 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
                 _vertical_shift = 0;
             }
             else {
-                if ((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nOTOwerflow) || _content_height < _text_rect_height) {
+                if ((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nVOTOverflow) || _content_height < _text_rect_height) {
                     switch (oBodyPr.anchor) {
                         case 0: //b
                         { // (Text Anchor Enum ( Bottom ))
@@ -2540,7 +2670,7 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
                 else {
 
 
-                    if((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nOTClip)
+                    if((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nVOTClip)
                         && oContent.Content[0] && oContent.Content[0].Lines[0]  && oContent.Content[0].Lines[0].Bottom > _text_rect_height )
                     {
                         var _content_first_line = oContent.Content[0].Lines[0].Bottom;
@@ -2605,7 +2735,7 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
                 _vertical_shift = 0;
             }
             else {
-                if ((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nOTOwerflow) || _content_height <= _text_rect_width) {
+                if ((!this.bWordShape && oBodyPr.vertOverflow === AscFormat.nVOTOverflow) || _content_height <= _text_rect_width) {
                     switch (oBodyPr.anchor) {
                         case 0: //b
                         { // (Text Anchor Enum ( Bottom ))
@@ -3418,6 +3548,8 @@ CShape.prototype.recalculateLocalTransform = function(transform)
 {
     AscFormat.ExecuteNoHistory(function(){
         var bNotesShape = false;
+
+        let oParaDrawing = getParaDrawing(this);
         if (!isRealObject(this.group))
         {
             var bUserShape = false;
@@ -3546,113 +3678,95 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 this.rot = AscFormat.isRealNumber(xfrm.rot) ? xfrm.rot : 0;
                 this.flipH = xfrm.flipH === true;
                 this.flipV = xfrm.flipV === true;
-                if(this.extX < 0.01 && this.extY < 0.01)
+
+                if(oParaDrawing)
                 {
-                    if(this.parent && this.parent.Extent && AscFormat.isRealNumber(this.parent.Extent.W) && AscFormat.isRealNumber(this.parent.Extent.H))
+                    if(oParaDrawing.Extent && AscFormat.isRealNumber(oParaDrawing.Extent.W) && AscFormat.isRealNumber(oParaDrawing.Extent.H))
                     {
-                        // this.x = 0;
-                        // this.y = 0;
-                        this.extX = this.parent.Extent.W;
-                        this.extY = this.parent.Extent.H;
+                        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+                        this.extX = oParaDrawing.Extent.W * dScaleCoefficient;
+                        this.extY = oParaDrawing.Extent.H * dScaleCoefficient;
                     }
-                }
-                else
-                {
-                    var oParaDrawing = getParaDrawing(this);
-                    if(oParaDrawing)
+                    if(oParaDrawing.SizeRelH || oParaDrawing.SizeRelV)
                     {
-                        // this.x = 0;
-                        // this.y = 0;
+                        this.m_oSectPr = null;
+                        var oParentParagraph = oParaDrawing.Get_ParentParagraph();
+                        if(oParentParagraph)
+                        {
 
-                        if(oParaDrawing.Extent && AscFormat.isRealNumber(oParaDrawing.Extent.W) && AscFormat.isRealNumber(oParaDrawing.Extent.H))
-                        {
-                            // this.x = 0;
-                            // this.y = 0;
-                            this.extX = oParaDrawing.Extent.W;
-                            this.extY = oParaDrawing.Extent.H;
-                        }
-                        if(oParaDrawing.SizeRelH || oParaDrawing.SizeRelV)
-                        {
-                            this.m_oSectPr = null;
-                            var oParentParagraph = oParaDrawing.Get_ParentParagraph();
-                            if(oParentParagraph)
+                            var oSectPr = oParentParagraph.Get_SectPr();
+                            if(oSectPr)
                             {
-
-                                var oSectPr = oParentParagraph.Get_SectPr();
-                                if(oSectPr)
+                                if(oParaDrawing.SizeRelH && oParaDrawing.SizeRelH.Percent > 0)
                                 {
-                                    if(oParaDrawing.SizeRelH && oParaDrawing.SizeRelH.Percent > 0)
+                                    switch(oParaDrawing.SizeRelH.RelativeFrom)
                                     {
-                                        switch(oParaDrawing.SizeRelH.RelativeFrom)
+                                        case c_oAscSizeRelFromH.sizerelfromhMargin:
                                         {
-                                            case c_oAscSizeRelFromH.sizerelfromhMargin:
-                                            {
-                                                this.extX = oSectPr.GetContentFrameWidth();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromH.sizerelfromhPage:
-                                            {
-                                                this.extX = oSectPr.GetPageWidth();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromH.sizerelfromhLeftMargin:
-                                            {
-                                                this.extX = oSectPr.GetPageMarginLeft();
-                                                break;
-                                            }
+                                            this.extX = oSectPr.GetContentFrameWidth();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromH.sizerelfromhPage:
+                                        {
+                                            this.extX = oSectPr.GetPageWidth();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromH.sizerelfromhLeftMargin:
+                                        {
+                                            this.extX = oSectPr.GetPageMarginLeft();
+                                            break;
+                                        }
 
-                                            case c_oAscSizeRelFromH.sizerelfromhRightMargin:
-                                            {
-                                                this.extX = oSectPr.GetPageMarginRight();
-                                                break;
-                                            }
-                                            default:
-                                            {
-                                                this.extX = oSectPr.GetPageMarginLeft();
-                                                break;
-                                            }
-                                        }
-                                        this.extX *= oParaDrawing.SizeRelH.Percent;
-                                    }
-                                    if(oParaDrawing.SizeRelV && oParaDrawing.SizeRelV.Percent > 0)
-                                    {
-                                        switch(oParaDrawing.SizeRelV.RelativeFrom)
+                                        case c_oAscSizeRelFromH.sizerelfromhRightMargin:
                                         {
-                                            case c_oAscSizeRelFromV.sizerelfromvMargin:
-                                            {
-                                                this.extY = oSectPr.GetContentFrameHeight();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromV.sizerelfromvPage:
-                                            {
-                                                this.extY = oSectPr.GetPageHeight();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromV.sizerelfromvTopMargin:
-                                            {
-                                                this.extY = oSectPr.GetPageMarginTop();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromV.sizerelfromvBottomMargin:
-                                            {
-                                                this.extY = oSectPr.GetPageMarginBottom();
-                                                break;
-                                            }
-                                            default:
-                                            {
-                                                this.extY = oSectPr.GetPageMarginTop();
-                                                break;
-                                            }
+                                            this.extX = oSectPr.GetPageMarginRight();
+                                            break;
                                         }
-                                        this.extY *= oParaDrawing.SizeRelV.Percent;
+                                        default:
+                                        {
+                                            this.extX = oSectPr.GetPageMarginLeft();
+                                            break;
+                                        }
                                     }
-                                    this.m_oSectPr = new CSectionPr();
-                                    this.m_oSectPr.Copy(oSectPr);
+                                    this.extX *= oParaDrawing.SizeRelH.Percent;
                                 }
+                                if(oParaDrawing.SizeRelV && oParaDrawing.SizeRelV.Percent > 0)
+                                {
+                                    switch(oParaDrawing.SizeRelV.RelativeFrom)
+                                    {
+                                        case c_oAscSizeRelFromV.sizerelfromvMargin:
+                                        {
+                                            this.extY = oSectPr.GetContentFrameHeight();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromV.sizerelfromvPage:
+                                        {
+                                            this.extY = oSectPr.GetPageHeight();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromV.sizerelfromvTopMargin:
+                                        {
+                                            this.extY = oSectPr.GetPageMarginTop();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromV.sizerelfromvBottomMargin:
+                                        {
+                                            this.extY = oSectPr.GetPageMarginBottom();
+                                            break;
+                                        }
+                                        default:
+                                        {
+                                            this.extY = oSectPr.GetPageMarginTop();
+                                            break;
+                                        }
+                                    }
+                                    this.extY *= oParaDrawing.SizeRelV.Percent;
+                                }
+                                this.m_oSectPr = new CSectionPr();
+                                this.m_oSectPr.Copy(oSectPr);
                             }
                         }
                     }
-
                 }
             }
             else
@@ -3690,12 +3804,13 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 else
                 {
                     var extX, extY;
-                    if(this.parent && this.parent.Extent)
+                    if(oParaDrawing && oParaDrawing.Extent)
                     {
                         this.x = 0;
                         this.y = 0;
-                        extX = this.parent.Extent.W;
-                        extY = this.parent.Extent.H;
+                        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+                        extX = oParaDrawing.Extent.W * dScaleCoefficient;
+                        extY = oParaDrawing.Extent.H * dScaleCoefficient;
                     }
                     else
                     {
@@ -4085,7 +4200,6 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 global_MatrixTransformer.MultiplyAppend(transform, this.parent.parent.localTransform);
             }
         }
-        var oParaDrawing = getParaDrawing(this);
         if(oParaDrawing) {
             this.m_oSectPr = null;
             var oParentParagraph = oParaDrawing.Get_ParentParagraph();
@@ -5423,7 +5537,7 @@ CShape.prototype.clipTextRect = function(graphics, transform, transformText, pag
         var oBodyPr = this.getBodyPr();
         if(!this.bWordShape)
         {
-            if(oBodyPr.vertOverflow === AscFormat.nOTOwerflow)
+            if(oBodyPr.vertOverflow === AscFormat.nVOTOverflow)
             {
                 return;
             }
@@ -6990,7 +7104,7 @@ CShape.prototype.getColumnNumber = function(){
         {
             return oBodyPr.vertOverflow;
         }
-        return AscFormat.nOTOwerflow;
+        return AscFormat.nVOTOverflow;
     };
 
 
@@ -7229,6 +7343,10 @@ CShape.prototype.getColumnNumber = function(){
                 //this.setUseBgFill(reader.GetValueBool());
                 break;
             }
+            case "modelId": {
+                this.setModelId(reader.GetValue());
+                break;
+            }
         }
     };
     CShape.prototype.readChildXml = function(name, reader) {
@@ -7286,9 +7404,36 @@ CShape.prototype.getColumnNumber = function(){
                 this.setBodyPr(oBodyPr);
                 break;
             }
+            case "txXfrm": {
+                let oTxXfrm = new AscFormat.CXfrm();
+                oTxXfrm.fromXml(reader);
+                this.setTxXfrm(oTxXfrm);
+                break;
+            }
         }
     };
     CShape.prototype.toXml = function(writer, sName) {
+        if(this.isSignatureLine()) {
+            writer.WriteXmlNodeStart("w:pict");
+            writer.WriteXmlAttributesEnd();
+            let oContext = writer.context;
+            let sMainCSS = "";
+            let sMainNodes = "";
+            let sMainAttributes = "";
+            let nDocType = oContext.docType;
+            if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_DOCX) {
+                if(!this.group && this.parent instanceof AscCommonWord.ParaDrawing) {
+                    let oMainProps = this.parent.GetVmlMainProps();
+                    sMainCSS = oMainProps.sMainCSS;
+                    sMainNodes = oMainProps.sMainNodes;
+                    sMainAttributes = oMainProps.sMainAttributes;
+                }
+            }
+            this.toXmlVML(writer, sMainCSS, sMainAttributes, sMainNodes, null)
+            writer.WriteXmlNodeEnd("w:pict");
+            return;
+        }
+
         let name_ = sName || "a:sp";
 
         let oContext = writer.context;
@@ -7409,7 +7554,7 @@ CShape.prototype.getColumnNumber = function(){
 
         if (this.txXfrm && oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)
         {
-            this.txXfrm.toXml(writer);
+            this.txXfrm.toXml(writer, "dsp:txXfrm");
         }
         writer.WriteXmlNodeEnd(name_);
     };

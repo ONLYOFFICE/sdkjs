@@ -104,6 +104,13 @@
 
 		return null;
 	};
+	CTableId.prototype.GetClass = function(id)
+	{
+		if (!id || !this.m_aPairs[id])
+			return null;
+
+		return this.m_aPairs[id];
+	};
 	/**
 	 * Получаем Id, по классу (вообще, данную функцию лучше не использовать)
 	 * @param Class
@@ -414,7 +421,6 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_CBhvr]               = AscFormat.CCBhvr;
 			this.m_oFactoryClass[AscDFH.historyitem_type_CTn]                 = AscFormat.CCTn;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Cond]                = AscFormat.CCond;
-			this.m_oFactoryClass[AscDFH.historyitem_type_Rtn]                 = AscFormat.CRtn;
 			this.m_oFactoryClass[AscDFH.historyitem_type_TgtEl]               = AscFormat.CTgtEl;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SndTgt]              = AscFormat.CSndTgt;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SpTgt]               = AscFormat.CSpTgt;

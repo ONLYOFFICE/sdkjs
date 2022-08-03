@@ -1719,6 +1719,55 @@
 			}
 			return res;
 		};
+		MultiplyRange.prototype.unionByRowCol = function(_bCol) {
+			if (0 === this.ranges.length) {
+				return null;
+			}
+			if (1 === this.ranges.length) {
+				return this.ranges;
+			}
+			var _ranges = this.ranges;
+			var map = {};
+			var res = [];
+			for (var i = 0; i < _ranges.length; i++) {
+				for (var j = (_bCol ? _ranges[i].c1 : _ranges[i].r1); j <= (_bCol ? _ranges[i].c2 : _ranges[i].r2); j++) {
+					if (!map[j]) {
+						res.push(j);
+						map[j] = 1;
+					}
+				}
+			}
+
+			res = res.sort(function (a, b) {
+				return a - b;
+			});
+
+			//объединяем
+			var unionRanges = [];
+			var start = null;
+			var end = null;
+			for (var n = 0; n < res.length; n++) {
+				if (start === null) {
+					start = res[n];
+					end = res[n];
+				} else if (res[n - 1] === res[n] - 1) {
+					end++;
+				} else {
+					unionRanges.push(Asc.Range(_bCol ? start : 0, !_bCol ? start : 0, _bCol ? end : gc_nMaxCol0, !_bCol ? end : gc_nMaxRow0));
+					start = res[n];
+					end = res[n];
+				}
+
+				if (n === res.length - 1) {
+					unionRanges.push(Asc.Range(_bCol ? start : 0, !_bCol ? start : 0, _bCol ? end : gc_nMaxCol0, !_bCol ? end : gc_nMaxRow0));
+				}
+			}
+
+			return unionRanges.sort(function(a, b) {
+				return _bCol ? b.c1 - a.c2 : b.r1 - a.r2;
+			});
+		};
+
 
 		function VisibleRange(visibleRange, offsetX, offsetY) {
 			this.visibleRange = visibleRange;
@@ -3003,6 +3052,8 @@
 			this.sheetIndex = -1;
 			this.error = false;
 
+			this.isNeedRecalc = null;
+
 			this.specificRange = null;
 		}
 
@@ -3045,7 +3096,7 @@
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
 			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows &&
 				this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
-				this.lookIn === obj.lookIn;
+				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange;
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;
@@ -3065,6 +3116,9 @@
 		asc_CFindOptions.prototype.IsWholeWords = function () {
 			return this.isWholeWord;
 		};
+		asc_CFindOptions.prototype.IsWholeWords = function () {
+			return this.isWholeWord;
+		};
 
 		asc_CFindOptions.prototype.asc_setFindWhat = function (val) {this.findWhat = val;};
 		asc_CFindOptions.prototype.asc_setScanByRows = function (val) {this.scanByRows = val;};
@@ -3078,6 +3132,7 @@
 		asc_CFindOptions.prototype.asc_setReplaceWith = function (val) {this.replaceWith = val;};
 		asc_CFindOptions.prototype.asc_setIsReplaceAll = function (val) {this.isReplaceAll = val;};
 		asc_CFindOptions.prototype.asc_setSpecificRange = function (val) {this.specificRange = val;};
+		asc_CFindOptions.prototype.asc_setNeedRecalc = function (val) {this.isNeedRecalc = val;};
 
 		/** @constructor */
 		function findResults() {
@@ -3625,6 +3680,7 @@
 		prot["asc_setReplaceWith"] = prot.asc_setReplaceWith;
 		prot["asc_setIsReplaceAll"] = prot.asc_setIsReplaceAll;
 		prot["asc_setSpecificRange"] = prot.asc_setSpecificRange;
+		prot["asc_setNeedRecalc"] = prot.asc_setNeedRecalc;
 
 		window["AscCommonExcel"].findResults = findResults;
 

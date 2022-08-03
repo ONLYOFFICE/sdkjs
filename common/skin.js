@@ -300,7 +300,7 @@ function updateGlobalSkinColors(theme)
 
 		RulerDark                      : "canvas-ruler-margins-background",
 		RulerLight                     : "canvas-ruler-background",
-		RulerOutline                   : "border-toolbar",
+		RulerOutline                   : "canvas-ruler-border",
 		RulerMarkersOutlineColor       : "canvas-ruler-handle-border",
 		RulerMarkersOutlineColorOld    : "canvas-ruler-handle-border-disabled",
 		RulerMarkersFillColor          : "background-normal",

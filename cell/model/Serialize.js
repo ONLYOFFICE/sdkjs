@@ -2832,16 +2832,9 @@
             }
             if(null != font.va)
             {
-                var va = font.va;
-                //server constants SubScript:1, SuperScript: 2
-                if (va === AscCommon.vertalign_SubScript) {
-                    va = AscCommon.vertalign_SuperScript;
-                } else if (va === AscCommon.vertalign_SuperScript) {
-                    va = AscCommon.vertalign_SubScript;
-                }
                 this.memory.WriteByte(c_oSerFontTypes.VertAlign);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
-                this.memory.WriteByte(va);
+                this.memory.WriteByte(font.va);
             }
         };
         this.WriteNumFmts = function()
@@ -6644,12 +6637,6 @@
             else if ( c_oSerFontTypes.VertAlign == type )
             {
                 rPr.va = this.stream.GetUChar();
-                //server constants SubScript:1, SuperScript: 2
-                if (rPr.va === AscCommon.vertalign_SubScript) {
-                    rPr.va = AscCommon.vertalign_SuperScript;
-                } else if (rPr.va === AscCommon.vertalign_SuperScript) {
-                    rPr.va = AscCommon.vertalign_SubScript;
-                }
             }
             else if ( c_oSerFontTypes.Scheme == type )
                 rPr.scheme = this.stream.GetUChar();
@@ -10351,7 +10338,7 @@
                 wb.oApi.vbaMacrosXml = this.InitOpenManager.oReadResult.vbaMacrosXml;
             }
             wb.checkCorrectTables();
-		}
+		};
 		this.PostLoadPrepareDefNames = function(wb)
 		{
 			this.InitOpenManager.oReadResult.defNames.forEach(function (defName) {
@@ -10792,11 +10779,12 @@
         var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
         oBinaryFileReader.getbase64DecodedData2(stylesZip, 0, stream, 0);
 
-        if (window.nativeZlibEngine && window.nativeZlibEngine.open(new Uint8Array(pointer.data))) {
-            let contentBytes = window.nativeZlibEngine.getFile("presetTableStyles.xml");
+        let jsZlib = new AscCommon.ZLib();
+        if (jsZlib.open(new Uint8Array(pointer.data))) {
+            let contentBytes = jsZlib.getFile("presetTableStyles.xml");
             if (contentBytes) {
                 let content = AscCommon.UTF8ArrayToString(contentBytes, 0, contentBytes.length);
-                window.nativeZlibEngine.close();
+                jsZlib.close();
                 var stylesXml = new CT_PresetTableStyles(wb.TableStyles.DefaultStyles, wb.TableStyles.DefaultStylesPivot);
                 new AscCommon.openXml.SaxParserBase().parse(content, stylesXml);
                 wb.TableStyles.concatStyles();

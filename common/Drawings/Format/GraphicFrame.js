@@ -94,7 +94,7 @@ CGraphicFrame.prototype.setBDeleted = CShape.prototype.setBDeleted;
 CGraphicFrame.prototype.getBase64Img = CShape.prototype.getBase64Img;
 CGraphicFrame.prototype.checkDrawingBaseCoords = CShape.prototype.checkDrawingBaseCoords;
 CGraphicFrame.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
-CGraphicFrame.prototype.Is_UseInDocument = CShape.prototype.Is_UseInDocument;
+CGraphicFrame.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 CGraphicFrame.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CGraphicFrame.prototype.hit = CShape.prototype.hit;
 
@@ -484,26 +484,6 @@ CGraphicFrame.prototype.IsSelectedSingleElement = function()
 CGraphicFrame.prototype.recalculateCurPos = function()
     {
         this.graphicObject.RecalculateCurPos();
-};
-
-CGraphicFrame.prototype.isShape = function()
-    {
-        return false;
-};
-
-CGraphicFrame.prototype.isGroup = function()
-    {
-        return false;
-};
-
-CGraphicFrame.prototype.isChart = function()
-    {
-        return false;
-};
-
-CGraphicFrame.prototype.isTable = function()
-    {
-        return this.graphicObject instanceof CTable;
 };
 
 CGraphicFrame.prototype.getTypeName = function() 
@@ -953,11 +933,6 @@ CGraphicFrame.prototype.getTextSelectionState = function()
 CGraphicFrame.prototype.setTextSelectionState = function(Sate)
     {
         return this.graphicObject.SetSelectionState(Sate, Sate.length-1);
-};
-
-CGraphicFrame.prototype.isPlaceholder = function()
-    {
-        return this.nvGraphicFramePr &&  this.nvGraphicFramePr.nvPr && this.nvGraphicFramePr.nvPr.ph !== null;
 };
 
 CGraphicFrame.prototype.getPhType = function()
@@ -1494,10 +1469,16 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
         let Graphic = new AscFormat.CT_GraphicalObject();
         Graphic.Namespace = ' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"';
         Graphic.GraphicData = new AscFormat.CT_GraphicalObjectData();
-        if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace)
+        let nDrawingType = oDrawing.getObjectType();
+        if(nDrawingType === AscDFH.historyitem_type_ChartSpace) {
             Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart";
-        else
+        }
+        else if(nDrawingType === AscDFH.historyitem_type_SlicerView) {
             Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2010/slicer";
+        }
+        else if(nDrawingType === AscDFH.historyitem_type_SmartArt) {
+            Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/diagram";
+        }
         Graphic.GraphicData.graphicObject = oDrawing;
 
         let newGraphicObject = AscFormat.ExecuteNoHistory(function(){return new AscFormat.CGraphicFrame();}, this, []);

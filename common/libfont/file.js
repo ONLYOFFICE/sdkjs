@@ -1606,6 +1606,11 @@
 			return this.m_pFaceInfo.style_name;
 		};
 
+		this.GetFamilyName = function()
+		{
+			return this.m_pFaceInfo.family_name;
+		};
+
 		this.UpdateStyles = function(bBold, bItalic)
 		{
 			var sStyle = this.GetStyleName();
@@ -1755,33 +1760,33 @@
 				}
 				else
 				{
-					var bIsUseTypeAttack = ((this.m_pFaceInfo.os2_fsSelection & 128) == 128) ? true : false;
-					if (bIsUseTypeAttack)
-					{
-						this.m_lAscender  = this.m_pFaceInfo.os2_sTypoAscender;
-						this.m_lDescender = this.m_pFaceInfo.os2_sTypoDescender;
+					// Здесь все подобрано после многочисленных тестов, если будет что-то меняться, то все шрифты
+					// надо проверять заново
 
-						this.m_lLineHeight = (this.m_pFaceInfo.os2_sTypoAscender - this.m_pFaceInfo.os2_sTypoDescender + this.m_pFaceInfo.os2_sTypoLineGap);
+					let faceInfo = this.m_pFaceInfo;
+					let nAscent  = faceInfo.os2_usWinAscent;
+					let nDescent = -faceInfo.os2_usWinDescent;
+					let nLineGap = 0;
+
+					if (faceInfo.os2_fsSelection & 128 || faceInfo.family_name === "Cambria Math")
+					{
+						nAscent  = faceInfo.os2_sTypoAscender;
+						nDescent = faceInfo.os2_sTypoDescender;
+						nLineGap = faceInfo.os2_sTypoLineGap;
 					}
-					else if (false)
+
+					if (AscFonts.TextMeasureMode.Word === fontManager.Mode
+						&& faceInfo.os2_ulCodePageRange1 & 0x1e0000)
 					{
-						this.m_lAscender  = this.m_pFaceInfo.os2_usWinAscent;
-						this.m_lDescender = -this.m_pFaceInfo.os2_usWinDescent;
-
-						this.m_lLineHeight = (this.m_pFaceInfo.os2_usWinAscent + this.m_pFaceInfo.os2_usWinDescent);
-					}
-
-					// Normalize metrics for CJK fonts
-					if (fontManager.Mode !== AscFonts.TextMeasureMode.Slide
-						&& (this.m_pFaceInfo.os2_ulUnicodeRange2 & 0x2DF00000
-						|| this.m_pFaceInfo.os2_ulCodePageRange1 & 0x3e0000))
-					{
-						let nAscent  = this.m_lAscender;
-						let nDescent = this.m_lDescender;
-
 						this.m_lLineHeight = ((nAscent - nDescent) * 1.3) | 0;
 						this.m_lDescender  = (nDescent - (nAscent - nDescent) * 0.15) | 0;
 						this.m_lAscender   = this.m_lLineHeight + this.m_lDescender;
+					}
+					else
+					{
+						this.m_lLineHeight = Math.max(this.m_lLineHeight, nAscent - nDescent + nLineGap);
+						this.m_lAscender   = nAscent;
+						this.m_lDescender  = nDescent;
 					}
 				}
 			}

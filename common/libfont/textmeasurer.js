@@ -138,20 +138,24 @@
 		{
 			this.SetFontInternal(sFontName, 72, nFontStyle);
 
-			let oFont = this.m_oManager.m_pFont;
-			if (!oFont)
-				return null;
+			let oFont = this.m_oManager.m_oFont;
+			let nGID  = oFont ? oFont.GetGIDByUnicode(codePoint) : 0;
+			if (!nGID)
+			{
+				oFont = this.GetFontBySymbol(codePoint);
+				if (!oFont)
+					return AscFonts.NO_GRAPHEME;
 
-			let nGID   = oFont.GetGIDByUnicode(codePoint);
+				nGID = oFont.GetGIDByUnicode(codePoint);
+				sFontName = oFont.GetFamilyName();
+			}
 
-			let oGlyph = this.m_oManager.MeasureChar(codePoint);
+			let oGlyph = oFont.GetChar(codePoint);
 			if (!oGlyph)
-				return null;
-
-			let nAdvanceX = oGlyph.fAdvanceX * 64;
+				return AscFonts.NO_GRAPHEME;
 
 			AscFonts.InitGrapheme(AscCommon.FontNameMap.GetId(sFontName), nFontStyle);
-			AscFonts.AddGlyphToGrapheme(nGID, nAdvanceX, 0, 0, 0);
+			AscFonts.AddGlyphToGrapheme(nGID, oGlyph.fAdvanceX * 64, 0, 0, 0);
 			return AscFonts.GetGrapheme();
 		},
 
