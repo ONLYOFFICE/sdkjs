@@ -194,6 +194,7 @@
 
     function WriterToJSON()
 	{
+		this.api = editor ? editor : Asc.editor;
 		this.layoutsMap     = {};
 		this.mastersMap     = {};
 		this.notesMasterMap = {};
@@ -1231,9 +1232,10 @@
 			aSpTree.push(this.SerGraphicObject(oDrawing.spTree[nDrawing]));
 
 		return {
-			"spTree": aSpTree,
-			"spPr":   this.SerSpPr(oDrawing.spPr),
-			"type":   "drawing"
+			"spTree":    aSpTree,
+			"spPr":      this.SerSpPr(oDrawing.spPr),
+			"nvGrpSpPr": this.SerUniNvPr(oDrawing.nvGrpSpPr, oDrawing.locks, oDrawing.getObjectType()),
+			"type":      "drawing"
 		}
 	};
 	WriterToJSON.prototype.SerGraphicFrame = function(oGraphicFrame)
@@ -1990,7 +1992,7 @@
 
 		return {
 			"type": sType,
-			"lim":  oLine.limit
+			"lim":  oLine.limit != null ? oLine.limit : undefined
 		}
 	};
 	WriterToJSON.prototype.SerEndArrow = function(oArrow)
@@ -2361,7 +2363,7 @@
 			oElm = {
 				"color": this.SerColor(oEffect.color),
 				"dir":   oEffect.dir,
-				"dist":  oEffect.dis,
+				"dist":  oEffect.dist,
 				"prst":  sPrstType,
 				"type":  "prstShdw"
 			}
@@ -4203,18 +4205,18 @@
 
 		return {
 			"name":     oClrScheme.name,
-			"dk1":      this.SerColor(oClrScheme.colors[0]),
-			"lt1":      this.SerColor(oClrScheme.colors[1]),
-			"dk2":      this.SerColor(oClrScheme.colors[2]),
-			"lt2":      this.SerColor(oClrScheme.colors[3]),
-			"accent1":  this.SerColor(oClrScheme.colors[4]),
-			"accent2":  this.SerColor(oClrScheme.colors[5]),
-			"accent3":  this.SerColor(oClrScheme.colors[8]),
-			"accent4":  this.SerColor(oClrScheme.colors[9]),
-			"accent5":  this.SerColor(oClrScheme.colors[10]),
-			"accent6":  this.SerColor(oClrScheme.colors[11]),
-			"hlink":    this.SerColor(oClrScheme.colors[12]),
-			"folHlink": this.SerColor(oClrScheme.colors[13]),
+			"dk1":      this.SerColor(oClrScheme.colors[8]),
+			"lt1":      this.SerColor(oClrScheme.colors[12]),
+			"dk2":      this.SerColor(oClrScheme.colors[9]),
+			"lt2":      this.SerColor(oClrScheme.colors[13]),
+			"accent1":  this.SerColor(oClrScheme.colors[0]),
+			"accent2":  this.SerColor(oClrScheme.colors[1]),
+			"accent3":  this.SerColor(oClrScheme.colors[2]),
+			"accent4":  this.SerColor(oClrScheme.colors[3]),
+			"accent5":  this.SerColor(oClrScheme.colors[4]),
+			"accent6":  this.SerColor(oClrScheme.colors[5]),
+			"hlink":    this.SerColor(oClrScheme.colors[11]),
+			"folHlink": this.SerColor(oClrScheme.colors[10]),
 			"type":     "clrScheme"
 		}
 	};
@@ -4321,18 +4323,18 @@
 	{
 		var oClrScheme = new AscFormat.ClrScheme();
 		oClrScheme.setName(oParsedClrScheme["name"]);
-		oParsedClrScheme["dk1"] && oClrScheme.addColor(0, this.ColorFromJSON(oParsedClrScheme["dk1"]));
-		oParsedClrScheme["lt1"] && oClrScheme.addColor(1, this.ColorFromJSON(oParsedClrScheme["lt1"]));
-		oParsedClrScheme["dk2"] && oClrScheme.addColor(2, this.ColorFromJSON(oParsedClrScheme["dk2"]));
-		oParsedClrScheme["lt2"] && oClrScheme.addColor(3, this.ColorFromJSON(oParsedClrScheme["lt2"]));
-		oParsedClrScheme["accent1"] && oClrScheme.addColor(4, this.ColorFromJSON(oParsedClrScheme["accent1"]));
-		oParsedClrScheme["accent2"] && oClrScheme.addColor(5, this.ColorFromJSON(oParsedClrScheme["accent2"]));
-		oParsedClrScheme["accent3"] && oClrScheme.addColor(8, this.ColorFromJSON(oParsedClrScheme["accent3"]));
-		oParsedClrScheme["accent4"] && oClrScheme.addColor(9, this.ColorFromJSON(oParsedClrScheme["accent4"]));
-		oParsedClrScheme["accent5"] && oClrScheme.addColor(10, this.ColorFromJSON(oParsedClrScheme["accent5"]));
-		oParsedClrScheme["accent6"] && oClrScheme.addColor(11, this.ColorFromJSON(oParsedClrScheme["accent6"]));
-		oParsedClrScheme["hlink"] && oClrScheme.addColor(12, this.ColorFromJSON(oParsedClrScheme["hlink"]));
-		oParsedClrScheme["folHlink"] && oClrScheme.addColor(13, this.ColorFromJSON(oParsedClrScheme["folHlink"]));
+		oParsedClrScheme["dk1"] && oClrScheme.addColor(8, this.ColorFromJSON(oParsedClrScheme["dk1"]));
+		oParsedClrScheme["lt1"] && oClrScheme.addColor(12, this.ColorFromJSON(oParsedClrScheme["lt1"]));
+		oParsedClrScheme["dk2"] && oClrScheme.addColor(9, this.ColorFromJSON(oParsedClrScheme["dk2"]));
+		oParsedClrScheme["lt2"] && oClrScheme.addColor(13, this.ColorFromJSON(oParsedClrScheme["lt2"]));
+		oParsedClrScheme["accent1"] && oClrScheme.addColor(0, this.ColorFromJSON(oParsedClrScheme["accent1"]));
+		oParsedClrScheme["accent2"] && oClrScheme.addColor(1, this.ColorFromJSON(oParsedClrScheme["accent2"]));
+		oParsedClrScheme["accent3"] && oClrScheme.addColor(2, this.ColorFromJSON(oParsedClrScheme["accent3"]));
+		oParsedClrScheme["accent4"] && oClrScheme.addColor(3, this.ColorFromJSON(oParsedClrScheme["accent4"]));
+		oParsedClrScheme["accent5"] && oClrScheme.addColor(4, this.ColorFromJSON(oParsedClrScheme["accent5"]));
+		oParsedClrScheme["accent6"] && oClrScheme.addColor(5, this.ColorFromJSON(oParsedClrScheme["accent6"]));
+		oParsedClrScheme["hlink"] && oClrScheme.addColor(11, this.ColorFromJSON(oParsedClrScheme["hlink"]));
+		oParsedClrScheme["folHlink"] && oClrScheme.addColor(10, this.ColorFromJSON(oParsedClrScheme["folHlink"]));
 
 		return oClrScheme;
 	};
@@ -4666,7 +4668,7 @@
 		};
 
 		if (!aComplexFieldsToSave)
-			aComplexFieldsToSave = this.GetAllParaComplexFields(oHyperlink);
+			aComplexFieldsToSave = oHyperlink.GetAllFields();
 		
 		var oTempElm = null;
 		for (var nElm = 0; nElm < oHyperlink.Content.length; nElm++)
@@ -4739,39 +4741,51 @@
 
 			return ToComplexField(oPageCount);
 		}
-		function SerCompFieldItem(oItem)
+		function SerCompFieldContent(aContent)
 		{
 			var aResult = [];
 			
-			var oCompField  = oItem.GetComplexField();
-			var sInstuction = oCompField.InstructionLine;
-				
-			if (oItem.IsBegin())
+			for (var CurPos = 0; CurPos < aContent.length; CurPos++)
 			{
-				aResult.push({
-					"type":        "fldChar",
-					"fldCharType": "begin"					
-				});
-				aResult.push({
-					"type":  "instrText",
-					"instr": sInstuction					
-				});
+				var oItem = aContent[CurPos];
+
+				if (oItem.Type === para_InstrText)
+					continue;
+
+				var oCompField  = oItem.GetComplexField ? oItem.GetComplexField() : null;
+				var sInstuction = oCompField ? oCompField.InstructionLine : undefined;
+
+				if (sInstuction && oItem.IsBegin())
+				{
+					aResult.push({
+						"type":        "fldChar",
+						"fldCharType": "begin"					
+					});
+					aResult.push({
+						"type":  "instrText",
+						"instr": sInstuction					
+					});
+				}
+				else if (sInstuction && oItem.IsSeparate())
+				{
+					aResult.push({
+						"type":        "fldChar",
+						"fldCharType": "separate"					
+					});
+				}
+				else if (sInstuction && oItem.IsEnd())
+				{
+					aResult.push({
+						"type":        "fldChar",
+						"fldCharType": "end"					
+					});
+				}
+				else if (oItem.Type == para_Text)
+				{
+					aResult.push(String.fromCharCode(oItem.Value));
+				}
 			}
-			else if (oItem.IsSeparate())
-			{
-				aResult.push({
-					"type":        "fldChar",
-					"fldCharType": "separate"					
-				});
-			}
-			else if (oItem.IsEnd())
-			{
-				aResult.push({
-					"type":        "fldChar",
-					"fldCharType": "end"					
-				});
-			}
-			
+
 			return aResult;
 		}
 		function ToComplexField(oElement)
@@ -4895,7 +4909,7 @@
 						if (aComplexFieldsToSave[nCompField] === oComplexField)
 						{
 							allowAddCompField = true;
-							oRunObject["content"] = oRunObject["content"].concat(SerCompFieldItem(Item));
+							oRunObject["content"] = oRunObject["content"].concat(SerCompFieldContent(oRun.Content));
 							break;
 						}
 					}
@@ -5134,24 +5148,6 @@
 
 		return aResult;
 	};
-	WriterToJSON.prototype.GetAllParaComplexFields = function(oPara)
-	{
-		var arrComplexFields = [];
-		var arrTemp          = [];
-		var nEndPos          = oPara.Content.length;
-
-		for (var nIndex = 0; nIndex < nEndPos; nIndex++)
-		{
-			if (oPara.Content[nIndex].GetCurrentComplexFields)
-			{
-				oPara.Content[nIndex].GetCurrentComplexFields(arrTemp);
-				arrComplexFields = arrComplexFields.concat(arrTemp);
-				arrTemp          = [];
-			}
-		}
-
-		return arrComplexFields;
-	};
 	/**
 	 * Get all complex fields to save from content (Takes into account the positions of the beginning and end of fields)
 	 * @param  {Array} arrContent     - array of document content 
@@ -5179,7 +5175,7 @@
 
 			if (oElm instanceof AscCommonWord.Paragraph)
 			{
-				arrTemp = this.GetAllParaComplexFields(oElm);
+				arrTemp = oElm.GetAllFields();
 				if (!bAll)
 				{
 					for (var nField = 0; nField < arrTemp.length; nField++)
@@ -5459,11 +5455,9 @@
 		var sFormatType = To_XML_c_oAscNumberingFormat(oLvl.Format);
 
 		// lvl text
-		var oLvlText = {
-			val: oLvl.LvlText.length === 2 ? oLvl.LvlText[1].Value : oLvl.LvlText[0].Value
-		}
-		if (oLvl.LvlText.length)
-			oLvlText.numValue = oLvl.LvlText[0].Value;
+		var aLvlText = [];
+		for (var nText = 0; nText < oLvl.LvlText.length; nText++)
+			aLvlText.push(this.SerLvlTextItem(oLvl.LvlText[nText]));
 
 		return {
 			"isLgl": oLvl.IsLgl,
@@ -5475,7 +5469,7 @@
 			} : oLvl.Legacy,
 
 			"lvlJc":   sJc,
-			"lvlText": oLvlText,
+			"lvlText": aLvlText.length > 0 ? aLvlText : undefined,
 			"numFmt":  {
 				"val": sFormatType
 			},
@@ -5487,6 +5481,23 @@
 			"suff":    sSuffType,
 			"ilvl":    nLvl
 		}
+	};
+	WriterToJSON.prototype.SerLvlTextItem = function(oTextItem)
+	{
+		if (!oTextItem)
+			return undefined;
+
+		var oResult = {};
+		if(numbering_lvltext_Text == oTextItem.Type)
+		{
+			oResult["val"] = oTextItem.Value.toString();
+		}
+		else if(numbering_lvltext_Num == oTextItem.Type)
+		{
+			oResult["numValue"] = oTextItem.Value;
+		}
+
+		return oResult;
 	};
 	WriterToJSON.prototype.SerTabs = function(oTabs)
 	{
@@ -5500,9 +5511,9 @@
 		for (var nTab = 0; nTab < oTabs.Tabs.length; nTab++)
 		{
 			oTabsObj["tabs"].push({
-				"val":    oTabs.Tabs[nTab].Value,
+				"val":    ToXml_ST_TabJc(oTabs.Tabs[nTab].Value),
 				"pos":    private_MM2Twips(oTabs.Tabs[nTab].Pos),
-				"leader": oTabs.Tabs[nTab].Leader
+				"leader": ToXml_ST_TabTlc(oTabs.Tabs[nTab].Leader)
 			});
 		}
 
@@ -6936,7 +6947,7 @@
 
 		if (oNvUniSpPr.stCnxId && AscFormat.isRealNumber(oNvUniSpPr.stCnxIdx))
 		{
-			var nStIdx = oThis.GetSpIdxId(oNvUniSpPr.stCnxId);
+			var nStIdx = this.GetSpIdxId(oNvUniSpPr.stCnxId);
 			if (nStIdx !== null) {
 				oPr["stCxn"] = {
 					"id":  nStIdx,
@@ -6946,7 +6957,7 @@
 		}
 		if (oNvUniSpPr.endCnxId && AscFormat.isRealNumber(oNvUniSpPr.endCnxIdx))
 		{
-			var nEndIdx = oThis.GetSpIdxId(oNvUniSpPr.endCnxId);
+			var nEndIdx = this.GetSpIdxId(oNvUniSpPr.endCnxId);
 			if (nEndIdx !== null) {
 				oPr["endCxn"] = {
 					"id":  nEndIdx,
@@ -6954,6 +6965,8 @@
 				}
 			}
 		}
+
+		return oPr;
 	};
 	WriterToJSON.prototype.GetSpIdxId = function(sEditorId){
         if(typeof sEditorId === "string" && sEditorId.length > 0) {
@@ -7280,69 +7293,20 @@
 		if (!oClrMap)
 			return oClrMap;
 
-		var aClpMap = [];
-		
-		for (var nClrScheme in oClrMap.color_map)
-		{
-			var sClrSchemeType = null;
-			switch (oClrMap.color_map[nClrScheme])
-			{
-				case c_oAscColorSchemeIndex.Accent1:
-					sClrSchemeType = "accent1";
-					break;
-				case c_oAscColorSchemeIndex.Accent2:
-					sClrSchemeType = "accent2";
-					break;
-				case c_oAscColorSchemeIndex.Accent3:
-					sClrSchemeType = "accent3";
-					break;
-				case c_oAscColorSchemeIndex.Accent4:
-					sClrSchemeType = "accent4";
-					break;
-				case c_oAscColorSchemeIndex.Accent5:
-					sClrSchemeType = "accent5";
-					break;
-				case c_oAscColorSchemeIndex.Accent6:
-					sClrSchemeType = "accent6";
-					break;
-				case c_oAscColorSchemeIndex.Bg1:
-					sClrSchemeType = "bg1";
-					break;
-				case c_oAscColorSchemeIndex.Bg2:
-					sClrSchemeType = "bg2";
-					break;
-				case c_oAscColorSchemeIndex.Dk1:
-					sClrSchemeType = "dk1";
-					break;
-				case c_oAscColorSchemeIndex.Dk2:
-					sClrSchemeType = "dk2";
-					break;
-				case c_oAscColorSchemeIndex.FolHlink:
-					sClrSchemeType = "folHlink";
-					break;
-				case c_oAscColorSchemeIndex.Hlink:
-					sClrSchemeType = "hlink";
-					break;
-				case c_oAscColorSchemeIndex.Lt1:
-					sClrSchemeType = "lt1";
-					break;
-				case c_oAscColorSchemeIndex.Lt2:
-					sClrSchemeType = "lt2";
-					break;
-				case c_oAscColorSchemeIndex.PhClr:
-					sClrSchemeType = "phClr";
-					break;
-				case c_oAscColorSchemeIndex.Tx1:
-					sClrSchemeType = "tx1";
-					break;
-				case c_oAscColorSchemeIndex.Tx2:
-					sClrSchemeType = "tx2";
-					break;
-			}
-			aClpMap[nClrScheme] = sClrSchemeType;
-		}
-
-		return aClpMap;
+		return {
+			"bg1":      oClrMap.getColorName(oClrMap.color_map[6]),
+			"tx1":      oClrMap.getColorName(oClrMap.color_map[15]),
+			"bg2":      oClrMap.getColorName(oClrMap.color_map[7]),
+			"tx2":      oClrMap.getColorName(oClrMap.color_map[16]),
+			"accent1":  oClrMap.getColorName(oClrMap.color_map[0]),
+			"accent2":  oClrMap.getColorName(oClrMap.color_map[1]),
+			"accent3":  oClrMap.getColorName(oClrMap.color_map[2]),
+			"accent4":  oClrMap.getColorName(oClrMap.color_map[3]),
+			"accent5":  oClrMap.getColorName(oClrMap.color_map[4]),
+			"accent6":  oClrMap.getColorName(oClrMap.color_map[5]),
+			"hlink":    oClrMap.getColorName(oClrMap.color_map[11]),
+			"folHlink": oClrMap.getColorName(oClrMap.color_map[10])
+		};
 	};
 	WriterToJSON.prototype.SerUserShape = function(oUserShape)
 	{
@@ -8432,6 +8396,7 @@
 
 	function ReaderFromJSON()
 	{
+		this.api = editor ? editor : Asc.editor;
 		this.MoveMap           = {};
 		this.FootEndNoteMap    = {};
 		this.layoutsMap        = {};
@@ -8898,7 +8863,7 @@
 		var aContent  = oParsedPara["content"];
 		var oPr       = oParsedPara["pPr"];
 		var oDocument = private_GetLogicDocument();
-		var oParaPr   = this.ParaPrFromJSON(oPr, oParsedPara["numbering"], oPrevNumIdInfo);
+		var oParaPr   = this.ParaPrFromJSON(oPr, oPrevNumIdInfo);
 		var oPara     = new AscCommonWord.Paragraph(private_GetDrawingDocument(), oParent || oDocument, !oParsedPara["bFromDocument"]);
 
 		// символ конца параграфа
@@ -10440,7 +10405,8 @@
 		}
 
 		var oNumPr = new CNumPr(sNumId, nNumLvl);
-		oNumPr.NumId = oPrevNumIdInfo ? oNumPr.NumId : undefined;
+		if (nNumLvl == null)
+			oNumPr.Lvl = undefined;
 
 		return oNumPr;
 	};
@@ -10576,15 +10542,17 @@
 		oNumLvl.Restart = oParsedNumLvl["restart"];
 		oNumLvl.Start   = oParsedNumLvl["start"];
 		oNumLvl.PStyle  = oStyle ? oStyle.Id : oNumLvl.PStyle;
-		if (oParsedNumLvl["lvlText"]["numValue"] !== undefined)
-		{
-			oNumLvl.LvlText[0] = new CNumberingLvlTextNum(oParsedNumLvl["lvlText"]["numValue"]);
-			oNumLvl.LvlText[1] = new CNumberingLvlTextString(oParsedNumLvl["lvlText"]["val"]);
-		}
-		else
-			oNumLvl.LvlText[0] = new CNumberingLvlTextString(oParsedNumLvl["lvlText"]["val"]);
+		for (var nItem = 0; nItem < oParsedNumLvl["lvlText"].length; nItem++)
+			oNumLvl.LvlText.push(this.LvlTextItemFromJSON(oParsedNumLvl["lvlText"][nItem]));
 
 		return oNumLvl;
+	};
+	ReaderFromJSON.prototype.LvlTextItemFromJSON = function(oParsed)
+	{
+		if (oParsed["val"] != null)
+			return new CNumberingLvlTextString(oParsed["val"]);
+		else if (oParsed["numValue"] != null)
+			return new CNumberingLvlTextNum(oParsed["numValue"])
 	};
 	ReaderFromJSON.prototype.HyperlinkFromJSON = function(oParsedLink, oParentPara, notCompletedFields)
 	{
@@ -10602,8 +10570,8 @@
 			oHyper.SetValue(oParsedLink["value"]);
 			oHyper.SetAnchor("");
 		}
-		if (undefined != oParsedLink["toolTip"])
-			oHyper.SetToolTip(oParsedLink["toolTip"]);
+		if (undefined != oParsedLink["tooltip"])
+			oHyper.SetToolTip(oParsedLink["tooltip"]);
 
 
 		for (var nElm = 0; nElm < aContent.length; nElm++)
@@ -11289,7 +11257,7 @@
 		var oTabs = new CParaTabs();
 
 		for (var nTab = 0; nTab < oParsedTabs["tabs"].length; nTab++)
-			oTabs.Tabs.push(new CParaTab(oParsedTabs["tabs"][nTab]["val"], private_Twips2MM(oParsedTabs["tabs"][nTab]["pos"]), oParsedTabs["tabs"][nTab]["leader"]));
+			oTabs.Tabs.push(new CParaTab(FromXml_ST_TabJc(oParsedTabs["tabs"][nTab]["val"]), private_Twips2MM(oParsedTabs["tabs"][nTab]["pos"]), FromXml_ST_TabTlc(oParsedTabs["tabs"][nTab]["leader"])));
 
 		return oTabs;
 	};
@@ -11438,7 +11406,8 @@
 			}
 		}
 
-		oGradFill.rotWithShape = oParsedGradFill["rotWithShape"];
+		if (oParsedGradFill["rotWithShape"] != null)
+			oGradFill.rotateWithShape = oParsedGradFill["rotWithShape"];
 		
 		return oGradFill;
 	};
@@ -11777,7 +11746,7 @@
 				oEffect              = new AscFormat.CPrstShdw();
 				oEffect.color        = this.ColorFromJSON(oParsedEff["color"]);
 				oEffect.dir          = oParsedEff["dir"];
-				oEffect.dis          = oParsedEff["dist"];
+				oEffect.dist         = oParsedEff["dist"];
 				oEffect.prst         = nPrstType;
 				return oEffect;
 			case "reflection":
@@ -12158,6 +12127,7 @@
 			oLockedCanvas.addToSpTree(oLockedCanvas.spTree.length, this.GraphicObjFromJSON(oParsedLocCanvas["spTree"][nDrawing]));
 
 		oParsedLocCanvas["spPr"] && oLockedCanvas.setSpPr(this.SpPrFromJSON(oParsedLocCanvas["spPr"], oLockedCanvas));
+		oParsedLocCanvas["nvGrpSpPr"] && oLockedCanvas.setNvGrpSpPr(this.UniNvPrFromJSON(oParsedLocCanvas["nvGrpSpPr"]));
 
 		oLockedCanvas.setBDeleted(false);
 		return oLockedCanvas;
@@ -12181,6 +12151,7 @@
 		}
 			
 		oParsedGrpShp["spPr"] && oGroupShape.setSpPr(this.SpPrFromJSON(oParsedGrpShp["spPr"], oGroupShape));
+		oParsedGrpShp["nvGrpSpPr"] && oGroupShape.setNvGrpSpPr(this.UniNvPrFromJSON(oParsedGrpShp["nvGrpSpPr"]));
 
 		oGroupShape.setBDeleted(false);
 		return oGroupShape;
@@ -12228,9 +12199,9 @@
 		}
 
 		oParsedDrawing["spPr"] && oDrawing.setSpPr(this.SpPrFromJSON(oParsedDrawing["spPr"], oDrawing));
+		oParsedDrawing["nvGrpSpPr"] && oDrawing.setNvGrpSpPr(this.UniNvPrFromJSON(oParsedDrawing["nvGrpSpPr"]));
 
 		oDrawing.setBDeleted(false);
-		//oDrawing.recalculate();
 		return oDrawing;
 	};
 	ReaderFromJSON.prototype.StyleDefFromJSON = function(oParsedStyleDef)
@@ -12954,7 +12925,7 @@
 		oParsedChart["nvGraphicFramePr"] && oChartSpace.setNvSpPr(this.UniNvPrFromJSON(oParsedChart["nvGraphicFramePr"]));
 		oParsedChart["chartColors"]      && oChartSpace.setChartColors(this.ChartColorsFromJSON(oParsedChart["chartColors"]));
 		oParsedChart["chartStyle"]       && oChartSpace.setChartStyle(this.ChartStyleFromJSON(oParsedChart["chartStyle"]));
-		oParsedChart["clrMapOvr"]        && oChartSpace.setClrMapOvr(this.ColorMapOvrFromJSON());
+		oParsedChart["clrMapOvr"]        && oChartSpace.setClrMapOvr(this.ColorMapOvrFromJSON(oParsedChart["clrMapOvr"]));
 		oParsedChart["pivotSource"]      && oChartSpace.setPivotSource(this.PivotSourceFromJSON(oParsedChart["pivotSource"], oChartSpace));
 		oParsedChart["printSettings"]    && oChartSpace.setPrintSettings(this.PrintSettingsFromJSON(oParsedChart["printSettings"], oChartSpace));
 		oParsedChart["protection"]       && oChartSpace.setProtection(this.ProtectionFromJSON(oParsedChart["protection"]));
@@ -12992,69 +12963,35 @@
 		oGraphicFrame.setLocks(oGraphicFrame.nvGraphicFramePr && oGraphicFrame.nvGraphicFramePr.locks !== 0 ? oGraphicFrame.nvGraphicFramePr.locks : 0);
 		return oGraphicFrame;
 	};
-	ReaderFromJSON.prototype.ColorMapOvrFromJSON = function(oParsedClrMap)
+	ReaderFromJSON.prototype.ColorMapOvrFromJSON = function(oParsedClrMap, oClrMap)
 	{
-		var oClrMap = new AscFormat.ClrMap();
+		if (!oClrMap)
+			oClrMap = new AscFormat.ClrMap();
 
-		for (var nClrScheme = 0; nClrScheme < oParsedClrMap.length; nClrScheme++)
-		{
-			var nClrSchemeType = null;
-			switch (oParsedClrMap[nClrScheme])
-			{
-				case "accent1":
-					nClrSchemeType = c_oAscColorSchemeIndex.Accent1;
-					break;
-				case "accent2":
-					nClrSchemeType = c_oAscColorSchemeIndex.Accent2;
-					break;
-				case "accent3":
-					nClrSchemeType = c_oAscColorSchemeIndex.Accent3;
-					break;
-				case "accent4":
-					nClrSchemeType = c_oAscColorSchemeIndex.Accent4;
-					break;
-				case "accent5":
-					nClrSchemeType = c_oAscColorSchemeIndex.Accent5;
-					break;
-				case "accent6":
-					nClrSchemeType = c_oAscColorSchemeIndex.Accent6;
-					break;
-				case "bg1":
-					nClrSchemeType = c_oAscColorSchemeIndex.Bg1;
-					break;
-				case "bg2":
-					nClrSchemeType = c_oAscColorSchemeIndex.Bg2;
-					break;
-				case "dk1":
-					nClrSchemeType = c_oAscColorSchemeIndex.Dk1;
-					break;
-				case "dk2":
-					nClrSchemeType = c_oAscColorSchemeIndex.Dk2;
-					break;
-				case "folHlink":
-					nClrSchemeType = c_oAscColorSchemeIndex.FolHlink;
-					break;
-				case "hlink":
-					nClrSchemeType = c_oAscColorSchemeIndex.Hlink;
-					break;
-				case "lt1":
-					nClrSchemeType = c_oAscColorSchemeIndex.Lt1;
-					break;
-				case "lt2":
-					nClrSchemeType = c_oAscColorSchemeIndex.Lt2;
-					break;
-				case "phClr":
-					nClrSchemeType = c_oAscColorSchemeIndex.PhClr;
-					break;
-				case "tx1":
-					nClrSchemeType = c_oAscColorSchemeIndex.Tx1;
-					break;
-				case "tx2":
-					nClrSchemeType = c_oAscColorSchemeIndex.Tx2;
-					break;
-			}
-			nClrSchemeType != null && oClrMap.setClr(nClrScheme, nClrSchemeType);
-		}
+		if (oParsedClrMap["bg1"] != null)
+			oClrMap.setClr(6, oClrMap.getColorIdx(oParsedClrMap["bg1"]));
+		if (oParsedClrMap["tx1"] != null)
+			oClrMap.setClr(15, oClrMap.getColorIdx(oParsedClrMap["tx1"]));
+		if (oParsedClrMap["bg2"] != null)
+			oClrMap.setClr(7, oClrMap.getColorIdx(oParsedClrMap["bg2"]));
+		if (oParsedClrMap["tx2"] != null)
+			oClrMap.setClr(16, oClrMap.getColorIdx(oParsedClrMap["tx2"]));
+		if (oParsedClrMap["accent1"] != null)
+			oClrMap.setClr(0, oClrMap.getColorIdx(oParsedClrMap["accent1"]));
+		if (oParsedClrMap["accent2"] != null)
+			oClrMap.setClr(1, oClrMap.getColorIdx(oParsedClrMap["accent2"]));
+		if (oParsedClrMap["accent3"] != null)
+			oClrMap.setClr(2, oClrMap.getColorIdx(oParsedClrMap["accent3"]));
+		if (oParsedClrMap["accent4"] != null)
+			oClrMap.setClr(3, oClrMap.getColorIdx(oParsedClrMap["accent4"]));
+		if (oParsedClrMap["accent5"] != null)
+			oClrMap.setClr(4, oClrMap.getColorIdx(oParsedClrMap["accent5"]));
+		if (oParsedClrMap["accent6"] != null)
+			oClrMap.setClr(5, oClrMap.getColorIdx(oParsedClrMap["accent6"]));
+		if (oParsedClrMap["hlink"] != null)
+			oClrMap.setClr(11, oClrMap.getColorIdx(oParsedClrMap["hlink"]));
+		if (oParsedClrMap["folHlink"] != null)
+			oClrMap.setClr(10, oClrMap.getColorIdx(oParsedClrMap["folHlink"]));
 
 		return oClrMap;
 	};
@@ -15343,7 +15280,8 @@
 		}
 
 		oLineJoin.setType(nType);
-		oLineJoin.setLimit(oParsedLineJoin["lim"]);
+		if (oParsedLineJoin["lim"] != null)
+			oLineJoin.setLimit(oParsedLineJoin["lim"]);
 
 		return oLineJoin;
 	};
@@ -15625,7 +15563,7 @@
 	};
 	ReaderFromJSON.prototype.CnxCNvPrFromJSON = function(oParsed, oParentUniNvPr)
 	{
-		var nLocks = 0;
+		let nLocks = 0;
 
 		if (oParsed["cxnSpLocks"]["noAdjustHandles"] != null)
 			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noAdjustHandles, oParsed["cxnSpLocks"]["noAdjustHandles"]);
@@ -15650,17 +15588,18 @@
 
 		if (oParentUniNvPr)
 		{
+			let oCNvUniSpPr = new AscFormat.CNvUniSpPr();
 			if (oParsed["stCxn"] != null)
 			{
-				oParentUniNvPr.nvUniSpPr.stCnxId = oParsed["stCxn"]["id"];
-				oParentUniNvPr.nvUniSpPr.stCnxIdx = oParsed["stCxn"]["idx"];
+				oCNvUniSpPr.stCnxId = oParsed["stCxn"]["id"];
+				oCNvUniSpPr.stCnxIdx = oParsed["stCxn"]["idx"];
 			}
 			if (oParsed["endCxn"] != null)
 			{
-				oParentUniNvPr.nvUniSpPr.endCnxId = oParsed["endCxn"]["id"];
-				oParentUniNvPr.nvUniSpPr.endCnxIdx = oParsed["endCxn"]["idx"];
+				oCNvUniSpPr.endCnxId = oParsed["endCxn"]["id"];
+				oCNvUniSpPr.endCnxIdx = oParsed["endCxn"]["idx"];
 			}
-			oParentUniNvPr.nvUniSpPr.setUniSpPr(oParentUniNvPr.nvUniSpPr.copy());
+			oParentUniNvPr.setUniSpPr(oCNvUniSpPr);
 		}
 		
 		return nLocks;
@@ -20465,6 +20404,85 @@
 		}
 		return null;
 	}
+
+	function FromXml_ST_TabTlc(val) {
+		switch (val) {
+			case "none":
+				return Asc.c_oAscTabLeader.None;
+			case "dot":
+				return Asc.c_oAscTabLeader.Dot;
+			case "hyphen":
+				return Asc.c_oAscTabLeader.Hyphen;
+			case "underscore":
+				return Asc.c_oAscTabLeader.Underscore;
+			case "heavy":
+				return Asc.c_oAscTabLeader.Heavy;
+			case "middleDot":
+				return Asc.c_oAscTabLeader.MiddleDot;
+		}
+		return undefined;
+	}
+
+	function ToXml_ST_TabTlc(val) {
+		switch (val) {
+			case Asc.c_oAscTabLeader.None:
+				return "none";
+			case Asc.c_oAscTabLeader.Dot:
+				return "dot";
+			case Asc.c_oAscTabLeader.Hyphen:
+				return "hyphen";
+			case Asc.c_oAscTabLeader.Underscore:
+				return "underscore";
+			case Asc.c_oAscTabLeader.Heavy:
+				return "heavy";
+			case Asc.c_oAscTabLeader.MiddleDot:
+				return "middleDot";
+		}
+		return null;
+	}
+
+	function FromXml_ST_TabJc(val) {
+		switch (val) {
+			case "clear":
+				return tab_Clear;
+			case "start":
+			case "left":
+				return tab_Left;
+			case "center":
+				return tab_Center;
+			case "end":
+			case "right":
+				return tab_Right;
+			case "decimal":
+				return tab_Decimal;
+			case "bar":
+				return tab_Bar;
+			case "num":
+				return tab_Num;
+		}
+		return undefined;
+	}
+
+	function ToXml_ST_TabJc(val) {
+		switch (val) {
+			case tab_Clear:
+				return "clear";
+			case tab_Left:
+				return "left";
+			case tab_Center:
+				return "center";
+			case tab_Right:
+				return "right";
+			case tab_Decimal:
+				return "decimal";
+			case tab_Bar:
+				return "bar";
+			case tab_Num:
+				return "num";
+		}
+		return null;
+	}
+
     //----------------------------------------------------------export----------------------------------------------------
     window['AscCommon']       = window['AscCommon'] || {};
     window['AscFormat']       = window['AscFormat'] || {};

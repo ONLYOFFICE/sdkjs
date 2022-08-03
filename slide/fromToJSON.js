@@ -101,7 +101,7 @@
 	{
 		var aNotesMasters = [];
 		for (var nNote = 0; nNote < oPres.notesMasters.length; nNote++)
-			aNotesMasters.push(this.SerNoteMaster(oPres.notesMasters[nNote]));
+			aNotesMasters.push(this.SerNotesMaster(oPres.notesMasters[nNote]));
 
 		var aSlides = [];
 		for (var nSlide = 0; nSlide < oPres.Slides.length; nSlide++)
@@ -203,7 +203,7 @@
 	WriterToJSON.prototype.SerShowPr = function(oShowPr)
 	{
 		if (!oShowPr)
-			return oShowPr;
+			return undefined;
 
 		return {
 			"browse":  oShowPr.browse,
@@ -217,7 +217,7 @@
 			"useTimings":    oShowPr.useTimings
 		}
 	};
-	WriterToJSON.prototype.SerNoteMaster = function(oNoteMaster)
+	WriterToJSON.prototype.SerNotesMaster = function(oNoteMaster)
 	{
 		var oNotesMasterObj = {
 			"id":         oNoteMaster.Id,
@@ -242,7 +242,7 @@
 			"cSld":             this.SerCSld(oNote.cSld),
 			"showMasterPhAnim": oNote.showMasterPhAnim,
 			"showMasterSp":     oNote.showMasterSp,
-			"master":           this.notesMasterMap[oNote.Master.Id] ? oNote.Master.Id : this.SerNoteMaster(oNote.Master)
+			"master":           this.notesMasterMap[oNote.Master.Id] ? oNote.Master.Id : this.SerNotesMaster(oNote.Master)
 		}
 	};
 	WriterToJSON.prototype.SerSldComments = function(oSldComments)
@@ -508,7 +508,7 @@
 	WriterToJSON.prototype.SerHF = function(oHf)
 	{
 		if (!oHf)
-			return oHf;
+			return undefined;
 
 		return {
 			"dt":     oHf.dt,
@@ -532,7 +532,7 @@
 	WriterToJSON.prototype.SerBg = function(oBg)
 	{
 		if (!oBg)
-			return oBg;
+			return undefined;
 
 		var sBwModeType = undefined;
 		switch (oBg.bwMode)
@@ -581,7 +581,7 @@
 	WriterToJSON.prototype.SerBgPr = function(oBgPr)
 	{
 		if (!oBgPr)
-			return oBgPr;
+			return undefined;
 
 		return {
 			"fill":         this.SerFill(oBgPr.Fill),
@@ -591,7 +591,7 @@
 	WriterToJSON.prototype.SerTransition = function(oTransition)
 	{
 		if (!oTransition)
-			return oTransition;
+			return undefined;
 		
 		var sTransType = undefined;
 		switch (oTransition.TransitionType)
@@ -723,7 +723,7 @@
 	WriterToJSON.prototype.SerTiming = function(oTiming)
 	{
 		if (!oTiming)
-			return oTiming;
+			return undefined;
 		
 		return {
 			"bldLst": this.SerBldLst(oTiming.bldLst),
@@ -734,7 +734,7 @@
 	WriterToJSON.prototype.SerBldLst = function(oBldLst)
 	{
 		if (!oBldLst)
-			return oBldLst;
+			return undefined;
 
 		var aBldLst = [];
 		for (var nElm = 0; nElm < oBldLst.list.length; nElm++)
@@ -754,7 +754,7 @@
 	WriterToJSON.prototype.SerBldDgm = function(oBldDgm)
 	{
 		if (!oBldDgm)
-			return oBldDgm;
+			return undefined;
 
 		return {
 			"bld":      oBldDgm.bld, // ?? c_oAscSlideDgmBuildType
@@ -767,7 +767,7 @@
 	WriterToJSON.prototype.SerBldOleChart = function(oBldOleChart)
 	{
 		if (!oBldOleChart)
-			return oBldOleChart;
+			return undefined;
 
 		return {
 			"animBg":   oBldOleChart.animBg,
@@ -781,7 +781,7 @@
 	WriterToJSON.prototype.SerBldGraphic = function(oBldGraphic)
 	{
 		if (!oBldGraphic)
-			return oBldGraphic;
+			return undefined;
 
 		return {
 			"bldAsOne": this.SerEmptyObject(oBldGraphic.bldAsOne),
@@ -795,7 +795,7 @@
 	WriterToJSON.prototype.SerEmptyObject = function(oEmptyObject)
 	{
 		if (!oEmptyObject)
-			return null;
+			return undefined;
 
 		return {
 			"type": "emptyObj"
@@ -804,7 +804,7 @@
 	WriterToJSON.prototype.SerBldSub = function(oBldSub)
 	{
 		if (!oBldSub)
-			return oBldSub;
+			return undefined;
 
 		return {
 			"chart":    oBldSub.chart,
@@ -817,7 +817,7 @@
 	WriterToJSON.prototype.SerBldP = function(oBldP)
 	{
 		if (!oBldP)
-			return oBldP;
+			return undefined;
 
 		var sBuildType = undefined;
 		switch (oBldP.build)
@@ -852,7 +852,7 @@
 	WriterToJSON.prototype.SerTmplLst = function(oTmplLst)
 	{
 		if (!oTmplLst)
-			return oTmplLst;
+			return undefined;
 		
 		var aTmplLst = [];
 
@@ -871,7 +871,7 @@
 	WriterToJSON.prototype.SerTnLst = function(oTnLst)
 	{
 		if (!oTnLst)
-			return oTnLst;
+			return undefined;
 
 		var aTnLst   = [];
 		var oTempElm = null;
@@ -919,7 +919,7 @@
 	WriterToJSON.prototype.SerCTn = function(oCTn)
 	{
 		if (!oCTn)
-			return oCTn;
+			return undefined;
 
 		var sNodeFillType = undefined;
 		switch (oCTn.fill)
@@ -1104,7 +1104,7 @@
 	WriterToJSON.prototype.SerIterate = function(oIterate)
 	{
 		if (!oIterate)
-			return oIterate;
+			return undefined;
 
 		var sIterateType = undefined;
 		switch (oIterate.type)
@@ -1137,7 +1137,7 @@
 	WriterToJSON.prototype.SerCMediaNode = function(oCMediaNode)
 	{
 		if (!oCMediaNode)
-			return oCMediaNode;
+			return undefined;
 			
 		return {
 			"cTn":             this.SerCTn(oCMediaNode.cTn),
@@ -1207,7 +1207,7 @@
 	WriterToJSON.prototype.SerCBhvr = function(oCBhvr)
 	{
 		if (!oCBhvr)
-			return oCBhvr;
+			return undefined;
 
 		var sAccumulateType = undefined;
 		switch (oCBhvr.accumulate)
@@ -1280,7 +1280,7 @@
 	WriterToJSON.prototype.SerTavLst = function(oTavLst)
 	{
 		if (!oTavLst)
-			return oTavLst;
+			return undefined;
 
 		var aTavLst = [];
 		for (var nTav = 0; nTav < oTavLst.list.length; nTav++)
@@ -1299,7 +1299,7 @@
 	WriterToJSON.prototype.SerAttrNameLst = function(oAttrNameLst)
 	{
 		if (!oAttrNameLst)
-			return oAttrNameLst;
+			return undefined;
 
 		var aAttrNameLst = [];
 		for (var nName = 0; nName < oAttrNameLst.list.length; nName++)
@@ -1348,7 +1348,7 @@
 	WriterToJSON.prototype.SerByRGB = function(oByRGB)
 	{
 		if (!oByRGB)
-			return oByRGB;
+			return undefined;
 
 		return {
 			"r": oByRGB.c1,
@@ -1359,7 +1359,7 @@
 	WriterToJSON.prototype.SerByHSL = function(oByHSL)
 	{
 		if (!oByHSL)
-			return oByHSL;
+			return undefined;
 
 		return {
 			"h": oByHSL.c1,
@@ -1420,7 +1420,7 @@
 	WriterToJSON.prototype.SerByPoint = function(oPoint)
 	{
 		if (!oPoint)
-			return oPoint;
+			return undefined;
 
 		return {
 			"x": oPoint.x,
@@ -1481,7 +1481,7 @@
 	WriterToJSON.prototype.SerAnimVariant = function(oAnimVariant)
 	{
 		if (!oAnimVariant)
-			return oAnimVariant;
+			return undefined;
 
 		return {
 			"boolVal": oAnimVariant.boolVal,
@@ -1494,7 +1494,7 @@
 	WriterToJSON.prototype.SerCondLst = function(oCondLst)
 	{
 		if (!oCondLst)
-			return oCondLst;
+			return undefined;
 
 		var aCondLst = [];
 		for (var nCond = 0; nCond < oCondLst.list.length; nCond++)
@@ -1505,7 +1505,7 @@
 	WriterToJSON.prototype.SerCond = function(oCond)
 	{
 		if (!oCond)
-			return oCond;
+			return undefined;
 
 		var sEventType = undefined;
 		switch (oCond.evt)
@@ -1556,7 +1556,7 @@
 	WriterToJSON.prototype.SerRtn = function(oRtn)
 	{
 		if (!oRtn)
-			return oRtn;
+			return undefined;
 
 		var sType = undefined;
 		switch (oRtn.val)
@@ -1579,7 +1579,7 @@
 	WriterToJSON.prototype.SerTgtEl = function(oTgtEl)
 	{
 		if (!oTgtEl)
-			return oTgtEl;
+			return undefined;
 
 		return {
 			"inkTgt": this.SerInkTgt(oTgtEl.inkTgt),
@@ -1591,7 +1591,7 @@
 	WriterToJSON.prototype.SerInkTgt = function(oInkTgt)
 	{
 		if (!oInkTgt)
-			return oInkTgt;
+			return undefined;
 
 		return {
 			"spid": oInkTgt.spid
@@ -1600,7 +1600,7 @@
 	WriterToJSON.prototype.SerSndTgt = function(oSndTgt)
 	{
 		if (!oSndTgt)
-			return oSndTgt;
+			return undefined;
 
 		return {
 			"embed":   oSndTgt.embed,
@@ -1611,7 +1611,7 @@
 	WriterToJSON.prototype.SerSpTgt = function(oSpTgt)
 	{
 		if (!oSpTgt)
-			return oSpTgt;
+			return undefined;
 
 		return {
 			"spid":       oSpTgt.spid,
@@ -1625,7 +1625,7 @@
 	WriterToJSON.prototype.SerOleChartEl = function(oOleChartEl)
 	{
 		if (!oOleChartEl)
-			return oOleChartEl;
+			return undefined;
 
 		var sType = undefined;
 		switch (oOleChartEl.type)
@@ -1655,7 +1655,7 @@
 	WriterToJSON.prototype.SerTxEl = function(oTxEl)
 	{
 		if (!oTxEl)
-			return oTxEl;
+			return undefined;
 
 		return {
 			"charRg": this.SerIndexRg(oTxEl.charRg),
@@ -1665,7 +1665,7 @@
 	WriterToJSON.prototype.SerIndexRg = function(oIndexRg)
 	{
 		if (!oIndexRg)
-			return oIndexRg;
+			return undefined;
 			
 		return {
 			"st":  oIndexRg.st,
@@ -1675,7 +1675,7 @@
 	WriterToJSON.prototype.SerGraphicEl = function(oGraphicEl)
 	{
 		if (!oGraphicEl)
-			return oGraphicEl;
+			return undefined;
 			
 		return {
 			"chart": {
@@ -2113,7 +2113,8 @@
 	{
 		var oNotesMaster = new AscCommonSlide.CNotesMaster();
 
-		oParsedNotesMaster["clrMapOvr"] && oNotesMaster.setClMapOverride(this.ColorMapOvrFromJSON(oParsedNotesMaster["clrMapOvr"]));
+		if (oParsedNotesMaster["clrMap"] != null)
+			this.ColorMapOvrFromJSON(oParsedNotesMaster["clrMap"], oNotesMaster.clrMap);
 	
 		// cSld
 		var oCSld = this.CSldFromJSON(oParsedNotesMaster["cSld"]);
