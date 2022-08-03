@@ -644,7 +644,20 @@
 		}
 		writer.WriteXmlNodeEnd(name);
 	};
-
+	CMathBase.prototype.fromHtmlCtrlPr = function(reader, mathElem, opt_textPr) {
+		var rPr = opt_textPr ? opt_textPr : new CTextPr();
+		while (reader.MoveToNextAttribute()) {
+			switch (reader.GetNameNoNS()) {
+				case "style": {
+					var _styles = new ParseHtmlStyle(reader.GetValue());
+					_styles.parseStyles();
+					_styles.applyStyles(rPr);
+					break;
+				}
+			}
+		}
+		return rPr;
+	};
 
 	CMPrp.prototype.fromXml = function (reader) {
 		let elem, depth = reader.GetDepth();
@@ -701,6 +714,11 @@
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, mathElem, this.ctrPrp);
+					break;
+				}
 			}
 		}
 	};
@@ -747,6 +765,11 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
 					break;
 				}
 			}
@@ -831,6 +854,11 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
 					break;
 				}
 			}
@@ -984,6 +1012,11 @@
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					break;
+				}
 			}
 		}
 	};
@@ -1055,6 +1088,11 @@
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					break;
+				}
 			}
 		}
 	};
@@ -1111,6 +1149,11 @@
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					break;
+				}
 			}
 		}
 	};
@@ -1161,6 +1204,11 @@
 			switch (reader.GetNameNoNS()) {
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
 					break;
 				}
 			}
@@ -1226,6 +1274,11 @@
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					break;
+				}
 			}
 		}
 	};
@@ -1271,6 +1324,11 @@
 			switch (reader.GetNameNoNS()) {
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
 					break;
 				}
 			}
@@ -1369,6 +1427,11 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
 					break;
 				}
 			}
@@ -1473,6 +1536,11 @@
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					break;
+				}
 			}
 		}
 	};
@@ -1556,6 +1624,11 @@
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					break;
+				}
 			}
 		}
 	};
@@ -1607,6 +1680,11 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
 					break;
 				}
 			}
@@ -1663,6 +1741,11 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
 					break;
 				}
 			}
@@ -1731,6 +1814,11 @@
 			switch (reader.GetNameNoNS()) {
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					//paste from ms
+					this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
 					break;
 				}
 			}
@@ -2072,6 +2160,9 @@
 					break;
 				}
 				case "span": {
+					//this.buff = this.cTextPr;
+					//CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.cTextPr);
+
 					while (reader.MoveToNextAttribute()) {
 						console.log(reader.GetNameNoNS());
 						switch (reader.GetNameNoNS()) {
