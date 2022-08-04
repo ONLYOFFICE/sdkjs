@@ -301,28 +301,6 @@
 						elem = htmlContent.paraRuns;
 					}
 
-					/*var depth2 = reader.GetDepth();
-					elem = [];
-					while(reader.ReadNextSiblingNode(depth2))
-					{
-						var depth3 = reader.GetDepth();
-						while(reader.ReadNextSiblingNode(depth3)){
-							var paraRun = new ParaRun(this.Paragraph, true);
-							var txt = reader.GetTextDecodeXml();
-							for(var i = 0; i < txt.length; i++) {
-								var cMath = new CMathText();
-								cMath.addTxt(txt[i]);
-								paraRun.Add_ToContent(paraRun.GetElementsCount(), cMath, false);
-							}
-							var depth4 = reader.GetDepth();
-							paraRun.fromXml(reader);
-
-							elem.push(paraRun);
-						}
-
-						var depth4 = reader.GetDepth();
-					}*/
-
 					break;
 				}
 
@@ -1231,8 +1209,12 @@
 					break;
 				}
 				case "fName" : {
+					var state = reader.getState();
+					props.fromXml(reader, this);
+					reader.setState(state);
+
 					elem = new CMathContent();
-					elem.fromXml(reader);
+					elem.fromXml(reader, props);
 					props.content[0] = elem;
 					break;
 				}
