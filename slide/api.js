@@ -4394,7 +4394,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_doubleClickOnTableOleObject    = function(obj)
 	{
-		this.isChartEditor = true;	// Для совместного редактирования
+		this.isOleEditor = true;	// Для совместного редактирования
 		this.asc_onOpenChartFrame();
 
 		if(!window['IS_NATIVE_EDITOR']) {

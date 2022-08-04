@@ -316,7 +316,7 @@
 
     // create canvas
     if (null != this.element) {
-		if (!this.Api.VersionHistory && !this.Api.isOleEditor) {
+		if (!this.Api.VersionHistory && !this.Api.isEditOleMode) {
 			this.element.innerHTML = '<div id="ws-canvas-outer">\
 											<canvas id="ws-canvas"></canvas>\
 											<canvas id="ws-canvas-overlay"></canvas>\

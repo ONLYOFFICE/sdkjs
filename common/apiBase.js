@@ -394,6 +394,9 @@
 	{
 		return null;
 	};
+	baseEditorsApi.prototype.isFrameEditor = function () {
+		return !!(this.isChartEditor || this.isOleEditor);
+	};
 	baseEditorsApi.prototype.asc_setCoreProps                = function(oProps)
 	{
 
