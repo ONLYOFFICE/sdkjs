@@ -3904,7 +3904,7 @@
 				nAxiePos = AscFormat.AX_POS_R;
 				break;
 			case "top":
-				nAxiePos = AscFormat.AX_POS_B;
+				nAxiePos = AscFormat.AX_POS_T;
 				break;
 			default:
 				return false;
