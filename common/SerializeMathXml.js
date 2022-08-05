@@ -295,7 +295,7 @@
 				case 'b':
 				case 'i': {
 					//далее внутри нас интересуют два тега - m:r с текстом и настройками  в виде m:rPr
-					var htmlContent = new ParseHtmlContent(this.Paragraph);
+					var htmlContent = new ParseHtmlContent(this.Paragraph, null, opt_paragraphContent && opt_paragraphContent.ctrPrp);
 					htmlContent.fromXml(reader);
 					if (htmlContent.paraRuns) {
 						elem = htmlContent.paraRuns;
@@ -2086,12 +2086,12 @@
 		writer.WriteXmlNodeEnd(name);
 	};
 
-	function ParseHtmlContent(paragraph, buff) {
+	function ParseHtmlContent(paragraph, buff, opt_textPr) {
 		this.buff = buff;
 		this.paraRuns = null;
 		this.paragraph = paragraph;
 
-		this.cTextPr = new CTextPr();
+		this.cTextPr = opt_textPr ? opt_textPr : new CTextPr();
 	}
 
 	ParseHtmlContent.prototype.fromXml = function (reader) {
@@ -2101,7 +2101,6 @@
 	};
 
 	ParseHtmlContent.prototype.getXmlRunsRecursive = function (reader) {
-		let cText = new CTextPr();
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			let name = reader.GetNameNoNS();
@@ -2132,7 +2131,17 @@
 					}
 
 					if (this.buff != null) {
-						paraRun.Set_Pr(this.buff);
+						if (paraRun.Pr) {
+							paraRun.Pr.Merge(this.buff);
+						} else {
+							paraRun.Set_Pr(this.buff);
+						}
+					} else if (this.cTextPr) {
+						if (paraRun.Pr) {
+							paraRun.Pr.Merge(this.cTextPr);
+						} else {
+							paraRun.Set_Pr(this.cTextPr);
+						}
 					}
 
 					if (!this.paraRuns) {
@@ -2222,6 +2231,7 @@
 					font_size = 1;
 
 				textPr.FontSize = font_size;
+				textPr.FontSizeCS = font_size;
 			}
 		}
 
