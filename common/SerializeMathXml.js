@@ -2124,9 +2124,10 @@
 					reader.setState(state);
 
 					var txt = reader.GetTextDecodeXml();
-					for (var i = 0; i < txt.length; i++) {
+					for (var oIterator = txt.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+						var nUnicode = oIterator.value();
 						var cMath = new CMathText();
-						cMath.addTxt(txt[i]);
+						cMath.add(nUnicode);
 						paraRun.Add_ToContent(paraRun.GetElementsCount(), cMath, false);
 					}
 

@@ -6354,6 +6354,15 @@ PasteProcessor.prototype =
 				this.pasteTextIntoList = null;
 			}
 
+			//принудительно добавляю для математики шрифт Cambria Math
+			if (child && child.nodeName.toLowerCase() === "#comment" && -1 !== child.nodeValue.indexOf("[if gte msEquation 12]")) {
+				var mathFont = "Cambria Math";
+				this.oFonts[mathFont] = {
+					Name: g_fontApplication.GetFontNameDictionary(mathFont, true),
+					Index: -1
+				};
+			}
+
 			var child_nodeType = child.nodeType;
 			if (!(Node.ELEMENT_NODE === child_nodeType || Node.TEXT_NODE === child_nodeType))
 				continue;
@@ -8379,7 +8388,7 @@ PasteProcessor.prototype =
 					charCode = oIterator.value();
 				}
 				return charCode;
-			}
+			};
 
 			var setListItems = function (addFunc) {
 				for (var i = 0, length = node.childNodes.length; i < length; i++) {
