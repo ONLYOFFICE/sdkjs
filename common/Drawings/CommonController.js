@@ -7835,7 +7835,7 @@ DrawingObjectsController.prototype =
                 {
                     mainGroup = oDrawingSelectionState.textObject.group.getMainGroup();
                 }
-                if(oDrawingSelectionState.textObject.Is_UseInDocument()
+                if(oDrawingSelectionState.textObject.IsUseInDocument()
                     && (!mainGroup || mainGroup === this)
                 && (!bSlide || oDrawingSelectionState.textObject.parent === this.drawingObjects))
                 {
@@ -7868,7 +7868,7 @@ DrawingObjectsController.prototype =
             }
             else if(oDrawingSelectionState.groupObject)
             {
-                if(oDrawingSelectionState.groupObject.Is_UseInDocument() && !oDrawingSelectionState.groupObject.group
+                if(oDrawingSelectionState.groupObject.IsUseInDocument() && !oDrawingSelectionState.groupObject.group
                     && (!bSlide || oDrawingSelectionState.groupObject.parent === this.drawingObjects))
                 {
                     this.selectObject(oDrawingSelectionState.groupObject, bDocument ? (oDrawingSelectionState.groupObject.parent ? oDrawingSelectionState.groupObject.parent.PageNum : nPageIndex) : nPageIndex);
@@ -7893,7 +7893,7 @@ DrawingObjectsController.prototype =
             }
             else if(oDrawingSelectionState.chartObject)
             {
-                if(oDrawingSelectionState.chartObject.Is_UseInDocument()
+                if(oDrawingSelectionState.chartObject.IsUseInDocument()
                     && (!bSlide || oDrawingSelectionState.chartObject.parent === this.drawingObjects))
                 {
                     this.selectObject(oDrawingSelectionState.chartObject, bDocument ? (oDrawingSelectionState.chartObject.parent ? oDrawingSelectionState.chartObject.parent.PageNum : nPageIndex) : nPageIndex);
@@ -7913,7 +7913,7 @@ DrawingObjectsController.prototype =
             }
             else if(oDrawingSelectionState.wrapObject)
             {
-                if(oDrawingSelectionState.wrapObject.parent && oDrawingSelectionState.wrapObject.parent.Is_UseInDocument && oDrawingSelectionState.wrapObject.parent.Is_UseInDocument())
+                if(oDrawingSelectionState.wrapObject.parent && oDrawingSelectionState.wrapObject.parent.IsUseInDocument && oDrawingSelectionState.wrapObject.parent.IsUseInDocument())
                 {
                     this.selectObject(oDrawingSelectionState.wrapObject, oDrawingSelectionState.wrapObject.parent.PageNum);
                     if(oDrawingSelectionState.wrapObject.canChangeWrapPolygon && oDrawingSelectionState.wrapObject.canChangeWrapPolygon() && !oDrawingSelectionState.wrapObject.parent.Is_Inline())
@@ -7924,7 +7924,7 @@ DrawingObjectsController.prototype =
             }
             else if(oDrawingSelectionState.cropObject)
             {
-                if(oDrawingSelectionState.cropObject.Is_UseInDocument()
+                if(oDrawingSelectionState.cropObject.IsUseInDocument()
                     && (!bSlide || oDrawingSelectionState.cropObject.parent === this.drawingObjects))
                 {
                     this.selectObject(oDrawingSelectionState.cropObject, bDocument ? (oDrawingSelectionState.cropObject.parent ? oDrawingSelectionState.cropObject.parent.PageNum : nPageIndex) : nPageIndex);
@@ -7943,7 +7943,7 @@ DrawingObjectsController.prototype =
 
                 var oGeomSelection = oDrawingSelectionState.geometryObject.copy();
                 var oDrawing = oGeomSelection.drawing;
-                if(oDrawing.Is_UseInDocument()
+                if(oDrawing.IsUseInDocument()
                 && (!bSlide || oDrawing.parent === this.drawingObjects))
                 {
                     this.selectObject(oDrawing, bDocument ? (oDrawing.parent ? oDrawing.parent.PageNum : nPageIndex) : nPageIndex);
@@ -7959,7 +7959,7 @@ DrawingObjectsController.prototype =
                 for(var i = 0; i < oDrawingSelectionState.selection.length; ++i)
                 {
                     var oSp = oDrawingSelectionState.selection[i].object;
-                    if(oSp.Is_UseInDocument() && !oSp.group
+                    if(oSp.IsUseInDocument() && !oSp.group
                         && (!bSlide || oSp.parent === this.drawingObjects))
                     {
                         this.selectObject(oSp, bDocument ? (oSp.parent ? oSp.parent.PageNum : nPageIndex) : nPageIndex);

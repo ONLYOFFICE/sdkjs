@@ -815,6 +815,6 @@ CDocumentControllerBase.prototype.IsSelectionLocked  = function(CheckType)
 CDocumentControllerBase.prototype.FindNextFillingForm = function(isNext, isCurrent) {return null;};
 /**
  * Заполняем массив текущих изменений в рецензировании
- * @param oTrackManager {CTrackRevisionsManager}
+ * @param oTrackManager {AscWord.CTrackRevisionsManager}
  */
 CDocumentControllerBase.prototype.CollectSelectedReviewChanges = function(oTrackManager) {};

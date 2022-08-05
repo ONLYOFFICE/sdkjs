@@ -370,7 +370,7 @@ CStyle.prototype =
 					oNumLvl.SetPStyle(this.GetId());
 					oNum.SetLvl(oNumLvl, Value.NumPr.Lvl);
 
-					New.NumPr = new CNumPr(Value.NumPr.NumId);
+					New.NumPr = new CNumPr(Value.NumPr.NumId, Value.NumPr.Lvl);
 				}
 			}
 		}

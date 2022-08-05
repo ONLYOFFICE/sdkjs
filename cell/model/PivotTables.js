@@ -3995,6 +3995,9 @@ CT_pivotTableDefinition.prototype.asc_getColGrandTotals = function () {
 CT_pivotTableDefinition.prototype.asc_getShowHeaders = function () {
 	return this.showHeaders;
 };
+CT_pivotTableDefinition.prototype.asc_getUseAutoFormatting = function () {
+	return this.useAutoFormatting;
+};
 CT_pivotTableDefinition.prototype.asc_getTitle = function () {
 	return this.pivotTableDefinitionX14 && this.pivotTableDefinitionX14.altText;
 };
@@ -4716,6 +4719,9 @@ CT_pivotTableDefinition.prototype.asc_set = function (api, newVal) {
 		if (null !== newVal.gridDropZones) {
 			pivot.asc_setGridDropZones(newVal.gridDropZones, true);
 		}
+		if (null !== newVal.useAutoFormatting) {
+			pivot.asc_setUseAutoFormatting(newVal.useAutoFormatting, true);
+		}
 		if (null != newVal.ascFillDownLabels) {
 			pivot.setFillDownLabelsDefault(newVal.ascFillDownLabels, true);
 		}
@@ -4800,6 +4806,10 @@ CT_pivotTableDefinition.prototype.setOutline = function(newVal, addToHistory) {
 CT_pivotTableDefinition.prototype.asc_setGridDropZones = function(newVal, addToHistory) {
 	setTableProperty(this, this.gridDropZones, newVal, addToHistory, AscCH.historyitem_PivotTable_SetGridDropZones, true);
 	this.gridDropZones = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setUseAutoFormatting = function(newVal, addToHistory) {
+	setTableProperty(this, this.useAutoFormatting, newVal, addToHistory, AscCH.historyitem_PivotTable_UseAutoFormatting, true);
+	this.useAutoFormatting = newVal;
 };
 CT_pivotTableDefinition.prototype.asc_setFillDownLabelsDefault = function(newVal) {
 	this.ascFillDownLabels = newVal;
@@ -15784,6 +15794,7 @@ prot["asc_getPageOverThenDown"] = prot.asc_getPageOverThenDown;
 prot["asc_getRowGrandTotals"] = prot.asc_getRowGrandTotals;
 prot["asc_getColGrandTotals"] = prot.asc_getColGrandTotals;
 prot["asc_getShowHeaders"] = prot.asc_getShowHeaders;
+prot["asc_getUseAutoFormatting"] = prot.asc_getUseAutoFormatting;
 prot["asc_getDataRef"] = prot.asc_getDataRef;
 prot["asc_getTitle"] = prot.asc_getTitle;
 prot["asc_getDescription"] = prot.asc_getDescription;
@@ -15804,6 +15815,7 @@ prot["asc_setColGrandTotals"] = prot.asc_setColGrandTotals;
 prot["asc_setPageOverThenDown"] = prot.asc_setPageOverThenDown;
 prot["asc_setPageWrap"] = prot.asc_setPageWrap;
 prot["asc_setShowHeaders"] = prot.asc_setShowHeaders;
+prot["asc_setUseAutoFormatting"] = prot.asc_setUseAutoFormatting;
 prot["asc_setCompact"] = prot.asc_setCompact;
 prot["asc_setOutline"] = prot.asc_setOutline;
 prot["asc_setGridDropZones"] = prot.asc_setGridDropZones;

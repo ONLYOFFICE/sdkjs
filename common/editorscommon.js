@@ -746,7 +746,7 @@
 								let text = AscCommon.UTF8ArrayToString(data, 0, data.length);
 								oResult.changes[parseInt(path.slice('changes'.length))] = JSON.parse(text);
 							} else {
-								oZipImages[path] = data;
+								oZipImages[path] = new Uint8Array(data);
 							}
 						}
 					});

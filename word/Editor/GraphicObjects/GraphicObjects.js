@@ -907,7 +907,7 @@ CGraphicObjects.prototype =
     {
         for(var i = aDrawings.length - 1; i > -1; --i)
         {
-            if(!aDrawings[i].Is_UseInDocument())
+            if(!aDrawings[i].IsUseInDocument())
             {
                 aDrawings.splice(i, 1);
             }

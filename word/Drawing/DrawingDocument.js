@@ -7021,15 +7021,18 @@ function CDrawingDocument()
 			}
 			else if (type === 1)
 			{
-				var arrTypes = 
-				[
+				var arrTypes = [
 					c_oAscNumberingLevel.UpperLetterDot_Left,
 					c_oAscNumberingLevel.LowerLetterBracket_Left,
 					c_oAscNumberingLevel.LowerLetterDot_Left,
 					c_oAscNumberingLevel.DecimalDot_Right,
 					c_oAscNumberingLevel.DecimalBracket_Right,
 					c_oAscNumberingLevel.UpperRomanDot_Right,
-					c_oAscNumberingLevel.LowerRomanDot_Right
+					c_oAscNumberingLevel.LowerRomanDot_Right,
+					c_oAscNumberingLevel.UpperRussian_Dot_Left,
+					c_oAscNumberingLevel.UpperRussian_Bracket_Left,
+					c_oAscNumberingLevel.LowerRussian_Dot_Left,
+					c_oAscNumberingLevel.LowerRussian_Bracket_Left
 				];
 				for (var i = 0; i < arrTypes.length; i++)
 				{

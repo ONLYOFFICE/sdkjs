@@ -111,7 +111,7 @@ CDocumentOutline.prototype.Update = function()
 
 			var nPos   = this.private_FindElementByParagraph(oParagraph);
 			var nLevel = oParagraph.GetOutlineLvl();
-			var isUse  = oParagraph.Is_UseInDocument();
+			var isUse  = oParagraph.IsUseInDocument();
 
 			if (undefined !== nLevel && isUse)
 			{

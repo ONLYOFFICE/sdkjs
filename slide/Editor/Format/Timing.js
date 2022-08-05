@@ -9682,7 +9682,7 @@
         if(!oObj) {
             return false;
         }
-        if(!oObj.checkCorrect() || !(oObj.Is_UseInDocument && oObj.Is_UseInDocument())) {
+        if(!oObj.checkCorrect() || !(oObj.IsUseInDocument && oObj.IsUseInDocument())) {
             return false;
         }
         return true;

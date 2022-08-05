@@ -6131,8 +6131,10 @@ var editor;
 			}
 			if (ranges) {
 				ws.updateRanges(ranges);
-				ws._autoFitColumnsWidth(ranges);
-            }
+				if (pivot.useAutoFormatting) {
+					ws._autoFitColumnsWidth(ranges);
+				}
+			}
 			//ws can be inactive in case of slicer on other sheet
 			if (this.wbModel.getActive() === wsModel.getIndex()) {
 				ws.draw();

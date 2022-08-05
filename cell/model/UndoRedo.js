@@ -3898,6 +3898,9 @@ function (window, undefined) {
 			case AscCH.historyitem_PivotTable_SetGridDropZones:
 				pivotTable.asc_setGridDropZones(value);
 				break;
+			case AscCH.historyitem_PivotTable_UseAutoFormatting:
+				pivotTable.asc_setUseAutoFormatting(value);
+				break;
 			case AscCH.historyitem_PivotTable_SetFillDownLabelsDefault:
 				pivotTable.setFillDownLabelsDefault(value, false);
 				break;

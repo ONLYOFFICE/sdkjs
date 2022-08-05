@@ -8603,7 +8603,7 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 		}
 	}
 
-	if (this.Type == para_Math_Run)
+	if (this.Type === para_Math_Run)
 	{
 		if (undefined === this.Parent || null === this.Parent)
 		{
@@ -8695,6 +8695,12 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 		TextPr.ReplaceThemeFonts(oTheme.themeElements.fontScheme);
 	}
 
+	if(this.Paragraph.bFromDocument === false)
+	{
+		TextPr.BoldCS     = TextPr.Bold;
+		TextPr.ItalicCS   = TextPr.Italic;
+		TextPr.FontSizeCS = TextPr.FontSize;
+	}
 	TextPr.CheckFontScale();
 
 	// Для совместимости со старыми версиями запишем FontFamily
@@ -10346,7 +10352,7 @@ ParaRun.prototype.AddAfterParaEnd = function(oElement)
 };
 /**
  * Специальная функция очищающая метки переноса во время рецензирования
- * @param {CTrackRevisionsManager} oTrackManager
+ * @param {AscWord.CTrackRevisionsManager} oTrackManager
  */
 ParaRun.prototype.RemoveTrackMoveMarks = function(oTrackManager)
 {
@@ -11571,7 +11577,7 @@ ParaRun.prototype.private_GetPosInParent = function(_Parent)
 };
 ParaRun.prototype.Make_ThisElementCurrent = function(bUpdateStates)
 {
-    if (this.Is_UseInDocument())
+    if (this.IsUseInDocument())
     {
     	this.SetThisElementCurrentInParagraph();
         this.Paragraph.Document_SetThisElementCurrent(true === bUpdateStates ? true : false);
@@ -11967,17 +11973,6 @@ ParaRun.prototype.Get_ClassesByPos = function(Classes, ContentPos, Depth)
 {
     Classes.push(this);
 };
-ParaRun.prototype.Is_UseInParagraph = function()
-{
-    if (!this.Paragraph)
-        return false;
-
-    var ContentPos = this.Paragraph.Get_PosByElement(this);
-    if (!ContentPos)
-        return false;
-
-    return true;
-};
 /**
  * Получаем позицию данного рана в родительском параграфе
  * @param nInObjectPos {?number}
@@ -12077,14 +12072,6 @@ ParaRun.prototype.GetFootnotesList = function(oEngine)
 			oEngine.Add(oItem.GetFootnote(), oItem, this);
 		}
 	}
-};
-ParaRun.prototype.Is_UseInDocument = function()
-{
-	return (this.Paragraph && true === this.Paragraph.Is_UseInDocument() && true === this.Is_UseInParagraph() ? true : false);
-};
-ParaRun.prototype.IsUseInDocument = function()
-{
-	return this.Is_UseInDocument();
 };
 ParaRun.prototype.GetParaEnd = function()
 {
@@ -13674,7 +13661,7 @@ CRunWithPosition.prototype.SetDocumentPositionHere = function()
 };
 
 function CanUpdatePosition(Para, Run) {
-    return (Para && true === Para.Is_UseInDocument() && true === Run.Is_UseInParagraph());
+    return (Para && true === Para.IsUseInDocument() && true === Run.IsUseInParagraph());
 }
 
 //--------------------------------------------------------export----------------------------------------------------

@@ -1433,6 +1433,7 @@ background-repeat: no-repeat;\
 			_t.sendEvent("asc_onCountPages", pagesCount);
 		});
 		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onZoom", function(value, type){
+			_t.WordControl.m_nZoomValue = (value * 100) >> 0;
 			_t.sendEvent("asc_onZoomChange", (value * 100) >> 0, type);
 		});
 		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.open(gObject);
@@ -3961,6 +3962,11 @@ background-repeat: no-repeat;\
 	 a)  - SubType = 5
 	 a.  - SubType = 6
 	 i.  - SubType = 7
+	 Ж.  - SubType = 8
+	 Ж)  - SubType = 9
+	 ж.  - SubType = 10
+	 ж)  - SubType = 11
+
 
 	 Многоуровневый список Type = 2
 	 нет           - SubType = -1
@@ -3973,18 +3979,13 @@ background-repeat: no-repeat;\
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
 		var fCallback = function()
 		{
-			if (false === oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Properties))
+			if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
 			{
-				var NumberInfo =
-				{
-					Type    : 0,
-					SubType : -1
-				};
-
-				NumberInfo.Type    = type;
-				NumberInfo.SubType = subtype;
 				oLogicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphNumbering);
-				oLogicDocument.SetParagraphNumbering(NumberInfo);
+				oLogicDocument.SetParagraphNumbering({
+					Type    : type,
+					SubType : subtype
+				});
 				oLogicDocument.FinalizeAction();
 			}
 		};
@@ -10781,6 +10782,9 @@ background-repeat: no-repeat;\
 				return;
 		}
 
+		if (!oTOC.IsValid())
+			return;
+
 		if (oTOC instanceof AscCommonWord.CBlockLevelSdt)
 		{
 			this.asc_RemoveContentControl(oTOC.GetId());
@@ -10857,7 +10861,7 @@ background-repeat: no-repeat;\
 			return;
 
 		var oTOC = oPr.ComplexField;
-		if (!oTOC)
+		if (!oTOC || !oTOC.IsValid())
 		{
 			oTOC = oLogicDocument.GetTableOfContents();
 			if (!oTOC)
@@ -10946,7 +10950,7 @@ background-repeat: no-repeat;\
 		if (oTOC instanceof AscCommonWord.CBlockLevelSdt)
 			oTOC = oTOC.GetInnerTableOfContents();
 
-		if (!oTOC)
+		if (!oTOC || !oTOC.IsValid())
 		{
 			this.sendEvent("asc_onError", c_oAscError.ID.ComplexFieldNoTOC, c_oAscError.Level.NoCritical);
 			return;

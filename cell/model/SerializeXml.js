@@ -2748,9 +2748,11 @@
 			}
 		}
 
-		var t = this;
+		let t = this;
+		let oVmlDrawingReader = null;
 		if ("worksheet" === reader.GetNameNoNS()) {
 			var context = reader.GetContext();
+			context.aOleObjectsData = [];
 			context.initFromWS(this);
 			var depth = reader.GetDepth();
 			while (reader.ReadNextSiblingNode(depth)) {
@@ -2832,10 +2834,59 @@
 						oElement.fromXml(oReader, true);
 						context.InitOpenManager.legacyDrawing = oElement;
 					}
+					oVmlDrawingReader = oReader;
 				} else if ("legacyDrawingHF" === name) {
 					//do not support serialize - commented
 				} else if ("oleObjects" === name) {
-					//do not support serialize
+					let oWS = this;
+					let oDrawingData = null;
+					let fReadOleDrawing = function (reader, name) {
+						if(oDrawingData) {
+							return true;
+						}
+						if(name === "AlternateContent") {
+							fCallReadDrawing();
+						} else if(name === "Choice") {
+							fCallReadDrawing();
+						} else if(name === "oleObject") {
+							let oFrom = null, oTo = null, oPrNode = null;
+							let oNode = new CT_XmlNode(function(reader, name) {
+								if(name === "objectPr") {
+									oPrNode = new CT_XmlNode(function(reader, name) {
+										if(name === "anchor") {
+											let oAnchorNode = new CT_XmlNode(function(reader, name){
+												if(name === "from") {
+													oFrom = new AscFormat.CCellObjectInfo();
+													oFrom.fromXml(reader);
+												}
+												else if(name === "to") {
+													oTo = new AscFormat.CCellObjectInfo();
+													oTo.fromXml(reader);
+												}
+												return true;
+											});
+											oAnchorNode.fromXml(reader);
+										}
+										return true;
+									});
+									oPrNode.fromXml(reader);
+								}
+								return true;
+							});
+							oNode.fromXml(reader);
+							oDrawingData = {drawingNode: oNode, from: oFrom, to: oTo, objectPr: oPrNode};
+							context.aOleObjectsData.push(oDrawingData);
+						}
+					};
+					let fCallReadDrawing = function() {
+						let oNode = new CT_XmlNode(function (reader, name) {
+							fReadOleDrawing(reader, name);
+							return true;
+						});
+						oNode.fromXml(reader);
+					};
+					fCallReadDrawing();
+
 				} else if ("controls" === name) {
 					//do not support serialize
 				} else if ("headerFooter" === name) {
@@ -2898,10 +2949,159 @@
 		}
 
 		this.prepareExtLst(extLst, context.InitOpenManager);
+		this.prepareLegacyDrawings(reader, oVmlDrawingReader)
 	};
+	AscCommonExcel.Worksheet.prototype.prepareLegacyDrawings = function(reader, oVmlDrawingReader) {
+		let context = reader.context;
+		let aOleObjectsData = context.aOleObjectsData;
+		let oVmlDrawing = context.InitOpenManager.legacyDrawing;
 
+		let objectRender = new AscFormat.DrawingObjects();
+		let bVmlReader = false;
+
+
+		let oOldReader;
+		if(oVmlDrawingReader) {
+			oOldReader = oVmlDrawingReader.context.reader;
+			oVmlDrawingReader.context.reader = oVmlDrawingReader;
+		}
+		for(let nOle = 0; nOle < aOleObjectsData.length; ++nOle) {
+			let oData = aOleObjectsData[nOle];
+			let oFrom, oTo;
+			let oDrawingNode = oData.drawingNode;
+			let oPrNode = oData.objectPr;
+			oFrom = oData.from;
+			oTo = oData.to;
+			let sShapeId = oDrawingNode.attributes["shapeId"];
+			let oVMLSp = oVmlDrawing.getShape(sShapeId);
+			let sImageRId = null;
+			let sDataLinkId = oDrawingNode.attributes["id"];
+			let sProgId = oDrawingNode.attributes["progId"];
+			if(oVMLSp) {
+				let oClientData = oVMLSp.getClientData();
+				if(oClientData) {
+					let sAnchor = oClientData.m_oAnchor;
+					if(sAnchor) {
+						let aCoords = sAnchor.split(",");
+						if(aCoords.length === 8) {
+							let nFromCol = parseInt(aCoords[0]);
+							let dFromColOff = AscFormat.Px_To_Mm(parseInt(aCoords[1]));
+							let nFromRow = parseInt(aCoords[2]);
+							let dFromRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[3]));
+							let nToCol = parseInt(aCoords[4]);
+							let dToColOff = AscFormat.Px_To_Mm(parseInt(aCoords[5]));
+							let nToRow = parseInt(aCoords[6]);
+							let dToRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[7]));
+							if(AscFormat.isRealNumber(nFromCol) && AscFormat.isRealNumber(dFromColOff) &&
+								AscFormat.isRealNumber(nFromRow) && AscFormat.isRealNumber(dFromRowOff) &&
+								AscFormat.isRealNumber(nToCol) && AscFormat.isRealNumber(dToColOff) &&
+								AscFormat.isRealNumber(nToRow) && AscFormat.isRealNumber(dToRowOff)) {
+								if(!oFrom) {
+									oFrom = new AscFormat.CCellObjectInfo();
+								}
+								oFrom.col = nFromCol;
+								oFrom.colOff = dFromColOff;
+								oFrom.row = nFromRow;
+								oFrom.rowOff = dFromRowOff;
+								if(!oTo) {
+									oTo = new AscFormat.CCellObjectInfo();
+								}
+								oTo.col = nToCol;
+								oTo.colOff = dToColOff;
+								oTo.row = nToRow;
+								oTo.rowOff = dToRowOff;
+							}
+						}
+					}
+				}
+				let oImageData = oVMLSp.getImageData();
+				if(oImageData) {
+					if (oImageData.m_oRelId) sImageRId = oImageData.m_oRelId;
+					else if (oImageData.m_rId) sImageRId = oImageData.m_rId;
+					else if (oImageData.m_rPict) sImageRId = oImageData.m_rPict;
+					if(sImageRId) {
+						bVmlReader = !!oVmlDrawingReader;
+					}
+				}
+			}
+			if(!sImageRId) {
+				if(oPrNode) {
+					sImageRId = oPrNode.attributes["id"];
+					bVmlReader = false;
+				}
+			}
+			if(oFrom && oTo) {
+				let oOleObject = new AscFormat.COleObject();
+				AscFormat.fillImage(oOleObject, "", 0, 0, 50, 50);
+				AscFormat.fReadXmlRasterImageId(bVmlReader ? oVmlDrawingReader : reader, sImageRId, oOleObject.blipFill);
+				oOleObject.fillDataLink(sDataLinkId, reader);
+				oOleObject.setApplicationId(sProgId);
+				let oDrawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+				oDrawing.graphicObject = oOleObject;
+				oDrawing.from = oFrom;
+				oDrawing.to = oTo;
+				oDrawing.initAfterSerialize(this);
+			}
+		}
+		//signature lines
+		if(oVmlDrawing) {
+			let aSL = oVmlDrawing.getSignatureLines();
+			let aOOXMLSl = [];
+			for(let nSL = 0; nSL < aSL.length; ++nSL) {
+				let oSL = aSL[nSL];
+				let oOOXMLSL = oSL.convertToOOXML(oVmlDrawing.items, null, oVmlDrawingReader.context);
+				let oFrom, oTo;
+				let oClientData = oSL.getClientData();
+				if(oClientData) {
+					let sAnchor = oClientData.m_oAnchor;
+					if(sAnchor) {
+						let aCoords = sAnchor.split(",");
+						if(aCoords.length === 8) {
+							let nFromCol = parseInt(aCoords[0]);
+							let dFromColOff = AscFormat.Px_To_Mm(parseInt(aCoords[1]));
+							let nFromRow = parseInt(aCoords[2]);
+							let dFromRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[3]));
+							let nToCol = parseInt(aCoords[4]);
+							let dToColOff = AscFormat.Px_To_Mm(parseInt(aCoords[5]));
+							let nToRow = parseInt(aCoords[6]);
+							let dToRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[7]));
+							if(AscFormat.isRealNumber(nFromCol) && AscFormat.isRealNumber(dFromColOff) &&
+								AscFormat.isRealNumber(nFromRow) && AscFormat.isRealNumber(dFromRowOff) &&
+								AscFormat.isRealNumber(nToCol) && AscFormat.isRealNumber(dToColOff) &&
+								AscFormat.isRealNumber(nToRow) && AscFormat.isRealNumber(dToRowOff)) {
+								oFrom = new AscFormat.CCellObjectInfo();
+								oFrom.col = nFromCol;
+								oFrom.colOff = dFromColOff;
+								oFrom.row = nFromRow;
+								oFrom.rowOff = dFromRowOff;
+								oTo = new AscFormat.CCellObjectInfo();
+								oTo.col = nToCol;
+								oTo.colOff = dToColOff;
+								oTo.row = nToRow;
+								oTo.rowOff = dToRowOff;
+							}
+						}
+					}
+				}
+				if(oOOXMLSL && oOOXMLSL.isSignatureLine() && oFrom && oTo) {
+					let oDrawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+					let oSpPr = oOOXMLSL.spPr;
+					oOOXMLSL = oOOXMLSL.convertToPPTX(this.getDrawingDocument(), this, false);
+					oOOXMLSL.setSpPr(oSpPr);
+					oDrawing.graphicObject = oOOXMLSL;
+					oDrawing.from = oFrom;
+					oDrawing.to = oTo;
+					oDrawing.initAfterSerialize(this);
+				}
+			}
+			return aOOXMLSl;
+		}
+
+		if(oVmlDrawingReader) {
+			oVmlDrawingReader.context.reader = oOldReader;
+		}
+	};
 	//TOoDO PrepareToWrite делается в x2t, здесь не вижу необходиимости, но проверить нужно
-
 	AscCommonExcel.Worksheet.prototype.toXml = function (writer) {
 		var t = this, i;
 		var context = writer.context;
@@ -3065,28 +3265,76 @@
 			drawingRef.toXml(writer, "drawing");
 		}
 
+		let vmldrawingPart = null;
+		let vmlDrawingMemory = null;
+		let bVmlDrawing = (context.oleDrawings.length > 0 ||
+			context.signatureDrawings.length > 0 ||
+			this.aComments.length > 0);
+		if(bVmlDrawing) {
+			vmldrawingPart = context.part.addPart(AscCommon.openXml.Types.vmlDrawing);
+			vmlDrawingMemory = new AscCommon.CMemory();
+			vmlDrawingMemory.context = context;
+			let vmldrawingRef = new AscCommonExcel.CT_DrawingWSRef();
+			vmldrawingRef.id = vmldrawingPart.rId;
+			vmldrawingRef.toXml(writer, "legacyDrawing");
+			vmlDrawingMemory.WriteXmlString("<xml \
+xmlns:v=\"urn:schemas-microsoft-com:vml\" \
+xmlns:o=\"urn:schemas-microsoft-com:office:office\" \
+xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+		}
+
 		//vml drawings
 		if (this.aComments.length > 0) {
 			//TODO m_sGfxdata - не протаскивается
 			var vmldrawing = new AscFormat.CVMLDrawing();
 			vmldrawing.m_mapComments = this.aComments;
+			vmlDrawingMemory.WriteXmlString(vmldrawing.getXmlString());
 
-			var memory = new AscCommon.CMemory();
-			var vmldrawingXml = vmldrawing.getXmlString();
-			memory.WriteXmlString(vmldrawingXml);
-			var jsaData = memory.GetDataUint8();
-			var vmldrawingPart = context.part.addPart(AscCommon.openXml.Types.vmlDrawing);
-			vmldrawingPart.part.setData(jsaData);
-
-			var vmldrawingRef = new AscCommonExcel.CT_DrawingWSRef();
-			vmldrawingRef.id = vmldrawingPart.rId;
-			vmldrawingRef.toXml(writer, "legacyDrawing");
 		}
-
 
 		//skip m_oLegacyDrawingHF
 		//skip m_oPicture
-		//skip m_oOleObjects
+		//OLEObjects
+		if(context.oleDrawings.length > 0) {
+			writer.WriteXmlNodeStart("oleObjects");
+			writer.WriteXmlAttributesEnd();
+			let aDrawings = context.oleDrawings;
+			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+				let oDrawing = aDrawings[nDrawing];
+				oDrawing.toXmlOle(writer);
+			}
+			writer.WriteXmlNodeEnd("oleObjects");
+		}
+
+		if(vmlDrawingMemory) {
+			vmlDrawingMemory.context.clearCurrentPartDataMaps();
+		}
+		if(context.oleDrawings.length > 0) {
+			let oldPart = vmlDrawingMemory.context.part;
+			vmlDrawingMemory.context.part = vmldrawingPart.part;
+			let aDrawings = context.oleDrawings;
+			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+				let oDrawing = aDrawings[nDrawing];
+				oDrawing.graphicObject.toXmlVML(vmlDrawingMemory, "", "", "", "_x0000_s" + oDrawing.nShapeId)
+			}
+			vmlDrawingMemory.context.part = oldPart;
+		}
+		if(context.signatureDrawings.length > 0) {
+			let oldPart = vmlDrawingMemory.context.part;
+			vmlDrawingMemory.context.part = vmldrawingPart.part;
+			let aDrawings = context.signatureDrawings;
+			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+				let oDrawing = aDrawings[nDrawing];
+				oDrawing.graphicObject.toXmlVML(vmlDrawingMemory, "", "", "")
+			}
+			vmlDrawingMemory.context.part = oldPart;
+		}
+
+		if(bVmlDrawing) {
+			vmlDrawingMemory.WriteXmlString("</xml>");
+			let vmlData = vmlDrawingMemory.GetDataUint8();
+			vmldrawingPart.part.setData(vmlData);
+		}
 		//skip m_oControls
 
 		if (this.TableParts && this.TableParts.length > 0) {
@@ -3938,10 +4186,14 @@
 			while (reader.ReadNextSiblingNode(depth)) {
 				var name = reader.GetNameNoNS();
 				if ("twoCellAnchor" === name) {
-					var drawing = objectRender.createDrawingObject();
+					let drawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
 					drawing.fromXml(reader);
 				} else if ("oneCellAnchor" === name) {
+					let drawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
+					drawing.fromXml(reader);
 				} else if ("absoluteAnchor" === name) {
+					let drawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorAbsolute);
+					drawing.fromXml(reader);
 				}
 			}
 		}

@@ -217,6 +217,10 @@
 		{
 			this.private_InsertInline();
 		}
+		else if (this.private_IsOverwriteTableCells())
+		{
+			this.private_OverwriteTableCells();
+		}
 		else
 		{
 			this.private_InsertCommon();
@@ -763,6 +767,22 @@
 	{
 		return (1 === this.Elements.length && !this.Elements[0].SelectedAll && this.Elements[0].Element.IsParagraph() && (!this.Elements[0].Element.IsEmpty() || this.ForceInline));
 	};
+	CSelectedContent.prototype.private_IsOverwriteTableCells = function()
+	{
+		let oParagraph = this.Run.GetParagraph();
+		if (!oParagraph)
+			return false;
+
+		let nDstIndex   = oParagraph.GetIndex();
+		let oDocContent = oParagraph.GetParent();
+		if (!oDocContent || oParagraph !== oDocContent.GetElement(nDstIndex))
+			return false;
+
+		return (Asc.c_oSpecialPasteProps.overwriteCells === this.InsertOptions.Table
+			&& 1 === this.Elements.length
+			&& this.Elements[0].Element.IsTable()
+			&& oDocContent.GetParent() instanceof AscWord.CTableCell);
+	};
 	CSelectedContent.prototype.private_InsertToMathRun = function()
 	{
 		let oParaAnchorPos = this.ParaAnchorPos;
@@ -963,6 +983,11 @@
 			this.private_AdjustSizeForInlineDrawing();
 
 		this.private_CheckInsertSignatures();
+	};
+	CSelectedContent.prototype.private_OverwriteTableCells = function()
+	{
+		let oTableCell = this.Run.GetParagraph().GetParent().GetParent();
+		return oTableCell.InsertTableContent(this.Elements[0].Element);
 	};
 	CSelectedContent.prototype.private_InsertCommon = function()
 	{

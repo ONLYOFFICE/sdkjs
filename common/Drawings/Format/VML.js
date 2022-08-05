@@ -1129,6 +1129,7 @@
 
 		function COLEObject() {
 			CBaseNoId.call(this);
+			this.m_oPic= null;
 		}
 
 		IC(COLEObject, CBaseNoId, 0);
@@ -1154,6 +1155,10 @@
 			} else if ("LockedField" === name) {
 				this.m_oLockedField = new CLockedField();
 				this.m_oLockedField.fromXml(reader);
+			} else if("pic" === name) {
+				let oPic = new AscFormat.CImageShape();
+				oPic.fromXml(reader);
+				this.m_oPic = oPic;
 			}
 		};
 		COLEObject.prototype.writeAttrXmlImpl = function (writer) {
@@ -1175,6 +1180,30 @@
 
 			if (this.m_oFieldCodes)
 				this.m_oFieldCodes.toXml(writer, "o:FieldCodes");
+		};
+		COLEObject.prototype.fillEditorOleObject = function (oEditorObject, oOOXMLDrawing, reader) {
+			oEditorObject.m_sData = null;
+			oEditorObject.setApplicationId(this.m_sProgId);
+			oEditorObject.fillDataLink(this.m_oId, reader);
+			if(oOOXMLDrawing) {
+				if(oOOXMLDrawing.nvPicPr)
+				{
+					oEditorObject.setNvPicPr(oOOXMLDrawing.nvPicPr.createDuplicate());
+				}
+				if(oOOXMLDrawing.spPr)
+				{
+					oEditorObject.setSpPr(oOOXMLDrawing.spPr.createDuplicate());
+					oEditorObject.spPr.setParent(oEditorObject);
+				}
+				if(oOOXMLDrawing.blipFill)
+				{
+					oEditorObject.setBlipFill(oOOXMLDrawing.blipFill);
+				}
+				if(oOOXMLDrawing.style)
+				{
+					oEditorObject.setStyle(oOOXMLDrawing.style.createDuplicate());
+				}
+			}
 		};
 
 		function CProxy() {
@@ -8950,6 +8979,18 @@
 		CVmlCommonElements.prototype.getFill = function() {
 			return this.findItemByConstructor(CFillVml);
 		};
+
+		CVmlCommonElements.prototype.isSignatureLine = function() {
+			if(this instanceof  CShape) {
+				let oSL = this.getSignatureLine();
+				if(oSL) {
+					if(oSL.m_oIsSignatureLine === true) {
+						return true;
+					}
+				}
+			}
+			return false;
+		};
 		CVmlCommonElements.prototype.getSignatureLine = function() {
 			return this.findItemByConstructor(CSignatureLine);
 		};
@@ -8961,6 +9002,9 @@
 		};
 		CVmlCommonElements.prototype.getTextPath = function() {
 			return this.findItemByConstructor(CTextPath);
+		};
+		CVmlCommonElements.prototype.getClientData = function() {
+			return this.findItemByConstructor(CClientData);
 		};
 		CVmlCommonElements.prototype.getLeftBorder = function() {
 			for(let nItem = 0; nItem < this.items.length; ++nItem) {
@@ -9227,10 +9271,19 @@
 					return null;
 				}
 			}
-
 			else {
 				oOOXMLDrawing = new AscFormat.CShape();
 				oOOXMLDrawing.setWordShape(true);
+				if(oSignatureLine && oSignatureLine.m_oIsSignatureLine) {
+					let oOOXMLSignatureLine = new AscFormat.CSignatureLine();
+					oOOXMLSignatureLine.id = oSignatureLine.m_oId;
+					oOOXMLSignatureLine.signer = oSignatureLine.m_sSuggestedSigner;
+					oOOXMLSignatureLine.signer2 = oSignatureLine.m_sSuggestedSigner2;
+					oOOXMLSignatureLine.email = oSignatureLine.m_sSuggestedSignerEmail;
+					oOOXMLSignatureLine.showDate = oSignatureLine.m_oShowSignDate;
+					oOOXMLSignatureLine.instructions = oSignatureLine.m_sSigningInstructions;
+					oOOXMLDrawing.setSignature(oOOXMLSignatureLine);
+				}
 			}
 			let oNvPr = new AscFormat.UniNvPr();
 			oOOXMLDrawing.setNvSpPr(oNvPr);
@@ -11026,7 +11079,7 @@
 		};
 		CClientData.prototype.writeAttrXmlImpl = function (writer) {
 			if (this.m_oObjectType !== null) {
-				writer.WriteXmlNullableAttributeString(" ObjectType", this.m_oObjectType.ToString());
+				writer.WriteXmlNullableAttributeString(" ObjectType", getClientDataObjectType(this.m_oObjectType));
 			}
 		};
 		CClientData.prototype.writeChildrenXml = function (writer) {
@@ -12659,22 +12712,30 @@
 		};
 		CVMLDrawing.prototype.writeChildrenXml = function (writer) {
 		};
+		CVMLDrawing.prototype.getShape = function (nId) {
+			let sId = "_x0000_s" + nId;
+			for(let nItem = 0; nItem < this.items.length; ++nItem) {
+				let oItem = this.items[nItem];
+				if(oItem instanceof CShape) {
+					if(oItem.m_sId === sId) {
+						return oItem;
+					}
+				}
+			}
+			return null;
+		};
 		CVMLDrawing.prototype.getXmlString = function() {
 			if((!this.m_mapComments || isEmptyObject(this.m_mapComments)) && isEmptyObject(this.m_arObjectXml) && isEmptyObject(this.m_arControlXml))
 				return "";
 
 			let sXml = "";
-			sXml += "<xml \
-xmlns:v=\"urn:schemas-microsoft-com:vml\" \
-xmlns:o=\"urn:schemas-microsoft-com:office:office\" \
-xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 
 			for (let i = 0; i < this.m_arObjectXml.length; ++i)
 			{
 				sXml += (this.m_arObjectXml[i]);
 			}
 
-			if (false ===isEmptyObject(this.m_arControlXml) || ((null !== this.m_mapComments) && (false === isEmptyObject(this.m_mapComments))))
+			if (false === isEmptyObject(this.m_arControlXml) || ((null !== this.m_mapComments) && (false === isEmptyObject(this.m_mapComments))))
 			{
 				sXml += ("<o:shapelayout v:ext=\"edit\"><o:idmap v:ext=\"edit\" data=\"1\"/></o:shapelayout>");
 			}
@@ -12781,6 +12842,26 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 		CVMLDrawing.prototype.write = function (writer) {
 			writer.WriteXmlString(this.getXmlString());
 		};
+		CVMLDrawing.prototype.getSignatureLines = function() {
+			let aSL = [];
+			for(let nItem = 0; nItem < this.items.length; ++nItem) {
+				let oItem = this.items[nItem];
+				if(oItem.isSignatureLine()){
+					aSL.push(oItem);
+				}
+			}
+			return aSL;
+		};
+		CVMLDrawing.prototype.convertSignatureLines = function(oContext) {
+			let aSL = this.getSignatureLines();
+			let aOOXMLSl = [];
+			for(let nSL = 0; nSL < aSL.length; ++nSL) {
+				let oSL = aSL[nSL];
+				let oOOXMLSL = oSL.convertToOOXML(this.items, null, oContext);
+				aOOXMLSl.push(oOOXMLSL);
+			}
+			return aOOXMLSl;
+		};
 
 
 		function CLegacyDrawing(sType) {
@@ -12854,40 +12935,14 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 					let oOleObject = this.getOLEObject();
 					if(oOleObject && oContext.sourceItem.m_sId === oOleObject.m_sShapeId && oOOXMLDrawing instanceof AscFormat.CImageShape) {
 						let oEditorObject = new AscFormat.COleObject();
-						if(oOOXMLDrawing.nvPicPr)
-						{
-							oEditorObject.setNvPicPr(oOOXMLDrawing.nvPicPr.createDuplicate());
-						}
-						if(oOOXMLDrawing.spPr)
-						{
-							oEditorObject.setSpPr(oOOXMLDrawing.spPr.createDuplicate());
-							oEditorObject.spPr.setParent(oEditorObject);
-						}
-						if(oOOXMLDrawing.blipFill)
-						{
-							oEditorObject.setBlipFill(oOOXMLDrawing.blipFill);
-						}
-						if(oOOXMLDrawing.style)
-						{
-							oEditorObject.setStyle(oOOXMLDrawing.style.createDuplicate());
-						}
+
 						oEditorObject.setBDeleted(false);
 						oOOXMLDrawing = oEditorObject;
 
-						oEditorObject.m_sData = null;
-						oEditorObject.setApplicationId(oOleObject.m_sProgId);
-						oEditorObject.m_nPixWidth = this.dxaOrig;
-						oEditorObject.m_nPixHeight = this.dyaOrig;
-						//oEditorObject.m_sObjectFile = null;//ole object name in OOX
-						//oEditorObject.m_nOleType = null;
-						//oEditorObject.m_aBinaryData = null;
-						//oEditorObject.m_oMathObject = null;
-
-						// m_oDrawAspect: 0
-						// m_oId: "rId5"
-						// m_oType: 0
-						// m_sObjectId: "_1718637482"
-						// m_sProgId: "Excel.Sheet.12"
+						if(this.dxaOrig !== null && this.dyaOrig !== null) {
+							oEditorObject.setPixSizes(this.dxaOrig, this.dyaOrig);
+						}
+						oOleObject.fillEditorOleObject(oEditorObject, oOOXMLDrawing,  reader);
 					}
 					else {
 						oOOXMLDrawing.setBDeleted(false);
@@ -16822,6 +16877,13 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 			oNode.fromXml(reader);
 			return oShape;
 		};
+		CVMLToDrawingMLConverter.prototype.convertOleObject = function(reader) {
+			let oVMLOleObj = new COLEObject();
+			oVMLOleObj.fromXml(reader);
+			let oEditorOLEObject = new AscFormat.COLEObject();
+			oVMLOleObj.fillEditorOleObject(oEditorOLEObject, oVMLOleObj.m_oPic,  reader);
+			return oEditorOLEObject;
+		};
 		CVMLToDrawingMLConverter.prototype.convertFill = function(reader) {
 			return null;
 		};
@@ -16835,8 +16897,7 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 					return this.convertObject(reader);
 				}
 				case "oleObj": {
-
-					break;
+					return this.convertOleObject(reader);
 				}
 				case "drawing": {
 					break;
@@ -16854,6 +16915,9 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 						return true;
 					});
 					oNode.fromXml(reader);
+					if(oDrawing) {
+						return oDrawing;
+					}
 					break;
 				}
 			}
@@ -16867,9 +16931,10 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 				oOOXMLDrawing = oLegacyDrawing.convertToDrawingML(reader);
 			}
 			else if(name === "oleObj") {
-				let oOleObject = new AscFormat.COleObject();
+				let oOleObject = new AscFormat.COLEObject();
 				oOleObject.fromXml(reader);
-				oOOXMLDrawing = oOleObject;
+				oOOXMLDrawing = new AscFormat.COLEObject();
+				oOleObject.fillEditorOleObject(oOOXMLDrawing, null, reader);
 			}
 			if(oOOXMLDrawing) {
 				let oParaDrawing = new AscCommonWord.ParaDrawing(0, 0, oOOXMLDrawing, reader.context.DrawingDocument, paragraph.Parent, paragraph);
@@ -16924,5 +16989,15 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 		window['AscFormat'].ECssUnitsType = ECssUnitsType;
 		window['AscFormat'].CPoint = CPoint;
 		window['AscFormat'].CVMLToDrawingMLConverter = CVMLToDrawingMLConverter;
+		window['AscFormat'].COLEObject = COLEObject;
+		window['AscFormat'].CVMLClientData = CClientData;
+		window['AscFormat'].CVMLSignatureLine = CSignatureLine;
+		window['AscFormat'].EOLEDrawAspect = EOLEDrawAspect;
+		window['AscFormat'].EOLEType = EOLEType;
+		window['AscFormat'].EVmlClientDataObjectType = EVmlClientDataObjectType;
+		window['AscFormat'].Pt_To_Px = Pt_To_Px;
+		window['AscFormat'].Emu_To_Px = Emu_To_Px;
+		window['AscFormat'].Mm_To_Px = Mm_To_Px;
+		window['AscFormat'].Px_To_Mm = Px_To_Mm;
 
 	})(window);

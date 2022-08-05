@@ -1646,26 +1646,8 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oLogicDocument.CustomPr.fromXml(oCustomPrReader, true);
 			}
 		}
-		this.WordControl.m_oLogicDocument.ImageMap = {};
-		var _cur_ind = 0;
 		var context = reader.context;
-		for (var path in context.imageMap) {
-			if (context.imageMap.hasOwnProperty(path)) {
-				this.WordControl.m_oLogicDocument.ImageMap[_cur_ind++] = path;
-				let data = context.zip.getFile(path);
-				if (data) {
-					if (!window["NATIVE_EDITOR_ENJINE"]) {
-						let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
-						let blob = new Blob([data], {type: mime});
-						let url = window.URL.createObjectURL(blob);
-						AscCommon.g_oDocumentUrls.addImageUrl(path, url);
-					}
-					context.imageMap[path].forEach(function(blipFill) {
-						AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
-					});
-				}
-			}
-		}
+		this.WordControl.m_oLogicDocument.ImageMap = context.loadDataLinks();
 		jsZlib.close();
 		return true;
 	};

@@ -559,6 +559,14 @@
 			  //special paste
 			  "hideSpecialPasteOptions": function () {
 				  self.handlers.trigger("hideSpecialPasteOptions");
+			  },
+
+			  "cleanCutData": function (bDrawSelection, bCleanBuffer) {
+				  self.cleanCutData(bDrawSelection, bCleanBuffer);
+			  },
+
+			  "cleanCopyData": function (bDrawSelection, bCleanBuffer) {
+				  self.cleanCopyData(bDrawSelection, bCleanBuffer);
 			  }
 		  });
 

@@ -1139,7 +1139,38 @@
         return nType === AscDFH.historyitem_type_SmartArt ||
             nType === AscDFH.historyitem_type_SmartArtDrawing;
     };
+    CGraphicObjectBase.prototype.isOleObject = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_OleObject;
+    };
+    CGraphicObjectBase.prototype.isSignatureLine = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_Shape && this.signatureLine;
+    };
 
+    CGraphicObjectBase.prototype.isShape = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_Shape;
+    };
+
+    CGraphicObjectBase.prototype.isGroup = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_GroupShape;
+    };
+
+    CGraphicObjectBase.prototype.isChart = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_ChartSpace;
+    };
+
+    CGraphicObjectBase.prototype.isTable = function() {
+        return this.graphicObject && (this.graphicObject instanceof AscCommonWord.CTable);
+    };
+    CGraphicObjectBase.prototype.isImage = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_ImageShape;
+    };
+    CGraphicObjectBase.prototype.isPlaceholder = function() {
+        let oUniPr = this.getUniNvProps();
+        if(oUniPr) {
+            return isRealObject(oUniPr.nvPr) && isRealObject(oUniPr.nvPr.ph);
+        }
+        return false;
+    };
 
     CGraphicObjectBase.prototype.drawShdw = function(graphics){
         var outerShdw = this.getOuterShdw && this.getOuterShdw();
@@ -1203,12 +1234,6 @@
     };
     CGraphicObjectBase.prototype.setDrawingBase = function(drawingBase){
         this.drawingBase = drawingBase;
-        //if(Array.isArray(this.spTree)) {
-        //    for(var i = 0; i < this.spTree.length; ++i)
-        //    {
-        //        this.spTree[i].setDrawingBase(drawingBase);
-        //    }
-        //}
     };
     CGraphicObjectBase.prototype.setDrawingBaseType = function(nType){
         if(this.drawingBase){
@@ -2920,10 +2945,6 @@
 		}
         return this.getTypeName() + " " + this.getFormatId();
     };
-    
-    CGraphicObjectBase.prototype.isPlaceholder = function() {
-        return false;
-    };
     CGraphicObjectBase.prototype.getPlaceholderName = function() {
         if(!this.isPlaceholder()) {
             return "";
@@ -2972,14 +2993,10 @@
             dY += (this.convertPixToMM(4) + dH);
         }
     };
-    
-    CGraphicObjectBase.prototype.isImage = function() {
-        return this.getObjectType() === AscDFH.historyitem_type_ImageShape;
-    };
 
-    CGraphicObjectBase.prototype.Is_UseInDocument = function() {
-        if(CShape.prototype.Is_UseInDocument) {
-            return CShape.prototype.Is_UseInDocument.call(this);
+    CGraphicObjectBase.prototype.IsUseInDocument = function() {
+        if(CShape.prototype.IsUseInDocument) {
+            return CShape.prototype.IsUseInDocument.call(this);
         }
         return true;
     };

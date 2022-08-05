@@ -37,7 +37,7 @@
 // Import
 var CShape = AscFormat.CShape;
 
-CShape.prototype.Is_UseInDocument = function(drawingObjects)
+CShape.prototype.IsUseInDocument = function(drawingObjects)
 {
     if(this.group)
     {
@@ -46,7 +46,7 @@ CShape.prototype.Is_UseInDocument = function(drawingObjects)
         {
             if(aSpTree[i] === this)
             {
-                return this.group.Is_UseInDocument();
+                return this.group.IsUseInDocument();
             }
         }
         return false;

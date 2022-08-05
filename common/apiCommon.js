@@ -4676,6 +4676,12 @@
 	prot.put_Url = prot.asc_putUrl = function (v) {
 		this.Url = v;
 	};
+	prot.get_DirectUrl = prot.asc_getDirectUrl = function () {
+		return this.DirectUrl;
+	};
+	prot.put_DirectUrl = prot.asc_putDirectUrl = function (v) {
+		this.DirectUrl = v;
+	};
 	prot.get_Title = prot.asc_getTitle = function () {
 		return this.Title;
 	};
@@ -6864,6 +6870,8 @@
 	prot["put_Id"] = prot["asc_putId"] = prot.asc_putId;
 	prot["get_Url"] = prot["asc_getUrl"] = prot.asc_getUrl;
 	prot["put_Url"] = prot["asc_putUrl"] = prot.asc_putUrl;
+	prot["get_DirectUrl"] = prot["asc_getDirectUrl"] = prot.asc_getDirectUrl;
+	prot["put_DirectUrl"] = prot["asc_putDirectUrl"] = prot.asc_putDirectUrl;
 	prot["get_Title"] = prot["asc_getTitle"] = prot.asc_getTitle;
 	prot["put_Title"] = prot["asc_putTitle"] = prot.asc_putTitle;
 	prot["get_Format"] = prot["asc_getFormat"] = prot.asc_getFormat;

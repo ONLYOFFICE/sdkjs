@@ -3096,7 +3096,7 @@
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
 			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows &&
 				this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
-				this.lookIn === obj.lookIn;
+				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange;
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;

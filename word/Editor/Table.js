@@ -3455,28 +3455,28 @@ CTable.prototype.IsInnerTable = function()
 
 	return false;
 };
-CTable.prototype.Is_UseInDocument = function(Id)
+CTable.prototype.IsUseInDocument = function(Id)
 {
-	var bUse = false;
-	if (null != Id)
+	if (undefined !== Id && null !== Id)
 	{
-		var RowsCount = this.Content.length;
-		for (var Index = 0; Index < RowsCount; Index++)
+		let isFound = false;
+		for (let nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
 		{
-			if (Id === this.Content[Index].Get_Id())
+			if (Id === this.GetRow(nCurRow).GetId())
 			{
-				bUse = true;
+				isFound = true;
 				break;
 			}
 		}
+
+		if (!isFound)
+			return false;
 	}
-	else
-		bUse = true;
 
-	if (true === bUse && null != this.Parent)
-		return this.Parent.Is_UseInDocument(this.Get_Id());
+	if (-1 === this.GetIndex())
+		return false;
 
-	return false;
+	return this.Parent.IsUseInDocument();
 };
 CTable.prototype.Get_CurrentPage_Absolute = function()
 {
@@ -14103,6 +14103,7 @@ CTable.prototype.RemoveTableCells = function()
 		return true;
 
 	var arrSelectedCells = this.GetSelectionArray(true);
+	this.RemoveSelection();
 
 	var arrDeleteInfo = [];
 	var arrRowsInfo   = [];
@@ -19701,3 +19702,4 @@ CTableRowsInfo.prototype.Init = function()
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTable = CTable;
 window['AscCommonWord'].type_Table = type_Table;
+window['AscWord'].CTable = CTable;

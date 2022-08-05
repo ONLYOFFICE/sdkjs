@@ -564,10 +564,10 @@ CHeaderFooter.prototype =
 		return this.Content.IsTextSelectionUse();
 	},
 
-    Is_UseInDocument : function(Id)
+	IsUseInDocument : function(Id)
     {
         if ( null != this.Parent )
-            return this.Parent.Is_UseInDocument(this.Get_Id());
+            return this.Parent.IsUseInDocument(this.Get_Id());
 
         return false;
     },
@@ -1976,7 +1976,7 @@ CHeaderFooterController.prototype =
 		return false;
 	},
 
-	Is_UseInDocument : function(Id)
+	IsUseInDocument : function(Id)
 	{
 		var HdrFtr = g_oTableId.Get_ById(Id);
 		if (-1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))

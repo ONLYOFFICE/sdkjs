@@ -431,25 +431,10 @@ function CGroupShape()
         }
     };
 
-    CGroupShape.prototype.isShape = function()
-    {
-        return false;
-    };
-
-
-    CGroupShape.prototype.isChart = function()
-    {
-        return false;
-    };
-
-    CGroupShape.prototype.isGroup = function()
-    {
-        return true;
-    };
 
     CGroupShape.prototype.isPlaceholder  = function()
     {
-        return this.nvGrpSpPr != null && this.nvGrpSpPr.nvPr != undefined && this.nvGrpSpPr.nvPr.ph != undefined;
+        return !!(this.nvGrpSpPr != null && this.nvGrpSpPr.nvPr && this.nvGrpSpPr.nvPr.ph);
     };
 
     CGroupShape.prototype.getAllRasterImages = function(images)

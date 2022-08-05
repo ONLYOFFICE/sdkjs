@@ -2284,10 +2284,22 @@
 			jsZlibOpened = null;
 		}
 
-		var imageMapKeys = Object.keys(context.imageMap);
-		var downloadImages = function (imageMapKeys) {
+		//save embeddings
+		let oDataMap = context.dataMap;
+		if(jsZlibOpened) {
+			for(let sDataKey in oDataMap) {
+				if(oDataMap.hasOwnProperty(sDataKey)) {
+					let aEmbeddingData = jsZlibOpened.getFile(sDataKey);
+					if(aEmbeddingData) {
+						oDataMap[sDataKey].part.setData(aEmbeddingData);
+					}
+				}
+			}
+		}
+		let imageMapKeys = Object.keys(context.imageMap);
+		let downloadImages = function (imageMapKeys) {
 			if (imageMapKeys.length > 0) {
-				var elem = imageMapKeys.pop();
+				let elem = imageMapKeys.pop();
 				let data = jsZlibOpened && jsZlibOpened.getFile(elem);
 				if (data) {
 					context.imageMap[elem].part.setData(data);
@@ -2300,7 +2312,7 @@
 					}
 					downloadImages(imageMapKeys);
 				} else {
-					var url = AscCommon.g_oDocumentUrls.getImageUrl(elem);
+					let url = AscCommon.g_oDocumentUrls.getImageUrl(elem);
 					AscCommon.loadFileContent(url, function (httpRequest) {
 						if (httpRequest && httpRequest.response) {
 							context.imageMap[elem].part.setData(httpRequest.response);
@@ -2310,7 +2322,7 @@
 				}
 			} else {
 				jsZlibOpened && jsZlibOpened.close();
-				var data = jsZlibToSave.save();
+				let data = jsZlibToSave.save();
 				jsZlibToSave.close();
 				callback(data);
 			}

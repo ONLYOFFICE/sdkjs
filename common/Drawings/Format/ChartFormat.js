@@ -13286,10 +13286,10 @@
         }
         return this.chart.extX * 0.5;
     };
-    CTitle.prototype.Is_UseInDocument = function() {
+    CTitle.prototype.IsUseInDocument = function() {
         if(this.parent && this.parent.title === this &&
-            this.chart && this.chart.Is_UseInDocument) {
-            return this.chart.Is_UseInDocument();
+            this.chart && this.chart.IsUseInDocument) {
+            return this.chart.IsUseInDocument();
         }
         return false;
     };
