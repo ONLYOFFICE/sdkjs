@@ -662,8 +662,10 @@
 		if (AscCommon.isRealObject(oleBinary))
 		{
 			var _this = this;
-			if (oleBinary) {
-				if (!oleBinary['imageUrl']) {
+			if (oleBinary)
+			{
+				if (!oleBinary['imageUrl'])
+				{
 					var base64Image = oleBinary['base64Image'];
 					var fAfterUploadOleObjectImage = function (url) {
 						oleBinary['imageUrl'] = url;
@@ -679,9 +681,11 @@
 				}
 
 				var oController = this.getGraphicController();
-				if (oController) {
+				if (oController)
+				{
 					var selectedObjects = AscFormat.getObjectsByTypesFromArr(oController.selectedObjects);
-					if (selectedObjects.oleObjects.length === 1) {
+					if (selectedObjects.oleObjects.length === 1)
+					{
 						var selectedOleObject = selectedObjects.oleObjects[0];
 						var blipUrl = oleBinary['imageUrl'];
 						var binaryDataOfSheet = AscCommon.Base64.decode(oleBinary['binary']);
@@ -695,7 +699,7 @@
 						this.asc_editOleObjectAction(false, selectedOleObject, blipUrl, binaryDataOfSheet, mmExtX, mmExtY, adaptSizeWidth, adaptSizeHeight);
 					}
 				}
-				}
+			}
 		}
 	};
 	baseEditorsApi.prototype.canEdit                         = function()

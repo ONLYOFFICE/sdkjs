@@ -5732,7 +5732,8 @@ function BinaryPPTYLoader()
                 }
                 case 4:
                 {
-                    s.GetUChar();
+                    const drawAspect = s.GetUChar();
+                    ole.setDrawAspect(drawAspect);
                     break;
                 }
                 case 5:
@@ -10909,7 +10910,8 @@ function BinaryPPTYLoader()
                     }
                     case 4:
                     {
-                        s.GetUChar();
+                        const drawAspect = s.GetUChar();
+                        ole.setDrawAspect(drawAspect);
                         break;
                     }
                     case 5:

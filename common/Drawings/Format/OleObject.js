@@ -61,6 +61,7 @@ function (window, undefined) {
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetDataLink] = AscDFH.CChangesDrawingsString;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetOleType] = AscDFH.CChangesDrawingsLong;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetMathObject] = AscDFH.CChangesDrawingsObject;
+		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetDrawAspect] = AscDFH.CChangesDrawingsLong;
 
 
         AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryDefRPr] = AscCommonWord.CTextPr;
@@ -109,6 +110,7 @@ function (window, undefined) {
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetDataLink] = function(oClass, value){oClass.m_sDataLink = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetOleType] = function(oClass, value){oClass.m_nOleType = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetMathObject] = function(oClass, value){oClass.m_oMathObject = value;};
+		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetDrawAspect] = function(oClass, value){oClass.m_nDrawAspect = value;};
 
     function COleObject()
     {
@@ -122,6 +124,8 @@ function (window, undefined) {
         this.m_aBinaryData = null;
         this.m_oMathObject = null;
         this.m_sDataLink = null;
+        this.m_nDrawAspect = AscFormat.EOLEDrawAspect.oledrawaspectContent;
+        this.m_bShowAsIcon = false;
     }
 
     COleObject.prototype = Object.create(AscFormat.CImageShape.prototype);
@@ -135,6 +139,10 @@ function (window, undefined) {
     {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetData, this.m_sData, sData));
         this.m_sData = sData;
+    };
+    COleObject.prototype.setDrawAspect = function (oPr) {
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_ImageShapeSetDrawAspect, this.m_nDrawAspect, oPr));
+        this.m_nDrawAspect = oPr;
     };
     COleObject.prototype.setApplicationId = function(sApplicationId)
     {
@@ -368,40 +376,42 @@ function (window, undefined) {
         if (Data instanceof Uint8Array) {
             this.setBinaryData(Data)
         }
-        if(typeof sImageUrl  === "string" &&
-            (!this.blipFill || this.blipFill.RasterImageId !== sImageUrl)) {
-            var _blipFill           = new AscFormat.CBlipFill();
-            _blipFill.RasterImageId = sImageUrl;
-            this.setBlipFill(_blipFill);
-        }
-        if(this.m_nPixWidth !== nPixWidth || this.m_nPixHeight !== nPixHeight) {
-            this.setPixSizes(nPixWidth, nPixHeight);
-        }
-        var fWidth_ = fWidth;
-        var fHeight_ = fHeight;
-        if(!AscFormat.isRealNumber(fWidth_) || !AscFormat.isRealNumber(fHeight_)) {
-            var oImagePr = new Asc.asc_CImgProperty();
-            oImagePr.asc_putImageUrl(sImageUrl);
-            var oApi = editor || Asc.editor;
-            var oSize = oImagePr.asc_getOriginSize(oApi);
-            if(oSize.IsCorrect) {
-                fWidth_ = oSize.Width;
-                fHeight_ = oSize.Height;
+        if (this.m_nDrawAspect === AscFormat.EOLEDrawAspect.oledrawaspectContent && !this.m_bShowAsIcon) {
+            if(typeof sImageUrl  === "string" &&
+                (!this.blipFill || this.blipFill.RasterImageId !== sImageUrl)) {
+                var _blipFill           = new AscFormat.CBlipFill();
+                _blipFill.RasterImageId = sImageUrl;
+                this.setBlipFill(_blipFill);
             }
-        }
-        if(AscFormat.isRealNumber(fWidth_) && AscFormat.isRealNumber(fHeight_)) {
-            var oXfrm = this.spPr && this.spPr.xfrm;
-            if(oXfrm) {
-                if(!AscFormat.fApproxEqual(oXfrm.extX, fWidth_) ||
-                    !AscFormat.fApproxEqual(oXfrm.extY, fHeight_)) {
-                    oXfrm.setExtX(fWidth_);
-                    oXfrm.setExtY(fHeight_);
-                    if(!this.group) {
-                        if(this.drawingBase) {
-                            this.checkDrawingBaseCoords();
-                        }
-                        if(this.parent && this.parent.CheckWH) {
-                            this.parent.CheckWH();
+            if(this.m_nPixWidth !== nPixWidth || this.m_nPixHeight !== nPixHeight) {
+                this.setPixSizes(nPixWidth, nPixHeight);
+            }
+            var fWidth_ = fWidth;
+            var fHeight_ = fHeight;
+            if(!AscFormat.isRealNumber(fWidth_) || !AscFormat.isRealNumber(fHeight_)) {
+                var oImagePr = new Asc.asc_CImgProperty();
+                oImagePr.asc_putImageUrl(sImageUrl);
+                var oApi = editor || Asc.editor;
+                var oSize = oImagePr.asc_getOriginSize(oApi);
+                if(oSize.IsCorrect) {
+                    fWidth_ = oSize.Width;
+                    fHeight_ = oSize.Height;
+                }
+            }
+            if(AscFormat.isRealNumber(fWidth_) && AscFormat.isRealNumber(fHeight_)) {
+                var oXfrm = this.spPr && this.spPr.xfrm;
+                if(oXfrm) {
+                    if(!AscFormat.fApproxEqual(oXfrm.extX, fWidth_) ||
+                        !AscFormat.fApproxEqual(oXfrm.extY, fHeight_)) {
+                        oXfrm.setExtX(fWidth_);
+                        oXfrm.setExtY(fHeight_);
+                        if(!this.group) {
+                            if(this.drawingBase) {
+                                this.checkDrawingBaseCoords();
+                            }
+                            if(this.parent && this.parent.CheckWH) {
+                                this.parent.CheckWH();
+                            }
                         }
                     }
                 }

@@ -3503,7 +3503,7 @@ function CBinaryFileWriter()
         oThis._WriteString2(1, ole.m_sData);
         oThis._WriteInt2(2, ratio * ole.m_nPixWidth);
         oThis._WriteInt2(3, ratio * ole.m_nPixHeight);
-        oThis._WriteUChar2(4, 0);
+        oThis._WriteUChar2(4, ole.m_nDrawAspect);
         oThis._WriteUChar2(5, 0);
         oThis._WriteString2(7, ole.m_sObjectFile);
         oThis.WriteUChar(g_nodeAttributeEnd);
@@ -5406,7 +5406,7 @@ function CBinaryFileWriter()
             _writer._WriteString2(1, ole.m_sData);
 			_writer._WriteInt2(2, ratio * ole.m_nPixWidth);
 			_writer._WriteInt2(3, ratio * ole.m_nPixHeight);
-            _writer._WriteUChar2(4, 0);
+            _writer._WriteUChar2(4, ole.m_nDrawAspect);
             _writer._WriteUChar2(5, 0);
 			_writer._WriteString2(7, ole.m_sObjectFile);
             _writer.WriteUChar(g_nodeAttributeEnd);
