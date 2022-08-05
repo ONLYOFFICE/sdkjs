@@ -3901,6 +3901,7 @@ var editor;
 
     this.fAfterLoad = function () {
       _this.wb.scrollToOleSize();
+      _this.wb.onOleEditorReady();
     }
     };
   /**

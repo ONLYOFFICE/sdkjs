@@ -2023,6 +2023,10 @@
     }
   };
 
+  WorkbookView.prototype.onOleEditorReady = function () {
+	  this.handlers.trigger("asc_onOleEditorReady");
+  };
+
   WorkbookView.prototype._onDocumentPlaceChanged = function() {
     if (this.isDocumentPlaceChangedEnabled) {
       this.handlers.trigger("asc_onDocumentPlaceChanged");
