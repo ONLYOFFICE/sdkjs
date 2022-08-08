@@ -1210,11 +1210,12 @@
 				}
 				case "fName" : {
 					var state = reader.getState();
-					props.fromXml(reader, this);
+					var insideProps = new CMathBasePr()
+					insideProps.fromXml(reader, this);
 					reader.setState(state);
 
 					elem = new CMathContent();
-					elem.fromXml(reader, props);
+					elem.fromXml(reader, insideProps);
 					props.content[0] = elem;
 					break;
 				}

@@ -9972,6 +9972,10 @@ PasteProcessor.prototype =
 					if (-1 !== value.indexOf("supportLineBreakNewLine")) {
 						bSkip = true;
 					}
+					if (-1 !== value.indexOf("[if !msEquation]")) {
+						bSkip = true;
+					}
+
 					// TODO пересмотреть информацию в <![if !supportFootnotes]>
 					/*if (-1 !== value.indexOf("supportFootnotes")) {
 						bSkip = true;
