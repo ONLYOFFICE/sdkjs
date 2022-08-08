@@ -588,9 +588,7 @@ CSdtBase.prototype.GetAllSubForms = function(arrForms)
 		if (!oControl.IsForm())
 			continue;
 
-		if (oControl.IsComplexForm())
-			oControl.GetAllSubForm(arrForms);
-		else
+		if (!oControl.IsComplexForm())
 			arrForms.push(oControl);
 	}
 
@@ -632,7 +630,7 @@ CSdtBase.prototype.IsMainForm = function()
 };
 /**
  * Возвращаем следующую простую подформу в составе сложной формы
- * @returns {null}
+ * @returns {?CSdtBase}
  */
 CSdtBase.prototype.GetNextSubForm = function()
 {
@@ -653,6 +651,10 @@ CSdtBase.prototype.GetNextSubForm = function()
 
 	return (nIndex < arrForms.length - 1 ? arrForms[nIndex + 1] : this);
 };
+/**
+ * Возвращаем предыдущую простую подформу в составе сложной формы
+ * @returns {?CSdtBase}
+ */
 CSdtBase.prototype.GetPrevSubForm = function()
 {
 	let oMainForm;
@@ -671,4 +673,60 @@ CSdtBase.prototype.GetPrevSubForm = function()
 		return arrForms[arrForms.length - 1];
 
 	return (nIndex > 0 ? arrForms[nIndex - 1] : this);
+};
+CSdtBase.prototype.GetSubFormFromCurrentPosition = function(isForward)
+{
+	let oMainForm;
+	if (!this.IsForm() || !(oMainForm = this.GetMainComplexForm()))
+		return null;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return null;
+
+	if (!this.IsComplexForm())
+		return this;
+
+	let nCurPos = this.State.ContentPos;
+	if (isForward)
+	{
+		for (let nPos = nCurPos + 1, nCount = this.Content.length; nPos < nCount; ++nPos)
+		{
+			let oElement = this.GetElement(nPos);
+			if (oElement instanceof AscWord.CInlineLevelSdt && oElement.IsForm())
+			{
+				if (!oElement.IsComplexForm())
+					return oElement;
+
+				let arrSubForms = oElement.GetAllSubForms();
+				if (arrSubForms.length)
+					return arrSubForms[0];
+			}
+		}
+	}
+	else
+	{
+		for (let nPos = nCurPos - 1; nPos >= 0; --nPos)
+		{
+			let oElement = this.GetElement(nPos);
+			if (oElement instanceof AscWord.CInlineLevelSdt && oElement.IsForm())
+			{
+				if (!oElement.IsComplexForm())
+					return oElement;
+
+				let arrSubForms = oElement.GetAllSubForms();
+				if (arrSubForms.length)
+					return arrSubForms[arrSubForms.length - 1];
+			}
+		}
+	}
+
+	let oParent = this.GetParent();
+	if (this === oMainForm
+		|| !oParent
+		|| !(oParent instanceof AscWord.CInlineLevelSdt)
+		|| !oParent.IsForm())
+		return null;
+
+	return oParent.GetSubFormFromCurrentPosition(isForward);
 };

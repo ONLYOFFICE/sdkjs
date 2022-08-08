@@ -565,7 +565,8 @@ CInlineLevelSdt.prototype.private_IsAddFormFieldToGraphics = function(oGraphics,
 };
 CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseContentPos)
 {
-	let oLogicDocument = this.Paragraph ? this.Paragraph.GetLogicDocument() : null;
+	let oParagraph     = this.GetParagraph();
+	let oLogicDocument = oParagraph ? oParagraph.GetLogicDocument() : null;
 
 	let isSimpleForm = false;
 	let isSubForm    = false;
@@ -578,25 +579,38 @@ CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, U
 		if (this.IsPlaceHolder())
 			return false;
 
-		if (!this.IsComplexForm())
+		let nCurPos = UseContentPos ? ContentPos.Get(Depth) : this.Content.length - 1;
+		if (!(this.Content[nCurPos] instanceof AscWord.CInlineLevelSdt))
 		{
-			if (oMainForm === this)
-				isSimpleForm = true;
+			if (!this.IsComplexForm())
+			{
+				if (oMainForm === this)
+					isSimpleForm = true;
+				else
+					isSubForm = true;
+			}
 			else
-				isSubForm = true;
-		}
-		else
-		{
-			
+			{
+				let oSubForm = this.GetSubFormFromCurrentPosition(false);
+				let oParaPos = oParagraph.GetPosByElement(oSubForm);
+				if (oSubForm && oParaPos)
+				{
+					let oNewPos = oParaPos.Copy();
+					oSubForm.Get_EndPos(false, oNewPos, oNewPos.GetDepth() + 1);
+					SearchPos.Pos = oNewPos;
+				}
+
+				SearchPos.Found = true;
+				return true;
+			}
 		}
 	}
 
-	if (false === UseContentPos && this.Content.length > 0)
+	if (!UseContentPos && this.Content.length)
 	{
-		// При переходе в новый контент встаем в его конец
-		var CurPos = this.Content.length - 1;
-		this.Content[CurPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-		SearchPos.Pos.Update(CurPos, Depth);
+		let nLastPos = this.Content.length - 1;
+		this.Content[nLastPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
+		SearchPos.Pos.Update(nLastPos, Depth);
 		SearchPos.Found = true;
 		return true;
 	}
@@ -612,35 +626,104 @@ CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, U
 	else if (!bResult && isSubForm)
 	{
 		let oPrevForm = this.GetPrevSubForm();
+		let oParaPos  = oParagraph.GetPosByElement(oPrevForm);
+		if (oPrevForm && oPrevForm !== this && oParaPos)
+		{
+			let oNewPos = oParaPos.Copy();
+			oPrevForm.Get_EndPos(false, oNewPos, oNewPos.GetDepth() + 1);
+
+			SearchPos.Pos   = oNewPos;
+			SearchPos.Found = true;
+			return true;
+		}
+		else
+		{
+			this.Get_StartPos(SearchPos.Pos, Depth);
+			SearchPos.Found = true;
+			return true;
+		}
 	}
 
 	return bResult;
 };
 CInlineLevelSdt.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, UseContentPos, StepEnd)
 {
-	if (false === UseContentPos && this.Content.length > 0)
+	let oParagraph     = this.GetParagraph();
+	let oLogicDocument = oParagraph ? oParagraph.GetLogicDocument() : null;
+
+	let isSimpleForm = false;
+	let isSubForm    = false;
+	let oMainForm;
+	if (oLogicDocument
+		&& oLogicDocument.IsFillingFormMode()
+		&& this.IsForm()
+		&& (oMainForm = this.GetMainForm()))
 	{
-		// При переходе в новый контент встаем в его начало
+		if (this.IsPlaceHolder())
+			return false;
+
+		let nCurPos = UseContentPos ? ContentPos.Get(Depth) : 0;
+		if (!(this.Content[nCurPos] instanceof AscWord.CInlineLevelSdt))
+		{
+			if (!this.IsComplexForm())
+			{
+				if (oMainForm === this)
+					isSimpleForm = true;
+				else
+					isSubForm = true;
+			}
+			else
+			{
+				let oSubForm = this.GetSubFormFromCurrentPosition(true);
+				let oParaPos = oParagraph.GetPosByElement(oSubForm);
+				if (oSubForm && oParaPos)
+				{
+					let oNewPos = oParaPos.Copy();
+					oSubForm.Get_StartPos(oNewPos, oNewPos.GetDepth() + 1);
+					SearchPos.Pos = oNewPos;
+				}
+
+				SearchPos.Found = true;
+				return true;
+			}
+		}
+	}
+
+	if (!UseContentPos && this.Content.length)
+	{
 		this.Content[0].Get_StartPos(SearchPos.Pos, Depth + 1);
 		SearchPos.Pos.Update(0, Depth);
 		SearchPos.Found = true;
 		return true;
 	}
 
-	if (this.IsForm() && this.IsPlaceHolder())
-		return false;
-
 	var bResult = CParagraphContentWithParagraphLikeContent.prototype.Get_RightPos.call(this, SearchPos, ContentPos, Depth, UseContentPos, StepEnd);
 
-	if (true !== bResult
-		&& this.Paragraph
-		&& this.Paragraph.LogicDocument
-		&& true === this.Paragraph.LogicDocument.IsFillingFormMode()
-		&& this === this.GetMainForm())
+	if (!bResult && isSimpleForm)
 	{
 		this.Get_EndPos(false, SearchPos.Pos, Depth);
 		SearchPos.Found = true;
 		return true;
+	}
+	else if (!bResult && isSubForm)
+	{
+		let oNextForm = this.GetNextSubForm();
+		let oParaPos  = oParagraph.GetPosByElement(oNextForm);
+		if (oNextForm && oNextForm !== this && oParaPos)
+		{
+			let oNewPos = oParaPos.Copy();
+			oNextForm.Get_StartPos(oNewPos, oNewPos.GetDepth() + 1);
+
+			SearchPos.Pos   = oNewPos;
+			SearchPos.Found = true;
+			return true;
+		}
+		else
+		{
+			this.Get_EndPos(false, SearchPos.Pos, Depth);
+			SearchPos.Found = true;
+			return true;
+		}
 	}
 
 	return bResult;

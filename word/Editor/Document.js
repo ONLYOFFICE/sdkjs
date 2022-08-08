@@ -6170,6 +6170,29 @@ CDocument.prototype.GetCursorRealPosition = function()
 		Y : this.CurPos.RealY
 	};
 };
+CDocument.prototype.CorrectCursorPosition = function(isForward)
+{
+	if (this.IsFillingFormMode())
+	{
+		let oInfo = this.GetSelectedElementsInfo();
+		let oForm = oInfo.GetInlineLevelSdt();
+
+		// Селект может быть внутри составных форм в режиме заполнения, а вот курсор там не должен находиться
+		if (oForm && oForm.IsForm() && oForm.IsComplexForm())
+		{
+			let oSubForm = oForm.GetSubFormFromCurrentPosition(isForward);
+			if (oSubForm)
+			{
+				oSubForm.SetThisElementCurrent(true);
+
+				if (isForward)
+					oSubForm.MoveCursorToStartPos();
+				else
+					oSubForm.MoveCursorToEndPos();
+			}
+		}
+	}
+};
 CDocument.prototype.MoveCursorToStartOfDocument = function()
 {
 	var nDocPosType = this.GetDocPosType();
@@ -6217,6 +6240,7 @@ CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 
 	this.Controller.MoveCursorLeft(AddToSelect, Word);
 
+	this.CorrectCursorPosition(false);
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateRulersState();
 	this.private_UpdateCursorXY(true, true);
@@ -6231,6 +6255,7 @@ CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 
 	this.Controller.MoveCursorRight(AddToSelect, Word, FromPaste);
 
+	this.CorrectCursorPosition(true);
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
 	this.private_UpdateCursorXY(true, true);

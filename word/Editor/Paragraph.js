@@ -5970,6 +5970,9 @@ Paragraph.prototype.MoveCursorToXY = function(X, Y, bLine, bDontChangeRealPos, C
  */
 Paragraph.prototype.Get_PosByElement = function(Class)
 {
+	if (!Class)
+		return null;
+
 	var ContentPos = new CParagraphContentPos();
 
 	// Сначала попробуем определить местоположение по данным рассчета
