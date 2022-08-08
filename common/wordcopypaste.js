@@ -9571,9 +9571,8 @@ PasteProcessor.prototype =
 						} else if (oThis.startMsoAnnotation && child.nodeValue === "[endif]") {
 							oThis.startMsoAnnotation = false;
 						} else if (-1 !== child.nodeValue.indexOf("[if gte msEquation 12]")) {
-							var mathContent = oThis._parseMathContent(child);
 							var oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument);
-							oPar.AddToContent(0, mathContent);
+							oThis._parseMathContent(child, oPar);
 
 							oThis.aContent.push(oPar)
 						}
@@ -10027,23 +10026,23 @@ PasteProcessor.prototype =
 		return bAddParagraph;
 	},
 
-	_parseMathContent: function (node) {
+	_parseMathContent: function (node, oPar) {
 		//получаем строку, которая содержит необходимые данные для получения уравнения
-		var str = node.nodeValue;
+		let str = node.nodeValue;
 		str = str.replace('[if gte msEquation 12]>', '');
 		str = str.replace('<![endif]', '');
 		str = str.replace(/lang=\w*-\w*/g, '');
 
 		let xmlParserContext = new AscCommon.XmlParserContext();
+		xmlParserContext.oReadResult.bCopyPaste = true;
 		var reader = new StaxParser(str, /*documentPart*/null, xmlParserContext);
 
 		if (!reader.ReadNextNode()) {
 			return;
 		}
 
-		var elem = new AscCommon.CT_OMathPara();
-		elem.fromXml(reader);
-		console.log(elem.OMath);
+		let elem = new AscCommon.CT_OMathPara();
+		elem.fromXml(reader, oPar);
 		return elem.OMath
 	},
 
