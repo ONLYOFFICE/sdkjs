@@ -554,6 +554,10 @@ CSdtBase.prototype.GetMainForm = function()
 	let oMain = this.GetMainComplexForm();
 	return oMain ? oMain : this;
 };
+/**
+ * Данная функция возвращает все дочерние формы по отношению к данной форме
+ * @returns {CSdtBase[]}
+ */
 CSdtBase.prototype.GetAllChildForms = function()
 {
 	let arrForms    = [];
@@ -562,6 +566,31 @@ CSdtBase.prototype.GetAllChildForms = function()
 	{
 		let oControl = arrControls[nIndex];
 		if (oControl.IsForm())
+			arrForms.push(oControl);
+	}
+
+	return arrForms;
+};
+/**
+ * Получаем все простые подформы (т.е. если подформы - составное поле, то мы пробегаемся по её простым подформам)
+ * @param arrForms
+ * @returns {CSdtBase[]}
+ */
+CSdtBase.prototype.GetAllSubForms = function(arrForms)
+{
+	if (!arrForms)
+		arrForms = [];
+
+	let arrControls = this.GetAllContentControls();
+	for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+	{
+		let oControl = arrControls[nIndex];
+		if (!oControl.IsForm())
+			continue;
+
+		if (oControl.IsComplexForm())
+			oControl.GetAllSubForm(arrForms);
+		else
 			arrForms.push(oControl);
 	}
 
@@ -600,4 +629,46 @@ CSdtBase.prototype.IsCurrentComplexForm = function()
 CSdtBase.prototype.IsMainForm = function()
 {
 	return (this === this.GetMainForm());
+};
+/**
+ * Возвращаем следующую простую подформу в составе сложной формы
+ * @returns {null}
+ */
+CSdtBase.prototype.GetNextSubForm = function()
+{
+	let oMainForm;
+	if (!this.IsForm()
+		|| this.IsComplexForm()
+		|| !(oMainForm = this.GetMainComplexForm())
+		|| oMainForm === this)
+		return null;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return null;
+
+	let nIndex = arrForms.indexOf(this);
+	if (-1 === nIndex)
+		return arrForms[0];
+
+	return (nIndex < arrForms.length - 1 ? arrForms[nIndex + 1] : this);
+};
+CSdtBase.prototype.GetPrevSubForm = function()
+{
+	let oMainForm;
+	if (!this.IsForm()
+		|| this.IsComplexForm()
+		|| !(oMainForm = this.GetMainComplexForm())
+		|| oMainForm === this)
+		return null;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return null;
+
+	let nIndex = arrForms.indexOf(this);
+	if (-1 === nIndex)
+		return arrForms[arrForms.length - 1];
+
+	return (nIndex > 0 ? arrForms[nIndex - 1] : this);
 };

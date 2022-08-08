@@ -565,6 +565,32 @@ CInlineLevelSdt.prototype.private_IsAddFormFieldToGraphics = function(oGraphics,
 };
 CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseContentPos)
 {
+	let oLogicDocument = this.Paragraph ? this.Paragraph.GetLogicDocument() : null;
+
+	let isSimpleForm = false;
+	let isSubForm    = false;
+	let oMainForm;
+	if (oLogicDocument
+		&& oLogicDocument.IsFillingFormMode()
+		&& this.IsForm()
+		&& (oMainForm = this.GetMainForm()))
+	{
+		if (this.IsPlaceHolder())
+			return false;
+
+		if (!this.IsComplexForm())
+		{
+			if (oMainForm === this)
+				isSimpleForm = true;
+			else
+				isSubForm = true;
+		}
+		else
+		{
+			
+		}
+	}
+
 	if (false === UseContentPos && this.Content.length > 0)
 	{
 		// При переходе в новый контент встаем в его конец
@@ -575,20 +601,17 @@ CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, U
 		return true;
 	}
 
-	if (this.IsForm() && this.IsPlaceHolder())
-		return false;
-
 	var bResult = CParagraphContentWithParagraphLikeContent.prototype.Get_LeftPos.call(this, SearchPos, ContentPos, Depth, UseContentPos);
 
-	if (true !== bResult
-		&& this.Paragraph
-		&& this.Paragraph.LogicDocument
-		&& true === this.Paragraph.LogicDocument.IsFillingFormMode()
-		&& this === this.GetMainForm())
+	if (!bResult && isSimpleForm)
 	{
 		this.Get_StartPos(SearchPos.Pos, Depth);
 		SearchPos.Found = true;
 		return true;
+	}
+	else if (!bResult && isSubForm)
+	{
+		let oPrevForm = this.GetPrevSubForm();
 	}
 
 	return bResult;
