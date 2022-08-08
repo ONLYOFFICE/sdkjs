@@ -2100,27 +2100,33 @@
 		reader.setState(state);
 	};
 
-	ParseHtmlContent.prototype.getXmlRunsRecursive = function (reader) {
+	ParseHtmlContent.prototype.getXmlRunsRecursive = function (reader, textPr, doNotCopyPr) {
 		let depth = reader.GetDepth();
+		if (!textPr) {
+			textPr = this.cTextPr;
+		}
+
 		while (reader.ReadNextSiblingNode(depth)) {
 			let name = reader.GetNameNoNS();
 			switch (name) {
 				case "u": {
-					this.cTextPr.Underline = true;
-					this.buff = this.cTextPr;
-					this.getXmlRunsRecursive(reader);
+					textPr.Underline = true;
+					this.getXmlRunsRecursive(reader, textPr);
 					break;
 				}
 				case "s": {
-					this.cTextPr.Strikeout = true;
-					this.buff = this.cTextPr;
-					this.getXmlRunsRecursive(reader);
+					textPr.Strikeout = true;
+					this.getXmlRunsRecursive(reader, textPr);
 					break;
 				}
 				case "r": {
 					var paraRun = new ParaRun(this.paragraph, true);
 					var state = reader.getState();
 					paraRun.fromXml(reader);
+					reader.setState(state);
+
+					var copyTextPr = textPr.Copy();
+					this.getXmlRunsRecursive(reader, copyTextPr, true);
 					reader.setState(state);
 
 					var txt = reader.GetTextDecodeXml();
@@ -2131,17 +2137,11 @@
 						paraRun.Add_ToContent(paraRun.GetElementsCount(), cMath, false);
 					}
 
-					if (this.buff != null) {
+					if (copyTextPr != null) {
 						if (paraRun.Pr) {
-							paraRun.Pr.Merge(this.buff);
+							paraRun.Pr.Merge(copyTextPr);
 						} else {
-							paraRun.Set_Pr(this.buff);
-						}
-					} else if (this.cTextPr) {
-						if (paraRun.Pr) {
-							paraRun.Pr.Merge(this.cTextPr);
-						} else {
-							paraRun.Set_Pr(this.cTextPr);
+							paraRun.Set_Pr(copyTextPr);
 						}
 					}
 
@@ -2152,12 +2152,13 @@
 					break;
 				}
 				case "span": {
-					CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.cTextPr);
-					this.buff = this.cTextPr;
+					var copyTextPr = doNotCopyPr ? textPr : textPr.Copy();
+					CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, copyTextPr);
+					this.getXmlRunsRecursive(reader, copyTextPr);
+					break;
 				}
-
 				default:
-					this.getXmlRunsRecursive(reader);
+					this.getXmlRunsRecursive(reader, textPr);
 					break;
 			}
 		}
