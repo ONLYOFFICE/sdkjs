@@ -8535,14 +8535,14 @@ var GLOBAL_PATH_COUNT = 0;
         return nResult;
     };
     CChartSpace.prototype.fillDataFromTrack = function(oSelectedRange) {
-        var oSlectedSeries = this.getSelectedSeries();
-        if(oSlectedSeries) {
-            oSlectedSeries.fillFromSelectedRange(oSelectedRange);
+        let oSelectedSeries = this.getSelectedSeries();
+        if(oSelectedSeries) {
+            oSelectedSeries.fillFromSelectedRange(oSelectedRange);
             this.recalculate();
             return;
         }
-        var oDataRange = this.getDataRefs();
-        var nResult = this.buildSeries(oDataRange.getSeriesRefsFromSelectedRange(oSelectedRange, this.isScatterChartType()));
+        let oDataRange = this.getDataRefs();
+        let nResult = this.buildSeries(oDataRange.getSeriesRefsFromSelectedRange(oSelectedRange, this.isScatterChartType()));
         if(Asc.c_oAscError.ID.No === nResult) {
             this.recalculate();
         }
