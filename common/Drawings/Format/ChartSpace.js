@@ -3748,7 +3748,6 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
         var worksheet = this.worksheet;
-        //this.pointsMap = {};
         if(!worksheet)
             return;
         var charts, series, i, j, ser;
