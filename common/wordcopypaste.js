@@ -6355,7 +6355,8 @@ PasteProcessor.prototype =
 			}
 
 			//принудительно добавляю для математики шрифт Cambria Math
-			if (child && child.nodeName.toLowerCase() === "#comment" && -1 !== child.nodeValue.indexOf("[if gte msEquation 12]")) {
+			if (child && child.nodeName.toLowerCase() === "#comment" && -1 !== child.nodeValue.indexOf("[if gte msEquation 12]") && !this.pasteInExcel) {
+				//TODO пока только в документы разрешаю вставку математики математику
 				var mathFont = "Cambria Math";
 				this.oFonts[mathFont] = {
 					Name: g_fontApplication.GetFontNameDictionary(mathFont, true),
@@ -9570,7 +9571,8 @@ PasteProcessor.prototype =
 							oThis.startMsoAnnotation = true;
 						} else if (oThis.startMsoAnnotation && child.nodeValue === "[endif]") {
 							oThis.startMsoAnnotation = false;
-						} else if (-1 !== child.nodeValue.indexOf("[if gte msEquation 12]")) {
+						} else if (-1 !== child.nodeValue.indexOf("[if gte msEquation 12]") && !oThis.pasteInExcel) {
+							//TODO пока только в документы разрешаю вставку математики математику
 							var oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument);
 							oThis._parseMathContent(child, oPar);
 
@@ -9971,7 +9973,8 @@ PasteProcessor.prototype =
 					if (-1 !== value.indexOf("supportLineBreakNewLine")) {
 						bSkip = true;
 					}
-					if (-1 !== value.indexOf("[if !msEquation]")) {
+					if (-1 !== value.indexOf("[if !msEquation]") && !this.pasteInExcel) {
+						//TODO пока только в документы разрешаю вставку математики математику
 						bSkip = true;
 					}
 
@@ -10804,7 +10807,10 @@ ParseHtmlStyle.prototype.applyStyles = function (textPr) {
 
 	var background_color = map.get("background");
 	if (background_color) {
-		textPr.HighLight = AscCommon.PasteProcessor.prototype._ParseColor(background_color);
+		var highLight = AscCommon.PasteProcessor.prototype._ParseColor(background_color);
+		if (highLight != null) {
+			textPr.HighLight = highLight;
+		}
 	}
 
 

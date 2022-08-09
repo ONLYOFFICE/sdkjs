@@ -2726,7 +2726,7 @@
 						oOldEditor = editor;
 					}
 					editor = {WordControl: oTempDrawingDocument, isDocumentEditor: true};
-					var oPasteProcessor = new AscCommon.PasteProcessor({WordControl: {m_oLogicDocument: newCDocument}, FontLoader: {}}, false, false);
+					var oPasteProcessor = new AscCommon.PasteProcessor({WordControl: {m_oLogicDocument: newCDocument}, FontLoader: {}}, false, false, null, true);
 					oPasteProcessor._Prepeare_recursive(node, true, true);
 
 					//при специальной вставке в firefox _getComputedStyle возвращает null
