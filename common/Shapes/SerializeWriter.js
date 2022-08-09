@@ -3508,7 +3508,7 @@ function CBinaryFileWriter()
         oThis._WriteString2(7, ole.m_sObjectFile);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
-        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && ole.m_aBinaryData !== null)
+        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && ole.m_aBinaryData.length !== 0)
         {
             oThis.WriteRecord1(1, ole.m_nOleType, function(val){
                 oThis.WriteUChar(val);
