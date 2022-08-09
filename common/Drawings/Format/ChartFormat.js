@@ -682,6 +682,7 @@
     };
     drawingsChangesMap[AscDFH.historyitem_ErrBars_SetSpPr] = function(oClass, value) {
         oClass.spPr = value;
+        oClass.pen = null;
     };
     drawingsChangesMap[AscDFH.historyitem_ErrBars_SetVal] = function(oClass, value) {
         oClass.val = value;
@@ -3568,6 +3569,9 @@
         }
         if(this.tx) {
             this.tx.update();
+        }
+        if(this.errBars) {
+            this.errBars.update();
         }
     };
     CSeriesBase.prototype.Refresh_RecalcData = function(oData) {
@@ -9612,6 +9616,8 @@
         this.plus = null;
         this.spPr = null;
         this.val = null;
+
+        this.pen = null;
     }
 
     InitClass(CErrBars, CBaseChartObject, AscDFH.historyitem_type_ErrBars);
@@ -9668,6 +9674,7 @@
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ErrBars_SetSpPr, this.spPr, pr));
         this.spPr = pr;
         this.setParentToChild(pr);
+        this.pen = null;
     };
     CErrBars.prototype.setVal = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_ErrBars_SetVal, this.val, pr));
@@ -9678,6 +9685,28 @@
             return;
         }
         this.applyStyleEntry(oChartStyle.errorBar, oColors.generateColors(1), 0, bReset);
+    };
+    CErrBars.prototype.handleUpdateLn = function() {
+        this.pen = null;
+    };
+    CErrBars.prototype.update = function() {
+        if(this.plus) {
+            this.plus.update();
+        }
+        if(this.minus) {
+            this.minus.update();
+        }
+    };
+    CErrBars.prototype.getPen = function() {
+        if(this.pen === null) {
+            let oPen = AscFormat.builder_CreateLine(12700, AscFormat.CreateUnfilFromRGB(0, 0, 0));
+            let oLn = this.spPr && this.spPr.ln;
+            if(oLn) {
+                oPen.merge(oLn);
+            }
+            this.pen = oPen;
+        }
+        return this.pen;
     };
 
     function CLayout() {
@@ -10707,7 +10736,6 @@
         this.numLit = null;
         this.numRef = null;
     }
-
     InitClass(CMinusPlus, CBaseChartObject, AscDFH.historyitem_type_MinusPlus);
     CMinusPlus.prototype.getChildren = function() {
         return [this.numRef, this.numLit];
@@ -10731,6 +10759,16 @@
         this.numRef = pr;
         this.setParentToChild(pr);
         this.onChangeDataRefs();
+    };
+    CMinusPlus.prototype.update = function() {
+        if(this.numRef) {
+            this.numRef.update();
+        }
+    };
+    CMinusPlus.prototype.handleOnChangeSheetName = function() {
+        if(this.numRef) {
+            this.numRef.handleOnChangeSheetName();
+        }
     };
 
     function CMultiLvlStrCache() {
