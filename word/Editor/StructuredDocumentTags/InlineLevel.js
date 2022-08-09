@@ -95,6 +95,7 @@ CInlineLevelSdt.prototype.Add = function(Item)
 	this.private_ReplacePlaceHolderWithContent();
 
 	var oTextFormRun;
+	let isFulfilled = false
 	if (this.IsTextForm())
 	{
 		if (para_Tab === Item.Type)
@@ -129,12 +130,26 @@ CInlineLevelSdt.prototype.Add = function(Item)
 			if (nInsertPos === oTextFormRun.Content.length)
 				arrCodePoints.push(nNewCodePoint);
 
-			if (AscWord.GraphemesCounter.GetCount(arrCodePoints, oTextFormRun.Get_CompiledPr(false)) > this.Pr.TextForm.MaxCharacters)
+			let nNewCount = AscWord.GraphemesCounter.GetCount(arrCodePoints, oTextFormRun.Get_CompiledPr(false));
+			if (nNewCount > this.Pr.TextForm.MaxCharacters)
 				return;
+			else if (nNewCount === this.Pr.TextForm.MaxCharacters)
+				isFulfilled = true;
 		}
 	}
 
 	CParagraphContentWithParagraphLikeContent.prototype.Add.apply(this, arguments);
+
+	let oNextForm;
+	if (isFulfilled
+		&& oTextFormRun.IsCursorAtEnd()
+		&& this.Paragraph.GetLogicDocument().IsFillingFormMode()
+		&& (oNextForm = this.GetNextSubForm())
+		&& oNextForm !== this)
+	{
+		oNextForm.SetThisElementCurrentInParagraph();
+		oNextForm.MoveCursorToStartPos();
+	}
 };
 CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
 {
@@ -741,18 +756,18 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		return true;
 	}
 
-	var bResult = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
+	let bResult = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
 
+	let oLogicDocument = this.GetLogicDocument();
 	if (this.Is_Empty()
-		&& this.Paragraph
-		&& this.Paragraph.LogicDocument
+		&& oLogicDocument
 		&& this.CanBeEdited()
 		&& ((!bOnAddText
-		&& true === this.Paragraph.LogicDocument.IsFillingFormMode())
-		|| (this === this.Paragraph.LogicDocument.CheckInlineSdtOnDelete)))
+		&& true === oLogicDocument.IsFillingFormMode())
+		|| (this === oLogicDocument.CheckInlineSdtOnDelete)))
 	{
 		this.private_ReplaceContentWithPlaceHolder();
-		return true;
+		bResult = true;
 	}
 
 	return bResult;
@@ -2308,8 +2323,7 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 			&& !this.IsSelectionUse()
 			&& ((this.IsPlaceHolder() && (AscCommon.changestype_Remove === CheckType || AscCommon.changestype_Delete === CheckType))
 				|| (this.Cursor_Is_Start() && AscCommon.changestype_Remove === CheckType)
-				|| (this.Cursor_Is_End() && AscCommon.changestype_Delete === CheckType))
-		)
+				|| (this.Cursor_Is_End() && AscCommon.changestype_Delete === CheckType)))
 		{
 			return AscCommon.CollaborativeEditing.Add_CheckLock(true);
 		}

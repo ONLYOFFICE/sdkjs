@@ -2965,6 +2965,20 @@ CParagraphContentWithParagraphLikeContent.prototype.IsCursorPlaceable = function
 {
     return true;
 };
+CParagraphContentWithParagraphLikeContent.prototype.IsCursorAtBegin = function()
+{
+	if (this.IsPlaceHolder())
+		return true;
+
+	return this.Cursor_Is_Start();
+};
+CParagraphContentWithParagraphLikeContent.prototype.IsCursorAtEnd = function()
+{
+	if (this.IsPlaceHolder())
+		return true;
+
+	return this.Cursor_Is_End();
+};
 CParagraphContentWithParagraphLikeContent.prototype.Cursor_Is_Start = function()
 {
     var CurPos = 0;
