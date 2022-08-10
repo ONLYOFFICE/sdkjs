@@ -4815,9 +4815,15 @@
 
 								History.EndTransaction();
 
-								//TODO ВРЕМЕННО ПЕРЕСЧИТЫВАЕМ ВСЕ ФОРМУЛЫ. сделать пересчёт только нужных
 								//кроме пересчёта нужно изменить ссылку на лист во всех диапазонах, которые используют данную ссылку
-								t.model.dependencyFormulas.calcTree();
+								for (var j = 0; i < externalReferences.length; j++) {
+									for (var n in externalReferences[j].worksheets) {
+										var prepared = t.model.dependencyFormulas.prepareChangeSheet(externalReferences[j].worksheets[n].getId());
+										t.model.dependencyFormulas.dependencyFormulas.changeSheet(prepared);
+									}
+								}
+
+								//t.model.dependencyFormulas.calcTree();
 								var ws = t.getWorksheet();
 								ws.draw();
 								//window["Asc"]["editor"].asc_calculate();
@@ -4891,7 +4897,7 @@
 		var externalReferences = [];
 		if (aIndexes) {
 			for (var i = 0; i < aIndexes.length; i++) {
-				var eR = this.model.externalReferences[i];
+				var eR = this.model.externalReferences[aIndexes[i]];
 				if (eR) {
 					externalReferences.push(eR.getAscLink());
 				}
