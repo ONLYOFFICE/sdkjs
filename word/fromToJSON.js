@@ -13100,7 +13100,7 @@
 				oGraphicObj = this.LockedCanvasFromJSON(oParsedObj, oParent);
 				break;
 			case "oleObject":
-				oGraphicObj = this.OleObjectFromJSOM(oParsedObj, oParent);
+				oGraphicObj = this.OleObjectFromJSON(oParsedObj, oParent);
 				break;
 			case "slicer":
 				oGraphicObj = this.SlicerDrawingFromJSON(oParsedObj, oParent);
@@ -13122,7 +13122,9 @@
 		if (oParsedSlicer["nvGraphicFramePr"] != null)
 			oSlicer.setNvSpPr(this.UniNvPrFromJSON(oParsedSlicer["nvGraphicFramePr"]));
 	
-		oSlicer.setLocks(oSlicer.nvSpPr && oSlicer.nvSpPr.locks !== 0 ? oSlicer.nvSpPr.locks : 0);
+		if (oSlicer.nvSpPr && oSlicer.nvSpPr.locks > 0)
+			oSlicer.setLocks(oSlicer.nvSpPr.locks);
+
 		return oSlicer;
 	};
 	ReaderFromJSON.prototype.LockedCanvasFromJSON = function(oParsedLocCanvas, oParentDrawing)
@@ -13194,7 +13196,8 @@
 		}
 
 		oSmartArt.setBDeleted(false);
-		oSmartArt.setLocks(oSmartArt.nvGrpSpPr && oSmartArt.nvGrpSpPr.locks !== 0 ? oSmartArt.nvGrpSpPr.locks : 0);
+		if (oSmartArt.nvGrpSpPr && oSmartArt.nvGrpSpPr.locks > 0)
+			oSmartArt.setLocks(oSmartArt.nvGrpSpPr.locks);
 		
 		return oSmartArt;
 	};
@@ -13956,7 +13959,8 @@
 
 		oChartSpace.bDeleted = false;
 		oChartSpace.updateLinks();
-		oChartSpace.setLocks(oChartSpace.nvGraphicFramePr && oChartSpace.nvGraphicFramePr.locks !== 0 ? oChartSpace.nvGraphicFramePr.locks : 0);
+		if (oChartSpace.nvGraphicFramePr && oChartSpace.nvGraphicFramePr.locks > 0)
+			oChartSpace.setLocks(oChartSpace.nvGraphicFramePr.locks);
 
 		return oChartSpace;
 	};
@@ -13969,7 +13973,8 @@
 		oParsedGraphFrame["graphic"] && oGraphicFrame.setGraphicObject(this.DrawingTableFromJSON(oParsedGraphFrame["graphic"], oGraphicFrame));
 
 		oGraphicFrame.setBDeleted(false);
-		oGraphicFrame.setLocks(oGraphicFrame.nvGraphicFramePr && oGraphicFrame.nvGraphicFramePr.locks !== 0 ? oGraphicFrame.nvGraphicFramePr.locks : 0);
+		if (oGraphicFrame.nvGraphicFramePr && oGraphicFrame.nvGraphicFramePr.locks > 0)
+			oGraphicFrame.setLocks(oGraphicFrame.nvGraphicFramePr.locks);
 		return oGraphicFrame;
 	};
 	ReaderFromJSON.prototype.ColorMapOvrFromJSON = function(oParsedClrMap, oClrMap)
@@ -14225,11 +14230,12 @@
 		oParsedShape["txXfrm"] != undefined && oShape.setTxXfrm(this.XfrmFromJSON(oParsedShape["txXfrm"]));
 
 		oShape.setBDeleted(false);
-		oShape.setLocks(oShape.nvSpPr && oShape.nvSpPr.locks !== 0 ? oShape.nvSpPr.locks : 0);
+		if (oShape.nvSpPr && oShape.nvSpPr.locks > 0)
+			oShape.setLocks(oShape.nvSpPr.locks);
 
 		return oShape;
 	};
-	ReaderFromJSON.prototype.OleObjectFromJSOM = function(oParsedOleObj, oParentDrawing)
+	ReaderFromJSON.prototype.OleObjectFromJSON = function(oParsedOleObj, oParentDrawing)
 	{
 		var oOleObject = new AscFormat.COleObject();
 		oOleObject.setBDeleted(false);
@@ -14254,7 +14260,8 @@
 		oOleObject.setBlipFill(this.BlipFillFromJSON(oParsedOleObj["blipFill"]));
 		oOleObject.setNvPicPr(this.UniNvPrFromJSON(oParsedOleObj["nvPicPr"]));
 		oOleObject.setSpPr(this.SpPrFromJSON(oParsedOleObj["spPr"], oOleObject));
-		oOleObject.setLocks(oOleObject.nvPicPr && oOleObject.nvPicPr.locks !== 0 ? oOleObject.nvPicPr.locks : 0);
+		if (oOleObject.nvPicPr && oOleObject.nvPicPr.locks > 0)
+			oOleObject.setLocks(oOleObject.nvPicPr.locks);
 		return oOleObject;
 	};
 	ReaderFromJSON.prototype.ImageFromJSON = function(oParsedImage, oParentDrawing)
@@ -14273,7 +14280,8 @@
 
 		oImage.setNoChangeAspect(true);
         oImage.setBDeleted(false);
-		oImage.setLocks(oImage.nvPicPr && oImage.nvPicPr.locks !== 0 ? oImage.nvPicPr.locks : 0);
+		if (oImage.nvPicPr && oImage.nvPicPr.locks > 0)
+			oImage.setLocks(oImage.nvPicPr.locks);
 		return oImage;
 	};
 	ReaderFromJSON.prototype.ChartFromJSON = function(oParsedChart, oParentChartSpace)
