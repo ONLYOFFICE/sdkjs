@@ -11360,7 +11360,7 @@
 		if (oParsedCell["hMerge"] != null)
 			oCell.hMerge = oParsedCell["hMerge"];
 		if (oParsedCell["rowSpan"] != null && oParsedCell["rowSpan"] > 1)
-			oCell.SetVMerge(oParsedCell["rowSpan"]);
+			oCell.SetVMerge(vmerge_Restart);
 		if (oParsedCell["vMerge"] === true && oCell.Pr.VMerge != vmerge_Restart)
 			oCell.SetVMerge(vmerge_Continue);
 
