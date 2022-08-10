@@ -37,6 +37,19 @@
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	function private_GetLogicDocument()
+	{
+		if (editor)
+			return editor.WordControl.m_oLogicDocument;
+		
+		return null;
+	}
+	function private_GetStyles()
+	{
+		var oLogicDocument = private_GetLogicDocument();
+
+		return oLogicDocument instanceof AscCommonWord.CDocument ? oLogicDocument.Get_Styles() : oLogicDocument.globalTableStyles;
+	}
 	function private_PtToMM(pt)
 	{
 		return 25.4 / 72.0 * pt;
@@ -504,6 +517,117 @@
 			"otherStyle": this.SerLstStyle(oTxStyles.otherStyle),
 			"titleStyle": this.SerLstStyle(oTxStyles.titleStyle)
 		}
+	};
+	WriterToJSON.prototype.SerTableStylesForWrite = function()
+	{
+		if (this.stylesForWrite == null)
+			return undefined;
+
+		var oResult = {};
+		for (var key in this.stylesForWrite.styles)
+			oResult[key] = this.SerTableStyle(this.stylesForWrite.styles[key]);
+
+		return oResult;
+	};
+	WriterToJSON.prototype.SerTableStyle = function(oStyle)
+	{
+		return {
+			"styleId":  oStyle.Id,
+			"name":     oStyle.Name,
+			"tblBg":    this.SerTableCellStyle(oStyle.TablePr, true),
+			"wholeTbl": this.SerTableStylePart(oStyle.TableWholeTable),
+			"band1H":   this.SerTableStylePart(oStyle.TableBand1Horz),
+			"band2H":   this.SerTableStylePart(oStyle.TableBand2Horz),
+			"band1V":   this.SerTableStylePart(oStyle.TableBand1Vert),
+			"band2V":   this.SerTableStylePart(oStyle.TableBand2Vert),
+			"lastCol":  this.SerTableStylePart(oStyle.TableLastCol),
+			"firstCol": this.SerTableStylePart(oStyle.TableFirstCol),
+			"lastRow":  this.SerTableStylePart(oStyle.TableLastRow),
+			"seCell":   this.SerTableStylePart(oStyle.TableBRCell),
+			"swCell":   this.SerTableStylePart(oStyle.TableBLCell),
+			"firstRow": this.SerTableStylePart(oStyle.TableFirstRow),
+			"neCell":   this.SerTableStylePart(oStyle.TableTRCell),
+			"nwCell":   this.SerTableStylePart(oStyle.TableTLCell)
+		}
+	};
+	WriterToJSON.prototype.SerTableCellStyle = function(oCellPr, isTableBorders)
+	{
+		if (!oCellPr)
+			return undefined;
+
+		let oBorders = isTableBorders ? oCellPr.TableBorders : oCellPr.TableCellBorders;
+		let oShd = oCellPr.Shd;
+		let bBorders = oBorders && (oBorders.Left || oBorders.Right || oBorders.Top ||  oBorders.Bottom ||  oBorders.InsideH || oBorders.InsideV);
+		
+		return {
+			"tcBdr": bBorders ? {
+				"left":    this.SerTableCellBorder(oBorders.Left),
+				"right":   this.SerTableCellBorder(oBorders.Right),
+				"top":     this.SerTableCellBorder(oBorders.Top),
+				"bottom":  this.SerTableCellBorder(oBorders.Bottom),
+				"insideH": this.SerTableCellBorder(oBorders.InsideH),
+				"insideV": this.SerTableCellBorder(oBorders.InsideV),
+			} : undefined,
+			"fillRef":     oShd ? this.SerStyleRef(oShd.FillRef) : undefined,
+			"fill":        oShd ? this.SerFill(oShd.Unifill) : undefined
+		}
+	};
+	WriterToJSON.prototype.SerTableCellBorder = function(oBorder)
+	{
+		if (!oBorder)
+			return undefined;
+
+		let oResult = {};
+
+		if (oBorder.LineRef)
+			oResult["lnRef"] = this.SerStyleRef(oBorder.LineRef);
+		else
+		{
+			let oLn = new AscFormat.CLn();
+			oLn.fromDocumentBorder(oBorder);
+			oResult["ln"] = this.SerLn(oLn);
+		}
+
+		return oResult;
+	};
+	WriterToJSON.prototype.SerTableStylePart = function(oStylePart)
+	{
+		if (!oStylePart)
+			return undefined;
+
+		return {
+			"tcTxStyle": this.SerTcTxStyle(oStylePart.TextPr),
+			"tcStyle":   this.SerTableCellStyle(oStylePart.TableCellPr)
+		}
+	};
+	WriterToJSON.prototype.SerTcTxStyle = function(oTextPr)
+	{
+		if (!oTextPr)
+			return undefined;
+
+		let oResult;
+		let oUnicolor = oTextPr.Unifill && oTextPr.Unifill.fill && oTextPr.Unifill.fill.color;
+		if(oTextPr.Italic === true || oTextPr.Italic === false ||
+			oTextPr.Bold === true || oTextPr.Bold === false ||
+			oTextPr.FontRef || oUnicolor)
+			{
+				oResult = {};
+				if(oTextPr.Italic === true || oTextPr.Italic === false) {
+					oResult["i"] = oTextPr.Italic ? "on" : "off";
+				}
+				if(oTextPr.Bold === true || oTextPr.Bold === false) {
+					oResult["b"] = oTextPr.Bold ? "on" : "off";
+				}
+	
+				if(oTextPr.FontRef) {
+					oResult["fontRef"] = this.SerFontRef(oTextPr.FontRef);
+				}
+				if(oUnicolor) {
+					oResult["color"] = this.SerColor(oUnicolor);
+				}
+			}
+
+		return oResult;
 	};
 	WriterToJSON.prototype.SerHF = function(oHf)
 	{
@@ -1745,6 +1869,154 @@
 			oTxStyles.titleStyle = this.LstStyleFromJSON(oParsedTxStyles["titleStyle"]);
 
 		return oTxStyles;
+	};
+	ReaderFromJSON.prototype.TableStylesFromJSON = function(oParsedStyles)
+	{
+		this.RestoredStylesMap = {};
+		// восстанавливаем все стили и мапим по старым id (т.к. создаются с новыми)
+		for (var key in oParsedStyles)
+			this.RestoredStylesMap[key] = this.TableStyleFromJSON(oParsedStyles[key]);
+	};
+	ReaderFromJSON.prototype.TableStyleFromJSON = function(oParsedStyle)
+	{
+		let oTableStyle = new AscCommonWord.CStyle(oParsedStyle["name"], null, null, styletype_Table);
+
+		if (oParsedStyle["band1H"])
+			oTableStyle.Set_TableBand1Horz(this.TableStylePartFromJSON(oParsedStyle["band1H"]));
+		if (oParsedStyle["band1V"])
+			oTableStyle.Set_TableBand1Vert(this.TableStylePartFromJSON(oParsedStyle["band1V"]));
+		if (oParsedStyle["band2H"])
+			oTableStyle.Set_TableBand2Horz(this.TableStylePartFromJSON(oParsedStyle["band2H"]));
+		if (oParsedStyle["band2V"])
+			oTableStyle.Set_TableBand2Vert(this.TableStylePartFromJSON(oParsedStyle["band2V"]));
+		if (oParsedStyle["firstCol"])
+			oTableStyle.Set_TableFirstCol(this.TableStylePartFromJSON(oParsedStyle["firstCol"]));
+		if (oParsedStyle["firstRow"])
+			oTableStyle.Set_TableFirstRow(this.TableStylePartFromJSON(oParsedStyle["firstRow"]));
+		if (oParsedStyle["lastCol"])
+			oTableStyle.Set_TableLastCol(this.TableStylePartFromJSON(oParsedStyle["lastCol"]));
+		if (oParsedStyle["lastRow"])
+			oTableStyle.Set_TableLastRow(this.TableStylePartFromJSON(oParsedStyle["lastRow"]));
+		if (oParsedStyle["wholeTbl"])
+			oTableStyle.Set_TableWholeTable(this.TableStylePartFromJSON(oParsedStyle["wholeTbl"]));
+		if (oParsedStyle["neCell"])
+			oTableStyle.Set_TableTLCell(this.TableStylePartFromJSON(oParsedStyle["neCell"]));
+		if (oParsedStyle["nwCell"])
+			oTableStyle.Set_TableTRCell(this.TableStylePartFromJSON(oParsedStyle["nwCell"]));
+		if (oParsedStyle["seCell"])
+			oTableStyle.Set_TableBLCell(this.TableStylePartFromJSON(oParsedStyle["seCell"]));
+		if (oParsedStyle["swCell"])
+			oTableStyle.Set_TableBRCell(this.TableStylePartFromJSON(oParsedStyle["swCell"]));
+		if (oParsedStyle["tblBg"])
+			oTableStyle.Set_TablePr(this.TableCellStyleFromJSON(null, oParsedStyle["tblBg"], true));
+
+		var oStyles = private_GetStyles();
+		if (oTableStyle)
+		{
+			// если такого стиля нет - добавляем новый
+			var nExistingStyleId = oStyles.GetStyleIdByName(oTableStyle.Name);
+			if (nExistingStyleId === null)
+			{
+				oStyles.Add(oTableStyle);
+			}
+			else
+			{
+				var oExistingStyle = oStyles.Get(nExistingStyleId);
+				// если стили идентичны, стиль не добавляем
+				if (!oTableStyle.IsEqual(oExistingStyle))
+					oStyles.Add(oTableStyle);
+				else
+					oTableStyle = oExistingStyle;
+			}
+		}
+
+		return oTableStyle;
+	};
+	ReaderFromJSON.prototype.TableStylePartFromJSON = function(oParsed)
+	{
+		let oPart = new CTableStylePr();
+		let oCellPr = oPart.TableCellPr;
+		let oTextPr = oPart.TextPr;
+		
+		if (oParsed["tcTxStyle"])
+			this.TcTxStyleFromJSON(oTextPr, oParsed["tcTxStyle"]);
+		if (oParsed["tcStyle"])
+			this.TableCellStyleFromJSON(oCellPr, oParsed["tcStyle"]);
+
+		return oPart;
+	};
+	ReaderFromJSON.prototype.TableCellStyleFromJSON = function(oCellPr, oParsed, isTableBorders)
+	{
+		if (!oCellPr)
+			oCellPr = new CTablePr();
+
+		let oBorders = isTableBorders ? oCellPr.TableBorders : oCellPr.TableCellBorders;
+		if (oParsed["fill"])
+		{
+			let oFill = this.FillFromJSON(oParsed["fill"]);
+			if(!oCellPr.Shd) {
+				oCellPr.Shd = new AscCommonWord.CDocumentShd();
+				oCellPr.Shd.Value = c_oAscShdClear;
+			}
+			oCellPr.Shd.Unifill = oFill;
+		}
+		if (oParsed["fillRef"])
+		{
+			let oStyleRef = this.StyleRefFromJSON(oParsed["fillRef"]);
+			if(!oCellPr.Shd) {
+				oCellPr.Shd = new AscCommonWord.CDocumentShd();
+				oCellPr.Shd.Value = c_oAscShdClear;
+			}
+			oCellPr.Shd.FillRef = oStyleRef;
+		}
+		if (oParsed["tcBdr"])
+		{
+			if (oParsed["tcBdr"]["bottom"])
+				oBorders.Bottom = this.TableCellBorderFromJSON(oParsed["tcBdr"]["bottom"]);
+			if (oParsed["tcBdr"]["insideH"])
+				oBorders.InsideH = this.TableCellBorderFromJSON(oParsed["tcBdr"]["insideH"]);
+			if (oParsed["tcBdr"]["insideV"])
+				oBorders.InsideV = this.TableCellBorderFromJSON(oParsed["tcBdr"]["insideV"]);
+			if (oParsed["tcBdr"]["left"])
+				oBorders.Left = this.TableCellBorderFromJSON(oParsed["tcBdr"]["left"]);
+			if (oParsed["tcBdr"]["right"])
+				oBorders.Right = this.TableCellBorderFromJSON(oParsed["tcBdr"]["right"]);
+			if (oParsed["tcBdr"]["top"])
+				oBorders.Top = this.TableCellBorderFromJSON(oParsed["tcBdr"]["top"]);
+		}
+
+		return oCellPr;
+	};
+	ReaderFromJSON.prototype.TableCellBorderFromJSON = function(oParsed)
+	{
+		let oBorder = new CDocumentBorder();
+		if (oParsed["ln"])
+		{
+			let oLn = this.LnFromJSON(oParsed["ln"]);
+			oLn.fillDocumentBorder(oBorder)
+		}
+		else if (oParsed["lnRef"])
+		{
+			let oStyleRef = this.StyleRefFromJSON(oParsed["lnRef"]);
+			oBorder.LineRef = oStyleRef;
+			oBorder.Value = AscCommonWord.border_Single;
+		}
+
+		return oBorder;
+	};
+	ReaderFromJSON.prototype.TcTxStyleFromJSON = function(oTcTxPr, oParsed)
+	{
+		if (oParsed["i"] != null)
+			oTcTxPr.Italic = oParsed["i"] === "on";
+		if (oParsed["b"] != null)
+			oTcTxPr.Bold = oParsed["b"] === "on";
+		if (oParsed["fontRef"])
+			oTcTxPr.FontRef = this.FontRefFromJSON(oParsed["fontRef"]);
+		if (oParsed["color"])
+		{
+			let oColor = this.ColorFromJSON(oParsed["color"]);
+			oTcTxPr.Unifill = AscFormat.CreateUniFillByUniColor(oColor);
+		}
 	};
 	ReaderFromJSON.prototype.SlideLayoutFromJSON = function(oParsedLayout)
 	{
@@ -3034,7 +3306,7 @@
 		switch (nTransType)
 		{
 			case c_oAscSlideTransitionTypes.Fade:
-				transOption = oTransition.TransitionOption === false ? c_oAscSlideTransitionParams.Fade_Smoothly  : c_oAscSlideTransitionParams.Fade_Through_Black;
+				transOption = oParsedTransition["option"] === false ? c_oAscSlideTransitionParams.Fade_Smoothly  : c_oAscSlideTransitionParams.Fade_Through_Black;
 				break;
 			case c_oAscSlideTransitionTypes.Push:
 			case c_oAscSlideTransitionTypes.Wipe:

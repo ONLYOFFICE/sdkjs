@@ -897,6 +897,9 @@
 		switch (oParsedObj.type)
 		{
             case "presentation":
+                if (oParsedObj["tblStyleLst"])
+                    oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
+
                 var oSldSize = oParsedObj["sldSz"] ? oReader.SlideSizeFromJSON(oParsedObj["sldSz"]) : null;
                 var oShowPr  = oParsedObj["showPr"] ? oReader.ShowPrFromJSON(oParsedObj["showPr"]) : null;
                 oSldSize && oPresentation.setSldSz(oSldSize);
@@ -951,6 +954,8 @@
 			case "hyperlink":
 				return this.private_CreateApiHyperlink(oReader.HyperlinkFromJSON(oParsedObj));
             case "graphicFrame":
+                if (oParsedObj["tblStyleLst"])
+                    oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
                 return ApiTable(oReader.GraphicObjFromJSON(oParsedObj));
 			case "image":
 				return new ApiImage(oReader.GraphicObjFromJSON(oParsedObj));
@@ -973,11 +978,17 @@
 			case "uniColor":
 				return this.private_CreateApiUniColor(oReader.ColorFromJSON(oParsedObj));
 			case "slide":
+                if (oParsedObj["tblStyleLst"])
+                    oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
 				return new ApiSlide(oReader.SlideFromJSON(oParsedObj));
 			case "sldLayout":
+                if (oParsedObj["tblStyleLst"])
+                    oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
 				return new ApiLayout(oReader.SlideLayoutFromJSON(oParsedObj));
 			case "sldMaster":
-				return new ApiMaster(oReader.MasterSlideFromJSON(oParsedObj));
+                if (oParsedObj["tblStyleLst"])
+                    oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
+                return new ApiMaster(oReader.MasterSlideFromJSON(oParsedObj));
 			case "fontScheme":
 				return new ApiThemeFontScheme(oReader.FontSchemeFromJSON(oParsedObj));
 			case "fmtScheme":
@@ -985,6 +996,8 @@
 			case "clrScheme":
 				return new ApiThemeColorScheme(oReader.ClrSchemeFromJSON(oParsedObj));
             case "slides":
+                if (oParsedObj["tblStyleLst"])
+                    oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
                 var aApiSlides = []
                 var aSlides = oReader.SlidesFromJSON(oParsedObj);
                 for (var nSlide = 0; nSlide < aSlides.length; nSlide++)
@@ -1304,11 +1317,15 @@
 	 * Converts the ApiPresentation object into the JSON object.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
+     * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
 	 * @returns {JSON}
 	 */
-    ApiPresentation.prototype.ToJSON = function(){
-        var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerPresentation(this.Presentation));
+    ApiPresentation.prototype.ToJSON = function(bWriteTableStyles){
+        let oWriter = new AscCommon.WriterToJSON();
+        let oResult = oWriter.SerPresentation(this.Presentation);
+        if (bWriteTableStyles)
+            oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
+		return JSON.stringify(oResult);
     };
     /**
 	 * Converts the slides from the current ApiPresentation object into the JSON objects.
@@ -1319,10 +1336,11 @@
      * @param {bool} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
      * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
      * @param {bool} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
+     * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
 	 * @returns {JSON[]}
 	 */
-    ApiPresentation.prototype.SlidesToJSON = function(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts){
-        var oWriter = new AscCommon.WriterToJSON();
+    ApiPresentation.prototype.SlidesToJSON = function(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
+        let oWriter = new AscCommon.WriterToJSON();
 
         nStart = nStart == undefined ? 0 : nStart;
         nEnd = nEnd == undefined ? this.Presentation.Slides.length - 1 : nEnd;
@@ -1332,7 +1350,10 @@
         if (nEnd < 0 || nEnd >= this.Presentation.Slides.length)
             return;
 
-        return JSON.stringify(oWriter.SerSlides(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts));
+        let oResult = oWriter.SerSlides(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts);
+        if (bWriteTableStyles)
+            oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
+        return JSON.stringify(oResult);
     };
 
     ApiPresentation.prototype.GetInfoOle = function(){
@@ -1710,11 +1731,15 @@
 	 * Converts the ApiMaster object into the JSON object.
 	 * @memberof ApiMaster
 	 * @typeofeditors ["CPE"]
+     * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
 	 * @returns {JSON}
 	 */
-    ApiMaster.prototype.ToJSON = function(){
-        var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerMasterSlide(this.Master, true));
+    ApiMaster.prototype.ToJSON = function(bWriteTableStyles){
+        let oWriter = new AscCommon.WriterToJSON();
+        let oResult = oWriter.SerMasterSlide(this.Master, true);
+        if (bWriteTableStyles)
+            oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
+		return JSON.stringify(oResult);
     };
 
     //------------------------------------------------------------------------------------------------------------------
@@ -2042,13 +2067,17 @@
     /**
 	 * Converts the ApiLayout object into the JSON object.
 	 * @memberof ApiLayout
+     * @typeofeditors ["CPE"]
      * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not.
-	 * @typeofeditors ["CPE"]
+     * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
 	 * @returns {JSON}
 	 */
-    ApiLayout.prototype.ToJSON = function(bWriteMaster){
-        var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerSlideLayout(this.Layout, bWriteMaster));
+    ApiLayout.prototype.ToJSON = function(bWriteMaster, bWriteTableStyles){
+        let oWriter = new AscCommon.WriterToJSON();
+        let oResult = oWriter.SerSlideLayout(this.Layout, bWriteMaster);
+        if (bWriteTableStyles)
+            oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
+		return JSON.stringify(oResult);
     };
 
     //------------------------------------------------------------------------------------------------------------------
@@ -3094,15 +3123,19 @@
     /**
 	 * Converts the ApiSlide object into the JSON object.
 	 * @memberof ApiSlide
+     * @typeofeditors ["CPE"]
      * @param {bool} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
      * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
      * @param {bool} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
-	 * @typeofeditors ["CPE"]
+	 * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
 	 * @returns {JSON}
 	 */
-    ApiSlide.prototype.ToJSON = function(bWriteLayout, bWriteMaster, bWriteAllMasLayouts){
-        var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerSlide(this.Slide, bWriteLayout, bWriteMaster, bWriteAllMasLayouts));
+    ApiSlide.prototype.ToJSON = function(bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
+        let oWriter = new AscCommon.WriterToJSON();
+        let oResult = oWriter.SerSlide(this.Slide, bWriteLayout, bWriteMaster, bWriteAllMasLayouts);
+        if (bWriteTableStyles)
+            oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
+		return JSON.stringify(oResult);
     };
 
     //------------------------------------------------------------------------------------------------------------------
@@ -4431,12 +4464,16 @@
 	 * Converts the ApiTable object into the JSON object.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
+     * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
 	 * @returns {JSON}
 	 */
-	ApiTable.prototype.ToJSON = function()
+	ApiTable.prototype.ToJSON = function(bWriteTableStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerGrapicObject(this.Drawing));
+		let oWriter = new AscCommon.WriterToJSON();
+        let oResult = oWriter.SerGrapicObject(this.Drawing);
+        if (bWriteTableStyles)
+            oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
+		return JSON.stringify(oResult);
 	};
 
     //------------------------------------------------------------------------------------------------------------------

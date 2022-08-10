@@ -261,7 +261,7 @@
 			"protectedRanges":       oWorksheet.aProtectedRanges.length > 0 ? this.SerProtectedRanges(oWorksheet.aProtectedRanges) : undefined,
 
 			// styles
-			"styles":                this.SerStylesForWrite(this.stylesForWrite), // to do
+			"styles":                this.SerExcelStylesForWrite(this.stylesForWrite),
 			"pivotCaches":           nCachesCount > 0 ? this.SerPivotCaches(oPivotCaches) : undefined,
 			"slicerCaches":          oSlicerCaches != null ? this.SerSlicerCaches(oSlicerCaches) : undefined,
 			"slicerCachesExt":       aSlicerCachesExt != null ? this.SerSlicerCaches(aSlicerCachesExt) : undefined,
@@ -3233,7 +3233,7 @@
 			"numFmtId":   numId != null ? numId : undefined
 		}
 	};
-	WriterToJSON.prototype.SerStylesForWrite = function()
+	WriterToJSON.prototype.SerExcelStylesForWrite = function()
 	{
 		var g_oDefaultFormat = AscCommonExcel.g_oDefaultFormat;
 

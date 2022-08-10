@@ -2772,7 +2772,7 @@
 
 		// numbering и styles в конце, потому что сначала нужно обойти все параграфы
 		oJSON["numbering"] = oWriter.jsonWordNumberings;
-		oJSON["styles"] = oWriter.SerWordStyles();
+		oJSON["styles"] = oWriter.SerWordStylesForWrite();
 
 		return JSON.stringify(oJSON);
 	};
@@ -3186,7 +3186,7 @@
 		var oWriter = new AscCommon.WriterToJSON();
 		var oJSON = oWriter.SerHyperlink(this.ParaHyperlink);
 		oJSON["numbering"] = oWriter.jsonWordNumberings;
-		oJSON["styles"] = oWriter.SerWordStyles();
+		oJSON["styles"] = oWriter.SerWordStylesForWrite();
 
 		return JSON.stringify(oJSON);
 	};
@@ -4905,7 +4905,7 @@
 		var oWriter = new AscCommon.WriterToJSON();
 		var oJSON = oWriter.SerDocContent(this.Document);
 		oJSON["numbering"] = oWriter.jsonWordNumberings;
-		oJSON["styles"] = oWriter.SerWordStyles();
+		oJSON["styles"] = oWriter.SerWordStylesForWrite();
 
 		return JSON.stringify(oJSON);
 	};
