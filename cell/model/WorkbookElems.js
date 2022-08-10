@@ -12228,6 +12228,19 @@ QueryTableField.prototype.clone = function() {
 		return null;
 	};
 
+	ExternalReference.prototype.getSheetBySheetId = function (sheetId) {
+		if (this.worksheets) {
+			for (var i in this.worksheets) {
+				//если есть this.worksheets, если нет - проверить и обработать
+				if (this.worksheets[i].Id === sheetId) {
+					return i;
+				}
+			}
+		}
+
+		return null;
+	};
+
 	ExternalReference.prototype.getWb = function () {
 		if (this.worksheets) {
 			for (var i in this.worksheets) {
@@ -12264,6 +12277,17 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	ExternalReference.prototype.removeSheetById = function (sheetId) {
+		if (sheetId != null) {
+			var sheetName = this.getSheetBySheetId(sheetId);
+			var index = this.getSheetByName(sheetName);
+			if (index != null) {
+				this.SheetNames.splice(index, 1);
+				this.SheetDataSet.splice(index, 1);
+				delete this.worksheets[sheetName];
+			}
+		}
+	};
 
 	function asc_CExternalReference() {
 		this.type = null;

@@ -465,6 +465,10 @@
 							}
 						}
 					}
+					if (Object.keys(sheetContainer.cellMap).length == 0) {
+						//если есть ссылки на внешние источники, необходимо их удалить
+						this.wb.removeExternalReferenceBySheet(sheetId);
+					}
 				}
 			}
 		},
@@ -4043,6 +4047,17 @@
 		return null;
 	};
 
+	Workbook.prototype.getExternalLinkIndexBySheetId = function (sheetId) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			for (var j in this.externalReferences[i].worksheets) {
+				if (this.externalReferences[i].worksheets[j].Id === sheetId) {
+					return i + 1;
+				}
+			}
+		}
+		return null;
+	};
+
 	Workbook.prototype.getExternalWorksheet = function (val, sheet) {
 		var extarnalLink = window['AscCommon'].isNumber(val) ? this.getExternalLinkByIndex(val - 1) : this.getExternalLinkByName(val);
 		if (extarnalLink) {
@@ -4125,11 +4140,29 @@
 				var eRIndex = this.getExternalLinkIndexByName(arr[i].externalReference.Id);
 				if (eRIndex != null) {
 					//TODO нужно заменить все ячейки просто значениями, где есть формулы, которые ссылаются на эту книгу
-					this.externalReferences.splice(eRIndex - 1, 1);
-					History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
-						null, null, new UndoRedoData_FromTo(arr[i], null));
+					this.removeExternalReference(eRIndex, true);
 				}
 			}
+		}
+	};
+
+	Workbook.prototype.removeExternalReference = function (index, addToHistory) {
+		if (index != null) {
+			var from = this.externalReferences[index - 1];
+			this.externalReferences.splice(index - 1, 1);
+			if (addToHistory) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
+					null, null, new UndoRedoData_FromTo(from, null));
+			}
+		}
+	};
+
+	Workbook.prototype.changeExternalReference = function (index, to) {
+		if (index != null) {
+			var from = this.externalReferences[index - 1].clone();
+			this.externalReferences[index - 1] = to;
+			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
+				null, null, new UndoRedoData_FromTo(from, to));
 		}
 	};
 
@@ -4165,6 +4198,21 @@
 		return res;
 	};
 
+	Workbook.prototype.removeExternalReferenceBySheet = function (sheetId) {
+		//пока предполагаю, что здесь будет массив asc_CExternalReference
+		var index = this.getExternalLinkIndexBySheetId(sheetId);
+		if (index !== null) {
+			var eR = this.externalReferences[index - 1];
+			if (eR.SheetNames.length === 1) {
+				//удаляем ссылку
+				this.removeExternalReference(index, true);
+			} else {
+				var to = eR.clone();
+				eR.removeSheetById(sheetId);
+				this.changeExternalReference(index, eR);
+			}
+		}
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
