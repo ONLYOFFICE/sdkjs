@@ -2130,6 +2130,7 @@
             }
             oCurElement = oCurElement.parent;
         }
+        return null;
     };
     CBaseChartObject.prototype.getDrawingDocument = function() {
         var oChartSpace = this.getChartSpace();
@@ -4045,7 +4046,6 @@
         }
         return this.getValObjectSourceNumFormat(0);
     };
-
     CSeriesBase.prototype.getValObjectSourceNumFormat = function(nPtIdx) {
         var oVal = this.val || this.yVal;
         if(!oVal) {
@@ -4306,6 +4306,9 @@
             History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_CommonSeries_RemoveDPt, idx, arrPt, false));
             arrPt[0].setParent(null);
         }
+    };
+    CSeriesBase.prototype.getErrBars = function() {
+        return this.errBars || null;
     };
     CSeriesBase.prototype.asc_getName = function() {
         var oThis = this;
@@ -9742,6 +9745,10 @@
                 oPen.merge(oLn);
             }
             this.pen = oPen;
+            if(this.pen.Fill) {
+                let oChartSpace = this.getChartSpace();
+                this.pen.Fill.check(oChartSpace.Get_Theme(), oChartSpace.Get_ColorMap());
+            }
         }
         return this.pen;
     };
