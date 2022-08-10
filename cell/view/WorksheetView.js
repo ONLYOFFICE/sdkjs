@@ -14549,7 +14549,9 @@
 			//TODO просмотреть все эти случаи, ms desktop и online ведут себя по-разному
 			//сейчас сравниваю по имени
 
-			var sameDoc = pastedWb && AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor && AscCommonExcel.g_clipboardExcel.pasteProcessor._checkPastedInOriginalDoc(pastedWb);
+			//TODO обработать: при вставке из одного и того же документа(открытого разными юзерами) с листа, который ещё не был добавлен другим юзером в режиме строго совместного редактирования
+
+			var sameDoc = pastedWb && AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor && AscCommonExcel.g_clipboardExcel.pasteProcessor._checkPastedInOriginalDoc(pastedWb, true);
 			var sameSheet = sameDoc && pastedWb.aWorksheets[0].sName === this.model.sName;
 			var externalSheetSameWb;
 			if (!sameSheet && sameDoc) {
