@@ -27,7 +27,10 @@ jobs:
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/FormulaTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/PivotTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/CopyPasteTests.html
+          node-qunit-puppeteer tests/word/unit-tests/paragraphContentPos.html
           node-qunit-puppeteer tests/word/document-calculation/paragraph.html
+          node-qunit-puppeteer tests/word/forms/forms.html
+          node-qunit-puppeteer tests/word/forms/complexForm.html
   builder-tests:
     runs-on: ubuntu-latest
     steps:

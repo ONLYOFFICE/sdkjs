@@ -1192,6 +1192,13 @@
 			this.WriteXmlStringEncode(val.toString());
 			this.WriteXmlNodeEnd(name);
 		};
+		this.WriteXmlValueStringEncode2 = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlStringEncode(val.toString());
+			this.WriteXmlNodeEnd(name);
+		};
 		this.WriteXmlValueBool = function(name, val)
 		{
 			this.WriteXmlNodeStart(name);
@@ -1265,6 +1272,12 @@
 		{
 			if (null !== val && undefined !== val) {
 				this.WriteXmlValueStringEncode(name, val)
+			}
+		};
+		this.WriteXmlNullableValueStringEncode2 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueStringEncode2(name, val)
 			}
 		};
 		this.WriteXmlNullableValueBool = function(name, val)

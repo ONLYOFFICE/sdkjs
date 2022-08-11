@@ -2246,7 +2246,7 @@
 		writer.WriteXmlNullableAttributeIntWithKoef("w:hSpace", this.HSpace, g_dKoef_mm_to_twips);
 		writer.WriteXmlNullableAttributeString("w:wrap", toXml_ST_Wrap(this.Wrap));
 		writer.WriteXmlNullableAttributeString("w:hAnchor", toXml_ST_HAnchor(this.HAnchor));
-		writer.WriteXmlNullableAttributeString("w:vAnchor", toXml_ST_VAnchor(this.WAnchor));
+		writer.WriteXmlNullableAttributeString("w:vAnchor", toXml_ST_VAnchor(this.VAnchor));
 		writer.WriteXmlNullableAttributeIntWithKoef("w:x", this.X, g_dKoef_mm_to_twips);
 		writer.WriteXmlNullableAttributeString("w:xAlign", toXml_ST_XAlign(this.XAlign));
 		writer.WriteXmlNullableAttributeIntWithKoef("w:y", this.Y, g_dKoef_mm_to_twips);
@@ -3317,7 +3317,7 @@
 		writer.WriteXmlNullable(CT_IntW.prototype.fromVal(this.Spacing, g_dKoef_mm_to_twips), "w:spacing");
 		// writer.WriteXmlNullable(this.W, "w:w");
 		// writer.WriteXmlNullable(this.Kern, "w:kern");
-		writer.WriteXmlNullable(CT_IntW.prototype.fromVal(this.Position, g_dKoef_mm_to_twips * 2), "w:position");
+		writer.WriteXmlNullable(CT_IntW.prototype.fromVal(this.Position, g_dKoef_mm_to_pt * 2), "w:position");
 		writer.WriteXmlNullable(CT_IntW.prototype.fromVal(this.FontSize, 2), "w:sz");
 		writer.WriteXmlNullable(CT_IntW.prototype.fromVal(this.FontSizeCS, 2), "w:szCs");
 		writer.WriteXmlNullable(Highlight, "w:highlight");
@@ -3335,7 +3335,7 @@
 			writer.WriteXmlString("<w14:textFill>");
 			let nOldDocType = writer.context.docType;
 			writer.context.docType = AscFormat.XMLWRITER_DOC_TYPE_WORDART;
-			this.TextFill.toXml(writer)
+			this.TextFill.toXml(writer);
 			writer.context.docType = nOldDocType;
 			writer.WriteXmlString("</w14:textFill>");
 		}
@@ -10753,7 +10753,7 @@
 	function fromXml_ST_CalendarType(val, def) {
 		switch (val) {
 			case "gregorian":
-				return Asc.c_oAscCalendarType.Gregorian;;
+				return Asc.c_oAscCalendarType.Gregorian;
 			case "gregorianUs":
 				return Asc.c_oAscCalendarType.GregorianUs;
 			case "gregorianMeFrench":

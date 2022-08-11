@@ -4117,8 +4117,7 @@
                 findFillColor = findFillColor || (!hasFill && mc && this.settings.cells.defaultState.background);
                 if (findFillColor) {
                     fill = new AscCommonExcel.Fill();
-                    fill.patternFill = new AscCommonExcel.PatternFill();
-                    fill.patternFill.fromColor(findFillColor);
+					fill.fromColor(findFillColor);
                 }
                 AscCommonExcel.drawFillCell(ctx, graphics, fill, new AscCommon.asc_CRect(x - offsetX, y - offsetY, w, h));
 			}
@@ -4285,8 +4284,7 @@
 				stop1.color = endColor;
 				fill.gradientFill.asc_putGradientStops([stop0, stop1]);
 			} else {
-				fill.patternFill = new AscCommonExcel.PatternFill();
-				fill.patternFill.fromColor(color);
+				fill.fromColor(color);
 			}
 			AscCommonExcel.drawFillCell(ctx, graphics, fill, new AscCommon.asc_CRect(x, top, dataBarLength, height - 3));
 

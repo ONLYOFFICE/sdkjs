@@ -9298,9 +9298,9 @@
 				let nFontSize = 11;
 				let sText = "";
 				let oTextFill, oTextStroke;
+				var oBodyPr = new AscFormat.CBodyPr();
 				if(bIsWordArt) {
 					let eTextShapeType;
-					var oBodyPr = new AscFormat.CBodyPr();
 					let oTextPath = this.getTextPath();
 					switch (nType)
 					{
@@ -12934,15 +12934,13 @@
 				if(oOOXMLDrawing) {
 					let oOleObject = this.getOLEObject();
 					if(oOleObject && oContext.sourceItem.m_sId === oOleObject.m_sShapeId && oOOXMLDrawing instanceof AscFormat.CImageShape) {
-						let oEditorObject = new AscFormat.COleObject();
-
-						oEditorObject.setBDeleted(false);
-						oOOXMLDrawing = oEditorObject;
-
+						let oOOXMLImage = oOOXMLDrawing;
+						oOOXMLDrawing = new AscFormat.COleObject();
+						oOOXMLDrawing.setBDeleted(false);
 						if(this.dxaOrig !== null && this.dyaOrig !== null) {
-							oEditorObject.setPixSizes(this.dxaOrig, this.dyaOrig);
+							oOOXMLDrawing.setPixSizes(this.dxaOrig, this.dyaOrig);
 						}
-						oOleObject.fillEditorOleObject(oEditorObject, oOOXMLDrawing,  reader);
+						oOleObject.fillEditorOleObject(oOOXMLDrawing, oOOXMLImage,  reader);
 					}
 					else {
 						oOOXMLDrawing.setBDeleted(false);

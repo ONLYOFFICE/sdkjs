@@ -318,7 +318,7 @@
 
     // create canvas
     if (null != this.element) {
-		if (!this.Api.VersionHistory && !this.Api.isOleEditor) {
+		if (!this.Api.VersionHistory && !this.Api.isEditOleMode) {
 			this.element.innerHTML = '<div id="ws-canvas-outer">\
 											<canvas id="ws-canvas"></canvas>\
 											<canvas id="ws-canvas-overlay"></canvas>\
@@ -2031,6 +2031,10 @@
     if (this.getCellEditMode()) {
       this.cellEditor.showCursor();
     }
+  };
+
+  WorkbookView.prototype.onOleEditorReady = function () {
+	  this.handlers.trigger("asc_onOleEditorReady");
   };
 
   WorkbookView.prototype._onDocumentPlaceChanged = function() {
@@ -4817,9 +4821,10 @@
 		this.StopTextAround();
 		this.SendClearAllTextAround();
 	};
-	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container) {
+	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container, options) {
 
-		var dN = new Asc.Range(c, r, c, r, true);
+		var byCols = options && !options.scanByRows;
+		var dN = new Asc.Range(byCols ? r : c, byCols ? c : r, byCols ? r : c, byCols ? c : r, true);
 		var defName = cell.ws ? AscCommon.parserHelp.get3DRef(cell.ws.getName(), dN.getAbsName()) : null;
 		defName = defName && cell.ws ? cell.ws.workbook.findDefinesNames(defName, cell.ws.getId(), true) : null;
 

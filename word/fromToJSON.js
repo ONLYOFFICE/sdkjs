@@ -4421,7 +4421,7 @@
 			changeValue = oChange.Value;
 
 		var startPos;
-		if (oChange.StartPos instanceof CParagraphContentPos)
+		if (oChange.StartPos instanceof AscWord.CParagraphContentPos)
 		{
 			startPos = {
 				"data":         oChange.StartPos.Data,
@@ -4433,7 +4433,7 @@
 			startPos = oChange.StartPos;
 
 		var endPos;
-		if (oChange.EndPos instanceof CParagraphContentPos)
+		if (oChange.EndPos instanceof AscWord.CParagraphContentPos)
 		{
 			endPos = {
 				"data":         oChange.EndPos.Data,
@@ -10673,7 +10673,7 @@
 		var startPos;
 		if (oParsedChange["start"]["data"])
 		{
-			startPos              = new CParagraphContentPos()
+			startPos              = new AscWord.CParagraphContentPos()
 			startPos.Data         = oParsedChange["start"]["data"];
 			startPos.Depth        = oParsedChange["start"]["depth"];
 			startPos.bPlaceholder = oParsedChange["start"]["bPlaceholder"];
@@ -10686,7 +10686,7 @@
 		var endPos;
 		if (oParsedChange["end"]["data"])
 		{
-			endPos              = new CParagraphContentPos();
+			endPos              = new AscWord.CParagraphContentPos();
 			endPos.Data         = oParsedChange["end"]["data"];
 			endPos.Depth        = oParsedChange["end"]["depth"];
 			endPos.bPlaceholder = oParsedChange["end"]["bPlaceholder"];

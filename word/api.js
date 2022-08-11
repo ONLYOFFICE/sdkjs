@@ -8565,6 +8565,10 @@ background-repeat: no-repeat;\
 		else if (!this.WordControl.m_oLogicDocument)
 		{
 			oAdditionalData["c"] = 'savefromorigin';
+			if (this.currentPassword) {
+				oAdditionalData["password"] = this.currentPassword;
+				oAdditionalData["savepassword"] = this.currentPassword;
+			}
 		}
 
 		if ('savefromorigin' === oAdditionalData["c"])
@@ -8613,7 +8617,9 @@ background-repeat: no-repeat;\
 			oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
 			dataContainer.data = last.data;
 		}
-		else if (c_oAscFileType.HTML_TODO === fileType && !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
+		else if (c_oAscFileType.HTML === fileType
+			&& null == options.oDocumentMailMerge && null == options.oMailMergeSendData
+			&& !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
 			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome))
 		{
 			//DownloadFileFromBytes has bug on Chrome on iOS https://github.com/kennethjiang/js-file-download/issues/72
@@ -8632,22 +8638,19 @@ background-repeat: no-repeat;\
 			}
 			return true;
 		}
-		else
+		else if(this.isOpenOOXInBrowser)
 		{
-			if (c_oAscFileType.DOTX === fileType) {
-				var title = this.documentTitle;
-				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Word, function(data) {
-					if (data) {
-						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("docx"));
-					}
-				});
-				if (actionType)
-				{
-					this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
+			var title = this.documentTitle;
+			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Word, function(data) {
+				if (data) {
+					AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("docx"));
 				}
-				return true;
+			});
+			if (actionType) {
+				this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 			}
-
+			return true;
+		} else {
 			if (options.advancedOptions instanceof Asc.asc_CTextOptions)
 			{
 				oAdditionalData["codepage"] = options.advancedOptions.asc_getCodePage();
@@ -8758,7 +8761,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_doubleClickOnTableOleObject    = function(obj)
 	{
-		this.isChartEditor = true;	// Для совместного редактирования
+		this.isOleEditor = true;	// Для совместного редактирования
 		this.asc_onOpenChartFrame();
 
 		if(!window['IS_NATIVE_EDITOR'])
@@ -10782,15 +10785,15 @@ background-repeat: no-repeat;\
 				return;
 		}
 
-		if (!oTOC.IsValid())
-			return;
-
 		if (oTOC instanceof AscCommonWord.CBlockLevelSdt)
 		{
 			this.asc_RemoveContentControl(oTOC.GetId());
 		}
 		else if (oTOC instanceof AscCommonWord.CComplexField)
 		{
+			if (!oTOC.IsValid())
+				return;
+
 			var oCF = oTOC;
 
 			oTOC = null;
@@ -10861,7 +10864,9 @@ background-repeat: no-repeat;\
 			return;
 
 		var oTOC = oPr.ComplexField;
-		if (!oTOC || !oTOC.IsValid())
+		if (!oTOC
+			|| !(oTOC instanceof AscCommonWord.CComplexField)
+			|| !oTOC.IsValid())
 		{
 			oTOC = oLogicDocument.GetTableOfContents();
 			if (!oTOC)
@@ -10950,7 +10955,9 @@ background-repeat: no-repeat;\
 		if (oTOC instanceof AscCommonWord.CBlockLevelSdt)
 			oTOC = oTOC.GetInnerTableOfContents();
 
-		if (!oTOC || !oTOC.IsValid())
+		if (!oTOC
+			|| !(oTOC instanceof AscCommonWord.CComplexField)
+			|| !oTOC.IsValid())
 		{
 			this.sendEvent("asc_onError", c_oAscError.ID.ComplexFieldNoTOC, c_oAscError.Level.NoCritical);
 			return;

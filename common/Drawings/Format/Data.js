@@ -5312,7 +5312,6 @@ Because of this, the display is sometimes not correct.
       var nInsertIdx = Math.min(this.hideLastTrans.length, Math.max(0, nIdx));
       oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentBool(this, AscDFH.historyitem_IteratorAttributesAddHideLastTrans, nInsertIdx, [oPr], true));
       nInsertIdx === this.hideLastTrans.length ? this.hideLastTrans.push(oPr) : this.hideLastTrans.splice(nInsertIdx, 0, oPr);
-      this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstHideLastTrans = function (nIdx) {

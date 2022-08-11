@@ -164,7 +164,7 @@
 	ApiGroup.prototype.constructor = ApiGroup;
 
     /**
-	 * Class representing an Ole-object.
+	 * Class representing an OLE object.
 	 * @constructor
 	 */
 	function ApiOleObject(OleObject)
@@ -323,18 +323,18 @@
      * */
 
     /**
-     * Text transform preset
+     * Text transform type.
 	 * @typedef {("textArchDown" | "textArchDownPour" | "textArchUp" | "textArchUpPour" | "textButton" | "textButtonPour" | "textCanDown"
 	 * | "textCanUp" | "textCascadeDown" | "textCascadeUp" | "textChevron" | "textChevronInverted" | "textCircle" | "textCirclePour"
 	 * | "textCurveDown" | "textCurveUp" | "textDeflate" | "textDeflateBottom" | "textDeflateInflate" | "textDeflateInflateDeflate" | "textDeflateTop"
 	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
 	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
-	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransofrm
+	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransform
 	 * */
 
     /**
 	 * Axis position in the chart.
-	 * @typedef {("top" | "bottom" | "right" | "left")} AxiePos
+	 * @typedef {("top" | "bottom" | "right" | "left")} AxisPos
 	 */
 
     /**
@@ -611,14 +611,14 @@
     };
 
     /**
-	 * Creates an Ole-object with the parameters specified.
+	 * Creates an OLE object with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
-	 * @param {EMU} nWidth - The Ole-object width in English measure units.
-	 * @param {EMU} nHeight - The Ole-object height in English measure units.
-	 * @param {string} sData - ole-object string data.
-	 * @param {string} sAppId - the application id associated with this object.
+	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} nWidth - The OLE object width in English measure units.
+	 * @param {EMU} nHeight - The OLE object height in English measure units.
+	 * @param {string} sData - The OLE object string data.
+	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {ApiOleObject}
 	 */
 	Api.prototype.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
@@ -850,12 +850,12 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
 	 * @param {string} [sText="Your text here"] - The text for the Text Art object.
-     * @param {TextTransofrm} [sTransform="textNoShape"] - Text transform type.
+     * @param {TextTransform} [sTransform="textNoShape"] - Text transform type.
 	 * @param {ApiFill} [oFill=Api.CreateNoFill()] - The color or pattern used to fill the Text Art object.
 	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the Text Art object shadow.
 	 * @param {number} [nRotAngle=0] - Rotation angle.
-	 * @param {EMU} [nWidth=1828800] - Text Art width measured in English measure units.
-	 * @param {EMU} [nHeight=1828800] - Text Art heigth measured in English measure units.
+	 * @param {EMU} [nWidth=1828800] - The Text Art width measured in English measure units.
+	 * @param {EMU} [nHeight=1828800] - The Text Art heigth measured in English measure units.
      * @param {EMU} [nIndLeft=ApiPresentation.GetWidth() / 2] - The Text Art left side indentation value measured in English measure units.
 	 * @param {EMU} [nIndTop=ApiPresentation.GetHeight() / 2] - The Text Art top side indentation value measured in English measure units.
 	 * @returns {ApiDrawing}
@@ -1108,15 +1108,15 @@
      */
     ApiPresentation.prototype.ReplaceCurrentImage = function(sImageUrl, Width, Height)
     {
-        var oPr = this.Presentation;
+        let oPr = this.Presentation;
         if(oPr.Slides[oPr.CurPage]){
-            var _slide = oPr.Slides[oPr.CurPage];
-            var oController = _slide.graphicObjects;
-            var _w = Width/36000.0;
-            var _h = Height/36000.0;
-            var oImage = oController.createImage(sImageUrl, 0, 0, _w, _h);
+            let _slide = oPr.Slides[oPr.CurPage];
+            let oController = _slide.graphicObjects;
+            let _w = Width/36000.0;
+            let _h = Height/36000.0;
+            let oImage = oController.createImage(sImageUrl, 0, 0, _w, _h);
             oImage.setParent(_slide);
-            var selectedObjects, spTree;
+            let selectedObjects, spTree;
             if(oController.selection.groupSelection){
                 selectedObjects = oController.selection.groupSelection.selectedObjects;
             }
@@ -1130,41 +1130,54 @@
                 else{
                     spTree = _slide.cSld.spTree;
                 }
-                for(var i = 0; i < spTree.length; ++i){
-                    if(spTree[i] === selectedObjects[0]){
-                        var _xfrm = spTree[i].spPr && spTree[i].spPr.xfrm;
-                        var _xfrm2 = oImage.spPr.xfrm;
-                        if(_xfrm){
-                            _xfrm2.setOffX(_xfrm.offX);
-                            _xfrm2.setOffY(_xfrm.offY);
-                            //_xfrm2.setRot(_xfrm.rot);
-                        }
-                        else{
-                            if(AscFormat.isRealNumber(spTree[i].x) && AscFormat.isRealNumber(spTree[i].y)){
-                                _xfrm2.setOffX(spTree[i].x);
-                                _xfrm2.setOffY(spTree[i].y);
+                for(let nSp = 0; nSp < spTree.length; ++nSp) {
+                    let oSp = spTree[nSp];
+                    if(oSp === selectedObjects[0] && selectedObjects.length === 1) {
+                        if(oSp.isImage()){
+                            oSp.replacePictureData(sImageUrl, _w, _h);
+                            if(oSp.group){
+                                oController.selection.groupSelection.resetInternalSelection();
+                                oSp.group.selectObject(oSp, 0);
+                            }
+                            else{
+                                oController.resetSelection();
+                                oController.selectObject(oSp, 0);
                             }
                         }
-                        if(selectedObjects[0].group){
-                            var _group = selectedObjects[0].group;
-                            _group.removeFromSpTreeByPos(i);
-                            _group.addToSpTree(i, oImage);
-                            oImage.setGroup(_group);
-                            oController.selection.groupSelection.resetInternalSelection();
-                            _group.selectObject(oImage, oPr.CurPage);
-                        }
-                        else{
-                            _slide.removeFromSpTreeByPos(i);
-                            _slide.addToSpTreeToPos(i, oImage);
-                            oController.resetSelection();
-                            oController.selectObject(oImage, oPr.CurPage);
+                        else {
+                            let _xfrm = oSp.spPr && oSp.spPr.xfrm;
+                            let _xfrm2 = oImage.spPr.xfrm;
+                            if(_xfrm){
+                                _xfrm2.setOffX(_xfrm.offX);
+                                _xfrm2.setOffY(_xfrm.offY);
+                            }
+                            else{
+                                if(AscFormat.isRealNumber(oSp.x) && AscFormat.isRealNumber(oSp.y)){
+                                    _xfrm2.setOffX(oSp.x);
+                                    _xfrm2.setOffY(oSp.y);
+                                }
+                            }
+                            if(selectedObjects[0].group){
+                                let _group = selectedObjects[0].group;
+                                _group.removeFromSpTreeByPos(nSp);
+                                _group.addToSpTree(nSp, oImage);
+                                oImage.setGroup(_group);
+                                oController.selection.groupSelection.resetInternalSelection();
+                                _group.selectObject(oImage, oPr.CurPage);
+                            }
+                            else{
+                                _slide.removeFromSpTreeByPos(nSp);
+                                _slide.addToSpTreeToPos(nSp, oImage);
+                                oController.resetSelection();
+                                oController.selectObject(oImage, oPr.CurPage);
+                            }
                         }
                         return;
                     }
                 }
             }
-            var _x = (this.Presentation.GetWidthMM() - _w)/2.0;
-            var _y = (this.Presentation.GetHeightMM() - _h)/2.0;
+            let _x = (this.Presentation.GetWidthMM() - _w)/2.0;
+            let _y = (this.Presentation.GetHeightMM() - _h)/2.0;
             oImage.spPr.xfrm.setOffX(_x);
             oImage.spPr.xfrm.setOffY(_y);
             _slide.addToSpTreeToPos(_slide.cSld.spTree.length, oImage);
@@ -1709,7 +1722,7 @@
     };
 
     /**
-     * Returns an array with all the ole-objects from the slide master.
+     * Returns an array with all the OLE objects from the slide master.
      * @typeofeditors ["CPE"]
      * @returns {ApiOleObject[]}
      * */
@@ -2034,7 +2047,7 @@
     };
 
     /**
-     * Returns an array with all the ole-objects from the slide layout.
+     * Returns an array with all the OLE objects from the slide layout.
      * @typeofeditors ["CPE"]
      * @returns {ApiOleObject[]}
      * */
@@ -2264,7 +2277,7 @@
     {
         if (oApiFontScheme && oApiFontScheme.GetClassType && oApiFontScheme.GetClassType() === "themeFontScheme")
         {
-            this.ThemeInfo.Theme.setFontScheme(oApiFontScheme.FontScheme);
+            this.ThemeInfo.Theme.changeFontScheme(oApiFontScheme.FontScheme);
             return true;
         }
 
@@ -3101,7 +3114,7 @@
     };
 
     /**
-     * Returns an array with all the ole-objects from the slide.
+     * Returns an array with all the OLE objects from the slide.
      * @typeofeditors ["CPE"]
      * @returns {ApiOleObject[]} 
      * */
@@ -4090,7 +4103,7 @@
 				nAxiePos = AscFormat.AX_POS_R;
 				break;
 			case "top":
-				nAxiePos = AscFormat.AX_POS_B;
+				nAxiePos = AscFormat.AX_POS_T;
 				break;
 			default:
 				return false;
@@ -4145,10 +4158,10 @@
 	};
 
 	/**
-	 * Sets the data to current Ole-object.
+	 * Sets the data to the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {string} sData - ole-object string data.
+	 * @param {string} sData - The OLE object string data.
 	 * @returns {boolean}
 	 */
 	ApiOleObject.prototype.SetData = function(sData)
@@ -4161,7 +4174,7 @@
 	};
 
 	/**
-	 * Gets the string data from current Ole-object.
+	 * Returns the string data from the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
@@ -4175,10 +4188,10 @@
 	};
 
 	/**
-	 * Sets the application id to current Ole-object.
+	 * Sets the application ID to the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {string} sAppId - the application id associated with this object.
+	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {boolean}
 	 */
 	ApiOleObject.prototype.SetApplicationId = function(sAppId)
@@ -4191,7 +4204,7 @@
 	};
 
 	/**
-	 * Gets the application id from current Ole-object.
+	 * Returns the application ID from the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}

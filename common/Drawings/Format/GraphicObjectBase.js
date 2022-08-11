@@ -2347,7 +2347,6 @@
         	aDocContents[i].CreateDuplicateComments();
         }
     };
-
     CGraphicObjectBase.prototype.writeRecord1 = function(pWriter, nType, oChild) {
         if(AscCommon.isRealObject(oChild)) {
             pWriter.WriteRecord1(nType, oChild, function(oChild) {
@@ -2363,7 +2362,6 @@
             this.writeRecord1(pWriter, nType, oChild);
         }
     };
-
     CGraphicObjectBase.prototype.ResetParametersWithResize = function(bNoResetRelSize)
     {
         var oParaDrawing = AscFormat.getParaDrawing(this);
@@ -2546,7 +2544,6 @@
     CGraphicObjectBase.prototype.onSlicerUpdate = function(sName){
         return false;
     };
-
     CGraphicObjectBase.prototype.onSlicerLock = function(sName, bLock){
     };
     CGraphicObjectBase.prototype.onSlicerDelete = function(sName){
@@ -2645,8 +2642,6 @@
             AscFormat.CShape.prototype.Set_CurrentElement.call(this, bUpdate, pageIndex);
         }
     };
-
-
     CGraphicObjectBase.prototype.SetControllerTextSelection = function(drawing_objects, nPageIndex) {
         if(drawing_objects) {
             var oContent = this.getDocContent && this.getDocContent();
@@ -2668,7 +2663,6 @@
             }
         }
     };
-
     CGraphicObjectBase.prototype.hitInBoundingRect = function (x, y) {
         if(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES){
             return false;
@@ -2757,7 +2751,6 @@
         AscCommon.IsShapeToImageConverter = false;
         return new AscFormat.CBaseAnimTexture(oCanvas, scale, nX, nY)
     };
-
     CGraphicObjectBase.prototype.isOnProtectedSheet = function() {
         if(this.worksheet) {
             if(this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
@@ -2809,7 +2802,6 @@
     CGraphicObjectBase.prototype.convertFromSmartArt = function() {
         return this;
     };
-
     CGraphicObjectBase.prototype.getDefaultRotSA = function () {
         if (this.isObjectInSmartArt()) {
             var point = this.getSmartArtShapePoint();
@@ -2829,9 +2821,7 @@
             return AscFormat.normalizeRotate(this.rot);
         }
     };
-
     CGraphicObjectBase.prototype.changePositionInSmartArt = function (newX, newY) {}
-
     CGraphicObjectBase.prototype.changeRot = function(dAngle, bWord) {
         var oSmartArt;
         if (this.isObjectInSmartArt()) {
@@ -2993,14 +2983,12 @@
             dY += (this.convertPixToMM(4) + dH);
         }
     };
-
     CGraphicObjectBase.prototype.IsUseInDocument = function() {
         if(CShape.prototype.IsUseInDocument) {
             return CShape.prototype.IsUseInDocument.call(this);
         }
         return true;
     };
-
     CGraphicObjectBase.prototype.GetWidth = function() {
         if (this.spPr && this.spPr.xfrm)
             return this.spPr.xfrm.extX;
@@ -3034,13 +3022,63 @@
             if(_xfrm.chExtX === null) {
                 _xfrm.setChExtX(_xfrm.extX);
             }
-            if(_xfrm.chExtX === null) {
+            if(_xfrm.chExtY === null) {
                 _xfrm.setChExtY(_xfrm.extY);
             }
         }
         this.spPr.setXfrm(_xfrm);
         _xfrm.setParent(this.spPr);
     };
+    CGraphicObjectBase.prototype.getPictureBase64Data = function() {
+        return null;
+    };
+    CGraphicObjectBase.prototype.getBase64Img = function () {
+        if(typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
+            return this.cachedImage;
+        }
+        if(this.parent) {
+            let nParentType = null;
+            if(this.parent.getObjectType) {
+                nParentType = this.parent.getObjectType();
+            }
+            if(nParentType === AscDFH.historyitem_type_SlideLayout ||
+               nParentType === AscDFH.historyitem_type_SlideMaster ||
+               nParentType === AscDFH.historyitem_type_Notes ||
+               nParentType === AscDFH.historyitem_type_NotesMaster) {
+                return "";
+            }
+        }
+        let oPictureData = this.getPictureBase64Data();
+        if(!AscFormat.isRealNumber(this.x) || !AscFormat.isRealNumber(this.y) ||
+            !AscFormat.isRealNumber(this.extX) || !AscFormat.isRealNumber(this.extY)
+            || (AscFormat.fApproxEqual(this.extX, 0) && AscFormat.fApproxEqual(this.extY, 0)))
+            return "";
+
+        let oImageData = AscCommon.ShapeToImageConverter(this, this.pageIndex);
+        if(oImageData) {
+            if(oImageData.ImageNative) {
+                try {
+                    this.cachedPixW = oImageData.ImageNative.width;
+                    this.cachedPixH = oImageData.ImageNative.height;
+                }
+                catch(e) {
+                    this.cachedPixW = 50;
+                    this.cachedPixH = 50;
+                }
+            }
+            if(oPictureData) {
+                return oPictureData.ImageUrl;
+            }
+            return oImageData.ImageUrl;
+        }
+        else {
+            if(oPictureData) {
+                return oPictureData.ImageUrl;
+            }
+            return "";
+        }
+    };
+
 
     var ANIM_LABEL_WIDTH_PIX = 22;
     var ANIM_LABEL_HEIGHT_PIX = 17;
@@ -3096,15 +3134,13 @@
         }
         return copy;
     };
-    CRelSizeAnchor.prototype.Refresh_RecalcData = function(drawingDocument){
-        if(this.parent && this.parent.Refresh_RecalcData2)
-        {
+    CRelSizeAnchor.prototype.Refresh_RecalcData = function() {
+        if(this.parent && this.parent.Refresh_RecalcData2) {
             this.parent.Refresh_RecalcData2();
         }
     };
-    CRelSizeAnchor.prototype.Refresh_RecalcData2 = function(drawingDocument){
-        if(this.parent && this.parent.Refresh_RecalcData2)
-        {
+    CRelSizeAnchor.prototype.Refresh_RecalcData2 = function() {
+        if(this.parent && this.parent.Refresh_RecalcData2) {
             this.parent.Refresh_RecalcData2();
         }
     };

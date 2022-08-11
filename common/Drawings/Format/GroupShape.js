@@ -86,13 +86,8 @@ function CGroupShape()
         textSelection: null
     };
 }
-	CGroupShape.prototype = Object.create(AscFormat.CGraphicObjectBase.prototype);
-	CGroupShape.prototype.constructor = CGroupShape;
 
-    CGroupShape.prototype.getObjectType = function()
-    {
-        return AscDFH.historyitem_type_GroupShape;
-    };
+AscFormat.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_GroupShape);
 
     CGroupShape.prototype.GetAllDrawingObjects = function(DrawingObjects)
     {
@@ -373,8 +368,6 @@ function CGroupShape()
             }
         }
     };
-
-    CGroupShape.prototype.getBase64Img = CShape.prototype.getBase64Img;
 
     CGroupShape.prototype.convertToWord = function(document)
     {
@@ -740,15 +733,20 @@ function CGroupShape()
     CGroupShape.prototype.recalculateArrGraphicObjects = function()
     {
         this.arrGraphicObjects.length = 0;
-        for(var i = 0; i < this.spTree.length; ++i)
+        for(let nSp = 0; nSp < this.spTree.length; ++nSp)
         {
-            if(!this.spTree[i].isGroup())
-                this.arrGraphicObjects.push(this.spTree[i]);
+            let oSp = this.spTree[nSp];
+            if(oSp.isGroup() || oSp.isSmartArtObject())
+            {
+                let aGraphicObjets = oSp.getArrGraphicObjects();
+                for(let nGr = 0; nGr < aGraphicObjets.length; ++nGr)
+                {
+                    this.arrGraphicObjects.push(aGraphicObjets[nGr]);
+                }
+            }
             else
             {
-                var arr_graphic_objects = this.spTree[i].getArrGraphicObjects();
-                for(var j = 0; j < arr_graphic_objects.length; ++j)
-                    this.arrGraphicObjects.push(arr_graphic_objects[j]);
+                this.arrGraphicObjects.push(oSp);
             }
         }
     };
@@ -1632,10 +1630,6 @@ function CGroupShape()
     CGroupShape.prototype.loadDocumentStateAfterLoadChanges = AscFormat.DrawingObjectsController.prototype.loadDocumentStateAfterLoadChanges;
     CGroupShape.prototype.getAllConnectors = AscFormat.DrawingObjectsController.prototype.getAllConnectors;
     CGroupShape.prototype.getAllShapes = AscFormat.DrawingObjectsController.prototype.getAllShapes;
-
-    CGroupShape.prototype.checkDrawingBaseCoords = CShape.prototype.checkDrawingBaseCoords;
-
-    CGroupShape.prototype.setDrawingBaseCoords = CShape.prototype.setDrawingBaseCoords;
 
 
     CGroupShape.prototype.calculateSnapArrays = function(snapArrayX, snapArrayY)

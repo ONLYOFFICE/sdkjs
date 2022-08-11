@@ -1795,7 +1795,7 @@ CT_PivotCacheDefinition.prototype.setPivotCacheId = function(val) {
 	this.pivotCacheDefinitionX14.pivotCacheId = val;
 };
 CT_PivotCacheDefinition.prototype.createNewPivotCacheId = function() {
-	this.setPivotCacheId(AscCommon.CreateUInt32());
+	this.setPivotCacheId(AscCommon.CreateDurableId());
 };
 CT_PivotCacheDefinition.prototype.getSlicerCaption = function () {
 	var res = [];

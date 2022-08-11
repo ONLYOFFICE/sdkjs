@@ -242,6 +242,18 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         for(var i = 0; i < this.cSld.spTree.length; ++i){
             this.cSld.spTree[i].Reassign_ImageUrls(images_rename);
         }
+
+        if(this.cSld.Bg &&
+            this.cSld.Bg.bgPr &&
+            this.cSld.Bg.bgPr.Fill &&
+            this.cSld.Bg.bgPr.Fill.fill instanceof AscFormat.CBlipFill &&
+            typeof this.cSld.Bg.bgPr.Fill.fill.RasterImageId === "string" &&
+            images_rename[this.cSld.Bg.bgPr.Fill.fill.RasterImageId])
+        {
+            let oBg = this.cSld.Bg.createFullCopy();
+            oBg.bgPr.Fill.fill.RasterImageId = images_rename[oBg.bgPr.Fill.fill.RasterImageId];
+            this.changeBackground(oBg);
+        }
     };
     Slide.prototype.Clear_CollaborativeMarks = function()
     {
@@ -1345,10 +1357,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         let bCheckBounds = graphics.IsSlideBoundsCheckerType;
         let bSlideShow = this.graphicObjects.isSlideShow();
         let bClipBySlide = !this.graphicObjects.canEdit();
-        if (bCheckBounds) {
-            if(bSlideShow || bClipBySlide) {
-                graphics.rect(0, 0, this.Width, this.Height);
-            }
+        if (bCheckBounds && (bSlideShow || bClipBySlide)) {
+            graphics.rect(0, 0, this.Width, this.Height);
             return;
         }
         let _bounds, i;
@@ -1479,9 +1489,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             this.timing.onAnimPaneMouseWheel(e, deltaY, X, Y);
         }
     };
-
     Slide.prototype.getTheme = function(){
-        return this.Layout.Master.Theme;
+        return this.Layout && this.Layout.Master && this.Layout.Master.Theme || null;
     };
 
     Slide.prototype.drawSelect = function(_type)

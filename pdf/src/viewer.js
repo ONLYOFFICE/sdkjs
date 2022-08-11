@@ -740,6 +740,7 @@
 				if (this.file && this.file.isNeedPassword())
 				{
 					window["AscViewer"].setFilePassword(this.file, password);
+					this.Api.currentPassword = password;
 				}
 			}
 			else

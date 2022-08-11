@@ -531,9 +531,9 @@
         }
         return null;
     };
-    CTextBody.prototype.Is_ThisElementCurrent = function() {
-        if(this.parent && this.parent.Is_ThisElementCurrent) {
-            return this.parent.Is_ThisElementCurrent();
+    CTextBody.prototype.IsThisElementCurrent = function() {
+        if(this.parent && this.parent.IsThisElementCurrent) {
+            return this.parent.IsThisElementCurrent();
         }
         return false;
     };

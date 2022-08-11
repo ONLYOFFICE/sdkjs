@@ -1823,6 +1823,7 @@ var g_oFontProperties = {
 			this.patternFill = new PatternFill();
 			this.patternFill.fromColor(color);
 		}
+		this.checkEmptyContent();
 	};
 	Fill.prototype.fromPatternParams = function (type, color) {
 		this.patternFill = null;
@@ -3966,7 +3967,7 @@ StyleManager.prototype =
 				} else {
 					newVal.setIndexNumber(container.count++);
 				}
-				if (!res) {
+				if (!res || forceAdd) {
 					container.vals[hash] = newVal;
 				}
 				res = newVal;

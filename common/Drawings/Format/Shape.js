@@ -1098,14 +1098,7 @@ function CShape()
     this.tmpLnSpcReduction = undefined;
     this.shapeSmartArtInfo = null;
 }
-
-	CShape.prototype = Object.create(AscFormat.CGraphicObjectBase.prototype);
-	CShape.prototype.constructor = CShape;
-
-CShape.prototype.getObjectType = function () {
-    return AscDFH.historyitem_type_Shape;
-};
-
+AscFormat.InitClass(CShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_Shape);
 CShape.prototype.setCustT = function (value) {
     var pointContent = this.getSmartArtPointContent();
     if (pointContent) {
@@ -5467,48 +5460,6 @@ CShape.prototype.check_bounds = function (checker) {
     }
 };
 
-CShape.prototype.getBase64Img = function ()
-{
-    if(this.parent)
-    {
-        if(this.parent.kind === AscFormat.TYPE_KIND.LAYOUT
-            || this.parent.kind === AscFormat.TYPE_KIND.MASTER
-            || this.parent.kind === AscFormat.TYPE_KIND.NOTES
-            || this.parent.kind === AscFormat.TYPE_KIND.NOTES_MASTER){
-            return ""
-        }
-    }
-    if(typeof this.cachedImage === "string" && this.cachedImage.length > 0)
-    {
-        return this.cachedImage;
-    }
-    if(!AscFormat.isRealNumber(this.x) || !AscFormat.isRealNumber(this.y) || !AscFormat.isRealNumber(this.extX) || !AscFormat.isRealNumber(this.extY)
-    || (AscFormat.fApproxEqual(this.extX, 0) && AscFormat.fApproxEqual(this.extY, 0)))
-        return "";
-    var img_object = AscCommon.ShapeToImageConverter(this, this.pageIndex);
-    if(img_object)
-    {
-        if(img_object.ImageNative)
-        {
-            try
-            {
-                this.cachedPixW = img_object.ImageNative.width;
-                this.cachedPixH = img_object.ImageNative.height;
-            }
-            catch(e)
-            {
-                this.cachedPixW = 50;
-                this.cachedPixH = 50;
-            }
-        }
-        return img_object.ImageUrl;
-    }
-    else
-    {
-
-        return "";
-    }
-};
 
 CShape.prototype.haveSelectedDrawingInContent = function()
 {

@@ -729,7 +729,7 @@ CFootnotesController.prototype.IsUseInDocument = function(sFootnoteId, arrFootno
  * @param oFootnote
  * return {boolean}
  */
-CFootnotesController.prototype.Is_ThisElementCurrent = function(oFootnote)
+CFootnotesController.prototype.IsThisElementCurrent = function(oFootnote)
 {
 	if (oFootnote === this.CurFootnote && docpostype_Footnotes === this.LogicDocument.GetDocPosType())
 		return true;

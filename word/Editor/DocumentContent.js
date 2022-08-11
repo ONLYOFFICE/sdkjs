@@ -532,10 +532,10 @@ CDocumentContent.prototype.Set_CurrentElement = function(Index, bUpdateStates)
 
 	this.SetThisElementCurrent(bUpdateStates)
 };
-CDocumentContent.prototype.Is_ThisElementCurrent = function()
+CDocumentContent.prototype.IsThisElementCurrent = function()
 {
 	if (this.Parent)
-		return this.Parent.Is_ThisElementCurrent(this);
+		return this.Parent.IsThisElementCurrent(this);
 
 	return false;
 };

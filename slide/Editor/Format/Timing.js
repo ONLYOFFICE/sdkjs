@@ -6221,7 +6221,7 @@
 
     changesFactory[AscDFH.historyitem_CondRtn] = CChangeObject;
     changesFactory[AscDFH.historyitem_CondTgtEl] = CChangeObject;
-    changesFactory[AscDFH.historyitem_CondTn] = CChangeObject;
+    changesFactory[AscDFH.historyitem_CondTn] = CChangeLong;
     changesFactory[AscDFH.historyitem_CondDelay] = CChangeString;
     changesFactory[AscDFH.historyitem_CondEvt] = CChangeLong;
 

@@ -35,7 +35,6 @@
 // Import
 var align_Left = AscCommon.align_Left;
 var align_Right = AscCommon.align_Right;
-var g_oTableId = AscCommon.g_oTableId;
 var History = AscCommon.History;
 
 var linerule_Auto = Asc.linerule_Auto;
@@ -267,7 +266,7 @@ function CStyle(Name, BasedOnId, NextId, type, bNoCreateTablePr)
     }
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 CStyle.prototype =
@@ -8266,7 +8265,7 @@ function CStyles(bCreateDefault)
 		this.Default.TOF = this.Add(oStyleTOF);
 
         // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-        g_oTableId.Add( this, this.Id );
+        AscCommon.g_oTableId.Add( this, this.Id );
     }
 	else
 	{
@@ -9256,7 +9255,7 @@ CStyles.prototype =
             var StyleId = LinkData.UpdateStyleId;
 
             var LogicDocument = editor.WordControl.m_oLogicDocument;
-            if (!LogicDocument)
+            if (!LogicDocument || !LogicDocument.IsDocumentEditor())
                 return;
 
             var AllParagraphs = [];

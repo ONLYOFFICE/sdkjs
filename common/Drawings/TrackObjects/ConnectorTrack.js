@@ -111,8 +111,10 @@
             //    AscCommon.global_MatrixTransformer.MultiplyAppend(_transform, _group.invertTransform);
             //}
             oConnectionObject = this.beginTrack.overlayObject.geometry.cnxLst[oConnectorInfo.stCnxIdx];
-            g_conn_info =  {idx: oConnectorInfo.stCnxIdx, ang: oConnectionObject.ang, x: oConnectionObject.x, y: oConnectionObject.y};
-            _startConnectionParams = this.originalObject.convertToConnectionParams(_rot, _flipH, _flipV, _transform, _bounds, g_conn_info);
+            if(oConnectionObject) {
+                g_conn_info =  {idx: oConnectorInfo.stCnxIdx, ang: oConnectionObject.ang, x: oConnectionObject.x, y: oConnectionObject.y};
+                _startConnectionParams = this.originalObject.convertToConnectionParams(_rot, _flipH, _flipV, _transform, _bounds, g_conn_info);
+            }
         }
         if(this.endTrack){
             track_bounds = this.convertTrackBounds(this.endTrack.getBounds());
@@ -144,8 +146,10 @@
             //    AscCommon.global_MatrixTransformer.MultiplyAppend(_transform, _group.invertTransform);
             //}
             oConnectionObject = this.endTrack.overlayObject.geometry.cnxLst[oConnectorInfo.endCnxIdx];
-            g_conn_info =  {idx: oConnectorInfo.endCnxIdx, ang: oConnectionObject.ang, x: oConnectionObject.x, y: oConnectionObject.y};
-            _endConnectionParams = this.originalObject.convertToConnectionParams(_rot, _flipH, _flipV, _transform, _bounds, g_conn_info);
+            if(oConnectionObject) {
+                g_conn_info =  {idx: oConnectorInfo.endCnxIdx, ang: oConnectionObject.ang, x: oConnectionObject.x, y: oConnectionObject.y};
+                _endConnectionParams = this.originalObject.convertToConnectionParams(_rot, _flipH, _flipV, _transform, _bounds, g_conn_info);
+            }
         }
         if(_startConnectionParams || _endConnectionParams){
             var bMoveInGroup = false;

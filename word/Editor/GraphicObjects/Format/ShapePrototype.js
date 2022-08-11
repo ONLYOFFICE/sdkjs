@@ -1002,7 +1002,7 @@ CShape.prototype.GetPrevElementEndInfo = function(CurElement)
     }
     return null;
 };
-CShape.prototype.Is_ThisElementCurrent = function(CurElement)
+CShape.prototype.IsThisElementCurrent = function(CurElement)
 {
     var oLogicDoc = this.getLogicDocument();
     if(!oLogicDoc)

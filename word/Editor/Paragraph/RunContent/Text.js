@@ -302,6 +302,10 @@
 	};
 	CRunText.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
 	{
+		if (Context.m_bIsTextDrawer === true)
+		{
+			Context.CheckAddNewPath(X, Y);
+		}
 		if (this.Flags & FLAGS_GAPS)
 		{
 			Context.SaveGrState();

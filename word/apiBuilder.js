@@ -2979,7 +2979,7 @@
 	ApiPictureForm.prototype.constructor = ApiPictureForm;
 
 	/**
-	 * Class representing a complex form
+	 * Class representing a complex form.
 	 * @param oSdt
 	 * @constructor
 	 * @extends {ApiFormBase}
@@ -3674,7 +3674,7 @@
 	 * | "textCurveDown" | "textCurveUp" | "textDeflate" | "textDeflateBottom" | "textDeflateInflate" | "textDeflateInflateDeflate" | "textDeflateTop"
 	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
 	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
-	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransofrm
+	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransform
 	 * */
 
 	/**
@@ -3791,7 +3791,7 @@
 	 */
 
 	/**
-	 * Types of all supported forms
+	 * Types of all supported forms.
 	 * @typedef {ApiTextForm | ApiComboBoxForm | ApiCheckBoxForm | ApiPictureForm | ApiComplexForm} ApiForm
 	 */
 
@@ -4026,14 +4026,14 @@
 	};
 
 	/**
-	 * Creates an Ole-object with the parameters specified.
+	 * Creates an OLE object with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
-	 * @param {EMU} nWidth - The Ole-object width in English measure units.
-	 * @param {EMU} nHeight - The Ole-object height in English measure units.
-	 * @param {string} sData - ole-object string data.
-	 * @param {string} sAppId - the application id associated with this object.
+	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} nWidth - The OLE object width in English measure units.
+	 * @param {EMU} nHeight - The OLE object height in English measure units.
+	 * @param {string} sData - The OLE object string data.
+	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {ApiOleObject}
 	 */
 	Api.prototype.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
@@ -4939,7 +4939,7 @@
 		return aContent;
 	};
 	/**
-	 * Returns a collection of drawing objects in the document content.
+	 * Returns a collection of drawing objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiDrawing[]}  
@@ -4955,7 +4955,7 @@
 		return arrApiShapes;
 	};
 	/**
-	 * Returns a collection of shape objects in the document content.
+	 * Returns a collection of shape objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiShape[]}  
@@ -4974,7 +4974,7 @@
 		return arrApiShapes;
 	};
 	/**
-	 * Returns a collection of image objects in the document content.
+	 * Returns a collection of image objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiImage[]}  
@@ -4993,7 +4993,7 @@
 		return arrApiImages;
 	};
 	/**
-	 * Returns a collection of chart objects in the document content.
+	 * Returns a collection of chart objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiChart[]}  
@@ -5012,7 +5012,7 @@
 		return arrApiCharts;
 	};
 	/**
-	 * Returns a collection of ole-objects in the document content.
+	 * Returns a collection of OLE objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiOleObject[]}  
@@ -5436,7 +5436,7 @@
 		this.Document.ReplaceSearchElement(sReplace, true, null, false);
 	};
 	/**
-	 * Returns a list of all the content controls in the document.
+	 * Returns a list of all the content controls from the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
@@ -5455,7 +5455,7 @@
 		return arrResult;
 	};
 	/**
-	 * Returns a list of all tags that are used for all content controls in the document
+	 * Returns a list of all tags that are used for all content controls in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {String[]}
@@ -5480,7 +5480,7 @@
 		return arrResult;
 	};
 	/**
-	 * Returns a list of all tags that are used for all special forms in the document
+	 * Returns a list of all tags that are used for all forms in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {String[]}
@@ -5505,10 +5505,10 @@
 		return arrResult;
 	};
 	/**
-	 * Returns a list of all the content controls in the document with specified tag name
+	 * Returns a list of all content controls in the document with the specified tag name.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param sTag {string}
+	 * @param sTag {string} - Content control tag.
 	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
 	 */
 	ApiDocument.prototype.GetContentControlsByTag = function(sTag)
@@ -5530,10 +5530,10 @@
 		return arrResult;
 	};
 	/**
-	 * Returns a list of all the special forms in the document with specified tag name
+	 * Returns a list of all forms in the document with the specified tag name.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param sTag {string}
+	 * @param sTag {string} - Form tag.
 	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
 	 */
 	ApiDocument.prototype.GetFormsByTag = function(sTag)
@@ -6215,7 +6215,7 @@
 	};
 
 	/**
-     * Returns the selected drawings.
+     * Returns all the selected drawings in the current document.
      * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
      * @returns {ApiShape[] | ApiImage[] | ApiChart[] | ApiDrawing[]}
@@ -6250,6 +6250,53 @@
 		}
 
 		return aResult;
+	};
+
+	/**
+	 * Replaces the current image with an image specified.
+	 * @typeofeditors ["CDE"]
+	 * @memberof ApiPresentation
+	 * @param {string} sImageUrl - The image source where the image to be inserted should be taken from (currently, only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} Width - The image width in English measure units.
+	 * @param {EMU} Height - The image height in English measure units.
+	 */
+	ApiDocument.prototype.ReplaceCurrentImage = function(sImageUrl, Width, Height)
+	{
+		let oLogicDocument = private_GetLogicDocument();
+		let oDrawingObjects = oLogicDocument.DrawingObjects;
+		let oDrawingSelection = oDrawingObjects.selection;
+		let aSelectedObjects;
+		if(oDrawingSelection.groupSelection)
+		{
+			aSelectedObjects = oDrawingSelection.groupSelection.selectedObjects;
+		}
+		else
+		{
+			aSelectedObjects = oDrawingObjects.selectedObjects;
+		}
+		if(aSelectedObjects.length === 1 && aSelectedObjects[0].isImage())
+		{
+			let dWidth = private_EMU2MM(Width);
+			let dHeight = private_EMU2MM(Height);
+			let oSp = aSelectedObjects[0];
+			oSp.replacePictureData(sImageUrl, dWidth, dHeight);
+			if(oSp.group){
+				oDrawingObjects.selection.groupSelection.resetInternalSelection();
+				oSp.group.selectObject(oSp, 0);
+			}
+			else{
+				oDrawingObjects.resetSelection();
+				oDrawingObjects.selectObject(oSp, 0);
+			}
+		}
+		else
+		{
+			let oParagraph, arrInsertResult = [], oImage;
+			oParagraph = Api.CreateParagraph();
+			oImage = Api.CreateImage(sImageUrl, Width, Height);
+			oParagraph.AddDrawing(oImage);
+			this.InsertContent(arrInsertResult);
+		}
 	};
 
 	/**
@@ -6297,7 +6344,7 @@
 	};
 
 	/**
-	 * Adds footnote for selected text (or current position if selection doesn't exist).
+	 * Adds a footnote for the selected text (or the current position if the selection doesn't exist).
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiDocumentContent}
@@ -6312,7 +6359,7 @@
 	};
 
 	/**
-	 * Adds endnote for selected text (or current position if selection doesn't exist).
+	 * Adds an endnote for the selected text (or the current position if the selection doesn't exist).
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiDocumentContent}
@@ -7326,7 +7373,7 @@
 		return arrApiCharts;
 	};
 	/**
-	 * Returns a collection of ole-objects in the paragraph.
+	 * Returns a collection of OLE objects in the paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiOleObject[]}  
@@ -7692,17 +7739,17 @@
 			sSepWith = "";
 
 		var oDocument = private_GetLogicDocument();
-		var oParaPos, oldSelectionInfo;
+		var oldSelectionInfo;
 
 		var allNumberedParas = oDocument.GetAllNumberedParagraphs();
 		for (var nPara = 0; nPara < allNumberedParas.length; nPara++)
 		{
 			if (allNumberedParas[nPara].Id === oParaTo.Paragraph.Id)
 			{
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow, sSepWith);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7758,10 +7805,10 @@
 			return false;
 
 		var oDocument = private_GetLogicDocument();
-		var oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 		var oldSelectionInfo = oDocument.SaveDocumentState();
 		oDocument.RemoveSelection();
-		oDocument.SetContentPosition(oParaPos, 0, 0);
+		this.Paragraph.Document_SetThisElementCurrent();
+		this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 		oDocument.AddRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow, undefined);
 		oDocument.LoadDocumentState(oldSelectionInfo);
 		return true;
@@ -7814,17 +7861,16 @@
 
 		var oDocument = private_GetLogicDocument();
 		var oManager = oDocument.GetBookmarksManager();
-		var oParaPos, sName, oldSelectionInfo;
+		var sName, oldSelectionInfo;
 		for (var nBookmark = 0, nCount = oManager.GetCount(); nBookmark < nCount; nBookmark++)
 		{
 			sName = oManager.GetName(nBookmark);
 			if (!oManager.IsInternalUseBookmark(sName) && !oManager.IsHiddenBookmark(sName) && sName === sBookmarkName)
 			{
-				
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddRefToBookmark(sBookmarkName, nRefTo, bLink, bAboveBelow, sSepWith);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7871,17 +7917,17 @@
 			bAboveBelow = false;
 
 		var oDocument = private_GetLogicDocument();
-		var oParaPos, oldSelectionInfo;
+		var oldSelectionInfo;
 
 		var aFirstFootnoteParas = oDocument.GetFootNotesFirstParagraphs();
 		for (var nPara = 0; nPara < aFirstFootnoteParas.length; nPara++)
 		{
 			if (aFirstFootnoteParas[nPara].Id === oParaTo.Paragraph.Id)
 			{
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddNoteRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7928,16 +7974,16 @@
 
 		var oDocument = private_GetLogicDocument();
 		var aFirstEndnoteParas = oDocument.GetEndNotesFirstParagraphs();
-		var oParaPos, oldSelectionInfo;
+		var oldSelectionInfo;
 		
 		for (var nPara = 0; nPara < aFirstEndnoteParas.length; nPara++)
 		{
 			if (aFirstEndnoteParas[nPara].Id === oParaTo.Paragraph.Id)
 			{
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddNoteRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -8003,9 +8049,9 @@
 
 		var oDocument = private_GetLogicDocument();
 		var oldSelectionInfo = oDocument.SaveDocumentState();
-		var oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 		oDocument.RemoveSelection();
-		oDocument.SetContentPosition(oParaPos, 0, 0);
+		this.Paragraph.Document_SetThisElementCurrent();
+		this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 		oDocument.AddRefToCaption(sCaption[0].toUpperCase() + sCaption.slice(1), oParaTo, nRefTo, bLink, bAboveBelow);
 		oDocument.LoadDocumentState(oldSelectionInfo);
 		return true;
@@ -8026,7 +8072,7 @@
 	};
 
 	/**
-     * Returns the paragraph position in its parent element.
+     * Returns the paragraph position within its parent element.
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
      * @returns {Number} - returns -1 if the paragraph parent doesn't exist. 
@@ -10003,7 +10049,7 @@
 	};
 
 	/**
-     * Returns the table position in its parent element.
+     * Returns the table position within its parent element.
      * @memberof ApiTable
      * @typeofeditors ["CDE"]
      * @returns {Number} - returns -1 if the table parent doesn't exist. 
@@ -12366,7 +12412,7 @@
 	 * Sets the table title (caption).
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sTitle - the table title to be set.
+	 * @param {string} sTitle - The table title to be set.
 	 * @return {boolean}
 	 */
 	ApiTablePr.prototype.SetTableTitle = function(sTitle)
@@ -12379,7 +12425,7 @@
 		return true;
 	};
 	/**
-	 * Gets the table title (caption).
+	 * Returns the table title (caption).
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @return {string}
@@ -12395,7 +12441,7 @@
 	 * Sets the table description.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sDescr - the table description to be set.
+	 * @param {string} sDescr - The table description to be set.
 	 * @return {boolean}
 	 */
 	ApiTablePr.prototype.SetTableDescription = function(sDescr)
@@ -12408,7 +12454,7 @@
 		return true;
 	};
 	/**
-	 * Gets the table description.
+	 * Returns the table description.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @return {string}
@@ -13462,9 +13508,9 @@
 
 	/**
      * Sets the properties from another drawing to the current drawing.
-	 * The following properties will be copied: PosH, PosV, Distance, WrappingStyle, drawing name, title and description.
+	 * The following properties will be copied: horizontal and vertical alignment, distance between the edges of the current drawing object and any subsequent text, wrapping style, drawing name, title and description.
      * @memberof ApiDrawing
-     * @param {ApiDrawing} oAnotherDrawing - Drawing whose properties will be set to the current drawing.
+     * @param {ApiDrawing} oAnotherDrawing - The drawing which properties will be set to the current drawing.
      * @typeofeditors ["CDE"]
      * @returns {boolean}
      */
@@ -13564,10 +13610,10 @@
 	};
 
 	/**
-	 * Sets the data to current Ole-object.
+	 * Sets the data to the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {string} sData - ole-object string data.
+	 * @param {string} sData - The OLE object string data.
 	 * @returns {boolean}
 	 */
 	ApiOleObject.prototype.SetData = function(sData)
@@ -13580,7 +13626,7 @@
 	};
 
 	/**
-	 * Gets the string data from current Ole-object.
+	 * Returns the string data from the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
@@ -13594,10 +13640,10 @@
 	};
 
 	/**
-	 * Sets the application id to current Ole-object.
+	 * Sets the application ID to the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {string} sAppId - the application id associated with this object.
+	 * @param {string} sAppId - The application ID associated with the curent OLE object.
 	 * @returns {boolean}
 	 */
 	ApiOleObject.prototype.SetApplicationId = function(sAppId)
@@ -13610,7 +13656,7 @@
 	};
 
 	/**
-	 * Gets the application id from current Ole-object.
+	 * Returns the application ID from the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
@@ -14464,7 +14510,7 @@
 				nAxiePos = AscFormat.AX_POS_R;
 				break;
 			case "top":
-				nAxiePos = AscFormat.AX_POS_B;
+				nAxiePos = AscFormat.AX_POS_T;
 				break;
 			default:
 				return false;
@@ -15717,7 +15763,7 @@
 	};
 
 	/**
-     * Returns the content control position in its parent element.
+     * Returns the content control position within its parent element.
      * @memberof ApiBlockLvlSdt
      * @typeofeditors ["CDE"]
      * @returns {Number} - returns -1 if the content control parent doesn't exist. 
@@ -16733,11 +16779,12 @@
 	};
 
 	/**
+	 * Replaces each paragraph (or text in cell) in the select with the corresponding text from an array of strings.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {Array} arrString - An array of replacement strings.
-	 * @param {string} [sParaTab=" "] - specifies which character to use to define the tab in the source text.
-	 * @param {string} [sParaNewLine=" "] - specifies which character to use to specify the line break character in the source text.
+	 * @param {string} [sParaTab=" "] - A character which is used to specify the tab in the source text.
+	 * @param {string} [sParaNewLine=" "] - A character which is used to specify the line break character in the source text.
 	 */
 	Api.prototype.ReplaceTextSmart = function(arrString, sParaTab, sParaNewLine)
 	{
@@ -17177,12 +17224,12 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
 	 * @param {string} [sText="Your text here"] - The text for the Text Art object.
-	 * @param {TextTransofrm} [sTransform="textNoShape"] - Text transform type.
+	 * @param {TextTransform} [sTransform="textNoShape"] - Text transform type.
 	 * @param {ApiFill}   [oFill=Api.CreateNoFill()] - The color or pattern used to fill the Text Art object.
 	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the Text Art object shadow.
 	 * @param {number} [nRotAngle=0] - Rotation angle.
-	 * @param {EMU} [nWidth=1828800] - Text Art width measured in English measure units.
-	 * @param {EMU} [nHeight=1828800] - Text Art heigth measured in English measure units.
+	 * @param {EMU} [nWidth=1828800] - The Text Art width measured in English measure units.
+	 * @param {EMU} [nHeight=1828800] - The Text Art heigth measured in English measure units.
 	 * @returns {ApiDrawing}
 	 */
 	Api.prototype.CreateWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight) {
@@ -17340,6 +17387,7 @@
 	ApiDocument.prototype["AddEndnote"]                  = ApiDocument.prototype.AddEndnote;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
+	ApiDocument.prototype["ReplaceCurrentImage"]         = ApiDocument.prototype.ReplaceCurrentImage;
 	ApiDocument.prototype["ReplaceDrawing"]              = ApiDocument.prototype.ReplaceDrawing;
 	ApiDocument.prototype["AcceptAllRevisionChanges"]    = ApiDocument.prototype.AcceptAllRevisionChanges;
 	ApiDocument.prototype["RejectAllRevisionChanges"]    = ApiDocument.prototype.RejectAllRevisionChanges;

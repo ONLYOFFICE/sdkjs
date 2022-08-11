@@ -133,7 +133,7 @@ ParaField.prototype.Add = function(Item)
 			var CurPos  = this.State.ContentPos;
 			var CurItem = this.Content[CurPos];
 
-			var CurContentPos = new CParagraphContentPos();
+			var CurContentPos = new AscWord.CParagraphContentPos();
 			CurItem.Get_ParaContentPos(false, false, CurContentPos);
 
 			var NewItem = CurItem.Split(CurContentPos, 0);
@@ -413,13 +413,13 @@ ParaField.prototype.Replace_MailMerge = function(_Value)
     if (null === ParaContentPos)
         return false;
 
-    var Depth    = ParaContentPos.Get_Depth();
+    var Depth    = ParaContentPos.GetDepth();
     var FieldPos = ParaContentPos.Get(Depth);
 
     if (Depth < 0)
         return false;
 
-    ParaContentPos.Decrease_Depth(1);
+    ParaContentPos.DecreaseDepth(1);
     var FieldContainer = Paragraph.Get_ElementByPos(ParaContentPos);
     if (!FieldContainer || !FieldContainer.Content || FieldContainer.Content[FieldPos] !== this)
         return false;

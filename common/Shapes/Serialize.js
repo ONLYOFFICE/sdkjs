@@ -360,9 +360,28 @@ function BinaryPPTYLoader()
                 this.presentation.Core.fromStream(s);
             }
 
+            if (undefined != _main_tables["8"])
+            {
+                // Customs
+                let nCustomPos = _main_tables["8"];
+                s.Seek2(nCustomPos);
+
+                //let nCustomType = s.GetUChar();
+                let nCustomCount = s.GetULong();
+                if(nCustomCount > 0) {
+                    for(let nRecord = 0; nRecord < nCustomCount; ++nRecord) {
+
+                        let nCustomType = s.GetUChar();
+                        s.SkipRecord();
+                    }
+                }
+                this.presentation.CustomXmlData = s.data.slice(nCustomPos, s.cur);
+                s.Seek2(nCustomPos);
+            }
+
             if (undefined != _main_tables["48"])
             {
-                // core
+                // CustomProperties
                 s.Seek2(_main_tables["48"]);
 
                 this.presentation.CustomProperties = new AscCommon.CCustomProperties();
@@ -5713,7 +5732,8 @@ function BinaryPPTYLoader()
                 }
                 case 4:
                 {
-                    s.GetUChar();
+                    const drawAspect = s.GetUChar();
+                    ole.setDrawAspect(drawAspect);
                     break;
                 }
                 case 5:
@@ -10890,7 +10910,8 @@ function BinaryPPTYLoader()
                     }
                     case 4:
                     {
-                        s.GetUChar();
+                        const drawAspect = s.GetUChar();
+                        ole.setDrawAspect(drawAspect);
                         break;
                     }
                     case 5:

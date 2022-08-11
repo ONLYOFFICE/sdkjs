@@ -1185,14 +1185,14 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
         if(!bSeries)
         {
 			j = 0;
-			if(Array.isArray(t.catAxisChart))
+			if(Array.isArray(t.axesChart))
 			{
-				for(j = 0; j < t.catAxisChart.length; ++j)
+				for(j = 0; j < t.axesChart.length; ++j)
 				{
-					var oAxObj = t.catAxisChart[j];
+					var oAxObj = t.axesChart[j];
 					if(oAxObj && oAxObj.paths)
 					{
-						if(oAxObj.catAx && oAxObj.catAx.compiledMajorGridLines && oAxObj.catAx.compiledMajorGridLines.isVisible()
+						if(oAxObj.axis && oAxObj.axis.compiledMajorGridLines && oAxObj.axis.compiledMajorGridLines.isVisible()
 							&& AscFormat.isRealNumber(oAxObj.paths.gridLines))//TODo Date Ax vehicle log book1.xlsx
 						{
 							var oPath = drawing.pathMemory.GetPath(oAxObj.paths.gridLines);
@@ -1202,12 +1202,12 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 								selector.resetSelection();
 								selector.selectObject(drawing, pageIndex);
 								selector.selection.chartSelection = drawing;
-								drawing.selection.axis = oAxObj.catAx;
+								drawing.selection.axis = oAxObj.axis;
 								drawing.selection.majorGridlines = true;
 								break;
 							}
 						}
-						if(!bSeries && oAxObj.catAx && oAxObj.catAx.compiledMinorGridLines && oAxObj.catAx.compiledMinorGridLines.isVisible()
+						if(!bSeries && oAxObj.axis && oAxObj.axis.compiledMinorGridLines && oAxObj.axis.compiledMinorGridLines.isVisible()
 							&& AscFormat.isRealNumber(oAxObj.paths.minorGridLines))
 						{
 							var oPath = drawing.pathMemory.GetPath(oAxObj.paths.minorGridLines);
@@ -1217,7 +1217,7 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 								selector.resetSelection();
 								selector.selectObject(drawing, pageIndex);
 								selector.selection.chartSelection = drawing;
-								drawing.selection.axis = oAxObj.catAx;
+								drawing.selection.axis = oAxObj.axis;
 								drawing.selection.minorGridlines = true;
 								break;
 							}
@@ -1225,49 +1225,6 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 					}
 				}
 			}
-            if(!Array.isArray(t.catAxisChart) || j ===  t.catAxisChart.length)
-            {
-				if(Array.isArray(t.valAxisChart))
-				{
-					for(j = 0; j < t.valAxisChart.length; ++j)
-					{
-						var oAxObj = t.valAxisChart[j];
-						if(oAxObj && oAxObj.paths)
-						{
-							if(oAxObj.valAx.compiledMajorGridLines && oAxObj.valAx.compiledMajorGridLines.isVisible() &&
-								AscFormat.isRealNumber(oAxObj.paths.gridLines))
-							{
-								var oPath = drawing.pathMemory.GetPath(oAxObj.paths.gridLines);
-								if(oPath.hitInPath(oCanvas, dTx, dTy))
-								{
-									bSeries = true;
-									selector.resetSelection();
-									selector.selectObject(drawing, pageIndex);
-									selector.selection.chartSelection = drawing;
-									drawing.selection.axis = oAxObj.valAx;
-									drawing.selection.majorGridlines = true;
-									break;
-								}
-							}
-							if(!bSeries && oAxObj.valAx.compiledMinorGridLines && oAxObj.valAx.compiledMinorGridLines.isVisible() &&
-								AscFormat.isRealNumber(oAxObj.paths.minorGridLines))
-							{
-								var oPath = drawing.pathMemory.GetPath(oAxObj.paths.minorGridLines);
-								if(oPath.hitInPath(oCanvas, dTx, dTy))
-								{
-									bSeries = true;
-									selector.resetSelection();
-									selector.selectObject(drawing, pageIndex);
-									selector.selection.chartSelection = drawing;
-									drawing.selection.axis = oAxObj.valAx;
-									drawing.selection.minorGridlines = true;
-									break;
-								}
-							}
-						}
-					}
-				}
-            }
         }
     }
     return bSeries;

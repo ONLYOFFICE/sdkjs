@@ -36,7 +36,7 @@
 {
 	AscCommon.baseEditorsApi.prototype._openChartOrLocalDocument = function ()
 	{
-		if (this.isChartEditor)
+		if (this.isFrameEditor())
 		{
 			return this._openEmptyDocument();
 		}
@@ -44,7 +44,7 @@
 	AscCommon.baseEditorsApi.prototype.onEndLoadFile2 = AscCommon.baseEditorsApi.prototype.onEndLoadFile;
 	AscCommon.baseEditorsApi.prototype.onEndLoadFile = function(result)
 	{
-		if (this.isChartEditor)
+		if (this.isFrameEditor())
 		{
 			return this.onEndLoadFile2(result);
 		}

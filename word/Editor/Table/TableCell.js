@@ -598,14 +598,14 @@ CTableCell.prototype =
         Table.Document_SetThisElementCurrent(bUpdateStates);
     },
 
-    Is_ThisElementCurrent : function()
+	IsThisElementCurrent : function()
     {
         var Table = this.Row.Table;
         if ( false === Table.Selection.Use && this === Table.CurCell )
         {
             var Parent = Table.Parent;
             if ((Parent instanceof AscFormat.CGraphicFrame) || docpostype_Content === Parent.GetDocPosType() && false === Parent.Selection.Use && this.Index === Parent.CurPos.ContentPos )
-                return Table.Parent.Is_ThisElementCurrent();
+                return Table.Parent.IsThisElementCurrent();
         }
 
         return false;

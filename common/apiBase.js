@@ -394,6 +394,9 @@
 	{
 		return null;
 	};
+	baseEditorsApi.prototype.isFrameEditor = function () {
+		return !!(this.isChartEditor || this.isOleEditor);
+	};
 	baseEditorsApi.prototype.asc_setCoreProps                = function(oProps)
 	{
 
@@ -659,8 +662,10 @@
 		if (AscCommon.isRealObject(oleBinary))
 		{
 			var _this = this;
-			if (oleBinary) {
-				if (!oleBinary['imageUrl']) {
+			if (oleBinary)
+			{
+				if (!oleBinary['imageUrl'])
+				{
 					var base64Image = oleBinary['base64Image'];
 					var fAfterUploadOleObjectImage = function (url) {
 						oleBinary['imageUrl'] = url;
@@ -676,9 +681,11 @@
 				}
 
 				var oController = this.getGraphicController();
-				if (oController) {
+				if (oController)
+				{
 					var selectedObjects = AscFormat.getObjectsByTypesFromArr(oController.selectedObjects);
-					if (selectedObjects.oleObjects.length === 1) {
+					if (selectedObjects.oleObjects.length === 1)
+					{
 						var selectedOleObject = selectedObjects.oleObjects[0];
 						var blipUrl = oleBinary['imageUrl'];
 						var binaryDataOfSheet = AscCommon.Base64.decode(oleBinary['binary']);
@@ -692,7 +699,7 @@
 						this.asc_editOleObjectAction(false, selectedOleObject, blipUrl, binaryDataOfSheet, mmExtX, mmExtY, adaptSizeWidth, adaptSizeHeight);
 					}
 				}
-				}
+			}
 		}
 	};
 	baseEditorsApi.prototype.canEdit                         = function()
@@ -813,7 +820,7 @@
 					locale = undefined;
 				}
 			}
-			let convertToOrigin = 'view' === this.DocInfo.get_Mode() ? '.docx.xlsx.pptx' : '';
+			let convertToOrigin = !!this.DocInfo.get_DirectUrl() ? '.docx.xlsx.pptx' : '';
 			rData = {
 				"c"             : 'open',
 				"id"            : this.documentId,
@@ -1768,9 +1775,6 @@
 		if (actionType)
 		{
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
-		}
-		if (Asc.c_oAscFileType.HTML === options.fileType && null == options.oDocumentMailMerge && null == options.oMailMergeSendData) {
-			options.fileType = Asc.c_oAscFileType.HTML_TODO;
 		}
 
 		var downloadType;

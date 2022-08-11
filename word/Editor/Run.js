@@ -7591,7 +7591,7 @@ ParaRun.prototype.Set_ParaContentPos = function(ContentPos, Depth)
 };
 /**
  * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange
- * @param {CParagraphContentPos} oContentPos - если null -> возвращает количество символов в элементе.
+ * @param {AscWord.CParagraphContentPos} oContentPos - если null -> возвращает количество символов в элементе.
  * @param {number} nDepth
  * @return {number}
  */
@@ -11590,7 +11590,7 @@ ParaRun.prototype.SetThisElementCurrent = function()
 		return;
 
 	var StartPos = ContentPos.Copy();
-	this.Get_StartPos(StartPos, StartPos.Get_Depth() + 1);
+	this.Get_StartPos(StartPos, StartPos.GetDepth() + 1);
 
 	this.Paragraph.Set_ParaContentPos(StartPos, true, -1, -1, false);
 	this.Paragraph.Document_SetThisElementCurrent(false);
@@ -11976,7 +11976,7 @@ ParaRun.prototype.Get_ClassesByPos = function(Classes, ContentPos, Depth)
 /**
  * Получаем позицию данного рана в родительском параграфе
  * @param nInObjectPos {?number}
- * @returns {?CParagraphContentPos}
+ * @returns {?AscWord.CParagraphContentPos}
  */
 ParaRun.prototype.GetParagraphContentPosFromObject = function(nInObjectPos)
 {
@@ -13049,7 +13049,7 @@ ParaRun.prototype.GetNextRunElement = function(nPos)
 /**
  * Получаем позицию следующего элемента внутри параграфа
  * @param nPos {number} позиция внутри данного рана
- * @returns {?{Element : AscWord.CRunElementBase, Pos : CParagraphContentPos}}
+ * @returns {?{Element : AscWord.CRunElementBase, Pos : AscWord.CParagraphContentPos}}
  */
 ParaRun.prototype.GetNextRunElementEx = function(nPos)
 {

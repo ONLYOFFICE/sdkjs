@@ -2245,25 +2245,28 @@
 		let oBorders = oCellPr.TableCellBorders;
 		let oShd = oCellPr.Shd;
 		let bBorders = oBorders && (oBorders.Left || oBorders.Right || oBorders.Top ||  oBorders.Bottom ||  oBorders.InsideH || oBorders.InsideV);
+		let bBg = sName === "a:tblBg"
 		if(bBorders ||
 			oCellPr.Shd && (oShd.FillRef || oShd.Unifill)) {
 
 			writer.WriteXmlNodeStart(sName);
 			writer.WriteXmlAttributesEnd();
-			if(bBorders) {
-				writer.WriteXmlNodeStart("a:tcBdr");
-				writer.WriteXmlAttributesEnd();
-				this.writeTcBorder(writer, oBorders.Left, "a:left");
-				this.writeTcBorder(writer, oBorders.Right, "a:right");
-				this.writeTcBorder(writer, oBorders.Top, "a:top");
-				this.writeTcBorder(writer, oBorders.Bottom, "a:bottom");
-				this.writeTcBorder(writer, oBorders.InsideH, "a:insideH");
-				this.writeTcBorder(writer, oBorders.InsideV, "a:insideV");
-				writer.WriteXmlNodeEnd("a:tcBdr");
-			}
-			else {
-				writer.WriteXmlNodeStart("a:tcBdr");
-				writer.WriteXmlAttributesEnd(true);
+			if(!bBg) {
+				if(bBorders) {
+					writer.WriteXmlNodeStart("a:tcBdr");
+					writer.WriteXmlAttributesEnd();
+					this.writeTcBorder(writer, oBorders.Left, "a:left");
+					this.writeTcBorder(writer, oBorders.Right, "a:right");
+					this.writeTcBorder(writer, oBorders.Top, "a:top");
+					this.writeTcBorder(writer, oBorders.Bottom, "a:bottom");
+					this.writeTcBorder(writer, oBorders.InsideH, "a:insideH");
+					this.writeTcBorder(writer, oBorders.InsideV, "a:insideV");
+					writer.WriteXmlNodeEnd("a:tcBdr");
+				}
+				else {
+					writer.WriteXmlNodeStart("a:tcBdr");
+					writer.WriteXmlAttributesEnd(true);
+				}
 			}
 			if(oShd) {
 				if(oShd.FillRef) {
@@ -2297,7 +2300,7 @@
 			writer.WriteXmlNodeStart(sName);
 			writer.WriteXmlAttributesEnd();
 			if(oBorder.LineRef) {
-				oBorder.LineRef.toXml("a:lnRef");
+				oBorder.LineRef.toXml(writer, "a:lnRef");
 			}
 			else {
 				let oLn = new AscFormat.CLn();

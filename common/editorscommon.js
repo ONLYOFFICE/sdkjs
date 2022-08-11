@@ -1540,7 +1540,6 @@
 				return 'pdf';
 				break;
 			case c_oAscFileType.HTML:
-			case c_oAscFileType.HTML_TODO:
 				return 'html';
 				break;
 			// Word

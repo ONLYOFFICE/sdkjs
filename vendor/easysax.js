@@ -1673,8 +1673,7 @@ XmlParserContext.prototype.loadDataLinks = function() {
             let data = this.zip.getFile(path);
             if (data) {
                 if (!window["NATIVE_EDITOR_ENJINE"]) {
-                    let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
-                    let blob = new Blob([data], {type: mime});
+                    let blob = this.zip.getImageBlob(path);
                     let url = window.URL.createObjectURL(blob);
                     AscCommon.g_oDocumentUrls.addImageUrl(path, url);
                 }
