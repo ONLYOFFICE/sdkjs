@@ -115,6 +115,8 @@ function CChartsDrawer()
 	this.sideWall3DChart = null;
 	this.backWall3DChart = null;
 
+	this.errBars = null;
+
 	this.changeAxisMap = null;
 }
 
@@ -190,8 +192,12 @@ CChartsDrawer.prototype =
 			}
 		}
 
+		if (!chartSpace.bEmptySeries) {
+			this.errBars.recalculate(this.charts);
+		}
+
 		//for test
-		this._testChartsPaths();
+		//this._testChartsPaths();
 	},
 
 	init: function(chartSpace) {
@@ -203,6 +209,7 @@ CChartsDrawer.prototype =
 		this.floor3DChart = new floor3DChart();
 		this.sideWall3DChart = new sideWall3DChart();
 		this.backWall3DChart = new backWall3DChart();
+		this.errBars = new CErrBarsDraw(this);
 
 		//draw chart
 		var newChart;
@@ -315,6 +322,7 @@ CChartsDrawer.prototype =
 			}
 		};
 
+		var i;
 		if (!chartSpace.bEmptySeries) {
 			this.plotAreaChart.draw(this, true);
 
@@ -325,7 +333,7 @@ CChartsDrawer.prototype =
 					this.backWall3DChart.draw(this);
 				}
 				//GRID
-				for(var i = 0; i < this.axesChart.length; i++) {
+				for(i = 0; i < this.axesChart.length; i++) {
 					this.axesChart[i].draw(this, true);
 				}
 				this.plotAreaChart.draw(this, null, true);
@@ -335,12 +343,15 @@ CChartsDrawer.prototype =
 			//рисуем оси поверх 3d-диаграмм и линейных/точечных
 			drawCharts(true);
 
-			for(var i = 0; i < this.axesChart.length; i++) {
+			for(i = 0; i < this.axesChart.length; i++) {
 				this.axesChart[i].draw(this);
 			}
 
 			//DRAW CHARTS
 			drawCharts();
+
+			//err bars
+			this.errBars.draw();
 		}
 	},
 
@@ -15278,7 +15289,162 @@ plotAreaChart.prototype =
 	}
 };
 
-	/** @constructor */
+function CErrBarsDraw(chartsDrawer) {
+	this.cChartDrawer = chartsDrawer;
+	this.paths = {};
+}
+
+CErrBarsDraw.prototype = {
+	constructor: CErrBarsDraw,
+
+	draw: function () {
+
+	},
+
+	recalculate: function (charts) {
+		this.paths = {};
+		for (var i in charts) {
+			this.recalculateChart(charts[i]);
+		}
+	},
+
+	recalculateChart: function (oChart) {
+		//TODO пока только для line
+		if (!oChart.paths.points) {
+			return;
+		}
+		for (var i = 0; i < oChart.paths.points.length; i++) {
+			if (oChart.paths.points[i]) {
+				for (var j = 0; j < oChart.paths.points[i].length; j++) {
+					if (oChart.paths.points[i][j]) {
+						var point = this.cChartDrawer.getPointByIndex(oChart.chart.series[i], j);
+						var path;
+
+						if(!point) {
+							continue;
+						}
+
+						var commandIndex = 0;
+						if(oChart.paths.points[i] && oChart.paths.points[i][j]){
+							path = oChart.paths.points[i][j].path;
+						}
+
+
+						if (!AscFormat.isRealNumber(path)) {
+							continue;
+						}
+
+						var oPath = this.cChartDrawer.cChartSpace.GetPath(path);
+						var oCommand0 = oPath.getCommandByIndex(commandIndex);
+						var x = oCommand0.X;
+						var y = oCommand0.Y;
+
+						var pxToMm = this.cChartDrawer.calcProp.pxToMM;
+
+						console.log("x: " + x + " y: " + y);
+
+						/*var width = point.compiledDlb.extX;
+						var height = point.compiledDlb.extY;
+
+
+						var centerX = x - width / 2;
+						var centerY = y - height / 2;
+
+						switch (point.compiledDlb.dLblPos) {
+							case c_oAscChartDataLabelsPos.b: {
+								centerY = centerY + height / 2 + constMargin;
+								break;
+							}
+							case c_oAscChartDataLabelsPos.bestFit: {
+								break;
+							}
+							case c_oAscChartDataLabelsPos.ctr: {
+								break;
+							}
+							case c_oAscChartDataLabelsPos.l: {
+								centerX = centerX - width / 2 - constMargin;
+								break;
+							}
+							case c_oAscChartDataLabelsPos.r: {
+								centerX = centerX + width / 2 + constMargin;
+								break;
+							}
+							case c_oAscChartDataLabelsPos.t: {
+								centerY = centerY - height / 2 - constMargin;
+								break;
+							}
+						}
+
+						if (centerX < 0) {
+							centerX = 0;
+						}
+						if (centerX + width > this.cChartDrawer.calcProp.widthCanvas / pxToMm) {
+							centerX = this.cChartDrawer.calcProp.widthCanvas / pxToMm - width;
+						}
+
+						if (centerY < 0) {
+							centerY = 0;
+						}
+						if (centerY + height > this.cChartDrawer.calcProp.heightCanvas / pxToMm) {
+							centerY = this.cChartDrawer.calcProp.heightCanvas / pxToMm - height;
+						}
+
+						return {x: centerX, y: centerY};*/
+					}
+				}
+			}
+		}
+	},
+
+	_drawLines: function (/*isSkip*/) {
+		//TODO для того, чтобы верхняя линия рисовалась. пересмотреть!
+		var diffPen = 3;
+		var leftRect = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
+		var topRect = (this.chartProp.chartGutter._top - diffPen) / this.chartProp.pxToMM;
+		var rightRect = this.chartProp.trueWidth / this.chartProp.pxToMM;
+		var bottomRect = (this.chartProp.trueHeight + diffPen) / this.chartProp.pxToMM;
+
+		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+		this.cChartDrawer.drawPaths(this.paths, this.chart.series, true);
+		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+
+		this.cChartDrawer.drawPathsPoints(this.paths, this.chart.series);
+	},
+
+	_drawLine3D: function (path, pen, brush, k) {
+		//затемнение боковых сторон
+		//в excel всегда темные боковые стороны, лицевая и задняя стороны светлые
+
+		//todo возможно стоит проверить fill.type на FILL_TYPE_NOFILL и рисовать отдельно границы, если они заданы!
+		//brush = pen.Fill;
+
+		if (k !== 2) {
+			var props = this.cChartSpace.getParentObjects();
+			var duplicateBrush = brush.createDuplicate();
+			var cColorMod = new AscFormat.CColorMod;
+
+			cColorMod.name = "shade";
+			if (k === 1 || k === 4) {
+				cColorMod.val = 45000;
+			} else {
+				cColorMod.val = 35000;
+			}
+
+			this._addColorMods(cColorMod, duplicateBrush);
+
+			duplicateBrush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, this.cChartSpace.clrMapOvr);
+			pen = AscFormat.CreatePenFromParams(duplicateBrush, undefined, undefined, undefined, undefined, 0.1);
+
+			this.cChartDrawer.drawPath(path, pen, duplicateBrush);
+		} else {
+			pen = AscFormat.CreatePenFromParams(brush, undefined, undefined, undefined, undefined, 0.1);
+			this.cChartDrawer.drawPath(path, pen, brush);
+		}
+	}
+};
+
+/** @constructor */
 function CGeometry2()
 {
     this.pathLst = [];
