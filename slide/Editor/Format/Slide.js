@@ -242,6 +242,18 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         for(var i = 0; i < this.cSld.spTree.length; ++i){
             this.cSld.spTree[i].Reassign_ImageUrls(images_rename);
         }
+
+        if(this.cSld.Bg &&
+            this.cSld.Bg.bgPr &&
+            this.cSld.Bg.bgPr.Fill &&
+            this.cSld.Bg.bgPr.Fill.fill instanceof AscFormat.CBlipFill &&
+            typeof this.cSld.Bg.bgPr.Fill.fill.RasterImageId === "string" &&
+            images_rename[this.cSld.Bg.bgPr.Fill.fill.RasterImageId])
+        {
+            let oBg = this.cSld.Bg.createFullCopy();
+            oBg.bgPr.Fill.fill.RasterImageId = images_rename[oBg.bgPr.Fill.fill.RasterImageId];
+            this.changeBackground(oBg);
+        }
     };
     Slide.prototype.Clear_CollaborativeMarks = function()
     {

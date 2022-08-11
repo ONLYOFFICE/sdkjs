@@ -4301,6 +4301,9 @@ CPresentation.prototype.setShowPr = function (oShowPr) {
 CPresentation.prototype.createDefaultTableStyles = function () {
     //AscFormat.ExecuteNoHistory(function(){
     this.globalTableStyles = new CStyles(false);
+
+    this.globalTableStyles.Id = AscCommon.g_oIdCounter.Get_NewId();
+    AscCommon.g_oTableId.Add( this.globalTableStyles, this.globalTableStyles.Id );
     this.DefaultTableStyleId = CreatePresentationTableStyles(this.globalTableStyles, this.TableStylesIdMap);
     //}, this, []);
 };
@@ -8012,15 +8015,46 @@ CPresentation.prototype.Get_AllImageUrls = function (aImages) {
     if (!Array.isArray(aImages)) {
         aImages = [];
     }
-    for (var i = 0; i < this.Slides.length; ++i) {
-        this.Slides[i].getAllRasterImages(aImages);
+    let oObjectsToCheck = {};
+    for (let i = 0; i < this.Slides.length; ++i) {
+        let oSlide = this.Slides[i];
+
+        oSlide.getAllRasterImages(aImages);
+        let oLayout = oSlide.Layout;
+        if(oLayout) {
+            oObjectsToCheck[oLayout.Id] = oLayout;
+            let oMaster = oLayout.Master;
+            if(oMaster) {
+                oObjectsToCheck[oMaster.Id] = oMaster;
+            }
+        }
+    }
+    for(let sKey in oObjectsToCheck) {
+        if(oObjectsToCheck.hasOwnProperty(sKey)) {
+            oObjectsToCheck[sKey].getAllRasterImages(aImages);
+        }
     }
     return aImages;
 };
 
 CPresentation.prototype.Reassign_ImageUrls = function (images_rename) {
-    for (var i = 0; i < this.Slides.length; ++i) {
-        this.Slides[i].Reassign_ImageUrls(images_rename);
+    let oObjectsToCheck = {};
+    for (let i = 0; i < this.Slides.length; ++i) {
+        let oSlide = this.Slides[i];
+        oSlide.Reassign_ImageUrls(images_rename);
+        let oLayout = oSlide.Layout;
+        if(oLayout) {
+            oObjectsToCheck[oLayout.Id] = oLayout;
+            let oMaster = oLayout.Master;
+            if(oMaster) {
+                oObjectsToCheck[oMaster.Id] = oMaster;
+            }
+        }
+    }
+    for(let sKey in oObjectsToCheck) {
+        if(oObjectsToCheck.hasOwnProperty(sKey)) {
+            oObjectsToCheck[sKey].Reassign_ImageUrls(images_rename);
+        }
     }
 };
 

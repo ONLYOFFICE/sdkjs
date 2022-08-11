@@ -9255,7 +9255,7 @@ CStyles.prototype =
             var StyleId = LinkData.UpdateStyleId;
 
             var LogicDocument = editor.WordControl.m_oLogicDocument;
-            if (!LogicDocument)
+            if (!LogicDocument || !LogicDocument.IsDocumentEditor())
                 return;
 
             var AllParagraphs = [];
