@@ -11657,6 +11657,38 @@
 		FmtScheme.prototype.addBgFillToStyleLst = function (pr) {
 			this.bgFillStyleLst.push(pr);
 		};
+		FmtScheme.prototype.getAllRasterImages = function(aImages) {
+			for(let nIdx = 0; nIdx < this.fillStyleLst.length; ++nIdx) {
+				let oUnifill = this.fillStyleLst[nIdx];
+				let sRasterImageId = oUnifill && oUnifill.fill && oUnifill.fill.RasterImageId;
+				if(sRasterImageId) {
+					aImages.push(sRasterImageId);
+				}
+			}
+			for(let nIdx = 0; nIdx < this.bgFillStyleLst.length; ++nIdx) {
+				let oUnifill = this.bgFillStyleLst[nIdx];
+				let sRasterImageId = oUnifill && oUnifill.fill && oUnifill.fill.RasterImageId;
+				if(sRasterImageId) {
+					aImages.push(sRasterImageId);
+				}
+			}
+		};
+		FmtScheme.prototype.Reassign_ImageUrls = function(oImageMap) {
+			for(let nIdx = 0; nIdx < this.fillStyleLst.length; ++nIdx) {
+				let oUnifill = this.fillStyleLst[nIdx];
+				let sRasterImageId = oUnifill && oUnifill.fill && oUnifill.fill.RasterImageId;
+				if(sRasterImageId && oImageMap[sRasterImageId]) {
+					oUnifill.fill.RasterImageId = oImageMap[sRasterImageId]
+				}
+			}
+			for(let nIdx = 0; nIdx < this.bgFillStyleLst.length; ++nIdx) {
+				let oUnifill = this.bgFillStyleLst[nIdx];
+				let sRasterImageId = oUnifill && oUnifill.fill && oUnifill.fill.RasterImageId;
+				if(sRasterImageId && oImageMap[sRasterImageId]) {
+					oUnifill.fill.RasterImageId = oImageMap[sRasterImageId]
+				}
+			}
+		};
 		FmtScheme.prototype.readAttrXml = function (name, reader) {
 			switch (name) {
 				case "name": {
@@ -11675,7 +11707,6 @@
 				aArray.push(oObj);
 			}
 		};
-
 		FmtScheme.prototype.writeList = function (writer, aArray, sName, sChildName) {
 
 
@@ -12012,6 +12043,29 @@
 					if(oPresentation) {
 						oPresentation.Refresh_RecalcData({Type: AscDFH.historyitem_Presentation_ChangeTheme, aIndexes: aSlideIndexes});
 					}
+				}
+			}
+		};
+		CTheme.prototype.getAllRasterImages = function(aImages) {
+			if(this.themeElements && this.themeElements.fmtScheme) {
+				this.themeElements.fmtScheme.getAllRasterImages(aImages);
+			}
+		};
+		CTheme.prototype.Reassign_ImageUrls = function(images_rename) {
+			if(this.themeElements && this.themeElements.fmtScheme) {
+				let aImages = [];
+				this.themeElements.fmtScheme.getAllRasterImages(aImages);
+				let bReassign = false;
+				for(let nImage = 0; nImage < aImages.length; ++nImage) {
+					if(images_rename[aImages[nImage]]) {
+						bReassign = true;
+						break;
+					}
+				}
+				if(bReassign) {
+					let oNewFmtScheme = this.themeElements.fmtScheme.createDuplicate();
+					oNewFmtScheme.Reassign_ImageUrls(images_rename);
+					this.setFormatScheme(oNewFmtScheme);
 				}
 			}
 		};

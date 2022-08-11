@@ -8026,6 +8026,10 @@ CPresentation.prototype.Get_AllImageUrls = function (aImages) {
             let oMaster = oLayout.Master;
             if(oMaster) {
                 oObjectsToCheck[oMaster.Id] = oMaster;
+                let oTheme = oMaster.Theme;
+                if(oTheme) {
+                    oObjectsToCheck[oTheme.Id] = oTheme;
+                }
             }
         }
     }
@@ -8048,6 +8052,10 @@ CPresentation.prototype.Reassign_ImageUrls = function (images_rename) {
             let oMaster = oLayout.Master;
             if(oMaster) {
                 oObjectsToCheck[oMaster.Id] = oMaster;
+                let oTheme = oMaster.Theme;
+                if(oTheme) {
+                    oObjectsToCheck[oTheme.Id] = oTheme;
+                }
             }
         }
     }
