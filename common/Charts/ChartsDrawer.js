@@ -15298,6 +15298,30 @@ CErrBarsDraw.prototype = {
 	constructor: CErrBarsDraw,
 
 	draw: function () {
+		var leftRect = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
+		var topRect = (this.chartProp.chartGutter._top - diffPen) / this.chartProp.pxToMM;
+		var rightRect = this.chartProp.trueWidth / this.chartProp.pxToMM;
+		var bottomRect = (this.chartProp.trueHeight + diffPen) / this.chartProp.pxToMM;
+
+		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+
+		var numPoint = numCache ? numCache.getPtByIndex(k) : null;
+		if (numPoint) {
+			markerBrush = numPoint.compiledMarker ? numPoint.compiledMarker.brush : null;
+			markerPen = numPoint.compiledMarker ? numPoint.compiledMarker.pen : null;
+		}
+
+		//frame of point
+		if (paths.points[i][k] && paths.points[i][k].framePaths) {
+			this.drawPath(paths.points[i][k].framePaths, null, markerBrush, false);
+		}
+		//point
+		if (paths.points[i][k]) {
+			this.drawPath(paths.points[i][k].path, markerPen, markerBrush, true);
+		}
+
+		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
 
 	},
 
@@ -15313,87 +15337,217 @@ CErrBarsDraw.prototype = {
 		if (!oChart.paths.points) {
 			return;
 		}
+
+		//TODO errBars -> errDir  - вдоль какой оси
+		//var nErrDir = oParsedErrBars.errDir === "x" ? AscFormat.st_errdirX : AscFormat.st_errdirY;
+
+		var t = this;
+		var calcErrLine = function (_start, _end, pos) {
+			var pathId = t.cChartDrawer.cChartSpace.AllocPath();
+			var path = t.cChartDrawer.cChartSpace.GetPath(pathId);
+
+			var pathH = t.cChartDrawer.calcProp.pathH;
+			var pathW = t.cChartDrawer.calcProp.pathW;
+
+			if (errBars.errDir === AscFormat.st_errdirX) {
+
+			} else {
+				path.moveTo(pos * pathW, _start * pathH);
+				path.lnTo(pos * pathW, _end * pathH);
+			}
+
+			return pathId;
+		};
+
+		var errBars;
 		for (var i = 0; i < oChart.paths.points.length; i++) {
 			if (oChart.paths.points[i]) {
+				if (!oChart.chart.series[i].errBars) {
+					continue;
+				}
+				errBars = oChart.chart.series[i].errBars;
 				for (var j = 0; j < oChart.paths.points[i].length; j++) {
 					if (oChart.paths.points[i][j]) {
-						var point = this.cChartDrawer.getPointByIndex(oChart.chart.series[i], j);
-						var path;
+						//расчитываем величину погрешности в одну сторону
+						var errVal = this.calculateErrVal(oChart, i, j);
+						if (errVal !== null) {
 
-						if(!point) {
-							continue;
-						}
+							var point = this.cChartDrawer.getPointByIndex(oChart.chart.series[i], j);
+							var path;
 
-						var commandIndex = 0;
-						if(oChart.paths.points[i] && oChart.paths.points[i][j]){
-							path = oChart.paths.points[i][j].path;
-						}
-
-
-						if (!AscFormat.isRealNumber(path)) {
-							continue;
-						}
-
-						var oPath = this.cChartDrawer.cChartSpace.GetPath(path);
-						var oCommand0 = oPath.getCommandByIndex(commandIndex);
-						var x = oCommand0.X;
-						var y = oCommand0.Y;
-
-						var pxToMm = this.cChartDrawer.calcProp.pxToMM;
-
-						console.log("x: " + x + " y: " + y);
-
-						/*var width = point.compiledDlb.extX;
-						var height = point.compiledDlb.extY;
-
-
-						var centerX = x - width / 2;
-						var centerY = y - height / 2;
-
-						switch (point.compiledDlb.dLblPos) {
-							case c_oAscChartDataLabelsPos.b: {
-								centerY = centerY + height / 2 + constMargin;
-								break;
+							if(!point) {
+								continue;
 							}
-							case c_oAscChartDataLabelsPos.bestFit: {
-								break;
-							}
-							case c_oAscChartDataLabelsPos.ctr: {
-								break;
-							}
-							case c_oAscChartDataLabelsPos.l: {
-								centerX = centerX - width / 2 - constMargin;
-								break;
-							}
-							case c_oAscChartDataLabelsPos.r: {
-								centerX = centerX + width / 2 + constMargin;
-								break;
-							}
-							case c_oAscChartDataLabelsPos.t: {
-								centerY = centerY - height / 2 - constMargin;
-								break;
-							}
-						}
 
-						if (centerX < 0) {
-							centerX = 0;
-						}
-						if (centerX + width > this.cChartDrawer.calcProp.widthCanvas / pxToMm) {
-							centerX = this.cChartDrawer.calcProp.widthCanvas / pxToMm - width;
-						}
+							var commandIndex = 0;
+							if(oChart.paths.points[i] && oChart.paths.points[i][j]){
+								path = oChart.paths.points[i][j].path;
+							}
 
-						if (centerY < 0) {
-							centerY = 0;
-						}
-						if (centerY + height > this.cChartDrawer.calcProp.heightCanvas / pxToMm) {
-							centerY = this.cChartDrawer.calcProp.heightCanvas / pxToMm - height;
-						}
 
-						return {x: centerX, y: centerY};*/
+							if (!AscFormat.isRealNumber(path)) {
+								continue;
+							}
+
+							var pxToMm = this.cChartDrawer.calcProp.pxToMM;
+							var oPath = this.cChartDrawer.cChartSpace.GetPath(path);
+							var oCommand0 = oPath.getCommandByIndex(commandIndex);
+							var x = oCommand0.X * pxToMm;
+							var y = oCommand0.Y * pxToMm;
+
+							var axis = this.cChartDrawer.getAxisFromAxId(oChart.chart.axId, AscDFH.historyitem_type_ValAx);
+							//резмер оси + минимальное/максимальное значение оси
+
+
+							//todo пока конкретно для line реализую
+							var start, end;
+							switch (errBars.errBarType) {
+								case AscFormat.st_errbartypeBOTH: {
+									start = this.cChartDrawer.getYPosition(point.val - errVal, axis);
+									end = this.cChartDrawer.getYPosition(point.val + errVal, axis);
+									break;
+								}
+								case AscFormat.st_errbartypeMINUS: {
+									start = this.cChartDrawer.getYPosition(point.val, axis);
+									end = this.cChartDrawer.getYPosition(point.val + errVal, axis);
+									break;
+								}
+								case AscFormat.st_errbartypePLUS: {
+									start = this.cChartDrawer.getYPosition(point.val - errVal, axis);
+									end = this.cChartDrawer.getYPosition(point.val, axis);
+									break;
+								}
+							}
+
+							if (!this.paths[i]) {
+								this.paths[i] = [];
+							}
+							this.paths[i].push(calcErrLine(start, end, x));
+
+							/*Id: "35"
+							errBarType: 0
+							errDir: 1
+							errValType: 2
+							minus: null
+							noEndCap: false
+							parent: CLineSeries {Id: '30', parent: CLineChart, idx: 0, order: 0, tx: null, …}
+							pen: null
+							plus: null
+							spPr: CSpPr {Id: '36', parent: CErrBars, bwMode: 0, xfrm: null, geometry: null, …}
+							val: 10*/
+
+
+
+
+							console.log("x: " + x*pxToMm + " y: " + y*pxToMm);
+
+							/*var width = point.compiledDlb.extX;
+							var height = point.compiledDlb.extY;
+
+
+							var centerX = x - width / 2;
+							var centerY = y - height / 2;
+
+							switch (point.compiledDlb.dLblPos) {
+								case c_oAscChartDataLabelsPos.b: {
+									centerY = centerY + height / 2 + constMargin;
+									break;
+								}
+								case c_oAscChartDataLabelsPos.bestFit: {
+									break;
+								}
+								case c_oAscChartDataLabelsPos.ctr: {
+									break;
+								}
+								case c_oAscChartDataLabelsPos.l: {
+									centerX = centerX - width / 2 - constMargin;
+									break;
+								}
+								case c_oAscChartDataLabelsPos.r: {
+									centerX = centerX + width / 2 + constMargin;
+									break;
+								}
+								case c_oAscChartDataLabelsPos.t: {
+									centerY = centerY - height / 2 - constMargin;
+									break;
+								}
+							}
+
+							if (centerX < 0) {
+								centerX = 0;
+							}
+							if (centerX + width > this.cChartDrawer.calcProp.widthCanvas / pxToMm) {
+								centerX = this.cChartDrawer.calcProp.widthCanvas / pxToMm - width;
+							}
+
+							if (centerY < 0) {
+								centerY = 0;
+							}
+							if (centerY + height > this.cChartDrawer.calcProp.heightCanvas / pxToMm) {
+								centerY = this.cChartDrawer.calcProp.heightCanvas / pxToMm - height;
+							}
+
+							return {x: centerX, y: centerY};*/
+						}
 					}
 				}
 			}
 		}
+	},
+
+	calculateErrVal: function (oChart, ser, val) {
+		var res = null;
+		var seria = oChart.chart.series[ser];
+		if (seria && seria.errBars) {
+			var errBars = seria.errBars;
+			var point = this.cChartDrawer.getPointByIndex(seria, val);
+			var pointVal = point.val;
+
+
+			switch (errBars.errValType) {
+				case AscFormat.st_errvaltypeCUST: {
+
+					break;
+				}
+				case AscFormat.st_errvaltypeFIXEDVAL: {
+					res = pointVal;
+					break;
+				}
+				case AscFormat.st_errvaltypePERCENTAGE: {
+					res = pointVal * errBars.val / 100;
+					break;
+				}
+				case AscFormat.st_errvaltypeSTDDEV: {
+
+					break;
+				}
+				case AscFormat.st_errvaltypeSTDERR: {
+
+					break;
+				}
+			}
+
+
+			/*var st_errvaltypeCUST = 0;
+			var st_errvaltypeFIXEDVAL = 1;
+			var st_errvaltypePERCENTAGE = 2;
+			var st_errvaltypeSTDDEV = 3;
+			var st_errvaltypeSTDERR = 4;*/
+
+			/*Id: "35"
+			errBarType: 0
+			errDir: 1
+			errValType: 2
+			minus: null
+			noEndCap: false
+			parent: CLineSeries {Id: '30', parent: CLineChart, idx: 0, order: 0, tx: null, …}
+			pen: null
+			plus: null
+			spPr: CSpPr {Id: '36', parent: CErrBars, bwMode: 0, xfrm: null, geometry: null, …}
+			val: 10*/
+
+		}
+		return res;
 	},
 
 	_drawLines: function (/*isSkip*/) {
