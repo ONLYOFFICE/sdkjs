@@ -15348,6 +15348,7 @@ CErrBarsDraw.prototype = {
 
 		var res = [];
 		var t = this;
+		var pxToMm = this.cChartDrawer.calcProp.pxToMM;
 		var calcErrLine = function (_start, _end, pos) {
 			var pathId = t.cChartDrawer.cChartSpace.AllocPath();
 			var path = t.cChartDrawer.cChartSpace.GetPath(pathId);
@@ -15360,6 +15361,17 @@ CErrBarsDraw.prototype = {
 			} else {
 				path.moveTo(pos * pathW, _start * pathH);
 				path.lnTo(pos * pathW, _end * pathH);
+			}
+
+			if (!errBars.noEndCap) {
+				var sizeCap = 5 / pxToMm;
+
+				path.moveTo((pos - sizeCap / 2) * pathW, _start * pathH);
+				path.lnTo((pos + sizeCap / 2) * pathW, _start * pathH);
+
+				path.moveTo((pos - sizeCap / 2) * pathW, _end * pathH);
+				path.lnTo((pos + sizeCap / 2) * pathW, _end * pathH);
+
 			}
 
 			return pathId;
@@ -15395,7 +15407,6 @@ CErrBarsDraw.prototype = {
 								continue;
 							}
 
-							var pxToMm = this.cChartDrawer.calcProp.pxToMM;
 							var oPath = this.cChartDrawer.cChartSpace.GetPath(path);
 							var oCommand0 = oPath.getCommandByIndex(commandIndex);
 							var x = oCommand0.X;
