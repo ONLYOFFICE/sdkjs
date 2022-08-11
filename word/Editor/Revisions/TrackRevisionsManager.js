@@ -468,6 +468,9 @@
 	CTrackRevisionsManager.prototype.InitSelectedChanges = function()
 	{
 		var oEditorApi = this.LogicDocument.GetApi();
+		if (!oEditorApi)
+			return;
+
 		oEditorApi.sync_BeginCatchRevisionsChanges();
 		oEditorApi.sync_EndCatchRevisionsChanges();
 	};
@@ -476,6 +479,9 @@
 		if (this.SelectedChanges.length > 0)
 		{
 			var oEditorApi = this.LogicDocument.GetApi();
+			if (!oEditorApi)
+				return;
+
 			oEditorApi.sync_BeginCatchRevisionsChanges();
 			oEditorApi.sync_EndCatchRevisionsChanges();
 		}

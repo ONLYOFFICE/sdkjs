@@ -795,6 +795,12 @@
 					var byCol = null;
 					for (var i = 1; i < ws.model.selectionRange.ranges.length; i++) {
 						var nextRange = ws.model.selectionRange.ranges[i];
+
+						if (nextRange.isIntersectWithRanges(ws.model.selectionRange.ranges, i)) {
+							res = false;
+							break;
+						}
+
 						if (byCol === null && firstRange.r1 === nextRange.r1 && firstRange.r2 === nextRange.r2) {
 							byCol = false;
 						} else if (byCol === null && firstRange.c1 === nextRange.c1 && firstRange.c2 === nextRange.c2) {

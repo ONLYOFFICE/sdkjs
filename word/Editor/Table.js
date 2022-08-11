@@ -10056,36 +10056,33 @@ CTable.prototype.RemoveTableRow = function(Ind)
  */
 CTable.prototype.Row_Remove2 = function()
 {
-	if (false == this.Selection.Use || table_Selection_Text == this.Selection.Type)
+	if (!this.IsCellSelection())
 		return true;
 
-	var Rows_to_delete = [];
-	for (var Index = 0; Index < this.Content.length; Index++)
-		Rows_to_delete[Index] = 0;
+	let arrRowsToDelete = [];
+	for (let nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+		arrRowsToDelete[nCurRow] = 0;
 
-	for (var Index = 0; Index < this.Selection.Data.length; Index++)
+	let arrSelection = this.GetSelectionArray(false);
+	for (let nIndex = 0, nCount = arrSelection.length; nIndex < nCount; ++nIndex)
 	{
-		var Pos = this.Selection.Data[Index];
-		if (0 == Rows_to_delete[Pos.Row])
-			Rows_to_delete[Pos.Row] = 1;
+		arrRowsToDelete[arrSelection[nIndex].Row]++;
 	}
 
-	// Удаляем строки.
-	for (var Index = this.Content.length - 1; Index >= 0; Index--)
+	this.RemoveSelection();
+
+	for (let nCurRow = this.GetRowsCount() - 1; nCurRow >= 0; --nCurRow)
 	{
-		if (0 != Rows_to_delete[Index])
-			this.private_RemoveRow(Index);
+		if (arrRowsToDelete[nCurRow])
+			this.private_RemoveRow(nCurRow);
 	}
 
-	// При удалении последней строки, надо сообщить об этом родительскому классу
-	if (this.Content.length <= 0)
+	if (!this.GetRowsCount())
 		return false;
 
 	// Проверяем текущую ячейку
 	if (this.CurCell.Row.Index >= this.Content.length)
-		this.CurCell = this.Content[this.Content.length - 1].Get_Cell(0);
-
-	this.RemoveSelection();
+		this.CurCell = this.GetRow(this.GetRowsCount() - 1).GetCell(0);
 
 	return true;
 };

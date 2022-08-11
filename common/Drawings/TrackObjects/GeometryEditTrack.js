@@ -509,23 +509,16 @@
         oXfrm.setExtY(dExtY);
         oXfrm.setRot(0);
         var oOffset;
-        //set new position
-        if(bWord && !this.originalObject.group) {
-            oXfrm.setOffX(0);
-            oXfrm.setOffY(0);
-        }
-		else if(this.originalObject.animMotionTrack) {
+        if(this.originalObject.animMotionTrack) {
             oOffset = this.getXfrmOffset();
-            this.originalObject.updateAnimation(oOffset.OffX, oOffset.OffY, dExtX, dExtY, 0, this.geometry)
-
-
+            this.originalObject.updateAnimation(oOffset.OffX, oOffset.OffY, dExtX, dExtY, 0, this.geometry);
         }
         else {
             oXfrm.setExtX(dExtX);
             oXfrm.setExtY(dExtY);
             oXfrm.setRot(0);
             //set new position
-            if(bWord) {
+            if(bWord && !this.originalObject.group) {
                 oXfrm.setOffX(0);
                 oXfrm.setOffY(0);
             }
@@ -859,6 +852,7 @@
         AscFormat.ExecuteNoHistory(
             function(){
                 var geometry = this.geometry;
+                this.geometry.setPreset(null);
                 this.calculateMinMax();
                 var w = this.xMax - this.xMin, h = this.yMax - this.yMin;
                 var kw, kh, pathW, pathH;

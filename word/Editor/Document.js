@@ -1787,7 +1787,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
     //------------------------------------------------------------------------------------------------------------------
     this.History              = History;
     this.IdCounter            = AscCommon.g_oIdCounter;
-    this.TableId              = g_oTableId;
+    this.TableId              = AscCommon.g_oTableId;
     this.CollaborativeEditing = (("undefined" !== typeof(AscCommon.CWordCollaborativeEditing) && AscCommon.CollaborativeEditing instanceof AscCommon.CWordCollaborativeEditing) ? AscCommon.CollaborativeEditing : null);
     this.Api                  = editor;
     //------------------------------------------------------------------------------------------------------------------
@@ -2277,7 +2277,7 @@ CDocument.prototype.private_UpdateFieldsOnEndLoad = function()
 		}
 	}
 
-	let openedAt = this.Api.openedAt;
+	let openedAt = this.Api ? this.Api.openedAt : undefined;
 	if (undefined === openedAt)
 		return;
 
@@ -2370,7 +2370,7 @@ CDocument.prototype.Set_CurrentElement = function(Index, bUpdateStates)
 		this.DrawingDocument.FirePaint();
 	}
 };
-CDocument.prototype.Is_ThisElementCurrent          = function()
+CDocument.prototype.IsThisElementCurrent          = function()
 {
     return true;
 };
@@ -6059,6 +6059,30 @@ CDocument.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTe
 	this.Document_UpdateSelectionState();
 	this.Document_UpdateInterfaceState();
 };
+CDocument.prototype.CheckSubFormBeforeRemove = function(nDirection)
+{
+	if (!this.IsFillingFormMode() || this.IsTextSelectionUse())
+		return;
+
+	let oForm = this.GetSelectedElementsInfo().GetInlineLevelSdt();
+	let oMainForm;
+	if (!oForm || !oForm.IsForm() || !(oMainForm = oForm.GetMainForm()) || oMainForm === oForm)
+		return;
+
+	if (!((nDirection < 0 && oForm.IsCursorAtBegin()) || (nDirection > 0 && oForm.IsCursorAtEnd())))
+		return;
+
+	let oNextForm = nDirection > 0 ? oForm.GetNextSubForm() : oForm.GetPrevSubForm();
+	if (!oNextForm || oNextForm === oForm)
+		return;
+
+	oNextForm.SetThisElementCurrent();
+
+	if (nDirection > 0)
+		oNextForm.MoveCursorToStartPos();
+	else
+		oNextForm.MoveCursorToEndPos();
+};
 CDocument.prototype.Remove = function(nDirection, isRemoveWholeElement, bRemoveOnlySelection, bOnTextAdd, isWord, isCheckInlineLevelSdt)
 {
 	if (undefined === nDirection)
@@ -6171,6 +6195,29 @@ CDocument.prototype.GetCursorRealPosition = function()
 		Y : this.CurPos.RealY
 	};
 };
+CDocument.prototype.CorrectCursorPosition = function(isForward)
+{
+	if (this.IsFillingFormMode())
+	{
+		let oInfo = this.GetSelectedElementsInfo();
+		let oForm = oInfo.GetInlineLevelSdt();
+
+		// Селект может быть внутри составных форм в режиме заполнения, а вот курсор там не должен находиться
+		if (oForm && oForm.IsForm() && oForm.IsComplexForm())
+		{
+			let oSubForm = oForm.GetSubFormFromCurrentPosition(isForward);
+			if (oSubForm)
+			{
+				oSubForm.SetThisElementCurrent(true);
+
+				if (isForward)
+					oSubForm.MoveCursorToStartPos();
+				else
+					oSubForm.MoveCursorToEndPos();
+			}
+		}
+	}
+};
 CDocument.prototype.MoveCursorToStartOfDocument = function()
 {
 	var nDocPosType = this.GetDocPosType();
@@ -6218,6 +6265,7 @@ CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 
 	this.Controller.MoveCursorLeft(AddToSelect, Word);
 
+	this.CorrectCursorPosition(false);
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateRulersState();
 	this.private_UpdateCursorXY(true, true);
@@ -6232,6 +6280,7 @@ CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 
 	this.Controller.MoveCursorRight(AddToSelect, Word, FromPaste);
 
+	this.CorrectCursorPosition(true);
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
 	this.private_UpdateCursorXY(true, true);
@@ -9407,6 +9456,8 @@ CDocument.prototype.OnKeyDown = function(e)
 	{
 		if (e.KeyCode === 8) // BackSpace
 		{
+			this.CheckSubFormBeforeRemove(-1);
+
 			if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Remove, null, true, this.IsFormFieldEditing()))
 			{
 				this.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
@@ -9892,6 +9943,8 @@ CDocument.prototype.OnKeyDown = function(e)
 		{
 			if (true !== e.ShiftKey)
 			{
+				this.CheckSubFormBeforeRemove(1);
+
 				if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Delete, null, true, this.IsFormFieldEditing()))
 				{
 					this.StartAction(AscDFH.historydescription_Document_DeleteButton);
@@ -10189,6 +10242,20 @@ CDocument.prototype.OnKeyDown = function(e)
 
 			bRetValue = keydownresult_PreventAll;
 		}
+		// else if (e.KeyCode === 121)
+		// {
+		// 	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+		// 	{
+		// 		this.StartAction(AscDFH.historydescription_Document_AddContentControlTextForm);
+		//
+		// 		let oCC = this.AddComplexForm();
+		// 		oCC.SetFormPr(new AscWord.CSdtFormPr());
+		//
+		// 		this.UpdateInterface();
+		// 		this.Recalculate();
+		// 		this.FinalizeAction();
+		// 	}
+		// }
 	}
 
     // Если был пересчет, значит были изменения, а вместе с ними пересылается и новая позиция курсора
@@ -11867,7 +11934,7 @@ CDocument.prototype.Document_UpdateInterfaceState = function(bSaveCurRevisionCha
 CDocument.prototype.private_UpdateInterface = function(isSaveCurrentReviewChange, isExternalTrigger)
 {
 	let oApi = this.GetApi();
-	if (!oApi.isDocumentLoadComplete || true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+	if (!oApi || !oApi.isDocumentLoadComplete || true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
 		return;
 
 	if (true === this.TurnOffInterfaceEvents)
@@ -12078,10 +12145,10 @@ CDocument.prototype.UpdateContentControlFocusState = function(oCC)
 	if (this.FocusCC === oCC)
 		return;
 
-	if (this.FocusCC)
+	if (this.FocusCC && this.Api)
 		this.Api.asc_OnBlurContentControl(this.FocusCC);
 
-	if (oCC)
+	if (oCC && this.Api)
 		this.Api.asc_OnFocusContentControl(oCC);
 
 	this.FocusCC = oCC;
@@ -12127,7 +12194,7 @@ CDocument.prototype.private_UpdateUndoRedo = function()
 };
 CDocument.prototype.Document_UpdateCopyCutState = function()
 {
-	if (true === this.TurnOffInterfaceEvents)
+	if (true === this.TurnOffInterfaceEvents || !this.Api)
 		return;
 
 	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
@@ -14817,7 +14884,7 @@ CDocument.prototype.Set_FastCollaborativeEditing = function(isOn)
 {
 	this.CollaborativeEditing.Set_Fast(isOn);
 
-	if (c_oAscCollaborativeMarksShowType.LastChanges === this.Api.GetCollaborativeMarksShowType())
+	if (this.Api && c_oAscCollaborativeMarksShowType.LastChanges === this.Api.GetCollaborativeMarksShowType())
 		this.Api.SetCollaborativeMarksShowType(c_oAscCollaborativeMarksShowType.All);
 };
 CDocument.prototype.Continue_FastCollaborativeEditing = function()
@@ -15476,7 +15543,7 @@ CDocument.prototype.Get_DocumentPagePositionByContentPosition = function(Content
 	if (!Para)
 		return null;
 
-	var ParaContentPos = new CParagraphContentPos();
+	var ParaContentPos = new AscWord.CParagraphContentPos();
 	for (var Pos = ParaPos; Pos < Count; ++Pos)
 	{
 		ParaContentPos.Update(ContentPosition[Pos].Position, Pos - ParaPos);
@@ -17650,7 +17717,7 @@ CDocument.prototype.Is_CursorInsideCompositeText = function()
 	if (arrClasses.length <= 0 || arrClasses[arrClasses.length - 1] !== this.CompositeInput.Run)
 		return false;
 
-	var nInRunPos = oParaPos.Get(oParaPos.Get_Depth());
+	var nInRunPos = oParaPos.Get(oParaPos.GetDepth());
 	if (nInRunPos >= this.CompositeInput.Pos && nInRunPos <= this.CompositeInput.Pos + this.CompositeInput.Length)
 		return true;
 
@@ -21523,7 +21590,7 @@ CDocument.prototype.GetAllFormTextFields = function()
 };
 CDocument.prototype.IsFillingFormMode = function()
 {
-	return this.Api.isRestrictionForms();
+	return this.Api && this.Api.isRestrictionForms();
 };
 CDocument.prototype.IsFillingOFormMode = function()
 {

@@ -14149,9 +14149,9 @@ axisChart.prototype = {
 		var paths;
 		if (this.axis.axPos === window['AscFormat'].AX_POS_L || this.axis.axPos === window['AscFormat'].AX_POS_R) {
 			//ось слева или справа, линии горизонтальные
-			paths = this.cChartDrawer.getHorizontalGridLines(this.axis);
+			paths = this.cChartDrawer.getHorizontalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx);
 		} else {
-			paths = this.cChartDrawer.getVerticalGridLines(this.axis);
+			paths = this.cChartDrawer.getVerticalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx);
 		}
 		this.paths.gridLines = paths ? paths.gridLines : null;
 		this.paths.minorGridLines = paths ? paths.minorGridLines : null;
@@ -14215,13 +14215,10 @@ axisChart.prototype = {
 
 
 		this.paths.axisLine = this._calculateLine(x, y, x1, y1);
-
 	},
 
 	_getTickmarksPropsSer: function () {
 		var widthLine = 0, crossMajorStep = 0;
-		var widthLine = 0;
-		var crossMajorStep = 0;
 		switch (this.axis.majorTickMark) {
 			case c_oAscTickMark.TICK_MARK_CROSS: {
 				widthLine = 5;

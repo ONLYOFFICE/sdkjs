@@ -651,7 +651,7 @@ CShape.prototype.OnContentReDraw = function(){
     }
 };
 
-    CShape.prototype.Is_ThisElementCurrent = function()
+    CShape.prototype.IsThisElementCurrent = function()
     {
         if(this.parent && this.parent.graphicObjects)
         {

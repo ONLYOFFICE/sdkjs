@@ -1187,10 +1187,10 @@ CBlockLevelSdt.prototype.Get_TextBackGroundColor = function()
 {
 	return this.Parent.Get_TextBackGroundColor();
 };
-CBlockLevelSdt.prototype.Is_ThisElementCurrent = function(oElement)
+CBlockLevelSdt.prototype.IsThisElementCurrent = function(oElement)
 {
 	if (oElement === this.Content)
-		return this.Parent.Is_ThisElementCurrent();
+		return this.Parent.IsThisElementCurrent();
 
 	return false;
 };

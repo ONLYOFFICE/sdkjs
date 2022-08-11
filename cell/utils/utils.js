@@ -570,6 +570,17 @@
 			return bRes;
 		};
 
+		Range.prototype.isIntersectWithRanges = function (ranges, exceptionIndex) {
+			if (ranges) {
+				for (var i = 0; i < ranges.length; i++) {
+					if ((null == exceptionIndex || (null != exceptionIndex && i !== exceptionIndex)) && this.isIntersect(ranges[i])) {
+						return true;
+					}
+				}
+			}
+			return false;
+		};
+
 		Range.prototype.isIntersectForShift = function(range, offset) {
 			var isHor = offset && offset.col;
 			var isDelete = offset && (offset.col < 0 || offset.row < 0);
@@ -2553,8 +2564,7 @@
 
 			var fill = new AscCommonExcel.Fill();
 			if (colors.length === 1) {
-				fill.patternFill = new AscCommonExcel.PatternFill();
-				fill.patternFill.fromColor(colors[0]);
+				fill.fromColor(colors[0]);
 			} else {
 				fill.gradientFill = new AscCommonExcel.GradientFill();
 				var arrColors = [];

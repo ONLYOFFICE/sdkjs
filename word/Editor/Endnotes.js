@@ -228,7 +228,7 @@ CEndnotesController.prototype.IsUseInDocument = function(sEndnoteId, arrEndnotes
  * @param oEndnote
  * return {boolean}
  */
-CEndnotesController.prototype.Is_ThisElementCurrent = function(oEndnote)
+CEndnotesController.prototype.IsThisElementCurrent = function(oEndnote)
 {
 	if (oEndnote === this.CurEndnote && docpostype_Endnotes === this.LogicDocument.GetDocPosType())
 		return true;

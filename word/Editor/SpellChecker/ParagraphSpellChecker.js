@@ -393,7 +393,7 @@
 	CParagraphSpellChecker.prototype.GetCurrentPositionInParagraph = function()
 	{
 		let oCurPos = null;
-		if (this.Paragraph.Is_ThisElementCurrent())
+		if (this.Paragraph.IsThisElementCurrent())
 			oCurPos = this.Paragraph.Get_ParaContentPos(false, false);
 
 		return oCurPos;

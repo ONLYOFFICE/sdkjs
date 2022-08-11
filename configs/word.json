@@ -165,6 +165,7 @@
 			"word/Editor/Paragraph/ParaTextPrChanges.js",
 			"word/Editor/Paragraph/ParaDrawing.js",
 			"word/Editor/Paragraph/ParaDrawingChanges.js",
+			"word/Editor/Paragraph/ParagraphContentPos.js",
 			"word/Editor/Paragraph/ComplexFieldInstruction.js",
 			"word/Editor/Paragraph/ComplexField.js",
 			"word/Editor/Paragraph/FormulaParser.js",

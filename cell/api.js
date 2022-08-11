@@ -392,7 +392,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_DownloadAs = function (options) {
-    if (!this.canSave || this.isChartEditor || c_oAscAdvancedOptionsAction.None !== this.advancedOptionsAction) {
+    if (!this.canSave || this.isFrameEditor() || c_oAscAdvancedOptionsAction.None !== this.advancedOptionsAction) {
       return;
     }
     if (this.isLongAction()) {
@@ -402,7 +402,7 @@ var editor;
     this.downloadAs(c_oAscAsyncAction.DownloadAs, options);
   };
 	spreadsheet_api.prototype._saveCheck = function() {
-		return !this.isChartEditor && c_oAscAdvancedOptionsAction.None === this.advancedOptionsAction &&
+		return !this.isFrameEditor() && c_oAscAdvancedOptionsAction.None === this.advancedOptionsAction &&
 			!this.isLongAction() && !this.asc_getIsTrackShape() && !this.isOpenedChartFrame &&
 			History.IsEndTransaction();
 	};
@@ -1181,25 +1181,23 @@ var editor;
       // ToDo select txt params
       oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
       dataContainer.data = last.data;
-    } else {
+    } else if(this.isOpenOOXInBrowser) {
 		var t = this;
-		if (c_oAscFileType.XLTX === fileType) {
-			var title = this.documentTitle;
-			AscCommonExcel.executeInR1C1Mode(false, function () {
-				t.saveDocumentToZip(t.wb.model, AscCommon.c_oEditorId.Spreadsheet, function(data) {
-					if (data) {
-						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("xlsx"));
-					}
-				});
-				if (actionType)
-				{
-					t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
+		var title = this.documentTitle;
+		AscCommonExcel.executeInR1C1Mode(false, function () {
+			t.saveDocumentToZip(t.wb.model, AscCommon.c_oEditorId.Spreadsheet, function(data) {
+				if (data) {
+					AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("xlsx"));
 				}
 			});
+			if (actionType)
+			{
+				t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
+			}
+		});
 
-			return true;
-		}
-
+		return true;
+	} else {
       var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
       if (c_oAscFileType.CSV === fileType) {
         if (options.advancedOptions instanceof asc.asc_CTextOptions) {
@@ -1460,7 +1458,7 @@ var editor;
 		//по идее нужно делать его полное зануление, а при открытии создавать заново. но есть функции, которые
 		//добавляются в интерфейсе и в случае с историей версий заново не добавляются
 		this.wb.removeHandlersList();
-		if (this.isOleEditor) {
+		if (this.isEditOleMode) {
 			this.wb.removeEventListeners();
 			var cellEditor = this.wb.cellEditor;
 			if (this.wb.cellEditor) {
@@ -1670,10 +1668,11 @@ var editor;
 
 				//person list
 				var personListPart = wbPart.getPartByRelationshipType(openXml.Types.person.relationType);
+				var personList;
 				if (personListPart) {
 					var contentPersonList = personListPart.getDocumentContent();
 					if (contentPersonList) {
-						var personList = new AscCommonExcel.CT_PersonList();
+						personList = new AscCommonExcel.CT_PersonList();
 						reader = new StaxParser(contentPersonList, personListPart, xmlParserContext);
 						personList.fromXml(reader);
 					}
@@ -1888,7 +1887,7 @@ var editor;
 									pThreadedComments.fromXml(reader);
 								}
 
-								AscCommonExcel.PrepareComments(ws, xmlParserContext, comments, pThreadedComments);
+								AscCommonExcel.PrepareComments(ws, xmlParserContext, comments, pThreadedComments, personList);
 							}
 						}
 					}
@@ -2671,7 +2670,7 @@ var editor;
 
 		//история версий - возможно стоит грамотно чистить wbview, но не пересоздавать
 		var previousVersionZoom;
-		if ((this.VersionHistory || this.isOleEditor) && this.controller) {
+		if ((this.VersionHistory || this.isEditOleMode) && this.controller) {
 			var elem = document.getElementById("ws-v-scrollbar");
 			if (elem) {
 				elem.parentNode.removeChild(elem);
@@ -2738,7 +2737,7 @@ var editor;
 			this.sendEvent('asc_onError', c_oAscError.ID.OpenWarning, c_oAscError.Level.NoCritical);
 		}
 
-		if (this.VersionHistory || this.isOleEditor) {
+		if (this.VersionHistory || this.isEditOleMode) {
 			if (this.VersionHistory && this.VersionHistory.changes) {
 				this.VersionHistory.applyChanges(this);
 			}
@@ -3592,6 +3591,9 @@ var editor;
 	spreadsheet_api.prototype.sync_SearchEndCallback = function () {
 		this.sendEvent("asc_onSearchEnd");
 	};
+    spreadsheet_api.prototype.sync_closeOleEditor = function() {
+        this.sendEvent("asc_onCloseOleEditor");
+    };
 
 	spreadsheet_api.prototype.asc_StartTextAroundSearch = function()
 	{
@@ -3891,13 +3893,15 @@ var editor;
     var file = new AscCommon.OpenFileResult();
     file.bSerFormat = AscCommon.checkStreamSignature(stream, AscCommon.c_oSerFormat.Signature);
     file.data = stream;
-    this.isOleEditor = true;
+    this.isEditOleMode = true;
+    this.isChartEditor = false;
     this.isFromSheetEditor = oleObj["isFromSheetEditor"];
     this.asc_CloseFile();
     this.openDocument(file);
 
     this.fAfterLoad = function () {
       _this.wb.scrollToOleSize();
+      _this.wb.onOleEditorReady();
     }
     };
   /**
@@ -4285,7 +4289,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_doubleClickOnTableOleObject = function (obj) {
-    this.isChartEditor = true;	// Для совместного редактирования
+    this.isOleEditor = true;	// Для совместного редактирования
     this.asc_onOpenChartFrame();
     // console.log(editor.WordControl)
     // if(!window['IS_NATIVE_EDITOR']) {

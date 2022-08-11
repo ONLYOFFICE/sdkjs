@@ -450,7 +450,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		PDFA    : 0x0209,
 		DJVU    : 0x0203,
 		XPS     : 0x0204,
-		HTML    : 0x0803,
 
 		// Word
 		DOCX : 0x0041,
@@ -458,7 +457,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		ODT  : 0x0043,
 		RTF  : 0x0044,
 		TXT  : 0x0045,
-		HTML_TODO  : 0x0046,
+		HTML : 0x0046,
 		MHT  : 0x0047,
 		EPUB : 0x0048,
 		FB2  : 0x0049,
@@ -3445,7 +3444,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ODT']                  = prot.ODT;
 	prot['RTF']                  = prot.RTF;
 	prot['TXT']                  = prot.TXT;
-	prot['HTML_TODO']                = prot.HTML_TODO;
 	prot['MHT']                  = prot.MHT;
 	prot['EPUB']                 = prot.EPUB;
 	prot['FB2']                  = prot.FB2;

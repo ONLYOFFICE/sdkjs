@@ -12648,7 +12648,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 	};
 
 
-	 function PrepareComments (ws, xmlParserContext, comments, pThreadedComments) {
+	 function PrepareComments (ws, xmlParserContext, comments, pThreadedComments, personList) {
 		var m_mapComments = {};
 		var pVmlDrawing = xmlParserContext.InitOpenManager.legacyDrawing;
 		if (!pVmlDrawing || !comments) {

@@ -977,7 +977,7 @@ function CDrawingDocument()
 			thpages[index].IsRecalc = true;
 		}
 
-		if (index == this.SlideCurrent)
+		if (index === this.SlideCurrent)
 		{
 			this.m_oWordControl.Thumbnails.LockMainObjType = true;
 

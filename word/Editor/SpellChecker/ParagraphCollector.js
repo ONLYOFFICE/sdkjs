@@ -48,14 +48,14 @@
 	 */
 	function CParagraphSpellCheckerCollector(oSpellChecker, isForceFullCheck)
 	{
-		this.ContentPos   = new CParagraphContentPos();
+		this.ContentPos   = new AscWord.CParagraphContentPos();
 		this.SpellChecker = oSpellChecker;
 
 		this.CurLcid  = -1;
 		this.bWord    = false;
 		this.sWord    = "";
-		this.StartPos = null; // CParagraphContentPos
-		this.EndPos   = null; // CParagraphContentPos
+		this.StartPos = null; // AscWord.CParagraphContentPos
+		this.EndPos   = null; // AscWord.CParagraphContentPos
 		this.Prefix   = null;
 
 		// Защита от проверки орфографии в большом параграфе

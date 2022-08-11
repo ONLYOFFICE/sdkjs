@@ -81,8 +81,7 @@ function CGraphicFrame()
     this.RecalcInfo = {};
 }
 
-	CGraphicFrame.prototype = Object.create(AscFormat.CGraphicObjectBase.prototype);
-	CGraphicFrame.prototype.constructor = CGraphicFrame;
+AscFormat.InitClass(CGraphicFrame, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_GraphicFrame);
 
 CGraphicFrame.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 
@@ -90,9 +89,6 @@ CGraphicFrame.prototype.Get_Theme = CShape.prototype.Get_Theme;
 
 CGraphicFrame.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
 
-CGraphicFrame.prototype.setBDeleted = CShape.prototype.setBDeleted;
-CGraphicFrame.prototype.getBase64Img = CShape.prototype.getBase64Img;
-CGraphicFrame.prototype.checkDrawingBaseCoords = CShape.prototype.checkDrawingBaseCoords;
 CGraphicFrame.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
 CGraphicFrame.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 CGraphicFrame.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
@@ -235,11 +231,6 @@ CGraphicFrame.prototype.setGroup= function(group)
     {
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSetGroup, this.group, group));
         this.group = group;
-};
-
-CGraphicFrame.prototype.getObjectType= function()
-    {
-        return AscDFH.historyitem_type_GraphicFrame;
 };
 
 CGraphicFrame.prototype.Search = function(SearchEngine, Type)
@@ -1194,7 +1185,7 @@ CGraphicFrame.prototype.checkTypeCorrect = function()
         }
         return true;
     };
-CGraphicFrame.prototype.Is_ThisElementCurrent = function()
+CGraphicFrame.prototype.IsThisElementCurrent = function()
     {
         if(this.parent && this.parent.graphicObjects)
         {

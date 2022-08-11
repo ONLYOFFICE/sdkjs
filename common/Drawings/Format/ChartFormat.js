@@ -7287,6 +7287,12 @@
         this.crossAx = null;
         this.crosses = null;
         this.crossesAt = null;
+
+
+        this.bDelete = false;
+        this.majorTickMark = c_oAscTickMark.TICK_MARK_OUT;
+        this.minorTickMark = c_oAscTickMark.TICK_MARK_NONE;
+        this.crosses = AscFormat.CROSSES_AUTO_ZERO;
     }
 
     InitClass(CAxisBase, CBaseChartObject, AscDFH.historyitem_type_Unknown);
@@ -7763,10 +7769,6 @@
 
     function CCatAx() {
         CAxisBase.call(this);
-        this.majorTickMark = c_oAscTickMark.TICK_MARK_OUT;
-        this.majorTickMark = c_oAscTickMark.TICK_MARK_NONE;
-        this.crosses = c_oAscTickMark.CROSSES_AUTO_ZERO;
-        this.bDelete = false;
         this.auto = null;
         this.extLst = null;
         this.lblAlgn = null;
@@ -8090,10 +8092,6 @@
 
     function CDateAx() {
         CAxisBase.call(this);
-        this.majorTickMark = c_oAscTickMark.TICK_MARK_OUT;
-        this.majorTickMark = c_oAscTickMark.TICK_MARK_NONE;
-        this.crosses = c_oAscTickMark.CROSSES_AUTO_ZERO;
-        this.bDelete = false;
         this.auto = null;
         this.baseTimeUnit = null;
         this.extLst = null;
@@ -8186,10 +8184,6 @@
 
     function CSerAx() {
         CAxisBase.call(this);
-        this.majorTickMark = c_oAscTickMark.TICK_MARK_OUT;
-        this.majorTickMark = c_oAscTickMark.TICK_MARK_NONE;
-        this.crosses = c_oAscTickMark.CROSSES_AUTO_ZERO;
-        this.bDelete = false;
         this.extLst = null;
         this.tickLblSkip = null;
         this.tickMarkSkip = null;
@@ -8227,10 +8221,6 @@
 
     function CValAx() {
         CAxisBase.call(this);
-        this.majorTickMark = c_oAscTickMark.TICK_MARK_OUT;
-        this.minorTickMark = c_oAscTickMark.TICK_MARK_NONE;
-        this.crosses = AscFormat.CROSSES_AUTO_ZERO;
-        this.bDelete = false;
         this.crossBetween = null;
         this.majorUnit = null;
         this.minorUnit = null;

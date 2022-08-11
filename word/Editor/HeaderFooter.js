@@ -35,7 +35,6 @@
 // Import
 var hdrftr_Header = AscCommon.hdrftr_Header;
 var hdrftr_Footer = AscCommon.hdrftr_Footer;
-var g_oTableId = AscCommon.g_oTableId;
 var History = AscCommon.History;
 
 //-----------------------------------------------------------------------------------
@@ -72,7 +71,7 @@ function CHeaderFooter(Parent, oLogicDocument, DrawingDocument, Type)
 	this.PageCountElements = [];
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 CHeaderFooter.prototype =
@@ -403,7 +402,7 @@ CHeaderFooter.prototype =
         }
     },
 
-    Is_ThisElementCurrent : function()
+	IsThisElementCurrent : function()
     {
         if (this === this.Parent.CurHdrFtr && docpostype_HdrFtr === this.LogicDocument.GetDocPosType())
             return true;
@@ -1303,7 +1302,7 @@ CHeaderFooter.prototype =
         this.Id      = Reader.GetString2();
         this.Type    = Reader.GetLong();
 
-        this.Content = g_oTableId.Get_ById( Reader.GetString2() );        
+        this.Content = AscCommon.g_oTableId.Get_ById( Reader.GetString2() );
     },
 //-----------------------------------------------------------------------------------
 // Функции для работы с комментариями
@@ -1482,7 +1481,7 @@ function CHeaderFooterController(LogicDocument, DrawingDocument)
     this.Lock = new AscCommon.CLock();   
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 CHeaderFooterController.prototype =
@@ -1630,7 +1629,7 @@ CHeaderFooterController.prototype =
 
     Set_CurHdrFtr_ById : function(Id)
     {
-        var HdrFtr = g_oTableId.Get_ById( Id );
+        var HdrFtr = AscCommon.g_oTableId.Get_ById( Id );
         if ( -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr( HdrFtr ) )
             return false;
         
@@ -1978,7 +1977,7 @@ CHeaderFooterController.prototype =
 
 	IsUseInDocument : function(Id)
 	{
-		var HdrFtr = g_oTableId.Get_ById(Id);
+		var HdrFtr = AscCommon.g_oTableId.Get_ById(Id);
 		if (-1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
 			return false;
 
