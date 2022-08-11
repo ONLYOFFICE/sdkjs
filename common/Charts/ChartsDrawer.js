@@ -15291,44 +15291,49 @@ plotAreaChart.prototype =
 
 function CErrBarsDraw(chartsDrawer) {
 	this.cChartDrawer = chartsDrawer;
-	this.paths = {};
+	this.paths = [];
 }
 
 CErrBarsDraw.prototype = {
 	constructor: CErrBarsDraw,
 
 	draw: function () {
-		var leftRect = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
+		/*var leftRect = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
 		var topRect = (this.chartProp.chartGutter._top - diffPen) / this.chartProp.pxToMM;
 		var rightRect = this.chartProp.trueWidth / this.chartProp.pxToMM;
 		var bottomRect = (this.chartProp.trueHeight + diffPen) / this.chartProp.pxToMM;
 
 		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
-		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);*/
 
-		var numPoint = numCache ? numCache.getPtByIndex(k) : null;
-		if (numPoint) {
-			markerBrush = numPoint.compiledMarker ? numPoint.compiledMarker.brush : null;
-			markerPen = numPoint.compiledMarker ? numPoint.compiledMarker.pen : null;
+		for (var i in this.paths) {
+			if (this.paths[i]) {
+				for (var j = 0; j < this.paths[i].length; j++) {
+					if (!this.paths[i][j]) {
+						continue;
+					}
+					var seria = this.charts[i].chart.series[j];
+					for (var k = 0; k < this.paths[i][j].length; k++) {
+						var errBars = seria.getErrBars();
+						var pen = errBars && errBars.getPen();
+						if (pen) {
+							this.cChartDrawer.drawPath(this.paths[i][j][k], pen);
+						}
+					}
+				}
+			}
+
 		}
 
-		//frame of point
-		if (paths.points[i][k] && paths.points[i][k].framePaths) {
-			this.drawPath(paths.points[i][k].framePaths, null, markerBrush, false);
-		}
-		//point
-		if (paths.points[i][k]) {
-			this.drawPath(paths.points[i][k].path, markerPen, markerBrush, true);
-		}
-
-		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+		//this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
 
 	},
 
 	recalculate: function (charts) {
 		this.paths = {};
+		this.charts = charts;
 		for (var i in charts) {
-			this.recalculateChart(charts[i]);
+			this.paths[i] = this.recalculateChart(charts[i]);
 		}
 	},
 
@@ -15341,6 +15346,7 @@ CErrBarsDraw.prototype = {
 		//TODO errBars -> errDir  - вдоль какой оси
 		//var nErrDir = oParsedErrBars.errDir === "x" ? AscFormat.st_errdirX : AscFormat.st_errdirY;
 
+		var res = [];
 		var t = this;
 		var calcErrLine = function (_start, _end, pos) {
 			var pathId = t.cChartDrawer.cChartSpace.AllocPath();
@@ -15392,8 +15398,8 @@ CErrBarsDraw.prototype = {
 							var pxToMm = this.cChartDrawer.calcProp.pxToMM;
 							var oPath = this.cChartDrawer.cChartSpace.GetPath(path);
 							var oCommand0 = oPath.getCommandByIndex(commandIndex);
-							var x = oCommand0.X * pxToMm;
-							var y = oCommand0.Y * pxToMm;
+							var x = oCommand0.X;
+							var y = oCommand0.Y;
 
 							var axis = this.cChartDrawer.getAxisFromAxId(oChart.chart.axId, AscDFH.historyitem_type_ValAx);
 							//резмер оси + минимальное/максимальное значение оси
@@ -15419,10 +15425,10 @@ CErrBarsDraw.prototype = {
 								}
 							}
 
-							if (!this.paths[i]) {
-								this.paths[i] = [];
+							if (!res[i]) {
+								res[i] = [];
 							}
-							this.paths[i].push(calcErrLine(start, end, x));
+							res[i].push(calcErrLine(start, end, x));
 
 							/*Id: "35"
 							errBarType: 0
@@ -15493,6 +15499,8 @@ CErrBarsDraw.prototype = {
 				}
 			}
 		}
+
+		return res;
 	},
 
 	calculateErrVal: function (oChart, ser, val) {
