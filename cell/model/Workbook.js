@@ -4154,6 +4154,9 @@
 				var eRIndex = this.getExternalLinkIndexByName(arr[i].externalReference.Id);
 				if (eRIndex != null) {
 
+					//TODO при undo кладутся в массив в обратном порядке - нужно всегда в одном порядке добавлять
+					this.removeExternalReference(eRIndex, true);
+
 					//TODO нужно заменить все ячейки просто значениями, где есть формулы, которые ссылаются на эту книгу
 					for (var j in arr[i].externalReference.worksheets) {
 						var removedSheet = arr[i].externalReference.worksheets[j];
@@ -4180,8 +4183,6 @@
 							this.dependencyFormulas.removeSheet(prepared);
 						}
 					}
-
-					//this.removeExternalReference(eRIndex, true);
 				}
 			}
 			History.EndTransaction();
