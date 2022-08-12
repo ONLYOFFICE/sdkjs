@@ -4166,7 +4166,10 @@
 									if (cell && cell.nCol != null && cell.nRow != null) {
 										//нужно удалить формулу из этой ячейки
 										parsed.ws._getCellNoEmpty(cell.nRow, cell.nCol, function(cell) {
-											cell.setFormulaInternal(null);
+											var valueData = cell.getValueData();
+											valueData.formula = null;
+											cell.setValueData(valueData);
+											//cell.setFormulaInternal(null);
 										});
 									}
 								}
