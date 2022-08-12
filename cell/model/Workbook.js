@@ -482,6 +482,18 @@
 				delete this.volatileListeners[listenerId];
 			}
 		},
+		forEachSheetListeners: function(sheetId, callback) {
+			var sheetContainer = this.sheetListeners[sheetId];
+			if (sheetContainer) {
+				for (var i in sheetContainer.cellMap) {
+					if (sheetContainer.cellMap[i]) {
+						for (var j in sheetContainer.cellMap[i].listeners) {
+							callback(sheetContainer.cellMap[i].listeners[j]);
+						}
+					}
+				}
+			}
+		},
 		startListeningDefName: function(name, listener, opt_sheetId) {
 			var listenerId = listener.getListenerId();
 			var nameIndex = getDefNameIndex(name);
@@ -4143,8 +4155,30 @@
 				if (eRIndex != null) {
 
 					//TODO нужно заменить все ячейки просто значениями, где есть формулы, которые ссылаются на эту книгу
+					for (var j in arr[i].externalReference.worksheets) {
+						var removedSheet = arr[i].externalReference.worksheets[j];
+						if (removedSheet) {
 
-					this.removeExternalReference(eRIndex, true);
+							var removedSheetId = removedSheet.getId();
+							this.dependencyFormulas.forEachSheetListeners(removedSheetId, function (parsed) {
+								if (parsed) {
+									var cell = parsed.parent;
+									if (cell && cell.nCol != null && cell.nRow != null) {
+										//нужно удалить формулу из этой ячейки
+										parsed.ws._getCellNoEmpty(cell.nRow, cell.nCol, function(cell) {
+											cell.setFormulaInternal(null);
+										});
+									}
+								}
+							});
+
+
+							var prepared = this.dependencyFormulas.prepareChangeSheet(removedSheetId, {remove: removedSheetId});
+							this.dependencyFormulas.removeSheet(prepared);
+						}
+					}
+
+					//this.removeExternalReference(eRIndex, true);
 				}
 			}
 			History.EndTransaction();
