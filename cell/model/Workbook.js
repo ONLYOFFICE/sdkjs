@@ -4136,13 +4136,18 @@
 	Workbook.prototype.removeExternalReferences = function (arr) {
 		//пока предполагаю, что здесь будет массив asc_CExternalReference
 		if (arr) {
+			History.Create_NewPoint();
+			History.StartTransaction();
 			for (var i = 0; i < arr.length; i++) {
 				var eRIndex = this.getExternalLinkIndexByName(arr[i].externalReference.Id);
 				if (eRIndex != null) {
+
 					//TODO нужно заменить все ячейки просто значениями, где есть формулы, которые ссылаются на эту книгу
+
 					this.removeExternalReference(eRIndex, true);
 				}
 			}
+			History.EndTransaction();
 		}
 	};
 

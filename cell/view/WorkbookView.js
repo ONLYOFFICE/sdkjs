@@ -4892,19 +4892,8 @@
 		}
 	};
 
-	WorkbookView.prototype.updateExternalReferenceByIndexes = function (aIndexes) {
-		var t = this;
-		var externalReferences = [];
-		if (aIndexes) {
-			for (var i = 0; i < aIndexes.length; i++) {
-				var eR = this.model.externalReferences[aIndexes[i]];
-				if (eR) {
-					externalReferences.push(eR.getAscLink());
-				}
-			}
-		}
-
-		this.doUpdateExternalReference(externalReferences);
+	WorkbookView.prototype.updateExternalReferences = function (arr) {
+		this.doUpdateExternalReference(arr);
 	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch

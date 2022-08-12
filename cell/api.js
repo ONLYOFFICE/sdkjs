@@ -7720,9 +7720,15 @@ var editor;
 		return this.wb.getExternalReferences();
 	};
 
-	spreadsheet_api.prototype.asc_updateExternalReferences = function(aIndexes) {
+	spreadsheet_api.prototype.asc_updateExternalReferences = function(arr) {
 		if (this.canEdit()) {
-			this.wb.updateExternalReferenceByIndexes(aIndexes);
+			this.wb.updateExternalReferences(arr);
+		}
+	};
+
+	spreadsheet_api.prototype.asc_removeExternalReferences = function(arr) {
+		if (this.canEdit()) {
+			this.wb.removeExternalReferences(arr);
 		}
 	};
 
@@ -8265,6 +8271,8 @@ var editor;
 
   prot["asc_getExternalReference"] = prot.asc_getExternalReferences;
   prot["asc_updateExternalReference"] = prot.asc_updateExternalReferences;
+  prot["asc_removeExternalReferences"] = prot.asc_removeExternalReferences;
+
 
 
 })(window);
