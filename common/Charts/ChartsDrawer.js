@@ -5703,11 +5703,15 @@ drawBarChart.prototype = {
 				}
 				this.paths.series[serIdx][idx] = paths;
 
+				if (this.chart.series[i].errBars) {
+					var _pointX = (startX + individualBarWidth / 2) / this.chartProp.pxToMM;
+					var pointY = (startY + height) / this.chartProp.pxToMM;
+					var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
+					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, null,  serIdx, idx);
+				}
 			}
 
-			//if (seria.length) {
 			seriesCounter++;
-			//}
 		}
 
 		if (this.cChartDrawer.nDimensionCount === 3) {
@@ -6602,12 +6606,12 @@ drawLineChart.prototype = {
 				compiledMarkerSize = idxPoint && idxPoint.compiledMarker && idxPoint.compiledMarker.size ? idxPoint.compiledMarker.size : null;
 				compiledMarkerSymbol = idxPoint && idxPoint.compiledMarker && AscFormat.isRealNumber(idxPoint.compiledMarker.symbol) ? idxPoint.compiledMarker.symbol : null;
 
-				/*if(val === null) {
-					val = 0;
-				}*/
-
 				if (val != null) {
 					this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol);
+					//this.paths.points[i][n].val = val;
+					if (this.chart.series[i].errBars) {
+						this.cChartDrawer.errBars.putPoint(x, y, val, null,  i, n);
+					}
 					points[i][n] = {x: x, y: y};
 				} else {
 					this.paths.points[i][n] = null;
@@ -6623,9 +6627,6 @@ drawLineChart.prototype = {
 		if(!points) {
 			return;
 		}
-
-		var xPoints = this.catAx.xPoints;
-		var yPoints = this.valAx.yPoints;
 
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			//сдвиг по OZ в глубину
@@ -12046,7 +12047,13 @@ drawScatterChart.prototype = {
 					}
 
 					if (yVal != null) {
-						this.paths.points[i][n] = this.cChartDrawer.calculatePoint(this.cChartDrawer.getYPosition(xVal, this.catAx), this.cChartDrawer.getYPosition(yVal, this.valAx, true), compiledMarkerSize, compiledMarkerSymbol);
+						var x = this.cChartDrawer.getYPosition(xVal, this.catAx);
+						var y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
+						this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol);
+						if (this.chart.series[i].errBars) {
+							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, i, n);
+						}
+
 						points[i][n] = {x: xVal, y: yVal};
 					} else {
 						this.paths.points[i][n] = null;
@@ -15302,6 +15309,7 @@ plotAreaChart.prototype =
 
 function CErrBarsDraw(chartsDrawer) {
 	this.cChartDrawer = chartsDrawer;
+	this.points = null;
 	this.paths = [];
 }
 
@@ -15348,14 +15356,21 @@ CErrBarsDraw.prototype = {
 		}
 	},
 
-	recalculateChart: function (oChart) {
-		//TODO пока только для line
-		if (!oChart.paths.points && !oChart.paths.series) {
-			return;
+	putPoint: function (x, y, xVal, yVal, nSeries, nPoint) {
+		if (!this.points) {
+			this.points = [];
+		}
+		if (!this.points[nSeries]) {
+			this.points[nSeries] = [];
 		}
 
-		//TODO errBars -> errDir  - вдоль какой оси
-		//var nErrDir = oParsedErrBars.errDir === "x" ? AscFormat.st_errdirX : AscFormat.st_errdirY;
+		this.points[nSeries][nPoint] = {x: x, y: y, xVal: xVal, yVal: yVal};
+	},
+
+	recalculateChart: function (oChart) {
+		if (!this.points) {
+			return;
+		}
 
 		var res = [];
 		var t = this;
@@ -15398,47 +15413,27 @@ CErrBarsDraw.prototype = {
 
 		var errBars;
 		var isHorPos;
-		for (var i = 0; i < oChart.paths.points.length; i++) {
-			if (oChart.paths.points[i]) {
+		for (var i = 0; i < this.points.length; i++) {
+			if (this.points[i]) {
 				if (!oChart.chart.series[i].errBars) {
 					continue;
 				}
 				errBars = oChart.chart.series[i].errBars;
-				for (var j = 0; j < oChart.paths.points[i].length; j++) {
-					if (oChart.paths.points[i][j]) {
+				for (var j = 0; j < this.points[i].length; j++) {
+					if (this.points[i][j]) {
+
 						isHorPos = errBars.errDir === AscFormat.st_errdirX;
 						var axis = this.cChartDrawer.getAxisByPos(oChart.chart.axId, isHorPos);
 						var isCatAx = axis.getObjectType() === AscDFH.historyitem_type_CatAx;
 
 						//расчитываем величину погрешности в одну сторону
-						var errVal = this.calculateErrVal(oChart, i, j, isCatAx);
+						var errVal = this.calculateErrVal(oChart, i, j, isCatAx, pointVal);
 						if (errVal !== null) {
-
-							var point = this.cChartDrawer.getPointByIndex(oChart.chart.series[i], j);
-							var pointVal = isCatAx ? j + 1 : point.val;
-							var path;
-
-							if(!point) {
-								continue;
-							}
-
-							var commandIndex = 0;
-							if(oChart.paths.points[i] && oChart.paths.points[i][j]){
-								path = oChart.paths.points[i][j].path;
-							}
-
-
-							if (!AscFormat.isRealNumber(path)) {
-								continue;
-							}
-
-							var oPath = this.cChartDrawer.cChartSpace.GetPath(path);
-							var oCommand0 = oPath.getCommandByIndex(commandIndex);
-							var x = oCommand0.X;
-							var y = oCommand0.Y;
-
+							var x = this.points[i][j].x;
+							var y = this.points[i][j].y;
 
 							//todo пока конкретно для line реализую
+							var pointVal = isCatAx ? j + 1 : this.points[i][j].xVal;
 							var start, end;
 							switch (errBars.errBarType) {
 								case AscFormat.st_errbartypeBOTH: {
@@ -15471,14 +15466,28 @@ CErrBarsDraw.prototype = {
 		return res;
 	},
 
+	getPointPos: function (oChart, path) {
+		var res = null;
+		var type = oChart.chart.getObjectType();
+		if (type === AscDFH.historyitem_type_LineChart) {
+			var commandIndex = 0;
+			var oPath = this.cChartDrawer.cChartSpace.GetPath(path);
+			var oCommand0 = oPath.getCommandByIndex(commandIndex);
+			res = {x: oCommand0.X, y: oCommand0.Y};
+		}
+
+		return res;
+	},
+
 	calculateErrVal: function (oChart, ser, val, isCatAx) {
 		var res = null;
 		var seria = oChart.chart.series[ser];
 		if (seria && seria.errBars) {
 			var errBars = seria.errBars;
+
+			//здесь необходимо истинное значение без учёта накоплений. функция выше использует значение с учётом накопления
 			var point = this.cChartDrawer.getPointByIndex(seria, val);
 			var pointVal = isCatAx ? val + 1 : point.val;
-
 
 			switch (errBars.errValType) {
 				case AscFormat.st_errvaltypeCUST: {
