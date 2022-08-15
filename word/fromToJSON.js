@@ -7758,7 +7758,7 @@
 			"fillRef":        this.SerStyleRef(oStyleEntry.fillRef),
 			"effectRef":      this.SerStyleRef(oStyleEntry.effectRef),
 			"fontRef":        this.SerFontRef(oStyleEntry.fontRef),
-			"defRPr":         this.this.SerTextPrDrawing(oStyleEntry.defRPr),
+			"defRPr":         this.SerTextPrDrawing(oStyleEntry.defRPr),
 			"bodyPr":         this.SerBodyPr(oStyleEntry.bodyPr),
 			"spPr":           this.SerSpPr(oStyleEntry.spPr),
 		}
