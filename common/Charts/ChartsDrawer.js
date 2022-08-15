@@ -15350,7 +15350,7 @@ CErrBarsDraw.prototype = {
 
 	recalculateChart: function (oChart) {
 		//TODO пока только для line
-		if (!oChart.paths.points) {
+		if (!oChart.paths.points && !oChart.paths.series) {
 			return;
 		}
 
@@ -15462,71 +15462,6 @@ CErrBarsDraw.prototype = {
 								res[i] = [];
 							}
 							res[i].push(calcErrLine(start, end, isHorPos ? y : x));
-
-							/*Id: "35"
-							errBarType: 0
-							errDir: 1
-							errValType: 2
-							minus: null
-							noEndCap: false
-							parent: CLineSeries {Id: '30', parent: CLineChart, idx: 0, order: 0, tx: null, …}
-							pen: null
-							plus: null
-							spPr: CSpPr {Id: '36', parent: CErrBars, bwMode: 0, xfrm: null, geometry: null, …}
-							val: 10*/
-
-
-
-
-							console.log("x: " + x*pxToMm + " y: " + y*pxToMm);
-
-							/*var width = point.compiledDlb.extX;
-							var height = point.compiledDlb.extY;
-
-
-							var centerX = x - width / 2;
-							var centerY = y - height / 2;
-
-							switch (point.compiledDlb.dLblPos) {
-								case c_oAscChartDataLabelsPos.b: {
-									centerY = centerY + height / 2 + constMargin;
-									break;
-								}
-								case c_oAscChartDataLabelsPos.bestFit: {
-									break;
-								}
-								case c_oAscChartDataLabelsPos.ctr: {
-									break;
-								}
-								case c_oAscChartDataLabelsPos.l: {
-									centerX = centerX - width / 2 - constMargin;
-									break;
-								}
-								case c_oAscChartDataLabelsPos.r: {
-									centerX = centerX + width / 2 + constMargin;
-									break;
-								}
-								case c_oAscChartDataLabelsPos.t: {
-									centerY = centerY - height / 2 - constMargin;
-									break;
-								}
-							}
-
-							if (centerX < 0) {
-								centerX = 0;
-							}
-							if (centerX + width > this.cChartDrawer.calcProp.widthCanvas / pxToMm) {
-								centerX = this.cChartDrawer.calcProp.widthCanvas / pxToMm - width;
-							}
-
-							if (centerY < 0) {
-								centerY = 0;
-							}
-							if (centerY + height > this.cChartDrawer.calcProp.heightCanvas / pxToMm) {
-								centerY = this.cChartDrawer.calcProp.heightCanvas / pxToMm - height;
-							}
-
-							return {x: centerX, y: centerY};*/
 						}
 					}
 				}
@@ -15551,7 +15486,7 @@ CErrBarsDraw.prototype = {
 					break;
 				}
 				case AscFormat.st_errvaltypeFIXEDVAL: {
-					res = pointVal * errBars.val;
+					res = errBars.val;
 					break;
 				}
 				case AscFormat.st_errvaltypePERCENTAGE: {
