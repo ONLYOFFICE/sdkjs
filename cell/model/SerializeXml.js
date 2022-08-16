@@ -1546,11 +1546,9 @@
 		return res;
 	}
 
-	function FromXml_ST_HorizontalAlignment(val) {
-		var res = -1;
-		if ("general" === val) {
-			res = -1;
-		} else if ("left" === val) {
+	function FromXml_ST_HorizontalAlignment(val, default_null) {
+		var res = default_null ? null: -1;//general == null
+		if ("left" === val) {
 			res = AscCommon.align_Left;
 		} else if ("center" === val) {
 			res = AscCommon.align_Center;
@@ -9478,7 +9476,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		while (reader.MoveToNextAttribute()) {
 			if ("horizontal" === reader.GetName() || "ss:Horizontal" === reader.GetName()) {
 				val = reader.GetValue();
-				this.hor = FromXml_ST_HorizontalAlignment(val);
+				this.hor = FromXml_ST_HorizontalAlignment(val, true);
 			} else if ("indent" === reader.GetName() || "ss:Indent" === reader.GetName()) {
 				val = reader.GetValueInt();
 				this.indent = val;
