@@ -4378,6 +4378,8 @@
 
 		var c = this._getVisibleCell(col, row);
 
+		c.getType();
+
 		if (false === this.model.getSheetView().asc_getShowZeros() && c.getValue() === "0") {
 			return;
 		}

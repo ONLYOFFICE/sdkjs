@@ -3972,19 +3972,20 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 	AscCommonExcel.Cell.prototype.fromXml = function (reader) {
 		this.readAttr(reader);
 
-		var value = reader.GetContext().cellValue;
+		var ctx = reader.GetContext();
+		var value = ctx.cellValue;
 		var depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			if ("v" === reader.GetName()) {
 				value.fromXml(reader);
 				if (CellValueType.String === this.type) {
 					var ss;
-					var nSharedStr = parseInt(value.val);
-					if (isNaN(nSharedStr)) {
-						ss = value.val != null ? value.val : undefined;
+					if (ctx.originType === "str") {
+						ss = value.val
 					} else {
-						ss = reader.GetContext().sharedStrings[nSharedStr];
+						ss = reader.GetContext().sharedStrings[parseInt(value.val)];
 					}
+
 					if (undefined !== ss) {
 						if (typeof ss === 'string') {
 							this.setValueTextInternal(ss);
@@ -4005,7 +4006,9 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 	};
 	AscCommonExcel.Cell.prototype.readAttr = function (reader) {
 		var val;
-		var cellBase = reader.GetContext().cellBase;
+		var ctx = reader.GetContext();
+		var cellBase = ctx.cellBase;
+		ctx.originType = null;
 		while (reader.MoveToNextAttribute()) {
 			if ("r" === reader.GetName()) {
 				val = reader.GetValue();
@@ -4024,6 +4027,7 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 				}
 			} else if ("t" === reader.GetName()) {
 				val = reader.GetValue();
+				ctx.originType = val;
 				var type = FromXml_ST_CellValueType(val);
 				if (type != null) {
 					this.type = type;
