@@ -3594,9 +3594,8 @@
 					}
 				};
 
-				text = text.replace(/\r\n/g,'\n');
-
 				if(!bPastedArray) {
+					text = text.replace(/\r\n/g,'\n');
 					_parseText(text);
 				} else {
 					for(var i = 0; i < text.length; i++) {
