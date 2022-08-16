@@ -63,6 +63,33 @@ $(function () {
 		let format = new AscWord.CTextFormFormat();
 		assert.strictEqual(format.Check("qwe123"), true, "Check no format validation");
 
+		format.SetSymbols("1234567890");
+		assert.strictEqual(format.Check("qwe123"), false, "Add symbols and check 'qwe123'");
+		assert.strictEqual(format.Check("555123"), true, "Add symbols and check '555123'");
+
+		format.SetSymbols();
+		format.SetDigit();
+		assert.strictEqual(format.Check("qwe123"), false, "Digit: check 'qwe123'");
+		assert.strictEqual(format.Check("555123"), true, "Digit: check '555123'");
+
+		format.SetSymbols("153");
+		format.SetDigit();
+		assert.strictEqual(format.Check("qwe123"), false, "Digit and symbols: check 'qwe123'");
+		assert.strictEqual(format.Check("555123"), false, "Digit and symbols: check '555123'");
+		assert.strictEqual(format.Check("513513"), true, "Digit and symbols: check '513513'");
+
+		format.SetSymbols();
+		format.SetLetter();
+		assert.strictEqual(format.Check("qwe123"), false, "Letter: check 'qwe123'");
+		assert.strictEqual(format.Check("555123"), false, "Letter: check '555123'");
+		assert.strictEqual(format.Check("АБВГДЕabcdef"), true, "Letter: check 'АБВГДЕabcdef'");
+
+		format.SetSymbols("абвгдеёжзийклмнопрстуфхцчшщъыьэюя");
+		format.SetLetter();
+		assert.strictEqual(format.Check("АБВГДЕabcdef"), false, "Letter and symbols: check 'АБВГДЕabcdef'");
+		assert.strictEqual(format.Check("привет"), true, "Letter: check 'привет'");
+		assert.strictEqual(format.Check("hello"), false, "Letter: check 'hello'");
+
 
 	});
 

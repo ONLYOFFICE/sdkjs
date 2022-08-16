@@ -49,13 +49,25 @@
 	function CTextFormFormat()
 	{
 		this.BaseFormat = FormatType.None;
-		this.SymbolsSet = []; // Специальный параметр для возможного ограничения на ввод символов
+		this.Symbols    = []; // Специальный параметр для возможного ограничения на ввод символов
 
 		this.Mask = "";
 	}
-	CTextFormFormat.prototype.SetBaseFormat = function(nType)
+	CTextFormFormat.prototype.SetSymbols = function(value)
 	{
-		this.BaseFormat = nType;
+		this.Symbols = [];
+
+		if (Array.isArray(value))
+		{
+			this.Symbols = Array.from(value);
+		}
+		else if (typeof(value) === "string")
+		{
+			for (let oIter = value.getUnicodeIterator(); oIter.check(); oIter.next())
+			{
+				this.Symbols.push(oIter.value());
+			}
+		}
 	};
 	CTextFormFormat.prototype.SetDigit = function()
 	{
@@ -75,20 +87,64 @@
 		this.BaseFormat = FormatType.Mask;
 		this.Mask = sMask;
 	};
-	CTextFormFormat.prototype.Check = function(sText)
+	CTextFormFormat.prototype.CheckFormat = function(sText)
 	{
-		if (sText && this.SymbolsSet.length)
+		switch (this.BaseFormat)
 		{
-			for (let oIter = sText.getUnicodeIterator(); iter.check(); iter.next())
+			case FormatType.Digit:
+				return this.CheckDigit(sText);
+			case FormatType.Letter:
+				return this.CheckLetter(sText);
+			case FormatType.Mask:
+				return this.CheckMask(sText);
+		}
+
+		return true;
+	};
+	CTextFormFormat.prototype.CheckSymbols = function(sText)
+	{
+		if (sText && this.Symbols.length)
+		{
+			for (let oIter = sText.getUnicodeIterator(); oIter.check(); oIter.next())
 			{
-				if (-1 === this.SymbolsSet.indexOf(oIter.value()))
+				if (-1 === this.Symbols.indexOf(oIter.value()))
 					return false;
 			}
 		}
 
 		return true;
 	};
+	CTextFormFormat.prototype.Check = function(sText)
+	{
+		return (this.CheckFormat(sText)
+			&& this.CheckSymbols(sText));
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//--------------------------------------------------------export----------------------------------------------------
+	CTextFormFormat.prototype.CheckDigit = function(sText)
+	{
+		for (let oIter = sText.getUnicodeIterator(); oIter.check(); oIter.next())
+		{
+			if (!AscCommon.IsDigit(oIter.value()))
+				return false;
+		}
+		return true;
+	};
+	CTextFormFormat.prototype.CheckLetter = function(sText)
+	{
+		for (let oIter = sText.getUnicodeIterator(); oIter.check(); oIter.next())
+		{
+			if (!AscCommon.IsLetter(oIter.value()))
+				return false;
+		}
+		return true;
+	};
+	CTextFormFormat.prototype.CheckMask = function(sText)
+	{
+		return true;
+	};
 	window['AscWord'].CTextFormFormat = CTextFormFormat;
 
 
