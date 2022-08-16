@@ -3980,7 +3980,13 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 			if ("v" === reader.GetName()) {
 				value.fromXml(reader);
 				if (CellValueType.String === this.type) {
-					var ss = reader.GetContext().sharedStrings[parseInt(value.val)];
+					var ss;
+					var nSharedStr = parseInt(value.val);
+					if (isNaN(nSharedStr)) {
+						ss = value.val != null ? value.val : undefined;
+					} else {
+						ss = reader.GetContext().sharedStrings[nSharedStr];
+					}
 					if (undefined !== ss) {
 						if (typeof ss === 'string') {
 							this.setValueTextInternal(ss);
