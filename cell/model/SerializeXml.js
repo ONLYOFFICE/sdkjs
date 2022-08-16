@@ -4890,10 +4890,10 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 				val = reader.GetValue();
 				this.DisplayName = val;
 			} else if ("headerRowCount" === reader.GetName()) {
-				val = reader.GetValue();
+				val = reader.GetValueInt();
 				this.HeaderRowCount = val;
 			} else if ("totalsRowCount" === reader.GetName()) {
-				val = reader.GetValue();
+				val = reader.GetValueInt();
 				this.TotalsRowCount = val;
 			} else if ("id" === reader.GetName()) {
 				reader.context.InitOpenManager.oReadResult.tableIds[reader.GetValue()] = this;
