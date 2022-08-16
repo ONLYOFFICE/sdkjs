@@ -6018,7 +6018,7 @@
 	 * @param bWriteDefaultTextPr - Specifies if the default text properties will be written to the JSON object or not.
 	 * @param bWriteDefaultParaPr - Specifies if the default paragraph properties will be written to the JSON object or not.
 	 * @param bWriteTheme         - Specifies if the document theme will be written to the JSON object or not.
-	 * @param bWriteSectionPr     - Specifies if the section properties will be written to the JSON object or not.
+	 * @param bWriteSectionPr     - Specifies if the document section properties will be written to the JSON object or not.
 	 * @param bWriteNumberings    - Specifies if the document numberings will be written to the JSON object or not.
 	 * @param bWriteStyles        - Specifies if the document styles will be written to the JSON object or not.
 	 * @returns {JSON}

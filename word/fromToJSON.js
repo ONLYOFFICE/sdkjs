@@ -4121,9 +4121,9 @@
 		
 		let oSpacing = {
 			"before":            oParaSpacing.Before != null ? private_MM2Twips(oParaSpacing.Before) : undefined,
-			"beforeAutoSpacing": oParaSpacing.BeforeAutoSpacing !== null ? (oParaSpacing.BeforeAutoSpacing === true ? "on" : "off") : undefined,
+			"beforeAutoSpacing": oParaSpacing.BeforeAutoSpacing != null ? (oParaSpacing.BeforeAutoSpacing === true ? "on" : "off") : undefined,
 			"after":             oParaSpacing.After != null ? private_MM2Twips(oParaSpacing.After) : undefined,
-			"afterAutoSpacing":  oParaSpacing.AfterAutoSpacing !== null ? (oParaSpacing.AfterAutoSpacing === true ? "on" : "off") : undefined
+			"afterAutoSpacing":  oParaSpacing.AfterAutoSpacing != null ? (oParaSpacing.AfterAutoSpacing === true ? "on" : "off") : undefined
 		};
 
 		switch (oParaSpacing.LineRule)
@@ -8186,20 +8186,20 @@
 				"lastValue": oSdtPr.DropDown.LastValue
 			} : undefined,
 
-			"equation" : oSdtPr.Equation,
-			"id":        oSdtPr.Id,
-			"label":     oSdtPr.Label,
-			"lock":      ToXml_ST_Lock(oSdtPr.Lock),
-			"picture":   oSdtPr.Picture,
+			"equation":  oSdtPr.Equation != null ? oSdtPr.Equation : undefined,
+			"id":        oSdtPr.Id != null ? oSdtPr.Id : undefined,
+			"label":     oSdtPr.Label != null ? oSdtPr.Label : undefined,
+			"lock":      oSdtPr.Lock != null ? ToXml_ST_Lock(oSdtPr.Lock) : undefined,
+			"picture":   oSdtPr.Picture != null ? oSdtPr.Picture : undefined,
 
 			"placeholder": oSdtPr.Placeholder ? {
 				"docPart": oSdtPr.Placeholder
 			} : undefined,
 
 			"rPr":           this.SerTextPr(oSdtPr.TextPr),
-			"showingPlcHdr": oSdtPr.ShowingPlcHdr,
-			"tag":           oSdtPr.Tag,
-			"temporary":     oSdtPr.Temporary
+			"showingPlcHdr": oSdtPr.ShowingPlcHdr != null ? oSdtPr.ShowingPlcHdr : undefined,
+			"tag":           oSdtPr.Tag != null ? oSdtPr.Tag : undefined,
+			"temporary":     oSdtPr.Temporary != null ? oSdtPr.Temporary : undefined
 		}
 	};
 	WriterToJSON.prototype.SerParaMath = function(oParaMath)
@@ -10917,23 +10917,33 @@
 	};
 	ReaderFromJSON.prototype.HeaderFromJSON = function(oParsedHdr)
 	{
-		var oDocument         = private_GetLogicDocument();
-		var oDrawingDocuemnt  = private_GetDrawingDocument();
-		var oHdrFtrController = oDocument.GetHdrFtr();
+		let oDocument         = private_GetLogicDocument();
+		let oDrawingDocuemnt  = private_GetDrawingDocument();
+		let oHdrFtrController = oDocument.GetHdrFtr();
 
-		var oHeader = new AscCommonWord.CHeaderFooter(oHdrFtrController, oDocument, oDrawingDocuemnt, AscCommon.hdrftr_Header);
-		oHeader.Content.Copy2(this.DocContentFromJSON(oParsedHdr["content"], oHeader));
+		let oHeader = new AscCommonWord.CHeaderFooter(oHdrFtrController, oDocument, oDrawingDocuemnt, AscCommon.hdrftr_Header);
+		let oNewContent = this.DocContentFromJSON(oParsedHdr["content"], oHeader);
+		//oHeader.Content.Copy2(this.DocContentFromJSON(oParsedHdr["content"], oHeader));
+
+		oHeader.Content.Internal_Content_RemoveAll();
+		for (let nIndex = 0; nIndex < oNewContent.Content.length; nIndex++)
+			oHeader.Content.Internal_Content_Add(nIndex, oNewContent.Content[nIndex]);
 
 		return oHeader;
 	};
 	ReaderFromJSON.prototype.FooterFromJSON = function(oParsedHdr)
 	{
-		var oDocument         = private_GetLogicDocument();
-		var oDrawingDocuemnt  = private_GetDrawingDocument();
-		var oHdrFtrController = oDocument.GetHdrFtr();
+		let oDocument         = private_GetLogicDocument();
+		let oDrawingDocuemnt  = private_GetDrawingDocument();
+		let oHdrFtrController = oDocument.GetHdrFtr();
 
-		var oFooter = new AscCommonWord.CHeaderFooter(oHdrFtrController, oDocument, oDrawingDocuemnt, AscCommon.hdrftr_Footer);
-		oFooter.Content.Copy2(this.DocContentFromJSON(oParsedHdr["content"], oFooter));
+		let oFooter = new AscCommonWord.CHeaderFooter(oHdrFtrController, oDocument, oDrawingDocuemnt, AscCommon.hdrftr_Footer);
+		let oNewContent = this.DocContentFromJSON(oParsedHdr["content"], oFooter);
+		//oFooter.Content.Copy2(this.DocContentFromJSON(oParsedHdr["content"], oFooter));
+
+		oFooter.Content.Internal_Content_RemoveAll();
+		for (let nIndex = 0; nIndex < oNewContent.Content.length; nIndex++)
+			oFooter.Content.Internal_Content_Add(nIndex, oNewContent.Content[nIndex]);
 
 		return oFooter;
 	};
@@ -11336,10 +11346,14 @@
 		if (!oMapBookmarksInfo)
 			oMapBookmarksInfo = {};
 
-		var oSdt = new AscCommonWord.CBlockLevelSdt(private_GetLogicDocument(), oParent || private_GetLogicDocument());
+		let oSdt = new AscCommonWord.CBlockLevelSdt(private_GetLogicDocument(), oParent || private_GetLogicDocument());
 		this.SdtPrFromJSON(oParsedSdt["sdtPr"], oSdt);
-		
-		oSdt.Content.Copy2(this.DocContentFromJSON(oParsedSdt["sdtContent"], oSdt, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo));
+		let oNewContent = this.DocContentFromJSON(oParsedSdt["sdtContent"], oSdt, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo);
+		//oSdt.Content.Copy2(this.DocContentFromJSON(oParsedSdt["sdtContent"], oSdt, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo));
+
+		oSdt.Content.Internal_Content_RemoveAll();
+		for (let nIndex = 0; nIndex < oNewContent.Content.length; nIndex++)
+			oSdt.Content.Internal_Content_Add(nIndex, oNewContent.Content[nIndex]);
 
 		return oSdt;
 	};
@@ -11348,9 +11362,13 @@
 		let oCell = new CTableCell(oParentRow);
 
 		oParsedCell["tcPr"] && oCell.Set_Pr(this.TableCellPrFromJSON(oParsedCell["tcPr"]));
-
-		oCell.Content.Copy2(this.DocContentFromJSON(oParsedCell["content"], oCell, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo));
+		let oNewContent = this.DocContentFromJSON(oParsedCell["content"], oCell, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo);
+		//oCell.Content.Copy2(this.DocContentFromJSON(oParsedCell["content"], oCell, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo));
 	
+		oCell.Content.Internal_Content_RemoveAll();
+		for (let nIndex = 0; nIndex < oNewContent.Content.length; nIndex++)
+			oCell.Content.Internal_Content_Add(nIndex, oNewContent.Content[nIndex]);
+
 		return oCell;
 	};
 	ReaderFromJSON.prototype.DrawingTableCellFromJSON = function(oParsedCell, oParentRow)
@@ -11373,8 +11391,13 @@
 			oCell.Set_Pr(oTcPr);
 		}
 
-		oCell.Content.Copy2(this.DrawingDocContentFromJSON(oParsedCell["content"], oCell));
+		let oNewContent = this.DocContentFromJSON(oParsedCell["content"], oCell);
+		//oCell.Content.Copy2(this.DrawingDocContentFromJSON(oParsedCell["content"], oCell));
 	
+		oCell.Content.Internal_Content_RemoveAll();
+		for (let nIndex = 0; nIndex < oNewContent.Content.length; nIndex++)
+			oCell.Content.Internal_Content_Add(nIndex, oNewContent.Content[nIndex]);
+			
 		return oCell;
 	};
 	ReaderFromJSON.prototype.TableCellPrFromJSON = function(oParsedPr)
@@ -14280,7 +14303,7 @@
 		oImage.setNvPicPr(this.UniNvPrFromJSON(oParsedImage["nvPicPr"]));
 		oImage.setSpPr(this.SpPrFromJSON(oParsedImage["spPr"], oImage));
 
-		oImage.setNoChangeAspect(true);
+		//oImage.setNoChangeAspect(true);
         oImage.setBDeleted(false);
 		if (oImage.nvPicPr && oImage.nvPicPr.locks > 0)
 			oImage.setLocks(oImage.nvPicPr.locks);
