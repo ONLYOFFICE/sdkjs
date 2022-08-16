@@ -34,95 +34,62 @@
 
 (function(window)
 {
+
+	const FormatType = {
+		None   : 0,
+		Digit  : 1,
+		Letter : 2,
+		Mask   : 3
+	};
+
 	/**
 	 * Базовый класс для всех форматов
 	 * @constructor
 	 */
-	function CTextFormFormatBase()
+	function CTextFormFormat()
 	{
-		this.Set = []; // Специальный параметр для возможного ограничения на ввод символов
+		this.BaseFormat = FormatType.None;
+		this.SymbolsSet = []; // Специальный параметр для возможного ограничения на ввод символов
+
+		this.Mask = "";
 	}
-	CTextFormFormatBase.prototype.Check = function(sText)
+	CTextFormFormat.prototype.SetBaseFormat = function(nType)
 	{
-		if (sText && this.Set.length)
+		this.BaseFormat = nType;
+	};
+	CTextFormFormat.prototype.SetDigit = function()
+	{
+		this.BaseFormat = FormatType.Digit;
+	};
+	CTextFormFormat.prototype.SetLetter = function()
+	{
+		this.BaseFormat = FormatType.Letter;
+	};
+	/**
+	 * Выствляем маску. Маску используем как в Adobe:
+	 * 9 - число, a - текстовый символ, * - либо число, либо текстовый символ
+	 * @param sMask
+	 */
+	CTextFormFormat.prototype.SetMask = function(sMask)
+	{
+		this.BaseFormat = FormatType.Mask;
+		this.Mask = sMask;
+	};
+	CTextFormFormat.prototype.Check = function(sText)
+	{
+		if (sText && this.SymbolsSet.length)
 		{
 			for (let oIter = sText.getUnicodeIterator(); iter.check(); iter.next())
 			{
-				if (-1 === this.Set.indexOf(oIter.value()))
+				if (-1 === this.SymbolsSet.indexOf(oIter.value()))
 					return false;
 			}
 		}
 
 		return true;
 	};
-	/**
-	 * Класс представляющий пустой формат
-	 * @constructor
-	 * @extends {CTextFormFormatBase}
-	 */
-	function CTextFormFormatNone()
-	{
-		CTextFormFormatBase.call(this);
-	}
-	CTextFormFormatNone.prototype = Object.create(AscWord.CRunElementBase.prototype);
-	CTextFormFormatNone.prototype.constructor = CTextFormFormatBase;
-	CTextFormFormatNone.prototype.Check = function(sText)
-	{
-		return this.constructor.prototype.Check.call(sText);
-	};
-
-	/**
-	 * Только числа
-	 * @constructor
-	 * @extends {CTextFormFormatBase}
-	 */
-	function CTextFormFormatDecimal()
-	{
-		CTextFormFormatBase.call(this);
-	}
-	CTextFormFormatDecimal.prototype = Object.create(AscWord.CRunElementBase.prototype);
-	CTextFormFormatDecimal.prototype.constructor = CTextFormFormatBase;
-	CTextFormFormatDecimal.prototype.Check = function(sText)
-	{
-		return true;
-	};
-	/**
-	 * Формат - маска
-	 * @param sMask {string}
-	 * @constructor
-	 * @extends {CTextFormFormatBase}
-	 */
-	function CTextFormFormatLetters(sMask)
-	{
-		CTextFormFormatBase.call(this);
-	}
-	CTextFormFormatMask.prototype = Object.create(AscWord.CRunElementBase.prototype);
-	CTextFormFormatMask.prototype.constructor = CTextFormFormatBase;
-	CTextFormFormatMask.prototype.Check = function(sText)
-	{
-		return true;
-	};
-	/**
-	 * Формат - маска
-	 * @param sMask {string}
-	 * @constructor
-	 * @extends {CTextFormFormatBase}
-	 */
-	function CTextFormFormatMask(sMask)
-	{
-		CTextFormFormatBase.call(this);
-	}
-	CTextFormFormatMask.prototype = Object.create(AscWord.CRunElementBase.prototype);
-	CTextFormFormatMask.prototype.constructor = CTextFormFormatBase;
-	CTextFormFormatMask.prototype.Check = function(sText)
-	{
-		return true;
-	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'].CTextFormFormatNone    = CTextFormFormatNone;
-	window['AscWord'].CTextFormFormatDecimal = CTextFormFormatDecimal;
-	window['AscWord'].CTextFormFormatMask    = CTextFormFormatMask;
-
+	window['AscWord'].CTextFormFormat = CTextFormFormat;
 
 
 })(window);

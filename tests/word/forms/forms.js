@@ -58,6 +58,13 @@ $(function () {
 
 	QUnit.module("Check forms");
 
+	QUnit.test("Check text form formats", function (assert)
+	{
+		let format = new AscWord.CTextFormFormat();
+		assert.strictEqual(format.Check("qwe123"), true, "Check no format validation");
+
+
+	});
 
 	QUnit.test("Test: \"GetAllForms\"", function (assert)
 	{

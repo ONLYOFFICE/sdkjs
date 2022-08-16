@@ -270,6 +270,7 @@
 			"word/Editor/StructuredDocumentTags/Custom/Form.js",
 			"word/Editor/StructuredDocumentTags/Custom/PictureForm.js",
 			"word/Editor/StructuredDocumentTags/Custom/TextForm.js",
+			"word/Editor/StructuredDocumentTags/Custom/TextFormFormat.js",
 			"word/Editor/Serialize2.js",
 			"word/Editor/SpellChecker/DocumentSpellChecker.js",
 			"word/Editor/SpellChecker/ParagraphCollector.js",
