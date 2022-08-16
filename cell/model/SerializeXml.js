@@ -9896,7 +9896,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				}
 			} else if ("sz" === name) {
 				readOneAttr(reader, "val", function () {
-					t.fs = reader.GetValueInt();
+					t.fs = reader.GetValueDouble();
 				});
 			} else if ("u" === name) {
 				if (reader.GetValue() !== null) {
