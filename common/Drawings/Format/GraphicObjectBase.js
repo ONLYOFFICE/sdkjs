@@ -1151,7 +1151,7 @@
     };
 
     CGraphicObjectBase.prototype.isGroup = function() {
-        return this.getObjectType() === AscDFH.historyitem_type_GroupShape;
+        return false;
     };
 
     CGraphicObjectBase.prototype.isChart = function() {
@@ -3078,7 +3078,32 @@
             return "";
         }
     };
-
+    CGraphicObjectBase.prototype.deleteDrawingBase = function(bCheckPlaceholder) {
+        if(AscFormat.editorDeleteDrawingBase) {
+            return AscFormat.editorDeleteDrawingBase(this, bCheckPlaceholder);
+        }
+        return -1;
+    };
+    CGraphicObjectBase.prototype.addToDrawingObjects =  function(pos, type) {
+        if(AscFormat.editorAddToDrawingObjects) {
+            return AscFormat.editorAddToDrawingObjects(this, pos, type);
+        }
+        return -1;
+    };
+    CGraphicObjectBase.prototype.checkDrawingUniNvPr = function() {
+        let oUniNvPr = this.getUniNvProps();
+        if(!oUniNvPr) {
+            oUniNvPr = new AscFormat.UniNvPr();
+            this.setNvSpPr(oUniNvPr);
+        }
+        if(Array.isArray(this.spTree)) {
+            for(let i = 0; i < this.spTree.length; ++i) {
+                this.spTree[i].checkDrawingUniNvPr();
+            }
+        }
+    };
+    CGraphicObjectBase.prototype.setNvSpPr = function(oPr) {
+    };
 
     var ANIM_LABEL_WIDTH_PIX = 22;
     var ANIM_LABEL_HEIGHT_PIX = 17;

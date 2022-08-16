@@ -4528,7 +4528,9 @@ function BinaryPPTYLoader()
                 }
                 case 1:
                 {
-                    this.ReadClrMap(oNotesMaster.clrMap);
+                    let clrMap = new AscFormat.ClrMap();
+                    this.ReadClrMap(clrMap);
+                    oNotesMaster.setClrMap(clrMap);
                     break;
                 }
                 case 2:
@@ -4538,7 +4540,6 @@ function BinaryPPTYLoader()
                 }
                 case 3:
                 {
-
                     oNotesMaster.setNotesStyle(this.ReadTextListStyle());
                     break;
                 }
@@ -8933,9 +8934,7 @@ function BinaryPPTYLoader()
                 }
                 case 17:
                 {
-                    bodyPr.vert = s.GetUChar();
-                    if(bodyPr.vert === AscFormat.nVertTTwordArtVert)
-                        bodyPr.vert = AscFormat.nVertTTvert;
+                    bodyPr.setVertOpen(s.GetUChar());
                     break;
                 }
                 case 18:

@@ -34,7 +34,7 @@
 
 $(function () {
 
-	const charWidth = test_CharWidth * test_FontSize;
+	const charWidth = AscTest.CharWidth * AscTest.FontSize;
 
 	let dc = new AscWord.CDocumentContent();
 	dc.ClearContent(false);
@@ -86,30 +86,30 @@ $(function () {
 		SetText("");
 		Recalculate(narrowWidth);
 		assert.strictEqual(para.GetLinesCount(), 1, "Lines count of empty paragraph");
-		assert.deepEqual(para.GetLineBounds(0), new AscWord.CDocumentBounds(0, 0, narrowWidth, test_FontHeight), "Line bounds of empty paragraph");
+		assert.deepEqual(para.GetLineBounds(0), new AscWord.CDocumentBounds(0, 0, narrowWidth, AscTest.FontHeight), "Line bounds of empty paragraph");
 		assert.strictEqual(para.GetPagesCount(), 1, "Pages count of paragraph");
 
 		SetText("123");
 		Recalculate(narrowWidth);
 		assert.strictEqual(para.GetText({ParaEndToSpace : false}), "123", "Paragraph text: 123");
 		assert.strictEqual(para.GetLinesCount(), 3, "Lines count 3");
-		assert.deepEqual(para.GetLineBounds(0), new AscWord.CDocumentBounds(0, 0, narrowWidth, test_FontHeight), "Check line bounds");
-		assert.deepEqual(para.GetLineBounds(1), new AscWord.CDocumentBounds(0, test_FontHeight, narrowWidth, test_FontHeight * 2), "Check line bounds");
-		assert.deepEqual(para.GetLineBounds(2), new AscWord.CDocumentBounds(0, test_FontHeight * 2, narrowWidth, test_FontHeight * 3), "Check line bounds");
+		assert.deepEqual(para.GetLineBounds(0), new AscWord.CDocumentBounds(0, 0, narrowWidth, AscTest.FontHeight), "Check line bounds");
+		assert.deepEqual(para.GetLineBounds(1), new AscWord.CDocumentBounds(0, AscTest.FontHeight, narrowWidth, AscTest.FontHeight * 2), "Check line bounds");
+		assert.deepEqual(para.GetLineBounds(2), new AscWord.CDocumentBounds(0, AscTest.FontHeight * 2, narrowWidth, AscTest.FontHeight * 3), "Check line bounds");
 		assert.strictEqual(para.GetPagesCount(), 1, "Pages count of paragraph");
 
 		SetText("Q");
 		Recalculate(narrowWidth);
 		assert.strictEqual(para.GetText({ParaEndToSpace : false}), "Q", "Paragraph text: Q");
 		assert.strictEqual(para.GetLinesCount(), 1, "Lines count 1");
-		assert.deepEqual(para.GetLineBounds(0), new AscWord.CDocumentBounds(0, 0, narrowWidth, test_FontHeight), "Check line bounds");
+		assert.deepEqual(para.GetLineBounds(0), new AscWord.CDocumentBounds(0, 0, narrowWidth, AscTest.FontHeight), "Check line bounds");
 		assert.strictEqual(para.GetPagesCount(), 1, "Pages count of paragraph");
 
 		SetText("Q ");
 		Recalculate(narrowWidth);
 		assert.strictEqual(para.GetText({ParaEndToSpace : false}), "Q ", "Paragraph text: Q'<'space'>'");
 		assert.strictEqual(para.GetLinesCount(), 1, "Lines count 1");
-		assert.deepEqual(para.GetLineBounds(0), new AscWord.CDocumentBounds(0, 0, narrowWidth, test_FontHeight), "Check line bounds");
+		assert.deepEqual(para.GetLineBounds(0), new AscWord.CDocumentBounds(0, 0, narrowWidth, AscTest.FontHeight), "Check line bounds");
 		assert.strictEqual(para.GetPagesCount(), 1, "Pages count of paragraph");
 	});
 

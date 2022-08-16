@@ -42,12 +42,14 @@
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetBg]          = AscDFH.CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterAddToNotesLst]  = AscDFH.CChangesDrawingsContentPresentation;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetName]        = AscDFH.CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetClrMap]      = AscDFH.CChangesDrawingsObject;
 
 
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesTheme]  = function(oClass, value){oClass.Theme = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetHF]          = function(oClass, value){oClass.hf = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesStyle]  = function(oClass, value){oClass.txStyles = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetName]        = function(oClass, value){oClass.cSld.name = value;};
+    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetClrMap]      = function(oClass, value){oClass.clrMap = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetBg]          = function(oClass, value, FromLoad){
         oClass.cSld.Bg = value;
         if(FromLoad){
@@ -97,6 +99,10 @@
     CNotesMaster.prototype.setTheme = function(pr){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetNotesTheme, this.Theme, pr));
         this.Theme = pr;
+    };
+    CNotesMaster.prototype.setClrMap = function(pr){
+        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetClrMap, this.clrMap, pr));
+        this.clrMap = pr;
     };
 
     CNotesMaster.prototype.setHF = function(pr){

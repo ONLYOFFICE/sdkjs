@@ -468,6 +468,28 @@ CSdtBase.prototype.IsFormFilled = function()
 	return true;
 }
 /**
+ * Проверка заполненности формы для составных форм
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsComplexFormFilled = function()
+{
+	let oMainForm = this.GetMainForm();
+	if (!oMainForm)
+		return false;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return true;
+
+	for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
+	{
+		if (!arrForms[nIndex].IsFormFilled())
+			return false;
+	}
+
+	return true;
+};
+/**
  * Оборачиваем форму в графический контейнер
  * @returns {?ParaDrawing}
  */

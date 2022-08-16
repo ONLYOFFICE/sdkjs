@@ -3817,8 +3817,8 @@
 	//---------------------------------------------------------version----------------------------------------------------
 	baseEditorsApi.prototype["GetVersion"] = baseEditorsApi.prototype.GetVersion = function()
 	{
-		var ver = "@@Version";
-		return (ver === "0.0.0" || ver.substr(2) === "Version") ? "develop" : ver;
+		this.versionSdk = "@@Version";
+		return (this.versionSdk === "0.0.0" || this.versionSdk.substr(2) === "Version") ? "develop" : this.versionSdk;
 	};
 	//----------------------------------------------------------addons----------------------------------------------------
 	baseEditorsApi.prototype["asc_isSupportFeature"] = function(type)
@@ -3896,6 +3896,15 @@
 	baseEditorsApi.prototype.setOpenedAt = function(val)
 	{
 		this.openedAt = val;
+	};
+
+	baseEditorsApi.prototype.getImageDataFromSelection = function ()
+	{
+		return AscFormat.WHITE_RECT_IMAGE_DATA;
+	};
+
+	baseEditorsApi.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight)
+	{
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------

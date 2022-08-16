@@ -103,6 +103,12 @@ var DISTANCE_TO_TEXT_LEFTRIGHT = 3.2;
     CURSOR_TYPES_BY_CARD_DIRECTION[CARD_DIRECTION_W]  = "w-resize";
     CURSOR_TYPES_BY_CARD_DIRECTION[CARD_DIRECTION_NW] = "nw-resize";
 
+    const WHITE_RECT_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAIAAAD2HxkiAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMrSURBVHhe7dMxAQAADMOg+TfdycgDHrgBKQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJISYhBCTEGISQkxCiEkIMQkhJiHEJITU9vSZzteUMFOrAAAAAElFTkSuQmCC';
+    const WHITE_RECT_IMAGE_DATA = {
+        "src": WHITE_RECT_IMAGE,
+        "width": 300,
+        "height": 300,
+    }
     function fillImage(image, rasterImageId, x, y, extX, extY, sVideoUrl, sAudioUrl)
     {
         image.setSpPr(new AscFormat.CSpPr());
@@ -10261,6 +10267,94 @@ DrawingObjectsController.prototype =
             return Last;
         }
         return null;
+    },
+    getImageDataFromSelection: function() {
+        let aSelectedObjects = this.getSelectedArray();
+        if(aSelectedObjects.length < 1) {
+            return AscFormat.WHITE_RECT_IMAGE_DATA;
+        }
+        let sSrc = aSelectedObjects[0].getBase64Img();
+        let nWidth = aSelectedObjects[0].cachedPixW || 50;
+        let nHeight = aSelectedObjects[0].cachedPixH || 50;
+        return {
+            "src": sSrc,
+            "width": nWidth,
+            "height": nHeight
+        };
+    },
+    putImageToSelection: function(sImageUrl, nWidth, nHeight) {
+        let spTree = this.getDrawingArray();
+        let selectedObjects = this.getSelectedArray();
+        const nPageIndex = 0;
+        let oController = this;
+        if(selectedObjects.length > 0 && !this.getTargetDocContent()){
+            this.checkSelectedObjectsAndCallback(function(){
+
+                let _w = nWidth * AscCommon.g_dKoef_pix_to_mm;
+                let _h = nHeight * AscCommon.g_dKoef_pix_to_mm;
+                let oImage = oController.createImage(sImageUrl, 0, 0, _w, _h);
+                let oFirstSelectedObject = selectedObjects[0];
+                for(let nSp = 0; nSp < spTree.length; ++nSp) {
+                    let oSp = spTree[nSp];
+                    if(oSp === oFirstSelectedObject) {
+                        if(oSp.isImage()){
+                            oSp.replacePictureData(sImageUrl, _w, _h);
+                            if(oSp.group){
+                                oController.selection.groupSelection.resetInternalSelection();
+                                oSp.group.selectObject(oSp, 0);
+                            }
+                            else{
+                                oController.resetSelection();
+                                oController.selectObject(oSp, 0);
+                            }
+                        }
+                        else {
+                            let _xfrm = oSp.spPr && oSp.spPr.xfrm;
+                            let _xfrm2 = oImage.spPr.xfrm;
+                            if(_xfrm){
+                                _xfrm2.setOffX(_xfrm.offX);
+                                _xfrm2.setOffY(_xfrm.offY);
+                            }
+                            else{
+                                if(AscFormat.isRealNumber(oSp.x) && AscFormat.isRealNumber(oSp.y)){
+                                    _xfrm2.setOffX(oSp.x);
+                                    _xfrm2.setOffY(oSp.y);
+                                }
+                            }
+                            if(oFirstSelectedObject.group){
+                                let _group = oFirstSelectedObject.group;
+                                _group.removeFromSpTreeByPos(nSp);
+                                _group.addToSpTree(nSp, oImage);
+                                oImage.setGroup(_group);
+                                oController.selection.groupSelection.resetInternalSelection();
+                                _group.selectObject(oImage, nPageIndex);
+                            }
+                            else{
+                                let nPos = oFirstSelectedObject.deleteDrawingBase(false);
+                                if(nPos > -1) {
+                                    if(oController.drawingObjects.cSld) {
+                                        oImage.setParent(oController.drawingObjects);
+                                    }
+                                    else {
+                                        if(oController.drawingObjects.getWorksheetModel) {
+                                            oImage.setWorksheet(oController.drawingObjects.getWorksheetModel());
+                                        }
+                                    }
+                                    oImage.addToDrawingObjects(nPos, AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
+                                    oImage.checkDrawingBaseCoords();
+                                    oController.resetSelection();
+                                    oController.selectObject(oImage, nPageIndex);
+                                }
+                            }
+                        }
+                        return;
+                    }
+                }
+            }, [], false, 0, [], false);
+            return;
+        }
+        AscCommon.History.Create_NewPoint(0);
+        this.addImage(sImageUrl, nWidth, nHeight, null, null);
     }
 };
 
@@ -12145,6 +12239,8 @@ function CalcLiterByLength(aAlphaBet, nLength)
 	window['AscFormat'].drawingsUpdateForeignCursor = drawingsUpdateForeignCursor;
 	window['AscFormat'].fSortTrackObjects = fSortTrackObjects;
 	window['AscFormat'].isLeftButtonDoubleClick = isLeftButtonDoubleClick;
+	window['AscFormat'].WHITE_RECT_IMAGE = WHITE_RECT_IMAGE;
+	window['AscFormat'].WHITE_RECT_IMAGE_DATA = WHITE_RECT_IMAGE_DATA;
 
     window['AscCommon'] = window['AscCommon'] || {};
     window["AscCommon"].CDrawTask = CDrawTask;

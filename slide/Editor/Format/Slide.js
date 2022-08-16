@@ -882,50 +882,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         var nv_sp_pr;
         if(drawing)
         {
-            switch (drawing.getObjectType())
-            {
-                case AscDFH.historyitem_type_ChartSpace:
-                {
-                    if(!drawing.nvGraphicFramePr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    break;
-                }
-                case AscDFH.historyitem_type_GroupShape:
-                {
-                    if(!drawing.nvGrpSpPr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    for(var i = 0; i < drawing.spTree.length; ++i)
-                    {
-                        this.checkDrawingUniNvPr(drawing.spTree[i]);
-                    }
-                    break;
-                }
-                case AscDFH.historyitem_type_ImageShape:
-                case AscDFH.historyitem_type_OleObject:
-                {
-                    if(!drawing.nvPicPr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    break;
-                }
-                case AscDFH.historyitem_type_Shape:
-                {
-                    if(!drawing.nvSpPr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    break;
-                }
-            }
+            drawing.checkDrawingUniNvPr();
         }
     };
 

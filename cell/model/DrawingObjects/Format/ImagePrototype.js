@@ -38,8 +38,6 @@
 var CShape = AscFormat.CShape;
 var CImageShape = AscFormat.CImageShape;
 
-CImageShape.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
-CImageShape.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CImageShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CImageShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CImageShape.prototype.getHierarchy = CShape.prototype.getHierarchy;

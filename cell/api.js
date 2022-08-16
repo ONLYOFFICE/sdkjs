@@ -4532,6 +4532,15 @@ var editor;
     this.asc_addImage({isTextArtChangeUrl: true, textureType: type});
   };
 
+  spreadsheet_api.prototype.getImageDataFromSelection = function() {
+      var ws = this.wb.getWorksheet();
+      return ws.objectRender.controller.getImageDataFromSelection();
+  };
+  spreadsheet_api.prototype.putImageToSelection = function(sImageSrc, nWidth, nHeight) {
+      var ws = this.wb.getWorksheet();
+      return ws.objectRender.controller.putImageToSelection(sImageSrc, nWidth, nHeight);
+  };
+
   spreadsheet_api.prototype.asc_putPrLineSpacing = function(type, value) {
     var ws = this.wb.getWorksheet();
     ws.objectRender.controller.putPrLineSpacing(type, value);

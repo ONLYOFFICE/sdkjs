@@ -1112,77 +1112,8 @@
         if(oPr.Slides[oPr.CurPage]){
             let _slide = oPr.Slides[oPr.CurPage];
             let oController = _slide.graphicObjects;
-            let _w = Width/36000.0;
-            let _h = Height/36000.0;
-            let oImage = oController.createImage(sImageUrl, 0, 0, _w, _h);
-            oImage.setParent(_slide);
-            let selectedObjects, spTree;
-            if(oController.selection.groupSelection){
-                selectedObjects = oController.selection.groupSelection.selectedObjects;
-            }
-            else{
-                selectedObjects = oController.selectedObjects;
-            }
-            if(selectedObjects.length > 0 && !oController.getTargetDocContent()){
-                if(selectedObjects[0].group){
-                    spTree = selectedObjects[0].group.spTree;
-                }
-                else{
-                    spTree = _slide.cSld.spTree;
-                }
-                for(let nSp = 0; nSp < spTree.length; ++nSp) {
-                    let oSp = spTree[nSp];
-                    if(oSp === selectedObjects[0] && selectedObjects.length === 1) {
-                        if(oSp.isImage()){
-                            oSp.replacePictureData(sImageUrl, _w, _h);
-                            if(oSp.group){
-                                oController.selection.groupSelection.resetInternalSelection();
-                                oSp.group.selectObject(oSp, 0);
-                            }
-                            else{
-                                oController.resetSelection();
-                                oController.selectObject(oSp, 0);
-                            }
-                        }
-                        else {
-                            let _xfrm = oSp.spPr && oSp.spPr.xfrm;
-                            let _xfrm2 = oImage.spPr.xfrm;
-                            if(_xfrm){
-                                _xfrm2.setOffX(_xfrm.offX);
-                                _xfrm2.setOffY(_xfrm.offY);
-                            }
-                            else{
-                                if(AscFormat.isRealNumber(oSp.x) && AscFormat.isRealNumber(oSp.y)){
-                                    _xfrm2.setOffX(oSp.x);
-                                    _xfrm2.setOffY(oSp.y);
-                                }
-                            }
-                            if(selectedObjects[0].group){
-                                let _group = selectedObjects[0].group;
-                                _group.removeFromSpTreeByPos(nSp);
-                                _group.addToSpTree(nSp, oImage);
-                                oImage.setGroup(_group);
-                                oController.selection.groupSelection.resetInternalSelection();
-                                _group.selectObject(oImage, oPr.CurPage);
-                            }
-                            else{
-                                _slide.removeFromSpTreeByPos(nSp);
-                                _slide.addToSpTreeToPos(nSp, oImage);
-                                oController.resetSelection();
-                                oController.selectObject(oImage, oPr.CurPage);
-                            }
-                        }
-                        return;
-                    }
-                }
-            }
-            let _x = (this.Presentation.GetWidthMM() - _w)/2.0;
-            let _y = (this.Presentation.GetHeightMM() - _h)/2.0;
-            oImage.spPr.xfrm.setOffX(_x);
-            oImage.spPr.xfrm.setOffY(_y);
-            _slide.addToSpTreeToPos(_slide.cSld.spTree.length, oImage);
-            oController.resetSelection();
-            oController.selectObject(oImage, oPr.CurPage);
+            let dK = 1 / 36000 / AscCommon.g_dKoef_pix_to_mm;
+            oController.putImageToSelection(sImageUrl, Width * dK, Height * dK );
         }
     };
 

@@ -72,48 +72,47 @@ CShape.prototype.getDrawingObjectsController = function()
 };
 
 
-CShape.prototype.addToDrawingObjects =  function(pos)
+function editorAddToDrawingObjects(oGraphicObject, pos, type)
 {
-    if(this.parent && this.parent.cSld && this.parent.cSld.spTree)
+    if(oGraphicObject.parent && oGraphicObject.parent.cSld && oGraphicObject.parent.cSld.spTree)
     {
-        if(this.signatureLine && this.setSignature)
+        if(oGraphicObject.signatureLine && oGraphicObject.setSignature)
         {
-            this.setSignature(null);
+            oGraphicObject.setSignature(null);
         }
-        this.parent.shapeAdd(pos, this);
+        oGraphicObject.parent.shapeAdd(pos, oGraphicObject);
     }
-};
-
-
-CShape.prototype.deleteDrawingBase = function(bCheckPlaceholder)
-{
-    if(this.parent && this.parent.cSld && this.parent.cSld.spTree)
+}
+    function editorDeleteDrawingBase(oGraphicObject, bCheckPlaceholder)
     {
-        var pos = this.parent.removeFromSpTreeById(this.Id);
-        var phType = this.getPlaceholderType();
-        if(bCheckPlaceholder && this.isPlaceholder() && !this.isEmptyPlaceholder()
-            && phType !== AscFormat.phType_hdr && phType !== AscFormat.phType_ftr
-            && phType !== AscFormat.phType_sldNum && phType !== AscFormat.phType_dt )
+        let oSlide = oGraphicObject.parent;
+        if(oSlide && oSlide.cSld && oSlide.cSld.spTree)
         {
-            var hierarchy = this.getHierarchy();
-            if(hierarchy[0])
+            var pos = oSlide.removeFromSpTreeById(oGraphicObject.Id);
+            var phType = oGraphicObject.getPlaceholderType();
+            if(bCheckPlaceholder && oGraphicObject.isPlaceholder() && !oGraphicObject.isEmptyPlaceholder()
+                && phType !== AscFormat.phType_hdr && phType !== AscFormat.phType_ftr
+                && phType !== AscFormat.phType_sldNum && phType !== AscFormat.phType_dt )
             {
-                var copy = hierarchy[0].copy(undefined);
-                copy.setParent(this.parent);
-                copy.addToDrawingObjects(pos);
-                var doc_content = copy.getDocContent && copy.getDocContent();
-                if(doc_content)
+                var hierarchy = oGraphicObject.getHierarchy();
+                if(hierarchy[0])
                 {
-                    doc_content.SetApplyToAll(true);
-                    doc_content.Remove(-1);
-                    doc_content.SetApplyToAll(false);
+                    var copy = hierarchy[0].copy(undefined);
+                    copy.setParent(oSlide);
+                    copy.addToDrawingObjects(pos);
+                    var doc_content = copy.getDocContent && copy.getDocContent();
+                    if(doc_content)
+                    {
+                        doc_content.SetApplyToAll(true);
+                        doc_content.Remove(-1);
+                        doc_content.SetApplyToAll(false);
+                    }
                 }
             }
+            return pos;
         }
-        return pos;
+        return -1;
     }
-    return -1;
-};
 
 CShape.prototype.setRecalculateInfo = function()
 {
@@ -680,4 +679,6 @@ CShape.prototype.OnContentReDraw = function(){
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
+    window['AscFormat'].editorDeleteDrawingBase = editorDeleteDrawingBase;
+    window['AscFormat'].editorAddToDrawingObjects = editorAddToDrawingObjects;
 })(window);

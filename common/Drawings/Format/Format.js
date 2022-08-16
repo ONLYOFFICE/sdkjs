@@ -689,8 +689,19 @@
 		drawingsChangesMap[AscDFH.historyitem_ThemeSetFontScheme] = function (oClass, value) {
 			oClass.themeElements.fontScheme = value;
 		};
-		drawingsChangesMap[AscDFH.historyitem_ThemeSetFmtScheme] = function (oClass, value) {
+		drawingsChangesMap[AscDFH.historyitem_ThemeSetFmtScheme] = function (oClass, value, bFromLoad) {
 			oClass.themeElements.fmtScheme = value;
+			if(bFromLoad) {
+				if(typeof AscCommon.CollaborativeEditing !== "undefined") {
+					if(value) {
+						let aImages = [];
+						value.getAllRasterImages(aImages);
+						for(let nImage = 0; nImage < aImages.length; ++nImage) {
+							AscCommon.CollaborativeEditing.Add_NewImage(aImages[nImage]);
+						}
+					}
+				}
+			}
 		};
 		drawingsChangesMap[AscDFH.historyitem_ThemeSetName] = function (oClass, value) {
 			oClass.name = value;
@@ -3444,9 +3455,6 @@
 			if (typeof sRasterImageId !== "string" || sRasterImageId.length === 0) {
 				return null;
 			}
-			if (sRasterImageId.indexOf("data:") === 0 && sRasterImageId.indexOf("base64") > 0) {
-				return sRasterImageId;
-			}
 			var oApi = Asc.editor || editor;
 			var sDefaultResult = sRasterImageId;
 			if(bReturnOrigIfCantDraw === false) {
@@ -3462,6 +3470,10 @@
 			var oImage = oImageLoader.map_image_index[AscCommon.getFullImageSrc2(sRasterImageId)];
 			if (!oImage || !oImage.Image || oImage.Status !== AscFonts.ImageLoadStatus.Complete) {
 				return {img: sDefaultResult, w: null, h: null};
+			}
+
+			if (sRasterImageId.indexOf("data:") === 0 && sRasterImageId.indexOf("base64") > 0) {
+				return {img: sRasterImageId, w: oImage.Image.width, h: oImage.Image.height};
 			}
 			var sResult = sDefaultResult;
 			if (!window["NATIVE_EDITOR_ENJINE"]) {
@@ -5928,6 +5940,10 @@
 				}
 			}
 		};
+		CGradFill.prototype.fromXml = function (reader, bSkipFirstNode) {
+			CBaseNoIdObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
+			this.colors.sort(function(a,b){return a.pos- b.pos;});
+		}
 		CGradFill.prototype.toXml = function (writer, sNamespace) {
 			let sAttrNamespace = "";
 			let strName = "";
@@ -11462,10 +11478,12 @@
 		FontScheme.prototype.Write_ToBinary = function (w) {
 			this.majorFont.Write_ToBinary(w);
 			this.minorFont.Write_ToBinary(w);
+			writeString(w, this.name);
 		};
 		FontScheme.prototype.Read_FromBinary = function (r) {
 			this.majorFont.Read_FromBinary(r);
 			this.minorFont.Read_FromBinary(r);
+			this.name = readString(r);
 		};
 		FontScheme.prototype.checkFromFontCollection = function (font, fontCollection, region) {
 			if (fontCollection === this.majorFont) {
@@ -13132,6 +13150,13 @@
 		};
 		CBodyPr.prototype.Refresh_RecalcData = function () {
 		};
+		CBodyPr.prototype.setVertOpen = function (nVert) {
+			let nVert_ = nVert;
+			if(nVert === AscFormat.nVertTTwordArtVert) {
+				nVert_ = AscFormat.nVertTTvert;
+			}
+			this.vert = nVert_;
+		};
 		CBodyPr.prototype.getLnSpcReduction = function () {
 			if (this.textFit
 				&& this.textFit.type === AscFormat.text_fit_NormAuto
@@ -14145,7 +14170,7 @@
 				}
 				case "vert": {
 					let sVal = reader.GetValue();
-					this.vert = this.GetVertCode(sVal);
+					this.setVertOpen(this.GetVertCode(sVal));
 					break;
 				}
 				case "vertOverflow": {
@@ -14665,7 +14690,6 @@
 				this.bulletType.toXml(writer);
 			}
 		};
-//interface methods
 		//interface methods
 		var prot = CBullet.prototype;
 		prot["fillBulletImage"] = prot["asc_fillBulletImage"] = CBullet.prototype.fillBulletImage;

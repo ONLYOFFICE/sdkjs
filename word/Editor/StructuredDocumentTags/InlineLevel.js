@@ -591,8 +591,18 @@ CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, U
 		&& this.IsForm()
 		&& (oMainForm = this.GetMainForm()))
 	{
-		if (this.IsPlaceHolder())
+		if (!this.IsComplexForm() && oMainForm !== this && this.IsPlaceHolder())
+		{
+			let oPrevForm = this.GetPrevSubForm();
+			if (!oPrevForm || oPrevForm === this)
+			{
+				this.Content[0].Get_StartPos(SearchPos.Pos, Depth + 1);
+				SearchPos.Pos.Update(0, Depth);
+				SearchPos.Found = true;
+				return true;
+			}
 			return false;
+		}
 
 		let nCurPos = UseContentPos ? ContentPos.Get(Depth) : this.Content.length - 1;
 		if (!(this.Content[nCurPos] instanceof AscWord.CInlineLevelSdt))
@@ -619,6 +629,10 @@ CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, U
 				return true;
 			}
 		}
+	}
+	else if (this.IsForm() && this.IsPlaceHolder() && UseContentPos)
+	{
+		return false;
 	}
 
 	if (!UseContentPos && this.Content.length)
@@ -674,8 +688,19 @@ CInlineLevelSdt.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, 
 		&& this.IsForm()
 		&& (oMainForm = this.GetMainForm()))
 	{
-		if (this.IsPlaceHolder())
+		if (!this.IsComplexForm() && oMainForm !== this && this.IsPlaceHolder())
+		{
+			let oNextForm = this.GetNextSubForm();
+			if (!oNextForm || oNextForm === this)
+			{
+				this.Content[0].Get_StartPos(SearchPos.Pos, Depth + 1);
+				SearchPos.Pos.Update(0, Depth);
+				SearchPos.Found = true;
+				return true;
+			}
+
 			return false;
+		}
 
 		let nCurPos = UseContentPos ? ContentPos.Get(Depth) : 0;
 		if (!(this.Content[nCurPos] instanceof AscWord.CInlineLevelSdt))
@@ -702,6 +727,10 @@ CInlineLevelSdt.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, 
 				return true;
 			}
 		}
+	}
+	else if (this.IsForm() && this.IsPlaceHolder() && UseContentPos)
+	{
+		return false;
 	}
 
 	if (!UseContentPos && this.Content.length)
@@ -2715,6 +2744,9 @@ CInlineLevelSdt.prototype.IsFormFilled = function()
 
 	if (this.IsPlaceHolder())
 		return false;
+
+	if (this.IsComplexForm())
+		return this.IsComplexFormFilled();
 
 	if (this.IsTextForm())
 	{

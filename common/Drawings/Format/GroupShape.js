@@ -1429,9 +1429,9 @@ AscFormat.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyite
             }
         }
     };
-
-
-
+    CGroupShape.prototype.isGroup = function() {
+        return true;
+    };
     CGroupShape.prototype.normalize = function()
     {
         for(var i = 0; i < this.spTree.length; ++i)

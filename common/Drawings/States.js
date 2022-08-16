@@ -159,60 +159,64 @@ StartAddNewShape.prototype =
                     this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
                     return;
                 }
-                if(this.animCustomPath) {
-                    this.drawingObjects.clearTrackObjects();
-                    this.drawingObjects.clearPreTrackObjects();
-                    this.drawingObjects.updateOverlay();
-                    this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
-                    let oApi = this.drawingObjects.getEditorApi();
-                    let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
-                    if(oPresentation) {
-                        let oCurSlide = oPresentation.GetCurrentSlide();
-                        if(oCurSlide) {
-                            if(oPresentation.IsSelectionLocked(AscCommon.changestype_Timing) === false) {
-                                oPresentation.StartAction(0);
-                                var aAddedEffects = oCurSlide.addAnimation(AscFormat.PRESET_CLASS_PATH, AscFormat.MOTION_SQUARE, 0, this.bReplace);
-                                if(!aAddedEffects[0]) {
-                                    return;
+            }
+            if(this.bAnimCustomPath) {
+                this.drawingObjects.clearTrackObjects();
+                this.drawingObjects.clearPreTrackObjects();
+                this.drawingObjects.updateOverlay();
+                this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+                let oApi = this.drawingObjects.getEditorApi();
+                let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                if(oPresentation) {
+                    let oCurSlide = oPresentation.GetCurrentSlide();
+                    if(oCurSlide) {
+                        if(oPresentation.IsSelectionLocked(AscCommon.changestype_Timing) === false) {
+                            oPresentation.StartAction(0);
+                            var aAddedEffects = oCurSlide.addAnimation(AscFormat.PRESET_CLASS_PATH, AscFormat.MOTION_SQUARE, 0, this.bReplace);
+                            let oEffect = aAddedEffects[0];
+                            if(!oEffect) {
+                                return;
+                            }
+                            let oPathShape = null;
+                            oEffect.traverse(function(oChild) {
+                                if(oChild.getObjectType() === AscDFH.historyitem_type_AnimMotion) {
+                                    oPathShape = oChild.createPathShape();
+                                    return true;
                                 }
-                                let oPathShape = null;
-                                aAddedEffects[0].traverse(function(oChild) {
-                                    if(oChild.getObjectType() === AscDFH.historyitem_type_AnimMotion) {
-                                        oPathShape = oChild.createPathShape();
-                                        return;
-                                    }
-                                });
-                                if(!oPathShape) {
-                                    return;
-                                }
+                                return false;
+                            });
+                            if(!oPathShape) {
+                                return;
+                            }
 
-                                let oPolylineShape = AscFormat.ExecuteNoHistory(function () {
-                                    return oTrack.getShape(false, oPresentation.drawingDocument, oCurSlide.graphicObjects);
-                                }, this, []);
-                                if(!oPolylineShape) {
-                                    return;
+                            let oPolylineShape = AscFormat.ExecuteNoHistory(function () {
+                                return oTrack.getShape(false, oPresentation.drawingDocument, oCurSlide.graphicObjects);
+                            }, this, []);
+                            if(!oPolylineShape) {
+                                return;
+                            }
+                            let oSpPr = oPolylineShape.spPr;
+                            let oXfrm = oSpPr.xfrm;
+                            oPathShape.updateAnimation(oXfrm.offX, oXfrm.offY, oXfrm.extX, oXfrm.extY, oXfrm.rot, oSpPr.geometry);
+                            oEffect.cTn.setPresetID(AscFormat.MOTION_CUSTOM_PATH);
+                            oEffect.cTn.setPresetSubtype(0);
+                            oPresentation.FinalizeAction();
+                            oPresentation.Document_UpdateInterfaceState();
+                            if(this.bPreview && aAddedEffects.length > 0) {
+                                oCurSlide.graphicObjects.resetSelection();
+                                oPresentation.GetCurTiming().resetSelection();
+                                for(var nEffect = 0; nEffect < aAddedEffects.length; ++nEffect) {
+                                    aAddedEffects[nEffect].select();
                                 }
-                                let oSpPr = oPolylineShape.spPr;
-                                let oXfrm = oSpPr.xfrm;
-                                oPathShape.updateAnimation(oXfrm.offX, oXfrm.offY, oXfrm.extX, oXfrm.extY, oXfrm.rot, oSpPr.geometry)
-                                oPresentation.FinalizeAction();
-                                oPresentation.Document_UpdateInterfaceState();
-                                if(this.bPreview && aAddedEffects.length > 0) {
-                                    oCurSlide.graphicObjects.resetSelection();
-                                    oPresentation.GetCurTiming().resetSelection();
-                                    for(var nEffect = 0; nEffect < aAddedEffects.length; ++nEffect) {
-                                        aAddedEffects[nEffect].select();
-                                    }
-                                    oPresentation.StartAnimationPreview();
-                                }
-                                else {
-                                    oPresentation.DrawingDocument.OnRecalculatePage(oPresentation.CurPage, oCurSlide);
-                                }
+                                oPresentation.StartAnimationPreview();
+                            }
+                            else {
+                                oPresentation.DrawingDocument.OnRecalculatePage(oPresentation.CurPage, oCurSlide);
                             }
                         }
                     }
-                    return;
                 }
+                return;
             }
 
             var callback = function(bLock, isClickMouseEvent){
@@ -1869,11 +1873,13 @@ TextAddState.prototype =
 };
 
 
-function SplineBezierState(drawingObjects)
+function SplineBezierState(drawingObjects, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
-
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 SplineBezierState.prototype =
 {
@@ -1885,9 +1891,11 @@ SplineBezierState.prototype =
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.addPreTrackObject(new AscFormat.Spline(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
         this.drawingObjects.arrPreTrackObjects[0].path.push(new AscFormat.SplineCommandMoveTo(x, y));
-        this.drawingObjects.changeCurrentState(new SplineBezierState33(this.drawingObjects, x, y,pageIndex));
-        this.drawingObjects.checkChartTextSelection();
-        this.drawingObjects.resetSelection();
+        this.drawingObjects.changeCurrentState(new SplineBezierState33(this.drawingObjects, x, y,pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
+        if(!this.bAnimCustomPath) {
+            this.drawingObjects.checkChartTextSelection();
+            this.drawingObjects.resetSelection();
+        }
         this.drawingObjects.updateOverlay();
     },
 
@@ -1910,12 +1918,14 @@ SplineBezierState.prototype =
 };
 
 
-function SplineBezierState33(drawingObjects, startX, startY, pageIndex)
+function SplineBezierState33(drawingObjects, startX, startY, pageIndex, bAnimCustomPath, bReplace, bPreview)
 {
-
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
     this.pageIndex = pageIndex;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 
 SplineBezierState33.prototype =
@@ -1947,7 +1957,7 @@ SplineBezierState33.prototype =
         }
         this.drawingObjects.swapTrackObjects();
         this.drawingObjects.arrTrackObjects[0].path.push(new AscFormat.SplineCommandLineTo(tr_x, tr_y));
-        this.drawingObjects.changeCurrentState(new SplineBezierState2(this.drawingObjects, this.pageIndex));
+        this.drawingObjects.changeCurrentState(new SplineBezierState2(this.drawingObjects, this.pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
         this.drawingObjects.updateOverlay();
     },
 
@@ -1956,11 +1966,14 @@ SplineBezierState33.prototype =
     }
 };
 
-function SplineBezierState2(drawingObjects,pageIndex)
+function SplineBezierState2(drawingObjects,pageIndex, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
     this.pageIndex = pageIndex;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 
 SplineBezierState2.prototype =
@@ -2022,18 +2035,21 @@ SplineBezierState2.prototype =
                 tr_x = tr_point.x;
                 tr_y = tr_point.y;
             }
-            this.drawingObjects.changeCurrentState(new SplineBezierState3(this.drawingObjects,tr_x, tr_y, this.pageIndex));
+            this.drawingObjects.changeCurrentState(new SplineBezierState3(this.drawingObjects,tr_x, tr_y, this.pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
         }
     }
 };
 
-function SplineBezierState3(drawingObjects, startX, startY,pageIndex)
+function SplineBezierState3(drawingObjects, startX, startY, pageIndex, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.startX = startX;
     this.startY = startY;
     this.polylineFlag = true;
-    this.pageIndex =pageIndex;
+    this.pageIndex = pageIndex;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 
 SplineBezierState3.prototype =
@@ -2103,7 +2119,7 @@ SplineBezierState3.prototype =
 
         spline.path.push(new AscFormat.SplineCommandBezier(x4, y4, x5, y5, x6, y6));
         this.drawingObjects.updateOverlay();
-        this.drawingObjects.changeCurrentState(new SplineBezierState4(this.drawingObjects, this.pageIndex));
+        this.drawingObjects.changeCurrentState(new SplineBezierState4(this.drawingObjects, this.pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
     },
 
     onMouseUp: function(e, x, y, pageIndex)
@@ -2126,11 +2142,14 @@ SplineBezierState3.prototype =
 };
 
 
-function SplineBezierState4(drawingObjects, pageIndex)
+function SplineBezierState4(drawingObjects, pageIndex, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
     this.pageIndex = pageIndex;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 
 
@@ -2241,19 +2260,21 @@ SplineBezierState4.prototype =
                 tr_x = tr_point.X;
                 tr_y = tr_point.Y;
             }
-            this.drawingObjects.changeCurrentState(new SplineBezierState5(this.drawingObjects, tr_x, tr_y, this.pageIndex));
+            this.drawingObjects.changeCurrentState(new SplineBezierState5(this.drawingObjects, tr_x, tr_y, this.pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
         }
     }
 };
 
-function SplineBezierState5(drawingObjects, startX, startY,pageIndex)
+function SplineBezierState5(drawingObjects, startX, startY,pageIndex, bAnimCustomPath, bReplace, bPreview)
 {
-
     this.drawingObjects = drawingObjects;
     this.startX = startX;
     this.startY = startY;
     this.polylineFlag = true;
     this.pageIndex = pageIndex;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 
 }
 
@@ -2338,7 +2359,7 @@ SplineBezierState5.prototype =
 
         spline.path.push(new AscFormat.SplineCommandBezier(x4, y4, x5, y5, x6, y6));
         this.drawingObjects.updateOverlay();
-        this.drawingObjects.changeCurrentState(new SplineBezierState4(this.drawingObjects, this.pageIndex));
+        this.drawingObjects.changeCurrentState(new SplineBezierState4(this.drawingObjects, this.pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
     },
 
     onMouseUp: function(e, x, y, pageIndex)
@@ -2352,11 +2373,13 @@ SplineBezierState5.prototype =
     }
 };
 
-function PolyLineAddState(drawingObjects)
+function PolyLineAddState(drawingObjects, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
-
     this.polylineFlag = true;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 
 PolyLineAddState.prototype =
@@ -2369,11 +2392,13 @@ PolyLineAddState.prototype =
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.addTrackObject(new AscFormat.PolyLine(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
         this.drawingObjects.arrTrackObjects[0].addPoint(x, y);
-        this.drawingObjects.checkChartTextSelection();
-        this.drawingObjects.resetSelection();
+        if(!this.bAnimCustomPath) {
+            this.drawingObjects.checkChartTextSelection();
+            this.drawingObjects.resetSelection();
+        }
         this.drawingObjects.updateOverlay();
         var _min_distance = this.drawingObjects.convertPixToMM(1);
-        this.drawingObjects.changeCurrentState(new PolyLineAddState2(this.drawingObjects, _min_distance));
+        this.drawingObjects.changeCurrentState(new PolyLineAddState2(this.drawingObjects, _min_distance, this.bAnimCustomPath, this.bReplace, this.bPreview));
     },
 
     onMouseMove: function()
@@ -2395,10 +2420,13 @@ PolyLineAddState.prototype =
 };
 
 
-function PolyLineAddState2(drawingObjects, minDistance)
+function PolyLineAddState2(drawingObjects, minDistance, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 
 }
 PolyLineAddState2.prototype =
@@ -2461,7 +2489,7 @@ function AddPolyLine2State(drawingObjects, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
-    this.animCustomPath = bAnimCustomPath;
+    this.bAnimCustomPath = bAnimCustomPath;
     this.bReplace = bReplace;
     this.bPreview = bPreview;
 }
@@ -2473,14 +2501,14 @@ AddPolyLine2State.prototype =
             return {objectId: "1", bMarker: true, cursorType: "crosshair"};
         this.drawingObjects.startTrackPos = {x: x, y: y, pageIndex : pageIndex};
         this.drawingObjects.checkChartTextSelection();
-        if(!this.animCustomPath) {
+        if(!this.bAnimCustomPath) {
             this.drawingObjects.resetSelection();
         }
         this.drawingObjects.updateOverlay();
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.addPreTrackObject(new AscFormat.PolyLine(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
         this.drawingObjects.arrPreTrackObjects[0].addPoint(x, y);
-        this.drawingObjects.changeCurrentState(new AddPolyLine2State2(this.drawingObjects, x, y, this.animCustomPath, this.bReplace, this.bPreview));
+        this.drawingObjects.changeCurrentState(new AddPolyLine2State2(this.drawingObjects, x, y, this.bAnimCustomPath, this.bReplace, this.bPreview));
     },
 
     onMouseMove: function(e, x, y, pageIndex)
@@ -2497,7 +2525,7 @@ function AddPolyLine2State2(drawingObjects, x, y, bAnimCustomPath, bReplace, bPr
     this.X = x;
     this.Y = y;
     this.polylineFlag = true;
-    this.animCustomPath = bAnimCustomPath;
+    this.bAnimCustomPath = bAnimCustomPath;
     this.bReplace = bReplace;
     this.bPreview = bPreview;
 
@@ -2543,7 +2571,7 @@ AddPolyLine2State2.prototype =
             }
             this.drawingObjects.swapTrackObjects();
             this.drawingObjects.arrTrackObjects[0].tryAddPoint(tr_x, tr_y);
-            this.drawingObjects.changeCurrentState(new AddPolyLine2State3(this.drawingObjects, this.animCustomPath, this.bReplace, this.bPreview));
+            this.drawingObjects.changeCurrentState(new AddPolyLine2State3(this.drawingObjects, this.bAnimCustomPath, this.bReplace, this.bPreview));
         }
     },
 
@@ -2561,7 +2589,7 @@ function AddPolyLine2State3(drawingObjects, bAnimCustomPath, bReplace, bPreview)
 
 
     this.polylineFlag = true;
-    this.animCustomPath = bAnimCustomPath;
+    this.bAnimCustomPath = bAnimCustomPath;
     this.bReplace = bReplace;
     this.bPreview = bPreview;
 }

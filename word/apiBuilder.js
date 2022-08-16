@@ -6264,39 +6264,9 @@
 	{
 		let oLogicDocument = private_GetLogicDocument();
 		let oDrawingObjects = oLogicDocument.DrawingObjects;
-		let oDrawingSelection = oDrawingObjects.selection;
-		let aSelectedObjects;
-		if(oDrawingSelection.groupSelection)
-		{
-			aSelectedObjects = oDrawingSelection.groupSelection.selectedObjects;
-		}
-		else
-		{
-			aSelectedObjects = oDrawingObjects.selectedObjects;
-		}
-		if(aSelectedObjects.length === 1 && aSelectedObjects[0].isImage())
-		{
-			let dWidth = private_EMU2MM(Width);
-			let dHeight = private_EMU2MM(Height);
-			let oSp = aSelectedObjects[0];
-			oSp.replacePictureData(sImageUrl, dWidth, dHeight);
-			if(oSp.group){
-				oDrawingObjects.selection.groupSelection.resetInternalSelection();
-				oSp.group.selectObject(oSp, 0);
-			}
-			else{
-				oDrawingObjects.resetSelection();
-				oDrawingObjects.selectObject(oSp, 0);
-			}
-		}
-		else
-		{
-			let oParagraph, arrInsertResult = [], oImage;
-			oParagraph = Api.CreateParagraph();
-			oImage = Api.CreateImage(sImageUrl, Width, Height);
-			oParagraph.AddDrawing(oImage);
-			this.InsertContent(arrInsertResult);
-		}
+
+		let dK = 1 / 36000 / AscCommon.g_dKoef_pix_to_mm;
+		oDrawingObjects.putImageToSelection(sImageUrl, Width * dK, Height * dK );
 	};
 
 	/**

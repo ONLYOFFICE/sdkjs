@@ -8070,12 +8070,17 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 		this.GetSelectedElementsInfo(oInfo);
 		var oField = oInfo.GetField();
 		var oSdt   = oInfo.GetInlineLevelSdt();
+
+		let oForm = null;
+		if (oSdt && oSdt.IsForm() && this.GetLogicDocument() && this.GetLogicDocument().IsDocumentEditor() && this.GetLogicDocument().IsFillingFormMode())
+			oForm = oSdt;
+
 		if (oSdt && oSdt.IsPlaceHolder())
 		{
 			oSdt.SelectAll(1);
 			oSdt.SelectThisElement(1);
 		}
-		else  if (oField && fieldtype_FORMTEXT === oField.Get_FieldType())
+		else if (oField && fieldtype_FORMTEXT === oField.Get_FieldType())
 		{
 			oField.SelectAll(1);
 			oField.SelectThisElement(1);
@@ -8105,6 +8110,27 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 				var StartPos = ( true === SearchPosS.Found ? SearchPosS.Pos : this.Get_StartPos() );
 				var EndPos   = ( true === SearchPosE.Found ? SearchPosE.Pos : this.Get_EndPos(false) );
 
+				if (oForm)
+				{
+					let oFormStartPos = oForm.GetStartPosInParagraph();
+					let oFormEndPos   = oForm.GetEndPosInParagraph();
+
+					let oMainForm = oForm.GetMainForm();
+					if (oForm !== oMainForm && !oForm.IsComplexForm())
+					{
+						StartPos = oFormStartPos;
+						EndPos   = oFormEndPos;
+					}
+					else
+					{
+						if (oFormStartPos.Compare(StartPos) > 0)
+							StartPos = oFormStartPos;
+
+						if (oFormEndPos.Compare(EndPos) < 0)
+							EndPos = oFormEndPos;
+					}
+				}
+
 				this.Selection.Use = true;
 				this.Set_SelectionContentPos(StartPos, EndPos);
 
@@ -8113,9 +8139,17 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 			}
 			else // ( 1 == ClickCounter % 2 )
 			{
-				// Выделяем весь параграф целиком
-
-				this.SelectAll(1);
+				if (oForm)
+				{
+					oForm = oForm.GetMainForm();
+					oForm.SelectAll(1);
+					oForm.SelectThisElement(1);
+				}
+				else
+				{
+					// Выделяем весь параграф целиком
+					this.SelectAll(1);
+				}
 			}
 		}
 	}

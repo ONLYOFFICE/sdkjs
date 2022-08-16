@@ -835,10 +835,6 @@ CGraphicFrame.prototype.recalculateTransform = CShape.prototype.recalculateTrans
 
 CGraphicFrame.prototype.recalculateLocalTransform = CShape.prototype.recalculateLocalTransform;
 
-CGraphicFrame.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
-
-CGraphicFrame.prototype.addToDrawingObjects = CShape.prototype.addToDrawingObjects;
-
 
 CGraphicFrame.prototype.Update_ContentIndexing = function()
 {};

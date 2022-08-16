@@ -505,13 +505,10 @@
         var dExtY = this.yMax - this.yMin;
         var oSpPr = this.originalObject.spPr;
         var oXfrm = oSpPr.xfrm;
-        oXfrm.setExtX(dExtX);
-        oXfrm.setExtY(dExtY);
-        oXfrm.setRot(0);
         var oOffset;
         if(this.originalObject.animMotionTrack) {
             oOffset = this.getXfrmOffset();
-            this.originalObject.updateAnimation(oOffset.OffX, oOffset.OffY, dExtX, dExtY, 0, this.geometry);
+            this.originalObject.updateAnimation(oOffset.OffX, oOffset.OffY, dExtX, dExtY, 0, this.geometry, true);
         }
         else {
             oXfrm.setExtX(dExtX);
@@ -1171,9 +1168,9 @@
                 pathElem = geometry.pathLst[pathIndex],
                 arrayCommands = geometry.pathLst[pathIndex].ArrPathCommand;
 
-            if(pathElem && pathElem.stroke === true && pathElem.fill === "none") {
-                return;
-            }
+            // if(pathElem && pathElem.stroke === true && pathElem.fill === "none") {
+            //     return;
+            // }
 
             var pathC1 = gmEditPoint.pathC1,
                 pathC2 = gmEditPoint.pathC2,

@@ -1558,86 +1558,11 @@
 	 * @param {EMU} nHeight - The image height in English measure units.
 	 */
 	ApiWorksheet.prototype.ReplaceCurrentImage = function(sImageUrl, nWidth, nHeight){
-
 		let oWorksheet = Asc['editor'].wb.getWorksheet();
 		if(oWorksheet && oWorksheet.objectRender && oWorksheet.objectRender.controller){
-
 			let oController = oWorksheet.objectRender.controller;
-			let _w = nWidth/36000.0;
-			let _h = nHeight/36000.0;
-			let oImage = oController.createImage(sImageUrl, 0, 0, _w, _h);
-			oImage.setWorksheet(oWorksheet.model);
-			let selectedObjects, spTree;
-			if(oController.selection.groupSelection){
-				selectedObjects = oController.selection.groupSelection.selectedObjects;
-			}
-			else{
-				selectedObjects = oController.selectedObjects;
-			}
-			if(selectedObjects.length > 0) {
-				if(selectedObjects[0].group){
-					spTree = selectedObjects[0].group.spTree;
-				}
-				else{
-					spTree = oController.getDrawingArray();
-				}
-
-				for(let nSp = 0; nSp < spTree.length; ++nSp){
-					let oSp = spTree[nSp];
-					if(oSp === selectedObjects[0]){
-						if(oSp.isImage() && selectedObjects.length === 1){
-							oSp.replacePictureData(sImageUrl, _w, _h);
-							if(oSp.group){
-								oController.selection.groupSelection.resetInternalSelection();
-								oSp.group.selectObject(oSp, 0);
-							}
-							else{
-								oController.resetSelection();
-								oController.selectObject(oSp, 0);
-							}
-						}
-						else {
-							let _xfrm = oSp.spPr && oSp.spPr.xfrm;
-							let _xfrm2 = oImage.spPr.xfrm;
-							if(_xfrm){
-								_xfrm2.setOffX(_xfrm.offX);
-								_xfrm2.setOffY(_xfrm.offY);
-							}
-							else{
-								if(AscFormat.isRealNumber(oSp.x) && AscFormat.isRealNumber(oSp.y)){
-									_xfrm2.setOffX(oSp.x);
-									_xfrm2.setOffY(oSp.y);
-								}
-							}
-							if(selectedObjects[0].group){
-								let _group = selectedObjects[0].group;
-								_group.removeFromSpTreeByPos(nSp);
-								_group.addToSpTree(nSp, oImage);
-								oImage.setGroup(_group);
-								oController.selection.groupSelection.resetInternalSelection();
-								_group.selectObject(oImage, 0);
-							}
-							else{
-								oSp.deleteDrawingBase();
-								oImage.setBDeleted(false);
-								oImage.setWorksheet(oWorksheet.model);
-								oImage.addToDrawingObjects(nSp);
-								oImage.setDrawingBaseType(AscCommon.c_oAscCellAnchorType.cellanchorAbsolute);
-								oImage.setDrawingBaseCoords(0, 0, 0, 0, 0, 0, 0, 0, oSp.x, oSp.y, oImage.spPr.xfrm.extX, oImage.spPr.xfrm.extY);
-								oImage.setDrawingBaseExt(oImage.spPr.xfrm.extX, oImage.spPr.xfrm.extY);
-								oController.resetSelection();
-								oController.selectObject(oImage, 0);
-							}
-						}
-						return;
-					}
-				}
-			}
-			let cell = this.worksheet.selectionRange.activeCell;
-			private_SetCoords(oImage, oWorksheet.model, nWidth, nHeight, cell ? cell.col : 0, 0,  cell ? cell.row : 0, 0, undefined);
-			oController.resetSelection();
-			oController.selectObject(oImage, 0);
-			oWorksheet.isSelectOnShape = true;
+			let dK = 1 / 36000 / AscCommon.g_dKoef_pix_to_mm;
+			oController.putImageToSelection(sImageUrl, nWidth * dK, nHeight * dK );
 		}
 	};
 
