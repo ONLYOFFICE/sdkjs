@@ -68,6 +68,21 @@
 			}
 		}
 	};
+	CTextFormFormat.prototype.GetSymbols = function(isToString)
+	{
+		if (isToString)
+			return String.fromCodePoint(this.Symbols);
+
+		return this.Symbols;
+	};
+	CTextFormFormat.prototype.SetNone = function()
+	{
+		this.BaseFormat = FormatType.None;
+	};
+	CTextFormFormat.prototype.GetType = function()
+	{
+		return this.BaseFormat;
+	};
 	CTextFormFormat.prototype.SetDigit = function()
 	{
 		this.BaseFormat = FormatType.Digit;
@@ -145,5 +160,10 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTextFormFormat = CTextFormFormat;
 
+	let exportPrototype       = window['Asc']['TextFormFormatType'] = window['Asc'].TextFormFormatType = FormatType;
+	exportPrototype['None']   = exportPrototype.None;
+	exportPrototype['Digit']  = exportPrototype.Digit;
+	exportPrototype['Letter'] = exportPrototype.Letter;
+	exportPrototype['Mask']   = exportPrototype.Mask;
 
 })(window);

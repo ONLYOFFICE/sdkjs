@@ -49,6 +49,7 @@
 		this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
 		this.MultiLine             = false;
 		this.AutoFit               = false;
+		this.Format                = new AscWord.CTextFormFormat();
 	}
 	CSdtTextFormPr.prototype.Copy = function()
 	{
@@ -247,6 +248,34 @@
 	{
 		this.WidthRule = nRule;
 	};
+	CSdtTextFormPr.prototype.GetFormatType = function()
+	{
+		return this.Format.GetType();
+	};
+	CSdtTextFormPr.prototype.SetDigitFormat = function()
+	{
+		this.Format.SetDigit();
+	};
+	CSdtTextFormPr.prototype.SetLetterFormat = function()
+	{
+		this.Format.SetLetter();
+	};
+	CSdtTextFormPr.prototype.SetMaskFormat = function(sMask)
+	{
+		this.Format.SetMask(sMask);
+	};
+	CSdtTextFormPr.prototype.SetNoneFormat = function()
+	{
+		this.Format.SetNone();
+	};
+	CSdtTextFormPr.prototype.SetFormatSymbols = function(arrSymbols)
+	{
+		this.Format.SetSymbols(arrSymbols);
+	};
+	CSdtTextFormPr.prototype.GetFormatSymbols = function()
+	{
+		return this.Format.GetSymbols(true);
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CSdtTextFormPr    = CSdtTextFormPr;
@@ -273,5 +302,12 @@
 	CSdtTextFormPr.prototype['put_AutoFit']           = CSdtTextFormPr.prototype.SetAutoFit;
 	CSdtTextFormPr.prototype['get_WidthRule']         = CSdtTextFormPr.prototype.GetWidthRule;
 	CSdtTextFormPr.prototype['put_WidthRule']         = CSdtTextFormPr.prototype.SetWidthRule;
+	CSdtTextFormPr.prototype['get_FormatType']        = CSdtTextFormPr.prototype.GetFormatType;
+	CSdtTextFormPr.prototype['put_NoneFormat']        = CSdtTextFormPr.prototype.SetNoneFormat;
+	CSdtTextFormPr.prototype['put_DigitFormat']       = CSdtTextFormPr.prototype.SetDigitFormat;
+	CSdtTextFormPr.prototype['put_LetterFormat']      = CSdtTextFormPr.prototype.SetLetterFormat;
+	CSdtTextFormPr.prototype['put_MaskFormat']        = CSdtTextFormPr.prototype.SetMaskFormat;
+	CSdtTextFormPr.prototype['get_FormatSymbols']     = CSdtTextFormPr.prototype.GetFormatSymbols;
+	CSdtTextFormPr.prototype['put_FormatSymbols']     = CSdtTextFormPr.prototype.SetFormatSymbols;
 
 })(window);

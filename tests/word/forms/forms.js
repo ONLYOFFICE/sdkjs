@@ -105,10 +105,10 @@ $(function () {
 		assert.strictEqual(format.Check("(193)-12-5555"), true, "Mask (9^99)-99-9999: check '(193)-12-5555'");
 
 		format.SetMask("^aabc*");
-		assert.strictEqual(format.Check("aabcd"), true, "Mask ^aabc: check 'aabcd'");
-		assert.strictEqual(format.Check("qqbcd"), false, "Mask ^aabc: check 'qqbcd'");
-		assert.strictEqual(format.Check("aqbc1"), true, "Mask ^aabc: check 'aqbc1'");
-		assert.strictEqual(format.Check("aqbc123"), false, "Mask ^aabc: check 'aqbc123'");
+		assert.strictEqual(format.Check("aabcd"), true, "Mask ^aabc*: check 'aabcd'");
+		assert.strictEqual(format.Check("qqbcd"), false, "Mask ^aabc*: check 'qqbcd'");
+		assert.strictEqual(format.Check("aqbc1"), true, "Mask ^aabc*: check 'aqbc1'");
+		assert.strictEqual(format.Check("aqbc123"), false, "Mask ^aabc*: check 'aqbc123'");
 	});
 
 	QUnit.test("Test: \"GetAllForms\"", function (assert)
