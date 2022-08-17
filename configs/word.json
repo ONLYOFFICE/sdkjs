@@ -235,6 +235,7 @@
 			"word/Editor/StructuredDocumentTags/Custom/PictureForm.js",
 			"word/Editor/StructuredDocumentTags/Custom/TextForm.js",
 			"word/Editor/StructuredDocumentTags/Custom/TextFormFormat.js",
+			"word/Editor/StructuredDocumentTags/Custom/TextFormMask.js",
 			"word/Editor/Serialize2.js",
 			"common/api/searchSettings.js",
 			"word/Editor/Search/DocumentSearch.js",

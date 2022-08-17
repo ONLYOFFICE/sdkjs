@@ -34,7 +34,6 @@
 
 (function(window)
 {
-
 	const FormatType = {
 		None   : 0,
 		Digit  : 1,
@@ -51,7 +50,7 @@
 		this.BaseFormat = FormatType.None;
 		this.Symbols    = []; // Специальный параметр для возможного ограничения на ввод символов
 
-		this.Mask = "";
+		this.Mask = new AscWord.CTextFormMask();
 	}
 	CTextFormFormat.prototype.SetSymbols = function(value)
 	{
@@ -85,7 +84,7 @@
 	CTextFormFormat.prototype.SetMask = function(sMask)
 	{
 		this.BaseFormat = FormatType.Mask;
-		this.Mask = sMask;
+		this.Mask.Set(sMask);
 	};
 	CTextFormFormat.prototype.CheckFormat = function(sText)
 	{
@@ -116,13 +115,11 @@
 	};
 	CTextFormFormat.prototype.Check = function(sText)
 	{
-		return (this.CheckFormat(sText)
-			&& this.CheckSymbols(sText));
+		return (this.CheckFormat(sText) && this.CheckSymbols(sText));
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//--------------------------------------------------------export----------------------------------------------------
 	CTextFormFormat.prototype.CheckDigit = function(sText)
 	{
 		for (let oIter = sText.getUnicodeIterator(); oIter.check(); oIter.next())
@@ -143,8 +140,9 @@
 	};
 	CTextFormFormat.prototype.CheckMask = function(sText)
 	{
-		return true;
+		return this.Mask.Check(sText);
 	};
+	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTextFormFormat = CTextFormFormat;
 
 

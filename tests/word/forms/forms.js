@@ -90,7 +90,25 @@ $(function () {
 		assert.strictEqual(format.Check("привет"), true, "Letter: check 'привет'");
 		assert.strictEqual(format.Check("hello"), false, "Letter: check 'hello'");
 
+		format.SetMask("(999)-99-9999");
+		format.SetSymbols();
+		assert.strictEqual(format.Check("123-12-1234"), false, "Mask (999)-99-9999: check '123-12-1234'");
+		assert.strictEqual(format.Check("(123)"), true, "Mask (999)-99-9999: check '(123)'");
+		assert.strictEqual(format.Check("(123)abc"), false, "Mask (999)-99-9999: check '(123)abc'");
+		assert.strictEqual(format.Check("(123)-12-abc5"), false, "Mask (999)-99-9999: check '(123)-12-abc5'");
+		assert.strictEqual(format.Check("(123)-12-5555"), true, "Mask (999)-99-9999: check '(123)-12-5555'");
 
+		format.SetMask("(9^99)-99-9999");
+
+		assert.strictEqual(format.Check("(1"), true, "Mask (9^99)-99-9999: check '(1'");
+		assert.strictEqual(format.Check("(123)-12-5555"), false, "Mask (9^99)-99-9999: check '(123)-12-5555'");
+		assert.strictEqual(format.Check("(193)-12-5555"), true, "Mask (9^99)-99-9999: check '(193)-12-5555'");
+
+		format.SetMask("^aabc*");
+		assert.strictEqual(format.Check("aabcd"), true, "Mask ^aabc: check 'aabcd'");
+		assert.strictEqual(format.Check("qqbcd"), false, "Mask ^aabc: check 'qqbcd'");
+		assert.strictEqual(format.Check("aqbc1"), true, "Mask ^aabc: check 'aqbc1'");
+		assert.strictEqual(format.Check("aqbc123"), false, "Mask ^aabc: check 'aqbc123'");
 	});
 
 	QUnit.test("Test: \"GetAllForms\"", function (assert)
