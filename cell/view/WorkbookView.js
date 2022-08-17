@@ -1009,6 +1009,9 @@
 	this.model.handlers.add("clearFindResults", function(index) {
 		self.clearSearchOnRecalculate(index);
 	});
+	this.model.handlers.add("updateFindResults", function(index) {
+		self.updateSearchOnRecalculate(index);
+	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
       collaborativeEditing: this.collaborativeEditing,
@@ -4690,6 +4693,19 @@
 		}
 	};
 
+	WorkbookView.prototype.updateSearchOnRecalculate = function (index) {
+		//обновился документ
+		//не стираем информацию о найденном
+		//отправляем в интерфейс событие, чтобы показать инф. о том, что документ был изменен
+		if (this.SearchEngine && !this.SearchEngine.isReplacingText) {
+			var isPrevSearch = this.SearchEngine.Count > 0;
+			if (isPrevSearch) {
+				this.handlers.trigger("asc_onUpdateDocument");
+				this.SearchEngine.clearHighlight();
+			}
+		}
+	};
+
 	WorkbookView.prototype.setDate1904 = function (val) {
 		// Проверка глобального лока
 		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
@@ -4785,6 +4801,10 @@
 		this.TextAroundUpdate = true;
 		this.StopTextAround();
 		this.SendClearAllTextAround();
+	};
+
+	CDocumentSearchExcel.prototype.clearHighlight = function () {
+		this.mapFindCells = {};
 	};
 	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container, options) {
 
