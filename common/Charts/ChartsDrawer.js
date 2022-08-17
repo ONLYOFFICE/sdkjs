@@ -5458,7 +5458,7 @@ CChartsDrawer.prototype =
 		var res = 0;
 		for (var i = 0; i < m; i++) {
 			for (var j = 0; j < n; j++) {
-				res += calcFunc();
+				res += calcFunc(i, j);
 			}
 		}
 		return res;
@@ -15504,6 +15504,8 @@ CErrBarsDraw.prototype = {
 			var pointVal = isCatAx ? val + 1 : point.val;
 
 			var ny, mSumm, aSumm;
+			var serCount = oChart.chart.series.length;
+			var pointCount = seria.getValuesCount();
 			switch (errBars.errValType) {
 				case AscFormat.st_errvaltypeCUST: {
 					//TODO
