@@ -109,6 +109,12 @@ $(function () {
 		assert.strictEqual(format.Check("qqbcd"), false, "Mask ^aabc*: check 'qqbcd'");
 		assert.strictEqual(format.Check("aqbc1"), true, "Mask ^aabc*: check 'aqbc1'");
 		assert.strictEqual(format.Check("aqbc123"), false, "Mask ^aabc*: check 'aqbc123'");
+
+		format.SetRegExp("^[A-Fa-f0-9]+$");
+		assert.strictEqual(format.Check("12FF"), true, "RegExp ^[A-Fa-f0-9]+$: check '12FF'");
+		assert.strictEqual(format.Check("Test"), false, "RegExp ^[A-Fa-f0-9]+$: check 'Test'");
+		assert.strictEqual(format.Check("FE19FF"), true, "RegExp ^[A-Fa-f0-9]+$: check 'FE19FF'");
+
 	});
 
 	QUnit.test("Test: \"GetAllForms\"", function (assert)

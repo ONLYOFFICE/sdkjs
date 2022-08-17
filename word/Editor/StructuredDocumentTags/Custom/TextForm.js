@@ -264,6 +264,10 @@
 	{
 		this.Format.SetMask(sMask);
 	};
+	CSdtTextFormPr.prototype.SetRegExpFormat = function(sRegExp)
+	{
+		this.Format.SetRegExp(sRegExp);
+	};
 	CSdtTextFormPr.prototype.SetNoneFormat = function()
 	{
 		this.Format.SetNone();
@@ -307,6 +311,7 @@
 	CSdtTextFormPr.prototype['put_DigitFormat']       = CSdtTextFormPr.prototype.SetDigitFormat;
 	CSdtTextFormPr.prototype['put_LetterFormat']      = CSdtTextFormPr.prototype.SetLetterFormat;
 	CSdtTextFormPr.prototype['put_MaskFormat']        = CSdtTextFormPr.prototype.SetMaskFormat;
+	CSdtTextFormPr.prototype['put_RegExpFormat']      = CSdtTextFormPr.prototype.SetRegExpFormat;
 	CSdtTextFormPr.prototype['get_FormatSymbols']     = CSdtTextFormPr.prototype.GetFormatSymbols;
 	CSdtTextFormPr.prototype['put_FormatSymbols']     = CSdtTextFormPr.prototype.SetFormatSymbols;
 

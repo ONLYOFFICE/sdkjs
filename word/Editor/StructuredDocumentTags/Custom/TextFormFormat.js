@@ -38,7 +38,8 @@
 		None   : 0,
 		Digit  : 1,
 		Letter : 2,
-		Mask   : 3
+		Mask   : 3,
+		RegExp : 4
 	};
 
 	/**
@@ -50,7 +51,8 @@
 		this.BaseFormat = FormatType.None;
 		this.Symbols    = []; // Специальный параметр для возможного ограничения на ввод символов
 
-		this.Mask = new AscWord.CTextFormMask();
+		this.Mask   = new AscWord.CTextFormMask();
+		this.RegExp = "";
 	}
 	CTextFormFormat.prototype.SetSymbols = function(value)
 	{
@@ -101,6 +103,11 @@
 		this.BaseFormat = FormatType.Mask;
 		this.Mask.Set(sMask);
 	};
+	CTextFormFormat.prototype.SetRegExp = function(sRegExp)
+	{
+		this.BaseFormat = FormatType.RegExp;
+		this.RegExp     = sRegExp;
+	};
 	CTextFormFormat.prototype.CheckFormat = function(sText)
 	{
 		switch (this.BaseFormat)
@@ -111,6 +118,8 @@
 				return this.CheckLetter(sText);
 			case FormatType.Mask:
 				return this.CheckMask(sText);
+			case FormatType.RegExp:
+				return this.CheckRegExp(sText);
 		}
 
 		return true;
@@ -157,6 +166,10 @@
 	{
 		return this.Mask.Check(sText);
 	};
+	CTextFormFormat.prototype.CheckRegExp = function(sText)
+	{
+		return (!!sText.match(this.RegExp));
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTextFormFormat = CTextFormFormat;
 
@@ -165,5 +178,6 @@
 	exportPrototype['Digit']  = exportPrototype.Digit;
 	exportPrototype['Letter'] = exportPrototype.Letter;
 	exportPrototype['Mask']   = exportPrototype.Mask;
+	exportPrototype['RegExp'] = exportPrototype.RegExp;
 
 })(window);
