@@ -5452,6 +5452,16 @@ CChartsDrawer.prototype =
 	checkingPenForDrawing: function (shape, verge) {
 		var isCone = shape === AscFormat.BAR_SHAPE_CONE || shape === AscFormat.BAR_SHAPE_CONETOMAX;
 		return isCone && (verge === 0 || verge === 5);
+	},
+
+	getAutoSum: function (m, n, calcFunc) {
+		var res = 0;
+		for (var i = 0; i < m; i++) {
+			for (var j = 0; j < n; j++) {
+				res += calcFunc();
+			}
+		}
+		return res;
 	}
 };
 
@@ -15480,6 +15490,7 @@ CErrBarsDraw.prototype = {
 	},
 
 	calculateErrVal: function (oChart, ser, val, isCatAx) {
+		var t = this;
 		var res = null;
 		var seria = oChart.chart.series[ser];
 		if (seria && seria.errBars) {
@@ -15487,11 +15498,16 @@ CErrBarsDraw.prototype = {
 
 			//здесь необходимо истинное значение без учёта накоплений. функция выше использует значение с учётом накопления
 			var point = this.cChartDrawer.getPointByIndex(seria, val);
+			if (!point) {
+				return null;
+			}
 			var pointVal = isCatAx ? val + 1 : point.val;
 
+			var ny, mSumm, aSumm;
 			switch (errBars.errValType) {
 				case AscFormat.st_errvaltypeCUST: {
-
+					//TODO
+					res = 1;
 					break;
 				}
 				case AscFormat.st_errvaltypeFIXEDVAL: {
@@ -15504,10 +15520,46 @@ CErrBarsDraw.prototype = {
 				}
 				case AscFormat.st_errvaltypeSTDDEV: {
 
+					ny = oChart.chart.series.length * seria.getValuesCount();
+
+					mSumm = this.cChartDrawer.getAutoSum(ser, val, function (_ser, _val) {
+						var _oSer = oChart.chart.series[_ser];
+						var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
+						if (_point) {
+							return isCatAx ? j + 1 : _point.val;
+						}
+						return 0;
+					});
+					var m = mSumm / ny;
+
+					aSumm = this.cChartDrawer.getAutoSum(ser, val, function (_ser, _val) {
+						var _oSer = oChart.chart.series[_ser];
+						var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
+						if (_point) {
+							var _pointVal = isCatAx ? j + 1 : _point.val;
+							return Math.pow(_pointVal - m, 2);
+						}
+						return 0;
+					});
+
+					res = Math.sqrt(aSumm / (ny - 1));
+
 					break;
 				}
 				case AscFormat.st_errvaltypeSTDERR: {
+					ny = oChart.chart.series.length * seria.getValuesCount();
 
+					aSumm = this.cChartDrawer.getAutoSum(ser, val, function (_ser, _val) {
+						var _oSer = oChart.chart.series[_ser];
+						var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
+						if (_point) {
+							var _pointVal = isCatAx ? j + 1 : _point.val;
+							return Math.pow(_pointVal, 2);
+						}
+						return 0;
+					});
+
+					res = Math.sqrt(aSumm / ((ny - 1)*ny));
 					break;
 				}
 			}
