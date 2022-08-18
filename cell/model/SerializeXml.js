@@ -2088,7 +2088,7 @@
 		//val = val.replace(/\n/g, "\&#xA;");
 		//от мс приходит \r\n
 		//val = val.replace(/\n/g, "\r\n");
-
+		val = escape_ST_Xstring(val);
 		return val;
 	}
 
@@ -2103,6 +2103,40 @@
 			}
 		}
 		return res;
+	}
+
+	var match_hex = "^_x[0-9A-F]{4}_";
+	function escape_ST_Xstring(wstr) {
+		var ret_val = "";
+
+		for (var i = 0; i < wstr.length; i++) {
+			var str = wstr[i];
+			var strCode = str.charCodeAt(0);
+			if (strCode < 0x0009 || strCode === 0x000B || strCode === 0x000C || strCode > 0x000D && strCode < 0x0020 || strCode > 0xD7FF && strCode < 0xE000 || strCode > 0xFFFD) {
+				ret_val += "_x" + wchar_t2hex_str(strCode) + "_";
+			} else if ('_' === str && wstr.substring(i, 7).match(match_hex)) {
+				ret_val += "_x005F_";
+			} else {
+				ret_val += str;
+			}
+		}
+		return ret_val;
+	}
+
+	function wchar_t2hex_str(val)
+	{
+		var hex = "0123456789ABCDEF";
+		var code_string = "";
+		code_string += hex[(val & 0xf000) >> 12];
+		code_string += hex[(val & 0x0f00) >> 8];
+		code_string += hex[(val & 0x00f0) >> 4];
+		code_string += hex[(val & 0x000f)];
+
+		if (code_string === "0000") {
+			return val;
+		}
+
+		return code_string;
 	}
 
 	function hex2Str(hex) {
@@ -4128,7 +4162,7 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 			}
 
 			if (null !== text) {
-				writer.WriteXmlValueString("v", text);
+				writer.WriteXmlValueString("v", prepareTextToXml(text));
 			} else if (null !== number) {
 				writer.WriteXmlValueNumber("v", number);
 			}
