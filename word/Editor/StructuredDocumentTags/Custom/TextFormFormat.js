@@ -73,7 +73,16 @@
 	CTextFormFormat.prototype.GetSymbols = function(isToString)
 	{
 		if (isToString)
-			return String.fromCodePoint(...this.Symbols);
+		{
+			// wait for support by IE
+			//return String.fromCodePoint(...this.Symbols);
+			let sResult = "";
+			for (let nIndex = 0, nCount = this.Symbols.length; nIndex < nCount; ++nIndex)
+			{
+				sResult += String.fromCodePoint(this.Symbols[nIndex]);
+			}
+			return sResult;
+		}
 
 		return this.Symbols;
 	};
