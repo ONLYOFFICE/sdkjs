@@ -2066,6 +2066,9 @@
 		val = val.replace(/&#xD;&#xA;/g, "\n");
 		val = val.replace(/_x000D_\r\n/g, "\n");
 		val = val.replace(/\r\n/g, "\n");
+
+		val = unescape_ST_Xstring(val);
+
 		return val;
 	}
 
@@ -2087,6 +2090,59 @@
 		//val = val.replace(/\n/g, "\r\n");
 
 		return val;
+	}
+
+	function unescape_ST_Xstring(wstr)
+	{
+		/*var match_hex = "^_x[0-9A-F]{4}_";
+		var x_pos_noncopied = 0;
+		var x_pos_next;
+		var wstr_end = wstr.length;
+		var ret_val = "";
+
+		while(true)
+		{
+
+			var it_range = wstr.substring(x_pos_noncopied, wstr_end);
+			x_pos_next = it_range.indexOf("_x");
+
+			if (wstr_end === x_pos_next || x_pos_next === -1) {
+				break;
+			}
+
+			var needRange = it_range.substring(x_pos_next, wstr_end);
+			if(!needRange.match(match_hex))
+			{
+				x_pos_next += 2;
+				ret_val += it_range.substring(x_pos_noncopied, x_pos_next);
+				x_pos_noncopied = x_pos_next;
+			}
+			else
+			{
+				//ret_val += static_cast<wchar_t>(hex_str2int(x_pos_next + 2, x_pos_next + 6));
+				x_pos_noncopied = x_pos_next + 7;
+			}
+		}
+
+		ret_val += wstr.substring(x_pos_noncopied, x_pos_next);
+
+		return ret_val;*/
+
+		var res = "";
+		for (var i = 0; i < wstr.length; i++) {
+			if (i + 6 < wstr.length && wstr[i] === '_' && wstr[i + 1] === 'x' && !isNaN(wstr[i + 2]) && !isNaN(wstr[i + 3]) && !isNaN(wstr[i + 4]) && !isNaN(wstr[i + 5]) && wstr[i + 6] === '_') {
+				res += hex2Str(wstr.substring(i + 4, i + 6));
+				i += 6;
+			} else {
+				res += wstr[i];
+			}
+		}
+		return res;
+	}
+
+	function hex2Str(hex)
+	{
+		return hex;
 	}
 
 	//for uri/namespaces
@@ -3981,7 +4037,7 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 				if (CellValueType.String === this.type) {
 					var ss;
 					if (ctx.originType === "str") {
-						ss = value.val
+						ss = prepareTextFromXml(value.val);
 					} else {
 						ss = reader.GetContext().sharedStrings[parseInt(value.val)];
 					}
