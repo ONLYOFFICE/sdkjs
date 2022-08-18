@@ -1491,6 +1491,9 @@ var editor;
 		}
 		xmlParserContext.zip = jsZlib;
 
+		//check fonts inside
+		AscFonts.IsCheckSymbols = true;
+
 		AscCommonExcel.executeInR1C1Mode(false, function () {
 			var doc = new openXml.OpenXmlPackage(jsZlib, null);
 			var reader, i, j;
@@ -2020,6 +2023,8 @@ var editor;
 
 			wb.initPostOpenZip(pivotCaches, xmlParserContext);
 		});
+
+		AscFonts.IsCheckSymbols = false;
 
 		jsZlib.close();
 		//clean up
