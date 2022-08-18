@@ -120,6 +120,8 @@
 		oWriter.WriteBool(this.MultiLine);
 		oWriter.WriteBool(this.AutoFit);
 		oWriter.WriteLong(this.WidthRule);
+
+		this.Format.WriteToBinary(oWriter);
 	};
 	CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 	{
@@ -142,6 +144,8 @@
 		this.MultiLine = oReader.GetBool();
 		this.AutoFit   = oReader.GetBool();
 		this.WidthRule = oReader.GetLong();
+
+		this.Format.ReadFromBinary(oReader);
 	};
 	CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
 	{

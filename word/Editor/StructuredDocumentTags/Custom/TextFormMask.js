@@ -100,6 +100,10 @@
 		this.Mask = sMask;
 		this.Parse();
 	};
+	CTextFormMask.prototype.Get = function()
+	{
+		return this.Mask;
+	};
 	CTextFormMask.prototype.Check = function(sText)
 	{
 		for (let iterator = sText.getUnicodeIterator(), pos = 0; iterator.check(); iterator.next(), ++pos)

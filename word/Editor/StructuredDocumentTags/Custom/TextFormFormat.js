@@ -73,7 +73,7 @@
 	CTextFormFormat.prototype.GetSymbols = function(isToString)
 	{
 		if (isToString)
-			return String.fromCodePoint(this.Symbols);
+			return String.fromCodePoint(...this.Symbols);
 
 		return this.Symbols;
 	};
@@ -140,6 +140,20 @@
 	CTextFormFormat.prototype.Check = function(sText)
 	{
 		return (this.CheckFormat(sText) && this.CheckSymbols(sText));
+	};
+	CTextFormFormat.prototype.WriteToBinary = function(oWriter)
+	{
+		oWriter.WriteLong(this.BaseFormat);
+		oWriter.WriteString2(this.GetSymbols(true));
+		oWriter.WriteString2(this.Mask.Get());
+		oWriter.WriteString2(this.RegExp);
+	};
+	CTextFormFormat.prototype.ReadFromBinary = function(oReader)
+	{
+		this.BaseFormat = oReader.GetLong();
+		this.SetSymbols(oReader.GetString2());
+		this.Mask.Set(oReader.GetString2());
+		this.RegExp = oReader.GetString2();
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

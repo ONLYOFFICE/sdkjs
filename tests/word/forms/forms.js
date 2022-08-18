@@ -85,6 +85,8 @@ $(function () {
 		assert.strictEqual(format.Check("АБВГДЕabcdef"), true, "Letter: check 'АБВГДЕabcdef'");
 
 		format.SetSymbols("абвгдеёжзийклмнопрстуфхцчшщъыьэюя");
+		assert.strictEqual(format.GetSymbols(true), "абвгдеёжзийклмнопрстуфхцчшщъыьэюя", "Check symbols");
+
 		format.SetLetter();
 		assert.strictEqual(format.Check("АБВГДЕabcdef"), false, "Letter and symbols: check 'АБВГДЕabcdef'");
 		assert.strictEqual(format.Check("привет"), true, "Letter: check 'привет'");
@@ -115,6 +117,13 @@ $(function () {
 		assert.strictEqual(format.Check("Test"), false, "RegExp ^[A-Fa-f0-9]+$: check 'Test'");
 		assert.strictEqual(format.Check("FE19FF"), true, "RegExp ^[A-Fa-f0-9]+$: check 'FE19FF'");
 
+		let writer = AscTest.GetBinaryWriter();
+		format.WriteToBinary(writer);
+
+		let reader = AscTest.GetBinaryReader(writer);
+		let format2 = new AscWord.CTextFormFormat();
+		format2.ReadFromBinary(reader);
+		assert.deepEqual(format, format2, "Check  write/read");
 	});
 
 	QUnit.test("Test: \"GetAllForms\"", function (assert)

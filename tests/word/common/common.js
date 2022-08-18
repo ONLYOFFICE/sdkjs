@@ -63,9 +63,20 @@ var AscTest = AscTest || {};
 		});
 	}
 
+	function GetBinaryWriter()
+	{
+		return new AscCommon.CMemory();
+	}
+	function GetBinaryReader(binaryWriter)
+	{
+		return new AscCommon.FT_Stream2(binaryWriter.GetData(), binaryWriter.GetCurPosition());
+	}
+
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.Letter = Letter;
 
 	AscTest.AddTextToInlineSdt = AddTextToInlineSdt;
+	AscTest.GetBinaryWriter    = GetBinaryWriter;
+	AscTest.GetBinaryReader    = GetBinaryReader;
 
 })(window);
