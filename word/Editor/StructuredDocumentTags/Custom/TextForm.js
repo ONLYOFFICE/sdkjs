@@ -50,6 +50,8 @@
 		this.MultiLine             = false;
 		this.AutoFit               = false;
 		this.Format                = new AscWord.CTextFormFormat();
+
+		this.Format.SetDigit();
 	}
 	CSdtTextFormPr.prototype.Copy = function()
 	{
@@ -283,6 +285,14 @@
 	CSdtTextFormPr.prototype.GetFormatSymbols = function()
 	{
 		return this.Format.GetSymbols(true);
+	};
+	CSdtTextFormPr.prototype.CheckFormat = function(sText)
+	{
+		return this.Format.Check(sText);
+	};
+	CSdtTextFormPr.prototype.CheckFormatOnFly = function()
+	{
+		return this.Format.CheckOnFly();
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};

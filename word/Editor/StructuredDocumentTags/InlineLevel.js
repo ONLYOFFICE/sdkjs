@@ -105,8 +105,11 @@ CInlineLevelSdt.prototype.Add = function(Item)
 
 		oTextFormRun = this.MakeSingleRunElement(false);
 
-		if (this.Pr.TextForm.MaxCharacters > 0)
+		let isCheckFormat = this.Pr.TextForm.CheckFormatOnFly();
+		if (this.Pr.TextForm.MaxCharacters > 0 || isCheckFormat)
 		{
+			// TODO: Надо проверить, если изначально текст был не по формату, тогда и проверять не надо, будет использовать общую проверку
+
 			if (!(Item instanceof AscWord.CRunText) && !(Item instanceof AscWord.CRunSpace))
 				return;
 
@@ -130,11 +133,17 @@ CInlineLevelSdt.prototype.Add = function(Item)
 			if (nInsertPos === oTextFormRun.Content.length)
 				arrCodePoints.push(nNewCodePoint);
 
-			let nNewCount = AscWord.GraphemesCounter.GetCount(arrCodePoints, oTextFormRun.Get_CompiledPr(false));
-			if (nNewCount > this.Pr.TextForm.MaxCharacters)
+			if (isCheckFormat && !this.Pr.TextForm.CheckFormat(arrCodePoints))
 				return;
-			else if (nNewCount === this.Pr.TextForm.MaxCharacters)
-				isFulfilled = true;
+
+			if (this.Pr.TextForm.MaxCharacters > 0)
+			{
+				let nNewCount = AscWord.GraphemesCounter.GetCount(arrCodePoints, oTextFormRun.Get_CompiledPr(false));
+				if (nNewCount > this.Pr.TextForm.MaxCharacters)
+					return;
+				else if (nNewCount === this.Pr.TextForm.MaxCharacters)
+					isFulfilled = true;
+			}
 		}
 	}
 

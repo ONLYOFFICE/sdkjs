@@ -104,11 +104,11 @@
 	{
 		return this.Mask;
 	};
-	CTextFormMask.prototype.Check = function(sText)
+	CTextFormMask.prototype.Check = function(arrBuffer)
 	{
-		for (let iterator = sText.getUnicodeIterator(), pos = 0; iterator.check(); iterator.next(), ++pos)
+		for (let nIndex = 0, nCount = arrBuffer.length; nIndex < nCount; ++nIndex)
 		{
-			if (pos >= this.Pattern.length || !this.Pattern[pos].Check(iterator.value()))
+			if (nIndex >= this.Pattern.length || !this.Pattern[nIndex].Check(arrBuffer[nIndex]))
 				return false;
 		}
 

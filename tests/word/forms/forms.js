@@ -66,6 +66,8 @@ $(function () {
 		format.SetSymbols("1234567890");
 		assert.strictEqual(format.Check("qwe123"), false, "Add symbols and check 'qwe123'");
 		assert.strictEqual(format.Check("555123"), true, "Add symbols and check '555123'");
+		assert.strictEqual(format.Check(Array.from("qwe123")), false, "Add symbols and check 'qwe123' as an array");
+		assert.strictEqual(format.Check(Array.from("555123")), true, "Add symbols and check '555123' as an array");
 
 		format.SetSymbols();
 		format.SetDigit();

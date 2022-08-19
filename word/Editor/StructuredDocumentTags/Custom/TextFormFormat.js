@@ -117,29 +117,29 @@
 		this.BaseFormat = FormatType.RegExp;
 		this.RegExp     = sRegExp;
 	};
-	CTextFormFormat.prototype.CheckFormat = function(sText)
+	CTextFormFormat.prototype.CheckFormat = function(arrBuffer)
 	{
 		switch (this.BaseFormat)
 		{
 			case FormatType.Digit:
-				return this.CheckDigit(sText);
+				return this.CheckDigit(arrBuffer);
 			case FormatType.Letter:
-				return this.CheckLetter(sText);
+				return this.CheckLetter(arrBuffer);
 			case FormatType.Mask:
-				return this.CheckMask(sText);
+				return this.CheckMask(arrBuffer);
 			case FormatType.RegExp:
-				return this.CheckRegExp(sText);
+				return this.CheckRegExp(arrBuffer);
 		}
 
 		return true;
 	};
-	CTextFormFormat.prototype.CheckSymbols = function(sText)
+	CTextFormFormat.prototype.CheckSymbols = function(arrBuffer)
 	{
-		if (sText && this.Symbols.length)
+		if (arrBuffer && this.Symbols.length)
 		{
-			for (let oIter = sText.getUnicodeIterator(); oIter.check(); oIter.next())
+			for (let nIndex = 0, nCount = arrBuffer.length; nIndex < nCount; ++nIndex)
 			{
-				if (-1 === this.Symbols.indexOf(oIter.value()))
+				if (-1 === this.Symbols.indexOf(arrBuffer[nIndex]))
 					return false;
 			}
 		}
@@ -148,7 +148,26 @@
 	};
 	CTextFormFormat.prototype.Check = function(sText)
 	{
-		return (this.CheckFormat(sText) && this.CheckSymbols(sText));
+		let arrBuffer = [];
+		if (Array.isArray(sText))
+		{
+			arrBuffer = Array.from(sText);
+		}
+		else if (typeof(sText) === "string")
+		{
+			for (let oIter = sText.getUnicodeIterator(); oIter.check(); oIter.next())
+			{
+				arrBuffer.push(oIter.value());
+			}
+		}
+
+		return (this.CheckFormat(arrBuffer) && this.CheckSymbols(arrBuffer));
+	};
+	CTextFormFormat.prototype.CheckOnFly = function()
+	{
+		return ((FormatType.None === this.BaseFormat && this.Symbols.length > 0)
+			|| FormatType.Digit === this.BaseFormat
+			|| FormatType.Letter === this.BaseFormat);
 	};
 	CTextFormFormat.prototype.WriteToBinary = function(oWriter)
 	{
@@ -167,30 +186,36 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	CTextFormFormat.prototype.CheckDigit = function(sText)
+	CTextFormFormat.prototype.CheckDigit = function(arrBuffer)
 	{
-		for (let oIter = sText.getUnicodeIterator(); oIter.check(); oIter.next())
+		for (let nIndex = 0, nCount = arrBuffer.length; nIndex < nCount; ++nIndex)
 		{
-			if (!AscCommon.IsDigit(oIter.value()))
+			if (!AscCommon.IsDigit(arrBuffer[nIndex]))
 				return false;
 		}
 		return true;
 	};
-	CTextFormFormat.prototype.CheckLetter = function(sText)
+	CTextFormFormat.prototype.CheckLetter = function(arrBuffer)
 	{
-		for (let oIter = sText.getUnicodeIterator(); oIter.check(); oIter.next())
+		for (let nIndex = 0, nCount = arrBuffer.length; nIndex < nCount; ++nIndex)
 		{
-			if (!AscCommon.IsLetter(oIter.value()))
+			if (!AscCommon.IsLetter(arrBuffer[nIndex]))
 				return false;
 		}
 		return true;
 	};
-	CTextFormFormat.prototype.CheckMask = function(sText)
+	CTextFormFormat.prototype.CheckMask = function(arrBuffer)
 	{
-		return this.Mask.Check(sText);
+		return this.Mask.Check(arrBuffer);
 	};
-	CTextFormFormat.prototype.CheckRegExp = function(sText)
+	CTextFormFormat.prototype.CheckRegExp = function(arrBuffer)
 	{
+		let sText = "";
+		for (let nIndex = 0, nCount = arrBuffer.length; nIndex < nCount; ++nIndex)
+		{
+			sText += String.fromCodePoint(arrBuffer[nIndex]);
+		}
+
 		return (!!sText.match(this.RegExp));
 	};
 	//--------------------------------------------------------export----------------------------------------------------
