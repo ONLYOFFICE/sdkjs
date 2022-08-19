@@ -129,6 +129,20 @@ AscFormat.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyite
                 this.spTree[i].documentGetAllFontNames(allFonts);
         }
     };
+    CGroupShape.prototype.getImageFromBulletsMap = function(oImages) {
+        for(var i = 0; i < this.spTree.length; ++i)
+        {
+            if(this.spTree[i].getImageFromBulletsMap)
+                this.spTree[i].getImageFromBulletsMap(oImages);
+        }
+    };
+    CGroupShape.prototype.getDocContentsWithImageBullets = function (arrContents) {
+        for(var i = 0; i < this.spTree.length; ++i)
+        {
+            if(this.spTree[i].getDocContentsWithImageBullets)
+                this.spTree[i].getDocContentsWithImageBullets(arrContents);
+        }
+    };
     CGroupShape.prototype.handleAllContents = function(fCallback)
     {
         for(var i = 0; i < this.spTree.length; ++i)

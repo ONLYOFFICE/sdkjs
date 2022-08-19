@@ -1190,6 +1190,8 @@
     };
     CGraphicObjectBase.prototype.getAllRasterImages = function(mapUrl){
     };
+    CGraphicObjectBase.prototype.getImageFromBulletsMap = function(oImages) {};
+    CGraphicObjectBase.prototype.getDocContentsWithImageBullets = function (arrContents) {};
     CGraphicObjectBase.prototype.getAllSlicerViews = function(aSlicerView) {
 
     };

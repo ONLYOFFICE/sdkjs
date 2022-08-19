@@ -177,6 +177,8 @@
 			History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, oParent));
 			this.parent = oParent;
 		};
+		CBaseFormatObject.prototype.getImageFromBulletsMap = function(oImages) {};
+		CBaseFormatObject.prototype.getDocContentsWithImageBullets = function (arrContents) {};
 		CBaseFormatObject.prototype.setParentToChild = function (oChild) {
 			if (oChild && oChild.setParent) {
 				oChild.setParent(this);
@@ -11991,6 +11993,8 @@
 		FmtScheme.prototype.addBgFillToStyleLst = function (pr) {
 			this.bgFillStyleLst.push(pr);
 		};
+		FmtScheme.prototype.getImageFromBulletsMap = function(oImages) {};
+		FmtScheme.prototype.getDocContentsWithImageBullets = function (arrContents) {};
 		FmtScheme.prototype.getAllRasterImages = function(aImages) {
 			for(let nIdx = 0; nIdx < this.fillStyleLst.length; ++nIdx) {
 				let oUnifill = this.fillStyleLst[nIdx];
@@ -12385,6 +12389,8 @@
 				this.themeElements.fmtScheme.getAllRasterImages(aImages);
 			}
 		};
+		CTheme.prototype.getImageFromBulletsMap = function(oImages) {};
+		CTheme.prototype.getDocContentsWithImageBullets = function (arrContents) {};
 		CTheme.prototype.Reassign_ImageUrls = function(images_rename) {
 			if(this.themeElements && this.themeElements.fmtScheme) {
 				let aImages = [];
