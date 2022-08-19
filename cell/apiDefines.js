@@ -48,7 +48,8 @@ var c_oAscConfirm = {
   ConfirmReplaceRange: 0,
   ConfirmPutMergeRange: 1,
   ConfirmReplaceFormulaInTable: 2,
-  ConfirmChangeProtectRange: 3
+  ConfirmChangeProtectRange: 3,
+  ConfirmAddCellWatches: 4
 };
 
 var c_oAscMergeOptions = {
@@ -554,6 +555,7 @@ var c_oAscPopUpSelectorType = {
     Range: 2
   };
 
+  var c_nAscMaxAddCellWatchesCount = 10000;
 
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -605,6 +607,7 @@ var c_oAscPopUpSelectorType = {
   prot['ConfirmReplaceRange'] = prot.ConfirmReplaceRange;
   prot['ConfirmPutMergeRange'] = prot.ConfirmPutMergeRange;
   prot['ConfirmChangeProtectRange'] = prot.ConfirmChangeProtectRange;
+  prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
 
   prot['ConfirmReplaceFormulaInTable'] = prot.ConfirmReplaceFormulaInTable;
   window['Asc']['c_oAscMergeOptions'] = window['Asc'].c_oAscMergeOptions = c_oAscMergeOptions;
@@ -910,6 +913,8 @@ var c_oAscPopUpSelectorType = {
   prot['Workbook'] = prot.Workbook;
   prot['Sheet'] = prot.Sheet;
   prot['Range'] = prot.Range;
+
+  window['Asc']['c_nAscMaxAddCellWatchesCount'] = window['Asc'].c_nAscMaxAddCellWatchesCount = c_nAscMaxAddCellWatchesCount;
 
 
 })(window);

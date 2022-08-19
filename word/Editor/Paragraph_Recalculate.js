@@ -2190,7 +2190,7 @@ Paragraph.prototype.private_RecalculateRange           = function(CurRange, CurL
 
         if ( para_Math === Item.Type )
         {
-            var NotInlineMath = this.CheckMathPara(Pos);
+            var NotInlineMath = this.CheckMathPara(Pos) && !Item.Get_Inline();
             if (true === NotInlineMath && true !== PRS.EmptyLine)
             {
                 PRS.ForceNewLine = true;

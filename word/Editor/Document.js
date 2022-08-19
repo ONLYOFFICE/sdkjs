@@ -2009,6 +2009,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.MoveDrawing               = false; // Происходит ли сейчас перенос автофигуры
 	this.PrintSelection            = false; // Печатаем выделенный фрагмент
 	this.CheckFormPlaceHolder      = true;  // Выполняем ли специальную обработку для плейсхолдеров у форм
+	this.MathInputType             = Asc.c_oAscMathInputType.Unicode;
 	this.ForceDrawPlaceHolders     = null;  // true/false - насильно заставляем рисовать или не рисовать плейсхолдеры и подсветку,
 	this.ForceDrawFormHighlight    = null;  // null - редактор решает рисовать или нет в зависимости от других параметров
 	this.ConcatParagraphsOnRemove  = false; // Во время удаления объединять ли первый и последний параграфы
@@ -26487,6 +26488,157 @@ CDocument.prototype.GetImageFormSelection = function()
     return this.DrawingObjects.getImageDataFromSelection();
 };
 
+
+/**
+ * Функция конвертации вида формулы из линейного в профессиональный и наоборот
+ * @param {boolean} isToLinear
+ * @param {boolean} isAll
+ */
+CDocument.prototype.ConvertMathView = function(isToLinear, isAll)
+{
+	var oInfo = this.GetSelectedElementsInfo();
+	var oMath = oInfo.GetMath();
+	if (!oMath)
+		return;
+
+	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+	{
+		this.StartAction(AscDFH.historydescription_Document_ConvertMathView);
+
+		var oLogicDocument = this.GetLogicDocument()
+		var nInputType = oLogicDocument ? oLogicDocument.GetMathInputType() : Asc.c_oAscMathInputType.Unicode;
+
+		if (isAll || !this.IsTextSelectionUse())
+		{
+			this.RemoveTextSelection();
+			oMath.ConvertView(isToLinear, nInputType);
+		}
+		else
+		{
+			//получаем копию выделенного контента для конвертации
+			var oTempSelectedObject = oMath.Copy(true);
+			
+			//ссылка на выделенный контент
+			var oSelection = oMath.GetSelectContent()
+			var oContent = oSelection.Content;
+			var intStart = oSelection.Start;
+			var intEnd = oSelection.End;
+			
+			if (intEnd < intStart) {
+				var intTemp = intStart;
+				intStart = intEnd;
+				intEnd = intTemp;
+			}
+
+			//корректировка стартовой и конечной позиции selection
+			if (intStart !== intEnd) {
+				for (var nPos = intStart; nPos <= intEnd; nPos++) {
+					var oElement = oContent.Content[nPos].Copy(true);
+					if (oElement.Content.length === 0 || (oContent.Content[nPos].Selection.Use === false && oElement.Type === 49)) {
+						if (nPos === intStart) {
+							intStart++;
+						} else if (nPos === intEnd) {
+							intEnd--;
+						}
+					}
+				}
+			}
+
+			//если выделение затрагивает ParaRun не полностью - его нужно разделить
+			for (var i = intStart; i <= intEnd; i++) {
+				var oParaRun = oContent.Content[i];
+			
+				if (oParaRun.Type === 49  && oParaRun.Selection.StartPos < oParaRun.Selection.EndPos && oParaRun.Content.length > 1) {
+
+					if (oParaRun.Content.length > 1) {
+					
+						if (oParaRun.Selection.EndPos < oParaRun.Selection.StartPos) {
+							var intTemp = oParaRun.Selection.StartPos;
+							oParaRun.Selection.StartPos = oParaRun.Selection.EndPos;
+							oParaRun.Selection.EndPos = intTemp;
+						}
+					
+						if (oParaRun.Selection.StartPos !== 0 && oParaRun.Content.length >= oParaRun.Selection.StartPos) {
+	
+							var isEndPosSplit = oParaRun.Selection.EndPos !== oParaRun.Content.length;
+	
+							var oNewRun = oParaRun.Split_Run(oParaRun.Selection.StartPos);
+							oContent.Add_ToContent(i + 1, oNewRun);
+							intStart++;
+							intEnd++;
+	
+							if (isEndPosSplit) {
+								i++;
+								oParaRun = oContent.Content[i];
+								var oNewRun = oParaRun.Split_Run(oParaRun.Selection.EndPos);
+								oContent.Add_ToContent(i + 1, oNewRun);
+							}
+						}
+						else if (oParaRun.Selection.EndPos !== oParaRun.Content.length && oParaRun.Selection.EndPos!== 0 ) {
+							var oNewRun = oParaRun.Split_Run(oParaRun.Selection.EndPos);
+							oContent.Add_ToContent(i + 1, oNewRun);
+						}
+					}
+				}
+			}
+
+			oTempSelectedObject.ConvertView(isToLinear, nInputType);
+			oContent.RemoveFromContent(intStart, intEnd - intStart + 1, false);
+
+			//вставка нового контента
+			var oOutput = [];
+			for (var i = 0; i < oTempSelectedObject.Root.Content.length; i++) {
+				var oElement = oTempSelectedObject.Root.Content[i];
+				oContent.Add_ToContent(intStart + i, oElement, false);
+				if (oElement.Content.length !== 0) {
+					oOutput.push(oElement);
+				}
+			}
+
+			oContent.RemoveSelection();
+
+			for (var i = 0; i < oOutput.length; i++) {
+				var strId = oOutput[i].Id;
+				for (var j = 0; j < oContent.Content.length; j++) {
+					if (oContent.Content[j].Id === strId) {
+						
+						oContent.Content[j].SelectAll();
+						
+						if (i === 0) {
+							oContent.Selection.Use      = true;
+							oContent.Selection.StartPos = j;
+							oContent.Selection.EndPos   = j;
+						} else {
+							oContent.Selection.EndPos = j;
+						}
+
+						break;
+					}
+				}
+			}
+			oContent.Correct_Selection();
+		}
+
+		this.Recalculate();
+		this.UpdateInterface();
+		this.UpdateTracks();
+		this.FinalizeAction();
+	}
+};
+/**
+ * @param {Asc.c_oAscMathInputType} nType
+ */
+CDocument.prototype.SetMathInputType = function(nType)
+{
+	this.MathInputType = nType;
+};
+/**
+ * @returns {Asc.c_oAscMathInputType}
+ */
+CDocument.prototype.GetMathInputType = function()
+{
+	return this.MathInputType;
+};
 
 function CDocumentSelectionState()
 {

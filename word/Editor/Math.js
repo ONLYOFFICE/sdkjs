@@ -1763,11 +1763,11 @@ ParaMath.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 	return "";
 };
 
-ParaMath.prototype.GetText = function()
+ParaMath.prototype.GetText = function(isLaTeX)
 {
     var res = "";
     if (this.Root && this.Root.GetTextContent) {
-        var textContent = this.Root.GetTextContent();
+        var textContent = this.Root.GetTextContent(false, isLaTeX);
         if (textContent && textContent.str) {
             res = textContent.str;
         }
@@ -2628,6 +2628,7 @@ ParaMath.prototype.ConvertToInlineMode = function()
 		oRun.Add(new AscWord.CRunSpace());
 		oParent.AddToContent(nPosInParent, oRun);
 	}
+	this.Set_Inline(true);
 
 	return true;
 };
@@ -2676,6 +2677,7 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 		oRun.Add(new AscWord.CRunBreak(AscWord.break_Line));
 		oParent.AddToContent(nPosInParent, oRun);
 	}
+	this.Set_Inline(false);
 
 	return true;
 };
@@ -3388,15 +3390,19 @@ ParaMath.prototype.Handle_AddNewLine = function()
 
     var NeedRecalculate = false;
 
-    if(MATH_EQ_ARRAY === CurrContent.ParentElement.kind)
+    if(MATH_EQ_ARRAY === CurrContent.ParentElement.kind && this.Cursor_Is_End())
     {
-        var oEqArray = CurrContent.Parent;
-
+        var oEqArray = CurrContent.ParentElement;
         oEqArray.Add_Row(oEqArray.CurPos + 1);
         oEqArray.CurPos++;
 
         NeedRecalculate = true;
     }
+    //todo duplication EQ_ARRAY while creating new line 
+    // else if(MATH_EQ_ARRAY === CurrContent.ParentElement.kind)
+    // {
+
+    // }
     else if(MATH_MATRIX !== CurrContent.ParentElement.kind)
     {
         var ctrPrp = CurrContent.Parent.CtrPrp.Copy();
@@ -3430,8 +3436,7 @@ ParaMath.prototype.Handle_AddNewLine = function()
 
         NeedRecalculate = true;
     }
-
-
+    //console.log(CurrContent.ParentElement)
     return NeedRecalculate;
 };
 
@@ -3649,6 +3654,60 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 {
 	this.Root.CalculateTextToTable(oEngine);
 };
+ParaMath.prototype.ConvertFromLaTeX = function()
+{
+	var strLaTeX = this.GetText(true);
+	this.Root.Remove_Content(0, this.Root.Content.length);
+    this.Root.Correct_Content(true);
+    AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);
+	this.Root.Correct_Content(true);
+};
+ParaMath.prototype.ConvertToLaTeX = function()
+{
+	var strLatex = this.GetText(true);
+	this.Root.Remove_Content(0,this.Root.Content.length);
+	//console.log('LaTeX string:', strLatex);
+	this.Root.Add_Text(strLatex, this.Paragraph);
+};
+ParaMath.prototype.ConvertFromUnicodeMath = function()
+{
+	var strUnicode = this.GetText();
+	this.Root.Remove_Content(0,this.Root.Content.length);
+    this.Root.Correct_Content(true);
+	AscMath.CUnicodeConverter(strUnicode, this.Root);
+	this.Root.Correct_Content(true);
+};
+ParaMath.prototype.ConvertToUnicodeMath = function()
+{
+	var strUnicode = this.GetText();
+	this.Root.Remove_Content(0,this.Root.Content.length);
+	//console.log('Unicode string:', strUnicode);
+	this.Root.Add_Text(strUnicode, this.Paragraph);
+};
+ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
+{
+	if (undefined === nInputType) {
+		var oLogicDocument = this.GetLogicDocument()
+		nInputType = oLogicDocument ? oLogicDocument.GetMathInputType() : Asc.c_oAscMathInputType.Unicode;
+	}
+
+	if (isToLinear)
+	{
+		if (Asc.c_oAscMathInputType.Unicode === nInputType)
+			this.ConvertToUnicodeMath();
+		else if (Asc.c_oAscMathInputType.LaTeX === nInputType)
+			this.ConvertToLaTeX();
+	}
+	else
+	{
+		if (Asc.c_oAscMathInputType.Unicode === nInputType) {
+			this.ConvertFromUnicodeMath();
+		}
+		else if (Asc.c_oAscMathInputType.LaTeX === nInputType) {
+			this.ConvertFromLaTeX();
+		}
+	}
+};
 ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
 {
 	if (oCollector.IsExceedLimit())
@@ -3701,7 +3760,7 @@ function MatGetKoeffArgSize(FontSize, ArgSize)
     }
 
     return FontKoef;
-}
+};
 
 function CMathRecalculateInfo()
 {

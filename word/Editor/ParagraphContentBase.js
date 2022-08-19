@@ -52,6 +52,10 @@ CParagraphContentBase.prototype.Get_Type = function()
 {
 	return this.Type;
 };
+CParagraphContentBase.prototype.GetLogicDocument = function()
+{
+	return this.Paragraph ? this.Paragraph.GetLogicDocument() : null;
+};
 CParagraphContentBase.prototype.CanSplit = function()
 {
 	return false;

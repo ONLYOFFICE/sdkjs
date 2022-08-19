@@ -4071,32 +4071,7 @@
 				}
 
 
-				var parseMathArr = function (mathContent) {
-					if (!mathContent) {
-						return;
-					}
-
-					for (var i = 0; i < mathContent.length; i++) {
-						var elem = mathContent[i];
-
-						var newParaRunObj;
-						if (para_Math_Run === elem.Type) {
-							newParaRunObj = t._parseParaRun(elem, oNewItem, paraPr, innerCol, row, col, text);
-							innerCol = newParaRunObj.col;
-							row = newParaRunObj.row;
-						} else if (typeof(elem) === "string") {
-							var newParaRun = new ParaRun();
-							window['AscCommon'].addTextIntoRun(newParaRun, elem);
-							newParaRunObj =
-								t._parseParaRun(newParaRun, oNewItem, paraPr, innerCol, row, col, text, t.prevTextPr);
-							innerCol = newParaRunObj.col;
-							row = newParaRunObj.row;
-						} else if (elem.length) {
-							parseMathArr(elem);
-						}
-					}
-				};
-
+				
 				//проходимся по контенту paragraph
 				var paraRunObj;
 				//получае общий шрифт для ячейки для случая когда вставляем нумерованный список
@@ -4171,10 +4146,15 @@
 						}
 						case para_Math://*para_Math*
 						{
+							
 							if (this.bFromPresentation) {
 								var mathTextContent = content[n].Root.GetTextContent();
 								if (mathTextContent) {
-									parseMathArr(mathTextContent.paraRunArr);
+									var newParaRun = new ParaRun();
+									window['AscCommon'].addTextIntoRun(newParaRun, mathTextContent.str);
+									var objTemp = t._parseParaRun(newParaRun, oNewItem, paraPr, innerCol, row, col, text);
+									innerCol = objTemp.col;
+									row = objTemp.row;
 								}
 							} else {
 								var tempFonts = [];

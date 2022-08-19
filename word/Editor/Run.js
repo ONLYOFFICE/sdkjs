@@ -531,6 +531,18 @@ ParaRun.prototype.GetText = function(oText)
 	return oText.Text;
 };
 
+ParaRun.prototype.GetTextOfElement = function(isLaTeX) {
+    var str = "";
+	for (var i = 0; i < this.Content.length; i++) {
+		str += this.Content[i].GetTextOfElement(isLaTeX);
+	}
+	//???
+	if (str === 'mod') {
+		str = '\\bmod'
+	}
+	return str;
+};
+
 // Проверяем пустой ли ран
 ParaRun.prototype.Is_Empty = function(oProps)
 {

@@ -8717,6 +8717,9 @@
 		var VIDEO_FILE = 3;
 		var QUICK_TIME_FILE = 4;
 
+		// from core
+		var SPTREE_TYPE_VIDEO = 7;
+		var SPTREE_TYPE_AUDIO = 8;
 
 		function UniMedia() {
 			CBaseNoIdObject.call(this);
@@ -20620,6 +20623,8 @@
 		window['AscFormat']._global_layout_summs_array = _global_layout_summs_array;
 
 
+		window['AscFormat'].SPTREE_TYPE_VIDEO = SPTREE_TYPE_VIDEO;
+		window['AscFormat'].SPTREE_TYPE_AUDIO = SPTREE_TYPE_AUDIO;
 		window['AscFormat'].AUDIO_CD = AUDIO_CD;
 		window['AscFormat'].WAV_AUDIO_FILE = WAV_AUDIO_FILE;
 		window['AscFormat'].AUDIO_FILE = AUDIO_FILE;

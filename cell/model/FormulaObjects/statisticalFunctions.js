@@ -6537,11 +6537,14 @@ function (window, undefined) {
 
 			var C = [[]], k = 0;
 			for (i = 1; i < tB.length; i++, k++) {
-				C[0][k] = new cNumber(0);
+				if (!C[k]) {
+					C[k] = [];
+				}
+				C[k][0] = new cNumber(0);
 				for (j = 0; j < tA.length; j++) {
 					if (tA[j] > tB[i - 1] && tA[j] <= tB[i]) {
-						var a = C[0][k].getValue();
-						C[0][k] = new cNumber(++a);
+						var a = C[k][0].getValue();
+						C[k][0] = new cNumber(++a);
 					}
 				}
 			}

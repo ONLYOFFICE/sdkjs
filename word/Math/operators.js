@@ -4044,6 +4044,35 @@ CDelimiter.prototype.private_GetRightOperator = function(bHide)
 
     return NewEndCode;
 };
+CDelimiter.prototype.GetTextOfElement = function(isLaTeX) {
+	//	Patterns:
+	//	if start bracket doesn't show:	├ ...) => ...)
+	//	if end bracket doesn't show:	(...┤ => (...
+	//	else:							(...) => (...)
+	//if start and close braketets non-standart add \open, \close
+
+	var strTemp = "";
+	var strStartSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
+	var strEndSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
+	var strSeparatorSymbol = isLaTeX ? "\\mid" : "∣";
+	if (strStartSymbol === "\uffff") {
+		strStartSymbol = ' '
+	}
+
+   strTemp += strStartSymbol;
+	for (var intCount = 0; intCount < this.Content.length; intCount++) {
+        if (isLaTeX && this.Content && this.Content.length === 1 && this.Content[0].Content.length && this.Content[0].Content[1] && this.Content[0].Content.length > 1 && this.Content[0].Content[1].Type === 51) {
+            return this.Content[0].Content[1].GetTextOfElement(isLaTeX, strStartSymbol+strEndSymbol);
+        }
+		strTemp += this.CheckIsEmpty(this.Content[intCount].GetTextOfElement(isLaTeX));
+
+		if (strSeparatorSymbol && this.Content.length > 1 && intCount < this.Content.length - 1) {
+			strTemp += strSeparatorSymbol;
+		}
+	}
+    strTemp += strEndSymbol;
+	return strTemp;
+}
 
 /**
  *
@@ -4494,6 +4523,23 @@ CGroupCharacter.prototype.Can_ModifyArgSize = function()
 CGroupCharacter.prototype.Can_ChangePos = function()
 {
     return this.Pr.chr == 0x23DC || this.Pr.chr == 0x23DD || this.Pr.chr == 0x23DE || this.Pr.chr == 0x23DF;
+};
+CGroupCharacter.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var intStartCode = this.Pr.chr || this.operator.Get_CodeChr();
+	var strStart = String.fromCharCode(intStartCode);
+	var Base = this.getBase().GetTextOfElement();
+	var strStartBracet = (Base.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
+	var strCloseBracet = (Base.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
+
+	if (true === isLaTeX) {
+		if (intStartCode === 9182)
+			strStart = '\\overbrace';
+		else if (intStartCode === 9183)
+			strStart = '\\underbrace';
+	}
+	strTemp = strStart + strStartBracet + Base + strCloseBracet;
+	return strTemp;
 };
 
 /**

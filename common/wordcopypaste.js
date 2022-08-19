@@ -8146,6 +8146,10 @@ PasteProcessor.prototype =
 		if (newNode) {
 			node = newNode;
 			tableNode = newNode;
+		} else if (headNode) {
+			node = headNode;
+			//tableNode = headNode;
+			//pPr.repeatHeaderRow = true;
 		}
 
 		//валидация талиц. В таблице не может быть строк состоящих из вертикально замерженых ячеек.

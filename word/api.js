@@ -8845,7 +8845,6 @@ background-repeat: no-repeat;\
 			this.FontAsyncLoadParam = Type;
 		}
 	};
-
 	asc_docs_api.prototype.asc_AddMath2 = function(nType)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
@@ -8858,6 +8857,18 @@ background-repeat: no-repeat;\
 			oLogicDocument.AddParaMath(nType);
 			oLogicDocument.FinalizeAction();
 		}
+	};
+	asc_docs_api.prototype.asc_ConvertMathView = function(isToLinear, isAll)
+	{
+		this.private_GetLogicDocument().ConvertMathView(isToLinear, isAll);
+	};
+	asc_docs_api.prototype.asc_GetMathInputType = function()
+	{
+		return this.private_GetLogicDocument().GetMathInputType();
+	};
+	asc_docs_api.prototype.asc_SetMathInputType = function(nType)
+	{
+		this.private_GetLogicDocument().SetMathInputType(nType);
 	};
 	asc_docs_api.prototype.asc_AddPageCount = function()
 	{
@@ -11903,7 +11914,7 @@ background-repeat: no-repeat;\
 		if (undefined !== version)
 			AscCommon.CurFileVersion = version;
 
-		this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
+		//this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
 		if (this.isOpenOOXInBrowser) {
 			//slice because array contains garbage after end of function
 			this.openOOXInBrowserZip = base64File.slice();
@@ -13150,6 +13161,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_setDrawCollaborationMarks']             = asc_docs_api.prototype.asc_setDrawCollaborationMarks;
 	asc_docs_api.prototype['asc_AddMath']                               = asc_docs_api.prototype.asc_AddMath;
 	asc_docs_api.prototype['asc_AddMath2']                              = asc_docs_api.prototype.asc_AddMath2;
+	asc_docs_api.prototype['asc_ConvertMathView']                       = asc_docs_api.prototype.asc_ConvertMathView;
+	asc_docs_api.prototype['asc_GetMathInputType']                      = asc_docs_api.prototype.asc_GetMathInputType;
+	asc_docs_api.prototype['asc_SetMathInputType']                      = asc_docs_api.prototype.asc_SetMathInputType;
 	asc_docs_api.prototype['asc_AddPageCount']                          = asc_docs_api.prototype.asc_AddPageCount;
 	asc_docs_api.prototype['asc_StartMailMerge']                        = asc_docs_api.prototype.asc_StartMailMerge;
 	asc_docs_api.prototype['asc_StartMailMergeByList']                  = asc_docs_api.prototype.asc_StartMailMergeByList;

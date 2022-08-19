@@ -74,6 +74,9 @@ var AscCommonExcel = window["AscCommonExcel"];
 window["AscCommonWord"] = {};
 var AscCommonWord = window["AscCommonWord"];
 
+window["AscMath"] = {};
+var AscMath = window["AscMath"];
+
 window["AscCommonSlide"] = {};
 var AscCommonSlide = window["AscCommonSlide"];
 

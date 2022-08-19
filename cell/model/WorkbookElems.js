@@ -11887,6 +11887,108 @@ QueryTableField.prototype.clone = function() {
 	}
 
 
+	function CCellWatch(ws) {
+		this.r = null;
+
+		this._ws = ws;
+		this._workbook = null;
+		this._sheet = null;
+		this._name = null;
+		this._cell = null;
+		this._value = null;
+		this._formula = null;
+
+		this.needRecalc = null;
+
+		return this;
+	}
+	CCellWatch.prototype.clone = function () {
+
+	};
+	CCellWatch.prototype.setNeedRecalc = function () {
+		this.needRecalc = true;
+	};
+	CCellWatch.prototype.setRef = function (ref) {
+		this.r = ref;
+	};
+	CCellWatch.prototype.clone = function () {
+
+	};
+	CCellWatch.prototype.asc_getWorkbook = function () {
+		return this._workbook;
+	};
+	CCellWatch.prototype.asc_getSheet = function () {
+		return this._sheet;
+	};
+	CCellWatch.prototype.asc_getName = function () {
+		return this._name;
+	};
+	CCellWatch.prototype.asc_getCell = function () {
+		return this._cell;
+	};
+	CCellWatch.prototype.asc_getValue = function () {
+		return this._value;
+	};
+	CCellWatch.prototype.asc_getFormula = function () {
+		return this._formula;
+	};
+	CCellWatch.prototype.recalculate = function (ignoreNeedRecalc) {
+		var isChanged = false;
+		if (this.needRecalc || ignoreNeedRecalc) {
+			if (this._ws) {
+				var docInfo = window["Asc"]["editor"].DocInfo;
+
+				var dN = new Asc.Range(this.r.c1, this.r.r1, this.r.c2, this.r.r2, true);
+				var defName = parserHelp.get3DRef(this._ws.getName(), dN.getAbsName());
+				defName = this._ws.workbook.findDefinesNames(defName, this._ws.getId(), true);
+
+				var formula = "";
+				var value = "";
+				if (this.r && this._ws) {
+					this._ws.getCell3(this.r.r1, this.r.c1)._foreachNoEmpty(function (cell) {
+						if (cell.isFormula()) {
+							formula = cell.getValueForEdit();
+						}
+						value = cell.getValue();
+					});
+				}
+
+				if (this._name != defName) {
+					this._name = defName ? defName : null;
+					isChanged = true;
+				}
+
+				this._cell = this.r ? this.r.getName() : this.r;
+
+				if (!this._workbook) {
+					this._workbook = docInfo ? docInfo.get_Title() : "";
+					isChanged = true;
+				}
+				if (this._sheet !== this._ws.sName) {
+					this._sheet = this._ws.sName;
+					isChanged = true;
+				}
+				if (this._value !== value) {
+					this._value = value;
+					isChanged = true;
+				}
+				if (this._formula !== formula) {
+					this._formula = formula;
+					isChanged = true;
+				}
+
+				this.needRecalc = null;
+			}
+		}
+		return isChanged;
+	};
+	CCellWatch.prototype.initPostOpen = function (ws) {
+		this._ws = ws;
+	};
+
+
+
+
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};
@@ -12258,6 +12360,16 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].CT_Connection = CT_Connection;
 	window["AscCommonExcel"].CT_Filter = CT_Filter;
 
+
+
+	window["AscCommonExcel"].CCellWatch = CCellWatch;
+	prot = CCellWatch.prototype;
+	prot["asc_getWorkbook"] = prot.asc_getWorkbook;
+	prot["asc_getSheet"] = prot.asc_getSheet;
+	prot["asc_getName"] = prot.asc_getName;
+	prot["asc_getCell"] = prot.asc_getCell;
+	prot["asc_getValue"] = prot.asc_getValue;
+	prot["asc_getFormula"] = prot.asc_getFormula;
 
 
 })(window);

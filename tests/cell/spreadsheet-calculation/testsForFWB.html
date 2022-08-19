@@ -9,10 +9,10 @@
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/qunit/1.11.0/qunit.js"></script>
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xregexp/3.2.0/xregexp-all.min.js"></script>
 
-		<script type="text/javascript" src="../../develop/sdkjs/cell/scripts.js"></script>
+		<script type="text/javascript" src="../../../develop/sdkjs/cell/scripts.js"></script>
 		<script type="text/javascript">
 			window.sdk_scripts.forEach(function(item){
-				document.write('<script type="text/javascript" src="' + item.substring('../'.length) + '"><\/script>');
+				document.write('<script type="text/javascript" src="' + item + '"><\/script>');
 			});
 		</script>
 

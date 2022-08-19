@@ -4492,9 +4492,13 @@ Paragraph.prototype.Add = function(Item)
 				if (null !== NewElement)
 					this.Internal_Content_Add(CurPos + 1, NewElement);
 
-				var MathElement = new ParaMath();
-				MathElement.Root.Load_FromMenu(Item.Menu, this, null, Item.GetText());
-				MathElement.Root.Correct_Content(true);
+				var MathElement = Item;
+				if (!(Item instanceof ParaMath))
+				{
+					MathElement = new ParaMath();
+					MathElement.Root.Load_FromMenu(Item.Menu, this, null, Item.GetText());
+					MathElement.Root.Correct_Content(true);
+				}
 
 				this.Internal_Content_Add(CurPos + 1, MathElement);
 

@@ -541,6 +541,71 @@ CDegree.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos == 1 && false === this.Is_SelectInside(); // находимся в итераторе
 };
+CDegree.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var strTypeOfScript = this.Pr.type === 1 ? '^' : '_';
+	var oBase = this.getBase();
+	var strBase = this.CheckIsEmpty(oBase.GetTextOfElement(isLaTeX));
+	var strIterator = this.CheckIsEmpty(this.getIterator().GetTextOfElement(isLaTeX));
+	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
+	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
+
+	if (isLaTeX) {
+		if (strIterator.length > 1) {
+			strIterator = strStartBracet + strIterator + strCloseBracet;
+		}
+		switch (strBase) {
+			case 'cos':
+			case 'sin':
+			case 'tan':
+			case 'sec':
+			case 'cot':
+			case 'csc':
+			case 'arcsin':
+			case 'arccos':
+			case 'arctan':
+			case 'arcsec':
+			case 'arccot':
+			case 'arccsc':
+			case 'sinh':
+			case 'cosh':
+			case 'tanh':
+			case 'coth':
+			case 'sech':
+			case 'csch':
+			case 'srcsinh':
+			case 'arctanh':
+			case 'arcsech':
+			case 'arccosh':
+			case 'arccoth':
+			case 'arccsch':
+			case 'log':
+			case 'lim':
+			case 'ln':
+			case 'max':
+			case 'min':
+			case 'exp': strBase = '\\'+ strBase; break;
+			default: break;
+		}
+		
+		if(strIterator.length === 0) {
+			strIterator = '{}'
+		}
+		strTemp = strBase + strTypeOfScript + strIterator;
+	} else {
+		if (strIterator.length > 1) {
+			strIterator = strStartBracet + strIterator + strCloseBracet;
+		}
+		if(strIterator.length === 0) {
+			strIterator = '()'
+		}
+		if (strBase.length > 1 && strIterator.length > 1) {
+			strBase = '〖'+ strBase +'〗';
+		}
+		strTemp = strBase + strTypeOfScript + strIterator;
+	}
+	return strTemp;
+};
 
 /**
  *
@@ -1194,6 +1259,62 @@ CDegreeSubSup.prototype.Get_InterfaceProps = function()
 CDegreeSubSup.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos !== 0 && false === this.Is_SelectInside(); // находимся в итераторе
+};
+CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var Base = this.getBase().GetTextOfElement(isLaTeX);
+	var strLower = this.CheckIsEmpty(this.getLowerIterator().GetTextOfElement(isLaTeX));
+	var strUpper = this.CheckIsEmpty(this.getUpperIterator().GetTextOfElement(isLaTeX));
+	var isPreScript = this.Pr.type === -1;
+	if (isLaTeX) {
+		strLower = strLower.length > 1
+			? '{' + strLower + '}'
+			: strLower;
+		strUpper = strUpper.length > 1
+			? '{' + strUpper + '}'
+			: strUpper;
+		Base = Base.length > 1
+			? '{'+ Base +'}'
+			: Base;
+
+		if(strLower.length === 0) {
+			strLower = '{}'
+		}
+		if(strUpper.length === 0) {
+			strUpper = '{}'
+		}
+		if(strLower === '⬚') {
+			strLower = '{}'
+		}
+		if(strUpper === '⬚') {
+			strUpper = '{}'
+		}
+		if (true === isPreScript) {
+			strTemp = '{' + '_' + strLower + '^' + strUpper + '}' + Base;
+		} else {
+			strTemp = Base + '_' + strLower + '^' + strUpper;
+		}
+	} else {
+		strLower = strLower.length > 1
+			? '(' + strLower + ')'
+			: strLower;
+		if(strLower.length === 0) {
+			strLower = '()'
+		}
+		strUpper = strUpper.length > 1
+			? '(' + strUpper + ')'
+			: strUpper;
+		if(strUpper.length === 0) {
+			strUpper = '()'
+		}
+
+		if (true === isPreScript) {
+			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base;
+		} else {
+			strTemp = Base + '_' + strLower + '^' + strUpper;
+		}
+	}
+	return strTemp;
 };
 
 /**

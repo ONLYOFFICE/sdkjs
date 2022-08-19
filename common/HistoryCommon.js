@@ -1228,6 +1228,8 @@
 			case AscDFH.historydescription_Document_Docxf_To_Docx:
 				sString = "Document_Docxf_To_Docx";
 				break;
+			case AscDFH.historydescription_Document_ConvertMathView:
+				sString = "Document_ConvertMathView";
 			case AscDFH.historydescription_Document_ConvertMathDisplayMode:
 				sString = "Document_ConvertMathDisplayMode";
 				break;
@@ -4309,6 +4311,8 @@
 	window['AscDFH'].historydescription_Document_AddParagraphToTOC                  = 0x0192;
 	window['AscDFH'].historydescription_Document_FillFormsByTags                    = 0x0193;
 	window['AscDFH'].historydescription_Document_FillFormInPlugin                   = 0x0194;
+	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0195;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

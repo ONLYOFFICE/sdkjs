@@ -297,6 +297,8 @@
 		this.SearchEngine = new CDocumentSearchExcel(this);
 	}
 
+	this.changedCellWatchesSheets = null;
+
 	return this;
   }
 
@@ -1013,6 +1015,14 @@
 	});
 	this.model.handlers.add("clearFindResults", function(index) {
 		self.clearSearchOnRecalculate(index);
+	});
+	this.model.handlers.add("updateCellWatches", function(recalcAll) {
+		self.sendUpdateCellWatches(recalcAll);
+	});
+	this.model.handlers.add("changeCellWatches", function(index) {
+		//делаю для оптимизации. в случае открытого окна Cell Watches: обновляем весь список только в случае когда меняется этот список
+		// в противном случае в интерфейс отправляю только то, что изменилось по индексу
+		self.changedCellWatchesSheets = true;
 	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
@@ -4722,6 +4732,31 @@
 
 		callback();
 	};
+
+	WorkbookView.prototype.sendUpdateCellWatches = function (recalcAll) {
+		if (!this.handlers.hasTrigger("asc_onUpdateCellWatches")) {
+			this.changedCellWatchesSheets = null;
+			return;
+		}
+
+		if (this.changedCellWatchesSheets || recalcAll) {
+			this.handlers.trigger("asc_onUpdateCellWatches");
+		} else {
+			var needUpdateMap = this.getChangedCellWatches();
+			if (needUpdateMap) {
+				this.handlers.trigger("asc_onUpdateCellWatches",needUpdateMap);
+			}
+		}
+
+		this.changedCellWatchesSheets = null;
+	};
+
+	WorkbookView.prototype.getChangedCellWatches = function () {
+		return this.model.recalculateCellWatches(true);
+	};
+
+
+
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {

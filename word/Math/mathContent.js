@@ -9295,305 +9295,33 @@ CMathContent.prototype.private_ReplaceAutoCorrect = function(AutoCorrectEngine) 
         }
     }
 };
-CMathContent.prototype.GetTextContent = function(bSelectedText) {
-	var arr = [], str = "", bIsContainsOperator = false, paraRunArr = [];
-	var addText = function(value, bIsAddParenthesis, paraRun) {
-		if (bIsAddParenthesis) {
-			arr.push("(");
-			str += "(";
-			paraRunArr.push("(");
-		}
-		arr.push(value);
-		str += value;
-		if(undefined === paraRun) {
-			paraRunArr.push(value);
-		} else {
-			paraRunArr.push(paraRun);
-		}
-		if (bIsAddParenthesis) {
-			arr.push(")");
-			str += ")";
-			paraRunArr.push(")");
-		}
-	};
+CMathContent.prototype.GetTextOfElement = function(isLaTeX) {
+	var str = "";
+	for (var i = 0; i < this.Content.length; i++) {
+		str += this.Content[i].GetTextOfElement(isLaTeX);
+	}
+	return str;
+}
+CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX) {
+	if (undefined === isLaTeX || null === isLaTeX) {
+		isLaTeX = false;
+	}
 
-	var getAndPushTextContent = function(elem, bAddBrackets) {
-		var tempStr = elem.GetTextContent();
-		if (tempStr.str) {
-			addText(tempStr.str, tempStr.bIsContainsOperator || bAddBrackets, tempStr.paraRunArr);
-		}
-    };
-    
-    var checkBracket = function(str) {
-        var result = false;
-        var MathLeftRighBracketsCharCodes = 
-        [
-            0x28, 0x29, 0x5B, 0x5D, 0x7B, 0x7D, 0x27E8, 0x27E9, 0x2329, 0x232A, 0x27E6, 0x27E7,
-            0x27EA, 0x27EB, 0x2308, 0x2309, 0x230A, 0x230B, 0x3016, 0x3017, 0x2524
-        ];
-		for (var i = 0 ; i < MathLeftRighBracketsCharCodes.length; i++) {
-            var templ = String.fromCharCode(MathLeftRighBracketsCharCodes[i]);
-            if (str.indexOf(templ) !== -1) {
-                result = true;
-                break;
-            }
-        }
-        return result;
-	};
-
-	var parseMathComposition = function(elem) {
-        var tempStr;
-        if(elem instanceof CDegree) {//степень
-			//основание
-            getAndPushTextContent(elem.getBase(), false);
-            //знак
-			addText((elem.Pr.type === DEGREE_SUPERSCRIPT) ? "^" : "_");
-            //показатель
-            getAndPushTextContent(elem.getIterator(), checkBracket(elem.getIterator().GetTextContent().str));
-        } else if (elem instanceof CDegreeSubSup) {//^ и _
-            var bAddBrackets = false;
-            var base = elem.getBase();
-            var lower = elem.getLowerIterator();
-            var upper = elem.getUpperIterator();
-            if (elem.Pr.type == 1) {
-                if (checkBracket(elem.getBase().GetTextContent().str)) {
-                    addText("〖");
-                    bAddBrackets = true;
-                }
-                //основание
-                getAndPushTextContent(base);
-                if (bAddBrackets) {
-                    addText("〗");
-                }
-                addText("^");
-                getAndPushTextContent(upper, checkBracket(upper.GetTextContent().str));
-                addText("_");
-                //показатель _
-                getAndPushTextContent(lower, checkBracket(lower.GetTextContent().str));
-            } else {
-                //показатель _
-                getAndPushTextContent(lower, checkBracket(lower.GetTextContent().str));
-                addText("_");
-                //показатель ^
-                getAndPushTextContent(upper, checkBracket(upper.GetTextContent().str));
-                addText("^");
-                if (checkBracket(base.GetTextContent().str)) {
-                    addText("〖");
-                    bAddBrackets = true;
-                }
-                //основание
-                getAndPushTextContent(base);
-                if (bAddBrackets) {
-                    addText("〗");
-                }
-            }   
-        } else if (elem instanceof CBar) {
-            //символ Bar
-            addText(String.fromCharCode((elem.Pr.pos) ? 9601 : 175));        
-            //содержимое
-            getAndPushTextContent(elem.getBase(), true);
-        } else if (elem instanceof CBox || elem instanceof CBorderBox) {
-            addText(String.fromCharCode((elem instanceof CBox) ? 9633 : 9645));
-            //содержимое
-            getAndPushTextContent(elem.getBase(), true);
-        } else if (elem instanceof CEqArray) {
-            addText(String.fromCharCode(9608));
-            addText("(");
-            for(var j = 0; j < elem.Content.length; j++) {
-                if(para_Math_Content === elem.Content[j].Type) {
-                    getAndPushTextContent(elem.Content[j]);
-                    if (j !== elem.Content.length - 1)
-                        addText(String.fromCharCode(64));
-                }
-            }
-			addText(")");
-        } else if (elem instanceof CDelimiter && elem.Pr.endChr == -1) {
-            //символ Eq array
-            addText(String.fromCharCode(9400));
-            addText("(");
-            var tempEl = null;
-            for (var i = 0; i < elem.Content[0].Content.length; i++) {
-                if (elem.Content[0].Content[i] instanceof CEqArray) {
-                    tempEl = elem.Content[0].Content[i];
-                    break;
-                }
-            }
-            if (tempEl) {
-                for(var j = 0; j < tempEl.Content.length; j++) {
-                    if(para_Math_Content === tempEl.Content[j].Type) {
-                        getAndPushTextContent(tempEl.Content[j]);
-                        if (j !== tempEl.Content.length - 1)
-                            addText(String.fromCharCode(64));
-                    }
-                }
-            }
-			addText(")");
-        } else if (elem instanceof CGroupCharacter) {
-            addText(String.fromCharCode(elem.Pr.chr || elem.operator.Get_CodeChr()));
-            getAndPushTextContent(elem.getBase(), true);
-        } else if (elem instanceof CAccent) {
-            getAndPushTextContent(elem.getBase(), true);
-            addText(String.fromCharCode(elem.Pr.chr || elem.operator.Get_CodeChr()));
-        } else if (elem instanceof CDelimiter) {
-            addText(String.fromCharCode(elem.Pr.begChr || elem.begOper.code || 40));
-            for (var i = 0; i < elem.Content.length; i++) {
-                getAndPushTextContent(elem.Content[i]);
-                if (i != elem.Content.length - 1)
-                    addText(String.fromCharCode(elem.sepOper.code))
-            }
-            addText(String.fromCharCode(elem.Pr.endChr || elem.endOper.code || 41));            
-		} else if (elem instanceof CNary) {
-            addText(String.fromCharCode(elem.Pr.chr || elem.getSign().chrCode));
-            //верхняя граница суммирования
-            if (!elem.Pr.supHide) {
-				addText("^");             
-                getAndPushTextContent(elem.getSupMathContent(), checkBracket(elem.getSupMathContent().GetTextContent().str));
-            }
-            //нижняя граница суммирования
-			if (!elem.Pr.subHide) {
-				addText("_");
-                getAndPushTextContent(elem.getSubMathContent(), checkBracket(elem.getSubMathContent().GetTextContent().str));
-			}
-            addText(String.fromCharCode(9618));
-            var bAddBrackets = false;
-            if (checkBracket(elem.getBase().GetTextContent().str)) {
-                addText("〖");
-                bAddBrackets = true;
-            }
-            getAndPushTextContent(elem.getBase(), false);
-            if (bAddBrackets) {
-                addText("〗");
-            }
-        } else if (elem instanceof CFraction) {//дробь
-            //числитель
-			getAndPushTextContent(elem.getNumerator(), checkBracket(elem.getNumerator().GetTextContent().str));
-            switch (elem.Pr.type) {
-                case 0:
-                    addText(String.fromCharCode(47));
-                    break;
-                case 1:
-                    addText(String.fromCharCode(8260));
-                    break;
-                case 2:
-                    addText(String.fromCharCode(92));
-                    addText(String.fromCharCode(47));
-                    break;
-                case 3:
-                    addText(String.fromCharCode(166));
-                    break;
-            }
-			//знаменатель
-            getAndPushTextContent(elem.getDenominator(), checkBracket(elem.getDenominator().GetTextContent().str));       
-		} else if (elem instanceof CRadical) {//корень
-			addText(String.fromCharCode(8730));
-			//степень корня
-			tempStr = elem.getDegree().GetTextContent(bSelectedText);
-			var bOpenBr = false;
-			if (tempStr.str) {
-				addText("(");
-				addText(tempStr.str, tempStr.bIsContainsOperator, tempStr.paraRunArr);
-				bOpenBr = true;
-			}
-			if (tempStr.str) {
-				addText(String.fromCharCode(38));
-            }
-            tempStr = elem.getBase().GetTextContent();
-            if (tempStr.str !== "") {
-                if (!bOpenBr && checkBracket(tempStr.str)) {
-                    addText("(");
-                    bOpenBr = true;
-                }
-                //подкоренное выражение
-			    getAndPushTextContent(elem.getBase());
-            } 
-            if (bOpenBr) {
-                addText(")");
-            }
-        } else if (elem instanceof CMathMatrix) {//matrix
-            var symbol = [];
-            for (var row = 0; row < elem.nRow; row++) {
-				for(var col = 1; col < elem.nCol; col++) {
-					symbol.push(String.fromCharCode(38));
-                }
-                if (row !== elem.nRow - 1)
-                    symbol.push(String.fromCharCode(64));
-			}
-			addText(String.fromCharCode(9632));
-			addText("(");
-			for (var j = 0; j < elem.Content.length; j++) {
-				if (para_Math_Content === elem.Content[j].Type) {
-					getAndPushTextContent(elem.Content[j]);
-					if (symbol[j]) {
-						addText(symbol[j]);
-					}
-				}
-			}
-			addText(")");
-		} else if(elem instanceof CMathFunc) {
-			//функция
-            getAndPushTextContent(elem.getFName());
-            addText(String.fromCharCode(0x2061));
-            var tmp = elem.getArgument();
-            var bAddBrackets = false;
-            if (checkBracket(tmp.GetTextContent().str)) {
-                addText("〖");
-                bAddBrackets = true;
-            }
-			//аргумент
-            getAndPushTextContent(tmp, false);
-            if (bAddBrackets) {
-                addText("〗");
-            }
-		} else if(elem instanceof CLimit) {
-			//функция
-            getAndPushTextContent(elem.getFName(), false);
-            addText((elem.Pr.type == 1) ? "┴" : "┬");
-			//аргумент
-            getAndPushTextContent(elem.getIterator(), true);
-		}
-
-	};
-
-	var StartPos = 0, EndPos = this.Content.length;
+	var str = "";
+	var StartPos = 0; 
+	var EndPos = this.Content.length;
 	if (bSelectedText) {
 		StartPos = (this.Selection.Use == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
 		EndPos   = (this.Selection.Use == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
 	}
 
 	for (var i = StartPos; i <= EndPos; i++) {
-		if (!this.Content[i]) {
-			continue;
-		}
-
-		switch (this.Content[i].Type) {
-			case para_Math_Run:
-				if (this.Content[i].Content.length) {
-					var StartContentPos = 0, EndContentPos = this.Content[i].Content.length;
-					if (bSelectedText) {
-						StartContentPos = (this.Content[i].Selection.Use == true ? Math.min(this.Content[i].Selection.StartPos, this.Content[i].Selection.EndPos) : this.Content[i].CurPos.ContentPos);
-						EndContentPos   = (this.Content[i].Selection.Use == true ? Math.max(this.Content[i].Selection.StartPos, this.Content[i].Selection.EndPos) : this.Content[i].CurPos.ContentPos);
-					}
-					var string = "";
-					for (var j = StartContentPos; j < EndContentPos; j++) {
-						if (!this.Content[i].Content[j]) {
-							continue;
-						}
-						if (this.Content[i].Content[j].Type === para_Math_Text) {
-							string += String.fromCharCode(this.Content[i].Content[j].value);
-						} else if (this.Content[i].Content[j].Type === para_Math_BreakOperator) {
-							string += String.fromCharCode(this.Content[i].Content[j].value);
-							// bIsContainsOperator = true;
-						}
-					}
-					addText(string, null, this.Content[i]);
-				}
-				break;
-			case para_Math_Composition:
-				parseMathComposition(this.Content[i]);
-				break;
+		if (this.Content[i] !== undefined) {
+			str += this.Content[i].GetTextOfElement(isLaTeX);
 		}
 	}
-	return {str: str, bIsContainsOperator: bIsContainsOperator, paraRunArr: paraRunArr};
+
+	return {str: str};
 };
 function CMathAutoCorrectEngine(Elem, CurPos, Paragraph) {
     this.ActionElement    = Elem;                                               // элемент на которотом срабатывает автодополнение

@@ -1019,6 +1019,50 @@ CMathText.prototype.ToSearchElement = function(oProps)
 
 	return new AscCommonWord.CSearchTextItemChar(nCodePoint);
 };
+CMathText.prototype.GetTextOfElement = function(isLaTeX) {
+	var strPre = "";
+	if (this.Parent) {
+		var oParentMathPrp = this.Parent.MathPrp.scr;
+		if (1 === oParentMathPrp) {
+			strPre = '\\script';
+		} else if (2 === oParentMathPrp) {
+			strPre = '\\fraktur';
+		} else if (3 === oParentMathPrp) {
+			strPre = '\\double';
+		}
+	}
+	var strOutput = String.fromCharCode(this.value);
+	if (isLaTeX) {
+		if (strOutput === 'θ') {
+			strOutput = '\\theta'
+		}
+		if (strOutput === '→') {
+			strOutput = '\\to'
+		}
+		if (strOutput === '∞') {
+			strOutput = '\\infty'
+		}
+		if (strOutput === '…') {
+			strOutput = '\\dots'
+		}
+	}
+
+	// if (strOutput !== '{' || strOutput !== '}') {
+	// 	for (var i = 65; i <= 90; i++) {
+	// 		var obj = SymbolsForCorrect[String.fromCharCode(i)];
+	
+	// 		if (obj) {
+	// 			var oneObj = Object.entries(obj);
+	// 			for (var j = 0; j < oneObj.length; j++) {
+	// 				if (oneObj[j][1] === this.value) {
+	// 					strOutput = oneObj[j][0];
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+	return strPre + strOutput;
+};
 /*CMathText.prototype.Recalculate_Reset = function(StartRange, StartLine, PRS)
 {
     var bNotUpdate = PRS !== null && PRS!== undefined && PRS.bFastRecalculate == true;
@@ -1145,6 +1189,11 @@ CMathAmp.prototype.Write_ToBinary = function(Writer)
 CMathAmp.prototype.Read_FromBinary = function(Reader)
 {
 };
+CMathAmp.prototype.GetTextOfElement = function(isLaTeX)
+{
+	return '&'
+};
+
 
 function CMathInfoTextPr(InfoTextPr)
 {

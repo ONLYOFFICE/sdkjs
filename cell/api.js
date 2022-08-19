@@ -7521,6 +7521,50 @@ var editor;
 		}
 	};
 
+	spreadsheet_api.prototype.asc_addCellWatches = function (sRange) {
+		var t = this;
+		if (this.wb && this.wb.model) {
+			var oRange = t.wb.model.getRangeAndSheetFromStr(sRange);
+			if (oRange && oRange.sheet && oRange.range) {
+				var maxCellsCount = 100;
+				var countCells = oRange.range.getWidth() * oRange.range.getHeight();
+				if (countCells > maxCellsCount) {
+					this.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmAddCellWatches, function (can) {
+						if (can) {
+							t.wb.model.addCellWatches(oRange.sheet, oRange.range);
+						}
+					}, countCells);
+				} else {
+					t.wb.model.addCellWatches(oRange.sheet, oRange.range);
+				}
+			}
+		}
+	};
+
+	spreadsheet_api.prototype.asc_deleteCellWatches = function (aCellWatches, opt_remove_all) {
+		if (this.wb && this.wb.model) {
+			this.wb.model.delCellWatches(aCellWatches, true, opt_remove_all);
+		}
+	};
+
+	spreadsheet_api.prototype.asc_getCellWatches = function () {
+		var res = null;
+		if (this.wb && this.wb.model) {
+			this.wb.model.recalculateCellWatches(true);
+
+			for (var i = 0; i < this.wb.model.aWorksheets.length; i++) {
+				var ws = this.wb.model.aWorksheets[i];
+				if (ws && ws.aCellWatches.length) {
+					if (!res) {
+						res = [];
+					}
+					res = res.concat(ws.aCellWatches);
+				}
+			}
+		}
+		return res;
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -8047,6 +8091,14 @@ var editor;
 
   prot["asc_setDate1904"] = prot.asc_setDate1904;
   prot["asc_getDate1904"] = prot.asc_getDate1904;
+
+
+
+  prot["asc_addCellWatches"]               = prot.asc_addCellWatches;
+  prot["asc_deleteCellWatches"]            = prot.asc_deleteCellWatches;
+  prot["asc_getCellWatches"]               = prot.asc_getCellWatches;
+
+
 
 
 

@@ -3009,6 +3009,26 @@ CMathBase.prototype.ConvertOperatorToStr = function(operator)
     return OPERATOR_EMPTY === operator ? "" : AscCommon.convertUnicodeToUTF16([operator]);
 };
 
+CMathBase.prototype.GetStartBracetForGetTextContent = function(isLaTeX) {
+	if (isLaTeX) 
+		return '{';
+	else
+		return '(';
+};
+CMathBase.prototype.GetEndBracetForGetTextContent = function(isLaTeX) {
+	if (isLaTeX) 
+		return '}';
+	else
+		return ')';
+};
+CMathBase.prototype.CheckIsEmpty = function(strAtom) {
+	if (strAtom === '⬚') {
+		return "";
+	} else {
+		return strAtom
+	}
+};
+
 function CMathBasePr()
 {
 }

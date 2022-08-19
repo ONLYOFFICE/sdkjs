@@ -688,6 +688,40 @@ CAccent.prototype.Get_InterfaceProps = function()
 {
     return new CMathMenuAccent(this);
 };
+CAccent.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement(isLaTeX));
+	var strAccent = String.fromCharCode(this.Pr.chr);
+	var strStartBracet = (strBase.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
+	var strCloseBracet = (strBase.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
+	
+	if (isLaTeX) {
+		var intAccentCode = strAccent.charCodeAt();
+		switch (intAccentCode) {
+			case 0:		strAccent = '\\hat'; 				break;
+			case 768:	strAccent = '\\grave';				break;
+			case 769:	strAccent = '\\acute';				break;
+			case 771:	strAccent = '\\tilde';				break;
+			case 831:
+			case 773:	strAccent = '\\bar';				break;
+			case 774:	strAccent = '\\breve';				break;
+			case 775:	strAccent = '\\dot';				break;
+			case 776:	strAccent = '\\ddot';				break;
+			case 780:	strAccent = '\\check';				break;
+			case 8400:	strAccent = '\\overleftharpoon';	break;
+			case 8401:	strAccent = '\\overrightharpoon';	break;
+			case 8406:	strAccent = '\\overleftarrow';		break;
+			case 8407:	strAccent = '\\overrightarrow';		break;
+			case 8411:	strAccent = '\\dddot';				break;
+			case 8417:	strAccent = '\\overleftrightarrow';	break;
+			default:	strAccent = '\\hat';				break;
+		}
+		strTemp = strAccent + strStartBracet + strBase + strCloseBracet
+	} else {
+		strTemp = strStartBracet + strBase + strCloseBracet + strAccent;
+	}
+	return strTemp;
+};
 
 /**
  *
