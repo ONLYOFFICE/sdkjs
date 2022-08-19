@@ -3892,6 +3892,7 @@ var editor;
    * @param {{}} [oleObj] info from oleObject
    */
   spreadsheet_api.prototype.asc_addTableOleObjectInOleEditor = function(oleObj) {
+  this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Open);
     oleObj = oleObj || {"binary": AscCommon.getEmpty()};
     var stream = oleObj["binary"];
     var _this = this;
@@ -3902,12 +3903,12 @@ var editor;
     this.isChartEditor = false;
     this.isFromSheetEditor = oleObj["isFromSheetEditor"];
     this.asc_CloseFile();
-    this.openDocument(file);
-
     this.fAfterLoad = function () {
-      _this.wb.scrollToOleSize();
-      _this.wb.onOleEditorReady();
+        _this.wb.scrollToOleSize();
+        _this.wb.onOleEditorReady();
+        this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Open);
     }
+    this.openDocument(file);
     };
   /**
    * get binary info about changed ole object
