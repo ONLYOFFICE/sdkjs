@@ -901,10 +901,10 @@
 				var runObject = this.runnedPluginsMap[guid];
 				runObject.startData.setAttribute("type", "onExternalMouseMove");
 				var coef = 1;
-				if (window.AscBrowser.isSafariMacOs) {
+				if (AscCommon.AscBrowser.isSafariMacOs) {
 					coef = window.outerWidth / window.innerWidth;
 				} else {
-					coef = window.devicePixelRatio / (window.AscBrowser.isMacOs ? window.AscBrowser.retinaPixelRatio : 1);
+					coef = window.devicePixelRatio / (AscCommon.AscBrowser.isMacOs ? AscCommon.AscBrowser.retinaPixelRatio : 1);
 				}
 				var obj = {
 					movementX : (e.movementX / coef),
