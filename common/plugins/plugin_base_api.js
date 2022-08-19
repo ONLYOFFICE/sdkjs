@@ -243,6 +243,14 @@ window.startPluginApi = function() {
 	 * @description The function called when the mouse button is released outside the plugin iframe.
      */
 
+	/**
+	 * Event: onExternalMouseMove
+	 * @event Plugin#onExternalMouseMove
+	 * @memberof Plugin
+	 * @alias onExternalMouseMove
+	 * @description The function called when the mouse is moving outside the plugin iframe.
+	 */
+
     /**
      * Event: onExternalPluginMessage
      * @event Plugin#onExternalPluginMessage

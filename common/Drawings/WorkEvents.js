@@ -510,6 +510,9 @@
 
 	function Window_OnMouseMove(e)
 	{
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onExternalMouseMove(e);
+
 		if (!global_mouseEvent.IsLocked || !global_mouseEvent.Sender)
 			return;
 

@@ -695,6 +695,12 @@
 						window.Asc.plugin.onExternalMouseUp();
 					break;
 				}
+				case "onExternalMouseMove":
+				{
+					if (window.Asc.plugin.onExternalMouseMove)
+						window.Asc.plugin.onExternalMouseMove(pluginData.data);
+					break;
+				}
 				case "onMethodReturn":
 				{
 					window.Asc.plugin.isWaitMethod = false;
