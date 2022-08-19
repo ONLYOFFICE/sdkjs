@@ -880,10 +880,11 @@
 		if (!oBldDgm)
 			return undefined;
 
+		let nSpId = this.GetSpIdxId(oBldDgm.spid);
 		return {
 			"bld":      oBldDgm.bld, // ?? c_oAscSlideDgmBuildType
 			"grpId":    oBldDgm.grpId,
-			"spid":     oBldDgm.spid,
+			"spid":     nSpId != null ? nSpId : undefined,
 			"uiExpand": oBldDgm.uiExpand,
 			"type":     "bldDgm"
 		}
@@ -893,11 +894,13 @@
 		if (!oBldOleChart)
 			return undefined;
 
+		let nSpId = this.GetSpIdxId(oBldOleChart.spid);
+
 		return {
 			"animBg":   oBldOleChart.animBg,
 			"bld":      oBldOleChart.bld, // ?? c_oAscSlideOleChartBuildType
 			"grpId":    oBldOleChart.grpId,
-			"spid":     oBldOleChart.spid,
+			"spid":     nSpId != null ? nSpId : undefined,
 			"uiExpand": oBldOleChart.uiExpand,
 			"type":     "bldOleChart"
 		}
@@ -907,11 +910,13 @@
 		if (!oBldGraphic)
 			return undefined;
 
+		let nSpId = this.GetSpIdxId(oBldGraphic.spid);
+
 		return {
 			"bldAsOne": this.SerEmptyObject(oBldGraphic.bldAsOne),
 			"bldSub":   this.SerBldSub(oBldGraphic.bldSub),
 			"grpId":    oBldGraphic.grpId,
-			"spid":     oBldGraphic.spid,
+			"spid":     nSpId != null ? nSpId : undefined,
 			"uiExpand": oBldGraphic.uiExpand,
 			"type":     "bldGraphic"
 		}
@@ -959,6 +964,8 @@
 				sBuildType = "whole";
 				break;
 		}
+		let nSpId = this.GetSpIdxId(oBldP.spid);
+
 		return {
 			"tmplLst":         this.SerTmplLst(oBldP.tmplLst),
 			"advAuto":         oBldP.advAuto,
@@ -968,7 +975,7 @@
         	"build":           sBuildType,
 			"grpId":           oBldP.grpId,
 			"rev":             oBldP.rev,
-			"spid":            oBldP.spid,
+			"spid":            nSpId != null ? nSpId : undefined,
 			"uiExpand":        oBldP.uiExpand,
 			"type":            "bldP"
 		}	
@@ -1716,8 +1723,10 @@
 		if (!oInkTgt)
 			return undefined;
 
+		let nSpId = this.GetSpIdxId(oInkTgt.spid);
+
 		return {
-			"spid": oInkTgt.spid
+			"spid": nSpId != null ? nSpId : undefined
 		}
 	};
 	WriterToJSON.prototype.SerSndTgt = function(oSndTgt)
@@ -1736,10 +1745,13 @@
 		if (!oSpTgt)
 			return undefined;
 
+		let nSpId = this.GetSpIdxId(oSpTgt.spid);
+		let nSubSpId = this.GetSpIdxId(oSpTgt.subSpId);
+
 		return {
-			"spid":       oSpTgt.spid,
+			"spid":       nSpId != null ? nSpId : undefined,
 			"bg":         oSpTgt.bg,
-			"subSpId":    oSpTgt.subSpId,
+			"subSpId":    nSubSpId != null ? nSubSpId : undefined,
 			"oleChartEl": this.SerOleChartEl(oSpTgt.oleChartEl),
 			"txEl":       this.SerTxEl(oSpTgt.txEl),
 			"graphicEl":  this.SerGraphicEl(oSpTgt.graphicEl)
@@ -1799,7 +1811,9 @@
 	{
 		if (!oGraphicEl)
 			return undefined;
-			
+		
+		let nSpId = this.GetSpIdxId(oGraphicEl.dgmId);
+
 		return {
 			"chart": {
 				"bldStep":     oGraphicEl.chartBuildStep,
@@ -1808,7 +1822,7 @@
 			},
 			"dgm": {
 				"bldStep": oGraphicEl.dgmBuildStep,
-				"id":      oGraphicEl.dgmId
+				"id":      nSpId != null ? nSpId : undefined
 			}
 		}
 	};
@@ -2841,9 +2855,10 @@
 	{
 		var oInkTgt = new AscFormat.CObjectTarget();
 
-		var spId = this.drawingsMap[oParsedInkTgt["spid"]] ? this.drawingsMap[oParsedInkTgt["spid"]].Id : oParsedInkTgt["spid"];
+		//var spId = this.drawingsMap[oParsedInkTgt["spid"]] ? this.drawingsMap[oParsedInkTgt["spid"]].Id : oParsedInkTgt["spid"];
 
 		oParsedInkTgt["spid"] != undefined && oInkTgt.setSpid(spId);
+		this.AddConnectedObject(oInkTgt);
 
 		return oInkTgt;
 	};
@@ -2865,17 +2880,17 @@
 	{
 		var oSpTgt = new AscFormat.CSpTgt();
 
-		var spId = this.drawingsMap[oParsedSpTgt["spid"]] ? this.drawingsMap[oParsedSpTgt["spid"]].Id : oParsedSpTgt["spid"];
-		var subSpId = this.drawingsMap[oParsedSpTgt["subSpId"]] ? this.drawingsMap[oParsedSpTgt["subSpId"]].Id : oParsedSpTgt["subSpId"];
+		//var spId = this.drawingsMap[oParsedSpTgt["spid"]] ? this.drawingsMap[oParsedSpTgt["spid"]].Id : oParsedSpTgt["spid"];
+		//var subSpId = this.drawingsMap[oParsedSpTgt["subSpId"]] ? this.drawingsMap[oParsedSpTgt["subSpId"]].Id : oParsedSpTgt["subSpId"];
 
-		oParsedSpTgt["spid"] != undefined && oSpTgt.setSpid(spId);
+		oParsedSpTgt["spid"] != undefined && oSpTgt.setSpid(oParsedSpTgt["spid"]);
 		oParsedSpTgt["bg"] != undefined && oSpTgt.setBg(oParsedSpTgt["bg"]);
-		oParsedSpTgt["subSpId"] != undefined && oSpTgt.setSubSpId(subSpId);
-
+		oParsedSpTgt["subSpId"] != undefined && oSpTgt.setSubSpId(oParsedSpTgt["subSpId"]);
+		
 		oParsedSpTgt["oleChartEl"] && oSpTgt.setOleChartEl(this.OleChartElFromJSON(oParsedSpTgt["oleChartEl"]));
 		oParsedSpTgt["txEl"] && oSpTgt.setTxEl(this.TxElFromJSON(oParsedSpTgt["txEl"]));
 		oParsedSpTgt["graphicEl"] && oSpTgt.setGraphicEl(this.GraphicElFromJSON(oParsedSpTgt["graphicEl"]));
-
+		this.AddConnectedObject(oSpTgt);
 		return oSpTgt;
 	};
 	ReaderFromJSON.prototype.OleChartElFromJSON = function(oParsedOleChartEl)
@@ -2935,6 +2950,7 @@
 
 		oParsedGraphicEl["dgm"]["bldStep"] != undefined && oGraphicEl.setDgmBuildStep(oParsedGraphicEl["dgm"]["bldStep"]);
 		oParsedGraphicEl["dgm"]["id"] != undefined && oGraphicEl.setDgmId(oParsedGraphicEl["dgm"]["id"]);
+		this.AddConnectedObject(oGraphicEl);
 
 		return oGraphicEl;
 	};

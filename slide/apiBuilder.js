@@ -889,38 +889,38 @@
 	 */
 	Api.prototype.FromJSON = function(sMessage)
 	{
-		var oReader = new AscCommon.ReaderFromJSON();
-        var oApiPresentation = this.GetPresentation();
-        var oPresentation = private_GetPresentation();
-		var oParsedObj  = JSON.parse(sMessage);
-
+		let oReader = new AscCommon.ReaderFromJSON();
+        let oApiPresentation = this.GetPresentation();
+        let oPresentation = private_GetPresentation();
+		let oParsedObj  = JSON.parse(sMessage);
+        let oResult = null;
 		switch (oParsedObj.type)
 		{
             case "presentation":
                 if (oParsedObj["tblStyleLst"])
                     oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
 
-                var oSldSize = oParsedObj["sldSz"] ? oReader.SlideSizeFromJSON(oParsedObj["sldSz"]) : null;
-                var oShowPr  = oParsedObj["showPr"] ? oReader.ShowPrFromJSON(oParsedObj["showPr"]) : null;
+                let oSldSize = oParsedObj["sldSz"] ? oReader.SlideSizeFromJSON(oParsedObj["sldSz"]) : null;
+                let oShowPr  = oParsedObj["showPr"] ? oReader.ShowPrFromJSON(oParsedObj["showPr"]) : null;
                 oSldSize && oPresentation.setSldSz(oSldSize);
                 oShowPr && oPresentation.setShowPr(oShowPr);
 
-                for (var nNoteMaster = 0; nNoteMaster < oParsedObj["notesMasters"].length; nNoteMaster++)
+                for (let nNoteMaster = 0; nNoteMaster < oParsedObj["notesMasters"].length; nNoteMaster++)
                     oReader.NotesMasterFromJSON(oParsedObj["notesMasters"][nNoteMaster], oPresentation);
 
-                for (var nMaster = 0; nMaster < oParsedObj["sldMasters"].length; nMaster++)
+                for (let nMaster = 0; nMaster < oParsedObj["sldMasters"].length; nMaster++)
                     oReader.MasterSlideFromJSON(oParsedObj["sldMasters"][nMaster], oPresentation);
 
-                for (var nSlide = 0; nSlide < oParsedObj["slides"].length; nSlide++)
+                for (let nSlide = 0; nSlide < oParsedObj["slides"].length; nSlide++)
                 {
-                    var oSlide = oReader.SlideFromJSON(oParsedObj["slides"][nSlide]);
+                    let oSlide = oReader.SlideFromJSON(oParsedObj["slides"][nSlide]);
                     oSlide.setSlideSize(oPresentation.GetWidthMM(), oPresentation.GetHeightMM());
                     oSlide.setSlideNum(oPresentation.Slides.length);
                     oPresentation.insertSlide(oPresentation.Slides.length, oSlide);
                 }
 
 
-                var oCPres = new AscCommon.CPres();
+                let oCPres = new AscCommon.CPres();
                 oCPres.defaultTextStyle = oReader.LstStyleFromJSON(oParsedObj["defaultTextStyle"]);
                 oCPres.attrAutoCompressPictures = oParsedObj.autoCompressPictures;
                 oCPres.attrBookmarkIdSeed = oParsedObj.bookmarkIdSeed;
@@ -940,70 +940,96 @@
                 oPresentation.setShowSpecialPlsOnTitleSld(oCPres.attrShowSpecialPlsOnTitleSld);
                 oPresentation.setFirstSlideNum(oCPres.attrFirstSlideNum);
 
-                return oApiPresentation;
+                oResult = oApiPresentation;
+                break;
 			case "docContent":
-				return this.private_CreateApiDocContent(oReader.DocContentFromJSON(oParsedObj));
+				oResult = this.private_CreateApiDocContent(oReader.DocContentFromJSON(oParsedObj));
+                break;
 			case "drawingDocContent":
-				return this.private_CreateApiDocContent(oReader.DrawingDocContentFromJSON(oParsedObj));
+				oResult = this.private_CreateApiDocContent(oReader.DrawingDocContentFromJSON(oParsedObj));
+                break;
 			case "paragraph":
-				return this.private_CreateApiParagraph(oReader.ParagraphFromJSON(oParsedObj));
+				oResult = this.private_CreateApiParagraph(oReader.ParagraphFromJSON(oParsedObj));
+                break;
 			case "run":
 			case "mathRun":
 			case "endRun":
-				return this.private_CreateApiRun(oReader.ParaRunFromJSON(oParsedObj));
+				oResult = this.private_CreateApiRun(oReader.ParaRunFromJSON(oParsedObj));
+                break;
 			case "hyperlink":
-				return this.private_CreateApiHyperlink(oReader.HyperlinkFromJSON(oParsedObj));
+				oResult = this.private_CreateApiHyperlink(oReader.HyperlinkFromJSON(oParsedObj));
+                break;
             case "graphicFrame":
                 if (oParsedObj["tblStyleLst"])
                     oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
-                return ApiTable(oReader.GraphicObjFromJSON(oParsedObj));
+                oResult = new ApiTable(oReader.GraphicObjFromJSON(oParsedObj));
+                break;
 			case "image":
-				return new ApiImage(oReader.GraphicObjFromJSON(oParsedObj));
+				oResult = new ApiImage(oReader.GraphicObjFromJSON(oParsedObj));
+                break;
             case "shape":
             case "connectShape":
-                return new ApiShape(oReader.GraphicObjFromJSON(oParsedObj));
+                oResult = new ApiShape(oReader.GraphicObjFromJSON(oParsedObj));
+                break;
             case "chartSpace":
-                return new ApiChart(oReader.GraphicObjFromJSON(oParsedObj));
+                oResult = new ApiChart(oReader.GraphicObjFromJSON(oParsedObj));
+                break;
 			case "textPr":
-				return this.private_CreateApiTextPr(oReader.TextPrFromJSON(oParsedObj));
+				oResult = this.private_CreateApiTextPr(oReader.TextPrDrawingFromJSON(oParsedObj));
+                break;
 			case "paraPr":
-				return this.private_CreateApiParaPr(oReader.ParaPrFromJSON(oParsedObj));
+				oResult = this.private_CreateApiParaPr(oReader.ParaPrDrawingFromJSON(oParsedObj));
+                break;
 			case "fill":
-				return this.private_CreateApiFill(oReader.FillFromJSON(oParsedObj));
+				oResult = this.private_CreateApiFill(oReader.FillFromJSON(oParsedObj));
+                break;
 			case "stroke":
-				return this.private_CreateApiStroke(oReader.LnFromJSON(oParsedObj));
+				oResult = this.private_CreateApiStroke(oReader.LnFromJSON(oParsedObj));
+                break;
 			case "gradStop":
-				var oGs = oReader.GradStopFromJSON(oParsedObj);
-				return this.private_CreateApiGradStop(this.private_CreateApiUniColor(oGs.color), oGs.pos);
+				let oGs = oReader.GradStopFromJSON(oParsedObj);
+				oResult = this.private_CreateApiGradStop(this.private_CreateApiUniColor(oGs.color), oGs.pos);
+                break;
 			case "uniColor":
-				return this.private_CreateApiUniColor(oReader.ColorFromJSON(oParsedObj));
+				oResult = this.private_CreateApiUniColor(oReader.ColorFromJSON(oParsedObj));
+                break;
 			case "slide":
                 if (oParsedObj["tblStyleLst"])
                     oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
-				return new ApiSlide(oReader.SlideFromJSON(oParsedObj));
+				oResult = new ApiSlide(oReader.SlideFromJSON(oParsedObj));
+                break;
 			case "sldLayout":
                 if (oParsedObj["tblStyleLst"])
                     oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
-				return new ApiLayout(oReader.SlideLayoutFromJSON(oParsedObj));
+				oResult = new ApiLayout(oReader.SlideLayoutFromJSON(oParsedObj));
+                break;
 			case "sldMaster":
                 if (oParsedObj["tblStyleLst"])
                     oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
-                return new ApiMaster(oReader.MasterSlideFromJSON(oParsedObj));
+                oResult = new ApiMaster(oReader.MasterSlideFromJSON(oParsedObj));
+                break;
 			case "fontScheme":
-				return new ApiThemeFontScheme(oReader.FontSchemeFromJSON(oParsedObj));
+				oResult = new ApiThemeFontScheme(oReader.FontSchemeFromJSON(oParsedObj));
+                break;
 			case "fmtScheme":
-				return new ApiThemeFormatScheme(oReader.FmtSchemeFromJSON(oParsedObj));
+				oResult = new ApiThemeFormatScheme(oReader.FmtSchemeFromJSON(oParsedObj));
+                break;
 			case "clrScheme":
-				return new ApiThemeColorScheme(oReader.ClrSchemeFromJSON(oParsedObj));
+				oResult = new ApiThemeColorScheme(oReader.ClrSchemeFromJSON(oParsedObj));
+                break;
             case "slides":
                 if (oParsedObj["tblStyleLst"])
                     oReader.TableStylesFromJSON(oParsedObj["tblStyleLst"]);
-                var aApiSlides = []
-                var aSlides = oReader.SlidesFromJSON(oParsedObj);
-                for (var nSlide = 0; nSlide < aSlides.length; nSlide++)
+                let aApiSlides = []
+                let aSlides = oReader.SlidesFromJSON(oParsedObj);
+                for (let nSlide = 0; nSlide < aSlides.length; nSlide++)
                     aApiSlides.push(new ApiSlide(aSlides[nSlide]));
-                return aApiSlides;
+                oResult = aApiSlides;
+                break;
 		}
+
+        oReader.AssignConnectedObjects();
+        return oResult;
 	};
     //------------------------------------------------------------------------------------------------------------------
     //
