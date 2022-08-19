@@ -733,6 +733,28 @@
 	};
 
 	/**
+	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
+	 * @memberof Api
+	 * @param {JSON} sMessage - The JSON object to convert.
+	 * @typeofeditors ["CSE"]
+	 */
+	Api.prototype.FromJSON = function(sMessage)
+	{
+		var oReader = new AscCommon.ReaderFromJSON();
+		var oParsedObj = JSON.parse(sMessage);
+		var oReadedObj = null;
+
+		switch (oParsedObj.type)
+		{
+			case "worksheet":
+				oReadedObj = new ApiWorksheet(oReader.WorksheetFromJSON(oParsedObj, this.wbModel));
+				break;
+		}
+
+		return oReadedObj;
+	};
+
+	/**
 	 * Returns the state of sheet visibility.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -1633,6 +1655,20 @@
 		}
 		return allApiDrawings;
 	};
+
+	/**
+	 * Converts the ApiWorksheet object to the JSON object.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiChart[]}.
+	*/
+	ApiWorksheet.prototype.ToJSON = function(){
+		var oWriter = new AscCommon.WriterToJSON();
+		oWriter.Workbook = Asc.editor.wbModel;
+		return JSON.stringify(oWriter.SerWorksheet(this.worksheet));
+	};
+	
+
 
 	/**
 	 * Specifies the cell border position.
@@ -3119,6 +3155,18 @@
 		return false;
 	};
 
+	/**
+	 * Converts the ApiDrawing object into the JSON object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {JSON}
+	 */
+	ApiDrawing.prototype.ToJSON = function()
+	{
+		var oWriter = new AscCommon.WriterToJSON();
+		return JSON.stringify(oWriter.SerGrapicObject(this.Drawing));
+	};
+
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -4151,6 +4199,7 @@
 	Api.prototype["GetRange"] = Api.prototype.GetRange;
 
 	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
+	Api.prototype["FromJSON"]               = Api.prototype.FromJSON;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -4198,7 +4247,7 @@
 	ApiWorksheet.prototype["GetAllShapes"] = ApiWorksheet.prototype.GetAllShapes;
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
 	ApiWorksheet.prototype["GetAllOleObjects"] = ApiWorksheet.prototype.GetAllOleObjects;
-
+	ApiWorksheet.prototype["ToJSON"] = ApiWorksheet.prototype.ToJSON;
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
 	ApiRange.prototype["GetCol"] = ApiRange.prototype.GetCol;
@@ -4263,6 +4312,7 @@
 	ApiDrawing.prototype["GetHeight"]                  =  ApiDrawing.prototype.GetHeight;
 	ApiDrawing.prototype["GetLockValue"]               =  ApiDrawing.prototype.GetLockValue;
 	ApiDrawing.prototype["SetLockValue"]               =  ApiDrawing.prototype.SetLockValue;
+	ApiDrawing.prototype["ToJSON"]                     =  ApiDrawing.prototype.ToJSON;
 
 	ApiImage.prototype["GetClassType"]                 =  ApiImage.prototype.GetClassType;
 
@@ -4319,8 +4369,8 @@
 	ApiChart.prototype["SetAxieNumFormat"]            =  ApiChart.prototype.SetAxieNumFormat;
 
 	ApiOleObject.prototype["GetClassType"]            = ApiOleObject.prototype.GetClassType;
-	ApiOleObject.prototype["SetData"]              = ApiOleObject.prototype.SetData;
-	ApiOleObject.prototype["GetData"]              = ApiOleObject.prototype.GetData;
+	ApiOleObject.prototype["SetData"]                 = ApiOleObject.prototype.SetData;
+	ApiOleObject.prototype["GetData"]                 = ApiOleObject.prototype.GetData;
 	ApiOleObject.prototype["SetApplicationId"]        = ApiOleObject.prototype.SetApplicationId;
 	ApiOleObject.prototype["GetApplicationId"]        = ApiOleObject.prototype.GetApplicationId;
 
