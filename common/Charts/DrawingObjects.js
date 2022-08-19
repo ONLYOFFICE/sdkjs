@@ -2151,7 +2151,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
     _this.init = function(currentSheet) {
 
-        var api = window["Asc"]["editor"];
+        const api = window["Asc"]["editor"];
         worksheet = currentSheet;
 
         drawingCtx = currentSheet.drawingGraphicCtx;
@@ -2170,12 +2170,11 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
         aImagesSync = [];
 
-		var i;
         aObjects = currentSheet.model.Drawings;
-        for (i = 0; currentSheet.model.Drawings && (i < currentSheet.model.Drawings.length); i++)
+        for (let i = 0; currentSheet.model.Drawings && (i < currentSheet.model.Drawings.length); i++)
         {
             aObjects[i] = _this.cloneDrawingObject(aObjects[i]);
-            var drawingObject = aObjects[i];
+            const drawingObject = aObjects[i];
             // Check drawing area
             drawingObject.drawingArea = _this.drawingArea;
             drawingObject.worksheet = currentSheet;
@@ -2183,10 +2182,11 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             drawingObject.graphicObject.setDrawingObjects(_this);
             drawingObject.graphicObject.getAllRasterImages(aImagesSync);
         }
+        aImagesSync = _this.checkImageBullets(currentSheet, aImagesSync);
 
-        for(i = 0; i < aImagesSync.length; ++i)
+        for(let i = 0; i < aImagesSync.length; ++i)
         {
-			var localUrl = aImagesSync[i];
+			const localUrl = aImagesSync[i];
 			if(api.DocInfo && api.DocInfo.get_OfflineApp()) {
           AscCommon.g_oDocumentUrls.addImageUrl(localUrl, "/sdkjs/cell/document/media/" + localUrl);
 			}
@@ -2195,7 +2195,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
         if(aImagesSync.length > 0)
         {
-            var old_val = api.ImageLoader.bIsAsyncLoadDocumentImages;
+            const old_val = api.ImageLoader.bIsAsyncLoadDocumentImages;
             api.ImageLoader.bIsAsyncLoadDocumentImages = true;
             api.ImageLoader.LoadDocumentImages(aImagesSync);
             api.ImageLoader.bIsAsyncLoadDocumentImages = old_val;
@@ -2203,6 +2203,41 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 		_this.recalculate(true);
         worksheet.model.Drawings = aObjects;
     };
+
+    _this.checkImageBullets = function (currentSheet, arrImages) {
+        const aObjects = currentSheet.model.Drawings;
+        const arrContentsWithImageBullet = [];
+        const oBulletImages = {};
+        const arrBulletImagesAsync = [];
+
+        for (let i = 0; aObjects && (i < aObjects.length); i += 1) {
+            const drawingObject = aObjects[i];
+            drawingObject.graphicObject.getDocContentsWithImageBullets(arrContentsWithImageBullet);
+            drawingObject.graphicObject.getImageFromBulletsMap(oBulletImages);
+        }
+
+        for (let localUrl in oBulletImages) {
+            if(api.DocInfo && api.DocInfo.get_OfflineApp()) {
+                AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.documentUrl+ "media/" + localUrl);
+            }
+            const fullUrl = AscCommon.getFullImageSrc2(localUrl);
+            arrBulletImagesAsync.push(fullUrl);
+        }
+
+        api.ImageLoader.LoadImagesWithCallback(arrBulletImagesAsync, function () {
+            for (let i = 0; i < arrContentsWithImageBullet.length; i += 1) {
+                const oContent = arrContentsWithImageBullet[i];
+                oContent.Recalculate();
+                _this.showDrawingObjects();
+            }
+        });
+
+        const arrImagesWithoutImageBullets = arrImages.filter(function (sImageId) {
+           return !oBulletImages[sImageId];
+        });
+
+        return arrImagesWithoutImageBullets;
+    }
 
 
     _this.getSelectedDrawingsRange = function()

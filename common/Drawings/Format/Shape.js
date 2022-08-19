@@ -990,26 +990,6 @@ function SetXfrmFromMetrics(oDrawing, metrics)
         }
     };
 
-    function getBulletImages(oContent, aImages) {
-        if(!oContent) {
-            return;
-        }
-        var aParagraphs = oContent.Content;
-        var sImageId;
-        for(var nPar = 0; nPar < aParagraphs.length; ++nPar) 
-        {
-            var oPr = aParagraphs[nPar].Pr;
-            if(oPr.Bullet) 
-            {
-                sImageId = oPr.Bullet.getImageBulletURL();
-                if(sImageId) 
-                {
-                    aImages.push(sImageId);
-                }
-            }
-        }
-    }
-
     function CSignatureLine(){
         this.id = null;
         this.signer = null;
@@ -1828,7 +1808,10 @@ CShape.prototype.getAllImages = function (images) {
     if (this.spPr && this.spPr.Fill && this.spPr.Fill.fill instanceof AscFormat.CBlipFill && typeof this.spPr.Fill.fill.RasterImageId === "string") {
         images[AscCommon.getFullImageSrc2(this.spPr.Fill.fill.RasterImageId)] = true;
     }
-    getBulletImages(this.getDocContent && this.getDocContent(), images);
+    const oContent = this.getDocContent && this.getDocContent();
+    if (oContent) {
+        oContent.getBulletImages(images);
+    }
 };
 
 CShape.prototype.getAllFonts = function (fonts) {
@@ -6072,6 +6055,44 @@ CShape.prototype.getParagraphTextPr = function () {
     return null;
 };
 
+CShape.prototype.getImageFromBulletsMap = function (oImages) {
+    const oContent = this.getDocContent();
+    if(!oContent) {
+        return;
+    }
+    const aParagraphs = oContent.Content;
+    for(let nPar = 0; nPar < aParagraphs.length; ++nPar) {
+        var oPr = aParagraphs[nPar].Pr;
+        if(oPr.Bullet) {
+            const sImageId = oPr.Bullet.getImageBulletURL();
+            if(sImageId) {
+                oImages[sImageId] = true;
+            }
+        }
+    }
+};
+
+CShape.prototype.getDocContentsWithImageBullets = function (arrContents) {
+    const oContent = this.getDocContent();
+    if(!oContent) {
+        return;
+    }
+    const aParagraphs = oContent.Content;
+    for(let nPar = 0; nPar < aParagraphs.length; ++nPar)
+    {
+        var oPr = aParagraphs[nPar].Pr;
+        if(oPr.Bullet)
+        {
+            const sImageId = oPr.Bullet.getImageBulletURL();
+            if(sImageId)
+            {
+                arrContents.push(oContent);
+                break;
+            }
+        }
+    }
+}
+
 CShape.prototype.getAllRasterImages = function(images)
 {
     if(this.spPr && this.spPr.Fill && this.spPr.Fill.fill && typeof (this.spPr.Fill.fill.RasterImageId) === "string" && this.spPr.Fill.fill.RasterImageId.length > 0)
@@ -6101,7 +6122,7 @@ CShape.prototype.getAllRasterImages = function(images)
         }
         else 
         {
-            getBulletImages(oContent, images);
+            oContent.getBulletImages(images);
         }
         var fCallback = function(oRun)
 		{
