@@ -489,6 +489,10 @@ function (window, undefined) {
             if(AscFormat.isRealNumber(fWidth_) && AscFormat.isRealNumber(fHeight_)) {
                 const oXfrm = this.spPr && this.spPr.xfrm;
                 if(oXfrm) {
+                    if (oXfrm.isZero()) {
+                        oXfrm.setOffX(this.x || 0);
+                        oXfrm.setOffY(this.y || 0);
+                    }
                     if(!AscFormat.fApproxEqual(oXfrm.extX, fWidth_) ||
                         !AscFormat.fApproxEqual(oXfrm.extY, fHeight_)) {
                         oXfrm.setExtX(fWidth_);

@@ -685,11 +685,17 @@
 					var binaryDataOfSheet = AscCommon.Base64.decode(oleBinary['binary']);
 					var sizes = AscCommon.getSourceImageSize(blipUrl);
 					var mmExtX, mmExtY, adaptSizeHeight, adaptSizeWidth;
-					adaptSizeWidth = (sizes.width || 0);
-					adaptSizeHeight = (sizes.height || 0);
-					mmExtY = adaptSizeHeight * AscCommon.g_dKoef_pix_to_mm;
-					mmExtX = adaptSizeWidth * AscCommon.g_dKoef_pix_to_mm;
-
+					if (oleBinary['isFromSheetEditor']) {
+						mmExtY = selectedOleObject.extY;
+						mmExtX = selectedOleObject.extX;
+						adaptSizeWidth = mmExtX * AscCommon.g_dKoef_mm_to_pix;
+						adaptSizeHeight = mmExtY * AscCommon.g_dKoef_mm_to_pix;
+					} else {
+						adaptSizeWidth = (sizes.width || 0);
+						adaptSizeHeight = (sizes.height || 0);
+						mmExtY = adaptSizeHeight * AscCommon.g_dKoef_pix_to_mm;
+						mmExtX = adaptSizeWidth * AscCommon.g_dKoef_pix_to_mm;
+					}
 					this.asc_editOleObjectAction(false, selectedOleObject, blipUrl, binaryDataOfSheet, mmExtX, mmExtY, adaptSizeWidth, adaptSizeHeight);
 				}
 			}
