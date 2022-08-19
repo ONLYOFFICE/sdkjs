@@ -3531,7 +3531,11 @@ var editor;
         result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
       }
     } else {
+
 		//***searchEngine
+
+		this.wb.SearchEngine.checkReSearch();
+
 		var SearchEngine = this.wb.Search(options);
 		var Id = this.wb.GetSearchElementId(!options || options.scanForward);
 
@@ -3609,6 +3613,8 @@ var editor;
 		let wb = this.wb;
 		if (!wb || !wb.SearchEngine)
 			return;
+
+		wb.SearchEngine.checkReSearch();
 
 		wb.SelectSearchElement(sId);
 	};

@@ -4700,8 +4700,9 @@
 		if (this.SearchEngine && !this.SearchEngine.isReplacingText) {
 			var isPrevSearch = this.SearchEngine.Count > 0;
 			if (isPrevSearch) {
-				this.handlers.trigger("asc_onUpdateDocument");
-				this.SearchEngine.clearHighlight();
+				this.handlers.trigger("asc_onModifiedDocument");
+				//this.SearchEngine.Clear(null, true);
+				this.SearchEngine.setModifiedDocument(true);
 			}
 		}
 	};
@@ -4712,7 +4713,7 @@
 			return;
 		}
 
-		if (this.model.WorkbookPr.Date1904 == val) {
+		if (this.model.WorkbookPr.Date1904 === val) {
 			return;
 		}
 
@@ -4754,6 +4755,8 @@
 
 		this.changedSelection = null;
 		this._lastNotEmpty = null;
+
+		this.modifiedDocument = null;
 	}
 
 	CDocumentSearchExcel.prototype.Reset = function () {
@@ -4765,7 +4768,7 @@
 	CDocumentSearchExcel.prototype.Compare = function (oProps) {
 		return oProps && this.props && this.props.isEqual2(oProps) && this.props.scanOnOnlySheet === oProps.scanOnOnlySheet;
 	};
-	CDocumentSearchExcel.prototype.Clear = function (index) {
+	CDocumentSearchExcel.prototype.Clear = function (index, doNotSendInterface) {
 		if (this.isReplacingText) {
 			return;
 		}
@@ -4799,12 +4802,26 @@
 		this.changedSelection = null;
 
 		this.TextAroundUpdate = true;
-		this.StopTextAround();
-		this.SendClearAllTextAround();
+		if (!doNotSendInterface) {
+			this.StopTextAround();
+			this.SendClearAllTextAround();
+		}
+
+		this.modifiedDocument = null;
+	};
+
+	CDocumentSearchExcel.prototype.checkReSearch = function () {
+		if (this.modifiedDocument) {
+			//var props = this.props;
+			this.Clear();
+		}
 	};
 
 	CDocumentSearchExcel.prototype.clearHighlight = function () {
 		this.mapFindCells = {};
+	};
+	CDocumentSearchExcel.prototype.setModifiedDocument = function (val) {
+		this.modifiedDocument = val;
 	};
 	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container, options) {
 
@@ -4853,7 +4870,7 @@
 			if (ws) {
 				var range = new Asc.Range(elem.col, elem.row, elem.col, elem.row);
 				//options.findInSelection ? ws.setActiveCell(result) : ws.setSelection(range);
-				ws.setSelection(range)
+				ws.setSelection(range);
 
 				this.SetCurrent(nId);
 			}
