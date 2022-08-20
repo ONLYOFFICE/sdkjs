@@ -193,28 +193,15 @@
     var WriterToJSON   = window['AscCommon'].WriterToJSON;
 	var ReaderFromJSON = window['AscCommon'].ReaderFromJSON;
 	
-	WriterToJSON.prototype.SerWorksheet = function(oWorksheet)
+	/**
+	 * Converts the specified worksheets objects into the JSON.
+	 * @typeofeditors ["CSE"]
+	 * @param {Worksheet} oWorksheet
+	 * @param {boolean} isOneSheet - if isOneSheet === true, then write styles, pivotCaches, slicerCaches, slicerCachesExt in current returned object
+	 * @return {object} 
+	 */
+	WriterToJSON.prototype.SerWorksheet = function(oWorksheet, isOneSheet)
 	{
-		if (this.workbook == null)
-			this.Workbook = oWorksheet.workbook;
-
-		if (this.InitSaveManager == null)
-			this.InitSaveManager = new AscCommonExcel.InitSaveManager(this.Workbook);
-
-		// init styles for write
-		if (this.stylesForWrite == null)
-		{
-			this.stylesForWrite = new AscCommonExcel.StylesForWrite();
-			this.InitSaveManager._prepeareStyles(this.stylesForWrite);
-		}
-		// pivot caches
-		var oPivotCaches = {};
-		var nCachesCount = this.Workbook.preparePivotForSerialization(oPivotCaches);
-
-		// slicer cache
-		var oSlicerCaches = this.InitSaveManager.getSlicersCache();
-		var aSlicerCachesExt = this.InitSaveManager.getSlicersCache(true);
-
 		var aCols = this.SerCols(oWorksheet);
 
 		var aDrawings = [];
@@ -259,17 +246,50 @@
 			"namedSheetViews":       oWorksheet.aNamedSheetViews.length > 0 ? this.SerNamedSheetViews(oWorksheet.aNamedSheetViews) : undefined,
 			"sheetProtection":       oWorksheet.sheetProtection != null ? this.SerSheetProtection(oWorksheet.sheetProtection) : undefined,
 			"protectedRanges":       oWorksheet.aProtectedRanges.length > 0 ? this.SerProtectedRanges(oWorksheet.aProtectedRanges) : undefined,
-
-			// styles
-			"styles":                this.SerExcelStylesForWrite(this.stylesForWrite),
-			"pivotCaches":           nCachesCount > 0 ? this.SerPivotCaches(oPivotCaches) : undefined,
-			"slicerCaches":          oSlicerCaches != null ? this.SerSlicerCaches(oSlicerCaches) : undefined,
-			"slicerCachesExt":       aSlicerCachesExt != null ? this.SerSlicerCaches(aSlicerCachesExt) : undefined,
-
 			"type":                  "worksheet"
 		}
 
 		return oSheet;
+	};
+	WriterToJSON.prototype.SerWorksheets = function(nStart, nEnd)
+	{
+		let aSheets = this.api.wbModel.aWorksheets;
+
+		if (this.workbook == null)
+			this.Workbook = this.api.wbModel;
+
+		if (this.InitSaveManager == null)
+			this.InitSaveManager = new AscCommonExcel.InitSaveManager(this.Workbook);
+
+		// init styles for write
+		if (this.stylesForWrite == null)
+		{
+			this.stylesForWrite = new AscCommonExcel.StylesForWrite();
+			this.InitSaveManager._prepeareStyles(this.stylesForWrite);
+		}
+		// pivot caches
+		let oPivotCaches = {};
+		let nCachesCount = this.Workbook.preparePivotForSerialization(oPivotCaches);
+
+		// slicer cache
+		let oSlicerCaches = this.InitSaveManager.getSlicersCache();
+		let aSlicerCachesExt = this.InitSaveManager.getSlicersCache(true);
+
+		let aSerSheets = [];
+		for (let Index = nStart; Index < nEnd; nEnd++)
+			aSerSheets.push(this.SerWorksheet(aSheets[Index], false));
+
+		return {
+			"sheets":          aSerSheets,
+
+			// styles
+			"styles":          this.SerExcelStylesForWrite(this.stylesForWrite),
+			"pivotCaches":     nCachesCount > 0 ? this.SerPivotCaches(oPivotCaches) : undefined,
+			"slicerCaches":    oSlicerCaches != null ? this.SerSlicerCaches(oSlicerCaches) : undefined,
+			"slicerCachesExt": aSlicerCachesExt != null ? this.SerSlicerCaches(aSlicerCachesExt) : undefined,
+
+			"type": "sheets"
+		}
 	};
 	WriterToJSON.prototype.SerDrawingExcell = function(oDrawingExcel)
 	{
@@ -3560,11 +3580,11 @@
 		return sColumn + (oRefCell.row + 1);
 	};
 	
-	ReaderFromJSON.prototype.WorksheetFromJSON = function(oParsedSheet, oWorkbook, oWorksheet, bSaveToHistory)
+	ReaderFromJSON.prototype.WorksheetFromJSON = function(oParsedSheet, oWorkbook)
 	{
-		var api = window["Asc"]["editor"];
-		var WorkbookView = api.wb;
-		var renameSheetMap = {};
+		let api = window["Asc"]["editor"];
+		let WorkbookView = api.wb;
+		let renameSheetMap = {};
 
 		History.TurnOff();
 		if (oWorkbook == null)
@@ -3574,15 +3594,15 @@
 			oWorkbook.setCommonIndexObjectsFrom(WorkbookView.model);
 		}
 		this.Workbook = oWorkbook;
-		oWorksheet = new AscCommonExcel.Worksheet(oWorkbook, -1);
+		let oWorksheet = new AscCommonExcel.Worksheet(oWorkbook, -1);
 		this.curWorksheet = oWorksheet;
 
 		if (this.StyleObject == null)
 		{
-			var oStyleObject = {aBorders: [], aFills: [], aFonts: [], oNumFmts: {}, aCellStyleXfs: [],
+			let oStyleObject = {aBorders: [], aFills: [], aFonts: [], oNumFmts: {}, aCellStyleXfs: [],
 			aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: {}, oCustomSlicerStyles: null};
 			this.StylesFromJSON(oParsedSheet["styles"], oStyleObject);
-			var oStyleReader = new AscCommonExcel.InitOpenManager(null, this.Workbook, [], false);
+			let oStyleReader = new AscCommonExcel.InitOpenManager(null, this.Workbook, [], false);
 			oStyleReader.InitStyleManager(oStyleObject, this.aCellXfs);
 			this.oNumFmtsOpen = oStyleObject.oNumFmts;
 			this.aDxfs = oStyleObject.aDxfs;
@@ -3654,20 +3674,20 @@
 			oWorksheet.protectedRanges = this.ProtectedRangesFromJSON(oParsedSheet["protectedRanges"]);
 
 		oWorksheet.initPostOpenZip(this.pivotCaches, this.oNumFmtsOpen);
-		var sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(oWorksheet, null, null, true, true);
+		let sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(oWorksheet, null, null, true, true);
 		History.TurnOn();
 
-		var newFonts = {};
+		let newFonts = {};
 		newFonts = this.Workbook.generateFontMap2();
-		var pasteProcessor = AscCommonExcel.g_clipboardExcel.pasteProcessor;
+		let pasteProcessor = AscCommonExcel.g_clipboardExcel.pasteProcessor;
 		newFonts = pasteProcessor._convertFonts(newFonts);
-		for (var i = 0; i < oWorksheet.Drawings.length; i++) {
+		for (let i = 0; i < oWorksheet.Drawings.length; i++) {
 			oWorksheet.Drawings[i].graphicObject.getAllFonts(newFonts);
 		}
 		
-		var pasteSheet = function() {
-			var where = WorkbookView.model.aWorksheets.length;
-			var renameParams = WorkbookView.model.copyWorksheet(0, where, oWorksheet.name, undefined, undefined, undefined, oWorksheet, sBinarySheet);
+		let pasteSheet = function() {
+			let where = WorkbookView.model.aWorksheets.length;
+			let renameParams = WorkbookView.model.copyWorksheet(0, where, oWorksheet.name, undefined, undefined, undefined, oWorksheet, sBinarySheet);
 			//TODO ошибку по срезам добавил в renameParams. необходимо пересмотреть
 			//переименовать эту переменную, либо не добавлять copySlicerError и посылать ошибку в другом месте
 			if (renameParams && renameParams.copySlicerError) {
@@ -6413,9 +6433,10 @@
 		// to do (check sheetId, tapIdOpen)
 		var oTable = new Asc.CT_slicerCachePivotTable();
 		
-		oTable.sheetId = oWorksheet.Id;
 		if (oParsed["name"] != null)
 			oTable.name = oParsed["name"];
+		if (oParsed["sheetId"] != null)
+			oTable.sheetId = oParsed["sheetId"];
 
 		return oTable;
 	};
@@ -7645,9 +7666,6 @@
 			oCommentData = this.CommentDataFromJSON(aParsed[nElm]["data"], oWorksheet);
 			oCommentData.asc_putRow(oCommentCoords.nRow);
 			oCommentData.asc_putCol(oCommentCoords.nCol);
-			// History.Add(AscCommonExcel.g_oUndoRedoComment, AscCH.historyitem_Comment_Add, oWorksheet.getId(), null, oCommentData.clone());
-			// History.Add(AscCommonExcel.g_oUndoRedoComment, AscCH.historyitem_Comment_Coords, oWorksheet.getId(), null,
-			// new AscCommonExcel.UndoRedoData_FromTo(null, oCommentCoords.clone()));
 			oWorksheet.aComments.push(oCommentData);
 		}
 	};
@@ -9712,13 +9730,13 @@
 
 	function ToXml_ST_Axis(val) {
 		var res = "";
-		if (c_oAscAxis.AxisRow === val) {
+		if (Asc.c_oAscAxis.AxisRow === val) {
 			res = "axisRow";
-		} else if (c_oAscAxis.AxisCol === val) {
+		} else if (Asc.c_oAscAxis.AxisCol === val) {
 			res = "axisCol";
-		} else if (c_oAscAxis.AxisPage === val) {
+		} else if (Asc.c_oAscAxis.AxisPage === val) {
 			res = "axisPage";
-		} else if (c_oAscAxis.AxisValues === val) {
+		} else if (Asc.c_oAscAxis.AxisValues === val) {
 			res = "axisValues";
 		}
 		return res;
@@ -9726,24 +9744,24 @@
 	function FromXml_ST_Axis(val) {
 		var res = -1;
 		if ("axisRow" === val) {
-			res = c_oAscAxis.AxisRow;
+			res = Asc.c_oAscAxis.AxisRow;
 		} else if ("axisCol" === val) {
-			res = c_oAscAxis.AxisCol;
+			res = Asc.c_oAscAxis.AxisCol;
 		} else if ("axisPage" === val) {
-			res = c_oAscAxis.AxisPage;
+			res = Asc.c_oAscAxis.AxisPage;
 		} else if ("axisValues" === val) {
-			res = c_oAscAxis.AxisValues;
+			res = Asc.c_oAscAxis.AxisValues;
 		}
 		return res;
 	}
 
 	function ToXml_ST_FieldSortType(val) {
 		var res = "";
-		if (c_oAscFieldSortType.Manual === val) {
+		if (Asc.c_oAscFieldSortType.Manual === val) {
 			res = "manual";
-		} else if (c_oAscFieldSortType.Ascending === val) {
+		} else if (Asc.c_oAscFieldSortType.Ascending === val) {
 			res = "ascending";
-		} else if (c_oAscFieldSortType.Descending === val) {
+		} else if (Asc.c_oAscFieldSortType.Descending === val) {
 			res = "descending";
 		}
 		return res;
@@ -9751,24 +9769,24 @@
 	function FromXml_ST_FieldSortType(val) {
 		var res = -1;
 		if ("manual" === val) {
-			res = c_oAscFieldSortType.Manual;
+			res = Asc.c_oAscFieldSortType.Manual;
 		} else if ("ascending" === val) {
-			res = c_oAscFieldSortType.Ascending;
+			res = Asc.c_oAscFieldSortType.Ascending;
 		} else if ("descending" === val) {
-			res = c_oAscFieldSortType.Descending;
+			res = Asc.c_oAscFieldSortType.Descending;
 		}
 		return res;
 	}
 
 	function ToXml_ST_AllocationMethod(val) {
 		var res = "";
-		if (c_oAscAllocationMethod.EqualAllocation === val) {
+		if (Asc.c_oAscAllocationMethod.EqualAllocation === val) {
 			res = "equalAllocation";
-		} else if (c_oAscAllocationMethod.EqualIncrement === val) {
+		} else if (Asc.c_oAscAllocationMethod.EqualIncrement === val) {
 			res = "equalIncrement";
-		} else if (c_oAscAllocationMethod.WeightedAllocation === val) {
+		} else if (Asc.c_oAscAllocationMethod.WeightedAllocation === val) {
 			res = "weightedAllocation";
-		} else if (c_oAscAllocationMethod.WeightedIncrement === val) {
+		} else if (Asc.c_oAscAllocationMethod.WeightedIncrement === val) {
 			res = "weightedIncrement";
 		}
 		return res;
@@ -9776,32 +9794,32 @@
 	function FromXml_ST_AllocationMethod(val) {
 		var res = -1;
 		if ("equalAllocation" === val) {
-			res = c_oAscAllocationMethod.EqualAllocation;
+			res = Asc.c_oAscAllocationMethod.EqualAllocation;
 		} else if ("equalIncrement" === val) {
-			res = c_oAscAllocationMethod.EqualIncrement;
+			res = Asc.c_oAscAllocationMethod.EqualIncrement;
 		} else if ("weightedAllocation" === val) {
-			res = c_oAscAllocationMethod.WeightedAllocation;
+			res = Asc.c_oAscAllocationMethod.WeightedAllocation;
 		} else if ("weightedIncrement" === val) {
-			res = c_oAscAllocationMethod.WeightedIncrement;
+			res = Asc.c_oAscAllocationMethod.WeightedIncrement;
 		}
 		return res;
 	}
 
 	function ToXml_ST_PivotAreaType(val) {
 		var res = "";
-		if (c_oAscPivotAreaType.None === val) {
+		if (Asc.c_oAscPivotAreaType.None === val) {
 			res = "none";
-		} else if (c_oAscPivotAreaType.Normal === val) {
+		} else if (Asc.c_oAscPivotAreaType.Normal === val) {
 			res = "normal";
-		} else if (c_oAscPivotAreaType.Data === val) {
+		} else if (Asc.c_oAscPivotAreaType.Data === val) {
 			res = "data";
-		} else if (c_oAscPivotAreaType.All === val) {
+		} else if (Asc.c_oAscPivotAreaType.All === val) {
 			res = "all";
-		} else if (c_oAscPivotAreaType.Origin === val) {
+		} else if (Asc.c_oAscPivotAreaType.Origin === val) {
 			res = "origin";
-		} else if (c_oAscPivotAreaType.Button === val) {
+		} else if (Asc.c_oAscPivotAreaType.Button === val) {
 			res = "button";
-		} else if (c_oAscPivotAreaType.TopEnd === val) {
+		} else if (Asc.c_oAscPivotAreaType.TopEnd === val) {
 			res = "topEnd";
 		}
 		return res;
@@ -9809,19 +9827,19 @@
 	function FromXml_ST_PivotAreaType(val) {
 		var res = -1;
 		if ("none" === val) {
-			res = c_oAscPivotAreaType.None;
+			res = Asc.c_oAscPivotAreaType.None;
 		} else if ("normal" === val) {
-			res = c_oAscPivotAreaType.Normal;
+			res = Asc.c_oAscPivotAreaType.Normal;
 		} else if ("data" === val) {
-			res = c_oAscPivotAreaType.Data;
+			res = Asc.c_oAscPivotAreaType.Data;
 		} else if ("all" === val) {
-			res = c_oAscPivotAreaType.All;
+			res = Asc.c_oAscPivotAreaType.All;
 		} else if ("origin" === val) {
-			res = c_oAscPivotAreaType.Origin;
+			res = Asc.c_oAscPivotAreaType.Origin;
 		} else if ("button" === val) {
-			res = c_oAscPivotAreaType.Button;
+			res = Asc.c_oAscPivotAreaType.Button;
 		} else if ("topEnd" === val) {
-			res = c_oAscPivotAreaType.TopEnd;
+			res = Asc.c_oAscPivotAreaType.TopEnd;
 		}
 		return res;
 	}
@@ -9899,27 +9917,27 @@
 
 	function ToXml_ST_DataConsolidateFunction(val) {
 		var res = "";
-		if (c_oAscDataConsolidateFunction.Average === val) {
+		if (Asc.c_oAscDataConsolidateFunction.Average === val) {
 			res = "average";
-		} else if (c_oAscDataConsolidateFunction.Count === val) {
+		} else if (Asc.c_oAscDataConsolidateFunction.Count === val) {
 			res = "count";
-		} else if (c_oAscDataConsolidateFunction.CountNums === val) {
+		} else if (Asc.c_oAscDataConsolidateFunction.CountNums === val) {
 			res = "countNums";
-		} else if (c_oAscDataConsolidateFunction.Max === val) {
+		} else if (Asc.c_oAscDataConsolidateFunction.Max === val) {
 			res = "max";
-		} else if (c_oAscDataConsolidateFunction.Min === val) {
+		} else if (Asc.c_oAscDataConsolidateFunction.Min === val) {
 			res = "min";
-		} else if (c_oAscDataConsolidateFunction.Product === val) {
+		} else if (Asc.c_oAscDataConsolidateFunction.Product === val) {
 			res = "product";
-		} else if (c_oAscDataConsolidateFunction.StdDev === val) {
+		} else if (Asc.c_oAscDataConsolidateFunction.StdDev === val) {
 			res = "stdDev";
-		} else if (c_oAscDataConsolidateFunction.StdDevp === val) {
+		} else if (Asc.c_oAscDataConsolidateFunction.StdDevp === val) {
 			res = "stdDevp";
-		} else if (c_oAscDataConsolidateFunction.Sum === val) {
+		} else if (Asc.c_oAscDataConsolidateFunction.Sum === val) {
 			res = "sum";
-		} else if (c_oAscDataConsolidateFunction.Var === val) {
+		} else if (Asc.c_oAscDataConsolidateFunction.Var === val) {
 			res = "var";
-		} else if (c_oAscDataConsolidateFunction.Varp === val) {
+		} else if (Asc.c_oAscDataConsolidateFunction.Varp === val) {
 			res = "varp";
 		}
 		return res;
@@ -9927,50 +9945,50 @@
 	function FromXml_ST_DataConsolidateFunction(val) {
 		var res = -1;
 		if ("average" === val) {
-			res = c_oAscDataConsolidateFunction.Average;
+			res = Asc.c_oAscDataConsolidateFunction.Average;
 		} else if ("count" === val) {
-			res = c_oAscDataConsolidateFunction.Count;
+			res = Asc.c_oAscDataConsolidateFunction.Count;
 		} else if ("countNums" === val) {
-			res = c_oAscDataConsolidateFunction.CountNums;
+			res = Asc.c_oAscDataConsolidateFunction.CountNums;
 		} else if ("max" === val) {
-			res = c_oAscDataConsolidateFunction.Max;
+			res = Asc.c_oAscDataConsolidateFunction.Max;
 		} else if ("min" === val) {
-			res = c_oAscDataConsolidateFunction.Min;
+			res = Asc.c_oAscDataConsolidateFunction.Min;
 		} else if ("product" === val) {
-			res = c_oAscDataConsolidateFunction.Product;
+			res = Asc.c_oAscDataConsolidateFunction.Product;
 		} else if ("stdDev" === val) {
-			res = c_oAscDataConsolidateFunction.StdDev;
+			res = Asc.c_oAscDataConsolidateFunction.StdDev;
 		} else if ("stdDevp" === val) {
-			res = c_oAscDataConsolidateFunction.StdDevp;
+			res = Asc.c_oAscDataConsolidateFunction.StdDevp;
 		} else if ("sum" === val) {
-			res = c_oAscDataConsolidateFunction.Sum;
+			res = Asc.c_oAscDataConsolidateFunction.Sum;
 		} else if ("var" === val) {
-			res = c_oAscDataConsolidateFunction.Var;
+			res = Asc.c_oAscDataConsolidateFunction.Var;
 		} else if ("varp" === val) {
-			res = c_oAscDataConsolidateFunction.Varp;
+			res = Asc.c_oAscDataConsolidateFunction.Varp;
 		}
 		return res;
 	}
 
 	function ToXml_ST_ShowDataAs(val) {
 		var res = "";
-		if (c_oAscShowDataAs.Normal === val) {
+		if (Asc.c_oAscShowDataAs.Normal === val) {
 			res = "normal";
-		} else if (c_oAscShowDataAs.Difference === val) {
+		} else if (Asc.c_oAscShowDataAs.Difference === val) {
 			res = "difference";
-		} else if (c_oAscShowDataAs.Percent === val) {
+		} else if (Asc.c_oAscShowDataAs.Percent === val) {
 			res = "percent";
-		} else if (c_oAscShowDataAs.PercentDiff === val) {
+		} else if (Asc.c_oAscShowDataAs.PercentDiff === val) {
 			res = "percentDiff";
-		} else if (c_oAscShowDataAs.RunTotal === val) {
+		} else if (Asc.c_oAscShowDataAs.RunTotal === val) {
 			res = "runTotal";
-		} else if (c_oAscShowDataAs.PercentOfRow === val) {
+		} else if (Asc.c_oAscShowDataAs.PercentOfRow === val) {
 			res = "percentOfRow";
-		} else if (c_oAscShowDataAs.PercentOfCol === val) {
+		} else if (Asc.c_oAscShowDataAs.PercentOfCol === val) {
 			res = "percentOfCol";
-		} else if (c_oAscShowDataAs.PercentOfTotal === val) {
+		} else if (Asc.c_oAscShowDataAs.PercentOfTotal === val) {
 			res = "percentOfTotal";
-		} else if (c_oAscShowDataAs.Index === val) {
+		} else if (Asc.c_oAscShowDataAs.Index === val) {
 			res = "index";
 		}
 		return res;
@@ -9978,36 +9996,36 @@
 	function FromXml_ST_ShowDataAs(val) {
 		var res = -1;
 		if ("normal" === val) {
-			res = c_oAscShowDataAs.Normal;
+			res = Asc.c_oAscShowDataAs.Normal;
 		} else if ("difference" === val) {
-			res = c_oAscShowDataAs.Difference;
+			res = Asc.c_oAscShowDataAs.Difference;
 		} else if ("percent" === val) {
-			res = c_oAscShowDataAs.Percent;
+			res = Asc.c_oAscShowDataAs.Percent;
 		} else if ("percentDiff" === val) {
-			res = c_oAscShowDataAs.PercentDiff;
+			res = Asc.c_oAscShowDataAs.PercentDiff;
 		} else if ("runTotal" === val) {
-			res = c_oAscShowDataAs.RunTotal;
+			res = Asc.c_oAscShowDataAs.RunTotal;
 		} else if ("percentOfRow" === val) {
-			res = c_oAscShowDataAs.PercentOfRow;
+			res = Asc.c_oAscShowDataAs.PercentOfRow;
 		} else if ("percentOfCol" === val) {
-			res = c_oAscShowDataAs.PercentOfCol;
+			res = Asc.c_oAscShowDataAs.PercentOfCol;
 		} else if ("percentOfTotal" === val) {
-			res = c_oAscShowDataAs.PercentOfTotal;
+			res = Asc.c_oAscShowDataAs.PercentOfTotal;
 		} else if ("index" === val) {
-			res = c_oAscShowDataAs.Index;
+			res = Asc.c_oAscShowDataAs.Index;
 		}
 		return res;
 	}
 	
 	function ToXml_ST_FormatAction(val) {
 		var res = "";
-		if (c_oAscFormatAction.Blank === val) {
+		if (Asc.c_oAscFormatAction.Blank === val) {
 			res = "blank";
-		} else if (c_oAscFormatAction.Formatting === val) {
+		} else if (Asc.c_oAscFormatAction.Formatting === val) {
 			res = "formatting";
-		} else if (c_oAscFormatAction.Drill === val) {
+		} else if (Asc.c_oAscFormatAction.Drill === val) {
 			res = "drill";
-		} else if (c_oAscFormatAction.Formula === val) {
+		} else if (Asc.c_oAscFormatAction.Formula === val) {
 			res = "formula";
 		}
 		return res;
@@ -10015,24 +10033,24 @@
 	function FromXml_ST_FormatAction(val) {
 		var res = -1;
 		if ("blank" === val) {
-			res = c_oAscFormatAction.Blank;
+			res = Asc.c_oAscFormatAction.Blank;
 		} else if ("formatting" === val) {
-			res = c_oAscFormatAction.Formatting;
+			res = Asc.c_oAscFormatAction.Formatting;
 		} else if ("drill" === val) {
-			res = c_oAscFormatAction.Drill;
+			res = Asc.c_oAscFormatAction.Drill;
 		} else if ("formula" === val) {
-			res = c_oAscFormatAction.Formula;
+			res = Asc.c_oAscFormatAction.Formula;
 		}
 		return res;
 	}
 
 	function ToXml_ST_Scope(val) {
 		var res = "";
-		if (c_oAscScope.Selection === val) {
+		if (Asc.c_oAscScope.Selection === val) {
 			res = "selection";
-		} else if (c_oAscScope.Data === val) {
+		} else if (Asc.c_oAscScope.Data === val) {
 			res = "data";
-		} else if (c_oAscScope.Field === val) {
+		} else if (Asc.c_oAscScope.Field === val) {
 			res = "field";
 		}
 		return res;
@@ -10040,24 +10058,24 @@
 	function FromXml_ST_Scope(val) {
 		var res = -1;
 		if ("selection" === val) {
-			res = c_oAscScope.Selection;
+			res = Asc.c_oAscScope.Selection;
 		} else if ("data" === val) {
-			res = c_oAscScope.Data;
+			res = Asc.c_oAscScope.Data;
 		} else if ("field" === val) {
-			res = c_oAscScope.Field;
+			res = Asc.c_oAscScope.Field;
 		}
 		return res;
 	}
 
 	function ToXml_ST_Type(val) {
 		var res = "";
-		if (c_oAscType.None === val) {
+		if (Asc.c_oAscType.None === val) {
 			res = "none";
-		} else if (c_oAscType.All === val) {
+		} else if (Asc.c_oAscType.All === val) {
 			res = "all";
-		} else if (c_oAscType.Row === val) {
+		} else if (Asc.c_oAscType.Row === val) {
 			res = "row";
-		} else if (c_oAscType.Column === val) {
+		} else if (Asc.c_oAscType.Column === val) {
 			res = "column";
 		}
 		return res;
@@ -10065,150 +10083,150 @@
 	function FromXml_ST_Type(val) {
 		var res = -1;
 		if ("none" === val) {
-			res = c_oAscType.None;
+			res = Asc.c_oAscType.None;
 		} else if ("all" === val) {
-			res = c_oAscType.All;
+			res = Asc.c_oAscType.All;
 		} else if ("row" === val) {
-			res = c_oAscType.Row;
+			res = Asc.c_oAscType.Row;
 		} else if ("column" === val) {
-			res = c_oAscType.Column;
+			res = Asc.c_oAscType.Column;
 		}
 		return res;
 	}
 	
 	function ToXml_ST_PivotFilterType(val) {
 		var res = "";
-		if (c_oAscPivotFilterType.Unknown === val) {
+		if (Asc.c_oAscPivotFilterType.Unknown === val) {
 			res = "unknown";
-		} else if (c_oAscPivotFilterType.Count === val) {
+		} else if (Asc.c_oAscPivotFilterType.Count === val) {
 			res = "count";
-		} else if (c_oAscPivotFilterType.Percent === val) {
+		} else if (Asc.c_oAscPivotFilterType.Percent === val) {
 			res = "percent";
-		} else if (c_oAscPivotFilterType.Sum === val) {
+		} else if (Asc.c_oAscPivotFilterType.Sum === val) {
 			res = "sum";
-		} else if (c_oAscPivotFilterType.CaptionEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionEqual === val) {
 			res = "captionEqual";
-		} else if (c_oAscPivotFilterType.CaptionNotEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionNotEqual === val) {
 			res = "captionNotEqual";
-		} else if (c_oAscPivotFilterType.CaptionBeginsWith === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionBeginsWith === val) {
 			res = "captionBeginsWith";
-		} else if (c_oAscPivotFilterType.CaptionNotBeginsWith === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionNotBeginsWith === val) {
 			res = "captionNotBeginsWith";
-		} else if (c_oAscPivotFilterType.CaptionEndsWith === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionEndsWith === val) {
 			res = "captionEndsWith";
-		} else if (c_oAscPivotFilterType.CaptionNotEndsWith === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionNotEndsWith === val) {
 			res = "captionNotEndsWith";
-		} else if (c_oAscPivotFilterType.CaptionContains === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionContains === val) {
 			res = "captionContains";
-		} else if (c_oAscPivotFilterType.CaptionNotContains === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionNotContains === val) {
 			res = "captionNotContains";
-		} else if (c_oAscPivotFilterType.CaptionGreaterThan === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionGreaterThan === val) {
 			res = "captionGreaterThan";
-		} else if (c_oAscPivotFilterType.CaptionGreaterThanOrEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionGreaterThanOrEqual === val) {
 			res = "captionGreaterThanOrEqual";
-		} else if (c_oAscPivotFilterType.CaptionLessThan === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionLessThan === val) {
 			res = "captionLessThan";
-		} else if (c_oAscPivotFilterType.CaptionLessThanOrEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionLessThanOrEqual === val) {
 			res = "captionLessThanOrEqual";
-		} else if (c_oAscPivotFilterType.CaptionBetween === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionBetween === val) {
 			res = "captionBetween";
-		} else if (c_oAscPivotFilterType.CaptionNotBetween === val) {
+		} else if (Asc.c_oAscPivotFilterType.CaptionNotBetween === val) {
 			res = "captionNotBetween";
-		} else if (c_oAscPivotFilterType.ValueEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.ValueEqual === val) {
 			res = "valueEqual";
-		} else if (c_oAscPivotFilterType.ValueNotEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.ValueNotEqual === val) {
 			res = "valueNotEqual";
-		} else if (c_oAscPivotFilterType.ValueGreaterThan === val) {
+		} else if (Asc.c_oAscPivotFilterType.ValueGreaterThan === val) {
 			res = "valueGreaterThan";
-		} else if (c_oAscPivotFilterType.ValueGreaterThanOrEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.ValueGreaterThanOrEqual === val) {
 			res = "valueGreaterThanOrEqual";
-		} else if (c_oAscPivotFilterType.ValueLessThan === val) {
+		} else if (Asc.c_oAscPivotFilterType.ValueLessThan === val) {
 			res = "valueLessThan";
-		} else if (c_oAscPivotFilterType.ValueLessThanOrEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.ValueLessThanOrEqual === val) {
 			res = "valueLessThanOrEqual";
-		} else if (c_oAscPivotFilterType.ValueBetween === val) {
+		} else if (Asc.c_oAscPivotFilterType.ValueBetween === val) {
 			res = "valueBetween";
-		} else if (c_oAscPivotFilterType.ValueNotBetween === val) {
+		} else if (Asc.c_oAscPivotFilterType.ValueNotBetween === val) {
 			res = "valueNotBetween";
-		} else if (c_oAscPivotFilterType.DateEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.DateEqual === val) {
 			res = "dateEqual";
-		} else if (c_oAscPivotFilterType.DateNotEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.DateNotEqual === val) {
 			res = "dateNotEqual";
-		} else if (c_oAscPivotFilterType.DateOlderThan === val) {
+		} else if (Asc.c_oAscPivotFilterType.DateOlderThan === val) {
 			res = "dateOlderThan";
-		} else if (c_oAscPivotFilterType.DateOlderThanOrEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.DateOlderThanOrEqual === val) {
 			res = "dateOlderThanOrEqual";
-		} else if (c_oAscPivotFilterType.DateNewerThan === val) {
+		} else if (Asc.c_oAscPivotFilterType.DateNewerThan === val) {
 			res = "dateNewerThan";
-		} else if (c_oAscPivotFilterType.DateNewerThanOrEqual === val) {
+		} else if (Asc.c_oAscPivotFilterType.DateNewerThanOrEqual === val) {
 			res = "dateNewerThanOrEqual";
-		} else if (c_oAscPivotFilterType.DateBetween === val) {
+		} else if (Asc.c_oAscPivotFilterType.DateBetween === val) {
 			res = "dateBetween";
-		} else if (c_oAscPivotFilterType.DateNotBetween === val) {
+		} else if (Asc.c_oAscPivotFilterType.DateNotBetween === val) {
 			res = "dateNotBetween";
-		} else if (c_oAscPivotFilterType.Tomorrow === val) {
+		} else if (Asc.c_oAscPivotFilterType.Tomorrow === val) {
 			res = "tomorrow";
-		} else if (c_oAscPivotFilterType.Today === val) {
+		} else if (Asc.c_oAscPivotFilterType.Today === val) {
 			res = "today";
-		} else if (c_oAscPivotFilterType.Yesterday === val) {
+		} else if (Asc.c_oAscPivotFilterType.Yesterday === val) {
 			res = "yesterday";
-		} else if (c_oAscPivotFilterType.NextWeek === val) {
+		} else if (Asc.c_oAscPivotFilterType.NextWeek === val) {
 			res = "nextWeek";
-		} else if (c_oAscPivotFilterType.ThisWeek === val) {
+		} else if (Asc.c_oAscPivotFilterType.ThisWeek === val) {
 			res = "thisWeek";
-		} else if (c_oAscPivotFilterType.LastWeek === val) {
+		} else if (Asc.c_oAscPivotFilterType.LastWeek === val) {
 			res = "lastWeek";
-		} else if (c_oAscPivotFilterType.NextMonth === val) {
+		} else if (Asc.c_oAscPivotFilterType.NextMonth === val) {
 			res = "nextMonth";
-		} else if (c_oAscPivotFilterType.ThisMonth === val) {
+		} else if (Asc.c_oAscPivotFilterType.ThisMonth === val) {
 			res = "thisMonth";
-		} else if (c_oAscPivotFilterType.LastMonth === val) {
+		} else if (Asc.c_oAscPivotFilterType.LastMonth === val) {
 			res = "lastMonth";
-		} else if (c_oAscPivotFilterType.NextQuarter === val) {
+		} else if (Asc.c_oAscPivotFilterType.NextQuarter === val) {
 			res = "nextQuarter";
-		} else if (c_oAscPivotFilterType.ThisQuarter === val) {
+		} else if (Asc.c_oAscPivotFilterType.ThisQuarter === val) {
 			res = "thisQuarter";
-		} else if (c_oAscPivotFilterType.LastQuarter === val) {
+		} else if (Asc.c_oAscPivotFilterType.LastQuarter === val) {
 			res = "lastQuarter";
-		} else if (c_oAscPivotFilterType.NextYear === val) {
+		} else if (Asc.c_oAscPivotFilterType.NextYear === val) {
 			res = "nextYear";
-		} else if (c_oAscPivotFilterType.ThisYear === val) {
+		} else if (Asc.c_oAscPivotFilterType.ThisYear === val) {
 			res = "thisYear";
-		} else if (c_oAscPivotFilterType.LastYear === val) {
+		} else if (Asc.c_oAscPivotFilterType.LastYear === val) {
 			res = "lastYear";
-		} else if (c_oAscPivotFilterType.YearToDate === val) {
+		} else if (Asc.c_oAscPivotFilterType.YearToDate === val) {
 			res = "yearToDate";
-		} else if (c_oAscPivotFilterType.Q1 === val) {
+		} else if (Asc.c_oAscPivotFilterType.Q1 === val) {
 			res = "Q1";
-		} else if (c_oAscPivotFilterType.Q2 === val) {
+		} else if (Asc.c_oAscPivotFilterType.Q2 === val) {
 			res = "Q2";
-		} else if (c_oAscPivotFilterType.Q3 === val) {
+		} else if (Asc.c_oAscPivotFilterType.Q3 === val) {
 			res = "Q3";
-		} else if (c_oAscPivotFilterType.Q4 === val) {
+		} else if (Asc.c_oAscPivotFilterType.Q4 === val) {
 			res = "Q4";
-		} else if (c_oAscPivotFilterType.M1 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M1 === val) {
 			res = "M1";
-		} else if (c_oAscPivotFilterType.M2 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M2 === val) {
 			res = "M2";
-		} else if (c_oAscPivotFilterType.M3 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M3 === val) {
 			res = "M3";
-		} else if (c_oAscPivotFilterType.M4 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M4 === val) {
 			res = "M4";
-		} else if (c_oAscPivotFilterType.M5 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M5 === val) {
 			res = "M5";
-		} else if (c_oAscPivotFilterType.M6 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M6 === val) {
 			res = "M6";
-		} else if (c_oAscPivotFilterType.M7 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M7 === val) {
 			res = "M7";
-		} else if (c_oAscPivotFilterType.M8 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M8 === val) {
 			res = "M8";
-		} else if (c_oAscPivotFilterType.M9 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M9 === val) {
 			res = "M9";
-		} else if (c_oAscPivotFilterType.M10 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M10 === val) {
 			res = "M10";
-		} else if (c_oAscPivotFilterType.M11 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M11 === val) {
 			res = "M11";
-		} else if (c_oAscPivotFilterType.M12 === val) {
+		} else if (Asc.c_oAscPivotFilterType.M12 === val) {
 			res = "M12";
 		}
 		return res;
@@ -10216,137 +10234,137 @@
 	function FromXml_ST_PivotFilterType(val) {
 		var res = -1;
 		if ("unknown" === val) {
-			res = c_oAscPivotFilterType.Unknown;
+			res = Asc.c_oAscPivotFilterType.Unknown;
 		} else if ("count" === val) {
-			res = c_oAscPivotFilterType.Count;
+			res = Asc.c_oAscPivotFilterType.Count;
 		} else if ("percent" === val) {
-			res = c_oAscPivotFilterType.Percent;
+			res = Asc.c_oAscPivotFilterType.Percent;
 		} else if ("sum" === val) {
-			res = c_oAscPivotFilterType.Sum;
+			res = Asc.c_oAscPivotFilterType.Sum;
 		} else if ("captionEqual" === val) {
-			res = c_oAscPivotFilterType.CaptionEqual;
+			res = Asc.c_oAscPivotFilterType.CaptionEqual;
 		} else if ("captionNotEqual" === val) {
-			res = c_oAscPivotFilterType.CaptionNotEqual;
+			res = Asc.c_oAscPivotFilterType.CaptionNotEqual;
 		} else if ("captionBeginsWith" === val) {
-			res = c_oAscPivotFilterType.CaptionBeginsWith;
+			res = Asc.c_oAscPivotFilterType.CaptionBeginsWith;
 		} else if ("captionNotBeginsWith" === val) {
-			res = c_oAscPivotFilterType.CaptionNotBeginsWith;
+			res = Asc.c_oAscPivotFilterType.CaptionNotBeginsWith;
 		} else if ("captionEndsWith" === val) {
-			res = c_oAscPivotFilterType.CaptionEndsWith;
+			res = Asc.c_oAscPivotFilterType.CaptionEndsWith;
 		} else if ("captionNotEndsWith" === val) {
-			res = c_oAscPivotFilterType.CaptionNotEndsWith;
+			res = Asc.c_oAscPivotFilterType.CaptionNotEndsWith;
 		} else if ("captionContains" === val) {
-			res = c_oAscPivotFilterType.CaptionContains;
+			res = Asc.c_oAscPivotFilterType.CaptionContains;
 		} else if ("captionNotContains" === val) {
-			res = c_oAscPivotFilterType.CaptionNotContains;
+			res = Asc.c_oAscPivotFilterType.CaptionNotContains;
 		} else if ("captionGreaterThan" === val) {
-			res = c_oAscPivotFilterType.CaptionGreaterThan;
+			res = Asc.c_oAscPivotFilterType.CaptionGreaterThan;
 		} else if ("captionGreaterThanOrEqual" === val) {
-			res = c_oAscPivotFilterType.CaptionGreaterThanOrEqual;
+			res = Asc.c_oAscPivotFilterType.CaptionGreaterThanOrEqual;
 		} else if ("captionLessThan" === val) {
-			res = c_oAscPivotFilterType.CaptionLessThan;
+			res = Asc.c_oAscPivotFilterType.CaptionLessThan;
 		} else if ("captionLessThanOrEqual" === val) {
-			res = c_oAscPivotFilterType.CaptionLessThanOrEqual;
+			res = Asc.c_oAscPivotFilterType.CaptionLessThanOrEqual;
 		} else if ("captionBetween" === val) {
-			res = c_oAscPivotFilterType.CaptionBetween;
+			res = Asc.c_oAscPivotFilterType.CaptionBetween;
 		} else if ("captionNotBetween" === val) {
-			res = c_oAscPivotFilterType.CaptionNotBetween;
+			res = Asc.c_oAscPivotFilterType.CaptionNotBetween;
 		} else if ("valueEqual" === val) {
-			res = c_oAscPivotFilterType.ValueEqual;
+			res = Asc.c_oAscPivotFilterType.ValueEqual;
 		} else if ("valueNotEqual" === val) {
-			res = c_oAscPivotFilterType.ValueNotEqual;
+			res = Asc.c_oAscPivotFilterType.ValueNotEqual;
 		} else if ("valueGreaterThan" === val) {
-			res = c_oAscPivotFilterType.ValueGreaterThan;
+			res = Asc.c_oAscPivotFilterType.ValueGreaterThan;
 		} else if ("valueGreaterThanOrEqual" === val) {
-			res = c_oAscPivotFilterType.ValueGreaterThanOrEqual;
+			res = Asc.c_oAscPivotFilterType.ValueGreaterThanOrEqual;
 		} else if ("valueLessThan" === val) {
-			res = c_oAscPivotFilterType.ValueLessThan;
+			res = Asc.c_oAscPivotFilterType.ValueLessThan;
 		} else if ("valueLessThanOrEqual" === val) {
-			res = c_oAscPivotFilterType.ValueLessThanOrEqual;
+			res = Asc.c_oAscPivotFilterType.ValueLessThanOrEqual;
 		} else if ("valueBetween" === val) {
-			res = c_oAscPivotFilterType.ValueBetween;
+			res = Asc.c_oAscPivotFilterType.ValueBetween;
 		} else if ("valueNotBetween" === val) {
-			res = c_oAscPivotFilterType.ValueNotBetween;
+			res = Asc.c_oAscPivotFilterType.ValueNotBetween;
 		} else if ("dateEqual" === val) {
-			res = c_oAscPivotFilterType.DateEqual;
+			res = Asc.c_oAscPivotFilterType.DateEqual;
 		} else if ("dateNotEqual" === val) {
-			res = c_oAscPivotFilterType.DateNotEqual;
+			res = Asc.c_oAscPivotFilterType.DateNotEqual;
 		} else if ("dateOlderThan" === val) {
-			res = c_oAscPivotFilterType.DateOlderThan;
+			res = Asc.c_oAscPivotFilterType.DateOlderThan;
 		} else if ("dateOlderThanOrEqual" === val) {
-			res = c_oAscPivotFilterType.DateOlderThanOrEqual;
+			res = Asc.c_oAscPivotFilterType.DateOlderThanOrEqual;
 		} else if ("dateNewerThan" === val) {
-			res = c_oAscPivotFilterType.DateNewerThan;
+			res = Asc.c_oAscPivotFilterType.DateNewerThan;
 		} else if ("dateNewerThanOrEqual" === val) {
-			res = c_oAscPivotFilterType.DateNewerThanOrEqual;
+			res = Asc.c_oAscPivotFilterType.DateNewerThanOrEqual;
 		} else if ("dateBetween" === val) {
-			res = c_oAscPivotFilterType.DateBetween;
+			res = Asc.c_oAscPivotFilterType.DateBetween;
 		} else if ("dateNotBetween" === val) {
-			res = c_oAscPivotFilterType.DateNotBetween;
+			res = Asc.c_oAscPivotFilterType.DateNotBetween;
 		} else if ("tomorrow" === val) {
-			res = c_oAscPivotFilterType.Tomorrow;
+			res = Asc.c_oAscPivotFilterType.Tomorrow;
 		} else if ("today" === val) {
-			res = c_oAscPivotFilterType.Today;
+			res = Asc.c_oAscPivotFilterType.Today;
 		} else if ("yesterday" === val) {
-			res = c_oAscPivotFilterType.Yesterday;
+			res = Asc.c_oAscPivotFilterType.Yesterday;
 		} else if ("nextWeek" === val) {
-			res = c_oAscPivotFilterType.NextWeek;
+			res = Asc.c_oAscPivotFilterType.NextWeek;
 		} else if ("thisWeek" === val) {
-			res = c_oAscPivotFilterType.ThisWeek;
+			res = Asc.c_oAscPivotFilterType.ThisWeek;
 		} else if ("lastWeek" === val) {
-			res = c_oAscPivotFilterType.LastWeek;
+			res = Asc.c_oAscPivotFilterType.LastWeek;
 		} else if ("nextMonth" === val) {
-			res = c_oAscPivotFilterType.NextMonth;
+			res = Asc.c_oAscPivotFilterType.NextMonth;
 		} else if ("thisMonth" === val) {
-			res = c_oAscPivotFilterType.ThisMonth;
+			res = Asc.c_oAscPivotFilterType.ThisMonth;
 		} else if ("lastMonth" === val) {
-			res = c_oAscPivotFilterType.LastMonth;
+			res = Asc.c_oAscPivotFilterType.LastMonth;
 		} else if ("nextQuarter" === val) {
-			res = c_oAscPivotFilterType.NextQuarter;
+			res = Asc.c_oAscPivotFilterType.NextQuarter;
 		} else if ("thisQuarter" === val) {
-			res = c_oAscPivotFilterType.ThisQuarter;
+			res = Asc.c_oAscPivotFilterType.ThisQuarter;
 		} else if ("lastQuarter" === val) {
-			res = c_oAscPivotFilterType.LastQuarter;
+			res = Asc.c_oAscPivotFilterType.LastQuarter;
 		} else if ("nextYear" === val) {
-			res = c_oAscPivotFilterType.NextYear;
+			res = Asc.c_oAscPivotFilterType.NextYear;
 		} else if ("thisYear" === val) {
-			res = c_oAscPivotFilterType.ThisYear;
+			res = Asc.c_oAscPivotFilterType.ThisYear;
 		} else if ("lastYear" === val) {
-			res = c_oAscPivotFilterType.LastYear;
+			res = Asc.c_oAscPivotFilterType.LastYear;
 		} else if ("yearToDate" === val) {
-			res = c_oAscPivotFilterType.YearToDate;
+			res = Asc.c_oAscPivotFilterType.YearToDate;
 		} else if ("Q1" === val) {
-			res = c_oAscPivotFilterType.Q1;
+			res = Asc.c_oAscPivotFilterType.Q1;
 		} else if ("Q2" === val) {
-			res = c_oAscPivotFilterType.Q2;
+			res = Asc.c_oAscPivotFilterType.Q2;
 		} else if ("Q3" === val) {
-			res = c_oAscPivotFilterType.Q3;
+			res = Asc.c_oAscPivotFilterType.Q3;
 		} else if ("Q4" === val) {
-			res = c_oAscPivotFilterType.Q4;
+			res = Asc.c_oAscPivotFilterType.Q4;
 		} else if ("M1" === val) {
-			res = c_oAscPivotFilterType.M1;
+			res = Asc.c_oAscPivotFilterType.M1;
 		} else if ("M2" === val) {
-			res = c_oAscPivotFilterType.M2;
+			res = Asc.c_oAscPivotFilterType.M2;
 		} else if ("M3" === val) {
-			res = c_oAscPivotFilterType.M3;
+			res = Asc.c_oAscPivotFilterType.M3;
 		} else if ("M4" === val) {
-			res = c_oAscPivotFilterType.M4;
+			res = Asc.c_oAscPivotFilterType.M4;
 		} else if ("M5" === val) {
-			res = c_oAscPivotFilterType.M5;
+			res = Asc.c_oAscPivotFilterType.M5;
 		} else if ("M6" === val) {
-			res = c_oAscPivotFilterType.M6;
+			res = Asc.c_oAscPivotFilterType.M6;
 		} else if ("M7" === val) {
-			res = c_oAscPivotFilterType.M7;
+			res = Asc.c_oAscPivotFilterType.M7;
 		} else if ("M8" === val) {
-			res = c_oAscPivotFilterType.M8;
+			res = Asc.c_oAscPivotFilterType.M8;
 		} else if ("M9" === val) {
-			res = c_oAscPivotFilterType.M9;
+			res = Asc.c_oAscPivotFilterType.M9;
 		} else if ("M10" === val) {
-			res = c_oAscPivotFilterType.M10;
+			res = Asc.c_oAscPivotFilterType.M10;
 		} else if ("M11" === val) {
-			res = c_oAscPivotFilterType.M11;
+			res = Asc.c_oAscPivotFilterType.M11;
 		} else if ("M12" === val) {
-			res = c_oAscPivotFilterType.M12;
+			res = Asc.c_oAscPivotFilterType.M12;
 		}
 		return res;
 	}
@@ -10575,13 +10593,13 @@
 
 	function ToXml_ST_SourceType(val) {
 		var res = "";
-		if (c_oAscSourceType.Worksheet === val) {
+		if (Asc.c_oAscSourceType.Worksheet === val) {
 			res = "worksheet";
-		} else if (c_oAscSourceType.External === val) {
+		} else if (Asc.c_oAscSourceType.External === val) {
 			res = "external";
-		} else if (c_oAscSourceType.Consolidation === val) {
+		} else if (Asc.c_oAscSourceType.Consolidation === val) {
 			res = "consolidation";
-		} else if (c_oAscSourceType.Scenario === val) {
+		} else if (Asc.c_oAscSourceType.Scenario === val) {
 			res = "scenario";
 		}
 		return res;
@@ -10589,34 +10607,34 @@
 	function FromXml_ST_SourceType(val) {
 		var res = -1;
 		if ("worksheet" === val) {
-			res = c_oAscSourceType.Worksheet;
+			res = Asc.c_oAscSourceType.Worksheet;
 		} else if ("external" === val) {
-			res = c_oAscSourceType.External;
+			res = Asc.c_oAscSourceType.External;
 		} else if ("consolidation" === val) {
-			res = c_oAscSourceType.Consolidation;
+			res = Asc.c_oAscSourceType.Consolidation;
 		} else if ("scenario" === val) {
-			res = c_oAscSourceType.Scenario;
+			res = Asc.c_oAscSourceType.Scenario;
 		}
 		return res;
 	}
 
 	function ToXml_ST_GroupBy(val) {
 		var res = "";
-		if (c_oAscGroupBy.Range === val) {
+		if (Asc.c_oAscGroupBy.Range === val) {
 			res = "range";
-		} else if (c_oAscGroupBy.Seconds === val) {
+		} else if (Asc.c_oAscGroupBy.Seconds === val) {
 			res = "seconds";
-		} else if (c_oAscGroupBy.Minutes === val) {
+		} else if (Asc.c_oAscGroupBy.Minutes === val) {
 			res = "minutes";
-		} else if (c_oAscGroupBy.Hours === val) {
+		} else if (Asc.c_oAscGroupBy.Hours === val) {
 			res = "hours";
-		} else if (c_oAscGroupBy.Days === val) {
+		} else if (Asc.c_oAscGroupBy.Days === val) {
 			res = "days";
-		} else if (c_oAscGroupBy.Months === val) {
+		} else if (Asc.c_oAscGroupBy.Months === val) {
 			res = "months";
-		} else if (c_oAscGroupBy.Quarters === val) {
+		} else if (Asc.c_oAscGroupBy.Quarters === val) {
 			res = "quarters";
-		} else if (c_oAscGroupBy.Years === val) {
+		} else if (Asc.c_oAscGroupBy.Years === val) {
 			res = "years";
 		}
 		return res;
@@ -10624,21 +10642,21 @@
 	function FromXml_ST_GroupBy(val) {
 		var res = -1;
 		if ("range" === val) {
-			res = c_oAscGroupBy.Range;
+			res = Asc.c_oAscGroupBy.Range;
 		} else if ("seconds" === val) {
-			res = c_oAscGroupBy.Seconds;
+			res = Asc.c_oAscGroupBy.Seconds;
 		} else if ("minutes" === val) {
-			res = c_oAscGroupBy.Minutes;
+			res = Asc.c_oAscGroupBy.Minutes;
 		} else if ("hours" === val) {
-			res = c_oAscGroupBy.Hours;
+			res = Asc.c_oAscGroupBy.Hours;
 		} else if ("days" === val) {
-			res = c_oAscGroupBy.Days;
+			res = Asc.c_oAscGroupBy.Days;
 		} else if ("months" === val) {
-			res = c_oAscGroupBy.Months;
+			res = Asc.c_oAscGroupBy.Months;
 		} else if ("quarters" === val) {
-			res = c_oAscGroupBy.Quarters;
+			res = Asc.c_oAscGroupBy.Quarters;
 		} else if ("years" === val) {
-			res = c_oAscGroupBy.Years;
+			res = Asc.c_oAscGroupBy.Years;
 		}
 		return res;
 	}
@@ -10648,25 +10666,25 @@
 		var sType = undefined;
 		switch (nType)
 		{
-			case c_oAscPivotRecType.Number:
+			case Asc.c_oAscPivotRecType.Number:
 				sType = "n";
 				break;
-			case c_oAscPivotRecType.String:
+			case Asc.c_oAscPivotRecType.String:
 				sType = "s";
 				break;
-			case c_oAscPivotRecType.Boolean:
+			case Asc.c_oAscPivotRecType.Boolean:
 				sType = "b";
 				break;
-			case c_oAscPivotRecType.Error:
+			case Asc.c_oAscPivotRecType.Error:
 				sType = "e";
 				break;
-			case c_oAscPivotRecType.DateTime:
+			case Asc.c_oAscPivotRecType.DateTime:
 				sType = "d";
 				break;
-			case c_oAscPivotRecType.Missing:
+			case Asc.c_oAscPivotRecType.Missing:
 				sType = "m";
 				break;
-			case c_oAscPivotRecType.Index:
+			case Asc.c_oAscPivotRecType.Index:
 				sType = "i";
 				break;
 		}
@@ -10679,25 +10697,25 @@
 		switch (sType)
 		{
 			case "n":
-				nType = c_oAscPivotRecType.Number;
+				nType = Asc.c_oAscPivotRecType.Number;
 				break;
 			case "s":
-				nType = c_oAscPivotRecType.String;
+				nType = Asc.c_oAscPivotRecType.String;
 				break;
 			case "b":
-				nType = c_oAscPivotRecType.Boolean;
+				nType = Asc.c_oAscPivotRecType.Boolean;
 				break;
 			case "e":
-				nType = c_oAscPivotRecType.Error;
+				nType = Asc.c_oAscPivotRecType.Error;
 				break;
 			case "d":
-				nType = c_oAscPivotRecType.DateTime;
+				nType = Asc.c_oAscPivotRecType.DateTime;
 				break;
 			case "m":
-				nType = c_oAscPivotRecType.Missing;
+				nType = Asc.c_oAscPivotRecType.Missing;
 				break;
 			case "i":
-				nType = c_oAscPivotRecType.Index;
+				nType = Asc.c_oAscPivotRecType.Index;
 				break;
 		}
 

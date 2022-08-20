@@ -733,6 +733,25 @@
 	};
 
 	/**
+	 * Converts the specified worksheets objects into the JSON.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {number} [nStart=0] - start worksheet index.
+	 * @param {number} [nEnd=Api.GetSheets().length - 1] - start worksheet index.
+	 * @return {JSON}
+	 */
+	Api.prototype.WorksheetsToJSON = function(nStart, nEnd)
+	{
+		let oWriter = new AscCommon.WriterToJSON();
+		if (typeof(nStart) !== "number" || nStart < 0)
+			nStart = 0;
+		if (typeof(nEnd) !== "number" || nEnd > this.wbModel.aWorksheets.length - 1)
+			nStart = this.wbModel.aWorksheets.length - 1;
+		
+		return JSON.stringify(oWriter.SerWorksheets(nStart, nEnd));		
+	};
+
+	/**
 	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
 	 * @memberof Api
 	 * @param {JSON} sMessage - The JSON object to convert.
@@ -1665,7 +1684,7 @@
 	ApiWorksheet.prototype.ToJSON = function(){
 		var oWriter = new AscCommon.WriterToJSON();
 		oWriter.Workbook = Asc.editor.wbModel;
-		return JSON.stringify(oWriter.SerWorksheet(this.worksheet));
+		return JSON.stringify(oWriter.SerWorksheet(this.worksheet, true));
 	};
 	
 
@@ -3155,19 +3174,6 @@
 		return false;
 	};
 
-	/**
-	 * Converts the ApiDrawing object into the JSON object.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CSE"]
-	 * @returns {JSON}
-	 */
-	ApiDrawing.prototype.ToJSON = function()
-	{
-		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerGrapicObject(this.Drawing));
-	};
-
-
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage
@@ -4312,7 +4318,6 @@
 	ApiDrawing.prototype["GetHeight"]                  =  ApiDrawing.prototype.GetHeight;
 	ApiDrawing.prototype["GetLockValue"]               =  ApiDrawing.prototype.GetLockValue;
 	ApiDrawing.prototype["SetLockValue"]               =  ApiDrawing.prototype.SetLockValue;
-	ApiDrawing.prototype["ToJSON"]                     =  ApiDrawing.prototype.ToJSON;
 
 	ApiImage.prototype["GetClassType"]                 =  ApiImage.prototype.GetClassType;
 
