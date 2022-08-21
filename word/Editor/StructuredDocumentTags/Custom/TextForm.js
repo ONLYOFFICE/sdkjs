@@ -51,7 +51,7 @@
 		this.AutoFit               = false;
 		this.Format                = new AscWord.CTextFormFormat();
 
-		this.Format.SetDigit();
+		//this.Format.SetDigit();
 	}
 	CSdtTextFormPr.prototype.Copy = function()
 	{
