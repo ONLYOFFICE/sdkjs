@@ -92,6 +92,15 @@ CInlineLevelSdt.prototype.Add = function(Item)
 		return;
 	}
 
+	if (this.IsTextForm()
+		&& this.IsPlaceHolder()
+		&& this.Pr.TextForm.CheckFormatOnFly()
+		&& ((Item.Type !== para_Text && Item.Type !== para_Space)
+			|| !this.Pr.TextForm.CheckFormat(String.fromCodePoint(Item.Type === para_Text ? Item.Value : 0x20))))
+		return;
+
+	// TODO: ЕЩЕ ОБРАБОТАТЬ СЛУЧАЙ, когда добавляем текст с выделением, там тоже надо добавить проверку
+
 	this.private_ReplacePlaceHolderWithContent();
 
 	var oTextFormRun;
