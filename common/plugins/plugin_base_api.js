@@ -497,6 +497,28 @@ window.startPluginApi = function() {
         };
         _client.send();
     };
+
+    /**
+     * lockMouse
+     * @memberof Plugin
+     * @alias lockMouse
+     * @description Defines the method used to set flag getting mousemove event or not in true.
+     */
+    Plugin.lockMouse = function()
+    {
+        this.executeMethod('LockMouse', [true]);
+    };
+
+    /**
+     * unlockMouse
+     * @memberof Plugin
+     * @alias unlockMouse
+     * @description Defines the method used to set flag getting mousemove event or not in false.
+     */
+    Plugin.unlockMouse = function()
+    {
+        this.executeMethod('LockMouse', [false]);
+    };
 	/***********************************************************************
 	 * INPUT HELPERS
  	 */
