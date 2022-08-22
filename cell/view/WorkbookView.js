@@ -1013,7 +1013,7 @@
 		self.clearSearchOnRecalculate(index);
 	});
 	this.model.handlers.add("updateFindResults", function(index) {
-		self.updateSearchOnRecalculate(index);
+		//self.updateSearchOnRecalculate(index);
 	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
@@ -5108,6 +5108,9 @@
 				if (!cell.isEqual(this.props)) {
 					this._removeFromSearchElems(key, id);
 				}
+			} else if (cell.isEqual(this.props)) {
+				this.wb.handlers.trigger("asc_onModifiedDocument");
+				this.setModifiedDocument(true);
 			}
 		}
 	};

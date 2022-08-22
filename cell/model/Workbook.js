@@ -7226,7 +7226,7 @@
 		// ToDo do not update conditional formatting on hidden sheet
 		this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(ranges));
 		//this.workbook.handlers.trigger("toggleAutoCorrectOptions", null,true);
-		this.updateFindResults();
+		//this.updateFindResults();
 	};
 	Worksheet.prototype.updateSparklineCache = function (sheet, ranges) {
 		for (var i = 0; i < this.aSparklineGroups.length; ++i) {
@@ -11248,6 +11248,7 @@
 			} else {
 				wb.dependencyFormulas.addToBuildDependencyCell(this);
 			}
+			this.ws.workbook.handlers.trigger("changeCellValue", this);
 		} else if (val) {
 			this._setValue(val, ignoreHyperlink);
 			if (!ignoreHyperlink && window['AscCommonExcel'].g_AutoCorrectHyperlinks) {
@@ -11256,6 +11257,7 @@
 			wb.dependencyFormulas.addToChangedCell(this);
 		} else {
 			wb.dependencyFormulas.addToChangedCell(this);
+			this.ws.workbook.handlers.trigger("changeCellValue", this);
 		}
 
 		var DataNew = null;
@@ -12325,10 +12327,13 @@
 			return false;
 		}
 
-		this.ws.workbook.handlers.trigger("changeCellValue", this);
 
-		if("" == val)
+
+		if("" == val) {
+			this.ws.workbook.handlers.trigger("changeCellValue", this);
 			return;
+		}
+
 		var oNumFormat;
 		var xfs = this.getCompiledStyle();
 		if(null != xfs && null != xfs.num)
@@ -12391,6 +12396,7 @@
 				}
 			}
 		}
+		this.ws.workbook.handlers.trigger("changeCellValue", this);
 	};
 	Cell.prototype._autoformatHyperlink = function(val){
 		if (AscCommon.rx_allowedProtocols.test(val) || /^(www.)|@/i.test(val)) {
