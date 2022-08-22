@@ -3534,7 +3534,7 @@ var editor;
 
 		//***searchEngine
 
-		this.wb.SearchEngine.checkReSearch();
+		//this.wb.SearchEngine.checkReSearch();
 
 		var SearchEngine = this.wb.Search(options);
 		var Id = this.wb.GetSearchElementId(!options || options.scanForward);
@@ -3614,7 +3614,7 @@ var editor;
 		if (!wb || !wb.SearchEngine)
 			return;
 
-		wb.SearchEngine.checkReSearch();
+		//wb.SearchEngine.checkReSearch();
 
 		wb.SelectSearchElement(sId);
 	};

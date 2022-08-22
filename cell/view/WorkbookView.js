@@ -892,6 +892,9 @@
         ws.changeWorksheet("update", val);
       }
     });
+    this.model.handlers.add("changeCellValue", function(cell) {
+		self.SearchEngine && self.SearchEngine.changeCellValue(cell);
+    });
     this.model.handlers.add("showWorksheet", function(wsId) {
       var wsModel = self.model.getWorksheetById(wsId), index;
       if (wsModel) {
@@ -4928,8 +4931,15 @@
 	};
 	CDocumentSearchExcel.prototype.GetNextElement = function () {
 		var id;
+
+		if (this.props.lastSearchElem) {
+			//временно переставляем селект на данный элемент и ставим CurId - 1
+			this.CurId = -1;
+		}
+
 		if (-1 === this.CurId) {
 			id = this.findNearestElement();
+			this.props.lastSearchElem = null;
 		} else {
 			id = this.Direction ? this.CurId + 1 : this.CurId - 1;
 		}
@@ -4992,7 +5002,16 @@
 		} else {
 			var ws = this.wb.getActiveWS();
 			var selectionRange = this.props.selectionRange || ws.selectionRange;
+
 			var activeCell = selectionRange.activeCell;
+			if (this.props.lastSearchElem) {
+				var cell = this.props.lastSearchElem[3];
+				if (cell) {
+					var range = AscCommonExcel.g_oRangeCache.getAscRange(cell);
+					activeCell = {row: range.r1, col: range.c1};
+				}
+			}
+
 			var bReverse = !t.Direction;
 
 			//получаем массив из индексов
@@ -5081,19 +5100,33 @@
 			}
 		}
 	};
+	CDocumentSearchExcel.prototype.changeCellValue = function (cell) {
+		if (this.isNotEmpty()) {
+			var key = cell.ws.index + "-" + cell.nCol + "-" + cell.nRow;
+			if (null != this.mapFindCells[key]) {
+				var id = this.mapFindCells[key];
+				if (!cell.isEqual(this.props)) {
+					this._removeFromSearchElems(key, id);
+				}
+			}
+		}
+	};
 	CDocumentSearchExcel.prototype.removeFromSearchElems = function (col, row, ws) {
 		var key = ws.index + "-" + col + "-" + row;
 		if (null != this.mapFindCells[key]) {
 			var id = this.mapFindCells[key];
-			if (this.Elements[id]) {
-				var oApi = window["Asc"]["editor"];
-				oApi.sync_removeTextAroundSearch(id);
-				delete this.Elements[id];
-			}
-			delete this.mapFindCells[key];
-			this.Count--;
-			this.private_AddReplacedId(id);
+			this._removeFromSearchElems(key, id);
 		}
+	};
+	CDocumentSearchExcel.prototype._removeFromSearchElems = function (key, id) {
+		if (this.Elements[id]) {
+			var oApi = window["Asc"]["editor"];
+			oApi.sync_removeTextAroundSearch(id);
+			delete this.Elements[id];
+		}
+		delete this.mapFindCells[key];
+		this.Count--;
+		this.private_AddReplacedId(id);
 	};
 	CDocumentSearchExcel.prototype.Replace = function (sReplaceString, Id, bRestorePos) {
 	};

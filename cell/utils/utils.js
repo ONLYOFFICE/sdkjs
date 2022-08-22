@@ -3065,6 +3065,10 @@
 			this.isNeedRecalc = null;
 
 			this.specificRange = null;
+
+			//если запускаем новый поиск из-за измененного документа, то присылаем последний элемент, на который
+			//кликнул пользователь и далее пытаемся найти следующий/предыдущий
+			this.lastSearchElem = null;
 		}
 
 		asc_CFindOptions.prototype.clone = function () {
@@ -3143,6 +3147,7 @@
 		asc_CFindOptions.prototype.asc_setIsReplaceAll = function (val) {this.isReplaceAll = val;};
 		asc_CFindOptions.prototype.asc_setSpecificRange = function (val) {this.specificRange = val;};
 		asc_CFindOptions.prototype.asc_setNeedRecalc = function (val) {this.isNeedRecalc = val;};
+		asc_CFindOptions.prototype.asc_setLastSearchElem = function (val) {this.lastSearchElem = val;};
 
 		/** @constructor */
 		function findResults() {

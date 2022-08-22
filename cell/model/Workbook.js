@@ -11959,6 +11959,8 @@
 		}
 		else
 			this.setValue("");
+
+		this.ws.workbook.handlers.trigger("changeCellValue", this);
 	};
 	Cell.prototype._checkDirty = function(){
 		var t = this;
@@ -12322,6 +12324,8 @@
 			}
 			return false;
 		}
+
+		this.ws.workbook.handlers.trigger("changeCellValue", this);
 
 		if("" == val)
 			return;
