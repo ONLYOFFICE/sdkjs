@@ -1404,4 +1404,16 @@
 			this.sendEvent("asc_onPluginHideButton", id);
 		}
 	};
+
+    /**
+    * Send or not events mousemove from editors to plugins.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {boolean} [bLock] - The flag send or not events.
+     * @alias LockMouse 
+     */
+	Api.prototype["pluginMethod_LockMouse"] = function(bLock)
+	{
+		window.g_asc_plugins.isLockMouse = !!bLock;
+	};
 })(window);

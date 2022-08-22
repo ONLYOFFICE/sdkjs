@@ -497,40 +497,6 @@ window.startPluginApi = function() {
         };
         _client.send();
     };
-
-    /**
-     * lockMouse
-     * @memberof Plugin
-     * @alias lockMouse
-     * @description Defines the method used to set flag getting mousemove event or not in true.
-     */
-    Plugin.lockMouse = function()
-    {
-        var _message = JSON.stringify({
-            guid : window.Asc.plugin.info.guid,
-            type : "lockMouse",
-            data : true
-        });
-        
-        window.plugin_sendMessage(_message);
-    };
-
-    /**
-     * unlockMouse
-     * @memberof Plugin
-     * @alias unlockMouse
-     * @description Defines the method used to set flag getting mousemove event or not in false.
-     */
-    Plugin.unlockMouse = function()
-    {
-        var _message = JSON.stringify({
-            guid : window.Asc.plugin.info.guid,
-            type : "lockMouse",
-            data : false
-        });
-        
-        window.plugin_sendMessage(_message);
-    };
 	/***********************************************************************
 	 * INPUT HELPERS
  	 */
