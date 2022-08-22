@@ -194,6 +194,7 @@ CHistory.prototype =
 
     UndoLastPoint : function(nBottomIndex)
     {
+    	let arrChanges = [];
         var oPoint = this.Points[this.Index];
         if(oPoint)
         {
@@ -211,10 +212,13 @@ CHistory.prototype =
             {
                 var oItem = aItems[i];
                 oItem.Data.Undo();
+                arrChanges.push(oItem.Data);
             }
             oPoint.Items.length = _bottomIndex + 1;
             this.Document.SetSelectionState( oPoint.State );
         }
+
+        return arrChanges;
     },
 
     Undo : function(Options)

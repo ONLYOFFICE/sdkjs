@@ -148,26 +148,20 @@
 	};
 	CTextFormFormat.prototype.Check = function(sText)
 	{
-		let arrBuffer = [];
-		if (Array.isArray(sText))
-		{
-			arrBuffer = Array.from(sText);
-		}
-		else if (typeof(sText) === "string")
-		{
-			for (let oIter = sText.getUnicodeIterator(); oIter.check(); oIter.next())
-			{
-				arrBuffer.push(oIter.value());
-			}
-		}
-
+		let arrBuffer = this.GetBuffer(sText);
 		return (this.CheckFormat(arrBuffer) && this.CheckSymbols(arrBuffer));
 	};
-	CTextFormFormat.prototype.CheckOnFly = function()
+	CTextFormFormat.prototype.CheckOnFly = function(sText)
 	{
-		return ((FormatType.None === this.BaseFormat && this.Symbols.length > 0)
-			|| FormatType.Digit === this.BaseFormat
-			|| FormatType.Letter === this.BaseFormat);
+		let arrBuffer = this.GetBuffer(sText);
+
+		if (!this.CheckSymbols(arrBuffer))
+			return false;
+
+		if (FormatType.Digit === this.BaseFormat || FormatType.Letter === this.BaseFormat)
+			return this.CheckFormat(arrBuffer);
+
+		return true;
 	};
 	CTextFormFormat.prototype.WriteToBinary = function(oWriter)
 	{
@@ -217,6 +211,23 @@
 		}
 
 		return (!!sText.match(this.RegExp));
+	};
+	CTextFormFormat.prototype.GetBuffer = function(sText)
+	{
+		let arrBuffer = [];
+		if (Array.isArray(sText))
+		{
+			arrBuffer = Array.from(sText);
+		}
+		else if (typeof(sText) === "string")
+		{
+			for (let oIter = sText.getUnicodeIterator(); oIter.check(); oIter.next())
+			{
+				arrBuffer.push(oIter.value());
+			}
+		}
+
+		return arrBuffer;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTextFormFormat = CTextFormFormat;

@@ -247,6 +247,21 @@
 		else
 			this.OnChangeTextForm(oForm);
 	};
+	/**
+	 * Проверяем корректность изменения формы
+	 * @param oForm
+	 */
+	CFormsManager.prototype.ValidateChangeOnFly = function(oForm)
+	{
+		if (!oForm.IsPlaceHolder() && !oForm.IsComplexForm() && oForm.IsTextForm())
+		{
+			let oTextFormPr = oForm.GetTextFormPr();
+			if (!oTextFormPr.CheckFormatOnFly(oForm.GetInnerText()))
+				return false;
+		}
+
+		return true;
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

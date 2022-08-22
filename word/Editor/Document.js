@@ -1895,7 +1895,9 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		Start           : false,
 		Depth           : 0,
 		PointsCount     : 0,
+		Description     : AscDFH.historyitem_type_Unknown,
 		Recalculate     : false,
+		CancelAction    : false,
 		UpdateSelection : false,
 		UpdateInterface : false,
 		UpdateRulers    : false,
@@ -2514,6 +2516,7 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState)
 		this.Action.Depth           = 0;
 		this.Action.PointsCount     = isNewPoint ? 1 : 0;
 		this.Action.Recalculate     = false;
+		this.Action.Description     = nDescription;
 		this.Action.UpdateSelection = false;
 		this.Action.UpdateInterface = false;
 		this.Action.UpdateRulers    = false;
@@ -2677,7 +2680,17 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.private_CheckAdditionalOnFinalize();
 
 	var isAllPointsEmpty = true;
-	if (false !== isCheckEmptyAction)
+	if (this.Action.CancelAction)
+	{
+		let arrChanges = [];
+		for (var nIndex = 0, nPointsCount = this.Action.PointsCount; nIndex < nPointsCount; ++nIndex)
+		{
+			arrChanges = arrChanges.concat(this.History.UndoLastPoint());
+		}
+
+		this.RecalculateByChanges(arrChanges);
+	}
+	else if (false !== isCheckEmptyAction)
 	{
 		for (var nIndex = 0, nPointsCount = this.Action.PointsCount; nIndex < nPointsCount; ++nIndex)
 		{
@@ -2739,6 +2752,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.Depth           = 0;
 	this.Action.PointsCount     = 0;
 	this.Action.Recalculate     = false;
+	this.Action.CancelAction    = false;
 	this.Action.UpdateSelection = false;
 	this.Action.UpdateInterface = false;
 	this.Action.UpdateRulers    = false;
@@ -2757,6 +2771,12 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 
 	if (this.TrackMoveId)
 		this.private_FinalizeCheckTrackMove();
+
+	if (this.Action.Additional.ValidateForm)
+		this.private_FinalizeValidateForm();
+
+	if (this.Action.CancelAction)
+		return;
 
 	if (this.Action.Additional.FormChange)
 		this.private_FinalizeFormChange();
@@ -2840,6 +2860,23 @@ CDocument.prototype.private_FinalizeCheckTrackMove = function()
 			oMarks.From.End.RemoveThisMarkFromDocument();
 
 		this.Action.Recalculate = true;
+	}
+};
+CDocument.prototype.private_FinalizeValidateForm = function()
+{
+	if (1 === this.Action.PointsCount
+		&& (AscDFH.historydescription_Document_BackSpaceButton === this.Action.Description
+			|| AscDFH.historydescription_Document_DeleteButton === this.Action.Description))
+		return;
+
+	for (var sId in this.Action.Additional.ValidateForm)
+	{
+		let oForm = this.Action.Additional.ValidateForm[sId];
+		if (!this.FormsManager.ValidateChangeOnFly(oForm))
+		{
+			this.Action.CancelAction = true;
+			return;
+		}
 	}
 };
 CDocument.prototype.private_FinalizeFormChange = function()
@@ -24987,12 +25024,16 @@ CDocument.prototype.OnChangeForm = function(oForm)
 		oForm = oMainForm;
 	}
 
+	if (!this.Action.Additional.ValidateForm)
+		this.Action.Additional.ValidateForm = {};
+
+	this.Action.Additional.ValidateForm[oForm.GetId()] = oForm;
+
 	if (!sKey)
 		return;
 
 	if (!this.Action.Additional.FormChange)
 		this.Action.Additional.FormChange = {};
-
 
 	if (this.Action.Additional.FormChange[sKey])
 		return;

@@ -92,15 +92,6 @@ CInlineLevelSdt.prototype.Add = function(Item)
 		return;
 	}
 
-	if (this.IsTextForm()
-		&& this.IsPlaceHolder()
-		&& this.Pr.TextForm.CheckFormatOnFly()
-		&& ((Item.Type !== para_Text && Item.Type !== para_Space)
-			|| !this.Pr.TextForm.CheckFormat(String.fromCodePoint(Item.Type === para_Text ? Item.Value : 0x20))))
-		return;
-
-	// TODO: ЕЩЕ ОБРАБОТАТЬ СЛУЧАЙ, когда добавляем текст с выделением, там тоже надо добавить проверку
-
 	this.private_ReplacePlaceHolderWithContent();
 
 	var oTextFormRun;
@@ -114,11 +105,8 @@ CInlineLevelSdt.prototype.Add = function(Item)
 
 		oTextFormRun = this.MakeSingleRunElement(false);
 
-		let isCheckFormat = this.Pr.TextForm.CheckFormatOnFly();
-		if (this.Pr.TextForm.MaxCharacters > 0 || isCheckFormat)
+		if (this.Pr.TextForm.MaxCharacters > 0)
 		{
-			// TODO: Надо проверить, если изначально текст был не по формату, тогда и проверять не надо, будет использовать общую проверку
-
 			if (!(Item instanceof AscWord.CRunText) && !(Item instanceof AscWord.CRunSpace))
 				return;
 
@@ -141,9 +129,6 @@ CInlineLevelSdt.prototype.Add = function(Item)
 
 			if (nInsertPos === oTextFormRun.Content.length)
 				arrCodePoints.push(nNewCodePoint);
-
-			if (isCheckFormat && !this.Pr.TextForm.CheckFormat(arrCodePoints))
-				return;
 
 			if (this.Pr.TextForm.MaxCharacters > 0)
 			{
