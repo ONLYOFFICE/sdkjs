@@ -147,4 +147,56 @@ $(function () {
 		forms = formsManager.GetAllForms();
 		assert.strictEqual(forms.length, 2, "Check forms count after adding combobox content control");
 	});
+
+	QUnit.test("Check format in text form", function (assert)
+	{
+		AscTest.ClearDocument();
+		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		logicDocument.AddToContent(0, p);
+		logicDocument.MoveCursorToEndPos();
+
+		let textForm = logicDocument.AddContentControlTextForm();
+		AddFormPr(textForm);
+
+		let textFormPr = textForm.GetTextFormPr();
+		textFormPr.SetDigitFormat();
+
+		textForm.SetThisElementCurrent();
+		textForm.MoveCursorToStartPos();
+
+		assert.strictEqual(textForm.IsPlaceHolder(), true, "Check if text form is filled with placeholder");
+		assert.strictEqual(textForm.IsThisElementCurrent(), true, "Check if cursor is placed in the text form");
+
+		AscTest.PressKey(AscTest.Key.A);
+		AscTest.PressKey(AscTest.Key.B);
+		AscTest.PressKey(AscTest.Key._1);
+		AscTest.PressKey(AscTest.Key._2);
+		AscTest.PressKey(AscTest.Key.C);
+		AscTest.PressKey(AscTest.Key._3);
+
+		assert.strictEqual(textForm.GetInnerText(), "123", "Check inner text after entering 'AB12C3'");
+
+		textFormPr.SetLetterFormat();
+		AscTest.PressKey(AscTest.Key.A);
+		AscTest.PressKey(AscTest.Key._1);
+
+		assert.strictEqual(textForm.GetInnerText(), "123", "Change type to Letter and attempt to enter 'A1'");
+
+		AscTest.PressKey(AscTest.Key.backspace);
+		AscTest.PressKey(AscTest.Key.backspace);
+		AscTest.PressKey(AscTest.Key.backspace);
+		assert.strictEqual(textForm.IsPlaceHolder(), true, "Check if text form is filled with placeholder");
+
+		AscTest.PressKey(AscTest.Key.A);
+		AscTest.PressKey(AscTest.Key.B);
+		AscTest.PressKey(AscTest.Key._1);
+		AscTest.PressKey(AscTest.Key._2);
+		AscTest.PressKey(AscTest.Key.C);
+		AscTest.PressKey(AscTest.Key._3);
+
+		assert.strictEqual(textForm.GetInnerText(), "ABC", "Check inner text after entering 'AB12C3'");
+
+
+
+	});
 });

@@ -212,12 +212,12 @@ $(function () {
 		assert.strictEqual(textForm1.IsTextForm() && !!textForm1.GetTextFormPr(), true, "Check if text form1 is an actual text form");
 		assert.strictEqual(textForm1.GetTextFormPr().GetMaxCharacters(), -1, "Check max characters value");
 
-		AscTest.PressKey(AscTest.KeyCode.a);
-		AscTest.PressKey(AscTest.KeyCode.b);
-		AscTest.PressKey(AscTest.KeyCode.c);
-		AscTest.PressKey(AscTest.KeyCode.d);
-		AscTest.PressKey(AscTest.KeyCode.e);
-		AscTest.PressKey(AscTest.KeyCode.f);
+		AscTest.PressKey(AscTest.Key.a);
+		AscTest.PressKey(AscTest.Key.b);
+		AscTest.PressKey(AscTest.Key.c);
+		AscTest.PressKey(AscTest.Key.d);
+		AscTest.PressKey(AscTest.Key.e);
+		AscTest.PressKey(AscTest.Key.f);
 
 		assert.strictEqual(textForm1.GetInnerText(), "abcdef", "Text of text form1 : abcdef");
 		assert.strictEqual(textForm2.IsPlaceHolder(), true, "Text form 2 is filled with placeholder");
@@ -225,9 +225,9 @@ $(function () {
 
 		AscTest.MoveCursorRight();
 
-		AscTest.PressKey(AscTest.KeyCode.A);
-		AscTest.PressKey(AscTest.KeyCode.B);
-		AscTest.PressKey(AscTest.KeyCode.C);
+		AscTest.PressKey(AscTest.Key.A);
+		AscTest.PressKey(AscTest.Key.B);
+		AscTest.PressKey(AscTest.Key.C);
 
 		assert.strictEqual(complexForm.GetInnerText(), "111abcdef222ABC333", "Check text of all complex form");
 
@@ -241,12 +241,12 @@ $(function () {
 		assert.strictEqual(textForm1.IsTextForm() && !!textForm1.GetTextFormPr(), true, "Check if text form1 is an actual text form");
 		assert.strictEqual(textForm1.GetTextFormPr().GetMaxCharacters(), 3, "Check max characters value");
 
-		AscTest.PressKey(AscTest.KeyCode.a);
-		AscTest.PressKey(AscTest.KeyCode.b);
-		AscTest.PressKey(AscTest.KeyCode.c);
-		AscTest.PressKey(AscTest.KeyCode.d);
-		AscTest.PressKey(AscTest.KeyCode.e);
-		AscTest.PressKey(AscTest.KeyCode.f);
+		AscTest.PressKey(AscTest.Key.a);
+		AscTest.PressKey(AscTest.Key.b);
+		AscTest.PressKey(AscTest.Key.c);
+		AscTest.PressKey(AscTest.Key.d);
+		AscTest.PressKey(AscTest.Key.e);
+		AscTest.PressKey(AscTest.Key.f);
 
 		assert.strictEqual(textForm1.GetInnerText(), "abc", "Text of text form1 : abc");
 		assert.strictEqual(textForm2.GetInnerText(), "def", "Text of text form2 : def");

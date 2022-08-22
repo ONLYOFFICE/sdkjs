@@ -67,6 +67,9 @@
 	editor.sync_OnAllRequiredFormsFilled = function(){};
 	editor.asc_OnFocusContentControl = function(){};
 	editor.asc_OnBlurContentControl = function(){};
+	editor.sync_CanUndoCallback = function(){};
+	editor.sync_CanRedoCallback = function(){};
+	editor.CheckChangedDocument = function(){};
 
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = drawingDocument;

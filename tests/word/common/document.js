@@ -36,7 +36,18 @@
 {
 	let logicDocument = null;
 
-	const KeyCode = {
+	const Key = {
+		_0 : 48,
+		_1 : 49,
+		_2 : 50,
+		_3 : 51,
+		_4 : 52,
+		_5 : 53,
+		_6 : 54,
+		_7 : 55,
+		_8 : 56,
+		_9 : 57,
+
 		A : 65,
 		B : 66,
 		C : 67,
@@ -49,8 +60,17 @@
 		c : 99,
 		d : 100,
 		e : 101,
-		f : 102
+		f : 102,
+
+		space : 32,
+		backspace : 8
 	};
+
+	function IsKeyDown(key)
+	{
+		return (Key.space === key
+			|| Key.backspace === key);
+	}
 
 	function CreateLogicDocument()
 	{
@@ -90,10 +110,10 @@
 		global_mouseEvent.AltKey   = !!isAlt;
 		global_mouseEvent.KeyCode  = keyCode;
 
-		if (0x20 !== keyCode)
-			logicDocument.OnKeyPress(global_mouseEvent);
-		else
+		if (IsKeyDown(keyCode))
 			logicDocument.OnKeyDown(global_mouseEvent);
+		else
+			logicDocument.OnKeyPress(global_mouseEvent);
 	}
 	function MoveCursorLeft(isShift, isCtrl)
 	{
@@ -149,7 +169,7 @@
 	AscTest.Recalculate         = Recalculate;
 	AscTest.ClickMouseButton    = ClickMouseButton;
 	AscTest.ClearDocument       = ClearDocument;
-	AscTest.KeyCode             = KeyCode;
+	AscTest.Key                 = Key;
 
 })(window);
 
