@@ -4809,17 +4809,6 @@
 
 		this.modifiedDocument = null;
 	};
-
-	CDocumentSearchExcel.prototype.checkReSearch = function () {
-		if (this.modifiedDocument) {
-			//var props = this.props;
-			this.Clear();
-		}
-	};
-
-	CDocumentSearchExcel.prototype.clearHighlight = function () {
-		this.mapFindCells = {};
-	};
 	CDocumentSearchExcel.prototype.setModifiedDocument = function (val) {
 		this.modifiedDocument = val;
 	};
