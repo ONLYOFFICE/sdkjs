@@ -2365,6 +2365,8 @@ CDocument.prototype.Set_CurrentElement = function(Index, bUpdateStates)
 		this.Document_UpdateSelectionState();
 	}
 
+	this.UpdateTracks();
+
 	if (docpostype_HdrFtr === OldDocPosType)
 	{
 		this.DrawingDocument.ClearCachePages();
@@ -2685,7 +2687,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		let arrChanges = [];
 		for (var nIndex = 0, nPointsCount = this.Action.PointsCount; nIndex < nPointsCount; ++nIndex)
 		{
-			arrChanges = arrChanges.concat(this.History.UndoLastPoint());
+			arrChanges = arrChanges.concat(this.History.Undo());
 		}
 
 		this.RecalculateByChanges(arrChanges);
@@ -2864,20 +2866,32 @@ CDocument.prototype.private_FinalizeCheckTrackMove = function()
 };
 CDocument.prototype.private_FinalizeValidateForm = function()
 {
-	if (1 === this.Action.PointsCount
-		&& (AscDFH.historydescription_Document_BackSpaceButton === this.Action.Description
-			|| AscDFH.historydescription_Document_DeleteButton === this.Action.Description))
-		return;
+	let isCancelAction = this.Action.CancelAction;
 
+	let arrForms = [];
 	for (var sId in this.Action.Additional.ValidateForm)
 	{
 		let oForm = this.Action.Additional.ValidateForm[sId];
 		if (!this.FormsManager.ValidateChangeOnFly(oForm))
-		{
 			this.Action.CancelAction = true;
-			return;
-		}
+
+		arrForms.push(oForm);
 	}
+
+	if (1 === this.Action.PointsCount
+		&& !isCancelAction
+		&& (AscDFH.historydescription_Document_BackSpaceButton === this.Action.Description
+			|| AscDFH.historydescription_Document_DeleteButton === this.Action.Description))
+	{
+		this.Action.CancelAction = false;
+	}
+
+	if (this.Action.CancelAction)
+		return;
+
+	// По логике заполнять одновремнно более одной формы нельзя
+	if (1 === arrForms.length)
+		this.History.SetAdditionalFormFilling(arrForms[0], this.Action.PointsCount);
 };
 CDocument.prototype.private_FinalizeFormChange = function()
 {
@@ -12191,6 +12205,9 @@ CDocument.prototype.UpdateContentControlFocusState = function(oCC)
 	if (this.FocusCC === oCC)
 		return;
 
+	if (this.FocusCC)
+		this.CheckTextFormFormatOnBlur(this.FocusCC);
+
 	if (this.FocusCC && this.Api)
 		this.Api.asc_OnBlurContentControl(this.FocusCC);
 
@@ -12198,6 +12215,35 @@ CDocument.prototype.UpdateContentControlFocusState = function(oCC)
 		this.Api.asc_OnFocusContentControl(oCC);
 
 	this.FocusCC = oCC;
+};
+CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
+{
+	if (!oForm
+		|| !oForm.IsForm()
+		|| !oForm.IsTextForm()
+		|| oForm.IsComplexForm()
+		|| oForm.IsPlaceHolder())
+		return;
+
+	let sText = oForm.GetInnerText();
+	if (!oForm.GetTextFormPr().CheckFormat(sText))
+	{
+		// TODO: Add event
+
+		if (this.CollaborativeEditing.Is_SingleUser() || !this.CollaborativeEditing.Is_Fast())
+		{
+			let arrChanges = [];
+			while (oForm === this.History.GetLastPointFormFilling())
+			{
+				arrChanges = arrChanges.concat(this.History.Undo());
+			}
+
+			if (arrChanges.length)
+				this.RecalculateByChanges(arrChanges);
+		}
+	}
+
+	this.History.ClearFormFillingInfo();
 };
 CDocument.prototype.UpdateSelectedReviewChanges = function(isSaveCurrentReviewChange)
 {

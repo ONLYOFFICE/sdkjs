@@ -63,7 +63,8 @@
 		f : 102,
 
 		space : 32,
-		backspace : 8
+		backspace : 8,
+		minus : 45,
 	};
 
 	function IsKeyDown(key)

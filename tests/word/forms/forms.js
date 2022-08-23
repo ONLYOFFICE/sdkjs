@@ -196,6 +196,62 @@ $(function () {
 
 		assert.strictEqual(textForm.GetInnerText(), "ABC", "Check inner text after entering 'AB12C3'");
 
+		p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		logicDocument.AddToContent(1, p);
+
+		p.SetThisElementCurrent();
+		p.MoveCursorToStartPos();
+
+		let textForm2 = logicDocument.AddContentControlTextForm();
+		AddFormPr(textForm2);
+
+		let textForm2Pr = textForm2.GetTextFormPr();
+		textForm2Pr.SetMaskFormat("999-aaa");
+
+		textForm2.SetThisElementCurrent();
+		textForm2.MoveCursorToStartPos();
+
+		assert.strictEqual(textForm2.IsPlaceHolder(), true, "Check if text form is filled with placeholder");
+		assert.strictEqual(textForm2.IsThisElementCurrent(), true, "Check if cursor is placed in the text form");
+
+		AscTest.PressKey(AscTest.Key._1);
+		AscTest.PressKey(AscTest.Key._1);
+		AscTest.PressKey(AscTest.Key._2);
+		AscTest.PressKey(AscTest.Key.minus);
+		AscTest.PressKey(AscTest.Key.A);
+
+		textForm.SetThisElementCurrent();
+		textForm.MoveCursorToStartPos();
+
+		assert.strictEqual(textForm2.GetInnerText(), "112-A", "Check inner text in the text form 2");
+		assert.strictEqual(textForm2Pr.CheckFormat("112-A"), true, "Check format of the text in text form2");
+
+		textForm2.SetThisElementCurrent();
+		textForm2.MoveCursorToEndPos();
+
+		AscTest.PressKey(AscTest.Key.B);
+		AscTest.PressKey(AscTest.Key._1);
+
+		assert.strictEqual(textForm2.GetInnerText(), "112-AB1", "Check inner text in the text form 2 after adding text");
+
+		textForm.SetThisElementCurrent();
+		textForm.MoveCursorToStartPos();
+
+		assert.strictEqual(textForm2.GetInnerText(), "112-A", "Check inner text in the text form 2 after moving cursor outside form");
+
+		textForm2.SetThisElementCurrent();
+		textForm2.MoveCursorToEndPos();
+		AscTest.PressKey(AscTest.Key.B);
+		AscTest.PressKey(AscTest.Key.B);
+
+		textForm.SetThisElementCurrent();
+		textForm2.SetThisElementCurrent();
+		textForm2.MoveCursorToEndPos();
+		AscTest.PressKey(AscTest.Key.C);
+
+		textForm.SetThisElementCurrent();
+		assert.strictEqual(textForm2.GetInnerText(), "112-ABB", "Check inner text in the text form 2. It must be '112-ABB'");
+
 
 
 	});
