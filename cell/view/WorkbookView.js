@@ -4932,7 +4932,7 @@
 	CDocumentSearchExcel.prototype.GetNextElement = function () {
 		var id;
 
-		if (this.props.lastSearchElem && this.modifiedDocument) {
+		if (this.props.lastSearchElem) {
 			//временно переставляем селект на данный элемент и ставим CurId - 1
 			this.CurId = -1;
 		}
@@ -5005,7 +5005,7 @@
 			var selectionRange = this.props.selectionRange || ws.selectionRange;
 
 			var activeCell = selectionRange.activeCell;
-			if (this.props.lastSearchElem && this.modifiedDocument) {
+			if (this.props.lastSearchElem) {
 				var cell = this.props.lastSearchElem[3];
 				if (cell) {
 					var range = AscCommonExcel.g_oRangeCache.getAscRange(cell);
