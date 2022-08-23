@@ -520,15 +520,21 @@ window.startPluginApi = function() {
 		this.isLockMouse = false;
     };
 
-	window.addEventListener('pointerdown', function() {
-		// we use poiter down, bacause PerfectScroll lock mousedow event and send only pointerdown
+	function onMousedown() {
 		if (window.Asc.plugin.isLockMouse)
-			window.Asc.plugin.executeMethod('LockMouse', [window.Asc.plugin.guid]);
-	});
-	window.addEventListener('mouseup', function() {
+			window.Asc.plugin.executeMethod('LockMouse', [true]);
+	};
+
+	function onMouseUp() {
 		if (window.Asc.plugin.isLockMouse)
-			window.Asc.plugin.executeMethod('LockMouse', [null]);
-	});
+			window.Asc.plugin.executeMethod('LockMouse', [false]);
+	};
+
+	window.addEventListener('pointerdown', onMousedown , false);
+	window.addEventListener('pointerup', onMouseUp, false);
+	window.addEventListener('touchstart', onMousedown, false);
+	window.addEventListener('ontouchend', onMouseUp, false);
+
 	/***********************************************************************
 	 * INPUT HELPERS
  	 */

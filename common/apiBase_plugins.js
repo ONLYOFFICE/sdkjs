@@ -1409,12 +1409,11 @@
     * Send or not events mousemove from editors to plugins.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [guid] - The plugin guid that locks mousemove event.
+     * @param {boolean} [bLock] - The flag send or not events.
      * @alias LockMouse 
      */
-	Api.prototype["pluginMethod_LockMouse"] = function(guid)
+	Api.prototype["pluginMethod_LockMouse"] = function(bLock)
 	{
-		console.log('pluginMethod_LockMouse guid: ' + guid);
-		window.g_asc_plugins.lockMouseGuid = guid;
+		window.g_asc_plugins.lockMouseGuid = (bLock ? window.g_asc_plugins.guidAsyncMethod : null);
 	};
 })(window);
