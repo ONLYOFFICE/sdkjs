@@ -16907,19 +16907,7 @@
 			var resultText        = null;
 			var nTextToReplace    = 0;
 			var ws                = this.wb.getWorksheet();
-			var oContent = ws.objectRender.controller.getTargetDocContent();
-
-			if (oWorksheet.worksheet.getSheetProtection()) {
-				let aContainsRanges = oWorksheet.worksheet.protectedRangesContainsRange(oRange.range.bbox, false) || [];
-				if (aContainsRanges.length !== 0) {
-					for (let Index = 0; Index < aContainsRanges.length; Index++) {
-						if (aContainsRanges[Index].asc_isPassword() && !aContainsRanges[Index]._isEnterPassword)
-							return false;
-					}
-				}
-				else
-					return false;
-			}
+			var oContent = ws.objectRender.controller != null ? ws.objectRender.controller.getTargetDocContent() : null;
 
 			if (oContent) 
 			{
@@ -16930,6 +16918,27 @@
 					arrSelectedParas[0].Parent.RemoveSelection();
 				Asc.editor.wb.recalculateDrawingObjects();
 				return;
+			}
+
+			if (oWorksheet.worksheet.getSheetProtection()) {
+				let aContainsRanges = oWorksheet.worksheet.protectedRangesContainsRange(oRange.range.bbox, false) || [];
+				if (aContainsRanges.length !== 0) {
+					for (let Index = 0; Index < aContainsRanges.length; Index++) {
+						if (aContainsRanges[Index].asc_isPassword() && !aContainsRanges[Index]._isEnterPassword)
+						{
+							if (oWorksheet.worksheet.workbook.handlers)
+								oWorksheet.worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+							
+							return false;
+						}
+					}
+				}
+				else {
+					if (oWorksheet.worksheet.workbook.handlers)
+						oWorksheet.worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+
+					return false;
+				}
 			}
 
 			for (var nRow = oRange.range.bbox.r1; nRow <= oRange.range.bbox.r2; nRow++)
