@@ -3692,22 +3692,25 @@
 		}
 
 		this.SetSlicerCachePivotTablesTabId();
-
+		let newFonts = {};
+		let pasteProcessor = AscCommonExcel.g_clipboardExcel.pasteProcessor;
+		newFonts = this.Workbook.generateFontMap2();
+		newFonts = pasteProcessor._convertFonts(newFonts);
+		
 		for (let nSheet = 0; nSheet < aRestoredSheets.length; nSheet++)
 		{
 			let oWorksheet = aRestoredSheets[nSheet];
-
-			let sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(oWorksheet, null, null, true, true);
-			let newFonts = {};
-			newFonts = this.Workbook.generateFontMap2();
-			let pasteProcessor = AscCommonExcel.g_clipboardExcel.pasteProcessor;
-			newFonts = pasteProcessor._convertFonts(newFonts);
 			for (let i = 0; i < oWorksheet.Drawings.length; i++) {
 				oWorksheet.Drawings[i].graphicObject.getAllFonts(newFonts);
 			}
-			
-			let pasteSheet = function() {
-				History.Create_NewPoint();
+		}
+
+		let pasteSheets = function() {
+			for (let nSheet = 0; nSheet < aRestoredSheets.length; nSheet++)
+			{
+				let oWorksheet = aRestoredSheets[nSheet];
+				let sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(oWorksheet, null, null, true, true);
+
 				let where = WorkbookView.model.aWorksheets.length;
 				let renameParams = WorkbookView.model.copyWorksheet(0, where, undefined, undefined, undefined, undefined, oWorksheet, sBinarySheet);
 				//TODO ошибку по срезам добавил в renameParams. необходимо пересмотреть
@@ -3721,14 +3724,12 @@
 				api.asc_setZoom(1);
 				// Посылаем callback об изменении списка листов
 				api.sheetsChanged();
-			};
+			}
+		};
 
-			
-			api._loadFonts(newFonts, function () {
-				pasteSheet();
-			});
-		}
-		
+		api._loadFonts(newFonts, function () {
+			pasteSheets();
+		});
 
 		return aRestoredSheets;
 	};
