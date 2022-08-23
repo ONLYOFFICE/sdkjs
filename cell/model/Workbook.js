@@ -7226,7 +7226,6 @@
 		// ToDo do not update conditional formatting on hidden sheet
 		this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(ranges));
 		//this.workbook.handlers.trigger("toggleAutoCorrectOptions", null,true);
-		//this.updateFindResults();
 	};
 	Worksheet.prototype.updateSparklineCache = function (sheet, ranges) {
 		for (var i = 0; i < this.aSparklineGroups.length; ++i) {
@@ -8597,9 +8596,6 @@
 		return null;
 	};
 	// ----- Search -----
-	Worksheet.prototype.updateFindResults = function () {
-		this.workbook.handlers.trigger("updateFindResults", this.index);
-	};
 	Worksheet.prototype.clearFindResults = function () {
 		this.lastFindOptions = null;
 		this.workbook.handlers.trigger("clearFindResults", this.index);

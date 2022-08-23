@@ -1012,9 +1012,6 @@
 	this.model.handlers.add("clearFindResults", function(index) {
 		self.clearSearchOnRecalculate(index);
 	});
-	this.model.handlers.add("updateFindResults", function(index) {
-		//self.updateSearchOnRecalculate(index);
-	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
       collaborativeEditing: this.collaborativeEditing,
