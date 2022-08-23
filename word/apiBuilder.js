@@ -16909,6 +16909,18 @@
 			var ws                = this.wb.getWorksheet();
 			var oContent = ws.objectRender.controller.getTargetDocContent();
 
+			if (oWorksheet.worksheet.getSheetProtection()) {
+				let aContainsRanges = oWorksheet.worksheet.protectedRangesContainsRange(oRange.range.bbox, false) || [];
+				if (aContainsRanges.length !== 0) {
+					for (let Index = 0; Index < aContainsRanges.length; Index++) {
+						if (aContainsRanges[Index].asc_isPassword() && !aContainsRanges[Index]._isEnterPassword)
+							return false;
+					}
+				}
+				else
+					return false;
+			}
+
 			if (oContent) 
 			{
 				arrSelectedParas = [];
