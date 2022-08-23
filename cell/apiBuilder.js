@@ -761,16 +761,19 @@
 	{
 		var oReader = new AscCommon.ReaderFromJSON();
 		var oParsedObj = JSON.parse(sMessage);
-		var oReadedObj = null;
+		var readedObj = null;
 
 		switch (oParsedObj.type)
 		{
-			case "worksheet":
-				oReadedObj = new ApiWorksheet(oReader.WorksheetFromJSON(oParsedObj, this.wbModel));
+			case "sheets":
+				let aSheets = oReader.WorksheetsFromJSON(oParsedObj, this.wbModel);
+				readedObj = [];
+				for (let Index = 0; Index < aSheets.length; Index++)
+					readedObj.push(new ApiWorksheet(aSheets[Index]));
 				break;
 		}
 
-		return oReadedObj;
+		return readedObj;
 	};
 
 	/**
@@ -1684,10 +1687,8 @@
 	ApiWorksheet.prototype.ToJSON = function(){
 		var oWriter = new AscCommon.WriterToJSON();
 		oWriter.Workbook = Asc.editor.wbModel;
-		return JSON.stringify(oWriter.SerWorksheet(this.worksheet, true));
+		return JSON.stringify(oWriter.SerWorksheets(this.worksheet.index, this.worksheet.index));
 	};
-	
-
 
 	/**
 	 * Specifies the cell border position.

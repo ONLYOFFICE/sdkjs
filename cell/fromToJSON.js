@@ -197,10 +197,9 @@
 	 * Converts the specified worksheets objects into the JSON.
 	 * @typeofeditors ["CSE"]
 	 * @param {Worksheet} oWorksheet
-	 * @param {boolean} isOneSheet - if isOneSheet === true, then write styles, pivotCaches, slicerCaches, slicerCachesExt in current returned object
 	 * @return {object} 
 	 */
-	WriterToJSON.prototype.SerWorksheet = function(oWorksheet, isOneSheet)
+	WriterToJSON.prototype.SerWorksheet = function(oWorksheet)
 	{
 		var aCols = this.SerCols(oWorksheet);
 
@@ -276,7 +275,7 @@
 		let aSlicerCachesExt = this.InitSaveManager.getSlicersCache(true);
 
 		let aSerSheets = [];
-		for (let Index = nStart; Index < nEnd; nEnd++)
+		for (let Index = nStart; Index <= nEnd; Index++)
 			aSerSheets.push(this.SerWorksheet(aSheets[Index], false));
 
 		return {
@@ -3580,45 +3579,12 @@
 		return sColumn + (oRefCell.row + 1);
 	};
 	
-	ReaderFromJSON.prototype.WorksheetFromJSON = function(oParsedSheet, oWorkbook)
+	ReaderFromJSON.prototype.WorksheetFromJSON = function(oParsedSheet)
 	{
-		let api = window["Asc"]["editor"];
-		let WorkbookView = api.wb;
-		let renameSheetMap = {};
-
 		History.TurnOff();
-		if (oWorkbook == null)
-		{
-			oWorkbook = new AscCommonExcel.Workbook();
-			oWorkbook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
-			oWorkbook.setCommonIndexObjectsFrom(WorkbookView.model);
-		}
-		this.Workbook = oWorkbook;
-		let oWorksheet = new AscCommonExcel.Worksheet(oWorkbook, -1);
+
+		let oWorksheet = new AscCommonExcel.Worksheet(this.Workbook, -1);
 		this.curWorksheet = oWorksheet;
-
-		if (this.StyleObject == null)
-		{
-			let oStyleObject = {aBorders: [], aFills: [], aFonts: [], oNumFmts: {}, aCellStyleXfs: [],
-			aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: {}, oCustomSlicerStyles: null};
-			this.StylesFromJSON(oParsedSheet["styles"], oStyleObject);
-			let oStyleReader = new AscCommonExcel.InitOpenManager(null, this.Workbook, [], false);
-			oStyleReader.InitStyleManager(oStyleObject, this.aCellXfs);
-			this.oNumFmtsOpen = oStyleObject.oNumFmts;
-			this.aDxfs = oStyleObject.aDxfs;
-		}
-
-		this.slicerCaches = {};
-		this.slicerCachesExt = {};
-
-		if (oParsedSheet["pivotCaches"] != null)
-			this.pivotCaches = this.PivotCachesFromJSON(oParsedSheet["pivotCaches"]);
-		
-		if (oParsedSheet["slicerCaches"] != null)
-			this.slicerCaches = this.SlicerCachesFromJSON(oParsedSheet["slicerCaches"], oWorksheet);
-		
-		if (oParsedSheet["slicerCachesExt"] != null)
-			this.slicerCachesExt = this.SlicerCachesFromJSON(oParsedSheet["slicerCachesExt"], oWorksheet);
 
 		// worksheet props
 		oWorksheet.sName = oParsedSheet["name"];
@@ -3674,39 +3640,118 @@
 			oWorksheet.protectedRanges = this.ProtectedRangesFromJSON(oParsedSheet["protectedRanges"]);
 
 		oWorksheet.initPostOpenZip(this.pivotCaches, this.oNumFmtsOpen);
-		let sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(oWorksheet, null, null, true, true);
 		History.TurnOn();
 
-		let newFonts = {};
-		newFonts = this.Workbook.generateFontMap2();
-		let pasteProcessor = AscCommonExcel.g_clipboardExcel.pasteProcessor;
-		newFonts = pasteProcessor._convertFonts(newFonts);
-		for (let i = 0; i < oWorksheet.Drawings.length; i++) {
-			oWorksheet.Drawings[i].graphicObject.getAllFonts(newFonts);
+		return oWorksheet;
+	};
+	ReaderFromJSON.prototype.WorksheetsFromJSON = function(oParsedSheets, oWorkbook)
+	{
+		let api = window["Asc"]["editor"];
+		let WorkbookView = api.wb;
+		let aRestoredSheets = [];
+		let renameSheetMap = {};
+
+		this.tabsIdMap = {};
+		if (oWorkbook == null)
+		{
+			oWorkbook = new AscCommonExcel.Workbook();
+			oWorkbook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
+			oWorkbook.setCommonIndexObjectsFrom(WorkbookView.model);
+		}
+		this.Workbook = oWorkbook;
+
+		if (this.StyleObject == null)
+		{
+			let oStyleObject = {aBorders: [], aFills: [], aFonts: [], oNumFmts: {}, aCellStyleXfs: [],
+			aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: {}, oCustomSlicerStyles: null};
+			this.StylesFromJSON(oParsedSheets["styles"], oStyleObject);
+			let oStyleReader = new AscCommonExcel.InitOpenManager(null, this.Workbook, [], false);
+			oStyleReader.InitStyleManager(oStyleObject, this.aCellXfs);
+			this.oNumFmtsOpen = oStyleObject.oNumFmts;
+			this.aDxfs = oStyleObject.aDxfs;
+		}
+
+		this.slicerCaches = {};
+		this.slicerCachesExt = {};
+
+		if (oParsedSheets["pivotCaches"] != null)
+			this.pivotCaches = this.PivotCachesFromJSON(oParsedSheets["pivotCaches"]);
+		
+		if (oParsedSheets["slicerCaches"] != null)
+			this.slicerCaches = this.SlicerCachesFromJSON(oParsedSheets["slicerCaches"]);
+		
+		if (oParsedSheets["slicerCachesExt"] != null)
+			this.slicerCachesExt = this.SlicerCachesFromJSON(oParsedSheets["slicerCachesExt"]);
+
+		let nSheetsCount = this.Workbook.aWorksheets.length;
+		for (var Index = 0; Index < oParsedSheets["sheets"].length; Index++)
+		{
+			let oWorksheet = this.WorksheetFromJSON(oParsedSheets["sheets"][Index]);
+			aRestoredSheets.push(oWorksheet);
+			this.tabsIdMap[oParsedSheets["sheets"][Index]["id"]] = nSheetsCount++;
+		}
+
+		this.SetSlicerCachePivotTablesTabId();
+
+		for (let nSheet = 0; nSheet < aRestoredSheets.length; nSheet++)
+		{
+			let oWorksheet = aRestoredSheets[nSheet];
+
+			let sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(oWorksheet, null, null, true, true);
+			let newFonts = {};
+			newFonts = this.Workbook.generateFontMap2();
+			let pasteProcessor = AscCommonExcel.g_clipboardExcel.pasteProcessor;
+			newFonts = pasteProcessor._convertFonts(newFonts);
+			for (let i = 0; i < oWorksheet.Drawings.length; i++) {
+				oWorksheet.Drawings[i].graphicObject.getAllFonts(newFonts);
+			}
+			
+			let pasteSheet = function() {
+				History.Create_NewPoint();
+				let where = WorkbookView.model.aWorksheets.length;
+				let renameParams = WorkbookView.model.copyWorksheet(0, where, undefined, undefined, undefined, undefined, oWorksheet, sBinarySheet);
+				//TODO ошибку по срезам добавил в renameParams. необходимо пересмотреть
+				//переименовать эту переменную, либо не добавлять copySlicerError и посылать ошибку в другом месте
+				if (renameParams && renameParams.copySlicerError) {
+					t.handlers.trigger("asc_onError", Asc.c_oAscError.ID.MoveSlicerError, Asc.c_oAscError.Level.NoCritical);
+				}
+
+				renameSheetMap[renameParams.lastName] = renameParams.newName;
+				api.asc_showWorksheet(where);
+				api.asc_setZoom(1);
+				// Посылаем callback об изменении списка листов
+				api.sheetsChanged();
+			};
+
+			
+			api._loadFonts(newFonts, function () {
+				pasteSheet();
+			});
 		}
 		
-		let pasteSheet = function() {
-			let where = WorkbookView.model.aWorksheets.length;
-			let renameParams = WorkbookView.model.copyWorksheet(0, where, oWorksheet.name, undefined, undefined, undefined, oWorksheet, sBinarySheet);
-			//TODO ошибку по срезам добавил в renameParams. необходимо пересмотреть
-			//переименовать эту переменную, либо не добавлять copySlicerError и посылать ошибку в другом месте
-			if (renameParams && renameParams.copySlicerError) {
-				t.handlers.trigger("asc_onError", Asc.c_oAscError.ID.MoveSlicerError, Asc.c_oAscError.Level.NoCritical);
+
+		return aRestoredSheets;
+	};
+	ReaderFromJSON.prototype.SetSlicerCachePivotTablesTabId = function()
+	{
+		for (let key in this.slicerCaches)
+		{
+			for (let nTable = 0; nTable < this.slicerCaches[key].pivotTables.length; nTable++)
+			{
+				let oSlicerCachePivotTable = this.slicerCaches[key].pivotTables[nTable];
+
+				if (this.tabsIdMap[oSlicerCachePivotTable.sheetId])
+				{
+					oSlicerCachePivotTable.tabIdOpen = this.tabsIdMap[oSlicerCachePivotTable.sheetId];
+					//oSlicerCachePivotTable.sheetId = this.tabsIdMap[oSlicerCachePivotTable.sheetId].Id;
+				}
+				else
+				{
+					oSlicerCachePivotTable.tabIdOpen = null;
+					oSlicerCachePivotTable.sheetId = null;
+				}
 			}
-
-			renameSheetMap[renameParams.lastName] = renameParams.newName;
-			api.asc_showWorksheet(where);
-			api.asc_setZoom(1);
-			// Посылаем callback об изменении списка листов
-			api.sheetsChanged();
-		};
-
-		
-		api._loadFonts(newFonts, function () {
-			pasteSheet();
-		});
-
-		return WorkbookView.model.aWorksheets[WorkbookView.model.aWorksheets.length - 1];
+		}
 	};
 	ReaderFromJSON.prototype.StylesFromJSON = function(oParsed, oStyleObject)
 	{
@@ -6399,9 +6444,9 @@
 
 		return oSlicer;
 	};
-	ReaderFromJSON.prototype.SlicerCacheDefinitionFromJSON = function(oParsed, oWorksheet)
+	ReaderFromJSON.prototype.SlicerCacheDefinitionFromJSON = function(oParsed)
 	{
-		var oCache = new Asc.CT_slicerCacheDefinition(oWorksheet.workbook);
+		var oCache = new Asc.CT_slicerCacheDefinition(this.Workbook);
 
 		if (oParsed["name"] != null)
 			oCache.name = oParsed["name"];
@@ -6410,7 +6455,7 @@
 		if (oParsed["sourceName"] != null)
 			oCache.sourceName = oParsed["sourceName"];
 		if (oParsed["pivotTables"] != null)
-			oCache.pivotTables = this.SlicerCachePivotTablesFromJSON(oParsed["pivotTables"], oWorksheet);
+			oCache.pivotTables = this.SlicerCachePivotTablesFromJSON(oParsed["pivotTables"]);
 		if (oParsed["data"] != null)
 			oCache.data = this.SlicerCacheDataFromJSON(oParsed["data"]);
 		if (oParsed["tableSlicerCache"] != null)
@@ -6420,24 +6465,25 @@
 
 		return oCache;
 	};
-	ReaderFromJSON.prototype.SlicerCachePivotTablesFromJSON = function(aParsed, oWorksheet)
+	ReaderFromJSON.prototype.SlicerCachePivotTablesFromJSON = function(aParsed)
 	{
 		var aResult = [];
 		for (var nTable = 0; nTable < aParsed.length; nTable++)
-			aResult.push(this.SlicerCachePivotTableFromJSON(aParsed[nTable], oWorksheet));
+			aResult.push(this.SlicerCachePivotTableFromJSON(aParsed[nTable]));
 
 		return aResult;
 	};
-	ReaderFromJSON.prototype.SlicerCachePivotTableFromJSON = function(oParsed, oWorksheet)
+	ReaderFromJSON.prototype.SlicerCachePivotTableFromJSON = function(oParsed)
 	{
 		// to do (check sheetId, tapIdOpen)
 		var oTable = new Asc.CT_slicerCachePivotTable();
 		
 		if (oParsed["name"] != null)
 			oTable.name = oParsed["name"];
-		if (oParsed["sheetId"] != null)
-			oTable.sheetId = oParsed["sheetId"];
-
+		if (oParsed["tabIdOpen"] != null)
+			oTable.tabIdOpen = oParsed["tabIdOpen"];
+		//if (oParsed["sheetId"] != null)
+		//	oTable.sheetId = oParsed["sheetId"];
 		return oTable;
 	};
 	ReaderFromJSON.prototype.SlicerCacheDataFromJSON = function(oParsed)
@@ -6631,12 +6677,12 @@
 
 		return oPivotCaches;
 	};
-	ReaderFromJSON.prototype.SlicerCachesFromJSON = function(oParsed, oWorksheet)
+	ReaderFromJSON.prototype.SlicerCachesFromJSON = function(oParsed)
 	{
 		var oSlicerCaches = {};
 
 		for (var key in oParsed)
-			oSlicerCaches[key] = this.SlicerCacheDefinitionFromJSON(oParsed[key], oWorksheet);
+			oSlicerCaches[key] = this.SlicerCacheDefinitionFromJSON(oParsed[key]);
 
 		return oSlicerCaches;
 	};
