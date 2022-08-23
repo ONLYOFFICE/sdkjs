@@ -16924,7 +16924,7 @@
 				let aContainsRanges = oWorksheet.worksheet.protectedRangesContainsRange(oRange.range.bbox, false) || [];
 				if (aContainsRanges.length !== 0) {
 					for (let Index = 0; Index < aContainsRanges.length; Index++) {
-						if (aContainsRanges[Index].asc_isPassword() && !aContainsRanges[Index]._isEnterPassword)
+						if (aContainsRanges[Index].asc_isPassword() && !aContainsRanges[Index].isUserEnteredPassword())
 						{
 							if (oWorksheet.worksheet.workbook.handlers)
 								oWorksheet.worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
