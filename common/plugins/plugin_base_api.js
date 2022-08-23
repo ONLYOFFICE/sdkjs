@@ -499,26 +499,36 @@ window.startPluginApi = function() {
     };
 
     /**
-     * lockMouse
+     * enableLockMouse
      * @memberof Plugin
-     * @alias lockMouse
+     * @alias enableLockMouse
      * @description Defines the method used to set flag getting mousemove event or not in true.
      */
-    Plugin.lockMouse = function()
+    Plugin.enableLockMouse = function()
     {
-        this.executeMethod('LockMouse', [true]);
+        this.isLockMouse = true;
     };
 
     /**
-     * unlockMouse
+     * disableLockMouse
      * @memberof Plugin
-     * @alias unlockMouse
+     * @alias disableLockMouse
      * @description Defines the method used to set flag getting mousemove event or not in false.
      */
-    Plugin.unlockMouse = function()
+    Plugin.disableLockMouse = function()
     {
-        this.executeMethod('LockMouse', [false]);
+		this.isLockMouse = false;
     };
+
+	window.addEventListener('pointerdown', function() {
+		// we use poiter down, bacause PerfectScroll lock mousedow event and send only pointerdown
+		if (window.Asc.plugin.isLockMouse)
+			window.Asc.plugin.executeMethod('LockMouse', [window.Asc.plugin.guid]);
+	});
+	window.addEventListener('mouseup', function() {
+		if (window.Asc.plugin.isLockMouse)
+			window.Asc.plugin.executeMethod('LockMouse', [null]);
+	});
 	/***********************************************************************
 	 * INPUT HELPERS
  	 */
