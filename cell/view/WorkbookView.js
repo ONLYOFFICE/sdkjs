@@ -4617,7 +4617,7 @@
 		if (!this.SearchEngine) {
 			return;
 		}
-		if (this.SearchEngine.Compare(oProps) && !oProps.isNeedRecalc) {
+		if (this.SearchEngine.Compare(oProps) && !oProps.isNeedRecalc && !oProps.lastSearchElem) {
 			return this.SearchEngine;
 		}
 		oProps.isNeedRecalc = null;
@@ -5108,7 +5108,7 @@
 				if (!cell.isEqual(this.props)) {
 					this._removeFromSearchElems(key, id);
 				}
-			} else if (cell.isEqual(this.props)) {
+			} else if (!this.modifiedDocument && cell.isEqual(this.props)) {
 				this.wb.handlers.trigger("asc_onModifiedDocument");
 				this.setModifiedDocument(true);
 			}
