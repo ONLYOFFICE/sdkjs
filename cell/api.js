@@ -3536,7 +3536,13 @@ var editor;
 
 		//this.wb.SearchEngine.checkReSearch();
 
+		var isModifyDoc = (options.lastSearchElem && this.wb.SearchEngine.modifiedDocument);
 		var SearchEngine = this.wb.Search(options);
+
+		/*if (isModifyDoc) {
+			this.asc_StartTextAroundSearch();
+		}*/
+
 		var Id = this.wb.GetSearchElementId(!options || options.scanForward);
 
 		if (null != Id) {

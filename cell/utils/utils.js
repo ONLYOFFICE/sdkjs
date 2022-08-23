@@ -3100,6 +3100,8 @@
 			result.error = this.error;
 
 			result.specificRange = this.specificRange;
+			result.lastSearchElem = this.lastSearchElem;
+
 			return result;
 		};
 

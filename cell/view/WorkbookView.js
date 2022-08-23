@@ -4617,7 +4617,7 @@
 		if (!this.SearchEngine) {
 			return;
 		}
-		if (this.SearchEngine.Compare(oProps) && !oProps.isNeedRecalc && !oProps.lastSearchElem) {
+		if (this.SearchEngine.Compare(oProps) && !oProps.isNeedRecalc && !(oProps.lastSearchElem && this.SearchEngine.modifiedDocument)) {
 			return this.SearchEngine;
 		}
 		oProps.isNeedRecalc = null;
@@ -4932,7 +4932,7 @@
 	CDocumentSearchExcel.prototype.GetNextElement = function () {
 		var id;
 
-		if (this.props.lastSearchElem) {
+		if (this.props.lastSearchElem && this.modifiedDocument) {
 			//временно переставляем селект на данный элемент и ставим CurId - 1
 			this.CurId = -1;
 		}
@@ -4940,6 +4940,7 @@
 		if (-1 === this.CurId) {
 			id = this.findNearestElement();
 			this.props.lastSearchElem = null;
+			this.modifiedDocument = null;
 		} else {
 			id = this.Direction ? this.CurId + 1 : this.CurId - 1;
 		}
@@ -5004,7 +5005,7 @@
 			var selectionRange = this.props.selectionRange || ws.selectionRange;
 
 			var activeCell = selectionRange.activeCell;
-			if (this.props.lastSearchElem) {
+			if (this.props.lastSearchElem && this.modifiedDocument) {
 				var cell = this.props.lastSearchElem[3];
 				if (cell) {
 					var range = AscCommonExcel.g_oRangeCache.getAscRange(cell);
