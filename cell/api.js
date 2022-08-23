@@ -7522,6 +7522,13 @@ var editor;
 		}
 	};
 
+	spreadsheet_api.prototype.setDrawGroupsRestriction = function() {
+		if (this.wb) {
+			//пока использую строку. будут другие ограничения на отрисовку - необходимо завести константы
+			this.wb.setDrawRestriction("groups");
+		}
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------

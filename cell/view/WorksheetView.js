@@ -20277,6 +20277,9 @@
 
 	//GROUP DATA FUNCTIONS
 	WorksheetView.prototype._updateGroups = function(bCol, start, end, bUpdateOnlyRowLevelMap, bUpdateOnlyRange) {
+		if (this.workbook.getDrawRestriction("groups")) {
+			return;
+		}
 		if(bCol) {
 			if(bUpdateOnlyRowLevelMap) {
 				//this.arrColGroups.levelMap = this.getGroupDataArray(bCol, start, end, bUpdateOnlyRowLevelMap, bUpdateOnlyRange).levelMap;
@@ -20302,6 +20305,9 @@
 	};
 
 	WorksheetView.prototype._updateGroupsWidth = function() {
+		if (this.workbook.getDrawRestriction("groups")) {
+			return;
+		}
 		this.groupHeight = this.getGroupCommonWidth(this.getGroupCommonLevel(true), true);
 		this.groupWidth = this.getGroupCommonWidth(this.getGroupCommonLevel());
 	};
@@ -20488,6 +20494,9 @@
 	};
 
 	WorksheetView.prototype._drawGroupData = function ( drawingCtx, range, leftFieldInPx, topFieldInPx, bCol /*width, height*/  ) {
+		if (this.workbook.getDrawRestriction("groups")) {
+			return;
+		}
 		var t = this;
 		if ( !range ) {
 			range = this.visibleRange;
@@ -20858,6 +20867,9 @@
 	};
 
 	WorksheetView.prototype._drawGroupDataButtons = function(drawingCtx, buttons, leftFieldInPx, topFieldInPx, bCol) {
+		if (this.workbook.getDrawRestriction("groups")) {
+			return;
+		}
 		if(!buttons) {
 			return;
 		}
@@ -21085,6 +21097,9 @@
 	};
 
 	WorksheetView.prototype._drawGroupDataMenuButton = function ( drawingCtx, level, bActive, bClean, bCol ) {
+		if (this.workbook.getDrawRestriction("groups")) {
+			return;
+		}
 		var ctx = drawingCtx || this.drawingCtx;
 		var st = this.settings.header.style[kHeaderDefault];
 
@@ -21240,6 +21255,10 @@
 		var viewMode = this.handlers.trigger('getViewMode') || window["Asc"]["editor"].isRestrictionComments();
 
 		if(this.collaborativeEditing.getGlobalLock() && !viewMode) {
+			return;
+		}
+
+		if (this.workbook.getDrawRestriction("groups")) {
 			return;
 		}
 
@@ -21421,6 +21440,10 @@
 			return;
 		}
 
+		if (this.workbook.getDrawRestriction("groups")) {
+			return;
+		}
+
 		if (!viewMode) {
 			var currentSheetId = this.model.getId();
 			var nLockAllType = this.collaborativeEditing.isLockAllOther(currentSheetId);
@@ -21470,6 +21493,10 @@
 
 		// Проверка глобального лока
 		if (this.collaborativeEditing.getGlobalLock() && !viewMode) {
+			return;
+		}
+
+		if (this.workbook.getDrawRestriction("groups")) {
 			return;
 		}
 

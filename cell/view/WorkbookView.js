@@ -297,6 +297,11 @@
 		this.SearchEngine = new CDocumentSearchExcel(this);
 	}
 
+	//ограничения на отрисовку какого-либо компонента на всех листах
+	//в данном случае добавляю для  того, чтобы не рисовать группы в нативных редакторах
+	//внутри пока простой объект {groups: true}
+	this.drawRestrictions = null;
+
 	return this;
   }
 
@@ -1047,7 +1052,7 @@
 	WorkbookView.prototype.scrollToOleSize = function () {
 		var ws = this.getWorksheet();
 		ws.scrollToOleSize();
-	}
+	};
 
   WorkbookView.prototype._createWorksheetView = function(wsModel) {
     return new AscCommonExcel.WorksheetView(this, wsModel, this.wsViewHandlers, this.buffers, this.stringRender, this.maxDigitWidth, this.collaborativeEditing, this.defaults.worksheetView);
@@ -4721,6 +4726,17 @@
 		};
 
 		callback();
+	};
+
+	WorkbookView.prototype.getDrawRestriction = function (val) {
+		return this.drawRestrictions && this.drawRestrictions[val];
+	};
+
+	WorkbookView.prototype.setDrawRestriction = function (val) {
+		if (!this.drawRestrictions) {
+			this.drawRestrictions = {};
+		}
+		this.drawRestrictions[val] = true;
 	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
