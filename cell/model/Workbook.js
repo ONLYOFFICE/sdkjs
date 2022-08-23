@@ -10444,8 +10444,7 @@
 		if (this.aProtectedRanges && this.aProtectedRanges.length) {
 			for (var i = 0; i < this.aProtectedRanges.length; i++) {
 				if (this.aProtectedRanges[i].containsRange(range)) {
-					var isPassword = this.aProtectedRanges[i].asc_isPassword();
-					if (!ignoreWithoutPassword || (ignoreWithoutPassword && this.aProtectedRanges[i].asc_isPassword() && !this.aProtectedRanges[i].isUserEnteredPassword)) {
+					if (!ignoreWithoutPassword || (ignoreWithoutPassword && isPassword && !this.aProtectedRanges[i].isUserEnteredPassword())) {
 						res.push(this.aProtectedRanges[i]);
 					}
 				}

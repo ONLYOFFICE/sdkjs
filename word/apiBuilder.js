@@ -16907,7 +16907,8 @@
 			var resultText        = null;
 			var nTextToReplace    = 0;
 			var ws                = this.wb.getWorksheet();
-			var oContent = ws.objectRender.controller.getTargetDocContent();
+			var oContent          = ws.objectRender.controller != null ? ws.objectRender.controller.getTargetDocContent() : null;
+			var isPasteLocked     = false;
 
 			if (oContent) 
 			{
@@ -16918,6 +16919,26 @@
 					arrSelectedParas[0].Parent.RemoveSelection();
 				Asc.editor.wb.recalculateDrawingObjects();
 				return;
+			}
+
+			if (oWorksheet.worksheet.getSheetProtection()) {
+				oRange.range._foreach(function(cell) {
+					let isLockedCell = oWorksheet.worksheet.getLockedCell(cell.nCol, cell.nRow);
+					let aProtRanges = oWorksheet.worksheet.protectedRangesContains(cell.nCol, cell.nRow) || [];
+					if (aProtRanges.length == 0 && isLockedCell)
+						isPasteLocked = true;
+					else if (aProtRanges.length > 0) {
+						for (let Index = 0; Index < aProtRanges.length; Index++) {
+							if (aProtRanges[Index].asc_isPassword() && !aProtRanges[Index].isUserEnteredPassword())
+								isPasteLocked = true;
+						}
+					}
+				});
+			}
+			
+			if (isPasteLocked && oWorksheet.worksheet.workbook.handlers) {
+				oWorksheet.worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+				return false;
 			}
 
 			for (var nRow = oRange.range.bbox.r1; nRow <= oRange.range.bbox.r2; nRow++)
