@@ -3147,7 +3147,9 @@
 		if (options.isReplaceAll) {
 			this.SearchEngine.Clear();
 		}
-    }
+    } else {
+		this.SearchEngine.replaceEnd();
+	}
 
     History.EndTransaction();
     if (options.isReplaceAll) {
