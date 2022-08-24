@@ -2686,15 +2686,45 @@
 		function SerCell(oCell)
 		{
 			var sRef = AscCommon.g_oCellAddressUtils.colnumToColstr(oCell.nCol + 1) + (oCell.nRow + 1);
-
+			var oFormulaForWrite = oCell.isFormula() ? oThis.InitSaveManager.PrepareFormulaToWrite(oCell) : null;
 			oTempCell = {
-				"f": oCell.getFormula(),
-				"v": oCell.getValue(),
+				"f": SerFormula(oFormulaForWrite),
 				"r": sRef,
-				"s": oThis.stylesForWrite.add(oCell.getStyle())
+				"s": oThis.stylesForWrite.add(oCell.getStyle()),
+				"t": ToXml_ST_CellValueType(oCell.type)
 			}
+			if (oCell.multiText)
+			{
+				oTempCell["v"] = [];
+				for (let Index = 0; Index < oCell.multiText.length; Index++)
+					oTempCell["v"].push(SerMultiTextElem(oCell.multiText[Index]));
+			}
+			else
+				oTempCell["v"] = oCell.getValue();
 
 			oTempRow["cell"].push(oTempCell);
+		}
+
+		function SerFormula(oFormulaForWrite)
+		{
+			if (!oFormulaForWrite)
+				return undefined;
+				
+			return {
+				"t":   ToXml_ST_CellFormulaType(oFormulaForWrite.type),
+				"ref": oFormulaForWrite.ref != null ? oFormulaForWrite.ref.getName() : undefined,
+				"v":   oFormulaForWrite.formula,
+				"ca":  oFormulaForWrite.ca != null ? oFormulaForWrite.ca : undefined,
+				"si":  oFormulaForWrite.si != null ? oFormulaForWrite.si : undefined
+			}
+		}
+
+		function SerMultiTextElem(oMultiTextElem)
+		{
+			return {
+				"text":   oMultiTextElem.text,
+				"format": oThis.SerFontExcell(oMultiTextElem.format)
+			}
 		}
 
 		oRange._foreachNoEmpty(SerCell, SerRow);
@@ -3579,11 +3609,11 @@
 		return sColumn + (oRefCell.row + 1);
 	};
 	
-	ReaderFromJSON.prototype.WorksheetFromJSON = function(oParsedSheet)
+	ReaderFromJSON.prototype.WorksheetFromJSON = function(oParsedSheet, oWorkbook)
 	{
 		History.TurnOff();
 
-		let oWorksheet = new AscCommonExcel.Worksheet(this.Workbook, -1);
+		let oWorksheet = new AscCommonExcel.Worksheet(oWorkbook, -1);
 		this.curWorksheet = oWorksheet;
 
 		// worksheet props
@@ -3650,14 +3680,13 @@
 		let WorkbookView = api.wb;
 		let aRestoredSheets = [];
 		let renameSheetMap = {};
-
+		let oTempWorkBook = new AscCommonExcel.Workbook();
+		oTempWorkBook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
+		oTempWorkBook.setCommonIndexObjectsFrom(WorkbookView.model);
+		oTempWorkBook.oApi = api;
+		oTempWorkBook.theme = oWorkbook.theme;
 		this.tabsIdMap = {};
-		if (oWorkbook == null)
-		{
-			oWorkbook = new AscCommonExcel.Workbook();
-			oWorkbook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
-			oWorkbook.setCommonIndexObjectsFrom(WorkbookView.model);
-		}
+
 		this.Workbook = oWorkbook;
 
 		if (this.StyleObject == null)
@@ -3665,8 +3694,8 @@
 			let oStyleObject = {aBorders: [], aFills: [], aFonts: [], oNumFmts: {}, aCellStyleXfs: [],
 			aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: {}, oCustomSlicerStyles: null};
 			this.StylesFromJSON(oParsedSheets["styles"], oStyleObject);
-			let oStyleReader = new AscCommonExcel.InitOpenManager(null, this.Workbook, [], false);
-			oStyleReader.InitStyleManager(oStyleObject, this.aCellXfs);
+			this.InitOpenManager = new AscCommonExcel.InitOpenManager(null, this.Workbook, [], false);
+			this.InitOpenManager.InitStyleManager(oStyleObject, this.aCellXfs);
 			this.oNumFmtsOpen = oStyleObject.oNumFmts;
 			this.aDxfs = oStyleObject.aDxfs;
 		}
@@ -3686,8 +3715,8 @@
 		let nSheetsCount = this.Workbook.aWorksheets.length;
 		for (var Index = 0; Index < oParsedSheets["sheets"].length; Index++)
 		{
-			let oWorksheet = this.WorksheetFromJSON(oParsedSheets["sheets"][Index]);
-			aRestoredSheets.push(oWorksheet);
+			let oWorksheet = this.WorksheetFromJSON(oParsedSheets["sheets"][Index], oTempWorkBook);
+			oTempWorkBook.aWorksheets.push(oWorksheet);
 			this.tabsIdMap[oParsedSheets["sheets"][Index]["id"]] = nSheetsCount++;
 		}
 
@@ -3697,18 +3726,20 @@
 		newFonts = this.Workbook.generateFontMap2();
 		newFonts = pasteProcessor._convertFonts(newFonts);
 		
-		for (let nSheet = 0; nSheet < aRestoredSheets.length; nSheet++)
+		for (let nSheet = 0; nSheet < oTempWorkBook.aWorksheets.length; nSheet++)
 		{
-			let oWorksheet = aRestoredSheets[nSheet];
+			let oWorksheet = oTempWorkBook.aWorksheets[nSheet];
 			for (let i = 0; i < oWorksheet.Drawings.length; i++) {
 				oWorksheet.Drawings[i].graphicObject.getAllFonts(newFonts);
 			}
 		}
 
 		let pasteSheets = function() {
-			for (let nSheet = 0; nSheet < aRestoredSheets.length; nSheet++)
+			for (let nSheet = 0; nSheet < oTempWorkBook.aWorksheets.length; nSheet++)
 			{
-				let oWorksheet = aRestoredSheets[nSheet];
+				let oWorksheet = oTempWorkBook.aWorksheets[nSheet];
+				oTempWorkBook._updateWorksheetIndexes();
+				oTempWorkBook.nActive = oWorksheet.getIndex();
 				let sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(oWorksheet, null, null, true, true);
 
 				let where = WorkbookView.model.aWorksheets.length;
@@ -3716,7 +3747,7 @@
 				//TODO ошибку по срезам добавил в renameParams. необходимо пересмотреть
 				//переименовать эту переменную, либо не добавлять copySlicerError и посылать ошибку в другом месте
 				if (renameParams && renameParams.copySlicerError) {
-					t.handlers.trigger("asc_onError", Asc.c_oAscError.ID.MoveSlicerError, Asc.c_oAscError.Level.NoCritical);
+					WorkbookView.handlers.trigger("asc_onError", Asc.c_oAscError.ID.MoveSlicerError, Asc.c_oAscError.Level.NoCritical);
 				}
 
 				renameSheetMap[renameParams.lastName] = renameParams.newName;
@@ -7793,8 +7824,15 @@
 	};
 	ReaderFromJSON.prototype.SheetDataFromJSON = function(aParsed, oWorksheet)
 	{
+		let oThis = this;
 		var oParsedRow, oParsedCell, oCellAddress;
 		var oTempRow, oTempCell;
+
+		var tmp = {
+			pos: null, len: null, bNoBuildDep: false, ws: oWorksheet, row: null,
+			cell: null, formula: null, sharedFormulas: {},
+			prevFormulas: {}, siFormulas: {}, prevRow: -1, prevCol: -1, formulaArray: []
+		};
 
 		for (var nRow = 0; nRow < aParsed.length; nRow++)
 		{
@@ -7802,24 +7840,7 @@
 			oTempRow = new AscCommonExcel.Row(oWorksheet);
 			oTempRow.loadContent(oParsedRow["r"] - 1);
 			oWorksheet._initRow(oTempRow, oParsedRow["r"] - 1);
-
-			for (var nCell = 0; nCell < oParsedRow["cell"].length; nCell++)
-			{
-				oParsedCell = oParsedRow["cell"][nCell];
-				oTempCell = new AscCommonExcel.Cell(oWorksheet);
-				oCellAddress = AscCommon.g_oCellAddressUtils.getCellAddress(oParsedCell["r"]);
-				oTempCell.loadContent(oParsedRow["r"] - 1, oCellAddress.col - 1);
-				oWorksheet._initCell(oTempCell, oParsedRow["r"] - 1, oCellAddress.col - 1);
-
-				if (oParsedCell["f"] != null && oParsedCell["f"] != "")
-					oTempCell.setFormula(oParsedCell["f"]);
-				if (oParsedCell["v"] != null && oParsedCell["v"] != "")
-					oTempCell.setValue(oParsedCell["v"]);
-				if (oParsedCell["s"] != null && oParsedCell["s"] !== 0)
-					oTempCell.setStyle(this.aCellXfs[oParsedCell["s"]]);
-
-				oTempCell.saveContent(true);
-			}
+			tmp.row = oTempRow;
 
 			if (oParsedRow["collapsed"] != null && oParsedRow["collapsed"] !== false)
 				oTempRow.setCollapsed(oParsedRow["collapsed"]);
@@ -7835,6 +7856,104 @@
 				oTempRow.setStyle(this.aCellXfs[oParsedRow["s"]]);
 			
 			oTempRow.saveContent(true);
+
+			for (var nCell = 0; nCell < oParsedRow["cell"].length; nCell++)
+			{
+				oParsedCell = oParsedRow["cell"][nCell];
+				oTempCell = new AscCommonExcel.Cell(oWorksheet);
+				oCellAddress = AscCommon.g_oCellAddressUtils.getCellAddress(oParsedCell["r"]);
+				oTempCell.loadContent(oParsedRow["r"] - 1, oCellAddress.col - 1);
+				oWorksheet._initCell(oTempCell, oParsedRow["r"] - 1, oCellAddress.col - 1);
+
+				if (oParsedCell["f"] != null)
+				{
+					tmp.cell = oTempCell;
+					tmp.formula = FormulaFromJSON(oParsedCell["f"]);
+					this.InitOpenManager.setFormulaOpen(tmp);
+				}
+				// multiText
+				else if (Array.isArray(oParsedCell["v"]))
+				{
+					let aMultiText = [];
+					for (let Index = 0; Index < oParsedCell["v"].length; Index++)
+						aMultiText.push(MultiTextElemFromJSON(oParsedCell["v"][Index]));
+				
+					oTempCell.setValueMultiTextInternal(aMultiText);
+				}
+				else if (oParsedCell["v"] != null && oParsedCell["v"] != "")
+				{
+					switch (oParsedCell["t"])
+					{
+						case "s":
+							oTempCell.setValueTextInternal(oParsedCell["v"]);
+							break;
+						case "e":
+							oTempCell.setValueTextInternal(oParsedCell["v"]);
+							break;
+						case "n":
+						case "b":
+						default:
+							oTempCell.setValueNumberInternal(oParsedCell["v"]);
+							break;
+					}
+				}
+				if (oParsedCell["s"] != null && oParsedCell["s"] !== 0)
+					oTempCell.setStyle(this.aCellXfs[oParsedCell["s"]]);
+
+				oTempCell.type = FromXml_ST_CellValueType(oParsedCell["t"]);
+				oTempCell.saveContent(true);
+			}
+		}
+
+		// for(var j = 0; j < tmp.formulaArray.length; j++) {
+		// 	var curFormula = tmp.formulaArray[j];
+		// 	var ref = curFormula.ref;
+		// 	if(ref) {
+		// 		var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
+		// 		rangeFormulaArray._foreach(function(cell){
+		// 			cell.setFormulaInternal(curFormula);
+		// 			if (curFormula.ca || cell.isNullTextString()) {
+		// 				tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
+		// 			}
+		// 		});
+		// 	}
+		// }
+		// for (var nCol in tmp.prevFormulas) {
+		// 	if (tmp.prevFormulas.hasOwnProperty(nCol)) {
+		// 		var prevFormula = tmp.prevFormulas[nCol];
+		// 		if (!tmp.siFormulas[prevFormula.parsed.getListenerId()]) {
+		// 			prevFormula.parsed.buildDependencies();
+		// 		}
+		// 	}
+		// }
+		// for (var listenerId in tmp.siFormulas) {
+		// 	if (tmp.siFormulas.hasOwnProperty(listenerId)) {
+		// 		tmp.siFormulas[listenerId].buildDependencies();
+		// 	}
+		// }
+
+		function FormulaFromJSON(oParsed)
+		{
+			let oFormula = new AscCommonExcel.OpenFormula();
+			oFormula.t = FromXml_ST_CellFormulaType(oParsed["t"]);
+			oFormula.v = oParsed["v"];
+			if (oParsed["ref"] != null)
+				oFormula.ref = oParsed["ref"];
+			if (oParsed["ca"] != null)
+				oFormula.ca = oParsed["ca"];
+			if (oParsed["si"] != null)
+				oFormula.si = oParsed["si"];
+
+			return oFormula;
+		}
+
+		function MultiTextElemFromJSON(oParsed)
+		{
+			let oElem = new AscCommonExcel.CMultiTextElem();
+			oElem.text = oParsed["text"];
+			oElem.format = oThis.FontExcellFromJSON(oParsed["format"]);
+
+			return oElem;
 		}
 	};
 
@@ -10929,6 +11048,94 @@
 
 		return nVal;
 	}
+
+	function ToXml_ST_CellFormulaType(val) {
+		var res = null;
+		switch (val) {
+			case window["Asc"].ECellFormulaType.cellformulatypeArray:
+				res = "array";
+				break;
+			case window["Asc"].ECellFormulaType.cellformulatypeShared:
+				res = "shared";
+				break;
+			case window["Asc"].ECellFormulaType.cellformulatypeDataTable:
+				res = "dataTable";
+				break;
+		}
+		return res;
+	}
+	function FromXml_ST_CellFormulaType(val) {
+		var res = null;
+		switch (val) {
+			case "array":
+				res = window["Asc"].ECellFormulaType.cellformulatypeArray;
+				break;
+			case "shared":
+				res = window["Asc"].ECellFormulaType.cellformulatypeShared;
+				break;
+			case "dataTable":
+				res = window["Asc"].ECellFormulaType.cellformulatypeDataTable;
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_CellValueType(val) {
+		var res = undefined;
+		switch (val) {
+			case "s":
+				res = AscCommon.CellValueType.String;
+				break;
+			case "str":
+				res = AscCommon.CellValueType.String;
+				break;
+			case "n":
+				res = AscCommon.CellValueType.Number;
+				break;
+			case "e":
+				res = AscCommon.CellValueType.Error;
+				break;
+			case "b":
+				res =  AscCommon.CellValueType.Bool;
+				break;
+			case "inlineStr":
+				res = AscCommon.CellValueType.String;
+				break;
+			case "d":
+				res = AscCommon.CellValueType.String;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_CellValueType(val) {
+		var res = undefined;
+		switch (val) {
+			case AscCommon.CellValueType.String:
+				res = "s";
+				break;
+			/*case AscCommon.CellValueType.String:
+				res = "str";
+				break;*/
+			case AscCommon.CellValueType.Number:
+				res = "n";
+				break;
+			case AscCommon.CellValueType.Error:
+				res = "e";
+				break;
+			case AscCommon.CellValueType.Bool:
+				res = "b";
+				break;
+			/*case "inlineStr":
+				res = AscCommon.CellValueType.String;
+				break;
+			case "d":
+				res = AscCommon.CellValueType.String;
+				break;*/
+		}
+		return res;
+	}
+
     //----------------------------------------------------------export----------------------------------------------------
     window['AscCommon']       = window['AscCommon'] || {};
     window['AscFormat']       = window['AscFormat'] || {};

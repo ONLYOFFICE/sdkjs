@@ -746,7 +746,7 @@
 		if (typeof(nStart) !== "number" || nStart < 0)
 			nStart = 0;
 		if (typeof(nEnd) !== "number" || nEnd > this.wbModel.aWorksheets.length - 1)
-			nStart = this.wbModel.aWorksheets.length - 1;
+			nEnd = this.wbModel.aWorksheets.length - 1;
 		
 		return JSON.stringify(oWriter.SerWorksheets(nStart, nEnd));		
 	};
