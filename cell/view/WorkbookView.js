@@ -5009,10 +5009,10 @@
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
 			var ws = this.wb.getActiveWS();
-			var selectionRange = this.props.selectionRange || ws.selectionRange;
+			var selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange;
 
 			var activeCell = selectionRange.activeCell;
-			if (this.props.lastSearchElem) {
+			if (this.props && this.props.lastSearchElem) {
 				var cell = this.props.lastSearchElem[3];
 				if (cell) {
 					var range = AscCommonExcel.g_oRangeCache.getAscRange(cell);
@@ -5037,9 +5037,9 @@
 					return;
 				}
 				if (changeColOnRow) {
-					return t.props.scanByRows ? obj.col : obj.row;
+					return t.props && t.props.scanByRows ? obj.col : obj.row;
 				} else {
-					return t.props.scanByRows ? obj.row : obj.col;
+					return t.props && t.props.scanByRows ? obj.row : obj.col;
 				}
 			};
 
