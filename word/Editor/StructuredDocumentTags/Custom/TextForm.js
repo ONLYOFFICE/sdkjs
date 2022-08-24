@@ -284,9 +284,9 @@
 	{
 		return this.Format.GetSymbols(true);
 	};
-	CSdtTextFormPr.prototype.CheckFormat = function(sText)
+	CSdtTextFormPr.prototype.CheckFormat = function(sText, isFullCheck)
 	{
-		return this.Format.Check(sText);
+		return this.Format.Check(sText, isFullCheck);
 	};
 	CSdtTextFormPr.prototype.CheckFormatOnFly = function(sText)
 	{

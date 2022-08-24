@@ -187,11 +187,20 @@
 	 */
 	CFormsManager.prototype.IsAllRequiredFormsFilled = function()
 	{
+		// TODO: Сейчас у нас здесь идет проверка и на правильность заполнения форм с форматом
+		// Возможно стоит разделить на 2 разные проверки и добавить одну общую проверку на правильность
+		// заполненности формы, куда будут входить обе предыдущие проверки
+
 		let arrForms = this.GetAllForms();
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oForm = arrForms[nIndex];
 			if (oForm.IsFormRequired() && !oForm.IsFormFilled())
+				return false;
+
+			if (oForm.IsTextForm()
+				&& !oForm.IsPlaceHolder()
+				&& !oForm.GetTextFormPr().CheckFormat(oForm.GetInnerText(), true))
 				return false;
 		}
 		return true;

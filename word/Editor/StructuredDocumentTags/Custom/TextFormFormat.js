@@ -53,6 +53,8 @@
 
 		this.Mask   = new AscWord.CTextFormMask();
 		this.RegExp = "";
+
+		this.FulllCheck = false;
 	}
 	CTextFormFormat.prototype.SetSymbols = function(value)
 	{
@@ -146,8 +148,10 @@
 
 		return true;
 	};
-	CTextFormFormat.prototype.Check = function(sText)
+	CTextFormFormat.prototype.Check = function(sText, isFullCheck)
 	{
+		this.FulllCheck = !!isFullCheck;
+
 		let arrBuffer = this.GetBuffer(sText);
 		return (this.CheckFormat(arrBuffer) && this.CheckSymbols(arrBuffer));
 	};
@@ -200,7 +204,7 @@
 	};
 	CTextFormFormat.prototype.CheckMask = function(arrBuffer)
 	{
-		return this.Mask.Check(arrBuffer);
+		return this.Mask.Check(arrBuffer, this.FulllCheck);
 	};
 	CTextFormFormat.prototype.CheckRegExp = function(arrBuffer)
 	{

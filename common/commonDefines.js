@@ -696,6 +696,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			ComplexFieldEmptyTOC : -1101,
 			ComplexFieldNoTOC    : -1102,
 
+			TextFormWrongFormat : -1201,
+
 			SecondaryAxis: 1001,
 			ComboSeriesError: 1002,
 

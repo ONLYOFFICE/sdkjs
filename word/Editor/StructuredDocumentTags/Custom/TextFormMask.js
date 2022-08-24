@@ -104,8 +104,11 @@
 	{
 		return this.Mask;
 	};
-	CTextFormMask.prototype.Check = function(arrBuffer)
+	CTextFormMask.prototype.Check = function(arrBuffer, isFullCheck)
 	{
+		if (isFullCheck && arrBuffer.length !== this.Pattern.length)
+			return false;
+
 		for (let nIndex = 0, nCount = arrBuffer.length; nIndex < nCount; ++nIndex)
 		{
 			if (nIndex >= this.Pattern.length || !this.Pattern[nIndex].Check(arrBuffer[nIndex]))

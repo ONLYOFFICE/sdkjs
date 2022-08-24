@@ -12225,10 +12225,11 @@ CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
 		|| oForm.IsPlaceHolder())
 		return;
 
-	let sText = oForm.GetInnerText();
-	if (!oForm.GetTextFormPr().CheckFormat(sText))
+	let sText       = oForm.GetInnerText();
+	let oTextFormPr = oForm.GetTextFormPr();
+	if (!oTextFormPr.CheckFormat(sText))
 	{
-		// TODO: Add event
+		this.Api.sendEvent("asc_onError", c_oAscError.ID.TextFormWrongFormat, c_oAscError.Level.NoCritical, oTextFormPr);
 
 		if (this.CollaborativeEditing.Is_SingleUser() || !this.CollaborativeEditing.Is_Fast())
 		{

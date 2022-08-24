@@ -128,7 +128,7 @@ $(function () {
 		assert.deepEqual(format, format2, "Check  write/read");
 	});
 
-	QUnit.test("Test: \"GetAllForms\"", function (assert)
+	QUnit.test("Check GetAllForms function", function (assert)
 	{
 		let forms = formsManager.GetAllForms();
 		assert.strictEqual(forms.length, 0, "Check forms count (must be zero)");
@@ -253,6 +253,120 @@ $(function () {
 		assert.strictEqual(textForm2.GetInnerText(), "112-ABB", "Check inner text in the text form 2. It must be '112-ABB'");
 
 
+
+	});
+
+	QUnit.test("Check filling out the required forms", function (assert)
+	{
+		AscTest.ClearDocument();
+		let p1 = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p2 = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p3 = new AscWord.CParagraph(AscTest.DrawingDocument);
+		logicDocument.AddToContent(0, p1);
+		logicDocument.AddToContent(1, p2);
+		logicDocument.AddToContent(1, p3);
+
+		assert.strictEqual(formsManager.GetAllForms().length, 0, "Check forms count (must be zero)");
+
+		p1.SetThisElementCurrent();
+		p1.MoveCursorToStartPos();
+
+		AddFormPr(logicDocument.AddContentControlCheckBox());
+		AddFormPr(logicDocument.AddContentControlComboBox());
+
+		logicDocument.AddContentControlComboBox();
+
+		p2.SetThisElementCurrent();
+		p2.MoveCursorToStartPos();
+
+		let checkBox = logicDocument.AddContentControlCheckBox();
+		AddFormPr(checkBox);
+
+		p2.MoveCursorToEndPos();
+
+		let textForm = logicDocument.AddContentControlTextForm();
+		AddFormPr(textForm);
+
+		p3.SetThisElementCurrent();
+		p3.MoveCursorToEndPos();
+
+		let textForm2 = logicDocument.AddContentControlTextForm();
+		AddFormPr(textForm2);
+
+		assert.strictEqual(formsManager.GetAllForms().length, 5, "Check forms count");
+
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "No format and required forms. Check is form filled");
+
+		checkBox.GetFormPr().SetRequired(true);
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), false, "Set checkbox required and check");
+
+		checkBox.SetCheckBoxChecked(true);
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "Fill checkbox and check");
+
+		textForm.GetFormPr().SetRequired(true);
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), false, "Set text form required and check");
+
+		textForm.SetThisElementCurrent();
+		textForm.MoveCursorToEndPos();
+
+		AscTest.PressKey(AscTest.Key.A);
+		AscTest.PressKey(AscTest.Key.B);
+
+		assert.strictEqual(textForm.GetInnerText(), "AB", "Check entered text to a text form");
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "Fill text form and check");
+
+		// Поля заполненные неправильно по формату мы тоже учитываем в функции IsAllRequiredFormsFilled
+		// Возможно стоит сделать две отдельные проверки и одну общую: что форма заполнена, в которой обе проверки будут запускаться
+
+		let textForm2Pr = textForm2.GetTextFormPr();
+		textForm2Pr.SetMaskFormat("999-aaa");
+
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "Set mask to text form2 and check");
+
+		textForm2.SetThisElementCurrent();
+		textForm2.MoveCursorToEndPos();
+
+		AscTest.PressKey(AscTest.Key._1);
+		AscTest.PressKey(AscTest.Key._2);
+		AscTest.PressKey(AscTest.Key._3);
+
+		assert.strictEqual(textForm2.GetInnerText(), "123", "Check internal text");
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), false, "Fill the mask incorrectly (too short) and check");
+
+		AscTest.PressKey(AscTest.Key.minus);
+		AscTest.PressKey(AscTest.Key.A);
+		AscTest.PressKey(AscTest.Key.B);
+		AscTest.PressKey(AscTest.Key.C);
+
+		assert.strictEqual(textForm2.GetInnerText(), "123-ABC", "Check internal text");
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "Fill the mask and check");
+
+		AscTest.PressKey(AscTest.Key.backspace);
+		AscTest.PressKey(AscTest.Key.backspace);
+
+		AscTest.PressKey(AscTest.Key._1);
+		AscTest.PressKey(AscTest.Key._2);
+		assert.strictEqual(textForm2.GetInnerText(), "123-A12", "Check internal text");
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), false, "Fill the mask incorrectly and check");
+
+		AscTest.PressKey(AscTest.Key.backspace);
+		AscTest.PressKey(AscTest.Key.backspace);
+
+		AscTest.PressKey(AscTest.Key.A);
+		AscTest.PressKey(AscTest.Key.B);
+		AscTest.PressKey(AscTest.Key.C);
+		assert.strictEqual(textForm2.GetInnerText(), "123-AABC", "Check internal text");
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), false, "Fill the mask incorrectly (too long) and check");
+
+		textForm2Pr.SetRegExpFormat("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)");
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), false, "Change format to hyperlink regexp an check ");
+
+		textForm2.ClearContentControlExt();
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "Clear text form and check ");
+
+		AscTest.AddTextToInlineSdt(textForm2, "https://www.onlyoffice.com/");
+		assert.strictEqual(textForm2Pr.CheckFormat(textForm2.GetInnerText()), true, "Check format");
+		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "Fill text form with correct hyperlink and check ");
 
 	});
 });
