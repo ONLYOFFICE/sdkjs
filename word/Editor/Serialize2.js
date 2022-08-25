@@ -8271,6 +8271,7 @@ function BinaryFileReader(doc, openParams)
         this.stream = this.getbase64DecodedData(sBase64);
         this.ReadMainTable();
         var oReadResult = this.oReadResult;
+
         //обрабатываем списки
         for (var i = 0, length = oReadResult.paraNumPrs.length; i < length; ++i) {
             var numPr = oReadResult.paraNumPrs[i];
@@ -8280,103 +8281,103 @@ function BinaryFileReader(doc, openParams)
             else
                 numPr.NumId = "0";
         }
+
         //обрабатываем стили
-        var isAlreadyContainsStyle;
-        var oStyleTypes = { par: 1, table: 2, lvl: 3, run: 4, styleLink: 5, numStyleLink: 6};
-        var addNewStyles = false;
-        var fParseStyle = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
-            if (aStyles == undefined)
-                return;
-            for (var i = 0, length = aStyles.length; i < length; ++i) {
-                var elem = aStyles[i];
-                var stylePaste = oReadResult.styles[elem.style];
-                var isEqualName = null;
-                if (null != stylePaste && null != stylePaste.style && oDocumentStyles) {
-                    for (var j in oDocumentStyles.Style) {
-                        var styleDoc = oDocumentStyles.Style[j];
-                        isAlreadyContainsStyle = styleDoc.isEqual(stylePaste.style);
-                        if (styleDoc.Name == stylePaste.style.Name)
-                            isEqualName = j;
-                        if (isAlreadyContainsStyle) 
-						{
-                            if (oStyleTypes.par == nStyleType)
-                                elem.pPr.PStyle = j;
-                            else if (oStyleTypes.table == nStyleType)
-                                elem.pPr.Set_TableStyle2(j);
-							else if (oStyleTypes.run == nStyleType)
-							{
-								//TODO сделать аналогично для Pstyle
-								if(elem.run)
-								{
-									elem.run.Set_RStyle(j);
-								}
-								else
-								{
-									elem.pPr.RStyle = j;
-								}
-							}	
-                            else if(oStyleTypes.styleLink == nStyleType)
-                                elem.pPr.StyleLink = j;
-                            else if(oStyleTypes.numStyleLink == nStyleType)
-                                elem.pPr.NumStyleLink = j;
-							else
-                                elem.pPr.PStyle = j;
-                            break;
-                        }
-                    }
-                    if (!isAlreadyContainsStyle && isEqualName != null)//если нашли имя такого же стиля
-                    {
-                        if (nStyleType == oStyleTypes.par || nStyleType == oStyleTypes.lvl)
-                            elem.pPr.PStyle = isEqualName;
-                        else if (nStyleType == oStyleTypes.table)
-                            elem.pPr.Set_TableStyle2(isEqualName);
-						else if (nStyleType == oStyleTypes.run)
-						{
-							if(elem.run)
-							{
-								elem.run.Set_RStyle(isEqualName);
-							}
-							else
-							{
-								elem.pPr.RStyle = isEqualName;
-							}
-						}	
-                        else if(nStyleType == oStyleTypes.styleLink)
-                            elem.pPr.StyleLink = isEqualName;
-                        else if(nStyleType == oStyleTypes.numStyleLink)
-                            elem.pPr.NumStyleLink = isEqualName;
-                    }
-                    else if (!isAlreadyContainsStyle && isEqualName == null)//нужно добавить новый стиль
-                    {
-                        //todo править и BaseOn
-						stylePaste.style.BasedOn = null;
-                        var nStyleId = oDocumentStyles.Add(stylePaste.style);
-                        if (nStyleType == oStyleTypes.par || nStyleType == oStyleTypes.lvl)
-                            elem.pPr.PStyle = nStyleId;
-                        else if (nStyleType == oStyleTypes.table)
-                            elem.pPr.Set_TableStyle2(nStyleId);
-						else if (nStyleType == oStyleTypes.run)
-						{
-							if(elem.run)
-							{
-								elem.run.Set_RStyle(nStyleId);
-							}
-							else
-							{
-								elem.pPr.RStyle = nStyleId;
-							}
+		var isAlreadyContainsStyle;
+		var oStyleTypes = {par: 1, table: 2, lvl: 3, run: 4, styleLink: 5, numStyleLink: 6};
+		var addNewStyles = false;
+		var fParseStyle = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
+			if (aStyles == null) {
+				return;
+			}
+
+			var expandBasedOn = function (_style) {
+				if (!_style || !_style.style) {
+					return;
+				}
+				var _elem = oReadResult.styles[_style.style]
+				if (_elem && _elem.style && _elem.style.BasedOn) {
+					var basedOnObj = {pPr: null, style: _elem.style.BasedOn};
+					aStyles.push(basedOnObj);
+					expandBasedOn(basedOnObj);
+				}
+			};
+
+			var i;
+			for (i = 0, length = aStyles.length; i < length; ++i) {
+				expandBasedOn(aStyles[i]);
+			}
+			expandBasedOn(aStyles);
+
+			for (i = 0, length = aStyles.length; i < length; ++i) {
+				var elem = aStyles[i];
+				var stylePaste = oReadResult.styles[elem.style];
+				var isEqualName = null;
+
+				var putStyle = function (_elem, _styleId, putDefaultStyle) {
+					if (!_elem.pPr) {
+						return;
+					}
+					if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
+						_elem.pPr.PStyle = _styleId;
+					} else if (nStyleType === oStyleTypes.table) {
+						_elem.pPr.Set_TableStyle2(_styleId);
+					} else if (nStyleType === oStyleTypes.run) {
+						if (_elem.run) {
+							_elem.run.Set_RStyle(_styleId);
+						} else {
+							_elem.pPr.RStyle = _styleId;
 						}
-                        else if(nStyleType == oStyleTypes.styleLink)
-                            elem.pPr.StyleLink = nStyleId;
-                        else if(nStyleType == oStyleTypes.numStyleLink)
-                            elem.pPr.NumStyleLink = nStyleId;
-						
-                        addNewStyles = true;
-                    }
-                }
-            }
-        };
-		
+					} else if (nStyleType === oStyleTypes.styleLink) {
+						_elem.pPr.StyleLink = _styleId;
+					} else if (nStyleType === oStyleTypes.numStyleLink) {
+						_elem.pPr.NumStyleLink = _styleId;
+					} else if (putDefaultStyle) {
+						_elem.pPr.PStyle = j;
+					}
+				};
+
+				var nStyleId;
+				if (null != stylePaste && null != stylePaste.style && oDocumentStyles) {
+					for (var j in oDocumentStyles.Style) {
+						var styleDoc = oDocumentStyles.Style[j];
+						isAlreadyContainsStyle = styleDoc.isEqual(stylePaste.style);
+						if (styleDoc.Name === stylePaste.style.Name) {
+							isEqualName = j;
+						}
+						if (isAlreadyContainsStyle) {
+							putStyle(elem, j, true);
+							break;
+						}
+					}
+
+					if (!isAlreadyContainsStyle && isEqualName != null) {
+						//если нашли имя такого же стиля
+						//поскольку содержимое отличается, нужно проверять, используется ли данный стиль в документе
+						//если не используется - нужно его заменить
+						//на данный момент функции для замены нет, добавляю новый стиль с новм именем
+						var isUseStyleInDoc = false;
+						if (!isUseStyleInDoc) {
+							stylePaste.style.BasedOn = null;
+							stylePaste.style.Name = stylePaste.style.Name + "_123";
+							nStyleId = oDocumentStyles.Add(stylePaste.style);
+							putStyle(elem, nStyleId);
+						} else {
+							putStyle(elem, isEqualName);
+						}
+					} else if (!isAlreadyContainsStyle && isEqualName == null)//нужно добавить новый стиль
+					{
+						//todo править и BaseOn
+						stylePaste.style.BasedOn = null;
+						nStyleId = oDocumentStyles.Add(stylePaste.style);
+						putStyle(elem, nStyleId);
+
+						addNewStyles = true;
+					}
+				}
+			}
+		};
+
 		fParseStyle(this.oReadResult.runStyles, this.Document.Styles, this.oReadResult, oStyleTypes.run);
         fParseStyle(this.oReadResult.paraStyles, this.Document.Styles, this.oReadResult, oStyleTypes.par);
         fParseStyle(this.oReadResult.tableStyles, this.Document.Styles, this.oReadResult, oStyleTypes.table);
@@ -8393,18 +8394,18 @@ function BinaryFileReader(doc, openParams)
             bInBlock = true;
         //создаем список используемых шрифтов
         var AllFonts = {};
-		
+
 		if(this.Document.Numbering)
 			this.Document.Numbering.GetAllFontNames(AllFonts);
-		if(this.Document.Styles)	
+		if(this.Document.Styles)
         this.Document.Styles.Document_Get_AllFontNames(AllFonts);
-		
+
         for (var Index = 0, Count = aContent.length; Index < Count; Index++)
             aContent[Index].Document_Get_AllFontNames(AllFonts);
         var aPrepeareFonts = [];
-		
+
 		var oDocument = this.Document && this.Document.LogicDocument ? this.Document.LogicDocument : this.Document;
-		
+
 		var fontScheme;
 		var m_oLogicDocument = editor.WordControl.m_oLogicDocument;
 		//для презентаций находим fontScheme
@@ -8414,7 +8415,7 @@ function BinaryFileReader(doc, openParams)
 			fontScheme = m_oLogicDocument.theme.themeElements.fontScheme;
 
 		AscFormat.checkThemeFonts(AllFonts, fontScheme);
-		
+
         for (var i in AllFonts)
             aPrepeareFonts.push(new AscFonts.CFont(i, 0, "", 0));
         //создаем список используемых картинок
@@ -8438,7 +8439,7 @@ function BinaryFileReader(doc, openParams)
 			}
 		}
 		//add comments
-		var setting = this.oReadResult.setting;        
+		var setting = this.oReadResult.setting;
 		var fInitCommentData = function(comment)
 		{
 			var oCommentObj = new AscCommon.CCommentData();
@@ -8469,7 +8470,7 @@ function BinaryFileReader(doc, openParams)
 			}
 			return oCommentObj;
 		};
-		
+
 		var oCommentsNewId = {};
 		//меняем CDocumentContent на Document для возможности вставки комментариев в колонтитул и таблицу
 		var isIntoShape = this.Document && this.Document.Parent && this.Document.Parent instanceof AscFormat.CShape;
@@ -8480,11 +8481,11 @@ function BinaryFileReader(doc, openParams)
 			if(this.oReadResult.oCommentsPlaces && this.oReadResult.oCommentsPlaces[i] && this.oReadResult.oCommentsPlaces[i].Start != null && this.oReadResult.oCommentsPlaces[i].End != null && document && document.Comments && isCopyPaste === true)
 			{
 				var oOldComment = this.oReadResult.oComments[i];
-				
+
 				var m_sQuoteText = this.oReadResult.oCommentsPlaces[i].QuoteText;
 				if(m_sQuoteText)
 					oOldComment.m_sQuoteText = m_sQuoteText;
-				
+
 				var oNewComment = new AscCommon.CComment(document.Comments, fInitCommentData(oOldComment))
 				document.Comments.Add(oNewComment);
 				oCommentsNewId[oOldComment.Id] = oNewComment;
