@@ -292,6 +292,10 @@
 	{
 		return this.Format.CheckOnFly(sText);
 	};
+	CSdtTextFormPr.prototype.GetFormat = function()
+	{
+		return this.Format;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CSdtTextFormPr    = CSdtTextFormPr;

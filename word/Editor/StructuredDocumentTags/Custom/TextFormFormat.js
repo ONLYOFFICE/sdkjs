@@ -181,6 +181,54 @@
 		this.Mask.Set(oReader.GetString2());
 		this.RegExp = oReader.GetString2();
 	};
+	CTextFormFormat.prototype.ToJson = function()
+	{
+		switch (this.BaseFormat)
+		{
+			case FormatType.Digit:
+				return {
+					"type" : "digit"
+				};
+			case FormatType.Letter:
+				return {
+					"type" : "letter"
+				};
+			case FormatType.Mask:
+				return {
+					"type"  : "mask",
+					"value" : this.Mask.Get()
+				};
+			case FormatType.RegExp:
+				return {
+					"type"  : "regExp",
+					"value" : this.RegExp
+				};
+		}
+
+		return {
+			"type" : "none"
+		};
+	};
+	CTextFormFormat.prototype.FromJson = function(json)
+	{
+		this.SetNone();
+
+		if (!json || !json["type"])
+			return;
+
+		let sType = json["type"];
+		switch (sType)
+		{
+			case "digit":
+				return this.SetDigit();
+			case "letter":
+				return this.SetLetter();
+			case "mask":
+				return this.SetMask(json["value"]);
+			case "regExp":
+				return this.SetRegExp(json["value"]);
+		}
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

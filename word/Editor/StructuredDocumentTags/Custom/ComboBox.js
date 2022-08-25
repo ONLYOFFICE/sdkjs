@@ -74,6 +74,7 @@
 		this.ListItems = [];
 		this.LastValue = -1;
 		this.AutoFit   = false;
+		this.Format    = new AscWord.CTextFormFormat();
 	}
 	CSdtComboBoxPr.prototype.Copy = function()
 	{
@@ -143,6 +144,7 @@
 			this.ListItems[nIndex].WriteToBinary(oWriter);
 		}
 		oWriter.WriteBool(this.AutoFit);
+		this.Format.WriteToBinary(oWriter);
 	};
 	CSdtComboBoxPr.prototype.ReadFromBinary = function(oReader)
 	{
@@ -156,6 +158,7 @@
 			this.ListItems.push(oItem);
 		}
 		this.AutoFit = oReader.GetBool();
+		this.Format.ReadFromBinary(oReader);
 	};
 	CSdtComboBoxPr.prototype.Write_ToBinary = function(oWriter)
 	{
@@ -200,6 +203,10 @@
 	CSdtComboBoxPr.prototype.SetAutoFit = function(isAutoFit)
 	{
 		this.AutoFit = isAutoFit;
+	};
+	CSdtComboBoxPr.prototype.GetFormat = function()
+	{
+		return this.Format;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
