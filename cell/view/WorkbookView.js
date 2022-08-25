@@ -4639,8 +4639,11 @@
 		this.SearchEngine.Clear();
 		this.SearchEngine.Set(oProps);
 
-		//далее дёргаем в CDocumentSearchExcel -> Add
-		this.model.findCellText(oProps, this.SearchEngine);
+		if (!(oProps.isNotSearchEmptyCells && oProps.findWhat === "")) {
+			//далее дёргаем в CDocumentSearchExcel -> Add
+			this.model.findCellText(oProps, this.SearchEngine);
+		}
+
 		return this.SearchEngine;
 	};
 
