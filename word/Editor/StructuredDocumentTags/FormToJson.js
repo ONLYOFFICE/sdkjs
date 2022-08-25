@@ -85,7 +85,10 @@
 			{
 				let oForm = JsonToSimpleForm(oElement);
 				if (oForm)
+				{
+					oForm.SetFormPr(new AscWord.CSdtFormPr());
 					oComplexForm.AddToContentToEnd(oForm);
+				}
 			}
 		}
 

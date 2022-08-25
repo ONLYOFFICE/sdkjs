@@ -431,7 +431,7 @@ $(function () {
 		logicDocument.AddToContent(logicDocument.GetElementsCount(), paragraph);
 		paragraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : Asc.linerule_Auto});
 
-		let complexForm = logicDocument.AddComplexForm();
+		let complexForm   = logicDocument.AddComplexForm();
 		let complexFormPr = new AscWord.CSdtFormPr();
 		complexForm.SetFormPr(complexFormPr);
 
@@ -494,7 +494,7 @@ $(function () {
 		logicDocument.AddToContent(logicDocument.GetElementsCount(), paragraph2);
 
 		let complexForm2 = logicDocument.AddComplexForm();
-		complexFormPr = new AscWord.CSdtFormPr();
+		complexFormPr    = new AscWord.CSdtFormPr();
 		complexForm2.SetFormPr(complexFormPr);
 
 		complexForm2.SetThisElementCurrent();
@@ -516,5 +516,90 @@ $(function () {
 		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), false, "Check is all required filled");
 		checkBox.SetCheckBoxChecked(true);
 		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "Toggle checkbox and check form completion");
+	});
+
+	QUnit.test("Check form to json conversion", function (assert)
+	{
+		AscTest.ClearDocument();
+
+		// Наполняем нашу форму: 111<textForm>222<comboForm>333
+
+		let paragraph = new AscWord.CParagraph(AscTest.DrawingDocument);
+		logicDocument.AddToContent(logicDocument.GetElementsCount(), paragraph);
+
+		let complexForm   = logicDocument.AddComplexForm();
+		let complexFormPr = new AscWord.CSdtFormPr();
+		complexForm.SetFormPr(complexFormPr);
+
+		let tempRun1 = new AscWord.CRun();
+		tempRun1.AddText("111");
+		complexForm.Add(tempRun1);
+
+		logicDocument.RemoveSelection();
+		complexForm.SetThisElementCurrent();
+		complexForm.MoveCursorToEndPos();
+
+		let textForm1 = logicDocument.AddContentControlTextForm();
+		textForm1.SetFormPr(new AscWord.CSdtFormPr());
+		textForm1.SetPlaceholderText("TextForm");
+
+		logicDocument.RemoveSelection();
+		complexForm.SetThisElementCurrent();
+		complexForm.MoveCursorToEndPos();
+
+		let tempRun2 = new AscWord.CRun();
+		tempRun2.AddText("222");
+		complexForm.Add(tempRun2);
+
+		let comboForm = logicDocument.AddContentControlComboBox();
+		comboForm.SetPlaceholderText("ComboForm");
+		comboForm.SetFormPr(new AscWord.CSdtFormPr());
+		let comboPr = comboForm.GetComboBoxPr();
+		comboPr.AddItem("123", "123");
+		comboPr.AddItem("zxc", "zxc");
+
+		complexForm.SetThisElementCurrent();
+		complexForm.MoveCursorToEndPos();
+
+		let tempRun3 = new AscWord.CRun();
+		tempRun3.AddText("333");
+		complexForm.Add(tempRun3);
+
+		let json = AscWord.FormToJson(complexForm);
+		assert.deepEqual(json, {
+			"preview" : "",
+			"type"    : "custom",
+			"format"  : ["111", {
+				"comb"          : false,
+				"format"        : {"type" : "none"},
+				"maxCharacters" : -1,
+				"placeHolder"   : "TextForm",
+				"type"          : "text"
+			}, "222", {
+				"choice"      : ["Choose an item", "123", "zxc"],
+				"edit"        : true,
+				"format"      : {"type" : "none"},
+				"placeHolder" : "ComboForm",
+				"type"        : "comboBox"
+			}, "333"]
+		}, "Check form to json conversion");
+
+		json.format.push({
+			"checked" : false,
+			"type"    : "checkBox"
+		});
+		json.format.push("444");
+
+		let complexForm2 = AscWord.JsonToForm(json);
+		assert.strictEqual(complexForm2.GetInnerText(), "111TextForm222ComboForm333444", "Check inner text after conversion json to form");
+
+		let subForms = complexForm2.GetAllSubForms();
+		assert.strictEqual(subForms.length, 3, "Check the count of subforms");
+
+		assert.strictEqual(subForms[0].IsTextForm(), true, "Check type of the 0 subform");
+		assert.strictEqual(subForms[1].IsComboBox(), true, "Check type of the 1 subform");
+		assert.strictEqual(subForms[2].IsCheckBox(), true, "Check type of the 2 subform");
+		assert.strictEqual(subForms[2].IsCheckBoxChecked(), false, "Check value of the 2 subform");
+
 	});
 });
