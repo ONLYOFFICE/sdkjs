@@ -15931,6 +15931,7 @@ window["Asc"]["CT_WorksheetSource"] = window['Asc'].CT_WorksheetSource = CT_Work
 window["Asc"]["PivotLayoutType"] = window['Asc'].PivotLayoutType = PivotLayoutType;
 window["Asc"]["PivotLayout"] = window['Asc'].PivotLayout = PivotLayout;
 window["Asc"]["PivotLayoutCell"] = window['Asc'].PivotLayoutCell = PivotLayoutCell;
+window["Asc"]["PivotRecords"] = window['Asc'].PivotRecords = PivotRecords;
 
 window["Asc"]["c_oAscAllocationMethod"] = window['Asc'].c_oAscAllocationMethod = c_oAscAllocationMethod;
 window["Asc"]["c_oAscPivotRecType"] = window['Asc'].c_oAscPivotRecType = c_oAscPivotRecType;

@@ -1822,6 +1822,7 @@
 
 		return {
 			// attributes
+			"id":                    oCache.id,
 			"invalid":               oCache.invalid !== false ? oCache.invalid : undefined,
 			"saveData":              oCache.saveData !== true ? oCache.saveData : undefined,
 			"refreshOnLoad":         oCache.refreshOnLoad !== false ? oCache.refreshOnLoad : undefined,
@@ -1834,7 +1835,7 @@
 			"createdVersion":        oCache.createdVersion !== 0 ? oCache.createdVersion : undefined,
 			"refreshedVersion":      oCache.refreshedVersion !== 0 ? oCache.refreshedVersion : undefined,
 			"minRefreshableVersion": oCache.minRefreshableVersion !== 0 ? oCache.minRefreshableVersion : undefined,
-			"recordCount":           oCache.cacheRecords != null ? oCache.cacheRecords.getRowsCount() : undefined,
+			"cacheRecords":          oCache.cacheRecords != null ? this.SerPivotCacheRecords(oCache.cacheRecords) : undefined,
 			"upgradeOnRefresh":      oCache.upgradeOnRefresh !== false ? oCache.upgradeOnRefresh : undefined,
 			"tupleCache":            oCache.tupleCache !== false ? oCache.tupleCache : undefined,
 			"supportSubquery":       oCache.supportSubquery !== false ? oCache.supportSubquery : undefined,
@@ -1853,6 +1854,26 @@
 			// ext
 			"pivotCacheDefinitionX14": oCache.pivotCacheDefinitionX14 !== null ? this.SerPivotCacheDefinitionX14(oCache.pivotCacheDefinitionX14) : undefined // to do (возожно стоит записать как extLst)
 		}
+	};
+	WriterToJSON.prototype.SerPivotCacheRecords = function(oRecords) // CT_PivotCacheRecords
+	{
+		var count = oRecords.getRowsCount();
+
+		let oResult = {
+			"records": [],
+			"extLst":  oRecords.extLst != null ? this.SerExtensionList(oRecords.extLst) : undefined,
+			"count": count
+		}
+
+		for (let i = 0; i < count; i++) {
+			let aRow = [];
+			for (let j = 0; j < oRecords._cols.length; j++)
+				aRow = aRow.concat(this.SerPivotRecords(oRecords._cols[j], i));
+			
+			oResult["records"].push(aRow);
+		}
+
+		return oResult;
 	};
 	WriterToJSON.prototype.SerPivotCaches = function(oCaches)
 	{
@@ -2029,18 +2050,27 @@
 			"items":                  this.SerPivotRecords(oItems.Items)
 		}
 	};
-	WriterToJSON.prototype.SerPivotRecords = function(oRecords) // PivotRecords
+	WriterToJSON.prototype.SerPivotRecords = function(oRecords, nOptIndex) // PivotRecords
 	{
 		if (!oRecords)
 			return oRecords;
 
 		var aRecords = [];
 		var oTempData, sTempType;
-		for (var nElm = 0; nElm < oRecords.size; nElm++)
+		if (nOptIndex !== undefined)
 		{
-			oTempData = oRecords.get(nElm);
+			oTempData = oRecords.get(nOptIndex);
 			sTempType = ToXML_PivotRecType(oTempData.type);
 			aRecords.push(this.SerPivotRecord(sTempType, oTempData.val, oTempData.addition));
+		}
+		else
+		{
+			for (var nElm = 0; nElm < oRecords.size; nElm++)
+			{
+				oTempData = oRecords.get(nElm);
+				sTempType = ToXML_PivotRecType(oTempData.type);
+				aRecords.push(this.SerPivotRecord(sTempType, oTempData.val, oTempData.addition));
+			}
 		}
 		
 		return aRecords;
@@ -2550,30 +2580,6 @@
 			"measureGroup": oMap.measureGroup != null ? oMap.measureGroup : undefined,
 			"dimension":    oMap.dimension != null ? oMap.dimension : undefined
 		}
-	};
-	WriterToJSON.prototype.Ser = function(o)
-	{
-
-	};
-	WriterToJSON.prototype.Ser = function(o)
-	{
-
-	};
-	WriterToJSON.prototype.Ser = function(o)
-	{
-
-	};
-	WriterToJSON.prototype.Ser = function(o)
-	{
-
-	};
-	WriterToJSON.prototype.Ser = function(o)
-	{
-
-	};
-	WriterToJSON.prototype.Ser = function(o)
-	{
-
 	};
 	WriterToJSON.prototype.SerTabularSlicerCache = function(oCache) // CT_tabularSlicerCache
 	{
@@ -3678,14 +3684,15 @@
 	{
 		let api = window["Asc"]["editor"];
 		let WorkbookView = api.wb;
-		let aRestoredSheets = [];
 		let renameSheetMap = {};
 		let oTempWorkBook = new AscCommonExcel.Workbook();
+		let aRestoredSheets = [];
+		let oThis = this;
 		oTempWorkBook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
 		oTempWorkBook.setCommonIndexObjectsFrom(WorkbookView.model);
 		oTempWorkBook.oApi = api;
 		oTempWorkBook.theme = oWorkbook.theme;
-		this.tabsIdMap = {};
+		this.slicerCachePivotTableSheetIdMap = {};
 
 		this.Workbook = oWorkbook;
 
@@ -3712,15 +3719,12 @@
 		if (oParsedSheets["slicerCachesExt"] != null)
 			this.slicerCachesExt = this.SlicerCachesFromJSON(oParsedSheets["slicerCachesExt"]);
 
-		let nSheetsCount = this.Workbook.aWorksheets.length;
 		for (var Index = 0; Index < oParsedSheets["sheets"].length; Index++)
 		{
 			let oWorksheet = this.WorksheetFromJSON(oParsedSheets["sheets"][Index], oTempWorkBook);
 			oTempWorkBook.aWorksheets.push(oWorksheet);
-			this.tabsIdMap[oParsedSheets["sheets"][Index]["id"]] = nSheetsCount++;
 		}
 
-		this.SetSlicerCachePivotTablesTabId();
 		let newFonts = {};
 		let pasteProcessor = AscCommonExcel.g_clipboardExcel.pasteProcessor;
 		newFonts = this.Workbook.generateFontMap2();
@@ -3734,6 +3738,8 @@
 			}
 		}
 
+		let newSlicerCaches = {};
+		let newSlicerCachesExt = {};
 		let pasteSheets = function() {
 			for (let nSheet = 0; nSheet < oTempWorkBook.aWorksheets.length; nSheet++)
 			{
@@ -3744,9 +3750,10 @@
 
 				let where = WorkbookView.model.aWorksheets.length;
 				let renameParams = WorkbookView.model.copyWorksheet(0, where, undefined, undefined, undefined, undefined, oWorksheet, sBinarySheet);
-				//TODO ошибку по срезам добавил в renameParams. необходимо пересмотреть
-				//переименовать эту переменную, либо не добавлять copySlicerError и посылать ошибку в другом месте
-				if (renameParams && renameParams.copySlicerError) {
+				let oNewWorksheet = WorkbookView.model.aWorksheets[where];
+				oThis.slicerCachePivotTableSheetIdMap[oParsedSheets["sheets"][nSheet]["id"]] = oNewWorksheet.getId();
+
+				if (renameParams && renameParams.copySlicerError && WorkbookView.handlers) {
 					WorkbookView.handlers.trigger("asc_onError", Asc.c_oAscError.ID.MoveSlicerError, Asc.c_oAscError.Level.NoCritical);
 				}
 
@@ -3755,7 +3762,24 @@
 				api.asc_setZoom(1);
 				// Посылаем callback об изменении списка листов
 				api.sheetsChanged();
+
+				for (let i = 0; i < oNewWorksheet.aSlicers.length; ++i) {
+					var slicerCache = oNewWorksheet.aSlicers[i].getSlicerCache();
+					if (slicerCache) {
+						if (oNewWorksheet.aSlicers[i].isExt()) {
+							newSlicerCachesExt[slicerCache.name] = slicerCache;
+						} else {
+							newSlicerCaches[slicerCache.name] = slicerCache;
+						}
+					}
+				}
+
+				aRestoredSheets.push(oNewWorksheet);
 			}
+
+			oThis.slicerCaches = newSlicerCaches;
+			oThis.slicerCachesExt = newSlicerCachesExt;
+			oThis.ResetSlicerCachePivotTablesSheetId();
 		};
 
 		api._loadFonts(newFonts, function () {
@@ -3764,24 +3788,28 @@
 
 		return aRestoredSheets;
 	};
-	ReaderFromJSON.prototype.SetSlicerCachePivotTablesTabId = function()
+	ReaderFromJSON.prototype.ResetSlicerCachePivotTablesSheetId = function()
 	{
 		for (let key in this.slicerCaches)
 		{
-			for (let nTable = 0; nTable < this.slicerCaches[key].pivotTables.length; nTable++)
+			let oSlicerCachePivotTable = this.slicerCaches[key].pivotTables[0];
+			if (oSlicerCachePivotTable)
 			{
-				let oSlicerCachePivotTable = this.slicerCaches[key].pivotTables[nTable];
-
-				if (this.tabsIdMap[oSlicerCachePivotTable.sheetId])
-				{
-					oSlicerCachePivotTable.tabIdOpen = this.tabsIdMap[oSlicerCachePivotTable.sheetId];
-					//oSlicerCachePivotTable.sheetId = this.tabsIdMap[oSlicerCachePivotTable.sheetId].Id;
-				}
+				if (this.slicerCachePivotTableSheetIdMap[oSlicerCachePivotTable.sheetId])
+					this.slicerCaches[key].forCopySheet(oSlicerCachePivotTable.sheetId, this.slicerCachePivotTableSheetIdMap[oSlicerCachePivotTable.sheetId]);
 				else
-				{
-					oSlicerCachePivotTable.tabIdOpen = null;
-					oSlicerCachePivotTable.sheetId = null;
-				}
+					this.slicerCaches[key].forCopySheet(oSlicerCachePivotTable.sheetId, null);
+			}
+		}
+		for (let key in this.slicerCachesExt)
+		{
+			let oSlicerCachePivotTable = this.slicerCachesExt[key].pivotTables[0];
+			if (oSlicerCachePivotTable)
+			{
+				if (this.slicerCachePivotTableSheetIdMap[oSlicerCachePivotTable.sheetId])
+					this.slicerCachesExt[key].forCopySheet(oSlicerCachePivotTable.sheetId, this.slicerCachePivotTableSheetIdMap[oSlicerCachePivotTable.sheetId]);
+				else
+					this.slicerCachesExt[key].forCopySheet(oSlicerCachePivotTable.sheetId, null);
 			}
 		}
 	};
@@ -5166,7 +5194,7 @@
 		if (oParsed["cfIcon"].length > 0)
 		{
 			for (var nElm = 0; nElm < oParsed["cfIcon"].length; nElm++)
-				oIconSet.aIconSets.push(this.CondFmtValObjFromJSON(oParsed["cfIcon"][nElm]));
+				oIconSet.aIconSets.push(this.CondFmtIconSetFromJSON(oParsed["cfIcon"][nElm]));
 		}
 
 		return oIconSet;
@@ -5181,10 +5209,6 @@
 			oCFIS.IconId = oParsed["iconId"];
 
 		return oCFIS;
-	};
-	ReaderFromJSON.prototype.FromJSON = function(oParsed)
-	{
-		
 	};
 	ReaderFromJSON.prototype.FormulaCFFromJSON = function(oParsed)
 	{
@@ -6453,8 +6477,8 @@
 
 		if (oParsed["name"] != null)
 			oSlicer.name = oParsed["name"];
-		if (oParsed["uid"] != null)
-			oSlicer.uid = oParsed["uid"];
+		//if (oParsed["uid"] != null)
+		//	oSlicer.uid = oParsed["uid"];
 		if (oParsed["cacheDefinition"] != null)
 			oSlicer.cacheDefinition = this.slicerCaches[oParsed["cacheDefinition"]] || this.slicerCachesExt[oParsed["cacheDefinition"]];
 		if (oParsed["caption"] != null)
@@ -6482,8 +6506,8 @@
 
 		if (oParsed["name"] != null)
 			oCache.name = oParsed["name"];
-		if (oParsed["uid"] != null)
-			oCache.uid = oParsed["uid"];
+		//if (oParsed["uid"] != null)
+		//	oCache.uid = oParsed["uid"];
 		if (oParsed["sourceName"] != null)
 			oCache.sourceName = oParsed["sourceName"];
 		if (oParsed["pivotTables"] != null)
@@ -6507,15 +6531,14 @@
 	};
 	ReaderFromJSON.prototype.SlicerCachePivotTableFromJSON = function(oParsed)
 	{
-		// to do (check sheetId, tapIdOpen)
 		var oTable = new Asc.CT_slicerCachePivotTable();
 		
 		if (oParsed["name"] != null)
 			oTable.name = oParsed["name"];
-		if (oParsed["tabIdOpen"] != null)
-			oTable.tabIdOpen = oParsed["tabIdOpen"];
-		//if (oParsed["sheetId"] != null)
-		//	oTable.sheetId = oParsed["sheetId"];
+		//if (oParsed["tabIdOpen"] != null)
+		//	oTable.tabIdOpen = oParsed["tabIdOpen"];
+		if (oParsed["sheetId"] != null)
+			oTable.sheetId = oParsed["sheetId"];
 		return oTable;
 	};
 	ReaderFromJSON.prototype.SlicerCacheDataFromJSON = function(oParsed)
@@ -6639,6 +6662,8 @@
 		var oPivotCahceDef = new Asc.CT_PivotCacheDefinition();
 
 		// attributes
+		// if (oParsed["id"] != null)
+		// 	oPivotCahceDef.id = oParsed["id"];
 		if (oParsed["invalid"] != null)
 			oPivotCahceDef.invalid = oParsed["invalid"];
 		if (oParsed["saveData"] != null)
@@ -6663,8 +6688,6 @@
 			oPivotCahceDef.refreshedVersion = oParsed["refreshedVersion"];
 		if (oParsed["minRefreshableVersion"] != null)
 			oPivotCahceDef.minRefreshableVersion = oParsed["minRefreshableVersion"];
-		if (oParsed["recordCount"] != null)
-			oPivotCahceDef.recordCount = oParsed["recordCount"];
 		if (oParsed["upgradeOnRefresh"] != null)
 			oPivotCahceDef.upgradeOnRefresh = oParsed["upgradeOnRefresh"];
 		if (oParsed["tupleCache"] != null)
@@ -6674,6 +6697,8 @@
 		if (oParsed["supportAdvancedDrill"] != null)
 			oPivotCahceDef.supportAdvancedDrill = oParsed["supportAdvancedDrill"];
 		// members
+		if (oParsed["cacheRecords"] != null)
+			oPivotCahceDef.cacheRecords = this.PivotCacheRecordsFromJSON(oParsed["cacheRecords"]);
 		if (oParsed["cacheSource"] != null)
 			oPivotCahceDef.cacheSource = this.CacheSourceFromJSON(oParsed["cacheSource"]);
 		if (oParsed["cacheFields"] != null)
@@ -6699,6 +6724,29 @@
 			oPivotCahceDef.pivotCacheDefinitionX14 = this.PivotCacheDefinitionX14FromJSON(oParsed["pivotCacheDefinitionX14"]); // to do
 
 		return oPivotCahceDef;
+	};
+	ReaderFromJSON.prototype.PivotCacheRecordsFromJSON = function(oParsed)
+	{
+		let oRecords = new Asc.CT_PivotCacheRecords();
+		
+		if (oParsed["records"].length)
+		{
+			for (let i = 0; i < oParsed["records"][0].length; i++)
+				oRecords._cols.push(new Asc.PivotRecords());
+		}
+
+		for (let i = 0; i < oParsed["records"].length; i++) {
+			for (let j = 0; j < oParsed["records"][i].length; j++) {
+				this.PivotRecordsFromJSON([oParsed["records"][i][j]], oRecords._cols[j]);
+			}
+		}
+
+		oRecords.startCount = oParsed["count"];
+
+		if (oParsed["extLst"])
+			oRecords.extLst = this.ExtensionListFromJSON(oParsed["extLst"]);
+
+		return oRecords;
 	};
 	ReaderFromJSON.prototype.PivotCachesFromJSON = function(oParsed)
 	{
