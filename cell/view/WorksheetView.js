@@ -8952,23 +8952,23 @@
 						userIdAllProps = isLocked.UserId;
 					}
 				}
-				
-				//проверяем, не попали ли мы в чужой селект
-				if (this.collaborativeEditing.getFast()) {
-					var isForeignSelect = this.collaborativeEditing.getForeignSelectIntersection(c.col, r.row);
-					if (isForeignSelect) {
-						var foreignRow = isForeignSelect.ranges[0].r1;
-						var foreignCol = isForeignSelect.ranges[0].c2;
-						userIdForeignSelect = isForeignSelect.userId;
-						shortIdForeignSelect = isForeignSelect.shortId;
-						foreignSelectPosLeft = this._getColLeft(foreignCol) + this._getColumnWidth(foreignCol);
-						foreignSelectPosTop = this._getRowTop(foreignRow);
-						// Пересчитываем X и Y относительно видимой области
-						foreignSelectPosLeft -= offsetX;
-						foreignSelectPosTop -= offsetY;
-						foreignSelectPosLeft = this.cellsLeft > foreignSelectPosLeft ? this.cellsLeft : foreignSelectPosLeft;
-						foreignSelectPosTop = this.cellsTop > foreignSelectPosTop ? this.cellsTop : foreignSelectPosTop;
-					}
+			}
+
+			//проверяем, не попали ли мы в чужой селект
+			if ((canEdit || this.workbook.Api.isLiveViewer()) && readyMode && this.collaborativeEditing.getFast()) {
+				var isForeignSelect = this.collaborativeEditing.getForeignSelectIntersection(c.col, r.row);
+				if (isForeignSelect) {
+					var foreignRow = isForeignSelect.ranges[0].r1;
+					var foreignCol = isForeignSelect.ranges[0].c2;
+					userIdForeignSelect = isForeignSelect.userId;
+					shortIdForeignSelect = isForeignSelect.shortId;
+					foreignSelectPosLeft = this._getColLeft(foreignCol) + this._getColumnWidth(foreignCol);
+					foreignSelectPosTop = this._getRowTop(foreignRow);
+					// Пересчитываем X и Y относительно видимой области
+					foreignSelectPosLeft -= offsetX;
+					foreignSelectPosTop -= offsetY;
+					foreignSelectPosLeft = this.cellsLeft > foreignSelectPosLeft ? this.cellsLeft : foreignSelectPosLeft;
+					foreignSelectPosTop = this.cellsTop > foreignSelectPosTop ? this.cellsTop : foreignSelectPosTop;
 				}
 			}
 			
