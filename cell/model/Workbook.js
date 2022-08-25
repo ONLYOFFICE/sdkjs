@@ -2460,6 +2460,7 @@
 			this.dependencyFormulas.removeSheet(prepared);
 			this.dependencyFormulas.unlockRecal();
 			this.handlers.trigger("asc_onSheetDeleted", nIndex);
+			this.handlers.trigger("onSheetDeleted", nIndex);
 			return wsActive.getIndex();
 		}
 		return -1;

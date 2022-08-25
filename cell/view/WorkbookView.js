@@ -905,6 +905,9 @@
     this.model.handlers.add("changeCellValue", function(cell) {
 		self.SearchEngine && self.SearchEngine.changeCellValue(cell);
     });
+    this.model.handlers.add("onSheetDeleted", function(index) {
+		self.SearchEngine && self.SearchEngine.removeSheet(index);
+    });
     this.model.handlers.add("showWorksheet", function(wsId) {
       var wsModel = self.model.getWorksheetById(wsId), index;
       if (wsModel) {
@@ -5121,6 +5124,19 @@
 			} else if (!this.modifiedDocument && cell.isEqual(this.props)) {
 				this.wb.handlers.trigger("asc_onModifiedDocument");
 				this.setModifiedDocument(true);
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.removeSheet = function (index) {
+		//TODO так же сделать события для изменения названия листа + индекса листа
+		if (this.isNotEmpty()) {
+			for (var i in this.Elements) {
+				if (this.Elements[i] && index === this.Elements[i].index) {
+					var key = index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					if (null != this.mapFindCells[key]) {
+						this._removeFromSearchElems(key, this.mapFindCells[key]);
+					}
+				}
 			}
 		}
 	};
