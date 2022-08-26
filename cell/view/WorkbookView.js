@@ -5157,7 +5157,7 @@
 			for (var i in this.Elements) {
 				if (this.Elements[i] && index === this.Elements[i].index) {
 					this.Elements[i].sheet = val
-					arrResult.push([i, this.Elements[i].sheet, this.Elements[i].name, this.Elements[i].cell, this.Elements[i].text, this.Elements[i].formula]);
+					arrResult.push([parseInt(i), this.Elements[i].sheet, this.Elements[i].name, this.Elements[i].cell, this.Elements[i].text, this.Elements[i].formula]);
 				}
 			}
 		}
