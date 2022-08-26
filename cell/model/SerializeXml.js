@@ -4841,7 +4841,7 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 
 	CT_Value.prototype.fromXml = function (reader) {
 		this.readAttr(reader);
-		this.val = reader.GetText();
+		this.val = reader.GetTextDecodeXml();
 	};
 	CT_Value.prototype.readAttributes = function (attr, uq) {
 		if (attr()) {
@@ -10830,7 +10830,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		var val;
 		while (reader.ReadNextSiblingNode(depth)) {
 			if ("v" === reader.GetName()) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				this.val.CellValue = val;
 			}
 		}
