@@ -2093,7 +2093,13 @@ function BinaryStyleTableWriter(memory, doc, oNumIdMap, copyParams, saveParams)
     {
         var oThis = this;
 		var compilePr = this.copyParams ? this.Document.Styles.Get_Pr(id, style.Get_Type()) : style;
-		
+
+		if (this.copyParams && style.Get_Type() === styletype_Numbering) {
+			if (style.ParaPr.NumPr) {
+				compilePr.ParaPr.NumPr = style.ParaPr.NumPr.Copy();
+			}
+		}
+
         //ID
         if(null != id)
         {
@@ -5144,10 +5150,58 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
         var oThis = this;
 		if(null != this.copyParams)
         {
+
+
+
+			var checkStyleNumInside = function (id, _Numbering) {
+				var style = oThis.Document.Styles.Get(id);
+				if (style.ParaPr && style.ParaPr.NumPr && style.ParaPr.NumPr.NumId) {
+					var _Num = Numbering.GetNum(style.ParaPr.NumPr.NumId);
+
+
+
+
+					if(null != oNum)
+					{
+
+
+						var oAbstractNum = Numbering.AbstractNum[_Num.AbstractNumId];
+						if (oAbstractNum && oAbstractNum.GetNumStyleLink())
+						{
+							var oStyles   = editor.WordControl.m_oLogicDocument.GetStyles();
+							var oNumStyle = oThis.Document.Styles.Get(oAbstractNum.GetNumStyleLink());
+
+							if (oNumStyle && oNumStyle.ParaPr.NumPr && undefined !== oNumStyle.ParaPr.NumPr.NumId)
+							{
+								oThis.copyParams.oUsedNumIdMap[oNumStyle.ParaPr.NumPr.NumId] = oThis.copyParams.nNumIdIndex;
+							}
+						}
+
+
+						/*if (null != oNum.GetNumStyleLink()) {
+							oThis.copyParams.oUsedStyleMap[oNum.GetNumStyleLink()] = 1;
+						}
+						if (null != oNum.GetStyleLink()) {
+							oThis.copyParams.oUsedStyleMap[oNum.GetStyleLink()] = 1;
+						}
+						for(var i = 0, length = 9; i < length; ++i)
+						{
+							var oLvl = oNum.GetLvl(i);
+							if(oLvl && oLvl.GetPStyle())
+								oThis.copyParams.oUsedStyleMap[oLvl.GetPStyle()] = 1;
+						}*/
+					}
+				}
+			};
+
 			//анализируем используемые списки и стили
 			var sParaStyle = par.Style_Get();
-			if(null != sParaStyle)
+			if(null != sParaStyle) {
 				this.copyParams.oUsedStyleMap[sParaStyle] = 1;
+				checkStyleNumInside(sParaStyle);
+			}
+
+			var style;
 			var oNumPr = par.GetNumPr();
 			if(oNumPr && oNumPr.IsValid())
 			{
@@ -5163,16 +5217,24 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 					if(null != oNum)
 					{
 						if (null != oNum.GetNumStyleLink()) {
-							this.copyParams.oUsedStyleMap[oNum.GetNumStyleLink()] = 1;
+							style = oNum.GetNumStyleLink();
+							this.copyParams.oUsedStyleMap[style] = 1;
+							checkStyleNumInside(style);
 						}
 						if (null != oNum.GetStyleLink()) {
-							this.copyParams.oUsedStyleMap[oNum.GetStyleLink()] = 1;
+							style = oNum.GetStyleLink();
+							this.copyParams.oUsedStyleMap[style] = 1;
+							checkStyleNumInside(style);
 						}
 						for(var i = 0, length = 9; i < length; ++i)
 						{
 							var oLvl = oNum.GetLvl(i);
-							if(oLvl && oLvl.GetPStyle())
-								this.copyParams.oUsedStyleMap[oLvl.GetPStyle()] = 1;
+							if(oLvl && oLvl.GetPStyle()) {
+								style = oLvl.GetPStyle();
+								this.copyParams.oUsedStyleMap[style] = 1;
+								checkStyleNumInside(style);
+							}
+
 						}
 					}
 				}
