@@ -7150,32 +7150,32 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		while (reader.ReadNextSiblingNode(depth)) {
 			var name = reader.GetNameNoNS();
 			if ("evenFooter" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setEvenFooter(val);
 				}
 			} else if ("evenHeader" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setEvenHeader(val);
 				}
 			} else if ("firstFooter" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setFirstFooter(val);
 				}
 			} else if ("firstHeader" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setFirstHeader(val);
 				}
 			} else if ("oddFooter" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setOddFooter(val);
 				}
 			} else if ("oddHeader" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setOddHeader(val);
 				}
