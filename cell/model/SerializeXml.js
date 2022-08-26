@@ -8167,7 +8167,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				this.aRuleElements.push(val);
 			} else if ("formula" === name || "f" === name) {
 				val = new AscCommonExcel.CFormulaCF()
-				val.Text = reader.GetText();
+				val.Text = prepareTextFromXml(reader.GetTextDecodeXml());
 				this.aRuleElements.push(val);
 			} else if ("iconSet" === name) {
 				val = new AscCommonExcel.CIconSet();
