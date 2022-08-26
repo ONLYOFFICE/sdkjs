@@ -2706,7 +2706,19 @@
 					oTempCell["v"].push(SerMultiTextElem(oCell.multiText[Index]));
 			}
 			else
-				oTempCell["v"] = oCell.getValue();
+			{
+				switch (oCell.type)
+				{
+					case AscCommon.CellValueType.String:
+					case AscCommon.CellValueType.Error:
+						oTempCell["v"] = oCell.text;
+						break;
+					case AscCommon.CellValueType.Bool:
+					default:
+						oTempCell["v"] = oCell.number;
+						break;
+				}
+			}
 
 			oTempRow["cell"].push(oTempCell);
 		}
@@ -7928,7 +7940,7 @@
 				
 					oTempCell.setValueMultiTextInternal(aMultiText);
 				}
-				else if (oParsedCell["v"] != null && oParsedCell["v"] != "")
+				else if (oParsedCell["v"] != null)
 				{
 					switch (oParsedCell["t"])
 					{
@@ -11124,6 +11136,8 @@
 			case "dataTable":
 				res = window["Asc"].ECellFormulaType.cellformulatypeDataTable;
 				break;
+			default:
+				res = window["Asc"].ECellFormulaType.cellformulatypeNormal;
 		}
 		return res;
 	}
