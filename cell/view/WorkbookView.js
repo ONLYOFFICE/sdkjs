@@ -1025,6 +1025,12 @@
 	this.model.handlers.add("clearFindResults", function(index) {
 		self.clearSearchOnRecalculate(index);
 	});
+	this.model.handlers.add("renameSheet", function(index, val) {
+		self.SearchEngine && self.SearchEngine.renameSheet(index, val);
+	});
+	this.model.handlers.add("changeSheetIndex", function(index, val) {
+		self.SearchEngine && self.SearchEngine.changeSheetIndex(index, val);
+	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
       collaborativeEditing: this.collaborativeEditing,
@@ -5141,6 +5147,33 @@
 					if (null != this.mapFindCells[key]) {
 						this._removeFromSearchElems(key, this.mapFindCells[key]);
 					}
+				}
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.renameSheet = function (index, val) {
+		var arrResult = [];
+		if (this.isNotEmpty()) {
+			for (var i in this.Elements) {
+				if (this.Elements[i] && index === this.Elements[i].index) {
+					this.Elements[i].sheet = val
+					arrResult.push([i, this.Elements[i].sheet, this.Elements[i].name, this.Elements[i].cell, this.Elements[i].text, this.Elements[i].formula]);
+				}
+			}
+		}
+		if (arrResult.length) {
+			var oApi = window["Asc"]["editor"];
+			oApi.sync_changedElements(arrResult);
+		}
+	};
+	CDocumentSearchExcel.prototype.changeSheetIndex = function (from ,to) {
+		if (from === to) {
+			return;
+		}
+		if (this.isNotEmpty()) {
+			for (var i in this.Elements) {
+				if (this.Elements[i] && from === this.Elements[i].index) {
+					this.Elements[i].index = to;
 				}
 			}
 		}

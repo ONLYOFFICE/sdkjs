@@ -5022,6 +5022,7 @@
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Rename, this.getId(), null, new UndoRedoData_FromTo(lastName, name));
 
 			this.workbook.dependencyFormulas.calcTree();
+			this.workbook.handlers.trigger("renameSheet", this.index, name);
 		} else {
 			console.log(new Error('The sheet name must be less than 31 characters.'));
 		}
@@ -7003,6 +7004,7 @@
 		}
 	};
 	Worksheet.prototype._setIndex=function(ind){
+		this.workbook.handlers.trigger("changeSheetIndex", this.index, ind);
 		this.index = ind;
 	};
 	Worksheet.prototype._BuildDependencies=function(cellRange){

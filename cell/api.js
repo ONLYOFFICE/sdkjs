@@ -3599,6 +3599,9 @@ var editor;
     spreadsheet_api.prototype.sync_closeOleEditor = function() {
         this.sendEvent("asc_onCloseOleEditor");
     };
+	spreadsheet_api.prototype.sync_changedElements = function (arr) {
+		this.sendEvent("asc_onUpdateSearchElem", arr);
+	};
 
 	spreadsheet_api.prototype.asc_StartTextAroundSearch = function()
 	{
