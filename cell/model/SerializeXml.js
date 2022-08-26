@@ -6232,10 +6232,11 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		while (reader.ReadNextSiblingNode(depth)) {
 			var name = reader.GetNameNoNS();
 			if ("formula1" === name) {
-				val = new Asc.CDataFormula(reader.GetText());
+				val = new Asc.CDataFormula(prepareTextFromXml(reader.GetTextDecodeXml()));
+
 				this.formula1 = val;
 			} else if ("formula2" === name) {
-				val = new Asc.CDataFormula(reader.GetText());
+				val = new Asc.CDataFormula(prepareTextFromXml(reader.GetTextDecodeXml()));
 				this.formula2 = val;
 			} else if ("sqref" === name) {
 				this.setSqRef(reader.GetText());
@@ -6267,7 +6268,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				m_oFormula1->m_sText = convert.convert(oReader.GetText3());*/
 
 				//TODO r1c1? не могу найти в каком виде она должна быть здесь записана
-				val = new Asc.CDataFormula(reader.GetText());
+				val = new Asc.CDataFormula(prepareTextFromXml(reader.GetTextDecodeXml()));
 				this.formula1 = val;
 			}
 		}
@@ -7070,7 +7071,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				if (!this.securityDescriptors) {
 					this.securityDescriptors = [];
 				}
-				this.securityDescriptors.push(reader.GetText());
+				this.securityDescriptors.push(prepareTextFromXml(reader.GetTextDecodeXml()));
 			}
 		}
 	};
@@ -7378,7 +7379,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				this.colorLow = AscCommon.getColorFromXml2(reader);
 			} else if ("f" === name) {
 				//TODO текст, возможно нужно использовать prepareTextToXml
-				this.f = reader.GetText();
+				this.f = prepareTextFromXml(reader.GetTextDecodeXml());
 			} else if ("sparklines" === name) {
 				var depth2 = reader.GetDepth();
 				while (reader.ReadNextSiblingNode(depth2)) {
@@ -7550,7 +7551,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			var name = reader.GetNameNoNS();
 
 			if ("f" === name) {
-				this.setF(reader.GetText());
+				this.setF(prepareTextFromXml(reader.GetTextDecodeXml()));
 			} else if ("sqref" === name) {
 				this.setSqRef(reader.GetText());
 			}
@@ -7788,7 +7789,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				} else if ("slicerCacheHideItemsWithNoData" === name) {
 
 				} else if ("id" === name) {
-					val = reader.GetText();
+					val = prepareTextFromXml(reader.GetTextDecodeXml());
 					this.ids.push(val);
 				} else if ("presenceInfo" === name) {
 
@@ -8391,7 +8392,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			var name = reader.GetNameNoNS();
 			if ("formula" === name || "f" === name) {
 				//TODO prepareTextToXml?
-				this.Val = reader.GetText();
+				this.Val = prepareTextFromXml(reader.GetTextDecodeXml());
 			}
 		}
 	};
@@ -12274,7 +12275,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			var name = reader.GetNameNoNS();
 
 			if ("author" === name) {
-				this.arr.push(reader.GetText());
+				this.arr.push(prepareTextFromXml(reader.GetTextDecodeXml()));
 			}
 		}
 	};
@@ -12611,7 +12612,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			var name = reader.GetNameNoNS();
 
 			if ("text" === name) {
-				this.text = reader.GetText();
+				this.text = prepareTextFromXml(reader.GetTextDecodeXml());
 			} else if ("mentions" === name) {
 				//m_oMentions = oReader;
 				reader.readXmlArray("mention", function () {
