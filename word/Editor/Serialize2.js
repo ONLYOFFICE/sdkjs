@@ -5153,10 +5153,11 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 
 
 
-			var checkStyleNumInside = function (id, _Numbering) {
+			var checkStyleNumInside = function (id) {
 				var style = oThis.Document.Styles.Get(id);
+				var _Numbering = par.Parent.Get_Numbering();
 				if (style.ParaPr && style.ParaPr.NumPr && style.ParaPr.NumPr.NumId) {
-					var _Num = Numbering.GetNum(style.ParaPr.NumPr.NumId);
+					var _Num = _Numbering.GetNum(style.ParaPr.NumPr.NumId);
 
 
 
@@ -5165,7 +5166,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 					{
 
 
-						var oAbstractNum = Numbering.AbstractNum[_Num.AbstractNumId];
+						var oAbstractNum = _Numbering.AbstractNum[_Num.AbstractNumId];
 						if (oAbstractNum && oAbstractNum.GetNumStyleLink())
 						{
 							var oStyles   = editor.WordControl.m_oLogicDocument.GetStyles();
