@@ -902,18 +902,8 @@
         ws.changeWorksheet("update", val);
       }
     });
-    this.model.handlers.add("changeCellValue", function(cell) {
-		self.SearchEngine && self.SearchEngine.changeCellValue(cell);
-    });
-    this.model.handlers.add("changeRangeValue", function(bbox, ws) {
-		self.SearchEngine && self.SearchEngine.changeRangeValue(bbox, ws);
-    });
-    this.model.handlers.add("changeSheetContent", function(ws) {
-		self.SearchEngine && self.SearchEngine.changeSheetContent(ws);
-    });
-
-    this.model.handlers.add("onSheetDeleted", function(index) {
-		self.SearchEngine && self.SearchEngine.removeSheet(index);
+    this.model.handlers.add("changeDocument", function(prop, arg1, arg2) {
+		self.SearchEngine && self.SearchEngine.changeDocument(prop, arg1, arg2);
     });
     this.model.handlers.add("showWorksheet", function(wsId) {
       var wsModel = self.model.getWorksheetById(wsId), index;
@@ -1031,12 +1021,6 @@
 	});
 	this.model.handlers.add("clearFindResults", function(index) {
 		self.clearSearchOnRecalculate(index);
-	});
-	this.model.handlers.add("renameSheet", function(index, val) {
-		self.SearchEngine && self.SearchEngine.renameSheet(index, val);
-	});
-	this.model.handlers.add("changeSheetIndex", function(index, val) {
-		self.SearchEngine && self.SearchEngine.changeSheetIndex(index, val);
 	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
@@ -5131,6 +5115,36 @@
 			}
 		}
 	};
+
+	CDocumentSearchExcel.prototype.changeDocument = function (prop, arg1, arg2) {
+		switch (prop) {
+			case AscCommonExcel.docChangedType.cellValue:
+				this.changeCellValue(arg1);
+				break;
+			case AscCommonExcel.docChangedType.rangeValues:
+				this.changeRangeValue(arg1, arg2);
+				break;
+			case AscCommonExcel.docChangedType.sheetContent:
+				this.changeSheetContent(arg1);
+				break;
+			case AscCommonExcel.docChangedType.sheetRemove:
+				this.removeSheet(arg1);
+				break;
+			case AscCommonExcel.docChangedType.sheetRename:
+				this.renameSheet(arg1, arg2);
+				break;
+			case AscCommonExcel.docChangedType.sheetChangeIndex:
+				this.changeSheetIndex(arg1, arg2);
+				break;
+			case AscCommonExcel.docChangedType.markModifiedSearch:
+				if (this.wb.Api.selectSearchingResults && this.props && !this.modifiedDocument) {
+					this.wb.handlers.trigger("asc_onModifiedDocument");
+					this.setModifiedDocument(true);
+				}
+
+				break;
+		}
+	};
 	CDocumentSearchExcel.prototype.changeCellValue = function (cell) {
 		if (this.wb.Api.selectSearchingResults && this.props) {
 			var key = cell.ws.index + "-" + cell.nCol + "-" + cell.nRow;
@@ -5203,10 +5217,26 @@
 			for (var i in this.Elements) {
 				if (this.Elements[i] && from === this.Elements[i].index) {
 					this.Elements[i].index = to;
+					var keyOld = from + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					var keyNew = to + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					var oldId = this.mapFindCells[keyOld];
+					delete this.mapFindCells[keyOld];
+					this.mapFindCells[keyNew] = oldId;
 				}
 			}
 		}
 	};
+	/*CDocumentSearchExcel.prototype.updateMapFindCells = function () {
+		if (this.isNotEmpty()) {
+			this.mapFindCells = {};
+			for (var i in this.Elements) {
+				if (this.Elements[i]) {
+					var key = this.Elements[i].index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					this.mapFindCells[key] = i - 1;
+				}
+			}
+		}
+	};*/
 	CDocumentSearchExcel.prototype.removeFromSearchElems = function (col, row, ws) {
 		var key = ws.index + "-" + col + "-" + row;
 		if (null != this.mapFindCells[key]) {

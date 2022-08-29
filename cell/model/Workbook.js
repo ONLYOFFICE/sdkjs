@@ -2276,6 +2276,8 @@
 
 			this.aWorksheetsById[newSheet.getId()] = newSheet;
 			this._updateWorksheetIndexes(wsActive);
+			this.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.markModifiedSearch);
+
 			//copyFrom after sheet add because formula assemble dependce on sheet structure
 			renameParams = newSheet.copyFrom(wsFrom, sName, tableNames);
 			
@@ -2460,7 +2462,7 @@
 			this.dependencyFormulas.removeSheet(prepared);
 			this.dependencyFormulas.unlockRecal();
 			this.handlers.trigger("asc_onSheetDeleted", nIndex);
-			this.handlers.trigger("onSheetDeleted", nIndex);
+			this.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRemove, nIndex);
 			return wsActive.getIndex();
 		}
 		return -1;
@@ -5022,7 +5024,7 @@
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Rename, this.getId(), null, new UndoRedoData_FromTo(lastName, name));
 
 			this.workbook.dependencyFormulas.calcTree();
-			this.workbook.handlers.trigger("renameSheet", this.index, name);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRename, this.index, name);
 		} else {
 			console.log(new Error('The sheet name must be less than 31 characters.'));
 		}
@@ -5298,7 +5300,8 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RemoveRows, this.getId(), new Asc.Range(0, start, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromToRowCol(true, start, stop));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
-		this.workbook.handlers.trigger("changeSheetContent", this);
+
+		this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
 
 		this.workbook.dependencyFormulas.unlockRecal();
 
@@ -5386,7 +5389,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_AddRows, this.getId(), new Asc.Range(0, index, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromToRowCol(true, index, index + count - 1));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
-		this.workbook.handlers.trigger("changeSheetContent", this);
+		this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
 
 		this.workbook.dependencyFormulas.unlockRecal();
 		return true;
@@ -5474,7 +5477,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RemoveCols, this.getId(), new Asc.Range(start, 0, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromToRowCol(false, start, stop));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
-		this.workbook.handlers.trigger("changeSheetContent", this);
+		this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
 
 		this.workbook.dependencyFormulas.unlockRecal();
 
@@ -5561,7 +5564,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_AddCols, this.getId(), new Asc.Range(index, 0, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromToRowCol(false, index, index + count - 1));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
-		this.workbook.handlers.trigger("changeSheetContent", this);
+		this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
 
 		this.workbook.dependencyFormulas.unlockRecal();
 		return true;
@@ -6834,7 +6837,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ShiftCellsLeft, this.getId(), oActualRange, new UndoRedoData_BBox(oBBox));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
-		this.workbook.handlers.trigger("changeSheetContent", this);
+		this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
 		//todo проверить не уменьшились ли границы таблицы
 	};
 	Worksheet.prototype._shiftCellsUp=function(oBBox){
@@ -6874,7 +6877,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ShiftCellsTop, this.getId(), oActualRange, new UndoRedoData_BBox(oBBox));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
-		this.workbook.handlers.trigger("changeSheetContent", this);
+		this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
 		//todo проверить не уменьшились ли границы таблицы
 	};
 	Worksheet.prototype._shiftCellsRight=function(oBBox, displayNameFormatTable){
@@ -6936,7 +6939,7 @@
 
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
-		this.workbook.handlers.trigger("changeSheetContent", this);
+		this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
 	};
 	Worksheet.prototype._shiftCellsBottom=function(oBBox, displayNameFormatTable){
 		var t = this;
@@ -7008,11 +7011,11 @@
 		if(!this.workbook.bUndoChanges)
 		{
 			this.autoFilters.redrawStylesTables(redrawTablesArr);
-			this.workbook.handlers.trigger("changeSheetContent", this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
 		}
 	};
 	Worksheet.prototype._setIndex=function(ind){
-		this.workbook.handlers.trigger("changeSheetIndex", this.index, ind);
+		this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetChangeIndex, this.index, ind);
 		this.index = ind;
 	};
 	Worksheet.prototype._BuildDependencies=function(cellRange){
@@ -11257,7 +11260,7 @@
 			} else {
 				wb.dependencyFormulas.addToBuildDependencyCell(this);
 			}
-			this.ws.workbook.handlers.trigger("changeCellValue", this);
+			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
 		} else if (val) {
 			this._setValue(val, ignoreHyperlink);
 			if (!ignoreHyperlink && window['AscCommonExcel'].g_AutoCorrectHyperlinks) {
@@ -11266,7 +11269,7 @@
 			wb.dependencyFormulas.addToChangedCell(this);
 		} else {
 			wb.dependencyFormulas.addToChangedCell(this);
-			this.ws.workbook.handlers.trigger("changeCellValue", this);
+			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
 		}
 
 		var DataNew = null;
@@ -11971,7 +11974,7 @@
 		else
 			this.setValue("");
 
-		this.ws.workbook.handlers.trigger("changeCellValue", this);
+		this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
 	};
 	Cell.prototype._checkDirty = function(){
 		var t = this;
@@ -12339,7 +12342,7 @@
 
 
 		if("" == val) {
-			this.ws.workbook.handlers.trigger("changeCellValue", this);
+			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
 			return;
 		}
 
@@ -12405,7 +12408,7 @@
 				}
 			}
 		}
-		this.ws.workbook.handlers.trigger("changeCellValue", this);
+		this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
 	};
 	Cell.prototype._autoformatHyperlink = function(val){
 		if (AscCommon.rx_allowedProtocols.test(val) || /^(www.)|@/i.test(val)) {
@@ -16272,7 +16275,7 @@
 
 		this.worksheet.workbook.dependencyFormulas.addToChangedRange(this.worksheet.getId(), new Asc.Range(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r2));
 		this.worksheet.workbook.dependencyFormulas.calcTree();
-		this.worksheet.workbook.handlers.trigger("changeSheetContent", this.worksheet);
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this.worksheet);
 
 		if (false == this.worksheet.workbook.bUndoChanges && (false == this.worksheet.workbook.bRedoChanges || this.worksheet.workbook.bCollaborativeChanges)) {
 			History.LocalChange = true;
