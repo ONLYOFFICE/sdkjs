@@ -16213,10 +16213,10 @@
 		func.apply(tempRange, [(function (cell) {
 			var ws = t.worksheet;
 			var formula = cell.getFormulaParsed();
-			var nFrom = opt_by_row ? cell.nCol : cell.nRow;
-			var nTo = oSortedIndexes[nFrom];
 			if (formula) {
 				var cellWithFormula = formula.getParent();
+				var nFrom = opt_by_row ? cell.nCol : cell.nRow;
+				var nTo = oSortedIndexes[nFrom];
 				if (null != nTo) {
 					if (opt_by_row) {
 						cell.changeOffset(new AscCommon.CellBase(0, nTo - nFrom), true, true, true);
