@@ -56,6 +56,10 @@
 
 		this.FulllCheck = false;
 	}
+	CTextFormFormat.prototype.IsEmpty = function()
+	{
+		return (FormatType.None === this.BaseFormat && !this.Symbols.length);
+	};
 	CTextFormFormat.prototype.SetSymbols = function(value)
 	{
 		this.Symbols = [];
@@ -114,10 +118,18 @@
 		this.BaseFormat = FormatType.Mask;
 		this.Mask.Set(sMask);
 	};
+	CTextFormFormat.prototype.GetMask = function()
+	{
+		return this.Mask.Get();
+	};
 	CTextFormFormat.prototype.SetRegExp = function(sRegExp)
 	{
 		this.BaseFormat = FormatType.RegExp;
 		this.RegExp     = sRegExp;
+	};
+	CTextFormFormat.prototype.GetRegExp = function()
+	{
+		return this.RegExp;
 	};
 	CTextFormFormat.prototype.CheckFormat = function(arrBuffer)
 	{

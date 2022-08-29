@@ -1098,6 +1098,7 @@ var c_oSerSdt = {
 	TextFormPrCombBorder    : 56,
 	TextFormPrAutoFit       : 57,
 	TextFormPrMultiLine     : 58,
+	TextFormPrFormat        : 59,
 
 	CheckboxGroupKey: 59,
 
@@ -1110,7 +1111,10 @@ var c_oSerSdt = {
 
 	FormPrBorder : 70,
 	FormPrShd    : 71,
-	TextFormPrCombWRule : 72
+	TextFormPrCombWRule : 72,
+
+	TextFormPrFormatType : 80,
+	TextFormPrFormatVal  : 81
 
 };
 var c_oSerFFData = {
@@ -6643,6 +6647,11 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (null != val.MultiLine) {
 			this.bs.WriteItem(c_oSerSdt.TextFormPrMultiLine, function(){oThis.memory.WriteBool(val.MultiLine);});
 		}
+
+		let format = val.GetFormat();
+		if (format && !format.IsEmpty()) {
+			oThis.bs.WriteItem(c_oSerSdt.TextFormPrFormat, function (){oThis.WriteSdtTextFormat(format);});
+		}
 	};
 	this.WriteSdtTextFormPrComb = function (val)
 	{
@@ -6660,6 +6669,21 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			oThis.bs.WriteItem(c_oSerSdt.TextFormPrCombWRule, function (){oThis.memory.WriteByte(val.WidthRule);});
 		}
 	};
+	this.WriteSdtTextFormat = function(format)
+	{
+		var oThis = this;
+
+		let type = form.GetType();
+		this.bs.WriteItem(c_oSerSdt.TextFormPrFormatType, function (){oThis.memory.WriteByte(type);});
+
+		if (Asc.TextFormFormatType.RegExp === type)
+			this.bs.WriteItem(c_oSerSdt.TextFormPrFormatVal, function (){oThis.memory.WriteString3(format.GetMask());});
+		else if (Asc.TextFormFormatType.Mask === type)
+			this.bs.WriteItem(c_oSerSdt.TextFormPrFormatVal, function (){oThis.memory.WriteString3(format.GetRegExp());});
+
+
+		//if ()
+	}
 	this.WriteSdtPictureFormPr = function(val)
 	{
 		var oThis = this;
