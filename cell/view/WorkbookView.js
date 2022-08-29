@@ -905,6 +905,13 @@
     this.model.handlers.add("changeCellValue", function(cell) {
 		self.SearchEngine && self.SearchEngine.changeCellValue(cell);
     });
+    this.model.handlers.add("changeRangeValue", function(bbox, ws) {
+		self.SearchEngine && self.SearchEngine.changeRangeValue(bbox, ws);
+    });
+    this.model.handlers.add("changeSheetContent", function(ws) {
+		self.SearchEngine && self.SearchEngine.changeSheetContent(ws);
+    });
+
     this.model.handlers.add("onSheetDeleted", function(index) {
 		self.SearchEngine && self.SearchEngine.removeSheet(index);
     });
@@ -5125,7 +5132,7 @@
 		}
 	};
 	CDocumentSearchExcel.prototype.changeCellValue = function (cell) {
-		if (this.isNotEmpty()) {
+		if (this.wb.Api.selectSearchingResults && this.props) {
 			var key = cell.ws.index + "-" + cell.nCol + "-" + cell.nRow;
 			if (null != this.mapFindCells[key]) {
 				var id = this.mapFindCells[key];
@@ -5135,6 +5142,28 @@
 			} else if (!this.modifiedDocument && cell.isEqual(this.props)) {
 				this.wb.handlers.trigger("asc_onModifiedDocument");
 				this.setModifiedDocument(true);
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.changeRangeValue = function (bbox, ws) {
+		if (this.wb.Api.selectSearchingResults && bbox) {
+			var t = this;
+			ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmpty(function(cell) {
+				t.changeCellValue(cell);
+			});
+		}
+	};
+	CDocumentSearchExcel.prototype.changeSheetContent = function (ws) {
+		if (this.wb.Api.selectSearchingResults && ws && this.props) {
+			if (this.isNotEmpty()) {
+				for (var i in this.Elements) {
+					if (this.Elements[i] && ws.index === this.Elements[i].index) {
+						this.wb.handlers.trigger("asc_onModifiedDocument");
+						this.setModifiedDocument(true);
+						this.mapFindCells = {};
+						break;
+					}
+				}
 			}
 		}
 	};

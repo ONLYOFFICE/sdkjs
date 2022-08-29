@@ -5298,6 +5298,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RemoveRows, this.getId(), new Asc.Range(0, start, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromToRowCol(true, start, stop));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
+		this.workbook.handlers.trigger("changeSheetContent", this);
 
 		this.workbook.dependencyFormulas.unlockRecal();
 
@@ -5385,6 +5386,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_AddRows, this.getId(), new Asc.Range(0, index, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromToRowCol(true, index, index + count - 1));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
+		this.workbook.handlers.trigger("changeSheetContent", this);
 
 		this.workbook.dependencyFormulas.unlockRecal();
 		return true;
@@ -5472,6 +5474,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RemoveCols, this.getId(), new Asc.Range(start, 0, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromToRowCol(false, start, stop));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
+		this.workbook.handlers.trigger("changeSheetContent", this);
 
 		this.workbook.dependencyFormulas.unlockRecal();
 
@@ -5558,6 +5561,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_AddCols, this.getId(), new Asc.Range(index, 0, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromToRowCol(false, index, index + count - 1));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
+		this.workbook.handlers.trigger("changeSheetContent", this);
 
 		this.workbook.dependencyFormulas.unlockRecal();
 		return true;
@@ -6830,6 +6834,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ShiftCellsLeft, this.getId(), oActualRange, new UndoRedoData_BBox(oBBox));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
+		this.workbook.handlers.trigger("changeSheetContent", this);
 		//todo проверить не уменьшились ли границы таблицы
 	};
 	Worksheet.prototype._shiftCellsUp=function(oBBox){
@@ -6869,6 +6874,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ShiftCellsTop, this.getId(), oActualRange, new UndoRedoData_BBox(oBBox));
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
+		this.workbook.handlers.trigger("changeSheetContent", this);
 		//todo проверить не уменьшились ли границы таблицы
 	};
 	Worksheet.prototype._shiftCellsRight=function(oBBox, displayNameFormatTable){
@@ -6930,6 +6936,7 @@
 
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
+		this.workbook.handlers.trigger("changeSheetContent", this);
 	};
 	Worksheet.prototype._shiftCellsBottom=function(oBBox, displayNameFormatTable){
 		var t = this;
@@ -7001,6 +7008,7 @@
 		if(!this.workbook.bUndoChanges)
 		{
 			this.autoFilters.redrawStylesTables(redrawTablesArr);
+			this.workbook.handlers.trigger("changeSheetContent", this);
 		}
 	};
 	Worksheet.prototype._setIndex=function(ind){
@@ -16205,10 +16213,10 @@
 		func.apply(tempRange, [(function (cell) {
 			var ws = t.worksheet;
 			var formula = cell.getFormulaParsed();
+			var nFrom = opt_by_row ? cell.nCol : cell.nRow;
+			var nTo = oSortedIndexes[nFrom];
 			if (formula) {
 				var cellWithFormula = formula.getParent();
-				var nFrom = opt_by_row ? cell.nCol : cell.nRow;
-				var nTo = oSortedIndexes[nFrom];
 				if (null != nTo) {
 					if (opt_by_row) {
 						cell.changeOffset(new AscCommon.CellBase(0, nTo - nFrom), true, true, true);
@@ -16264,6 +16272,7 @@
 
 		this.worksheet.workbook.dependencyFormulas.addToChangedRange(this.worksheet.getId(), new Asc.Range(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r2));
 		this.worksheet.workbook.dependencyFormulas.calcTree();
+		this.worksheet.workbook.handlers.trigger("changeSheetContent", this.worksheet);
 
 		if (false == this.worksheet.workbook.bUndoChanges && (false == this.worksheet.workbook.bRedoChanges || this.worksheet.workbook.bCollaborativeChanges)) {
 			History.LocalChange = true;
