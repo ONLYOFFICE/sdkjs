@@ -8402,8 +8402,8 @@ function BinaryFileReader(doc, openParams)
 						//на данный момент функции для замены нет, добавляю новый стиль с новм именем
 						var isUseStyleInDoc = false;
 						if (!isUseStyleInDoc) {
-							stylePaste.style.BasedOn = null;
-							stylePaste.style.Name = stylePaste.style.Name + "_123";
+							//stylePaste.style.BasedOn = null;
+							stylePaste.style.Set_Name(stylePaste.style.Name + "_123");
 							nStyleId = oDocumentStyles.Add(stylePaste.style);
 							putStyle(elem, nStyleId);
 						} else {
