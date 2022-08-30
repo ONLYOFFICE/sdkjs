@@ -12963,8 +12963,10 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			val.AutoFit = this.stream.GetBool();
 		} else if (c_oSerSdt.TextFormPrMultiLine === type) {
 			val.MultiLine = this.stream.GetBool();
+		} else if (c_oSerSdt.TextFormPrFormat === type) {
+			res = this.ReadSdtTextFormat(length, val.GetFormat());
 		} else {
-			res = c_oSerConstants.ReadUnknown;
+				res = c_oSerConstants.ReadUnknown;
 		}
 		return res;
 	};
@@ -12983,16 +12985,43 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		}
 		return res;
 	};
-	this.ReadSdtTextFormat = function(type, length, format)	{
-		let res = c_oSerConstants.ReadOk;
+	this.ReadSdtTextFormat = function(length, format)
+	{
+		let oThis = this;
+		let formatPr = {
+			type    : Asc.TextFormFormatType.None,
+			val     : "",
+			symbols : ""
+		};
 
-		if (c_oSerSdt.TextFormPrFormatType === type) {
-			format.BaseFormat = this.stream.GetByte();
-		} else if (c_oSerSdt.TextFormPrFormatVal === type) {
+		let res = this.bcr.Read1(length, function(t, l) {
+			return oThis.ReadSdtTextFormatPr(t, l, formatPr);
+		});
 
+		switch (formatPr.type)
+		{
+			case Asc.TextFormFormatType.Digit: format.SetDigit(); break;
+			case Asc.TextFormFormatType.Letter: format.SetLetter(); break;
+			case Asc.TextFormFormatType.Mask: format.SetMask(formatPr.val); break;
+			case Asc.TextFormFormatType.RegExp: format.SetRegExp(formatPr.val); break;
+			case Asc.TextFormFormatType.None:
+			default: val.SetNoneFormat(); break;
 		}
 
+		if (formatPr.symbols)
+			format.SetSymbols(formatPr.symbols);
 
+		return res;
+	};
+	this.ReadSdtTextFormatPr = function(type, length, format)	{
+		let res = c_oSerConstants.ReadOk;
+		if (c_oSerSdt.TextFormPrFormatType === type) {
+			format.type = this.stream.GetByte();
+		} else if (c_oSerSdt.TextFormPrFormatVal === type) {
+			format.val = this.stream.GetString2LE(length);
+		} else if (c_oSerSdt.TextFormPrFormatSymbols === type) {
+			format.symbols = this.stream.GetString2LE(length);
+		}
 		return res;
 	};
 	this.ReadSdtPictureFormPr = function(type, length, val) {
