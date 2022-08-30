@@ -3812,6 +3812,24 @@
      * @typedef {("Table" | "Equation" | "Figure")} CaptionLabel
 	 * **/
 
+	/**
+	 * **"dot"**       - "......."
+	 * **"dash"**      - "-------"
+	 * **"underline"** - "_______"
+     * Possible values for the table of contents leader.
+     * @typedef {("dot" | "dash" | "underline" | "none")} TocLeader
+	 * **/
+
+	/**
+     * Possible values for the style of table of contents.
+     * @typedef {("simple" | "online" | "standard" | "modern" | "classic")} TocStyle
+	 * **/
+	
+	/**
+     * Possible values for the style of table of contents.
+     * @typedef {("simple" | "online" | "classic" | "distinctive" | "centered" | "formal")} TofStyle
+	 * **/
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Base Api
@@ -6346,6 +6364,202 @@
 			return null;
 
 		return new ApiDocumentContent(oResult);
+	};
+
+	/**
+	 * Adds a table of content.
+	 * Note: changes existing table of contents instead of adding.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {boolean} [bShowPageNums=true] - whether to show page numbers.
+	 * @param {boolean} [bRightAlgn=true] - whether to right align page numbers.
+	 * @param {TocLeader} [sLeaderType="dot"] - leader type.
+	 * @param {boolean} [bFormatAsLinks=true] - whether format table of contents as links.
+	 * @param {object} [oBuildFrom={nOutlineLvls=9}] - build table of contents from (outline levels or specified styles).
+	 * @param {number} oBuildFrom.nOutlineLvls - maximum levels in table of figures
+	 * @param {Array[]} oBuildFrom.aStylesLvls - levels for styles (ex. [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]).
+	 * Note: if oBuildFrom.aStylesLvls.length !== 0 then oBuildFrom.nOutlineLvls will be ignore.
+	 * @param {string} oBuildFrom.aStylesLvls[0].Name - name of style (ex. "Heading 1")
+	 * @param {number} oBuildFrom.aStylesLvls[0].Lvl - the level that will be applied to the specified style
+	 * @param {TocStyle} [sTocStyle="standard"] - table of contents style type
+	 */
+	ApiDocument.prototype.AddTableOfContents = function(bShowPageNums, bRightAlgn, sLeaderType, bFormatAsLinks, oBuildFrom, sTocStyle)
+	{
+		let oTocPr = new Asc.CTableOfContentsPr();
+		oTocPr.PageNumbers = typeof(bShowPageNums) == "boolean" ? bShowPageNums : true;
+		oTocPr.RightTab = typeof(bRightAlgn) == "boolean" ? bRightAlgn : true;
+		oTocPr.Hyperlink = typeof(bFormatAsLinks) == "boolean" ? bFormatAsLinks : true;
+		
+		if (sLeaderType == null)
+			sLeaderType = "dot";
+		switch (sLeaderType)
+		{
+			case "dot":
+				oTocPr.TabLeader = 0;
+				break;
+			case "dash":
+				oTocPr.TabLeader = 2;
+				break;
+			case "underline":
+				oTocPr.TabLeader = 5;
+				break;
+			case "none":
+				oTocPr.TabLeader = 4;
+				break;
+		}
+
+		if (Array.isArray(oBuildFrom["aStylesLvls"]) && oBuildFrom["aStylesLvls"].length > 0)
+		{
+			oTocPr.Styles = oBuildFrom["aStylesLvls"];
+			oTocPr.OutlineEnd = -1;
+			oTocPr.OutlineStart = -1;
+		}
+		else if (oBuildFrom["nOutlineLvls"] >= 1 && oBuildFrom["nOutlineLvls"] <= 9)
+		{
+			oTocPr.OutlineEnd = oBuildFrom["nOutlineLvls"];
+		}
+
+		if (sTocStyle == null)
+			sTocStyle == "standard";
+		switch (sTocStyle)
+		{
+			case "simple":
+				oTocPr.StylesType = 1;
+				break;
+			case "online":
+				oTocPr.StylesType = 5;
+				break;
+			case "standard":
+				oTocPr.StylesType = 2;
+				break;
+			case "modern":
+				oTocPr.StylesType = 3;
+				break;
+			case "classic":
+				oTocPr.StylesType = 4;
+				break;
+		}
+
+		var oTOC = this.Document.GetTableOfContents();
+		if (oTOC instanceof AscCommonWord.CBlockLevelSdt && oTOC.IsBuiltInUnique())
+		{
+			if (oTocPr)
+				this.Document.SetTableOfContentsPr(oTocPr);
+
+			return;
+		}
+
+		this.Document.AddTableOfContents(null, oTocPr, undefined);
+	};
+	
+	/**
+	 * Adds a table of figures.
+	 * Note: replaces current selected table of figures instead of adding.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {boolean} [bShowPageNums=true] - whether to show page numbers.
+	 * @param {boolean} [bRightAlgn=true] - whether to right align page numbers.
+	 * @param {TocLeader} [sLeaderType="dot"] - leader type.
+	 * @param {boolean} [bFormatAsLinks=true] - whether format table of figures as links.
+	 * @param {captionType | string} [sBuildFrom="figure"] - build table of figures from specified caption type or used paragraph style name (ex. "Heading 1").
+	 * @param {boolean} [bLabelNumber=true] - whether to include label and number.
+	 * @param {TofStyle} [TofStyle="distinctive"] - table of figures style type
+	 * @returns {boolean}
+	 */
+	ApiDocument.prototype.AddTableOfFigures = function(bShowPageNums, bRightAlgn, sLeaderType, bFormatAsLinks, sBuildFrom, bLabelNumber, TofStyle)
+	{
+		let oTocPr = new Asc.CTableOfContentsPr();
+		oTocPr.PageNumbers = typeof(bShowPageNums) == "boolean" ? bShowPageNums : true;
+		oTocPr.RightTab = typeof(bRightAlgn) == "boolean" ? bRightAlgn : true;
+		oTocPr.Hyperlink = typeof(bFormatAsLinks) == "boolean" ? bFormatAsLinks : true;
+		oTocPr.IsIncludeLabelAndNumber = typeof(bLabelNumber) == "boolean" ? bLabelNumber : true;
+
+		if (sLeaderType == null)
+			sLeaderType = "dot";
+		switch (sLeaderType)
+		{
+			case "dot":
+				oTocPr.TabLeader = 0;
+				break;
+			case "dash":
+				oTocPr.TabLeader = 2;
+				break;
+			case "underline":
+				oTocPr.TabLeader = 5;
+				break;
+			case "none":
+				oTocPr.TabLeader = 4;
+				break;
+		}
+
+		if (typeof(sBuildFrom) !== "string")
+			sBuildFrom = "figure";
+
+		if (sBuildFrom == "figure" || sBuildFrom == "equation" || sBuildFrom == "table")
+			oTocPr.Caption = sBuildFrom[0].toUpperCase() + sBuildFrom.slice(1);
+		else
+		{
+			let aStyles = this.Document.GetAllUsedParagraphStyles();
+			let isUsedStyle = false;
+
+			for (var i = 0; i < aStyles.length; i++)
+			{
+				if (aStyles[i].Name == sBuildFrom)
+				{
+					isUsedStyle = true;
+					break;
+				}
+			}
+
+			if (isUsedStyle)
+				oTocPr.Styles = [{ Name: sBuildFrom, Lvl: undefined }];
+			else
+				return false;
+
+			oTocPr.Caption = null;
+		}
+
+		if (TofStyle == null)
+			TofStyle = "distinctive";
+		switch (TofStyle)
+		{
+			case "simple":
+				oTocPr.StylesType = 5;
+				break;
+			case "online":
+				oTocPr.StylesType = 6;
+				break;
+			case "classic":
+				oTocPr.StylesType = 1;
+				break;
+			case "distinctive":
+				oTocPr.StylesType = 2;
+				break;
+			case "centered":
+				oTocPr.StylesType = 3;
+				break;
+			case "formal":
+				oTocPr.StyleType = 4;
+				break;
+		}
+
+		let aTOF = this.Document.GetAllTablesOfFigures(true);
+		let oTOFToReplace = null;
+		if(aTOF.length > 0)
+		{
+			oTOFToReplace = aTOF[0];
+		}
+
+		if (oTOFToReplace)
+		{
+			oTOFToReplace.SelectFieldValue();
+			oTocPr.ComplexField = oTOFToReplace;
+			this.Document.SetTableOfContentsPr(oTocPr);
+		}
+		else
+			this.Document.AddTableOfFigures(oTocPr);
+		
+		return true;
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -17352,6 +17566,8 @@
 	ApiDocument.prototype["ToJSON"]                  = ApiDocument.prototype.ToJSON;
 	ApiDocument.prototype["UpdateAllTOC"]		     = ApiDocument.prototype.UpdateAllTOC;
 	ApiDocument.prototype["UpdateAllTOF"]		     = ApiDocument.prototype.UpdateAllTOF;
+	ApiDocument.prototype["AddTableOfContents"]		 = ApiDocument.prototype.AddTableOfContents;
+	ApiDocument.prototype["AddTableOfFigures"]		 = ApiDocument.prototype.AddTableOfFigures;
 
 	ApiDocument.prototype["GetAllForms"]             = ApiDocument.prototype.GetAllForms;
 	ApiDocument.prototype["ClearAllFields"]          = ApiDocument.prototype.ClearAllFields;

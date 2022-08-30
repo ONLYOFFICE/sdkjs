@@ -23107,6 +23107,91 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
         }
     }
 };
+CDocument.prototype.SetTableOfContentsPr = function(oPr)
+{
+	if (!(oPr instanceof Asc.CTableOfContentsPr))
+			return;
+
+	var oTOC = oPr.ComplexField;
+	if (!oTOC
+		|| !(oTOC instanceof AscCommonWord.CComplexField)
+		|| !oTOC.IsValid())
+	{
+		oTOC = this.GetTableOfContents();
+		if (!oTOC)
+			return;
+	}
+
+	if (oTOC instanceof AscCommonWord.CBlockLevelSdt)
+	{
+		var oInnerTOC = oTOC.GetInnerTableOfContents();
+		if (!oInnerTOC)
+		{
+			this.AddTableOfContents(null, oPr, oTOC);
+			return;
+		}
+
+		oTOC = oInnerTOC;
+	}
+
+	if (!oTOC)
+		return;
+
+	var oStyles     = this.GetStyles();
+	var nStylesType = oPr.get_StylesType();
+
+	var isTOF = oPr.get_Caption() !== undefined;
+
+	var isNeedChangeStyles = false;
+
+	if(isTOF)
+	{
+		isNeedChangeStyles = (Asc.c_oAscTOFStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOFStyleType());
+	}
+	else
+	{
+		isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
+	}
+
+	oTOC.SelectField();
+
+	var isLocked = true;
+	if (isNeedChangeStyles)
+	{
+		isLocked = this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content, {
+			Type : AscCommon.changestype_2_AdditionalTypes, Types : [AscCommon.changestype_Document_Styles]
+		});
+	}
+	else
+	{
+		isLocked = this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content)
+	}
+
+	if (!isLocked)
+	{
+		this.StartAction(AscDFH.historydescription_Document_SetComplexFieldPr);
+
+		if (isNeedChangeStyles)
+		{
+			if(isTOF)
+			{
+				oStyles.SetTOFStyleType(nStylesType);
+			}
+			else
+			{
+				oStyles.SetTOCStylesType(nStylesType);
+			}
+		}
+
+		oTOC.SetPr(oPr);
+		oTOC.Update();
+
+		this.Recalculate();
+		this.UpdateInterface();
+		this.UpdateSelection();
+		this.FinalizeAction();
+	}
+};
 CDocument.prototype.GetPage = function(nPageAbs)
 {
 	return this.Pages[nPageAbs];
