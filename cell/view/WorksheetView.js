@@ -8955,7 +8955,7 @@
 			}
 
 			//проверяем, не попали ли мы в чужой селект
-			if ((canEdit || this.workbook.Api.isLiveViewer()) && readyMode && this.collaborativeEditing.getFast()) {
+			if (((canEdit && this.collaborativeEditing.getCollaborativeEditing()) || this.workbook.Api.isLiveViewer()) && readyMode && this.collaborativeEditing.getFast()) {
 				var isForeignSelect = this.collaborativeEditing.getForeignSelectIntersection(c.col, r.row);
 				if (isForeignSelect) {
 					var foreignRow = isForeignSelect.ranges[0].r1;
