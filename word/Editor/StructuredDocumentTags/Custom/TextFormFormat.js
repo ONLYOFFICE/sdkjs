@@ -56,6 +56,21 @@
 
 		this.FulllCheck = false;
 	}
+	CTextFormFormat.prototype.Copy = function()
+	{
+		let format = new CTextFormFormat();
+		format.BaseFormat = this.BaseFormat;
+		format.Symbols    = Array.from(this.Symbols);
+		format.RegExp     = this.RegExp;
+		format.Mask.Set(this.Mask.Get());
+		return format;
+	};
+	CTextFormFormat.prototype.IsEqual = function(format)
+	{
+		return (this.BaseFormat === format.BaseFormat
+			&& (FormatType.RegExp !== this.BaseFormat || format.RegExp === this.RegExp)
+			&& (FormatType.Mask !== this.BaseFormat || format.Mask.Get() === this.Mask.Get()));
+	};
 	CTextFormFormat.prototype.IsEmpty = function()
 	{
 		return (FormatType.None === this.BaseFormat && !this.Symbols.length);

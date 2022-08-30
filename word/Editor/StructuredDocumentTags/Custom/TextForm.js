@@ -64,6 +64,7 @@
 		oText.CombBorder            = this.CombBorder ? this.CombBorder.Copy() : undefined;
 		oText.MultiLine             = this.MultiLine;
 		oText.AutoFit               = this.AutoFit;
+		oText.Format                = this.Format.Copy();
 
 		return oText;
 	};
@@ -79,6 +80,7 @@
 			&& ((!this.CombBorder && !oOther) || (this.CombBorder && this.CombBorder.IsEqual(oOther)))
 			&& this.MultiLine === oOther.MultiLine
 			&& this.AutoFit === oOther.AutoFit
+			&& this.Format.IsEqual(oOther.Format)
 		);
 	};
 	CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)

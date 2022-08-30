@@ -1113,8 +1113,9 @@ var c_oSerSdt = {
 	FormPrShd    : 71,
 	TextFormPrCombWRule : 72,
 
-	TextFormPrFormatType : 80,
-	TextFormPrFormatVal  : 81
+	TextFormPrFormatType    : 80,
+	TextFormPrFormatVal     : 81,
+	TextFormPrFormatSymbols : 82,
 
 };
 var c_oSerFFData = {
@@ -6540,6 +6541,11 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 				oThis.bs.WriteItem(c_oSerSdt.SdtListItem, function (){oThis.WriteSdtListItem(val.ListItems[i]);});
 			}
 		}
+
+		let format = val.GetFormat();
+		if (format && !format.IsEmpty()) {
+			oThis.bs.WriteItem(c_oSerSdt.TextFormPrFormat, function (){oThis.WriteSdtTextFormat(format);});
+		}
 	};
 	this.WriteSdtListItem = function (val)
 	{
@@ -6650,7 +6656,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 
 		let format = val.GetFormat();
 		if (format && !format.IsEmpty()) {
-			oThis.bs.WriteItem(c_oSerSdt.TextFormPrFormat, function (){oThis.WriteSdtTextFormat(format);});
+			this.bs.WriteItem(c_oSerSdt.TextFormPrFormat, function (){oThis.WriteSdtTextFormat(format);});
 		}
 	};
 	this.WriteSdtTextFormPrComb = function (val)
@@ -6673,7 +6679,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 	{
 		var oThis = this;
 
-		let type = form.GetType();
+		let type = format.GetType();
 		this.bs.WriteItem(c_oSerSdt.TextFormPrFormatType, function (){oThis.memory.WriteByte(type);});
 
 		if (Asc.TextFormFormatType.RegExp === type)
@@ -6681,8 +6687,9 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		else if (Asc.TextFormFormatType.Mask === type)
 			this.bs.WriteItem(c_oSerSdt.TextFormPrFormatVal, function (){oThis.memory.WriteString3(format.GetRegExp());});
 
-
-		//if ()
+		let symbols = format.GetSymbols(true);
+		if (symbols)
+			this.bs.WriteItem(c_oSerSdt.TextFormPrFormatSymbols, function (){oThis.memory.WriteString3(symbols);});
 	}
 	this.WriteSdtPictureFormPr = function(val)
 	{
@@ -12974,6 +12981,18 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
+		return res;
+	};
+	this.ReadSdtTextFormat = function(type, length, format)	{
+		let res = c_oSerConstants.ReadOk;
+
+		if (c_oSerSdt.TextFormPrFormatType === type) {
+			format.BaseFormat = this.stream.GetByte();
+		} else if (c_oSerSdt.TextFormPrFormatVal === type) {
+
+		}
+
+
 		return res;
 	};
 	this.ReadSdtPictureFormPr = function(type, length, val) {
