@@ -3998,9 +3998,6 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 				//если не число - мс пропускает
 				if (AscCommon.isNumber(val)) {
 					this.setHeight(val);
-					if (AscCommon.CurFileVersion < 2) {
-						this.setCustomHeight(true);
-					}
 				}
 			} else if ("ss:Height" === reader.GetName()) {
 				val = reader.GetValueDouble();
