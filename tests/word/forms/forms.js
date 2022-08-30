@@ -369,4 +369,13 @@ $(function () {
 		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "Fill text form with correct hyperlink and check ");
 
 	});
+
+	QUnit.test("Check correction of text mask", function (assert)
+	{
+		let mask = new AscWord.CTextFormMask();
+		mask.Set("(999) 999-9999");
+
+		assert.strictEqual(mask.Correct("123) 123-1231"), "(123) 123-1231", "Test '123) 123-1231'");
+
+	});
 });

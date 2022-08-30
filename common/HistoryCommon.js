@@ -1246,6 +1246,9 @@
 			case AscDFH.historydescription_Document_AddComplexForm:
 				sString = "Document_AddComplexForm";
 				break;
+			case AscDFH.historydescription_Document_CorrectFormTextByFormat:
+				sString = "Document_CorrectFormTextByFormat";
+				break;
 		}
 		return sString;
 	}
@@ -4313,6 +4316,7 @@
 	window['AscDFH'].historydescription_Document_FillFormsByTags                    = 0x0193;
 	window['AscDFH'].historydescription_Document_FillFormInPlugin                   = 0x0194;
 	window['AscDFH'].historydescription_Document_AddComplexForm                     = 0x0195;
+	window['AscDFH'].historydescription_Document_CorrectFormTextByFormat            = 0x0196;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

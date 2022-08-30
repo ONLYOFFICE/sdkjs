@@ -117,6 +117,31 @@
 
 		return true;
 	};
+	CTextFormMask.prototype.Correct = function(text)
+	{
+		let buffer;
+		if (typeof(text) === "string")
+			buffer = text.codePointsArray();
+		else if (Array.isArray(text))
+			buffer = Array.from(text);
+
+		if (!buffer || this.Check(buffer, false))
+			return text;
+
+		buffer = this.CorrectBuffer(buffer);
+
+		if (typeof(text) === "string")
+		{
+			let sResult = "";
+			for (let index = 0, count = buffer.length; index < count; ++index)
+			{
+				sResult += String.fromCodePoint(buffer[index]);
+			}
+			return sResult;
+		}
+
+		return buffer;
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,6 +176,17 @@
 				this.Pattern.push(new CTextItem(unicode));
 			}
 		}
+	};
+	CTextFormMask.prototype.CorrectBuffer = function(buffer)
+	{
+		if (!this.Pattern.length || !buffer.length)
+			return buffer;
+
+		let result = Array.from(buffer);
+		if (this.Pattern[0] instanceof CTextItem && !this.Pattern[0].Check(buffer[0]))
+			result.splice(0, 0, this.Pattern[0].Value);
+
+		return result;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTextFormMask = CTextFormMask;

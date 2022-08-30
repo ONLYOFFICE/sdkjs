@@ -175,6 +175,13 @@
 
 		return true;
 	};
+	CTextFormFormat.prototype.Correct = function(sText)
+	{
+		if (this.BaseFormat === FormatType.Mask)
+			sText = this.Mask.Correct(sText);
+
+		return sText;
+	};
 	CTextFormFormat.prototype.Check = function(sText, isFullCheck)
 	{
 		this.FulllCheck = !!isFullCheck;

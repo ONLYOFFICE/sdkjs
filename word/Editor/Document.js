@@ -12211,9 +12211,15 @@ CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
 		|| oForm.IsPlaceHolder())
 		return;
 
-	let sText       = oForm.GetInnerText();
+	let sInnerText  = oForm.GetInnerText();
 	let oTextFormPr = oForm.GetTextFormPr();
-	if (!oTextFormPr.CheckFormat(sText))
+	let sText       = sInnerText;
+
+	let format = oTextFormPr.GetFormat();
+	if (!format.Check(sInnerText))
+		sText = format.Correct(sInnerText);
+
+	if (!format.Check(sText))
 	{
 		this.Api.sendEvent("asc_onError", c_oAscError.ID.TextFormWrongFormat, c_oAscError.Level.NoCritical, oTextFormPr);
 
@@ -12229,8 +12235,34 @@ CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
 				this.RecalculateByChanges(arrChanges);
 		}
 	}
+	else if (sText !== sInnerText)
+	{
+		this.private_UpdateFormInnerText(oForm, sText);
+	}
 
 	this.History.ClearFormFillingInfo();
+};
+CDocument.prototype.private_UpdateFormInnerText = function(form, text)
+{
+	let paragraph = form.GetParagraph();
+	if (!paragraph || form.IsPlaceHolder())
+		return;
+
+	if (!this.IsSelectionLocked(AscCommon.changestype_None, {
+		Type      : AscCommon.changestype_2_Element_and_Type,
+		Element   : paragraph,
+		CheckType : AscCommon.changestype_Paragraph_Content
+	}))
+	{
+		this.StartAction(AscDFH.historydescription_Document_CorrectFormTextByFormat);
+
+		let run = form.MakeSingleRunElement(true);
+		run.AddText(text);
+		this.Recalculate();
+		this.UpdateInterface();
+		this.UpdateSelection();
+		this.FinalizeAction();
+	}
 };
 CDocument.prototype.UpdateSelectedReviewChanges = function(isSaveCurrentReviewChange)
 {
