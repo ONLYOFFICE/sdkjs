@@ -8375,7 +8375,7 @@ function BinaryFileReader(doc, openParams)
 					} else if (nStyleType === oStyleTypes.styleLink) {
 						_elem.pPr.StyleLink = _styleId;
 					} else if (nStyleType === oStyleTypes.numStyleLink) {
-						_elem.pPr.NumStyleLink = _styleId;
+						_elem.pPr.SetNumStyleLink(_styleId);
 					} else if (putDefaultStyle) {
 						_elem.pPr.PStyle = j;
 					}
