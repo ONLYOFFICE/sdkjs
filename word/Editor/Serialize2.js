@@ -8353,6 +8353,8 @@ function BinaryFileReader(doc, openParams)
 			}
 			expandBasedOn(aStyles);
 
+			var mapStylesIds = {};
+			var basedOnStyles = [];
 			for (i = 0, length = aStyles.length; i < length; ++i) {
 				var elem = aStyles[i];
 				var stylePaste = oReadResult.styles[elem.style];
@@ -8406,17 +8408,39 @@ function BinaryFileReader(doc, openParams)
 							stylePaste.style.Set_Name(stylePaste.style.Name + "_123");
 							nStyleId = oDocumentStyles.Add(stylePaste.style);
 							putStyle(elem, nStyleId);
+
+							if (stylePaste.style.BasedOn) {
+								basedOnStyles.push(nStyleId);
+							}
+							mapStylesIds[stylePaste.param.id] = nStyleId;
+
 						} else {
 							putStyle(elem, isEqualName);
 						}
 					} else if (!isAlreadyContainsStyle && isEqualName == null)//нужно добавить новый стиль
 					{
 						//todo править и BaseOn
-						stylePaste.style.BasedOn = null;
+						//stylePaste.style.BasedOn = null;
+
 						nStyleId = oDocumentStyles.Add(stylePaste.style);
 						putStyle(elem, nStyleId);
 
+						if (stylePaste.style.BasedOn) {
+							basedOnStyles.push(nStyleId);
+						}
+						mapStylesIds[stylePaste.param.id] = nStyleId;
+
 						addNewStyles = true;
+					}
+				}
+			}
+
+
+			if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
+				for (i = 0, length = basedOnStyles.length; i < length; ++i) {
+					var addedStyle = oDocumentStyles.Style[basedOnStyles[i]];
+					if (addedStyle) {
+						addedStyle.Set_BasedOn(mapStylesIds[addedStyle.BasedOn]);
 					}
 				}
 			}

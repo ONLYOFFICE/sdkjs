@@ -3551,6 +3551,8 @@ PasteProcessor.prototype =
 		var tempPresentation = !PasteElementsId.g_bIsDocumentCopyPaste && editor && editor.WordControl ? editor.WordControl.m_oLogicDocument : null;
 		var insertToPresentationWithoutSlides = tempPresentation && tempPresentation.Slides && !tempPresentation.Slides.length;
 
+		//this.oDocument.Remove(1, false, false, false, false, true);
+
 		var base64FromExcel, base64FromWord, base64FromPresentation
 		if (PasteElementsId.copyPasteUseBinary) {
 			//get binary
