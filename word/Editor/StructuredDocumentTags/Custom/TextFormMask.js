@@ -125,7 +125,7 @@
 		else if (Array.isArray(text))
 			buffer = Array.from(text);
 
-		if (!buffer || this.Check(buffer, false))
+		if (!buffer)
 			return text;
 
 		buffer = this.CorrectBuffer(buffer);
@@ -142,6 +142,53 @@
 
 		return buffer;
 	};
+
+	function BufferIterator (buffer)
+	{
+		this.buffer = buffer;
+		this.intCursor = 0;
+		this.intContent = this.GetNext();
+		this.arrOutputContent = [];
+	}
+	BufferIterator.prototype.GetNext = function ()
+	{
+		if (this.intCursor > this.buffer.length)
+			return false;
+
+		let oContent = this.buffer[this.intCursor];
+		this.intCursor++;
+
+		if (undefined !== oContent) {
+			return oContent;
+		}
+
+		return false;
+	};
+	BufferIterator.prototype.CheckRule = function (oRule)
+	{
+		if (undefined === oRule)
+			return false;
+
+		if (oRule.Check(this.intContent))
+		{
+			this.arrOutputContent.push(this.intContent);
+			this.intContent = this.GetNext();
+		}
+		else
+		{
+			if (oRule.Value)
+				this.arrOutputContent.push(oRule.Value);
+			else
+				return false;
+		}
+
+		return true;
+	};
+	BufferIterator.prototype.GetOutputContent = function ()
+	{
+		return Array.from(this.arrOutputContent)
+	};
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,11 +229,16 @@
 		if (!this.Pattern.length || !buffer.length)
 			return buffer;
 
-		let result = Array.from(buffer);
-		if (this.Pattern[0] instanceof CTextItem && !this.Pattern[0].Check(buffer[0]))
-			result.splice(0, 0, this.Pattern[0].Value);
+		let oBufferIterator = new BufferIterator(buffer);
 
-		return result;
+		for (let i = 0, isContinue = true; i < this.Pattern.length && isContinue;i++) {
+			isContinue = oBufferIterator.CheckRule(this.Pattern[i]);
+
+			if (!isContinue)
+				break;
+		}
+
+		return oBufferIterator.GetOutputContent();
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTextFormMask = CTextFormMask;
