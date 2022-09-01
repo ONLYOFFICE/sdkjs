@@ -20278,6 +20278,8 @@
 	//GROUP DATA FUNCTIONS
 	WorksheetView.prototype._updateGroups = function(bCol, start, end, bUpdateOnlyRowLevelMap, bUpdateOnlyRange) {
 		if (this.workbook.getDrawRestriction("groups")) {
+			this.groupHeight = 0;
+			this.groupWidth = 0;
 			return;
 		}
 		if(bCol) {
