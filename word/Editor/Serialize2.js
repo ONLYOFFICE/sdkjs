@@ -8564,7 +8564,8 @@ function BinaryFileReader(doc, openParams)
 				return null;
 			};
 
-
+			var allAddedStylesIds = [];
+			var mapStylesIds = {};
 			for (i = 0, length = aStyles.length; i < length; ++i) {
 				var elem = aStyles[i];
 				var stylePaste = oReadResult.styles[elem.style];
@@ -8572,8 +8573,11 @@ function BinaryFileReader(doc, openParams)
 				if (null != stylePaste && null != stylePaste.style && oDocumentStyles) {
 					//1. ищем родительсие стили стили
 					var basedOnElems = [];
-					if (elem.pPr) {
-						putBasedOn(elem, basedOnElems);
+
+					if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
+						if (elem.pPr) {
+							putBasedOn(elem, basedOnElems);
+						}
 					}
 
 					//2. передаём основной стиль и родительские
@@ -8582,31 +8586,35 @@ function BinaryFileReader(doc, openParams)
 
 
 					var styleId = tryAddStyle(stylePaste, elem, basedOnElems);
+					mapStylesIds[stylePaste.param.id] = styleId;
 					if (styleId) {
+						allAddedStylesIds.push(styleId);
 						//4. далее если основной стиль добавлен, то необходимо добавить и все родительские
-						var prevStyleBasedOn = styleId;
 						if (basedOnElems && basedOnElems.length) {
 							for (var j = 0; j < basedOnElems.length; j++) {
 								var elemBasedOn = basedOnElems[j];
 								var stylePasteBasedOn = oReadResult.styles[elemBasedOn.style];
 								if (stylePasteBasedOn) {
 									var styleIdBasedOn = tryAddStyle(stylePasteBasedOn, elemBasedOn);
-									if (styleIdBasedOn) {
-										var addedStyle = oDocumentStyles.Style[prevStyleBasedOn];
-										if (addedStyle) {
-											addedStyle.Set_BasedOn(styleIdBasedOn);
-										}
-										prevStyleBasedOn = styleIdBasedOn;
-									} else {
-										prevStyleBasedOn = null;
-									}
+									allAddedStylesIds.push(styleIdBasedOn);
+									mapStylesIds[stylePasteBasedOn.param.id] = styleIdBasedOn;
 								}
-
 							}
 						}
 					}
 				}
 			}
+
+			//подменяем у всех элементов basedOn
+			if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
+				for (i = 0, length = allAddedStylesIds.length; i < length; ++i) {
+					var addedStyle = oDocumentStyles.Style[allAddedStylesIds[i]];
+					if (addedStyle) {
+						addedStyle.Set_BasedOn(mapStylesIds[addedStyle.BasedOn]);
+					}
+				}
+			}
+
 		};
 
 
