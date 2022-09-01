@@ -8330,7 +8330,7 @@ function BinaryFileReader(doc, openParams)
 		var isAlreadyContainsStyle;
 		var oStyleTypes = {par: 1, table: 2, lvl: 3, run: 4, styleLink: 5, numStyleLink: 6};
 		var addNewStyles = false;
-		var fParseStyle = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
+		var fParseStyle1 = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
 			if (aStyles == null) {
 				return;
 			}
@@ -8450,7 +8450,7 @@ function BinaryFileReader(doc, openParams)
 
 
 
-		var fParseStyle2 = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
+		var fParseStyle = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
 			if (aStyles == null) {
 				return;
 			}
@@ -8521,8 +8521,16 @@ function BinaryFileReader(doc, openParams)
 						//подменяем стили документа
 						//TODO нужна функция для подмены
 						//присваиваем элементу id соответсвующего стиля + отправляем в функцию выще id  и проходимся там по всем родительским элементам basedOn
-						putStyle(_elem, isEqualName);
-						return isEqualName;
+						//putStyle(_elem, isEqualName);
+						//return isEqualName;
+
+						//stylePaste.style.BasedOn = null;
+						var newName = _stylePaste.style.Name + "_123";
+						_stylePaste.style.Set_Name(newName);
+						nStyleId = oDocumentStyles.Add(_stylePaste.style);
+						putStyle(_elem, nStyleId);
+
+						return nStyleId;
 
 
 						//stylePaste.style.BasedOn = null;
@@ -8540,26 +8548,17 @@ function BinaryFileReader(doc, openParams)
 					} else {
 						//просто присваиваем элементу id соответсвующего стиля
 						putStyle(_elem, isEqualName);
-						//putStyle(_elem, isEqualName);
-						//return nStyleId;
 					}
 				} else if (!isAlreadyContainsStyle && isEqualName == null)//нужно добавить новый стиль
 				{
 					//todo править и BaseOn
 					//stylePaste.style.BasedOn = null;
 
-					var nStyleId = oDocumentStyles.Add(stylePaste.style);
+					var nStyleId = oDocumentStyles.Add(_stylePaste.style);
 					var addedStyle = oDocumentStyles.Style[nStyleId];
 					addedStyle.SetCustom(true);
 					putStyle(_elem, nStyleId);
 					return nStyleId;
-
-					/*if (_stylePaste.style.BasedOn) {
-						basedOnStyles.push(nStyleId);
-					}
-					mapStylesIds[_stylePaste.param.id] = nStyleId;
-
-					addNewStyles = true;*/
 				}
 
 				return null;
@@ -8591,12 +8590,13 @@ function BinaryFileReader(doc, openParams)
 								var elemBasedOn = basedOnElems[j];
 								var stylePasteBasedOn = oReadResult.styles[elemBasedOn.style];
 								if (stylePasteBasedOn) {
-									var styleIdBasedOn = tryAddStyle(stylePasteBasedOn, elemBasedOn, basedOnElems);
+									var styleIdBasedOn = tryAddStyle(stylePasteBasedOn, elemBasedOn);
 									if (styleIdBasedOn) {
 										var addedStyle = oDocumentStyles.Style[prevStyleBasedOn];
 										if (addedStyle) {
 											addedStyle.Set_BasedOn(styleIdBasedOn);
 										}
+										prevStyleBasedOn = styleIdBasedOn;
 									} else {
 										prevStyleBasedOn = null;
 									}
@@ -8607,16 +8607,6 @@ function BinaryFileReader(doc, openParams)
 					}
 				}
 			}
-
-
-			/*if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
-				for (i = 0, length = basedOnStyles.length; i < length; ++i) {
-					var addedStyle = oDocumentStyles.Style[basedOnStyles[i]];
-					if (addedStyle) {
-						addedStyle.Set_BasedOn(mapStylesIds[addedStyle.BasedOn]);
-					}
-				}
-			}*/
 		};
 
 
