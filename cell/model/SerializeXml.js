@@ -7770,6 +7770,9 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 						if ("dxf" === name2) {
 							val = new AscCommonExcel.CellXfs();
 							val.fromXml(reader);
+							if (!this.dxfs) {
+								this.dxfs = [];
+							}
 							this.dxfs.push(val);
 						}
 					}
