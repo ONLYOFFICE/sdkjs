@@ -125,10 +125,11 @@
 
 		return true;
 	};
-	BufferIterator.prototype.GetOutputContent = function ()
+	BufferIterator.prototype.IsReturnContent = function (intLengthPatternArr)
 	{
-		return Array.from(this.arrOutputContent)
-	};
+		return this.intCursor - 1 === this.buffer.length ||
+			this.arrOutputContent.length === intLengthPatternArr
+	}
 
 	/**
 	 * Класс представляющий маску для текстовой формы
@@ -171,10 +172,10 @@
 		else if (Array.isArray(text))
 			buffer = Array.from(text);
 
+		buffer = this.CorrectBuffer(buffer);
+
 		if (!buffer)
 			return text;
-
-		buffer = this.CorrectBuffer(buffer);
 
 		if (typeof(text) === "string")
 		{
@@ -225,10 +226,10 @@
 	};
 	CTextFormMask.prototype.CorrectBuffer = function(buffer)
 	{
-		if (!this.Pattern.length || !buffer.length)
+		if (!this.Pattern.length  || !buffer || !buffer.length)
 			return buffer;
 
-		let oBufferIterator = new BufferIterator(buffer);
+		let oBufferIterator = new BufferIterator(buffer, this.Pattern.length);
 
 		for (let i = 0, isContinue = true; i < this.Pattern.length && isContinue; i++)
 		{
@@ -238,7 +239,10 @@
 				break;
 		}
 
-		return oBufferIterator.GetOutputContent();
+		if (oBufferIterator.IsReturnContent(this.Pattern.length))
+			return Array.from(oBufferIterator.arrOutputContent);
+
+		return false
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTextFormMask = CTextFormMask;
