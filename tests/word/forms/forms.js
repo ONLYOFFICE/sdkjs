@@ -56,16 +56,6 @@ $(function () {
 		oCC.SetFormPr(new AscWord.CSdtFormPr());
 	}
 
-	function CheckFormMask(assert, strMask, strInputText, strResult) {
-		let mask = new AscWord.CTextFormMask();
-		mask.Set(strMask);
-		assert.strictEqual(
-			mask.Correct(strInputText),
-			strResult,
-			"Test mask \'" + strMask + "\' with text \'"+ strInputText+"\'; must be \'" + strResult + "\'"
-		);
-	}
-
 	QUnit.module("Check forms");
 
 	QUnit.test("Check text form formats", function (assert)
@@ -378,124 +368,135 @@ $(function () {
 
 	});
 
-	QUnit.test("Check correction of text mask", function (assert) {
-		CheckFormMask(assert,"", "1234", "1234");
-		CheckFormMask(assert,"*", "1234", "1");
-		CheckFormMask(assert,"a", "1234", "");
-		CheckFormMask(assert,"a", "1bcd", "");
-		CheckFormMask(assert,"a9", "bc", "b");
-		CheckFormMask(assert,"a^9", "bc", "b9");
-		CheckFormMask(assert,"^a9", "u", "a");
-		CheckFormMask(assert,"^a9", "9", "a9");
-		CheckFormMask(assert,"^a9", "a", "a");
+	QUnit.test("Check correction of text mask", function (assert)
+	{
+		let mask = new AscWord.CTextFormMask();
 
-		CheckFormMask(assert,"999-999", "123", "123-");
-		CheckFormMask(assert,"999-999", "123-", "123-");
-		CheckFormMask(assert,"999-999", "123456", "123-456");
+		function CheckFormMask(strMask, strInputText, strResult)
+		{
+			mask.Set(strMask);
+			assert.strictEqual(
+				mask.Correct(strInputText),
+				strResult,
+				"Test mask \'" + strMask + "\' with text \'"+ strInputText+"\'; must be \'" + strResult + "\'"
+			);
+		}
 
-		CheckFormMask(assert,"(999) 999-9999", "", "");
-		CheckFormMask(assert,"(999) 999-9999", "9", "(9");
-		CheckFormMask(assert,"(999) 999-9999", "999", "(999) ");
-		CheckFormMask(assert,"(999) 999-9999", "(999", "(999) ");
-		CheckFormMask(assert,"(999) 999-9999", "(999)", "(999) ");
-		CheckFormMask(assert,"(999) 999-9999", "(999)123", "(999) 123-");
-		CheckFormMask(assert,"(999) 999-9999", "999123", "(999) 123-");
-		CheckFormMask(assert,"(999) 999-9999", "9991231122", "(999) 123-1122");
-		CheckFormMask(assert,"(999) 999-9999", "(999)1231122", "(999) 123-1122");
-		CheckFormMask(assert,"(999) 999-9999", "(999)123-1122", "(999) 123-1122");
-		CheckFormMask(assert,"(999) 999-9999", "333)123-1122", "(333) 123-1122");
-		CheckFormMask(assert,"(999) 999-9999", "9)-", "(9");
- 		CheckFormMask(assert,"(999) 999-9999", "9)bcs", "(9" );
-		CheckFormMask(assert,"+7 (999)-999-99-99", "9991112211", "+7 (999)-111-22-11");
-		CheckFormMask(assert,"+7 (999)-999-99-99", "999a", "+7 (999)-");
-		CheckFormMask(assert,"+7 (999)-999-99-99", "(999a", "+7 (999)-");
-		CheckFormMask(assert,"+7 (999)-999-99-99", "+(999a1", "+7 (999)-");
+		CheckFormMask("", "1234", "1234");
+		CheckFormMask("*", "1234", "1");
+		CheckFormMask("a", "1234", "");
+		CheckFormMask("a", "1bcd", "");
+		CheckFormMask("a9", "bc", "b");
+		CheckFormMask("a^9", "bc", "b9");
+		CheckFormMask("^a9", "u", "a");
+		CheckFormMask("^a9", "9", "a9");
+		CheckFormMask("^a9", "a", "a");
 
-		CheckFormMask(assert,"*****@aaaa", "index", "index@");
-		CheckFormMask(assert,"*****@aaaa", "index1234", "index@");
-		CheckFormMask(assert,"*****@aaaa", "indexmail", "index@mail");
-		CheckFormMask(assert,"*****@aaaa.ru", "indexmail", "index@mail.ru");
+		CheckFormMask("999-999", "123", "123-");
+		CheckFormMask("999-999", "123-", "123-");
+		CheckFormMask("999-999", "123456", "123-456");
 
-		CheckFormMask(assert,"99.99.99.9.9", "12345678", "12.34.56.7.8");
-		CheckFormMask(assert,"99.99.99.9.9", "12", "12.");
-		CheckFormMask(assert,"99.99.99.9.9", "1232b", "12.32.");
-		CheckFormMask(assert,"99.99.99.9.9", "b", "");
-		CheckFormMask(assert,"99.99.99.9.9", "1234567812345678", "12.34.56.7.8");
+		CheckFormMask("(999) 999-9999", "", "");
+		CheckFormMask("(999) 999-9999", "9", "(9");
+		CheckFormMask("(999) 999-9999", "9(99", "(999) ");
+		CheckFormMask("(999) 999-9999", "999", "(999) ");
+		CheckFormMask("(999) 999-9999", "(999", "(999) ");
+		CheckFormMask("(999) 999-9999", "(999)", "(999) ");
+		CheckFormMask("(999) 999-9999", "(999)123", "(999) 123-");
+		CheckFormMask("(999) 999-9999", "999123", "(999) 123-");
+		CheckFormMask("(999) 999-9999", "9991231122", "(999) 123-1122");
+		CheckFormMask("(999) 999-9999", "(999)1231122", "(999) 123-1122");
+		CheckFormMask("(999) 999-9999", "(999)123-1122", "(999) 123-1122");
+		CheckFormMask("(999) 999-9999", "333)123-1122", "(333) 123-1122");
+		CheckFormMask("(999) 999-9999", "9)-", "(9");
+ 		CheckFormMask("(999) 999-9999", "9)bcs", "(9" );
 
-		CheckFormMask(assert,"**-^x", "", "");
-		CheckFormMask(assert,"**-^x", "1", "1");
-		CheckFormMask(assert,"**-^x", "12", "12-x");
-		CheckFormMask(assert,"**-^x", "12-", "12-x");
-		CheckFormMask(assert,"**-^x", "12-x", "12-x");
+		CheckFormMask("+7 (999)-999-99-99", "9991112211", "+7 (999)-111-22-11");
+		CheckFormMask("+7 (999)-999-99-99", "999a", "+7 (999)-");
+		CheckFormMask("+7 (999)-999-99-99", "(999a", "+7 (999)-");
+		CheckFormMask("+7 (999)-999-99-99", "+(999a1", "+7 (999)-");
 
-		CheckFormMask(assert,"***-*9*^*xxx:uuu-y", "", "");
-		CheckFormMask(assert,"***-*9*^*xxx:uuu-y", "a", "a");
-		CheckFormMask(assert,"***-*9*^*xxx:uuu-y", "ad", "ad");
-		CheckFormMask(assert,"***-*9*^*xxx:uuu-y", "ad9", "ad9-");
-		CheckFormMask(assert,"***-*9*^*xxx:uuu-y", "ad94", "ad9-4");
-		CheckFormMask(assert,"***-*9*^*xxx:uuu-y", "ad949", "ad9-49");
-		CheckFormMask(assert,"***-*9*^*xxx:uuu-y", "ad949f", "ad9-49f*xxx:uuu-y");
-		CheckFormMask(assert,"***-*9*^*xxx:uuu-y", "ad949f*", "ad9-49f*xxx:uuu-y");
-		CheckFormMask(assert,"***-*9*^*xxx:uuu-y", "ad949f*xxx:uuu-y", "ad9-49f*xxx:uuu-y");
-		CheckFormMask(assert,"***-*9*^*xxx:uuu-y", "ad949f*xxx:uuu-fke3", "ad9-49f*xxx:uuu-y");
+		CheckFormMask("*****@aaaa", "index", "index@");
+		CheckFormMask("*****@aaaa", "index1234", "index@");
+		CheckFormMask("*****@aaaa", "indexmail", "index@mail");
+		CheckFormMask("*****@aaaa.ru", "indexmail", "index@mail.ru");
 
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "", "");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "a", "a");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "ad", "ad");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "ad9", "ad9-");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "ad94", "ad9-4");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "ad94b", "ad9-4");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "ad949", "ad9-49");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "ad949b", "ad9-49b*bbb:uuu-y-");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "ad949b1", "ad9-49b*bbb:uuu-y-1");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "ad949b1*", "ad9-49b*bbb:uuu-y-1");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "ad949b123", "ad9-49b*bbb:uuu-y-123");
-		CheckFormMask(assert,"***-*9*^*bbb:uuu-y-999", "ad949f*678", "ad9-49f*bbb:uuu-y-678");
+		CheckFormMask("99.99.99.9.9", "12345678", "12.34.56.7.8");
+		CheckFormMask("99.99.99.9.9", "12", "12.");
+		CheckFormMask("99.99.99.9.9", "1232b", "12.32.");
+		CheckFormMask("99.99.99.9.9", "b", "");
+		CheckFormMask("99.99.99.9.9", "1234567812345678", "12.34.56.7.8");
 
-		CheckFormMask(assert,"9-^a-9-b-9-c-9-d", "", "");
-		CheckFormMask(assert,"9-^a-9-b-9-c-9-d", "1", "1-a-");
-		CheckFormMask(assert,"9-^a-9-b-9-c-9-d", "12", "1-a-2-b-");
-		CheckFormMask(assert,"9-^a-9-b-9-c-9-d", "12bsx", "1-a-2-b-");
-		CheckFormMask(assert,"9-^a-9-b-9-c-9-d", "123", "1-a-2-b-3-c-");
-		CheckFormMask(assert,"9-^a-9-b-9-c-9-d", "1234", "1-a-2-b-3-c-4-d");
-		CheckFormMask(assert,"9-^a-9-b-9-c-9-d", "1234bc", "1-a-2-b-3-c-4-d");
+		CheckFormMask("**-^x", "", "");
+		CheckFormMask("**-^x", "1", "1");
+		CheckFormMask("**-^x", "12", "12-x");
+		CheckFormMask("**-^x", "12-", "12-x");
+		CheckFormMask("**-^x", "12-x", "12-x");
 
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "", "");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "a", "order №a");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "ab", "order №ab");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "ab54d", "order №ab54d-");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "ab54dab", "order №ab54d-");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "ab54d310822", "order №ab54d-31.08.22-");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "ab54d31.08.22", "order №ab54d-31.08.22-");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "ab54d-31.08.22", "order №ab54d-31.08.22-");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "ab54d-31.08.22uk", "order №ab54d-31.08.22-uk-");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "ab54d-31.08.22ukbcsd", "order №ab54d-31.08.22-uk-");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "ab54d310822uk1234", "order №ab54d-31.08.22-uk-1234");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "orderab54d310822-uk-1234", "order №ab54d-31.08.22-uk-1234");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "order №ab54d310822-uk-1234", "order №ab54d-31.08.22-uk-1234");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "order №ab54d-31.08.22-uk-1234", "order №ab54d-31.08.22-uk-1234");
-		CheckFormMask(assert,"order №*****-99.99.99-aa-9999", "or", "order №");
+		CheckFormMask("***-*9*^*xxx:uuu-y", "", "");
+		CheckFormMask("***-*9*^*xxx:uuu-y", "a", "a");
+		CheckFormMask("***-*9*^*xxx:uuu-y", "ad", "ad");
+		CheckFormMask("***-*9*^*xxx:uuu-y", "ad9", "ad9-");
+		CheckFormMask("***-*9*^*xxx:uuu-y", "ad94", "ad9-4");
+		CheckFormMask("***-*9*^*xxx:uuu-y", "ad949", "ad9-49");
+		CheckFormMask("***-*9*^*xxx:uuu-y", "ad949f", "ad9-49f*xxx:uuu-y");
+		CheckFormMask("***-*9*^*xxx:uuu-y", "ad949f*", "ad9-49f*xxx:uuu-y");
+		CheckFormMask("***-*9*^*xxx:uuu-y", "ad949f*xxx:uuu-y", "ad9-49f*xxx:uuu-y");
+		CheckFormMask("***-*9*^*xxx:uuu-y", "ad949f*xxx:uuu-fke3", "ad9-49f*xxx:uuu-y");
+
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "", "");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "a", "a");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "ad", "ad");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "ad9", "ad9-");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "ad94", "ad9-4");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "ad94b", "ad9-4");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "ad949", "ad9-49");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "ad949b", "ad9-49b*bbb:uuu-y-");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "ad949b1", "ad9-49b*bbb:uuu-y-1");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "ad949b1*", "ad9-49b*bbb:uuu-y-1");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "ad949b123", "ad9-49b*bbb:uuu-y-123");
+		CheckFormMask("***-*9*^*bbb:uuu-y-999", "ad949f*678", "ad9-49f*bbb:uuu-y-678");
+
+		CheckFormMask("9-^a-9-b-9-c-9-d", "", "");
+		CheckFormMask("9-^a-9-b-9-c-9-d", "1", "1-a-");
+		CheckFormMask("9-^a-9-b-9-c-9-d", "12", "1-a-2-b-");
+		CheckFormMask("9-^a-9-b-9-c-9-d", "12bsx", "1-a-2-b-");
+		CheckFormMask("9-^a-9-b-9-c-9-d", "123", "1-a-2-b-3-c-");
+		CheckFormMask("9-^a-9-b-9-c-9-d", "1234", "1-a-2-b-3-c-4-d");
+		CheckFormMask("9-^a-9-b-9-c-9-d", "1234bc", "1-a-2-b-3-c-4-d");
+
+		CheckFormMask("order №*****-99.99.99-aa-9999", "", "");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "a", "order №a");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "ab", "order №ab");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "ab54d", "order №ab54d-");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "ab54dab", "order №ab54d-");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "ab54d310822", "order №ab54d-31.08.22-");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "ab54d31.08.22", "order №ab54d-31.08.22-");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "ab54d-31.08.22", "order №ab54d-31.08.22-");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "ab54d-31.08.22uk", "order №ab54d-31.08.22-uk-");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "ab54d-31.08.22ukbcsd", "order №ab54d-31.08.22-uk-");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "ab54d310822uk1234", "order №ab54d-31.08.22-uk-1234");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "orderab54d310822-uk-1234", "order №ab54d-31.08.22-uk-1234");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "order №ab54d310822-uk-1234", "order №ab54d-31.08.22-uk-1234");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "order №ab54d-31.08.22-uk-1234", "order №ab54d-31.08.22-uk-1234");
+		CheckFormMask("order №*****-99.99.99-aa-9999", "or", "order №");
 
 		CheckFormMask(
-			assert,
 			"****:****:****:****:****:****:****:****",
 			"2001",
 			"2001:",
 		);
 		CheckFormMask(
-			assert,
 			"****:****:****:****:****:****:****:****",
 			"2001:",
 			"2001:",
 		);
 		CheckFormMask(
-			assert,
 			"****:****:****:****:****:****:****:****",
 			"20010db8",
 			"2001:0db8:",
 		);
 		CheckFormMask(
-			assert,
 			"****:****:****:****:****:****:****:****",
 			"20010db885a3000000008a2e03707334",
 			"2001:0db8:85a3:0000:0000:8a2e:0370:7334",

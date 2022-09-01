@@ -84,6 +84,52 @@
 		return (AscCommon.IsDigit(unicode) || AscCommon.IsLetter(unicode));
 	}
 
+	function BufferIterator (buffer)
+	{
+		this.buffer = buffer;
+		this.intCursor = 0;
+		this.intContent = this.GetNext();
+		this.arrOutputContent = [];
+	}
+	BufferIterator.prototype.GetNext = function ()
+	{
+		if (this.intCursor > this.buffer.length)
+			return false;
+
+		let oContent = this.buffer[this.intCursor];
+		this.intCursor++;
+
+		if (undefined !== oContent) {
+			return oContent;
+		}
+
+		return false;
+	};
+	BufferIterator.prototype.CheckRule = function (oRule)
+	{
+		if (undefined === oRule)
+			return false;
+
+		if (oRule.Check(this.intContent))
+		{
+			this.arrOutputContent.push(this.intContent);
+			this.intContent = this.GetNext();
+		}
+		else
+		{
+			if (oRule.Value)
+				this.arrOutputContent.push(oRule.Value);
+			else
+				return false;
+		}
+
+		return true;
+	};
+	BufferIterator.prototype.GetOutputContent = function ()
+	{
+		return Array.from(this.arrOutputContent)
+	};
+
 	/**
 	 * Класс представляющий маску для текстовой формы
 	 * @constructor
@@ -142,53 +188,6 @@
 
 		return buffer;
 	};
-
-	function BufferIterator (buffer)
-	{
-		this.buffer = buffer;
-		this.intCursor = 0;
-		this.intContent = this.GetNext();
-		this.arrOutputContent = [];
-	}
-	BufferIterator.prototype.GetNext = function ()
-	{
-		if (this.intCursor > this.buffer.length)
-			return false;
-
-		let oContent = this.buffer[this.intCursor];
-		this.intCursor++;
-
-		if (undefined !== oContent) {
-			return oContent;
-		}
-
-		return false;
-	};
-	BufferIterator.prototype.CheckRule = function (oRule)
-	{
-		if (undefined === oRule)
-			return false;
-
-		if (oRule.Check(this.intContent))
-		{
-			this.arrOutputContent.push(this.intContent);
-			this.intContent = this.GetNext();
-		}
-		else
-		{
-			if (oRule.Value)
-				this.arrOutputContent.push(oRule.Value);
-			else
-				return false;
-		}
-
-		return true;
-	};
-	BufferIterator.prototype.GetOutputContent = function ()
-	{
-		return Array.from(this.arrOutputContent)
-	};
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -231,7 +230,8 @@
 
 		let oBufferIterator = new BufferIterator(buffer);
 
-		for (let i = 0, isContinue = true; i < this.Pattern.length && isContinue;i++) {
+		for (let i = 0, isContinue = true; i < this.Pattern.length && isContinue; i++)
+		{
 			isContinue = oBufferIterator.CheckRule(this.Pattern[i]);
 
 			if (!isContinue)
