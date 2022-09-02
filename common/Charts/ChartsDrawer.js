@@ -1851,7 +1851,7 @@ CChartsDrawer.prototype =
 			bIsManualStep = true;
 		} else {
 			//было следующее условие - isOx || c_oChartTypes.HBar === this.calcProp.type
-			if (isOx && !isScatter && axisMin !== 0 && axisMax !== 0) {
+			if (isOx /*&& !isScatter && axisMin !== 0 && axisMax !== 0*/) {
 				step = this._getStep(firstDegree.val + (firstDegree.val / 10) * 3);
 			} else {
 				step = this._getStep(firstDegree.val);
