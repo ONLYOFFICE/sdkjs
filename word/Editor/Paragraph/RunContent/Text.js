@@ -321,13 +321,27 @@
 			if (AscFonts.NO_GRAPHEME !== this.TempGrapheme)
 				AscFonts.DrawGrapheme(this.TempGrapheme, Context, X, Y, nFontSize);
 		}
-		else if (AscFonts.NO_GRAPHEME !== this.Grapheme && (!this.IsNBSP() || (editor && editor.ShowParaMarks)))
+		else if (AscFonts.NO_GRAPHEME !== this.Grapheme)
 		{
-			AscFonts.DrawGrapheme(this.Grapheme, Context, X, Y, nFontSize);
+			if (this.IsNBSP())
+				this.DrawNonBreakingSpace(Context, X, Y, nFontSize);
+			else
+				AscFonts.DrawGrapheme(this.Grapheme, Context, X, Y, nFontSize);
 		}
 
 		if (this.Flags & FLAGS_GAPS)
 			Context.RestoreGrState();
+	};
+	CRunText.prototype.DrawNonBreakingSpace = function(Context, X, Y, nFontSize)
+	{
+		if (!editor || !editor.ShowParaMarks)
+			return;
+
+		let nbspWidth = AscFonts.GetGraphemeWidth(this.Grapheme) * nFontSize;
+		let width     = this.Width / AscWord.TEXTWIDTH_DIVIDER;
+		let shift     = (width - nbspWidth) / 2;
+
+		AscFonts.DrawGrapheme(this.Grapheme, Context, X + shift, Y, nFontSize);
 	};
 	CRunText.prototype.Measure = function(oMeasurer, oTextPr)
 	{
