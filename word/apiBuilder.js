@@ -3765,7 +3765,7 @@
 
 	/**
 	 * Available caption types.
-	 * @typedef {"equation" | "figure" | "table"} captionType
+	 * @typedef {"Equation" | "Figure" | "Table"} captionType
 	 */
 	//------------------------------------------------------End Cross-reference types--------------------------------------------------
 
@@ -6106,7 +6106,7 @@
 	 * Returns all caption paragraphs of the specified type from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {captionType} sCaption Caption type (equation, figure or table).
+	 * @param {captionType | string} sCaption - caption label ("Equation", "Figure", "Table" or another caption label).
 	 * @returns {ApiParagraph[]}
 	 */
 	ApiDocument.prototype.GetAllCaptionParagraphs = function(sCaption) 
@@ -6114,7 +6114,7 @@
 		if (typeof(sCaption) !== "string" || sCaption.length === 0)
 			return [];
 
-		var allParas = this.Document.GetAllCaptionParagraphs(sCaption[0].toUpperCase() + sCaption.slice(1));
+		var allParas = this.Document.GetAllCaptionParagraphs(sCaption);
 		var aResult = [];
 		for (var nPara = 0; nPara < allParas.length; nPara++)
 			aResult.push(new ApiParagraph(allParas[nPara]));
@@ -7917,7 +7917,7 @@
 	 * The paragraph must be in the document.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {captionType} sCaption - Caption type (equation, figure, table).
+	 * @param {captionType | string} sCaption - caption label ("Equation", "Figure", "Table" or another caption label).
 	 * @param {captionRefTo} sRefType - The text or numeric value of a caption reference you want to insert.
 	 * @param {ApiParagraph} oParaTo - The caption paragraph to be referred to (must be in the document).
 	 * @param {boolean} [bLink=true] - Specifies if the reference will be inserted as a hyperlink.
@@ -7958,7 +7958,7 @@
 		var aTempCompFlds = [];
 		oParaTo = oParaTo.private_GetImpl();
 		
-		oParaTo.GetAllSeqFieldsByType(sCaption[0].toUpperCase() + sCaption.slice(1), aTempCompFlds);
+		oParaTo.GetAllSeqFieldsByType(sCaption, aTempCompFlds);
 		if (aTempCompFlds.length === 0)
 			return false;
 		if (nRefTo === 7 && oParaTo.asc_canAddRefToCaptionText(typeRec.displayValue) === false)
@@ -7972,7 +7972,7 @@
 		oDocument.RemoveSelection();
 		this.Paragraph.Document_SetThisElementCurrent();
 		this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
-		oDocument.AddRefToCaption(sCaption[0].toUpperCase() + sCaption.slice(1), oParaTo, nRefTo, bLink, bAboveBelow);
+		oDocument.AddRefToCaption(sCaption, oParaTo, nRefTo, bLink, bAboveBelow);
 		oDocument.LoadDocumentState(oldSelectionInfo);
 		return true;
 	};
