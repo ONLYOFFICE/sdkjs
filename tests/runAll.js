@@ -40,7 +40,8 @@ const allTests = [
 	'word/document-calculation/paragraph.html',
 	'word/forms/forms.html',
 	'word/forms/complexForm.html',
-	'word/api/api.html'
+	'word/api/api.html',
+	'word/styles/paraPr.html'
 ];
 
 const {performance} = require('perf_hooks');

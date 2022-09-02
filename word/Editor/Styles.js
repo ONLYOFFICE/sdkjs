@@ -15954,13 +15954,15 @@ CNumPr.prototype.Copy = function()
 };
 CNumPr.prototype.IsValid = function()
 {
-	if (undefined === this.NumId
-		|| null === this.NumId
-		|| 0 === this.NumId
-		|| "0" === this.NumId)
-		return false;
-
-	return true;
+	return (!this.IsZero() && undefined !== this.NumId && null !== this.NumId);
+};
+/**
+ * Нулевая нумерация используется для сброса нумерации в иерархии
+ * @returns {boolean}
+ */
+CNumPr.prototype.IsZero = function()
+{
+	return (0 === this.NumId || "0" === this.NumId);
 };
 CNumPr.prototype.IsEqual = function(oNumPr)
 {
@@ -17898,6 +17900,7 @@ asc_CStyle.prototype.get_TextPr = function()
 };
 //---------------------------------------------------------export---------------------------------------------------
 window['Asc'] = window['Asc'] || {};
+window['AscWord'] = window['AscWord'] || {};
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window["Asc"]["asc_CStyle"] = window["Asc"].asc_CStyle = asc_CStyle;
 asc_CStyle.prototype["get_Name"]    = asc_CStyle.prototype.get_Name;
@@ -17939,6 +17942,9 @@ window["AscCommonWord"].wrap_None = wrap_None;
 window["AscCommonWord"].wrap_NotBeside = wrap_NotBeside;
 window["AscCommonWord"].wrap_Through = wrap_Through;
 window["AscCommonWord"].wrap_Tight = wrap_Tight;
+
+window["AscWord"].CStyle = CStyle;
+window["AscWord"].CNumPr = CNumPr;
 
 
 // Создаем глобальные дефолтовые стили, чтобы быстро можно было отдать дефолтовые настройки

@@ -10398,9 +10398,9 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 			Pr.ParaPr.StyleNumPr = Pr.ParaPr.NumPr.Copy();
 
 		var Lvl = -1;
-		if (undefined != this.Pr.NumPr)
+		if (this.Pr.NumPr)
 		{
-			if (undefined != this.Pr.NumPr.NumId && 0 != this.Pr.NumPr.NumId)
+			if (this.Pr.NumPr.IsValid())
 			{
 				Lvl = this.Pr.NumPr.Lvl;
 				if (undefined === Lvl)
@@ -10416,9 +10416,9 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 					Pr.ParaPr.NumPr = undefined;
 				}
 			}
-			else if (0 === this.Pr.NumPr.NumId)
+			else if (this.Pr.NumPr.IsZero())
 			{
-				// Word значение 0 для NumId воспринимает как отсутствие нумерации
+				// Нулевую нумерацию воспринимаем, как отмену нумерации по иерархии
 				Lvl             = -1;
 				Pr.ParaPr.NumPr = undefined;
 
@@ -10591,6 +10591,10 @@ Paragraph.prototype.GetDirectParaPr = function(isCopy)
 		return this.Pr;
 
 	return this.Pr.Copy();
+};
+Paragraph.prototype.GetCompiledParaPr = function(copy)
+{
+	return this.Get_CompiledPr2(copy).ParaPr;
 };
 Paragraph.prototype.PasteFormatting = function(TextPr, oParaPr, ApplyPara)
 {
