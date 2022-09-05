@@ -16603,10 +16603,13 @@
 				}
 				if (dataValidation) {
 					var checkCell, setValueError;
-					checkCell =
-						t.model.getCellForValidation(row, col, val, t._isFormula(val) ? text : null, function (_res) {
-							setValueError = !_res;
-						});
+					AscFormat.ExecuteNoHistory(function () {
+						checkCell =
+							t.model.getCellForValidation(row, col, val, t._isFormula(val) ? text : null, function (_res) {
+								setValueError = !_res;
+							});
+					}, this, []);
+
 					if (setValueError) {
 						// Error sent from another function
 						return false;
