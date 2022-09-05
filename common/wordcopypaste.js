@@ -1370,7 +1370,7 @@ CopyProcessor.prototype =
 					}
 
 					if (type_Paragraph === Item.GetType()) {
-						oThis.oPresentationWriter.StartRecord(0);
+						oThis.oPresentationWriter.StartRecord(elements[Index].SelectedAll ? 1 : 0);
 						oThis.oPresentationWriter.WriteParagraph(Item);
 						oThis.oPresentationWriter.EndRecord();
 
@@ -6119,7 +6119,9 @@ PasteProcessor.prototype =
 		var newDocContent = new AscFormat.CDrawingDocContent(shape.txBody, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, false, false);
 		var elements = [], paragraph, selectedElement;
 		for (var i = 0; i < count; ++i) {
-			loader.stream.Skip2(1); // must be 0
+			//loader.stream.Skip2(1); // must be 0
+			var selectedAll = stream.GetUChar();
+
 			paragraph = loader.ReadParagraph(newDocContent);
 
 			//FONTS
@@ -6127,6 +6129,9 @@ PasteProcessor.prototype =
 
 			selectedElement = new AscCommonWord.CSelectedElement();
 			selectedElement.Element = paragraph;
+			if (selectedAll === 1) {
+				selectedElement.SelectedAll = true;
+			}
 			elements.push(selectedElement);
 		}
 		return elements;
