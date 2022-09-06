@@ -2084,23 +2084,23 @@
 			return (text_format.Text === "") ? false : true;
 		};
 
-		this.findText = function(text, isMachingCase, isNext, callback)
+		this.findText = function(text, isMachingCase, isWholeWords, isNext, callback)
 		{
 			if (!this.isFullText)
 			{
-				this.fullTextMessageCallbackArgs = [text, isMachingCase, isNext, callback];
+				this.fullTextMessageCallbackArgs = [text, isMachingCase, isWholeWords, isNext, callback];
 				this.fullTextMessageCallback = function() {
-					this.file.findText(this.fullTextMessageCallbackArgs[0], this.fullTextMessageCallbackArgs[1], this.fullTextMessageCallbackArgs[2]);
+					this.file.findText(this.fullTextMessageCallbackArgs[0], this.fullTextMessageCallbackArgs[1], this.fullTextMessageCallbackArgs[2], this.fullTextMessageCallbackArgs[3]);
 					this.onUpdateOverlay();
 
-					if (this.fullTextMessageCallbackArgs[3])
-						this.fullTextMessageCallbackArgs[3].call(this.Api, this.SearchResults.Current, this.SearchResults.Count);
+					if (this.fullTextMessageCallbackArgs[4])
+						this.fullTextMessageCallbackArgs[4].call(this.Api, this.SearchResults.Current, this.SearchResults.Count);
 				};
 				this.showTextMessage();
 				return true; // async
 			}
 
-			this.file.findText(text, isMachingCase, isNext);
+			this.file.findText(text, isMachingCase, isWholeWords, isNext);
 			this.onUpdateOverlay();
 			return false;
 		};

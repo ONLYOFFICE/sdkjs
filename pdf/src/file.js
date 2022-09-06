@@ -1650,7 +1650,6 @@ void main() {\n\
         var _SeekToNextPoint = 0;
         var _SeekLinePrevCharX = 0;
 
-        var arrayLines = [];
         var curLine = null;
 
         while (stream.pos < stream.size)
@@ -1764,9 +1763,13 @@ void main() {\n\
         // если текст, который ищем разбит на строки, то мапим в какой строке какую часть текста нашли,
         // чтобы потом повторно не пробегаться по строкам в поисках текста для aroundtext
         var oEqualStrByLine = {};
-
+        
+        // Для whole words. Запоминаем символ, который был перед началом совпадения.
+        var charBeforeMatch;
+        
         while (stream.pos < stream.size)
         {
+            nLastUsedPos = stream.pos;
             var command = stream.GetUChar();
 
             switch (command)
@@ -1795,6 +1798,11 @@ void main() {\n\
                     if (0xFFFF == _char)
                         _char = " ".charCodeAt(0);
 
+                    if (charBeforeMatch === undefined)
+                    {
+                        charBeforeMatch = _char;
+                    }
+                    
                     _lineLastGlyphWidth = stream.GetDouble2();
 
                     var _isFound = false;
@@ -1813,6 +1821,10 @@ void main() {\n\
 
                     if (_isFound)
                     {
+                        // начало строки - нет символов перед началом совпадения
+                        if (_lineCharCount === 1)
+                            charBeforeMatch = -1;
+
                         if (0 == glyphsEqualFound)
                         {
                             _findLine = _numLine;
@@ -1831,6 +1843,21 @@ void main() {\n\
                         _findLineOffsetR = _linePrevCharX + _lineLastGlyphWidth;
                         if (glyphsFindCount == glyphsEqualFound)
                         {
+                            if (_searchResults.WholeWords)
+                            {
+                                var nCurStreamPos = stream.pos;
+                                var isWhole = CheckWholeWords(stream, charBeforeMatch);
+                                if (!isWhole)
+                                {
+                                    stream.pos = nCurStreamPos;
+                                    charBeforeMatch = undefined;
+                                    glyphsEqualFound = 0;
+                                    oEqualStrByLine = {};
+
+                                    break;
+                                }
+                            }
+
                             var _rects = [];
                             for (var i = _findLine; i <= _numLine; i++)
                             {
@@ -1865,6 +1892,8 @@ void main() {\n\
                     }
                     else
                     {
+                        charBeforeMatch = _char;
+
                         if (0 != glyphsEqualFound)
                         {
                             // нужно вернуться и попробовать искать со след буквы.
@@ -1874,8 +1903,7 @@ void main() {\n\
                             _lineCharCount = _findGlyphIndex;
                             _numLine = _findLine;
 
-                            if (glyphsEqualFound == 0)
-                                oEqualStrByLine = {};
+                            oEqualStrByLine = {};
                         }
                     }
 
@@ -1903,6 +1931,7 @@ void main() {\n\
                     else
                         _lineGidExist = false;
 
+                    charBeforeMatch = undefined;
                     break;
                 }
                 case 162:
@@ -1922,13 +1951,45 @@ void main() {\n\
                 }
             }
         }
+
+        function CheckWholeWords(stream, charBeforeMatch)
+        {
+            if (charBeforeMatch !== -1 && charBeforeMatch !== " ".charCodeAt(0) && undefined === AscCommon.g_aPunctuation[charBeforeMatch])
+                return false;
+
+            if (stream.pos < stream.size)
+            {
+                var command = stream.GetUChar();
+                switch (command)
+                {
+                    case 80:
+                    {
+                        if (0 != _lineCharCount)
+                            stream.GetDouble2();
+
+                        var _char = stream.GetUShort();
+                        if (_lineGidExist)
+                            stream.Skip(2);
+
+                        if (0xFFFF == _char || _char == " ".charCodeAt(0) || undefined !== AscCommon.g_aPunctuation[_char])
+                            return true;
+                        
+                        return false;
+                    }
+                    default:
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
     };
 
-    CFile.prototype.findText = function(text, isMachingCase, isNext)
+    CFile.prototype.findText = function(text, isMachingCase, isWholeWords, isNext)
     {
         this.SearchResults.IsSearch = true;
         var pagesCount = this.pages.length;
-        if (text === this.SearchResults.Text && isMachingCase === this.SearchResults.MachingCase)
+        if (text === this.SearchResults.Text && isMachingCase === this.SearchResults.MachingCase && isWholeWords == this.SearchResults.WholeWords)
         {
             if (this.SearchResults.Count === 0)
             {
@@ -2029,6 +2090,7 @@ void main() {\n\
 
         this.SearchResults.Text = text;
         this.SearchResults.MachingCase = isMachingCase;
+        this.SearchResults.WholeWords = isWholeWords;
 
         for (var i = 0; i < this.pages.length; i++)
         {
@@ -2094,19 +2156,38 @@ void main() {\n\
                     if (oLastPartInfo && oPart.LineNum != oLastPartInfo.numLine)
                         oLastPartInfo = null;
 
-                    // запоминаем позицию в строке у первого вхождения, чтобы расчитывать позиции следующих
+                    var nPosInLine;
+                    // запоминаем позицию в строке у первого совпадения, чтобы расчитывать позиции следующих
                     if (!oLastPartInfo)
                     {
+                        nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase());
+                        if (this.SearchResults.WholeWords)
+                        {
+                            while (!CheckWholeWords(nPosInLine, oPart.Text, oLineInfo.text))
+                            {
+                                nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, nPosInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), nPosInLine + 1);
+                            }
+                        }
+
                         oLastPartInfo = {
-                            posInLine: this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase()),
+                            posInLine: nPosInLine,
                             numLine: oPart.LineNum,
                             text: oPart.Text 
                         };    
                     }
                     else
                     {
+                        nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, oLastPartInfo.posInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), oLastPartInfo.posInLine + 1);
+                        if (this.SearchResults.WholeWords)
+                        {
+                            while (!CheckWholeWords(nPosInLine, oPart.Text, oLineInfo.text))
+                            {
+                                nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, nPosInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), nPosInLine + 1);
+                            }
+                        }
+
                         oLastPartInfo = {
-                            posInLine: this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, oLastPartInfo.posInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), oLastPartInfo.posInLine + 1),
+                            posInLine: nPosInLine,
                             numLine: oPart.LineNum,
                             text: oPart.Text
                         }
@@ -2124,6 +2205,19 @@ void main() {\n\
 
                 aTextAround.push([nAroundAdded + nMatch, sTempText]);
             }
+        }
+
+        function CheckWholeWords(nMatchPos, sMatchStr, sParentSrt)
+        {
+            var charBeforeMatch = sParentSrt[nMatchPos - 1] ? sParentSrt[nMatchPos - 1].charCodeAt(0) : undefined;
+            var charAfterMatch = sParentSrt[nMatchPos + sMatchStr.length] ? sParentSrt[nMatchPos + sMatchStr.length].charCodeAt(0) : undefined;
+
+            if (charBeforeMatch !== " ".charCodeAt(0) && charBeforeMatch !== undefined && undefined === AscCommon.g_aPunctuation[charBeforeMatch])
+                return false;
+            if (charAfterMatch !== " ".charCodeAt(0) && charAfterMatch !== undefined && undefined === AscCommon.g_aPunctuation[charAfterMatch])
+                return false;
+
+            return true;
         }
 
         this.viewer.Api.sync_startTextAroundSearch();
