@@ -2047,7 +2047,10 @@
 				loader.stream = stream;
 
 				var readContent = function () {
-					var docContent = oThis.ReadPresentationText(stream, worksheet);
+					History.TurnOff();
+					var docContent = AscCommon.PasteProcessor.prototype.ReadPresentationText.call(this, stream, worksheet);
+					History.TurnOn();
+
 					if (docContent.length === 0) {
 						return;
 					}
@@ -2999,37 +3002,6 @@
 
 				var arrImages = arrBase64Img.concat(loader.End_UseFullUrl());
 				return {arrShapes: arr_shapes, arrImages: arrImages, arrTransforms: arr_transforms};
-			},
-
-			ReadPresentationText: function (stream, worksheet, cDocumentContent) {
-				History.TurnOff();
-
-				var loader = new AscCommon.BinaryPPTYLoader();
-				loader.Start_UseFullUrl();
-				loader.DrawingDocument = worksheet.getDrawingDocument();
-				loader.stream = stream;
-				loader.presentation = worksheet.model;
-
-				var count = stream.GetULong() / 100000;
-
-				//читаем контент, здесь только параграфы
-				//var newDocContent = new CDocumentContent(shape.txBody, editor.WordControl.m_oDrawingDocument, 0 , 0, 0, 0, false, false);
-				var elements = [], paragraph, selectedElement;
-
-				if (!cDocumentContent) {
-					cDocumentContent = worksheet;
-				}
-
-				for (var i = 0; i < count; ++i) {
-					loader.stream.Skip2(1); // must be 0
-					paragraph = loader.ReadParagraph(cDocumentContent);
-
-					elements.push(paragraph);
-				}
-
-				History.TurnOn();
-
-				return elements;
 			},
 
 			ReadFromBinaryWord: function (sBase64, worksheet) {

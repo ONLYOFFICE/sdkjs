@@ -6097,42 +6097,52 @@ PasteProcessor.prototype =
 		};
 	},
 
-	ReadPresentationText: function (stream) {
+	ReadPresentationText: function (stream, worksheet) {
 		var loader = new AscCommon.BinaryPPTYLoader();
 		loader.Start_UseFullUrl();
+		loader.DrawingDocument = worksheet ? worksheet.getDrawingDocument() : editor.WordControl.m_oLogicDocument.DrawingDocument;
 		loader.stream = stream;
-		loader.presentation = editor.WordControl.m_oLogicDocument;
-		loader.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
-		var presentation = editor.WordControl.m_oLogicDocument;
+		loader.presentation = worksheet ? worksheet.model : editor.WordControl.m_oLogicDocument;
 
-		var shape;
-		if (presentation.Slides)
-			shape = new CShape(presentation.Slides[presentation.CurPage]);
-		else
-			shape = new CShape(presentation);
+		var cDocumentContent;
+		var isExcel = !!worksheet;
+		if (!isExcel) {
+			var presentation = editor.WordControl.m_oLogicDocument;
+			var shape;
+			if (presentation.Slides) {
+				shape = new CShape(presentation.Slides[presentation.CurPage]);
+			} else {
+				shape = new CShape(presentation);
+			}
 
-		shape.setTxBody(new AscFormat.CTextBody(shape));
+			shape.setTxBody(new AscFormat.CTextBody(shape));
 
-		var count = stream.GetULong() / 100000;
+			//читаем контент, здесь только параграфы
+			cDocumentContent = new AscFormat.CDrawingDocContent(shape.txBody, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, false, false);
+		} else {
+			cDocumentContent = worksheet;
+		}
 
-		//читаем контент, здесь только параграфы
-		var newDocContent = new AscFormat.CDrawingDocContent(shape.txBody, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, false, false);
 		var elements = [], paragraph, selectedElement;
+		var count = stream.GetULong() / 100000;
 		for (var i = 0; i < count; ++i) {
 			//loader.stream.Skip2(1); // must be 0
 			var selectedAll = stream.GetUChar();
+			paragraph = loader.ReadParagraph(cDocumentContent);
 
-			paragraph = loader.ReadParagraph(newDocContent);
+			if (isExcel) {
+				elements.push(paragraph);
+			} else {
+				//FONTS
+				paragraph.Document_Get_AllFontNames(this.oFonts);
 
-			//FONTS
-			paragraph.Document_Get_AllFontNames(this.oFonts);
-
-			selectedElement = new AscCommonWord.CSelectedElement();
-			selectedElement.Element = paragraph;
-			if (selectedAll === 1) {
-				selectedElement.SelectedAll = true;
+				selectedElement = new AscCommonWord.CSelectedElement();
+				selectedElement.Element = paragraph;
+				if (selectedAll === 1) {
+					selectedElement.SelectedAll = true;
+				}
+				elements.push(selectedElement);
 			}
-			elements.push(selectedElement);
 		}
 		return elements;
 	},
