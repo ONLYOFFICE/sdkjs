@@ -1791,7 +1791,7 @@
 									} else {
 										pasteRange.c2 -= diff;
 									}
-									oBinaryFileReader.copyPasteObj.activeRange = pasteRange.getName();
+									oBinaryFileReader.InitOpenManager.copyPasteObj.activeRange = pasteRange.getName();
 								}
 							});
 						}
