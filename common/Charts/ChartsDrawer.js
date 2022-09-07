@@ -5454,10 +5454,10 @@ CChartsDrawer.prototype =
 		return isCone && (verge === 0 || verge === 5);
 	},
 
-	getAutoSum: function (m, n, calcFunc) {
+	getAutoSum: function (startM, endM, startN, endN, calcFunc) {
 		var res = 0;
-		for (var i = 0; i < m; i++) {
-			for (var j = 0; j < n; j++) {
+		for (var i = startM; i <= endM; i++) {
+			for (var j = startN; j <= endN; j++) {
 				res += calcFunc(i, j);
 			}
 		}
@@ -15503,7 +15503,39 @@ CErrBarsDraw.prototype = {
 			}
 			var pointVal = isCatAx ? val + 1 : point.val;
 
-			var ny, mSumm, aSumm;
+			var calculateStDev = function () {
+				var ny, mSumm, aSumm;
+				ny = seria.getValuesCount();
+
+				var startSer = ser;
+				var endSer = ser;
+				var startPoint = 0;
+				var endPoint = seria.getValuesCount() - 1;
+				mSumm = t.cChartDrawer.getAutoSum(startSer, endSer, startPoint, endPoint, function (_ser, _val) {
+					var _oSer = oChart.chart.series[_ser];
+					var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
+					if (_point) {
+						return isCatAx ? j + 1 : _point.val;
+					}
+					return 0;
+				});
+				var m = mSumm / ny;
+
+				aSumm = t.cChartDrawer.getAutoSum(startSer, endSer, startPoint, endPoint, function (_ser, _val) {
+					var _oSer = oChart.chart.series[_ser];
+					var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
+					if (_point) {
+						var _pointVal = isCatAx ? j + 1 : _point.val;
+						var av = _pointVal - m;
+						return av * av;
+					}
+					return 0;
+				});
+
+				return Math.sqrt(aSumm / (ny - 1));
+			};
+
+
 			var serCount = oChart.chart.series.length;
 			var pointCount = seria.getValuesCount();
 			switch (errBars.errValType) {
@@ -15521,81 +15553,17 @@ CErrBarsDraw.prototype = {
 					break;
 				}
 				case AscFormat.st_errvaltypeSTDDEV: {
-
-					ny = oChart.chart.series.length * seria.getValuesCount();
-
-					mSumm = this.cChartDrawer.getAutoSum(ser, val, function (_ser, _val) {
-						var _oSer = oChart.chart.series[_ser];
-						var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
-						if (_point) {
-							return isCatAx ? j + 1 : _point.val;
-						}
-						return 0;
-					});
-					var m = mSumm / ny;
-
-					aSumm = this.cChartDrawer.getAutoSum(ser, val, function (_ser, _val) {
-						var _oSer = oChart.chart.series[_ser];
-						var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
-						if (_point) {
-							var _pointVal = isCatAx ? j + 1 : _point.val;
-							return Math.pow(_pointVal - m, 2);
-						}
-						return 0;
-					});
-
-					res = Math.sqrt(aSumm / (ny - 1));
+					res = calculateStDev();
 
 					break;
 				}
 				case AscFormat.st_errvaltypeSTDERR: {
-					ny = oChart.chart.series.length * seria.getValuesCount();
-
-					mSumm = this.cChartDrawer.getAutoSum(oChart.chart.series.length, seria.getValuesCount(), function (_ser, _val) {
-						var _oSer = oChart.chart.series[_ser];
-						var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
-						if (_point) {
-							return isCatAx ? j + 1 : _point.val;
-						}
-						return 0;
-					});
-					var m = mSumm / ny;
-
-					aSumm = this.cChartDrawer.getAutoSum(ser + 1, seria.getValuesCount(), function (_ser, _val) {
-						var _oSer = oChart.chart.series[_ser];
-						var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
-						if (_point) {
-							var _pointVal = isCatAx ? j + 1 : _point.val;
-							var av = _pointVal - m;
-							return av * av;
-						}
-						return 0;
-					});
-
-					res = (Math.sqrt(aSumm / (ny - 1))) / Math.sqrt(ny);
+					//по официальным данным мс, формула для расчёта стандратной ошибки - другая
+					//здесь использую STDEV(currentSerData)/SQRT(COUNT(currentSerData))
+					res = calculateStDev() / Math.sqrt(seria.getValuesCount());
 					break;
 				}
 			}
-
-
-			/*var st_errvaltypeCUST = 0;
-			var st_errvaltypeFIXEDVAL = 1;
-			var st_errvaltypePERCENTAGE = 2;
-			var st_errvaltypeSTDDEV = 3;
-			var st_errvaltypeSTDERR = 4;*/
-
-			/*Id: "35"
-			errBarType: 0
-			errDir: 1
-			errValType: 2
-			minus: null
-			noEndCap: false
-			parent: CLineSeries {Id: '30', parent: CLineChart, idx: 0, order: 0, tx: null, …}
-			pen: null
-			plus: null
-			spPr: CSpPr {Id: '36', parent: CErrBars, bwMode: 0, xfrm: null, geometry: null, …}
-			val: 10*/
-
 		}
 		return res;
 	},
