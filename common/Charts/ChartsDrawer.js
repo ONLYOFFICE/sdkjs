@@ -15451,12 +15451,12 @@ CErrBarsDraw.prototype = {
 									end = this.cChartDrawer.getYPosition(pointVal + errVal, axis, true);
 									break;
 								}
-								case AscFormat.st_errbartypeMINUS: {
+								case AscFormat.st_errbartypePLUS: {
 									start = this.cChartDrawer.getYPosition(pointVal, axis, true);
 									end = this.cChartDrawer.getYPosition(pointVal + errVal, axis, true);
 									break;
 								}
-								case AscFormat.st_errbartypePLUS: {
+								case AscFormat.st_errbartypeMINUS: {
 									start = this.cChartDrawer.getYPosition(pointVal - errVal, axis, true);
 									end = this.cChartDrawer.getYPosition(pointVal, axis, true);
 									break;
@@ -15551,17 +15551,28 @@ CErrBarsDraw.prototype = {
 				case AscFormat.st_errvaltypeSTDERR: {
 					ny = oChart.chart.series.length * seria.getValuesCount();
 
-					aSumm = this.cChartDrawer.getAutoSum(ser, val, function (_ser, _val) {
+					mSumm = this.cChartDrawer.getAutoSum(oChart.chart.series.length, seria.getValuesCount(), function (_ser, _val) {
+						var _oSer = oChart.chart.series[_ser];
+						var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
+						if (_point) {
+							return isCatAx ? j + 1 : _point.val;
+						}
+						return 0;
+					});
+					var m = mSumm / ny;
+
+					aSumm = this.cChartDrawer.getAutoSum(ser + 1, seria.getValuesCount(), function (_ser, _val) {
 						var _oSer = oChart.chart.series[_ser];
 						var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
 						if (_point) {
 							var _pointVal = isCatAx ? j + 1 : _point.val;
-							return Math.pow(_pointVal, 2);
+							var av = _pointVal - m;
+							return av * av;
 						}
 						return 0;
 					});
 
-					res = Math.sqrt(aSumm / ((ny - 1)*ny));
+					res = (Math.sqrt(aSumm / (ny - 1))) / Math.sqrt(ny);
 					break;
 				}
 			}
