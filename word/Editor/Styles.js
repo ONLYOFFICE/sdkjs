@@ -105,7 +105,7 @@ function private_GetWordLogicDocument()
 	if(editor)
 	{
 		let oLogicDocument = null;
-		oLogicDocument = editor.private_GetLogicDocument();
+		oLogicDocument = editor.private_GetLogicDocument && editor.private_GetLogicDocument();
 		if(oLogicDocument && oLogicDocument.IsDocumentEditor())
 		{
 			return oLogicDocument;
