@@ -15437,13 +15437,20 @@ CErrBarsDraw.prototype = {
 						var isCatAx = axis.getObjectType() === AscDFH.historyitem_type_CatAx;
 
 						//расчитываем величину погрешности в одну сторону
-						var errVal = this.calculateErrVal(oChart, i, j, isCatAx, pointVal);
-						if (errVal !== null) {
+						var oErrVal = this.calculateErrVal(oChart, i, j, isCatAx, pointVal);
+						if (oErrVal !== null) {
+							var errVal = oErrVal.errVal;
 							var x = this.points[i][j].x;
 							var y = this.points[i][j].y;
 
 							//todo пока конкретно для line реализую
-							var pointVal = isCatAx ? j + 1 : this.points[i][j].xVal;
+							var pointVal;
+							if (null !== oErrVal.startVal) {
+								pointVal = oErrVal.startVal;
+							} else {
+								pointVal = isCatAx ? j + 1 : this.points[i][j].xVal;
+							}
+
 							var start, end;
 							switch (errBars.errBarType) {
 								case AscFormat.st_errbartypeBOTH: {
@@ -15491,8 +15498,11 @@ CErrBarsDraw.prototype = {
 
 	calculateErrVal: function (oChart, ser, val, isCatAx) {
 		var t = this;
-		var res = null;
 		var seria = oChart.chart.series[ser];
+
+		var startVal = null;
+		var errVal = null;
+
 		if (seria && seria.errBars) {
 			var errBars = seria.errBars;
 
@@ -15503,15 +15513,9 @@ CErrBarsDraw.prototype = {
 			}
 			var pointVal = isCatAx ? val + 1 : point.val;
 
-			var calculateStDev = function () {
-				var ny, mSumm, aSumm;
-				ny = seria.getValuesCount();
-
-				var startSer = ser;
-				var endSer = ser;
-				var startPoint = 0;
-				var endPoint = seria.getValuesCount() - 1;
-				mSumm = t.cChartDrawer.getAutoSum(startSer, endSer, startPoint, endPoint, function (_ser, _val) {
+			//TODO J
+			var calculateSerSum = function (_ser, _startVal, endVal) {
+				return t.cChartDrawer.getAutoSum(_ser, _ser, _startVal, endVal, function (_ser, _val) {
 					var _oSer = oChart.chart.series[_ser];
 					var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
 					if (_point) {
@@ -15519,6 +15523,17 @@ CErrBarsDraw.prototype = {
 					}
 					return 0;
 				});
+			};
+
+			var calculateStDev = function () {
+				var ny, mSumm, aSumm;
+				ny = pointsCount;
+
+				var startSer = ser;
+				var endSer = ser;
+				var startPoint = 0;
+				var endPoint = pointsCount - 1;
+				mSumm = calculateSerSum(startSer, startPoint, endPoint);
 				var m = mSumm / ny;
 
 				aSumm = t.cChartDrawer.getAutoSum(startSer, endSer, startPoint, endPoint, function (_ser, _val) {
@@ -15536,36 +15551,36 @@ CErrBarsDraw.prototype = {
 			};
 
 
-			var serCount = oChart.chart.series.length;
-			var pointCount = seria.getValuesCount();
+			var pointsCount = seria.getValuesCount();
 			switch (errBars.errValType) {
 				case AscFormat.st_errvaltypeCUST: {
 					//TODO
-					res = 1;
+					errVal = 1;
 					break;
 				}
 				case AscFormat.st_errvaltypeFIXEDVAL: {
-					res = errBars.val;
+					errVal = errBars.val;
 					break;
 				}
 				case AscFormat.st_errvaltypePERCENTAGE: {
-					res = pointVal * errBars.val / 100;
+					errVal = pointVal * errBars.val / 100;
 					break;
 				}
 				case AscFormat.st_errvaltypeSTDDEV: {
-					res = calculateStDev();
-
+					//calculate Standard Deviation +  change start val
+					errVal = calculateStDev();
+					startVal = (calculateSerSum(ser, 0, pointsCount - 1)) / pointsCount;
 					break;
 				}
 				case AscFormat.st_errvaltypeSTDERR: {
 					//по официальным данным мс, формула для расчёта стандратной ошибки - другая
 					//здесь использую STDEV(currentSerData)/SQRT(COUNT(currentSerData))
-					res = calculateStDev() / Math.sqrt(seria.getValuesCount());
+					errVal = calculateStDev() / Math.sqrt(pointsCount);
 					break;
 				}
 			}
 		}
-		return res;
+		return errVal !== null ? {startVal: startVal, errVal: errVal} : null;
 	},
 
 	_drawLines: function (/*isSkip*/) {
