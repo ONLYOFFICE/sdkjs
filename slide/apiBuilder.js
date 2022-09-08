@@ -3428,7 +3428,7 @@
 	ApiDrawing.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerGrapicObject(this.Drawing));
+		return JSON.stringify(oWriter.SerGraphicObject(this.Drawing));
 	};
 
     //------------------------------------------------------------------------------------------------------------------
@@ -4440,7 +4440,7 @@
 	ApiTable.prototype.ToJSON = function(bWriteTableStyles)
 	{
 		let oWriter = new AscCommon.WriterToJSON();
-        let oResult = oWriter.SerGrapicObject(this.Drawing);
+        let oResult = oWriter.SerGraphicObject(this.Drawing);
         if (bWriteTableStyles)
             oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
 		return JSON.stringify(oResult);
