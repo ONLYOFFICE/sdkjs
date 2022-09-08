@@ -5151,21 +5151,28 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if(null != this.copyParams)
         {
 			var checkStyleNumInside = function (id) {
-				var style = oThis.Document.Styles.Get(id);
-				var _Numbering = par.Parent.Get_Numbering();
-				if (style.ParaPr && style.ParaPr.NumPr && style.ParaPr.NumPr.NumId) {
-					var _Num = _Numbering.GetNum(style.ParaPr.NumPr.NumId);
-					if(null != oNum)
-					{
-						var oAbstractNum = _Numbering.AbstractNum[_Num.AbstractNumId];
-						if (oAbstractNum && oAbstractNum.GetNumStyleLink())
-						{
-							var oStyles   = editor.WordControl.m_oLogicDocument.GetStyles();
-							var oNumStyle = oStyles.Get(oAbstractNum.GetNumStyleLink());
+				//TODO общую правку заливаю именно для работы плагина. данная правка только для копирования(копипаст)
+				//чтобы не затронуть общий копипаст, функция данная пока работать не будет
+				return;
 
-							if (oNumStyle && oNumStyle.ParaPr.NumPr && undefined !== oNumStyle.ParaPr.NumPr.NumId)
-							{
+				var logicDocument = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
+				var oStyles = logicDocument && logicDocument.GetStyles();
+				var style = oStyles && oStyles.Get(id);
+				var _Numbering = logicDocument && logicDocument.Get_Numbering();
+
+				if (style && style.ParaPr && style.ParaPr.NumPr && style.ParaPr.NumPr.NumId && _Numbering) {
+					var _Num = _Numbering.GetNum(style.ParaPr.NumPr.NumId);
+					if (null != oNum) {
+						var oAbstractNum = _Numbering.AbstractNum && _Numbering.AbstractNum[_Num.AbstractNumId];
+						if (oAbstractNum && oAbstractNum.GetNumStyleLink()) {
+
+							var oNumStyle = oStyles && oStyles.Get(oAbstractNum.GetNumStyleLink());
+
+							if (oNumStyle && oNumStyle.ParaPr && oNumStyle.ParaPr.NumPr && undefined !== oNumStyle.ParaPr.NumPr.NumId) {
 								oThis.copyParams.oUsedNumIdMap[oNumStyle.ParaPr.NumPr.NumId] = oThis.copyParams.nNumIdIndex;
+								oThis.copyParams.nNumIdIndex++;
+							} else {
+								oThis.copyParams.oUsedNumIdMap[oNum.Get_Id()] = oThis.copyParams.nNumIdIndex;
 								oThis.copyParams.nNumIdIndex++;
 							}
 						} else {
