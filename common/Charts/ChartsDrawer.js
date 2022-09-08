@@ -115,7 +115,7 @@ function CChartsDrawer()
 	this.sideWall3DChart = null;
 	this.backWall3DChart = null;
 
-	this.errBars = null;
+	this.errBars = new CErrBarsDraw(this);
 
 	this.changeAxisMap = null;
 }
@@ -209,7 +209,6 @@ CChartsDrawer.prototype =
 		this.floor3DChart = new floor3DChart();
 		this.sideWall3DChart = new sideWall3DChart();
 		this.backWall3DChart = new backWall3DChart();
-		this.errBars = new CErrBarsDraw(this);
 
 		//draw chart
 		var newChart;
@@ -1543,6 +1542,7 @@ CChartsDrawer.prototype =
 		var chartType = this._getChartType(chart);
 		var t = this;
 		var bFirst = true;
+		var maxErr = null, minErr = null;
 
 		var addValues = function(tempValX, tempValY) {
 			if(bFirst) {
@@ -1572,6 +1572,7 @@ CChartsDrawer.prototype =
 			var seria, numCache, pts;
 			if(AscDFH.historyitem_type_ValAx === axis.getObjectType()) {
 				var isEn = false, numSeries = 0;
+
 				for (var l = 0; l < series.length; l++) {
 					seria = series[l];
 					numCache = t.getNumCache(seria.val);
@@ -1601,6 +1602,43 @@ CChartsDrawer.prototype =
 							max = value;
 							isEn = true;
 						}
+
+						if (seria.errBars) {
+							var oErrVal = t.errBars.calculateErrVal(chart, l, col);
+							if (oErrVal) {
+								var pointVal;
+								if (null !== oErrVal.startVal) {
+									pointVal = oErrVal.startVal;
+								} else {
+									pointVal = value;
+								}
+								var errVal = oErrVal.errVal;
+								switch (seria.errBars.errBarType) {
+									case AscFormat.st_errbartypeBOTH: {
+										if (maxErr === null || maxErr < pointVal + errVal) {
+											maxErr = pointVal + errVal;
+										}
+										if (minErr === null || minErr > pointVal - errVal) {
+											minErr = pointVal + errVal;
+										}
+										break;
+									}
+									case AscFormat.st_errbartypePLUS: {
+										if (maxErr === null || maxErr < pointVal + errVal) {
+											maxErr = pointVal + errVal;
+										}
+										break;
+									}
+									case AscFormat.st_errbartypeMINUS: {
+										if (minErr === null || minErr > pointVal - errVal) {
+											minErr = pointVal + errVal;
+										}
+										break;
+									}
+								}
+							}
+						}
+
 						if (!isNaN(value) && value > max) {
 							max = value;
 						}
@@ -1663,67 +1701,6 @@ CChartsDrawer.prototype =
 						addValues(val.x, val.y);
 						newArr[l][j] = [val.x, val.y];
 					}
-
-					/*if (yNumCache.pts[j]) {
-						yVal = parseFloat(yNumCache.pts[j].val);
-
-						xNumCache = t.getNumCache(series[l].xVal);
-
-						if (xNumCache && xNumCache.pts[j]) {
-							if (!isNaN(parseFloat(xNumCache.pts[j].val))) {
-								xVal = parseFloat(xNumCache.pts[j].val);
-							} else {
-								xVal = j + 1;
-							}
-						} else {
-							xVal = j + 1;
-						}
-
-						newArr[l][j] = [xVal, yVal];
-
-						if (l === 0 && j === 0) {
-							min = xVal;
-							max = xVal;
-							minY = yVal;
-							maxY = yVal;
-						}
-
-						if (xVal < min) {
-							min = xVal;
-						}
-						if (xVal > max) {
-							max = xVal;
-						}
-						if (yVal < minY) {
-							minY = yVal;
-						}
-						if (yVal > maxY) {
-							maxY = yVal;
-						}
-					} else {
-						xNumCache = t.getNumCache(series[l].xVal);
-
-						if (xNumCache && xNumCache.pts[j]) {
-							if (!isNaN(parseFloat(xNumCache.pts[j].val))) {
-								xVal = parseFloat(xNumCache.pts[j].val);
-							} else {
-								xVal = j + 1;
-							}
-						} else {
-							xVal = j + 1;
-						}
-
-						if (l === 0 && j === 0) {
-							min = xVal;
-							max = xVal;
-						}
-						if (xVal < min) {
-							min = xVal;
-						}
-						if (xVal > max) {
-							max = xVal;
-						}
-					}*/
 				}
 			}
 		};
@@ -1748,6 +1725,13 @@ CChartsDrawer.prototype =
 				min = stackedExtremum.min;
 				max = stackedExtremum.max;
 			}
+		}
+
+		if (minErr !== null && min > minErr) {
+			min = minErr;
+		}
+		if (maxErr !== null && max < maxErr) {
+			max = maxErr;
 		}
 
 		return {min: min, max: max, ymin: minY, ymax: maxY};
@@ -15437,7 +15421,7 @@ CErrBarsDraw.prototype = {
 						var isCatAx = axis.getObjectType() === AscDFH.historyitem_type_CatAx;
 
 						//расчитываем величину погрешности в одну сторону
-						var oErrVal = this.calculateErrVal(oChart, i, j, isCatAx, pointVal);
+						var oErrVal = this.calculateErrVal(oChart.chart, i, j, isCatAx, pointVal);
 						if (oErrVal !== null) {
 							var errVal = oErrVal.errVal;
 							var x = this.points[i][j].x;
@@ -15498,7 +15482,7 @@ CErrBarsDraw.prototype = {
 
 	calculateErrVal: function (oChart, ser, val, isCatAx) {
 		var t = this;
-		var seria = oChart.chart.series[ser];
+		var seria = oChart.series[ser];
 
 		var startVal = null;
 		var errVal = null;
@@ -15516,7 +15500,7 @@ CErrBarsDraw.prototype = {
 			//TODO J
 			var calculateSerSum = function (_ser, _startVal, endVal) {
 				return t.cChartDrawer.getAutoSum(_ser, _ser, _startVal, endVal, function (_ser, _val) {
-					var _oSer = oChart.chart.series[_ser];
+					var _oSer = oChart.series[_ser];
 					var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
 					if (_point) {
 						return isCatAx ? j + 1 : _point.val;
@@ -15537,7 +15521,7 @@ CErrBarsDraw.prototype = {
 				var m = mSumm / ny;
 
 				aSumm = t.cChartDrawer.getAutoSum(startSer, endSer, startPoint, endPoint, function (_ser, _val) {
-					var _oSer = oChart.chart.series[_ser];
+					var _oSer = oChart.series[_ser];
 					var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
 					if (_point) {
 						var _pointVal = isCatAx ? j + 1 : _point.val;
