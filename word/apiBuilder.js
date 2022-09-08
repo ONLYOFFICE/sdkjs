@@ -14158,7 +14158,7 @@
 	ApiChart.prototype.SetXValues = function(aValues)
 	{
 		if (this.Chart.isScatterChartType())
-			return this.Chart.SetValuesToXDataPoints(aValues);
+			return this.Chart.SetXValuesToDataPoints(aValues);
 		return false;
 	};
 
