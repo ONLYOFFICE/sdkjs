@@ -3785,7 +3785,7 @@
 	ApiChart.prototype.SetXValues = function(aValues)
 	{
 		if (this.Chart.isScatterChartType())
-			return this.Chart.SetValuesToXDataPoints(aValues);
+			return this.Chart.SetXValuesToDataPoints(aValues);
 		return false;
 	};
 
@@ -3812,7 +3812,7 @@
 	 */
 	ApiChart.prototype.SetCategoryName = function(sName, nCategory)
 	{
-		return this.Chart.SetCategoryName(sName, nCategory);
+		return this.Chart.SetCatName(sName, nCategory);
 	};
 
     /**
