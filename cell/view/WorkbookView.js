@@ -2806,10 +2806,6 @@
 		}
 		var ws = this.getWorksheet();
 		g_clipboardExcel.checkCopyToClipboard(ws, _clipboard, _formats);
-
-		if (!this.getCellEditMode() && false === ws.isMultiSelect()) {
-			ws.copyCutRange = ws.model.selectionRange.getLast();
-		}
 	};
 
   WorkbookView.prototype.pasteData = function(_format, data1, data2, text_data, doNotShowButton) {
@@ -2877,12 +2873,6 @@
 
 			if (ws.isNeedSelectionCut()) {
 				ws.emptySelection(c_oAscCleanOptions.All, true);
-			} else {
-				//в данном случае не вырезаем, а записываем
-				if (false === ws.isMultiSelect()) {
-					this.cutIdSheet = ws.model.Id;
-					ws.copyCutRange = ws.model.selectionRange.getLast();
-				}
 			}
 		}
 	};

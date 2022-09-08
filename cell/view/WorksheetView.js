@@ -4829,7 +4829,9 @@
 
 	WorksheetView.prototype._drawCutRange = function () {
 		if(this.copyCutRange) {
-			this._drawElements(this._drawSelectionElement, this.copyCutRange, AscCommonExcel.selectionLineType.DashThick, this.settings.activeCellBorderColor);
+			for (var i in this.copyCutRange) {
+				this._drawElements(this._drawSelectionElement, this.copyCutRange[i], AscCommonExcel.selectionLineType.DashThick, this.settings.activeCellBorderColor);
+			}
 		}
 	};
 
