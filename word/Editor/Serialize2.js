@@ -8327,128 +8327,8 @@ function BinaryFileReader(doc, openParams)
         }
 
         //обрабатываем стили
-		var isAlreadyContainsStyle;
 		var oStyleTypes = {par: 1, table: 2, lvl: 3, run: 4, styleLink: 5, numStyleLink: 6};
 		var addNewStyles = false;
-		var fParseStyle1 = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
-			if (aStyles == null) {
-				return;
-			}
-
-			var expandBasedOn = function (_style) {
-				if (!_style || !_style.style) {
-					return;
-				}
-				var _elem = oReadResult.styles[_style.style]
-				if (_elem && _elem.style && _elem.style.BasedOn) {
-					var basedOnObj = {pPr: null, style: _elem.style.BasedOn};
-					aStyles.push(basedOnObj);
-					expandBasedOn(basedOnObj);
-				}
-			};
-
-			var i;
-			for (i = 0, length = aStyles.length; i < length; ++i) {
-				expandBasedOn(aStyles[i]);
-			}
-			expandBasedOn(aStyles);
-
-			var mapStylesIds = {};
-			var basedOnStyles = [];
-			for (i = 0, length = aStyles.length; i < length; ++i) {
-				var elem = aStyles[i];
-				var stylePaste = oReadResult.styles[elem.style];
-				var isEqualName = null;
-
-				var putStyle = function (_elem, _styleId, putDefaultStyle) {
-					if (!_elem.pPr) {
-						return;
-					}
-					if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
-						_elem.pPr.PStyle = _styleId;
-					} else if (nStyleType === oStyleTypes.table) {
-						_elem.pPr.Set_TableStyle2(_styleId);
-					} else if (nStyleType === oStyleTypes.run) {
-						if (_elem.run) {
-							_elem.run.Set_RStyle(_styleId);
-						} else {
-							_elem.pPr.RStyle = _styleId;
-						}
-					} else if (nStyleType === oStyleTypes.styleLink) {
-						_elem.pPr.StyleLink = _styleId;
-					} else if (nStyleType === oStyleTypes.numStyleLink) {
-						_elem.pPr.SetNumStyleLink(_styleId);
-					} else if (putDefaultStyle) {
-						_elem.pPr.PStyle = j;
-					}
-				};
-
-				var nStyleId;
-				if (null != stylePaste && null != stylePaste.style && oDocumentStyles) {
-					for (var j in oDocumentStyles.Style) {
-						var styleDoc = oDocumentStyles.Style[j];
-						isAlreadyContainsStyle = styleDoc.isEqual(stylePaste.style);
-						if (styleDoc.Name === stylePaste.style.Name) {
-							isEqualName = j;
-						}
-						if (isAlreadyContainsStyle) {
-							putStyle(elem, j, true);
-							break;
-						}
-					}
-
-					if (!isAlreadyContainsStyle && isEqualName != null) {
-						//если нашли имя такого же стиля
-						//поскольку содержимое отличается, нужно проверять, используется ли данный стиль в документе
-						//если не используется - нужно его заменить
-						//на данный момент функции для замены нет, добавляю новый стиль с новм именем
-						var isUseStyleInDoc = false;
-						if (!isUseStyleInDoc) {
-							//stylePaste.style.BasedOn = null;
-							stylePaste.style.Set_Name(stylePaste.style.Name + "_123");
-							nStyleId = oDocumentStyles.Add(stylePaste.style);
-							putStyle(elem, nStyleId);
-
-							if (stylePaste.style.BasedOn) {
-								basedOnStyles.push(nStyleId);
-							}
-							mapStylesIds[stylePaste.param.id] = nStyleId;
-
-						} else {
-							putStyle(elem, isEqualName);
-						}
-					} else if (!isAlreadyContainsStyle && isEqualName == null)//нужно добавить новый стиль
-					{
-						//todo править и BaseOn
-						//stylePaste.style.BasedOn = null;
-
-						nStyleId = oDocumentStyles.Add(stylePaste.style);
-						putStyle(elem, nStyleId);
-
-						if (stylePaste.style.BasedOn) {
-							basedOnStyles.push(nStyleId);
-						}
-						mapStylesIds[stylePaste.param.id] = nStyleId;
-
-						addNewStyles = true;
-					}
-				}
-			}
-
-
-			if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
-				for (i = 0, length = basedOnStyles.length; i < length; ++i) {
-					var addedStyle = oDocumentStyles.Style[basedOnStyles[i]];
-					if (addedStyle) {
-						addedStyle.Set_BasedOn(mapStylesIds[addedStyle.BasedOn]);
-					}
-				}
-			}
-		};
-
-
-
-
 
 		var fParseStyle = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
 			if (aStyles == null) {
@@ -8459,7 +8339,7 @@ function BinaryFileReader(doc, openParams)
 				if (!_style || !_style.style) {
 					return;
 				}
-				var _elem = oReadResult.styles[_style.style]
+				var _elem = oReadResult.styles[_style.style];
 				if (_elem && _elem.style && _elem.style.BasedOn) {
 					var basedOnObj = {pPr: null, style: _elem.style.BasedOn};
 					container.push(basedOnObj);
@@ -8531,20 +8411,6 @@ function BinaryFileReader(doc, openParams)
 						putStyle(_elem, nStyleId);
 
 						return nStyleId;
-
-
-						//stylePaste.style.BasedOn = null;
-						/*stylePaste.style.Set_Name(stylePaste.style.Name + "_123");
-						nStyleId = oDocumentStyles.Add(stylePaste.style);
-						putStyle(elem, nStyleId);
-
-						if (stylePaste.style.BasedOn) {
-							basedOnStyles.push(nStyleId);
-						}
-						mapStylesIds[stylePaste.param.id] = nStyleId;*/
-
-
-
 					} else {
 						//просто присваиваем элементу id соответсвующего стиля
 						putStyle(_elem, isEqualName);
@@ -8617,17 +8483,13 @@ function BinaryFileReader(doc, openParams)
 
 		};
 
-
-
-
-
-
 		fParseStyle(this.oReadResult.runStyles, this.Document.Styles, this.oReadResult, oStyleTypes.run);
         fParseStyle(this.oReadResult.paraStyles, this.Document.Styles, this.oReadResult, oStyleTypes.par);
         fParseStyle(this.oReadResult.tableStyles, this.Document.Styles, this.oReadResult, oStyleTypes.table);
         fParseStyle(this.oReadResult.lvlStyles, this.Document.Styles, this.oReadResult, oStyleTypes.lvl);
         fParseStyle(this.oReadResult.styleLinks, this.Document.Styles, this.oReadResult, oStyleTypes.styleLink);
 		fParseStyle(this.oReadResult.numStyleLinks, this.Document.Styles, this.oReadResult, oStyleTypes.numStyleLink);
+
         var aContent = this.oReadResult.DocumentContent;
         for (var i = 0, length = this.oReadResult.aPostOpenStyleNumCallbacks.length; i < length; ++i)
             this.oReadResult.aPostOpenStyleNumCallbacks[i].call();
