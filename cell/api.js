@@ -7595,7 +7595,7 @@ var editor;
 			// todo сделать получение листа ещё
 			range = this.GetRangeByNumber(ws.worksheet, props.r1, props.c1, props.r2, props.c2);
 		}
-		this.sendEvent('asc_onWorksheetChange', range);
+		this.sendEvent('onWorksheetChange', range);
 	};
 
   /*
