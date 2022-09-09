@@ -3482,10 +3482,10 @@ CDocMeta.prototype =
         editor.WordControl.m_oDrawingDocument.EndSearch(false);
     },
 
-    findText : function(text, isMachingCase, isNext)
+    findText : function(text, isMachingCase, isWholeWords, isNext)
     {
         this.SearchResults.IsSearch = true;
-        if (text == this.SearchResults.Text && isMachingCase == this.SearchResults.MachingCase)
+        if (text == this.SearchResults.Text && isMachingCase == this.SearchResults.MachingCase && isWholeWords == this.SearchResults.WholeWords)
         {
             if (this.SearchResults.Count == 0)
             {
