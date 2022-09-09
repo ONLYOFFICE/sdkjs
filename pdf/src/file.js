@@ -1769,7 +1769,6 @@ void main() {\n\
         
         while (stream.pos < stream.size)
         {
-            nLastUsedPos = stream.pos;
             var command = stream.GetUChar();
 
             switch (command)
@@ -1823,7 +1822,7 @@ void main() {\n\
                     {
                         // начало строки - нет символов перед началом совпадения
                         if (_lineCharCount === 1)
-                            charBeforeMatch = -1;
+                            charBeforeMatch = null;
 
                         if (0 == glyphsEqualFound)
                         {
@@ -1954,7 +1953,7 @@ void main() {\n\
 
         function CheckWholeWords(stream, charBeforeMatch)
         {
-            if (charBeforeMatch !== -1 && charBeforeMatch !== " ".charCodeAt(0) && undefined === AscCommon.g_aPunctuation[charBeforeMatch])
+            if (charBeforeMatch !== null && charBeforeMatch !== " ".charCodeAt(0) && undefined === AscCommon.g_aPunctuation[charBeforeMatch])
                 return false;
 
             if (stream.pos < stream.size)
