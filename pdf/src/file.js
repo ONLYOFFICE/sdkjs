@@ -1764,9 +1764,7 @@ void main() {\n\
         // чтобы потом повторно не пробегаться по строкам в поисках текста для aroundtext
         var oEqualStrByLine = {};
         
-        // Для whole words. Запоминаем символ, который был перед началом совпадения.
-        var charBeforeMatch;
-        
+        var isStartWhole = false;
         while (stream.pos < stream.size)
         {
             var command = stream.GetUChar();
@@ -1797,12 +1795,17 @@ void main() {\n\
                     if (0xFFFF == _char)
                         _char = " ".charCodeAt(0);
 
-                    if (charBeforeMatch === undefined)
+                    if (isStartWhole === false && _char === " ".charCodeAt(0) || undefined !== AscCommon.g_aPunctuation[_char])
                     {
-                        charBeforeMatch = _char;
+                        isStartWhole = true;
+                        _lineLastGlyphWidth = stream.GetDouble2();
+                        break;
                     }
-                    
+
                     _lineLastGlyphWidth = stream.GetDouble2();
+                    
+                    if (isWhole && isStartWhole === false)
+                        break;
 
                     var _isFound = false;
                     if (_searchResults.MachingCase)
@@ -1820,10 +1823,6 @@ void main() {\n\
 
                     if (_isFound)
                     {
-                        // начало строки - нет символов перед началом совпадения
-                        if (_lineCharCount === 1)
-                            charBeforeMatch = null;
-
                         if (0 == glyphsEqualFound)
                         {
                             _findLine = _numLine;
@@ -1845,11 +1844,12 @@ void main() {\n\
                             if (_searchResults.WholeWords)
                             {
                                 var nCurStreamPos = stream.pos;
-                                var isWhole = CheckWholeWords(stream, charBeforeMatch);
+                                var isWhole = CheckWholeWords(stream);
+                                stream.pos = nCurStreamPos;
                                 if (!isWhole)
                                 {
+                                    isStartWhole = false;
                                     stream.pos = nCurStreamPos;
-                                    charBeforeMatch = undefined;
                                     glyphsEqualFound = 0;
                                     oEqualStrByLine = {};
 
@@ -1880,28 +1880,36 @@ void main() {\n\
 
                             _navRects[_navRects.length] = _rects;
 
-                            // нужно вернуться и попробовать искать со след буквы.
+                            // если isWhole !== true -> нужно вернуться и попробовать искать со след буквы.
+                            if (!isWhole)
+                            {
+                                stream.pos = _SeekToNextPoint;
+                                _linePrevCharX = _SeekLinePrevCharX;
+                                _lineCharCount = _findGlyphIndex;
+                                _numLine = _findLine;
+                            }
+                            
+                            isStartWhole = false;
                             glyphsEqualFound = 0;
-                            stream.pos = _SeekToNextPoint;
-                            _linePrevCharX = _SeekLinePrevCharX;
-                            _lineCharCount = _findGlyphIndex;
-                            _numLine = _findLine;
                             oEqualStrByLine = {};
                         }
                     }
                     else
                     {
-                        charBeforeMatch = _char;
+                        isStartWhole = false;
 
                         if (0 != glyphsEqualFound)
                         {
-                            // нужно вернуться и попробовать искать со след буквы.
-                            glyphsEqualFound = 0;
-                            stream.pos = _SeekToNextPoint;
-                            _linePrevCharX = _SeekLinePrevCharX;
-                            _lineCharCount = _findGlyphIndex;
-                            _numLine = _findLine;
+                            // если isWhole !== true -> нужно вернуться и попробовать искать со след буквы.
+                            if (!isWhole)
+                            {
+                                stream.pos = _SeekToNextPoint;
+                                _linePrevCharX = _SeekLinePrevCharX;
+                                _lineCharCount = _findGlyphIndex;
+                                _numLine = _findLine;
+                            }
 
+                            glyphsEqualFound = 0;
                             oEqualStrByLine = {};
                         }
                     }
@@ -1930,12 +1938,12 @@ void main() {\n\
                     else
                         _lineGidExist = false;
 
-                    charBeforeMatch = undefined;
                     break;
                 }
                 case 162:
                 {
                     ++_numLine;
+                    isStartWhole = true;
                     break;
                 }
                 case 161:
@@ -1951,11 +1959,9 @@ void main() {\n\
             }
         }
 
-        function CheckWholeWords(stream, charBeforeMatch)
+        // проверка следующего символа на совпадение условий для whole words
+        function CheckWholeWords(stream)
         {
-            if (charBeforeMatch !== null && charBeforeMatch !== " ".charCodeAt(0) && undefined === AscCommon.g_aPunctuation[charBeforeMatch])
-                return false;
-
             if (stream.pos < stream.size)
             {
                 var command = stream.GetUChar();
