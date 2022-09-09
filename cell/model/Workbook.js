@@ -3872,6 +3872,10 @@
 
 		AscCommon.bDate1904 = val;
 		AscCommonExcel.c_DateCorrectConst = AscCommon.bDate1904 ? AscCommonExcel.c_Date1904Const : AscCommonExcel.c_Date1900Const;
+
+		if (!this.WorkbookPr) {
+			this.WorkbookPr = {};
+		}
 		this.WorkbookPr.Date1904 = val;
 
 		if (addToHistory) {

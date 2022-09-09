@@ -4720,7 +4720,7 @@
 			return;
 		}
 
-		if (this.model.WorkbookPr.Date1904 === val) {
+		if ((!this.model.WorkbookPr && !val) || (this.model.WorkbookPr && this.model.WorkbookPr.Date1904 === val)) {
 			return;
 		}
 
