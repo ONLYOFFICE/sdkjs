@@ -1650,7 +1650,6 @@ void main() {\n\
         var _SeekToNextPoint = 0;
         var _SeekLinePrevCharX = 0;
 
-        var arrayLines = [];
         var curLine = null;
 
         while (stream.pos < stream.size)
@@ -1765,6 +1764,9 @@ void main() {\n\
         // чтобы потом повторно не пробегаться по строкам в поисках текста для aroundtext
         var oEqualStrByLine = {};
 
+        // для whole words
+        var isStartWhole = false;
+
         while (stream.pos < stream.size)
         {
             var command = stream.GetUChar();
@@ -1795,7 +1797,17 @@ void main() {\n\
                     if (0xFFFF == _char)
                         _char = " ".charCodeAt(0);
 
+                    if (isStartWhole === false && _char === " ".charCodeAt(0) || undefined !== AscCommon.g_aPunctuation[_char])
+                    {
+                        isStartWhole = true;
+                        _lineLastGlyphWidth = stream.GetDouble2();
+                        break;
+                    }
+
                     _lineLastGlyphWidth = stream.GetDouble2();
+
+                    if (isWhole && isStartWhole === false)
+                        break;
 
                     var _isFound = false;
                     if (_searchResults.MachingCase)
@@ -1831,6 +1843,22 @@ void main() {\n\
                         _findLineOffsetR = _linePrevCharX + _lineLastGlyphWidth;
                         if (glyphsFindCount == glyphsEqualFound)
                         {
+                            if (_searchResults.WholeWords)
+                            {
+                                var nCurStreamPos = stream.pos;
+                                var isWhole = CheckWholeWords(stream);
+                                stream.pos = nCurStreamPos;
+                                if (!isWhole)
+                                {
+                                    isStartWhole = false;
+                                    stream.pos = nCurStreamPos;
+                                    glyphsEqualFound = 0;
+                                    oEqualStrByLine = {};
+
+                                    break;
+                                }
+                            }
+
                             var _rects = [];
                             for (var i = _findLine; i <= _numLine; i++)
                             {
@@ -1854,28 +1882,37 @@ void main() {\n\
 
                             _navRects[_navRects.length] = _rects;
 
-                            // нужно вернуться и попробовать искать со след буквы.
+                            // если isWhole !== true -> нужно вернуться и попробовать искать со след буквы.
+                            if (!isWhole)
+                            {
+                                stream.pos = _SeekToNextPoint;
+                                _linePrevCharX = _SeekLinePrevCharX;
+                                _lineCharCount = _findGlyphIndex;
+                                _numLine = _findLine;
+                            }
+
+                            isStartWhole = false;
                             glyphsEqualFound = 0;
-                            stream.pos = _SeekToNextPoint;
-                            _linePrevCharX = _SeekLinePrevCharX;
-                            _lineCharCount = _findGlyphIndex;
-                            _numLine = _findLine;
                             oEqualStrByLine = {};
                         }
                     }
                     else
                     {
+                        isStartWhole = false;
+
                         if (0 != glyphsEqualFound)
                         {
-                            // нужно вернуться и попробовать искать со след буквы.
-                            glyphsEqualFound = 0;
-                            stream.pos = _SeekToNextPoint;
-                            _linePrevCharX = _SeekLinePrevCharX;
-                            _lineCharCount = _findGlyphIndex;
-                            _numLine = _findLine;
+                            // если isWhole !== true -> нужно вернуться и попробовать искать со след буквы.
+                            if (!isWhole)
+                            {
+                                stream.pos = _SeekToNextPoint;
+                                _linePrevCharX = _SeekLinePrevCharX;
+                                _lineCharCount = _findGlyphIndex;
+                                _numLine = _findLine;
+                            }
 
-                            if (glyphsEqualFound == 0)
-                                oEqualStrByLine = {};
+                            glyphsEqualFound = 0;
+                            oEqualStrByLine = {};
                         }
                     }
 
@@ -1908,6 +1945,7 @@ void main() {\n\
                 case 162:
                 {
                     ++_numLine;
+                    isStartWhole = true;
                     break;
                 }
                 case 161:
@@ -1922,13 +1960,43 @@ void main() {\n\
                 }
             }
         }
+
+        // проверка следующего символа на совпадение условий для whole words
+        function CheckWholeWords(stream)
+        {
+            if (stream.pos < stream.size)
+            {
+                var command = stream.GetUChar();
+                switch (command)
+                {
+                    case 80:
+                    {
+                        if (0 != _lineCharCount)
+                            stream.GetDouble2();
+
+                        var _char = stream.GetUShort();
+                        if (_lineGidExist)
+                            stream.Skip(2);
+
+                        if (0xFFFF == _char || _char == " ".charCodeAt(0) || undefined !== AscCommon.g_aPunctuation[_char])
+                            return true;
+
+                        return false;
+                    }
+                    default:
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
     };
 
-    CFile.prototype.findText = function(text, isMachingCase, isNext)
+    CFile.prototype.findText = function(text, isMachingCase, isWholeWords, isNext)
     {
         this.SearchResults.IsSearch = true;
         var pagesCount = this.pages.length;
-        if (text === this.SearchResults.Text && isMachingCase === this.SearchResults.MachingCase)
+        if (text === this.SearchResults.Text && isMachingCase === this.SearchResults.MachingCase && isWholeWords == this.SearchResults.WholeWords)
         {
             if (this.SearchResults.Count === 0)
             {
@@ -2029,6 +2097,7 @@ void main() {\n\
 
         this.SearchResults.Text = text;
         this.SearchResults.MachingCase = isMachingCase;
+        this.SearchResults.WholeWords = isWholeWords;
 
         for (var i = 0; i < this.pages.length; i++)
         {
@@ -2094,19 +2163,38 @@ void main() {\n\
                     if (oLastPartInfo && oPart.LineNum != oLastPartInfo.numLine)
                         oLastPartInfo = null;
 
-                    // запоминаем позицию в строке у первого вхождения, чтобы расчитывать позиции следующих
+                    var nPosInLine;
+                    // запоминаем позицию в строке у первого совпадения, чтобы расчитывать позиции следующих
                     if (!oLastPartInfo)
                     {
+                        nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase());
+                        if (this.SearchResults.WholeWords)
+                        {
+                            while (!CheckWholeWords(nPosInLine, oPart.Text, oLineInfo.text))
+                            {
+                                nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, nPosInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), nPosInLine + 1);
+                            }
+                        }
+
                         oLastPartInfo = {
-                            posInLine: this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase()),
+                            posInLine: nPosInLine,
                             numLine: oPart.LineNum,
                             text: oPart.Text 
                         };    
                     }
                     else
                     {
+                        nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, oLastPartInfo.posInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), oLastPartInfo.posInLine + 1);
+                        if (this.SearchResults.WholeWords)
+                        {
+                            while (!CheckWholeWords(nPosInLine, oPart.Text, oLineInfo.text))
+                            {
+                                nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, nPosInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), nPosInLine + 1);
+                            }
+                        }
+
                         oLastPartInfo = {
-                            posInLine: this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, oLastPartInfo.posInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), oLastPartInfo.posInLine + 1),
+                            posInLine: nPosInLine,
                             numLine: oPart.LineNum,
                             text: oPart.Text
                         }
@@ -2126,6 +2214,19 @@ void main() {\n\
             }
         }
 
+        function CheckWholeWords(nMatchPos, sMatchStr, sParentSrt)
+        {
+            var charBeforeMatch = sParentSrt[nMatchPos - 1] ? sParentSrt[nMatchPos - 1].charCodeAt(0) : undefined;
+            var charAfterMatch = sParentSrt[nMatchPos + sMatchStr.length] ? sParentSrt[nMatchPos + sMatchStr.length].charCodeAt(0) : undefined;
+
+            if (charBeforeMatch !== " ".charCodeAt(0) && charBeforeMatch !== undefined && undefined === AscCommon.g_aPunctuation[charBeforeMatch])
+                return false;
+            if (charAfterMatch !== " ".charCodeAt(0) && charAfterMatch !== undefined && undefined === AscCommon.g_aPunctuation[charAfterMatch])
+                return false;
+
+            return true;
+        }
+        
         this.viewer.Api.sync_startTextAroundSearch();
         this.viewer.Api.sync_getTextAroundSearchPack(aTextAround);
         this.viewer.Api.sync_endTextAroundSearch();
