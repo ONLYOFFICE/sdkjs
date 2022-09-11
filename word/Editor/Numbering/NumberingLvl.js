@@ -515,6 +515,7 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel_Article_Section = function
 	this.Restart = -1;
 	this.LvlText = [];
 	this.ParaPr  = new CParaPr();
+	this.TextPr  = new CTextPr();
 	this.Suff    = Asc.c_oAscNumberingSuff.Tab;
 
 	switch (nLvl)
@@ -636,6 +637,7 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel_Chapter = function(nLvl)
 	this.Restart = -1;
 	this.LvlText = [];
 	this.ParaPr  = new CParaPr();
+	this.TextPr  = new CTextPr();
 	this.Suff    = Asc.c_oAscNumberingSuff.None;
 	this.Jc      = AscCommon.align_Left;
 
@@ -667,6 +669,7 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel_I_A_1 = function(nLvl)
 	this.Restart = -1;
 	this.LvlText = [];
 	this.ParaPr  = new CParaPr();
+	this.TextPr  = new CTextPr();
 	this.Suff    = Asc.c_oAscNumberingSuff.Tab;
 	this.Jc      = AscCommon.align_Left;
 
