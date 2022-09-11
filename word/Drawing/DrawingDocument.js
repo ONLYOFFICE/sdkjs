@@ -7335,6 +7335,8 @@ function CDrawingDocument()
 				var text_base_offset_x = offset + ((2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 				var text_base_offset_dist = (2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
 
+				let ind = 0;
+
 				for (var j = 0; j < 3; j++)
 				{
 					ctx.moveTo(Math.round(text_base_offset_x * rPR), Math.round(y * rPR)); ctx.lineTo(Math.round((width_px - offsetBase) * rPR), Math.round(y * rPR));
@@ -7349,8 +7351,24 @@ function CDrawingDocument()
 
 					this.privateGetParagraphByString((type == 2) ? props[i][j] : props[i], 0, 1 + ((type == 1) ? j : 0), startText, textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
 					y += (line_w + line_distance);
-					if (type == 2)
-						text_base_offset_x += text_base_offset_dist;
+					if (type == 2 && j < 2)
+					{
+						let lvl = props[i][j + 1];
+						if (lvl.ParaPr && lvl.ParaPr.Ind && undefined !== lvl.ParaPr.Ind.Left && undefined !== lvl.ParaPr.Ind.FirstLine)
+						{
+							let lvlInd = lvl.ParaPr.Ind.Left + lvl.ParaPr.Ind.FirstLine;
+							if (lvlInd - ind > 0.05)
+								text_base_offset_x += text_base_offset_dist;
+							else if (ind - lvlInd > 0.05)
+								text_base_offset_x -= text_base_offset_dist;
+
+							ind = lvlInd;
+						}
+						else
+						{
+							text_base_offset_x += text_base_offset_dist;
+						}
+					}
 				}
 			}
 		}
