@@ -9833,6 +9833,20 @@ CStyles.prototype.GetDefaultHeading = function(nLvl)
 {
 	return this.Default.Headings[Math.max(Math.min(nLvl, 8), 0)];
 };
+CStyles.prototype.HaveHeadingsNum = function()
+{
+	for (let index = 0; index <= 8; ++index)
+	{
+		let style = this.Get(this.GetDefaultHeading(index));
+		let numPr;
+		if (style
+			&& (numPr = style.GetParaPr().GetNumPr())
+			&& numPr.IsValid())
+			return true;
+	}
+
+	return false;
+};
 CStyles.prototype.GetHeadingLevelByName = function(sStyleName)
 {
 	let sId = this.GetStyleIdByName(sStyleName);

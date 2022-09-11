@@ -4032,21 +4032,24 @@ background-repeat: no-repeat;\
 	 1.1.1         - SubType = 2
 	 маркированный - SubType = 3
 
-	 SubType = 4:
+	 SubType = 4: (Headings)
 	 	Article I
 	 		Section 1.01
 	 			(a)
 
-	 SubType = 5:
+	 SubType = 5 : (Headings)
+	 1.1.1  (аналогичен SubType = 2)
+
+	 SubType = 6: (Headings)
+	 I. A. 3. a) (1)
+
+	 SubType = 7: (Headings)
 	 	Chapter 1
 	 	(none)
 	 	(none)
 
-	 SubType = 6:
-	 I. A. 3. a) (1)
-
 	 */
-	asc_docs_api.prototype.put_ListType = function(type, subtype, applyToHeading)
+	asc_docs_api.prototype.put_ListType = function(type, subtype)
 	{
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
 		var fCallback = function()
@@ -4055,9 +4058,9 @@ background-repeat: no-repeat;\
 			{
 				oLogicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphNumbering);
 				oLogicDocument.SetParagraphNumbering({
-					Type    : type,
-					SubType : subtype,
-					Heading : applyToHeading
+					Type     : type,
+					SubType  : subtype,
+					Headings : 2 === type && 4 <= subtype && subtype <= 7
 				});
 				oLogicDocument.FinalizeAction();
 			}

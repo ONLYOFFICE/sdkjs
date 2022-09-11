@@ -6473,7 +6473,7 @@ function CDrawingDocument()
 		}
 	};
 
-    this.privateGetParagraphByString = function(level, levelNum, counterCurrent, x, y, lineHeight, ctx, w, h)
+    this.privateGetParagraphByString = function(level, levelNum, counterCurrent, startText, x, y, lineHeight, ctx, w, h)
     {
         var text = "";
         for (var i = 0; i < level.Text.length; i++)
@@ -6518,6 +6518,18 @@ function CDrawingDocument()
         parRun.Set_Pr(textPr);
         parRun.AddText(text);
         par.AddToContent(0, parRun);
+
+		if (startText)
+		{
+			let headingRun    = new AscWord.CRun();
+			let headingTextPr = textPr.Copy();
+			headingTextPr.RFonts.SetAll("Arial");
+			headingTextPr.FontSize = headingTextPr.FontSizeCS = textPr.FontSize * 0.8;
+			headingRun.Set_Pr(headingTextPr);
+			headingRun.Set_Color(new CDocumentColor(122, 122, 122));
+			headingRun.AddText(startText);
+			par.AddToContent(1, headingRun);
+		}
 
         par.Reset(0, 0, 1000, 1000, 0, 0, 1);
         par.Recalculate_Page(0);
@@ -6741,7 +6753,7 @@ function CDrawingDocument()
 
 			for (var i = 0; i < textYs.length; i++)
 			{
-				this.privateGetParagraphByString(props.Lvl[level], level, i + 1, (text_base_offset_x- ((6.25 * AscCommon.g_dKoef_mm_to_pix)) >> 0),
+				this.privateGetParagraphByString(props.Lvl[level], level, i + 1, null, (text_base_offset_x- ((6.25 * AscCommon.g_dKoef_mm_to_pix)) >> 0),
 					textYs[i], line_distance, ctx, width_px, height_px);
 			}
 
@@ -6815,7 +6827,7 @@ function CDrawingDocument()
 
 			for (var i = 0; i < 9; i++)
 			{
-                this.privateGetParagraphByString(props.Lvl[i], level, 1, textYs[i].x, textYs[i].y, line_distance, ctx, width_px, height_px);
+                this.privateGetParagraphByString(props.Lvl[i], level, 1, null, textYs[i].x, textYs[i].y, line_distance, ctx, width_px, height_px);
             }
         }
 
@@ -6935,7 +6947,7 @@ function CDrawingDocument()
 
             text_base_offset_x += text_base_offset_dist;
 
-            this.privateGetParagraphByString(props.Lvl[k], k, 1, textYs.x, textYs.y, (height_px >> 1), ctx, width_px, height_px);
+            this.privateGetParagraphByString(props.Lvl[k], k, 1, null, textYs.x, textYs.y, (height_px >> 1), ctx, width_px, height_px);
         }
 
         if (oDocState)
@@ -7049,12 +7061,13 @@ function CDrawingDocument()
 			{
 				var arrTypes = 
 				[
-					c_oAscMultiLevelNumbering.MultiLevel1,
-					c_oAscMultiLevelNumbering.MultiLevel2,
-					c_oAscMultiLevelNumbering.MultiLevel3,
-					c_oAscMultiLevelNumbering.MultiLevel4,
-					c_oAscMultiLevelNumbering.MultiLevel5,
-					c_oAscMultiLevelNumbering.MultiLevel6
+					c_oAscMultiLevelNumbering.MultiLevel_1_a_i,
+					c_oAscMultiLevelNumbering.MultiLevel_1_11_111,
+					c_oAscMultiLevelNumbering.MultiLevel_Bullet,
+					c_oAscMultiLevelNumbering.MultiLevel_Article_Section,
+					c_oAscMultiLevelNumbering.MultiLevel_Chapter,
+					c_oAscMultiLevelNumbering.MultiLevel_I_A_1,
+					c_oAscMultiLevelNumbering.MultiLevel_1_11_111
 				];
 				for (var i = 0; i < arrTypes.length; i++)
 				{
@@ -7215,7 +7228,7 @@ function CDrawingDocument()
 			var x = (width_px - (parW >> 0)) >> 1;
 			var y = (height_px >> 1) + (parH >> 1);
 
-			this.privateGetParagraphByString(lvl, 0, 0, x, y, line_distance, ctx, width_px, height_px);
+			this.privateGetParagraphByString(lvl, 0, 0, null, x, y, line_distance, ctx, width_px, height_px);
 		}
 
 		for (var i = 1; i < id.length; i++)
@@ -7305,7 +7318,7 @@ function CDrawingDocument()
 				}
 
 				// для размеров окна 38 на 38
-				this.privateGetParagraphByString(props[i], 0, 0, x, y, line_distance, ctx, width_px, height_px);
+				this.privateGetParagraphByString(props[i], 0, 0, null, x, y, line_distance, ctx, width_px, height_px);
 			}
 			else
 			{
@@ -7329,7 +7342,12 @@ function CDrawingDocument()
 					ctx.beginPath();
 					var textYx =  text_base_offset_x - ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0),
 						textYy = y + (line_w * 2.5);
-					this.privateGetParagraphByString((type == 2) ? props[i][j] : props[i], 0, 1 + ((type == 1) ? j : 0), textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
+
+					let startText = null;
+					if (2 === type && 4 <= i && i <= 7)
+						startText = " Heading " + (j + 1);
+
+					this.privateGetParagraphByString((type == 2) ? props[i][j] : props[i], 0, 1 + ((type == 1) ? j : 0), startText, textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
 					y += (line_w + line_distance);
 					if (type == 2)
 						text_base_offset_x += text_base_offset_dist;

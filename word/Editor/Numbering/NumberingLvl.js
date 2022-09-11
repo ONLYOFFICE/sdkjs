@@ -212,23 +212,23 @@ CNumberingLvl.prototype.InitDefault = function(nLvl, nType)
 		case c_oAscMultiLevelNumbering.Bullet:
 			this.private_InitDefaultBullet(nLvl);
 			break;
-		case c_oAscMultiLevelNumbering.MultiLevel1:
-			this.private_InitDefaultMultiLevel1(nLvl);
+		case c_oAscMultiLevelNumbering.MultiLevel_1_a_i:
+			this.private_InitDefaultMultiLevel_1_a_i(nLvl);
 			break;
-		case c_oAscMultiLevelNumbering.MultiLevel2:
-			this.private_InitDefaultMultiLevel2(nLvl);
+		case c_oAscMultiLevelNumbering.MultiLevel_1_11_111:
+			this.private_InitDefaultMultiLevel_1_11_111(nLvl);
 			break;
-		case c_oAscMultiLevelNumbering.MultiLevel3:
-			this.private_InitDefaultMultiLevel3(nLvl);
+		case c_oAscMultiLevelNumbering.MultiLevel_Bullet:
+			this.private_InitDefaultMultiLevel_Bullet(nLvl);
 			break;
-		case c_oAscMultiLevelNumbering.MultiLevel4:
-			this.private_InitDefaultMultiLevel4(nLvl);
+		case c_oAscMultiLevelNumbering.MultiLevel_Article_Section:
+			this.private_InitDefaultMultiLevel_Article_Section(nLvl);
 			break;
-		case c_oAscMultiLevelNumbering.MultiLevel5:
-			this.private_InitDefaultMultiLevel5(nLvl);
+		case c_oAscMultiLevelNumbering.MultiLevel_Chapter:
+			this.private_InitDefaultMultiLevel_Chapter(nLvl);
 			break;
-		case c_oAscMultiLevelNumbering.MultiLevel6:
-			this.private_InitDefaultMultiLevel6(nLvl);
+		case c_oAscMultiLevelNumbering.MultiLevel_I_A_1:
+			this.private_InitDefaultMultiLevel_I_A_1(nLvl);
 			break;
 		default:
 			this.private_InitDefault(nLvl);
@@ -344,7 +344,7 @@ CNumberingLvl.prototype.private_InitDefaultBullet = function(nLvl)
  * Многоуровневый список 1) a) i) 1) a) i) 1) a) i)
  * @param nLvl {number} 0..8
  */
-CNumberingLvl.prototype.private_InitDefaultMultiLevel1 = function(nLvl)
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_1_a_i = function(nLvl)
 {
 	this.Start   = 1;
 	this.Restart = -1;
@@ -381,7 +381,7 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel1 = function(nLvl)
  * Многоуровневый список 1. 1.1. 1.1.1. и т.д.
  * @param nLvl {number} 0..8
  */
-CNumberingLvl.prototype.private_InitDefaultMultiLevel2 = function(nLvl)
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_1_11_111 = function(nLvl)
 {
 	this.Jc     = AscCommon.align_Left;
 	this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
@@ -449,7 +449,7 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel2 = function(nLvl)
  * Многоуровневый символьный список
  * @param nLvl {number} 0..8
  */
-CNumberingLvl.prototype.private_InitDefaultMultiLevel3 = function(nLvl)
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_Bullet = function(nLvl)
 {
 	this.Start   = 1;
 	this.Restart = -1;
@@ -509,7 +509,7 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel3 = function(nLvl)
  *     (a)
  * @param nLvl {number} 0..8
  */
-CNumberingLvl.prototype.private_InitDefaultMultiLevel4 = function(nLvl)
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_Article_Section = function(nLvl)
 {
 	this.Start   = 1;
 	this.Restart = -1;
@@ -630,7 +630,7 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel4 = function(nLvl)
  * ...
  * @param nLvl {number} 0..8
  */
-CNumberingLvl.prototype.private_InitDefaultMultiLevel5 = function(nLvl)
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_Chapter = function(nLvl)
 {
 	this.Start   = 1;
 	this.Restart = -1;
@@ -661,7 +661,7 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel5 = function(nLvl)
  * I. A. 1. a) (1) (a) (i) (a) (i)
  * @param nLvl {number} 0..8
  */
-CNumberingLvl.prototype.private_InitDefaultMultiLevel6 = function(nLvl)
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_I_A_1 = function(nLvl)
 {
 	this.Start   = 1;
 	this.Restart = -1;

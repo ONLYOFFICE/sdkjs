@@ -6578,7 +6578,28 @@ CDocument.prototype.private_SetParagraphNumbering = function(oNumInfo)
 		}
 		else if (2 === oNumInfo.Type) // Multilevel
 		{
-			this.private_SetParagraphNumberingMultiLevel(arrSelectedParagraphs, oNumPr, oNumInfo.SubType);
+			let numId = this.private_SetParagraphNumberingMultiLevel(arrSelectedParagraphs, oNumPr, oNumInfo.SubType);
+			if (numId && oNumInfo.Headings)
+			{
+				let num = this.Numbering.GetNum(numId);
+				let styles = this.GetStyles();
+				if (num && !styles.HaveHeadingsNum())
+				{
+					num.LinkWithHeadings(this.GetStyles());
+
+					for (var index = 0, count = arrSelectedParagraphs.length; index < count; ++index)
+					{
+						let paragraph = arrSelectedParagraphs[index];
+						let numPr     = paragraph.GetNumPr();
+						let iLvl      = numPr ? numPr.Lvl : 0;
+						paragraph.SetNumPr(undefined);
+						paragraph.SetParagraphStyleById(styles.GetDefaultHeading(iLvl));
+					}
+
+					this.Document_UpdateStylesPanel();
+				}
+
+			}
 		}
 	}
 
@@ -7252,32 +7273,37 @@ CDocument.prototype.private_SetParagraphNumberingMultiLevel = function(arrParagr
 	{
 		case 1:
 		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel1);
+			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_1_a_i);
 			break;
 		}
 		case 2:
 		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel2);
+			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_1_11_111);
 			break;
 		}
 		case 3:
 		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel3);
+			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_Bullet);
 			break;
 		}
 		case 4:
 		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel4);
+			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_Article_Section);
 			break;
 		}
 		case 5:
 		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel5);
+			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_Chapter);
 			break;
 		}
 		case 6:
 		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel6);
+			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_I_A_1);
+			break;
+		}
+		case 7:
+		{
+			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_1_11_111);
 			break;
 		}
 	}
@@ -7294,7 +7320,11 @@ CDocument.prototype.private_SetParagraphNumberingMultiLevel = function(arrParagr
 			else
 				arrParagraphs[nIndex].ApplyNumPr(sNumId, 0);
 		}
+
+		return sNumId;
 	}
+
+	return null;
 };
 CDocument.prototype.private_CheckPrevNumberingOnAdd = function(arrParagraphs, sNumId, nLvl)
 {
