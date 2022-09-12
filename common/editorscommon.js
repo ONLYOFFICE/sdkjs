@@ -337,6 +337,11 @@
 		return window['SockJS'] || require('sockjs');
 	}
 
+	function getSocketIO()
+	{
+		return require("socket.io-client");
+	}
+
 	function getBaseUrl()
 	{
 		var indexHtml = window["location"]["href"];
@@ -13012,6 +13017,7 @@
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
+	window["AscCommon"].getSocketIO = getSocketIO;
 	window["AscCommon"].getBaseUrl = getBaseUrl;
 	window["AscCommon"].getEncodingParams = getEncodingParams;
 	window["AscCommon"].getEncodingByBOM = getEncodingByBOM;
