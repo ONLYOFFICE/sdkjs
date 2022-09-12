@@ -4159,7 +4159,7 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 			}
 
 			if (null !== text) {
-				writer.WriteXmlValueString("v", prepareTextToXml(text));
+				writer.WriteXmlValueStringEncode2("v", prepareTextToXml(text));
 			} else if (null !== number) {
 				writer.WriteXmlValueNumber("v", number);
 			}
