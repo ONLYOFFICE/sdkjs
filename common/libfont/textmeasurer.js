@@ -119,7 +119,7 @@
 		{
 			let oFont = this.m_oManager.m_pFont;
 			if (!oFont)
-				return null;
+				return {Font : null, CodePoint : codePoint};
 
 			if (!oFont.GetGIDByUnicode(codePoint))
 			{
@@ -131,7 +131,7 @@
 					oFont = _oFont;
 			}
 
-			return oFont;
+			return {Font : oFont, CodePoint : codePoint};
 		},
 
 		GetGraphemeByUnicode : function(codePoint, sFontName, nFontStyle)
@@ -142,7 +142,7 @@
 			let nGID  = oFont ? oFont.GetGIDByUnicode(codePoint) : 0;
 			if (!nGID)
 			{
-				oFont = this.GetFontBySymbol(codePoint);
+				oFont = this.GetFontBySymbol(codePoint).Font;
 				if (!oFont)
 					return AscFonts.NO_GRAPHEME;
 
