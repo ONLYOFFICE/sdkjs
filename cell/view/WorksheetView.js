@@ -17018,10 +17018,6 @@
 						if (isSlowOperation) {
 							t.handlers.trigger("slowOperation", false);
 						}
-
-						if (filterInfo.filterRange.r2 === filterInfo.rangeWithoutDiff.r2) {
-							t.workbook.Api.onWorksheetChange({r1: filterInfo.filterRange.r1, c1: filterInfo.filterRange.c1, r2: filterInfo.filterRange.r1, c2: filterInfo.filterRange.c2});
-						}
 					};
 
 					if(isSlowOperation) {
