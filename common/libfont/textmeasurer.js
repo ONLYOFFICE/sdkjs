@@ -112,7 +112,10 @@
 			if (!oFont)
 				return true;
 
-			return (!!oFont.GetGIDByUnicode(codePoint))
+			if (null != this.LastFontOriginInfo.Replace)
+				codePoint = g_fontApplication.GetReplaceGlyph(codePoint, this.LastFontOriginInfo.Replace);
+
+			return (!!oFont.GetGIDByUnicode(codePoint));
 		},
 
 		GetFontBySymbol : function(codePoint, oPreferredFont)
@@ -120,6 +123,9 @@
 			let oFont = this.m_oManager.m_pFont;
 			if (!oFont)
 				return {Font : null, CodePoint : codePoint};
+
+			if (null != this.LastFontOriginInfo.Replace)
+				codePoint = g_fontApplication.GetReplaceGlyph(codePoint, this.LastFontOriginInfo.Replace);
 
 			if (!oFont.GetGIDByUnicode(codePoint))
 			{
