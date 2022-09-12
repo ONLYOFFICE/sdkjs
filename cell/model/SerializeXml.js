@@ -4267,7 +4267,7 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 	CT_DrawingWS.prototype.toXml = function (writer) {
 		writer.WriteXmlString('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
 		writer.WriteXmlNodeStart("xdr:wsDr");
-		writer.WriteXmlString(' xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"');
+		writer.WriteXmlString(' xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"');
 		writer.WriteXmlAttributesEnd();
 		this.ws.Drawings.forEach(function (drawing) {
 			drawing.toXml(writer);
