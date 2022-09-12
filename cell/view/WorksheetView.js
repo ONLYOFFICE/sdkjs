@@ -43,7 +43,7 @@
      * -----------------------------------------------------------------------------
      */
     var CellValueType = AscCommon.CellValueType;
-    var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+    var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
     var c_oAscBorderType = AscCommon.c_oAscBorderType;
     var c_oAscLockTypes = AscCommon.c_oAscLockTypes;
     var c_oAscFormatPainterState = AscCommon.c_oAscFormatPainterState;

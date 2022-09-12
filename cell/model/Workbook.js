@@ -38,7 +38,7 @@
 	var g_memory = AscFonts.g_memory;
 
 	var CellValueType = AscCommon.CellValueType;
-	var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+	var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
 	var fSortAscending = AscCommon.fSortAscending;
 	var parserHelp = AscCommon.parserHelp;
 	var oNumFormatCache = AscCommon.oNumFormatCache;

@@ -4387,47 +4387,47 @@
 		var border = new AscCommonExcel.BorderProp();
 		switch (lineStyle) {
 			case 'Double':
-				border.setStyle(AscCommon.c_oAscBorderStyles.Double);
+				border.setStyle(Asc.c_oAscBorderStyles.Double);
 				break;
 			case 'Hair':
-				border.setStyle(AscCommon.c_oAscBorderStyles.Hair);
+				border.setStyle(Asc.c_oAscBorderStyles.Hair);
 				break;
 			case 'DashDotDot':
-				border.setStyle(AscCommon.c_oAscBorderStyles.DashDotDot);
+				border.setStyle(Asc.c_oAscBorderStyles.DashDotDot);
 				break;
 			case 'DashDot':
-				border.setStyle(AscCommon.c_oAscBorderStyles.DashDot);
+				border.setStyle(Asc.c_oAscBorderStyles.DashDot);
 				break;
 			case 'Dotted':
-				border.setStyle(AscCommon.c_oAscBorderStyles.Dotted);
+				border.setStyle(Asc.c_oAscBorderStyles.Dotted);
 				break;
 			case 'Dashed':
-				border.setStyle(AscCommon.c_oAscBorderStyles.Dashed);
+				border.setStyle(Asc.c_oAscBorderStyles.Dashed);
 				break;
 			case 'Thin':
-				border.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+				border.setStyle(Asc.c_oAscBorderStyles.Thin);
 				break;
 			case 'MediumDashDotDot':
-				border.setStyle(AscCommon.c_oAscBorderStyles.MediumDashDotDot);
+				border.setStyle(Asc.c_oAscBorderStyles.MediumDashDotDot);
 				break;
 			case 'SlantDashDot':
-				border.setStyle(AscCommon.c_oAscBorderStyles.SlantDashDot);
+				border.setStyle(Asc.c_oAscBorderStyles.SlantDashDot);
 				break;
 			case 'MediumDashDot':
-				border.setStyle(AscCommon.c_oAscBorderStyles.MediumDashDot);
+				border.setStyle(Asc.c_oAscBorderStyles.MediumDashDot);
 				break;
 			case 'MediumDashed':
-				border.setStyle(AscCommon.c_oAscBorderStyles.MediumDashed);
+				border.setStyle(Asc.c_oAscBorderStyles.MediumDashed);
 				break;
 			case 'Medium':
-				border.setStyle(AscCommon.c_oAscBorderStyles.Medium);
+				border.setStyle(Asc.c_oAscBorderStyles.Medium);
 				break;
 			case 'Thick':
-				border.setStyle(AscCommon.c_oAscBorderStyles.Thick);
+				border.setStyle(Asc.c_oAscBorderStyles.Thick);
 				break;
 			case 'None':
 			default:
-				border.setStyle(AscCommon.c_oAscBorderStyles.None);
+				border.setStyle(Asc.c_oAscBorderStyles.None);
 				break;
 		}
 

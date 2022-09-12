@@ -9518,10 +9518,10 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			writer.WriteXmlString("<diagonal/>");
 		}
 
-		if (null != border.iv && AscCommon.c_oAscBorderStyles.None !== border.iv.s) {
+		if (null != border.iv && Asc.c_oAscBorderStyles.None !== border.iv.s) {
 			border.iv.toXml(writer, "vertical", childns, childns);
 		}
-		if (null != border.ih && AscCommon.c_oAscBorderStyles.None !== border.ih.s) {
+		if (null != border.ih && Asc.c_oAscBorderStyles.None !== border.ih.s) {
 			border.ih.toXml(writer, "horizontal", childns, childns);
 		}
 

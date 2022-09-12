@@ -36,7 +36,7 @@
       // Import
       var CellValueType = AscCommon.CellValueType;
       var c_oAscCellAnchorType = AscCommon.c_oAscCellAnchorType;
-      var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+      var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
       var gc_nMaxRow0 = AscCommon.gc_nMaxRow0;
       var gc_nMaxCol0 = AscCommon.gc_nMaxCol0;
       var Binary_CommonReader = AscCommon.Binary_CommonReader;
