@@ -456,9 +456,7 @@
 		}
 		else
 		{
-			var oElement = new AscWord.CRunText(0x2D);
-			oElement.Set_SpaceAfter(false);
-			return oElement;
+			return AscWord.CreateNonBreakingHyphen();
 		}
 	};
 	CSearchTextSpecialNonBreakingHyphen.prototype.IsNonBreakingHyphen = function()

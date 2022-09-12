@@ -740,6 +740,7 @@
 				if (this.file && this.file.isNeedPassword())
 				{
 					window["AscViewer"].setFilePassword(this.file, password);
+					this.Api.currentPassword = password;
 				}
 			}
 			else
@@ -2085,9 +2086,6 @@
 
 		this.findText = function(text, isMachingCase, isNext, callback)
 		{
-			if (this.isFullTextMessage)
-				return bRetValue;
-
 			if (!this.isFullText)
 			{
 				this.fullTextMessageCallbackArgs = [text, isMachingCase, isNext, callback];
@@ -2096,7 +2094,7 @@
 					this.onUpdateOverlay();
 
 					if (this.fullTextMessageCallbackArgs[3])
-						this.fullTextMessageCallbackArgs[3](this.SearchResults.Count);
+						this.fullTextMessageCallbackArgs[3].call(this.Api, this.SearchResults.Current, this.SearchResults.Count);
 				};
 				this.showTextMessage();
 				return true; // async
@@ -2179,6 +2177,38 @@
 			}
 		};
 
+		this.SelectSearchElement = function(elmId)
+		{
+			var nSearchedId = 0, nPage;
+			var nMatchesCount = 0;
+			for (nPage = 0; nPage < this.SearchResults.Pages.length; nPage++)
+			{
+				for (var nMatch = 0; nMatch < this.SearchResults.Pages[nPage].length; nMatch++)
+				{
+					nMatchesCount++;
+
+					if (nMatchesCount - 1 == elmId)
+					{
+						nSearchedId = nMatch;
+						break;
+					}
+				}
+				if (nMatchesCount - 1 == elmId)
+				{
+					nSearchedId = nMatch;
+					break;
+				}
+			}
+
+			this.CurrentSearchNavi = this.SearchResults.Pages[nPage][nSearchedId];
+			this.SearchResults.CurrentPage = nPage;
+			this.SearchResults.Current = nSearchedId;
+			this.SearchResults.CurMatchIdx = elmId;
+            this.ToSearchResult();
+			this.onUpdateOverlay();
+			this.Api.sync_setSearchCurrent(elmId, this.SearchResults.Count);
+		};
+		
 		this.OnKeyDown = function(e)
 		{
 			var bRetValue = false;

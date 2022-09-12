@@ -514,14 +514,14 @@
     CTextBody.prototype.GetPrevElementEndInfo = function(CurElement) {
         return null;
     };
-    CTextBody.prototype.Is_UseInDocument = function(Id) {
+    CTextBody.prototype.IsUseInDocument = function(Id) {
         if(Id != undefined) {
             if(!this.content || this.content.Get_Id() !== Id) {
                 return false;
             }
         }
-        if(this.parent && this.parent.Is_UseInDocument) {
-            return this.parent.Is_UseInDocument();
+        if(this.parent && this.parent.IsUseInDocument) {
+            return this.parent.IsUseInDocument();
         }
         return false;
     };
@@ -531,9 +531,9 @@
         }
         return null;
     };
-    CTextBody.prototype.Is_ThisElementCurrent = function() {
-        if(this.parent && this.parent.Is_ThisElementCurrent) {
-            return this.parent.Is_ThisElementCurrent();
+    CTextBody.prototype.IsThisElementCurrent = function() {
+        if(this.parent && this.parent.IsThisElementCurrent) {
+            return this.parent.IsThisElementCurrent();
         }
         return false;
     };

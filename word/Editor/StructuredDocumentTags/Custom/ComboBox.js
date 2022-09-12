@@ -74,6 +74,7 @@
 		this.ListItems = [];
 		this.LastValue = -1;
 		this.AutoFit   = false;
+		this.Format    = new AscWord.CTextFormFormat();
 	}
 	CSdtComboBoxPr.prototype.Copy = function()
 	{
@@ -88,12 +89,16 @@
 		}
 
 		oList.AutoFit = this.AutoFit;
+		oList.Format  = this.Format.Copy();
 
 		return oList;
 	};
 	CSdtComboBoxPr.prototype.IsEqual = function(oOther)
 	{
-		if (!oOther || this.LastValue !== oOther.LastValue || this.ListItems.length !== oOther.ListItems.length)
+		if (!oOther
+			|| this.LastValue !== oOther.LastValue
+			|| this.ListItems.length !== oOther.ListItems.length
+			|| !this.Format.IsEqual(oOther.Format))
 			return false;
 
 		for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
@@ -143,6 +148,7 @@
 			this.ListItems[nIndex].WriteToBinary(oWriter);
 		}
 		oWriter.WriteBool(this.AutoFit);
+		this.Format.WriteToBinary(oWriter);
 	};
 	CSdtComboBoxPr.prototype.ReadFromBinary = function(oReader)
 	{
@@ -156,6 +162,7 @@
 			this.ListItems.push(oItem);
 		}
 		this.AutoFit = oReader.GetBool();
+		this.Format.ReadFromBinary(oReader);
 	};
 	CSdtComboBoxPr.prototype.Write_ToBinary = function(oWriter)
 	{
@@ -201,6 +208,10 @@
 	{
 		this.AutoFit = isAutoFit;
 	};
+	CSdtComboBoxPr.prototype.GetFormat = function()
+	{
+		return this.Format;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CSdtComboBoxPr = CSdtComboBoxPr;
@@ -217,5 +228,6 @@
 	CSdtComboBoxPr.prototype['get_ItemValue']       = CSdtComboBoxPr.prototype.GetItemValue;
 	CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.GetAutoFit;
 	CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.SetAutoFit;
+
 
 })(window);

@@ -1315,7 +1315,7 @@ CComment.prototype =
         {
             var Para_start = g_oTableId.Get_ById( this.m_oStartInfo.ParaId );
 
-            if ( true != Para_start.Is_UseInDocument() )
+            if ( true != Para_start.IsUseInDocument() )
                 bUse = false;
         }
 
@@ -1323,7 +1323,7 @@ CComment.prototype =
         {
             var Para_end = g_oTableId.Get_ById( this.m_oEndInfo.ParaId );
 
-            if ( true != Para_end.Is_UseInDocument() )
+            if ( true != Para_end.IsUseInDocument() )
                 bUse = false;
         }
 

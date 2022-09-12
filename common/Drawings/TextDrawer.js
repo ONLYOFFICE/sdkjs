@@ -1617,6 +1617,16 @@ CTextDrawer.prototype =
     {
         this.FillTextCode(x, y, text.charCodeAt(0));
     },
+
+    CheckAddNewPath : function(x, y)
+    {
+
+        if(this.m_bDivGlyphs === true)
+        {
+            this.Get_PathToDraw(false, true, x, y);
+        }
+    },
+
     FillTextCode : function(x,y,code)
     {
         //var _is_face_index_no_0 = (_font_info.faceIndexR <= 0 && _font_info.faceIndexI <= 0 && _font_info.faceIndexB <= 0 && _font_info.faceIndexBI <= 0);
@@ -1624,10 +1634,7 @@ CTextDrawer.prototype =
         //if (code < 0xFFFF && (_is_face_index_no_0 || window["native"] !== undefined))
         //    return;
 
-        if(this.m_bDivGlyphs === true)
-        {
-            this.Get_PathToDraw(false, true, x, y);
-        }
+        this.CheckAddNewPath(x, y);
         AscCommon.g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
 
         if (null != this.LastFontOriginInfo.Replace)

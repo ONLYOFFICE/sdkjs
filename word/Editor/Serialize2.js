@@ -1098,6 +1098,7 @@ var c_oSerSdt = {
 	TextFormPrCombBorder    : 56,
 	TextFormPrAutoFit       : 57,
 	TextFormPrMultiLine     : 58,
+	TextFormPrFormat        : 59,
 
 	CheckboxGroupKey: 59,
 
@@ -1110,8 +1111,14 @@ var c_oSerSdt = {
 
 	FormPrBorder : 70,
 	FormPrShd    : 71,
-	TextFormPrCombWRule : 72
+	TextFormPrCombWRule : 72,
 
+	TextFormPrFormatType    : 80,
+	TextFormPrFormatVal     : 81,
+	TextFormPrFormatSymbols : 82,
+
+	ComplexFormPr     : 90,
+	ComplexFormPrType : 91
 };
 var c_oSerFFData = {
 	CalcOnExit: 0,
@@ -1696,11 +1703,20 @@ function initMathRevisions(elem ,props, reader) {
 function ReadDocumentShd(length, bcr, oShd) {
 	var themeColor = { Auto: null, Color: null, Tint: null, Shade: null };
 	var themeFill = { Auto: null, Color: null, Tint: null, Shade: null };
+	oShd.Value = undefined;
 	oShd.Color = undefined;
 	var res = bcr.Read2(length, function (t, l) {
 		return bcr.ReadShd(t, l, oShd, themeColor, themeFill);
 	});
 
+	//если нет Value, но есть цвет, то Value по умолчанию ShdClear(Тарифы May,01,2016.docx, Тарифы_на_комплексное_обслуживание_клиен.docx)
+	if (undefined === oShd.Value) {
+		if (oShd.Color || oShd.Fill || oShd.Unifill || oShd.ThemeFill) {
+			oShd.Value = Asc.c_oAscShdClear;
+		} else {
+			oShd.Value = Asc.c_oAscShdNil;
+		}
+	}
 	// TODO: Как только будем нормально воспринимать CDocumentShd.Color = undefined, убрать отсюда проверку (!oShd.Color)
 	if (!oShd.Color || themeColor.Auto)
 		oShd.Color = new AscCommonWord.CDocumentColor(255, 255, 255, true);
@@ -1715,7 +1731,6 @@ function ReadDocumentShd(length, bcr, oShd) {
 	unifill = CreateThemeUnifill(themeFill.Color, themeFill.Tint, themeFill.Shade);
 	if (unifill)
 		oShd.ThemeFill = unifill;
-
 	return oShd;
 }
 
@@ -2093,7 +2108,13 @@ function BinaryStyleTableWriter(memory, doc, oNumIdMap, copyParams, saveParams)
     {
         var oThis = this;
 		var compilePr = this.copyParams ? this.Document.Styles.Get_Pr(id, style.Get_Type()) : style;
-		
+
+		if (this.copyParams && style.Get_Type() === styletype_Numbering) {
+			if (style.ParaPr.NumPr) {
+				compilePr.ParaPr.NumPr = style.ParaPr.NumPr.Copy();
+			}
+		}
+
         //ID
         if(null != id)
         {
@@ -2905,12 +2926,12 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 			if (null != border.Space) {
 				this.memory.WriteByte(c_oSerPageBorders.Space);
 				this.memory.WriteByte(c_oSerPropLenType.Long);
-				this.bs.WriteLong(border.getSpaceInPoint());
+				this.memory.WriteLong(border.getSpaceInPoint());
 			}
 			if (null != border.Size) {
 				this.memory.WriteByte(c_oSerPageBorders.Sz);
 				this.memory.WriteByte(c_oSerPropLenType.Long);
-				this.bs.WriteLong(border.getSizeIn8Point());
+				this.memory.WriteLong(border.getSizeIn8Point());
 			}
 			if (null != border.Unifill || (null != border.Color && border.Color.Auto)) {
 				this.memory.WriteByte(c_oSerPageBorders.ColorTheme);
@@ -5144,10 +5165,47 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
         var oThis = this;
 		if(null != this.copyParams)
         {
+			var checkStyleNumInside = function (id) {
+				//TODO общую правку заливаю именно для работы плагина. данная правка только для копирования(копипаст)
+				//чтобы не затронуть общий копипаст, функция данная пока работать не будет
+				return;
+
+				var logicDocument = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
+				var oStyles = logicDocument && logicDocument.GetStyles();
+				var style = oStyles && oStyles.Get(id);
+				var _Numbering = logicDocument && logicDocument.Get_Numbering();
+
+				if (style && style.ParaPr && style.ParaPr.NumPr && style.ParaPr.NumPr.NumId && _Numbering) {
+					var _Num = _Numbering.GetNum(style.ParaPr.NumPr.NumId);
+					if (null != oNum) {
+						var oAbstractNum = _Numbering.AbstractNum && _Numbering.AbstractNum[_Num.AbstractNumId];
+						if (oAbstractNum && oAbstractNum.GetNumStyleLink()) {
+
+							var oNumStyle = oStyles && oStyles.Get(oAbstractNum.GetNumStyleLink());
+
+							if (oNumStyle && oNumStyle.ParaPr && oNumStyle.ParaPr.NumPr && undefined !== oNumStyle.ParaPr.NumPr.NumId) {
+								oThis.copyParams.oUsedNumIdMap[oNumStyle.ParaPr.NumPr.NumId] = oThis.copyParams.nNumIdIndex;
+								oThis.copyParams.nNumIdIndex++;
+							} else {
+								oThis.copyParams.oUsedNumIdMap[oNum.Get_Id()] = oThis.copyParams.nNumIdIndex;
+								oThis.copyParams.nNumIdIndex++;
+							}
+						} else {
+							oThis.copyParams.oUsedNumIdMap[oNum.Get_Id()] = oThis.copyParams.nNumIdIndex;
+							oThis.copyParams.nNumIdIndex++;
+						}
+					}
+				}
+			};
+
 			//анализируем используемые списки и стили
 			var sParaStyle = par.Style_Get();
-			if(null != sParaStyle)
+			if(null != sParaStyle) {
 				this.copyParams.oUsedStyleMap[sParaStyle] = 1;
+				checkStyleNumInside(sParaStyle);
+			}
+
+			var style;
 			var oNumPr = par.GetNumPr();
 			if(oNumPr && oNumPr.IsValid())
 			{
@@ -5163,16 +5221,24 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 					if(null != oNum)
 					{
 						if (null != oNum.GetNumStyleLink()) {
-							this.copyParams.oUsedStyleMap[oNum.GetNumStyleLink()] = 1;
+							style = oNum.GetNumStyleLink();
+							this.copyParams.oUsedStyleMap[style] = 1;
+							checkStyleNumInside(style);
 						}
 						if (null != oNum.GetStyleLink()) {
-							this.copyParams.oUsedStyleMap[oNum.GetStyleLink()] = 1;
+							style = oNum.GetStyleLink();
+							this.copyParams.oUsedStyleMap[style] = 1;
+							checkStyleNumInside(style);
 						}
 						for(var i = 0, length = 9; i < length; ++i)
 						{
 							var oLvl = oNum.GetLvl(i);
-							if(oLvl && oLvl.GetPStyle())
-								this.copyParams.oUsedStyleMap[oLvl.GetPStyle()] = 1;
+							if(oLvl && oLvl.GetPStyle()) {
+								style = oLvl.GetPStyle();
+								this.copyParams.oUsedStyleMap[style] = 1;
+								checkStyleNumInside(style);
+							}
+
 						}
 					}
 				}
@@ -6501,6 +6567,10 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (undefined !== type) {
 			oThis.bs.WriteItem(c_oSerSdt.Type, function (){oThis.memory.WriteByte(type);});
 		}
+		let complexFormPr = oSdt.GetComplexFormPr && oSdt.GetComplexFormPr();
+		if (complexFormPr) {
+			this.bs.WriteItem(c_oSerSdt.ComplexFormPr, function (){oThis.WriteSdtComplexFormPr(complexFormPr)});
+		}
 	};
 	this.WriteSdtCheckBox = function (val)
 	{
@@ -6535,6 +6605,11 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			for(var  i = 0 ; i < val.ListItems.length; ++i){
 				oThis.bs.WriteItem(c_oSerSdt.SdtListItem, function (){oThis.WriteSdtListItem(val.ListItems[i]);});
 			}
+		}
+
+		let format = val.GetFormat();
+		if (format && !format.IsEmpty()) {
+			oThis.bs.WriteItem(c_oSerSdt.TextFormPrFormat, function (){oThis.WriteSdtTextFormat(format);});
 		}
 	};
 	this.WriteSdtListItem = function (val)
@@ -6643,6 +6718,11 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (null != val.MultiLine) {
 			this.bs.WriteItem(c_oSerSdt.TextFormPrMultiLine, function(){oThis.memory.WriteBool(val.MultiLine);});
 		}
+
+		let format = val.GetFormat();
+		if (format && !format.IsEmpty()) {
+			this.bs.WriteItem(c_oSerSdt.TextFormPrFormat, function (){oThis.WriteSdtTextFormat(format);});
+		}
 	};
 	this.WriteSdtTextFormPrComb = function (val)
 	{
@@ -6660,6 +6740,22 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			oThis.bs.WriteItem(c_oSerSdt.TextFormPrCombWRule, function (){oThis.memory.WriteByte(val.WidthRule);});
 		}
 	};
+	this.WriteSdtTextFormat = function(format)
+	{
+		var oThis = this;
+
+		let type = format.GetType();
+		this.bs.WriteItem(c_oSerSdt.TextFormPrFormatType, function (){oThis.memory.WriteByte(type);});
+
+		if (Asc.TextFormFormatType.Mask === type)
+			this.bs.WriteItem(c_oSerSdt.TextFormPrFormatVal, function (){oThis.memory.WriteString3(format.GetMask());});
+		else if (Asc.TextFormFormatType.RegExp === type)
+			this.bs.WriteItem(c_oSerSdt.TextFormPrFormatVal, function (){oThis.memory.WriteString3(format.GetRegExp());});
+
+		let symbols = format.GetSymbols(true);
+		if (symbols)
+			this.bs.WriteItem(c_oSerSdt.TextFormPrFormatSymbols, function (){oThis.memory.WriteString3(symbols);});
+	}
 	this.WriteSdtPictureFormPr = function(val)
 	{
 		var oThis = this;
@@ -6678,6 +6774,11 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (null != val.ShiftY) {
 			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrShiftY, function (){oThis.memory.WriteDouble2(val.ShiftY);});
 		}
+	};
+	this.WriteSdtComplexFormPr = function(complexFormPr)
+	{
+		var oThis = this;
+		this.bs.WriteItem(c_oSerSdt.ComplexFormPrType, function (){oThis.memory.WriteLong(complexFormPr.GetType());});
 	};
 };
 function BinaryOtherTableWriter(memory, doc)
@@ -8104,6 +8205,34 @@ function BinaryFileReader(doc, openParams)
 			}
 		}
 		//split runs after styles because rPr can have a RStyle
+		for (let id in this.oReadResult.runsToSplitBySym) {
+			if (this.oReadResult.runsToSplitBySym.hasOwnProperty(id)) {
+				var runElem = this.oReadResult.runsToSplitBySym[id];
+				var runParent = runElem.run.Get_Parent();
+				var runPos = runElem.run.private_GetPosInParent(runParent);
+				if (!runParent) {
+					continue;
+				}
+
+				for (let i = runElem.syms.length - 1; i >= 0; --i) {
+					let symElem = runElem.syms[i];
+					runElem.run.RemoveFromContent(symElem.pos, 1);
+					runElem.run.Split2(symElem.pos, runParent, runPos);
+
+					let bMathRun = runElem.run.Type == para_Math_Run;
+					var NewRun = new ParaRun(runElem.run.Paragraph, bMathRun);
+					NewRun.SetPr(runElem.run.Pr.Copy(true));
+					if (symElem.sym.font) {
+						NewRun.Pr.RFonts.SetAll(symElem.sym.font);
+					}
+					NewRun.AddText(String.fromCharCode(symElem.sym.char), -1);
+
+					runParent.AddToContent(runPos, NewRun, false);
+				}
+			}
+		}
+
+		//split runs after styles because rPr can have a RStyle
 		for (var i = 0; i < this.oReadResult.runsToSplit.length; ++i) {
 			var run = this.oReadResult.runsToSplit[i];
 			var runParent = run.Get_Parent();
@@ -8244,22 +8373,7 @@ function BinaryFileReader(doc, openParams)
 		if (opt_xmlParserContext) {
 			AscCommon.pptx_content_loader.Reader.ImageMapChecker = AscCommon.pptx_content_loader.ImageMapChecker;
 			var context = opt_xmlParserContext;
-			for (var path in context.imageMap) {
-				if (context.imageMap.hasOwnProperty(path)) {
-					var data = context.zip.getFile(path);
-					if (data) {
-						if (!window["NATIVE_EDITOR_ENJINE"]) {
-							let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
-							let blob = new Blob([data], {type: mime});
-							let url = window.URL.createObjectURL(blob);
-							AscCommon.g_oDocumentUrls.addImageUrl(path, url);
-						}
-						context.imageMap[path].forEach(function(blipFill) {
-							AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
-						});
-					}
-				}
-			}
+			context.loadDataLinks();
 		}
 
         this.Document.On_EndLoad();
@@ -8286,6 +8400,7 @@ function BinaryFileReader(doc, openParams)
         this.stream = this.getbase64DecodedData(sBase64);
         this.ReadMainTable();
         var oReadResult = this.oReadResult;
+
         //обрабатываем списки
         for (var i = 0, length = oReadResult.paraNumPrs.length; i < length; ++i) {
             var numPr = oReadResult.paraNumPrs[i];
@@ -8295,109 +8410,201 @@ function BinaryFileReader(doc, openParams)
             else
                 numPr.NumId = "0";
         }
+
         //обрабатываем стили
-        var isAlreadyContainsStyle;
-        var oStyleTypes = { par: 1, table: 2, lvl: 3, run: 4, styleLink: 5, numStyleLink: 6};
-        var addNewStyles = false;
-        var fParseStyle = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
-            if (aStyles == undefined)
-                return;
-            for (var i = 0, length = aStyles.length; i < length; ++i) {
-                var elem = aStyles[i];
-                var stylePaste = oReadResult.styles[elem.style];
-                var isEqualName = null;
-                if (null != stylePaste && null != stylePaste.style && oDocumentStyles) {
-                    for (var j in oDocumentStyles.Style) {
-                        var styleDoc = oDocumentStyles.Style[j];
-                        isAlreadyContainsStyle = styleDoc.isEqual(stylePaste.style);
-                        if (styleDoc.Name == stylePaste.style.Name)
-                            isEqualName = j;
-                        if (isAlreadyContainsStyle) 
-						{
-                            if (oStyleTypes.par == nStyleType)
-                                elem.pPr.PStyle = j;
-                            else if (oStyleTypes.table == nStyleType)
-                                elem.pPr.Set_TableStyle2(j);
-							else if (oStyleTypes.run == nStyleType)
-							{
-								//TODO сделать аналогично для Pstyle
-								if(elem.run)
-								{
-									elem.run.Set_RStyle(j);
+		var oStyleTypes = {par: 1, table: 2, lvl: 3, run: 4, styleLink: 5, numStyleLink: 6};
+		var addNewStyles = false;
+		var fParseStyle = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
+			if (aStyles == null) {
+				return;
+			}
+
+			var putBasedOn = function (_style, container) {
+				if (!_style || !_style.style) {
+					return;
+				}
+				var _elem = oReadResult.styles[_style.style];
+				if (_elem && _elem.style && _elem.style.BasedOn) {
+					var basedOnObj = {pPr: null, style: _elem.style.BasedOn};
+					container.push(basedOnObj);
+					putBasedOn(basedOnObj, container);
+				}
+			};
+
+			var generateNewStyleName = function (_base) {
+				var index = 1;
+				var res;
+				while (true) {
+					res = _base + "_" + index;
+
+					var isContains = false;
+					for (var j in oDocumentStyles.Style) {
+						//TODO пока закомментировал, поскольку всегда добавляем новый стиль
+						if (oDocumentStyles.Style[j].Name === res) {
+							index++;
+							isContains = true;
+							break;
+						}
+
+					}
+					if (!isContains) {
+						return res;
+					} else if (index > 100) {
+						return null;
+					}
+				}
+			};
+
+			var putStyle = function (_elem, _styleId, putDefaultStyle) {
+				if (!_elem.pPr) {
+					return;
+				}
+				if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
+					_elem.pPr.PStyle = _styleId;
+				} else if (nStyleType === oStyleTypes.table) {
+					_elem.pPr.Set_TableStyle2(_styleId);
+				} else if (nStyleType === oStyleTypes.run) {
+					if (_elem.run) {
+						_elem.run.Set_RStyle(_styleId);
+					} else {
+						_elem.pPr.RStyle = _styleId;
+					}
+				} else if (nStyleType === oStyleTypes.styleLink) {
+					_elem.pPr.StyleLink = _styleId;
+				} else if (nStyleType === oStyleTypes.numStyleLink) {
+					_elem.pPr.SetNumStyleLink(_styleId);
+				} else if (putDefaultStyle) {
+					_elem.pPr.PStyle = j;
+				}
+			};
+
+			var tryAddStyle = function (_stylePaste, _elem, _basedOnElems) {
+				var isEqualName = null, isAlreadyContainsStyle;
+
+				for (var j in oDocumentStyles.Style) {
+					var styleDoc = oDocumentStyles.Style[j];
+					isAlreadyContainsStyle = styleDoc.isEqual(_stylePaste.style);
+
+					//TODO пока закомментировал, поскольку всегда добавляем новый стиль
+					if (styleDoc.Name === _stylePaste.style.Name /*|| (styleDoc.Custom === false && stylePaste.style.Custom === false && styleDoc.Name.toLowerCase() === stylePaste.style.Name.toLowerCase())*/) {
+						isEqualName = j;
+					}
+
+					if (isAlreadyContainsStyle) {
+						putStyle(_elem, j, true);
+						break;
+					}
+				}
+
+				if (!isAlreadyContainsStyle && isEqualName != null) {
+					//если нашли имя такого же стиля
+					//поскольку содержимое отличается, нужно проверять, используется ли данный стиль в документе
+					//если не используется - нужно его заменить
+					//на данный момент функции для замены нет, добавляю новый стиль с новым именем
+
+
+					//пока работаем как и раньше, только расширяем количество стилей за счёт putBasedOn
+					//TODO нужна функци для поиска check(_basedOnElems) && check(_elem)
+					var isUseStyleInDoc = true; // = check(_basedOnElems) && check(_elem)
+					if (!isUseStyleInDoc) {
+
+						//подменяем стили документа
+						//TODO нужна функция для подмены
+						//присваиваем элементу id соответсвующего стиля + отправляем в функцию выще id  и проходимся там по всем родительским элементам basedOn
+						//putStyle(_elem, isEqualName);
+						//return isEqualName;
+
+						//stylePaste.style.BasedOn = null;
+						var newName = generateNewStyleName(_stylePaste.style.Name);
+						if (newName) {
+							_stylePaste.style.Set_Name(newName);
+							nStyleId = oDocumentStyles.Add(_stylePaste.style);
+							putStyle(_elem, nStyleId);
+							addNewStyles = true;
+
+							return nStyleId;
+						}
+					} else {
+						//просто присваиваем элементу id соответсвующего стиля
+						putStyle(_elem, isEqualName);
+					}
+				} else if (!isAlreadyContainsStyle && isEqualName == null)//нужно добавить новый стиль
+				{
+					//todo править и BaseOn
+					//stylePaste.style.BasedOn = null;
+
+					var nStyleId = oDocumentStyles.Add(_stylePaste.style);
+					var addedStyle = oDocumentStyles.Style[nStyleId];
+					addedStyle.SetCustom(true);
+					putStyle(_elem, nStyleId);
+					addNewStyles = true;
+					return nStyleId;
+				}
+
+				return null;
+			};
+
+			var allAddedStylesIds = [];
+			var mapStylesIds = {};
+			for (i = 0, length = aStyles.length; i < length; ++i) {
+				var elem = aStyles[i];
+				var stylePaste = oReadResult.styles[elem.style];
+
+				if (null != stylePaste && null != stylePaste.style && oDocumentStyles) {
+					//1. ищем родительсие стили стили
+					var basedOnElems = [];
+					if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
+						if (elem.pPr) {
+							putBasedOn(elem, basedOnElems);
+						}
+					}
+
+					//2. передаём основной стиль и родительские
+					//3. в функции tryAddStyle определяем, используются уже эти стили + основной стиль в документе
+					//TODO пункт 3. такой функции пока нет
+
+
+					var styleId = tryAddStyle(stylePaste, elem, basedOnElems);
+					if (styleId) {
+						mapStylesIds[stylePaste.param.id] = styleId;
+						allAddedStylesIds.push(styleId);
+					}
+					//4. далее если основной стиль добавлен, то необходимо добавить и все родительские
+					if (basedOnElems && basedOnElems.length) {
+						for (var j = 0; j < basedOnElems.length; j++) {
+							var elemBasedOn = basedOnElems[j];
+							var stylePasteBasedOn = oReadResult.styles[elemBasedOn.style];
+							if (stylePasteBasedOn) {
+								var styleIdBasedOn = tryAddStyle(stylePasteBasedOn, elemBasedOn);
+								if (styleIdBasedOn) {
+									allAddedStylesIds.push(styleIdBasedOn);
+									mapStylesIds[stylePasteBasedOn.param.id] = styleIdBasedOn;
 								}
-								else
-								{
-									elem.pPr.RStyle = j;
-								}
-							}	
-                            else if(oStyleTypes.styleLink == nStyleType)
-                                elem.pPr.StyleLink = j;
-                            else if(oStyleTypes.numStyleLink == nStyleType)
-                                elem.pPr.NumStyleLink = j;
-							else
-                                elem.pPr.PStyle = j;
-                            break;
-                        }
-                    }
-                    if (!isAlreadyContainsStyle && isEqualName != null)//если нашли имя такого же стиля
-                    {
-                        if (nStyleType == oStyleTypes.par || nStyleType == oStyleTypes.lvl)
-                            elem.pPr.PStyle = isEqualName;
-                        else if (nStyleType == oStyleTypes.table)
-                            elem.pPr.Set_TableStyle2(isEqualName);
-						else if (nStyleType == oStyleTypes.run)
-						{
-							if(elem.run)
-							{
-								elem.run.Set_RStyle(isEqualName);
-							}
-							else
-							{
-								elem.pPr.RStyle = isEqualName;
-							}
-						}	
-                        else if(nStyleType == oStyleTypes.styleLink)
-                            elem.pPr.StyleLink = isEqualName;
-                        else if(nStyleType == oStyleTypes.numStyleLink)
-                            elem.pPr.NumStyleLink = isEqualName;
-                    }
-                    else if (!isAlreadyContainsStyle && isEqualName == null)//нужно добавить новый стиль
-                    {
-                        //todo править и BaseOn
-						stylePaste.style.BasedOn = null;
-                        var nStyleId = oDocumentStyles.Add(stylePaste.style);
-                        if (nStyleType == oStyleTypes.par || nStyleType == oStyleTypes.lvl)
-                            elem.pPr.PStyle = nStyleId;
-                        else if (nStyleType == oStyleTypes.table)
-                            elem.pPr.Set_TableStyle2(nStyleId);
-						else if (nStyleType == oStyleTypes.run)
-						{
-							if(elem.run)
-							{
-								elem.run.Set_RStyle(nStyleId);
-							}
-							else
-							{
-								elem.pPr.RStyle = nStyleId;
 							}
 						}
-                        else if(nStyleType == oStyleTypes.styleLink)
-                            elem.pPr.StyleLink = nStyleId;
-                        else if(nStyleType == oStyleTypes.numStyleLink)
-                            elem.pPr.NumStyleLink = nStyleId;
-						
-                        addNewStyles = true;
-                    }
-                }
-            }
-        };
-		
+					}
+				}
+			}
+
+			//подменяем у всех элементов basedOn
+			if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
+				for (i = 0, length = allAddedStylesIds.length; i < length; ++i) {
+					var addedStyle = oDocumentStyles.Style[allAddedStylesIds[i]];
+					if (addedStyle && addedStyle.BasedOn != null && mapStylesIds[addedStyle.BasedOn]) {
+						addedStyle.Set_BasedOn(mapStylesIds[addedStyle.BasedOn]);
+					}
+				}
+			}
+
+		};
+
 		fParseStyle(this.oReadResult.runStyles, this.Document.Styles, this.oReadResult, oStyleTypes.run);
         fParseStyle(this.oReadResult.paraStyles, this.Document.Styles, this.oReadResult, oStyleTypes.par);
         fParseStyle(this.oReadResult.tableStyles, this.Document.Styles, this.oReadResult, oStyleTypes.table);
         fParseStyle(this.oReadResult.lvlStyles, this.Document.Styles, this.oReadResult, oStyleTypes.lvl);
         fParseStyle(this.oReadResult.styleLinks, this.Document.Styles, this.oReadResult, oStyleTypes.styleLink);
 		fParseStyle(this.oReadResult.numStyleLinks, this.Document.Styles, this.oReadResult, oStyleTypes.numStyleLink);
+
         var aContent = this.oReadResult.DocumentContent;
         for (var i = 0, length = this.oReadResult.aPostOpenStyleNumCallbacks.length; i < length; ++i)
             this.oReadResult.aPostOpenStyleNumCallbacks[i].call();
@@ -8408,18 +8615,18 @@ function BinaryFileReader(doc, openParams)
             bInBlock = true;
         //создаем список используемых шрифтов
         var AllFonts = {};
-		
+
 		if(this.Document.Numbering)
 			this.Document.Numbering.GetAllFontNames(AllFonts);
-		if(this.Document.Styles)	
+		if(this.Document.Styles)
         this.Document.Styles.Document_Get_AllFontNames(AllFonts);
-		
+
         for (var Index = 0, Count = aContent.length; Index < Count; Index++)
             aContent[Index].Document_Get_AllFontNames(AllFonts);
         var aPrepeareFonts = [];
-		
+
 		var oDocument = this.Document && this.Document.LogicDocument ? this.Document.LogicDocument : this.Document;
-		
+
 		var fontScheme;
 		var m_oLogicDocument = editor.WordControl.m_oLogicDocument;
 		//для презентаций находим fontScheme
@@ -8429,7 +8636,7 @@ function BinaryFileReader(doc, openParams)
 			fontScheme = m_oLogicDocument.theme.themeElements.fontScheme;
 
 		AscFormat.checkThemeFonts(AllFonts, fontScheme);
-		
+
         for (var i in AllFonts)
             aPrepeareFonts.push(new AscFonts.CFont(i, 0, "", 0));
         //создаем список используемых картинок
@@ -8453,7 +8660,7 @@ function BinaryFileReader(doc, openParams)
 			}
 		}
 		//add comments
-		var setting = this.oReadResult.setting;        
+		var setting = this.oReadResult.setting;
 		var fInitCommentData = function(comment)
 		{
 			var oCommentObj = new AscCommon.CCommentData();
@@ -8484,7 +8691,7 @@ function BinaryFileReader(doc, openParams)
 			}
 			return oCommentObj;
 		};
-		
+
 		var oCommentsNewId = {};
 		//меняем CDocumentContent на Document для возможности вставки комментариев в колонтитул и таблицу
 		var isIntoShape = this.Document && this.Document.Parent && this.Document.Parent instanceof AscFormat.CShape;
@@ -8495,11 +8702,11 @@ function BinaryFileReader(doc, openParams)
 			if(this.oReadResult.oCommentsPlaces && this.oReadResult.oCommentsPlaces[i] && this.oReadResult.oCommentsPlaces[i].Start != null && this.oReadResult.oCommentsPlaces[i].End != null && document && document.Comments && isCopyPaste === true)
 			{
 				var oOldComment = this.oReadResult.oComments[i];
-				
+
 				var m_sQuoteText = this.oReadResult.oCommentsPlaces[i].QuoteText;
 				if(m_sQuoteText)
 					oOldComment.m_sQuoteText = m_sQuoteText;
-				
+
 				var oNewComment = new AscCommon.CComment(document.Comments, fInitCommentData(oOldComment))
 				document.Comments.Add(oNewComment);
 				oCommentsNewId[oOldComment.Id] = oNewComment;
@@ -8581,6 +8788,7 @@ function BinaryFileReader(doc, openParams)
         return { content: aContent, fonts: aPrepeareFonts, images: aPrepeareImages, bAddNewStyles: addNewStyles, aPastedImages: aPastedImages, bInBlock: bInBlock };
     }
 }
+
 function BinaryStyleTableReader(doc, oReadResult, stream)
 {
     this.Document = doc;
@@ -10401,13 +10609,7 @@ Binary_tblPrReader.prototype =
         {
             if(null == Pr.Shd)
                 Pr.Shd = new CDocumentShd();
-            var oNewShd = {Value: undefined, Color: undefined, Unifill: undefined};
-			ReadDocumentShd(length, this.bcr, oNewShd);
-            //если есть themeColor или Color, то Value по умолчанию ShdClear(Тарифы_на_комплексное_обслуживание_клиен.docx)
-            if (undefined == oNewShd.Value && oNewShd.Unifill) {
-                oNewShd.Value = Asc.c_oAscShdClear;
-            }
-            Pr.Shd.Set_FromObject(oNewShd);
+			ReadDocumentShd(length, this.bcr, Pr.Shd);
         }
         else if( c_oSerProp_cellPrType.TableCellBorders === type )
         {
@@ -10889,9 +11091,9 @@ function Binary_HdrFtrTableReader(doc, oReadResult, openParams, stream)
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.ReadHdrFtrItem(t, l, oNewItem);
             });
-            if(null != oNewItem.Content)
+            if(null != oNewItem.Content && oNewItem.Content.length > 0)
             {
-                hdrftr.Content.Content = oNewItem.Content;
+				hdrftr.Content.ReplaceContent(oNewItem.Content);
 				oHdrFtrContainer.push({type: type, elem: hdrftr});
             }
         }
@@ -11293,8 +11495,15 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		    res = this.bcr.Read1(length, function (t, l) {
 		        return oThis.ReadFldSimple(t, l, oFldSimpleObj, paragraphContent);
 		    });
-			if(null != oFldSimpleObj.ParaField){
-				paragraphContent.AddToContentToEnd(oFldSimpleObj.ParaField);
+			let paraField = oFldSimpleObj.ParaField;
+			if(null != paraField){
+				let pageField = paraField.GetRunWithPageField(paragraph);
+				if (pageField) {
+					paragraphContent.AddToContentToEnd(pageField);
+				} else {
+					this.oReadResult.logicDocument.Register_Field(paraField);
+					paragraphContent.AddToContentToEnd(paraField);
+				}
 			}
 		} else if (c_oSerParType.Del == type && this.oReadResult.checkReadRevisions()) {
             var reviewInfo = new CReviewInfo();
@@ -11389,7 +11598,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			let Instruction = oParser.GetInstructionClass(Instr);
 			oParser.InitParaFieldArguments(Instruction.Type, Instr, elem);
 			if (fieldtype_UNKNOWN !== elem.FieldType) {
-				this.oReadResult.logicDocument.Register_Field(elem);
 				oFldSimpleObj.ParaField = elem;
 			} else {
 				this.ConcatContent(elem.Content);
@@ -11747,8 +11955,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
         }
         else if (c_oSerRunType.nonBreakHyphen === type)
         {
-            oNewElem = new AscWord.CRunText(0x002D);
-            oNewElem.Set_SpaceAfter(false);
+            oNewElem = AscWord.CreateNonBreakingHyphen();
         }
         else if (c_oSerRunType.softHyphen === type)
         {
@@ -12778,6 +12985,12 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				return oThis.ReadSdtTextFormPr(t, l, textFormPr);
 			});
 			oSdt.SetTextFormPr(textFormPr);
+		} else if (c_oSerSdt.ComplexFormPr === type && oSdt.SetComplexFormPr) {
+			let complexFormPr = new AscWord.CSdtComplexFormPr();
+			res = this.bcr.Read1(length, function(t, l) {
+				return oThis.ReadSdtComplexFormPr(t, l, complexFormPr);
+			});
+			oSdt.SetComplexFormPr(complexFormPr);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -12813,6 +13026,8 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				return oThis.ReadSdtListItem(t, l, listItem);
 			});
 			val.ListItems.push(listItem);
+		} else if (c_oSerSdt.TextFormPrFormat === type) {
+			res = this.ReadSdtTextFormat(length, val.GetFormat());
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -12919,8 +13134,10 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			val.AutoFit = this.stream.GetBool();
 		} else if (c_oSerSdt.TextFormPrMultiLine === type) {
 			val.MultiLine = this.stream.GetBool();
+		} else if (c_oSerSdt.TextFormPrFormat === type) {
+			res = this.ReadSdtTextFormat(length, val.GetFormat());
 		} else {
-			res = c_oSerConstants.ReadUnknown;
+				res = c_oSerConstants.ReadUnknown;
 		}
 		return res;
 	};
@@ -12939,6 +13156,36 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		}
 		return res;
 	};
+	this.ReadSdtTextFormat = function(length, format) {
+		let oThis = this;
+		let formatPr = {
+			type    : Asc.TextFormFormatType.None,
+			val     : "",
+			symbols : ""
+		};
+
+		let res = this.bcr.Read1(length, function(t, l) {
+			return oThis.ReadSdtTextFormatPr(t, l, formatPr);
+		});
+
+		format.SetType(formatPr.type, formatPr.val);
+
+		if (formatPr.symbols)
+			format.SetSymbols(formatPr.symbols);
+
+		return res;
+	};
+	this.ReadSdtTextFormatPr = function(type, length, format) {
+		let res = c_oSerConstants.ReadOk;
+		if (c_oSerSdt.TextFormPrFormatType === type) {
+			format.type = this.stream.GetByte();
+		} else if (c_oSerSdt.TextFormPrFormatVal === type) {
+			format.val = this.stream.GetString2LE(length);
+		} else if (c_oSerSdt.TextFormPrFormatSymbols === type) {
+			format.symbols = this.stream.GetString2LE(length);
+		}
+		return res;
+	};
 	this.ReadSdtPictureFormPr = function(type, length, val) {
 		var res = c_oSerConstants.ReadOk;
 		if (c_oSerSdt.PictureFormPrScaleFlag === type) {
@@ -12953,6 +13200,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			val.ShiftY = this.stream.GetDoubleLE();
 		} else {
 			res = c_oSerConstants.ReadUnknown;
+		}
+		return res;
+	};
+	this.ReadSdtComplexFormPr = function(type, length, complexFormPr){
+		let res = c_oSerConstants.ReadOk;
+		if (c_oSerSdt.ComplexFormPrType === type) {
+			complexFormPr.Type = this.stream.GetLong();
 		}
 		return res;
 	};
@@ -13067,8 +13321,7 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
         }
         else if (c_oSerRunType.nonBreakHyphen === type)
         {
-            oNewElem = new AscWord.CRunText(0x002D);
-            oNewElem.Set_SpaceAfter(false);
+            oNewElem = AscWord.CreateNonBreakingHyphen();
         }
         else if (c_oSerRunType.softHyphen === type)
         {
@@ -14970,7 +15223,7 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
 		}
 		else if (c_oSer_OMathContentType.Run === type)
 		{
-			var run = new ParaRun(paragraphContent.GetParapgraph());
+			var run = new ParaRun(paragraphContent.GetParagraph());
             var oRes = { bRes: true };
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.ReadRun(t, l, run, paragraphContent, oRes);
@@ -16947,7 +17200,9 @@ function DocReadResult(doc) {
 	this.TrackRevisions = null;
 	this.bdtr = null;
 	this.runsToSplit = [];
+	this.runsToSplitBySym = [];
 	this.bCopyPaste = false;
+	this.styleGenIndex = 1;
 
 	this.lastPar = null;
 	this.toNextPar = [];

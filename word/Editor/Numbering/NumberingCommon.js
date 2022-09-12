@@ -45,9 +45,12 @@ var c_oAscMultiLevelNumbering = {
 	Numbered    : 0,
 	Bullet      : 1,
 
-	MultiLevel1 : 101,
-	MultiLevel2 : 102,
-	MultiLevel3 : 103
+	MultiLevel_1_a_i           : 101,
+	MultiLevel_1_11_111        : 102,
+	MultiLevel_Bullet          : 103,
+	MultiLevel_Article_Section : 104,
+	MultiLevel_Chapter         : 105,
+	MultiLevel_I_A_1           : 106
 };
 
 /** enum {number} */
@@ -56,36 +59,44 @@ var c_oAscNumberingLevel = {
 	Bullet     : 0x1000,
 	Numbered   : 0x2000,
 
-	DecimalBracket_Right    : 0x2001,
-	DecimalBracket_Left     : 0x2002,
-	DecimalDot_Right        : 0x2003,
-	DecimalDot_Left         : 0x2004,
-	UpperRomanDot_Right     : 0x2005,
-	UpperLetterDot_Left     : 0x2006,
-	LowerLetterBracket_Left : 0x2007,
-	LowerLetterDot_Left     : 0x2008,
-	LowerRomanDot_Right     : 0x2009,
-	UpperRomanBracket_Left  : 0x200A,
-	LowerRomanBracket_Left  : 0x200B,
-	UpperLetterBracket_Left : 0x200C
+	DecimalBracket_Right      : 0x2001,
+	DecimalBracket_Left       : 0x2002,
+	DecimalDot_Right          : 0x2003,
+	DecimalDot_Left           : 0x2004,
+	UpperRomanDot_Right       : 0x2005,
+	UpperLetterDot_Left       : 0x2006,
+	LowerLetterBracket_Left   : 0x2007,
+	LowerLetterDot_Left       : 0x2008,
+	LowerRomanDot_Right       : 0x2009,
+	UpperRomanBracket_Left    : 0x200A,
+	LowerRomanBracket_Left    : 0x200B,
+	UpperLetterBracket_Left   : 0x200C,
+	LowerRussian_Dot_Left     : 0x3001,
+	LowerRussian_Bracket_Left : 0x3002,
+	UpperRussian_Dot_Left     : 0x3003,
+	UpperRussian_Bracket_Left : 0x3004
 };
 
 window["Asc"]["asc_oAscNumberingLevel"]           = window["Asc"].c_oAscNumberingLevel = c_oAscNumberingLevel;
-c_oAscNumberingLevel["None"]                    = c_oAscNumberingLevel.None;
-c_oAscNumberingLevel["Bullet"]                  = c_oAscNumberingLevel.Bullet;
-c_oAscNumberingLevel["Numbered"]                = c_oAscNumberingLevel.Numbered;
-c_oAscNumberingLevel["DecimalBracket_Right"]    = c_oAscNumberingLevel.DecimalBracket_Right;
-c_oAscNumberingLevel["DecimalBracket_Left"]     = c_oAscNumberingLevel.DecimalBracket_Left;
-c_oAscNumberingLevel["DecimalDot_Right"]        = c_oAscNumberingLevel.DecimalDot_Right;
-c_oAscNumberingLevel["DecimalDot_Left"]         = c_oAscNumberingLevel.DecimalDot_Left;
-c_oAscNumberingLevel["UpperRomanDot_Right"]     = c_oAscNumberingLevel.UpperRomanDot_Right;
-c_oAscNumberingLevel["UpperLetterDot_Left"]     = c_oAscNumberingLevel.UpperLetterDot_Left;
-c_oAscNumberingLevel["LowerLetterBracket_Left"] = c_oAscNumberingLevel.LowerLetterBracket_Left;
-c_oAscNumberingLevel["LowerLetterDot_Left"]     = c_oAscNumberingLevel.LowerLetterDot_Left;
-c_oAscNumberingLevel["LowerRomanDot_Right"]     = c_oAscNumberingLevel.LowerRomanDot_Right;
-c_oAscNumberingLevel["UpperRomanBracket_Left"]  = c_oAscNumberingLevel.UpperRomanBracket_Left;
-c_oAscNumberingLevel["LowerRomanBracket_Left"]  = c_oAscNumberingLevel.LowerRomanBracket_Left;
-c_oAscNumberingLevel["UpperLetterBracket_Left"] = c_oAscNumberingLevel.UpperLetterBracket_Left;
+c_oAscNumberingLevel["None"]                      = c_oAscNumberingLevel.None;
+c_oAscNumberingLevel["Bullet"]                    = c_oAscNumberingLevel.Bullet;
+c_oAscNumberingLevel["Numbered"]                  = c_oAscNumberingLevel.Numbered;
+c_oAscNumberingLevel["DecimalBracket_Right"]      = c_oAscNumberingLevel.DecimalBracket_Right;
+c_oAscNumberingLevel["DecimalBracket_Left"]       = c_oAscNumberingLevel.DecimalBracket_Left;
+c_oAscNumberingLevel["DecimalDot_Right"]          = c_oAscNumberingLevel.DecimalDot_Right;
+c_oAscNumberingLevel["DecimalDot_Left"]           = c_oAscNumberingLevel.DecimalDot_Left;
+c_oAscNumberingLevel["UpperRomanDot_Right"]       = c_oAscNumberingLevel.UpperRomanDot_Right;
+c_oAscNumberingLevel["UpperLetterDot_Left"]       = c_oAscNumberingLevel.UpperLetterDot_Left;
+c_oAscNumberingLevel["LowerLetterBracket_Left"]   = c_oAscNumberingLevel.LowerLetterBracket_Left;
+c_oAscNumberingLevel["LowerLetterDot_Left"]       = c_oAscNumberingLevel.LowerLetterDot_Left;
+c_oAscNumberingLevel["LowerRomanDot_Right"]       = c_oAscNumberingLevel.LowerRomanDot_Right;
+c_oAscNumberingLevel["UpperRomanBracket_Left"]    = c_oAscNumberingLevel.UpperRomanBracket_Left;
+c_oAscNumberingLevel["LowerRomanBracket_Left"]    = c_oAscNumberingLevel.LowerRomanBracket_Left;
+c_oAscNumberingLevel["UpperLetterBracket_Left"]   = c_oAscNumberingLevel.UpperLetterBracket_Left;
+c_oAscNumberingLevel["LowerRussian_Dot_Left"]     = c_oAscNumberingLevel.LowerRussian_Dot_Left;
+c_oAscNumberingLevel["LowerRussian_Bracket_Left"] = c_oAscNumberingLevel.LowerRussian_Bracket_Left;
+c_oAscNumberingLevel["UpperRussian_Dot_Left"]     = c_oAscNumberingLevel.UpperRussian_Dot_Left;
+c_oAscNumberingLevel["UpperRussian_Bracket_Left"] = c_oAscNumberingLevel.UpperRussian_Bracket_Left;
 
 // Преобразовываем число в буквенную строку :
 //  1 -> a

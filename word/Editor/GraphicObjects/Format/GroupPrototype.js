@@ -73,7 +73,7 @@ CGroupShape.prototype.handleUpdateLn = function()
 CGroupShape.prototype.getRecalcObject = CShape.prototype.getRecalcObject;
 CGroupShape.prototype.setRecalcObject = CShape.prototype.setRecalcObject;
 CGroupShape.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
-CGroupShape.prototype.Is_UseInDocument = CShape.prototype.Is_UseInDocument;
+CGroupShape.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 
 
 CGroupShape.prototype.getTargetDocContent = AscFormat.DrawingObjectsController.prototype.getTargetDocContent;
@@ -210,8 +210,6 @@ CGroupShape.prototype.recalcSmartArtCoords = function () {
     }
 };
 
-CGroupShape.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
-CGroupShape.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CGroupShape.prototype.getHierarchy = CShape.prototype.getHierarchy;

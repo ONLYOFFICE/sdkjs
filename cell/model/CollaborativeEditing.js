@@ -239,7 +239,14 @@
 
 				asc_applyFunction(callback, true);
 			} else if (result["error"]) {
+				if (Asc.editor && Asc.editor.isOleEditor && !Asc.editor.isEditOleMode) {
+					Asc.editor.sync_closeOleEditor();
+				}
+
 				asc_applyFunction(callback, false);
+			}
+			if (Asc.editor && !Asc.editor.isEditOleMode) {
+				Asc.editor.isOleEditor = false;
 			}
 		};
 		CCollaborativeEditing.prototype.addUnlock = function (LockClass) {

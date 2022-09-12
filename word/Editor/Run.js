@@ -936,6 +936,9 @@ ParaRun.prototype.private_CheckMathBreakOperatorBeforeAdd = function(oNewRun)
  */
 ParaRun.prototype.CheckRunBeforeAdd = function(oItem)
 {
+	if (this.GetParentForm())
+		return null;
+
 	var oNewRun        = null;
 	var oLogicDocument = this.GetLogicDocument();
 
@@ -1816,7 +1819,7 @@ ParaRun.prototype.AddText = function(sString, nPos)
 
 	let oForm     = this.GetParentForm();
 	var oTextForm = oForm ? oForm.GetTextFormPr() : null;
-	var nMax      = oTextForm ? oTextForm.MaxCharacters : 0;
+	var nMax      = oTextForm ? oTextForm.GetMaxCharacters() : 0;
 
 	if (this.IsMathRun())
 	{
@@ -3322,7 +3325,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 		const nWRule = oTextForm.GetWidthRule();
 		isKeepWidth  = Asc.CombFormWidthRule.Exact === nWRule;
 
-		nMaxComb = oTextForm.MaxCharacters;
+		nMaxComb = oTextForm.GetMaxCharacters();
 
 		if (undefined === oTextForm.Width || nWRule === Asc.CombFormWidthRule.Auto)
 			nCombWidth = 0;
@@ -3719,7 +3722,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						GraphemeLen = 0;
 						WordLen     = Para.GetContentWidthInRange(PRS.LineBreakPos, oCurrentPos);
 
-						if (X + WordLen > XEnd)
+						if (X + WordLen > XEnd && (Word || !Para.IsSingleRangeOnLine(ParaLine, ParaRange)))
 						{
 							// Слово оказалось единственным элементом в промежутке, и, все равно,
 							// не умещается целиком. Делаем следующее:
@@ -3728,28 +3731,42 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							// 2) Если у нас строка без вырезов, тогда мы ищем перенос строки, начиная с текущего
 							//    места в обратном направлении, при этом решейпим текст в заданном промежутке
 
+							let isBreak = true;
 							if (Para.IsSingleRangeOnLine(ParaLine, ParaRange))
 							{
 								let oLineStartPos = PRS.LineBreakPos.Copy();
 								PRS.LineBreakPos  = Para.FindLineBreakInLongWord(XEnd - X, PRS.LineBreakPos, oCurrentPos);
 
-								this.protected_FillRange(CurLine, CurRange, RangeStartPos, RangeStartPos);
-								Para.Recalculate_SetRangeBounds(ParaLine, ParaRange, oLineStartPos, PRS.LineBreakPos);
+								if (PRS.LineBreakPos.IsEqual(oLineStartPos) || PRS.LineBreakPos.IsEqual(oCurrentPos))
+								{
+									PRS.LineBreakPos = oLineStartPos;
+									LetterLen        = WordLen;
+									WordLen          = 0;
+									isBreak          = false;
+								}
+								else
+								{
+									this.protected_FillRange(CurLine, CurRange, RangeStartPos, RangeStartPos);
+									Para.Recalculate_SetRangeBounds(ParaLine, ParaRange, oLineStartPos, PRS.LineBreakPos);
 
-								isSkipFillRange = true;
+									isSkipFillRange = true;
 
-								PRS.LongWord = true;
+									PRS.LongWord = true;
 
-								EmptyLine  = false;
-								TextOnLine = true;
+									EmptyLine  = false;
+									TextOnLine = true;
 
-								X += WordLen;
-								WordLen = 0;
+									X += WordLen;
+									WordLen = 0;
+								}
 							}
 
-							MoveToLBP = true;
-							NewRange  = true;
-							break;
+							if (isBreak)
+							{
+								MoveToLBP = true;
+								NewRange  = true;
+								break;
+							}
 						}
 						else if (!Word)
 						{
@@ -5474,22 +5491,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             }
             case para_End:
             {
-                var SectPr = PRSA.Paragraph.Get_SectionPr();
-                if (!PRSA.Paragraph.LogicDocument || PRSA.Paragraph.LogicDocument !== PRSA.Paragraph.Parent || !PRSA.Paragraph.bFromDocument)
-                    SectPr = undefined;
-
-				if (undefined !== SectPr)
-				{
-					// Нас интересует тип следующей секции
-					var LogicDocument = PRSA.Paragraph.LogicDocument;
-					var NextSectPr    = LogicDocument.SectionsInfo.Get_SectPr(PRSA.Paragraph.Index + 1).SectPr;
-					Item.UpdateSectionEnd(NextSectPr.Type, PRSA.XEnd - PRSA.X, LogicDocument);
-				}
-				else
-				{
-					Item.ClearSectionEnd();
-				}
-
+				Item.CheckMark(PRSA.Paragraph, PRSA.XEnd - PRSA.X);
                 PRSA.X += Item.GetWidth();
 
                 break;
@@ -7577,7 +7579,7 @@ ParaRun.prototype.Set_ParaContentPos = function(ContentPos, Depth)
 };
 /**
  * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange
- * @param {CParagraphContentPos} oContentPos - если null -> возвращает количество символов в элементе.
+ * @param {AscWord.CParagraphContentPos} oContentPos - если null -> возвращает количество символов в элементе.
  * @param {number} nDepth
  * @return {number}
  */
@@ -8589,7 +8591,7 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 		}
 	}
 
-	if (this.Type == para_Math_Run)
+	if (this.Type === para_Math_Run)
 	{
 		if (undefined === this.Parent || null === this.Parent)
 		{
@@ -8681,6 +8683,12 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 		TextPr.ReplaceThemeFonts(oTheme.themeElements.fontScheme);
 	}
 
+	if(this.Paragraph.bFromDocument === false)
+	{
+		TextPr.BoldCS     = TextPr.Bold;
+		TextPr.ItalicCS   = TextPr.Italic;
+		TextPr.FontSizeCS = TextPr.FontSize;
+	}
 	TextPr.CheckFontScale();
 
 	// Для совместимости со старыми версиями запишем FontFamily
@@ -10332,7 +10340,7 @@ ParaRun.prototype.AddAfterParaEnd = function(oElement)
 };
 /**
  * Специальная функция очищающая метки переноса во время рецензирования
- * @param {CTrackRevisionsManager} oTrackManager
+ * @param {AscWord.CTrackRevisionsManager} oTrackManager
  */
 ParaRun.prototype.RemoveTrackMoveMarks = function(oTrackManager)
 {
@@ -11557,7 +11565,7 @@ ParaRun.prototype.private_GetPosInParent = function(_Parent)
 };
 ParaRun.prototype.Make_ThisElementCurrent = function(bUpdateStates)
 {
-    if (this.Is_UseInDocument())
+    if (this.IsUseInDocument())
     {
     	this.SetThisElementCurrentInParagraph();
         this.Paragraph.Document_SetThisElementCurrent(true === bUpdateStates ? true : false);
@@ -11570,7 +11578,7 @@ ParaRun.prototype.SetThisElementCurrent = function()
 		return;
 
 	var StartPos = ContentPos.Copy();
-	this.Get_StartPos(StartPos, StartPos.Get_Depth() + 1);
+	this.Get_StartPos(StartPos, StartPos.GetDepth() + 1);
 
 	this.Paragraph.Set_ParaContentPos(StartPos, true, -1, -1, false);
 	this.Paragraph.Document_SetThisElementCurrent(false);
@@ -11953,21 +11961,10 @@ ParaRun.prototype.Get_ClassesByPos = function(Classes, ContentPos, Depth)
 {
     Classes.push(this);
 };
-ParaRun.prototype.Is_UseInParagraph = function()
-{
-    if (!this.Paragraph)
-        return false;
-
-    var ContentPos = this.Paragraph.Get_PosByElement(this);
-    if (!ContentPos)
-        return false;
-
-    return true;
-};
 /**
  * Получаем позицию данного рана в родительском параграфе
  * @param nInObjectPos {?number}
- * @returns {?CParagraphContentPos}
+ * @returns {?AscWord.CParagraphContentPos}
  */
 ParaRun.prototype.GetParagraphContentPosFromObject = function(nInObjectPos)
 {
@@ -12063,14 +12060,6 @@ ParaRun.prototype.GetFootnotesList = function(oEngine)
 			oEngine.Add(oItem.GetFootnote(), oItem, this);
 		}
 	}
-};
-ParaRun.prototype.Is_UseInDocument = function()
-{
-	return (this.Paragraph && true === this.Paragraph.Is_UseInDocument() && true === this.Is_UseInParagraph() ? true : false);
-};
-ParaRun.prototype.IsUseInDocument = function()
-{
-	return this.Is_UseInDocument();
 };
 ParaRun.prototype.GetParaEnd = function()
 {
@@ -12780,8 +12769,8 @@ ParaRun.prototype.CopyTextFormContent = function(oRun)
 	var nRunLen = oRun.Content.length;
 
 	var oTextForm = this.GetTextForm();
-	if (oTextForm && undefined !== oTextForm.MaxCharacters && oTextForm.MaxCharacters > 0)
-		nRunLen = Math.min(oTextForm.MaxCharacters, nRunLen);
+	if (oTextForm && undefined !== oTextForm.GetMaxCharacters() && oTextForm.GetMaxCharacters() > 0)
+		nRunLen = Math.min(oTextForm.GetMaxCharacters(), nRunLen);
 
 	// Упрощенный вариант сравнения двух контентов. Сравниваем просто начало и конец
 
@@ -13048,7 +13037,7 @@ ParaRun.prototype.GetNextRunElement = function(nPos)
 /**
  * Получаем позицию следующего элемента внутри параграфа
  * @param nPos {number} позиция внутри данного рана
- * @returns {?{Element : AscWord.CRunElementBase, Pos : CParagraphContentPos}}
+ * @returns {?{Element : AscWord.CRunElementBase, Pos : AscWord.CParagraphContentPos}}
  */
 ParaRun.prototype.GetNextRunElementEx = function(nPos)
 {
@@ -13660,7 +13649,7 @@ CRunWithPosition.prototype.SetDocumentPositionHere = function()
 };
 
 function CanUpdatePosition(Para, Run) {
-    return (Para && true === Para.Is_UseInDocument() && true === Run.Is_UseInParagraph());
+    return (Para && true === Para.IsUseInDocument() && true === Run.IsUseInParagraph());
 }
 
 //--------------------------------------------------------export----------------------------------------------------

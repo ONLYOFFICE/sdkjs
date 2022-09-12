@@ -1823,6 +1823,7 @@ var g_oFontProperties = {
 			this.patternFill = new PatternFill();
 			this.patternFill.fromColor(color);
 		}
+		this.checkEmptyContent();
 	};
 	Fill.prototype.fromPatternParams = function (type, color) {
 		this.patternFill = null;
@@ -3700,6 +3701,7 @@ StyleManager.prototype =
 	},
 	setFill : function(oItemWithXfs, val)
 	{
+		val && val.checkEmptyContent();
 		return this._setProperty(oItemWithXfs, val, "fill", CellXfs.prototype.getFill, CellXfs.prototype.setFill, g_StyleCache.addFill);
 	},
 	setBorder : function(oItemWithXfs, val)
@@ -3966,7 +3968,7 @@ StyleManager.prototype =
 				} else {
 					newVal.setIndexNumber(container.count++);
 				}
-				if (!res) {
+				if (!res || forceAdd) {
 					container.vals[hash] = newVal;
 				}
 				res = newVal;

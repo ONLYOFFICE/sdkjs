@@ -570,6 +570,17 @@
 			return bRes;
 		};
 
+		Range.prototype.isIntersectWithRanges = function (ranges, exceptionIndex) {
+			if (ranges) {
+				for (var i = 0; i < ranges.length; i++) {
+					if ((null == exceptionIndex || (null != exceptionIndex && i !== exceptionIndex)) && this.isIntersect(ranges[i])) {
+						return true;
+					}
+				}
+			}
+			return false;
+		};
+
 		Range.prototype.isIntersectForShift = function(range, offset) {
 			var isHor = offset && offset.col;
 			var isDelete = offset && (offset.col < 0 || offset.row < 0);
@@ -1719,6 +1730,55 @@
 			}
 			return res;
 		};
+		MultiplyRange.prototype.unionByRowCol = function(_bCol) {
+			if (0 === this.ranges.length) {
+				return null;
+			}
+			if (1 === this.ranges.length) {
+				return this.ranges;
+			}
+			var _ranges = this.ranges;
+			var map = {};
+			var res = [];
+			for (var i = 0; i < _ranges.length; i++) {
+				for (var j = (_bCol ? _ranges[i].c1 : _ranges[i].r1); j <= (_bCol ? _ranges[i].c2 : _ranges[i].r2); j++) {
+					if (!map[j]) {
+						res.push(j);
+						map[j] = 1;
+					}
+				}
+			}
+
+			res = res.sort(function (a, b) {
+				return a - b;
+			});
+
+			//объединяем
+			var unionRanges = [];
+			var start = null;
+			var end = null;
+			for (var n = 0; n < res.length; n++) {
+				if (start === null) {
+					start = res[n];
+					end = res[n];
+				} else if (res[n - 1] === res[n] - 1) {
+					end++;
+				} else {
+					unionRanges.push(Asc.Range(_bCol ? start : 0, !_bCol ? start : 0, _bCol ? end : gc_nMaxCol0, !_bCol ? end : gc_nMaxRow0));
+					start = res[n];
+					end = res[n];
+				}
+
+				if (n === res.length - 1) {
+					unionRanges.push(Asc.Range(_bCol ? start : 0, !_bCol ? start : 0, _bCol ? end : gc_nMaxCol0, !_bCol ? end : gc_nMaxRow0));
+				}
+			}
+
+			return unionRanges.sort(function(a, b) {
+				return _bCol ? b.c1 - a.c2 : b.r1 - a.r2;
+			});
+		};
+
 
 		function VisibleRange(visibleRange, offsetX, offsetY) {
 			this.visibleRange = visibleRange;
@@ -2245,7 +2305,7 @@
 				}
 			}
 		}
-		
+
 		function drawFillCell(ctx, graphics, fill, rect) {
 			if (!fill.hasFill()) {
 				return;
@@ -2256,7 +2316,7 @@
 				ctx.setFillStyle(solid).fillRect(rect._x, rect._y, rect._width, rect._height);
 				return;
 			}
-			
+
 			var vector_koef = AscCommonExcel.vector_koef / ctx.getZoom();
 			if (AscCommon.AscBrowser.isCustomScaling()) {
 				vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
@@ -2293,7 +2353,7 @@
 					shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
 					shapeDrawer.draw(geometry);
 					graphics.RestoreGrState();
-					
+
 					if (ctx instanceof AscCommonExcel.CPdfPrinter) {
 						graphics.SetBaseTransform(null);
 						graphics.RestoreGrState();
@@ -2504,8 +2564,7 @@
 
 			var fill = new AscCommonExcel.Fill();
 			if (colors.length === 1) {
-				fill.patternFill = new AscCommonExcel.PatternFill();
-				fill.patternFill.fromColor(colors[0]);
+				fill.fromColor(colors[0]);
 			} else {
 				fill.gradientFill = new AscCommonExcel.GradientFill();
 				var arrColors = [];
@@ -2612,7 +2671,7 @@
 
 				//Filter
 				this.filter = obj.filter;
-				
+
 				//Tooltip
 				this.tooltip = obj.tooltip;
 
@@ -3006,6 +3065,12 @@
 			this.isNeedRecalc = null;
 
 			this.specificRange = null;
+
+			//если запускаем новый поиск из-за измененного документа, то присылаем последний элемент, на который
+			//кликнул пользователь и далее пытаемся найти следующий/предыдущий
+			this.lastSearchElem = null;
+
+			this.isNotSearchEmptyCells = null;
 		}
 
 		asc_CFindOptions.prototype.clone = function () {
@@ -3037,6 +3102,9 @@
 			result.error = this.error;
 
 			result.specificRange = this.specificRange;
+			result.lastSearchElem = this.lastSearchElem;
+			result.isNotSearchEmptyCells = this.isNotSearchEmptyCells;
+
 			return result;
 		};
 
@@ -3047,7 +3115,7 @@
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
 			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows &&
 				this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
-				this.lookIn === obj.lookIn;
+				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells;
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;
@@ -3084,6 +3152,8 @@
 		asc_CFindOptions.prototype.asc_setIsReplaceAll = function (val) {this.isReplaceAll = val;};
 		asc_CFindOptions.prototype.asc_setSpecificRange = function (val) {this.specificRange = val;};
 		asc_CFindOptions.prototype.asc_setNeedRecalc = function (val) {this.isNeedRecalc = val;};
+		asc_CFindOptions.prototype.asc_setLastSearchElem = function (val) {this.lastSearchElem = val;};
+		asc_CFindOptions.prototype.asc_setNotSearchEmptyCells = function (val) {this.isNotSearchEmptyCells = val;};
 
 		/** @constructor */
 		function findResults() {
@@ -3380,7 +3450,7 @@
 				}
 			}
 		};
-		
+
 		cDate.prototype.getDateFromExcelWithTime2 = function ( val ) {
 			return new cDate( val * c_msPerDay + this.getExcelNullDate() );
 		};
@@ -3632,6 +3702,8 @@
 		prot["asc_setIsReplaceAll"] = prot.asc_setIsReplaceAll;
 		prot["asc_setSpecificRange"] = prot.asc_setSpecificRange;
 		prot["asc_setNeedRecalc"] = prot.asc_setNeedRecalc;
+		prot["asc_setLastSearchElem"] = prot.asc_setLastSearchElem;
+		prot["asc_setNotSearchEmptyCells"] = prot.asc_setNotSearchEmptyCells;
 
 		window["AscCommonExcel"].findResults = findResults;
 

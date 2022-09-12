@@ -34,8 +34,11 @@
 
 (function(window)
 {
-	const FLAGS_FONTKOEF_SCRIPT     = 0x01;
-	const FLAGS_NON_FONTKOEF_SCRIPT = 0x0E;
+	const FLAGS_MARK_NORMAL     = 0x00; // Два бита выделяем под тип (не побитово)
+	const FLAGS_MARK_ENDCELL    = 0x01;
+	const FLAGS_MARK_ENDSECTION = 0x02;
+
+	const FLAGS_MARK_MASK       = 0x03;
 
 	/**
 	 * Класс представляющий символ конца параграфа
@@ -72,6 +75,8 @@
 	};
 	CRunParagraphMark.prototype.Measure = function(oMeasurer, oTextPr, isEndCell)
 	{
+		this.private_UpdateMarkType(isEndCell ? FLAGS_MARK_ENDCELL : FLAGS_MARK_NORMAL);
+
 		let nUnicode  = isEndCell ? 0x00A4 : 0x00B6;
 		let nFontSlot = oTextPr.RTL || oTextPr.CS ? AscWord.fontslot_CS : AscWord.fontslot_ASCII;
 		let oFontInfo = oTextPr.GetFontInfo(nFontSlot);
@@ -92,8 +97,7 @@
 	};
 	CRunParagraphMark.prototype.UpdateSectionEnd = function(nSectionType, nWidth, oLogicDocument)
 	{
-		if (!oLogicDocument)
-			return;
+		this.private_UpdateMarkType(FLAGS_MARK_ENDSECTION);
 
 		var oPr = oLogicDocument.GetSectionEndMarkPr(nSectionType);
 
@@ -141,35 +145,34 @@
 	{
 		this.SectionEnd = null;
 	};
-	CRunParagraphMark.prototype.private_DrawSectionEnd = function(X, Y, Context)
+	CRunParagraphMark.prototype.CheckMark = function(oParagraph, nRangeW)
 	{
-		Context.b_color1(0, 0, 0, 255);
-		Context.p_color(0, 0, 0, 255);
-		Context.SetFont({
-			FontFamily : {Name : "Courier New", Index : -1},
-			FontSize   : 8,
-			Italic     : false,
-			Bold       : false
-		});
+		let oSectPr        = oParagraph.Get_SectionPr();
+		let oLogicDocument = oParagraph.GetLogicDocument();
 
-		for (var nPos = 0, nCount = this.SectionEnd.ColonsCount; nPos < nCount; ++nPos)
+		if (!oLogicDocument
+			|| oLogicDocument !== oParagraph.GetParent()
+			|| !oLogicDocument.IsDocumentEditor())
+			oSectPr = null;
+
+		if (oSectPr)
 		{
-			Context.FillTextCode(X, Y, this.SectionEnd.ColonSymbol);
-			X += this.SectionEnd.ColonWidth;
+			let oNextSectPr = oLogicDocument.SectionsInfo.Get_SectPr(oParagraph.GetIndex() + 1).SectPr;
+			this.UpdateSectionEnd(oNextSectPr.Type, nRangeW, oLogicDocument);
 		}
-
-		if (this.SectionEnd.String)
+		else
 		{
-			for (var nPos = 0, nCount = this.SectionEnd.String.length; nPos < nCount; ++nPos)
-			{
-				Context.FillText(X, Y, this.SectionEnd.String[nPos]);
-				X += this.SectionEnd.Widths[nPos];
-			}
+			this.ClearSectionEnd();
 
-			for (var nPos = 0, nCount = this.SectionEnd.ColonsCount; nPos < nCount; ++nPos)
+			let isEndCell = oParagraph.IsLastParagraphInCell();
+
+			let nType = isEndCell ? FLAGS_MARK_ENDCELL : FLAGS_MARK_NORMAL;
+			if (nType !== this.GetMarkType())
 			{
-				Context.FillTextCode(X, Y, this.SectionEnd.ColonSymbol);
-				X += this.SectionEnd.ColonWidth;
+				let oMeasurer = AscCommon.g_oTextMeasurer;
+				let oTextPr   = oParagraph.GetParaEndCompiledPr();
+				oMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+				this.Measure(oMeasurer, oTextPr, isEndCell);
 			}
 		}
 	};
@@ -202,6 +205,49 @@
 	CRunParagraphMark.prototype.GetFontSlot = function(oTextPr)
 	{
 		return AscWord.fontslot_Unknown;
+	};
+	CRunParagraphMark.prototype.GetMarkType = function()
+	{
+		return (this.Flags & FLAGS_MARK_MASK);
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	CRunParagraphMark.prototype.private_DrawSectionEnd = function(X, Y, Context)
+	{
+		Context.b_color1(0, 0, 0, 255);
+		Context.p_color(0, 0, 0, 255);
+		Context.SetFont({
+			FontFamily : {Name : "Courier New", Index : -1},
+			FontSize   : 8,
+			Italic     : false,
+			Bold       : false
+		});
+
+		for (var nPos = 0, nCount = this.SectionEnd.ColonsCount; nPos < nCount; ++nPos)
+		{
+			Context.FillTextCode(X, Y, this.SectionEnd.ColonSymbol);
+			X += this.SectionEnd.ColonWidth;
+		}
+
+		if (this.SectionEnd.String)
+		{
+			for (var nPos = 0, nCount = this.SectionEnd.String.length; nPos < nCount; ++nPos)
+			{
+				Context.FillText(X, Y, this.SectionEnd.String[nPos]);
+				X += this.SectionEnd.Widths[nPos];
+			}
+
+			for (var nPos = 0, nCount = this.SectionEnd.ColonsCount; nPos < nCount; ++nPos)
+			{
+				Context.FillTextCode(X, Y, this.SectionEnd.ColonSymbol);
+				X += this.SectionEnd.ColonWidth;
+			}
+		}
+	};
+	CRunParagraphMark.prototype.private_UpdateMarkType = function(nType)
+	{
+		this.Flags = (this.Flags & 0xFFFFFFFC) | nType;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

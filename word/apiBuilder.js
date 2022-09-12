@@ -2729,22 +2729,24 @@
 	/**
 	 * Converts the ApiRange object into the JSON object.
 	 * @memberof ApiRange
+	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
 	 */
-	ApiRange.prototype.ToJSON = function()
+	ApiRange.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
 		var oDocument = private_GetLogicDocument();
 		var aContent = [];
-		var aResult = {
-			type: "document",
-			content: []
+		var oJSON = {
+			"type":    "document",
+			"content": []
 		}
 
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
-		var oldSelectionInfo	= oDocument.SaveDocumentState();
+		var oldSelectionInfo = oDocument.SaveDocumentState();
 		this.Select(false);
 
 		var oSelectedContent = oDocument.GetSelectedContent();
@@ -2765,12 +2767,18 @@
 		if (aContent.length > 0)
 		{
 			var oWriter = new AscCommon.WriterToJSON();
-			aResult["content"] = oWriter.SerContent(aContent);
+			oJSON["content"] = oWriter.SerContent(aContent);
 		}
 		else
 			return "";
 
-		return JSON.stringify(aResult);
+		// numbering и styles в конце, потому что сначала нужно обойти все параграфы
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+
+		return JSON.stringify(oJSON);
 	};
 
 	/**
@@ -2975,7 +2983,7 @@
 	ApiPictureForm.prototype.constructor = ApiPictureForm;
 
 	/**
-	 * Class representing a complex form
+	 * Class representing a complex form.
 	 * @param oSdt
 	 * @constructor
 	 * @extends {ApiFormBase}
@@ -3174,13 +3182,18 @@
 	/**
 	 * Converts the ApiHyperlink object into the JSON object.
 	 * @memberof ApiHyperlink
+	 * @param bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
 	 */
-	ApiHyperlink.prototype.ToJSON = function()
+	ApiHyperlink.prototype.ToJSON = function(bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerHyperlink(this.ParaHyperlink));
+		var oJSON = oWriter.SerHyperlink(this.ParaHyperlink);
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+
+		return JSON.stringify(oJSON);
 	};
 
 	/**
@@ -3666,7 +3679,7 @@
 	 * | "textCurveDown" | "textCurveUp" | "textDeflate" | "textDeflateBottom" | "textDeflateInflate" | "textDeflateInflateDeflate" | "textDeflateTop"
 	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
 	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
-	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransofrm
+	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransform
 	 * */
 
 	/**
@@ -3764,8 +3777,8 @@
 	 */
 
 	/**
-	 * Available caption types.
-	 * @typedef {"equation" | "figure" | "table"} captionType
+	 * Available caption labels.
+	 * @typedef {"Equation" | "Figure" | "Table"} CaptionLabel
 	 */
 	//------------------------------------------------------End Cross-reference types--------------------------------------------------
 
@@ -3783,7 +3796,7 @@
 	 */
 
 	/**
-	 * Types of all supported forms
+	 * Types of all supported forms.
 	 * @typedef {ApiTextForm | ApiComboBoxForm | ApiCheckBoxForm | ApiPictureForm | ApiComplexForm} ApiForm
 	 */
 
@@ -3993,14 +4006,14 @@
 	};
 
 	/**
-	 * Creates an Ole-object with the parameters specified.
+	 * Creates an OLE object with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
-	 * @param {EMU} nWidth - The Ole-object width in English measure units.
-	 * @param {EMU} nHeight - The Ole-object height in English measure units.
-	 * @param {string} sData - ole-object string data.
-	 * @param {string} sAppId - the application id associated with this object.
+	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} nWidth - The OLE object width in English measure units.
+	 * @param {EMU} nHeight - The OLE object height in English measure units.
+	 * @param {string} sData - The OLE object string data.
+	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {ApiOleObject}
 	 */
 	Api.prototype.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
@@ -4440,44 +4453,52 @@
 		var oReader = new AscCommon.ReaderFromJSON();
 		var oDocument = this.GetDocument();
 		var oParsedObj  = JSON.parse(sMessage);
-
-		switch (oParsedObj.type)
+		var oResult = null;
+		switch (oParsedObj["type"])
 		{
 			case "document":
-				if (oParsedObj.textPr)
+				if (oParsedObj["numbering"])
 				{
-					var oNewTextPr = oReader.TextPrFromJSON(oParsedObj.textPr);
+					oReader.parsedNumbering = oParsedObj["numbering"];
+				}
+				if (oParsedObj["styles"])
+				{
+					oReader.StylesFromJSON(oParsedObj["styles"]);
+				}
+				if (oParsedObj["textPr"])
+				{
+					var oNewTextPr = oReader.TextPrFromJSON(oParsedObj["textPr"]);
 					var oDefaultTextPr = oDocument.GetDefaultTextPr();
 
-					oDefaultTextPr.TextPr.Set_FromObject(oNewTextPr);
+					oDefaultTextPr.TextPr = oNewTextPr;
 					oDefaultTextPr.private_OnChange();
 				}
-				if (oParsedObj.paraPr)
+				if (oParsedObj["paraPr"])
 				{
-					var oNewParaPr = oReader.ParaPrFromJSON(oParsedObj.paraPr);
+					var oNewParaPr = oReader.ParaPrFromJSON(oParsedObj["paraPr"]);
 					var oDefaultParaPr = oDocument.GetDefaultParaPr();
 
 					oDefaultParaPr.ParaPr.Set_FromObject(oNewParaPr);
 					oDefaultParaPr.private_OnChange();
 				}
-				if (oParsedObj.theme)
+				if (oParsedObj["theme"])
 				{
 					var oDefaultTheme = oDocument.Document.GetTheme();
 
-					oDefaultTheme.setColorScheme(oReader.ClrSchemeFromJSON(oParsedObj.theme.themeElements.clrScheme));
-					oDefaultTheme.setFontScheme(oReader.FontSchemeFromJSON(oParsedObj.theme.themeElements.fontScheme));
-					oDefaultTheme.setFormatScheme(oReader.FmtSchemeFromJSON(oParsedObj.theme.themeElements.fmtScheme));
+					oDefaultTheme.setColorScheme(oReader.ClrSchemeFromJSON(oParsedObj["theme"]["themeElements"]["clrScheme"]));
+					oDefaultTheme.setFontScheme(oReader.FontSchemeFromJSON(oParsedObj["theme"]["themeElements"]["fontScheme"]));
+					oDefaultTheme.setFormatScheme(oReader.FmtSchemeFromJSON(oParsedObj["theme"]["themeElements"]["fmtScheme"]));
 
-					oDefaultTheme.setLnDef(oParsedObj.theme.objectDefaults.lnDef ? oReader.DefSpDefinitionFromJSON(oParsedObj.theme.objectDefaults.lnDef) : null);
-					oDefaultTheme.setSpDef(oParsedObj.theme.objectDefaults.spDef ? oReader.DefSpDefinitionFromJSON(oParsedObj.theme.objectDefaults.spDef) : null);
-					oDefaultTheme.setTxDef(oParsedObj.theme.objectDefaults.txDef ? oReader.DefSpDefinitionFromJSON(oParsedObj.theme.objectDefaults.txDef) : null);
+					oDefaultTheme.setLnDef(oParsedObj["theme"]["objectDefaults"]["lnDef"] ? oReader.DefSpDefinitionFromJSON(oParsedObj["theme"]["objectDefaults"]["lnDef"]) : null);
+					oDefaultTheme.setSpDef(oParsedObj["theme"]["objectDefaults"]["spDef"] ? oReader.DefSpDefinitionFromJSON(oParsedObj["theme"]["objectDefaults"]["spDef"]) : null);
+					oDefaultTheme.setTxDef(oParsedObj["theme"]["objectDefaults"]["txDef"] ? oReader.DefSpDefinitionFromJSON(oParsedObj["theme"]["objectDefaults"]["txDef"]) : null);
 
-					oDefaultTheme.setName(oParsedObj.theme);
-					oDefaultTheme.setIsThemeOverride(true);
+					oDefaultTheme.setName(oParsedObj["theme"]);
+					oDefaultTheme.setIsThemeOverride(oParsedObj["theme"]["isThemeOverride"]);
 				}
-				if (oParsedObj.sectPr)
+				if (oParsedObj["sectPr"])
 				{
-					var oNewSectPr = oReader.SectPrFromJSON(oParsedObj.sectPr);
+					var oNewSectPr = oReader.SectPrFromJSON(oParsedObj["sectPr"]);
 					var oCurSectPr = oDocument.Document.SectPr;
 
 					// borders
@@ -4513,7 +4534,7 @@
 					oCurSectPr.SetGutter(oNewSectPr.PageMargins.Gutter);
 					oCurSectPr.SetPageMargins(oNewSectPr.PageMargins.Left, oNewSectPr.PageMargins.Top, oNewSectPr.PageMargins.Right, oNewSectPr.PageMargins.Bottom);
 					oCurSectPr.SetPageMarginFooter(oNewSectPr.PageMargins.Footer);
-					oCurSectPr.GetPageMarginHeader(oNewSectPr.PageMargins.Header);
+					oCurSectPr.SetPageMarginHeader(oNewSectPr.PageMargins.Header);
 
 					// pageSize
 					oCurSectPr.SetPageSize(oNewSectPr.PageSize.W, oNewSectPr.PageSize.H);
@@ -4536,7 +4557,7 @@
 
 				}
 
-				var aContent = oReader.ContentFromJSON(oParsedObj.content);
+				var aContent = oReader.ContentFromJSON(oParsedObj["content"]);
 				for (var nElm = 0; nElm < aContent.length; nElm++)
 				{
 					if (aContent[nElm] instanceof AscCommonWord.Paragraph)
@@ -4547,54 +4568,75 @@
 						aContent[nElm] = new ApiBlockLvlSdt(aContent[nElm]);
 				}
 
-				return aContent;
+				oResult = aContent;
+				break;
 			case "docContent":
-				return new ApiDocumentContent(oReader.DocContentFromJSON(oParsedObj));
+				oResult = new ApiDocumentContent(oReader.DocContentFromJSON(oParsedObj));
+				break;
 			case "drawingDocContent":
-				return new ApiDocumentContent(oReader.DrawingDocContentFromJSON(oParsedObj));
+				oResult = new ApiDocumentContent(oReader.DrawingDocContentFromJSON(oParsedObj));
+				break;
 			case "paragraph":
-				return new ApiParagraph(oReader.ParagraphFromJSON(oParsedObj));
+				oResult = new ApiParagraph(oReader.ParagraphFromJSON(oParsedObj));
+				break;
 			case "run":
 			case "mathRun":
 			case "endRun":
-				return new ApiRun(oReader.ParaRunFromJSON(oParsedObj));
+				oResult = new ApiRun(oReader.ParaRunFromJSON(oParsedObj));
+				break;
 			case "hyperlink":
-				return new ApiHyperlink(oReader.HyperlinkFromJSON(oParsedObj));
+				oResult = new ApiHyperlink(oReader.HyperlinkFromJSON(oParsedObj));
+				break;
 			case "inlineLvlSdt":
-				return new ApiInlineLvlSdt(oReader.InlineLvlSdtFromJSON(oParsedObj));
+				oResult = new ApiInlineLvlSdt(oReader.InlineLvlSdtFromJSON(oParsedObj));
+				break;
 			case "blockLvlSdt":
-				return new ApiBlockLvlSdt(oReader.BlockLvlSdtFromJSON(oParsedObj));
+				oResult = new ApiBlockLvlSdt(oReader.BlockLvlSdtFromJSON(oParsedObj));
+				break;
 			case "table":
-				return new ApiTable(oReader.TableFromJSON(oParsedObj));
+				oResult = new ApiTable(oReader.TableFromJSON(oParsedObj));
+				break;
 			case "paraDrawing":
-				return new ApiDrawing(oReader.ParaDrawingFromJSON(oParsedObj));
+				oResult = new ApiDrawing(oReader.ParaDrawingFromJSON(oParsedObj));
+				break;
 			case "nextPage":
 			case "oddPage":
 			case "evenPage":
 			case "continuous":
 			case "nextColumn":
-				return new ApiSection(oReader.SectPrFromJSON(oParsedObj));
+				oResult = new ApiSection(oReader.SectPrFromJSON(oParsedObj));
+				break;
 			case "numbering":
-				return new ApiNumbering(oReader.NumberingFromJSON(oParsedObj));
+				oResult = new ApiNumbering(oReader.NumberingFromJSON(oParsedObj));
+				break;
 			case "textPr":
-				return new ApiTextPr(null, oReader.TextPrFromJSON(oParsedObj));
+				oResult = oParsedObj["bFromDocument"] ? new ApiTextPr(null, oReader.TextPrFromJSON(oParsedObj)) : new ApiTextPr(null, oReader.TextPrDrawingFromJSON(oParsedObj));
+				break;
 			case "paraPr":
-				return new ApiParaPr(null, oReader.ParaPrFromJSON(oParsedObj));
+				oResult = oParsedObj["bFromDocument"] ? new ApiParaPr(null, oReader.ParaPrFromJSON(oParsedObj)) : new ApiParaPr(null, oReader.ParaPrDrawingFromJSON(oParsedObj));
+				break;
 			case "tablePr":
-				return new ApiTablePr(null, oReader.TablePrFromJSON(null, oParsedObj));
+				oResult = new ApiTablePr(null, oReader.TablePrFromJSON(null, oParsedObj));
+				break;
 			case "tableRowPr":
-				return new ApiTableRowPr(null, oReader.TableRowPrFromJSON(oParsedObj));
+				oResult = new ApiTableRowPr(null, oReader.TableRowPrFromJSON(oParsedObj));
+				break;
 			case "tableCellPr":
-				return new ApiTableCellPr(null, oReader.TableCellPrFromJSON(oParsedObj));
+				oResult = new ApiTableCellPr(null, oReader.TableCellPrFromJSON(oParsedObj));
+				break;
 			case "fill":
-				return new ApiFill(oReader.FillFromJSON(oParsedObj));
+				oResult = new ApiFill(oReader.FillFromJSON(oParsedObj));
+				break;
 			case "stroke":
-				return new ApiStroke(oReader.LnFromJSON(oParsedObj));
+				oResult = new ApiStroke(oReader.LnFromJSON(oParsedObj));
+				break;
 			case "gradStop":
 				var oGs = oReader.GradStopFromJSON(oParsedObj);
-				return new ApiGradientStop(new ApiUniColor(oGs.color), oGs.pos);
+				oResult = new ApiGradientStop(new ApiUniColor(oGs.color), oGs.pos);
+				break;
 			case "uniColor":
-				return new ApiUniColor(oReader.ColorFromJSON(oParsedObj));
+				oResult = new ApiUniColor(oReader.ColorFromJSON(oParsedObj));
+				break;
 			case "style":
 				var oStyle = oReader.StyleFromJSON(oParsedObj);
 				var oDocument = private_GetLogicDocument();
@@ -4617,10 +4659,15 @@
 							oStyle = oExistingStyle;
 					}
 				}
-				return new ApiStyle(oStyle);
+				oResult = new ApiStyle(oStyle);
+				break;
 			case "tableStyle":
-				return new ApiTableStylePr(oParsedObj.styleType, null, oReader.TableStylePrFromJSON(oParsedObj));
+				oResult = new ApiTableStylePr(oParsedObj.styleType, null, oReader.TableStylePrFromJSON(oParsedObj));
+				break;
 		}
+
+		oReader.AssignConnectedObjects();
+		return oResult;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4792,7 +4839,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 			this.Document.Internal_Content_Add(nPos, oElm);
 		}
@@ -4809,7 +4856,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			this.Document.Internal_Content_Add(this.Document.Content.length, oElm);
@@ -4858,11 +4905,20 @@
 	 * Converts the ApiDocumentContent object into the JSON object.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
+	 * @returns {JSON}
 	 */
-	ApiDocumentContent.prototype.ToJSON = function()
+	ApiDocumentContent.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerDocContent(this.Document));
+		var oJSON = oWriter.SerDocContent(this.Document);
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+
+		return JSON.stringify(oJSON);
 	};
 	/**
 	 * Returns an array of document elements from the current ApiDocumentContent object.
@@ -4894,7 +4950,7 @@
 		return aContent;
 	};
 	/**
-	 * Returns a collection of drawing objects in the document content.
+	 * Returns a collection of drawing objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiDrawing[]}  
@@ -4910,7 +4966,7 @@
 		return arrApiShapes;
 	};
 	/**
-	 * Returns a collection of shape objects in the document content.
+	 * Returns a collection of shape objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiShape[]}  
@@ -4929,7 +4985,7 @@
 		return arrApiShapes;
 	};
 	/**
-	 * Returns a collection of image objects in the document content.
+	 * Returns a collection of image objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiImage[]}  
@@ -4948,7 +5004,7 @@
 		return arrApiImages;
 	};
 	/**
-	 * Returns a collection of chart objects in the document content.
+	 * Returns a collection of chart objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiChart[]}  
@@ -4967,7 +5023,7 @@
 		return arrApiCharts;
 	};
 	/**
-	 * Returns a collection of ole-objects in the document content.
+	 * Returns a collection of OLE objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiOleObject[]}  
@@ -5196,7 +5252,7 @@
 			if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 			{
 				oElm = oElement.private_GetImpl();
-				if (oElm.Is_UseInDocument())
+				if (oElm.IsUseInDocument())
 					continue;
 
 				oSelectedContent.Add(new AscCommonWord.CSelectedElement(oElm, true));
@@ -5391,7 +5447,7 @@
 		this.Document.ReplaceSearchElement(sReplace, true, null, false);
 	};
 	/**
-	 * Returns a list of all the content controls in the document.
+	 * Returns a list of all the content controls from the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
@@ -5410,7 +5466,7 @@
 		return arrResult;
 	};
 	/**
-	 * Returns a list of all tags that are used for all content controls in the document
+	 * Returns a list of all tags that are used for all content controls in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {String[]}
@@ -5435,7 +5491,7 @@
 		return arrResult;
 	};
 	/**
-	 * Returns a list of all tags that are used for all special forms in the document
+	 * Returns a list of all tags that are used for all forms in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {String[]}
@@ -5460,10 +5516,10 @@
 		return arrResult;
 	};
 	/**
-	 * Returns a list of all the content controls in the document with specified tag name
+	 * Returns a list of all content controls in the document with the specified tag name.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param sTag {string}
+	 * @param sTag {string} - Content control tag.
 	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
 	 */
 	ApiDocument.prototype.GetContentControlsByTag = function(sTag)
@@ -5485,10 +5541,10 @@
 		return arrResult;
 	};
 	/**
-	 * Returns a list of all the special forms in the document with specified tag name
+	 * Returns a list of all forms in the document with the specified tag name.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param sTag {string}
+	 * @param sTag {string} - Form tag.
 	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
 	 */
 	ApiDocument.prototype.GetFormsByTag = function(sTag)
@@ -5965,27 +6021,32 @@
 				oDocument.LoadDocumentState(oState);
 			}
 		}
-	};	/**
+	};
+	/**
 	 * Converts the ApiDocument object into the JSON object.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param bWriteDefaultTextPr - Specifies if the default text properties will be written to the JSON object or not.
 	 * @param bWriteDefaultParaPr - Specifies if the default paragraph properties will be written to the JSON object or not.
 	 * @param bWriteTheme         - Specifies if the document theme will be written to the JSON object or not.
-	 * @param bWriteSectionPr     - Specifies if the section properties will be written to the JSON object or not.
+	 * @param bWriteSectionPr     - Specifies if the document section properties will be written to the JSON object or not.
+	 * @param bWriteNumberings    - Specifies if the document numberings will be written to the JSON object or not.
+	 * @param bWriteStyles        - Specifies if the document styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
-	ApiDocument.prototype.ToJSON = function(bWriteDefaultTextPr, bWriteDefaultParaPr, bWriteTheme, bWriteSectionPr)
+	ApiDocument.prototype.ToJSON = function(bWriteDefaultTextPr, bWriteDefaultParaPr, bWriteTheme, bWriteSectionPr, bWriteNumberings, bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
 
 		var oResult = {
-			type: "document",
-			textPr: bWriteDefaultTextPr ? oWriter.SerTextPr(this.GetDefaultTextPr().TextPr) : null,
-			paraPr: bWriteDefaultParaPr ? oWriter.SerParaPr(this.GetDefaultParaPr().ParaPr) : null,
-			theme: bWriteTheme ? oWriter.SerTheme(this.Document.GetTheme()) : null,
-			sectPr: bWriteSectionPr ? oWriter.SerSectionPr(this.Document.SectPr) : null,
-			content: oWriter.SerContent(this.Document.Content, undefined, undefined, undefined, true)
+			"type":      "document",
+			"textPr":    bWriteDefaultTextPr ? oWriter.SerTextPr(this.GetDefaultTextPr().TextPr) : undefined,
+			"paraPr":    bWriteDefaultParaPr ? oWriter.SerParaPr(this.GetDefaultParaPr().ParaPr) : undefined,
+			"theme":     bWriteTheme ? oWriter.SerTheme(this.Document.GetTheme()) : undefined,
+			"sectPr":    bWriteSectionPr ? oWriter.SerSectionPr(this.Document.SectPr) : undefined,
+			"content":   oWriter.SerContent(this.Document.Content, undefined, undefined, undefined, true),
+			"numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined,
+			"styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined
 		}
 
 		return JSON.stringify(oResult);
@@ -6106,7 +6167,7 @@
 	 * Returns all caption paragraphs of the specified type from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {captionType} sCaption Caption type (equation, figure or table).
+	 * @param {CaptionLabel | string} sCaption - caption label ("Equation", "Figure", "Table" or another caption label).
 	 * @returns {ApiParagraph[]}
 	 */
 	ApiDocument.prototype.GetAllCaptionParagraphs = function(sCaption) 
@@ -6114,7 +6175,7 @@
 		if (typeof(sCaption) !== "string" || sCaption.length === 0)
 			return [];
 
-		var allParas = this.Document.GetAllCaptionParagraphs(sCaption[0].toUpperCase() + sCaption.slice(1));
+		var allParas = this.Document.GetAllCaptionParagraphs(sCaption);
 		var aResult = [];
 		for (var nPara = 0; nPara < allParas.length; nPara++)
 			aResult.push(new ApiParagraph(allParas[nPara]));
@@ -6165,7 +6226,7 @@
 	};
 
 	/**
-     * Returns the selected drawings.
+     * Returns all the selected drawings in the current document.
      * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
      * @returns {ApiShape[] | ApiImage[] | ApiChart[] | ApiDrawing[]}
@@ -6200,6 +6261,23 @@
 		}
 
 		return aResult;
+	};
+
+	/**
+	 * Replaces the current image with an image specified.
+	 * @typeofeditors ["CDE"]
+	 * @memberof ApiPresentation
+	 * @param {string} sImageUrl - The image source where the image to be inserted should be taken from (currently, only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} Width - The image width in English measure units.
+	 * @param {EMU} Height - The image height in English measure units.
+	 */
+	ApiDocument.prototype.ReplaceCurrentImage = function(sImageUrl, Width, Height)
+	{
+		let oLogicDocument = private_GetLogicDocument();
+		let oDrawingObjects = oLogicDocument.DrawingObjects;
+
+		let dK = 1 / 36000 / AscCommon.g_dKoef_pix_to_mm;
+		oDrawingObjects.putImageToSelection(sImageUrl, Width * dK, Height * dK );
 	};
 
 	/**
@@ -6247,7 +6325,7 @@
 	};
 
 	/**
-	 * Adds footnote for selected text (or current position if selection doesn't exist).
+	 * Adds a footnote for the selected text (or the current position if the selection doesn't exist).
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiDocumentContent}
@@ -6262,7 +6340,7 @@
 	};
 
 	/**
-	 * Adds endnote for selected text (or current position if selection doesn't exist).
+	 * Adds an endnote for the selected text (or the current position if the selection doesn't exist).
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiDocumentContent}
@@ -6575,7 +6653,7 @@
 			return false;
 
 		var oParaElement = oElement.private_GetImpl();
-		if (oParaElement.Is_UseInDocument())
+		if (oParaElement.IsUseInDocument())
 			return false;
 
 		if (undefined !== nPos)
@@ -6735,7 +6813,7 @@
 	 */
 	ApiParagraph.prototype.Push = function(oElement)
 	{
-		if (oElement.private_GetImpl().Is_UseInDocument())
+		if (oElement.private_GetImpl().IsUseInDocument())
 			return false;
 
 		if (private_IsSupportedParaElement(oElement))
@@ -7276,7 +7354,7 @@
 		return arrApiCharts;
 	};
 	/**
-	 * Returns a collection of ole-objects in the paragraph.
+	 * Returns a collection of OLE objects in the paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiOleObject[]}  
@@ -7632,7 +7710,7 @@
 				nRefTo = 5;
 				break;
 		}
-		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7642,17 +7720,17 @@
 			sSepWith = "";
 
 		var oDocument = private_GetLogicDocument();
-		var oParaPos, oldSelectionInfo;
+		var oldSelectionInfo;
 
 		var allNumberedParas = oDocument.GetAllNumberedParagraphs();
 		for (var nPara = 0; nPara < allNumberedParas.length; nPara++)
 		{
 			if (allNumberedParas[nPara].Id === oParaTo.Paragraph.Id)
 			{
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow, sSepWith);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7696,7 +7774,7 @@
 				nRefTo = 5;
 				break;
 		}
-		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !oParaTo.Paragraph.Is_UseInDocument() || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !oParaTo.Paragraph.IsUseInDocument() || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7708,10 +7786,10 @@
 			return false;
 
 		var oDocument = private_GetLogicDocument();
-		var oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 		var oldSelectionInfo = oDocument.SaveDocumentState();
 		oDocument.RemoveSelection();
-		oDocument.SetContentPosition(oParaPos, 0, 0);
+		this.Paragraph.Document_SetThisElementCurrent();
+		this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 		oDocument.AddRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow, undefined);
 		oDocument.LoadDocumentState(oldSelectionInfo);
 		return true;
@@ -7753,7 +7831,7 @@
 				nRefTo = 5;
 				break;
 		}
-		if (nRefTo === -1 || typeof(sBookmarkName) !== "string" || sBookmarkName.length === 0 || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || typeof(sBookmarkName) !== "string" || sBookmarkName.length === 0 || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7764,17 +7842,16 @@
 
 		var oDocument = private_GetLogicDocument();
 		var oManager = oDocument.GetBookmarksManager();
-		var oParaPos, sName, oldSelectionInfo;
+		var sName, oldSelectionInfo;
 		for (var nBookmark = 0, nCount = oManager.GetCount(); nBookmark < nCount; nBookmark++)
 		{
 			sName = oManager.GetName(nBookmark);
 			if (!oManager.IsInternalUseBookmark(sName) && !oManager.IsHiddenBookmark(sName) && sName === sBookmarkName)
 			{
-				
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddRefToBookmark(sBookmarkName, nRefTo, bLink, bAboveBelow, sSepWith);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7813,7 +7890,7 @@
 				nRefTo = 9;
 				break;
 		}
-		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7821,17 +7898,17 @@
 			bAboveBelow = false;
 
 		var oDocument = private_GetLogicDocument();
-		var oParaPos, oldSelectionInfo;
+		var oldSelectionInfo;
 
 		var aFirstFootnoteParas = oDocument.GetFootNotesFirstParagraphs();
 		for (var nPara = 0; nPara < aFirstFootnoteParas.length; nPara++)
 		{
 			if (aFirstFootnoteParas[nPara].Id === oParaTo.Paragraph.Id)
 			{
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddNoteRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7869,7 +7946,7 @@
 				nRefTo = 9;
 				break;
 		}
-		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7878,16 +7955,16 @@
 
 		var oDocument = private_GetLogicDocument();
 		var aFirstEndnoteParas = oDocument.GetEndNotesFirstParagraphs();
-		var oParaPos, oldSelectionInfo;
+		var oldSelectionInfo;
 		
 		for (var nPara = 0; nPara < aFirstEndnoteParas.length; nPara++)
 		{
 			if (aFirstEndnoteParas[nPara].Id === oParaTo.Paragraph.Id)
 			{
-				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
-				oDocument.SetContentPosition(oParaPos, 0, 0);
+				this.Paragraph.Document_SetThisElementCurrent();
+				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
 				oDocument.AddNoteRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow);
 				oDocument.LoadDocumentState(oldSelectionInfo);
 				return true;
@@ -7901,7 +7978,7 @@
 	 * The paragraph must be in the document.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {captionType} sCaption - Caption type (equation, figure, table).
+	 * @param {CaptionLabel | string} sCaption - caption label ("Equation", "Figure", "Table" or another caption label).
 	 * @param {captionRefTo} sRefType - The text or numeric value of a caption reference you want to insert.
 	 * @param {ApiParagraph} oParaTo - The caption paragraph to be referred to (must be in the document).
 	 * @param {boolean} [bLink=true] - Specifies if the reference will be inserted as a hyperlink.
@@ -7932,7 +8009,7 @@
 				nRefTo = 5;
 				break;
 		}
-		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7942,7 +8019,7 @@
 		var aTempCompFlds = [];
 		oParaTo = oParaTo.private_GetImpl();
 		
-		oParaTo.GetAllSeqFieldsByType(sCaption[0].toUpperCase() + sCaption.slice(1), aTempCompFlds);
+		oParaTo.GetAllSeqFieldsByType(sCaption, aTempCompFlds);
 		if (aTempCompFlds.length === 0)
 			return false;
 		if (nRefTo === 7 && oParaTo.asc_canAddRefToCaptionText(typeRec.displayValue) === false)
@@ -7953,10 +8030,10 @@
 
 		var oDocument = private_GetLogicDocument();
 		var oldSelectionInfo = oDocument.SaveDocumentState();
-		var oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 		oDocument.RemoveSelection();
-		oDocument.SetContentPosition(oParaPos, 0, 0);
-		oDocument.AddRefToCaption(sCaption[0].toUpperCase() + sCaption.slice(1), oParaTo, nRefTo, bLink, bAboveBelow);
+		this.Paragraph.Document_SetThisElementCurrent();
+		this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
+		oDocument.AddRefToCaption(sCaption, oParaTo, nRefTo, bLink, bAboveBelow);
 		oDocument.LoadDocumentState(oldSelectionInfo);
 		return true;
 	};
@@ -7965,16 +8042,23 @@
 	 * Converts the ApiParagraph object into the JSON object.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
-	ApiParagraph.prototype.ToJSON = function()
+	ApiParagraph.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerParagraph(this.Paragraph));
+		var oJSON = oWriter.SerParagraph(this.Paragraph);
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		return JSON.stringify(oJSON);
 	};
 
 	/**
-     * Returns the paragraph position in its parent element.
+     * Returns the paragraph position within its parent element.
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
      * @returns {Number} - returns -1 if the paragraph parent doesn't exist. 
@@ -7996,7 +8080,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			var oParent = this.Paragraph.GetParent();
@@ -8669,11 +8753,16 @@
 	 * Converts the ApiRun object into the JSON object.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
+	 * @returns {JSON}
 	 */
-	ApiRun.prototype.ToJSON = function()
+	ApiRun.prototype.ToJSON = function(bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerParaRun(this.Run));
+		var oJSON = oWriter.SerParaRun(this.Run);
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		return JSON.stringify(oJSON);
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -8983,12 +9072,19 @@
 	 * Converts the ApiSection object into the JSON object.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
-	ApiSection.prototype.ToJSON = function()
+	ApiSection.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerSectionPr(this.Section));
+		var oJSON = oWriter.SerSectionPr(this.Section);
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		return JSON.stringify(oJSON);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -9309,7 +9405,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 			apiCellContent.Document.Internal_Content_Add(nPos, oElm);
 
@@ -9840,16 +9936,23 @@
 	 * Converts the ApiTable object into the JSON object.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
-	ApiTable.prototype.ToJSON = function()
+	ApiTable.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerTable(this.Table));
+		var oJSON = oWriter.SerTable(this.Table);
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		return JSON.stringify(oJSON);
 	};
 
 	/**
-     * Returns the table position in its parent element.
+     * Returns the table position within its parent element.
      * @memberof ApiTable
      * @typeofeditors ["CDE"]
      * @returns {Number} - returns -1 if the table parent doesn't exist. 
@@ -9871,7 +9974,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			var oParent = this.Table.GetParent();
@@ -10483,7 +10586,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 			apiCellContent.Document.Internal_Content_Add(nPos, oElm);
 
@@ -10745,12 +10848,16 @@
 	 * Converts the ApiStyle object into the JSON object.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
-	ApiStyle.prototype.ToJSON = function()
+	ApiStyle.prototype.ToJSON = function(bWriteNumberings)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerStyle(this.Style));
+		var oJSON = oWriter.SerStyle(this.Style);
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		return JSON.stringify(oJSON);
 	};
 
 
@@ -11083,12 +11190,23 @@
 	 * Converts the ApiTextPr object into the JSON object.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
-	ApiTextPr.prototype.ToJSON = function()
+	ApiTextPr.prototype.ToJSON = function(bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerTextPr(this.TextPr));
+		let oWriter = new AscCommon.WriterToJSON();
+		let bFromDocument = true;
+		let oParentRun = this.Parent;
+		let oParentPara = oParentRun instanceof ParaRun ? oParentRun.GetParagraph() : null;
+
+		if (oWriter.isWord === false || (oParentPara instanceof Paragraph && oParentPara.bFromDocument !== true))
+			bFromDocument = false;
+
+		let oJSON = bFromDocument ? oWriter.SerTextPr(this.TextPr) : oWriter.SerTextPrDrawing(this.TextPr);
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		return JSON.stringify();
 	};
 
 
@@ -11713,12 +11831,16 @@
 	 * Converts the ApiParaPr object into the JSON object.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
-	ApiParaPr.prototype.ToJSON = function()
+	ApiParaPr.prototype.ToJSON = function(bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerParaPr(this.ParaPr));
+		var oJSON = this.Parent != null && this.Parent instanceof Paragraph && this.Parent.bFromDocument !== true ? oWriter.SerParaPrDrawing(this.ParaPr) : oWriter.SerParaPr(this.ParaPr);
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		return JSON.stringify(oJSON);
 	};
 
 
@@ -12208,7 +12330,7 @@
 	 * Sets the table title (caption).
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sTitle - the table title to be set.
+	 * @param {string} sTitle - The table title to be set.
 	 * @return {boolean}
 	 */
 	ApiTablePr.prototype.SetTableTitle = function(sTitle)
@@ -12221,7 +12343,7 @@
 		return true;
 	};
 	/**
-	 * Gets the table title (caption).
+	 * Returns the table title (caption).
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @return {string}
@@ -12237,7 +12359,7 @@
 	 * Sets the table description.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sDescr - the table description to be set.
+	 * @param {string} sDescr - The table description to be set.
 	 * @return {boolean}
 	 */
 	ApiTablePr.prototype.SetTableDescription = function(sDescr)
@@ -12250,7 +12372,7 @@
 		return true;
 	};
 	/**
-	 * Gets the table description.
+	 * Returns the table description.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @return {string}
@@ -13228,12 +13350,19 @@
 	 * Converts the ApiDrawing object into the JSON object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
-	ApiDrawing.prototype.ToJSON = function()
+	ApiDrawing.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerParaDrawing(this.Drawing));
+		var oJSON = oWriter.SerParaDrawing(this.Drawing);
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		return JSON.stringify(oJSON);
 	};
 
 	/**
@@ -13244,7 +13373,7 @@
 	 */
 	ApiDrawing.prototype.GetWidth = function()
 	{
-		return private_MM2EMU(this.Drawing.GetWidth());
+		return private_MM2EMU(this.Drawing.getXfrmExtX());
 	};
 	/**
 	 * Returns the height of the current drawing.
@@ -13254,7 +13383,7 @@
 	 */
 	ApiDrawing.prototype.GetHeight = function()
 	{
-		return private_MM2EMU(this.Drawing.Get_Height());
+		return private_MM2EMU(this.Drawing.getXfrmExtY());
 	};
 	/**
      * Returns the lock value for the specified lock type of the current drawing.
@@ -13302,9 +13431,9 @@
 
 	/**
      * Sets the properties from another drawing to the current drawing.
-	 * The following properties will be copied: PosH, PosV, Distance, WrappingStyle, drawing name, title and description.
+	 * The following properties will be copied: horizontal and vertical alignment, distance between the edges of the current drawing object and any subsequent text, wrapping style, drawing name, title and description.
      * @memberof ApiDrawing
-     * @param {ApiDrawing} oAnotherDrawing - Drawing whose properties will be set to the current drawing.
+     * @param {ApiDrawing} oAnotherDrawing - The drawing which properties will be set to the current drawing.
      * @typeofeditors ["CDE"]
      * @returns {boolean}
      */
@@ -13404,10 +13533,10 @@
 	};
 
 	/**
-	 * Sets the data to current Ole-object.
+	 * Sets the data to the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {string} sData - ole-object string data.
+	 * @param {string} sData - The OLE object string data.
 	 * @returns {boolean}
 	 */
 	ApiOleObject.prototype.SetData = function(sData)
@@ -13420,7 +13549,7 @@
 	};
 
 	/**
-	 * Gets the string data from current Ole-object.
+	 * Returns the string data from the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
@@ -13434,10 +13563,10 @@
 	};
 
 	/**
-	 * Sets the application id to current Ole-object.
+	 * Sets the application ID to the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {string} sAppId - the application id associated with this object.
+	 * @param {string} sAppId - The application ID associated with the curent OLE object.
 	 * @returns {boolean}
 	 */
 	ApiOleObject.prototype.SetApplicationId = function(sAppId)
@@ -13450,7 +13579,7 @@
 	};
 
 	/**
-	 * Gets the application id from current Ole-object.
+	 * Returns the application ID from the current OLE object.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
@@ -14029,7 +14158,7 @@
 	ApiChart.prototype.SetXValues = function(aValues)
 	{
 		if (this.Chart.isScatterChartType())
-			return this.Chart.SetValuesToXDataPoints(aValues);
+			return this.Chart.SetXValuesToDataPoints(aValues);
 		return false;
 	};
 
@@ -14304,7 +14433,7 @@
 				nAxiePos = AscFormat.AX_POS_R;
 				break;
 			case "top":
-				nAxiePos = AscFormat.AX_POS_B;
+				nAxiePos = AscFormat.AX_POS_T;
 				break;
 			default:
 				return false;
@@ -14361,6 +14490,7 @@
 	 * Converts the ApiFill object into the JSON object.
 	 * @memberof ApiFill
 	 * @typeofeditors ["CDE"]
+	 * @returns {JSON}
 	 */
 	ApiFill.prototype.ToJSON = function()
 	{
@@ -14388,6 +14518,7 @@
 	 * Converts the ApiStroke object into the JSON object.
 	 * @memberof ApiStroke
 	 * @typeofeditors ["CDE"]
+	 * @returns {JSON}
 	 */
 	ApiStroke.prototype.ToJSON = function()
 	{
@@ -14415,6 +14546,7 @@
 	 * Converts the ApiGradientStop object into the JSON object.
 	 * @memberof ApiGradientStop
 	 * @typeofeditors ["CDE"]
+	 * @returns {JSON}
 	 */
 	ApiGradientStop.prototype.ToJSON = function()
 	{
@@ -14442,6 +14574,7 @@
 	 * Converts the ApiUniColor object into the JSON object.
 	 * @memberof ApiUniColor
 	 * @typeofeditors ["CDE"]
+	 * @returns {JSON}
 	 */
 	ApiUniColor.prototype.ToJSON = function()
 	{
@@ -14469,6 +14602,7 @@
 	 * Converts the ApiRGBColor object into the JSON object.
 	 * @memberof ApiRGBColor
 	 * @typeofeditors ["CDE"]
+	 * @returns {JSON}
 	 */
 	ApiRGBColor.prototype.ToJSON = function()
 	{
@@ -14496,6 +14630,7 @@
 	 * Converts the ApiSchemeColor object into the JSON object.
 	 * @memberof ApiSchemeColor
 	 * @typeofeditors ["CDE"]
+	 * @returns {JSON}
 	 */
 	ApiSchemeColor.prototype.ToJSON = function()
 	{
@@ -14523,6 +14658,7 @@
 	 * Converts the ApiPresetColor object into the JSON object.
 	 * @memberof ApiPresetColor
 	 * @typeofeditors ["CDE"]
+	 * @returns {JSON}
 	 */
 	ApiPresetColor.prototype.ToJSON = function()
 	{
@@ -14722,7 +14858,7 @@
 	 * Removes all the elements from the current inline text content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean} - returns false if control haven't elements.
+	 * @returns {boolean} - returns false if control has not elements.
 	 */
 	ApiInlineLvlSdt.prototype.RemoveAllElements = function()
 	{
@@ -14755,7 +14891,7 @@
 			return false;
 
 		var oParaElement = oElement.private_GetImpl();
-		if (oParaElement.Is_UseInDocument())
+		if (oParaElement.IsUseInDocument())
 			return false;
 
 		if (this.Sdt.IsShowingPlcHdr())
@@ -14789,7 +14925,7 @@
 			return false;
 
 		var oParaElement = oElement.private_GetImpl();
-		if (oParaElement.Is_UseInDocument())
+		if (oParaElement.IsUseInDocument())
 			return false;
 
 		if (this.Sdt.IsShowingPlcHdr())
@@ -14993,11 +15129,16 @@
 	 * Converts the ApiInlineLvlSdt object into the JSON object.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
+	 * @return {JSON}
 	 */
-	ApiInlineLvlSdt.prototype.ToJSON = function()
+	ApiInlineLvlSdt.prototype.ToJSON = function(bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerInlineLvlSdt(this.Sdt));
+		var oJSON = oWriter.SerInlineLvlSdt(this.Sdt);
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		return JSON.stringify(oJSON);
 	};
 
 	/**
@@ -15258,8 +15399,7 @@
 	 */
 	ApiBlockLvlSdt.prototype.RemoveAllElements = function()
 	{
-		this.Sdt.Content.ClearContent(true);
-
+		this.Sdt.ReplaceContentWithPlaceHolder(false);
 		return true;
 	};
 
@@ -15393,7 +15533,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			if (this.Sdt.IsShowingPlcHdr())
@@ -15422,7 +15562,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			if (this.Sdt.IsShowingPlcHdr())
@@ -15447,16 +15587,27 @@
 	 */
 	ApiBlockLvlSdt.prototype.AddText = function(sText)
 	{
-		if (typeof sText === "string")
-		{
-			var oParagraph = editor.CreateParagraph();
-			oParagraph.AddText(sText);
-			this.Sdt.Content.Internal_Content_Add(this.Sdt.Content.Content.length, oParagraph.private_GetImpl());
+		let _sText = GetStringParameter(sText, null);
+		if (null === _sText)
+			return false;
 
-			return true;
+		let oParagraph;
+		if (this.Sdt.IsPlaceHolder())
+		{
+			this.Sdt.ReplacePlaceHolderWithContent();
+			let oDocContent = this.GetContent();
+			if (oDocContent.GetElementsCount() && oDocContent.GetElement(0) instanceof ApiParagraph)
+				oParagraph = oDocContent.GetElement(0);
 		}
 
-		return false;
+		if (!oParagraph)
+		{
+			oParagraph = Api.prototype.CreateParagraph();
+			this.GetContent().Push(oParagraph);
+		}
+
+		oParagraph.AddText(_sText);
+		return true;
 	};
 
 	/**
@@ -15545,7 +15696,7 @@
 	};
 
 	/**
-     * Returns the content control position in its parent element.
+     * Returns the content control position within its parent element.
      * @memberof ApiBlockLvlSdt
      * @typeofeditors ["CDE"]
      * @returns {Number} - returns -1 if the content control parent doesn't exist. 
@@ -15567,7 +15718,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			var oParent = this.Sdt.GetParent();
@@ -16551,19 +16702,28 @@
 	 * Converts the ApiBlockLvlSdt object into the JSON object.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
+	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
+	 * @return {JSON}
 	 */
-	ApiBlockLvlSdt.prototype.ToJSON = function()
+	ApiBlockLvlSdt.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerBlockLvlSdt(this.Sdt));
+		var oJSON = oWriter.SerBlockLvlSdt(this.Sdt);
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		if (bWriteStyles)
+			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		return JSON.stringify(oJSON);
 	};
 
 	/**
+	 * Replaces each paragraph (or text in cell) in the select with the corresponding text from an array of strings.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {Array} arrString - An array of replacement strings.
-	 * @param {string} [sParaTab=" "] - specifies which character to use to define the tab in the source text.
-	 * @param {string} [sParaNewLine=" "] - specifies which character to use to specify the line break character in the source text.
+	 * @param {string} [sParaTab=" "] - A character which is used to specify the tab in the source text.
+	 * @param {string} [sParaNewLine=" "] - A character which is used to specify the line break character in the source text.
 	 */
 	Api.prototype.ReplaceTextSmart = function(arrString, sParaTab, sParaNewLine)
 	{
@@ -16880,7 +17040,9 @@
 			var resultText        = null;
 			var nTextToReplace    = 0;
 			var ws                = this.wb.getWorksheet();
-			var oContent = ws.objectRender.controller.getTargetDocContent();
+			var oContent          = ws.objectRender.controller != null ? ws.objectRender.controller.getTargetDocContent() : null;
+			var isPasteLocked     = false;
+			var isLockedRange     = oWorksheet.worksheet.isLockedRange(oRange.range.bbox);
 
 			if (oContent) 
 			{
@@ -16891,6 +17053,24 @@
 					arrSelectedParas[0].Parent.RemoveSelection();
 				Asc.editor.wb.recalculateDrawingObjects();
 				return;
+			}
+
+			if (oWorksheet.worksheet.getSheetProtection()) {
+				let aProtRanges = oWorksheet.worksheet.protectedRangesContainsRange(oRange.range.bbox) || [];
+				if (aProtRanges.length == 0 && isLockedRange)
+					isPasteLocked = true;
+				else if (aProtRanges.length > 0) {
+					for (let Index = 0; Index < aProtRanges.length; Index++) {
+						if (aProtRanges[Index].asc_isPassword() && !aProtRanges[Index].isUserEnteredPassword())
+							isPasteLocked = true;
+					}
+				}
+			}
+			
+			if (isPasteLocked) {
+				if (oWorksheet.worksheet.workbook.handlers)
+					oWorksheet.worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+				return false;
 			}
 
 			for (var nRow = oRange.range.bbox.r1; nRow <= oRange.range.bbox.r2; nRow++)
@@ -17003,12 +17183,12 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
 	 * @param {string} [sText="Your text here"] - The text for the Text Art object.
-	 * @param {TextTransofrm} [sTransform="textNoShape"] - Text transform type.
+	 * @param {TextTransform} [sTransform="textNoShape"] - Text transform type.
 	 * @param {ApiFill}   [oFill=Api.CreateNoFill()] - The color or pattern used to fill the Text Art object.
 	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the Text Art object shadow.
 	 * @param {number} [nRotAngle=0] - Rotation angle.
-	 * @param {EMU} [nWidth=1828800] - Text Art width measured in English measure units.
-	 * @param {EMU} [nHeight=1828800] - Text Art heigth measured in English measure units.
+	 * @param {EMU} [nWidth=1828800] - The Text Art width measured in English measure units.
+	 * @param {EMU} [nHeight=1828800] - The Text Art heigth measured in English measure units.
 	 * @returns {ApiDrawing}
 	 */
 	Api.prototype.CreateWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight) {
@@ -17168,6 +17348,7 @@
 	ApiDocument.prototype["AddEndnote"]                  = ApiDocument.prototype.AddEndnote;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
+	ApiDocument.prototype["ReplaceCurrentImage"]         = ApiDocument.prototype.ReplaceCurrentImage;
 	ApiDocument.prototype["ReplaceDrawing"]              = ApiDocument.prototype.ReplaceDrawing;
 	ApiDocument.prototype["AcceptAllRevisionChanges"]    = ApiDocument.prototype.AcceptAllRevisionChanges;
 	ApiDocument.prototype["RejectAllRevisionChanges"]    = ApiDocument.prototype.RejectAllRevisionChanges;
@@ -18783,8 +18964,8 @@
         var oBodyPr = oArt.getBodyPr().createDuplicate();
         oBodyPr.rot = 0;
         oBodyPr.spcFirstLastPara = false;
-        oBodyPr.vertOverflow = AscFormat.nOTOwerflow;
-        oBodyPr.horzOverflow = AscFormat.nOTOwerflow;
+        oBodyPr.vertOverflow = AscFormat.nVOTOverflow;
+        oBodyPr.horzOverflow = AscFormat.nHOTOverflow;
         oBodyPr.vert = AscFormat.nVertTThorz;
         oBodyPr.wrap = AscFormat.nTWTNone;
         oBodyPr.lIns = 2.54;

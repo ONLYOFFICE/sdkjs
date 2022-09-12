@@ -363,21 +363,6 @@
         return true;
     };
 
-    function CChangesDrawingsContentBool(Class, Type, Pos, Items, isAdd) {
-        this.Type = Type;
-        AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, isAdd);
-    }
-    CChangesDrawingsContentBool.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
-    CChangesDrawingsContentBool.prototype.constructor = CChangesDrawingsContentBool;
-    window['AscDFH'].CChangesDrawingsContentBool = CChangesDrawingsContentBool;
-
-    CChangesDrawingsContentBool.prototype.private_WriteItem = function (Writer, Item) {
-        Writer.WriteBool(Item);
-    };
-    // CChangesDrawingsContentBool.prototype.private_ReadItem = function (Reader) {
-    //     return Reader.GetULong();
-    // };
-
     function CChangesDrawingsContent(Class, Type, Pos, Items, isAdd) {
         this.Type = Type;
 		AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, isAdd);
@@ -647,6 +632,23 @@
         return Reader.GetLong();
     };
     window['AscDFH'].CChangesDrawingsContentLong = CChangesDrawingsContentLong;
+
+
+
+    function CChangesDrawingsContentBool(Class, Type, Pos, Items, isAdd) {
+        this.Type = Type;
+        AscDFH.CChangesDrawingsContent.call(this, Class, Type, Pos, Items, isAdd);
+    }
+    CChangesDrawingsContentBool.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
+    CChangesDrawingsContentBool.prototype.constructor = CChangesDrawingsContentBool;
+    CChangesDrawingsContentBool.prototype.private_WriteItem = function (Writer, Item) {
+        Writer.WriteBool(Item);
+    };
+    CChangesDrawingsContentBool.prototype.private_ReadItem = function (Reader) {
+        return Reader.GetBool();
+    };
+    window['AscDFH'].CChangesDrawingsContentBool = CChangesDrawingsContentBool;
+
 
 
     function CChangesDrawingsContentLongMap(Class, Type, Pos, Items, isAdd){

@@ -898,7 +898,7 @@ CShape.prototype.hitInTextRect = function(x, y)
     return this.hitInTextRectWord(x, y);
 };
 
-CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
+CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection)
 {
     var oLogicDoc = this.getLogicDocument();
     if(!oLogicDoc)
@@ -906,14 +906,18 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
         return;
     }
 	var para_drawing;
+    var main_group;
+    let oSelector;
 	if (this.group)
 	{
-		var main_group = this.group.getMainGroup();
+		main_group = this.group.getMainGroup();
 		para_drawing   = main_group.parent;
+        oSelector = main_group;
 	}
 	else
 	{
 		para_drawing = this.parent;
+        oSelector = oLogicDoc.DrawingObjects;
 	}
 
 	let oDocumentContent = para_drawing ? para_drawing.GetDocumentContent() : null;
@@ -922,7 +926,13 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
         var nPageIndex = AscFormat.isRealNumber(pageIndex) ? pageIndex : para_drawing.PageNum;
 		var drawing_objects = oLogicDoc.DrawingObjects;
 
-        this.SetControllerTextSelection(drawing_objects, nPageIndex);
+        if(bNoTextSelection !== true) {
+            this.SetControllerTextSelection(drawing_objects, nPageIndex);
+        }
+        else {
+            oSelector.resetSelection();
+            oSelector.selectObject(this, nPageIndex);
+        }
 
 		var hdr_ftr = oDocumentContent.IsHdrFtr(true);
 		if (hdr_ftr)
@@ -1002,7 +1012,7 @@ CShape.prototype.GetPrevElementEndInfo = function(CurElement)
     }
     return null;
 };
-CShape.prototype.Is_ThisElementCurrent = function(CurElement)
+CShape.prototype.IsThisElementCurrent = function(CurElement)
 {
     var oLogicDoc = this.getLogicDocument();
     if(!oLogicDoc)
@@ -1011,7 +1021,7 @@ CShape.prototype.Is_ThisElementCurrent = function(CurElement)
     }
     return oLogicDoc.DrawingObjects.getTargetDocContent() === this.getDocContent();
 };
-CShape.prototype.Is_UseInDocument = function()
+CShape.prototype.IsUseInDocument = function()
 {
     if(this.group)
     {
@@ -1020,14 +1030,14 @@ CShape.prototype.Is_UseInDocument = function()
         {
             if(aSpTree[i] === this)
             {
-                return this.group.Is_UseInDocument();
+                return this.group.IsUseInDocument();
             }
         }
         return false;
     }
-    if(this.parent && this.parent.Is_UseInDocument && this.parent.GraphicObj === this)
+    if(this.parent && this.parent.IsUseInDocument && this.parent.GraphicObj === this)
     {
-        return this.parent.Is_UseInDocument();
+        return this.parent.IsUseInDocument();
     }
     return false;
 };

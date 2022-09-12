@@ -804,8 +804,8 @@ CShapeDrawer.prototype =
                 var _fc = _fill.fgClr && _fill.fgClr.RGBA || {R: 0, G: 0, B: 0, A: 255};
                 var _bc = _fill.bgClr && _fill.bgClr.RGBA || {R: 255, G: 255, B: 255, A: 255};
 
-                var __fa = (null === this.UniFill.transparent) ? _fc.A : 255;
-                var __ba = (null === this.UniFill.transparent) ? _bc.A : 255;
+                var __fa = (null === this.UniFill.transparent) ? _fc.A : (this.UniFill.transparent >> 0);
+                var __ba = (null === this.UniFill.transparent) ? _bc.A : (this.UniFill.transparent >> 0);
 
                 this.NativeGraphics["PD_b_color1"](_fc.R, _fc.G, _fc.B, __fa);
                 this.NativeGraphics["PD_b_color2"](_bc.R, _bc.G, _bc.B, __ba);

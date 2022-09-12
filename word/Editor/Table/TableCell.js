@@ -125,6 +125,11 @@ CTableCell.prototype =
         return this.Id;
     },
 
+	GetId : function()
+	{
+		return this.Id;
+	},
+
     Get_Theme : function()
     {
         return this.Row.Table.Get_Theme();
@@ -558,12 +563,12 @@ CTableCell.prototype =
         return true;
     },
 
-    Is_UseInDocument : function(Id)
+	IsUseInDocument : function(Id)
     {
-        if ( null != this.Row )
-            return this.Row.Is_UseInDocument(this.Get_Id());
+		if (!this.Row)
+			return false;
 
-        return false;
+		return this.Row.IsUseInDocument(this.GetId());
     },
 
     Get_PageContentStartPos : function(PageNum)
@@ -593,14 +598,14 @@ CTableCell.prototype =
         Table.Document_SetThisElementCurrent(bUpdateStates);
     },
 
-    Is_ThisElementCurrent : function()
+	IsThisElementCurrent : function()
     {
         var Table = this.Row.Table;
         if ( false === Table.Selection.Use && this === Table.CurCell )
         {
             var Parent = Table.Parent;
             if ((Parent instanceof AscFormat.CGraphicFrame) || docpostype_Content === Parent.GetDocPosType() && false === Parent.Selection.Use && this.Index === Parent.CurPos.ContentPos )
-                return Table.Parent.Is_ThisElementCurrent();
+                return Table.Parent.IsThisElementCurrent();
         }
 
         return false;
@@ -2712,3 +2717,4 @@ CTableCellRecalculateObject.prototype =
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTableCell = CTableCell;
+window['AscWord'].CTableCell = CTableCell;

@@ -143,11 +143,21 @@ CNumberingLvl.prototype.GetOLang = function()
 };
 /**
  * Выставляем содержимое нумерации
- * @constructor
  */
 CNumberingLvl.prototype.SetLvlText = function(arrLvlText)
 {
 	this.LvlText = arrLvlText;
+};
+CNumberingLvl.prototype.AddStringToLvlText = function(text)
+{
+	for (let iterator = text.getUnicodeIterator(); iterator.check(); iterator.next())
+	{
+		this.LvlText.push(new CNumberingLvlTextString(String.fromCharCode(iterator.value())));
+	}
+};
+CNumberingLvl.prototype.AddLvlToLvlText = function(iLvl)
+{
+	this.LvlText.push(new CNumberingLvlTextNum(iLvl));
 };
 /**
  * Проверяем совместимость с устаревшей нумерацией
@@ -202,14 +212,23 @@ CNumberingLvl.prototype.InitDefault = function(nLvl, nType)
 		case c_oAscMultiLevelNumbering.Bullet:
 			this.private_InitDefaultBullet(nLvl);
 			break;
-		case c_oAscMultiLevelNumbering.MultiLevel1:
-			this.private_InitDefaultMultilevel1(nLvl);
+		case c_oAscMultiLevelNumbering.MultiLevel_1_a_i:
+			this.private_InitDefaultMultiLevel_1_a_i(nLvl);
 			break;
-		case c_oAscMultiLevelNumbering.MultiLevel2:
-			this.private_InitDefaultMultilevel2(nLvl);
+		case c_oAscMultiLevelNumbering.MultiLevel_1_11_111:
+			this.private_InitDefaultMultiLevel_1_11_111(nLvl);
 			break;
-		case c_oAscMultiLevelNumbering.MultiLevel3:
-			this.private_InitDefaultMultiLevel3(nLvl);
+		case c_oAscMultiLevelNumbering.MultiLevel_Bullet:
+			this.private_InitDefaultMultiLevel_Bullet(nLvl);
+			break;
+		case c_oAscMultiLevelNumbering.MultiLevel_Article_Section:
+			this.private_InitDefaultMultiLevel_Article_Section(nLvl);
+			break;
+		case c_oAscMultiLevelNumbering.MultiLevel_Chapter:
+			this.private_InitDefaultMultiLevel_Chapter(nLvl);
+			break;
+		case c_oAscMultiLevelNumbering.MultiLevel_I_A_1:
+			this.private_InitDefaultMultiLevel_I_A_1(nLvl);
 			break;
 		default:
 			this.private_InitDefault(nLvl);
@@ -325,7 +344,7 @@ CNumberingLvl.prototype.private_InitDefaultBullet = function(nLvl)
  * Многоуровневый список 1) a) i) 1) a) i) 1) a) i)
  * @param nLvl {number} 0..8
  */
-CNumberingLvl.prototype.private_InitDefaultMultilevel1 = function(nLvl)
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_1_a_i = function(nLvl)
 {
 	this.Start   = 1;
 	this.Restart = -1;
@@ -362,7 +381,7 @@ CNumberingLvl.prototype.private_InitDefaultMultilevel1 = function(nLvl)
  * Многоуровневый список 1. 1.1. 1.1.1. и т.д.
  * @param nLvl {number} 0..8
  */
-CNumberingLvl.prototype.private_InitDefaultMultilevel2 = function(nLvl)
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_1_11_111 = function(nLvl)
 {
 	this.Jc     = AscCommon.align_Left;
 	this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
@@ -430,7 +449,7 @@ CNumberingLvl.prototype.private_InitDefaultMultilevel2 = function(nLvl)
  * Многоуровневый символьный список
  * @param nLvl {number} 0..8
  */
-CNumberingLvl.prototype.private_InitDefaultMultiLevel3 = function(nLvl)
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_Bullet = function(nLvl)
 {
 	this.Start   = 1;
 	this.Restart = -1;
@@ -482,6 +501,234 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel3 = function(nLvl)
 		this.TextPr.RFonts.SetAll("Symbol", -1);
 	else
 		this.TextPr.RFonts.SetAll("Wingdings", -1);
+};
+/**
+ * Многоуровневый список
+ * Article I
+ *   Section 1.01
+ *     (a)
+ * @param nLvl {number} 0..8
+ */
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_Article_Section = function(nLvl)
+{
+	this.Start   = 1;
+	this.Restart = -1;
+	this.LvlText = [];
+	this.ParaPr  = new CParaPr();
+	this.TextPr  = new CTextPr();
+	this.Suff    = Asc.c_oAscNumberingSuff.Tab;
+
+	switch (nLvl)
+	{
+		case 0:
+
+			this.SetFormat(Asc.c_oAscNumberingFormat.UpperRoman);
+			this.Jc      = AscCommon.align_Left;
+
+			this.ParaPr.Ind.Left      = 0;
+			this.ParaPr.Ind.FirstLine = 0;
+
+			this.AddStringToLvlText("Article ");
+			this.AddLvlToLvlText(0);
+			this.AddStringToLvlText(".");
+
+			break;
+		case 1:
+
+			this.SetFormat(Asc.c_oAscNumberingFormat.DecimalZero);
+			this.Jc      = AscCommon.align_Left;
+
+			this.ParaPr.Ind.Left      = 0;
+			this.ParaPr.Ind.FirstLine = 0;
+
+			this.AddStringToLvlText("Section ");
+			this.AddLvlToLvlText(0);
+			this.AddStringToLvlText(".");
+			this.AddLvlToLvlText(1);
+
+			break;
+
+		case 2:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerLetter);
+			this.Jc      = AscCommon.align_Left;
+
+			this.ParaPr.Ind.Left      = 720 * g_dKoef_twips_to_mm;
+			this.ParaPr.Ind.FirstLine = -432 * g_dKoef_twips_to_mm;
+
+			this.AddStringToLvlText("(");
+			this.AddLvlToLvlText(2);
+			this.AddStringToLvlText(")");
+
+			break;
+		case 3:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerRoman);
+			this.Jc      = AscCommon.align_Right;
+
+			this.ParaPr.Ind.Left      = 864 * g_dKoef_twips_to_mm;
+			this.ParaPr.Ind.FirstLine = -144 * g_dKoef_twips_to_mm;
+
+			this.AddStringToLvlText("(");
+			this.AddLvlToLvlText(3);
+			this.AddStringToLvlText(")");
+			break;
+		case 4:
+			this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
+			this.Jc      = AscCommon.align_Left;
+
+			this.ParaPr.Ind.Left      = 1008 * g_dKoef_twips_to_mm;
+			this.ParaPr.Ind.FirstLine = -432 * g_dKoef_twips_to_mm;
+
+			this.AddLvlToLvlText(4);
+			this.AddStringToLvlText(")");
+			break;
+		case 5:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerLetter);
+			this.Jc      = AscCommon.align_Left;
+
+			this.ParaPr.Ind.Left      = 1152 * g_dKoef_twips_to_mm;
+			this.ParaPr.Ind.FirstLine = -432 * g_dKoef_twips_to_mm;
+
+			this.AddLvlToLvlText(5);
+			this.AddStringToLvlText(")");
+			break;
+		case 6:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerRoman);
+			this.Jc      = AscCommon.align_Right;
+
+			this.ParaPr.Ind.Left      = 1296 * g_dKoef_twips_to_mm;
+			this.ParaPr.Ind.FirstLine = -288 * g_dKoef_twips_to_mm;
+
+			this.AddLvlToLvlText(6);
+			this.AddStringToLvlText(")");
+			break;
+		case 7:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerLetter);
+			this.Jc      = AscCommon.align_Left;
+
+			this.ParaPr.Ind.Left      = 1440 * g_dKoef_twips_to_mm;
+			this.ParaPr.Ind.FirstLine = -432 * g_dKoef_twips_to_mm;
+
+			this.AddLvlToLvlText(7);
+			this.AddStringToLvlText(".");
+			break;
+		case 8:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerRoman);
+			this.Jc      = AscCommon.align_Right;
+
+			this.ParaPr.Ind.Left      = 1584 * g_dKoef_twips_to_mm;
+			this.ParaPr.Ind.FirstLine = -144 * g_dKoef_twips_to_mm;
+
+			this.AddLvlToLvlText(8);
+			this.AddStringToLvlText(".");
+			break;
+	}
+};
+/**
+ * Многоуровневый список
+ * Chapter 1
+ * (none)
+ * (none)
+ * ...
+ * @param nLvl {number} 0..8
+ */
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_Chapter = function(nLvl)
+{
+	this.Start   = 1;
+	this.Restart = -1;
+	this.LvlText = [];
+	this.ParaPr  = new CParaPr();
+	this.TextPr  = new CTextPr();
+	this.Suff    = Asc.c_oAscNumberingSuff.None;
+	this.Jc      = AscCommon.align_Left;
+
+	this.ParaPr.Ind.Left      = 0;
+	this.ParaPr.Ind.FirstLine = 0;
+
+	if (0 === nLvl)
+	{
+		this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
+		this.Suff = Asc.c_oAscNumberingSuff.Space;
+		this.AddStringToLvlText("Chapter ");
+		this.AddLvlToLvlText(0);
+	}
+	else
+	{
+		this.SetFormat(Asc.c_oAscNumberingFormat.None);
+	}
+
+
+};
+/**
+ * Многоуровневый список
+ * I. A. 1. a) (1) (a) (i) (a) (i)
+ * @param nLvl {number} 0..8
+ */
+CNumberingLvl.prototype.private_InitDefaultMultiLevel_I_A_1 = function(nLvl)
+{
+	this.Start   = 1;
+	this.Restart = -1;
+	this.LvlText = [];
+	this.ParaPr  = new CParaPr();
+	this.TextPr  = new CTextPr();
+	this.Suff    = Asc.c_oAscNumberingSuff.Tab;
+	this.Jc      = AscCommon.align_Left;
+
+	this.ParaPr.Ind.Left      = nLvl * 720 * g_dKoef_twips_to_mm;
+	this.ParaPr.Ind.FirstLine = 0;
+
+	switch (nLvl)
+	{
+		case 0:
+			this.SetFormat(Asc.c_oAscNumberingFormat.UpperRoman);
+			this.AddLvlToLvlText(0);
+			this.AddStringToLvlText(".");
+			break;
+		case 1:
+			this.SetFormat(Asc.c_oAscNumberingFormat.UpperLetter);
+			this.AddLvlToLvlText(1);
+			this.AddStringToLvlText(".");
+			break;
+		case 2:
+			this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
+			this.AddLvlToLvlText(2);
+			this.AddStringToLvlText(".");
+			break;
+		case 3:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerLetter);
+			this.AddLvlToLvlText(3);
+			this.AddStringToLvlText(")");
+			break;
+		case 4:
+			this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
+			this.AddStringToLvlText("(");
+			this.AddLvlToLvlText(4);
+			this.AddStringToLvlText(")");
+			break;
+		case 5:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerLetter);
+			this.AddStringToLvlText("(");
+			this.AddLvlToLvlText(5);
+			this.AddStringToLvlText(")");
+			break;
+		case 6:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerRoman);
+			this.AddStringToLvlText("(");
+			this.AddLvlToLvlText(6);
+			this.AddStringToLvlText(")");
+			break;
+		case 7:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerLetter);
+			this.AddStringToLvlText("(");
+			this.AddLvlToLvlText(7);
+			this.AddStringToLvlText(")");
+			break;
+		case 8:
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerRoman);
+			this.AddStringToLvlText("(");
+			this.AddLvlToLvlText(8);
+			this.AddStringToLvlText(")");
+			break;
+	}
 };
 /**
  * Создаем копию
@@ -631,6 +878,38 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			this.LvlText.push(new CNumberingLvlTextString(")"));
 			this.TextPr = new CTextPr();
 			break;
+		case c_oAscNumberingLevel.LowerRussian_Dot_Left:
+			this.Jc = AscCommon.align_Left;
+			this.SetFormat(Asc.c_oAscNumberingFormat.RussianLower);
+			this.LvlText = [];
+			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
+			this.LvlText.push(new CNumberingLvlTextString("."));
+			this.TextPr = new CTextPr();
+			break;
+		case c_oAscNumberingLevel.LowerRussian_Bracket_Left:
+			this.Jc = AscCommon.align_Left;
+			this.SetFormat(Asc.c_oAscNumberingFormat.RussianLower);
+			this.LvlText = [];
+			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
+			this.LvlText.push(new CNumberingLvlTextString(")"));
+			this.TextPr = new CTextPr();
+			break;
+		case c_oAscNumberingLevel.UpperRussian_Dot_Left:
+			this.Jc = AscCommon.align_Left;
+			this.SetFormat(Asc.c_oAscNumberingFormat.RussianUpper);
+			this.LvlText = [];
+			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
+			this.LvlText.push(new CNumberingLvlTextString("."));
+			this.TextPr = new CTextPr();
+			break;
+		case c_oAscNumberingLevel.UpperRussian_Bracket_Left:
+			this.Jc = AscCommon.align_Left;
+			this.SetFormat(Asc.c_oAscNumberingFormat.RussianUpper);
+			this.LvlText = [];
+			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
+			this.LvlText.push(new CNumberingLvlTextString(")"));
+			this.TextPr = new CTextPr();
+			break;
 	}
 };
 /**
@@ -678,34 +957,45 @@ CNumberingLvl.prototype.GetPresetType = function()
 		{
 			var nNumVal2 = this.LvlText[1].Value;
 
-			if (Asc.c_oAscNumberingFormat.Decimal === this.Format)
+			switch (this.Format)
 			{
-				if ("." === nNumVal2)
-					nSubType = 1;
-				else if (")" === nNumVal2)
-					nSubType = 2;
-			}
-			else if (Asc.c_oAscNumberingFormat.UpperRoman === this.Format)
-			{
-				if ("." === nNumVal2)
-					nSubType = 3;
-			}
-			else if (Asc.c_oAscNumberingFormat.UpperLetter === this.Format)
-			{
-				if ("." === nNumVal2)
-					nSubType = 4;
-			}
-			else if (Asc.c_oAscNumberingFormat.LowerLetter === this.Format)
-			{
-				if (")" === nNumVal2)
-					nSubType = 5;
-				else if ("." === nNumVal2)
-					nSubType = 6;
-			}
-			else if (Asc.c_oAscNumberingFormat.LowerRoman === this.Format)
-			{
-				if ("." === nNumVal2)
-					nSubType = 7;
+				case Asc.c_oAscNumberingFormat.Decimal:
+					if ("." === nNumVal2)
+						nSubType = 1;
+					else if (")" === nNumVal2)
+						nSubType = 2;
+					break;
+				case Asc.c_oAscNumberingFormat.UpperRoman:
+					if ("." === nNumVal2)
+						nSubType = 3;
+					break;
+				case Asc.c_oAscNumberingFormat.UpperLetter:
+					if ("." === nNumVal2)
+						nSubType = 4;
+					break;
+				case Asc.c_oAscNumberingFormat.LowerLetter:
+					if (")" === nNumVal2)
+						nSubType = 5;
+					else if ("." === nNumVal2)
+						nSubType = 6;
+					break;
+				case Asc.c_oAscNumberingFormat.LowerRoman:
+					if ("." === nNumVal2)
+						nSubType = 7;
+					break;
+				case Asc.c_oAscNumberingFormat.RussianUpper:
+					if ("." === nNumVal2)
+						nSubType = 8;
+					else if (")" === nNumVal2)
+						nSubType = 9;
+					break;
+				case Asc.c_oAscNumberingFormat.RussianLower:
+					if ("." === nNumVal2)
+						nSubType = 10;
+					else if (")" === nNumVal2)
+						nSubType = 11;
+					break;
+
 			}
 		}
 	}

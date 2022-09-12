@@ -428,6 +428,7 @@
 		global_keyboardEvent.CtrlKey  = global_mouseEvent.CtrlKey;
 
 		global_mouseEvent.Type   = g_mouse_event_type_down;
+		let oldButton = global_mouseEvent.Button;
 		global_mouseEvent.Button = getMouseButton(e);
 
 		if (!global_mouseEvent.IsLocked || !global_mouseEvent.Sender)
@@ -436,14 +437,14 @@
 		if (isClicks)
 		{
 			var CurTime = new Date().getTime();
-			if (0 == global_mouseEvent.ClickCount)
+			if (0 === global_mouseEvent.ClickCount)
 			{
 				global_mouseEvent.ClickCount    = 1;
 				global_mouseEvent.LastClickTime = CurTime;
 			}
 			else
 			{
-				if (500 > CurTime - global_mouseEvent.LastClickTime)
+				if ((500 > (CurTime - global_mouseEvent.LastClickTime)) && oldButton === global_mouseEvent.Button)
 				{
 					global_mouseEvent.LastClickTime = CurTime;
 					global_mouseEvent.ClickCount++;

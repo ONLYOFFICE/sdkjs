@@ -1955,7 +1955,10 @@
 						}
 					}
 
-					if (!bUndoChanges && !bRedoChanges /*&& !notAddToHistory*/ && oldFilter) {
+					//для случая, когда вставляем последнюю строку в ф/т, не добавляю эти сдвиги в историю
+					//это делается при undo в функции _shiftCellsBottom
+					//2 раза дублировать сдвиги не нужно
+					if (!bUndoChanges && !bRedoChanges /*&& !notAddToHistory*/ && oldFilter && !(displayNameFormatTable && insertType === c_oAscInsertOptions.InsertCellsAndShiftDown)) {
 						var changeElement = {
 							oldFilter: oldFilter, newFilterRef: filter.Ref.clone()
 						};

@@ -456,6 +456,9 @@
 	CDocumentSearch.prototype.SendClearAllTextAround = function()
 	{
 		let oApi = this.LogicDocument.GetApi();
+		if (!oApi)
+			return;
+
 		oApi.sync_startTextAroundSearch();
 		oApi.sync_endTextAroundSearch();
 	};

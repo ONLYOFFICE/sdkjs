@@ -1619,6 +1619,10 @@ void main() {\n\
 
         var _searchResults = this.SearchResults;
         var _navRects = _searchResults.Pages[pageIndex];
+        if (_searchResults.PagesLines == null)
+            _searchResults.PagesLines = {};
+
+        _searchResults.PagesLines[pageIndex] = [];
 
         var glyphsEqualFound = 0;
         var text = _searchResults.Text;
@@ -1693,8 +1697,8 @@ void main() {\n\
                     _linePrevCharX = 0;
                     _lineCharCount = 0;
 
-                    arrayLines[arrayLines.length] = new CLineInfo();
-                    curLine = arrayLines[arrayLines.length - 1];
+                    _searchResults.PagesLines[pageIndex][_searchResults.PagesLines[pageIndex].length] = new CLineInfo();
+                    curLine = _searchResults.PagesLines[pageIndex][_searchResults.PagesLines[pageIndex].length - 1];
 
                     var mask = stream.GetUChar();
                     curLine.X = stream.GetDouble();
@@ -1757,6 +1761,10 @@ void main() {\n\
 
         stream.Seek(0);
 
+        // если текст, который ищем разбит на строки, то мапим в какой строке какую часть текста нашли,
+        // чтобы потом повторно не пробегаться по строкам в поисках текста для aroundtext
+        var oEqualStrByLine = {};
+
         while (stream.pos < stream.size)
         {
             var command = stream.GetUChar();
@@ -1816,6 +1824,10 @@ void main() {\n\
                         }
 
                         glyphsEqualFound++;
+                        if (!oEqualStrByLine[_numLine])
+                            oEqualStrByLine[_numLine] = "";
+                        oEqualStrByLine[_numLine] += String.fromCharCode(_char);
+
                         _findLineOffsetR = _linePrevCharX + _lineLastGlyphWidth;
                         if (glyphsFindCount == glyphsEqualFound)
                         {
@@ -1825,18 +1837,18 @@ void main() {\n\
                                 var ps = 0;
                                 if (_findLine == i)
                                     ps = _findLineOffsetX;
-                                var pe = arrayLines[i].W;
+                                var pe = _searchResults.PagesLines[pageIndex][i].W;
                                 if (i == _numLine)
                                     pe = _findLineOffsetR;
 
-                                var _l = arrayLines[i];
+                                var _l = _searchResults.PagesLines[pageIndex][i];
                                 if (_l.Ex == 1 && _l.Ey == 0)
                                 {
-                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps, Y : _l.Y, W : pe - ps, H : _l.H };
+                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps, Y : _l.Y, W : pe - ps, H : _l.H, LineNum: i, Text: oEqualStrByLine[i]};
                                 }
                                 else
                                 {
-                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps * _l.Ex, Y : _l.Y + ps * _l.Ey, W : pe - ps, H : _l.H, Ex : _l.Ex, Ey : _l.Ey };
+                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps * _l.Ex, Y : _l.Y + ps * _l.Ey, W : pe - ps, H : _l.H, Ex : _l.Ex, Ey : _l.Ey, LineNum: i, Text: oEqualStrByLine[i]};
                                 }
                             }
 
@@ -1848,6 +1860,7 @@ void main() {\n\
                             _linePrevCharX = _SeekLinePrevCharX;
                             _lineCharCount = _findGlyphIndex;
                             _numLine = _findLine;
+                            oEqualStrByLine = {};
                         }
                     }
                     else
@@ -1860,6 +1873,9 @@ void main() {\n\
                             _linePrevCharX = _SeekLinePrevCharX;
                             _lineCharCount = _findGlyphIndex;
                             _numLine = _findLine;
+
+                            if (glyphsEqualFound == 0)
+                                oEqualStrByLine = {};
                         }
                     }
 
@@ -2054,6 +2070,67 @@ void main() {\n\
         this.viewer.ToSearchResult();
     };
 
+    CFile.prototype.startTextAround = function()
+    {
+        var aTextAround = [];
+        var oPageMatches, oPart, oLineInfo, oLastPartInfo;
+        var sTempText, nAroundAdded;
+        for (var nPage = 0; nPage < this.SearchResults.Pages.length; nPage++)
+        {
+            oPageMatches = this.SearchResults.Pages[nPage];
+            nAroundAdded = aTextAround.length;
+            // идём по всем совпадениям
+            for (var nMatch = 0; nMatch < oPageMatches.length; nMatch++)
+            {
+                sTempText = "";
+                // найденный текст может быть разбит на части (строки)
+                for (var nPart = 0; nPart < oPageMatches[nMatch].length; nPart++)
+                {
+                    oPart = oPageMatches[nMatch][nPart];
+                    // знаем в какой строке было найдено совпадение
+                    oLineInfo = this.SearchResults.PagesLines[nPage][oPart.LineNum];
+
+                    // если line изменился, тогда инфу обнуляем
+                    if (oLastPartInfo && oPart.LineNum != oLastPartInfo.numLine)
+                        oLastPartInfo = null;
+
+                    // запоминаем позицию в строке у первого вхождения, чтобы расчитывать позиции следующих
+                    if (!oLastPartInfo)
+                    {
+                        oLastPartInfo = {
+                            posInLine: this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase()),
+                            numLine: oPart.LineNum,
+                            text: oPart.Text 
+                        };    
+                    }
+                    else
+                    {
+                        oLastPartInfo = {
+                            posInLine: this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, oLastPartInfo.posInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), oLastPartInfo.posInLine + 1),
+                            numLine: oPart.LineNum,
+                            text: oPart.Text
+                        }
+                    }
+
+                    if (nPart == 0 && oPageMatches[nMatch].length == 1)
+                        sTempText += oLineInfo.text.slice(0, oLastPartInfo.posInLine) + '<b>' + oPart.Text + '</b>' + oLineInfo.text.slice(oLastPartInfo.posInLine + oPart.Text.length);
+                    else if (nPart == 0)
+                        sTempText += oLineInfo.text.slice(0, oLastPartInfo.posInLine) + '<b>' + oPart.Text;
+                    else if (nPart == oPageMatches[nMatch].length - 1)
+                        sTempText += oPart.Text + '</b>' + oLineInfo.text.slice(oLastPartInfo.posInLine + oPart.Text.length);
+                    else
+                        sTempText += oPart.Text;
+                }
+
+                aTextAround.push([nAroundAdded + nMatch, sTempText]);
+            }
+        }
+
+        this.viewer.Api.sync_startTextAroundSearch();
+        this.viewer.Api.sync_getTextAroundSearchPack(aTextAround);
+        this.viewer.Api.sync_endTextAroundSearch();
+    };
+    
     CFile.prototype.prepareSearch = function()
     {
         this.SearchResults.Pages = new Array(this.pages.length);

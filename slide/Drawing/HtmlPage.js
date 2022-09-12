@@ -4169,7 +4169,7 @@ function CEditorPage(api)
 		if (!isRepaint && oWordControl.m_oNotesApi.IsRepaint)
 			isRepaint = true;
 
-		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi)
+		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi && oWordControl.IsNotesShown())
 			oWordControl.m_oNotesApi.CheckPaint();
 
 		if (oWordControl.m_oAnimPaneApi)

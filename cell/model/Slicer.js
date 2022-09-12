@@ -3138,7 +3138,10 @@
 	window['Asc']['CT_slicerStyles'] = window['Asc'].CT_slicerStyles = CT_slicerStyles;
 	window['Asc']['CT_slicerStyle'] = window['Asc'].CT_slicerStyle = CT_slicerStyle;
 	window['Asc']['CT_slicerStyleElement'] = window['Asc'].CT_slicerStyleElement = CT_slicerStyleElement;
-
+	window['Asc']['CT_slicerCacheHideNoData'] = window['Asc'].CT_slicerCacheHideNoData = CT_slicerCacheHideNoData;
+	window['Asc']['CT_slicerCacheOlapLevelName'] = window['Asc'].CT_slicerCacheOlapLevelName = CT_slicerCacheOlapLevelName;
+	window['Asc']['CT_olapSlicerCacheItemParent'] = window['Asc'].CT_olapSlicerCacheItemParent = CT_olapSlicerCacheItemParent;
+	
 	window['Asc']['ST_olapSlicerCacheSortOrder'] = window['AscCommonExcel'].ST_olapSlicerCacheSortOrder = ST_olapSlicerCacheSortOrder;
 	prot = ST_olapSlicerCacheSortOrder;
 	prot['Natural'] = prot.Natural;

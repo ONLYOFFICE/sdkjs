@@ -1048,6 +1048,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
             var dY_ = oTransform.TransformPointY(dX, dY);
             return ((((dY_ - dStartY) / dSlideHeight) * 1000 + 0.5 >> 0) / 1000) + "";
         }
+        let nLastCmd = null, nLastX = null, nLastY = null;
         for(var nCmd = 0; nCmd < aCmds.length; ++nCmd) {
             var oCmd = aCmds[nCmd];
             if(sSVG.length > 0) {
@@ -1055,17 +1056,27 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
             }
             switch(oCmd.id) {
                 case moveTo: {
+                    if(nLastX !== null && nLastY !== null && AscFormat.fApproxEqual(nLastX, oCmd.X) && AscFormat.fApproxEqual(nLastY, oCmd.Y)) {
+                        break;
+                    }
                     sSVG += "M ";
                     sSVG += calcX(oCmd.X, oCmd.Y);
                     sSVG += " ";
                     sSVG += calcY(oCmd.X, oCmd.Y);
+                    nLastX = oCmd.X;
+                    nLastY = oCmd.Y;
                     break;
                 }
                 case lineTo: {
+                    if(nLastX !== null && nLastY !== null && AscFormat.fApproxEqual(nLastX, oCmd.X) && AscFormat.fApproxEqual(nLastY, oCmd.Y)) {
+                        break;
+                    }
                     sSVG += "L ";
                     sSVG += calcX(oCmd.X, oCmd.Y);
                     sSVG += " ";
                     sSVG += calcY(oCmd.X, oCmd.Y);
+                    nLastX = oCmd.X;
+                    nLastY = oCmd.Y;
                     break;
                 }
                 case bezier4: {
@@ -1081,16 +1092,23 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     sSVG += calcX(oCmd.X2, oCmd.Y2);
                     sSVG += " ";
                     sSVG += calcY(oCmd.X2, oCmd.Y2);
+                    nLastX = oCmd.X2;
+                    nLastY = oCmd.Y2;
                     break;
                 }
                 case close: {
                     sSVG += "Z";
+                    nLastCmd = null;
+                    nLastX = null;
+                    nLastY = null;
                     break;
                 }
                 default: {
                     break;
                 }
             }
+
+            nLastCmd = oCmd.id;
         }
         return sSVG;
     };
@@ -1105,7 +1123,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                 break;
             }
             case "stroke": {
-                this.setStroke(reader.GetValue());
+                this.setStroke(reader.GetValueBool());
                 break;
             }
             case "w": {
@@ -1123,7 +1141,8 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
             case "arcTo": {
                 let oCmd = new AscFormat.CBaseAttrObject();
                 oCmd.fromXml(reader);
-                this.arcTo(oCmd["wR"], oCmd["hR"], oCmd["stAng"], oCmd["swAng"]);
+                let oAttr = oCmd.attr;
+                this.arcTo(oAttr["wR"], oAttr["hR"], oAttr["stAng"], oAttr["swAng"]);
                 break;
             }
             case "close": {
@@ -1170,6 +1189,12 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                 break;
             }
         }
+    };
+    Path.prototype.fromXml = function (reader, bSkipFirstNode) {
+        this.setExtrusionOk(false);
+        this.setFill("norm");
+        this.setStroke(true);
+        AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
     };
     Path.prototype.toXml = function (writer) {
         writer.WriteXmlNodeStart("a:path");

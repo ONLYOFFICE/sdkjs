@@ -692,7 +692,7 @@
 		writer.WriteXmlNullable(this.getBase(), "m:e");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathBarPr.prototype.fromXml = function (reader) {
+	CMathBarPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -744,7 +744,7 @@
 		while (reader.MoveToNextAttribute()) {
 			switch (reader.GetNameNoNS()) {
 				case "alnAt": {
-					this.alnAt = Math.min(255, Math.max(1, CT_UIntM.prototype.toVal(reader, 1)));
+					this.alnAt = Math.min(255, Math.max(1, reader.GetValueUInt(1)));
 					break;
 				}
 			}
@@ -756,7 +756,7 @@
 	};
 	CMathBreak.prototype.toXml = function (writer, name) {
 		writer.WriteXmlNodeStart(name);
-		writer.WriteXmlNullable(CT_UIntM.prototype.fromVal(this.alnAt), "m:alnAt");
+		writer.WriteXmlNullableAttributeUInt("alnAt", this.alnAt);
 		writer.WriteXmlAttributesEnd(true);
 	};
 	CMathBoxPr.prototype.fromXml = function (reader, mathElem) {
@@ -1653,13 +1653,13 @@
 				case "sub" : {
 					elem = new CMathContent();
 					elem.fromXml(reader);
-					props.content[1] = elem;
+					props.content[2] = elem;
 					break;
 				}
 				case "sup" : {
 					elem = new CMathContent();
 					elem.fromXml(reader);
-					props.content[2] = elem;
+					props.content[1] = elem;
 					break;
 				}
 			}

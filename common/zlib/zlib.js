@@ -129,6 +129,15 @@
 			{
 				return this.engine["close"]();
 			};
+			/**
+			 * Get image blob for browser
+			 * @returns {Blob}
+			 */
+			ZLib.prototype.getImageBlob = function(path)
+			{
+				return this.engine["getImageBlob"](path);
+			};
+
 
 			AscCommon.ZLib = ZLib;
 			AscCommon.ZLib.prototype.isModuleInit = true;

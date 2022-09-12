@@ -1277,17 +1277,22 @@ StaxParser.prototype.parseNode = function(indexStart) {
     return -1;
 };
 StaxParser.prototype.MoveToNextAttribute = function() {
-    var startAttrName = this.index;
     var i = this.index;
     var w = this.xml.charCodeAt(i);
     while (i < this.length) {
         if (w === 61 /* "=" */ && i + 1 < this.length) {
-            this.name = this.xml.substring(startAttrName, i);
+            this.name = this.xml.substring(this.index, i);
+            this.name = this.name.trim();
             var textStart = i + 2;
             if (this.xml.charCodeAt(textStart - 1) === 34/* "\"" */) {
                 i = this.xml.indexOf("\"", textStart);
             } else {
-                i = this.xml.indexOf('\'', textStart);
+                i = this.xml.slice(textStart - 1).search(/["']/g);
+                if (-1 !== i) {
+                    i += textStart - 1;//slice compensation
+                    textStart = i + 1;
+                    i = this.xml.indexOf(this.xml[i], textStart);
+                }
             }
             if (-1 !== i) {
                 this.text = this.xml.substring(textStart, i);
@@ -1300,7 +1305,6 @@ StaxParser.prototype.MoveToNextAttribute = function() {
         if (w === 32 || w === 9 || w === 10 || w === 11 || w === 12 || w === 13) { // \f\n\r\t\v space
             //todo spaces between name and =
             w = this.xml.charCodeAt(++i);
-            startAttrName = i;
             continue;
         }
         if (w === 62 /* ">" */) {
@@ -1498,7 +1502,7 @@ StaxParser.prototype.GetText = function () {
         if (EasySAXEvent.END_ELEMENT === type && curDepth === depth)
             break;
         if (EasySAXEvent.CHARACTERS === type) {
-            text += this.GetValueDecodeXml();
+            text += this.GetValue();
         }
     }
     return text;
@@ -1627,7 +1631,6 @@ function XmlParserContext(){
     this.TablesMap = {};
     this.TableStylesMap = {};
     this.ConnectorsPr = [];
-    this.DrawingIdsMap = {};
 }
 XmlParserContext.prototype.initFromWS = function(ws) {
     this.ws = ws;
@@ -1665,6 +1668,27 @@ XmlParserContext.prototype.checkZIndex = function(nZIndex) {
         this.maxZIndex = Math.max(this.maxZIndex, nZIndex);
     }
 };
+XmlParserContext.prototype.loadDataLinks = function() {
+    let _cur_ind = 0;
+    let oImageMap = {};
+    for (let path in this.imageMap) {
+        if (this.imageMap.hasOwnProperty(path)) {
+            oImageMap[_cur_ind++] = path;
+            let data = this.zip.getFile(path);
+            if (data) {
+                if (!window["NATIVE_EDITOR_ENJINE"]) {
+                    let blob = this.zip.getImageBlob(path);
+                    let url = window.URL.createObjectURL(blob);
+                    AscCommon.g_oDocumentUrls.addImageUrl(path, url);
+                }
+                this.imageMap[path].forEach(function(blipFill) {
+                    AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
+                });
+            }
+        }
+    }
+    return oImageMap;
+};
 function XmlWriterContext(editorId){
     //common
     this.editorId = editorId;
@@ -1672,6 +1696,9 @@ function XmlWriterContext(editorId){
     this.part = null;
     this.imageMap = {};
     this.currentPartImageMap = {};
+    this.dataMap = {};
+    this.currentPartDataMap = {};
+    this.m_lObjectIdVML = 1025;
 
     this.oUriMap = {};
     this.objectId = 1;
@@ -1705,6 +1732,8 @@ function XmlWriterContext(editorId){
     this.isCopyPaste = null;
     this.stylesForWrite = new AscCommonExcel.StylesForWrite();
     this.oSharedStrings = {index: 0, strings: {}};
+    this.oleDrawings = [];
+    this.signatureDrawings = [];
     //pptx
     this.presentation = null;
     this.sldMasterIdLst = [];
@@ -1744,8 +1773,9 @@ XmlWriterContext.prototype.getSlideMastersCount = function() {
 XmlWriterContext.prototype.getSlidesCount = function() {
     return this.sldIdLst.length;
 };
-XmlWriterContext.prototype.clearCurrentPartImageMap = function() {
+XmlWriterContext.prototype.clearCurrentPartDataMaps = function() {
     this.currentPartImageMap = {};
+    this.currentPartDataMap = {};
 };
 XmlWriterContext.prototype.getImageRId = function(sRasterImageId) {
     let imagePart = this.imageMap[sRasterImageId];
@@ -1772,6 +1802,31 @@ XmlWriterContext.prototype.getImageRId = function(sRasterImageId) {
     }
     return this.currentPartImageMap[sRasterImageId] ? this.currentPartImageMap[sRasterImageId] : "";
 };
+XmlWriterContext.prototype.getDataRId = function(sDataLink) {
+    let dataPart = this.dataMap[sDataLink];
+    let type = this.editorId === AscCommon.c_oEditorId.Word ? AscCommon.openXml.Types.wordPackage : AscCommon.openXml.Types.package;
+    if (!dataPart) {
+        if (this.part) {
+            let ext = AscCommon.GetFileExtension(sDataLink);
+            type = Object.assign({}, type);
+            type.filename = AscCommon.changeFileExtention(type.filename, ext, null);
+            type.contentType = AscCommon.openXml.GetMimeType(ext);
+            dataPart = this.part.addPart(type);
+            if (dataPart) {
+                this.dataMap[sDataLink] = dataPart;
+                this.currentPartDataMap[sDataLink] = dataPart.rId;
+            }
+        }
+    }
+    else {
+        if(!this.currentPartDataMap[sDataLink]) {
+            if(this.part) {
+                this.currentPartDataMap[sDataLink] = this.part.addRelationship(type.relationType, dataPart.part.uri);
+            }
+        }
+    }
+    return this.currentPartDataMap[sDataLink] ? this.currentPartDataMap[sDataLink] : "";
+};
 XmlWriterContext.prototype.getSpIdxId = function(sEditorId){
     if(typeof sEditorId === "string" && sEditorId.length > 0) {
         var oDrawing = AscCommon.g_oTableId.Get_ById(sEditorId);
@@ -1782,7 +1837,6 @@ XmlWriterContext.prototype.getSpIdxId = function(sEditorId){
     return null;
 };
 function CT_XmlNode(opt_elemReader) {
-    this.attributes = {};
     this.attributes = {};
     this.members = {};
     this.text = null;

@@ -182,7 +182,8 @@
 	{
 		let oFontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
 		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x00B0, oFontInfo.Name, oFontInfo.Style);
-		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nGrapheme), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
+		let nSpace    = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x0020, oFontInfo.Name, oFontInfo.Style);
+		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nSpace), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
 	};
 	CParagraphTextShaper.prototype.private_HandleItem = function(oItem, nGrapheme, nWidth, nFontSize, nFontSlot, nCodePointType)
 	{

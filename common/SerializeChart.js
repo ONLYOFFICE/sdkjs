@@ -1082,7 +1082,7 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
 };
 BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal) {
     var oThis = this;
-    if (false != oVal.date1904) {
+    if (null != oVal.date1904) {
         this.bs.WriteItem(c_oserct_chartspaceDATE1904, function () {
             oThis.WriteCT_Boolean(oVal.date1904);
         });
@@ -1092,7 +1092,7 @@ BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal) {
             oThis.WriteCT_TextLanguageID(oVal.lang);
         });
     }
-    if (false != oVal.roundedCorners) {
+    if (null != oVal.roundedCorners) {
         this.bs.WriteItem(c_oserct_chartspaceROUNDEDCORNERS, function () {
             oThis.WriteCT_Boolean(oVal.roundedCorners);
         });
@@ -5395,7 +5395,7 @@ BinaryChartWriter.prototype.WriteCT_Chart = function (oVal) {
             oThis.WriteCT_DispBlanksAs(oVal.dispBlanksAs);
         });
     }
-    if (false != oVal.showDLblsOverMax) {
+    if (null != oVal.showDLblsOverMax) {
         this.bs.WriteItem(c_oserct_chartSHOWDLBLSOVERMAX, function () {
             oThis.WriteCT_Boolean(oVal.showDLblsOverMax);
         });

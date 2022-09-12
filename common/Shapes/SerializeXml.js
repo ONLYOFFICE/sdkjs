@@ -83,7 +83,7 @@
 		return this;
 	}
 	CT_GraphicalObject.prototype.fromXml = function(reader) {
-		var elem, depth = reader.GetDepth();
+		let elem, depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "graphicData" : {
@@ -121,7 +121,7 @@
 	};
 	CT_GraphicalObjectData.prototype.fromXml = function(reader) {
 		this.readAttr(reader);
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			let name = reader.GetNameNoNS();
 			this.graphicObject = AscFormat.CGraphicObjectBase.prototype.fromXmlElem(reader, name, this.graphicFrame);
@@ -148,6 +148,11 @@
 			res.setBDeleted(false);
 			res.fromXml(reader);
 		}
+		else if("lockedCanvas" === name) {
+			res = new AscFormat.CLockedCanvas();
+			res.setBDeleted(false);
+			res.fromXml(reader);
+		}
 		else if("sp" === name || "wsp" === name) {
 			res = new AscFormat.CShape();
 			res.setBDeleted(false);
@@ -163,6 +168,7 @@
 			res.fromXml(reader);
 			res = res.graphicObject;
 		} else if ("AlternateContent" === name) {
+			let bRetNull = false;
 			let elem = new CT_XmlNode(function(reader, name) {
 				let oThis = this;
 				if(!res) {
@@ -174,6 +180,10 @@
 							return true;
 						});
 						elem.fromXml(reader);
+						let oAttr = elem.attributes;
+						if(oAttr["Requires"] === "cx" && oAttr["cx"] === "http://schemas.microsoft.com/office/drawing/2014/chartex") {
+							bRetNull = true;
+						}
 						return elem;
 					}
 					else if("Fallback" === name) {
@@ -190,20 +200,30 @@
 				return true;
 			});
 			elem.fromXml(reader);
+			if(bRetNull) {
+				if(res) {
+					res = null;
+				}
+			}
 		}  else if ("slicer" === name) {
 			res = new AscFormat.CSlicer();
 			res.fromXml(reader);
+			let _xfrm = null;
+			if(graphicFrame) {
+				_xfrm = graphicFrame.spPr && graphicFrame.spPr.xfrm;
+			}
+			res.checkEmptySpPrAndXfrm(_xfrm);
 		} else if ("chart" === name) {
 			if (typeof AscFormat.CChartSpace !== "undefined") {
 				let elem = new CT_XmlNode();
 				elem.fromXml(reader);
 				let rId = elem.attributes["id"];
-				var rel = reader.rels.getRelationship(rId);
+				let rel = reader.rels.getRelationship(rId);
 				if ("Internal" === rel.targetMode) {
-					var chartPart = reader.rels.pkg.getPartByUri(rel.targetFullName);
+					let chartPart = reader.rels.pkg.getPartByUri(rel.targetFullName);
 					if (chartPart) {
-						var chartContent = chartPart.getDocumentContent();
-						var chartReader = new AscCommon.StaxParser(chartContent, chartPart, reader.context);
+						let chartContent = chartPart.getDocumentContent();
+						let chartReader = new AscCommon.StaxParser(chartContent, chartPart, reader.context);
 						res = new AscFormat.CChartSpace();
 						res.fromXml(chartReader);
 
@@ -229,6 +249,17 @@
 									res.setChartColors(chartStyle);
 								}
 							}
+							let themeOverridePart = chartPart.getPartByRelationshipType(AscCommon.openXml.Types.themeOverride.relationType);
+							if (themeOverridePart) {
+								let themeOverrideContent = themeOverridePart.getDocumentContent();
+								if (themeOverrideContent) {
+									let themeOverride = new AscFormat.CTheme();
+									themeOverride.setIsThemeOverride(true);
+									let readerThemeOverride = new AscCommon.StaxParser(themeOverrideContent, themeOverridePart, reader.context);
+									themeOverride.themeElements.fromXml(readerThemeOverride, true);
+									res.setThemeOverride(themeOverride);
+								}
+							}
 							let _xfrm = null;
 							if(graphicFrame) {
 								_xfrm = graphicFrame.spPr && graphicFrame.spPr.xfrm;
@@ -241,12 +272,18 @@
 				}
 			}
 		} else if("tbl" === name)  {
-			var _table = new CTable(reader.context.DrawingDocument, graphicFrame || null, false, 0, 0, [], true);
-			_table.fromDrawingML(reader);
 			if(graphicFrame) {
-				graphicFrame.setGraphicObject(_table);
 				let _xfrm = graphicFrame.spPr && graphicFrame.spPr.xfrm;
+				let extX = 50;
+				let extY = 50;
+				if(_xfrm) {
+					extX = _xfrm.extX;
+					extY = _xfrm.extY;
+				}
+				let _table = CTable.prototype.static_readFromDrawingML(reader, graphicFrame, extX, extY);
+				graphicFrame.setGraphicObject(_table);
 				graphicFrame.checkEmptySpPrAndXfrm(_xfrm);
+
 			}
 
 		}
@@ -258,6 +295,69 @@
 				_xfrm = graphicFrame.spPr && graphicFrame.spPr.xfrm;
 			}
 			res.checkEmptySpPrAndXfrm(_xfrm);
+		}
+		else if("oleObj" === name) {
+			if(reader.GetName() === "p:oleObj") {
+
+				let oOleObject = new AscFormat.COleObject();
+				oOleObject.m_sData = null
+
+				let oOleNode = new CT_XmlNode(function(reader, name) {
+					if(name === "pic") {
+						oOleObject.fromXml(reader);
+						res = oOleObject;
+						return true;
+					}
+					return false;
+				});
+				oOleNode.fromXml(reader);
+				let sAppName = oOleNode.attributes["progId"];
+				if(sAppName) {
+					oOleObject.setApplicationId(sAppName);
+				}
+				let isN = AscFormat.isRealNumber;
+				let nImgH = reader.GetInt(oOleNode.attributes["imgH"]);
+				let nImgW = reader.GetInt(oOleNode.attributes["imgW"]);
+				if(isN(nImgW) && isN(nImgH)) {
+					oOleObject.setPixSizes(AscFormat.Emu_To_Px(nImgW), AscFormat.Emu_To_Px(nImgH));
+				}
+				oOleObject.fillDataLink(oOleNode.attributes["id"], reader);
+				let oVmlPart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.vmlDrawing.relationType);
+				if(oVmlPart) {
+					let oVmlPartContent = oVmlPart.getDocumentContent();
+					if(oVmlPartContent) {
+						let oVmlReader = new AscCommon.StaxParser(oVmlPartContent, oVmlPart, reader.context);
+						let oVmlDrawing = new AscFormat.CVMLDrawing();
+						oVmlDrawing.fromXml(oVmlReader);
+						let oVmlShape = oVmlDrawing.getShapeBySpId(oOleNode.attributes["spid"]);
+						if(oVmlShape) {
+							let oImageData = oVmlShape.getImageData();
+							if(oImageData) {
+								let oOldReader = reader.context.reader;
+								reader.context.reader = oVmlReader;
+								let oFill = oImageData.getOOXMLFill(reader.context);
+								if(oFill && oFill.isBlipFill()) {
+									oOleObject.setBlipFill(oFill.fill);
+									res = oOleObject;
+								}
+								reader.context.reader = oOldReader;
+							}
+						}
+					}
+				}
+				if(!oOleObject.spPr) {
+					oOleObject.setSpPr(new AscFormat.CSpPr());
+				}
+				oOleObject.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+			}
+			else {
+				let oOLEObj = new AscFormat.COLEObject();
+				oOLEObj.fromXml(reader);
+				if(oOLEObj.m_oPic) {
+					res = new AscFormat.COleObject();
+					oOLEObj.fillEditorOleObject(res, oOLEObj.m_oPic, reader);
+				}
+			}
 		}
 		return res;
 	};
@@ -302,6 +402,17 @@
 					let chartColorPart = chartPart.part.addPart(AscCommon.openXml.Types.chartColorStyle);
 					chartColorPart.part.setDataXml(graphicObject.chartColors, writer);
 				}
+				if (graphicObject.themeOverride) {
+					let themeOverridePart = chartPart.part.addPart(AscCommon.openXml.Types.themeOverride);
+					let memory = new AscCommon.CMemory();
+					memory.context = writer.context;
+					writer.context.clearCurrentPartDataMaps();
+					memory.WriteXmlString(AscCommonWord.g_sXmlHeader);
+					graphicObject.themeOverride.themeElements.toXml(memory, "a:themeOverride");
+					let commentAuthorsData = memory.GetDataUint8();
+					themeOverridePart.part.setData(commentAuthorsData);
+					memory.Seek(0);
+				}
 				break;
 			}
 			case AscDFH.historyitem_type_SlicerView:
@@ -326,11 +437,11 @@
 
 	// window['AscFormat'].CBlipFill.prototype.toXml = function(writer, name)
 	// {
-	// 	var context = writer.context;
-	// 	var imagePart = context.imageMap[this.RasterImageId];
+	// 	let context = writer.context;
+	// 	let imagePart = context.imageMap[this.RasterImageId];
 	// 	if (!imagePart) {
-	// 		var ext = AscCommon.GetFileExtension(this.RasterImageId);
-	// 		var type = context.editorId === AscCommon.c_oEditorId.Word? AscCommon.openXml.Types.imageWord : AscCommon.openXml.Types.image;
+	// 		let ext = AscCommon.GetFileExtension(this.RasterImageId);
+	// 		let type = context.editorId === AscCommon.c_oEditorId.Word? AscCommon.openXml.Types.imageWord : AscCommon.openXml.Types.image;
 	// 		type = Object.assign({}, type);
 	// 		type.filename += ext;
 	// 		type.contentType = openXml.GetMimeType(ext);
@@ -389,7 +500,7 @@
 		writer.WriteXmlAttributesEnd(true);
 	};
 	CT_ComplexType.prototype.fromVal = function(val) {
-		var res = null;
+		let res = null;
 		if (null !== val && undefined !== val) {
 			res = new this.constructor();
 			res.val = val;
@@ -522,10 +633,10 @@
 	};
 
 	AscCommonWord.Paragraph.prototype.fromDrawingML = function(reader) {
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		let EndPos = 0;
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			switch(name) {
 				case "br": {
 					let oRun = new AscCommonWord.ParaRun(this, false);
@@ -539,7 +650,7 @@
 					oTextPr.fromDrawingML(reader);
 					this.TextPr.Apply_TextPr(oTextPr);
 					let oEndRun = this.Content[this.Content.length - 1]; //TODO: check whether it needs to set properties for end run
-					var oParaTextPrEnd = new CTextPr();
+					let oParaTextPrEnd = new CTextPr();
 					oParaTextPrEnd.Set_FromObject(oTextPr);
 					oEndRun.Set_Pr(oParaTextPrEnd);
 					break;
@@ -596,6 +707,7 @@
 				}
 			}
 		}
+		this.Correct_Content();
 	};
 	AscCommonWord.ParaHyperlink.prototype.toDrawingML = function(writer) {
 		for(let nIdx = 0; nIdx < this.Content.length; ++nIdx) {
@@ -656,9 +768,9 @@
 		writer.WriteXmlNodeEnd("a:p");
 	};
 	AscCommonWord.ParaRun.prototype.fromDrawingML = function (reader) {
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			switch(name) {
 				case "rPr": {
 					let oTextPr = new AscCommonWord.CTextPr();
@@ -831,10 +943,11 @@
 					break;
 				}
 				case "sz": {
-					var nSz = reader.GetValueInt() / 100;
+					let nSz = reader.GetValueInt() / 100;
 					nSz = ((nSz * 2) + 0.5) >> 0;
 					nSz /= 2;
 					this.FontSize = nSz;
+					this.FontSizeCS = nSz;
 					break;
 				}
 				case "u": {
@@ -843,9 +956,9 @@
 				}
 			}
 		}
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if(AscFormat.CUniFill.prototype.isFillName(name)) {
 				this.Unifill = new AscFormat.CUniFill();
 				this.Unifill.fromXml(reader, name);
@@ -1072,9 +1185,9 @@
 				}
 			}
 		}
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if(name.indexOf("bu") === 0) {
 				if(!this.Bullet) {
 					this.Bullet = new AscFormat.CBullet();
@@ -1187,9 +1300,9 @@
 				}
 			}
 		}
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if(name === "pPr") {
 				let oParaPr = new AscCommonWord.CParaPr();
 				oParaPr.fromDrawingML(reader);
@@ -1224,14 +1337,76 @@
 		}
 		writer.WriteXmlNodeEnd("a:fld");
 	};
+
+	AscCommonWord.CTable.prototype.static_readFromDrawingML = function(reader, graphicFrame, extX, extY) {
+		let nRows = 0;
+		let aColsGrid = [];
+		let oDrawingDocument = reader.context.DrawingDocument;
+		let oParent = graphicFrame || null;
+		let oStartState = reader.getState();
+		let depth = reader.GetDepth();
+		while (reader.ReadNextSiblingNode(depth)) {
+			let name = reader.GetNameNoNS();
+			if(name === "tblGrid") {
+				let oPr = new CT_XmlNode(function (reader, name) {
+					if(name === "gridCol") {
+						let oPr = new CT_XmlNode(function (reader, name) {
+							return true;
+						});
+						oPr.fromXml(reader);
+						if(oPr.attributes["w"]) {
+							let nW = parseInt(oPr.attributes["w"]);
+							if(AscFormat.isRealNumber(nW)) {
+								aColsGrid.push(nW / 36000);
+							}
+						}
+					}
+					return true;
+				});
+				oPr.fromXml(reader);
+			}
+			else if(name === "tblPr") {
+			}
+			else if(name === "tr") {
+				++nRows;
+			}
+		}
+		if(aColsGrid.length === 0) {
+			aColsGrid.push(extX);
+		}
+
+		let oTable = new CTable(oDrawingDocument, oParent, false, nRows, aColsGrid.length, aColsGrid, true);
+		oTable.Set_TableLook(new AscCommon.CTableLook(false, false, false, false, false, false));
+		oTable.Reset(0, 0, extX, 100000, 0, 0, 1);
+		reader.setState(oStartState);
+		depth = reader.GetDepth();
+		let nCurRow = 0;
+		while (reader.ReadNextSiblingNode(depth)) {
+			let name = reader.GetNameNoNS();
+			if(name === "tr") {
+				let oRow = oTable.Content[nCurRow++];
+				if(oRow) {
+					oRow.fromDrawingML(reader)
+				}
+			}
+			else if(name === "tblPr") {
+				let oPr = new CTablePr();
+				oPr.fromDrawingML(reader, oTable);
+				oTable.Set_Pr(oPr)
+			}
+		}
+		oTable.SetTableLayout(tbllayout_Fixed);
+		return oTable;
+	};
+
 	AscCommonWord.CTable.prototype.fromDrawingML = function(reader) {
 		let oTable = this;
 
 		this.SetTableLayout(tbllayout_Fixed);
 		reader.context.TablesMap[this.Get_Id()] = this;
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if(name === "tblGrid") {
 				let aGrid = [];
 				let oPr = new CT_XmlNode(function (reader, name) {
@@ -1258,9 +1433,10 @@
 				this.Set_Pr(oPr);
 			}
 			else if(name === "tr") {
-				let oRow = new CTableRow(this, 0);
-				oRow.fromDrawingML(reader);
 				let nIdx = this.Content.length;
+				let oRow = new CTableRow(this, 0);
+				oRow.Index = nIdx;
+				oRow.fromDrawingML(reader);
 				this.Content[nIdx] = oRow;
 				this.Content[nIdx].Recalc_CompiledPr();
 				History.Add(new CChangesTableAddRow(this, nIdx, [this.Content[nIdx]]));
@@ -1350,9 +1526,9 @@
 		if(oTable && oTableLook) {
 			oTable.Set_TableLook(oTableLook);
 		}
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if(AscFormat.CUniFill.prototype.isFillName(name)) {
 				let oFill = new AscFormat.CUniFill();
 				oFill.fromXml(reader, name);
@@ -1398,7 +1574,6 @@
 	};
 	AscCommonWord.CTableRow.prototype.fromDrawingML = function (reader) {
 		let sName;
-
 		let fRowHeight = 5;
 		while (reader.MoveToNextAttribute()) {
 			sName = reader.GetNameNoNS();
@@ -1410,15 +1585,62 @@
 
 			}
 		}
-		var depth = reader.GetDepth();
+
+		let nCellsCount = 0;
+		let depth = reader.GetDepth();
+		let aCellStates = [];
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if(name === "tc") {
-				let oCell = this.Add_Cell(this.Content.length, this, null, false);
-				oCell.fromDrawingML(reader);
+				++nCellsCount;
+				aCellStates.push(reader.getState());
+			}
+		}
+
+		let oEndState = reader.getState();
+
+		let _count = aCellStates.length;
+		_count = Math.min(_count, this.Content.length);
+		for(let i = 0; i < aCellStates.length; ++i) {
+			reader.setState(aCellStates[i]);
+			let bIsNoHMerge = this.Content[i].fromDrawingML(reader);
+			if (bIsNoHMerge === false) {
+				this.Remove_Cell(i);
+				aCellStates.splice(i, 1);
+				i--;
+				_count--;
+			}
+			let _gridCol = 1;
+			if ("number" == typeof (this.Content[i].Pr.GridSpan)) {
+				_gridCol = this.Content[i].Pr.GridSpan;
+			}
+
+			if (_gridCol > (_count - i)) {
+				_gridCol = _count - i;
+				this.Content[i].Pr.GridSpan = _gridCol;
+				if (1 === this.Content[i].Pr.GridSpan)
+					this.Content[i].Pr.GridSpan = undefined;
+			}
+
+			_gridCol--;
+			while (_gridCol > 0) {
+				i++;
+				if (i >= _count)
+					break;
+
+				reader.setState(aCellStates[i]);
+				this.Content[i].fromDrawingML(reader);
+
+				this.Remove_Cell(i);
+				aCellStates.splice(i, 1);
+				i--;
+				_count--;
+
+				--_gridCol;
 			}
 		}
 		this.updateHeightAfterOpen(fRowHeight);
+		reader.setState(oEndState);
 	};
 	AscCommonWord.CTableRow.prototype.toDrawingML = function (writer, oInfo) {
 		writer.WriteXmlNodeStart("a:tr");
@@ -1472,21 +1694,21 @@
 
 	}
 	AscCommonWord.CTableRow.prototype.updateHeightAfterOpen = function(fRowHeight) {
-		var fMaxTopMargin = 0, fMaxBottomMargin = 0, fMaxTopBorder = 0, fMaxBottomBorder = 0;
-		var bLoadVal = AscCommon.g_oIdCounter.m_bLoad;
-		var bRead = AscCommon.g_oIdCounter.m_bRead;
+		let fMaxTopMargin = 0, fMaxBottomMargin = 0, fMaxTopBorder = 0, fMaxBottomBorder = 0;
+		let bLoadVal = AscCommon.g_oIdCounter.m_bLoad;
+		let bRead = AscCommon.g_oIdCounter.m_bRead;
 		AscCommon.g_oIdCounter.m_bLoad = false;
 		AscCommon.g_oIdCounter.m_bRead = false;
 		for(let i = 0;  i < this.Content.length; ++i){
-			var oCell = this.Content[i];
-			var oMargins = oCell.GetMargins();
+			let oCell = this.Content[i];
+			let oMargins = oCell.GetMargins();
 			if(oMargins.Bottom.W > fMaxBottomMargin){
 				fMaxBottomMargin = oMargins.Bottom.W;
 			}
 			if(oMargins.Top.W > fMaxTopMargin){
 				fMaxTopMargin = oMargins.Top.W;
 			}
-			var oBorders = oCell.Get_Borders();
+			let oBorders = oCell.Get_Borders();
 			if(oBorders.Top.Size > fMaxTopBorder){
 				fMaxTopBorder = oBorders.Top.Size;
 			}
@@ -1509,6 +1731,9 @@
 				}
 				case "hMerge": {
 					this.hMerge = reader.GetValueBool();
+					if(this.hMerge) {
+						return false;
+					}
 					break;
 				}
 				case "id": {
@@ -1533,9 +1758,9 @@
 
 			}
 		}
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if(name === "tcPr") {
 				let props = new CTableCellPr();
 				props.fromDrawingML(reader);
@@ -1546,6 +1771,7 @@
 				AscFormat.CTextBody.prototype.fromXml(reader, false, this.Content);
 			}
 		}
+		return true;
 	};
 	CTableCellPr.prototype.fromDrawingML = function (reader) {
 
@@ -1648,9 +1874,9 @@
 
 			}
 		}
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if (AscFormat.CUniFill.prototype.isFillName(name)) {
 				let oFill = new AscFormat.CUniFill();
 				oFill.fromXml(reader, name);
@@ -1699,8 +1925,8 @@
 	CTableCellPr.prototype.toDrawingML = function (writer, oTablePr) {
 		writer.WriteXmlNodeStart("a:tcPr");
 
-		var _marg = this.TableCellMar;
-		var tableMar = oTablePr && oTablePr.TableCellMar;
+		let _marg = this.TableCellMar;
+		let tableMar = oTablePr && oTablePr.TableCellMar;
 
 		if(_marg && _marg.Left && AscFormat.isRealNumber(_marg.Left.W)) {
 			writer.WriteXmlAttributeInt("marL", (_marg.Left.W * 36000) >> 0);
@@ -1857,9 +2083,9 @@
 		}
 	};
 	CParaTabs.prototype.fromDrawingML = function(reader) {
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if(name === "tab") {
 				let oTab = new CParaTab();
 				oTab.fromDrawingML(reader);
@@ -1981,6 +2207,10 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			let sName = reader.GetNameNoNS();
 			switch (sName) {
+				case "tblBg": {
+					this.readTableCellProperties(reader, this.TablePr);
+					break;
+				}
 				case "band1H": {
 					this.TableBand1Horz = this.readDrawingMLTableStylePart(reader);
 					break;
@@ -2033,23 +2263,26 @@
 					this.TableBLCell = this.readDrawingMLTableStylePart(reader);
 					break;
 				}
-				case "tblBg": {
-					this.readTableCellProperties(reader, this.TablePr);
-					break;
-				}
 			}
 		}
+		this.wholeToTablePr();
 	};
 	AscCommonWord.CStyle.prototype.readDrawingMLTableStylePart = function(reader) {
 		let oPart =  new CTableStylePr();
 		let oCellPr = oPart.TableCellPr;
 		let oTextPr = oPart.TextPr;
+		let oTablePr = oPart.TablePr;
+		let oCellBorders = oCellPr.TableCellBorders;
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			let sName = reader.GetNameNoNS();
 			switch (sName) {
 				case "tcStyle": {
 					this.readTableCellProperties(reader, oCellPr);
+					oTablePr.TableBorders.InsideH = oCellBorders.InsideH;
+					oTablePr.TableBorders.InsideV = oCellBorders.InsideV;
+					delete oCellBorders.InsideH;
+					delete oCellBorders.InsideV;
 					break;
 				}
 				case "tcTxStyle": {
@@ -2075,13 +2308,9 @@
 					});
 					oTxStyleNode.fromXml(reader);
 					let sBoldAttr = oTxStyleNode.attributes["b"];
-					if(sBoldAttr) {
-						oTextPr.Bold = reader.GetBool(sBoldAttr);
-					}
+					oTextPr.Bold = reader.GetBool(sBoldAttr);
 					let sItalicAttr = oTxStyleNode.attributes["i"];
-					if(sItalicAttr) {
-						oTextPr.Italic = reader.GetBool(sItalicAttr);
-					}
+					oTextPr.Italic = reader.GetBool(sItalicAttr);
 					break;
 				}
 			}
@@ -2236,25 +2465,28 @@
 		let oBorders = oCellPr.TableCellBorders;
 		let oShd = oCellPr.Shd;
 		let bBorders = oBorders && (oBorders.Left || oBorders.Right || oBorders.Top ||  oBorders.Bottom ||  oBorders.InsideH || oBorders.InsideV);
+		let bBg = sName === "a:tblBg"
 		if(bBorders ||
 			oCellPr.Shd && (oShd.FillRef || oShd.Unifill)) {
 
 			writer.WriteXmlNodeStart(sName);
 			writer.WriteXmlAttributesEnd();
-			if(bBorders) {
-				writer.WriteXmlNodeStart("a:tcBdr");
-				writer.WriteXmlAttributesEnd();
-				this.writeTcBorder(writer, oBorders.Left, "a:left");
-				this.writeTcBorder(writer, oBorders.Right, "a:right");
-				this.writeTcBorder(writer, oBorders.Top, "a:top");
-				this.writeTcBorder(writer, oBorders.Bottom, "a:bottom");
-				this.writeTcBorder(writer, oBorders.InsideH, "a:insideH");
-				this.writeTcBorder(writer, oBorders.InsideV, "a:insideV");
-				writer.WriteXmlNodeEnd("a:tcBdr");
-			}
-			else {
-				writer.WriteXmlNodeStart("a:tcBdr");
-				writer.WriteXmlAttributesEnd(true);
+			if(!bBg) {
+				if(bBorders) {
+					writer.WriteXmlNodeStart("a:tcBdr");
+					writer.WriteXmlAttributesEnd();
+					this.writeTcBorder(writer, oBorders.Left, "a:left");
+					this.writeTcBorder(writer, oBorders.Right, "a:right");
+					this.writeTcBorder(writer, oBorders.Top, "a:top");
+					this.writeTcBorder(writer, oBorders.Bottom, "a:bottom");
+					this.writeTcBorder(writer, oBorders.InsideH, "a:insideH");
+					this.writeTcBorder(writer, oBorders.InsideV, "a:insideV");
+					writer.WriteXmlNodeEnd("a:tcBdr");
+				}
+				else {
+					writer.WriteXmlNodeStart("a:tcBdr");
+					writer.WriteXmlAttributesEnd(true);
+				}
 			}
 			if(oShd) {
 				if(oShd.FillRef) {
@@ -2282,13 +2514,12 @@
 		}
 
 	};
-
 	AscCommonWord.CStyle.prototype.writeTcBorder = function (writer, oBorder, sName) {
 		if(oBorder) {
 			writer.WriteXmlNodeStart(sName);
 			writer.WriteXmlAttributesEnd();
 			if(oBorder.LineRef) {
-				oBorder.LineRef.toXml("a:lnRef");
+				oBorder.LineRef.toXml(writer, "a:lnRef");
 			}
 			else {
 				let oLn = new AscFormat.CLn();
@@ -2296,6 +2527,51 @@
 				oLn.toXml(writer, "a:ln");
 			}
 			writer.WriteXmlNodeEnd(sName);
+		}
+	};
+	AscCommonWord.CStyle.prototype.wholeToTablePr = function() {
+
+		let oWhole = this.TableWholeTable;
+		if(!oWhole) {
+			return
+		}
+		let oWholeBorders = oWhole.TablePr && oWhole.TablePr.TableBorders;
+		if(!oWholeBorders) {
+			return;
+		}
+		let oWholeCellBorders = oWhole.TableCellPr && oWhole.TableCellPr.TableCellBorders;
+		if(!oWholeCellBorders) {
+			return;
+		}
+
+		let oTablePBorders = this.TablePr && this.TablePr.TableBorders;
+		if(!oTablePBorders) {
+			return;
+		}
+
+		if(oWholeBorders.InsideH) {
+			oTablePBorders.InsideH = oWholeBorders.InsideH;
+			delete oWholeBorders.InsideH;
+		}
+		if(oWholeBorders.InsideV) {
+			oTablePBorders.InsideV = oWholeBorders.InsideV;
+			delete oWholeBorders.InsideV;
+		}
+		if(oWholeCellBorders.Top) {
+			oTablePBorders.Top = oWholeCellBorders.Top;
+			delete oWholeCellBorders.Top;
+		}
+		if(oWholeCellBorders.Bottom) {
+			oTablePBorders.Bottom = oWholeCellBorders.Bottom;
+			delete oWholeCellBorders.Bottom;
+		}
+		if(oWholeCellBorders.Left) {
+			oTablePBorders.Left = oWholeCellBorders.Left;
+			delete oWholeCellBorders.Left;
+		}
+		if(oWholeCellBorders.Right) {
+			oTablePBorders.Right = oWholeCellBorders.Right;
+			delete oWholeCellBorders.Right;
 		}
 	};
 	let SPACING_SCALE = 0.00352777778;
@@ -2318,7 +2594,7 @@
 		let depth = reader.GetDepth();
 		let oRet = {val: null, valPct: null};
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if(name === "spcPct") {
 				while (reader.MoveToNextAttribute()) {
 					sName = reader.GetNameNoNS();
@@ -2402,9 +2678,9 @@
 		}
 	}
 	function readHighlightColor(reader) {
-		var depth = reader.GetDepth();
+		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
-			var name = reader.GetNameNoNS();
+			let name = reader.GetNameNoNS();
 			if(AscFormat.CUniColor.prototype.isUnicolor(name)) {
 				let oColor = new AscFormat.CUniColor();
 				oColor.fromXml(reader, name);

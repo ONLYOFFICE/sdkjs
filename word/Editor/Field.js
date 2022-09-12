@@ -133,7 +133,7 @@ ParaField.prototype.Add = function(Item)
 			var CurPos  = this.State.ContentPos;
 			var CurItem = this.Content[CurPos];
 
-			var CurContentPos = new CParagraphContentPos();
+			var CurContentPos = new AscWord.CParagraphContentPos();
 			CurItem.Get_ParaContentPos(false, false, CurContentPos);
 
 			var NewItem = CurItem.Split(CurContentPos, 0);
@@ -199,21 +199,6 @@ ParaField.prototype.Draw_HighLights = function(PDSH)
     {
         PDSH.MMFields.Add(Y0, Y1, X0, X1, 0, 0, 0, 0  );
     }
-};
-ParaField.prototype.Is_UseInDocument = function()
-{
-	return (this.Paragraph && true === this.Paragraph.Is_UseInDocument() && true === this.Is_UseInParagraph() ? true : false);
-};
-ParaField.prototype.Is_UseInParagraph = function()
-{
-	if (!this.Paragraph)
-		return false;
-
-	var ContentPos = this.Paragraph.Get_PosByElement(this);
-	if (!ContentPos)
-		return false;
-
-	return true;
 };
 ParaField.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseContentPos)
 {
@@ -428,13 +413,13 @@ ParaField.prototype.Replace_MailMerge = function(_Value)
     if (null === ParaContentPos)
         return false;
 
-    var Depth    = ParaContentPos.Get_Depth();
+    var Depth    = ParaContentPos.GetDepth();
     var FieldPos = ParaContentPos.Get(Depth);
 
     if (Depth < 0)
         return false;
 
-    ParaContentPos.Decrease_Depth(1);
+    ParaContentPos.DecreaseDepth(1);
     var FieldContainer = Paragraph.Get_ElementByPos(ParaContentPos);
     if (!FieldContainer || !FieldContainer.Content || FieldContainer.Content[FieldPos] !== this)
         return false;
@@ -679,6 +664,25 @@ ParaField.prototype.ReplaceWithComplexField = function()
 	oComplexField.Update(false);
 	return oComplexField;
 };
+ParaField.prototype.GetRunWithPageField = function(paragraph)
+{
+	let res = null;
+	if (fieldtype_PAGENUM == this.FieldType || fieldtype_PAGECOUNT == this.FieldType) {
+		res = new ParaRun(paragraph);
+		let run = this.GetFirstRunNonEmpty();
+		let rPr = run && run.Get_FirstTextPr();
+		if (rPr) {
+			res.Set_Pr(rPr);
+		}
+		if (fieldtype_PAGENUM == this.FieldType) {
+			res.AddToContentToEnd(new AscWord.CRunPageNum());
+		} else {
+			var pageCount = parseInt(this.GetSelectedText(true));
+			res.AddToContentToEnd(new AscWord.CRunPagesCount(isNaN(pageCount) ? undefined : pageCount));
+		}
+	}
+	return res;
+}
 //----------------------------------------------------------------------------------------------------------------------
 // Функции совместного редактирования
 //----------------------------------------------------------------------------------------------------------------------

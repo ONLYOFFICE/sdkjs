@@ -1624,8 +1624,14 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
                 break;
             }
             case "rect": {
-                let oAvLst = new CAvLst(this);
-                oAvLst.fromXml(reader);
+                let oNode = new CT_XmlNode(function (reader, name) {
+                    return true;
+                });
+                oNode.fromXml(reader);
+                let oAttr = oNode.attributes;
+                if(oAttr["l"] && oAttr["t"] && oAttr["r"] && oAttr["b"]) {
+                    this.AddRect(oAttr["l"], oAttr["t"], oAttr["r"], oAttr["b"]);
+                }
                 break;
             }
         }

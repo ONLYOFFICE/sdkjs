@@ -363,7 +363,7 @@ CDocumentContent.prototype.Get_PageLimits = function(nCurPage)
 		return {X : 0, Y : 0, XLimit : W, YLimit : H};
 	}
 };
-CDocumentContent.prototype.Get_PageFields = function(PageIndex, isHdrFtr)
+CDocumentContent.prototype.Get_PageFields = function(PageIndex, isHdrFtr, oSectPr)
 {
 	if (this.Parent && (this.Parent.IsCell() || (undefined !== AscFormat.CShape && this.Parent instanceof AscFormat.CShape)))
 	{
@@ -459,7 +459,7 @@ CDocumentContent.prototype.Is_PointInFlowTable = function(X, Y, PageAbs)
 };
 CDocumentContent.prototype.Get_Numbering = function()
 {
-	return this.Get_Numbering();
+	return this.GetNumbering();
 };
 CDocumentContent.prototype.GetNumbering = function()
 {
@@ -532,10 +532,10 @@ CDocumentContent.prototype.Set_CurrentElement = function(Index, bUpdateStates)
 
 	this.SetThisElementCurrent(bUpdateStates)
 };
-CDocumentContent.prototype.Is_ThisElementCurrent = function()
+CDocumentContent.prototype.IsThisElementCurrent = function()
 {
 	if (this.Parent)
-		return this.Parent.Is_ThisElementCurrent(this);
+		return this.Parent.IsThisElementCurrent(this);
 
 	return false;
 };
@@ -646,30 +646,28 @@ CDocumentContent.prototype.Is_TopDocument = function(isReturnTopDocument)
 
 	return this.Parent.Is_TopDocument(isReturnTopDocument);
 };
-// Проверяем, используется ли данный элемент в документе
-CDocumentContent.prototype.Is_UseInDocument = function(Id)
+CDocumentContent.prototype.IsUseInDocument = function(Id)
 {
-	var bUse = false;
-
-	if (null != Id)
+	if (undefined !== Id && null !== Id)
 	{
-		var Count = this.Content.length;
-		for (var Index = 0; Index < Count; Index++)
+		let isFound = false;
+		for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 		{
-			if (Id === this.Content[Index].Get_Id())
+			if (this.Content[nIndex].Get_Id() === Id)
 			{
-				bUse = true;
+				isFound = true;
 				break;
 			}
 		}
+
+		if (!isFound)
+			return false;
 	}
-	else
-		bUse = true;
 
-	if (true === bUse && this.Parent && this.Parent.Is_UseInDocument)
-		return this.Parent.Is_UseInDocument(this.Get_Id());
+	if (!this.Parent || !this.Parent.IsUseInDocument)
+		return false;
 
-	return false;
+	return this.Parent.IsUseInDocument(this.GetId());
 };
 CDocumentContent.prototype.IsHdrFtr = function(bReturnHdrFtr)
 {
@@ -2361,7 +2359,7 @@ CDocumentContent.prototype.Can_CopyCut = function()
 
 	if (null !== LogicDocument)
 	{
-		if (true === LogicDocument.IsSelectionUse())
+		if (true === LogicDocument.IsSelectionUse() && !LogicDocument.IsSelectionEmpty())
 		{
 			if (selectionflag_Numbering === LogicDocument.Selection.Flag)
 				bCanCopyCut = false;
@@ -3624,6 +3622,9 @@ CDocumentContent.prototype.MoveCursorLeft = function(AddToSelect, Word)
 				{
 					if (0 !== this.Selection.EndPos)
 					{
+						if (this.Selection.EndPos > this.Selection.StartPos)
+							this.Content[this.Selection.EndPos].RemoveSelection();
+
 						this.Selection.EndPos--;
 						this.CurPos.ContentPos = this.Selection.EndPos;
 
@@ -3773,6 +3774,9 @@ CDocumentContent.prototype.MoveCursorRight = function(AddToSelect, Word, FromPas
 				{
 					if (this.Content.length - 1 !== this.Selection.EndPos)
 					{
+						if (this.Selection.EndPos < this.Selection.StartPos)
+							this.Content[this.Selection.EndPos].RemoveSelection();
+
 						this.Selection.EndPos++;
 						this.CurPos.ContentPos = this.Selection.EndPos;
 
@@ -4528,23 +4532,14 @@ CDocumentContent.prototype.GetSelectedElementsInfo = function(oInfo)
 	{
 		if (docpostype_DrawingObjects === this.CurPos.Type)
 		{
-			if (this.LogicDocument && this.LogicDocument.DrawingsController)
+			let logicDocument = this.GetLogicDocument();
+			if (logicDocument)
 			{
-				var oContentControl = this.LogicDocument.DrawingsController.private_GetParentContentControl();
-				if (oContentControl)
-				{
-					if (oContentControl.IsBlockLevel())
-					{
-						oInfo.SetBlockLevelSdt(oContentControl);
-					}
-					else if (oContentControl.IsInlineLevel())
-					{
-						oInfo.SetInlineLevelSdt(oContentControl);
-					}
-				}
+				if (logicDocument.IsDocumentEditor())
+					logicDocument.DrawingsController.GetSelectedElementsInfo(oInfo);
+				else if (logicDocument.DrawingObjects)
+					logicDocument.DrawingObjects.getSelectedElementsInfo(oInfo);
 			}
-
-			this.LogicDocument.DrawingObjects.getSelectedElementsInfo(oInfo);
 		}
 		else //if ( docpostype_Content == this.CurPos.Type )
 		{
@@ -9133,3 +9128,4 @@ CDocumentRecalculateObject.prototype =
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CDocumentContent = CDocumentContent;
+window['AscWord'].CDocumentContent = CDocumentContent;
