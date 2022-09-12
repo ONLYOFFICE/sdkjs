@@ -7160,6 +7160,10 @@ CPresentation.prototype.OnKeyPress = function (e) {
     if (!this.CanEdit())
         return false;
 
+    if(e.KeyCode === 27) {
+        //escape. for bug 58884  in IE
+        return;
+    }
     var oCurSlide = this.Slides[this.CurPage];
     if (!oCurSlide || !oCurSlide.graphicObjects) {
         return;
