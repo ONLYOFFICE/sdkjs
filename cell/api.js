@@ -2356,6 +2356,12 @@ var editor;
         t.syncCollaborativeChanges();
       }
     };
+	this.CoAuthoringApi.onChangesIndex = function(changesIndex)
+	{
+		if (t.isLiveViewer() && changesIndex >= 0) {
+			//todo
+		}
+	};
     this.CoAuthoringApi.onRecalcLocks = function(excelAdditionalInfo) {
       if (!excelAdditionalInfo) {
         return;

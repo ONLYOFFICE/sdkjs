@@ -1372,7 +1372,9 @@
 			oHistory.Remove_LastPoint();
 			this.Clear_DCChanges();
 
-			editor.CoAuthoringApi.saveChanges(aSendingChanges, null, null, false, this.getCollaborativeEditing());
+            if (isWrite) {
+                editor.CoAuthoringApi.saveChanges(aSendingChanges, null, null, false, this.getCollaborativeEditing());
+            }
 		
             this.private_RestoreDocumentState(DocState);
             this.private_RecalculateDocument(arrReverseChanges);
@@ -1386,8 +1388,8 @@
 		CCollaborativeEditingBase.prototype.UndoMultipleActions = function(intCount) {
 			if (undefined === intCount)
 				return;
-			if (true === this.Get_GlobalLock())
-				return;
+			// if (true === this.Get_GlobalLock())
+			// 	return;
 
 			var arrReverseChanges = [];
 			var intIndex = this.m_aAllChanges.length - 1;
@@ -1397,7 +1399,7 @@
 				return false;
 
 			//Формируем пачку действий
-			while (intIndex >= this.m_aAllChanges.length - 1 - intCount)
+			while (intIndex >= this.m_aAllChanges.length - intCount)
 			{
 				var oChange = this.m_aAllChanges[intIndex];
 				if (!oChange)
@@ -1430,12 +1432,18 @@
 
 				intIndex--;
 			}
+            // Удаляем запись о изменениях
+            this.m_aAllChanges.length = this.m_aAllChanges.length - intCount;
 
 			this.ApplyChangesForCurrentClientAndProceedHistoryPoint(arrReverseChanges, false);
 		};
 		CCollaborativeEditingBase.prototype.CanUndoMultipleActions = function()
         {
             return this.m_aAllChanges.length > 0;
+        };
+        CCollaborativeEditingBase.prototype.GetAllChangesCount = function()
+        {
+            return this.m_aAllChanges.length;
         };
         CCollaborativeEditingBase.prototype.Undo = function()
         {

@@ -70,6 +70,7 @@
       this.onSetIndexUser = options.onSetIndexUser;
       this.onSpellCheckInit = options.onSpellCheckInit;
       this.onSaveChanges = options.onSaveChanges;
+      this.onChangesIndex = options.onChangesIndex;
       this.onStartCoAuthoring = options.onStartCoAuthoring;
       this.onEndCoAuthoring = options.onEndCoAuthoring;
       this.onUnSaveLock = options.onUnSaveLock;
@@ -143,6 +144,9 @@
       };
       this._CoAuthoringApi.onSaveChanges = function(e, userId, bFirstLoad) {
         t.callback_OnSaveChanges(e, userId, bFirstLoad);
+      };
+      this._CoAuthoringApi.onChangesIndex = function(changesIndex) {
+        t.callback_OnChangesIndex(changesIndex);
       };
       // Callback есть пользователей больше 1
       this._CoAuthoringApi.onStartCoAuthoring = function(e, isWaitAuth) {
@@ -518,6 +522,11 @@
       this.onSaveChanges(e, userId, bFirstLoad);
     }
   };
+  CDocsCoApi.prototype.callback_OnChangesIndex = function(changesIndex) {
+    if (this.onChangesIndex) {
+      this.onChangesIndex(changesIndex);
+    }
+  };
   CDocsCoApi.prototype.callback_OnStartCoAuthoring = function(e, isWaitAuth) {
     if (this.onStartCoAuthoring) {
       this.onStartCoAuthoring(e, isWaitAuth);
@@ -587,6 +596,7 @@
       this.onSetIndexUser = options.onSetIndexUser;
       this.onSpellCheckInit = options.onSpellCheckInit;
       this.onSaveChanges = options.onSaveChanges;
+      this.onChangesIndex = options.onChangesIndex;
       this.onFirstLoadChangesEnd = options.onFirstLoadChangesEnd;
       this.onConnectionStateChanged = options.onConnectionStateChanged;
       this.onUnSaveLock = options.onUnSaveLock;
@@ -1323,6 +1333,7 @@
           }
         }
       }
+      this.onChangesIndex(changesIndex);
     }
   };
 
