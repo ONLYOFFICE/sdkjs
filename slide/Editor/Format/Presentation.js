@@ -3048,6 +3048,7 @@ function CPresentation(DrawingDocument) {
 
 
     this.sldSz = null;
+    this.viewPr = null;
 
     this.recalcMap = {};
     this.bNeedUpdateTh = false;
@@ -3169,6 +3170,10 @@ CPresentation.prototype.GetSizeType = function () {
 CPresentation.prototype.setSldSz = function(pr) {
     History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_Presentation_SlideSize, this.sldSz, pr));
     this.sldSz = pr;
+};
+CPresentation.prototype.setViewPr = function(pr) {
+    History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_Presentation_ViewPr, this.viewPr, pr));
+    this.viewPr = pr;
 };
 
 
