@@ -1612,26 +1612,28 @@ CChartsDrawer.prototype =
 								} else {
 									pointVal = value;
 								}
-								var errVal = oErrVal.errVal;
+
+								var plusErrVal = oErrVal.plusErrVal;
+								var minusErrVal = oErrVal.minusErrVal
 								switch (seria.errBars.errBarType) {
 									case AscFormat.st_errbartypeBOTH: {
-										if (maxErr === null || maxErr < pointVal + errVal) {
-											maxErr = pointVal + errVal;
+										if (maxErr === null || maxErr < pointVal + plusErrVal) {
+											maxErr = pointVal + plusErrVal;
 										}
-										if (minErr === null || minErr > pointVal - errVal) {
-											minErr = pointVal + errVal;
+										if (minErr === null || minErr > pointVal - minusErrVal) {
+											minErr = pointVal - minusErrVal;
 										}
 										break;
 									}
 									case AscFormat.st_errbartypePLUS: {
-										if (maxErr === null || maxErr < pointVal + errVal) {
-											maxErr = pointVal + errVal;
+										if (maxErr === null || maxErr < pointVal + plusErrVal) {
+											maxErr = pointVal + plusErrVal;
 										}
 										break;
 									}
 									case AscFormat.st_errbartypeMINUS: {
-										if (minErr === null || minErr > pointVal - errVal) {
-											minErr = pointVal + errVal;
+										if (minErr === null || minErr > pointVal - minusErrVal) {
+											minErr = pointVal - minusErrVal;
 										}
 										break;
 									}
@@ -2972,11 +2974,7 @@ CChartsDrawer.prototype =
 			return oCache.getPtByIndex(index);
 		}
 
-		if (pts == null) {
-			return null;
-		}
-
-		return pts[index];
+		return null;
 	},
 
 	getPtCount: function (series) {
@@ -15423,7 +15421,8 @@ CErrBarsDraw.prototype = {
 						//расчитываем величину погрешности в одну сторону
 						var oErrVal = this.calculateErrVal(oChart.chart, i, j, isCatAx, pointVal);
 						if (oErrVal !== null) {
-							var errVal = oErrVal.errVal;
+							var plusErrVal = oErrVal.plusErrVal;
+							var minusErrVal = oErrVal.minusErrVal;
 							var x = this.points[i][j].x;
 							var y = this.points[i][j].y;
 
@@ -15438,17 +15437,17 @@ CErrBarsDraw.prototype = {
 							var start, end;
 							switch (errBars.errBarType) {
 								case AscFormat.st_errbartypeBOTH: {
-									start = this.cChartDrawer.getYPosition(pointVal - errVal, axis, true);
-									end = this.cChartDrawer.getYPosition(pointVal + errVal, axis, true);
+									start = this.cChartDrawer.getYPosition(pointVal - minusErrVal, axis, true);
+									end = this.cChartDrawer.getYPosition(pointVal + plusErrVal, axis, true);
 									break;
 								}
 								case AscFormat.st_errbartypePLUS: {
 									start = this.cChartDrawer.getYPosition(pointVal, axis, true);
-									end = this.cChartDrawer.getYPosition(pointVal + errVal, axis, true);
+									end = this.cChartDrawer.getYPosition(pointVal + plusErrVal, axis, true);
 									break;
 								}
 								case AscFormat.st_errbartypeMINUS: {
-									start = this.cChartDrawer.getYPosition(pointVal - errVal, axis, true);
+									start = this.cChartDrawer.getYPosition(pointVal - minusErrVal, axis, true);
 									end = this.cChartDrawer.getYPosition(pointVal, axis, true);
 									break;
 								}
@@ -15485,7 +15484,8 @@ CErrBarsDraw.prototype = {
 		var seria = oChart.series[ser];
 
 		var startVal = null;
-		var errVal = null;
+		var plusErrVal = null;
+		var minusErrVal = null;
 
 		if (seria && seria.errBars) {
 			var errBars = seria.errBars;
@@ -15538,33 +15538,49 @@ CErrBarsDraw.prototype = {
 			var pointsCount = seria.getValuesCount();
 			switch (errBars.errValType) {
 				case AscFormat.st_errvaltypeCUST: {
-					//TODO
-					errVal = 1;
+					//TODO numRef ?
+					if (errBars.plus && errBars.plus.numLit) {
+						plusErrVal = errBars.plus.numLit.getPtByIndex(val);
+						if (plusErrVal) {
+							plusErrVal = plusErrVal.val;
+						}
+					}
+					if (errBars.minus && errBars.minus.numLit) {
+						minusErrVal = errBars.minus.numLit.getPtByIndex(val);
+						if (minusErrVal) {
+							minusErrVal = minusErrVal.val;
+						}
+					}
 					break;
 				}
 				case AscFormat.st_errvaltypeFIXEDVAL: {
-					errVal = errBars.val;
+					plusErrVal = errBars.val;
 					break;
 				}
 				case AscFormat.st_errvaltypePERCENTAGE: {
-					errVal = pointVal * errBars.val / 100;
+					plusErrVal = pointVal * errBars.val / 100;
 					break;
 				}
 				case AscFormat.st_errvaltypeSTDDEV: {
 					//calculate Standard Deviation +  change start val
-					errVal = calculateStDev();
+					plusErrVal = calculateStDev();
 					startVal = (calculateSerSum(ser, 0, pointsCount - 1)) / pointsCount;
 					break;
 				}
 				case AscFormat.st_errvaltypeSTDERR: {
 					//по официальным данным мс, формула для расчёта стандратной ошибки - другая
 					//здесь использую STDEV(currentSerData)/SQRT(COUNT(currentSerData))
-					errVal = calculateStDev() / Math.sqrt(pointsCount);
+					plusErrVal = calculateStDev() / Math.sqrt(pointsCount);
 					break;
 				}
 			}
 		}
-		return errVal !== null ? {startVal: startVal, errVal: errVal} : null;
+
+		if (null == minusErrVal) {
+			minusErrVal = plusErrVal;
+		}
+
+		return plusErrVal !== null ? {startVal: startVal, plusErrVal: plusErrVal, minusErrVal: minusErrVal} : null;
 	},
 
 	_drawLines: function (/*isSkip*/) {
