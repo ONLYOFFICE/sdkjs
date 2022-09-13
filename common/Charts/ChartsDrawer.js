@@ -1610,7 +1610,7 @@ CChartsDrawer.prototype =
 								if (null !== oErrVal.startVal) {
 									pointVal = oErrVal.startVal;
 								} else {
-									pointVal = value;
+									pointVal = oErrVal.val;
 								}
 
 								var plusErrVal = oErrVal.plusErrVal;
@@ -5443,6 +5443,37 @@ CChartsDrawer.prototype =
 				res += calcFunc(i, j);
 			}
 		}
+		return res;
+	},
+
+	getValWithStacked: function (ser, val, oChart) {
+		var grouping = this.getChartGrouping(oChart);
+		var res = null;
+
+		var point, oSer;
+		if (grouping === "stacked") {
+			for (var i = 0; i <= ser; i++) {
+				oSer = oChart.series[i];
+				if (oSer) {
+					point = this.getPointByIndex(oSer, val);
+					if (point) {
+						if (!res) {
+							res = 0;
+						}
+						res += point.val;
+					}
+				}
+			}
+		} else if (grouping === "stackedPer") {
+
+		} else {
+			oSer = oChart.series[ser];
+			point = this.getPointByIndex(oSer, val);
+			if (point) {
+				res = point.val;
+			}
+		}
+
 		return res;
 	}
 };
@@ -15309,13 +15340,14 @@ CErrBarsDraw.prototype = {
 	constructor: CErrBarsDraw,
 
 	draw: function () {
-		/*var leftRect = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
-		var topRect = (this.chartProp.chartGutter._top - diffPen) / this.chartProp.pxToMM;
-		var rightRect = this.chartProp.trueWidth / this.chartProp.pxToMM;
-		var bottomRect = (this.chartProp.trueHeight + diffPen) / this.chartProp.pxToMM;
+		var diffPen = 0;
+		var leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+		var topRect = (this.cChartDrawer.calcProp.chartGutter._top - diffPen) / this.cChartDrawer.calcProp.pxToMM;
+		var rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+		var bottomRect = (this.cChartDrawer.calcProp.trueHeight + diffPen) / this.cChartDrawer.calcProp.pxToMM;
 
 		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
-		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);*/
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
 
 		for (var i in this.paths) {
 			if (this.paths[i]) {
@@ -15336,8 +15368,7 @@ CErrBarsDraw.prototype = {
 
 		}
 
-		//this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
-
+		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
 	},
 
 	recalculate: function (charts) {
@@ -15490,22 +15521,16 @@ CErrBarsDraw.prototype = {
 		if (seria && seria.errBars) {
 			var errBars = seria.errBars;
 
-			//здесь необходимо истинное значение без учёта накоплений. функция выше использует значение с учётом накопления
-			var point = this.cChartDrawer.getPointByIndex(seria, val);
-			if (!point) {
-				return null;
+			var pointVal = t.cChartDrawer.getValWithStacked(ser, val, oChart);
+			if (pointVal == null) {
+				return pointVal;
 			}
-			var pointVal = isCatAx ? val + 1 : point.val;
 
 			//TODO J
 			var calculateSerSum = function (_ser, _startVal, endVal) {
 				return t.cChartDrawer.getAutoSum(_ser, _ser, _startVal, endVal, function (_ser, _val) {
-					var _oSer = oChart.series[_ser];
-					var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
-					if (_point) {
-						return isCatAx ? j + 1 : _point.val;
-					}
-					return 0;
+					var _pointVal = isCatAx ? j + 1 : t.cChartDrawer.getValWithStacked(_ser, _val, oChart);
+					return _pointVal != null ? _pointVal : 0;
 				});
 			};
 
@@ -15521,14 +15546,12 @@ CErrBarsDraw.prototype = {
 				var m = mSumm / ny;
 
 				aSumm = t.cChartDrawer.getAutoSum(startSer, endSer, startPoint, endPoint, function (_ser, _val) {
-					var _oSer = oChart.series[_ser];
-					var _point = t.cChartDrawer.getPointByIndex(_oSer, _val);
-					if (_point) {
-						var _pointVal = isCatAx ? j + 1 : _point.val;
+						var _pointVal = isCatAx ? j + 1 : t.cChartDrawer.getValWithStacked(_ser, _val, oChart);
+						if (_pointVal == null) {
+							return 0;
+						}
 						var av = _pointVal - m;
 						return av * av;
-					}
-					return 0;
 				});
 
 				return Math.sqrt(aSumm / (ny - 1));
@@ -15580,7 +15603,7 @@ CErrBarsDraw.prototype = {
 			minusErrVal = plusErrVal;
 		}
 
-		return plusErrVal !== null ? {startVal: startVal, plusErrVal: plusErrVal, minusErrVal: minusErrVal} : null;
+		return plusErrVal !== null ? {startVal: startVal, plusErrVal: plusErrVal, minusErrVal: minusErrVal, val: pointVal} : null;
 	},
 
 	_drawLines: function (/*isSkip*/) {
