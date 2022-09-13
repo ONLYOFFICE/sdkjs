@@ -2391,6 +2391,16 @@ var editor;
         t.wb.Update_ForeignCursor(e[e.length - 1]['cursor'], e[e.length - 1]['user'], true, e[e.length - 1]['useridoriginal']);
       }
     };
+	  this.CoAuthoringApi.onParticipantsChangedOrigin     = function(users)
+	  {
+		  let m_bIsCollaborativeWithLiveViewer = users && -1 !== users.findIndex(function(element) {
+				  return !!element.isLiveViewer;
+			  });
+		  t.collaborativeEditing.m_bIsCollaborativeWithLiveViewer = m_bIsCollaborativeWithLiveViewer;
+		  if (t.isDocumentLoadComplete && m_bIsCollaborativeWithLiveViewer) {
+			  AscCommon.History.Clear();
+		  }
+	  };
   };
 
   spreadsheet_api.prototype._onSaveChanges = function(recalcIndexColumns, recalcIndexRows, isAfterAskSave) {

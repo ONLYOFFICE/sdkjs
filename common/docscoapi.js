@@ -52,6 +52,7 @@
     if (options) {
       this.onAuthParticipantsChanged = options.onAuthParticipantsChanged;
       this.onParticipantsChanged = options.onParticipantsChanged;
+      this.onParticipantsChangedOrigin = options.onParticipantsChangedOrigin;
       this.onMessage = options.onMessage;
       this.onServerVersion = options.onServerVersion;
       this.onCursor =  options.onCursor;
@@ -90,6 +91,9 @@
       };
       this._CoAuthoringApi.onParticipantsChanged = function(e) {
         t.callback_OnParticipantsChanged(e);
+      };
+      this._CoAuthoringApi.onParticipantsChangedOrigin = function(e) {
+        t.callback_OnParticipantsChangedOrigin(e);
       };
       this._CoAuthoringApi.onMessage = function(e, clear) {
         t.callback_OnMessage(e, clear);
@@ -411,6 +415,12 @@
     }
   };
 
+  CDocsCoApi.prototype.callback_OnParticipantsChangedOrigin = function(e) {
+    if (this.onParticipantsChangedOrigin) {
+      this.onParticipantsChangedOrigin(e);
+    }
+  };
+
   CDocsCoApi.prototype.callback_OnMessage = function(e, clear) {
     if (this.onMessage) {
       this.onMessage(e, clear);
@@ -579,6 +589,7 @@
     if (options) {
       this.onAuthParticipantsChanged = options.onAuthParticipantsChanged;
       this.onParticipantsChanged = options.onParticipantsChanged;
+      this.onParticipantsChangedOrigin = options.onParticipantsChangedOrigin;
       this.onMessage = options.onMessage;
       this.onServerVersion = options.onServerVersion;
       this.onCursor = options.onCursor;
@@ -1437,6 +1448,7 @@
       if (this.onAuthParticipantsChanged) {
         this.onAuthParticipantsChanged(this._participants, this._userId);
       }
+      this.onParticipantsChangedOrigin(participants);
 
       // Посылаем эвент о совместном редактировании
       if (1 < this._countEditUsers) {
@@ -1467,6 +1479,8 @@
     if (this.onConnectionStateChanged && (!this._participantsTimestamp || this._participantsTimestamp <= data['participantsTimestamp'])) {
       this._participantsTimestamp = data['participantsTimestamp'];
       usersStateChanged = this._onParticipantsChanged(data['participants'], true);
+
+      this.onParticipantsChangedOrigin(data['participants']);
 
       if (isWaitAuth && !(usersStateChanged.length > 0 && 1 < this._countEditUsers)) {
         var errorMsg = 'Error: connection state changed waitAuth' +
