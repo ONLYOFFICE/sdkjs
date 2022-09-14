@@ -1103,9 +1103,15 @@
 				let change = this.m_aAllChanges[index--];
 				if (!change)
 					continue;
-
-				change.Undo();
-				changeArray.push(change);
+				
+				// TODO: Чтобы здесь вызывать простое change.Undo, нужно поправить все изменения, чтобы
+				//       они на Undo/Redo работали с PosArray. А пока делаем такую заглушку CreateReverse->Load
+				let reverseChange = change.CreateReverseChange();
+				if (reverseChange)
+				{
+					reverseChange.Load();
+					changeArray.push(reverseChange);
+				}
 			}
 
 			this.m_aAllChanges.length = this.m_aAllChanges.length - count;
