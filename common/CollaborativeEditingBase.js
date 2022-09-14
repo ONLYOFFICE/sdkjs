@@ -1067,7 +1067,53 @@
                 this.m_aAllChanges = this.m_aAllChanges.concat(arrChanges);
             }
         };
-		CCollaborativeEditingBase.prototype.ApplyChangesForCurrentClientAndProceedHistoryPoint = function(arrReverseChanges, isWrite) {
+		CCollaborativeEditingBase.prototype.private_PreUndo = function()
+		{
+			let logicDocument = this.m_oLogicDocument;
+
+			logicDocument.DrawingDocument.EndTrackTable(null, true);
+			logicDocument.TurnOffCheckChartSelection();
+
+			return this.private_SaveDocumentState();
+		};
+		CCollaborativeEditingBase.prototype.private_PostUndo = function(state, changes)
+		{
+			this.private_RestoreDocumentState(state);
+			this.private_RecalculateDocument(changes);
+
+			let logicDocument = this.m_oLogicDocument;
+			logicDocument.TurnOnCheckChartSelection();
+			logicDocument.UpdateSelection();
+			logicDocument.UpdateInterface();
+			logicDocument.UpdateRulers();
+		};
+		CCollaborativeEditingBase.prototype.UndoGlobal = function(count)
+		{
+			if (!count)
+				return;
+
+			count = Math.min(count, this.m_aAllChanges.length);
+
+			let state = this.private_PreUndo();
+
+			let index = this.m_aAllChanges.length - 1;
+			let changeArray = [];
+			while (index >= this.m_aAllChanges.length - count)
+			{
+				let change = this.m_aAllChanges[index--];
+				if (!change)
+					continue;
+
+				change.Undo();
+				changeArray.push(change);
+			}
+
+			this.m_aAllChanges.length = this.m_aAllChanges.length - count;
+
+			this.private_PostUndo(state, changeArray);
+		};
+		CCollaborativeEditingBase.prototype.ApplyChangesForCurrentClientAndProceedHistoryPoint = function(arrReverseChanges)
+		{
 			// Накатываем изменения в данном клиенте
             var oLogicDocument = this.m_oLogicDocument;
 
@@ -1087,9 +1133,7 @@
                 if (oClass && oClass.SetIsRecalculated && (!arrReverseChanges[nIndex] || arrReverseChanges[nIndex].IsNeedRecalculate()))
                     oClass.SetIsRecalculated(false);
 
-				if (isWrite) {
-					this.m_aAllChanges.push(arrReverseChanges[nIndex]);
-				}
+				this.m_aAllChanges.push(arrReverseChanges[nIndex]);
             }
 
             // Может так случиться, что в каких-то классах DocumentContent удалились все элементы, либо
@@ -1372,10 +1416,8 @@
 			oHistory.Remove_LastPoint();
 			this.Clear_DCChanges();
 
-            if (isWrite) {
-                editor.CoAuthoringApi.saveChanges(aSendingChanges, null, null, false, this.getCollaborativeEditing());
-            }
-		
+            editor.CoAuthoringApi.saveChanges(aSendingChanges, null, null, false, this.getCollaborativeEditing());
+
             this.private_RestoreDocumentState(DocState);
             this.private_RecalculateDocument(arrReverseChanges);
 
@@ -1384,58 +1426,6 @@
 			oLogicDocument.UpdateSelection();
             oLogicDocument.UpdateInterface();
             oLogicDocument.UpdateRulers();
-		};
-		CCollaborativeEditingBase.prototype.UndoMultipleActions = function(intCount) {
-			if (undefined === intCount)
-				return;
-			// if (true === this.Get_GlobalLock())
-			// 	return;
-
-			var arrReverseChanges = [];
-			var intIndex = this.m_aAllChanges.length - 1;
-			var intIndexStart = this.m_aAllChanges.length;
-
-			if (intIndex < 0)
-				return false;
-
-			//Формируем пачку действий
-			while (intIndex >= this.m_aAllChanges.length - intCount)
-			{
-				var oChange = this.m_aAllChanges[intIndex];
-				if (!oChange)
-					continue;
-				
-				var oTemp;
-
-				if (oChange.IsContentChange())
-				{
-					var _oChange = oChange.Copy();
-
-					if (this.private_CommutateContentChanges(_oChange, intIndexStart))
-						oTemp = _oChange;
-					oChange.SetReverted(true);
-				}
-				else
-				{
-					var oClass = oChange.GetClass();
-					var _oChange = oChange; // TODO: Тут надо бы сделать копирование
-					if (this.private_CommutatePropertyChanges(oClass, _oChange, intIndexStart))
-						oTemp = _oChange;
-				}
-
-				var oReverseChange = oTemp.CreateReverseChange();
-				if (oReverseChange)
-				{
-					arrReverseChanges.push(oReverseChange);
-					oReverseChange.SetReverted(true);
-				}
-
-				intIndex--;
-			}
-            // Удаляем запись о изменениях
-            this.m_aAllChanges.length = this.m_aAllChanges.length - intCount;
-
-			this.ApplyChangesForCurrentClientAndProceedHistoryPoint(arrReverseChanges, false);
 		};
 		CCollaborativeEditingBase.prototype.CanUndoMultipleActions = function()
         {
@@ -1504,7 +1494,7 @@
                 }
             }
 
-            this.ApplyChangesForCurrentClientAndProceedHistoryPoint(arrReverseChanges, true);
+            this.ApplyChangesForCurrentClientAndProceedHistoryPoint(arrReverseChanges);
         };
         CCollaborativeEditingBase.prototype.CanUndo = function()
         {
