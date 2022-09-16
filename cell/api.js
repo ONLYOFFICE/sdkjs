@@ -2394,7 +2394,7 @@ var editor;
 	  this.CoAuthoringApi.onParticipantsChangedOrigin     = function(users)
 	  {
 		  let m_bIsCollaborativeWithLiveViewer = users && -1 !== users.findIndex(function(element) {
-				  return !!element.isLiveViewer;
+				  return !!element['isLiveViewer'];
 			  });
 		  t.collaborativeEditing.m_bIsCollaborativeWithLiveViewer = m_bIsCollaborativeWithLiveViewer;
 		  if (t.isDocumentLoadComplete && m_bIsCollaborativeWithLiveViewer) {
