@@ -118,6 +118,7 @@ CGraphicObjects.prototype =
     rotateTrackObjects: DrawingObjectsController.prototype.rotateTrackObjects,
     handleRotateTrack: DrawingObjectsController.prototype.handleRotateTrack,
     trackResizeObjects: DrawingObjectsController.prototype.trackResizeObjects,
+    trackGeometryObjects: DrawingObjectsController.prototype.trackGeometryObjects,
     resetInternalSelection: DrawingObjectsController.prototype.resetInternalSelection,
     handleTextHit: DrawingObjectsController.prototype.handleTextHit,
     getConnectorsForCheck: DrawingObjectsController.prototype.getConnectorsForCheck,

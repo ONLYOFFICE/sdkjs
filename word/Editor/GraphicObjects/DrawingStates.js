@@ -1019,7 +1019,7 @@ ResizeState.prototype =
         var startPage = this.drawingObjects.graphicPages[this.majorObject.selectStartPage];
         var start_arr = startPage ? startPage.beforeTextObjects.concat(startPage.inlineObjects, startPage.behindDocObjects) : [];
         var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, coords.x, coords.y, start_arr);
-        this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e);
+        this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e, coords.x, coords.y);
         if(AscFormat.isRealNumber(resize_coef.snapX))
         {
             this.drawingObjects.drawingDocument.DrawVerAnchor(pageIndex, resize_coef.snapX);
