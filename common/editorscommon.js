@@ -352,6 +352,15 @@
 		}
     		return indexHtml.substring(0, indexHtml.lastIndexOf("/") + 1);
 	}
+	function getBaseUrlPathname()
+	{
+		let baseUrl = getBaseUrl();
+		return baseUrl.substring(getIndex(baseUrl, '/', 3));
+	}
+
+	function getIndex(str, substring, n) {
+		return str.split(substring).slice(0, n).join(substring).length;
+	}
 
 	function getEncodingParams()
 	{
@@ -13019,6 +13028,8 @@
 	window["AscCommon"].getSockJs = getSockJs;
 	window["AscCommon"].getSocketIO = getSocketIO;
 	window["AscCommon"].getBaseUrl = getBaseUrl;
+	window["AscCommon"].getBaseUrlPathname = getBaseUrlPathname;
+	window["AscCommon"].getIndex = getIndex;
 	window["AscCommon"].getEncodingParams = getEncodingParams;
 	window["AscCommon"].getEncodingByBOM = getEncodingByBOM;
 	window["AscCommon"].saveWithParts = saveWithParts;

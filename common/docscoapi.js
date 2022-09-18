@@ -680,8 +680,6 @@
 
     this._url = "";
 
-    this.reconnectTimeout = null;
-    this.attemptCount = 0;
     this.maxAttemptCount = 50;
     this.reconnectInterval = 2000;
     this.errorTimeOut = 10000;
@@ -693,7 +691,7 @@
     this._user = null;
     this._userId = "Anonymous";
     this.ownedLockBlocks = [];
-    this.sockjs_url = null;
+    this.socketio_url = null;
     this.socketio = null;
     this.editorType = -1;
     this._isExcel = false;
@@ -1594,8 +1592,11 @@
       this._sessionTimeConnect = data['sessionTimeConnect'];
       if (data['settings']) {
         if (data['settings']['reconnection']) {
-          this.maxAttemptCount = data['settings']['reconnection']['attempts'];
-          this.reconnectInterval = data['settings']['reconnection']['delay'];
+          let attempts = data['settings']['reconnection']['attempts'];
+          let delay = data['settings']['reconnection']['delay'];
+          this.socketio.io.reconnectionAttempts(attempts);
+          this.socketio.io.reconnectionDelay(delay);
+          this.socketio.io.reconnectionDelayMax(delay);
         }
         if (data['settings']['websocketMaxPayloadSize']) {
           this.websocketMaxPayloadSize = data['settings']['websocketMaxPayloadSize'];
@@ -1671,7 +1672,7 @@
     this._documentCallbackUrl = documentCallbackUrl;
     this._token = token;
     this.ownedLockBlocks = [];
-    this.sockjs_url = null;
+    this.socketio_url = null;
     this.editorType = editorType;
     this._isExcel = c_oEditorId.Spreadsheet === editorType;
     this._isPresentation = c_oEditorId.Presentation === editorType;
@@ -1694,9 +1695,7 @@
   DocsCoApi.prototype.setDocId = function(docid) {
     //todo возможно надо менять sockjs_url
     this._docid = docid;
-    // this.sockjs_url = AscCommon.getBaseUrl() + '../../../../doc/' + docid + '/c';
-    this.sockjs_url = AscCommon.getBaseUrl() + '../../../../doc/socket.io';
-    this.sockjs_url = '/web-apps/apps/documenteditor/main/../../../../doc/socket.io';
+    this.socketio_url = AscCommon.getBaseUrlPathname() + '../../../../doc/socket.io';
   };
   // Авторизация (ее нужно делать после выставления состояния редактора view-mode)
   DocsCoApi.prototype.auth = function(isViewer, opt_openCmd, opt_isIdle) {
@@ -1758,10 +1757,9 @@
 		} else {
           let io = AscCommon.getSocketIO();
           socket = io({
-            path: this.sockjs_url,
+            path: this.socketio_url,
             closeOnBeforeunload: false,
-            // reconnectionAttempts: 15,
-            reconnectionAttempts: 2,
+            reconnectionAttempts: 15,
             reconnectionDelay: 500,
             reconnectionDelayMax: 10000,
             randomizationFactor: 0.5,
@@ -1797,12 +1795,6 @@
 	};
 
 	DocsCoApi.prototype._onServerOpen = function () {
-		if (this.reconnectTimeout) {
-			clearTimeout(this.reconnectTimeout);
-			this.reconnectTimeout = null;
-			this.attemptCount = 0;
-		}
-
 		this._state = ConnectionState.WaitAuth;
 		this.onFirstConnect();
 	};
@@ -1905,27 +1897,11 @@
 		if (this.onDisconnect) {
 			this.onDisconnect(reason, code);
 		}
-		//Try reconect
-		// if (!bIsDisconnectAtAll) {
-		// 	this._tryReconnect();
-		// }
 	};
 	DocsCoApi.prototype._reconnect = function () {
 		delete this.sockjs;
 		this._initSocksJs();
 	};
-	DocsCoApi.prototype._tryReconnect = function () {
-		var t = this;
-		if (this.reconnectTimeout) {
-			clearTimeout(this.reconnectTimeout);
-			t.reconnectTimeout = null;
-		}
-		++this.attemptCount;
-		this.reconnectTimeout = setTimeout(function () {
-			t._reconnect();
-		}, this.reconnectInterval);
-	};
-
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommon'] = window['AscCommon'] || {};
   window['AscCommon'].CDocsCoApi = CDocsCoApi;
