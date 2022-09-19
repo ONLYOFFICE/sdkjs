@@ -65,21 +65,33 @@ StartAddNewShape.prototype =
     {
         if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR)
             return {objectId: "1", bMarker: true, cursorType: "crosshair"};
-        this.startX = x;
-        this.startY = y;
+
+        let dStartX = x;
+        let dStartY = y;
+        let oNearestPos = this.drawingObjects.getSnapNearestPos(x, y);
+        if(oNearestPos)
+        {
+            dStartX = oNearestPos.x;
+            dStartY = oNearestPos.y;
+        }
+        this.startX = dStartX;
+        this.startY = dStartY;
         this.drawingObjects.arrPreTrackObjects.length = 0;
         var layout = null, master = null, slide = null;
-        if(this.drawingObjects.drawingObjects && this.drawingObjects.drawingObjects.cSld &&  this.drawingObjects.drawingObjects.getParentObjects)
+        if(this.drawingObjects.drawingObjects && this.drawingObjects.drawingObjects.cSld)
         {
-            var oParentObjects = this.drawingObjects.drawingObjects.getParentObjects();
-            if(isRealObject(oParentObjects))
+            if(this.drawingObjects.drawingObjects.getParentObjects)
             {
-                layout = oParentObjects.layout;
-                master = oParentObjects.master;
-                slide = oParentObjects.slide;
+                var oParentObjects = this.drawingObjects.drawingObjects.getParentObjects();
+                if(isRealObject(oParentObjects))
+                {
+                    layout = oParentObjects.layout;
+                    master = oParentObjects.master;
+                    slide = oParentObjects.slide;
+                }
             }
         }
-        this.drawingObjects.arrPreTrackObjects.push(new AscFormat.NewShapeTrack(this.preset, x, y, this.drawingObjects.getTheme(), master, layout, slide, 0, this.drawingObjects));
+        this.drawingObjects.arrPreTrackObjects.push(new AscFormat.NewShapeTrack(this.preset, dStartX, dStartY, this.drawingObjects.getTheme(), master, layout, slide, 0, this.drawingObjects));
         this.bStart = true;
         this.drawingObjects.swapTrackObjects();
     },
@@ -90,7 +102,15 @@ StartAddNewShape.prototype =
         {
             if(!this.bMoved && (Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA ))
                 this.bMoved = true;
-            this.drawingObjects.arrTrackObjects[0].track(e, x, y);
+            let oNearestPos = this.drawingObjects.getSnapNearestPos(x, y);
+            let dX = x;
+            let dY = y;
+            if(oNearestPos)
+            {
+                dX = oNearestPos.x;
+                dY = oNearestPos.y;
+            }
+            this.drawingObjects.arrTrackObjects[0].track(e, dX, dY);
             this.drawingObjects.updateOverlay();
         }
         else
@@ -535,10 +555,10 @@ NullState.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        var aDrawings = this.drawingObjects.getDrawingArray();
-        var _x = x, _y = y, oDrawing;
+        let aDrawings = this.drawingObjects.getDrawingArray();
+        let _x = x, _y = y, oDrawing;
         this.lastMoveHandler = null;
-        for(var nDrawing = aDrawings.length - 1; nDrawing > -1; --nDrawing) {
+        for(let nDrawing = aDrawings.length - 1; nDrawing > -1; --nDrawing) {
             oDrawing = aDrawings[nDrawing];
             if(oDrawing.onMouseMove(e, _x, _y)) {
                 this.lastMoveHandler = oDrawing;
@@ -1189,8 +1209,16 @@ ResizeState.prototype =
         }
         var start_arr = this.drawingObjects.getDrawingArray();
         var coords = AscFormat.CheckCoordsNeedPage(x, y, pageIndex, this.majorObject.selectStartPage, this.drawingObjects.getDrawingDocument());
-        var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, coords.x, coords.y, start_arr);
-        this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e, x, y);
+        let dX = coords.x;
+        let dY = coords.y;
+        let oNearestPos = this.drawingObjects.getSnapNearestPos(coords.x, coords.y);
+        if(oNearestPos)
+        {
+            dX = oNearestPos.x;
+            dY = oNearestPos.y;
+        }
+        var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, dX, dY, start_arr);
+        this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e, dX, dY);
         if(this.drawingObjects.drawingObjects.cSld)
         {
             if(AscFormat.isRealNumber(resize_coef.snapX))
@@ -1308,108 +1336,84 @@ MoveState.prototype =
             this.onMouseUp(e, x, y, pageIndex);
             return;
         }
-        var _arr_track_objects = this.drawingObjects.arrTrackObjects;
-        var _objects_count = _arr_track_objects.length;
-        var _object_index;
-
-        var result_x, result_y;
+        let aTracks = this.drawingObjects.arrTrackObjects;
+        let nTracksCount = aTracks.length;
+        let nTrack;
+        let bIsSlide = false;
+        if(this.drawingObjects &&
+            this.drawingObjects.drawingObjects &&
+            this.drawingObjects.drawingObjects.cSld)
+        {
+            bIsSlide = true;
+        }
+        let dResultX, dResultY;
         if(!e.ShiftKey)
         {
-            result_x = x;
-            result_y = y;
+            dResultX = x;
+            dResultY = y;
         }
         else
         {
-            var abs_dist_x = Math.abs(this.startX - x);
-            var abs_dist_y = Math.abs(this.startY - y);
-            if(abs_dist_x > abs_dist_y)
+            let dAbsDistX = Math.abs(this.startX - x);
+            let dAbsDistY = Math.abs(this.startY - y);
+            if(dAbsDistX > dAbsDistY)
             {
-                result_x = x;
-                result_y = this.startY;
+                dResultX = x;
+                dResultY = this.startY;
             }
             else
             {
-                result_x = this.startX;
-                result_y = y;
+                dResultX = this.startX;
+                dResultY = y;
             }
         }
-
-
-        var startPos = {x: this.startX, y: this.startY};
-        var start_arr = this.drawingObjects.getAllObjectsOnPage(0);
-        var min_dx = null, min_dy = null;
-        var dx, dy;
-        var snap_x = [], snap_y = [];
-
-        var snapHorArray = [], snapVerArray = [];
-
+        let aDrawings = this.drawingObjects.getAllObjectsOnPage(0);
+        let dMinDx = null, dMinDy = null;
+        let dDx, dDy;
+        let dCurDx = dResultX - this.startX;
+        let dCurDy = dResultY - this.startY;
+        let aSnapX = [], aSnapY = [];
+        let oCurTrackOriginal;
+        let aTrackSnapX, aTrackSnapY;
+        let nSnapPos;
+        let oSnapData;
 
         //-------------------------------------------------
-        for(var track_index = 0; track_index < _arr_track_objects.length; ++track_index)
+        for(nTrack = 0; nTrack < nTracksCount; ++nTrack)
         {
-            var cur_track_original_shape = _arr_track_objects[track_index].originalObject;
-            var trackSnapArrayX = cur_track_original_shape.snapArrayX;
-            if(!trackSnapArrayX)
+            oCurTrackOriginal = aTracks[nTrack].originalObject;
+            aTrackSnapX = oCurTrackOriginal.snapArrayX;
+            if(!aTrackSnapX)
             {
                 continue;
             }
-            var curDX =  result_x - startPos.x;
 
-
-            for(snap_index = 0; snap_index < trackSnapArrayX.length; ++snap_index)
+            if(aDrawings.length > 0)
             {
-                var snap_obj = AscFormat.GetMinSnapDistanceXObjectByArrays(trackSnapArrayX[snap_index] + curDX, snapHorArray);
-                if(isRealObject(snap_obj))
+                for(nSnapPos = 0; nSnapPos < aTrackSnapX.length; ++nSnapPos)
                 {
-                    dx = snap_obj.dist;
-                    if(dx !== null)
+                    oSnapData = AscFormat.GetMinSnapDistanceXObject(aTrackSnapX[nSnapPos] + dCurDx, aDrawings);
+                    if(oSnapData)
                     {
-                        if(min_dx === null)
+                        dDx = oSnapData.dist;
+                        if(dDx !== null)
                         {
-                            min_dx = dx;
-                            snap_x.push(snap_obj.pos);
-                        }
-                        else
-                        {
-                            if(AscFormat.fApproxEqual(min_dx, dx, 0.01)){
-                                snap_x.push(snap_obj.pos);
-                            }
-                            else if(Math.abs(min_dx) > Math.abs(dx))
+                            if(dMinDx === null)
                             {
-                                min_dx = dx;
-                                snap_x.length = 0;
-                                snap_x.push(snap_obj.pos);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if(start_arr.length > 0)
-            {
-                for(var snap_index = 0; snap_index < trackSnapArrayX.length; ++snap_index)
-                {
-                    var snap_obj = AscFormat.GetMinSnapDistanceXObject(trackSnapArrayX[snap_index] + curDX, start_arr);
-                    if(isRealObject(snap_obj))
-                    {
-                        dx = snap_obj.dist;
-                        if(dx !== null)
-                        {
-                            if(min_dx === null)
-                            {
-                                min_dx = dx;
-                                snap_x.push(snap_obj.pos);
+                                dMinDx = dDx;
+                                aSnapX.push(oSnapData.pos);
                             }
                             else
                             {
-                                if(AscFormat.fApproxEqual(min_dx, dx, 0.01)){
-                                    snap_x.push(snap_obj.pos);
-                                }
-                                else if(Math.abs(min_dx) > Math.abs(dx))
+                                if(AscFormat.fApproxEqual(dMinDx, dDx, 0.01))
                                 {
-                                    min_dx = dx;
-                                    snap_x.length = 0;
-                                    snap_x.push(snap_obj.pos);
+                                    aSnapX.push(oSnapData.pos);
+                                }
+                                else if(Math.abs(dMinDx) > Math.abs(dDx))
+                                {
+                                    dMinDx = dDx;
+                                    aSnapX.length = 0;
+                                    aSnapX.push(oSnapData.pos);
                                 }
                             }
                         }
@@ -1417,77 +1421,46 @@ MoveState.prototype =
                 }
             }
         }
-        if(result_x === this.startX)
+        if(AscFormat.fApproxEqual(dResultX, this.startX))
         {
-            min_dx = 0;
+            dMinDx = 0;
         }
 
         //-----------------------------
-        for(track_index = 0; track_index < _arr_track_objects.length; ++track_index)
+        for(nTrack = 0; nTrack < aTracks.length; ++nTrack)
         {
-            cur_track_original_shape = _arr_track_objects[track_index].originalObject;
-            var trackSnapArrayY = cur_track_original_shape.snapArrayY;
-            if(!trackSnapArrayY)
+            oCurTrackOriginal = aTracks[nTrack].originalObject;
+            aTrackSnapY = oCurTrackOriginal.snapArrayY;
+            if(!aTrackSnapY)
             {
                 continue;
             }
-            var curDY =  result_y - startPos.y;
-
-
-            for(snap_index = 0; snap_index < trackSnapArrayY.length; ++snap_index)
+            if(aDrawings.length > 0)
             {
-                var snap_obj = AscFormat.GetMinSnapDistanceYObjectByArrays(trackSnapArrayY[snap_index] + curDY, snapVerArray);
-                if(isRealObject(snap_obj))
+                for(nSnapPos = 0; nSnapPos < aTrackSnapY.length; ++nSnapPos)
                 {
-                    dy = snap_obj.dist;
-                    if(dy !== null)
+                    oSnapData = AscFormat.GetMinSnapDistanceYObject(aTrackSnapY[nSnapPos] + dCurDy, aDrawings);
+                    if(oSnapData)
                     {
-                        if(min_dy === null)
+                        dDy = oSnapData.dist;
+                        if(dDy !== null)
                         {
-                            min_dy = dy;
-                            snap_y.push(snap_obj.pos);
-                        }
-                        else
-                        {
-                            if(AscFormat.fApproxEqual(min_dy, dy, 0.01)){
-                                snap_y.push(snap_obj.pos);
-                            }
-                            else if(Math.abs(min_dy) > Math.abs(dy))
+                            if(dMinDy === null)
                             {
-                                min_dy = dy;
-                                snap_y.length = 0;
-                                snap_y.push(snap_obj.pos);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if(start_arr.length > 0)
-            {
-                for(snap_index = 0; snap_index < trackSnapArrayY.length; ++snap_index)
-                {
-                    var snap_obj = AscFormat.GetMinSnapDistanceYObject(trackSnapArrayY[snap_index] + curDY, start_arr);
-                    if(isRealObject(snap_obj))
-                    {
-                        dy = snap_obj.dist;
-                        if(dy !== null)
-                        {
-                            if(min_dy === null)
-                            {
-                                min_dy = dy;
-                                snap_y.push(snap_obj.pos);
+                                dMinDy = dDy;
+                                aSnapY.push(oSnapData.pos);
                             }
                             else
                             {
-                                if(AscFormat.fApproxEqual(min_dy, dy, 0.01)){
-                                    snap_y.push(snap_obj.pos);
-                                }
-                                else if(Math.abs(min_dy) > Math.abs(dy))
+                                if(AscFormat.fApproxEqual(dMinDy, dDy, 0.01))
                                 {
-                                    min_dy = dy;
-                                    snap_y.length = 0;
-                                    snap_y.push(snap_obj.pos);
+                                    aSnapY.push(oSnapData.pos);
+                                }
+                                else if(Math.abs(dMinDy) > Math.abs(dDy))
+                                {
+                                    dMinDy = dDy;
+                                    aSnapY.length = 0;
+                                    aSnapY.push(oSnapData.pos);
                                 }
                             }
                         }
@@ -1495,41 +1468,68 @@ MoveState.prototype =
                 }
             }
         }
-        if(result_y === this.startY)
+        if(AscFormat.fApproxEqual(dResultY, this.startY))
         {
-            min_dy = 0;
+            dMinDy = 0;
         }
 
-        if(min_dx === null || Math.abs(min_dx) > SNAP_DISTANCE)
-            min_dx = 0;
+        let oMajorBounds = this.majorObject.getRectBounds();
+        let oNearestSnapPos = this.drawingObjects.getSnapNearestPos(oMajorBounds.l + dCurDx, oMajorBounds.t + dCurDy);
+        if(dMinDx === null || Math.abs(dMinDx) > SNAP_DISTANCE)
+        {
+            dMinDx = 0;
+            if(oNearestSnapPos)
+            {
+                if(!AscFormat.fApproxEqual(dResultX, this.startX))
+                {
+                    let dDeltaX = oNearestSnapPos.x - oMajorBounds.x;
+                    dMinDx = dDeltaX - dResultX + this.startX;
+                }
+            }
+        }
         else
         {
-            if(this.drawingObjects.drawingObjects.cSld)
+            if(bIsSlide)
             {
-                for(var i = 0; i < snap_x.length; ++i){
-                    this.drawingObjects.getDrawingDocument().DrawVerAnchor(pageIndex, snap_x[i]);
+                for(nSnapPos = 0; nSnapPos < aSnapX.length; ++nSnapPos)
+                {
+                    this.drawingObjects.getDrawingDocument().DrawVerAnchor(pageIndex, aSnapX[nSnapPos]);
                 }
 
             }
         }
 
-        if(min_dy === null || Math.abs(min_dy) > SNAP_DISTANCE)
-            min_dy = 0;
+        if(dMinDy === null || Math.abs(dMinDy) > SNAP_DISTANCE)
+        {
+            dMinDy = 0;
+            if(oNearestSnapPos)
+            {
+                if(!AscFormat.fApproxEqual(dResultY, this.startY))
+                {
+                    let dDeltaY = oNearestSnapPos.y - oMajorBounds.y;
+                    dMinDy = dDeltaY - dResultY + this.startY;
+                }
+            }
+        }
         else
         {
-            if(this.drawingObjects.drawingObjects.cSld)
+            if(bIsSlide)
             {
-                for(var i = 0; i < snap_y.length; ++i){
-                    this.drawingObjects.getDrawingDocument().DrawHorAnchor(pageIndex, snap_y[i]);
+                for(nSnapPos = 0; nSnapPos < aSnapY.length; ++nSnapPos)
+                {
+                    this.drawingObjects.getDrawingDocument().DrawHorAnchor(pageIndex, aSnapY[nSnapPos]);
                 }
             }
         }
 
-        var tx = result_x - this.startX + min_dx, ty = result_y - this.startY + min_dy;
-        var check_position = this.drawingObjects.drawingObjects.checkGraphicObjectPosition(this.rectX + tx, this.rectY + ty, this.rectW, this.rectH);
-        for(_object_index = 0; _object_index < _objects_count; ++_object_index)
-            _arr_track_objects[_object_index].track(tx + check_position.x, ty + check_position.y, pageIndex);
-        this.bSamePos = (AscFormat.fApproxEqual(tx + check_position.x, 0) && AscFormat.fApproxEqual(ty + check_position.y, 0));
+        dDx = dResultX - this.startX + dMinDx;
+        dDy = dResultY - this.startY + dMinDy;
+        let oCheckPosition = this.drawingObjects.checkGraphicObjectPosition(this.rectX + dDx, this.rectY + dDy, this.rectW, this.rectH);
+        for(nTrack = 0; nTrack < nTracksCount; ++nTrack)
+        {
+            aTracks[nTrack].track(dDx + oCheckPosition.x, dDy + oCheckPosition.y, pageIndex);
+        }
+        this.bSamePos = (AscFormat.fApproxEqual(dDx + oCheckPosition.x, 0) && AscFormat.fApproxEqual(dDy + oCheckPosition.y, 0));
         this.drawingObjects.updateOverlay();
     },
 

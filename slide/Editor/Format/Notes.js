@@ -318,10 +318,6 @@
         return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
     };
 
-    CNotes.prototype.checkGraphicObjectPosition = function()
-    {
-        return {x: 0, y: 0};
-    };
 
     CNotes.prototype.Clear_ContentChanges = function()
     {

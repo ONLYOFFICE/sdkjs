@@ -254,8 +254,6 @@ CChartSpace.prototype.setRecalcObject = CShape.prototype.setRecalcObject;
 
 CChartSpace.prototype.createResizeTrack = CShape.prototype.createResizeTrack;
 CChartSpace.prototype.createMoveTrack = CShape.prototype.createMoveTrack;
-CChartSpace.prototype.getRectBounds = CShape.prototype.getRectBounds;
-
 CChartSpace.prototype.recalculate = function()
 {
     if(this.bDeleted)

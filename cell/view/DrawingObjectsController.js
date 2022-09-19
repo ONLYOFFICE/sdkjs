@@ -735,7 +735,16 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
                 oThis.drawingObjects.sendGraphicObjectProps();
             });
         }
-    }
+    };
+
+    DrawingObjectsController.prototype.checkGraphicObjectPosition = function (x, y, w, h)
+    {
+        if(this.drawingObjects.checkGraphicObjectPosition)
+        {
+            return this.drawingObjects.checkGraphicObjectPosition(x, y, w, h);
+        }
+        return {x: 0, y: 0};
+    };
 //------------------------------------------------------------export---------------------------------------------------
 window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 window['AscCommonExcel'].CheckIdSatetShapeAdd = CheckIdSatetShapeAdd;

@@ -3050,6 +3050,8 @@ function CPresentation(DrawingDocument) {
     this.sldSz = null;
     this.viewPr = null;
 
+    this.strideData = null;
+
     this.recalcMap = {};
     this.bNeedUpdateTh = false;
     this.needSelectPages = [];
@@ -3175,7 +3177,12 @@ CPresentation.prototype.setViewPr = function(pr) {
     History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_Presentation_ViewPr, this.viewPr, pr));
     this.viewPr = pr;
 };
-
+CPresentation.prototype.getStrideData = function() {
+    if(!this.strideData) {
+        this.strideData = new AscCommonSlide.CStrideData(this);
+    }
+    return this.strideData;
+};
 
 CPresentation.prototype.changeSlideSizeFunction = function () {
     AscFormat.ExecuteNoHistory(function () {
@@ -3213,6 +3220,29 @@ CPresentation.prototype.changeSlideSize = function (width, height, nType) {
         this.Recalculate();
         this.Document_UpdateInterfaceState();
     }
+};
+
+CPresentation.prototype.getViewProperties = function() {
+    let oPresentation = this;
+    return AscFormat.ExecuteNoHistory(function() {
+        if(oPresentation.viewPr) {
+            return oPresentation.viewPr.createDuplicate();
+        }
+        return new AscFormat.CViewPr();
+    }, this, []);
+};
+CPresentation.prototype.getViewPropertiesStride = function() {
+    if(this.viewPr) {
+        return this.viewPr.getGridSpacing();
+    }
+    return AscFormat.CViewPr.prototype.DEFAULT_GRID_SPACING;
+};
+CPresentation.prototype.isSnapToGrid = function() {
+    return true;
+    if(this.viewPr) {
+        return this.viewPr.isSnapToGrid();
+    }
+    return false;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

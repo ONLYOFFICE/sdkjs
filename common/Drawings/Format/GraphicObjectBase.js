@@ -621,6 +621,14 @@
         }
         return false;
     };
+
+
+    CGraphicObjectBase.prototype.getRectBounds = function() {
+        let aSnapX = [];
+        let aSnapY = [];
+        this.calculateSnapArrays(aSnapX, aSnapY, this.getTransformMatrix());
+        return new CGraphicBounds(Math.min.apply(Math, aSnapX), Math.min.apply(Math, aSnapY),Math.max.apply(Math, aSnapX), Math.max.apply(Math, aSnapY));
+    };
     /**
      * Internal method for calculating snap arrays
      * @param {Array} snapArrayX

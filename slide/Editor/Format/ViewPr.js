@@ -52,10 +52,13 @@
 
     function fReadSlideSize(oStream) {
         let oSlideSize = new AscCommonSlide.CSlideSize();
-        oStream.GetUChar();//start attributes
+        let nStart = oStream.cur;
+        let nEnd = nStart + oStream.GetULong() + 4;
+        let nType = oStream.GetUChar();//start attributes
         oSlideSize.setCX(oStream.GetLong());
         oSlideSize.setCY(oStream.GetLong());
-        oStream.GetUChar();//end attributes
+        nType = oStream.GetUChar();//end attributes
+        oStream.Seek2(nEnd);
         return oSlideSize;
     }
 
@@ -115,14 +118,15 @@
         let oStream = pReader.stream;
         switch (nType) {
             case 0: {
-                let oGridSpacing = fReadSlideSize(oStream);
-                this.setGridSpacing(oGridSpacing);
+                //let oGridSpacing = fReadSlideSize(oStream);
+                //this.setGridSpacing(oGridSpacing);
+
+                oStream.SkipRecord();
                 break;
             }
             case 1:
             case 2:
-            case 3:
-            case 4: {
+            case 3: {
                 oStream.SkipRecord();
                 break;
             }
@@ -150,6 +154,20 @@
     };
     CViewPr.prototype.toXml = function (writer, name) {
     };
+    CViewPr.prototype.DEFAULT_GRID_SPACING = 720000;
+    CViewPr.prototype.getGridSpacing = function () {
+        let oSpacing = this.gridSpacing;
+        if(oSpacing) {
+            return oSpacing.cx || this.DEFAULT_GRID_SPACING;
+        }
+        return  this.DEFAULT_GRID_SPACING;
+    };
+    CViewPr.prototype.isSnapToGrid = function () {
+        if(this.slideViewPr) {
+            return this.slideViewPr.isSnapToGrid();
+        }
+        return false;
+    };
 
 
     function CCommonViewPr() {
@@ -161,6 +179,12 @@
     CCommonViewPr.prototype.setCSldViewPr = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CommonViewPrCSldViewPr, this.cSldViewPr, oPr));
         this.cSldViewPr = oPr;
+    };
+    CCommonViewPr.prototype.isSnapToGrid = function() {
+        if(this.cSldViewPr) {
+            return this.cSldViewPr.isSnapToGrid();
+        }
+        return false;
     };
     CCommonViewPr.prototype.readAttribute = function(nType, pReader) {
     };
@@ -268,6 +292,9 @@
         }
     };
     CCSldViewPr.prototype.toXml = function (writer, name) {
+    };
+    CCSldViewPr.prototype.isSnapToGrid = function () {
+        return this.snapToGrid === true;
     };
 
 
