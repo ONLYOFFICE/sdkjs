@@ -1287,7 +1287,7 @@
 	 * Converts the ApiPresentation object into the JSON object.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
-     * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
+     * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
 	 */
     ApiPresentation.prototype.ToJSON = function(bWriteTableStyles){
@@ -1306,7 +1306,7 @@
      * @param {bool} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
      * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
      * @param {bool} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
-     * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
+     * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON[]}
 	 */
     ApiPresentation.prototype.SlidesToJSON = function(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
@@ -1701,7 +1701,7 @@
 	 * Converts the ApiMaster object into the JSON object.
 	 * @memberof ApiMaster
 	 * @typeofeditors ["CPE"]
-     * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
+     * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
 	 */
     ApiMaster.prototype.ToJSON = function(bWriteTableStyles){
@@ -2039,7 +2039,7 @@
 	 * @memberof ApiLayout
      * @typeofeditors ["CPE"]
      * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not.
-     * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
+     * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
 	 */
     ApiLayout.prototype.ToJSON = function(bWriteMaster, bWriteTableStyles){
@@ -3097,7 +3097,7 @@
      * @param {bool} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
      * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
      * @param {bool} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
-	 * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
+	 * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
 	 */
     ApiSlide.prototype.ToJSON = function(bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
@@ -4434,7 +4434,7 @@
 	 * Converts the ApiTable object into the JSON object.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-     * @param {bool} [bWriteTableStyles=false] - Specifies whether or not to write used table styles
+     * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
 	 */
 	ApiTable.prototype.ToJSON = function(bWriteTableStyles)
