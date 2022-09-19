@@ -734,25 +734,25 @@
 		s._WriteString2(1, this.id);
 		s.WriteUChar(AscCommon.g_nodeAttributeEnd);
 
-		var dxfs = [];
+		var initSaveManager = new AscCommonExcel.InitSaveManager();
 		if (null !== this.filter) {
 			s.StartRecord(1);
 			s.WriteULong(1);
 			s.StartRecord(0);
 			var tmp = new AscCommon.CMemory(true);
 			s.ExportToMemory(tmp);
-			var btw = new AscCommonExcel.BinaryTableWriter(tmp, dxfs, false, {});
+			var btw = new AscCommonExcel.BinaryTableWriter(tmp, initSaveManager, false, {});
 			btw.WriteFilterColumn(this.filter);
 			s.ImportFromMemory(tmp);
 			s.EndRecord();
 			s.EndRecord();
 		}
-		if (dxfs.length > 0) {
+		if (initSaveManager && initSaveManager.aDxfs.length > 0) {
 			s.StartRecord(0);
 			var tmp = new AscCommon.CMemory(true);
 			s.ExportToMemory(tmp);
 			var bstw = new AscCommonExcel.BinaryStylesTableWriter(tmp, null, null);
-			bstw.WriteDxf(dxfs[0]);
+			bstw.WriteDxf(initSaveManager.aDxfs[0]);
 			s.ImportFromMemory(tmp);
 			s.EndRecord();
 		}
@@ -805,8 +805,11 @@
 						s.Skip2(1); // type
 						var _stream = new AscCommon.FT_Stream2();
 						_stream.FromFileStream(s);
-						var oReadResult = new AscCommonWord.DocReadResult(null);
-						var bwtr = new AscCommonExcel.Binary_TableReader(_stream, oReadResult, null, dxfs);
+						var initOpenManager = new AscCommonExcel.InitOpenManager();
+						var bwtr = new AscCommonExcel.Binary_TableReader(_stream, initOpenManager);
+						if (initOpenManager.Dxfs) {
+							dxfs = dxfs.concat(initOpenManager.Dxfs);
+						}
 						this.filter = bwtr.ReadFilterColumnExternal();
 						_stream.ToFileStream2(s);
 					}
@@ -1038,8 +1041,11 @@
 				case 2: {
 					var _stream = new AscCommon.FT_Stream2();
 					_stream.FromFileStream(s);
-					var oReadResult = new AscCommonWord.DocReadResult(null);
-					var bwtr = new AscCommonExcel.Binary_TableReader(_stream, oReadResult, null, dxfs);
+					var initOpenManager = new AscCommonExcel.InitOpenManager();
+					var bwtr = new AscCommonExcel.Binary_TableReader(_stream, initOpenManager);
+					if (initOpenManager.Dxfs) {
+						dxfs = dxfs.concat(initOpenManager.Dxfs);
+					}
 					this.sortCondition = bwtr.ReadSortConditionExternal();
 					//dxfId is absent in sortCondition
 					if ((Asc.ESortBy.sortbyCellColor === this.sortCondition.ConditionSortBy ||

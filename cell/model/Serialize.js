@@ -10108,7 +10108,6 @@
 
             var aSharedStrings = [];
             var aCellXfs = [];
-            this.InitOpenManager.Dxfs = [];
             var oMediaArray = {};
 
 
@@ -11077,6 +11076,7 @@
             sheetIds: {}
         };
         this.wb = wb;
+        this.Dxfs = [];
 
         //при чтении из xml
         this.legacyDrawingId = null;
@@ -11693,6 +11693,11 @@
         var oThis = this;
         var tablesIndex = 1;
         var sheetIndex = 1;
+
+        if (!this.wb) {
+            return;
+        }
+
         this.wb.forEach(function(ws) {
             //prepare tables IDs
             var i;
@@ -11803,6 +11808,11 @@
     };
     InitSaveManager.prototype._prepeareStyles = function (stylesForWrite) {
         stylesForWrite.init();
+
+        if (!this.wb) {
+            return;
+        }
+
         var styles = this.wb.CellStyles.CustomStyles;
         var style = null;
         for (var i = 0; i < styles.length; ++i) {
