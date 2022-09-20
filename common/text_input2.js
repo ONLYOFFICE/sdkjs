@@ -112,7 +112,12 @@
 
 	CTextInputPrototype.log = function(value)
 	{
-		//console.log(value);
+		console.log(value);
+	};
+
+	// для совместимости. убрал системный ввод
+	CTextInputPrototype.systemInputEnable = function()
+	{
 	};
 
 	// input common
@@ -259,30 +264,28 @@
 		type = type.toLowerCase()
 
 		let newValue = this.getAreaValue();
-		console.log(newValue);
+		this.log("onInput: " + newValue);
 
 		if (-1 !== newValue.indexOf("&nbsp;"))
 			newValue = newValue.split("&nbsp;").join(" ");
 
-		let isCompositionProgress = false;
-		if ("compositionstart" === type || "compositionupdate" === type)
-			isCompositionProgress = true;
-		else if ("compositionend" == type)
-			isCompositionProgress = false;
-
-		if (isCompositionProgress && !this.ApiIsComposition)
+		if (("compositionstart" === type || "compositionupdate" === type) && !this.ApiIsComposition)
 		{
 			// начался композитный ввод
 			this.TextBeforeComposition = this.Text;
+
+			this.log("compositionStart: " + this.TextBeforeComposition);
 			this.compositeStart();
 		}
 
 		let lastSymbol = 0;
-		if (isCompositionProgress)
+		if (this.ApiIsComposition)
 		{
-			if (newValue.length > this.TextBeforeComposition.length)
+			if (newValue.length >= this.TextBeforeComposition.length)
 			{
-				let newText = newValue.substr(oldLen);
+				let newText = newValue.substr(this.TextBeforeComposition.length);
+
+				this.log("compositionText: " + newText);
 
 				let codes = [];
 				for (let iter = newText.getUnicodeIterator(); iter.check(); iter.next())
@@ -318,8 +321,8 @@
 			}
 
 			// удаляем то, чего уже нет
-			if (savedLen > equalsLen)
-				this.removeText(savedLen - equalsLen);
+			if (oldLen > equalsLen)
+				this.removeText(oldLen - equalsLen);
 
 			// удаляем старые из массива
 			if (0 !== equalsLen)
@@ -332,10 +335,12 @@
 				lastSymbol = codesNew[codesNew.length - 1];
 		}
 
-		if (!isCompositionProgress && this.ApiIsComposition)
+		if (("compositionend" === type) && this.ApiIsComposition)
 		{
 			// закончился композитный ввод
 			this.compositeEnd();
+
+			this.log("compositionEnd: " + newValue);
 		}
 
 		this.Text = newValue;
@@ -345,26 +350,17 @@
 
 		if (!this.ApiIsComposition && lastSymbol !== 0)
 		{
-			let isClear = false;
-			if (this.isSpaceSymbol(lastSymbol))
-				isClear = true;
-
-			if (!isClear)
+			switch (lastSymbol)
 			{
-				switch (lastSymbol)
+				case 32:
+				case 46:
+				case 12290:
 				{
-					case 46:
-					case 12290:
-					{
-						isClear = true;
-					}
-					default:
-						break;
+					this.clear();
 				}
+				default:
+					break;
 			}
-
-			if (isClear)
-				this.clear();
 		}
 	};
 	CTextInputPrototype.compositeStart = function()
@@ -436,21 +432,37 @@
 	};
 	CTextInputPrototype.addTextCode = function(code)
 	{
-		this.emulateKeyPressApi(code);
+		let keyObject = this.getKeyboardEventObject(code);
+		if (code === 32)
+		{
+			//this.Api.onKeyDown(keyObject);
+			//this.Api.onKeyUp(keyObject);
+			// пробел добавился на onKeyDown
+			return;
+		}
+		else
+		{
+			// TODO: отдельный метод в апи
+			this.Api.onKeyDown(keyObject);
+			this.Api.onKeyPress(keyObject);
+			this.Api.onKeyUp(keyObject);
+		}
 	};
 	CTextInputPrototype.removeText = function(length)
 	{
 		for (let i = 0; i < length; i++)
 		{
 			// backspace
-			this.emulateKeyDownApi(8);
+			let keyObject = this.getKeyboardEventObject(8);
+			this.Api.onKeyDown(keyObject);
+			this.Api.onKeyUp(keyObject);
 		}
 	};
 
 	// keyboard
-	CTextInputPrototype.emulateKeyDownApi = function(code)
+	CTextInputPrototype.getKeyboardEventObject = function(code)
 	{
-		var _e = {
+		return {
 			altKey : false,
 			ctrlKey : false,
 			shiftKey : false,
@@ -464,28 +476,6 @@
 			preventDefault : function() {},
 			stopPropagation : function() {}
 		};
-
-		this.Api.onKeyDown(_e);
-		this.Api.onKeyUp(_e);
-	};
-	CTextInputPrototype.emulateKeyPressApi = function(code)
-	{
-		var _e = {
-			altKey : false,
-			ctrlKey : false,
-			shiftKey : false,
-			target : null,
-			charCode : 0,
-			which : code,
-			keyCode : code,
-			code : "",
-			emulated: true,
-
-			preventDefault : function() {},
-			stopPropagation : function() {}
-		};
-
-		this.Api.onKeyPress(_e);
 	};
 	CTextInputPrototype.emulateNativeKeyDown = function(e, target)
 	{
