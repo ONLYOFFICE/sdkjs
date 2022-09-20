@@ -806,10 +806,8 @@
 						var _stream = new AscCommon.FT_Stream2();
 						_stream.FromFileStream(s);
 						var initOpenManager = new AscCommonExcel.InitOpenManager();
+						initOpenManager.Dxfs = dxfs;
 						var bwtr = new AscCommonExcel.Binary_TableReader(_stream, initOpenManager);
-						if (initOpenManager.Dxfs) {
-							dxfs = dxfs.concat(initOpenManager.Dxfs);
-						}
 						this.filter = bwtr.ReadFilterColumnExternal();
 						_stream.ToFileStream2(s);
 					}
@@ -1042,10 +1040,8 @@
 					var _stream = new AscCommon.FT_Stream2();
 					_stream.FromFileStream(s);
 					var initOpenManager = new AscCommonExcel.InitOpenManager();
+					initOpenManager.Dxfs = dxfs;
 					var bwtr = new AscCommonExcel.Binary_TableReader(_stream, initOpenManager);
-					if (initOpenManager.Dxfs) {
-						dxfs = dxfs.concat(initOpenManager.Dxfs);
-					}
 					this.sortCondition = bwtr.ReadSortConditionExternal();
 					//dxfId is absent in sortCondition
 					if ((Asc.ESortBy.sortbyCellColor === this.sortCondition.ConditionSortBy ||
