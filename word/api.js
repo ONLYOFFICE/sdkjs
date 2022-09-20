@@ -3238,49 +3238,28 @@ background-repeat: no-repeat;\
 		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 		{
 			oViewer = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+			isAsync = (true === oViewer.findText(oProps.GetText(), oProps.IsMatchCase(), oProps.IsWholeWords(), isNext, this.sync_setSearchCurrent)) ? true : false;
 			result = oViewer.SearchResults.Count;
 
-			// если параметры поиска не изменились, то можно не искать повторно, а просто выделить следующее/предыдущее совпадение, т.к. уже все найдены
-			if (result > 0 && oViewer.PrevSearchPr && oProps.GetText() === oViewer.PrevSearchPr.GetText() && oProps.IsMatchCase() === oViewer.PrevSearchPr.IsMatchCase())
-			{
-				CurMatchIdx = isNext ? oViewer.SearchResults.CurMatchIdx + 1 : oViewer.SearchResults.CurMatchIdx - 1;
-				if (CurMatchIdx >= oViewer.SearchResults.Count)
-					CurMatchIdx = 0;
-				else if (CurMatchIdx < 0)
-					CurMatchIdx = oViewer.SearchResults.Count - 1;
-
-				oViewer.SelectSearchElement(CurMatchIdx);
-				oViewer.SearchResults.CurMatchIdx = CurMatchIdx;
-			}
+			if (oViewer.SearchResults.CurrentPage === 0)
+				CurMatchIdx = oViewer.SearchResults.Current;
 			else
 			{
-				isAsync = (true === oViewer.findText(oProps.GetText(), oProps.IsMatchCase(), isNext, this.sync_setSearchCurrent)) ? true : false;
-				result = oViewer.SearchResults.Count;
-
-				if (result > 0)
+				// чтобы узнать, под каким номером в списке текущее совпадение
+				// нужно посчитать сколько совпадений было до текущего на текущей странице
+				for (var nPage = 0; nPage <= oViewer.SearchResults.CurrentPage; nPage++)
 				{
-					if (oViewer.SearchResults.CurrentPage === 0)
-						CurMatchIdx = oViewer.SearchResults.Current;
-					else
+					for (var nMatch = 0; nMatch < oViewer.SearchResults.Pages[nPage].length; nMatch++)
 					{
-						// чтобы узнать, под каким номером в списке текущее совпадение
-						// нужно посчитать сколько совпадений было до текущего на текущей странице
-						for (var nPage = 0; nPage <= oViewer.SearchResults.CurrentPage; nPage++)
-						{
-							for (var nMatch = 0; nMatch < oViewer.SearchResults.Pages[nPage].length; nMatch++)
-							{
-								if (nPage == oViewer.SearchResults.CurrentPage && nMatch == oViewer.SearchResults.Current)
-									break;
-								CurMatchIdx++;
-							}
-						}
+						if (nPage == oViewer.SearchResults.CurrentPage && nMatch == oViewer.SearchResults.Current)
+							break;
+						CurMatchIdx++;
 					}
 				}
-				oViewer.SearchResults.CurMatchIdx = CurMatchIdx;
-				this.sync_setSearchCurrent(CurMatchIdx, result);
 			}
 
-			oViewer.PrevSearchPr = oProps;
+			oViewer.SearchResults.CurMatchIdx = CurMatchIdx;
+			this.sync_setSearchCurrent(CurMatchIdx, result);
 		}
 		else
 		{
