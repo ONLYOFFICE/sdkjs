@@ -407,16 +407,13 @@
 				if (this.ApiIsComposition)
 				{
 					this.compositeReplace(codes);
-					this.compositeEnd();
 				}
 				else
 				{
 					this.addTextCodes(codes);
 				}
 
-				this.clear();
 				this.setReadOnly(false);
-
 			});
 
 			this.setReadOnly(true);
@@ -689,6 +686,7 @@
 	};
 
 	// html element
+	const TEXT_INPUT_DEBUG = false;
 	CTextInputPrototype.init = function(target_id, parent_id)
 	{
 		this.TargetId   = target_id;
