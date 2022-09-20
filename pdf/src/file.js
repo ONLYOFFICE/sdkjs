@@ -1806,7 +1806,7 @@ void main() {\n\
 
                     _lineLastGlyphWidth = stream.GetDouble2();
 
-                    if (isWhole && isStartWhole === false)
+                    if (this.SearchResults.WholeWords && isStartWhole === false)
                         break;
 
                     var _isFound = false;
