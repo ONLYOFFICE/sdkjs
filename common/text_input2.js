@@ -130,33 +130,6 @@
 	{
 		return this.ApiIsComposition;
 	};
-	CTextInputPrototype.apiInputText = function(codes)
-	{
-		var isAsync = AscFonts.FontPickerByCharacter.checkTextLight(codes, true);
-
-		if (!isAsync)
-		{
-			this.apiCompositeStart();
-			this.apiCompositeReplace(codes);
-			this.apiCompositeEnd();
-		}
-		else
-		{
-			AscFonts.FontPickerByCharacter.loadFonts(this, function ()
-			{
-
-				this.apiCompositeStart();
-				this.apiCompositeReplace(codes);
-				this.apiCompositeEnd();
-
-				this.setReadOnly(false);
-
-			});
-
-			this.setReadOnly(true);
-			return false;
-		}
-	};
 
 	// input
 	CTextInputPrototype.onKeyDown = function(e)
@@ -216,8 +189,8 @@
 				this.setReadOnly(false);
 			});
 
-			AscCommon.stopEvent(e);
 			this.setReadOnly(true);
+			AscCommon.stopEvent(e);
 			return false;
 		}
 
@@ -261,8 +234,7 @@
 			return false;
 		}
 
-		AscCommon.stopEvent(e);
-		return false;
+		// вся обработка - в onInput
 	};
 	CTextInputPrototype.onKeyUp = function(e)
 	{
@@ -287,6 +259,8 @@
 		type = type.toLowerCase()
 
 		let newValue = this.getAreaValue();
+		console.log(newValue);
+
 		if (-1 !== newValue.indexOf("&nbsp;"))
 			newValue = newValue.split("&nbsp;").join(" ");
 
@@ -347,8 +321,12 @@
 			if (savedLen > equalsLen)
 				this.removeText(savedLen - equalsLen);
 
+			// удаляем старые из массива
+			if (0 !== equalsLen)
+				codesNew.splice(0, equalsLen);
+
 			// добавляем новые
-			this.checkTextInput(codesNew, equalsLen);
+			this.checkTextInput(codesNew);
 
 			if (codesNew.length > 0)
 				lastSymbol = codesNew[codesNew.length - 1];
@@ -459,7 +437,7 @@
 	};
 	CTextInputPrototype.addTextCode = function(code)
 	{
-		this.Api.onKeyPress({ Which : code });
+		this.emulateKeyPressApi(code);
 	};
 	CTextInputPrototype.removeText = function(length)
 	{
@@ -490,6 +468,25 @@
 
 		this.Api.onKeyDown(_e);
 		this.Api.onKeyUp(_e);
+	};
+	CTextInputPrototype.emulateKeyPressApi = function(code)
+	{
+		var _e = {
+			altKey : false,
+			ctrlKey : false,
+			shiftKey : false,
+			target : null,
+			charCode : 0,
+			which : code,
+			keyCode : code,
+			code : "",
+			emulated: true,
+
+			preventDefault : function() {},
+			stopPropagation : function() {}
+		};
+
+		this.Api.onKeyPress(_e);
 	};
 	CTextInputPrototype.emulateNativeKeyDown = function(e, target)
 	{
@@ -790,10 +787,10 @@
 			return oThis.onKeyUp(e);
 		};
 
-		var inputEvents = ["input", "textInput", "compositionstart", "compositionupdate", "compositionend"];
+		var inputEvents = ["input", /*"textInput", */"compositionstart", "compositionupdate", "compositionend"];
 		for (let i = 0, len = inputEvents.length; i < len; i++)
 		{
-			this.HtmlArea.addEventListener("input", function(e)
+			this.HtmlArea.addEventListener(inputEvents[i], function(e)
 			{
 				return oThis.onInput(e);
 			}, false);
@@ -1034,14 +1031,14 @@
 	}
 
 	window['AscCommon']            = window['AscCommon'] || {};
-	window['AscCommon'].CTextInput = CTextInput;
+	window['AscCommon'].CTextInput = CTextInput2;
 
 	window['AscCommon'].InitBrowserInputContext = function(api, target_id, parent_id)
 	{
 		if (window['AscCommon'].g_inputContext)
 			return;
 
-		window['AscCommon'].g_inputContext = new CTextInput(api);
+		window['AscCommon'].g_inputContext = new CTextInput2(api);
 		window['AscCommon'].g_inputContext.init(target_id, parent_id);
 		window['AscCommon'].g_clipboardBase.Init(api);
 		window['AscCommon'].g_clipboardBase.inputContext = window['AscCommon'].g_inputContext;
