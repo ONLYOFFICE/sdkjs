@@ -423,7 +423,6 @@
 
 			});
 
-			AscCommon.stopEvent(e);
 			this.setReadOnly(true);
 			return false;
 		}
