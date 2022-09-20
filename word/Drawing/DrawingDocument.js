@@ -2590,9 +2590,14 @@ function CDrawingDocument()
 		if (1 === this.m_oWordControl.ReaderModeCurrent)
 		{
 			params.PrintInReaderMode = true;
-			this.m_oWordControl.ChangeReaderMode();
 			// добавляем еще один longAction, чтобы убрать не после готовности pdf, а после возврата в reader mode
 			this.m_oWordControl.m_oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
+
+			// делаем через таймаут, чтобы fullRecalculate произошел не синхронно (чтобы были выставлены m_arPrintingWaitEndRecalculate)
+			var wordControl = this.m_oWordControl;
+			setTimeout(function(){
+				wordControl.ChangeReaderMode();
+			}, 10);
 		}
 
 		this.m_arPrintingWaitEndRecalculate = params;
