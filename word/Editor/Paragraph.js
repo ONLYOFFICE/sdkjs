@@ -17941,6 +17941,11 @@ Paragraph.prototype.IsInFixedForm = function()
 	var oShape = this.Parent ? this.Parent.Is_DrawingShape(true) : null;
 	return (oShape && oShape.isForm());
 };
+Paragraph.prototype.GetParentShape = function()
+{
+	let shape = this.Parent ? this.Parent.Is_DrawingShape(true) : null;
+	return shape;
+};
 Paragraph.prototype.CalculateTextToTable = function(oEngine)
 {
 	oEngine.OnStartParagraph();
