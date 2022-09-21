@@ -1693,6 +1693,13 @@
     CGraphicObjectBase.prototype.getAllDocContents = function(aDrawings){
 
     };
+    CGraphicObjectBase.prototype.checkRunContent = function(fCallback){
+        let aDocContents = [];
+        this.getAllDocContents(aDocContents);
+        for(let nIdx = 0; nIdx < aDocContents.length; ++nIdx) {
+            aDocContents[nIdx].CheckRunContent(fCallback);
+        }
+    };
     CGraphicObjectBase.prototype.getFullRotate = function () {
         return !AscCommon.isRealObject(this.group) ? this.rot : this.rot + this.group.getFullRotate();
     };

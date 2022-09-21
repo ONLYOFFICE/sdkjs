@@ -2339,19 +2339,41 @@ CShape.prototype.getFullFlip = function () {
 };
 
 CShape.prototype.getTextRect = function () {
+    let oRect;
     if(this.txXfrm && this.spPr && this.spPr.xfrm) {
         var newL = this.txXfrm.offX - this.spPr.xfrm.offX;
         var newT = this.txXfrm.offY - this.spPr.xfrm.offY;
         var newR = newL + this.txXfrm.extX;
         var newB = newT + this.txXfrm.extY;
-        var oRect = {};
+        oRect = {};
         oRect.l = newL;
         oRect.t = newT;
         oRect.r = newR;
         oRect.b = newB;
+        let oParaDrawing = getParaDrawing(this);
+        if(oParaDrawing) {
+            let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+            oRect.l *= dScaleCoefficient;
+            oRect.t *= dScaleCoefficient;
+            oRect.r *= dScaleCoefficient;
+            oRect.b *= dScaleCoefficient;
+        }
+    }
+    else {
+        let _r = this.spPr && this.spPr.geometry && this.spPr.geometry.rect;
+        if(_r) {
+            oRect = {
+                l: _r.l,
+                t: _r.t,
+                r: _r.r,
+                b: _r.b
+            };
+        }
+    }
+    if(oRect) {
         return oRect;
     }
-    return this.spPr && this.spPr.geometry && this.spPr.geometry.rect ? this.spPr.geometry.rect : {
+    return {
         l: 0,
         t: 0,
         r: this.extX,
@@ -2412,8 +2434,13 @@ CShape.prototype.getTextRect = function () {
             var xc = deltaShape.localTransform.TransformPointX(oRect.l + extX, oRect.t + extY) - deltaTranslateX;
             var yc = deltaShape.localTransform.TransformPointY(oRect.l + extX, oRect.t + extY) - deltaTranslateY;
 
-            oRectShape.spPr.xfrm.setOffX(xc - extX);
-            oRectShape.spPr.xfrm.setOffY(yc - extY);
+            let dScale = 1.0;
+            let oParaDrawing = getParaDrawing(this);
+            if(oParaDrawing) {
+                dScale = oParaDrawing.GetScaleCoefficient();
+            }
+            oRectShape.spPr.xfrm.setOffX((xc - extX) / dScale);
+            oRectShape.spPr.xfrm.setOffY((yc - extY) / dScale);
             oRectShape.spPr.xfrm.setExtX(this.txXfrm.extX);
             oRectShape.spPr.xfrm.setExtY(this.txXfrm.extY);
             // oRectShape.changeFlipH(this.spPr.xfrm.flipH); TODO: repair this
@@ -6150,10 +6177,19 @@ CShape.prototype.getAllRasterImages = function(images)
 };
 CShape.prototype.getAllDocContents = function(aDocContents)
 {
-    if(this.textBoxContent){
+    if(this.textBoxContent)
+    {
         aDocContents.push(this.textBoxContent);
     }
 };
+
+    CShape.prototype.checkRunContent = function(fCallback)
+    {
+        if(this.textBoxContent)
+        {
+            this.textBoxContent.CheckRunContent(fCallback);
+        }
+    };
 
 CShape.prototype.changePositionInSmartArt = function (newX, newY) {
     if (this.isObjectInSmartArt()) {

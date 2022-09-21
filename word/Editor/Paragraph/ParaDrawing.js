@@ -3303,10 +3303,10 @@ ParaDrawing.prototype.IsDrawing = function()
 };
 ParaDrawing.prototype.CheckRunContent = function(fCheck)
 {
-	// TODO: Реализовать полностью
-
-	if (this.IsShape() && this.GraphicObj.textBoxContent)
-		this.GraphicObj.textBoxContent.CheckRunContent(fCheck);
+	if(this.GraphicObj)
+	{
+		this.GraphicObj.checkRunContent(fCheck);
+	}
 };
 /**
  * Класс, описывающий текущее положение параграфа при рассчете позиции автофигуры.
