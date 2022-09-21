@@ -84,7 +84,7 @@
 		this.TextBeforeComposition = "";
 
 		// в каком состоянии апи (композитный ли ввод сейчас)
-		this.ApiIsComposition = false;
+		this.IsComposition = false;
 
 		// ---------------------------------------------------------------
 
@@ -110,9 +110,10 @@
 
 	var CTextInputPrototype = CTextInput2.prototype;
 
+	const TEXT_INPUT_DEBUG = false;
 	CTextInputPrototype.log = function(value)
 	{
-		console.log(value);
+		//console.log(value);
 	};
 
 	// для совместимости. убрал системный ввод
@@ -133,7 +134,7 @@
 	};
 	CTextInputPrototype.isCompositionProcess = function()
 	{
-		return this.ApiIsComposition;
+		return this.IsComposition;
 	};
 
 	// input
@@ -269,7 +270,7 @@
 		if (-1 !== newValue.indexOf("&nbsp;"))
 			newValue = newValue.split("&nbsp;").join(" ");
 
-		if (("compositionstart" === type || "compositionupdate" === type) && !this.ApiIsComposition)
+		if (("compositionstart" === type || "compositionupdate" === type) && !this.IsComposition)
 		{
 			// начался композитный ввод
 			this.TextBeforeComposition = this.Text;
@@ -279,7 +280,8 @@
 		}
 
 		let lastSymbol = 0;
-		if (this.ApiIsComposition)
+		let newTextLength = 0;
+		if (this.IsComposition)
 		{
 			if (newValue.length >= this.TextBeforeComposition.length)
 			{
@@ -291,8 +293,9 @@
 				for (let iter = newText.getUnicodeIterator(); iter.check(); iter.next())
 					codes.push(iter.value());
 
-				if (codes.length > 0)
-					lastSymbol = codes[codes.length - 1];
+				newTextLength = codes.length;
+				if (newTextLength > 0)
+					lastSymbol = codes[newTextLength - 1];
 
 				this.checkTextInput(codes);
 			}
@@ -320,6 +323,8 @@
 				++equalsLen;
 			}
 
+			newTextLength = newTextLength;
+
 			// удаляем то, чего уже нет
 			if (oldLen > equalsLen)
 				this.removeText(oldLen - equalsLen);
@@ -335,7 +340,7 @@
 				lastSymbol = codesNew[codesNew.length - 1];
 		}
 
-		if (("compositionend" === type) && this.ApiIsComposition)
+		if (("compositionend" === type) && this.IsComposition)
 		{
 			// закончился композитный ввод
 			this.compositeEnd();
@@ -348,27 +353,40 @@
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.onPluginEvent("onInputHelperInput", { "text" : this.Text });
 
-		if (!this.ApiIsComposition && lastSymbol !== 0)
+		if (!this.IsComposition && lastSymbol !== 0)
 		{
+			let isClear = false;
 			switch (lastSymbol)
 			{
-				case 32:
-				case 46:
-				case 12290:
+				case 32: // пробел
+				case 46: // точка
+				case 44: // запятая
+				//case 12290: // азиатская точка
+				//case 65292: // азиатская запятая
 				{
-					this.clear();
+					isClear = true;
+					break;
 				}
 				default:
+				{
+					// надеемся, что при вводе все-таки будут точки/пробелы/запятые
+					// если нет - то не даем копить до бесконечности.
+					let currentTextLenMax = this.Api.isMobileVersion ? 20 : 100;
+					if (newTextLength > currentTextLenMax)
+						isClear = true;
 					break;
+				}
 			}
+			if (isClear)
+				this.clear();
 		}
 	};
 	CTextInputPrototype.compositeStart = function()
 	{
-		if (this.ApiIsComposition)
+		if (this.IsComposition)
 			return;
 
-		this.ApiIsComposition = true;
+		this.IsComposition = true;
 		this.Api.Begin_CompositeInput();
 	};
 	CTextInputPrototype.compositeReplace = function(codes)
@@ -377,10 +395,10 @@
 	};
 	CTextInputPrototype.compositeEnd = function()
 	{
-		if (!this.ApiIsComposition)
+		if (!this.IsComposition)
 			return;
 
-		this.ApiIsComposition = false;
+		this.IsComposition = false;
 		this.Api.End_CompositeInput();
 
 		this.TextBeforeComposition = "";
@@ -391,7 +409,7 @@
 
 		if (!isAsync)
 		{
-			if (this.ApiIsComposition)
+			if (this.IsComposition)
 			{
 				this.compositeReplace(codes);
 			}
@@ -404,7 +422,7 @@
 		{
 			AscFonts.FontPickerByCharacter.loadFonts(this, function ()
 			{
-				if (this.ApiIsComposition)
+				if (this.IsComposition)
 				{
 					this.compositeReplace(codes);
 				}
@@ -413,10 +431,10 @@
 					this.addTextCodes(codes);
 				}
 
-				this.setReadOnly(false);
+				//this.setReadOnly(false);
 			});
 
-			this.setReadOnly(true);
+			//this.setReadOnly(true);
 			return false;
 		}
 	};
@@ -429,7 +447,6 @@
 	};
 	CTextInputPrototype.addTextCode = function(code)
 	{
-		let keyObject = this.getKeyboardEventObject(code);
 		if (code === 32)
 		{
 			//this.Api.onKeyDown(keyObject);
@@ -440,9 +457,15 @@
 		else
 		{
 			// TODO: отдельный метод в апи
-			this.Api.onKeyDown(keyObject);
+
+			// пока имитируем через keyCode - для keyDown/Up - сделаем такой код,
+			// который ни на что не влияет. код для буквы 'a' - 65
+			let keyObject = this.getKeyboardEventObject(code);
+			let keyObjectUpDown = this.getKeyboardEventObject(65);
+
+			this.Api.onKeyDown(keyObjectUpDown);
 			this.Api.onKeyPress(keyObject);
-			this.Api.onKeyUp(keyObject);
+			this.Api.onKeyUp(keyObjectUpDown);
 		}
 	};
 	CTextInputPrototype.removeText = function(length)
@@ -614,6 +637,8 @@
 	};
 	CTextInputPrototype.clear = function(isFromFocus)
 	{
+		this.log("clear");
+
 		this.TextBeforeComposition = "";
 		this.Text = "";
 
@@ -675,7 +700,7 @@
 	};
 	CTextInputPrototype.externalChangeFocus = function()
 	{
-		if (!this.ApiIsComposition)
+		if (!this.IsComposition)
 			return false;
 
 		setTimeout(function() {
@@ -686,7 +711,6 @@
 	};
 
 	// html element
-	const TEXT_INPUT_DEBUG = false;
 	CTextInputPrototype.init = function(target_id, parent_id)
 	{
 		this.TargetId   = target_id;
@@ -697,12 +721,12 @@
 		this.HtmlDiv.style.border     = "none";
 
 		// в хроме скроллируется редактор, когда курсор текстового поля выходит за пределы окна
-		if (AscCommon.AscBrowser.isChrome)
+		if (AscCommon.AscBrowser.isChrome && !TEXT_INPUT_DEBUG)
 			this.HtmlDiv.style.position = "fixed";
 		else
 			this.HtmlDiv.style.position   = "absolute";
 		this.HtmlDiv.style.zIndex     = 10;
-		this.HtmlDiv.style.width      = "20px";
+		this.HtmlDiv.style.width      = TEXT_INPUT_DEBUG ? "200px" : "20px";
 		this.HtmlDiv.style.height     = "50px";
 		this.HtmlDiv.style.overflow   = "hidden";
 
@@ -724,11 +748,20 @@
 		if (this.Api.isViewMode && this.Api.isMobileVersion)
 			this.setReadOnlyWrapper(true);
 
-		var _style = ("left:-" + (this.HtmlAreaWidth >> 1) + "px;top:" + (-this.HtmlAreaOffset) + "px;");
-		_style += ("background:transparent;border:none;position:absolute;text-shadow:0 0 0 #000;outline:none;color:transparent;width:" + this.HtmlAreaWidth + "px;height:50px;");
+		var _style = "";
+		if (!TEXT_INPUT_DEBUG)
+		{
+			_style = ("left:-" + (this.HtmlAreaWidth >> 1) + "px;top:" + (-this.HtmlAreaOffset) + "px;");
+			_style += "color:transparent;caret-color:transparent;background:transparent;";
+			_style += AscCommon.AscBrowser.isAppleDevices ? "font-size:0px;" : "font-size:8px;";
+		}
+		else
+		{
+			_style = "left:0px;top:0px;color:black;caret-color:black;font-size:16px;background:transparent;";
+		}
+		_style += ("border:none;position:absolute;text-shadow:0 0 0 #000;outline:none;width:" + this.HtmlAreaWidth + "px;height:50px;");
 		_style += "overflow:hidden;padding:0px;margin:0px;font-family:arial;resize:none;font-weight:normal;box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;";
-		_style += "touch-action: none;-webkit-touch-callout: none;color:transparent;caret-color:transparent;";
-		_style += AscCommon.AscBrowser.isAppleDevices ? "font-size:0px;" : "font-size:8px;"
+		_style += "touch-action: none;-webkit-touch-callout: none;";
 
 		this.HtmlArea.setAttribute("style", _style);
 		this.HtmlArea.setAttribute("spellcheck", false);
@@ -797,7 +830,7 @@
 					_this.virtualKeyboardClickTimeout = -1;
 				}
 
-				_this.apiCompositeEnd();
+				_this.compositeEnd();
 
 				if (!_this.virtualKeyboardClickPrevent)
 					return;
@@ -825,7 +858,8 @@
 		// нужен еще один родитель. чтобы скроллился он, а не oHtmlParent
 		var oHtmlDivScrollable = document.createElement("div");
 		oHtmlDivScrollable.id = "area_id_main";
-		oHtmlDivScrollable.setAttribute("style", "background:transparent;border:none;position:absolute;padding:0px;margin:0px;z-index:0;pointer-events:none;");
+		let styleZIndex = TEXT_INPUT_DEBUG ? "z-index:50;" : "z-index:0;";
+		oHtmlDivScrollable.setAttribute("style", "background:transparent;border:none;position:absolute;padding:0px;margin:0px;pointer-events:none;" + styleZIndex);
 		var parentStyle = getComputedStyle(oHtmlParent);
 		oHtmlDivScrollable.style.left = parentStyle.left;
 		oHtmlDivScrollable.style.top = parentStyle.top;
@@ -1043,9 +1077,11 @@
 			var _oldNativeFE	 = t.nativeFocusElement;
 			t.nativeFocusElement = e.target;
 
+			t.log("focus");
+
 			if (t.IsComposition)
 			{
-				t.apiCompositeEnd();
+				t.compositeEnd();
 				t.externalEndCompositeInput();
 			}
 
