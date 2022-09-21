@@ -1671,20 +1671,28 @@ CShape.prototype.getCurrentDocContentInSmartArt = function () {
 CShape.prototype.getBodyPr = function () {
     return AscFormat.ExecuteNoHistory(function () {
 
+        let ret;
         if (this.bWordShape) {
-            var ret = new AscFormat.CBodyPr();
+            ret = new AscFormat.CBodyPr();
             ret.setDefault();
             if (this.bodyPr)
                 ret.merge(this.bodyPr);
-            return ret;
         }
         else {
-            if (this.txBody && this.txBody.bodyPr)
-                return this.txBody.getCompiledBodyPr();
-            var ret = new AscFormat.CBodyPr();
-            ret.setDefault();
-            return ret;
+            if (this.txBody && this.txBody.bodyPr) {
+                ret = this.txBody.getCompiledBodyPr();
+            }
+            else {
+                ret = new AscFormat.CBodyPr();
+                ret.setDefault();
+            }
         }
+        let dScale = this.getScaleCoefficient();
+        ret.lIns *= dScale;
+        ret.tIns *= dScale;
+        ret.rIns *= dScale;
+        ret.bIns *= dScale;
+        return ret;
     }, this, []);
 };
 
@@ -2346,18 +2354,11 @@ CShape.prototype.getTextRect = function () {
         var newR = newL + this.txXfrm.extX;
         var newB = newT + this.txXfrm.extY;
         oRect = {};
-        oRect.l = newL;
-        oRect.t = newT;
-        oRect.r = newR;
-        oRect.b = newB;
-        let oParaDrawing = getParaDrawing(this);
-        if(oParaDrawing) {
-            let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
-            oRect.l *= dScaleCoefficient;
-            oRect.t *= dScaleCoefficient;
-            oRect.r *= dScaleCoefficient;
-            oRect.b *= dScaleCoefficient;
-        }
+        let dScale = this.getScaleCoefficient();
+        oRect.l = newL * dScale;
+        oRect.t = newT * dScale;
+        oRect.r = newR * dScale;
+        oRect.b = newB * dScale;
     }
     else {
         let _r = this.spPr && this.spPr.geometry && this.spPr.geometry.rect;
@@ -2434,11 +2435,7 @@ CShape.prototype.getTextRect = function () {
             var xc = deltaShape.localTransform.TransformPointX(oRect.l + extX, oRect.t + extY) - deltaTranslateX;
             var yc = deltaShape.localTransform.TransformPointY(oRect.l + extX, oRect.t + extY) - deltaTranslateY;
 
-            let dScale = 1.0;
-            let oParaDrawing = getParaDrawing(this);
-            if(oParaDrawing) {
-                dScale = oParaDrawing.GetScaleCoefficient();
-            }
+            let dScale = this.getScaleCoefficient();
             oRectShape.spPr.xfrm.setOffX((xc - extX) / dScale);
             oRectShape.spPr.xfrm.setOffY((yc - extY) / dScale);
             oRectShape.spPr.xfrm.setExtX(this.txXfrm.extX);
@@ -3686,7 +3683,7 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 {
                     if(oParaDrawing.Extent && AscFormat.isRealNumber(oParaDrawing.Extent.W) && AscFormat.isRealNumber(oParaDrawing.Extent.H))
                     {
-                        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+                        let dScaleCoefficient = this.getScaleCoefficient();
                         this.extX = oParaDrawing.Extent.W * dScaleCoefficient;
                         this.extY = oParaDrawing.Extent.H * dScaleCoefficient;
                     }
@@ -6185,9 +6182,10 @@ CShape.prototype.getAllDocContents = function(aDocContents)
 
     CShape.prototype.checkRunContent = function(fCallback)
     {
-        if(this.textBoxContent)
+        let oContent = this.getDocContent();
+        if(oContent)
         {
-            this.textBoxContent.CheckRunContent(fCallback);
+            oContent.CheckRunContent(fCallback);
         }
     };
 

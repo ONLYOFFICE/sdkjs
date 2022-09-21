@@ -1700,6 +1700,13 @@
             aDocContents[nIdx].CheckRunContent(fCallback);
         }
     };
+    CGraphicObjectBase.prototype.getScaleCoefficient = function(){
+        let oParaDrawing = AscFormat.getParaDrawing(this);
+        if(oParaDrawing) {
+            return oParaDrawing.GetScaleCoefficient();
+        }
+        return 1.0;
+    };
     CGraphicObjectBase.prototype.getFullRotate = function () {
         return !AscCommon.isRealObject(this.group) ? this.rot : this.rot + this.group.getFullRotate();
     };
