@@ -4834,7 +4834,7 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
         }
         return this.contentHeight > sizesOfTextRectContent.height;
     };
-    CShape.prototype.findFitFontSizeForSmartArt = function () {
+    CShape.prototype.findFitFontSizeForSmartArt = function (bMax) {
         const MAX_FONT_SIZE = 65;
 
         const content = this.getCurrentDocContentInSmartArt();
@@ -4848,7 +4848,13 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
 
             while (a !== averageAmount && b !== averageAmount) {
                 this.setFontSizeInSmartArt(scalesForSmartArt[averageAmount]);
-                if (content.RecalculateMinMaxContentWidth().Min > this.contentWidth || this.compareHeightOfBoundsTextInSmartArt()) {
+                let widthOfContent = content.RecalculateMinMaxContentWidth();
+                if (bMax) {
+                    widthOfContent = widthOfContent.Max;
+                } else {
+                    widthOfContent = widthOfContent.Min;
+                }
+                if (widthOfContent > this.contentWidth || this.compareHeightOfBoundsTextInSmartArt()) {
                     b = averageAmount;
                 } else {
                     a = averageAmount;
