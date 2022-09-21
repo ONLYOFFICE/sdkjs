@@ -10036,7 +10036,7 @@
 
 
 		const textPr = numberInfo.textPr.Copy();
-		textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
+		textPr.FontSize = textPr.FontSizeCS = this.getFontSizeByLineHeight(line_distance);
 		if (bullet.m_sSrc) {
 			const formatBullet = new AscFormat.CBullet();
 			formatBullet.fillBulletImage(bullet.m_sSrc);
@@ -10107,15 +10107,21 @@
 			ctx.beginPath();
 			const textYx =  text_base_offset_x - ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 			const	textYy = y + (line_w * 2.5);
-
+			const nLineHeight = line_distance - 4;
+			textPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
 			if (bullet.m_sSrc) {
-				this.drawImageBulletsWithLines(bullet.m_sSrc, textPr, textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
+				this.drawImageBulletsWithLines(bullet.m_sSrc, textPr, textYx, textYy, nLineHeight, ctx, width_px, height_px);
 			} else {
-				this.privateGetParagraphByString(bullet.getDrawingText(j + 1), textPr, textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
+				this.privateGetParagraphByString(bullet.getDrawingText(j + 1), textPr, textYx, textYy, nLineHeight, ctx, width_px, height_px);
 			}
 			y += (line_w + line_distance);
 		}
 	}
+
+	CBulletPreviewDrawer.prototype.getFontSizeByLineHeight = function (nLineHeight)
+	{
+		return ((2 * nLineHeight * 72 / 96) >> 0) / 2;
+	};
 
 	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (divId, info)
 	{
@@ -10126,37 +10132,42 @@
 		const ctx = canvas.getContext("2d");
 		ctx.beginPath();
 
-
 		const lvl = info;
 		const text = lvl.bullet.getDrawingText();
-		const line_distance = (height_px === 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 1 : 2));
-
-
 
 		const oNewShape = new AscFormat.CShape();
 		oNewShape.createTextBody();
+		oNewShape.extX = width_px * AscCommon.g_dKoef_pix_to_mm;
+		oNewShape.extY = height_px * AscCommon.g_dKoef_pix_to_mm;
+		oNewShape.contentWidth = oNewShape.extX;
+
 		const par = oNewShape.txBody.content.GetAllParagraphs()[0];
 		par.MoveCursorToStartPos();
 		par.Pr = new AscCommonWord.CParaPr();
 
 		const parRun = new AscCommonWord.ParaRun(par);
 		const textPr = lvl.textPr.Copy();
-		textPr.FontSize = ((2 * line_distance * 72 / 96) >> 0) / 2;
 		parRun.Set_Pr(textPr);
 		parRun.AddText(text);
 		par.AddToContent(0, parRun);
 
-		par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-		par.Recalculate_Page(0);
+		let nLineHeight = (height_px === 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 1 : 2));
+		textPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
 
-		const bounds = par.Get_PageBounds(0);
+		par.TextPr.SetFontSize(textPr.FontSize);
 
-		const parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-		const parH = (bounds.Bottom - bounds.Top);
+		let parW = par.RecalculateMinMaxContentWidth().Max;
+		if (parW > oNewShape.contentWidth) {
+			oNewShape.findFitFontSizeForSmartArt(true);
+			parW = par.RecalculateMinMaxContentWidth().Max;
+		}
+
+		parW = parW * AscCommon.g_dKoef_mm_to_pix;
+
+		nLineHeight = par.Get_EmptyHeight();
 		const x = (width_px - (parW >> 0)) >> 1;
-		const y = (height_px >> 1) + (parH >> 0);
-
-		this.privateGetParagraphByString(text, textPr, x, y, line_distance, ctx, width_px, height_px);
+		const y = (height_px >> 1) + (nLineHeight >> 0);
+		this.privateGetParagraphByString(text, textPr, x, y, nLineHeight, ctx, width_px, height_px);
 	}
 
 	CBulletPreviewDrawer.prototype.privateGetParagraphByString = function(text, textPr, x, y, lineHeight, ctx, w, h)
@@ -10178,7 +10189,6 @@
 		//par.Pr = level.ParaPr.Copy();
 		par.Pr = new AscCommonWord.CParaPr();
 		textPr = textPr.Copy();
-		textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
 
 		const parRun = new AscCommonWord.ParaRun(par);
 		parRun.Set_Pr(textPr);
