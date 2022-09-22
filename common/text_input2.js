@@ -388,6 +388,16 @@
 				this.clear();
 		}
 	};
+	CTextInputPrototype.addText = function(text)
+	{
+		this.setAreaValue(this.getAreaValue() + text);
+
+		this.onInput({
+			type : "input",
+			preventDefault : function() {},
+			stopPropagation : function() {}
+		});
+	};
 	CTextInputPrototype.compositeStart = function()
 	{
 		if (this.IsComposition)
@@ -481,6 +491,13 @@
 			this.Api.onKeyDown(keyObject);
 			this.Api.onKeyUp(keyObject);
 		}
+	};
+	CTextInputPrototype.emulateKeyDownApi = function(code)
+	{
+		let keyObject = this.getKeyboardEventObject(code);
+
+		this.Api.onKeyDown(keyObject);
+		this.Api.onKeyUp(keyObject);
 	};
 
 	// keyboard
@@ -665,6 +682,13 @@
 			this.HtmlArea.value = "";
 		else
 			this.HtmlArea.innerHTML = "";
+	};
+	CTextInputPrototype.setAreaValue = function(value)
+	{
+		if (this.ElementType === InputTextElementType.TextArea)
+			this.HtmlArea.value = value;
+		else
+			this.HtmlArea.innerHTML = value;
 	};
 	CTextInputPrototype.setReadOnly = function(isLock)
 	{
