@@ -113,7 +113,8 @@
 	const TEXT_INPUT_DEBUG = false;
 	CTextInputPrototype.log = function(value)
 	{
-		//console.log(value);
+		if (TEXT_INPUT_DEBUG)
+			console.log(value);
 	};
 
 	// для совместимости. убрал системный ввод
@@ -270,6 +271,12 @@
 		if (-1 !== newValue.indexOf("&nbsp;"))
 			newValue = newValue.split("&nbsp;").join(" ");
 
+		if (("compositionstart" === type) && this.IsComposition)
+		{
+			// не пришел end - пришлем сами
+			this.compositeEnd();
+		}
+
 		if (("compositionstart" === type || "compositionupdate" === type) && !this.IsComposition)
 		{
 			// начался композитный ввод
@@ -323,7 +330,7 @@
 				++equalsLen;
 			}
 
-			newTextLength = newTextLength;
+			newTextLength = newLen;
 
 			// удаляем то, чего уже нет
 			if (oldLen > equalsLen)
@@ -422,14 +429,11 @@
 		{
 			AscFonts.FontPickerByCharacter.loadFonts(this, function ()
 			{
-				if (this.IsComposition)
-				{
-					this.compositeReplace(codes);
-				}
-				else
-				{
-					this.addTextCodes(codes);
-				}
+				this.onInput({
+					type : this.IsComposition ? "compositionupdate" : "input",
+					preventDefault : function() {},
+					stopPropagation : function() {}
+				});
 
 				//this.setReadOnly(false);
 			});
@@ -700,6 +704,7 @@
 	};
 	CTextInputPrototype.externalChangeFocus = function()
 	{
+		return;
 		if (!this.IsComposition)
 			return false;
 
@@ -1085,10 +1090,12 @@
 				t.externalEndCompositeInput();
 			}
 
+			/*
 			if (!t.isNoClearOnFocus)
 				t.clear(true);
 
             t.isNoClearOnFocus = false;
+			 */
 
 			var _nativeFocusElementNoRemoveOnElementFocus = t.nativeFocusElementNoRemoveOnElementFocus;
 			t.nativeFocusElementNoRemoveOnElementFocus = false;
