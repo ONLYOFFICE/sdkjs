@@ -2081,7 +2081,7 @@ ParaDrawing.prototype.AddToDocument = function(oAnchorPos, oRunPr, oRun, oPictur
 	oSelectedContent.EndCollect();
 	oSelectedContent.SetMoveDrawing(true);
 	oSelectedContent.Insert(oAnchorPos, true);
-
+	this.SelectAsDrawing();
 	oAnchorParagraph.Clear_NearestPosArray();
 };
 ParaDrawing.prototype.AddToParagraph = function(oParagraph)
