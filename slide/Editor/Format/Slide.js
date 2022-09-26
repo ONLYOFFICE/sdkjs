@@ -1592,6 +1592,14 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         if(!oApi.WordControl) {
             return;
         }
+        let oContext = oGraphics.m_oContext;
+        if(!oContext) {
+            return;
+        }
+        if(oGraphics.IsThumbnail || oGraphics.animationDrawer || oGraphics.IsDemonstrationMode) {
+            return;
+        }
+
         let oPresentation = oApi.WordControl.m_oLogicDocument;
         if(!oPresentation) {
             return;

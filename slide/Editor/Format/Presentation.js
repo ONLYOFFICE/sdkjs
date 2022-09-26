@@ -4884,7 +4884,19 @@ CPresentation.prototype.drawGuides = function(oGraphics) {
         this.viewPr.drawGuides(oGraphics);
     }
 };
+CPresentation.prototype.getHorGuidesPos = function() {
+    if(this.viewPr) {
+        return this.viewPr.getHorGuidesPos();
+    }
+    return [];
 
+};
+CPresentation.prototype.getVertGuidesPos = function() {
+    if(this.viewPr) {
+        return this.viewPr.getVertGuidesPos();
+    }
+    return [];
+};
 CPresentation.prototype.Update_ForeignCursor = function (CursorInfo, UserId, Show, UserShortId) {
     if (!editor.User)
         return;

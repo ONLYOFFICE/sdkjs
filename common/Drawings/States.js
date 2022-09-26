@@ -1378,6 +1378,9 @@ MoveState.prototype =
         let nSnapPos;
         let oSnapData;
 
+        let aVertGuidesPos = this.drawingObjects.getVertGuidesPos();
+        let aHorGuidesPos = this.drawingObjects.getHorGuidesPos();
+
         //-------------------------------------------------
         for(nTrack = 0; nTrack < nTracksCount; ++nTrack)
         {
@@ -1392,7 +1395,7 @@ MoveState.prototype =
             {
                 for(nSnapPos = 0; nSnapPos < aTrackSnapX.length; ++nSnapPos)
                 {
-                    oSnapData = AscFormat.GetMinSnapDistanceXObject(aTrackSnapX[nSnapPos] + dCurDx, aDrawings);
+                    oSnapData = AscFormat.GetMinSnapDistanceXObject(aTrackSnapX[nSnapPos] + dCurDx, aDrawings, undefined, aVertGuidesPos);
                     if(oSnapData)
                     {
                         dDx = oSnapData.dist;
@@ -1401,19 +1404,19 @@ MoveState.prototype =
                             if(dMinDx === null)
                             {
                                 dMinDx = dDx;
-                                aSnapX.push(oSnapData.pos);
+                               !oSnapData.guide && aSnapX.push(oSnapData.pos);
                             }
                             else
                             {
                                 if(AscFormat.fApproxEqual(dMinDx, dDx, 0.01))
                                 {
-                                    aSnapX.push(oSnapData.pos);
+                                    !oSnapData.guide && aSnapX.push(oSnapData.pos);
                                 }
                                 else if(Math.abs(dMinDx) > Math.abs(dDx))
                                 {
                                     dMinDx = dDx;
                                     aSnapX.length = 0;
-                                    aSnapX.push(oSnapData.pos);
+                                    !oSnapData.guide && aSnapX.push(oSnapData.pos);
                                 }
                             }
                         }
@@ -1439,7 +1442,7 @@ MoveState.prototype =
             {
                 for(nSnapPos = 0; nSnapPos < aTrackSnapY.length; ++nSnapPos)
                 {
-                    oSnapData = AscFormat.GetMinSnapDistanceYObject(aTrackSnapY[nSnapPos] + dCurDy, aDrawings);
+                    oSnapData = AscFormat.GetMinSnapDistanceYObject(aTrackSnapY[nSnapPos] + dCurDy, aDrawings, undefined, aHorGuidesPos);
                     if(oSnapData)
                     {
                         dDy = oSnapData.dist;
@@ -1448,19 +1451,19 @@ MoveState.prototype =
                             if(dMinDy === null)
                             {
                                 dMinDy = dDy;
-                                aSnapY.push(oSnapData.pos);
+                                !oSnapData.guide && aSnapY.push(oSnapData.pos);
                             }
                             else
                             {
                                 if(AscFormat.fApproxEqual(dMinDy, dDy, 0.01))
                                 {
-                                    aSnapY.push(oSnapData.pos);
+                                    !oSnapData.guide && aSnapY.push(oSnapData.pos);
                                 }
                                 else if(Math.abs(dMinDy) > Math.abs(dDy))
                                 {
                                     dMinDy = dDy;
                                     aSnapY.length = 0;
-                                    aSnapY.push(oSnapData.pos);
+                                    !oSnapData.guide && aSnapY.push(oSnapData.pos);
                                 }
                             }
                         }

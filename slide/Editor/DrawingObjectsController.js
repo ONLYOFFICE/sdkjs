@@ -466,6 +466,15 @@ DrawingObjectsController.prototype.getSnapNearestPos = function(dX, dY)
     return this.getPresentation().getStrideData().getNearestPoint(dX, dY);
 };
 
+
+DrawingObjectsController.prototype.getHorGuidesPos = function() {
+    return this.getPresentation().getHorGuidesPos();
+
+};
+DrawingObjectsController.prototype.getVertGuidesPos = function() {
+    return this.getPresentation().getVertGuidesPos();
+};
+
 function PreMoveCommentState(drawingObjects, startX, startY, comment)
 {
     this.drawingObjects = drawingObjects;

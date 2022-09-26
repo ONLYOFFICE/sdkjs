@@ -202,6 +202,26 @@
     CViewPr.prototype.addVerticalGuide = function () {
         this.checkSlideViewPr().checkCSldViewPr().addVerticalGuide();
     };
+    CViewPr.prototype.fillObject = function (oCopy, oIdMap) {
+        oCopy.setLastView(this.lastView);
+        oCopy.setShowComments(this.showComments);
+        if(this.slideViewPr) {
+            oCopy.setSlideViewPr(this.slideViewPr.createDuplicate());
+        }
+    };
+    CViewPr.prototype.getHorGuidesPos = function() {
+        if(this.slideViewPr) {
+            return this.slideViewPr.getHorGuidesPos();
+        }
+        return [];
+
+    };
+    CViewPr.prototype.getVertGuidesPos = function() {
+        if(this.slideViewPr) {
+            return this.slideViewPr.getVertGuidesPos();
+        }
+        return [];
+    };
 
 
     function CCommonViewPr() {
@@ -220,7 +240,6 @@
         }
         return this.cSldViewPr;
     };
-
     CCommonViewPr.prototype.isSnapToGrid = function() {
         if(this.cSldViewPr) {
             return this.cSldViewPr.isSnapToGrid();
@@ -249,6 +268,25 @@
             this.cSldViewPr.drawGuides(oGraphics);
         }
     };
+    CCommonViewPr.prototype.fillObject = function (oCopy, oIdMap) {
+        if(this.cSldViewPr) {
+            oCopy.setCSldViewPr(this.cSldViewPr.createDuplicate());
+        }
+    };
+    CCommonViewPr.prototype.getHorGuidesPos = function() {
+        if(this.cSldViewPr) {
+            return this.cSldViewPr.getHorGuidesPos();
+        }
+        return [];
+
+    };
+    CCommonViewPr.prototype.getVertGuidesPos = function() {
+        if(this.cSldViewPr) {
+            return this.cSldViewPr.getVertGuidesPos();
+        }
+        return [];
+    };
+
 
     const GUIDE_POS_TO_EMU = 1587.5;
 
@@ -364,7 +402,7 @@
         }
         for(let nGd = 0; nGd < this.guideLst.length; ++nGd) {
             let oGuide = this.guideLst[nGd];
-            if(bHorizontal && oGuide.isHorizontal() || oGuide.isVertical()) {
+            if(bHorizontal && oGuide.isHorizontal() || !bHorizontal && oGuide.isVertical()) {
                 if(!oLastGuide) {
                     oLastGuide = oGuide;
                 }
@@ -402,6 +440,36 @@
     CCSldViewPr.prototype.addVerticalGuide = function () {
         this.insertGuide(false);
     };
+    CCSldViewPr.prototype.fillObject = function (oCopy, oIdMap) {
+        oCopy.setShowGuides(this.showGuides);
+        oCopy.setSnapToGrid(this.snapToGrid);
+        oCopy.setSnapToObjects(this.snapToObjects);
+
+        if(this.cViewPr) {
+            oCopy.setCViewPr(this.cViewPr.createDuplicate());
+        }
+        for(let nGd = 0; nGd < this.guideLst.length; ++nGd) {
+            oCopy.addGuide(this.guideLst[nGd].createDuplicate());
+        }
+    };
+    CCSldViewPr.prototype.getGuidesPos = function(bHor) {
+        let aRet = [];
+        for(let nGd = 0; nGd < this.guideLst.length; ++nGd) {
+            let oGd = this.guideLst[nGd];
+            if(bHor && oGd.isHorizontal() || !bHor && oGd.isVertical()) {
+                aRet.push(GdPosToMm(oGd.pos))
+            }
+        }
+        return aRet;
+
+    };
+    CCSldViewPr.prototype.getHorGuidesPos = function() {
+        return this.getGuidesPos(true);
+
+    };
+    CCSldViewPr.prototype.getVertGuidesPos = function() {
+        return this.getGuidesPos(false);
+    };
 
 
 
@@ -438,18 +506,25 @@
     CGuide.prototype.draw = function(oGraphics) {
         let oPresentation = editor.WordControl.m_oLogicDocument;
         let dPos = GdPosToMm(this.pos);
+        let bOldVal = editor.isShowTableEmptyLineAttack;
+        editor.isShowTableEmptyLineAttack = true;
         if(this.isHorizontal()) {
             oGraphics.DrawEmptyTableLine(0, dPos, oPresentation.GetWidthMM(), dPos);
         }
         else {
             oGraphics.DrawEmptyTableLine(dPos, 0, dPos, oPresentation.GetHeightMM());
         }
+        editor.isShowTableEmptyLineAttack = bOldVal;
     };
     CGuide.prototype.isHorizontal = function() {
         return (this.orient === orient_horz);
     };
     CGuide.prototype.isVertical = function() {
-        return !this.isVertical();
+        return !this.isHorizontal();
+    };
+    CGuide.prototype.fillObject = function (oCopy, oIdMap) {
+        oCopy.setPos(this.pos);
+        oCopy.setOrient(this.orient);
     };
 
     function CCViewPr() {
@@ -496,6 +571,12 @@
     };
     CCViewPr.prototype.toXml = function (writer, name) {
     };
+    CCViewPr.prototype.fillObject = function (oCopy, oIdMap) {
+        oCopy.setScale(this.scale);
+        if(this.origin) {
+            oCopy.setOrigin(this.origin.createDuplicate());
+        }
+    };
 
     function CScale() {
         CBFO.call(this);
@@ -525,6 +606,11 @@
     };
     CScale.prototype.toXml = function (writer, name) {
     };
+    CScale.prototype.fillObject = function (oCopy, oIdMap) {
+        oCopy.setSx(this.sx);
+        oCopy.setSy(this.sy);
+    };
+
 
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CViewPr = CViewPr;

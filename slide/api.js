@@ -609,7 +609,7 @@
 
 		this.ShowParaMarks        = false;
 		this.ShowSmartGuides      = true;
-		this.ShowGuides           = false;
+		this.ShowGuides           = true;
 		this.ShowGridlines        = false;
 
 

@@ -10431,6 +10431,12 @@ DrawingObjectsController.prototype =
         }
         AscCommon.History.Create_NewPoint(0);
         this.addImage(sImageUrl, nWidth, nHeight, null, null);
+    },
+    getHorGuidesPos: function() {
+        return [];
+    },
+    getVertGuidesPos: function() {
+        return [];
     }
 };
 
@@ -11152,7 +11158,7 @@ CSlideBoundsChecker.prototype =
     }
 
 
-    function GetMinSnapDistancePosObject(dPos, aDrawings, oExclude, bXPoints)
+    function GetMinSnapDistancePosObject(dPos, aDrawings, oExclude, bXPoints, aGuides)
     {
         let dMinDistance = null;
         let oResult = null;
@@ -11178,17 +11184,23 @@ CSlideBoundsChecker.prototype =
                 dMinDistance = oCurResult.dist;
             }
         }
+        let oCurResult = GetMinSnapDistance(aGuides, dPos, dMinDistance);
+        if(oCurResult)
+        {
+            oResult = oCurResult;
+            oCurResult.guide = true;
+        }
         return oResult;
     }
 
-function GetMinSnapDistanceXObject(pointX, arrGrObjects, oExclude)
+function GetMinSnapDistanceXObject(pointX, arrGrObjects, oExclude, aGuides)
 {
-    return GetMinSnapDistancePosObject(pointX, arrGrObjects, oExclude, true);
+    return GetMinSnapDistancePosObject(pointX, arrGrObjects, oExclude, true, aGuides);
 }
 
-function GetMinSnapDistanceYObject(pointY, arrGrObjects, oExclude)
+function GetMinSnapDistanceYObject(pointY, arrGrObjects, oExclude, aGuides)
 {
-    return GetMinSnapDistancePosObject(pointY, arrGrObjects, oExclude, false);
+    return GetMinSnapDistancePosObject(pointY, arrGrObjects, oExclude, false, aGuides);
 }
 
 function GetMinSnapDistanceXObjectByArrays(pointX, snapArrayX)
