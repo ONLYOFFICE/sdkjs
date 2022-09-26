@@ -1283,7 +1283,9 @@
 		};
 		this.CoAuthoringApi.onLicenseChanged          = function(res)
 		{
-			t.licenseResult   = res;
+			if (t.licenseResult) {
+				this.licenseResult['type'] = res;
+			}
 			t.isOnLoadLicense = true;
 			var oResult = new AscCommon.asc_CAscEditorPermissions();
 			oResult.setLicenseType(res);
