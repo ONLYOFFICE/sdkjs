@@ -1830,7 +1830,7 @@
     CGraphicObjectBase.prototype.getInvertTransform = function(){
         return this.invertTransform;
     };
-    CGraphicObjectBase.prototype.getResizeCoefficients = function (numHandle, x, y, aDrawings) {
+    CGraphicObjectBase.prototype.getResizeCoefficients = function (numHandle, x, y, aDrawings, oController) {
         var cx, cy;
         cx = this.extX > 0 ? this.extX : 0.01;
         cy = this.extY > 0 ? this.extY : 0.01;
@@ -1884,7 +1884,11 @@
 
         if(!bSnapH) {
             if(Array.isArray(aDrawings)) {
-                oSnapHorObject = AscFormat.GetMinSnapDistanceXObject(x, aDrawings, this);
+                let aVertGuidesPos = [];
+                if(oController) {
+                    aVertGuidesPos = oController.getVertGuidesPos();
+                }
+                oSnapHorObject = AscFormat.GetMinSnapDistanceXObject(x, aDrawings, this, aVertGuidesPos);
                 if(oSnapHorObject) {
                     if(Math.abs(oSnapHorObject.dist) < AscFormat.SNAP_DISTANCE) {
                         bSnapH = true;
@@ -1897,7 +1901,11 @@
         }
         if(!bSnapV) {
             if(Array.isArray(aDrawings)) {
-                oSnapVertObject = AscFormat.GetMinSnapDistanceYObject(y, aDrawings, this);
+                let aHorGuidesPos = [];
+                if(oController) {
+                    aHorGuidesPos = oController.getHorGuidesPos();
+                }
+                oSnapVertObject = AscFormat.GetMinSnapDistanceYObject(y, aDrawings, this, aHorGuidesPos);
                 if(oSnapVertObject && Math.abs(oSnapVertObject.dist) < AscFormat.SNAP_DISTANCE) {
                     bSnapV = true;
                 }

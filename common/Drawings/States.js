@@ -1217,7 +1217,7 @@ ResizeState.prototype =
             dX = oNearestPos.x;
             dY = oNearestPos.y;
         }
-        var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, dX, dY, start_arr);
+        var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, dX, dY, start_arr, this.drawingObjects);
         this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e, dX, dY);
         if(this.drawingObjects.drawingObjects.cSld)
         {

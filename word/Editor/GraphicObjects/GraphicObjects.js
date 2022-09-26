@@ -4577,7 +4577,12 @@ CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHei
         }
     }
 };
-
+CGraphicObjects.prototype.getHorGuidesPos = function() {
+    return [];
+}
+CGraphicObjects.prototype.getVertGuidesPos = function() {
+    return [];
+};
 function ComparisonByZIndexSimpleParent(obj1, obj2)
 {
     if(obj1.parent && obj2.parent)
