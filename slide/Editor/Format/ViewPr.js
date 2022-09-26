@@ -89,6 +89,12 @@
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ViewPrGridSpacing, this.gridSpacing, oPr));
         this.gridSpacing = oPr;
     };
+    CViewPr.prototype.setGridSpacingVal = function(nVal) {
+        let oSpacing = new AscCommonSlide.CSlideSize();
+        oSpacing.setCX(nVal);
+        oSpacing.setCY(nVal);
+        this.setGridSpacing(oSpacing);
+    };
     CViewPr.prototype.setSlideViewPr = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ViewPrSlideViewerPr, this.slideViewPr, oPr));
         this.slideViewPr = oPr;
@@ -100,6 +106,15 @@
     CViewPr.prototype.setShowComments = function(oPr) {
         oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ViewPrShowComments, this.showComments, oPr));
         this.showComments = oPr;
+    };
+    CViewPr.prototype.checkSlideViewPr = function() {
+        if(!this.slideViewPr) {
+            this.setSlideViewPr(new CCommonViewPr());
+        }
+        else {
+            this.setSlideViewPr(this.slideViewPr.createDuplicate())
+        }
+        return this.slideViewPr;
     };
     CViewPr.prototype.readAttribute = function(nType, pReader) {
         let oStream = pReader.stream;
@@ -154,7 +169,7 @@
     };
     CViewPr.prototype.toXml = function (writer, name) {
     };
-    CViewPr.prototype.DEFAULT_GRID_SPACING = 720000;
+    CViewPr.prototype.DEFAULT_GRID_SPACING = 360000;
     CViewPr.prototype.getGridSpacing = function () {
         let oSpacing = this.gridSpacing;
         if(oSpacing) {
@@ -168,6 +183,25 @@
         }
         return false;
     };
+    CViewPr.prototype.setSnapToGrid = function(bVal) {
+        this.checkSlideViewPr().checkCSldViewPr().setSnapToGrid(bVal);
+    };
+    CViewPr.prototype.Refresh_RecalcData = function(Data) {
+        if(this.parent) {
+            this.parent.Refresh_RecalcData2(Data);
+        }
+    };
+    CViewPr.prototype.drawGuides = function(oGraphics) {
+        if(this.slideViewPr) {
+            this.slideViewPr.drawGuides(oGraphics);
+        }
+    };
+    CViewPr.prototype.addHorizontalGuide = function () {
+        this.checkSlideViewPr().checkCSldViewPr().addHorizontalGuide();
+    };
+    CViewPr.prototype.addVerticalGuide = function () {
+        this.checkSlideViewPr().checkCSldViewPr().addVerticalGuide();
+    };
 
 
     function CCommonViewPr() {
@@ -180,6 +214,13 @@
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CommonViewPrCSldViewPr, this.cSldViewPr, oPr));
         this.cSldViewPr = oPr;
     };
+    CCommonViewPr.prototype.checkCSldViewPr = function() {
+        if(!this.cSldViewPr) {
+            this.setCSldViewPr(new CCSldViewPr());
+        }
+        return this.cSldViewPr;
+    };
+
     CCommonViewPr.prototype.isSnapToGrid = function() {
         if(this.cSldViewPr) {
             return this.cSldViewPr.isSnapToGrid();
@@ -203,7 +244,20 @@
     };
     CCommonViewPr.prototype.toXml = function (writer, name) {
     };
+    CCommonViewPr.prototype.drawGuides = function (oGraphics) {
+        if(this.cSldViewPr) {
+            this.cSldViewPr.drawGuides(oGraphics);
+        }
+    };
 
+    const GUIDE_POS_TO_EMU = 1587.5;
+
+    function GdPosToMm(nVal) {
+        return AscFormat.Emu_To_Mm(nVal * GUIDE_POS_TO_EMU);
+    }
+    function EmuToGdPos(nVal) {
+        return (nVal / GUIDE_POS_TO_EMU + 0.5) >> 0;
+    }
 
     function CCSldViewPr() {
         CBFO.call(this);
@@ -296,6 +350,59 @@
     CCSldViewPr.prototype.isSnapToGrid = function () {
         return this.snapToGrid === true;
     };
+    CCSldViewPr.prototype.drawGuides = function (oGraphics) {
+        let aGds = this.guideLst;
+        for(let nGd = 0; nGd < aGds.length; ++nGd) {
+            aGds[nGd].draw(oGraphics);
+        }
+    };
+    CCSldViewPr.prototype.insertGuide = function(bHorizontal) {
+        let oLastGuide = null;
+        let oGuideToAdd = new CGuide();
+        if(bHorizontal) {
+            oGuideToAdd.setOrient(orient_horz);
+        }
+        for(let nGd = 0; nGd < this.guideLst.length; ++nGd) {
+            let oGuide = this.guideLst[nGd];
+            if(bHorizontal && oGuide.isHorizontal() || oGuide.isVertical()) {
+                if(!oLastGuide) {
+                    oLastGuide = oGuide;
+                }
+                else {
+                    if(oLastGuide.pos < oGuide.pos) {
+                        oLastGuide = oGuide;
+                    }
+                }
+            }
+        }
+        let oPresentation = editor.WordControl.m_oLogicDocument;
+        let nWidth = EmuToGdPos(oPresentation.GetWidthEMU());
+        let nHeight = EmuToGdPos(oPresentation.GetHeightEMU());
+        if(!oLastGuide) {
+            if(bHorizontal) {
+                oGuideToAdd.setPos(nHeight / 2 >> 0);
+            }
+            else {
+                oGuideToAdd.setPos(nWidth / 2 >> 0);
+            }
+        }
+        else {
+            if(bHorizontal) {
+                oGuideToAdd.setPos(Math.min(nHeight, oLastGuide.pos + 100));
+            }
+            else {
+                oGuideToAdd.setPos(Math.min(nWidth, oLastGuide.pos + 100));
+            }
+        }
+        this.addGuide(oGuideToAdd);
+    };
+    CCSldViewPr.prototype.addHorizontalGuide = function () {
+        this.insertGuide(true);
+    };
+    CCSldViewPr.prototype.addVerticalGuide = function () {
+        this.insertGuide(false);
+    };
+
 
 
     const orient_horz = 0;
@@ -327,6 +434,22 @@
                 break;
             }
         }
+    };
+    CGuide.prototype.draw = function(oGraphics) {
+        let oPresentation = editor.WordControl.m_oLogicDocument;
+        let dPos = GdPosToMm(this.pos);
+        if(this.isHorizontal()) {
+            oGraphics.DrawEmptyTableLine(0, dPos, oPresentation.GetWidthMM(), dPos);
+        }
+        else {
+            oGraphics.DrawEmptyTableLine(dPos, 0, dPos, oPresentation.GetHeightMM());
+        }
+    };
+    CGuide.prototype.isHorizontal = function() {
+        return (this.orient === orient_horz);
+    };
+    CGuide.prototype.isVertical = function() {
+        return !this.isVertical();
     };
 
     function CCViewPr() {

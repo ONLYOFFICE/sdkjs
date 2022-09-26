@@ -608,7 +608,11 @@
 		this.IsSupportEmptyPresentation = true;
 
 		this.ShowParaMarks        = false;
-		this.ShowSnapLines        = true;
+		this.ShowSmartGuides      = true;
+		this.ShowGuides           = false;
+		this.ShowGridlines        = false;
+
+
 		this.isAddSpaceBetweenPrg = false;
 		this.isPageBreakBefore    = false;
 		this.isKeepLinesTogether  = false;
@@ -3038,11 +3042,68 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.put_ShowSnapLines = function(isShow)
 	{
-		this.ShowSnapLines = isShow;
+		this.ShowSmartGuides = isShow;
 	};
 	asc_docs_api.prototype.get_ShowSnapLines = function()
 	{
-		return this.ShowSnapLines;
+		return this.ShowSmartGuides;
+	};
+
+	asc_docs_api.prototype.asc_setShowSmartGuides = function(isShow)
+	{
+		this.ShowSmartGuides = isShow;
+	};
+	asc_docs_api.prototype.asc_getShowSmartGuides = function()
+	{
+		return this.ShowSmartGuides;
+	};
+
+	asc_docs_api.prototype.asc_setShowGuides = function(isShow)
+	{
+		this.ShowGuides = isShow;
+	};
+	asc_docs_api.prototype.asc_getShowGuides = function()
+	{
+		return this.ShowGuides;
+	};
+
+	asc_docs_api.prototype.asc_setShowGridlines = function(isShow)
+	{
+		if(this.ShowGridlines === isShow)
+		{
+			return;
+		}
+		this.ShowGridlines = isShow;
+		let oPresentation = this.WordControl.m_oLogicDocument;
+		oPresentation.RedrawCurSlide();
+	};
+	asc_docs_api.prototype.asc_getShowGridlines = function()
+	{
+		return this.ShowGridlines;
+	};
+	asc_docs_api.prototype.asc_setGridSpacing = function(nSpacing)
+	{
+		this.WordControl.m_oLogicDocument.setGridSpacing(nSpacing);
+	};
+	asc_docs_api.prototype.asc_getGridSpacing = function()
+	{
+		return this.WordControl.m_oLogicDocument.getGridSpacing();
+	};
+	asc_docs_api.prototype.asc_setSnapToGrid = function(bVal)
+	{
+		this.WordControl.m_oLogicDocument.setSnapToGrid(bVal);
+	};
+	asc_docs_api.prototype.asc_getSnapToGrid = function()
+	{
+		return this.WordControl.m_oLogicDocument.isSnapToGrid();
+	};
+	asc_docs_api.prototype.asc_addHorizontalGuide = function()
+	{
+		return this.WordControl.m_oLogicDocument.addHorizontalGuide();
+	};
+	asc_docs_api.prototype.asc_addVerticalGuide = function()
+	{
+		return this.WordControl.m_oLogicDocument.addVerticalGuide();
 	};
 
 	asc_docs_api.prototype.put_ShowParaMarks      = function(isShow)
@@ -8557,6 +8618,18 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['put_ListType']                        = asc_docs_api.prototype.put_ListType;
 	asc_docs_api.prototype['put_ShowSnapLines']                   = asc_docs_api.prototype.put_ShowSnapLines;
 	asc_docs_api.prototype['get_ShowSnapLines']                   = asc_docs_api.prototype.get_ShowSnapLines;
+	asc_docs_api.prototype['asc_setShowSmartGuides']              = asc_docs_api.prototype.asc_setShowSmartGuides;
+	asc_docs_api.prototype['asc_getShowSmartGuides']              = asc_docs_api.prototype.asc_getShowSmartGuides;
+	asc_docs_api.prototype['asc_setShowGuides']                   = asc_docs_api.prototype.asc_setShowGuides;
+	asc_docs_api.prototype['asc_getShowGuides']                   = asc_docs_api.prototype.asc_getShowGuides;
+	asc_docs_api.prototype['asc_setShowGridlines']                = asc_docs_api.prototype.asc_setShowGridlines;
+	asc_docs_api.prototype['asc_getShowGridlines']                = asc_docs_api.prototype.asc_getShowGridlines;
+	asc_docs_api.prototype['asc_setGridSpacing']                  = asc_docs_api.prototype.asc_setGridSpacing;
+	asc_docs_api.prototype['asc_getGridSpacing']                  = asc_docs_api.prototype.asc_getGridSpacing;
+	asc_docs_api.prototype['asc_setSnapToGrid']                   = asc_docs_api.prototype.asc_setSnapToGrid;
+	asc_docs_api.prototype['asc_getSnapToGrid']                   = asc_docs_api.prototype.asc_getSnapToGrid;
+	asc_docs_api.prototype['asc_addHorizontalGuide']              = asc_docs_api.prototype.asc_addHorizontalGuide;
+	asc_docs_api.prototype['asc_addVerticalGuide']                = asc_docs_api.prototype.asc_addVerticalGuide;
 	asc_docs_api.prototype['put_ShowParaMarks']                   = asc_docs_api.prototype.put_ShowParaMarks;
 	asc_docs_api.prototype['get_ShowParaMarks']                   = asc_docs_api.prototype.get_ShowParaMarks;
 	asc_docs_api.prototype['put_ShowTableEmptyLine']              = asc_docs_api.prototype.put_ShowTableEmptyLine;

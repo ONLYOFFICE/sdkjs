@@ -1478,24 +1478,25 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
         let nHorStart;
         let nVertStart;
+        let nSlideWidth = this.slideWidth;
+        let nSlideHeight = this.slideHeight;
 
-        while(nStrideInsideLinePix < nMinInsideLineStridePix) {
-            nStrideInsideLine *= 2;
-            nStrideInsideLinePix = ep(nStrideInsideLine);
-        }
+       while(nStrideInsideLinePix < nMinInsideLineStridePix) {
+           nStrideInsideLine *= 2;
+           nStrideInsideLinePix = ep(nStrideInsideLine);
+       }
         nStrideLine = nStrideInsideLine;
         nStrideLinePix = nStrideInsideLinePix;
+        let nStartStrideVerPos = this.getStartStridePos(nStrideLine, nSlideHeight);
+        let nStartStrideHorPos = this.getStartStridePos(nStrideLine, nSlideHeight);
+        let nStartInsideHorPos = this.getStartStridePos(nStrideInsideLine, nSlideWidth);
+        let nStartInsideVerPos = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
         while(nStrideLinePix < nMinLineStridePix) {
             nStrideLine += nStrideInsideLine;
             nStrideLinePix = ep(nStrideLine);
+            //nStartStridePos = this.getStartStridePos(nStrideLine, nSlideHeight);
         }
         bPixel = nStrideInsideLinePix < 17;
-        let nSlideWidth = this.slideWidth;
-        let nSlideHeight = this.slideHeight;
-        nHorStart = this.getStartStridePos(nStrideInsideLine, nSlideWidth);
-        nVertStart = this.getStartStridePos(nStrideLine, nSlideHeight);
-        let nVertPos = nVertStart;
-        let nHorPos;
 
         oGraphics.SaveGrState();
         oGraphics.transform3(new AscCommon.CMatrix());
@@ -1541,6 +1542,12 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 oContext.drawImage(oImageCanvas, nX - 1, nY - 1);
             }
         }
+
+
+        nHorStart = this.getStartStridePos(nStrideInsideLine, nSlideWidth);
+        nVertStart = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
+        let nVertPos = nVertStart;
+        let nHorPos;
         while (nVertPos < nSlideHeight) {
             if(nVertPos > 0) {
                 nHorPos = nHorStart;
@@ -1556,8 +1563,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
 
 
-        nHorStart = this.getStartStridePos(nStrideLine, nSlideWidth);
-        nVertStart = this.getStartStridePos(nStrideLine, nSlideHeight);
+        nHorStart = this.getStartStridePos(nStrideInsideLine, nSlideWidth);
+        nVertStart = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
         nHorPos = nHorStart;
 
 
@@ -1577,7 +1584,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         oGraphics.df();
         oGraphics.RestoreGrState();
     };
-
     Slide.prototype.drawGrid = function(oGraphics) {
         let oApi = editor;
         if(!oApi) {
@@ -1590,9 +1596,13 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         if(!oPresentation) {
             return;
         }
-        oPresentation.getStrideData().drawGrid(oGraphics);
+        if(oApi.asc_getShowGridlines()) {
+            oPresentation.drawGrid(oGraphics);
+        }
+        if(oApi.asc_getShowGuides()) {
+            oPresentation.drawGuides(oGraphics);
+        }
     };
-
     Slide.prototype.drawNotes = function (g) {
         if(this.notesShape) {
             this.notesShape.draw(g);
@@ -1612,7 +1622,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             }
         }
     };
-
     Slide.prototype.drawAnimPane = function(oGraphics) {
         if(this.timing) {
             this.timing.drawAnimPane(oGraphics);
