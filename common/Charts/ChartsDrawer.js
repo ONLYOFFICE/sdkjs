@@ -5450,9 +5450,9 @@ CChartsDrawer.prototype =
 		var grouping = this.getChartGrouping(oChart);
 		var res = null;
 
-		var point, oSer;
+		var point, oSer, i;
 		if (grouping === "stacked") {
-			for (var i = 0; i <= ser; i++) {
+			for (i = 0; i <= ser; i++) {
 				oSer = oChart.series[i];
 				if (oSer) {
 					point = this.getPointByIndex(oSer, val);
@@ -5465,7 +5465,37 @@ CChartsDrawer.prototype =
 				}
 			}
 		} else if (grouping === "stackedPer") {
+			var sumVal = 0;
+			for (i = 0; i <= oChart.series.length; i++) {
+				oSer = oChart.series[i];
+				if (oSer) {
+					point = this.getPointByIndex(oSer, val);
+					if (point) {
+						if (!res) {
+							res = 0;
+						}
+						sumVal += Math.abs(point.val);
+					}
+				}
+			}
 
+			for (i = 0; i <= ser; i++) {
+				oSer = oChart.series[i];
+				if (oSer) {
+					point = this.getPointByIndex(oSer, val);
+					if (point) {
+						if (!res) {
+							res = 0;
+						}
+						res += point.val;
+					}
+				}
+			}
+			if(sumVal === 0) {
+				res = 0;
+			} else {
+				res = res / sumVal;
+			}
 		} else {
 			oSer = oChart.series[ser];
 			point = this.getPointByIndex(oSer, val);
