@@ -3121,7 +3121,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_deleteGuide = function(sId)
 	{
-		return this.WordControl.m_oLogicDocument.deleteGuide();
+		return this.WordControl.m_oLogicDocument.deleteGuide(sId);
 	};
 
 
@@ -7634,6 +7634,7 @@ background-repeat: no-repeat;\
 			this.Y_abs         = oData.Y_abs;
 			this.IsSlideSelect = oData.IsSlideSelect;
 			this.IsSlideHidden = oData.IsSlideHidden;
+			this.Guide         = oData.Guide;
 		}
 		else
 		{
@@ -7642,6 +7643,7 @@ background-repeat: no-repeat;\
 			this.Y_abs         = 0;
 			this.IsSlideSelect = true;
             this.IsSlideHidden = false;
+            this.Guide         = null;
 		}
 	}
 
@@ -7665,6 +7667,10 @@ background-repeat: no-repeat;\
 	CContextMenuData.prototype.get_IsSlideHidden = function()
 	{
 		return this.IsSlideHidden;
+	};
+	CContextMenuData.prototype.get_Guide = function()
+	{
+		return this.Guide;
 	};
 
 	asc_docs_api.prototype.sync_ContextMenuCallback = function(Data)
@@ -9074,6 +9080,7 @@ background-repeat: no-repeat;\
 	CContextMenuData.prototype['get_Y']               = CContextMenuData.prototype.get_Y;
 	CContextMenuData.prototype['get_IsSlideSelect']   = CContextMenuData.prototype.get_IsSlideSelect;
 	CContextMenuData.prototype['get_IsSlideHidden']   = CContextMenuData.prototype.get_IsSlideHidden;
+	CContextMenuData.prototype['get_Guide']           = CContextMenuData.prototype.get_Guide;
 	window['Asc']['CAscSlideProps']                   = CAscSlideProps;
 	CAscSlideProps.prototype['get_background']        = CAscSlideProps.prototype.get_background;
 	CAscSlideProps.prototype['put_background']        = CAscSlideProps.prototype.put_background;

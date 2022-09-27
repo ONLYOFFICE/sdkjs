@@ -732,6 +732,9 @@ TrackSelectionRect.prototype =
             let oTrack = this.drawingObjects.arrTrackObjects[0];
             if(oTrack) {
                 oTrack.track(x, y);
+                let dPos = bHor ? x : y;
+                let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(x, y, 0);
+                editor.sendEvent("asc_onTrackGuide", dPos, oConvertedPos.X, oConvertedPos.Y)
                 this.drawingObjects.updateOverlay();
             }
         }
@@ -747,11 +750,8 @@ TrackSelectionRect.prototype =
                 this.drawingObjects.trackEnd();
                 oPresentation.Recalculate();
             }
-            else {
-                this.drawingObjects.clearTrackObjects();
-            }
-
         }
+        this.drawingObjects.clearTrackObjects();
         this.drawingObjects.updateOverlay();
         this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
     };
