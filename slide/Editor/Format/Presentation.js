@@ -9918,6 +9918,7 @@ CPresentation.prototype.Refresh_RecalcData2 = function (Data) {
             break;
         }
         case AscDFH.historyitem_CSldViewPrGuideLst:
+        case AscDFH.historyitem_ViewPrGuidePos:
         case AscDFH.historyitem_ViewPrGridSpacing:
         case AscDFH.historyitem_ViewPrSlideViewerPr: {
             History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, All: true});
