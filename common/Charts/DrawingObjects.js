@@ -1385,16 +1385,6 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         return false;
     };
 
-    DrawingBase.prototype.createImage = function() {
-        var koef = Asc.getCvtRatio(3, 0, this.worksheet._getPPIX());
-        var wb = this.worksheet && this.worksheet.workbook;
-        wb.setOleSize(null);
-        var drawingCtx = AscCommonExcel.getContext(this.ext.cx * koef, this.ext.cy * koef, wb);
-        var graphics = AscCommonExcel.getGraphics(drawingCtx);
-        this.draw(graphics);
-        return drawingCtx.toDataURL();
-    };
-
     DrawingBase.prototype.getAllFonts = function(AllFonts) {
         var _t = this;
         _t.graphicObject && _t.graphicObject.documentGetAllFontNames && _t.graphicObject.documentGetAllFontNames(AllFonts);
@@ -2230,10 +2220,15 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
         for(let i = 0; i < aImagesSync.length; ++i)
         {
-			const localUrl = aImagesSync[i];
-			if(api.DocInfo && api.DocInfo.get_OfflineApp()) {
-          AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.documentUrl + "media/" + localUrl);
-			}
+            const localUrl = aImagesSync[i];
+            if(api.DocInfo && api.DocInfo.get_OfflineApp()) {
+                const urlWithMedia = AscCommon.g_oDocumentUrls.mediaPrefix + localUrl;
+                if (api.imagesFromGeneralEditor && api.imagesFromGeneralEditor[urlWithMedia]) {
+                    AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.imagesFromGeneralEditor[urlWithMedia]);
+                } else {
+                    AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.documentUrl + urlWithMedia);
+                }
+            }
             aImagesSync[i] = AscCommon.getFullImageSrc2(localUrl);
         }
 
@@ -2262,7 +2257,12 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
         for (let localUrl in oBulletImages) {
             if(api.DocInfo && api.DocInfo.get_OfflineApp()) {
-                AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.documentUrl + "media/" + localUrl);
+                const urlWithMedia = AscCommon.g_oDocumentUrls.mediaPrefix + localUrl;
+                if (api.imagesFromGeneralEditor && api.imagesFromGeneralEditor[urlWithMedia]) {
+                    AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.imagesFromGeneralEditor[urlWithMedia]);
+                } else {
+                    AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.documentUrl + urlWithMedia);
+                }
             }
             const fullUrl = AscCommon.getFullImageSrc2(localUrl);
             arrBulletImagesAsync.push(fullUrl);

@@ -4159,7 +4159,7 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 			}
 
 			if (null !== text) {
-				writer.WriteXmlValueString("v", prepareTextToXml(text));
+				writer.WriteXmlValueStringEncode2("v", prepareTextToXml(text));
 			} else if (null !== number) {
 				writer.WriteXmlValueNumber("v", number);
 			}
@@ -4267,7 +4267,7 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 	CT_DrawingWS.prototype.toXml = function (writer) {
 		writer.WriteXmlString('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
 		writer.WriteXmlNodeStart("xdr:wsDr");
-		writer.WriteXmlString(' xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"');
+		writer.WriteXmlString(' xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"');
 		writer.WriteXmlAttributesEnd();
 		this.ws.Drawings.forEach(function (drawing) {
 			drawing.toXml(writer);
@@ -9518,10 +9518,10 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			writer.WriteXmlString("<diagonal/>");
 		}
 
-		if (null != border.iv && AscCommon.c_oAscBorderStyles.None !== border.iv.s) {
+		if (null != border.iv && Asc.c_oAscBorderStyles.None !== border.iv.s) {
 			border.iv.toXml(writer, "vertical", childns, childns);
 		}
-		if (null != border.ih && AscCommon.c_oAscBorderStyles.None !== border.ih.s) {
+		if (null != border.ih && Asc.c_oAscBorderStyles.None !== border.ih.s) {
 			border.ih.toXml(writer, "horizontal", childns, childns);
 		}
 

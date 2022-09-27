@@ -7247,6 +7247,8 @@ Paragraph.prototype.Apply_TextPr = function(TextPr, IncFontSize)
 
 	if (true === this.Selection.Use)
 	{
+		let selectDirection = this.GetSelectDirection();
+
 		var StartPos = this.Selection.StartPos;
 		var EndPos   = this.Selection.EndPos;
 
@@ -7254,9 +7256,15 @@ Paragraph.prototype.Apply_TextPr = function(TextPr, IncFontSize)
 		{
 			var NewElements = this.Content[EndPos].Apply_TextPr(TextPr, IncFontSize, false);
 
-			if (para_Run === this.Content[EndPos].Type)
+			if (this.Content[EndPos].IsRun())
 			{
-				this.Internal_ReplaceRun(EndPos, NewElements);
+				this.RemoveSelection();
+				let centerPos = this.Internal_ReplaceRun(EndPos, NewElements);
+
+				this.Selection.Use      = true;
+				this.Selection.StartPos = centerPos;
+				this.Selection.EndPos   = centerPos;
+				this.Content[centerPos].SelectAll(selectDirection);
 			}
 		}
 		else
@@ -12086,12 +12094,12 @@ Paragraph.prototype.private_GetReviewChangeForHover = function(X, Y, CurPage, oC
 		}
 		else if (isInText && Asc.c_oAscRevisionsChangeType.TextPr === nType)
 		{
-			oChange = oCurChange;
-			break;
+			if (!oChange || oChange.GetWeight() < oCurChange.GetWeight())
+				oChange = oCurChange;
 		}
 		else if (isInText && (Asc.c_oAscRevisionsChangeType.TextAdd === nType || Asc.c_oAscRevisionsChangeType.TextRem === nType))
 		{
-			if (!oChange)
+			if (!oChange || oChange.GetWeight() < oCurChange.GetWeight())
 				oChange = oCurChange;
 		}
 
@@ -14439,6 +14447,14 @@ Paragraph.prototype.Set_SectionPr = function(SectPr, bUpdate)
 			LastRun.RecalcInfo.Measure = true;
 		}
 	}
+};
+Paragraph.prototype.SetSectionPr = function(sectPr, isUpdate)
+{
+	return this.Set_SectionPr(sectPr, isUpdate);
+};
+Paragraph.prototype.RemoveSectionPr = function(isUpdate)
+{
+	return this.Set_SectionPr(undefined, isUpdate);
 };
 Paragraph.prototype.GetLastRangeVisibleBounds = function()
 {
@@ -17994,6 +18010,42 @@ Paragraph.prototype.CheckOrAddSpaceAtStartPos = function(isAddToEmpty)
 Paragraph.prototype.CheckTextShape = function()
 {
 	// TODO: Надо проверить, что все символы собраны
+};
+Paragraph.prototype.IsEmptyBetweenClasses = function(class1, class2)
+{
+	let pos1 = this.GetPosByElement(class1);
+	let pos2 = this.GetPosByElement(class2);
+
+	if (!pos1 || !pos2)
+		return false;
+
+	if (pos1.IsPartOf(pos2) || pos2.IsPartOf(pos1))
+		return true;
+
+	if (pos1.Compare(pos2) > 0)
+	{
+		let temp = class1;
+		class1   = class2;
+		class2   = temp;
+	}
+
+	let startPos = pos1.Copy();
+	class1.Get_EndPos(false, startPos, startPos.GetDepth() + 1);
+
+	let endPos = pos2.Copy();
+	class2.Get_StartPos(endPos, endPos.GetDepth() + 1);
+
+	let state = this.SaveSelectionState();
+
+	this.RemoveSelection();
+
+	this.Selection.Use = true;
+	this.SetSelectionContentPos(startPos, endPos);
+
+	let result = this.IsSelectionEmpty(true);
+
+	this.LoadSelectionState(state);
+	return result;
 };
 
 Paragraph.prototype.asc_getText = function()

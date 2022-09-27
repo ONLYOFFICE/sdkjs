@@ -1495,6 +1495,12 @@
 				return false;
 			}
 		}
+		if(this.view3D && !oPr.view3D || !this.view3D && oPr.view3D) {
+			return false;
+		}
+		if(this.view3D && oPr.view3D && !this.view3D.isEqual(oPr.view3D)) {
+			return false;
+		}
 		return true;
 	};
 	asc_ChartSettings.prototype.isEmpty = function() {

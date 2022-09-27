@@ -1401,12 +1401,13 @@
 		this.ctBrushColor2          = 23;
 		this.ctBrushAlpha1          = 24;
 		this.ctBrushAlpha2          = 25;
-		this.ctBrushTexturePath     = 26;
+		this.ctBrushTexturePathOld  = 26;
 		this.ctBrushTextureAlpha    = 27;
 		this.ctBrushTextureMode     = 28;
 		this.ctBrushRectable        = 29;
 		this.ctBrushRectableEnabled = 30;
 		this.ctBrushGradient        = 31;
+		this.ctBrushTexturePath     = 32;
 
 		// font
 		this.ctFontXML       = 40;

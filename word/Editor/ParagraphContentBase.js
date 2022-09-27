@@ -1057,7 +1057,7 @@ CParagraphContentWithContentBase.prototype.IsUseInDocument = function()
 };
 CParagraphContentWithContentBase.prototype.IsUseInParagraph = function()
 {
-	return (this.Paragraph && this.Paragraph.Get_PosByElement(this));
+	return (this.Paragraph && !!this.Paragraph.Get_PosByElement(this));
 };
 CParagraphContentWithContentBase.prototype.SelectThisElement = function(nDirection, isUseInnerSelection)
 {

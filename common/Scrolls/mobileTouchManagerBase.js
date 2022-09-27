@@ -2187,6 +2187,10 @@
 	};
 	CMobileTouchManagerBase.prototype.checkPointerMultiTouchRemove = function(e)
 	{
+		// на андроиде не приходит onCompositeEnd - поэтому заглушка
+		if (AscCommon.AscBrowser.isAndroid && AscCommon.g_inputContext)
+			AscCommon.g_inputContext.apiCompositeEnd();
+
 		if (!this.checkPointerEvent(e))
 			return;
 

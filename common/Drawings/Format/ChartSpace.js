@@ -8038,7 +8038,16 @@ var GLOBAL_PATH_COUNT = 0;
         }
     };
     CChartSpace.prototype.createImage = function () {
-        return this.drawingBase.createImage();
+        var nCoefficient = Asc.getCvtRatio(3, 0, this.drawingBase.worksheet._getPPIX());
+        var oWorkbook = this.drawingBase.worksheet && this.drawingBase.worksheet.workbook;
+        oWorkbook.setOleSize(null);
+        var oDrawingContext = AscCommonExcel.getContext(this.extX * nCoefficient, this.extY * nCoefficient, oWorkbook);
+        var oGraphics = AscCommonExcel.getGraphics(oDrawingContext);
+        const oOldTransform = this.transform.CreateDublicate();
+        this.transform.Reset();
+        this.draw(oGraphics);
+        this.transform = oOldTransform;
+        return oDrawingContext.toDataURL();
     }
     CChartSpace.prototype.checkDrawingCache = function(graphics) {
         if(window["NATIVE_EDITOR_ENJINE"] || graphics.RENDERER_PDF_FLAG || this.isSparkline || this.bPreview || graphics.PrintPreview) {

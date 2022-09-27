@@ -1061,7 +1061,7 @@ DrawingObjectsController.prototype =
             for(var j = 0; j < aDrawings.length; ++j){
                 if(aDrawings[j].getObjectType() === AscDFH.historyitem_type_GroupShape){
                     if(bInsideGroup) {
-                        this.getAllConnectorsByDrawings(aDrawings[j].spTree, _ret, _aConnectors, bInsideGroup);
+                        this.getAllConnectorsByDrawings(aDrawings[j].getArrGraphicObjects(), _ret, _aConnectors, bInsideGroup);
                     }
                 }
                 else{
@@ -5011,9 +5011,9 @@ DrawingObjectsController.prototype =
         {
             oTypedChart.setLineParams(oProps.showMarker, oProps.bLine, oProps.smooth);
         }
-        let oView3D = oProps.getView3d();
+        let oView3D = oProps.view3D;
         if(oView3D) {
-            oChartSpace.changeView3d(oProps.getView3d());
+            oChartSpace.changeView3d(oView3D);
         }
     },
 
@@ -7329,7 +7329,13 @@ DrawingObjectsController.prototype =
             this.arrTrackObjects[i].track(angle, e);
     },
 
-    trackResizeObjects: function( e, x, y)
+    trackResizeObjects: function(kd1, kd2, e, x, y)
+    {
+        for(var i = 0; i < this.arrTrackObjects.length; ++i)
+            this.arrTrackObjects[i].track(kd1, kd2, e, x, y);
+    },
+
+    trackGeometryObjects: function(e, x, y)
     {
         for(var i = 0; i < this.arrTrackObjects.length; ++i)
             this.arrTrackObjects[i].track(e, x, y);
@@ -12058,7 +12064,7 @@ function CalcLiterByLength(aAlphaBet, nLength)
         }
     };
     GeometryEditState.prototype.onMouseMove = function(e, x, y) {
-        this.drawingObjects.trackResizeObjects(e, x, y);
+        this.drawingObjects.trackGeometryObjects(e, x, y);
         this.drawingObjects.updateOverlay();
     };
     GeometryEditState.prototype.onMouseUp = function(e, x, y, pageIndex) {

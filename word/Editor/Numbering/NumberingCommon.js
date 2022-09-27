@@ -45,9 +45,13 @@ var c_oAscMultiLevelNumbering = {
 	Numbered    : 0,
 	Bullet      : 1,
 
-	MultiLevel1 : 101,
-	MultiLevel2 : 102,
-	MultiLevel3 : 103
+	MultiLevel_1_a_i           : 101,
+	MultiLevel_1_11_111        : 102,
+	MultiLevel_Bullet          : 103,
+	MultiLevel_Article_Section : 104,
+	MultiLevel_Chapter         : 105,
+	MultiLevel_I_A_1           : 106,
+	MultiLevel_1_11_111_NoInd  : 107,
 };
 
 /** enum {number} */

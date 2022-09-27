@@ -752,3 +752,15 @@ CSdtBase.prototype.GetSubFormFromCurrentPosition = function(isForward)
 
 	return oParent.GetSubFormFromCurrentPosition(isForward);
 };
+CSdtBase.prototype.IsBuiltInTableOfContents = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && this.Pr.DocPartObj.Gallery === "Table of Contents");
+};
+CSdtBase.prototype.IsBuiltInWatermark = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && (this.Pr.DocPartObj.Gallery === "Watermarks" || this.Pr.DocPartObj.Gallery === "Watermark"));
+};
+CSdtBase.prototype.IsBuiltInUnique = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && true === this.Pr.DocPartObj.Unique);
+};

@@ -564,6 +564,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 		if (oContentControl.IsFixedForm() && !isCombChanged)
 			oContentControl.UpdateFixedFormSizeByCombWidth();
+
+		if (!this.TextFormPr.MultiLine)
+			oContentControl.CorrectSingleLineFormContent();
 	}
 
 	if (undefined !== this.PlaceholderText)

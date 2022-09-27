@@ -187,7 +187,7 @@ function CEditorPage(api)
     this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
 
 	this.zoom_values = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 320, 340, 360, 380, 400, 425, 450, 475, 500];
-	this.m_nZoomType = 0; // 0 - custom, 1 - fitToWodth, 2 - fitToPage
+	this.m_nZoomType = 0; // 0 - custom, 1 - fitToWidth, 2 - fitToPage
 	this.m_nZoomValue = 100;
 
 	// текущий зум после резайза. чтобы например после zoomToWidth и zoomIn/Out можно было вернуться на значение меньше меньшего/больше большего
@@ -2224,6 +2224,11 @@ function CEditorPage(api)
 	{
 		if (this.m_oLogicDocument)
 		{
+			if (this.m_oDrawingDocument)
+			{
+				this.m_nZoomType = 1;
+				this.m_oDrawingDocument.m_bUpdateAllPagesOnFirstRecalculate = true;
+			}
 			let sectPr = this.m_oLogicDocument.GetSectionsInfo().Get(0).SectPr;
 			const nPageW = sectPr.GetPageWidth() / AscCommon.AscBrowser.retinaPixelRatio;
 			const nPageH = sectPr.GetPageHeight() / AscCommon.AscBrowser.retinaPixelRatio;
@@ -2361,8 +2366,13 @@ function CEditorPage(api)
 	{
 		if (this.isNewReaderMode && this.m_oLogicDocument)
 		{
-			this.m_oLogicDocument.SetDocumentPrintMode();
 			this.ReaderModeCurrent = 0;
+			if (this.m_oDrawingDocument)
+			{
+				this.m_nZoomType = 1;
+				this.m_oDrawingDocument.m_bUpdateAllPagesOnFirstRecalculate = true;
+			}
+			this.m_oLogicDocument.SetDocumentPrintMode();
 			return;
 		}
 

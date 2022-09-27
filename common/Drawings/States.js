@@ -232,12 +232,14 @@ StartAddNewShape.prototype =
                                 if(oSpPr.geometry) {
                                     oGeometry = oSpPr.geometry.createDuplicate();
                                     oGeometry.Recalculate(oXfrm.extX, oXfrm.extY);
-                                    oPath = oGeometry.pathLst[0];
-                                    if(oPath && oObjectBounds) {
-                                        let oFirstCommand = oPath.ArrPathCommand[0];
-                                        if(oFirstCommand && oFirstCommand.id === AscFormat.moveTo) {
-                                            dOffX = oObjectBounds.x + oObjectBounds.w/2 - oFirstCommand.X;
-                                            dOffY = oObjectBounds.y + oObjectBounds.h/2 - oFirstCommand.Y;
+                                    if(aAddedEffects.length > 1) {
+                                        oPath = oGeometry.pathLst[0];
+                                        if(oPath && oObjectBounds) {
+                                            let oFirstCommand = oPath.ArrPathCommand[0];
+                                            if(oFirstCommand && oFirstCommand.id === AscFormat.moveTo) {
+                                                dOffX = oObjectBounds.x + oObjectBounds.w/2 - oFirstCommand.X;
+                                                dOffY = oObjectBounds.y + oObjectBounds.h/2 - oFirstCommand.Y;
+                                            }
                                         }
                                     }
                                 }

@@ -1040,7 +1040,7 @@ function CEditorPage(api)
 		if (this.retinaScaling != AscCommon.AscBrowser.retinaPixelRatio)
 		{
             this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
-            // сбросить кэш страниц
+			this.m_oDrawingDocument.ClearCachePages();
             this.onButtonTabsDraw();
 		}
 	};

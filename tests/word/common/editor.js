@@ -60,7 +60,8 @@
 		OnRepaintPage : function(){},
 		FirePaint : function(){},
 		GetMMPerDot : function(value){return value / this.GetDotsPerMM(1);},
-		GetDotsPerMM : function(value) {return 72;}
+		GetDotsPerMM : function(value) {return 72;},
+		EndTrackTable : function() {}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');

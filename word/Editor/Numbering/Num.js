@@ -268,6 +268,51 @@ CNum.prototype.SetLvlStart = function(nLvl, nStart)
 	}
 };
 /**
+ * Связываем данную нумерацию с заголовками
+ * @param styles {CStyles}
+ */
+CNum.prototype.LinkWithHeadings = function(styles)
+{
+	for (let iLvl = 0; iLvl <= 8; ++iLvl)
+	{
+		let styleId = styles.GetDefaultHeading(iLvl);
+		let style   = styles.Get(styleId);
+		if (style)
+		{
+			let paraPr = style.GetParaPr().Copy();
+			paraPr.NumPr = new CNumPr(this.GetId(), iLvl);
+			style.SetParaPr(paraPr);
+			this.LinkWithStyle(iLvl, styleId);
+		}
+	}
+};
+/**
+ * Связываем заданный уровень с заданным стилем
+ * @param {number} iLvl 0..8
+ * @param {string} styleId
+ */
+CNum.prototype.LinkWithStyle = function(iLvl, styleId)
+{
+	if ("number" !== typeof(iLvl) || iLvl < 0 || iLvl >= 9)
+		return;
+
+	if (this.private_HaveLvlOverride(iLvl))
+	{
+		var oNumberingLvl      = this.LvlOverride[iLvl].GetLvl();
+		var oNewNumberingLvl   = oNumberingLvl.Copy();
+		oNewNumberingLvl.SetPStyle(styleId);
+		this.SetLvlOverride(oNewNumberingLvl, iLvl);
+	}
+	else
+	{
+		var oAbstractNum = this.Numbering.GetAbstractNum(this.AbstractNumId);
+		if (!oAbstractNum)
+			return;
+
+		oAbstractNum.SetLvlPStyle(iLvl, styleId);
+	}
+};
+/**
  * Выставляем тип разделителя между табом и последующим текстом
  * @param nLvl {number} 0..8
  * @param nSuff {number}

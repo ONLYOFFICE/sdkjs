@@ -11798,10 +11798,10 @@
 		var oTable     = new CTable(private_GetDrawingDocument(), oParentGrFrame || null, false, 0, 0, aTableGrid, true);
 		var aContent   = oParsedTable["content"]; 
 	
-		oTable.SetTableLayout(tbllayout_Fixed);
-
 		// table prop.
 		oTable.Set_Pr(this.DrawingTablePrFromJSON(oTable, oParsedTable["tblPr"]));
+
+		oTable.SetTableLayout(tbllayout_Fixed);
 
 		// fill table content
 		for (var nRow = 0; nRow < aContent.length; nRow++)

@@ -37,7 +37,7 @@
 // Import
 var CellValueType = AscCommon.CellValueType;
 var c_oAscBorderWidth = AscCommon.c_oAscBorderWidth;
-var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
 var FormulaTablePartInfo = AscCommon.FormulaTablePartInfo;
 var parserHelp = AscCommon.parserHelp;
 var gc_nMaxRow0 = AscCommon.gc_nMaxRow0;
@@ -1968,46 +1968,46 @@ var g_oFontProperties = {
 	function ToXml_ST_BorderStyle(val) {
 		var res = null;
 		switch (val) {
-			case  AscCommon.c_oAscBorderStyles.DashDot:
+			case  Asc.c_oAscBorderStyles.DashDot:
 				res = "dashDot";
 				break;
-			case  AscCommon.c_oAscBorderStyles.DashDotDot:
+			case  Asc.c_oAscBorderStyles.DashDotDot:
 				res = "dashDotDot";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Dashed:
+			case  Asc.c_oAscBorderStyles.Dashed:
 				res = "dashed";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Dotted:
+			case  Asc.c_oAscBorderStyles.Dotted:
 				res = "dotted";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Double:
+			case  Asc.c_oAscBorderStyles.Double:
 				res = "double";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Hair:
+			case  Asc.c_oAscBorderStyles.Hair:
 				res = "hair";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Medium:
+			case  Asc.c_oAscBorderStyles.Medium:
 				res = "medium";
 				break;
-			case  AscCommon.c_oAscBorderStyles.MediumDashDot:
+			case  Asc.c_oAscBorderStyles.MediumDashDot:
 				res = "mediumDashDot";
 				break;
-			case  AscCommon.c_oAscBorderStyles.MediumDashDotDot:
+			case  Asc.c_oAscBorderStyles.MediumDashDotDot:
 				res = "mediumDashDotDot";
 				break;
-			case  AscCommon.c_oAscBorderStyles.MediumDashed:
+			case  Asc.c_oAscBorderStyles.MediumDashed:
 				res = "mediumDashed";
 				break;
-			case  AscCommon.c_oAscBorderStyles.None:
+			case  Asc.c_oAscBorderStyles.None:
 				//res = "none";
 				break;
-			case  AscCommon.c_oAscBorderStyles.SlantDashDot:
+			case  Asc.c_oAscBorderStyles.SlantDashDot:
 				res = "slantDashDot";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Thick:
+			case  Asc.c_oAscBorderStyles.Thick:
 				res = "thick";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Thin:
+			case  Asc.c_oAscBorderStyles.Thin:
 				res = "thin";
 				break;
 		}

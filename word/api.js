@@ -619,6 +619,9 @@
 					}};
 					var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
 					options.isNaturalDownload = true;
+					if (_current["Url"]) {
+						options.errorDirect = Asc.c_oAscError.ID.DirectUrl;
+					}
 					this.api.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, options);
 					return;
 				}
@@ -1882,6 +1885,13 @@ background-repeat: no-repeat;\
 			if (!bFirstLoad && t.bInit_word_control)
 			{
 				t.sync_CollaborativeChanges();
+			}
+		};
+		this.CoAuthoringApi.onChangesIndex = function(changesIndex)
+		{
+			if (t.isLiveViewer() && changesIndex >= 0 && changesIndex < AscCommon.CollaborativeEditing.GetAllChangesCount()) {
+				let count = AscCommon.CollaborativeEditing.GetAllChangesCount() - changesIndex;
+				AscCommon.CollaborativeEditing.UndoGlobal(count);
 			}
 		};
 		this.CoAuthoringApi.onRecalcLocks            = function(e)
@@ -3237,50 +3247,30 @@ background-repeat: no-repeat;\
 
 		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 		{
+			oProps.SetText(oProps.GetText().trim());
 			oViewer = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+			isAsync = (true === oViewer.findText(oProps.GetText(), oProps.IsMatchCase(), oProps.IsWholeWords(), isNext, this.sync_setSearchCurrent)) ? true : false;
 			result = oViewer.SearchResults.Count;
 
-			// если параметры поиска не изменились, то можно не искать повторно, а просто выделить следующее/предыдущее совпадение, т.к. уже все найдены
-			if (result > 0 && oViewer.PrevSearchPr && oProps.GetText() === oViewer.PrevSearchPr.GetText() && oProps.IsMatchCase() === oViewer.PrevSearchPr.IsMatchCase())
-			{
-				CurMatchIdx = isNext ? oViewer.SearchResults.CurMatchIdx + 1 : oViewer.SearchResults.CurMatchIdx - 1;
-				if (CurMatchIdx >= oViewer.SearchResults.Count)
-					CurMatchIdx = 0;
-				else if (CurMatchIdx < 0)
-					CurMatchIdx = oViewer.SearchResults.Count - 1;
-
-				oViewer.SelectSearchElement(CurMatchIdx);
-				oViewer.SearchResults.CurMatchIdx = CurMatchIdx;
-			}
+			if (oViewer.SearchResults.CurrentPage === 0)
+				CurMatchIdx = oViewer.SearchResults.Current;
 			else
 			{
-				isAsync = (true === oViewer.findText(oProps.GetText(), oProps.IsMatchCase(), isNext, this.sync_setSearchCurrent)) ? true : false;
-				result = oViewer.SearchResults.Count;
-
-				if (result > 0)
+				// чтобы узнать, под каким номером в списке текущее совпадение
+				// нужно посчитать сколько совпадений было до текущего на текущей странице
+				for (var nPage = 0; nPage <= oViewer.SearchResults.CurrentPage; nPage++)
 				{
-					if (oViewer.SearchResults.CurrentPage === 0)
-						CurMatchIdx = oViewer.SearchResults.Current;
-					else
+					for (var nMatch = 0; nMatch < oViewer.SearchResults.Pages[nPage].length; nMatch++)
 					{
-						// чтобы узнать, под каким номером в списке текущее совпадение
-						// нужно посчитать сколько совпадений было до текущего на текущей странице
-						for (var nPage = 0; nPage <= oViewer.SearchResults.CurrentPage; nPage++)
-						{
-							for (var nMatch = 0; nMatch < oViewer.SearchResults.Pages[nPage].length; nMatch++)
-							{
-								if (nPage == oViewer.SearchResults.CurrentPage && nMatch == oViewer.SearchResults.Current)
-									break;
-								CurMatchIdx++;
-							}
-						}
+						if (nPage == oViewer.SearchResults.CurrentPage && nMatch == oViewer.SearchResults.Current)
+							break;
+						CurMatchIdx++;
 					}
 				}
-				oViewer.SearchResults.CurMatchIdx = CurMatchIdx;
-				this.sync_setSearchCurrent(CurMatchIdx, result);
 			}
 
-			oViewer.PrevSearchPr = oProps;
+			oViewer.SearchResults.CurMatchIdx = CurMatchIdx;
+			this.sync_setSearchCurrent(CurMatchIdx, result);
 		}
 		else
 		{
@@ -3298,6 +3288,14 @@ background-repeat: no-repeat;\
 			callback(result);
 
 		return result;
+	};
+	asc_docs_api.prototype.asc_endFindText = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+
+		return logicDocument.ClearSearch();
 	};
 	asc_docs_api.prototype.asc_replaceText = function(oProps, replaceWith, isReplaceAll)
 	{
@@ -4031,6 +4029,23 @@ background-repeat: no-repeat;\
 	 1)a)i)        - SubType = 1
 	 1.1.1         - SubType = 2
 	 маркированный - SubType = 3
+
+	 SubType = 4: (Headings)
+	 	Article I
+	 		Section 1.01
+	 			(a)
+
+	 SubType = 5 : (Headings)
+	 1.1.1  (аналогичен SubType = 2)
+
+	 SubType = 6: (Headings)
+	 I. A. 3. a) (1)
+
+	 SubType = 7: (Headings)
+	 	Chapter 1
+	 	(none)
+	 	(none)
+
 	 */
 	asc_docs_api.prototype.put_ListType = function(type, subtype)
 	{
@@ -4041,8 +4056,9 @@ background-repeat: no-repeat;\
 			{
 				oLogicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphNumbering);
 				oLogicDocument.SetParagraphNumbering({
-					Type    : type,
-					SubType : subtype
+					Type     : type,
+					SubType  : subtype,
+					Headings : 2 === type && 4 <= subtype && subtype <= 7
 				});
 				oLogicDocument.FinalizeAction();
 			}
@@ -9137,7 +9153,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_IsStyleDefault         = function(sName)
 	{
-		return this.WordControl.m_oLogicDocument.Is_StyleDefault(sName);
+		return this.WordControl.m_oLogicDocument.IsStyleDefaultByName(sName);
 	};
 	asc_docs_api.prototype.asc_IsDefaultStyleChanged  = function(sName)
 	{
@@ -9232,6 +9248,28 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.RejectRevisionChange(oChange);
 		else
 			this.WordControl.m_oLogicDocument.RejectRevisionChangesBySelection();
+	};
+	asc_docs_api.prototype.asc_AcceptChangesBySelection        = function(moveToNext)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+
+		logicDocument.AcceptRevisionChangesBySelection();
+
+		if (moveToNext)
+			logicDocument.GetNextRevisionChange();
+	};
+	asc_docs_api.prototype.asc_RejectChangesBySelection        = function(moveToNext)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+
+		logicDocument.RejectRevisionChangesBySelection();
+
+		if (moveToNext)
+			logicDocument.GetNextRevisionChange();
 	};
 	asc_docs_api.prototype.asc_HaveRevisionsChanges            = function(isCheckOwnChanges)
 	{
@@ -11960,6 +11998,9 @@ background-repeat: no-repeat;\
 
 		var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
 		options.isNaturalDownload = true;
+		if (document.url) {
+			options.errorDirect = Asc.c_oAscError.ID.DirectUrl;
+		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, options);
 	};
 	// callback for local mode
@@ -12933,6 +12974,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['sync_ReturnHeadersCallback']                = asc_docs_api.prototype.sync_ReturnHeadersCallback;
 	asc_docs_api.prototype['asc_searchEnabled']                         = asc_docs_api.prototype.asc_searchEnabled;
 	asc_docs_api.prototype['asc_findText']                              = asc_docs_api.prototype.asc_findText;
+	asc_docs_api.prototype['asc_endFindText']                           = asc_docs_api.prototype.asc_endFindText;
 	asc_docs_api.prototype['asc_replaceText']                           = asc_docs_api.prototype.asc_replaceText;
 	asc_docs_api.prototype['asc_GetErrorForReplaceString']              = asc_docs_api.prototype.asc_GetErrorForReplaceString;
 	asc_docs_api.prototype['asc_isSelectSearchingResults']              = asc_docs_api.prototype.asc_isSelectSearchingResults;
@@ -13288,6 +13330,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['sync_AddRevisionsChange']                   = asc_docs_api.prototype.sync_AddRevisionsChange;
 	asc_docs_api.prototype['asc_AcceptChanges']                         = asc_docs_api.prototype.asc_AcceptChanges;
 	asc_docs_api.prototype['asc_RejectChanges']                         = asc_docs_api.prototype.asc_RejectChanges;
+	asc_docs_api.prototype['asc_AcceptChangesBySelection']              = asc_docs_api.prototype.asc_AcceptChangesBySelection;
+	asc_docs_api.prototype['asc_RejectChangesBySelection']              = asc_docs_api.prototype.asc_RejectChangesBySelection;
 	asc_docs_api.prototype['asc_HaveRevisionsChanges']                  = asc_docs_api.prototype.asc_HaveRevisionsChanges;
 	asc_docs_api.prototype['asc_HaveNewRevisionsChanges']               = asc_docs_api.prototype.asc_HaveNewRevisionsChanges;
 	asc_docs_api.prototype['asc_GetNextRevisionsChange']                = asc_docs_api.prototype.asc_GetNextRevisionsChange;

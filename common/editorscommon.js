@@ -955,6 +955,11 @@
 				return {width: _img.Image.width, height: _img.Image.height};
 			}
 		}
+		if (window["NATIVE_EDITOR_ENJINE"] && window["native"]["GetImageOriginalSize"]) {
+			var sizes = window["native"]["GetImageOriginalSize"](src);
+			if (sizes)
+				return {width:sizes["W"], height:sizes["H"]};
+		}
 		return {width: 0, height: 0};
 	}
 	function getFullImageSrc2(src)
@@ -1773,6 +1778,9 @@
 							if (!window.g_asc_plugins)
 								return;
 
+							if (!window.g_asc_plugins.api.licenseResult || !window.g_asc_plugins.api.licenseResult['advancedApi'])
+								return;
+
 							if (data["subType"] === "internalCommand")
 							{
 								// такие команды перечисляем здесь и считаем их функционалом
@@ -1945,6 +1953,19 @@
 				e.preventDefault();
 				var files = e.dataTransfer.files;
 				var nError = ValidateUploadImage(files);
+
+				if (nError === c_oAscServerError.UploadExtension && 1 === files.length)
+				{
+					let types = e.dataTransfer.types;
+					for (let i = 0, len = types.length; i < len; i++)
+					{
+						if (types[i] === "text" || types[i] === "text/plain" || types[i] === "text/html")
+						{
+							nError = c_oAscServerError.UploadCountFiles;
+							break;
+						}
+					}
+				}
 
                 var editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
                 editor.endInlineDropTarget(e);

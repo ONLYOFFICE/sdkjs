@@ -36,7 +36,7 @@
 {
 	function IsEscapingChar(unicode)
 	{
-		return (94 === unicode); // ^
+		return (92 === unicode); // \
 	}
 	function IsDigit(unicode)
 	{
@@ -44,11 +44,15 @@
 	}
 	function IsLetter(unicode)
 	{
-		return (97 === unicode); // a
+		return (97 === unicode || 65 === unicode); // a A
 	}
 	function IsDigitOrLetter(unicode)
 	{
-		return (42 === unicode); // *
+		return (79 === unicode); // O
+	}
+	function IsAnyCharacter(unicode)
+	{
+		return (88 === unicode); // X
 	}
 
 	function CTextItem(unicode)
@@ -82,6 +86,14 @@
 	CDigitOrLetterItem.prototype.Check = function(unicode)
 	{
 		return (AscCommon.IsDigit(unicode) || AscCommon.IsLetter(unicode));
+	}
+
+	function CAnyCharacter()
+	{
+	}
+	CAnyCharacter.prototype.Check = function(unicode)
+	{
+		return true;
 	}
 
 	function BufferIterator (buffer)
@@ -221,6 +233,10 @@
 			else if (IsDigitOrLetter(unicode))
 			{
 				this.Pattern.push(new CDigitOrLetterItem());
+			}
+			else if (IsAnyCharacter(unicode))
+			{
+				this.Pattern.push(new CAnyCharacter());
 			}
 			else
 			{

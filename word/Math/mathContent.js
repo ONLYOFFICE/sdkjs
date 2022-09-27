@@ -5459,12 +5459,32 @@ CMathContent.prototype.private_IsMenuPropsForContent = function(Action)
 
     return bDecreaseArgSize || bIncreaseArgSize || bInsertForcedBreak || bDeleteForcedBreak;
 };
-CMathContent.prototype.Process_AutoCorrect = function(ActionElement) {
+CMathContent.prototype.Process_AutoCorrect = function(ActionElement)
+{
+	if (!this.private_NeedAutoCorrect(ActionElement))
+		return;
+
+	let _this  = this;
+	let engine = new CMathAutoCorrectEngine(ActionElement, this.CurPos, this.GetParagraph());
+	engine.private_Check_IsFull();
+	engine.private_Add_Element(this.Content);
+
+	let textToCheck = engine.GetTextToCheck();
+	if (textToCheck.length)
+	{
+		AscFonts.FontPickerByCharacter.checkText(textToCheck, this, function()
+		{
+			_this.private_ProcessAutoCorrect(ActionElement);
+		}, true, false, true);
+	}
+	else
+	{
+		this.private_ProcessAutoCorrect(ActionElement, textToCheck);
+	}
+};
+CMathContent.prototype.private_ProcessAutoCorrect = function(ActionElement) {
     //при закрытии скобки делать автозамену до открывающейся скобки (добавить)
-    var bNeedAutoCorrect = this.private_NeedAutoCorrect(ActionElement);
-    if (!bNeedAutoCorrect) {
-        return false;
-    }
+
     var AutoCorrectEngine = new CMathAutoCorrectEngine(ActionElement, this.CurPos, this.GetParagraph());
     AutoCorrectEngine.private_Check_IsFull();
     //добавить все элементы
@@ -5566,41 +5586,30 @@ CMathContent.prototype.Process_AutoCorrect = function(ActionElement) {
     }
 
 
-
     if (CanMakeAutoCorrect || CanMakeAutoCorrectEquation || CanMakeAutoCorrectFunc) {
-        AscFonts.FontPickerByCharacter.checkText(AutoCorrectEngine.RepCharsCode, this, function() {
-            if (AscCommon.g_fontManager) {
-                AscCommon.g_fontManager.ClearFontsRasterCache();
-                AscCommon.g_fontManager.m_pFont = null;
-            }
-            if (AscCommon.g_fontManager2) {
-                AscCommon.g_fontManager2.ClearFontsRasterCache();
-                AscCommon.g_fontManager2.m_pFont = null;
-            }
-            if(oLogicDocument) {
-                this.private_ReplaceAutoCorrect(AutoCorrectEngine);
-                if (oLogicDocument.Api.WordControl.EditorType == "presentations") {
-                    if (this.Paragraph.Parent.Parent.parent)
-                        this.Paragraph.Parent.Parent.parent.checkExtentsByDocContent();
-                }
-            } else {
-                var shape = this.Paragraph.Parent.DrawingDocument.drawingObjects.controller.selectedObjects[0];
-                var wb = shape.worksheet.workbook.oApi.wb;
-                for (var i = 0, length = wb.fmgrGraphics.length; i < length; ++i) 
-                    wb.fmgrGraphics[i].ClearFontsRasterCache();
-                
-                this.private_ReplaceAutoCorrect(AutoCorrectEngine);
-                shape.checkExtentsByDocContent();
-                this.Paragraph.Parent.DrawingDocument.drawingObjects.controller.startRecalculate();
-            }
-            if (AutoCorrectEngine.StartHystory) {
-                if(oLogicDocument)
-                    oLogicDocument.FinalizeAction();
+		if(oLogicDocument) {
+			this.private_ReplaceAutoCorrect(AutoCorrectEngine);
+			if (oLogicDocument.Api.WordControl.EditorType == "presentations") {
+				if (this.Paragraph.Parent.Parent.parent)
+					this.Paragraph.Parent.Parent.parent.checkExtentsByDocContent();
+			}
+		} else {
+			var shape = this.Paragraph.Parent.DrawingDocument.drawingObjects.controller.selectedObjects[0];
+			this.private_ReplaceAutoCorrect(AutoCorrectEngine);
+			shape.checkExtentsByDocContent();
+			this.Paragraph.Parent.DrawingDocument.drawingObjects.controller.startRecalculate();
+		}
+		if (AutoCorrectEngine.StartHystory) {
+			if (oLogicDocument)
+			{
+				oLogicDocument.Recalculate();
+				oLogicDocument.UpdateTracks();
+				oLogicDocument.FinalizeAction();
+			}
 
-                AutoCorrectEngine.StartHystory = false;
-            }
-        }, true, false, true); 
-    } else if (AutoCorrectEngine.StartHystory) {
+			AutoCorrectEngine.StartHystory = false;
+		}
+	} else if (AutoCorrectEngine.StartHystory) {
         if(oLogicDocument)
             oLogicDocument.FinalizeAction();
 
@@ -5708,7 +5717,6 @@ CMathContent.prototype.private_CanAutoCorrectText = function(AutoCorrectEngine) 
             var ReplaceText = new CMathText();
             ReplaceText.add(ReplaceChars[i]);
             MathRun.Add(ReplaceText, true);
-            AutoCorrectEngine.RepCharsCode.push(ReplaceChars[i]);
         }
         AutoCorrectEngine.Remove.push({Count:RemoveCount, Start:Start});
         AutoCorrectEngine.Remove.total += RemoveCount;
@@ -9339,7 +9347,6 @@ function CMathAutoCorrectEngine(Elem, CurPos, Paragraph) {
     this.Shift 			  = 0;                                                  // отступ
     this.StartHystory     = false;                                              // флаг, обозначающий была ли уже создана точка в истории автозаменой
     this.IntFlag          = window['AscCommonWord'].b_DoAutoCorrectMathSymbols; // флаг из интерфейса делать ли автозамену  символов из списка
-    this.RepCharsCode     = [];                                                 // массив символов, добавленных в документ при автозамене
     this.IsFull           = false;                                              // флаг обозначения полной автозамены
     this.IsRemActive      = false;												// флаг для обозначения необходимости удалить активный элемент
     this.TypeSpecFunc     = null;                                               // тип функции полученной в private_CanAutoCorrectText (пока важны только identitymatrix и quadratic) 
@@ -9370,6 +9377,59 @@ CMathAutoCorrectEngine.prototype.private_Check_IsFull = function() {
     if (ArrFullAutocorrect[this.ActionElement.value]) {
         this.IsFull = true;
     }
+};
+CMathAutoCorrectEngine.prototype.GetTextToCheck = function()
+{
+	var IndexAdd = (g_aMathAutoCorrectTriggerCharCodes[this.ActionElement.value]) ? 1 : 0;
+	var ElCount = this.Elements.length;
+	if (ElCount < 1 + IndexAdd)
+		return [];
+
+	let charsToCheck = [];
+
+	var AutoCorrectCount = g_AutoCorrectMathSymbols.length;
+	for (var nIndex = 0; nIndex < AutoCorrectCount; nIndex++)
+	{
+		var AutoCorrectElement = g_AutoCorrectMathSymbols[nIndex];
+		var Ind                = g_aMathAutoCorrectSpecSymb.findIndex(function(el, ind)
+		{
+			if (el == AutoCorrectElement[0])
+				return el;
+		});
+
+		var IndexSkip      = (Ind === -1) ? 0 : 1;
+		var CheckString    = AutoCorrectElement[0];
+		var CheckStringLen = CheckString.length;
+
+		if (ElCount < CheckStringLen + IndexAdd - IndexSkip)
+			continue;
+
+		var Found = true;
+		for (var nStringPos = 0; nStringPos < CheckStringLen; nStringPos++)
+		{
+			var LastEl = this.Elements[ElCount - nStringPos - 1 - IndexAdd + IndexSkip];
+			if (!LastEl.Element.IsMathText())
+				return charsToCheck;
+
+			if (String.fromCharCode(LastEl.Element.value) !== CheckString[CheckStringLen - nStringPos - 1])
+			{
+				Found = false;
+				break;
+			}
+		}
+
+		if (Found)
+		{
+			if (Array.isArray(AutoCorrectElement[1]))
+				charsToCheck = AutoCorrectElement[1].slice();
+			else
+				charsToCheck = [AutoCorrectElement[1]];
+
+			break;
+		}
+	}
+
+	return charsToCheck;
 };
 
 var g_DefaultAutoCorrectMathFuncs =

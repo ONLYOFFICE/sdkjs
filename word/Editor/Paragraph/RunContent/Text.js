@@ -323,17 +323,19 @@
 		}
 
 		let nFontSize = (((this.Flags >> 16) & 0xFFFF) / 64);
-		if (this.Flags & FLAGS_TEMPORARY)
+
+		if (this.IsNBSP())
+		{
+			this.DrawNonBreakingSpace(Context, X, Y, nFontSize);
+		}
+		else if (this.Flags & FLAGS_TEMPORARY)
 		{
 			if (AscFonts.NO_GRAPHEME !== this.TempGrapheme)
 				AscFonts.DrawGrapheme(this.TempGrapheme, Context, X, Y, nFontSize);
 		}
 		else if (AscFonts.NO_GRAPHEME !== this.Grapheme)
 		{
-			if (this.IsNBSP())
-				this.DrawNonBreakingSpace(Context, X, Y, nFontSize);
-			else
-				AscFonts.DrawGrapheme(this.Grapheme, Context, X, Y, nFontSize);
+			AscFonts.DrawGrapheme(this.Grapheme, Context, X, Y, nFontSize);
 		}
 
 		if (this.Flags & FLAGS_GAPS)

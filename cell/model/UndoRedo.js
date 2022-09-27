@@ -1742,65 +1742,48 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.activeCells:
 				return new UndoRedoData_BBox(this.activeCells);
-				break;
 			case this.Properties.styleName:
 				return this.styleName;
-				break;
 			case this.Properties.type:
 				return this.type;
-				break;
 			case this.Properties.cellId:
 				return this.cellId;
-				break;
 			case this.Properties.autoFiltersObject:
 				return this.autoFiltersObject;
-				break;
 			case this.Properties.addFormatTableOptionsObj:
 				return this.addFormatTableOptionsObj;
-				break;
 			case this.Properties.moveFrom:
 				return new UndoRedoData_BBox(this.moveFrom);
-				break;
 			case this.Properties.moveTo:
 				return new UndoRedoData_BBox(this.moveTo);
-				break;
 			case this.Properties.bWithoutFilter:
 				return this.bWithoutFilter;
-				break;
 			case this.Properties.displayName:
 				return this.displayName;
-				break;
 			case this.Properties.val:
 				return this.val;
-				break;
 			case this.Properties.ShowColumnStripes:
 				return this.ShowColumnStripes;
-				break;
 			case this.Properties.ShowFirstColumn:
 				return this.ShowFirstColumn;
-				break;
 			case this.Properties.ShowLastColumn:
 				return this.ShowLastColumn;
-				break;
 			case this.Properties.ShowRowStripes:
 				return this.ShowRowStripes;
-				break;
 			case this.Properties.HeaderRowCount:
 				return this.HeaderRowCount;
-				break;
 			case this.Properties.TotalsRowCount:
 				return this.TotalsRowCount;
-				break;
 			case this.Properties.color:
 				return this.color;
-				break;
 			case this.Properties.tablePart: {
 				var tablePart = this.tablePart;
 				if (tablePart) {
 					var memory = new AscCommon.CMemory();
-					var aDxfs = [];
-					var oBinaryTableWriter = new AscCommonExcel.BinaryTableWriter(memory, aDxfs, false, {});
-					var ws = window["Asc"]["editor"].wb ? window["Asc"]["editor"].wb.getWorksheetById(nSheetId) : null;
+					var wb = window["Asc"]["editor"].wb;
+					var initSaveManager = new AscCommonExcel.InitSaveManager(wb && wb.model);
+					var oBinaryTableWriter = new AscCommonExcel.BinaryTableWriter(memory, initSaveManager, false, {});
+					var ws = wb ? wb.getWorksheetById(nSheetId) : null;
 					oBinaryTableWriter.WriteTable(tablePart, ws ? ws.model : null);
 					tablePart = memory.GetBase64Memory();
 				}
@@ -1809,19 +1792,14 @@ function (window, undefined) {
 			}
 			case this.Properties.nCol:
 				return this.nCol;
-				break;
 			case this.Properties.nRow:
 				return this.nRow;
-				break;
 			case this.Properties.formula:
 				return this.formula;
-				break;
 			case this.Properties.totalFunction:
 				return this.totalFunction;
-				break;
 			case this.Properties.viewId:
 				return this.viewId;
-				break;
 		}
 
 		return null;
@@ -1897,8 +1875,8 @@ function (window, undefined) {
 					var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
 					nCurOffset = oBinaryFileReader.getbase64DecodedData2(value, 0, stream, nCurOffset);
 
-					var dxfs = [];
-					var oBinaryTableReader = new AscCommonExcel.Binary_TableReader(stream, null, null, dxfs);
+					var initOpenManager = new AscCommonExcel.InitOpenManager();
+					var oBinaryTableReader = new AscCommonExcel.Binary_TableReader(stream, initOpenManager);
 					oBinaryTableReader.stream = stream;
 					oBinaryTableReader.oReadResult = {
 						tableCustomFunc: []

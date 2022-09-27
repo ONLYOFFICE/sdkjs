@@ -126,6 +126,9 @@
 	g_oTextMeasurer.SetFontSlot     = function()
 	{
 	};
+	g_oTextMeasurer.SetFont         = function()
+	{
+	};
 	g_oTextMeasurer.GetHeight       = function()
 	{
 		return FontHeight;
@@ -139,6 +142,10 @@
 		return FontDescent;
 	};
 	g_oTextMeasurer.MeasureCode     = function()
+	{
+		return {Width : CharWidth * FontSize};
+	};
+	g_oTextMeasurer.Measure         = function()
 	{
 		return {Width : CharWidth * FontSize};
 	};

@@ -1397,6 +1397,14 @@ CDocumentContentBase.prototype.AddToContent = function(nPos, oItem, isCorrectCon
 	this.Add_ToContent(nPos, oItem, isCorrectContent);
 };
 /**
+ * Добавляем элемент в конец
+ * @param oItem
+ */
+CDocumentContentBase.prototype.PushToContent = function(oItem, isCorrectContent)
+{
+	return this.AddToContent(this.GetElementsCount(), oItem, isCorrectContent);
+};
+/**
  * Удаляем заданное количество элементов (с записью в историю)
  * @param {number} nPos
  * @param {number} [nCount=1]

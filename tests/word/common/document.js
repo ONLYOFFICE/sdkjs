@@ -86,6 +86,30 @@
 
 		return logicDocument;
 	}
+	function CreateParagraph()
+	{
+		return new AscWord.CParagraph(AscTest.DrawingDocument);
+	}
+	function CreateTable(rows, cols)
+	{
+		return new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols);
+	}
+	function RemoveTableBorders(table)
+	{
+		function CreateNoneBorder()
+		{
+			let border = new AscWord.CBorder();
+			border.SetNone();
+			return border;
+		}
+
+		table.Set_TableBorder_Left(CreateNoneBorder());
+		table.Set_TableBorder_Top(CreateNoneBorder());
+		table.Set_TableBorder_Right(CreateNoneBorder());
+		table.Set_TableBorder_Bottom(CreateNoneBorder());
+		table.Set_TableBorder_InsideH(CreateNoneBorder());
+		table.Set_TableBorder_InsideV(CreateNoneBorder());
+	}
 	function SetFillingFormMode(isOForm)
 	{
 		editor.restrictions = Asc.c_oAscRestrictionType.OnlyForms;
@@ -162,6 +186,9 @@
 	}
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument = CreateLogicDocument;
+	AscTest.CreateParagraph     = CreateParagraph;
+	AscTest.CreateTable         = CreateTable;
+	AscTest.RemoveTableBorders  = RemoveTableBorders;
 	AscTest.SetFillingFormMode  = SetFillingFormMode;
 	AscTest.SetEditingMode      = SetEditingMode;
 	AscTest.PressKey            = PressKey;
