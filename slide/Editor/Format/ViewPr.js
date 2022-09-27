@@ -50,6 +50,47 @@
     let CBFO = AscFormat.CBaseFormatObject;
 
 
+
+    AscDFH.changesFactory[AscDFH.historyitem_ViewPrGridSpacing] = CChangeObject;
+    AscDFH.changesFactory[AscDFH.historyitem_ViewPrSlideViewerPr] = CChangeObject;
+    AscDFH.changesFactory[AscDFH.historyitem_ViewPrLastView] = CChangeLong;
+    AscDFH.changesFactory[AscDFH.historyitem_ViewPrShowComments] = CChangeBool;
+    AscDFH.changesFactory[AscDFH.historyitem_CommonViewPrCSldViewPr] = CChangeObject;
+    AscDFH.changesFactory[AscDFH.historyitem_CSldViewPrCViewPr] = CChangeObject;
+    AscDFH.changesFactory[AscDFH.historyitem_CSldViewPrGuideLst] = CChangeContent;
+    AscDFH.changesFactory[AscDFH.historyitem_CSldViewPrShowGuides] = CChangeBool;
+    AscDFH.changesFactory[AscDFH.historyitem_CSldViewPrSnapToGrid] = CChangeBool;
+    AscDFH.changesFactory[AscDFH.historyitem_CSldViewPrSnapToObjects] = CChangeBool;
+    AscDFH.changesFactory[AscDFH.historyitem_ViewPrGuidePos] = CChangeLong;
+    AscDFH.changesFactory[AscDFH.historyitem_ViewPrGuideOrient] = CChangeLong;
+    AscDFH.changesFactory[AscDFH.historyitem_CViewPrOrigin] = CChangeObject;
+    AscDFH.changesFactory[AscDFH.historyitem_CViewPrScale] = CChangeObject;
+    AscDFH.changesFactory[AscDFH.historyitem_ViewPrScaleSx] = CChangeObject;
+    AscDFH.changesFactory[AscDFH.historyitem_ViewPrScaleSy] = CChangeObject;
+
+
+    let drawingsChangesMap = window['AscDFH'].drawingsChangesMap;
+
+    drawingsChangesMap[AscDFH.historyitem_ViewPrGridSpacing] = function(oClass, value){oClass.gridSpacing = value;};
+    drawingsChangesMap[AscDFH.historyitem_ViewPrSlideViewerPr] = function(oClass, value){oClass.slideViewPr = value;};
+    drawingsChangesMap[AscDFH.historyitem_ViewPrLastView] = function(oClass, value){oClass.lastView = value;};
+    drawingsChangesMap[AscDFH.historyitem_ViewPrShowComments] = function(oClass, value){oClass.showComments = value;};
+    drawingsChangesMap[AscDFH.historyitem_CommonViewPrCSldViewPr] = function(oClass, value){oClass.cSldViewPr = value;};
+    drawingsChangesMap[AscDFH.historyitem_CSldViewPrCViewPr] = function(oClass, value){oClass.cViewPr = value;};
+    drawingsChangesMap[AscDFH.historyitem_CSldViewPrShowGuides] = function(oClass, value){oClass.showGuides = value;};
+    drawingsChangesMap[AscDFH.historyitem_CSldViewPrSnapToGrid] = function(oClass, value){oClass.snapToGrid = value;};
+    drawingsChangesMap[AscDFH.historyitem_CSldViewPrSnapToObjects] = function(oClass, value){oClass.snapToObjects = value;};
+    drawingsChangesMap[AscDFH.historyitem_ViewPrGuidePos] = function(oClass, value){oClass.pos = value;};
+    drawingsChangesMap[AscDFH.historyitem_ViewPrGuideOrient] = function(oClass, value){oClass.orient = value;};
+    drawingsChangesMap[AscDFH.historyitem_CViewPrOrigin] = function(oClass, value){oClass.origin = value;};
+    drawingsChangesMap[AscDFH.historyitem_CViewPrScale] = function(oClass, value){oClass.scale = value;};
+    drawingsChangesMap[AscDFH.historyitem_ViewPrScaleSx] = function(oClass, value){oClass.sx = value;};
+    drawingsChangesMap[AscDFH.historyitem_ViewPrScaleSy] = function(oClass, value){oClass.sy = value;};
+
+    AscDFH.drawingContentChanges[AscDFH.historyitem_CSldViewPrGuideLst] = function(oClass){return oClass.guideLst;};
+
+
+
     function fReadSlideSize(oStream) {
         let oSlideSize = new AscCommonSlide.CSlideSize();
         let nStart = oStream.cur;
@@ -585,13 +626,13 @@
         this.pos = null;
         this.orient = null;
     }
-    IC(CGuide, CBFO, AscDFH.historyitem_type_Unknown);
+    IC(CGuide, CBFO, AscDFH.historyitem_type_ViewPrGuide);
     CGuide.prototype.setPos = function(oPr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Unknown_Unknown, this.pos, oPr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ViewPrGuidePos, this.pos, oPr));
         this.pos = oPr;
     };
     CGuide.prototype.setOrient = function(oPr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Unknown_Unknown, this.orient, oPr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ViewPrGuideOrient, this.orient, oPr));
         this.orient = oPr;
     };
     CGuide.prototype.readAttribute = function(nType, pReader) {

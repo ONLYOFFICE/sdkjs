@@ -1670,6 +1670,7 @@
 	window['AscDFH'].historyitem_type_CSldViewPr             = 2113 << 16;
 	window['AscDFH'].historyitem_type_CViewPr                = 2114 << 16;
 	window['AscDFH'].historyitem_type_ViewPrScale            = 2115 << 16;
+	window['AscDFH'].historyitem_type_ViewPrGuide            = 2116 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3926,6 +3927,9 @@
 
 	AscDFH.historyitem_ViewPrScaleSx             = AscDFH.historyitem_type_ViewPrScale | 1;
 	AscDFH.historyitem_ViewPrScaleSy             = AscDFH.historyitem_type_ViewPrScale | 2;
+
+	AscDFH.historyitem_ViewPrGuideOrient         = AscDFH.historyitem_type_ViewPrGuide | 1;
+	AscDFH.historyitem_ViewPrGuidePos            = AscDFH.historyitem_type_ViewPrGuide | 2;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
