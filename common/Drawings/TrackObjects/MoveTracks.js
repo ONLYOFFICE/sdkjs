@@ -751,11 +751,12 @@ function MoveChartObjectTrack(oObject, oChartSpace)
 
 
     function CGuideTrack(oGuide) {
+
+    AscFormat.ExecuteNoHistory(function () {
         this.guide = oGuide;
         this.x = 0;
         this.y = 0;
 
-        this.geometry = new AscFormat.CreateGeometry("line");
         var oPen = new AscFormat.CLn();
         oPen.w = 15000;
         oPen.Fill = AscFormat.CreateSolidFillRGBA(255, 255, 255, 255);
@@ -769,9 +770,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
             dExtX = 0;
             dExtY = oPresentation.GetHeightMM();
         }
-        this.geometry.Recalculate(dExtX, dExtY)
-        this.transform = new AscCommon.CMatrix();
-        this.objectToDraw = new AscFormat.OverlayObject(this.geometry, dExtX, dExtY, null, oPen, this.transform);
+        }, this, []);
     }
     CGuideTrack.prototype.track = function(x, y)
     {
@@ -779,14 +778,6 @@ function MoveChartObjectTrack(oObject, oChartSpace)
         let oPresentation = editor.WordControl.m_oLogicDocument;
         this.x = Math.max(0, Math.min(x, oPresentation.GetWidthMM()));
         this.y = Math.max(0, Math.min(y, oPresentation.GetHeightMM()));
-        if(this.guide.isHorizontal()) {
-            this.transform.tx = 0;
-            this.transform.ty = y;
-        }
-        else {
-            this.transform.tx = x;
-            this.transform.ty = 0;
-        }
     };
 
     CGuideTrack.prototype.draw = function(oAutoShapeTrack)

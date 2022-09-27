@@ -88,6 +88,7 @@
     CViewPr.prototype.setGridSpacing = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ViewPrGridSpacing, this.gridSpacing, oPr));
         this.gridSpacing = oPr;
+        this.setParentToChild(oPr);
     };
     CViewPr.prototype.setGridSpacingVal = function(nVal) {
         let oSpacing = new AscCommonSlide.CSlideSize();
@@ -98,6 +99,7 @@
     CViewPr.prototype.setSlideViewPr = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ViewPrSlideViewerPr, this.slideViewPr, oPr));
         this.slideViewPr = oPr;
+        this.setParentToChild(oPr);
     };
     CViewPr.prototype.setLastView = function(oPr) {
         oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ViewPrLastView, this.lastView, oPr));
@@ -244,6 +246,9 @@
         }
         return null;
     };
+    CViewPr.prototype.Refresh_RecalcData = function(Data) {
+        this.Refresh_RecalcData2(Data);
+    };
     CViewPr.prototype.Refresh_RecalcData2 = function(Data) {
         if(this.parent) {
             this.parent.Refresh_RecalcData2(Data);
@@ -260,6 +265,7 @@
     CCommonViewPr.prototype.setCSldViewPr = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CommonViewPrCSldViewPr, this.cSldViewPr, oPr));
         this.cSldViewPr = oPr;
+        this.setParentToChild(oPr);
     };
     CCommonViewPr.prototype.checkCSldViewPr = function() {
         if(!this.cSldViewPr) {
@@ -329,6 +335,9 @@
         }
         return null;
     };
+    CCommonViewPr.prototype.Refresh_RecalcData = function(Data) {
+        this.Refresh_RecalcData2(Data);
+    };
     CCommonViewPr.prototype.Refresh_RecalcData2 = function(Data) {
         if(this.parent) {
             this.parent.Refresh_RecalcData2(Data);
@@ -362,6 +371,7 @@
     CCSldViewPr.prototype.setCViewPr = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CSldViewPrCViewPr, this.cViewPr, oPr));
         this.cViewPr = oPr;
+        this.setParentToChild(oPr);
     };
     CCSldViewPr.prototype.addGuide = function(oPr) {
         oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CSldViewPrGuideLst, this.guideLst.length, [oPr], true));
@@ -556,6 +566,9 @@
         }
         return null;
     };
+    CCSldViewPr.prototype.Refresh_RecalcData = function(Data) {
+        this.Refresh_RecalcData2(Data);
+    };
     CCSldViewPr.prototype.Refresh_RecalcData2 = function(Data) {
         if(this.parent) {
             this.parent.Refresh_RecalcData2(Data);
@@ -649,10 +662,12 @@
     CCViewPr.prototype.setOrigin = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CViewPrOrigin, this.origin, oPr));
         this.origin = oPr;
+        this.setParentToChild(oPr);
     };
     CCViewPr.prototype.setScale = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CViewPrScale, this.scale, oPr));
         this.scale = oPr;
+        this.setParentToChild(oPr);
     };
     CCViewPr.prototype.readAttribute = function(nType, pReader) {
         if(nType === 0) {
@@ -689,6 +704,9 @@
             oCopy.setOrigin(this.origin.createDuplicate());
         }
     };
+    CCViewPr.prototype.Refresh_RecalcData = function(Data) {
+        this.Refresh_RecalcData2(Data);
+    };
     CCViewPr.prototype.Refresh_RecalcData2 = function(Data) {
         if(this.parent) {
             this.parent.Refresh_RecalcData2(Data);
@@ -704,10 +722,12 @@
     CScale.prototype.setSx = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ViewPrScaleSx, this.sx, oPr));
         this.sx = oPr;
+        this.setParentToChild(oPr);
     };
     CScale.prototype.setSy = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ViewPrScaleSy, this.sy, oPr));
         this.sy = oPr;
+        this.setParentToChild(oPr);
     };
     CScale.prototype.fromPPTY = function(pReader) {
         let oStream = pReader.stream;
@@ -726,6 +746,9 @@
     CScale.prototype.fillObject = function (oCopy, oIdMap) {
         oCopy.setSx(this.sx);
         oCopy.setSy(this.sy);
+    };
+    CScale.prototype.Refresh_RecalcData = function(Data) {
+        this.Refresh_RecalcData2(Data);
     };
     CScale.prototype.Refresh_RecalcData2 = function(Data) {
         if(this.parent) {
