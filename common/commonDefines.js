@@ -2335,7 +2335,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var changestype_SlideHide                 = 75;
 	var changestype_CorePr                    = 76;
 	var changestype_Document_Settings         = 77; // Изменение общих настроек документа Document.Settings
-	var changestype_Timing                    = 78; // Изменение общих настроек документа Document.Settings
+	var changestype_Timing                    = 78;
+	var changestype_ViewPr                    = 79;
 
 	var changestype_2_InlineObjectMove       = 1; // Передвигаем объект в заданную позцию (проверяем место, в которое пытаемся передвинуть)
 	var changestype_2_HdrFtr                 = 2; // Изменения с колонтитулом
@@ -4317,6 +4318,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].changestype_CorePr                    = changestype_CorePr;
 	window["AscCommon"].changestype_Document_Settings         = changestype_Document_Settings;
 	window["AscCommon"].changestype_Timing                    = changestype_Timing;
+	window["AscCommon"].changestype_ViewPr                    = changestype_ViewPr;
 
 	window["AscCommon"].changestype_2_InlineObjectMove        = changestype_2_InlineObjectMove;
 	window["AscCommon"].changestype_2_HdrFtr                  = changestype_2_HdrFtr;

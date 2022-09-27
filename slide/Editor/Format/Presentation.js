@@ -4897,6 +4897,33 @@ CPresentation.prototype.getVertGuidesPos = function() {
     }
     return [];
 };
+CPresentation.prototype.canClearGuides = function() {
+    if(this.viewPr) {
+        return this.viewPr.canClearGuides();
+    }
+    return false;
+};
+CPresentation.prototype.clearGuides = function() {
+    if(!this.canClearGuides()) {
+        return;
+    }
+    if(this.viewPr) {
+        this.Create_NewHistoryPoint(0);
+        return this.viewPr.clearGuides();
+    }
+};
+CPresentation.prototype.deleteGuide = function(sId) {
+    if(this.viewPr) {
+        this.Create_NewHistoryPoint(0);
+        this.viewPr.removeGuideById(sId);
+    }
+};
+CPresentation.prototype.hitInGuide = function(x, y) {
+    if(this.viewPr) {
+        return this.viewPr.hitInGuide(x, y);
+    }
+    return null;
+};
 CPresentation.prototype.Update_ForeignCursor = function (CursorInfo, UserId, Show, UserShortId) {
     if (!editor.User)
         return;
@@ -9887,6 +9914,7 @@ CPresentation.prototype.Refresh_RecalcData2 = function (Data) {
             });
             break;
         }
+        case AscDFH.historyitem_GR:
         case AscDFH.historyitem_ViewPrGridSpacing:
         case AscDFH.historyitem_ViewPrSlideViewerPr: {
             History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, All: true});

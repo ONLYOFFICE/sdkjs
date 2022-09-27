@@ -10437,6 +10437,9 @@ DrawingObjectsController.prototype =
     },
     getVertGuidesPos: function() {
         return [];
+    },
+    hitInGuide: function(x, y) {
+        return null;
     }
 };
 

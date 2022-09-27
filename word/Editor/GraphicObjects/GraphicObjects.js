@@ -4583,6 +4583,9 @@ CGraphicObjects.prototype.getHorGuidesPos = function() {
 CGraphicObjects.prototype.getVertGuidesPos = function() {
     return [];
 };
+CGraphicObjects.prototype.hitInGuide = function(x, y) {
+    return null;
+};
 function ComparisonByZIndexSimpleParent(obj1, obj2)
 {
     if(obj1.parent && obj2.parent)

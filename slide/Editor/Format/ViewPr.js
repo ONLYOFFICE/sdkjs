@@ -222,6 +222,33 @@
         }
         return [];
     };
+    CViewPr.prototype.canClearGuides = function() {
+        return this.getHorGuidesPos().length > 0 || this.getVertGuidesPos().length > 0;
+    };
+    CViewPr.prototype.clearGuides = function() {
+        if(!this.canClearGuides()) {
+            return;
+        }
+        if(this.slideViewPr) {
+            return this.slideViewPr.clearGuides();
+        }
+    };
+    CViewPr.prototype.removeGuideById = function(sId) {
+        if(this.slideViewPr) {
+            return this.slideViewPr.removeGuideById(sId);
+        }
+    };
+    CViewPr.prototype.hitInGuide = function(x, y) {
+        if(this.slideViewPr) {
+            return this.slideViewPr.hitInGuide(x, y);
+        }
+        return null;
+    };
+    CViewPr.prototype.Refresh_RecalcData2 = function(Data) {
+        if(this.parent) {
+            this.parent.Refresh_RecalcData2(Data);
+        }
+    };
 
 
     function CCommonViewPr() {
@@ -286,12 +313,36 @@
         }
         return [];
     };
+    CCommonViewPr.prototype.clearGuides = function() {
+        if(this.cSldViewPr) {
+            return this.cSldViewPr.clearGuides();
+        }
+    };
+    CCommonViewPr.prototype.removeGuideById = function(sId) {
+        if(this.cSldViewPr) {
+            return this.cSldViewPr.removeGuideById(sId);
+        }
+    };
+    CCommonViewPr.prototype.hitInGuide = function(x, y) {
+        if(this.cSldViewPr) {
+            return this.cSldViewPr.hitInGuide(x, y);
+        }
+        return null;
+    };
+    CCommonViewPr.prototype.Refresh_RecalcData2 = function(Data) {
+        if(this.parent) {
+            this.parent.Refresh_RecalcData2(Data);
+        }
+    };
 
 
     const GUIDE_POS_TO_EMU = 1587.5;
 
     function GdPosToMm(nVal) {
         return AscFormat.Emu_To_Mm(nVal * GUIDE_POS_TO_EMU);
+    }
+    function MmToGdPos(dVal) {
+        return (dVal / GdPosToMm(1) + 0.5) >> 0;
     }
     function EmuToGdPos(nVal) {
         return (nVal / GUIDE_POS_TO_EMU + 0.5) >> 0;
@@ -315,6 +366,9 @@
     CCSldViewPr.prototype.addGuide = function(oPr) {
         oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CSldViewPrGuideLst, this.guideLst.length, [oPr], true));
         this.guideLst.push(oPr);
+        if(oPr) {
+            oPr.setParent(this);
+        }
     };
     CCSldViewPr.prototype.setShowGuides = function(oPr) {
         oHistory.Add(new CChangeBool(this, AscDFH.historyitem_CSldViewPrShowGuides, this.showGuides, oPr));
@@ -470,6 +524,43 @@
     CCSldViewPr.prototype.getVertGuidesPos = function() {
         return this.getGuidesPos(false);
     };
+    CCSldViewPr.prototype.clearGuides = function() {
+        let nLength = this.guideLst.length;
+        for(let nGd = nLength - 1; nGd > -1; nGd --) {
+            this.removeGuide(nGd);
+        }
+    };
+    CCSldViewPr.prototype.removeGuide = function(nIdx) {
+        if(this.guideLst[nIdx]) {
+            oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CSldViewPrGuideLst, this.guideLst.length, [this.guideLst[nIdx]], false))
+            this.guideLst.splice(nIdx, 1);
+        }
+    };
+    CCSldViewPr.prototype.removeGuideById = function(sId) {
+        let nLength = this.guideLst.length;
+        for(let nGd = nLength - 1; nGd > -1; nGd --) {
+            let oGd = this.guideLst[nGd];
+            if(oGd.Id === sId) {
+                this.removeGuide(nGd);
+                return;
+            }
+        }
+    };
+    CCSldViewPr.prototype.hitInGuide = function(x, y) {
+        let nLength = this.guideLst.length;
+        for(let nGd = nLength - 1; nGd > -1; nGd --) {
+            let oGd = this.guideLst[nGd];
+            if(oGd.hit(x, y)) {
+                return oGd.Id;
+            }
+        }
+        return null;
+    };
+    CCSldViewPr.prototype.Refresh_RecalcData2 = function(Data) {
+        if(this.parent) {
+            this.parent.Refresh_RecalcData2(Data);
+        }
+    };
 
 
 
@@ -527,6 +618,27 @@
         oCopy.setOrient(this.orient);
     };
 
+    CGuide.prototype.hit = function (x, y) {
+        let dPos = GdPosToMm(this.pos);
+        let dCheckPos;
+        if(this.isHorizontal()) {
+            dCheckPos = y;
+        }
+        else {
+            dCheckPos = x;
+        }
+        if(Math.abs(dCheckPos - dPos) < AscCommon.TRACK_CIRCLE_RADIUS) {
+            return true;
+        }
+        return false;
+    };
+
+    CGuide.prototype.Refresh_RecalcData = function (Data) {
+        if(this.parent) {
+            this.parent.Refresh_RecalcData2(Data);
+        }
+    };
+
     function CCViewPr() {
         CBFO.call(this);
         this.origin = null;
@@ -577,6 +689,11 @@
             oCopy.setOrigin(this.origin.createDuplicate());
         }
     };
+    CCViewPr.prototype.Refresh_RecalcData2 = function(Data) {
+        if(this.parent) {
+            this.parent.Refresh_RecalcData2(Data);
+        }
+    };
 
     function CScale() {
         CBFO.call(this);
@@ -610,8 +727,14 @@
         oCopy.setSx(this.sx);
         oCopy.setSy(this.sy);
     };
+    CScale.prototype.Refresh_RecalcData2 = function(Data) {
+        if(this.parent) {
+            this.parent.Refresh_RecalcData2(Data);
+        }
+    };
 
 
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CViewPr = CViewPr;
+    window['AscFormat'].MmToGdPos = MmToGdPos;
 }) (window);

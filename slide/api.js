@@ -3060,7 +3060,13 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_setShowGuides = function(isShow)
 	{
+		if(this.ShowGuides === isShow)
+		{
+			return;
+		}
 		this.ShowGuides = isShow;
+		let oPresentation = this.WordControl.m_oLogicDocument;
+		oPresentation.RedrawCurSlide();
 	};
 	asc_docs_api.prototype.asc_getShowGuides = function()
 	{
@@ -3105,6 +3111,19 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.addVerticalGuide();
 	};
+	asc_docs_api.prototype.asc_canClearGuides = function(sId)
+	{
+		return this.WordControl.m_oLogicDocument.canClearGuides();
+	};
+	asc_docs_api.prototype.asc_clearGuides = function()
+	{
+		return this.WordControl.m_oLogicDocument.clearGuides();
+	};
+	asc_docs_api.prototype.asc_deleteGuide = function(sId)
+	{
+		return this.WordControl.m_oLogicDocument.deleteGuide();
+	};
+
 
 	asc_docs_api.prototype.put_ShowParaMarks      = function(isShow)
 	{
@@ -8630,6 +8649,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_getSnapToGrid']                   = asc_docs_api.prototype.asc_getSnapToGrid;
 	asc_docs_api.prototype['asc_addHorizontalGuide']              = asc_docs_api.prototype.asc_addHorizontalGuide;
 	asc_docs_api.prototype['asc_addVerticalGuide']                = asc_docs_api.prototype.asc_addVerticalGuide;
+	asc_docs_api.prototype['asc_canClearGuides']                  = asc_docs_api.prototype.asc_canClearGuides;
+	asc_docs_api.prototype['asc_clearGuides']                     = asc_docs_api.prototype.asc_clearGuides;
+	asc_docs_api.prototype['asc_deleteGuide']                     = asc_docs_api.prototype.asc_deleteGuide;
 	asc_docs_api.prototype['put_ShowParaMarks']                   = asc_docs_api.prototype.put_ShowParaMarks;
 	asc_docs_api.prototype['get_ShowParaMarks']                   = asc_docs_api.prototype.get_ShowParaMarks;
 	asc_docs_api.prototype['put_ShowTableEmptyLine']              = asc_docs_api.prototype.put_ShowTableEmptyLine;

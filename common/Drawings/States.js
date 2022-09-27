@@ -401,9 +401,26 @@ NullState.prototype =
     },
     onMouseDown: function(e, x, y, pageIndex, bTextFlag)
     {
-        var start_target_doc_content, end_target_doc_content, selected_comment_index = -1;
-        var oStartPara = null;
-        var bHandleMode = this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE;
+        let start_target_doc_content, end_target_doc_content, selected_comment_index = -1;
+        let oStartPara = null;
+        let bHandleMode = this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE;
+        let sHitGuideId = this.drawingObjects.hitInGuide(x, y);
+        let oGuide = AscCommon.g_oTableId.Get_ById(sHitGuideId);
+        if(oGuide)
+        {
+            if(!bHandleMode)
+            {
+                let bHor = oGuide.isHorizontal();
+                return {cursorType: bHor ? "ns-resize" : "ew-resize", objectId: "1"};
+            }
+            else
+            {
+                this.drawingObjects.addPreTrackObject(new AscFormat.CGuideTrack(oGuide));
+                this.drawingObjects.changeCurrentState(new TrackGuideState(this.drawingObjects, oGuide, x, y))
+                return;
+            }
+
+        }
         if(bHandleMode)
         {
             start_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
@@ -611,8 +628,6 @@ NullState.prototype =
 function TrackSelectionRect(drawingObjects)
 {
     this.drawingObjects = drawingObjects;
-
-
 }
 
 TrackSelectionRect.prototype =
@@ -681,6 +696,65 @@ TrackSelectionRect.prototype =
 
 };
 
+
+
+
+    function TrackGuideState(drawingObjects, oGuide, dStartX, dStartY) {
+        this.drawingObjects = drawingObjects;
+        this.guide = oGuide;
+        this.tracked = false;
+        this.startX = dStartX;
+        this.startY = dStartY;
+    }
+
+    TrackGuideState.prototype.onMouseDown = function (e, x, y, pageIndex) {
+        if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR) {
+            let bHor = this.guide.isHorizontal();
+            return {cursorType: bHor ? "ns-resize" : "ew-resize" , objectId: "1"};
+        }
+        return null;
+    };
+    TrackGuideState.prototype.onMouseMove = function (e, x, y, pageIndex) {
+        if(!e.IsLocked) {
+            return this.onMouseUp(e, x, y, pageIndex);
+        }
+        let bHor = this.guide.isHorizontal();
+        if(!this.tracked) {
+            if(bHor && Math.abs(x - this.startX) > MOVE_DELTA ||
+                !bHor && Math.abs(y - this.startY) > MOVE_DELTA) {
+                this.tracked = true;
+                this.drawingObjects.swapTrackObjects();
+                this.onMouseMove(e, x, y, pageIndex);
+                return;
+            }
+        }
+        else {
+            let oTrack = this.drawingObjects.arrTrackObjects[0];
+            if(oTrack) {
+                oTrack.track(x, y);
+                this.drawingObjects.updateOverlay();
+            }
+        }
+    };
+    TrackGuideState.prototype.onMouseUp = function (e, x, y, pageIndex) {
+        if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR) {
+            let bHor = this.guide.isHorizontal();
+            return {cursorType: bHor ? "ew-resize" : "ns-resize", objectId: "1"};
+        }
+        if(this.tracked) {
+            let oPresentation = editor.WordControl.m_oLogicDocument;
+            if(false === oPresentation.Document_Is_SelectionLocked(AscCommon.changestype_ViewPr, undefined, undefined, [])) {
+                this.drawingObjects.trackEnd();
+                oPresentation.Recalculate();
+            }
+            else {
+                this.drawingObjects.clearTrackObjects();
+            }
+
+        }
+        this.drawingObjects.updateOverlay();
+        this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+    };
 
 function PreChangeAdjState(drawingObjects, majorObject)
 {
@@ -1221,11 +1295,11 @@ ResizeState.prototype =
         this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e, dX, dY);
         if(this.drawingObjects.drawingObjects.cSld)
         {
-            if(AscFormat.isRealNumber(resize_coef.snapX))
+            if(AscFormat.isRealNumber(resize_coef.snapX) && !resize_coef.horGuideSnap)
             {
                 this.drawingObjects.getDrawingDocument().DrawVerAnchor(pageIndex, resize_coef.snapX);
             }
-            if(AscFormat.isRealNumber(resize_coef.snapY))
+            if(AscFormat.isRealNumber(resize_coef.snapY) && !resize_coef.vertGuideSnap)
             {
                 this.drawingObjects.getDrawingDocument().DrawHorAnchor(pageIndex, resize_coef.snapY);
             }

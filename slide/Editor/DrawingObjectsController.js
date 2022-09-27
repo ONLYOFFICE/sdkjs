@@ -474,6 +474,9 @@ DrawingObjectsController.prototype.getHorGuidesPos = function() {
 DrawingObjectsController.prototype.getVertGuidesPos = function() {
     return this.getPresentation().getVertGuidesPos();
 };
+DrawingObjectsController.prototype.hitInGuide = function(x, y) {
+    return this.getPresentation().hitInGuide(x, y);
+};
 
 function PreMoveCommentState(drawingObjects, startX, startY, comment)
 {
