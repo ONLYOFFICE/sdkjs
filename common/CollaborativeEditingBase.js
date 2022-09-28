@@ -363,7 +363,7 @@
         if(!oApi){
             return;
         }
-        rData['c'] = 'pathurls';
+        rData['type'] = 'pathurls';
         rData['data'] = [];
         for(i = 0; i < aImages.length; ++i)
         {
@@ -375,9 +375,9 @@
         if(false === oApi.isSaveFonts_Images){
             oApi.isSaveFonts_Images = true;
         }
-        oApi.fCurCallback = function (oRes) {
+        var callback = function (isTimeout, oRes) {
             var aData, i, oUrls;
-            if(oRes['status'] === 'ok')
+            if(oRes && oRes['status'] === 'ok')
             {
                 aData = oRes['data'];
                 oUrls= {};
@@ -389,7 +389,10 @@
             }
             AscCommon.CollaborativeEditing.SendImagesCallback(aImagesToLoad);
         };
-        AscCommon.sendCommand(oApi, null, rData);
+
+        if (!oApi.CoAuthoringApi.callPRC(rData, Asc.c_nCommonRequestTime, callback)) {
+            callback(false, undefined);
+        }
     };
 
     CCollaborativeEditingBase.prototype.SendImagesCallback = function (aImages) {
