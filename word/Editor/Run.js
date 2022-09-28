@@ -8706,7 +8706,13 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 		&& (oLayout = oLogicDocument.GetDocumentLayout()))
 	{
 		let nFontCoef = oLayout.GetFontScale();
-		TextPr.FontSize   *= nFontCoef;
+
+		let shape   = this.Paragraph.GetParentShape();
+		let drawing = shape ? shape.GetParaDrawing() : null;
+		if (drawing)
+			nFontCoef = drawing.GetScaleCoefficient();
+
+		TextPr.FontSize *= nFontCoef;
 		TextPr.FontSizeCS *= nFontCoef;
 	}
 

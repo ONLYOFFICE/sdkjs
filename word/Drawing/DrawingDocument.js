@@ -2249,6 +2249,9 @@ function CDrawingDocument()
 				if (this.m_lPagesCount > this.m_lCountCalculatePages)
 					this.m_arrPages.splice(this.m_lCountCalculatePages, this.m_lPagesCount - this.m_lCountCalculatePages);
 				this.m_lPagesCount = 0;
+
+				this.m_lDrawingFirst = -1;
+				this.m_lDrawingEnd = -1;
 			}
 
 			this.OnEndRecalculate(false);

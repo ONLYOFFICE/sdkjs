@@ -440,6 +440,10 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 {
 	PDSH.AddInlineSdt(this);
+
+	if (PDSH.IsCollectFixedForms())
+		return CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+
 	var oGraphics = PDSH.Graphics;
 
 	if (this.IsSkipDraw(oGraphics))

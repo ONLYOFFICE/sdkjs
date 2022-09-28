@@ -963,8 +963,6 @@
 
 		if (this.MoveDrawing)
 		{
-			if (this.DrawingObjects.length)
-				this.DrawingObjects[0].SelectAsDrawing();
 		}
 		else if (isSelect)
 		{

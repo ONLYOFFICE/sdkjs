@@ -1671,20 +1671,28 @@ CShape.prototype.getCurrentDocContentInSmartArt = function () {
 CShape.prototype.getBodyPr = function () {
     return AscFormat.ExecuteNoHistory(function () {
 
+        let ret;
         if (this.bWordShape) {
-            var ret = new AscFormat.CBodyPr();
+            ret = new AscFormat.CBodyPr();
             ret.setDefault();
             if (this.bodyPr)
                 ret.merge(this.bodyPr);
-            return ret;
         }
         else {
-            if (this.txBody && this.txBody.bodyPr)
-                return this.txBody.getCompiledBodyPr();
-            var ret = new AscFormat.CBodyPr();
-            ret.setDefault();
-            return ret;
+            if (this.txBody && this.txBody.bodyPr) {
+                ret = this.txBody.getCompiledBodyPr();
+            }
+            else {
+                ret = new AscFormat.CBodyPr();
+                ret.setDefault();
+            }
         }
+        let dScale = this.getScaleCoefficient();
+        ret.lIns *= dScale;
+        ret.tIns *= dScale;
+        ret.rIns *= dScale;
+        ret.bIns *= dScale;
+        return ret;
     }, this, []);
 };
 
@@ -2339,19 +2347,34 @@ CShape.prototype.getFullFlip = function () {
 };
 
 CShape.prototype.getTextRect = function () {
+    let oRect;
     if(this.txXfrm && this.spPr && this.spPr.xfrm) {
         var newL = this.txXfrm.offX - this.spPr.xfrm.offX;
         var newT = this.txXfrm.offY - this.spPr.xfrm.offY;
         var newR = newL + this.txXfrm.extX;
         var newB = newT + this.txXfrm.extY;
-        var oRect = {};
-        oRect.l = newL;
-        oRect.t = newT;
-        oRect.r = newR;
-        oRect.b = newB;
+        oRect = {};
+        let dScale = this.getScaleCoefficient();
+        oRect.l = newL * dScale;
+        oRect.t = newT * dScale;
+        oRect.r = newR * dScale;
+        oRect.b = newB * dScale;
+    }
+    else {
+        let _r = this.spPr && this.spPr.geometry && this.spPr.geometry.rect;
+        if(_r) {
+            oRect = {
+                l: _r.l,
+                t: _r.t,
+                r: _r.r,
+                b: _r.b
+            };
+        }
+    }
+    if(oRect) {
         return oRect;
     }
-    return this.spPr && this.spPr.geometry && this.spPr.geometry.rect ? this.spPr.geometry.rect : {
+    return {
         l: 0,
         t: 0,
         r: this.extX,
@@ -2412,8 +2435,9 @@ CShape.prototype.getTextRect = function () {
             var xc = deltaShape.localTransform.TransformPointX(oRect.l + extX, oRect.t + extY) - deltaTranslateX;
             var yc = deltaShape.localTransform.TransformPointY(oRect.l + extX, oRect.t + extY) - deltaTranslateY;
 
-            oRectShape.spPr.xfrm.setOffX(xc - extX);
-            oRectShape.spPr.xfrm.setOffY(yc - extY);
+            let dScale = this.getScaleCoefficient();
+            oRectShape.spPr.xfrm.setOffX((xc - extX) / dScale);
+            oRectShape.spPr.xfrm.setOffY((yc - extY) / dScale);
             oRectShape.spPr.xfrm.setExtX(this.txXfrm.extX);
             oRectShape.spPr.xfrm.setExtY(this.txXfrm.extY);
             // oRectShape.changeFlipH(this.spPr.xfrm.flipH); TODO: repair this
@@ -3659,7 +3683,7 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 {
                     if(oParaDrawing.Extent && AscFormat.isRealNumber(oParaDrawing.Extent.W) && AscFormat.isRealNumber(oParaDrawing.Extent.H))
                     {
-                        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+                        let dScaleCoefficient = this.getScaleCoefficient();
                         this.extX = oParaDrawing.Extent.W * dScaleCoefficient;
                         this.extY = oParaDrawing.Extent.H * dScaleCoefficient;
                     }
@@ -4834,7 +4858,7 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
         }
         return this.contentHeight > sizesOfTextRectContent.height;
     };
-    CShape.prototype.findFitFontSizeForSmartArt = function () {
+    CShape.prototype.findFitFontSizeForSmartArt = function (bMax) {
         const MAX_FONT_SIZE = 65;
 
         const content = this.getCurrentDocContentInSmartArt();
@@ -4848,7 +4872,13 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
 
             while (a !== averageAmount && b !== averageAmount) {
                 this.setFontSizeInSmartArt(scalesForSmartArt[averageAmount]);
-                if (content.RecalculateMinMaxContentWidth().Min > this.contentWidth || this.compareHeightOfBoundsTextInSmartArt()) {
+                let widthOfContent = content.RecalculateMinMaxContentWidth();
+                if (bMax) {
+                    widthOfContent = widthOfContent.Max;
+                } else {
+                    widthOfContent = widthOfContent.Min;
+                }
+                if (widthOfContent > this.contentWidth || this.compareHeightOfBoundsTextInSmartArt()) {
                     b = averageAmount;
                 } else {
                     a = averageAmount;
@@ -6144,10 +6174,20 @@ CShape.prototype.getAllRasterImages = function(images)
 };
 CShape.prototype.getAllDocContents = function(aDocContents)
 {
-    if(this.textBoxContent){
+    if(this.textBoxContent)
+    {
         aDocContents.push(this.textBoxContent);
     }
 };
+
+    CShape.prototype.checkRunContent = function(fCallback)
+    {
+        let oContent = this.getDocContent();
+        if(oContent)
+        {
+            oContent.CheckRunContent(fCallback);
+        }
+    };
 
 CShape.prototype.changePositionInSmartArt = function (newX, newY) {
     if (this.isObjectInSmartArt()) {

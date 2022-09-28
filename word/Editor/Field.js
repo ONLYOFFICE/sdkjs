@@ -76,17 +76,26 @@ ParaField.prototype.Get_Id = function()
 };
 ParaField.prototype.Copy = function(Selected, oPr)
 {
-    var NewField = CParagraphContentWithParagraphLikeContent.prototype.Copy.apply(this, arguments);
+	let newField = CParagraphContentWithParagraphLikeContent.prototype.Copy.apply(this, arguments);
 
-    // TODO: Сделать функциями с иторией
-    NewField.FieldType = this.FieldType;
-    NewField.Arguments = this.Arguments;
-    NewField.Switches  = this.Switches;
+	if (oPr && oPr.SkipFldSimple)
+	{
+		let newItems = this.Content.slice();
+		this.RemoveAll();
+		return newItems;
+	}
+	else
+	{
+		// TODO: Сделать функциями с иторией
+		newField.FieldType = this.FieldType;
+		newField.Arguments = this.Arguments;
+		newField.Switches  = this.Switches;
 
-    if (editor)
-        editor.WordControl.m_oLogicDocument.Register_Field(NewField);
+		if (editor)
+			editor.WordControl.m_oLogicDocument.Register_Field(newField);
 
-    return NewField;
+		return newField;
+	}
 };
 ParaField.prototype.GetSelectedElementsInfo = function(Info, ContentPos, Depth)
 {

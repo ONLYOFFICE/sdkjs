@@ -1264,14 +1264,21 @@ CParagraphContentWithParagraphLikeContent.prototype.Copy = function(Selected, oP
 		}
 	}
 
+	let newElementPos = 0;
 	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
 	{
-		var Item = this.Content[CurPos];
-
-		if (StartPos === CurPos || EndPos === CurPos)
-			NewElement.Add_ToContent(CurPos - StartPos, Item.Copy(Selected, oPr));
-		else
-			NewElement.Add_ToContent(CurPos - StartPos, Item.Copy(false, oPr));
+		let newItems = this.Content[CurPos].Copy(Selected && (StartPos === CurPos || EndPos === CurPos), oPr);
+		if (Array.isArray(newItems))
+		{
+			for (let newIndex = 0, newCount = newItems.length; newIndex < newCount; ++newIndex)
+			{
+				NewElement.AddToContent(newElementPos++, newItems[newIndex]);
+			}
+		}
+		else if (newItems)
+		{
+			NewElement.AddToContent(newElementPos++, newItems);
+		}
 	}
 
 	return NewElement;

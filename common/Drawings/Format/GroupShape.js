@@ -158,6 +158,14 @@ AscFormat.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyite
                 this.spTree[i].getAllDocContents(aDocContents);
         }
     };
+    CGroupShape.prototype.checkRunContent = function(fCallback)
+    {
+        let aGraphics = this.getArrGraphicObjects();
+        for(let nIdx = 0; nIdx < aGraphics.length; ++nIdx)
+        {
+            aGraphics[nIdx].checkRunContent(fCallback);
+        }
+    };
 
     CGroupShape.prototype.documentCreateFontMap = function(allFonts)
     {
