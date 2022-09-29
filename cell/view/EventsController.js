@@ -1314,6 +1314,49 @@
 		};
 
 		/** @param event {KeyboardEvent} */
+		asc_CEventsController.prototype.EnterText = function (codePoints) {
+			// Нельзя при отключенных эвентах возвращать false (это касается и ViewerMode)
+			if (!this.enableKeyEvents) {
+				return true;
+			}
+
+			// не вводим текст в режиме просмотра
+			// если в FF возвращать false, то отменяется дальнейшая обработка серии keydown -> keypress -> keyup
+			// и тогда у нас не будут обрабатываться ctrl+c и т.п. события
+			if (!this.canEdit() || this.getSelectionDialogMode() || this.view.Api.isEditVisibleAreaOleEditor) {
+				return true;
+			}
+
+			// Для таких браузеров, которые не присылают отжатие левой кнопки мыши для двойного клика, при выходе из
+			// окна редактора и отпускания кнопки, будем отрабатывать выход из окна (только Chrome присылает эвент MouseUp даже при выходе из браузера)
+			this.showCellEditorCursor();
+
+			// Не можем вводить когда селектим или когда совершаем действия с объектом
+			if (this.getCellEditMode() && !this.hasFocus || this.isSelectMode ||
+				!this.handlers.trigger('canReceiveKeyPress')) {
+				return true;
+			}
+
+			if (this.skipKeyPress) {
+				this.skipKeyPress = true;
+				return true;
+			}
+
+			if (!this.getCellEditMode()) {
+				if (this.handlers.trigger("graphicObjectWindowEnterText", codePoints)) {
+					return true;
+				}
+
+				// При нажатии символа, фокус не ставим и очищаем содержимое ячейки
+				var enterOptions = new AscCommonExcel.CEditorEnterOptions();
+				enterOptions.newText = '';
+				enterOptions.quickInput = true;
+				this.handlers.trigger("editCell", enterOptions);
+			}
+			return true;
+		};
+
+		/** @param event {KeyboardEvent} */
 		asc_CEventsController.prototype._onWindowKeyUp = function (event) {
 			var t = this;
 

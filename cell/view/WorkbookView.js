@@ -507,6 +507,8 @@
 				  return self._onGraphicObjectWindowKeyUp.apply(self, arguments);
 			  }, "graphicObjectWindowKeyPress": function () {
 				  return self._onGraphicObjectWindowKeyPress.apply(self, arguments);
+			  }, "graphicObjectWindowEnterText": function () {
+				  return self._onGraphicObjectWindowEnterText.apply(self, arguments);
 			  }, "graphicObjectMouseWheel": function () {
 				  return self._onGraphicObjecMouseWheel.apply(self, arguments);
 			  }, "getGraphicsInfo": function () {
@@ -1756,6 +1758,10 @@
     var objectRender = this.getWorksheet().objectRender;
     return (0 < objectRender.getSelectedGraphicObjects().length) ? objectRender.graphicObjectKeyPress(e) : false;
   };
+	WorkbookView.prototype._onGraphicObjectWindowEnterText = function(codePoints) {
+		var objectRender = this.getWorksheet().objectRender;
+		return objectRender.controller && (0 < objectRender.getSelectedGraphicObjects().length) ? objectRender.controller.enterText(codePoints) : false;
+	};
   WorkbookView.prototype._onGraphicObjecMouseWheel = function(deltaX, deltaY) {
     var objectRender = this.getWorksheet().objectRender;
       if(objectRender && objectRender.controller) {
@@ -4770,6 +4776,13 @@
 			if (activeWs) {
 				activeWs.draw();
 			}
+		}
+	};
+
+	WorkbookView.prototype.EnterText = function (codePoints) {
+		this.controller.EnterText(codePoints);
+		if (this.isCellEditMode) {
+			this.cellEditor.EnterText(codePoints);
 		}
 	};
 
