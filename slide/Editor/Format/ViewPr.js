@@ -104,6 +104,17 @@
         oStream.Seek2(nEnd);
         return oSlideSize;
     }
+    function fWriteSlideSize(oSize, pWriter, nType) {
+        if(!oSize) {
+            return;
+        }
+        pWriter.StartRecord(nType);
+        pWriter.WriteUChar(AscCommon.g_nodeAttributeStart);
+        pWriter._WriteInt2(0, oSize.cx);
+        pWriter._WriteInt2(1, oSize.cy);
+        pWriter.WriteUChar(AscCommon.g_nodeAttributeEnd);
+        pWriter.EndRecord();
+    }
 
     const lastView_handoutView = 0;
     const lastView_notesMasterView = 1;
@@ -208,6 +219,14 @@
                 break;
             }
         }
+    };
+
+
+    CViewPr.prototype.privateWriteAttributes = function(pWriter) {
+    };
+    CViewPr.prototype.writeChildren = function(pWriter) {
+        fWriteSlideSize(this.gridSpacing, pWriter, 0);
+        this.writeRecord2(pWriter, 5, this.slideViewPr);
     };
     CViewPr.prototype.readChildXml = function (name, reader) {
         let oChild;
@@ -325,7 +344,7 @@
         return false;
     };
     CCommonViewPr.prototype.readAttribute = function(nType, pReader) {
-    };;
+    };
     CCommonViewPr.prototype.readAttributes = function(pReader) {
     };
     CCommonViewPr.prototype.readChild = function(nType, pReader) {
@@ -337,6 +356,13 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CCommonViewPr.prototype.writeAttributes = function (pWriter) {
+    };
+    CCommonViewPr.prototype.privateWriteAttributes = function(pWriter) {
+    };
+    CCommonViewPr.prototype.writeChildren = function(pWriter) {
+        this.writeRecord2(pWriter, 0, this.cSldViewPr);
     };
     CCommonViewPr.prototype.readChildXml = function (name, reader) {
     };
@@ -487,6 +513,22 @@
                 break;
             }
         }
+    };
+    CCSldViewPr.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteBool2(0, this.showGuides);
+        pWriter._WriteBool2(1, this.snapToGrid);
+        pWriter._WriteBool2(2, this.snapToObjects);
+    };
+    CCSldViewPr.prototype.writeChildren = function(pWriter) {
+        this.writeRecord2(pWriter, 0, this.cViewPr);
+
+        pWriter.StartRecord(1);
+        pWriter.WriteULong(this.guideLst.length);
+        for (let nGd = 0; nGd < this.guideLst.length; ++nGd) {
+            this.writeRecord2(pWriter, 2, this.guideLst[nGd]);
+        }
+
+        pWriter.EndRecord();
     };
     CCSldViewPr.prototype.readChildXml = function (name, reader) {
         let oChild;
@@ -653,6 +695,10 @@
             }
         }
     };
+    CGuide.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteUInt2(0, this.pos);
+        pWriter._WriteLimit2(1, this.orient);
+    };
     CGuide.prototype.draw = function(oGraphics) {
         let oPresentation = editor.WordControl.m_oLogicDocument;
         let dPos = GdPosToMm(this.pos);
@@ -736,6 +782,13 @@
             }
         }
     };
+    CCViewPr.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteBool2(0, this.scale);
+    };
+    CCViewPr.prototype.writeChildren = function(pWriter) {
+        fWriteSlideSize(this.origin, pWriter, 0);
+        this.writeRecord2(pWriter, 1, this.scale);
+    };
     CCViewPr.prototype.readChildXml = function (name, reader) {
         let oChild;
         switch(name) {
@@ -788,6 +841,10 @@
         this.setSy(fReadSlideSize(oStream));
 
         oStream.Seek2(nEnd);
+    };
+    CScale.prototype.toPPTY = function (pWriter) {
+        fWriteSlideSize(this.sx, pWriter, 0);
+        fWriteSlideSize(this.sy, pWriter, 1);
     };
     CScale.prototype.readChildXml = function (name, reader) {
         let oChild;

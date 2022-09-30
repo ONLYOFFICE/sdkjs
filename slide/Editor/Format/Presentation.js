@@ -2965,8 +2965,14 @@ CSlideSize.prototype.writeAttrXmlImpl = function(writer) {
     }
 };
 
-let CONFORMANCE_STRICT = 0;
-let CONFORMANCE_TRANSITIONAL = 1;
+CSlideSize.prototype.fillObject = function (oCopy, oIdMap) {
+    oCopy.setCX(this.cx);
+    oCopy.setCY(this.cy);
+    oCopy.setType(this.type);
+};
+
+const CONFORMANCE_STRICT = 0;
+const CONFORMANCE_TRANSITIONAL = 1;
 
 function CPresentation(DrawingDocument) {
     AscFormat.CBaseFormatObject.call(this);

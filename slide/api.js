@@ -3100,6 +3100,9 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_setGridSpacing = function(nSpacing)
 	{
+		if(!AscFormat.isRealNumber(nSpacing)) {
+			return;
+		}
 		this.WordControl.m_oLogicDocument.setGridSpacing(nSpacing);
 	};
 	asc_docs_api.prototype.asc_getGridSpacing = function()
