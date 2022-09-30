@@ -12880,8 +12880,7 @@ background-repeat: no-repeat;\
 			if (password === "") {
 				checkPassword([""]);
 			} else {
-				var checkHash = {password: password, salt: documentProtection.saltValue, spinCount: documentProtection.spinCount,
-					alg: props.algorithmName};
+				var checkHash = {password: password, salt: documentProtection.saltValue, spinCount: documentProtection.spinCount, alg: documentProtection.getAlgorithmNameForCheck()};
 				AscCommon.calculateProtectHash([checkHash], checkPassword);
 			}
 		} else {

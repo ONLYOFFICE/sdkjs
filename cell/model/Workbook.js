@@ -10709,7 +10709,7 @@
 						password: val,
 						salt: this.aProtectedRanges[i].saltValue,
 						spinCount: this.aProtectedRanges[i].spinCount,
-						alg: AscCommonExcel.fromModelAlgoritmName(this.aProtectedRanges[i].algorithmName)
+						alg: AscCommon.fromModelAlgorithmName(this.aProtectedRanges[i].algorithmName)
 					});
 				}
 			}

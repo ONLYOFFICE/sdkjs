@@ -6853,7 +6853,7 @@ var editor;
 					password: arr[i].temporaryPassword,
 					salt: arr[i].saltValue,
 					spinCount: arr[i].spinCount,
-					alg: AscCommonExcel.fromModelAlgoritmName(arr[i].algorithmName)
+					alg: AscCommon.fromModelAlgorithmName(arr[i].algorithmName)
 				});
 			}
 		}
@@ -7082,7 +7082,7 @@ var editor;
 				checkPassword([AscCommonExcel.getPasswordHash(props.temporaryPassword, true)]);
 			} else {
 				var checkHash = {password: props.temporaryPassword, salt: props.saltValue, spinCount: props.spinCount,
-					alg: AscCommonExcel.fromModelAlgoritmName(props.algorithmName)};
+					alg: AscCommon.fromModelAlgorithmName(props.algorithmName)};
 				AscCommon.calculateProtectHash([checkHash], checkPassword);
 			}
 		} else {
@@ -7197,7 +7197,7 @@ var editor;
 				checkPassword([AscCommonExcel.getPasswordHash(props.temporaryPassword, true)]);
 			} else {
 				var checkHash = {password: props.temporaryPassword, salt: props.workbookSaltValue, spinCount: props.workbookSpinCount,
-					alg: AscCommonExcel.fromModelAlgoritmName(props.workbookAlgorithmName)};
+					alg: AscCommon.fromModelAlgorithmName(props.algorithmName)};
 				AscCommon.calculateProtectHash([checkHash], checkPassword);
 			}
 		} else {

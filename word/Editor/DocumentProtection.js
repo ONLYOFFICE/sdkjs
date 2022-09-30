@@ -110,6 +110,22 @@ CDocProtect.prototype.generateHashParams = function () {
 	this.spinCount = params.spinCount;
 	//this.algorithmName = params.algorithmName;
 };
+CDocProtect.prototype.generateHashParams = function () {
+	var params = AscCommon.generateHashParams();
+
+	this.saltValue = params.saltValue;
+	this.spinCount = params.spinCount;
+	//this.algorithmName = params.algorithmName;
+};
+CDocProtect.prototype.getAlgorithmNameForCheck = function () {
+	if (this.algorithmName) {
+		return AscCommon.fromModelAlgorithmName(this.algorithmName);
+	} else if (this.cryptAlgorithmSid) {
+		return AscCommon.fromModelCryptAlgorithmSid(this.cryptAlgorithmSid);
+	}
+	return null;
+};
+
 
 
 function CWriteProtection() {
