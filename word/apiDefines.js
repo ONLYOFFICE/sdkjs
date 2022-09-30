@@ -876,6 +876,14 @@ c_oAscDateTimeFormat[lcid_enUS]     = [
 	"HH:mm:ss"
 ];
 
+var c_oAscEDocProtect = {
+	Comments: 0,
+	Forms: 1,
+	None: 2,
+	ReadOnly: 3,
+	TrackedChanges: 4
+};
+
 //------------------------------------------------------------export---------------------------------------------------
 var prot;
 window['Asc'] = window['Asc'] || {};
@@ -1057,3 +1065,10 @@ prot['Content'] = prot.Content;
 prot['Window']  = prot.Window;
 
 window['Asc']['c_oAscDateTimeFormat'] = window['Asc'].c_oAscDateTimeFormat = c_oAscDateTimeFormat;
+
+prot = window['Asc']['c_oAscEDocProtect'] = window['Asc'].c_oAscEDocProtect = c_oAscEDocProtect;
+prot['Comments']   = prot.Comments;
+prot['Forms'] = prot.Forms;
+prot['None']  = prot.None;
+prot['ReadOnly']  = prot.ReadOnly;
+prot['TrackedChanges']  = prot.TrackedChanges;

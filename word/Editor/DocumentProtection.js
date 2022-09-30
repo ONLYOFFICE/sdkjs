@@ -44,14 +44,6 @@ var ECryptAlgoritmName = {
 	SHA_512: 9,
 	WHIRLPOOL: 10
 };
-
-var EDocProtect = {
-	Comments: 0,
-	Forms: 1,
-	None: 2,
-	ReadOnly: 3,
-	TrackedChanges: 4
-};
 var ECryptAlgClass = {
 	Custom: 0,
 	Hash: 1
@@ -86,11 +78,39 @@ function CDocProtect() {
 	this.cryptProviderTypeExtSource = null;
 }
 CDocProtect.prototype.isOnlyView = function () {
-	return this.edit === EDocProtect.ReadOnly;
+	return this.edit === Asc.c_oAscEDocProtect.ReadOnly;
 };
 CDocProtect.prototype.getEnforcment = function () {
 	return this.enforcment;
 };
+CDocProtect.prototype.getRestrictionType = function () {
+	var res = null;
+	switch (this.edit) {
+		case Asc.c_oAscEDocProtect.Comments:
+			res = Asc.c_oAscRestrictionType.OnlyComments;
+			break;
+		case Asc.c_oAscEDocProtect.Forms:
+			res = Asc.c_oAscRestrictionType.OnlyForms;
+			break;
+		case Asc.c_oAscEDocProtect.ReadOnly:
+			res = Asc.c_oAscRestrictionType.View;
+			break;
+		case Asc.c_oAscEDocProtect.TrackedChanges:
+			//asc_SetLocalTrackRevisions
+			//asc_SetGlobalTrackRevisions
+			res = Asc.c_oAscRestrictionType.OnlySignatures;
+			break;
+	}
+	return res;
+};
+CDocProtect.prototype.generateHashParams = function () {
+	var params = AscCommon.generateHashParams();
+
+	this.saltValue = params.saltValue;
+	this.spinCount = params.spinCount;
+	//this.algorithmName = params.algorithmName;
+};
+
 
 function CWriteProtection() {
 	this.algorithmName = null;

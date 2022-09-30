@@ -174,11 +174,6 @@
 		return str;
 	}
 
-
-	function generateHashParams() {
-		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64(), algorithmName: c_oSerProtectedAlgorithmNameTypes.SHA_512};
-	}
-
 	function getPasswordHash(password, getString) {
 		var nResult = null;
 		if (password.length) {
@@ -573,10 +568,10 @@
 		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedSheet
 		this.setSheet(!this.sheet);
 		if (this.sheet && password) {
-			var hashParams = generateHashParams();
+			var hashParams = AscCommon.generateHashParams();
 			this.saltValue = hashParams.saltValue;
 			this.spinCount = hashParams.spinCount;
-			this.algorithmName = hashParams.algorithmName;
+			this.algorithmName =  c_oSerProtectedAlgorithmNameTypes.SHA_512;
 		}
 		this.temporaryPassword = password;
 		if (callback) {
@@ -877,10 +872,10 @@
 		this.setLockStructure(!this.lockStructure);
 
 		if (this.lockStructure && password) {
-			var hashParams = generateHashParams();
+			var hashParams = AscCommon.generateHashParams();
 			this.workbookSaltValue = hashParams.saltValue;
 			this.workbookSpinCount = hashParams.spinCount;
-			this.workbookAlgorithmName = hashParams.algorithmName;
+			this.workbookAlgorithmName =  c_oSerProtectedAlgorithmNameTypes.SHA_512;
 		}
 		this.temporaryPassword = password;
 		if (callback) {
@@ -1316,10 +1311,10 @@
 	};
 	CProtectedRange.prototype.asc_setPassword = function (val) {
 		if (val) {
-			var hashParams = generateHashParams();
+			var hashParams = AscCommon.generateHashParams();
 			this.saltValue = hashParams.saltValue;
 			this.spinCount = hashParams.spinCount;
-			this.algorithmName = hashParams.algorithmName;
+			this.algorithmName =  c_oSerProtectedAlgorithmNameTypes.SHA_512;
 		}
 		//генерируем хэш
 		this.temporaryPassword = val;

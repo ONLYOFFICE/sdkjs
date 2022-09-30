@@ -8380,7 +8380,12 @@ function BinaryFileReader(doc, openParams)
 
 		var docProtection = this.Document.Settings && this.Document.Settings.DocumentProtection;
 		if (docProtection) {
-			if (docProtection.isOnlyView() && false !== docProtection.getEnforcment()) {
+			//this.Document.applyProtection()
+			var restrictionType = docProtection.getRestrictionType();
+			if (/*docProtection.isOnlyView() && false !== docProtection.getEnforcment()*/restrictionType !== null) {
+				api && api.asc_addRestriction(restrictionType);
+			} else if (false !== docProtection.getEnforcment() ) {
+				//TODO ?
 				api && api.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 			}
 		}
@@ -16292,7 +16297,7 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 			res = this.bcr.Read1(length, function(t, l){
 				return oThis.ReadDocProtect(t,l,oDocProtect);
 			});
-			//Settings.DocumentProtection = oDocProtect;
+			Settings.DocumentProtection = oDocProtect;
 		}
 		else if ( c_oSer_SettingsType.WriteProtection === type )
 		{

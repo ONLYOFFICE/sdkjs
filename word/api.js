@@ -12791,6 +12791,107 @@ background-repeat: no-repeat;\
 		return oDocument.PutImageToSelection(sImageSrc, nWidth, nHeight);
 	};
 
+	//asc_onChangeProtectWorkbook
+	asc_docs_api.prototype.asc_getDocumentProtection = function () {
+		let oDocument = this.private_GetLogicDocument();
+		if (!oDocument) {
+			return;
+		}
+
+		var docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
+		if (docProtection) {
+			return docProtection.edit;
+		}
+	};
+
+	asc_docs_api.prototype.asc_setDocumentProtection = function (props, password) {
+		//props -> c_oAscEDocProtect
+
+		// Проверка глобального лока
+		/*if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}*/
+
+		let oDocument = this.private_GetLogicDocument();
+		if (!oDocument) {
+			return;
+		}
+		var t = this;
+
+		var callback = function (res) {
+			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+
+			if (res) {
+				/*History.Create_NewPoint();
+				History.StartTransaction();
+				if (!t.wbModel.getWorksheet(i).setProtectedSheet(props, true)) {
+					t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename,
+						c_oAscError.Level.NoCritical);
+				} else if (wsView) {
+					wsView.updateAfterChangeSheetProtection();
+				}
+				t.handlers.trigger("asc_onChangeDocumentProtection");
+
+				History.EndTransaction();*/
+			} else {
+				//t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename, c_oAscError.Level.NoCritical);
+			}
+		};
+
+		var documentProtection = oDocument.Settings.DocumentProtection;
+		if (!documentProtection) {
+			documentProtection = new CDocProtect();
+			documentProtection.generateHashParams();
+		}
+
+		var checkPassword = function (hash, doNotCheckPassword) {
+			if (doNotCheckPassword) {
+				//t.collaborativeEditing.lock([lockInfo], callback);
+				callback();
+			} else {
+				if (props) {
+					documentProtection.hashValue = hash && hash[0] ? hash[0] : null;
+					//t.collaborativeEditing.lock([lockInfo], callback);
+					callback();
+				} else {
+					if (hash && hash[0] === documentProtection.hashValue) {
+						documentProtection.hashValue = null;
+						documentProtection.saltValue = null;
+						documentProtection.spinCount = null;
+						documentProtection.algorithmName = null;
+						//t.collaborativeEditing.lock([lockInfo], callback);
+						callback();
+					} else {
+						//неверный пароль
+						t.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect,
+							c_oAscError.Level.NoCritical);
+						t.handlers.trigger("asc_onChangeDocumentProtection");
+						t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+					}
+				}
+				props.temporaryPassword = null;
+			}
+		};
+
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+		//props !== null && props !== Asc.c_oAscEDocProtect.None
+
+		if (password != null) {
+			if (password === "") {
+				checkPassword([""]);
+			} else {
+				var checkHash = {password: password, salt: documentProtection.saltValue, spinCount: documentProtection.spinCount,
+					alg: props.algorithmName};
+				AscCommon.calculateProtectHash([checkHash], checkPassword);
+			}
+		} else {
+			checkPassword(null, true);
+		}
+
+		return true;
+	};
+
+
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	CAscSection.prototype['get_PageWidth']                              = CAscSection.prototype.get_PageWidth;

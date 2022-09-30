@@ -11028,29 +11028,29 @@
 	function fromXml_ST_DocProtect(val, def) {
 		switch (val) {
 			case "comments":
-				return EDocProtect.Comments;
+				return Asc.c_oAscEDocProtect.Comments;
 			case "forms":
-				return EDocProtect.Forms;
+				return Asc.c_oAscEDocProtect.Forms;
 			case "none":
-				return EDocProtect.None;
+				return Asc.c_oAscEDocProtect.None;
 			case "readOnly":
-				return EDocProtect.ReadOnly;
+				return Asc.c_oAscEDocProtect.ReadOnly;
 			case "trackedChanges":
-				return EDocProtect.TrackedChanges;
+				return Asc.c_oAscEDocProtect.TrackedChanges;
 		}
 		return def;
 	}
 	function toXml_ST_DocProtect(val) {
 		switch (val) {
-			case EDocProtect.Comments:
+			case Asc.c_oAscEDocProtect.Comments:
 				return "comments";
-			case EDocProtect.Forms:
+			case Asc.c_oAscEDocProtect.Forms:
 				return "forms";
-			case EDocProtect.None:
+			case Asc.c_oAscEDocProtect.None:
 				return "none";
-			case EDocProtect.ReadOnly:
+			case Asc.c_oAscEDocProtect.ReadOnly:
 				return "readOnly";
-			case EDocProtect.TrackedChanges:
+			case Asc.c_oAscEDocProtect.TrackedChanges:
 				return "trackedChanges";
 		}
 		return null;
