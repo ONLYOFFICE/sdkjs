@@ -834,7 +834,7 @@
 		this.undoList = [];
 		this.redoList = [];
 		this.undoMode = false;
-		this.skipKeyPress = false;
+		this._setSkipKeyPress(false);
 
 		this.updateWizardMode(false);
 	};
@@ -2333,7 +2333,7 @@
 			t.lastKeyCode = event.which;
 		}
 
-		t.skipKeyPress = true;
+		t._setSkipKeyPress(true);
 		t.skipTLUpdate = false;
 
 		// определение ввода иероглифов
@@ -2408,7 +2408,7 @@
 				event.stopPropagation();
 				event.preventDefault();
 
-				t.skipKeyPress = false;
+				t._setSkipKeyPress(false);
 				return false;
 
 			case 35:  // "end"
@@ -2660,11 +2660,11 @@
 					event.stopPropagation();
 					event.preventDefault();
 				}
-				t.skipKeyPress = false;
+				t._setSkipKeyPress(false);
 				return false;
 		}
 
-		t.skipKeyPress = false;
+		t._setSkipKeyPress(false);
 		t.skipTLUpdate = true;
 		return true;
 	};
@@ -2674,8 +2674,8 @@
 		var t = this;
 
 		if (!window['IS_NATIVE_EDITOR']) {
-			if (event.which < 32) {
-				t.skipKeyPress = true;
+			if (event.which < 32 || t.skipKeyPress) {
+				t._setSkipKeyPress(true);
 				return true;
 			}
 		}
@@ -2699,15 +2699,13 @@
 			if (!t.isOpened || !t.enableKeyEvents || this.handlers.trigger('getWizard')) {
 				return true;
 			}
-			if (t.skipKeyPress) {
-				t.skipKeyPress = true;
-				return true;
-			}
 			// определение ввода иероглифов
 			if (t.isTopLineActive && AscCommonExcel.getFragmentsLength(t.options.fragments) !== t.input.value.length) {
 				t._syncEditors();
 			}
 		}
+
+		t._setSkipKeyPress(false);
 
 		//TODO перевод из кода в символы!
 		var newChar;
@@ -2991,6 +2989,9 @@
 		this._moveCursor(kBeginOfText);
 		this._selectChars(kEndOfText);
 		this.skipTLUpdate = tmp;
+	};
+	CellEditor.prototype._setSkipKeyPress = function (val) {
+		this.skipKeyPress = val;
 	};
 
 

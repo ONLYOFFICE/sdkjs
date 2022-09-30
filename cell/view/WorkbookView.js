@@ -4779,9 +4779,9 @@
 		}
 	};
 
-	WorkbookView.prototype.EnterText = function (codePoints) {
+	WorkbookView.prototype.EnterText = function (codePoints, skipCellEditor) {
 		this.controller.EnterText(codePoints);
-		if (this.isCellEditMode) {
+		if (this.isCellEditMode && !skipCellEditor) {
 			this.cellEditor.EnterText(codePoints);
 		}
 	};
