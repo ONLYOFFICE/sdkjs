@@ -56,9 +56,10 @@ function CHistory(Document)
 		Flow         : [],
 		HdrFtr       : [],
 		Drawings     : {
-			All       : false,
-			Map       : {},
-			ThemeInfo : null
+			All        : false,
+			Map        : {},
+			ThemeInfo  : null,
+            SlideMinIdx: null
 		},
 		Tables       : [],
 		NumPr        : [],
@@ -570,17 +571,18 @@ CHistory.prototype =
             }
             case AscDFH.historyitem_recalctype_Drawing:
             {
-                if(!this.RecalculateData.Drawings.All)
+                let oDrawings = this.RecalculateData.Drawings;
+                if(!oDrawings.All)
                 {
                     if(Data.All)
                     {
-                        this.RecalculateData.Drawings.All = true;
+                        oDrawings.All = true;
                     }
                     else
                     {
                         if(Data.Theme)
                         {
-                            this.RecalculateData.Drawings.ThemeInfo =
+                            oDrawings.ThemeInfo =
                             {
                                 Theme: true,
                                 ArrInd: Data.ArrInd
@@ -588,10 +590,21 @@ CHistory.prototype =
                         }
                         else if(Data.ColorScheme)
                         {
-                            this.RecalculateData.Drawings.ThemeInfo =
+                            oDrawings.ThemeInfo =
                             {
                                 ColorScheme: true,
                                 ArrInd: Data.ArrInd
+                            }
+                        }
+                        else if(AscFormat.isRealNumber(Data.SlideMinIdx))
+                        {
+                            if(AscFormat.isRealNumber(oDrawings.SlideMinIdx))
+                            {
+                                oDrawings.SlideMinIdx = Math.min(Data.SlideMinIdx, oDrawings.SlideMinIdx);
+                            }
+                            else
+                            {
+                                oDrawings.SlideMinIdx = Data.SlideMinIdx;
                             }
                         }
                         else
@@ -1228,9 +1241,10 @@ CHistory.prototype.private_ClearRecalcData = function()
 		Flow     : [],
 		HdrFtr   : [],
 		Drawings : {
-			All       : false,
-			Map       : {},
-			ThemeInfo : null
+			All        : false,
+			Map        : {},
+			ThemeInfo  : null,
+            SlideMinIdx: null
 		},
 
 		Tables        : [],

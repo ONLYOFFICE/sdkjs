@@ -4609,9 +4609,8 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
     History.Reset_RecalcIndex();
     this.RecalculateCurPos();
     if (bSync) {
-        var bEndRecalc = false;
+        let bEndRecalc = false;
         if (bRedrawAllSlides) {
-
             this.bNeedUpdateTh = true;
             bEndRecalc = (this.Slides.length > 0);
             if (this.Slides[this.CurPage]) {
@@ -4621,10 +4620,20 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 
         } else {
             aToRedrawSlides.sort(AscCommon.fSortAscending);
-            for (i = 0; i < aToRedrawSlides.length; ++i) {
-                this.DrawingDocument.OnRecalculatePage(aToRedrawSlides[i], this.Slides[aToRedrawSlides[i]]);
+            let nSlideMinIdx = _RecalcData.Drawings.SlideMinIdx;
+            if(AscFormat.isRealNumber(nSlideMinIdx)) {
+                for (i = 0; i < aToRedrawSlides.length && aToRedrawSlides[i] < nSlideMinIdx; ++i) {
+                    this.DrawingDocument.OnRecalculatePage(aToRedrawSlides[i], this.Slides[aToRedrawSlides[i]]);
+                }
+                for (i = nSlideMinIdx; i < this.Slides.length; ++i) {
+                    this.DrawingDocument.OnRecalculatePage(i, this.Slides[i]);
+                }
+            } else {
+                for (i = 0; i < aToRedrawSlides.length; ++i) {
+                    this.DrawingDocument.OnRecalculatePage(aToRedrawSlides[i], this.Slides[aToRedrawSlides[i]]);
+                }
             }
-            bEndRecalc = (aToRedrawSlides.length > 0);
+            bEndRecalc = (aToRedrawSlides.length > 0) || AscFormat.isRealNumber(nSlideMinIdx);
         }
         if (bRedrawNotes) {
             if (this.Slides[this.CurPage]) {
@@ -4637,8 +4646,6 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
     }
     if (!this.Slides[this.CurPage]) {
         this.DrawingDocument.m_oWordControl.GoToPage(this.Slides.length - 1);
-
-        //this.Set_CurPage(this.Slides.length - 1);
     } else {
         if (this.bGoToPage) {
             this.DrawingDocument.m_oWordControl.GoToPage(this.CurPage);
@@ -4647,10 +4654,6 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
             this.DrawingDocument.m_oWordControl.CheckLayouts(bAttack);
         }
         if (this.needSelectPages.length > 0) {
-            //for(slideIndex = 0; i < this.needSelectPages.length; ++i)
-            //{
-            //    this.DrawingDocument.SelectPage(this.needSelectPages[slideIndex]);
-            //}
             this.needSelectPages.length = 0;
         }
     }
@@ -7230,7 +7233,7 @@ CPresentation.prototype.EnterText = function (codePoints) {
         }
         else {
             oItem = AscCommon.IsSpace(codePoints) ? new AscWord.CRunSpace(codePoints) : new AscWord.CRunText(codePoints);
-            this.AddToParagraph(new AscWord.CRunText(codePoints), false, true);
+            this.AddToParagraph(oItem, false, true);
         }
         this.CheckLanguageOnTextAdd = false;
         if (oController) {
@@ -9776,11 +9779,11 @@ CPresentation.prototype.Refresh_RecalcData = function (Data) {
 CPresentation.prototype.Refresh_RecalcData2 = function (Data) {
     switch (Data.Type) {
         case AscDFH.historyitem_Presentation_AddSlide: {
-            History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, All: true});
+            History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, SlideMinIdx: Data.Pos});
             break;
         }
         case AscDFH.historyitem_Presentation_RemoveSlide: {
-            History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, All: true});
+            History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, SlideMinIdx: Data.Pos});
             break;
         }
         case AscDFH.historyitem_Presentation_SlideSize:
@@ -10056,7 +10059,7 @@ CPresentation.prototype.shiftSlides = function (pos, array, bCopy) {
     } else {
         for (i = array.length - 1; i > -1; --i) {
             var oIdMap = {};
-            var oSlideCopy = this.Slides[array[i]].createDuplicate(oIdMap);
+            var oSlideCopy = this.Slides[array[i]].createDuplicate(oIdMap, false);
             AscFormat.fResetConnectorsIds(oSlideCopy.cSld.spTree, oIdMap);
             deleted.push(oSlideCopy);
         }
@@ -10070,7 +10073,7 @@ CPresentation.prototype.shiftSlides = function (pos, array, bCopy) {
         this.insertSlide(pos + i, deleted[i]);
     }
     for (i = 0; i < this.Slides.length; ++i) {
-        if (this.Slides[i].num == _selectedPage)
+        if (this.Slides[i].num === _selectedPage)
             _newSelectedPage = i;
 
         this.Slides[i].changeNum(i);

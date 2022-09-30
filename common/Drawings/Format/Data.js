@@ -12000,9 +12000,11 @@ Because of this, the display is sometimes not correct.
       if(this.textLink !== null) {
         copy.setTextLink(this.textLink);
       }
-      copy.cachedImage = this.getBase64Img();
-      copy.cachedPixH = this.cachedPixH;
-      copy.cachedPixW = this.cachedPixW;
+      if(!oPr || false !== oPr.cacheImage) {
+        copy.cachedImage = this.getBase64Img();
+        copy.cachedPixH = this.cachedPixH;
+        copy.cachedPixW = this.cachedPixW;
+      }
       copy.setLocks(this.locks);
       if (this.group) {
         copy.setGroup(this.group);
@@ -14863,9 +14865,11 @@ Because of this, the display is sometimes not correct.
       if (this.colorsDef) {
         copy.setColorsDef(this.colorsDef.createDuplicate());
       }
-      copy.cachedImage = this.getBase64Img();
-      copy.cachedPixH = this.cachedPixH;
-      copy.cachedPixW = this.cachedPixW;
+      if(!oPr || false !== oPr.cacheImage) {
+        copy.cachedImage = this.getBase64Img();
+        copy.cachedPixH = this.cachedPixH;
+        copy.cachedPixW = this.cachedPixW;
+      }
       copy.setLocks(this.locks);
       copy.setConnections2();
       return copy;

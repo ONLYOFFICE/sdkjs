@@ -106,6 +106,9 @@
 		this.isHardCheckKeyboard = AscCommon.AscBrowser.isSailfish;
 		this.virtualKeyboardClickTimeout = -1;
 		this.virtualKeyboardClickPrevent = false;
+
+		// на андроиде не приходят пробелы на keyDown
+		this.isSpaceOnKeyDown = false;
 	}
 
 	var CTextInputPrototype = CTextInput2.prototype;
@@ -221,11 +224,15 @@
 				this.clear();
 				return false;
 			}
+			case 32:
+			{
+				this.isSpaceOnKeyDown = true;
+			}
 			default:
 				break;
 		}
 
-		if (e.keyCode == 32 && AscCommon.global_keyboardEvent.CtrlKey && !AscCommon.global_keyboardEvent.ShiftKey)
+		if (e.keyCode === 32 && AscCommon.global_keyboardEvent.CtrlKey && !AscCommon.global_keyboardEvent.ShiftKey)
 		{
 			if (window.g_asc_plugins)
 				window.g_asc_plugins.onPluginEvent("onClick");
@@ -387,6 +394,8 @@
 			if (isClear)
 				this.clear();
 		}
+
+		this.isSpaceOnKeyDown = false;
 	};
 	CTextInputPrototype.addText = function(text)
 	{
@@ -420,6 +429,8 @@
 
 		this.TextBeforeComposition = "";
 	};
+	// чтобы можно было переключать версии text_input
+	CTextInputPrototype.apiCompositeEnd = CTextInputPrototype.compositeEnd;
 	CTextInputPrototype.checkTextInput = function(codes)
 	{
 		var isAsync = AscFonts.FontPickerByCharacter.checkTextLight(codes, true);
@@ -463,9 +474,13 @@
 	{
 		if (code === 32)
 		{
-			//this.Api.onKeyDown(keyObject);
-			//this.Api.onKeyUp(keyObject);
-			// пробел добавился на onKeyDown
+			if (!this.isSpaceOnKeyDown)
+			{
+				// иначе пробел добавился на onKeyDown
+				let keyObject = this.getKeyboardEventObject(code);
+				this.Api.onKeyDown(keyObject);
+				this.Api.onKeyUp(keyObject);
+			}
 			return;
 		}
 		else

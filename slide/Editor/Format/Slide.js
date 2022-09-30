@@ -259,11 +259,12 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     {
         this.collaborativeMarks.Clear();
     };
-    Slide.prototype.createDuplicate = function(IdMap)
+    Slide.prototype.createDuplicate = function(IdMap, bCacheImage)
     {
         var oIdMap = IdMap || {};
         var oPr = new AscFormat.CCopyObjectProperties();
         oPr.idMap = oIdMap;
+        oPr.cacheImage = bCacheImage !== false;
         var copy = new Slide(this.presentation, this.Layout, 0), i;
         if(typeof this.cSld.name === "string" && this.cSld.name.length > 0)
         {
@@ -316,7 +317,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
         if(!this.recalcInfo.recalculateBackground && !this.recalcInfo.recalculateSpTree)
         {
-            copy.cachedImage = this.getBase64Img();
+            if(!oPr || false !== oPr.cacheImage) {
+                copy.cachedImage = this.getBase64Img();
+            }
         }
         if(this.timing) {
             copy.setTiming(this.timing.createDuplicate(oIdMap));

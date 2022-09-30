@@ -2445,7 +2445,7 @@
 					this.Memory.WriteLong(oTextFormPr.MaxCharacters);
 				}
 
-				var sValue = oForm.GetSelectedText(true);
+				let sValue = oForm.GetSelectedText(true);
 				if (sValue)
 				{
 					nFlag |= (1 << 22);
@@ -2458,11 +2458,36 @@
 				if (oTextFormPr.AutoFit)
 					nFlag |= (1 << 24);
 
-				var sPlaceHolderText = oForm.GetPlaceholderText();
+				let sPlaceHolderText = oForm.GetPlaceholderText();
 				if (sPlaceHolderText)
 				{
 					nFlag |= (1 << 25);
 					this.Memory.WriteString(sPlaceHolderText);
+				}
+
+				let format = oTextFormPr.GetFormat();
+				if (!format.IsEmpty())
+				{
+					nFlag |= (1 << 26);
+
+					this.Memory.WriteByte(format.GetType());
+
+					let formatSymbols = format.GetSymbols(false);
+
+					this.Memory.WriteLong(formatSymbols.length);
+					for (let index = 0, count = formatSymbols.length; index < count; ++index)
+					{
+						this.Memory.WriteLong(formatSymbols[index]);
+					}
+
+					let mask = "";
+
+					if (format.IsMask())
+						mask = format.GetMask();
+					else if (format.IsRegExp())
+						mask = format.GetRegExp();
+
+					this.Memory.WriteString(mask);
 				}
 			}
 			else if (oForm.IsComboBox() || oForm.IsDropDownList())

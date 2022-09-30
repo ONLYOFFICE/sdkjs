@@ -521,7 +521,7 @@
 
     CConnectionShape.prototype.copy = function (oPr) {
         var copy = new CConnectionShape();
-        this.fillObject(copy);
+        this.fillObject(copy, oPr);
         return copy;
     };
 

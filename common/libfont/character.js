@@ -186,6 +186,8 @@
 			var oldCount = this.FontsByRangeCount;
 			for (var i = 0; i < _array.length; ++i)
 			{
+				if (32 === _array[i])
+					continue;
 				AscFonts.FontPickerByCharacter.getFontBySymbol(_array[i]);
 			}
 			return (this.FontsByRangeCount != oldCount);

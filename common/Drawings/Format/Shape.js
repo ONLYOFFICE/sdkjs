@@ -3095,9 +3095,11 @@ CShape.prototype.fillObject = function(copy, oPr){
     copy.setWordShape(this.bWordShape);
     copy.setBDeleted(this.bDeleted);
     copy.setLocks(this.locks);
-    copy.cachedImage = this.getBase64Img();
-    copy.cachedPixH = this.cachedPixH;
-    copy.cachedPixW = this.cachedPixW;
+    if(!oPr || false !== oPr.cacheImage) {
+        copy.cachedImage = this.getBase64Img();
+        copy.cachedPixH = this.cachedPixH;
+        copy.cachedPixW = this.cachedPixW;
+    }
     if (this.txXfrm) {
         copy.setTxXfrm(this.txXfrm.createDuplicate());
     }

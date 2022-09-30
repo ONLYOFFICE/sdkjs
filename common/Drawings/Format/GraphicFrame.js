@@ -290,9 +290,11 @@ CGraphicFrame.prototype.copy = function(oPr)
         }
         if(!this.recalcInfo.recalculateTable && !this.recalcInfo.recalculateSizes && !this.recalcInfo.recalculateTransform)
         {
-            ret.cachedImage = this.getBase64Img();
-            ret.cachedPixW = this.cachedPixW;
-            ret.cachedPixH = this.cachedPixH;
+            if(!oPr || false !== oPr.cacheImage) {
+                ret.cachedImage = this.getBase64Img();
+                ret.cachedPixH = this.cachedPixH;
+                ret.cachedPixW = this.cachedPixW;
+            }
         }
         return ret;
 };
