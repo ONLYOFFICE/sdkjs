@@ -753,6 +753,7 @@ TrackSelectionRect.prototype =
                 oPresentation.Recalculate();
             }
         }
+        this.drawingObjects.clearPreTrackObjects();
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.updateOverlay();
         this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));

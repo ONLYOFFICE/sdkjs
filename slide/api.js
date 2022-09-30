@@ -3122,7 +3122,7 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.addVerticalGuide();
 	};
-	asc_docs_api.prototype.asc_canClearGuides = function(sId)
+	asc_docs_api.prototype.asc_canClearGuides = function()
 	{
 		return this.WordControl.m_oLogicDocument.canClearGuides();
 	};
