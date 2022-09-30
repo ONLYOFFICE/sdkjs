@@ -96,7 +96,9 @@
         let nStart = oStream.cur;
         let nEnd = nStart + oStream.GetULong() + 4;
         let nType = oStream.GetUChar();//start attributes
+        oStream.GetUChar();
         oSlideSize.setCX(oStream.GetLong());
+        oStream.GetUChar();
         oSlideSize.setCY(oStream.GetLong());
         nType = oStream.GetUChar();//end attributes
         oStream.Seek2(nEnd);
@@ -176,10 +178,9 @@
         let oStream = pReader.stream;
         switch (nType) {
             case 0: {
-                //let oGridSpacing = fReadSlideSize(oStream);
-                //this.setGridSpacing(oGridSpacing);
-
-                oStream.SkipRecord();
+                let oGridSpacing = fReadSlideSize(oStream);
+                this.setGridSpacing(oGridSpacing);
+                //oStream.SkipRecord();
                 break;
             }
             case 1:
@@ -189,12 +190,15 @@
                 break;
             }
             case 4: {
+                oStream.SkipRecord();
+                break;
+            }
+            case 5: {
                 let oSlideViewPr = new CCommonViewPr();
                 oSlideViewPr.fromPPTY(pReader);
                 this.setSlideViewPr(oSlideViewPr);
                 break;
             }
-            case 5:
             case 6: {
                 oStream.SkipRecord();
                 break;
@@ -321,9 +325,10 @@
         return false;
     };
     CCommonViewPr.prototype.readAttribute = function(nType, pReader) {
+    };;
+    CCommonViewPr.prototype.readAttributes = function(pReader) {
     };
-    CCommonViewPr.prototype.fromPPTY = function(pReader) {
-        let nType = pReader.stream.GetUChar();
+    CCommonViewPr.prototype.readChild = function(nType, pReader) {
         if(nType === 0) {
             let oCSldViewPr = new CCSldViewPr();
             oCSldViewPr.fromPPTY(pReader);
@@ -771,11 +776,18 @@
         this.setParentToChild(oPr);
     };
     CScale.prototype.fromPPTY = function(pReader) {
+
         let oStream = pReader.stream;
-        oStream.GetUChar();
+
+        let nStart = oStream.cur;
+        let nEnd = nStart + oStream.GetULong() + 4;
+        let val;
+        val = oStream.GetUChar();
         this.setSx(fReadSlideSize(oStream));
-        oStream.GetUChar();
+        val = oStream.GetUChar();
         this.setSy(fReadSlideSize(oStream));
+
+        oStream.Seek2(nEnd);
     };
     CScale.prototype.readChildXml = function (name, reader) {
         let oChild;

@@ -790,7 +790,10 @@ function BinaryPPTYLoader()
 
     this.ReadViewProps = function()
     {
+       //this.stream.SkipRecord();
+       //return null;
         let oViewPr = new AscFormat.CViewPr();
+        this.stream.GetUChar();
         oViewPr.fromPPTY(this);
         return oViewPr;
     };
