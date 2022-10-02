@@ -1181,7 +1181,7 @@ var editor;
       // ToDo select txt params
       oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
       dataContainer.data = last.data;
-    } else if(this.isOpenOOXInBrowser) {
+    } else if(this.isOpenOOXInBrowser && this.saveDocumentToZip) {
 		var t = this;
 		var title = this.documentTitle;
 		AscCommonExcel.executeInR1C1Mode(false, function () {
@@ -1448,7 +1448,7 @@ var editor;
   	if (file.changes && this.VersionHistory) {
   		this.VersionHistory.changes = file.changes;
 	}
-	this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(file.data);
+	this.isOpenOOXInBrowser = this["asc_isSupportFeature"]("ooxml") && AscCommon.checkOOXMLSignature(file.data);
 	if (this.isOpenOOXInBrowser) {
 		this.openOOXInBrowserZip = file.data;
 	}
@@ -5874,7 +5874,7 @@ var editor;
     }
 
 	  let xlsxData;
-	  this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
+	  this.isOpenOOXInBrowser = this["asc_isSupportFeature"]("ooxml") && AscCommon.checkOOXMLSignature(base64File);
 	  if (this.isOpenOOXInBrowser) {
 		  //slice because array contains garbage after end of function
 		  this.openOOXInBrowserZip = base64File.slice();
@@ -5943,7 +5943,7 @@ var editor;
       return { data: oBinaryFileWriter.Write(true, true), header: oBinaryFileWriter.WriteFileHeader(oBinaryFileWriter.Memory.GetCurPosition(), Asc.c_nVersionNoBase64) };
   };
   spreadsheet_api.prototype.asc_nativeGetFileData = function() {
-	  if (this.isOpenOOXInBrowser) {
+	  if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
 		  let res;
 		  this.saveDocumentToZip(this.wb.model, this.editorId, function(data) {
 			  res = data;
