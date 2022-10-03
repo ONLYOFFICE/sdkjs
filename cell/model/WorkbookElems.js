@@ -1300,6 +1300,1808 @@ var g_oFontProperties = {
 		}
 	}
 
+	function FromXml_ST_DataValidationOperator(val) {
+		var res = null;
+		switch (val) {
+			case "between":
+				res = Asc.EDataValidationOperator.Between;
+				break;
+			case "notBetween":
+				res = Asc.EDataValidationOperator.NotBetween;
+				break;
+			case "equal":
+				res = Asc.EDataValidationOperator.Equal;
+				break;
+			case "notEqual":
+				res = Asc.EDataValidationOperator.NotEqual;
+				break;
+			case "lessThan":
+				res = Asc.EDataValidationOperator.LessThan;
+				break;
+			case "lessThanOrEqual":
+				res = Asc.EDataValidationOperator.LessThanOrEqual;
+				break;
+			case "greaterThan":
+				res = Asc.EDataValidationOperator.GreaterThan;
+				break;
+			case "greaterThanOrEq":
+				res = Asc.EDataValidationOperator.GreaterThanOrEqual;
+		}
+		return res;
+	}
+
+	function ToXml_ST_DataValidationOperator(val) {
+		var res = null;
+		switch (val) {
+			case Asc.EDataValidationOperator.Between:
+				res = "between";
+				break;
+			case Asc.EDataValidationOperator.NotBetween:
+				res = "notBetween";
+				break;
+			case Asc.EDataValidationOperator.Equal:
+				res = "equal";
+				break;
+			case Asc.EDataValidationOperator.NotEqual:
+				res = "notEqual";
+				break;
+			case Asc.EDataValidationOperator.LessThan:
+				res = "lessThan";
+				break;
+			case Asc.EDataValidationOperator.LessThanOrEqual:
+				res = "lessThanOrEqual";
+				break;
+			case Asc.EDataValidationOperator.GreaterThan:
+				res = "greaterThan";
+				break;
+			case Asc.EDataValidationOperator.GreaterThanOrEqual:
+				res = "greaterThanOrEq";
+		}
+		return res;
+	}
+
+	function ToXml_CFOperatorType(nType) {
+		var sType = undefined;
+		switch (nType) {
+			case AscCommonExcel.ECfOperator.Operator_beginsWith:
+				sType = "beginsWith";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_between:
+				sType = "between";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_containsText:
+				sType = "containsText";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_endsWith:
+				sType = "endsWith";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_equal:
+				sType = "equal";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_greaterThan:
+				sType = "greaterThan";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_greaterThanOrEqual:
+				sType = "greaterThanOrEqual";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_lessThan:
+				sType = "lessThan";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_lessThanOrEqual:
+				sType = "lessThanOrEqual";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_notBetween:
+				sType = "notBetween";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_notContains:
+				sType = "notContains";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_notEqual:
+				sType = "notEqual";
+				break;
+		}
+
+		return sType;
+	}
+
+	function FromXml_CFOperatorType(sType) {
+		var nType = undefined;
+		switch (sType) {
+			case "beginsWith":
+				nType = AscCommonExcel.ECfOperator.Operator_beginsWith;
+				break;
+			case "between":
+				nType = AscCommonExcel.ECfOperator.Operator_between;
+				break;
+			case "containsText":
+				nType = AscCommonExcel.ECfOperator.Operator_containsText;
+				break;
+			case "endsWith":
+				nType = AscCommonExcel.ECfOperator.Operator_endsWith;
+				break;
+			case "equal":
+				nType = AscCommonExcel.ECfOperator.Operator_equal;
+				break;
+			case "greaterThan":
+				nType = AscCommonExcel.ECfOperator.Operator_greaterThan;
+				break;
+			case "greaterThanOrEqual":
+				nType = AscCommonExcel.ECfOperator.Operator_greaterThanOrEqual;
+				break;
+			case "lessThan":
+				nType = AscCommonExcel.ECfOperator.Operator_lessThan;
+				break;
+			case "lessThanOrEqual":
+				nType = AscCommonExcel.ECfOperator.Operator_lessThanOrEqual;
+				break;
+			case "notBetween":
+				nType = AscCommonExcel.ECfOperator.Operator_notBetween;
+				break;
+			case "notContains":
+				nType = AscCommonExcel.ECfOperator.Operator_notContains;
+				break;
+			case "notEqual":
+				nType = AscCommonExcel.ECfOperator.Operator_notEqual;
+				break;
+		}
+
+		return nType;
+	}
+
+	function ToXml_ST_TimePeriod(nType) {
+		var sType = undefined;
+		switch (nType) {
+			case AscCommonExcel.ST_TimePeriod.last7Days:
+				sType = "last7Days";
+				break;
+			case AscCommonExcel.ST_TimePeriod.lastMonth:
+				sType = "lastMonth";
+				break;
+			case AscCommonExcel.ST_TimePeriod.lastWeek:
+				sType = "lastWeek";
+				break;
+			case AscCommonExcel.ST_TimePeriod.nextMonth:
+				sType = "nextMonth";
+				break;
+			case AscCommonExcel.ST_TimePeriod.nextWeek:
+				sType = "nextWeek";
+				break;
+			case AscCommonExcel.ST_TimePeriod.thisMonth:
+				sType = "thisMonth";
+				break;
+			case AscCommonExcel.ST_TimePeriod.thisWeek:
+				sType = "thisWeek";
+				break;
+			case AscCommonExcel.ST_TimePeriod.today:
+				sType = "today";
+				break;
+			case AscCommonExcel.ST_TimePeriod.tomorrow:
+				sType = "tomorrow";
+				break;
+			case AscCommonExcel.ST_TimePeriod.yesterday:
+				sType = "yesterday";
+				break;
+		}
+
+		return sType;
+	}
+
+	function FromXml_ST_TimePeriod(sType) {
+		var nType = undefined;
+		switch (sType) {
+			case "last7Days":
+				nType = AscCommonExcel.ST_TimePeriod.last7Days;
+				break;
+			case "lastMonth":
+				nType = AscCommonExcel.ST_TimePeriod.lastMonth;
+				break;
+			case "lastWeek":
+				nType = AscCommonExcel.ST_TimePeriod.lastWeek;
+				break;
+			case "nextMonth":
+				nType = AscCommonExcel.ST_TimePeriod.nextMonth;
+				break;
+			case "nextWeek":
+				nType = AscCommonExcel.ST_TimePeriod.nextWeek;
+				break;
+			case "thisMonth":
+				nType = AscCommonExcel.ST_TimePeriod.thisMonth;
+				break;
+			case "thisWeek":
+				nType = AscCommonExcel.ST_TimePeriod.thisWeek;
+				break;
+			case "today":
+				nType = AscCommonExcel.ST_TimePeriod.today;
+				break;
+			case "tomorrow":
+				nType = AscCommonExcel.ST_TimePeriod.tomorrow;
+				break;
+			case "yesterday":
+				nType = AscCommonExcel.ST_TimePeriod.yesterday;
+				break;
+		}
+
+		return nType;
+	}
+
+	function FromXml_ST_FilterOperator(val) {
+		var res = -1;
+		if ("equal" === val) {
+			res = Asc.c_oAscCustomAutoFilter.equals;
+		} else if ("lessThan" === val) {
+			res = Asc.c_oAscCustomAutoFilter.isLessThan;
+		} else if ("lessThanOrEqual" === val) {
+			res = Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo;
+		} else if ("notEqual" === val) {
+			res = Asc.c_oAscCustomAutoFilter.doesNotEqual;
+		} else if ("greaterThanOrEqual" === val) {
+			res = Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo;
+		} else if ("greaterThan" === val) {
+			res = Asc.c_oAscCustomAutoFilter.isGreaterThan;
+		}
+		return res;
+	}
+
+	function ToXml_ST_FilterOperator(val) {
+		var res = "";
+		if (Asc.c_oAscCustomAutoFilter.equals === val) {
+			res = "equal";
+		} else if (Asc.c_oAscCustomAutoFilter.isLessThan === val) {
+			res = "lessThan";
+		} else if (Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo === val) {
+			res = "lessThanOrEqual";
+		} else if (Asc.c_oAscCustomAutoFilter.doesNotEqual === val) {
+			res = "notEqual";
+		} else if (Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo === val) {
+			res = "greaterThanOrEqual";
+		} else if (Asc.c_oAscCustomAutoFilter.isGreaterThan === val) {
+			res = "greaterThan";
+		}
+		return res;
+	}
+
+	function FromXml_ST_DynamicFilterType(val) {
+		var res = -1;
+		if ("null" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.nullType;
+		} else if ("aboveAverage" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.aboveAverage;
+		} else if ("belowAverage" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.belowAverage;
+		} else if ("tomorrow" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.tomorrow;
+		} else if ("today" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.today;
+		} else if ("yesterday" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.yesterday;
+		} else if ("nextWeek" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.nextWeek;
+		} else if ("thisWeek" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.thisWeek;
+		} else if ("lastWeek" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.lastWeek;
+		} else if ("nextMonth" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.nextMonth;
+		} else if ("thisMonth" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.thisMonth;
+		} else if ("lastMonth" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.lastMonth;
+		} else if ("nextQuarter" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.nextQuarter;
+		} else if ("thisQuarter" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.thisQuarter;
+		} else if ("lastQuarter" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.lastQuarter;
+		} else if ("nextYear" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.nextYear;
+		} else if ("thisYear" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.thisYear;
+		} else if ("lastYear" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.lastYear;
+		} else if ("yearToDate" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.yearToDate;
+		} else if ("Q1" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.q1;
+		} else if ("Q2" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.q2;
+		} else if ("Q3" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.q3;
+		} else if ("Q4" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.q4;
+		} else if ("M1" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m1;
+		} else if ("M2" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m2;
+		} else if ("M3" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m3;
+		} else if ("M4" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m4;
+		} else if ("M5" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m5;
+		} else if ("M6" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m6;
+		} else if ("M7" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m7;
+		} else if ("M8" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m8;
+		} else if ("M9" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m9;
+		} else if ("M10" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m10;
+		} else if ("M11" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m11;
+		} else if ("M12" === val) {
+			res = Asc.c_oAscDynamicAutoFilter.m12;
+		}
+		return res;
+	}
+
+	function ToXml_ST_DynamicFilterType(val) {
+		var res = "";
+		if (Asc.c_oAscDynamicAutoFilter.nullType === val) {
+			res = "null";
+		} else if (Asc.c_oAscDynamicAutoFilter.aboveAverage === val) {
+			res = "aboveAverage";
+		} else if (Asc.c_oAscDynamicAutoFilter.belowAverage === val) {
+			res = "belowAverage";
+		} else if (Asc.c_oAscDynamicAutoFilter.tomorrow === val) {
+			res = "tomorrow";
+		} else if (Asc.c_oAscDynamicAutoFilter.today === val) {
+			res = "today";
+		} else if (Asc.c_oAscDynamicAutoFilter.yesterday === val) {
+			res = "yesterday";
+		} else if (Asc.c_oAscDynamicAutoFilter.nextWeek === val) {
+			res = "nextWeek";
+		} else if (Asc.c_oAscDynamicAutoFilter.thisWeek === val) {
+			res = "thisWeek";
+		} else if (Asc.c_oAscDynamicAutoFilter.lastWeek === val) {
+			res = "lastWeek";
+		} else if (Asc.c_oAscDynamicAutoFilter.nextMonth === val) {
+			res = "nextMonth";
+		} else if (Asc.c_oAscDynamicAutoFilter.thisMonth === val) {
+			res = "thisMonth";
+		} else if (Asc.c_oAscDynamicAutoFilter.lastMonth === val) {
+			res = "lastMonth";
+		} else if (Asc.c_oAscDynamicAutoFilter.nextQuarter === val) {
+			res = "nextQuarter";
+		} else if (Asc.c_oAscDynamicAutoFilter.thisQuarter === val) {
+			res = "thisQuarter";
+		} else if (Asc.c_oAscDynamicAutoFilter.lastQuarter === val) {
+			res = "lastQuarter";
+		} else if (Asc.c_oAscDynamicAutoFilter.nextYear === val) {
+			res = "nextYear";
+		} else if (Asc.c_oAscDynamicAutoFilter.thisYear === val) {
+			res = "thisYear";
+		} else if (Asc.c_oAscDynamicAutoFilter.lastYear === val) {
+			res = "lastYear";
+		} else if (Asc.c_oAscDynamicAutoFilter.yearToDate === val) {
+			res = "yearToDate";
+		} else if (Asc.c_oAscDynamicAutoFilter.q1 === val) {
+			res = "Q1";
+		} else if (Asc.c_oAscDynamicAutoFilter.q2 === val) {
+			res = "Q2";
+		} else if (Asc.c_oAscDynamicAutoFilter.q3 === val) {
+			res = "Q3";
+		} else if (Asc.c_oAscDynamicAutoFilter.q4 === val) {
+			res = "Q4";
+		} else if (Asc.c_oAscDynamicAutoFilter.m1 === val) {
+			res = "M1";
+		} else if (Asc.c_oAscDynamicAutoFilter.m2 === val) {
+			res = "M2";
+		} else if (Asc.c_oAscDynamicAutoFilter.m3 === val) {
+			res = "M3";
+		} else if (Asc.c_oAscDynamicAutoFilter.m4 === val) {
+			res = "M4";
+		} else if (Asc.c_oAscDynamicAutoFilter.m5 === val) {
+			res = "M5";
+		} else if (Asc.c_oAscDynamicAutoFilter.m6 === val) {
+			res = "M6";
+		} else if (Asc.c_oAscDynamicAutoFilter.m7 === val) {
+			res = "M7";
+		} else if (Asc.c_oAscDynamicAutoFilter.m8 === val) {
+			res = "M8";
+		} else if (Asc.c_oAscDynamicAutoFilter.m9 === val) {
+			res = "M9";
+		} else if (Asc.c_oAscDynamicAutoFilter.m10 === val) {
+			res = "M10";
+		} else if (Asc.c_oAscDynamicAutoFilter.m11 === val) {
+			res = "M11";
+		} else if (Asc.c_oAscDynamicAutoFilter.m12 === val) {
+			res = "M12";
+		}
+		return res;
+	}
+
+	function FromXml_ST_DateTimeGrouping(val) {
+		var res = -1;
+		if ("year" === val) {
+			res = Asc.EDateTimeGroup.datetimegroupYear;
+		} else if ("month" === val) {
+			res = Asc.EDateTimeGroup.datetimegroupMonth;
+		} else if ("day" === val) {
+			res = Asc.EDateTimeGroup.datetimegroupDay;
+		} else if ("hour" === val) {
+			res = Asc.EDateTimeGroup.datetimegroupHour;
+		} else if ("minute" === val) {
+			res = Asc.EDateTimeGroup.datetimegroupMinute;
+		} else if ("second" === val) {
+			res = Asc.EDateTimeGroup.datetimegroupSecond;
+		}
+		return res;
+	}
+
+	function ToXml_ST_DateTimeGrouping(val) {
+		var res = "";
+		if (Asc.EDateTimeGroup.datetimegroupYear === val) {
+			res = "year";
+		} else if (Asc.EDateTimeGroup.datetimegroupMonth === val) {
+			res = "month";
+		} else if (Asc.EDateTimeGroup.datetimegroupDay === val) {
+			res = "day";
+		} else if (Asc.EDateTimeGroup.datetimegroupHour === val) {
+			res = "hour";
+		} else if (Asc.EDateTimeGroup.datetimegroupMinute === val) {
+			res = "minute";
+		} else if (Asc.EDateTimeGroup.datetimegroupSecond === val) {
+			res = "second";
+		}
+		return res;
+	}
+
+	function ToXml_ST_HorizontalAlignment(val, default_null) {
+		var res = default_null ? null : -1;
+		switch (val) {
+			case -1:
+				res = "general";
+				break;
+			case AscCommon.align_Left:
+				res = "left";
+				break;
+			case AscCommon.align_Center:
+				res = "center";
+				break;
+			case AscCommon.align_Right:
+				res = "right";
+				break;
+			case AscCommon.align_Justify:
+				res = "justify";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_HorizontalAlignment(val, default_null) {
+		var res = default_null ? null: -1;//general == null
+		if ("left" === val) {
+			res = AscCommon.align_Left;
+		} else if ("center" === val) {
+			res = AscCommon.align_Center;
+		} else if ("right" === val) {
+			res = AscCommon.align_Right;
+		} else if ("fill" === val) {
+			res = AscCommon.align_Justify;
+		} else if ("justify" === val) {
+			res = AscCommon.align_Justify;
+		} else if ("centerContinuous" === val) {
+			res = AscCommon.align_Center;
+		} else if ("distributed" === val) {
+			res = AscCommon.align_Justify;
+		}
+		return res;
+	}
+
+	function ToXml_ST_VerticalAlignment(val, default_null) {
+		var res = default_null ? null : -1;
+		switch (val) {
+			case Asc.c_oAscVAlign.Top:
+				res = "top";
+				break;
+			case Asc.c_oAscVAlign.Center:
+				res = "center";
+				break;
+			case Asc.c_oAscVAlign.Bottom:
+				res = "bottom";
+				break;
+			case Asc.c_oAscVAlign.Just:
+				res = "justify";
+				break;
+			case Asc.c_oAscVAlign.Dist:
+				res = "distributed";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_VerticalAlignment(val) {
+		var res = -1;
+		if ("top" === val) {
+			res = Asc.c_oAscVAlign.Top;
+		} else if ("center" === val) {
+			res = Asc.c_oAscVAlign.Center;
+		} else if ("bottom" === val) {
+			res = Asc.c_oAscVAlign.Bottom;
+		} else if ("justify" === val) {
+			res = Asc.c_oAscVAlign.Just;
+		} else if ("distributed" === val) {
+			res = Asc.c_oAscVAlign.Dist;
+		}
+		return res;
+	}
+
+	function ToXml_ST_CfvoType(nType) {
+		var sType = "";
+		switch (nType) {
+			case AscCommonExcel.ECfvoType.Formula:
+				sType = "formula";
+				break;
+			case AscCommonExcel.ECfvoType.Maximum:
+				sType = "max";
+				break;
+			case AscCommonExcel.ECfvoType.Minimum:
+				sType = "min";
+				break;
+			case AscCommonExcel.ECfvoType.Number:
+				sType = "num";
+				break;
+			case AscCommonExcel.ECfvoType.Percent:
+				sType = "percent";
+				break;
+			case AscCommonExcel.ECfvoType.Percentile:
+				sType = "percentile";
+				break;
+			case AscCommonExcel.ECfvoType.AutoMin:
+				sType = "autoMin";
+				break;
+			case AscCommonExcel.ECfvoType.AutoMax:
+				sType = "autoMax";
+				break;
+		}
+
+		return sType;
+	}
+
+	function FromXml_ST_CfvoType(sType) {
+		var nType = -1;
+		switch (sType) {
+			case "formula":
+				nType = AscCommonExcel.ECfvoType.Formula;
+				break;
+			case "max":
+				nType = AscCommonExcel.ECfvoType.Maximum;
+				break;
+			case "min":
+				nType = AscCommonExcel.ECfvoType.Minimum;
+				break;
+			case "num":
+				nType = AscCommonExcel.ECfvoType.Number;
+				break;
+			case "percent":
+				nType = AscCommonExcel.ECfvoType.Percent;
+				break;
+			case "percentile":
+				nType = AscCommonExcel.ECfvoType.Percentile;
+				break;
+			case "autoMin":
+				nType = AscCommonExcel.ECfvoType.AutoMin;
+				break;
+			case "autoMax":
+				nType = AscCommonExcel.ECfvoType.AutoMax;
+				break;
+		}
+
+		return nType;
+	}
+
+	function FromXml_ST_IconSetType(val) {
+		//в пивотах есть функция FromXml_ST_IconSetType, но там корвенртирцем в другие константы. пока оставляю так, нужно сделать общие
+		var res = undefined;
+		switch (val) {
+			case "3Arrows":
+				res = Asc.EIconSetType.Arrows3;
+				break;
+			case "3ArrowsGray":
+				res = Asc.EIconSetType.Arrows3Gray;
+				break;
+			case "3Flags":
+				res = Asc.EIconSetType.Flags3;
+				break;
+			case "3TrafficLights1":
+				res = Asc.EIconSetType.Traffic3Lights1;
+				break;
+			case "3TrafficLights2":
+				res = Asc.EIconSetType.Traffic3Lights2;
+				break;
+			case "3Signs":
+				res = Asc.EIconSetType.Signs3;
+				break;
+			case "3Symbols":
+				res = Asc.EIconSetType.Symbols3;
+				break;
+			case "3Symbols2":
+				res = Asc.EIconSetType.Symbols3_2;
+				break;
+			case "4Arrows":
+				res = Asc.EIconSetType.Arrows4;
+				break;
+			case "4ArrowsGray":
+				res = Asc.EIconSetType.Arrows4Gray;
+				break;
+			case "4TrafficLights":
+				res = Asc.EIconSetType.Traffic4Lights;
+				break;
+			case "5Arrows":
+				res = Asc.EIconSetType.Arrows5;
+				break;
+			case "5ArrowsGray":
+				res = Asc.EIconSetType.Arrows5Gray;
+				break;
+			case "5Rating":
+				res = Asc.EIconSetType.Rating5;
+				break;
+			case "5Quarters":
+				res = Asc.EIconSetType.Quarters5;
+				break;
+			case "4RedToBlack":
+				res = Asc.EIconSetType.RedToBlack4;
+				break;
+			case "4Rating":
+				res = Asc.EIconSetType.Rating4;
+				break;
+			case "3Stars":
+				res = Asc.EIconSetType.Stars3;
+				break;
+			case "3Triangles":
+				res = Asc.EIconSetType.Triangles3;
+				break;
+			case "5Boxes":
+				res = Asc.EIconSetType.Boxes5;
+				break;
+			case "NoIcons":
+				res = Asc.EIconSetType.NoIcons;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_IconSetType(val) {
+		//в пивотах есть функция ToXml_ST_IconSetType, но там корвенртирцем в другие константы. пока оставляю так, нужно сделать общие
+		var res = undefined;
+		switch (val) {
+			case Asc.EIconSetType.Arrows3:
+				res = "3Arrows";
+				break;
+			case Asc.EIconSetType.Arrows3Gray:
+				res = "3ArrowsGray";
+				break;
+			case Asc.EIconSetType.Flags3:
+				res = "3Flags";
+				break;
+			case Asc.EIconSetType.Traffic3Lights1:
+				res = "3TrafficLights1";
+				break;
+			case Asc.EIconSetType.Traffic3Lights2:
+				res = "3TrafficLights2";
+				break;
+			case Asc.EIconSetType.Signs3:
+				res = "3Signs";
+				break;
+			case Asc.EIconSetType.Symbols3:
+				res = "3Symbols";
+				break;
+			case Asc.EIconSetType.Symbols3_2:
+				res = "3Symbols2";
+				break;
+			case Asc.EIconSetType.Arrows4:
+				res = "4Arrows";
+				break;
+			case Asc.EIconSetType.Arrows4Gray:
+				res = "4ArrowsGray";
+				break;
+			case Asc.EIconSetType.Traffic4Lights:
+				res = "4TrafficLights";
+				break;
+			case Asc.EIconSetType.Arrows5:
+				res = "5Arrows";
+				break;
+			case Asc.EIconSetType.Arrows5Gray:
+				res = "5ArrowsGray";
+				break;
+			case Asc.EIconSetType.Rating5:
+				res = "5Rating";
+				break;
+			case Asc.EIconSetType.Quarters5:
+				res = "5Quarters";
+				break;
+			case Asc.EIconSetType.RedToBlack4:
+				res = "4RedToBlack";
+				break;
+			case Asc.EIconSetType.Rating4:
+				res = "4Rating";
+				break;
+			case Asc.EIconSetType.Stars3:
+				res = "3Stars";
+				break;
+			case Asc.EIconSetType.Triangles3:
+				res = "3Triangles";
+				break;
+			case Asc.EIconSetType.Boxes5:
+				res = "5Boxes";
+				break;
+			case Asc.EIconSetType.NoIcons:
+				res = "NoIcons";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_CfType(val) {
+		var res = null;
+		switch (val) {
+			case "aboveAverage":
+				res = Asc.ECfType.aboveAverage;
+				break;
+			case "beginsWith":
+				res = Asc.ECfType.beginsWith;
+				break;
+			case "cellIs":
+				res = Asc.ECfType.cellIs;
+				break;
+			case "colorScale":
+				res = Asc.ECfType.colorScale;
+				break;
+			case "containsBlanks":
+				res = Asc.ECfType.containsBlanks;
+				break;
+			case "containsErrors":
+				res = Asc.ECfType.containsErrors;
+				break;
+			case "containsText":
+				res = Asc.ECfType.containsText;
+				break;
+			case "dataBar":
+				res = Asc.ECfType.dataBar;
+				break;
+			case "duplicateValues":
+				res = Asc.ECfType.duplicateValues;
+				break;
+			case "expression":
+				res = Asc.ECfType.expression;
+				break;
+			case "notContainsBlanks":
+				res = Asc.ECfType.notContainsBlanks;
+				break;
+			case "notContainsErrors":
+				res = Asc.ECfType.notContainsErrors;
+				break;
+			case "notContainsText":
+				res = Asc.ECfType.notContainsText;
+				break;
+			case "timePeriod":
+				res = Asc.ECfType.timePeriod;
+				break;
+			case "top10":
+				res = Asc.ECfType.top10;
+				break;
+			case "uniqueValues":
+				res = Asc.ECfType.uniqueValues;
+				break;
+			case "endsWith":
+				res = Asc.ECfType.endsWith;
+				break;
+			case "iconSet":
+				res = Asc.ECfType.iconSet;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_CfType(val) {
+		var res = null;
+		switch (val) {
+			case Asc.ECfType.aboveAverage:
+				res = "aboveAverage";
+				break;
+			case Asc.ECfType.beginsWith:
+				res = "beginsWith";
+				break;
+			case Asc.ECfType.cellIs:
+				res = "cellIs";
+				break;
+			case Asc.ECfType.colorScale:
+				res = "colorScale";
+				break;
+			case Asc.ECfType.containsBlanks:
+				res = "containsBlanks";
+				break;
+			case Asc.ECfType.containsErrors:
+				res = "containsErrors";
+				break;
+			case Asc.ECfType.containsText:
+				res = "containsText";
+				break;
+			case Asc.ECfType.dataBar:
+				res = "dataBar";
+				break;
+			case Asc.ECfType.duplicateValues:
+				res = "duplicateValues";
+				break;
+			case Asc.ECfType.expression:
+				res = "expression";
+				break;
+			case Asc.ECfType.notContainsBlanks:
+				res = "notContainsBlanks";
+				break;
+			case Asc.ECfType.notContainsErrors:
+				res = "notContainsErrors";
+				break;
+			case Asc.ECfType.notContainsText:
+				res = "notContainsText";
+				break;
+			case Asc.ECfType.timePeriod:
+				res = "timePeriod";
+				break;
+			case Asc.ECfType.top10:
+				res = "top10";
+				break;
+			case Asc.ECfType.uniqueValues:
+				res = "uniqueValues";
+				break;
+			case Asc.ECfType.endsWith:
+				res = "endsWith";
+				break;
+			case Asc.ECfType.iconSet:
+				res = "iconSet";
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_DataValidationErrorStyle(nType) {
+		var sType = undefined;
+		switch (nType) {
+			case Asc.EDataValidationErrorStyle.Stop:
+				sType = "stop";
+				break;
+			case Asc.EDataValidationErrorStyle.Warning:
+				sType = "warning";
+				break;
+			case Asc.EDataValidationErrorStyle.Information:
+				sType = "information";
+				break;
+		}
+
+		return sType;
+	}
+
+	function FromXml_ST_DataValidationErrorStyle(sType) {
+		var nType = undefined;
+		switch (sType) {
+			case "stop":
+				nType = Asc.EDataValidationErrorStyle.Stop;
+				break;
+			case "warning":
+				nType = Asc.EDataValidationErrorStyle.Warning;
+				break;
+			case "information":
+				nType = Asc.EDataValidationErrorStyle.Information;
+				break;
+		}
+
+		return nType;
+	}
+
+	function FromXml_ST_DataValidationType(val) {
+		var res = undefined;
+		switch (val) {
+			case "none":
+				res = Asc.EDataValidationType.None;
+				break;
+			case "whole":
+				res = Asc.EDataValidationType.Whole;
+				break;
+			case "decimal":
+				res = Asc.EDataValidationType.Decimal;
+				break;
+			case "list":
+				res = Asc.EDataValidationType.List;
+				break;
+			case "date":
+				res = Asc.EDataValidationType.Date;
+				break;
+			case "time":
+				res = Asc.EDataValidationType.Time;
+				break;
+			case "textLength":
+				res = Asc.EDataValidationType.TextLength;
+				break;
+			case "custom":
+				res = Asc.EDataValidationType.Custom;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_DataValidationType(val) {
+		var res = undefined;
+		switch (val) {
+			case Asc.EDataValidationType.None:
+				res = "none";
+				break;
+			case Asc.EDataValidationType.Whole:
+				res = "whole";
+				break;
+			case Asc.EDataValidationType.Decimal:
+				res = "decimal";
+				break;
+			case Asc.EDataValidationType.List:
+				res = "list";
+				break;
+			case Asc.EDataValidationType.Date:
+				res = "date";
+				break;
+			case Asc.EDataValidationType.Time:
+				res = "time";
+				break;
+			case Asc.EDataValidationType.TextLength:
+				res = "textLength";
+				break;
+			case Asc.EDataValidationType.Custom:
+				res = "custom";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_DataValidationImeMode(val) {
+		var res = undefined;
+		switch (val) {
+			case "noControl":
+				res = Asc.EDataValidationImeMode.NoControl;
+				break;
+			case "off":
+				res = Asc.EDataValidationImeMode.Off;
+				break;
+			case "on":
+				res = Asc.EDataValidationImeMode.On;
+				break;
+			case "disabled":
+				res = Asc.EDataValidationImeMode.Disabled;
+				break;
+			case "hiragana":
+				res = Asc.EDataValidationImeMode.Hiragana;
+				break;
+			case "fullKatakana":
+				res = Asc.EDataValidationImeMode.FullKatakana;
+				break;
+			case "halfKatakana":
+				res = Asc.EDataValidationImeMode.HalfKatakana;
+				break;
+			case "fullAlpha":
+				res = Asc.EDataValidationImeMode.FullAlpha;
+				break;
+			case "halfAlpha":
+				res = Asc.EDataValidationImeMode.HalfAlpha;
+				break;
+			case "fullHangul":
+				res = Asc.EDataValidationImeMode.FullHangul;
+				break;
+			case "halfHangul":
+				res = Asc.EDataValidationImeMode.HalfHangul;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_DataValidationImeMode(val) {
+		var res = undefined;
+		switch (val) {
+			case Asc.EDataValidationImeMode.NoControl:
+				res = "noControl";
+				break;
+			case Asc.EDataValidationImeMode.Off:
+				res = "off";
+				break;
+			case Asc.EDataValidationImeMode.On:
+				res = "on";
+				break;
+			case Asc.EDataValidationImeMode.Disabled:
+				res = "disabled";
+				break;
+			case Asc.EDataValidationImeMode.Hiragana:
+				res = "hiragana";
+				break;
+			case Asc.EDataValidationImeMode.FullKatakana:
+				res = "fullKatakana";
+				break;
+			case Asc.EDataValidationImeMode.HalfKatakana:
+				res = "halfKatakana";
+				break;
+			case Asc.EDataValidationImeMode.FullAlpha:
+				res = "fullAlpha";
+				break;
+			case Asc.EDataValidationImeMode.HalfAlpha:
+				res = "halfAlpha";
+				break;
+			case Asc.EDataValidationImeMode.FullHangul:
+				res = "fullHangul";
+				break;
+			case Asc.EDataValidationImeMode.HalfHangul:
+				res = "halfHangul";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_GradientType(val, default_null) {
+		var res = default_null ? null : -1;
+		if ("linear" === val) {
+			res = Asc.c_oAscFillGradType.GRAD_LINEAR;
+		} else if ("path" === val) {
+			res = Asc.c_oAscFillGradType.GRAD_PATH;
+		}
+		return res;
+	}
+
+	function ToXml_ST_GradientType(val, default_null) {
+		var res = default_null ? null : -1;
+		if (Asc.c_oAscFillGradType.GRAD_LINEAR === val) {
+			res = "linear";
+		} else if (Asc.c_oAscFillGradType.GRAD_PATH === val) {
+			res = "path";
+		}
+		return res;
+	}
+
+	function FromXml_ST_FontScheme(val) {
+		var res = null;
+		switch (val) {
+			case  "major":
+				res = Asc.EFontScheme.fontschemeMajor;
+				break;
+			case  "minor":
+				res = Asc.EFontScheme.fontschemeMinor;
+				break;
+			case  Asc.EFontScheme.fontschemeNone:
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_FontScheme(val) {
+		var res = null;
+		switch (val) {
+			case  Asc.EFontScheme.fontschemeMajor:
+				res = "major";
+				break;
+			case  Asc.EFontScheme.fontschemeMinor:
+				res = "minor";
+				break;
+			case  Asc.EFontScheme.fontschemeNone:
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_PageOrder(val) {
+		var res = null;
+		switch (val) {
+			case  "downThenOver":
+				res = 0;
+				break;
+			case  "overThenDown":
+				res = 1;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_PageOrder(val) {
+		var res = null;
+		switch (val) {
+			case  0:
+				res = "downThenOver";
+				break;
+			case  1:
+				res = "overThenDown";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_PageOrientation(val) {
+		var res = null;
+		switch (val) {
+			case "portrait":
+				res = Asc.c_oAscPageOrientation.PagePortrait;
+				break;
+			case "landscape":
+				res = Asc.c_oAscPageOrientation.PageLandscape;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_PageOrientation(val) {
+		var res = null;
+		switch (val) {
+			case Asc.c_oAscPageOrientation.PagePortrait:
+				res = "portrait";
+				break;
+			case Asc.c_oAscPageOrientation.PageLandscape:
+				res = "landscape";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_CellComments(val) {
+		var res = 0;
+		switch (val) {
+			case "none":
+				res = AscCommonExcel.ST_CellComments.none;
+				break;
+			case "asDisplayed":
+				res = AscCommonExcel.ST_CellComments.asDisplayed;
+				break;
+			case "atEnd":
+				res = AscCommonExcel.ST_CellComments.atEnd;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_CellComments(val) {
+		var res = null;
+		switch (val) {
+			case AscCommonExcel.ST_CellComments.none:
+				res = "none";
+				break;
+			case AscCommonExcel.ST_CellComments.asDisplayed:
+				res = "asDisplayed";
+				break;
+			case AscCommonExcel.ST_CellComments.atEnd:
+				res = "atEnd";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_PrintError(val) {
+		var res = 0;
+		switch (val) {
+			case "displayed":
+				res = AscCommonExcel.ST_PrintError.displayed;
+				break;
+			case "blank":
+				res = AscCommonExcel.ST_PrintError.blank;
+				break;
+			case "dash":
+				res = AscCommonExcel.ST_PrintError.dash;
+				break;
+			case "NA":
+				res = AscCommonExcel.ST_PrintError.NA;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_PrintError(val) {
+		var res = null;
+		switch (val) {
+			case AscCommonExcel.ST_PrintError.displayed:
+				res = "displayed";
+				break;
+			case AscCommonExcel.ST_PrintError.blank:
+				res = "blank";
+				break;
+			case AscCommonExcel.ST_PrintError.dash:
+				res = "dash";
+				break;
+			case AscCommonExcel.ST_PrintError.NA:
+				res = "NA";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_SortBy(val) {
+		var res = 0;
+		switch (val) {
+			case "value":
+				res = Asc.ESortBy.sortbyValue;
+				break;
+			case "cellColor":
+				res = Asc.ESortBy.sortbyCellColor;
+				break;
+			case "fontColor":
+				res = Asc.ESortBy.sortbyFontColor;
+				break;
+			case "icon":
+				res = Asc.ESortBy.sortbyIcon;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_SortBy(val) {
+		var res = null;
+		switch (val) {
+			case Asc.ESortBy.sortbyValue:
+				res = "value";
+				break;
+			case Asc.ESortBy.sortbyCellColor:
+				res = "cellColor";
+				break;
+			case Asc.ESortBy.sortbyFontColor:
+				res = "fontColor";
+				break;
+			case Asc.ESortBy.sortbyIcon:
+				res = "icon";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_TabularSlicerCacheSortOrder(val) {
+		var res = null;
+		switch (val) {
+			case "ascending":
+				res = Asc.ST_tabularSlicerCacheSortOrder.Ascending;
+				break;
+			case "descending":
+				res = Asc.ST_tabularSlicerCacheSortOrder.Descending;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_TabularSlicerCacheSortOrder(val) {
+		var res = null;
+		switch (val) {
+			case Asc.ST_tabularSlicerCacheSortOrder.Ascending:
+				res = "ascending";
+				break;
+			case Asc.ST_tabularSlicerCacheSortOrder.Descending:
+				res = "descending";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_SlicerCacheCrossFilter(val) {
+		var res = null;
+		switch (val) {
+			case "showItemsWithDataAtTop":
+				res = Asc.ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
+				break;
+			case "showItemsWithNoData":
+				res = Asc.ST_slicerCacheCrossFilter.ShowItemsWithNoData;
+				break;
+			default:
+				res = Asc.ST_slicerCacheCrossFilter.None;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_SlicerCacheCrossFilter(val) {
+		var res = null;
+		switch (val) {
+			case Asc.ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop:
+				res = "showItemsWithDataAtTop";
+				break;
+			case Asc.ST_slicerCacheCrossFilter.ShowItemsWithNoData:
+				res = "showItemsWithNoData";
+				break;
+			default:
+				res = "none";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_SortMethod(val) {
+		var res = null;
+		switch (val) {
+			case "stroke":
+				res = AscCommonExcel.ESortMethod.sortmethodStroke;
+				break;
+			case "pinYin":
+				res = AscCommonExcel.ESortMethod.sortmethodPinYin;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_SortMethod(val) {
+		var res = null;
+		switch (val) {
+			case AscCommonExcel.ESortMethod.sortmethodStroke:
+				res = "stroke";
+				break;
+			case AscCommonExcel.ESortMethod.sortmethodPinYin:
+				res = "pinYin";
+				break;
+		}
+		return res;
+	}
+
+	function FromXML_ST_DispBlanksAs(val) {
+		var res = null;
+		switch (val) {
+			case "span":
+				res = Asc.c_oAscEDispBlanksAs.Span;
+				break;
+			case "gap":
+				res = Asc.c_oAscEDispBlanksAs.Gap;
+				break;
+			case "zero":
+				res = Asc.c_oAscEDispBlanksAs.Zero;
+				break;
+		}
+		return res;
+	}
+
+	function ToXML_ST_DispBlanksAs(val) {
+		var res = null;
+		switch (val) {
+			case Asc.c_oAscEDispBlanksAs.Span:
+				res = "span";
+				break;
+			case Asc.c_oAscEDispBlanksAs.Gap:
+				res = "gap";
+				break;
+			case Asc.c_oAscEDispBlanksAs.Zero:
+				res = "zero";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_SparklineType(val) {
+		var res = null;
+		switch (val) {
+			case "line":
+				res = Asc.c_oAscSparklineType.Line;
+				break;
+			case "column":
+				res = Asc.c_oAscSparklineType.Column;
+				break;
+			case "stacked":
+				res = Asc.c_oAscSparklineType.Stacked;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_SparklineType(val) {
+		var res = null;
+		switch (val) {
+			case Asc.c_oAscSparklineType.Line:
+				res = "line";
+				break;
+			case Asc.c_oAscSparklineType.Column:
+				res = "column";
+				break;
+			case Asc.c_oAscSparklineType.Stacked:
+				res = "stacked";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_UnderlineValues(val) {
+		var res = null;
+		switch (val) {
+			case "single":
+				res = Asc.EUnderline.underlineSingle;
+				break;
+			case "double":
+				res = Asc.EUnderline.underlineDouble;
+				break;
+			case "singleAccounting":
+				res = Asc.EUnderline.underlineSingleAccounting;
+				break;
+			case "doubleAccounting":
+				res = Asc.EUnderline.underlineDoubleAccounting;
+				break;
+			case "none":
+				res = Asc.EUnderline.underlineNone;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_UnderlineValues(val) {
+		var res = null;
+		switch (val) {
+			case Asc.EUnderline.underlineSingle:
+				res = "single";
+				break;
+			case Asc.EUnderline.underlineDouble:
+				res = "double";
+				break;
+			case Asc.EUnderline.underlineSingleAccounting:
+				res = "singleAccounting";
+				break;
+			case Asc.EUnderline.underlineDoubleAccounting:
+				res = "doubleAccounting";
+				break;
+			case Asc.EUnderline.underlineNone:
+				res = "none";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_SparklineAxisMinMax(val) {
+		var res = null;
+		switch (val) {
+			case "individual":
+				res = Asc.c_oAscSparklineAxisMinMax.Individual;
+				break;
+			case "group":
+				res = Asc.c_oAscSparklineAxisMinMax.Group;
+				break;
+			case "custom":
+				res = Asc.c_oAscSparklineAxisMinMax.Custom;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_SparklineAxisMinMax(val) {
+		var res = null;
+		switch (val) {
+			case Asc.c_oAscSparklineAxisMinMax.Individual:
+				res = "individual";
+				break;
+			case Asc.c_oAscSparklineAxisMinMax.Group:
+				res = "group";
+				break;
+			case Asc.c_oAscSparklineAxisMinMax.Custom:
+				res = "custom";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_CellFormulaType(val) {
+		var res = null;
+		switch (val) {
+			case "array":
+				res = window["Asc"].ECellFormulaType.cellformulatypeArray;
+				break;
+			case "shared":
+				res = window["Asc"].ECellFormulaType.cellformulatypeShared;
+				break;
+			case "dataTable":
+				res = window["Asc"].ECellFormulaType.cellformulatypeDataTable;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_CellFormulaType(val) {
+		var res = null;
+		switch (val) {
+			case window["Asc"].ECellFormulaType.cellformulatypeArray:
+				res = "array";
+				break;
+			case window["Asc"].ECellFormulaType.cellformulatypeShared:
+				res = "shared";
+				break;
+			case window["Asc"].ECellFormulaType.cellformulatypeDataTable:
+				res = "dataTable";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_TableStyleType(val) {
+		var res = null;
+		switch (val) {
+			case "wholeTable":
+				res = Asc.ETableStyleType.tablestyletypeWholeTable;
+				break;
+			case "headerRow":
+				res = Asc.ETableStyleType.tablestyletypeHeaderRow;
+				break;
+			case "totalRow":
+				res = Asc.ETableStyleType.tablestyletypeTotalRow;
+				break;
+			case "firstColumn":
+				res = Asc.ETableStyleType.tablestyletypeFirstColumn;
+				break;
+			case "lastColumn":
+				res = Asc.ETableStyleType.tablestyletypeLastColumn;
+				break;
+			case "firstRowStripe":
+				res = Asc.ETableStyleType.tablestyletypeFirstRowStripe;
+				break;
+			case "secondRowStripe":
+				res = Asc.ETableStyleType.tablestyletypeSecondRowStripe;
+				break;
+			case "firstColumnStripe":
+				res = Asc.ETableStyleType.tablestyletypeFirstColumnStripe;
+				break;
+			case "secondColumnStripe":
+				res = Asc.ETableStyleType.tablestyletypeSecondColumnStripe;
+				break;
+			case "firstHeaderCell":
+				res = Asc.ETableStyleType.tablestyletypeFirstHeaderCell;
+				break;
+			case "lastHeaderCell":
+				res = Asc.ETableStyleType.tablestyletypeLastHeaderCell;
+				break;
+			case "firstTotalCell":
+				res = Asc.ETableStyleType.tablestyletypeFirstTotalCell;
+				break;
+			case "lastTotalCell":
+				res = Asc.ETableStyleType.tablestyletypeLastTotalCell;
+				break;
+			case "firstSubtotalColumn":
+				res = Asc.ETableStyleType.tablestyletypeFirstSubtotalColumn;
+				break;
+			case "secondSubtotalColumn":
+				res = Asc.ETableStyleType.tablestyletypeSecondSubtotalColumn;
+				break;
+			case "thirdSubtotalColumn":
+				res = Asc.ETableStyleType.tablestyletypeThirdSubtotalColumn;
+				break;
+			case "firstSubtotalRow":
+				res = Asc.ETableStyleType.tablestyletypeFirstSubtotalRow;
+				break;
+			case "secondSubtotalRow":
+				res = Asc.ETableStyleType.tablestyletypeSecondSubtotalRow;
+				break;
+			case "thirdSubtotalRow":
+				res = Asc.ETableStyleType.tablestyletypeThirdSubtotalRow;
+				break;
+			case "blankRow":
+				res = Asc.ETableStyleType.tablestyletypeBlankRow;
+				break;
+			case "firstColumnSubheading":
+				res = Asc.ETableStyleType.tablestyletypeFirstColumnSubheading;
+				break;
+			case "secondColumnSubheading":
+				res = Asc.ETableStyleType.tablestyletypeSecondColumnSubheading;
+				break;
+			case "thirdColumnSubheading":
+				res = Asc.ETableStyleType.tablestyletypeThirdColumnSubheading;
+				break;
+			case "firstRowSubheading":
+				res = Asc.ETableStyleType.tablestyletypeFirstRowSubheading;
+				break;
+			case "secondRowSubheading":
+				res = Asc.ETableStyleType.tablestyletypeSecondRowSubheading;
+				break;
+			case "thirdRowSubheading":
+				res = Asc.ETableStyleType.tablestyletypeThirdRowSubheading;
+				break;
+			case "pageFieldLabels":
+				res = Asc.ETableStyleType.tablestyletypePageFieldLabels;
+				break;
+			case "pageFieldValues":
+				res = Asc.ETableStyleType.tablestyletypePageFieldValues;
+				break;
+
+		}
+		return res;
+	}
+
+	function ToXml_ST_TableStyleType(val) {
+		var res = null;
+		switch (val) {
+			case Asc.ETableStyleType.tablestyletypeWholeTable:
+				res = "wholeTable";
+				break;
+			case Asc.ETableStyleType.tablestyletypeHeaderRow:
+				res = "headerRow";
+				break;
+			case Asc.ETableStyleType.tablestyletypeTotalRow:
+				res = "totalRow";
+				break;
+			case Asc.ETableStyleType.tablestyletypeFirstColumn:
+				res = "firstColumn";
+				break;
+			case Asc.ETableStyleType.tablestyletypeLastColumn:
+				res = "lastColumn";
+				break;
+			case Asc.ETableStyleType.tablestyletypeFirstRowStripe:
+				res = "firstRowStripe";
+				break;
+			case Asc.ETableStyleType.tablestyletypeSecondRowStripe:
+				res = "secondRowStripe";
+				break;
+			case Asc.ETableStyleType.tablestyletypeFirstColumnStripe:
+				res = "firstColumnStripe";
+				break;
+			case Asc.ETableStyleType.tablestyletypeSecondColumnStripe:
+				res = "secondColumnStripe";
+				break;
+			case Asc.ETableStyleType.tablestyletypeFirstHeaderCell:
+				res = "firstHeaderCell";
+				break;
+			case Asc.ETableStyleType.tablestyletypeLastHeaderCell:
+				res = "lastHeaderCell";
+				break;
+			case Asc.ETableStyleType.tablestyletypeFirstTotalCell:
+				res = "firstTotalCell";
+				break;
+			case Asc.ETableStyleType.tablestyletypeLastTotalCell:
+				res = "lastTotalCell";
+				break;
+			case Asc.ETableStyleType.tablestyletypeFirstSubtotalColumn:
+				res = "firstSubtotalColumn";
+				break;
+			case Asc.ETableStyleType.tablestyletypeSecondSubtotalColumn:
+				res = "secondSubtotalColumn";
+				break;
+			case Asc.ETableStyleType.tablestyletypeThirdSubtotalColumn:
+				res = "thirdSubtotalColumn";
+				break;
+			case Asc.ETableStyleType.tablestyletypeFirstSubtotalRow:
+				res = "firstSubtotalRow";
+				break;
+			case Asc.ETableStyleType.tablestyletypeSecondSubtotalRow:
+				res = "secondSubtotalRow";
+				break;
+			case Asc.ETableStyleType.tablestyletypeThirdSubtotalRow:
+				res = "thirdSubtotalRow";
+				break;
+			case Asc.ETableStyleType.tablestyletypeBlankRow:
+				res = "blankRow";
+				break;
+			case Asc.ETableStyleType.tablestyletypeFirstColumnSubheading:
+				res = "firstColumnSubheading";
+				break;
+			case Asc.ETableStyleType.tablestyletypeSecondColumnSubheading:
+				res = "secondColumnSubheading";
+				break;
+			case Asc.ETableStyleType.tablestyletypeThirdColumnSubheading:
+				res = "thirdColumnSubheading";
+				break;
+			case Asc.ETableStyleType.tablestyletypeFirstRowSubheading:
+				res = "firstRowSubheading";
+				break;
+			case Asc.ETableStyleType.tablestyletypeSecondRowSubheading:
+				res = "secondRowSubheading";
+				break;
+			case Asc.ETableStyleType.tablestyletypeThirdRowSubheading:
+				res = "thirdRowSubheading";
+				break;
+			case Asc.ETableStyleType.tablestyletypePageFieldLabels:
+				res = "pageFieldLabels";
+				break;
+			case Asc.ETableStyleType.tablestyletypePageFieldValues:
+				res = "pageFieldValues";
+				break;
+
+		}
+		return res;
+	}
+
+	function FromXml_ST_DataBarDirection(val) {
+		var res = undefined;
+		switch (val) {
+			case "context":
+				res = AscCommonExcel.EDataBarDirection.context;
+				break;
+			case "leftToRight":
+				res = AscCommonExcel.EDataBarDirection.leftToRight;
+				break;
+			case "rightToLeft":
+				res = AscCommonExcel.EDataBarDirection.rightToLeft;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_DataBarDirection(val) {
+		var res = undefined;
+		switch (val) {
+			case AscCommonExcel.EDataBarDirection.context:
+				res = "context";
+				break;
+			case AscCommonExcel.EDataBarDirection.leftToRight:
+				res = "leftToRight";
+				break;
+			case AscCommonExcel.EDataBarDirection.rightToLeft:
+				res = "rightToLeft";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_DataBarAxisPosition(val) {
+		var res = undefined;
+		switch (val) {
+			case "automatic":
+				res = AscCommonExcel.EDataBarAxisPosition.context;
+				break;
+			case "middle":
+				res = AscCommonExcel.EDataBarAxisPosition.middle;
+				break;
+			case "none":
+				res = AscCommonExcel.EDataBarAxisPosition.none;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_DataBarAxisPosition(val) {
+		var res = undefined;
+		switch (val) {
+			case AscCommonExcel.EDataBarAxisPosition.automatic:
+				res = "automatic";
+				break;
+			case AscCommonExcel.EDataBarAxisPosition.middle:
+				res = "middle";
+				break;
+			case AscCommonExcel.EDataBarAxisPosition.none:
+				res = "none";
+				break;
+		}
+		return res;
+	}
+
+	function FromXml_ST_CellValueType(val) {
+		var res = undefined;
+		switch (val) {
+			case "s":
+				res = CellValueType.String;
+				break;
+			case "str":
+				res = CellValueType.String;
+				break;
+			case "n":
+				res = CellValueType.Number;
+				break;
+			case "e":
+				res = CellValueType.Error;
+				break;
+			case "b":
+				res =  CellValueType.Bool;
+				break;
+			case "inlineStr":
+				res = CellValueType.String;
+				break;
+			case "d":
+				res = CellValueType.String;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_CellValueType(val) {
+		var res = undefined;
+		switch (val) {
+			case CellValueType.String:
+				res = "s";
+				break;
+			/*case CellValueType.String:
+				res = "str";
+				break;*/
+			case CellValueType.Number:
+				res = "n";
+				break;
+			case CellValueType.Error:
+				res = "e";
+				break;
+			case CellValueType.Bool:
+				res =   "b";
+				break;
+			/*case "inlineStr":
+				res = CellValueType.String;
+				break;
+			case "d":
+				res = CellValueType.String;
+				break;*/
+		}
+		return res;
+	}
+
 	function GradientFill() {
 		//Attributes
 		this.type = Asc.c_oAscFillGradType.GRAD_LINEAR;
@@ -12370,5 +14172,71 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].CT_Filter = CT_Filter;
 
 
+	window['AscCommonExcel'].ToXml_ST_DataValidationOperator = ToXml_ST_DataValidationOperator;
+	window['AscCommonExcel'].FromXml_ST_DataValidationOperator = FromXml_ST_DataValidationOperator;
+	window['AscCommonExcel'].ToXml_CFOperatorType = ToXml_CFOperatorType;
+	window['AscCommonExcel'].FromXml_CFOperatorType = FromXml_CFOperatorType;
+	window['AscCommonExcel'].ToXml_ST_TimePeriod = ToXml_ST_TimePeriod;
+	window['AscCommonExcel'].FromXml_ST_TimePeriod = FromXml_ST_TimePeriod;
+	window["AscCommonExcel"].FromXml_ST_FilterOperator = FromXml_ST_FilterOperator;
+	window["AscCommonExcel"].ToXml_ST_FilterOperator = ToXml_ST_FilterOperator;
+	window["AscCommonExcel"].ToXml_ST_DynamicFilterType = ToXml_ST_DynamicFilterType;
+	window["AscCommonExcel"].FromXml_ST_DynamicFilterType = FromXml_ST_DynamicFilterType;
+	window["AscCommonExcel"].ToXml_ST_DateTimeGrouping = ToXml_ST_DateTimeGrouping;
+	window["AscCommonExcel"].FromXml_ST_DateTimeGrouping = FromXml_ST_DateTimeGrouping;
+	window["AscCommonExcel"].ToXml_ST_HorizontalAlignment = ToXml_ST_HorizontalAlignment;
+	window["AscCommonExcel"].FromXml_ST_HorizontalAlignment = FromXml_ST_HorizontalAlignment;
+	window["AscCommonExcel"].ToXml_ST_VerticalAlignment = ToXml_ST_VerticalAlignment;
+	window["AscCommonExcel"].FromXml_ST_VerticalAlignment = FromXml_ST_VerticalAlignment;
+	window["AscCommonExcel"].ToXml_ST_CfvoType = ToXml_ST_CfvoType;
+	window["AscCommonExcel"].FromXml_ST_CfvoType = FromXml_ST_CfvoType;
+	window["AscCommonExcel"].ToXml_ST_IconSetType = ToXml_ST_IconSetType;
+	window["AscCommonExcel"].FromXml_ST_IconSetType = FromXml_ST_IconSetType;
+	window["AscCommonExcel"].ToXml_ST_CfType = ToXml_ST_CfType;
+	window["AscCommonExcel"].FromXml_ST_CfType = FromXml_ST_CfType;
+	window["AscCommonExcel"].ToXml_ST_DataValidationErrorStyle = ToXml_ST_DataValidationErrorStyle;
+	window["AscCommonExcel"].FromXml_ST_DataValidationErrorStyle = FromXml_ST_DataValidationErrorStyle;
+	window["AscCommonExcel"].ToXml_ST_DataValidationType = ToXml_ST_DataValidationType;
+	window["AscCommonExcel"].FromXml_ST_DataValidationType = FromXml_ST_DataValidationType;
+	window["AscCommonExcel"].ToXml_ST_DataValidationImeMode = ToXml_ST_DataValidationImeMode;
+	window["AscCommonExcel"].FromXml_ST_DataValidationImeMode = FromXml_ST_DataValidationImeMode;
+	window["AscCommonExcel"].ToXml_ST_GradientType = ToXml_ST_GradientType;
+	window["AscCommonExcel"].FromXml_ST_GradientType = FromXml_ST_GradientType;
+	window["AscCommonExcel"].FromXml_ST_FontScheme = FromXml_ST_FontScheme;
+	window["AscCommonExcel"].ToXml_ST_FontScheme = ToXml_ST_FontScheme;
+	window["AscCommonExcel"].FromXml_ST_PageOrder = FromXml_ST_PageOrder;
+	window["AscCommonExcel"].ToXml_ST_PageOrder = ToXml_ST_PageOrder;
+	window["AscCommonExcel"].FromXml_ST_PageOrientation = FromXml_ST_PageOrientation;
+	window["AscCommonExcel"].ToXml_ST_PageOrientation = ToXml_ST_PageOrientation;
+	window["AscCommonExcel"].FromXml_ST_CellComments = FromXml_ST_CellComments;
+	window["AscCommonExcel"].ToXml_ST_CellComments = ToXml_ST_CellComments;
+	window["AscCommonExcel"].FromXml_ST_PrintError = FromXml_ST_PrintError;
+	window["AscCommonExcel"].ToXml_ST_PrintError = ToXml_ST_PrintError;
+	window["AscCommonExcel"].FromXml_ST_SortBy = FromXml_ST_SortBy;
+	window["AscCommonExcel"].ToXml_ST_SortBy = ToXml_ST_SortBy;
+	window["AscCommonExcel"].FromXml_ST_TabularSlicerCacheSortOrder = FromXml_ST_TabularSlicerCacheSortOrder;
+	window["AscCommonExcel"].ToXml_ST_TabularSlicerCacheSortOrder = ToXml_ST_TabularSlicerCacheSortOrder;
+	window["AscCommonExcel"].FromXml_ST_SlicerCacheCrossFilter = FromXml_ST_SlicerCacheCrossFilter;
+	window["AscCommonExcel"].ToXml_ST_SlicerCacheCrossFilter = ToXml_ST_SlicerCacheCrossFilter;
+	window["AscCommonExcel"].FromXml_ST_SortMethod = FromXml_ST_SortMethod;
+	window["AscCommonExcel"].ToXml_ST_SortMethod = ToXml_ST_SortMethod;
+	window["AscCommonExcel"].FromXML_ST_DispBlanksAs = FromXML_ST_DispBlanksAs;
+	window["AscCommonExcel"].ToXML_ST_DispBlanksAs = ToXML_ST_DispBlanksAs;
+	window["AscCommonExcel"].FromXml_ST_SparklineType = FromXml_ST_SparklineType;
+	window["AscCommonExcel"].ToXml_ST_SparklineType = ToXml_ST_SparklineType;
+	window["AscCommonExcel"].FromXml_ST_UnderlineValues = FromXml_ST_UnderlineValues;
+	window["AscCommonExcel"].ToXml_ST_UnderlineValues = ToXml_ST_UnderlineValues;
+	window["AscCommonExcel"].FromXml_ST_SparklineAxisMinMax = FromXml_ST_SparklineAxisMinMax;
+	window["AscCommonExcel"].ToXml_ST_SparklineAxisMinMax = ToXml_ST_SparklineAxisMinMax;
+	window["AscCommonExcel"].FromXml_ST_CellFormulaType = FromXml_ST_CellFormulaType;
+	window["AscCommonExcel"].ToXml_ST_CellFormulaType = ToXml_ST_CellFormulaType;
+	window["AscCommonExcel"].FromXml_ST_TableStyleType = FromXml_ST_TableStyleType;
+	window["AscCommonExcel"].ToXml_ST_TableStyleType = ToXml_ST_TableStyleType;
+	window["AscCommonExcel"].FromXml_ST_DataBarDirection = FromXml_ST_DataBarDirection;
+	window["AscCommonExcel"].ToXml_ST_DataBarDirection = ToXml_ST_DataBarDirection;
+	window["AscCommonExcel"].FromXml_ST_DataBarAxisPosition = FromXml_ST_DataBarAxisPosition;
+	window["AscCommonExcel"].ToXml_ST_DataBarAxisPosition = ToXml_ST_DataBarAxisPosition;
+	window["AscCommonExcel"].FromXml_ST_CellValueType = FromXml_ST_CellValueType;
+	window["AscCommonExcel"].ToXml_ST_CellValueType = ToXml_ST_CellValueType;
 
 })(window);
