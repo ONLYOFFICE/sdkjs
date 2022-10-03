@@ -12799,6 +12799,7 @@ background-repeat: no-repeat;\
 		}
 
 		var docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
+		//TODO enforcment!!! - проверить данный флаг
 		if (docProtection) {
 			return docProtection.edit;
 		}
@@ -12834,7 +12835,7 @@ background-repeat: no-repeat;\
 
 				History.EndTransaction();*/
 			} else {
-				//t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename, c_oAscError.Level.NoCritical);
+				t.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
 			}
 		};
 
