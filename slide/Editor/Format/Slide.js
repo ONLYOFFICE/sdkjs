@@ -1387,7 +1387,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 }
             }
         }
-        this.drawGrid(graphics);
+        if(!bCheckBounds && !bSlideShow) {
+            this.drawGrid(graphics);
+        }
         if(bClipBySlide) {
             graphics.RestoreGrState();
         }

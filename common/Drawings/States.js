@@ -707,6 +707,13 @@ TrackSelectionRect.prototype =
         this.tracked = false;
         this.startX = dStartX;
         this.startY = dStartY;
+        let oTrack = this.drawingObjects.arrPreTrackObjects[0];
+        if(oTrack) {
+            let bHor = this.guide.isHorizontal();
+            let dPos = bHor ? dStartX : dStartY;
+            let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(dStartX, dStartY, 0);
+            editor.sendEvent("asc_onTrackGuide", dPos, oConvertedPos.X, oConvertedPos.Y);
+        }
     }
 
     TrackGuideState.prototype.onMouseDown = function (e, x, y, pageIndex) {
@@ -757,6 +764,7 @@ TrackSelectionRect.prototype =
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.updateOverlay();
         this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+        editor.sendEvent("asc_onTrackGuide");
     };
 
 function PreChangeAdjState(drawingObjects, majorObject)
