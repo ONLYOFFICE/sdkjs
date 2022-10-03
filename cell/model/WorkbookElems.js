@@ -3134,25 +3134,18 @@ var g_oFontProperties = {
 		switch (nType) {
 			case this.Properties.type:
 				return this.type;
-				break;
 			case this.Properties.degree:
 				return this.degree;
-				break;
 			case this.Properties.left:
 				return this.left;
-				break;
 			case this.Properties.right:
 				return this.right;
-				break;
 			case this.Properties.top:
 				return this.top;
-				break;
 			case this.Properties.bottom:
 				return this.bottom;
-				break;
 			case this.Properties.stop:
 				return this.stop;
-				break;
 		}
 	};
 	GradientFill.prototype.setProperty = function (nType, value) {
