@@ -1319,10 +1319,11 @@
 		};
 
 		asc_CEventsController.prototype.EnterText = function (codePoints) {
+			//TODO практически копия _onWindowKeyPress - после того, как будет включена функция EnterText - проверить и объединить функции
 			// Нельзя при отключенных эвентах возвращать false (это касается и ViewerMode)
-			/*if (!this.enableKeyEvents) {
+			if (!this.enableKeyEvents) {
 				return true;
-			}*/
+			}
 
 			// не вводим текст в режиме просмотра
 			// если в FF возвращать false, то отменяется дальнейшая обработка серии keydown -> keypress -> keyup
