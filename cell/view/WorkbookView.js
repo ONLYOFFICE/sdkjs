@@ -1758,10 +1758,10 @@
     var objectRender = this.getWorksheet().objectRender;
     return (0 < objectRender.getSelectedGraphicObjects().length) ? objectRender.graphicObjectKeyPress(e) : false;
   };
-	WorkbookView.prototype._onGraphicObjectWindowEnterText = function(codePoints) {
-		var objectRender = this.getWorksheet().objectRender;
-		return objectRender.controller && (0 < objectRender.getSelectedGraphicObjects().length) ? objectRender.controller.enterText(codePoints) : false;
-	};
+  WorkbookView.prototype._onGraphicObjectWindowEnterText = function(codePoints) {
+    var objectRender = this.getWorksheet().objectRender;
+    return objectRender.controller && (0 < objectRender.getSelectedGraphicObjects().length) ? objectRender.controller.enterText(codePoints) : false;
+  };
   WorkbookView.prototype._onGraphicObjecMouseWheel = function(deltaX, deltaY) {
     var objectRender = this.getWorksheet().objectRender;
       if(objectRender && objectRender.controller) {

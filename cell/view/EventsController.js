@@ -2027,7 +2027,6 @@
 
 		asc_CEventsController.prototype._setSkipKeyPress = function (val) {
 			this.skipKeyPress = val;
-			console.log(val)
 		};
 
 		//------------------------------------------------------------export---------------------------------------------------
