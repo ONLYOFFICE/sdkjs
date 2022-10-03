@@ -125,6 +125,9 @@ CDocProtect.prototype.getAlgorithmNameForCheck = function () {
 	}
 	return null;
 };
+CDocProtect.prototype.isPassword = function () {
+	return this.algorithmName != null || this.cryptAlgorithmSid != null;
+};
 
 
 
