@@ -12819,10 +12819,21 @@ background-repeat: no-repeat;\
 		}
 		var t = this;
 
+		var calculatedHashValue;
 		var callback = function (res) {
 			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 
 			if (res) {
+				if (props) {
+					//устанавливаем
+					documentProtection.hashValue = calculatedHashValue;
+				} else {
+					//снимаем
+					documentProtection.hashValue = null;
+					documentProtection.saltValue = null;
+					documentProtection.spinCount = null;
+					documentProtection.algorithmName = null;
+				}
 				/*History.Create_NewPoint();
 				History.StartTransaction();
 				if (!t.wbModel.getWorksheet(i).setProtectedSheet(props, true)) {
@@ -12835,42 +12846,45 @@ background-repeat: no-repeat;\
 
 				History.EndTransaction();*/
 			} else {
-				t.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
+				t.sendEvent("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
 			}
 		};
 
 		var documentProtection = oDocument.Settings.DocumentProtection;
-		if (!documentProtection) {
-			documentProtection = new CDocProtect();
-			documentProtection.generateHashParams();
+		var salt, alg, spinCount;
+		if (documentProtection) {
+			salt = documentProtection.saltValue;
+			spinCount =  documentProtection.spinCount;
+			alg = documentProtection.cryptAlgorithmSid;
+		} else {
+			var params = AscCommon.generateHashParams();
+			salt = params.saltValue;
+			spinCount = params.spinCount;
+			alg = AscCommon.c_oSerCryptAlgorithmSid.SHA_512;
 		}
 
 		var checkPassword = function (hash, doNotCheckPassword) {
 			if (doNotCheckPassword) {
 				//t.collaborativeEditing.lock([lockInfo], callback);
-				callback();
+				callback(true);
 			} else {
 				if (props) {
-					documentProtection.hashValue = hash && hash[0] ? hash[0] : null;
+					//устанавливаем защиту
+					calculatedHashValue = hash && hash[0] ? hash[0] : null;
 					//t.collaborativeEditing.lock([lockInfo], callback);
-					callback();
+					callback(true);
 				} else {
-					if (hash && hash[0] === documentProtection.hashValue) {
-						documentProtection.hashValue = null;
-						documentProtection.saltValue = null;
-						documentProtection.spinCount = null;
-						documentProtection.algorithmName = null;
+					//пробуем снять защиту
+					if (documentProtection && hash && hash[0] === documentProtection.hashValue) {
 						//t.collaborativeEditing.lock([lockInfo], callback);
-						callback();
+						callback(true);
 					} else {
 						//неверный пароль
-						t.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect,
-							c_oAscError.Level.NoCritical);
-						t.handlers.trigger("asc_onChangeDocumentProtection");
+						t.sendEvent("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
+						t.sendEvent("asc_onChangeDocumentProtection");
 						t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 					}
 				}
-				props.temporaryPassword = null;
 			}
 		};
 
@@ -12881,7 +12895,7 @@ background-repeat: no-repeat;\
 			if (password === "") {
 				checkPassword([""]);
 			} else {
-				var checkHash = {password: password, salt: documentProtection.saltValue, spinCount: documentProtection.spinCount, alg: documentProtection.getAlgorithmNameForCheck()};
+				var checkHash = {password: password, salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)};
 				AscCommon.calculateProtectHash([checkHash], checkPassword);
 			}
 		} else {
