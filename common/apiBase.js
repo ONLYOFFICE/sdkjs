@@ -216,6 +216,7 @@
 		this.isUseNativeViewer = true;
 
 		this.openedAt = undefined;
+		this.maxChangesSize = undefined;
 
 		this.isBlurEditor = false;
 		this._correctEmbeddedWork();
@@ -1262,6 +1263,26 @@
 			this.autoSaveGap = autoSaveGap * 1000; // Нам выставляют в секундах
 		}
 	};
+	baseEditorsApi.prototype.checkChangesSize = function() {
+		if (undefined === this.maxChangesSize) {
+			return;
+		}
+		let api = this;
+		let localSize = History.GetLocalChangesSize ? History.GetLocalChangesSize() : 0;
+		let serverSize = this.CoAuthoringApi.get_serverChangesSize();
+		if (localSize + serverSize > api.maxChangesSize) {
+			api.asc_stopSaving();
+			api.sendEvent("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange,
+				function(can) {
+					if (can) {
+						api.asc_coAuthoringDisconnect();
+					} else {
+						api.asc_Undo ? api.asc_Undo() : api.Undo();
+						api.asc_continueSaving();
+					}
+				});
+		}
+	};
 	// send chart message
 	baseEditorsApi.prototype.asc_coAuthoringChatSendMessage      = function(message)
 	{
@@ -1401,12 +1422,16 @@
 		};
 		this.CoAuthoringApi.onLicenseChanged          = function(res)
 		{
+			if (res['settings'] && res['settings']['maxChangesSize']) {
+				t.maxChangesSize = res['settings']['maxChangesSize'];
+			}
+			let licenseType = res['licenseType'];
 			if (t.licenseResult) {
-				t.licenseResult['type'] = res;
+				t.licenseResult['type'] = licenseType;
 			}
 			t.isOnLoadLicense = true;
 			var oResult = new AscCommon.asc_CAscEditorPermissions();
-			oResult.setLicenseType(res);
+			oResult.setLicenseType(licenseType);
 			t.sendEvent('asc_onLicenseChanged', oResult);
 		};
 		this.CoAuthoringApi.onWarning                 = function(code)

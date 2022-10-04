@@ -1024,6 +1024,9 @@
 	this.model.handlers.add("clearFindResults", function(index) {
 		self.clearSearchOnRecalculate(index);
 	});
+	this.Api.asc_registerCallback("EndTransactionCheckSize", function() {
+		self.Api.checkChangesSize();
+	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
       collaborativeEditing: this.collaborativeEditing,

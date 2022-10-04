@@ -2665,6 +2665,16 @@
 	Workbook.prototype.checkDefNameLock = function(){
 		return this.dependencyFormulas.checkDefNameLock();
 	};
+	Workbook.prototype._SerializeHistoryBase64Item = function (oMemory, item) {
+		if (!item.LocalChange) {
+			oMemory.Seek(0);
+			item.Serialize(oMemory, this.oApi.collaborativeEditing);
+			var nLen = oMemory.GetCurPosition();
+			if (nLen > 0)
+				return nLen + ";" + oMemory.GetBase64Memory2(0, nLen);
+		}
+		return;
+	};
 	Workbook.prototype._SerializeHistoryBase64 = function (oMemory, item, aPointChangesBase64) {
 		if (!item.LocalChange) {
 			var nPosStart = oMemory.GetCurPosition();
@@ -2693,7 +2703,11 @@
 				var aPointChanges = aActions[i];
 				for (j = 0, length2 = aPointChanges.length; j < length2; ++j) {
 					var item = aPointChanges[j];
-					this._SerializeHistoryBase64(oMemory, item, aRes);
+					if (item.bytes) {
+						aRes.push(item.bytes);
+					} else {
+						this._SerializeHistoryBase64(oMemory, item, aRes);this._SerializeHistoryBase64(oMemory, item, aRes);
+					}
 				}
 			}
 			this.aCollaborativeActions = [];
