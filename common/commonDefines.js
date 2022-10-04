@@ -3415,6 +3415,14 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Web         : 5
 	};
 
+	var c_oAscConfirm = {
+		ConfirmReplaceRange: 0,
+		ConfirmPutMergeRange: 1,
+		ConfirmReplaceFormulaInTable: 2,
+		ConfirmChangeProtectRange: 3,
+		ConfirmMaxChangesSize: 4
+	};
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -4765,5 +4773,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Outline']     = prot.Outline;
 	prot['Print']       = prot.Print;
 	prot['Web']         = prot.Web;
+
+	prot = window['Asc']['c_oAscConfirm'] = window['Asc'].c_oAscConfirm = c_oAscConfirm;
+	prot['ConfirmReplaceRange'] = prot.ConfirmReplaceRange;
+	prot['ConfirmPutMergeRange'] = prot.ConfirmPutMergeRange;
+	prot['ConfirmChangeProtectRange'] = prot.ConfirmChangeProtectRange;
+	prot['ConfirmMaxChangesSize'] = prot.ConfirmMaxChangesSize;
 
 })(window);

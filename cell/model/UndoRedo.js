@@ -58,13 +58,14 @@ function (window, undefined) {
 	}
 
 //главный обьект для пересылки изменений
-	function UndoRedoItemSerializable(oClass, nActionType, nSheetId, oRange, oData, LocalChange) {
+	function UndoRedoItemSerializable(oClass, nActionType, nSheetId, oRange, oData, LocalChange, bytes) {
 		this.oClass = oClass;
 		this.nActionType = nActionType;
 		this.nSheetId = nSheetId;
 		this.oRange = oRange;
 		this.oData = oData;
 		this.LocalChange = LocalChange;
+		this.bytes = bytes;
 	}
 
 	UndoRedoItemSerializable.prototype.Serialize = function (oBinaryWriter, collaborativeEditing) {

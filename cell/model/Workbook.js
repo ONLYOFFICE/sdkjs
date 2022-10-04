@@ -2706,7 +2706,7 @@
 					if (item.bytes) {
 						aRes.push(item.bytes);
 					} else {
-						this._SerializeHistoryBase64(oMemory, item, aRes);this._SerializeHistoryBase64(oMemory, item, aRes);
+						this._SerializeHistoryBase64(oMemory, item, aRes);
 					}
 				}
 			}

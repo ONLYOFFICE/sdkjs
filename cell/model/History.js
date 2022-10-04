@@ -1151,13 +1151,12 @@ CHistory.prototype.private_EndTransactionCheckSize = function(api) {
 			if (elem.bytes) {
 				continue;
 			}
-			let serializable = new AscCommonExcel.UndoRedoItemSerializable(elem.Class, elem.Type, elem.SheetId, elem.Range, elem.Data, elem.LocalChange, elem.bytes);
+			let serializable = new AscCommonExcel.UndoRedoItemSerializable(elem.Class, elem.Type, elem.SheetId, elem.Range, elem.Data, elem.LocalChange);
 			elem.bytes = this.workbook._SerializeHistoryBase64Item(this.memory, serializable);
 		}
 		api.sendEvent("EndTransactionCheckSize");
 	}
-;
-
+};
 CHistory.prototype.EndTransaction = function()
 {
 	if (1 === this.Transaction && !this.Is_LastPointEmpty()) {

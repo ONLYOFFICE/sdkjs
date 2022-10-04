@@ -1278,8 +1278,8 @@
 						api.asc_coAuthoringDisconnect();
 					} else {
 						api.asc_Undo ? api.asc_Undo() : api.Undo();
-						api.asc_continueSaving();
 					}
+					api.asc_continueSaving();
 				});
 		}
 	};
