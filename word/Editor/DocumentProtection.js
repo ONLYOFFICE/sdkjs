@@ -59,6 +59,15 @@ var ECryptProv = {
 };
 
 function CDocProtect() {
+	this.Id = AscCommon.g_oIdCounter.Get_NewId();
+
+	/*this.Lock = new AscCommon.CLock(); // Зажат ли комментарий другим пользователем
+	if (false === AscCommon.g_oIdCounter.m_bLoad)
+	{
+		this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+		AscCommon.CollaborativeEditing.Add_Unlock2(this);
+	}*/
+
 	this.algorithmName = null;
 	this.edit = null;
 	this.enforcment = null;
@@ -76,6 +85,9 @@ function CDocProtect() {
 	this.cryptProviderType = null;
 	this.cryptProviderTypeExt = null;
 	this.cryptProviderTypeExtSource = null;
+
+	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
+	AscCommon.g_oTableId.Add(this, this.Id);
 }
 CDocProtect.prototype.isOnlyView = function () {
 	return this.edit === Asc.c_oAscEDocProtect.ReadOnly;
@@ -128,7 +140,13 @@ CDocProtect.prototype.getAlgorithmNameForCheck = function () {
 CDocProtect.prototype.isPassword = function () {
 	return this.algorithmName != null || this.cryptAlgorithmSid != null;
 };
-
+CDocProtect.prototype.setProps = function (oProps) {
+	History.Add(new CChangesCorePr(this, this, oProps, null));
+	this.title = oProps.title;
+	this.creator = oProps.creator;
+	this.description = oProps.description;
+	this.subject = oProps.subject;
+};
 
 
 function CWriteProtection() {

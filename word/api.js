@@ -12824,8 +12824,21 @@ background-repeat: no-repeat;\
 			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 
 			if (res) {
-				if (props) {
+
+
+
+
+
+				oDocument.StartAction(AscDFH.historydescription_Document_SetDocumentProtection);
+
+				//this.SetCheckBoxChecked(false);
+
+				oDocument.SetProtection(props, salt, spinCount, alg, calculatedHashValue);
+
+
+				/*if (props) {
 					//устанавливаем
+					oDocument.SetProtection(props, salt, spinCount, alg, calculatedHashValue);
 					documentProtection.hashValue = calculatedHashValue;
 				} else {
 					//снимаем
@@ -12833,7 +12846,7 @@ background-repeat: no-repeat;\
 					documentProtection.saltValue = null;
 					documentProtection.spinCount = null;
 					documentProtection.algorithmName = null;
-				}
+				}*/
 				/*History.Create_NewPoint();
 				History.StartTransaction();
 				if (!t.wbModel.getWorksheet(i).setProtectedSheet(props, true)) {
@@ -12845,6 +12858,8 @@ background-repeat: no-repeat;\
 				t.handlers.trigger("asc_onChangeDocumentProtection");
 
 				History.EndTransaction();*/
+
+				oDocument.FinalizeAction();
 			} else {
 				t.sendEvent("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
 			}

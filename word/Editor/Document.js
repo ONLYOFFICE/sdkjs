@@ -16318,6 +16318,14 @@ CDocument.prototype.IsSpecialFormsSettingsDefault = function()
 {
 	return this.Settings.SpecialFormsSettings.IsDefault();
 };
+CDocument.prototype.SetProtection = function(props)
+{
+	if (!this.Settings.DocumentProtection) {
+		this.Settings.DocumentProtection = new CDocProtect();
+	}
+	return this.Settings.DocumentProtection.setProps(props);
+};
+
 CDocument.prototype.GetDocumentLayout = function()
 {
 	return this.Layout;
