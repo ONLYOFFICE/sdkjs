@@ -867,12 +867,6 @@
 
     	return this.private_GetElementPageIndex(ElementPos, PageIndex, ResultColumn, ColumnsCount);
     }
-    CDrawingDocContent.prototype.fromXml = function(reader) {
-
-    };
-    CDrawingDocContent.prototype.toXml = function (writer, name) {
-
-    };
 
     function fReadParagraphs(reader) {
 

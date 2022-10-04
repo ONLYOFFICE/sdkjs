@@ -671,15 +671,6 @@ CCommentAuthor.prototype.Calculate = function() {
             this.Initials += (arr[i].substring(0, 1));
     }
 };
-    CCommentAuthor.prototype.toXml = function(writer) {
-        writer.WriteXmlNodeStart("p:cmAuthor");
-        writer.WriteXmlAttributeInt("id", this.Id);
-        writer.WriteXmlAttributeString("name", this.Name);
-        writer.WriteXmlAttributeString("initials", this.Initials);
-        writer.WriteXmlAttributeInt("lastIdx", this.LastId);
-        writer.WriteXmlAttributeInt("clrIdx", this.Id - 1);
-        writer.WriteXmlAttributesEnd(true);
-    };
 
 
 function CCommentData()
