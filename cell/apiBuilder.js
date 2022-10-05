@@ -49,6 +49,7 @@
 	 * @property {Array} Sheets - Returns the Sheets collection that represents all the sheets in the active workbook.
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
+	 * @event onWorksheetChange - Calls the callback function when the sheet is changed.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -748,6 +749,15 @@
 			}
 		}
 	};
+
+	/**
+	 * Subscribing to an event and calling the callback function when the event was called.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} eventName - The name of the event.
+	 * @param {function} callback - Function to be called when the sheet is changed.
+	 */
+ 	Api.prototype["attachEvent"] = Api.prototype.attachEvent;
 
 	/**
 	 * Returns the state of sheet visibility.
