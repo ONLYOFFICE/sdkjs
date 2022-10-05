@@ -4785,7 +4785,14 @@
 	 * @param {function} callback - Function to be called when the sheet is changed.
 	 */
 	Api.prototype["attachEvent"] = Api.prototype.attachEvent;
-	
+
+	/**
+	 * Unsubscribing to an event.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} eventName - The name of the event.
+	 */
+	Api.prototype["detachEvent"] = Api.prototype.detachEvent;
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
