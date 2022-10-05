@@ -723,3 +723,328 @@ CChangesDocumentSettingsTrackRevisions.prototype.CreateReverseChange = function(
 {
 	return new CChangesDocumentSettingsTrackRevisions(this.Class, this.New, this.Old, this.UserId);
 };
+
+function CChangesDocumentProtection(Class, Old, New) {
+	AscDFH.CChangesBase.call(this, Class, Old, New);
+	if (Old && New) {
+		this.OldAlgorithmName = Old.algorithmName;
+		this.OldEdit = Old.edit;
+		this.OldEnforcment = Old.enforcment;
+		this.OldFormatting = Old.formatting;
+		this.OldHashValue = Old.hashValue;
+		this.OldSaltValue = Old.saltValue;
+		this.OldSpinCount = Old.spinCount;
+		this.OldAlgIdExt = Old.algIdExt;
+		this.OldAlgIdExtSource = Old.algIdExtSource;
+		this.OldCryptAlgorithmClass = Old.cryptAlgorithmClass;
+		this.OldCryptAlgorithmSid = Old.cryptAlgorithmSid;
+		this.OldCryptAlgorithmType = Old.cryptAlgorithmType;
+		this.OldCryptProvider = Old.cryptProvider;
+		this.OldCryptProviderType = Old.cryptProviderType;
+		this.OldCryptProviderTypeExt = Old.cryptProviderTypeExt;
+		this.OldCryptProviderTypeExtSource = Old.cryptProviderTypeExtSource;
+
+		this.NewAlgorithmName = New.algorithmName === Old.algorithmName ? undefined : New.algorithmName;
+		this.NewEdit = New.edit === Old.edit ? undefined : New.edit;
+		this.NewEnforcment = New.enforcment === Old.enforcment ? undefined : New.enforcment;
+		this.NewFormatting = New.formatting === Old.formatting ? undefined : New.formatting;
+		this.NewHashValue = New.hashValue === Old.hashValue ? undefined : New.hashValue;
+		this.NewSaltValue = New.saltValue === Old.saltValue ? undefined : New.saltValue;
+		this.NewSpinCount = New.spinCount === Old.spinCount ? undefined : New.spinCount;
+		this.NewAlgIdExt = New.algIdExt === Old.algIdExt ? undefined : New.algIdExt;
+		this.NewAlgIdExtSource = New.algIdExtSource === Old.algIdExtSource ? undefined : New.algIdExtSource;
+		this.NewCryptAlgorithmClass = New.cryptAlgorithmClass === Old.cryptAlgorithmClass ? undefined : New.cryptAlgorithmClass;
+		this.NewCryptAlgorithmSid = New.cryptAlgorithmSid === Old.cryptAlgorithmSid ? undefined : New.cryptAlgorithmSid;
+		this.NewCryptAlgorithmType = New.cryptAlgorithmType === Old.cryptAlgorithmType ? undefined : New.cryptAlgorithmType;
+		this.NewCryptProvider = New.cryptProvider === Old.cryptProvider ? undefined : New.cryptProvider;
+		this.NewCryptProviderType = New.cryptProviderType === Old.cryptProviderType ? undefined : New.cryptProviderType;
+		this.NewCryptProviderTypeExt = New.cryptProviderTypeExt === Old.cryptProviderTypeExt ? undefined : New.cryptProviderTypeExt;
+		this.NewCryptProviderTypeExtSource = New.cryptProviderTypeExtSource === Old.cryptProviderTypeExtSource ? undefined : New.cryptProviderTypeExtSource;
+	} else {
+		this.OldAlgorithmName = undefined;
+		this.OldEdit = undefined;
+		this.OldEnforcment = undefined;
+		this.OldFormatting = undefined;
+		this.OldHashValue = undefined;
+		this.OldSaltValue = undefined;
+		this.OldSpinCount = undefined;
+		this.OldAlgIdExt = undefined;
+		this.OldAlgIdExtSource = undefined;
+		this.OldCryptAlgorithmClass = undefined;
+		this.OldCryptAlgorithmSid = undefined;
+		this.OldCryptAlgorithmType = undefined;
+		this.OldCryptProvider = undefined;
+		this.OldCryptProviderType = undefined;
+		this.OldCryptProviderTypeExt = undefined;
+		this.OldCryptProviderTypeExtSource = undefined;
+
+		this.NewAlgorithmName = undefined;
+		this.NewEdit = undefined;
+		this.NewEnforcment = undefined;
+		this.NewFormatting = undefined;
+		this.NewHashValue = undefined;
+		this.NewSaltValue = undefined;
+		this.NewSpinCount = undefined;
+		this.NewAlgIdExt = undefined;
+		this.NewAlgIdExtSource = undefined;
+		this.NewCryptAlgorithmClass = undefined;
+		this.NewCryptAlgorithmSid = undefined;
+		this.NewCryptAlgorithmType = undefined;
+		this.NewCryptProvider = undefined;
+		this.NewCryptProviderType = undefined;
+		this.NewCryptProviderTypeExt = undefined;
+		this.NewCryptProviderTypeExtSource = undefined;
+	}
+}
+
+CChangesDocumentProtection.prototype = Object.create(AscDFH.CChangesBase.prototype);
+CChangesDocumentProtection.prototype.constructor = CChangesDocumentProtection;
+CChangesDocumentProtection.prototype.Type = AscDFH.historydescription_Document_DocumentProtection;
+CChangesDocumentProtection.prototype.Undo = function () {
+	if (!this.Class) {
+		return;
+	}
+
+	this.Class.algorithmName = this.OldAlgorithmName;
+	this.Class.edit = this.OldEdit;
+	this.Class.enforcment = this.OldEnforcment;
+	this.Class.formatting = this.OldFormatting;
+
+	this.Class.hashValue = this.OldHashValue;
+	this.Class.saltValue = this.OldSaltValue;
+	this.Class.spinCount = this.OldSpinCount;
+	this.Class.algIdExt = this.OldAlgIdExt;
+
+	this.Class.algIdExtSource = this.OldAlgIdExtSource;
+	this.Class.cryptAlgorithmClass = this.OldCryptAlgorithmClass;
+	this.Class.cryptAlgorithmSid = this.OldCryptAlgorithmSid;
+	this.Class.cryptAlgorithmType = this.OldCryptAlgorithmType;
+
+	this.Class.cryptProvider = this.OldCryptProvider;
+	this.Class.cryptProviderType = this.OldCryptProviderType;
+	this.Class.cryptProviderTypeExt = this.OldCryptProviderTypeExt;
+	this.Class.cryptProviderTypeExtSource = this.OldCryptProviderTypeExtSource;
+};
+CChangesDocumentProtection.prototype.Redo = function () {
+	if (!this.Class) {
+		return;
+	}
+
+	if (this.NewAlgorithmName !== undefined) {
+		this.Class.algorithmName = this.NewAlgorithmName;
+	}
+	if (this.NewEdit !== undefined) {
+		this.Class.edit = this.NewEdit;
+	}
+	if (this.NewEnforcment !== undefined) {
+		this.Class.enforcment = this.NewEnforcment;
+	}
+	if (this.NewFormatting !== undefined) {
+		this.Class.formatting = this.NewFormatting;
+	}
+
+	if (this.NewHashValue !== undefined) {
+		this.Class.hashValue = this.NewHashValue;
+	}
+	if (this.NewSaltValue !== undefined) {
+		this.Class.saltValue = this.NewSaltValue;
+	}
+	if (this.NewSpinCount !== undefined) {
+		this.Class.spinCount = this.NewSpinCount;
+	}
+	if (this.NewFormatting !== undefined) {
+		this.Class.formatting = this.NewFormatting;
+	}
+
+	if (this.NewAlgIdExt !== undefined) {
+		this.Class.algIdExt = this.NewAlgIdExt;
+	}
+	if (this.NewAlgIdExtSource !== undefined) {
+		this.Class.algIdExtSource = this.NewAlgIdExtSource;
+	}
+	if (this.NewCryptAlgorithmClass !== undefined) {
+		this.Class.cryptAlgorithmClass = this.NewCryptAlgorithmClass;
+	}
+	if (this.NewCryptAlgorithmSid !== undefined) {
+		this.Class.cryptAlgorithmSid = this.NewCryptAlgorithmSid;
+	}
+
+	if (this.NewCryptAlgorithmType !== undefined) {
+		this.Class.cryptAlgorithmType = this.NewCryptAlgorithmType;
+	}
+	if (this.NewCryptProvider !== undefined) {
+		this.Class.cryptProvider = this.NewCryptProvider;
+	}
+	if (this.NewCryptProviderType !== undefined) {
+		this.Class.cryptProviderType = this.NewCryptProviderType;
+	}
+	if (this.NewCryptProviderTypeExt !== undefined) {
+		this.Class.cryptProviderTypeExt = this.NewCryptProviderTypeExt;
+	}
+	if (this.NewCryptProviderTypeExtSource !== undefined) {
+		this.Class.cryptProviderTypeExtSource = this.NewCryptProviderTypeExtSource;
+	}
+};
+CChangesDocumentProtection.prototype.WriteToBinary = function (Writer) {
+	if (undefined !== this.NewAlgorithmName) {
+		Writer.WriteBool(true);
+		Writer.WriteByte(this.NewAlgorithmName);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewEdit) {
+		Writer.WriteBool(true);
+		Writer.WriteByte(this.NewEdit);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewEnforcment) {
+		Writer.WriteBool(true);
+		Writer.WriteBool(this.NewEnforcment);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewFormatting) {
+		Writer.WriteBool(true);
+		Writer.WriteBool(this.NewFormatting);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewHashValue) {
+		Writer.WriteBool(true);
+		Writer.WriteString2(this.NewHashValue);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewSaltValue) {
+		Writer.WriteBool(true);
+		Writer.WriteString2(this.NewSaltValue);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewSpinCount) {
+		Writer.WriteBool(true);
+		Writer.WriteLong(this.NewSpinCount);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewAlgIdExt) {
+		Writer.WriteBool(true);
+		Writer.WriteString2(this.NewAlgIdExt);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewAlgIdExt) {
+		Writer.WriteBool(true);
+		Writer.WriteString2(this.NewAlgIdExt);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewAlgIdExtSource) {
+		Writer.WriteBool(true);
+		Writer.WriteString2(this.NewAlgIdExtSource);
+	} else {
+		Writer.WriteBool(false);
+	}
+
+	if (undefined !== this.NewCryptAlgorithmClass) {
+		Writer.WriteBool(true);
+		Writer.WriteByte(this.NewCryptAlgorithmClass);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewCryptAlgorithmSid) {
+		Writer.WriteBool(true);
+		Writer.WriteLong(this.NewCryptAlgorithmSid);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewCryptAlgorithmType) {
+		Writer.WriteBool(true);
+		Writer.WriteByte(this.NewCryptAlgorithmType);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewCryptProvider) {
+		Writer.WriteBool(true);
+		Writer.WriteString2(this.NewCryptProvider);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewCryptProviderType) {
+		Writer.WriteBool(true);
+		Writer.WriteByte(this.NewCryptProviderType);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewCryptProviderTypeExt) {
+		Writer.WriteBool(true);
+		Writer.WriteString2(this.NewCryptProviderTypeExt);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (undefined !== this.NewCryptProviderTypeExtSource) {
+		Writer.WriteBool(true);
+		Writer.WriteString2(this.NewCryptProviderTypeExtSource);
+	} else {
+		Writer.WriteBool(false);
+	}
+};
+
+CChangesDocumentProtection.prototype.ReadFromBinary = function (Reader) {
+	if (Reader.GetBool()) {
+		this.NewAlgorithmName = Reader.GetByte();
+	}
+	if (Reader.GetBool()) {
+		this.NewEdit = Reader.GetByte();
+	}
+	if (Reader.GetBool()) {
+		this.NewEnforcment = Reader.GetBool();
+	}
+	if (Reader.GetBool()) {
+		this.NewFormatting = Reader.GetBool();
+	}
+	if (Reader.GetBool()) {
+		this.NewHashValue = Reader.GetString2();
+	}
+	if (Reader.GetBool()) {
+		this.NewSaltValue = Reader.GetString2();
+	}
+	if (Reader.GetBool()) {
+		this.NewSpinCount = Reader.GetLong();
+	}
+	if (Reader.GetBool()) {
+		this.NewAlgIdExt = Reader.GetString2();
+	}
+	if (Reader.GetBool()) {
+		this.NewAlgIdExt = Reader.GetString2();
+	}
+	if (Reader.GetBool()) {
+		this.NewAlgIdExtSource = Reader.GetString2();
+	}
+	if (Reader.GetBool()) {
+		this.NewCryptAlgorithmClass = Reader.GetByte();
+	}
+	if (Reader.GetBool()) {
+		this.NewCryptAlgorithmSid = Reader.GetLong();
+	}
+	if (Reader.GetBool()) {
+		this.NewCryptAlgorithmType = Reader.GetByte();
+	}
+	if (Reader.GetBool()) {
+		this.NewCryptProvider = Reader.GetString2();
+	}
+	if (Reader.GetBool()) {
+		this.NewCryptProviderType = Reader.GetByte();
+	}
+	if (Reader.GetBool()) {
+		this.NewCryptProviderTypeExt = Reader.GetString2();
+	}
+	if (Reader.GetBool()) {
+		this.NewCryptProviderTypeExtSource = Reader.GetString2();
+	}
+};
+CChangesDocumentProtection.prototype.CreateReverseChange = function () {
+};
+
+AscDFH.changesFactory[AscDFH.historydescription_Document_DocumentProtection] = CChangesDocumentProtection;

@@ -89,6 +89,9 @@ function CDocProtect() {
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
 }
+CDocProtect.prototype.Get_Id = function () {
+	return this.Id;
+};
 CDocProtect.prototype.isOnlyView = function () {
 	return this.edit === Asc.c_oAscEDocProtect.ReadOnly;
 };
@@ -141,11 +144,55 @@ CDocProtect.prototype.isPassword = function () {
 	return this.algorithmName != null || this.cryptAlgorithmSid != null;
 };
 CDocProtect.prototype.setProps = function (oProps) {
-	History.Add(new CChangesCorePr(this, this, oProps, null));
-	this.title = oProps.title;
-	this.creator = oProps.creator;
-	this.description = oProps.description;
-	this.subject = oProps.subject;
+	//TODO  в дальнейшем отправилять копию CDocProtect в интерфейс и принимать эту измененную копию + отправлять её в историю. сейчас имитирую эти действия
+	var newDocProtect;
+	AscFormat.ExecuteNoHistory(function () {
+		newDocProtect = new CDocProtect();
+	}, this, []);
+	//TODO compare
+	newDocProtect.setFromInterface(oProps)
+	History.Add(new CChangesDocumentProtection(this, this, newDocProtect));
+	this.setFromInterface(oProps);
+};
+CDocProtect.prototype.setFromInterface = function (oProps) {
+	this.edit = oProps.props;
+	this.saltValue = oProps.saltValue;
+	this.spinCount = oProps.spinCount;
+	this.cryptAlgorithmSid = oProps.alg;
+	this.hashValue = oProps.hashValue;
+};
+CDocProtect.prototype.Refresh_RecalcData = function () {
+};
+CDocProtect.prototype.copy = function () {
+	return AscFormat.ExecuteNoHistory(function () {
+		var oDocProtect = new CDocProtect();
+		oDocProtect.algorithmName = this.algorithmName;
+		oDocProtect.edit = this.edit;
+		oDocProtect.enforcment = this.enforcment;
+		oDocProtect.formatting = this.formatting;
+		oDocProtect.hashValue = this.hashValue;
+		oDocProtect.saltValue = this.saltValue;
+		oDocProtect.spinCount = this.spinCount;
+		oDocProtect.algIdExt = this.algIdExt;
+		oDocProtect.algIdExtSource = this.algIdExtSource;
+		oDocProtect.cryptAlgorithmClass = this.cryptAlgorithmClass;
+		oDocProtect.cryptAlgorithmSid = this.cryptAlgorithmSid;
+		oDocProtect.cryptAlgorithmType = this.cryptAlgorithmType;
+		oDocProtect.cryptProvider = this.cryptProvider;
+		oDocProtect.cryptProviderType = this.cryptProviderType;
+		oDocProtect.cryptProviderTypeExt = this.cryptProviderTypeExt;
+		oDocProtect.cryptProviderTypeExtSource = this.cryptProviderTypeExtSource;
+		return oDocProtect;
+	}, this, []);
+};
+CDocProtect.prototype.Write_ToBinary2 = function(Writer)
+{
+	Writer.WriteLong(AscDFH.historyitem_type_DocumentProtection);
+	Writer.WriteString2("" + this.Id);
+};
+CDocProtect.prototype.Read_FromBinary2 = function(Reader)
+{
+	this.Id = Reader.GetString2();
 };
 
 
@@ -166,3 +213,5 @@ function CWriteProtection() {
 	this.cryptProviderTypeExt = null;
 	this.cryptProviderTypeExtSource = null;
 }
+
+window['AscCommonWord'].CDocProtect = CDocProtect;
