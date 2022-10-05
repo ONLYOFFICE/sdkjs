@@ -49,7 +49,9 @@
 	 * @property {Array} Sheets - Returns the Sheets collection that represents all the sheets in the active workbook.
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
-	 * @event onWorksheetChange - Calls the callback function when the sheet is changed.
+	 * @event onWorksheetChange - Calls the callback function when the specified range of the current sheet changes.
+	 * It is called with the *range* parameter which specifies the modified range represented as the ApiRange object.
+	 * <note>Please note that the event is not called for the undo/redo operations.</note>
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
