@@ -824,65 +824,43 @@ CChangesDocumentProtection.prototype.Undo = function () {
 	this.Class.cryptProviderType = this.OldCryptProviderType;
 	this.Class.cryptProviderTypeExt = this.OldCryptProviderTypeExt;
 	this.Class.cryptProviderTypeExtSource = this.OldCryptProviderTypeExtSource;
+
+	editor.sendEvent("asc_onChangeDocumentProtection");
 };
 CChangesDocumentProtection.prototype.Redo = function () {
 	if (!this.Class) {
 		return;
 	}
 
-	if (this.NewAlgorithmName !== undefined) {
-		this.Class.algorithmName = this.NewAlgorithmName;
-	}
-	if (this.NewEdit !== undefined) {
-		this.Class.edit = this.NewEdit;
-	}
-	if (this.NewEnforcment !== undefined) {
-		this.Class.enforcment = this.NewEnforcment;
-	}
-	if (this.NewFormatting !== undefined) {
-		this.Class.formatting = this.NewFormatting;
-	}
+	this.Class.algorithmName = this.NewAlgorithmName;
+	this.Class.edit = this.NewEdit;
+	this.Class.enforcment = this.NewEnforcment;
+	this.Class.formatting = this.NewFormatting;
+	this.Class.hashValue = this.NewHashValue;
+	this.Class.saltValue = this.NewSaltValue;
+	this.Class.spinCount = this.NewSpinCount;
+	this.Class.formatting = this.NewFormatting;
+	this.Class.algIdExt = this.NewAlgIdExt;
 
-	if (this.NewHashValue !== undefined) {
-		this.Class.hashValue = this.NewHashValue;
-	}
-	if (this.NewSaltValue !== undefined) {
-		this.Class.saltValue = this.NewSaltValue;
-	}
-	if (this.NewSpinCount !== undefined) {
-		this.Class.spinCount = this.NewSpinCount;
-	}
-	if (this.NewFormatting !== undefined) {
-		this.Class.formatting = this.NewFormatting;
-	}
+	this.Class.algIdExtSource = this.NewAlgIdExtSource;
+	this.Class.cryptAlgorithmClass = this.NewCryptAlgorithmClass;
+	this.Class.cryptAlgorithmSid = this.NewCryptAlgorithmSid;
+	this.Class.cryptAlgorithmType = this.NewCryptAlgorithmType;
+	this.Class.cryptProvider = this.NewCryptProvider;
+	this.Class.cryptProviderType = this.NewCryptProviderType;
+	this.Class.cryptProviderTypeExt = this.NewCryptProviderTypeExt;
+	this.Class.cryptProviderTypeExtSource = this.NewCryptProviderTypeExtSource;
 
-	if (this.NewAlgIdExt !== undefined) {
-		this.Class.algIdExt = this.NewAlgIdExt;
-	}
-	if (this.NewAlgIdExtSource !== undefined) {
-		this.Class.algIdExtSource = this.NewAlgIdExtSource;
-	}
-	if (this.NewCryptAlgorithmClass !== undefined) {
-		this.Class.cryptAlgorithmClass = this.NewCryptAlgorithmClass;
-	}
-	if (this.NewCryptAlgorithmSid !== undefined) {
-		this.Class.cryptAlgorithmSid = this.NewCryptAlgorithmSid;
-	}
-
-	if (this.NewCryptAlgorithmType !== undefined) {
-		this.Class.cryptAlgorithmType = this.NewCryptAlgorithmType;
-	}
-	if (this.NewCryptProvider !== undefined) {
-		this.Class.cryptProvider = this.NewCryptProvider;
-	}
-	if (this.NewCryptProviderType !== undefined) {
-		this.Class.cryptProviderType = this.NewCryptProviderType;
-	}
-	if (this.NewCryptProviderTypeExt !== undefined) {
-		this.Class.cryptProviderTypeExt = this.NewCryptProviderTypeExt;
-	}
-	if (this.NewCryptProviderTypeExtSource !== undefined) {
-		this.Class.cryptProviderTypeExtSource = this.NewCryptProviderTypeExtSource;
+	var api = Asc.editor || editor;
+	if (api) {
+		let oDocument = api.private_GetLogicDocument();
+		if (oDocument && oDocument.Settings) {
+			var docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
+			if (!docProtection || this.Class !== docProtection) {
+				oDocument.Settings.DocumentProtection = this.Class;
+			}
+		}
+		api.sendEvent("asc_onChangeDocumentProtection");
 	}
 };
 CChangesDocumentProtection.prototype.WriteToBinary = function (Writer) {

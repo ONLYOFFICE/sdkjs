@@ -12891,28 +12891,28 @@
 			case AscCommon.c_oSerCryptAlgorithmSid.MD5 :
 				res = AscCommon.HashAlgs.MD5;
 				break;
-			case AscCommon.c_oSerAlgorithmNameTypes.SHA_1 :
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_1 :
 				res = AscCommon.HashAlgs.SHA1;
 				break;
-			case AscCommon.c_oSerAlgorithmNameTypes.MAC :
+			case AscCommon.c_oSerCryptAlgorithmSid.MAC :
 				//alg = AscCommon.HashAlgs.SHA1;
 				break;
-			case AscCommon.c_oSerAlgorithmNameTypes.RIPEMD :
+			case AscCommon.c_oSerCryptAlgorithmSid.RIPEMD :
 				//alg = AscCommon.HashAlgs.SHA256;
 				break;
-			case AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_160 :
+			case AscCommon.c_oSerCryptAlgorithmSid.RIPEMD_160 :
 				//alg = AscCommon.HashAlgs.SHA384;
 				break;
-			case AscCommon.c_oSerAlgorithmNameTypes.HMAC :
+			case AscCommon.c_oSerCryptAlgorithmSid.HMAC :
 				//alg = AscCommon.HashAlgs.SHA512;
 				break;
-			case AscCommon.c_oSerAlgorithmNameTypes.SHA_256 :
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_256 :
 				res = AscCommon.HashAlgs.SHA256;
 				break;
-			case AscCommon.c_oSerAlgorithmNameTypes.SHA_384 :
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_384 :
 				res = AscCommon.HashAlgs.SHA384;
 				break;
-			case AscCommon.c_oSerAlgorithmNameTypes.SHA_512 :
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_512 :
 				res = AscCommon.HashAlgs.SHA512;
 				break;
 		}

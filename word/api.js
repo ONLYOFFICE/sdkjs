@@ -12801,7 +12801,7 @@ background-repeat: no-repeat;\
 		var docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
 		//TODO enforcment!!! - проверить данный флаг
 		if (docProtection) {
-			return [docProtection.edit, docProtection.isPassword()];
+			return [docProtection.edit, docProtection.enforcement ? docProtection.isPassword() : null];
 		}
 	};
 
@@ -12825,9 +12825,10 @@ background-repeat: no-repeat;\
 
 			if (res) {
 				oDocument.StartAction(AscDFH.historydescription_Document_DocumentProtection);
-				oDocument.SetProtection({props: props, saltValue: salt, spinCount: spinCount, alg: alg, hashValue: calculatedHashValue});
+				oDocument.SetProtection({props: props, saltValue: salt, spinCount: spinCount, alg:  alg, hashValue: calculatedHashValue});
 				oDocument.UpdateInterface();
 				oDocument.FinalizeAction();
+				t.sendEvent("asc_onChangeDocumentProtection");
 			} else {
 				t.sendEvent("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
 			}
@@ -12851,7 +12852,7 @@ background-repeat: no-repeat;\
 				//t.collaborativeEditing.lock([lockInfo], callback);
 				callback(true);
 			} else {
-				if (props) {
+				if (props && props !== Asc.c_oAscEDocProtect.None) {
 					//устанавливаем защиту
 					calculatedHashValue = hash && hash[0] ? hash[0] : null;
 					//t.collaborativeEditing.lock([lockInfo], callback);

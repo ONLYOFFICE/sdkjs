@@ -160,6 +160,11 @@ CDocProtect.prototype.setFromInterface = function (oProps) {
 	this.spinCount = oProps.spinCount;
 	this.cryptAlgorithmSid = oProps.alg;
 	this.hashValue = oProps.hashValue;
+
+	if (oProps.props && oProps.props !== Asc.c_oAscEDocProtect.None) {
+		this.enforcment = true;
+	}
+
 };
 CDocProtect.prototype.Refresh_RecalcData = function () {
 };
