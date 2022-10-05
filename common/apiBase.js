@@ -1269,15 +1269,15 @@
 		}
 		let api = this;
 		let localSize = History.GetLocalChangesSize ? History.GetLocalChangesSize() : 0;
-		let serverSize = this.CoAuthoringApi.get_serverChangesSize();
+		let serverSize = api.CoAuthoringApi.get_serverChangesSize();
 		if (localSize + serverSize > api.maxChangesSize) {
 			api.asc_stopSaving();
-			api.sendEvent("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange,
+			api.sendEvent("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmMaxChangesSize,
 				function(can) {
 					if (can) {
-						api.asc_coAuthoringDisconnect();
-					} else {
 						api.asc_Undo ? api.asc_Undo() : api.Undo();
+					} else {
+						api.setViewModeDisconnect(true);
 					}
 					api.asc_continueSaving();
 				});
