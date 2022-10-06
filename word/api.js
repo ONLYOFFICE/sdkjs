@@ -12801,7 +12801,7 @@ background-repeat: no-repeat;\
 		var docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
 		//TODO enforcment!!! - проверить данный флаг
 		if (docProtection) {
-			return [docProtection.edit, docProtection.enforcement ? docProtection.isPassword() : null];
+			return [docProtection.edit, docProtection.enforcment ? docProtection.isPassword() : null];
 		}
 	};
 

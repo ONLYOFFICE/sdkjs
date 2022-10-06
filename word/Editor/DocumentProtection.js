@@ -88,6 +88,9 @@ function CDocProtect() {
 
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
+
+	this.Lock = new AscCommon.CLock();
+	this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
 }
 CDocProtect.prototype.Get_Id = function () {
 	return this.Id;
