@@ -1727,9 +1727,9 @@ function asc_ReadCBorder(s, p) {
                 if (type == "thin") {
                     style = Asc.c_oAscBorderStyles.Thin;
                 } else if (type == "medium") {
-                    style = Asc.c_oAscBorderStyles.Medium; 
+                    style = Asc.c_oAscBorderStyles.Medium;
                 } else if (type == "thick") {
-                    style = Asc.c_oAscBorderStyles.Thick; 
+                    style = Asc.c_oAscBorderStyles.Thick;
                 }
                 break;
             }
@@ -3460,6 +3460,9 @@ function OfflineEditor () {
         deviceScale = window["native"]["GetDeviceScale"]();
         sdkCheck = settings["sdkCheck"];
 
+        // в таблицах неправильно выставляются dpi. пока фиксируем.
+        AscCommon.global_mouseEvent.AscHitToHandlesEpsilon = 18;
+
         window.NATIVE_DOCUMENT_TYPE = "";
 
         var translations = this.initSettings["translations"];
@@ -3513,6 +3516,7 @@ function OfflineEditor () {
 
              var thenCallback = function() {
 
+                _api.setDrawGroupsRestriction();
             	t.asc_WriteAllWorksheets(true);
             	t.asc_WriteCurrentCell();
             
@@ -3956,6 +3960,7 @@ function OfflineEditor () {
                                  width + region.columnOff, height + region.rowOff);
         }
         
+        worksheet.stringRender.fontNeedUpdate = true;
         worksheet.__drawCellsAndBorders(null,
                                         region.columnBeg, region.rowBeg, region.columnEnd, region.rowEnd,
                                         region.columnOff, region.rowOff, istoplayer);
@@ -7136,6 +7141,7 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
                t.wb = new AscCommonExcel.WorkbookView(t.wbModel, t.controller, t.handlers,
                                                       window["_null_object"], window["_null_object"], t,
                                                       t.collaborativeEditing, t.fontRenderingMode);
+               t.setDrawGroupsRestriction();
 
                if (!sdkCheck) {
 

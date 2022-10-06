@@ -194,6 +194,8 @@ CHistory.prototype =
 
     UndoLastPoint : function(nBottomIndex)
     {
+    	// TODO: Данная функция почему-то НЕ меняет индекс, надо проверить на корректность те места, где она используется
+    	let arrChanges = [];
         var oPoint = this.Points[this.Index];
         if(oPoint)
         {
@@ -211,10 +213,13 @@ CHistory.prototype =
             {
                 var oItem = aItems[i];
                 oItem.Data.Undo();
+                arrChanges.push(oItem.Data);
             }
             oPoint.Items.length = _bottomIndex + 1;
             this.Document.SetSelectionState( oPoint.State );
         }
+
+        return arrChanges;
     },
 
     Undo : function(Options)
@@ -663,7 +668,7 @@ CHistory.prototype =
         for (var TableId in this.RecalculateData.Tables)
         {
             var Table = AscCommon.g_oTableId.Get_ById(TableId);
-            if (null !== Table && Table.Is_UseInDocument())
+            if (null !== Table && Table.IsUseInDocument())
             {
                 if (true === Table.Check_ChangedTableGrid())
                 {
@@ -714,6 +719,9 @@ CHistory.prototype =
 
         var Point1 = this.Points[this.Points.length - 2];
         var Point2 = this.Points[this.Points.length - 1];
+
+        if (Point1.Additional.FormFilling !== Point2.Additional.FormFilling)
+        	return false;
 
         // Не объединяем слова больше 63 элементов
         if (Point1.Items.length > 63 && AscDFH.historydescription_Document_AddLetterUnion === Point1.Description)
@@ -777,6 +785,10 @@ CHistory.prototype =
             Additional : {},
             Description: NewDescription
         };
+
+        let oForm = Point1.Additional.FormFilling;
+        if (oForm)
+        	NewPoint.Additional.FormFilling = oForm;
 
 		if (null !== this.SavedIndex && this.SavedIndex >= this.Points.length - 2)
             this.Set_SavedIndex(this.Points.length - 3);
@@ -1019,10 +1031,39 @@ CHistory.prototype =
 		if (this.RegisterClasses < 0)
 			this.RegisterClasses = 0;
 	};
+	CHistory.prototype.SetAdditionalFormFilling = function(oForm, nCount)
+	{
+		if (undefined === nCount)
+			nCount = 1;
+
+		for (let nIndex = this.Index; nIndex > this.Index - nCount && nIndex >= 0; --nIndex)
+		{
+			this.Points[nIndex].Additional.FormFilling = oForm;
+		}
+	};
+	CHistory.prototype.GetLastPointFormFilling = function()
+	{
+		let additional = this.Index >= 0 ? this.Points[this.Index].Additional : null;
+		return (additional && additional.FormFilling ? additional.FormFilling : null);
+	};
+	CHistory.prototype.ClearFormFillingInfo = function()
+	{
+		if (this.Points[this.Index] && this.Points[this.Index].Additional.FormFilling)
+			delete this.Points[this.Index].Additional.FormFilling;
+	};
 CHistory.prototype.ClearAdditional = function()
 {
 	if (this.Index >= 0)
+	{
+		// TODO: На создании новой точки не удаляем информацию о заполнении формы
+		//       надо переназвать функции по-нормальному
+
+		let form = this.GetLastPointFormFilling();
 		this.Points[this.Index].Additional = {};
+
+		if (form)
+			this.SetAdditionalFormFilling(form);
+	}
 
 	if (this.Api && true === this.Api.isMarkerFormat)
 		this.Api.sync_MarkerFormatCallback(false);

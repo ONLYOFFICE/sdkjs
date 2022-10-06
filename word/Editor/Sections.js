@@ -89,7 +89,7 @@ function CSectionPr(LogicDocument)
 	this.LnNumType     = undefined;
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 CSectionPr.prototype =
@@ -215,6 +215,32 @@ CSectionPr.prototype =
 
         return HdrFtrs;
     },
+
+	RemoveEmptyHdrFtrs : function()
+	{
+		function IsEmpty(oHeader)
+		{
+			return (oHeader && oHeader.GetContent().GetElementsCount() <= 0);
+		}
+
+		if (IsEmpty(this.HeaderFirst))
+			this.Set_Header_First(null);
+
+		if (IsEmpty(this.HeaderEven))
+			this.Set_Header_Even(null);
+
+		if (IsEmpty(this.HeaderDefault))
+			this.Set_Header_Default(null);
+
+		if (IsEmpty(this.FooterFirst))
+			this.Set_Footer_First(null);
+
+		if (IsEmpty(this.FooterEven))
+			this.Set_Footer_Even(null);
+
+		if (IsEmpty(this.FooterDefault))
+			this.Set_Footer_Default(null);
+	},
 
     Compare_PageSize : function(OtherSectionPr)
     {
@@ -800,6 +826,14 @@ CSectionPr.prototype =
 CSectionPr.prototype.GetId = function()
 {
 	return this.Id;
+};
+CSectionPr.prototype.SetType = function(type)
+{
+	return this.Set_Type(type);
+};
+CSectionPr.prototype.GetType = function()
+{
+	return this.Get_Type();
 };
 /**
  * Проверяем, есть ли хоть один колонтитул в данной секции

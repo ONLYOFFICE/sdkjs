@@ -570,6 +570,17 @@
 			return bRes;
 		};
 
+		Range.prototype.isIntersectWithRanges = function (ranges, exceptionIndex) {
+			if (ranges) {
+				for (var i = 0; i < ranges.length; i++) {
+					if ((null == exceptionIndex || (null != exceptionIndex && i !== exceptionIndex)) && this.isIntersect(ranges[i])) {
+						return true;
+					}
+				}
+			}
+			return false;
+		};
+
 		Range.prototype.isIntersectForShift = function(range, offset) {
 			var isHor = offset && offset.col;
 			var isDelete = offset && (offset.col < 0 || offset.row < 0);
@@ -2188,7 +2199,7 @@
 		}
 
 		function drawStyle(ctx, graphics, sr, oStyle, sStyleName, width, height, opt_cf_preview) {
-			var bc = null, bs = AscCommon.c_oAscBorderStyles.None, isNotFirst = false; // cached border color
+			var bc = null, bs = Asc.c_oAscBorderStyles.None, isNotFirst = false; // cached border color
 			ctx.clear();
 			// Fill cell
 			if (oStyle.ApplyFill) {
@@ -2294,7 +2305,7 @@
 				}
 			}
 		}
-		
+
 		function drawFillCell(ctx, graphics, fill, rect) {
 			if (!fill.hasFill()) {
 				return;
@@ -2305,7 +2316,7 @@
 				ctx.setFillStyle(solid).fillRect(rect._x, rect._y, rect._width, rect._height);
 				return;
 			}
-			
+
 			var vector_koef = AscCommonExcel.vector_koef / ctx.getZoom();
 			if (AscCommon.AscBrowser.isCustomScaling()) {
 				vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
@@ -2342,7 +2353,7 @@
 					shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
 					shapeDrawer.draw(geometry);
 					graphics.RestoreGrState();
-					
+
 					if (ctx instanceof AscCommonExcel.CPdfPrinter) {
 						graphics.SetBaseTransform(null);
 						graphics.RestoreGrState();
@@ -2432,25 +2443,25 @@
 			var oBorder = dxf && dxf.getBorder();
 			if (oBorder) {
 				var oS = oBorder.l;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x0, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.t;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y0, x1 - 1);
 					ctx.stroke();
 				}
 				oS = oBorder.r;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x1 - 1, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.b;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y1 - 1, x1 - 1);
 					ctx.stroke();
@@ -2553,8 +2564,7 @@
 
 			var fill = new AscCommonExcel.Fill();
 			if (colors.length === 1) {
-				fill.patternFill = new AscCommonExcel.PatternFill();
-				fill.patternFill.fromColor(colors[0]);
+				fill.fromColor(colors[0]);
 			} else {
 				fill.gradientFill = new AscCommonExcel.GradientFill();
 				var arrColors = [];
@@ -2661,7 +2671,7 @@
 
 				//Filter
 				this.filter = obj.filter;
-				
+
 				//Tooltip
 				this.tooltip = obj.tooltip;
 
@@ -3055,6 +3065,12 @@
 			this.isNeedRecalc = null;
 
 			this.specificRange = null;
+
+			//если запускаем новый поиск из-за измененного документа, то присылаем последний элемент, на который
+			//кликнул пользователь и далее пытаемся найти следующий/предыдущий
+			this.lastSearchElem = null;
+
+			this.isNotSearchEmptyCells = null;
 		}
 
 		asc_CFindOptions.prototype.clone = function () {
@@ -3086,6 +3102,9 @@
 			result.error = this.error;
 
 			result.specificRange = this.specificRange;
+			result.lastSearchElem = this.lastSearchElem;
+			result.isNotSearchEmptyCells = this.isNotSearchEmptyCells;
+
 			return result;
 		};
 
@@ -3096,7 +3115,7 @@
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
 			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows &&
 				this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
-				this.lookIn === obj.lookIn;
+				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells;
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;
@@ -3133,6 +3152,8 @@
 		asc_CFindOptions.prototype.asc_setIsReplaceAll = function (val) {this.isReplaceAll = val;};
 		asc_CFindOptions.prototype.asc_setSpecificRange = function (val) {this.specificRange = val;};
 		asc_CFindOptions.prototype.asc_setNeedRecalc = function (val) {this.isNeedRecalc = val;};
+		asc_CFindOptions.prototype.asc_setLastSearchElem = function (val) {this.lastSearchElem = val;};
+		asc_CFindOptions.prototype.asc_setNotSearchEmptyCells = function (val) {this.isNotSearchEmptyCells = val;};
 
 		/** @constructor */
 		function findResults() {
@@ -3429,7 +3450,7 @@
 				}
 			}
 		};
-		
+
 		cDate.prototype.getDateFromExcelWithTime2 = function ( val ) {
 			return new cDate( val * c_msPerDay + this.getExcelNullDate() );
 		};
@@ -3681,6 +3702,8 @@
 		prot["asc_setIsReplaceAll"] = prot.asc_setIsReplaceAll;
 		prot["asc_setSpecificRange"] = prot.asc_setSpecificRange;
 		prot["asc_setNeedRecalc"] = prot.asc_setNeedRecalc;
+		prot["asc_setLastSearchElem"] = prot.asc_setLastSearchElem;
+		prot["asc_setNotSearchEmptyCells"] = prot.asc_setNotSearchEmptyCells;
 
 		window["AscCommonExcel"].findResults = findResults;
 

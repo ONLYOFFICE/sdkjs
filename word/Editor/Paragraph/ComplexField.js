@@ -945,13 +945,16 @@ CComplexField.prototype.private_UpdateTOC = function()
 	else
 	{
 		var sReplacementText;
-		if(bTOF)
+		if (bTOF)
 		{
 			sReplacementText = AscCommon.translateManager.getValue("No table of figures entries found.");
 		}
 		else
 		{
 			sReplacementText = AscCommon.translateManager.getValue("No table of contents entries found.");
+
+			let oApi = this.LogicDocument.GetApi();
+			oApi.sendEvent("asc_onError", c_oAscError.ID.ComplexFieldEmptyTOC, c_oAscError.Level.NoCritical);
 		}
 
 		oPara = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument, false);
@@ -960,9 +963,6 @@ CComplexField.prototype.private_UpdateTOC = function()
 		oRun.AddText(sReplacementText);
 		oPara.AddToContent(0, oRun);
 		oSelectedContent.Add(new AscCommonWord.CSelectedElement(oPara, true));
-
-		let oApi = this.LogicDocument.GetApi();
-		oApi.sendEvent("asc_onError", c_oAscError.ID.ComplexFieldEmptyTOC, c_oAscError.Level.NoCritical);
 	}
 
 	this.SelectFieldValue();

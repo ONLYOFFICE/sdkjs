@@ -339,6 +339,8 @@ MasterSlide.prototype.setTiming = function(oTiming)
     }
 };
 MasterSlide.prototype.changeSize = Slide.prototype.changeSize;
+MasterSlide.prototype.getAllRasterImages = Slide.prototype.getAllRasterImages;
+MasterSlide.prototype.Reassign_ImageUrls = Slide.prototype.Reassign_ImageUrls;
 MasterSlide.prototype.setTheme = function (theme) {
     History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideMasterSetTheme, this.Theme, theme));
     this.Theme = theme;

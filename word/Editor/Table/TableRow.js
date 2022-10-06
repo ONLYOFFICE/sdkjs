@@ -114,6 +114,11 @@ CTableRow.prototype =
         return this.Id;
     },
 
+	GetId : function()
+	{
+		return this.Id;
+	},
+
 	// Создаем копию данного объекта
 	Copy : function(Table, oPr)
 	{
@@ -140,7 +145,7 @@ CTableRow.prototype =
 		return Row;
 	},
 
-    Is_UseInDocument : function(Id)
+	IsUseInDocument : function(Id)
     {
         var bUse = false;
         if ( null != Id )
@@ -159,7 +164,7 @@ CTableRow.prototype =
             bUse = true;
 
         if ( true === bUse && null != this.Table )
-            return this.Table.Is_UseInDocument(this.Get_Id());
+            return this.Table.IsUseInDocument(this.Get_Id());
 
         return false;
     },

@@ -903,8 +903,7 @@ function Chart3dAdjustTrack(oChartSpace, numHandle, startX, startY)
         if(!this.bIsTracked){
             return;
         }
-        oChartSpace.chart.setView3D(this.view3D.createDuplicate());
-        oChartSpace.setRecalculateInfo();
+        oChartSpace.changeView3d(this.view3D.createDuplicate());
     }
 }
 

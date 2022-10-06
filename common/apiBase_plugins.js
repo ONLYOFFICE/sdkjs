@@ -1103,6 +1103,42 @@
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
 	};
 
+
+    /**
+     * An object containing the font information.
+     * @typedef {Object} ImageData
+     * @property {string} src
+     * @property {number} width
+     * @property {number} height
+     */
+
+	/**
+     * Returns an image data obtained from first of selected drawings.
+     * If there are no selected drawings it returns white rect.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias GetImageDataFromSelection
+     * @returns {?ImageData} - ImageData with png image encoded in base64 format or null if there are no selected objects.
+     */
+	Api.prototype["pluginMethod_GetImageDataFromSelection"] = function()
+	{
+		return this.getImageDataFromSelection();
+	};
+	/**
+     * Replaces the first selected drawing
+     * If there are no selected drawings it inserts the image to the current position.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias PutImageDataToSelection
+     * @param {ImageData} oImageData - image encoded in base64 format.
+     */
+	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
+	{
+        this._beforeEvalCommand();
+		this.putImageToSelection(oImageData["src"], oImageData["width"], oImageData["height"]);
+        this._afterEvalCommand();
+	};
+
 	function getLocalStorageItem(key)
 	{
 		try
@@ -1350,5 +1386,22 @@
 	Api.prototype["pluginMethod_UpdatePlugin"] = function(url, guid)
 	{
 		return installPlugin(config, "Updated");
+	};
+
+	/**
+    * Show or hide buttons in header.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [id] - The id of the button.
+     * @param {boolean} [bShow] - The flag show or hide the button.
+     * @alias ShowButton 
+     */
+	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
+	{
+		if (bShow) {
+			this.sendEvent("asc_onPluginShowButton", id);
+		} else {
+			this.sendEvent("asc_onPluginHideButton", id);
+		}
 	};
 })(window);

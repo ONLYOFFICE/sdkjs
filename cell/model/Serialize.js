@@ -36,7 +36,7 @@
       // Import
       var CellValueType = AscCommon.CellValueType;
       var c_oAscCellAnchorType = AscCommon.c_oAscCellAnchorType;
-      var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+      var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
       var gc_nMaxRow0 = AscCommon.gc_nMaxRow0;
       var gc_nMaxCol0 = AscCommon.gc_nMaxCol0;
       var Binary_CommonReader = AscCommon.Binary_CommonReader;
@@ -1464,6 +1464,16 @@
         NA: 3
     };
 
+    var ST_TableType = {
+        queryTable: 0,
+        worksheet: 1,
+        xml: 2
+    }
+
+    var ST_PageOrder = {
+        downThenOver: 0,
+        overThenDown: 1
+    };
 
     var g_nNumsMaxId = 160;
 
@@ -7334,7 +7344,7 @@
 			else if ( c_oSerWorkbookTypes.OleSize === type )
 			{
 				var sRange = this.stream.GetString2LE(length);
-				var parsedRange = AscCommonExcel.g_oRangeCache.getAscRange(sRange);
+				var parsedRange = AscCommonExcel.g_oRangeCache.getAscRange(sRange).clone();
 				if (parsedRange) {
 					this.oWorkbook.setOleSize(new AscCommonExcel.OleSizeSelectionRange(null, parsedRange));
 				}
@@ -10173,7 +10183,6 @@
 
             var aSharedStrings = [];
             var aCellXfs = [];
-            this.InitOpenManager.Dxfs = [];
             var oMediaArray = {};
 
 
@@ -11142,6 +11151,7 @@
             sheetIds: {}
         };
         this.wb = wb;
+        this.Dxfs = [];
 
         //при чтении из xml
         this.legacyDrawingId = null;
@@ -11758,6 +11768,11 @@
         var oThis = this;
         var tablesIndex = 1;
         var sheetIndex = 1;
+
+        if (!this.wb) {
+            return;
+        }
+
         this.wb.forEach(function(ws) {
             //prepare tables IDs
             var i;
@@ -11868,6 +11883,11 @@
     };
     InitSaveManager.prototype._prepeareStyles = function (stylesForWrite) {
         stylesForWrite.init();
+
+        if (!this.wb) {
+            return;
+        }
+
         var styles = this.wb.CellStyles.CustomStyles;
         var style = null;
         for (var i = 0; i < styles.length; ++i) {
@@ -12300,6 +12320,9 @@
     window["AscCommonExcel"].ESortMethod = ESortMethod;
     window["AscCommonExcel"].ST_CellComments = ST_CellComments;
     window["AscCommonExcel"].ST_PrintError = ST_PrintError;
+    window["AscCommonExcel"].ST_TableType = ST_TableType;
+    window["AscCommonExcel"].ST_PageOrder = ST_PageOrder;
+    window["AscCommonExcel"].EActivePane = EActivePane;
 
     window["AscCommonExcel"].ReadWbComments = ReadWbComments;
     window["AscCommonExcel"].WriteWbComments = WriteWbComments;

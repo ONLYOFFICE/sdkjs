@@ -149,6 +149,7 @@
 	CMathContent.prototype.fromXml = function(reader, opt_paragraphContent) {
 		let elem, depth = reader.GetDepth();
 		let oReadResult = reader.context.oReadResult;
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			elem = null;
 			let name = reader.GetNameNoNS();
@@ -288,6 +289,22 @@
 					if (oReadResult.checkReadRevisions()) {
 						for (let i = startPos; i < endPos; ++i) {
 							oReadResult.setNestedReviewType(this.GetElement(i), reviewtype_Add, trackChange.ReviewInfo);
+						}
+					}
+					break;
+				}
+
+				case 's':
+				case 'u':
+				case 'span':
+				case 'b':
+				case 'i': {
+					if (isPastingMath) {
+						//далее внутри нас интересуют два тега - m:r с текстом и настройками  в виде m:rPr
+						var htmlContent = new AscCommon.ParseHtmlMathContent(this.Paragraph, opt_paragraphContent && opt_paragraphContent.ctrPrp);
+						htmlContent.fromXml(reader);
+						if (htmlContent.paraRuns) {
+							elem = htmlContent.paraRuns;
 						}
 					}
 					break;
@@ -455,8 +472,15 @@
 				// }
 			}
 			if (elem) {
-				this.addElementToContent(elem);
-				elem.Paragraph = this.Paragraph;
+				if(isPastingMath && Array.isArray(elem)) {
+					for(var i = 0; i < elem.length; i++) {
+						this.addElementToContent(elem[i]);
+						elem[i].Paragraph = this.Paragraph;
+					}
+				} else {
+					this.addElementToContent(elem);
+					elem.Paragraph = this.Paragraph;
+				}
 			}
 		}
 	};
@@ -599,7 +623,20 @@
 		}
 		writer.WriteXmlNodeEnd(name);
 	};
-
+	CMathBase.prototype.fromHtmlCtrlPr = function(reader, opt_textPr) {
+		var rPr = opt_textPr ? opt_textPr : new CTextPr();
+		while (reader.MoveToNextAttribute()) {
+			switch (reader.GetNameNoNS()) {
+				case "style": {
+					var _styles = new AscCommon.ParseHtmlStyle(reader.GetValue());
+					_styles.parseStyles();
+					_styles.applyStyles(rPr);
+					break;
+				}
+			}
+		}
+		return rPr;
+	};
 
 	CMPrp.prototype.fromXml = function (reader) {
 		let elem, depth = reader.GetDepth();
@@ -646,6 +683,7 @@
 	};
 	CMathAccentPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "chr" : {
@@ -654,6 +692,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, mathElem, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -692,8 +737,9 @@
 		writer.WriteXmlNullable(this.getBase(), "m:e");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathBarPr.prototype.fromXml = function (reader) {
+	CMathBarPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "pos" : {
@@ -702,6 +748,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -744,7 +797,7 @@
 		while (reader.MoveToNextAttribute()) {
 			switch (reader.GetNameNoNS()) {
 				case "alnAt": {
-					this.alnAt = Math.min(255, Math.max(1, CT_UIntM.prototype.toVal(reader, 1)));
+					this.alnAt = Math.min(255, Math.max(1, reader.GetValueUInt(1)));
 					break;
 				}
 			}
@@ -756,11 +809,12 @@
 	};
 	CMathBreak.prototype.toXml = function (writer, name) {
 		writer.WriteXmlNodeStart(name);
-		writer.WriteXmlNullable(CT_UIntM.prototype.fromVal(this.alnAt), "m:alnAt");
+		writer.WriteXmlNullableAttributeUInt("alnAt", this.alnAt);
 		writer.WriteXmlAttributesEnd(true);
 	};
 	CMathBoxPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "opEmu" : {
@@ -786,6 +840,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -913,6 +974,7 @@
 	};
 	CMathDelimiterPr.prototype.fromXml = function (reader, mathElem) {
 		let  depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "begChr" : {
@@ -937,6 +999,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -984,6 +1053,7 @@
 	};
 	CMathEqArrPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "baseJc" : {
@@ -1008,6 +1078,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -1056,6 +1133,7 @@
 	};
 	CMathFractionPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "type" : {
@@ -1064,6 +1142,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -1112,10 +1197,18 @@
 	};
 	CMathBasePr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -1138,8 +1231,13 @@
 					break;
 				}
 				case "fName" : {
+					var state = reader.getState();
+					var insideProps = new CMathBasePr()
+					insideProps.fromXml(reader, this);
+					reader.setState(state);
+
 					elem = new CMathContent();
-					elem.fromXml(reader);
+					elem.fromXml(reader, insideProps);
 					props.content[0] = elem;
 					break;
 				}
@@ -1163,6 +1261,7 @@
 	};
 	CMathGroupChrPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "chr" : {
@@ -1179,6 +1278,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -1222,10 +1328,18 @@
 	};
 	CMathLimitPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -1274,6 +1388,7 @@
 	CMathMatrixPr.prototype.fromXml = function (reader, mathElem) {
 		let t = this;
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "baseJc" : {
@@ -1324,6 +1439,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -1402,6 +1524,7 @@
 	};
 	CMathNaryPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "chr" : {
@@ -1426,6 +1549,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -1485,6 +1615,7 @@
 	};
 	CMathPhantomPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "show" : {
@@ -1509,6 +1640,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -1554,6 +1692,7 @@
 	};
 	CMathRadicalPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "degHide" : {
@@ -1562,6 +1701,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -1610,6 +1756,7 @@
 	};
 	CMathDegreeSubSupPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "alnScr" : {
@@ -1618,6 +1765,13 @@
 				}
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}
@@ -1653,13 +1807,13 @@
 				case "sub" : {
 					elem = new CMathContent();
 					elem.fromXml(reader);
-					props.content[1] = elem;
+					props.content[2] = elem;
 					break;
 				}
 				case "sup" : {
 					elem = new CMathContent();
 					elem.fromXml(reader);
-					props.content[2] = elem;
+					props.content[1] = elem;
 					break;
 				}
 			}
@@ -1682,10 +1836,18 @@
 	};
 	CMathDegreePr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
+		let isPastingMath = reader.context && reader.context.oReadResult && reader.context.oReadResult.bCopyPaste;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "ctrlPr" : {
 					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
+					break;
+				}
+				case "span" : {
+					if (isPastingMath) {
+						//paste from ms
+						this.ctrPrp = CMathBase.prototype.fromHtmlCtrlPr.call(this, reader, this.ctrPrp);
+					}
 					break;
 				}
 			}

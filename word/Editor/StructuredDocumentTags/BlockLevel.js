@@ -1170,12 +1170,12 @@ CBlockLevelSdt.prototype.GetEndInfo = function()
 {
 	return this.Content.GetEndInfo();
 };
-CBlockLevelSdt.prototype.Is_UseInDocument = function(Id)
+CBlockLevelSdt.prototype.IsUseInDocument = function(Id)
 {
 	if (Id === this.Content.GetId() && this.Parent)
-		return this.Parent.Is_UseInDocument(this.GetId());
-	else if (this.Parent && this.Parent.Is_UseInDocument)
-		return this.Parent.Is_UseInDocument(this.Get_Id());
+		return this.Parent.IsUseInDocument(this.GetId());
+	else if (this.Parent && this.Parent.IsUseInDocument)
+		return this.Parent.IsUseInDocument(this.Get_Id());
 
 	return false;
 };
@@ -1187,10 +1187,10 @@ CBlockLevelSdt.prototype.Get_TextBackGroundColor = function()
 {
 	return this.Parent.Get_TextBackGroundColor();
 };
-CBlockLevelSdt.prototype.Is_ThisElementCurrent = function(oElement)
+CBlockLevelSdt.prototype.IsThisElementCurrent = function(oElement)
 {
 	if (oElement === this.Content)
-		return this.Parent.Is_ThisElementCurrent();
+		return this.Parent.IsThisElementCurrent();
 
 	return false;
 };
@@ -1544,14 +1544,6 @@ CBlockLevelSdt.prototype.SetDocPartObj = function(sCategory, sGallery, isUnique)
 	this.Pr.DocPartObj.Gallery  = sGallery;
 	this.Pr.DocPartObj.Unique   = isUnique;
 };
-CBlockLevelSdt.prototype.IsBuiltInTableOfContents = function()
-{
-	return this.Pr.DocPartObj.Gallery === "Table of Contents";
-};
-CBlockLevelSdt.prototype.IsBuiltInUnique = function()
-{
-	return true === this.Pr.DocPartObj.Unique;
-};
 CBlockLevelSdt.prototype.SetContentControlLock = function(nLockType)
 {
 	if (this.Pr.Lock !== nLockType)
@@ -1710,10 +1702,15 @@ CBlockLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(isSkip
 	if (true !== isSkipTemporaryCheck && this.IsContentControlTemporary())
 		this.RemoveContentControlWrapper();
 };
-CBlockLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSelect)
+CBlockLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSelect, isForceUpdate)
 {
 	if (this.IsPlaceHolder())
+	{
+		if (isForceUpdate)
+			this.private_FillPlaceholderContent();
+		
 		return;
+	}
 
 	this.SetShowingPlcHdr(true);
 	this.private_FillPlaceholderContent();
@@ -1796,9 +1793,9 @@ CBlockLevelSdt.prototype.ReplacePlaceHolderWithContent = function()
 {
 	return this.private_ReplacePlaceHolderWithContent();
 };
-CBlockLevelSdt.prototype.ReplaceContentWithPlaceHolder = function(isSelect)
+CBlockLevelSdt.prototype.ReplaceContentWithPlaceHolder = function(isSelect, isForceUpdate)
 {
-	return this.private_ReplaceContentWithPlaceHolder(isSelect);
+	return this.private_ReplaceContentWithPlaceHolder(isSelect, isForceUpdate);
 };
 CBlockLevelSdt.prototype.CheckRunContent = function(fCheck)
 {

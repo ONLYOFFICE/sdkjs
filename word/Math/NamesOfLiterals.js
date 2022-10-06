@@ -1843,7 +1843,7 @@
 							for (let i = 0; i < oTokens.length; i++) {
 								ConvertTokens(
 									oTokens[i],
-									oContext,
+									oContext
 								);
 							}
 							break;
@@ -1865,12 +1865,12 @@
 							if (oTokens.decimal) {
 								ConvertTokens(
 									oTokens.left,
-									oContext,
+									oContext
 								);
 								oContext.Add_Text(oTokens.decimal, Paragraph)
 								ConvertTokens(
 									oTokens.right,
-									oContext,
+									oContext
 								);
 							}
 							else {
@@ -1887,7 +1887,7 @@
 							);
 							ConvertTokens(
 								oTokens.value,
-								oPreSubSup.getBase(),
+								oPreSubSup.getBase()
 							);
 							UnicodeArgument(
 								oTokens.up,
@@ -1983,7 +1983,7 @@
 								let oFuncWithLimit = oContext.Add_FunctionWithLimit(
 									{},
 									null,
-									null,
+									null
 								);
 								oFuncWithLimit
 									.getFName()
@@ -2013,7 +2013,7 @@
 								let oNary = oContext.Add_NAry({chr: oTokens.value.value.charCodeAt(0)}, null, null, null);
 								ConvertTokens(
 									oTokens.third,
-									oNary.getBase(),
+									oNary.getBase()
 								);
 								UnicodeArgument(
 									oTokens.up,
@@ -2049,7 +2049,7 @@
 								);
 								ConvertTokens(
 									oTokens.value,
-									SubSup.getBase(),
+									SubSup.getBase()
 								);
 								UnicodeArgument(
 									oTokens.up,
@@ -2067,7 +2067,7 @@
 							let oFuncWithLimit = oContext.Add_FunctionWithLimit(
 								{},
 								null,
-								null,
+								null
 							);
 							if (typeof oTokens.value === "object") {
 								UnicodeArgument(
@@ -2152,7 +2152,7 @@
 								oTokens.value.length ? oTokens.value.length : 1,
 								[null],
 								GetBracketCode(oTokens.left),
-								GetBracketCode(oTokens.right),
+								GetBracketCode(oTokens.right)
 							);
 							if (oTokens.value.length) {
 								for (let intCount = 0; intCount < oTokens.value.length; intCount++) {
@@ -2200,7 +2200,7 @@
 						case oNamesOfLiterals.mathFontLiteral[num]:
 							ConvertTokens(
 								oTokens.value,
-								oContext,
+								oContext
 							);
 							break;
 						case oNamesOfLiterals.matrixLiteral[num]:
@@ -2227,7 +2227,7 @@
 									let oContent = oMatrix.getContentElement(intRow, intCol);
 									ConvertTokens(
 										oTokens.value[intRow][intCol],
-										oContent,
+										oContent
 									);
 								}
 							}
@@ -2242,7 +2242,7 @@
 								let oMathContent = oEqArray.getElementMathContent(i);
 								ConvertTokens(
 									oTokens.value[i],
-									oMathContent,
+									oMathContent
 								);
 							}
 							break;
@@ -2251,7 +2251,7 @@
 							UnicodeArgument(
 								oTokens.value,
 								oNamesOfLiterals.bracketBlockLiteral[num],
-								oBox.getBase(),
+								oBox.getBase()
 							)
 							break;
 						case oNamesOfLiterals.rectLiteral[num]:
@@ -2259,7 +2259,7 @@
 							UnicodeArgument(
 								oTokens.value,
 								oNamesOfLiterals.bracketBlockLiteral[num],
-								oBorderBox.getBase(),
+								oBorderBox.getBase()
 							)
 							break;
 						case oNamesOfLiterals.overBarLiteral[num]:
@@ -2268,7 +2268,7 @@
 							UnicodeArgument(
 								oTokens.value,
 								oNamesOfLiterals.bracketBlockLiteral[num],
-								oBar.getBase(),
+								oBar.getBase()
 							)
 							break;
 					}
@@ -2278,13 +2278,13 @@
 				if (oInput && type === 0 && oInput.type === oComparison && oInput.left === "(" && oInput.right === ")") {
 					ConvertTokens(
 						oInput.value,
-						oContext,
+						oContext
 					)
 				}
 				else if (oInput) {
 					ConvertTokens(
 						oInput,
-						oContext,
+						oContext
 					)
 				}
 			}
@@ -2358,7 +2358,7 @@
 		if (!this.IsHasMoreTokens()) {
 			return {
 				class: undefined,
-				data: undefined,
+				data: undefined
 			};
 		}
 
@@ -2401,7 +2401,7 @@
 			return {
 				class: tokenClass,
 				data: tokenValue,
-				index: i,
+				index: i
 			}
 		}
 
@@ -2409,7 +2409,7 @@
 			strError += " ";
 		}
 		strError += "^";
-		throw new SyntaxError(`Unexpected token: "${string[0]}"\n` + this._string.join('') + "\n" + strError);
+		throw new SyntaxError('Unexpected token: "' + string[0] + '"\n' + this._string.join('') + "\n" + strError);
 	}
 	Tokenizer.prototype.ProcessString = function (str, char) {
 		let intLenOfRule = 0;

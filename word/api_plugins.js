@@ -248,13 +248,25 @@
 			prop.CC.SelectContentControl();
 		}
 
-		if (prop && prop.CC) delete prop.CC;
-
-		prop["Tag"] = prop.Tag;
-		prop["Id"] = prop.Id;
-		prop["Lock"] = prop.Lock;
-		prop["InternalId"] = prop.InternalId;
-		prop["Appearance"] = prop.Appearance;
+		var result =
+		{
+			"Tag"        : prop.Tag,
+			"Id"         : prop.Id,
+			"Lock"       : prop.Lock,
+			"Alias"      : prop.Alias,
+			"InternalId" : prop.InternalId,
+			"Appearance" : prop.Appearance,
+		};
+		
+		if (prop.Color)
+		{
+			result["Color"] =
+			{
+				"R" : prop.Color.r,
+				"G" : prop.Color.g,
+				"B" : prop.Color.b
+			}
+		}
 
 		if (contentFormat)
 		{
@@ -269,7 +281,7 @@
 			if (contentFormat == Asc.EPluginDataType.html)
 				copy_format = 2;
 			this.asc_CheckCopy(copy_data, copy_format);
-			prop["content"] = copy_data.data;
+			result["content"] = copy_data.data;
 		}
 
 		if (oState && contentFormat)
@@ -278,7 +290,7 @@
 			oLogicDocument.UpdateSelection();
 		}
 
-		return prop;
+		return result;
 	};
     /**
      * Selects the specified content control.
@@ -344,7 +356,12 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias AddComment
-	 * @param {object} oCommentData - An object which contains the comment data: "comment" - the comment text, "author" - the comment author.
+	 * @param {object}  oCommentData - An object which contains the comment data
+	 * @param {string}  oCommentData.UserName - the comment author
+	 * @param {string}  oCommentData.Text - the comment text
+	 * @param {string}  oCommentData.Time - the comment time
+	 * @param {boolean}  oCommentData.Solved - is the comment resolved
+	 * @param {undefined | array} oCommentData.Replies - an array of replies, they are in the same format as oCommentData
 	 * @return {string | null} - The comment ID in the string format or null if the comment cannot be added.
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AddComment"] = function(oCommentData)
@@ -844,7 +861,7 @@
 				&& oDrawing.getObjectType
 				&& oDrawing.getObjectType() === AscDFH.historyitem_type_OleObject)
 			{
-				if(oDrawing.Is_UseInDocument())
+				if(oDrawing.IsUseInDocument())
 				{
 					aDrawings.push(oDrawing);
 				}

@@ -16,3 +16,7 @@ slide/sdk-all.props.js.map
 slide/sdk-all.vars.js.map
 word/sdk-all.props.js.map
 word/sdk-all.vars.js.map
+node_modules
+package-lock.json
+*/node_modules
+*/package-lock.json

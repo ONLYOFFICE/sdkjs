@@ -49,6 +49,7 @@
 		this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
 		this.MultiLine             = false;
 		this.AutoFit               = false;
+		this.Format                = new AscWord.CTextFormFormat();
 	}
 	CSdtTextFormPr.prototype.Copy = function()
 	{
@@ -63,6 +64,7 @@
 		oText.CombBorder            = this.CombBorder ? this.CombBorder.Copy() : undefined;
 		oText.MultiLine             = this.MultiLine;
 		oText.AutoFit               = this.AutoFit;
+		oText.Format                = this.Format.Copy();
 
 		return oText;
 	};
@@ -78,6 +80,7 @@
 			&& ((!this.CombBorder && !oOther) || (this.CombBorder && this.CombBorder.IsEqual(oOther)))
 			&& this.MultiLine === oOther.MultiLine
 			&& this.AutoFit === oOther.AutoFit
+			&& this.Format.IsEqual(oOther.Format)
 		);
 	};
 	CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
@@ -119,6 +122,8 @@
 		oWriter.WriteBool(this.MultiLine);
 		oWriter.WriteBool(this.AutoFit);
 		oWriter.WriteLong(this.WidthRule);
+
+		this.Format.WriteToBinary(oWriter);
 	};
 	CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 	{
@@ -141,6 +146,8 @@
 		this.MultiLine = oReader.GetBool();
 		this.AutoFit   = oReader.GetBool();
 		this.WidthRule = oReader.GetLong();
+
+		this.Format.ReadFromBinary(oReader);
 	};
 	CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
 	{
@@ -152,6 +159,9 @@
 	};
 	CSdtTextFormPr.prototype.GetMaxCharacters = function()
 	{
+		if (this.Format.IsMask())
+			return this.Format.GetMaskLength();
+
 		return this.MaxCharacters;
 	};
 	CSdtTextFormPr.prototype.SetMaxCharacters = function(nMax)
@@ -218,7 +228,8 @@
 	};
 	CSdtTextFormPr.prototype.IsComb = function()
 	{
-		return !!(this.Comb && undefined !== this.MaxCharacters && this.MaxCharacters <= 1000);
+		let maxCharacters = this.GetMaxCharacters();
+		return !!(this.Comb && undefined !== maxCharacters && maxCharacters <= 1000);
 	};
 	CSdtTextFormPr.prototype.GetMultiLine = function()
 	{
@@ -247,6 +258,58 @@
 	{
 		this.WidthRule = nRule;
 	};
+	CSdtTextFormPr.prototype.GetFormatType = function()
+	{
+		return this.Format.GetType();
+	};
+	CSdtTextFormPr.prototype.SetDigitFormat = function()
+	{
+		this.Format.SetDigit();
+	};
+	CSdtTextFormPr.prototype.SetLetterFormat = function()
+	{
+		this.Format.SetLetter();
+	};
+	CSdtTextFormPr.prototype.SetMaskFormat = function(sMask)
+	{
+		this.Format.SetMask(sMask);
+	};
+	CSdtTextFormPr.prototype.GetMaskFormat = function()
+	{
+		return this.Format.GetMask();
+	};
+	CSdtTextFormPr.prototype.SetRegExpFormat = function(sRegExp)
+	{
+		this.Format.SetRegExp(sRegExp);
+	};
+	CSdtTextFormPr.prototype.GetRegExpFormat = function()
+	{
+		return this.Format.GetRegExp();
+	};
+	CSdtTextFormPr.prototype.SetNoneFormat = function()
+	{
+		this.Format.SetNone();
+	};
+	CSdtTextFormPr.prototype.SetFormatSymbols = function(arrSymbols)
+	{
+		this.Format.SetSymbols(arrSymbols);
+	};
+	CSdtTextFormPr.prototype.GetFormatSymbols = function()
+	{
+		return this.Format.GetSymbols(true);
+	};
+	CSdtTextFormPr.prototype.CheckFormat = function(sText, isFullCheck)
+	{
+		return this.Format.Check(sText, isFullCheck);
+	};
+	CSdtTextFormPr.prototype.CheckFormatOnFly = function(sText)
+	{
+		return this.Format.CheckOnFly(sText);
+	};
+	CSdtTextFormPr.prototype.GetFormat = function()
+	{
+		return this.Format;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CSdtTextFormPr    = CSdtTextFormPr;
@@ -273,5 +336,15 @@
 	CSdtTextFormPr.prototype['put_AutoFit']           = CSdtTextFormPr.prototype.SetAutoFit;
 	CSdtTextFormPr.prototype['get_WidthRule']         = CSdtTextFormPr.prototype.GetWidthRule;
 	CSdtTextFormPr.prototype['put_WidthRule']         = CSdtTextFormPr.prototype.SetWidthRule;
+	CSdtTextFormPr.prototype['get_FormatType']        = CSdtTextFormPr.prototype.GetFormatType;
+	CSdtTextFormPr.prototype['put_NoneFormat']        = CSdtTextFormPr.prototype.SetNoneFormat;
+	CSdtTextFormPr.prototype['put_DigitFormat']       = CSdtTextFormPr.prototype.SetDigitFormat;
+	CSdtTextFormPr.prototype['put_LetterFormat']      = CSdtTextFormPr.prototype.SetLetterFormat;
+	CSdtTextFormPr.prototype['put_MaskFormat']        = CSdtTextFormPr.prototype.SetMaskFormat;
+	CSdtTextFormPr.prototype['get_MaskFormat']        = CSdtTextFormPr.prototype.GetMaskFormat;
+	CSdtTextFormPr.prototype['put_RegExpFormat']      = CSdtTextFormPr.prototype.SetRegExpFormat;
+	CSdtTextFormPr.prototype['get_RegExpFormat']      = CSdtTextFormPr.prototype.GetRegExpFormat;
+	CSdtTextFormPr.prototype['get_FormatSymbols']     = CSdtTextFormPr.prototype.GetFormatSymbols;
+	CSdtTextFormPr.prototype['put_FormatSymbols']     = CSdtTextFormPr.prototype.SetFormatSymbols;
 
 })(window);

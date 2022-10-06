@@ -73,6 +73,16 @@ window.startPluginApi = function() {
 	 */
 
 	/**
+	 * @typedef {Object} ContentControl
+	 * Content control object.
+	 * @property {string} Tag - A tag assigned to the content control. The same tag can be assigned to several content controls so that it is possible to make reference to them in your code.
+	 * @property {string} Id - A unique identifier of the content control. It can be used to search for a certain content control and make reference to it in the code.
+	 * @property {ContentControlLock} Lock - A value that defines if it is possible to delete and/or edit the content control or not: 0 - only deleting, 1 - no deleting or editing, 2 - only editing, 3 - full access.
+	 * @property {string} InternalId - A unique internal identifier of the content control. It is used for all operations with content controls.
+	 */
+
+
+	/**
 	 * Plugin variations, or subplugins, that are created inside the origin plugin.
 	 * @typedef { Object } variation
 	 * @description Plugin variations can be created for the following purposes:
@@ -241,6 +251,36 @@ window.startPluginApi = function() {
      * @description The function called to show the editor integrator message.
      * @param {Object} data - Defines the editor integrator message: "type" - the message type, "text" - the message text.
      */
+
+	/**
+	 * Event: onFocusContentControl
+	 * @event Plugin#onExternalPluginMessage
+	 * @memberof Plugin
+	 * @typeofeditors ["CDE"]
+	 * @alias onFocusContentControl
+	 * @description The function called to show which content control has been focused.
+	 * @param {ContentControl} control - Defines the control which has been focused.
+	 */
+
+	/**
+	 * Event: onBlurContentControl
+	 * @event Plugin#onExternalPluginMessage
+	 * @memberof Plugin
+	 * @typeofeditors ["CDE"]
+	 * @alias onBlurContentControl
+	 * @description The function called to show which content control has been blurred.
+	 * @param {ContentControl} control - Defines the control which has been blurred.
+	 */
+
+	/**
+	 * Event: onChangeContentControl
+	 * @event Plugin#onExternalPluginMessage
+	 * @memberof Plugin
+	 * @typeofeditors ["CDE"]
+	 * @alias onChangeContentControl
+	 * @description The function called to show which content control has been changed.
+	 * @param {ContentControl} control - Defines the control which has been changed.
+	 */
 
 
     var Plugin = window["Asc"]["plugin"];

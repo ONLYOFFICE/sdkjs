@@ -117,14 +117,35 @@ CAbstractNum.prototype.GetNumStyleLink = function()
 {
 	return this.NumStyleLink;
 };
-CAbstractNum.prototype.private_RecalculateRelatedParagraphs = function(nLvl)
+CAbstractNum.prototype.RecalculateRelatedParagraphs = function(nLvl)
 {
 	if (nLvl < 0 || nLvl > 8)
 		nLvl = undefined;
 
-	var oLogicDocument = editor.WordControl.m_oLogicDocument;
-	var arrParagraphs  = oLogicDocument.GetAllParagraphsByNumbering({NumId : this.Id, Lvl : nLvl});
+	let logicDocument = editor.WordControl.m_oLogicDocument;
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
 
+	let styleManager = logicDocument.GetStyles();
+	if (undefined !== nLvl)
+	{
+		let lvl   = this.GetLvl(nLvl);
+		let style = styleManager.Get(lvl.GetPStyle());
+		if (style)
+			logicDocument.Add_ChangedStyle(style.GetId());
+	}
+	else
+	{
+		for (let iLvl = 0; iLvl <= 8; ++iLvl)
+		{
+			let lvl   = this.GetLvl(iLvl);
+			let style = styleManager.Get(lvl.GetPStyle());
+			if (style)
+				logicDocument.Add_ChangedStyle(style.GetId());
+		}
+	}
+
+	var arrParagraphs = logicDocument.GetAllParagraphsByNumbering({NumId : this.Id, Lvl : nLvl});
 	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 	{
 		arrParagraphs[nIndex].RecalcCompiledPr();
@@ -155,6 +176,7 @@ CAbstractNum.prototype.SetLvl = function(nLvl, oLvlNew)
 	var oLvlOld    = this.Lvl[nLvl];
 	this.Lvl[nLvl] = oLvlNew;
 	History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, oLvlNew, nLvl));
+	this.RecalculateRelatedParagraphs(nLvl);
 };
 /**
  * Создаем многоуровневый список с заданным пресетом
@@ -164,12 +186,10 @@ CAbstractNum.prototype.CreateDefault = function(nType)
 {
 	for (var nLvl = 0; nLvl < 9; ++nLvl)
 	{
-		var oLvlNew = new CNumberingLvl();
-		oLvlNew.InitDefault(nLvl, nType);
-
-		var oLvlOld = this.Lvl[nLvl].Copy();
-		History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, oLvlNew.Copy(), nLvl));
-		this.Lvl[nLvl] = oLvlNew;
+		let lvlOld = this.Lvl[nLvl].Copy();
+		this.Lvl[nLvl].InitDefault(nLvl, nType);
+		History.Add(new CChangesAbstractNumLvlChange(this, lvlOld, this.Lvl[nLvl].Copy(), nLvl));
+		this.RecalculateRelatedParagraphs(nLvl);
 	}
 };
 /**
@@ -187,6 +207,7 @@ CAbstractNum.prototype.SetLvlByType = function(nLvl, nType, sText, oTextPr)
 	var oLvlOld = this.Lvl[nLvl].Copy();
 	this.Lvl[nLvl].SetByType(nType, nLvl, sText, oTextPr);
 	History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, this.Lvl[nLvl].Copy(), nLvl));
+	this.RecalculateRelatedParagraphs(nLvl);
 };
 /**
  * Заполняем уровень по заданному формату
@@ -204,6 +225,22 @@ CAbstractNum.prototype.SetLvlByFormat = function(nLvl, nType, sFormatText, nAlig
 	this.Lvl[nLvl].SetByFormat(nLvl, nType, sFormatText, nAlign);
 
 	History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, this.Lvl[nLvl].Copy(), nLvl));
+	this.RecalculateRelatedParagraphs(nLvl);
+};
+/**
+ * Связываем заданный уровень с заданным стилем
+ * @param iLvl {number} 0..8
+ * @param styleId {string}
+ */
+CAbstractNum.prototype.SetLvlPStyle = function(iLvl, styleId)
+{
+	if ("number" !== typeof(iLvl) || iLvl < 0 || iLvl >= 9)
+		return;
+
+	var oLvlOld = this.Lvl[iLvl].Copy();
+
+	this.Lvl[iLvl].SetPStyle(styleId);
+	History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, this.Lvl[iLvl].Copy(), iLvl));
 };
 /**
  * Выставляем является ли данный уровень сквозным или каждый раз перестартовывать нумерацию
@@ -416,7 +453,7 @@ CAbstractNum.prototype.Recalc_CompiledPr = function(nLvl)
 	// Ищем все параграфы, который используют данную нумерацию и проставляем у них, то что их стиль
 	// нужно перекомпилировать.
 
-	this.private_RecalculateRelatedParagraphs(nLvl);
+	this.RecalculateRelatedParagraphs(nLvl);
 };
 CAbstractNum.prototype.isEqual = function(abstractNum)
 {

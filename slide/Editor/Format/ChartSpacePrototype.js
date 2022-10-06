@@ -37,13 +37,11 @@ var CShape = AscFormat.CShape;
 var CChartSpace = AscFormat.CChartSpace;
 var CreateUnifillSolidFillSchemeColor = AscFormat.CreateUnifillSolidFillSchemeColor;
 
-CChartSpace.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
-CChartSpace.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
 CChartSpace.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;
 CChartSpace.prototype.getIsSingleBody = CShape.prototype.getIsSingleBody;
 CChartSpace.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
-CChartSpace.prototype.Is_UseInDocument = CShape.prototype.Is_UseInDocument;
+CChartSpace.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 CChartSpace.prototype.getEditorType = function()
 {
     return 0;
@@ -171,7 +169,6 @@ CChartSpace.prototype.hit = CShape.prototype.hit;
 CChartSpace.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
 CChartSpace.prototype.hitInPath = CShape.prototype.hitInPath;
 CChartSpace.prototype.check_bounds = CShape.prototype.check_bounds;
-CChartSpace.prototype.setWorksheet = CShape.prototype.setWorksheet;
 CChartSpace.prototype.handleUpdateLn = function()
 {
     this.recalcInfo.recalculatePenBrush = true;

@@ -56,7 +56,7 @@
 	{
 		this.Reset();
 
-		if (oDocContent.IsTextSelectionUse())
+		if (oDocContent.IsTextSelectionUse() && !oDocContent.IsSelectionEmpty())
 			this.HandleSelectionCase(oDocContent);
 		else
 			this.HandleCursorCase(oDocContent);

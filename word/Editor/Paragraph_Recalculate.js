@@ -3210,13 +3210,13 @@ function CParagraphRecalculateStateWrap(Para)
     this.End      = false;
     this.RangeY   = false; // Текущая строка переносится по Y из-за обтекания
 
-    this.CurPos       = new CParagraphContentPos();
+    this.CurPos       = new AscWord.CParagraphContentPos();
 
-    this.NumberingPos = new CParagraphContentPos(); // Позиция элемента вместе с которым идет нумерация
+    this.NumberingPos = new AscWord.CParagraphContentPos(); // Позиция элемента вместе с которым идет нумерация
 
     this.MoveToLBP      = false;                      // Делаем ли разрыв в позиции this.LineBreakPos
 	this.LineBreakFirst = true;                       // Последняя позиция для переноса - это первый элемент в отрезке
-    this.LineBreakPos   = new CParagraphContentPos(); // Последняя позиция в которой можно будет добавить разрыв
+    this.LineBreakPos   = new AscWord.CParagraphContentPos(); // Последняя позиция в которой можно будет добавить разрыв
                                                       // отрезка или строки, если что-то не умещается (например,
                                                       // если у нас не убирается слово, то разрыв ставим перед ним)
 	this.LastItem       = null;                       // Последний непробельный элемент
@@ -3245,7 +3245,7 @@ function CParagraphRecalculateStateWrap(Para)
     this.bMath_OneLine       = false;
     this.bMathWordLarge      = false;
     this.bEndRunToContent    = false;
-    this.PosEndRun           = new CParagraphContentPos();
+    this.PosEndRun           = new AscWord.CParagraphContentPos();
 
     // параметры, необходимые для расчета разбиения по операторам
     // у "крайних" в строке операторов/мат объектов сооответствующий Gap равен нулю
@@ -3319,7 +3319,7 @@ CParagraphRecalculateStateWrap.prototype =
         this.bMath_OneLine       = false;
         this.bMathWordLarge      = false;
         this.bEndRunToContent    = false;
-        this.PosEndRun           = new CParagraphContentPos();
+        this.PosEndRun           = new AscWord.CParagraphContentPos();
         this.Footnotes           = [];
         this.Endnotes            = [];
 
@@ -3358,7 +3358,7 @@ CParagraphRecalculateStateWrap.prototype =
 		this.RangeSpaces     = [];
 
 		this.MoveToLBP      = false;
-		this.LineBreakPos   = new CParagraphContentPos();
+		this.LineBreakPos   = new AscWord.CParagraphContentPos();
 		this.LineBreakFirst = true;
 		this.LastItem       = null;
 		this.UpdateLBP      = true;
@@ -3367,7 +3367,7 @@ CParagraphRecalculateStateWrap.prototype =
         this.bMath_OneLine    = false;
         this.bMathWordLarge   = false;
         this.bEndRunToContent = false;
-        this.PosEndRun        = new CParagraphContentPos();
+        this.PosEndRun        = new AscWord.CParagraphContentPos();
 
         this.OperGapRight        = 0;
         this.OperGapLeft         = 0;

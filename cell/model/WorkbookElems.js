@@ -37,7 +37,7 @@
 // Import
 var CellValueType = AscCommon.CellValueType;
 var c_oAscBorderWidth = AscCommon.c_oAscBorderWidth;
-var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
 var FormulaTablePartInfo = AscCommon.FormulaTablePartInfo;
 var parserHelp = AscCommon.parserHelp;
 var gc_nMaxRow0 = AscCommon.gc_nMaxRow0;
@@ -1823,6 +1823,7 @@ var g_oFontProperties = {
 			this.patternFill = new PatternFill();
 			this.patternFill.fromColor(color);
 		}
+		this.checkEmptyContent();
 	};
 	Fill.prototype.fromPatternParams = function (type, color) {
 		this.patternFill = null;
@@ -1967,46 +1968,46 @@ var g_oFontProperties = {
 	function ToXml_ST_BorderStyle(val) {
 		var res = null;
 		switch (val) {
-			case  AscCommon.c_oAscBorderStyles.DashDot:
+			case  Asc.c_oAscBorderStyles.DashDot:
 				res = "dashDot";
 				break;
-			case  AscCommon.c_oAscBorderStyles.DashDotDot:
+			case  Asc.c_oAscBorderStyles.DashDotDot:
 				res = "dashDotDot";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Dashed:
+			case  Asc.c_oAscBorderStyles.Dashed:
 				res = "dashed";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Dotted:
+			case  Asc.c_oAscBorderStyles.Dotted:
 				res = "dotted";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Double:
+			case  Asc.c_oAscBorderStyles.Double:
 				res = "double";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Hair:
+			case  Asc.c_oAscBorderStyles.Hair:
 				res = "hair";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Medium:
+			case  Asc.c_oAscBorderStyles.Medium:
 				res = "medium";
 				break;
-			case  AscCommon.c_oAscBorderStyles.MediumDashDot:
+			case  Asc.c_oAscBorderStyles.MediumDashDot:
 				res = "mediumDashDot";
 				break;
-			case  AscCommon.c_oAscBorderStyles.MediumDashDotDot:
+			case  Asc.c_oAscBorderStyles.MediumDashDotDot:
 				res = "mediumDashDotDot";
 				break;
-			case  AscCommon.c_oAscBorderStyles.MediumDashed:
+			case  Asc.c_oAscBorderStyles.MediumDashed:
 				res = "mediumDashed";
 				break;
-			case  AscCommon.c_oAscBorderStyles.None:
+			case  Asc.c_oAscBorderStyles.None:
 				//res = "none";
 				break;
-			case  AscCommon.c_oAscBorderStyles.SlantDashDot:
+			case  Asc.c_oAscBorderStyles.SlantDashDot:
 				res = "slantDashDot";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Thick:
+			case  Asc.c_oAscBorderStyles.Thick:
 				res = "thick";
 				break;
-			case  AscCommon.c_oAscBorderStyles.Thin:
+			case  Asc.c_oAscBorderStyles.Thin:
 				res = "thin";
 				break;
 		}
@@ -3700,6 +3701,7 @@ StyleManager.prototype =
 	},
 	setFill : function(oItemWithXfs, val)
 	{
+		val && val.checkEmptyContent();
 		return this._setProperty(oItemWithXfs, val, "fill", CellXfs.prototype.getFill, CellXfs.prototype.setFill, g_StyleCache.addFill);
 	},
 	setBorder : function(oItemWithXfs, val)
@@ -3966,7 +3968,7 @@ StyleManager.prototype =
 				} else {
 					newVal.setIndexNumber(container.count++);
 				}
-				if (!res) {
+				if (!res || forceAdd) {
 					container.vals[hash] = newVal;
 				}
 				res = newVal;
@@ -4757,7 +4759,7 @@ StyleManager.prototype =
 		if (this.index >= 0 && (!opt_inCaseOfChange || this._hasChanged)) {
 			this._hasChanged = false;
 			var sheetMemory = this.ws.rowsData;
-			sheetMemory.checkSize(this.index);
+			sheetMemory.checkIndex(this.index);
 			var xfSave = this.xfs ? this.xfs.getIndexNumber() : 0;
 			var flagToSave = this.flags;
 			var heightToSave = this.h;
@@ -4776,7 +4778,7 @@ StyleManager.prototype =
 		this.clear();
 		this.index = index;
 		var sheetMemory = this.ws.rowsData;
-		if (sheetMemory.hasSize(this.index)) {
+		if (sheetMemory.hasIndex(this.index)) {
 			this.flags = sheetMemory.getUint8(this.index, g_nRowOffsetFlag);
 			if (0 != (g_nRowFlag_init & this.flags)) {
 				this.xfs = g_StyleCache.getXf(sheetMemory.getUint32(this.index, g_nRowOffsetXf));
@@ -11826,6 +11828,21 @@ QueryTableField.prototype.clone = function() {
 		oGraphics.m_oFontManager = AscCommon.g_fontManager;
 		this.ctx.DocumentRenderer = oGraphics;
 		this.pixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+
+		if (isChangeForZoom && this.advancedOptions) {
+			this.recalculatePageClipRect();
+		}
+	};
+	CPrintPreviewState.prototype.recalculatePageClipRect = function () {
+		var pages = this.wb.calcPagesPrint(this.advancedOptions);
+		if (pages && pages.arrPages && this.pages.arrPages && this.pages.arrPages.length === pages.arrPages.length) {
+			for (var i in this.pages.arrPages) {
+				this.pages.arrPages[i].pageClipRectHeight = pages.arrPages[i].pageClipRectHeight;
+				this.pages.arrPages[i].pageClipRectLeft = pages.arrPages[i].pageClipRectLeft;
+				this.pages.arrPages[i].pageClipRectTop = pages.arrPages[i].pageClipRectTop;
+				this.pages.arrPages[i].pageClipRectWidth = pages.arrPages[i].pageClipRectWidth;
+			}
+		}
 	};
 	CPrintPreviewState.prototype.setAdvancedOptions = function (val) {
 		this.advancedOptions = val;

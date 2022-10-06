@@ -183,7 +183,7 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.LineTop = null;
 	this.LineBottom = null;
 	//------------------------------------------------------------
-	g_oTableId.Add(this, this.Id);
+	AscCommon.g_oTableId.Add(this, this.Id);
 
 	if (this.graphicObjects)
 	{
@@ -515,21 +515,17 @@ ParaDrawing.prototype.Get_Props = function(OtherProps)
 
 	return Props;
 };
-ParaDrawing.prototype.Is_UseInDocument = function()
+ParaDrawing.prototype.IsUseInDocument = function()
 {
 	if (this.Parent)
 	{
 		var Run = this.Parent.Get_DrawingObjectRun(this.Id);
 		if (Run)
 		{
-			return Run.Is_UseInDocument(this.Get_Id());
+			return Run.IsUseInDocument(this.GetId());
 		}
 	}
 	return false;
-};
-ParaDrawing.prototype.IsUseInDocument = function()
-{
-	return this.Is_UseInDocument();
 };
 ParaDrawing.prototype.CheckGroupSizes = function()
 {
@@ -1284,6 +1280,9 @@ ParaDrawing.prototype.GetScaleCoefficient = function ()
 		oLogicDocument.Layout = oLogicDocument.Layouts.Print;
 		let oSectPr = oParagraph.Get_SectPr();
 		oLogicDocument.Layout = oLayout;
+
+		if (!oSectPr)
+			return 1;
 
 		return oLogicDocument.GetDocumentLayout().GetScaleBySection(oSectPr);
 	}

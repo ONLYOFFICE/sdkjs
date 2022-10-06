@@ -84,7 +84,7 @@
 	CTextShaper.prototype.AppendToString = function(oItem)
 	{
 		let nCodePoint = this.GetCodePoint(oItem);
-		this.private_CheckNewSegment(nCodePoint);
+		nCodePoint = this.private_CheckNewSegment(nCodePoint);
 		this.Buffer.push(oItem);
 		AscFonts.HB_AppendToString(nCodePoint);
 	};
@@ -150,7 +150,17 @@
 		{
 			isSubst = !AscCommon.g_oTextMeasurer.CheckUnicodeInCurrentFont(nUnicode);
 			if (-1 === nFontId || isSubst)
-				nFontId = AscCommon.g_oTextMeasurer.GetFontBySymbol(nUnicode, -1 !== nFontId ? nFontId : null);
+			{
+				let oInfo = AscCommon.g_oTextMeasurer.GetFontBySymbol(nUnicode, -1 !== nFontId ? nFontId : null);
+				nFontId   = oInfo.Font;
+				nUnicode  = oInfo.CodePoint;
+			}
+			else
+			{
+				let nCurFontId = AscCommon.g_oTextMeasurer.GetCurrentFont();
+				if (nCurFontId)
+					nFontId = nCurFontId;
+			}
 
 			if (this.FontId !== nFontId
 				&& -1 !== this.FontId
@@ -167,6 +177,8 @@
 		this.FontSlot  = AscWord.fontslot_None !== nFontSlot ? nFontSlot : this.FontSlot;
 		this.FontId    = nFontId;
 		this.FontSubst = isSubst;
+
+		return nUnicode;
 	};
 	CTextShaper.prototype.private_CheckFont = function(nFontSlot)
 	{

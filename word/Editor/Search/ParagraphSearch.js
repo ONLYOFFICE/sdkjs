@@ -45,7 +45,7 @@
 		this.SearchEngine = SearchEngine;
 		this.Type         = Type;
 
-		this.ContentPos   = new CParagraphContentPos();
+		this.ContentPos   = new AscWord.CParagraphContentPos();
 
 		this.StartPos     = null; // Запоминаем здесь стартовую позицию поиска
 		this.SearchIndex  = 0;    // Номер символа, с которым мы проверяем совпадение

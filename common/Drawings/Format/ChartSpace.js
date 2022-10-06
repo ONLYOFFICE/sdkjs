@@ -1159,13 +1159,9 @@ var GLOBAL_PATH_COUNT = 0;
             textSelection: null
         };
     }
-    CChartSpace.prototype = Object.create(AscFormat.CGraphicObjectBase.prototype);
-    CChartSpace.prototype.constructor = CChartSpace;
-    CChartSpace.prototype.checkDrawingBaseCoords = CShape.prototype.checkDrawingBaseCoords;
-    CChartSpace.prototype.setDrawingBaseCoords = CShape.prototype.setDrawingBaseCoords;
+    AscFormat.InitClass(CChartSpace, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_ChartSpace);
+
     CChartSpace.prototype.changeSize = CShape.prototype.changeSize;
-    CChartSpace.prototype.isPlaceholder = CShape.prototype.isPlaceholder;
-    CChartSpace.prototype.getBase64Img = CShape.prototype.getBase64Img;
     CChartSpace.prototype.getDataRefs = function() {
         if(!this.dataRefs) {
             this.dataRefs = new AscFormat.CChartDataRefs(this);
@@ -1577,24 +1573,11 @@ var GLOBAL_PATH_COUNT = 0;
             else if(this.selection.axis) {
                 var oAxObj;
                 var oChartObj = this.chartObj;
-                if(this.selection.axis.getObjectType() === AscDFH.historyitem_type_CatAx || this.selection.axis.getObjectType() === AscDFH.historyitem_type_DateAx) {
-
-                    if(Array.isArray(oChartObj.catAxisChart)) {
-                        for(i = 0; i < oChartObj.catAxisChart.length; ++i) {
-                            if(oChartObj.catAxisChart[i] && oChartObj.catAxisChart[i].catAx === this.selection.axis) {
-                                oAxObj = oChartObj.catAxisChart[i];
-                                break;
-                            }
-                        }
-                    }
-                }
-                else if(this.selection.axis.getObjectType() === AscDFH.historyitem_type_ValAx) {
-                    if(Array.isArray(oChartObj.valAxisChart)) {
-                        for(i = 0; i < oChartObj.valAxisChart.length; ++i) {
-                            if(oChartObj.valAxisChart[i] && oChartObj.valAxisChart[i].valAx === this.selection.axis) {
-                                oAxObj = oChartObj.valAxisChart[i];
-                                break;
-                            }
+                if(Array.isArray(oChartObj.axesChart)) {
+                    for(i = 0; i < oChartObj.axesChart.length; ++i) {
+                        if(oChartObj.axesChart[i] && oChartObj.axesChart[i].axis === this.selection.axis) {
+                            oAxObj = oChartObj.axesChart[i];
+                            break;
                         }
                     }
                 }
@@ -3475,9 +3458,6 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
     };
-    CChartSpace.prototype.getObjectType = function() {
-        return AscDFH.historyitem_type_ChartSpace;
-    };
     CChartSpace.prototype.getAllRasterImages = function(images) {
         if(this.spPr) {
             this.spPr.checkBlipFillRasterImage(images);
@@ -3721,15 +3701,6 @@ var GLOBAL_PATH_COUNT = 0;
         return false;
     };
     CChartSpace.prototype.drawAdjustments = function() {
-    };
-    CChartSpace.prototype.isChart = function() {
-        return true;
-    };
-    CChartSpace.prototype.isShape = function() {
-        return false;
-    };
-    CChartSpace.prototype.isGroup = function() {
-        return false;
     };
     CChartSpace.prototype.setGroup = function(group) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartSpace_SetGroup, this.group, group));
@@ -4353,6 +4324,20 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
     };
+    CChartSpace.prototype.getView3d = function() {
+        return this.chart.getView3d();
+    };
+    CChartSpace.prototype.changeView3d = function(oView3D) {
+        let oCurView3D = this.getView3d();
+        if(!oCurView3D && !oView3D) {
+            return;
+        }
+        if(oCurView3D && oView3D && oView3D.isEqual(oCurView3D)) {
+            return;
+        }
+        this.chart.setView3D(oView3D);
+        this.setRecalculateInfo();
+    };
     CChartSpace.prototype.getDepthPerspective = function() {
         var oProcessor3D = this.chartObj && this.chartObj.processor3D;
         var dDepth = 0;
@@ -4639,11 +4624,26 @@ var GLOBAL_PATH_COUNT = 0;
             var fDiff;
             var fPrecision = 0.01;
             oCorrectedRect = new CRect(oRect.x, oRect.y, oRect.w, oRect.h);
+            let bWEdge = false;
+            let bHEge = false;
+            let oPALayout = this.chart.plotArea.layout;
+            if(oPALayout) {
+                let iN = AscFormat.isRealNumber;
+                if(oPALayout.wMode === AscFormat.LAYOUT_MODE_EDGE && iN(oPALayout.w)) {
+                    bWEdge = true;
+                }
+                if(oPALayout.hMode === AscFormat.LAYOUT_MODE_EDGE && iN(oPALayout.h)) {
+                    bHEge = true;
+                }
+            }
             if(bWithoutLabels) {
                 fDiff = fL;
                 if(fDiff < 0.0 && !AscFormat.fApproxEqual(fDiff, 0.0, fPrecision)) {
                     oCorrectedRect.x -= fDiff;
-                    //oCorrectedRect.w -= fDiff;
+
+                    if(bWEdge) {
+                        oCorrectedRect.w += fDiff;
+                    }
                     bCorrected = true;
                 }
                 fDiff = fR - this.extX;
@@ -4654,12 +4654,14 @@ var GLOBAL_PATH_COUNT = 0;
                 fDiff = fT;
                 if(fDiff < 0.0 && !AscFormat.fApproxEqual(fDiff, 0.0, fPrecision)) {
                     oCorrectedRect.y -= fDiff;
-                    //oCorrectedRect.h -= fDiff;
+                    if(bHEge) {
+                        oCorrectedRect.h += fDiff;
+                    }
                     bCorrected = true;
                 }
                 fDiff = fB - this.extY;
                 if(fDiff > 0.0 && !AscFormat.fApproxEqual(fDiff, 0.0, fPrecision)) {
-                    oCorrectedRect.h -= (fB - this.extY);
+                    oCorrectedRect.h -= fDiff;
                     bCorrected = true;
                 }
             }
@@ -4667,7 +4669,9 @@ var GLOBAL_PATH_COUNT = 0;
                 fDiff = oBaseRect.x - fL;
                 if(/*fDiff > 0.0 && */!AscFormat.fApproxEqual(fDiff, 0.0, fPrecision)) {
                     oCorrectedRect.x += fDiff;
-                    oCorrectedRect.w -= fDiff;
+                    if(bWEdge) {
+                        oCorrectedRect.w -= fDiff;
+                    }
                     bCorrected = true;
                 }
                 fDiff = oBaseRect.x + oBaseRect.w - fR;
@@ -4678,7 +4682,9 @@ var GLOBAL_PATH_COUNT = 0;
                 fDiff = oBaseRect.y - fT;
                 if(/*fDiff > 0.0 &&*/ !AscFormat.fApproxEqual(fDiff, 0.0, fPrecision)) {
                     oCorrectedRect.y += fDiff;
-                    oCorrectedRect.h -= fDiff;
+                    if(bHEge) {
+                        oCorrectedRect.h -= fDiff;
+                    }
                     bCorrected = true;
                 }
                 fDiff = oBaseRect.y + oBaseRect.h - fB;
@@ -6939,6 +6945,8 @@ var GLOBAL_PATH_COUNT = 0;
 
                 axis.compiledLn = calcGridLine(defaultStyle.axisAndMajorGridLines, axis.spPr, subtleLine, parents);
                 axis.compiledTickMarkLn = axis.compiledLn.createDuplicate();
+                axis.compiledTickMarkLn.headEnd = null;
+                axis.compiledTickMarkLn.tailEnd = null;
                 axis.compiledTickMarkLn.calculate(parents.theme, parents.slide, parents.layout, parents.master, {
                     R: 0,
                     G: 0,
@@ -8030,7 +8038,16 @@ var GLOBAL_PATH_COUNT = 0;
         }
     };
     CChartSpace.prototype.createImage = function () {
-        return this.drawingBase.createImage();
+        var nCoefficient = Asc.getCvtRatio(3, 0, this.drawingBase.worksheet._getPPIX());
+        var oWorkbook = this.drawingBase.worksheet && this.drawingBase.worksheet.workbook;
+        oWorkbook.setOleSize(null);
+        var oDrawingContext = AscCommonExcel.getContext(this.extX * nCoefficient, this.extY * nCoefficient, oWorkbook);
+        var oGraphics = AscCommonExcel.getGraphics(oDrawingContext);
+        const oOldTransform = this.transform.CreateDublicate();
+        this.transform.Reset();
+        this.draw(oGraphics);
+        this.transform = oOldTransform;
+        return oDrawingContext.toDataURL();
     }
     CChartSpace.prototype.checkDrawingCache = function(graphics) {
         if(window["NATIVE_EDITOR_ENJINE"] || graphics.RENDERER_PDF_FLAG || this.isSparkline || this.bPreview || graphics.PrintPreview) {

@@ -462,7 +462,7 @@ CHdrFtrController.prototype.SaveDocumentStateBeforeLoadChanges = function(State)
 CHdrFtrController.prototype.RestoreDocumentStateAfterLoadChanges = function(State)
 {
 	var HdrFtr = State.HdrFtr;
-	if (null !== HdrFtr && undefined !== HdrFtr && true === HdrFtr.Is_UseInDocument())
+	if (null !== HdrFtr && undefined !== HdrFtr && true === HdrFtr.IsUseInDocument())
 	{
 		this.HdrFtr.Set_CurHdrFtr(HdrFtr);
 		var HdrFtrContent = HdrFtr.Get_DocumentContent();

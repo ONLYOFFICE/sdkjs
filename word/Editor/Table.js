@@ -251,7 +251,7 @@ function CTable(DrawingDocument, Parent, Inline, Rows, Cols, TableGrid, bPresent
 
     this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add(this, this.Id);
 }
 
 CTable.prototype = Object.create(CDocumentContentElementBase.prototype);
@@ -2847,22 +2847,18 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 				}
 
 				oTargetTable = AscCommon.CollaborativeEditing.Is_SingleUser() ? this : this.Copy(NewDocContent);
-				if (NewDocContent != OldDocContent)
+				if (NewDocContent !== OldDocContent)
 				{
-					// Сначала добавляем таблицу в новый класс
-					NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
-
-					// Удаляем таблицу из родительского класса
 					OldDocContent.Internal_Content_Remove(OldIndex, 1);
-
+					NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
 					oTargetTable.Parent = NewDocContent;
 				}
-				else
+				else if (NewIndex !== OldIndex && OldIndex + 1 !== NewIndex)
 				{
-					if (NearestPos.Paragraph.Index > this.Index)
+					if (NewIndex > OldIndex)
 					{
-						NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
 						OldDocContent.Internal_Content_Remove(OldIndex, 1);
+						NewDocContent.Internal_Content_Add(NewIndex - 1, oTargetTable);
 					}
 					else
 					{
@@ -3455,28 +3451,28 @@ CTable.prototype.IsInnerTable = function()
 
 	return false;
 };
-CTable.prototype.Is_UseInDocument = function(Id)
+CTable.prototype.IsUseInDocument = function(Id)
 {
-	var bUse = false;
-	if (null != Id)
+	if (undefined !== Id && null !== Id)
 	{
-		var RowsCount = this.Content.length;
-		for (var Index = 0; Index < RowsCount; Index++)
+		let isFound = false;
+		for (let nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
 		{
-			if (Id === this.Content[Index].Get_Id())
+			if (Id === this.GetRow(nCurRow).GetId())
 			{
-				bUse = true;
+				isFound = true;
 				break;
 			}
 		}
+
+		if (!isFound)
+			return false;
 	}
-	else
-		bUse = true;
 
-	if (true === bUse && null != this.Parent)
-		return this.Parent.Is_UseInDocument(this.Get_Id());
+	if (-1 === this.GetIndex())
+		return false;
 
-	return false;
+	return this.Parent.IsUseInDocument();
 };
 CTable.prototype.Get_CurrentPage_Absolute = function()
 {
@@ -3821,6 +3817,10 @@ CTable.prototype.Is_Inline = function()
 CTable.prototype.IsInline = function()
 {
 	return this.Is_Inline();
+};
+CTable.prototype.SetInline = function(isInline)
+{
+	return this.Set_Inline(isInline);
 };
 /**
  * Берем настройки рамки для всей таблицы
@@ -8539,6 +8539,10 @@ CTable.prototype.Get_TableStyle = function()
 {
 	return this.TableStyle;
 };
+CTable.prototype.GetTableStyle = function()
+{
+	return this.Get_TableStyle();
+};
 CTable.prototype.Set_TableLook = function(TableLook)
 {
 	History.Add(new CChangesTableTableLook(this, this.TableLook, TableLook));
@@ -8574,6 +8578,10 @@ CTable.prototype.Set_PositionH = function(RelativeFrom, Align, Value)
 	this.PositionH.Align        = Align;
 	this.PositionH.Value        = Value;
 };
+CTable.prototype.SetPositionH = function(relativeFrom, align, value)
+{
+	return this.Set_PositionH(relativeFrom, align, value);
+};
 CTable.prototype.Get_PositionHValueInTwips = function() {
 	var res;
 	if(this.PositionH && null !== this.PositionH.Value && undefined !== this.PositionH.Value) {
@@ -8602,6 +8610,10 @@ CTable.prototype.Set_PositionV = function(RelativeFrom, Align, Value)
 	this.PositionV.RelativeFrom = RelativeFrom;
 	this.PositionV.Align        = Align;
 	this.PositionV.Value        = Value;
+};
+CTable.prototype.SetPositionV = function(relativeFrom, align, value)
+{
+	return this.Set_PositionV(relativeFrom, align, value);
 };
 CTable.prototype.Get_PositionVValueInTwips = function() {
 	var res;
@@ -9826,7 +9838,7 @@ CTable.prototype.AddTableRow = function(bBefore, nCount, isCheckInnerTable)
 		var Cell_grid_start = Cell_info.StartGridCol;
 		var Cell_grid_span  = Cell.Get_GridSpan();
 
-		var VMerge_count_before = this.Internal_GetVertMergeCount2(RowId, Cell_grid_start, Cell_grid_span);
+		var VMerge_count_before = this.Internal_GetVertMergeCountUp(RowId, Cell_grid_start, Cell_grid_span);
 		var VMerge_count_after  = this.Internal_GetVertMergeCount(RowId, Cell_grid_start, Cell_grid_span);
 
 		Cells_info[CurCell] = {
@@ -9973,7 +9985,7 @@ CTable.prototype.RemoveTableRow = function(Ind)
 
 			// Данная ячейка продолжает вертикальное объединение ячеек
 			// Найдем строку, с которой начинается данное объединение.
-			var VMerge_count = this.Internal_GetVertMergeCount2(CurRow, Row.Get_CellInfo(CurCell).StartGridCol, Cell.Get_GridSpan());
+			var VMerge_count = this.Internal_GetVertMergeCountUp(CurRow, Row.Get_CellInfo(CurCell).StartGridCol, Cell.Get_GridSpan());
 			if (CurRow - ( VMerge_count - 1 ) >= FirstRow_to_delete)
 				Cell.SetVMerge(vmerge_Restart);
 		}
@@ -10056,36 +10068,33 @@ CTable.prototype.RemoveTableRow = function(Ind)
  */
 CTable.prototype.Row_Remove2 = function()
 {
-	if (false == this.Selection.Use || table_Selection_Text == this.Selection.Type)
+	if (!this.IsCellSelection())
 		return true;
 
-	var Rows_to_delete = [];
-	for (var Index = 0; Index < this.Content.length; Index++)
-		Rows_to_delete[Index] = 0;
+	let arrRowsToDelete = [];
+	for (let nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+		arrRowsToDelete[nCurRow] = 0;
 
-	for (var Index = 0; Index < this.Selection.Data.length; Index++)
+	let arrSelection = this.GetSelectionArray(false);
+	for (let nIndex = 0, nCount = arrSelection.length; nIndex < nCount; ++nIndex)
 	{
-		var Pos = this.Selection.Data[Index];
-		if (0 == Rows_to_delete[Pos.Row])
-			Rows_to_delete[Pos.Row] = 1;
+		arrRowsToDelete[arrSelection[nIndex].Row]++;
 	}
 
-	// Удаляем строки.
-	for (var Index = this.Content.length - 1; Index >= 0; Index--)
+	this.RemoveSelection();
+
+	for (let nCurRow = this.GetRowsCount() - 1; nCurRow >= 0; --nCurRow)
 	{
-		if (0 != Rows_to_delete[Index])
-			this.private_RemoveRow(Index);
+		if (arrRowsToDelete[nCurRow])
+			this.private_RemoveRow(nCurRow);
 	}
 
-	// При удалении последней строки, надо сообщить об этом родительскому классу
-	if (this.Content.length <= 0)
+	if (!this.GetRowsCount())
 		return false;
 
 	// Проверяем текущую ячейку
 	if (this.CurCell.Row.Index >= this.Content.length)
-		this.CurCell = this.Content[this.Content.length - 1].Get_Cell(0);
-
-	this.RemoveSelection();
+		this.CurCell = this.GetRow(this.GetRowsCount() - 1).GetCell(0);
 
 	return true;
 };
@@ -14103,6 +14112,7 @@ CTable.prototype.RemoveTableCells = function()
 		return true;
 
 	var arrSelectedCells = this.GetSelectionArray(true);
+	this.RemoveSelection();
 
 	var arrDeleteInfo = [];
 	var arrRowsInfo   = [];
@@ -14419,28 +14429,35 @@ CTable.prototype.Internal_GetVertMergeCount = function(StartRow, StartGridCol, G
 /**
  * Считаем количество соединенных вертикально ячеек, но в обратную сторону (т.е. снизу вверх)
  */
-CTable.prototype.Internal_GetVertMergeCount2 = function(StartRow, StartGridCol, GridSpan)
+CTable.prototype.Internal_GetVertMergeCountUp = function(StartRow, StartGridCol, GridSpan)
 {
-	// начинаем с 1, потому что предполагается, что соединение начинается с исходной ячейки
-	var VmergeCount = 1;
+	// Сначала проверим VMerge заданной ячейки
+	let row = this.GetRow(StartRow);
+	if (!row)
+		return 1;
 
-	// сначала проверим VMerge текущей ячейки
-	var Start_Row        = this.Content[StartRow];
-	var Start_VMerge     = vmerge_Restart;
-	var Start_CellsCount = Start_Row.Get_CellsCount();
-	for (var Index = 0; Index < Start_CellsCount; Index++)
+	let curGridCol = row.GetBefore().Grid;
+	for (let curCell = 0, cellsCount = row.GetCellsCount(); curCell < cellsCount; ++curCell)
 	{
-		var Temp_Grid_start = Start_Row.Get_CellInfo(Index).StartGridCol;
-		if (Temp_Grid_start === StartGridCol)
+		let cell = row.GetCell(curCell);
+
+		if (curGridCol === StartGridCol)
 		{
-			Start_VMerge = Start_Row.Get_Cell(Index).GetVMerge();
+			if (vmerge_Restart === cell.GetVMerge())
+				return 1;
+
 			break;
 		}
+		else if (curGridCol > StartGridCol)
+		{
+			return 1;
+		}
+
+		curGridCol += cell.GetGridSpan();
 	}
 
-	if (vmerge_Restart === Start_VMerge)
-		return VmergeCount;
-
+	// начинаем с 1, потому что предполагается, что соединение начинается с исходной ячейки
+	var VmergeCount = 1;
 	for (var Index = StartRow - 1; Index >= 0; Index--)
 	{
 		var Row        = this.Content[Index];
@@ -16984,7 +17001,7 @@ CTable.prototype.private_StartTrackTable = function(CurPage)
     var Transform = this.Get_ParentTextTransform();
     this.DrawingDocument.StartTrackTable(NewOutline, Transform);
 };
-CTable.prototype.Correct_BadTable = function()
+CTable.prototype.CorrectBadTable = function()
 {
     // TODO: Пока оставим эту заглушку на случай загрузки плохих таблиц. В будущем надо будет
     //       сделать нормальный обсчет для случая, когда у нас есть "пустые" строки (составленные
@@ -17066,8 +17083,7 @@ CTable.prototype.CorrectHMerge = function()
 	this.Recalc_CompiledPr2();
 };
 /**
- * Специальная функция, проверяющая, чтобы в первой строке не было ячеек с параметром vmerge_Continue
- * @constructor
+ * Специальная функция, проверяющая корректность вертикального объединения всех ячеек в таблице
  */
 CTable.prototype.CorrectVMerge = function()
 {
@@ -17080,15 +17096,27 @@ CTable.prototype.CorrectVMerge = function()
 	AscCommon.g_oIdCounter.m_bLoad = false;
 	AscCommon.g_oIdCounter.m_bRead = false;
 
-	var oRow = this.GetRow(0);
-
-	for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+	for (let curRow = 0, rowsCount = this.GetRowsCount(); curRow < rowsCount; ++curRow)
 	{
-		var oCell   = oRow.GetCell(nCurCell);
-		var nVMerge = oCell.GetVMerge();
+		let row = this.GetRow(curRow);
 
-		if (vmerge_Continue === oCell.GetVMerge())
-			oCell.SetVMerge(vmerge_Restart);
+		let gridCol = row.GetBefore().Grid;
+		for (let curCell = 0, cellsCount = row.GetCellsCount(); curCell < cellsCount; ++curCell)
+		{
+			let cell     = row.GetCell(curCell);
+			let gridSpan = cell.GetGridSpan();
+
+			if (vmerge_Continue !== cell.GetVMerge())
+			{
+				gridCol += gridSpan;
+				continue;
+			}
+
+			if (0 === curRow || this.Internal_GetVertMergeCountUp(curRow, gridCol, gridSpan) <= 1)
+				cell.SetVMerge(vmerge_Restart);
+
+			gridCol += gridSpan;
+		}
 	}
 
 	// HACK: Восстанавливаем флаги и выставляем, что стиль всей таблицы нужно пересчитать
@@ -17300,7 +17328,19 @@ CTable.prototype.CorrectBadGrid = function()
 	}
 
 	var arrGrid = this.private_CopyTableGrid();
-	if (arrGrid.length != GridCount)
+
+	// MSWord плохо работает с файлами, где GridCol равен 0, поэтому такие правим
+	let isZeroColumns = false;
+	for (let nIndex = 0, nCount = arrGrid.length; nIndex < nCount; ++nIndex)
+	{
+		if (arrGrid[nIndex] < 0.001)
+		{
+			isZeroColumns = true;
+			arrGrid[nIndex] = 20;
+		}
+	}
+
+	if (arrGrid.length !== GridCount || isZeroColumns)
 	{
 		if (arrGrid.length < GridCount)
 		{
@@ -19701,3 +19741,4 @@ CTableRowsInfo.prototype.Init = function()
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTable = CTable;
 window['AscCommonWord'].type_Table = type_Table;
+window['AscWord'].CTable = CTable;

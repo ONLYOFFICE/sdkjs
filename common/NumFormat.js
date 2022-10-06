@@ -830,10 +830,9 @@ NumFormat.prototype =
             {
                 this._addToFormat(numFormat_TimeSeparator);
             }
-            else if('0' <= next && next <= '9')
+            else if('0' === next)
             {
-                //не 0 может быть только в дробях
-                this._addToFormat(numFormat_Digit, next - 0);
+                this._addToFormat(numFormat_Digit, 0);
             }
             else if("#" == next)
             {
@@ -1124,7 +1123,7 @@ NumFormat.prototype =
                     for(var j = i + 1; j < nFormatLength; ++j)
                     {
                         var subitem = this.aRawFormat[j];
-                        if(this._isDigitType(subitem.type))
+                        if(this._isDigitType(subitem.type) || (numFormat_Text === subitem.type && '0' <= subitem.val && subitem.val <= '9'))
                             nRight = j;
                         else
                             break;
@@ -1138,14 +1137,14 @@ NumFormat.prototype =
                         i -= i - nLeft;
                         this.bSlash = true;
 
-                        var flag = (item.aRight.length > 0) && (item.aRight[0].type == numFormat_Digit) && (item.aRight[0].val > 0);
+                        var flag = (item.aRight.length > 0) && (item.aRight[0].type == numFormat_Digit || item.aRight[0].type == numFormat_Text) && (parseInt(item.aRight[0].val) > 0);
                         if(flag)
                         {
                             var rPart = 0;
                             for(var j = 0; j< item.aRight.length; j++)
                             {
-                                if(item.aRight[j].type == numFormat_Digit)
-                                    rPart = rPart*10 + item.aRight[j].val;
+                                if(item.aRight[j].type == numFormat_Digit || item.aRight[j].type == numFormat_Text)
+                                    rPart = rPart*10 + parseInt(item.aRight[j].val);
                                 else
                                 {
                                     bValid = false;
@@ -2910,9 +2909,8 @@ CellFormat.prototype =
 				var oCurFormat = this.aComporationFormats[i];
 				if (0 != i) {
 					res += ";";
-				} else {
-					res += oCurFormat.toString(nShift, useLocaleFormat);
 				}
+				res += oCurFormat.toString(nShift, useLocaleFormat);
 			}
 		}
 		return res;

@@ -1192,6 +1192,13 @@
 			this.WriteXmlStringEncode(val.toString());
 			this.WriteXmlNodeEnd(name);
 		};
+		this.WriteXmlValueStringEncode2 = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlStringEncode(val.toString());
+			this.WriteXmlNodeEnd(name);
+		};
 		this.WriteXmlValueBool = function(name, val)
 		{
 			this.WriteXmlNodeStart(name);
@@ -1265,6 +1272,12 @@
 		{
 			if (null !== val && undefined !== val) {
 				this.WriteXmlValueStringEncode(name, val)
+			}
+		};
+		this.WriteXmlNullableValueStringEncode2 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueStringEncode2(name, val)
 			}
 		};
 		this.WriteXmlNullableValueBool = function(name, val)
@@ -1388,12 +1401,13 @@
 		this.ctBrushColor2          = 23;
 		this.ctBrushAlpha1          = 24;
 		this.ctBrushAlpha2          = 25;
-		this.ctBrushTexturePath     = 26;
+		this.ctBrushTexturePathOld  = 26;
 		this.ctBrushTextureAlpha    = 27;
 		this.ctBrushTextureMode     = 28;
 		this.ctBrushRectable        = 29;
 		this.ctBrushRectableEnabled = 30;
 		this.ctBrushGradient        = 31;
+		this.ctBrushTexturePath     = 32;
 
 		// font
 		this.ctFontXML       = 40;
