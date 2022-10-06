@@ -1750,6 +1750,10 @@ background-repeat: no-repeat;\
                     {
                         editor.sendEvent("asc_onLockCore", true);
                     }
+					else if(Class instanceof AscCommonWord.CDocProtect)
+					{
+						editor.sendEvent("asc_onLockDocumentProtection", true);
+					}
 					// Теперь обновлять состояние необходимо, чтобы обновить локи в режиме рецензирования.
 					t.WordControl.m_oLogicDocument.UpdateInterface(undefined, true);
 				}
@@ -1857,6 +1861,17 @@ background-repeat: no-repeat;\
 						else
 						{
 							editor.sendEvent("asc_onLockCore", false);
+						}
+					}
+					else if(Class instanceof AscCommonWord.CDocProtect)
+					{
+						if (NewType !== locktype_Mine && NewType !== locktype_None)
+						{
+							editor.sendEvent("asc_onLockDocumentProtection", true);
+						}
+						else
+						{
+							editor.sendEvent("asc_onLockDocumentProtection", false);
 						}
 					}
 				}
@@ -12809,9 +12824,9 @@ background-repeat: no-repeat;\
 		//props -> c_oAscEDocProtect
 
 		// Проверка глобального лока
-		/*if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
-			return false;
-		}*/
+		if (AscCommon.CollaborativeEditing.Get_GlobalLock()) {
+			return;
+		}
 
 		let oDocument = this.private_GetLogicDocument();
 		if (!oDocument) {
@@ -12824,15 +12839,14 @@ background-repeat: no-repeat;\
 			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 
 			if (res) {
-				//if(false === oDocument.Document_Is_SelectionLocked(AscCommon.changestype_DocumentProtection, null))
-				//{
+				if(false === oDocument.Document_Is_SelectionLocked(AscCommon.changestype_DocumentProtection, null))
+				{
 					oDocument.StartAction(AscDFH.historydescription_Document_DocumentProtection);
 					oDocument.SetProtection({props: props, saltValue: salt, spinCount: spinCount, alg:  alg, hashValue: calculatedHashValue});
 					oDocument.UpdateInterface();
 					oDocument.FinalizeAction();
 					t.sendEvent("asc_onChangeDocumentProtection");
-				//}
-
+				}
 			} else {
 				t.sendEvent("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
 			}

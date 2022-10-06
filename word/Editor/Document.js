@@ -13366,9 +13366,9 @@ CDocument.prototype.private_DocumentIsSelectionLocked = function(CheckType)
 		}
 		else if (AscCommon.changestype_DocumentProtection === CheckType)
 		{
-			if (this.Core)
+			if (this.Settings.DocumentProtection)
 			{
-				this.Core.Lock.Check(this.Core.Get_Id());
+				this.Settings.DocumentProtection.Lock.Check(this.Settings.DocumentProtection.Get_Id());
 			}
 		}
 		else if (AscCommon.changestype_Document_Settings === CheckType)
