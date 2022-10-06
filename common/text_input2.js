@@ -106,9 +106,6 @@
 		this.isHardCheckKeyboard = AscCommon.AscBrowser.isSailfish;
 		this.virtualKeyboardClickTimeout = -1;
 		this.virtualKeyboardClickPrevent = false;
-
-		// на андроиде не приходят пробелы на keyDown
-		this.isSpaceOnKeyDown = false;
 	}
 
 	var CTextInputPrototype = CTextInput2.prototype;
@@ -204,7 +201,30 @@
 			return false;
 		}
 
-		var ret = this.Api.onKeyDown(e);
+		let isSpaceAsText = (32 === e.keyCode);
+		if (isSpaceAsText)
+		{
+			// hotkeys
+			if (AscCommon.global_keyboardEvent.AltKey ||
+				AscCommon.global_keyboardEvent.CtrlKey ||
+				AscCommon.global_keyboardEvent.MacCmdKey)
+			{
+				isSpaceAsText = false;
+			}
+
+			if (isSpaceAsText)
+			{
+				// cell hotkey
+				if (AscCommon.global_keyboardEvent.ShiftKey && this.Api.editorId === AscCommon.c_oEditorId.Spreadsheet)
+				{
+					isSpaceAsText = false;
+				}
+			}
+		}
+
+		let ret = undefined;
+		if (!isSpaceAsText)
+			ret = this.Api.onKeyDown(e);
 
 		switch (e.keyCode)
 		{
@@ -222,11 +242,6 @@
 			case 46:	// delete
 			{
 				this.clear();
-				return false;
-			}
-			case 32:
-			{
-				this.isSpaceOnKeyDown = true;
 			}
 			default:
 				break;
@@ -295,6 +310,8 @@
 
 		let lastSymbol = 0;
 		let newTextLength = 0;
+
+		let isAsyncInput = false;
 		if (this.IsComposition)
 		{
 			if (newValue.length >= this.TextBeforeComposition.length)
@@ -311,7 +328,7 @@
 				if (newTextLength > 0)
 					lastSymbol = codes[newTextLength - 1];
 
-				this.checkTextInput(codes);
+				isAsyncInput = this.checkTextInput(codes);
 			}
 		}
 		else
@@ -348,7 +365,7 @@
 				codesNew.splice(0, equalsLen);
 
 			// добавляем новые
-			this.checkTextInput(codesNew);
+			isAsyncInput = this.checkTextInput(codesNew);
 
 			if (codesNew.length > 0)
 				lastSymbol = codesNew[codesNew.length - 1];
@@ -362,12 +379,16 @@
 			this.log("compositionEnd: " + newValue);
 		}
 
-		this.Text = newValue;
+		if (!isAsyncInput)
+		{
+			// если асинхронно - то на коллбеке придет onInput - и текст добавится позже
+			this.Text = newValue;
+		}
 
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.onPluginEvent("onInputHelperInput", { "text" : this.Text });
 
-		if (!this.IsComposition && lastSymbol !== 0)
+		if (!this.IsComposition && lastSymbol !== 0 && !isAsyncInput)
 		{
 			let isClear = false;
 			switch (lastSymbol)
@@ -394,8 +415,6 @@
 			if (isClear)
 				this.clear();
 		}
-
-		this.isSpaceOnKeyDown = false;
 	};
 	CTextInputPrototype.addText = function(text)
 	{
@@ -429,8 +448,14 @@
 
 		this.TextBeforeComposition = "";
 	};
-	// чтобы можно было переключать версии text_input
-	CTextInputPrototype.apiCompositeEnd = CTextInputPrototype.compositeEnd;
+	CTextInputPrototype.apiCompositeEnd = function()
+	{
+		if (!this.IsComposition)
+			return;
+
+		this.compositeEnd();
+		this.clear();
+	};
 	CTextInputPrototype.checkTextInput = function(codes)
 	{
 		var isAsync = AscFonts.FontPickerByCharacter.checkTextLight(codes, true);
@@ -460,9 +485,16 @@
 			});
 
 			//this.setReadOnly(true);
-			return false;
 		}
+		return isAsync;
 	};
+
+	CTextInputPrototype.addTextCodes = function(codes)
+	{
+		this.Api.asc_enterText(codes);
+	};
+
+	/* Old version
 	CTextInputPrototype.addTextCodes = function(codes)
 	{
 		for (let i = 0, len = codes.length; i < len; i++)
@@ -486,7 +518,6 @@
 		else
 		{
 			// TODO: отдельный метод в апи
-
 			// пока имитируем через keyCode - для keyDown/Up - сделаем такой код,
 			// который ни на что не влияет. код для буквы 'a' - 65
 			let keyObject = this.getKeyboardEventObject(code);
@@ -497,6 +528,7 @@
 			this.Api.onKeyUp(keyObjectUpDown);
 		}
 	};
+	*/
 	CTextInputPrototype.removeText = function(length)
 	{
 		for (let i = 0; i < length; i++)
@@ -861,35 +893,6 @@
 		}
 
 		this.Api.Input_UpdatePos();
-
-		if (AscCommon.AscBrowser.isAndroid)
-		{
-			this.HtmlArea.onclick = function (e)
-			{
-				var _this = AscCommon.g_inputContext;
-
-				if (-1 != _this.virtualKeyboardClickTimeout)
-				{
-					clearTimeout(_this.virtualKeyboardClickTimeout);
-					_this.virtualKeyboardClickTimeout = -1;
-				}
-
-				_this.compositeEnd();
-
-				if (!_this.virtualKeyboardClickPrevent)
-					return;
-
-				_this.setReadOnlyWrapper(true);
-				_this.virtualKeyboardClickPrevent = false;
-				AscCommon.stopEvent(e);
-				_this.virtualKeyboardClickTimeout = setTimeout(function ()
-				{
-					_this.setReadOnlyWrapper(false);
-					_this.virtualKeyboardClickTimeout = -1;
-				}, 1);
-				return false;
-			};
-		}
 	};
 	CTextInputPrototype.appendInputToCanvas = function(parent_id)
 	{
@@ -1135,6 +1138,7 @@
 
             t.isNoClearOnFocus = false;
 			 */
+			t.Api.isBlurEditor = false;
 
 			var _nativeFocusElementNoRemoveOnElementFocus = t.nativeFocusElementNoRemoveOnElementFocus;
 			t.nativeFocusElementNoRemoveOnElementFocus = false;

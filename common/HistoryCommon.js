@@ -4578,11 +4578,11 @@
 	};
 	CChangesBaseContentChange.prototype.ConvertToSimpleActions = function()
 	{
-		var arrActions = [];
+		let arrActions = [];
 
 		if (this.UseArray)
 		{
-			for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+			for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 			{
 				arrActions.push({
 					Item : this.Items[nIndex],
@@ -4593,8 +4593,8 @@
 		}
 		else
 		{
-			var Pos = this.Pos;
-			for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+			let Pos = this.Pos;
+			for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 			{
 				arrActions.push({
 					Item : this.Items[nIndex],
@@ -4605,6 +4605,20 @@
 		}
 
 		return arrActions;
+	};
+	CChangesBaseContentChange.prototype.ConvertToSimpleChanges = function()
+	{
+		let arrSimpleActions = this.ConvertToSimpleActions();
+		let arrChanges       = [];
+
+		for (let nIndex = 0, nCount = arrSimpleActions.length; nIndex < nCount; ++nIndex)
+		{
+			let oAction = arrSimpleActions[nIndex];
+			let oChange = new this.constructor(this.Class, oAction.Pos, [oAction.Item], oAction.Add);
+			arrChanges.push(oChange);
+		}
+
+		return arrChanges;
 	};
 	CChangesBaseContentChange.prototype.ConvertFromSimpleActions = function(arrActions)
 	{

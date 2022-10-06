@@ -819,7 +819,7 @@
 				return result;
 			}
 
-			t.skipKeyPress = true;
+			t._setSkipKeyPress(true);
 
 			var isNeedCheckActiveCellChanged = null;
 			var _activeCell;
@@ -833,7 +833,7 @@
 						}
 						return result;
 					}
-					t.skipKeyPress = false;
+					t._setSkipKeyPress(false);
 					return true;
 
 				case 120: // F9
@@ -875,7 +875,7 @@
 						this.handlers.trigger("editCell", enterOptions);
 						return result;
 					}
-					t.skipKeyPress = false;
+					t._setSkipKeyPress(false);
 					return true;
 
 
@@ -969,8 +969,13 @@
 					var isSelectColumns = !AscBrowser.isMacOs && ctrlKey || AscBrowser.isMacOs && event.altKey;
 					// Обработать как обычный текст
 					if (!isSelectColumns && !shiftKey) {
-						t.skipKeyPress = false;
-						return true;
+						//теперь пробел обрабатывается на WindowKeyDown
+						//вторыы аргументом передаю true, чтобы два раза пробел не добавлялся и сработало событие CellEditor.prototype._onWindowKeyDown
+						//задача функции EnterText в данном случае - либо добавить данные в графику, либо открыть редактор ячейки, чтобы потом
+						//была вызвана следующая инструкия в функции выше -> Api.onKeyDown
+						window["Asc"]["editor"].wb.EnterText(event.which, true);
+						t._setSkipKeyPress(false);
+						return false;
 					}
 					// Отключим стандартную обработку браузера нажатия
 					// Ctrl+Shift+Spacebar, Ctrl+Spacebar, Shift+Spacebar
@@ -1103,7 +1108,7 @@
 					}
 
 					if (!ctrlKey) {
-						t.skipKeyPress = false;
+						t._setSkipKeyPress(false);
 						return true;
 					}
 
@@ -1188,7 +1193,7 @@
 					}
 
 					if (!action) {
-						t.skipKeyPress = false;
+						t._setSkipKeyPress(false);
 						return true;
 					}
 					stop();
@@ -1206,7 +1211,7 @@
 								'SUM', Asc.c_oAscPopUpSelectorType.Func, true);
 						stop();
 					} else {
-						this.skipKeyPress = false;
+						t._setSkipKeyPress(false);
 					}
 					return result;
 
@@ -1218,7 +1223,7 @@
 					}
 
 				default:
-					this.skipKeyPress = false;
+					t._setSkipKeyPress(false);
 					return true;
 
 			} // end of switch
@@ -1295,12 +1300,55 @@
 			}
 
 			if (this.skipKeyPress || event.which < 32) {
-				this.skipKeyPress = true;
+				this._setSkipKeyPress(true);
 				return true;
 			}
 
 			if (!this.getCellEditMode()) {
 				if (this.handlers.trigger("graphicObjectWindowKeyPress", event)) {
+					return true;
+				}
+
+				// При нажатии символа, фокус не ставим и очищаем содержимое ячейки
+				var enterOptions = new AscCommonExcel.CEditorEnterOptions();
+				enterOptions.newText = '';
+				enterOptions.quickInput = true;
+				this.handlers.trigger("editCell", enterOptions);
+			}
+			return true;
+		};
+
+		asc_CEventsController.prototype.EnterText = function (codePoints) {
+			//TODO практически копия _onWindowKeyPress - после того, как будет включена функция EnterText - проверить и объединить функции
+			// Нельзя при отключенных эвентах возвращать false (это касается и ViewerMode)
+			if (!this.enableKeyEvents) {
+				return true;
+			}
+
+			// не вводим текст в режиме просмотра
+			// если в FF возвращать false, то отменяется дальнейшая обработка серии keydown -> keypress -> keyup
+			// и тогда у нас не будут обрабатываться ctrl+c и т.п. события
+			if (!this.canEdit() || this.getSelectionDialogMode() || this.view.Api.isEditVisibleAreaOleEditor) {
+				return true;
+			}
+
+			// Для таких браузеров, которые не присылают отжатие левой кнопки мыши для двойного клика, при выходе из
+			// окна редактора и отпускания кнопки, будем отрабатывать выход из окна (только Chrome присылает эвент MouseUp даже при выходе из браузера)
+			this.showCellEditorCursor();
+
+			// Не можем вводить когда селектим или когда совершаем действия с объектом
+			if (this.getCellEditMode() && !this.hasFocus || this.isSelectMode ||
+				!this.handlers.trigger('canReceiveKeyPress')) {
+				return true;
+			}
+
+			/*if (this.skipKeyPress) {
+				this._setSkipKeyPress(true);
+				return true;
+			}*/
+
+			if (!this.getCellEditMode()) {
+				if (this.handlers.trigger("graphicObjectWindowEnterText", codePoints)) {
 					return true;
 				}
 
@@ -1976,6 +2024,10 @@
 			y *= AscCommon.AscBrowser.retinaPixelRatio;
 
 			return {x: x, y: y};
+		};
+
+		asc_CEventsController.prototype._setSkipKeyPress = function (val) {
+			this.skipKeyPress = val;
 		};
 
 		//------------------------------------------------------------export---------------------------------------------------

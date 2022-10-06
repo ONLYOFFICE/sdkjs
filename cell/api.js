@@ -7657,6 +7657,15 @@ var editor;
 		this.sendEvent('onWorksheetChange', range);
 	};
 
+	spreadsheet_api.prototype.asc_enterText = function(codePoints)
+	{
+		let wb = this.wb;
+		if (!wb)
+			return;
+
+		wb.EnterText(codePoints);
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------

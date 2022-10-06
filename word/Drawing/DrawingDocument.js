@@ -2759,6 +2759,22 @@ function CDrawingDocument()
 		this.m_oWordControl.OnScroll();
 	};
 
+	this.GetVisibleRegion = function()
+	{
+		let height = 0;
+		if (this.m_oWordControl)
+			height += this.m_oWordControl.Y;
+		if (this.m_oWordControl.m_oEditor)
+			height += this.m_oWordControl.m_oEditor.HtmlElement.height;
+		if (true === this.m_oWordControl.m_bIsRuler)
+			height += (7 * g_dKoef_mm_to_pix);
+
+		let pos1 = this.ConvertCoordsFromCursor2(0, 0);
+		let pos2 = this.ConvertCoordsFromCursor2(0, height);
+
+		return [{ Page : pos1.Page, Y : pos1.Y }, { Page : pos2.Page, Y : pos2.Y }];
+	};
+
 	this.ConvertCoordsFromCursor = function (x, y, bIsRul)
 	{
 		var _x = x;
@@ -3530,9 +3546,12 @@ function CDrawingDocument()
 	};
 	this.DrawTarget = function ()
 	{
-		if (oThis.NeedTarget && oThis.m_oWordControl.IsFocus)
+		if (oThis.NeedTarget)
 		{
-			oThis.showTarget(!oThis.isShowTarget());
+			if (oThis.m_oWordControl.IsFocus && !oThis.m_oWordControl.m_oApi.isBlurEditor)
+				oThis.showTarget(!oThis.isShowTarget());
+			else
+				oThis.showTarget(true);
 		}
 	};
 

@@ -1996,10 +1996,17 @@ function CDrawingDocument()
 	};
 	this.DrawTarget      = function()
 	{
-		if (0 != oThis.SlidesCount && "block" != oThis.TargetHtmlElement.style.display && oThis.NeedTarget && !oThis.TransitionSlide.IsPlaying())
-			oThis.TargetHtmlElement.style.display = "block";
-		else
-			oThis.TargetHtmlElement.style.display = "none";
+		let isNeedTarget = (0 != oThis.SlidesCount) && oThis.NeedTarget && !oThis.TransitionSlide.IsPlaying();
+		let isShow = false;
+		if (isNeedTarget)
+		{
+			if (oThis.m_oWordControl.m_oApi.isBlurEditor)
+				isShow = true;
+			else if ("block" != oThis.TargetHtmlElement.style.display)
+				isShow = true;
+		}
+
+		oThis.TargetHtmlElement.style.display = isShow ? "block" : "none";
 	};
 	this.TargetShow      = function()
 	{

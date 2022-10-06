@@ -3339,7 +3339,10 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 			nCombWidth = this.TextAscent;
 
 		let oParagraph = this.GetParagraph();
-		if (oParagraph && oParagraph.IsInFixedForm())
+		if (oParagraph
+			&& oParagraph.IsInFixedForm()
+			&& oParagraph.GetInnerForm()
+			&& !oParagraph.GetInnerForm().IsComplexForm())
 		{
 			isKeepWidth = true;
 			var oShape  = oParagraph.Parent.Is_DrawingShape(true);
