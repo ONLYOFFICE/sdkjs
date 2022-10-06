@@ -204,6 +204,8 @@ CWordCollaborativeEditing.prototype.Release_Locks = function()
                 editor.sync_UnLockDocumentSchema();
             else if (this.m_aNeedUnlock[Index] instanceof AscCommon.CCore)
                 editor.sendEvent("asc_onLockCore", false);
+			else if (this.m_aNeedUnlock[Index] instanceof AscCommonWord.CDocProtect)
+				editor.sendEvent("asc_onLockDocumentProtection", false);
         }
         else if (AscCommon.locktype_Other3 === CurLockType)
         {
