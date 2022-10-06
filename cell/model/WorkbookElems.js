@@ -9263,6 +9263,27 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return newContext;
 	};
+	AutoFilter.prototype.toXml = function (writer, name, ns) {
+		if (!ns) {
+			ns = "";
+		}
+		writer.WriteXmlNodeStart(ns + name/*"autoFilter"*/);
+		if (null !== this.Ref) {
+			writer.WriteXmlAttributeStringEncode("ref", this.Ref.getName());
+		}
+		writer.WriteXmlAttributesEnd();
+		if (this.FilterColumns) {
+			for (var i = 0; i < this.FilterColumns.length; ++i) {
+				var elem = this.FilterColumns[i];
+				elem.toXml(writer, "filterColumn");
+			}
+		}
+		if (this.SortState) {
+			this.SortState.toXml(writer, "sortState");
+		}
+
+		writer.WriteXmlNodeEnd(ns + name);
+	};
 	AutoFilter.prototype.deleteFilterColumn = function(index) {
 		if (this.FilterColumns && this.FilterColumns[index]) {
 			this.FilterColumns.splice(index, 1)
@@ -10095,6 +10116,46 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return newContext;
 	};
+	FilterColumn.prototype.toXml = function (writer, name, ns, childns) {
+		if (!ns) {
+			ns = "";
+		}
+		if (!childns) {
+			childns = "";
+		}
+
+		writer.WriteXmlNodeStart(ns + name/*"filterColumn"*/);
+
+		if (null !== this.ColId) {
+			writer.WriteXmlAttributeNumber("colId", this.ColId);
+		}
+		if (true !== this.ShowButton) {
+			if (this.ShowButton) {
+				writer.WriteXmlAttributeBool("showButton", this.ShowButton);
+			} else {
+				writer.WriteXmlAttributeBool("hiddenButton", !this.ShowButton);
+			}
+		}
+		writer.WriteXmlAttributesEnd();
+
+		if (null !== this.ColorFilter) {
+			this.ColorFilter.toXml(writer, "colorFilter", childns, childns);
+		}
+		if (null !== this.CustomFiltersObj) {
+			this.CustomFiltersObj.toXml(writer, "customFilters", childns, childns);
+		}
+		if (null !== this.DynamicFilter) {
+			this.DynamicFilter.toXml(writer, "dynamicFilter", childns, childns);
+		}
+		if (null !== this.Filters) {
+			this.Filters.toXml(writer, "filters", childns, childns);
+		}
+		if (null !== this.Top10) {
+			this.Top10.toXml(writer, "top10", childns, childns);
+		}
+		writer.WriteXmlNodeEnd(ns + name);
+
+	};
 
 	function CT_Filter() {
 		//Attributes
@@ -10109,6 +10170,17 @@ function RangeDataManagerElem(bbox, data)
 				this.Val = AscCommon.unleakString(uq(val));
 			}
 		}
+	};
+
+	CT_Filter.prototype.toXml = function (writer, name, ns) {
+		if (!ns) {
+			ns = "";
+		}
+		writer.WriteXmlNodeStart(ns + name);
+		if (null !== this.Val) {
+			writer.WriteXmlAttributeStringEncode("val", this.Val);
+		}
+		writer.WriteXmlAttributesEnd(true);
 	};
 
 	/** @constructor */
@@ -10327,7 +10399,32 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return newContext;
 	};
+	Filters.prototype.toXml = function (writer, name, ns, childns) {
+		if (!ns) {
+			ns = "";
+		}
+		if (!childns) {
+			childns = "";
+		}
 
+		writer.WriteXmlNodeStart(ns + name);
+		if (null !== this.Blank) {
+			writer.WriteXmlAttributeBool("blank", this.Blank);
+		}
+		writer.WriteXmlAttributesEnd();
+		for (var val in this.Values) {
+			var filter = new AscCommonExcel.CT_Filter();
+			filter.Val = val;
+			filter.toXml(writer, "filter", childns, childns);
+		}
+		for (var i = 0; i < this.Dates.length; ++i) {
+			var elem = this.Dates[i];
+			var dateGroupItem = new AscCommonExcel.DateGroupItem();
+			dateGroupItem.convertRangeToDateGroupItem(elem);
+			dateGroupItem.toXml(writer, "dateGroupItem", childns, childns);
+		}
+		writer.WriteXmlNodeEnd(ns + name);
+	};
 
 /** @constructor */
 function Filter() {
@@ -10450,6 +10547,25 @@ DateGroupItem.prototype.readAttributes = function(attr, uq) {
 			}
 		}
 	}
+};
+DateGroupItem.prototype.toXml = function (writer, name, ns) {
+	if (!ns) {
+		ns = "";
+	}
+
+	writer.WriteXmlNodeStart(ns + name/*"dateGroupItem"*/);
+
+	writer.WriteXmlNullableAttributeNumber("year", this.Year);
+	writer.WriteXmlNullableAttributeNumber("month", this.Month);
+	writer.WriteXmlNullableAttributeNumber("day", this.Day);
+	writer.WriteXmlNullableAttributeNumber("hour", this.Hour);
+	writer.WriteXmlNullableAttributeNumber("minute", this.Minute);
+	writer.WriteXmlNullableAttributeNumber("second", this.Second);
+	writer.WriteXmlAttributeStringEncode("dateTimeGrouping", AscCommonExcel.ToXml_ST_DateTimeGrouping(this.DateTimeGrouping));
+	writer.WriteXmlAttributesEnd();
+
+	writer.WriteXmlNodeEnd(ns + name);
+
 };
 
 var g_oCustomFilters = {
@@ -10580,6 +10696,25 @@ CustomFilters.prototype.onStartNode = function(elem, attr, uq) {
 		newContext = null;
 	}
 	return newContext;
+};
+CustomFilters.prototype.toXml = function (writer, name, ns, childns) {
+	if (!ns) {
+		ns = "";
+	}
+	if (!childns) {
+		childns = "";
+	}
+
+	writer.WriteXmlNodeStart(ns + name);
+
+	writer.WriteXmlNullableAttributeString("and", this.And ? 1 : null);
+	writer.WriteXmlAttributesEnd();
+
+	for (var i = 0; i < this.CustomFilters.length; ++i) {
+		this.CustomFilters[i].toXml(writer, "customFilter", childns, childns);
+	}
+
+	writer.WriteXmlNodeEnd(ns + name);
 };
 CustomFilters.prototype.changeForInterface = function () {
 	var res = this.clone();
@@ -10865,6 +11000,18 @@ CustomFilter.prototype.readAttributes = function(attr, uq) {
 		}
 	}
 };
+CustomFilter.prototype.toXml = function (writer, name, ns) {
+	if (!ns) {
+		ns = "";
+	}
+
+	writer.WriteXmlNodeStart(ns + name/*"сustomFilter"*/);
+	writer.WriteXmlAttributeString("operator", AscCommonExcel.ToXml_ST_FilterOperator(this.Operator));
+	writer.WriteXmlAttributeStringEncode("val", this.Val);
+	writer.WriteXmlAttributesEnd();
+
+	writer.WriteXmlNodeEnd(ns + name);
+};
 CustomFilter.prototype.Write_ToBinary2 = function(writer) {
 	if (null != this.Operator) {
 		writer.WriteBool(true);
@@ -11043,6 +11190,19 @@ DynamicFilter.prototype.readAttributes = function(attr, uq) {
 			this.MaxVal = val - 0;
 		}
 	}
+};
+DynamicFilter.prototype.toXml = function (writer, name, ns, childns) {
+	if (!ns) {
+		ns = "";
+	}
+
+	writer.WriteXmlNodeStart(ns + name/*"dynamicFilter"*/);
+
+	writer.WriteXmlAttributeString("type", AscCommonExcel.ToXml_ST_DynamicFilterType(this.Type));
+	writer.WriteXmlNullableAttributeNumber("val", this.val);
+	writer.WriteXmlNullableAttributeNumber("maxVal", this.MaxVal);
+
+	writer.WriteXmlAttributesEnd(true);
 };
 DynamicFilter.prototype.Write_ToBinary2 = function(writer) {
 	if (null !== this.Type) {
@@ -11251,6 +11411,23 @@ ColorFilter.prototype.readAttributes = function(attr, uq) {
 			this.CellColor = AscCommon.getBoolFromXml(val);
 		}
 	}
+};
+ColorFilter.prototype.toXml = function (writer, name, ns, childns) {
+	if (!ns) {
+		ns = "";
+	}
+
+	writer.WriteXmlNodeStart(ns + name/*colorFilter*/);
+	if (this.dxf != null) {
+		writer.WriteXmlNullableAttributeNumber("dxfId", writer.context.InitSaveManager.aDxfs.length);
+		writer.context.InitSaveManager.aDxfs.push(this.dxf);
+	}
+
+	if (this.CellColor === false) {
+		writer.WriteXmlNullableAttributeNumber("cellColor", 0);
+	}
+
+	writer.WriteXmlAttributesEnd(true);
 };
 ColorFilter.prototype.Write_ToBinary2 = function(writer) {
 	if (null !== this.CellColor) {
@@ -11464,6 +11641,25 @@ Top10.prototype.readAttributes = function(attr, uq) {
 			this.FilterVal = val - 0;
 		}
 	}
+};
+Top10.prototype.toXml = function (writer, name, ns) {
+	if (!ns) {
+		ns = "";
+	}
+	writer.WriteXmlNodeStart(ns + name);
+	if (true !== this.Top) {
+		writer.WriteXmlAttributeBool("top", this.Top);
+	}
+	if (false !== this.Percent) {
+		writer.WriteXmlAttributeBool("percent", this.Percent);
+	}
+	if (null !== this.Val) {
+		writer.WriteXmlAttributeNumber("val", this.Val);
+	}
+	if (null !== this.FilterVal) {
+		writer.WriteXmlAttributeNumber("filterVal", this.FilterVal);
+	}
+	writer.WriteXmlAttributesEnd(true);
 };
 Top10.prototype.Write_ToBinary2 = function(w) {
 	if (null !== this.FilterVal) {
