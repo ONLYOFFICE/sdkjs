@@ -12840,10 +12840,15 @@ background-repeat: no-repeat;\
 			salt = documentProtection.saltValue;
 			spinCount =  documentProtection.spinCount;
 			alg = documentProtection.cryptAlgorithmSid;
-		} else {
+		}
+
+		if (!salt || !spinCount) {
 			var params = AscCommon.generateHashParams();
 			salt = params.saltValue;
 			spinCount = params.spinCount;
+		}
+
+		if (!alg) {
 			alg = AscCommon.c_oSerCryptAlgorithmSid.SHA_512;
 		}
 
