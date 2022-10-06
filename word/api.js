@@ -12839,7 +12839,7 @@ background-repeat: no-repeat;\
 			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 
 			if (res) {
-				if(false === oDocument.Document_Is_SelectionLocked(AscCommon.changestype_DocumentProtection, null))
+				if(false === oDocument.Document_Is_SelectionLocked(AscCommon.changestype_DocumentProtection, null, null, true))
 				{
 					oDocument.StartAction(AscDFH.historydescription_Document_DocumentProtection);
 					oDocument.SetProtection({props: props, saltValue: salt, spinCount: spinCount, alg:  alg, hashValue: calculatedHashValue});
