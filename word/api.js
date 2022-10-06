@@ -12824,11 +12824,15 @@ background-repeat: no-repeat;\
 			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 
 			if (res) {
-				oDocument.StartAction(AscDFH.historydescription_Document_DocumentProtection);
-				oDocument.SetProtection({props: props, saltValue: salt, spinCount: spinCount, alg:  alg, hashValue: calculatedHashValue});
-				oDocument.UpdateInterface();
-				oDocument.FinalizeAction();
-				t.sendEvent("asc_onChangeDocumentProtection");
+				//if(false === oDocument.Document_Is_SelectionLocked(AscCommon.changestype_DocumentProtection, null))
+				//{
+					oDocument.StartAction(AscDFH.historydescription_Document_DocumentProtection);
+					oDocument.SetProtection({props: props, saltValue: salt, spinCount: spinCount, alg:  alg, hashValue: calculatedHashValue});
+					oDocument.UpdateInterface();
+					oDocument.FinalizeAction();
+					t.sendEvent("asc_onChangeDocumentProtection");
+				//}
+
 			} else {
 				t.sendEvent("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
 			}
@@ -12836,20 +12840,22 @@ background-repeat: no-repeat;\
 
 		var documentProtection = oDocument.Settings.DocumentProtection;
 		var salt, alg, spinCount;
-		if (documentProtection) {
-			salt = documentProtection.saltValue;
-			spinCount =  documentProtection.spinCount;
-			alg = documentProtection.cryptAlgorithmSid;
-		}
+		if (password !== "" && password != null) {
+			if (documentProtection) {
+				salt = documentProtection.saltValue;
+				spinCount =  documentProtection.spinCount;
+				alg = documentProtection.cryptAlgorithmSid;
+			}
 
-		if (!salt || !spinCount) {
-			var params = AscCommon.generateHashParams();
-			salt = params.saltValue;
-			spinCount = params.spinCount;
-		}
+			if (!salt || !spinCount) {
+				var params = AscCommon.generateHashParams();
+				salt = params.saltValue;
+				spinCount = params.spinCount;
+			}
 
-		if (!alg) {
-			alg = AscCommon.c_oSerCryptAlgorithmSid.SHA_512;
+			if (!alg) {
+				alg = AscCommon.c_oSerCryptAlgorithmSid.SHA_512;
+			}
 		}
 
 		var checkPassword = function (hash, doNotCheckPassword) {
@@ -12857,7 +12863,7 @@ background-repeat: no-repeat;\
 				//t.collaborativeEditing.lock([lockInfo], callback);
 				callback(true);
 			} else {
-				if (props && props !== Asc.c_oAscEDocProtect.None) {
+				if (props != null && props !== Asc.c_oAscEDocProtect.None) {
 					//устанавливаем защиту
 					calculatedHashValue = hash && hash[0] ? hash[0] : null;
 					//t.collaborativeEditing.lock([lockInfo], callback);
