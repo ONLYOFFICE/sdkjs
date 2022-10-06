@@ -710,7 +710,7 @@ TrackSelectionRect.prototype =
         let oTrack = this.drawingObjects.arrPreTrackObjects[0];
         if(oTrack) {
             let bHor = this.guide.isHorizontal();
-            let dPos = bHor ? dStartX : dStartY;
+            let dPos = bHor ? dStartY : dStartX;
             let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(dStartX, dStartY, 0);
             editor.sendEvent("asc_onTrackGuide", dPos, oConvertedPos.X, oConvertedPos.Y);
         }
@@ -741,7 +741,7 @@ TrackSelectionRect.prototype =
             let oTrack = this.drawingObjects.arrTrackObjects[0];
             if(oTrack) {
                 oTrack.track(x, y);
-                let dPos = bHor ? x : y;
+                let dPos = bHor ? y : x;
                 let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(x, y, 0);
                 editor.sendEvent("asc_onTrackGuide", dPos, oConvertedPos.X, oConvertedPos.Y)
                 this.drawingObjects.updateOverlay();

@@ -1498,7 +1498,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             nStrideLinePix = ep(nStrideLine);
             //nStartStridePos = this.getStartStridePos(nStrideLine, nSlideHeight);
         }
-        bPixel = nStrideInsideLinePix < 17;
+        bPixel = nStrideInsideLinePix < AscCommon.AscBrowser.convertToRetinaValue(17, true);
 
         oGraphics.SaveGrState();
         oGraphics.transform3(new AscCommon.CMatrix());
@@ -1510,7 +1510,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         let oImageCanvas = document.createElement('canvas');
         let oImageContext;
         let c = function(value) {
-            return AscCommon.AscBrowser.convertToRetinaValue(value, true);
+            return value;//AscCommon.AscBrowser.convertToRetinaValue(value, true);
         }
         if(bPixel) {
             oImageCanvas.width = c(1);
