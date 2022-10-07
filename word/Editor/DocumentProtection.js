@@ -225,7 +225,7 @@ function CWriteProtection() {
 
 window['AscCommonWord'].CDocProtect = CDocProtect;
 prot = CDocProtect.prototype;
-prot["asc_getIsPassword"] = prot.asc_getTitle;
-prot["asc_getEditType"] = prot.asc_getCreator;
-prot["asc_setEditType"] = prot.asc_getLastModifiedBy;
-prot["asc_setPassword"] = prot.asc_getRevision;
+prot["asc_getIsPassword"] = prot.asc_getIsPassword;
+prot["asc_getEditType"] = prot.asc_getEditType;
+prot["asc_setEditType"] = prot.asc_setEditType;
+prot["asc_setPassword"] = prot.asc_setPassword;
