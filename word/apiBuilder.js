@@ -17149,7 +17149,7 @@
 	/**
 	 * Creates the empty text properties.
 	 * @memberof Api
-	 * @typeofeditors ["CSE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {ApiTextPr}
 	 */
 	Api.prototype.CreateTextPr = function () {
