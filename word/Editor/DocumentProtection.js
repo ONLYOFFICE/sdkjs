@@ -61,13 +61,6 @@ var ECryptProv = {
 function CDocProtect() {
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-	/*this.Lock = new AscCommon.CLock(); // Зажат ли комментарий другим пользователем
-	if (false === AscCommon.g_oIdCounter.m_bLoad)
-	{
-		this.Lock.Set_Type(AscCommon.locktype_Mine, false);
-		AscCommon.CollaborativeEditing.Add_Unlock2(this);
-	}*/
-
 	this.algorithmName = null;
 	this.edit = null;
 	this.enforcment = null;
@@ -91,6 +84,8 @@ function CDocProtect() {
 
 	this.Lock = new AscCommon.CLock();
 	this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
+
+	this.temporaryPassword = null;
 }
 CDocProtect.prototype.Get_Id = function () {
 	return this.Id;
@@ -147,28 +142,21 @@ CDocProtect.prototype.isPassword = function () {
 	return this.algorithmName != null || this.cryptAlgorithmSid != null;
 };
 CDocProtect.prototype.setProps = function (oProps) {
-	//TODO  в дальнейшем отправилять копию CDocProtect в интерфейс и принимать эту измененную копию + отправлять её в историю. сейчас имитирую эти действия
-	var newDocProtect;
-	AscFormat.ExecuteNoHistory(function () {
-		newDocProtect = new CDocProtect();
-	}, this, []);
-	//TODO compare
-	newDocProtect.setFromInterface(oProps)
-	History.Add(new CChangesDocumentProtection(this, this, newDocProtect));
+	History.Add(new CChangesDocumentProtection(this, this, oProps));
 	this.setFromInterface(oProps);
 };
 CDocProtect.prototype.setFromInterface = function (oProps) {
-	this.edit = oProps.props;
+	this.edit = oProps.edit;
 	this.saltValue = oProps.saltValue;
 	this.spinCount = oProps.spinCount;
-	this.cryptAlgorithmSid = oProps.alg;
+	this.cryptAlgorithmSid = oProps.cryptAlgorithmSid;
 	this.hashValue = oProps.hashValue;
 
-	this.enforcment = oProps.props && oProps.props !== Asc.c_oAscEDocProtect.None;
+	this.enforcment = oProps.enforcment;
 };
 CDocProtect.prototype.Refresh_RecalcData = function () {
 };
-CDocProtect.prototype.copy = function () {
+CDocProtect.prototype.Copy = function () {
 	return AscFormat.ExecuteNoHistory(function () {
 		var oDocProtect = new CDocProtect();
 		oDocProtect.algorithmName = this.algorithmName;
@@ -199,6 +187,22 @@ CDocProtect.prototype.Read_FromBinary2 = function(Reader)
 {
 	this.Id = Reader.GetString2();
 };
+CDocProtect.prototype.asc_getIsPassword = function()
+{
+	return this.enforcment ? this.isPassword() : null
+};
+CDocProtect.prototype.asc_getEditType = function()
+{
+	return this.edit;
+};
+CDocProtect.prototype.asc_setPassword = function(val)
+{
+	this.temporaryPassword = val;
+};
+CDocProtect.prototype.asc_setEditType = function(val)
+{
+	this.edit = val;
+};
 
 
 function CWriteProtection() {
@@ -220,3 +224,8 @@ function CWriteProtection() {
 }
 
 window['AscCommonWord'].CDocProtect = CDocProtect;
+prot = CDocProtect.prototype;
+prot["asc_getIsPassword"] = prot.asc_getTitle;
+prot["asc_getEditType"] = prot.asc_getCreator;
+prot["asc_setEditType"] = prot.asc_getLastModifiedBy;
+prot["asc_setPassword"] = prot.asc_getRevision;

@@ -12816,12 +12816,12 @@ background-repeat: no-repeat;\
 		var docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
 		//TODO enforcment!!! - проверить данный флаг
 		if (docProtection) {
-			return [docProtection.edit, docProtection.enforcment ? docProtection.isPassword() : null];
+			return docProtection.Copy();
 		}
 	};
 
-	asc_docs_api.prototype.asc_setDocumentProtection = function (props, password) {
-		//props -> c_oAscEDocProtect
+	asc_docs_api.prototype.asc_setDocumentProtection = function (props) {
+		//props -> CDocProtect
 
 		// Проверка глобального лока
 		if (AscCommon.CollaborativeEditing.Get_GlobalLock()) {
@@ -12842,7 +12842,14 @@ background-repeat: no-repeat;\
 				if(false === oDocument.Document_Is_SelectionLocked(AscCommon.changestype_DocumentProtection, null, null, true))
 				{
 					oDocument.StartAction(AscDFH.historydescription_Document_DocumentProtection);
-					oDocument.SetProtection({props: props, saltValue: salt, spinCount: spinCount, alg:  alg, hashValue: calculatedHashValue});
+
+					props.saltValue = salt;
+					props.spinCount = spinCount;
+					props.cryptAlgorithmSid = alg;
+					props.hashValue = calculatedHashValue;
+					props.enforcment = props.edit && props.edit !== Asc.c_oAscEDocProtect.None;
+
+					oDocument.SetProtection(props);
 					oDocument.UpdateInterface();
 					oDocument.FinalizeAction();
 					t.sendEvent("asc_onChangeDocumentProtection");
@@ -12852,6 +12859,8 @@ background-repeat: no-repeat;\
 			}
 		};
 
+		var password = props.temporaryPassword;
+		props.temporaryPassword = null;
 		var documentProtection = oDocument.Settings.DocumentProtection;
 		var salt, alg, spinCount;
 		if (password !== "" && password != null) {
@@ -12877,7 +12886,7 @@ background-repeat: no-repeat;\
 				//t.collaborativeEditing.lock([lockInfo], callback);
 				callback(true);
 			} else {
-				if (props != null && props !== Asc.c_oAscEDocProtect.None) {
+				if (props != null && props.edit != null && props.edit !== Asc.c_oAscEDocProtect.None) {
 					//устанавливаем защиту
 					calculatedHashValue = hash && hash[0] ? hash[0] : null;
 					//t.collaborativeEditing.lock([lockInfo], callback);
