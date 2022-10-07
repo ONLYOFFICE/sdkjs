@@ -178,7 +178,7 @@ CDocProtect.prototype.Copy = function () {
 		return oDocProtect;
 	}, this, []);
 };
-CDocProtect.prototype.Write_ToBinary2 = function(Writer)
+/*CDocProtect.prototype.Write_ToBinary2 = function(Writer)
 {
 	Writer.WriteLong(AscDFH.historyitem_type_DocumentProtection);
 	Writer.WriteString2("" + this.Id);
@@ -186,7 +186,7 @@ CDocProtect.prototype.Write_ToBinary2 = function(Writer)
 CDocProtect.prototype.Read_FromBinary2 = function(Reader)
 {
 	this.Id = Reader.GetString2();
-};
+};*/
 CDocProtect.prototype.asc_getIsPassword = function()
 {
 	return this.enforcment ? this.isPassword() : null

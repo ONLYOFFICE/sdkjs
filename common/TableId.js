@@ -381,7 +381,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNode      ]     = AscFormat.SmartArtNode;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNodeData  ]     = AscFormat.SmartArtNodeData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
-		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentProtection]     = AscCommonWord.CDocProtect;
 
 		if (window['AscCommonSlide'])
 		{

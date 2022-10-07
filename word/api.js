@@ -12806,7 +12806,6 @@ background-repeat: no-repeat;\
 		return oDocument.PutImageToSelection(sImageSrc, nWidth, nHeight);
 	};
 
-	//asc_onChangeProtectWorkbook
 	asc_docs_api.prototype.asc_getDocumentProtection = function () {
 		let oDocument = this.private_GetLogicDocument();
 		if (!oDocument) {
@@ -12814,7 +12813,6 @@ background-repeat: no-repeat;\
 		}
 
 		var docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
-		//TODO enforcment!!! - проверить данный флаг
 		if (docProtection) {
 			return docProtection.Copy();
 		}
@@ -12883,18 +12881,15 @@ background-repeat: no-repeat;\
 
 		var checkPassword = function (hash, doNotCheckPassword) {
 			if (doNotCheckPassword) {
-				//t.collaborativeEditing.lock([lockInfo], callback);
 				callback(true);
 			} else {
 				if (props != null && props.edit != null && props.edit !== Asc.c_oAscEDocProtect.None) {
 					//устанавливаем защиту
 					calculatedHashValue = hash && hash[0] ? hash[0] : null;
-					//t.collaborativeEditing.lock([lockInfo], callback);
 					callback(true);
 				} else {
 					//пробуем снять защиту
 					if (documentProtection && hash && hash[0] === documentProtection.hashValue) {
-						//t.collaborativeEditing.lock([lockInfo], callback);
 						callback(true);
 					} else {
 						//неверный пароль
@@ -12907,8 +12902,6 @@ background-repeat: no-repeat;\
 		};
 
 		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
-		//props !== null && props !== Asc.c_oAscEDocProtect.None
-
 		if (password != null) {
 			if (password === "") {
 				checkPassword([""]);
