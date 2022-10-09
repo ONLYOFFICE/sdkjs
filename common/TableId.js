@@ -130,6 +130,10 @@
 	{
 		return this.Id;
 	};
+	CTableId.prototype.GetId = function()
+	{
+		return this.Id;
+	};
 	CTableId.prototype.Clear = function()
 	{
 		this.m_aPairs   = {};

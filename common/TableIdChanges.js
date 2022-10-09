@@ -186,6 +186,10 @@
 		this.DeletedIndex  = Reader.GetLong();
 		this.VersionString = Reader.GetString2();
 	};
+	CChangesTableIdDescription.prototype.GetBinarySize = function()
+	{
+		return (9 * 4 + 4 + ((this.VersionString.length & 0x7FFFFFFF) * 2));
+	};
 	CChangesTableIdDescription.prototype.Load = function(Color)
 	{
 		// var CollaborativeEditing = AscCommon.CollaborativeEditing;

@@ -1007,6 +1007,41 @@ CHistory.prototype =
         }
     }
 };
+	CHistory.prototype.GetLocalChangesSize = function()
+	{
+		function GetDescriptionSize()
+		{
+			let change = new AscCommon.CChangesTableIdDescription(AscCommon.g_oTableId, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			let id     = "" + AscCommon.g_oTableId.GetId();
+			return (4 + ((id.length & 0x7FFFFFFF) * 2) + 4 + change.GetBinarySize());
+		}
+		function GetBase64Size(binarySize)
+		{
+			// Бинарник пишется Binary.Len + ";" + base64Encode(Binary.Data)
+			return ((binarySize + ";").length + (((4 * binarySize / 3) + 3) & ~3));
+		}
+
+		let descriptionSize = GetBase64Size(GetDescriptionSize());
+
+		let size = 0;
+
+		let startIndex = null !== this.SavedIndex ? this.SavedIndex + 1 : 0;
+		for (let pointIndex = startIndex; pointIndex <= this.Index; ++pointIndex)
+		{
+			let point = this.Points[pointIndex];
+
+			let firstItem = point.Items[0];
+			if (!firstItem || !firstItem.Data.IsDescriptionChange())
+				size += descriptionSize;
+
+			for (let itemIndex = 0, itemsCount = point.Items.length; itemIndex < itemsCount; ++itemIndex)
+			{
+				let item = point.Items[itemIndex];
+				size += GetBase64Size(item.Binary.Len);
+			}
+		}
+		return size;
+	};
 	/**
 	 * Проверяем, можно ли добавить изменение
 	 * @returns {boolean}
