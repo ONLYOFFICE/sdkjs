@@ -1143,20 +1143,6 @@ CHistory.prototype.StartTransaction = function()
 	}
 	this.Transaction++;
 };
-CHistory.prototype.private_EndTransactionCheckSize = function(api) {
-	if (api && this.workbook && this.Points[this.Index]) {
-		let point = this.Points[this.Index];
-		for (let i = 0; i < point.Items.length; ++i) {
-			let elem = point.Items[i];
-			if (elem.bytes) {
-				continue;
-			}
-			let serializable = new AscCommonExcel.UndoRedoItemSerializable(elem.Class, elem.Type, elem.SheetId, elem.Range, elem.Data, elem.LocalChange);
-			elem.bytes = this.workbook._SerializeHistoryBase64Item(this.memory, serializable);
-		}
-		api.sendEvent("EndTransactionCheckSize");
-	}
-};
 CHistory.prototype.EndTransaction = function()
 {
 	if (1 === this.Transaction && !this.Is_LastPointEmpty()) {
@@ -1165,7 +1151,7 @@ CHistory.prototype.EndTransaction = function()
 		if (wsView) {
 			wsView.updateTopLeftCell();
 		}
-		this.private_EndTransactionCheckSize(api);
+		api && api.sendEvent("EndTransactionCheckSize");
 	}
 	this.Transaction--;
 	if(this.Transaction < 0)
@@ -1267,8 +1253,13 @@ CHistory.prototype.GetSerializeArray = function()
 		for (; i <= this.Index; ++i) {
 			var point = this.Points[i];
 			for (var j = 0, length2 = point.Items.length; j < length2; ++j) {
-				if (point.Items[j].bytes) {
-					res += point.Items[j].bytes.length;
+				let elem = point.Items[j];
+				if (!elem.bytes && this.workbook) {
+					let serializable = new AscCommonExcel.UndoRedoItemSerializable(elem.Class, elem.Type, elem.SheetId, elem.Range, elem.Data, elem.LocalChange);
+					elem.bytes = this.workbook._SerializeHistoryBase64Item(this.memory, serializable);
+				}
+				if (elem.bytes) {
+					res += elem.bytes.length;
 				}
 			}
 		}
