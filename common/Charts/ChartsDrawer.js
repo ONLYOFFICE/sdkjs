@@ -5517,7 +5517,45 @@ CChartsDrawer.prototype =
 		}
 
 		return res;
-	}
+	},
+
+	getValWithPercent: function (ser, val, oChart) {
+		var grouping = this.getChartGrouping(oChart);
+		var res = null;
+
+		var point, oSer, i;
+		if (grouping === "stackedPer") {
+			var sumVal = 0;
+			for (i = 0; i <= oChart.series.length; i++) {
+				oSer = oChart.series[i];
+				if (oSer) {
+					point = this.getPointByIndex(oSer, val);
+					if (point) {
+						sumVal += Math.abs(point.val);
+					}
+				}
+			}
+
+			oSer = oChart.series[ser];
+			if (oSer) {
+				point = this.getPointByIndex(oSer, val);
+				if (point) {
+					if (!res) {
+						res = 0;
+					}
+					res += point.val;
+				}
+			}
+
+			if(sumVal === 0) {
+				res = 0;
+			} else {
+				res = res / sumVal;
+			}
+		}
+
+		return res;
+	},
 };
 
 
@@ -15560,7 +15598,8 @@ CErrBarsDraw.prototype = {
 		if (seria && seria.errBars) {
 			var errBars = seria.errBars;
 
-			var pointVal = errBars.errValType === AscFormat.st_errvaltypePERCENTAGE ?  t.cChartDrawer.getValWithoutStacked(ser, val, oChart) : t.cChartDrawer.getValWithStacked(ser, val, oChart);
+			var grouping = t.cChartDrawer.getChartGrouping(oChart);
+			var pointVal = errBars.errValType === AscFormat.st_errvaltypePERCENTAGE ? (grouping === "stackedPer" ? t.cChartDrawer.getValWithPercent(ser, val, oChart) : t.cChartDrawer.getValWithoutStacked(ser, val, oChart)) : t.cChartDrawer.getValWithStacked(ser, val, oChart);
 			if (pointVal == null) {
 				return pointVal;
 			}
@@ -15598,6 +15637,17 @@ CErrBarsDraw.prototype = {
 
 
 			var pointsCount = seria.getValuesCount();
+			if (!pointsCount) {
+				if (errBars.errDir === AscFormat.st_errdirX) {
+					if (seria.xVal) {
+						pointsCount = seria.xVal.getValuesCount();
+					}
+				} else if (errBars.errDir === AscFormat.st_errdirY) {
+					if (seria.yVal) {
+						pointsCount = seria.yVal.getValuesCount();
+					}
+				}
+			}
 			switch (errBars.errValType) {
 				case AscFormat.st_errvaltypeCUST: {
 					//TODO numRef ?
@@ -15621,6 +15671,9 @@ CErrBarsDraw.prototype = {
 				}
 				case AscFormat.st_errvaltypePERCENTAGE: {
 					plusErrVal = pointVal * errBars.val / 100;
+					//эта величина используется для расчёт оси. в данном случае расчёт величины погрешности выполняется от изначальнго значение
+					//но стартовая точка - величина с накоплением
+					pointVal = t.cChartDrawer.getValWithStacked(ser, val, oChart);
 					break;
 				}
 				case AscFormat.st_errvaltypeSTDDEV: {
@@ -15642,7 +15695,7 @@ CErrBarsDraw.prototype = {
 			minusErrVal = plusErrVal;
 		}
 
-		return plusErrVal !== null ? {startVal: startVal, plusErrVal: plusErrVal, minusErrVal: minusErrVal, val: pointVal} : null;
+		return plusErrVal !== null ? {startVal: startVal, plusErrVal: Math.abs(plusErrVal), minusErrVal: Math.abs(minusErrVal), val: pointVal} : null;
 	},
 
 	_drawLines: function (/*isSkip*/) {
