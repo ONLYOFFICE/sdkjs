@@ -5505,6 +5505,18 @@ CChartsDrawer.prototype =
 		}
 
 		return res;
+	},
+
+	getValWithoutStacked: function (ser, val, oChart) {
+		var res = null;
+
+		var oSer = oChart.series[ser];
+		var point = this.getPointByIndex(oSer, val);
+		if (point) {
+			res = point.val;
+		}
+
+		return res;
 	}
 };
 
@@ -15551,7 +15563,7 @@ CErrBarsDraw.prototype = {
 		if (seria && seria.errBars) {
 			var errBars = seria.errBars;
 
-			var pointVal = t.cChartDrawer.getValWithStacked(ser, val, oChart);
+			var pointVal = errBars.errValType === AscFormat.st_errvaltypePERCENTAGE ?  t.cChartDrawer.getValWithoutStacked(ser, val, oChart) : t.cChartDrawer.getValWithStacked(ser, val, oChart);
 			if (pointVal == null) {
 				return pointVal;
 			}
