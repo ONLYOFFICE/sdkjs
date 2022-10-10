@@ -11274,6 +11274,7 @@ CPresentation.prototype.StartAction = function (nDescription) {
 };
 CPresentation.prototype.FinalizeAction = function () {
     this.Recalculate();
+    this.Api.checkChangesSize();
 };
 
 CPresentation.prototype.IsSplitPageBreakAndParaMark = function() {

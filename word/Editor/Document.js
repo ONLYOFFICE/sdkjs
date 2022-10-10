@@ -2772,6 +2772,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.Redraw.Start    = undefined;
 	this.Action.Redraw.End      = undefined;
 	this.Action.Additional      = {};
+	this.Api.checkChangesSize();
 };
 CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 {

@@ -216,7 +216,7 @@
 		this.isUseNativeViewer = true;
 
 		this.openedAt = undefined;
-		this.maxChangesSize = undefined;
+		this.maxChangesSize = 0;
 
 		this.isBlurEditor = false;
 		this._correctEmbeddedWork();
@@ -1268,7 +1268,7 @@
 		}
 	};
 	baseEditorsApi.prototype.checkChangesSize = function() {
-		if (undefined === this.maxChangesSize) {
+		if (0 === this.maxChangesSize) {
 			return;
 		}
 		let api = this;
@@ -1426,7 +1426,7 @@
 		};
 		this.CoAuthoringApi.onLicenseChanged          = function(res)
 		{
-			if (res['settings'] && res['settings']['maxChangesSize']) {
+			if (res['settings'] && undefined !== res['settings']['maxChangesSize']) {
 				t.maxChangesSize = res['settings']['maxChangesSize'];
 			}
 			let licenseType = res['licenseType'];
