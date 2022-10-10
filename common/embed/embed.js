@@ -39,7 +39,7 @@
 		this.frame  = frame;
 		this.x = window.scrollX;
 		this.y = window.scrollY;
-		this.isLock = false;
+		this.lockCounter = 0;
 
 		document.addEventListener("scroll", this.onScroll.bind(this), false);
 		window.addEventListener("blur", this.onBlur.bind(this), false);
@@ -53,7 +53,7 @@
 
 	ScrollLocker.prototype.onScroll = function()
 	{
-		if (document.activeElement === this.frame || this.isLock)
+		if (document.activeElement === this.frame || (0 !== this.lockCounter))
 		{
 			window.scrollTo(this.x, this.y);
 			return;
@@ -66,12 +66,7 @@
 	{
 		if (document.activeElement === this.frame)
 		{
-			this.isLock = true;
-			var _t = this;
-			setTimeout(function(){
-				_t.isLock = false;
-			}, 100);
-			return;
+			this.lockWithTimeout(100);
 		}
 	};
 
@@ -87,7 +82,19 @@
 	ScrollLocker.prototype.onMove = function()
 	{
 		if (document.activeElement === this.frame)
+		{
+			this.lockWithTimeout(100);
 			this.frame.blur();
+		}
+	};
+
+	ScrollLocker.prototype.lockWithTimeout = function(interval)
+	{
+		this.lockCounter++;
+		var _t = this;
+		setTimeout(function(){
+			_t.lockCounter--;
+		}, interval);
 	};
 
 	window.AscEmbed.initWorker = function(frame)

@@ -334,49 +334,6 @@
     CNotes.prototype.Refresh_ContentChanges = function()
     {
     };
-    CNotes.prototype.readAttrXml = function(name, reader) {
-        switch (name) {
-            case "showMasterPhAnim": {
-                this.setShowPhAnim(reader.GetValueBool());
-                break;
-            }
-            case "showMasterSp": {
-                this.setShowMasterSp(reader.GetValueBool());
-                break;
-            }
-        }
-    };
-    CNotes.prototype.readChildXml = function(name, reader) {
-        switch(name) {
-            case "cSld": {
-                let oCSld = this.cSld;
-                oCSld.fromXml(reader);
-                break;
-            }
-            case "clrMapOvr": {
-
-                let oClrMapOvr = new AscFormat.CClrMapOvr();
-                oClrMapOvr.fromXml(reader);
-                this.setClMapOverride(oClrMapOvr.overrideClrMapping);
-                break;
-            }
-        }
-    };
-    CNotes.prototype.toXml = function(writer) {
-        writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
-        writer.WriteXmlNodeStart("p:notes");
-        writer.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
-        writer.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
-        writer.WriteXmlAttributeString("xmlns:p", "http://schemas.openxmlformats.org/presentationml/2006/main");
-        writer.WriteXmlAttributeString("xmlns:m", "http://schemas.openxmlformats.org/officeDocument/2006/math");
-        writer.WriteXmlAttributeString("xmlns:w", "http://schemas.openxmlformats.org/wordprocessingml/2006/main");
-        writer.WriteXmlNullableAttributeBool("showMasterPhAnim", this.showMasterPhAnim);
-        writer.WriteXmlNullableAttributeBool("showMasterSp", this.showMasterSp);
-        writer.WriteXmlAttributesEnd();
-        this.cSld.toXml(writer);
-        AscFormat.CClrMapOvr.prototype.static_WriteCrlMapAsOvr(writer, this.clrMap);
-        writer.WriteXmlNodeEnd("p:notes");
-    };
 
     function CreateNotes(){
         var oN = new CNotes();

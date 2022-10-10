@@ -1249,6 +1249,9 @@
 			case AscDFH.historydescription_Document_CorrectFormTextByFormat:
 				sString = "Document_CorrectFormTextByFormat";
 				break;
+			case AscDFH.historydescription_Document_CorrectEnterText:
+				sString = "Document_CorrectEnterText";
+				break;
 		}
 		return sString;
 	}
@@ -4322,6 +4325,7 @@
 	window['AscDFH'].historydescription_Document_FillFormInPlugin                   = 0x0194;
 	window['AscDFH'].historydescription_Document_AddComplexForm                     = 0x0195;
 	window['AscDFH'].historydescription_Document_CorrectFormTextByFormat            = 0x0196;
+	window['AscDFH'].historydescription_Document_CorrectEnterText                   = 0x0197;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -4466,9 +4470,13 @@
 	{
 		return this.Add;
 	};
+	CChangesBaseContentChange.prototype.CreateFromParams = function(Class, Pos, Items, Add)
+	{
+		return new this.constructor(Class, Pos, Items, Add);
+	};
 	CChangesBaseContentChange.prototype.Copy = function()
 	{
-		var oChanges = new this.constructor(this.Class, this.Pos, this.Items, this.Add);
+		var oChanges = this.CreateFromParams(this.Class, this.Pos, this.Items, this.Add);
 
 		oChanges.UseArray = this.UseArray;
 
@@ -4578,11 +4586,11 @@
 	};
 	CChangesBaseContentChange.prototype.ConvertToSimpleActions = function()
 	{
-		var arrActions = [];
+		let arrActions = [];
 
 		if (this.UseArray)
 		{
-			for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+			for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 			{
 				arrActions.push({
 					Item : this.Items[nIndex],
@@ -4593,8 +4601,8 @@
 		}
 		else
 		{
-			var Pos = this.Pos;
-			for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+			let Pos = this.Pos;
+			for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 			{
 				arrActions.push({
 					Item : this.Items[nIndex],
@@ -4605,6 +4613,20 @@
 		}
 
 		return arrActions;
+	};
+	CChangesBaseContentChange.prototype.ConvertToSimpleChanges = function()
+	{
+		let arrSimpleActions = this.ConvertToSimpleActions();
+		let arrChanges       = [];
+
+		for (let nIndex = 0, nCount = arrSimpleActions.length; nIndex < nCount; ++nIndex)
+		{
+			let oAction = arrSimpleActions[nIndex];
+			let oChange = this.CreateFromParams(this.Class, oAction.Pos, [oAction.Item], oAction.Add);
+			arrChanges.push(oChange);
+		}
+
+		return arrChanges;
 	};
 	CChangesBaseContentChange.prototype.ConvertFromSimpleActions = function(arrActions)
 	{

@@ -501,15 +501,9 @@
     CChangesDrawingsContent.prototype.IsContentChange = function () {
         return false;
     };
-    CChangesDrawingsContent.prototype.Copy = function()
+    CChangesDrawingsContent.prototype.CreateFromParams = function(Class, Pos, Items, Add)
     {
-        var oChanges = new this.constructor(this.Class, this.Type, this.Pos, this.Items, this.Add);
-        oChanges.UseArray = this.UseArray;
-        oChanges.Pos = this.Pos;
-        for (var nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
-            oChanges.PosArray[nIndex] = this.PosArray[nIndex];
-
-        return oChanges;
+        return new this.constructor(Class, this.Type, Pos, Items, Add);
     };
 
     CChangesDrawingsContent.prototype.CreateReverseChange = function(){

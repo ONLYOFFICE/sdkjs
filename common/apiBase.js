@@ -325,7 +325,7 @@
 		}
 
 		var _t = this;
-		window.addEventListener("blur", function(){
+		window.addEventListener && window.addEventListener("blur", function(){
 			_t.isBlurEditor = true;
 		}, false);
 	};
@@ -943,7 +943,11 @@
 					locale = undefined;
 				}
 			}
-			let convertToOrigin = !!this.DocInfo.get_DirectUrl() ? '.docx.xlsx.pptx' : '';
+			let convertToOrigin = '';
+			if (!!this.DocInfo.get_DirectUrl() && this["asc_isSupportFeature"]("ooxml")) {
+				convertToOrigin = '.docx.xlsx.pptx';
+			}
+
 			rData = {
 				"c"             : 'open',
 				"id"            : this.documentId,
@@ -2452,64 +2456,6 @@
 	baseEditorsApi.prototype.openDocumentFromZip  = function()
 	{
 	};
-	baseEditorsApi.prototype.saveDocumentToZip  = function(model, editorType, callback)
-	{
-		let t = this;
-		var context = new AscCommon.XmlWriterContext(editorType);
-		let jsZlibToSave = new AscCommon.ZLib();
-		jsZlibToSave.create();
-		model.toZip(jsZlibToSave, context);
-
-		let jsZlibOpened = new AscCommon.ZLib();
-		if (!jsZlibOpened.open(t.openOOXInBrowserZip)) {
-			jsZlibOpened = null;
-		}
-
-		//save embeddings
-		let oDataMap = context.dataMap;
-		if(jsZlibOpened) {
-			for(let sDataKey in oDataMap) {
-				if(oDataMap.hasOwnProperty(sDataKey)) {
-					let aEmbeddingData = jsZlibOpened.getFile(sDataKey);
-					if(aEmbeddingData) {
-						oDataMap[sDataKey].part.setData(aEmbeddingData);
-					}
-				}
-			}
-		}
-		let imageMapKeys = Object.keys(context.imageMap);
-		let downloadImages = function (imageMapKeys) {
-			if (imageMapKeys.length > 0) {
-				let elem = imageMapKeys.pop();
-				let data = jsZlibOpened && jsZlibOpened.getFile(elem);
-				if (data) {
-					context.imageMap[elem].part.setData(data);
-					downloadImages(imageMapKeys);
-				} else if (window["NATIVE_EDITOR_ENJINE"] === true && window["native"]["getImagesDirectory"] && window["native"]["GetFileBinary"]) {
-					let path = window["native"]["getImagesDirectory"]() + '/' + elem;
-					let data = window["native"]["GetFileBinary"](path);
-					if (data) {
-						context.imageMap[elem].part.setData(data);
-					}
-					downloadImages(imageMapKeys);
-				} else {
-					let url = AscCommon.g_oDocumentUrls.getImageUrl(elem);
-					AscCommon.loadFileContent(url, function (httpRequest) {
-						if (httpRequest && httpRequest.response) {
-							context.imageMap[elem].part.setData(httpRequest.response);
-						}
-						downloadImages(imageMapKeys);
-					}, "arraybuffer");
-				}
-			} else {
-				jsZlibOpened && jsZlibOpened.close();
-				let data = jsZlibToSave.save();
-				jsZlibToSave.close();
-				callback(data);
-			}
-		};
-		downloadImages(imageMapKeys);
-	};
 	baseEditorsApi.prototype.onEndLoadDocInfo = function()
 	{
 		if (this.isLoadFullApi && this.DocInfo)
@@ -3980,7 +3926,10 @@
 	baseEditorsApi.prototype.asc_EditSelectAll = function()
 	{
 	};
-	baseEditorsApi.prototype.asc_enterText = function(codePoints)
+	baseEditorsApi.prototype.asc_enterText = function(value)
+	{
+	};
+	baseEditorsApi.prototype.asc_correctEnterText = function(oldValue, newValue)
 	{
 	};
 	//---------------------------------------------------------search-----------------------------------------------------
@@ -4023,13 +3972,13 @@
 	};
 
     // ---------------------------------------------------- internal events ----------------------------------------------
-    baseEditorsApi.prototype["attachEvent"] = function(name, callback, listenerId)
+    baseEditorsApi.prototype.attachEvent = function(name, callback, listenerId)
     {
     	if (!this.internalEvents.hasOwnProperty(name))
             this.internalEvents[name] = {};
         this.internalEvents[name]["" + ((undefined === listenerId) ? 0 : listenerId)] = callback;
     };
-    baseEditorsApi.prototype["detachEvent"] = function(name, listenerId)
+    baseEditorsApi.prototype.detachEvent = function(name, listenerId)
     {
         if (!this.internalEvents.hasOwnProperty(name))
         	return;

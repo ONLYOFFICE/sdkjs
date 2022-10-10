@@ -12080,6 +12080,161 @@
         return res;
     }
 
+    function CT_Workbook(wb) {
+        //Members
+        this.wb = wb;
+        this.sheets = null;
+        this.pivotCaches = null;
+        this.externalReferences = [];
+        this.extLst = null;
+        this.slicerCachesIds = [];
+        this.newDefinedNames = [];
+    }
+
+    CT_Workbook.prototype.fromXml = function (reader) {
+        if (!reader.ReadNextNode()) {
+            return;
+        }
+        if ("workbook" !== reader.GetNameNoNS()) {
+            if (!reader.ReadNextNode()) {
+                return;
+            }
+        }
+
+        var t = this, val;
+        if ("workbook" === reader.GetNameNoNS()) {
+            var depth = reader.GetDepth();
+            while (reader.ReadNextSiblingNode(depth)) {
+                var name = reader.GetNameNoNS();
+                if ("sheets" === name) {
+                    var sheets = new AscCommonExcel.CT_Sheets(this.wb);
+                    sheets.fromXml(reader);
+                    this.sheets = sheets.sheets;
+                } else if ("pivotCaches" === name) {
+                    var pivotCaches = new AscCommonExcel.CT_PivotCaches();
+                    pivotCaches.fromXml(reader);
+                    this.pivotCaches = pivotCaches.pivotCaches;
+                }
+            }
+        }
+    };
+
+    function CT_Sheets(wb) {
+        this.wb = wb;
+        this.sheets = [];
+    }
+
+    CT_Sheets.prototype.fromXml = function (reader) {
+        var depth = reader.GetDepth();
+        while (reader.ReadNextSiblingNode(depth)) {
+            if ("sheet" === reader.GetNameNoNS()) {
+                var sheet = new AscCommonExcel.CT_Sheet();
+                sheet.fromXml(reader);
+                this.sheets.push(sheet);
+            }
+        }
+    };
+
+    function CT_Sheet() {
+        //Attributes
+        this.name = null;
+        this.sheetId = null;
+        this.id = null;
+        this.bHidden = null;
+    }
+
+    CT_Sheet.prototype.fromXml = function (reader) {
+        this.readAttr(reader);
+        reader.ReadTillEnd();
+    };
+    CT_Sheet.prototype.readAttributes = function (attr, uq) {
+        if (attr()) {
+            this.parseAttributes(attr());
+        }
+    };
+    CT_Sheet.prototype.readAttr = function (reader) {
+        var val;
+        while (reader.MoveToNextAttribute()) {
+            var name = reader.GetNameNoNS();
+            if ("name" === name) {
+                this.name = reader.GetValueDecodeXml();
+            } else if ("sheetId" === name) {
+                this.sheetId = reader.GetValueInt();
+            } else if ("id" === name) {
+                this.id = reader.GetValueDecodeXml();
+            } else if ("state" === name) {
+                val = reader.GetValue();
+                if ("hidden" === val) {
+                    this.bHidden = true;
+                } else if ("veryHidden" === val) {
+                    this.bHidden = true;
+                } else if ("visible" === val) {
+                    this.bHidden = false;
+                }
+            }
+        }
+    };
+    CT_Sheet.prototype.parseAttributes = function (vals, uq) {
+        var val;
+        val = vals["r:id"];
+        if (undefined !== val) {
+            this.id = AscCommon.unleakString(uq(val));
+        }
+    };
+
+    function CT_PivotCaches() {
+        this.pivotCaches = [];
+    }
+
+    CT_PivotCaches.prototype.fromXml = function (reader) {
+        var depth = reader.GetDepth();
+        while (reader.ReadNextSiblingNode(depth)) {
+            if ("pivotCache" === reader.GetNameNoNS()) {
+                var pivotCache = new AscCommonExcel.CT_PivotCache();
+                pivotCache.fromXml(reader);
+                this.pivotCaches.push(pivotCache);
+            }
+        }
+    };
+
+    function CT_PivotCache() {
+        //Attributes
+        this.cacheId = null;
+        this.id = null;
+    }
+
+    CT_PivotCache.prototype.fromXml = function (reader) {
+        this.readAttr(reader);
+        reader.ReadTillEnd();
+    };
+    CT_PivotCache.prototype.readAttributes = function (attr, uq) {
+        if (attr()) {
+            var vals = attr();
+            this.parseAttributes(attr(), uq);
+        }
+    };
+    CT_PivotCache.prototype.readAttr = function (reader) {
+        while (reader.MoveToNextAttribute()) {
+            var name = reader.GetNameNoNS();
+            if ("id" === name) {
+                this.id = reader.GetValueDecodeXml();
+            } else if ("cacheId" === name) {
+                this.cacheId = parseInt(reader.GetValue());
+            }
+        }
+    };
+    CT_PivotCache.prototype.parseAttributes = function (vals, uq) {
+        var val;
+        val = vals["cacheId"];
+        if (undefined !== val) {
+            this.cacheId = val - 0;
+        }
+        val = vals["r:id"];
+        if (undefined !== val) {
+            this.id = AscCommon.unleakString(uq(val));
+        }
+    };
+
     var prot;
     window['Asc'] = window['Asc'] || {};
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -12251,6 +12406,13 @@
 
     window["AscCommonExcel"].ReadWbComments = ReadWbComments;
     window["AscCommonExcel"].WriteWbComments = WriteWbComments;
+
+    window['AscCommonExcel'].CT_Workbook = CT_Workbook;
+    window['AscCommonExcel'].CT_Sheets = CT_Sheets;
+    window['AscCommonExcel'].CT_Sheet = CT_Sheet;
+    window['AscCommonExcel'].CT_PivotCaches = CT_PivotCaches;
+    window['AscCommonExcel'].CT_PivotCache = CT_PivotCache;
+
 
 
 })(window);

@@ -24,7 +24,7 @@ pos_return_editor_obj = api_content.find("return {")
 new_content = ""
 new_content += min_content
 new_content += "\n        "
-new_content += "function _createEmbedWorker() { return new AscEmbed.initWorker(); }"
+new_content += "function _createEmbedWorker() { return new AscEmbed.initWorker(iframe); }"
 new_content += "\n\n"
 
 new_content += "        return {"
