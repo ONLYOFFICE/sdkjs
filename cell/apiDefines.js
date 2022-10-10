@@ -355,6 +355,16 @@ var c_oAscVisibleAreaOleEditorBorderColor = new CColor(32, 139, 255);
     DashThick   : 32
   };
 
+  var docChangedType = {
+    cellValue: 0,
+    rangeValues: 1,
+    sheetContent: 2,
+    sheetRemove: 3,
+    sheetRename: 4,
+    sheetChangeIndex: 5,
+    markModifiedSearch: 6
+  };
+
   var c_oAscLockNameFrozenPane = "frozenPane";
   var c_oAscLockNameTabColor = "tabColor";
   var c_oAscLockAddSheet = "addSheet";
@@ -556,6 +566,11 @@ var c_oAscPopUpSelectorType = {
   };
 
   var c_nAscMaxAddCellWatchesCount = 10000;
+  var c_oAscExternalReferenceType = {
+    referenceData: 0,
+    link: 1,
+    path: 2
+  };
 
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -583,6 +598,7 @@ var c_oAscPopUpSelectorType = {
   window['AscCommonExcel'].c_oAscLockLayoutOptions = c_oAscLockLayoutOptions;
   window['AscCommonExcel'].c_oAscHeaderFooterEdit = c_oAscHeaderFooterEdit;
   window['AscCommonExcel'].c_oAscLockPrintScaleOptions = c_oAscLockPrintScaleOptions;
+  window['AscCommonExcel'].docChangedType = docChangedType;
 
 
   window['AscCommonExcel'].c_kMaxPrintPages = c_kMaxPrintPages;
@@ -915,6 +931,11 @@ var c_oAscPopUpSelectorType = {
   prot['Range'] = prot.Range;
 
   window['Asc']['c_nAscMaxAddCellWatchesCount'] = window['Asc'].c_nAscMaxAddCellWatchesCount = c_nAscMaxAddCellWatchesCount;
+  window['Asc']['c_oAscExternalReferenceType'] = window['Asc'].c_oAscExternalReferenceType = c_oAscExternalReferenceType;
+  prot = c_oAscExternalReferenceType;
+  prot['referenceData'] = prot.referenceData;
+  prot['link'] = prot.link;
+  prot['path'] = prot.path;
 
 
 })(window);

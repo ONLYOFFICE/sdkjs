@@ -242,6 +242,18 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         for(var i = 0; i < this.cSld.spTree.length; ++i){
             this.cSld.spTree[i].Reassign_ImageUrls(images_rename);
         }
+
+        if(this.cSld.Bg &&
+            this.cSld.Bg.bgPr &&
+            this.cSld.Bg.bgPr.Fill &&
+            this.cSld.Bg.bgPr.Fill.fill instanceof AscFormat.CBlipFill &&
+            typeof this.cSld.Bg.bgPr.Fill.fill.RasterImageId === "string" &&
+            images_rename[this.cSld.Bg.bgPr.Fill.fill.RasterImageId])
+        {
+            let oBg = this.cSld.Bg.createFullCopy();
+            oBg.bgPr.Fill.fill.RasterImageId = images_rename[oBg.bgPr.Fill.fill.RasterImageId];
+            this.changeBackground(oBg);
+        }
     };
     Slide.prototype.Clear_CollaborativeMarks = function()
     {
@@ -870,50 +882,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         var nv_sp_pr;
         if(drawing)
         {
-            switch (drawing.getObjectType())
-            {
-                case AscDFH.historyitem_type_ChartSpace:
-                {
-                    if(!drawing.nvGraphicFramePr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    break;
-                }
-                case AscDFH.historyitem_type_GroupShape:
-                {
-                    if(!drawing.nvGrpSpPr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    for(var i = 0; i < drawing.spTree.length; ++i)
-                    {
-                        this.checkDrawingUniNvPr(drawing.spTree[i]);
-                    }
-                    break;
-                }
-                case AscDFH.historyitem_type_ImageShape:
-                case AscDFH.historyitem_type_OleObject:
-                {
-                    if(!drawing.nvPicPr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    break;
-                }
-                case AscDFH.historyitem_type_Shape:
-                {
-                    if(!drawing.nvSpPr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    break;
-                }
-            }
+            drawing.checkDrawingUniNvPr();
         }
     };
 
@@ -1345,10 +1314,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         let bCheckBounds = graphics.IsSlideBoundsCheckerType;
         let bSlideShow = this.graphicObjects.isSlideShow();
         let bClipBySlide = !this.graphicObjects.canEdit();
-        if (bCheckBounds) {
-            if(bSlideShow || bClipBySlide) {
-                graphics.rect(0, 0, this.Width, this.Height);
-            }
+        if (bCheckBounds && (bSlideShow || bClipBySlide)) {
+            graphics.rect(0, 0, this.Width, this.Height);
             return;
         }
         let _bounds, i;
@@ -1479,9 +1446,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             this.timing.onAnimPaneMouseWheel(e, deltaY, X, Y);
         }
     };
-
     Slide.prototype.getTheme = function(){
-        return this.Layout.Master.Theme;
+        return this.Layout && this.Layout.Master && this.Layout.Master.Theme || null;
     };
 
     Slide.prototype.drawSelect = function(_type)
@@ -1791,7 +1757,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
     Slide.prototype.getDrawingsForController = function(){
         if(this.timing) {
-            var aShapes = this.timing.getMoveEffectsShapes();
+            let aShapes = this.timing.getMoveEffectsShapes();
             if(aShapes && aShapes.length > 0) {
                 return this.cSld.spTree.concat(aShapes);
             }

@@ -108,6 +108,17 @@
 		this.Elements[this.Id++] = Paragraph;
 		return (this.Id - 1);
 	};
+	CDocumentSearch.prototype.GetElementsMap = function()
+	{
+		let map = {};
+		for (let searchId in this.Elements)
+		{
+			let paraId = this.Elements[searchId].GetId();
+			if (!map[paraId])
+				map[paraId] = this.Elements[searchId];
+		}
+		return map;
+	};
 	CDocumentSearch.prototype.Select = function(nId, bUpdateStates)
 	{
 		var Paragraph = this.Elements[nId];
@@ -456,6 +467,9 @@
 	CDocumentSearch.prototype.SendClearAllTextAround = function()
 	{
 		let oApi = this.LogicDocument.GetApi();
+		if (!oApi)
+			return;
+
 		oApi.sync_startTextAroundSearch();
 		oApi.sync_endTextAroundSearch();
 	};

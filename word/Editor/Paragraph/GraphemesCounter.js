@@ -100,6 +100,10 @@
 		if (AscCommon.IsSpace(nCodePoint))
 		{
 			this.FlushWord();
+
+			if (this.TrimResult && this.CharsCount < this.TrimLength)
+				this.TrimResult.push(nCodePoint);
+
 			this.CharsCount++;
 		}
 		else

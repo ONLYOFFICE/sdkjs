@@ -990,26 +990,6 @@ function SetXfrmFromMetrics(oDrawing, metrics)
         }
     };
 
-    function getBulletImages(oContent, aImages) {
-        if(!oContent) {
-            return;
-        }
-        var aParagraphs = oContent.Content;
-        var sImageId;
-        for(var nPar = 0; nPar < aParagraphs.length; ++nPar) 
-        {
-            var oPr = aParagraphs[nPar].Pr;
-            if(oPr.Bullet) 
-            {
-                sImageId = oPr.Bullet.getImageBulletURL();
-                if(sImageId) 
-                {
-                    aImages.push(sImageId);
-                }
-            }
-        }
-    }
-
     function CSignatureLine(){
         this.id = null;
         this.signer = null;
@@ -1098,14 +1078,7 @@ function CShape()
     this.tmpLnSpcReduction = undefined;
     this.shapeSmartArtInfo = null;
 }
-
-	CShape.prototype = Object.create(AscFormat.CGraphicObjectBase.prototype);
-	CShape.prototype.constructor = CShape;
-
-CShape.prototype.getObjectType = function () {
-    return AscDFH.historyitem_type_Shape;
-};
-
+AscFormat.InitClass(CShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_Shape);
 CShape.prototype.setCustT = function (value) {
     var pointContent = this.getSmartArtPointContent();
     if (pointContent) {
@@ -1835,7 +1808,10 @@ CShape.prototype.getAllImages = function (images) {
     if (this.spPr && this.spPr.Fill && this.spPr.Fill.fill instanceof AscFormat.CBlipFill && typeof this.spPr.Fill.fill.RasterImageId === "string") {
         images[AscCommon.getFullImageSrc2(this.spPr.Fill.fill.RasterImageId)] = true;
     }
-    getBulletImages(this.getDocContent && this.getDocContent(), images);
+    const oContent = this.getDocContent && this.getDocContent();
+    if (oContent) {
+        oContent.getBulletImages(images);
+    }
 };
 
 CShape.prototype.getAllFonts = function (fonts) {
@@ -4687,6 +4663,10 @@ CShape.prototype.getSmartArtShapePoint = function () {
         }
     };
 
+    CShape.prototype.isShape = function() {
+        return true;
+    };
+
 var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70000, 75000, 80000, 85000, 90000, 95000, 10000];
 
 
@@ -5467,48 +5447,6 @@ CShape.prototype.check_bounds = function (checker) {
     }
 };
 
-CShape.prototype.getBase64Img = function ()
-{
-    if(this.parent)
-    {
-        if(this.parent.kind === AscFormat.TYPE_KIND.LAYOUT
-            || this.parent.kind === AscFormat.TYPE_KIND.MASTER
-            || this.parent.kind === AscFormat.TYPE_KIND.NOTES
-            || this.parent.kind === AscFormat.TYPE_KIND.NOTES_MASTER){
-            return ""
-        }
-    }
-    if(typeof this.cachedImage === "string" && this.cachedImage.length > 0)
-    {
-        return this.cachedImage;
-    }
-    if(!AscFormat.isRealNumber(this.x) || !AscFormat.isRealNumber(this.y) || !AscFormat.isRealNumber(this.extX) || !AscFormat.isRealNumber(this.extY)
-    || (AscFormat.fApproxEqual(this.extX, 0) && AscFormat.fApproxEqual(this.extY, 0)))
-        return "";
-    var img_object = AscCommon.ShapeToImageConverter(this, this.pageIndex);
-    if(img_object)
-    {
-        if(img_object.ImageNative)
-        {
-            try
-            {
-                this.cachedPixW = img_object.ImageNative.width;
-                this.cachedPixH = img_object.ImageNative.height;
-            }
-            catch(e)
-            {
-                this.cachedPixW = 50;
-                this.cachedPixH = 50;
-            }
-        }
-        return img_object.ImageUrl;
-    }
-    else
-    {
-
-        return "";
-    }
-};
 
 CShape.prototype.haveSelectedDrawingInContent = function()
 {
@@ -5598,9 +5536,9 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex,
     var _transform_text2 = options.transformText2 || this.transformText2;
     var geometry = this.calcGeometry || this.spPr && this.spPr.geometry;
 
-	this.drawShdw &&  this.drawShdw(graphics);
     if (graphics.IsSlideBoundsCheckerType === true) {
 
+        this.drawShdw &&  this.drawShdw(graphics);
         graphics.transform3(_transform);
         if (!this.spPr || null == geometry || geometry.isEmpty() || !graphics.IsShapeNeedBounds(geometry.preset)) {
             graphics._s();
@@ -5650,6 +5588,7 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex,
         graphics.SaveGrState();
         graphics.AddClipRect(oClipRect.x, oClipRect.y, oClipRect.w, oClipRect.h);
     }
+    this.drawShdw &&  this.drawShdw(graphics);
     var _oldBrush = this.brush;
     if(this.signatureLine){
         var sSignatureUrl = null;
@@ -6121,6 +6060,44 @@ CShape.prototype.getParagraphTextPr = function () {
     return null;
 };
 
+CShape.prototype.getImageFromBulletsMap = function (oImages) {
+    const oContent = this.getDocContent();
+    if(!oContent) {
+        return;
+    }
+    const aParagraphs = oContent.Content;
+    for(let nPar = 0; nPar < aParagraphs.length; ++nPar) {
+        var oPr = aParagraphs[nPar].Pr;
+        if(oPr.Bullet) {
+            const sImageId = oPr.Bullet.getImageBulletURL();
+            if(sImageId) {
+                oImages[sImageId] = true;
+            }
+        }
+    }
+};
+
+CShape.prototype.getDocContentsWithImageBullets = function (arrContents) {
+    const oContent = this.getDocContent();
+    if(!oContent) {
+        return;
+    }
+    const aParagraphs = oContent.Content;
+    for(let nPar = 0; nPar < aParagraphs.length; ++nPar)
+    {
+        var oPr = aParagraphs[nPar].Pr;
+        if(oPr.Bullet)
+        {
+            const sImageId = oPr.Bullet.getImageBulletURL();
+            if(sImageId)
+            {
+                arrContents.push(oContent);
+                break;
+            }
+        }
+    }
+}
+
 CShape.prototype.getAllRasterImages = function(images)
 {
     if(this.spPr && this.spPr.Fill && this.spPr.Fill.fill && typeof (this.spPr.Fill.fill.RasterImageId) === "string" && this.spPr.Fill.fill.RasterImageId.length > 0)
@@ -6150,7 +6127,7 @@ CShape.prototype.getAllRasterImages = function(images)
         }
         else 
         {
-            getBulletImages(oContent, images);
+            oContent.getBulletImages(images);
         }
         var fCallback = function(oRun)
 		{
@@ -6539,14 +6516,8 @@ CShape.prototype.hitToAdjustment = function (x, y) {
         ret = _calcGeom.hitToAdj(t_x, t_y, _dist);
         if(ret.hit)
         {
-            t_x = invert_transform.TransformPointX(x, y);
-            t_y = invert_transform.TransformPointY(x, y);
-            ret = _calcGeom.hitToAdj(t_x, t_y, this.convertPixToMM(global_mouseEvent.KoefPixToMM * AscCommon.TRACK_CIRCLE_RADIUS));
-            if(ret.hit)
-            {
-                ret.warp = false;
-                return ret;
-            }
+            ret.warp = false;
+            return ret;
         }
     }
     if(this.recalcInfo.warpGeometry && this.invertTransformTextWordArt)
@@ -7396,6 +7367,15 @@ CShape.prototype.getColumnNumber = function(){
                     return new CT_XmlNode();
                 });
                 elem.fromXml(reader);
+                break;
+            }
+            case "txSp": {
+                let oThis = this;
+                let oTxSpNode = new CT_XmlNode(function(reader, name) {
+                    oThis.readChildXml(name, reader);
+                    return true;
+                });
+                oTxSpNode.fromXml(reader);
                 break;
             }
             case "bodyPr": {

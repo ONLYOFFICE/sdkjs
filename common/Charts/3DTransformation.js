@@ -2718,5 +2718,7 @@ CSortFaces.prototype =
 	window['AscFormat'].Processor3D = Processor3D;
 	window['AscFormat'].Point3D = Point3D;
 	window['AscFormat'].CSortFaces = CSortFaces;
+	window['AscFormat'].global3DPersperctive = global3DPersperctive;
+	window['AscFormat'].globalBasePercent = globalBasePercent;
 	window['AscCommon'].c_oChartFloorPosition = c_oChartFloorPosition;
 })(window);

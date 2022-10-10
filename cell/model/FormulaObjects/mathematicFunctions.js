@@ -5037,6 +5037,9 @@
 
 
 			arg1Range = getRange(arg1);
+			if (!arg1Range) {
+				return new cError(cErrorType.wrong_value_type);
+			}
 
 			var arg1C = arg1Range.c2 - arg1Range.c1 + 1;
 			var arg1R = arg1Range.r2 - arg1Range.r1 + 1;

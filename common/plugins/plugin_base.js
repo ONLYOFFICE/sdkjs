@@ -673,6 +673,9 @@
 				case "button":
 				{
 					var _buttonId = parseInt(pluginData.button);
+					if (isNaN(_buttonId))
+						_buttonId =pluginData.button;
+
 					if (!window.Asc.plugin.button && -1 == _buttonId)
 						window.Asc.plugin.executeCommand("close", "");
 					else

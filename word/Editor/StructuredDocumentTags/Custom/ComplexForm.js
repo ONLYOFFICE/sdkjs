@@ -34,30 +34,50 @@
 
 (function(window)
 {
+	const ComplexFormType = {
+		Custom    : 0,
+		Telephone : 1,
+		Email     : 2,
+	};
+
 	/**
 	 *
 	 * @constructor
 	 */
 	function CSdtComplexFormPr()
 	{
-
+		this.Type = ComplexFormType.Custom;
 	}
 	CSdtComplexFormPr.prototype.Copy = function()
 	{
-		return new CSdtComplexFormPr();
+		let formPr = new CSdtComplexFormPr();
+		formPr.Type = this.Type;
+		return formPr;
 	};
-	CSdtComplexFormPr.prototype.IsEqual = function(oComplexFormPr)
+	CSdtComplexFormPr.prototype.IsEqual = function(formPr)
 	{
-		return (oComplexFormPr instanceof CSdtComplexFormPr);
+		return (formPr instanceof CSdtComplexFormPr
+			&& formPr.Type === this.Type);
+	};
+	CSdtComplexFormPr.prototype.GetType = function()
+	{
+		return this.Type;
 	};
 	CSdtComplexFormPr.prototype.WriteToBinary = function(oWriter)
 	{
+		oWriter.WriteLong(this.Type);
 	};
 	CSdtComplexFormPr.prototype.ReadFromBinary = function(oReader)
 	{
+		this.Type = oReader.GetLong();
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CSdtComplexFormPr = CSdtComplexFormPr
+
+	let exportPrototype          = window['Asc']['ComplexFormType'] = window['Asc'].ComplexFormType = ComplexFormType;
+	exportPrototype['Custom']    = exportPrototype.Custom;
+	exportPrototype['Telephone'] = exportPrototype.Telephone;
+	exportPrototype['Email']     = exportPrototype.Email;
 
 })(window);

@@ -409,114 +409,85 @@ function CChangesDrawingObjectsRemoveFromDrawingObjects(Class, Pos){
         }
     };
 
-CShape.prototype.addToDrawingObjects =  function(pos, type)
-{
-    var position = addToDrawings(this.worksheet, this, pos, /*lockByDefault*/undefined, type);
-    //var data = {Type: AscDFH.historyitem_AutoShapes_AddToDrawingObjects, Pos: position};
-    History.Add(new CChangesDrawingObjectsAddToDrawingObjects(this, position));
-    if(this.setDrawingBaseType)
+
+    function editorAddToDrawingObjects(oGraphicObject, pos, type)
     {
-        if(this.drawingBase)
+        var position = addToDrawings(oGraphicObject.worksheet, oGraphicObject, pos, /*lockByDefault*/undefined, type);
+        //var data = {Type: AscDFH.historyitem_AutoShapes_AddToDrawingObjects, Pos: position};
+        History.Add(new CChangesDrawingObjectsAddToDrawingObjects(oGraphicObject, position));
+        if(oGraphicObject.setDrawingBaseType)
         {
-            this.setDrawingBaseType && this.setDrawingBaseType(this.drawingBase.Type);
-            this.setDrawingBaseEditAs && this.setDrawingBaseEditAs(this.drawingBase.editAs);
-        }
-        if(AscFormat.isRealNumber(type))
-        {
-            this.setDrawingBaseType(type);
-            if(type === AscCommon.c_oAscCellAnchorType.cellanchorTwoCell)
+            if(oGraphicObject.drawingBase)
             {
-                this.setDrawingBaseEditAs(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+                oGraphicObject.setDrawingBaseType && oGraphicObject.setDrawingBaseType(oGraphicObject.drawingBase.Type);
+                oGraphicObject.setDrawingBaseEditAs && oGraphicObject.setDrawingBaseEditAs(oGraphicObject.drawingBase.editAs);
             }
-        }
-    }
-    //this.worksheet.addContentChanges(new AscCommon.CContentChangesElement(AscCommon.contentchanges_Add, position, 1, data));
-    var nv_sp_pr, bNeedSet = false;
-    switch(this.getObjectType()){
-        case AscDFH.historyitem_type_Shape:{
-            if(!this.nvSpPr){
-                bNeedSet = true;
-            }
-            break;
-        }
-        case AscDFH.historyitem_type_ChartSpace:{
-            if(!this.nvGraphicFramePr){
-                bNeedSet = true;
-            }
-            break;
-        }
-        case AscDFH.historyitem_type_ImageShape:{
-            if(!this.nvPicPr){
-                bNeedSet = true;
-            }
-            break;
-        }
-        case AscDFH.historyitem_type_GroupShape:{
-            if(!this.nvGrpSpPr){
-                bNeedSet = true;
-            }
-            break;
-        }
-    }
-    if(bNeedSet){
-        nv_sp_pr = new AscFormat.UniNvPr();
-        nv_sp_pr.cNvPr.setId(++AscFormat.Ax_Counter.GLOBAL_AX_ID_COUNTER);
-        this.setNvSpPr(nv_sp_pr);
-    }
-    if(this.signatureLine)
-    {
-        this.setSignature(this.signatureLine);
-    }
-    this.checkClientData();
-    var oApi = Asc.editor;
-    if(oApi && this.signatureLine)
-    {
-        oApi.sendEvent("asc_onAddSignature", this.signatureLine.id);
-    }
-};
-
-
-CShape.prototype.deleteDrawingBase = function()
-{
-    if(this.drawingBase)
-    {
-        var oFrom = this.drawingBase.from;
-        var oTo = this.drawingBase.to;
-        var oPos = this.drawingBase.Pos;
-        var oExt = this.drawingBase.ext;
-        if(oFrom && oTo && oPos && oExt && this.setDrawingBaseType && this.setDrawingBaseCoords)
-        {
-            if(this.drawingBase.Type === AscCommon.c_oAscCellAnchorType.cellanchorTwoCell)
+            if(AscFormat.isRealNumber(type))
             {
-                this.setDrawingBaseEditAs(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+                oGraphicObject.setDrawingBaseType(type);
+                if(type === AscCommon.c_oAscCellAnchorType.cellanchorTwoCell)
+                {
+                    oGraphicObject.setDrawingBaseEditAs(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+                }
             }
-            this.setDrawingBaseType(this.drawingBase.Type);
-
-            this.setDrawingBaseCoords(oFrom.col, oFrom.colOff, oFrom.row, oFrom.rowOff, oTo.col, oTo.colOff, oTo.row, oTo.rowOff, oPos.X, oPos.Y, oExt.cx, oExt.cy)
+        }
+        //oGraphicObject.worksheet.addContentChanges(new AscCommon.CContentChangesElement(AscCommon.contentchanges_Add, position, 1, data));
+        oGraphicObject.checkDrawingUniNvPr();
+        if(oGraphicObject.signatureLine)
+        {
+            oGraphicObject.setSignature(oGraphicObject.signatureLine);
+        }
+        oGraphicObject.checkClientData();
+        var oApi = Asc.editor;
+        if(oApi && oGraphicObject.signatureLine)
+        {
+            oApi.sendEvent("asc_onAddSignature", oGraphicObject.signatureLine.id);
         }
     }
-    if(this.signatureLine && this.setSignature)
+
+function editorDeleteDrawingBase(oGraphicObject, bCheckPlaceholder) {
+
+    let oDrawingBase = oGraphicObject.drawingBase;
+    if(oDrawingBase)
     {
-        this.setSignature(this.signatureLine);
+        let oFrom = oDrawingBase.from;
+        let oTo = oDrawingBase.to;
+        let oPos = oDrawingBase.Pos;
+        let oExt = oDrawingBase.ext;
+        if(oFrom && oTo && oPos && oExt && oGraphicObject.setDrawingBaseType && oGraphicObject.setDrawingBaseCoords)
+        {
+            if(oDrawingBase.Type === AscCommon.c_oAscCellAnchorType.cellanchorTwoCell)
+            {
+                oGraphicObject.setDrawingBaseEditAs(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+            }
+            oGraphicObject.setDrawingBaseType(oDrawingBase.Type);
+
+            oGraphicObject.setDrawingBaseCoords(oFrom.col, oFrom.colOff, oFrom.row, oFrom.rowOff, oTo.col, oTo.colOff, oTo.row, oTo.rowOff, oPos.X, oPos.Y, oExt.cx, oExt.cy)
+        }
     }
-    var position = AscFormat.deleteDrawingBase(this.worksheet.Drawings, this.Get_Id());
+    if(oGraphicObject.signatureLine && oGraphicObject.setSignature)
+    {
+        oGraphicObject.setSignature(oGraphicObject.signatureLine);
+    }
+    let position = AscFormat.deleteDrawingBase(oGraphicObject.worksheet.Drawings, oGraphicObject.Get_Id());
     if(AscFormat.isRealNumber(position))
     {
         //var data = {Type: AscDFH.historyitem_AutoShapes_RemoveFromDrawingObjects, Pos: position};
-        History.Add(new CChangesDrawingObjectsRemoveFromDrawingObjects(this, position));
-        //this.worksheet.addContentChanges(new AscCommon.CContentChangesElement(AscCommon.contentchanges_Remove, data.Pos, 1, data));
+        History.Add(new CChangesDrawingObjectsRemoveFromDrawingObjects(oGraphicObject, position));
+        //oGraphicObject.worksheet.addContentChanges(new AscCommon.CContentChangesElement(AscCommon.contentchanges_Remove, data.Pos, 1, data));
     }
-    if(this.signatureLine && this.setSignature)
+    if(oGraphicObject.signatureLine && oGraphicObject.setSignature)
     {
-        var oApi = Asc.editor;
+        let oApi = Asc.editor;
         if(oApi)
         {
-            oApi.sendEvent("asc_onAddSignature", this.signatureLine.id);
+            oApi.sendEvent("asc_onAddSignature", oGraphicObject.signatureLine.id);
         }
-        this.setSignature(this.signatureLine);
+        oGraphicObject.setSignature(oGraphicObject.signatureLine);
     }
     return position;
-};
+}
+
 
 function getDrawingObjects_Sp(sp)
 {
@@ -896,4 +867,6 @@ AscFormat.CTextBody.prototype.getDrawingDocument = function()
     //------------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].addToDrawings = addToDrawings;
+    window['AscFormat'].editorDeleteDrawingBase = editorDeleteDrawingBase;
+    window['AscFormat'].editorAddToDrawingObjects = editorAddToDrawingObjects;
 })(window);

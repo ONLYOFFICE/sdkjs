@@ -80,6 +80,11 @@
 			this.LoadMobileImages();
 	};
 
+	CMobileTouchManager.prototype.isViewMode = function()
+	{
+		return (this.Api.isViewMode || this.Api.isRestrictionView()) ? true : false;
+	};
+
 	CMobileTouchManager.prototype.onTouchStart = function(e)
 	{
 		this.IsTouching = true;
@@ -282,7 +287,7 @@
 		if (AscCommon.AscBrowser.isAndroid && !AscCommon.AscBrowser.isSailfish)
 			isPreventDefault = false;
 
-		if (this.Api.isViewMode || isPreventDefault)
+		if (this.isViewMode() || isPreventDefault)
 			AscCommon.stopEvent(e);
 
 		return false;
@@ -658,7 +663,7 @@
 
 		this.checkPointerMultiTouchRemove(e);
 
-		if (this.Api.isViewMode || isPreventDefault && !this.Api.getHandlerOnClick())
+		if (this.isViewMode() || isPreventDefault && !this.Api.getHandlerOnClick())
 			AscCommon.stopEvent(e);//AscCommon.g_inputContext.preventVirtualKeyboard(e);
 
 		if (true !== this.iScroll.isAnimating)

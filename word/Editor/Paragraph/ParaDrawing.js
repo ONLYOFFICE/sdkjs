@@ -183,7 +183,7 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.LineTop = null;
 	this.LineBottom = null;
 	//------------------------------------------------------------
-	g_oTableId.Add(this, this.Id);
+	AscCommon.g_oTableId.Add(this, this.Id);
 
 	if (this.graphicObjects)
 	{
@@ -1280,6 +1280,9 @@ ParaDrawing.prototype.GetScaleCoefficient = function ()
 		oLogicDocument.Layout = oLogicDocument.Layouts.Print;
 		let oSectPr = oParagraph.Get_SectPr();
 		oLogicDocument.Layout = oLayout;
+
+		if (!oSectPr)
+			return 1;
 
 		return oLogicDocument.GetDocumentLayout().GetScaleBySection(oSectPr);
 	}

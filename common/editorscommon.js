@@ -955,6 +955,11 @@
 				return {width: _img.Image.width, height: _img.Image.height};
 			}
 		}
+		if (window["NATIVE_EDITOR_ENJINE"] && window["native"]["GetImageOriginalSize"]) {
+			var sizes = window["native"]["GetImageOriginalSize"](src);
+			if (sizes)
+				return {width:sizes["W"], height:sizes["H"]};
+		}
 		return {width: 0, height: 0};
 	}
 	function getFullImageSrc2(src)
@@ -1155,6 +1160,18 @@
     {
         return new CUnicodeIterator(this);
     };
+	/**
+	 * @returns {number[]}
+	 */
+	String.prototype.codePointsArray = function(codePoints)
+	{
+		let _codePoints = codePoints ? codePoints : [];
+
+		for (let iter = this.getUnicodeIterator(); iter.check(); iter.next())
+			_codePoints.push(iter.value());
+
+		return _codePoints;
+	};
 
 	var UTF8Decoder = typeof TextDecoder !== "undefined" ? new TextDecoder("utf8") : undefined;
 	function UTF8ArrayToString(u8Array, idx, maxBytesToRead) {
@@ -1540,7 +1557,6 @@
 				return 'pdf';
 				break;
 			case c_oAscFileType.HTML:
-			case c_oAscFileType.HTML_TODO:
 				return 'html';
 				break;
 			// Word
@@ -1762,6 +1778,9 @@
 							if (!window.g_asc_plugins)
 								return;
 
+							if (!window.g_asc_plugins.api.licenseResult || !window.g_asc_plugins.api.licenseResult['advancedApi'])
+								return;
+
 							if (data["subType"] === "internalCommand")
 							{
 								// такие команды перечисляем здесь и считаем их функционалом
@@ -1865,10 +1884,10 @@
 	}
 	function ShowImageFileDialog(documentId, documentUserId, jwt, callback, callbackOld)
 	{
-		if (false === _ShowFileDialog("image/*", true, true, ValidateUploadImage, callback)) {
+		if (false === _ShowFileDialog(getAcceptByArray(c_oAscImageUploadProp.SupportedFormats), true, true, ValidateUploadImage, callback)) {
 			//todo remove this compatibility
 			var frameWindow = GetUploadIFrame();
-			var url = sUploadServiceLocalUrlOld + '/' + documentId + '/' + documentUserId + '/' + g_oDocumentUrls.getMaxIndex();
+			var url = sUploadServiceLocalUrlOld + '/' + documentId;
 			if (jwt)
 			{
 				url += '?token=' + encodeURIComponent(jwt);
@@ -1934,6 +1953,19 @@
 				e.preventDefault();
 				var files = e.dataTransfer.files;
 				var nError = ValidateUploadImage(files);
+
+				if (nError === c_oAscServerError.UploadExtension && 1 === files.length)
+				{
+					let types = e.dataTransfer.types;
+					for (let i = 0, len = types.length; i < len; i++)
+					{
+						if (types[i] === "text" || types[i] === "text/plain" || types[i] === "text/html")
+						{
+							nError = c_oAscServerError.UploadCountFiles;
+							break;
+						}
+					}
+				}
 
                 var editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
                 editor.endInlineDropTarget(e);
@@ -2064,7 +2096,7 @@
 	{
 		if (files.length > 0)
 		{
-			var url = sUploadServiceLocalUrl + '/' + documentId + '/' + documentUserId + '/' + g_oDocumentUrls.getMaxIndex();
+			var url = sUploadServiceLocalUrl + '/' + documentId;
 
 			var aFiles = [];
 			for(var i = files.length - 1;  i > - 1; --i){
@@ -2093,7 +2125,7 @@
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
 
-                            url = sUploadServiceLocalUrl + '/' + documentId + '/' + documentUserId + '/' + g_oDocumentUrls.getMaxIndex();
+                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -2127,7 +2159,7 @@
     {
         if (files.length > 0)
         {
-            var url = sUploadServiceLocalUrl + '/' + documentId + '/' + documentUserId + '/' + g_oDocumentUrls.getMaxIndex();
+            var url = sUploadServiceLocalUrl + '/' + documentId;
 
             var aFiles = [];
             for(var i = files.length - 1;  i > - 1; --i){
@@ -2161,7 +2193,7 @@
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
 
-                            url = sUploadServiceLocalUrl + '/' + documentId + '/' + documentUserId + '/' + g_oDocumentUrls.getMaxIndex();
+                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -2381,6 +2413,8 @@
 		rx_ref3D_quoted       = new XRegExp("^'(?<name_from>(?:''|[^\\[\\]'\\/*?:])*)(?::(?<name_to>(?:''|[^\\[\\]'\\/*?:])*))?'!"),
 		rx_ref3D_non_quoted_2 = new XRegExp("^(?<name_from>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*)(:(?<name_to>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*))?!", "i"),
 		rx_ref3D              = new XRegExp("^(?<name_from>[^:]+)(:(?<name_to>[^:]+))?!"),
+		rx_ref_external       = /^(\[{1}(\d*)\]{1})/,
+		rx_ref_external2      = /^(\[{1}(\d*)\]{1})/,
 		rx_number             = /^ *[+-]?\d*(\d|\.)\d*([eE][+-]?\d+)?/,
 		rx_RightParentheses   = /^ *\)/,
 		rx_Comma              = /^ *[,;] */,
@@ -2415,6 +2449,52 @@
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
+
+
+	function parseExternalLink(url) {
+		//var regExpExceptExternalLink = /('?[a-zA-Z0-9\s\[\]\.]{1,99})?'?!?\$?[a-zA-Z]{1,3}\$?[0-9]{1,7}(:\$?[a-zA-Z]{1,3}\$?[0-9]{1,7})?/;
+
+		//'path/[name]Sheet1'!A1
+		var path, name, startLink, i;
+		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
+			for (i = url.length - 1; i >= 0; i--) {
+				if (url[i] === "!" && url[i - 1] === "'") {
+					startLink = true;
+					i--;
+					continue;
+				}
+				if (startLink) {
+					if (name) {
+						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" || (url[i - 1] === "'") && i === 1)) {
+							break;
+						} else {
+							name.end--;
+						}
+					} else {
+						if("]" === url[i]) {
+							name = {start: i, end: i};
+						}
+					}
+				}
+			}
+			if (name) {
+				var fullname = url.substring(0, name.start + 1);
+				path = url.substring(1, name.end - 1);
+				name = url.substring(name.end, name.start);
+				return {name: name, path: path, fullname: fullname};
+			}
+		} else if (url && url[0] === "[") { // [name]Sheet1!A1
+			for (i = 1; i < url.length; i++) {
+				if (url[i] === "]") {
+					return {name: url.substring(1, i), path: "", fullname:  url.substring(0, i + 1)};
+				}
+			}
+		} else if (true) { //https://s3.amazonaws.com/nct-files/xlsx/[ExternalLinksDestination.xlsx]Sheet1!A1:A2
+
+		}
+
+		return null;
+	}
 
 	function getUrlType(url)
 	{
@@ -2803,17 +2883,42 @@
 			this._reset();
 		}
 
-		var subSTR = formula.substring(start_pos),
-			match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		//проверям на [0-9] - в таком виде мы получаем ссылки при открытии.
+		var subSTR = formula.substring(start_pos);
+		var external = XRegExp.exec(subSTR, rx_ref_external);
+		var externalLength = 0;
+		if (external && external[2]) {
+			externalLength = external[0].length;
+			subSTR = formula.substring(start_pos + externalLength);
+			external = external[2];
+		} else {
+			//1. при вводе в ячейку
+			//проверям на наличие ссылки при вводе 'C:\Users\[test.xlsx]Sheet1'!$A$1 (с обратным слэшем тоже нужно распознать) / 'https://test.net/[test.xlsx]Sheet1'!$A$1
+			//необходимо вычленить имя файла и путь к нему, затем проверить путь
+			//если путь указан, то ссылка должна быть в одинарных кавычках, если указан просто название файла в [] - в мс это означает, что данный файл открыт, при его закрытии путь проставляется
+			//пока не реализовываем с открытыми файлами, работаем только с путями
+			external = parseExternalLink(subSTR);
+			if (external) {
+				externalLength = external.fullname.length;
+				subSTR = formula.substring(start_pos + externalLength);
+				if (-1 !== subSTR.indexOf("'")) {
+					externalLength += 1;
+				}
+				subSTR = subSTR.replace("'", "");
+				external = external.path + external.name;
+			}
+		}
+
+		var match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
 		if(!match && support_digital_start) {
 			match = XRegExp.exec(subSTR, rx_ref3D_non_quoted_2);
 		}
 
 		if (match != null)
 		{
-			this.pCurrPos += match[0].length;
+			this.pCurrPos += match[0].length + externalLength;
 			this.operand_str = match[1];
-			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null];
+			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
 		}
 		return [false, null, null];
 	};
@@ -3599,7 +3704,7 @@
 						// Some data has been received; however, neither responseText nor responseBody is available.
 						break;
 					case 4:
-						if (httpRequest.status === 200 || httpRequest.status === 1223)
+						if (httpRequest.status === 200 || httpRequest.status === 1223 || url.indexOf("file:") == 0)
 						{
 							if (typeof success === "function")
 								success(httpRequest);
@@ -12833,7 +12938,7 @@
 	window["AscCommon"].UTF8ArrayToString = UTF8ArrayToString;
 	window["AscCommon"].build_local_rx = build_local_rx;
 	window["AscCommon"].GetFileName = GetFileName;
-	window["AscCommon"].GetFileExtension = GetFileExtension;
+	window["AscCommon"]['GetFileExtension'] = window["AscCommon"].GetFileExtension = GetFileExtension;
 	window["AscCommon"].changeFileExtention = changeFileExtention;
 	window["AscCommon"].getExtentionByFormat = getExtentionByFormat;
 	window["AscCommon"].InitOnMessage = InitOnMessage;
@@ -12874,7 +12979,7 @@
 	window["AscCommon"].MMToTwips = MMToTwips;
 	window["AscCommon"].RomanToInt = RomanToInt;
 	window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
-	window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
+	window["Asc"]["IntToNumberFormat"] = window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
 	window["AscCommon"].IsSpace = IsSpace;
 	window["AscCommon"].IntToHex = IntToHex;
 	window["AscCommon"].Int32ToHex = Int32ToHex;

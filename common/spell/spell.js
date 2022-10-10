@@ -113,6 +113,8 @@ function CSpellchecker(settings)
 		"1053" : "sv_SE",
 		"1055" : "tr_TR",
 		"1058" : "uk_UA",
+		"2115" : "uz_Cyrl_UZ",
+		"1091" : "uz_Latn_UZ",
 		"1066" : "vi_VN",
 		"2067" : "nl_NL" // nl_BE
 	};

@@ -186,7 +186,7 @@
 			}
 		}
 		name = reader.GetNameNoNS();
-		if ("chartSpace" === name || "chartSpace" === name || "chartSpace" === name) {
+		if ("chartSpace" === name) {
 			var elem, depth = reader.GetDepth();
 			while (reader.ReadNextSiblingNode(depth)) {
 				switch (reader.GetNameNoNS()) {
@@ -265,11 +265,31 @@
 						this.setPrintSettings(elem);
 						break;
 					}
-					case "themeOverride" : {
-						//todo themeOverride
+					case "userShapes" : {
+						let oChartSpace = this;
+						let oUserShapesEntry = new AscFormat.IdEntry();
+						oUserShapesEntry.fromXml(reader);
+						oUserShapesEntry.readItem(reader, function () {
+							let oNode = new CT_XmlNode(
+								function(reader, name) {
+									if(name === "relSizeAnchor") {
+										let oAnchor = new AscFormat.CRelSizeAnchor();
+										oAnchor.fromXml(reader);
+										oChartSpace.addUserShape(null, oAnchor);
+									}
+									else if(name === "absSizeAnchor") {
+										let oAnchor = new AscFormat.CAbsSizeAnchor();
+										oAnchor.fromXml(reader);
+										oChartSpace.addUserShape(null, oAnchor);
+									}
+									return true;
+								}
+							);
+							return oNode;
+						});
 						break;
 					}
-					//todo userShapes, styles, colors
+					//todo styles, colors
 				}
 			}
 		}
@@ -312,8 +332,27 @@
 		writer.WriteXmlNullable(this.txPr, "c:txPr");
 		// writer.WriteXmlNullable(CT_Bool.prototype.fromVal(this.externalData), "c:externalData");
 		writer.WriteXmlNullable(this.printSettings, "c:printSettings");
-		// writer.WriteXmlNullable(this.userShapes, "c:userShapes");
-		// writer.WriteXmlNullable(this.themeOverride, "c:themeOverride");
+		if(this.userShapes.length > 0) {
+			let userShapesPart = writer.context.part.addPart(AscCommon.openXml.Types.chartDrawing);
+			let memory = new AscCommon.CMemory();
+			memory.context = writer.context;
+			memory.WriteXmlNodeStart("c:userShapes");
+			memory.WriteXmlAttributeString("xmlns:c", "http://schemas.openxmlformats.org/drawingml/2006/chart");
+			memory.WriteXmlAttributeString("xmlns:cdr", "http://schemas.openxmlformats.org/drawingml/2006/chartDrawing");
+			memory.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
+			memory.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+			memory.WriteXmlAttributesEnd();
+			for(let nUSp = 0; nUSp < this.userShapes.length; ++nUSp) {
+				this.userShapes[nUSp].toXml(memory);
+			}
+			memory.WriteXmlNodeEnd("c:userShapes");
+			let userShapesData = memory.GetDataUint8();
+			userShapesPart.part.setData(userShapesData);
+			memory.Seek(0);
+			let oEntry = new AscFormat.IdEntry("c:userShapes");
+			oEntry.rId = userShapesPart.rId;
+			oEntry.toXml(writer);
+		}
 		writer.WriteXmlNodeEnd(name);
 
 		writer.context.docType = nOldDocType;
@@ -2491,6 +2530,11 @@
 					this.setGapWidth(CT_Double.prototype.toVal(reader, this.gapWidth));
 					break;
 				}
+				case "overlap" : {
+					//todo percent
+					this.setOverlap(CT_Double.prototype.toVal(reader, this.overlap));
+					break;
+				}
 				case "gapDepth" : {
 					//todo percent
 					this.setGapDepth(CT_Double.prototype.toVal(reader, this.gapDepth));
@@ -2527,6 +2571,7 @@
 		writer.WriteXmlArray(this.series, "c:ser");
 		writer.WriteXmlNullable(this.dLbls, "c:dLbls");
 		writer.WriteXmlNullable(CT_Double.prototype.fromVal(this.gapWidth), "c:gapWidth");
+		writer.WriteXmlNullable(CT_Double.prototype.fromVal(this.overlap), "c:overlap");
 		writer.WriteXmlNullable(CT_Double.prototype.fromVal(this.gapDepth), "c:gapDepth");
 		writer.WriteXmlNullable(CT_String.prototype.fromVal(toXml_ST_Shape(this.shape)), "c:shape");
 		this.axId.forEach(function(axis) {
@@ -3008,7 +3053,7 @@
 					break;
 				}
 				case "smooth" : {
-					this.setSmooth(CT_Bool.prototype.toVal(reader, this.smooth));
+					this.setSmooth(CT_Bool.prototype.toVal(reader, true));
 					break;
 				}
 				case "axId" : {
@@ -3027,6 +3072,9 @@
 				// 	break;
 				// }
 			}
+		}
+		if(this.smooth === null){
+			this.setSmooth(false);
 		}
 	};
 	CLineChart.prototype.toXml = function(writer, name) {
@@ -3113,7 +3161,7 @@
 					break;
 				}
 				case "smooth" : {
-					this.setSmooth(CT_Bool.prototype.toVal(reader, this.smooth));
+					this.setSmooth(CT_Bool.prototype.toVal(reader, false));
 					break;
 				}
 				// case "extLst" : {
@@ -3128,6 +3176,10 @@
 				// 	break;
 				// }
 			}
+		}
+
+		if(this.smooth === null){
+			this.setSmooth(false);
 		}
 	};
 	CLineSeries.prototype.toXml = function(writer, name) {
@@ -3607,10 +3659,13 @@
 					break;
 				}
 				case "smooth" : {
-					this.setSmooth(CT_Bool.prototype.toVal(reader, this.smooth));
+					this.setSmooth(CT_Bool.prototype.toVal(reader, true));
 					break;
 				}
 			}
+		}
+		if(this.smooth === null){
+			this.setSmooth(false);
 		}
 	};
 	CScatterSeries.prototype.toXml = function(writer, name) {
@@ -3720,10 +3775,74 @@
 		writer.WriteXmlAttributesEnd();
 		writer.WriteXmlNullable(CT_Bool.prototype.fromVal(this.wireframe), "c:wireframe");
 		writer.WriteXmlArray(this.series, "c:ser");
-		writer.WriteXmlArray(this.bandFmts, "c:bandFmts");
+		writer.WriteXmlNodeStart("c:bandFmts");
+		writer.WriteXmlAttributesEnd();
+		writer.WriteXmlArray(this.bandFmts, "c:bandFmt");
+		writer.WriteXmlNodeEnd("c:bandFmts");
 		this.axId.forEach(function(axis) {
 			writer.WriteXmlNullable(CT_Int.prototype.fromVal(axis.axId), "c:axId");
 		});
+		writer.WriteXmlNodeEnd(name);
+	};
+	CSurfaceSeries.prototype.fromXml = function (reader) {
+
+		let elem, depth = reader.GetDepth();
+		while (reader.ReadNextSiblingNode(depth)) {
+			switch (reader.GetNameNoNS()) {
+				case "idx" : {
+					this.setIdx(CT_UInt.prototype.toVal(reader, this.idx));
+					break;
+				}
+				case "order" : {
+					this.setOrder(CT_UInt.prototype.toVal(reader, this.order));
+					break;
+				}
+				case "tx" : {
+					elem = new AscFormat.CTx();
+					elem.fromXml(reader);
+					this.setTx(elem);
+					break;
+				}
+				case "spPr" : {
+					readSpPr(reader, this);
+					break;
+				}
+				case "cat" : {
+					elem = new AscFormat.CCat();
+					elem.fromXml(reader);
+					this.setCat(elem);
+					break;
+				}
+				case "val" : {
+					elem = new AscFormat.CYVal();
+					elem.fromXml(reader);
+					this.setVal(elem);
+					break;
+				}
+				// case "extLst" : {
+				// 	let subDepth = reader.GetDepth();
+				// 	while (reader.ReadNextSiblingNode(subDepth)) {
+				// 		if ("ext" === reader.GetNameNoNS()) {
+				// 			elem = new CT_Extension();
+				// 			elem.fromXml(reader);
+				// 			this.extLst.push(elem);
+				// 		}
+				// 	}
+				// 	break;
+				// }
+			}
+		}
+	};
+	CSurfaceSeries.prototype.toXml = function (writer, name) {
+		writer.WriteXmlNodeStart(name);
+		writer.WriteXmlAttributesEnd();
+		writer.WriteXmlNullable(CT_UInt.prototype.fromVal(this.idx), "c:idx");
+		writer.WriteXmlNullable(CT_UInt.prototype.fromVal(this.order), "c:order");
+		writer.WriteXmlNullable(this.tx, "c:tx");
+		writer.WriteXmlNullable(this.spPr, "c:spPr");
+		writer.WriteXmlNullable(this.cat, "c:cat");
+		writer.WriteXmlNullable(this.val, "c:val");
+		// writer.WriteXmlArray(this.extLst, "c:extLst");
 		writer.WriteXmlNodeEnd(name);
 	};
 	CBandFmt.prototype.fromXml = function(reader) {

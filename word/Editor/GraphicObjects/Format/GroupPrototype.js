@@ -210,8 +210,6 @@ CGroupShape.prototype.recalcSmartArtCoords = function () {
     }
 };
 
-CGroupShape.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
-CGroupShape.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CGroupShape.prototype.getHierarchy = CShape.prototype.getHierarchy;

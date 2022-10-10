@@ -356,7 +356,12 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias AddComment
-	 * @param {object} oCommentData - An object which contains the comment data: "comment" - the comment text, "author" - the comment author.
+	 * @param {object}  oCommentData - An object which contains the comment data
+	 * @param {string}  oCommentData.UserName - the comment author
+	 * @param {string}  oCommentData.Text - the comment text
+	 * @param {string}  oCommentData.Time - the comment time
+	 * @param {boolean}  oCommentData.Solved - is the comment resolved
+	 * @param {undefined | array} oCommentData.Replies - an array of replies, they are in the same format as oCommentData
 	 * @return {string | null} - The comment ID in the string format or null if the comment cannot be added.
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AddComment"] = function(oCommentData)

@@ -1522,11 +1522,11 @@
 		const token = this.oLookahead;
 
 		if (token === null) {
-			console.log(`Unexpected end of input, expected: "${tokenType}"`)
+			console.log('Unexpected end of input, expected: "' + tokenType + '"');
 		}
 
 		if (token.class !== tokenType) {
-			console.log(`Unexpected token: "${token.class}", expected: "${tokenType}"`)
+			console.log('Unexpected token: "' + token.class + '", expected: "' + tokenType + '"');
 		}
 		if (this.isSaveTokens) {
 			this.arrSavedTokens.push(this.oLookahead);

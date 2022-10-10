@@ -505,27 +505,17 @@
         var dExtY = this.yMax - this.yMin;
         var oSpPr = this.originalObject.spPr;
         var oXfrm = oSpPr.xfrm;
-        oXfrm.setExtX(dExtX);
-        oXfrm.setExtY(dExtY);
-        oXfrm.setRot(0);
         var oOffset;
-        //set new position
-        if(bWord && !this.originalObject.group) {
-            oXfrm.setOffX(0);
-            oXfrm.setOffY(0);
-        }
-		else if(this.originalObject.animMotionTrack) {
+        if(this.originalObject.animMotionTrack) {
             oOffset = this.getXfrmOffset();
-            this.originalObject.updateAnimation(oOffset.OffX, oOffset.OffY, dExtX, dExtY, 0, this.geometry)
-
-
+            this.originalObject.updateAnimation(oOffset.OffX, oOffset.OffY, dExtX, dExtY, 0, this.geometry, true);
         }
         else {
             oXfrm.setExtX(dExtX);
             oXfrm.setExtY(dExtY);
             oXfrm.setRot(0);
             //set new position
-            if(bWord) {
+            if(bWord && !this.originalObject.group) {
                 oXfrm.setOffX(0);
                 oXfrm.setOffY(0);
             }
@@ -543,6 +533,9 @@
             if(oGmSelection) {
                 oGmSelection.setGmEditPointIdx(this.addedPointIdx);
             }
+        }
+        if(this.drawingObjects) {
+            this.drawingObjects.resetConnectors([this.originalObject]);
         }
     };
 
@@ -859,6 +852,7 @@
         AscFormat.ExecuteNoHistory(
             function(){
                 var geometry = this.geometry;
+                this.geometry.setPreset(null);
                 this.calculateMinMax();
                 var w = this.xMax - this.xMin, h = this.yMax - this.yMin;
                 var kw, kh, pathW, pathH;
@@ -1177,9 +1171,9 @@
                 pathElem = geometry.pathLst[pathIndex],
                 arrayCommands = geometry.pathLst[pathIndex].ArrPathCommand;
 
-            if(pathElem && pathElem.stroke === true && pathElem.fill === "none") {
-                return;
-            }
+            // if(pathElem && pathElem.stroke === true && pathElem.fill === "none") {
+            //     return;
+            // }
 
             var pathC1 = gmEditPoint.pathC1,
                 pathC2 = gmEditPoint.pathC2,

@@ -558,10 +558,36 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 
 		return (((nFontSize * nCoef * 2 + 0.5) | 0) / 2);
 	}
+	function TextToRunElements(sText, fHandle)
+	{
+		let arrElements = fHandle ? null : [];
+		for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			let nCharCode = oIterator.value();
 
+			let oElement = null;
+			if (9 === nCharCode)
+				oElement = new AscWord.CRunTab();
+			else if (10 === nCharCode)
+				oElement = new AscWord.CRunBreak(AscWord.break_Line);
+			else if (13 === nCharCode)
+				continue;
+			else if (AscCommon.IsSpace(nCharCode))
+				oElement = new AscWord.CRunSpace(nCharCode);
+			else
+				oElement = new AscWord.CRunText(nCharCode);
+
+			if (fHandle)
+				fHandle(oElement);
+			else
+				arrElements.push(oElement);
+		}
+		return fHandle ? null : arrElements;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CompareDocumentPositions = CompareDocumentPositions;
 	window['AscWord'].AlignFontSize            = AlignFontSize;
+	window['AscWord'].TextToRunElements        = TextToRunElements;
 
 })(window);

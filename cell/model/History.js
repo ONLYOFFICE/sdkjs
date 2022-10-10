@@ -51,6 +51,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_Calculate = 9;
 	window['AscCH'].historyitem_Workbook_PivotWorksheetSource = 10;
 	window['AscCH'].historyitem_Workbook_Date1904 = 11;
+	window['AscCH'].historyitem_Workbook_ChangeExternalReference = 12;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;
@@ -647,7 +648,17 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			var curSheet = this.workbook.getWorksheetById(i);
 			if (curSheet)
 				this.workbook.getWorksheetById(i).updateSlicersByRange(Point.UpdateRigions[i]);
+
+			//this.workbook.oApi.onWorksheetChange(Point.UpdateRigions[i]);
 		}
+
+		// So far, the event call has been removed when undo/redo, since UpdateRigions does not always have the right range and you need to pick it up from another place
+		// if (Point.SelectRange) {
+		// 	this.workbook.oApi.onWorksheetChange(Point.SelectRange);
+		// }
+		// if (Point.SelectRangeRedo && (!Point.SelectRange || (Point.SelectRange && !Point.SelectRange.isEqual(Point.SelectRangeRedo)))) {
+		// 	this.workbook.oApi.onWorksheetChange(Point.SelectRangeRedo);
+		// }
 
 		if (oRedoObjectParam.bOnSheetsChanged)
 			this.workbook.handlers.trigger("asc_onSheetsChanged");

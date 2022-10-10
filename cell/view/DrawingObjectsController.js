@@ -469,6 +469,23 @@ DrawingObjectsController.prototype.addImageFromParams = function(rasterImageId, 
     this.selectObject(image, 0);
     image.addToRecalculate();
 };
+DrawingObjectsController.prototype.addImage = function(sImageUrl, nPixW, nPixH, videoUrl, audioUrl)
+{
+    let options = {
+        cell: this.drawingObjects.getWorksheetModel().selectionRange.activeCell,
+        width: nPixW,
+        height: nPixH
+    }
+    let _image = {
+        src:  sImageUrl,
+        Image: {
+          src: sImageUrl
+        }
+    };
+    this.drawingObjects.addImageObjectCallback(_image, options);
+    this.startRecalculate();
+    this.drawingObjects.getWorksheet().setSelectionShape(true);
+};
 
 DrawingObjectsController.prototype.addOleObjectFromParams = function(fPosX, fPosY, fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect){
     var oOleObject = this.createOleObject(sData, sApplicationId, sLocalUrl, fPosX, fPosY, fWidth, fHeight, nWidthPix, nHeightPix);

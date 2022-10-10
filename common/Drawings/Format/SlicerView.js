@@ -177,7 +177,7 @@
     }
     function drawHorBorder(graphics, oBorderPr, oPrevBorderPr, align, y, x, r) {
         var oLastBorderPr = null;
-        if(oBorderPr && oBorderPr.s !== AscCommon.c_oAscBorderStyles.None) {
+        if(oBorderPr && oBorderPr.s !== Asc.c_oAscBorderStyles.None) {
             graphics.drawHorLine(align, y, x, r, setGraphicsSettings(graphics, oBorderPr, oPrevBorderPr));
             oLastBorderPr = oBorderPr;
         }
@@ -185,7 +185,7 @@
     }
     function drawVerBorder(graphics, oBorderPr, oPrevBorderPr, align, x, y, b) {
         var oLastBorderPr = null;
-        if(oBorderPr && oBorderPr.s !== AscCommon.c_oAscBorderStyles.None) {
+        if(oBorderPr && oBorderPr.s !== Asc.c_oAscBorderStyles.None) {
             graphics.drawVerLine(align, x, y, b, setGraphicsSettings(graphics, oBorderPr, oPrevBorderPr));
             oLastBorderPr = oBorderPr;
         }
@@ -697,17 +697,17 @@
         oBorder = new AscCommonExcel.Border(null);
         if(nType !== STYLE_TYPE.HEADER) {
             oBorder.l = new AscCommonExcel.BorderProp();
-            oBorder.l.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+            oBorder.l.setStyle(Asc.c_oAscBorderStyles.Thin);
             oBorder.l.c = AscCommonExcel.createRgbColor(r, g, b);
             oBorder.t = new AscCommonExcel.BorderProp();
-            oBorder.t.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+            oBorder.t.setStyle(Asc.c_oAscBorderStyles.Thin);
             oBorder.t.c = AscCommonExcel.createRgbColor(r, g, b);
             oBorder.r = new AscCommonExcel.BorderProp();
-            oBorder.r.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+            oBorder.r.setStyle(Asc.c_oAscBorderStyles.Thin);
             oBorder.r.c = AscCommonExcel.createRgbColor(r, g, b);
         }
         oBorder.b = new AscCommonExcel.BorderProp();
-        oBorder.b.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+        oBorder.b.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.b.c = AscCommonExcel.createRgbColor(r, g, b);
         return oBorder;
     };
@@ -2484,16 +2484,16 @@
         b = 0xCE;
         var oBorder = new AscCommonExcel.Border(null);
         oBorder.l = new AscCommonExcel.BorderProp();
-        oBorder.l.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+        oBorder.l.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.l.c = AscCommonExcel.createRgbColor(r, g, b);
         oBorder.t = new AscCommonExcel.BorderProp();
-        oBorder.t.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+        oBorder.t.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.t.c = AscCommonExcel.createRgbColor(r, g, b);
         oBorder.r = new AscCommonExcel.BorderProp();
-        oBorder.r.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+        oBorder.r.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.r.c = AscCommonExcel.createRgbColor(r, g, b);
         oBorder.b = new AscCommonExcel.BorderProp();
-        oBorder.b.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+        oBorder.b.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.b.c = AscCommonExcel.createRgbColor(r, g, b);
         return oBorder;
     };

@@ -133,7 +133,7 @@ var c_oAscError = Asc.c_oAscError;
 	};
 	spreadsheet_api.prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack)
 	{
-		if (this.isChartEditor || AscCommon.c_oAscAdvancedOptionsAction.None !== this.advancedOptionsAction)
+		if (this.isFrameEditor() || AscCommon.c_oAscAdvancedOptionsAction.None !== this.advancedOptionsAction)
 			return;
 
 		var t = this;

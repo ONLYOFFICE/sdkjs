@@ -35,7 +35,6 @@
 // Import
 var changestype_Drawing_Props = AscCommon.changestype_Drawing_Props;
 var changestype_2_ElementsArray_and_Type = AscCommon.changestype_2_ElementsArray_and_Type;
-var g_oTableId = AscCommon.g_oTableId;
 var isRealObject = AscCommon.isRealObject;
 var global_mouseEvent = AscCommon.global_mouseEvent;
 var History = AscCommon.History;
@@ -106,7 +105,7 @@ function CGraphicObjects(document, drawingDocument, api)
 
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
     this.Lock = new AscCommon.CLock();
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 CGraphicObjects.prototype =
@@ -119,6 +118,7 @@ CGraphicObjects.prototype =
     rotateTrackObjects: DrawingObjectsController.prototype.rotateTrackObjects,
     handleRotateTrack: DrawingObjectsController.prototype.handleRotateTrack,
     trackResizeObjects: DrawingObjectsController.prototype.trackResizeObjects,
+    trackGeometryObjects: DrawingObjectsController.prototype.trackGeometryObjects,
     resetInternalSelection: DrawingObjectsController.prototype.resetInternalSelection,
     handleTextHit: DrawingObjectsController.prototype.handleTextHit,
     getConnectorsForCheck: DrawingObjectsController.prototype.getConnectorsForCheck,
@@ -1014,7 +1014,7 @@ CGraphicObjects.prototype =
         {
             if(oDrawingMap.hasOwnProperty(key))
             {
-                oDrawing = g_oTableId.Get_ById(key);
+                oDrawing = AscCommon.g_oTableId.Get_ById(key);
                 aDrawings.push(oDrawing);
                 aZIndex.push(oDrawing.RelativeHeight);
                 oDrawing.Set_RelativeHeight2(oDrawingMap[key]);
@@ -1375,7 +1375,7 @@ CGraphicObjects.prototype =
         {
             this.graphicPages[pageIndex] = new CGraphicPage(pageIndex, this);
         }
-        var table = g_oTableId.Get_ById(id);
+        var table = AscCommon.g_oTableId.Get_ById(id);
         if(table)
         {
             var hdr_ftr = table.Parent.IsHdrFtr(true);
@@ -2467,7 +2467,7 @@ CGraphicObjects.prototype =
         var object;
         if(cursor_type )
         {
-            object = g_oTableId.Get_ById(cursor_type.objectId);
+            object = AscCommon.g_oTableId.Get_ById(cursor_type.objectId);
             if(object)
             {
                 if(cursor_type.cursorType === "text")
@@ -3422,7 +3422,7 @@ CGraphicObjects.prototype =
                     return -1;
                 }
             }
-            var object = g_oTableId.Get_ById(ret.objectId);
+            var object = AscCommon.g_oTableId.Get_ById(ret.objectId);
             if(isRealObject(object) && (!(bSelected === true) ||  bSelected && object.selected) )
             {
                 if(object.group)
@@ -3492,7 +3492,7 @@ CGraphicObjects.prototype =
         this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
         if(ret)
         {
-            var object = g_oTableId.Get_ById(ret.objectId);
+            var object = AscCommon.g_oTableId.Get_ById(ret.objectId);
             if(object)
             {
                 var parent_drawing;
@@ -3521,7 +3521,7 @@ CGraphicObjects.prototype =
         this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
         if(ret)
         {
-            var object = g_oTableId.Get_ById(ret.objectId);
+            var object = AscCommon.g_oTableId.Get_ById(ret.objectId);
             if(object && object.selected /*&& object.selectStartPage === pageIndex*/)
                 return true;
         }
@@ -4148,7 +4148,7 @@ CGraphicObjects.prototype =
 
     removeById: function(pageIndex, id)
     {
-        var object = g_oTableId.Get_ById(id);
+        var object = AscCommon.g_oTableId.Get_ById(id);
         if(isRealObject(object))
         {
             var hdr_ftr = object.DocumentContent.IsHdrFtr(true);
@@ -4173,7 +4173,7 @@ CGraphicObjects.prototype =
     selectById: function(id, pageIndex)
     {
         this.resetSelection();
-        var obj = g_oTableId.Get_ById(id), nPageIndex = pageIndex;
+        var obj = AscCommon.g_oTableId.Get_ById(id), nPageIndex = pageIndex;
         if(obj && obj.GraphicObj)
         {
             if(obj.DocumentContent && obj.DocumentContent.IsHdrFtr())
@@ -4528,6 +4528,55 @@ CGraphicObjects.prototype.documentIsSelectionLocked = function(CheckType)
 CGraphicObjects.prototype.getAnimationPlayer = function()
 {
     return null;
+};
+
+CGraphicObjects.prototype.getImageDataFromSelection = DrawingObjectsController.prototype.getImageDataFromSelection;
+CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHeight)
+{
+    let aSelectedObjects = this.getSelectedArray();
+    if(aSelectedObjects.length > 0 && aSelectedObjects[0].isImage())
+    {
+        let oController = this;
+        this.checkSelectedObjectsAndCallback(function() {
+            let dWidth = nWidth * AscCommon.g_dKoef_pix_to_mm;
+            let dHeight = nHeight * AscCommon.g_dKoef_pix_to_mm;
+            let oSp = aSelectedObjects[0];
+            oSp.replacePictureData(sImageUrl, dWidth, dHeight);
+            if(oSp.group)
+            {
+                oController.selection.groupSelection.resetInternalSelection();
+                oSp.group.selectObject(oSp, 0);
+            }
+            else
+            {
+                oController.resetSelection();
+                oController.selectObject(oSp, 0);
+            }
+        }, [], false, 0, []);
+    }
+    else
+    {
+        if (false === this.document.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content))
+        {
+            let oImageData =
+            {
+                src: sImageUrl,
+                Image:
+                {
+                    width: nWidth,
+                    height: nHeight
+                }
+            };
+            this.document.StartAction();
+            if(aSelectedObjects.length > 0)
+            {
+                this.document.Remove(-1)
+            }
+            this.document.AddImages([oImageData]);
+            this.document.FinalizeAction();
+
+        }
+    }
 };
 
 function ComparisonByZIndexSimpleParent(obj1, obj2)

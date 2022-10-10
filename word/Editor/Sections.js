@@ -89,7 +89,7 @@ function CSectionPr(LogicDocument)
 	this.LnNumType     = undefined;
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 CSectionPr.prototype =
@@ -826,6 +826,14 @@ CSectionPr.prototype =
 CSectionPr.prototype.GetId = function()
 {
 	return this.Id;
+};
+CSectionPr.prototype.SetType = function(type)
+{
+	return this.Set_Type(type);
+};
+CSectionPr.prototype.GetType = function()
+{
+	return this.Get_Type();
 };
 /**
  * Проверяем, есть ли хоть один колонтитул в данной секции

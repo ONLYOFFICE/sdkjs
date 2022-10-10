@@ -36,7 +36,7 @@
       // Import
       var CellValueType = AscCommon.CellValueType;
       var c_oAscCellAnchorType = AscCommon.c_oAscCellAnchorType;
-      var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+      var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
       var gc_nMaxRow0 = AscCommon.gc_nMaxRow0;
       var gc_nMaxCol0 = AscCommon.gc_nMaxCol0;
       var Binary_CommonReader = AscCommon.Binary_CommonReader;
@@ -1464,6 +1464,16 @@
         NA: 3
     };
 
+    var ST_TableType = {
+        queryTable: 0,
+        worksheet: 1,
+        xml: 2
+    }
+
+    var ST_PageOrder = {
+        downThenOver: 0,
+        overThenDown: 1
+    };
 
     var g_nNumsMaxId = 160;
 
@@ -3244,6 +3254,24 @@
                 this.bs.WriteItem(c_oSerWorkbookTypes.SlicerCachesExt, function () {oThis.WriteSlicerCaches(slicerCachesExt/*, oThis.tableIds, oThis.sheetIds*/);});
             }
 			if (!this.isCopyPaste && this.wb.externalReferences.length > 0) {
+
+            /*<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <externalLink xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main">
+                    <externalBook xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId1">
+                    <sheetNames>
+                    <sheetName val="Sheet1"/>
+                    </sheetNames>
+                    <sheetDataSet>
+                    <sheetData sheetId="0" refreshError="1"/>
+                    </sheetDataSet>
+                    </externalBook>
+                    <extLst>
+                    <ext uri="{78C0D931-6437-407d-A8EE-F0AAD7539E66}">
+                    <externalReference data="testData"/>
+                    </ext>
+                    </extLst>
+                    </externalLink>*/
+
 				this.bs.WriteItem(c_oSerWorkbookTypes.ExternalReferences, function() {oThis.WriteExternalReferences();});
 			}
 			if (!this.isCopyPaste) {
@@ -7316,7 +7344,7 @@
 			else if ( c_oSerWorkbookTypes.OleSize === type )
 			{
 				var sRange = this.stream.GetString2LE(length);
-				var parsedRange = AscCommonExcel.g_oRangeCache.getAscRange(sRange);
+				var parsedRange = AscCommonExcel.g_oRangeCache.getAscRange(sRange).clone();
 				if (parsedRange) {
 					this.oWorkbook.setOleSize(new AscCommonExcel.OleSizeSelectionRange(null, parsedRange));
 				}
@@ -7542,7 +7570,7 @@
 			var res = c_oSerConstants.ReadOk;
 			var oThis = this;
 			if (c_oSerWorkbookTypes.ExternalBook == type) {
-				var externalBook = {Type: 0, Id: null, SheetNames: [], DefinedNames: [], SheetDataSet: []};
+				var externalBook = new AscCommonExcel.ExternalReference();
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalBook(t, l, externalBook);
 				});
@@ -7620,7 +7648,7 @@
 			var res = c_oSerConstants.ReadOk;
 			var oThis = this;
 			if (c_oSer_ExternalLinkTypes.SheetData == type) {
-				var sheetData = {SheetId: null, RefreshError: null, Row: []};
+				var sheetData = new AscCommonExcel.ExternalSheetDataSet();
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalSheetData(t, l, sheetData);
 				});
@@ -7638,7 +7666,7 @@
 			} else if (c_oSer_ExternalLinkTypes.SheetDataRefreshError == type) {
 				sheetData.RefreshError = this.stream.GetBool();
 			} else if (c_oSer_ExternalLinkTypes.SheetDataRow == type) {
-				var row = {R: null, Cell: []};
+				var row = new AscCommonExcel.ExternalRow();
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalRow(t, l, row);
 				});
@@ -7654,7 +7682,7 @@
 			if (c_oSer_ExternalLinkTypes.SheetDataRowR == type) {
 				row.R = this.stream.GetULongLE();
 			} else if (c_oSer_ExternalLinkTypes.SheetDataRowCell == type) {
-				var cell = {Ref: null, CellType: null, CellValue: null};
+				var cell = new AscCommonExcel.ExternalCell();
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalCell(t, l, cell);
 				});
@@ -10155,7 +10183,6 @@
 
             var aSharedStrings = [];
             var aCellXfs = [];
-            this.InitOpenManager.Dxfs = [];
             var oMediaArray = {};
 
 
@@ -11124,6 +11151,7 @@
             sheetIds: {}
         };
         this.wb = wb;
+        this.Dxfs = [];
 
         //при чтении из xml
         this.legacyDrawingId = null;
@@ -11740,6 +11768,11 @@
         var oThis = this;
         var tablesIndex = 1;
         var sheetIndex = 1;
+
+        if (!this.wb) {
+            return;
+        }
+
         this.wb.forEach(function(ws) {
             //prepare tables IDs
             var i;
@@ -11850,6 +11883,11 @@
     };
     InitSaveManager.prototype._prepeareStyles = function (stylesForWrite) {
         stylesForWrite.init();
+
+        if (!this.wb) {
+            return;
+        }
+
         var styles = this.wb.CellStyles.CustomStyles;
         var style = null;
         for (var i = 0; i < styles.length; ++i) {
@@ -12282,6 +12320,9 @@
     window["AscCommonExcel"].ESortMethod = ESortMethod;
     window["AscCommonExcel"].ST_CellComments = ST_CellComments;
     window["AscCommonExcel"].ST_PrintError = ST_PrintError;
+    window["AscCommonExcel"].ST_TableType = ST_TableType;
+    window["AscCommonExcel"].ST_PageOrder = ST_PageOrder;
+    window["AscCommonExcel"].EActivePane = EActivePane;
 
     window["AscCommonExcel"].ReadWbComments = ReadWbComments;
     window["AscCommonExcel"].WriteWbComments = WriteWbComments;

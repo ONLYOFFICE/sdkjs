@@ -2729,8 +2729,8 @@ CMathBase.prototype.CheckRevisionsChanges = function(Checker, ContentPos, Depth)
                 var TempContentPos = this.Paragraph.Get_PosByElement(this);
                 if (TempContentPos)
                 {
-                    var InParentPos = TempContentPos.Get(TempContentPos.Get_Depth());
-                    TempContentPos.Decrease_Depth(1);
+                    var InParentPos = TempContentPos.Get(TempContentPos.GetDepth());
+                    TempContentPos.DecreaseDepth(1);
                     var Parent = this.Paragraph.Get_ElementByPos(TempContentPos);
                     if (Parent && Parent.Content && this === Parent.Content[InParentPos] && Parent.Content[InParentPos + 1] && para_Math_Run === Parent.Content[InParentPos + 1].Type)
                     {

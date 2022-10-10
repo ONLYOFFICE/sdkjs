@@ -2161,7 +2161,11 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
         }
         case 62: // ASC_MENU_EVENT_TYPE_SEARCH_FINDTEXT
         {
-            var _ret = this.asc_findText(_params[0], _params[1], _params[2]);
+            var searchSettings = new AscCommon.CSearchSettings();
+            searchSettings.put_Text(_params[0]);
+            searchSettings.put_MatchCase(_params[2]);
+
+            var _ret = _api.asc_findText(searchSettings, _params[1]);
             var _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
             _stream["WriteLong"](_ret);
@@ -2170,7 +2174,11 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
         }
         case 63: // ASC_MENU_EVENT_TYPE_SEARCH_REPLACETEXT
         {
-            var _ret = this.asc_replaceText(_params[0], _params[1], _params[2], _params[3]);
+            var searchSettings = new AscCommon.CSearchSettings();
+            searchSettings.put_Text(_params[0]);
+            searchSettings.put_MatchCase(_params[3]);
+
+            var _ret = _api.asc_replaceText(searchSettings, _params[1], _params[2]);
             var _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
             _stream["WriteBool"](_ret);
@@ -2962,6 +2970,11 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
             } else {
                 _api.asc_SetFootnoteProps(props, isAll);
             }
+            break;
+        }
+        case 2500: // ASC_MENU_EVENT_TYPE_CHANGE_MOBILE_MODE
+        {
+            _api.ChangeReaderMode();
             break;
         }
 
@@ -5468,57 +5481,6 @@ Asc['asc_docs_api'].prototype.SetDocumentModified = function(bValue)
 };
 
 // find -------------------------------------------------------------------------------------------------
-Asc['asc_docs_api'].prototype.asc_findText = function(text, isNext, isMatchCase, callback)
-{
-	let oProps = AscCommon.CSearchSettings();
-	oProps.SetText(text);
-	oProps.SetMatchCase(isMatchCase);
-
-    var SearchEngine = editor.WordControl.m_oLogicDocument.Search(oProps);
-
-    var Id = this.WordControl.m_oLogicDocument.GetSearchElementId( isNext );
-
-    if ( null != Id )
-        this.WordControl.m_oLogicDocument.SelectSearchElement( Id );
-
-    if (callback)
-        callback(SearchEngine.Count);
-
-    return SearchEngine.Count;
-};
-
-Asc['asc_docs_api'].prototype.asc_replaceText = function(text, replaceWith, isReplaceAll, isMatchCase)
-{
-	let oProps = AscCommon.CSearchSettings();
-	oProps.SetText(text);
-	oProps.SetMatchCase(isMatchCase);
-
-    this.WordControl.m_oLogicDocument.Search(oProps);
-
-    if ( true === isReplaceAll )
-    {
-        this.WordControl.m_oLogicDocument.ReplaceSearchElement(replaceWith, true, -1);
-        return true;
-    }
-    else
-    {
-        var CurId = this.WordControl.m_oLogicDocument.SearchEngine.CurId;
-        var bDirection = this.WordControl.m_oLogicDocument.SearchEngine.Direction;
-        if ( -1 != CurId )
-            this.WordControl.m_oLogicDocument.ReplaceSearchElement(replaceWith, false, CurId);
-
-        var Id = this.WordControl.m_oLogicDocument.GetSearchElementId( bDirection );
-
-        if ( null != Id )
-        {
-            this.WordControl.m_oLogicDocument.SelectSearchElement( Id );
-            return true;
-        }
-
-        return false;
-    }
-};
-
 Asc['asc_docs_api'].prototype._selectSearchingResults = function(bShow)
 {
     this.WordControl.m_oLogicDocument.HighlightSearchResults(bShow);
@@ -7372,6 +7334,16 @@ window["asc_docs_api"].prototype["asc_nativeGetCoreProps"] = function() {
     }
 
     return {};
+}
+
+window["Asc"]["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wrapWithSpaces) {
+    var settings = new AscCommon.CAddTextSettings();
+
+    if (wrapWithSpaces) {
+        settings.SetWrapWithSpaces(true);
+    }
+    
+    _api.asc_AddText(text, settings);
 }
 
 window["AscCommon"].getFullImageSrc2 = function(src) {

@@ -170,7 +170,7 @@ $(function () {
 		ws.selectionRange.ranges = [getRange(0, 0, 0, 1)];
 		base64 = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(ws, wsView.objectRender);
 
-		ws.selectionRange.ranges = [getRange(2, 1, 2, 6), getRange(3, 5, 3, 8), getRange(4, 5, 4, 7)];
+		ws.selectionRange.ranges = [getRange(2, 1, 2, 6), getRange(3, 5, 3, 8), getRange(4, 5, 4, 6)];
 		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
 
 		assert.strictEqual(ws.getRange2("C2").getValueForEdit(), "=SIN(C3)");
@@ -187,7 +187,6 @@ $(function () {
 
 		assert.strictEqual(ws.getRange2("E6").getValueForEdit(), "=SIN(E7)");
 		assert.strictEqual(ws.getRange2("E7").getValueForEdit(), "=SIN(E8)");
-		assert.strictEqual(ws.getRange2("E8").getValueForEdit(), "");
 	});
 
 	QUnit.test("Test: \"comment tests\"", function (assert) {

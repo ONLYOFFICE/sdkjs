@@ -36,7 +36,7 @@
 {
 	AscCommon.baseEditorsApi.prototype._openChartOrLocalDocument = function ()
 	{
-		if (this.isChartEditor)
+		if (this.isFrameEditor())
 		{
 			return this._openEmptyDocument();
 		}
@@ -44,7 +44,7 @@
 	AscCommon.baseEditorsApi.prototype.onEndLoadFile2 = AscCommon.baseEditorsApi.prototype.onEndLoadFile;
 	AscCommon.baseEditorsApi.prototype.onEndLoadFile = function(result)
 	{
-		if (this.isChartEditor)
+		if (this.isFrameEditor())
 		{
 			return this.onEndLoadFile2(result);
 		}
@@ -262,10 +262,11 @@ AscCommon.sendImgUrls = function(api, images, callback)
 	callback(_data);
 };
 
-window['Asc']["CAscWatermarkProperties"].prototype["showFileDialog"] = function () {
-    if(!this.Api || !this.DivId){
+window['Asc']["CAscWatermarkProperties"].prototype["showFileDialog"] = window['Asc']["CAscWatermarkProperties"].prototype["asc_showFileDialog"] = function ()
+{
+    if(!this.Api || !this.DivId)
         return;
-    }
+
     var t = this.Api;
     var _this = this;
 
@@ -289,6 +290,29 @@ window['Asc']["CAscWatermarkProperties"].prototype["showFileDialog"] = function 
             }
         });
     });
+};
+window["Asc"]["asc_CBullet"].prototype["showFileDialog"] = window["Asc"]["asc_CBullet"].prototype["asc_showFileDialog"] = function()
+{
+	var Api = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
+	var _this = this;
+	window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
+		var file = _file;
+		if (Array.isArray(file))
+			file = file[0];
+		if (!file)
+			return;
+
+		var url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
+		var urls = [AscCommon.g_oDocumentUrls.getImageUrl(url)];
+
+		Api.ImageLoader.LoadImagesWithCallback(urls, function(){
+			if(urls.length > 0)
+			{
+				_this.fillBulletImage(urls[0]);
+				Api.sendEvent("asc_onBulletImageLoaded", _this);
+			}
+		});
+	});
 };
 
 /////////////////////////////////////////////////////////
@@ -321,7 +345,8 @@ AscCommon.CDocsCoApi.prototype.askSaveChanges = function(callback)
 };
 AscCommon.CDocsCoApi.prototype.saveChanges = function(arrayChanges, deleteIndex, excelAdditionalInfo)
 {
-	window["AscDesktopEditor"]["LocalFileSaveChanges"](arrayChanges.join("\",\""), deleteIndex, arrayChanges.length);
+	let count = arrayChanges.length;
+	window["AscDesktopEditor"]["LocalFileSaveChanges"]((count > 100000) ? arrayChanges : arrayChanges.join("\",\""), deleteIndex, count);
 	//this.onUnSaveLock();
 };
 
@@ -597,13 +622,7 @@ window["asc_LocalRequestSign"] = function(guid, width, height, isView)
 		}
 	}
 
-	var isModify = false;
-	if (_editor.asc_isDocumentModified)
-		isModify = _editor.asc_isDocumentModified();
-	else
-		isModify = _editor.isDocumentModified();
-
-	if (!isModify)
+	if (!_editor.isDocumentModified())
 	{
 		_editor.sendEvent("asc_onSignatureClick", guid, width, height, window["asc_IsVisibleSign"](guid));
 		return;

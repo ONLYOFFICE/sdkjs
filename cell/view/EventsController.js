@@ -150,7 +150,7 @@
 			this.handlers = new AscCommonExcel.asc_CHandlersList(handlers);
             this._createScrollBars();
 
-			if(Asc.editor.isOleEditor) {
+			if(Asc.editor.isEditOleMode) {
 				return;
 			}
 
@@ -1378,13 +1378,15 @@
 			this.isMousePressed = false;
 			// Shapes
 			if (this.isShapeAction) {
-                if(!this.isUpOnCanvas)
-                {
-                    event.isLocked = this.isMousePressed;
-                    event.ClickCount = this.clickCounter.clickCount;
-                    event.fromWindow = true;
-                    this.handlers.trigger("graphicObjectMouseUp", event, coord.x, coord.y);
-                    this._changeSelectionDone(event);
+                if(!this.isUpOnCanvas) {
+					let oDrawingsController = this.view.getWorksheet().objectRender.controller;
+					if(oDrawingsController.haveTrackedObjects()) {
+						event.isLocked = this.isMousePressed;
+						event.ClickCount = this.clickCounter.clickCount;
+						event.fromWindow = true;
+						this.handlers.trigger("graphicObjectMouseUp", event, coord.x, coord.y);
+						this._changeSelectionDone(event);
+					}
                 }
                 this.isUpOnCanvas = false;
 				return true;
@@ -1478,6 +1480,7 @@
 			var coord = t._getCoordinates(event);
 			var button = AscCommon.getMouseButton(event);
 			event.isLocked = t.isMousePressed = true;
+			this.isShapeAction = false;
 			// Shapes
 			var graphicsInfo = t.handlers.trigger("getGraphicsInfo", coord.x, coord.y);
 			if(!graphicsInfo) {
@@ -1538,7 +1541,6 @@
 				return;
 			}
 
-			this.isShapeAction = false;
 
 			if (2 === event.detail) {
 				// Это означает, что это MouseDown для dblClick эвента (его обрабатывать не нужно)

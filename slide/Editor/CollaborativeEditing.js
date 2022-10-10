@@ -613,7 +613,7 @@ CCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(UserId, 
         DrawingDocument.Collaborative_RemoveTarget(UserId);
         return;
     }
-    ParaContentPos.Update(InRunPos, ParaContentPos.Get_Depth() + 1);
+    ParaContentPos.Update(InRunPos, ParaContentPos.GetDepth() + 1);
     var XY = Paragraph.Get_XYByContentPos(ParaContentPos);
     if (XY && XY.Height > 0.001){
         var ShortId = this.m_aForeignCursorsId[UserId] ? this.m_aForeignCursorsId[UserId] : UserId;

@@ -1759,7 +1759,7 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
 
     var TablePr = this.Get_CompiledPr(false).TablePr;
     var PageLimits = this.Parent.Get_PageLimits(this.PageNum);
-    var PageFields = this.Parent.Get_PageFields(this.PageNum, isHdtFtr);
+    var PageFields = this.Parent.Get_PageFields(this.PageNum, isHdtFtr, this.Get_SectPr());
 
 	var LD_PageLimits = this.LogicDocument.Get_PageLimits(this.Get_StartPage_Absolute());
 	var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_StartPage_Absolute(), isHdtFtr);
@@ -1804,17 +1804,6 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
     {
         if (0 === CurPage)
         {
-        	var oSectPr = this.Get_SectPr();
-        	if (oSectPr)
-			{
-				var oFrame = oSectPr.GetContentFrame(this.GetAbsolutePage(CurPage));
-
-				PageFields.Y      = oFrame.Top;
-				PageFields.YLimit = oFrame.Bottom;
-				PageFields.X      = oFrame.Left;
-				PageFields.XLimit = oFrame.Right;
-			}
-
             var OffsetCorrection_Left  = this.GetTableOffsetCorrection();
             var OffsetCorrection_Right = this.GetRightTableOffsetCorrection();
 

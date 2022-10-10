@@ -3845,7 +3845,7 @@
 						break;
 					}
 					case PPTFormulaType.ftCos: {
-						this.convertProd(oGuide.m_lParam2, oGuide.m_eType2, pow3_16, ParamType.ptValue, oGuide.m_lParam, oGuide.m_eType, false, false, true);
+						this.convertProd(oGuide.m_lParam2, oGuide.m_eType2, pow3_16, ParamType.ptValue, this.m_oParam.m_lParam, this.m_oParam.m_eType, false, false, true);
 						this.convertCos(oGuide.m_lParam1, oGuide.m_eType1, this.m_lIndexDst-1, ParamType.ptFormula, false, true);
 						break;
 					}
@@ -3854,8 +3854,12 @@
 						break;
 					}
 					case PPTFormulaType.ftAtan2: {
-						this.convertProd(oGuide.m_lParam2, oGuide.m_eType2, pow3_16, ParamType.ptValue, oGuide.m_lParam, oGuide.m_eType, false, false, true);
-						this.convertSin(oGuide.m_lParam1, oGuide.m_eType1, this.m_lIndexDst-1, ParamType.ptFormula, false, true);
+
+
+						//ConvertAt2(pFormula.m_lParam1, pFormula.m_eType1, pFormula.m_lParam2, pFormula.m_eType2, false, false, m_oGuidsRes);
+						//ConvertProd(m_lIndexDst-1, ptFormula, m_oParam.m_lParam, m_oParam.m_eType, pow3_16, ptValue, true, true, false, m_oGuidsRes);
+						this.convertAt2(oGuide.m_lParam1, oGuide.m_eType1, oGuide.m_lParam2, oGuide.m_eType2, false, false, true);
+						this.convertProd(this.m_lIndexDst-1, ParamType.ptFormula, this.m_oParam.m_lParam, this.m_oParam.m_eType, pow3_16, ParamType.ptValue, true, true, false);
 						break;
 					}
 					case PPTFormulaType.ftSinatan2: {
@@ -8710,7 +8714,12 @@
 			else if ("print" === name) this.m_oPrlet = reader.GetValueBool();
 			else if ("strokecolor" === name) this.m_oStrokeColor = this.readColor(reader);
 			else if ("stroked" === name) this.m_oStroked = reader.GetValueBool();
-			else if ("strokeweight" === name) this.m_oStrokeWeight = reader.GetValueInt();
+			else if ("strokeweight" === name) {
+				let sValue = reader.GetValue();
+				let oVal = new CUniversalMeasure();
+				oVal.Parse(sValue, 1);
+				this.m_oStrokeWeight = oVal.m_dValue;
+			}
 			else if ("style" === name) this.m_oStyle = new CCssStyle(reader.GetValue());
 			else if ("target" === name) this.m_sTarget = reader.GetValue();
 			else if ("title" === name) this.m_sTitle = reader.GetValue();
@@ -8875,7 +8884,7 @@
 			writer.WriteXmlNullableAttributeString("strokecolor", getColorType(this.m_oStrokeColor));
 
 			if (this.m_oStrokeWeight !== null)
-				writer.WriteXmlNullableAttributeInt("strokeweight", this.m_oStrokeWeight);
+				writer.WriteXmlNullableAttributeString("strokeweight", this.m_oStrokeWeight + "pt");
 
 			writer.WriteXmlNullableAttributeString("insetpen", getBooleanTrueFalse(this.m_oInsetPen));
 
@@ -9019,6 +9028,12 @@
 			if(this.m_oOpacity !== null) {
 				oFill.addAlpha(this.m_oOpacity);
 			}
+			else {
+				let oVMLFill = this.getFill();
+				if(oVMLFill && oVMLFill.m_oOpacity !== null) {
+					oFill.addAlpha(oVMLFill.m_oOpacity);
+				}
+			}
 		};
 		CVmlCommonElements.prototype.getOOXMLFill = function(oContext) {
 			if(this.m_oFilled === false) {
@@ -9035,9 +9050,14 @@
 					return oFill;
 				}
 			}
-
 			if(this.m_oFillColor) {
 				oFill = this.m_oFillColor.getOOXMLFill(oContext);
+				let oFillVML = this.getFill();
+				if(oFillVML) {
+					if(oFillVML.isGradient()) {
+						oFill = oFillVML.getOOXMLFill(oContext, this.m_oFillColor)
+					}
+				}
 				this.correctFillOpacity(oFill);
 				return oFill;
 			}
@@ -9055,10 +9075,21 @@
 				if(this.m_oStrokeWeight !== null) {
 					oStroke.w = Pt_To_Emu(this.m_oStrokeWeight);
 				}
+				if(oVMLStroke.m_oColor === null) {
+					if(this.m_oStrokeColor !== null) {
+						oStroke.Fill = this.m_oStrokeColor.getOOXMLFill();
+					}
+					else {
+						oStroke.Fill = AscFormat.CreateSolidFillRGB(0, 0, 0);
+					}
+				}
 			}
 			else {
 				if(this.m_oStroked === false) {
 					oStroke = AscFormat.CreateNoFillLine();
+					if(this.m_oStrokeWeight !== null) {
+						oStroke.w = Pt_To_Emu(this.m_oStrokeWeight);
+					}
 				}
 				else {
 					if(this.m_oStrokeWeight !== null || this.m_oStrokeColor !== null) {
@@ -9103,6 +9134,9 @@
 				oStroke = new AscFormat.CLn();
 				oStroke.setFill(AscFormat.CreateSolidFillRGB(0, 0, 0));
 			}
+			// if(!oStroke.isVisible()) {
+			// 	return null;
+			// }
 			return oStroke;
 		};
 		CVmlCommonElements.prototype.createSpPrIfNoPresent = function(oSpPr) {
@@ -9144,10 +9178,9 @@
 						oXfrm.setFlipV(true);
 					}
 				}
-				let nRot = this.m_oStyle.GetNumberValue(ECssPropertyType.cssptRotation);
-				if (nRot !== null)
-				{
-					oXfrm.setRot(getRotateAngle(nRot, oXfrm.flipH, oXfrm.flipV));
+				let sRot = this.m_oStyle.GetPropertyValueString("rotation");
+				if (sRot) {
+					oXfrm.setRot(getRotateAngle(sRot, oXfrm.flipH, oXfrm.flipV));
 				}
 			}
 		};
@@ -9182,6 +9215,11 @@
 					}
 				}
 			}
+			if(this instanceof CRoundRect) {
+				if(this.m_oArcSize && AscFormat.isRealNumber(this.m_oArcSize.m_dValue)) {
+					oGeometryData.adjustments[0] = (this.m_oArcSize.m_dValue * 65536 / 10.0 + 0.5) >> 0;
+				}
+ 			}
 			let sPath = this.m_oPath || oShapeType && oShapeType.m_oPath;
 			let bNeeLoadCoordSize = true;
 			if(this instanceof CLine) {
@@ -9298,9 +9336,9 @@
 				let nFontSize = 11;
 				let sText = "";
 				let oTextFill, oTextStroke;
+				let oBodyPr = new AscFormat.CBodyPr();
 				if(bIsWordArt) {
 					let eTextShapeType;
-					var oBodyPr = new AscFormat.CBodyPr();
 					let oTextPath = this.getTextPath();
 					switch (nType)
 					{
@@ -9350,7 +9388,7 @@
 					oTextStroke = this.getOOXMLStroke();
 					oSpPr.setGeometry(AscFormat.CreateGeometry("rect"));
 					oSpPr.setFill(AscFormat.CreateNoFillUniFill());
-					oSpPr.setLn(AscFormat.CreateNoFillLine());
+					oSpPr.setLn(null);
 					oBodyPr.lIns = 0;
 					oBodyPr.tIns = 0;
 					oBodyPr.rIns = 0;
@@ -9371,23 +9409,84 @@
 					oBodyPr.wrap = AscFormat.nTWTSquare;
 					oBodyPr.fromWordArt = true;
 					oOOXMLDrawing.setBodyPr(oBodyPr);
-
-					oOOXMLDrawing.setBodyPr(oBodyPr);
 					oDocContent = new CDocumentContent(oOOXMLDrawing, oContext.DrawingDocument, 0, 0, 0, 0, false, false, false)
 					oDocContent.MoveCursorToStartPos(false);
 					oDocContent.AddText(sText);
 					oOOXMLDrawing.setTextBoxContent(oDocContent);
 				}
 				else {
+					oBodyPr.wrap = AscFormat.nTWTSquare;
+					oBodyPr.upright = true;
 					let oTextbox = this.getTextbox();
 					if(oTextbox) {
 						if(oTextbox.m_oTxtbxContent) {
-							oBodyPr.setAnchor(1);
+							//oBodyPr.setAnchor(1);
+							let oInset = oTextbox.m_oInset;
+							if(oInset) {
+								if(oInset.m_dLeft !== null) {
+									oBodyPr.lIns = Pt_To_Mm(oInset.m_dLeft);
+								}
+								if(oInset.m_dTop !== null) {
+									oBodyPr.tIns = Pt_To_Mm(oInset.m_dTop);
+								}
+								if(oInset.m_dRight !== null) {
+									oBodyPr.rIns = Pt_To_Mm(oInset.m_dRight);
+								}
+								if(oInset.m_dBottom !== null) {
+									oBodyPr.bIns = Pt_To_Mm(oInset.m_dBottom);
+								}
+							}
+							
+							let oCssStyle = oTextbox.m_oStyle;
+							if(oCssStyle) {
+								let oProperty = oCssStyle.GetProperty(ECssPropertyType.cssptLayoutFlow);
+								if (oProperty) {
+									if (oProperty.m_oValue.eLayoutFlow === ECssLayoutFlow.csslayoutflowVertical) {
+										oBodyPr.vert = AscFormat.nVertTTvert;
+									}
+								}
+								oProperty = oCssStyle.GetProperty(ECssPropertyType.cssptMsoLayoutFlowAlt);
+								if (oProperty) {
+									if (oProperty.m_oValue.eLayoutFlowAlt === ECssLayoutFlowAlt.csslayoutflowaltBottomToTop) {
+										oBodyPr.vert = AscFormat.nVertTTvert270;
+									}
+								}
+								oProperty = oCssStyle.GetProperty(ECssPropertyType.cssptMsoRotate);
+								if (oProperty) {
+									let val = 0;
+									switch (oProperty.m_oValue.eRotate) {
+										case ECssMsoRotate.cssmsorotate90:	val = 90; break;
+										case ECssMsoRotate.cssmsorotate180:	val = 180; break;
+										case ECssMsoRotate.cssmsorotate270:	val = 270; break;
+									}
+									oBodyPr.rot = val * 60000;
+								}
+								oProperty = oCssStyle.GetProperty(ECssPropertyType.cssptMsoFitShapeToText);
+								if (oProperty) {
+									if (oProperty.m_oValue.bValue) {
+										oBodyPr.textFit = new AscFormat.CTextFit(AscFormat.text_fit_Auto);
+									}
+								}
+								oProperty = oCssStyle.GetProperty(ECssPropertyType.cssptMsoFitTextToShape);
+								if (oProperty) {
+									if (oProperty.m_oValue.bValue) {
+										oBodyPr.textFit = new AscFormat.CTextFit(AscFormat.text_fit_No);
+									}
+								}
+								oProperty = oCssStyle.GetProperty(ECssPropertyType.cssptMsoTextScale);
+								if (oProperty) {
+									if (oProperty.m_oValue.oValue.eType === ECssUnitsType.cssunitstypeUnits) {
+										oBodyPr.textFit = new AscFormat.CTextFit(AscFormat.text_fit_NormAuto);
+										oBodyPr.textFit.fontScale = (100 * oProperty.m_oValue.oValue.dValue + 0.5) >> 0;
+									}
+								}
+							}
 							oOOXMLDrawing.setBodyPr(oBodyPr);
-							oOOXMLDrawing.setTextBoxContent(oTextbox.m_oTxtbxContent.Copy(oOOXMLDrawing));
+							oOOXMLDrawing.setTextBoxContent(oTextbox.m_oTxtbxContent);
+							oTextbox.m_oTxtbxContent.SetParent(oOOXMLDrawing);
 						}
 						else if(oTextbox.m_oText) {
-							oBodyPr.setAnchor(1);
+							//oBodyPr.setAnchor(1);
 							oOOXMLDrawing.setBodyPr(oBodyPr);
 							oDocContent = new CDocumentContent(oOOXMLDrawing, oContext.DrawingDocument, 0, 0, 0, 0, false, false, false)
 							oDocContent.MoveCursorToStartPos(false);
@@ -9399,6 +9498,21 @@
 						}
 					}
 				}
+
+				if(this.m_oStyle) {
+					let sCSSAnchor = this.m_oStyle.GetPropertyValueString("v-text-anchor");
+					if(sCSSAnchor) {
+						if (sCSSAnchor === "middle")					oBodyPr.setAnchor(oBodyPr.GetAnchorCode("ctr"));
+						if (sCSSAnchor === "bottom")					oBodyPr.setAnchor(oBodyPr.GetAnchorCode("b"));
+						if (sCSSAnchor === "top-center")				oBodyPr.setAnchor(oBodyPr.GetAnchorCode("t"));
+						if (sCSSAnchor === "middle-center")			    oBodyPr.setAnchor(oBodyPr.GetAnchorCode("ctr"));
+						if (sCSSAnchor === "bottom-center")			    oBodyPr.setAnchor(oBodyPr.GetAnchorCode("b"));
+						if (sCSSAnchor === "top-baseline")			    oBodyPr.setAnchor(oBodyPr.GetAnchorCode("t"));
+						if (sCSSAnchor === "bottom-baseline")		    oBodyPr.setAnchor(oBodyPr.GetAnchorCode("b"));
+						if (sCSSAnchor === "top-center-baseline")	    oBodyPr.setAnchor(oBodyPr.GetAnchorCode("t"));
+						if (sCSSAnchor === "bottom-center-baseline")	oBodyPr.setAnchor(oBodyPr.GetAnchorCode("b"));
+					}
+				}
 				if(oDocContent) {
 					if(oCSSStyle) {
 						let sCSSFont = oCSSStyle.GetStringValue(ECssPropertyType.cssptFontFamily);
@@ -9407,7 +9521,7 @@
 						}
 						let nCSSFontSize = oCSSStyle.GetNumberValue(ECssPropertyType.cssptFontSize);
 						if(nCSSFontSize !== null) {
-							nFontSize = nCSSFontSize * 2;
+							nFontSize = nCSSFontSize;
 						}
 						let oFontStylePr = oCSSStyle.GetProperty(ECssPropertyType.cssptFontStyle);
 						if(oFontStylePr) {
@@ -9419,7 +9533,7 @@
 						let oFontWeightPr = oCSSStyle.GetProperty(ECssPropertyType.cssptFontWeight);
 						if(oFontWeightPr) {
 							let oValue = oFontWeightPr.m_oValue;
-							if(oValue.eFontWeight >= ECssFontStyle.cssfontweight400) {
+							if(oValue.eFontWeight >= ECssFontWeight.cssfontweight400) {
 								bBold = true;
 							}
 						}
@@ -9792,16 +9906,20 @@
 		CFillVml.prototype.writeChildrenXml = function (writer) {
 			this.m_oFill && this.m_oFill.toXml(writer, "o:fill");
 		};
-		CFillVml.prototype.getOOXMLFill = function(oContext) {
+		CFillVml.prototype.isGradient = function() {
+			return (this.m_oType === EFillType.filltypeGradient || this.m_oType === EFillType.filltypeGradientRadial);
+		};
+		CFillVml.prototype.getOOXMLFill = function(oContext, oFirstColor) {
 			let oFill = null;
-			if(this.m_oType !== null && (this.m_oType === EFillType.filltypeGradient || EFillType.filltypeGradientRadial)) {
+			if(this.isGradient()) {
 				oFill = new AscFormat.CUniFill();
 				let oGradFill = new AscFormat.CGradFill();
 				oFill.fill = oGradFill;
 				let oGs;
-				if (this.m_oColor) {
+				let oStartColor = this.m_oColor || oFirstColor;
+				if (oStartColor) {
 					oGs = new AscFormat.CGs();
-					oGs.setColor(this.m_oColor.getOOXMLColor());
+					oGs.setColor(oStartColor.getOOXMLColor());
 					oGradFill.addColor(oGs);
 				}
 				if(this.m_oColor2) {
@@ -9823,6 +9941,17 @@
 				if(this.m_oRotate === true) {
 					oGradFill.rotateWithShape = true;
 				}
+				let nAngle = 90;
+				let nFocus = 0;
+				if(this.m_oAngle !== null) {
+					nAngle =  (-1) * this.m_oAngle + 90;
+				}
+				if(this.m_oFocus && this.m_oFocus.m_dValue) {
+					nFocus = parseInt(this.m_oFocus / 100);
+				}
+				let oGradLin = new AscFormat.GradLin();
+				oGradLin.angle = (nAngle * 60000 + 0.5) >> 0;
+				oGradFill.lin = oGradLin;
 			}
 			else if (typeof this.m_rId === "string" && this.m_rId.length > 0) {
 				oFill = new AscFormat.CreateBlipFillUniFillFromUrl("");
@@ -9838,7 +9967,10 @@
 			else if (this.m_oColor) {
 				return this.m_oColor.getOOXMLFill();
 			}
-			if(oFill !== null && this.m_oOpacity !== null) {
+			if(!oFill) {
+				oFill = AscFormat.CreateSolidFillRGB(0xFF, 0xFF, 0xFF);
+			}
+			if(this.m_oOpacity !== null) {
 				oFill.addAlpha(this.m_oOpacity);
 			}
 			return oFill;
@@ -10214,11 +10346,11 @@
 				//crop
 				if(this.m_oCropLeft !== null || this.m_oCropTop !== null ||
 					this.m_oCropRight !== null || this.m_oCropBottom !== null) {
-					oFill.srcRect = new AscFormat.CSrcRect();
-					oFill.srcRect.l = (this.m_oCropLeft !== null) ? this.m_oCropLeft * 100 : 0;
-					oFill.srcRect.t = (this.m_oCropTop !== null) ? this.m_oCropTop * 100 : 0;
-					oFill.srcRect.r = (this.m_oCropRight !== null) ? this.m_oCropRight * 100 : 0;
-					oFill.srcRect.b = (this.m_oCropBottom !== null) ? this.m_oCropBottom * 100 : 0;
+					oFill.fill.srcRect = new AscFormat.CSrcRect();
+					oFill.fill.srcRect.l = (this.m_oCropLeft !== null) ? this.m_oCropLeft * 100 : 0;
+					oFill.fill.srcRect.t = (this.m_oCropTop !== null) ? this.m_oCropTop * 100 : 0;
+					oFill.fill.srcRect.r = 100 - ((this.m_oCropRight !== null) ? this.m_oCropRight * 100 : 0);
+					oFill.fill.srcRect.b = 100 - ((this.m_oCropBottom !== null) ? this.m_oCropBottom * 100 : 0);
 				}
 				return oFill;
 			}
@@ -12159,7 +12291,7 @@
 		}
 
 		function Mm_To_Emu(dValue) {
-			return dValue * 36000;
+			return dValue * 36000 + 0.5 >> 0;
 		}
 
 		function Pt_To_Cm(dValue) {
@@ -12223,7 +12355,7 @@
 		}
 
 		function Px_To_Emu(dValue) {
-			return dValue * 9525;
+			return (dValue * 9525 + 0.5) >> 0;
 		}
 
 		function Inch_To_Cm(dValue) {
@@ -12714,10 +12846,24 @@
 		};
 		CVMLDrawing.prototype.getShape = function (nId) {
 			let sId = "_x0000_s" + nId;
+			return this.getShapeById(sId);
+		};
+		CVMLDrawing.prototype.getShapeById = function (sId) {
 			for(let nItem = 0; nItem < this.items.length; ++nItem) {
 				let oItem = this.items[nItem];
 				if(oItem instanceof CShape) {
 					if(oItem.m_sId === sId) {
+						return oItem;
+					}
+				}
+			}
+			return null;
+		};
+		CVMLDrawing.prototype.getShapeBySpId = function (sId) {
+			for(let nItem = 0; nItem < this.items.length; ++nItem) {
+				let oItem = this.items[nItem];
+				if(oItem instanceof CShape) {
+					if(oItem.m_sSpId === sId) {
 						return oItem;
 					}
 				}
@@ -12934,15 +13080,13 @@
 				if(oOOXMLDrawing) {
 					let oOleObject = this.getOLEObject();
 					if(oOleObject && oContext.sourceItem.m_sId === oOleObject.m_sShapeId && oOOXMLDrawing instanceof AscFormat.CImageShape) {
-						let oEditorObject = new AscFormat.COleObject();
-
-						oEditorObject.setBDeleted(false);
-						oOOXMLDrawing = oEditorObject;
-
+						let oOOXMLImage = oOOXMLDrawing;
+						oOOXMLDrawing = new AscFormat.COleObject();
+						oOOXMLDrawing.setBDeleted(false);
 						if(this.dxaOrig !== null && this.dyaOrig !== null) {
-							oEditorObject.setPixSizes(this.dxaOrig, this.dyaOrig);
+							oOOXMLDrawing.setPixSizes(this.dxaOrig, this.dyaOrig);
 						}
-						oOleObject.fillEditorOleObject(oEditorObject, oOOXMLDrawing,  reader);
+						oOleObject.fillEditorOleObject(oOOXMLDrawing, oOOXMLImage,  reader);
 					}
 					else {
 						oOOXMLDrawing.setBDeleted(false);
@@ -13769,10 +13913,10 @@
 		};
 		CColor.prototype.byHexColor = function (sVal) {
 			this.type = EColorType.colortypeRGB;
-			let nColor = parseInt(sVal.slice(1));
-			this.r = (nColor >> 16) & 0xFF;
-			this.g = (nColor >> 8) & 0xFF;
-			this.b = nColor & 0xFF;
+			let oRGBA = AscCommon.RgbaHexToRGBA(sVal);
+			this.r = oRGBA.R;
+			this.g = oRGBA.G;
+			this.b = oRGBA.B;
 		};
 		CColor.prototype.byColorName = function (sVal) {
 			this.type = EColorType.colortypeNone;
@@ -13793,6 +13937,83 @@
 			else if (sVal.indexOf("teal") > -1) this.type = EColorType.colortypeTeal;
 			else if (sVal.indexOf("white") > -1) this.type = EColorType.colortypeWhite;
 			else if (sVal.indexOf("yellow") > -1) this.type = EColorType.colortypeYellow;
+			else if (sVal.indexOf("fill") > -1) {
+				this.type = EColorType.colortypeRGB;
+
+				let sColorEffect = sVal;
+				let sColor = sVal;
+				if (sColorEffect.length > 5)
+					sColorEffect = sColorEffect.substring(5);
+
+				let resR, resG, resB;
+
+				resR = this.r;
+				resG = this.g;
+				resB = this.b;
+
+				let param = 0;
+				let pos1 = sColor.indexOf('(');
+				let pos2 = sColor.indexOf(')');
+				if (pos1 === -1 || pos2 === -1)
+					return;
+				if (pos2 < (pos1 + 2))
+					return;
+
+				let s = sColor.substring(pos1 + 1, pos2);
+				param = parseInt(s);
+				let isEffect = false;
+
+				if (0 === sColorEffect.indexOf("darken")) {
+					resR = (this.r * param / 255);
+					resG = (this.g * param / 255);
+					resB = (this.b * param / 255);
+					isEffect = true;
+				}
+				else if (0 === sColorEffect.indexOf("lighten")) {
+					resR = 255 - ((255 - this.r) * param / 255);
+					resG = 255 - ((255 - this.g) * param / 255);
+					resB = 255 - ((255 - this.b) * param / 255);
+					isEffect = true;
+				}
+				else if (0 === sColorEffect.indexOf("add")) {
+					resR = this.r + param;
+					resG = this.g + param;
+					resB = this.b + param;
+					isEffect = true;
+				}
+				else if (0 === sColorEffect.indexOf("subtract")) {
+					resR = this.r - param;
+					resG = this.g - param;
+					resB = this.b - param;
+					isEffect = true;
+				}
+				else if (0 === sColorEffect.indexOf("reversesubtract")) {
+					resR = param - this.r;
+					resG = param - this.g;
+					resB = param - this.b;
+					isEffect = true;
+				}
+				else if (0 === sColorEffect.indexOf("blackwhite")) {
+					resR = (this.r < param) ? 0 : 255;
+					resG = (this.g < param) ? 0 : 255;
+					resB = (this.b < param) ? 0 : 255;
+					isEffect = true;
+				}
+
+				if (isEffect) {
+					resR = (resR < 0) ? 0 : resR;
+					resR = (resR > 255) ? 255 : resR;
+
+					resG = (resG < 0) ? 0 : resG;
+					resG = (resG > 255) ? 255 : resG;
+
+					resB = (resB < 0) ? 0 : resB;
+					resB = (resB > 255) ? 255 : resB;
+				}
+				this.r = resR;
+				this.g = resG;
+				this.b = resB;
+			}
 			else if (sVal.indexOf("[") > -1 && sVal.indexOf("]") > -1) {
 				let p1 = sVal.indexOf("[");
 				let p2 = sVal.indexOf("]");
@@ -13884,8 +14105,8 @@
 
 			let nStartPos = 0;
 			while (true) {
-				let nMidPos = sValue.indexOf(",", nStartPos);
-				let nEndPos = sValue.indexOf(",", nMidPos + 1);
+				let nMidPos = sValue.indexOf(" ", nStartPos);
+				let nEndPos = sValue.indexOf(" ", nMidPos + 1);
 
 				if (-1 === nMidPos)
 					break;
@@ -14397,7 +14618,7 @@
 
 			let nPos = sValue.indexOf(",");
 
-			let strX, strY;
+			let strX, strY = "";
 			if (-1 === nPos) {//only x coord
 				strX = sValue;
 			} else {
@@ -15575,7 +15796,8 @@
 			let arSplit;
 
 			sValue.replace("@", "");
-			arSplit = sValue.split(", ");
+			sValue.replace(" ", "");
+			arSplit = sValue.split(",");
 
 			if (arSplit.length > 0) {
 				let oPt = new CPoint(arSplit[0]);
@@ -15583,17 +15805,20 @@
 			}
 
 			if (arSplit.length > 1) {
-				let oPt = new CPoint(arSplit[1]);
+				let oPt = new CUniversalMeasure();
+				oPt.Parse(arSplit[1], 1)
 				this.m_dTop = oPt.GetValue();
 			}
 
 			if (arSplit.length > 2) {
-				let oPt = new CPoint(arSplit[2]);
+				let oPt = new CUniversalMeasure();
+				oPt.Parse(arSplit[2], 1)
 				this.m_dRight = oPt.GetValue();
 			}
 
 			if (arSplit.length > 3) {
-				let oPt = new CPoint(arSplit[3]);
+				let oPt = new CUniversalMeasure();
+				oPt.Parse(arSplit[3], 1)
 				this.m_dBottom = oPt.GetValue();
 			}
 
@@ -16952,8 +17177,7 @@
 		};
 
 
-		function getRotateAngle(nRot, flipX, flipY)
-		{
+		function getRotateAngle(sRot, flipX, flipY) {
 			let nCheckInvert = 0;
 
 			if (flipX === true)
@@ -16961,25 +17185,47 @@
 			if (flipY === true)
 				nCheckInvert += 1;
 
-			if (nCheckInvert === 1)
-			{
-				nRot = -nRot;
+			let nRot = parseInt(sRot);
+			if (sRot.indexOf('f') !== -1) {
+				let dVal = nRot;
+				dVal /= 65536;
+
+				if (nCheckInvert === 1) {
+					dVal = -dVal;
+				}
+
+				if (dVal > 360) {
+					let nPart = (dVal / 360 + 0.5) >> 0 ;
+					dVal = dVal - nPart * 360;
+				}
+				else if (dVal < 0)
+				{
+					let nPart = (dVal / 360 + 0.5) >> 0;
+					nPart = 1 - nPart;
+					dVal = dVal + nPart * 360;
+				}
+
+				nRot = (dVal * 60000 + 0.5) >> 0;
+			}
+			else {
+				if (nCheckInvert === 1) {
+					nRot = -nRot;
+				}
+
+				if (nRot > 360) {
+					let nPart = (nRot / 360 + 0.5) >> 0.5;
+					nRot = nRot - nPart * 360;
+				}
+				else if (nRot < 0) {
+					let nPart = (nRot / 360 + 0.5) >> 0.5;
+					nPart = 1 - nPart;
+					nRot = nRot + nPart * 360;
+				}
+
+				nRot *= 60000;
 			}
 
-			if (nRot > 360)
-			{
-				let nPart = (nRot / 360);
-				nRot = nRot - nPart * 360;
-			}
-			else if (nRot < 0)
-			{
-				let nPart = (nRot / 360);
-				nPart = 1 - nPart;
-				nRot = nRot + nPart * 360;
-			}
-
-			nRot *=  (Math.PI / 180);
-
+			nRot  *= AscFormat.cToRad;
 			return nRot;
 		}
 
@@ -16999,5 +17245,9 @@
 		window['AscFormat'].Emu_To_Px = Emu_To_Px;
 		window['AscFormat'].Mm_To_Px = Mm_To_Px;
 		window['AscFormat'].Px_To_Mm = Px_To_Mm;
+		window['AscFormat'].Emu_To_Mm = Emu_To_Mm;
+		window['AscFormat'].Mm_To_Emu = Mm_To_Emu;
+		window['AscFormat'].Emu_To_Twips = Emu_To_Twips;
+		window['AscFormat'].Px_To_Emu = Px_To_Emu;
 
 	})(window);

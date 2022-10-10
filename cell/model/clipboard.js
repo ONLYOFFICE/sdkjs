@@ -44,7 +44,7 @@
 		 * -----------------------------------------------------------------------------
 		 */
 		var prot;
-		var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+		var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
 		var c_oAscMaxCellOrCommentLength = Asc.c_oAscMaxCellOrCommentLength;
 		var doc = window.document;
 		var copyPasteUseBinary = true;
@@ -395,6 +395,18 @@
 				ws.model.excludeHiddenRows(false);
 				ws.model.ignoreWriteFormulas(false);
 			}
+
+			if (ws && ws.workbook && !ws.workbook.getCellEditMode()) {
+				if (AscCommon.g_clipboardBase.bCut) {
+					//в данном случае не вырезаем, а записываем
+					if (!ws.isNeedSelectionCut() && false === ws.isMultiSelect()) {
+						ws.workbook.cutIdSheet = ws.model.Id;
+						ws.copyCutRange = [ws.model.selectionRange.getLast()];
+					}
+				} else {
+					ws.copyCutRange = ws.model.selectionRange.ranges;
+				}
+			}
 		};
 
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll) {
@@ -588,8 +600,19 @@
 					var oldCreator = wb.Core.creator;
 					var oldIdentifier = wb.Core.identifier;
 					var oldLanguage = wb.Core.language;
+					var oldTitle = wb.Core.title;
+					var oldCategory = wb.Core.category;
+					var oldContentStatus = wb.Core.contentStatus;
+
 					wb.Core.creator = wb.oApi && wb.oApi.CoAuthoringApi ? wb.oApi.CoAuthoringApi.getUserConnectionId() : null;
 					wb.Core.identifier = wb.oApi && wb.oApi.DocInfo ? wb.oApi.DocInfo.Id : null;
+
+					//для внешних данных необходимо протащить docInfo->ReferenceData
+					//пока беру данные поля, поскольку для копипаста они не используются. по названию не особо совпадают - пересмотреть
+					wb.Core.contentStatus = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData.fileId : null;
+					wb.Core.category = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData.portalName : null;
+
+					wb.Core.title = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.Title ? wb.oApi.DocInfo.Title : null;
 
 					//записываю изображение выделенного фрагмента. пока только для изоюражений
 					//выбрал для этого поле subject
@@ -628,6 +651,9 @@
 						wb.Core.identifier = oldIdentifier;
 						wb.Core.language = oldLanguage;
 						wb.Core.subject = oldSubject;
+						wb.Core.title = oldTitle;
+						wb.Core.category = oldCategory;
+						wb.Core.contentStatus = oldContentStatus;
 					}
 				}
 
@@ -795,6 +821,12 @@
 					var byCol = null;
 					for (var i = 1; i < ws.model.selectionRange.ranges.length; i++) {
 						var nextRange = ws.model.selectionRange.ranges[i];
+
+						if (nextRange.isIntersectWithRanges(ws.model.selectionRange.ranges, i)) {
+							res = false;
+							break;
+						}
+
 						if (byCol === null && firstRange.r1 === nextRange.r1 && firstRange.r2 === nextRange.r2) {
 							byCol = false;
 						} else if (byCol === null && firstRange.c1 === nextRange.c1 && firstRange.c2 === nextRange.c2) {
@@ -852,55 +884,29 @@
 				if (window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor) {
 					return false;
 				}
-				var isImage = false;
-				var objectRender = worksheet.objectRender;
+				let objectRender = worksheet.objectRender;
 
 				objectRender.preCopy();
-				var res = document.createElement('span');
-				var drawings = worksheet.model.Drawings;
+				let res = document.createElement('span');
+				let drawings = worksheet.model.Drawings;
 
-				for (var j = 0; j < isSelectedImages.length; ++j) {
-					var image = drawings[isSelectedImages[j]];
-					var cloneImg = objectRender.cloneDrawingObject(image);
-					var curImage = new Image();
-					var url;
-
-					if (cloneImg.graphicObject.isChart() && cloneImg.graphicObject.brush.fill.RasterImageId) {
-						url = cloneImg.graphicObject.brush.fill.RasterImageId;
-					} else if (cloneImg.graphicObject &&
-						(cloneImg.graphicObject.isShape() || cloneImg.graphicObject.isImage() ||
-						cloneImg.graphicObject.isGroup() || cloneImg.graphicObject.isChart())) {
-						var altAttr = null;
-						isImage = cloneImg.graphicObject.isImage();
-						var imageUrl;
-						if (isImage) {
-							imageUrl = cloneImg.graphicObject.getImageUrl();
-						}
-						if (isImage && imageUrl) {
-							//desktop - пишем все урлы в виде base64
-							if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] &&
-								window["AscDesktopEditor"]["IsLocalFile"]()) {
-								url = cloneImg.graphicObject.getBase64Img();
+				for (let j = 0; j < isSelectedImages.length; ++j) {
+					let oDrawing = drawings[isSelectedImages[j]];
+					if(oDrawing) {
+						let oGraphicObj = oDrawing.graphicObject;
+						if(oGraphicObj) {
+							let oHtmlImage = new Image();
+							oHtmlImage.src = oGraphicObj.getBase64Img();
+							if(oGraphicObj.cachedPixW && oGraphicObj.cachedPixH) {
+								oHtmlImage.width = oGraphicObj.cachedPixW;
+								oHtmlImage.height = oGraphicObj.cachedPixH;
 							} else {
-								url = AscCommon.getFullImageSrc2(imageUrl);
+								oHtmlImage.width = oDrawing.getWidthFromTo();
+								oHtmlImage.height = oDrawing.getHeightFromTo();
 							}
-						} else {
-							url = cloneImg.graphicObject.getBase64Img();
+							res.appendChild(oHtmlImage);
 						}
-						curImage.alt = altAttr;
-					} else {
-						url = cloneImg.image.src;
 					}
-
-					curImage.src = url;
-					curImage.width = cloneImg.getWidthFromTo();
-					curImage.height = cloneImg.getHeightFromTo();
-					if (image.guid) {
-						curImage.name = image.guid;
-					}
-
-					res.appendChild(curImage);
-					isImage = true;
 				}
 				return res;
 			},
@@ -1668,7 +1674,7 @@
 					}
 
 					//закрываем общую транзакцию _loadDataBeforePaste после загрузки шрифтов
-					worksheet.setSelectionInfo('paste', {data: pasteData, fromBinary: true, fontsNew: newFonts, pasteAllSheet: isPasteAll});
+					worksheet.setSelectionInfo('paste', {data: pasteData, fromBinary: true, fontsNew: newFonts, pasteAllSheet: isPasteAll, wb: tempWorkbook});
 				};
 
 				var doPasteIntoShape = function() {
@@ -1713,7 +1719,7 @@
 							if(isPasteAll) {
 								doPasteData();
 							}
-						} else if (!(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
+						} else if (!(window["Asc"]["editor"] && (window["Asc"]["editor"].isChartEditor || window["Asc"]["editor"].isEditOleMode && aPastedImages && aPastedImages.length))) {
 
 							newFonts = {};
 							for (var i = 0; i < pasteData.Drawings.length; i++) {
@@ -1811,7 +1817,7 @@
 									} else {
 										pasteRange.c2 -= diff;
 									}
-									oBinaryFileReader.copyPasteObj.activeRange = pasteRange.getName();
+									oBinaryFileReader.InitOpenManager.copyPasteObj.activeRange = pasteRange.getName();
 								}
 							});
 						}
@@ -1838,6 +1844,7 @@
 					var wsFrom = window["Asc"]["editor"].wb.getWorksheetById(window["Asc"]["editor"].wb.cutIdSheet);
 					var fromRange = wsFrom ? wsFrom.copyCutRange : null;
 					if(fromRange) {
+						fromRange = fromRange[0];
 						var aRange = ws.model.selectionRange.getLast();
 						var toRange = new Asc.Range(aRange.c1, aRange.r1, aRange.c1 + (fromRange.c2 - fromRange.c1), aRange.r1 + (fromRange.r2 - fromRange.r1));
 
@@ -1861,15 +1868,19 @@
 				return res;
 			},
 
-			_checkPastedInOriginalDoc: function(pastedWb) {
+			_checkPastedInOriginalDoc: function(pastedWb, notCheckUser) {
 				var res = false;
 
 				var api = window["Asc"]["editor"];
 				var curDocId = api.DocInfo && api.DocInfo.Id;
 				var curUserId = api.CoAuthoringApi && api.CoAuthoringApi.getUserConnectionId();
 
-				if(pastedWb && pastedWb.Core && pastedWb.Core.identifier === curDocId && pastedWb.Core.creator === curUserId) {
-					res = true;
+				if(pastedWb && pastedWb.Core && pastedWb.Core.identifier === curDocId) {
+					if (notCheckUser) {
+						res = true;
+					} else if (pastedWb.Core.creator === curUserId) {
+						res = true;
+					}
 				}
 
 				return res;
@@ -2019,7 +2030,7 @@
 					}
 
 					var arr_shapes = content.Drawings;
-					if (arr_shapes && arr_shapes.length && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
+					if (arr_shapes && arr_shapes.length && !(window["Asc"]["editor"] && (window["Asc"]["editor"].isChartEditor || window["Asc"]["editor"].isEditOleMode && arr_Images.length !== 0))) {
 						if (!bSlideObjects && content.Drawings.length === selectedContent2[1].content.Drawings.length) {
 							var oEndContent = {
 								Drawings: []
@@ -2048,6 +2059,8 @@
 								t._insertImagesFromBinary(worksheet, {Drawings: arr_shapes}, isIntoShape, true);
 							}
 						});
+					} else {
+						window['AscCommon'].g_specialPasteHelper.buttonInfo.clean();
 					}
 
 					return true;
@@ -2067,7 +2080,10 @@
 				loader.stream = stream;
 
 				var readContent = function () {
-					var docContent = oThis.ReadPresentationText(stream, worksheet);
+					History.TurnOff();
+					var docContent = AscCommon.PasteProcessor.prototype.ReadPresentationText.call(this, stream, worksheet);
+					History.TurnOn();
+
 					if (docContent.length === 0) {
 						return;
 					}
@@ -2748,10 +2764,10 @@
 
 				var aImagesToDownload = this._getImageFromHtml(node, true);
 				var specialPasteProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
-				if (aImagesToDownload !== null &&
+				var api = Asc["editor"];
+				if (!api.isFrameEditor() && aImagesToDownload !== null &&
 					(!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
 				{
-					var api = Asc["editor"];
 					AscCommon.sendImgUrls(api, aImagesToDownload, function (data) {
 						for (var i = 0, length = Math.min(data.length, aImagesToDownload.length); i < length; ++i) {
 							var elem = data[i];
@@ -3019,37 +3035,6 @@
 
 				var arrImages = arrBase64Img.concat(loader.End_UseFullUrl());
 				return {arrShapes: arr_shapes, arrImages: arrImages, arrTransforms: arr_transforms};
-			},
-
-			ReadPresentationText: function (stream, worksheet, cDocumentContent) {
-				History.TurnOff();
-
-				var loader = new AscCommon.BinaryPPTYLoader();
-				loader.Start_UseFullUrl();
-				loader.DrawingDocument = worksheet.getDrawingDocument();
-				loader.stream = stream;
-				loader.presentation = worksheet.model;
-
-				var count = stream.GetULong() / 100000;
-
-				//читаем контент, здесь только параграфы
-				//var newDocContent = new CDocumentContent(shape.txBody, editor.WordControl.m_oDrawingDocument, 0 , 0, 0, 0, false, false);
-				var elements = [], paragraph, selectedElement;
-
-				if (!cDocumentContent) {
-					cDocumentContent = worksheet;
-				}
-
-				for (var i = 0; i < count; ++i) {
-					loader.stream.Skip2(1); // must be 0
-					paragraph = loader.ReadParagraph(cDocumentContent);
-
-					elements.push(paragraph);
-				}
-
-				History.TurnOn();
-
-				return elements;
 			},
 
 			ReadFromBinaryWord: function (sBase64, worksheet) {
@@ -3418,7 +3403,7 @@
 					}
 				}
 				var aResult = this._getTableFromText(text, textImport);
-				if (aResult && !(aResult.onlyImages && window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
+				if (aResult && !(aResult.onlyImages && window["Asc"]["editor"] && window["Asc"]["editor"].isFrameEditor())) {
 					if (textImport) {
 						var arn = worksheet.model.selectionRange.getLast().clone();
 						var width = aResult.content && aResult.content[0] ? aResult.content[0].length - 1 : 0;
@@ -3588,9 +3573,8 @@
 					}
 				};
 
-				text = text.replace(/\r\n/g,'\n');
-
 				if(!bPastedArray) {
+					text = text.replace(/\r\n/g,'\n');
 					_parseText(text);
 				} else {
 					for(var i = 0; i < text.length; i++) {
@@ -3838,10 +3822,11 @@
 				var documentContentBounds = new DocumentContentBounds();
 				var coverDocument = documentContentBounds.getBounds(0, 0, documentContent);
 				this._parseChildren(coverDocument);
+				var aImagesToDownload = pasteData.images && pasteData.images.length ? pasteData.images : this.aResult.props._images;
 
 				//не вставляем графику в редактор диаграмм
 				//если кроме графики есть ещё данные, то убираем только графику
-				if (window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor) {
+				if (window["Asc"]["editor"] && (window["Asc"]["editor"].isChartEditor || window["Asc"]["editor"].isEditOleMode && aImagesToDownload && aImagesToDownload.length)) {
 					if (this.aResult.props && this.aResult.props.addImagesFromWord && this.aResult.props.addImagesFromWord.length === 1 && this.aResult.content) {
 						if (1 === this.aResult.content.length && 1 === this.aResult.content[0].length && this.aResult.content[0][0].content && this.aResult.content[0][0].content.length === 0) {
 							window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
@@ -3860,11 +3845,10 @@
 						newFonts[pasteData.fonts[i].name] = 1;
 					}
 				}
-
 				this.aResult.props.fontsNew = newFonts;
 				this.aResult.props.rowSpanSpCount = 0;
 				this.aResult.props.cellCount = this.maxCellCount + 1 > coverDocument.width ? this.maxCellCount + 1 : coverDocument.width;
-				this.aResult.props._images = pasteData.images && pasteData.images.length ? pasteData.images : this.aResult.props._images;
+				this.aResult.props._images = aImagesToDownload;
 				this.aResult.props._aPastedImages = pasteData.aPastedImages && pasteData.aPastedImages.length ? pasteData.aPastedImages : this.aResult.props._aPastedImages;
 
 
@@ -3873,8 +3857,7 @@
 				//грузим картинки для вствки из документов(если это необходимо)
 				//в данный момент в worksheetView не грузятся изображения
 				var specialPasteProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
-				var aImagesToDownload = this.aResult.props._images;
-				if (!this.clipboard.alreadyLoadImagesOnServer && aImagesToDownload && (!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
+				if (!this.clipboard.alreadyLoadImagesOnServer && aImagesToDownload && aImagesToDownload.length && (!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
 				{
 					var oObjectsForDownload = AscCommon.GetObjectsForImageDownload(t.aResult.props._aPastedImages);
 					var api = window["Asc"]["editor"];

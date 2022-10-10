@@ -214,9 +214,9 @@ var EditorSkins = {
 		FormsContentControlsOutlineMoverActive : "#444444",
 
 		/* presentations */
-		BackgroundColorThumbnails       : "#666666",
-		BackgroundColorThumbnailsActive : "#666666",
-		BackgroundColorThumbnailsHover  : "#666666",
+		BackgroundColorThumbnails       : "#404040",
+		BackgroundColorThumbnailsActive : "#404040",
+		BackgroundColorThumbnailsHover  : "#404040",
 		ThumbnailsPageOutlineActive     : "#848484",
 		ThumbnailsPageOutlineHover      : "#CFCFCF",
 		ThumbnailsPageNumberText        : "#FFFFFF",
@@ -228,7 +228,7 @@ var EditorSkins = {
 		THEMES_THUMBNAIL_WIDTH  : 88,
 		THEMES_THUMBNAIL_HEIGHT : 40,
 
-		BorderSplitterColor                   : "#CBCBCB",
+		BorderSplitterColor                   : "#616161",
 		SupportNotes                          : true,
 		SplitterWidthMM                       : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,

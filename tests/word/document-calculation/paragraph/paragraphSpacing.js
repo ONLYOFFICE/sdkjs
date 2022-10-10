@@ -50,10 +50,10 @@ $(function () {
 	p2.AddToContent(0, r2);
 	r2.AddText("Абракадабра");
 
-	const pageWidth = 20 * test_CharWidth * test_FontSize;
+	const pageWidth = 20 * AscTest.CharWidth * AscTest.FontSize;
 	function Recalculate()
 	{
-		dc.Reset(0, 0, 20 * test_CharWidth * test_FontSize, 10000);
+		dc.Reset(0, 0, 20 * AscTest.CharWidth * AscTest.FontSize, 10000);
 		dc.Recalculate_Page(0, true);
 	}
 
@@ -70,22 +70,22 @@ $(function () {
 		assert.strictEqual(p1.GetPagesCount(), 1, "Check pages count of the first paragraph");
 		assert.strictEqual(p2.GetPagesCount(), 1, "Check pages count of the second paragraph");
 
-		assert.deepEqual(p1.GetPageBounds(0), new AscWord.CDocumentBounds(0, 0, pageWidth, test_FontHeight), "Check page bounds of the first paragraph");
-		assert.deepEqual(p2.GetPageBounds(0), new AscWord.CDocumentBounds(0, test_FontHeight, pageWidth, test_FontHeight * 2), "Check page bounds of the second paragraph");
+		assert.deepEqual(p1.GetPageBounds(0), new AscWord.CDocumentBounds(0, 0, pageWidth, AscTest.FontHeight), "Check page bounds of the first paragraph");
+		assert.deepEqual(p2.GetPageBounds(0), new AscWord.CDocumentBounds(0, AscTest.FontHeight, pageWidth, AscTest.FontHeight * 2), "Check page bounds of the second paragraph");
 
 
 		p1.SetParagraphSpacing({Before : 15, After : 20});
 		p2.SetParagraphSpacing({Before : 0, After : 0});
 
 		Recalculate();
-		assert.deepEqual(p1.GetPageBounds(0), new AscWord.CDocumentBounds(0, 0, pageWidth, test_FontHeight + 35), "Check page bounds of the first paragraph");
-		assert.deepEqual(p2.GetPageBounds(0), new AscWord.CDocumentBounds(0, test_FontHeight + 35, pageWidth, test_FontHeight * 2 + 35), "Check page bounds of the second paragraph");
+		assert.deepEqual(p1.GetPageBounds(0), new AscWord.CDocumentBounds(0, 0, pageWidth, AscTest.FontHeight + 35), "Check page bounds of the first paragraph");
+		assert.deepEqual(p2.GetPageBounds(0), new AscWord.CDocumentBounds(0, AscTest.FontHeight + 35, pageWidth, AscTest.FontHeight * 2 + 35), "Check page bounds of the second paragraph");
 
 		p1.SetParagraphSpacing({Before : 15, After : 20});
 		p2.SetParagraphSpacing({Before : 30, After : 0});
 
 		Recalculate();
-		assert.deepEqual(p1.GetPageBounds(0), new AscWord.CDocumentBounds(0, 0, pageWidth, test_FontHeight + 35), "Check page bounds of the first paragraph");
-		assert.deepEqual(p2.GetPageBounds(0), new AscWord.CDocumentBounds(0, test_FontHeight + 35, pageWidth, test_FontHeight * 2 + 45), "Check page bounds of the second paragraph");
+		assert.deepEqual(p1.GetPageBounds(0), new AscWord.CDocumentBounds(0, 0, pageWidth, AscTest.FontHeight + 35), "Check page bounds of the first paragraph");
+		assert.deepEqual(p2.GetPageBounds(0), new AscWord.CDocumentBounds(0, AscTest.FontHeight + 35, pageWidth, AscTest.FontHeight * 2 + 45), "Check page bounds of the second paragraph");
 	});
 });
