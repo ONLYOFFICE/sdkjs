@@ -5507,11 +5507,11 @@ CChartsDrawer.prototype =
 		return res;
 	},
 
-	getValWithoutStacked: function (ser, val, oChart) {
+	getValWithoutStacked: function (ser, val, oChart, bXVal) {
 		var res = null;
 
 		var oSer = oChart.series[ser];
-		var point = this.getPointByIndex(oSer, val);
+		var point = this.getPointByIndex(oSer, val, bXVal);
 		if (point) {
 			res = point.val;
 		}
@@ -5831,8 +5831,9 @@ drawBarChart.prototype = {
 				if (this.chart.series[i].errBars) {
 					var _pointX = (startX + individualBarWidth / 2) / this.chartProp.pxToMM;
 					var pointY = (startY + height) / this.chartProp.pxToMM;
-					var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
-					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, null,  serIdx, idx);
+					var _pointVal = this.cChartDrawer.getValWithStacked(i, j, this.chart);
+					//var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
+					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 				}
 			}
 
@@ -8903,8 +8904,9 @@ drawHBarChart.prototype = {
 				if (this.chart.series[i].errBars) {
 					var _pointX = (startX) / this.chartProp.pxToMM;
 					var pointY = (startY - individualBarHeight / 2) / this.chartProp.pxToMM;
-					var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
-					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, null,  serIdx, idx);
+					//var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
+					var _pointVal = this.cChartDrawer.getValWithStacked(i, j, this.chart);
+					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 				}
 			}
 
@@ -15553,6 +15555,8 @@ CErrBarsDraw.prototype = {
 
 						isHorPos = t.cChartDrawer.getErrBarsPosition(errBars, oChart);
 						var axis = this.cChartDrawer.getAxisByPos(oChart.chart.axId, isHorPos);
+						//другая ось нужна в случае, если используется ось категорий и нужно расчитать позицию по другой оси
+						var otherAxis = this.cChartDrawer.getAxisByPos(oChart.chart.axId, !isHorPos);
 						var isCatAx = axis.getObjectType() === AscDFH.historyitem_type_CatAx;
 
 						//расчитываем величину погрешности в одну сторону
@@ -15602,7 +15606,8 @@ CErrBarsDraw.prototype = {
 							if (!res[i]) {
 								res[i] = [];
 							}
-							res[i].push(calcErrLine(start, end, isHorPos ? y : x));
+							//isCatAx
+							res[i].push(calcErrLine(start, end, isHorPos ?  this.cChartDrawer.getYPosition(otherAxis.getObjectType() === AscDFH.historyitem_type_CatAx ? j + 1 : this.points[i][j].yVal, otherAxis, true) : x));
 						}
 					}
 				}
@@ -15637,7 +15642,17 @@ CErrBarsDraw.prototype = {
 			var errBars = seria.errBars;
 
 			var grouping = t.cChartDrawer.getChartGrouping(oChart);
-			var pointVal = errBars.errValType === AscFormat.st_errvaltypePERCENTAGE ? (grouping === "stackedPer" ? t.cChartDrawer.getValWithPercent(ser, val, oChart) : t.cChartDrawer.getValWithoutStacked(ser, val, oChart)) : t.cChartDrawer.getValWithStacked(ser, val, oChart);
+			var chartType = t.cChartDrawer._getChartType(oChart);
+			var pointVal = null;
+			if (chartType === c_oChartTypes.Scatter) {
+				pointVal = errBars.errValType === t.cChartDrawer.getValWithoutStacked(ser, val, oChart, errBars.errDir === AscFormat.st_errdirX);
+				if (!pointVal && errBars.errDir === AscFormat.st_errdirX) {
+					pointVal = val + 1;
+				}
+			} else {
+				pointVal = errBars.errValType === AscFormat.st_errvaltypePERCENTAGE ? (grouping === "stackedPer" ? t.cChartDrawer.getValWithPercent(ser, val, oChart) : t.cChartDrawer.getValWithoutStacked(ser, val, oChart)) : t.cChartDrawer.getValWithStacked(ser, val, oChart);
+			}
+
 			if (pointVal == null) {
 				return pointVal;
 			}
@@ -15645,7 +15660,7 @@ CErrBarsDraw.prototype = {
 			//TODO J
 			var calculateSerSum = function (_ser, _startVal, endVal) {
 				return t.cChartDrawer.getAutoSum(_ser, _ser, _startVal, endVal, function (_ser, _val) {
-					var _pointVal = isCatAx ? j + 1 : t.cChartDrawer.getValWithStacked(_ser, _val, oChart);
+					var _pointVal = isCatAx ? _val + 1 : t.cChartDrawer.getValWithStacked(_ser, _val, oChart);
 					return _pointVal != null ? _pointVal : 0;
 				});
 			};
@@ -15662,7 +15677,7 @@ CErrBarsDraw.prototype = {
 				var m = mSumm / ny;
 
 				aSumm = t.cChartDrawer.getAutoSum(startSer, endSer, startPoint, endPoint, function (_ser, _val) {
-						var _pointVal = isCatAx ? j + 1 : t.cChartDrawer.getValWithStacked(_ser, _val, oChart);
+						var _pointVal = isCatAx ? _val + 1 : t.cChartDrawer.getValWithStacked(_ser, _val, oChart);
 						if (_pointVal == null) {
 							return 0;
 						}
@@ -15679,10 +15694,14 @@ CErrBarsDraw.prototype = {
 				if (t.cChartDrawer.getErrBarsPosition(errBars, oChart)) {
 					if (seria.xVal) {
 						pointsCount = seria.xVal.getValuesCount();
+					} else if (seria.yVal) {
+						pointsCount = seria.yVal.getValuesCount();
 					}
 				} else {
 					if (seria.yVal) {
 						pointsCount = seria.yVal.getValuesCount();
+					} else if (seria.xVal) {
+						pointsCount = seria.xVal.getValuesCount();
 					}
 				}
 			}
@@ -15690,13 +15709,13 @@ CErrBarsDraw.prototype = {
 				case AscFormat.st_errvaltypeCUST: {
 					//TODO numRef ?
 					if (errBars.plus && errBars.plus.numLit) {
-						plusErrVal = errBars.plus.numLit.getPtByIndex(val);
+						plusErrVal = errBars.plus.numLit.getPtByIndex(errBars.plus.numLit.ptCount === 1 ? 0 : val);
 						if (plusErrVal) {
 							plusErrVal = plusErrVal.val;
 						}
 					}
 					if (errBars.minus && errBars.minus.numLit) {
-						minusErrVal = errBars.minus.numLit.getPtByIndex(val);
+						minusErrVal = errBars.minus.numLit.getPtByIndex(errBars.plus.numLit.ptCount === 1 ? 0 : val);
 						if (minusErrVal) {
 							minusErrVal = minusErrVal.val;
 						}
