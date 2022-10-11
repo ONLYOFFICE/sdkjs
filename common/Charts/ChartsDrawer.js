@@ -5556,6 +5556,28 @@ CChartsDrawer.prototype =
 
 		return res;
 	},
+
+	getErrBarsPosition: function (errBars, oChart) {
+		//true -> horizontal/false -vertical
+		if (!errBars) {
+			return null;
+		}
+
+		var res = null;
+		if (errBars.errDir === AscFormat.st_errdirX) {
+			res = true;
+		} else if (errBars.errDir === AscFormat.st_errdirY) {
+			res = false;
+		} else if (errBars.errDir === null) {
+			var chartType = this._getChartType(oChart.chart);
+			if (chartType === c_oChartTypes.HBar) {
+				res = true;
+			} else {
+				res = false;
+			}
+		}
+		return res;
+	}
 };
 
 
@@ -8876,6 +8898,13 @@ drawHBarChart.prototype = {
 
 				if (height !== 0) {
 					this.paths.series[serIdx][idx] = paths;
+				}
+
+				if (this.chart.series[i].errBars) {
+					var _pointX = (startX) / this.chartProp.pxToMM;
+					var pointY = (startY - individualBarHeight / 2) / this.chartProp.pxToMM;
+					var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
+					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, null,  serIdx, idx);
 				}
 			}
 
@@ -15482,7 +15511,7 @@ CErrBarsDraw.prototype = {
 			var pathH = t.cChartDrawer.calcProp.pathH;
 			var pathW = t.cChartDrawer.calcProp.pathW;
 
-			if (errBars.errDir === AscFormat.st_errdirX) {
+			if (t.cChartDrawer.getErrBarsPosition(errBars, oChart)) {
 				path.moveTo(_start * pathW, pos * pathH);
 				path.lnTo(_end * pathW, pos * pathH);
 			} else {
@@ -15522,7 +15551,7 @@ CErrBarsDraw.prototype = {
 				for (var j = 0; j < this.points[i].length; j++) {
 					if (this.points[i][j]) {
 
-						isHorPos = errBars.errDir === AscFormat.st_errdirX;
+						isHorPos = t.cChartDrawer.getErrBarsPosition(errBars, oChart);
 						var axis = this.cChartDrawer.getAxisByPos(oChart.chart.axId, isHorPos);
 						var isCatAx = axis.getObjectType() === AscDFH.historyitem_type_CatAx;
 
@@ -15539,7 +15568,16 @@ CErrBarsDraw.prototype = {
 							if (null !== oErrVal.startVal) {
 								pointVal = oErrVal.startVal;
 							} else {
-								pointVal = isCatAx ? j + 1 : this.points[i][j].xVal;
+								switch (this.cChartDrawer._getChartType(oChart.chart)) {
+									case c_oChartTypes.Scatter: {
+										pointVal = isCatAx ? j + 1 : (isHorPos ? this.points[i][j].xVal : this.points[i][j].yVal);
+										break;
+									}
+									default: {
+										pointVal = isCatAx ? j + 1 : this.points[i][j].xVal;
+										break;
+									}
+								}
 							}
 
 							var start, end;
@@ -15638,11 +15676,11 @@ CErrBarsDraw.prototype = {
 
 			var pointsCount = seria.getValuesCount();
 			if (!pointsCount) {
-				if (errBars.errDir === AscFormat.st_errdirX) {
+				if (t.cChartDrawer.getErrBarsPosition(errBars, oChart)) {
 					if (seria.xVal) {
 						pointsCount = seria.xVal.getValuesCount();
 					}
-				} else if (errBars.errDir === AscFormat.st_errdirY) {
+				} else {
 					if (seria.yVal) {
 						pointsCount = seria.yVal.getValuesCount();
 					}
