@@ -1614,6 +1614,7 @@
 				t.clear(true);
 
             t.isNoClearOnFocus = false;
+			t.Api.isBlurEditor = false;
 
 			var _nativeFocusElementNoRemoveOnElementFocus = t.nativeFocusElementNoRemoveOnElementFocus;
 			t.nativeFocusElementNoRemoveOnElementFocus = false;

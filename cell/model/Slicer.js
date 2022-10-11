@@ -1432,7 +1432,7 @@
 				api.wbModel.dependencyFormulas.unlockRecal();
 				History.EndTransaction();
 
-				api._changePivotEndCheckError(pivotTables[0], changeRes, function() {
+				api._changePivotEndCheckError(changeRes, function() {
 					t.applyPivotFilterWithLock(api, values, slicerName, excludePivot, true);
 				});
 			});

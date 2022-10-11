@@ -436,6 +436,7 @@
         this.idMap = null;
         this.bSaveSourceFormatting = null;
         this.contentCopyPr = null;
+        this.cacheImage = true;
     }
 
 
@@ -1700,6 +1701,23 @@
     };
     CGraphicObjectBase.prototype.getAllDocContents = function(aDrawings){
 
+    };
+    CGraphicObjectBase.prototype.GetParaDrawing = function(){
+        return AscFormat.getParaDrawing(this);
+    };
+    CGraphicObjectBase.prototype.checkRunContent = function(fCallback){
+        let aDocContents = [];
+        this.getAllDocContents(aDocContents);
+        for(let nIdx = 0; nIdx < aDocContents.length; ++nIdx) {
+            aDocContents[nIdx].CheckRunContent(fCallback);
+        }
+    };
+    CGraphicObjectBase.prototype.getScaleCoefficient = function(){
+        let oParaDrawing = AscFormat.getParaDrawing(this);
+        if(oParaDrawing) {
+            return oParaDrawing.GetScaleCoefficient();
+        }
+        return 1.0;
     };
     CGraphicObjectBase.prototype.getFullRotate = function () {
         return !AscCommon.isRealObject(this.group) ? this.rot : this.rot + this.group.getFullRotate();
@@ -3192,72 +3210,6 @@
             this.parent.Refresh_RecalcData2();
         }
     };
-    CRelSizeAnchor.prototype.fromXml = function(reader, bSkipFirstNode) {
-        CBaseObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
-        if(this.from && this.to) {
-            let oFromX = this.from.members["x"];
-            let oFromY = this.from.members["y"];
-            let oToX = this.to.members["x"];
-            let oToY = this.to.members["y"];
-            if(oFromX && oFromY && oToX && oToY) {
-                let dFromX = reader.GetDouble(oFromX.text);
-                let dFromY = reader.GetDouble(oFromY.text);
-                let dToX = reader.GetDouble(oToX.text);
-                let dToY = reader.GetDouble(oToY.text);
-                let fN = AscFormat.isRealNumber;
-                if(fN(dFromX) && fN(dFromY) && fN(dToX) && fN(dToY)) {
-                    this.setFromTo(dFromX, dFromY, dToX, dToY);
-                }
-            }
-        }
-        delete this.from;
-        delete this.to;
-    };
-    CRelSizeAnchor.prototype.readChildXml = function(name, reader) {
-        let oObject = CGraphicObjectBase.prototype.fromXmlElem(reader, name, null);
-        if(oObject) {
-            this.setObject(oObject);
-        }
-        else if("from" === name) {
-            let oFrom = new CT_XmlNode(function (reader, name){
-                return null;
-            });
-            oFrom.fromXml(reader);
-            this.from = oFrom;
-        }
-        else if("to" === name) {
-            let oTo = new CT_XmlNode(function (reader, name){
-                return null;
-            });
-            oTo.fromXml(reader);
-            this.to = oTo;
-        }
-    };
-    CRelSizeAnchor.prototype.toXml = function (writer, name) {
-        writer.WriteXmlNodeStart("cdr:relSizeAnchor");
-        writer.WriteXmlAttributesEnd();
-        if (this.fromX !== null && this.fromY !== null) {
-            writer.WriteXmlNodeStart("cdr:from");
-            writer.WriteXmlAttributesEnd();
-            writer.WriteXmlValueDouble("cdr:x", this.fromX);
-            writer.WriteXmlValueDouble("cdr:y", this.fromY);
-            writer.WriteXmlNodeEnd("cdr:from");
-        }
-        if (this.toX !== null && this.toY !== null) {
-            writer.WriteXmlNodeStart("cdr:to");
-            writer.WriteXmlAttributesEnd();
-            writer.WriteXmlValueDouble("cdr:x", this.toX);
-            writer.WriteXmlValueDouble("cdr:y", this.toY);
-            writer.WriteXmlNodeEnd("cdr:to");
-        }
-        if (this.object) {
-            let nOldDocType = writer.context.docType;
-            writer.context.docType = AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING;
-            this.object.toXml(writer, name);
-            writer.context.docType = nOldDocType;
-        }
-        writer.WriteXmlNodeEnd("cdr:relSizeAnchor");
-    };
 
     AscDFH.drawingsChangesMap[AscDFH.historyitem_RelSizeAnchorFromX]  = function(oClass, value){oClass.fromX =  value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_RelSizeAnchorFromY]  = function(oClass, value){oClass.fromY =  value;};
@@ -3333,72 +3285,6 @@
         {
             this.parent.Refresh_RecalcData2();
         }
-    };
-    CAbsSizeAnchor.prototype.fromXml = function(reader, bSkipFirstNode) {
-        CBaseObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
-        if(this.from && this.ext) {
-            let oFromX = this.from.members["x"];
-            let oFromY = this.from.members["y"];
-            let dCX = reader.GetDouble(this.ext.attributes["cx"]);
-            let dCY = reader.GetDouble(this.ext.attributes["cy"]);
-            let fN = AscFormat.isRealNumber;
-            if(oFromX && oFromY && fN(dCX) && fN(dCY)) {
-                let dFromX = reader.GetDouble(oFromX.text);
-                let dFromY = reader.GetDouble(oFromY.text);
-                let dToX = AscFormat.Emu_To_Mm(dCX);
-                let dToY = AscFormat.Emu_To_Mm(dCY);
-                if(fN(dFromX) && fN(dFromY) && fN(dToX) && fN(dToY)) {
-                    this.setFromTo(dFromX, dFromY, dToX, dToY);
-                }
-            }
-        }
-        delete this.from;
-        delete this.ext;
-    };
-    CAbsSizeAnchor.prototype.readChildXml = function(name, reader) {
-        let oObject = CGraphicObjectBase.prototype.fromXmlElem(reader, name, null);
-        if(oObject) {
-            this.setObject(oObject);
-        }
-        else if("from" === name) {
-            let oFrom = new CT_XmlNode(function (reader, name){
-                return null;
-            });
-            oFrom.fromXml(reader);
-            this.from = oFrom;
-        }
-        else if("ext" === name) {
-            let oTo = new CT_XmlNode(function (reader, name){
-                return null;
-            });
-            oTo.fromXml(reader);
-            this.ext = oTo;
-        }
-    };
-    CAbsSizeAnchor.prototype.toXml = function (writer, name) {
-        writer.WriteXmlNodeStart("cdr:absSizeAnchor");
-        writer.WriteXmlAttributesEnd();
-        if (this.fromX !== null && this.fromY !== null) {
-            writer.WriteXmlNodeStart("cdr:from");
-            writer.WriteXmlAttributesEnd();
-            writer.WriteXmlValueDouble("cdr:x", this.fromX);
-            writer.WriteXmlValueDouble("cdr:y", this.fromY);
-            writer.WriteXmlNodeEnd("cdr:from");
-        }
-        if (this.toX !== null && this.toY !== null) {
-            writer.WriteXmlNodeStart("cdr:ext");
-            writer.WriteXmlAttributeInt("cx", AscFormat.Mm_To_Emu(this.toX));
-            writer.WriteXmlAttributeInt("cy", AscFormat.Mm_To_Emu(this.toY));
-            writer.WriteXmlAttributesEnd();
-            writer.WriteXmlNodeEnd("cdr:ext");
-        }
-        if (this.object) {
-            let nOldDocType = writer.context.docType;
-            writer.context.docType = AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING;
-            this.object.toXml(writer, name);
-            writer.context.docType = nOldDocType;
-        }
-        writer.WriteXmlNodeEnd("cdr:absSizeAnchor");
     };
 
     function CalculateSrcRect(parentCropTransform, bounds, oInvertTransformCrop, cropExtX, cropExtY){

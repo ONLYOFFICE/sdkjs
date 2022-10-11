@@ -64,6 +64,7 @@
 		this.TextAroundTimer  = null;
 		this.TextAroundUpdate = true;
 		this.ReplaceEvent     = true;
+		this.TextAroundEmpty  = true; // Флаг, что все очищено, чтобы не очищать повторно
 	}
 
 	CDocumentSearch.prototype.Reset = function()
@@ -417,6 +418,9 @@
 			arrResult.push([sId, sText]);
 		}
 
+		if (arrResult.length)
+			this.TextAroundEmpty = false;
+
 		this.LogicDocument.GetApi().sync_getTextAroundSearchPack(arrResult);
 
 		let oThis = this;
@@ -466,12 +470,17 @@
 	};
 	CDocumentSearch.prototype.SendClearAllTextAround = function()
 	{
+		if (this.TextAroundEmpty)
+			return;
+
 		let oApi = this.LogicDocument.GetApi();
 		if (!oApi)
 			return;
 
 		oApi.sync_startTextAroundSearch();
 		oApi.sync_endTextAroundSearch();
+
+		this.TextAroundEmpty = true;
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------

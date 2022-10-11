@@ -3816,10 +3816,6 @@
 	 * @typedef {"entireCaption" | "labelNumber" | "captionText" | "pageNum" | "aboveBelow"} captionRefTo
 	 */
 
-	/**
-	 * Available caption labels.
-	 * @typedef {"Equation" | "Figure" | "Table"} CaptionLabel
-	 */
 	//------------------------------------------------------End Cross-reference types--------------------------------------------------
 
 	/**
@@ -3863,6 +3859,62 @@
 	/**
      * Possible values for the caption label.
      * @typedef {("Table" | "Equation" | "Figure")} CaptionLabel
+	 * **/
+
+	/**
+	 * Table of contents properties.
+	 * @typedef {Object} TocPr
+	 * @property {boolean} [ShowPageNums=true] - whether to show page numbers.
+	 * @property {boolean} [RightAlgn=true] - whether to right align page numbers.
+	 * @property {TocLeader} [LeaderType="dot"] - leader type.
+	 * @property {boolean} [FormatAsLinks=true] - whether format table of contents as links..
+	 * @property {TocBuildFromPr} [BuildFrom={OutlineLvls=9}] - build table of contents from (outline levels or specified styles).
+	 * @property {TocStyle} [TocStyle="standard"] - table of contents style type.
+	 */
+
+	/**
+	 * Table of figures properties.
+	 * @typedef {Object} TofPr
+	 * @property {boolean} [ShowPageNums=true] - whether to show page numbers.
+	 * @property {boolean} [RightAlgn=true] - whether to right align page numbers.
+	 * @property {TocLeader} [LeaderType="dot"] - leader type.
+	 * @property {boolean} [FormatAsLinks=true] - whether format table of contents as links.
+	 * @property {CaptionLabel | string} [BuildFrom="Figure"] - build table of figures by specified caption label or used paragraph style name (ex. "Heading 1").
+	 * @property {boolean} [LabelNumber=true] - whether to include label and number.
+	 * @property {TofStyle} [TofStyle="distinctive"] - table of figures style type.
+	 */
+
+	/**
+	 * Table of contents build from propertie.
+	 * @typedef {Object} TocBuildFromPr
+	 * @property {number} [OutlineLvls=9] - maximum levels in table of figures
+	 * @property {TocStyleLvl[]} StylesLvls - levels for styles (ex. [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]).
+	 * Note: if StylesLvls.length > 0 then OutlineLvls propertie will be ignore.
+	 */
+
+	/**
+	 * Table of contents style lvl.
+	 * @typedef {Object} TocStyleLvl
+	 * @property {string} Name - name of style. (ex. "Heading 1")
+	 * @property {number} Lvl - level which will be apply for style in TOC
+	 */
+
+	/**
+	 * **"dot"**       - "......."
+	 * **"dash"**      - "-------"
+	 * **"underline"** - "_______"
+     * Possible values for the table of contents leader.
+     * @typedef {("dot" | "dash" | "underline" | "none")} TocLeader
+	 * **/
+
+	/**
+     * Possible values for the style of table of contents.
+     * @typedef {("simple" | "online" | "standard" | "modern" | "classic")} TocStyle
+	 * **/
+
+	/**
+     * Possible values for the style of table of contents.
+     * @typedef {("simple" | "online" | "classic" | "distinctive" | "centered" | "formal")} TofStyle
 	 * **/
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4842,7 +4894,22 @@
 		return false;
 	};
 
-	
+	/**
+	 * Subscribes to the specified event and calls the callback function when the event fires.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} eventName - The event name.
+	 * @param {function} callback - Function to be called when the event fires.
+	 */
+	Api.prototype["attachEvent"] = Api.prototype.attachEvent;
+
+	/**
+	 * Unsubscribes from the specified event.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} eventName - The event name.
+	 */
+	Api.prototype["detachEvent"] = Api.prototype.detachEvent;
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -5390,13 +5457,17 @@
 			{
 				var isAnswer     = !oReport[sUserName][nIndex].Top;
 				var oCommentData = oReport[sUserName][nIndex].Data;
+				var nDateUTC     = parseInt(oCommentData.m_sOOTime);
+				if (isNaN(nDateUTC))
+					nDateUTC = 0;
 
 				if (isAnswer)
 				{
 					oResult[sUserName].push({
 						"IsAnswer"       : true,
 						"CommentMessage" : oCommentData.GetText(),
-						"Date"           : oCommentData.GetDateTime()
+						"Date"           : oCommentData.GetDateTime(),
+						"DateUTC"        : nDateUTC
 					});
 				}
 				else
@@ -5406,6 +5477,7 @@
 						"IsAnswer"       : false,
 						"CommentMessage" : oCommentData.GetText(),
 						"Date"           : oCommentData.GetDateTime(),
+						"DateUTC"        : nDateUTC,
 						"QuoteText"      : sQuoteText,
 						"IsSolved"       : oCommentData.IsSolved()
 					});
@@ -6417,6 +6489,215 @@
 		}
 	};
 
+	/**
+	 * Adds a table of content.
+	 * Note: replaces existing table of contents.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {TocPr} [oTocPr={}] - table of contents properties.
+	 */
+	ApiDocument.prototype.AddTableOfContents = function(oTocPr)
+	{
+		if (typeof(oTocPr) !== "object")
+			oTocPr = {};
+
+		if (!oTocPr["BuildFrom"])
+			oTocPr["BuildFrom"] = {"OutlineLvls": 9};
+
+		let oTargetPr = new Asc.CTableOfContentsPr();
+		oTargetPr.PageNumbers = typeof(oTocPr["ShowPageNums"]) == "boolean" ? oTocPr["ShowPageNums"] : true;
+		oTargetPr.RightTab = typeof(oTocPr["RightAlgn"]) == "boolean" ? oTocPr["RightAlgn"] : true;
+		oTargetPr.Hyperlink = typeof(oTocPr["FormatAsLinks"]) == "boolean" ? oTocPr["FormatAsLinks"] : true;
+
+		if (oTocPr["LeaderType"] == null)
+			oTocPr["LeaderType"] = "dot";
+		switch (oTocPr["LeaderType"])
+		{
+			case "dot":
+				oTargetPr.TabLeader = 0;
+				break;
+			case "dash":
+				oTargetPr.TabLeader = 2;
+				break;
+			case "underline":
+				oTargetPr.TabLeader = 5;
+				break;
+			case "none":
+				oTargetPr.TabLeader = 4;
+				break;
+		}
+
+		if (Array.isArray(oTocPr["BuildFrom"]["StylesLvls"]) && oTocPr["BuildFrom"]["StylesLvls"].length > 0)
+		{
+			oTargetPr.Styles = oTocPr["BuildFrom"]["StylesLvls"];
+			oTargetPr.OutlineEnd = -1;
+			oTargetPr.OutlineStart = -1;
+		}
+		else if (oTocPr["BuildFrom"]["OutlineLvls"] >= 1 && oTocPr["BuildFrom"]["OutlineLvls"] <= 9)
+		{
+			oTargetPr.OutlineEnd = oTocPr["BuildFrom"]["OutlineLvls"];
+		}
+
+		if (oTocPr["TocStyle"] == null)
+			oTocPr["TocStyle"] = "standard";
+		switch (oTocPr["TocStyle"])
+		{
+			case "simple":
+				oTargetPr.StylesType = 1;
+				break;
+			case "online":
+				oTargetPr.StylesType = 5;
+				break;
+			case "standard":
+				oTargetPr.StylesType = 2;
+				break;
+			case "modern":
+				oTargetPr.StylesType = 3;
+				break;
+			case "classic":
+				oTargetPr.StylesType = 4;
+				break;
+		}
+
+		var oTOC = this.Document.GetTableOfContents();
+		if (oTOC instanceof AscCommonWord.CBlockLevelSdt && oTOC.IsBuiltInUnique())
+		{
+			var oInnerTOC = oTOC.GetInnerTableOfContents();
+			oTOC = oInnerTOC;
+			if (!oTOC)
+				return;
+
+			var oStyles = this.Document.GetStyles();
+			var nStylesType = oTargetPr.get_StylesType();
+			var isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
+
+			oTOC.SelectField();
+			if (isNeedChangeStyles)
+				oStyles.SetTOCStylesType(nStylesType);
+
+			oTOC.SetPr(oTargetPr);
+			oTOC.Update();
+			return;
+		}
+
+		this.Document.AddTableOfContents(null, oTargetPr, undefined);
+	};
+
+	/**
+	 * Adds a table of figures.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {TofPr} [oTofPr={}] - table of figures properties.
+	 * Note: oTofPr will be fill by default properties if undefined.
+	 * @param {boolean} [bReplace=true] - replaces current selected table of figures instead of adding.
+	 * @returns {boolean}
+	 */
+	ApiDocument.prototype.AddTableOfFigures = function(oTofPr, bReplace)
+	{
+		if (typeof(oTofPr) !== "object")
+			oTofPr = {};
+		if (typeof(bReplace) !== "boolean")
+			bReplace = true;
+
+		let oTargetPr = new Asc.CTableOfContentsPr();
+		oTargetPr.PageNumbers = typeof(oTofPr["ShowPageNums"]) == "boolean" ? oTofPr["ShowPageNums"] : true;
+		oTargetPr.RightTab = typeof(oTofPr["RightAlgn"]) == "boolean" ? oTofPr["RightAlgn"] : true;
+		oTargetPr.Hyperlink = typeof(oTofPr["FormatAsLinks"]) == "boolean" ? oTofPr["FormatAsLinks"] : true;
+		oTargetPr.IsIncludeLabelAndNumber = typeof(oTofPr["LabelNumber"]) == "boolean" ? oTofPr["LabelNumber"] : true;
+		oTargetPr.OutlineEnd = -1;
+		oTargetPr.OutlineStart = -1;
+
+
+		if (oTofPr["LeaderType"] == null)
+			oTofPr["LeaderType"] = "dot";
+		switch (oTofPr["LeaderType"])
+		{
+			case "dot":
+				oTargetPr.TabLeader = 0;
+				break;
+			case "dash":
+				oTargetPr.TabLeader = 2;
+				break;
+			case "underline":
+				oTargetPr.TabLeader = 5;
+				break;
+			case "none":
+				oTargetPr.TabLeader = 4;
+				break;
+		}
+
+		if (typeof(oTofPr["BuildFrom"]) !== "string")
+			oTofPr["BuildFrom"] = "Figure";
+
+		let aStyles = this.Document.GetAllUsedParagraphStyles();
+		let isUsedStyle = false;
+		for (var i = 0; i < aStyles.length; i++)
+		{
+			if (aStyles[i].Name == oTofPr["BuildFrom"])
+			{
+				isUsedStyle = true;
+				break;
+			}
+		}
+
+		if (isUsedStyle)
+		{
+			oTargetPr.Styles = [{ Name: oTofPr["BuildFrom"], Lvl: undefined }];
+			oTargetPr.Caption = null;
+		}
+		else
+			oTargetPr.Caption = oTofPr["BuildFrom"];
+
+		if (oTofPr["TofStyle"] == null)
+			oTofPr["TofStyle"] = "distinctive";
+		switch (oTofPr["TofStyle"])
+		{
+			case "simple":
+				oTargetPr.StylesType = 5;
+				break;
+			case "online":
+				oTargetPr.StylesType = 6;
+				break;
+			case "classic":
+				oTargetPr.StylesType = 1;
+				break;
+			case "distinctive":
+				oTargetPr.StylesType = 2;
+				break;
+			case "centered":
+				oTargetPr.StylesType = 3;
+				break;
+			case "formal":
+				oTargetPr.StyleType = 4;
+				break;
+		}
+
+		let aTOF = this.Document.GetAllTablesOfFigures(true);
+		let oTOFToReplace = null;
+		if(aTOF.length > 0)
+		{
+			oTOFToReplace = aTOF[0];
+		}
+
+		if (oTOFToReplace && bReplace)
+		{
+			oTOFToReplace.SelectFieldValue();
+			oTargetPr.ComplexField = oTOFToReplace;
+
+			var oStyles     = this.Document.GetStyles();
+			var nStylesType = oTargetPr.get_StylesType();
+			var isNeedChangeStyles = (Asc.c_oAscTOFStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOFStyleType());
+			if (isNeedChangeStyles)
+				oStyles.SetTOFStyleType(nStylesType);
+
+			oTOFToReplace.SetPr(oTargetPr);
+			oTOFToReplace.Update();
+		}
+		else
+			this.Document.AddTableOfFigures(oTargetPr);
+
+		return true;
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -7450,9 +7731,10 @@
 
 		for (var Index = ParaPosition.length - 1; Index >= 1; Index--)
 		{
-			if (ParaPosition[Index].Class)
-				if (ParaPosition[Index].Class instanceof CBlockLevelSdt)
-					return new ApiBlockLvlSdt(ParaPosition[Index].Class);
+			if (ParaPosition[Index].Class && ParaPosition[Index].Class.Parent && ParaPosition[Index].Class.Parent instanceof CBlockLevelSdt)
+			{
+				return new ApiBlockLvlSdt(ParaPosition[Index].Class.Parent);
+			}
 		}
 
 		return null;
@@ -8520,7 +8802,7 @@
         {
             if (RunPosition[Index].Class)
             {
-                if (RunPosition[Index].Class instanceof CBlockLevelSdt)
+                if (RunPosition[Index].Class.Parent && RunPosition[Index].Class.Parent instanceof CBlockLevelSdt)
                     return new ApiBlockLvlSdt(RunPosition[Index].Class);
                 else if (RunPosition[Index].Class instanceof CInlineLevelSdt)
                     return new ApiInlineLvlSdt(RunPosition[Index].Class);
@@ -9780,9 +10062,8 @@
 
         for (var Index = TablePosition.length - 1; Index >= 1; Index--)
         {
-            if (TablePosition[Index].Class)
-                if (TablePosition[Index].Class instanceof CBlockLevelSdt)
-                    return new ApiBlockLvlSdt(TablePosition[Index].Class);
+            if (TablePosition[Index].Class && TablePosition[Index].Class.Parent && TablePosition[Index].Class.Parent instanceof CBlockLevelSdt)
+				return new ApiBlockLvlSdt(TablePosition[Index].Class.Parent);
         }
 
         return null;
@@ -15624,9 +15905,8 @@
 
 		for (var Index = documentPos.length - 1; Index >= 1; Index--)
 		{
-			if (documentPos[Index].Class)
-				if (documentPos[Index].Class instanceof CBlockLevelSdt)
-					return new ApiBlockLvlSdt(documentPos[Index].Class);
+			if (documentPos[Index].Class && documentPos[Index].Class.Parent && documentPos[Index].Class.Parent instanceof CBlockLevelSdt)
+				return new ApiBlockLvlSdt(documentPos[Index].Class.Parent);
 		}
 
 		return null;
@@ -16247,7 +16527,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
-	 * *This method is used only for text and combo box forms.
+	 * *This method is used only for text and combo box forms.*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
@@ -16265,7 +16545,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
-	 * *This method is used only for text and combo box forms.
+	 * *This method is used only for text and combo box forms.*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiTextPr}  
@@ -17553,6 +17833,8 @@
 	ApiDocument.prototype["ToJSON"]                  = ApiDocument.prototype.ToJSON;
 	ApiDocument.prototype["UpdateAllTOC"]		     = ApiDocument.prototype.UpdateAllTOC;
 	ApiDocument.prototype["UpdateAllTOF"]		     = ApiDocument.prototype.UpdateAllTOF;
+	ApiDocument.prototype["AddTableOfContents"]		 = ApiDocument.prototype.AddTableOfContents;
+	ApiDocument.prototype["AddTableOfFigures"]		 = ApiDocument.prototype.AddTableOfFigures;
 
 	ApiDocument.prototype["GetAllForms"]             = ApiDocument.prototype.GetAllForms;
 	ApiDocument.prototype["ClearAllFields"]          = ApiDocument.prototype.ClearAllFields;

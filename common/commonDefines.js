@@ -791,6 +791,16 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		MailMerge : 'asc_onSaveMailMerge'
 	};
 
+	var c_oAscFrameDataType = {
+		SendImageUrls: 0,
+		GetLoadedImages: 1,
+		OpenFrame: 2,
+		ShowImageDialogInFrame: 3,
+		GetUrlsFromImageDialog: 4,
+		SkipStartEndAction: 5,
+		StartUploadImageAction: 6
+	};
+
 	var CellValueType = {
 		Number : 0,
 		String : 1,
@@ -4279,6 +4289,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].c_oAscMaxFormulaLength      = c_oAscMaxFormulaLength;
 	window["AscCommon"].c_oAscMaxFormulaReferenceLength = c_oAscMaxFormulaReferenceLength;
 	window["AscCommon"].c_oAscMaxTableColumnTextLength = c_oAscMaxTableColumnTextLength;
+
+	window["AscCommon"].c_oAscFrameDataType = c_oAscFrameDataType;
 
 	prot =  window["AscCommon"]["c_oAscUrlType"] = window["AscCommon"].c_oAscUrlType = c_oAscUrlType;
 	prot["Invalid"] = prot.Invalid;

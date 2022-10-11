@@ -2313,6 +2313,9 @@
     CBaseChartObject.prototype.isForm = function() {
         return false;
     };
+    CBaseChartObject.prototype.GetParaDrawing = function() {
+        return null;
+    };
     CBaseChartObject.prototype.isObjectInSmartArt = function() {
         return false;
     };
@@ -15214,6 +15217,9 @@
     CalcLegendEntry.prototype.isForm = function() {
         return false;
     };
+    CalcLegendEntry.prototype.GetParaDrawing = function() {
+        return null;
+    };
 
     function CompiledMarker() {
         this.spPr = new AscFormat.CSpPr();
@@ -15236,6 +15242,9 @@
     };
     CompiledMarker.prototype.isForm = function() {
         return false;
+    };
+    CompiledMarker.prototype.GetParaDrawing = function() {
+        return null;
     };
 
     function CUnionMarker() {

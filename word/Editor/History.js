@@ -56,9 +56,10 @@ function CHistory(Document)
 		Flow         : [],
 		HdrFtr       : [],
 		Drawings     : {
-			All       : false,
-			Map       : {},
-			ThemeInfo : null
+			All        : false,
+			Map        : {},
+			ThemeInfo  : null,
+            SlideMinIdx: null
 		},
 		Tables       : [],
 		NumPr        : [],
@@ -439,6 +440,10 @@ CHistory.prototype =
         // Удаляем ненужные точки
         this.Points.length = this.Index + 1;
     },
+	ClearRedo : function()
+	{
+		return this.Clear_Redo();
+	},
 
     // Регистрируем новое изменение:
     // Class - объект, в котором оно произошло
@@ -570,17 +575,18 @@ CHistory.prototype =
             }
             case AscDFH.historyitem_recalctype_Drawing:
             {
-                if(!this.RecalculateData.Drawings.All)
+                let oDrawings = this.RecalculateData.Drawings;
+                if(!oDrawings.All)
                 {
                     if(Data.All)
                     {
-                        this.RecalculateData.Drawings.All = true;
+                        oDrawings.All = true;
                     }
                     else
                     {
                         if(Data.Theme)
                         {
-                            this.RecalculateData.Drawings.ThemeInfo =
+                            oDrawings.ThemeInfo =
                             {
                                 Theme: true,
                                 ArrInd: Data.ArrInd
@@ -588,10 +594,21 @@ CHistory.prototype =
                         }
                         else if(Data.ColorScheme)
                         {
-                            this.RecalculateData.Drawings.ThemeInfo =
+                            oDrawings.ThemeInfo =
                             {
                                 ColorScheme: true,
                                 ArrInd: Data.ArrInd
+                            }
+                        }
+                        else if(AscFormat.isRealNumber(Data.SlideMinIdx))
+                        {
+                            if(AscFormat.isRealNumber(oDrawings.SlideMinIdx))
+                            {
+                                oDrawings.SlideMinIdx = Math.min(Data.SlideMinIdx, oDrawings.SlideMinIdx);
+                            }
+                            else
+                            {
+                                oDrawings.SlideMinIdx = Data.SlideMinIdx;
                             }
                         }
                         else
@@ -740,10 +757,19 @@ CHistory.prototype =
             && AscDFH.historydescription_Document_CompositeInputReplace === Point2.Description)
         {
             // Ничего не делаем. Эта ветка означает, что эти две точки можно объединить
-            NewDescription = AscDFH.historydescription_Document_CompositeInput;
+            NewDescription = Point1.Description;
         }
-        else
-        {
+		else if (AscDFH.historydescription_Document_CompositeInput === Point1.Description
+			|| AscDFH.historydescription_Document_CompositeInputReplace === Point1.Description
+			|| AscDFH.historydescription_Document_CompositeInput === Point2.Description
+			|| AscDFH.historydescription_Document_CompositeInputReplace === Point2.Description)
+		{
+			// Композитный ввод не разрешаем объединять ни с чем, кроме композитного ввода
+			return false;
+		}
+		else if (AscDFH.historydescription_Document_AddLetterUnion === Point1.Description
+			&& AscDFH.historydescription_Document_AddLetterUnion === Point2.Description)
+		{
             var PrevItem = null;
             var Class    = null;
             for (var Index = StartIndex1; Index < Point1.Items.length; Index++)
@@ -770,6 +796,10 @@ CHistory.prototype =
 
             NewDescription = AscDFH.historydescription_Document_AddLetterUnion;
         }
+		else
+		{
+			return false;
+		}
 
         if (0 !== StartIndex1)
             Point1.Items.splice(0, 1);
@@ -804,11 +834,14 @@ CHistory.prototype =
         return true;
 	},
 
-    CanRemoveLastPoint : function()
+    CanRemoveLastPoint : function(pointsCount)
     {
-        if (this.Points.length <= 0
-            || (true !== this.Is_UserSaveMode() && null !== this.SavedIndex && this.SavedIndex >= this.Points.length - 1)
-            || (true === this.Is_UserSaveMode() && null !== this.UserSavedIndex && this.UserSavedIndex >= this.Points.length - 1))
+		if (undefined === pointsCount || null === pointsCount)
+			pointsCount = 1;
+
+        if (this.Points.length < pointsCount
+            || (true !== this.Is_UserSaveMode() && null !== this.SavedIndex && this.SavedIndex >= this.Points.length - pointsCount)
+            || (true === this.Is_UserSaveMode() && null !== this.UserSavedIndex && this.UserSavedIndex >= this.Points.length - pointsCount))
             return false;
 
         return true;
@@ -1228,9 +1261,10 @@ CHistory.prototype.private_ClearRecalcData = function()
 		Flow     : [],
 		HdrFtr   : [],
 		Drawings : {
-			All       : false,
-			Map       : {},
-			ThemeInfo : null
+			All        : false,
+			Map        : {},
+			ThemeInfo  : null,
+            SlideMinIdx: null
 		},
 
 		Tables        : [],
@@ -1396,6 +1430,81 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			|| AscDFH.historydescription_Document_AutoCorrectFirstLetterOfSentence === nDescription
 			|| AscDFH.historydescription_Document_AutoCorrectHyphensWithDash === nDescription
 			|| AscDFH.historydescription_Document_AutoCorrectSmartQuotes === nDescription);
+	};
+	/**
+	 * Специальная функция для отмены последнего ввода через композитный ввод
+	 */
+	CHistory.prototype.UndoCompositeInput = function()
+	{
+		let lastIndex = this.Index;
+		while (lastIndex >= 0)
+		{
+			let description = this.Points[lastIndex].Description;
+
+			if (AscDFH.historydescription_Document_CompositeInput === description)
+				break;
+
+			if (AscDFH.historydescription_Document_CompositeInputReplace !== description)
+				return null;
+
+			lastIndex--;
+		}
+
+		if (lastIndex < 0)
+			return null;
+
+
+		let changes = [];
+		for (; this.Index >= lastIndex; --this.Index)
+		{
+			let point = this.Points[this.Index];
+			for (let changeIndex = point.Items.length - 1; changeIndex >= 0; --changeIndex)
+			{
+				let item = point.Items[changeIndex];
+				if (item.Data)
+				{
+					item.Data.Undo();
+					changes.push(item.Data);
+				}
+				this.private_UpdateContentChangesOnUndo(item);
+			}
+		}
+
+		return changes;
+	};
+	/**
+	 * Проверяем что последнее действие ввод заданного символа, в предшествующей заданной позиции
+	 * @param run {AscWord.CRun}
+	 * @param inRunPos {number}
+	 * @param codePoint {?number}
+	 * @returns {boolean}
+	 */
+	CHistory.prototype.CheckAsYouTypeEnterText = function(run, inRunPos, codePoint)
+	{
+		this.CheckUnionLastPoints();
+
+		if (this.Points.length <= 0 || this.Index !== this.Points.length - 1)
+			return false;
+
+		let point = this.Points[this.Index];
+		let description = point.Description;
+		if (AscDFH.historydescription_Document_AddLetter !== description
+			&& AscDFH.historydescription_Document_AddLetterUnion !== description
+			&& AscDFH.historydescription_Document_SpaceButton !== description
+			&& AscDFH.historydescription_Document_CorrectEnterText !== description
+			&& AscDFH.historydescription_Document_CompositeInput !== description
+			&& AscDFH.historydescription_Document_CompositeInputReplace !== description)
+			return false;
+
+		let changes = point.Items;
+		if (!changes.length)
+			return false;
+
+		let lastChange = changes[changes.length - 1].Data;
+		return (AscDFH.historyitem_ParaRun_AddItem === lastChange.Type
+			&& lastChange.Class === run
+			&& lastChange.Pos === inRunPos - 1
+			&& (undefined === codePoint || lastChange.Items[0].GetCodePoint() === codePoint));
 	};
 
 	//----------------------------------------------------------export--------------------------------------------------

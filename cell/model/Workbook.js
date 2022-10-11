@@ -465,6 +465,10 @@
 							}
 						}
 					}
+					if (Object.keys(sheetContainer.cellMap).length == 0) {
+						//если есть ссылки на внешние источники, необходимо их удалить
+						this.wb.removeExternalReferenceBySheet(sheetId);
+					}
 				}
 			}
 		},
@@ -476,6 +480,18 @@
 			var listenerId = listener.getListenerId();
 			if (null != listenerId) {
 				delete this.volatileListeners[listenerId];
+			}
+		},
+		forEachSheetListeners: function(sheetId, callback) {
+			var sheetContainer = this.sheetListeners[sheetId];
+			if (sheetContainer) {
+				for (var i in sheetContainer.cellMap) {
+					if (sheetContainer.cellMap[i]) {
+						for (var j in sheetContainer.cellMap[i].listeners) {
+							callback(sheetContainer.cellMap[i].listeners[j]);
+						}
+					}
+				}
 			}
 		},
 		startListeningDefName: function(name, listener, opt_sheetId) {
@@ -4024,6 +4040,245 @@
 			}
 		}
 		return changedMap;
+	};
+
+	//*****external links*****
+	//при открытии ждём ссылок в виде [1]Sheet1!A1:A2, но если пользователь введёт такую ссылку, то текст самой ссылки будет уже "1", а индекс самой ссылки увеличится length + 1
+	//далее отображаем в таком виде в зависимости от самой ссылки 'https://s3.amazonaws.com/xlsx/[ExternalLinksDestination.xlsx]Sheet1'!A1:A2
+	//при вводе с клавиатуры сложнее - мс пропускает ссылки в достаточно странном виде 'abracadabra1://abracadabra2:[file.abracadabra3]Sheet1'!A1:A2
+	Workbook.prototype.getExternalLinkByIndex = function (index, needSplit) {
+		var res = this.externalReferences && this.externalReferences[index];
+		if (needSplit && res) {
+			//разбиваем на имя и путь
+			//ms обрабатывает http:/https:/ftp: и любая конструкция до : -  ..test..:
+			//предполагаем, что здесь уже лежит ссылка в грамотном виде
+			//ищем последний слэш или двоеточие и разделяем на части
+			res = res.Id;
+			for (var i = res.length - 1; i >= 0; i--) {
+				if (res[i] === "/" || res[i] === ":") {
+					return {path: res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
+				}
+			}
+			if (res) {
+				res = {path: "", name: res};
+			}
+		}
+		return res ? res : null;
+	};
+
+	Workbook.prototype.getExternalLinkByName = function (name) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].Id === name) {
+				return this.externalReferences[i];
+			}
+		}
+	};
+
+	Workbook.prototype.getExternalLinkIndexByName = function (name) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].Id === name) {
+				return i + 1;
+			}
+		}
+		return null;
+	};
+
+	Workbook.prototype.getExternalLinkIndexBySheetId = function (sheetId) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			for (var j in this.externalReferences[i].worksheets) {
+				if (this.externalReferences[i].worksheets[j].Id === sheetId) {
+					return i + 1;
+				}
+			}
+		}
+		return null;
+	};
+
+	Workbook.prototype.getExternalWorksheet = function (val, sheet) {
+		var extarnalLink = window['AscCommon'].isNumber(val) ? this.getExternalLinkByIndex(val - 1) : this.getExternalLinkByName(val);
+		if (extarnalLink) {
+			if (null == sheet) {
+				return extarnalLink;
+			}
+			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
+				return extarnalLink.worksheets[sheet];
+			}
+			if (extarnalLink.SheetNames) {
+				for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
+					if (extarnalLink.SheetNames[i] === sheet) {
+						var wb = this.getTemporaryExternalWb();
+						extarnalLink.worksheets[sheet] = new Worksheet(wb, wb.aWorksheets.length);
+						wb.aWorksheets.push(extarnalLink.worksheets[sheet]);
+						extarnalLink.worksheets[sheet].sName = sheet;
+						return extarnalLink.worksheets[sheet];
+					}
+				}
+			}
+		}
+		return null;
+	};
+
+	Workbook.prototype.getExternalWorksheetByIndex = function (index, sheet) {
+		var extarnalLink = this.getExternalLinkByIndex(index);
+		if (extarnalLink) {
+			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
+				return extarnalLink.worksheets[sheet];
+			}
+			if (extarnalLink.SheetNames) {
+				for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
+					if (extarnalLink.SheetNames[i] === sheet) {
+						var wb = this.getTemporaryExternalWb();
+						extarnalLink.worksheets[sheet] = new Worksheet(wb);
+						return extarnalLink.worksheets[sheet];
+					}
+				}
+			}
+		}
+		return null;
+	};
+
+	Workbook.prototype.getExternalWorksheetByName = function (name, sheet) {
+		var extarnalLink = this.getExternalLinkByName(name);
+		if (extarnalLink) {
+			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
+				return extarnalLink.worksheets[sheet];
+			}
+			if (extarnalLink.SheetNames) {
+				for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
+					if (extarnalLink.SheetNames[i] === sheet) {
+						var wb = this.getTemporaryExternalWb();
+						extarnalLink.worksheets[sheet] = new Worksheet(wb);
+						return extarnalLink.worksheets[sheet];
+					}
+				}
+			}
+		}
+		return null;
+	};
+
+	Workbook.prototype.getTemporaryExternalWb = function () {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].worksheets) {
+				for (var j in this.externalReferences[i].worksheets) {
+					if (this.externalReferences[i].worksheets[j]) {
+						return this.externalReferences[i].worksheets[j].workbook;
+					}
+				}
+			}
+		}
+		return new Workbook();
+	};
+
+	Workbook.prototype.removeExternalReferences = function (arr) {
+		//пока предполагаю, что здесь будет массив asc_CExternalReference
+		if (arr) {
+			History.Create_NewPoint();
+			History.StartTransaction();
+			for (var i = 0; i < arr.length; i++) {
+				var eRIndex = this.getExternalLinkIndexByName(arr[i].externalReference.Id);
+				if (eRIndex != null) {
+
+					//TODO при undo кладутся в массив в обратном порядке - нужно всегда в одном порядке добавлять
+					this.removeExternalReference(eRIndex, true);
+
+					//TODO нужно заменить все ячейки просто значениями, где есть формулы, которые ссылаются на эту книгу
+					for (var j in arr[i].externalReference.worksheets) {
+						var removedSheet = arr[i].externalReference.worksheets[j];
+						if (removedSheet) {
+
+							var removedSheetId = removedSheet.getId();
+							this.dependencyFormulas.forEachSheetListeners(removedSheetId, function (parsed) {
+								if (parsed) {
+									var cell = parsed.parent;
+									if (cell && cell.nCol != null && cell.nRow != null) {
+										//нужно удалить формулу из этой ячейки
+										parsed.ws._getCellNoEmpty(cell.nRow, cell.nCol, function(cell) {
+											var valueData = cell.getValueData();
+											valueData.formula = null;
+											cell.setValueData(valueData);
+											//cell.setFormulaInternal(null);
+										});
+									}
+								}
+							});
+
+
+							var prepared = this.dependencyFormulas.prepareChangeSheet(removedSheetId, {remove: removedSheetId});
+							this.dependencyFormulas.removeSheet(prepared);
+						}
+					}
+				}
+			}
+			History.EndTransaction();
+		}
+	};
+
+	Workbook.prototype.removeExternalReference = function (index, addToHistory) {
+		if (index != null) {
+			var from = this.externalReferences[index - 1];
+			this.externalReferences.splice(index - 1, 1);
+			if (addToHistory) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
+					null, null, new UndoRedoData_FromTo(from, null));
+			}
+		}
+	};
+
+	Workbook.prototype.changeExternalReference = function (index, to) {
+		if (index != null) {
+			var from = this.externalReferences[index - 1].clone();
+			this.externalReferences[index - 1] = to;
+			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
+				null, null, new UndoRedoData_FromTo(from, to));
+		}
+	};
+
+	Workbook.prototype.addExternalReferences = function (arr) {
+		if (arr) {
+			for (var i = 0; i < arr.length; i++) {
+				this.externalReferences.push(arr[i]);
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
+					null, null, new UndoRedoData_FromTo(null, arr[i]));
+			}
+		}
+	};
+
+	Workbook.prototype.getExternalLinkByReferenceData = function (referenceData) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].referenceData) {
+				if (this.externalReferences[i].referenceData.fileId === referenceData.fileId && this.externalReferences[i].referenceData.portalName === referenceData.portalName) {
+					return {index: i + 1, val: this.externalReferences};
+				}
+			}
+		}
+		return null;
+	};
+
+	Workbook.prototype.getExternalReferences = function () {
+		var res = null;
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (!res) {
+				res = [];
+			}
+			res.push(this.externalReferences[i].getAscLink())
+		}
+		return res;
+	};
+
+	Workbook.prototype.removeExternalReferenceBySheet = function (sheetId) {
+		//пока предполагаю, что здесь будет массив asc_CExternalReference
+		var index = this.getExternalLinkIndexBySheetId(sheetId);
+		if (index !== null) {
+			var eR = this.externalReferences[index - 1];
+			if (eR.SheetNames.length === 1) {
+				//удаляем ссылку
+				this.removeExternalReference(index, true);
+			} else {
+				var to = eR.clone();
+				eR.removeSheetById(sheetId);
+				this.changeExternalReference(index, eR);
+			}
+		}
 	};
 
 //-------------------------------------------------------------------------------------------------

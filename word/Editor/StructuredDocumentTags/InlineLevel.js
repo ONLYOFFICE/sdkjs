@@ -440,6 +440,10 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 {
 	PDSH.AddInlineSdt(this);
+
+	if (PDSH.IsCollectFixedForms())
+		return CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+
 	var oGraphics = PDSH.Graphics;
 
 	if (this.IsSkipDraw(oGraphics))
@@ -2878,7 +2882,7 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 			{
 				if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
 				{
-					nW = this.Bounds[Key].W + 0.5;
+					nW = this.Bounds[Key].W + (2 * 25.4 / 72) * 2 + 0.1;
 					nH = this.Bounds[Key].H + 0.1;
 					break;
 				}

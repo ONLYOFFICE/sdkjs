@@ -2134,6 +2134,7 @@ CGraphics.prototype =
             this._m(x, y);
             this._l(r, y);
             this.ds();
+            this._s();
             return;
         }
 
@@ -2197,6 +2198,8 @@ CGraphics.prototype =
                 break;
             }
         }
+
+        ctx.beginPath();
     },
     drawHorLine2 : function(align, y, x, r, penW)
     {
@@ -2224,6 +2227,7 @@ CGraphics.prototype =
             this._m(x, _y2);
             this._l(r, _y2);
             this.ds();
+            this._s();
             return;
         }
 
@@ -2274,6 +2278,8 @@ CGraphics.prototype =
                 break;
             }
         }
+
+        ctx.beginPath();
     },
     drawVerLine : function(align, x, y, b, penW)
     {
@@ -2293,6 +2299,7 @@ CGraphics.prototype =
             this._m(x, y);
             this._l(x, b);
             this.ds();
+            this._s();
             return;
         }
 
@@ -2353,6 +2360,8 @@ CGraphics.prototype =
                 break;
             }
         }
+
+        ctx.beginPath();
     },
 
     // мега крутые функции для таблиц
@@ -2374,6 +2383,7 @@ CGraphics.prototype =
             this._m(x, y);
             this._l(r, y);
             this.ds();
+            this._s();
             return;
         }
 
@@ -2490,6 +2500,8 @@ CGraphics.prototype =
                 break;
             }
         }
+
+        ctx.beginPath();
     },
 
     rect : function(x,y,w,h)

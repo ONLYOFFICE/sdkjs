@@ -1112,171 +1112,11 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
         }
         return sSVG;
     };
-    Path.prototype.readAttrXml = function (name, reader) {
-        switch (name) {
-            case "extrusionOk": {
-                this.setExtrusionOk(reader.GetValueBool());
-                break;
-            }
-            case "fill": {
-                this.setFill(reader.GetValue());
-                break;
-            }
-            case "stroke": {
-                this.setStroke(reader.GetValueBool());
-                break;
-            }
-            case "w": {
-                this.setPathW(reader.GetValueInt());
-                break;
-            }
-            case "h": {
-                this.setPathH(reader.GetValueInt());
-                break;
-            }
-        }
-    };
-    Path.prototype.readChildXml = function (name, reader) {
-        switch (name) {
-            case "arcTo": {
-                let oCmd = new AscFormat.CBaseAttrObject();
-                oCmd.fromXml(reader);
-                let oAttr = oCmd.attr;
-                this.arcTo(oAttr["wR"], oAttr["hR"], oAttr["stAng"], oAttr["swAng"]);
-                break;
-            }
-            case "close": {
-                this.close();
-                break;
-            }
-            case "cubicBezTo": {
-                let oCmd = new CPathCmd();
-                oCmd.fromXml(reader);
-                if(oCmd.pts.length === 3) {
-                    let pt0 = oCmd.pts[0];
-                    let pt1 = oCmd.pts[1];
-                    let pt2 = oCmd.pts[2];
-                    this.cubicBezTo(pt0.x, pt0.y, pt1.x, pt1.y, pt2.x, pt2.y);
-                }
-                break;
-            }
-            case "lnTo": {
-                let oCmd = new CPathCmd();
-                oCmd.fromXml(reader);
-                if(oCmd.pts.length === 1) {
-                    let pt0 = oCmd.pts[0];
-                    this.lnTo(pt0.x, pt0.y);
-                }
-                break;
-            }
-            case "moveTo": {
-                let oCmd = new CPathCmd();
-                oCmd.fromXml(reader);
-                if(oCmd.pts.length === 1) {
-                    let pt0 = oCmd.pts[0];
-                    this.moveTo(pt0.x, pt0.y);
-                }
-                break;
-            }
-            case "quadBezTo": {
-                let oCmd = new CPathCmd();
-                oCmd.fromXml(reader);
-                if(oCmd.pts.length === 2) {
-                    let pt0 = oCmd.pts[0];
-                    let pt1 = oCmd.pts[1];
-                    this.quadBezTo(pt0.x, pt0.y, pt1.x, pt1.y);
-                }
-                break;
-            }
-        }
-    };
-    Path.prototype.fromXml = function (reader, bSkipFirstNode) {
-        this.setExtrusionOk(false);
-        this.setFill("norm");
-        this.setStroke(true);
-        AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
-    };
-    Path.prototype.toXml = function (writer) {
-        writer.WriteXmlNodeStart("a:path");
-
-        writer.WriteXmlNullableAttributeUInt("w", this.pathW);
-        writer.WriteXmlNullableAttributeUInt("h", this.pathH);
-        writer.WriteXmlNullableAttributeString("fill", this.fill);
-        writer.WriteXmlNullableAttributeString("stroke", this.stroke);
-        writer.WriteXmlNullableAttributeBool("extrusionOk", this.extrusionOk);
-        writer.WriteXmlAttributesEnd();
-
-        let nCount = this.ArrPathCommandInfo.length;
-        for (let i = 0; i < nCount; ++i) {
-            let oCmd = this.ArrPathCommandInfo[i];
-            switch (oCmd.id) {
-                case moveTo: {
-                    writer.WriteXmlNodeStart("a:moveTo");
-                    writer.WriteXmlAttributesEnd();
-                    AscFormat.CGeomPt.prototype.toXml(writer, "a:pt", oCmd.X, oCmd.Y);
-                    writer.WriteXmlNodeEnd("a:moveTo");
-                    break;
-                }
-                case lineTo: {
-                    writer.WriteXmlNodeStart("a:lnTo");
-                    writer.WriteXmlAttributesEnd();
-                    AscFormat.CGeomPt.prototype.toXml(writer, "a:pt", oCmd.X, oCmd.Y);
-                    writer.WriteXmlNodeEnd("a:lnTo");
-                    break;
-                }
-                case arcTo: {
-                    writer.WriteXmlNodeStart("a:arcTo");
-                    writer.WriteXmlNullableAttributeString("wR", oCmd.wR);
-                    writer.WriteXmlNullableAttributeString("hR", oCmd.hR);
-                    writer.WriteXmlNullableAttributeString("stAng", oCmd.stAng);
-                    writer.WriteXmlNullableAttributeString("swAng", oCmd.swAng);
-                    writer.WriteXmlAttributesEnd();
-                    writer.WriteXmlNodeEnd("a:arcTo");
-                    break;
-                }
-                case bezier3: {
-                    writer.WriteXmlNodeStart("a:quadBezTo");
-                    writer.WriteXmlAttributesEnd();
-                    AscFormat.CGeomPt.prototype.toXml(writer, "a:pt", oCmd.X0, oCmd.Y0);
-                    AscFormat.CGeomPt.prototype.toXml(writer, "a:pt", oCmd.X1, oCmd.Y1);
-                    writer.WriteXmlNodeEnd("a:quadBezTo");
-                    break;
-                }
-                case bezier4: {
-                    writer.WriteXmlNodeStart("a:cubicBezTo");
-                    writer.WriteXmlAttributesEnd();
-                    AscFormat.CGeomPt.prototype.toXml(writer, "a:pt", oCmd.X0, oCmd.Y0);
-                    AscFormat.CGeomPt.prototype.toXml(writer, "a:pt", oCmd.X1, oCmd.Y1);
-                    AscFormat.CGeomPt.prototype.toXml(writer, "a:pt", oCmd.X2, oCmd.Y2);
-                    writer.WriteXmlNodeEnd("a:cubicBezTo");
-                    break;
-                }
-                case close: {
-                    writer.WriteXmlNodeStart("a:close");
-                    writer.WriteXmlAttributesEnd(true);
-                    break;
-                }
-            }
-        }
-        writer.WriteXmlNodeEnd("a:path");
-    };
     function CPathCmd() {
         AscFormat.CBaseNoIdObject.call(this);
         this.pts = [];
     }
     AscFormat.InitClass(CPathCmd, AscFormat.CBaseNoIdObject, 0);
-    CPathCmd.prototype.readAttrXml = function (name, reader) {
-    };
-    CPathCmd.prototype.readChildXml = function (name, reader) {
-        switch (name) {
-            case "pt": {
-                let oPt = new AscFormat.CGeomPt();
-                oPt.fromXml(reader);
-                this.pts.push(oPt);
-                break;
-            }
-        }
-    };
 
     function CheckPointByPaths(dX, dY, dWidth, dHeight, dMinX, dMinY, oPolygonWrapper1, oPolygonWrapper2)
     {
@@ -2586,6 +2426,7 @@ function partition_bezier4(x0, y0, x1, y1, x2, y2, x3, y3, epsilon)
     window['AscFormat'].cToRad2 = cToRad2;
     window['AscFormat'].Path = Path;
     window['AscFormat'].Path2 = Path2;
+    window['AscFormat'].CPathCmd = CPathCmd;
     window['AscFormat'].partition_bezier3 = partition_bezier3;
     window['AscFormat'].partition_bezier4 = partition_bezier4;
 })(window);

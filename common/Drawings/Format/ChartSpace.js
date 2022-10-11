@@ -3228,9 +3228,11 @@ var GLOBAL_PATH_COUNT = 0;
         if(this.textLink !== null) {
             copy.setTextLink(this.textLink);
         }
-        copy.cachedImage = this.getBase64Img();
-        copy.cachedPixH = this.cachedPixH;
-        copy.cachedPixW = this.cachedPixW;
+        if(!oPr || false !== oPr.cacheImage) {
+            copy.cachedImage = this.getBase64Img();
+            copy.cachedPixH = this.cachedPixH;
+            copy.cachedPixW = this.cachedPixW;
+        }
         return copy;
     };
     CChartSpace.prototype.convertToWord = function(document) {
