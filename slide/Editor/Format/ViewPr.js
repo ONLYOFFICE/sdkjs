@@ -420,7 +420,7 @@
     const GUIDE_POS_TO_EMU = 1587.5;
 
     function GdPosToMm(nVal) {
-        return AscFormat.Emu_To_Mm(nVal * GUIDE_POS_TO_EMU);
+        return nVal * GUIDE_POS_TO_EMU / 36000;
     }
     function MmToGdPos(dVal) {
         return (dVal / GdPosToMm(1) + 0.5) >> 0;

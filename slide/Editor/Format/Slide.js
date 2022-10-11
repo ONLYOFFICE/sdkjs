@@ -1442,8 +1442,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     };
     CStrideData.prototype.getNearestPoint = function(x, y) {
         this.checkUpdate();
-        let em = AscFormat.Emu_To_Mm;
-        let me = AscFormat.Mm_To_Emu;
+        let em = function (dValue) {return dValue / 36000;};
+        let me = function(dValue) { return dValue * 36000 + 0.5 >> 0;};
         let nDX = me(x) - this.originX;
         let nDY = me(y) - this.originY;
         let nX = this.getNearestLinearPoint(nDX, this.originX);
@@ -1463,7 +1463,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         let mmp = function(dMM) {
             return (dMM*dPixScale + 0.5) >> 0;
         };
-        let em = AscFormat.Emu_To_Mm;
+        let em = function (val) {return val / 36000;};
         let ep = function(nEmu) {
             return mmp(em(nEmu));
         };
