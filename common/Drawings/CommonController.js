@@ -9566,6 +9566,7 @@ DrawingObjectsController.prototype =
                 }
                 callback.apply(_this, args);
                 _this.startRecalculate();
+                oApi.checkChangesSize();
                 if(!(bNoSendProps === true))
                 {
                     _this.drawingObjects.sendGraphicObjectProps();

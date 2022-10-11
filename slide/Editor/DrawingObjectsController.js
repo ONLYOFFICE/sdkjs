@@ -190,12 +190,13 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndCallback = function(ca
             ];
         }
     }
-    if(editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(check_type, aCommentData, undefined, aAdditionaObjects) === false)
+    let oPresentation = editor.WordControl.m_oLogicDocument;
+    if(oPresentation.Document_Is_SelectionLocked(check_type, aCommentData, undefined, aAdditionaObjects) === false)
     {
         var nPointType = AscFormat.isRealNumber(nHistoryPointType) ? nHistoryPointType : AscDFH.historydescription_CommonControllerCheckSelected;
-        History.Create_NewPoint(nPointType);
+        oPresentation.StartAction(nPointType)
         callback.apply(this, args);
-        this.startRecalculate();
+        oPresentation.FinalizeAction();
     }
 };
 DrawingObjectsController.prototype.startRecalculate = function()
