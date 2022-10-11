@@ -10813,7 +10813,7 @@
     };
     CMinusPlus.prototype.update = function() {
         if(this.numRef) {
-            this.numRef.update();
+            this.numRef.updateCache();
         }
     };
     CMinusPlus.prototype.handleOnChangeSheetName = function(sOldSheetName, sNewSheetName) {
