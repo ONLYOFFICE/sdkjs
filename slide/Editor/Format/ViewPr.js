@@ -630,7 +630,7 @@
     };
     CCSldViewPr.prototype.removeGuide = function(nIdx) {
         if(this.guideLst[nIdx]) {
-            oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CSldViewPrGuideLst, this.guideLst.length, [this.guideLst[nIdx]], false))
+            oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CSldViewPrGuideLst, nIdx, [this.guideLst[nIdx]], false))
             this.guideLst.splice(nIdx, 1);
         }
     };
@@ -869,5 +869,10 @@
 
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CViewPr = CViewPr;
+    window['AscFormat'].CCommonViewPr = CCommonViewPr;
+    window['AscFormat'].CCSldViewPr = CCSldViewPr;
+    window['AscFormat'].CCViewPr = CCViewPr;
+    window['AscFormat'].CViewPrScale = CScale;
+    window['AscFormat'].CViewPrGuide = CGuide;
     window['AscFormat'].MmToGdPos = MmToGdPos;
 }) (window);

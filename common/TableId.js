@@ -461,6 +461,12 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_NamedSheetView]       = Asc.CT_NamedSheetView;
 			this.m_oFactoryClass[AscDFH.historyitem_type_DataValidation]       = AscCommonExcel.CDataValidation;
 			this.m_oFactoryClass[AscDFH.historyitem_type_OleSizeSelection  ]   = AscCommonExcel.OleSizeSelectionRange;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPr]               = AscFormat.CViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CommonViewPr]         = AscFormat.CCommonViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CSldViewPr]           = AscFormat.CCSldViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CViewPr]              = AscFormat.CCViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPrScale]          = AscFormat.CViewPrScale;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPrGuide]          = AscFormat.CViewPrGuide;
 
 		}
 
