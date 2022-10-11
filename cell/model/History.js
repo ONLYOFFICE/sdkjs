@@ -1151,7 +1151,7 @@ CHistory.prototype.EndTransaction = function()
 		if (wsView) {
 			wsView.updateTopLeftCell();
 		}
-		api && api.sendEvent("EndTransactionCheckSize");
+		this.workbook && this.workbook.handlers.trigger("EndTransactionCheckSize");
 	}
 	this.Transaction--;
 	if(this.Transaction < 0)
