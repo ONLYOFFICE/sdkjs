@@ -12906,7 +12906,7 @@ background-repeat: no-repeat;\
 			if (password === "") {
 				checkPassword([""]);
 			} else {
-				var checkHash = {password: password, salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)};
+				var checkHash = {password: AscCommon.prepareWordPassword(password), salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)};
 				AscCommon.calculateProtectHash([checkHash], checkPassword);
 			}
 		} else {
