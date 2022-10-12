@@ -15708,14 +15708,16 @@ CErrBarsDraw.prototype = {
 			switch (errBars.errValType) {
 				case AscFormat.st_errvaltypeCUST: {
 					//TODO numRef ?
-					if (errBars.plus && errBars.plus.numLit) {
-						plusErrVal = errBars.plus.numLit.getPtByIndex(errBars.plus.numLit.ptCount === 1 ? 0 : val);
+					var numLit = errBars.plus.numLit || (errBars.plus.numRef && errBars.plus.numRef.numCache);
+					if (errBars.plus && numLit) {
+						plusErrVal = numLit.getPtByIndex(numLit.ptCount === 1 ? 0 : val);
 						if (plusErrVal) {
 							plusErrVal = plusErrVal.val;
 						}
 					}
-					if (errBars.minus && errBars.minus.numLit) {
-						minusErrVal = errBars.minus.numLit.getPtByIndex(errBars.plus.numLit.ptCount === 1 ? 0 : val);
+					numLit = errBars.minus.numLit || (errBars.minus.numRef && errBars.minus.numRef.numCache);
+					if (errBars.minus && numLit) {
+						minusErrVal = numLit.getPtByIndex(numLit.ptCount === 1 ? 0 : val);
 						if (minusErrVal) {
 							minusErrVal = minusErrVal.val;
 						}
