@@ -213,8 +213,7 @@
 
 				if (isSet) {
 					for (let k = 0; k < _encryptionMatrix[0][0].length; k++) {
-						highOrderWord[k] = highOrderWord[k] ^ 			var encryptionMatrixIndex = i + (_encryptionMatrix.length - passwordLength);
-						[encryptionMatrixIndex][j][k];
+						highOrderWord[k] = highOrderWord[k] ^ _encryptionMatrix[encryptionMatrixIndex][j][k];
 					}
 				}
 			}
