@@ -2094,7 +2094,7 @@
 		var nRow = bbox.r2 - bbox.r1 + 1;
 		var res;
 		if (this.range.isOneCell()) {
-			res = this.range.getValue();
+			res = this.range.getValueWithoutFormat();
 		} else {
 			res = [];
 			for (var i = 0; i < nRow; i++) {
@@ -2130,7 +2130,7 @@
 		var nRow = bbox.r2 - bbox.r1 + 1;
 		var res;
 		if (this.range.isOneCell()) {
-			res = this.range.getValue();
+			res = this.range.getValueWithFormat();
 		} else {
 			res = [];
 			for (var i = 0; i < nRow; i++) {
@@ -2147,7 +2147,7 @@
 
 	Object.defineProperty(ApiRange.prototype, "Text", {
 		get: function () {
-			return this.range.getValueWithFormat();
+			return this.GetText();
 		},
 		set: function (value) {
 			this.SetValue(value);
