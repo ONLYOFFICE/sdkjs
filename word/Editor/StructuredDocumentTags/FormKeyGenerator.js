@@ -47,13 +47,20 @@
 
 	CFormKeyGenerator.prototype.GetNewKey = function(form)
 	{
-		let key = this.GenerateKey(form);
-		while (!this.CheckKey(key))
+		if (form && form.IsRadioButton())
 		{
-			key = this.GenerateKey(form);
+			return this.GenerateRadioButtonKey(form);
 		}
+		else
+		{
+			let key = this.GenerateKey(form);
+			while (!this.CheckKey(key))
+			{
+				key = this.GenerateKey(form);
+			}
 
-		return key;
+			return key;
+		}
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -68,11 +75,8 @@
 	};
 	CFormKeyGenerator.prototype.GenerateKey = function(form)
 	{
-		if (form && form.IsRadioButton())
-			return this.GenerateRadioButtonKey(form);
-
 		let counter = this.GlobalCounter++;
-		
+
 		if (!form)
 			return "Form" + counter;
 		else if (form.IsComplexForm())
@@ -97,7 +101,7 @@
 		let choiceKeys = {};
 		for (let index = 0, count = buttons.length; index < count; ++index)
 		{
-			choiceKeys[buttons.GetFormKey()] = buttons;
+			choiceKeys[buttons[index].GetFormKey()] = buttons;
 		}
 
 		let choiceNum = buttons.length;
