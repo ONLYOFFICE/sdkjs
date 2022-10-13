@@ -729,7 +729,7 @@ function CChangesDocumentProtection(Class, Old, New) {
 	if (Old && New) {
 		this.OldAlgorithmName = Old.algorithmName;
 		this.OldEdit = Old.edit;
-		this.OldEnforcment = Old.enforcment;
+		this.OldEnforcement = Old.enforcement;
 		this.OldFormatting = Old.formatting;
 		this.OldHashValue = Old.hashValue;
 		this.OldSaltValue = Old.saltValue;
@@ -746,7 +746,7 @@ function CChangesDocumentProtection(Class, Old, New) {
 
 		this.NewAlgorithmName = New.algorithmName === Old.algorithmName ? undefined : New.algorithmName;
 		this.NewEdit = New.edit === Old.edit ? undefined : New.edit;
-		this.NewEnforcment = New.enforcment === Old.enforcment ? undefined : New.enforcment;
+		this.NewEnforcement = New.enforcement === Old.enforcement ? undefined : New.enforcement;
 		this.NewFormatting = New.formatting === Old.formatting ? undefined : New.formatting;
 		this.NewHashValue = New.hashValue === Old.hashValue ? undefined : New.hashValue;
 		this.NewSaltValue = New.saltValue === Old.saltValue ? undefined : New.saltValue;
@@ -763,7 +763,7 @@ function CChangesDocumentProtection(Class, Old, New) {
 	} else {
 		this.OldAlgorithmName = undefined;
 		this.OldEdit = undefined;
-		this.OldEnforcment = undefined;
+		this.OldEnforcement = undefined;
 		this.OldFormatting = undefined;
 		this.OldHashValue = undefined;
 		this.OldSaltValue = undefined;
@@ -780,7 +780,7 @@ function CChangesDocumentProtection(Class, Old, New) {
 
 		this.NewAlgorithmName = undefined;
 		this.NewEdit = undefined;
-		this.NewEnforcment = undefined;
+		this.NewEnforcement = undefined;
 		this.NewFormatting = undefined;
 		this.NewHashValue = undefined;
 		this.NewSaltValue = undefined;
@@ -807,7 +807,7 @@ CChangesDocumentProtection.prototype.Undo = function () {
 
 	this.Class.algorithmName = this.OldAlgorithmName;
 	this.Class.edit = this.OldEdit;
-	this.Class.enforcment = this.OldEnforcment;
+	this.Class.enforcement = this.OldEnforcement;
 	this.Class.formatting = this.OldFormatting;
 
 	this.Class.hashValue = this.OldHashValue;
@@ -834,7 +834,7 @@ CChangesDocumentProtection.prototype.Redo = function () {
 
 	this.Class.algorithmName = this.NewAlgorithmName;
 	this.Class.edit = this.NewEdit;
-	this.Class.enforcment = this.NewEnforcment;
+	this.Class.enforcement = this.NewEnforcement;
 	this.Class.formatting = this.NewFormatting;
 	this.Class.hashValue = this.NewHashValue;
 	this.Class.saltValue = this.NewSaltValue;
@@ -876,9 +876,9 @@ CChangesDocumentProtection.prototype.WriteToBinary = function (Writer) {
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewEnforcment) {
+	if (undefined !== this.NewEnforcement) {
 		Writer.WriteBool(true);
-		Writer.WriteBool(this.NewEnforcment);
+		Writer.WriteBool(this.NewEnforcement);
 	} else {
 		Writer.WriteBool(false);
 	}
@@ -977,7 +977,7 @@ CChangesDocumentProtection.prototype.ReadFromBinary = function (Reader) {
 		this.NewEdit = Reader.GetByte();
 	}
 	if (Reader.GetBool()) {
-		this.NewEnforcment = Reader.GetBool();
+		this.NewEnforcement = Reader.GetBool();
 	}
 	if (Reader.GetBool()) {
 		this.NewFormatting = Reader.GetBool();

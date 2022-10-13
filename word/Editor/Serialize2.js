@@ -722,7 +722,7 @@ var c_oSer_SettingsType = {
 var c_oDocProtect = {
 	AlgorithmName: 0,
 	Edit: 1,
-	Enforcment: 2,
+	Enforcement: 2,
 	Formatting: 3,
 	HashValue: 4,
 	SaltValue: 5,
@@ -7250,16 +7250,16 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 				oThis.memory.WriteByte(oDocProtect.algorithmName);
 			});
 		}
-		if (oDocProtect.edit)
+		if (null !== oDocProtect.edit)
 		{
 			this.bs.WriteItem(c_oDocProtect.Edit, function () {
 				oThis.memory.WriteByte(oDocProtect.edit);
 			});
 		}
-		if (null !== oDocProtect.enforcment)
+		if (null !== oDocProtect.enforcement)
 		{
-			this.bs.WriteItem(c_oDocProtect.Enforcment, function () {
-				oThis.memory.WriteBool(oDocProtect.enforcment);
+			this.bs.WriteItem(c_oDocProtect.Enforcement, function () {
+				oThis.memory.WriteBool(oDocProtect.enforcement);
 			});
 		}
 		if (null !== oDocProtect.formatting)
@@ -8382,9 +8382,9 @@ function BinaryFileReader(doc, openParams)
 		if (docProtection) {
 			//this.Document.applyProtection()
 			var restrictionType = docProtection.getRestrictionType();
-			if (/*docProtection.isOnlyView() && false !== docProtection.getEnforcment()*/restrictionType !== null) {
+			if (/*docProtection.isOnlyView() && false !== docProtection.getEnforcement()*/restrictionType !== null) {
 				api && api.asc_addRestriction(restrictionType);
-			} else if (false !== docProtection.getEnforcment() ) {
+			} else if (false !== docProtection.getEnforcement() ) {
 				//TODO ?
 				api && api.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 			}
@@ -16825,9 +16825,9 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		{
 			pDocProtect.edit = this.stream.GetUChar();
 		}
-		else if (c_oDocProtect.Enforcment == type)
+		else if (c_oDocProtect.Enforcement == type)
 		{
-			pDocProtect.enforcment = this.stream.GetUChar() != 0;
+			pDocProtect.enforcement = this.stream.GetUChar() != 0;
 		}
 		else if (c_oDocProtect.Formatting == type)
 		{

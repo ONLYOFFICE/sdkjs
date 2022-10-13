@@ -63,7 +63,7 @@ function CDocProtect() {
 
 	this.algorithmName = null;
 	this.edit = null;
-	this.enforcment = null;
+	this.enforcement = null;
 	this.formatting = null;
 	this.hashValue = null;
 	this.saltValue = null;
@@ -93,8 +93,8 @@ CDocProtect.prototype.Get_Id = function () {
 CDocProtect.prototype.isOnlyView = function () {
 	return this.edit === Asc.c_oAscEDocProtect.ReadOnly;
 };
-CDocProtect.prototype.getEnforcment = function () {
-	return this.enforcment;
+CDocProtect.prototype.getEnforcement = function () {
+	return this.enforcement;
 };
 CDocProtect.prototype.getRestrictionType = function () {
 	var res = null;
@@ -152,7 +152,7 @@ CDocProtect.prototype.setFromInterface = function (oProps) {
 	this.cryptAlgorithmSid = oProps.cryptAlgorithmSid;
 	this.hashValue = oProps.hashValue;
 
-	this.enforcment = oProps.enforcment;
+	this.enforcement = oProps.enforcement;
 };
 CDocProtect.prototype.Refresh_RecalcData = function () {
 };
@@ -161,7 +161,7 @@ CDocProtect.prototype.Copy = function () {
 		var oDocProtect = new CDocProtect();
 		oDocProtect.algorithmName = this.algorithmName;
 		oDocProtect.edit = this.edit;
-		oDocProtect.enforcment = this.enforcment;
+		oDocProtect.enforcement = this.enforcement;
 		oDocProtect.formatting = this.formatting;
 		oDocProtect.hashValue = this.hashValue;
 		oDocProtect.saltValue = this.saltValue;
@@ -189,7 +189,7 @@ CDocProtect.prototype.Read_FromBinary2 = function(Reader)
 };*/
 CDocProtect.prototype.asc_getIsPassword = function()
 {
-	return this.enforcment ? this.isPassword() : null
+	return this.enforcement ? this.isPassword() : null
 };
 CDocProtect.prototype.asc_getEditType = function()
 {

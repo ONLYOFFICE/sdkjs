@@ -12845,7 +12845,7 @@ background-repeat: no-repeat;\
 					props.spinCount = spinCount;
 					props.cryptAlgorithmSid = alg;
 					props.hashValue = calculatedHashValue;
-					props.enforcment = props.edit && props.edit !== Asc.c_oAscEDocProtect.None;
+					props.enforcement = props.edit !== Asc.c_oAscEDocProtect.None;
 
 					oDocument.SetProtection(props);
 					oDocument.UpdateInterface();
