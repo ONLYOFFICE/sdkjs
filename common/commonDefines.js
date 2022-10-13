@@ -2347,7 +2347,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var changestype_Document_Settings         = 77; // Изменение общих настроек документа Document.Settings
 	var changestype_Timing                    = 78;
 	var changestype_ViewPr                    = 79;
-	var changestype_DocumentProtection        = 79;
+	var changestype_DocumentProtection        = 80;
 
 	var changestype_2_InlineObjectMove       = 1; // Передвигаем объект в заданную позцию (проверяем место, в которое пытаемся передвинуть)
 	var changestype_2_HdrFtr                 = 2; // Изменения с колонтитулом
