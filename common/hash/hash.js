@@ -166,24 +166,47 @@
 
 		var byteToBits = function (byte) {
 			var bitsArr = [];
-			for (let i = 7; i >= 0; i--) {
+			for (let i = 0; i < 8; i++) {
 				let bit = byte & (1 << i) ? 1 : 0;
 				bitsArr.push(bit);
 			}
 			return bitsArr;
 		};
-		var getBitsSequence = function (bytes) {
-			var bitsArr = [];
+		var getBitsSequence = function (bytes, getStr) {
+			var bitsArr = getStr ? "" : [];
 			//TODO ++ ?
-			for (let j = 0; i >= bytes.length; j++) {
-				var byte = bytes[i];
+			for (let j = 0; j < bytes.length; j++) {
+				var byte = bytes[j];
 				for (let i = 7; i >= 0; i--) {
 					let bit = byte & (1 << i) ? 1 : 0;
-					bitsArr.push(bit);
+					if (getStr) {
+						bitsArr += bit;
+					} else {
+						bitsArr.push(bit);
+					}
 				}
 			}
 
 			return bitsArr;
+		};
+
+
+
+		var getFull2Byte = function (str) {
+			var strLength = str.length;
+			var beforeStr = "0000000000000000".substring(0, 16 - strLength);
+			return beforeStr + str;
+		};
+
+		var toByteArray = function (str) {
+			/*var arr = [];
+			for (var i = 0; i < str; i++) {
+
+			}
+			return arr;*/
+			var byte1 = str.substring(0, 8);
+			var byte2 = str.substring(8, 16);
+			return [parseInt( byte1, 2), parseInt(byte2, 2)];
 		};
 
 		if (password == null) {
@@ -220,14 +243,37 @@
 		}
 
 		let lowOrderWord = [0x00, 0x00];
-		let lowOrderBitSequence = getBitsSequence(lowOrderWord);
-		let bitSequence1 = getBitsSequence([0x00, 0x01]);
-		let bitSequence7FFF = getBitsSequence([0x7F, 0xFF]);
+		let lowOrderBitSequence = getBitsSequence(lowOrderWord, true);
+		let bitSequence1 = getBitsSequence([0x00, 0x01], true);
+		let bitSequence7FFF = getBitsSequence([0x7F, 0xFF], true);
 
-		for (let i = passwordLength - 1; i >= 0; i--) {
+		let lowOrderSequence = parseInt(lowOrderBitSequence,2);
+		let sequence1 = parseInt(bitSequence1,2);
+		let sequence7FFF = parseInt(bitSequence7FFF,2);
+
+		/*for (let i = passwordLength - 1; i >= 0; i--) {
 			let passwordByte = passwordBytes[i];
 			lowOrderBitSequence = (((lowOrderBitSequence >> 14) & bitSequence1) | ((lowOrderBitSequence << 1) & bitSequence7FFF)) ^ getBitsSequence([0x00, passwordByte]);
+		}*/
+		for (let i = passwordLength - 1; i >= 0; i--) {
+			let passwordByte = passwordBytes[i];
+			let passwordBits = parseInt(getBitsSequence([0x00, passwordByte], true), 2);
+			lowOrderSequence = (((lowOrderSequence >> 14) & sequence1) | ((lowOrderSequence << 1) & sequence7FFF)) ^ passwordBits;
 		}
+
+		//lowOrderBitSequence = (lowOrderSequence).toString(2);
+		//lowOrderSequence = getFull2Byte(lowOrderBitSequence);
+
+		let bitTest1 = getBitsSequence([0x00, passwordLength], true);
+		let test1 = parseInt(bitTest1, 2);
+		let bitTest2 = getBitsSequence([0xCE, 0x4B], true);
+		let test2 = parseInt(bitTest2, 2);
+		lowOrderSequence = (((lowOrderSequence >> 14) & sequence1) | ((lowOrderSequence << 1) & sequence7FFF)) ^ test1 ^ test2;
+
+		lowOrderWord = toByteArray((getFull2Byte((lowOrderSequence).toString(2))));
+		var key = highOrderWord.concat(lowOrderWord).reverse();
+
+
 	};
 
 	window['AscCommon'].HashAlgs = {
