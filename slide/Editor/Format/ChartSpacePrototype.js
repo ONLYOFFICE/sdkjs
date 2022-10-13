@@ -308,7 +308,6 @@ CChartSpace.prototype.recalculateTransform = CShape.prototype.recalculateTransfo
 
 CChartSpace.prototype.createResizeTrack = CShape.prototype.createResizeTrack;
 CChartSpace.prototype.createMoveTrack = CShape.prototype.createMoveTrack;
-CChartSpace.prototype.getRectBounds = CShape.prototype.getRectBounds;
 
 CChartSpace.prototype.recalculateBounds = function()
 {

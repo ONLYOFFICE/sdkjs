@@ -622,13 +622,7 @@ window["asc_LocalRequestSign"] = function(guid, width, height, isView)
 		}
 	}
 
-	var isModify = false;
-	if (_editor.asc_isDocumentModified)
-		isModify = _editor.asc_isDocumentModified();
-	else
-		isModify = _editor.isDocumentModified();
-
-	if (!isModify)
+	if (!_editor.isDocumentModified())
 	{
 		_editor.sendEvent("asc_onSignatureClick", guid, width, height, window["asc_IsVisibleSign"](guid));
 		return;

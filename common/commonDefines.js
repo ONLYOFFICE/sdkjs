@@ -791,6 +791,16 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		MailMerge : 'asc_onSaveMailMerge'
 	};
 
+	var c_oAscFrameDataType = {
+		SendImageUrls: 0,
+		GetLoadedImages: 1,
+		OpenFrame: 2,
+		ShowImageDialogInFrame: 3,
+		GetUrlsFromImageDialog: 4,
+		SkipStartEndAction: 5,
+		StartUploadImageAction: 6
+	};
+
 	var CellValueType = {
 		Number : 0,
 		String : 1,
@@ -2335,7 +2345,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var changestype_SlideHide                 = 75;
 	var changestype_CorePr                    = 76;
 	var changestype_Document_Settings         = 77; // Изменение общих настроек документа Document.Settings
-	var changestype_Timing                    = 78; // Изменение общих настроек документа Document.Settings
+	var changestype_Timing                    = 78;
+	var changestype_ViewPr                    = 79;
 	var changestype_DocumentProtection        = 79;
 
 	var changestype_2_InlineObjectMove       = 1; // Передвигаем объект в заданную позцию (проверяем место, в которое пытаемся передвинуть)
@@ -4280,6 +4291,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].c_oAscMaxFormulaReferenceLength = c_oAscMaxFormulaReferenceLength;
 	window["AscCommon"].c_oAscMaxTableColumnTextLength = c_oAscMaxTableColumnTextLength;
 
+	window["AscCommon"].c_oAscFrameDataType = c_oAscFrameDataType;
+
 	prot =  window["AscCommon"]["c_oAscUrlType"] = window["AscCommon"].c_oAscUrlType = c_oAscUrlType;
 	prot["Invalid"] = prot.Invalid;
 	prot["Http"] = prot.Http;
@@ -4328,6 +4341,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].changestype_CorePr                    = changestype_CorePr;
 	window["AscCommon"].changestype_Document_Settings         = changestype_Document_Settings;
 	window["AscCommon"].changestype_Timing                    = changestype_Timing;
+	window["AscCommon"].changestype_ViewPr                    = changestype_ViewPr;
 	window["AscCommon"].changestype_DocumentProtection        = changestype_DocumentProtection;
 
 	window["AscCommon"].changestype_2_InlineObjectMove        = changestype_2_InlineObjectMove;

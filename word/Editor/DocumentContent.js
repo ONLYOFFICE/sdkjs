@@ -3031,11 +3031,11 @@ CDocumentContent.prototype.AddImages = function(aImages){
     }
 };
 
-CDocumentContent.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CDocumentContent.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
-		return this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
+		return this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 	}
 	else //if ( docpostype_Content === this.CurPos.Type )
 	{
@@ -3046,7 +3046,7 @@ CDocumentContent.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, 
 		if (type_Paragraph == Item.GetType())
 		{
 			var Drawing = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-			var Image   = this.DrawingObjects.createOleObject(Data, sApplicationId, Img, 0, 0, W, H, nWidthPix, nHeightPix);
+			var Image   = this.DrawingObjects.createOleObject(Data, sApplicationId, Img, 0, 0, W, H, nWidthPix, nHeightPix, arrImagesForAddToHistory);
 			Image.setParent(Drawing);
 			Drawing.Set_GraphicObject(Image);
 
@@ -3058,7 +3058,7 @@ CDocumentContent.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, 
 		}
 		else
 		{
-			Item.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+			Item.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 		}
 	}
 };

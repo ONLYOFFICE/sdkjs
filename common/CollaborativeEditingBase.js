@@ -363,7 +363,7 @@
         if(!oApi){
             return;
         }
-        rData['c'] = 'pathurls';
+        rData['type'] = 'pathurls';
         rData['data'] = [];
         for(i = 0; i < aImages.length; ++i)
         {
@@ -375,9 +375,9 @@
         if(false === oApi.isSaveFonts_Images){
             oApi.isSaveFonts_Images = true;
         }
-        oApi.fCurCallback = function (oRes) {
+        var callback = function (isTimeout, oRes) {
             var aData, i, oUrls;
-            if(oRes['status'] === 'ok')
+            if(oRes && oRes['status'] === 'ok')
             {
                 aData = oRes['data'];
                 oUrls= {};
@@ -389,7 +389,10 @@
             }
             AscCommon.CollaborativeEditing.SendImagesCallback(aImagesToLoad);
         };
-        AscCommon.sendCommand(oApi, null, rData);
+
+        if (!oApi.CoAuthoringApi.callPRC(rData, Asc.c_nCommonRequestTime, callback)) {
+            callback(false, undefined);
+        }
     };
 
     CCollaborativeEditingBase.prototype.SendImagesCallback = function (aImages) {
@@ -915,7 +918,7 @@
             this.m_aCursorsToUpdate = {};
         }
         else {
-            DocState = LogicDocument.Save_DocumentStateBeforeLoadChanges();
+            DocState = LogicDocument.Save_DocumentStateBeforeLoadChanges(false, true);
         }
         return DocState;
     };
@@ -932,7 +935,8 @@
             this.Refresh_ForeignCursors();
         }
     };
-    CCollaborativeEditingBase.prototype.WatchDocumentPositionsByState = function(DocState) {
+    CCollaborativeEditingBase.prototype.WatchDocumentPositionsByState = function(DocState)
+	{
         this.Clear_DocumentPositions();
 
         if (DocState.Pos)
@@ -941,6 +945,11 @@
             this.Add_DocumentPosition(DocState.StartPos);
         if (DocState.EndPos)
             this.Add_DocumentPosition(DocState.EndPos);
+
+		if (DocState.ViewPosTop)
+			this.Add_DocumentPosition(DocState.ViewPosTop);
+		if (DocState.ViewPosBottom)
+			this.Add_DocumentPosition(DocState.ViewPosBottom);
 
         if (DocState.FootnotesStart && DocState.FootnotesStart.Pos)
             this.Add_DocumentPosition(DocState.FootnotesStart.Pos);
@@ -955,13 +964,19 @@
         if (DocState.FootnotesEnd && DocState.FootnotesEnd.EndPos)
             this.Add_DocumentPosition(DocState.FootnotesEnd.EndPos);
     };
-    CCollaborativeEditingBase.prototype.UpdateDocumentPositionsByState = function(DocState) {
+    CCollaborativeEditingBase.prototype.UpdateDocumentPositionsByState = function(DocState)
+	{
         if (DocState.Pos)
             this.Update_DocumentPosition(DocState.Pos);
         if (DocState.StartPos)
             this.Update_DocumentPosition(DocState.StartPos);
         if (DocState.EndPos)
             this.Update_DocumentPosition(DocState.EndPos);
+
+		if (DocState.ViewPosTop)
+			this.Update_DocumentPosition(DocState.ViewPosTop);
+		if (DocState.ViewPosBottom)
+			this.Update_DocumentPosition(DocState.ViewPosBottom);
 
         if (DocState.FootnotesStart && DocState.FootnotesStart.Pos)
             this.Update_DocumentPosition(DocState.FootnotesStart.Pos);
@@ -1103,14 +1118,20 @@
 				let change = this.m_aAllChanges[index--];
 				if (!change)
 					continue;
-				
-				// TODO: Чтобы здесь вызывать простое change.Undo, нужно поправить все изменения, чтобы
-				//       они на Undo/Redo работали с PosArray. А пока делаем такую заглушку CreateReverse->Load
-				let reverseChange = change.CreateReverseChange();
-				if (reverseChange)
+
+				if (change.IsContentChange())
 				{
-					reverseChange.Load();
-					changeArray.push(reverseChange);
+					let simpleChanges = change.ConvertToSimpleChanges();
+					for (let simpleIndex = simpleChanges.length - 1; simpleIndex >= 0; --simpleIndex)
+					{
+						simpleChanges[simpleIndex].Undo();
+						changeArray.push(simpleChanges[simpleIndex]);
+					}
+				}
+				else
+				{
+					change.Undo();
+					changeArray.push(change);
 				}
 			}
 

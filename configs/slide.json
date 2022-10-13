@@ -72,7 +72,6 @@
 			"common/Drawings/States.js",
 			"common/Drawings/DrawingsChanges.js",
 			"common/Drawings/Format/Format.js",
-			"common/Drawings/Format/VML.js",
 			"common/Drawings/Format/CreateGeometry.js",
 			"common/Drawings/Format/Geometry.js",
 			"common/Drawings/Format/GraphicObjectBase.js",
@@ -164,6 +163,7 @@
 			"slide/Drawing/DrawingDocument.js",
 			"slide/Drawing/HtmlPage.js",
 			"slide/Editor/Format/Presentation.js",
+			"slide/Editor/Format/ViewPr.js",
 			"slide/Editor/DrawingObjectsController.js",
 			"slide/Editor/Format/Timing.js",
 			"slide/Editor/Format/Slide.js",
@@ -295,7 +295,7 @@
 
 			"common/versionHistory.js",
 			"common/clipboard_base.js",
-			"common/text_input.js",
+			"common/text_input2.js",
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",
@@ -303,12 +303,7 @@
 			"common/Native/native_graphics.js",
 			
 			"vendor/easysax.js",
-			"common/openxml.js",
-			"common/Shapes/SerializeXml.js",
-			"common/SerializeChartXml.js",
-			"common/SerializeMathXml.js",
-			"word/Editor/SerializeXml.js",
-			"word/Editor/SerializeXmlAssets.js"
+			"common/openxml.js"
 		],
 		"desktop": {
 			"min": [

@@ -521,7 +521,7 @@
 
     CConnectionShape.prototype.copy = function (oPr) {
         var copy = new CConnectionShape();
-        this.fillObject(copy);
+        this.fillObject(copy, oPr);
         return copy;
     };
 
@@ -768,26 +768,6 @@
                 }
             }
         }
-    };
-    CConnectionShape.prototype.toXml = function(writer, sNamespace) {
-        let namespace_ = sNamespace || "a";
-
-        if		(writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
-            writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)	namespace_ = "wps";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_XLSX)			namespace_ = "xdr";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_GRAPHICS)		namespace_ = "a";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING)	namespace_ = "cdr";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DIAGRAM)			namespace_ = "dgm";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)		namespace_ = "dsp";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_PPTX)		namespace_ = "p";
-
-        writer.WriteXmlNodeStart(namespace_ + ":cxnSp");
-        writer.WriteXmlNullableAttributeString("macro", this.macro);
-        writer.WriteXmlAttributesEnd();
-        this.nvSpPr.toXmlCxn(writer);
-        this.spPr.toXml(writer);
-        writer.WriteXmlNullable(this.style);
-        writer.WriteXmlNodeEnd(namespace_ + ":cxnSp");
     };
 
     window['AscFormat'] = window['AscFormat'] || {};

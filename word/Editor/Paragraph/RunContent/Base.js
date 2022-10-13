@@ -290,6 +290,20 @@
 		return false;
 	};
 	/**
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsFieldChar = function()
+	{
+		return false;
+	};
+	/**
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsInstrText = function()
+	{
+		return false;
+	};
+	/**
 	 * @returns {AscWord.fontslot_Unknown}
 	 */
 	CRunElementBase.prototype.GetFontSlot = function(oTextPr)

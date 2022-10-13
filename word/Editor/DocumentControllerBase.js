@@ -310,8 +310,10 @@ CDocumentControllerBase.prototype.AddImages = function(aImages){};
  * @param oImage
  * @param oData
  * @param sApplicationId
+ * @param bSelect
+ * @param arrImagesForAddToHistory
  */
-CDocumentControllerBase.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect){};
+CDocumentControllerBase.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect, arrImagesForAddToHistory){};
 /**
  * Добавляем графический объект TextArt.
  * @param nStyle

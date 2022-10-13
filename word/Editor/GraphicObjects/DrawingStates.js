@@ -173,7 +173,7 @@ StartAddNewShape.prototype =
                 shape.select(this.drawingObjects, this.pageIndex);
                 this.drawingObjects.document.Recalculate();
 				oLogicDocument.FinalizeAction();
-                if(this.preset === "textRect")
+                if(this.preset && (this.preset.indexOf("textRect") === 0))
                 {
                     this.drawingObjects.selection.textSelection = shape;
                     shape.selectionSetStart(e, x, y, pageIndex);

@@ -752,9 +752,9 @@ CHeaderFooter.prototype =
         this.Content.AddSignatureLine(oSignatureDrawing);
     },
 
-	AddOleObject : function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+	AddOleObject : function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
     {
-        this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+        this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
     },
 
 	AddTextArt : function(nStyle)
@@ -2047,10 +2047,10 @@ CHeaderFooterController.prototype =
             return this.CurHdrFtr.AddSignatureLine(oSignatureDrawing);
     },
 
-	AddOleObject: function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+	AddOleObject: function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
     {
         if ( null != this.CurHdrFtr )
-            return this.CurHdrFtr.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+            return this.CurHdrFtr.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
     },
 
 	AddTextArt : function(nStyle)

@@ -1060,7 +1060,7 @@ DrawingObjectsController.prototype =
         for(var i = 0; i < _aConnectors.length; ++i){
             for(var j = 0; j < aDrawings.length; ++j){
                 if(aDrawings[j].getObjectType() === AscDFH.historyitem_type_GroupShape){
-                    if(bInsideGroup){
+                    if(bInsideGroup) {
                         this.getAllConnectorsByDrawings(aDrawings[j].getArrGraphicObjects(), _ret, _aConnectors, bInsideGroup);
                     }
                 }
@@ -6850,12 +6850,16 @@ DrawingObjectsController.prototype =
         return bRetValue;
     },
 
+    haveTrackedObjects: function(){
+        return this.arrTrackObjects.length > 0 || this.arrPreTrackObjects.length > 0;
+    },
+
     checkTrackDrawings: function(){
         return this.curState instanceof  AscFormat.StartAddNewShape
         || this.curState instanceof  AscFormat.SplineBezierState
         || this.curState instanceof  AscFormat.PolyLineAddState
         || this.curState instanceof  AscFormat.AddPolyLine2State
-        || this.arrTrackObjects.length > 0 || this.arrPreTrackObjects.length > 0;
+        || this.haveTrackedObjects();
     },
 
     checkEndAddShape: function()
@@ -7355,6 +7359,21 @@ DrawingObjectsController.prototype =
             aAllConnectors[i].calculateTransform();
         }
         this.drawingObjects.showDrawingObjects();
+    },
+
+    checkGraphicObjectPosition: function(x, y, w, h)
+    {
+        return {x: 0, y: 0};
+    },
+
+    isSnapToGrid: function()
+    {
+        return false;
+    },
+
+    getSnapNearestPos: function(dX, dY)
+    {
+        return null;
     },
 
     canGroup: function()
@@ -9245,10 +9264,13 @@ DrawingObjectsController.prototype =
         return image;
     },
 
-    createOleObject: function(data, sApplicationId, rasterImageId, x, y, extX, extY, nWidthPix, nHeightPix)
+    createOleObject: function(data, sApplicationId, rasterImageId, x, y, extX, extY, nWidthPix, nHeightPix, arrImagesForAddToHistory)
     {
         var oleObject = new AscFormat.COleObject();
         AscFormat.fillImage(oleObject, rasterImageId, x, y, extX, extY);
+        if (arrImagesForAddToHistory) {
+            oleObject.loadImagesFromContent(arrImagesForAddToHistory);
+        }
         if (data instanceof Uint8Array) {
             oleObject.setBinaryData(data);
         } else {
@@ -10422,6 +10444,15 @@ DrawingObjectsController.prototype =
         }
         AscCommon.History.Create_NewPoint(0);
         this.addImage(sImageUrl, nWidth, nHeight, null, null);
+    },
+    getHorGuidesPos: function() {
+        return [];
+    },
+    getVertGuidesPos: function() {
+        return [];
+    },
+    hitInGuide: function(x, y) {
+        return null;
     }
 };
 
@@ -11113,130 +11144,89 @@ CSlideBoundsChecker.prototype =
 // ASC Classes
 //-----------------------------------------------------------------------------------
 
-function GetMinSnapDistanceXObject(pointX, arrGrObjects, oExclude)
-{
-    var min_dx = null;
-    var ret = null;
-    for(var i = 0; i < arrGrObjects.length; ++i)
+    function GetMinSnapDistance(aSnap, dPos, dMinDistance)
     {
-        var cur_snap_arr_x = arrGrObjects[i].snapArrayX;
-        if(!cur_snap_arr_x)
+        if(!aSnap)
         {
-            continue;
+            return null;
         }
-        if(oExclude === arrGrObjects[i])
+        let dCurMinDistance = dMinDistance;
+        let oRet = null;
+        let nSnapCount = aSnap.length;
+        for(let nSnap  = 0; nSnap < nSnapCount; ++nSnap)
         {
-            continue;
-        }
-        var count = cur_snap_arr_x.length;
-        for(var snap_index  = 0; snap_index < count; ++snap_index)
-        {
-            var dx = cur_snap_arr_x[snap_index] - pointX;
-            if(min_dx === null)
+            let dDist = aSnap[nSnap] - dPos;
+            if(dCurMinDistance === null)
             {
-                ret = {dist: dx, pos: cur_snap_arr_x[snap_index]};
-                min_dx = dx;
+                oRet = {dist: dDist, pos: aSnap[nSnap]};
+                dCurMinDistance = dDist;
             }
             else
             {
-                if(Math.abs(dx) < Math.abs(min_dx))
+                if(Math.abs(dDist) < Math.abs(dCurMinDistance))
                 {
-                    min_dx = dx;
-                    ret = {dist: dx, pos: cur_snap_arr_x[snap_index]};
+                    dCurMinDistance = dDist;
+                    oRet = {dist: dDist, pos: aSnap[nSnap]};
                 }
             }
         }
+        return oRet;
     }
-    return ret;
+
+
+    function GetMinSnapDistancePosObject(dPos, aDrawings, oExclude, bXPoints, aGuides)
+    {
+        let dMinDistance = null;
+        let oResult = null;
+        for(let i = 0; i < aDrawings.length; ++i)
+        {
+            if(oExclude === aDrawings[i])
+            {
+                continue;
+            }
+            let aSnap;
+            if(bXPoints)
+            {
+                aSnap = aDrawings[i].snapArrayX;
+            }
+            else
+            {
+                aSnap = aDrawings[i].snapArrayY;
+            }
+            let oCurResult = GetMinSnapDistance(aSnap, dPos, dMinDistance);
+            if(oCurResult)
+            {
+                oResult = oCurResult;
+                dMinDistance = oCurResult.dist;
+            }
+        }
+        let oCurResult = GetMinSnapDistance(aGuides, dPos, dMinDistance);
+        if(oCurResult)
+        {
+            oResult = oCurResult;
+            oCurResult.guide = true;
+        }
+        return oResult;
+    }
+
+function GetMinSnapDistanceXObject(pointX, arrGrObjects, oExclude, aGuides)
+{
+    return GetMinSnapDistancePosObject(pointX, arrGrObjects, oExclude, true, aGuides);
 }
 
-function GetMinSnapDistanceYObject(pointY, arrGrObjects, oExclude)
+function GetMinSnapDistanceYObject(pointY, arrGrObjects, oExclude, aGuides)
 {
-    var min_dy = null;
-    var ret = null;
-    for(var i = 0; i < arrGrObjects.length; ++i)
-    {
-        var cur_snap_arr_y = arrGrObjects[i].snapArrayY;
-        if(!cur_snap_arr_y)
-        {
-            continue;
-        }
-        if(oExclude === arrGrObjects[i])
-        {
-            continue;
-        }
-        var count = cur_snap_arr_y.length;
-        for(var snap_index  = 0; snap_index < count; ++snap_index)
-        {
-            var dy = cur_snap_arr_y[snap_index] - pointY;
-            if(min_dy === null)
-            {
-                min_dy = dy;
-                ret = {dist: dy, pos: cur_snap_arr_y[snap_index]};
-            }
-            else
-            {
-                if(Math.abs(dy) < Math.abs(min_dy))
-                {
-                    min_dy = dy;
-                    ret = {dist: dy, pos: cur_snap_arr_y[snap_index]};
-                }
-            }
-        }
-    }
-    return ret;
+    return GetMinSnapDistancePosObject(pointY, arrGrObjects, oExclude, false, aGuides);
 }
 
 function GetMinSnapDistanceXObjectByArrays(pointX, snapArrayX)
 {
-    var min_dx = null;
-    var ret = null;
-    var cur_snap_arr_x = snapArrayX;
-    var count = cur_snap_arr_x.length;
-    for(var snap_index  = 0; snap_index < count; ++snap_index)
-    {
-        var dx = cur_snap_arr_x[snap_index] - pointX;
-        if(min_dx === null)
-        {
-            ret = {dist: dx, pos: cur_snap_arr_x[snap_index]};
-            min_dx = dx;
-        }
-        else
-        {
-            if(Math.abs(dx) < Math.abs(min_dx))
-            {
-                min_dx = dx;
-                ret = {dist: dx, pos: cur_snap_arr_x[snap_index]};
-            }
-        }
-    }
-    return ret;
+    return GetMinSnapDistance(snapArrayX, pointX, null);
 }
 
 function GetMinSnapDistanceYObjectByArrays(pointY, snapArrayY)
 {
-    var min_dy = null;
-    var ret = null;
-    var cur_snap_arr_y = snapArrayY;
-    var count = cur_snap_arr_y.length;
-    for(var snap_index  = 0; snap_index < count; ++snap_index)
-    {
-        var dy = cur_snap_arr_y[snap_index] - pointY;
-        if(min_dy === null)
-        {
-            min_dy = dy;
-            ret = {dist: dy, pos: cur_snap_arr_y[snap_index]};
-        }
-        else
-        {
-            if(Math.abs(dy) < Math.abs(min_dy))
-            {
-                min_dy = dy;
-                ret = {dist: dy, pos: cur_snap_arr_y[snap_index]};
-            }
-        }
-    }
-    return ret;
+    return GetMinSnapDistance(snapArrayY, pointY, null);
 }
 
 function getAbsoluteRectBoundsObject(drawing)

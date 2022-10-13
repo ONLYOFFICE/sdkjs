@@ -7621,6 +7621,52 @@ CStyle.prototype.IsTableStyle = function()
 	return (this.Type === styletype_Table);
 };
 
+CStyle.prototype.wholeToTablePr = function() {
+
+	let oWhole = this.TableWholeTable;
+	if(!oWhole) {
+		return
+	}
+	let oWholeBorders = oWhole.TablePr && oWhole.TablePr.TableBorders;
+	if(!oWholeBorders) {
+		return;
+	}
+	let oWholeCellBorders = oWhole.TableCellPr && oWhole.TableCellPr.TableCellBorders;
+	if(!oWholeCellBorders) {
+		return;
+	}
+
+	let oTablePBorders = this.TablePr && this.TablePr.TableBorders;
+	if(!oTablePBorders) {
+		return;
+	}
+
+	if(oWholeBorders.InsideH) {
+		oTablePBorders.InsideH = oWholeBorders.InsideH;
+		delete oWholeBorders.InsideH;
+	}
+	if(oWholeBorders.InsideV) {
+		oTablePBorders.InsideV = oWholeBorders.InsideV;
+		delete oWholeBorders.InsideV;
+	}
+	if(oWholeCellBorders.Top) {
+		oTablePBorders.Top = oWholeCellBorders.Top;
+		delete oWholeCellBorders.Top;
+	}
+	if(oWholeCellBorders.Bottom) {
+		oTablePBorders.Bottom = oWholeCellBorders.Bottom;
+		delete oWholeCellBorders.Bottom;
+	}
+	if(oWholeCellBorders.Left) {
+		oTablePBorders.Left = oWholeCellBorders.Left;
+		delete oWholeCellBorders.Left;
+	}
+	if(oWholeCellBorders.Right) {
+		oTablePBorders.Right = oWholeCellBorders.Right;
+		delete oWholeCellBorders.Right;
+	}
+};
+
 function CStyles(bCreateDefault)
 {
 	this.ValidDefaultEastAsiaFont = false;

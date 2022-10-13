@@ -158,6 +158,14 @@ AscFormat.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyite
                 this.spTree[i].getAllDocContents(aDocContents);
         }
     };
+    CGroupShape.prototype.checkRunContent = function(fCallback)
+    {
+        let aGraphics = this.getArrGraphicObjects();
+        for(let nIdx = 0; nIdx < aGraphics.length; ++nIdx)
+        {
+            aGraphics[nIdx].checkRunContent(fCallback);
+        }
+    };
 
     CGroupShape.prototype.documentCreateFontMap = function(allFonts)
     {
@@ -365,9 +373,11 @@ AscFormat.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyite
         if(this.fLocksText !== null) {
             copy.setFLocksText(this.fLocksText);
         }
-        copy.cachedImage = this.getBase64Img();
-        copy.cachedPixH = this.cachedPixH;
-        copy.cachedPixW = this.cachedPixW;
+        if(!oPr || false !== oPr.cacheImage) {
+            copy.cachedImage = this.getBase64Img();
+            copy.cachedPixH = this.cachedPixH;
+            copy.cachedPixW = this.cachedPixW;
+        }
         copy.setLocks(this.locks);
         return copy;
     };
@@ -545,35 +555,6 @@ AscFormat.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyite
     CGroupShape.prototype.getInvertTransform = function()
     {
         return this.invertTransform;
-    };
-
-    CGroupShape.prototype.getRectBounds = function()
-    {
-        var transform = this.getTransformMatrix();
-        var w = this.extX;
-        var h = this.extY;
-        var rect_points = [{x:0, y:0}, {x: w, y: 0}, {x: w, y: h}, {x: 0, y: h}];
-        var min_x, max_x, min_y, max_y;
-        min_x = transform.TransformPointX(rect_points[0].x, rect_points[0].y);
-        min_y = transform.TransformPointY(rect_points[0].x, rect_points[0].y);
-        max_x = min_x;
-        max_y = min_y;
-        var cur_x, cur_y;
-        for(var i = 1; i < 4; ++i)
-        {
-            cur_x = transform.TransformPointX(rect_points[i].x, rect_points[i].y);
-            cur_y = transform.TransformPointY(rect_points[i].x, rect_points[i].y);
-            if(cur_x < min_x)
-                min_x = cur_x;
-            if(cur_x > max_x)
-                max_x = cur_x;
-
-            if(cur_y < min_y)
-                min_y = cur_y;
-            if(cur_y > max_y)
-                max_y = cur_y;
-        }
-        return {minX: min_x, maxX: max_x, minY: min_y, maxY: max_y};
     };
 
     CGroupShape.prototype.getResultScaleCoefficients = function()
@@ -1921,57 +1902,6 @@ AscFormat.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyite
     };
 
 
-    CGroupShape.prototype.readChildXml = function (name, reader) {
-        let res;
-        if( "cxnSp" === name) {
-            res = new AscFormat.CConnectionShape();
-            res.setBDeleted(false);
-            res.fromXml(reader);
-            this.addToSpTree(null, res);
-        }
-        else if("grpSp" === name || "wgp" === name) {
-            res = new AscFormat.CGroupShape();
-            res.setBDeleted(false);
-            res.fromXml(reader);
-            this.addToSpTree(null, res);
-        }
-        else if("sp" === name || "wsp" === name) {
-            res = new AscFormat.CShape();
-            res.setBDeleted(false);
-			res.setWordShape("wsp" === name);
-            res.fromXml(reader);
-            this.addToSpTree(null, res);
-        }
-        else if ("pic" === name) {
-            res = new AscFormat.CImageShape();
-            res.setBDeleted(false);
-            res.fromXml(reader);
-            this.addToSpTree(null, res);
-        } else if ("graphicFrame" === name) {
-            res = new AscFormat.CGraphicFrame();
-            res.fromXml(reader);
-            res = res.graphicObject;
-            res && this.addToSpTree(null, res);
-        } else if ("grpSpPr" === name) {
-            res = new AscFormat.CSpPr();
-            res.fromXml(reader);
-            this.setSpPr(res);
-        } else if ("nvGrpSpPr" === name) {
-            res = new AscFormat.UniNvPr();
-            res.fromXml(reader);
-            this.setNvSpPr(res);
-            this.setLocks(res.getLocks());
-        }
-    };
-    CGroupShape.prototype.fromXml = function(reader, bSkipFirstNode) {
-        AscFormat.CGraphicObjectBase.prototype.fromXml.call(this, reader, bSkipFirstNode);
-        this.checkXfrm();
-    };
-    CGroupShape.prototype.toXml = function (writer) {
-        writer.context.groupIndex++;
-        AscFormat.CSpTree.prototype.toXml.call(this, writer, true);
-        writer.context.groupIndex--;
-    };
     CGroupShape.prototype.checkXfrm = function () {
         if(!this.spPr){
             return;

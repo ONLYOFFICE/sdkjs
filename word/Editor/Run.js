@@ -208,7 +208,7 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 
     var NewRun = new ParaRun(this.Paragraph, bMath);
 
-	NewRun.Set_Pr(this.Pr.Copy(undefined, oPr));
+	NewRun.Set_Pr(this.Pr.Copy(isCopyReviewPr, oPr));
 
     var oLogicDocument = this.GetLogicDocument();
 	if(oPr && oPr.Comparison)
@@ -3351,7 +3351,10 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 			nCombWidth = this.TextAscent;
 
 		let oParagraph = this.GetParagraph();
-		if (oParagraph && oParagraph.IsInFixedForm())
+		if (oParagraph
+			&& oParagraph.IsInFixedForm()
+			&& oParagraph.GetInnerForm()
+			&& !oParagraph.GetInnerForm().IsComplexForm())
 		{
 			isKeepWidth = true;
 			var oShape  = oParagraph.Parent.Is_DrawingShape(true);
@@ -8718,7 +8721,13 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 		&& (oLayout = oLogicDocument.GetDocumentLayout()))
 	{
 		let nFontCoef = oLayout.GetFontScale();
-		TextPr.FontSize   *= nFontCoef;
+
+		let shape   = this.Paragraph.GetParentShape();
+		let drawing = shape ? shape.GetParaDrawing() : null;
+		if (drawing)
+			nFontCoef = drawing.GetScaleCoefficient();
+
+		TextPr.FontSize *= nFontCoef;
 		TextPr.FontSizeCS *= nFontCoef;
 	}
 
@@ -10207,16 +10216,13 @@ ParaRun.prototype.ApplyFontFamily = function(sFontName)
 //-----------------------------------------------------------------------------------
 ParaRun.prototype.Check_HistoryUninon = function(Data1, Data2)
 {
-    var Type1 = Data1.Type;
-    var Type2 = Data2.Type;
-
-    if ( AscDFH.historyitem_ParaRun_AddItem === Type1 && AscDFH.historyitem_ParaRun_AddItem === Type2 )
-    {
-        if ( 1 === Data1.Items.length && 1 === Data2.Items.length && Data1.Pos === Data2.Pos - 1 && para_Text === Data1.Items[0].Type && para_Text === Data2.Items[0].Type )
-            return true;
-    }
-
-    return false;
+	return (AscDFH.historyitem_ParaRun_AddItem === Data1.Type
+		&& AscDFH.historyitem_ParaRun_AddItem === Data2.Type
+		&& 1 === Data1.Items.length
+		&& 1 === Data2.Items.length
+		&& Data1.Pos === Data2.Pos - 1
+		&& (Data1.Items[0].IsText() || Data1.Items[0].IsSpace())
+		&& (Data2.Items[0].IsText() || Data2.Items[0].IsSpace()));
 };
 //-----------------------------------------------------------------------------------
 // Функции для совместного редактирования

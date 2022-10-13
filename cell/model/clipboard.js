@@ -600,8 +600,19 @@
 					var oldCreator = wb.Core.creator;
 					var oldIdentifier = wb.Core.identifier;
 					var oldLanguage = wb.Core.language;
+					var oldTitle = wb.Core.title;
+					var oldCategory = wb.Core.category;
+					var oldContentStatus = wb.Core.contentStatus;
+
 					wb.Core.creator = wb.oApi && wb.oApi.CoAuthoringApi ? wb.oApi.CoAuthoringApi.getUserConnectionId() : null;
 					wb.Core.identifier = wb.oApi && wb.oApi.DocInfo ? wb.oApi.DocInfo.Id : null;
+
+					//для внешних данных необходимо протащить docInfo->ReferenceData
+					//пока беру данные поля, поскольку для копипаста они не используются. по названию не особо совпадают - пересмотреть
+					wb.Core.contentStatus = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData.fileId : null;
+					wb.Core.category = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData.portalName : null;
+
+					wb.Core.title = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.Title ? wb.oApi.DocInfo.Title : null;
 
 					//записываю изображение выделенного фрагмента. пока только для изоюражений
 					//выбрал для этого поле subject
@@ -640,6 +651,9 @@
 						wb.Core.identifier = oldIdentifier;
 						wb.Core.language = oldLanguage;
 						wb.Core.subject = oldSubject;
+						wb.Core.title = oldTitle;
+						wb.Core.category = oldCategory;
+						wb.Core.contentStatus = oldContentStatus;
 					}
 				}
 
@@ -1660,7 +1674,7 @@
 					}
 
 					//закрываем общую транзакцию _loadDataBeforePaste после загрузки шрифтов
-					worksheet.setSelectionInfo('paste', {data: pasteData, fromBinary: true, fontsNew: newFonts, pasteAllSheet: isPasteAll});
+					worksheet.setSelectionInfo('paste', {data: pasteData, fromBinary: true, fontsNew: newFonts, pasteAllSheet: isPasteAll, wb: tempWorkbook});
 				};
 
 				var doPasteIntoShape = function() {
@@ -1705,7 +1719,7 @@
 							if(isPasteAll) {
 								doPasteData();
 							}
-						} else if (!(window["Asc"]["editor"] && (window["Asc"]["editor"].isChartEditor || window["Asc"]["editor"].isEditOleMode && aPastedImages && aPastedImages.length))) {
+						} else if (!(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
 
 							newFonts = {};
 							for (var i = 0; i < pasteData.Drawings.length; i++) {
@@ -1854,15 +1868,19 @@
 				return res;
 			},
 
-			_checkPastedInOriginalDoc: function(pastedWb) {
+			_checkPastedInOriginalDoc: function(pastedWb, notCheckUser) {
 				var res = false;
 
 				var api = window["Asc"]["editor"];
 				var curDocId = api.DocInfo && api.DocInfo.Id;
 				var curUserId = api.CoAuthoringApi && api.CoAuthoringApi.getUserConnectionId();
 
-				if(pastedWb && pastedWb.Core && pastedWb.Core.identifier === curDocId && pastedWb.Core.creator === curUserId) {
-					res = true;
+				if(pastedWb && pastedWb.Core && pastedWb.Core.identifier === curDocId) {
+					if (notCheckUser) {
+						res = true;
+					} else if (pastedWb.Core.creator === curUserId) {
+						res = true;
+					}
 				}
 
 				return res;
@@ -2012,7 +2030,7 @@
 					}
 
 					var arr_shapes = content.Drawings;
-					if (arr_shapes && arr_shapes.length && !(window["Asc"]["editor"] && (window["Asc"]["editor"].isChartEditor || window["Asc"]["editor"].isEditOleMode && arr_Images.length !== 0))) {
+					if (arr_shapes && arr_shapes.length && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
 						if (!bSlideObjects && content.Drawings.length === selectedContent2[1].content.Drawings.length) {
 							var oEndContent = {
 								Drawings: []
@@ -2638,7 +2656,7 @@
 					History.TurnOn();
 
 					callback();
-				}, true);
+				});
 			},
 
 			_insertTableFromPresentation: function (ws, graphicFrame) {
@@ -2747,7 +2765,7 @@
 				var aImagesToDownload = this._getImageFromHtml(node, true);
 				var specialPasteProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
 				var api = Asc["editor"];
-				if (!api.isFrameEditor() && aImagesToDownload !== null &&
+				if (!api.isChartEditor && aImagesToDownload !== null &&
 					(!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
 				{
 					AscCommon.sendImgUrls(api, aImagesToDownload, function (data) {
@@ -2764,7 +2782,7 @@
 						t.alreadyLoadImagesOnServer = true;
 						callBackAfterLoadImages();
 
-					}, true);
+					});
 
 				} else {
 					callBackAfterLoadImages();
@@ -3385,7 +3403,7 @@
 					}
 				}
 				var aResult = this._getTableFromText(text, textImport);
-				if (aResult && !(aResult.onlyImages && window["Asc"]["editor"] && window["Asc"]["editor"].isFrameEditor())) {
+				if (aResult && !(aResult.onlyImages && window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
 					if (textImport) {
 						var arn = worksheet.model.selectionRange.getLast().clone();
 						var width = aResult.content && aResult.content[0] ? aResult.content[0].length - 1 : 0;
@@ -3804,11 +3822,10 @@
 				var documentContentBounds = new DocumentContentBounds();
 				var coverDocument = documentContentBounds.getBounds(0, 0, documentContent);
 				this._parseChildren(coverDocument);
-				var aImagesToDownload = pasteData.images && pasteData.images.length ? pasteData.images : this.aResult.props._images;
 
 				//не вставляем графику в редактор диаграмм
 				//если кроме графики есть ещё данные, то убираем только графику
-				if (window["Asc"]["editor"] && (window["Asc"]["editor"].isChartEditor || window["Asc"]["editor"].isEditOleMode && aImagesToDownload && aImagesToDownload.length)) {
+				if (window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor) {
 					if (this.aResult.props && this.aResult.props.addImagesFromWord && this.aResult.props.addImagesFromWord.length === 1 && this.aResult.content) {
 						if (1 === this.aResult.content.length && 1 === this.aResult.content[0].length && this.aResult.content[0][0].content && this.aResult.content[0][0].content.length === 0) {
 							window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
@@ -3827,10 +3844,11 @@
 						newFonts[pasteData.fonts[i].name] = 1;
 					}
 				}
+
 				this.aResult.props.fontsNew = newFonts;
 				this.aResult.props.rowSpanSpCount = 0;
 				this.aResult.props.cellCount = this.maxCellCount + 1 > coverDocument.width ? this.maxCellCount + 1 : coverDocument.width;
-				this.aResult.props._images = aImagesToDownload;
+				this.aResult.props._images = pasteData.images && pasteData.images.length ? pasteData.images : this.aResult.props._images;
 				this.aResult.props._aPastedImages = pasteData.aPastedImages && pasteData.aPastedImages.length ? pasteData.aPastedImages : this.aResult.props._aPastedImages;
 
 
@@ -3839,7 +3857,8 @@
 				//грузим картинки для вствки из документов(если это необходимо)
 				//в данный момент в worksheetView не грузятся изображения
 				var specialPasteProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
-				if (!this.clipboard.alreadyLoadImagesOnServer && aImagesToDownload && aImagesToDownload.length && (!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
+				var aImagesToDownload = this.aResult.props._images;
+				if (!this.clipboard.alreadyLoadImagesOnServer && aImagesToDownload && (!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
 				{
 					var oObjectsForDownload = AscCommon.GetObjectsForImageDownload(t.aResult.props._aPastedImages);
 					var api = window["Asc"]["editor"];
@@ -3852,7 +3871,7 @@
 						t.aResult.props.oImageMap = oImageMap;
 						t.aResult.props.data = data;
 						worksheet.setSelectionInfo('paste', {data: t.aResult});
-					}, true);
+					});
 				} else {
 					worksheet.setSelectionInfo('paste', {data: t.aResult});
 				}

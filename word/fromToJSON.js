@@ -11706,7 +11706,7 @@
 		}
 			
 
-		oRow.updateHeightAfterOpen(fRowHeight);
+		AscFormat.updateRowHeightAfterOpen(oRow, fRowHeight);
 		return oRow;
 	};
 	ReaderFromJSON.prototype.TableRowPrFromJSON = function(oParsedPr)

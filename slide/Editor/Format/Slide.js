@@ -259,11 +259,12 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     {
         this.collaborativeMarks.Clear();
     };
-    Slide.prototype.createDuplicate = function(IdMap)
+    Slide.prototype.createDuplicate = function(IdMap, bCacheImage)
     {
         var oIdMap = IdMap || {};
         var oPr = new AscFormat.CCopyObjectProperties();
         oPr.idMap = oIdMap;
+        oPr.cacheImage = bCacheImage !== false;
         var copy = new Slide(this.presentation, this.Layout, 0), i;
         if(typeof this.cSld.name === "string" && this.cSld.name.length > 0)
         {
@@ -316,7 +317,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
         if(!this.recalcInfo.recalculateBackground && !this.recalcInfo.recalculateSpTree)
         {
-            copy.cachedImage = this.getBase64Img();
+            if(!oPr || false !== oPr.cacheImage) {
+                copy.cachedImage = this.getBase64Img();
+            }
         }
         if(this.timing) {
             copy.setTiming(this.timing.createDuplicate(oIdMap));
@@ -1387,23 +1390,242 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 }
             }
         }
+        if(!bCheckBounds && !bSlideShow) {
+            this.drawGrid(graphics);
+        }
         if(bClipBySlide) {
             graphics.RestoreGrState();
         }
     };
 
-    Slide.prototype.drawNotes = function (g) {
+    function CStrideData(oPresentation) {
+        this.presentation = oPresentation;
+        this.slideWidth = null;
+        this.slideHeight = null;
+        this.stride = null;
+        this.originX = null;
+        this.originY = null;
 
-        if(this.notesShape){
+    }
+    CStrideData.prototype.checkUpdate = function() {
+        if(this.slideWidth !== this.presentation.GetWidthEMU() ||
+        this.slideHeight !== this.presentation.GetHeightEMU() ||
+        this.stride !== this.presentation.getViewPropertiesStride()) {
+            this.update();
+            return true;
+        }
+        return false;
+    };
+    CStrideData.prototype.update = function() {
+        this.stride = this.presentation.getViewPropertiesStride();
+        this.slideWidth = this.presentation.GetWidthEMU();
+        this.slideHeight = this.presentation.GetHeightEMU();
+
+        this.originX = this.getStartStridePos(this.stride, this.slideWidth);
+        this.originY = this.getStartStridePos(this.stride, this.slideHeight);
+    };
+    CStrideData.prototype.getStartStridePos = function(stride, len) {
+        let nStrideCnt = (len / stride) >> 0;
+        return (((len - nStrideCnt * stride) / 2 + 0.5) >> 0) - stride;
+    };
+    CStrideData.prototype.getNearestLinearPoint = function(nDX, nOrigin) {
+        let nCX = nDX / this.stride >> 0;
+        let dRX = nDX - nCX * this.stride;
+        let nX;
+        if((dRX / this.stride) < 0.5) {
+            nX = nCX * this.stride;
+        }
+        else {
+            nX = (nCX + 1) * this.stride;
+        }
+        return nOrigin + nX;
+    };
+    CStrideData.prototype.getNearestPoint = function(x, y) {
+        this.checkUpdate();
+        let em = function (dValue) {return dValue / 36000;};
+        let me = function(dValue) { return dValue * 36000 + 0.5 >> 0;};
+        let nDX = me(x) - this.originX;
+        let nDY = me(y) - this.originY;
+        let nX = this.getNearestLinearPoint(nDX, this.originX);
+        let nY = this.getNearestLinearPoint(nDY, this.originY);
+        return {x: em(nX), y: em(nY)};
+    };
+    CStrideData.prototype.drawGrid = function(oGraphics) {
+        let oContext = oGraphics.m_oContext;
+        if(!oContext) {
+            return;
+        }
+        if(oGraphics.IsThumbnail || oGraphics.animationDrawer || oGraphics.IsDemonstrationMode) {
+            return;
+        }
+        this.checkUpdate();
+        let dPixScale = oGraphics.m_oCoordTransform.sx;
+        let mmp = function(dMM) {
+            return (dMM*dPixScale + 0.5) >> 0;
+        };
+        let em = function (val) {return val / 36000;};
+        let ep = function(nEmu) {
+            return mmp(em(nEmu));
+        };
+
+        let nGridSpacingPix = ep(this.stride);
+
+        let nMinLineStridePix = ep(720000);
+        let nMinInsideLineStridePix = ep(150000);
+
+        let nGridSpacing = this.stride;
+        let bPixel = true;
+        let nStrideInsideLine = nGridSpacing;
+        let nStrideLine;
+
+        let nStrideInsideLinePix = nGridSpacingPix;
+        let nStrideLinePix;
+
+        let nHorStart;
+        let nVertStart;
+        let nSlideWidth = this.slideWidth;
+        let nSlideHeight = this.slideHeight;
+
+       while(nStrideInsideLinePix < nMinInsideLineStridePix) {
+           nStrideInsideLine *= 2;
+           nStrideInsideLinePix = ep(nStrideInsideLine);
+       }
+        nStrideLine = nStrideInsideLine;
+        nStrideLinePix = nStrideInsideLinePix;
+        let nStartStrideVerPos = this.getStartStridePos(nStrideLine, nSlideHeight);
+        let nStartStrideHorPos = this.getStartStridePos(nStrideLine, nSlideHeight);
+        let nStartInsideHorPos = this.getStartStridePos(nStrideInsideLine, nSlideWidth);
+        let nStartInsideVerPos = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
+        while(nStrideLinePix < nMinLineStridePix) {
+            nStrideLine += nStrideInsideLine;
+            nStrideLinePix = ep(nStrideLine);
+            //nStartStridePos = this.getStartStridePos(nStrideLine, nSlideHeight);
+        }
+        bPixel = nStrideInsideLinePix < AscCommon.AscBrowser.convertToRetinaValue(17, true);
+
+        oGraphics.SaveGrState();
+        oGraphics.transform3(new AscCommon.CMatrix());
+        oGraphics.SetIntegerGrid(true);
+        oGraphics.b_color1(0, 0, 0, 255);
+
+        let nX, nY;
+        let oT = oGraphics.m_oFullTransform;
+        let oImageCanvas = document.createElement('canvas');
+        let oImageContext;
+        let c = function(value) {
+            return value;//AscCommon.AscBrowser.convertToRetinaValue(value, true);
+        }
+        if(bPixel) {
+            oImageCanvas.width = c(1);
+            oImageCanvas.height = c(1);
+            oImageContext = oImageCanvas.getContext("2d");
+            oImageContext.fillStyle = 'black';
+            oImageContext.fillRect(0, 0, oImageCanvas.width, oImageCanvas.height);
+            oImageContext.fill();
+        }
+        else {
+            oImageCanvas.width = c(3);
+            oImageCanvas.height = c(3);
+            oImageContext = oImageCanvas.getContext("2d");
+            oImageContext.fillStyle = 'black';
+            oImageContext.fillRect(c(1), 0, c(1), c(1));
+            oImageContext.fillRect(0, c(1), c(1), c(1));
+            oImageContext.fillRect(c(2), c(1), c(1), c(1));
+            oImageContext.fillRect(c(1), c(2), c(1), c(1));
+            oImageContext.fill();
+        }
+
+        function dp() {
+            let nHP = em(nHorPos);
+            let nVP = em(nVertPos);
+            nX = oT.TransformPointX(nHP, nVP) + 0.5 >> 0;
+            nY = oT.TransformPointY(nHP, nVP) + 0.5 >> 0;
+            if(bPixel) {
+                oContext.drawImage(oImageCanvas, nX, nY);
+            }
+            else {
+                oContext.drawImage(oImageCanvas, nX - 1, nY - 1);
+            }
+        }
+
+
+        nHorStart = this.getStartStridePos(nStrideInsideLine, nSlideWidth);
+        nVertStart = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
+        let nVertPos = nVertStart;
+        let nHorPos;
+        while (nVertPos < nSlideHeight) {
+            if(nVertPos > 0) {
+                nHorPos = nHorStart;
+                while (nHorPos < nSlideWidth) {
+                    if(nHorPos > 0) {
+                        dp();
+                    }
+                    nHorPos += nStrideInsideLine;
+                }
+            }
+            nVertPos += nStrideLine;
+        }
+
+
+
+        nHorStart = this.getStartStridePos(nStrideInsideLine, nSlideWidth);
+        nVertStart = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
+        nHorPos = nHorStart;
+
+
+        while (nHorPos < nSlideWidth) {
+            if(nHorPos > 0) {
+                nVertPos = nVertStart;
+                while (nVertPos < nSlideHeight) {
+                    if(nVertPos > 0) {
+                        dp();
+                    }
+                    nVertPos += nStrideInsideLine;
+                }
+            }
+            nHorPos += nStrideLine;
+        }
+
+        oGraphics.df();
+        oGraphics.RestoreGrState();
+    };
+    Slide.prototype.drawGrid = function(oGraphics) {
+        let oApi = editor;
+        if(!oApi) {
+            return;
+        }
+        if(!oApi.WordControl) {
+            return;
+        }
+        let oContext = oGraphics.m_oContext;
+        if(!oContext) {
+            return;
+        }
+        if(oGraphics.IsThumbnail || oGraphics.animationDrawer || oGraphics.IsDemonstrationMode) {
+            return;
+        }
+
+        let oPresentation = oApi.WordControl.m_oLogicDocument;
+        if(!oPresentation) {
+            return;
+        }
+        if(oApi.asc_getShowGridlines()) {
+            oPresentation.drawGrid(oGraphics);
+        }
+        if(oApi.asc_getShowGuides()) {
+            oPresentation.drawGuides(oGraphics);
+        }
+    };
+    Slide.prototype.drawNotes = function (g) {
+        if(this.notesShape) {
             this.notesShape.draw(g);
             var oLock = this.notesShape.Lock;
-            if(oLock && AscCommon.locktype_None != oLock.Get_Type())
-            {
+            if(oLock && AscCommon.locktype_None != oLock.Get_Type()) {
                 var bCoMarksDraw = true;
-                if(typeof editor !== "undefined" && editor && AscFormat.isRealBool(editor.isCoMarksDraw)){
+                if(typeof editor !== "undefined" && editor && AscFormat.isRealBool(editor.isCoMarksDraw)) {
                     bCoMarksDraw = editor.isCoMarksDraw;
                 }
-                if(bCoMarksDraw){
+                if(bCoMarksDraw) {
                     g.transform3(this.notesShape.transformText);
                     var Width = this.notesShape.txBody.content.XLimit - 2;
                     Width = Math.max(Width, 1);
@@ -1413,7 +1635,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             }
         }
     };
-
     Slide.prototype.drawAnimPane = function(oGraphics) {
         if(this.timing) {
             this.timing.drawAnimPane(oGraphics);
@@ -1505,11 +1726,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     Slide.prototype.sendGraphicObjectProps = function()
     {
         editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-    };
-
-    Slide.prototype.checkGraphicObjectPosition = function()
-    {
-        return {x: 0, y: 0};
     };
 
     Slide.prototype.isViewerMode = function()
@@ -1808,218 +2024,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             return 0;
         }
         return oTransition.SlideAdvanceDuration;
-    };
-    Slide.prototype.readCommentsXml = function(reader) {
-        if (!reader.ReadNextNode()) {
-            return;
-        }
-        let depth = reader.GetDepth();
-        while (reader.ReadNextSiblingNode(depth)) {
-            let name = reader.GetNameNoNS();
-            if(name === "cm") {
-                this.readCommentXml(reader);
-            }
-        }
-    };
-Slide.prototype.readCommentXml = function(reader) {
-    let oComment = new AscCommon.CWriteCommentData();
-    this.writecomments.push(oComment);
-    let oNode = new CT_XmlNode(function(reader, name) {
-        if(name === "pos") {
-            let oPosNode = new CT_XmlNode(function (reader, name) {
-                return true;
-            });
-            oPosNode.fromXml(reader);
-            oComment.x = parseInt(oPosNode.attributes["x"]);
-            oComment.y = parseInt(oPosNode.attributes["y"]);
-        }
-        else if(name === "text") {
-            oComment.WriteText = reader.GetTextDecodeXml();
-        }
-        else if(name === "extLst") {
-            let oExtLstNode = new CT_XmlNode(function (reader, name) {
-                if(name === "ext") {
-                    let oExtNode = new CT_XmlNode(function (reader, name) {
-                        if(name === "threadingInfo") {
-                            let oThreadingInfoNode = new CT_XmlNode(function (reader, name) {
-                                if(name === "parentCm") {
-                                    let oParentCmNode = new CT_XmlNode(function (reader, name) {
-                                        return true;
-                                    });
-                                    oParentCmNode.fromXml(reader);
-                                    let nParentId = parseInt(oParentCmNode.attributes["authorId"]);
-                                    if(AscFormat.isRealNumber(nParentId)) {
-                                        oComment.WriteParentAuthorId = nParentId;
-                                    }
-                                    let nParentIdx = parseInt(oParentCmNode.attributes["idx"]);
-                                    if(AscFormat.isRealNumber(nParentId)) {
-                                        oComment.WriteParentCommentId = nParentIdx;
-                                    }
-                                }
-                                return true;
-                            });
-                            oThreadingInfoNode.fromXml(reader);
-                            let timeZoneBias = parseInt(oThreadingInfoNode.attributes["timeZoneBias"]);
-                            if(AscFormat.isRealNumber(timeZoneBias)) {
-                                oComment.timeZoneBias = timeZoneBias;
-                            }
-                        }
-                        else if(name === "presenceInfo") {
-                            let oPresenceInfoNode = new CT_XmlNode(function (reader, name) {
-                                return true;
-                            });
-                            oPresenceInfoNode.fromXml(reader);
-                            oComment.AdditionalData = oPresenceInfoNode.attributes["userId"] || null;
-                        }
-                        return true;
-                    });
-                    oExtNode.fromXml(reader);
-                }
-                return true;
-            });
-            oExtLstNode.fromXml(reader);
-
-            //check comment guid
-            if(!(oComment.AdditionalData && 0 === oComment.AdditionalData.indexOf("teamlab_data:") && -1 !== oComment.AdditionalData.indexOf("4;38;"))) {
-                if(!oComment.AdditionalData) {
-                    oComment.AdditionalData = "teamlab_data:";
-                }
-                if(':' !== oComment.AdditionalData.charAt(oComment.AdditionalData.length - 1) && ';' !== oComment.AdditionalData.charAt(oComment.AdditionalData.length - 1)) {
-                    oComment.AdditionalData = oComment.AdditionalData + ";";
-                }
-                oComment.AdditionalData = oComment.AdditionalData + ("4;38;{" + AscCommon.GUID() + "}");
-            }
-        }
-        return true;
-    });
-    oNode.fromXml(reader);
-    oComment.WriteAuthorId = parseInt(oNode.attributes["authorId"]);
-    oComment.WriteCommentId = parseInt(oNode.attributes["idx"]);
-};
-    Slide.prototype.fromXml = function(reader, bSkipFirstNode) {
-        AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
-        reader.context.assignConnectors(this.cSld.spTree);
-        //read notes
-        let oNotesPart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.notesSlide.relationType);
-        if(oNotesPart) {
-            let oNotesContent = oNotesPart.getDocumentContent();
-            let oNotesReader = new AscCommon.StaxParser(oNotesContent, oNotesPart, reader.context);
-            let oNotes = new AscCommonSlide.CNotes();
-            oNotes.fromXml(oNotesReader, true);
-            let oRel = oNotesReader.rels.getPartByRelationshipType(AscCommon.openXml.Types.notesMaster.relationType);
-            if(oRel) {
-                oNotes.masterTarget = oRel.uri;
-                this.setNotes(oNotes);
-            }
-        }
-        let oCommentsPart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.slideComments.relationType);
-        if(oCommentsPart) {
-            let oCommentsPartContent = oCommentsPart.getDocumentContent();
-            if(oCommentsPartContent) {
-                let oCommentsReader = new AscCommon.StaxParser(oCommentsPartContent, oCommentsPart, reader.context);
-                this.readCommentsXml(oCommentsReader);
-            }
-        }
-    };
-    Slide.prototype.readAttrXml = function(name, reader) {
-        switch (name) {
-            case "show": {
-                this.setShow(reader.GetValueBool());
-                break;
-            }
-            case "showMasterPhAnim": {
-                this.setShowPhAnim(reader.GetValueBool());
-                break;
-            }
-            case "showMasterSp": {
-                this.setShowMasterSp(reader.GetValueBool());
-                break;
-            }
-        }
-    };
-    Slide.prototype.readChildXml = function(name, reader) {
-        let oResult = null;
-        switch(name) {
-            case "cSld": {
-                let oCSld = new AscFormat.CSld(this);
-                oCSld.fromXml(reader);
-                AscCommonSlide.fFillFromCSld(this, oCSld);
-                oResult = oCSld;
-                break;
-            }
-            case "clrMapOvr": {
-                let oClrMapOvr = new AscFormat.CClrMapOvr();
-                oClrMapOvr.fromXml(reader);
-                this.setClMapOverride(oClrMapOvr.overrideClrMapping);
-                oResult = oClrMapOvr;
-                break;
-            }
-            case "AlternateContent": {
-                let oThis = this;
-                let elem = new CT_XmlNode(function(reader, name) {
-                    if(!oResult) {
-                        if ("Choice" === name) {
-                            let elem = new CT_XmlNode(function(reader, name) {
-                                if(!oResult) {
-                                    oResult = oThis.readChildXml(name, reader);
-                                }
-                                return true;
-                            });
-                            elem.fromXml(reader);
-                            return elem;
-                        }
-                        else if("Fallback" === name) {
-                            let elem = new CT_XmlNode(function(reader, name) {
-                                if(!oResult) {
-                                    oResult = oThis.readChildXml(name, reader);
-                                }
-                                return true;
-                            });
-                            elem.fromXml(reader);
-                            return elem;
-                        }
-                    }
-                    return true;
-                });
-                elem.fromXml(reader);
-                break;
-            }
-            case "timing": {
-                let oTiming = new AscFormat.CTiming();
-                oTiming.fromXml(reader);
-                this.setTiming(oTiming);
-                oResult = oTiming;
-                break;
-            }
-            case "transition": {
-                let oTransition = new Asc.CAscSlideTransition();
-                oTransition.fromXml(reader);
-                this.applyTransition(oTransition);
-                oResult = oTransition;
-                break;
-            }
-        }
-        return oResult;
-    };
-    Slide.prototype.toXml = function(writer) {
-        writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
-        writer.WriteXmlNodeStart("p:sld");
-        writer.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
-        writer.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
-        writer.WriteXmlAttributeString("xmlns:p", "http://schemas.openxmlformats.org/presentationml/2006/main");
-        writer.WriteXmlAttributeString("xmlns:m", "http://schemas.openxmlformats.org/officeDocument/2006/math");
-        writer.WriteXmlAttributeString("xmlns:w", "http://schemas.openxmlformats.org/wordprocessingml/2006/main");
-
-        writer.WriteXmlNullableAttributeBool("showMasterPhAnim", this.showMasterPhAnim);
-        writer.WriteXmlNullableAttributeBool("showMasterSp", this.showMasterSp);
-        writer.WriteXmlNullableAttributeBool("show", this.show);
-        writer.WriteXmlAttributesEnd();
-        this.cSld.toXml(writer);
-
-        AscFormat.CClrMapOvr.prototype.static_WriteCrlMapAsOvr(writer, this.clrMap);
-        writer.WriteXmlNullable(this.transition, "p:transition");
-        writer.WriteXmlNullable(this.timing, "p:timing");
-        writer.WriteXmlNodeEnd("p:sld");
     };
 function fLoadComments(oObject, authors)
 {
@@ -2461,3 +2465,4 @@ window['AscCommonSlide'].Slide = Slide;
 window['AscCommonSlide'].PropLocker = PropLocker;
 window['AscCommonSlide'].SlideComments = SlideComments;
 window['AscCommonSlide'].fLoadComments = fLoadComments;
+window['AscCommonSlide'].CStrideData = CStrideData;
