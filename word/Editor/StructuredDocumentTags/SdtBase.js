@@ -210,6 +210,8 @@ CSdtBase.prototype.IsContentControlTemporary = function()
  */
 CSdtBase.prototype.SetFormPr = function(oFormPr)
 {
+	this.private_CheckKeyValueBeforeSet(oFormPr);
+
 	if ((!this.Pr.FormPr && oFormPr) || !this.Pr.FormPr.IsEqual(oFormPr))
 	{
 		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr));
@@ -221,7 +223,23 @@ CSdtBase.prototype.SetFormPr = function(oFormPr)
 
 		this.private_OnAddFormPr();
 	}
-}
+};
+CSdtBase.prototype.private_CheckKeyValueBeforeSet = function(formPr)
+{
+	if (!this.Pr.FormPr || !formPr)
+		return;
+
+	let newKey = formPr.GetKey();
+	if (!newKey)
+		newKey = "";
+
+	newKey = newKey.trim();
+
+	if ("" === newKey)
+		formPr.SetKey(this.Pr.FormPr.GetKey());
+	else
+		formPr.SetKey(newKey);
+};
 /**
  * Удаляем настройки специальных форм
  */

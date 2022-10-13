@@ -54,9 +54,10 @@
 
 		// В мапе форм находятся вообще все формы. В списке находятся только самостоятельные формы, которые
 		// не являются частью другой формы
-		this.FormsMap   = {};
-		this.Forms      = [];
-		this.UpdateList = false;
+		this.FormsMap     = {};
+		this.Forms        = [];
+		this.UpdateList   = false;
+		this.KeyGenerator = new AscWord.CFormKeyGenerator(this);
 	}
 	CFormsManager.prototype.Register = function(oForm)
 	{
@@ -270,6 +271,13 @@
 		}
 
 		return true;
+	};
+	/**
+	 * @returns {AscWord.CFormKeyGenerator}
+	 */
+	CFormsManager.prototype.GetKeyGenerator = function()
+	{
+		return this.KeyGenerator;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
