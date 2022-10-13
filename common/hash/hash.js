@@ -163,7 +163,7 @@
 			[[0x33, 0x31], [0x66, 0x62], [0xCC, 0xC4], [0x89, 0xA9], [0x03, 0x73], [0x06, 0xE6], [0x0D, 0xCC]],
 			[[0x10, 0x21], [0x20, 0x42], [0x40, 0x84], [0x81, 0x08], [0x12, 0x31], [0x24, 0x62], [0x48, 0xC4]]];
 
-		var byteToBits = function (byte) {
+		let byteToBits = function (byte) {
 			let bitsArr = [];
 			for (let i = 0; i < 8; i++) {
 				let bit = byte & (1 << i) ? 1 : 0;
@@ -171,42 +171,21 @@
 			}
 			return bitsArr;
 		};
-		var getBitsSequence = function (bytes, getStr) {
-			let bitsArr = getStr ? "" : [];
-			//TODO ++ ?
-			for (let j = 0; j < bytes.length; j++) {
-				let byte = bytes[j];
-				for (let i = 7; i >= 0; i--) {
-					let bit = byte & (1 << i) ? 1 : 0;
-					if (getStr) {
-						bitsArr += bit;
-					} else {
-						bitsArr.push(bit);
-					}
-				}
-			}
 
-			return bitsArr;
+		let splitByHighLowBytes = function (val) {
+			return [(val & 0xff00) >> 8, val & 0x00ff];
 		};
 
-		var getFull2Byte = function (str) {
-			let strLength = str.length;
-			let beforeStr = "0000000000000000".substring(0, 16 - strLength);
-			return beforeStr + str;
-		};
-
-		var toByteArray = function (str) {
-			let byte1 = str.substring(0, 8);
-			let byte2 = str.substring(8, 16);
-			return [parseInt( byte1, 2), parseInt(byte2, 2)];
-		};
-
-		var getHexStr = function (arr) {
+		let getHexStr = function (arr) {
 			let res = "";
 			for (let i = 0; i < arr.length; i++) {
 				res += AscCommon.ByteToHex(arr[i]);
 			}
 			return res;
+		};
+
+		let getUnionBytes = function (byte1, byte2) {
+			return ((byte1 << 8) | byte2);
 		};
 
 		if (password == null) {
@@ -216,15 +195,15 @@
 		let textEncoder = new TextEncoder();
 		let passwordBytes = textEncoder.encode(password);
 
-		passwordBytes = passwordBytes.slice(0, 14);
+		let maxPasswordLength = 15;
+		passwordBytes = passwordBytes.slice(0, maxPasswordLength);
 		let passwordLength = passwordBytes.length;
 
-
+		//high word
 		let highOrderWord = [0x00, 0x00];
 		if (passwordLength > 0) {
 			highOrderWord = _highOrderWords[passwordLength - 1];
 		}
-
 		for (var i = 0; i < passwordLength; i++) {
 			let passwordByte = passwordBytes[i];
 			let encryptionMatrixIndex = i + (_encryptionMatrix.length - passwordLength);
@@ -242,29 +221,33 @@
 			}
 		}
 
-		let lowOrderWord = [0x00, 0x00];
-		let lowOrderBitSequence = getBitsSequence(lowOrderWord, true);
-		let bitSequence1 = getBitsSequence([0x00, 0x01], true);
-		let bitSequence7FFF = getBitsSequence([0x7F, 0xFF], true);
-
-		let lowOrderSequence = parseInt(lowOrderBitSequence,2);
-		let sequence1 = parseInt(bitSequence1,2);
-		let sequence7FFF = parseInt(bitSequence7FFF,2);
-
-		for (let i = passwordLength - 1; i >= 0; i--) {
-			let passwordByte = passwordBytes[i];
-			let passwordBits = parseInt(getBitsSequence([0x00, passwordByte], true), 2);
-			lowOrderSequence = (((lowOrderSequence >> 14) & sequence1) | ((lowOrderSequence << 1) & sequence7FFF)) ^ passwordBits;
+		if (!highOrderWord) {
+			return null;
 		}
 
-		let bitTest1 = getBitsSequence([0x00, passwordLength], true);
-		let test1 = parseInt(bitTest1, 2);
-		let bitTest2 = getBitsSequence([0xCE, 0x4B], true);
-		let test2 = parseInt(bitTest2, 2);
-		lowOrderSequence = (((lowOrderSequence >> 14) & sequence1) | ((lowOrderSequence << 1) & sequence7FFF)) ^ test1 ^ test2;
+		//low word
+		let lowOrderSequence = 0x00;
+		let sequence1 = 0x01;
+		let sequence7FFF = 0x7FFF;
+		for (let i = passwordLength - 1; i >= 0; i--) {
+			let passwordByte = passwordBytes[i];
+			lowOrderSequence = (((lowOrderSequence >> 14) & sequence1) | ((lowOrderSequence << 1) & sequence7FFF)) ^ passwordByte;
+		}
+		lowOrderSequence = (((lowOrderSequence >> 14) & sequence1) | ((lowOrderSequence << 1) & sequence7FFF)) ^ passwordLength ^ getUnionBytes(0xCE, 0x4B);
 
-		lowOrderWord = toByteArray((getFull2Byte((lowOrderSequence).toString(2))));
-		return  getHexStr(highOrderWord.concat(lowOrderWord).reverse());
+		let lowOrderWord = splitByHighLowBytes(lowOrderSequence);
+		if (!lowOrderWord) {
+			return null;
+		}
+
+		//full word
+		let fullWord = highOrderWord.concat(lowOrderWord);
+		fullWord = fullWord && fullWord.reverse();
+		if (!fullWord) {
+			return null;
+		}
+
+		return getHexStr(fullWord);
 	};
 
 	window['AscCommon'].HashAlgs = {

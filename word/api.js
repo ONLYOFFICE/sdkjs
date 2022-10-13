@@ -12889,7 +12889,7 @@ background-repeat: no-repeat;\
 					callback(true);
 				} else {
 					//пробуем снять защиту
-					if (documentProtection && hash && hash[0] === documentProtection.hashValue) {
+					if (documentProtection && hash && (hash[0] === documentProtection.hashValue || hash[1] === documentProtection.hashValue)) {
 						callback(true);
 					} else {
 						//неверный пароль
@@ -12906,8 +12906,16 @@ background-repeat: no-repeat;\
 			if (password === "") {
 				checkPassword([""]);
 			} else {
-				var checkHash = {password: AscCommon.prepareWordPassword(password), salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)};
-				AscCommon.calculateProtectHash([checkHash], checkPassword);
+				//перед тем, как сгенерировать хэш, мс предварительно преобразовывает пароль
+				//в мс подходит как преобразованные пароль, так и не преобразованный
+				//т.е. если сгенерировать вручную хэш из непреобразованного пароля и положить в xml, то документ можно будет разблокировать по первоначальному паролю
+				var hashPassword = AscCommon.prepareWordPassword(password);
+				var hashArr = [];
+				if (hashPassword) {
+					hashArr.push({password: hashPassword, salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)});
+				}
+				hashArr.push({password: password, salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)});
+				AscCommon.calculateProtectHash(hashArr, checkPassword);
 			}
 		} else {
 			checkPassword(null, true);
