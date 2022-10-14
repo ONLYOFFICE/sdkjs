@@ -10614,6 +10614,33 @@ background-repeat: no-repeat;\
 		let oManager = this.private_GetFormsManager();
 		return oManager ? oManager.GetAllKeys({RadioGroup : true}) : [];
 	};
+	asc_docs_api.prototype.asc_GetFormKeysByType = function(type)
+	{
+		let formManager = this.private_GetFormsManager();
+		if (!formManager)
+			return [];
+
+		let pr = {};
+		switch (type)
+		{
+			case Asc.c_oAscContentControlSpecificType.Picture:
+				pr.Picture = true;
+				break;
+			case Asc.c_oAscContentControlSpecificType.CheckBox:
+				pr.CheckBox = true;
+				break;
+			case Asc.c_oAscContentControlSpecificType.Complex:
+				pr.Complex = true;
+				break;
+			default:
+				pr.Text         = true;
+				pr.ComboBox     = true;
+				pr.DropDownList = true;
+				break;
+		}
+
+		return formManager.GetAllKeys(pr);
+	};
 	asc_docs_api.prototype.asc_ClearAllSpecialForms = function()
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
@@ -13449,6 +13476,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_GetPictureFormKeys']                    = asc_docs_api.prototype.asc_GetPictureFormKeys;
 	asc_docs_api.prototype['asc_GetCheckBoxFormKeys']                   = asc_docs_api.prototype.asc_GetCheckBoxFormKeys;
 	asc_docs_api.prototype['asc_GetRadioButtonGroupKeys']               = asc_docs_api.prototype.asc_GetRadioButtonGroupKeys;
+	asc_docs_api.prototype['asc_GetFormKeysByType']                     = asc_docs_api.prototype.asc_GetFormKeysByType;
 	asc_docs_api.prototype['asc_ClearAllSpecialForms']                  = asc_docs_api.prototype.asc_ClearAllSpecialForms;
 	asc_docs_api.prototype['asc_SetSpecialFormsHighlightColor']         = asc_docs_api.prototype.asc_SetSpecialFormsHighlightColor;
 	asc_docs_api.prototype['asc_GetSpecialFormsHighlightColor']         = asc_docs_api.prototype.asc_GetSpecialFormsHighlightColor;

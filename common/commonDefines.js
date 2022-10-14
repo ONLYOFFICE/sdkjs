@@ -2875,7 +2875,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		DropDownList : 4,
 		DateTime     : 5,
 
-		TOC          : 10
+		TOC          : 10,
+		Complex      : 11
 	};
 
 	var c_oAscDefNameType = {
@@ -4610,6 +4611,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['DropDownList'] = c_oAscContentControlSpecificType.DropDownList;
 	prot['DateTime']     = c_oAscContentControlSpecificType.DateTime;
 	prot['TOC']          = c_oAscContentControlSpecificType.TOC;
+	prot['Complex']      = c_oAscContentControlSpecificType.Complex;
 
 	window['Asc']['c_oAscDefNameType'] = window['Asc'].c_oAscDefNameType = c_oAscDefNameType;
 	prot = c_oAscDefNameType;
