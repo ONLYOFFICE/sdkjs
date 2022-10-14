@@ -6982,7 +6982,10 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 
 		// Для плейсхолдера форм нам нужна только рамка
 		if (isFormPlaceHolder)
+		{
+			X += ItemWidthVisible;
 			continue;
+		}
 
 		switch (ItemType)
 		{
