@@ -403,11 +403,14 @@
 	};
 	CFormsManager.prototype.OnChangeComplexForm = function(oForm)
 	{
+		let sKey     = oForm.GetFormKey();
 		let arrForms = this.GetAllForms();
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oTempForm = arrForms[nIndex];
-			if (!oTempForm.IsComplexForm() || oTempForm === oForm)
+			if (!oTempForm.IsComplexForm()
+				|| oTempForm === oForm
+				|| sKey !== oTempForm.GetFormKey())
 				continue;
 
 			// TODO: Сейчас мы полностью перезаписываем содержимое поля. Можно проверить, что поле состоит из таких
