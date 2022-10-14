@@ -12551,12 +12551,7 @@ CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
 
 		if (this.CollaborativeEditing.Is_SingleUser() || !this.CollaborativeEditing.Is_Fast())
 		{
-			let arrChanges = [];
-			while (oForm === this.History.GetLastPointFormFilling())
-			{
-				arrChanges = arrChanges.concat(this.History.Undo());
-			}
-
+			let arrChanges = this.History.UndoFormFilling(oForm);
 			if (arrChanges.length)
 				this.RecalculateByChanges(arrChanges);
 		}

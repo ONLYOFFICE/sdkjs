@@ -44,8 +44,10 @@ function CHistory(Document)
     this.Document   = Document;
     this.Api                  = null;
     this.CollaborativeEditing = null;
-    this.CanNotAddChanges = false; // флаг для отслеживания ошибок добавления изменений без точки:Create_NewPoint->Add->Save_Changes->Add
-	this.CollectChanges   = false;
+
+    this.CanNotAddChanges     = false; // флаг для отслеживания ошибок добавления изменений без точки:Create_NewPoint->Add->Save_Changes->Add
+	this.CollectChanges       = false;
+	this.UndoRedoInProgress   = false; //
 
 	this.RecalculateData =
 	{
@@ -179,18 +181,12 @@ CHistory.prototype =
 
     Can_Undo : function()
     {
-        if ( this.Index >= 0 )
-            return true;
-
-        return false;
+        return (!this.UndoRedoInProgress && this.Index >= 0);
     },
 
     Can_Redo : function()
     {
-        if ( this.Points.length > 0 && this.Index < this.Points.length - 1 )
-            return true;
-
-        return false;
+        return (!this.UndoRedoInProgress && this.Points.length > 0 && this.Index < this.Points.length - 1);
     },
 
     UndoLastPoint : function(nBottomIndex)
@@ -229,9 +225,10 @@ CHistory.prototype =
 
         this.CheckUnionLastPoints();
 
-        // Проверяем можно ли сделать Undo
-        if (true !== this.Can_Undo())
+        if (!this.Can_Undo())
             return null;
+
+		this.UndoRedoInProgress = true;
 
         // Запоминаем самое последнее состояние документа для Redo
         if ( this.Index === this.Points.length - 1 )
@@ -245,36 +242,13 @@ CHistory.prototype =
             while (this.Index >= 0)
             {
                 Point = this.Points[this.Index--];
-
-                // Откатываем все действия в обратном порядке (относительно их выполенения)
-                for (var Index = Point.Items.length - 1; Index >= 0; Index--)
-                {
-                    var Item = Point.Items[Index];
-
-					if (Item.Data)
-					{
-						Item.Data.Undo();
-						arrChanges.push(Item.Data);
-					}
-                    this.private_UpdateContentChangesOnUndo(Item);
-                }
-            }
+				this.private_UndoPoint(Point, arrChanges);
+			}
         }
         else
         {
-            Point = this.Points[this.Index--];
-
-            // Откатываем все действия в обратном порядке (относительно их выполенения)
-            for (var Index = Point.Items.length - 1; Index >= 0; Index--)
-            {
-                var Item = Point.Items[Index];
-				if (Item.Data)
-				{
-					Item.Data.Undo();
-					arrChanges.push(Item.Data);
-				}
-				this.private_UpdateContentChangesOnUndo(Item);
-            }
+			Point = this.Points[this.Index--];
+            this.private_UndoPoint(Point, arrChanges);
         }
 
         if (null != Point)
@@ -284,7 +258,8 @@ CHistory.prototype =
 		{
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide(true);
 		}
-		
+
+		this.UndoRedoInProgress = false;
         return arrChanges;
     },
 
@@ -292,26 +267,15 @@ CHistory.prototype =
     {
 		var arrChanges = [];
 
-        // Проверяем можно ли сделать Redo
-        if (true !== this.Can_Redo())
+        if (!this.Can_Redo())
             return null;
+
+		this.UndoRedoInProgress = true;
 
         this.Document.RemoveSelection(true);
         
         var Point = this.Points[++this.Index];
-
-        // Выполняем все действия в прямом порядке
-        for ( var Index = 0; Index < Point.Items.length; Index++ )
-        {
-            var Item = Point.Items[Index];
-
-			if (Item.Data)
-			{
-				Item.Data.Redo();
-				arrChanges.push(Item.Data);
-			}
-			this.private_UpdateContentChangesOnRedo(Item);
-        }
+		this.private_RedoPoint(Point, arrChanges);
 
         // Восстанавливаем состояние на следующую точку
         var State = null;
@@ -326,7 +290,8 @@ CHistory.prototype =
 		{
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 		}
-		
+
+		this.UndoRedoInProgress = false;
         return arrChanges;
     },
 
@@ -1471,6 +1436,9 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	 */
 	CHistory.prototype.UndoCompositeInput = function()
 	{
+		if (this.UndoRedoInProgress)
+			return [];
+
 		let lastIndex = this.Index;
 		while (lastIndex >= 0)
 		{
@@ -1488,23 +1456,15 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		if (lastIndex < 0)
 			return null;
 
+		this.UndoRedoInProgress = true;
 
 		let changes = [];
 		for (; this.Index >= lastIndex; --this.Index)
 		{
-			let point = this.Points[this.Index];
-			for (let changeIndex = point.Items.length - 1; changeIndex >= 0; --changeIndex)
-			{
-				let item = point.Items[changeIndex];
-				if (item.Data)
-				{
-					item.Data.Undo();
-					changes.push(item.Data);
-				}
-				this.private_UpdateContentChangesOnUndo(item);
-			}
+			this.private_UndoPoint(this.Points[this.Index], changes);
 		}
 
+		this.UndoRedoInProgress = false;
 		return changes;
 	};
 	/**
@@ -1540,6 +1500,80 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			&& lastChange.Class === run
 			&& lastChange.Pos === inRunPos - 1
 			&& (undefined === codePoint || lastChange.Items[0].GetCodePoint() === codePoint));
+	};
+	/**
+	 * Специальная функция отмена ввода в форму
+	 * @returns {CChangesBase[]}
+	 */
+	CHistory.prototype.UndoFormFilling = function(form)
+	{
+		if (!form || !this.Can_Undo())
+			return [];
+
+		this.UndoRedoInProgress = true;
+		let changes = [];
+
+		if (this.Index === this.Points.length - 1)
+			this.LastState = this.Document.GetSelectionState();
+
+		this.Document.RemoveSelection(true);
+
+		let point = this.Points[this.Index];
+		let newState = null;
+		while (this.private_IsFormFillingPoint(point, form))
+		{
+			newState = point.State;
+			this.private_UndoPoint(point, changes)
+
+			this.Index--;
+			if (this.Index < 0)
+				break;
+
+			point = this.Points[this.Index];
+		}
+
+		if (newState)
+			this.Document.SetSelectionState(newState);
+
+		if (!window['AscCommon'].g_specialPasteHelper.specialPasteStart)
+			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide(true);
+
+		this.UndoRedoInProgress = false;
+		return changes;
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	CHistory.prototype.private_UndoPoint = function(point, changes)
+	{
+		for (let changeIndex = point.Items.length - 1; changeIndex >= 0; --changeIndex)
+		{
+			let item = point.Items[changeIndex];
+			if (item.Data)
+			{
+				item.Data.Undo();
+				changes.push(item.Data);
+			}
+			this.private_UpdateContentChangesOnUndo(item);
+		}
+	};
+	CHistory.prototype.private_RedoPoint = function(point, changes)
+	{
+		for (var changeIndex = 0; changeIndex < point.Items.length; ++changeIndex)
+		{
+			let item = point.Items[changeIndex];
+
+			if (item.Data)
+			{
+				item.Data.Redo();
+				changes.push(item.Data);
+			}
+			this.private_UpdateContentChangesOnRedo(item);
+		}
+	};
+	CHistory.prototype.private_IsFormFillingPoint = function(point, form)
+	{
+		return (point.Additional && form === point.Additional.FormFilling);
 	};
 
 	//----------------------------------------------------------export--------------------------------------------------
