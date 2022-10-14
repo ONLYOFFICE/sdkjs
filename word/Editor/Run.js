@@ -10209,8 +10209,8 @@ ParaRun.prototype.Check_HistoryUninon = function(Data1, Data2)
 		&& 1 === Data1.Items.length
 		&& 1 === Data2.Items.length
 		&& Data1.Pos === Data2.Pos - 1
-		&& (Data1.Items[0].IsText() || Data1.Items[0].IsSpace())
-		&& (Data2.Items[0].IsText() || Data2.Items[0].IsSpace()));
+		&& ((Data1.Items[0].IsText() && Data2.Items[0].IsText())
+			|| (Data1.Items[0].IsSpace() && Data2.Items[0].IsSpace())));
 };
 //-----------------------------------------------------------------------------------
 // Функции для совместного редактирования
