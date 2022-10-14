@@ -2476,7 +2476,7 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
  */
 CInlineLevelSdt.prototype.GetSpecificType = function()
 {
-	if (this.IsComplexForm() || !this.IsMainForm())
+	if (this.IsComplexForm())
 		return Asc.c_oAscContentControlSpecificType.Complex;
 
 	if (this.IsCheckBox())
