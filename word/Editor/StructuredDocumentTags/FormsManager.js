@@ -403,8 +403,9 @@
 	};
 	CFormsManager.prototype.OnChangeComplexForm = function(oForm)
 	{
-		let sKey     = oForm.GetFormKey();
-		let arrForms = this.GetAllForms();
+		let sKey          = oForm.GetFormKey();
+		let isPlaceholder = oForm.IsPlaceHolder();
+		let arrForms      = this.GetAllForms();
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oTempForm = arrForms[nIndex];
@@ -416,6 +417,7 @@
 			// TODO: Сейчас мы полностью перезаписываем содержимое поля. Можно проверить, что поле состоит из таких
 			//       же базовых подклассов и попробовать обновить их каждый по отдельности, что бы было меньше изменений
 
+			oTempForm.SetShowingPlcHdr(isPlaceholder);
 			oTempForm.RemoveAll();
 			for (let nPos = 0, nItemsCount = oForm.GetElementsCount(); nPos < nItemsCount; ++nPos)
 			{
