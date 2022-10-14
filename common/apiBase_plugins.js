@@ -1260,7 +1260,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetInstalledPlugins
-     * @returns {[]} - Array of all installed plugins.
+     * @returns {object[]} - Array of all installed plugins.
      */
 	Api.prototype["pluginMethod_GetInstalledPlugins"] = function()
 	{

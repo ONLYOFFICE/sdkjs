@@ -444,7 +444,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias GetAllComments
-	 * @returns {[]} - An array which contains all the comments from the document.
+	 * @returns {object[]} - An array which contains all the comments from the document.
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_GetAllComments"] = function()
 	{
@@ -620,7 +620,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias AddContentControlList
 	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: 1 (comboBox) or 0 (drop-down list).
-	 * @param {Array[{String, String}]}  [List = [{Display, Value}]] - A list of the content control elements that consists of two items: "Display" - an item that will be displayed to the user in the content control list, "Value" - a value of each item from the content control list.
+	 * @param {Array<String, String>}  [List = [{Display, Value}]] - A list of the content control elements that consists of two items: "Display" - an item that will be displayed to the user in the content control list, "Value" - a value of each item from the content control list.
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @return {undefined}
 	 * @example

@@ -49,11 +49,15 @@
 	 * @property {Array} Sheets - Returns the Sheets collection that represents all the sheets in the active workbook.
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
-	 * @event onWorksheetChange - Calls the callback function when the specified range of the current sheet changes.
-	 * It is called with the *range* parameter which specifies the modified range represented as the ApiRange object.
-	 * <note>Please note that the event is not called for the undo/redo operations.</note>
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
+
+	/**
+ 	* The callback function which is called when the specified range of the current sheet changes.
+ 	* <note>Please note that the event is not called for the undo/redo operations.</note>
+	* @event Api#onWorksheetChange
+	* @property {ApiRange} range - The modified range represented as the ApiRange object.
+ 	*/
 
 	/**
 	 * Class representing a sheet.
@@ -754,6 +758,25 @@
 			}
 		}
 	};
+
+	/**
+	 * Subscribes to the specified event and calls the callback function when the event fires.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} eventName - The event name.
+	 * @param {function} callback - Function to be called when the event fires.
+	 * @fires Api#onWorksheetChange
+	 */
+	Api.prototype["attachEvent"] = Api.prototype.attachEvent;
+
+	/**
+	 * Unsubscribes from the specified event.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} eventName - The event name.
+	 * @fires Api#onWorksheetChange
+	 */
+	Api.prototype["detachEvent"] = Api.prototype.detachEvent;
 
 	/**
 	 * Returns the state of sheet visibility.
