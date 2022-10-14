@@ -5136,7 +5136,7 @@
 									for(let nMod = aMods.length -1; nMod > -1; nMod--) {
 										let oMod = aMods[nMod];
 										if(oMod && oMod.name === "alpha") {
-											aMods.splice(nMod);
+											aMods.splice(nMod, 1);
 										}
 									}
 								}
