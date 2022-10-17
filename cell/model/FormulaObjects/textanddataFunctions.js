@@ -2225,14 +2225,14 @@ function (window, undefined) {
 	cTEXTBEFORE.prototype.Calculate = function (arg) {
 		//каждый из аргументов может быть массивом, массив обрабатывается выше
 		//здесь не обрабатываю массивы
-		var text = arg[0];
+		let text = arg[0];
 		text = text.tocString();
 		if (text instanceof cError) {
 			return text;
 		}
 		text = text.toString();
 
-		var delimiter = arg[1];
+		let delimiter = arg[1];
 		delimiter = delimiter.tocString();
 		if (delimiter instanceof cError) {
 			return delimiter;
@@ -2240,9 +2240,9 @@ function (window, undefined) {
 		delimiter = delimiter.toString();
 
 		//instance_num - при отрицательном вхождении поиск с конца начинается
-		var instance_num = arg[2] ? arg[2] : new cNumber(1);
-		var match_mode = arg[3] ? arg[3] : new cBool(false);
-		var match_end = arg[4] ? arg[4] : new cBool(false);
+		let instance_num = arg[2] ? arg[2] : new cNumber(1);
+		let match_mode = arg[3] ? arg[3] : new cBool(false);
+		let match_end = arg[4] ? arg[4] : new cBool(false);
 
 		if (instance_num instanceof cError) {
 			return instance_num;
@@ -2254,28 +2254,32 @@ function (window, undefined) {
 			return match_end;
 		}
 
-		//todo match_end
 		instance_num = instance_num.toNumber();
+		//Excel returns a #VALUE! error if instance_num = 0 or if instance_num is greater than the length of text.
+		if (instance_num === 0 || instance_num > text.length) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		//todo match_end
 		match_mode = match_mode.toBool();
 		match_end = match_end.toBool();
 
-		var if_not_found = arg[5] ? arg[5] : new cError(cErrorType.not_available);
+		let if_not_found = arg[5] ? arg[5] : new cError(cErrorType.not_available);
+		let modifiedText = match_mode ? text.toLowerCase() : text;
+		let modifiedDelimiter = match_mode ? delimiter.toLowerCase() : delimiter;
 
-		if (instance_num > 1) {
-			text = text.substr(instance_num  - 1);
-		}
-		if (instance_num < -1) {
-			text = text.slice(-1*(text.length + instance_num), -1*text.length);
-		}
-		if (match_mode) {
-			text = text.toLowerCase();
-		}
+		//Excel returns a #N/A error if delimiter isn’t contained in text.
+		//Excel returns a #N/A error if instance_num is greater than the number of occurrences of delimiter in text.
 
-		var foundIndex;
-		if (instance_num > 0) {
-			foundIndex = text.indexOf(delimiter);
-		} else {
-			foundIndex = text.lastIndexOf(delimiter);
+		let isReverseSearch = instance_num < 0;
+		let foundIndex = -1;
+		let startPos = isReverseSearch ? modifiedText.length : 0;
+		for (let i = 0; i < Math.abs(instance_num); i++) {
+			foundIndex = isReverseSearch ? modifiedText.lastIndexOf(modifiedDelimiter ,startPos) : modifiedText.indexOf(modifiedDelimiter ,startPos);
+			if (foundIndex === -1) {
+				break;
+			}
+			startPos = isReverseSearch ? foundIndex - modifiedDelimiter.length : foundIndex + modifiedDelimiter.length;
 		}
 
 		if (foundIndex === -1) {

@@ -4998,6 +4998,102 @@ $( function () {
 		testArrayFormulaEqualsValues(assert, "113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-422445,113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-422445,113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-422445,113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-422445;113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-422445,113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-422445,113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-422445,113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-4224455113.1233.123-4-422445;#N/A,#N/A,#N/A,#N/A", "TEXTJOIN(A1:C2,A1:A2,A1:C2,A1:C2,A1:C2,A1:C2)");
 	} );
 
+	QUnit.test("Test: \"TEXTBEFORE\"", function (assert) {
+		ws.getRange2( "B2" ).setValue( "TesttestTeesttestTESTttetstetest" );
+		ws.getRange2( "B3" ).setValue( "test" );
+		ws.getRange2( "B4" ).setValue( "test2" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "Test" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B4)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;1)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "Test" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;2)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "TesttestTeest" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;3)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "TesttestTeesttestTESTttetste" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;4)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;1;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;2;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "Test" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;3;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "TesttestTeest" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;4;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "TesttestTeesttest" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;5;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "TesttestTeesttestTESTttetste" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;6, TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;0, TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-1)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "TesttestTeesttestTESTttetste" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-2)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "TesttestTeest" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-3)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "Test" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-4)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-1;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "TesttestTeesttestTESTttetste" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-2;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "TesttestTeesttest" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-3;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "TesttestTeest" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-4;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "Test" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-5;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "" );
+	} );
+
 
 	QUnit.test("Test: \"WORKDAY\"", function (assert) {
 
