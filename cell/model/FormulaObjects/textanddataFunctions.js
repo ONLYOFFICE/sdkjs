@@ -61,7 +61,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['TextAndData'].push(cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
 		cEXACT, cFIND, cFINDB, cFIXED, cJIS, cLEFT, cLEFTB, cLEN, cLENB, cLOWER, cMID, cMIDB, cNUMBERVALUE, cPHONETIC,
 		cPROPER, cREPLACE, cREPLACEB, cREPT, cRIGHT, cRIGHTB, cSEARCH, cSEARCHB, cSUBSTITUTE, cT, cTEXT, cTEXTJOIN,
-		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE);
+		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE, cTEXTBEFORE);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cBAHTTEXT, cJIS, cPHONETIC);
@@ -2205,6 +2205,84 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cTEXTBEFORE() {
+	}
+
+	//***array-formula***
+	cTEXTBEFORE.prototype = Object.create(cBaseFunction.prototype);
+	cTEXTBEFORE.prototype.constructor = cTEXTBEFORE;
+	cTEXTBEFORE.prototype.name = 'TEXTBEFORE';
+	cTEXTBEFORE.prototype.argumentsMin = 2;
+	cTEXTBEFORE.prototype.argumentsMax = 6;
+	cTEXTBEFORE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.logical];
+	cTEXTBEFORE.prototype.Calculate = function (arg) {
+		//каждый из аргументов может быть массивом, массив обрабатывается выше
+		//здесь не обрабатываю массивы
+		var text = arg[0];
+		text = text.tocString();
+		if (text instanceof cError) {
+			return text;
+		}
+		text = text.toString();
+
+		var delimiter = arg[1];
+		delimiter = delimiter.tocString();
+		if (delimiter instanceof cError) {
+			return delimiter;
+		}
+		delimiter = delimiter.toString();
+
+		//instance_num - при отрицательном вхождении поиск с конца начинается
+		var instance_num = arg[2] ? arg[2] : new cNumber(1);
+		var match_mode = arg[3] ? arg[3] : new cBool(false);
+		var match_end = arg[4] ? arg[4] : new cBool(false);
+
+		if (instance_num instanceof cError) {
+			return instance_num;
+		}
+		if (match_mode instanceof cError) {
+			return match_mode;
+		}
+		if (match_end instanceof cError) {
+			return match_end;
+		}
+
+		//todo match_end
+		instance_num = instance_num.toNumber();
+		match_mode = match_mode.toBool();
+		match_end = match_end.toBool();
+
+		var if_not_found = arg[5] ? arg[5] : new cError(cErrorType.not_available);
+
+		if (instance_num > 1) {
+			text = text.substr(instance_num  - 1);
+		}
+		if (instance_num < -1) {
+			text = text.slice(-1*(text.length + instance_num), -1*text.length);
+		}
+		if (match_mode) {
+			text = text.toLowerCase();
+		}
+
+		var foundIndex;
+		if (instance_num > 0) {
+			foundIndex = text.indexOf(delimiter);
+		} else {
+			foundIndex = text.lastIndexOf(delimiter);
+		}
+
+		if (foundIndex === -1) {
+			return if_not_found;
+		} else {
+			return new cString(text.substring(0, foundIndex));
+		}
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
