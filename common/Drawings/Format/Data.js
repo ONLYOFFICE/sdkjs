@@ -10214,7 +10214,7 @@ Because of this, the display is sometimes not correct.
         pReader.presentation = logicDocument;
         pReader.DrawingDocument = drawingDocument;
 
-        let sData = AscCommon.g_oSmartArtDrawings[nSmartArtType];
+        let sData = AscCommon['g_oSmartArtDrawings'][nSmartArtType];
         let data = AscCommon.Base64.decode(sData, true, undefined, undefined);
         pReader.stream = new AscCommon.FileStream(data, data.length);
         pReader.ReadSmartArtGroup(this.drawing);
@@ -10222,22 +10222,22 @@ Because of this, the display is sometimes not correct.
         this.addToSpTree(0, this.drawing);
 
         if (!bLoadOnlyDrawing) {
-          sData = AscCommon.g_oSmartArtStyleDef[nSmartArtType];
+          sData = AscCommon['g_oSmartArtStyleDef'][nSmartArtType];
           data = AscCommon.Base64.decode(sData, true, undefined, undefined);
           pReader.stream = new AscCommon.FileStream(data, data.length);
           this.styleDef.fromPPTY(pReader);
 
-          sData = AscCommon.g_oSmartArtLayoutDef[nSmartArtType];
+          sData = AscCommon['g_oSmartArtLayoutDef'][nSmartArtType];
           data = AscCommon.Base64.decode(sData, true, undefined, undefined);
           pReader.stream = new AscCommon.FileStream(data, data.length);
           this.layoutDef.fromPPTY(pReader);
 
-          sData = AscCommon.g_oSmartArtColorsDef[nSmartArtType];
+          sData = AscCommon['g_oSmartArtColorsDef'][nSmartArtType];
           data = AscCommon.Base64.decode(sData, true, undefined, undefined);
           pReader.stream = new AscCommon.FileStream(data, data.length);
           this.colorsDef.fromPPTY(pReader);
 
-          sData = AscCommon.g_oSmartArtData[nSmartArtType];
+          sData = AscCommon['g_oSmartArtData'][nSmartArtType];
           data = AscCommon.Base64.decode(sData, true, undefined, undefined);
           pReader.stream = new AscCommon.FileStream(data, data.length);
           this.dataModel.fromPPTY(pReader);
@@ -10246,17 +10246,18 @@ Because of this, the display is sometimes not correct.
 
         this.setSpPr(new AscFormat.CSpPr());
         this.spPr.setParent(this);
-        const smXfrm = AscCommon.g_oXfrmSmartArt.createDuplicate();
+        const smXfrm = new AscFormat.CXfrm();
+        smXfrm.fillStandardSmartArtXfrm();
         if (bFromWord) {
           smXfrm.setOffX(0);
           smXfrm.setOffY(0);
         }
         this.spPr.setXfrm(smXfrm);
         this.setBDeleted2(false);
-        this.x = AscCommon.g_oXfrmSmartArt.offX;
-        this.y = AscCommon.g_oXfrmSmartArt.offY;
-        this.extX = AscCommon.g_oXfrmSmartArt.extX;
-        this.extY = AscCommon.g_oXfrmSmartArt.extY;
+        this.x = smXfrm.offX;
+        this.y = smXfrm.offY;
+        this.extX = smXfrm.extX;
+        this.extY = smXfrm.extY;
         this.drawing.setXfrmByParent();
 
         if (!bLoadOnlyDrawing) {
