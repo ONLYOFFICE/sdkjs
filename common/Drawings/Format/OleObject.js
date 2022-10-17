@@ -316,7 +316,7 @@ function (window, undefined) {
         return false;
     };
 
-    COleObject.prototype.copy = function()
+    COleObject.prototype.copy = function(oPr)
     {
         const copy = new COleObject();
         if(this.nvPicPr)
