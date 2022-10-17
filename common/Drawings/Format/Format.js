@@ -150,8 +150,8 @@
 		InitClass(CBaseObject, CBaseNoIdObject, AscDFH.historyitem_type_Unknown);
 
 		CBaseObject.prototype.isGlobalSkipAddId = function () {
-			const oApi = editor || Asc.editor;
-			return !!(oApi && oApi.isSkipAddIdToBaseObject);
+			const oApi = window.editor || Asc.editor;
+			return !!(!AscCommon.g_oTableId.checkInit() || oApi && oApi.isSkipAddIdToBaseObject);
 		}
 
 		function InitClassWithoutType(fClass, fBase) {
@@ -14885,8 +14885,22 @@
 			builder_SetAxisMinorGridlines(oChartSpace.chart.plotArea.getHorizontalAxis(), oLn);
 		}
 
+		const g_oXfrmSmartArt =  new CXfrm();
+		ExecuteNoHistory(function () {
+			const emuTOmm = 1 / 36000;
+			g_oXfrmSmartArt.setOffX(2032000 * emuTOmm);
+			g_oXfrmSmartArt.setOffY(719666 * emuTOmm);
+			g_oXfrmSmartArt.setExtX(8128000 * emuTOmm);
+			g_oXfrmSmartArt.setExtY(5418667 * emuTOmm);
+			g_oXfrmSmartArt.setChOffX(0);
+			g_oXfrmSmartArt.setChOffY(0);
+			g_oXfrmSmartArt.setChExtX(g_oXfrmSmartArt.extX);
+			g_oXfrmSmartArt.setChExtY(g_oXfrmSmartArt.extY);
+		}, null, []);
+
 //----------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
+		window['AscFormat'].g_oXfrmSmartArt = g_oXfrmSmartArt;
 		window['AscFormat'].CreateFontRef = CreateFontRef;
 		window['AscFormat'].CreatePresetColor = CreatePresetColor;
 		window['AscFormat'].isRealNumber = isRealNumber;
