@@ -2708,6 +2708,10 @@
 					}
 				}
 
+				if (name && AscCommonExcel.cFormulaFunctionToLocale && AscCommonExcel.cFormulaFunctionToLocale[name]) {
+					name = AscCommonExcel.cFormulaFunctionToLocale[name];
+				}
+
 				if (name) {
 					res = new AscCommonExcel.CFunctionInfo(name)
 
