@@ -66,6 +66,72 @@ function (window, undefined) {
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cBAHTTEXT, cJIS, cPHONETIC);
 
+	function calcBeforeAfterText(arg, arg1, isAfter) {
+		let newArgs = cBaseFunction.prototype._prepareArguments.call(this, arg, arg1, true).args;
+		let text = newArgs[0];
+		text = text.tocString();
+		if (text.type === cElementType.error) {
+			return text;
+		}
+		text = text.toString();
+
+		let delimiter = newArgs[1];
+		delimiter = delimiter.tocString();
+		if (delimiter.type === cElementType.error) {
+			return delimiter;
+		}
+		delimiter = delimiter.toString();
+
+		//instance_num - при отрицательном вхождении поиск с конца начинается
+		let instance_num = newArgs[2] && !(newArgs[2].type === cElementType.empty) ? newArgs[2] : new cNumber(1);
+		let match_mode = newArgs[3] && !(newArgs[3].type === cElementType.empty) ? newArgs[3] : new cBool(false);
+		let match_end = newArgs[4] && !(newArgs[4].type === cElementType.empty) ? newArgs[4] : new cBool(false);
+		if (instance_num.type === cElementType.error) {
+			return instance_num;
+		}
+		if (match_mode.type === match_mode.error) {
+			return match_mode;
+		}
+		if (match_end.type === match_end.error) {
+			return match_end;
+		}
+
+		instance_num = instance_num.toNumber();
+		if (instance_num === 0 || (instance_num > text.length && newArgs[2].type !== cElementType.empty)) {
+			//Excel returns a #VALUE! error if instance_num = 0 or if instance_num is greater than the length of text.
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		match_mode = match_mode.toBool();
+		match_end = match_end.toBool();
+
+		let if_not_found = newArgs[5] ? newArgs[5] : new cError(cErrorType.not_available);
+
+		//calculate
+		let modifiedText = match_mode ? text.toLowerCase() : text;
+		let modifiedDelimiter = match_mode ? delimiter.toLowerCase() : delimiter;
+
+		let isReverseSearch = instance_num < 0;
+		let foundIndex = -1;
+		let startPos = isReverseSearch ? modifiedText.length : 0;
+		for (let i = 0; i < Math.abs(instance_num); i++) {
+			foundIndex = isReverseSearch ? modifiedText.lastIndexOf(modifiedDelimiter ,startPos) : modifiedText.indexOf(modifiedDelimiter ,startPos);
+			if (foundIndex === -1) {
+				if (match_end && i === Math.abs(instance_num) - 1) {
+					foundIndex = isReverseSearch ? 0 : text.length;
+				}
+				break;
+			}
+			startPos = isReverseSearch ? foundIndex - modifiedDelimiter.length : foundIndex + modifiedDelimiter.length;
+		}
+
+		if (foundIndex === -1) {
+			return if_not_found;
+		} else {
+			return new cString(isAfter ? text.substring(foundIndex, text.length) : text.substring(0, foundIndex));
+		}
+	}
+
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
@@ -2221,74 +2287,34 @@ function (window, undefined) {
 	cTEXTBEFORE.prototype.argumentsMin = 2;
 	cTEXTBEFORE.prototype.argumentsMax = 6;
 	cTEXTBEFORE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.logical];
+	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
 	cTEXTBEFORE.prototype.Calculate = function (arg) {
 		//каждый из аргументов может быть массивом, массив обрабатывается выше
 		//здесь не обрабатываю массивы
-		let text = arg[0];
-		text = text.tocString();
-		if (text instanceof cError) {
-			return text;
-		}
-		text = text.toString();
+		//prepare
+		return calcBeforeAfterText(arg, arguments[1]);
+	};
 
-		let delimiter = arg[1];
-		delimiter = delimiter.tocString();
-		if (delimiter instanceof cError) {
-			return delimiter;
-		}
-		delimiter = delimiter.toString();
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cTEXTAFTER() {
+	}
 
-		//instance_num - при отрицательном вхождении поиск с конца начинается
-		let instance_num = arg[2] ? arg[2] : new cNumber(1);
-		let match_mode = arg[3] ? arg[3] : new cBool(false);
-		let match_end = arg[4] ? arg[4] : new cBool(false);
-
-		if (instance_num instanceof cError) {
-			return instance_num;
-		}
-		if (match_mode instanceof cError) {
-			return match_mode;
-		}
-		if (match_end instanceof cError) {
-			return match_end;
-		}
-
-		instance_num = instance_num.toNumber();
-		//Excel returns a #VALUE! error if instance_num = 0 or if instance_num is greater than the length of text.
-		if (instance_num === 0 || instance_num > text.length) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		match_mode = match_mode.toBool();
-		match_end = match_end.toBool();
-
-		let if_not_found = arg[5] ? arg[5] : new cError(cErrorType.not_available);
-		let modifiedText = match_mode ? text.toLowerCase() : text;
-		let modifiedDelimiter = match_mode ? delimiter.toLowerCase() : delimiter;
-
-		//Excel returns a #N/A error if delimiter isn’t contained in text.
-		//Excel returns a #N/A error if instance_num is greater than the number of occurrences of delimiter in text.
-
-		let isReverseSearch = instance_num < 0;
-		let foundIndex = -1;
-		let startPos = isReverseSearch ? modifiedText.length : 0;
-		for (let i = 0; i < Math.abs(instance_num); i++) {
-			foundIndex = isReverseSearch ? modifiedText.lastIndexOf(modifiedDelimiter ,startPos) : modifiedText.indexOf(modifiedDelimiter ,startPos);
-			if (foundIndex === -1) {
-				if (match_end && i === Math.abs(instance_num) - 1) {
-					foundIndex = isReverseSearch ? 0 : text.length;
-				}
-				break;
-			}
-			startPos = isReverseSearch ? foundIndex - modifiedDelimiter.length : foundIndex + modifiedDelimiter.length;
-		}
-
-		if (foundIndex === -1) {
-			return if_not_found;
-		} else {
-			return new cString(text.substring(0, foundIndex));
-		}
+	//***array-formula***
+	cTEXTAFTER.prototype = Object.create(cBaseFunction.prototype);
+	cTEXTAFTER.prototype.constructor = cTEXTAFTER;
+	cTEXTAFTER.prototype.name = 'TEXTAFTER';
+	cTEXTAFTER.prototype.argumentsMin = 2;
+	cTEXTAFTER.prototype.argumentsMax = 6;
+	cTEXTAFTER.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cTEXTAFTER.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
+	cTEXTAFTER.prototype.Calculate = function (arg) {
+		//каждый из аргументов может быть массивом, массив обрабатывается выше
+		//здесь не обрабатываю массивы
+		//prepare
+		return calcBeforeAfterText(arg, arguments[1], true);
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
