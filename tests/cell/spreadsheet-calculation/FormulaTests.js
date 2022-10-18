@@ -5092,6 +5092,56 @@ $( function () {
 		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-5;TRUE)", "A1", ws );
 		assert.ok( oParser.parse() );
 		assert.strictEqual( oParser.calculate().getValue(), "" );
+
+
+		ws.getRange2( "B2" ).setValue( "12test434TESTtest233" );
+		ws.getRange2( "B3" ).setValue( "TEST" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;1;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "12" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;2;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "12test434" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;3;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "12test434TEST" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;4;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "12test434TESTtest233" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;5;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "error" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;5;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "error" );
+
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-1;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "12test434TEST" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-2;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "12test434" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-3;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "12" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-4;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "" );
+
+		oParser = new parserFormula( "TEXTBEFORE(B2;B3;-5;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "error" );
+
 	} );
 
 

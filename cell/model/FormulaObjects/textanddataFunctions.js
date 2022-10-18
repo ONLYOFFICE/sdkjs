@@ -2260,7 +2260,6 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		//todo match_end
 		match_mode = match_mode.toBool();
 		match_end = match_end.toBool();
 
@@ -2277,6 +2276,9 @@ function (window, undefined) {
 		for (let i = 0; i < Math.abs(instance_num); i++) {
 			foundIndex = isReverseSearch ? modifiedText.lastIndexOf(modifiedDelimiter ,startPos) : modifiedText.indexOf(modifiedDelimiter ,startPos);
 			if (foundIndex === -1) {
+				if (match_end && i === Math.abs(instance_num) - 1) {
+					foundIndex = isReverseSearch ? 0 : text.length;
+				}
 				break;
 			}
 			startPos = isReverseSearch ? foundIndex - modifiedDelimiter.length : foundIndex + modifiedDelimiter.length;
