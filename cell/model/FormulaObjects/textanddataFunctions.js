@@ -114,11 +114,17 @@ function (window, undefined) {
 		let isReverseSearch = instance_num < 0;
 		let foundIndex = -1;
 		let startPos = isReverseSearch ? modifiedText.length : 0;
+		let repeatZero = 0;
+		let match_end_active = false;
 		for (let i = 0; i < Math.abs(instance_num); i++) {
 			foundIndex = isReverseSearch ? modifiedText.lastIndexOf(modifiedDelimiter ,startPos) : modifiedText.indexOf(modifiedDelimiter ,startPos);
+			if (foundIndex === 0) {
+				repeatZero++;
+			}
 			if (foundIndex === -1) {
 				if (match_end && i === Math.abs(instance_num) - 1) {
 					foundIndex = isReverseSearch ? 0 : text.length;
+					match_end_active = true;
 				}
 				break;
 			}
@@ -128,7 +134,7 @@ function (window, undefined) {
 		if (foundIndex === -1) {
 			return if_not_found;
 		} else {
-			return new cString(isAfter ? text.substring(foundIndex + ((foundIndex === 0 && match_end ) ? 0 : modifiedDelimiter.length), text.length) : text.substring(0, foundIndex));
+			return new cString(isAfter ? text.substring(foundIndex + (((repeatZero > 1 || match_end_active) && match_end && isReverseSearch ) ? 0 : modifiedDelimiter.length), text.length) : text.substring(0, foundIndex));
 		}
 	}
 

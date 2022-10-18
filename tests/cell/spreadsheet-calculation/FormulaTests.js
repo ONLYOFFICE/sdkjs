@@ -5256,6 +5256,22 @@ $( function () {
 		oParser = new parserFormula( "TEXTAFTER(C3;\"asdasd\";-8;TRUE;TRUE)", "A1", ws );
 		assert.ok( oParser.parse() );
 		assert.strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+		oParser = new parserFormula( "TEXTAFTER(12333;123;1;TRUE;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "33" );
+
+		oParser = new parserFormula( "TEXTAFTER(12333;123;-1;TRUE;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "33" );
+
+		oParser = new parserFormula( "TEXTAFTER(12333;123;-2;TRUE;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "12333" );
+
+		oParser = new parserFormula( "TEXTAFTER(12333;123;3;TRUE;TRUE)", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "#N/A" );
 	} );
 
 	QUnit.test("Test: \"WORKDAY\"", function (assert) {
