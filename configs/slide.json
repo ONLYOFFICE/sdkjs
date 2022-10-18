@@ -132,6 +132,7 @@
 			"word/Editor/Serialize2.js",
 			"word/Editor/Styles.js",
 			"slide/Editor/Format/StylesPrototype.js",
+			"word/Editor/Numbering/NumberingApplicator.js",
 			"word/Editor/Numbering/NumberingCommon.js",
 			"word/Editor/Numbering/NumberingLvl.js",
 			"word/Editor/Numbering/AbstractNum.js",

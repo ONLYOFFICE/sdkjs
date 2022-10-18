@@ -4144,6 +4144,29 @@ background-repeat: no-repeat;\
 			fCallback();
 		}
 	};
+	asc_docs_api.prototype.put_ListTypeExt = function(numInfo)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+
+		new Promise(function(resolve)
+		{
+			let symbols = AscWord.GetNumberingSymbols(numInfo);
+			if (symbols && symbols.length)
+				AscFonts.FontPickerByCharacter.checkText(symbols, this, resolve);
+			else
+				resolve();
+		}).then(function()
+		{
+			if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
+			{
+				logicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphNumbering);
+				logicDocument.SetParagraphNumbering(numInfo);
+				logicDocument.FinalizeAction();
+			}
+		});
+	};
 	asc_docs_api.prototype.asc_ContinueNumbering = function()
 	{
 		var oLogicDocument = this.WordControl.m_oLogicDocument;

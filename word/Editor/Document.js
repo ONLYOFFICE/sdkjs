@@ -6570,14 +6570,25 @@ CDocument.prototype.SetParagraphIndent = function(Ind)
 	this.UpdateSelection();
 	this.UpdateInterface();
 };
-CDocument.prototype.SetParagraphNumbering = function(NumInfo)
+CDocument.prototype.SetParagraphNumbering = function(numInfo)
 {
-	if (this.private_SetParagraphNumbering(NumInfo))
+	let result = false;
+	if (undefined !== numInfo.Type && undefined !== numInfo.SubType)
+	{
+		result = this.private_SetParagraphNumbering(numInfo);
+	}
+	else
+	{
+		let applicator = new AscWord.CNumberingApplicator(this);
+		result = applicator.Apply(numInfo);
+	}
+
+	if (result)
 	{
 		this.Recalculate();
-		this.Document_UpdateSelectionState();
-		this.Document_UpdateInterfaceState();
-		this.Document_UpdateStylesPanel();
+		this.UpdateSelection();
+		this.UpdateInterface();
+		this.UpdateStylePanel();
 	}
 };
 CDocument.prototype.SetParagraphOutlineLvl = function(nLvl)
@@ -6659,7 +6670,7 @@ CDocument.prototype.private_SetParagraphNumbering = function(oNumInfo)
 							paragraph.SetParagraphStyleById(styles.GetDefaultHeading(iLvl));
 					}
 
-					this.Document_UpdateStylesPanel();
+					this.UpdateStylePanel();
 				}
 
 			}
@@ -12332,7 +12343,7 @@ CDocument.prototype.private_UpdateInterface = function(isSaveCurrentReviewChange
 	this.Document_UpdateUndoRedoState();
 	this.Document_UpdateCanAddHyperlinkState();
 	this.Document_UpdateSectionPr();
-	this.Document_UpdateStylesPanel();
+	this.UpdateStylePanel();
 };
 CDocument.prototype.private_UpdateRulers = function()
 {
@@ -15133,7 +15144,7 @@ CDocument.prototype.Add_ChangedStyle = function(arrStylesId)
 		this.ChangedStyles[arrStylesId[nIndex]] = true;
 	}
 };
-CDocument.prototype.Document_UpdateStylesPanel = function()
+CDocument.prototype.UpdateStylePanel = function()
 {
 	if (0 !== this.TurnOffPanelStyles)
 		return;
@@ -15161,7 +15172,7 @@ CDocument.prototype.UnlockPanelStyles = function(isUpdate)
 	this.TurnOffPanelStyles = Math.max(0, this.TurnOffPanelStyles - 1);
 
 	if (true === isUpdate)
-		this.Document_UpdateStylesPanel();
+		this.UpdateStylePanel();
 };
 CDocument.prototype.GetAllParagraphs = function(Props, ParaArray)
 {

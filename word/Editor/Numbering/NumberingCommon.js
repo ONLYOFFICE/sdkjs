@@ -179,3 +179,23 @@ function Numbering_Number_To_Roman(Num, bLowerCase)
 
 	return T;
 }
+
+(function(window)
+{
+	/**
+	 * Получаем набор символов используемых в заданной нумерации
+	 * @param value {object} заданная нумерация
+	 * @returns {string}
+	 */
+	function GetNumberingSymbols(value)
+	{
+		// TODO: Сейчас функция работает с JSON, возможно, стоит добавить поддержку с самой асбстрактной нумерацией
+		//       и с отдельным уровнем нумерации
+
+		// TODO: Реализовать
+		return "abc";
+	}
+	//---------------------------------------------------------export---------------------------------------------------
+	window["AscWord"].GetNumberingSymbols = GetNumberingSymbols;
+
+})(window);

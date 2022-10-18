@@ -187,6 +187,7 @@
 			"word/Editor/Paragraph_Recalculate.js",
 			"word/Editor/Sections.js",
 			"word/Editor/SectionsChanges.js",
+			"word/Editor/Numbering/NumberingApplicator.js",
 			"word/Editor/Numbering/NumberingCommon.js",
 			"word/Editor/Numbering/NumberingLvl.js",
 			"word/Editor/Numbering/AbstractNum.js",
