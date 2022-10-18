@@ -2891,7 +2891,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return calculateFunc(argsArray);
 	};
-	cBaseFunction.prototype._prepareArguments = function (args, arg1, bAddFirstArrElem, typeArray) {
+	cBaseFunction.prototype._prepareArguments = function (args, arg1, bAddFirstArrElem, typeArray, bFirstRangeElem) {
 		var newArgs = [];
 		var indexArr = null;
 
@@ -2910,7 +2910,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					newArgs[i] = new cError(cErrorType.division_by_zero);
 				}
 			} else if (cElementType.cellsRange === arg.type || cElementType.cellsRange3D === arg.type) {
-				newArgs[i] = arg.cross(arg1);
+				newArgs[i] = bFirstRangeElem ? arg.getValueByRowCol(0,0) : arg.cross(arg1);
+				if (newArgs[i] == undefined) {
+					newArgs[i] = arg.cross(arg1);
+				}
 			} else if (cElementType.array === arg.type) {
 				if (bAddFirstArrElem) {
 					newArgs[i] = arg.getElementRowCol(0, 0);

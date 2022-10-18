@@ -67,7 +67,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['NotRealised'].push(cBAHTTEXT, cJIS, cPHONETIC);
 
 	function calcBeforeAfterText(arg, arg1, isAfter) {
-		let newArgs = cBaseFunction.prototype._prepareArguments.call(this, arg, arg1, true).args;
+		let newArgs = cBaseFunction.prototype._prepareArguments.call(this, arg, arg1, true, null, true).args;
 		let text = newArgs[0];
 		text = text.tocString();
 		if (text.type === cElementType.error) {
