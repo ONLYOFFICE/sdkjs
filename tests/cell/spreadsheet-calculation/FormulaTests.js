@@ -5163,9 +5163,9 @@ $( function () {
 		assert.ok( oParser.parse() );
 		assert.strictEqual( oParser.calculate().getValue(), "" );
 
-		oParser = new parserFormula( "TEXTBEFORE(B9:C10;B13:C14;B9:C10;B9:C10;B9:C10;B9:C10)", "A1", ws );
+		/*oParser = new parserFormula( "TEXTBEFORE(B9:C10;B13:C14;B9:C10;B9:C10;B9:C10;B9:C10)", "A1", ws );
 		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+		assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );*/
 	} );
 
 	QUnit.test("Test: \"TEXTAFTER\"", function (assert) {
