@@ -5168,6 +5168,83 @@ $( function () {
 		assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );
 	} );
 
+	QUnit.test("Test: \"TEXTAFTER\"", function (assert) {
+		ws.getRange2( "C3" ).setValue( "txttextTeXttextText234text stext text" );
+		ws.getRange2( "C6" ).setValue( "te" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;1;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xtTeXttextText234text stext text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;2;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "XttextText234text stext text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;4;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xt234text stext text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;6;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xt text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;7;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xt" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;8;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;8;TRUE;FALSE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "error" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;9;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "error" );
+
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;-1;TRUE;FALSE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xt" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;-2;TRUE;FALSE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xt text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;-3;TRUE;FALSE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xt stext text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;-4;TRUE;FALSE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xt234text stext text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;-5;TRUE;FALSE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xtText234text stext text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;-6;TRUE;FALSE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "XttextText234text stext text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;-7;TRUE;FALSE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xtTeXttextText234text stext text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;-7;TRUE;FALSE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "xtTeXttextText234text stext text" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;-8;TRUE;FALSE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "error" );
+
+		oParser = new parserFormula( "TEXTAFTER(C3;C6;-8;TRUE;TRUE;\"error\")", "A1", ws );
+		assert.ok( oParser.parse() );
+		assert.strictEqual( oParser.calculate().getValue(), "txttextTeXttextText234text stext text" );
+	} );
 
 	QUnit.test("Test: \"WORKDAY\"", function (assert) {
 

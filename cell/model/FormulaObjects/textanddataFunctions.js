@@ -61,7 +61,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['TextAndData'].push(cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
 		cEXACT, cFIND, cFINDB, cFIXED, cJIS, cLEFT, cLEFTB, cLEN, cLENB, cLOWER, cMID, cMIDB, cNUMBERVALUE, cPHONETIC,
 		cPROPER, cREPLACE, cREPLACEB, cREPT, cRIGHT, cRIGHTB, cSEARCH, cSEARCHB, cSUBSTITUTE, cT, cTEXT, cTEXTJOIN,
-		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE, cTEXTBEFORE);
+		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE, cTEXTBEFORE, cTEXTAFTER);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cBAHTTEXT, cJIS, cPHONETIC);
@@ -128,7 +128,7 @@ function (window, undefined) {
 		if (foundIndex === -1) {
 			return if_not_found;
 		} else {
-			return new cString(isAfter ? text.substring(foundIndex, text.length) : text.substring(0, foundIndex));
+			return new cString(isAfter ? text.substring(foundIndex + ((foundIndex === 0 && match_end ) ? 0 : modifiedDelimiter.length), text.length) : text.substring(0, foundIndex));
 		}
 	}
 
@@ -2289,9 +2289,6 @@ function (window, undefined) {
 	cTEXTBEFORE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
 	cTEXTBEFORE.prototype.Calculate = function (arg) {
-		//каждый из аргументов может быть массивом, массив обрабатывается выше
-		//здесь не обрабатываю массивы
-		//prepare
 		return calcBeforeAfterText(arg, arguments[1]);
 	};
 
@@ -2311,9 +2308,6 @@ function (window, undefined) {
 	cTEXTAFTER.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTEXTAFTER.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
 	cTEXTAFTER.prototype.Calculate = function (arg) {
-		//каждый из аргументов может быть массивом, массив обрабатывается выше
-		//здесь не обрабатываю массивы
-		//prepare
 		return calcBeforeAfterText(arg, arguments[1], true);
 	};
 
