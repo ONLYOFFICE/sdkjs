@@ -1928,7 +1928,9 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     this.CheckEmptyElementsOnSelection = true; // При выделении проверять или нет пустой параграф в конце/начале выделения.
 
-    this.Numbering = new AscWord.CNumbering();
+    this.Numbering           = new AscWord.CNumbering();
+	this.NumberingApplicator = new AscWord.CNumberingApplicator(this);
+
     this.Styles    = new CStyles();
     this.Styles.Set_LogicDocument(this);
 
@@ -6579,8 +6581,7 @@ CDocument.prototype.SetParagraphNumbering = function(numInfo)
 	}
 	else
 	{
-		let applicator = new AscWord.CNumberingApplicator(this);
-		result = applicator.Apply(numInfo);
+		result = this.NumberingApplicator.Apply(numInfo);
 	}
 
 	if (result)

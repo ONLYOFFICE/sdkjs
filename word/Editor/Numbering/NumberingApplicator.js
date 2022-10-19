@@ -257,7 +257,7 @@
 
 		let lastNumPr = this.GetLastBulleted();
 		let lastNum   = lastNumPr ? this.Numbering.GetNum(lastNumPr.NumId) : null;
-		if (lastNum && lastNum.GetLvl(lastNumPr.Lvl).IsBulleted())
+		if (lastNum && lastNum.GetLvl(numPr.Lvl).IsBulleted())
 		{
 			lvl = lastNum.GetLvl(lastNumPr.Lvl).Copy();
 		}
@@ -278,7 +278,134 @@
 	};
 	CNumberingApplicator.prototype.ApplyNumbered = function()
 	{
+		if (this.ApplyNumberedToCurrent())
+			return true;
 
+		// 1. Пытаемся присоединить список к списку предыдущего параграфа (если он нумерованный)
+		// 2. Пытаемся присоединить список к списку следующего параграфа (если он нумерованный)
+		// 3. Пытаемся добавить список, который добавлялся предыдущий раз (добавляем его копию, и опционально продолжаем)
+		// 4. Создаем новый нумерованный список
+
+		let numberingManager = this.Document.GetNumbering();
+
+		let numId = null;
+		let ilvl  = 0;
+
+		let prevNumPr = this.GetPrevNumPr();
+		if (prevNumPr && numberingManager.CheckFormat(prevNumPr.NumId, prevNumPr.Lvl, Asc.c_oAscNumberingFormat.Decimal))
+		{
+			numId = prevNumPr.NumId;
+			ilvl  = prevNumPr.Lvl;
+		}
+
+		if (!numId)
+		{
+			let nextNumPr = this.GetNextNumPr();
+			if (nextNumPr && numberingManager.CheckFormat(nextNumPr.NumId, nextNumPr.Lvl, Asc.c_oAscNumberingFormat.Decimal))
+			{
+				numId = nextNumPr.NumId;
+				ilvl  = nextNumPr.Lvl;
+			}
+		}
+
+		let isCheckPrev = false;
+		if (!numId)
+		{
+			let lastNumPr = this.GetLastNumbered();
+			let lastNum   = lastNumPr ? this.Numbering.GetNum(lastNumPr.NumId) : null;
+			if (lastNum && lastNum.GetLvl(0).IsNumbered())
+			{
+				let newNum = this.Numbering.CreateNum();
+
+				if (lastNum.IsHaveRelatedLvlText())
+				{
+					for (let ilvlTemp = 0; ilvlTemp < 9; ++ilvlTemp)
+					{
+						newNum.SetLvl(lastNum.GetLvl(ilvlTemp).Copy(), ilvlTemp);
+					}
+				}
+				else
+				{
+					newNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
+					newNum.SetLvl(lastNum.GetLvl(lastNumPr.Lvl).Copy(), 0);
+				}
+
+				numId = newNum.GetId();
+				ilvl  = 0;
+
+				isCheckPrev = true;
+			}
+		}
+
+		if (!numId)
+		{
+			let newNum = this.Numbering.CreateNum();
+			newNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
+
+			numId = newNum.GetId();
+			ilvl  = 0;
+
+			isCheckPrev = true;
+		}
+
+		if (isCheckPrev)
+		{
+			let result = this.CheckPrevNumPr(numId, ilvl);
+			if (result)
+			{
+				numId = result.NumId;
+				ilvl  = result.Lvl;
+			}
+		}
+
+		this.SetLastNumbered(numId, ilvl);
+		this.ApplyNumPr(numId, ilvl);
+
+		return true;
+	};
+	CNumberingApplicator.prototype.ApplyNumberedToCurrent = function()
+	{
+		let numPr = this.NumPr;
+		if (!numPr)
+			return false;
+
+		let num = this.Numbering.GetNum(numPr.NumId);
+		if (!num)
+			return false;
+
+		let lvl;
+
+		let lastNumPr = this.GetLastNumbered();
+		let lastNum   = lastNumPr ? this.Numbering.GetNum(lastNumPr.NumId) : null;
+		if (lastNum && lastNum.GetLvl(numPr.Lvl).IsNumbered())
+		{
+			if (lastNum.IsHaveRelatedLvlText())
+			{
+				// В этом случае мы не можем подменить просто текущий уровень, меняем целиком весь список
+				for (let ilvl = 0; ilvl < 9; ++ilvl)
+				{
+					num.SetLvl(lastNum.GetLvl(nLvl).Copy(), ilvl);
+				}
+			}
+			else
+			{
+				lvl        = lastNum.GetLvl(lastNum.Lvl).Copy();
+				lvl.ParaPr = num.GetLvl(numPr.Lvl).ParaPr.Copy();
+				lvl.ResetNumberedText(numPr.Lvl);
+			}
+		}
+		else
+		{
+			lvl = num.GetLvl(numPr.Lvl).Copy();
+			lvl.SetByType(c_oAscNumberingLevel.DecimalDot_Right, numPr.Lvl);
+			lvl.ParaPr = num.GetLvl(numPr.Lvl).ParaPr.Copy();
+		}
+
+		if (lvl)
+			num.SetLvl(lvl, numPr.Lvl);
+
+		this.SetLastNumbered(numPr.NumId, numPr.Lvl);
+		return true;
 	};
 	CNumberingApplicator.prototype.ApplySingleLevel = function()
 	{
