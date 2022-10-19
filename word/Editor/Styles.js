@@ -15381,6 +15381,14 @@ CTextPr.prototype.GetFontInfo = function(nFontSlot)
 
 	return new AscFonts.CTextFontInfo(sFontName, (isBold ? 1  : 0) | (isItalic ? 2 : 0), nFontSize);
 };
+CTextPr.prototype.ToJSON = function()
+{
+	return {};
+};
+CTextPr.prototype.FromJSON = function(json)
+{
+
+};
 
 function CTextMetrics()
 {
@@ -17926,6 +17934,14 @@ CParaPr.prototype.CheckBorderSpaces = function()
 
 	if (this.Brd.Between)
 		this.Brd.Between.Space = this.private_CorrectBorderSpace(this.Brd.Between.Space);
+};
+CParaPr.prototype.ToJSON = function()
+{
+	return {};
+};
+CParaPr.prototype.FromJSON = function(json)
+{
+
 };
 //----------------------------------------------------------------------------------------------------------------------
 // CParaPr Export

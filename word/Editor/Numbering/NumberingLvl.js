@@ -2764,6 +2764,10 @@ CNumberingLvl.prototype.ToJSON = function()
 	let writer = new AscCommon.WriterToJSON();
 	return writer.SerNumLvl(this, 0);
 };
+CNumberingLvl.prototype.FromJSON = function(json)
+{
+	// TODO: Реализовать
+};
 
 
 function CNumberingLvlTextString(Val)
