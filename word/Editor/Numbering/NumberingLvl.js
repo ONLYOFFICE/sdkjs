@@ -2758,8 +2758,12 @@ CNumberingLvl.prototype.private_CheckSymbols = function()
 			}
 		}
 	}
-}
-
+};
+CNumberingLvl.prototype.ToJSON = function()
+{
+	let writer = new AscCommon.WriterToJSON();
+	return writer.SerNumLvl(this, 0);
+};
 
 
 function CNumberingLvlTextString(Val)

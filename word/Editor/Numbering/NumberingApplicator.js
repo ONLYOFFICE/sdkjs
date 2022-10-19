@@ -88,7 +88,7 @@
 			result = this.ApplyMultilevel();
 
 		if (result)
-			this.UpdateDocumentOutLine();
+			this.UpdateDocumentOutline();
 
 		return result;
 	};
@@ -151,11 +151,11 @@
 	};
 	CNumberingApplicator.prototype.IsSingleLevel = function()
 	{
-		return (NumberingType.Number === this.NumInfo.Type);
+		return (NumberingType.Number === this.NumInfo.Type && this.NumInfo.Lvl && 1 === this.NumInfo.Lvl.length);
 	};
 	CNumberingApplicator.prototype.IsMultilevel = function()
 	{
-		return false;
+		return (this.NumInfo.Lvl && this.NumInfo.Lvl.length >= 8);
 	};
 	CNumberingApplicator.prototype.RemoveNumbering = function()
 	{
@@ -416,7 +416,7 @@
 		if (!numLvl)
 			return false;
 
-		let commonNumPr = this.GetCommonNumPrOfParagraphs();
+		let commonNumPr = this.GetCommonNumPr();
 		if (this.NumPr)
 		{
 			let num = this.Numbering.GetNum(this.NumPr.NumId);
@@ -467,7 +467,35 @@
 	};
 	CNumberingApplicator.prototype.ApplyMultilevel = function()
 	{
+		let commonNumId = this.NumPr ? this.NumPr.NumId : this.GetCommonNumId();
 
+		let num, numId;
+		if (commonNumId)
+		{
+			num = this.Numbering.GetNum(commonNumId);
+		}
+		else
+		{
+			num   = this.CreateBaseNum();
+			numId = num.GetId();
+		}
+
+		if (!num)
+			return false;
+
+		for (let ilvl = 0; ilvl < 9; ++ilvl)
+		{
+			let numLvl = this.CreateSingleNumberingLvl(ilvl);
+			num.SetLvl(numLvl, ilvl);
+		}
+
+		if (numId)
+		{
+			this.ApplyNumPr(numId, 0);
+			this.ApplyToHeadings();
+		}
+
+		return true;
 	};
 	CNumberingApplicator.prototype.GetPrevNumPr = function()
 	{
@@ -511,7 +539,7 @@
 
 		return new AscWord.CNumPr(numId, ilvl);
 	};
-	CNumberingApplicator.prototype.GetCommonNumPrOfParagraphs = function()
+	CNumberingApplicator.prototype.GetCommonNumPr = function()
 	{
 		let isDiffLvl = false;
 		let isDiffId  = false;
@@ -562,9 +590,37 @@
 
 		return new AscWord.CNumPr(numId, ilvl);
 	};
-	CNumberingApplicator.prototype.CreateSingleNumberingLvl = function()
+	CNumberingApplicator.prototype.GetCommonNumId = function()
 	{
-		// TODO: Реализовать создание уровня
+		let numId = null;
+		for (let index = 0, count = this.Paragraphs.length; index < count; ++index)
+		{
+			let numPr = this.Paragraphs[index].GetNumPr();
+			if (numPr)
+			{
+				if (null === numId)
+					numId = numPr.NumId;
+				else if (numId !== numPr.NumId)
+					return null;
+			}
+			else
+			{
+				return null;
+			}
+		}
+		return numId;
+	};
+	CNumberingApplicator.prototype.CreateSingleNumberingLvl = function(ilvl)
+	{
+		let _ilvl = ilvl ? ilvl : 0;
+
+		if (!this.NumInfo
+			|| !this.NumInfo.Lvl
+			|| this.NumInfo.Lvl.length <= _ilvl)
+			return null;
+
+		let reader = new AscCommon.ReaderFromJSON();
+		return reader.NumLvlFromJSON(this.NumInfo.Lvl[_ilvl]);
 	};
 	CNumberingApplicator.prototype.CreateBaseNum = function()
 	{
@@ -588,6 +644,32 @@
 				paragraph.ApplyNumPr(numId, oldNumPr.Lvl);
 			else
 				paragraph.ApplyNumPr(numId, ilvl);
+		}
+	};
+	CNumberingApplicator.prototype.ApplyToHeadings = function(numId)
+	{
+		if (!numId || !this.NumInfo.Headings)
+			return;
+
+		let num          = this.Numbering.GetNum(numId);
+		let styleManager = this.Document.GetStyles();
+		if (num && !styleManager.HaveHeadingsNum())
+		{
+			num.LinkWithHeadings(styleManager);
+
+			for (let index = 0, count = this.Paragraphs.length; index < count; ++index)
+			{
+				let paragraph = this.Paragraphs[index];
+				let numPr     = paragraph.GetNumPr();
+				let iLvl      = numPr ? numPr.Lvl : 0;
+				paragraph.SetNumPr(undefined);
+
+				let pStyle = paragraph.GetParagraphStyle();
+				if (!pStyle || -1 === styleManager.GetHeadingLevelById(pStyle))
+					paragraph.SetParagraphStyleById(styleManager.GetDefaultHeading(iLvl));
+			}
+
+			this.Document.UpdateStylePanel();
 		}
 	};
 	CNumberingApplicator.prototype.UpdateDocumentOutline = function()
