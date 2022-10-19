@@ -502,6 +502,7 @@ window.startPluginApi = function() {
 	 */
 
 	/**
+	 * Class representing an input helper - a window that appears and disappears when you type text. Its location is tied to the cursor.
 	 * @global
 	 * @class
 	 * @name InputHelper
