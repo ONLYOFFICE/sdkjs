@@ -87,8 +87,14 @@
 		else if (this.IsMultilevel())
 			result = this.ApplyMultilevel();
 
+		if (result)
+			this.UpdateDocumentOutLine();
+
 		return result;
 	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CNumberingApplicator.prototype.GetLastBulleted = function()
 	{
 		return this.LastBulleted;
@@ -111,9 +117,6 @@
 		else
 			this.LastNumbered = new AscWord.CNumPr(numId, ilvl);
 	};
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Private area
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CNumberingApplicator.prototype.GetCurrentNumPr = function()
 	{
 		let document = this.Document;
@@ -409,7 +412,58 @@
 	};
 	CNumberingApplicator.prototype.ApplySingleLevel = function()
 	{
+		let numLvl = this.CreateSingleNumberingLvl();
+		if (!numLvl)
+			return false;
 
+		let commonNumPr = this.GetCommonNumPrOfParagraphs();
+		if (this.NumPr)
+		{
+			let num = this.Numbering.GetNum(this.NumPr.NumId);
+			if (num)
+			{
+				num.SetLvl(numLvl, this.NumPr.Lvl);
+				this.SetLastSingleLevel(this.NumPr.NumId, this.NumPr.Lvl);
+			}
+		}
+		else if (!commonNumPr.NumId)
+		{
+			let num   = this.CreateBaseNum();
+			let numId = num.GetId();
+			let ilvl  = !commonNumPr.Lvl ? 0 : commonNumPr.Lvl;
+			num.SetLvl(numLvl, ilvl);
+
+			let prevNumPr = this.CheckPrevNumPr(numId, ilvl);
+			if (prevNumPr)
+			{
+				numId = prevNumPr.NumId;
+				ilvl  = prevNumPr.Lvl;
+			}
+
+			this.ApplyNumPr(numId, ilvl);
+			this.SetLastSingleLevel(numId, ilvl);
+		}
+		else
+		{
+			let num = this.Numbering.GetNum(commonNumPr.NumId);
+			if (num)
+			{
+				num.SetLvl(numLvl, commonNumPr.Lvl);
+				this.SetLastSingleLevel(commonNumPr.NumId, commonNumPr.Lvl);
+			}
+		}
+
+		return true;
+	};
+	CNumberingApplicator.prototype.SetLastSingleLevel = function(numId, ilvl)
+	{
+		if (!this.NumInfo)
+			return;
+
+		if (NumberingType.Bullet === this.NumInfo.Type)
+			this.SetLastBulleted(numId, ilvl);
+		else if (NumberingType.Number === this.NumInfo.Type)
+			this.SetLastNumbered(numId, ilvl);
 	};
 	CNumberingApplicator.prototype.ApplyMultilevel = function()
 	{
@@ -457,6 +511,72 @@
 
 		return new AscWord.CNumPr(numId, ilvl);
 	};
+	CNumberingApplicator.prototype.GetCommonNumPrOfParagraphs = function()
+	{
+		let isDiffLvl = false;
+		let isDiffId  = false;
+		let numId     = null;
+		let ilvl      = null;
+
+		for (let index = 0, count = this.Paragraphs.length; index < count; ++index)
+		{
+			if (isDiffLvl)
+				break;
+
+			let numPr = this.Paragraphs[index].GetNumPr();
+			if (numPr)
+			{
+				if (null === ilvl)
+					ilvl = numPr.Lvl;
+				else if (ilvl !== numPr.Lvl)
+					isDiffLvl = true;
+
+				if (null === numId)
+					numId = numPr.NumId;
+				else if (numId !== numPr.NumId)
+					isDiffId = true;
+			}
+			else
+			{
+				isDiffLvl = true;
+			}
+		}
+
+		if (isDiffLvl)
+		{
+			numId = null;
+			ilvl  = 0;
+		}
+		else if (isDiffId)
+		{
+			numId = null;
+		}
+		else if (numId)
+		{
+			if (NumberingType.Bullet === this.NumInfo.Type
+				&& !this.Numbering.CheckFormat(numId, ilvl, Asc.c_oAscNumberingFormat.Bullet))
+			{
+				numId = null;
+			}
+		}
+
+		return new AscWord.CNumPr(numId, ilvl);
+	};
+	CNumberingApplicator.prototype.CreateSingleNumberingLvl = function()
+	{
+		// TODO: Реализовать создание уровня
+	};
+	CNumberingApplicator.prototype.CreateBaseNum = function()
+	{
+		let num = this.Numbering.CreateNum();
+
+		if (NumberingType.Bullet === this.NumInfo.Type)
+			num.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
+		else if (NumberingType.Number === this.NumInfo.Type)
+			num.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
+
+		return num;
+	};
 	CNumberingApplicator.prototype.ApplyNumPr = function(numId, ilvl)
 	{
 		for (let index = 0, count = this.Paragraphs.length; index < count; ++index)
@@ -468,6 +588,13 @@
 				paragraph.ApplyNumPr(numId, oldNumPr.Lvl);
 			else
 				paragraph.ApplyNumPr(numId, ilvl);
+		}
+	};
+	CNumberingApplicator.prototype.UpdateDocumentOutline = function()
+	{
+		for (let index = 0, count = this.Paragraphs.length; index < count; ++index)
+		{
+			this.Paragraphs[index].UpdateDocumentOutline();
 		}
 	};
 	//---------------------------------------------------------export---------------------------------------------------
