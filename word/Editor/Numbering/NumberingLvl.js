@@ -2759,16 +2759,21 @@ CNumberingLvl.prototype.private_CheckSymbols = function()
 		}
 	}
 };
-CNumberingLvl.prototype.ToJSON = function()
+CNumberingLvl.prototype.ToJson = function()
 {
 	let writer = new AscCommon.WriterToJSON();
 	return writer.SerNumLvl(this, 0);
 };
-CNumberingLvl.prototype.FromJSON = function(json)
+CNumberingLvl.prototype.FromJson = function(json)
 {
 	// TODO: Реализовать
 };
-
+CNumberingLvl.FromJson = function(json)
+{
+	let numLvl = new CNumberingLvl();
+	numLvl.FromJson(json);
+	return numLvl;
+};
 
 function CNumberingLvlTextString(Val)
 {
