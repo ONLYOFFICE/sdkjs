@@ -2335,8 +2335,6 @@ function (window, undefined) {
 	cTEXTSPLIT.prototype.Calculate = function (arg) {
 
 		//функция должна возвращать массив
-		//если первый аргумент - массив или диапазон, то возвращаем массив, равный его размеру
-		//если первый ургмента не массив/диапазон - возвращаем массив из разбитого текста
 		let text = arg[0];
 		if (text.type === cElementType.error) {
 			return text;
@@ -2354,7 +2352,7 @@ function (window, undefined) {
 			return col_delimiter;
 		}
 
-		let row_delimiter = arg[2];
+		let row_delimiter = arg[2] ? arg[2] : new cEmpty(true);
 		if (row_delimiter.type === cElementType.error) {
 			return row_delimiter;
 		}
@@ -2373,7 +2371,23 @@ function (window, undefined) {
 
 		let pad_with = arg[5] ? arg[5].tocBool() : new cError(cErrorType.not_available);
 
+		let options = new Asc.asc_CTextOptions(null, col_delimiter);
+		options.delimiterRows = row_delimiter;
 
+		//если первый аргумент - массив или диапазон, то возвращаем массив, равный его размеру
+		//если первый ургмента не массив/диапазон - возвращаем массив из разбитого текста
+		if (cElementType.cellsRange === text.type || cElementType.array === text.type || cElementType.cellsRange3D === text.type) {
+			text.foreach2(function (cell) {
+				var test = 1;
+			});
+		} else {
+			text = text.tocString();
+			if (text.type === cElementType.error) {
+				return text;
+			}
+			text = text.toString();
+			AscCommon.parseText(text, options);
+		}
 	};
 
 

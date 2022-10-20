@@ -91,6 +91,8 @@
 
 			this.numberDecimalSeparator = null;
 			this.numberGroupSeparator = null;
+
+			this.delimiterRows = null;
 		}
 		asc_CTextOptions.prototype.asc_getDelimiter = function(){return this.delimiter;};
 		asc_CTextOptions.prototype.asc_setDelimiter = function(v){this.delimiter = v;};
@@ -126,6 +128,9 @@
 		asc_CTextOptions.prototype.asc_getTextQualifier = function(){return this.textQualifier;};
 		asc_CTextOptions.prototype.asc_getTextQualifierArr = function () {
 			return ["\"", "'", null];
+		};
+		asc_CTextOptions.prototype.getDelimiterRows = function () {
+			return this.delimiterRows;
 		};
 
 

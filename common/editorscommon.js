@@ -12270,6 +12270,7 @@
 	}
 
 	function parseText(text, options, bTrimSpaces) {
+		//в функция textQualifier может быть массивом, поэтому проверяем на равенство
 		var delimiterChar;
 		if (options.asc_getDelimiterChar()) {
 			delimiterChar = options.asc_getDelimiterChar();
@@ -12296,30 +12297,72 @@
 			}
 		}
 
+		var isArrayDelimiter = Array.isArray(delimiterChar);
+		var isEqualDelimiter = function (_val) {
+			if (isArrayDelimiter) {
+				for (var row = 0; row < delimiterChar.length; row++) {
+					for (var col = 0; col < delimiterChar[row].length; col++) {
+						if (_val === delimiterChar[row][col]) {
+							return true;
+						}
+					}
+				}
+			} else {
+				return _val === delimiterChar;
+			}
+		};
+
+		var getRexExpFromArray = function (_array) {
+			var sRegExp;
+			if (Array.isArray(_array)) {
+				sRegExp += "[";
+				for (var row = 0; row < _array.length; row++) {
+					for (var col = 0; col < _array[row].length; col++) {
+						sRegExp += _array[row][col];
+					}
+				}
+				sRegExp += "]+";
+			} else {
+				sRegExp += "[" + _array + "]+";
+			}
+
+			return new RegExp(sRegExp);
+		};
+
+		var regexDelimiter = null;
+		var doSplitRow = function (_row) {
+			if (isArrayDelimiter) {
+				if (!regexDelimiter) {
+					regexDelimiter = getRexExpFromArray(delimiterChar);
+				}
+			}
+			return _row.split(regexDelimiter ? regexDelimiter : delimiterChar);
+		};
+
 		var textQualifier = options.asc_getTextQualifier();
 		var matrix = [];
-		//var rows = text.match(/[^\r\n]+/g);
-		var rows = text.split(/\r?\n/);
+		var rowsDelimiter = options.getDelimiterRows();
+		var rows = text.split(rowsDelimiter ? getRexExpFromArray(rowsDelimiter) : /\r?\n/);
 		for (var i = 0; i < rows.length; ++i) {
 			var row = rows[i];
-			if(" " === delimiterChar && bTrimSpaces) {
+			if(isEqualDelimiter(" ") && bTrimSpaces) {
 				var addSpace = false;
-				if(row[0] === delimiterChar) {
+				if(row[0] === " ") {
 					addSpace = true;
 				}
-				row = addSpace ? delimiterChar + row.trim() : row.trim();
+				row = addSpace ? " " + row.trim() : row.trim();
 			}
 			//todo quotes
 			if (textQualifier) {
 				if (!row.length) {
-					matrix.push(row.split(delimiterChar));
+					matrix.push(doSplitRow(row));
 					continue;
 				}
 
 				var _text = "";
 				var startQualifier = false;
 				for (var j = 0; j < row.length; j++) {
-					if (!startQualifier && row[j] === textQualifier && (!row[j - 1] || (row[j - 1] && row[j - 1] === delimiterChar))) {
+					if (!startQualifier && row[j] === textQualifier && (!row[j - 1] || (row[j - 1] && isEqualDelimiter(row[j - 1])))) {
 						startQualifier = !startQualifier;
 						continue;
 					} else if (startQualifier && row[j] === textQualifier) {
@@ -12335,7 +12378,7 @@
 						continue;
 					}
 					
-					if (!startQualifier && row[j] === delimiterChar) {
+					if (!startQualifier && isEqualDelimiter(row[j])) {
 						if (!matrix[i]) {
 							matrix[i] = [];
 						}
@@ -12352,7 +12395,7 @@
 					}
 				}
 			} else {
-				matrix.push(row.split(delimiterChar));	
+				matrix.push(doSplitRow(row));
 			}
 		}
 		return matrix;
