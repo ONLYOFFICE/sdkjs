@@ -61,7 +61,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['TextAndData'].push(cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
 		cEXACT, cFIND, cFINDB, cFIXED, cJIS, cLEFT, cLEFTB, cLEN, cLENB, cLOWER, cMID, cMIDB, cNUMBERVALUE, cPHONETIC,
 		cPROPER, cREPLACE, cREPLACEB, cREPT, cRIGHT, cRIGHTB, cSEARCH, cSEARCHB, cSUBSTITUTE, cT, cTEXT, cTEXTJOIN,
-		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE, cTEXTBEFORE, cTEXTAFTER);
+		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE, cTEXTBEFORE, cTEXTAFTER, cTEXTSPLIT);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cBAHTTEXT, cJIS, cPHONETIC);
@@ -2316,6 +2316,66 @@ function (window, undefined) {
 	cTEXTAFTER.prototype.Calculate = function (arg) {
 		return calcBeforeAfterText(arg, arguments[1], true);
 	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cTEXTSPLIT() {
+	}
+
+	//***array-formula***
+	cTEXTSPLIT.prototype = Object.create(cBaseFunction.prototype);
+	cTEXTSPLIT.prototype.constructor = cTEXTSPLIT;
+	cTEXTSPLIT.prototype.name = 'TEXTSPLIT';
+	cTEXTSPLIT.prototype.argumentsMin = 2;
+	cTEXTSPLIT.prototype.argumentsMax = 6;
+	cTEXTSPLIT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cTEXTSPLIT.prototype.argumentsType = [argType.text, argType.text, argType.text, argType.logical, argType.logical, argType.any];
+	cTEXTSPLIT.prototype.Calculate = function (arg) {
+
+		//функция должна возвращать массив
+		//если первый аргумент - массив или диапазон, то возвращаем массив, равный его размеру
+		//если первый ургмента не массив/диапазон - возвращаем массив из разбитого текста
+		let text = arg[0];
+		if (text.type === cElementType.error) {
+			return text;
+		}
+
+		/*if (cElementType.cellsRange === text.type || cElementType.array === text.type) {
+			newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
+		} else if (cElementType.cellsRange3D === text.type) {
+			newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg)[0];
+		}*/
+
+		//второй/третий аргумент тоже может быть массивом, каждый из элементов каторого может быть разделителем
+		let col_delimiter = arg[1];
+		if (col_delimiter.type === cElementType.error) {
+			return col_delimiter;
+		}
+
+		let row_delimiter = arg[2];
+		if (row_delimiter.type === cElementType.error) {
+			return row_delimiter;
+		}
+
+		let ignore_empty = arg[3] ? arg[3].tocBool() : new cBool(true);
+		if (ignore_empty.type === cElementType.error) {
+			return ignore_empty;
+		}
+		ignore_empty = ignore_empty.toBool();
+
+		let match_mode = arg[4] ? arg[4].tocBool() : new cBool(true);
+		if (match_mode.type === cElementType.error) {
+			return match_mode;
+		}
+		match_mode = match_mode.toBool();
+
+		let pad_with = arg[5] ? arg[5].tocBool() : new cError(cErrorType.not_available);
+
+
+	};
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
