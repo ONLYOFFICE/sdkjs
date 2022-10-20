@@ -72,7 +72,7 @@
 		this.NumPr      = this.GetCurrentNumPr();
 		this.Paragraphs = this.GetParagraphs();
 
-		if (this.Paragraphs.length)
+		if (!this.Paragraphs.length)
 			return false;
 
 		let result = false;
@@ -131,7 +131,7 @@
 	{
 		let paragraphs = [];
 		if (this.NumPr)
-			paragraphs = this.Document.GetAllParagraphsByNumbering(oNumPr);
+			paragraphs = this.Document.GetAllParagraphsByNumbering(this.NumPr);
 		else
 			paragraphs = this.Document.GetSelectedParagraphs();
 
@@ -416,21 +416,25 @@
 		if (!numLvl)
 			return false;
 
-		let commonNumPr = this.GetCommonNumPr();
-		if (this.NumPr)
+		let commonNumPr = this.NumPr ? this.NumPr : this.GetCommonNumPr();
+		if (commonNumPr && commonNumPr.NumId)
 		{
-			let num = this.Numbering.GetNum(this.NumPr.NumId);
+			let num = this.Numbering.GetNum(commonNumPr.NumId);
 			if (num)
 			{
-				num.SetLvl(numLvl, this.NumPr.Lvl);
-				this.SetLastSingleLevel(this.NumPr.NumId, this.NumPr.Lvl);
+				let oldNumLvl = num.GetLvl(commonNumPr.Lvl);
+				numLvl.SetParaPr(oldNumLvl.GetParaPr());
+				numLvl.ResetNumberedText(commonNumPr.Lvl);
+				num.SetLvl(numLvl, commonNumPr.Lvl);
+				this.SetLastSingleLevel(commonNumPr.NumId, commonNumPr.Lvl);
 			}
 		}
-		else if (!commonNumPr.NumId)
+		else
 		{
 			let num   = this.CreateBaseNum();
 			let numId = num.GetId();
-			let ilvl  = !commonNumPr.Lvl ? 0 : commonNumPr.Lvl;
+			let ilvl  = !commonNumPr || !commonNumPr.Lvl ? 0 : commonNumPr.Lvl;
+			numLvl.ResetNumberedText(ilvl);
 			num.SetLvl(numLvl, ilvl);
 
 			let prevNumPr = this.CheckPrevNumPr(numId, ilvl);
@@ -442,15 +446,6 @@
 
 			this.ApplyNumPr(numId, ilvl);
 			this.SetLastSingleLevel(numId, ilvl);
-		}
-		else
-		{
-			let num = this.Numbering.GetNum(commonNumPr.NumId);
-			if (num)
-			{
-				num.SetLvl(numLvl, commonNumPr.Lvl);
-				this.SetLastSingleLevel(commonNumPr.NumId, commonNumPr.Lvl);
-			}
 		}
 
 		return true;

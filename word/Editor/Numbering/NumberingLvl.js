@@ -126,6 +126,13 @@ CNumberingLvl.prototype.GetParaPr = function()
 	return this.ParaPr;
 };
 /**
+ * @param paraPr {AscWord.CParaPr}
+ */
+CNumberingLvl.prototype.SetParaPr = function(paraPr)
+{
+	this.ParaPr = paraPr;
+};
+/**
  * Доступ к содержимому нумерации
  * @returns {[CNumberingLvlTextString | CNumberingLvlTextNum]}
  */

@@ -4167,6 +4167,52 @@ background-repeat: no-repeat;\
 			}
 		});
 	};
+	asc_docs_api.prototype.asc_GetCurrentNumberingJson = function(isSingleLevel)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		let numPr = logicDocument.GetSelectedNum();
+		if (!numPr)
+			return null;
+
+		let numManager = logicDocument.GetNumbering();
+		let num = numManager.GetNum(numPr.NumId);
+		if (!num)
+			return null;
+
+		let result = {
+			Type : 0xFF,
+			Lvl  : []
+		};
+
+		if (isSingleLevel)
+		{
+			let numLvl = num.GetLvl(0);
+			result.Type = numLvl.IsBulleted() ? 1 : 2;
+			result.Lvl[0] = numLvl.ToJson();
+		}
+		else
+		{
+			let isBulleted = false;
+			let isNumbered = false;
+
+			for (let ilvl = 0; ilvl < 9; ++ilvl)
+			{
+				let numLvl = num.GetLvl(ilvl);
+				isBulleted = isBulleted || numLvl.IsBulleted();
+				isNumbered = isNumbered || numLvl.IsNumbered();
+				result.Lvl[ilvl] = numLvl.ToJson();
+			}
+
+			if (isBulleted && isNumbered)
+				result.Type = 3;
+			else if (isBulleted)
+				result.Type = 2;
+			else if (isBulleted)
+				result.Type = 1;
+		}
+
+		return result;
+	};
 	asc_docs_api.prototype.asc_ContinueNumbering = function()
 	{
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
