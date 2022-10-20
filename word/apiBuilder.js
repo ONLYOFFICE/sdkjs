@@ -2769,7 +2769,7 @@
 
 		if (aContent.length > 0)
 		{
-			var oWriter = new AscCommon.WriterToJSON();
+			var oWriter = new AscJsonConverter.WriterToJSON();
 			oJSON["content"] = oWriter.SerContent(aContent);
 		}
 		else
@@ -3228,7 +3228,7 @@
 	 */
 	ApiHyperlink.prototype.ToJSON = function(bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerHyperlink(this.ParaHyperlink);
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
@@ -4567,7 +4567,9 @@
 	 */
 	Api.prototype.FromJSON = function(sMessage)
 	{
-		var oReader = new AscCommon.ReaderFromJSON();
+		var oReader = new AscJsonConverter.ReaderFromJSON();
+		AscJsonConverter.ActiveReader = oReader;
+
 		var oDocument = this.GetDocument();
 		var oParsedObj  = JSON.parse(sMessage);
 		var oResult = null;
@@ -5043,7 +5045,7 @@
 	 */
 	ApiDocumentContent.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerDocContent(this.Document);
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
@@ -6151,7 +6153,7 @@
 	 */
 	ApiDocument.prototype.ToJSON = function(bWriteDefaultTextPr, bWriteDefaultParaPr, bWriteTheme, bWriteSectionPr, bWriteNumberings, bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 
 		var oResult = {
 			"type":      "document",
@@ -8382,7 +8384,7 @@
 	 */
 	ApiParagraph.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerParagraph(this.Paragraph);
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
@@ -9188,7 +9190,7 @@
 	 */
 	ApiRun.prototype.ToJSON = function(bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerParaRun(this.Run);
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
@@ -9511,7 +9513,7 @@
 	 */
 	ApiSection.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerSectionPr(this.Section);
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
@@ -10374,7 +10376,7 @@
 	 */
 	ApiTable.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerTable(this.Table);
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
@@ -11285,7 +11287,7 @@
 	 */
 	ApiStyle.prototype.ToJSON = function(bWriteNumberings)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerStyle(this.Style);
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
@@ -11627,7 +11629,7 @@
 	 */
 	ApiTextPr.prototype.ToJSON = function(bWriteStyles)
 	{
-		let oWriter = new AscCommon.WriterToJSON();
+		let oWriter = new AscJsonConverter.WriterToJSON();
 		let bFromDocument = true;
 		let oParentRun = this.Parent;
 		let oParentPara = oParentRun instanceof ParaRun ? oParentRun.GetParagraph() : null;
@@ -12268,7 +12270,7 @@
 	 */
 	ApiParaPr.prototype.ToJSON = function(bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = this.Parent != null && this.Parent instanceof Paragraph && this.Parent.bFromDocument !== true ? oWriter.SerParaPrDrawing(this.ParaPr) : oWriter.SerParaPr(this.ParaPr);
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
@@ -12311,7 +12313,7 @@
 	 */
 	ApiNumbering.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerNumbering(this.Num));
 	};
 
@@ -12824,7 +12826,7 @@
 	 */
 	ApiTablePr.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerTablePr(this.TablePr));
 	};
 
@@ -12882,7 +12884,7 @@
 	 */
 	ApiTableRowPr.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerTableRowPr(this.RowPr));
 	};
 
@@ -13160,7 +13162,7 @@
 	 */
 	ApiTableCellPr.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerTableCellPr(this.CellPr));
 	};
 
@@ -13248,7 +13250,7 @@
 	 */
 	ApiTableStylePr.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerTableStylePr(this.TableStylePr, this.Type));
 	};
 
@@ -13788,7 +13790,7 @@
 	 */
 	ApiDrawing.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerParaDrawing(this.Drawing);
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
@@ -14926,7 +14928,7 @@
 	 */
 	ApiFill.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerFill(this.UniFill));
 	};
 
@@ -14954,7 +14956,7 @@
 	 */
 	ApiStroke.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerLn(this.Ln));
 	};
 
@@ -14982,7 +14984,7 @@
 	 */
 	ApiGradientStop.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerGradStop(this.Gs));
 	};
 
@@ -15010,7 +15012,7 @@
 	 */
 	ApiUniColor.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
 
@@ -15038,7 +15040,7 @@
 	 */
 	ApiRGBColor.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
 
@@ -15066,7 +15068,7 @@
 	 */
 	ApiSchemeColor.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
 
@@ -15094,7 +15096,7 @@
 	 */
 	ApiPresetColor.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
 
@@ -15566,7 +15568,7 @@
 	 */
 	ApiInlineLvlSdt.prototype.ToJSON = function(bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerInlineLvlSdt(this.Sdt);
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
@@ -17185,7 +17187,7 @@
 	 */
 	ApiBlockLvlSdt.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerBlockLvlSdt(this.Sdt);
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;

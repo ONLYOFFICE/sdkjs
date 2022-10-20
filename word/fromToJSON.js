@@ -202,6 +202,7 @@
 		this.themesMap      = {};
 		this.workbook       = null;
 		this.stylesForWrite = null;
+		window["AscJsonConverter"].ActiveWriter = this;
 	}
 
     WriterToJSON.prototype.SerHlink = function(oHlink)
@@ -3793,26 +3794,9 @@
 		if (!oParaPr)
 			return undefined;
 
-		// horizontal align
-		var sJc = undefined;
-		switch (oParaPr.Jc)
-		{
-			case AscCommon.align_Right:
-				sJc = "end";
-				break;
-			case AscCommon.align_Left:
-				sJc = "start";
-				break;
-			case AscCommon.align_Center:
-				sJc = "center";
-				break;
-			case AscCommon.align_Justify:
-				sJc = "both";
-				break;
-			case AscCommon.align_Distributed:
-				sJc = "distribute";
-				break;
-		}
+		let oResult = oParaPr.ToJson(true);
+		if (oParaPr.PStyle != null)
+			oResult["pStyle"] = this.AddWordStyleForWrite(oParaPr.PStyle);
 
 		if (oParaPr.NumPr)
 		{
@@ -3824,123 +3808,14 @@
 				this.SerNumbering(oNum);
 		}
 
-		return {
-			"contextualSpacing":   oParaPr.ContextualSpacing,
-			"framePr":             this.SerFramePr(oParaPr.FramePr),
-			"ind":                 this.SerParaInd(oParaPr.Ind),
-			"jc":                  sJc,
-			"keepLines":           oParaPr.KeepLines,
-			"keepNext":            oParaPr.KeepNext,
-			"numPr":               this.SerNumPr(oParaPr.NumPr),
-			"outlineLvl":          oParaPr.OutlineLvl,
-			"pageBreakBefore":     oParaPr.PageBreakBefore,
-			"suppressLineNumbers": oParaPr.SuppressLineNumbers,
-
-			"pBdr": oParaPr.Brd ? 
-			{
-				"between": this.SerDocBorder(oParaPr.Brd.Between),
-				"bottom":  this.SerDocBorder(oParaPr.Brd.Bottom),
-				"left":    this.SerDocBorder(oParaPr.Brd.Left),
-				"right":   this.SerDocBorder(oParaPr.Brd.Right),
-				"top":     this.SerDocBorder(oParaPr.Brd.Top)
-			} : oParaPr.Brd,
-
-			"pPrChange":    this.SerParaPr(oParaPr.PrChange),
-			"pStyle":       this.AddWordStyleForWrite(oParaPr.PStyle),
-			"shd":          this.SerShd(oParaPr.Shd),
-			"spacing":      this.SerParaSpacing(oParaPr.Spacing),
-			"tabs":         this.SerTabs(oParaPr.Tabs),
-			"widowControl": oParaPr.WidowControl,
-			"bFromDocument": true,
-			"type":         "paraPr"
-		}
+		return oResult;
 	};
 	WriterToJSON.prototype.SerParaPrDrawing = function(oParaPr)
 	{
 		if (!oParaPr)
 			return undefined;
 
-		let oResult = {};
-
-		if (oParaPr.Ind) {
-			if(oParaPr.Ind.Left != null) {
-
-				oResult["marL"] = private_MM2EMU(oParaPr.Ind.Left);
-			}
-			if(oParaPr.Ind.Right != null) {
-
-				oResult["marR"] = private_MM2EMU(oParaPr.Ind.Right);
-			}
-			if(oParaPr.Ind.FirstLine != null) {
-				oResult["indent"] = private_MM2EMU(oParaPr.Ind.FirstLine);
-			}
-		}
-
-		if (oParaPr.Lvl != null)
-			oResult["lvl"] = oParaPr.Lvl;
-
-		if (oParaPr.Jc != null) {
-			switch(oParaPr.Jc) {
-				case AscCommon.align_Center: {
-					oResult["algn"] = "ctr";
-					break;
-				}
-				case AscCommon.align_Justify: {
-					oResult["algn"] = "just";
-					break;
-				}
-				case AscCommon.align_Left: {
-					oResult["algn"] = "l";
-					break;
-				}
-				case AscCommon.align_Right: {
-					oResult["algn"] = "r";
-					break;
-				}
-			}
-		}
-
-		// def tab size
-		if (oParaPr.DefaultTab != null) {
-			oResult["defTabSz"] = private_MM2EMU(oParaPr.DefaultTab);
-		}
-
-		// lnSpc
-		if (oParaPr.Spacing.Line != null)
-		{
-			if (oParaPr.Spacing.LineRule === Asc.linerule_Exact)
-				oResult["lnSpc"] = this.SerParaSpacingDrawing({val: oParaPr.Spacing.Line});
-			else
-				oResult["lnSpc"] = this.SerParaSpacingDrawing({valPct: oParaPr.Spacing.Line});
-		}
-
-		// spcAft
-		if (oParaPr.Spacing.After != null)
-			oResult["spcAft"] = this.SerParaSpacingDrawing({val: oParaPr.Spacing.After});
-		else if (oParaPr.Spacing.AfterPct != null)
-			oResult["spcAft"] = this.SerParaSpacingDrawing({valPct: oParaPr.Spacing.AfterPct});
-
-		// spcBef
-		if (oParaPr.Spacing.Before != null)
-			oResult["spcBef"] = this.SerParaSpacingDrawing({val: oParaPr.Spacing.Before});
-		else if (oParaPr.Spacing.BeforePct != null)
-			oResult["spcBef"] = this.SerParaSpacingDrawing({valPct: oParaPr.Spacing.BeforePct});
-
-		// bullet
-		if (oParaPr.Bullet != null)
-			oResult["bullet"] = this.SerBullet(oParaPr.Bullet);
-
-		// tabs
-		if (oParaPr.Tabs)
-			oResult["tabLst"] = this.SerTabsDrawing(oParaPr.Tabs);
-
-		// defRunPr
-		if (oParaPr.DefaultRunPr != null)
-			oResult["defRPr"] = this.SerTextPrDrawing(oParaPr.DefaultRunPr);
-
-		oResult["bFromDocument"] = false;
-
-		return oResult;
+		return oParaPr.ToJson(false);
 	};
 	WriterToJSON.prototype.SerFramePr = function(oFramePr)
 	{
@@ -5733,90 +5608,23 @@
 	{
 		if (!oLvl)
 			return undefined;
-			
-		// align
-		var sJc = undefined;
-		switch (oLvl.Jc)
-		{
-			case AscCommon.align_Right:
-				sJc = "end";
-				break;
-			case AscCommon.align_Left:
-				sJc = "start";
-				break;
-			case AscCommon.align_Center:
-				sJc = "center";
-				break;
-			case AscCommon.align_Justify:
-				sJc = "both";
-				break;
-			case AscCommon.align_Distributed:
-				sJc = "distribute";
-				break;
-		}
 
-		// suff
-		var sSuffType = undefined;
-		switch (oLvl.Suff)
-		{
-			case Asc.c_oAscNumberingSuff.Tab:
-				sSuffType = "tab";
-				break;
-			case Asc.c_oAscNumberingSuff.Space:
-				sSuffType = "space";
-				break;
-			case Asc.c_oAscNumberingSuff.None:
-				sSuffType = "nothing";
-				break;
-		}
+		let oResult = oLvl.ToJson(nLvl);
+		if (oLvl.PStyle != null)
+			oResult["pStyle"] = this.AddWordStyleForWrite(oLvl.PStyle);
 
-		// format type
-		var sFormatType = To_XML_c_oAscNumberingFormat(oLvl.Format);
-
-		// lvl text
-		var aLvlText = [];
-		for (var nText = 0; nText < oLvl.LvlText.length; nText++)
-			aLvlText.push(this.SerLvlTextItem(oLvl.LvlText[nText]));
-
-		return {
-			"isLgl": oLvl.IsLgl,
-
-			"legacy": oLvl.Legacy ? {
-				"legacy":       oLvl.Legacy.Legacy,
-				"legacyIndent": oLvl.Legacy.Indent,
-				"legacySpace":  oLvl.Legacy.Space
-			} : oLvl.Legacy,
-
-			"lvlJc":   sJc,
-			"lvlText": aLvlText.length > 0 ? aLvlText : undefined,
-			"numFmt":  {
-				"val": sFormatType
-			},
-			"pPr":     this.SerParaPr(oLvl.ParaPr),
-			"pStyle":  this.AddWordStyleForWrite(oLvl.PStyle),
-			"rPr":     this.SerTextPr(oLvl.TextPr),
-			"restart": oLvl.Restart,
-			"start":   oLvl.Start,
-			"suff":    sSuffType,
-			"ilvl":    nLvl
-		}
+		return oResult;
 	};
 	WriterToJSON.prototype.SerLvlTextItem = function(oTextItem)
 	{
-		if (!oTextItem)
-			return undefined;
-
-		var oResult = {};
 		if(numbering_lvltext_Text == oTextItem.Type)
 		{
-			oResult["val"] = oTextItem.Value.toString();
+			return oTextItem.Value.toString();
 		}
 		else if(numbering_lvltext_Num == oTextItem.Type)
 		{
-			oResult["numValue"] = oTextItem.Value;
+			return "%" + (oTextItem.Value + 1);
 		}
-
-		return oResult;
 	};
 	WriterToJSON.prototype.SerTabs = function(oTabs)
 	{
@@ -7896,165 +7704,18 @@
 		if (!oTextPr)
 			return undefined;
 		
-		let sVAlign = undefined;
-		// alignV
-		if (oTextPr.VertAlign != null)
-		{
-			switch (oTextPr.VertAlign)
-			{
-				case 0:
-					sVAlign = "baseline";
-					break;
-				case 1:
-					sVAlign = "superscript";
-					break;
-				case 2:
-					sVAlign = "subscript";
-					break;
-			}
-		}
-
-		return {
-			"b":         oTextPr.Bold,
-			"bCs":       oTextPr.BoldCS,
-			"caps":      oTextPr.Caps,
-			"color":     oTextPr.Color ? {
-				"auto": oTextPr.Color.Auto,
-				"r":    oTextPr.Color.r,
-				"g":    oTextPr.Color.g,
-				"b":    oTextPr.Color.b
-			} : undefined,
-			"cs":        oTextPr.CS,
-			"dstrike":   oTextPr.DStrikeout,
-			"highlight": oTextPr.HighLight ? (oTextPr.HighLight !== -1 ? {
-				"auto": oTextPr.HighLight.Auto,
-				"r":    oTextPr.HighLight.r,
-				"g":    oTextPr.HighLight.g,
-				"b":    oTextPr.HighLight.b
-			} : "none") : undefined,
-			"i":         oTextPr.Italic,
-			"iCs":       oTextPr.ItalicCS,
-			"lang":      oTextPr.Lang ? {
-				"bidi":     oTextPr.Lang.Bidi != null ? Asc.g_oLcidIdToNameMap[oTextPr.Lang.Bidi] : undefined,
-				"eastAsia": oTextPr.Lang.EastAsia != null ? Asc.g_oLcidIdToNameMap[oTextPr.Lang.EastAsia] : undefined,
-				"val":      oTextPr.Lang.Val != null ? Asc.g_oLcidIdToNameMap[oTextPr.Lang.Val] : undefined
-			} : undefined,
-			"outline":   this.SerLn(oTextPr.TextOutline),
-			"position":  oTextPr.Position != null ? 2.0 * private_MM2Pt(oTextPr.Position) : undefined,
-			"rFonts":    oTextPr.RFonts ? {
-				"ascii":         oTextPr.RFonts.Ascii != null ? oTextPr.RFonts.Ascii.Name : undefined,
-				"asciiTheme":    oTextPr.RFonts.AsciiTheme,
-				"cs":            oTextPr.RFonts.CS != null ? oTextPr.RFonts.CS.Name : undefined,
-				"cstheme":       oTextPr.RFonts.CSTheme,
-				"eastAsia":      oTextPr.RFonts.EastAsia != null ? oTextPr.RFonts.EastAsia.Name : undefined,
-				"eastAsiaTheme": oTextPr.RFonts.EastAsiaTheme,
-				"hAnsi":         oTextPr.RFonts.HAnsi != null ? oTextPr.RFonts.HAnsi.Name : undefined,
-				"hAnsiTheme":    oTextPr.RFonts.HAnsiTheme,
-				"hint":          oTextPr.RFonts.Hint != null ? ToXml_ST_Hint(oTextPr.RFonts.Hint) : undefined
-			} : undefined,
-			"fontFamily": oTextPr.FontFamily ? {
-				"name": oTextPr.FontFamily.Name,
-				"idx":  oTextPr.FontFamily.Index
-			} : undefined,
-			"rPrChange":     this.SerTextPr(oTextPr.PrChange),
-			"rStyle":        this.AddWordStyleForWrite(oTextPr.RStyle),
-			"rtl":           oTextPr.RTL,
-			"shd":           this.SerShd(oTextPr.Shd),
-			"smallCaps":     oTextPr.SmallCaps,
-			"spacing":       oTextPr.Spacing != null ? private_MM2Twips(oTextPr.Spacing) : undefined,
-			"strike":        oTextPr.Strikeout,
-			"sz":            oTextPr.FontSize != null ? 2.0 * oTextPr.FontSize : undefined,
-			"szCs":          oTextPr.FontSizeCS != null ? 2.0 * oTextPr.FontSizeCS : undefined,
-			"u":             oTextPr.Underline,
-			"vanish":        oTextPr.Vanish,
-			"vertAlign":     sVAlign,
-			"uniFill":       this.SerFill(oTextPr.Unifill),
-			"textFill":      this.SerFill(oTextPr.TextFill),
-			"reviewInfo":    this.SerReviewInfo(oTextPr.ReviewInfo),
-			"bFromDocument": true,
-			"type":          "textPr"
-		}
+		let oResult = oTextPr.ToJson(true)
+		if (oTextPr.RStyle != null)
+			oResult["rStyle"] = this.AddWordStyleForWrite(oTextPr.RStyle);
+		
+		return oResult;
 	};
 	WriterToJSON.prototype.SerTextPrDrawing = function(oTextPr)
 	{
 		if (!oTextPr)
 			return undefined;
 
-		let oResult = {};
-		// lang
-		oResult["lang"] = Asc.g_oLcidIdToNameMap[oTextPr.Lang.Val];
-		if(oTextPr.FontSize !== null && oTextPr.FontSize !== undefined) {
-			oResult["sz"] = oTextPr.FontSize * 100 >> 0;
-		}
-
-		// bold italic
-		oResult["i"] = oTextPr.Italic != null ? oTextPr.Italic : undefined;
-		oResult["b"] = oTextPr.Bold != null ? oTextPr.Bold : undefined;
-		
-		// underline
-		if(oTextPr.Underline != null) {
-			if(!oTextPr.Underline) {
-				oResult["u"] = "none";
-			}
-			else {
-				oResult["u"] = "sng";
-			}
-		}
-
-		// strikeou
-		if(oTextPr.Strikeout === false && oTextPr.DStrikeout === true) {
-			oResult["strike"] = "dblStrike";
-		}
-		else if(oTextPr.Strikeout === true && oTextPr.DStrikeout === false) {
-			oResult["strike"] = "sngStrike";
-		}
-		else if(oTextPr.Strikeout === false && oTextPr.DStrikeout === false) {
-			oResult["strike"] = "noStrike";
-		}
-
-		// caps
-		if(oTextPr.Caps === true && oTextPr.SmallCaps === false) {
-			oResult["cap"] = "all";
-		}
-		else if(oTextPr.Caps === false && oTextPr.SmallCaps === true) {
-			oResult["cap"] = "small";
-		}
-		else if(oTextPr.Caps === false && oTextPr.SmallCaps === false) {
-			oResult["cap"] = "none";
-		}
-		
-		if(oTextPr.Spacing !== undefined && oTextPr.Spacing !== null) {
-			oResult["spc"] = oTextPr.Spacing * 7200 / 25.4 >> 0;
-		}
-
-		if (AscCommon.vertalign_SubScript === oTextPr.VertAlign) {
-			oResult["baseline"] = -25000;
-		}
-		else if (AscCommon.vertalign_SuperScript === oTextPr.VertAlign) {
-			oResult["baseline"] = 30000;
-		}
-
-		if(oTextPr.TextOutline) {
-			oResult["ln"] = this.SerLn(oTextPr.TextOutline);
-		}
-
-		if(oTextPr.Unifill) {
-			oResult["uniFill"] = this.SerFill(oTextPr.Unifill);
-		}
-
-		if(oTextPr.HighlightColor) {
-			oResult["highlight"] = this.SerColor(oTextPr.HighlightColor);
-		}
-
-		if(oTextPr.RFonts.Ascii)
-			oResult["latin"] = oTextPr.RFonts.Ascii.Name;
-		if(oTextPr.RFonts.EastAsia)
-			oResult["ea"] = oTextPr.RFonts.EastAsia.Name;
-		if(oTextPr.RFonts.CS)
-			oResult["cs"] = oTextPr.RFonts.CS.Name;
-
-		oResult["bFromDocument"] = false;
-		return oResult;
+		return oTextPr.ToJson(false);
 	};
 	WriterToJSON.prototype.AddWordStyleForWrite = function(sStyleId)
 	{
@@ -8874,6 +8535,7 @@
 		this.oConnectedObjects = {};
 		this.map_shapes_by_id  = {};
 		//this.old_to_new_shapes_id_map = {};
+		window["AscJsonConverter"].ActiveReader = this;
 	}
 	ReaderFromJSON.prototype.AddConnectedObject = function(oObject)
 	{
@@ -9186,229 +8848,21 @@
 	};
 	ReaderFromJSON.prototype.TextPrFromJSON = function(oParsedPr)
 	{
-		var oTextPr  = new AscCommonWord.CTextPr();
-
-		// alignV
-		var nVAlign  = undefined;
-		if (oParsedPr["vertAlign"])
-		{
-			switch (oParsedPr["vertAlign"])
-			{
-				case "baseline":
-					nVAlign = 0;
-					break;
-				case "superscript":
-					nVAlign = 1;
-					break;
-				case "subscript":
-					nVAlign = 2;
-					break;
-			}
-		}
+		var oTextPr = AscCommonWord.CTextPr.FromJson(oParsedPr, true);
 
 		// style 
 		var oStyle = null;
 		if (oParsedPr["rStyle"] != null && this.RestoredStylesMap[oParsedPr["rStyle"]])
 			oStyle = this.RestoredStylesMap[oParsedPr["rStyle"]];
 
-		if (oParsedPr["b"] != null)
-			oTextPr.Bold = oParsedPr["b"];
-		if (oParsedPr["bCs"] != null)
-			oTextPr.BoldCS = oParsedPr["bCs"];
-		if (oParsedPr["caps"] != null)
-			oTextPr.Caps = oParsedPr["caps"];
-		if (oParsedPr["color"] != null)
-			oTextPr.Color = new AscCommonWord.CDocumentColor(oParsedPr["color"]["r"], oParsedPr["color"]["g"], oParsedPr["color"]["b"], oParsedPr["color"]["auto"]);
-		if (oParsedPr["cs"] != null)
-			oTextPr.CS = oParsedPr["cs"];
-		if (oParsedPr["dstrike"] != null)
-			oTextPr.DStrikeout = oParsedPr["dstrike"];
-
-		if (oParsedPr["highlight"] === "none")
-			oTextPr.HighLight = -1;
-		else if (oParsedPr["highlight"] != null)
-			oTextPr.HighLight = new AscCommonWord.CDocumentColor(oParsedPr["highlight"]["r"], oParsedPr["highlight"]["g"], oParsedPr["highlight"]["b"], oParsedPr["highlight"]["auto"]);
-
-		if (oParsedPr["i"] != null)
-			oTextPr.Italic = oParsedPr["i"];
-		if (oParsedPr["iCs"] != null)
-			oTextPr.ItalicCS = oParsedPr["iCs"];
-		
-		if (oParsedPr["lang"] != null)
-		{
-			if (oParsedPr["lang"]["bidi"] != null)
-				oTextPr.Lang.Bidi = Asc.g_oLcidNameToIdMap[oParsedPr["lang"]["bidi"]];
-			if (oParsedPr["lang"]["eastAsia"] != null)
-				oTextPr.Lang.EastAsia = Asc.g_oLcidNameToIdMap[oParsedPr["lang"]["eastAsia"]];
-			if (oParsedPr["lang"]["val"] != null)
-				oTextPr.Lang.Val = Asc.g_oLcidNameToIdMap[oParsedPr["lang"]["val"]];
-		}
-		
-		if (oParsedPr["outline"] != null)
-			 oTextPr.TextOutline = this.LnFromJSON(oParsedPr["outline"]);
-		if (oParsedPr["position"] != null)
-			oTextPr.Position = private_PtToMM(oParsedPr["position"] / 2.0);
-		if (oParsedPr["rFonts"]["ascii"])
-			oTextPr.RFonts.Ascii = {Name: oParsedPr["rFonts"]["ascii"], Index: -1};
-		if (oParsedPr["rFonts"]["cs"])
-			oTextPr.RFonts.CS = {Name: oParsedPr["rFonts"]["cs"], Index: -1};
-		if (oParsedPr["rFonts"]["eastAsia"])
-			oTextPr.RFonts.EastAsia = {Name: oParsedPr["rFonts"]["eastAsia"], Index: -1};
-		if (oParsedPr["rFonts"]["hAnsi"])
-			oTextPr.RFonts.HAnsi = {Name: oParsedPr["rFonts"]["hAnsi"], Index: -1};
-		if (oParsedPr["rFonts"]["hint"] != null)
-			oTextPr.RFonts.Hint = FromXml_ST_Hint(oParsedPr["rFonts"]["hint"]);
-		
-		if (oParsedPr["rFonts"]["asciiTheme"] != null)
-			oTextPr.RFonts.AsciiTheme = oParsedPr["rFonts"]["asciiTheme"];
-		if (oParsedPr["rFonts"]["cstheme"] != null)
-			oTextPr.RFonts.CSTheme = oParsedPr["rFonts"]["cstheme"];
-		if (oParsedPr["rFonts"]["eastAsiaTheme"] != null)
-			oTextPr.RFonts.EastAsiaTheme = oParsedPr["rFonts"]["eastAsiaTheme"];
-		if (oParsedPr["rFonts"]["hAnsiTheme"] != null)
-			oTextPr.RFonts.HAnsiTheme = oParsedPr["rFonts"]["hAnsiTheme"];
-		if (oParsedPr["fontFamily"] != null)
-			oTextPr.FontFamily = {Index: oParsedPr["fontFamily"]["idx"], Name: oParsedPr["fontFamily"]["name"]};
-		if (oParsedPr["rPrChange"] != null)
-			oTextPr.PrChange = this.TextPrFromJSON(oParsedPr["rPrChange"]);
 		if (oStyle != null)
 			oTextPr.RStyle = oStyle.Id;
-		if (oParsedPr["rtl"] != null)
-			oTextPr.RTL = oParsedPr["rtl"];
-		if (oParsedPr["shd"] != null)
-			 oTextPr.Shd = this.ShadeFromJSON(oParsedPr["shd"]);
-		if (oParsedPr["smallCaps"] != null)
-			oTextPr.SmallCaps = oParsedPr["smallCaps"];
-		if (oParsedPr["spacing"] != null)
-			oTextPr.Spacing = private_Twips2MM(oParsedPr["spacing"]);
-		if (oParsedPr["strike"] != null)
-			oTextPr.Strikeout = oParsedPr["strike"];
-		if (oParsedPr["sz"] != null)
-			oTextPr.FontSize = oParsedPr["sz"] / 2.0;
-		if (oParsedPr["szCs"] != null)
-			oTextPr.FontSizeCS = oParsedPr["szCs"] / 2.0;
-		if (oParsedPr["u"] != null)
-			oTextPr.Underline = oParsedPr["u"];
-		if (oParsedPr["vanish"] != null)
-			oTextPr.Vanish = oParsedPr["vanish"];
-		if (nVAlign != null)
-			oTextPr.VertAlign = nVAlign;
-		if (oParsedPr["uniFill"] != null)
-			oTextPr.Unifill = this.FillFromJSON(oParsedPr["uniFill"]);
-		if (oParsedPr["textFill"] != null)
-			oTextPr.TextFill = this.FillFromJSON(oParsedPr["textFill"]);
-		if (oParsedPr["reviewInfo"] != null)
-			oTextPr.ReviewInfo = this.ReviewInfoFromJSON(oParsedPr["reviewInfo"]);
-
+		
 		return oTextPr;
 	};
 	ReaderFromJSON.prototype.TextPrDrawingFromJSON = function(oParsedPr)
 	{
-		var oTextPr  = new AscCommonWord.CTextPr();
-
-		if (oParsedPr["baseline"] != null)
-		{
-			if (oParsedPr["baseline"] < 0)
-				oTextPr.VertAlign = AscCommon.vertalign_SubScript;
-			else if (oParsedPr["baseline"] > 0)
-				oTextPr.VertAlign = AscCommon.vertalign_SuperScript;
-		}
-
-		if (oParsedPr["cap"] != null)
-		{
-			if(oParsedPr["cap"] === "all") {
-				oTextPr.Caps = true;
-				oTextPr.SmallCaps = false;
-			}
-			else if(oParsedPr["cap"] === "small") {
-				oTextPr.Caps = false;
-				oTextPr.SmallCaps = true;
-			}
-			else {
-				oTextPr.Caps = false;
-				oTextPr.SmallCaps = false;
-			}
-		}
-
-		if (oParsedPr["i"] != null)
-		{
-			oTextPr.Italic = oParsedPr["i"];
-		}
-
-		if (oParsedPr["b"] != null)
-		{
-			oTextPr.Bold = oParsedPr["b"];
-		}
-
-		if (oParsedPr["lang"] != null)
-		{
-			let nLcid = Asc.g_oLcidNameToIdMap[oParsedPr["lang"]];
-			if(nLcid)
-				oTextPr.Lang.Val = nLcid;
-		}
-
-		if (oParsedPr["spc"] != null)
-		{
-			oTextPr.Spacing = oParsedPr["spc"] * 25.4 / 7200;
-		}
-
-		if (oParsedPr["strike"] != null)
-		{
-			if(oParsedPr["strike"] === "dblStrike") {
-				oTextPr.Strikeout = false;
-				oTextPr.DStrikeout = true;
-			}
-			else if(oParsedPr["strike"] === "sngStrike") {
-				oTextPr.Strikeout = true;
-				oTextPr.DStrikeout = false;
-			}
-			else if(oParsedPr["strike"] === "noStrike") {
-				oTextPr.Strikeout = false;
-				oTextPr.DStrikeout = false;
-			}
-		}
-
-		if (oParsedPr["sz"] != null)
-		{
-			var nSz = oParsedPr["sz"] / 100;
-			//nSz = ((nSz * 2) + 0.5) >> 0;
-			//nSz /= 2;
-			oTextPr.FontSize = nSz;
-			oTextPr.FontSizeCS = nSz;
-		}
-
-		if (oParsedPr["u"] != null)
-		{
-			oTextPr.Underline = oParsedPr["u"] !== "none";
-		}
-
-		if (oParsedPr["ln"] != null)
-		{
-			oTextPr.TextOutline = this.LnFromJSON(oParsedPr["ln"]);
-		}
-
-		if (oParsedPr["uniFill"] != null)
-		{
-			oTextPr.Unifill = this.FillFromJSON(oParsedPr["uniFill"]);
-		}
-
-		if (oParsedPr["highlight"] != null)
-		{
-			oTextPr.HighlightColor = this.ColorFromJSON(oParsedPr["highlight"]);
-		}
-
-		if(oParsedPr["cs"] != null) {
-			oTextPr.RFonts.CS = { Name: oParsedPr["cs"], Index : -1 };
-		}
-		if(oParsedPr["ea"] != null) {
-			oTextPr.RFonts.EastAsia = { Name: oParsedPr["ea"], Index : -1 };
-		}
-		if(oParsedPr["latin"] != null) {
-			oTextPr.RFonts.Ascii = { Name: oParsedPr["latin"], Index : -1 };
-			oTextPr.RFonts.HAnsi = { Name: oParsedPr["latin"], Index : -1 };
-		}
-
-		return oTextPr;
+		return AscCommonWord.CTextPr.FromJson(oParsedPr, false);
 	};
 	ReaderFromJSON.prototype.ShadeFromJSON = function(oParsedShd)
 	{
@@ -9553,179 +9007,24 @@
 	};
 	ReaderFromJSON.prototype.ParaPrFromJSON = function(oParsedParaPr, oPrevNumIdInfo)
 	{
-		var oParaPr = new AscCommonWord.CParaPr();
-		
-		// align
-		var nJc;
-		switch (oParsedParaPr["jc"])
-		{
-			case "end":
-				nJc = AscCommon.align_Right;
-				break;
-			case "start":
-				nJc = AscCommon.align_Left;
-				break;
-			case "center":
-				nJc = AscCommon.align_Center;
-				break;
-			case "both":
-				nJc = AscCommon.align_Justify;
-				break;
-			case "distribute":
-				nJc = AscCommon.align_Distributed;
-				break;
-		}
+		let oParaPr = AscCommonWord.CParaPr.FromJson(oParsedParaPr, true);
 
 		// style 
-		var oStyle = null;
+		let oStyle = null;
 		if (oParsedParaPr["pStyle"] != null && this.RestoredStylesMap[oParsedParaPr["pStyle"]])
 			oStyle = this.RestoredStylesMap[oParsedParaPr["pStyle"]];
 
-		if (oParsedParaPr["contextualSpacing"] != null)
-			oParaPr.ContextualSpacing = oParsedParaPr["contextualSpacing"];
-		if (oParsedParaPr["framePr"] != null)
-			oParaPr.FramePr = this.FramePrFromJSON(oParsedParaPr["framePr"]);
-		if (oParsedParaPr["spacing"] != null)
-			oParaPr.Spacing = this.ParaSpacingFromJSON(oParsedParaPr["spacing"]);
-		if (oParsedParaPr["ind"]["left"] != null)
-			oParaPr.Ind.Left = private_Twips2MM(oParsedParaPr["ind"]["left"]);
-		if (oParsedParaPr["ind"]["right"] != null)
-			oParaPr.Ind.Right = private_Twips2MM(oParsedParaPr["ind"]["right"]);
-		if (oParsedParaPr["ind"]["firstLine"] != null)
-			oParaPr.Ind.FirstLine = private_Twips2MM(oParsedParaPr["ind"]["firstLine"]);
-		if (nJc != null)
-			oParaPr.Jc = nJc;
-		if (oParsedParaPr["defTabSz"] != null)
-			oParaPr.DefaultTab = private_EMU2MM(oParsedParaPr["defTabSz"]);
-		if (oParsedParaPr["keepLines"] != null)
-			oParaPr.KeepLines = oParsedParaPr["keepLines"];
-		if (oParsedParaPr["keepNext"] != null)
-			oParaPr.KeepNext = oParsedParaPr["keepNext"];
-		if (oParsedParaPr["numPr"] != null)
-			oParaPr.NumPr = this.NumPrFromJSON(oParsedParaPr["numPr"], oPrevNumIdInfo);
-		if (oParsedParaPr["outlineLvl"] != null)
-			oParaPr.OutlineLvl = oParsedParaPr["outlineLvl"];
-		if (oParsedParaPr["pBdr"]["between"] != null)
-			oParaPr.Brd.Between = this.DocBorderFromJSON(oParsedParaPr["pBdr"]["between"]);
-		if (oParsedParaPr["pBdr"]["bottom"] != null)
-			oParaPr.Brd.Bottom = this.DocBorderFromJSON(oParsedParaPr["pBdr"]["bottom"]);
-		if (oParsedParaPr["pBdr"]["left"] != null)
-			oParaPr.Brd.Left = this.DocBorderFromJSON(oParsedParaPr["pBdr"]["left"]);
-		if (oParsedParaPr["pBdr"]["right"] != null)
-			oParaPr.Brd.Right = this.DocBorderFromJSON(oParsedParaPr["pBdr"]["right"]);
-		if (oParsedParaPr["pBdr"]["top"] != null)
-			oParaPr.Brd.Top = this.DocBorderFromJSON(oParsedParaPr["pBdr"]["top"]);
 		if (oStyle)
 			oParaPr.PStyle = oStyle.Id;
-		if (oParsedParaPr["pageBreakBefore"] != null)
-			oParaPr.PageBreakBefore = oParsedParaPr["pageBreakBefore"];
-		if (oParsedParaPr["suppressLineNumbers"] != null)
-			oParaPr.SuppressLineNumbers = oParsedParaPr["suppressLineNumbers"];
-		if (oParsedParaPr["shd"] != null)
-			oParaPr.Shd = this.ShadeFromJSON(oParsedParaPr["shd"]);
-		if (oParsedParaPr["tabs"] != null)
-			oParaPr.Tabs = this.TabsFromJSON(oParsedParaPr["tabs"]);
-		if (oParsedParaPr["widowControl"] != null)
-			oParaPr.WidowControl = oParsedParaPr["widowControl"];
+
+		if (oParsedParaPr["numPr"] != null)
+			oParaPr.NumPr = this.NumPrFromJSON(oParsedParaPr["numPr"], oPrevNumIdInfo);
 
 		return oParaPr;
 	};
 	ReaderFromJSON.prototype.ParaPrDrawingFromJSON = function(oParsedParaPr)
 	{
-		var oParaPr = new AscCommonWord.CParaPr();
-
-		if (oParsedParaPr["algn"] != null)
-		{
-			switch(oParsedParaPr["algn"])
-			{
-				case "ctr": {
-					oParaPr.Jc = AscCommon.align_Center;
-					break;
-				}
-				case "dist": {
-					oParaPr.Jc = AscCommon.align_Justify;
-					break;
-				}
-				case "just": {
-					oParaPr.Jc = AscCommon.align_Justify;
-					break;
-				}
-				case "justLow": {
-					oParaPr.Jc = AscCommon.align_Justify;
-					break;
-				}
-				case "l": {
-					oParaPr.Jc = AscCommon.align_Left;
-					break;
-				}
-				case "r": {
-					oParaPr.Jc = AscCommon.align_Right;
-					break;
-				}
-				case "thaiDist": {
-					oParaPr.Jc = AscCommon.align_Justify;
-					break;
-				}
-			}
-		}
-
-		if (oParsedParaPr["defTabSz"] != null)
-			oParaPr.DefaultTab = private_EMU2MM(oParsedParaPr["defTabSz"]);
-		if (oParsedParaPr["lvl"] != null)
-			oParaPr.Lvl = oParsedParaPr["lvl"];
-		if (oParsedParaPr["indent"] != null)
-			oParaPr.Ind.FirstLine = private_EMU2MM(oParsedParaPr["indent"]);
-		if (oParsedParaPr["marL"] != null)
-			oParaPr.Ind.Left = private_EMU2MM(oParsedParaPr["marL"]);
-		if (oParsedParaPr["marR"] != null)
-			oParaPr.Ind.Right = private_EMU2MM(oParsedParaPr["marR"]);
-		if (oParsedParaPr["bullet"] != null)
-			oParaPr.Bullet = this.BulletFromJSON(oParsedParaPr["bullet"]);
-		if (oParsedParaPr["defRPr"] != null)
-			oParaPr.DefaultRunPr = this.TextPrDrawingFromJSON(oParsedParaPr["defRPr"]);
-
-		let oSpc;
-		if (oParsedParaPr["lnSpc"] != null)
-		{
-			oSpc = this.ParaSpacingDrawingFromJSON(oParsedParaPr["lnSpc"]);
-			if(oSpc.valPct != null) {
-				oParaPr.Spacing.Line = oSpc.valPct;
-				oParaPr.Spacing.LineRule = Asc.linerule_Auto;
-			}
-			else if(oSpc.val != null) {
-				oParaPr.Spacing.Line = oSpc.val;
-				oParaPr.Spacing.LineRule = Asc.linerule_Exact;
-			}
-		}
-		if (oParsedParaPr["spcAft"] != null)
-		{
-			oSpc = this.ParaSpacingDrawingFromJSON(oParsedParaPr["spcAft"]);
-			if(oSpc.valPct !== null) {
-				oParaPr.Spacing.AfterPct = oSpc.valPct;
-				oParaPr.Spacing.After = 0;
-			}
-			else if(oSpc.val !== null) {
-				oParaPr.Spacing.After = oSpc.val;
-			}
-		}
-		if (oParsedParaPr["spcBef"] != null)
-		{
-			oSpc = this.ParaSpacingDrawingFromJSON(oParsedParaPr["spcBef"]);
-			if(oSpc.valPct !== null) {
-				oParaPr.Spacing.BeforePct = oSpc.valPct;
-				oParaPr.Spacing.Before = 0;
-			}
-			else if(oSpc.val !== null) {
-				oParaPr.Spacing.Before = oSpc.val;
-			}
-		}
-
-		if (oParsedParaPr["tabLst"] != null)
-		{
-			oParaPr.Tabs = this.TabsDrawingFromJSON(oParsedParaPr["tabLst"]);
-		}
-	
-		return oParaPr;
+		return AscCommonWord.CParaPr.FromJson(oParsedParaPr, false);
 	};
 	ReaderFromJSON.prototype.BulletFromJSON = function(oParsedBullet)
 	{
@@ -11217,73 +10516,34 @@
 	};
 	ReaderFromJSON.prototype.NumLvlFromJSON = function(oParsedNumLvl)
 	{
-		var oNumLvl = new CNumberingLvl();
-
-		// align
-		var nJc = undefined;
-		switch (oParsedNumLvl["lvlJc"])
-		{
-			case "end":
-				nJc = AscCommon.align_Right;
-				break;
-			case "start":
-				nJc = AscCommon.align_Left;
-				break;
-			case "center":
-				nJc = AscCommon.align_Center;
-				break;
-			case "both":
-				nJc = AscCommon.align_Justify;
-				break;
-			case "distribute":
-				nJc = AscCommon.align_Distributed;
-				break;
-		}
+		let oNumLvl = CNumberingLvl.FromJson(oParsedNumLvl);
 
 		// style 
 		var oStyle = null;
 		if (oParsedNumLvl["pStyle"] && this.RestoredStylesMap[oParsedNumLvl["pStyle"]])
 			oStyle = this.RestoredStylesMap[oParsedNumLvl["pStyle"]];
 
-		// suff
-		var nSuffType = undefined;
-		switch (oParsedNumLvl["suff"])
-		{
-			case "tab":
-				nSuffType = Asc.c_oAscNumberingSuff.Tab;
-				break;
-			case "space":
-				nSuffType = Asc.c_oAscNumberingSuff.Space;
-				break;
-			case "nothing":
-				nSuffType = Asc.c_oAscNumberingSuff.None;
-				break;
-		}
-
-		// format type
-		var nFormatType = From_XML_c_oAscNumberingFormat(oParsedNumLvl["numFmt"]["val"]);
-
-		oNumLvl.IsLgl   = oParsedNumLvl["isLgl"];
-		oNumLvl.Legacy  = oParsedNumLvl["legacy"] ? new CNumberingLvlLegacy(oParsedNumLvl["legacy"]["legacy"], oParsedNumLvl["legacy"]["legacyIndent"], oParsedNumLvl["legacy"]["legacySpace"]) : oNumLvl.Legacy;
-		oNumLvl.Jc      = nJc;
-		oNumLvl.Format  = nFormatType;
-		oNumLvl.ParaPr  = this.ParaPrFromJSON(oParsedNumLvl["pPr"]);
-		oNumLvl.TextPr  = this.TextPrFromJSON(oParsedNumLvl["rPr"]);
-		oNumLvl.Suff    = nSuffType;
-		oNumLvl.Restart = oParsedNumLvl["restart"];
-		oNumLvl.Start   = oParsedNumLvl["start"];
-		oNumLvl.PStyle  = oStyle ? oStyle.Id : oNumLvl.PStyle;
-		for (var nItem = 0; nItem < oParsedNumLvl["lvlText"].length; nItem++)
-			oNumLvl.LvlText.push(this.LvlTextItemFromJSON(oParsedNumLvl["lvlText"][nItem]));
+		if (oStyle)
+			this.PStyle = oStyle.Id;
 
 		return oNumLvl;
 	};
-	ReaderFromJSON.prototype.LvlTextItemFromJSON = function(oParsed)
+	ReaderFromJSON.prototype.LvlTextItemsFromJSON = function(sParsedLvlText)
 	{
-		if (oParsed["val"] != null)
-			return new CNumberingLvlTextString(oParsed["val"]);
-		else if (oParsed["numValue"] != null)
-			return new CNumberingLvlTextNum(oParsed["numValue"])
+		let aLvlTextItems = [];
+
+		for (var nPos = 0; nPos < sParsedLvlText.length; nPos++)
+		{
+			if (sParsedLvlText[nPos] === "%")
+			{
+				aLvlTextItems.push(new CNumberingLvlTextNum(sParsedLvlText[nPos + 1] -1));
+				nPos += 1;
+			}
+			else
+				aLvlTextItems.push(new CNumberingLvlTextString(sParsedLvlText[nPos]));
+		}
+		
+		return aLvlTextItems;
 	};
 	ReaderFromJSON.prototype.HyperlinkFromJSON = function(oParsedLink, oParentPara, notCompletedFields)
 	{
@@ -16964,6 +16224,929 @@
 			Value:        nValue
 		}
 	};
+
+	CNumberingLvl.prototype.ToJson = function(nLvl)
+	{
+		if (nLvl == null)
+			nLvl = 0;
+				
+		let oResult = {};
+
+		// align
+		var sJc = undefined;
+		switch (this.Jc)
+		{
+			case AscCommon.align_Right:
+				sJc = "end";
+				break;
+			case AscCommon.align_Left:
+				sJc = "start";
+				break;
+			case AscCommon.align_Center:
+				sJc = "center";
+				break;
+			case AscCommon.align_Justify:
+				sJc = "both";
+				break;
+			case AscCommon.align_Distributed:
+				sJc = "distribute";
+				break;
+		}
+
+		// suff
+		var sSuffType = undefined;
+		switch (this.Suff)
+		{
+			case Asc.c_oAscNumberingSuff.Tab:
+				sSuffType = "tab";
+				break;
+			case Asc.c_oAscNumberingSuff.Space:
+				sSuffType = "space";
+				break;
+			case Asc.c_oAscNumberingSuff.None:
+				sSuffType = "nothing";
+				break;
+		}
+
+		// format type
+		var sFormatType = To_XML_c_oAscNumberingFormat(this.Format);
+
+		// lvl text
+		var sLvlText = "";
+		for (var nText = 0; nText < this.LvlText.length; nText++)
+			sLvlText += WriterToJSON.prototype.SerLvlTextItem(this.LvlText[nText]);
+
+		if (this.IsLgl != null)
+			oResult["isLgl"] = this.IsLgl;
+		if (this.Legacy != null)
+		{
+			oResult["legacy"] = {};
+			if (this.Legacy.Legacy != null)
+				oResult["legacy"]["legacy"] = this.Legacy.Legacy;
+			if (this.Legacy.Indent != null)
+				oResult["legacy"]["legacyIndent"] = this.Legacy.Indent;
+			if (this.Legacy.Space != null)
+				oResult["legacy"]["legacySpace"] = this.Legacy.Space;
+		}
+		if (sJc != null)
+			oResult["lvlJc"] = sJc;
+		if (sLvlText.length > 0)
+			oResult["lvlText"] = sLvlText;
+		if (this.ParaPr != null)
+			oResult["pPr"] = WriterToJSON.prototype.SerParaPr(this.ParaPr); 
+		if (this.TextPr != null)
+			oResult["rPr"] = WriterToJSON.prototype.SerTextPr(this.TextPr); 
+		if (this.Restart != null)
+			oResult["restart"] = this.Restart;
+		if (this.Start != null)
+			oResult["start"] = this.Start;
+		if (sSuffType != null)
+			oResult["suff"] = sSuffType;
+		if (nLvl != null)
+			oResult["ilvl"] = nLvl;
+
+		oResult["numFmt"] = {"val": sFormatType};
+
+		return oResult;
+	};
+	CNumberingLvl.prototype.FromJson = function(oParsedJson)
+	{
+		// align
+		var nJc = undefined;
+		switch (oParsedJson["lvlJc"])
+		{
+			case "end":
+				nJc = AscCommon.align_Right;
+				break;
+			case "start":
+				nJc = AscCommon.align_Left;
+				break;
+			case "center":
+				nJc = AscCommon.align_Center;
+				break;
+			case "both":
+				nJc = AscCommon.align_Justify;
+				break;
+			case "distribute":
+				nJc = AscCommon.align_Distributed;
+				break;
+		}
+
+		// suff
+		var nSuffType = undefined;
+		switch (oParsedJson["suff"])
+		{
+			case "tab":
+				nSuffType = Asc.c_oAscNumberingSuff.Tab;
+				break;
+			case "space":
+				nSuffType = Asc.c_oAscNumberingSuff.Space;
+				break;
+			case "nothing":
+				nSuffType = Asc.c_oAscNumberingSuff.None;
+				break;
+		}
+
+		// format type
+		var nFormatType = From_XML_c_oAscNumberingFormat(oParsedJson["numFmt"]["val"]);
+
+		this.IsLgl   = oParsedJson["isLgl"];
+		this.Legacy  = oParsedJson["legacy"] ? new CNumberingLvlLegacy(oParsedJson["legacy"]["legacy"], oParsedJson["legacy"]["legacyIndent"], oParsedJson["legacy"]["legacySpace"]) : this.Legacy;
+		this.Jc      = nJc;
+		this.Format  = nFormatType;
+		this.ParaPr  = ReaderFromJSON.prototype.ParaPrFromJSON(oParsedJson["pPr"]);
+		this.TextPr  = ReaderFromJSON.prototype.TextPrFromJSON(oParsedJson["rPr"]);
+		this.Suff    = nSuffType;
+		this.Restart = oParsedJson["restart"];
+		this.Start   = oParsedJson["start"];
+		
+		this.LvlText = ReaderFromJSON.prototype.LvlTextItemsFromJSON(oParsedJson["lvlText"]);
+
+		return this;
+	};
+	CNumberingLvl.FromJson = function(json)
+	{
+		let numLvl = new CNumberingLvl();
+		numLvl.FromJson(json);
+		return numLvl;
+	};
+	CParaPr.prototype.ToJson = function(bFromDocument)
+	{
+		var oResult = {};
+		if (bFromDocument === false)
+		{
+			if (this.Ind) {
+				if(this.Ind.Left != null) {
+
+					oResult["marL"] = private_MM2EMU(this.Ind.Left);
+				}
+				if(this.Ind.Right != null) {
+
+					oResult["marR"] = private_MM2EMU(this.Ind.Right);
+				}
+				if(this.Ind.FirstLine != null) {
+					oResult["indent"] = private_MM2EMU(this.Ind.FirstLine);
+				}
+			}
+
+			if (this.Lvl != null)
+				oResult["lvl"] = this.Lvl;
+
+			if (this.Jc != null) {
+				switch(this.Jc) {
+					case AscCommon.align_Center: {
+						oResult["algn"] = "ctr";
+						break;
+					}
+					case AscCommon.align_Justify: {
+						oResult["algn"] = "just";
+						break;
+					}
+					case AscCommon.align_Left: {
+						oResult["algn"] = "l";
+						break;
+					}
+					case AscCommon.align_Right: {
+						oResult["algn"] = "r";
+						break;
+					}
+				}
+			}
+
+			// def tab size
+			if (this.DefaultTab != null) {
+				oResult["defTabSz"] = private_MM2EMU(this.DefaultTab);
+			}
+
+			// lnSpc
+			if (this.Spacing.Line != null)
+			{
+				if (this.Spacing.LineRule === Asc.linerule_Exact)
+					oResult["lnSpc"] = WriterToJSON.prototype.SerParaSpacingDrawing({val: this.Spacing.Line});
+				else
+					oResult["lnSpc"] = WriterToJSON.prototype.SerParaSpacingDrawing({valPct: this.Spacing.Line});
+			}
+
+			// spcAft
+			if (this.Spacing.After != null)
+				oResult["spcAft"] = WriterToJSON.prototype.SerParaSpacingDrawing({val: this.Spacing.After});
+			else if (this.Spacing.AfterPct != null)
+				oResult["spcAft"] = WriterToJSON.prototype.SerParaSpacingDrawing({valPct: this.Spacing.AfterPct});
+
+			// spcBef
+			if (this.Spacing.Before != null)
+				oResult["spcBef"] = WriterToJSON.prototype.SerParaSpacingDrawing({val: this.Spacing.Before});
+			else if (this.Spacing.BeforePct != null)
+				oResult["spcBef"] = WriterToJSON.prototype.SerParaSpacingDrawing({valPct: this.Spacing.BeforePct});
+
+			// bullet
+			if (this.Bullet != null)
+				oResult["bullet"] = WriterToJSON.prototype.SerBullet(this.Bullet);
+
+			// tabs
+			if (this.Tabs)
+				oResult["tabLst"] = WriterToJSON.prototype.SerTabsDrawing(this.Tabs);
+
+			// defRunPr
+			if (this.DefaultRunPr != null)
+				oResult["defRPr"] = this.DefaultRunPr.ToJson(false);
+
+			oResult["bFromDocument"] = false;
+		}
+		else
+		{
+			let sJc = undefined;
+			switch (this.Jc)
+			{
+				case AscCommon.align_Right:
+					sJc = "end";
+					break;
+				case AscCommon.align_Left:
+					sJc = "start";
+					break;
+				case AscCommon.align_Center:
+					sJc = "center";
+					break;
+				case AscCommon.align_Justify:
+					sJc = "both";
+					break;
+				case AscCommon.align_Distributed:
+					sJc = "distribute";
+					break;
+			}
+
+			if (this.ContextualSpacing != null)
+				oResult["contextualSpacing"] = this.ContextualSpacing;
+			if (this.FramePr != null)
+				oResult["framePr"] = WriterToJSON.prototype.SerFramePr(this.FramePr);
+			if (this.Ind != null)
+				oResult["ind"] = WriterToJSON.prototype.SerParaInd(this.Ind);
+			if (sJc != null)
+				oResult["jc"] = sJc;
+				
+			if (this.KeepLines != null)
+				oResult["keepLines"] = this.KeepLines;
+			if (this.KeepNext != null)
+				oResult["keepNext"] = this.KeepNext;
+			if (this.NumPr != null)
+				oResult["numPr"] = WriterToJSON.prototype.SerNumPr(this.NumPr);
+			if (this.OutlineLvl != null)
+				oResult["outlineLvl"] = this.OutlineLvl;
+			if (this.PageBreakBefore != null)
+				oResult["pageBreakBefore"] = this.PageBreakBefore;
+			if (this.SuppressLineNumbers != null)
+				oResult["suppressLineNumbers"] = this.SuppressLineNumbers;
+			if (this.Brd != null)
+			{
+				oResult["pBdr"] = {};
+				if (this.Brd.Between != null)
+					oResult["pBdr"]["between"] = WriterToJSON.prototype.SerDocBorder(this.Brd.Between);
+				if (this.Brd.Bottom != null)
+					oResult["pBdr"]["bottom"] = WriterToJSON.prototype.SerDocBorder(this.Brd.Bottom);
+				if (this.Brd.Left != null)
+					oResult["pBdr"]["left"] = WriterToJSON.prototype.SerDocBorder(this.Brd.Left);
+				if (this.Brd.Right != null)
+					oResult["pBdr"]["right"] = WriterToJSON.prototype.SerDocBorder(this.Brd.Right);
+				if (this.Brd.Top != null)
+					oResult["pBdr"]["top"] = WriterToJSON.prototype.SerDocBorder(this.Brd.Top);
+			}
+			if (this.PrChange != null)
+				oResult["pPrChange"] = WriterToJSON.prototype.SerParaPr(this.PrChange);
+			
+			if (this.Shd != null)
+				oResult["shd"] = WriterToJSON.prototype.SerShd(this.Shd);
+			if (this.Spacing != null)
+				oResult["spacing"] = WriterToJSON.prototype.SerParaSpacing(this.Spacing);
+			if (this.Tabs != null)
+				oResult["tabs"] = WriterToJSON.prototype.SerTabs(this.Tabs);
+			if (this.WidowControl != null)
+				oResult["widowControl"] = this.WidowControl;
+			
+			oResult["bFromDocument"] = true;
+			oResult["type"] = "paraPr";
+		}
+
+		return oResult;
+	};
+	CParaPr.prototype.FromJson = function(oParsedJson, bFromDocument)
+	{
+		if (bFromDocument === false)
+		{
+			if (oParsedJson["algn"] != null)
+			{
+				switch(oParsedJson["algn"])
+				{
+					case "ctr": {
+						this.Jc = AscCommon.align_Center;
+						break;
+					}
+					case "dist": {
+						this.Jc = AscCommon.align_Justify;
+						break;
+					}
+					case "just": {
+						this.Jc = AscCommon.align_Justify;
+						break;
+					}
+					case "justLow": {
+						this.Jc = AscCommon.align_Justify;
+						break;
+					}
+					case "l": {
+						this.Jc = AscCommon.align_Left;
+						break;
+					}
+					case "r": {
+						this.Jc = AscCommon.align_Right;
+						break;
+					}
+					case "thaiDist": {
+						this.Jc = AscCommon.align_Justify;
+						break;
+					}
+				}
+			}
+
+			if (oParsedJson["defTabSz"] != null)
+				this.DefaultTab = private_EMU2MM(oParsedJson["defTabSz"]);
+			if (oParsedJson["lvl"] != null)
+				this.Lvl = oParsedJson["lvl"];
+			if (oParsedJson["indent"] != null)
+				this.Ind.FirstLine = private_EMU2MM(oParsedJson["indent"]);
+			if (oParsedJson["marL"] != null)
+				this.Ind.Left = private_EMU2MM(oParsedJson["marL"]);
+			if (oParsedJson["marR"] != null)
+				this.Ind.Right = private_EMU2MM(oParsedJson["marR"]);
+			if (oParsedJson["bullet"] != null)
+				this.Bullet = ReaderFromJSON.prototype.BulletFromJSON(oParsedJson["bullet"]);
+			if (oParsedJson["defRPr"] != null)
+				this.DefaultRunPr = ReaderFromJSON.prototype.TextPrDrawingFromJSON(oParsedJson["defRPr"]);
+
+			let oSpc;
+			if (oParsedJson["lnSpc"] != null)
+			{
+				oSpc = ReaderFromJSON.prototype.ParaSpacingDrawingFromJSON(oParsedJson["lnSpc"]);
+				if(oSpc.valPct != null) {
+					this.Spacing.Line = oSpc.valPct;
+					this.Spacing.LineRule = Asc.linerule_Auto;
+				}
+				else if(oSpc.val != null) {
+					this.Spacing.Line = oSpc.val;
+					this.Spacing.LineRule = Asc.linerule_Exact;
+				}
+			}
+			if (oParsedJson["spcAft"] != null)
+			{
+				oSpc = ReaderFromJSON.prototype.ParaSpacingDrawingFromJSON(oParsedJson["spcAft"]);
+				if(oSpc.valPct !== null) {
+					this.Spacing.AfterPct = oSpc.valPct;
+					this.Spacing.After = 0;
+				}
+				else if(oSpc.val !== null) {
+					this.Spacing.After = oSpc.val;
+				}
+			}
+			if (oParsedJson["spcBef"] != null)
+			{
+				oSpc = ReaderFromJSON.prototype.ParaSpacingDrawingFromJSON(oParsedJson["spcBef"]);
+				if(oSpc.valPct !== null) {
+					this.Spacing.BeforePct = oSpc.valPct;
+					this.Spacing.Before = 0;
+				}
+				else if(oSpc.val !== null) {
+					this.Spacing.Before = oSpc.val;
+				}
+			}
+
+			if (oParsedJson["tabLst"] != null)
+			{
+				this.Tabs = ReaderFromJSON.prototype.TabsDrawingFromJSON(oParsedJson["tabLst"]);
+			}
+		}
+		else
+		{
+			// align
+			var nJc;
+			switch (oParsedJson["jc"])
+			{
+				case "end":
+					nJc = AscCommon.align_Right;
+					break;
+				case "start":
+					nJc = AscCommon.align_Left;
+					break;
+				case "center":
+					nJc = AscCommon.align_Center;
+					break;
+				case "both":
+					nJc = AscCommon.align_Justify;
+					break;
+				case "distribute":
+					nJc = AscCommon.align_Distributed;
+					break;
+			}
+
+			if (oParsedJson["contextualSpacing"] != null)
+				this.ContextualSpacing = oParsedJson["contextualSpacing"];
+			if (oParsedJson["framePr"] != null)
+				this.FramePr = ReaderFromJSON.prototype.FramePrFromJSON(oParsedJson["framePr"]);
+			if (oParsedJson["spacing"] != null)
+				this.Spacing = ReaderFromJSON.prototype.ParaSpacingFromJSON(oParsedJson["spacing"]);
+			if (oParsedJson["ind"]["left"] != null)
+				this.Ind.Left = private_Twips2MM(oParsedJson["ind"]["left"]);
+			if (oParsedJson["ind"]["right"] != null)
+				this.Ind.Right = private_Twips2MM(oParsedJson["ind"]["right"]);
+			if (oParsedJson["ind"]["firstLine"] != null)
+				this.Ind.FirstLine = private_Twips2MM(oParsedJson["ind"]["firstLine"]);
+			if (nJc != null)
+				this.Jc = nJc;
+			if (oParsedJson["defTabSz"] != null)
+				this.DefaultTab = private_EMU2MM(oParsedJson["defTabSz"]);
+			if (oParsedJson["keepLines"] != null)
+				this.KeepLines = oParsedJson["keepLines"];
+			if (oParsedJson["keepNext"] != null)
+				this.KeepNext = oParsedJson["keepNext"];
+			if (oParsedJson["outlineLvl"] != null)
+				this.OutlineLvl = oParsedJson["outlineLvl"];
+			if (oParsedJson["pBdr"]["between"] != null)
+				this.Brd.Between = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["between"]);
+			if (oParsedJson["pBdr"]["bottom"] != null)
+				this.Brd.Bottom = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["bottom"]);
+			if (oParsedJson["pBdr"]["left"] != null)
+				this.Brd.Left = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["left"]);
+			if (oParsedJson["pBdr"]["right"] != null)
+				this.Brd.Right = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["right"]);
+			if (oParsedJson["pBdr"]["top"] != null)
+				this.Brd.Top = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["top"]);
+			if (oParsedJson["pageBreakBefore"] != null)
+				this.PageBreakBefore = oParsedJson["pageBreakBefore"];
+			if (oParsedJson["suppressLineNumbers"] != null)
+				this.SuppressLineNumbers = oParsedJson["suppressLineNumbers"];
+			if (oParsedJson["shd"] != null)
+				this.Shd = ReaderFromJSON.prototype.ShadeFromJSON(oParsedJson["shd"]);
+			if (oParsedJson["tabs"] != null)
+				this.Tabs = ReaderFromJSON.prototype.TabsFromJSON(oParsedJson["tabs"]);
+			if (oParsedJson["widowControl"] != null)
+				this.WidowControl = oParsedJson["widowControl"];
+		}
+		
+		return this;
+	};
+	CParaPr.FromJson = function(json, bFromDocument)
+	{
+		let paraPr = new CParaPr();
+		paraPr.FromJson(json, bFromDocument);
+		return paraPr;
+	};
+	CTextPr.prototype.ToJson = function(bFromDocument)
+	{
+		let oResult = {};
+		if (bFromDocument === false)
+		{
+			// lang
+			oResult["lang"] = Asc.g_oLcidIdToNameMap[this.Lang.Val];
+			if(this.FontSize !== null && this.FontSize !== undefined) {
+				oResult["sz"] = this.FontSize * 100 >> 0;
+			}
+
+			// bold italic
+			oResult["i"] = this.Italic != null ? this.Italic : undefined;
+			oResult["b"] = this.Bold != null ? this.Bold : undefined;
+			
+			// underline
+			if(this.Underline != null) {
+				if(!this.Underline) {
+					oResult["u"] = "none";
+				}
+				else {
+					oResult["u"] = "sng";
+				}
+			}
+
+			// strikeout
+			if(this.Strikeout === false && this.DStrikeout === true) {
+				oResult["strike"] = "dblStrike";
+			}
+			else if(this.Strikeout === true && this.DStrikeout === false) {
+				oResult["strike"] = "sngStrike";
+			}
+			else if(this.Strikeout === false && this.DStrikeout === false) {
+				oResult["strike"] = "noStrike";
+			}
+
+			// caps
+			if(this.Caps === true && this.SmallCaps === false) {
+				oResult["cap"] = "all";
+			}
+			else if(this.Caps === false && this.SmallCaps === true) {
+				oResult["cap"] = "small";
+			}
+			else if(this.Caps === false && this.SmallCaps === false) {
+				oResult["cap"] = "none";
+			}
+			
+			if(this.Spacing !== undefined && this.Spacing !== null) {
+				oResult["spc"] = this.Spacing * 7200 / 25.4 >> 0;
+			}
+
+			if (AscCommon.vertalign_SubScript === this.VertAlign) {
+				oResult["baseline"] = -25000;
+			}
+			else if (AscCommon.vertalign_SuperScript === this.VertAlign) {
+				oResult["baseline"] = 30000;
+			}
+
+			if(this.TextOutline) {
+				oResult["ln"] = WriterToJSON.prototype.SerLn(this.TextOutline);
+			}
+
+			if(this.Unifill) {
+				oResult["uniFill"] = WriterToJSON.prototype.SerFill(this.Unifill);
+			}
+
+			if(this.HighlightColor) {
+				oResult["highlight"] = WriterToJSON.prototype.SerColor(this.HighlightColor);
+			}
+
+			if(this.RFonts.Ascii)
+				oResult["latin"] = this.RFonts.Ascii.Name;
+			if(this.RFonts.EastAsia)
+				oResult["ea"] = this.RFonts.EastAsia.Name;
+			if(this.RFonts.CS)
+				oResult["cs"] = this.RFonts.CS.Name;
+
+			oResult["bFromDocument"] = false;
+		}
+		else
+		{
+			let sVAlign = undefined;
+			// alignV
+			if (this.VertAlign != null)
+			{
+				switch (this.VertAlign)
+				{
+					case 0:
+						sVAlign = "baseline";
+						break;
+					case 1:
+						sVAlign = "superscript";
+						break;
+					case 2:
+						sVAlign = "subscript";
+						break;
+				}
+			}
+
+			if (this.Bold != null)
+				oResult["b"] = this.Bold;
+			if (this.BoldCS != null)
+				oResult["bCs"] = this.BoldCS;
+			if (this.Caps != null)
+				oResult["caps"] = this.Caps;
+			if (this.Color != null)
+			{
+				oResult["color"] = {};
+
+				if (this.Color.Auto != null)
+					oResult["auto"] = this.Color.Auto;
+				if (this.Color.r != null)
+					oResult["r"] = this.Color.r;
+				if (this.Color.g != null)
+					oResult["g"] = this.Color.g;
+				if (this.Color.b != null)
+					oResult["b"] = this.Color.b;
+			}
+
+			if (this.CS != null)
+				oResult["cs"] = this.CS;
+			if (this.DStrikeout != null)
+				oResult["dstrike"] = this.DStrikeout;
+			if (this.HighLight != null)
+			{
+				if (this.HighLight !== -1)
+				{
+					oResult["highlight"] = {};
+					if (this.HighLight.Auto != null)
+						oResult["highlight"]["auto"] = this.HighLight.Auto;
+					if (this.HighLight.r != null)
+						oResult["highlight"]["r"] = this.HighLight.r;
+					if (this.HighLight.g != null)
+						oResult["highlight"]["g"] = this.HighLight.g;
+					if (this.HighLight.b != null)
+						oResult["highlight"]["b"] = this.HighLight.b;
+				}
+				else
+					oResult["highlight"] = "none";
+			}
+			if (this.Italic != null)
+				oResult["i"] = this.Italic;
+			if (this.ItalicCS != null)
+				oResult["iCs"] = this.ItalicCS;
+			if (this.Lang != null)
+			{
+				oResult["lang"] = {};
+
+				if (this.Lang.Bidi != null)
+					oResult["lang"]["bidi"] = Asc.g_oLcidIdToNameMap[this.Lang.Bidi];
+				if (this.Lang.EastAsia != null)
+					oResult["lang"]["eastAsia"] = Asc.g_oLcidIdToNameMap[this.Lang.EastAsia];
+				if (this.Lang.Val != null)
+					oResult["lang"]["val"] = Asc.g_oLcidIdToNameMap[this.Lang.Val];
+			}
+			if (this.TextOutline != null)
+				oResult["outline"] = WriterToJSON.prototype.SerLn(this.TextOutline);
+			if (this.Position != null)
+				oResult["position"] = 2.0 * private_MM2Pt(this.Position);
+			if (this.RFonts != null)
+			{
+				oResult["rFonts"] = {};
+
+				if (this.RFonts.Ascii != null)
+					oResult["rFonts"]["ascii"] = this.RFonts.Ascii.Name;
+				if (this.RFonts.AsciiTheme != null)
+					oResult["rFonts"]["asciiTheme"] = this.RFonts.AsciiTheme;
+				if (this.RFonts.CS != null)
+					oResult["rFonts"]["cs"] = this.RFonts.CS.Name;
+				if (this.RFonts.CSTheme != null)
+					oResult["rFonts"]["cstheme"] = this.RFonts.CSTheme;
+				if (this.RFonts.EastAsia != null)
+					oResult["rFonts"]["eastAsia"] = this.RFonts.EastAsia.Name;
+				if (this.RFonts.EastAsiaTheme != null)
+					oResult["rFonts"]["eastAsiaTheme"] = this.RFonts.EastAsiaTheme;
+				if (this.RFonts.HAnsi != null)
+					oResult["rFonts"]["hAnsi"] = this.RFonts.HAnsi.Name;
+				if (this.RFonts.HAnsiTheme != null)
+					oResult["rFonts"]["hAnsiTheme"] = this.RFonts.HAnsiTheme;
+				if (this.RFonts.Hint != null)
+					oResult["rFonts"]["hint"] = ToXml_ST_Hint(this.RFonts.Hint);
+			}
+			if (this.FontFamily != null)
+			{
+				oResult["fontFamily"] = {};
+				if (this.FontFamily.Name != null)
+					oResult["fontFamily"]["name"] = this.FontFamily.Name;
+				if (this.FontFamily.Index != null)
+					oResult["fontFamily"]["idx"] = this.FontFamily.Index;
+			}
+			if (this.PrChange != null)
+				oResult["rPrChange"] = WriterToJSON.prototype.SerTextPr(this.PrChange);
+			if (this.RTL != null)
+				oResult["rtl"] = this.RTL;
+			if (this.Shd != null)
+				oResult["shd"] = WriterToJSON.prototype.SerShd(this.Shd);
+			if (this.SmallCaps != null)
+				oResult["smallCaps"] = this.SmallCaps;	
+			if (this.Spacing != null)
+				oResult["spacing"] = private_MM2Twips(this.Spacing);	
+			if (this.Strikeout != null)
+				oResult["strike"] = this.Strikeout;	
+			if (this.FontSize != null)
+				oResult["sz"] = 2.0 * this.FontSize;	
+			if (this.FontSizeCS != null)
+				oResult["szCs"] = 2.0 * this.FontSizeCS;	
+			if (this.Underline != null)
+				oResult["u"] = this.Underline;	
+			if (this.Vanish != null)
+				oResult["vanish"] = this.Vanish;
+			if (sVAlign != null)
+				oResult["vertAlign"] = sVAlign;
+			if (this.Unifill != null)
+				oResult["uniFill"] = WriterToJSON.prototype.SerFill(this.Unifill);
+			if (this.TextFill != null)
+				oResult["textFill"] = WriterToJSON.prototype.SerFill(this.TextFill);
+			if (this.ReviewInfo != null)
+				oResult["reviewInfo"] = WriterToJSON.prototype.SerReviewInfo(this.ReviewInfo);
+
+			oResult["bFromDocument"] = true;
+		}
+		
+		oResult["type"] = "textPr";
+		return oResult;
+	};
+	CTextPr.prototype.FromJson = function(oParsedJson, bFromDocument)
+	{
+		if (bFromDocument === false)
+		{
+			if (oParsedJson["baseline"] != null)
+			{
+				if (oParsedJson["baseline"] < 0)
+					this.VertAlign = AscCommon.vertalign_SubScript;
+				else if (oParsedJson["baseline"] > 0)
+					this.VertAlign = AscCommon.vertalign_SuperScript;
+			}
+
+			if (oParsedJson["cap"] != null)
+			{
+				if(oParsedJson["cap"] === "all") {
+					this.Caps = true;
+					this.SmallCaps = false;
+				}
+				else if(oParsedJson["cap"] === "small") {
+					this.Caps = false;
+					this.SmallCaps = true;
+				}
+				else {
+					this.Caps = false;
+					this.SmallCaps = false;
+				}
+			}
+
+			if (oParsedJson["i"] != null)
+			{
+				this.Italic = oParsedJson["i"];
+			}
+
+			if (oParsedJson["b"] != null)
+			{
+				this.Bold = oParsedJson["b"];
+			}
+
+			if (oParsedJson["lang"] != null)
+			{
+				let nLcid = Asc.g_oLcidNameToIdMap[oParsedJson["lang"]];
+				if(nLcid)
+					this.Lang.Val = nLcid;
+			}
+
+			if (oParsedJson["spc"] != null)
+			{
+				this.Spacing = oParsedJson["spc"] * 25.4 / 7200;
+			}
+
+			if (oParsedJson["strike"] != null)
+			{
+				if(oParsedJson["strike"] === "dblStrike") {
+					this.Strikeout = false;
+					this.DStrikeout = true;
+				}
+				else if(oParsedJson["strike"] === "sngStrike") {
+					this.Strikeout = true;
+					this.DStrikeout = false;
+				}
+				else if(oParsedJson["strike"] === "noStrike") {
+					this.Strikeout = false;
+					this.DStrikeout = false;
+				}
+			}
+
+			if (oParsedJson["sz"] != null)
+			{
+				var nSz = oParsedJson["sz"] / 100;
+				//nSz = ((nSz * 2) + 0.5) >> 0;
+				//nSz /= 2;
+				this.FontSize = nSz;
+				this.FontSizeCS = nSz;
+			}
+
+			if (oParsedJson["u"] != null)
+			{
+				this.Underline = oParsedJson["u"] !== "none";
+			}
+
+			if (oParsedJson["ln"] != null)
+			{
+				this.TextOutline = ReaderFromJSON.prototype.LnFromJSON(oParsedJson["ln"]);
+			}
+
+			if (oParsedJson["uniFill"] != null)
+			{
+				this.Unifill = ReaderFromJSON.prototype.FillFromJSON(oParsedJson["uniFill"]);
+			}
+
+			if (oParsedJson["highlight"] != null)
+			{
+				this.HighlightColor = ReaderFromJSON.prototype.ColorFromJSON(oParsedJson["highlight"]);
+			}
+
+			if (oParsedJson["cs"] != null) {
+				this.RFonts.CS = { Name: oParsedJson["cs"], Index : -1 };
+			}
+			if (oParsedJson["ea"] != null) {
+				this.RFonts.EastAsia = { Name: oParsedJson["ea"], Index : -1 };
+			}
+			if (oParsedJson["latin"] != null) {
+				this.RFonts.Ascii = { Name: oParsedJson["latin"], Index : -1 };
+				this.RFonts.HAnsi = { Name: oParsedJson["latin"], Index : -1 };
+			}
+		}
+		else
+		{
+			// alignV
+			var nVAlign  = undefined;
+			if (oParsedJson["vertAlign"])
+			{
+				switch (oParsedJson["vertAlign"])
+				{
+					case "baseline":
+						nVAlign = 0;
+						break;
+					case "superscript":
+						nVAlign = 1;
+						break;
+					case "subscript":
+						nVAlign = 2;
+						break;
+				}
+			}
+
+			if (oParsedJson["b"] != null)
+				this.Bold = oParsedJson["b"];
+			if (oParsedJson["bCs"] != null)
+				this.BoldCS = oParsedJson["bCs"];
+			if (oParsedJson["caps"] != null)
+				this.Caps = oParsedJson["caps"];
+			if (oParsedJson["color"] != null)
+				this.Color = new AscCommonWord.CDocumentColor(oParsedJson["color"]["r"], oParsedJson["color"]["g"], oParsedJson["color"]["b"], oParsedJson["color"]["auto"]);
+			if (oParsedJson["cs"] != null)
+				this.CS = oParsedJson["cs"];
+			if (oParsedJson["dstrike"] != null)
+				this.DStrikeout = oParsedJson["dstrike"];
+
+			if (oParsedJson["highlight"] === "none")
+				this.HighLight = -1;
+			else if (oParsedJson["highlight"] != null)
+				this.HighLight = new AscCommonWord.CDocumentColor(oParsedJson["highlight"]["r"], oParsedJson["highlight"]["g"], oParsedJson["highlight"]["b"], oParsedJson["highlight"]["auto"]);
+
+			if (oParsedJson["i"] != null)
+				this.Italic = oParsedJson["i"];
+			if (oParsedJson["iCs"] != null)
+				this.ItalicCS = oParsedJson["iCs"];
+			
+			if (oParsedJson["lang"] != null)
+			{
+				if (oParsedJson["lang"]["bidi"] != null)
+					this.Lang.Bidi = Asc.g_oLcidNameToIdMap[oParsedJson["lang"]["bidi"]];
+				if (oParsedJson["lang"]["eastAsia"] != null)
+					this.Lang.EastAsia = Asc.g_oLcidNameToIdMap[oParsedJson["lang"]["eastAsia"]];
+				if (oParsedJson["lang"]["val"] != null)
+					this.Lang.Val = Asc.g_oLcidNameToIdMap[oParsedJson["lang"]["val"]];
+			}
+			
+			if (oParsedJson["outline"] != null)
+				this.TextOutline = ReaderFromJSON.prototype.LnFromJSON(oParsedJson["outline"]);
+			if (oParsedJson["position"] != null)
+				this.Position = private_PtToMM(oParsedJson["position"] / 2.0);
+			if (oParsedJson["rFonts"]["ascii"])
+				this.RFonts.Ascii = {Name: oParsedJson["rFonts"]["ascii"], Index: -1};
+			if (oParsedJson["rFonts"]["cs"])
+				this.RFonts.CS = {Name: oParsedJson["rFonts"]["cs"], Index: -1};
+			if (oParsedJson["rFonts"]["eastAsia"])
+				this.RFonts.EastAsia = {Name: oParsedJson["rFonts"]["eastAsia"], Index: -1};
+			if (oParsedJson["rFonts"]["hAnsi"])
+				this.RFonts.HAnsi = {Name: oParsedJson["rFonts"]["hAnsi"], Index: -1};
+			if (oParsedJson["rFonts"]["hint"] != null)
+				this.RFonts.Hint = FromXml_ST_Hint(oParsedJson["rFonts"]["hint"]);
+			
+			if (oParsedJson["rFonts"]["asciiTheme"] != null)
+				this.RFonts.AsciiTheme = oParsedJson["rFonts"]["asciiTheme"];
+			if (oParsedJson["rFonts"]["cstheme"] != null)
+				this.RFonts.CSTheme = oParsedJson["rFonts"]["cstheme"];
+			if (oParsedJson["rFonts"]["eastAsiaTheme"] != null)
+				this.RFonts.EastAsiaTheme = oParsedJson["rFonts"]["eastAsiaTheme"];
+			if (oParsedJson["rFonts"]["hAnsiTheme"] != null)
+				this.RFonts.HAnsiTheme = oParsedJson["rFonts"]["hAnsiTheme"];
+			if (oParsedJson["fontFamily"] != null)
+				this.FontFamily = {Index: oParsedJson["fontFamily"]["idx"], Name: oParsedJson["fontFamily"]["name"]};
+			if (oParsedJson["rPrChange"] != null)
+				this.PrChange = ReaderFromJSON.prototype.TextPrFromJSON(oParsedJson["rPrChange"]);
+			
+			if (oParsedJson["rtl"] != null)
+				this.RTL = oParsedJson["rtl"];
+			if (oParsedJson["shd"] != null)
+				this.Shd = ReaderFromJSON.prototype.ShadeFromJSON(oParsedJson["shd"]);
+			if (oParsedJson["smallCaps"] != null)
+				this.SmallCaps = oParsedJson["smallCaps"];
+			if (oParsedJson["spacing"] != null)
+				this.Spacing = private_Twips2MM(oParsedJson["spacing"]);
+			if (oParsedJson["strike"] != null)
+				this.Strikeout = oParsedJson["strike"];
+			if (oParsedJson["sz"] != null)
+				this.FontSize = oParsedJson["sz"] / 2.0;
+			if (oParsedJson["szCs"] != null)
+				this.FontSizeCS = oParsedJson["szCs"] / 2.0;
+			if (oParsedJson["u"] != null)
+				this.Underline = oParsedJson["u"];
+			if (oParsedJson["vanish"] != null)
+				this.Vanish = oParsedJson["vanish"];
+			if (nVAlign != null)
+				this.VertAlign = nVAlign;
+			if (oParsedJson["uniFill"] != null)
+				this.Unifill = ReaderFromJSON.prototype.FillFromJSON(oParsedJson["uniFill"]);
+			if (oParsedJson["textFill"] != null)
+				this.TextFill = ReaderFromJSON.prototype.FillFromJSON(oParsedJson["textFill"]);
+			if (oParsedJson["reviewInfo"] != null)
+				this.ReviewInfo = ReaderFromJSON.prototype.ReviewInfoFromJSON(oParsedJson["reviewInfo"]);
+		}
+
+		return this;
+	};
+	CTextPr.FromJson = function(json, bFromDocument)
+	{
+		let textPr = new CTextPr();
+		textPr.FromJson(json, bFromDocument);
+		return textPr;
+	};
+
 	function To_XML_ST_HueDir(nType)
 	{
 		var sDir = undefined;
@@ -21771,10 +21954,10 @@
 	}
 
     //----------------------------------------------------------export----------------------------------------------------
-    window['AscCommon']       = window['AscCommon'] || {};
-    window['AscFormat']       = window['AscFormat'] || {};
-	window['AscCommon'].WriterToJSON   = WriterToJSON;
-	window['AscCommon'].ReaderFromJSON = ReaderFromJSON;
+	window['AscJsonConverter'] = window['AscJsonConverter'] || {};
+	window['AscJsonConverter'].WriterToJSON   = WriterToJSON;
+	window['AscJsonConverter'].ReaderFromJSON = ReaderFromJSON;
+	
 })(window);
 
 

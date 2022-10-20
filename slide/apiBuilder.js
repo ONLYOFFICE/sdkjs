@@ -889,7 +889,7 @@
 	 */
 	Api.prototype.FromJSON = function(sMessage)
 	{
-		let oReader = new AscCommon.ReaderFromJSON();
+		let oReader = new AscJsonConverter.ReaderFromJSON();
         let oApiPresentation = this.GetPresentation();
         let oPresentation = private_GetPresentation();
 		let oParsedObj  = JSON.parse(sMessage);
@@ -1309,7 +1309,7 @@
 	 * @returns {JSON}
 	 */
     ApiPresentation.prototype.ToJSON = function(bWriteTableStyles){
-        let oWriter = new AscCommon.WriterToJSON();
+        let oWriter = new AscJsonConverter.WriterToJSON();
         let oResult = oWriter.SerPresentation(this.Presentation);
         if (bWriteTableStyles)
             oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
@@ -1328,7 +1328,7 @@
 	 * @returns {JSON[]}
 	 */
     ApiPresentation.prototype.SlidesToJSON = function(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
-        let oWriter = new AscCommon.WriterToJSON();
+        let oWriter = new AscJsonConverter.WriterToJSON();
 
         nStart = nStart == undefined ? 0 : nStart;
         nEnd = nEnd == undefined ? this.Presentation.Slides.length - 1 : nEnd;
@@ -1723,7 +1723,7 @@
 	 * @returns {JSON}
 	 */
     ApiMaster.prototype.ToJSON = function(bWriteTableStyles){
-        let oWriter = new AscCommon.WriterToJSON();
+        let oWriter = new AscJsonConverter.WriterToJSON();
         let oResult = oWriter.SerMasterSlide(this.Master, true);
         if (bWriteTableStyles)
             oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
@@ -2061,7 +2061,7 @@
 	 * @returns {JSON}
 	 */
     ApiLayout.prototype.ToJSON = function(bWriteMaster, bWriteTableStyles){
-        let oWriter = new AscCommon.WriterToJSON();
+        let oWriter = new AscJsonConverter.WriterToJSON();
         let oResult = oWriter.SerSlideLayout(this.Layout, bWriteMaster);
         if (bWriteTableStyles)
             oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
@@ -2341,7 +2341,7 @@
 	 * @returns {JSON}
 	 */
     ApiThemeColorScheme.prototype.ToJSON = function(){
-        var oWriter = new AscCommon.WriterToJSON();
+        var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerClrScheme(this.ColorScheme));
     };
 
@@ -2484,7 +2484,7 @@
 	 * @returns {JSON}
 	 */
     ApiThemeFormatScheme.prototype.ToJSON = function(){
-        var oWriter = new AscCommon.WriterToJSON();
+        var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerFmtScheme(this.FormatScheme));
     };
 
@@ -2572,7 +2572,7 @@
 	 * @returns {JSON}
 	 */
     ApiThemeFontScheme.prototype.ToJSON = function(){
-        var oWriter = new AscCommon.WriterToJSON();
+        var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerFontScheme(this.FontScheme));
     };
 
@@ -3119,7 +3119,7 @@
 	 * @returns {JSON}
 	 */
     ApiSlide.prototype.ToJSON = function(bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
-        let oWriter = new AscCommon.WriterToJSON();
+        let oWriter = new AscJsonConverter.WriterToJSON();
         let oResult = oWriter.SerSlide(this.Slide, bWriteLayout, bWriteMaster, bWriteAllMasLayouts);
         if (bWriteTableStyles)
             oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
@@ -3445,7 +3445,7 @@
 	 */
 	ApiDrawing.prototype.ToJSON = function()
 	{
-		var oWriter = new AscCommon.WriterToJSON();
+		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerGraphicObject(this.Drawing));
 	};
 
@@ -4457,7 +4457,7 @@
 	 */
 	ApiTable.prototype.ToJSON = function(bWriteTableStyles)
 	{
-		let oWriter = new AscCommon.WriterToJSON();
+		let oWriter = new AscJsonConverter.WriterToJSON();
         let oResult = oWriter.SerGraphicObject(this.Drawing);
         if (bWriteTableStyles)
             oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
