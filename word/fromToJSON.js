@@ -16225,60 +16225,55 @@
 		}
 	};
 
-	CNumberingLvl.prototype.ToJson = function(nLvl)
+	AscWord.CNumberingLvl.prototype.ToJson = function(nLvl)
 	{
-		if (nLvl == null)
-			nLvl = 0;
-				
 		let oResult = {};
 
-		// align
-		var sJc = undefined;
 		switch (this.Jc)
 		{
 			case AscCommon.align_Right:
-				sJc = "end";
+				oResult["lvlJc"] = "right";
 				break;
 			case AscCommon.align_Left:
-				sJc = "start";
+				oResult["lvlJc"] = "left";
 				break;
 			case AscCommon.align_Center:
-				sJc = "center";
+				oResult["lvlJc"] = "center";
 				break;
 			case AscCommon.align_Justify:
-				sJc = "both";
+				oResult["lvlJc"] = "both";
 				break;
 			case AscCommon.align_Distributed:
-				sJc = "distribute";
+				oResult["lvlJc"] = "distribute";
 				break;
 		}
 
-		// suff
-		var sSuffType = undefined;
 		switch (this.Suff)
 		{
 			case Asc.c_oAscNumberingSuff.Tab:
-				sSuffType = "tab";
+				oResult["suff"] = "tab";
 				break;
 			case Asc.c_oAscNumberingSuff.Space:
-				sSuffType = "space";
+				oResult["suff"] = "space";
 				break;
 			case Asc.c_oAscNumberingSuff.None:
-				sSuffType = "nothing";
+				oResult["suff"] = "nothing";
 				break;
 		}
 
-		// format type
 		var sFormatType = To_XML_c_oAscNumberingFormat(this.Format);
+		oResult["numFmt"] = {"val": sFormatType};
 
-		// lvl text
 		var sLvlText = "";
 		for (var nText = 0; nText < this.LvlText.length; nText++)
 			sLvlText += WriterToJSON.prototype.SerLvlTextItem(this.LvlText[nText]);
 
-		if (this.IsLgl != null)
+		oResult["lvlText"] = sLvlText;
+
+		if (undefined !== this.IsLgl && null !== this.IsLgl && false !== this.IsLgl)
 			oResult["isLgl"] = this.IsLgl;
-		if (this.Legacy != null)
+
+		if (this.Legacy)
 		{
 			oResult["legacy"] = {};
 			if (this.Legacy.Legacy != null)
@@ -16288,89 +16283,105 @@
 			if (this.Legacy.Space != null)
 				oResult["legacy"]["legacySpace"] = this.Legacy.Space;
 		}
-		if (sJc != null)
-			oResult["lvlJc"] = sJc;
-		if (sLvlText.length > 0)
-			oResult["lvlText"] = sLvlText;
-		if (this.ParaPr != null)
-			oResult["pPr"] = WriterToJSON.prototype.SerParaPr(this.ParaPr); 
-		if (this.TextPr != null)
-			oResult["rPr"] = WriterToJSON.prototype.SerTextPr(this.TextPr); 
-		if (this.Restart != null)
-			oResult["restart"] = this.Restart;
-		if (this.Start != null)
-			oResult["start"] = this.Start;
-		if (sSuffType != null)
-			oResult["suff"] = sSuffType;
-		if (nLvl != null)
-			oResult["ilvl"] = nLvl;
 
-		oResult["numFmt"] = {"val": sFormatType};
+		if (this.ParaPr && !this.ParaPr.IsEmpty())
+			oResult["pPr"] = WriterToJSON.prototype.SerParaPr(this.ParaPr);
+
+		if (this.TextPr && !this.TextPr.IsEmpty())
+			oResult["rPr"] = WriterToJSON.prototype.SerTextPr(this.TextPr); 
+
+		if (undefined !== this.Restart && null !== this.Restart && -1 !== this.Restart)
+			oResult["restart"] = this.Restart;
+
+		if (undefined !== this.Start && null !== this.Start && 1 !== this.Start)
+			oResult["start"] = this.Start;
+
+		if (undefined !== nLvl && null !== nLvl)
+			oResult["ilvl"] = nLvl;
 
 		return oResult;
 	};
-	CNumberingLvl.prototype.FromJson = function(oParsedJson)
+	AscWord.CNumberingLvl.prototype.FromJson = function(oParsedJson)
 	{
-		// align
-		var nJc = undefined;
+		this.Jc = AscCommon.align_Left;
 		switch (oParsedJson["lvlJc"])
 		{
 			case "end":
-				nJc = AscCommon.align_Right;
+			case "right":
+				this.Jc = AscCommon.align_Right;
 				break;
 			case "start":
-				nJc = AscCommon.align_Left;
+			case "left":
+				this.Jc = AscCommon.align_Left;
 				break;
 			case "center":
-				nJc = AscCommon.align_Center;
+				this.Jc = AscCommon.align_Center;
 				break;
 			case "both":
-				nJc = AscCommon.align_Justify;
+				this.Jc = AscCommon.align_Justify;
 				break;
 			case "distribute":
-				nJc = AscCommon.align_Distributed;
+				this.Jc = AscCommon.align_Distributed;
 				break;
 		}
 
-		// suff
-		var nSuffType = undefined;
+		this.Suff = Asc.c_oAscNumberingSuff.Tab;
 		switch (oParsedJson["suff"])
 		{
 			case "tab":
-				nSuffType = Asc.c_oAscNumberingSuff.Tab;
+				this.Suff = Asc.c_oAscNumberingSuff.Tab;
 				break;
 			case "space":
-				nSuffType = Asc.c_oAscNumberingSuff.Space;
+				this.Suff = Asc.c_oAscNumberingSuff.Space;
 				break;
 			case "nothing":
-				nSuffType = Asc.c_oAscNumberingSuff.None;
+				this.Suff = Asc.c_oAscNumberingSuff.None;
 				break;
 		}
 
-		// format type
-		var nFormatType = From_XML_c_oAscNumberingFormat(oParsedJson["numFmt"]["val"]);
+		if (undefined !== oParsedJson["numFmt"])
+			this.Format = From_XML_c_oAscNumberingFormat(oParsedJson["numFmt"]["val"]);
+		else
+			this.Format = Asc.c_oAscNumberingFormat.Bullet;
 
-		this.IsLgl   = oParsedJson["isLgl"];
-		this.Legacy  = oParsedJson["legacy"] ? new CNumberingLvlLegacy(oParsedJson["legacy"]["legacy"], oParsedJson["legacy"]["legacyIndent"], oParsedJson["legacy"]["legacySpace"]) : this.Legacy;
-		this.Jc      = nJc;
-		this.Format  = nFormatType;
-		this.ParaPr  = ReaderFromJSON.prototype.ParaPrFromJSON(oParsedJson["pPr"]);
-		this.TextPr  = ReaderFromJSON.prototype.TextPrFromJSON(oParsedJson["rPr"]);
-		this.Suff    = nSuffType;
-		this.Restart = oParsedJson["restart"];
-		this.Start   = oParsedJson["start"];
-		
-		this.LvlText = ReaderFromJSON.prototype.LvlTextItemsFromJSON(oParsedJson["lvlText"]);
+		if (undefined !== oParsedJson["isLgl"])
+			this.IsLgl = oParsedJson["isLgl"];
+		else
+			this.IsLgl = false;
+
+		if (undefined !== oParsedJson["legacy"])
+			this.Legacy = new CNumberingLvlLegacy(oParsedJson["legacy"]["legacy"], oParsedJson["legacy"]["legacyIndent"], oParsedJson["legacy"]["legacySpace"]);
+		else
+			this.Legacy = undefined;
+
+		if (oParsedJson["pPr"])
+			this.ParaPr = ReaderFromJSON.prototype.ParaPrFromJSON(oParsedJson["pPr"]);
+
+		if (oParsedJson["rPr"])
+			this.TextPr = ReaderFromJSON.prototype.TextPrFromJSON(oParsedJson["rPr"]);
+
+		if (undefined !== oParsedJson["restart"])
+			this.Restart = oParsedJson["restart"];
+		else
+			this.Restart = -1;
+
+		if (undefined !== oParsedJson["start"])
+			this.Start = oParsedJson["start"];
+		else
+			this.Start = 1;
+
+		if (oParsedJson["lvlText"])
+			this.LvlText = ReaderFromJSON.prototype.LvlTextItemsFromJSON(oParsedJson["lvlText"]);
 
 		return this;
 	};
-	CNumberingLvl.FromJson = function(json)
+	AscWord.CNumberingLvl.FromJson = function(json)
 	{
 		let numLvl = new CNumberingLvl();
 		numLvl.FromJson(json);
 		return numLvl;
 	};
-	CParaPr.prototype.ToJson = function(bFromDocument)
+	AscWord.CParaPr.prototype.ToJson = function(bFromDocument)
 	{
 		var oResult = {};
 		if (bFromDocument === false)
@@ -16479,8 +16490,10 @@
 				oResult["contextualSpacing"] = this.ContextualSpacing;
 			if (this.FramePr != null)
 				oResult["framePr"] = WriterToJSON.prototype.SerFramePr(this.FramePr);
-			if (this.Ind != null)
+
+			if (this.Ind && !this.Ind.IsEmpty())
 				oResult["ind"] = WriterToJSON.prototype.SerParaInd(this.Ind);
+
 			if (sJc != null)
 				oResult["jc"] = sJc;
 				
@@ -16496,7 +16509,8 @@
 				oResult["pageBreakBefore"] = this.PageBreakBefore;
 			if (this.SuppressLineNumbers != null)
 				oResult["suppressLineNumbers"] = this.SuppressLineNumbers;
-			if (this.Brd != null)
+
+			if (!this.IsEmptyBorders())
 			{
 				oResult["pBdr"] = {};
 				if (this.Brd.Between != null)
@@ -16510,13 +16524,16 @@
 				if (this.Brd.Top != null)
 					oResult["pBdr"]["top"] = WriterToJSON.prototype.SerDocBorder(this.Brd.Top);
 			}
+
 			if (this.PrChange != null)
 				oResult["pPrChange"] = WriterToJSON.prototype.SerParaPr(this.PrChange);
 			
 			if (this.Shd != null)
 				oResult["shd"] = WriterToJSON.prototype.SerShd(this.Shd);
-			if (this.Spacing != null)
+
+			if (this.Spacing && !this.Spacing.IsEmpty())
 				oResult["spacing"] = WriterToJSON.prototype.SerParaSpacing(this.Spacing);
+
 			if (this.Tabs != null)
 				oResult["tabs"] = WriterToJSON.prototype.SerTabs(this.Tabs);
 			if (this.WidowControl != null)
@@ -16528,7 +16545,7 @@
 
 		return oResult;
 	};
-	CParaPr.prototype.FromJson = function(oParsedJson, bFromDocument)
+	AscWord.CParaPr.prototype.FromJson = function(oParsedJson, bFromDocument)
 	{
 		if (bFromDocument === false)
 		{
@@ -16650,14 +16667,20 @@
 				this.ContextualSpacing = oParsedJson["contextualSpacing"];
 			if (oParsedJson["framePr"] != null)
 				this.FramePr = ReaderFromJSON.prototype.FramePrFromJSON(oParsedJson["framePr"]);
-			if (oParsedJson["spacing"] != null)
+
+			if (oParsedJson["spacing"])
 				this.Spacing = ReaderFromJSON.prototype.ParaSpacingFromJSON(oParsedJson["spacing"]);
-			if (oParsedJson["ind"]["left"] != null)
-				this.Ind.Left = private_Twips2MM(oParsedJson["ind"]["left"]);
-			if (oParsedJson["ind"]["right"] != null)
-				this.Ind.Right = private_Twips2MM(oParsedJson["ind"]["right"]);
-			if (oParsedJson["ind"]["firstLine"] != null)
-				this.Ind.FirstLine = private_Twips2MM(oParsedJson["ind"]["firstLine"]);
+
+			if (oParsedJson["ind"])
+			{
+				if (oParsedJson["ind"]["left"] != null)
+					this.Ind.Left = private_Twips2MM(oParsedJson["ind"]["left"]);
+				if (oParsedJson["ind"]["right"] != null)
+					this.Ind.Right = private_Twips2MM(oParsedJson["ind"]["right"]);
+				if (oParsedJson["ind"]["firstLine"] != null)
+					this.Ind.FirstLine = private_Twips2MM(oParsedJson["ind"]["firstLine"]);
+			}
+
 			if (nJc != null)
 				this.Jc = nJc;
 			if (oParsedJson["defTabSz"] != null)
@@ -16668,16 +16691,19 @@
 				this.KeepNext = oParsedJson["keepNext"];
 			if (oParsedJson["outlineLvl"] != null)
 				this.OutlineLvl = oParsedJson["outlineLvl"];
-			if (oParsedJson["pBdr"]["between"] != null)
-				this.Brd.Between = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["between"]);
-			if (oParsedJson["pBdr"]["bottom"] != null)
-				this.Brd.Bottom = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["bottom"]);
-			if (oParsedJson["pBdr"]["left"] != null)
-				this.Brd.Left = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["left"]);
-			if (oParsedJson["pBdr"]["right"] != null)
-				this.Brd.Right = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["right"]);
-			if (oParsedJson["pBdr"]["top"] != null)
-				this.Brd.Top = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["top"]);
+			if (oParsedJson["pBdr"])
+			{
+				if (oParsedJson["pBdr"]["between"] != null)
+					this.Brd.Between = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["between"]);
+				if (oParsedJson["pBdr"]["bottom"] != null)
+					this.Brd.Bottom = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["bottom"]);
+				if (oParsedJson["pBdr"]["left"] != null)
+					this.Brd.Left = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["left"]);
+				if (oParsedJson["pBdr"]["right"] != null)
+					this.Brd.Right = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["right"]);
+				if (oParsedJson["pBdr"]["top"] != null)
+					this.Brd.Top = ReaderFromJSON.prototype.DocBorderFromJSON(oParsedJson["pBdr"]["top"]);
+			}
 			if (oParsedJson["pageBreakBefore"] != null)
 				this.PageBreakBefore = oParsedJson["pageBreakBefore"];
 			if (oParsedJson["suppressLineNumbers"] != null)
@@ -16692,13 +16718,13 @@
 		
 		return this;
 	};
-	CParaPr.FromJson = function(json, bFromDocument)
+	AscWord.CParaPr.FromJson = function(json, bFromDocument)
 	{
 		let paraPr = new CParaPr();
 		paraPr.FromJson(json, bFromDocument);
 		return paraPr;
 	};
-	CTextPr.prototype.ToJson = function(bFromDocument)
+	AscWord.CTextPr.prototype.ToJson = function(bFromDocument)
 	{
 		let oResult = {};
 		if (bFromDocument === false)
@@ -16842,7 +16868,8 @@
 				oResult["i"] = this.Italic;
 			if (this.ItalicCS != null)
 				oResult["iCs"] = this.ItalicCS;
-			if (this.Lang != null)
+
+			if (this.Lang && !this.Lang.IsEmpty())
 			{
 				oResult["lang"] = {};
 
@@ -16853,11 +16880,13 @@
 				if (this.Lang.Val != null)
 					oResult["lang"]["val"] = Asc.g_oLcidIdToNameMap[this.Lang.Val];
 			}
+
 			if (this.TextOutline != null)
 				oResult["outline"] = WriterToJSON.prototype.SerLn(this.TextOutline);
 			if (this.Position != null)
 				oResult["position"] = 2.0 * private_MM2Pt(this.Position);
-			if (this.RFonts != null)
+
+			if (this.RFonts && !this.RFonts.IsEmpty())
 			{
 				oResult["rFonts"] = {};
 
@@ -16923,7 +16952,7 @@
 		oResult["type"] = "textPr";
 		return oResult;
 	};
-	CTextPr.prototype.FromJson = function(oParsedJson, bFromDocument)
+	AscWord.CTextPr.prototype.FromJson = function(oParsedJson, bFromDocument)
 	{
 		if (bFromDocument === false)
 		{
@@ -17072,7 +17101,7 @@
 			if (oParsedJson["iCs"] != null)
 				this.ItalicCS = oParsedJson["iCs"];
 			
-			if (oParsedJson["lang"] != null)
+			if (oParsedJson["lang"])
 			{
 				if (oParsedJson["lang"]["bidi"] != null)
 					this.Lang.Bidi = Asc.g_oLcidNameToIdMap[oParsedJson["lang"]["bidi"]];
@@ -17086,25 +17115,30 @@
 				this.TextOutline = ReaderFromJSON.prototype.LnFromJSON(oParsedJson["outline"]);
 			if (oParsedJson["position"] != null)
 				this.Position = private_PtToMM(oParsedJson["position"] / 2.0);
-			if (oParsedJson["rFonts"]["ascii"])
-				this.RFonts.Ascii = {Name: oParsedJson["rFonts"]["ascii"], Index: -1};
-			if (oParsedJson["rFonts"]["cs"])
-				this.RFonts.CS = {Name: oParsedJson["rFonts"]["cs"], Index: -1};
-			if (oParsedJson["rFonts"]["eastAsia"])
-				this.RFonts.EastAsia = {Name: oParsedJson["rFonts"]["eastAsia"], Index: -1};
-			if (oParsedJson["rFonts"]["hAnsi"])
-				this.RFonts.HAnsi = {Name: oParsedJson["rFonts"]["hAnsi"], Index: -1};
-			if (oParsedJson["rFonts"]["hint"] != null)
-				this.RFonts.Hint = FromXml_ST_Hint(oParsedJson["rFonts"]["hint"]);
-			
-			if (oParsedJson["rFonts"]["asciiTheme"] != null)
-				this.RFonts.AsciiTheme = oParsedJson["rFonts"]["asciiTheme"];
-			if (oParsedJson["rFonts"]["cstheme"] != null)
-				this.RFonts.CSTheme = oParsedJson["rFonts"]["cstheme"];
-			if (oParsedJson["rFonts"]["eastAsiaTheme"] != null)
-				this.RFonts.EastAsiaTheme = oParsedJson["rFonts"]["eastAsiaTheme"];
-			if (oParsedJson["rFonts"]["hAnsiTheme"] != null)
-				this.RFonts.HAnsiTheme = oParsedJson["rFonts"]["hAnsiTheme"];
+
+			if (oParsedJson["rFonts"])
+			{
+				if (oParsedJson["rFonts"]["ascii"])
+					this.RFonts.Ascii = {Name : oParsedJson["rFonts"]["ascii"], Index : -1};
+				if (oParsedJson["rFonts"]["cs"])
+					this.RFonts.CS = {Name : oParsedJson["rFonts"]["cs"], Index : -1};
+				if (oParsedJson["rFonts"]["eastAsia"])
+					this.RFonts.EastAsia = {Name : oParsedJson["rFonts"]["eastAsia"], Index : -1};
+				if (oParsedJson["rFonts"]["hAnsi"])
+					this.RFonts.HAnsi = {Name : oParsedJson["rFonts"]["hAnsi"], Index : -1};
+				if (oParsedJson["rFonts"]["hint"] != null)
+					this.RFonts.Hint = FromXml_ST_Hint(oParsedJson["rFonts"]["hint"]);
+
+				if (oParsedJson["rFonts"]["asciiTheme"] != null)
+					this.RFonts.AsciiTheme = oParsedJson["rFonts"]["asciiTheme"];
+				if (oParsedJson["rFonts"]["cstheme"] != null)
+					this.RFonts.CSTheme = oParsedJson["rFonts"]["cstheme"];
+				if (oParsedJson["rFonts"]["eastAsiaTheme"] != null)
+					this.RFonts.EastAsiaTheme = oParsedJson["rFonts"]["eastAsiaTheme"];
+				if (oParsedJson["rFonts"]["hAnsiTheme"] != null)
+					this.RFonts.HAnsiTheme = oParsedJson["rFonts"]["hAnsiTheme"];
+			}
+
 			if (oParsedJson["fontFamily"] != null)
 				this.FontFamily = {Index: oParsedJson["fontFamily"]["idx"], Name: oParsedJson["fontFamily"]["name"]};
 			if (oParsedJson["rPrChange"] != null)
@@ -17140,7 +17174,7 @@
 
 		return this;
 	};
-	CTextPr.FromJson = function(json, bFromDocument)
+	AscWord.CTextPr.FromJson = function(json, bFromDocument)
 	{
 		let textPr = new CTextPr();
 		textPr.FromJson(json, bFromDocument);

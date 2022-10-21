@@ -2877,3 +2877,6 @@ CNumberingLvlLegacy.prototype.ReadFromBinary = function(oReader)
 	this.Indent = oReader.GetLong();
 	this.Space  = oReader.GetLong();
 };
+//---------------------------------------------------------export---------------------------------------------------
+window['AscWord'] = window['AscWord'] || {};
+window["AscWord"].CNumberingLvl = CNumberingLvl;

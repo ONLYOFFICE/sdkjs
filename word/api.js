@@ -4074,6 +4074,8 @@ background-repeat: no-repeat;\
 	 */
 	asc_docs_api.prototype.put_ListType = function(type, subtype)
 	{
+
+		console.log(`type ${type} subtype ${subtype}`);
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
 		var fCallback = function()
 		{
@@ -4144,6 +4146,52 @@ background-repeat: no-repeat;\
 			fCallback();
 		}
 	};
+	asc_docs_api.prototype.put_ListType2 = function(type, subtype)
+	{
+		console.log(`type ${type} subtype ${subtype}`);
+		let value = "";
+
+		if (-1 === subtype)
+		{
+			value = '{"Type":"remove"}';
+		}
+		else if (0 === type)
+		{
+			switch (subtype)
+			{
+				case 0: value = '{"Type":"bullet"}'; break;
+				case 1: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"·","rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}}]}'; break;
+				case 2: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"o","rPr":{"rFonts":{"ascii":"Courier New","cs":"Courier New","eastAsia":"Courier New","hAnsi":"Courier New"}}}]}'; break;
+				case 3: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"§","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
+				case 4: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"v","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
+				case 5: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"Ø","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
+				case 6: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"ü","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
+				case 7: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"¨","rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}}]}'; break;
+				case 8: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"–","rPr":{"rFonts":{"ascii":"Arial","cs":"Arial","eastAsia":"Arial","hAnsi":"Arial"}}}]}'; break;
+			}
+		}
+		else if (1 === type)
+		{
+			switch (subtype)
+			{
+				case 0: value = '{"Type":"number"}'; break;
+				case 1: value = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1."}]}'; break;
+				case 2: value = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1)"}]}'; break;
+				case 3: value = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"upperRoman"},"lvlText":"%1."}]}'; break;
+				case 4: value = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"upperLetter"},"lvlText":"%1."}]}'; break;
+				case 5: value = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%1)"}]}'; break;
+				case 6: value = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%1."}]}'; break;
+				case 7: value = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%1."}]}'; break;
+				case 8: value = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianUpper"},"lvlText":"%1."}]}'; break;
+				case 9: value = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianUpper"},"lvlText":"%1)"}]}'; break;
+				case 10: value = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianLower"},"lvlText":"%1."}]}'; break;
+				case 11: value = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianLower"},"lvlText":"%1)"}]}'; break;
+			}
+		}
+
+		if (value)
+			this.put_ListTypeExt(JSON.parse(value));
+	};
 	asc_docs_api.prototype.put_ListTypeExt = function(numInfo)
 	{
 		let logicDocument = this.private_GetLogicDocument();
@@ -4180,14 +4228,14 @@ background-repeat: no-repeat;\
 			return null;
 
 		let result = {
-			Type : 0xFF,
+			Type : "unknown",
 			Lvl  : []
 		};
 
 		if (isSingleLevel)
 		{
 			let numLvl = num.GetLvl(0);
-			result.Type = numLvl.IsBulleted() ? 1 : 2;
+			result.Type = numLvl.IsBulleted() ? "bullet" : "number";
 			result.Lvl[0] = numLvl.ToJson();
 		}
 		else
@@ -4204,11 +4252,11 @@ background-repeat: no-repeat;\
 			}
 
 			if (isBulleted && isNumbered)
-				result.Type = 3;
+				result.Type = "hybrid";
+			else if (isNumbered)
+				result.Type = "number";
 			else if (isBulleted)
-				result.Type = 2;
-			else if (isBulleted)
-				result.Type = 1;
+				result.Type = "bullet";
 		}
 
 		return result;

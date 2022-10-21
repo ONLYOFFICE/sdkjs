@@ -35,10 +35,10 @@
 (function(window)
 {
 	const NumberingType = {
-		Remove : 0,
-		Bullet : 1,
-		Number : 2,
-		Hybrid : 3
+		Remove : "remove",
+		Bullet : "bullet",
+		Number : "number",
+		Hybrid : "hybrid"
 	};
 
 	/**
@@ -151,7 +151,7 @@
 	};
 	CNumberingApplicator.prototype.IsSingleLevel = function()
 	{
-		return (NumberingType.Number === this.NumInfo.Type && this.NumInfo.Lvl && 1 === this.NumInfo.Lvl.length);
+		return (NumberingType.Remove !== this.NumInfo.Type && this.NumInfo.Lvl && 1 === this.NumInfo.Lvl.length);
 	};
 	CNumberingApplicator.prototype.IsMultilevel = function()
 	{
@@ -434,6 +434,9 @@
 			let num   = this.CreateBaseNum();
 			let numId = num.GetId();
 			let ilvl  = !commonNumPr || !commonNumPr.Lvl ? 0 : commonNumPr.Lvl;
+
+			let oldNumLvl = num.GetLvl(commonNumPr.Lvl);
+			numLvl.SetParaPr(oldNumLvl.GetParaPr());
 			numLvl.ResetNumberedText(ilvl);
 			num.SetLvl(numLvl, ilvl);
 
@@ -513,7 +516,7 @@
 		if (this.Paragraphs.length !== 1 || this.Document.IsSelectionUse())
 			return new AscWord.CNumPr(numId, ilvl);
 
-		var prevParagraph = arrParagraphs[0].GetPrevParagraph();
+		var prevParagraph = this.Paragraphs[0].GetPrevParagraph();
 		while (prevParagraph)
 		{
 			if (prevParagraph.GetNumPr() || !prevParagraph.IsEmpty())
@@ -614,8 +617,7 @@
 			|| this.NumInfo.Lvl.length <= _ilvl)
 			return null;
 
-		let reader = new AscCommon.ReaderFromJSON();
-		return reader.NumLvlFromJSON(this.NumInfo.Lvl[_ilvl]);
+		return AscWord.CNumberingLvl.FromJson(this.NumInfo.Lvl[_ilvl]);
 	};
 	CNumberingApplicator.prototype.CreateBaseNum = function()
 	{
