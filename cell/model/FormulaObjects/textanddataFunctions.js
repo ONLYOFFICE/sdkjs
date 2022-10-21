@@ -2331,6 +2331,7 @@ function (window, undefined) {
 	cTEXTSPLIT.prototype.argumentsMin = 2;
 	cTEXTSPLIT.prototype.argumentsMax = 6;
 	cTEXTSPLIT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cTEXTSPLIT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cTEXTSPLIT.prototype.argumentsType = [argType.text, argType.text, argType.text, argType.logical, argType.logical, argType.any];
 	cTEXTSPLIT.prototype.Calculate = function (arg) {
 
@@ -2340,19 +2341,13 @@ function (window, undefined) {
 			return text;
 		}
 
-		/*if (cElementType.cellsRange === text.type || cElementType.array === text.type) {
-			newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
-		} else if (cElementType.cellsRange3D === text.type) {
-			newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg)[0];
-		}*/
-
 		//второй/третий аргумент тоже может быть массивом, каждый из элементов каторого может быть разделителем
 		let col_delimiter = arg[1];
 		if (col_delimiter.type === cElementType.error) {
 			return col_delimiter;
 		}
 
-		let row_delimiter = arg[2] ? arg[2] : new cEmpty(true);
+		let row_delimiter = arg[2] ? arg[2] : new AscCommonExcel.cEmpty(true);
 		if (row_delimiter.type === cElementType.error) {
 			return row_delimiter;
 		}
@@ -2371,23 +2366,57 @@ function (window, undefined) {
 
 		let pad_with = arg[5] ? arg[5].tocBool() : new cError(cErrorType.not_available);
 
-		let options = new Asc.asc_CTextOptions(null, col_delimiter);
+		let options = new Asc.asc_CTextOptions();
+		options.delimiterChar = col_delimiter;
 		options.delimiterRows = row_delimiter;
 
 		//если первый аргумент - массив или диапазон, то возвращаем массив, равный его размеру
 		//если первый ургмента не массив/диапазон - возвращаем массив из разбитого текста
-		if (cElementType.cellsRange === text.type || cElementType.array === text.type || cElementType.cellsRange3D === text.type) {
-			text.foreach2(function (cell) {
-				var test = 1;
-			});
+		var res;
+		if (cElementType.cellsRange === text.type || cElementType.cellsRange3D === text.type || cElementType.array === text.type) {
+			res = text;
+			if (cElementType.cellsRange === text.type || cElementType.cellsRange3D === text.type) {
+				res = text.getFullArray();
+			}
+			if (res) {
+				if (res.type === cElementType.error) {
+					return res;
+				} else {
+					res.foreach(function (elem, r, c) {
+						elem = elem.tocString();
+						if (elem.type === cElementType.error) {
+							this.array[r][c] = elem;
+						} else {
+							//здесь делаем полный разбор текста, хотя для результата нам достаточно первого элемента
+							var parsedArray = AscCommon.parseText(text, elem.toString());
+							if (parsedArray && parsedArray[0] && parsedArray[0][0]) {
+								this.array[r][c] = parsedArray[0][0];
+							} else {
+								this.array[r][c] = new cError(cErrorType.not_available);
+							}
+						}
+					});
+				}
+			}
+
 		} else {
 			text = text.tocString();
 			if (text.type === cElementType.error) {
 				return text;
 			}
 			text = text.toString();
-			AscCommon.parseText(text, options);
+			var array = AscCommon.parseText(text, options);
+			if (array) {
+				res = new cArray();
+				res.fillFromArray(array);
+
+				res.foreach(function (elem, r, c) {
+					this.array[r][c] = new cString(elem);
+				});
+			}
 		}
+
+		return res ?  res : new cError(cErrorType.not_available);
 	};
 
 
