@@ -4021,11 +4021,11 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.put_ListType = function(type, subtype)
 	{
-		let numObject = AscWord.GetNumberingObjectByObsoleteTypes(type, subtype);
+		let numObject = AscWord.GetNumberingObjectByDeprecatedTypes(type, subtype);
 		if (!numObject)
 			return;
 
-		this.put_ListTypeExt(numObject);
+		this.put_ListTypeCustom(numObject);
 	};
 	asc_docs_api.prototype.put_ListTypeCustom = function(numInfo)
 	{

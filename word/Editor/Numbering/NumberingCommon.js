@@ -201,7 +201,7 @@ function Numbering_Number_To_Roman(Num, bLowerCase)
 	 * @param subtype {number}
 	 * @returns {object}
 	 */
-	function GetNumberingObjectByObsoleteTypes(type, subtype)
+	function GetNumberingObjectByDeprecatedTypes(type, subtype)
 	{
 		// Во всех случаях SubType = 0 означает, что нажали просто на кнопку
 		// c выбором типа списка, без выбора подтипа.
@@ -323,7 +323,7 @@ function Numbering_Number_To_Roman(Num, bLowerCase)
 		return numObject;
 	}
 	//---------------------------------------------------------export---------------------------------------------------
-	window["AscWord"].GetNumberingSymbols               = GetNumberingSymbols;
-	window["AscWord"].GetNumberingObjectByObsoleteTypes = GetNumberingObjectByObsoleteTypes;
+	window["AscWord"].GetNumberingSymbols                 = GetNumberingSymbols;
+	window["AscWord"].GetNumberingObjectByDeprecatedTypes = GetNumberingObjectByDeprecatedTypes;
 
 })(window);
