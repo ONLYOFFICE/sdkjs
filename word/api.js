@@ -4083,7 +4083,7 @@ background-repeat: no-repeat;\
 
 		if (isSingleLevel)
 		{
-			let numLvl = num.GetLvl(0);
+			let numLvl = num.GetLvl(numPr.Lvl);
 			result.Type = numLvl.IsBulleted() ? "bullet" : "number";
 			result.Lvl[0] = numLvl.ToJson();
 		}
@@ -13210,6 +13210,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['put_TextPrBaseline']                        = asc_docs_api.prototype.put_TextPrBaseline;
 	asc_docs_api.prototype['put_ListType']                              = asc_docs_api.prototype.put_ListType;
 	asc_docs_api.prototype['put_ListTypeCustom']                        = asc_docs_api.prototype.put_ListTypeCustom;
+	asc_docs_api.prototype['asc_GetCurrentNumberingJson']               = asc_docs_api.prototype.asc_GetCurrentNumberingJson;
 	asc_docs_api.prototype['asc_ContinueNumbering']                     = asc_docs_api.prototype.asc_ContinueNumbering;
 	asc_docs_api.prototype['asc_RestartNumbering']                      = asc_docs_api.prototype.asc_RestartNumbering;
 	asc_docs_api.prototype['asc_GetCurrentNumberingId']                 = asc_docs_api.prototype.asc_GetCurrentNumberingId;
