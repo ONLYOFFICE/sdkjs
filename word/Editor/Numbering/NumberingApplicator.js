@@ -484,13 +484,14 @@
 		for (let ilvl = 0; ilvl < 9; ++ilvl)
 		{
 			let numLvl = this.CreateSingleNumberingLvl(ilvl);
-			num.SetLvl(numLvl, ilvl);
+			if (numLvl)
+				num.SetLvl(numLvl, ilvl);
 		}
 
 		if (numId)
 		{
 			this.ApplyNumPr(numId, 0);
-			this.ApplyToHeadings();
+			this.ApplyToHeadings(numId);
 		}
 
 		return true;

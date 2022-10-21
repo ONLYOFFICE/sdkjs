@@ -4019,188 +4019,37 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};
-	/*
-	 Во всех случаях SubType = 0 означает, что нажали просто на кнопку
-	 c выбором типа списка, без выбора подтипа.
-
-	 Маркированный список Type = 0
-	 нет          - SubType = -1
-	 черная точка - SubType = 1
-	 круг         - SubType = 2
-	 квадрат      - SubType = 3
-	 картинка     - SubType = -1
-	 4 ромба      - SubType = 4
-	 ч/б стрелка  - SubType = 5
-	 галка        - SubType = 6
-	 ромб         - SubType = 7
-
-	 Нумерованный список Type = 1
-	 нет - SubType = -1
-	 1.  - SubType = 1
-	 1)  - SubType = 2
-	 I.  - SubType = 3
-	 A.  - SubType = 4
-	 a)  - SubType = 5
-	 a.  - SubType = 6
-	 i.  - SubType = 7
-	 Ж.  - SubType = 8
-	 Ж)  - SubType = 9
-	 ж.  - SubType = 10
-	 ж)  - SubType = 11
-
-
-	 Многоуровневый список Type = 2
-	 нет           - SubType = -1
-	 1)a)i)        - SubType = 1
-	 1.1.1         - SubType = 2
-	 маркированный - SubType = 3
-
-	 SubType = 4: (Headings)
-	 	Article I
-	 		Section 1.01
-	 			(a)
-
-	 SubType = 5 : (Headings)
-	 1.1.1  (аналогичен SubType = 2)
-
-	 SubType = 6: (Headings)
-	 I. A. 3. a) (1)
-
-	 SubType = 7: (Headings)
-	 	Chapter 1
-	 	(none)
-	 	(none)
-
-	 */
 	asc_docs_api.prototype.put_ListType = function(type, subtype)
 	{
+		let numObject = AscWord.GetNumberingObjectByObsoleteTypes(type, subtype);
+		if (!numObject)
+			return;
 
-		console.log(`type ${type} subtype ${subtype}`);
-		var oLogicDocument = this.WordControl.m_oLogicDocument;
-		var fCallback = function()
-		{
-			if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
-			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphNumbering);
-				oLogicDocument.SetParagraphNumbering({
-					Type     : type,
-					SubType  : subtype,
-					Headings : 2 === type && 4 <= subtype && subtype <= 7
-				});
-				oLogicDocument.FinalizeAction();
-			}
-		};
-		var sBullet = "";
-		if(type === 0)
-		{
-			switch (subtype)
-			{
-				case 1:
-				{
-					sBullet = String.fromCharCode(0x00B7);
-					break;
-				}
-				case 2:
-				{
-					sBullet = "o";
-					break;
-				}
-				case 3:
-				{
-					sBullet = String.fromCharCode(0x00A7);
-					break;
-				}
-				case 4:
-				{
-					sBullet = String.fromCharCode(0x0076);
-					break;
-				}
-				case 5:
-				{
-					sBullet = String.fromCharCode(0x00D8);
-					break;
-				}
-				case 6:
-				{
-					sBullet = String.fromCharCode(0x00FC);
-					break;
-				}
-				case 7:
-				{
-					sBullet = String.fromCharCode(0x00A8);
-					break;
-				}
-				case 8:
-				{
-					sBullet = String.fromCharCode(0x2013);
-					break;
-				}
-			}
-		}
-		if(sBullet.length > 0)
-		{
-			AscFonts.FontPickerByCharacter.checkText(sBullet, this, fCallback);
-		}
-		else
-		{
-			fCallback();
-		}
+		this.put_ListTypeExt(numObject);
 	};
-	asc_docs_api.prototype.put_ListType2 = function(type, subtype)
+	asc_docs_api.prototype.put_ListTypeCustom = function(numInfo)
 	{
-		console.log(`type ${type} subtype ${subtype}`);
-		let value = "";
-
-		if (-1 === subtype)
+		let _numInfo = numInfo;
+		if (typeof _numInfo === "string" || _numInfo instanceof String)
 		{
-			value = '{"Type":"remove"}';
-		}
-		else if (0 === type)
-		{
-			switch (subtype)
+			try
 			{
-				case 0: value = '{"Type":"bullet"}'; break;
-				case 1: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"·","rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}}]}'; break;
-				case 2: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"o","rPr":{"rFonts":{"ascii":"Courier New","cs":"Courier New","eastAsia":"Courier New","hAnsi":"Courier New"}}}]}'; break;
-				case 3: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"§","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
-				case 4: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"v","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
-				case 5: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"Ø","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
-				case 6: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"ü","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
-				case 7: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"¨","rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}}]}'; break;
-				case 8: value = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"–","rPr":{"rFonts":{"ascii":"Arial","cs":"Arial","eastAsia":"Arial","hAnsi":"Arial"}}}]}'; break;
+				_numInfo = JSON.parse(numInfo);
 			}
-		}
-		else if (1 === type)
-		{
-			switch (subtype)
+			catch (e)
 			{
-				case 0: value = '{"Type":"number"}'; break;
-				case 1: value = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1."}]}'; break;
-				case 2: value = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1)"}]}'; break;
-				case 3: value = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"upperRoman"},"lvlText":"%1."}]}'; break;
-				case 4: value = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"upperLetter"},"lvlText":"%1."}]}'; break;
-				case 5: value = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%1)"}]}'; break;
-				case 6: value = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%1."}]}'; break;
-				case 7: value = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%1."}]}'; break;
-				case 8: value = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianUpper"},"lvlText":"%1."}]}'; break;
-				case 9: value = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianUpper"},"lvlText":"%1)"}]}'; break;
-				case 10: value = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianLower"},"lvlText":"%1."}]}'; break;
-				case 11: value = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianLower"},"lvlText":"%1)"}]}'; break;
+				return;
 			}
 		}
 
-		if (value)
-			this.put_ListTypeExt(JSON.parse(value));
-	};
-	asc_docs_api.prototype.put_ListTypeExt = function(numInfo)
-	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return;
 
 		new Promise(function(resolve)
 		{
-			let symbols = AscWord.GetNumberingSymbols(numInfo);
+			let symbols = AscWord.GetNumberingSymbols(_numInfo);
+			console.log(symbols);
 			if (symbols && symbols.length)
 				AscFonts.FontPickerByCharacter.checkText(symbols, this, resolve);
 			else
@@ -4210,7 +4059,7 @@ background-repeat: no-repeat;\
 			if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
 			{
 				logicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphNumbering);
-				logicDocument.SetParagraphNumbering(numInfo);
+				logicDocument.SetParagraphNumbering(_numInfo);
 				logicDocument.FinalizeAction();
 			}
 		});
@@ -13360,6 +13209,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['put_PrAlign']                               = asc_docs_api.prototype.put_PrAlign;
 	asc_docs_api.prototype['put_TextPrBaseline']                        = asc_docs_api.prototype.put_TextPrBaseline;
 	asc_docs_api.prototype['put_ListType']                              = asc_docs_api.prototype.put_ListType;
+	asc_docs_api.prototype['put_ListTypeCustom']                        = asc_docs_api.prototype.put_ListTypeCustom;
 	asc_docs_api.prototype['asc_ContinueNumbering']                     = asc_docs_api.prototype.asc_ContinueNumbering;
 	asc_docs_api.prototype['asc_RestartNumbering']                      = asc_docs_api.prototype.asc_RestartNumbering;
 	asc_docs_api.prototype['asc_GetCurrentNumberingId']                 = asc_docs_api.prototype.asc_GetCurrentNumberingId;

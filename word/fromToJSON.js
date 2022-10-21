@@ -75,7 +75,7 @@
 	}
 	function private_MM2Twips(mm)
 	{
-		return mm / (25.4 / 72.0 / 20);
+		return Math.floor(mm / (25.4 / 72.0 / 20) + 0.5);
 	}
 	function private_Twips2Px(twips)
 	{
@@ -16906,7 +16906,7 @@
 					oResult["rFonts"]["hAnsi"] = this.RFonts.HAnsi.Name;
 				if (this.RFonts.HAnsiTheme != null)
 					oResult["rFonts"]["hAnsiTheme"] = this.RFonts.HAnsiTheme;
-				if (this.RFonts.Hint != null)
+				if (undefined !== this.RFonts.Hint && null !== this.RFonts.Hint && AscWord.fonthint_Default !== this.RFonts.Hint)
 					oResult["rFonts"]["hint"] = ToXml_ST_Hint(this.RFonts.Hint);
 			}
 			if (this.FontFamily != null)
