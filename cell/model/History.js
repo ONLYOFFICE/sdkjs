@@ -1264,7 +1264,7 @@ CHistory.prototype.GetSerializeArray = function()
 				let elem = point.Items[j];
 				if (!elem.bytes && this.workbook) {
 					let serializable = new AscCommonExcel.UndoRedoItemSerializable(elem.Class, elem.Type, elem.SheetId, elem.Range, elem.Data, elem.LocalChange);
-					elem.bytes = this.workbook._SerializeHistoryBase64Item(this.memory, serializable);
+					elem.bytes = this.workbook._SerializeHistoryItem(this.memory, serializable);
 				}
 				if (elem.bytes) {
 					res += elem.bytes.length;

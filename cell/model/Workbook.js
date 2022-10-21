@@ -2735,6 +2735,30 @@
 				aPointChangesBase64.push(nLen + ";" + oMemory.GetBase64Memory2(nPosStart, nLen));
 		}
 	};
+	Workbook.prototype._SerializeHistoryItem = function (oMemory, item) {
+		if (!item.LocalChange) {
+			oMemory.Seek(0);
+			oMemory.WriteULong(0);
+			item.Serialize(oMemory, this.oApi.collaborativeEditing);
+			var nLen = oMemory.GetCurPosition();
+			if (nLen > 4) {
+				oMemory.Seek(0);
+				oMemory.WriteULong(nLen);
+				return oMemory.GetDataUint8(0, nLen);
+			}
+		}
+		return;
+	};
+	Workbook.prototype._SerializeHistory = function (oMemory, item, aPointChanges) {
+		if (!item.LocalChange) {
+			var nPosStart = oMemory.GetCurPosition();
+			item.Serialize(oMemory, this.oApi.collaborativeEditing);
+			var nPosEnd = oMemory.GetCurPosition();
+			var nLen = nPosEnd - nPosStart;
+			if (nLen > 0)
+				aPointChanges.push(oMemory.GetDataUint8());
+		}
+	};
 	Workbook.prototype.SerializeHistory = function(){
 		var aRes = [];
 		//соединяем изменения, которые были до приема данных с теми, что получились после.
@@ -2756,7 +2780,7 @@
 					if (item.bytes) {
 						aRes.push(item.bytes);
 					} else {
-						this._SerializeHistoryBase64(oMemory, item, aRes);
+						this._SerializeHistory(oMemory, item, aRes);
 					}
 				}
 			}

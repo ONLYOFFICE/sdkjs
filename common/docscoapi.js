@@ -936,7 +936,7 @@
       this._serverChangesSize += curBytes;
     }
 
-    this._send({'type': 'saveChanges', 'changes': JSON.stringify(arrayChanges.slice(startIndex, endIndex)),
+    this._send({'type': 'saveChanges', 'changes': arrayChanges.slice(startIndex, endIndex),
       'startSaveChanges': (startIndex === 0), 'endSaveChanges': (endIndex === arrayChanges.length),
       'isCoAuthoring': this.isCoAuthoring, 'isExcel': this._isExcel, 'deleteIndex': this.deleteIndex,
       'excelAdditionalInfo': this.excelAdditionalInfo ? JSON.stringify(this.excelAdditionalInfo) : null,
@@ -1758,6 +1758,7 @@
           let io = AscCommon.getSocketIO();
           socket = io({
             path: this.socketio_url,
+            transports: ["websocket", "polling"],
             closeOnBeforeunload: false,
             reconnectionAttempts: 15,
             reconnectionDelay: 500,
@@ -1768,7 +1769,6 @@
             }
           });
           socket.on("connect", function () {
-            console.error(`socket.connect`);
             t._onServerOpen();
           });
           socket.on("message", function (data) {
