@@ -184,16 +184,23 @@ function Numbering_Number_To_Roman(Num, bLowerCase)
 {
 	/**
 	 * Получаем набор символов используемых в заданной нумерации
-	 * @param value {object} заданная нумерация
+	 * @param numInfo {object} нумерация заданная в виде объекта
 	 * @returns {string}
 	 */
-	function GetNumberingSymbols(value)
+	function GetNumberingSymbols(numInfo)
 	{
-		// TODO: Сейчас функция работает с JSON, возможно, стоит добавить поддержку с самой асбстрактной нумерацией
-		//       и с отдельным уровнем нумерации
+		if (!numInfo || !numInfo.Lvl || !Array.isArray(numInfo.Lvl))
+			return "";
 
-		// TODO: Реализовать
-		return "abc";
+		let symbols = "";
+		for (let ilvl = 0, count = numInfo.Lvl.length; ilvl < count; ++ilvl)
+		{
+			let numLvl = AscWord.CNumberingLvl.FromJson(numInfo.Lvl[ilvl]);
+			if (numLvl)
+				symbols += numLvl.GetSymbols();
+		}
+
+		return symbols;
 	}
 	/**
 	 * Получаем объект нумерации по устаревшим типам
