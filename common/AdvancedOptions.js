@@ -94,7 +94,6 @@
 
 			this.delimiterRows = null;
 			this.matchMode = null;
-			this.ignoreEmpty = null;
 		}
 		asc_CTextOptions.prototype.asc_getDelimiter = function(){return this.delimiter;};
 		asc_CTextOptions.prototype.asc_setDelimiter = function(v){this.delimiter = v;};

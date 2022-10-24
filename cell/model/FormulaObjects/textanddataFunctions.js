@@ -2348,10 +2348,12 @@ function (window, undefined) {
 			return col_delimiter;
 		}
 
-		let row_delimiter = arg[2] ? arg[2] : new AscCommonExcel.cEmpty(true);
-		row_delimiter = row_delimiter.toArray(true, true);
-		if (row_delimiter.type === cElementType.error) {
-			return row_delimiter;
+		let row_delimiter = arg[2] ? arg[2] : null;
+		if (row_delimiter) {
+			row_delimiter = row_delimiter.toArray(true, true);
+			if (row_delimiter.type === cElementType.error) {
+				return row_delimiter;
+			}
 		}
 
 		let ignore_empty = arg[3] ? arg[3].tocBool() : new cBool(true);
@@ -2367,7 +2369,7 @@ function (window, undefined) {
 		match_mode = match_mode.toBool();
 
 		//TODO заполняющее_значение           Значение, которым нужно дополнить результат. Значение по умолчанию: #Н/Д.
-		let pad_with = arg[5] ? arg[5].tocBool() : new cError(cErrorType.not_available);
+		let pad_with = arg[5] ? arg[5] : new cError(cErrorType.not_available);
 
 		let options = new Asc.asc_CTextOptions();
 		options.delimiterChar = col_delimiter;
@@ -2411,12 +2413,32 @@ function (window, undefined) {
 			text = text.toString();
 			var array = AscCommon.parseText(text, options);
 			if (array) {
-				res = new cArray();
-				res.fillFromArray(array);
+				//проверяем массив на пустые элементы +  дополняем массив pad_with
 
-				res.foreach(function (elem, r, c) {
-					this.array[r][c] = new cString(elem);
-				});
+				let rowCount = array.length;
+				let colCount = 0, i, j;
+				for (i = 0; i < rowCount; i++) {
+					colCount = Math.max(colCount, array[i].length)
+				}
+
+				let newArray = [];
+				let isEmptyRow;
+				for (i = 0; i < rowCount; i++) {
+					isEmptyRow = true;
+					for (j = 0; j < colCount; j++) {
+						if (null != array[i][j] && "" !== array[i][j]) {
+							isEmptyRow = false;
+						}
+						array[i][j] = ((null == array[i][j] || "" === array[i][j]) && ignore_empty) || (!ignore_empty && null == array[i][j]) ? pad_with : new cString(array[i][j]);
+					}
+
+					if (!(isEmptyRow && ignore_empty)) {
+						newArray.push(array[i]);
+					}
+				}
+
+				res = new cArray();
+				res.fillFromArray(newArray);
 			}
 		}
 
