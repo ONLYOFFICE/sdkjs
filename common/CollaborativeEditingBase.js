@@ -62,6 +62,7 @@
         var CollaborativeEditing = AscCommon.CollaborativeEditing;
 
         var Reader  = this.private_LoadData(this.m_pData);
+        Reader.GetULong();
         var ClassId = Reader.GetString2();
         var Class   = AscCommon.g_oTableId.Get_ById(ClassId);
 
@@ -111,15 +112,14 @@
     };
     CCollaborativeChanges.prototype.GetStream = function(szSrc, offset)
     {
-        var memoryData = AscCommon.Base64.decode(szSrc, true, undefined, offset);
-        return new AscCommon.FT_Stream2(memoryData, memoryData.length);
+        return new AscCommon.FT_Stream2(szSrc, szSrc.length);
     };
     CCollaborativeChanges.prototype.private_SaveData = function(Binary)
     {
         var Writer = AscCommon.History.BinaryWriter;
         var Pos    = Binary.Pos;
         var Len    = Binary.Len;
-        return Len + ";" + Writer.GetBase64Memory2(Pos, Len);
+        return Writer.GetDataUint8(Pos, Len);
     };
 
 

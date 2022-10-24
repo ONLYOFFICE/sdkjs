@@ -2715,26 +2715,6 @@
 	Workbook.prototype.checkDefNameLock = function(){
 		return this.dependencyFormulas.checkDefNameLock();
 	};
-	Workbook.prototype._SerializeHistoryBase64Item = function (oMemory, item) {
-		if (!item.LocalChange) {
-			oMemory.Seek(0);
-			item.Serialize(oMemory, this.oApi.collaborativeEditing);
-			var nLen = oMemory.GetCurPosition();
-			if (nLen > 0)
-				return nLen + ";" + oMemory.GetBase64Memory2(0, nLen);
-		}
-		return;
-	};
-	Workbook.prototype._SerializeHistoryBase64 = function (oMemory, item, aPointChangesBase64) {
-		if (!item.LocalChange) {
-			var nPosStart = oMemory.GetCurPosition();
-			item.Serialize(oMemory, this.oApi.collaborativeEditing);
-			var nPosEnd = oMemory.GetCurPosition();
-			var nLen = nPosEnd - nPosStart;
-			if (nLen > 0)
-				aPointChangesBase64.push(nLen + ";" + oMemory.GetBase64Memory2(nPosStart, nLen));
-		}
-	};
 	Workbook.prototype._SerializeHistoryItem = function (oMemory, item) {
 		if (!item.LocalChange) {
 			oMemory.Seek(0);
@@ -2750,14 +2730,9 @@
 		return;
 	};
 	Workbook.prototype._SerializeHistory = function (oMemory, item, aPointChanges) {
-		if (!item.LocalChange) {
-			var nPosStart = oMemory.GetCurPosition();
-			item.Serialize(oMemory, this.oApi.collaborativeEditing);
-			var nPosEnd = oMemory.GetCurPosition();
-			var nLen = nPosEnd - nPosStart;
-			if (nLen > 0)
-				aPointChanges.push(oMemory.GetDataUint8());
-		}
+		let data = this._SerializeHistoryItem(oMemory, item);
+		if (data)
+			aPointChanges.push(data);
 	};
 	Workbook.prototype.SerializeHistory = function(){
 		var aRes = [];
@@ -2966,26 +2941,16 @@
 			this.bCollaborativeChanges = true;
 			//собираем общую длину
 			var dstLen = 0;
-			var aIndexes = [], i, length = aChanges.length, sChange;
-			for(i = 0; i < length; ++i)
-			{
-				sChange = aChanges[i];
-				var nIndex = sChange.indexOf(";");
-				if (-1 != nIndex) {
-					dstLen += parseInt(sChange.substring(0, nIndex));
-					nIndex++;
-				}
-				aIndexes.push(nIndex);
-			}
-			var pointer = g_memory.Alloc(dstLen);
-			var stream = new AscCommon.FT_Stream2(pointer.data, dstLen);
-			stream.obj = pointer.obj;
+			var i, length = aChanges.length, sChange;
+
 			var nCurOffset = 0;
 			var aUndoRedoElems = [];
 			for (i = 0; i < length; ++i) {
 				sChange = aChanges[i];
 				var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
-				nCurOffset = oBinaryFileReader.getbase64DecodedData2(sChange, aIndexes[i], stream, nCurOffset);
+				var stream = new AscCommon.FT_Stream2(sChange, sChange.length);
+				stream.Seek(4);
+				stream.Seek2(4);
 				var item = new UndoRedoItemSerializable();
 				item.Deserialize(stream);
 				if (!oThis.needSkipChange(item)) {

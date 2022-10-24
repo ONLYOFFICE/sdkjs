@@ -139,9 +139,11 @@ CHistory.prototype =
 			);
 
 			var Binary_Pos = this.BinaryWriter.GetCurPosition();
-			this.BinaryWriter.WriteString2(Class.Get_Id());
-			this.BinaryWriter.WriteLong(Data.Type);
-			Data.WriteToBinary(this.BinaryWriter);
+			this.BinaryWriter.WriteWithLen(this, function(){
+				this.BinaryWriter.WriteString2(Class.Get_Id());
+				this.BinaryWriter.WriteLong(Data.Type);
+				Data.WriteToBinary(this.BinaryWriter);
+			});
 
 			var Binary_Len = this.BinaryWriter.GetCurPosition() - Binary_Pos;
 

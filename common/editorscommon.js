@@ -3943,9 +3943,11 @@
 		this.m_pData.Data.UseArray = true;
 		this.m_pData.Data.PosArray = this.m_aPositions;
 
-		Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
-		Binary_Writer.WriteLong(this.m_pData.Data.Type);
-		this.m_pData.Data.WriteToBinary(Binary_Writer);
+		Binary_Writer.WriteWithLen(this, function(){
+			Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
+			Binary_Writer.WriteLong(this.m_pData.Data.Type);
+			this.m_pData.Data.WriteToBinary(Binary_Writer);
+		});
 
 		var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
 
@@ -11034,7 +11036,8 @@
                 {
                     if (_array[i]["change"].length > _checkPrefixLen)
                     {
-                    	_prefix = _array[i]["change"].substr(0, _checkPrefixLen);
+						_prefix = String.prototype.fromUtf8(_array[i]["change"], 0, _checkPrefixLen);
+                    	// _prefix = _array[i]["change"].substr(0, _checkPrefixLen);
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;
@@ -11053,7 +11056,8 @@
                 {
                     if (_array[i].length > _checkPrefixLen)
                     {
-                        _prefix = _array[i].substr(0, _checkPrefixLen);
+						_prefix = String.prototype.fromUtf8(_array[i], 0, _checkPrefixLen);
+                        // _prefix = _array[i].substr(0, _checkPrefixLen);
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;
@@ -11068,7 +11072,8 @@
                 {
                     if (_array[i].m_pData.length > _checkPrefixLen)
                     {
-                        _prefix = _array[i].m_pData.substr(0, _checkPrefixLen);
+						_prefix = String.prototype.fromUtf8(_array[i].m_pData, 0, _checkPrefixLen);
+                        // _prefix = _array[i].m_pData.substr(0, _checkPrefixLen);
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;

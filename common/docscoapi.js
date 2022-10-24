@@ -1348,13 +1348,13 @@
       if (allServerChanges) {
         for (var i = 0; i < allServerChanges.length; ++i) {
           var change = allServerChanges[i];
-          var changesOneUser = change['change'];
+          var changesOneUser = new Uint8Array(change['change']);
           if (changesOneUser) {
             if (change['user'] !== this._userId) {
               this.lastOtherSaveTime = change['time'];
             }
             this._serverChangesSize += changesOneUser.length;
-            this.onSaveChanges(JSON.parse(changesOneUser), change['useridoriginal'], bFirstLoad);
+            this.onSaveChanges(changesOneUser, change['useridoriginal'], bFirstLoad);
           }
         }
       }
@@ -1801,7 +1801,7 @@
 	DocsCoApi.prototype._onServerMessage = function (data) {
 		//TODO: add checks and error handling
 		//Get data type
-		var dataObject = JSON.parse(data);
+		var dataObject = data;
 		switch (dataObject['type']) {
 			case 'auth'        :
 				this._onAuth(dataObject);
