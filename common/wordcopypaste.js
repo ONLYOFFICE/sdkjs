@@ -8430,6 +8430,85 @@ PasteProcessor.prototype =
 	},
 
 	_ExecuteBlockLevelStd : function (node, pPr) {
+
+		//1. plain text (CInlineLevelSdt)
+// 		<body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+// 		<!--StartFragment-->
+// 		<span>
+// 		<w:Sdt DocPart="AD334DF7FD99465099BBBD9F3C3AE5AE" ID="-818574957">
+// 			<span style='mso-spacerun:yes'>В </span>
+// 			Plaein text
+// 		</w:Sdt>
+// </span>
+// 		<!--EndFragment-->
+// 		</body>
+
+
+		//2. Rich text (CBlockLevelSdt)
+		//
+		// <body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// <!--StartFragment-->
+		// <w:Sdt DocPart="5AAA70241BB24C68A16AC32AB3233FFC" ID="819472493">
+		// 	<p className=MsoNormal>Rich plain textf
+		// 		<o:p/>
+		// 		<w:sdtPr/>
+		// 	</p>
+		// </w:Sdt>
+		// <!--EndFragment-->
+		// </body>
+
+		//3.picture(CInlineLevelSdt)
+
+		// <p class=MsoNormal>
+		// 	<w:Sdt ShowingPlcHdr="t" DocPart="6BE2DA46972A420788E197A3986DD1A7" DisplayAsPicture="t" Text="t" ID="575168600">
+		// 	</span>
+		// </w:Sdt>
+		// <o:p/>
+		// </p>
+
+		//4. Choose (CInlineLevelSdt)
+
+// 		<body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+// 		<!--StartFragment-->
+// 		<span>
+// 		<w:Sdt ShowingPlcHdr="t" DocPart="F7011D2027BE4F6C919D5BB7D95A0DC0" DropDown="t" ID="1536853350">
+// 			<w:ListItem ListValue="Choose an item" DataValue=""/>Choose an item
+// 		</w:Sdt>
+// 	</span>
+// 		<!--EndFragment-->
+// 		</body>
+
+
+		//5. Date (CInlineLevelSdt)
+
+// 		<body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+// 		<!--StartFragment-->
+// 		<span>
+// 		<w:Sdt DocPart="0D4FD865761947FCBA0D9229E17016DB" Calendar="t" MapToDateTime="t" CalendarType="Gregorian" Date="2022-10-24T20:27:00Z" DateFormat="dd.MM.yyyy" Lang="EN-US" ID="-291673853">24.10.2022</w:Sdt>
+// 	</span>
+// 		<!--EndFragment-->
+// 		</body>
+
+
+		//6. check box (CInlineLevelSdt)
+//
+// 		<body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+// 		<!--StartFragment-->
+// 		<span>
+// 		<w:Sdt CheckBox="t" CheckBoxIsChecked="t" CheckBoxValueChecked="в’" CheckBoxValueUnchecked="вђ" CheckBoxFontChecked="MS Gothic" CheckBoxFontUnchecked="MS Gothic" ID="-213812918">
+// 			<span style='font-family:
+//  "MS Gothic"'>в’</span>
+// 		</w:Sdt>
+// </span>
+// 		<!--EndFragment-->
+// 		</body>
+
+
+
+
+		//w:Sdt -> ориентируемся по первому внутреннему тегу
+		//если параграф - то оборачиваем в CBlockLevelSdt, если текст с настройками - в CInlineLevelSdt
+
 		var blockLevelSdt = new CBlockLevelSdt(this.oLogicDocument, this.oDocument);
 
 		//ms в буфер записывает только lock контента
