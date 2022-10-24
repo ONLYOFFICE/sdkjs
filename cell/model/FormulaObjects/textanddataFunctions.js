@@ -2356,13 +2356,17 @@ function (window, undefined) {
 			}
 		}
 
-		let ignore_empty = arg[3] ? arg[3].tocBool() : new cBool(true);
+		if (col_delimiter.type === cElementType.empty) {
+			col_delimiter = row_delimiter;
+		}
+
+		let ignore_empty = arg[3] ? arg[3].tocBool() : new cBool(false);
 		if (ignore_empty.type === cElementType.error) {
 			return ignore_empty;
 		}
 		ignore_empty = ignore_empty.toBool();
 
-		let match_mode = arg[4] ? arg[4].tocBool() : new cBool(true);
+		let match_mode = arg[4] ? arg[4].tocBool() : new cBool(false);
 		if (match_mode.type === cElementType.error) {
 			return match_mode;
 		}
@@ -2375,7 +2379,6 @@ function (window, undefined) {
 		options.delimiterChar = col_delimiter;
 		options.delimiterRows = row_delimiter;
 		options.matchMode = match_mode;
-		options.ignoreEmpty = ignore_empty;
 
 		//если первый аргумент - массив или диапазон, то возвращаем массив, равный его размеру
 		//если первый ургмента не массив/диапазон - возвращаем массив из разбитого текста
@@ -2411,7 +2414,7 @@ function (window, undefined) {
 				return text;
 			}
 			text = text.toString();
-			var array = AscCommon.parseText(text, options);
+			let array = AscCommon.parseText(text, options);
 			if (array) {
 				//проверяем массив на пустые элементы +  дополняем массив pad_with
 
@@ -2422,18 +2425,21 @@ function (window, undefined) {
 				}
 
 				let newArray = [];
-				let isEmptyRow;
 				for (i = 0; i < rowCount; i++) {
-					isEmptyRow = true;
+					let row = [];
 					for (j = 0; j < colCount; j++) {
-						if (null != array[i][j] && "" !== array[i][j]) {
-							isEmptyRow = false;
+						if (("" === array[i][j] && !ignore_empty) || array[i][j]) {
+							row.push(new cString(array[i][j]));
 						}
-						array[i][j] = ((null == array[i][j] || "" === array[i][j]) && ignore_empty) || (!ignore_empty && null == array[i][j]) ? pad_with : new cString(array[i][j]);
 					}
 
-					if (!(isEmptyRow && ignore_empty)) {
-						newArray.push(array[i]);
+					if (row.length || (!row.length && !ignore_empty)) {
+						if (colCount > row.length) {
+							while (colCount > row.length) {
+								row.push(pad_with);
+							}
+						}
+						newArray.push(row);
 					}
 				}
 
