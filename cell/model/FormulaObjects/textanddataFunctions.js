@@ -2356,9 +2356,9 @@ function (window, undefined) {
 			}
 		}
 
-		if (col_delimiter.type === cElementType.empty) {
+		/*if (col_delimiter.type === cElementType.empty) {
 			col_delimiter = row_delimiter;
-		}
+		}*/
 
 		let ignore_empty = arg[3] ? arg[3].tocBool() : new cBool(false);
 		if (ignore_empty.type === cElementType.error) {
@@ -2379,6 +2379,53 @@ function (window, undefined) {
 		options.delimiterChar = col_delimiter;
 		options.delimiterRows = row_delimiter;
 		options.matchMode = match_mode;
+
+
+		let getRexExpFromArray = function (_array, _match_mode) {
+			let sRegExp = "";
+			if (Array.isArray(_array)) {
+				for (let row = 0; row < _array.length; row++) {
+					for (let col = 0; col < _array[row].length; col++) {
+						if (sRegExp !== "") {
+							sRegExp += "|";
+						}
+
+						sRegExp += _array[row][col];
+					}
+				}
+			} else {
+				sRegExp += "[" + _array + "]";
+			}
+
+			return _match_mode ? new RegExp(sRegExp, "i") : new RegExp(sRegExp);
+		};
+
+		let splitText = function (_text, _rowDelimiter, _colDelimiter) {
+			var res;
+
+			if (_rowDelimiter === "" || _rowDelimiter && _rowDelimiter[0] === "" || _rowDelimiter && _rowDelimiter[0] && _rowDelimiter[0][0] === "") {
+				_rowDelimiter = null;
+			} else {
+				_rowDelimiter = getRexExpFromArray(_rowDelimiter, match_mode);
+			}
+			if (_colDelimiter === "" || _colDelimiter && _colDelimiter[0] === "" || _colDelimiter && _colDelimiter[0] && _colDelimiter[0][0] === "") {
+				_colDelimiter = null;
+			} else {
+				_colDelimiter = getRexExpFromArray(_colDelimiter, match_mode);
+			}
+
+			var _array = _text.split(_rowDelimiter);
+			if (_array) {
+				for (let i = 0; i < _array.length; i++) {
+					if (!res) {
+						res = [];
+					}
+					res.push(_array[i].split(_colDelimiter));
+				}
+			}
+
+			return res;
+		};
 
 		//если первый аргумент - массив или диапазон, то возвращаем массив, равный его размеру
 		//если первый ургмента не массив/диапазон - возвращаем массив из разбитого текста
@@ -2414,7 +2461,8 @@ function (window, undefined) {
 				return text;
 			}
 			text = text.toString();
-			let array = AscCommon.parseText(text, options);
+			//let array = AscCommon.parseText(text, options);
+			let array = splitText(text, row_delimiter, col_delimiter);
 			if (array) {
 				//проверяем массив на пустые элементы +  дополняем массив pad_with
 
