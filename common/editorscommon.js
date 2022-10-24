@@ -12271,7 +12271,7 @@
 
 	function parseText(text, options, bTrimSpaces) {
 		//в функция textQualifier может быть массивом, поэтому проверяем на равенство
-		var delimiterChar;
+		let delimiterChar;
 		if (options.asc_getDelimiterChar()) {
 			delimiterChar = options.asc_getDelimiterChar();
 		} else {
@@ -12297,11 +12297,11 @@
 			}
 		}
 
-		var isArrayDelimiter = Array.isArray(delimiterChar);
-		var isEqualDelimiter = function (_val) {
+		let isArrayDelimiter = Array.isArray(delimiterChar);
+		let isEqualDelimiter = function (_val) {
 			if (isArrayDelimiter) {
-				for (var row = 0; row < delimiterChar.length; row++) {
-					for (var col = 0; col < delimiterChar[row].length; col++) {
+				for (let row = 0; row < delimiterChar.length; row++) {
+					for (let col = 0; col < delimiterChar[row].length; col++) {
 						if (_val === delimiterChar[row][col]) {
 							return true;
 						}
@@ -12312,12 +12312,12 @@
 			}
 		};
 
-		var getRexExpFromArray = function (_array) {
-			var sRegExp;
+		let getRexExpFromArray = function (_array) {
+			let sRegExp;
 			if (Array.isArray(_array)) {
 				sRegExp += "[";
-				for (var row = 0; row < _array.length; row++) {
-					for (var col = 0; col < _array[row].length; col++) {
+				for (let row = 0; row < _array.length; row++) {
+					for (let col = 0; col < _array[row].length; col++) {
 						sRegExp += _array[row][col];
 					}
 				}
@@ -12329,8 +12329,8 @@
 			return new RegExp(sRegExp);
 		};
 
-		var regexDelimiter = null;
-		var doSplitRow = function (_row) {
+		let regexDelimiter = null;
+		let doSplitRow = function (_row) {
 			if (isArrayDelimiter) {
 				if (!regexDelimiter) {
 					regexDelimiter = getRexExpFromArray(delimiterChar);
@@ -12339,14 +12339,18 @@
 			return _row.split(regexDelimiter ? regexDelimiter : delimiterChar);
 		};
 
-		var textQualifier = options.asc_getTextQualifier();
-		var matrix = [];
-		var rowsDelimiter = options.getDelimiterRows();
-		var rows = text.split(rowsDelimiter ? getRexExpFromArray(rowsDelimiter) : /\r?\n/);
-		for (var i = 0; i < rows.length; ++i) {
-			var row = rows[i];
+		//3 свойства в данный момент используются только в формулах
+		let matchMode = options.matchMode;
+		let ignoreEmpty = options.ignoreEmpty;
+		let rowsDelimiter = options.getDelimiterRows();
+
+		let textQualifier = options.asc_getTextQualifier();
+		let matrix = [];
+		let rows = text.split(rowsDelimiter ? getRexExpFromArray(rowsDelimiter) : /\r?\n/);
+		for (let i = 0; i < rows.length; ++i) {
+			let row = rows[i];
 			if(isEqualDelimiter(" ") && bTrimSpaces) {
-				var addSpace = false;
+				let addSpace = false;
 				if(row[0] === " ") {
 					addSpace = true;
 				}
@@ -12359,9 +12363,9 @@
 					continue;
 				}
 
-				var _text = "";
-				var startQualifier = false;
-				for (var j = 0; j < row.length; j++) {
+				let _text = "";
+				let startQualifier = false;
+				for (let j = 0; j < row.length; j++) {
 					if (!startQualifier && row[j] === textQualifier && (!row[j - 1] || (row[j - 1] && isEqualDelimiter(row[j - 1])))) {
 						startQualifier = !startQualifier;
 						continue;

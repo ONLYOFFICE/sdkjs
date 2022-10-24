@@ -556,6 +556,41 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 
+	cBaseType.prototype.toArray = function (putValue, checkOnError) {
+		let arr = [];
+		if (this.getMatrix) {
+			arr = this.getMatrix();
+			if (putValue || checkOnError) {
+				for (let i = 0; i < arr.length; i++) {
+					if (arr[i]) {
+						for (let j = 0; j < arr[i].length; j++) {
+							if (checkOnError) {
+								if (arr[i][j].type === cElementType.error) {
+									return arr[i][j];
+								}
+							}
+							if (putValue) {
+								arr[i][j] = arr[i][j].getValue();
+							}
+						}
+					}
+				}
+			}
+		} else {
+			if (checkOnError) {
+				if (this.type === cElementType.error) {
+					return this;
+				}
+			} else {
+				if (!arr[0]) {
+					arr[0] = [];
+				}
+				arr[0][0] = putValue ? this.getValue() : this;
+			}
+		}
+		return arr;
+	};
+
 	/*Basic types of an elements used into formulas*/
 	/**
 	 * @constructor

@@ -2343,11 +2343,13 @@ function (window, undefined) {
 
 		//второй/третий аргумент тоже может быть массивом, каждый из элементов каторого может быть разделителем
 		let col_delimiter = arg[1];
+		col_delimiter = col_delimiter.toArray(true, true);
 		if (col_delimiter.type === cElementType.error) {
 			return col_delimiter;
 		}
 
 		let row_delimiter = arg[2] ? arg[2] : new AscCommonExcel.cEmpty(true);
+		row_delimiter = row_delimiter.toArray(true, true);
 		if (row_delimiter.type === cElementType.error) {
 			return row_delimiter;
 		}
@@ -2364,11 +2366,14 @@ function (window, undefined) {
 		}
 		match_mode = match_mode.toBool();
 
+		//TODO заполняющее_значение           Значение, которым нужно дополнить результат. Значение по умолчанию: #Н/Д.
 		let pad_with = arg[5] ? arg[5].tocBool() : new cError(cErrorType.not_available);
 
 		let options = new Asc.asc_CTextOptions();
 		options.delimiterChar = col_delimiter;
 		options.delimiterRows = row_delimiter;
+		options.matchMode = match_mode;
+		options.ignoreEmpty = ignore_empty;
 
 		//если первый аргумент - массив или диапазон, то возвращаем массив, равный его размеру
 		//если первый ургмента не массив/диапазон - возвращаем массив из разбитого текста
@@ -2398,7 +2403,6 @@ function (window, undefined) {
 					});
 				}
 			}
-
 		} else {
 			text = text.tocString();
 			if (text.type === cElementType.error) {
