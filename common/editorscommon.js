@@ -12270,8 +12270,7 @@
 	}
 
 	function parseText(text, options, bTrimSpaces) {
-		//в функция textQualifier может быть массивом, поэтому проверяем на равенство
-		let delimiterChar;
+		var delimiterChar;
 		if (options.asc_getDelimiterChar()) {
 			delimiterChar = options.asc_getDelimiterChar();
 		} else {
@@ -12297,128 +12296,63 @@
 			}
 		}
 
-		let compareValues = function (val1, val2) {
-			if (matchMode) {
-				if (val1 != null) {
-					val1 = val1.toLowerCase()
+		var textQualifier = options.asc_getTextQualifier();
+		var matrix = [];
+		//var rows = text.match(/[^\r\n]+/g);
+		var rows = text.split(/\r?\n/);
+		for (var i = 0; i < rows.length; ++i) {
+			var row = rows[i];
+			if(" " === delimiterChar && bTrimSpaces) {
+				var addSpace = false;
+				if(row[0] === delimiterChar) {
+					addSpace = true;
 				}
-				if (val2 != null) {
-					val2 = val2.toLowerCase()
-				}
+				row = addSpace ? delimiterChar + row.trim() : row.trim();
 			}
-			return val1 === val2;
-		};
-
-		let isArrayDelimiter = Array.isArray(delimiterChar);
-		let isEqualDelimiter = function (_val) {
-			if (isArrayDelimiter) {
-				for (let row = 0; row < delimiterChar.length; row++) {
-					for (let col = 0; col < delimiterChar[row].length; col++) {
-						if (compareValues(_val, delimiterChar[row][col])) {
-							return true;
-						}
-					}
+			//todo quotes
+			if (textQualifier) {
+				if (!row.length) {
+					matrix.push(row.split(delimiterChar));
+					continue;
 				}
-			} else {
-				return compareValues(_val, delimiterChar);
-			}
-		};
 
-		let getRexExpFromArray = function (_array) {
-			let sRegExp = "";
-			if (Array.isArray(_array)) {
-				for (let row = 0; row < _array.length; row++) {
-					for (let col = 0; col < _array[row].length; col++) {
-						if (sRegExp !== "") {
-							sRegExp += "|";
-						}
-
-						sRegExp += _array[row][col];
-					}
-				}
-			} else {
-				sRegExp += "[" + _array + "]";
-			}
-
-			return matchMode ? new RegExp(sRegExp, "i") : new RegExp(sRegExp);
-		};
-
-		let regexDelimiter = null;
-		let doSplitRow = function (_row) {
-			if (isArrayDelimiter) {
-				if (!regexDelimiter) {
-					regexDelimiter = getRexExpFromArray(delimiterChar);
-				}
-			}
-			return _row.split(regexDelimiter ? regexDelimiter : delimiterChar);
-		};
-
-		//2 свойства в данный момент используются только в формулах
-		let matchMode = options.matchMode;
-		let rowsDelimiter = options.getDelimiterRows();
-
-		let textQualifier = options.asc_getTextQualifier();
-		let matrix = [];
-		let rows = text.split(rowsDelimiter ? getRexExpFromArray(rowsDelimiter) : /\r?\n/);
-
-		for (let i = 0; i < rows.length; ++i) {
-			let row = rows[i];
-
-			if (!textQualifier) {
-				matrix.push(doSplitRow(row));
-			} else {
-				if(isEqualDelimiter(" ") && bTrimSpaces) {
-					let addSpace = false;
-					if(row[0] === " ") {
-						addSpace = true;
-					}
-					row = addSpace ? " " + row.trim() : row.trim();
-				}
-				//todo quotes
-				if (textQualifier) {
-					if (!row.length) {
-						matrix.push(doSplitRow(row));
+				var _text = "";
+				var startQualifier = false;
+				for (var j = 0; j < row.length; j++) {
+					if (!startQualifier && row[j] === textQualifier && (!row[j - 1] || (row[j - 1] && row[j - 1] === delimiterChar))) {
+						startQualifier = !startQualifier;
 						continue;
-					}
+					} else if (startQualifier && row[j] === textQualifier) {
+						startQualifier = !startQualifier;
 
-					let _text = "";
-					let startQualifier = false;
-					for (let j = 0; j < row.length; j++) {
-						if (!startQualifier && row[j] === textQualifier && (!row[j - 1] || (row[j - 1] && isEqualDelimiter(row[j - 1])))) {
-							startQualifier = !startQualifier;
-							continue;
-						} else if (startQualifier && row[j] === textQualifier) {
-							startQualifier = !startQualifier;
-
-							if (j === row.length - 1) {
-								if (!matrix[i]) {
-									matrix[i] = [];
-								}
-								matrix[i].push(_text);
-							}
-
-							continue;
-						}
-
-						if (!startQualifier && isEqualDelimiter(row[j])) {
+						if (j === row.length - 1) {
 							if (!matrix[i]) {
 								matrix[i] = [];
 							}
 							matrix[i].push(_text);
-							_text = "";
-						} else {
-							_text += row[j];
-							if (j === row.length - 1) {
-								if (!matrix[i]) {
-									matrix[i] = [];
-								}
-								matrix[i].push(_text);
+						}
+
+						continue;
+					}
+
+					if (!startQualifier && row[j] === delimiterChar) {
+						if (!matrix[i]) {
+							matrix[i] = [];
+						}
+						matrix[i].push(_text);
+						_text = "";
+					} else {
+						_text += row[j];
+						if (j === row.length - 1) {
+							if (!matrix[i]) {
+								matrix[i] = [];
 							}
+							matrix[i].push(_text);
 						}
 					}
-				} else {
-					matrix.push(doSplitRow(row));
 				}
+			} else {
+				matrix.push(row.split(delimiterChar));
 			}
 		}
 		return matrix;
