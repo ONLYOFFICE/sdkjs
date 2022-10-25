@@ -2343,22 +2343,30 @@ function (window, undefined) {
 
 		//второй/третий аргумент тоже может быть массивом, каждый из элементов каторого может быть разделителем
 		let col_delimiter = arg[1];
+		let row_delimiter = arg[2] ? arg[2] : null;
+
+		//если оба empty или хотя бы один из разделителей - пустая строка - ошибка
+		if (col_delimiter && row_delimiter && col_delimiter.type === cElementType.empty && row_delimiter.type === cElementType.empty) {
+			return  new cError(cErrorType.wrong_value_type);
+		}
+		if (col_delimiter && col_delimiter.type === cElementType.string && col_delimiter.getValue() === "") {
+			return  new cError(cErrorType.wrong_value_type);
+		}
+		if (row_delimiter && row_delimiter.type === cElementType.string && row_delimiter.getValue() === "") {
+			return  new cError(cErrorType.wrong_value_type);
+		}
+
 		col_delimiter = col_delimiter.toArray(true, true);
 		if (col_delimiter.type === cElementType.error) {
 			return col_delimiter;
 		}
 
-		let row_delimiter = arg[2] ? arg[2] : null;
 		if (row_delimiter) {
 			row_delimiter = row_delimiter.toArray(true, true);
 			if (row_delimiter.type === cElementType.error) {
 				return row_delimiter;
 			}
 		}
-
-		/*if (col_delimiter.type === cElementType.empty) {
-			col_delimiter = row_delimiter;
-		}*/
 
 		let ignore_empty = arg[3] ? arg[3].tocBool() : new cBool(false);
 		if (ignore_empty.type === cElementType.error) {
@@ -2374,13 +2382,6 @@ function (window, undefined) {
 
 		//заполняющее_значение. Значение по умолчанию: #Н/Д.
 		let pad_with = arg[5] ? arg[5] : new cError(cErrorType.not_available);
-
-		/*let options = new Asc.asc_CTextOptions();
-		options.delimiterChar = col_delimiter;
-		options.delimiterRows = row_delimiter;
-		options.matchMode = match_mode;*/
-
-
 		let getRexExpFromArray = function (_array, _match_mode) {
 			let sRegExp = "";
 			if (Array.isArray(_array)) {
