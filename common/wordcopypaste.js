@@ -6509,7 +6509,7 @@ PasteProcessor.prototype =
 	},
 	_IsBlockElem: function (name) {
 		if ("p" === name || "div" === name || "ul" === name || "ol" === name || "li" === name || "table" === name || "tbody" === name || "tr" === name || "td" === name || "th" === name ||
-			"h1" === name || "h2" === name || "h3" === name || "h4" === name || "h5" === name || "h6" === name || "center" === name || "dd" === name || "dt" === name || "w:sdt" === name)
+			"h1" === name || "h2" === name || "h3" === name || "h4" === name || "h5" === name || "h6" === name || "center" === name || "dd" === name || "dt" === name)
 			return true;
 		return false;
 	},
@@ -8508,32 +8508,32 @@ PasteProcessor.prototype =
 
 		//w:Sdt -> ориентируемся по первому внутреннему тегу
 		//если параграф - то оборачиваем в CBlockLevelSdt, если текст с настройками - в CInlineLevelSdt
-
-		var blockLevelSdt = new CBlockLevelSdt(this.oLogicDocument, this.oDocument);
+		var isBlockLevelSdt = node.getElementsByTagName("p").length > 0;
+		var levelSdt = isBlockLevelSdt ? new CBlockLevelSdt(this.oLogicDocument, this.oDocument) : new CInlineLevelSdt();
 
 		//ms в буфер записывает только lock контента
 		if (node && node.attributes) {
 			var contentLocked = node.attributes["contentlocked"];
 			if (contentLocked /*&& contentLocked.value === "t"*/) {
-				blockLevelSdt.SetContentControlLock(c_oAscSdtLockType.SdtContentLocked);
+				levelSdt.SetContentControlLock(c_oAscSdtLockType.SdtContentLocked);
 			}
 			//далее тег и титульник, цвета нет
 			var alias = node.attributes["title"];
 			if (alias && alias.value) {
-				blockLevelSdt.SetAlias(alias.value);
+				levelSdt.SetAlias(alias.value);
 			}
 			var tag = node.attributes["sdttag"];
 			if (tag && tag.value) {
-				blockLevelSdt.SetTag(tag.value);
+				levelSdt.SetTag(tag.value);
 			}
 			var temporary = node.attributes["temporary"];
 			if (temporary && temporary.value) {
-				blockLevelSdt.SetContentControlTemporary(temporary.value === "t");
+				levelSdt.SetContentControlTemporary(temporary.value === "t");
 			}
 
 			var placeHolder = node.attributes["showingplchdr"];
 			if (placeHolder && placeHolder.value === "t") {
-				blockLevelSdt.SetPlaceholder(c_oAscDefaultPlaceholderName.Text);
+				levelSdt.SetPlaceholder(c_oAscDefaultPlaceholderName.Text);
 			}
 
 			//TODO поддержать Picture CC
@@ -8591,12 +8591,12 @@ PasteProcessor.prototype =
 					oPr.UncheckedSymbol = getCharCode(uncheckedSymbol.value);
 				}
 
-				blockLevelSdt.ApplyCheckBoxPr(oPr);
+				levelSdt.ApplyCheckBoxPr(oPr);
 			}
 
 			var id = node.attributes["id"];
 			if (id) {
-				blockLevelSdt.Pr.Id = id;
+				levelSdt.Pr.Id = id;
 			}
 
 			var comboBox = node.attributes["combobox"];
@@ -8615,7 +8615,7 @@ PasteProcessor.prototype =
 				setListItems(function (sDisplay, sValue) {
 					oPr.AddItem(sDisplay, sValue);
 				});
-				blockLevelSdt.ApplyComboBoxPr(oPr);
+				levelSdt.ApplyComboBoxPr(oPr);
 			}
 		}
 
@@ -8627,28 +8627,40 @@ PasteProcessor.prototype =
 			oPasteProcessor.oFonts = this.oFonts;
 			oPasteProcessor.oImages = this.oImages;
 			oPasteProcessor.bIsForFootEndnote = this.bIsForFootEndnote;
-			oPasteProcessor.oDocument = blockLevelSdt.Content;
+			oPasteProcessor.oDocument = isBlockLevelSdt ? levelSdt.Content : this.oDocument;
 			oPasteProcessor.bIgnoreNoBlockText = true;
 			oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
 			oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
 			oPasteProcessor.msoListMap = this.msoListMap;
 			oPasteProcessor._Execute(node, pPr, true, true, false);
 			oPasteProcessor._PrepareContent();
-			oPasteProcessor._AddNextPrevToContent(blockLevelSdt.Content);
+			oPasteProcessor._AddNextPrevToContent(levelSdt.Content);
 
 			//добавляем новый параграфы
-			for (var i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
-				if (i === length - 1) {
-					blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
-				} else {
-					blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
+			if (isBlockLevelSdt) {
+				for (var i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
+					if (i === length - 1) {
+						levelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
+					} else {
+						levelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
+					}
+				}
+				levelSdt.Content.Internal_Content_Remove(0, 1);
+			} else {
+				for (var i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
+					for (var j = 0, length2 = oPasteProcessor.aContent[i].Content.length; j < length2; ++j) {
+						levelSdt.AddToContent(j, oPasteProcessor.aContent[i].Content[j]);
+					}
 				}
 			}
-
-			blockLevelSdt.Content.Internal_Content_Remove(0, 1);
 		}
 
-		this.aContent.push(blockLevelSdt);
+		if (isBlockLevelSdt) {
+			this.aContent.push(levelSdt);
+		} else {
+			//this._CommitRunToParagraph(true);
+			this._CommitElemToParagraph(levelSdt);
+		}
 	},
 
 	_ExecuteBorder: function (computedStyle, node, type, type2, bAddIfNull, setUnifill) {
