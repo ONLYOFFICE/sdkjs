@@ -584,7 +584,7 @@
 			let curPos = this.GetCurPosition();
 			let len = curPos - oldPos;
 			this.Seek(oldPos);
-			this.WriteULong(len);
+			this.WriteULong(len - 4);
 			this.Seek(curPos);
 			return len;
 		};

@@ -1899,7 +1899,6 @@
 		}
 	};
 	DocsCoApi.prototype._reconnect = function () {
-		delete this.sockjs;
 		this._initSocksJs();
 	};
   //----------------------------------------------------------export----------------------------------------------------

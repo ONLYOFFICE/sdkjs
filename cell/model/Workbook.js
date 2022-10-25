@@ -2717,15 +2717,10 @@
 	};
 	Workbook.prototype._SerializeHistoryItem = function (oMemory, item) {
 		if (!item.LocalChange) {
-			oMemory.Seek(0);
-			oMemory.WriteULong(0);
-			item.Serialize(oMemory, this.oApi.collaborativeEditing);
-			var nLen = oMemory.GetCurPosition();
-			if (nLen > 4) {
-				oMemory.Seek(0);
-				oMemory.WriteULong(nLen);
-				return oMemory.GetDataUint8(0, nLen);
-			}
+			let nLen = oMemory.WriteWithLen(this, function(){
+				item.Serialize(oMemory, this.oApi.collaborativeEditing);
+			});
+			return oMemory.GetDataUint8(0, nLen);
 		}
 		return;
 	};

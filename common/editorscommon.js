@@ -339,7 +339,7 @@
 
 	function getSocketIO()
 	{
-		return require("socket.io-client");
+		return typeof window['io'] === 'function' ? window['io'] : require("socketio");
 	}
 
 	function getBaseUrl()
@@ -756,9 +756,8 @@
 					jsZlib.files.forEach(function(path){
 						let data = jsZlib.getFile(path);
 						if (data) {
-							if (path.endsWith('.json')) {
-								let text = AscCommon.UTF8ArrayToString(data, 0, data.length);
-								oResult.changes[parseInt(path.slice('changes'.length))] = JSON.parse(text);
+							if (path.endsWith('.bin')) {
+								oResult.changes[parseInt(path.slice('changes'.length))] = AscCommon.splitBinaryChanges(data);
 							} else {
 								oZipImages[path] = new Uint8Array(data);
 							}
@@ -9559,6 +9558,18 @@
 		return "0" !== val && "false" !== val && "off" !== val;
 	}
 
+	function splitBinaryChanges(data) {
+		let changes = [];
+		let stream = new AscCommon.FT_Stream2(data, data.length);
+		while (stream.GetCurPos() < stream.GetSize()) {
+			let oldPos = stream.GetCurPos();
+			let size = stream.GetULong();
+			changes.push(data.subarray(oldPos, oldPos + size));
+			stream.Skip2(size);
+		}
+		return changes;
+	}
+
 	function CUserCacheColor(nColor)
 	{
 		this.Light = null;
@@ -13082,6 +13093,7 @@
 	window["AscCommon"].getColorFromXml2 = getColorFromXml2;
 	window["AscCommon"].writeColorToXml = writeColorToXml;
 	window["AscCommon"].getBoolFromXml = getBoolFromXml;
+	window["AscCommon"].splitBinaryChanges = splitBinaryChanges;
 	window["AscCommon"].initStreamFromResponse = initStreamFromResponse;
 	window["AscCommon"].checkStreamSignature = checkStreamSignature;
 	window["AscCommon"].checkOOXMLSignature = checkOOXMLSignature;
