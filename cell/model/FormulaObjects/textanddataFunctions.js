@@ -2372,13 +2372,13 @@ function (window, undefined) {
 		}
 		match_mode = match_mode.toBool();
 
-		//TODO заполняющее_значение           Значение, которым нужно дополнить результат. Значение по умолчанию: #Н/Д.
+		//заполняющее_значение. Значение по умолчанию: #Н/Д.
 		let pad_with = arg[5] ? arg[5] : new cError(cErrorType.not_available);
 
-		let options = new Asc.asc_CTextOptions();
+		/*let options = new Asc.asc_CTextOptions();
 		options.delimiterChar = col_delimiter;
 		options.delimiterRows = row_delimiter;
-		options.matchMode = match_mode;
+		options.matchMode = match_mode;*/
 
 
 		let getRexExpFromArray = function (_array, _match_mode) {
@@ -2403,7 +2403,7 @@ function (window, undefined) {
 		let splitText = function (_text, _rowDelimiter, _colDelimiter) {
 			var res;
 
-			if (_rowDelimiter === "" || _rowDelimiter && _rowDelimiter[0] === "" || _rowDelimiter && _rowDelimiter[0] && _rowDelimiter[0][0] === "") {
+			if (_rowDelimiter == null || _rowDelimiter === "" || _rowDelimiter && _rowDelimiter[0] === "" || _rowDelimiter && _rowDelimiter[0] && _rowDelimiter[0][0] === "") {
 				_rowDelimiter = null;
 			} else {
 				_rowDelimiter = getRexExpFromArray(_rowDelimiter, match_mode);
@@ -2428,7 +2428,7 @@ function (window, undefined) {
 		};
 
 		//если первый аргумент - массив или диапазон, то возвращаем массив, равный его размеру
-		//если первый ургмента не массив/диапазон - возвращаем массив из разбитого текста
+		//если первый аргмента не массив/диапазон - возвращаем массив из разбитого текста
 		var res;
 		if (cElementType.cellsRange === text.type || cElementType.cellsRange3D === text.type || cElementType.array === text.type) {
 			res = text;
@@ -2461,6 +2461,10 @@ function (window, undefined) {
 				return text;
 			}
 			text = text.toString();
+			if (match_mode) {
+				text = text.toLowerCase();
+			}
+
 			//let array = AscCommon.parseText(text, options);
 			let array = splitText(text, row_delimiter, col_delimiter);
 			if (array) {
