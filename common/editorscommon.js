@@ -12334,7 +12334,7 @@
 
 						continue;
 					}
-
+					
 					if (!startQualifier && row[j] === delimiterChar) {
 						if (!matrix[i]) {
 							matrix[i] = [];
@@ -12352,7 +12352,7 @@
 					}
 				}
 			} else {
-				matrix.push(row.split(delimiterChar));
+				matrix.push(row.split(delimiterChar));	
 			}
 		}
 		return matrix;
