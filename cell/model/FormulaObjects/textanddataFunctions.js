@@ -2515,19 +2515,23 @@ function (window, undefined) {
 	cVSTACK.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cVSTACK.prototype.argumentsType = [[argType.array]];
 	cVSTACK.prototype.Calculate = function (arg) {
-		var unionMatrix;
-		for (let i = 0; i < arg.length; i++) {
+		let unionArray;
+		let maxColCount = 0;
+		let i;
+		for (i = 0; i < arg.length; i++) {
 			let matrix;
-			if (arg[i] instanceof cArea || arg[i] instanceof cArray || arg[i] instanceof cRef || arg[i] instanceof cRef3D) {
+			if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.array || arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
 				matrix = arg[i].getMatrix();
-			} else if (arg[i] instanceof cArea3D) {
+			} else if (arg[i].type === cElementType.cellsRange3D) {
 				if (arg[i].isSingleSheet()) {
 					matrix = arg[i].getMatrix()[0];
 				} else {
 					return new cError(cErrorType.bad_reference);
 				}
-			} else if (arg[i] instanceof cError) {
+			} else if (arg[i].type === cElementType.error) {
 				return arg[i];
+			} else if (arg[i].type === cElementType.empty) {
+				return new cError(cErrorType.wrong_value_type);
 			} else {
 				matrix = [[arg[i]]];
 			}
@@ -2535,17 +2539,19 @@ function (window, undefined) {
 			//добавляем по строкам
 			for (let j = 0; j < matrix.length; j++) {
 				if (matrix[j]) {
-					if (!unionMatrix) {
-						unionMatrix = [];
+					if (!unionArray) {
+						unionArray = [];
 					}
-					unionMatrix.push(matrix[j]);
+					unionArray.push(matrix[j]);
+					maxColCount = Math.max(maxColCount, matrix[j].length)
 				}
 			}
 		}
 
-		if (unionMatrix) {
+		if (unionArray) {
 			let res = new cArray();
-			res.fillFromArray(unionMatrix);
+			res.fillFromArray(unionArray);
+			res.fillMatrix(new cError(cErrorType.not_available));
 			return res;
 		} else {
 			return new cError(cErrorType.wrong_value_type);

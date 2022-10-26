@@ -5584,8 +5584,151 @@ $(function () {
 		/*oParser = new parserFormula("TEXTSPLIT(C3,C5:D5,C6:D6,C59:D59,{TRUE,FALSE},C11)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test1");*/
+	});
+
+	QUnit.test("Test: \"VSTACK\"", function (assert) {
+		//1. добавляем общие тесты
+		ws.getRange2("A1").setValue("2");
+		ws.getRange2("A2").setValue("w");
+		ws.getRange2("A3").setValue("test");
+
+		ws.getRange2("B1").setValue("test2");
+		ws.getRange2("B2").setValue("3");
+		ws.getRange2("B3").setValue("4");
+
+		ws.getRange2("A1").setValue("2");
+		ws.getRange2("A2").setValue("w");
+		ws.getRange2("A3").setValue("test");
+
+		ws.getRange2("B5").setValue("test11");
+		ws.getRange2("C5").setValue("test12");
+		ws.getRange2("D5").setValue("test13");
+
+		ws.getRange2("B8").setValue("test13");
+		ws.getRange2("B9").setValue("test14");
+		ws.getRange2("B10").setValue("#VALUE!");
+		ws.getRange2("B11").setValue("test16");
+
+		ws.getRange2("B14").setValue("f");
+		ws.getRange2("B15").setValue("s");
+		ws.getRange2("B16").setValue("d");
+		ws.getRange2("B17").setValue("s");
+		ws.getRange2("B18").setValue("d");
+
+		ws.getRange2("C14").setValue("g");
+		ws.getRange2("C15").setValue("");
+		ws.getRange2("C16").setValue("");
+		ws.getRange2("C17").setValue("dfg");
+		ws.getRange2("C18").setValue("");
+
+		ws.getRange2("D14").setValue("h");
+		ws.getRange2("D15").setValue("d");
+		ws.getRange2("D16").setValue("g");
+		ws.getRange2("D17").setValue("s");
+		ws.getRange2("D18").setValue("");
+
+		ws.getRange2("E14").setValue("g");
+		ws.getRange2("E15").setValue("f");
+		ws.getRange2("E16").setValue("f");
+		ws.getRange2("E17").setValue("d");
+		ws.getRange2("E18").setValue("g");
+
+		oParser = new parserFormula("VSTACK(A1:B3,B5:D5,B8:B11,B14:E18)", "A1", ws);
+		assert.ok(oParser.parse());
+		let array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 'test2');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), '#N/A');
+		
+
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'w');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 3);
+		
+
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 'test');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 4);
+		
+
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 'test11');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), 'test12');
+		assert.strictEqual(array.getElementRowCol(3, 2).getValue(), 'test13');
+		
+
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 'test13');
+		
+
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 'test14');
+
+		assert.strictEqual(array.getElementRowCol(6, 0).getValue(), '#VALUE!');
 
 
+		assert.strictEqual(array.getElementRowCol(7, 0).getValue(), 'test16');
+		
+
+		assert.strictEqual(array.getElementRowCol(8, 0).getValue(), 'f');
+		assert.strictEqual(array.getElementRowCol(8, 1).getValue(), 'g');
+		assert.strictEqual(array.getElementRowCol(8, 2).getValue(), 'h');
+		assert.strictEqual(array.getElementRowCol(8, 3).getValue(), 'g');
+		
+
+		assert.strictEqual(array.getElementRowCol(9, 0).getValue(), 's');
+		assert.strictEqual(array.getElementRowCol(9, 1).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(9, 2).getValue(), 'd');
+		assert.strictEqual(array.getElementRowCol(9, 3).getValue(), 'f');
+		
+
+		assert.strictEqual(array.getElementRowCol(10, 0).getValue(), 'd');
+		assert.strictEqual(array.getElementRowCol(10, 1).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(10, 2).getValue(), 'g');
+		assert.strictEqual(array.getElementRowCol(10, 3).getValue(), 'f');
+		
+
+		assert.strictEqual(array.getElementRowCol(11, 0).getValue(), 's');
+		assert.strictEqual(array.getElementRowCol(11, 1).getValue(), 'dfg');
+		assert.strictEqual(array.getElementRowCol(11, 2).getValue(), 's');
+		assert.strictEqual(array.getElementRowCol(11, 3).getValue(), 'd');
+		
+
+		assert.strictEqual(array.getElementRowCol(12, 0).getValue(), 'd');
+		assert.strictEqual(array.getElementRowCol(12, 1).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(12, 2).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(12, 3).getValue(), 'g');
+
+		//2. аргументы - разные типы. нужно пербрать все аргументы
+		//2.1 аргумент - number
+		oParser = new parserFormula("VSTACK(1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.2 аргумент - string
+		oParser = new parserFormula("VSTACK(\"test\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test");
+		//2.3 аргумент - bool
+		oParser = new parserFormula("VSTACK(true)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "TRUE");
+		//2.4 аргумент - error
+		oParser = new parserFormula("VSTACK(#VALUE!)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.5 аргумент - empty
+		oParser = new parserFormula("VSTACK(1,,1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.6 аргумент - cellsRange
+		//2.7 аргумент - cell
+		oParser = new parserFormula("VSTACK(B1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test2");
+
+		//2.8 аргумент - array
+		oParser = new parserFormula("VSTACK({1,2})", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2);
 	});
 
 	QUnit.test("Test: \"WORKDAY\"", function (assert) {

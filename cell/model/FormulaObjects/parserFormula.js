@@ -2664,6 +2664,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.getDimensions = function () {
 		return {col: this.getCountElementInRow(), row: this.getRowCount()};
 	};
+	cArray.prototype.fillMatrix = function (replace_empty) {
+		let maxColCount = Math.max.apply(null, this.countElementInRow);
+		this.countElementInRow = [];
+		this.countElement = 0;
+		for (let i = 0; i < this.rowCount; i++) {
+			let currentCount = this.array[i].length;
+			if (currentCount < maxColCount) {
+				for (let j = 0; j < maxColCount - currentCount; j++) {
+					this.array[i].push(replace_empty);
+				}
+			}
+			this.countElementInRow[i] = this.array[i].length;
+			this.countElement += this.array[i].length;
+		}
+	};
+	cArray.prototype.recalculate = function () {
+		this.rowCount = this.array.length;
+		this.countElementInRow = [];
+		this.countElement = 0;
+		for (var i = 0; i < this.array.length; i++) {
+			this.countElementInRow[i] = this.array[i].length;
+			this.countElement += this.array[i].length;
+		}
+	};
 
 
 	/**
