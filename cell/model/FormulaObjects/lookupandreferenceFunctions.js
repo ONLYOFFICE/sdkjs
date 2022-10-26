@@ -69,7 +69,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
 	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCOLUMN, cCOLUMNS, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE,
-		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK);
+		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cAREAS, cGETPIVOTDATA, cRTD);
@@ -2569,6 +2569,52 @@ function (window, undefined) {
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
+	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cTOROW() {
+	}
+
+	//***array-formula***
+	cTOROW.prototype = Object.create(cBaseFunction.prototype);
+	cTOROW.prototype.constructor = cTOROW;
+	cTOROW.prototype.name = 'TOROW';
+	cTOROW.prototype.argumentsMin = 1;
+	cTOROW.prototype.argumentsMax = 3;
+	cTOROW.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cTOROW.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cTOROW.prototype.argumentsType = [[argType.array]];
+	cTOROW.prototype.isXLFN = true;
+	cTOROW.prototype.Calculate = function (arg) {
+		let arg1 = arg[0];
+		col_delimiter = col_delimiter.toArray(true, true);
+		if (col_delimiter.type === cElementType.error) {
+			return col_delimiter;
+		}
+	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cTOCOL() {
+	}
+
+	//***array-formula***
+	cTOCOL.prototype = Object.create(cBaseFunction.prototype);
+	cTOCOL.prototype.constructor = cTOCOL;
+	cTOCOL.prototype.name = 'TOCOL';
+	cTOCOL.prototype.argumentsMin = 1;
+	cTOCOL.prototype.argumentsMax = 3;
+	cTOCOL.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cTOCOL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cTOCOL.prototype.argumentsType = [[argType.array]];
+	cTOCOL.prototype.isXLFN = true;
+	cTOCOL.prototype.Calculate = function (arg) {
+
 	}
 
 	var g_oVLOOKUPCache = new VHLOOKUPCache(false);
