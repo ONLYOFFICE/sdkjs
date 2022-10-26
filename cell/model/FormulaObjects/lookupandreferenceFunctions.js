@@ -2461,7 +2461,7 @@ function (window, undefined) {
 	cVSTACK.prototype.argumentsMin = 1;
 	cVSTACK.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cVSTACK.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
-	cVSTACK.prototype.argumentsType = [[argType.array]];
+	cVSTACK.prototype.argumentsType = [[argType.reference]];
 	cVSTACK.prototype.isXLFN = true;
 	cVSTACK.prototype.Calculate = function (arg) {
 		let unionArray;
@@ -2518,7 +2518,7 @@ function (window, undefined) {
 	cHSTACK.prototype.argumentsMin = 1;
 	cHSTACK.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cHSTACK.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
-	cHSTACK.prototype.argumentsType = [[argType.array]];
+	cHSTACK.prototype.argumentsType = [[argType.reference]];
 	cHSTACK.prototype.isXLFN = true;
 	cHSTACK.prototype.Calculate = function (arg) {
 		let unionArray;
@@ -2585,15 +2585,22 @@ function (window, undefined) {
 	cTOROW.prototype.argumentsMin = 1;
 	cTOROW.prototype.argumentsMax = 3;
 	cTOROW.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cTOROW.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
-	cTOROW.prototype.argumentsType = [[argType.array]];
+	cTOROW.prototype.arrayIndexes = {0: 1};
+	cTOROW.prototype.argumentsType = [argType.reference, argType.number, argType.bool];
 	cTOROW.prototype.isXLFN = true;
 	cTOROW.prototype.Calculate = function (arg) {
-		let arg1 = arg[0];
-		col_delimiter = col_delimiter.toArray(true, true);
-		if (col_delimiter.type === cElementType.error) {
-			return col_delimiter;
+		var argError;
+		if (argError = this._checkErrorArg(arg)) {
+			return argError;
 		}
+
+		let arg1 = arg[0];
+		if (arg1.type === arg1.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		arg1 = arg1.toArray(null, true);
+
+
 	}
 
 	/**
