@@ -2516,9 +2516,7 @@ function (window, undefined) {
 	cVSTACK.prototype.argumentsType = [[argType.array]];
 	cVSTACK.prototype.Calculate = function (arg) {
 		let unionArray;
-		let maxColCount = 0;
-		let i;
-		for (i = 0; i < arg.length; i++) {
+		for (let i = 0; i < arg.length; i++) {
 			let matrix;
 			if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.array || arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
 				matrix = arg[i].getMatrix();
@@ -2543,7 +2541,6 @@ function (window, undefined) {
 						unionArray = [];
 					}
 					unionArray.push(matrix[j]);
-					maxColCount = Math.max(maxColCount, matrix[j].length)
 				}
 			}
 		}
