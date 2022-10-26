@@ -109,7 +109,7 @@
 		var bIsHorPresent = (this.HtmlPage.m_oScrollHorApi != null);
 		if (_scroll.directionLocked == "v")
 		{
-			this.HtmlPage.m_oScrollVerApi.scrollToY(-_scroll.y + this.HtmlPage.SlideScrollMIN);
+			this.HtmlPage.m_oScrollVerApi.scrollToY(-_scroll._y + this.HtmlPage.SlideScrollMIN);
 		}
 		else if (_scroll.directionLocked == "h" && bIsHorPresent)
 		{
@@ -119,7 +119,7 @@
 		{
 			if (bIsHorPresent)
 				this.HtmlPage.m_oScrollHorApi.scrollToX(-_scroll.x);
-			this.HtmlPage.m_oScrollVerApi.scrollToY(-_scroll.y + this.HtmlPage.SlideScrollMIN);
+			this.HtmlPage.m_oScrollVerApi.scrollToY(-_scroll._y + this.HtmlPage.SlideScrollMIN);
 		}
 	};
 	CMobileDelegateEditorPresentation.prototype.GetScrollPosition = function()
@@ -381,7 +381,10 @@
 			bounce : false,
 			eventsElement : this.eventsElement,
 			click : false,
-			useLongTap : true
+			useLongTap : true,
+			// such offset for example
+			offsetTopY : 100,
+			offsetBotY : 100
 		});
 
 		this.delegate.Init();

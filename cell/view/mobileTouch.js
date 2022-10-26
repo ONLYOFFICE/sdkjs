@@ -198,8 +198,9 @@ function (window, undefined)
 
 		if ('v' === _scroll.directionLocked)
 		{
-			pos = -_scroll.y / _api.controller.settings.hscrollStep;
-			if (-_scroll.y >= -_scroll.maxScrollY)
+			pos = -_scroll._y / _api.controller.settings.hscrollStep;
+			// we must also take into account the offsets
+			if (-_scroll._y >= -(_scroll.maxScrollY + _scroll.options.offsetBotY + _scroll.options.offsetTopY))
 				pos += 1;
 			_api._onScrollY(pos);
 		}
@@ -212,8 +213,8 @@ function (window, undefined)
 		}
 		else if ('n' === _scroll.directionLocked)
 		{
-			pos = -_scroll.y / _api.controller.settings.hscrollStep;
-			if (-_scroll.y >= -_scroll.maxScrollY)
+			pos = -_scroll._y / _api.controller.settings.hscrollStep;
+			if (-_scroll._y >= -(_scroll.maxScrollY + _scroll.options.offsetBotY + _scroll.options.offsetTopY))
 				pos += 1;
 			_api._onScrollY(pos);
 
@@ -522,7 +523,10 @@ function (window, undefined)
 			scroller_id : this.iScrollElement,
 			bounce : false,
 			eventsElement : this.eventsElement,
-			click : false
+			click : false,
+			// such offset for example (we can't set bottom offset for cells, because we must load new rows)
+			offsetTopY : 100,
+			offsetBotY : 0
 		});
 
 		this.delegate.Init();

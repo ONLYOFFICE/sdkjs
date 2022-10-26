@@ -2629,7 +2629,7 @@ function CEditorPage(api)
 
 		if (oWordControl.MobileTouchManager && oWordControl.MobileTouchManager.iScroll)
 		{
-			oWordControl.MobileTouchManager.iScroll.y = -oWordControl.m_dScrollY;
+			oWordControl.MobileTouchManager.iScroll._y = -oWordControl.m_dScrollY;
 		}
 	};
 	this.CorrectSpeedVerticalScroll = function(newScrollPos)

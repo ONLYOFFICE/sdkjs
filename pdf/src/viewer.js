@@ -464,7 +464,7 @@
 			this.scrollY = pos;
 			this.scrollMaxY = maxPos;
 			if (this.Api.WordControl.MobileTouchManager && this.Api.WordControl.MobileTouchManager.iScroll)
-				this.Api.WordControl.MobileTouchManager.iScroll.y = - Math.max(0, Math.min(pos, maxPos));
+				this.Api.WordControl.MobileTouchManager.iScroll._y = - Math.max(0, Math.min(pos, maxPos));
 
 			this.paint();
 		};

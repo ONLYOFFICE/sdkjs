@@ -514,7 +514,7 @@
 		{
 			case "v":
 			{
-				verScrollApi.scrollToY(-_scroll.y);
+				verScrollApi.scrollToY(-(_scroll._y));
 				break;
 			}
 			case "h":
@@ -525,7 +525,7 @@
 			case "n":
 			{
 				horScrollApi.scrollToX(-_scroll.x);
-				verScrollApi.scrollToY(-_scroll.y);
+				verScrollApi.scrollToY(-(_scroll._y));
 				break;
 			}
 			default:

@@ -71,7 +71,10 @@
 			bounce : false,
 			eventsElement : this.eventsElement,
 			click : false,
-			useLongTap : true
+			useLongTap : true,
+			// such offset for example
+			offsetTopY : 100,
+			offsetBotY : 100
 		});
 
 		this.delegate.Init();
@@ -771,7 +774,10 @@
 			fadeScrollbars: true,
 			scrollX : true,
 			scroller_id : this.iScrollElement,
-			bounce : true
+			bounce : true,
+			// such offset for example
+			offsetTopY : 100,
+			offsetBotY : 100
 		});
 
 		// создаем делегата. инициализация его - ПОСЛЕ создания iScroll

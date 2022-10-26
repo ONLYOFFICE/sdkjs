@@ -306,6 +306,9 @@ function IScroll (el, options) {
 		disableMouse : utils.hasPointer || utils.hasTouch,
 		startX: 0,
 		startY: 0,
+		// we will get this options from options in function params
+		offsetTopY: 0,
+		offsetBotY: 0,
 		scrollY: true,
 		directionLockThreshold: 5,
 		momentum: true,
@@ -326,6 +329,13 @@ function IScroll (el, options) {
 	for ( var i in options ) {
 		this.options[i] = options[i];
 	}
+
+	// make 1px margin for offset
+	if (this.options.offsetBotY)
+		this.options.offsetBotY--;
+
+	if (this.options.offsetTopY)
+		this.options.offsetTopY--;
 
 	// на последних ios - может не приходить pointedown/up при быстрых кликах.
 	// они посылают вместо них просто сообщение onclick
@@ -379,6 +389,11 @@ function IScroll (el, options) {
 	// Some defaults
 	this.x = 0;
 	this.y = 0;
+	// create new _y for real scroll (without offset)
+	this._y = 0
+	// flags that we are in offset
+	this.inTopOffset = true;
+	this.inBottomOffset = false;
 	this.directionX = 0;
 	this.directionY = 0;
 	this._events = {};
@@ -584,6 +599,37 @@ IScroll.prototype = {
 		this.directionX = deltaX > 0 ? -1 : deltaX < 0 ? 1 : 0;
 		this.directionY = deltaY > 0 ? -1 : deltaY < 0 ? 1 : 0;
 
+		var flag = false;
+		// if we have deltaX, we should sent scroll event
+		if (!deltaX) {
+			// check top offset
+			if ( this.options.offsetTopY && newY > -this.options.offsetTopY && newY <= 0 ) {
+				// it's for small scroll (when can we skip the real scroll)
+				if (!this.inTopOffset) {
+					flag = false;
+					this.inTopOffset = true;
+				} else {
+					flag = true;
+				}
+			} else {
+				this.inTopOffset = false;
+			}
+	
+			// check bottom offset
+			if ( this.options.offsetBotY && newY >= this.maxScrollY && newY < (this.maxScrollY + this.options.offsetBotY)) {
+				// it's for small scroll (when can we skip the real scroll)
+				if (!this.inBottomOffset) {
+					flag = false;
+					this.inBottomOffset = true;
+				} else {
+					flag = true;
+				}		
+			} else {
+				this.inBottomOffset = false;
+			}
+		}
+		
+
 		if ( !this.moved ) {
 			this._execEvent('scrollStart');
 		}
@@ -599,9 +645,10 @@ IScroll.prototype = {
 			this.startX = this.x;
 			this.startY = this.y;
 		}
-		
+
 		// !!!
-		this._execEvent('scroll');
+		if (!flag)
+			this._execEvent('scroll');
 
 /* REPLACE END: _move */
 
@@ -753,7 +800,7 @@ IScroll.prototype = {
 /* REPLACE START: refresh */
 
 		this.scrollerWidth	= this.scroller.offsetWidth;
-		this.scrollerHeight	= this.scroller.offsetHeight;
+		this.scrollerHeight	= (this.wrapper.clientHeight - this.scroller.offsetHeight < 0) ? (this.scroller.offsetHeight + this.options.offsetTopY + this.options.offsetBotY) : (this.scroller.offsetHeight);
 
 		this.maxScrollX		= this.wrapperWidth - this.scrollerWidth;
 		this.maxScrollY		= this.wrapperHeight - this.scrollerHeight;
@@ -953,6 +1000,13 @@ IScroll.prototype = {
 
 		this.x = x;
 		this.y = y;
+		// calculate real y (withouut offset)
+		this._y = this.y + this.options.offsetTopY;
+		if (this._y < (this.maxScrollY + this.options.offsetBotY + this.options.offsetTopY))
+			this._y = this.maxScrollY + this.options.offsetBotY + this.options.offsetTopY
+
+		if (this._y > 0)
+			this._y = 0;
 
 
 	if ( this.indicators ) {
@@ -1632,6 +1686,7 @@ IScroll.prototype = {
 			var now = utils.getTime(),
 				newX, newY,
 				easing;
+			var bHasX  = false;
 
 			if ( now >= destTime ) {
 				that.isAnimating = false;
@@ -1648,14 +1703,48 @@ IScroll.prototype = {
 			easing = easingFn(now);
 			newX = ( destX - startX ) * easing + startX;
 			newY = ( destY - startY ) * easing + startY;
+			if (newX != that.x)
+				bHasX = true;
+
 			that._translate(newX, newY);
 
 			if ( that.isAnimating ) {
 				rAF(step);
 			}
 
+			var flag = false;
+			// if we have bHasX, we should sent scroll event
+			if (!bHasX) {
+				// check top offset
+				if ( that.options.offsetTopY && newY > -that.options.offsetTopY && newY <= 0 ) {
+					// it's for small scroll (when can we skip the real scroll)
+					if (!that.inTopOffset) {
+						flag = false;
+						that.inTopOffset = true;
+					} else {
+						flag = true;
+					}
+				} else {
+					that.inTopOffset = false;
+				}
+	
+				// check bottom offset
+				if ( that.options.offsetBotY && newY >= that.maxScrollY && newY < (that.maxScrollY + that.options.offsetBotY)) {
+					// it's for small scroll (when can we skip the real scroll)
+					if (!that.inBottomOffset) {
+						flag = false;
+						that.inBottomOffset = true;
+					} else {
+						flag = true;
+					}		
+				} else {
+					that.inBottomOffset = false;
+				}
+			}			
+
 			// !!!
-			that._execEvent('scroll');
+			if (!flag)
+				that._execEvent('scroll');
 		}
 
 		this.isAnimating = true;
