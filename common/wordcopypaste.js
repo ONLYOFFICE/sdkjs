@@ -8508,56 +8508,56 @@ PasteProcessor.prototype =
 
 		//w:Sdt -> ориентируемся по первому внутреннему тегу
 		//если параграф - то оборачиваем в CBlockLevelSdt, если текст с настройками - в CInlineLevelSdt
-		var isBlockLevelSdt = node.getElementsByTagName("p").length > 0;
-		var levelSdt = isBlockLevelSdt ? new CBlockLevelSdt(this.oLogicDocument, this.oDocument) : new CInlineLevelSdt();
+		let isBlockLevelSdt = node.getElementsByTagName("p").length > 0;
+		let levelSdt = isBlockLevelSdt ? new CBlockLevelSdt(this.oLogicDocument, this.oDocument) : new CInlineLevelSdt();
 
 		//ms в буфер записывает только lock контента
 		if (node && node.attributes) {
-			var contentLocked = node.attributes["contentlocked"];
+			let contentLocked = node.attributes["contentlocked"];
 			if (contentLocked /*&& contentLocked.value === "t"*/) {
 				levelSdt.SetContentControlLock(c_oAscSdtLockType.SdtContentLocked);
 			}
 			//далее тег и титульник, цвета нет
-			var alias = node.attributes["title"];
+			let alias = node.attributes["title"];
 			if (alias && alias.value) {
 				levelSdt.SetAlias(alias.value);
 			}
-			var tag = node.attributes["sdttag"];
+			let tag = node.attributes["sdttag"];
 			if (tag && tag.value) {
 				levelSdt.SetTag(tag.value);
 			}
-			var temporary = node.attributes["temporary"];
+			let temporary = node.attributes["temporary"];
 			if (temporary && temporary.value) {
 				levelSdt.SetContentControlTemporary(temporary.value === "t");
 			}
 
-			var placeHolder = node.attributes["showingplchdr"];
+			let placeHolder = node.attributes["showingplchdr"];
 			if (placeHolder && placeHolder.value === "t") {
 				levelSdt.SetPlaceholder(c_oAscDefaultPlaceholderName.Text);
 			}
 
 			//TODO поддержать Picture CC
-			/*var aspicture = node.attributes["displayaspicture"];
+			/*let aspicture = node.attributes["displayaspicture"];
 			if (aspicture) {
 				blockLevelSdt.SetPicturePr(aspicture.value === "t");
 			}*/
 
 
-			var getCharCode = function (text) {
-				var charCode;
-				for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+			let getCharCode = function (text) {
+				let charCode;
+				for (let oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 					charCode = oIterator.value();
 				}
 				return charCode;
 			};
 
-			var setListItems = function (addFunc) {
-				for (var i = 0, length = node.childNodes.length; i < length; i++) {
-					var child = node.childNodes[i];
+			let setListItems = function (addFunc) {
+				for (let i = 0, length = node.childNodes.length; i < length; i++) {
+					let child = node.childNodes[i];
 					if (child && "w:listitem" === child.nodeName.toLowerCase()) {
 						if (child.attributes) {
-							var listvalue = child.attributes["listvalue"] && child.attributes["listvalue"].value;
-							var datavalue = child.attributes["datavalue"] && child.attributes["datavalue"].value;
+							let listvalue = child.attributes["listvalue"] && child.attributes["listvalue"].value;
+							let datavalue = child.attributes["datavalue"] && child.attributes["datavalue"].value;
 							if (datavalue) {
 								addFunc(datavalue, listvalue ? listvalue : undefined);
 							}
@@ -8566,27 +8566,27 @@ PasteProcessor.prototype =
 				}
 			};
 
-			var oPr;
-			var checkBox = node.attributes["checkbox"];
+			let oPr;
+			let checkBox = node.attributes["checkbox"];
 			if (checkBox && checkBox.value === "t") {
 				oPr = new AscWord.CSdtCheckBoxPr();
-				var checked = node.attributes["checkboxischecked"];
+				let checked = node.attributes["checkboxischecked"];
 				if (checked) {
 					oPr.Checked = checked.value === "t";
 				}
-				var checkedFont = node.attributes["checkboxfontchecked"];
+				let checkedFont = node.attributes["checkboxfontchecked"];
 				if (checkedFont) {
 					oPr.CheckedFont = checkedFont.value;
 				}
-				var checkedSymbol = node.attributes["checkboxvaluechecked"];
+				let checkedSymbol = node.attributes["checkboxvaluechecked"];
 				if (checkedSymbol) {
 					oPr.CheckedSymbol = getCharCode(checkedSymbol.value);
 				}
-				var uncheckedFont = node.attributes["checkboxfontunchecked"];
+				let uncheckedFont = node.attributes["checkboxfontunchecked"];
 				if (uncheckedFont) {
 					oPr.UncheckedFont = uncheckedFont.value;
 				}
-				var uncheckedSymbol = node.attributes["checkboxvalueunchecked"];
+				let uncheckedSymbol = node.attributes["checkboxvalueunchecked"];
 				if (checkedSymbol) {
 					oPr.UncheckedSymbol = getCharCode(uncheckedSymbol.value);
 				}
@@ -8594,17 +8594,17 @@ PasteProcessor.prototype =
 				levelSdt.ApplyCheckBoxPr(oPr);
 			}
 
-			var id = node.attributes["id"];
+			let id = node.attributes["id"];
 			if (id) {
 				levelSdt.Pr.Id = id;
 			}
 
-			var comboBox = node.attributes["combobox"];
+			let comboBox = node.attributes["combobox"];
 			if (comboBox && comboBox.value === "t") {
 				oPr = new AscWord.CSdtComboBoxPr();
 			}
 
-			var dropdown = node.attributes["dropdown"];
+			let dropdown = node.attributes["dropdown"];
 			if (dropdown && dropdown.value === "t") {
 				oPr = new AscWord.CSdtComboBoxPr();
 			}
@@ -8621,7 +8621,7 @@ PasteProcessor.prototype =
 
 		//content
 		if (!checkBox && !comboBox && !dropdown) {
-			var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
+			let oPasteProcessor = new PasteProcessor(this.api, false, false, true);
 			oPasteProcessor.AddedFootEndNotes = this.AddedFootEndNotes;
 			oPasteProcessor.msoComments = this.msoComments;
 			oPasteProcessor.oFonts = this.oFonts;
@@ -8637,8 +8637,9 @@ PasteProcessor.prototype =
 			oPasteProcessor._AddNextPrevToContent(levelSdt.Content);
 
 			//добавляем новый параграфы
+			let i, j, length, length2;
 			if (isBlockLevelSdt) {
-				for (var i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
+				for (i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
 					if (i === length - 1) {
 						levelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
 					} else {
@@ -8647,9 +8648,11 @@ PasteProcessor.prototype =
 				}
 				levelSdt.Content.Internal_Content_Remove(0, 1);
 			} else {
-				for (var i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
-					for (var j = 0, length2 = oPasteProcessor.aContent[i].Content.length; j < length2; ++j) {
-						levelSdt.AddToContent(j, oPasteProcessor.aContent[i].Content[j]);
+				for (i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
+					if (oPasteProcessor.aContent[i] && oPasteProcessor.aContent[i].Content) {
+						for (j = 0, length2 = oPasteProcessor.aContent[i].Content.length - 1; j < length2; ++j) {
+							levelSdt.AddToContent(j, oPasteProcessor.aContent[i].Content[j]);
+						}
 					}
 				}
 			}
@@ -8658,8 +8661,8 @@ PasteProcessor.prototype =
 		if (isBlockLevelSdt) {
 			this.aContent.push(levelSdt);
 		} else {
-			//this._CommitRunToParagraph(true);
 			this._CommitElemToParagraph(levelSdt);
+			this.oCur_rPr = new CTextPr();
 		}
 	},
 
@@ -10130,6 +10133,7 @@ PasteProcessor.prototype =
 
 			if ("w:sdt" === sNodeName && this.pasteInExcel !== true && this.pasteInPresentationShape !== true) {
 				//CBlockLevelSdt
+				bAddParagraph = this._Decide_AddParagraph(node, pPr, bAddParagraph);
 				this._ExecuteBlockLevelStd(node, pPr);
 				return bAddParagraph;
 			}
