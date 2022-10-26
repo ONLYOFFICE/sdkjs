@@ -5586,8 +5586,7 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test1");*/
 	});
 
-	QUnit.test("Test: \"VSTACK\"", function (assert) {
-		//1. добавляем общие тесты
+	function putStackData() {
 		ws.getRange2("A1").setValue("2");
 		ws.getRange2("A2").setValue("w");
 		ws.getRange2("A3").setValue("test");
@@ -5632,7 +5631,10 @@ $(function () {
 		ws.getRange2("E16").setValue("f");
 		ws.getRange2("E17").setValue("d");
 		ws.getRange2("E18").setValue("g");
-
+	}
+	QUnit.test("Test: \"VSTACK\"", function (assert) {
+		//1. добавляем общие тесты
+		putStackData();
 		oParser = new parserFormula("VSTACK(A1:B3,B5:D5,B8:B11,B14:E18)", "A1", ws);
 		assert.ok(oParser.parse());
 		let array = oParser.calculate();
