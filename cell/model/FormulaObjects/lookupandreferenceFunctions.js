@@ -2589,8 +2589,8 @@ function (window, undefined) {
 	cTOROW.prototype.argumentsType = [argType.reference, argType.number, argType.bool];
 	cTOROW.prototype.isXLFN = true;
 	cTOROW.prototype.Calculate = function (arg) {
-		var argError;
-		if (argError = this._checkErrorArg(arg)) {
+		var argError = this._checkErrorArg(arg);
+		if (argError) {
 			return argError;
 		}
 
@@ -2598,9 +2598,72 @@ function (window, undefined) {
 		if (arg1.type === arg1.empty) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		arg1 = arg1.toArray(null, true);
+		arg1 = arg1.toArray();
 
 
+		//0    Keep all values (default)
+		//1    Ignore blanks
+		//2    Ignore errors
+		//3    Ignore blanks and errors
+		let arg2 = arg[1] ? arg[1] : new cNumber(0);
+		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
+			arg2 = arg2.cross(arguments[1]);
+		} else if (cElementType.array === arg2.type) {
+			arg2 = arg2.getElementRowCol(0, 0);
+		}
+		arg2 = arg2.tocNumber();
+		if (arg2.type === cElementType.error) {
+			return arg2;
+		}
+		arg2 = arg2.toNumber();
+
+		//scan_by_column
+		let arg3 = arg[2] ? arg[2] : new cBool(false);
+		if (cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
+			arg3 = arg3.cross(arguments[1]);
+		} else if (cElementType.array === arg3.type) {
+			arg3 = arg3.getElementRowCol(0, 0);
+		}
+		arg3 = arg3.tocBool();
+		if (arg3.type === cElementType.error) {
+			return arg3;
+		}
+		arg3 = arg3.toBool();
+
+		let arg1_array = new cArray();
+		arg1_array.fillFromArray(arg1);
+
+
+		var res = new cArray();
+		arg1_array.foreach2(function (elem, r, c) {
+			if (elem) {
+				let needAdd = true;
+				switch (arg2) {
+					case 0:
+						break;
+					case 1:
+						if (elem.type === arg1.empty) {
+							needAdd = false;
+						}
+						break;
+					case 2:
+						if (elem.type === arg1.error) {
+							needAdd = false;
+						}
+						break;
+					case 3:
+						if (elem.type === arg1.error || elem.type === arg1.empty) {
+							needAdd = false;
+						}
+						break;
+				}
+				if (needAdd) {
+					res.addElement(elem);
+				}
+			}
+		}, arg3);
+
+		return res;
 	}
 
 	/**

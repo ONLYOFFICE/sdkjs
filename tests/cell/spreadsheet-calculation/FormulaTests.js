@@ -5816,6 +5816,32 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2);
 	});
 
+	QUnit.test("Test: \"TOROW\"", function (assert) {
+		//1. добавляем общие тесты
+
+		ws.getRange2("A1").setValue("2");
+		ws.getRange2("A2").setValue("w");
+		ws.getRange2("A3").setValue("test");
+
+		ws.getRange2("B1").setValue("test2");
+		ws.getRange2("B2").setValue("#N/A");
+		ws.getRange2("B3").setValue("");
+
+		oParser = new parserFormula("TOROW(A1:B3,0, FALSE)", "A1", ws);
+		assert.ok(oParser.parse());
+		let array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 'test2');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 'w');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), '#N/A');
+		assert.strictEqual(array.getElementRowCol(0, 4).getValue(), 'test');
+		assert.strictEqual(array.getElementRowCol(0, 5).getValue(), '');
+
+
+
+	});
+
 	QUnit.test("Test: \"WORKDAY\"", function (assert) {
 
 		oParser = new parserFormula("WORKDAY(DATE(2006,1,1),0)", "A2", ws);
