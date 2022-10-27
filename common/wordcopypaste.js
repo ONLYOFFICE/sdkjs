@@ -8512,6 +8512,7 @@ PasteProcessor.prototype =
 		let levelSdt = isBlockLevelSdt ? new CBlockLevelSdt(this.oLogicDocument, this.oDocument) : new CInlineLevelSdt();
 
 		//ms в буфер записывает только lock контента
+		let checkBox, dropdown, comboBox;
 		if (node && node.attributes) {
 			let contentLocked = node.attributes["contentlocked"];
 			if (contentLocked /*&& contentLocked.value === "t"*/) {
@@ -8567,7 +8568,7 @@ PasteProcessor.prototype =
 			};
 
 			let oPr;
-			let checkBox = node.attributes["checkbox"];
+			checkBox = node.attributes["checkbox"];
 			if (checkBox && checkBox.value === "t") {
 				oPr = new AscWord.CSdtCheckBoxPr();
 				let checked = node.attributes["checkboxischecked"];
@@ -8599,12 +8600,12 @@ PasteProcessor.prototype =
 				levelSdt.Pr.Id = id;
 			}
 
-			let comboBox = node.attributes["combobox"];
+			comboBox = node.attributes["combobox"];
 			if (comboBox && comboBox.value === "t") {
 				oPr = new AscWord.CSdtComboBoxPr();
 			}
 
-			let dropdown = node.attributes["dropdown"];
+			dropdown = node.attributes["dropdown"];
 			if (dropdown && dropdown.value === "t") {
 				oPr = new AscWord.CSdtComboBoxPr();
 			}
