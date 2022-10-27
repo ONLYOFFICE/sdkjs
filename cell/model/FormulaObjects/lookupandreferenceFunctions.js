@@ -2697,10 +2697,81 @@ function (window, undefined) {
 	cTOCOL.prototype.argumentsMax = 3;
 	cTOCOL.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTOCOL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
-	cTOCOL.prototype.argumentsType = [[argType.array]];
+	cTOCOL.prototype.argumentsType = [argType.reference, argType.number, argType.bool];
 	cTOCOL.prototype.isXLFN = true;
 	cTOCOL.prototype.Calculate = function (arg) {
 		return toRowCol(arg, arguments[1], true);
+	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cWRAPROWS() {
+	}
+
+	//***array-formula***
+	cWRAPROWS.prototype = Object.create(cBaseFunction.prototype);
+	cWRAPROWS.prototype.constructor = cWRAPROWS;
+	cWRAPROWS.prototype.name = 'WRAPROWS';
+	cWRAPROWS.prototype.argumentsMin = 2;
+	cWRAPROWS.prototype.argumentsMax = 3;
+	cWRAPROWS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cWRAPROWS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cWRAPROWS.prototype.argumentsType = [argType.any/*vector*/, argType.number, argType.any];
+	cWRAPROWS.prototype.isXLFN = true;
+	cWRAPROWS.prototype.Calculate = function (arg) {
+		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
+		if (argError) {
+			return argError;
+		}
+
+		let arg1 = arg[0];
+		if (arg1.type === arg1.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		var dimension = arg1.getDimensions();
+		if (dimension.col > 1 && dimension.row > 1) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		let arg2 = arg[1];
+		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
+			arg2 = arg2.cross(arguments[1]);
+		} else if (cElementType.array === arg2.type) {
+			arg2 = arg2.getElementRowCol(0, 0);
+		}
+		arg2 = arg2.tocNumber();
+		if (arg2.type === cElementType.error) {
+			return arg2;
+		}
+		arg2 = arg2.toNumber();
+
+		if (arg2 < 1) {
+			return new cError(cErrorType.not_available);
+		}
+
+		let arg3 = arg[2] ? arg[2] : new cError(cErrorType.not_available);
+		if (cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
+			arg3 = arg3.cross(arguments[1]);
+		} else if (cElementType.array === arg3.type) {
+			arg3 = arg3.getElementRowCol(0, 0);
+		}
+		arg3 = arg3.tocBool();
+
+		let res = new cArray();
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type || cElementType.array === arg1.type) {
+			arg3.foreach2(function (val) {
+				if (res.array[res.array.length - 1] && res.array[res.array.length - 1].length === arg2) {
+					res.addRow();
+				}
+				res.addElement(val);
+			});
+			res.fillMatrix(arg3);
+		} else {
+			res.addElement(arg1);
+		}
+		return res;
 	}
 
 	var g_oVLOOKUPCache = new VHLOOKUPCache(false);
