@@ -198,6 +198,11 @@
       return this._CoAuthoringApi.setDocId(docId)
     }
   };
+  CDocsCoApi.prototype.setBinaryChanges = function(binaryChanges) {
+    if (this._CoAuthoringApi) {
+      return this._CoAuthoringApi.binaryChanges = binaryChanges;
+    }
+  };
 
   CDocsCoApi.prototype.auth = function(isViewer, opt_openCmd, opt_isIdle) {
     if (this._CoAuthoringApi && this._onlineWork) {
@@ -623,6 +628,7 @@
       this.onFirstConnect = options.onFirstConnect;
       this.onLicense = options.onLicense;
       this.onLicenseChanged = options.onLicenseChanged;
+      this.binaryChanges = options.binaryChanges;
     }
     this._state = ConnectionState.None;
     // Online-пользователи в документе
@@ -935,8 +941,8 @@
     if (!reSave) {
       this._serverChangesSize += curBytes;
     }
-
-    this._send({'type': 'saveChanges', 'changes': arrayChanges.slice(startIndex, endIndex),
+    let _changes = this.binaryChanges ? arrayChanges.slice(startIndex, endIndex) : JSON.stringify(arrayChanges.slice(startIndex, endIndex));
+    this._send({'type': 'saveChanges', 'changes': _changes,
       'startSaveChanges': (startIndex === 0), 'endSaveChanges': (endIndex === arrayChanges.length),
       'isCoAuthoring': this.isCoAuthoring, 'isExcel': this._isExcel, 'deleteIndex': this.deleteIndex,
       'excelAdditionalInfo': this.excelAdditionalInfo ? JSON.stringify(this.excelAdditionalInfo) : null,
@@ -1348,7 +1354,7 @@
       if (allServerChanges) {
         for (var i = 0; i < allServerChanges.length; ++i) {
           var change = allServerChanges[i];
-          var changesOneUser = new Uint8Array(change['change']);
+          var changesOneUser = this.binaryChanges ? new Uint8Array(change['change']) : JSON.parse(change['change']);
           if (changesOneUser) {
             if (change['user'] !== this._userId) {
               this.lastOtherSaveTime = change['time'];

@@ -700,7 +700,7 @@
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml");
 	}
-	function openFileCommand(docId, binUrl, changesUrl, changesToken, Signature, callback)
+	function openFileCommand(docId, binUrl, changesUrl, changesToken, Signature, binaryChanges, callback)
 	{
 		var nError = Asc.c_oAscError.ID.No, oResult = new OpenFileResult(), bEndLoadFile = false, bEndLoadChanges = false;
 		var onEndOpen = function ()
@@ -756,8 +756,11 @@
 					jsZlib.files.forEach(function(path){
 						let data = jsZlib.getFile(path);
 						if (data) {
-							if (path.endsWith('.bin')) {
+							if (binaryChanges && path.endsWith('.bin')) {
 								oResult.changes[parseInt(path.slice('changes'.length))] = AscCommon.splitBinaryChanges(data);
+							} else if (!binaryChanges && path.endsWith('.json')) {
+								let text = AscCommon.UTF8ArrayToString(data, 0, data.length);
+								oResult.changes[parseInt(path.slice('changes'.length))] = JSON.parse(text);
 							} else {
 								oZipImages[path] = new Uint8Array(data);
 							}
@@ -3942,11 +3945,17 @@
 		this.m_pData.Data.UseArray = true;
 		this.m_pData.Data.PosArray = this.m_aPositions;
 
-		Binary_Writer.WriteWithLen(this, function(){
+		if ((Asc.editor || editor).binaryChanges) {
+			Binary_Writer.WriteWithLen(this, function() {
+				Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
+				Binary_Writer.WriteLong(this.m_pData.Data.Type);
+				this.m_pData.Data.WriteToBinary(Binary_Writer);
+			});
+		} else {
 			Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
 			Binary_Writer.WriteLong(this.m_pData.Data.Type);
 			this.m_pData.Data.WriteToBinary(Binary_Writer);
-		});
+		}
 
 		var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
 
@@ -9561,6 +9570,11 @@
 	function splitBinaryChanges(data) {
 		let changes = [];
 		let stream = new AscCommon.FT_Stream2(data, data.length);
+		//skip header
+		let charCode = ";".charCodeAt(0);
+		while(charCode !== stream.GetByte()) {
+			;
+		}
 		while (stream.GetCurPos() < stream.GetSize()) {
 			let oldPos = stream.GetCurPos();
 			let size = stream.GetULong();
@@ -11047,8 +11061,11 @@
                 {
                     if (_array[i]["change"].length > _checkPrefixLen)
                     {
-						_prefix = String.prototype.fromUtf8(_array[i]["change"], 0, _checkPrefixLen);
-                    	// _prefix = _array[i]["change"].substr(0, _checkPrefixLen);
+						if((Asc.editor || editor).binaryChanges) {
+							_prefix = String.prototype.fromUtf8(_array[i]["change"], 0, _checkPrefixLen);
+						} else {
+							_prefix = _array[i]["change"].substr(0, _checkPrefixLen);
+						}
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;
@@ -11067,8 +11084,11 @@
                 {
                     if (_array[i].length > _checkPrefixLen)
                     {
-						_prefix = String.prototype.fromUtf8(_array[i], 0, _checkPrefixLen);
-                        // _prefix = _array[i].substr(0, _checkPrefixLen);
+						if((Asc.editor || editor).binaryChanges) {
+							_prefix = String.prototype.fromUtf8(_array[i], 0, _checkPrefixLen);
+						} else {
+							_prefix = _array[i].substr(0, _checkPrefixLen);
+						}
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;
@@ -11083,8 +11103,11 @@
                 {
                     if (_array[i].m_pData.length > _checkPrefixLen)
                     {
-						_prefix = String.prototype.fromUtf8(_array[i].m_pData, 0, _checkPrefixLen);
-                        // _prefix = _array[i].m_pData.substr(0, _checkPrefixLen);
+						if((Asc.editor || editor).binaryChanges) {
+							_prefix = String.prototype.fromUtf8(_array[i].m_pData, 0, _checkPrefixLen);
+						} else {
+							_prefix = _array[i].m_pData.substr(0, _checkPrefixLen);
+						}
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;

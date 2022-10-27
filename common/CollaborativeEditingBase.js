@@ -62,7 +62,9 @@
         var CollaborativeEditing = AscCommon.CollaborativeEditing;
 
         var Reader  = this.private_LoadData(this.m_pData);
-        Reader.GetULong();
+        if ((Asc.editor || editor).binaryChanges) {
+            Reader.GetULong();
+        }
         var ClassId = Reader.GetString2();
         var Class   = AscCommon.g_oTableId.Get_ById(ClassId);
 
@@ -112,14 +114,23 @@
     };
     CCollaborativeChanges.prototype.GetStream = function(szSrc, offset)
     {
-        return new AscCommon.FT_Stream2(szSrc, szSrc.length);
+        if ((Asc.editor || editor).binaryChanges) {
+            return new AscCommon.FT_Stream2(szSrc, szSrc.length);
+        } else {
+            var memoryData = AscCommon.Base64.decode(szSrc, true, undefined, offset);
+            return new AscCommon.FT_Stream2(memoryData, memoryData.length);
+        }
     };
     CCollaborativeChanges.prototype.private_SaveData = function(Binary)
     {
         var Writer = AscCommon.History.BinaryWriter;
         var Pos    = Binary.Pos;
         var Len    = Binary.Len;
-        return Writer.GetDataUint8(Pos, Len);
+        if ((Asc.editor || editor).binaryChanges) {
+            return Writer.GetDataUint8(Pos, Len);
+        } else {
+            return Len + ";" + Writer.GetBase64Memory2(Pos, Len);
+        }
     };
 
 

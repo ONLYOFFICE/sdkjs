@@ -2716,18 +2716,30 @@
 		return this.dependencyFormulas.checkDefNameLock();
 	};
 	Workbook.prototype._SerializeHistoryItem = function (oMemory, item) {
-		if (!item.LocalChange) {
-			let nLen = oMemory.WriteWithLen(this, function(){
+		if (this.oApi.binaryChanges) {
+			if (!item.LocalChange) {
+				let nLen = oMemory.WriteWithLen(this, function(){
+					item.Serialize(oMemory, this.oApi.collaborativeEditing);
+				});
+				return oMemory.GetDataUint8(0, nLen);
+			}
+			return;
+		} else {
+			if (!item.LocalChange) {
+				oMemory.Seek(0);
 				item.Serialize(oMemory, this.oApi.collaborativeEditing);
-			});
-			return oMemory.GetDataUint8(0, nLen);
+				var nLen = oMemory.GetCurPosition();
+				if (nLen > 0)
+					return nLen + ";" + oMemory.GetBase64Memory2(0, nLen);
+			}
+			return;
 		}
-		return;
 	};
-	Workbook.prototype._SerializeHistory = function (oMemory, item, aPointChanges) {
+	Workbook.prototype._SerializeHistory = function(oMemory, item, aPointChanges) {
 		let data = this._SerializeHistoryItem(oMemory, item);
-		if (data)
+		if (data) {
 			aPointChanges.push(data);
+		}
 	};
 	Workbook.prototype.SerializeHistory = function(){
 		var aRes = [];
@@ -2927,22 +2939,12 @@
 			}
 		}
 	};
-	Workbook.prototype.DeserializeHistory = function(aChanges, fCallback){
+	Workbook.prototype._DeserializeUndoRedoElems = function(aChanges){
 		var oThis = this;
-		//сохраняем те изменения, которые были до приема данных, потому что дальше undo/redo будет очищено
-		this.aCollaborativeActions = this.aCollaborativeActions.concat(History.GetSerializeArray());
-		if(aChanges.length > 0)
-		{
-			this.bCollaborativeChanges = true;
-			//собираем общую длину
-			var dstLen = 0;
-			var i, length = aChanges.length, sChange;
-
-			var nCurOffset = 0;
-			var aUndoRedoElems = [];
-			for (i = 0; i < length; ++i) {
-				sChange = aChanges[i];
-				var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
+		var aUndoRedoElems = [];
+		if (this.oApi.binaryChanges) {
+			for (let i = 0; i < aChanges.length; ++i) {
+				let sChange = aChanges[i];
 				var stream = new AscCommon.FT_Stream2(sChange, sChange.length);
 				stream.Seek(4);
 				stream.Seek2(4);
@@ -2952,6 +2954,47 @@
 					aUndoRedoElems.push(item);
 				}
 			}
+		} else {
+			var dstLen = 0;
+			var aIndexes = [], i, length = aChanges.length, sChange;
+			for(i = 0; i < length; ++i)
+			{
+				sChange = aChanges[i];
+				var nIndex = sChange.indexOf(";");
+				if (-1 != nIndex) {
+					dstLen += parseInt(sChange.substring(0, nIndex));
+					nIndex++;
+				}
+				aIndexes.push(nIndex);
+			}
+			var pointer = g_memory.Alloc(dstLen);
+			var stream = new AscCommon.FT_Stream2(pointer.data, dstLen);
+			stream.obj = pointer.obj;
+			var nCurOffset = 0;
+			for (i = 0; i < length; ++i) {
+				sChange = aChanges[i];
+				var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
+				nCurOffset = oBinaryFileReader.getbase64DecodedData2(sChange, aIndexes[i], stream, nCurOffset);
+				var item = new UndoRedoItemSerializable();
+				item.Deserialize(stream);
+				if (!oThis.needSkipChange(item)) {
+					aUndoRedoElems.push(item);
+				}
+			}
+		}
+		return aUndoRedoElems;
+	}
+	Workbook.prototype.DeserializeHistory = function(aChanges, fCallback){
+		var oThis = this;
+		//сохраняем те изменения, которые были до приема данных, потому что дальше undo/redo будет очищено
+		this.aCollaborativeActions = this.aCollaborativeActions.concat(History.GetSerializeArray());
+		if(aChanges.length > 0)
+		{
+			this.bCollaborativeChanges = true;
+			//собираем общую длину
+			var i, length = aChanges.length;
+
+			var aUndoRedoElems = this._DeserializeUndoRedoElems(aChanges);
 			var wsViews = window["Asc"]["editor"].wb && window["Asc"]["editor"].wb.wsViews;
 			if(oThis.oApi.collaborativeEditing.getFast()){
 				AscCommon.CollaborativeEditing.Clear_DocumentPositions();

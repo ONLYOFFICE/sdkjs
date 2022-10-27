@@ -217,6 +217,7 @@
 
 		this.openedAt = undefined;
 		this.maxChangesSize = 0;
+		this.binaryChanges = false;
 
 		this.isBlurEditor = false;
 		this._correctEmbeddedWork();
@@ -1036,7 +1037,7 @@
 	baseEditorsApi.prototype._onOpenCommand                      = function(data)
 	{
 		var t = this;
-		AscCommon.openFileCommand(this.documentId, data, this.documentUrlChanges, this.documentTokenChanges, AscCommon.c_oSerFormat.Signature, function(error, result)
+		AscCommon.openFileCommand(this.documentId, data, this.documentUrlChanges, this.documentTokenChanges, AscCommon.c_oSerFormat.Signature, this.binaryChanges, function(error, result)
 		{
 			var signature = result.data && String.fromCharCode(result.data[0], result.data[1], result.data[2], result.data[3]);
 			if (c_oAscError.ID.No !== error || (!result.bSerFormat && 'PK' !== signature.substring(0, 2) && (t.editorId !== c_oEditorId.Word || 'XLSY' === signature || 'PPTY' === signature)))
@@ -1505,6 +1506,10 @@
 		{
 			if (res['settings'] && res['settings']['maxChangesSize']) {
 				t.maxChangesSize = res['settings']['maxChangesSize'];
+			}
+			if (res['settings'] && res['settings']['binaryChanges']) {
+				t.binaryChanges = res['settings']['binaryChanges'];
+				t.CoAuthoringApi.setBinaryChanges(t.binaryChanges);
 			}
 			let licenseType = res['licenseType'];
 			if (t.licenseResult) {
