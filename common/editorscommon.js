@@ -700,7 +700,7 @@
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml");
 	}
-	function openFileCommand(docId, binUrl, changesUrl, changesToken, Signature, binaryChanges, callback)
+	function openFileCommand(docId, binUrl, changesUrl, changesToken, Signature, callback)
 	{
 		var nError = Asc.c_oAscError.ID.No, oResult = new OpenFileResult(), bEndLoadFile = false, bEndLoadChanges = false;
 		var onEndOpen = function ()
@@ -756,11 +756,14 @@
 					jsZlib.files.forEach(function(path){
 						let data = jsZlib.getFile(path);
 						if (data) {
-							if (binaryChanges && path.endsWith('.bin')) {
-								oResult.changes[parseInt(path.slice('changes'.length))] = AscCommon.splitBinaryChanges(data);
-							} else if (!binaryChanges && path.endsWith('.json')) {
-								let text = AscCommon.UTF8ArrayToString(data, 0, data.length);
-								oResult.changes[parseInt(path.slice('changes'.length))] = JSON.parse(text);
+							if (path.endsWith('.bin') || path.endsWith('.json')) {
+								let index = parseInt(path.slice('changes'.length));
+								if(isBinaryChanges(data)) {
+									oResult.changes[index] = splitBinaryChanges(data);
+								} else {
+									let text = AscCommon.UTF8ArrayToString(data, 0, data.length);
+									oResult.changes[index] = JSON.parse(text);
+								}
 							} else {
 								oZipImages[path] = new Uint8Array(data);
 							}
@@ -9567,11 +9570,14 @@
 		return "0" !== val && "false" !== val && "off" !== val;
 	}
 
+	function isBinaryChanges(data) {
+		return 'CHANGES\t' === AscCommon.UTF8ArrayToString(data, 0, 'CHANGES;'.length);
+	}
 	function splitBinaryChanges(data) {
 		let changes = [];
 		let stream = new AscCommon.FT_Stream2(data, data.length);
 		//skip header
-		let charCode = ";".charCodeAt(0);
+		let charCode = "\n".charCodeAt(0);
 		while(charCode !== stream.GetByte()) {
 			;
 		}
@@ -13116,7 +13122,6 @@
 	window["AscCommon"].getColorFromXml2 = getColorFromXml2;
 	window["AscCommon"].writeColorToXml = writeColorToXml;
 	window["AscCommon"].getBoolFromXml = getBoolFromXml;
-	window["AscCommon"].splitBinaryChanges = splitBinaryChanges;
 	window["AscCommon"].initStreamFromResponse = initStreamFromResponse;
 	window["AscCommon"].checkStreamSignature = checkStreamSignature;
 	window["AscCommon"].checkOOXMLSignature = checkOOXMLSignature;
