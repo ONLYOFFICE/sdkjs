@@ -5895,7 +5895,7 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test2");
 
 		//2.8 аргумент - array
-		oParser = new parserFormula("HSTACK({1,2})", "A1", ws);
+		oParser = new parserFormula("TOROW({1,2})", "A1", ws);
 		assert.ok(oParser.parse());
 		array = oParser.calculate();
 
@@ -5916,6 +5916,110 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
 
 		oParser = new parserFormula("TOROW(1,A1:A3,A1:A3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+	});
+
+	QUnit.test("Test: \"TOCOL\"", function (assert) {
+		//1. добавляем общие тесты
+
+		ws.getRange2("A1").setValue("2");
+		ws.getRange2("A2").setValue("");
+		ws.getRange2("A3").setValue("test");
+
+		ws.getRange2("B1").setValue("test2");
+		ws.getRange2("B2").setValue("#N/A");
+		ws.getRange2("B3").setValue("");
+
+		oParser = new parserFormula("TOCOL(A1:B3,0, FALSE)", "A1", ws);
+		assert.ok(oParser.parse());
+		let array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'test2');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), '#N/A');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 'test');
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), '');
+
+		oParser = new parserFormula("TOCOL(A1:B3,1, FALSE)", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'test2');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), '#N/A');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 'test');
+
+		oParser = new parserFormula("TOCOL(A1:B3,2, FALSE)", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'test2');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 'test');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), '');
+
+		oParser = new parserFormula("TOCOL(A1:B3,3,FALSE)", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'test2');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 'test');
+
+
+		//2. аргументы - разные типы. нужно пербрать все аргументы
+		//2.1 аргумент - number
+		oParser = new parserFormula("TOCOL(1,3,FALSE)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.2 аргумент - string
+		oParser = new parserFormula("TOCOL(\"test\",3,FALSE)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test");
+		//2.3 аргумент - bool
+		oParser = new parserFormula("TOCOL(true)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "TRUE");
+		//2.4 аргумент - error
+		oParser = new parserFormula("TOCOL(#VALUE!)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.5 аргумент - empty
+		oParser = new parserFormula("TOCOL(1,,1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.6 аргумент - cellsRange
+		//2.7 аргумент - cell
+		oParser = new parserFormula("TOCOL(B1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test2");
+
+		//2.8 аргумент - array
+		oParser = new parserFormula("TOCOL({1,2})", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2);
+
+
+		oParser = new parserFormula("TOCOL(1,{1,2,3},FALSE)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		oParser = new parserFormula("TOCOL(1,{1,2,3},{false,true})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		oParser = new parserFormula("TOCOL(1,A1:A3,{false,true})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		oParser = new parserFormula("TOCOL(1,A1:A3,A1:A3)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
 	});
