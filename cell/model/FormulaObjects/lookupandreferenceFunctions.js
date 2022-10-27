@@ -2642,17 +2642,17 @@ function (window, undefined) {
 					case 0:
 						break;
 					case 1:
-						if (elem.type === arg1.empty) {
+						if (elem.type === cElementType.empty) {
 							needAdd = false;
 						}
 						break;
 					case 2:
-						if (elem.type === arg1.error) {
+						if (elem.type === cElementType.error) {
 							needAdd = false;
 						}
 						break;
 					case 3:
-						if (elem.type === arg1.error || elem.type === arg1.empty) {
+						if (elem.type === cElementType.error || elem.type === cElementType.empty) {
 							needAdd = false;
 						}
 						break;
