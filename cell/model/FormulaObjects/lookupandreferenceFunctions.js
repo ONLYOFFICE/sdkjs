@@ -69,7 +69,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
 	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCOLUMN, cCOLUMNS, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE,
-		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL);
+		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cAREAS, cGETPIVOTDATA, cRTD);
@@ -2727,7 +2727,7 @@ function (window, undefined) {
 		}
 
 		let arg1 = arg[0];
-		if (arg1.type === arg1.empty) {
+		if (arg1.type === cElementType.empty) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 		var dimension = arg1.getDimensions();
@@ -2737,9 +2737,11 @@ function (window, undefined) {
 
 		let arg2 = arg[1];
 		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-			arg2 = arg2.cross(arguments[1]);
+			arg2 = arg2.getValueByRowCol(0,0);
 		} else if (cElementType.array === arg2.type) {
 			arg2 = arg2.getElementRowCol(0, 0);
+		} else if (arg2.type === cElementType.empty) {
+			return new cError(cErrorType.not_numeric);
 		}
 		arg2 = arg2.tocNumber();
 		if (arg2.type === cElementType.error) {
@@ -2753,15 +2755,14 @@ function (window, undefined) {
 
 		let arg3 = arg[2] ? arg[2] : new cError(cErrorType.not_available);
 		if (cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
-			arg3 = arg3.cross(arguments[1]);
+			arg3 = arg3.getValueByRowCol(0,0);
 		} else if (cElementType.array === arg3.type) {
 			arg3 = arg3.getElementRowCol(0, 0);
 		}
-		arg3 = arg3.tocBool();
 
 		let res = new cArray();
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type || cElementType.array === arg1.type) {
-			arg3.foreach2(function (val) {
+			arg1.foreach2(function (val) {
 				if (res.array[res.array.length - 1] && res.array[res.array.length - 1].length === arg2) {
 					res.addRow();
 				}
@@ -2769,6 +2770,9 @@ function (window, undefined) {
 			});
 			res.fillMatrix(arg3);
 		} else {
+			if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+				arg1 = arg1.getValue();
+			}
 			res.addElement(arg1);
 		}
 		return res;

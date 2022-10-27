@@ -6024,6 +6024,111 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
 	});
 
+	QUnit.test("Test: \"WRAPROWS\"", function (assert) {
+		//1. добавляем общие тесты
+
+		ws.getRange2("A1").setValue("2");
+		ws.getRange2("A2").setValue("");
+		ws.getRange2("A3").setValue("test");
+
+		ws.getRange2("B1").setValue("test2");
+		ws.getRange2("B2").setValue("#N/A");
+		ws.getRange2("B3").setValue("");
+
+		oParser = new parserFormula("WRAPROWS(1,A1:B5)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		oParser = new parserFormula("WRAPROWS(A1:A3,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		let array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'test');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '#N/A');
+
+
+		oParser = new parserFormula("WRAPROWS(A1:B3,3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+
+
+		//2. аргументы - разные типы. нужно пербрать все аргументы
+		//2.1 аргумент - number
+		oParser = new parserFormula("WRAPROWS(1,3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.2 аргумент - string
+		oParser = new parserFormula("WRAPROWS(\"test\",3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test");
+		//2.3 аргумент - bool
+		oParser = new parserFormula("WRAPROWS(true,3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "TRUE");
+		//2.4 аргумент - error
+		oParser = new parserFormula("WRAPROWS(#VALUE!,3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.5 аргумент - empty
+		oParser = new parserFormula("WRAPROWS(,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.6 аргумент - cellsRange
+		//2.7 аргумент - cell
+		oParser = new parserFormula("WRAPROWS(B1, 10)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test2");
+
+		//2.8 аргумент - array
+		oParser = new parserFormula("WRAPROWS({2;\"\";\"test\"},2)", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'test');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '#N/A');
+
+
+		//2.2 аргумент - string
+		oParser = new parserFormula("WRAPROWS(1,\"test\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.3 аргумент - bool
+		oParser = new parserFormula("WRAPROWS(1,true)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.4 аргумент - error
+		oParser = new parserFormula("WRAPROWS(1, #VALUE!)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.5 аргумент - empty
+		oParser = new parserFormula("WRAPROWS(1,)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+
+		//2.6 аргумент - cellsRange
+		//2.7 аргумент - cell
+		oParser = new parserFormula("WRAPROWS(1,A1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		oParser = new parserFormula("WRAPROWS(1,A1:B5)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		//2.8 аргумент - array
+		oParser = new parserFormula("WRAPROWS(1,{2;\"\";\"test\"})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+
+	});
+
 	QUnit.test("Test: \"WORKDAY\"", function (assert) {
 
 		oParser = new parserFormula("WORKDAY(DATE(2006,1,1),0)", "A2", ws);
