@@ -2294,6 +2294,7 @@ function (window, undefined) {
 	cTEXTBEFORE.prototype.argumentsMax = 6;
 	cTEXTBEFORE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
+	cTEXTBEFORE.prototype.isXLFN = true;
 	cTEXTBEFORE.prototype.Calculate = function (arg) {
 		return calcBeforeAfterText(arg, arguments[1]);
 	};
@@ -2313,6 +2314,7 @@ function (window, undefined) {
 	cTEXTAFTER.prototype.argumentsMax = 6;
 	cTEXTAFTER.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTEXTAFTER.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
+	cTEXTAFTER.prototype.isXLFN = true;
 	cTEXTAFTER.prototype.Calculate = function (arg) {
 		return calcBeforeAfterText(arg, arguments[1], true);
 	};
@@ -2334,6 +2336,7 @@ function (window, undefined) {
 	//cTEXTSPLIT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cTEXTSPLIT.prototype.arrayIndexes = {1: 1, 2: 1, 4: 1, 5: 1};
 	cTEXTSPLIT.prototype.argumentsType = [argType.text, argType.text, argType.text, argType.logical, argType.logical, argType.any];
+	cTEXTSPLIT.prototype.isXLFN = true;
 	cTEXTSPLIT.prototype.Calculate = function (arg) {
 
 		//функция должна возвращать массив
@@ -2497,7 +2500,6 @@ function (window, undefined) {
 
 		return res ? res : new cError(cErrorType.not_available);
 	};
-
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};

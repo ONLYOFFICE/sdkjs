@@ -118,9 +118,13 @@
 			return (!!oFont.GetGIDByUnicode(codePoint));
 		},
 
-		GetFontBySymbol : function(codePoint, oPreferredFont)
+		GetFontBySymbol : function(codePoint, oPreferredFont, isForcePreferred)
 		{
 			let oFont = this.m_oManager.m_pFont;
+
+			if (oPreferredFont && isForcePreferred)
+				oFont = oPreferredFont;
+
 			if (!oFont)
 				return {Font : null, CodePoint : codePoint};
 

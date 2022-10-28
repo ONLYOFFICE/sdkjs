@@ -39,6 +39,7 @@ const allTests = [
 	'word/unit-tests/paragraphContentPos.html',
 	'word/document-calculation/paragraph.html',
 	'word/document-calculation/table/flowTablePosition.html',
+	'word/document-calculation/textShaper/textShaper.html',
 	'word/forms/forms.html',
 	'word/forms/complexForm.html',
 	'word/api/api.html',

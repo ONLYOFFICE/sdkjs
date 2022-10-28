@@ -116,7 +116,6 @@
 
 		AscFonts.HB_StartString();
 	};
-
 	g_oTextMeasurer.SetFontInternal = function()
 	{
 	};

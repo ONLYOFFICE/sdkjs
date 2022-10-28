@@ -217,6 +217,7 @@
 
 		this.openedAt = undefined;
 		this.maxChangesSize = 0;
+		this.binaryChanges = false;
 
 		this.isBlurEditor = false;
 		this._correctEmbeddedWork();
@@ -1505,6 +1506,10 @@
 		{
 			if (res['settings'] && res['settings']['maxChangesSize']) {
 				t.maxChangesSize = res['settings']['maxChangesSize'];
+			}
+			if (res['settings'] && res['settings']['binaryChanges']) {
+				t.binaryChanges = res['settings']['binaryChanges'];
+				t.CoAuthoringApi.setBinaryChanges(t.binaryChanges);
 			}
 			let licenseType = res['licenseType'];
 			if (t.licenseResult) {

@@ -36,6 +36,7 @@
 			"common/api/tableStylesPreviewGenerator.js",
 			"common/api/spellCheckSettings.js",
 			"common/api/addTextSettings.js",
+			"common/api/autoCorrectSettings.js",
 
 			"common/nameMap.js",
 			"common/downloaderfiles.js",

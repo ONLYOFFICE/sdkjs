@@ -8382,9 +8382,10 @@ function BinaryFileReader(doc, openParams)
 		if (docProtection) {
 			//this.Document.applyProtection()
 			var restrictionType = docProtection.getRestrictionType();
+			var enforcement = docProtection.getEnforcement();
 			if (/*docProtection.isOnlyView() && false !== docProtection.getEnforcement()*/restrictionType !== null) {
 				api && api.asc_addRestriction(restrictionType);
-			} else if (false !== docProtection.getEnforcement() ) {
+			} else if (false !== enforcement && enforcement != null && restrictionType !== null) {
 				//TODO ?
 				api && api.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 			}

@@ -86,7 +86,7 @@
 			let nOffsetY      = oGrapheme[nPos++];
 			let arrCodePoints = oGrapheme[nPos++];
 
-			oContext.tg(nGID, nX + nOffsetX * nKoef, nY + nOffsetY * nKoef, arrCodePoints);
+			oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints);
 			nX += nAdvanceX * nKoef;
 			nY += nAdvanceY * nKoef;
 		}

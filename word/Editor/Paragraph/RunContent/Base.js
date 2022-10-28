@@ -117,14 +117,6 @@
 	{
 	};
 	/**
-	 * Проверяем является ли данный элемент диакритическим символом
-	 * @returns {boolean}
-	 */
-	CRunElementBase.prototype.IsDiacriticalSymbol = function()
-	{
-		return false;
-	};
-	/**
 	 * Может ли строка начинаться с данного элемента
 	 * @returns {boolean}
 	 */

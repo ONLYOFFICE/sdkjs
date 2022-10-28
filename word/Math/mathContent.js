@@ -7507,7 +7507,8 @@ CMathAutoCorrectEngine.prototype.private_PackTextToContent = function(oMathConte
 				oMathContent.AddToContent(nInContentPos++, oItem);
 				oMathRun = null;
 			}
-			else if (para_Math_Text === oItem.Type || para_Math_Ampersand === oItem.Type)
+			// we should work with para_Math_BreakOperator (some of it can be inside formula)
+			else if ( para_Math_Text === oItem.Type || para_Math_Ampersand === oItem.Type || ( para_Math_BreakOperator === oItem.Type && g_aMathAutoCorrectFracCharCodes[oItem.value] ) )
 			{
 				if (!oMathRun || (oParent && oParent !== oItem.Parent))
 				{
@@ -10023,7 +10024,14 @@ var g_aMathAutoCorrectFracCharCodes =
     /*0x27 : 1,*/ 0x28 : 1, 0x29 : 1, 0x2A : 1, 0x2B : 1, 0x2C : 1, 0x2D : 1,
     0x2E : 1, 0x2F : 1, 0x3A : 1, 0x3B : 1, 0x3C : 1, 0x3D : 1, 0x3E : 1,
     0x3F : 1, 0x40 : 1, 0x5B : 1, /*0x5C : 1,*/ 0x5D : 1, 0x5E : 1, 0x5F : 1,
-    0x60 : 1, 0x7B : 1, /*0x7C : 1,*/ 0x7D : 1, 0x7E : 1, /*0x2592 : 1,*/ 0xD7 : 1
+    0x60 : 1, 0x7B : 1, /*0x7C : 1,*/ 0x7D : 1, 0x7E : 1, /*0x2592 : 1,*/ 0xD7 : 1,
+	0x221D: 1, 0x2248: 1, 0x2249: 1, 0x2261: 1, 0x2262: 1, 0x00D7 : 1, 0x00F7 : 1,
+	0x226A: 1, 0x226B: 1, 0x203C: 1, 0x2026: 1, 0x2237: 1, 0x2254: 1, 0x226E: 1,
+	0x226F: 1, 0x2260: 1, 0x2245: 1, 0x2213: 1, 0x00B1: 1, 0x2264: 1, 0x2192: 1,
+	0x2265: 1, 0x2200: 1, 0x222A: 1, 0x2229: 1, 0x2205: 1, 0x00B0: 1, 0x2109: 1,
+	0x2103: 1, 0x2203: 1, 0x2204: 1, 0x2208: 1, 0x220B: 1, 0x2190: 1, 0x2191: 1,
+	0x2192: 1, 0x2193: 1, 0x2194: 1, 0x2234: 1, 0x2217: 1, 0x2219: 1, 0x22EE: 1,
+	0x22EF: 1, 0x22F0: 1, 0x22F1: 1, 0x2062: 1, 0x2297: 1
 };
 //символы для определения необходимости автозамены
 var g_aMathAutoCorrectTriggerCharCodes =

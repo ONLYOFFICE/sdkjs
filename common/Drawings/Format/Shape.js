@@ -1179,7 +1179,7 @@ CShape.prototype.convertToWord = function (document) {
 };
 
 CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMath) {
-    var c = new CShape();
+    let c = new CShape();
     c.setWordShape(false);
     c.setBDeleted(false);
     c.setWorksheet(worksheet);
@@ -1194,21 +1194,26 @@ CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMat
         c.setStyle(this.style.createDuplicate());
     }
     if (this.textBoxContent) {
-        var tx_body = new AscFormat.CTextBody();
+        let tx_body = new AscFormat.CTextBody();
         tx_body.setParent(c);
         if (this.bodyPr) {
             tx_body.setBodyPr(this.bodyPr.createDuplicate());
         }
-        var new_content = new AscFormat.CDrawingDocContent(tx_body, drawingDocument, 0, 0, 0, 0, false, false, true);
-        new_content.Internal_Content_RemoveAll();
-        var paragraphs = this.textBoxContent.Content;
-
-        var index = 0;
-        for (var i = 0; i < paragraphs.length; ++i) {
-            var cur_par = paragraphs[i];
-            if (cur_par instanceof Paragraph) {
-                var new_paragraph = ConvertParagraphToPPTX(cur_par, drawingDocument, new_content, bIsAddMath);
-                new_content.Internal_Content_Add(index++, new_paragraph, false);
+        let new_content = new AscFormat.CDrawingDocContent(tx_body, drawingDocument, 0, 0, 0, 0, false, false, true);
+        let aContent = this.textBoxContent.Content;
+        let aNewParagraphs = [];
+        for (let nIdx = 0; nIdx < aContent.length; ++nIdx) {
+            let oCurElement = aContent[nIdx];
+            if (oCurElement instanceof AscCommonWord.Paragraph) {
+                let oParagraph = ConvertParagraphToPPTX(oCurElement, drawingDocument, new_content, bIsAddMath);
+                aNewParagraphs.push(oParagraph);
+            }
+        }
+        if(aNewParagraphs.length > 0) {
+            new_content.Internal_Content_RemoveAll();
+            for (let nIdx = 0; nIdx < aNewParagraphs.length; ++nIdx) {
+                let oParagraph = aNewParagraphs[nIdx];
+                new_content.Internal_Content_Add(nIdx, oParagraph, false);
             }
         }
         tx_body.setContent(new_content);

@@ -94,6 +94,10 @@
 	{
 		return new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols);
 	}
+	function GetParagraphText(paragraph)
+	{
+		return paragraph.GetText({ParaEndToSpace : false});
+	}
 	function RemoveTableBorders(table)
 	{
 		function CreateNoneBorder()
@@ -229,6 +233,7 @@
 	AscTest.CreateLogicDocument     = CreateLogicDocument;
 	AscTest.CreateParagraph         = CreateParagraph;
 	AscTest.CreateTable             = CreateTable;
+	AscTest.GetParagraphText        = GetParagraphText;
 	AscTest.RemoveTableBorders      = RemoveTableBorders;
 	AscTest.SetFillingFormMode      = SetFillingFormMode;
 	AscTest.SetEditingMode          = SetEditingMode;
