@@ -2517,19 +2517,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return undefined;
 	};
-	cArray.prototype.foreach = function (action) {
-		if (typeof (action) !== 'function') {
-			return true;
-		}
-		for (var ir = 0; ir < this.rowCount; ir++) {
-			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
-				if (action.call(this, this.array[ir][ic], ir, ic)) {
-					return true;
-				}
-			}
-		}
-		return undefined;
-	};
 	cArray.prototype.foreach2 = function (action, byCol) {
 		if (typeof (action) !== 'function') {
 			return true;

@@ -69,7 +69,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
 	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCOLUMN, cCOLUMNS, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE,
-		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS);
+		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cAREAS, cGETPIVOTDATA, cRTD);
@@ -2703,24 +2703,7 @@ function (window, undefined) {
 		return toRowCol(arg, arguments[1], true);
 	}
 
-	/**
-	 * @constructor
-	 * @extends {AscCommonExcel.cBaseFunction}
-	 */
-	function cWRAPROWS() {
-	}
-
-	//***array-formula***
-	cWRAPROWS.prototype = Object.create(cBaseFunction.prototype);
-	cWRAPROWS.prototype.constructor = cWRAPROWS;
-	cWRAPROWS.prototype.name = 'WRAPROWS';
-	cWRAPROWS.prototype.argumentsMin = 2;
-	cWRAPROWS.prototype.argumentsMax = 3;
-	cWRAPROWS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cWRAPROWS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
-	cWRAPROWS.prototype.argumentsType = [argType.any/*vector*/, argType.number, argType.any];
-	cWRAPROWS.prototype.isXLFN = true;
-	cWRAPROWS.prototype.Calculate = function (arg) {
+	function wrapRowsCols(arg, argument1, toCol) {
 		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
 		if (argError) {
 			return argError;
@@ -2762,12 +2745,31 @@ function (window, undefined) {
 
 		let res = new cArray();
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type || cElementType.array === arg1.type) {
+			let rowCounter = 0, colCounter = 0;
 			arg1.foreach2(function (val) {
-				if (res.array[res.array.length - 1] && res.array[res.array.length - 1].length === arg2) {
-					res.addRow();
+				if (toCol) {
+					/*if (res.array.l && res.array[res.array.length - 1].length === arg2) {
+						res.addRow();
+					}*/
+					if (rowCounter === arg2) {
+						colCounter++;
+						rowCounter = 0;
+					}
+					if (!res.array[rowCounter]) {
+						res.array[rowCounter] = [];
+					}
+					res.array[rowCounter][colCounter] = val;
+					rowCounter++;
+				} else {
+					if (res.array[res.array.length - 1] && res.array[res.array.length - 1].length === arg2) {
+						res.addRow();
+					}
+					res.addElement(val);
 				}
-				res.addElement(val);
 			});
+			if (toCol) {
+				res.recalculate();
+			}
 			res.fillMatrix(arg3);
 		} else {
 			if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
@@ -2776,6 +2778,48 @@ function (window, undefined) {
 			res.addElement(arg1);
 		}
 		return res;
+	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cWRAPROWS() {
+	}
+
+	//***array-formula***
+	cWRAPROWS.prototype = Object.create(cBaseFunction.prototype);
+	cWRAPROWS.prototype.constructor = cWRAPROWS;
+	cWRAPROWS.prototype.name = 'WRAPROWS';
+	cWRAPROWS.prototype.argumentsMin = 2;
+	cWRAPROWS.prototype.argumentsMax = 3;
+	cWRAPROWS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cWRAPROWS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cWRAPROWS.prototype.argumentsType = [argType.any/*vector*/, argType.number, argType.any];
+	cWRAPROWS.prototype.isXLFN = true;
+	cWRAPROWS.prototype.Calculate = function (arg) {
+		return wrapRowsCols(arg, arguments[1]);
+	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cWRAPCOLS() {
+	}
+
+	//***array-formula***
+	cWRAPCOLS.prototype = Object.create(cBaseFunction.prototype);
+	cWRAPCOLS.prototype.constructor = cWRAPCOLS;
+	cWRAPCOLS.prototype.name = 'WRAPCOLS';
+	cWRAPCOLS.prototype.argumentsMin = 2;
+	cWRAPCOLS.prototype.argumentsMax = 3;
+	cWRAPCOLS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cWRAPCOLS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cWRAPCOLS.prototype.argumentsType = [argType.any/*vector*/, argType.number, argType.any];
+	cWRAPCOLS.prototype.isXLFN = true;
+	cWRAPCOLS.prototype.Calculate = function (arg) {
+		return wrapRowsCols(arg, arguments[1], true);
 	}
 
 	var g_oVLOOKUPCache = new VHLOOKUPCache(false);
