@@ -67,7 +67,7 @@ function (window, undefined) {
 	var _func = AscCommonExcel._func;
 
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
-	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCOLUMN, cCOLUMNS, cFORMULATEXT,
+	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCOLUMN, cCOLUMNS, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE,
 		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS);
 
@@ -279,6 +279,67 @@ function (window, undefined) {
 		}
 
 		return new cError(cErrorType.wrong_value_type);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cCHOOSECOLS() {
+	}
+
+	//***array-formula***
+	cCHOOSECOLS.prototype = Object.create(cBaseFunction.prototype);
+	cCHOOSECOLS.prototype.constructor = cCHOOSECOLS;
+	cCHOOSECOLS.prototype.name = 'CHOOSECOLS';
+	cCHOOSECOLS.prototype.argumentsMin = 2;
+	cCHOOSECOLS.prototype.argumentsMax = 32;
+	cCHOOSECOLS.prototype.argumentsType = [argType.reference, [argType.number]];
+	cCHOOSECOLS.prototype.Calculate = function (arg) {
+		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
+		if (argError) {
+			return argError;
+		}
+
+		let arg1 = arg[0];
+		let matrix;
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			matrix = arg1.getMatrix();
+		} else if (arg1.type === cElementType.cellsRange3D) {
+			if (arg1.isSingleSheet()) {
+				matrix = arg1.getMatrix()[0];
+			} else {
+				return new cError(cErrorType.bad_reference);
+			}
+		} else if (arg1.type === cElementType.error) {
+			return arg1;
+		} else if (arg1.type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		} else {
+			matrix = [[arg1]];
+		}
+
+		var dimension = arg1.getDimensions();
+		let res;
+		for (let i = 1; i < arg.length; i++) {
+			let _arg = arg[i];
+			_arg = _arg.tocNumber();
+			if (arg1.type === cElementType.error) {
+				return arg1;
+			}
+			_arg = _arg.tocNumber();
+			if (_arg < 1 && _arg > dimension.col) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			if (!res) {
+				res = new cArray();
+			}
+
+			res.pushCol(matrix, _arg);
+		}
+
+		return res ? res : new cError(cErrorType.wrong_value_type);
 	};
 
 	/**
@@ -2502,7 +2563,7 @@ function (window, undefined) {
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
-	}
+	};
 
 	/**
 	 * @constructor
@@ -2544,7 +2605,7 @@ function (window, undefined) {
 			let maxColCount = 0;
 			for (let j = 0; j < matrix.length; j++) {
 				if (matrix[j]) {
-					maxColCount = Math.max(maxColCount, matrix[j].length)
+					maxColCount = Math.max(maxColCount, matrix[j].length);
 					for (let k = 0; k < matrix[j].length; k++) {
 						if (matrix[j][k]) {
 							if (!unionArray) {
@@ -2569,7 +2630,7 @@ function (window, undefined) {
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
-	}
+	};
 
 	function toRowCol(arg, argument1, toCol) {
 		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
@@ -2680,7 +2741,7 @@ function (window, undefined) {
 	cTOROW.prototype.isXLFN = true;
 	cTOROW.prototype.Calculate = function (arg) {
 		return toRowCol(arg, arguments[1]);
-	}
+	};
 
 	/**
 	 * @constructor
@@ -2701,7 +2762,7 @@ function (window, undefined) {
 	cTOCOL.prototype.isXLFN = true;
 	cTOCOL.prototype.Calculate = function (arg) {
 		return toRowCol(arg, arguments[1], true);
-	}
+	};
 
 	function wrapRowsCols(arg, argument1, toCol) {
 		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
@@ -2799,7 +2860,7 @@ function (window, undefined) {
 	cWRAPROWS.prototype.isXLFN = true;
 	cWRAPROWS.prototype.Calculate = function (arg) {
 		return wrapRowsCols(arg, arguments[1]);
-	}
+	};
 
 	/**
 	 * @constructor
@@ -2820,7 +2881,7 @@ function (window, undefined) {
 	cWRAPCOLS.prototype.isXLFN = true;
 	cWRAPCOLS.prototype.Calculate = function (arg) {
 		return wrapRowsCols(arg, arguments[1], true);
-	}
+	};
 
 	var g_oVLOOKUPCache = new VHLOOKUPCache(false);
 	var g_oHLOOKUPCache = new VHLOOKUPCache(true);

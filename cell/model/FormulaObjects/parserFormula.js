@@ -2711,6 +2711,17 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			this.countElement += this.array[i].length;
 		}
 	};
+	cArray.prototype.pushCol = function (matrix, colNum) {
+		for (let i = 0; i < matrix.length; i++) {
+			if (matrix[i] && matrix[i][colNum]) {
+				if (!this.array[i]) {
+					this.array[i] = [];
+				}
+				this.array[i].push(matrix[i][colNum]);
+			}
+		}
+		this.recalculate();
+	};
 
 
 	/**
