@@ -359,6 +359,7 @@ function (window, undefined) {
 	cCHOOSECOLS.prototype.argumentsMax = 253;
 	cCHOOSECOLS.prototype.argumentsType = [argType.reference, [argType.number]];
 	cCHOOSECOLS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cCHOOSECOLS.prototype.isXLFN = true;
 	cCHOOSECOLS.prototype.Calculate = function (arg) {
 		return chooseRowsCols(arg, arguments[1], true);
 	};
@@ -378,6 +379,7 @@ function (window, undefined) {
 	cCHOOSEROWS.prototype.argumentsMax = 253;
 	cCHOOSEROWS.prototype.argumentsType = [argType.reference, [argType.number]];
 	cCHOOSEROWS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cCHOOSEROWS.prototype.isXLFN = true;
 	cCHOOSEROWS.prototype.Calculate = function (arg) {
 		return chooseRowsCols(arg, arguments[1]);
 	};
