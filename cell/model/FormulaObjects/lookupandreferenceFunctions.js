@@ -1483,7 +1483,59 @@ function (window, undefined) {
 			matrix = [[arg1]];
 		}
 
-		
+		var dimension = arg1.getDimensions();
+
+		let arg2 = arg[1];
+		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
+			//_arg = _arg.getValue2(0,0);
+			return new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.array === arg2.type) {
+			//_arg = _arg.getElementRowCol(0, 0);
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+
+		if (cElementType.empty === arg2.type) {
+			arg2 = null;
+		} else {
+			arg2 = arg2.tocNumber();
+			if (arg2.type === cElementType.error) {
+				return arg2;
+			}
+			arg2 = arg2.toNumber();
+			arg2 = parseInt(arg2);
+			if (Math.abs(arg2) < 1 || Math.abs(arg2) > dimension.row) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		let arg3 = arg[1];
+		if (cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
+			//_arg = _arg.getValue2(0,0);
+			return new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.array === arg3.type) {
+			//_arg = _arg.getElementRowCol(0, 0);
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+
+		if (cElementType.empty === arg3.type) {
+			arg3 = null;
+		} else {
+			arg3 = arg3.tocNumber();
+			if (arg3.type === cElementType.error) {
+				return arg3;
+			}
+			arg3 = arg3.toNumber();
+			arg3 = parseInt(arg3);
+			if (Math.abs(arg3) < 1 || Math.abs(arg3) > dimension.col) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		let res = new cArray();
+		res = res.takeFromMatrix(arg2, arg3);
+		return res ? res : new cError(cErrorType.wrong_value_type);
 	};
 
 
