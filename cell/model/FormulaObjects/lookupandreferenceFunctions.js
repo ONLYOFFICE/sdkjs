@@ -326,14 +326,16 @@ function (window, undefined) {
 			let _arg = arg[i];
 
 			if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type) {
-				_arg = _arg.getValue2(0,0);
+				//_arg = _arg.getValue2(0,0);
+				return new cError(cErrorType.wrong_value_type);
 			} else if (cElementType.array === _arg.type) {
-				_arg = _arg.getElementRowCol(0, 0);
+				//_arg = _arg.getElementRowCol(0, 0);
+				return new cError(cErrorType.wrong_value_type);
 			}
 
 			_arg = _arg.tocNumber();
-			if (arg1.type === cElementType.error) {
-				return arg1;
+			if (_arg.type === cElementType.error) {
+				return _arg;
 			}
 			_arg = _arg.toNumber();
 			let reverse = _arg < 0;
