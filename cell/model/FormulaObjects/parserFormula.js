@@ -2722,6 +2722,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		this.recalculate();
 	};
+	cArray.prototype.pushRow = function (matrix, colNum) {
+		if (matrix && matrix[colNum]) {
+			this.array.push(matrix[colNum]);
+			this.recalculate();
+		}
+	};
+
 
 
 	/**

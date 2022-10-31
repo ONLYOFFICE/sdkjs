@@ -67,7 +67,7 @@ function (window, undefined) {
 	var _func = AscCommonExcel._func;
 
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
-	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCOLUMN, cCOLUMNS, cFORMULATEXT,
+	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE,
 		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS);
 
@@ -281,22 +281,7 @@ function (window, undefined) {
 		return new cError(cErrorType.wrong_value_type);
 	};
 
-	/**
-	 * @constructor
-	 * @extends {AscCommonExcel.cBaseFunction}
-	 */
-	function cCHOOSECOLS() {
-	}
-
-	//***array-formula***
-	cCHOOSECOLS.prototype = Object.create(cBaseFunction.prototype);
-	cCHOOSECOLS.prototype.constructor = cCHOOSECOLS;
-	cCHOOSECOLS.prototype.name = 'CHOOSECOLS';
-	cCHOOSECOLS.prototype.argumentsMin = 2;
-	cCHOOSECOLS.prototype.argumentsMax = 253;
-	cCHOOSECOLS.prototype.argumentsType = [argType.reference, [argType.number]];
-	cCHOOSECOLS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
-	cCHOOSECOLS.prototype.Calculate = function (arg) {
+	function chooseRowsCols(arg, argument1, byCol) {
 		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
 		if (argError) {
 			return argError;
@@ -341,7 +326,7 @@ function (window, undefined) {
 			let reverse = _arg < 0;
 			_arg = Math.abs(_arg);
 			_arg = parseInt(_arg);
-			if (_arg < 1 || _arg > dimension.col) {
+			if (_arg < 1 || (_arg > dimension.col && byCol) || (_arg > dimension.row && !byCol)) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
@@ -349,10 +334,52 @@ function (window, undefined) {
 				res = new cArray();
 			}
 
-			res.pushCol(matrix, reverse ? dimension.col - (_arg - 1) - 1 : _arg - 1);
+			if (byCol) {
+				res.pushCol(matrix, reverse ? dimension.col - (_arg - 1) - 1 : _arg - 1);
+			} else {
+				res.pushRow(matrix, reverse ? dimension.row - (_arg - 1) - 1 : _arg - 1);
+			}
 		}
 
 		return res ? res : new cError(cErrorType.wrong_value_type);
+	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cCHOOSECOLS() {
+	}
+
+	//***array-formula***
+	cCHOOSECOLS.prototype = Object.create(cBaseFunction.prototype);
+	cCHOOSECOLS.prototype.constructor = cCHOOSECOLS;
+	cCHOOSECOLS.prototype.name = 'CHOOSECOLS';
+	cCHOOSECOLS.prototype.argumentsMin = 2;
+	cCHOOSECOLS.prototype.argumentsMax = 253;
+	cCHOOSECOLS.prototype.argumentsType = [argType.reference, [argType.number]];
+	cCHOOSECOLS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cCHOOSECOLS.prototype.Calculate = function (arg) {
+		return chooseRowsCols(arg, arguments[1], true);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cCHOOSEROWS() {
+	}
+
+	//***array-formula***
+	cCHOOSEROWS.prototype = Object.create(cBaseFunction.prototype);
+	cCHOOSEROWS.prototype.constructor = cCHOOSEROWS;
+	cCHOOSEROWS.prototype.name = 'CHOOSEROWS';
+	cCHOOSEROWS.prototype.argumentsMin = 2;
+	cCHOOSEROWS.prototype.argumentsMax = 253;
+	cCHOOSEROWS.prototype.argumentsType = [argType.reference, [argType.number]];
+	cCHOOSEROWS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cCHOOSEROWS.prototype.Calculate = function (arg) {
+		return chooseRowsCols(arg, arguments[1]);
 	};
 
 	/**
