@@ -2372,6 +2372,194 @@ $(function () {
 		//testArrayFormula2(assert, "CHOOSE", 2, 9);
 	});
 
+	QUnit.test("Test: \"CHOOSECOLS\"", function (assert) {
+		//1. добавляем общие тесты
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("");
+		ws.getRange2("A4").setValue("4");
+		ws.getRange2("A5").setValue("#N/A");
+		ws.getRange2("A6").setValue("f");
+
+		ws.getRange2("B1").setValue("q");
+		ws.getRange2("B2").setValue("w");
+		ws.getRange2("B3").setValue("e");
+		ws.getRange2("B4").setValue("test");
+		ws.getRange2("B5").setValue("hhh");
+		ws.getRange2("B6").setValue("g");
+
+		ws.getRange2("C1").setValue("r");
+		ws.getRange2("C2").setValue("3");
+		ws.getRange2("C3").setValue("5");
+		ws.getRange2("C4").setValue("");
+		ws.getRange2("C5").setValue("6");
+		ws.getRange2("C6").setValue("h");
+
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C6;-1;1)", "A1", ws);
+		assert.ok(oParser.parse());
+		let array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 'r');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3);
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 5);
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 6);
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 'h');
+
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1);
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), 4);
+		assert.strictEqual(array.getElementRowCol(4, 1).getValue(), '#N/A');
+		assert.strictEqual(array.getElementRowCol(5, 1).getValue(), 'f');
+
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C6;-2;3)", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 'q');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'w');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 'e');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 'test');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 'hhh');
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 'g');
+
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 'r');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 3);
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 5);
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(4, 1).getValue(), 6);
+		assert.strictEqual(array.getElementRowCol(5, 1).getValue(), 'h');
+
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C6;-4;3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C6;-2;4)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C6;-2;0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+
+		//2. аргументы - разные типы. нужно пербрать все аргументы
+		//2.1 аргумент - number
+		oParser = new parserFormula("WRAPCOLS(1,3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.2 аргумент - string
+		oParser = new parserFormula("WRAPCOLS(\"test\",3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test");
+		//2.3 аргумент - bool
+		oParser = new parserFormula("WRAPCOLS(true,3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "TRUE");
+		//2.4 аргумент - error
+		oParser = new parserFormula("WRAPCOLS(#VALUE!,3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.5 аргумент - empty
+		oParser = new parserFormula("WRAPCOLS(,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.6 аргумент - cellsRange
+		//2.7 аргумент - cell
+		oParser = new parserFormula("WRAPCOLS(B1, 10)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test2");
+
+		//2.8 аргумент - array
+		oParser = new parserFormula("WRAPCOLS({2;\"\";\"test\"},2)", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 'test');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '#N/A');
+
+
+		//2.2 аргумент - string
+		oParser = new parserFormula("WRAPCOLS(1,\"test\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.3 аргумент - bool
+		oParser = new parserFormula("WRAPCOLS(1,true)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.4 аргумент - error
+		oParser = new parserFormula("WRAPCOLS(1, #VALUE!)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.5 аргумент - empty
+		oParser = new parserFormula("WRAPCOLS(1,)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+
+		//2.6 аргумент - cellsRange
+		//2.7 аргумент - cell
+		oParser = new parserFormula("WRAPCOLS(1,A1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		oParser = new parserFormula("WRAPCOLS(1,A1:B5)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		//2.8 аргумент - array
+		oParser = new parserFormula("WRAPCOLS(1,{2;\"\";\"test\"})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+
+		//2. аргументы - разные типы. нужно пербрать все аргументы
+		//2.1 аргумент - number
+		oParser = new parserFormula("WRAPCOLS(1,3,1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+
+		//2.2 аргумент - string
+		oParser = new parserFormula("WRAPCOLS(1,3,\"test\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.3 аргумент - bool
+		oParser = new parserFormula("WRAPCOLS(1,3,true)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.4 аргумент - error
+		oParser = new parserFormula("WRAPCOLS(1,3,#VALUE!)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		//2.5 аргумент - empty
+		oParser = new parserFormula("WRAPCOLS(1,3,)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.6 аргумент - cellsRange
+		//2.7 аргумент - cell
+		oParser = new parserFormula("WRAPCOLS(1,3, B1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		//2.8 аргумент - array
+		oParser = new parserFormula("WRAPCOLS(1,3, {1,2,3})", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1);
+
+		oParser = new parserFormula("WRAPCOLS(1,3, B1:B2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+	});
+
 	QUnit.test("Test: \"BETA.INV\"", function (assert) {
 		ws.getRange2("A2").setValue("0.685470581");
 		ws.getRange2("A3").setValue("8");

@@ -293,8 +293,9 @@ function (window, undefined) {
 	cCHOOSECOLS.prototype.constructor = cCHOOSECOLS;
 	cCHOOSECOLS.prototype.name = 'CHOOSECOLS';
 	cCHOOSECOLS.prototype.argumentsMin = 2;
-	cCHOOSECOLS.prototype.argumentsMax = 32;
+	cCHOOSECOLS.prototype.argumentsMax = 253;
 	cCHOOSECOLS.prototype.argumentsType = [argType.reference, [argType.number]];
+	cCHOOSECOLS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cCHOOSECOLS.prototype.Calculate = function (arg) {
 		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
 		if (argError) {
@@ -323,12 +324,22 @@ function (window, undefined) {
 		let res;
 		for (let i = 1; i < arg.length; i++) {
 			let _arg = arg[i];
+
+			if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type) {
+				_arg = _arg.getValue2(0,0);
+			} else if (cElementType.array === _arg.type) {
+				_arg = _arg.getElementRowCol(0, 0);
+			}
+
 			_arg = _arg.tocNumber();
 			if (arg1.type === cElementType.error) {
 				return arg1;
 			}
-			_arg = _arg.tocNumber();
-			if (_arg < 1 && _arg > dimension.col) {
+			_arg = _arg.toNumber();
+			let reverse = _arg < 0;
+			_arg = Math.abs(_arg);
+			_arg = parseInt(_arg);
+			if (_arg < 1 || _arg > dimension.col) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
@@ -336,7 +347,7 @@ function (window, undefined) {
 				res = new cArray();
 			}
 
-			res.pushCol(matrix, _arg);
+			res.pushCol(matrix, reverse ? dimension.col - (_arg - 1) - 1 : _arg - 1);
 		}
 
 		return res ? res : new cError(cErrorType.wrong_value_type);
