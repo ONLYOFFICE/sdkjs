@@ -7813,8 +7813,6 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1);
 		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2);
 
-
-
 		//2. аргументы - разные типы. нужно пербрать все аргументы
 		//2.1 аргумент - number
 		oParser = new parserFormula("TAKE(1,1)", "A1", ws);
@@ -7850,8 +7848,6 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
 		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), '');
 		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 'test');
-		
-
 
 		//2.2 аргумент - string
 		oParser = new parserFormula("TAKE(1,\"test\")", "A1", ws);
