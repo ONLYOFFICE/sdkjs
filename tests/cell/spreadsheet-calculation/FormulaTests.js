@@ -7728,6 +7728,13 @@ $(function () {
 		ws.getRange2("C5").setValue("6");
 		ws.getRange2("C6").setValue("h");
 
+		ws.getRange2("D1").setValue("");
+		ws.getRange2("D2").setValue("");
+		ws.getRange2("D3").setValue("");
+		ws.getRange2("D4").setValue("");
+		ws.getRange2("D5").setValue("");
+		ws.getRange2("D6").setValue("");
+
 
 		oParser = new parserFormula("TAKE(A1:C6,1,2)", "A1", ws);
 		assert.ok(oParser.parse());
