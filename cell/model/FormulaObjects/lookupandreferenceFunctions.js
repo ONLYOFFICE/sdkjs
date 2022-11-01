@@ -1459,6 +1459,7 @@ function (window, undefined) {
 	cTAKE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTAKE.prototype.isXLFN = true;
 	cTAKE.prototype.argumentsType = [argType.reference, argType.number, argType.number];
+	cTAKE.prototype.arrayIndexes = {0: 1};
 	cTAKE.prototype.Calculate = function (arg) {
 		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
 		if (argError) {
@@ -1486,8 +1487,6 @@ function (window, undefined) {
 		let array = new cArray();
 		array.fillFromArray(matrix);
 
-		var dimension = arg1.getDimensions();
-
 		let arg2 = arg[1];
 		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
 			//_arg = _arg.getValue2(0,0);
@@ -1507,12 +1506,12 @@ function (window, undefined) {
 			}
 			arg2 = arg2.toNumber();
 			arg2 = parseInt(arg2);
-			if (Math.abs(arg2) < 1 || Math.abs(arg2) > dimension.row) {
+			if (Math.abs(arg2) < 1) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 		}
 
-		let arg3 = arg[2];
+		let arg3 = arg[2] ? arg[2] : new cEmpty();
 		if (cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
 			//_arg = _arg.getValue2(0,0);
 			return new cError(cErrorType.wrong_value_type);
@@ -1531,7 +1530,7 @@ function (window, undefined) {
 			}
 			arg3 = arg3.toNumber();
 			arg3 = parseInt(arg3);
-			if (Math.abs(arg3) < 1 || Math.abs(arg3) > dimension.col) {
+			if (Math.abs(arg3) < 1) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 		}

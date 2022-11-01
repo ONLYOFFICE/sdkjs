@@ -7735,113 +7735,154 @@ $(function () {
 
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1);
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 'q');
-		
 
-
-		oParser = new parserFormula("CHOOSECOLS(A1:C6;-2;3)", "A1", ws);
+		oParser = new parserFormula("TAKE(A1:D5,100,100)", "A1", ws);
 		assert.ok(oParser.parse());
 		array = oParser.calculate();
 
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 'q');
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'w');
-		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 'e');
-		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 'test');
-		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 'hhh');
-		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 'g');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 4);
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), '#N/A');
 
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 'r');
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 3);
-		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 5);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 'q');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 'w');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 'e');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), 'test');
+		assert.strictEqual(array.getElementRowCol(4, 1).getValue(), 'hhh');
+
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 'r');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 3);
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), 5);
+		assert.strictEqual(array.getElementRowCol(3, 2).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(4, 2).getValue(), 6);
+
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(1, 3).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(2, 3).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(3, 3).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(4, 3).getValue(), '');
+
+
+		oParser = new parserFormula("TAKE(A1:D5,-1,-4)", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), '#N/A');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 'hhh');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 6);
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), '');
+
+		oParser = new parserFormula("TAKE(A1:D5,,-2)", "A1", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 'r');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3);
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 5);
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 6);
+
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), '');
 		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), '');
-		assert.strictEqual(array.getElementRowCol(4, 1).getValue(), 6);
-		assert.strictEqual(array.getElementRowCol(5, 1).getValue(), 'h');
+		assert.strictEqual(array.getElementRowCol(4, 1).getValue(), '');
 
-
-		oParser = new parserFormula("CHOOSECOLS(A1:C6;-4;3)", "A1", ws);
+		oParser = new parserFormula("TAKE(A1:D5,2,)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		array = oParser.calculate();
 
-		oParser = new parserFormula("CHOOSECOLS(A1:C6;-2;4)", "A1", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2);
 
-		oParser = new parserFormula("CHOOSECOLS(A1:C6;-2;0)", "A1", ws);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 'q');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 'w');
+
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 'r');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 3);
+
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(1, 3).getValue(), '');
+
+		oParser = new parserFormula("TAKE(A1:D5,2)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		array = oParser.calculate();
+
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2);
+
 
 
 		//2. аргументы - разные типы. нужно пербрать все аргументы
 		//2.1 аргумент - number
-		oParser = new parserFormula("CHOOSECOLS(1,1)", "A1", ws);
+		oParser = new parserFormula("TAKE(1,1)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
 		//2.2 аргумент - string
-		oParser = new parserFormula("CHOOSECOLS(\"test\",1)", "A1", ws);
+		oParser = new parserFormula("TAKE(\"test\",1)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test");
 		//2.3 аргумент - bool
-		oParser = new parserFormula("CHOOSECOLS(true,1)", "A1", ws);
+		oParser = new parserFormula("TAKE(true,1)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "TRUE");
 		//2.4 аргумент - error
-		oParser = new parserFormula("CHOOSECOLS(#VALUE!,3)", "A1", ws);
+		oParser = new parserFormula("TAKE(#VALUE!,3)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 		//2.5 аргумент - empty
-		oParser = new parserFormula("CHOOSECOLS(,2)", "A1", ws);
+		oParser = new parserFormula("TAKE(,2)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 		//2.6 аргумент - cellsRange
 		//2.7 аргумент - cell
-		oParser = new parserFormula("CHOOSECOLS(B1, 1)", "A1", ws);
+		oParser = new parserFormula("TAKE(B1, 1)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "q");
 
 		//2.8 аргумент - array
-		oParser = new parserFormula("CHOOSECOLS({2;\"\";\"test\"},3)", "A1", ws);
+		oParser = new parserFormula("TAKE({2;\"\";\"test\"},3)", "A1", ws);
 		assert.ok(oParser.parse());
 		array = oParser.calculate();
 
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
-
-		//2.8 аргумент - array
-		oParser = new parserFormula("CHOOSECOLS({2,\"\",\"test\"},3)", "A1", ws);
-		assert.ok(oParser.parse());
-		array = oParser.calculate();
-
-		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test");
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), '');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 'test');
+		
 
 
 		//2.2 аргумент - string
-		oParser = new parserFormula("CHOOSECOLS(1,\"test\")", "A1", ws);
+		oParser = new parserFormula("TAKE(1,\"test\")", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 		//2.3 аргумент - bool
-		oParser = new parserFormula("CHOOSECOLS(1,true)", "A1", ws);
+		oParser = new parserFormula("TAKE(1,true)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
 		//2.4 аргумент - error
-		oParser = new parserFormula("CHOOSECOLS(1, #VALUE!)", "A1", ws);
+		oParser = new parserFormula("TAKE(1, #VALUE!)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 		//2.5 аргумент - empty
-		oParser = new parserFormula("CHOOSECOLS(1,)", "A1", ws);
+		oParser = new parserFormula("TAKE(1,)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
 
 
 		//2.6 аргумент - cellsRange
 		//2.7 аргумент - cell
-		oParser = new parserFormula("CHOOSECOLS(1,A1)", "A1", ws);
+		oParser = new parserFormula("TAKE(1,A1)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
 
-		oParser = new parserFormula("CHOOSECOLS(1,A1:B5)", "A1", ws);
+		oParser = new parserFormula("TAKE(1,A1:B5)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
 		//2.8 аргумент - array
-		oParser = new parserFormula("CHOOSECOLS(1,{2;\"\";\"test\"})", "A1", ws);
+		oParser = new parserFormula("TAKE(1,{2;\"\";\"test\"})", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 	});
