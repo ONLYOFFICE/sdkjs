@@ -1483,6 +1483,9 @@ function (window, undefined) {
 			matrix = [[arg1]];
 		}
 
+		let array = new cArray();
+		array.fillFromArray(matrix);
+
 		var dimension = arg1.getDimensions();
 
 		let arg2 = arg[1];
@@ -1509,7 +1512,7 @@ function (window, undefined) {
 			}
 		}
 
-		let arg3 = arg[1];
+		let arg3 = arg[2];
 		if (cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
 			//_arg = _arg.getValue2(0,0);
 			return new cError(cErrorType.wrong_value_type);
@@ -1533,8 +1536,7 @@ function (window, undefined) {
 			}
 		}
 
-		let res = new cArray();
-		res = res.takeFromMatrix(arg2, arg3);
+		let res = array.crop(arg2, arg3);
 		return res ? res : new cError(cErrorType.wrong_value_type);
 	};
 

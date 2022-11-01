@@ -2728,6 +2728,29 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			this.recalculate();
 		}
 	};
+	cArray.prototype.crop = function (row, col) {
+		let newArray = this.array;
+		let dimensions = this.getDimensions();
+		if (row && Math.abs(row) < dimensions.row) {
+			if (row < 0) {
+				newArray = newArray.splice(this.array.length - Math.abs(row));
+			} else {
+				newArray = newArray.splice(0, row);
+			}
+		}
+		if (col && Math.abs(col) < dimensions.col) {
+			for (let i = 0; i < newArray.length; i++) {
+				if (col < 0) {
+					newArray[i].splice(newArray.length - Math.abs(col));
+				} else {
+					newArray[i].splice(0, col);
+				}
+			}
+		}
+		let res = new cArray();
+		res.fillFromArray(newArray);
+		return res;
+	};
 
 
 
