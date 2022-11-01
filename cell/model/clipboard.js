@@ -2414,6 +2414,7 @@
 						if(_copy.convertFromSmartArt) {
 							_copy.convertFromSmartArt(true);
 						}
+						_copy.clearChartDataCache();
 						oIdMap[data.Drawings[i].graphicObject.Id] = _copy.Id;
 						data.Drawings[i].graphicObject = _copy;
 						aCopies.push(data.Drawings[i].graphicObject);
@@ -2444,7 +2445,6 @@
 
 						drawingObject.graphicObject.setDrawingObjects(ws.objectRender);
 						drawingObject.graphicObject.setWorksheet(ws.model);
-						drawingObject.graphicObject.convertFromSmartArt();
 						xfrm.setOffX(curCol);
 						xfrm.setOffY(curRow);
 						drawingObject.graphicObject.addToDrawingObjects();
@@ -2613,6 +2613,10 @@
 					xfrm.setOffY(curRow);
 
 					drawingObject = ws.objectRender.cloneDrawingObject(drawingObject);
+					if(graphicObject.convertFromSmartArt) {
+						graphicObject.convertFromSmartArt(true);
+					}
+					graphicObject.clearChartDataCache();
 					graphicObject.setDrawingBase(drawingObject);
 					graphicObject.setDrawingObjects(ws.objectRender);
 					graphicObject.setWorksheet(ws.model);

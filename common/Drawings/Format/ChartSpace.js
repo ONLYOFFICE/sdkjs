@@ -3721,6 +3721,16 @@ var GLOBAL_PATH_COUNT = 0;
         var bVert = (nInfo & AscFormat.SERIES_FLAG_HOR_VALUE) !== 0;
         return {range: sRange, bVert: bVert};
     };
+
+    CChartSpace.prototype.clearDataCache = function() {
+        let aSeries = this.getAllSeries();
+        for(let nSer = 0; nSer < aSeries.length; ++nSer) {
+            aSeries[nSer].clearDataCache();
+        }
+    };
+    CChartSpace.prototype.clearChartDataCache = function() {
+        this.clearDataCache();
+    };
     CChartSpace.prototype.recalculateReferences = function() {
         var oSelectedSeries = this.getSelectedSeries();
         if(AscFormat.isRealNumber(this.selection.series)) {

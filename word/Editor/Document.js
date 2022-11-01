@@ -23572,22 +23572,6 @@ CDocument.prototype.IsAutoCorrectHyperlinks = function()
 	return this.AutoCorrectSettings.IsHyperlinks();
 };
 /**
- * Получаем массив исключений для автозамены первой буквы предложения
- * @returns {Array.string}
- */
-CDocument.prototype.GetFirstLetterAutoCorrectExceptions = function()
-{
-	return this.AutoCorrectSettings.GetFirstLetterAutoCorrectExceptions();
-};
-/**
- * Задаем массив исключений для автозамены первой буквы предложения
- * @returns {Array.string}
- */
-CDocument.prototype.SetFirstLetterAutoCorrectExceptions = function(arrExceptions)
-{
-	this.AutoCorrectSettings.SetFirstLetterAutoCorrectExceptions(arrExceptions);
-};
-/**
  * Получаем идентификатор текущего пользователя
  * @param [isConnectionId=false] {boolean} true - Id соединения пользователя или false - Id пользователя
  * @returns {string}

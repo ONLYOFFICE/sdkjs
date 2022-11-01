@@ -11773,22 +11773,6 @@ CPresentation.prototype.IsAutoCorrectHyperlinks = function()
 {
     return this.AutoCorrectSettings.IsHyperlinks();
 };
-/**
- * Получаем массив исключений для автозамены первой буквы предложения
- * @returns {Array.string}
- */
-CPresentation.prototype.GetFirstLetterAutoCorrectExceptions = function()
-{
-    return this.AutoCorrectSettings.GetFirstLetterAutoCorrectExceptions();
-};
-/**
- * Задаем массив исключений для автозамены первой буквы предложения
- * @returns {Array.string}
- */
-CPresentation.prototype.SetFirstLetterAutoCorrectExceptions = function(arrExceptions)
-{
-    this.AutoCorrectSettings.SetFirstLetterAutoCorrectExceptions(arrExceptions);
-};
 CPresentation.prototype.StopAnimation = function()
 {
     for(var nSlide = 0; nSlide < this.Slides.length; ++nSlide)

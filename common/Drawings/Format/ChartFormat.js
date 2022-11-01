@@ -3575,6 +3575,26 @@
     }
 
     InitClass(CSeriesBase, CBaseChartObject, AscDFH.historyitem_type_Unknown);
+    CSeriesBase.prototype.clearDataCache = function() {
+        if(this.val) {
+            this.val.clearDataCache();
+        }
+        if(this.yVal) {
+            this.yVal.clearDataCache();
+        }
+        if(this.cat) {
+            this.cat.clearDataCache();
+        }
+        if(this.xVal) {
+            this.xVal.clearDataCache();
+        }
+        if(this.tx) {
+            this.tx.clearDataCache();
+        }
+        if(this.errBars) {
+            this.errBars.clearDataCache();
+        }
+    };
     CSeriesBase.prototype.updateData = function(displayEmptyCellsAs, displayHidden) {
         if(this.val) {
             this.val.update(displayEmptyCellsAs, displayHidden, this);
@@ -9022,6 +9042,11 @@
             this.strRef.updateCache();
         }
     };
+    CChartText.prototype.clearDataCache = function() {
+        if(this.strRef) {
+            this.strRef.clearDataCache();
+        }
+    };
 
     function CDLbls() {
         CBaseChartObject.call(this);
@@ -9725,6 +9750,14 @@
         }
         if(this.minus) {
             this.minus.update();
+        }
+    };
+    CErrBars.prototype.clearDataCache = function() {
+        if(this.plus) {
+            this.plus.clearDataCache();
+        }
+        if(this.minus) {
+            this.minus.clearDataCache();
         }
     };
     CErrBars.prototype.handleOnChangeSheetName = function(sOldSheetName, sNewSheetName) {
@@ -10819,6 +10852,11 @@
             this.numRef.updateCache();
         }
     };
+    CMinusPlus.prototype.clearDataCache = function() {
+        if(this.numRef) {
+            this.numRef.clearDataCache();
+        }
+    };
     CMinusPlus.prototype.handleOnChangeSheetName = function(sOldSheetName, sNewSheetName) {
         if(this.numRef) {
             this.numRef.handleOnChangeSheetName(sOldSheetName, sNewSheetName);
@@ -11056,6 +11094,8 @@
     };
     CChartRefBase.prototype.updateCache = function() {
     };
+    CChartRefBase.prototype.clearDataCache = function() {
+    };
     CChartRefBase.prototype.updateCacheAndCat = function() {
         if(this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Cat) {
             this.parent.update();
@@ -11087,6 +11127,11 @@
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_MultiLvlStrRef_SetMultiLvlStrCache, this.multiLvlStrCache, pr));
         this.multiLvlStrCache = pr;
         this.setParentToChild(pr);
+    };
+    CMultiLvlStrRef.prototype.clearDataCache = function() {
+        if(this.multiLvlStrCache) {
+            this.setMultiLvlStrCache(null);
+        }
     };
     CMultiLvlStrRef.prototype.updateCache = function(oSeries) {
         AscFormat.ExecuteNoHistory(function() {
@@ -11141,6 +11186,11 @@
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_NumRef_SetNumCache, this.numCache, pr));
         this.numCache = pr;
         this.setParentToChild(pr);
+    };
+    CNumRef.prototype.clearDataCache = function() {
+        if(this.numCache) {
+            this.setNumCache(null);
+        }
     };
     CNumRef.prototype.updateCache = function(displayEmptyCellsAs, displayHidden, ser) {
         AscFormat.ExecuteNoHistory(function() {
@@ -11225,6 +11275,11 @@
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_StrRef_SetStrCache, this.strCache, pr));
         this.strCache = pr;
         this.setParentToChild(pr);
+    };
+    CStrRef.prototype.clearDataCache = function() {
+        if(this.strCache) {
+            this.setStrCache(null);
+        }
     };
     CStrRef.prototype.updateCache = function() {
         AscFormat.ExecuteNoHistory(function() {
@@ -12667,6 +12722,11 @@
             this.strRef.updateCache();
         }
     };
+    CTx.prototype.clearDataCache = function() {
+        if(this.strRef) {
+            this.strRef.clearDataCache();
+        }
+    };
     CTx.prototype.handleOnChangeSheetName = function(sOldSheetName, sNewSheetName) {
         if(this.strRef) {
             this.strRef.handleOnChangeSheetName(sOldSheetName, sNewSheetName);
@@ -13838,6 +13898,11 @@
         }
         return false;
     };
+    CYVal.prototype.clearDataCache = function() {
+        if(this.numRef) {
+            this.numRef.clearDataCache();
+        }
+    };
     CYVal.prototype.update = function(displayEmptyCellsAs, displayHidden, ser) {
         if(this.numRef) {
             this.numRef.updateCache(displayEmptyCellsAs, displayHidden, ser);
@@ -14115,6 +14180,17 @@
             oLit = this.multiLvlStrRef.getFirstLvlCache();
         }
         return oLit;
+    };
+    CCat.prototype.clearDataCache = function() {
+        if(this.numRef) {
+            this.numRef.clearDataCache();
+        }
+        if(this.strRef) {
+            this.strRef.clearDataCache();
+        }
+        if(this.multiLvlStrRef) {
+            this.multiLvlStrRef.clearDataCache();
+        }
     };
     CCat.prototype.update = function(oSeries) {
         return AscFormat.ExecuteNoHistory(function(){

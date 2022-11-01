@@ -34,81 +34,183 @@
 
 (function (window)
 {
-	const EXCEPTIONS = {};
+	const DEFAULT_EXCEPTIONS = {};
 
-	EXCEPTIONS[lcid_enUS] = {
-		'a' : ["a", "abbr", "abs", "acct", "addn", "adj", "advt", "al", "alt", "amt", "anon", "approx", "appt", "apr", "apt", "assn", "assoc", "asst", "attn", "attrib", "aug", "aux", "ave", "avg"],
-		'b' : ["b", "bal", "bldg", "blvd", "bot", "bro", "bros"],
-		'c' : ["c", "ca", "calc", "cc", "cert", "certif", "cf", "cit", "cm", "co", "comp", "conf", "confed", "const", "cont", "contrib", "coop", "corp", "ct"],
-		'd' : ["d", "dbl", "dec", "decl", "def", "defn", "dept", "deriv", "diag", "diff", "div", "dm", "dr", "dup", "dupl"],
-		'e' : ["e", "encl", "eq", "eqn", "equip", "equiv", "esp", "esq", "est", "etc", "excl", "ext"],
-		'f' : ["f", "feb", "ff", "fig", "freq", "fri", "ft", "fwd"],
-		'g' : ["g", "gal", "gen", "gov", "govt"],
-		'h' : ["h", "hdqrs", "hgt", "hist", "hosp", "hq", "hr", "hrs", "ht", "hwy"],
-		'i' : ["i", "ib", "ibid", "illus", "in", "inc", "incl", "incr", "int", "intl", "irreg", "ital"],
-		'j' : ["j", "jan", "jct", "jr", "jul", "jun"],
-		'k' : ["k", "kg", "km", "kmh"],
-		'l' : ["l", "lang", "lb", "lbs", "lg", "lit", "ln", "lt"],
-		'm' : ["m", "mar", "masc", "max", "mfg", "mg", "mgmt", "mgr", "mgt", "mhz", "mi", "min", "misc", "mkt", "mktg", "ml", "mm", "mngr", "mon", "mph", "mr", "mrs", "msec", "msg", "mt", "mtg", "mtn", "mun"],
-		'n' : ["n", "na", "name", "nat", "natl", "ne", "neg", "ng", "no", "norm", "nos", "nov", "num", "nw"],
-		'o' : ["o", "obj", "occas", "oct", "op", "opt", "ord", "org", "orig", "oz"],
-		'p' : ["p", "pa", "pg", "pkg", "pl", "pls", "pos", "pp", "ppt", "pred", "pref", "prepd", "prev", "priv", "prof", "proj", "pseud", "psi", "pt", "publ"],
-		'q' : ["q", "qlty", "qt", "qty"],
-		'r' : ["r", "rd", "re", "rec", "ref", "reg", "rel", "rep", "req", "reqd", "resp", "rev"],
-		's' : ["s", "sat", "sci", "se", "sec", "sect", "sep", "sept", "seq", "sig", "soln", "soph", "spec", "specif", "sq", "sr", "st", "sta", "stat", "std", "subj", "subst", "sun", "supvr", "sw"],
-		't' : ["t", "tbs", "tbsp", "tech", "tel", "temp", "thur", "thurs", "tkt", "tot", "transf", "transl", "tsp", "tues"],
-		'u' : ["u", "univ", "util"],
-		'v' : ["v", "var", "veg", "vert", "viz", "vol", "vs"],
-		'w' : ["w", "wed", "wk", "wkly", "wt"],
-		'x' : ["x"],
-		'y' : ["y", "yd", "yr"],
-		'z' : ["z"]
-	};
+	DEFAULT_EXCEPTIONS[lcid_enUS] = [
+		"a", "abbr", "abs", "acct", "addn", "adj", "advt", "al", "alt", "amt", "anon", "approx", "appt", "apr", "apt", "assn", "assoc", "asst", "attn", "attrib", "aug", "aux", "ave", "avg",
+		"b", "bal", "bldg", "blvd", "bot", "bro", "bros",
+		"c", "ca", "calc", "cc", "cert", "certif", "cf", "cit", "cm", "co", "comp", "conf", "confed", "const", "cont", "contrib", "coop", "corp", "ct",
+		"d", "dbl", "dec", "decl", "def", "defn", "dept", "deriv", "diag", "diff", "div", "dm", "dr", "dup", "dupl",
+		"e", "encl", "eq", "eqn", "equip", "equiv", "esp", "esq", "est", "etc", "excl", "ext",
+		"f", "feb", "ff", "fig", "freq", "fri", "ft", "fwd",
+		"g", "gal", "gen", "gov", "govt",
+		"h", "hdqrs", "hgt", "hist", "hosp", "hq", "hr", "hrs", "ht", "hwy",
+		"i", "ib", "ibid", "illus", "in", "inc", "incl", "incr", "int", "intl", "irreg", "ital",
+		"j", "jan", "jct", "jr", "jul", "jun",
+		"k", "kg", "km", "kmh",
+		"l", "lang", "lb", "lbs", "lg", "lit", "ln", "lt",
+		"m", "mar", "masc", "max", "mfg", "mg", "mgmt", "mgr", "mgt", "mhz", "mi", "min", "misc", "mkt", "mktg", "ml", "mm", "mngr", "mon", "mph", "mr", "mrs", "msec", "msg", "mt", "mtg", "mtn", "mun",
+		"n", "na", "name", "nat", "natl", "ne", "neg", "ng", "no", "norm", "nos", "nov", "num", "nw",
+		"o", "obj", "occas", "oct", "op", "opt", "ord", "org", "orig", "oz",
+		"p", "pa", "pg", "pkg", "pl", "pls", "pos", "pp", "ppt", "pred", "pref", "prepd", "prev", "priv", "prof", "proj", "pseud", "psi", "pt", "publ",
+		"q", "qlty", "qt", "qty",
+		"r", "rd", "re", "rec", "ref", "reg", "rel", "rep", "req", "reqd", "resp", "rev",
+		"s", "sat", "sci", "se", "sec", "sect", "sep", "sept", "seq", "sig", "soln", "soph", "spec", "specif", "sq", "sr", "st", "sta", "stat", "std", "subj", "subst", "sun", "supvr", "sw",
+		"t", "tbs", "tbsp", "tech", "tel", "temp", "thur", "thurs", "tkt", "tot", "transf", "transl", "tsp", "tues",
+		"u", "univ", "util",
+		"v", "var", "veg", "vert", "viz", "vol", "vs",
+		"w", "wed", "wk", "wkly", "wt",
+		"x",
+		"y", "yd", "yr",
+		"z"
+	];
 
-	EXCEPTIONS[lcid_ruRU] = {
-		'а' : ["а"],
-		'б' : ["б"],
-		'в' : ["вв"],
-		'г' : ["гг", "гл"],
-		'д' : ["д", "др"],
-		'е' : ["е", "ед"],
-		'ё' : ["ё"],
-		'ж' : ["ж"],
-		'з' : ["з"],
-		'и' : ["и"],
-		'й' : ["й"],
-		'к' : ["к", "кв", "кл", "коп", "куб"],
-		'л' : ["лл"],
-		'м' : ["м", "мл", "млн", "млрд"],
-		'н' : ["н", "наб", "нач"],
-		'о' : ["о", "обл", "обр", "ок"],
-		'п' : ["п", "пер", "пл", "пос", "пр"],
-		'р' : ["руб"],
-		'с' : ["сб", "св", "см", "соч", "ср", "ст", "стр"],
-		'т' : ["тт", "тыс"],
-		'у' : ["у"],
-		'ф' : ["ф"],
-		'х' : ["х"],
-		'ц' : ["ц"],
-		'ш' : ["ш", "шт"],
-		'щ' : ["щ"],
-		'ъ' : ["ъ"],
-		'ы' : ["ы"],
-		'ь' : ["ь"],
-		'э' : ["э", "экз"],
-		'ю' : ["ю"]
-	};
+	DEFAULT_EXCEPTIONS[lcid_ruRU] = [
+		"а",
+		"б",
+		"вв",
+		"гг", "гл",
+		"д", "др",
+		"е", "ед",
+		"ё",
+		"ж",
+		"з",
+		"и",
+		"й",
+		"к", "кв", "кл", "коп", "куб",
+		"лл",
+		"м", "мл", "млн", "млрд",
+		"н", "наб", "нач",
+		"о", "обл", "обр", "ок",
+		"п", "пер", "пл", "пос", "пр",
+		"руб",
+		"сб", "св", "см", "соч", "ср", "ст", "стр",
+		"тт", "тыс",
+		"у",
+		"ф",
+		"х",
+		"ц",
+		"ш", "шт",
+		"щ",
+		"ъ",
+		"ы",
+		"ь",
+		"э", "экз",
+		"ю"
+	];
 
-	function CheckFirstLetterException(word, lang)
+
+	/**
+	 * Класс для работы с исключениями автозамены первого символа в предложении
+	 * @constructor
+	 */
+	function CFirstLetterExceptions()
 	{
-		if (!word || !EXCEPTIONS[lang])
+		this.Exceptions = {};
+		this.MaxLen     = 0;
+	}
+	CFirstLetterExceptions.GetDefaultExceptions = function(lang)
+	{
+		return DEFAULT_EXCEPTIONS[lang] ? DEFAULT_EXCEPTIONS[lang] : [];
+	};
+	CFirstLetterExceptions.prototype.Check = function(word, lang)
+	{
+		if (!word)
 			return false;
 
-		let exceptions = !EXCEPTIONS[lang];
-	}
+		let exceptions = this.GetExceptionsByLang(lang);
+		let _word      = word.toLowerCase();
 
+		let firstCodePoint = _word.codePointAt(0);
+		if (!exceptions[firstCodePoint])
+			return false;
+
+		return (-1 !== exceptions[firstCodePoint].indexOf(_word));
+	};
+	CFirstLetterExceptions.prototype.GetExceptions = function(lang)
+	{
+		let exceptions = this.GetExceptionsByLang(lang);
+		let result = [];
+		for (let codePoint in exceptions)
+		{
+			result = result.concat(exceptions[codePoint]);
+		}
+		return result;
+	};
+	CFirstLetterExceptions.prototype.SetExceptions = function(exceptions, lang)
+	{
+		this.Exceptions[lang] = this.ToExceptionArray(exceptions);
+	};
+	CFirstLetterExceptions.prototype.AddException = function(word, lang)
+	{
+		let exceptions = this.GetExceptionsByLang(lang);
+		let _word      = word.toLowerCase();
+
+		let firstCodePoint = _word.codePointAt(0);
+		if (!exceptions[firstCodePoint])
+			return false;
+
+		if (-1 === exceptions[firstCodePoint].indexOf(_word))
+			exceptions[firstCodePoint].push(_word);
+	};
+	CFirstLetterExceptions.prototype.RemoveException = function(word, lang)
+	{
+		let exceptions = this.GetExceptionsByLang(lang);
+		let _word      = word.toLowerCase();
+
+		let firstCodePoint = _word.codePointAt(0);
+		if (!exceptions[firstCodePoint])
+			return false;
+
+		let index = exceptions[firstCodePoint].indexOf(_word);
+		if (-1 !== index)
+			exceptions[firstCodePoint].splice(index, 1);
+	};
+	CFirstLetterExceptions.prototype.GetMaxLen = function()
+	{
+		return this.MaxLen;
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	CFirstLetterExceptions.prototype.GetExceptionsByLang = function(lang)
+	{
+		if (!this.Exceptions[lang])
+			this.Exceptions[lang] = this.ToExceptionArray(DEFAULT_EXCEPTIONS[lang]);
+
+		return this.Exceptions[lang];
+	};
+	CFirstLetterExceptions.prototype.ToExceptionArray = function(words)
+	{
+		if (!words)
+			return {};
+
+		let result = {};
+		for (let index = 0, count = words.length; index < count; ++index)
+		{
+			let word = words[index];
+			if (!word)
+				continue;
+
+			if (word.length > this.MaxLen)
+				this.MaxLen = word.length;
+
+			let codePoint = word.codePointAt(0);
+			if (!result[codePoint])
+				result[codePoint] = [];
+
+			result[codePoint].push(word);
+		}
+
+		return result;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['Asc']['FIRST_LETTER_EXCEPTIONS'] = window['Asc'].FIRST_LETTER_EXCEPTIONS = FIRST_LETTER_EXCEPTIONS;
-	window['AscCommon']
+	window['AscCommon'].CFirstLetterExceptions = CFirstLetterExceptions;
+
+	CFirstLetterExceptions.prototype["get_Exceptions"]        = CFirstLetterExceptions.prototype.get_Exceptions = CFirstLetterExceptions.prototype.GetExceptions;
+	CFirstLetterExceptions.prototype["put_Exceptions"]        = CFirstLetterExceptions.prototype.put_Exceptions = CFirstLetterExceptions.prototype.SetExceptions;
+	CFirstLetterExceptions.prototype["get_DefaultExceptions"] = CFirstLetterExceptions.prototype.get_DefaultExceptions = CFirstLetterExceptions.GetDefaultExceptions;
+	CFirstLetterExceptions.prototype["add_Exception"]         = CFirstLetterExceptions.prototype.add_Exception = CFirstLetterExceptions.prototype.AddException;
+	CFirstLetterExceptions.prototype["remove_Exception"]      = CFirstLetterExceptions.prototype.remove_Exception = CFirstLetterExceptions.prototype.RemoveException;
 
 })(window);

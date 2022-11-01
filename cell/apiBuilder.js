@@ -1038,11 +1038,33 @@
 	 * from a single row - <b>A1:E1</b>, or cells from a single column - <b>A1:A10</b>, or cells from several rows and columns - <b>A1:E10</b>.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sRange - The range of cells from the current sheet.
+	 * @param {string | ApiRange} Range1 - The range of cells from the current sheet.
+	 * @param {string | ApiRange} Range2 - The range of cells from the current sheet.
 	 * @returns {ApiRange | null} - returns null if such a range does not exist.
 	 */
-	ApiWorksheet.prototype.GetRange = function (sRange) {
-		var Range = this.worksheet.getRange2(sRange);
+	ApiWorksheet.prototype.GetRange = function (Range1, Range2) {
+		var Range, r1, c1, r2, c2;
+		Range1 = (Range1 instanceof ApiRange) ? Range1.range : (typeof Range1 == 'string') ? this.worksheet.getRange2(Range1) : null;
+
+		if (!Range1) {
+			return new Error('Incorrect "Range1" or it is empty.')
+		}
+		
+		Range2 = (Range2 instanceof ApiRange) ? Range2.range : (typeof Range2 == 'string') ? this.worksheet.getRange2(Range2) : null;
+
+		if (Range2) {
+			r1 = Math.min(Range1.bbox.r1, Range2.bbox.r1);
+			c1 = Math.min(Range1.bbox.c1, Range2.bbox.c1);
+			r2 = Math.max(Range1.bbox.r2, Range2.bbox.r2);
+			c2 = Math.max(Range1.bbox.c1, Range2.bbox.c2);
+		} else {
+			r1 = Range1.bbox.r1;
+			c1 = Range1.bbox.c1;
+			r2 = Range1.bbox.r2;
+			c2 = Range1.bbox.c2;
+		}
+
+		Range = this.worksheet.getRange3(r1, c1, r2, c2);
 
 		if (!Range)
 			return null;

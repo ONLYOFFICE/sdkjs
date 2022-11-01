@@ -3145,6 +3145,9 @@
     CGraphicObjectBase.prototype.isMoveAnimObject = function() {
         return false;
     };
+    CGraphicObjectBase.prototype.clearChartDataCache = function() {
+
+    };
 
     var ANIM_LABEL_WIDTH_PIX = 22;
     var ANIM_LABEL_HEIGHT_PIX = 17;

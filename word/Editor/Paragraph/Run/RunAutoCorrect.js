@@ -749,6 +749,7 @@
 		let sText              = this.Text;
 		let oParagraph         = this.Paragraph;
 		let oRunElementsBefore = this.RunElementsBefore;
+		let nLang              = this.Lang;
 
 		if (!this.AsYouType)
 			return false;
@@ -836,7 +837,7 @@
 					sCheckException = String.fromCharCode(oElement.Value) + sCheckException;
 				}
 
-				if (autoCorrectSettings.CheckFirstLetterException(sCheckException))
+				if (autoCorrectSettings.CheckFirstLetterException(sCheckException, nLang))
 					return false;
 			}
 		}

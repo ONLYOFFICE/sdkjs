@@ -1929,6 +1929,11 @@ AscFormat.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyite
             this.spPr.xfrm.setParent(this.spPr);
         }
     };
+    CGroupShape.prototype.clearChartDataCache = function () {
+        for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+            this.spTree[nSp].clearChartDataCache();
+        }
+    };
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
