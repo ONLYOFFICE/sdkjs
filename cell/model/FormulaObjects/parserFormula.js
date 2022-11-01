@@ -2741,9 +2741,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (col && Math.abs(col) < dimensions.col) {
 			for (let i = 0; i < newArray.length; i++) {
 				if (col < 0) {
-					newArray[i].splice(newArray.length - Math.abs(col));
+					newArray[i] = newArray[i].splice(newArray.length - Math.abs(col));
 				} else {
-					newArray[i].splice(0, col);
+					newArray[i] = newArray[i].splice(0, col);
 				}
 			}
 		}
