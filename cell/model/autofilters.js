@@ -1432,6 +1432,7 @@
 							undo_apply();
 						} else {
 							this.isEmptyAutoFilters(cloneData.Ref);
+							worksheet.reinitRowsCount();
 						}
 						break;
 					case AscCH.historyitem_AutoFilter_ChangeTableStyle:

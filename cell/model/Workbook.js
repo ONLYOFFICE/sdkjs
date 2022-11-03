@@ -9363,6 +9363,17 @@
 		}
 		this.nRowsCount = val;
 	};
+	Worksheet.prototype.reinitRowsCount = function () {
+		let maxTableRow = 0;
+		if (this.TableParts) {
+			for (let i = 0; i < this.TableParts.length; i++) {
+				if (this.TableParts[i] && this.TableParts[i].Ref && this.TableParts[i].Ref.r2 > maxTableRow) {
+					maxTableRow = this.TableParts[i].Ref.r2;
+				}
+			}
+		}
+		this.nRowsCount = Math.max(maxTableRow, this.cellsByColRowsCount);
+	};
 	Worksheet.prototype.fromXLSB = function(stream, type, tmp, aCellXfs, aSharedStrings, fInitCellAfterRead) {
 		stream.XlsbSkipRecord();//XLSB::rt_BEGIN_SHEET_DATA
 
