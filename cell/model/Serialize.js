@@ -2614,9 +2614,7 @@
             var oThis = this;
 			var elems = this.stylesForWrite.oBorderMap.elems;
 			for (var i = 0; i < elems.length; ++i) {
-				//todo avoid diff
-				var border = elems[i].getDif(g_oDefaultFormat.BorderAbs);
-				this.bs.WriteItem(c_oSerStylesTypes.Border, function() {oThis.WriteBorder(border)});
+				this.bs.WriteItem(c_oSerStylesTypes.Border, function() {oThis.WriteBorder(elems[i])});
             }
         };
         this.WriteBorder = function(border)
@@ -6745,42 +6743,49 @@
             if ( c_oSerBorderTypes.Bottom == type )
             {
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
+                    oNewBorder.b = new AscCommonExcel.BorderProp();
                     return oThis.ReadBorderProp(t,l,oNewBorder.b);
                 });
             }
             else if ( c_oSerBorderTypes.Diagonal == type )
             {
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
+                    oNewBorder.d = new AscCommonExcel.BorderProp();
                     return oThis.ReadBorderProp(t,l,oNewBorder.d);
                 });
             }
             else if ( c_oSerBorderTypes.End == type )
             {
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
+                    oNewBorder.r = new AscCommonExcel.BorderProp();
                     return oThis.ReadBorderProp(t,l,oNewBorder.r);
                 });
             }
             else if ( c_oSerBorderTypes.Horizontal == type )
             {
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
+                    oNewBorder.ih = new AscCommonExcel.BorderProp();
                     return oThis.ReadBorderProp(t,l,oNewBorder.ih);
                 });
             }
             else if ( c_oSerBorderTypes.Start == type )
             {
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
+                    oNewBorder.l = new AscCommonExcel.BorderProp();
                     return oThis.ReadBorderProp(t,l,oNewBorder.l);
                 });
             }
             else if ( c_oSerBorderTypes.Top == type )
             {
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
+                    oNewBorder.t = new AscCommonExcel.BorderProp();
                     return oThis.ReadBorderProp(t,l,oNewBorder.t);
                 });
             }
             else if ( c_oSerBorderTypes.Vertical == type )
             {
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
+                    oNewBorder.iv = new AscCommonExcel.BorderProp();
                     return oThis.ReadBorderProp(t,l,oNewBorder.iv);
                 });
             }
@@ -9970,8 +9975,8 @@
 			fs: 11,
 			c: AscCommonExcel.g_oColorManager.getThemeColor(AscCommonExcel.g_nColorTextDefault)
 		});
-        g_oDefaultFormat.Fill = g_oDefaultFormat.FillAbs = new AscCommonExcel.Fill();
-        g_oDefaultFormat.Border = g_oDefaultFormat.BorderAbs = new AscCommonExcel.Border({
+        g_oDefaultFormat.Fill = new AscCommonExcel.Fill();
+        g_oDefaultFormat.Border = new AscCommonExcel.Border({
             l : new AscCommonExcel.BorderProp(),
             t : new AscCommonExcel.BorderProp(),
             r : new AscCommonExcel.BorderProp(),

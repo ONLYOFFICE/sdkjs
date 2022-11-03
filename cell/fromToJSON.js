@@ -3260,9 +3260,6 @@
 		var elems = this.stylesForWrite.oBorderMap.elems;
 		for (var i = 0; i < elems.length; ++i)
 		{
-			//todo avoid diff
-			//var oBorder = elems[i].getDif(g_oDefaultFormat.BorderAbs);
-			//if (oBorder)
 			aBorders.push(this.SerBorderExcell(elems[i]));
 		}
 
