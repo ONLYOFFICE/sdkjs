@@ -23956,7 +23956,7 @@
 		}
 
 		//если выделить ничего нельзя, то и редактировать возможности нет
-		if (wsModel.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells)) {
+		if (wsModel.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells) && wsModel.getSheetProtection(Asc.c_oAscSheetProtectType.selectUnlockedCells)) {
 			return;
 		}
 
