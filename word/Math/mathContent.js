@@ -3291,6 +3291,35 @@ CMathContent.prototype.Add_Text = function(sText, Paragraph, MathStyle)
         this.CurPos++;
     }
 };
+CMathContent.prototype.Add_Text_InPos = function(nPos, sText, Paragraph, MathStyle)
+{
+    this.Paragraph = Paragraph;
+
+    if (sText)
+    {
+        var MathRun = new ParaRun(this.Paragraph, true);
+
+        for (var nCharPos = 0, nTextLen = sText.length; nCharPos < nTextLen; nCharPos++)
+        {
+            var oText = null;
+            if (0x0026 == sText.charCodeAt(nCharPos))
+                oText = new CMathAmp();
+            else
+            {
+                oText = new CMathText(false);
+                oText.addTxt(sText[nCharPos]);
+            }
+            MathRun.Add(oText, true);
+        }
+
+        MathRun.Set_RFont_ForMathRun();
+
+        if (undefined !== MathStyle && null !== MathStyle)
+            MathRun.Math_Apply_Style(MathStyle);
+
+        this.Internal_Content_Add(nPos, MathRun, false);
+    }
+};
 CMathContent.prototype.Add_Symbol = function(Code, TextPr, MathPr)
 {
     var MathRun = new ParaRun(this.Paragraph, true);
@@ -5459,6 +5488,128 @@ CMathContent.prototype.private_IsMenuPropsForContent = function(Action)
 
     return bDecreaseArgSize || bIncreaseArgSize || bInsertForcedBreak || bDeleteForcedBreak;
 };
+
+CMathContent.prototype.SplitSelectedContentPos = function(pos) {
+	let oContent = this.Content[pos];
+	let isStart = this.Selection.StartPos === pos;
+
+	if (oContent) {
+
+		if (oContent.Type === 49) {
+
+			if (oContent.Selection.StartPos > oContent.Selection.EndPos) {
+	        	var intTemp = oContent.Selection.StartPos;
+	        	oContent.Selection.StartPos = oContent.Selection.EndPos;
+	       	 	oContent.Selection.EndPos = intTemp;
+	    	}
+
+	        if (oContent.Selection.StartPos !== 0 && oContent.Selection.StartPos <= oContent.Content.length - 1)
+	        {
+	            let oPrevContent = oContent.Split_Run(oContent.Selection.StartPos);
+	            this.Add_ToContent(this.Selection.StartPos + 1, oPrevContent);
+
+	            this.Selection.StartPos += 1;
+	            this.Selection.EndPos += 1;
+
+	            if (oPrevContent.Selection.EndPos !== oPrevContent.Content.length) {
+	                let oNextContent = oPrevContent.Split_Run(oPrevContent.Selection.EndPos);
+	                this.Add_ToContent(this.Selection.EndPos + 1, oNextContent);
+	            }
+	        }
+	        else if (oContent.Selection.StartPos === oContent.Selection.EndPos && isStart)
+	        {
+	      		this.Selection.StartPos += 1;
+	        }
+
+	        if (oContent.Selection.EndPos !== oContent.Content.length && oContent.Selection.EndPos <= oContent.Content.length - 1)
+	        {
+	            let oNextContent = oContent.Split_Run(oContent.Selection.EndPos);
+	            this.Add_ToContent(this.Selection.EndPos + 1, oNextContent);
+	        }
+	        else if (oContent.Selection.StartPos === oContent.Selection.EndPos && !isStart)
+	        {
+	             this.Selection.EndPos -= 1;
+	        }
+    	}
+	}
+}
+CMathContent.prototype.SplitSelectedContent = function() {
+	if (this.Content.length < 1)
+		return;
+
+	if (this.Selection.StartPos > this.Selection.EndPos) {
+        var intTemp = this.Selection.StartPos;
+        this.Selection.StartPos = this.Selection.EndPos;
+        this.Selection.EndPos = intTemp;
+    }
+
+	if (this.Selection.StartPos !== this.Selection.EndPos) {
+		this.SplitSelectedContentPos(this.Selection.StartPos);
+		this.SplitSelectedContentPos(this.Selection.EndPos);
+	} else {
+		this.SplitSelectedContentPos(this.Selection.StartPos);
+	}
+}
+CMathContent.prototype.ConvertContentView = function(intStart, intEnd, nInputType, isToLinear) {
+	if (this.Content.length === 0) {
+		return
+	}
+
+	if (intStart >= 0 && intEnd <= this.Content.length) {
+		let strContent = "";
+		let intCount = (intEnd - intStart) + 1;
+
+		for (let i = intStart, j = 0; i <= intEnd; i++) {
+			let oElement = this.Content[i];
+
+			if (undefined !== oElement) {
+				strContent += oElement.GetTextOfElement(nInputType);
+			}
+		}
+
+		if (isToLinear || undefined === nInputType || null === nInputType)
+		{
+			this.Remove_FromContent(intStart, intCount);
+			this.Add_Text_InPos(intStart, strContent);
+			this.Content[intStart].SelectAll();
+
+			this.Selection.Use      = true;
+			this.Selection.StartPos = intStart;
+			this.Selection.EndPos   = intStart;
+		}
+		else {
+			let oTempContent = new CMathContent();
+
+			if (nInputType === Asc.c_oAscMathInputType.Unicode)
+			{
+				AscMath.CUnicodeConverter(strContent, oTempContent);
+			}
+			else if (nInputType === Asc.c_oAscMathInputType.LaTeX)
+			{
+				AscMath.ConvertLaTeXToTokensList(strContent, oTempContent);
+			}
+
+			this.Remove_FromContent(intStart, intCount);
+			this.RemoveSelection();
+
+			for (let i = 0; i < oTempContent.Content.length; i++) {
+				this.Add_ToContent(intStart + i, oTempContent.Content[i], false);
+				this.Content[intStart + i].SelectAll();
+
+				if (i === 0) {
+					this.Selection.Use      = true;
+					this.Selection.StartPos = intStart +  i;
+					this.Selection.EndPos   = intStart +  i;
+				} else {
+					this.Selection.EndPos   = intStart +  i;
+				}
+			}
+
+			this.Correct_Content(true)
+			this.Correct_Selection();
+		}
+	}
+}
 CMathContent.prototype.Process_AutoCorrect = function(ActionElement)
 {
 	if (!this.private_NeedAutoCorrect(ActionElement))
