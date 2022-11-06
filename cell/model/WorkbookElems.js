@@ -3901,7 +3901,10 @@ var g_oFontProperties = {
 		return c_oAscBorderStyles.None === this.s;
 	};
 	BorderProp.prototype.isEqual = function (val, byRgb) {
-		return this.s === val.s && g_oColorManager.isEqual(this.c, val.c, byRgb);
+		return val && this.s === val.s && g_oColorManager.isEqual(this.c, val.c, byRgb);
+	};
+	BorderProp.prototype.isEqual2 = function (val1, val2, byRgb) {
+		return ((!val1 || val1.isEmpty()) && (!val2 || val2.isEmpty())) || (val1 && val2 && val1.isEqual(val2, byRgb))
 	};
 	BorderProp.prototype.clone = function () {
 		var res = new BorderProp();
@@ -3909,7 +3912,7 @@ var g_oFontProperties = {
 		return res;
 	};
 	BorderProp.prototype.merge = function (oBorderProp) {
-		if (null != oBorderProp.s && c_oAscBorderStyles.None !== oBorderProp.s) {
+		if (oBorderProp && !oBorderProp.isEmpty()) {
 			this.s = oBorderProp.s;
 			this.w = oBorderProp.w;
 			this.c = oBorderProp.c;
@@ -4012,64 +4015,63 @@ var g_oFontProperties = {
 	Border.prototype.setIndexNumber = function(val) {
 		return this._index = val;
 	};
-	Border.prototype._mergeProperty = function (first, second, def) {
-		//todo
-		if (def != first)
-			return first;
+	Border.prototype._mergeProperty = function (first, second) {
+		if (first && !first.isEmpty())
+			return first.clone();
+		else if (second && !second.isEmpty())
+			return second.clone();
 		else
-			return second;
+			return null;
 	};
 	Border.prototype.merge = function (border, isTable) {
 		//todo
-		var defaultBorder = g_oDefaultFormat.Border;
 		var oRes = new Border();
-		//todo null border props
-		if (true || isTable) {
-			oRes.l = this._mergeProperty(this.l, border.l, defaultBorder.l);
-			oRes.t = this._mergeProperty(this.t, border.t, defaultBorder.t);
-			oRes.r = this._mergeProperty(this.r, border.r, defaultBorder.r);
-			oRes.b = this._mergeProperty(this.b, border.b, defaultBorder.b);
-			oRes.ih = this._mergeProperty(this.ih, border.ih, defaultBorder.ih);
-			oRes.iv = this._mergeProperty(this.iv, border.iv, defaultBorder.iv);
-			oRes.d = this._mergeProperty(this.d, border.d, defaultBorder.d);
+		if (isTable) {
+			oRes.l = this._mergeProperty(this.l, border.l);
+			oRes.t = this._mergeProperty(this.t, border.t);
+			oRes.r = this._mergeProperty(this.r, border.r);
+			oRes.b = this._mergeProperty(this.b, border.b);
+			oRes.ih = this._mergeProperty(this.ih, border.ih);
+			oRes.iv = this._mergeProperty(this.iv, border.iv);
+			oRes.d = this._mergeProperty(this.d, border.d);
 			oRes.dd = this.dd || border.dd;
 			oRes.du = this.du || border.du;
 		} else {
 			//todo merge with default
-			oRes.l = this.l.clone();
-			oRes.t = this.t.clone();
-			oRes.r = this.r.clone();
-			oRes.b = this.b.clone();
-			oRes.ih = this.ih.clone();
-			oRes.iv = this.iv.clone();
-			oRes.d = this._mergeProperty(this.d, border.d, defaultBorder.d).clone();
+			oRes.l = this.l ? this.l.clone() : null;
+			oRes.t = this.t ? this.t.clone() : null;
+			oRes.r = this.r ? this.r.clone() : null;
+			oRes.b = this.b ? this.b.clone() : null;
+			oRes.ih = this.ih ? this.ih.clone() : null;
+			oRes.iv = this.iv ? this.iv.clone() : null;
+			oRes.d = this._mergeProperty(this.d, border.d);
 			oRes.dd = this.dd || border.dd;
 			oRes.du = this.du || border.du;
 		}
 		return oRes;
 	};
 	Border.prototype.intersect = function (border, byRgb) {
-		if (!this.l.isEqual(border.l, byRgb)) {
+		if (!BorderProp.prototype.isEqual2(this.l, border.l)) {
 			this.l = null;
 		}
-		if (!this.t.isEqual(border.t, byRgb)) {
+		if (!BorderProp.prototype.isEqual2(this.t, border.t)) {
 			this.t = null;
 		}
-		if (!this.r.isEqual(border.r, byRgb)) {
+		if (!BorderProp.prototype.isEqual2(this.r, border.r)) {
 			this.r = null;
 		}
-		if (!this.b.isEqual(border.b, byRgb)) {
+		if (!BorderProp.prototype.isEqual2(this.b, border.b)) {
 			this.b = null;
 		}
-		if (!this.d.isEqual(border.d, byRgb)) {
+		if (!BorderProp.prototype.isEqual2(this.d, border.d)) {
 			this.d = null;
 			this.dd = false;
 			this.du = false;
 		}
-		if (!this.ih.isEqual(border.ih, byRgb)) {
+		if (!BorderProp.prototype.isEqual2(this.ih, border.ih)) {
 			this.ih = null;
 		}
-		if (!this.iv.isEqual(border.iv, byRgb)) {
+		if (!BorderProp.prototype.isEqual2(this.iv, border.iv)) {
 			this.iv = null;
 		}
 		if (this.dd !== border.dd) {
@@ -4080,14 +4082,10 @@ var g_oFontProperties = {
 		}
 	};
 	Border.prototype.isEqual = function(val) {
-		return (!this.l && !val.l) || (this.l && val.l && this.l.isEqual(val.l))
-			&& (!this.t && !val.t) || (this.t && val.t && this.t.isEqual(val.l))
-			&& (!this.r && !val.r) || (this.r && val.r && this.r.isEqual(val.l))
-			&& (!this.b && !val.b) || (this.b && val.b && this.b.isEqual(val.l))
-			&& (!this.d && !val.d) || (this.d && val.d && this.d.isEqual(val.l))
-			&& (!this.ih && !val.ih) || (this.ih && val.ih && this.ih.isEqual(val.l))
-			&& (!this.iv && !val.iv) || (this.iv && val.iv && this.iv.isEqual(val.l))
-			&& this.dd == val.dd && this.du == val.du;
+		return BorderProp.prototype.isEqual2(this.l, val.l) && BorderProp.prototype.isEqual2(this.t, val.t)
+			&& BorderProp.prototype.isEqual2(this.r, val.r) && BorderProp.prototype.isEqual2(this.b, val.b)
+			&& BorderProp.prototype.isEqual2(this.d, val.d) && this.dd === val.dd && this.du === val.du
+			&& BorderProp.prototype.isEqual2(this.ih, val.ih) && BorderProp.prototype.isEqual2(this.iv, val.iv);
 	};
 	Border.prototype.clone = function () {
 		var res = new Border();
@@ -4116,25 +4114,53 @@ var g_oFontProperties = {
 	Border.prototype.mergeInner = function (border) {
 		if (border) {
 			if (border.l) {
-				this.l.merge(border.l);
+				if (this.l) {
+					this.l.merge(border.l);
+				} else {
+					this.l = border.l.clone();
+				}
 			}
 			if (border.t) {
-				this.t.merge(border.t);
+				if (this.t) {
+					this.t.merge(border.t);
+				} else {
+					this.t = border.t.clone();
+				}
 			}
 			if (border.r) {
-				this.r.merge(border.r);
+				if (this.r) {
+					this.r.merge(border.r);
+				} else {
+					this.r = border.r.clone();
+				}
 			}
 			if (border.b) {
-				this.b.merge(border.b);
+				if (this.b) {
+					this.b.merge(border.b);
+				} else {
+					this.b = border.b.clone();
+				}
 			}
 			if (border.d) {
-				this.d.merge(border.d);
+				if (this.d) {
+					this.d.merge(border.d);
+				} else {
+					this.d = border.d.clone();
+				}
 			}
 			if (border.ih) {
-				this.ih.merge(border.ih);
+				if (this.ih) {
+					this.ih.merge(border.ih);
+				} else {
+					this.ih = border.ih.clone();
+				}
 			}
 			if (border.iv) {
-				this.iv.merge(border.iv);
+				if (this.iv) {
+					this.iv.merge(border.iv);
+				} else {
+					this.iv = border.iv.clone();
+				}
 			}
 			if (null != border.dd) {
 				this.dd = this.dd || border.dd;
@@ -4213,9 +4239,9 @@ var g_oFontProperties = {
 		}
 	};
 	Border.prototype.notEmpty = function () {
-		return (this.l && c_oAscBorderStyles.None !== this.l.s) || (this.r && c_oAscBorderStyles.None !== this.r.s) ||
-			(this.t && c_oAscBorderStyles.None !== this.t.s) || (this.b && c_oAscBorderStyles.None !== this.b.s) ||
-			(this.d && c_oAscBorderStyles.None !== this.d.s && (this.dd || this.du));
+		return (this.l && !this.l.isEmpty()) || (this.r && !this.r.isEmpty()) ||
+			(this.t && !this.t.isEmpty()) || (this.b && !this.b.isEmpty()) ||
+			(this.d && !this.d.isEmpty() && (this.dd || this.du));
 	};
 	Border.prototype.readAttributes = function(attr, uq) {
 		if(attr()){
@@ -4511,7 +4537,16 @@ var g_oFontProperties = {
         if (!cache) {
             cache = new CellXfs();
             cache.border = this._mergeProperty(g_StyleCache.addBorder, xfs.border, this.border, isTable);
-            if (isTable && (g_StyleCache.firstXf === xfs || g_StyleCache.normalXf.fill === xfs.fill)) {
+			// if (isTable && (g_StyleCache.firstXf === xfs || g_StyleCache.normalXf.border === xfs.border)) {
+				// if (g_StyleCache.normalXf.border === xfs.border) {
+				// 	cache.border = this._mergeProperty(g_StyleCache.addBorder, this.border, g_oDefaultFormat.border);
+				// } else {
+				// 	cache.border = this._mergeProperty(g_StyleCache.addBorder, this.border, xfs.border);
+				// }
+			// } else {
+				// cache.border = this._mergeProperty(g_StyleCache.addBorder, xfs.border, this.border);
+			// }
+			if (isTable && (g_StyleCache.firstXf === xfs || g_StyleCache.normalXf.fill === xfs.fill)) {
                 if (g_StyleCache.normalXf.fill === xfs.fill) {
                     cache.fill = this._mergeProperty(g_StyleCache.addFill, this.fill, g_oDefaultFormat.Fill);
                 } else {
@@ -4753,7 +4788,7 @@ var g_oFontProperties = {
         var valCache = this.operationCache[operation];
         if (!valCache) {
             valCache = {};
-            //this.operationCache[operation] = valCache;
+            this.operationCache[operation] = valCache;
         }
         valCache[val] = xfs;
     };
@@ -4933,10 +4968,9 @@ var g_oFontProperties = {
 
 		//TODO duplicate
 		function makeBorder(b) {
-			var border = new AscCommonExcel.BorderProp();
-			if (b === false) {
-				border.setStyle(c_oAscBorderStyles.None);
-			} else if (b) {
+			var border = null;
+			if (b) {
+				border = new AscCommonExcel.BorderProp();
 				if (b.style !== null && b.style !== undefined) {
 					border.setStyle(b.style);
 				}
@@ -5824,7 +5858,7 @@ StyleManager.prototype =
 						}
 						xfModified.border = g_StyleCache.addBorder(borderModified);
 						xfModified = g_StyleCache.addXf(xfModified);
-						//style.borders[borderIndex] = xfModified;
+						style.borders[borderIndex] = xfModified;
 					}
 					xf = xfModified;
 				}

@@ -11960,10 +11960,9 @@
             var expansionTableRange;
 
             function makeBorder(b) {
-                var border = new AscCommonExcel.BorderProp();
-                if (b === false) {
-                    border.setStyle(c_oAscBorderStyles.None);
-                } else if (b) {
+                var border = null;
+                if (b) {
+					border = new AscCommonExcel.BorderProp();
                     if (b.style !== null && b.style !== undefined) {
                         border.setStyle(b.style);
                     }
