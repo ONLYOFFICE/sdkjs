@@ -5577,6 +5577,17 @@ CChartsDrawer.prototype =
 			}
 		}
 		return res;
+	},
+
+	getNextArrElem: function (arr, index) {
+		let res = null;
+		for (let i = index + 1; i < arr.length; i++) {
+			if (arr[i]) {
+				res = arr[i];
+				break;
+			}
+		}
+		return res;
 	}
 };
 
@@ -6754,25 +6765,26 @@ drawLineChart.prototype = {
 			return;
 		}
 
+		let perspectiveDepth, seriaDiff, gapDepth, depthSer, diffGapDepth;
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			//сдвиг по OZ в глубину
-			var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
-			var seriaDiff = perspectiveDepth / this.seriesCount;
-			var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
-			var depthSeria = seriaDiff / ((gapDepth / 100) + 1);
-			var DiffGapDepth = (depthSeria * (gapDepth / 100)) / 2;
-			depthSeria = (perspectiveDepth / this.seriesCount - 2 * DiffGapDepth);
+			perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
+			seriaDiff = perspectiveDepth / this.seriesCount;
+			gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
+			depthSer = seriaDiff / ((gapDepth / 100) + 1);
+			diffGapDepth = (depthSer * (gapDepth / 100)) / 2;
+			depthSer = (perspectiveDepth / this.seriesCount - 2 * diffGapDepth);
 		}
 
-		var x, y, x1, y1, x2, y2, x3, y3, isSplineLine;
-		for (var i = 0; i < points.length; i++) {
+		let x, y, x1, y1, x2, y2, x3, y3, isSplineLine;
+		for (let i = 0; i < points.length; i++) {
 			isSplineLine = this.chart.series[i].smooth !== false;
 
 			if (!points[i]) {
 				continue;
 			}
 
-			for (var n = 0; n < points[i].length; n++) {
+			for (let n = 0; n < points[i].length; n++) {
 				if (!this.paths.series) {
 					this.paths.series = [];
 				}
@@ -6780,13 +6792,15 @@ drawLineChart.prototype = {
 					this.paths.series[i] = [];
 				}
 
-				if (points[i][n] != null && points[i][n + 1] != null) {
+				let curPoint = points[i][n];
+				let nextPoint = AscFormat.DISP_BLANKS_AS_SPAN === this.cChartSpace.chart.dispBlanksAs ? this.cChartDrawer.getNextArrElem(points[i], n) : points[i][n+1];
+				if (curPoint != null && nextPoint != null) {
 					if (this.cChartDrawer.nDimensionCount === 3) {
-						x = points[i][n].x * this.chartProp.pxToMM;
-						y = points[i][n].y * this.chartProp.pxToMM;
+						x = curPoint.x * this.chartProp.pxToMM;
+						y = curPoint.y * this.chartProp.pxToMM;
 
-						x1 = points[i][n + 1].x * this.chartProp.pxToMM;
-						y1 = points[i][n + 1].y * this.chartProp.pxToMM;
+						x1 = nextPoint.x * this.chartProp.pxToMM;
+						y1 = nextPoint.y * this.chartProp.pxToMM;
 
 						if (!this.paths.series) {
 							this.paths.series = [];
@@ -6795,17 +6809,17 @@ drawLineChart.prototype = {
 							this.paths.series[i] = [];
 						}
 
-						var point1, point2, point3, point4, point5, point6, point7, point8, widthLine = 0.5;
-						point1 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, DiffGapDepth + seriaDiff * i);
-						point2 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, DiffGapDepth + seriaDiff * i);
-						point3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, DiffGapDepth + depthSeria + seriaDiff * i);
-						point4 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, DiffGapDepth + depthSeria + seriaDiff * i);
+						let point1, point2, point3, point4, point5, point6, point7, point8, widthLine = 0.5;
+						point1 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, diffGapDepth + seriaDiff * i);
+						point2 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, diffGapDepth + seriaDiff * i);
+						point3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, diffGapDepth + depthSer + seriaDiff * i);
+						point4 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, diffGapDepth + depthSer + seriaDiff * i);
 
 
-						point5 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, DiffGapDepth + seriaDiff * i);
-						point6 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, DiffGapDepth + seriaDiff * i);
-						point7 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, DiffGapDepth + depthSeria + seriaDiff * i);
-						point8 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, DiffGapDepth + depthSeria + seriaDiff * i);
+						point5 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, diffGapDepth + seriaDiff * i);
+						point6 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, diffGapDepth + seriaDiff * i);
+						point7 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, diffGapDepth + depthSer + seriaDiff * i);
+						point8 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, diffGapDepth + depthSer + seriaDiff * i);
 
 						this.paths.series[i][n] = this.cChartDrawer.calculateRect3D([point1, point2, point3, point4, point5, point6, point7, point8]);
 					} else if (isSplineLine) {
@@ -6823,7 +6837,7 @@ drawLineChart.prototype = {
 
 						this.paths.series[i][n] = this.cChartDrawer.calculateSplineLine(x + 1, y, x1 + 1, y1, x2 + 1, y2, x3 + 1, y3, this.catAx, this.valAx);
 					} else {
-						this.paths.series[i][n] = this._calculateLine(points[i][n].x, points[i][n].y, points[i][n + 1].x, points[i][n + 1].y);
+						this.paths.series[i][n] = this._calculateLine(curPoint.x, curPoint.y, nextPoint.x, nextPoint.y);
 					}
 				}
 			}
