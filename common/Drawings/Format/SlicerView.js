@@ -695,6 +695,7 @@
             b = 204;
         }
         oBorder = new AscCommonExcel.Border();
+        oBorder.initDefault();
         if(nType !== STYLE_TYPE.HEADER) {
             oBorder.l = new AscCommonExcel.BorderProp();
             oBorder.l.setStyle(Asc.c_oAscBorderStyles.Thin);
@@ -2465,6 +2466,7 @@
         g = 0xCE;
         b = 0xCE;
         var oBorder = new AscCommonExcel.Border();
+        oBorder.initDefault();
         oBorder.l = new AscCommonExcel.BorderProp();
         oBorder.l.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.l.c = AscCommonExcel.createRgbColor(r, g, b);

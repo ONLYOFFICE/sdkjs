@@ -2667,6 +2667,7 @@
 	 */
 	ApiRange.prototype.SetBorders = function (bordersIndex, lineStyle, oColor) {
 		var borders = new AscCommonExcel.Border();
+		borders.initDefault();
 		switch (bordersIndex) {
 			case 'DiagonalDown':
 				borders.dd = true;

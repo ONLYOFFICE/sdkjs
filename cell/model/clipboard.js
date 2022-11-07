@@ -4401,7 +4401,13 @@
 					return backgroundColor;
 				};
 
-				var formatBorders = oldBorders ? oldBorders : new AscCommonExcel.Border();
+				var formatBorders;
+				if (oldBorders) {
+					formatBorders = oldBorders;
+				} else {
+					formatBorders = new AscCommonExcel.Border();
+					formatBorders.initDefault();
+				}
 				//top border for cell
 				if (top === cellTable.top && (!formatBorders.t || formatBorders.t.isEmpty()) && borders.Top.Value !== 0/*border_None*/) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Top.Size, 3, 1));

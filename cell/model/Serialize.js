@@ -6727,6 +6727,8 @@
             if ( c_oSerStylesTypes.Border == type )
             {
                 var oNewBorder = new AscCommonExcel.Border();
+                //cell borders can not be null
+                oNewBorder.initDefault();
                 res = this.bcr.Read1(length, function(t,l){
                     return oThis.ReadBorder(t,l,oNewBorder);
                 });
@@ -9977,6 +9979,7 @@
 		});
         g_oDefaultFormat.Fill = new AscCommonExcel.Fill();
         g_oDefaultFormat.Border = new AscCommonExcel.Border();
+        g_oDefaultFormat.Border.initDefault();
         g_oDefaultFormat.Num = g_oDefaultFormat.NumAbs = new AscCommonExcel.Num({f : "General"});
         g_oDefaultFormat.Align = g_oDefaultFormat.AlignAbs = new AscCommonExcel.Align({
             hor : null,
@@ -10840,6 +10843,7 @@
                 });
             } else if (Types.Border === type) {
                 oStyleObject.border = new AscCommonExcel.Border();
+                oStyleObject.border.initDefault();
                 res = bcr.Read1(length, function (t, l) {
                     return oBinary_StylesTableReader.ReadBorder(t, l, oStyleObject.border);
                 });
@@ -11043,6 +11047,7 @@
 			;
 		} else if ("border" === elem) {
 			newContext = new AscCommonExcel.Border();
+            newContext.initDefault();
 			if (newContext.readAttributes) {
 				newContext.readAttributes(attr, uq);
 			}
@@ -11352,6 +11357,7 @@
         oStyleObject.aFills[1] = secondFill;
 
         oStyleObject.aBorders[0] = new AscCommonExcel.Border();
+        oStyleObject.aBorders[0].initDefault();
         for (i = 0; i < oStyleObject.aBorders.length; ++i) {
             oStyleObject.aBorders[i] = g_StyleCache.addBorder(oStyleObject.aBorders[i]);
         }

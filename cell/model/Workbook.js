@@ -158,19 +158,19 @@
 			return c_oRangeType.Range;
 	}
 
-	function getCompiledStyleFromArray(xf, xfs) {
+	function getCompiledStyleFromArray(xf, xfs, isTableBorders) {
 		for (var i = 0; i < xfs.length; ++i) {
 			if (null == xf) {
 				xf = xfs[i];
 			} else {
-				xf = xf.merge(xfs[i]);
+				xf = xf.merge(xfs[i], undefined, isTableBorders);
 			}
 		}
 		return xf;
 	}
 	function getCompiledStyle(sheetMergedStyles, hiddenManager, nRow, nCol, opt_cell, opt_ws, opt_styleComponents) {
 		var styleComponents = opt_styleComponents ? opt_styleComponents : sheetMergedStyles.getStyle(hiddenManager, nRow, nCol, opt_ws);
-		var xf = getCompiledStyleFromArray(null, styleComponents.table);
+		var xf = getCompiledStyleFromArray(null, styleComponents.table, true);
 		if (opt_cell) {
 			if (null === xf) {
 				xf = opt_cell.xfs;
@@ -8618,6 +8618,7 @@
 					//todo transparent ih, iv
 					var border;
 					border = new AscCommonExcel.Border();
+					border.initDefault();
 					border.l = new AscCommonExcel.BorderProp();
 					border.l.setStyle(c_oAscBorderStyles.Thin);
 					border.l.c = AscCommonExcel.createRgbColor(0, 0, 0);

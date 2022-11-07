@@ -306,14 +306,14 @@
           (this.isMerge() && (this.col !== this.mergeInfo.c1 || this.col - 1 !== this.mergeInfo.c2))) {
             return null;
         }
-        return this.borders.l;
+        return this.borders.getL();
     };
     CellBorderObject.prototype.getRightBorder = function () {
         if (!this.borders ||
           (this.isMerge() && (this.col - 1 !== this.mergeInfo.c1 || this.col !== this.mergeInfo.c2))) {
             return null;
         }
-        return this.borders.r;
+        return this.borders.getR();
     };
 
     CellBorderObject.prototype.getTopBorder = function () {
@@ -321,14 +321,14 @@
           (this.isMerge() && (this.row !== this.mergeInfo.r1 || this.row - 1 !== this.mergeInfo.r2))) {
             return null;
         }
-        return this.borders.t;
+        return this.borders.getT();
     };
     CellBorderObject.prototype.getBottomBorder = function () {
         if (!this.borders ||
           (this.isMerge() && (this.row - 1 !== this.mergeInfo.r1 || this.row !== this.mergeInfo.r2))) {
             return null;
         }
-        return this.borders.b;
+        return this.borders.getB();
     };
 
 
@@ -5090,7 +5090,7 @@
 			var borderLeft = borderLeftObject ? borderLeftObject.borders : null,
 				borderRight = borderRightObject ? borderRightObject.borders : null;
 
-			var border = AscCommonExcel.getMatchingBorder(borderLeft && borderLeft.r, borderRight && borderRight.l);
+			var border = AscCommonExcel.getMatchingBorder(borderLeft && borderLeft.getR(), borderRight && borderRight.getL());
 			if (!border || border.w < 1) {
 				return;
 			}
@@ -5114,7 +5114,7 @@
 			var borderTop = borderTopObject ? borderTopObject.borders : null,
 				borderBottom = borderBottomObject ? borderBottomObject.borders : null;
 
-			var border = AscCommonExcel.getMatchingBorder(borderTop && borderTop.b, borderBottom && borderBottom.t);
+			var border = AscCommonExcel.getMatchingBorder(borderTop && borderTop.getB(), borderBottom && borderBottom.getT());
 			if (border && border.w > 0) {
 				var bw = zoomPrintPreviewCorrect(border.w);
 
@@ -11960,9 +11960,10 @@
             var expansionTableRange;
 
             function makeBorder(b) {
-                var border = null;
-                if (b) {
-					border = new AscCommonExcel.BorderProp();
+                var border = new AscCommonExcel.BorderProp();
+                if (b === false) {
+                    border.setStyle(c_oAscBorderStyles.None);
+                } else if (b) {
                     if (b.style !== null && b.style !== undefined) {
                         border.setStyle(b.style);
                     }
@@ -12113,6 +12114,7 @@
                             break;
                         }
                         res = new AscCommonExcel.Border();
+						res.initDefault();
                         // Diagonal
                         res.d = makeBorder(val[c_oAscBorderOptions.DiagD] || val[c_oAscBorderOptions.DiagU]);
                         res.dd = !!val[c_oAscBorderOptions.DiagD];

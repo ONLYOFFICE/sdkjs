@@ -4015,16 +4015,43 @@ var g_oFontProperties = {
 	Border.prototype.setIndexNumber = function(val) {
 		return this._index = val;
 	};
+	Border.prototype.initDefault = function() {
+		this.l = new BorderProp();
+		this.t = new BorderProp();
+		this.r = new BorderProp();
+		this.b = new BorderProp();
+		this.d = new BorderProp();
+	};
+	Border.prototype.getL = function() {
+		return this.l || g_oDefaultFormat.Border.l;
+	};
+	Border.prototype.getT = function() {
+		return this.t || g_oDefaultFormat.Border.t;
+	};
+	Border.prototype.getR = function() {
+		return this.r || g_oDefaultFormat.Border.r;
+	};
+	Border.prototype.getB = function() {
+		return this.b || g_oDefaultFormat.Border.b;
+	};
+	Border.prototype.getD = function() {
+		return this.d || g_oDefaultFormat.Border.d;
+	};
+	Border.prototype.getIH = function() {
+		return this.ih || g_oDefaultFormat.Border.ih;
+	};
+	Border.prototype.getIV = function() {
+		return this.iv || g_oDefaultFormat.Border.iv;
+	};
 	Border.prototype._mergeProperty = function (first, second) {
 		if (first && !first.isEmpty())
 			return first.clone();
-		else if (second && !second.isEmpty())
+		else if (second)
 			return second.clone();
 		else
 			return null;
 	};
 	Border.prototype.merge = function (border, isTable) {
-		//todo
 		var oRes = new Border();
 		if (isTable) {
 			oRes.l = this._mergeProperty(this.l, border.l);
@@ -4051,27 +4078,27 @@ var g_oFontProperties = {
 		return oRes;
 	};
 	Border.prototype.intersect = function (border, byRgb) {
-		if (!BorderProp.prototype.isEqual2(this.l, border.l)) {
-			this.l = null;
+		if (!BorderProp.prototype.isEqual2(this.l, border.l, byRgb)) {
+			this.l = new BorderProp();
 		}
-		if (!BorderProp.prototype.isEqual2(this.t, border.t)) {
-			this.t = null;
+		if (!BorderProp.prototype.isEqual2(this.t, border.t, byRgb)) {
+			this.t = new BorderProp();
 		}
-		if (!BorderProp.prototype.isEqual2(this.r, border.r)) {
-			this.r = null;
+		if (!BorderProp.prototype.isEqual2(this.r, border.r, byRgb)) {
+			this.r = new BorderProp();
 		}
-		if (!BorderProp.prototype.isEqual2(this.b, border.b)) {
-			this.b = null;
+		if (!BorderProp.prototype.isEqual2(this.b, border.b, byRgb)) {
+			this.b = new BorderProp();
 		}
-		if (!BorderProp.prototype.isEqual2(this.d, border.d)) {
-			this.d = null;
+		if (!BorderProp.prototype.isEqual2(this.d, border.d, byRgb)) {
+			this.d = new BorderProp();
 			this.dd = false;
 			this.du = false;
 		}
-		if (!BorderProp.prototype.isEqual2(this.ih, border.ih)) {
+		if (!BorderProp.prototype.isEqual2(this.ih, border.ih, byRgb)) {
 			this.ih = null;
 		}
-		if (!BorderProp.prototype.isEqual2(this.iv, border.iv)) {
+		if (!BorderProp.prototype.isEqual2(this.iv, border.iv, byRgb)) {
 			this.iv = null;
 		}
 		if (this.dd !== border.dd) {
@@ -4527,7 +4554,7 @@ var g_oFontProperties = {
 	CellXfs.prototype.isNormalFont = function () {
 		return g_StyleCache.firstXf === this || g_StyleCache.normalXf.font === this.font;
 	};
-    CellXfs.prototype.merge = function (xfs, isTable) {
+    CellXfs.prototype.merge = function (xfs, isTable, isTableBorders) {
         var xfIndexNumber = xfs.getIndexNumber();
         if (undefined === xfIndexNumber) {
             xfs = g_StyleCache.addXf(xfs);
@@ -4536,16 +4563,12 @@ var g_oFontProperties = {
         var cache = this.getOperationCache("merge", xfIndexNumber);
         if (!cache) {
             cache = new CellXfs();
-            cache.border = this._mergeProperty(g_StyleCache.addBorder, xfs.border, this.border, isTable);
-			// if (isTable && (g_StyleCache.firstXf === xfs || g_StyleCache.normalXf.border === xfs.border)) {
-				// if (g_StyleCache.normalXf.border === xfs.border) {
-				// 	cache.border = this._mergeProperty(g_StyleCache.addBorder, this.border, g_oDefaultFormat.border);
-				// } else {
-				// 	cache.border = this._mergeProperty(g_StyleCache.addBorder, this.border, xfs.border);
-				// }
-			// } else {
-				// cache.border = this._mergeProperty(g_StyleCache.addBorder, xfs.border, this.border);
-			// }
+			//todo test isTable insted of isTableBorders
+			if ((isTable || isTableBorders) && (g_StyleCache.firstXf === xfs || g_StyleCache.normalXf.border === xfs.border)) {
+				cache.border = this._mergeProperty(g_StyleCache.addBorder, this.border, xfs.border, (isTable || isTableBorders));
+			} else {
+				cache.border = this._mergeProperty(g_StyleCache.addBorder, xfs.border, this.border, (isTable || isTableBorders));
+			}
 			if (isTable && (g_StyleCache.firstXf === xfs || g_StyleCache.normalXf.fill === xfs.fill)) {
                 if (g_StyleCache.normalXf.fill === xfs.fill) {
                     cache.fill = this._mergeProperty(g_StyleCache.addFill, this.fill, g_oDefaultFormat.Fill);
@@ -4968,9 +4991,10 @@ var g_oFontProperties = {
 
 		//TODO duplicate
 		function makeBorder(b) {
-			var border = null;
-			if (b) {
-				border = new AscCommonExcel.BorderProp();
+			var border = new AscCommonExcel.BorderProp();
+			if (b === false) {
+				border.setStyle(c_oAscBorderStyles.None);
+			} else if (b) {
 				if (b.style !== null && b.style !== undefined) {
 					border.setStyle(b.style);
 				}
@@ -4984,6 +5008,7 @@ var g_oFontProperties = {
 		}
 		
 		var res = new AscCommonExcel.Border();
+		res.initDefault();
 		var c_oAscBorderOptions = Asc.c_oAscBorderOptions;
 		// Diagonal
 		res.d = makeBorder(val[c_oAscBorderOptions.DiagD] || val[c_oAscBorderOptions.DiagU]);
