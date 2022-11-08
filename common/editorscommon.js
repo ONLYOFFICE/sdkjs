@@ -658,6 +658,43 @@
 		}
 		return stream;
 	}
+
+	function isPdfFormatFile(stream) {
+		let part = AscCommon.UTF8ArrayToString(stream, 0, 4096);//MIN_SIZE_BUFFER
+		return -1 !== part.indexOf("%PDF-");
+	}
+
+	function isDjvuFormatFile(stream) {
+		return stream.length > 4 && 0x41 == stream[0] && 0x54 == stream[1] && 0x26 == stream[2] &&
+			0x54 == stream[3] && 0x46 == stream[4] && 0x4f == stream[5] && 0x52 == stream[6] && 0x4d == stream[7];
+	}
+
+	function isXpsFormatFile(stream) {
+		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
+			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
+			return false;
+		}
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(stream)) {
+			return false;
+		}
+		let _relsBytes = jsZlib.getFile("_rels/.rels");
+		let _rels = _relsBytes ? AscCommon.UTF8ArrayToString(_relsBytes, 0, _relsBytes.length) : "";
+
+		//todo combine pieces
+		let _relsPieceBytes = jsZlib.getFile("_rels/.rels/[0].piece");
+		let _relsPiece = _relsPieceBytes ? AscCommon.UTF8ArrayToString(_relsPieceBytes, 0, _relsPieceBytes.length) : "";
+		jsZlib.close();
+
+		if (-1 !== _rels.indexOf("fixedrepresentation") && (-1 !== _rels.indexOf("/xps/") || -1 !== _rels.indexOf("/oxps/"))) {
+			return true;
+		}
+
+		return !!_relsPiece;
+	}
+	function checkNativeViewerSignature(stream) {
+		return isPdfFormatFile(stream) || isDjvuFormatFile(stream) || isXpsFormatFile(stream);
+	}
 	function checkStreamSignature(stream, Signature) {
 		if (stream.length > Signature.length) {
 			for(var i = 0 ; i < Signature.length; ++i){
@@ -669,37 +706,67 @@
 		}
 		return false;
 	}
-	function checkOOXMLSignature(stream, Signature) {
-		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
+	function checkOOXMLSignature(stream) {
+		return null !== getEditorByOOXMLSignature(stream);
+	}
+	function getEditorByBinSignature(stream, Signature) {
+		if (stream.length > 4) {
+			let signature = AscCommon.UTF8ArrayToString(stream, 0, 4);
+			switch(signature) {
+				case "DOCY":
+					return AscCommon.c_oEditorId.Word;
+				case "XLSY":
+					return AscCommon.c_oEditorId.Spreadsheet;
+				case "PPTY":
+					return AscCommon.c_oEditorId.Presentation;
+			}
+		}
+		return null;
+	}
+	function getEditorByOOXMLSignature(stream) {
+		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] &&
+			0x04 === stream[3])) {
 			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
-			return false;
+			return null;
 		}
 		let jsZlib = new AscCommon.ZLib();
 		if (!jsZlib.open(stream)) {
-			return false;
+			return null;
 		}
 		let contentTypesBytes = jsZlib.getFile("[Content_Types].xml");
 		let contentTypes = contentTypesBytes ? AscCommon.UTF8ArrayToString(contentTypesBytes, 0, contentTypesBytes.length) : "";
 		jsZlib.close();
 
-		return -1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
+		if (-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-word.document.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-word.template.macroEnabledTemplate.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.oform") ||
-			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.docxf") ||
-			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.docxf")) {
+			return AscCommon.c_oEditorId.Word;
+		} else if (-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-excel.template.macroEnabled.main+xml") ||
-			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.binary.macroEnabled.main") ||
-			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.binary.macroEnabled.main")) {
+			return AscCommon.c_oEditorId.Spreadsheet;
+		} else if (-1 !== contentTypes.indexOf(
+				"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml") ||
-			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml");
+			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml")) {
+			return AscCommon.c_oEditorId.Presentation;
+		} else {
+			return null;
+		}
 	}
+	function getEditorBySignature(stream) {
+		let res = getEditorByBinSignature(stream);
+		return null !== res ? res :getEditorByOOXMLSignature (stream);
+	}
+
 	function openFileCommand(docId, binUrl, changesUrl, changesToken, Signature, callback)
 	{
 		var nError = Asc.c_oAscError.ID.No, oResult = new OpenFileResult(), bEndLoadFile = false, bEndLoadChanges = false;
@@ -881,9 +948,12 @@
 			case c_oAscServerError.ConvertLIMITS :
 				nRes = Asc.c_oAscError.ID.ConvertationOpenLimitError;
 				break;
+			case c_oAscServerError.ConvertPARAMS :
+				nRes = AscCommon.c_oAscAdvancedOptionsAction.Save === nAction ? Asc.c_oAscError.ID.ConvertationSaveError :
+						Asc.c_oAscError.ID.ConvertationOpenFormat;
+				break;
 			case c_oAscServerError.ConvertCONVERT_CORRUPTED :
 			case c_oAscServerError.ConvertLIBREOFFICE :
-			case c_oAscServerError.ConvertPARAMS :
 			case c_oAscServerError.ConvertNEED_PARAMS :
 			case c_oAscServerError.ConvertUnknownFormat :
 			case c_oAscServerError.ConvertReadFile :
@@ -13125,6 +13195,8 @@
 	window["AscCommon"].initStreamFromResponse = initStreamFromResponse;
 	window["AscCommon"].checkStreamSignature = checkStreamSignature;
 	window["AscCommon"].checkOOXMLSignature = checkOOXMLSignature;
+	window["AscCommon"].checkNativeViewerSignature = checkNativeViewerSignature;
+	window["AscCommon"].getEditorBySignature = getEditorBySignature;
 
 	window["AscCommon"].DocumentUrls = DocumentUrls;
 	window["AscCommon"].OpenFileResult = OpenFileResult;

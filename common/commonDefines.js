@@ -442,6 +442,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var c_nVersionNoBase64 = 10;
 	var c_dMaxParaRunContentLength = 256;
 	var c_nMaxHyperlinkLength = 2083;
+	var c_sNativeViewerFormats = '.pdf.xps.oxps.djvu';
 
 	//files type for Saving & DownloadAs
 	var c_oAscFileType = {
@@ -613,6 +614,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			ConvertationOpenError      : -82,
             ConvertationSaveError      : -83,
 			ConvertationOpenLimitError : -84,
+			ConvertationOpenFormat     : -85,
 
 			UserDrop : -100,
 			Warning  : -101,
@@ -3867,6 +3869,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window['Asc']['c_nVersionNoBase64'] = window['Asc'].c_nVersionNoBase64 = c_nVersionNoBase64;
 	window['Asc']['c_dMaxParaRunContentLength'] = window['Asc'].c_dMaxParaRunContentLength = c_dMaxParaRunContentLength;
 	window['Asc']['c_nMaxHyperlinkLength'] = window['Asc'].c_nMaxHyperlinkLength = c_nMaxHyperlinkLength;
+	window['Asc']['c_sNativeViewerFormats'] = window['Asc'].c_sNativeViewerFormats = c_sNativeViewerFormats;
 	window['Asc']['c_oAscFileType'] = window['Asc'].c_oAscFileType = c_oAscFileType;
 	window['Asc'].g_oLcidNameToIdMap = g_oLcidNameToIdMap;
 	window['Asc'].availableIdeographLanguages = availableIdeographLanguages;
@@ -4014,6 +4017,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ConvertationOpenError']            = prot.ConvertationOpenError;
 	prot['ConvertationSaveError']            = prot.ConvertationSaveError;
 	prot['ConvertationOpenLimitError']       = prot.ConvertationOpenLimitError;
+	prot['ConvertationOpenFormat']       	 = prot.ConvertationOpenFormat;
 	prot['UserDrop']                         = prot.UserDrop;
 	prot['Warning']                          = prot.Warning;
 	prot['UpdateVersion']                    = prot.UpdateVersion;
