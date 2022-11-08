@@ -6765,13 +6765,14 @@ drawLineChart.prototype = {
 			return;
 		}
 
-		let perspectiveDepth, seriaDiff, gapDepth, depthSer, diffGapDepth;
-		if (this.cChartDrawer.nDimensionCount === 3) {
+		let chart3d = this.cChartDrawer.nDimensionCount === 3;
+		let perspectiveDepth, serDiff, gapDepth, depthSer, diffGapDepth;
+		if (chart3d) {
 			//сдвиг по OZ в глубину
 			perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
-			seriaDiff = perspectiveDepth / this.seriesCount;
+			serDiff = perspectiveDepth / this.seriesCount;
 			gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
-			depthSer = seriaDiff / ((gapDepth / 100) + 1);
+			depthSer = serDiff / ((gapDepth / 100) + 1);
 			diffGapDepth = (depthSer * (gapDepth / 100)) / 2;
 			depthSer = (perspectiveDepth / this.seriesCount - 2 * diffGapDepth);
 		}
@@ -6793,9 +6794,9 @@ drawLineChart.prototype = {
 				}
 
 				let curPoint = points[i][n];
-				let nextPoint = AscFormat.DISP_BLANKS_AS_SPAN === this.cChartSpace.chart.dispBlanksAs ? this.cChartDrawer.getNextArrElem(points[i], n) : points[i][n+1];
+				let nextPoint = AscFormat.DISP_BLANKS_AS_SPAN === this.cChartSpace.chart.dispBlanksAs && !chart3d ? this.cChartDrawer.getNextArrElem(points[i], n) : points[i][n+1];
 				if (curPoint != null && nextPoint != null) {
-					if (this.cChartDrawer.nDimensionCount === 3) {
+					if (chart3d) {
 						x = curPoint.x * this.chartProp.pxToMM;
 						y = curPoint.y * this.chartProp.pxToMM;
 
@@ -6810,16 +6811,16 @@ drawLineChart.prototype = {
 						}
 
 						let point1, point2, point3, point4, point5, point6, point7, point8, widthLine = 0.5;
-						point1 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, diffGapDepth + seriaDiff * i);
-						point2 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, diffGapDepth + seriaDiff * i);
-						point3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, diffGapDepth + depthSer + seriaDiff * i);
-						point4 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, diffGapDepth + depthSer + seriaDiff * i);
+						point1 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, diffGapDepth + serDiff * i);
+						point2 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, diffGapDepth + serDiff * i);
+						point3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, diffGapDepth + depthSer + serDiff * i);
+						point4 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, diffGapDepth + depthSer + serDiff * i);
 
 
-						point5 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, diffGapDepth + seriaDiff * i);
-						point6 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, diffGapDepth + seriaDiff * i);
-						point7 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, diffGapDepth + depthSer + seriaDiff * i);
-						point8 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, diffGapDepth + depthSer + seriaDiff * i);
+						point5 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, diffGapDepth + serDiff * i);
+						point6 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, diffGapDepth + serDiff * i);
+						point7 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, diffGapDepth + depthSer + serDiff * i);
+						point8 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, diffGapDepth + depthSer + serDiff * i);
 
 						this.paths.series[i][n] = this.cChartDrawer.calculateRect3D([point1, point2, point3, point4, point5, point6, point7, point8]);
 					} else if (isSplineLine) {
@@ -12156,8 +12157,8 @@ drawScatterChart.prototype = {
 	},
 
 	_recalculateScatter: function () {
-		var seria, yVal, xVal, points, yNumCache, compiledMarkerSize, compiledMarkerSymbol, yPoint, idx, xPoint;
-		for (var i = 0; i < this.chart.series.length; i++) {
+		let seria, yVal, xVal, points, yNumCache, compiledMarkerSize, compiledMarkerSymbol, yPoint, idx, xPoint;
+		for (let i = 0; i < this.chart.series.length; i++) {
 			seria = this.chart.series[i];
 			yNumCache = this.cChartDrawer.getNumCache(seria.yVal);
 
@@ -12169,12 +12170,12 @@ drawScatterChart.prototype = {
 			compiledMarkerSymbol = seria && seria.compiledSeriesMarker ? seria.compiledSeriesMarker.symbol : null;
 
 			//idx не всегда начинается с нуля
-			for (var n = 0; n < yNumCache.ptCount; n++) {
+			for (let n = 0; n < yNumCache.ptCount; n++) {
 				idx = yNumCache.pts && undefined !== yNumCache.pts[n] ? yNumCache.pts[n].idx : null;
-				if (null === idx) {
+				/*if (null === idx) {
 					continue;
-				}
-				var values = this.cChartDrawer._getScatterPointVal(seria, idx);
+				}*/
+				let values = this.cChartDrawer._getScatterPointVal(seria, idx);
 				if(values){
 					yVal = values.y;
 					xVal = values.x;
@@ -12203,8 +12204,8 @@ drawScatterChart.prototype = {
 					}
 
 					if (yVal != null) {
-						var x = this.cChartDrawer.getYPosition(xVal, this.catAx);
-						var y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
+						let x = this.cChartDrawer.getYPosition(xVal, this.catAx);
+						let y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
 						this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol);
 						if (this.chart.series[i].errBars) {
 							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, i, n);
