@@ -4083,6 +4083,16 @@ function CEditorPage(api)
 	{
 		return this.m_oMainContent.AbsolutePosition;
 	};
+
+	this.setOffsetTop = function(value)
+	{
+		this.offsetTop = value;
+
+		// TODO: set offset to mobile scroll
+
+		this.UpdateScrolls();
+		this.OnScroll();
+	};
 }
 
 var _message_update = "zero_delay_update";
