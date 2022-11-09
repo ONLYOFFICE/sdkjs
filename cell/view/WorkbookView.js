@@ -5655,7 +5655,7 @@
 
 		let arrResult = [];
 		for (let nId = 0; nId < this.Id; ++nId) {
-			if (!this.Elements[nId] || undefined === this.TextArround[nId]) {
+			if (!this.Elements[nId] || null == this.TextArround || undefined === this.TextArround[nId]) {
 				continue;
 			}
 
