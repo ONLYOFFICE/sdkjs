@@ -4089,6 +4089,8 @@ function CEditorPage(api)
 		this.offsetTop = value;
 
 		// TODO: set offset to mobile scroll
+		if (this.MobileTouchManager && this.MobileTouchManager.iScroll)
+			this.MobileTouchManager.iScroll.setOffset(value)
 
 		this.UpdateScrolls();
 		this.OnScroll();

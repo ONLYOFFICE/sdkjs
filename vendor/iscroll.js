@@ -391,6 +391,8 @@ function IScroll (el, options) {
 	this.y = 0;
 	// create new _y for real scroll (without offset)
 	this._y = 0
+	this.offsetTopY = 0;
+	this.offsetBotY = 0;
 	// flags that we are in offset
 	this.inTopOffset = true;
 	this.inBottomOffset = false;
@@ -601,33 +603,33 @@ IScroll.prototype = {
 
 		var flag = false;
 		// if we have deltaX, we should sent scroll event
-		if (!deltaX) {
-			// check top offset
-			if ( this.options.offsetTopY && newY > -this.options.offsetTopY && newY <= 0 ) {
-				// it's for small scroll (when can we skip the real scroll)
-				if (!this.inTopOffset) {
-					flag = false;
-					this.inTopOffset = true;
-				} else {
-					flag = true;
-				}
-			} else {
-				this.inTopOffset = false;
-			}
+		// if (!deltaX) {
+		// 	// check top offset
+		// 	if ( this.options.offsetTopY && newY > -this.options.offsetTopY && newY <= 0 ) {
+		// 		// it's for small scroll (when can we skip the real scroll)
+		// 		if (!this.inTopOffset) {
+		// 			flag = false;
+		// 			this.inTopOffset = true;
+		// 		} else {
+		// 			flag = true;
+		// 		}
+		// 	} else {
+		// 		this.inTopOffset = false;
+		// 	}
 	
-			// check bottom offset
-			if ( this.options.offsetBotY && newY >= this.maxScrollY && newY < (this.maxScrollY + this.options.offsetBotY)) {
-				// it's for small scroll (when can we skip the real scroll)
-				if (!this.inBottomOffset) {
-					flag = false;
-					this.inBottomOffset = true;
-				} else {
-					flag = true;
-				}		
-			} else {
-				this.inBottomOffset = false;
-			}
-		}
+		// 	// check bottom offset
+		// 	if ( this.options.offsetBotY && newY >= this.maxScrollY && newY < (this.maxScrollY + this.options.offsetBotY)) {
+		// 		// it's for small scroll (when can we skip the real scroll)
+		// 		if (!this.inBottomOffset) {
+		// 			flag = false;
+		// 			this.inBottomOffset = true;
+		// 		} else {
+		// 			flag = true;
+		// 		}		
+		// 	} else {
+		// 		this.inBottomOffset = false;
+		// 	}
+		// }
 		
 
 		if ( !this.moved ) {
@@ -791,6 +793,18 @@ IScroll.prototype = {
 		this.enabled = true;
 	},
 
+	setOffset: function (topOffset, botOffset) {
+		if (typeof topOffset == 'number')
+			this.offsetTopY = topOffset;
+
+		if (typeof botOffset == 'number')
+			this.offsetBotY = botOffset;
+
+		var scrollerHeight = this.wrapperHeight - (this.scroller.offsetHeight - this.offsetTopY- this.offsetBotY);
+		var position = { Y: ( ( this._y / this.realMaxScrollY ) * scrollerHeight ) };
+		this.refresh(position);
+	},
+
 	refresh: function (_position) {
 		var rf = this.wrapper.offsetHeight;		// Force reflow
 
@@ -800,10 +814,14 @@ IScroll.prototype = {
 /* REPLACE START: refresh */
 
 		this.scrollerWidth	= this.scroller.offsetWidth;
-		this.scrollerHeight	= (this.wrapper.clientHeight - this.scroller.offsetHeight < 0) ? (this.scroller.offsetHeight + this.options.offsetTopY + this.options.offsetBotY) : (this.scroller.offsetHeight);
+		// this.scrollerHeight	= (this.wrapper.clientHeight - this.scroller.offsetHeight < 0) ? (this.scroller.offsetHeight - this.options.offsetTopY - this.options.offsetBotY) : (this.scroller.offsetHeight);
+		this.scrollerHeight	= this.scroller.offsetHeight - this.offsetTopY - this.offsetBotY;
+
+		//todo решить проблему с тем, что при изменении offset мы должны оставаться на одном месте, а сейчас мы начинаем скролл с другого места.
 
 		this.maxScrollX		= this.wrapperWidth - this.scrollerWidth;
-		this.maxScrollY		= this.wrapperHeight - this.scrollerHeight;
+		this.maxScrollY		= this.wrapperHeight - this.scrollerHeight; // + this.offsetTopY + this.offsetBotY// если добавить здесь, то не будет меняться размер индикатора
+		this.realMaxScrollY = this.wrapperHeight - this.scrollerHeight - this.offsetTopY - this.offsetBotY;
 
 /* REPLACE END: refresh */
 
@@ -1001,12 +1019,14 @@ IScroll.prototype = {
 		this.x = x;
 		this.y = y;
 		// calculate real y (withouut offset)
-		this._y = this.y + this.options.offsetTopY;
-		if (this._y < (this.maxScrollY + this.options.offsetBotY + this.options.offsetTopY))
-			this._y = this.maxScrollY + this.options.offsetBotY + this.options.offsetTopY
+		// this._y = this.y + this.options.offsetTopY;
+		// if (this._y < (this.maxScrollY + this.options.offsetBotY + this.options.offsetTopY))
+		// 	this._y = this.maxScrollY + this.options.offsetBotY + this.options.offsetTopY
 
-		if (this._y > 0)
-			this._y = 0;
+		// if (this._y > 0)
+		// 	this._y = 0;
+
+		this._y = ( !this.maxScrollY ? 0 : ( (this.y / this.maxScrollY) * this.realMaxScrollY ) );
 
 
 	if ( this.indicators ) {
@@ -1714,33 +1734,33 @@ IScroll.prototype = {
 
 			var flag = false;
 			// if we have bHasX, we should sent scroll event
-			if (!bHasX) {
-				// check top offset
-				if ( that.options.offsetTopY && newY > -that.options.offsetTopY && newY <= 0 ) {
-					// it's for small scroll (when can we skip the real scroll)
-					if (!that.inTopOffset) {
-						flag = false;
-						that.inTopOffset = true;
-					} else {
-						flag = true;
-					}
-				} else {
-					that.inTopOffset = false;
-				}
+			// if (!bHasX) {
+			// 	// check top offset
+			// 	if ( that.options.offsetTopY && newY > -that.options.offsetTopY && newY <= 0 ) {
+			// 		// it's for small scroll (when can we skip the real scroll)
+			// 		if (!that.inTopOffset) {
+			// 			flag = false;
+			// 			that.inTopOffset = true;
+			// 		} else {
+			// 			flag = true;
+			// 		}
+			// 	} else {
+			// 		that.inTopOffset = false;
+			// 	}
 	
-				// check bottom offset
-				if ( that.options.offsetBotY && newY >= that.maxScrollY && newY < (that.maxScrollY + that.options.offsetBotY)) {
-					// it's for small scroll (when can we skip the real scroll)
-					if (!that.inBottomOffset) {
-						flag = false;
-						that.inBottomOffset = true;
-					} else {
-						flag = true;
-					}		
-				} else {
-					that.inBottomOffset = false;
-				}
-			}			
+			// 	// check bottom offset
+			// 	if ( that.options.offsetBotY && newY >= that.maxScrollY && newY < (that.maxScrollY + that.options.offsetBotY)) {
+			// 		// it's for small scroll (when can we skip the real scroll)
+			// 		if (!that.inBottomOffset) {
+			// 			flag = false;
+			// 			that.inBottomOffset = true;
+			// 		} else {
+			// 			flag = true;
+			// 		}		
+			// 	} else {
+			// 		that.inBottomOffset = false;
+			// 	}
+			// }			
 
 			// !!!
 			if (!flag)
