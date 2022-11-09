@@ -71,10 +71,7 @@
 			bounce : false,
 			eventsElement : this.eventsElement,
 			click : false,
-			useLongTap : true,
-			// such offset for example
-			offsetTopY : 100,
-			offsetBotY : 100
+			useLongTap : true
 		});
 
 		this.delegate.Init();

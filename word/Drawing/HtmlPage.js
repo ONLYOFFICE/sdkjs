@@ -200,7 +200,7 @@ function CEditorPage(api)
 
 	// сдвиг для редактора. используется для мобильной версии. меняется при скрытии тулбара.
 	// изначально - высота тулбара. без учета deviceScale (css значение)
-	this.offsetTop = 0;
+	this.offsetTop = 50;
 
 	this.ReaderFontSizeCur = 2;
 	this.ReaderFontSizes   = [12, 14, 16, 18, 22, 28, 36, 48, 72];
@@ -4090,7 +4090,7 @@ function CEditorPage(api)
 
 		// TODO: set offset to mobile scroll
 		if (this.MobileTouchManager && this.MobileTouchManager.iScroll)
-			this.MobileTouchManager.iScroll.setOffset(value)
+			this.MobileTouchManager.iScroll.setOffset(value);
 
 		this.UpdateScrolls();
 		this.OnScroll();

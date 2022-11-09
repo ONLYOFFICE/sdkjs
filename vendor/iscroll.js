@@ -306,9 +306,7 @@ function IScroll (el, options) {
 		disableMouse : utils.hasPointer || utils.hasTouch,
 		startX: 0,
 		startY: 0,
-		// we will get this options from options in function params
-		offsetTopY: 0,
-		offsetBotY: 0,
+		offsetTopY: 50,
 		scrollY: true,
 		directionLockThreshold: 5,
 		momentum: true,
@@ -329,13 +327,6 @@ function IScroll (el, options) {
 	for ( var i in options ) {
 		this.options[i] = options[i];
 	}
-
-	// make 1px margin for offset
-	if (this.options.offsetBotY)
-		this.options.offsetBotY--;
-
-	if (this.options.offsetTopY)
-		this.options.offsetTopY--;
 
 	// на последних ios - может не приходить pointedown/up при быстрых кликах.
 	// они посылают вместо них просто сообщение onclick
@@ -391,11 +382,8 @@ function IScroll (el, options) {
 	this.y = 0;
 	// create new _y for real scroll (without offset)
 	this._y = 0
-	this.offsetTopY = 0;
-	this.offsetBotY = 0;
 	// flags that we are in offset
 	this.inTopOffset = true;
-	this.inBottomOffset = false;
 	this.directionX = 0;
 	this.directionY = 0;
 	this._events = {};
@@ -603,33 +591,21 @@ IScroll.prototype = {
 
 		var flag = false;
 		// if we have deltaX, we should sent scroll event
-		// if (!deltaX) {
-		// 	// check top offset
-		// 	if ( this.options.offsetTopY && newY > -this.options.offsetTopY && newY <= 0 ) {
-		// 		// it's for small scroll (when can we skip the real scroll)
-		// 		if (!this.inTopOffset) {
-		// 			flag = false;
-		// 			this.inTopOffset = true;
-		// 		} else {
-		// 			flag = true;
-		// 		}
-		// 	} else {
-		// 		this.inTopOffset = false;
-		// 	}
-	
-		// 	// check bottom offset
-		// 	if ( this.options.offsetBotY && newY >= this.maxScrollY && newY < (this.maxScrollY + this.options.offsetBotY)) {
-		// 		// it's for small scroll (when can we skip the real scroll)
-		// 		if (!this.inBottomOffset) {
-		// 			flag = false;
-		// 			this.inBottomOffset = true;
-		// 		} else {
-		// 			flag = true;
-		// 		}		
-		// 	} else {
-		// 		this.inBottomOffset = false;
-		// 	}
-		// }
+		if (!deltaX) {
+			// check top offset
+			if ( this.options.offsetTopY && newY > -this.options.offsetTopY && newY <= 0 ) {
+				newY = -this.options.offsetTopY
+				// it's for small scroll (when can we skip the real scroll)
+				if (!this.inTopOffset) {
+					flag = false;
+					this.inTopOffset = true;
+				} else {
+					flag = true;
+				}
+			} else {
+				this.inTopOffset = false;
+			}
+		}
 		
 
 		if ( !this.moved ) {
@@ -711,7 +687,7 @@ IScroll.prototype = {
 			momentumX = this.hasHorizontalScroll ? utils.momentum(this.x, this.startX, duration, this.maxScrollX, this.options.bounce ? this.wrapperWidth : 0, this.options.deceleration) : { destination: newX, duration: 0 };
 			momentumY = this.hasVerticalScroll ? utils.momentum(this.y, this.startY, duration, this.maxScrollY, this.options.bounce ? this.wrapperHeight : 0, this.options.deceleration) : { destination: newY, duration: 0 };
 			newX = momentumX.destination;
-			newY = momentumY.destination;
+			newY = momentumY.destination > -this.options.offsetTopY ? -this.options.offsetTopY : momentumY.destination;
 			time = Math.max(momentumX.duration, momentumY.duration);
 			this.isInTransition = 1;
 		}
@@ -770,8 +746,8 @@ IScroll.prototype = {
 			x = this.maxScrollX;
 		}
 
-		if ( !this.hasVerticalScroll || this.y > 0 ) {
-			y = 0;
+		if ( !this.hasVerticalScroll || this.y > -this.options.offsetTopY ) {
+			y = -this.options.offsetTopY;
 		} else if ( this.y < this.maxScrollY ) {
 			y = this.maxScrollY;
 		}
@@ -793,16 +769,12 @@ IScroll.prototype = {
 		this.enabled = true;
 	},
 
-	setOffset: function (topOffset, botOffset) {
-		if (typeof topOffset == 'number')
-			this.offsetTopY = topOffset;
-
-		if (typeof botOffset == 'number')
-			this.offsetBotY = botOffset;
-
-		var scrollerHeight = this.wrapperHeight - (this.scroller.offsetHeight - this.offsetTopY- this.offsetBotY);
-		var position = { Y: ( ( this._y / this.realMaxScrollY ) * scrollerHeight ) };
-		this.refresh(position);
+	setOffset: function (offset) {
+		this.options.offsetTopY = offset;
+		// todo подумать как рассчитать новую позицию по Y, чтобы к ней проскролиться (текущий способ не работает)
+		var scrollerHeight	= (this.wrapper.clientHeight - this.scroller.offsetHeight < 0) ? (this.scroller.offsetHeight + (this.options.offsetTopY * 2)) : (this.scroller.offsetHeight);
+		var pos = {Y: (this.y / this.maxScrollY) * (this.wrapperHeight - scrollerHeight)};
+		this.refresh(pos);
 	},
 
 	refresh: function (_position) {
@@ -814,14 +786,10 @@ IScroll.prototype = {
 /* REPLACE START: refresh */
 
 		this.scrollerWidth	= this.scroller.offsetWidth;
-		// this.scrollerHeight	= (this.wrapper.clientHeight - this.scroller.offsetHeight < 0) ? (this.scroller.offsetHeight - this.options.offsetTopY - this.options.offsetBotY) : (this.scroller.offsetHeight);
-		this.scrollerHeight	= this.scroller.offsetHeight - this.offsetTopY - this.offsetBotY;
-
-		//todo решить проблему с тем, что при изменении offset мы должны оставаться на одном месте, а сейчас мы начинаем скролл с другого места.
+		this.scrollerHeight	= (this.wrapper.clientHeight - this.scroller.offsetHeight < 0) ? (this.scroller.offsetHeight + (this.options.offsetTopY * 2)) : (this.scroller.offsetHeight);
 
 		this.maxScrollX		= this.wrapperWidth - this.scrollerWidth;
-		this.maxScrollY		= this.wrapperHeight - this.scrollerHeight; // + this.offsetTopY + this.offsetBotY// если добавить здесь, то не будет меняться размер индикатора
-		this.realMaxScrollY = this.wrapperHeight - this.scrollerHeight - this.offsetTopY - this.offsetBotY;
+		this.maxScrollY		= this.wrapperHeight - this.scrollerHeight;
 
 /* REPLACE END: refresh */
 
@@ -1018,16 +986,12 @@ IScroll.prototype = {
 
 		this.x = x;
 		this.y = y;
-		// calculate real y (withouut offset)
-		// this._y = this.y + this.options.offsetTopY;
-		// if (this._y < (this.maxScrollY + this.options.offsetBotY + this.options.offsetTopY))
-		// 	this._y = this.maxScrollY + this.options.offsetBotY + this.options.offsetTopY
+		this._y = this.y + this.options.offsetTopY;
+		if (this._y < (this.maxScrollY+ this.options.offsetTopY))
+			this._y = this.maxScrollY + this.options.offsetTopY
 
-		// if (this._y > 0)
-		// 	this._y = 0;
-
-		this._y = ( !this.maxScrollY ? 0 : ( (this.y / this.maxScrollY) * this.realMaxScrollY ) );
-
+		if (this._y > 0)
+			this._y = 0;
 
 	if ( this.indicators ) {
 		for ( var i = this.indicators.length; i--; ) {
@@ -1734,33 +1698,21 @@ IScroll.prototype = {
 
 			var flag = false;
 			// if we have bHasX, we should sent scroll event
-			// if (!bHasX) {
-			// 	// check top offset
-			// 	if ( that.options.offsetTopY && newY > -that.options.offsetTopY && newY <= 0 ) {
-			// 		// it's for small scroll (when can we skip the real scroll)
-			// 		if (!that.inTopOffset) {
-			// 			flag = false;
-			// 			that.inTopOffset = true;
-			// 		} else {
-			// 			flag = true;
-			// 		}
-			// 	} else {
-			// 		that.inTopOffset = false;
-			// 	}
-	
-			// 	// check bottom offset
-			// 	if ( that.options.offsetBotY && newY >= that.maxScrollY && newY < (that.maxScrollY + that.options.offsetBotY)) {
-			// 		// it's for small scroll (when can we skip the real scroll)
-			// 		if (!that.inBottomOffset) {
-			// 			flag = false;
-			// 			that.inBottomOffset = true;
-			// 		} else {
-			// 			flag = true;
-			// 		}		
-			// 	} else {
-			// 		that.inBottomOffset = false;
-			// 	}
-			// }			
+			if (!bHasX) {
+				// check top offset
+				if ( that.options.offsetTopY && newY > -that.options.offsetTopY && newY <= 0 ) {
+					newY = - that.options.offsetTopY;
+					// it's for small scroll (when can we skip the real scroll)
+					if (!that.inTopOffset) {
+						flag = false;
+						that.inTopOffset = true;
+					} else {
+						flag = true;
+					}
+				} else {
+					that.inTopOffset = false;
+				}
+			}			
 
 			// !!!
 			if (!flag)
@@ -2250,6 +2202,7 @@ Indicator.prototype = {
 	},
 
 	updatePosition: function () {
+		//todo может быть здесь только применять
 		var x = this.options.listenX && Math.round(this.sizeRatioX * this.scroller.x) || 0,
 			y = this.options.listenY && Math.round(this.sizeRatioY * this.scroller.y) || 0;
 
