@@ -156,7 +156,7 @@
 		this.fKeyMouseMove = null;
 		//-----------------
 
-		this.objAutoComplete = {};
+		this.objAutoComplete = new Map();
 		this.sAutoComplete = null;
 		this.eventListeners = [];
 
@@ -396,7 +396,7 @@
 			}
 
 			// delete autoComplete
-			t.objAutoComplete = {};
+			t.objAutoComplete.clear();
 
 			// Сброс состояния редактора
 			t._setEditorState(c_oAscCellEditorState.editEnd);
@@ -452,7 +452,7 @@
 		}
 
 		// delete autoComplete
-		this.objAutoComplete = {};
+		this.objAutoComplete.clear();
 
 		// Сброс состояния редактора
 		this._setEditorState(c_oAscCellEditorState.editEnd);
@@ -2284,7 +2284,7 @@
 	CellEditor.prototype._getAutoComplete = function (str) {
 		// ToDo можно ускорить делая поиск каждый раз не в большом массиве, а в уменьшенном (по предыдущим символам)
 		//TODO оставляю текст!
-		var oLastResult = this.objAutoComplete[str];
+		var oLastResult = this.objAutoComplete.get(str);
 		if (oLastResult) {
 			return oLastResult;
 		}
@@ -2297,7 +2297,8 @@
 				arrResult.push(arrAutoComplete[i]);
 			}
 		}
-		return this.objAutoComplete[str] = arrResult;
+		this.objAutoComplete.set(str, arrResult);
+		return arrResult;
 	};
 
 	CellEditor.prototype._updateSelectionInfo = function () {
