@@ -400,7 +400,7 @@
 		for (let index = 0, count = reverseChanges.length; index < count; ++index)
 		{
 			let change = reverseChanges[index];
-			localHistory.Add(change.GetClass(), change);
+			localHistory.Add(change);
 		}
 
 		this.CorrectReveredChanges(reverseChanges);
