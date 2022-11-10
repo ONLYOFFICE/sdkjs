@@ -2745,7 +2745,9 @@ function CEditorPage(api)
 		settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
 		settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
 
-		settings.screenH -= this.offsetTop;
+		if (!this.MobileTouchManager)
+			settings.screenH -= this.offsetTop;
+
 		return settings;
 	};
 
@@ -2785,6 +2787,10 @@ function CEditorPage(api)
 		settings.isHorizontalScroll = false;
 		settings.isVerticalScroll = true;
 		settings.contentH = this.m_dDocumentHeight;
+
+		if (this.MobileTouchManager)
+			settings.contentH += this.offsetTop;
+
 		if (this.m_oScrollVer_)
 		{
 			this.m_oScrollVer_.Repos(settings, undefined, true);
@@ -3356,7 +3362,8 @@ function CEditorPage(api)
 		}
 
 		let lCurrentTopInDoc = parseInt(this.m_dScrollY);
-		let offsetTop = AscCommon.AscBrowser.convertToRetinaValue(this.offsetTop, true);
+		//let offsetTop = AscCommon.AscBrowser.convertToRetinaValue(this.offsetTop, true);
+		let offsetTop = this.offsetTop;
 
 		var dKoef  = (this.m_nZoomValue * g_dKoef_mm_to_pix / 100);
 		var lStart = offsetTop;
@@ -4093,23 +4100,22 @@ function CEditorPage(api)
 		return this.m_oMainContent.AbsolutePosition;
 	};
 
-	this.setOffsetTop = function(offsetMain, offsetScroll)
+	this.setOffsetTop = function(offset, offsetScrollTop)
 	{
-		if (undefined !== offsetMain && offsetMain !== this.offsetTop)
+		if (offset !== undefined && offset !== this.offsetTop)
 		{
-			this.offsetTop = offsetMain;
+			this.offsetTop = offset;
 
 			this.UpdateScrolls();
+
+			if (this.MobileTouchManager)
+				this.MobileTouchManager.UpdateScrolls();
+
 			this.OnScroll();
 		}
 
-		if (offsetScroll !== undefined &&
-			this.MobileTouchManager && this.MobileTouchManager.iScroll &&
-			this.MobileTouchManager.iScroll.options.offsetTopY !== offsetScroll)
-		{
-			// этот метод не должен отсылать событие скролла! влияет только на положение/размер полнузка
-			this.MobileTouchManager.iScroll.setOffset(offsetScroll);
-		}
+		if (undefined !== offsetScrollTop && this.MobileTouchManager)
+			this.MobileTouchManager.iScroll.setOffsetTop(offsetScrollTop);
 	};
 }
 

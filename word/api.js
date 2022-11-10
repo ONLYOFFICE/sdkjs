@@ -1186,9 +1186,9 @@
 		return this.WordControl.DecreaseReaderFontSize();
 	};
 
-	asc_docs_api.prototype.SetMobileTopOffset = function(offsetMain, offsetScroll)
+	asc_docs_api.prototype.SetMobileTopOffset = function(offset, offsetScrollTop)
 	{
-		this.WordControl && this.WordControl.setOffsetTop(offsetMain, offsetScroll);
+		this.WordControl && this.WordControl.setOffsetTop(offset, offsetScrollTop);
 	};
 
 	asc_docs_api.prototype.CreateCSS = function()

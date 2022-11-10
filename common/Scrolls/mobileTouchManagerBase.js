@@ -185,6 +185,10 @@
 	{
 		return { W : 100, H : 100 };
 	};
+	CMobileDelegateSimple.prototype.GetScrollerOffset = function()
+	{
+		return { W : 0, H : 0 };
+	};
 	CMobileDelegateSimple.prototype.GetScrollPosition = function()
 	{
 		return null;
@@ -505,6 +509,10 @@
 		if (this.IsNativeViewer())
 			return { W : this.DrawingDocument.m_oDocumentRenderer.documentWidth, H : this.DrawingDocument.m_oDocumentRenderer.documentHeight };
 		return { W : this.HtmlPage.m_dDocumentWidth, H : this.HtmlPage.m_dDocumentHeight };
+	};
+	CMobileDelegateEditor.prototype.GetScrollerOffset = function()
+	{
+		return { W : 0, H : this.HtmlPage.offsetTop };
 	};
 	CMobileDelegateEditor.prototype.ScrollTo = function(_scroll)
 	{
@@ -1084,19 +1092,26 @@
 	};
 
 	// изменился размер документа/экрана => нужно перескитать вспомогательный элемент для скролла
-	CMobileTouchManagerBase.prototype.Resize = function()
+	CMobileTouchManagerBase.prototype.UpdateScrolls = function()
 	{
-		this.delegate.Resize();
-		this.CheckZoomCriticalValues();
 		if (this.iScroll != null)
 		{
 			var _size = this.delegate.GetScrollerSize();
-			this.iScroll.scroller.style.width = _size.W + "px";
-			this.iScroll.scroller.style.height = _size.H + "px";
+			var _offset = this.delegate.GetScrollerOffset();
+
+			this.iScroll.scroller.style.width  = (_size.W + _offset.W) + "px";
+			this.iScroll.scroller.style.height = (_size.H + _offset.H) + "px";
 
 			var _position = this.delegate.GetScrollPosition();
 			this.iScroll.refresh(_position);
 		}
+	};
+	CMobileTouchManagerBase.prototype.Resize = function()
+	{
+		this.delegate.Resize();
+		this.CheckZoomCriticalValues();
+
+		this.UpdateScrolls();
 
 		if (this.isMobileContextMenuShowResize)
 			this.SendShowContextMenu();
