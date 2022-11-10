@@ -1204,7 +1204,9 @@
 
 		if (this.sqref) {
 			this.sqref.forEach(function (item) {
-				arrResult.push(item.getAbsName());
+				if (item) {
+					arrResult.push(item.getAbsName());
+				}
 			});
 		}
 		return "=" + arrResult.join(AscCommon.FormulaSeparators.functionArgumentSeparator);

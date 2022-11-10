@@ -3546,6 +3546,7 @@
 			}
 			else if (Asc.c_oAscSelectionDialogType.ConditionalFormattingRule === dialogType)
 			{
+
 				if (dataRange === null || dataRange === "")
 				{
 					return Asc.c_oAscError.ID.DataRangeError;
@@ -3555,9 +3556,18 @@
 					if (dataRange[0] === "=") {
 						dataRange = dataRange.slice(1);
 					}
+
 					if (!parserHelp.isArea(dataRange) && !parserHelp.isRef(dataRange) && !parserHelp.isTable(dataRange))
 					{
 						return Asc.c_oAscError.ID.DataRangeError;
+					}
+
+					if (model) {
+						var aRanges = AscCommonExcel.getRangeByRef(dataRange, model.getActiveWs())
+						if (aRanges && aRanges.length === 0)
+						{
+							return Asc.c_oAscError.ID.DataRangeError;
+						}
 					}
 				}
 			}
