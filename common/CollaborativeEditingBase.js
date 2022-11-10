@@ -210,6 +210,8 @@
         this.m_nRecalcIndexStart  = 0;
         this.m_nRecalcIndexEnd    = 0;
 
+		this.CoHistory = new AscCommon.CCollaborativeHistory(this);
+
         this.m_aAllChanges        = []; // Список всех изменений
         this.m_aOwnChangesIndexes = []; // Список номеров своих изменений в общем списке, которые мы можем откатить
 
@@ -231,6 +233,10 @@
     {
         return null;
     };
+	CCollaborativeEditingBase.prototype.GetLogicDocument = function()
+	{
+		return this.m_oLogicDocument;
+	};
     CCollaborativeEditingBase.prototype.Clear = function()
     {
         this.m_nUseType = 1;
@@ -497,18 +503,6 @@
 		editor.WordControl.m_oLogicDocument.RecalculateFromStart();
 
 		return counter;
-	};
-	CCollaborativeEditingBase.prototype.GetEmptyContentChanges = function()
-	{
-		let changes = [];
-		for (let index = this.m_aAllChanges.length - 1; index >= 0; --index)
-		{
-			let tempChange = this.m_aAllChanges[index];
-
-			if (tempChange.IsContentChange() && tempChange.GetItemsCount() <= 0)
-				changes.push(tempChange);
-		}
-		return changes;
 	};
     CCollaborativeEditingBase.prototype.getOwnLocksLength = function()
     {
@@ -1222,33 +1216,12 @@
             }
 
             if (false !== isSave)
-                this.m_aAllChanges.push(oChange);
+			{
+				this.CoHistory.AddChange(oChange);
+				this.m_aAllChanges.push(oChange);
+			}
 
             return true;
-        };
-        CCollaborativeEditingBase.prototype.private_OnSendOwnChanges = function(arrChanges, nDeleteIndex)
-        {
-            if (null !== nDeleteIndex)
-            {
-                this.m_aAllChanges.length = this.m_nAllChangesSavedIndex + nDeleteIndex;
-            }
-            else
-            {
-                this.m_nAllChangesSavedIndex = this.m_aAllChanges.length;
-            }
-
-            // TODO: Пока мы делаем это как одну точку, которую надо откатить. Надо пробежаться по массиву и разбить его
-            //       по отдельным действиям. В принципе, данная схема срабатывает в быстром совместном редактировании,
-            //       так что как правило две точки не успевают попасть в одно сохранение.
-            if (arrChanges.length > 0)
-            {
-                this.m_aOwnChangesIndexes.push({
-                    Position : this.m_aAllChanges.length,
-                    Count    : arrChanges.length
-                });
-
-                this.m_aAllChanges = this.m_aAllChanges.concat(arrChanges);
-            }
         };
 		CCollaborativeEditingBase.prototype.private_PreUndo = function()
 		{
@@ -1270,63 +1243,20 @@
 			logicDocument.UpdateInterface();
 			logicDocument.UpdateRulers();
 		};
-		CCollaborativeEditingBase.prototype.UndoGlobal = function(count)
-		{
-			if (!count)
-				return;
+	CCollaborativeEditingBase.prototype.UndoGlobal = function(count)
+	{
+		if (!count)
+			return;
 
-			count = Math.min(count, this.m_aAllChanges.length);
-
-			let state = this.private_PreUndo();
-
-			let index = this.m_aAllChanges.length - 1;
-			let changeArray = [];
-			while (index >= this.m_aAllChanges.length - count)
-			{
-				let change = this.m_aAllChanges[index--];
-				if (!change)
-					continue;
-
-				if (change.IsContentChange())
-				{
-					let simpleChanges = change.ConvertToSimpleChanges();
-					for (let simpleIndex = simpleChanges.length - 1; simpleIndex >= 0; --simpleIndex)
-					{
-						simpleChanges[simpleIndex].Undo();
-						changeArray.push(simpleChanges[simpleIndex]);
-					}
-				}
-				else
-				{
-					change.Undo();
-					changeArray.push(change);
-				}
-			}
-
-			this.m_aAllChanges.length = this.m_aAllChanges.length - count;
-
-			this.private_PostUndo(state, changeArray);
-		};
+		let state   = this.private_PreUndo();
+		let changes = this.CoHistory.UndoGlobalChanges(count);
+		this.private_PostUndo(state, changes);
+	};
 	CCollaborativeEditingBase.prototype.UndoGlobalPoint = function()
 	{
-		let count = 0;
-		for (let index = this.m_aAllChanges.length - 1; index > 0; --index, ++count)
-		{
-			let change = this.m_aAllChanges[index];
-			if (!change)
-				continue;
-
-			if (change.IsDescriptionChange())
-			{
-				count++;
-				break;
-			}
-		}
-
-		if (count)
-			this.UndoGlobal(count);
-
-		return count;
+		let state   = this.private_PreUndo();
+		let changes = this.CoHistory.UndoGlobalPoint();
+		this.private_PostUndo(state, changes);
 	};
 		CCollaborativeEditingBase.prototype.private_GetReverseChangesForCollaborativeUndo = function()
 		{
@@ -1385,7 +1315,41 @@
 
 			return arrReverseChanges;
 		};
-		CCollaborativeEditingBase.prototype.private_CorrectClassesOnCollaborativeUndo = function(arrReverseChanges)
+		CCollaborativeEditingBase.prototype.private_CreateHistoryPointForCollaborativeUndo = function(changes)
+		{
+			let history = AscCommon.History;
+
+			history.CreateNewPointForCollectChanges(AscDFH.historydescription_Collaborative_Undo);
+
+			this.private_CreateHistoryPointForCollaborativeUndo(arrReverseChanges);
+			this.private_CorrectClassesOnCollaborativeUndo(arrReverseChanges);
+
+
+			oHistory.Update_PointInfoItem();
+
+			var oBinaryWriter = AscCommon.History.BinaryWriter;
+			var aSendingChanges = [];
+			for (var nIndex = 0, nCount = arrReverseChanges.length; nIndex < nCount; ++nIndex)
+			{
+				var oReverseChange = arrReverseChanges[nIndex];
+				var oChangeClass   = oReverseChange.GetClass();
+
+				var nBinaryPos = oBinaryWriter.GetCurPosition();
+				oBinaryWriter.WriteString2(oChangeClass.Get_Id());
+				oBinaryWriter.WriteLong(oReverseChange.Type);
+				oReverseChange.WriteToBinary(oBinaryWriter);
+
+				var nBinaryLen = oBinaryWriter.GetCurPosition() - nBinaryPos;
+
+				var oChange = new AscCommon.CCollaborativeChanges();
+				oChange.Set_FromUndoRedo(oChangeClass, oReverseChange, {Pos : nBinaryPos, Len : nBinaryLen});
+				aSendingChanges.push(oChange.m_pData);
+			}
+
+
+			this.private_CorrectClassesForCollaborativeUndo(changes);
+		};
+		CCollaborativeEditingBase.prototype.private_CorrectClassesForCollaborativeUndo = function(arrReverseChanges)
 		{
 			let oLogicDocument = this.m_oLogicDocument;
 
@@ -1685,9 +1649,13 @@
 			// Создаем точку в истории. Делаем действия через обычные функции (с отключенным пересчетом), которые пишут в
 			// историю. Сохраняем список изменений в новой точке, удаляем данную точку.
 			var oHistory = AscCommon.History;
-			oHistory.CreateNewPointForCollectChanges();
+			oHistory.CreateNewPointForCollectChanges(AscDFH.historydescription_Collaborative_Undo);
 
+			this.private_CreateHistoryPointForCollaborativeUndo(arrReverseChanges);
             this.private_CorrectClassesOnCollaborativeUndo(arrReverseChanges);
+
+
+			oHistory.Update_PointInfoItem();
 
 			var oBinaryWriter = AscCommon.History.BinaryWriter;
 			var aSendingChanges = [];
@@ -1720,6 +1688,7 @@
 
 				arrReverseChanges.push(oHistoryPoint.Items[nIndex].Data);
 			}
+
 			oHistory.Remove_LastPoint();
 			this.Clear_DCChanges();
 

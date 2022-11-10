@@ -219,8 +219,9 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 		this.m_aNeedUnlock2.length = 0;
 	}
 
-    if (0 < aChanges.length || null !== deleteIndex) {
-        this.private_OnSendOwnChanges(aChanges2, deleteIndex);
+    if (0 < aChanges.length || null !== deleteIndex)
+	{
+		this.CoHistory.AddOwnChanges(aChanges2, deleteIndex);
         editor.CoAuthoringApi.saveChanges(aChanges, deleteIndex, AdditionalInfo, editor.canUnlockDocument2, bCollaborative);
         AscCommon.History.CanNotAddChanges = true;
     } else

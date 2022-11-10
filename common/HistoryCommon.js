@@ -1254,6 +1254,12 @@
 			case AscDFH.historydescription_Document_CorrectEnterText:
 				sString = "Document_CorrectEnterText";
 				break;
+			case AscDFH.historydescription_Document_DocumentProtection:
+				sString = "Document_DocumentProtection";
+				break;
+			case AscDFH.historydescription_Collaborative_Undo:
+				sString = "Collaborative_Undo";
+				break;
 		}
 		return sString;
 	}
@@ -4439,6 +4445,7 @@
 	window['AscDFH'].historydescription_Document_CorrectEnterText                   = 0x0198;
 	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0199;
 	window['AscDFH'].historydescription_Document_DocumentProtection                 = 0x019a;
+	window['AscDFH'].historydescription_Collaborative_Undo                          = 0x019b;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

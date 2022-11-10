@@ -355,15 +355,16 @@ CHistory.prototype =
 	/**
 	 * Специальная функция, для создания точки, чтобы отловить все изменения, которые происходят. После использования
 	 * данная точка ДОЛЖНА быть удалена через функцию Remove_LastPoint.
+	 * @param {numeber} description - идентификатор действия
 	 */
-	CreateNewPointForCollectChanges : function()
+	CreateNewPointForCollectChanges : function(description)
 	{
 		this.Points[++this.Index] = {
 			State       : null,
 			Items       : [],
 			Time        : null,
 			Additional  : {},
-			Description : -1
+			Description : description ? description : -1
 		};
 
 		this.Points.length  = this.Index + 1;

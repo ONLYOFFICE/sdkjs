@@ -21,6 +21,7 @@
 			"cell/apiDefines.js",
 			"cell/utils/utils.js",
 			"cell/view/HandlerList.js",
+			"common/collaborativeHistory.js",
 			"common/CollaborativeEditingBase.js",
 			"cell/model/DrawingObjects/GlobalCounters.js",
 			"cell/model/CollaborativeEditing.js",

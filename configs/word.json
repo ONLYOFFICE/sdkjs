@@ -19,6 +19,7 @@
 			"common/libfont/engine.js",
 			"common/libfont/loader.js",
 			"word/apiDefines.js",
+			"common/collaborativeHistory.js",
 			"common/CollaborativeEditingBase.js",
 			"word/Editor/CollaborativeEditing.js",
 			"common/macros.js",
