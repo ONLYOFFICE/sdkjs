@@ -197,6 +197,10 @@
 	{
 		return;
 	};
+	CMobileDelegateSimple.prototype.LockScrollStartPos = function()
+	{
+		return;
+	};
 	CMobileDelegateSimple.prototype.GetSelectionRectsBounds = function()
 	{
 		return this.LogicDocument.GetSelectionBounds();
@@ -540,6 +544,10 @@
 
 		this.HtmlPage.OnScroll();
 		_scroll.manager.OnScrollAnimationEnd();
+	};
+	CMobileDelegateEditor.prototype.LockScrollStartPos = function()
+	{
+		this.HtmlPage.mobileScrollStartPos = this.HtmlPage.m_dScrollY;
 	};
 	CMobileDelegateEditor.prototype.GetSelectionRectsBounds = function()
 	{

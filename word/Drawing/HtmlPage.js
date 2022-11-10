@@ -201,6 +201,9 @@ function CEditorPage(api)
 	// сдвиг для редактора. используется для мобильной версии. меняется при скрытии тулбара.
 	// изначально - высота тулбара. без учета deviceScale (css значение)
 	this.offsetTop = 0;
+	// запоминаем позицию скролла при начатии скролла. чтобы отсылать изменение в интерфейс (ТОЛЬКО при скролле).
+	// чтобы иметь возможность убирать интерфейс
+	this.mobileScrollStartPos = 0;
 
 	this.ReaderFontSizeCur = 2;
 	this.ReaderFontSizes   = [12, 14, 16, 18, 22, 28, 36, 48, 72];
@@ -2634,6 +2637,12 @@ function CEditorPage(api)
 		if (oWordControl.MobileTouchManager && oWordControl.MobileTouchManager.iScroll)
 		{
 			oWordControl.MobileTouchManager.iScroll.y = -oWordControl.m_dScrollY;
+
+			if ((oWordControl.MobileTouchManager.Mode === AscCommon.MobileTouchMode.None || oWordControl.MobileTouchManager.Mode === AscCommon.MobileTouchMode.Scroll) &&
+				(oWordControl.MobileTouchManager.iScroll.initiated !== 0 || oWordControl.MobileTouchManager.iScroll.isAnimating))
+			{
+				oThis.m_oApi.sendEvent("onMobileScrollDelta", oWordControl.m_dScrollY - oWordControl.mobileScrollStartPos);
+			}
 		}
 	};
 	this.CorrectSpeedVerticalScroll = function(newScrollPos)
@@ -4084,14 +4093,22 @@ function CEditorPage(api)
 		return this.m_oMainContent.AbsolutePosition;
 	};
 
-	this.setOffsetTop = function(value)
+	this.setOffsetTop = function(offsetMain, offsetScroll)
 	{
-		this.offsetTop = value;
+		if (offsetMain !== this.offsetTop)
+		{
+			this.offsetTop = offsetMain;
 
-		// TODO: set offset to mobile scroll
+			this.UpdateScrolls();
+			this.OnScroll();
+		}
 
-		this.UpdateScrolls();
-		this.OnScroll();
+		if (this.MobileTouchManager && this.MobileTouchManager.iScroll &&
+			this.MobileTouchManager.iScroll.options.offsetTopY !== offsetScroll)
+		{
+			// этот метод не должен отсылать событие скролла! влияет только на положение/размер полнузка
+			this.MobileTouchManager.iScroll.setOffset(offsetScroll);
+		}
 	};
 }
 
