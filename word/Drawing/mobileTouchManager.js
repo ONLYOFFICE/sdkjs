@@ -179,6 +179,7 @@
 				this.DownPointOriginal.X = global_mouseEvent.X;
 				this.DownPointOriginal.Y = global_mouseEvent.Y;
 
+				this.delegate.LockScrollStartPos();
 				this.iScroll._start(e);
 
 				break;
@@ -190,6 +191,7 @@
 				this.DownPointOriginal.X = global_mouseEvent.X;
 				this.DownPointOriginal.Y = global_mouseEvent.Y;
 
+				this.delegate.LockScrollStartPos();
 				this.iScroll._start(e);
 
 				break;
