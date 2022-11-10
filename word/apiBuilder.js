@@ -2835,7 +2835,7 @@
 		if (typeof(nEnd) != "number" || nEnd < 0)
 			nEnd = -1;
 
-		if (nStart > nEnd)
+		if (nEnd < 0 && nStart > nEnd)
 			[nStart, nEnd] = [nEnd, nStart];
 
 		let curStartPos	= this.StartPos;
