@@ -2822,6 +2822,144 @@
 	};
 
 	/**
+     * Returns a Range object that represents the document part contained in the specified range.
+     * @typeofeditors ["CDE"]
+     * @param {Number} [Start=0] - Start character index in the current range.
+     * @param {Number} [End=-1] - End character index in the current range. (if <= 0 then range to end).
+     * @returns {ApiRange} 
+     * */
+	ApiRange.prototype.GetRange = function(nStart, nEnd)
+	{
+		if (typeof(nStart) != "number" || nStart < 0)
+			nStart = 0;
+		if (typeof(nEnd) != "number" || nEnd < 0)
+			nEnd = -1;
+
+		if (nEnd > 0 && nStart > nEnd)
+			[nStart, nEnd] = [nEnd, nStart];
+
+		let curStartPos	= this.StartPos;
+		let curEndPos	= this.EndPos;
+
+		let newStartPos	= null;
+		let newEndPos	= nEnd == -1 ? curEndPos : nEnd;
+
+		let isStartDocPosFinded	= false;
+		let isEndDocPosFinded	= nEnd == -1 ? true : false;
+		
+		let nCharsNewRange = nEnd === -1 ? -1 : nEnd - nStart + 1; // кол-во символов в новом Range
+		let tempCharsCount = 0; // все символы по которым прошлись
+
+		let isSearchBegin = false; // нашли стартовый ран
+		let isStartRun = false;	// начинаем считать символы со Start позиции текущего Range (только в стартовом Run).
+
+		let isOutOfRange = false;
+
+		function checkRelateDocPos(firstPos, secondPos)
+		{
+			for (var nPos = 0, nLen = Math.min(firstPos.length, secondPos.length); nPos < nLen; ++nPos)
+			{
+				if (!secondPos[nPos] || !firstPos[nPos] || firstPos[nPos].Class !== secondPos[nPos].Class)
+					return -1;
+
+				if (firstPos[nPos].Position < secondPos[nPos].Position)
+					return -1;
+				else if (firstPos[nPos].Position > secondPos[nPos].Position)
+					return 1;
+			}
+
+			return 0;
+		}
+
+		function processRun(oRun)
+		{
+			if (isOutOfRange)
+				return;
+
+			var nRangePos = 0;
+
+			if (isSearchBegin == false && checkRelateDocPos(oRun.GetDocumentPositionFromObject(), curStartPos) === 0) {
+				isStartRun = true;
+				isSearchBegin = true;
+			}
+			else if (isSearchBegin == false)
+				return;
+			
+			var nLenght = oRun.Content.length;
+			var nPos = isStartRun == true ? curStartPos[curStartPos.length - 1].Position : 0;
+
+			for (; nPos < nLenght; ++nPos)
+			{
+				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type) {
+					nRangePos++;
+					tempCharsCount++;
+				}
+					
+				if (isStartDocPosFinded == false && nStart === tempCharsCount - 1)
+				{
+					let DocPosInRun =
+					{
+						Class : oRun,
+						Position : nPos,
+					};
+		
+					let DocPos = oRun.GetDocumentPositionFromObject();
+		
+					DocPos.push(DocPosInRun);
+		
+					newStartPos = DocPos;
+
+					isStartDocPosFinded = true;
+					tempCharsCount = 1; // теперь считаем кол-во символов от стартового в Range. Конец Range будет через nCharsNewRange символов.
+				}
+				
+				if (isEndDocPosFinded == false && nCharsNewRange == tempCharsCount)
+				{
+					let DocPosInRun =
+					{
+						Class : oRun,
+						Position : nPos + 1,
+					};
+		
+					let DocPos = oRun.GetDocumentPositionFromObject();
+					DocPos.push(DocPosInRun);
+		
+					newEndPos = DocPos;
+					isEndDocPosFinded = true;
+				}
+			}
+
+			isStartRun = false;
+		}
+		
+		if (this.Element instanceof CDocument || this.Element instanceof CDocumentContent || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
+		{
+			var allParagraphs = this.Element.GetAllParagraphs({OnlyMainDocument : true, All : true});
+
+			for (var paraItem = 0; paraItem < allParagraphs.length; paraItem++)
+			{
+				if (isOutOfRange)
+					return null;
+
+				if (isStartDocPosFinded && isEndDocPosFinded)
+					break;
+				else
+					allParagraphs[paraItem].CheckRunContent(processRun);
+			}
+		}
+		else if (this.Element instanceof Paragraph || this.Element instanceof ParaHyperlink || this.Element instanceof CInlineLevelSdt || this.Element instanceof ParaRun)
+		{
+			this.Element.CheckRunContent(processRun);
+		}
+		
+		let oRange = new ApiRange(this.Element, newStartPos, newEndPos);
+		if (oRange.isEmpty)
+			return null;
+		
+		return oRange;
+	};
+
+	/**
 	 * Class representing a document.
 	 * @constructor
 	 * @extends {ApiDocumentContent}
@@ -18360,6 +18498,7 @@
 	ApiRange.prototype["Delete"]                     = ApiRange.prototype.Delete;
 	ApiRange.prototype["ToJSON"]                     = ApiRange.prototype.ToJSON;
 	ApiRange.prototype["AddComment"]                 = ApiRange.prototype.AddComment;
+	ApiRange.prototype["GetRange"]                   = ApiRange.prototype.GetRange;
 
 	ApiDocument.prototype["GetClassType"]                = ApiDocument.prototype.GetClassType;
 	ApiDocument.prototype["CreateNewHistoryPoint"]       = ApiDocument.prototype.CreateNewHistoryPoint;
