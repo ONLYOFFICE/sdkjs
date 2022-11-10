@@ -1177,7 +1177,6 @@
 		if (this.ImageLoader)
 			this.ImageLoader.bIsAsyncLoadDocumentImages = false;
 	};
-
 	asc_docs_api.prototype.IncreaseReaderFontSize = function()
 	{
 		return this.WordControl.IncreaseReaderFontSize();
@@ -1185,6 +1184,11 @@
 	asc_docs_api.prototype.DecreaseReaderFontSize = function()
 	{
 		return this.WordControl.DecreaseReaderFontSize();
+	};
+
+	asc_docs_api.prototype.SetMobileTopOffset = function(offsetMain, offsetScroll)
+	{
+		this.WordControl && this.WordControl.setOffsetTop(offsetMain, offsetScroll);
 	};
 
 	asc_docs_api.prototype.CreateCSS = function()
@@ -13107,6 +13111,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['SetReaderModeOnly']                         = asc_docs_api.prototype.SetReaderModeOnly;
 	asc_docs_api.prototype['IncreaseReaderFontSize']                    = asc_docs_api.prototype.IncreaseReaderFontSize;
 	asc_docs_api.prototype['DecreaseReaderFontSize']                    = asc_docs_api.prototype.DecreaseReaderFontSize;
+	asc_docs_api.prototype['SetMobileTopOffset']                    	= asc_docs_api.prototype.SetMobileTopOffset;
 	asc_docs_api.prototype['CreateCSS']                                 = asc_docs_api.prototype.CreateCSS;
 	asc_docs_api.prototype['GetCopyPasteDivId']                         = asc_docs_api.prototype.GetCopyPasteDivId;
 	asc_docs_api.prototype['ContentToHTML']                             = asc_docs_api.prototype.ContentToHTML;
