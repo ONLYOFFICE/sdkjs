@@ -4095,7 +4095,7 @@ function CEditorPage(api)
 
 	this.setOffsetTop = function(offsetMain, offsetScroll)
 	{
-		if (offsetMain !== this.offsetTop)
+		if (undefined !== offsetMain && offsetMain !== this.offsetTop)
 		{
 			this.offsetTop = offsetMain;
 
@@ -4103,7 +4103,8 @@ function CEditorPage(api)
 			this.OnScroll();
 		}
 
-		if (this.MobileTouchManager && this.MobileTouchManager.iScroll &&
+		if (offsetScroll !== undefined &&
+			this.MobileTouchManager && this.MobileTouchManager.iScroll &&
 			this.MobileTouchManager.iScroll.options.offsetTopY !== offsetScroll)
 		{
 			// этот метод не должен отсылать событие скролла! влияет только на положение/размер полнузка
