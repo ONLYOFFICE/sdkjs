@@ -462,73 +462,87 @@ function (window, undefined) {
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
-		function cEXPAND() {
+	function cEXPAND() {
+	}
+
+	//***array-formula***
+	cEXPAND.prototype = Object.create(cBaseFunction.prototype);
+	cEXPAND.prototype.constructor = cEXPAND;
+	cEXPAND.prototype.name = 'EXPAND';
+	cEXPAND.prototype.argumentsMin = 1;
+	cEXPAND.prototype.argumentsMax = 4;
+	cEXPAND.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
+	cEXPAND.prototype.Calculate = function (arg) {
+		let array;
+		let arg0 = arg[0];
+		let arg1 = arg[1];
+		let arg2 = arg[2];
+		let arg3 = arg[3] ? arg[3] : new cError(cErrorType.not_available);
+		let rows = 0;
+		let columns = 0;
+		let pad_with = arg3;
+
+		function rowAndColumnTypeCheck() {
+			// rows type
+			if(cElementType.number === arg1.type) {
+				rows = arg1;
+			} else if(cElementType.empty === arg1.type) {
+				rows = (arg0.getRange().getBBox0().r2 - arg0.getRange().getBBox0().r1) + 1;
+			}
+			// columns type
+			if(cElementType.number === arg2.type) {
+				columns = arg2;
+			} else if(cElementType.empty === arg2.type) {
+				columns = (arg0.getRange().getBBox0().c2 - arg0.getRange().getBBox0().c1) + 1;
+			}
 		}
-	
-		//***array-formula***
-		cEXPAND.prototype = Object.create(cBaseFunction.prototype);
-		cEXPAND.prototype.constructor = cEXPAND;
-		cEXPAND.prototype.name = 'EXPAND';
-		cEXPAND.prototype.argumentsMin = 1;
-		cEXPAND.prototype.argumentsMax = 4;
-		cEXPAND.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
-		cEXPAND.prototype.Calculate = function (arg) {
-			let array = arg[0];
-			const rowsRange = array.getRange().getBBox0().r2 - array.getRange().getBBox0().r1;
-			const columnsRange = array.getRange().getBBox0().c2 - array.getRange().getBBox0().c1;
-			let rows = arg[1].value !== '' ? arg[1] : rowsRange + 1;
-			let columns = arg[2].value !== '' ? arg[2] : columnsRange + 1;
-			let pad_with = arg[3] ? arg[3] : new cError(cErrorType.not_available);
 
-			function expandedArray(arr) {
-				let res = new cArray();
-	
-				arr.length = rows;
-				for(let i = 0; i < arr.length; i++) {
-					if(Array.isArray(arr[i])){
-						arr[i].length = columns;
+		function expandedArray(arr) {
+			let res = new cArray();
+
+			for(let i = 0; i < rows; i++) {
+				if(!arr[i]) {
+					arr[i] = [];
+				}
+				for(let j = 0; j < columns; j++) {
+					if(!arr[i][j]) {
+						arr[i][j] = pad_with;
 					}
 				}
-	
-				for(let i = 0; i < arr.length; i++) {
-					if(!arr[i]) {
-						arr[i] = [];
-					}
-					for(let j = 0; j < arr[0].length; j++) {
-						if(!arr[i][j]) {
-							arr[i][j] = pad_with;
-						}
-					}
-				}
-
-				res.fillFromArray(arr);
-				return res;
-			}
-	
-			if (cElementType.cellsRange === array.type) {
-				array = array.getMatrix();
-			} else if(cElementType.cellsRange3D === array.type) {
-				array = array.getMatrix()[0];
-			} else if(cElementType.array === array.type) {
-				array = array.getMatrix();
-			} else if (cElementType.cell === array.type || cElementType.cell3D === array.type) {
-				return array.getValue();
-			} else if (cElementType.number === array.type || cElementType.string === array.type ||
-				cElementType.bool === array.type || cElementType.error === array.type) {
-				return array;
-			} else {
-				return new cError(cErrorType.not_available);
 			}
 
-			if (cElementType.error === array.type) {
-				return array;
-			}
-			if(0 === array.length){
-				return new cError(cErrorType.wrong_value_type);
-			}
-	
-			return expandedArray(array);
-		};
+			res.fillFromArray(arr);
+			return res;
+		}
+
+		if (cElementType.cellsRange === arg0.type || cElementType.array === arg0.type) {
+			array = arg0.getMatrix();
+			rowAndColumnTypeCheck();
+		} else if(cElementType.cellsRange3D === arg0.type) {
+			array = arg0.getMatrix()[0];
+			rowAndColumnTypeCheck();
+		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			return arg0.getValue();
+		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+			cElementType.bool === arg0.type || cElementType.error === arg0.type) {
+			return arg0;
+		} else {
+			return new cError(cErrorType.not_available);
+		}
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if(0 === arg0.length){
+			return new cError(cErrorType.wrong_value_type);
+		}
+		// check if columns and row < array.length;
+		if(rows < array.length || columns < array[0].length) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		return expandedArray(array);
+	};
 
 	/**
 	 * @constructor
