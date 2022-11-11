@@ -582,6 +582,7 @@ var editor;
 					} else {
 						callback(null);
 					}
+					_api.endInsertDocumentUrls();
 				}, endCallback: function (_api) {
 				}
 			};

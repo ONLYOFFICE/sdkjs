@@ -4915,12 +4915,17 @@
 					var arrAfterPromise = [];
 
 					var aRequests = [];
-					t._getLoadFileRequestsFromReferenceData(data, aRequests, externalReferences, function (_stream) {
+					t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream) {
 						arrAfterPromise.push(_stream);
 						if (data.length === arrAfterPromise.length) {
 							doUpdateData(arrAfterPromise);
 						}
 					});
+
+					if (!aRequests.length) {
+						t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
+						return;
+					}
 
 					var _promise = Promise.resolve();
 					for (let i in aRequests) {
@@ -4932,12 +4937,10 @@
 						History.StartTransaction();
 
 						for (var i = 0; i < _arrAfterPromise.length; i++) {
+							//соответствие по массиву externalReferences, по индексу
+							var eR = externalReferences[i] && externalReferences[i].externalReference && externalReferences[i].externalReference;
 							if (_arrAfterPromise[i]) {
 								//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
-
-								//соответствие по массиву externalReferences, по индексу
-								var eR = externalReferences[i] && externalReferences[i].externalReference && externalReferences[i].externalReference;
-
 								//использую общий wb для externalReferences. поскольку внутри
 								//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
 								//необходимо проверить, ссылкой на 2 листа одной книги
@@ -4947,6 +4950,7 @@
 									// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
 									let jsZlib = new AscCommon.ZLib();
 									if (!jsZlib.open(_arrAfterPromise[i])) {
+										t.model.handlers.trigger("asc_onErrorUpdateExternalReference");
 										return false;
 									}
 
@@ -4980,6 +4984,10 @@
 										eR && eR.updateData(updatedData);
 									}
 								}
+							} else {
+								if (eR) {
+									t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+								}
 							}
 						}
 
@@ -5010,7 +5018,7 @@
 		}
 	};
 
-	WorkbookView.prototype._getLoadFileRequestsFromReferenceData = function (data, requests, externalReferences, resolveFunc) {
+	WorkbookView.prototype._getPromiseRequestsArr = function (data, requests, externalReferences, resolveFunc) {
 		if (!requests) {
 			return;
 		}

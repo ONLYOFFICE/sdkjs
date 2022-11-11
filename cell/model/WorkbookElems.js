@@ -14434,6 +14434,9 @@ QueryTableField.prototype.clone = function() {
 	asc_CExternalReference.prototype.isExternalLink = function () {
 		return this.type === Asc.c_oAscExternalReferenceType.link;
 	};
+	asc_CExternalReference.prototype.asc_getId = function () {
+		return this.externalReference && this.externalReference.Id;
+	};
 
 
 	function ExternalSheetDataSet() {
@@ -15211,6 +15214,7 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getType"] = prot.asc_getType;
 	prot["asc_getData"] = prot.asc_getData;
 	prot["asc_getSource"] = prot.asc_getSource;
+	prot["asc_getId"] = prot.asc_getId;
 
 
 	window["AscCommonExcel"].CPrintPreviewState = CPrintPreviewState;
