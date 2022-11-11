@@ -4942,7 +4942,7 @@
 								//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
 								//необходимо проверить, ссылкой на 2 листа одной книги
 								var wb = eR.getWb();
-								if (!t.Api.isOpenOOXInBrowser) {
+								if (!t.Api["asc_isSupportFeature"]("ooxml")) {
 									//в этом случае запрашиваем бинарник
 									// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
 									let jsZlib = new AscCommon.ZLib();
@@ -5046,8 +5046,8 @@
 					//если открыть на клиенте не можем, то запрашиваем бинарник
 					var isXlsx = eR.externalReference && eR.externalReference.isXlsx();
 					//если внешняя ссылка, то конвертируем в xlsx
-					if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api.isOpenOOXInBrowser) {
-						window["Asc"]["editor"]._getFileFromUrl(sFileUrl, t.Api.isOpenOOXInBrowser ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY,
+					if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api["asc_isSupportFeature"]("ooxml")) {
+						window["Asc"]["editor"]._getFileFromUrl(sFileUrl, t.Api["asc_isSupportFeature"]("ooxml") ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY,
 							function (fileUrlAfterConvert) {
 								if (fileUrlAfterConvert) {
 									loadFile(fileUrlAfterConvert);
