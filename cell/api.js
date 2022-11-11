@@ -2979,6 +2979,10 @@ var editor;
 			}
 			this.asc_Resize();
 		}
+
+		if (this.asc_getExternalReferences()) {
+			this.handlers.trigger("asc_onNeedUpdateExternalReferenceOnOpen");
+		}
 		//this.asc_Resize(); // Убрал, т.к. сверху приходит resize (http://bugzilla.onlyoffice.com/show_bug.cgi?id=14680)
 	};
 
