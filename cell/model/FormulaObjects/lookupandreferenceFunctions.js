@@ -67,7 +67,7 @@ function (window, undefined) {
 	var _func = AscCommonExcel._func;
 
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
-	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cFORMULATEXT,
+	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE, cTAKE,
 		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS);
 
@@ -457,6 +457,78 @@ function (window, undefined) {
 		return (range ? new cNumber(Math.abs(range.getBBox0().c1 - range.getBBox0().c2) + 1) :
 			new cError(cErrorType.wrong_value_type));
 	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+		function cEXPAND() {
+		}
+	
+		//***array-formula***
+		cEXPAND.prototype = Object.create(cBaseFunction.prototype);
+		cEXPAND.prototype.constructor = cEXPAND;
+		cEXPAND.prototype.name = 'EXPAND';
+		cEXPAND.prototype.argumentsMin = 1;
+		cEXPAND.prototype.argumentsMax = 4;
+		cEXPAND.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
+		cEXPAND.prototype.Calculate = function (arg) {
+			let array = arg[0];
+			const rowsRange = array.getRange().getBBox0().r2 - array.getRange().getBBox0().r1;
+			const columnsRange = array.getRange().getBBox0().c2 - array.getRange().getBBox0().c1;
+			let rows = arg[1].value !== '' ? arg[1] : rowsRange + 1;
+			let columns = arg[2].value !== '' ? arg[2] : columnsRange + 1;
+			let pad_with = arg[3] ? arg[3] : new cError(cErrorType.not_available);
+
+			function expandedArray(arr) {
+				let res = new cArray();
+	
+				arr.length = rows;
+				for(let i = 0; i < arr.length; i++) {
+					if(Array.isArray(arr[i])){
+						arr[i].length = columns;
+					}
+				}
+	
+				for(let i = 0; i < arr.length; i++) {
+					if(!arr[i]) {
+						arr[i] = [];
+					}
+					for(let j = 0; j < arr[0].length; j++) {
+						if(!arr[i][j]) {
+							arr[i][j] = pad_with;
+						}
+					}
+				}
+
+				res.fillFromArray(arr);
+				return res;
+			}
+	
+			if (cElementType.cellsRange === array.type) {
+				array = array.getMatrix();
+			} else if(cElementType.cellsRange3D === array.type) {
+				array = array.getMatrix()[0];
+			} else if(cElementType.array === array.type) {
+				array = array.getMatrix();
+			} else if (cElementType.cell === array.type || cElementType.cell3D === array.type) {
+				return array.getValue();
+			} else if (cElementType.number === array.type || cElementType.string === array.type ||
+				cElementType.bool === array.type || cElementType.error === array.type) {
+				return array;
+			} else {
+				return new cError(cErrorType.not_available);
+			}
+
+			if (cElementType.error === array.type) {
+				return array;
+			}
+			if(0 === array.length){
+				return new cError(cErrorType.wrong_value_type);
+			}
+	
+			return expandedArray(array);
+		};
 
 	/**
 	 * @constructor
