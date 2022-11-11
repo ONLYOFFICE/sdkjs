@@ -4908,6 +4908,7 @@
 			// 	error: string, // для отображения ошибки
 			// })
 
+			this.model.handlers.trigger("asc_onStartUpdateExternalReference", true);
 
 			if (window["AscDesktopEditor"]) {
 				//десктоп
@@ -4917,11 +4918,158 @@
 				//получаем ссылку на файл через asc_onUpdateExternalReference от портала
 				t._getExternalReferenceData(externalReferences, function (data) {
 					//создаём запросы
-					t._getLoadFileRequestsFromReferenceData(data, requests, externalReferences);
+					//t._getLoadFileRequestsFromReferenceData(data, requests, externalReferences);
+
+					var arrAfterPromise = [];
+					var getPromise = function (oData, eR, resolve1) {
+						return function () {
+
+							return new Promise(function (resolve) {
+								var sFileUrl = oData && !oData.error ? oData.url : null;
+								var isExternalLink = eR.isExternalLink();
+
+								//если ссылка на внешний источник, пробуем получить контент
+								if (!sFileUrl && oData.error && isExternalLink) {
+									sFileUrl = eR.data;
+								}
+
+								//получаем контент файла
+								var loadFile = function (_fileUrl) {
+									AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
+										if (httpRequest) {
+											var stream = AscCommon.initStreamFromResponse(httpRequest);
+											arrAfterPromise.push(stream);
+											resolve(resolve1(stream));
+										} else {
+											//reject - не вызываю, чтобы выполнились все запросы
+											arrAfterPromise.push(null);
+											resolve(null);
+										}
+									}, "arraybuffer");
+								};
+
+								//если открыть на клиенте не можем, то запрашиваем бинарник
+								var isXlsx = eR.externalReference && eR.externalReference.isXlsx();
+								//если внешняя ссылка, то конвертируем в xlsx
+								if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api.isOpenOOXInBrowser) {
+									window["Asc"]["editor"]._getFileFromUrl(sFileUrl, t.Api.isOpenOOXInBrowser ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY, function (fileUrlAfterConvert) {
+										if (fileUrlAfterConvert) {
+											loadFile(fileUrlAfterConvert);
+										} else {
+											arrAfterPromise.push(null);
+											resolve(null);
+										}
+									});
+								} else {
+									if (sFileUrl) {
+										loadFile(sFileUrl);
+									} else {
+										arrAfterPromise.push(null);
+										resolve(null);
+									}
+								}
+							});
+						}
+
+					};
+
+					var asyncArray1 = [];
+					for (var i = 0; i < data.length; i++) {
+						var _oData = data && data[i];
+						var _eR = externalReferences[i];
+
+						asyncArray1.push(getPromise(_oData, _eR, function (_stream) {
+							if (data.length === arrAfterPromise.length) {
+								doUpdateData(arrAfterPromise);
+							} else {
+								arrAfterPromise.push(_stream);
+							}
+						}));
+					}
+
+					var chain = Promise.resolve();
+					for (const func of asyncArray1) {
+						chain = chain.then(func);
+					}
+
+					var doUpdateData = function (_arrAfterPromise) {
+						History.Create_NewPoint();
+						History.StartTransaction();
+
+						for (var i = 0; i < _arrAfterPromise.length; i++) {
+							if (_arrAfterPromise[i]) {
+								//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
+
+								//соответствие по массиву externalReferences, по индексу
+								var eR = externalReferences[i] && externalReferences[i].externalReference && externalReferences[i].externalReference;
+
+								//использую общий wb для externalReferences. поскольку внутри
+								//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
+								//необходимо проверить, ссылкой на 2 листа одной книги
+								var wb = eR.getWb();
+								if (!t.Api.isOpenOOXInBrowser) {
+									//в этом случае запрашиваем бинарник
+									// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
+									let jsZlib = new AscCommon.ZLib();
+									if (!jsZlib.open(_arrAfterPromise[i])) {
+										return false;
+									}
+
+									if (jsZlib.files && jsZlib.files.length) {
+										var binaryData = jsZlib.getFile(jsZlib.files[0])
+
+										//заполняем через банарник
+										var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+										//чтобы лишнего не читать, проставляю флаг копипаст
+										oBinaryFileReader.InitOpenManager.copyPasteObj = {
+											isCopyPaste: true, activeRange: null, selectAllSheet: true
+										};
+
+										if (!wb) {
+											wb = new AscCommonExcel.Workbook();
+											wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
+										}
+										AscFormat.ExecuteNoHistory(function() {
+											AscCommonExcel.executeInR1C1Mode(false, function () {
+												oBinaryFileReader.Read(binaryData, wb);
+											});
+										});
+
+										if (wb.aWorksheets) {
+											eR && eR.updateData(wb.aWorksheets);
+										}
+									}
+								} else {
+									var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, _arrAfterPromise[i]);
+									if (updatedData) {
+										eR && eR.updateData(updatedData);
+									}
+								}
+							}
+						}
+
+						History.EndTransaction();
+
+						//кроме пересчёта нужно изменить ссылку на лист во всех диапазонах, которые используют данную ссылку
+						for (var j = 0; i < externalReferences.length; j++) {
+							for (var n in externalReferences[j].worksheets) {
+								var prepared = t.model.dependencyFormulas.prepareChangeSheet(externalReferences[j].worksheets[n].getId());
+								t.model.dependencyFormulas.dependencyFormulas.changeSheet(prepared);
+							}
+						}
+
+						//t.model.dependencyFormulas.calcTree();
+						var ws = t.getWorksheet();
+						ws.draw();
+
+						t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
+					};
+
+					return;
 
 					//выполняем запросы на получение файлов
 					if (requests && requests.length) {
-						Promise.all(requests)
+						Promise.all(requests.map(promiseFn => new Promise(promiseFn)))
 							.then(function (values) {
 
 								History.Create_NewPoint();
@@ -4992,6 +5140,8 @@
 								//t.model.dependencyFormulas.calcTree();
 								var ws = t.getWorksheet();
 								ws.draw();
+
+								t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
 								//window["Asc"]["editor"].asc_calculate();
 							});
 					}
@@ -5006,21 +5156,23 @@
 		}
 	};
 
-	WorkbookView.prototype._getLoadFileRequestsFromReferenceData = function (data, requests, externalReferences) {
+	WorkbookView.prototype._getLoadFileRequestsFromReferenceData = function (data, requests, externalReferences, resolve) {
 		if (!requests) {
 			return;
 		}
 		var t = this;
 		//чтобы потом понять что нужно обновлять, сохраняю сооветсвие, количество запросов соответсвует количеству externalReferences
 		//для этого создаю на все Promise, и если data[i].error -> возвращаю null
-		for (var i = 0; i < data.length; i++) {
-			var promise = new Promise(function (resolve, reject) {
-				var sFileUrl = data && data[i] && !data[i].error ? data[i].url : null;
-				var isExternalLink = externalReferences[i].isExternalLink();
+
+		var getPromise = function (oData, eR) {
+
+			return new Promise((resolve) => {
+				var sFileUrl = oData && !oData.error ? oData.url : null;
+				var isExternalLink = eR.isExternalLink();
 
 				//если ссылка на внешний источник, пробуем получить контент
-				if (!sFileUrl && data[i].error && isExternalLink) {
-					sFileUrl = externalReferences[i].data;
+				if (!sFileUrl && oData.error && isExternalLink) {
+					sFileUrl = eR.data;
 				}
 
 				//получаем контент файла
@@ -5037,7 +5189,7 @@
 				};
 
 				//если открыть на клиенте не можем, то запрашиваем бинарник
-				var isXlsx = externalReferences[i].externalReference && externalReferences[i].externalReference.isXlsx();
+				var isXlsx = eR.externalReference && eR.externalReference.isXlsx();
 				//если внешняя ссылка, то конвертируем в xlsx
 				if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api.isOpenOOXInBrowser) {
 					window["Asc"]["editor"]._getFileFromUrl(sFileUrl, t.Api.isOpenOOXInBrowser ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY, function (fileUrlAfterConvert) {
@@ -5055,8 +5207,14 @@
 					}
 				}
 			});
+		};
 
-			requests.push(promise);
+
+		for (var i = 0; i < data.length; i++) {
+			var _oData = data && data[i];
+			var _eR = externalReferences[i];
+
+			requests.push(getPromise(_oData, _eR));
 		}
 	};
 
