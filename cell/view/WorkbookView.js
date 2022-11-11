@@ -4913,67 +4913,14 @@
 				t._getExternalReferenceData(externalReferences, function (data) {
 					//создаём запросы
 					var arrAfterPromise = [];
-					var getPromise = function (oData, eR, _resolve) {
-						return function () {
-
-							return new Promise(function (resolve) {
-								var sFileUrl = oData && !oData.error ? oData.url : null;
-								var isExternalLink = eR.isExternalLink();
-
-								//если ссылка на внешний источник, пробуем получить контент
-								if (!sFileUrl && oData.error && isExternalLink) {
-									sFileUrl = eR.data;
-								}
-
-								//получаем контент файла
-								var loadFile = function (_fileUrl) {
-									AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
-										if (httpRequest) {
-											var stream = AscCommon.initStreamFromResponse(httpRequest);
-											resolve(_resolve(stream));
-										} else {
-											//reject - не вызываю, чтобы выполнились все запросы
-											resolve(_resolve(null));
-										}
-									}, "arraybuffer");
-								};
-
-								//если открыть на клиенте не можем, то запрашиваем бинарник
-								var isXlsx = eR.externalReference && eR.externalReference.isXlsx();
-								//если внешняя ссылка, то конвертируем в xlsx
-								if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api.isOpenOOXInBrowser) {
-									window["Asc"]["editor"]._getFileFromUrl(sFileUrl, t.Api.isOpenOOXInBrowser ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY,
-										function (fileUrlAfterConvert) {
-											if (fileUrlAfterConvert) {
-												loadFile(fileUrlAfterConvert);
-											} else {
-												resolve(_resolve(null));
-											}
-										});
-								} else {
-									if (sFileUrl) {
-										loadFile(sFileUrl);
-									} else {
-										resolve(_resolve(null));
-									}
-								}
-							});
-						}
-
-					};
 
 					var aRequests = [];
-					for (var i = 0; i < data.length; i++) {
-						var _oData = data && data[i];
-						var _eR = externalReferences[i];
-
-						aRequests.push(getPromise(_oData, _eR, function (_stream) {
-							arrAfterPromise.push(_stream);
-							if (data.length === arrAfterPromise.length) {
-								doUpdateData(arrAfterPromise);
-							}
-						}));
-					}
+					t._getLoadFileRequestsFromReferenceData(data, aRequests, externalReferences, function (_stream) {
+						arrAfterPromise.push(_stream);
+						if (data.length === arrAfterPromise.length) {
+							doUpdateData(arrAfterPromise);
+						}
+					});
 
 					var _promise = Promise.resolve();
 					for (let i in aRequests) {
@@ -5063,7 +5010,7 @@
 		}
 	};
 
-	WorkbookView.prototype._getLoadFileRequestsFromReferenceData = function (data, requests, externalReferences) {
+	WorkbookView.prototype._getLoadFileRequestsFromReferenceData = function (data, requests, externalReferences, resolveFunc) {
 		if (!requests) {
 			return;
 		}
@@ -5071,49 +5018,53 @@
 		//чтобы потом понять что нужно обновлять, сохраняю сооветсвие, количество запросов соответсвует количеству externalReferences
 		//для этого создаю на все Promise, и если data[i].error -> возвращаю null
 
-		var getPromise = function (oData, eR) {
+		var getPromise = function (oData, eR, _resolve) {
+			return function () {
 
-			return new Promise((resolve) => {
-				var sFileUrl = oData && !oData.error ? oData.url : null;
-				var isExternalLink = eR.isExternalLink();
+				return new Promise(function (resolve) {
+					var sFileUrl = oData && !oData.error ? oData.url : null;
+					var isExternalLink = eR.isExternalLink();
 
-				//если ссылка на внешний источник, пробуем получить контент
-				if (!sFileUrl && oData.error && isExternalLink) {
-					sFileUrl = eR.data;
-				}
-
-				//получаем контент файла
-				var loadFile = function (_fileUrl) {
-					AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
-						if (httpRequest) {
-							var stream = AscCommon.initStreamFromResponse(httpRequest);
-							resolve(stream);
-						} else {
-							//reject - не вызываю, чтобы выполнились все запросы
-							resolve(null);
-						}
-					}, "arraybuffer");
-				};
-
-				//если открыть на клиенте не можем, то запрашиваем бинарник
-				var isXlsx = eR.externalReference && eR.externalReference.isXlsx();
-				//если внешняя ссылка, то конвертируем в xlsx
-				if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api.isOpenOOXInBrowser) {
-					window["Asc"]["editor"]._getFileFromUrl(sFileUrl, t.Api.isOpenOOXInBrowser ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY, function (fileUrlAfterConvert) {
-						if (fileUrlAfterConvert) {
-							loadFile(fileUrlAfterConvert);
-						} else {
-							resolve(null);
-						}
-					});
-				} else {
-					if (sFileUrl) {
-						loadFile(sFileUrl);
-					} else {
-						resolve(null);
+					//если ссылка на внешний источник, пробуем получить контент
+					if (!sFileUrl && oData.error && isExternalLink) {
+						sFileUrl = eR.data;
 					}
-				}
-			});
+
+					//получаем контент файла
+					var loadFile = function (_fileUrl) {
+						AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
+							if (httpRequest) {
+								var stream = AscCommon.initStreamFromResponse(httpRequest);
+								resolve(_resolve(stream));
+							} else {
+								//reject - не вызываю, чтобы выполнились все запросы
+								resolve(_resolve(null));
+							}
+						}, "arraybuffer");
+					};
+
+					//если открыть на клиенте не можем, то запрашиваем бинарник
+					var isXlsx = eR.externalReference && eR.externalReference.isXlsx();
+					//если внешняя ссылка, то конвертируем в xlsx
+					if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api.isOpenOOXInBrowser) {
+						window["Asc"]["editor"]._getFileFromUrl(sFileUrl, t.Api.isOpenOOXInBrowser ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY,
+							function (fileUrlAfterConvert) {
+								if (fileUrlAfterConvert) {
+									loadFile(fileUrlAfterConvert);
+								} else {
+									resolve(_resolve(null));
+								}
+							});
+					} else {
+						if (sFileUrl) {
+							loadFile(sFileUrl);
+						} else {
+							resolve(_resolve(null));
+						}
+					}
+				});
+			}
+
 		};
 
 
@@ -5121,7 +5072,7 @@
 			var _oData = data && data[i];
 			var _eR = externalReferences[i];
 
-			requests.push(getPromise(_oData, _eR));
+			requests.push(getPromise(_oData, _eR, resolveFunc));
 		}
 	};
 
