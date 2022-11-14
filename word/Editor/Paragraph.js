@@ -2868,6 +2868,13 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 						// символа параграфа.
 
 						var oTextPrTemp = this.TextPr.Value.Copy();
+						if (undefined !== oTextPrTemp.RStyle && this.Parent)
+						{
+							let styleManager = this.Parent.GetStyles();
+							let styleTextPr  = styleManager.Get_Pr(oTextPrTemp.RStyle, styletype_Character).TextPr;
+							oNumTextPr.Merge(styleTextPr);
+						}
+
 						oTextPrTemp.Underline = undefined;
 
 						oNumTextPr.Merge(oTextPrTemp);
