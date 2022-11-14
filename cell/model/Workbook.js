@@ -4209,6 +4209,7 @@
 	Workbook.prototype.removeExternalReferences = function (arr) {
 		//пока предполагаю, что здесь будет массив asc_CExternalReference
 		if (arr) {
+			var isChanged = false;
 			History.Create_NewPoint();
 			History.StartTransaction();
 			for (var i = 0; i < arr.length; i++) {
@@ -4217,6 +4218,7 @@
 
 					//TODO при undo кладутся в массив в обратном порядке - нужно всегда в одном порядке добавлять
 					this.removeExternalReference(eRIndex, true);
+					isChanged = true;
 
 					//TODO нужно заменить все ячейки просто значениями, где есть формулы, которые ссылаются на эту книгу
 					for (var j in arr[i].externalReference.worksheets) {
@@ -4247,6 +4249,10 @@
 				}
 			}
 			History.EndTransaction();
+
+			if (isChanged) {
+				this.handlers.trigger("asc_onUpdateExternalReferenceList");
+			}
 		}
 	};
 
@@ -4277,6 +4283,7 @@
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 					null, null, new UndoRedoData_FromTo(null, arr[i]));
 			}
+			this.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
 	};
 
@@ -4315,7 +4322,17 @@
 				eR.removeSheetById(sheetId);
 				this.changeExternalReference(index, eR);
 			}
+			this.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
+	};
+
+	Workbook.prototype.getExternalReferenceById = function (id) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].Id === id) {
+				return this.externalReferences[i];
+			}
+		}
+		return null;
 	};
 
 //-------------------------------------------------------------------------------------------------

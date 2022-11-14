@@ -4915,8 +4915,8 @@
 					var arrAfterPromise = [];
 
 					var aRequests = [];
-					t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream) {
-						arrAfterPromise.push(_stream);
+					t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream, externalReferenceId) {
+						arrAfterPromise.push({stream: _stream, externalReferenceId: externalReferenceId});
 						if (data.length === arrAfterPromise.length) {
 							doUpdateData(arrAfterPromise);
 						}
@@ -4937,9 +4937,10 @@
 						History.StartTransaction();
 
 						for (var i = 0; i < _arrAfterPromise.length; i++) {
-							//соответствие по массиву externalReferences, по индексу
-							var eR = externalReferences[i] && externalReferences[i].externalReference && externalReferences[i].externalReference;
-							if (_arrAfterPromise[i]) {
+							var externalReferenceId = _arrAfterPromise[i].externalReferenceId;
+							var stream = _arrAfterPromise[i].stream;
+							var eR = t.model.getExternalReferenceById(externalReferenceId);
+							if (stream && eR) {
 								//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
 								//использую общий wb для externalReferences. поскольку внутри
 								//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
@@ -4949,7 +4950,7 @@
 									//в этом случае запрашиваем бинарник
 									// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
 									let jsZlib = new AscCommon.ZLib();
-									if (!jsZlib.open(_arrAfterPromise[i])) {
+									if (!jsZlib.open(stream)) {
 										t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
 										return false;
 									}
@@ -4979,7 +4980,7 @@
 										}
 									}
 								} else {
-									var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, _arrAfterPromise[i]);
+									var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, stream);
 									if (updatedData) {
 										eR && eR.updateData(updatedData);
 									}
@@ -5043,10 +5044,10 @@
 						AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
 							if (httpRequest) {
 								var stream = AscCommon.initStreamFromResponse(httpRequest);
-								resolve(_resolve(stream));
+								resolve(_resolve(stream, eR.Id));
 							} else {
 								//reject - не вызываю, чтобы выполнились все запросы
-								resolve(_resolve(null));
+								resolve(_resolve(null, eR.Id));
 							}
 						}, "arraybuffer");
 					};
@@ -5060,14 +5061,14 @@
 								if (fileUrlAfterConvert) {
 									loadFile(fileUrlAfterConvert);
 								} else {
-									resolve(_resolve(null));
+									resolve(_resolve(null, eR.Id));
 								}
 							});
 					} else {
 						if (sFileUrl) {
 							loadFile(sFileUrl);
 						} else {
-							resolve(_resolve(null));
+							resolve(_resolve(null, eR.Id));
 						}
 					}
 				});
@@ -5080,7 +5081,9 @@
 			var _oData = data && data[i];
 			var _eR = externalReferences[i];
 
-			requests.push(getPromise(_oData, _eR, resolveFunc));
+			if (_oData && _eR) {
+				requests.push(getPromise(_oData, _eR, resolveFunc));
+			}
 		}
 	};
 
