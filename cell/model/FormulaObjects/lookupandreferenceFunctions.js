@@ -473,6 +473,7 @@ function (window, undefined) {
 	cEXPAND.prototype.argumentsMax = 4;
 	cEXPAND.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
 	cEXPAND.prototype.Calculate = function (arg) {
+		const MAX_ARRAY_SIZE = 1048576;
 		let array;
 		let arg0 = arg[0];
 		let arg1 = arg[1];
@@ -483,17 +484,53 @@ function (window, undefined) {
 		let pad_with = arg3;
 
 		function rowAndColumnTypeCheck() {
-			// rows type
-			if(cElementType.number === arg1.type) {
+			// type checking and value assignment
+			// --------------------- arg1(row) type check ----------------------//
+			if(cElementType.string === arg1.type || 
+				cElementType.cellsRange === arg1.type || 
+				cElementType.cellsRange3D === arg1.type || 
+				cElementType.array === arg1.type ||
+				cElementType.date === arg1.type ||
+				cElementType.bool === arg1.type ||
+				cElementType.func === arg1.type ||
+				cElementType.operator === arg1.type ||
+				cElementType.table === arg1.type) {
+				rows = new cError(cErrorType.wrong_value_type);
+			} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+				// check type in cell
+				if(cElementType.number === arg1.getValue().type) {
+					rows = arg1.getValue();
+				} else {
+					rows = new cError(cErrorType.wrong_value_type);
+				}
+			} else if (cElementType.number === arg1.type) {
 				rows = arg1;
 			} else if(cElementType.empty === arg1.type) {
-				rows = (arg0.getRange().getBBox0().r2 - arg0.getRange().getBBox0().r1) + 1;
+				rows = new cNumber(arg0.getDimensions().row);
 			}
-			// columns type
-			if(cElementType.number === arg2.type) {
+
+			// --------------------- arg2(column) type check ----------------------//
+			if(cElementType.string === arg2.type || 
+				cElementType.cellsRange === arg2.type || 
+				cElementType.cellsRange3D === arg2.type || 
+				cElementType.array === arg2.type ||
+				cElementType.date === arg2.type ||
+				cElementType.bool === arg2.type ||
+				cElementType.func === arg2.type ||
+				cElementType.operator === arg2.type ||
+				cElementType.table === arg2.type) {
+				columns = new cError(cErrorType.wrong_value_type);
+			} else if (cElementType.cell === arg2.type || cElementType.cell3D === arg2.type) {
+				// check type in cell
+				if(cElementType.number === arg2.getValue().type) {
+					columns = arg2.getValue();
+				} else {
+					columns = new cError(cErrorType.wrong_value_type);
+				}
+			} else if (cElementType.number === arg2.type) {
 				columns = arg2;
 			} else if(cElementType.empty === arg2.type) {
-				columns = (arg0.getRange().getBBox0().c2 - arg0.getRange().getBBox0().c1) + 1;
+				columns = new cNumber(arg0.getDimensions().col);
 			}
 		}
 
@@ -510,17 +547,14 @@ function (window, undefined) {
 					}
 				}
 			}
-
 			res.fillFromArray(arr);
 			return res;
 		}
 
 		if (cElementType.cellsRange === arg0.type || cElementType.array === arg0.type) {
 			array = arg0.getMatrix();
-			rowAndColumnTypeCheck();
 		} else if(cElementType.cellsRange3D === arg0.type) {
 			array = arg0.getMatrix()[0];
-			rowAndColumnTypeCheck();
 		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
 			return arg0.getValue();
 		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
@@ -529,19 +563,20 @@ function (window, undefined) {
 		} else {
 			return new cError(cErrorType.not_available);
 		}
-
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-		if(0 === arg0.length){
-			return new cError(cErrorType.wrong_value_type);
-		}
-		// check if columns and row < array.length;
-		if(rows < array.length || columns < array[0].length) {
+		if(arg0.length === 0){
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		return expandedArray(array);
+		rowAndColumnTypeCheck();
+
+		// check row and column type
+		if(rows.type === cElementType.number && columns.type === cElementType.number) {
+			// check length and max array size
+			if(rows.value >= array.length && columns.value >= array[0].length && (rows.value * columns.value) < MAX_ARRAY_SIZE) {
+				return expandedArray(array);
+			}
+		}
+		return new cError(cErrorType.wrong_value_type);
 	};
 
 	/**
