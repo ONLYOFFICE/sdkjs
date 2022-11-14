@@ -486,8 +486,7 @@ function (window, undefined) {
 		function rowAndColumnTypeCheck() {
 			// type checking and value assignment
 			// --------------------- arg1(row) type check ----------------------//
-			if(cElementType.string === arg1.type || 
-				cElementType.cellsRange === arg1.type || 
+			if(cElementType.cellsRange === arg1.type || 
 				cElementType.cellsRange3D === arg1.type || 
 				cElementType.array === arg1.type ||
 				cElementType.date === arg1.type ||
@@ -496,6 +495,12 @@ function (window, undefined) {
 				cElementType.operator === arg1.type ||
 				cElementType.table === arg1.type) {
 				rows = new cError(cErrorType.wrong_value_type);
+			} else if(cElementType.string === arg1.type) {
+				if(arg1.tocNumber().type === cElementType.number) {
+					rows = arg1.tocNumber();
+				} else {
+					rows = new cError(cErrorType.wrong_value_type);
+				}
 			} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 				// check type in cell
 				if(cElementType.number === arg1.getValue().type) {
@@ -510,8 +515,7 @@ function (window, undefined) {
 			}
 
 			// --------------------- arg2(column) type check ----------------------//
-			if(cElementType.string === arg2.type || 
-				cElementType.cellsRange === arg2.type || 
+			if(cElementType.cellsRange === arg2.type || 
 				cElementType.cellsRange3D === arg2.type || 
 				cElementType.array === arg2.type ||
 				cElementType.date === arg2.type ||
@@ -520,6 +524,12 @@ function (window, undefined) {
 				cElementType.operator === arg2.type ||
 				cElementType.table === arg2.type) {
 				columns = new cError(cErrorType.wrong_value_type);
+			} else if(cElementType.string === arg2.type) {
+				if(arg2.tocNumber().type === cElementType.number) {
+					columns = arg2.tocNumber();
+				} else {
+					columns = new cError(cErrorType.wrong_value_type);
+				}
 			} else if (cElementType.cell === arg2.type || cElementType.cell3D === arg2.type) {
 				// check type in cell
 				if(cElementType.number === arg2.getValue().type) {
@@ -572,8 +582,10 @@ function (window, undefined) {
 		// check row and column type
 		if(rows.type === cElementType.number && columns.type === cElementType.number) {
 			// check length and max array size
-			if(rows.value >= array.length && columns.value >= array[0].length && (rows.value * columns.value) < MAX_ARRAY_SIZE) {
+			if(rows.value >= array.length && columns.value >= array[0].length && (rows.value * columns.value) <= MAX_ARRAY_SIZE) {
 				return expandedArray(array);
+			} else if((rows.value * columns.value) > MAX_ARRAY_SIZE) {
+				return new cError(cErrorType.not_numeric);
 			}
 		}
 		return new cError(cErrorType.wrong_value_type);
