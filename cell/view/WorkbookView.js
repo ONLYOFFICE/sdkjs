@@ -4950,7 +4950,7 @@
 									// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
 									let jsZlib = new AscCommon.ZLib();
 									if (!jsZlib.open(_arrAfterPromise[i])) {
-										t.model.handlers.trigger("asc_onErrorUpdateExternalReference");
+										t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
 										return false;
 									}
 
