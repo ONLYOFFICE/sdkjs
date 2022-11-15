@@ -479,70 +479,7 @@ function (window, undefined) {
 		let arg1 = arg[1];
 		let arg2 = arg[2];
 		let arg3 = arg[3] ? arg[3] : new cError(cErrorType.not_available);
-		let rows = 0;
-		let columns = 0;
 		let pad_with = arg3;
-
-		function rowAndColumnTypeCheck() {
-			// type checking and value assignment
-			// --------------------- arg1(row) type check ----------------------//
-			if(cElementType.cellsRange === arg1.type || 
-				cElementType.cellsRange3D === arg1.type || 
-				cElementType.array === arg1.type ||
-				cElementType.date === arg1.type ||
-				cElementType.bool === arg1.type ||
-				cElementType.func === arg1.type ||
-				cElementType.operator === arg1.type ||
-				cElementType.table === arg1.type) {
-				rows = new cError(cErrorType.wrong_value_type);
-			} else if(cElementType.string === arg1.type) {
-				if(arg1.tocNumber().type === cElementType.number) {
-					rows = arg1.tocNumber();
-				} else {
-					rows = new cError(cErrorType.wrong_value_type);
-				}
-			} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
-				// check type in cell
-				if(cElementType.number === arg1.getValue().type) {
-					rows = arg1.getValue();
-				} else {
-					rows = new cError(cErrorType.wrong_value_type);
-				}
-			} else if (cElementType.number === arg1.type) {
-				rows = arg1;
-			} else if(cElementType.empty === arg1.type) {
-				rows = new cNumber(arg0.getDimensions().row);
-			}
-
-			// --------------------- arg2(column) type check ----------------------//
-			if(cElementType.cellsRange === arg2.type || 
-				cElementType.cellsRange3D === arg2.type || 
-				cElementType.array === arg2.type ||
-				cElementType.date === arg2.type ||
-				cElementType.bool === arg2.type ||
-				cElementType.func === arg2.type ||
-				cElementType.operator === arg2.type ||
-				cElementType.table === arg2.type) {
-				columns = new cError(cErrorType.wrong_value_type);
-			} else if(cElementType.string === arg2.type) {
-				if(arg2.tocNumber().type === cElementType.number) {
-					columns = arg2.tocNumber();
-				} else {
-					columns = new cError(cErrorType.wrong_value_type);
-				}
-			} else if (cElementType.cell === arg2.type || cElementType.cell3D === arg2.type) {
-				// check type in cell
-				if(cElementType.number === arg2.getValue().type) {
-					columns = arg2.getValue();
-				} else {
-					columns = new cError(cErrorType.wrong_value_type);
-				}
-			} else if (cElementType.number === arg2.type) {
-				columns = arg2;
-			} else if(cElementType.empty === arg2.type) {
-				columns = new cNumber(arg0.getDimensions().col);
-			}
-		}
 
 		function expandedArray(arr) {
 			let res = new cArray();
@@ -561,6 +498,7 @@ function (window, undefined) {
 			return res;
 		}
 
+		// --------------------- arg0(array) type check ----------------------//
 		if (cElementType.cellsRange === arg0.type || cElementType.array === arg0.type) {
 			array = arg0.getMatrix();
 		} else if(cElementType.cellsRange3D === arg0.type) {
@@ -577,7 +515,34 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		rowAndColumnTypeCheck();
+		// --------------------- arg1(row) type check ----------------------//
+		let rows = arg1;
+		let dimension = arg0.getDimensions();
+		if(cElementType.empty === arg1.type) {
+			rows = new cNumber(dimension.row);
+		} else if(cElementType.array === arg1.type) {
+			rows = arg1.getElementRowCol(0, 0);
+		}
+		rows = rows.tocNumber();
+
+		if(cElementType.error === arg1.type) {
+			return arg1;
+		}
+		arg1 = arg1.tocNumber();
+
+		// --------------------- arg2(column) type check ----------------------//
+		let columns = arg2;
+		if(cElementType.empty === arg2.type) {
+			columns = new cNumber(dimension.row);
+		} else if(cElementType.array === arg2.type) {
+			columns = arg2.getElementRowCol(0, 0);
+		}
+		columns = columns.tocNumber();
+
+		if(cElementType.error === arg2.type) {
+			return arg2;
+		}
+		arg2 = arg2.tocNumber();
 
 		// check row and column type
 		if(rows.type === cElementType.number && columns.type === cElementType.number) {
