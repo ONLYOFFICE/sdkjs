@@ -3121,7 +3121,7 @@
 			return new Error ("Invalid destination");
 		}
 	};
-	
+
 	/**
 	 * Pastes the Range object to the specified range.
 	 * @memberof ApiRange
@@ -3137,6 +3137,88 @@
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
 			return new Error ("Invalid range");
+		}
+	};
+	
+	/**
+	 * Finds specific information in a range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {String | undefined} What - The data to search for.
+	 * @param {String} LookIn - Can be one of the following XlFindLookIn constants: xlFormulas, xlValues.
+	 * @param {String} LookAt - Can be one of the following XlLookAt constants: xlWhole or xlPart.
+	 * @param {String} SearchOrder - Can be one of the following XlSearchOrder constants: xlByRows or xlByColumns.
+	 * @param {String} SearchDirection - Can be one of the following XlSearchDirection constants: xlNext or xlPrevious.
+	 * @param {Boolean} MatchCase - True to make the search case-sensitive. The default value is False.
+	 * @returns {ApiRange | null} - returns null if range does not contains such text.
+	 * 
+	 */
+	ApiRange.prototype.Find = function(What, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase) {
+		if (typeof What === 'string' || What === undefined) {
+			let res = null;
+			var options = new Asc.asc_CFindOptions();
+			options.asc_setFindWhat(What);
+			options.asc_setScanForward(SearchDirection != 'xlPrevious');
+			MatchCase && options.asc_setIsMatchCase(MatchCase);
+			options.asc_setIsWholeCell(LookAt === 'xlWhole');
+			options.asc_setScanOnOnlySheet(2);
+			options.asc_setSpecificRange(this.GetAddress(true, true));
+			options.asc_setScanByRows(SearchOrder === 'xlByRows');
+			options.asc_setLookIn( (LookIn === 'xlValues' ? 2 : 1) );
+			options.asc_setNotSearchEmptyCells( !(What === "" && !options.isWholeCell) );
+			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
+			if (id != null) {
+				this.range.worksheet.workbook.oApi.wb.SelectSearchElement(id);
+				let elem = engine.Elements[id];
+				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
+			}
+			return res;
+		} else {
+			return new Error('Invalid parametr "What".')
+		}
+	};
+
+	/**
+	 * Replaces specific information to another one in a range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {String | undefined} What - The data to search for.
+	 * @param {String} Replacement - The replacement string.
+	 * @param {String} LookAt - Can be one of the following XlLookAt constants: xlWhole or xlPart.
+	 * @param {String} SearchOrder - Can be one of the following XlSearchOrder constants: xlByRows or xlByColumns.
+	 * @param {String} SearchDirection - Can be one of the following XlSearchDirection constants: xlNext or xlPrevious.
+	 * @param {Boolean} MatchCase - True to make the search case-sensitive. The default value is False.
+	 * @param {Boolean} ReplaceAll - True to replace all. The default value is False.
+	 * 
+	 */
+	ApiRange.prototype.Replace = function(What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll) {
+		if (typeof What === 'string' && typeof Replacement === 'string') {
+			var options = new Asc.asc_CFindOptions();
+			options.asc_setFindWhat(What);
+			options.asc_setReplaceWith(Replacement);
+			options.asc_setScanForward(SearchDirection != 'xlPrevious');
+			MatchCase && options.asc_setIsMatchCase(MatchCase);
+			options.asc_setIsWholeCell(LookAt === 'xlWhole');
+			options.asc_setScanOnOnlySheet(2);
+			options.asc_setSpecificRange(this.GetAddress(true, true));
+			options.asc_setScanByRows(SearchOrder === 'xlByRows');
+			options.asc_setLookIn(Asc.c_oAscFindLookIn.Formulas);
+			options.asc_setIsReplaceAll(ReplaceAll === true)
+			this.range.worksheet.workbook.oApi.isReplaceAll = options.isReplaceAll;
+			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
+			options.isForMacros = true;
+			if (id != null) {
+				if (ReplaceAll)
+					engine.SetCurrent(id);
+				else
+					this.range.worksheet.workbook.oApi.wb.SelectSearchElement(id);
+
+				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
+			}
+		} else {
+			return new Error('Invalid type of parametr "What" or "Replacement.')
 		}
 	};
 
@@ -4414,6 +4496,8 @@
 	ApiRange.prototype["GetAreas"] = ApiRange.prototype.GetAreas;
 	ApiRange.prototype["Copy"] = ApiRange.prototype.Copy;
 	ApiRange.prototype["Paste"] = ApiRange.prototype.Paste;
+	ApiRange.prototype["Find"] = ApiRange.prototype.Find;
+	ApiRange.prototype["Replace"] = ApiRange.prototype.Replace;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;

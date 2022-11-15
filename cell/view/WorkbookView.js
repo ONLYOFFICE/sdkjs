@@ -3167,7 +3167,10 @@
       		options.sheetIndex = -1;
 		}
 
-		this.handlers.trigger("asc_onRenameCellTextEnd", options.countFindAll, options.countReplaceAll);
+		if (!options.isForMacros) {
+			this.handlers.trigger("asc_onRenameCellTextEnd", options.countFindAll, options.countReplaceAll);
+			options.isForMacros = null;
+		}
 		if (options.countFindAll !== options.countReplaceAll) {
 			this.SearchEngine.SetCurrent(this.SearchEngine.CurId);
 		}
