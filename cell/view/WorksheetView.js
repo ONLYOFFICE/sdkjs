@@ -13779,7 +13779,6 @@
 			var linkInfo = t._getPastedLinkInfo(pastedWb);
 			pasteLinkIndex = null;
 			if (linkInfo) {
-				console.log("r1: " + activeCellsPasteFragment.r1 + " c1: " + activeCellsPasteFragment.c1 + " r2: " + activeCellsPasteFragment.r2 + " c2: " + activeCellsPasteFragment.c2)
 				if (linkInfo.type === -1) {
 					pasteLinkIndex = linkInfo.index;
 					pasteSheetLinkName = linkInfo.sheet;

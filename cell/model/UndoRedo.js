@@ -2455,6 +2455,7 @@ function (window, undefined) {
 					wb.externalReferences[externalReferenceIndex - 1] = from;
 				}
 			}
+			wb.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {

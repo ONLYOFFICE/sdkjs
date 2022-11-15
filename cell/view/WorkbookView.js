@@ -5044,10 +5044,10 @@
 						AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
 							if (httpRequest) {
 								var stream = AscCommon.initStreamFromResponse(httpRequest);
-								resolve(_resolve(stream, eR.Id));
+								resolve(_resolve(stream, eR.externalReference.Id));
 							} else {
 								//reject - не вызываю, чтобы выполнились все запросы
-								resolve(_resolve(null, eR.Id));
+								resolve(_resolve(null, eR.externalReference.Id));
 							}
 						}, "arraybuffer");
 					};
@@ -5061,14 +5061,14 @@
 								if (fileUrlAfterConvert) {
 									loadFile(fileUrlAfterConvert);
 								} else {
-									resolve(_resolve(null, eR.Id));
+									resolve(_resolve(null, eR.externalReference.Id));
 								}
 							});
 					} else {
 						if (sFileUrl) {
 							loadFile(sFileUrl);
 						} else {
-							resolve(_resolve(null, eR.Id));
+							resolve(_resolve(null, eR.externalReference.Id));
 						}
 					}
 				});
