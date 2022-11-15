@@ -1154,19 +1154,19 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return arr;
 	};
-	cArea.prototype.getFullArray = function (emptyReplaceOn) {
-		var arr = new cArray();
-		var elemsNoEmpty = this.getMatrixNoEmpty();
-		var bbox = this.getBBox0();
+	cArea.prototype.getFullArray = function (emptyReplaceOn, maxRowCount, maxColCount) {
+		let arr = new cArray();
+		let elemsNoEmpty = this.getMatrixNoEmpty();
+		let bbox = this.getBBox0();
 		if (!emptyReplaceOn) {
 			emptyReplaceOn = new cEmpty();
 		}
-		var elem;
-		for (var i = bbox.r1; i <= bbox.r2; i++) {
+		let elem;
+		for (let i = bbox.r1; i <= Math.min(bbox.r2, maxRowCount != null ? bbox.r1 + maxRowCount : bbox.r2); i++) {
 			if ( !arr.array[i - bbox.r1] ) {
 				arr.addRow();
 			}
-			for (var j = bbox.c1; j <= bbox.c2; j++) {
+			for (let j = bbox.c1; j <= Math.min(bbox.c2, maxColCount != null ? bbox.c1 + maxColCount : bbox.c2); j++) {
 				if (elemsNoEmpty && elemsNoEmpty[i - bbox.r1] && elemsNoEmpty[i - bbox.r1][j - bbox.c1]) {
 					elem = elemsNoEmpty[i - bbox.r1][j - bbox.c1];
 				}
@@ -1520,19 +1520,19 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return arr;
 	};
-	cArea3D.prototype.getFullArray = function (emptyReplaceOn) {
-		var arr = new cArray();
-		var elemsNoEmpty = this.getMatrixNoEmpty();
-		var bbox = this.getBBox0();
+	cArea3D.prototype.getFullArray = function (emptyReplaceOn, maxRowCount, maxColCount) {
+		let arr = new cArray();
+		let elemsNoEmpty = this.getMatrixNoEmpty();
+		let bbox = this.getBBox0();
 		if (!emptyReplaceOn) {
 			emptyReplaceOn = new cEmpty();
 		}
-		var elem;
-		for (var i = bbox.r1; i <= bbox.r2; i++) {
+		let elem;
+		for (let i = bbox.r1; i <= Math.min(bbox.r2, maxRowCount != null ? bbox.r1 + maxRowCount : bbox.r2); i++) {
 			if (!arr.array[i - bbox.r1]) {
 				arr.addRow();
 			}
-			for (var j = bbox.c1; j <= bbox.c2; j++) {
+			for (let j = bbox.c1; j <= Math.min(bbox.c2, maxColCount != null ? bbox.c1 + maxColCount : bbox.c2); j++) {
 				if (elemsNoEmpty && elemsNoEmpty[0] && elemsNoEmpty[0][i - bbox.r1] && elemsNoEmpty[0][i - bbox.r1][j - bbox.c1]) {
 					elem = elemsNoEmpty[0][i - bbox.r1][j - bbox.c1];
 				}
