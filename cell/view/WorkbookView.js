@@ -4917,7 +4917,7 @@
 					var aRequests = [];
 					t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream, externalReferenceId) {
 						arrAfterPromise.push({stream: _stream, externalReferenceId: externalReferenceId});
-						if (data.length === arrAfterPromise.length) {
+						if (aRequests.length === arrAfterPromise.length) {
 							doUpdateData(arrAfterPromise);
 						}
 					});
@@ -5083,7 +5083,7 @@
 			var _oData = data && data[i];
 			var _eR = externalReferences[i];
 
-			if (_oData && _eR) {
+			if (_oData && _eR && !_oData.error) {
 				requests.push(getPromise(_oData, _eR, resolveFunc));
 			}
 		}
