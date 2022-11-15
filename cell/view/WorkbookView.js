@@ -4936,11 +4936,13 @@
 						History.Create_NewPoint();
 						History.StartTransaction();
 
+						var updatedReferences = [];
 						for (var i = 0; i < _arrAfterPromise.length; i++) {
 							var externalReferenceId = _arrAfterPromise[i].externalReferenceId;
 							var stream = _arrAfterPromise[i].stream;
 							var eR = t.model.getExternalReferenceById(externalReferenceId);
 							if (stream && eR) {
+								updatedReferences.push(eR);
 								//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
 								//использую общий wb для externalReferences. поскольку внутри
 								//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
@@ -4995,9 +4997,9 @@
 						History.EndTransaction();
 
 						//кроме пересчёта нужно изменить ссылку на лист во всех диапазонах, которые используют данную ссылку
-						for (var j = 0; i < externalReferences.length; j++) {
-							for (var n in externalReferences[j].worksheets) {
-								var prepared = t.model.dependencyFormulas.prepareChangeSheet(externalReferences[j].worksheets[n].getId());
+						for (var j = 0; i < updatedReferences.length; j++) {
+							for (var n in updatedReferences[j].worksheets) {
+								var prepared = t.model.dependencyFormulas.prepareChangeSheet(updatedReferences[j].worksheets[n].getId());
 								t.model.dependencyFormulas.dependencyFormulas.changeSheet(prepared);
 							}
 						}
