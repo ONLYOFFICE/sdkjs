@@ -3156,7 +3156,8 @@
 	ApiRange.prototype.Find = function(What, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase) {
 		if (typeof What === 'string' || What === undefined) {
 			let res = null;
-			var options = new Asc.asc_CFindOptions();
+			let options = new Asc.asc_CFindOptions();
+			options.asc_setActiveCell({row: this.range.bbox.r1, col: this.range.bbox.c1});
 			options.asc_setFindWhat(What);
 			options.asc_setScanForward(SearchDirection != 'xlPrevious');
 			MatchCase && options.asc_setIsMatchCase(MatchCase);
@@ -3169,7 +3170,8 @@
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
 			if (id != null) {
-				this.range.worksheet.workbook.oApi.wb.SelectSearchElement(id);
+				engine.SetCurrent(id);
+				// this.range.worksheet.workbook.oApi.wb.SelectSearchElement(id);
 				let elem = engine.Elements[id];
 				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
 			}
@@ -3194,7 +3196,7 @@
 	 */
 	ApiRange.prototype.Replace = function(What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll) {
 		if (typeof What === 'string' && typeof Replacement === 'string') {
-			var options = new Asc.asc_CFindOptions();
+			let options = new Asc.asc_CFindOptions();
 			options.asc_setFindWhat(What);
 			options.asc_setReplaceWith(Replacement);
 			options.asc_setScanForward(SearchDirection != 'xlPrevious');
@@ -3208,7 +3210,7 @@
 			this.range.worksheet.workbook.oApi.isReplaceAll = options.isReplaceAll;
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
-			options.isForMacros = true;
+			options.asc_setIsForMacros(true);
 			if (id != null) {
 				if (ReplaceAll)
 					engine.SetCurrent(id);
