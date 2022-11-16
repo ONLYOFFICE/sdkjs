@@ -124,7 +124,7 @@ var editor;
 
     this.formulasList = null;	// Список всех формул
 
-	this.openingEnd = {bin: false, xlsxStart: false, xlsx: false, data: null};
+	this.openingEnd = {bin: false, xlsxStart: false, xlsx: false, data: null, perfStart: 0};
 
 	this.tmpR1C1mode = null;
 
@@ -1155,6 +1155,11 @@ var editor;
 	spreadsheet_api.prototype._onEndOpen = function() {
 		var t = this;
 		if (this.openingEnd.bin && this.openingEnd.xlsx && this.openDocumentFromZip(t.wbModel, this.openingEnd.data)) {
+			if (this.openingEnd.perfStart > 0) {
+				let perfEnd = performance.now();
+				AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - this.openingEnd.perfStart), this);
+				this.openingEnd.perfStart = 0;
+			}
 			//opening xlsx depends on getBinaryOtherTableGVar(called after Editor.bin)
 			Asc.ReadDefTableStyles(t.wbModel);
 			g_oIdCounter.Set_Load(false);
@@ -1487,7 +1492,8 @@ var editor;
 
   spreadsheet_api.prototype.openDocument = function(file) {
 	//todo native.js -> openDocument
-  	if (file.changes && this.VersionHistory) {
+	this.openingEnd.perfStart = performance.now();
+	if (file.changes && this.VersionHistory) {
   		this.VersionHistory.changes = file.changes;
 	}
 	this.isOpenOOXInBrowser = this["asc_isSupportFeature"]("ooxml") && AscCommon.checkOOXMLSignature(file.data);
@@ -2635,7 +2641,18 @@ var editor;
   };
 
   spreadsheet_api.prototype._onApplyChanges = function(changes, fCallback) {
-    this.wbModel.DeserializeHistory(changes, fCallback);
+	  let t = this;
+	  let perfStart = performance.now();
+	  let callback = fCallback;
+	  if (!this.isDocumentLoadComplete) {
+		  callback = function() {
+			  let perfEnd = performance.now();
+			  AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onApplyChanges", perfEnd - perfStart), t);
+			  fCallback();
+		  };
+
+	  }
+    this.wbModel.DeserializeHistory(changes, callback);
   };
 
   spreadsheet_api.prototype._onUpdateAfterApplyChanges = function() {

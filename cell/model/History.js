@@ -1278,7 +1278,7 @@ CHistory.prototype.GetSerializeArray = function()
 			if (this.CanNotAddChanges) {
 				var tmpErr = new Error();
 				if (tmpErr.stack) {
-					this.workbook.oApi.CoAuthoringApi.sendChangesError(tmpErr.stack);
+					AscCommon.sendClientLog("error", "changesError: " + tmpErr.stack, this.workbook.oApi);
 				}
 			}
 		} catch (e) {

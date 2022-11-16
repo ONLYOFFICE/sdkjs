@@ -263,9 +263,9 @@
     }
   };
 
-  CDocsCoApi.prototype.sendChangesError = function(data) {
+  CDocsCoApi.prototype.sendClientLog = function(level, msg) {
     if (this._CoAuthoringApi && this._onlineWork) {
-      this._CoAuthoringApi.sendChangesError(data);
+      this._CoAuthoringApi.sendClientLog(level, msg);
     }
   };
 
@@ -1038,10 +1038,8 @@
     }
   };
 
-  DocsCoApi.prototype.sendChangesError = function(data) {
-    if (typeof data === 'string') {
-      this._send({'type': 'changesError', 'stack': data});
-    }
+  DocsCoApi.prototype.sendClientLog = function(level, msg) {
+    this._send({'type': 'clientLog', 'level': level, 'msg': msg});
   };
 
   DocsCoApi.prototype._applyPrebuffered = function () {
@@ -1271,7 +1269,7 @@
     if (isWaitAuth && false === this.isCoAuthoring && !this.onStartCoAuthoring) {
       var errorMsg = 'Error: connection state changed waitAuth' +
           ';this.onStartCoAuthoring:' + !!this.onStartCoAuthoring;
-      this.sendChangesError(errorMsg);
+      this.sendClientLog("error", "changesError: " + errorMsg);
     }
     if (false === this.isCoAuthoring) {
       this.isCoAuthoring = true;
@@ -1494,7 +1492,7 @@
           ';onConnectionStateChanged:' + !!this.onConnectionStateChanged +
           ';this._participantsTimestamp:' + this._participantsTimestamp +
           ';data.participantsTimestamp:' + data['participantsTimestamp'];
-      this.sendChangesError(errorMsg);
+      this.sendClientLog("error", "changesError: " + errorMsg);
     }
     if (this.onConnectionStateChanged && (!this._participantsTimestamp || this._participantsTimestamp <= data['participantsTimestamp'])) {
       this._participantsTimestamp = data['participantsTimestamp'];
@@ -1506,7 +1504,7 @@
         var errorMsg = 'Error: connection state changed waitAuth' +
             ';usersStateChanged:' + JSON.stringify(usersStateChanged) +
             ';this._countEditUsers:' + this._countEditUsers;
-        this.sendChangesError(errorMsg);
+        this.sendClientLog("error", "changesError: " + errorMsg);
       }
       if (usersStateChanged.length > 0) {
         // Посылаем эвент о совместном редактировании
@@ -1749,6 +1747,7 @@
       'coEditingMode': this.coEditingMode,
       'jwtOpen': this.jwtOpen,
       'jwtSession': this.jwtSession,
+      'time': Math.round(performance.now()),
       'supportAuthChangesAck': true
     });
   };

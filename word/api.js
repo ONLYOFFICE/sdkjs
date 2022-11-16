@@ -7824,8 +7824,15 @@ background-repeat: no-repeat;\
 
 					// TODO: onDocumentContentReady вызываем в конце загрузки всех изменений (и объектов для этих изменений)
 					let oThis = this;
+
+					let perfStart = performance.now();
+					let OtherChanges = AscCommon.CollaborativeEditing.Have_OtherChanges();
 					AscCommon.CollaborativeEditing.Apply_Changes(function()
 					{
+						let perfEnd = performance.now();
+						if (OtherChanges) {
+							AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onApplyChanges", perfEnd - perfStart), oThis);
+						}
 						Document.MoveCursorToStartOfDocument();
 
 						if (isSendOnReady)
@@ -7985,6 +7992,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.openDocument = function(file)
 	{
+		let perfStart = performance.now();
 		if (file.changes && this.VersionHistory)
 		{
 			this.VersionHistory.changes = file.changes;
@@ -8006,6 +8014,8 @@ background-repeat: no-repeat;\
 			else
 				this.OpenDocument(file.url, file.data);
 		}
+		let perfEnd = performance.now();
+		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
 	};
 
 	asc_docs_api.prototype.asyncImageEndLoadedBackground = function(_image)

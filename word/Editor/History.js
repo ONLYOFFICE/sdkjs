@@ -996,7 +996,7 @@ CHistory.prototype =
             if (this.CanNotAddChanges && this.Api && !this.CollectChanges) {
                 var tmpErr = new Error();
                 if (tmpErr.stack) {
-                    this.Api.CoAuthoringApi.sendChangesError(tmpErr.stack);
+					AscCommon.sendClientLog("error", "changesError: " + tmpErr.stack, this.Api);
                 }
             }
         } catch (e) {
