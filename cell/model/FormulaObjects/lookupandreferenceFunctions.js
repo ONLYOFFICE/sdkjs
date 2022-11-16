@@ -471,6 +471,7 @@ function (window, undefined) {
 	cEXPAND.prototype.name = 'EXPAND';
 	cEXPAND.prototype.argumentsMin = 1;
 	cEXPAND.prototype.argumentsMax = 4;
+	cEXPAND.prototype.arrayIndexes = {0: 1};
 	cEXPAND.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
 	cEXPAND.prototype.Calculate = function (arg) {
 		const MAX_ARRAY_SIZE = 1048576;
