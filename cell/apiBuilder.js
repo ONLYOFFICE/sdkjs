@@ -3161,7 +3161,7 @@
 			options.asc_setScanForward(SearchDirection != 'xlPrevious');
 			MatchCase && options.asc_setIsMatchCase(MatchCase);
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
-			options.asc_setScanOnOnlySheet(2);
+			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
 			options.asc_setSpecificRange(this.GetAddress(true, true));
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn( (LookIn === 'xlValues' ? 2 : 1) );
@@ -3200,7 +3200,7 @@
 			options.asc_setScanForward(SearchDirection != 'xlPrevious');
 			MatchCase && options.asc_setIsMatchCase(MatchCase);
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
-			options.asc_setScanOnOnlySheet(2);
+			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
 			options.asc_setSpecificRange(this.GetAddress(true, true));
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn(Asc.c_oAscFindLookIn.Formulas);
