@@ -35,7 +35,7 @@
 (function (window, builder) {
 	function checkFormat(value) {
 		if (value.getTime){
-			return new AscCommonExcel.cNumber(new Asc.cDate(value.getTime()).getExcelDate());
+			return new AscCommonExcel.cNumber(new Asc.cDate(value.getTime()).getExcelDateWithTime(true));
 		} else {
 			return new AscCommonExcel.cString(value + '');
 		}

@@ -9247,7 +9247,7 @@
 		//CDocumentSearchExcel.prototype.SetCurrent
 
 		var selectionRange = options.selectionRange || this.selectionRange;
-		var activeCell = selectionRange.activeCell;
+		var activeCell = options.activeCell ? options.activeCell : selectionRange.activeCell;
 
 		var tmp, key1 = activeCell.row, key2 = activeCell.col;
 		if (!options.scanByRows) {

@@ -9652,6 +9652,17 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 6);
 
+		ws.getRange2("A1").setValue("12/1");
+		ws.getRange2("A2").setValue("12/1");
+
+		oParser = new parserFormula('COUNTIF(A1:A2,"12/1")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIF(A1:A2,"12/1/1")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
 		testArrayFormula2(assert, "COUNTIF", 2, 2)
 	});
 
