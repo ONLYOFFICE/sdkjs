@@ -3153,11 +3153,15 @@
 	 * @returns {ApiRange | null} - returns null if range does not contains such text.
 	 * 
 	 */
-	ApiRange.prototype.Find = function(What, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase) {
+	ApiRange.prototype.Find = function(What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase) {
 		if (typeof What === 'string' || What === undefined) {
 			let res = null;
 			let options = new Asc.asc_CFindOptions();
-			options.asc_setActiveCell({row: this.range.bbox.r1, col: this.range.bbox.c1});
+			let start = ( After instanceof ApiRange )
+						? { row: After.range.bbox.r1, col: After.range.bbox.c1 }
+						: { row : this.range.bbox.r1, col: this.range.bbox.c1 };
+			options.asc_setActiveCell(start);
+			// options.asc_setActiveCell(this.range.worksheet.selectionRange.activeCell);
 			options.asc_setFindWhat(What);
 			options.asc_setScanForward(SearchDirection != 'xlPrevious');
 			MatchCase && options.asc_setIsMatchCase(MatchCase);
@@ -3170,8 +3174,8 @@
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
 			if (id != null) {
-				engine.SetCurrent(id);
-				// this.range.worksheet.workbook.oApi.wb.SelectSearchElement(id);
+				// engine.SetCurrent(id);
+				this.range.worksheet.workbook.oApi.wb.SelectSearchElement(id);
 				let elem = engine.Elements[id];
 				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
 			}
