@@ -522,15 +522,17 @@ function (window, undefined) {
 			rows = new cNumber(dimension.row);
 		} else if(cElementType.array === arg1.type) {
 			rows = arg1.getElementRowCol(0, 0);
+			arg1 = new cNumber(rows);
 		} else if(cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			// TODO не получилось точно выяснить поведение функции при передаче в нее cellsRange вторым или третьим аргументом, поэтому пока возвращаем ошибку 
 			rows = new cError(cErrorType.wrong_value_type);
-		}
+		};
 		rows = rows.tocNumber();
 		
-		if(cElementType.error === arg1.type) {
-			return arg1;
+		if(cElementType.error === rows.type) {
+			return rows;
 		}
+		rows = rows.toNumber();
 		arg1 = arg1.tocNumber();
 
 		// --------------------- arg2(column) type check ----------------------//
@@ -539,15 +541,18 @@ function (window, undefined) {
 			columns = new cNumber(dimension.row);
 		} else if(cElementType.array === arg2.type) {
 			columns = arg2.getElementRowCol(0, 0);
+			arg2 = new cNumber(columns);
 		} else if(cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
 			// TODO не получилось точно выяснить поведение функции при передаче в нее cellsRange вторым или третьим аргументом, поэтому пока возвращаем ошибку
 			columns = new cError(cErrorType.wrong_value_type);
 		}
 		columns = columns.tocNumber();
 
-		if(cElementType.error === arg2.type) {
-			return arg2;
+		if(cElementType.error === columns.type) {
+			return columns;
 		}
+
+		columns = columns.toNumber();
 		arg2 = arg2.tocNumber();
 
 		// --------------------- arg3(pad_with) type check ----------------------//
@@ -557,11 +562,11 @@ function (window, undefined) {
 		}
 
 		// check row and column type
-		if(rows.type === cElementType.number && columns.type === cElementType.number) {
+		if(arg1.type === cElementType.number && arg2.type === cElementType.number) {
 			// check length and max array size
-			if(rows.value >= array.length && columns.value >= array[0].length && (rows.value * columns.value) <= MAX_ARRAY_SIZE) {
+			if(rows >= array.length && columns >= array[0].length && (rows * columns) <= MAX_ARRAY_SIZE) {
 				return expandedArray(array);
-			} else if((rows.value * columns.value) > MAX_ARRAY_SIZE) {
+			} else if((rows * columns) > MAX_ARRAY_SIZE) {
 				return new cError(cErrorType.not_numeric);
 			}
 		}
