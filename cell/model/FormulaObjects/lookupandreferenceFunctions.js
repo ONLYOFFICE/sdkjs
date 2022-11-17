@@ -471,7 +471,7 @@ function (window, undefined) {
 	cEXPAND.prototype.name = 'EXPAND';
 	cEXPAND.prototype.argumentsMin = 2;
 	cEXPAND.prototype.argumentsMax = 4;
-	cEXPAND.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
+	cEXPAND.prototype.arrayIndexes = {0: 1, 3: 1};
 	cEXPAND.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
 	cEXPAND.prototype.Calculate = function (arg) {
 		const MAX_ARRAY_SIZE = 1048576;
@@ -556,10 +556,10 @@ function (window, undefined) {
 		}
 
 		// check length and max array size
-		if(rows >= array.length && columns >= array[0].length && (rows * columns) <= MAX_ARRAY_SIZE) {
-			return expandedArray(array);
-		} else if((rows * columns) > MAX_ARRAY_SIZE) {
+		if((rows * columns) > MAX_ARRAY_SIZE) {
 			return new cError(cErrorType.not_numeric);
+		} else if(rows >= array.length && columns >= array[0].length) {
+			return expandedArray(array);
 		}
 
 		return new cError(cErrorType.wrong_value_type);
