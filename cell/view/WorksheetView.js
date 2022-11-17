@@ -7981,7 +7981,7 @@
                     r2 = vr.r2;
                 } else {
                     r1 = vr.r1;
-                    r2 = vr.r1 - 1 - delta;
+                    r2 = delta < 0 ? (vr.r1 + (oldVR.r1 - vr.r1 - 1)) : (vr.r1 - 1 - delta);
                 }
             } else {
                 r1 = vr.r1;
