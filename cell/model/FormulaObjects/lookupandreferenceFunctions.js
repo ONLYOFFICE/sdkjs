@@ -471,7 +471,7 @@ function (window, undefined) {
 	cEXPAND.prototype.name = 'EXPAND';
 	cEXPAND.prototype.argumentsMin = 2;
 	cEXPAND.prototype.argumentsMax = 4;
-	cEXPAND.prototype.arrayIndexes = {0: 1, 3: 1};
+	cEXPAND.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
 	cEXPAND.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
 	cEXPAND.prototype.Calculate = function (arg) {
 		const MAX_ARRAY_SIZE = 1048576;
@@ -522,6 +522,9 @@ function (window, undefined) {
 			rows = new cNumber(dimension.row);
 		} else if(cElementType.array === arg1.type) {
 			rows = arg1.getElementRowCol(0, 0);
+		} else if(cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			// TODO не получилось точно выяснить поведение функции при передаче в нее cellsRange вторым или третьим аргументом, поэтому пока возвращаем ошибку 
+			rows = new cError(cErrorType.wrong_value_type);
 		}
 		rows = rows.tocNumber();
 		
@@ -536,6 +539,9 @@ function (window, undefined) {
 			columns = new cNumber(dimension.row);
 		} else if(cElementType.array === arg2.type) {
 			columns = arg2.getElementRowCol(0, 0);
+		} else if(cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
+			// TODO не получилось точно выяснить поведение функции при передаче в нее cellsRange вторым или третьим аргументом, поэтому пока возвращаем ошибку
+			columns = new cError(cErrorType.wrong_value_type);
 		}
 		columns = columns.tocNumber();
 
