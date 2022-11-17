@@ -10255,8 +10255,16 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(1, 1).getValue().getValue(), "test", "Pass a reference to value in cell(single) to the last argument.[1,1]");
 
 		// cell ref(multiple)
+		// get the array -> get the values from array
+		oParser = new parserFormula('EXPAND(A1:A1,2,2,A1:B1)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to value in cell(array-like) to the last argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to value in cell(single) to the last argument.");
 
 		// array
+		oParser = new parserFormula('EXPAND(A1:A1,2,2,{1,2})', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an array to the last argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass an array to the last argument.");
+
 	})
 
 	QUnit.test("Test: \"FISHER\"", function (assert) {

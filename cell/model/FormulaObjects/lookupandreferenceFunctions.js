@@ -469,9 +469,9 @@ function (window, undefined) {
 	cEXPAND.prototype = Object.create(cBaseFunction.prototype);
 	cEXPAND.prototype.constructor = cEXPAND;
 	cEXPAND.prototype.name = 'EXPAND';
-	cEXPAND.prototype.argumentsMin = 1;
+	cEXPAND.prototype.argumentsMin = 2;
 	cEXPAND.prototype.argumentsMax = 4;
-	cEXPAND.prototype.arrayIndexes = {0: 1};
+	cEXPAND.prototype.arrayIndexes = {0: 1, 3: 1};
 	cEXPAND.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
 	cEXPAND.prototype.Calculate = function (arg) {
 		const MAX_ARRAY_SIZE = 1048576;
@@ -480,7 +480,6 @@ function (window, undefined) {
 		let arg1 = arg[1];
 		let arg2 = arg[2];
 		let arg3 = arg[3] ? arg[3] : new cError(cErrorType.not_available);
-		let pad_with = arg3;
 
 		function expandedArray(arr) {
 			let res = new cArray();
@@ -525,7 +524,7 @@ function (window, undefined) {
 			rows = arg1.getElementRowCol(0, 0);
 		}
 		rows = rows.tocNumber();
-
+		
 		if(cElementType.error === arg1.type) {
 			return arg1;
 		}
@@ -544,6 +543,12 @@ function (window, undefined) {
 			return arg2;
 		}
 		arg2 = arg2.tocNumber();
+
+		// --------------------- arg3(pad_with) type check ----------------------//
+		let pad_with = arg3;
+		if(cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type || cElementType.array === arg3.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
 		// check row and column type
 		if(rows.type === cElementType.number && columns.type === cElementType.number) {
