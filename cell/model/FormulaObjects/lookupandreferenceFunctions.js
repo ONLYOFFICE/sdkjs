@@ -477,8 +477,6 @@ function (window, undefined) {
 		const MAX_ARRAY_SIZE = 1048576;
 		let array;
 		let arg0 = arg[0];
-		let arg1 = arg[1];
-		let arg2 = arg[2];
 		let arg3 = arg[3] ? arg[3] : new cError(cErrorType.not_available);
 
 		function expandedArray(arr) {
@@ -516,14 +514,13 @@ function (window, undefined) {
 		}
 
 		// --------------------- arg1(row) type check ----------------------//
-		let rows = arg1;
+		let rows = arg[1];
 		let dimension = arg0.getDimensions();
-		if(cElementType.empty === arg1.type) {
+		if(cElementType.empty === rows.type) {
 			rows = new cNumber(dimension.row);
-		} else if(cElementType.array === arg1.type) {
-			rows = arg1.getElementRowCol(0, 0);
-			arg1 = new cNumber(rows);
-		} else if(cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+		} else if(cElementType.array === rows.type) {
+			rows = rows.getElementRowCol(0, 0);
+		} else if(cElementType.cellsRange === rows.type || cElementType.cellsRange3D === rows.type) {
 			// TODO не получилось точно выяснить поведение функции при передаче в нее cellsRange вторым или третьим аргументом, поэтому пока возвращаем ошибку 
 			rows = new cError(cErrorType.wrong_value_type);
 		};
@@ -533,16 +530,14 @@ function (window, undefined) {
 			return rows;
 		}
 		rows = rows.toNumber();
-		arg1 = arg1.tocNumber();
 
 		// --------------------- arg2(column) type check ----------------------//
-		let columns = arg2;
-		if(cElementType.empty === arg2.type) {
+		let columns = arg[2];
+		if(cElementType.empty === columns.type) {
 			columns = new cNumber(dimension.row);
-		} else if(cElementType.array === arg2.type) {
-			columns = arg2.getElementRowCol(0, 0);
-			arg2 = new cNumber(columns);
-		} else if(cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
+		} else if(cElementType.array === columns.type) {
+			columns = columns.getElementRowCol(0, 0);
+		} else if(cElementType.cellsRange === columns.type || cElementType.cellsRange3D === columns.type) {
 			// TODO не получилось точно выяснить поведение функции при передаче в нее cellsRange вторым или третьим аргументом, поэтому пока возвращаем ошибку
 			columns = new cError(cErrorType.wrong_value_type);
 		}
@@ -553,7 +548,6 @@ function (window, undefined) {
 		}
 
 		columns = columns.toNumber();
-		arg2 = arg2.tocNumber();
 
 		// --------------------- arg3(pad_with) type check ----------------------//
 		let pad_with = arg3;
@@ -561,15 +555,13 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		// check row and column type
-		if(arg1.type === cElementType.number && arg2.type === cElementType.number) {
-			// check length and max array size
-			if(rows >= array.length && columns >= array[0].length && (rows * columns) <= MAX_ARRAY_SIZE) {
-				return expandedArray(array);
-			} else if((rows * columns) > MAX_ARRAY_SIZE) {
-				return new cError(cErrorType.not_numeric);
-			}
+		// check length and max array size
+		if(rows >= array.length && columns >= array[0].length && (rows * columns) <= MAX_ARRAY_SIZE) {
+			return expandedArray(array);
+		} else if((rows * columns) > MAX_ARRAY_SIZE) {
+			return new cError(cErrorType.not_numeric);
 		}
+
 		return new cError(cErrorType.wrong_value_type);
 	};
 
