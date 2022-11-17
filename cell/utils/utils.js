@@ -3134,7 +3134,7 @@
 		asc_CFindOptions.prototype.asc_setLastSearchElem = function (val) {this.lastSearchElem = val;};
 		asc_CFindOptions.prototype.asc_setNotSearchEmptyCells = function (val) {this.isNotSearchEmptyCells = val;};
 		asc_CFindOptions.prototype.asc_setActiveCell = function (val) {this.activeCell = val;};
-		asc_CFindOptions.prototype.asc_setIsForMacros = function (val) {this.IsForMacros = val;};
+		asc_CFindOptions.prototype.asc_setIsForMacros = function (val) {this.isForMacros = val;};
 
 		/** @constructor */
 		function findResults() {

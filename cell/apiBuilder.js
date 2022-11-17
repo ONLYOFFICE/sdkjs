@@ -3145,6 +3145,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {String | undefined} What - The data to search for.
+	 * @param {ApiRange} After - The cell after which you want the search to begin. If you don't specify this argument, the search starts after the cell in the upper-left corner of the range.
 	 * @param {String} LookIn - Can be one of the following XlFindLookIn constants: xlFormulas, xlValues.
 	 * @param {String} LookAt - Can be one of the following XlLookAt constants: xlWhole or xlPart.
 	 * @param {String} SearchOrder - Can be one of the following XlSearchOrder constants: xlByRows or xlByColumns.
@@ -3157,31 +3158,92 @@
 		if (typeof What === 'string' || What === undefined) {
 			let res = null;
 			let options = new Asc.asc_CFindOptions();
-			let start = ( After instanceof ApiRange )
-						? { row: After.range.bbox.r1, col: After.range.bbox.c1 }
-						: { row : this.range.bbox.r1, col: this.range.bbox.c1 };
-			options.asc_setActiveCell(start);
-			// options.asc_setActiveCell(this.range.worksheet.selectionRange.activeCell);
 			options.asc_setFindWhat(What);
 			options.asc_setScanForward(SearchDirection != 'xlPrevious');
 			MatchCase && options.asc_setIsMatchCase(MatchCase);
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
-			options.asc_setSpecificRange(this.GetAddress(true, true));
+			options.asc_setSpecificRange(this.Address);
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn( (LookIn === 'xlValues' ? 2 : 1) );
 			options.asc_setNotSearchEmptyCells( !(What === "" && !options.isWholeCell) );
+			let start = ( After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range) )
+						? { row: After.range.bbox.r1, col: After.range.bbox.c1 }
+						: { row: this.range.bbox.r1, col: this.range.bbox.c1 };
+						
+			start.row += (options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
+			start.col += (!options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
+			options.asc_setActiveCell(start);
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
-			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(options.scanForward);
 			if (id != null) {
-				// engine.SetCurrent(id);
-				this.range.worksheet.workbook.oApi.wb.SelectSearchElement(id);
+				let elem = engine.Elements[id];
+				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
+			}
+			this._searchOptions = options;
+			return res;
+		} else {
+			return new Error('Invalid parametr "What".')
+		}
+	};
+
+	/**
+	 * Continues a search that was begun with the Find method. Finds the next cell that matches those same conditions and returns a Range object that represents that cell. This does not affect the selection or the active cell..
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} After - The cell after which you want the search to begin. If you don't specify this argument, the search starts from the last founded cell.
+	 * @returns {ApiRange} - returns null if range does not contains such text.
+	 * 
+	*/
+	ApiRange.prototype.FindNext = function(After) {
+		if (this._searchOptions) {
+			let res = null;
+			if (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range)) {
+				let start = { row: After.range.bbox.r1, col: After.range.bbox.c1 };
+				start.row += (this._searchOptions.scanByRows ? 1 : 0);
+				start.col += (!this._searchOptions.scanByRows ? 1 : 0);
+				this._searchOptions.asc_setActiveCell(start);
+			}
+			this._searchOptions.asc_setScanForward(true);
+			let engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(true);
+			if (id != null) {
 				let elem = engine.Elements[id];
 				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
 			}
 			return res;
 		} else {
-			return new Error('Invalid parametr "What".')
+			return new Error('You should use "Find" method before this.')
+		}
+	};
+
+	/**
+	 * Continues a search that was begun with the Find method. Finds the next cell that matches those same conditions and returns a Range object that represents that cell. This does not affect the selection or the active cell..
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Before - The cell before which you want the search to begin. If you don't specify this argument, the search starts from the last founded cell.
+	 * @returns {ApiRange} - returns null if range does not contains such text.
+	 * 
+	*/
+	ApiRange.prototype.FindPrevious = function(Before) {
+		if (this._searchOptions) {
+			let res = null;
+			if (Before instanceof ApiRange && Before.range.isOneCell() && this.range.containsRange(Before.range)) {
+				let start = { row: Before.range.bbox.r1, col: Before.range.bbox.c1 };
+				start.row += (this._searchOptions.scanByRows ? -1 : 0);
+				start.col += (!this._searchOptions.scanByRows ? -1 : 0);
+				this._searchOptions.asc_setActiveCell(start);
+			}
+			this._searchOptions.asc_setScanForward(false);
+			let engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(false);
+			if (id != null) {
+				let elem = engine.Elements[id];
+				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
+			}
+			return res;
+		} else {
+			return new Error('You should use "Find" method before this.')
 		}
 	};
 
@@ -3207,7 +3269,7 @@
 			MatchCase && options.asc_setIsMatchCase(MatchCase);
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
-			options.asc_setSpecificRange(this.GetAddress(true, true));
+			options.asc_setSpecificRange(this.Address);
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn(Asc.c_oAscFindLookIn.Formulas);
 			options.asc_setIsReplaceAll(ReplaceAll === true)
@@ -4503,6 +4565,8 @@
 	ApiRange.prototype["Copy"] = ApiRange.prototype.Copy;
 	ApiRange.prototype["Paste"] = ApiRange.prototype.Paste;
 	ApiRange.prototype["Find"] = ApiRange.prototype.Find;
+	ApiRange.prototype["FindNext"] = ApiRange.prototype.FindNext;
+	ApiRange.prototype["FindPrevious"] = ApiRange.prototype.FindPrevious;
 	ApiRange.prototype["Replace"] = ApiRange.prototype.Replace;
 
 

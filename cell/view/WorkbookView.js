@@ -3169,7 +3169,7 @@
 
 		if (!options.isForMacros) {
 			this.handlers.trigger("asc_onRenameCellTextEnd", options.countFindAll, options.countReplaceAll);
-			options.isForMacros = null;
+			options.asc_setIsForMacros(null);
 		}
 		if (options.countFindAll !== options.countReplaceAll) {
 			this.SearchEngine.SetCurrent(this.SearchEngine.CurId);
