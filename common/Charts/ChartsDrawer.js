@@ -12193,7 +12193,7 @@ drawScatterChart.prototype = {
 						var y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
 						this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol);
 						if (this.chart.series[i].errBars) {
-							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, i, n);
+							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, seria.idx, idx);
 						}
 
 						points[i][n] = {x: xVal, y: yVal};
