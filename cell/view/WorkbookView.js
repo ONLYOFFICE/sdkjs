@@ -5322,7 +5322,7 @@
 			var ws = this.wb.getActiveWS();
 			var selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange;
 
-			var activeCell = selectionRange.activeCell;
+			var activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;
 			if (this.props && this.props.lastSearchElem) {
 				var cell = this.props.lastSearchElem[3];
 				if (cell) {
