@@ -584,6 +584,7 @@ var editor;
 					}
 					_api.endInsertDocumentUrls();
 				}, endCallback: function (_api) {
+					callback(null);
 				}
 			};
 

@@ -5029,6 +5029,7 @@
 		//чтобы потом понять что нужно обновлять, сохраняю сооветсвие, количество запросов соответсвует количеству externalReferences
 		//для этого создаю на все Promise, и если data[i].error -> возвращаю null
 
+		var successfulLoadFileMap = {};
 		var getPromise = function (oData, eR, _resolve) {
 			return function () {
 
@@ -5061,8 +5062,9 @@
 						window["Asc"]["editor"]._getFileFromUrl(sFileUrl, t.Api["asc_isSupportFeature"]("ooxml") ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY,
 							function (fileUrlAfterConvert) {
 								if (fileUrlAfterConvert) {
+									successfulLoadFileMap[sFileUrl] = 1;
 									loadFile(fileUrlAfterConvert);
-								} else {
+								} else if (!successfulLoadFileMap[sFileUrl]) {
 									resolve(_resolve(null, eR.externalReference.Id));
 								}
 							});
