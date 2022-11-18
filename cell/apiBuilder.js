@@ -3198,14 +3198,23 @@
 	ApiRange.prototype.FindNext = function(After) {
 		if (this._searchOptions) {
 			let res = null;
+			let activeCell;
+			let engine;
+			this._searchOptions.asc_setScanForward(true);
 			if (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range)) {
-				let start = { row: After.range.bbox.r1, col: After.range.bbox.c1 };
+				activeCell = { row: After.range.bbox.r1, col: After.range.bbox.c1 };
 				start.row += (this._searchOptions.scanByRows ? 1 : 0);
 				start.col += (!this._searchOptions.scanByRows ? 1 : 0);
-				this._searchOptions.asc_setActiveCell(start);
+			} else {
+				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
 			}
-			this._searchOptions.asc_setScanForward(true);
-			let engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			if (JSON.stringify(this._searchOptions.activeCell) !== JSON.stringify(activeCell)) {
+				this._searchOptions.asc_setActiveCell(activeCell);
+			} else {
+				engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+				engine.Reset();
+			}
+			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(true);
 			if (id != null) {
 				let elem = engine.Elements[id];
@@ -3228,14 +3237,23 @@
 	ApiRange.prototype.FindPrevious = function(Before) {
 		if (this._searchOptions) {
 			let res = null;
+			let activeCell;
+			let engine;
+			this._searchOptions.asc_setScanForward(false);
 			if (Before instanceof ApiRange && Before.range.isOneCell() && this.range.containsRange(Before.range)) {
-				let start = { row: Before.range.bbox.r1, col: Before.range.bbox.c1 };
+				activeCell = { row: Before.range.bbox.r1, col: Before.range.bbox.c1 };
 				start.row += (this._searchOptions.scanByRows ? -1 : 0);
 				start.col += (!this._searchOptions.scanByRows ? -1 : 0);
-				this._searchOptions.asc_setActiveCell(start);
+			} else {
+				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
 			}
-			this._searchOptions.asc_setScanForward(false);
-			let engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			if (JSON.stringify(this._searchOptions.activeCell) !== JSON.stringify(activeCell)) {
+				this._searchOptions.asc_setActiveCell(activeCell);
+			} else {
+				engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+				engine.Reset();
+			}
+			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(false);
 			if (id != null) {
 				let elem = engine.Elements[id];
