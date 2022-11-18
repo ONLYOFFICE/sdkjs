@@ -5083,7 +5083,7 @@
 			var _oData = data && data[i];
 			var _eR = externalReferences[i];
 
-			if (_oData && _eR && !_oData.error) {
+			if (_oData && _eR && (_eR.isExternalLink() || !_oData.error)) {
 				requests.push(getPromise(_oData, _eR, resolveFunc));
 			}
 		}
