@@ -15215,6 +15215,7 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getData"] = prot.asc_getData;
 	prot["asc_getSource"] = prot.asc_getSource;
 	prot["asc_getId"] = prot.asc_getId;
+	prot["asc_isExternalLink"] = prot.isExternalLink;
 
 
 	window["AscCommonExcel"].CPrintPreviewState = CPrintPreviewState;

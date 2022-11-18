@@ -4259,6 +4259,7 @@
 	Workbook.prototype.removeExternalReference = function (index, addToHistory) {
 		if (index != null) {
 			var from = this.externalReferences[index - 1];
+			//this.reIndexExternalReferencesLinks(index - 1);
 			this.externalReferences.splice(index - 1, 1);
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
