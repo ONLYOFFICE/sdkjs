@@ -14642,7 +14642,7 @@ QueryTableField.prototype.clone = function() {
 		if (needGenerateRow) {
 			cell = new ExternalCell();
 			AscCommonExcel.executeInR1C1Mode(false, function () {
-				cell.Ref = new Asc.Range(t.R - 1, index, t.R - 1, index).getName();
+				cell.Ref = new Asc.Range(index, t.R - 1, index, t.R - 1).getName();
 			});
 			this.Cell.push(cell);
 		}
