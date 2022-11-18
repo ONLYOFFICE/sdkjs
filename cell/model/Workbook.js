@@ -481,10 +481,18 @@
 		forEachSheetListeners: function(sheetId, callback) {
 			var sheetContainer = this.sheetListeners[sheetId];
 			if (sheetContainer) {
-				for (var i in sheetContainer.cellMap) {
+				var i, j;
+				for (i in sheetContainer.cellMap) {
 					if (sheetContainer.cellMap[i]) {
-						for (var j in sheetContainer.cellMap[i].listeners) {
+						for (j in sheetContainer.cellMap[i].listeners) {
 							callback(sheetContainer.cellMap[i].listeners[j]);
+						}
+					}
+				}
+				for (i in sheetContainer.areaMap) {
+					if (sheetContainer.areaMap[i]) {
+						for (j in sheetContainer.areaMap[i].listeners) {
+							callback(sheetContainer.areaMap[i].listeners[j]);
 						}
 					}
 				}
