@@ -3203,8 +3203,8 @@
 			this._searchOptions.asc_setScanForward(true);
 			if (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range)) {
 				activeCell = { row: After.range.bbox.r1, col: After.range.bbox.c1 };
-				start.row += (this._searchOptions.scanByRows ? 1 : 0);
-				start.col += (!this._searchOptions.scanByRows ? 1 : 0);
+				activeCell.row += (this._searchOptions.scanByRows ? 1 : 0);
+				activeCell.col += (!this._searchOptions.scanByRows ? 1 : 0);
 			} else {
 				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
 			}
@@ -3242,8 +3242,8 @@
 			this._searchOptions.asc_setScanForward(false);
 			if (Before instanceof ApiRange && Before.range.isOneCell() && this.range.containsRange(Before.range)) {
 				activeCell = { row: Before.range.bbox.r1, col: Before.range.bbox.c1 };
-				start.row += (this._searchOptions.scanByRows ? -1 : 0);
-				start.col += (!this._searchOptions.scanByRows ? -1 : 0);
+				activeCell.row += (this._searchOptions.scanByRows ? -1 : 0);
+				activeCell.col += (!this._searchOptions.scanByRows ? -1 : 0);
 			} else {
 				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
 			}
@@ -3275,7 +3275,7 @@
 	 * @param {String} SearchOrder - Can be one of the following XlSearchOrder constants: xlByRows or xlByColumns.
 	 * @param {String} SearchDirection - Can be one of the following XlSearchDirection constants: xlNext or xlPrevious.
 	 * @param {Boolean} MatchCase - True to make the search case-sensitive. The default value is False.
-	 * @param {Boolean} ReplaceAll - True to replace all. The default value is False.
+	 * @param {Boolean} ReplaceAll - True to replace all. The default value is True.
 	 * 
 	 */
 	ApiRange.prototype.Replace = function(What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll) {
@@ -3290,9 +3290,14 @@
 			options.asc_setSpecificRange(this.Address);
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn(Asc.c_oAscFindLookIn.Formulas);
-			options.asc_setIsReplaceAll(ReplaceAll === true)
+			if (typeof ReplaceAll !== 'boolean')
+				ReplaceAll = true;
+
+			options.asc_setIsReplaceAll((ReplaceAll === true));
 			this.range.worksheet.workbook.oApi.isReplaceAll = options.isReplaceAll;
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			engine.Reset();
+			engine = this.range.worksheet.workbook.oApi.wb.Search(options);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
 			options.asc_setIsForMacros(true);
 			if (id != null) {
