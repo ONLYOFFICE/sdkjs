@@ -13230,11 +13230,8 @@
 						break;
 					}
 					case 8: {
-						var _length = s.GetULong();
-						var _end_rec2 = s.cur + _length;
-
-						oPresentattion.Api.vbaMacros = s.GetBuffer(_length);
-						s.Seek2(_end_rec2);
+						oPresentattion.Api.vbaProject = new AscCommon.VbaProject();
+						oPresentattion.Api.vbaProject.fromStream(s);
 						break;
 					}
 					case 9: {

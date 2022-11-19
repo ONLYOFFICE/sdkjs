@@ -1729,7 +1729,7 @@ var editor;
 				if (vbaProjectPart) {
 					var contentVbaProject = vbaProjectPart.getDocumentContent(true);
 					if (contentVbaProject) {
-						xmlParserContext.InitOpenManager.oReadResult.vbaMacros = contentVbaProject;
+						xmlParserContext.InitOpenManager.oReadResult.vbaMacros = new Uint8Array(contentVbaProject);
 					}
 				}
 

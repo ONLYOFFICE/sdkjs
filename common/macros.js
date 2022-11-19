@@ -216,6 +216,77 @@ function (window, undefined)
         return false;
     };
 
+	function VbaProject() {
+		this.filename = null;
+		this.vbaXml = null;
+		this.vbaDataXml = null;
+	}
+	VbaProject.prototype.toStream = function (s) {
+		s.WriteUChar(AscCommon.g_nodeAttributeStart);
+		s._WriteString2(0, this.filename);
+		s.WriteUChar(AscCommon.g_nodeAttributeEnd);
+
+		s.WriteRecord2(0, this.vbaXml, function(val){
+			s.WriteString2(val);
+		});
+		s.WriteRecord2(1, this.vbaDataXml, function(val){
+			s.WriteString2(val);
+		});
+	};
+	VbaProject.prototype.fromStream = function (s) {
+		var _len = s.GetULong();
+		var _start_pos = s.cur;
+		var _end_pos = _len + _start_pos;
+		var _at;
+// attributes
+		s.GetUChar();
+		while (true)
+		{
+			_at = s.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+			switch (_at)
+			{
+				case 0: {
+					this.filename = s.GetString2();
+					break;
+				}
+				default:
+					s.Seek2(_end_pos);
+					return;
+			}
+		}
+//members
+		var _type;
+		while (true)
+		{
+			if (s.cur >= _end_pos)
+				break;
+			_type = s.GetUChar();
+			switch (_type)
+			{
+				case 0:
+				{
+					s.GetULong();//len
+					this.vbaXml = s.GetString2();
+					break;
+				}
+				case 1:
+				{
+					s.GetULong();//len
+					this.vbaDataXml = s.GetString2();
+					break;
+				}
+				default:
+				{
+					s.SkipRecord();
+					break;
+				}
+			}
+		}
+		s.Seek2(_end_pos);
+	};
+
 	AscDFH.changesFactory[AscDFH.historyitem_DocumentMacros_Data]     = CChangesDocumentMacrosData;
 	AscDFH.changesRelationMap[AscDFH.historyitem_DocumentMacros_Data] = [AscDFH.historyitem_DocumentMacros_Data];
 
@@ -366,4 +437,5 @@ function (window, undefined)
 
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].CDocumentMacros = CDocumentMacros;
+	window['AscCommon'].VbaProject = VbaProject;
 })(window);
