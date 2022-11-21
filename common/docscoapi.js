@@ -252,6 +252,11 @@
     }
   };
 
+  CDocsCoApi.prototype.sendClientLog = function(level, msg) {
+    if (this._CoAuthoringApi && this._onlineWork) {
+      this._CoAuthoringApi.sendClientLog(level, msg);
+    }
+  };
   CDocsCoApi.prototype.sendCursor = function(cursor) {
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.sendCursor(cursor);
@@ -1026,6 +1031,10 @@
     if (typeof message === 'string') {
       this._send({"type": "message", "message": message});
     }
+  };
+
+  DocsCoApi.prototype.sendClientLog = function(level, msg) {
+    this._send({'type': 'clientLog', 'level': level, 'msg': msg});
   };
 
   DocsCoApi.prototype.sendCursor = function(cursor) {
