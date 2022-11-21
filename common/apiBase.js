@@ -1479,6 +1479,7 @@
 					t.setViewModeDisconnect(AscCommon.getEnableDownloadByCloseCode(code));
 					t.disconnectOnSave = {code: code, reason: reason};
 				} else {
+					t.CoAuthoringApi.sendClientLog('debug', 'disconnect code:' + code + ';reason:' + reason);
 					t.CoAuthoringApi.disconnect(code, reason);
 				}
 			}
