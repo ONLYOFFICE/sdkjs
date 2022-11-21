@@ -5503,6 +5503,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
+
+	 this.asc_fillHandleDone(null,  new Asc.Range(4,  1,  4,  4))
+	  return;
+
+
     var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -7999,6 +8004,18 @@ var editor;
 			this.wb.removeExternalReferences(arr);
 		}
 	};
+
+	spreadsheet_api.prototype.asc_fillHandleDone = function(startRange, endRange, bCtrl) {
+		if (this.canEdit()) {
+			let wb = this.wb;
+			if (!wb) {
+				return;
+			}
+			wb.fillHandleDone(startRange, endRange, bCtrl);
+		}
+	};
+
+
 
   /*
    * Export

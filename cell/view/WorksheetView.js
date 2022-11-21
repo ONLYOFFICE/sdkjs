@@ -10508,6 +10508,60 @@
 		}
     };
 
+	WorksheetView.prototype.fillHandleDone = function (startRange, endRange, bCtrl) {
+		//на входе имеем два диапазона, определяем точку крайней ячейки автозаполнения
+		if (!startRange) {
+			startRange = this.model.selectionRange.getLast().clone();
+		}
+		if (!endRange) {
+			endRange = this.model.selectionRange.getLast().clone();
+		}
+
+		startRange = typeof startRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(startRange) : startRange;
+		endRange = typeof endRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(endRange) : endRange;
+
+		let reverseRow = 1;
+		let reverseCol = 1;
+		let toCell;
+		if (startRange.r1 === endRange.r1 && startRange.r2 > endRange.r2) {
+			//попали внутрь диапазона, т.е. маркером пошли наверх
+			toCell = {row: endRange.r2, col: endRange.c2};
+		} else if (startRange.r1 === endRange.r1 && startRange.r2 < endRange.r2) {
+			//попали ниже диапазона, т.е. маркером пошли вниз
+			toCell = {row: endRange.r2, col: endRange.c2};
+		} else if (startRange.r2 === endRange.r2 && startRange.r1 > endRange.r1) {
+			//выше диапазона
+			toCell = {row: endRange.r1, col: endRange.c2};
+			reverseRow = 0;
+
+		} else if (startRange.c1 === endRange.c1 && startRange.c2 > endRange.c2) {
+			//попали внутрь диапазона, т.е. маркером пошли влево
+			toCell = {row: endRange.r2, col: endRange.c2};
+		} else if (startRange.с1 === endRange.с1 && startRange.с2 < endRange.с2) {
+			//попали ниже диапазона, т.е. маркером пошли вправо
+			toCell = {row: endRange.r2, col: endRange.c2};
+		} else if (startRange.с2 === endRange.с2 && startRange.с1 > endRange.с1) {
+			//влево диапазона
+			toCell = {row: endRange.r2, col: endRange.c1};
+			reverseCol = 0;
+		}
+
+		if (toCell) {
+			var cellCoord = this.getCellCoord(toCell.col, toCell.row);
+
+			if (cellCoord) {
+				//this.activeFillHandle = this.model.selectionRange.getLast().clone();
+				//this.activeFillHandle.normalize();
+
+				this.activeFillHandle = endRange;
+				this.fillHandleDirection = 1;
+
+				this.changeSelectionFillHandle(cellCoord._x + cellCoord._width * reverseCol, cellCoord._y + cellCoord._height * reverseRow);
+				this.applyFillHandle(null, null, bCtrl);
+			}
+		}
+	};
+
     /* Функция для работы автозаполнения (selection). (x, y) - координаты точки мыши на области */
     WorksheetView.prototype.changeSelectionFillHandle = function (x, y, tableIndex) {
         // Возвращаемый результат
