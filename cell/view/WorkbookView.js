@@ -4902,11 +4902,93 @@
 			// 	error: string, // для отображения ошибки
 			// })
 
+
+			var doUpdateData = function (_arrAfterPromise) {
+				History.Create_NewPoint();
+				History.StartTransaction();
+
+				var updatedReferences = [];
+				for (var i = 0; i < _arrAfterPromise.length; i++) {
+					var externalReferenceId = _arrAfterPromise[i].externalReferenceId;
+					var stream = _arrAfterPromise[i].stream;
+					var eR = t.model.getExternalReferenceById(externalReferenceId);
+					if (stream && eR) {
+						updatedReferences.push(eR);
+						//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
+						//использую общий wb для externalReferences. поскольку внутри
+						//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
+						//необходимо проверить, ссылкой на 2 листа одной книги
+						var wb = eR.getWb();
+						if (!t.Api["asc_isSupportFeature"]("ooxml")) {
+							//в этом случае запрашиваем бинарник
+							// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
+							let jsZlib = new AscCommon.ZLib();
+							if (!jsZlib.open(stream)) {
+								t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+								return false;
+							}
+
+							if (jsZlib.files && jsZlib.files.length) {
+								var binaryData = jsZlib.getFile(jsZlib.files[0])
+
+								//заполняем через банарник
+								var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+								//чтобы лишнего не читать, проставляю флаг копипаст
+								oBinaryFileReader.InitOpenManager.copyPasteObj = {
+									isCopyPaste: true, activeRange: null, selectAllSheet: true
+								};
+
+								if (!wb) {
+									wb = new AscCommonExcel.Workbook();
+									wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
+								}
+								AscFormat.ExecuteNoHistory(function () {
+									AscCommonExcel.executeInR1C1Mode(false, function () {
+										oBinaryFileReader.Read(binaryData, wb);
+									});
+								});
+
+								if (wb.aWorksheets) {
+									eR && eR.updateData(wb.aWorksheets);
+								}
+							}
+						} else {
+							var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, stream);
+							if (updatedData) {
+								eR && eR.updateData(updatedData);
+							}
+						}
+					} else {
+						if (eR) {
+							t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+						}
+					}
+				}
+
+				History.EndTransaction();
+
+				//кроме пересчёта нужно изменить ссылку на лист во всех диапазонах, которые используют данную ссылку
+				for (var j = 0; i < updatedReferences.length; j++) {
+					for (var n in updatedReferences[j].worksheets) {
+						var prepared = t.model.dependencyFormulas.prepareChangeSheet(updatedReferences[j].worksheets[n].getId());
+						t.model.dependencyFormulas.dependencyFormulas.changeSheet(prepared);
+					}
+				}
+
+				//t.model.dependencyFormulas.calcTree();
+				var ws = t.getWorksheet();
+				ws.draw();
+
+				t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
+			};
+
 			this.model.handlers.trigger("asc_onStartUpdateExternalReference", true);
 
 			if (window["AscDesktopEditor"]) {
+				//TODO для декстопа необходима функция получения файлов + при копипасте нужно записывать путь файла(и знать путь текущего файла, чтобы вычислить относительный)
 				//десктоп
-
+				//var arrAfterPromise = getFilesContent(externalReferences);
+				//doUpdateData(arrAfterPromise);
 			} else {
 				//портал
 				//получаем ссылку на файл через asc_onUpdateExternalReference от портала
@@ -4931,85 +5013,6 @@
 					for (let i in aRequests) {
 						_promise = _promise.then(aRequests[i]);
 					}
-
-					var doUpdateData = function (_arrAfterPromise) {
-						History.Create_NewPoint();
-						History.StartTransaction();
-
-						var updatedReferences = [];
-						for (var i = 0; i < _arrAfterPromise.length; i++) {
-							var externalReferenceId = _arrAfterPromise[i].externalReferenceId;
-							var stream = _arrAfterPromise[i].stream;
-							var eR = t.model.getExternalReferenceById(externalReferenceId);
-							if (stream && eR) {
-								updatedReferences.push(eR);
-								//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
-								//использую общий wb для externalReferences. поскольку внутри
-								//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
-								//необходимо проверить, ссылкой на 2 листа одной книги
-								var wb = eR.getWb();
-								if (!t.Api["asc_isSupportFeature"]("ooxml")) {
-									//в этом случае запрашиваем бинарник
-									// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
-									let jsZlib = new AscCommon.ZLib();
-									if (!jsZlib.open(stream)) {
-										t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
-										return false;
-									}
-
-									if (jsZlib.files && jsZlib.files.length) {
-										var binaryData = jsZlib.getFile(jsZlib.files[0])
-
-										//заполняем через банарник
-										var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
-										//чтобы лишнего не читать, проставляю флаг копипаст
-										oBinaryFileReader.InitOpenManager.copyPasteObj = {
-											isCopyPaste: true, activeRange: null, selectAllSheet: true
-										};
-
-										if (!wb) {
-											wb = new AscCommonExcel.Workbook();
-											wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
-										}
-										AscFormat.ExecuteNoHistory(function () {
-											AscCommonExcel.executeInR1C1Mode(false, function () {
-												oBinaryFileReader.Read(binaryData, wb);
-											});
-										});
-
-										if (wb.aWorksheets) {
-											eR && eR.updateData(wb.aWorksheets);
-										}
-									}
-								} else {
-									var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, stream);
-									if (updatedData) {
-										eR && eR.updateData(updatedData);
-									}
-								}
-							} else {
-								if (eR) {
-									t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
-								}
-							}
-						}
-
-						History.EndTransaction();
-
-						//кроме пересчёта нужно изменить ссылку на лист во всех диапазонах, которые используют данную ссылку
-						for (var j = 0; i < updatedReferences.length; j++) {
-							for (var n in updatedReferences[j].worksheets) {
-								var prepared = t.model.dependencyFormulas.prepareChangeSheet(updatedReferences[j].worksheets[n].getId());
-								t.model.dependencyFormulas.dependencyFormulas.changeSheet(prepared);
-							}
-						}
-
-						//t.model.dependencyFormulas.calcTree();
-						var ws = t.getWorksheet();
-						ws.draw();
-
-						t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
-					};
 				});
 			}
 		}
