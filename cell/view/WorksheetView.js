@@ -15466,6 +15466,7 @@
 								oRecalcType = AscCommonExcel.recalcType.full;
 								reinitRanges = true;
 								t.cellCommentator.updateCommentsDependencies(true, val, arn);
+								t.shiftCellWatches(true, val, arn);
 								t.model.shiftDataValidation(true, val, arn, true);
 								updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							}
@@ -15500,6 +15501,7 @@
 								oRecalcType = AscCommonExcel.recalcType.full;
 								reinitRanges = true;
 								t.cellCommentator.updateCommentsDependencies(true, val, arn);
+								t.shiftCellWatches(true, val, arn);
 								t.model.shiftDataValidation(true, val, arn, true);
 								updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							}
@@ -15551,6 +15553,7 @@
 							t._updateGroups(true);
 							updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							t.cellCommentator.updateCommentsDependencies(true, val, arn);
+							t.shiftCellWatches(true, val, arn);
 							t.model.shiftDataValidation(true, val, arn, true);
 							if (changeFreezePane) {
 								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
@@ -15588,6 +15591,7 @@
 							t._updateGroups();
 							updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							t.cellCommentator.updateCommentsDependencies(true, val, arn);
+							t.shiftCellWatches(true, val, arn);
 							t.model.shiftDataValidation(true, val, arn, true);
 							if (changeFreezePane) {
 								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
@@ -15635,6 +15639,7 @@
 							}
 							if (range.deleteCellsShiftLeft(function () {
 								t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
+								t.shiftCellWatches(false, val, arn);
 								t.model.shiftDataValidation(false, val, checkRange, true);
 								t._cleanCache(lockRange);
 							})) {
@@ -15684,6 +15689,7 @@
 							}
 							if (range.deleteCellsShiftUp(function () {
 								t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
+								t.shiftCellWatches(false, val, arn);
 								t.model.shiftDataValidation(false, val, checkRange, true);
 								t._cleanCache(lockRange);
 							})) {
@@ -15769,6 +15775,7 @@
 
 							doMultiRanges( function (start, end, updateRange) {
 								t.cellCommentator.updateCommentsDependencies(false, val, updateRange);
+								t.shiftCellWatches(false, val, arn);
 								t.model.shiftDataValidation(false, val, updateRange, true);
 								t.model.autoFilters.isEmptyAutoFilters(updateRange, c_oAscDeleteOptions.DeleteColumns);
 								t.model.removeCols(updateRange.c1, updateRange.c2);
@@ -15851,6 +15858,7 @@
 							doMultiRanges( function (start, end, updateRange) {
 								checkRange = t.model.autoFilters.checkDeleteAllRowsFormatTable(updateRange, true);
 								t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
+								t.shiftCellWatches(false, val, arn);
 								t.model.shiftDataValidation(false, val, checkRange, true);
 								t.model.autoFilters.isEmptyAutoFilters(updateRange, c_oAscDeleteOptions.DeleteRows);
 
@@ -19383,6 +19391,7 @@
 				History.EndTransaction();
 				if (shiftCells) {
 					t.cellCommentator.updateCommentsDependencies(true, type, arn);
+					t.shiftCellWatches(true, val, arn);
 					t.model.shiftDataValidation(true, type, arn, true);
 					t.objectRender.updateDrawingObject(true, type, arn);
 					t._onUpdateFormatTable(range);
@@ -19478,6 +19487,7 @@
 
                 var preDeleteAction = function () {
                     t.cellCommentator.updateCommentsDependencies(false, type, arn);
+					t.shiftCellWatches(false, val, arn);
 					t.model.shiftDataValidation(false, type, arn, true);
                 };
 
@@ -24163,6 +24173,10 @@
 		});
 
 		this.workbook.doUpdateExternalReference(externalReferences);
+	};
+
+	WorksheetView.prototype.shiftCellWatches = function () {
+		
 	};
 
 

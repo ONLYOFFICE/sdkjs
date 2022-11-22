@@ -2644,7 +2644,7 @@ function (window, undefined) {
 		var collaborativeEditing = wb.oApi.collaborativeEditing;
 		var workSheetView;
 		var changeFreezePane;
-		if (AscCH.historyitem_Worksheet_RemoveCell == Type) {
+		if (AscCH.historyitem_Worksheet_RemoveCell === Type) {
 			nRow = Data.nRow;
 			nCol = Data.nCol;
 			if (wb.bCollaborativeChanges) {
@@ -2671,10 +2671,10 @@ function (window, undefined) {
 			} else {
 				ws._removeCell(nRow, nCol);
 			}
-		} else if (AscCH.historyitem_Worksheet_ColProp == Type) {
+		} else if (AscCH.historyitem_Worksheet_ColProp === Type) {
 			index = Data.index;
 			if (wb.bCollaborativeChanges) {
-				if (AscCommonExcel.g_nAllColIndex == index) {
+				if (AscCommonExcel.g_nAllColIndex === index) {
 					range = new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0);
 				} else {
 					index = collaborativeEditing.getLockOtherColumn2(nSheetId, index);
@@ -2689,7 +2689,7 @@ function (window, undefined) {
 			var col = ws._getCol(index);
 			col.setWidthProp(bUndo ? Data.oOldVal : Data.oNewVal);
 			ws.initColumn(col);
-		} else if (AscCH.historyitem_Worksheet_RowProp == Type) {
+		} else if (AscCH.historyitem_Worksheet_RowProp === Type) {
 			index = Data.index;
 			if (wb.bCollaborativeChanges) {
 				index = collaborativeEditing.getLockOtherRow2(nSheetId, index);
@@ -2711,7 +2711,7 @@ function (window, undefined) {
 			//TODO для случая скрытия строк фильтром(undo), может два раза вызываться функция setColorStyleTable - пересмотреть
 			workSheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			workSheetView.model.autoFilters.reDrawFilter(null, index);
-		} else if (AscCH.historyitem_Worksheet_RowHide == Type) {
+		} else if (AscCH.historyitem_Worksheet_RowHide === Type) {
 			from = Data.from;
 			to = Data.to;
 			nRow = Data.bRow;
@@ -2735,14 +2735,14 @@ function (window, undefined) {
 
 			workSheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			workSheetView.model.autoFilters.reDrawFilter(new Asc.Range(0, from, ws.nColsCount - 1, to));
-		} else if (AscCH.historyitem_Worksheet_AddRows == Type || AscCH.historyitem_Worksheet_RemoveRows == Type) {
+		} else if (AscCH.historyitem_Worksheet_AddRows === Type || AscCH.historyitem_Worksheet_RemoveRows === Type) {
 			from = Data.from;
 			to = Data.to;
 			if (wb.bCollaborativeChanges) {
 				from = collaborativeEditing.getLockOtherRow2(nSheetId, from);
 				to = collaborativeEditing.getLockOtherRow2(nSheetId, to);
-				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_AddRows == Type) ||
-						(false == bUndo && AscCH.historyitem_Worksheet_RemoveRows == Type))) {
+				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_AddRows === Type) ||
+						(false == bUndo && AscCH.historyitem_Worksheet_RemoveRows === Type))) {
 					oLockInfo = new AscCommonExcel.asc_CLockInfo();
 					oLockInfo["sheetId"] = nSheetId;
 					oLockInfo["type"] = c_oAscLockTypeElem.Range;
@@ -2751,8 +2751,8 @@ function (window, undefined) {
 				}
 			}
 			range = new Asc.Range(0, from, gc_nMaxCol0, to);
-			if ((true == bUndo && AscCH.historyitem_Worksheet_AddRows == Type) ||
-				(false == bUndo && AscCH.historyitem_Worksheet_RemoveRows == Type)) {
+			if ((true == bUndo && AscCH.historyitem_Worksheet_AddRows === Type) ||
+				(false == bUndo && AscCH.historyitem_Worksheet_RemoveRows === Type)) {
 				ws.removeRows(from, to);
 				bInsert = false;
 				operType = c_oAscDeleteOptions.DeleteRows;
@@ -2770,6 +2770,7 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
+			worksheetView.shiftCellWatches(bInsert, operType, range);
 
 			if (wb.bCollaborativeChanges) {
 				changeFreezePane = worksheetView._getFreezePaneOffset(operType, range, bInsert);
@@ -2779,14 +2780,14 @@ function (window, undefined) {
 			}
 
 			//ws.shiftDataValidation(bInsert, operType, range);
-		} else if (AscCH.historyitem_Worksheet_AddCols == Type || AscCH.historyitem_Worksheet_RemoveCols == Type) {
+		} else if (AscCH.historyitem_Worksheet_AddCols === Type || AscCH.historyitem_Worksheet_RemoveCols === Type) {
 			from = Data.from;
 			to = Data.to;
 			if (wb.bCollaborativeChanges) {
 				from = collaborativeEditing.getLockOtherColumn2(nSheetId, from);
 				to = collaborativeEditing.getLockOtherColumn2(nSheetId, to);
-				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_AddCols == Type) ||
-						(false == bUndo && AscCH.historyitem_Worksheet_RemoveCols == Type))) {
+				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_AddCols === Type) ||
+						(false == bUndo && AscCH.historyitem_Worksheet_RemoveCols === Type))) {
 					oLockInfo = new AscCommonExcel.asc_CLockInfo();
 					oLockInfo["sheetId"] = nSheetId;
 					oLockInfo["type"] = c_oAscLockTypeElem.Range;
@@ -2796,8 +2797,8 @@ function (window, undefined) {
 			}
 
 			range = new Asc.Range(from, 0, to, gc_nMaxRow0);
-			if ((true == bUndo && AscCH.historyitem_Worksheet_AddCols == Type) ||
-				(false == bUndo && AscCH.historyitem_Worksheet_RemoveCols == Type)) {
+			if ((true == bUndo && AscCH.historyitem_Worksheet_AddCols === Type) ||
+				(false == bUndo && AscCH.historyitem_Worksheet_RemoveCols === Type)) {
 				ws.removeCols(from, to);
 				bInsert = false;
 				operType = c_oAscDeleteOptions.DeleteColumns;
@@ -2815,6 +2816,7 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
+			worksheetView.shiftCellWatches(bInsert, operType, range);
 
 			if (wb.bCollaborativeChanges) {
 				changeFreezePane = worksheetView._getFreezePaneOffset(operType, range, bInsert);
@@ -2824,8 +2826,8 @@ function (window, undefined) {
 			}
 
 			//ws.shiftDataValidation(bInsert, operType, range)
-		} else if (AscCH.historyitem_Worksheet_ShiftCellsLeft == Type ||
-			AscCH.historyitem_Worksheet_ShiftCellsRight == Type) {
+		} else if (AscCH.historyitem_Worksheet_ShiftCellsLeft === Type ||
+			AscCH.historyitem_Worksheet_ShiftCellsRight === Type) {
 			r1 = Data.r1;
 			c1 = Data.c1;
 			r2 = Data.r2;
@@ -2835,8 +2837,8 @@ function (window, undefined) {
 				c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, c1);
 				r2 = collaborativeEditing.getLockOtherRow2(nSheetId, r2);
 				c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, c2);
-				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsLeft == Type) ||
-						(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsRight == Type))) {
+				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsLeft === Type) ||
+						(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsRight === Type))) {
 					oLockInfo = new AscCommonExcel.asc_CLockInfo();
 					oLockInfo["sheetId"] = nSheetId;
 					oLockInfo["type"] = c_oAscLockTypeElem.Range;
@@ -2846,8 +2848,8 @@ function (window, undefined) {
 			}
 
 			range = ws.getRange3(r1, c1, r2, c2);
-			if ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsLeft == Type) ||
-				(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsRight == Type)) {
+			if ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsLeft === Type) ||
+				(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsRight === Type)) {
 				range.addCellsShiftRight();
 				bInsert = true;
 				operType = c_oAscInsertOptions.InsertCellsAndShiftRight;
@@ -2860,8 +2862,9 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range.bbox);
-		} else if (AscCH.historyitem_Worksheet_ShiftCellsTop == Type ||
-			AscCH.historyitem_Worksheet_ShiftCellsBottom == Type) {
+			worksheetView.shiftCellWatches(bInsert, operType, range.bbox);
+		} else if (AscCH.historyitem_Worksheet_ShiftCellsTop === Type ||
+			AscCH.historyitem_Worksheet_ShiftCellsBottom === Type) {
 			r1 = Data.r1;
 			c1 = Data.c1;
 			r2 = Data.r2;
@@ -2871,8 +2874,8 @@ function (window, undefined) {
 				c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, c1);
 				r2 = collaborativeEditing.getLockOtherRow2(nSheetId, r2);
 				c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, c2);
-				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsTop == Type) ||
-						(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsBottom == Type))) {
+				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsTop === Type) ||
+						(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsBottom === Type))) {
 					oLockInfo = new AscCommonExcel.asc_CLockInfo();
 					oLockInfo["sheetId"] = nSheetId;
 					oLockInfo["type"] = c_oAscLockTypeElem.Range;
@@ -2882,8 +2885,8 @@ function (window, undefined) {
 			}
 
 			range = ws.getRange3(r1, c1, r2, c2);
-			if ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsTop == Type) ||
-				(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsBottom == Type)) {
+			if ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsTop === Type) ||
+				(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsBottom === Type)) {
 				range.addCellsShiftBottom();
 				bInsert = true;
 				operType = c_oAscInsertOptions.InsertCellsAndShiftDown;
@@ -2896,6 +2899,7 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range.bbox);
+			worksheetView.shiftCellWatches(bInsert, operType, range.bbox);
 		} else if (AscCH.historyitem_Worksheet_Sort == Type) {
 			var bbox = Data.bbox;
 			var places = Data.places;
