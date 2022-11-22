@@ -12955,6 +12955,17 @@ background-repeat: no-repeat;\
 		if (!oDocument) {
 			return;
 		}
+
+		var curDocProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
+		if (curDocProtection) {
+			//пытаемся выставить такие же настройки
+			let curIsProtect = curDocProtection.edit != null && curDocProtection.edit !== Asc.c_oAscEDocProtect.None;
+			let isPropsProtect = props.edit != null && props.edit !== Asc.c_oAscEDocProtect.None;
+			if (curIsProtect === isPropsProtect) {
+				return;
+			}
+		}
+
 		var t = this;
 
 		var calculatedHashValue;
