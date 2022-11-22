@@ -10520,46 +10520,43 @@
 		startRange = typeof startRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(startRange) : startRange;
 		endRange = typeof endRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(endRange) : endRange;
 
-		let reverseRow = 1;
-		let reverseCol = 1;
-		let toCell;
-		if (startRange.r1 === endRange.r1 && startRange.r2 > endRange.r2) {
-			//попали внутрь диапазона, т.е. маркером пошли наверх
-			toCell = {row: endRange.r2, col: endRange.c2};
-		} else if (startRange.r1 === endRange.r1 && startRange.r2 < endRange.r2) {
-			//попали ниже диапазона, т.е. маркером пошли вниз
-			toCell = {row: endRange.r2, col: endRange.c2};
-		} else if (startRange.r2 === endRange.r2 && startRange.r1 > endRange.r1) {
-			//выше диапазона
-			toCell = {row: endRange.r1, col: endRange.c2};
-			reverseRow = 0;
+		this.activeFillHandle = startRange.clone();
 
-		} else if (startRange.c1 === endRange.c1 && startRange.c2 > endRange.c2) {
-			//попали внутрь диапазона, т.е. маркером пошли влево
-			toCell = {row: endRange.r2, col: endRange.c2};
-		} else if (startRange.с1 === endRange.с1 && startRange.с2 < endRange.с2) {
-			//попали ниже диапазона, т.е. маркером пошли вправо
-			toCell = {row: endRange.r2, col: endRange.c2};
-		} else if (startRange.с2 === endRange.с2 && startRange.с1 > endRange.с1) {
-			//влево диапазона
-			toCell = {row: endRange.r2, col: endRange.c1};
-			reverseCol = 0;
-		}
-
-		if (toCell) {
-			var cellCoord = this.getCellCoord(toCell.col, toCell.row);
-
-			if (cellCoord) {
-				//this.activeFillHandle = this.model.selectionRange.getLast().clone();
-				//this.activeFillHandle.normalize();
-
-				this.activeFillHandle = endRange;
-				this.fillHandleDirection = 1;
-
-				this.changeSelectionFillHandle(cellCoord._x + cellCoord._width * reverseCol, cellCoord._y + cellCoord._height * reverseRow);
-				this.applyFillHandle(null, null, bCtrl);
+		if (startRange.r1 !== endRange.r1 || startRange.r2 !== endRange.r2) {
+			this.fillHandleDirection = 1;
+			if (startRange.r1 === endRange.r1 && startRange.r1 <= endRange.r2 && startRange.r2 >= endRange.r2) {
+				//попали внутрь диапазона, т.е. маркером пошли наверх
+				this.activeFillHandle.r2 = endRange.r2 + 1;
+				this.activeFillHandle.r1 = startRange.r2;
+				this.fillHandleArea = 2;
+			} else if (endRange.r1 < startRange.r1) {
+				this.activeFillHandle.r2 = endRange.r1;
+				this.activeFillHandle.r1 = startRange.r2;
+				this.fillHandleArea = 1;
+			} else if (startRange.r1 === endRange.r1 && endRange.r2 > startRange.r2) {
+				this.activeFillHandle.r2 = endRange.r2;
+				this.activeFillHandle.r1 = endRange.r1;
+				this.fillHandleArea = 3;
+			}
+		} else {
+			this.fillHandleDirection = 0;
+			if (startRange.c1 === endRange.c1 && startRange.c1 <= endRange.c2 && startRange.c2 >= endRange.c2) {
+				//попали внутрь диапазона, т.е. маркером пошли наверх
+				this.activeFillHandle.c2 = endRange.c2 + 1;
+				this.activeFillHandle.c1 = startRange.c2;
+				this.fillHandleArea = 2;
+			} else if (endRange.c1 < startRange.c1) {
+				this.activeFillHandle.c2 = endRange.c1;
+				this.activeFillHandle.c1 = startRange.c2;
+				this.fillHandleArea = 1;
+			} else if (startRange.c1 === endRange.c1 && endRange.c2 > startRange.c2) {
+				this.activeFillHandle.c2 = endRange.c2;
+				this.activeFillHandle.c1 = endRange.c1;
+				this.fillHandleArea = 3;
 			}
 		}
+
+		this.applyFillHandle(null, null, bCtrl);
 	};
 
     /* Функция для работы автозаполнения (selection). (x, y) - координаты точки мыши на области */
@@ -10966,6 +10963,8 @@
 			t._drawSelection();
         	return;
 		}
+
+		console.log("r1: " + this.activeFillHandle.r1 + " r2: " + this.activeFillHandle.r2 + "c1: " + this.activeFillHandle.c1 + " c2: " + this.activeFillHandle.c2)
 
         // Текущее выделение (к нему применится автозаполнение)
         var arn = t.model.selectionRange.getLast();
