@@ -12956,7 +12956,7 @@ background-repeat: no-repeat;\
 			return;
 		}
 
-		var curDocProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
+		let curDocProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
 		if (curDocProtection) {
 			//пытаемся выставить такие же настройки
 			let curIsProtect = curDocProtection.edit != null && curDocProtection.edit !== Asc.c_oAscEDocProtect.None;
@@ -12966,10 +12966,10 @@ background-repeat: no-repeat;\
 			}
 		}
 
-		var t = this;
+		let t = this;
 
-		var calculatedHashValue;
-		var callback = function (res) {
+		let calculatedHashValue;
+		let callback = function (res) {
 			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 
 			if (res) {
@@ -12993,10 +12993,10 @@ background-repeat: no-repeat;\
 			}
 		};
 
-		var password = props.temporaryPassword;
+		let password = props.temporaryPassword;
 		props.temporaryPassword = null;
-		var documentProtection = oDocument.Settings.DocumentProtection;
-		var salt, alg, spinCount;
+		let documentProtection = oDocument.Settings.DocumentProtection;
+		let salt, alg, spinCount;
 		if (password !== "" && password != null) {
 			if (documentProtection) {
 				salt = documentProtection.saltValue;
@@ -13005,7 +13005,7 @@ background-repeat: no-repeat;\
 			}
 
 			if (!salt || !spinCount) {
-				var params = AscCommon.generateHashParams();
+				let params = AscCommon.generateHashParams();
 				salt = params.saltValue;
 				spinCount = params.spinCount;
 			}
@@ -13015,7 +13015,7 @@ background-repeat: no-repeat;\
 			}
 		}
 
-		var checkPassword = function (hash, doNotCheckPassword) {
+		let checkPassword = function (hash, doNotCheckPassword) {
 			if (doNotCheckPassword) {
 				callback(true);
 			} else {
@@ -13045,8 +13045,8 @@ background-repeat: no-repeat;\
 				//перед тем, как сгенерировать хэш, мс предварительно преобразовывает пароль
 				//в мс подходит как преобразованные пароль, так и не преобразованный
 				//т.е. если сгенерировать вручную хэш из непреобразованного пароля и положить в xml, то документ можно будет разблокировать по первоначальному паролю
-				var hashPassword = AscCommon.prepareWordPassword(password);
-				var hashArr = [];
+				let hashPassword = AscCommon.prepareWordPassword(password);
+				let hashArr = [];
 				if (hashPassword) {
 					hashArr.push({password: hashPassword, salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)});
 				}
