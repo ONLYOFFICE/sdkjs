@@ -24175,8 +24175,82 @@
 		this.workbook.doUpdateExternalReference(externalReferences);
 	};
 
-	WorksheetView.prototype.shiftCellWatches = function () {
-		
+	WorksheetView.prototype.shiftCellWatches = function (bInsert, operType, updateRange) {
+		var i, cellWatch, cellWatchRange;
+		var aCellWatches = this.model.aCellWatches;
+		for (let i = 0; i < aCellWatches.length; i++) {
+			cellWatch = aCellWatches[i];
+			cellWatchRange = cellWatch && cellWatch.r;
+			if (!cellWatchRange) {
+				continue;
+			}
+
+			if (bInsert) {
+				switch (operType) {
+					case c_oAscInsertOptions.InsertCellsAndShiftDown:
+						if ((cellWatchRange.r1 >= updateRange.r1) && (cellWatchRange.c1 >= updateRange.c1) && (cellWatchRange.c1 <= updateRange.c2)) {
+							cellWatch.setOffset( updateRange.r2 - updateRange.r1 + 1);
+						}
+						break;
+
+					case c_oAscInsertOptions.InsertCellsAndShiftRight:
+						if ((cellWatchRange.c1 >= updateRange.c1) && (cellWatchRange.r1 >= updateRange.r1) && (cellWatchRange.r1 <= updateRange.r2)) {
+							cellWatch.setOffset(null,  updateRange.c2 - updateRange.c1 + 1);
+						}
+						break;
+
+					case c_oAscInsertOptions.InsertColumns:
+						if (cellWatchRange.c1 >= updateRange.c1) {
+							cellWatch.setOffset(null,  updateRange.c2 - updateRange.c1 + 1);
+						}
+
+						break;
+
+					case c_oAscInsertOptions.InsertRows:
+						if (cellWatchRange.r1 >= updateRange.r1) {
+							cellWatch.setOffset(updateRange.r2 - updateRange.r1 + 1);
+						}
+
+						break;
+				}
+			} else {
+				switch (operType) {
+					case c_oAscDeleteOptions.DeleteCellsAndShiftTop:
+						if ((cellWatchRange.r1 > updateRange.r2) && (cellWatchRange.c1 >= updateRange.c1) && (cellWatchRange.c1 <= updateRange.c2)) {
+							cellWatch.setOffset(-(updateRange.r2 - updateRange.r1 + 1));
+						} else if (updateRange.contains(cellWatchRange.c1, cellWatchRange.r1)) {
+							this.model.deleteCellWatch(cellWatchRange);
+						}
+						break;
+
+					case c_oAscDeleteOptions.DeleteCellsAndShiftLeft:
+						if ((cellWatchRange.c1 > updateRange.c2) && (cellWatchRange.r1 >= updateRange.r1) && (cellWatchRange.r1 <= updateRange.r2)) {
+							cellWatch.setOffset(null, -(updateRange.c2 - updateRange.c1 + 1));
+						} else if (updateRange.contains(cellWatchRange.c1, cellWatchRange.r1)) {
+							this.model.deleteCellWatch(cellWatchRange);
+						}
+						break;
+
+					case c_oAscDeleteOptions.DeleteColumns:
+						if (cellWatchRange.c1 > updateRange.c2) {
+							cellWatch.setOffset(null, -(updateRange.c2 - updateRange.c1 + 1));
+						} else if ((updateRange.c1 <= cellWatchRange.c1) && (updateRange.c2 >= cellWatchRange.c1)) {
+							this.model.deleteCellWatch(cellWatchRange);
+						}
+						break;
+
+					case c_oAscDeleteOptions.DeleteRows:
+						if (cellWatchRange.r1 > updateRange.r2) {
+							cellWatch.setOffset(-(updateRange.r2 - updateRange.r1 + 1));
+						} else if ((updateRange.r1 <= cellWatchRange.r1) && (updateRange.r2 >= cellWatchRange.r1)) {
+							this.model.deleteCellWatch(cellWatchRange);
+						}
+						break;
+				}
+			}
+		}
+
+		this.model.workbook.handlers.trigger("asc_onUpdateCellWatches");
 	};
 
 
