@@ -11868,6 +11868,7 @@
 
                 t.model._moveRange(arnFrom, arnTo, copyRange, opt_wsTo && opt_wsTo.model);
                 t.cellCommentator.moveRangeComments(arnFrom, arnTo, copyRange, opt_wsTo);
+				t.moveCellWatches(arnFrom, arnTo, copyRange, opt_wsTo);
 
                 var oRangeFrom = new AscCommonExcel.Range(t.model, arnFrom.r1, arnFrom.c1, arnFrom.r2, arnFrom.c2);
                 var oRangeTo = new AscCommonExcel.Range(t.model, arnTo.r1, arnTo.c1, arnTo.r2, arnTo.c2);
@@ -24182,7 +24183,7 @@
 		let indexDiff = 0;
 		if (aCellWatches && aCellWatches.length) {
 			for (i = 0; i < this.workbook.model.aWorksheets.length; i++) {
-				let ws = this.wb.model.aWorksheets[i];
+				let ws = this.workbook.model.aWorksheets[i];
 				if (ws === this.model ) {
 					break;
 				} else if (ws.aCellWatches && ws.aCellWatches.length) {
@@ -24218,7 +24219,6 @@
 					case c_oAscInsertOptions.InsertColumns:
 						if (cellWatchRange.c1 >= updateRange.c1) {
 							cellWatch.setOffset(null,  updateRange.c2 - updateRange.c1 + 1);
-							updatedIndexes[i] = cellWatch;
 							isChanged = true;
 						}
 
@@ -24267,7 +24267,6 @@
 							isChanged = true;
 						} else if ((updateRange.r1 <= cellWatchRange.r1) && (updateRange.r2 >= cellWatchRange.r1)) {
 							aRemoveCellWatches.push(cellWatchRange);
-							this.model.deleteCellWatch(cellWatchRange, true);
 						}
 						break;
 				}
@@ -24276,6 +24275,7 @@
 				if (!updatedIndexes) {
 					updatedIndexes = {};
 				}
+				cellWatch.recalculate(true);
 				updatedIndexes[indexDiff + i] = cellWatch;
 			}
 		}
@@ -24289,6 +24289,29 @@
 			}
 		}
 	};
+
+	WorksheetView.prototype.moveCellWatches = function (from, to, copy, opt_wsTo) {
+		if (from && to) {
+			var colOffset = to.c1 - from.c1;
+			var rowOffset = to.r1 - from.r1;
+
+			var cellWatches = this.model.getCellWatchesByRange(from);
+			if (!copy) {
+				this.model.deleteCellWatchesByRange(from, true);
+			}
+			this.model.deleteCellWatchesByRange(to, true);
+
+			for (var i = 0; i < cellWatches.length; ++i) {
+				var newCellWatch = cellWatches[i];
+				newCellWatch.r.c1 += colOffset;
+				newCellWatch.r.c2 += colOffset;
+				newCellWatch.r.r1 += rowOffset;
+				newCellWatch.r.r2 += rowOffset;
+				this.model.addCellWatch(newCellWatch.r, true);
+			}
+		}
+	};
+
 
 
 	
