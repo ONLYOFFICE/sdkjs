@@ -24290,16 +24290,18 @@
 		}
 	};
 
-	WorksheetView.prototype.moveCellWatches = function (from, to, copy) {
+	WorksheetView.prototype.moveCellWatches = function (from, to, copy, opt_wsTo) {
 		if (from && to) {
 			var colOffset = to.c1 - from.c1;
 			var rowOffset = to.r1 - from.r1;
+
+			var modelTo = opt_wsTo ? opt_wsTo.model : this.model;
 
 			var cellWatches = this.model.getCellWatchesByRange(from);
 			if (!copy) {
 				this.model.deleteCellWatchesByRange(from, true);
 			}
-			this.model.deleteCellWatchesByRange(to, true);
+			modelTo.deleteCellWatchesByRange(to, true);
 
 			for (var i = 0; i < cellWatches.length; ++i) {
 				var newCellWatch = cellWatches[i].clone();
@@ -24307,7 +24309,7 @@
 				newCellWatch.r.c2 += colOffset;
 				newCellWatch.r.r1 += rowOffset;
 				newCellWatch.r.r2 += rowOffset;
-				this.model.addCellWatch(newCellWatch.r, true);
+				modelTo.addCellWatch(newCellWatch.r, true);
 			}
 		}
 	};
