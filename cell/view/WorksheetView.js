@@ -24290,7 +24290,7 @@
 		}
 	};
 
-	WorksheetView.prototype.moveCellWatches = function (from, to, copy, opt_wsTo) {
+	WorksheetView.prototype.moveCellWatches = function (from, to, copy) {
 		if (from && to) {
 			var colOffset = to.c1 - from.c1;
 			var rowOffset = to.r1 - from.r1;
@@ -24302,7 +24302,7 @@
 			this.model.deleteCellWatchesByRange(to, true);
 
 			for (var i = 0; i < cellWatches.length; ++i) {
-				var newCellWatch = cellWatches[i];
+				var newCellWatch = cellWatches[i].clone();
 				newCellWatch.r.c1 += colOffset;
 				newCellWatch.r.c2 += colOffset;
 				newCellWatch.r.r1 += rowOffset;

@@ -11493,6 +11493,7 @@
 		for (var i = 0; i < this.aCellWatches.length; i++) {
 			if (range.containsRange(this.aCellWatches[i].r)) {
 				this.deleteCellWatch(this.aCellWatches[i].r, addToHistory);
+				i--;
 			}
 		}
 	};
