@@ -14846,7 +14846,7 @@ QueryTableField.prototype.clone = function() {
 	};
 	CCellWatch.prototype.setOffset = function (row, col) {
 		if (this.r) {
-			this.r.setOffset({row: row, col: col});
+			this.r.setOffset({row: row ? row : 0, col: col ? col : 0});
 		}
 	};
 

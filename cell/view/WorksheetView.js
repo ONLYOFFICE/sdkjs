@@ -24176,8 +24176,21 @@
 	};
 
 	WorksheetView.prototype.shiftCellWatches = function (bInsert, operType, updateRange) {
-		var i, cellWatch, cellWatchRange;
-		var aCellWatches = this.model.aCellWatches;
+		let i, cellWatch, cellWatchRange, aRemoveCellWatches = [], updatedIndexes/*map[index] = obj*/;
+		let aCellWatches = this.model.aCellWatches;
+
+		let indexDiff = 0;
+		if (aCellWatches && aCellWatches.length) {
+			for (i = 0; i < this.workbook.model.aWorksheets.length; i++) {
+				let ws = this.wb.model.aWorksheets[i];
+				if (ws === this.model ) {
+					break;
+				} else if (ws.aCellWatches && ws.aCellWatches.length) {
+					indexDiff += ws.aCellWatches.length;
+				}
+			}
+		}
+
 		for (let i = 0; i < aCellWatches.length; i++) {
 			cellWatch = aCellWatches[i];
 			cellWatchRange = cellWatch && cellWatch.r;
@@ -24185,23 +24198,28 @@
 				continue;
 			}
 
+			let isChanged = false;
 			if (bInsert) {
 				switch (operType) {
 					case c_oAscInsertOptions.InsertCellsAndShiftDown:
 						if ((cellWatchRange.r1 >= updateRange.r1) && (cellWatchRange.c1 >= updateRange.c1) && (cellWatchRange.c1 <= updateRange.c2)) {
 							cellWatch.setOffset( updateRange.r2 - updateRange.r1 + 1);
+							isChanged = true;
 						}
 						break;
 
 					case c_oAscInsertOptions.InsertCellsAndShiftRight:
 						if ((cellWatchRange.c1 >= updateRange.c1) && (cellWatchRange.r1 >= updateRange.r1) && (cellWatchRange.r1 <= updateRange.r2)) {
 							cellWatch.setOffset(null,  updateRange.c2 - updateRange.c1 + 1);
+							isChanged = true;
 						}
 						break;
 
 					case c_oAscInsertOptions.InsertColumns:
 						if (cellWatchRange.c1 >= updateRange.c1) {
 							cellWatch.setOffset(null,  updateRange.c2 - updateRange.c1 + 1);
+							updatedIndexes[i] = cellWatch;
+							isChanged = true;
 						}
 
 						break;
@@ -24209,6 +24227,7 @@
 					case c_oAscInsertOptions.InsertRows:
 						if (cellWatchRange.r1 >= updateRange.r1) {
 							cellWatch.setOffset(updateRange.r2 - updateRange.r1 + 1);
+							isChanged = true;
 						}
 
 						break;
@@ -24218,39 +24237,57 @@
 					case c_oAscDeleteOptions.DeleteCellsAndShiftTop:
 						if ((cellWatchRange.r1 > updateRange.r2) && (cellWatchRange.c1 >= updateRange.c1) && (cellWatchRange.c1 <= updateRange.c2)) {
 							cellWatch.setOffset(-(updateRange.r2 - updateRange.r1 + 1));
+							isChanged = true;
 						} else if (updateRange.contains(cellWatchRange.c1, cellWatchRange.r1)) {
-							this.model.deleteCellWatch(cellWatchRange);
+							aRemoveCellWatches.push(cellWatchRange);
 						}
 						break;
 
 					case c_oAscDeleteOptions.DeleteCellsAndShiftLeft:
 						if ((cellWatchRange.c1 > updateRange.c2) && (cellWatchRange.r1 >= updateRange.r1) && (cellWatchRange.r1 <= updateRange.r2)) {
 							cellWatch.setOffset(null, -(updateRange.c2 - updateRange.c1 + 1));
+							isChanged = true;
 						} else if (updateRange.contains(cellWatchRange.c1, cellWatchRange.r1)) {
-							this.model.deleteCellWatch(cellWatchRange);
+							aRemoveCellWatches.push(cellWatchRange);
 						}
 						break;
 
 					case c_oAscDeleteOptions.DeleteColumns:
 						if (cellWatchRange.c1 > updateRange.c2) {
 							cellWatch.setOffset(null, -(updateRange.c2 - updateRange.c1 + 1));
+							isChanged = true;
 						} else if ((updateRange.c1 <= cellWatchRange.c1) && (updateRange.c2 >= cellWatchRange.c1)) {
-							this.model.deleteCellWatch(cellWatchRange);
+							aRemoveCellWatches.push(cellWatchRange);
 						}
 						break;
 
 					case c_oAscDeleteOptions.DeleteRows:
 						if (cellWatchRange.r1 > updateRange.r2) {
 							cellWatch.setOffset(-(updateRange.r2 - updateRange.r1 + 1));
+							isChanged = true;
 						} else if ((updateRange.r1 <= cellWatchRange.r1) && (updateRange.r2 >= cellWatchRange.r1)) {
-							this.model.deleteCellWatch(cellWatchRange);
+							aRemoveCellWatches.push(cellWatchRange);
+							this.model.deleteCellWatch(cellWatchRange, true);
 						}
 						break;
 				}
 			}
+			if (isChanged) {
+				if (!updatedIndexes) {
+					updatedIndexes = {};
+				}
+				updatedIndexes[indexDiff + i] = cellWatch;
+			}
 		}
 
-		this.model.workbook.handlers.trigger("asc_onUpdateCellWatches");
+		if (updatedIndexes) {
+			this.model.workbook.handlers.trigger("asc_onUpdateCellWatches", updatedIndexes);
+		}
+		if (aRemoveCellWatches.length) {
+			for (let j  = 0; j < aRemoveCellWatches.length; j++) {
+				this.model.deleteCellWatch(aRemoveCellWatches[j], true);
+			}
+		}
 	};
 
 
