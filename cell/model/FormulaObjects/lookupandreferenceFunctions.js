@@ -2618,7 +2618,6 @@ function (window, undefined) {
 		let item, index = -1, curIndex;
 
 		if(1 === a3value) {
-						// normal search
 			// first iteration for precise search
 			for (let i = 0; i < arr.length; ++i) {
 				item = undefined !== arr[i].v ? arr[i].v : arr[i];
@@ -2645,28 +2644,25 @@ function (window, undefined) {
 				}
 			}
 
+			// second iteration for approximate search
 			if(index === -1 && (1 === a2Value || -1 === a2Value)) {
-				// second iteration for approximate search 
-				for(let i = 0; i < arr.length; ++i) {
-					item = undefined !== arr[i].v ? arr[i].v : arr[i];
-					curIndex = undefined !== arr[i].i ? arr[i].i : i;
-					if (item.type === a0Type) {
-						if (-1 === a2Value) {
-							if (item <= a0Value) {
-								index = curIndex;
-								break;
-							} 
-						} else if (1 === a2Value) {
-							if (item >= a0Value) {
-								index = curIndex;
-								break;
-							} 
-						}
-					}
+				// с использованием сортировки
+				const lessEqualArr = arr.filter(function (item) { 
+					return item.v <= a0Value;
+				}).sort(function (a, b) { return b.v - a.v });
+
+				const moreEqualArr = arr.filter(function (item) { 
+					return item.v >= a0Value;
+				}).sort(function (a, b) { return a.v - b.v });
+
+				if(-1 === a2Value) {
+					index = lessEqualArr.length > 0 ? lessEqualArr[0].i : -1;
+				} else if(1 === a2Value) {
+					index = moreEqualArr.length > 0 ? moreEqualArr[0].i : -1;
 				}
 			}
 		} else if(-1 === a3value) {
-			// reverse search
+						// reverse search
 			// first iteration for precise search
 			for (let i = arr.length - 1; i > 0; --i) {
 				item = undefined !== arr[i].v ? arr[i].v : arr[i];
@@ -2692,26 +2688,23 @@ function (window, undefined) {
 					}
 				}
 			}
+			// second iteration for approximate search
 			if(index === -1 && (1 === a2Value || -1 === a2Value)) {
-				// second iteration for approximate search 
-				for(let i = arr.length - 1; i > 0; --i) {
-					item = undefined !== arr[i].v ? arr[i].v : arr[i];
-					curIndex = undefined !== arr[i].i ? arr[i].i : i;
-					if (item.type === a0Type) {
-						if (-1 === a2Value) {
-							if (item <= a0Value) {
-								index = curIndex;
-								break;
-							} 
-						} else if (1 === a2Value) {
-							if (item >= a0Value) {
-								index = curIndex;
-								break;
-							} 
-						}
-					}
+				const lessEqualArr = arr.filter(function (item) { 
+					return item.v <= a0Value;
+				}).sort(function (a, b) { return a.v - b.v });
+
+				const moreEqualArr = arr.filter(function (item) { 
+					return item.v >= a0Value;
+				}).sort(function (a, b) { return b.v - a.v });
+
+				if(-1 === a2Value) {
+					index = lessEqualArr.length > 0 ? lessEqualArr[lessEqualArr.length - 1].i : -1;
+				} else if(1 === a2Value) {
+					index = moreEqualArr.length > 0 ? moreEqualArr[moreEqualArr.length - 1].i : -1;
 				}
 			}
+
 		} else if(2 === a3value) {
 			index = binarySearch(false);
 		} else if(-2 === a3value) {
