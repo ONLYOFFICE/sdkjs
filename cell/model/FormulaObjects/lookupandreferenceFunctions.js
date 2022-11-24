@@ -2618,7 +2618,8 @@ function (window, undefined) {
 		let item, index = -1, curIndex;
 
 		if(1 === a3value) {
-			// normal search
+						// normal search
+			// first iteration for precise search
 			for (let i = 0; i < arr.length; ++i) {
 				item = undefined !== arr[i].v ? arr[i].v : arr[i];
 				curIndex = undefined !== arr[i].i ? arr[i].i : i;
@@ -2635,24 +2636,38 @@ function (window, undefined) {
 								break;
 							}
 						}
-					} else if (-1 === a2Value) {
-						if (item <= a0Value) {
+					} else if (-1 === a2Value || 1 === a2Value) {
+						if (item == a0Value) {
 							index = curIndex;
-						} else {
 							break;
-						}
-					} else if (1 === a2Value) {
-						if (item >= a0Value) {
-							index = curIndex;
-						} else {
-							break;
-						}
+						} 
 					}
 				}
 			}
 
+			if(index === -1 && (1 === a2Value || -1 === a2Value)) {
+				// second iteration for approximate search 
+				for(let i = 0; i < arr.length; ++i) {
+					item = undefined !== arr[i].v ? arr[i].v : arr[i];
+					curIndex = undefined !== arr[i].i ? arr[i].i : i;
+					if (item.type === a0Type) {
+						if (-1 === a2Value) {
+							if (item <= a0Value) {
+								index = curIndex;
+								break;
+							} 
+						} else if (1 === a2Value) {
+							if (item >= a0Value) {
+								index = curIndex;
+								break;
+							} 
+						}
+					}
+				}
+			}
 		} else if(-1 === a3value) {
 			// reverse search
+			// first iteration for precise search
 			for (let i = arr.length - 1; i > 0; --i) {
 				item = undefined !== arr[i].v ? arr[i].v : arr[i];
 				curIndex = undefined !== arr[i].i ? arr[i].i : i;
@@ -2669,22 +2684,34 @@ function (window, undefined) {
 								break;
 							}
 						}
-					} else if (-1 === a2Value) {
-						if (item <= a0Value) {
+					} else if (-1 === a2Value || 1 === a2Value) {
+						if (item == a0Value) {
 							index = curIndex;
-						} else {
 							break;
-						}
-					} else if (1 === a2Value) {
-						if (item >= a0Value) {
-							index = curIndex;
-						} else {
-							break;
+						} 
+					}
+				}
+			}
+			if(index === -1 && (1 === a2Value || -1 === a2Value)) {
+				// second iteration for approximate search 
+				for(let i = arr.length - 1; i > 0; --i) {
+					item = undefined !== arr[i].v ? arr[i].v : arr[i];
+					curIndex = undefined !== arr[i].i ? arr[i].i : i;
+					if (item.type === a0Type) {
+						if (-1 === a2Value) {
+							if (item <= a0Value) {
+								index = curIndex;
+								break;
+							} 
+						} else if (1 === a2Value) {
+							if (item >= a0Value) {
+								index = curIndex;
+								break;
+							} 
 						}
 					}
 				}
 			}
-
 		} else if(2 === a3value) {
 			index = binarySearch(false);
 		} else if(-2 === a3value) {
