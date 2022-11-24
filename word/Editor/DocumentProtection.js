@@ -86,6 +86,8 @@ function CDocProtect() {
 	this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
 
 	this.temporaryPassword = null;
+
+	this.m_oContentChanges = new AscCommon.CContentChanges();
 }
 CDocProtect.prototype.Get_Id = function () {
 	return this.Id;
@@ -202,6 +204,18 @@ CDocProtect.prototype.asc_setPassword = function(val)
 CDocProtect.prototype.asc_setEditType = function(val)
 {
 	this.edit = val;
+};
+CDocProtect.prototype.Add_ContentChanges = function(Changes)
+{
+	this.m_oContentChanges.Add(Changes);
+};
+CDocProtect.prototype.Refresh_ContentChanges = function()
+{
+	this.m_oContentChanges.Refresh();
+};
+CDocProtect.prototype.Clear_ContentChanges = function()
+{
+	this.m_oContentChanges.Clear();
 };
 
 
