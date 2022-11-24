@@ -161,7 +161,6 @@
 		if (reverseChanges.length <= 0)
 			return [];
 
-
 		for (let index = 0, count = reverseChanges.length; index < count; ++index)
 		{
 			let oClass = reverseChanges[index].GetClass();
