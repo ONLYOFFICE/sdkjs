@@ -1022,59 +1022,45 @@ CChangesDocumentProtection.prototype.ReadFromBinary = function (Reader) {
 		this.NewCryptProviderTypeExtSource = Reader.GetString2();
 	}
 };
-CChangesDocumentProtection.prototype.IsContentChange = function () {
-	return true;
-};
-CChangesDocumentProtection.prototype.IsAdd = function () {
-	return true;
-};
-CChangesDocumentProtection.prototype.GetItemsCount = function () {
-	return 1;
-};
-CChangesDocumentProtection.prototype.Copy = function () {
-	var res = new CChangesDocumentProtection(this.Class);
+CChangesDocumentProtection.prototype.CreateReverseChange = function () {
+	var ret = new CChangesDocumentProtection(this.Class);
+	
+	ret.OldAlgorithmName = this.NewAlgorithmName;
+	ret.OldEdit = this.NewEdit;
+	ret.OldEnforcement = this.NewEnforcement;
+	ret.OldFormatting = this.NewFormatting;
+	ret.OldHashValue = this.NewHashValue;
+	ret.OldSaltValue = this.NewSaltValue;
+	ret.OldSpinCount = this.NewSpinCount;
+	ret.OldAlgIdExt = this.NewAlgIdExt;
+	ret.OldAlgIdExtSource = this.NewAlgIdExtSource;
+	ret.OldCryptAlgorithmClass = this.NewCryptAlgorithmClass;
+	ret.OldCryptAlgorithmSid = this.NewCryptAlgorithmSid;
+	ret.OldCryptAlgorithmType = this.NewCryptAlgorithmType;
+	ret.OldCryptProvider = this.NewCryptProvider;
+	ret.OldCryptProviderType = this.NewCryptProviderType;
+	ret.OldCryptProviderTypeExt = this.NewCryptProviderTypeExt;
+	ret.OldCryptProviderTypeExtSource = this.NewCryptProviderTypeExtSource;
 
-	res.thisAlgorithmName = this.thisAlgorithmName;
-	res.thisEdit = this.thisEdit;
-	res.thisEnforcement = this.thisEnforcement;
-	res.thisFormatting = this.thisFormatting;
-	res.thisHashValue = this.thisHashValue;
-	res.thisSaltValue = this.thisSaltValue;
-	res.thisSpinCount = this.thisSpinCount;
-	res.thisAlgIdExt = this.thisAlgIdExt;
-	res.thisAlgIdExtSource = this.thisAlgIdExtSource;
-	res.thisCryptAlgorithmClass = this.thisCryptAlgorithmClass;
-	res.thisCryptAlgorithmSid = this.thisCryptAlgorithmSid;
-	res.thisCryptAlgorithmType = this.thisCryptAlgorithmType;
-	res.thisCryptProvider = this.thisCryptProvider;
-	res.thisCryptProviderType = this.thisCryptProviderType;
-	res.thisCryptProviderTypeExt = this.thisCryptProviderTypeExt;
-	res.thisCryptProviderTypeExtSource = this.thisCryptProviderTypeExtSource;
-
-	res.NewAlgorithmName = this.NewAlgorithmName;
-	res.NewEdit = this.NewEdit;
-	res.NewEnforcement = this.NewEnforcement;
-	res.NewFormatting = this.NewFormatting;
-	res.NewHashValue = this.NewHashValue;
-	res.NewSaltValue = this.NewSaltValue;
-	res.NewSpinCount = this.NewSpinCount;
-	res.NewAlgIdExt = this.NewAlgIdExt;
-	res.NewAlgIdExtSource = this.NewAlgIdExtSource;
-	res.NewCryptAlgorithmClass = this.NewCryptAlgorithmClass;
-	res.NewCryptAlgorithmSid = this.NewCryptAlgorithmSid;
-	res.NewCryptAlgorithmType = this.NewCryptAlgorithmType;
-	res.NewCryptProvider = this.NewCryptProvider;
-	res.NewCryptProviderType = this.NewCryptProviderType;
-	res.NewCryptProviderTypeExt = this.NewCryptProviderTypeExt;
-	res.NewCryptProviderTypeExtSource = this.NewCryptProviderTypeExtSource;
-
-	return res;
+	ret.NewAlgorithmName = this.OldAlgorithmName;
+	ret.NewEdit = this.OldEdit;
+	ret.NewEnforcement = this.OldEnforcement;
+	ret.NewFormatting = this.OldFormatting;
+	ret.NewHashValue = this.OldHashValue;
+	ret.NewSaltValue = this.OldSaltValue;
+	ret.NewSpinCount = this.OldSpinCount;
+	ret.NewAlgIdExt = this.OldAlgIdExt;
+	ret.NewAlgIdExtSource = this.OldAlgIdExtSource;
+	ret.NewCryptAlgorithmClass = this.OldCryptAlgorithmClass;
+	ret.NewCryptAlgorithmSid = this.OldCryptAlgorithmSid;
+	ret.NewCryptAlgorithmType = this.OldCryptAlgorithmType;
+	ret.NewCryptProvider = this.OldCryptProvider;
+	ret.NewCryptProviderType = this.OldCryptProviderType;
+	ret.NewCryptProviderTypeExt = this.OldCryptProviderTypeExt;
+	ret.NewCryptProviderTypeExtSource = this.OldCryptProviderTypeExtSource;
+	
+	return ret;
 };
 
-CChangesDocumentProtection.prototype.ConvertToSimpleActions = function()
-{
-	var arrActions = [];
-	return arrActions;
-};
 
 AscDFH.changesFactory[AscDFH.historydescription_Document_DocumentProtection] = CChangesDocumentProtection;
