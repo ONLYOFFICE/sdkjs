@@ -158,13 +158,8 @@
 	{
 		// Формируем новую пачку действий, которые будут откатывать нужные нам действия
 		let reverseChanges = this.GetReverseOwnChanges();
-		if (reverseChanges.length <= 0) {
-			//this.CoEditing.Clear_DCChanges();
-
-			//editor.CoAuthoringApi.saveChanges([], null, null, false, this.CoEditing.getCollaborativeEditing());
-
+		if (reverseChanges.length <= 0)
 			return [];
-		}
 
 
 		for (let index = 0, count = reverseChanges.length; index < count; ++index)
