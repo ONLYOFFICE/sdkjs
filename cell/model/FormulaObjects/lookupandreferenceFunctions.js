@@ -2470,7 +2470,7 @@ function (window, undefined) {
 		var res, _this = this, wsId = range.getWorksheet().getId(),
 			sRangeName = wsId + g_cCharDelimiter + range.getName(), cacheElem = this.cacheId[sRangeName];
 		var arg2Value = arg2.getValue();
-		var arg3Value = arg3.getValue();
+		var arg3Value = arg3 ? arg3.getValue() : '';
 		var valueForSearching = arg0.getValue();
 		if (!cacheElem) {
 			cacheElem = {elements: [], results: {}};
@@ -2486,7 +2486,7 @@ function (window, undefined) {
 			}
 			cacheRange.add(range.getBBox0(), cacheElem);
 		}
-		var sInputKey = valueForSearching + g_cCharDelimiter + arg2Value + g_cCharDelimiter + arg3Value;
+		var sInputKey = arg3Value ? valueForSearching + g_cCharDelimiter + arg2Value + g_cCharDelimiter + arg3Value : valueForSearching + g_cCharDelimiter + arg2Value;
 		res = cacheElem.results[sInputKey];
 		if(!res && isXMatch) {
 			cacheElem.results[sInputKey] = res = g_oXMatchCache._calculate(cacheElem.elements, arg0, arg2, arg3);
