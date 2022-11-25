@@ -55,6 +55,7 @@
 	 * @param {boolean}  oCommentData.Solved - is the comment resolved
 	 * @param {undefined | array} oCommentData.Replies - an array of replies, they are in the same format as oCommentData
 	 * @return {string | null} - returns null if the comment cannot be added.
+	 * @since 7.3.0
 	 */
 	Api.prototype["pluginMethod_AddComment"] = function(oCommentData)
 	{
@@ -80,6 +81,7 @@
 	 * @param {string} sId - The comment ID.
 	 * @param {object} oCommentData - An object which contains the new comment data: "comment" - the comment text, "author" - the comment author.
 	 * @return {boolean}
+	 * @since 7.3.0
 	 */
 	Api.prototype["pluginMethod_ChangeComment"] = function(sId, oCommentData)
 	{
@@ -103,6 +105,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @alias RemoveComments
 	 * @return {undefined}
+	 * @since 7.3.0
 	 */
 	Api.prototype["pluginMethod_RemoveComments"] = function(arrIds)
 	{

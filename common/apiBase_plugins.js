@@ -396,6 +396,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias GetVBAMacros
 	 * @returns {string | null} VBA xml macros.
+	 * @since 7.3.0
 	 */
 	Api.prototype["pluginMethod_GetVBAMacros"] = function()
 	{
@@ -1070,6 +1071,7 @@
      * @param {string} numbering.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
      * @param {string} numbering.TabSymbol - Defines how the tab will be specified in the resulting string.
      * @return {string} - Selected text.
+     * @since 7.1.0
      * @example
      * window.Asc.plugin.executeMethod("GetSelectedText", [{NewLine:true, NewLineParagraph:true, Numbering:true}])
      */
@@ -1111,6 +1113,7 @@
      * @param {string} [sParaTab=" "] - A character which is used to specify the tab in the source text.
      * @param {string} [sParaNewLine=" "] - A character which is used to specify the line break character in the source text.
      * @returns {boolean} - Always returns true.
+     * @since 7.1.0
      */
     Api.prototype["pluginMethod_ReplaceTextSmart"] = function(arrString, sParaTab, sParaNewLine)
     {
@@ -1153,6 +1156,7 @@
      * @alias GetFileToDownload
      * @param {string} [format=" "] - A format in which you need to download a file.
      * @returns {string} - URL to download the file in the specified format or error.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_GetFileToDownload"] = function(format)
 	{
@@ -1186,6 +1190,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetImageDataFromSelection
      * @returns {?ImageData} - The ImageData object containig the information about the base64 encoded png image.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_GetImageDataFromSelection"] = function()
 	{
@@ -1198,6 +1203,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias PutImageDataToSelection
      * @param {ImageData} oImageData - The information about the base64 encoded *png* image.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
@@ -1341,6 +1347,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetInstalledPlugins
      * @returns {PluginData[]} - An array of all the installed plugins.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_GetInstalledPlugins"] = function()
 	{
@@ -1404,6 +1411,7 @@
      * @param {string} [guid] - The plugin identifier. It must be of the *asc.{UUID}* type.
      * @alias RemovePlugin
      * @returns {object} - An object with the result information.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
 	{
@@ -1444,7 +1452,7 @@
      * @param {string} [url] - The URL to the plugin config for installing.
      * @alias InstallPlugin
      * @returns {object} - An object with the result information.
-	 * 
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_InstallPlugin"] = function(config)
 	{
@@ -1457,7 +1465,7 @@
      * @param {string} [url] - The URL to the plugin config for updating.
      * @alias UpdatePlugin
      * @returns {object} - An object with the result information.
-	 * 
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_UpdatePlugin"] = function(url, guid)
 	{
@@ -1471,6 +1479,7 @@
      * @param {string} [id] - The button ID.
      * @param {boolean} [bShow] - The flag specifies whether the button is shown (**true**) or hidden (**false**).
      * @alias ShowButton 
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
 	{

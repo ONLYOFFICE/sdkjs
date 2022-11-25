@@ -757,6 +757,7 @@
 	 * @alias GetAllOleObjects
 	 * @param {?string} sPluginId - Plugin identifier. It must be of the *asc.{UUID}* type.
 	 * @returns {OLEObjectData[]} - An array of the OLEObjectData objects containing the data about the OLE object parameters.
+	 * @since 7.1.0
 	 * */
 	window["asc_docs_api"].prototype["pluginMethod_GetAllOleObjects"] = function (sPluginId)
 	{
@@ -775,6 +776,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias RemoveOleObject
 	 * @param {string} sInternalId - The OLE object identifier which is used to work with OLE object added to the document.
+	 * @since 7.1.0
 	 * */
 	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObject"] = function (sInternalId)
 	{
@@ -787,6 +789,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias RemoveOleObjects
 	 * @param {OLEObjectData[]} arrObjects An array of the identifiers which are used to work with OLE objects added to the document. Example: [{"InternalId": "5_556"}].
+	 * @since 7.1.0
 	 * @example
 	 * window.Asc.plugin.executeMethod("RemoveOleObjects", [[{"InternalId": "5_556"}]])
 	 */
@@ -806,6 +809,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias SelectOleObject
 	 * @param {string} id - The OLE object identifier which is used to work with OLE object added to the document.
+	 * @since 7.1.0
 	 * @example
 	 * window.Asc.plugin.executeMethod("SelectOleObject", ["5_665"]);
 	 */
@@ -830,6 +834,7 @@
 	 * @alias InsertOleObject
 	 * @param {OLEObjectData} NewObject - The OLEObjectData object.
 	 * @param {?boolean} bSelect - Defines if the OLE object will be selected after inserting into the document (**true**) or not (**false**).
+	 * @since 7.1.0
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_InsertOleObject"] = function(NewObject, bSelect)
 	{
@@ -852,6 +857,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias ChangeOleObject
 	 * @param {OLEObjectData} ObjectData - The OLEObjectData object.
+	 * @since 7.1.0
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_ChangeOleObject"] = function(ObjectData)
 	{
@@ -863,6 +869,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias ChangeOleObjects
 	 * @param {OLEObjectData[]} arrObjectData - An array of OLE object data.
+	 * @since 7.1.0
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_ChangeOleObjects"] = function(arrObjectData)
 	{
@@ -964,9 +971,9 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias AcceptReviewChanges
 	 * @param {boolean} [isAll=false] Specifies if all changes will be accepted (**true**) or only changes from the current selection (**false**).
+	 * @since 7.2.1
 	 * @example
 	 * window.Asc.plugin.executeMethod("AcceptReviewChanges");
-	 *
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AcceptReviewChanges"] = function(isAll)
 	{
@@ -981,9 +988,9 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias RejectReviewChanges
 	 * @param {boolean} [isAll=false] Specifies if all changes will be rejected (**true**) or only changes from the current selection (**false**).
+	 * @since 7.2.1
 	 * @example
 	 * window.Asc.plugin.executeMethod("RejectReviewChanges");
-	 *
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_RejectReviewChanges"] = function(isAll)
 	{
@@ -998,9 +1005,9 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias MoveToNextReviewChange
 	 * @param {boolean} [isForward=true] Specifies whether to navigate to the next (**true**) or previous (**false**) review change.
+	 * @since 7.2.1
 	 * @example
 	 * window.Asc.plugin.executeMethod("MoveToNextReviewChange");
-	 *
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_MoveToNextReviewChange"] = function(isForward)
 	{
