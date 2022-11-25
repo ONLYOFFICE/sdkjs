@@ -2565,39 +2565,148 @@ function (window, undefined) {
 			let res = -1;
 
 			if (revert) {
-				// search by descending
+				// reverse search(by descending)
 				while(leftPointer <= rightPointer) {
 					mid = Math.floor((leftPointer + rightPointer) / 2);
-			
-					if (a0Value == arr[mid].v) {
-						res = mid;
-						break;
-					} else if (a0Value > arr[mid].v) {
-						rightPointer = mid - 1;
-					} else {
-						leftPointer = mid + 1;
+					item = undefined !== arr[mid].v ? arr[mid].v : arr[mid];
+					if(-1 === a2Value || 0 === a2Value || 1 === a2Value) {
+						// do not compare on the first iteration
+						if (leftPointer === 0 && rightPointer === arr.length - 1) {
+							if (a0Value >= item) {
+								rightPointer = mid - 1;
+							} else {
+								leftPointer = mid + 1;
+							}
+						} else {
+							if (a0Value == item) {
+								res = mid;
+								break;
+							} else if (a0Value > item) {
+								rightPointer = mid - 1;
+							} else {
+								leftPointer = mid + 1;
+							}
+						}
 					}
 				}
 			} else {
 				// search by ascending
 				while(leftPointer <= rightPointer) {
 					mid = Math.floor((leftPointer + rightPointer) / 2);
-					
-					// do not compare on the first iteration
-					if(leftPointer === 0 && rightPointer === arr.length - 1) {
-						if (a0Value <= arr[mid].v) {
-							rightPointer = mid - 1;
+					item = undefined !== arr[mid].v ? arr[mid].v : arr[mid]; 
+					if (-1 === a2Value || 0 === a2Value || 1 === a2Value) {
+						// exact match
+						// do not compare on the first iteration
+						if(leftPointer === 0 && rightPointer === arr.length - 1) {
+							if (a0Value <= item) {
+								rightPointer = mid - 1;
+							} else {
+								leftPointer = mid + 1;
+							}
 						} else {
-							leftPointer = mid + 1;
+							if (a0Value == item) {
+								res = mid;
+								break;
+							} else if (a0Value < item) {
+								rightPointer = mid - 1;
+							} else {
+								leftPointer = mid + 1;
+							}
 						}
-					} else {
-						if (a0Value == arr[mid].v) {
-							res = mid;
-							break;
-						} else if (a0Value < arr[mid].v) {
-							rightPointer = mid - 1;
-						} else {
-							leftPointer = mid + 1;
+					}
+				}
+			}
+
+			// second iteration
+			if(res === -1 && (1 === a2Value || -1 === a2Value)) {
+				leftPointer = 0;
+				rightPointer = arr.length - 1;
+				if(revert) {
+					while(leftPointer <= rightPointer) {
+						mid = Math.floor((leftPointer + rightPointer) / 2);
+						item = undefined !== arr[mid].v ? arr[mid].v : arr[mid];
+						// exact or larger
+						if (1 === a2Value) {
+							if (leftPointer === 0 && rightPointer === arr.length - 1) {
+								if(item == a0Value) {
+									res = mid;
+									break;
+								} else if (a0Value > item) {
+									rightPointer = mid - 1;
+								} else {
+									leftPointer = mid + 1;
+								}
+							} else {
+								if (item > a0Value || item == a0Value) {
+									res = mid;
+									break;
+								} else {
+									rightPointer = mid - 1;
+								}
+							}
+						} else if (-1 === a2Value) {
+							// exact or smaller
+							if (leftPointer === 0 && rightPointer === arr.length - 1) {
+								if(item == a0Value) {
+									res = mid;
+									break;
+								} else if (a0Value > item) {
+									rightPointer = mid - 1;
+								} else {
+									leftPointer = mid + 1;
+								}
+							} else {
+								if (item < a0Value || item == a0Value) {
+									res = mid;
+									break;
+								} else {
+									leftPointer = mid + 1;
+								}
+							}
+						}
+					}
+				} else {
+					while(leftPointer <= rightPointer) {
+						mid = Math.floor((leftPointer + rightPointer) / 2);
+						item = undefined !== arr[mid].v ? arr[mid].v : arr[mid];
+						// exact or larger
+						if (1 === a2Value) {
+							if (leftPointer === 0 && rightPointer === arr.length - 1) {
+								if (item == a0Value) {
+									res = mid;
+									break;
+								} else if (item < a0Value) {
+									leftPointer = mid + 1;
+								} else {
+									rightPointer = mid - 1;
+								}
+							} else {
+								if (item > a0Value || item == a0Value) {
+									res = mid;
+									break;
+								} else {
+									leftPointer = mid + 1;
+								}
+							}
+						} else if (-1 === a2Value) {
+							// exact or smaller
+							if (leftPointer === 0 && rightPointer === arr.length - 1) {
+								if(item == a0Value) {
+									res = mid;
+									break;
+								} else if (item < a0Value) {
+									leftPointer = mid + 1;
+								} else {
+									rightPointer = mid - 1;
+								}
+							} else {
+								if (item < a0Value || item == a0Value) {
+									res = mid;
+									break;
+								} else {
+									rightPointer = mid - 1;
+								}
+							}
 						}
 					}
 				}
@@ -2662,7 +2771,7 @@ function (window, undefined) {
 				}
 			}
 		} else if(-1 === a3value) {
-						// reverse search
+			// reverse search
 			// first iteration for precise search
 			for (let i = arr.length - 1; i > 0; --i) {
 				item = undefined !== arr[i].v ? arr[i].v : arr[i];
@@ -2706,8 +2815,16 @@ function (window, undefined) {
 			}
 
 		} else if(2 === a3value) {
+			if (2 === a2Value) {
+				// wildcard match(err)
+				return new cError(cErrorType.wrong_name);
+			}
 			index = binarySearch(false);
 		} else if(-2 === a3value) {
+			if (2 === a2Value) {
+				// wildcard match(err)
+				return new cError(cErrorType.wrong_name);
+			}
 			index = binarySearch(true);
 		}
 
