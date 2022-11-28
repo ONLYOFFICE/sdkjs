@@ -10516,7 +10516,36 @@
 		}
     };
 
-	WorksheetView.prototype.fillHandleDone = function (startRange, endRange, bCtrl) {
+	WorksheetView.prototype.canFillHandle = function (range) {
+		//if don't have empty rows/columns
+		//if all range is empty
+		if (!range) {
+			range = this.model.selectionRange.getLast().clone();
+		}
+
+		range = typeof range === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(range) : range;
+
+		if (this.model.autoFilters._isEmptyRange(range)) {
+			return false;
+		}
+
+		if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c1, range.r1, range.c2, range.r1))) {
+			return true;
+		}
+		if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c1, range.r2, range.c2, range.r2))) {
+			return true;
+		}
+		if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c1, range.r1, range.c1, range.r2))) {
+			return true;
+		}
+		if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c2, range.r1, range.c2, range.r2))) {
+			return true;
+		}
+
+		return false;
+	};
+
+	WorksheetView.prototype.fillHandleDone = function (range) {
 		let t = this;
 
 		let doFill = function (_start, _end) {
@@ -10557,93 +10586,83 @@
 				}
 			}
 
-			t.applyFillHandle(null, null, bCtrl, true);
+			t.applyFillHandle(null, null, null, true);
 		};
 
-		if (!startRange && !endRange) {
-			//only end range - selected range
 
-			//1. search base
-			var activeCell = this.model.selectionRange.activeCell.clone();
-			endRange = this.model.selectionRange.getLast().clone();
+		//only end range - selected range
+		//1. search base
+		var activeCell = this.model.selectionRange.activeCell.clone();
 
-			let i;
-			let baseRow1 = endRange.r1;
-			let baseRow2 = endRange.r2;
-			for (i = endRange.r1; i <= endRange.r2; i++) {
-				if (this.model.autoFilters._isEmptyRange(new Asc.Range(endRange.c1, i, endRange.c2, i))) {
-					baseRow1++;
-				} else {
-					break;
-				}
-			}
-			for (i = endRange.r2; i >= endRange.r1; i--) {
-				if (this.model.autoFilters._isEmptyRange(new Asc.Range(endRange.c1, i, endRange.c2, i))) {
-					baseRow2--;
-				} else {
-					break;
-				}
-			}
-			let baseCol1 = endRange.c1;
-			let baseCol2 = endRange.c2;
-			for (i = endRange.c1; i <= endRange.c2; i++) {
-				if (this.model.autoFilters._isEmptyRange(new Asc.Range(i, endRange.r1, i, endRange.r2))) {
-					baseCol1++;
-				} else {
-					break;
-				}
-			}
-			for (i = endRange.c2; i >= endRange.c1; i--) {
-				if (this.model.autoFilters._isEmptyRange(new Asc.Range(i, endRange.r1, i, endRange.r2))) {
-					baseCol2--;
-				} else {
-					break;
-				}
-			}
-
-			History.Create_NewPoint();
-			History.StartTransaction();
-
-			let baseRange = new Asc.Range(baseCol1, baseRow1, baseCol2, baseRow2);
-			//1. take base and expand up/down in empty cells
-			if (endRange.r1 !== baseRow1) {
-				doFill(baseRange, new Asc.Range(baseRange.c1, endRange.r1, baseRange.c2, baseRange.r2));
-			}
-			if (endRange.r2 !== baseRow2) {
-				doFill(baseRange, new Asc.Range(baseRange.c1, baseRange.r1, baseRange.c2, endRange.r2));
-			}
-
-			//get new base
-			baseRange = new Asc.Range(baseCol1, endRange.r1, baseCol2, endRange.r2);
-
-			//2. take base and expand left/right in empty cells
-			if (endRange.c1 !== baseCol1) {
-				doFill(baseRange, new Asc.Range(endRange.c1, baseRange.r1, baseRange.c2, baseRange.r2));
-			}
-			if (endRange.c2 !== baseCol2) {
-				doFill(baseRange, new Asc.Range(baseRange.c1, baseRange.r1, endRange.c2, baseRange.r2));
-			}
-
-			History.EndTransaction();
-
-			t.model.selectionRange.getLast().assign2(endRange);
-			t.model.selectionRange.activeCell = activeCell;
-			t.draw();
-			//t.cleanSelection();
-			//t._drawSelection();
-		} else {
-			if (!startRange) {
-				startRange = this.model.selectionRange.getLast().clone();
-			}
-			if (!endRange) {
-				endRange = this.model.selectionRange.getLast().clone();
-			}
-
-			startRange = typeof startRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(startRange) : startRange;
-			endRange = typeof endRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(endRange) : endRange;
-
-			doFill(startRange, endRange);
+		if (!range) {
+			range = this.model.selectionRange.getLast().clone();
 		}
+		range = typeof range === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(range) : range;
+
+		let i;
+		let baseRow1 = range.r1;
+		let baseRow2 = range.r2;
+		for (i = range.r1; i <= range.r2; i++) {
+			if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c1, i, range.c2, i))) {
+				baseRow1++;
+			} else {
+				break;
+			}
+		}
+		for (i = range.r2; i >= range.r1; i--) {
+			if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c1, i, range.c2, i))) {
+				baseRow2--;
+			} else {
+				break;
+			}
+		}
+		let baseCol1 = range.c1;
+		let baseCol2 = range.c2;
+		for (i = range.c1; i <= range.c2; i++) {
+			if (this.model.autoFilters._isEmptyRange(new Asc.Range(i, range.r1, i, range.r2))) {
+				baseCol1++;
+			} else {
+				break;
+			}
+		}
+		for (i = range.c2; i >= range.c1; i--) {
+			if (this.model.autoFilters._isEmptyRange(new Asc.Range(i, range.r1, i, range.r2))) {
+				baseCol2--;
+			} else {
+				break;
+			}
+		}
+
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		let baseRange = new Asc.Range(baseCol1, baseRow1, baseCol2, baseRow2);
+		//1. take base and expand up/down in empty cells
+		if (range.r1 !== baseRow1) {
+			doFill(baseRange, new Asc.Range(baseRange.c1, range.r1, baseRange.c2, baseRange.r2));
+		}
+		if (range.r2 !== baseRow2) {
+			doFill(baseRange, new Asc.Range(baseRange.c1, baseRange.r1, baseRange.c2, range.r2));
+		}
+
+		//get new base
+		baseRange = new Asc.Range(baseCol1, range.r1, baseCol2, range.r2);
+
+		//2. take base and expand left/right in empty cells
+		if (range.c1 !== baseCol1) {
+			doFill(baseRange, new Asc.Range(range.c1, baseRange.r1, baseRange.c2, baseRange.r2));
+		}
+		if (range.c2 !== baseCol2) {
+			doFill(baseRange, new Asc.Range(baseRange.c1, baseRange.r1, range.c2, baseRange.r2));
+		}
+
+		History.SetSelection(range);
+		History.SetSelectionRedo(range);
+		History.EndTransaction();
+
+		t.model.selectionRange.getLast().assign2(range);
+		t.model.selectionRange.activeCell = activeCell;
+		t.draw();
 	};
 
     /* Функция для работы автозаполнения (selection). (x, y) - координаты точки мыши на области */

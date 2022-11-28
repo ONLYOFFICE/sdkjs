@@ -5511,7 +5511,14 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-    var ws = this.wb.getWorksheet();
+    if (this.asc_canFillHandle()) {
+		this.asc_fillHandleDone()
+	} else {
+	 console.log("sdf")
+	}
+return;
+
+	  var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {
@@ -8008,14 +8015,25 @@ var editor;
 		}
 	};
 
-	spreadsheet_api.prototype.asc_fillHandleDone = function(startRange, endRange, bCtrl) {
+	spreadsheet_api.prototype.asc_fillHandleDone = function(range) {
 		if (this.canEdit()) {
 			let wb = this.wb;
 			if (!wb) {
 				return;
 			}
-			wb.fillHandleDone(startRange, endRange, bCtrl);
+			wb.fillHandleDone(range);
 		}
+	};
+
+	spreadsheet_api.prototype.asc_canFillHandle = function(range) {
+		if (this.canEdit()) {
+			let wb = this.wb;
+			if (!wb) {
+				return;
+			}
+			return wb.canFillHandle(range);
+		}
+		return false;
 	};
 
 
