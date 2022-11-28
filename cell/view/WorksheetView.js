@@ -10517,7 +10517,106 @@
     };
 
 	WorksheetView.prototype.fillHandleDone = function (startRange, endRange, bCtrl) {
-		//на входе имеем два диапазона, определяем точку крайней ячейки автозаполнения
+		let t = this;
+
+		let doFill = function (_start, _end) {
+			t.activeFillHandle = _start.clone();
+
+			if (_start.r1 !== _end.r1 || _start.r2 !== _end.r2) {
+				t.fillHandleDirection = 1;
+				if (_start.r1 === _end.r1 && _start.r1 <= _end.r2 && _start.r2 >= _end.r2) {
+					//inside range, go up
+					t.activeFillHandle.r2 = _end.r2 + 1;
+					t.activeFillHandle.r1 = _start.r2;
+					t.fillHandleArea = 2;
+				} else if (_end.r1 < _start.r1) {
+					t.activeFillHandle.r2 = _end.r1;
+					t.activeFillHandle.r1 = _start.r2;
+					t.fillHandleArea = 1;
+				} else if (_start.r1 === _end.r1 && _end.r2 > _start.r2) {
+					t.activeFillHandle.r2 = _end.r2;
+					t.activeFillHandle.r1 = _end.r1;
+					t.fillHandleArea = 3;
+				}
+			} else {
+				t.fillHandleDirection = 0;
+				if (_start.c1 === _end.c1 && _start.c1 <= _end.c2 && _start.c2 >= _end.c2) {
+					//inside range, gp down
+					t.activeFillHandle.c2 = _end.c2 + 1;
+					t.activeFillHandle.c1 = _start.c2;
+					t.fillHandleArea = 2;
+				} else if (_end.c1 < _start.c1) {
+					t.activeFillHandle.c2 = _end.c1;
+					t.activeFillHandle.c1 = _start.c2;
+					t.fillHandleArea = 1;
+				} else if (_start.c1 === _end.c1 && _end.c2 > _start.c2) {
+					t.activeFillHandle.c2 = _end.c2;
+					t.activeFillHandle.c1 = _end.c1;
+					t.fillHandleArea = 3;
+				}
+			}
+
+			t.applyFillHandle(null, null, bCtrl);
+		};
+
+		if (!startRange && !endRange) {
+			//only end range - selected range
+
+			//1. search base
+			endRange = this.model.selectionRange.getLast().clone();
+
+			let i;
+			let baseRow1 = endRange.r1;
+			let baseRow2 = endRange.r2;
+			for (i = endRange.r1; i <= endRange.r2; i++) {
+				let _range = t.model.getRange3(i, endRange.c1, i, endRange.c2);
+				if (_range.isEmptyTextString) {
+					baseRow1++;
+				}
+			}
+			for (i = endRange.r2; i >= endRange.r1; i--) {
+				let _range = t.model.getRange3(i, endRange.c1, i, endRange.c2);
+				if (_range.isEmptyTextString) {
+					baseRow2--;
+				}
+			}
+			let baseCol1 = endRange.c1;
+			let baseCol2 = endRange.c2;
+			for (i = endRange.c1; i <= endRange.c2; i++) {
+				let _range = t.model.getRange3(endRange.r1, i, endRange.r2, i);
+				if (_range.isEmptyTextString) {
+					baseCol1++;
+				}
+			}
+			for (i = endRange.c2; i >= endRange.c1; i--) {
+				let _range = t.model.getRange3(endRange.r1, i, endRange.r2, i);
+				if (_range.isEmptyTextString) {
+					baseCol2--;
+				}
+			}
+
+			let baseRange = new Asc.Range(baseCol1, baseRow1, baseCol2, baseRow2);
+			//1. take base and expand up/down in empty cells
+			if (endRange.r1 !== baseRow1) {
+				doFill(baseRange, new Asc.Range(baseRange.c1, endRange.r1, baseRange.c2, baseRange.r2));
+			}
+			if (endRange.r2 !== baseRow2) {
+				doFill(baseRange, new Asc.Range(baseRange.c1, baseRange.r1, baseRange.c2, endRange.r2));
+			}
+
+			//get new base
+			baseRange = new Asc.Range(baseCol1, endRange.r1, baseCol2, endRange.r2);
+
+			//2. take base and expand left/right in empty cells
+			if (endRange.c1 !== baseCol1) {
+				doFill(baseRange, new Asc.Range(endRange.c1, baseRange.r1, baseRange.c2, baseRange.r2));
+			}
+			if (endRange.c2 !== baseCol2) {
+				doFill(baseRange, new Asc.Range(baseRange.c1, baseRange.r1, endRange.c2, baseRange.r2));
+			}
+		}
+
+
 		if (!startRange) {
 			startRange = this.model.selectionRange.getLast().clone();
 		}
@@ -10528,43 +10627,7 @@
 		startRange = typeof startRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(startRange) : startRange;
 		endRange = typeof endRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(endRange) : endRange;
 
-		this.activeFillHandle = startRange.clone();
-
-		if (startRange.r1 !== endRange.r1 || startRange.r2 !== endRange.r2) {
-			this.fillHandleDirection = 1;
-			if (startRange.r1 === endRange.r1 && startRange.r1 <= endRange.r2 && startRange.r2 >= endRange.r2) {
-				//попали внутрь диапазона, т.е. маркером пошли наверх
-				this.activeFillHandle.r2 = endRange.r2 + 1;
-				this.activeFillHandle.r1 = startRange.r2;
-				this.fillHandleArea = 2;
-			} else if (endRange.r1 < startRange.r1) {
-				this.activeFillHandle.r2 = endRange.r1;
-				this.activeFillHandle.r1 = startRange.r2;
-				this.fillHandleArea = 1;
-			} else if (startRange.r1 === endRange.r1 && endRange.r2 > startRange.r2) {
-				this.activeFillHandle.r2 = endRange.r2;
-				this.activeFillHandle.r1 = endRange.r1;
-				this.fillHandleArea = 3;
-			}
-		} else {
-			this.fillHandleDirection = 0;
-			if (startRange.c1 === endRange.c1 && startRange.c1 <= endRange.c2 && startRange.c2 >= endRange.c2) {
-				//попали внутрь диапазона, т.е. маркером пошли наверх
-				this.activeFillHandle.c2 = endRange.c2 + 1;
-				this.activeFillHandle.c1 = startRange.c2;
-				this.fillHandleArea = 2;
-			} else if (endRange.c1 < startRange.c1) {
-				this.activeFillHandle.c2 = endRange.c1;
-				this.activeFillHandle.c1 = startRange.c2;
-				this.fillHandleArea = 1;
-			} else if (startRange.c1 === endRange.c1 && endRange.c2 > startRange.c2) {
-				this.activeFillHandle.c2 = endRange.c2;
-				this.activeFillHandle.c1 = endRange.c1;
-				this.fillHandleArea = 3;
-			}
-		}
-
-		this.applyFillHandle(null, null, bCtrl);
+		doFill(startRange, endRange);
 	};
 
     /* Функция для работы автозаполнения (selection). (x, y) - координаты точки мыши на области */
