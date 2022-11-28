@@ -235,7 +235,9 @@
         SlicerCachesExt: 19,
         SlicerCache: 20,
         WorkbookProtection: 21,
-        OleSize: 22
+        OleSize: 22,
+        ExternalFileId: 23,
+        ExternalPortalName: 24
     };
     /** @enum */
     var c_oSerWorkbookPrTypes =
@@ -3482,6 +3484,18 @@
 			var oThis = this;
 			for (var i = 0; i < this.wb.externalReferences.length; i++) {
 				var externalReference = this.wb.externalReferences[i];
+
+				if (externalReference.referenceData) {
+					if (externalReference.referenceData["fileId"]) {
+						oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalFileId);
+						oThis.memory.WriteString2(externalReference.referenceData["fileId"]);
+					}
+					if (externalReference.referenceData["portalName"]) {
+						oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalPortalName);
+						oThis.memory.WriteString2(externalReference.referenceData["portalName"]);
+					}
+				}
+
 				switch (externalReference.Type) {
 					case 0:
 						this.bs.WriteItem(c_oSerWorkbookTypes.ExternalBook, function() {
@@ -7340,9 +7354,13 @@
 			}
 			else if ( c_oSerWorkbookTypes.ExternalReferences === type )
 			{
-				res = this.bcr.Read1(length, function(t,l){
-					return oThis.ReadExternalReferences(t,l);
+				var externalReferencesExt = {};
+                res = this.bcr.Read1(length, function(t,l){
+					return oThis.ReadExternalReferences(t,l,externalReferencesExt);
 				});
+                if (externalReferencesExt.externalReference && externalReferencesExt.externalFileId && externalReferencesExt.externalPortalName) {
+                    externalReferencesExt.externalReference.setReferenceData(externalReferencesExt.externalFileId, externalReferencesExt.externalPortalName);
+                }
 			}
 			else if ( c_oSerWorkbookTypes.OleSize === type )
 			{
@@ -7566,20 +7584,25 @@
 			}
 			return res;
 		};
-		this.ReadExternalReferences = function(type, length) {
+		this.ReadExternalReferences = function(type, length, externalReferenceExt) {
 			var res = c_oSerConstants.ReadOk;
 			var oThis = this;
-			if (c_oSerWorkbookTypes.ExternalBook == type) {
+			if (c_oSerWorkbookTypes.ExternalBook === type) {
 				var externalBook = new AscCommonExcel.ExternalReference();
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalBook(t, l, externalBook);
 				});
+                externalReferenceExt.externalReference = externalBook;
 				this.oWorkbook.externalReferences.push(externalBook);
-			} else if (c_oSerWorkbookTypes.OleLink == type) {
+			} else if (c_oSerWorkbookTypes.OleLink === type) {
 				this.oWorkbook.externalReferences.push({Type: 1, Buffer: this.stream.GetBuffer(length)});
-			} else if (c_oSerWorkbookTypes.DdeLink == type) {
+			} else if (c_oSerWorkbookTypes.DdeLink === type) {
 				this.oWorkbook.externalReferences.push({Type: 2, Buffer: this.stream.GetBuffer(length)});
-			} else {
+			}  else if (c_oSerWorkbookTypes.ExternalFileId === type) {
+                externalReferenceExt.externalFileId = this.stream.GetString2LE(length);
+            } else if (c_oSerWorkbookTypes.ExternalPortalName === type) {
+                externalReferenceExt.externalPortalName = this.stream.GetString2LE(length);
+            } else {
 				res = c_oSerConstants.ReadUnknown;
 			}
 			return res;

@@ -14406,6 +14406,17 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	ExternalReference.prototype.setReferenceData = function (fileId, portalName) {
+		if (!fileId || !portalName) {
+			return;
+		}
+		if (!this.referenceData) {
+			this.referenceData = {};
+		}
+		this.referenceData["portalName"] = portalName;
+		this.referenceData["fileId"] = fileId;
+	};
+
 	function asc_CExternalReference() {
 		this.type = null;
 		this.data = null;
