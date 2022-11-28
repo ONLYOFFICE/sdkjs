@@ -600,6 +600,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			PasteSlicerError: 67,
 			MoveSlicerError: 68,
 			PasteMultiSelectError : -69,
+			CanNotPasteImage: -70,
 
 			DataRangeError   : -75,
 			CannotMoveRange  : -74,
@@ -4010,6 +4011,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['PasteSlicerError']                 = prot.PasteSlicerError;
 	prot['MoveSlicerError']                  = prot.MoveSlicerError;
 	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
+	prot['canNotPasteImage']                 = prot.canNotPasteImage;
 	prot['DataRangeError']                   = prot.DataRangeError;
 	prot['CannotMoveRange']                  = prot.CannotMoveRange;
 	prot['MaxDataSeriesError']               = prot.MaxDataSeriesError;
