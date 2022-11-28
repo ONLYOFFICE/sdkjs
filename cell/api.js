@@ -5511,14 +5511,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-    if (this.asc_canFillHandle()) {
-		this.asc_fillHandleDone()
-	} else {
-	 console.log("sdf")
-	}
-return;
-
-	  var ws = this.wb.getWorksheet();
+    var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {
@@ -8582,6 +8575,8 @@ return;
   prot["asc_updateExternalReferences"] = prot.asc_updateExternalReferences;
   prot["asc_removeExternalReferences"] = prot.asc_removeExternalReferences;
 
+  prot["asc_fillHandleDone"] = prot.asc_fillHandleDone;
+  prot["asc_canFillHandle"] = prot.asc_canFillHandle;
 
 
 })(window);
