@@ -2756,19 +2756,42 @@ function (window, undefined) {
 
 			// second iteration for approximate search
 			if(index === -1 && (1 === a2Value || -1 === a2Value)) {
-				// с использованием сортировки
-				const lessEqualArr = arr.filter(function (item) { 
-					return item.v <= a0Value;
-				}).sort(function (a, b) { return b.v - a.v });
-
-				const moreEqualArr = arr.filter(function (item) { 
-					return item.v >= a0Value;
-				}).sort(function (a, b) { return a.v - b.v });
-
 				if(-1 === a2Value) {
-					index = lessEqualArr.length > 0 ? lessEqualArr[0].i : -1;
+					const lessEqualArr = arr.filter(function (item) { 
+						return item.v <= a0Value;
+					}).sort(function (a, b) { return a.v.getValue() < b.v.getValue() ? 1 : -1 });
+
+					if(lessEqualArr.length > 0) {
+						let closestVal = lessEqualArr[0];
+						for(let i = 0; i < lessEqualArr.length; ++i) {
+							if(closestVal.v.getValue() < lessEqualArr[i].v.getValue()) {
+								closestVal = lessEqualArr[i];
+							} else if(closestVal.v.getValue() == lessEqualArr[i].v.getValue()) {
+								if(closestVal.i > lessEqualArr[i].i) {
+									closestVal = lessEqualArr[i];
+								}
+							}
+						}
+						index = closestVal.i;
+					}
 				} else if(1 === a2Value) {
-					index = moreEqualArr.length > 0 ? moreEqualArr[0].i : -1;
+					const moreEqualArr = arr.filter(function (item) { 
+						return item.v >= a0Value;
+					}).sort(function (a, b) { return a.v.getValue() > b.v.getValue() ? 1 : -1 });
+
+					if(moreEqualArr.length > 0) {
+						let closestVal = moreEqualArr[0];
+						for(let i = 0; i < moreEqualArr.length; ++i) {
+							if(closestVal.v.getValue() > moreEqualArr[i].v.getValue()) {
+								closestVal = moreEqualArr[i];
+							} else if(closestVal.v.getValue() == moreEqualArr[i].v.getValue()) {
+								if(closestVal.i > moreEqualArr[i].i) {
+									closestVal = moreEqualArr[i];
+								}
+							}
+						}
+						index = closestVal.i;
+					}
 				}
 			}
 		} else if(-1 === a3value) {
@@ -2800,18 +2823,41 @@ function (window, undefined) {
 			}
 			// second iteration for approximate search
 			if(index === -1 && (1 === a2Value || -1 === a2Value)) {
-				const lessEqualArr = arr.filter(function (item) { 
-					return item.v <= a0Value;
-				}).sort(function (a, b) { return a.v - b.v });
-
-				const moreEqualArr = arr.filter(function (item) { 
-					return item.v >= a0Value;
-				}).sort(function (a, b) { return b.v - a.v });
-
 				if(-1 === a2Value) {
-					index = lessEqualArr.length > 0 ? lessEqualArr[lessEqualArr.length - 1].i : -1;
+					const lessEqualArr = arr.filter(function (item) {
+						return item.v.getValue() <= a0Value;
+					}).sort(function (a, b) { return a.v.getValue() < b.v.getValue() ? 1 : -1 });
+					
+					if(lessEqualArr.length > 0) {
+						let closestVal = lessEqualArr[0];
+						for(let i = 0; i < lessEqualArr.length; ++i) {
+							if(closestVal.v.getValue().toUpperCase() < lessEqualArr[i].v.getValue().toUpperCase()) {
+								closestVal = lessEqualArr[i];
+							} else if(closestVal.v.getValue() == lessEqualArr[i].v.getValue()) {
+								if(closestVal.i < lessEqualArr[i].i) {
+									closestVal = lessEqualArr[i];
+								}
+							}
+						}
+						index = closestVal.i;
+					}
 				} else if(1 === a2Value) {
-					index = moreEqualArr.length > 0 ? moreEqualArr[moreEqualArr.length - 1].i : -1;
+					const moreEqualArr = arr.filter(function (item) { 
+						return item.v >= a0Value;
+					}).sort(function (a, b) { return a.v.getValue() > b.v.getValue() ? 1 : -1 });
+					if(moreEqualArr.length > 0) {
+						let closestVal = moreEqualArr[0];
+						for(let i = 0; i < moreEqualArr.length; ++i) {
+							if(closestVal.v.getValue().toUpperCase() > moreEqualArr[i].v.getValue().toUpperCase()) {
+								closestVal = moreEqualArr[i];
+							} else if(closestVal.v.getValue() == moreEqualArr[i].v.getValue()) {
+								if(closestVal.i < moreEqualArr[i].i) {
+									closestVal = moreEqualArr[i];
+								}
+							}
+						}
+						index = closestVal.i;
+					}
 				}
 			}
 
