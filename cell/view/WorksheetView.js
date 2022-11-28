@@ -10520,7 +10520,8 @@
 		let t = this;
 
 		let doFill = function (_start, _end) {
-			t.activeFillHandle = _start.clone();
+			t.model.selectionRange.getLast().assign2(_start);
+			t.activeFillHandle = _end.clone();
 
 			if (_start.r1 !== _end.r1 || _start.r2 !== _end.r2) {
 				t.fillHandleDirection = 1;
@@ -10556,44 +10557,52 @@
 				}
 			}
 
-			t.applyFillHandle(null, null, bCtrl);
+			t.applyFillHandle(null, null, bCtrl, true);
 		};
 
 		if (!startRange && !endRange) {
 			//only end range - selected range
 
 			//1. search base
+			var activeCell = this.model.selectionRange.activeCell.clone();
 			endRange = this.model.selectionRange.getLast().clone();
 
 			let i;
 			let baseRow1 = endRange.r1;
 			let baseRow2 = endRange.r2;
 			for (i = endRange.r1; i <= endRange.r2; i++) {
-				let _range = t.model.getRange3(i, endRange.c1, i, endRange.c2);
-				if (_range.isEmptyTextString) {
+				if (this.model.autoFilters._isEmptyRange(new Asc.Range(endRange.c1, i, endRange.c2, i))) {
 					baseRow1++;
+				} else {
+					break;
 				}
 			}
 			for (i = endRange.r2; i >= endRange.r1; i--) {
-				let _range = t.model.getRange3(i, endRange.c1, i, endRange.c2);
-				if (_range.isEmptyTextString) {
+				if (this.model.autoFilters._isEmptyRange(new Asc.Range(endRange.c1, i, endRange.c2, i))) {
 					baseRow2--;
+				} else {
+					break;
 				}
 			}
 			let baseCol1 = endRange.c1;
 			let baseCol2 = endRange.c2;
 			for (i = endRange.c1; i <= endRange.c2; i++) {
-				let _range = t.model.getRange3(endRange.r1, i, endRange.r2, i);
-				if (_range.isEmptyTextString) {
+				if (this.model.autoFilters._isEmptyRange(new Asc.Range(i, endRange.r1, i, endRange.r2))) {
 					baseCol1++;
+				} else {
+					break;
 				}
 			}
 			for (i = endRange.c2; i >= endRange.c1; i--) {
-				let _range = t.model.getRange3(endRange.r1, i, endRange.r2, i);
-				if (_range.isEmptyTextString) {
+				if (this.model.autoFilters._isEmptyRange(new Asc.Range(i, endRange.r1, i, endRange.r2))) {
 					baseCol2--;
+				} else {
+					break;
 				}
 			}
+
+			History.Create_NewPoint();
+			History.StartTransaction();
 
 			let baseRange = new Asc.Range(baseCol1, baseRow1, baseCol2, baseRow2);
 			//1. take base and expand up/down in empty cells
@@ -10614,20 +10623,27 @@
 			if (endRange.c2 !== baseCol2) {
 				doFill(baseRange, new Asc.Range(baseRange.c1, baseRange.r1, endRange.c2, baseRange.r2));
 			}
+
+			History.EndTransaction();
+
+			t.model.selectionRange.getLast().assign2(endRange);
+			t.model.selectionRange.activeCell = activeCell;
+			t.draw();
+			//t.cleanSelection();
+			//t._drawSelection();
+		} else {
+			if (!startRange) {
+				startRange = this.model.selectionRange.getLast().clone();
+			}
+			if (!endRange) {
+				endRange = this.model.selectionRange.getLast().clone();
+			}
+
+			startRange = typeof startRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(startRange) : startRange;
+			endRange = typeof endRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(endRange) : endRange;
+
+			doFill(startRange, endRange);
 		}
-
-
-		if (!startRange) {
-			startRange = this.model.selectionRange.getLast().clone();
-		}
-		if (!endRange) {
-			endRange = this.model.selectionRange.getLast().clone();
-		}
-
-		startRange = typeof startRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(startRange) : startRange;
-		endRange = typeof endRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(endRange) : endRange;
-
-		doFill(startRange, endRange);
 	};
 
     /* Функция для работы автозаполнения (selection). (x, y) - координаты точки мыши на области */
@@ -11014,7 +11030,7 @@
     };
 
     /* Функция для применения автозаполнения */
-    WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress) {
+    WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw) {
         var t = this;
 
         if (null !== this.resizeTableIndex) {
@@ -11027,15 +11043,13 @@
 					t.af_changeTableRange(table.DisplayName, t.activeFillHandle.clone());
 				}
 			}
-        	this.cleanSelection();
+			!opt_doNotDraw && this.cleanSelection();
         	t.activeFillHandle = null;
 			t.resizeTableIndex = null;
 			t.fillHandleDirection = -1;
-			t._drawSelection();
+			!opt_doNotDraw && t._drawSelection();
         	return;
 		}
-
-		console.log("r1: " + this.activeFillHandle.r1 + " r2: " + this.activeFillHandle.r2 + "c1: " + this.activeFillHandle.c1 + " c2: " + this.activeFillHandle.c2)
 
         // Текущее выделение (к нему применится автозаполнение)
         var arn = t.model.selectionRange.getLast();
@@ -11154,7 +11168,7 @@
 
 						// Обновляем выделенные ячейки
 						t._updateRange(arn);
-						t.draw();
+						!opt_doNotDraw && t.draw();
                     } else {
                         t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange,
                           c_oAscError.Level.NoCritical);
@@ -11171,7 +11185,7 @@
 					t.activeFillHandle = null;
 					t.fillHandleDirection = -1;
 					// Перерисовываем
-					t._drawSelection();
+					!opt_doNotDraw && t._drawSelection();
                 }
             };
 
@@ -11186,7 +11200,7 @@
 						t.activeFillHandle = null;
 						t.fillHandleDirection = -1;
 						// Перерисовываем
-						t._drawSelection();
+						!opt_doNotDraw && t._drawSelection();
 					}
 				}, true);
 				return;
@@ -11196,7 +11210,7 @@
 				this.activeFillHandle = null;
 				this.fillHandleDirection = -1;
 				// Перерисовываем
-				this._drawSelection();
+				!opt_doNotDraw && this._drawSelection();
 
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 					c_oAscError.Level.NoCritical);
@@ -11209,7 +11223,7 @@
 				this.activeFillHandle = null;
 				this.fillHandleDirection = -1;
 				// Перерисовываем
-				this._drawSelection();
+				!opt_doNotDraw && this._drawSelection();
 
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray,
 					c_oAscError.Level.NoCritical);
@@ -11225,7 +11239,7 @@
             this.activeFillHandle = null;
             this.fillHandleDirection = -1;
             // Перерисовываем
-            this._drawSelection();
+			!opt_doNotDraw && this._drawSelection();
         }
     };
 

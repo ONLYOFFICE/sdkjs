@@ -5791,6 +5791,9 @@
 			},
 
 			_isEmptyRange: function (ar, addDelta) {
+				if (addDelta == null) {
+					addDelta = 0;
+				}
 				var range = this.worksheet.getRange3(Math.max(0, ar.r1 - addDelta), Math.max(0, ar.c1 - addDelta), ar.r2 + addDelta, ar.c2 + addDelta);
 				var res = true;
 				range._foreachNoEmpty(function (cell) {
