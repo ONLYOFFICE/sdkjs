@@ -13378,7 +13378,7 @@ $(function () {
 		assert.ok(oParser.parse(), "Call: XMATCH(E60,E50:E59, 1, 1)");
 		assert.strictEqual(oParser.calculate().getValue(), 8, "Result of XMATCH(E60,E50:E59, 1, 1)");
 
-		// TODO excel выдает другой результат при подобных сравнениях строк
+		// TODO ms выдает другой результат при подобных сравнениях строк
 		oParser = new parserFormula("XMATCH(E60,E50:E59, -1, 1)", "A2", ws);
 		assert.ok(oParser.parse(), "Call: XMATCH(E60,E50:E59, -1, 1)");
 		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(E60,E50:E59, -1, 1)");
@@ -13459,6 +13459,34 @@ $(function () {
 		ws.getRange2("I59").setValue("a");
 
 		ws.getRange2("I60").setValue("10");
+		ws.getRange2("I61").setValue("7/18/2011 7:45");
+		ws.getRange2("I62").setValue("7/18/2011 7:40");
+		ws.getRange2("I63").setValue("=TODAY()");
+		ws.getRange2("I64").setValue("=1+1");
+
+		oParser = new parserFormula("XMATCH(I61,I50:I64)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(I61,I50:I64)");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of XMATCH(I61,I50:I64)");
+
+		oParser = new parserFormula("XMATCH(I62,I50:I61,1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(I62,I50:I61,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of XMATCH(I62,I50:I61,1)");
+
+		oParser = new parserFormula("XMATCH(I62,I50:I61,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(I62,I50:I61,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(I62,I50:I61,-1)");
+
+		oParser = new parserFormula("XMATCH(I62,I50:I61,0,2)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(I62,I50:I61,1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(I62,I50:I61,1)");
+
+		oParser = new parserFormula("XMATCH(I62,I50:I61,1,2)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(I62,I50:I61,1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(I62,I50:I61,1)");
+
+		oParser = new parserFormula("XMATCH(I62,I50:I61,-1,2)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(I62,I50:I61,1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(I62,I50:I61,1)");
 
 		oParser = new parserFormula("XMATCH(12,I50:I59)", "A2", ws);
 		assert.ok(oParser.parse(), "Call: XMATCH(12,I50:I59)");
@@ -13527,6 +13555,41 @@ $(function () {
 		oParser = new parserFormula("XMATCH(\"\",{1,2,TRUE,\"\"})", "A2", ws);
 		assert.ok(oParser.parse(), "Call: XMATCH(\"\",{1,2,TRUE,\"\"})");
 		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(\"\",{1,2,TRUE,\"\"})");
+
+		oParser = new parserFormula("XMATCH(\"str\",{1,2,\"str\"})", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(\"str\",{1,2,\"str\"})");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "Result of XMATCH(\"str\",{1,2,\"str\"})");
+
+		oParser = new parserFormula("XMATCH(I50,I50,0,0)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(I50,I50,0,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of XMATCH(I50,I50,0,0)");
+
+		oParser = new parserFormula("XMATCH(I50,I50,0)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(I50,I50,0)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(I50,I50,0)");
+
+		oParser = new parserFormula("XMATCH(I59,\"a\",0)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(I59,\"a\",0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(I59,\"a\",0)");
+
+		// TODO ms возвращает массив c длиной искомого значения
+		oParser = new parserFormula("XMATCH(I50:I55,I50:I59,0)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(I50:I55,I50:I59,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(I50:I55,I50:I59,0)");
+
+		// TODO ms возвращает массив c длиной искомого значения
+		oParser = new parserFormula("XMATCH({12,2,9},I50:I59,0)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH({12,2,9},I50:I59,0)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH({12,2,9},I50:I59,0)");
+
+		// TODO ms возвращает массив c длиной искомого значения
+		oParser = new parserFormula("XMATCH({2,2,2},{2,2,3,4,5,2})", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH({2,2,2},{2,2,3,4,5,2})");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH({2,2,2},{2,2,3,4,5,2})");
+
+		oParser = new parserFormula("XMATCH(,I50:I59,-1,2)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(,I50:I59,-1,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 5, "Result of XMATCH(,I50:I59,-1,2)");
 
 	});
 
