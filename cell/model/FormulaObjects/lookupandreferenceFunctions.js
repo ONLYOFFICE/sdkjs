@@ -2831,7 +2831,7 @@ function (window, undefined) {
 					if(lessEqualArr.length > 0) {
 						let closestVal = lessEqualArr[0];
 						for(let i = 0; i < lessEqualArr.length; ++i) {
-							if(closestVal.v.getValue().toUpperCase() < lessEqualArr[i].v.getValue().toUpperCase()) {
+							if(closestVal.v.getValue() < lessEqualArr[i].v.getValue()) {
 								closestVal = lessEqualArr[i];
 							} else if(closestVal.v.getValue() == lessEqualArr[i].v.getValue()) {
 								if(closestVal.i < lessEqualArr[i].i) {
@@ -2848,7 +2848,7 @@ function (window, undefined) {
 					if(moreEqualArr.length > 0) {
 						let closestVal = moreEqualArr[0];
 						for(let i = 0; i < moreEqualArr.length; ++i) {
-							if(closestVal.v.getValue().toUpperCase() > moreEqualArr[i].v.getValue().toUpperCase()) {
+							if(closestVal.v.getValue() > moreEqualArr[i].v.getValue()) {
 								closestVal = moreEqualArr[i];
 							} else if(closestVal.v.getValue() == moreEqualArr[i].v.getValue()) {
 								if(closestVal.i < moreEqualArr[i].i) {
