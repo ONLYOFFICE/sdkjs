@@ -158,13 +158,26 @@ function (window, undefined) {
 		}
 
 		// second iteration
-		if(index === -1 && (1 === match_mode || -1 === match_mode)) {
+		if(index === -1 && (1 === match_mode || -1 === match_mode || 0 === match_mode)) {
 			leftPointer = 0;
 			rightPointer = array.length - 1;
 			if(isReverse) {
 				while(leftPointer <= rightPointer) {
 					mid = Math.floor((leftPointer + rightPointer) / 2);
 					item = undefined !== array[mid].v ? array[mid].v : array[mid];
+
+					// exact 
+					if (0 === match_mode) {
+						if(item == target) {
+							index = mid;
+							break;
+						} else if(item < target) {
+							rightPointer = mid - 1;
+						} else {
+							leftPointer = mid + 1;
+						}
+					}
+
 					// exact or larger
 					if (1 === match_mode) {
 						if (leftPointer === 0 && rightPointer === array.length - 1) {
@@ -184,7 +197,10 @@ function (window, undefined) {
 								rightPointer = mid - 1;
 							}
 						}
-					} else if (-1 === match_mode) {
+					} 
+					
+					// exact or smaller
+					if (-1 === match_mode) {
 						// exact or smaller
 						if (leftPointer === 0 && rightPointer === array.length - 1) {
 							if(item == target) {
@@ -209,6 +225,19 @@ function (window, undefined) {
 				while(leftPointer <= rightPointer) {
 					mid = Math.floor((leftPointer + rightPointer) / 2);
 					item = undefined !== array[mid].v ? array[mid].v : array[mid];
+
+					// exact
+					if (0 === match_mode) {
+						if(item == target) {
+							index = mid;
+							break;
+						} else if(item < target) {
+							leftPointer = mid + 1;
+						} else {
+							rightPointer = mid - 1;
+						}
+					}
+
 					// exact or larger
 					if (1 === match_mode) {
 						if (leftPointer === 0 && rightPointer === array.length - 1) {
@@ -228,8 +257,10 @@ function (window, undefined) {
 								leftPointer = mid + 1;
 							}
 						}
-					} else if (-1 === match_mode) {
-						// exact or smaller
+					}
+					
+					// exact or smaller
+					if (-1 === match_mode) {
 						if (leftPointer === 0 && rightPointer === array.length - 1) {
 							if(item == target) {
 								index = mid;
