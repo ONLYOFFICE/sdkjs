@@ -3482,40 +3482,46 @@
         };
 		this.WriteExternalReferences = function() {
 			var oThis = this;
-			for (var i = 0; i < this.wb.externalReferences.length; i++) {
-				var externalReference = this.wb.externalReferences[i];
 
-				if (externalReference.referenceData) {
-					if (externalReference.referenceData["fileId"]) {
-						oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalFileId);
-						oThis.memory.WriteString2(externalReference.referenceData["fileId"]);
-					}
-					if (externalReference.referenceData["portalName"]) {
-						oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalPortalName);
-						oThis.memory.WriteString2(externalReference.referenceData["portalName"]);
-					}
-				}
-
-				switch (externalReference.Type) {
-					case 0:
-						this.bs.WriteItem(c_oSerWorkbookTypes.ExternalBook, function() {
-							oThis.WriteExternalReference(externalReference);
-						});
-						break;
-					case 1:
-						this.bs.WriteItem(c_oSerWorkbookTypes.OleLink, function() {
-							oThis.memory.WriteBuffer(externalReference.Buffer, 0, externalReference.Buffer.length);
-						});
-						break;
-					case 2:
-						this.bs.WriteItem(c_oSerWorkbookTypes.DdeLink, function() {
-							oThis.memory.WriteBuffer(externalReference.Buffer, 0, externalReference.Buffer.length);
-						});
-						break;
-				}
-			}
+            for(var i = 0, length = this.wb.externalReferences.length; i < length; ++i) {
+                this.bs.WriteItem( c_oSerWorkbookTypes.ExternalReference, function(){oThis.WriteExternalReference(oThis.wb.externalReferences[i]);});
+            }
 		};
-		this.WriteExternalReference = function(externalReference) {
+        this.WriteExternalReference = function(externalReference) {
+            var oThis = this;
+
+            if (externalReference.referenceData) {
+                 if (externalReference.referenceData["fileId"]) {
+                     oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalFileId);
+                     oThis.memory.WriteByte(c_oSerPropLenType.Variable);
+                     oThis.memory.WriteString2(externalReference.referenceData["fileId"]);
+                 }
+                 if (externalReference.referenceData["portalName"]) {
+                     oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalPortalName);
+                     oThis.memory.WriteByte(c_oSerPropLenType.Variable);
+                     oThis.memory.WriteString2(externalReference.referenceData["portalName"]);
+                 }
+             }
+
+            switch (externalReference.Type) {
+                case 0:
+                    this.memory.WriteByte(c_oSerWorkbookTypes.ExternalBook);
+                    this.memory.WriteByte(c_oSerPropLenType.Variable);
+                    this.bs.WriteItemWithLength(function(){oThis.WriteExternalBook(externalReference);});
+                    break;
+                case 1:
+                    this.memory.WriteByte(c_oSerWorkbookTypes.OleLink);
+                    this.memory.WriteByte(c_oSerPropLenType.Variable);
+                    this.bs.WriteItemWithLength(function(){oThis.memory.WriteBuffer(externalReference.Buffer, 0, externalReference.Buffer.length);});
+                    break;
+                case 2:
+                    this.memory.WriteByte(c_oSerWorkbookTypes.OleLink);
+                    this.memory.WriteByte(c_oSerPropLenType.Variable);
+                    this.bs.WriteItemWithLength(function(){oThis.memory.WriteBuffer(externalReference.Buffer, 0, externalReference.Buffer.length);});
+                    break;
+            }
+        };
+		this.WriteExternalBook = function(externalReference) {
 			var oThis = this;
 			if (null != externalReference.Id) {
 				oThis.memory.WriteByte(c_oSer_ExternalLinkTypes.Id);
