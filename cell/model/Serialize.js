@@ -3494,7 +3494,7 @@
                  if (externalReference.referenceData["fileId"]) {
                      oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalFileId);
                      oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                     oThis.memory.WriteString2(externalReference.referenceData["fileId"]);
+                     oThis.memory.WriteString2(externalReference.referenceData["fileId"].replaceAll('\"',"'"));
                  }
                  if (externalReference.referenceData["portalName"]) {
                      oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalPortalName);
@@ -7360,13 +7360,9 @@
 			}
 			else if ( c_oSerWorkbookTypes.ExternalReferences === type )
 			{
-				var externalReferencesExt = {};
                 res = this.bcr.Read1(length, function(t,l){
-					return oThis.ReadExternalReferences(t,l,externalReferencesExt);
+					return oThis.ReadExternalReferences(t,l);
 				});
-                if (externalReferencesExt.externalReference && externalReferencesExt.externalFileId && externalReferencesExt.externalPortalName) {
-                    externalReferencesExt.externalReference.setReferenceData(externalReferencesExt.externalFileId, externalReferencesExt.externalPortalName);
-                }
 			}
 			else if ( c_oSerWorkbookTypes.OleSize === type )
 			{
@@ -7590,29 +7586,44 @@
 			}
 			return res;
 		};
-		this.ReadExternalReferences = function(type, length, externalReferenceExt) {
-			var res = c_oSerConstants.ReadOk;
-			var oThis = this;
-			if (c_oSerWorkbookTypes.ExternalBook === type) {
-				var externalBook = new AscCommonExcel.ExternalReference();
-				res = this.bcr.Read1(length, function(t, l) {
-					return oThis.ReadExternalBook(t, l, externalBook);
-				});
+		this.ReadExternalReferences = function(type, length) {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSerWorkbookTypes.ExternalReference === type) {
+                var externalReferenceExt = {};
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadExternalReference(t, l, externalReferenceExt);
+                });
+                if (externalReferenceExt.externalReference && externalReferenceExt.externalFileId && externalReferenceExt.externalPortalName) {
+                    externalReferenceExt.externalReference.setReferenceData(externalReferenceExt.externalFileId.replaceAll("'", "\""), externalReferenceExt.externalPortalName);
+                }
+            } else
+                res = c_oSerConstants.ReadUnknown;
+            return res;
+		};
+        this.ReadExternalReference = function(type, length, externalReferenceExt) {
+            var res = c_oSerConstants.ReadOk;
+            var oThis = this;
+            if (c_oSerWorkbookTypes.ExternalBook === type) {
+                var externalBook = new AscCommonExcel.ExternalReference();
+                res = this.bcr.Read1(length, function(t, l) {
+                    return oThis.ReadExternalBook(t, l, externalBook);
+                });
                 externalReferenceExt.externalReference = externalBook;
-				this.oWorkbook.externalReferences.push(externalBook);
-			} else if (c_oSerWorkbookTypes.OleLink === type) {
-				this.oWorkbook.externalReferences.push({Type: 1, Buffer: this.stream.GetBuffer(length)});
-			} else if (c_oSerWorkbookTypes.DdeLink === type) {
-				this.oWorkbook.externalReferences.push({Type: 2, Buffer: this.stream.GetBuffer(length)});
-			}  else if (c_oSerWorkbookTypes.ExternalFileId === type) {
+                this.oWorkbook.externalReferences.push(externalBook);
+            } else if (c_oSerWorkbookTypes.OleLink === type) {
+                this.oWorkbook.externalReferences.push({Type: 1, Buffer: this.stream.GetBuffer(length)});
+            } else if (c_oSerWorkbookTypes.DdeLink === type) {
+                this.oWorkbook.externalReferences.push({Type: 2, Buffer: this.stream.GetBuffer(length)});
+            }  else if (c_oSerWorkbookTypes.ExternalFileId === type) {
                 externalReferenceExt.externalFileId = this.stream.GetString2LE(length);
             } else if (c_oSerWorkbookTypes.ExternalPortalName === type) {
                 externalReferenceExt.externalPortalName = this.stream.GetString2LE(length);
             } else {
-				res = c_oSerConstants.ReadUnknown;
-			}
-			return res;
-		};
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
 		this.ReadExternalBook = function(type, length, externalBook) {
 			var res = c_oSerConstants.ReadOk;
 			var oThis = this;
