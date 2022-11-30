@@ -2626,7 +2626,7 @@ function (window, undefined) {
 		var sInputKey = arg3Value ? valueForSearching + g_cCharDelimiter + arg2Value + g_cCharDelimiter + arg3Value : valueForSearching + g_cCharDelimiter + arg2Value;
 		res = cacheElem.results[sInputKey];
 		if(!res && isXMatch) {
-			cacheElem.results[sInputKey] = res = g_oXMatchCache._calculate(cacheElem.elements, arg0, arg2, arg3);
+			cacheElem.results[sInputKey] = res = this._xMatchCalculate(cacheElem.elements, arg0, arg2, arg3);
 		} else if (!res) {
 			cacheElem.results[sInputKey] = res = this._calculate(cacheElem.elements, arg0, arg2);
 		}
@@ -2681,15 +2681,7 @@ function (window, undefined) {
 
 		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);
 	};
-
-	function XMatchCache() {
-		this.cacheId = {};
-		this.cacheRanges = {};
-	}
-
-	XMatchCache.prototype = Object.create(MatchCache.prototype);
-	XMatchCache.prototype.constructor = XMatchCache;
-	XMatchCache.prototype._calculate = function(arr, a0, a2, a3) {
+	MatchCache.prototype._xMatchCalculate = function (arr, a0, a2, a3) {
 		let a0Type = a0.type;
 		let	a0Value = a0.getValue(),
 			a2Value = a2.getValue(),
@@ -2841,7 +2833,6 @@ function (window, undefined) {
 			}
 
 		} else if(2 === a3value) {
-			// TODO настроить бинарный поиск на такой же вывод как в ms
 			if (2 === a2Value) {
 				// wildcard match(err)
 				return new cError(cErrorType.wrong_name);
@@ -3539,7 +3530,6 @@ function (window, undefined) {
 	var g_oHLOOKUPCache = new VHLOOKUPCache(true);
 	var g_oMatchCache = new MatchCache();
 	var g_oLOOKUPCache = new LOOKUPCache();
-	var g_oXMatchCache = new XMatchCache();
 
 //----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
