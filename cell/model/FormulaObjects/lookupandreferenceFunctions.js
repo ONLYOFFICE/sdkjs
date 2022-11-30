@@ -2550,9 +2550,6 @@ function (window, undefined) {
 		}
 
 		var a2Value = arg2.getValue();
-		if(a2Value === 2) {
-			// wildcard match
-		}
 		if (!(-1 === a2Value || 0 === a2Value || 1 === a2Value || 2 === a2Value)) {
 			return new cError(cErrorType.not_numeric);
 		}
