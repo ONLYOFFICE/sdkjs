@@ -104,46 +104,18 @@ function (window, undefined) {
 		let leftPointer = 0,
 			rightPointer = array.length - 1;
 
-		if (isReverse) {
-			// reverse search(by descending)
+		function ascendingSearch (secondIteration) {
 			while(leftPointer <= rightPointer) {
 				mid = Math.floor((leftPointer + rightPointer) / 2);
 				item = undefined !== array[mid].v ? array[mid].v : array[mid];
 				if(-1 === match_mode || 0 === match_mode || 1 === match_mode) {
-					// do not compare on the first iteration
-					if (leftPointer === 0 && rightPointer === array.length - 1) {
-						if (target >= item) {
+					if (leftPointer === 0 && rightPointer === array.length - 1 && !secondIteration) {
+						if(target <= item) {
 							rightPointer = mid - 1;
 						} else {
 							leftPointer = mid + 1;
 						}
-					} else {
-						if (target == item) {
-							index = mid;
-							break;
-						} else if (target > item) {
-							rightPointer = mid - 1;
-						} else {
-							leftPointer = mid + 1;
-						}
-					}
-				}
-			}
-		} else {
-			// search by ascending
-			while(leftPointer <= rightPointer) {
-				mid = Math.floor((leftPointer + rightPointer) / 2);
-				item = undefined !== array[mid].v ? array[mid].v : array[mid]; 
-				if (-1 === match_mode || 0 === match_mode || 1 === match_mode) {
-					// exact match
-					// do not compare on the first iteration
-					if(leftPointer === 0 && rightPointer === array.length - 1) {
-						if (target <= item) {
-							rightPointer = mid - 1;
-						} else {
-							leftPointer = mid + 1;
-						}
-					} else {
+					} else if(!secondIteration) {
 						if (target == item) {
 							index = mid;
 							break;
@@ -153,8 +125,155 @@ function (window, undefined) {
 							leftPointer = mid + 1;
 						}
 					}
+
+					if(secondIteration) {
+						// exact
+						if (0 === match_mode) {
+							if(item == target) {
+								index = mid;
+								break;
+							} else if(item < target) {
+								leftPointer = mid + 1;
+							} else {
+								rightPointer = mid - 1;
+							}
+						}
+
+						// exact or larger
+						if (1 === match_mode) {
+							if (leftPointer === 0 && rightPointer === array.length - 1) {
+								if (item == target) {
+									index = mid;
+									break;
+								} else if (item < target) {
+									leftPointer = mid + 1;
+								} else {
+									rightPointer = mid - 1;
+								}
+							} else {
+								if (item > target || item == target) {
+									index = mid;
+									break;
+								} else {
+									leftPointer = mid + 1;
+								}
+							}
+						}
+						
+						// exact or smaller
+						if (-1 === match_mode) {
+							if (leftPointer === 0 && rightPointer === array.length - 1) {
+								if(item == target) {
+									index = mid;
+									break;
+								} else if (item < target) {
+									leftPointer = mid + 1;
+								} else {
+									rightPointer = mid - 1;
+								}
+							} else {
+								if (item < target || item == target) {
+									index = mid;
+									break;
+								} else {
+									rightPointer = mid - 1;
+								}
+							}
+						}
+					}
+				}		
+			}
+		}
+
+		function descendingSearch (secondIteration) {
+			while(leftPointer <= rightPointer) {
+				mid = Math.floor((leftPointer + rightPointer) / 2);
+				item = undefined !== array[mid].v ? array[mid].v : array[mid];
+				if(-1 === match_mode || 0 === match_mode || 1 === match_mode) {
+					// do not compare on the first iteration
+					if (leftPointer === 0 && rightPointer === array.length - 1 && !secondIteration) {
+						if (target >= item) {
+							rightPointer = mid - 1;
+						} else {
+							leftPointer = mid + 1;
+						}
+					} else if(!secondIteration) {
+						if (target == item) {
+							index = mid;
+							break;
+						} else if (target > item) {
+							rightPointer = mid - 1;
+						} else {
+							leftPointer = mid + 1;
+						}
+					}
+
+					if(secondIteration) {
+						// exact 
+						if (0 === match_mode) {
+							if(item == target) {
+								index = mid;
+								break;
+							} else if(item < target) {
+								rightPointer = mid - 1;
+							} else {
+								leftPointer = mid + 1;
+							}
+						}
+
+						// exact or larger
+						if (1 === match_mode) {
+							if (leftPointer === 0 && rightPointer === array.length - 1) {
+								if(item == target) {
+									index = mid;
+									break;
+								} else if (target > item) {
+									rightPointer = mid - 1;
+								} else {
+									leftPointer = mid + 1;
+								}
+							} else {
+								if (item > target || item == target) {
+									index = mid;
+									break;
+								} else {
+									rightPointer = mid - 1;
+								}
+							}
+						} 
+						
+						// exact or smaller
+						if (-1 === match_mode) {
+							// exact or smaller
+							if (leftPointer === 0 && rightPointer === array.length - 1) {
+								if(item == target) {
+									index = mid;
+									break;
+								} else if (target > item) {
+									rightPointer = mid - 1;
+								} else {
+									leftPointer = mid + 1;
+								}
+							} else {
+								if (item < target || item == target) {
+									index = mid;
+									break;
+								} else {
+									leftPointer = mid + 1;
+								}
+							}
+						}
+					}
 				}
 			}
+		}
+
+		if (isReverse) {
+			// reverse search(by descending)
+			descendingSearch(false);
+		} else {
+			// search by ascending
+			ascendingSearch(false);
 		}
 
 		// second iteration
@@ -162,124 +281,9 @@ function (window, undefined) {
 			leftPointer = 0;
 			rightPointer = array.length - 1;
 			if(isReverse) {
-				while(leftPointer <= rightPointer) {
-					mid = Math.floor((leftPointer + rightPointer) / 2);
-					item = undefined !== array[mid].v ? array[mid].v : array[mid];
-
-					// exact 
-					if (0 === match_mode) {
-						if(item == target) {
-							index = mid;
-							break;
-						} else if(item < target) {
-							rightPointer = mid - 1;
-						} else {
-							leftPointer = mid + 1;
-						}
-					}
-
-					// exact or larger
-					if (1 === match_mode) {
-						if (leftPointer === 0 && rightPointer === array.length - 1) {
-							if(item == target) {
-								index = mid;
-								break;
-							} else if (target > item) {
-								rightPointer = mid - 1;
-							} else {
-								leftPointer = mid + 1;
-							}
-						} else {
-							if (item > target || item == target) {
-								index = mid;
-								break;
-							} else {
-								rightPointer = mid - 1;
-							}
-						}
-					} 
-					
-					// exact or smaller
-					if (-1 === match_mode) {
-						// exact or smaller
-						if (leftPointer === 0 && rightPointer === array.length - 1) {
-							if(item == target) {
-								index = mid;
-								break;
-							} else if (target > item) {
-								rightPointer = mid - 1;
-							} else {
-								leftPointer = mid + 1;
-							}
-						} else {
-							if (item < target || item == target) {
-								index = mid;
-								break;
-							} else {
-								leftPointer = mid + 1;
-							}
-						}
-					}
-				}
+				descendingSearch(true);
 			} else {
-				while(leftPointer <= rightPointer) {
-					mid = Math.floor((leftPointer + rightPointer) / 2);
-					item = undefined !== array[mid].v ? array[mid].v : array[mid];
-
-					// exact
-					if (0 === match_mode) {
-						if(item == target) {
-							index = mid;
-							break;
-						} else if(item < target) {
-							leftPointer = mid + 1;
-						} else {
-							rightPointer = mid - 1;
-						}
-					}
-
-					// exact or larger
-					if (1 === match_mode) {
-						if (leftPointer === 0 && rightPointer === array.length - 1) {
-							if (item == target) {
-								index = mid;
-								break;
-							} else if (item < target) {
-								leftPointer = mid + 1;
-							} else {
-								rightPointer = mid - 1;
-							}
-						} else {
-							if (item > target || item == target) {
-								index = mid;
-								break;
-							} else {
-								leftPointer = mid + 1;
-							}
-						}
-					}
-					
-					// exact or smaller
-					if (-1 === match_mode) {
-						if (leftPointer === 0 && rightPointer === array.length - 1) {
-							if(item == target) {
-								index = mid;
-								break;
-							} else if (item < target) {
-								leftPointer = mid + 1;
-							} else {
-								rightPointer = mid - 1;
-							}
-						} else {
-							if (item < target || item == target) {
-								index = mid;
-								break;
-							} else {
-								rightPointer = mid - 1;
-							}
-						}
-					}
-				}
+				ascendingSearch(true);
 			}
 		}
 
@@ -2589,7 +2593,7 @@ function (window, undefined) {
 		if (cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg0.type) {
 			// arg0 = arg0.cross(_arg1);
 			arg0 = arg0.getFullArray().getElementRowCol(0,0);
-			
+
 			if (cElementType.empty === arg0.type) {
 				return new cError(cErrorType.not_available);
 			}
