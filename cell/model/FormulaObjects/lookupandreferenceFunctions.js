@@ -2587,7 +2587,12 @@ function (window, undefined) {
 		}
 
 		if (cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg0.type) {
-			arg0 = arg0.cross(_arg1);
+			// arg0 = arg0.cross(_arg1);
+			arg0 = arg0.getFullArray().getElementRowCol(0,0);
+			
+			if (cElementType.empty === arg0.type) {
+				return new cError(cErrorType.not_available);
+			}
 		} else if (cElementType.array === arg0.type) {
 			arg0 = arg0.getElementRowCol(0,0);
 		} else if (cElementType.error === arg0.type) {
