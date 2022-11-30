@@ -3334,6 +3334,13 @@
 			  var indexWorksheetTmp = -1;
 			  var startIndex = adjustPrint && adjustPrint.startPageIndex != null ? adjustPrint.startPageIndex : 0;
 			  var endIndex = adjustPrint && adjustPrint.endPageIndex != null  ? adjustPrint.endPageIndex + 1 : printPagesData.arrPages.length;
+			  if (startIndex > endIndex || startIndex > printPagesData.arrPages.length) {
+				  //error
+				  return pdfPrinter;
+			  }
+			  if (endIndex > printPagesData.arrPages.length) {
+				  endIndex = printPagesData.arrPages.length;
+			  }
 			  for (var i = startIndex; i < endIndex; ++i) {
 				  indexWorksheetTmp = printPagesData.arrPages[i].indexWorksheet;
 				  if (indexWorksheetTmp !== indexWorksheet) {
@@ -3466,7 +3473,7 @@
     if (printType === Asc.c_oAscPrintType.ActiveSheets) {
 		var activeSheetsArray = adjustPrint.asc_getActiveSheetsArray();
 		if (activeSheetsArray) {
-			for (i = 0; i < activeSheetsArray; ++i) {
+			for (i = 0; i < activeSheetsArray.length; ++i) {
 				if(adjustPrint.isOnlyFirstPage && i !== 0) {
 					break;
 				}
