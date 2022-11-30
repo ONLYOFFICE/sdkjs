@@ -13575,7 +13575,7 @@ $(function () {
 		// TODO ms возвращает массив c длиной искомого значения
 		oParser = new parserFormula("XMATCH(I50:I55,I50:I59,0)", "A2", ws);
 		assert.ok(oParser.parse(), "Call: XMATCH(I50:I55,I50:I59,0)");
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(I50:I55,I50:I59,0)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(I50:I55,I50:I59,0)");
 
 		// TODO ms возвращает массив c длиной искомого значения
 		oParser = new parserFormula("XMATCH({12,2,9},I50:I59,0)", "A2", ws);
