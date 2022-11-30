@@ -97,179 +97,14 @@ function (window, undefined) {
 		return new RegExp(vFS + "$", flags ? flags : "i");
 	}
 
-	// TODO переделать поиск: выполнение всех проверок за один цикл, результат такой же как в ms
+	// TODO переделать поиск: добиться такого же результата как в ms
 	function XBinarySearch (target, array, match_mode, isReverse) {
 		let mid, item;
 		let index = -1;
 		let leftPointer = 0,
 			rightPointer = array.length - 1;
 
-		function ascendingSearch (secondIteration) {
-			while(leftPointer <= rightPointer) {
-				mid = Math.floor((leftPointer + rightPointer) / 2);
-				item = undefined !== array[mid].v ? array[mid].v : array[mid];
-				if(-1 === match_mode || 0 === match_mode || 1 === match_mode) {
-					if (leftPointer === 0 && rightPointer === array.length - 1 && !secondIteration) {
-						if(target <= item) {
-							rightPointer = mid - 1;
-						} else {
-							leftPointer = mid + 1;
-						}
-					} else if(!secondIteration) {
-						if (target == item) {
-							index = mid;
-							break;
-						} else if (target < item) {
-							rightPointer = mid - 1;
-						} else {
-							leftPointer = mid + 1;
-						}
-					}
-
-					if(secondIteration) {
-						// exact
-						if (0 === match_mode) {
-							if(item == target) {
-								index = mid;
-								break;
-							} else if(item < target) {
-								leftPointer = mid + 1;
-							} else {
-								rightPointer = mid - 1;
-							}
-						}
-
-						// exact or larger
-						if (1 === match_mode) {
-							if (leftPointer === 0 && rightPointer === array.length - 1) {
-								if (item == target) {
-									index = mid;
-									break;
-								} else if (item < target) {
-									leftPointer = mid + 1;
-								} else {
-									rightPointer = mid - 1;
-								}
-							} else {
-								if (item > target || item == target) {
-									index = mid;
-									break;
-								} else {
-									leftPointer = mid + 1;
-								}
-							}
-						}
-						
-						// exact or smaller
-						if (-1 === match_mode) {
-							if (leftPointer === 0 && rightPointer === array.length - 1) {
-								if(item == target) {
-									index = mid;
-									break;
-								} else if (item < target) {
-									leftPointer = mid + 1;
-								} else {
-									rightPointer = mid - 1;
-								}
-							} else {
-								if (item < target || item == target) {
-									index = mid;
-									break;
-								} else {
-									rightPointer = mid - 1;
-								}
-							}
-						}
-					}
-				}		
-			}
-		}
-
-		function descendingSearch (secondIteration) {
-			while(leftPointer <= rightPointer) {
-				mid = Math.floor((leftPointer + rightPointer) / 2);
-				item = undefined !== array[mid].v ? array[mid].v : array[mid];
-				if(-1 === match_mode || 0 === match_mode || 1 === match_mode) {
-					// do not compare on the first iteration
-					if (leftPointer === 0 && rightPointer === array.length - 1 && !secondIteration) {
-						if (target >= item) {
-							rightPointer = mid - 1;
-						} else {
-							leftPointer = mid + 1;
-						}
-					} else if(!secondIteration) {
-						if (target == item) {
-							index = mid;
-							break;
-						} else if (target > item) {
-							rightPointer = mid - 1;
-						} else {
-							leftPointer = mid + 1;
-						}
-					}
-
-					if(secondIteration) {
-						// exact 
-						if (0 === match_mode) {
-							if(item == target) {
-								index = mid;
-								break;
-							} else if(item < target) {
-								rightPointer = mid - 1;
-							} else {
-								leftPointer = mid + 1;
-							}
-						}
-
-						// exact or larger
-						if (1 === match_mode) {
-							if (leftPointer === 0 && rightPointer === array.length - 1) {
-								if(item == target) {
-									index = mid;
-									break;
-								} else if (target > item) {
-									rightPointer = mid - 1;
-								} else {
-									leftPointer = mid + 1;
-								}
-							} else {
-								if (item > target || item == target) {
-									index = mid;
-									break;
-								} else {
-									rightPointer = mid - 1;
-								}
-							}
-						} 
-						
-						// exact or smaller
-						if (-1 === match_mode) {
-							// exact or smaller
-							if (leftPointer === 0 && rightPointer === array.length - 1) {
-								if(item == target) {
-									index = mid;
-									break;
-								} else if (target > item) {
-									rightPointer = mid - 1;
-								} else {
-									leftPointer = mid + 1;
-								}
-							} else {
-								if (item < target || item == target) {
-									index = mid;
-									break;
-								} else {
-									leftPointer = mid + 1;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-
-		function ascendingSearch2 (secondIteration, isDescending) {
+		function bidirectionalSearch (secondIteration, isDescending) {
 			while(leftPointer <= rightPointer) {
 				mid = Math.floor((leftPointer + rightPointer) / 2);
 				item = undefined !== array[mid].v ? array[mid].v : array[mid];
@@ -374,7 +209,6 @@ function (window, undefined) {
 									} else {
 										rightPointer = mid - 1;
 									}
-
 								}
 							}
 						}
@@ -383,13 +217,13 @@ function (window, undefined) {
 			}
 		}
 
-		ascendingSearch2(false, isReverse)
+		bidirectionalSearch(false, isReverse)
 
 		// second iteration
 		if(index === -1 && (1 === match_mode || -1 === match_mode || 0 === match_mode)) {
 			leftPointer = 0;
 			rightPointer = array.length - 1;
-			ascendingSearch2(true, isReverse);
+			bidirectionalSearch(true, isReverse);
 		}
 
 		return index;	
