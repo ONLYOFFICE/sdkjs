@@ -652,25 +652,54 @@
 		val0 = cDate.prototype.getDateFromExcel(val0);
 		val1 = cDate.prototype.getDateFromExcel(val1);
 
-		function dateDiff(date1, date2) {
-			var years = date2.getUTCFullYear() - date1.getUTCFullYear();
-			var months = years * 12 + date2.getUTCMonth() - date1.getUTCMonth();
-			var days = date2.getUTCDate() - date1.getUTCDate();
+		// function dateDiff(date1, date2) {
+		// 	var years = date2.getUTCFullYear() - date1.getUTCFullYear();
+		// 	var months = years * 12 + date2.getUTCMonth() - date1.getUTCMonth();
+		// 	var days = date2.getUTCDate() - date1.getUTCDate();
+		// 	var daysDiff = (date2 - date1) / c_msPerDay;
 
-			years -= date2.getUTCMonth() < date1.getUTCMonth();
-			months -= date2.getUTCDate() < date1.getUTCDate();
-			days +=
-				days < 0 ? new cDate(Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth() - 1, 0)).getUTCDate() + 1 : 0;
+		// 	years -= date2.getUTCMonth() < date1.getUTCMonth();
+		// 	months -= date2.getUTCDate() < date1.getUTCDate();
+		// 	days += days < 0 ? new cDate(Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth() - 1, 0)).getUTCDate() + 1 : 0;
 
-			return [years, months, days];
+		// 	if(years === 1 && daysDiff < 365) {
+		// 		years = 0;
+		// 	}
+
+		// 	return [years, months, days];
+		// }
+
+		function newDateDiff(date1, date2) {
+			let result = {
+				years: date2.getUTCFullYear() - date1.getUTCFullYear(),
+				months:	date2.getUTCMonth() - date1.getUTCMonth(),
+				days: date2.getUTCDate()  - date1.getUTCDate(),
+				hours: date2.getUTCHours() - date1.getUTCHours()
+			}
+			if (result.hours < 0) {
+				result.days--;
+				result.hours += 24;
+			}
+			if (result.days < 0) {
+				let copy1 = new Date(date1.getTime());
+				copy1.setDate(32);
+				result.months--;
+				result.days = 32 - date1.getUTCDate() - copy1.getUTCDate() + date2.getUTCDate();
+			}
+			if (result.months < 0) {
+				result.years--;
+				result.months += 12;
+			}
+
+			return result;
 		}
 
 		switch (arg2.getValue().toUpperCase()) {
 			case "Y":
-				return new cNumber(dateDiff(val0, val1)[0]);
+				return new cNumber(newDateDiff(val0, val1).years);
 				break;
 			case "M":
-				return new cNumber(dateDiff(val0, val1)[1]);
+				return new cNumber(newDateDiff(val0, val1).months);
 				break;
 			case "D":
 				return new cNumber(parseInt((val1 - val0) / c_msPerDay));
@@ -686,8 +715,8 @@
 				}
 				break;
 			case "YM":
-				var d = dateDiff(val0, val1);
-				return new cNumber(d[1] - d[0] * 12);
+				var d = newDateDiff(val0, val1);
+				return new cNumber(d.months - d.years * 12);
 				break;
 			case "YD":
 				if (val0.getUTCMonth() > val1.getUTCMonth()) {
