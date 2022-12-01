@@ -8464,7 +8464,10 @@
             } else if ( c_oSer_PageSetup.Errors == type ) {
                 oPageSetup.errors = this.stream.GetUChar();
             } else if ( c_oSer_PageSetup.FirstPageNumber == type ) {
-                oPageSetup.firstPageNumber = this.stream.GetULongLE();
+                var _firstPageNumber = this.stream.GetULongLE();
+                if (_firstPageNumber >= 0 && _firstPageNumber < 2147483647) {
+                    oPageSetup.firstPageNumber = _firstPageNumber;
+                }
             } else if ( c_oSer_PageSetup.FitToHeight == type ) {
                 oPageSetup.fitToHeight = this.stream.GetULongLE();
             } else if ( c_oSer_PageSetup.FitToWidth == type ) {
