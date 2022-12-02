@@ -2040,15 +2040,19 @@
 		return pos === end ? {index: i - 1, begin: begin, end: end} : undefined;
 	};
 
-	CellEditor.prototype._findFragmentToInsertInto = function ( pos ) {
-		var opt = this.options, i, begin, end;
+	CellEditor.prototype._findFragmentToInsertInto = function ( pos, fragments ) {
+		var i, begin, end;
 
-		for ( i = 0, begin = 0; i < opt.fragments.length; ++i ) {
-			end = begin + opt.fragments[i].getCharCodesLength();
+		if (!fragments) {
+			fragments = this.options.fragments;
+		}
+
+		for ( i = 0, begin = 0; i < fragments.length; ++i ) {
+			end = begin + fragments[i].getCharCodesLength();
 			if ( pos >= begin && pos <= end ) {
 				return {index: i, begin: begin, end: end};
 			}
-			if ( i < opt.fragments.length - 1 ) {
+			if ( i < fragments.length - 1 ) {
 				begin = end;
 			}
 		}
@@ -2142,19 +2146,23 @@
 		}
 	};
 
-	CellEditor.prototype._mergeFragments = function () {
-		var t = this, opt = t.options, i;
+	CellEditor.prototype._mergeFragments = function (fragments) {
+		var i;
+		
+		if (!fragments) {
+			fragments = this.options.fragments;
+		}
 
-		for (i = 0; i < opt.fragments.length;) {
-			if (opt.fragments[i].getCharCodesLength() < 1 && opt.fragments.length > 1) {
-				opt.fragments.splice(i, 1);
+		for (i = 0; i < fragments.length;) {
+			if (fragments[i].getCharCodesLength() < 1 && fragments.length > 1) {
+				fragments.splice(i, 1);
 				continue;
 			}
-			if (i < opt.fragments.length - 1) {
-				var fr = opt.fragments[i];
-				var nextFr = opt.fragments[i + 1];
+			if (i < fragments.length - 1) {
+				var fr = fragments[i];
+				var nextFr = fragments[i + 1];
 				if (fr.format.isEqual(nextFr.format)) {
-					opt.fragments.splice(i, 2, new Fragment({format: fr.format, charCodes: fr.getCharCodes().concat(nextFr.getCharCodes())}));
+					fragments.splice(i, 2, new Fragment({format: fr.format, charCodes: fr.getCharCodes().concat(nextFr.getCharCodes())}));
 					continue;
 				}
 			}
