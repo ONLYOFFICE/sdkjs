@@ -2772,7 +2772,7 @@ function CDrawingDocument()
 
 		let height = 0;
 		if (this.m_oWordControl.m_oEditor)
-			height += this.m_oWordControl.m_oEditor.HtmlElement.height;
+			height += AscCommon.AscBrowser.convertToRetinaValue(this.m_oWordControl.m_oEditor.HtmlElement.height);
 
 		let pos1 = this.ConvertCoordsFromCursor2(0, yOffset);
 		let pos2 = this.ConvertCoordsFromCursor2(0, yOffset + height);

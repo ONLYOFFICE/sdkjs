@@ -1212,7 +1212,7 @@ function CEditorPage(api)
 			return;
 
 		if (true === isBottom)
-			pos.Y -= ((this.m_oEditor.HtmlElement.height) >> 0);
+			pos.Y -= AscCommon.AscBrowser.convertToRetinaValue(this.m_oEditor.HtmlElement.height);
 
 		// TODO: X position?
 		if (0 !== pos.Y)
