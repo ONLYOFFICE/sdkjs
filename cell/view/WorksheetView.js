@@ -7120,7 +7120,10 @@
 				var oldExcludeCollapsed = this.model.bExcludeCollapsed;
 				this.model.bExcludeCollapsed = true;
                 // ToDo delete setRowHeight here
-				this.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, false);
+				// TODO temporary add limit, because minimal zoom change not correct row height
+				if (this.getZoom() >= 0.5) {
+					this.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, false);
+				}
 				this.model.bExcludeCollapsed = oldExcludeCollapsed;
 				History.TurnOn();
 
