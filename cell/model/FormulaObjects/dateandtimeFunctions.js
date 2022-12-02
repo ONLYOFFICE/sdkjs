@@ -670,36 +670,41 @@
 		// }
 
 		function newDateDiff(date1, date2) {
-			let result = {
+			const results = {
 				years: date2.getUTCFullYear() - date1.getUTCFullYear(),
 				months:	date2.getUTCMonth() - date1.getUTCMonth(),
 				days: date2.getUTCDate()  - date1.getUTCDate(),
 				hours: date2.getUTCHours() - date1.getUTCHours()
 			}
-			if (result.hours < 0) {
-				result.days--;
-				result.hours += 24;
+			
+			if (results.hours < 0) {
+				results.days--;
+				results.hours += 24;
 			}
-			if (result.days < 0) {
+			if (results.days < 0) {
 				let copy1 = new Date(date1.getTime());
 				copy1.setDate(32);
-				result.months--;
-				result.days = 32 - date1.getUTCDate() - copy1.getUTCDate() + date2.getUTCDate();
+				results.months--;
+				results.days = 32 - date1.getUTCDate() - copy1.getUTCDate() + date2.getUTCDate();
 			}
-			if (result.months < 0) {
-				result.years--;
-				result.months += 12;
+			if (results.months < 0) {
+				results.years--;
+				results.months += 12;
 			}
+		
+			let years = results.years;
+			let months = results.years * 12 + results.months;
+			let days = results.days;
 
-			return result;
+			return [years, months, days];
 		}
 
 		switch (arg2.getValue().toUpperCase()) {
 			case "Y":
-				return new cNumber(newDateDiff(val0, val1).years);
+				return new cNumber(newDateDiff(val0, val1)[0]);
 				break;
 			case "M":
-				return new cNumber(newDateDiff(val0, val1).months);
+				return new cNumber(newDateDiff(val0, val1)[1]);
 				break;
 			case "D":
 				return new cNumber(parseInt((val1 - val0) / c_msPerDay));
@@ -716,7 +721,7 @@
 				break;
 			case "YM":
 				var d = newDateDiff(val0, val1);
-				return new cNumber(d.months - d.years * 12);
+				return new cNumber(d[1] - d[0] * 12);
 				break;
 			case "YD":
 				if (val0.getUTCMonth() > val1.getUTCMonth()) {

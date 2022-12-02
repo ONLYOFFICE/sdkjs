@@ -7181,22 +7181,140 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"DATEDIF\"", function (assert) {
-
+		// dates
 		oParser = new parserFormula("DATEDIF(DATE(2001,1,1),DATE(2003,1,1),\"Y\")", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,1,1),DATE(2003,1,1), Y)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result DATEDIF(DATE(2001,1,1),DATE(2003,1,1), Y)");
 
-		oParser = new parserFormula("DATEDIF(DATE(2001,6,1),DATE(2002,8,15),\"D\")", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 440);
+		oParser = new parserFormula("DATEDIF(DATE(2001,1,1),DATE(2003,1,1),\"M\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,1,1),DATE(2003,1,1), M)");
+		assert.strictEqual(oParser.calculate().getValue(), 24, "Result DATEDIF(DATE(2001,1,1),DATE(2003,1,1), M)");
+
+		oParser = new parserFormula("DATEDIF(DATE(2001,1,1),DATE(2003,1,1),\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,1,1),DATE(2003,1,1), D)");
+		assert.strictEqual(oParser.calculate().getValue(), 730, "Result DATEDIF(DATE(2001,1,1),DATE(2003,1,1), D)");
 
 		oParser = new parserFormula("DATEDIF(DATE(2001,6,1),DATE(2002,8,15),\"YD\")", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 75);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,6,1),DATE(2002,8,15), YD)");
+		assert.strictEqual(oParser.calculate().getValue(), 75, "Result DATEDIF(DATE(2001,6,1),DATE(2002,8,15), YD)");
 
 		oParser = new parserFormula("DATEDIF(DATE(2001,6,1),DATE(2002,8,15),\"MD\")", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 14);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,6,1),DATE(2002,8,15), MD)");
+		assert.strictEqual(oParser.calculate().getValue(), 14, "Result DATEDIF(DATE(2001,6,1),DATE(2002,8,15), MD)");
+
+		oParser = new parserFormula("DATEDIF(DATE(2001,6,1),DATE(2002,8,15),\"YM\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,6,1),DATE(2002,8,15), YM)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result DATEDIF(DATE(2001,6,1),DATE(2002,8,15), YM)");
+
+		// bug tests
+		oParser = new parserFormula("DATEDIF(DATE(2020,10,2),DATE(2021,10,1),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Bug test case");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Bug test case");
+	
+		oParser = new parserFormula("DATEDIF(DATE(2000,4,13),DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Bug test case 2");
+		assert.strictEqual(oParser.calculate().getValue(), 21, "Bug test case 2");
+
+		// strings
+		oParser = new parserFormula("DATEDIF(\"sdy\",DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "String first");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "String first");
+
+		oParser = new parserFormula("DATEDIF(\"12\",DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "String number first");
+		assert.strictEqual(oParser.calculate().getValue(), 122, "String number first");
+
+		oParser = new parserFormula("DATEDIF(\"999999999999\",DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "String number first");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "String number first");
+
+		oParser = new parserFormula("DATEDIF(DATE(2022,4,12),\"sdy\",\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "String second");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "String second");
+
+		// numbers
+		// TODO в ms результат: 121
+		oParser = new parserFormula("DATEDIF(12,DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Number first");
+		assert.strictEqual(oParser.calculate().getValue(), 122, "Number first");
+
+		oParser = new parserFormula("DATEDIF(999999999999,DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Number first");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Number first");
+
+		oParser = new parserFormula("DATEDIF(DATE(2022,4,12),12,\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Number second");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Number second");
+
+		oParser = new parserFormula("DATEDIF(12,12,\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Two equal numbers");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Two equal numbers");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(years)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "First number less than second(years)");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"M\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(months)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "First number less than second(months)");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(days)");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "First number less than second(days)");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"MD\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(MDays)");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "First number less than second(MDays)");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"YM\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(YMonths)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "First number less than second(YMonths)");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"YD\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(YDays)");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "First number less than second(YDays)");
+		
+		// bool
+		oParser = new parserFormula("DATEDIF(TRUE,DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Boolean true first");
+		assert.strictEqual(oParser.calculate().getValue(), 122, "Boolean true first");
+
+		oParser = new parserFormula("DATEDIF(FALSE,DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Boolean false first");
+		assert.strictEqual(oParser.calculate().getValue(), 122, "Boolean false first");
+
+		oParser = new parserFormula("DATEDIF(DATE(2022,4,12),TRUE,\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Boolean second");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Boolean second");
+
+		// exotic dates
+		oParser = new parserFormula("DATEDIF(DATE(4022,4,12),DATE(4023,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(9999,30,12),DATE(99999,30,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 90000, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(9999,30,12),DATE(99999,30,12),\"M\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 1080000, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(9999,30,12),DATE(99999,30,12222),\"M\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 1080401, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(9999,30,12),DATE(99999,30,12),\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 32871825, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(9999,30,12),DATE(99999,30000,12),\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 33784019, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(1,1,1),DATE(1,2,1),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Exotic date");
 
 		testArrayFormula2(assert, "DATEDIF", 3, 3);
 	});
