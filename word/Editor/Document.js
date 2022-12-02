@@ -5313,7 +5313,10 @@ CDocument.prototype.CheckViewPosition = function()
 	if (cursorPos && 0 !== cursorAlign)
 	{
 		let cursor = GetXY(cursorPos);
-		// TODO: Надо сделать скроллинг к месту курсора
+		if (cursorAlign < 0)
+			this.DrawingDocument.m_oWordControl.ScrollToAbsolutePosition(cursor.X, cursor.Y - cursorDistance, cursor.Page);
+		else
+			this.DrawingDocument.m_oWordControl.ScrollToAbsolutePosition(cursor.X, cursor.Y + cursorDistance, cursor.Page, true);
 	}
 	else
 	{
@@ -5323,6 +5326,8 @@ CDocument.prototype.CheckViewPosition = function()
 		let height = (top.Page === bottom.Page ? bottom.Y - top.Y - top.H : bottom.Y);
 		this.DrawingDocument.m_oWordControl.ScrollToPosition(top.X, top.Y + top.H, top.Page, height);
 	}
+	
+	this.RecalculateCurPos();
 };
 CDocument.prototype.RecalculateCurPos = function()
 {
