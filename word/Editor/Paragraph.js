@@ -2866,6 +2866,8 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 
 						// Word не рисует подчеркивание у символа списка, если оно пришло из настроек для
 						// символа параграфа.
+						
+						let underlineValue = oNumTextPr.Underline;
 
 						var oTextPrTemp = this.TextPr.Value.Copy();
 						if (undefined !== oTextPrTemp.RStyle && this.Parent)
@@ -2874,10 +2876,10 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 							let styleTextPr  = styleManager.Get_Pr(oTextPrTemp.RStyle, styletype_Character).TextPr;
 							oNumTextPr.Merge(styleTextPr);
 						}
-
-						oTextPrTemp.Underline = undefined;
-
+						
 						oNumTextPr.Merge(oTextPrTemp);
+						oNumTextPr.Underline = underlineValue;
+						
 						oNumTextPr.Merge(oNumLvl.GetTextPr());
 
 						var oPrevNumTextPr = oPrevNumPr ? this.Get_CompiledPr2(false).TextPr.Copy() : null;
