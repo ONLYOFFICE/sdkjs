@@ -5277,6 +5277,10 @@ CDocument.prototype.CheckViewPosition = function()
 	let nInDocumentPosition = bottomDocPos[0].Position;
 	if (this.FullRecalc.Id && this.FullRecalc.StartIndex <= nInDocumentPosition)
 		return;
+	
+	let cursorPos      = this.ViewPosition.CursorPos;
+	let cursorAlign    = this.ViewPosition.CursorAlign;
+	let cursorDistance = this.ViewPosition.CursorDistance;
 
 	this.ViewPosition     = null;
 	this.NeedUpdateTarget = false;
@@ -5305,12 +5309,20 @@ CDocument.prototype.CheckViewPosition = function()
 			H    : posInfo.Height
 		}
 	}
-
-	let top    = GetXY(topDocPos);
-	let bottom = GetXY(bottomDocPos);
-
-	let height = (top.Page === bottom.Page ? bottom.Y - top.Y - top.H : bottom.Y);
-	this.DrawingDocument.m_oWordControl.ScrollToPosition(top.X, top.Y + top.H, top.Page, height);
+	
+	if (cursorPos && 0 !== cursorAlign)
+	{
+		let cursor = GetXY(cursorPos);
+		// TODO: Надо сделать скроллинг к месту курсора
+	}
+	else
+	{
+		let top    = GetXY(topDocPos);
+		let bottom = GetXY(bottomDocPos);
+		
+		let height = (top.Page === bottom.Page ? bottom.Y - top.Y - top.H : bottom.Y);
+		this.DrawingDocument.m_oWordControl.ScrollToPosition(top.X, top.Y + top.H, top.Page, height);
+	}
 };
 CDocument.prototype.RecalculateCurPos = function()
 {
@@ -15432,10 +15444,10 @@ CDocument.prototype.Save_DocumentStateBeforeLoadChanges = function(isRemoveSelec
 	State.StartPos   = [];
 	State.EndPos     = [];
 
+	this.Controller.SaveDocumentStateBeforeLoadChanges(State);
+	
 	if (isStoreViewPosition)
 		this.private_StoreViewPositions(State);
-
-	this.Controller.SaveDocumentStateBeforeLoadChanges(State);
 
 	// TODO: Разобраться зачем здесь делается RemoveSelection, по логике надо вынести за пределы данной функции
 	if (false !== isRemoveSelection)
@@ -15494,7 +15506,65 @@ CDocument.prototype.private_GetXYByDocumentPosition = function(docPos)
 CDocument.prototype.private_StoreViewPositions = function(state)
 {
 	let viewPort = this.DrawingDocument.GetVisibleRegion();
-
+	
+	let selectionBounds = this.GetSelectionBounds();
+	
+	let cursorY, cursorH, cursorPage = -1, cursorPosType;
+	if (selectionBounds)
+	{
+		if (this.IsSelectionUse())
+		{
+			if (selectionBounds.Direction > 0)
+			{
+				cursorY       = selectionBounds.End.Y;
+				cursorH       = selectionBounds.End.H;
+				cursorPage    = selectionBounds.End.Page;
+				cursorPosType = 2;
+			}
+			else
+			{
+				cursorY       = selectionBounds.Start.Y;
+				cursorH       = selectionBounds.Start.H;
+				cursorPage    = selectionBounds.Start.Page;
+				cursorPosType = 1;
+			}
+		}
+		else
+		{
+			cursorY       = selectionBounds.Start.Y;
+			cursorH       = selectionBounds.End.Y - selectionBounds.Start.Y;
+			cursorPage    = selectionBounds.Start.Page;
+			cursorPosType = 0;
+		}
+	}
+	
+	let cursorDistance = 0;
+	let cursorAlign    = 0;
+	if (-1 !== cursorPage
+		&& ((viewPort[0].Page === cursorPage && cursorY + cursorH > viewPort[0].Y)
+			|| (viewPort[1].Page === cursorPage && cursorY < viewPort[1].Y)))
+	{
+		if (viewPort[0].Page === cursorPage)
+		{
+			cursorDistance = cursorY - viewPort[0].Y;
+			cursorAlign    = -1;
+		}
+		else
+		{
+			cursorDistance = viewPort[1].Y - cursorY;
+			cursorAlign = 1;
+		}
+	}
+	else
+	{
+		cursorPosType = -1;
+	}
+	
+	state.CursorAlign    = cursorAlign;
+	state.CursorDistance = cursorDistance
+	state.CursorPosType  = cursorPosType;
+	
+	
 	let topPos    = this.GetDocumentPositionByXY(viewPort[0].Page, 0, viewPort[0].Y);
 	let bottomPos = this.GetDocumentPositionByXY(viewPort[1].Page, 0, viewPort[1].Y);
 
@@ -15635,9 +15705,28 @@ CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State)
 	}
 
 	if (State.ViewPosTop)
-		this.ViewPosition = {Top : State.ViewPosTop, Bottom : State.ViewPosBottom ? State.ViewPosBottom : State.ViewPosTop};
+	{
+		this.ViewPosition = {
+			Top            : State.ViewPosTop,
+			Bottom         : State.ViewPosBottom ? State.ViewPosBottom : State.ViewPosTop,
+			CursorAlign    : State.CursorAlign,
+			CursorDistance : State.CursorDistance,
+			CursorPos      : null
+		};
+		
+		if (0 === State.CursorPosType)
+			this.ViewPosition.CursorPos = State.Pos;
+		else if (1 === State.CursorPosType)
+			this.ViewPosition.CursorPos = State.StartPos;
+		else if (2 === State.CursorPosType)
+			this.ViewPosition.CursorPos = State.EndPos;
+		else
+			this.ViewPosition.CursorPos = null;
+	}
 	else
+	{
 		this.ViewPosition = null;
+	}
 
 	this.UpdateSelection();
 
