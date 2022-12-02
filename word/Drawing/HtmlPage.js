@@ -1205,11 +1205,14 @@ function CEditorPage(api)
 		}
 	};
 
-	this.ScrollToAbsolutePosition = function(x, y, page)
+	this.ScrollToAbsolutePosition = function(x, y, page, isBottom)
 	{
 		let pos = this.m_oDrawingDocument.ConvertCoordsToCursor(x, y, page);
 		if (pos.Error)
 			return;
+
+		if (true === isBottom)
+			pos.Y -= ((this.m_oEditor.HtmlElement.height) >> 0);
 
 		// TODO: X position?
 		if (0 !== pos.Y)
