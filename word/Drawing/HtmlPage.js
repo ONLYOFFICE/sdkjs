@@ -1205,6 +1205,17 @@ function CEditorPage(api)
 		}
 	};
 
+	this.ScrollToAbsolutePosition = function(x, y, page)
+	{
+		let pos = this.m_oDrawingDocument.ConvertCoordsToCursor(x, y, page);
+		if (pos.Error)
+			return;
+
+		// TODO: X position?
+		if (0 !== pos.Y)
+			this.m_oScrollVerApi.scrollToY(pos.Y + this.m_dScrollY);
+	};
+
 	this.onButtonTabsClick = function()
 	{
 		var oWordControl = oThis;
