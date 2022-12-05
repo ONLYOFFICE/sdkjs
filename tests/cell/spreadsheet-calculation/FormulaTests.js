@@ -7206,7 +7206,7 @@ $(function () {
 		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,6,1),DATE(2002,8,15), YM)");
 		assert.strictEqual(oParser.calculate().getValue(), 2, "Result DATEDIF(DATE(2001,6,1),DATE(2002,8,15), YM)");
 
-		// bug tests
+		// bug 54552 tests
 		oParser = new parserFormula("DATEDIF(DATE(2020,10,2),DATE(2021,10,1),\"Y\")", "A2", ws);
 		assert.ok(oParser.parse(), "Bug test case");
 		assert.strictEqual(oParser.calculate().getValue(), 0, "Bug test case");
@@ -7273,6 +7273,35 @@ $(function () {
 		oParser = new parserFormula("DATEDIF(12,22,\"YD\")", "A2", ws);
 		assert.ok(oParser.parse(), "First number less than second(YDays)");
 		assert.strictEqual(oParser.calculate().getValue(), 10, "First number less than second(YDays)");
+
+		oParser = new parserFormula("DATEDIF(-12,22,\"YD\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(-12,22, YD)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "DATEDIF(-12,22, YD)");
+
+		oParser = new parserFormula("DATEDIF(-12,-22,\"YD\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(-12,-22, YD)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "DATEDIF(-12,-22, YD)");
+
+		oParser = new parserFormula("DATEDIF(-1.2,22,\"YD\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(-1.2,22, YD)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "DATEDIF(-1.2,22, YD)");
+
+		oParser = new parserFormula("DATEDIF(2,2.2,\"YD\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(2,2.2, YD)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "DATEDIF(2,2.2, YD)");
+
+		oParser = new parserFormula("DATEDIF(1.2,2.2,\"YD\")", "A2", ws);	
+		assert.ok(oParser.parse(), "DATEDIF(1.2,2.2, YD)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "DATEDIF(1.2,2.2, YD)");
+
+		oParser = new parserFormula("DATEDIF(9,100,\"YM\")", "A2", ws);	
+		assert.ok(oParser.parse(), "DATEDIF(9,100, YM)");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "DATEDIF(9,100, YM)");
+
+		// TODO в ms результат - 2
+		oParser = new parserFormula("DATEDIF(10,100,\"YM\")", "A2", ws);	
+		assert.ok(oParser.parse(), "DATEDIF(10,100, YM)");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "DATEDIF(10,100, YM)");
 		
 		// bool
 		oParser = new parserFormula("DATEDIF(TRUE,DATE(2022,4,12),\"Y\")", "A2", ws);
@@ -7315,6 +7344,17 @@ $(function () {
 		oParser = new parserFormula("DATEDIF(DATE(1,1,1),DATE(1,2,1),\"Y\")", "A2", ws);
 		assert.ok(oParser.parse(), "Exotic date");
 		assert.strictEqual(oParser.calculate().getValue(), 0, "Exotic date");
+
+		// arrays|range
+		ws.getRange2("B2").setValue("2");
+		ws.getRange2("B3").setValue("5");
+		ws.getRange2("B4").setValue("15");
+		ws.getRange2("B5").setValue("string");
+		ws.getRange2("B6").setValue("#N/A");
+		ws.getRange2("B7").setValue();
+		ws.getRange2("B8").setValue("");	
+
+		// other
 
 		testArrayFormula2(assert, "DATEDIF", 3, 3);
 	});
