@@ -7180,7 +7180,7 @@ $(function () {
 		testArrayFormula2(assert, "YEARFRAC", 2, 3, true, null);
 	});
 
-	QUnit.test("Test: \"DATEDIF\"", function (assert) {
+	/*QUnit.test("Test: \"DATEDIF\"", function (assert) {
 		// dates
 		oParser = new parserFormula("DATEDIF(DATE(2001,1,1),DATE(2003,1,1),\"Y\")", "A2", ws);
 		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,1,1),DATE(2003,1,1), Y)");
@@ -7357,7 +7357,7 @@ $(function () {
 		// other
 
 		testArrayFormula2(assert, "DATEDIF", 3, 3);
-	});
+	});*/
 
 	QUnit.test("Test: \"PRODUCT\"", function (assert) {
 
