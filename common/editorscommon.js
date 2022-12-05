@@ -1597,6 +1597,10 @@
 		MaxFileSize:      25000000, //25 mb
 		SupportedFormats: ["txt", "csv"]
 	};
+	var c_oAscXmlUploadProp = {
+		MaxFileSize:      25000000, //25 mb
+		SupportedFormats: ["xml"]
+	};
 
 	/**
 	 *
@@ -2021,6 +2025,11 @@
 			callback(Asc.c_oAscError.ID.Unknown);
 		}
 	}
+	function ShowXmlFileDialog(callback) {
+		if (false === _ShowFileDialog(getAcceptByArray(c_oAscXmlUploadProp.SupportedFormats), false, false, ValidateUploadXml, callback)) {
+			callback(Asc.c_oAscError.ID.Unknown);
+		}
+	}
 
 	function InitDragAndDrop(oHtmlElement, callback)
 	{
@@ -2366,6 +2375,10 @@
 	function ValidateUploadText(files)
 	{
 		return ValidateUpload(files, c_oAscServerError.UploadDocumentExtension, c_oAscServerError.UploadDocumentContentLength, c_oAscServerError.UploadDocumentCountFiles, c_oAscTextUploadProp);
+	}
+	function ValidateUploadXml(files)
+	{
+		return ValidateUpload(files, c_oAscServerError.UploadDocumentExtension, c_oAscServerError.UploadDocumentContentLength, c_oAscServerError.UploadDocumentCountFiles, c_oAscXmlUploadProp);
 	}
 
 	function CanDropFiles(event)
@@ -13308,6 +13321,7 @@
 	window["AscCommon"].ShowDocumentFileDialog = ShowDocumentFileDialog;
 	window["AscCommon"].ShowSpreadsheetFileDialog = ShowSpreadsheetFileDialog;
 	window["AscCommon"].ShowTextFileDialog = ShowTextFileDialog;
+	window["AscCommon"].ShowXmlFileDialog = ShowXmlFileDialog;
 	window["AscCommon"].InitDragAndDrop = InitDragAndDrop;
 	window["AscCommon"].UploadImageFiles = UploadImageFiles;
     window["AscCommon"].UploadImageUrls = UploadImageUrls;

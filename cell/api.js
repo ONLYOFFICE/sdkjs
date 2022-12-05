@@ -646,8 +646,96 @@ var editor;
 				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
 			};
 
-			reader.readAsArrayBuffer(files[0]);
+			reader.readAsBinaryString(files[0]);
 		});
+	};
+
+	spreadsheet_api.prototype._getTextFromFile = function (options, callback) {
+		var t = this;
+
+		function wrapper_callback(data) {
+			var cp = {
+				'codepage': AscCommon.c_oAscCodePageUtf8, "delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
+				'encodings': AscCommon.getEncodingParams(),
+				'data': data
+			};
+			callback(new AscCommon.asc_CAdvancedOptions(cp));
+		}
+
+		if (window["AscDesktopEditor"]) {
+			// TODO: add translations
+			window["AscDesktopEditor"]["OpenFilenameDialog"]("csv/txt", false, function (_file) {
+				var file = _file;
+				if (Array.isArray(file))
+					file = file[0];
+				if (!file)
+					return;
+
+				window["AscDesktopEditor"]["loadLocalFile"](file, function(uint8Array) {
+					if (!uint8Array)
+						return;
+
+					wrapper_callback(uint8Array);
+				});
+			});
+			return;
+		}
+
+		AscCommon.ShowXmlFileDialog(function (error, files) {
+			if (Asc.c_oAscError.ID.No !== error) {
+				t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+				return;
+			}
+
+			var format = AscCommon.GetFileExtension(files[0].name);
+			var reader = new FileReader();
+			reader.onload = function () {
+				t._test({data: new Uint8Array(reader.result), format: format});
+			};
+			reader.onerror = function () {
+				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
+			};
+			//readAsBinaryString ?
+			reader.readAsBinaryString(files[0]);
+		});
+	};
+
+	spreadsheet_api.prototype._test = function (document, oOptions) {
+		var stream = null;
+		var oApi = this;
+		this.insertDocumentUrlsData = {
+			imageMap: null, documents: [document], convertCallback: function (_api, url) {
+				_api.insertDocumentUrlsData.imageMap = url;
+				if (!url['output.bin']) {
+					_api.endInsertDocumentUrls();
+					_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
+						Asc.c_oAscError.Level.NoCritical);
+					return;
+				}
+				AscCommon.loadFileContent(url['output.bin'], function (httpRequest) {
+					if (null === httpRequest || !(stream = AscCommon.initStreamFromResponse(httpRequest))) {
+						_api.endInsertDocumentUrls();
+						_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
+							Asc.c_oAscError.Level.NoCritical);
+						return;
+					}
+					_api.endInsertDocumentUrls();
+				}, "arraybuffer");
+			}, endCallback: function (_api) {
+
+				if (stream) {
+
+				}
+			}
+		};
+
+		var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.XLSY);
+		options.isNaturalDownload = true;
+		options.isGetTextFromUrl = true;
+		if (document.url) {
+			options.errorDirect = Asc.c_oAscError.ID.DirectUrl;
+		}
+		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, options);
 	};
 
 	spreadsheet_api.prototype.endInsertDocumentUrls = function()
