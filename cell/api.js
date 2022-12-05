@@ -696,23 +696,24 @@ var editor;
 				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
 			};
 			//readAsBinaryString ?
-			reader.readAsBinaryString(files[0]);
+			reader.readAsArrayBuffer(files[0]);
 		});
 	};
 
 	spreadsheet_api.prototype._test = function (document, oOptions) {
+		var t = this;
 		var stream = null;
 		var oApi = this;
 		this.insertDocumentUrlsData = {
 			imageMap: null, documents: [document], convertCallback: function (_api, url) {
 				_api.insertDocumentUrlsData.imageMap = url;
-				if (!url['output.bin']) {
+				if (!url['output.xlst']) {
 					_api.endInsertDocumentUrls();
 					_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
 						Asc.c_oAscError.Level.NoCritical);
 					return;
 				}
-				AscCommon.loadFileContent(url['output.bin'], function (httpRequest) {
+				AscCommon.loadFileContent(url['output.xlst'], function (httpRequest) {
 					if (null === httpRequest || !(stream = AscCommon.initStreamFromResponse(httpRequest))) {
 						_api.endInsertDocumentUrls();
 						_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
@@ -724,7 +725,70 @@ var editor;
 			}, endCallback: function (_api) {
 
 				if (stream) {
+					//в этом случае запрашиваем бинарник
+					// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
+					let jsZlib = new AscCommon.ZLib();
+					if (!jsZlib.open(stream)) {
+						t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+						return false;
+					}
 
+					if (jsZlib.files && jsZlib.files.length) {
+						var binaryData = jsZlib.getFile(jsZlib.files[0])
+
+						//заполняем через банарник
+						var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+						//чтобы лишнего не читать, проставляю флаг копипаст
+						oBinaryFileReader.InitOpenManager.copyPasteObj = {
+							isCopyPaste: true, activeRange: null, selectAllSheet: true
+						};
+
+
+						var wb = new AscCommonExcel.Workbook();
+						wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
+
+						AscFormat.ExecuteNoHistory(function () {
+							AscCommonExcel.executeInR1C1Mode(false, function () {
+								oBinaryFileReader.Read(binaryData, wb);
+							});
+						});
+
+						if (wb.aWorksheets) {
+							var arrSheets = wb.aWorksheets;
+							// ToDo перейти от wsViews на wsViewsId
+							History.Create_NewPoint();
+							History.StartTransaction();
+
+							var renameParamsArr = [], renameSheetMap = {};
+							for (var i = arrSheets.length - 1; i >= 0; --i) {
+								t.wb.pasteSheet(arrSheets[i], 0, "test", function(renameParams) {
+									// Делаем активным скопированный
+									renameParamsArr.push(renameParams);
+									renameSheetMap[renameParams.lastName] =  renameParams.newName;
+									t.asc_showWorksheet(0);
+									//t.asc_setZoom(1);
+									// Посылаем callback об изменении списка листов
+									t.sheetsChanged();
+								});
+
+							}
+							//парсинг формул после вставки всех листов, поскольку внутри одного листа может быть ссылка в формуле на другой лист который ещё не вставился
+							//поэтому дожидаемся вставку всех листов
+							for(var j = 0; j < renameParamsArr.length; j++) {
+								var newSheet = t.wb.model.getWorksheetByName(renameParamsArr[j].newName);
+								newSheet.copyFromFormulas(renameParamsArr[j], renameSheetMap);
+							}
+
+							// Делаем активным скопированный
+							t.wbModel.setActive(0);
+							t.wb.updateWorksheetByModel();
+							t.wb.showWorksheet();
+							History.EndTransaction();
+							// Посылаем callback об изменении списка листов
+							t.sheetsChanged();
+
+						}
+					}
 				}
 			}
 		};
