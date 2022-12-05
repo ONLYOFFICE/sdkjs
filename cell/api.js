@@ -754,38 +754,13 @@ var editor;
 						});
 
 						if (wb.aWorksheets) {
+							var ws = t.wb.getWorksheet();
 							var arrSheets = wb.aWorksheets;
-							// ToDo перейти от wsViews на wsViewsId
-							History.Create_NewPoint();
-							History.StartTransaction();
+							AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange = "A1:R100";
+							t.wb.getWorksheet().setSelectionInfo('paste', {data: arrSheets[0], fromBinary: true, fontsNew: [], pasteAllSheet: true, wb: wb});
 
-							var renameParamsArr = [], renameSheetMap = {};
-							for (var i = arrSheets.length - 1; i >= 0; --i) {
-								t.wb.pasteSheet(arrSheets[i], 0, "test", function(renameParams) {
-									// Делаем активным скопированный
-									renameParamsArr.push(renameParams);
-									renameSheetMap[renameParams.lastName] =  renameParams.newName;
-									t.asc_showWorksheet(0);
-									//t.asc_setZoom(1);
-									// Посылаем callback об изменении списка листов
-									t.sheetsChanged();
-								});
 
-							}
-							//парсинг формул после вставки всех листов, поскольку внутри одного листа может быть ссылка в формуле на другой лист который ещё не вставился
-							//поэтому дожидаемся вставку всех листов
-							for(var j = 0; j < renameParamsArr.length; j++) {
-								var newSheet = t.wb.model.getWorksheetByName(renameParamsArr[j].newName);
-								newSheet.copyFromFormulas(renameParamsArr[j], renameSheetMap);
-							}
 
-							// Делаем активным скопированный
-							t.wbModel.setActive(0);
-							t.wb.updateWorksheetByModel();
-							t.wb.showWorksheet();
-							History.EndTransaction();
-							// Посылаем callback об изменении списка листов
-							t.sheetsChanged();
 
 						}
 					}
