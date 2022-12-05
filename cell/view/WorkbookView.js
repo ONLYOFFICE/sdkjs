@@ -1610,10 +1610,16 @@
     ws.applyFillHandle(x, y, ctrlPress);
   };
 
-	WorkbookView.prototype.fillHandleDone = function(startRange, endRange, bCtrl) {
+	WorkbookView.prototype.fillHandleDone = function(range) {
 		var ws = this.getWorksheet();
-		ws.fillHandleDone(startRange, endRange, bCtrl);
+		ws.fillHandleDone(range);
 	};
+
+	WorkbookView.prototype.canFillHandle = function(range) {
+		var ws = this.getWorksheet();
+		return ws.canFillHandle(range);
+	};
+
 
   // Обработка перемещения диапазона
   WorkbookView.prototype._onMoveRangeHandle = function(x, y, callback) {

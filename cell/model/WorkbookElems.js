@@ -12496,7 +12496,7 @@ QueryTableField.prototype.clone = function() {
 		this.copies = 1;
 		this.draft = false;
 		this.errors = 0; // displayed ST_PrintError
-		this.firstPageNumber = -1;
+		this.firstPageNumber = null;//default 1
 		this.pageOrder = 0; // downThenOver ST_PageOrder
 		this.scale = 100;
 		this.useFirstPageNumber = false;
@@ -14439,6 +14439,17 @@ QueryTableField.prototype.clone = function() {
 				delete this.worksheets[sheetName];
 			}
 		}
+	};
+
+	ExternalReference.prototype.setReferenceData = function (fileId, portalName) {
+		if (!fileId || !portalName) {
+			return;
+		}
+		if (!this.referenceData) {
+			this.referenceData = {};
+		}
+		this.referenceData["portalName"] = portalName;
+		this.referenceData["fileId"] = fileId;
 	};
 
 	function asc_CExternalReference() {

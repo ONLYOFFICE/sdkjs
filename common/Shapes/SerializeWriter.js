@@ -5542,33 +5542,10 @@ function CBinaryFileWriter()
 
     function GetTableRowHeight(row)
     {
-        if (row.Pr.Height !== undefined && row.Pr.Height != null)
+        if (AscFormat.isRealNumber(row.Pr.Height.Value))
         {
-            let fMaxTopMargin = 0, fMaxBottomMargin = 0, fMaxTopBorder = 0, fMaxBottomBorder = 0;
-            for(let i = 0;  i < row.Content.length; ++i)
-            {
-                var oCell = row.Content[i];
-                var oMargins = oCell.GetMargins();
-                if(oMargins.Bottom.W > fMaxBottomMargin)
-                {
-                    fMaxBottomMargin = oMargins.Bottom.W;
-                }
-                if(oMargins.Top.W > fMaxTopMargin)
-                {
-                    fMaxTopMargin = oMargins.Top.W;
-                }
-                var oBorders = oCell.Get_Borders();
-                if(oBorders.Top.Size > fMaxTopBorder)
-                {
-                    fMaxTopBorder = oBorders.Top.Size;
-                }
-                if(oBorders.Bottom.Size > fMaxBottomBorder)
-                {
-                    fMaxBottomBorder = oBorders.Bottom.Size;
-                }
-            }
-            return (((row.Pr.Height.Value + fMaxBottomMargin + fMaxTopMargin + fMaxTopBorder/2 + fMaxBottomBorder/2) * 36000) >> 0);
-        }
+			return row.Pr.Height.Value * 36000 + 0.5 >> 0;
+		}
         return null;
     }
 

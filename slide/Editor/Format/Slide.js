@@ -1619,7 +1619,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         if(!oContext) {
             return;
         }
-        if(oGraphics.IsThumbnail || oGraphics.animationDrawer || oGraphics.IsDemonstrationMode) {
+        if(oGraphics.IsThumbnail || oGraphics.animationDrawer ||
+	        oGraphics.IsDemonstrationMode || AscCommon.IsShapeToImageConverter) {
             return;
         }
 

@@ -240,6 +240,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_PivotCacheId = 53;
 	window['AscCH'].historyitem_PivotTable_PivotFieldVisible = 54;
 	window['AscCH'].historyitem_PivotTable_UseAutoFormatting = 55;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetShowDataAs = 56;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseField = 57;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseItem = 58;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;

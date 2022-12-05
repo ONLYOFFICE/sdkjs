@@ -62,9 +62,22 @@
 		}
 	};
 
-	AscCommon.baseEditorsApi.prototype["asc_setIsReadOnly"] = function(value, is_from_app)
+	AscCommon.baseEditorsApi.prototype["local_sendEvent"] = function()
 	{
-		if (value)
+		return this.sendEvent.apply(this, arguments);
+	};
+
+	Asc["c_oAscLocalRestrictionType"] = {
+		"None"		: 0x00,
+		"ReadOnly"	: 0x01,
+		"Locked"	: 0x02,
+		"Nosafe"	: 0x04
+	};
+
+	AscCommon.baseEditorsApi.prototype["asc_setLocalRestrictions"] = function(value, is_from_app)
+	{
+		this.localRestrintions = value;
+		if (value !== Asc["c_oAscLocalRestrictionType"]["None"])
 			this.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 		else
 			this.asc_removeRestriction(Asc.c_oAscRestrictionType.View);
@@ -72,15 +85,13 @@
 		if (is_from_app)
 			return;
 
-		window["AscDesktopEditor"] && window["AscDesktopEditor"]["SetIsReadOnly"] && window["AscDesktopEditor"]["SetIsReadOnly"](value);
+		window["AscDesktopEditor"] && window["AscDesktopEditor"]["SetLocalRestrictions"] && window["AscDesktopEditor"]["SetLocalRestrictions"](value);
 	};
-	AscCommon.baseEditorsApi.prototype["asc_isReadOnly"] = function()
+	AscCommon.baseEditorsApi.prototype["asc_getLocalRestrictions"] = function()
 	{
-		return this.isRestrictionView();
-	};
-	AscCommon.baseEditorsApi.prototype["local_sendEvent"] = function()
-	{
-		return this.sendEvent.apply(this, arguments);
+		if (undefined === this.localRestrintions)
+			return Asc["c_oAscLocalRestrictionType"]["None"];
+		return this.localRestrintions;
 	};
 })(window);
 

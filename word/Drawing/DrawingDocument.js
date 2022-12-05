@@ -2256,6 +2256,9 @@ function CDrawingDocument()
 
 			this.OnEndRecalculate(false);
 		}
+
+		if (this.m_oWordControl.m_oApi.printPreview && this.m_oWordControl.m_oApi.printPreview.page === index)
+			this.m_oWordControl.m_oApi.printPreview.update();
 	};
 
 	this.OnEndRecalculate = function (isFull, isBreak)
@@ -2761,16 +2764,18 @@ function CDrawingDocument()
 
 	this.GetVisibleRegion = function()
 	{
-		let height = 0;
+		let yOffset = 0;
 		if (this.m_oWordControl)
-			height += this.m_oWordControl.Y;
-		if (this.m_oWordControl.m_oEditor)
-			height += this.m_oWordControl.m_oEditor.HtmlElement.height;
+			yOffset += this.m_oWordControl.Y;
 		if (true === this.m_oWordControl.m_bIsRuler)
-			height += (7 * g_dKoef_mm_to_pix);
+			yOffset += (7 * g_dKoef_mm_to_pix);
 
-		let pos1 = this.ConvertCoordsFromCursor2(0, 0);
-		let pos2 = this.ConvertCoordsFromCursor2(0, height);
+		let height = 0;
+		if (this.m_oWordControl.m_oEditor)
+			height += AscCommon.AscBrowser.convertToRetinaValue(this.m_oWordControl.m_oEditor.HtmlElement.height);
+
+		let pos1 = this.ConvertCoordsFromCursor2(0, yOffset);
+		let pos2 = this.ConvertCoordsFromCursor2(0, yOffset + height);
 
 		return [{ Page : pos1.Page, Y : pos1.Y }, { Page : pos2.Page, Y : pos2.Y }];
 	};

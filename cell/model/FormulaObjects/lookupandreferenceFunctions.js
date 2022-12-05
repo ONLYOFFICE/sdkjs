@@ -3518,6 +3518,7 @@ function (window, undefined) {
 	cXMATCH.prototype.argumentsMax = 4;
 	cXMATCH.prototype.arrayIndexes = {1: 1};
 	cXMATCH.prototype.argumentsType = [argType.any, argType.reference, argType.number, argType.number];
+	cXMATCH.prototype.isXLFN = true;
 	cXMATCH.prototype.Calculate = function (arg) {
 		arg[4] = true;
 		return g_oMatchCache.calculate(arg, arguments[1]);

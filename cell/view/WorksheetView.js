@@ -7120,7 +7120,10 @@
 				var oldExcludeCollapsed = this.model.bExcludeCollapsed;
 				this.model.bExcludeCollapsed = true;
                 // ToDo delete setRowHeight here
-				this.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, false);
+				// TODO temporary add limit, because minimal zoom change not correct row height
+				if (this.getZoom() >= 0.5) {
+					this.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, false);
+				}
 				this.model.bExcludeCollapsed = oldExcludeCollapsed;
 				History.TurnOn();
 
@@ -10516,55 +10519,153 @@
 		}
     };
 
-	WorksheetView.prototype.fillHandleDone = function (startRange, endRange, bCtrl) {
-		//на входе имеем два диапазона, определяем точку крайней ячейки автозаполнения
-		if (!startRange) {
-			startRange = this.model.selectionRange.getLast().clone();
-		}
-		if (!endRange) {
-			endRange = this.model.selectionRange.getLast().clone();
+	WorksheetView.prototype.canFillHandle = function (range) {
+		//if don't have empty rows/columns
+		//if all range is empty
+		if (!range) {
+			range = this.model.selectionRange.getLast().clone();
 		}
 
-		startRange = typeof startRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(startRange) : startRange;
-		endRange = typeof endRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(endRange) : endRange;
+		range = typeof range === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(range) : range;
 
-		this.activeFillHandle = startRange.clone();
+		if (this.model.autoFilters._isEmptyRange(range)) {
+			return false;
+		}
 
-		if (startRange.r1 !== endRange.r1 || startRange.r2 !== endRange.r2) {
-			this.fillHandleDirection = 1;
-			if (startRange.r1 === endRange.r1 && startRange.r1 <= endRange.r2 && startRange.r2 >= endRange.r2) {
-				//попали внутрь диапазона, т.е. маркером пошли наверх
-				this.activeFillHandle.r2 = endRange.r2 + 1;
-				this.activeFillHandle.r1 = startRange.r2;
-				this.fillHandleArea = 2;
-			} else if (endRange.r1 < startRange.r1) {
-				this.activeFillHandle.r2 = endRange.r1;
-				this.activeFillHandle.r1 = startRange.r2;
-				this.fillHandleArea = 1;
-			} else if (startRange.r1 === endRange.r1 && endRange.r2 > startRange.r2) {
-				this.activeFillHandle.r2 = endRange.r2;
-				this.activeFillHandle.r1 = endRange.r1;
-				this.fillHandleArea = 3;
+		if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c1, range.r1, range.c2, range.r1))) {
+			return true;
+		}
+		if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c1, range.r2, range.c2, range.r2))) {
+			return true;
+		}
+		if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c1, range.r1, range.c1, range.r2))) {
+			return true;
+		}
+		if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c2, range.r1, range.c2, range.r2))) {
+			return true;
+		}
+
+		return false;
+	};
+
+	WorksheetView.prototype.fillHandleDone = function (range) {
+		let t = this;
+
+		let doFill = function (_start, _end) {
+			t.model.selectionRange.getLast().assign2(_start);
+			t.activeFillHandle = _end.clone();
+
+			if (_start.r1 !== _end.r1 || _start.r2 !== _end.r2) {
+				t.fillHandleDirection = 1;
+				if (_start.r1 === _end.r1 && _start.r1 <= _end.r2 && _start.r2 >= _end.r2) {
+					//inside range, go up
+					t.activeFillHandle.r2 = _end.r2 + 1;
+					t.activeFillHandle.r1 = _start.r2;
+					t.fillHandleArea = 2;
+				} else if (_end.r1 < _start.r1) {
+					t.activeFillHandle.r2 = _end.r1;
+					t.activeFillHandle.r1 = _start.r2;
+					t.fillHandleArea = 1;
+				} else if (_start.r1 === _end.r1 && _end.r2 > _start.r2) {
+					t.activeFillHandle.r2 = _end.r2;
+					t.activeFillHandle.r1 = _end.r1;
+					t.fillHandleArea = 3;
+				}
+			} else {
+				t.fillHandleDirection = 0;
+				if (_start.c1 === _end.c1 && _start.c1 <= _end.c2 && _start.c2 >= _end.c2) {
+					//inside range, gp down
+					t.activeFillHandle.c2 = _end.c2 + 1;
+					t.activeFillHandle.c1 = _start.c2;
+					t.fillHandleArea = 2;
+				} else if (_end.c1 < _start.c1) {
+					t.activeFillHandle.c2 = _end.c1;
+					t.activeFillHandle.c1 = _start.c2;
+					t.fillHandleArea = 1;
+				} else if (_start.c1 === _end.c1 && _end.c2 > _start.c2) {
+					t.activeFillHandle.c2 = _end.c2;
+					t.activeFillHandle.c1 = _end.c1;
+					t.fillHandleArea = 3;
+				}
 			}
-		} else {
-			this.fillHandleDirection = 0;
-			if (startRange.c1 === endRange.c1 && startRange.c1 <= endRange.c2 && startRange.c2 >= endRange.c2) {
-				//попали внутрь диапазона, т.е. маркером пошли наверх
-				this.activeFillHandle.c2 = endRange.c2 + 1;
-				this.activeFillHandle.c1 = startRange.c2;
-				this.fillHandleArea = 2;
-			} else if (endRange.c1 < startRange.c1) {
-				this.activeFillHandle.c2 = endRange.c1;
-				this.activeFillHandle.c1 = startRange.c2;
-				this.fillHandleArea = 1;
-			} else if (startRange.c1 === endRange.c1 && endRange.c2 > startRange.c2) {
-				this.activeFillHandle.c2 = endRange.c2;
-				this.activeFillHandle.c1 = endRange.c1;
-				this.fillHandleArea = 3;
+
+			t.applyFillHandle(null, null, null, true);
+		};
+
+
+		//only end range - selected range
+		//1. search base
+		var activeCell = this.model.selectionRange.activeCell.clone();
+
+		if (!range) {
+			range = this.model.selectionRange.getLast().clone();
+		}
+		range = typeof range === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(range) : range;
+
+		let i;
+		let baseRow1 = range.r1;
+		let baseRow2 = range.r2;
+		for (i = range.r1; i <= range.r2; i++) {
+			if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c1, i, range.c2, i))) {
+				baseRow1++;
+			} else {
+				break;
+			}
+		}
+		for (i = range.r2; i >= range.r1; i--) {
+			if (this.model.autoFilters._isEmptyRange(new Asc.Range(range.c1, i, range.c2, i))) {
+				baseRow2--;
+			} else {
+				break;
+			}
+		}
+		let baseCol1 = range.c1;
+		let baseCol2 = range.c2;
+		for (i = range.c1; i <= range.c2; i++) {
+			if (this.model.autoFilters._isEmptyRange(new Asc.Range(i, range.r1, i, range.r2))) {
+				baseCol1++;
+			} else {
+				break;
+			}
+		}
+		for (i = range.c2; i >= range.c1; i--) {
+			if (this.model.autoFilters._isEmptyRange(new Asc.Range(i, range.r1, i, range.r2))) {
+				baseCol2--;
+			} else {
+				break;
 			}
 		}
 
-		this.applyFillHandle(null, null, bCtrl);
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		let baseRange = new Asc.Range(baseCol1, baseRow1, baseCol2, baseRow2);
+		//1. take base and expand up/down in empty cells
+		if (range.r1 !== baseRow1) {
+			doFill(baseRange, new Asc.Range(baseRange.c1, range.r1, baseRange.c2, baseRange.r2));
+		}
+		if (range.r2 !== baseRow2) {
+			doFill(baseRange, new Asc.Range(baseRange.c1, baseRange.r1, baseRange.c2, range.r2));
+		}
+
+		//get new base
+		baseRange = new Asc.Range(baseCol1, range.r1, baseCol2, range.r2);
+
+		//2. take base and expand left/right in empty cells
+		if (range.c1 !== baseCol1) {
+			doFill(baseRange, new Asc.Range(range.c1, baseRange.r1, baseRange.c2, baseRange.r2));
+		}
+		if (range.c2 !== baseCol2) {
+			doFill(baseRange, new Asc.Range(baseRange.c1, baseRange.r1, range.c2, baseRange.r2));
+		}
+
+		History.SetSelection(range);
+		History.SetSelectionRedo(range);
+		History.EndTransaction();
+
+		t.model.selectionRange.getLast().assign2(range);
+		t.model.selectionRange.activeCell = activeCell;
+		t.draw();
 	};
 
     /* Функция для работы автозаполнения (selection). (x, y) - координаты точки мыши на области */
@@ -10951,7 +11052,7 @@
     };
 
     /* Функция для применения автозаполнения */
-    WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress) {
+    WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw) {
         var t = this;
 
         if (null !== this.resizeTableIndex) {
@@ -10964,15 +11065,13 @@
 					t.af_changeTableRange(table.DisplayName, t.activeFillHandle.clone());
 				}
 			}
-        	this.cleanSelection();
+			!opt_doNotDraw && this.cleanSelection();
         	t.activeFillHandle = null;
 			t.resizeTableIndex = null;
 			t.fillHandleDirection = -1;
-			t._drawSelection();
+			!opt_doNotDraw && t._drawSelection();
         	return;
 		}
-
-		console.log("r1: " + this.activeFillHandle.r1 + " r2: " + this.activeFillHandle.r2 + "c1: " + this.activeFillHandle.c1 + " c2: " + this.activeFillHandle.c2)
 
         // Текущее выделение (к нему применится автозаполнение)
         var arn = t.model.selectionRange.getLast();
@@ -11091,7 +11190,7 @@
 
 						// Обновляем выделенные ячейки
 						t._updateRange(arn);
-						t.draw();
+						!opt_doNotDraw && t.draw();
                     } else {
                         t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange,
                           c_oAscError.Level.NoCritical);
@@ -11108,7 +11207,7 @@
 					t.activeFillHandle = null;
 					t.fillHandleDirection = -1;
 					// Перерисовываем
-					t._drawSelection();
+					!opt_doNotDraw && t._drawSelection();
                 }
             };
 
@@ -11123,7 +11222,7 @@
 						t.activeFillHandle = null;
 						t.fillHandleDirection = -1;
 						// Перерисовываем
-						t._drawSelection();
+						!opt_doNotDraw && t._drawSelection();
 					}
 				}, true);
 				return;
@@ -11133,7 +11232,7 @@
 				this.activeFillHandle = null;
 				this.fillHandleDirection = -1;
 				// Перерисовываем
-				this._drawSelection();
+				!opt_doNotDraw && this._drawSelection();
 
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 					c_oAscError.Level.NoCritical);
@@ -11146,7 +11245,7 @@
 				this.activeFillHandle = null;
 				this.fillHandleDirection = -1;
 				// Перерисовываем
-				this._drawSelection();
+				!opt_doNotDraw && this._drawSelection();
 
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray,
 					c_oAscError.Level.NoCritical);
@@ -11162,7 +11261,7 @@
             this.activeFillHandle = null;
             this.fillHandleDirection = -1;
             // Перерисовываем
-            this._drawSelection();
+			!opt_doNotDraw && this._drawSelection();
         }
     };
 
