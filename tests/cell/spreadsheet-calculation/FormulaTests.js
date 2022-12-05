@@ -7248,7 +7248,7 @@ $(function () {
 
 		oParser = new parserFormula("DATEDIF(12,12,\"Y\")", "A2", ws);
 		assert.ok(oParser.parse(), "Two equal numbers");
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Two equal numbers");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Two equal numbers");
 
 		oParser = new parserFormula("DATEDIF(12,22,\"Y\")", "A2", ws);
 		assert.ok(oParser.parse(), "First number less than second(years)");
@@ -7352,9 +7352,38 @@ $(function () {
 		ws.getRange2("B5").setValue("string");
 		ws.getRange2("B6").setValue("#N/A");
 		ws.getRange2("B7").setValue();
-		ws.getRange2("B8").setValue("");	
+		ws.getRange2("B8").setValue("");
 
-		// other
+		ws.getRange2("C2").setValue("2");
+		ws.getRange2("C3").setValue("12");
+		ws.getRange2("C4").setValue("15");
+		ws.getRange2("C5").setValue("25");
+		ws.getRange2("C6").setValue("25.5");
+
+		oParser = new parserFormula("DATEDIF({223,999,250},250,\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "Pass array to first argument and number to second argument.");
+		assert.strictEqual(oParser.calculate().getValue(), 27, "Pass array to first argument and number to second argument.");
+
+		oParser = new parserFormula("DATEDIF(B2:B2,25,\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "Pass cellsRange to first argument and number to second argument.");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass array to first argument and number to second argument.");
+
+		oParser = new parserFormula("DATEDIF(C2:C6,25,\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "Pass array to first and number to second argument.");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass array to first and number to second argument.");
+
+		// ctrl shift enter cases
+
+		oParser = new parserFormula("DATEDIF(C2:C6,25,\"D\")", "A2", ws);
+      	oParser.setArrayFormulaRef(ws.getRange2("C2:C6").bbox);
+		assert.ok(oParser.parse(), "Pass cellsRange to first and number to second argument.");
+		let array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, "Pass cellsRange to first and number to second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 13, "Pass cellsRange to first and number to second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 10, "Pass cellsRange to first and number to second argument.[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 0, "Pass cellsRange to first and number to second argument.[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#NUM!", "Pass cellsRange to first and number to second argument.[4,0]");
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "", "Pass cellsRange to first and number to second argument.[5,0]");
 
 		testArrayFormula2(assert, "DATEDIF", 3, 3);
 	});

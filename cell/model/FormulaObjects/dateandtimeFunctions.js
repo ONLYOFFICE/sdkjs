@@ -649,7 +649,7 @@
 
 		let val0 = arg0.getValue(), val1 = arg1.getValue();
 
-		if (val0 < 0 || val1 < 0 || val0 >= val1) {
+		if (val0 < 0 || val1 < 0 || val0 > val1) {
 			return new cError(cErrorType.not_numeric);
 		}
 
