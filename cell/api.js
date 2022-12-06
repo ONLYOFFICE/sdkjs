@@ -2108,7 +2108,7 @@ var editor;
 
 	spreadsheet_api.prototype.openDocumentFromZip2 = function (wb, data) {
 		//TODO зачитать sharedStrings
-		if (!data || !this.isOpenOOXInBrowser) {
+		if (!data || !this["asc_isSupportFeature"]("ooxml")) {
 			return null;
 		}
 
