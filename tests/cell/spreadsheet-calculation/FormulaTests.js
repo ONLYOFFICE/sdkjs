@@ -8270,7 +8270,7 @@ $(function () {
 
 
 	QUnit.test("Test: \"RANDBETWEEN\"", function (assert) {
-		var res;
+		let res;
 		oParser = new parserFormula("RANDBETWEEN(1,6)", "A1", ws);
 		assert.ok(oParser.parse());
 		res = oParser.calculate().getValue();
@@ -8286,7 +8286,57 @@ $(function () {
 		res = oParser.calculate().getValue();
 		assert.ok(res >= -25 && res <= -3);
 
-		testArrayFormula2(assert, "RANDBETWEEN", 2, 2, true)
+		oParser = new parserFormula("RANDBETWEEN(1,100)", "A1", ws);
+		assert.ok(oParser.parse());
+		res = oParser.calculate().getValue();
+		assert.ok(res >= 1 && res <= 100);
+
+		oParser = new parserFormula("RANDBETWEEN(0,999999999999999999999999999)", "A1", ws);
+		assert.ok(oParser.parse());
+		res = oParser.calculate().getValue();
+		assert.ok(res >= 9 && res <= 999999999999999999999999999n);
+
+		oParser = new parserFormula("RANDBETWEEN(-1,100)", "A1", ws);
+		assert.ok(oParser.parse());
+		res = oParser.calculate().getValue();
+		assert.ok(res >= -1 && res <= 100);
+
+		oParser = new parserFormula("RANDBETWEEN(1,-1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("RANDBETWEEN(1.1,22.9)", "A1", ws);
+		assert.ok(oParser.parse());
+		res = oParser.calculate().getValue();
+		assert.ok(res >= 2 && res <= 22);
+
+		oParser = new parserFormula("RANDBETWEEN(-22.9,-1.1)", "A1", ws);
+		assert.ok(oParser.parse());
+		res = oParser.calculate().getValue();
+		assert.ok(res >= -22 && res <= -1);
+
+		// special cases
+		oParser = new parserFormula("RANDBETWEEN(1.5,2.5)", "A1", ws);
+		assert.ok(oParser.parse());
+		res = oParser.calculate().getValue();
+		assert.ok(res === 2);
+
+		oParser = new parserFormula("RANDBETWEEN(-2.5,-1.5)", "A1", ws);
+		assert.ok(oParser.parse());
+		res = oParser.calculate().getValue();
+		assert.ok(res === -2);
+
+		oParser = new parserFormula("RANDBETWEEN(0.00000000005,0.1)", "A1", ws);
+		assert.ok(oParser.parse());
+		res = oParser.calculate().getValue();
+		assert.ok(res === 1);
+
+		oParser = new parserFormula("RANDBETWEEN(-0.1,-0.00000000005)", "A1", ws);
+		assert.ok(oParser.parse());
+		res = oParser.calculate().getValue();
+		assert.ok(res === 0);
+
+		// testArrayFormula2(assert, "RANDBETWEEN", 2, 2, true);
 	});
 
 	QUnit.test("Test: \"RANDARRAY\"", function (assert) {

@@ -3705,9 +3705,18 @@
 	cRANDBETWEEN.prototype.Calculate = function (arg) {
 
 		function randBetween(a, b) {
-			a = Math.round(a);
-			b = Math.round(b);
-			return new cNumber(Math.round(Math.random() * Math.abs(a - b)) + a);
+			if ((a > 0 && a < 1) && (b > 0 && b < 1)) {
+				return new cNumber(1);
+			}
+
+			if ((a < 0 && a > -1) && (b < 0 && b > -1)) {
+				return new cNumber(0);
+			}
+
+			let firstNumber = Math.ceil(a);
+			let secondNumber = Math.floor(b);
+
+			return new cNumber(Math.round(Math.random() * Math.abs(firstNumber - secondNumber)) + firstNumber);
 		}
 
 		function f(a, b, r, c) {
