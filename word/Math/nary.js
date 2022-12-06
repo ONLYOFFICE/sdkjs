@@ -879,6 +879,10 @@ CNary.prototype.GetTextOfElement = function(isLaTeX) {
 		strTemp += "_" + strSubContent;
 	}
 	strTemp += strBase;
+
+    if (!isLaTeX) {
+        strTemp =  '〖' + strTemp + '〗';
+    }
 	return strTemp;
 };
 

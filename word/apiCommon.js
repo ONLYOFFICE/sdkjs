@@ -2080,7 +2080,59 @@
 			oContext.beginPath();
 		}
 	};
+	CAscWatermarkProperties.prototype.isEqual = function(oPr)
+	{
+		if(!oPr)
+		{
+			return false;
+		}
+		if(this.Type !== oPr.Type)
+		{
+			return false;
+		}
+		if(this.Text !== oPr.Text)
+		{
+			return false;
+		}
 
+		if(this.TextPr && !oPr.TextPr ||
+		   !this.TextPr && oPr.TextPr)
+		{
+			return false;
+		}
+		if(this.TextPr)
+		{
+			let oCurDocTextPr = new AscWord.CTextPr();
+			let oDocTextPr = new AscWord.CTextPr();
+			oCurDocTextPr.Set_FromObject(this.TextPr);
+			oDocTextPr.Set_FromObject(oPr.TextPr);
+			if(!oCurDocTextPr.IsEqual(oDocTextPr))
+			{
+				return false;
+			}
+		}
+		if(AscFormat.isRealNumber(this.Opacity) && !AscFormat.isRealNumber(oPr.Opacity) ||
+			!AscFormat.isRealNumber(this.Opacity) && AscFormat.isRealNumber(oPr.Opacity) ||
+			AscFormat.isRealNumber(this.Opacity) && !AscFormat.fApproxEqual(this.Opacity, oPr.Opacity, 1))
+		{
+			return false;
+		}
+		if(this.IsDiagonal !== oPr.IsDiagonal)
+		{
+			return false;
+		}
+		if(this.ImageUrl !== oPr.ImageUrl)
+		{
+			return false;
+		}
+		if(AscFormat.isRealNumber(this.Scale) && !AscFormat.isRealNumber(oPr.Scale) ||
+			!AscFormat.isRealNumber(this.Scale) && AscFormat.isRealNumber(oPr.Scale) ||
+			AscFormat.isRealNumber(this.Scale) && !AscFormat.fApproxEqual(this.Scale, oPr.Scale))
+		{
+			return false;
+		}
+		return true;
+	};
 
 	function CAscCaptionProperties()
 	{

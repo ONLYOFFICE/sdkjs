@@ -2647,10 +2647,12 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 		return false;
 
 	let oContentPos = this.GetStartPosInParagraph();
-	let oRunElementsBefore = new CParagraphRunElements(oContentPos, 1, null, false);
+
+    let oRunElementsBefore = new CParagraphRunElements(oContentPos, 1, null, false);
 	oRunElementsBefore.SetSaveContentPositions(true);
 	oParagraph.GetPrevRunElements(oRunElementsBefore);
-	let arrElements = oRunElementsBefore.GetElements();
+
+    let arrElements = oRunElementsBefore.GetElements();
 	if (arrElements.length > 0 && arrElements[0].IsSpace())
 		oParagraph.RemoveRunElement(oRunElementsBefore.GetContentPositions()[0]);
 
@@ -3670,11 +3672,11 @@ ParaMath.prototype.ConvertToLaTeX = function()
 {
 	var strLatex = this.GetText(true);
 	this.Root.Remove_Content(0,this.Root.Content.length);
-	//console.log('LaTeX string:', strLatex);
 	this.Root.Add_Text(strLatex, this.Paragraph);
 };
 ParaMath.prototype.ConvertFromUnicodeMath = function()
 {
+    this.Root.CorrectAllMathWords();
 	var strUnicode = this.GetText();
 	this.Root.Remove_Content(0,this.Root.Content.length);
     this.Root.Correct_Content(true);
@@ -3685,11 +3687,11 @@ ParaMath.prototype.ConvertToUnicodeMath = function()
 {
 	var strUnicode = this.GetText();
 	this.Root.Remove_Content(0,this.Root.Content.length);
-	//console.log('Unicode string:', strUnicode);
 	this.Root.Add_Text(strUnicode, this.Paragraph);
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 {
+    debugger
 	if (undefined === nInputType)
 	{
 		let oApi = Asc.editor || editor;
@@ -3707,6 +3709,7 @@ ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 	{
 		if (Asc.c_oAscMathInputType.Unicode === nInputType)
 		{
+
 			this.ConvertFromUnicodeMath();
 		}
 		else if (Asc.c_oAscMathInputType.LaTeX === nInputType)
@@ -3717,13 +3720,31 @@ ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 };
 ParaMath.prototype.SplitSelectedContent = function() {
     var oSelection = this.GetSelectContent();
-    var oContent = oSelection.Content; 
+    var oContent = oSelection.Content;
     oContent.SplitSelectedContent();
 }
 ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
 {
     this.SplitSelectedContent();
-    
+
+    var oSelection = this.GetSelectContent();
+
+    oSelection.Content.ConvertContentView(
+        oSelection.Start,
+        oSelection.End,
+        nInputType,
+        isToLinear
+    );
+};
+ParaMath.prototype.SplitSelectedContent = function() {
+    var oSelection = this.GetSelectContent();
+    var oContent = oSelection.Content;
+    oContent.SplitSelectedContent();
+}
+ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
+{
+    this.SplitSelectedContent();
+
     var oSelection = this.GetSelectContent();
 
     oSelection.Content.ConvertContentView(

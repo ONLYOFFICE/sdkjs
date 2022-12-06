@@ -544,16 +544,18 @@ CDegree.prototype.Can_ModifyArgSize = function()
 CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strTypeOfScript = this.Pr.type === 1 ? '^' : '_';
+
 	var oBase = this.getBase();
+
 	var strBase = this.CheckIsEmpty(oBase.GetTextOfElement(isLaTeX));
 	var strIterator = this.CheckIsEmpty(this.getIterator().GetTextOfElement(isLaTeX));
 	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
 	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
 
-	if (isLaTeX) {
-		if (strIterator.length > 1) {
-			strIterator = strStartBracet + strIterator + strCloseBracet;
-		}
+	if (isLaTeX)
+    {
+		strIterator = strStartBracet + strIterator + strCloseBracet;
+		
 		switch (strBase) {
 			case 'cos':
 			case 'sin':
@@ -587,18 +589,13 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 			case 'exp': strBase = '\\'+ strBase; break;
 			default: break;
 		}
-		
-		if(strIterator.length === 0) {
-			strIterator = '{}'
-		}
+        
 		strTemp = strBase + strTypeOfScript + strIterator;
-	} else {
-		if (strIterator.length > 1) {
-			strIterator = strStartBracet + strIterator + strCloseBracet;
-		}
-		if(strIterator.length === 0) {
-			strIterator = '()'
-		}
+	}
+    else
+    {
+		strIterator = strStartBracet + strIterator + strCloseBracet;
+		
 		if (strBase.length > 1 && strIterator.length > 1) {
 			strBase = '〖'+ strBase +'〗';
 		}
@@ -1266,51 +1263,43 @@ CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX) {
 	var strLower = this.CheckIsEmpty(this.getLowerIterator().GetTextOfElement(isLaTeX));
 	var strUpper = this.CheckIsEmpty(this.getUpperIterator().GetTextOfElement(isLaTeX));
 	var isPreScript = this.Pr.type === -1;
-	if (isLaTeX) {
-		strLower = strLower.length > 1
-			? '{' + strLower + '}'
-			: strLower;
-		strUpper = strUpper.length > 1
-			? '{' + strUpper + '}'
-			: strUpper;
-		Base = Base.length > 1
-			? '{'+ Base +'}'
-			: Base;
+	
+    if (isLaTeX) {
+		strLower = '{' + strLower + '}';
+		strUpper = '{' + strUpper + '}';
+		Base = '{'+ Base +'}';
 
-		if(strLower.length === 0) {
+		if(strLower.length === 0 || strLower === '⬚') {
 			strLower = '{}'
 		}
-		if(strUpper.length === 0) {
+		if(strUpper.length === 0 || strUpper === '⬚') {
 			strUpper = '{}'
 		}
-		if(strLower === '⬚') {
-			strLower = '{}'
-		}
-		if(strUpper === '⬚') {
-			strUpper = '{}'
-		}
+
 		if (true === isPreScript) {
 			strTemp = '{' + '_' + strLower + '^' + strUpper + '}' + Base;
-		} else {
+		}
+        else {
 			strTemp = Base + '_' + strLower + '^' + strUpper;
 		}
+
 	} else {
-		strLower = strLower.length > 1
-			? '(' + strLower + ')'
-			: strLower;
-		if(strLower.length === 0) {
+		strLower = '(' + strLower + ')';
+		
+        if(strLower.length === 0) {
 			strLower = '()'
 		}
-		strUpper = strUpper.length > 1
-			? '(' + strUpper + ')'
-			: strUpper;
-		if(strUpper.length === 0) {
+
+		strUpper = '(' + strUpper + ')';
+		
+        if(strUpper.length === 0) {
 			strUpper = '()'
 		}
 
 		if (true === isPreScript) {
 			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base;
-		} else {
+		}
+        else {
 			strTemp = Base + '_' + strLower + '^' + strUpper;
 		}
 	}

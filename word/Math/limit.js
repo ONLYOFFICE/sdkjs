@@ -446,7 +446,7 @@ CMathFunc.prototype.fillContent = function()
 CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strFuncName = this.CheckIsEmpty(this.getFName().GetTextOfElement(isLaTeX));
-	var strArgument = " "+this.CheckIsEmpty(this.getArgument().GetTextOfElement(isLaTeX));
+	var strArgument = " " + this.CheckIsEmpty(this.getArgument().GetTextOfElement(isLaTeX));
 	var strStartBracet = "";
 	var strCloseBracet = "";
 
@@ -497,11 +497,15 @@ CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
 			default: break;
 		}
 	}
-	
-	strTemp = strFuncName
+
+	strTemp =  strFuncName
 		+ strStartBracet
 		+ strArgument
 		+ strCloseBracet;
+
+    if (!isLaTeX && strArgument !== " ") {
+        strTemp = "〖" + strTemp + "〗";
+    }
 
 	return strTemp;
 };

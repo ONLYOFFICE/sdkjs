@@ -2099,8 +2099,9 @@
             var oThis = this;
             if(null != tableColumn.Name)
             {
+                var columnName = tableColumn.Name.replaceAll("\n", "_x000a_");
                 this.memory.WriteByte(c_oSer_TableColumns.Name);
-                this.memory.WriteString2(tableColumn.Name);
+                this.memory.WriteString2(columnName);
             }
             if(null != tableColumn.TotalsRowLabel)
             {
@@ -6244,36 +6245,35 @@
                 res = c_oSerConstants.ReadUnknown;
             return res;
         };
-        this.ReadTableColumn = function(type, length, oTableColumn)
-        {
+        this.ReadTableColumn = function (type, length, oTableColumn) {
             var res = c_oSerConstants.ReadOk;
-            if ( c_oSer_TableColumns.Name == type )
-                oTableColumn.Name = this.stream.GetString2LE(length);
-            else if ( c_oSer_TableColumns.TotalsRowLabel == type )
+            if (c_oSer_TableColumns.Name === type) {
+                //replace only _x000a_ for fix bug(other spec. symbols didn't see in table columns)
+                var columnName = this.stream.GetString2LE(length);
+                oTableColumn.Name = columnName.replaceAll("_x000a_", "\n");
+            } else if (c_oSer_TableColumns.TotalsRowLabel === type) {
                 oTableColumn.TotalsRowLabel = this.stream.GetString2LE(length);
-            else if ( c_oSer_TableColumns.TotalsRowFunction == type )
+            } else if (c_oSer_TableColumns.TotalsRowFunction === type) {
                 oTableColumn.TotalsRowFunction = this.stream.GetUChar();
-            else if ( c_oSer_TableColumns.TotalsRowFormula == type ) {
+            } else if (c_oSer_TableColumns.TotalsRowFormula === type) {
                 var formula = this.stream.GetString2LE(length);
                 this.initOpenManager.oReadResult.tableCustomFunc.push({formula: formula, column: oTableColumn, ws: this.ws});
-            }  else if ( c_oSer_TableColumns.DataDxfId == type ) {
+            } else if (c_oSer_TableColumns.DataDxfId === type) {
                 var DxfId = this.stream.GetULongLE();
                 oTableColumn.dxf = this.initOpenManager.Dxfs[DxfId];
             }
             /*else if ( c_oSer_TableColumns.CalculatedColumnFormula == type )
 			{
 				oTableColumn.CalculatedColumnFormula = this.stream.GetString2LE(length);
-			}*/
-            else if ( c_oSer_TableColumns.QueryTableFieldId == type ) {
-				oTableColumn.queryTableFieldId = this.stream.GetULongLE();
-			}
-			else if ( c_oSer_TableColumns.UniqueName == type ) {
-				oTableColumn.uniqueName = this.stream.GetString2LE(length);
-			} else if ( c_oSer_TableColumns.Id == type ) {
+			}*/ else if (c_oSer_TableColumns.QueryTableFieldId === type) {
+                oTableColumn.queryTableFieldId = this.stream.GetULongLE();
+            } else if (c_oSer_TableColumns.UniqueName === type) {
+                oTableColumn.uniqueName = this.stream.GetString2LE(length);
+            } else if (c_oSer_TableColumns.Id === type) {
                 oTableColumn.id = this.stream.GetULongLE();
-            }
-            else
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         };
         this.ReadTableColumns = function(type, length, aTableColumns)

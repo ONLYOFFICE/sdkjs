@@ -653,6 +653,7 @@ CFraction.prototype.GetTextOfElement = function(isLaTeX) {
 			default:strTemp += String.fromCharCode(47); break;
 		}
 		strTemp += strDenominator;
+		strTemp = "〖" + strTemp + "〗";
 	}
 	return strTemp;
 };

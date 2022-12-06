@@ -6565,7 +6565,9 @@ CShape.prototype.getWatermarkProps = function()
     oProps.put_Text(oContent.GetSelectedText(true, {NewLineParagraph : false, NewLine : false}));
     oTextPr = oContent.GetCalculatedTextPr();
     oProps.put_Opacity(255);
-    if(oTextPr.FontSize - (oTextPr.FontSize >> 0) > 0)
+    if(!AscFormat.isRealNumber(oTextPr.FontSize) ||
+	    oTextPr.FontSize < 36 ||
+	    oTextPr.FontSize - (oTextPr.FontSize >> 0) > 0)
     {
         oTextPr.FontSize = -1;
     }

@@ -258,10 +258,6 @@
         }
     };
     CViewPr.prototype.drawGuides = function(oGraphics) {
-	    if(oGraphics.IsThumbnail || oGraphics.animationDrawer ||
-		    oGraphics.IsDemonstrationMode || AscCommon.IsShapeToImageConverter) {
-		    return;
-	    }
         if(this.slideViewPr) {
             this.slideViewPr.drawGuides(oGraphics);
         }
