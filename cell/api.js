@@ -574,7 +574,7 @@ var editor;
 		}
 	};
 
-	spreadsheet_api.prototype._getFileFromUrl = function (url, fileType, callback) {
+	spreadsheet_api.prototype.asc_TextFromFileOrUrl = function (url, fileType, callback) {
 		if (this.canEdit()) {
 			var document = {url: url, format: "XLSX"};
 			this.insertDocumentUrlsData = {
@@ -650,7 +650,7 @@ var editor;
 		});
 	};
 
-	spreadsheet_api.prototype._getTextFromFile = function (options, callback) {
+	spreadsheet_api.prototype.asc_ImportXmlStart = function (callback) {
 		var t = this;
 
 		function wrapper_callback(data) {
@@ -664,7 +664,7 @@ var editor;
 
 		if (window["AscDesktopEditor"]) {
 			// TODO: add translations
-			window["AscDesktopEditor"]["OpenFilenameDialog"]("csv/txt", false, function (_file) {
+			window["AscDesktopEditor"]["OpenFilenameDialog"]("xml", false, function (_file) {
 				var file = _file;
 				if (Array.isArray(file))
 					file = file[0];
@@ -675,7 +675,7 @@ var editor;
 					if (!uint8Array)
 						return;
 
-					wrapper_callback(uint8Array);
+					t._convertFromXml(uint8Array, callback);
 				});
 			});
 			return;
@@ -690,17 +690,58 @@ var editor;
 			var format = AscCommon.GetFileExtension(files[0].name);
 			var reader = new FileReader();
 			reader.onload = function () {
-				t._test({data: new Uint8Array(reader.result), format: format});
+				t._convertFromXml({data: new Uint8Array(reader.result), format: format}, callback);
 			};
 			reader.onerror = function () {
 				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
 			};
-			//readAsBinaryString ?
+
 			reader.readAsArrayBuffer(files[0]);
 		});
 	};
 
-	spreadsheet_api.prototype._test = function (document, oOptions) {
+	spreadsheet_api.prototype.asc_ImportXmlEnd = function (stream) {
+		var t = this;
+
+		//в этом случае запрашиваем бинарник
+		// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(stream)) {
+			t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+			return false;
+		}
+
+		if (jsZlib.files && jsZlib.files.length) {
+			var binaryData = jsZlib.getFile(jsZlib.files[0]);
+
+			//заполняем через банарник
+			var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+			//чтобы лишнего не читать, проставляю флаг копипаст
+			oBinaryFileReader.InitOpenManager.copyPasteObj = {
+				isCopyPaste: true, activeRange: null, selectAllSheet: true
+			};
+
+
+			var wb = new AscCommonExcel.Workbook();
+			wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
+
+			AscFormat.ExecuteNoHistory(function () {
+				AscCommonExcel.executeInR1C1Mode(false, function () {
+					oBinaryFileReader.Read(binaryData, wb);
+				});
+			});
+
+			if (wb.aWorksheets) {
+				var ws = t.wb.getWorksheet();
+				var arrSheets = wb.aWorksheets;
+				AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange = "A1:R100";
+				t.wb.getWorksheet().setSelectionInfo('paste', {data: arrSheets[0], fromBinary: true, fontsNew: [], pasteAllSheet: true, wb: wb});
+			}
+		}
+	};
+
+
+	spreadsheet_api.prototype._convertFromXml = function (document, callback) {
 		var t = this;
 		var stream = null;
 		var oApi = this;
@@ -711,6 +752,7 @@ var editor;
 					_api.endInsertDocumentUrls();
 					_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
 						Asc.c_oAscError.Level.NoCritical);
+					callback(null);
 					return;
 				}
 				AscCommon.loadFileContent(url['output.xlst'], function (httpRequest) {
@@ -718,6 +760,7 @@ var editor;
 						_api.endInsertDocumentUrls();
 						_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
 							Asc.c_oAscError.Level.NoCritical);
+						callback(null);
 						return;
 					}
 					_api.endInsertDocumentUrls();
@@ -725,45 +768,7 @@ var editor;
 			}, endCallback: function (_api) {
 
 				if (stream) {
-					//в этом случае запрашиваем бинарник
-					// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
-					let jsZlib = new AscCommon.ZLib();
-					if (!jsZlib.open(stream)) {
-						t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
-						return false;
-					}
-
-					if (jsZlib.files && jsZlib.files.length) {
-						var binaryData = jsZlib.getFile(jsZlib.files[0])
-
-						//заполняем через банарник
-						var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
-						//чтобы лишнего не читать, проставляю флаг копипаст
-						oBinaryFileReader.InitOpenManager.copyPasteObj = {
-							isCopyPaste: true, activeRange: null, selectAllSheet: true
-						};
-
-
-						var wb = new AscCommonExcel.Workbook();
-						wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
-
-						AscFormat.ExecuteNoHistory(function () {
-							AscCommonExcel.executeInR1C1Mode(false, function () {
-								oBinaryFileReader.Read(binaryData, wb);
-							});
-						});
-
-						if (wb.aWorksheets) {
-							var ws = t.wb.getWorksheet();
-							var arrSheets = wb.aWorksheets;
-							AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange = "A1:R100";
-							t.wb.getWorksheet().setSelectionInfo('paste', {data: arrSheets[0], fromBinary: true, fontsNew: [], pasteAllSheet: true, wb: wb});
-
-
-
-
-						}
-					}
+					callback(stream);
 				}
 			}
 		};
@@ -8712,7 +8717,12 @@ var editor;
   prot["asc_removeExternalReferences"] = prot.asc_removeExternalReferences;
 
   prot["asc_fillHandleDone"] = prot.asc_fillHandleDone;
-  prot["asc_canFillHandle"] = prot.asc_canFillHandle;
+  prot["asc_canFillHandle"]  = prot.asc_canFillHandle;
+
+  prot["asc_ImportXmlStart"] = prot.asc_ImportXmlStart;
+  prot["asc_ImportXmlEnd"]   = prot.asc_ImportXmlEnd;
+
+
 
 
 })(window);
