@@ -3711,31 +3711,37 @@
 		}
 
 		function f(a, b, r, c) {
-			if (a instanceof cNumber && b instanceof cNumber) {
-				this.array[r][c] = randBetween(a.getValue(), b.getValue());
+			if (cElementType.number === a.type && cElementType.number === b.type) {
+				if (a.getValue() > b.getValue()) {
+					return new cError(cErrorType.not_numeric);
+				} else {
+					this.array[r][c] = randBetween(a.getValue(), b.getValue());
+				}
 			} else {
 				this.array[r][c] = new cError(cErrorType.wrong_value_type);
 			}
 		}
 
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg1 instanceof cArea3D) {
+		let arg0 = arg[0], arg1 = arg[1];
+
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.cross(arguments[1]);
 		}
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			arg1 = arg1.cross(arguments[1]);
 		}
 		arg0 = arg0.tocNumber();
 		arg1 = arg1.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (cElementType.error === arg1.type) {
 			return arg1;
 		}
 
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
+		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
 			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
 				return new cError(cErrorType.not_available);
 			} else {
@@ -3744,23 +3750,27 @@
 				});
 				return arg0;
 			}
-		} else if (arg0 instanceof cArray) {
+		} else if (cElementType.array === arg0.type) {
 			arg0.foreach(function (elem, r, c) {
 				f.call(this, elem, arg1, r, c)
 			});
 			return arg0;
-		} else if (arg1 instanceof cArray) {
+		} else if (cElementType.array === arg1.type) {
 			arg1.foreach(function (elem, r, c) {
 				f.call(this, arg0, elem, r, c);
 			});
 			return arg1;
 		}
 
-		if (!(arg0 instanceof cNumber) || ( arg1 && !(arg0 instanceof cNumber) )) {
+		if (!(cElementType.number === arg0.type) || ( arg1 && !(cElementType.number === arg0.type) )) {
 			return new cError(cErrorType.wrong_value_type);
+		} else if(cElementType.number === arg0.type && cElementType.number === arg1.type) {
+			if (arg0.getValue() > arg1.getValue()) {
+				return new cError(cErrorType.not_numeric);
+			}
 		}
 
-
+		
 		return new cNumber(randBetween(arg0.getValue(), arg1.getValue()));
 	};
 
