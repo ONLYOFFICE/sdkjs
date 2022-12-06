@@ -2929,7 +2929,12 @@ CDrawingDocument.prototype =
   		}
 
   		return null;
-  	}
+  	},
+
+    GetVisibleRegion : function()
+    {
+        return null;
+    }
 };
 
 function check_KeyboardEvent(e)

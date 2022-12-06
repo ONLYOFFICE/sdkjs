@@ -14708,6 +14708,8 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 	}
 	
 	let viewPort = this.DrawingDocument.GetVisibleRegion();
+	if (!viewPort)
+		return;
 	
 	let selectionBounds = this.GetSelectionBounds();
 	
