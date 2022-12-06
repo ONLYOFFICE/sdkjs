@@ -1766,8 +1766,9 @@
     this.engine = window['SockJS'];
     this.settings = settings;
     this.io = this;
+    this.settings["type"] = "socketio";
   }
-  CNativeSocket.prototype.open = function() { return this.engine.open(); };
+  CNativeSocket.prototype.open = function() { return this.engine.open(this.settings); };
   CNativeSocket.prototype.send = function(message) { return this.engine.send(message); };
   CNativeSocket.prototype.close = function() { return this.engine.close(); };
   CNativeSocket.prototype.emit = function(message, data) { return this.send(JSON.stringify(data)); };
