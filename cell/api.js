@@ -653,15 +653,6 @@ var editor;
 	spreadsheet_api.prototype.asc_ImportXmlStart = function (callback) {
 		var t = this;
 
-		function wrapper_callback(data) {
-			var cp = {
-				'codepage': AscCommon.c_oAscCodePageUtf8, "delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
-				'encodings': AscCommon.getEncodingParams(),
-				'data': data
-			};
-			callback(new AscCommon.asc_CAdvancedOptions(cp));
-		}
-
 		if (window["AscDesktopEditor"]) {
 			// TODO: add translations
 			window["AscDesktopEditor"]["OpenFilenameDialog"]("xml", false, function (_file) {
@@ -707,7 +698,7 @@ var editor;
 		// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
 		let jsZlib = new AscCommon.ZLib();
 		if (!jsZlib.open(stream)) {
-			t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+			//t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
 			return false;
 		}
 
@@ -734,6 +725,7 @@ var editor;
 			if (wb.aWorksheets) {
 				var ws = t.wb.getWorksheet();
 				var arrSheets = wb.aWorksheets;
+				//test
 				AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange = "A1:R100";
 				t.wb.getWorksheet().setSelectionInfo('paste', {data: arrSheets[0], fromBinary: true, fontsNew: [], pasteAllSheet: true, wb: wb});
 			}
