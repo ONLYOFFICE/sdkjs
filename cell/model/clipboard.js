@@ -53,7 +53,7 @@
 		var c_oSpecialPasteProps = Asc.c_oSpecialPasteProps;
 
 		var c_MaxStringLength = 536870888;
-		
+		var notSupportExternalReferenceFileFormat = {"csv": 1};
 
 		function number2color(n) {
 			if( typeof(n)==="string" && n.indexOf("rgb")>-1)
@@ -609,8 +609,10 @@
 
 					//для внешних данных необходимо протащить docInfo->ReferenceData
 					//пока беру данные поля, поскольку для копипаста они не используются. по названию не особо совпадают - пересмотреть
-					wb.Core.contentStatus = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["fileId"] : null;
-					wb.Core.category = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["portalName"] : null;
+					if (wb.oApi && wb.oApi.DocInfo && !notSupportExternalReferenceFileFormat[wb.oApi.DocInfo.Format]) {
+						wb.Core.contentStatus = wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["fileId"] : null;
+						wb.Core.category = wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["portalName"] : null;
+					}
 
 					wb.Core.title = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.Title ? wb.oApi.DocInfo.Title : null;
 
