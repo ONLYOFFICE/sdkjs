@@ -141,6 +141,10 @@
 	{
 		return this.Value;
 	};
+	CRunText.prototype.GetScript = function()
+	{
+		return AscFonts.hb_get_script_by_unicode(this.GetCodePoint());
+	};
 	CRunText.prototype.SetGrapheme = function(nGrapheme)
 	{
 		this.Grapheme = nGrapheme;

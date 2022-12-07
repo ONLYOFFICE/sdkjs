@@ -340,7 +340,7 @@
             this.content.Set_StartPage(0);
             if (graphics.isSmartArtPreviewDrawer && graphics.m_oContext) {
                 const nContentHeight = this.parent.contentHeight;
-                const nLineHeight = 3;
+                const nLineHeight = 4 * AscCommon.g_dKoef_pix_to_mm;
                 graphics.save();
                 graphics.m_oContext.fillStyle = 'rgb(0,0,0)';
 
@@ -349,7 +349,7 @@
 
                 for (let i = 0; i < this.content.Content.length; i += 1) {
                     const oParagraph = this.content.Content[i];
-                    const nWidth = nContentWidth > 30 ? 30 : nContentWidth - nContentWidth * 0.3;
+                    const nWidth = nContentWidth > 20 ? 20 : nContentWidth - nContentWidth * 0.3;
                     const eJC = oParagraph.CompiledPr.Pr.ParaPr.Jc;
                     let startX;
                     const gap = 5;
@@ -371,17 +371,14 @@
                     }
 
                     const oBullet = oParagraph.PresentationPr && oParagraph.PresentationPr.Bullet;
-                    const Y = nHeightStep * i + (nHeightStep - nLineHeight) / 2;
+                    const Y = nHeightStep * i + nHeightStep / 2;
 
                     if(oBullet && !oBullet.IsNone()) {
-                        graphics.rect(startX + nWidth / 4, Y, nWidth - nWidth / 4, nLineHeight);
-                        graphics.df();
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX + nWidth / 2, startX + nWidth, nLineHeight);
 
-                        graphics.rect(startX, Y, nLineHeight, nLineHeight);
-                        graphics.df();
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX, startX + nLineHeight, nLineHeight);
                     } else {
-                        graphics.rect(startX, Y, nWidth, nLineHeight);
-                        graphics.df();
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX, startX + nWidth, nLineHeight);
                     }
                 }
                 graphics.restore();

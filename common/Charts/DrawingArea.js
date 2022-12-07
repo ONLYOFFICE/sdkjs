@@ -814,6 +814,15 @@ DrawingArea.prototype.reinitRanges = function() {
         this.frozenPlaces[i].initRange();
     }
 };
+DrawingArea.prototype.convertCoordsToCursorWR = function(x, y) {
+	let oFrozenPlace = this.frozenPlaces[0];
+	let oWS = this.worksheet;
+	let canvas = oWS.objectRender.getDrawingCanvas();
+	let shapeCtx = canvas.shapeCtx;
+	let nXT = AscCommon.AscBrowser.convertToRetinaValue(shapeCtx.m_oCoordTransform.sx * x + oFrozenPlace.getHorizontalScroll(), false);
+	let nYT = AscCommon.AscBrowser.convertToRetinaValue(shapeCtx.m_oCoordTransform.sy * y + oFrozenPlace.getVerticalScroll(), false);
+	return {X: nXT, Y: nYT, Error: false};
+};
 
 DrawingArea.prototype.drawSelection = function(drawingDocument) {
 	var oWS = this.worksheet;

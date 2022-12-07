@@ -127,6 +127,17 @@ function shiftSort(a, b, offset)
 function createRgbColor(r, g, b) {
 	return new RgbColor((r << 16) + (g << 8) + b);
 }
+
+function compareValues(val1, val2) {
+	if (val1 === val2) {
+		return true;
+	}
+	if ((val1 == null || val1 == "") && (val2 == null || val2 == "")) {
+		return true;
+	}
+
+	return false;
+}
 var g_oRgbColorProperties = {
 		rgb : 0
 	};
@@ -461,9 +472,7 @@ g_oColorManager = new ColorManager();
 		Num: null,
 		Border: null,
 		Align: null,
-		FillAbs: null,
 		NumAbs: null,
-		BorderAbs: null,
 		AlignAbs: null,
 		ColorAuto: new RgbColor(0),
 
@@ -3903,7 +3912,10 @@ var g_oFontProperties = {
 		return c_oAscBorderStyles.None === this.s;
 	};
 	BorderProp.prototype.isEqual = function (val, byRgb) {
-		return this.s === val.s && g_oColorManager.isEqual(this.c, val.c, byRgb);
+		return val && this.s === val.s && g_oColorManager.isEqual(this.c, val.c, byRgb);
+	};
+	BorderProp.prototype.isEqual2 = function (val1, val2, byRgb) {
+		return ((!val1 || val1.isEmpty()) && (!val2 || val2.isEmpty())) || (val1 && val2 && val1.isEqual(val2, byRgb))
 	};
 	BorderProp.prototype.clone = function () {
 		var res = new BorderProp();
@@ -3911,7 +3923,7 @@ var g_oFontProperties = {
 		return res;
 	};
 	BorderProp.prototype.merge = function (oBorderProp) {
-		if (null != oBorderProp.s && c_oAscBorderStyles.None !== oBorderProp.s) {
+		if (oBorderProp && !oBorderProp.isEmpty()) {
 			this.s = oBorderProp.s;
 			this.w = oBorderProp.w;
 			this.c = oBorderProp.c;
@@ -3966,7 +3978,24 @@ var g_oFontProperties = {
 		}
 		return newContext;
 	};
-var g_oBorderProperties = {
+
+	/** @constructor */
+	function Border() {
+		this.l = null;
+		this.t = null;
+		this.r = null;
+		this.b = null;
+		this.d = null;
+		this.ih = null;
+		this.iv = null;
+		this.dd = false;
+		this.du = false;
+
+		this._hash = null;
+		this._index;
+	}
+
+	Border.prototype.Properties = {
 		l: 0,
 		t: 1,
 		r: 2,
@@ -3977,27 +4006,6 @@ var g_oBorderProperties = {
 		dd: 7,
 		du: 8
 	};
-
-	/** @constructor */
-	function Border(val) {
-		if (null == val) {
-			val = g_oDefaultFormat.BorderAbs;
-		}
-		this.l = val.l.clone();
-		this.t = val.t.clone();
-		this.r = val.r.clone();
-		this.b = val.b.clone();
-		this.d = val.d.clone();
-		this.ih = val.ih.clone();
-		this.iv = val.iv.clone();
-		this.dd = val.dd;
-		this.du = val.du;
-
-		this._hash;
-		this._index;
-	}
-
-	Border.prototype.Properties = g_oBorderProperties;
 	Border.prototype.getHash = function() {
 		if (!this._hash) {
 			this._hash = (this.l ? this.l.getHash() : '') + '|';
@@ -4018,162 +4026,179 @@ var g_oBorderProperties = {
 	Border.prototype.setIndexNumber = function(val) {
 		return this._index = val;
 	};
-	Border.prototype._mergeProperty = function (first, second, def) {
-		if (first.s !== c_oAscBorderStyles.None) {
-			return first;
-		} else {
-			return second;
-		}
+	Border.prototype.initDefault = function() {
+		this.l = new BorderProp();
+		this.t = new BorderProp();
+		this.r = new BorderProp();
+		this.b = new BorderProp();
+		this.d = new BorderProp();
+	};
+	Border.prototype.getL = function() {
+		return this.l || g_oDefaultFormat.Border.l;
+	};
+	Border.prototype.getT = function() {
+		return this.t || g_oDefaultFormat.Border.t;
+	};
+	Border.prototype.getR = function() {
+		return this.r || g_oDefaultFormat.Border.r;
+	};
+	Border.prototype.getB = function() {
+		return this.b || g_oDefaultFormat.Border.b;
+	};
+	Border.prototype.getD = function() {
+		return this.d || g_oDefaultFormat.Border.d;
+	};
+	Border.prototype.getIH = function() {
+		return this.ih || g_oDefaultFormat.Border.ih;
+	};
+	Border.prototype.getIV = function() {
+		return this.iv || g_oDefaultFormat.Border.iv;
+	};
+	Border.prototype._mergeProperty = function (first, second) {
+		if (first && !first.isEmpty())
+			return first.clone();
+		else if (second)
+			return second.clone();
+		else
+			return null;
 	};
 	Border.prototype.merge = function (border, isTable) {
-		var defaultBorder = g_oDefaultFormat.Border;
 		var oRes = new Border();
-		//todo null border props
 		if (isTable) {
-			oRes.l = this._mergeProperty(this.l, border.l, defaultBorder.l).clone();
-			oRes.t = this._mergeProperty(this.t, border.t, defaultBorder.t).clone();
-			oRes.r = this._mergeProperty(this.r, border.r, defaultBorder.r).clone();
-			oRes.b = this._mergeProperty(this.b, border.b, defaultBorder.b).clone();
-			oRes.ih = this._mergeProperty(this.ih, border.ih, defaultBorder.ih).clone();
-			oRes.iv = this._mergeProperty(this.iv, border.iv, defaultBorder.iv).clone();
-			oRes.d = this._mergeProperty(this.d, border.d, defaultBorder.d).clone();
+			oRes.l = this._mergeProperty(this.l, border.l);
+			oRes.t = this._mergeProperty(this.t, border.t);
+			oRes.r = this._mergeProperty(this.r, border.r);
+			oRes.b = this._mergeProperty(this.b, border.b);
+			oRes.ih = this._mergeProperty(this.ih, border.ih);
+			oRes.iv = this._mergeProperty(this.iv, border.iv);
+			oRes.d = this._mergeProperty(this.d, border.d);
 			oRes.dd = this.dd || border.dd;
 			oRes.du = this.du || border.du;
 		} else {
 			//todo merge with default
-			oRes.l = this.l.clone();
-			oRes.t = this.t.clone();
-			oRes.r = this.r.clone();
-			oRes.b = this.b.clone();
-			oRes.ih = this.ih.clone();
-			oRes.iv = this.iv.clone();
-			oRes.d = this._mergeProperty(this.d, border.d, defaultBorder.d).clone();
+			oRes.l = this.l ? this.l.clone() : null;
+			oRes.t = this.t ? this.t.clone() : null;
+			oRes.r = this.r ? this.r.clone() : null;
+			oRes.b = this.b ? this.b.clone() : null;
+			oRes.ih = this.ih ? this.ih.clone() : null;
+			oRes.iv = this.iv ? this.iv.clone() : null;
+			oRes.d = this._mergeProperty(this.d, border.d);
 			oRes.dd = this.dd || border.dd;
 			oRes.du = this.du || border.du;
 		}
 		return oRes;
 	};
-	Border.prototype.getDif = function (val) {
-		var oRes = new Border(this);
-		var bEmpty = true;
-		if (true == this.l.isEqual(val.l)) {
-			oRes.l = null;
-		} else {
-			bEmpty = false;
+	Border.prototype.intersect = function (border, byRgb) {
+		if (!BorderProp.prototype.isEqual2(this.l, border.l, byRgb)) {
+			this.l = new BorderProp();
 		}
-		if (true == this.t.isEqual(val.t)) {
-			oRes.t = null;
-		} else {
-			bEmpty = false;
+		if (!BorderProp.prototype.isEqual2(this.t, border.t, byRgb)) {
+			this.t = new BorderProp();
 		}
-		if (true == this.r.isEqual(val.r)) {
-			oRes.r = null;
-		} else {
-			bEmpty = false;
+		if (!BorderProp.prototype.isEqual2(this.r, border.r, byRgb)) {
+			this.r = new BorderProp();
 		}
-		if (true == this.b.isEqual(val.b)) {
-			oRes.b = null;
-		} else {
-			bEmpty = false;
+		if (!BorderProp.prototype.isEqual2(this.b, border.b, byRgb)) {
+			this.b = new BorderProp();
 		}
-		if (true == this.d.isEqual(val.d)) {
-			oRes.d = null;
-		}
-		if (true == this.ih.isEqual(val.ih)) {
-			oRes.ih = null;
-		} else {
-			bEmpty = false;
-		}
-		if (true == this.iv.isEqual(val.iv)) {
-			oRes.iv = null;
-		} else {
-			bEmpty = false;
-		}
-		if (this.dd == val.dd) {
-			oRes.dd = null;
-		} else {
-			bEmpty = false;
-		}
-		if (this.du == val.du) {
-			oRes.du = null;
-		} else {
-			bEmpty = false;
-		}
-		if (bEmpty) {
-			oRes = null;
-		}
-		return oRes;
-	};
-	Border.prototype.intersect = function (border, def, byRgb) {
-		if (!this.l.isEqual(border.l, byRgb)) {
-			this.l = def.l;
-		}
-		if (!this.t.isEqual(border.t, byRgb)) {
-			this.t = def.t;
-		}
-		if (!this.r.isEqual(border.r, byRgb)) {
-			this.r = def.r;
-		}
-		if (!this.b.isEqual(border.b, byRgb)) {
-			this.b = def.b;
-		}
-		if (!this.d.isEqual(border.d, byRgb)) {
-			this.d = def.d;
+		if (!BorderProp.prototype.isEqual2(this.d, border.d, byRgb)) {
+			this.d = new BorderProp();
 			this.dd = false;
 			this.du = false;
 		}
-		if (!this.ih.isEqual(border.ih, byRgb)) {
-			this.ih = def.ih;
+		if (!BorderProp.prototype.isEqual2(this.ih, border.ih, byRgb)) {
+			this.ih = null;
 		}
-		if (!this.iv.isEqual(border.iv, byRgb)) {
-			this.iv = def.iv;
+		if (!BorderProp.prototype.isEqual2(this.iv, border.iv, byRgb)) {
+			this.iv = null;
 		}
 		if (this.dd !== border.dd) {
-			this.dd = def.dd;
+			this.dd = false;
+		}
+		if (this.du !== border.du) {
+			this.du = false;
 		}
 	};
-	Border.prototype.isEqual = function (val) {
-		return this.l.isEqual(val.l) && this.t.isEqual(val.t) && this.r.isEqual(val.r) && this.b.isEqual(val.b) &&
-			this.d.isEqual(val.d) && this.ih.isEqual(val.ih) && this.iv.isEqual(val.iv) && this.dd == val.dd &&
-			this.du == val.du;
+	Border.prototype.isEqual = function(val) {
+		return BorderProp.prototype.isEqual2(this.l, val.l) && BorderProp.prototype.isEqual2(this.t, val.t)
+			&& BorderProp.prototype.isEqual2(this.r, val.r) && BorderProp.prototype.isEqual2(this.b, val.b)
+			&& BorderProp.prototype.isEqual2(this.d, val.d) && this.dd === val.dd && this.du === val.du
+			&& BorderProp.prototype.isEqual2(this.ih, val.ih) && BorderProp.prototype.isEqual2(this.iv, val.iv);
 	};
 	Border.prototype.clone = function () {
-		return new Border(this);
+		var res = new Border();
+		res.l = this.l ? this.l.clone() : null;
+		res.t = this.t ? this.t.clone() : null;
+		res.r = this.r ? this.r.clone() : null;
+		res.b = this.b ? this.b.clone() : null;
+		res.d = this.d ? this.d.clone() : null;
+		res.ih = this.ih ? this.ih.clone() : null;
+		res.iv = this.iv ? this.iv.clone() : null;
+		res.dd = this.dd;
+		res.du = this.du;
+		return res;
 	};
 	Border.prototype.clean = function () {
-		var defaultBorder = g_oDefaultFormat.Border;
-		this.l = defaultBorder.l.clone();
-		this.t = defaultBorder.t.clone();
-		this.r = defaultBorder.r.clone();
-		this.b = defaultBorder.b.clone();
-		this.d = defaultBorder.d.clone();
-		this.ih = defaultBorder.ih.clone();
-		this.iv = defaultBorder.iv.clone();
-		this.dd = defaultBorder.dd;
-		this.du = defaultBorder.du;
+		this.l = null;
+		this.t = null;
+		this.r = null;
+		this.b = null;
+		this.d = null;
+		this.ih = null;
+		this.iv = null;
+		this.dd = false;
+		this.du = false;
 	};
 	Border.prototype.mergeInner = function (border) {
 		if (border) {
 			if (border.l) {
-				this.l.merge(border.l);
+				if (this.l) {
+					this.l.merge(border.l);
+				} else {
+					this.l = border.l.clone();
+				}
 			}
 			if (border.t) {
-				this.t.merge(border.t);
+				if (this.t) {
+					this.t.merge(border.t);
+				} else {
+					this.t = border.t.clone();
+				}
 			}
 			if (border.r) {
-				this.r.merge(border.r);
+				if (this.r) {
+					this.r.merge(border.r);
+				} else {
+					this.r = border.r.clone();
+				}
 			}
 			if (border.b) {
-				this.b.merge(border.b);
+				if (this.b) {
+					this.b.merge(border.b);
+				} else {
+					this.b = border.b.clone();
+				}
 			}
 			if (border.d) {
-				this.d.merge(border.d);
+				if (this.d) {
+					this.d.merge(border.d);
+				} else {
+					this.d = border.d.clone();
+				}
 			}
 			if (border.ih) {
-				this.ih.merge(border.ih);
+				if (this.ih) {
+					this.ih.merge(border.ih);
+				} else {
+					this.ih = border.ih.clone();
+				}
 			}
 			if (border.iv) {
-				this.iv.merge(border.iv);
+				if (this.iv) {
+					this.iv.merge(border.iv);
+				} else {
+					this.iv = border.iv.clone();
+				}
 			}
 			if (null != border.dd) {
 				this.dd = this.dd || border.dd;
@@ -4252,9 +4277,9 @@ var g_oBorderProperties = {
 		}
 	};
 	Border.prototype.notEmpty = function () {
-		return (this.l && c_oAscBorderStyles.None !== this.l.s) || (this.r && c_oAscBorderStyles.None !== this.r.s) ||
-			(this.t && c_oAscBorderStyles.None !== this.t.s) || (this.b && c_oAscBorderStyles.None !== this.b.s) ||
-			(this.dd && c_oAscBorderStyles.None !== this.dd.s) || (this.du && c_oAscBorderStyles.None !== this.du.s);
+		return (this.l && !this.l.isEmpty()) || (this.r && !this.r.isEmpty()) ||
+			(this.t && !this.t.isEmpty()) || (this.b && !this.b.isEmpty()) ||
+			(this.d && !this.d.isEmpty() && (this.dd || this.du));
 	};
 	Border.prototype.readAttributes = function(attr, uq) {
 		if(attr()){
@@ -4540,7 +4565,7 @@ var g_oBorderProperties = {
 	CellXfs.prototype.isNormalFont = function () {
 		return g_StyleCache.firstXf === this || g_StyleCache.normalXf.font === this.font;
 	};
-    CellXfs.prototype.merge = function (xfs, isTable) {
+    CellXfs.prototype.merge = function (xfs, isTable, isTableBorders) {
         var xfIndexNumber = xfs.getIndexNumber();
         if (undefined === xfIndexNumber) {
             xfs = g_StyleCache.addXf(xfs);
@@ -4549,8 +4574,13 @@ var g_oBorderProperties = {
         var cache = this.getOperationCache("merge", xfIndexNumber);
         if (!cache) {
             cache = new CellXfs();
-            cache.border = this._mergeProperty(g_StyleCache.addBorder, xfs.border, this.border, isTable);
-            if (isTable && (g_StyleCache.firstXf === xfs || g_StyleCache.normalXf.fill === xfs.fill)) {
+			//todo test isTable insted of isTableBorders
+			if ((isTable || isTableBorders) && (g_StyleCache.firstXf === xfs || g_StyleCache.normalXf.border === xfs.border)) {
+				cache.border = this._mergeProperty(g_StyleCache.addBorder, this.border, xfs.border, (isTable || isTableBorders));
+			} else {
+				cache.border = this._mergeProperty(g_StyleCache.addBorder, xfs.border, this.border, (isTable || isTableBorders));
+			}
+			if (isTable && (g_StyleCache.firstXf === xfs || g_StyleCache.normalXf.fill === xfs.fill)) {
                 if (g_StyleCache.normalXf.fill === xfs.fill) {
                     cache.fill = this._mergeProperty(g_StyleCache.addFill, this.fill, g_oDefaultFormat.Fill);
                 } else {
@@ -4989,6 +5019,7 @@ var g_oBorderProperties = {
 		}
 		
 		var res = new AscCommonExcel.Border();
+		res.initDefault();
 		var c_oAscBorderOptions = Asc.c_oAscBorderOptions;
 		// Diagonal
 		res.d = makeBorder(val[c_oAscBorderOptions.DiagD] || val[c_oAscBorderOptions.DiagU]);
@@ -9222,6 +9253,10 @@ function RangeDataManagerElem(bbox, data)
 					}
 					hiddenObj.h = null
 				}
+
+				if (true === isHidden) {
+					worksheet.setRowHidden(isHidden, i, i);
+				}
 			}
 		}
 
@@ -12461,7 +12496,7 @@ QueryTableField.prototype.clone = function() {
 		this.copies = 1;
 		this.draft = false;
 		this.errors = 0; // displayed ST_PrintError
-		this.firstPageNumber = -1;
+		this.firstPageNumber = null;//default 1
 		this.pageOrder = 0; // downThenOver ST_PageOrder
 		this.scale = 100;
 		this.useFirstPageNumber = false;
@@ -12910,7 +12945,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setEvenFooter = function (newVal) {
 		var oldVal = this.evenFooter ? this.evenFooter.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.evenFooter = null;
 			} else {
@@ -12927,7 +12962,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setEvenHeader = function (newVal) {
 		var oldVal = this.evenHeader ? this.evenHeader.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.evenHeader = null;
 			} else {
@@ -12944,7 +12979,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setFirstFooter = function (newVal) {
 		var oldVal = this.firstFooter ? this.firstFooter.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.firstFooter = null;
 			} else {
@@ -12961,7 +12996,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setFirstHeader = function (newVal) {
 		var oldVal = this.firstHeader ? this.firstHeader.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.firstHeader = null;
 			} else {
@@ -12978,7 +13013,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setOddFooter = function (newVal) {
 		var oldVal = this.oddFooter ? this.oddFooter.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.oddFooter = null;
 			} else {
@@ -12995,7 +13030,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setOddHeader = function (newVal) {
 		var oldVal = this.oddHeader ? this.oddHeader.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.oddHeader = null;
 			} else {
@@ -13014,7 +13049,7 @@ QueryTableField.prototype.clone = function() {
 		var oldVal = this.alignWithMargins;
 		var defaultVal = null === oldVal && (newVal === 1 || newVal === true);
 
-		if(oldVal !== newVal && !defaultVal) {
+		if(!compareValues(oldVal, newVal) && !defaultVal) {
 			this.alignWithMargins = newVal;
 
 			if (this.ws && History.Is_On()) {
@@ -13028,7 +13063,7 @@ QueryTableField.prototype.clone = function() {
 		var oldVal = this.scaleWithDoc;
 		var defaultVal = null === oldVal && (newVal === 1 || newVal === true);
 
-		if(oldVal !== newVal && !defaultVal) {
+		if(!compareValues(oldVal, newVal) && !defaultVal) {
 			this.scaleWithDoc = newVal;
 
 			if (this.ws && History.Is_On()) {
@@ -13042,7 +13077,7 @@ QueryTableField.prototype.clone = function() {
 		var oldVal = this.differentFirst;
 		var defaultVal = null === oldVal && (newVal === 0 || newVal === false);
 
-		if(oldVal !== newVal && !defaultVal) {
+		if(!compareValues(oldVal, newVal) && !defaultVal) {
 			this.differentFirst = newVal;
 
 			if (this.ws && History.Is_On()) {
@@ -13056,7 +13091,7 @@ QueryTableField.prototype.clone = function() {
 		var oldVal = this.differentOddEven;
 		var defaultVal = null === oldVal && (newVal === 0 || newVal === false);
 
-		if(oldVal !== newVal && !defaultVal) {
+		if(!compareValues(oldVal, newVal) && !defaultVal) {
 			this.differentOddEven = newVal;
 
 			if (this.ws && History.Is_On()) {
@@ -14406,6 +14441,17 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	ExternalReference.prototype.setReferenceData = function (fileId, portalName) {
+		if (!fileId || !portalName) {
+			return;
+		}
+		if (!this.referenceData) {
+			this.referenceData = {};
+		}
+		this.referenceData["portalName"] = portalName;
+		this.referenceData["fileId"] = fileId;
+	};
+
 	function asc_CExternalReference() {
 		this.type = null;
 		this.data = null;
@@ -14433,6 +14479,9 @@ QueryTableField.prototype.clone = function() {
 	};
 	asc_CExternalReference.prototype.isExternalLink = function () {
 		return this.type === Asc.c_oAscExternalReferenceType.link;
+	};
+	asc_CExternalReference.prototype.asc_getId = function () {
+		return this.externalReference && this.externalReference.Id;
 	};
 
 
@@ -14639,7 +14688,7 @@ QueryTableField.prototype.clone = function() {
 		if (needGenerateRow) {
 			cell = new ExternalCell();
 			AscCommonExcel.executeInR1C1Mode(false, function () {
-				cell.Ref = new Asc.Range(t.R - 1, index, t.R - 1, index).getName();
+				cell.Ref = new Asc.Range(index, t.R - 1, index, t.R - 1).getName();
 			});
 			this.Cell.push(cell);
 		}
@@ -14759,16 +14808,24 @@ QueryTableField.prototype.clone = function() {
 		return this;
 	}
 	CCellWatch.prototype.clone = function () {
+		var res = new CCellWatch();
+		res.r = this.r.clone();
 
+		res._ws = this._ws;
+		res._workbook = this._workbook;
+		res._sheet = this._sheet;
+		res._name = this._name;
+		res._cell = this._cell;
+		res._value = this._value;
+		res._formula = this._formula;
+
+		return res;
 	};
 	CCellWatch.prototype.setNeedRecalc = function () {
 		this.needRecalc = true;
 	};
 	CCellWatch.prototype.setRef = function (ref) {
 		this.r = ref;
-	};
-	CCellWatch.prototype.clone = function () {
-
 	};
 	CCellWatch.prototype.asc_getWorkbook = function () {
 		return this._workbook;
@@ -14840,6 +14897,11 @@ QueryTableField.prototype.clone = function() {
 	};
 	CCellWatch.prototype.initPostOpen = function (ws) {
 		this._ws = ws;
+	};
+	CCellWatch.prototype.setOffset = function (row, col) {
+		if (this.r) {
+			this.r.setOffset({row: row ? row : 0, col: col ? col : 0});
+		}
 	};
 
 
@@ -15211,6 +15273,8 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getType"] = prot.asc_getType;
 	prot["asc_getData"] = prot.asc_getData;
 	prot["asc_getSource"] = prot.asc_getSource;
+	prot["asc_getId"] = prot.asc_getId;
+	prot["asc_isExternalLink"] = prot.isExternalLink;
 
 
 	window["AscCommonExcel"].CPrintPreviewState = CPrintPreviewState;

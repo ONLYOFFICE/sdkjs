@@ -2419,25 +2419,25 @@
 			var oBorder = dxf && dxf.getBorder();
 			if (oBorder) {
 				var oS = oBorder.l;
-				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
+				if(oS && !oS.isEmpty()) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x0, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.t;
-				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
+				if(oS && !oS.isEmpty()) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y0, x1 - 1);
 					ctx.stroke();
 				}
 				oS = oBorder.r;
-				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
+				if(oS && !oS.isEmpty()) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x1 - 1, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.b;
-				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
+				if(oS && !oS.isEmpty()) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y1 - 1, x1 - 1);
 					ctx.stroke();
@@ -2812,6 +2812,7 @@
 			this.ignorePrintArea = null;
 
 			this.isOnlyFirstPage = null;
+			this.nativeOptions = undefined;
 			this.activeSheetsArray = null;//массив с индексами листов, которые необходимо напечатать
 
 			this.startPageIndex = null;
@@ -2825,6 +2826,8 @@
 		asc_CAdjustPrint.prototype.asc_setPageOptionsMap = function (val) { this.pageOptionsMap = val; };
 		asc_CAdjustPrint.prototype.asc_getIgnorePrintArea = function () { return this.ignorePrintArea; };
 		asc_CAdjustPrint.prototype.asc_setIgnorePrintArea = function (val) { this.ignorePrintArea = val; };
+		asc_CAdjustPrint.prototype.asc_getNativeOptions = function () { return this.nativeOptions; };
+		asc_CAdjustPrint.prototype.asc_setNativeOptions = function (val) { this.nativeOptions = val; };
 		asc_CAdjustPrint.prototype.asc_getActiveSheetsArray = function () { return this.activeSheetsArray; };
 		asc_CAdjustPrint.prototype.asc_setActiveSheetsArray = function (val) { this.activeSheetsArray = val; };
 		asc_CAdjustPrint.prototype.asc_getStartPageIndex = function () { return this.startPageIndex; };
@@ -3049,6 +3052,8 @@
 			this.isNeedRecalc = null;
 
 			this.specificRange = null;
+			this.isForMacros = null;
+			this.activeCell = null;
 
 			//если запускаем новый поиск из-за измененного документа, то присылаем последний элемент, на который
 			//кликнул пользователь и далее пытаемся найти следующий/предыдущий
@@ -3088,6 +3093,7 @@
 			result.specificRange = this.specificRange;
 			result.lastSearchElem = this.lastSearchElem;
 			result.isNotSearchEmptyCells = this.isNotSearchEmptyCells;
+			result.activeCell = this.activeCell;
 
 			return result;
 		};
@@ -3097,9 +3103,9 @@
 				this.scanOnOnlySheet === obj.scanOnOnlySheet;
 		};
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
-			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows &&
-				this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
-				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells;
+			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows && this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
+				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells && this.activeCell ==
+				obj.activeCell;
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;
@@ -3138,6 +3144,8 @@
 		asc_CFindOptions.prototype.asc_setNeedRecalc = function (val) {this.isNeedRecalc = val;};
 		asc_CFindOptions.prototype.asc_setLastSearchElem = function (val) {this.lastSearchElem = val;};
 		asc_CFindOptions.prototype.asc_setNotSearchEmptyCells = function (val) {this.isNotSearchEmptyCells = val;};
+		asc_CFindOptions.prototype.asc_setActiveCell = function (val) {this.activeCell = val;};
+		asc_CFindOptions.prototype.asc_setIsForMacros = function (val) {this.isForMacros = val;};
 
 		/** @constructor */
 		function findResults() {
@@ -3645,6 +3653,8 @@
 		prot["asc_setPageOptionsMap"] = prot.asc_setPageOptionsMap;
 		prot["asc_getIgnorePrintArea"] = prot.asc_getIgnorePrintArea;
 		prot["asc_setIgnorePrintArea"] = prot.asc_setIgnorePrintArea;
+		prot["asc_getNativeOptions"] = prot.asc_getNativeOptions;
+		prot["asc_setNativeOptions"] = prot.asc_setNativeOptions;
 		prot["asc_getActiveSheetsArray"] = prot.asc_getActiveSheetsArray;
 		prot["asc_setActiveSheetsArray"] = prot.asc_setActiveSheetsArray;
 		prot["asc_getStartPageIndex"] = prot.asc_getStartPageIndex;
@@ -3693,6 +3703,9 @@
 		prot["asc_setNeedRecalc"] = prot.asc_setNeedRecalc;
 		prot["asc_setLastSearchElem"] = prot.asc_setLastSearchElem;
 		prot["asc_setNotSearchEmptyCells"] = prot.asc_setNotSearchEmptyCells;
+		prot["asc_setActiveCell"] = prot.asc_setActiveCell;
+		prot["asc_setIsForMacros"] = prot.asc_setIsForMacros;
+
 
 		window["AscCommonExcel"].findResults = findResults;
 

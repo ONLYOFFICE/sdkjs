@@ -53,7 +53,7 @@
 
 		this.NumPr      = null;
 		this.Paragraphs = [];
-		this.NumInfo    = null;
+		this.NumInfo    = new CNumInfo();
 
 		this.LastBulleted = null;
 		this.LastNumbered = null;
@@ -65,10 +65,10 @@
 	 */
 	CNumberingApplicator.prototype.Apply = function(numInfo)
 	{
-		if (!this.Document)
+		if (!this.Document || !numInfo)
 			return false;
 
-		this.NumInfo    = numInfo;
+		this.NumInfo    = new CNumInfo(numInfo);
 		this.NumPr      = this.GetCurrentNumPr();
 		this.Paragraphs = this.GetParagraphs();
 
@@ -143,19 +143,19 @@
 	};
 	CNumberingApplicator.prototype.IsBulleted = function()
 	{
-		return (NumberingType.Bullet === this.NumInfo.Type && (!this.NumInfo.Lvl || 0 === this.NumInfo.Lvl.length));
+		return (NumberingType.Bullet === this.NumInfo.Type && 0 === this.NumInfo.Lvl.length);
 	};
 	CNumberingApplicator.prototype.IsNumbered = function()
 	{
-		return (NumberingType.Number === this.NumInfo.Type && (!this.NumInfo.Lvl || 0 === this.NumInfo.Lvl.length));
+		return (NumberingType.Number === this.NumInfo.Type && 0 === this.NumInfo.Lvl.length);
 	};
 	CNumberingApplicator.prototype.IsSingleLevel = function()
 	{
-		return (NumberingType.Remove !== this.NumInfo.Type && this.NumInfo.Lvl && 1 === this.NumInfo.Lvl.length);
+		return (NumberingType.Remove !== this.NumInfo.Type && 1 === this.NumInfo.Lvl.length);
 	};
 	CNumberingApplicator.prototype.IsMultilevel = function()
 	{
-		return (this.NumInfo.Lvl && this.NumInfo.Lvl.length >= 8);
+		return (this.NumInfo.Lvl.length >= 8);
 	};
 	CNumberingApplicator.prototype.RemoveNumbering = function()
 	{
@@ -270,7 +270,7 @@
 
 			let textPr = new AscWord.CTextPr();
 			textPr.RFonts.SetAll("Symbol");
-			lvl.SetByType(c_oAscNumberingLevel.Bullet, oNumPr.Lvl, String.fromCharCode(0x00B7), textPr);
+			lvl.SetByType(c_oAscNumberingLevel.Bullet, numPr.Lvl, String.fromCharCode(0x00B7), textPr);
 		}
 
 		lvl.ParaPr = num.GetLvl(numPr.Lvl).ParaPr.Copy();
@@ -455,9 +455,6 @@
 	};
 	CNumberingApplicator.prototype.SetLastSingleLevel = function(numId, ilvl)
 	{
-		if (!this.NumInfo)
-			return;
-
 		if (NumberingType.Bullet === this.NumInfo.Type)
 			this.SetLastBulleted(numId, ilvl);
 		else if (NumberingType.Number === this.NumInfo.Type)
@@ -677,6 +674,17 @@
 			this.Paragraphs[index].UpdateDocumentOutline();
 		}
 	};
+
+	/**
+	 * Класс для информации о нумерации
+	 * @param numInfo
+	 * @constructor
+	 */
+	function CNumInfo(numInfo)
+	{
+		this.Type = numInfo && numInfo["Type"] ? numInfo["Type"] : "";
+		this.Lvl  = numInfo && numInfo["Lvl"] && numInfo["Lvl"].length ? numInfo["Lvl"] : [];
+	}
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumberingApplicator = CNumberingApplicator;
 

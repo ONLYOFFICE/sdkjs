@@ -258,6 +258,10 @@
         }
     };
     CViewPr.prototype.drawGuides = function(oGraphics) {
+	    if(oGraphics.IsThumbnail || oGraphics.animationDrawer ||
+		    oGraphics.IsDemonstrationMode || AscCommon.IsShapeToImageConverter) {
+		    return;
+	    }
         if(this.slideViewPr) {
             this.slideViewPr.drawGuides(oGraphics);
         }
@@ -875,4 +879,5 @@
     window['AscFormat'].CViewPrScale = CScale;
     window['AscFormat'].CViewPrGuide = CGuide;
     window['AscFormat'].MmToGdPos = MmToGdPos;
+    window['AscFormat'].GdPosToMm = GdPosToMm;
 }) (window);

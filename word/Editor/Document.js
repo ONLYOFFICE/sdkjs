@@ -2016,7 +2016,6 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.MoveDrawing               = false; // Происходит ли сейчас перенос автофигуры
 	this.PrintSelection            = false; // Печатаем выделенный фрагмент
 	this.CheckFormPlaceHolder      = true;  // Выполняем ли специальную обработку для плейсхолдеров у форм
-	this.MathInputType             = Asc.c_oAscMathInputType.Unicode;
 	this.ForceDrawPlaceHolders     = null;  // true/false - насильно заставляем рисовать или не рисовать плейсхолдеры и подсветку,
 	this.ForceDrawFormHighlight    = null;  // null - редактор решает рисовать или нет в зависимости от других параметров
 	this.ConcatParagraphsOnRemove  = false; // Во время удаления объединять ли первый и последний параграфы
@@ -5283,6 +5282,10 @@ CDocument.prototype.CheckViewPosition = function()
 	let nInDocumentPosition = bottomDocPos[0].Position;
 	if (this.FullRecalc.Id && this.FullRecalc.StartIndex <= nInDocumentPosition)
 		return;
+	
+	let cursorPos      = this.ViewPosition.CursorPos;
+	let cursorAlign    = this.ViewPosition.CursorAlign;
+	let cursorDistance = this.ViewPosition.CursorDistance;
 
 	this.ViewPosition     = null;
 	this.NeedUpdateTarget = false;
@@ -5311,12 +5314,25 @@ CDocument.prototype.CheckViewPosition = function()
 			H    : posInfo.Height
 		}
 	}
-
-	let top    = GetXY(topDocPos);
-	let bottom = GetXY(bottomDocPos);
-
-	let height = (top.Page === bottom.Page ? bottom.Y - top.Y - top.H : bottom.Y);
-	this.DrawingDocument.m_oWordControl.ScrollToPosition(top.X, top.Y + top.H, top.Page, height);
+	
+	if (cursorPos && 0 !== cursorAlign)
+	{
+		let cursor = GetXY(cursorPos);
+		if (cursorAlign < 0)
+			this.DrawingDocument.m_oWordControl.ScrollToAbsolutePosition(cursor.X, cursor.Y - cursorDistance, cursor.Page);
+		else
+			this.DrawingDocument.m_oWordControl.ScrollToAbsolutePosition(cursor.X, cursor.Y + cursorDistance, cursor.Page, true);
+	}
+	else
+	{
+		let top    = GetXY(topDocPos);
+		let bottom = GetXY(bottomDocPos);
+		
+		let height = (top.Page === bottom.Page ? bottom.Y - top.Y - top.H : bottom.Y);
+		this.DrawingDocument.m_oWordControl.ScrollToPosition(top.X, top.Y + top.H, top.Page, height);
+	}
+	
+	this.RecalculateCurPos();
 };
 CDocument.prototype.RecalculateCurPos = function()
 {
@@ -10347,7 +10363,7 @@ CDocument.prototype.private_CheckForbiddenPlaceOnTextAdd = function()
 	if (!isFormFieldEditing && oCheckBox)
 	{
 		this.RemoveSelection();
-		oCheckBox.MoveCursorOutsideForm(false);
+		oCheckBox.MoveCursorOutsideForm(oCheckBox.IsCursorAtBegin());
 	}
 };
 /**
@@ -14622,10 +14638,10 @@ CDocument.prototype.Save_DocumentStateBeforeLoadChanges = function(isRemoveSelec
 	State.StartPos   = [];
 	State.EndPos     = [];
 
+	this.Controller.SaveDocumentStateBeforeLoadChanges(State);
+	
 	if (isStoreViewPosition)
 		this.private_StoreViewPositions(State);
-
-	this.Controller.SaveDocumentStateBeforeLoadChanges(State);
 
 	// TODO: Разобраться зачем здесь делается RemoveSelection, по логике надо вынести за пределы данной функции
 	if (false !== isRemoveSelection)
@@ -14684,7 +14700,65 @@ CDocument.prototype.private_GetXYByDocumentPosition = function(docPos)
 CDocument.prototype.private_StoreViewPositions = function(state)
 {
 	let viewPort = this.DrawingDocument.GetVisibleRegion();
-
+	
+	let selectionBounds = this.GetSelectionBounds();
+	
+	let cursorY, cursorH, cursorPage = -1, cursorPosType;
+	if (selectionBounds)
+	{
+		if (this.IsSelectionUse())
+		{
+			if (selectionBounds.Direction > 0)
+			{
+				cursorY       = selectionBounds.End.Y;
+				cursorH       = selectionBounds.End.H;
+				cursorPage    = selectionBounds.End.Page;
+				cursorPosType = 2;
+			}
+			else
+			{
+				cursorY       = selectionBounds.Start.Y;
+				cursorH       = selectionBounds.Start.H;
+				cursorPage    = selectionBounds.Start.Page;
+				cursorPosType = 1;
+			}
+		}
+		else
+		{
+			cursorY       = selectionBounds.Start.Y;
+			cursorH       = selectionBounds.End.Y - selectionBounds.Start.Y;
+			cursorPage    = selectionBounds.Start.Page;
+			cursorPosType = 0;
+		}
+	}
+	
+	let cursorDistance = 0;
+	let cursorAlign    = 0;
+	if (-1 !== cursorPage
+		&& ((viewPort[0].Page === cursorPage && cursorY + cursorH > viewPort[0].Y)
+			|| (viewPort[1].Page === cursorPage && cursorY < viewPort[1].Y)))
+	{
+		if (viewPort[0].Page === cursorPage)
+		{
+			cursorDistance = cursorY - viewPort[0].Y;
+			cursorAlign    = -1;
+		}
+		else
+		{
+			cursorDistance = viewPort[1].Y - cursorY;
+			cursorAlign = 1;
+		}
+	}
+	else
+	{
+		cursorPosType = -1;
+	}
+	
+	state.CursorAlign    = cursorAlign;
+	state.CursorDistance = cursorDistance
+	state.CursorPosType  = cursorPosType;
+	
+	
 	let topPos    = this.GetDocumentPositionByXY(viewPort[0].Page, 0, viewPort[0].Y);
 	let bottomPos = this.GetDocumentPositionByXY(viewPort[1].Page, 0, viewPort[1].Y);
 
@@ -14825,9 +14899,28 @@ CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State)
 	}
 
 	if (State.ViewPosTop)
-		this.ViewPosition = {Top : State.ViewPosTop, Bottom : State.ViewPosBottom ? State.ViewPosBottom : State.ViewPosTop};
+	{
+		this.ViewPosition = {
+			Top            : State.ViewPosTop,
+			Bottom         : State.ViewPosBottom ? State.ViewPosBottom : State.ViewPosTop,
+			CursorAlign    : State.CursorAlign,
+			CursorDistance : State.CursorDistance,
+			CursorPos      : null
+		};
+		
+		if (0 === State.CursorPosType)
+			this.ViewPosition.CursorPos = State.Pos;
+		else if (1 === State.CursorPosType)
+			this.ViewPosition.CursorPos = State.StartPos;
+		else if (2 === State.CursorPosType)
+			this.ViewPosition.CursorPos = State.EndPos;
+		else
+			this.ViewPosition.CursorPos = null;
+	}
 	else
+	{
 		this.ViewPosition = null;
+	}
 
 	this.UpdateSelection();
 
@@ -17338,8 +17431,10 @@ CDocument.prototype.Begin_CompositeInput = function()
 						oNewRun = oRun.private_SplitRunInCurPos();
 				}
 
-				if (oNewRun)
+				let prevRun = null;
+				if (oNewRun && oNewRun !== oRun)
 				{
+					prevRun = oRun;
 					oRun = oNewRun;
 					oRun.Make_ThisElementCurrent();
 				}
@@ -17349,7 +17444,8 @@ CDocument.prototype.Begin_CompositeInput = function()
 					Pos     : oRun.State.ContentPos,
 					Length  : 0,
 					CanUndo : true,
-					Check   : isCheck
+					Check   : isCheck,
+					PrevRun : prevRun
 				};
 
 				oRun.Set_CompositeInput(this.CompositeInput);
@@ -17389,10 +17485,16 @@ CDocument.prototype.Replace_CompositeText = function(arrCharCodes)
 
 	if (this.CompositeInput.Check && arrCharCodes.length)
 	{
-		if (AscCommon.IsComplexScript(arrCharCodes[0]))
-			this.CompositeInput.Run.ApplyComplexScript(true);
-		else
-			this.CompositeInput.Run.ApplyComplexScript(false);
+		let prevRun = this.CompositeInput.PrevRun;
+		let isCS = AscCommon.IsComplexScript(arrCharCodes[0]);
+
+		this.CompositeInput.Run.ApplyComplexScript(isCS);
+		if (prevRun
+			&& isCS !== prevRun.IsCS()
+			&& prevRun.IsOnlyCommonTextScript())
+		{
+			prevRun.ApplyComplexScript(isCS);
+		}
 
 		this.CompositeInput.Check = false;
 	}
@@ -26369,10 +26471,7 @@ CDocument.prototype.ConvertMathView = function(isToLinear, isAll)
 	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ConvertMathView);
-
-		var oLogicDocument = this.GetLogicDocument()
-		var nInputType = oLogicDocument ? oLogicDocument.GetMathInputType() : Asc.c_oAscMathInputType.Unicode;
-
+		var nInputType = this.Api.getMathInputType();
 		if (isAll || !this.IsTextSelectionUse())
 		{
 			this.RemoveTextSelection();
@@ -26388,20 +26487,6 @@ CDocument.prototype.ConvertMathView = function(isToLinear, isAll)
         this.UpdateTracks();
         this.FinalizeAction();
 	}
-};
-/**
- * @param {Asc.c_oAscMathInputType} nType
- */
-CDocument.prototype.SetMathInputType = function(nType)
-{
-	this.MathInputType = nType;
-};
-/**
- * @returns {Asc.c_oAscMathInputType}
- */
-CDocument.prototype.GetMathInputType = function()
-{
-	return this.MathInputType;
 };
 
 function CDocumentSelectionState()

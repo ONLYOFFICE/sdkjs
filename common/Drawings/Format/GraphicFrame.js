@@ -1450,31 +1450,7 @@ CGraphicFrame.prototype.IsThisElementCurrent = function()
 
 
     function updateRowHeightAfterOpen(oRow, fRowHeight) {
-        let fMaxTopMargin = 0, fMaxBottomMargin = 0, fMaxTopBorder = 0, fMaxBottomBorder = 0;
-        let bLoadVal = AscCommon.g_oIdCounter.m_bLoad;
-        let bRead = AscCommon.g_oIdCounter.m_bRead;
-        AscCommon.g_oIdCounter.m_bLoad = false;
-        AscCommon.g_oIdCounter.m_bRead = false;
-        for(let i = 0;  i < oRow.Content.length; ++i){
-            let oCell = oRow.Content[i];
-            let oMargins = oCell.GetMargins();
-            if(oMargins.Bottom.W > fMaxBottomMargin){
-                fMaxBottomMargin = oMargins.Bottom.W;
-            }
-            if(oMargins.Top.W > fMaxTopMargin){
-                fMaxTopMargin = oMargins.Top.W;
-            }
-            let oBorders = oCell.Get_Borders();
-            if(oBorders.Top.Size > fMaxTopBorder){
-                fMaxTopBorder = oBorders.Top.Size;
-            }
-            if(oBorders.Bottom.Size > fMaxBottomBorder){
-                fMaxBottomBorder = oBorders.Bottom.Size;
-            }
-        }
-        AscCommon.g_oIdCounter.m_bLoad = bLoadVal;
-        AscCommon.g_oIdCounter.m_bRead = bRead;
-        oRow.Set_Height(Math.max(1, fRowHeight - fMaxTopMargin - fMaxBottomMargin - fMaxTopBorder/2 - fMaxBottomBorder/2), Asc.linerule_AtLeast);
+	    oRow.Set_Height( fRowHeight, Asc.linerule_AtLeast);
     }
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};

@@ -828,3 +828,6 @@ CSdtBase.prototype.GetFormValue = function()
 
 	return this.GetInnerText();
 };
+CSdtBase.prototype.MoveCursorOutsideForm = function(isBefore)
+{
+};

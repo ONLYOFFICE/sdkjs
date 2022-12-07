@@ -35,7 +35,7 @@
 (function (window, builder) {
 	function checkFormat(value) {
 		if (value.getTime){
-			return new AscCommonExcel.cNumber(new Asc.cDate(value.getTime()).getExcelDate());
+			return new AscCommonExcel.cNumber(new Asc.cDate(value.getTime()).getExcelDateWithTime(true));
 		} else {
 			return new AscCommonExcel.cString(value + '');
 		}
@@ -57,7 +57,7 @@
  	* The callback function which is called when the specified range of the current sheet changes.
  	* <note>Please note that the event is not called for the undo/redo operations.</note>
 	* @event Api#onWorksheetChange
-	* @property {ApiRange} range - The modified range represented as the ApiRange object.
+	* @param {ApiRange} range - The modified range represented as the ApiRange object.
  	*/
 
 	/**
@@ -883,22 +883,41 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} row - The row number or the cell number (if only row is defined).
 	 * @param {number} col - The column number.
-	 * @returns {ApiRange}
+	 * @returns {ApiRange || Error}
 	 */
 	ApiWorksheet.prototype.GetCells = function (row, col) {
-		if (row) row--;
-		if (typeof col !== "undefined" && typeof row !== "undefined") {
-			if (col) col--;
-			return new ApiRange(this.worksheet.getRange3(row, col, row, col));
-		} else if (typeof row !== "undefined") {
-			var r = (row) ?  (row / AscCommon.gc_nMaxCol0) >> 0 : row;
-			var c = (row) ? row % AscCommon.gc_nMaxCol0 : row;
-			if (r && c) c--;
-			return new ApiRange(this.worksheet.getRange3(r, c, r, c));
+		let result;
+		if (typeof col == "number" && typeof row == "number") {
+			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
+				result = new Error('Invalid paremert "row" or "col".');
+			} else {
+				row--;
+				col--;
+				result = new ApiRange(this.worksheet.getRange3(row, col, row, col));
+			}
+		} else if (typeof row == "number") {
+			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
+				result = new Error('Invalid paremert "row".');
+			} else {
+				row--
+				let r = (row) ?  (row / AscCommon.gc_nMaxCol0) >> 0 : row;
+				let c = (row) ? row % AscCommon.gc_nMaxCol0 : row;
+				if (r && c) c--;
+				result = new ApiRange(this.worksheet.getRange3(r, c, r, c));
+			}
+			
+		} else if (typeof col == "number") {
+			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
+				result = new Error('Invalid paremert "col".');
+			} else {
+				col--;
+				result = new ApiRange(this.worksheet.getRange3(0, col, 0, col));
+			}
+		} else {
+			result = new ApiRange(this.worksheet.getRange3(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0));
 		}
-		else {
-			return new ApiRange(this.worksheet.getRange3(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0));
-		}
+
+		return result;
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Cells", {
 		get: function () {
@@ -1736,6 +1755,26 @@
 	};
 
 	/**
+	 * Moves the sheet to another location in the workbook.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiWorksheet} before - The sheet before which the moved sheet will be placed. You cannot specify Before if you specify After.
+	 * @param {ApiWorksheet} after - The sheet after which the moved sheet will be placed. You cannot specify After if you specify Before.
+	*/
+	ApiWorksheet.prototype.Move = function(before, after) {
+		var bb = before instanceof ApiWorksheet;
+		var ba = after instanceof ApiWorksheet;
+		if ( (bb && ba) || (!bb && !ba) )
+			return new Error('Incorrect parametrs.');
+
+		if (bb) {
+			this.worksheet.workbook.oApi.asc_moveWorksheet( before.Index, [this.Index] );
+		} else {
+			this.worksheet.workbook.oApi.asc_moveWorksheet( (after.Index + 1), [this.Index] );
+		}
+	};
+
+	/**
 	 * Specifies the cell border position.
 	 * @typedef {("DiagonalDown" | "DiagonalUp" | "Bottom" | "Left" | "Right" | "Top" | "InsideHorizontal" | "InsideVertical")} BordersIndex
 	 */
@@ -1790,7 +1829,7 @@
 	 * @returns {number}
 	 */
 	ApiRange.prototype.GetRow = function () {
-		return this.range.bbox.r1;
+		return (this.range.bbox.r1 + 1);
 	};
 	Object.defineProperty(ApiRange.prototype, "Row", {
 		get: function () {
@@ -1804,7 +1843,7 @@
 	 * @returns {number}
 	 */
 	ApiRange.prototype.GetCol = function () {
-		return this.range.bbox.c1;
+		return (this.range.bbox.c1 + 1);
 	};
 	Object.defineProperty(ApiRange.prototype, "Col", {
 		get: function () {
@@ -1890,34 +1929,63 @@
 	 * @param {Direction} direction - The direction of end in the specified range. *
 	 * @returns {ApiRange}
 	 */
-	 ApiRange.prototype.End = function (direction) {
-		var bbox = this.range.bbox;
-		var r1, c1, r2, c2;
+	ApiRange.prototype.End = function (direction) {
+		let bbox = this.range.bbox;
+		let row, col, res;
 		switch (direction) {
 			case "xlUp":
-				r1 = r2 = 0;
-				c1 = c2 = bbox.c1;
+				row = (bbox.r1 > 0 ? bbox.r1 - 1 : bbox.r1);
+				res = this.range.worksheet.getRange3(0, bbox.c1, 0, bbox.c1);
+				while (row) {
+					let cell = this.range.worksheet.getRange3(row, bbox.c1, row, bbox.c1);
+					if (cell.getValue() !== "") {
+						res = cell;
+						break;
+					}
+					row--;
+				}
 				break;
 			case "xlDown":
-				r1 = r2 = AscCommon.gc_nMaxRow0;
-				c1 = c2 = bbox.c1;
+				row = (bbox.r1 < AscCommon.gc_nMaxRow0 ? bbox.r1 + 1 : bbox.r1);
+				res = this.range.worksheet.getRange3(AscCommon.gc_nMaxRow0, bbox.c1, AscCommon.gc_nMaxRow0, bbox.c1);
+				while (row < AscCommon.gc_nMaxRow0) {
+					let cell = this.range.worksheet.getRange3(row, bbox.c1, row, bbox.c1);
+					if (cell.getValue() !== "") {
+						res = cell;
+						break;
+					}
+					row++;
+				}
 				break;
 			case "xlToRight":
-				r1 = r2 = bbox.r1;
-				c1 = c2 = AscCommon.gc_nMaxCol0;
+				col = (bbox.c1 < AscCommon.gc_nMaxCol0 ? bbox.c1 + 1 : bbox.c1);
+				res = this.range.worksheet.getRange3(bbox.r1, AscCommon.gc_nMaxCol0, bbox.r1, AscCommon.gc_nMaxCol0);
+				while (col < AscCommon.gc_nMaxCol0) {
+					let cell = this.range.worksheet.getRange3(bbox.r1, col, bbox.r1, col);
+					if (cell.getValue() !== "") {
+						res = cell;
+						break;
+					}
+					col++;
+				}
 				break;
 			case "xlToLeft":
-				r1 = r2 = bbox.r1;
-				c1 = c2 = 0;
+				col = (bbox.c1 > 0 ? bbox.c1 - 1 : bbox.c1);
+				res = this.range.worksheet.getRange3(bbox.r1, 0, bbox.r1, 0);
+				while (col) {
+					let cell = this.range.worksheet.getRange3(bbox.r1, col, bbox.r1, col);
+					if (cell.getValue() !== "") {
+						res = cell;
+						break;
+					}
+					col--;
+				}
 				break;
 			default:
-				r1 = bbox.r1;
-				c1 = bbox.c1;
-				r2 = bbox.r2;
-				c2 = bbox.c2;
+				res = this.range.worksheet.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
 				break;
 		}
-		return new ApiRange(this.range.worksheet.getRange3(r1, c1, r2, c2));
+		return new ApiRange(res);
 	};
 
 	/**
@@ -1928,20 +1996,36 @@
 	 * @param {number} col - The column number.
 	 * @returns {ApiRange}
 	 */
-	 ApiRange.prototype.GetCells = function (row, col) {
-		if (row) row--;
-		var bbox = this.range.bbox;
-		if (typeof col !== "undefined" && typeof row !== "undefined") {
-			return new ApiRange(this.range.worksheet.getRange3(row, col, row, col));
-		} else if (typeof row !== "undefined") {
-			var cellCount = bbox.c2 - bbox.c1 + 1; 
-			var r = bbox.r1 + ((row) ?  (row / cellCount) >> 0 : row);
-			var c = bbox.c1 + ((r) ? 1 : 0) + ((row) ? row % cellCount : row);
-			if (r && c) c--;
-			return new ApiRange(this.range.worksheet.getRange3(r, c, r, c));
+	ApiRange.prototype.GetCells = function (row, col) {
+		let bbox = this.range.bbox;
+		let r1, c1, result;
+		if (typeof col == "number" && typeof row == "number") {
+			row--;
+			col--
+			r1 = bbox.r1 + row;
+			c1 = bbox.c1 + col;
+		} else if (typeof row == "number") {
+			row--;
+			let cellCount = bbox.c2 - bbox.c1 + 1; 
+			r1 = bbox.r1 + ((row) ?  (row / cellCount) >> 0 : row);
+			c1 = bbox.c1 + ((r1) ? 1 : 0) + ((row) ? row % cellCount : row);
+			if (r1 && c1) c1--;
+		} else if (typeof col == "number") {
+			col--;
+			r1 = bbox.r1;
+			c1 = bbox.c1 + col;
 		} else {
-			return new ApiRange(this.range.worksheet.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2));
+			result = new ApiRange(this.range.worksheet.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2));
 		}
+
+		if (!result) {
+			if (r1 > AscCommon.gc_nMaxRow0) r1 = AscCommon.gc_nMaxRow0;
+			if (r1 < 0) r1 = 0;
+			if (c1 > AscCommon.gc_nMaxCol0) c1 = AscCommon.gc_nMaxCol0;
+			if (c1 < 0) c1 = 0;
+			result = new ApiRange(this.range.worksheet.getRange3(r1, c1, r1, c1));
+		}
+		return result;
 	};
 	Object.defineProperty(ApiRange.prototype, "Cells", {
 		get: function () {
@@ -2643,6 +2727,28 @@
 	});
 
 	/**
+	 * Returns value that represents the format code for the range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null} This property returns null if all cells in the specified range don't have the same number format.
+	 */
+	ApiRange.prototype.GetNumberFormat = function () {
+		var bbox = this.range.bbox;
+		var nCol = bbox.c2 - bbox.c1 + 1;
+		var nRow = bbox.r2 - bbox.r1 + 1;
+		var res = this.range.getNumFormatStr();
+		if ( !this.range.isOneCell() ) {
+			for (var i = 0; i < nRow; i++) {
+				for (var k = 0; k < nCol; k++) {
+					var cell = this.range.worksheet.getRange3( (bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k) );
+					if ( res !== cell.getNumFormatStr() )
+						return null;
+				}
+			}
+		}
+		return res;
+	};
+	/**
 	 * Specifies whether a number in the cell should be treated like number, currency, date, time, etc. or just like text.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -2652,6 +2758,9 @@
 		this.range.setNumFormat(sFormat);
 	};
 	Object.defineProperty(ApiRange.prototype, "NumberFormat", {
+		get: function () {
+			return this.GetNumberFormat();
+		},
 		set: function (sFormat) {
 			return this.SetNumberFormat(sFormat);
 		}
@@ -2667,6 +2776,7 @@
 	 */
 	ApiRange.prototype.SetBorders = function (bordersIndex, lineStyle, oColor) {
 		var borders = new AscCommonExcel.Border();
+		borders.initDefault();
 		switch (bordersIndex) {
 			case 'DiagonalDown':
 				borders.dd = true;
@@ -3075,7 +3185,7 @@
 			return new Error ("Invalid destination");
 		}
 	};
-	
+
 	/**
 	 * Pastes the Range object to the specified range.
 	 * @memberof ApiRange
@@ -3091,6 +3201,179 @@
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
 			return new Error ("Invalid range");
+		}
+	};
+	
+	/**
+	 * Finds specific information in a range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {String | undefined} What - The data to search for.
+	 * @param {ApiRange} After - The cell after which you want the search to begin. If you don't specify this argument, the search starts after the cell in the upper-left corner of the range.
+	 * @param {String} LookIn - Can be one of the following XlFindLookIn constants: xlFormulas, xlValues.
+	 * @param {String} LookAt - Can be one of the following XlLookAt constants: xlWhole or xlPart.
+	 * @param {String} SearchOrder - Can be one of the following XlSearchOrder constants: xlByRows or xlByColumns.
+	 * @param {String} SearchDirection - Can be one of the following XlSearchDirection constants: xlNext or xlPrevious.
+	 * @param {Boolean} MatchCase - True to make the search case-sensitive. The default value is False.
+	 * @returns {ApiRange | null} - returns null if range does not contains such text.
+	 * 
+	 */
+	ApiRange.prototype.Find = function(What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase) {
+		if (typeof What === 'string' || What === undefined) {
+			let res = null;
+			let options = new Asc.asc_CFindOptions();
+			options.asc_setFindWhat(What);
+			options.asc_setScanForward(SearchDirection != 'xlPrevious');
+			MatchCase && options.asc_setIsMatchCase(MatchCase);
+			options.asc_setIsWholeCell(LookAt === 'xlWhole');
+			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
+			options.asc_setSpecificRange(this.Address);
+			options.asc_setScanByRows(SearchOrder === 'xlByRows');
+			options.asc_setLookIn( (LookIn === 'xlValues' ? 2 : 1) );
+			options.asc_setNotSearchEmptyCells( !(What === "" && !options.isWholeCell) );
+			let start = ( After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range) )
+						? { row: After.range.bbox.r1, col: After.range.bbox.c1 }
+						: { row: this.range.bbox.r1, col: this.range.bbox.c1 };
+						
+			start.row += (options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
+			start.col += (!options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
+			options.asc_setActiveCell(start);
+			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(options.scanForward);
+			if (id != null) {
+				let elem = engine.Elements[id];
+				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
+			}
+			this._searchOptions = options;
+			return res;
+		} else {
+			return new Error('Invalid parametr "What".')
+		}
+	};
+
+	/**
+	 * Continues a search that was begun with the Find method. Finds the next cell that matches those same conditions and returns a Range object that represents that cell. This does not affect the selection or the active cell..
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} After - The cell after which you want the search to begin. If you don't specify this argument, the search starts from the last founded cell.
+	 * @returns {ApiRange} - returns null if range does not contains such text.
+	 * 
+	*/
+	ApiRange.prototype.FindNext = function(After) {
+		if (this._searchOptions) {
+			let res = null;
+			let activeCell;
+			let engine;
+			this._searchOptions.asc_setScanForward(true);
+			if (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range)) {
+				activeCell = { row: After.range.bbox.r1, col: After.range.bbox.c1 };
+				activeCell.row += (this._searchOptions.scanByRows ? 1 : 0);
+				activeCell.col += (!this._searchOptions.scanByRows ? 1 : 0);
+			} else {
+				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
+			}
+			if (JSON.stringify(this._searchOptions.activeCell) !== JSON.stringify(activeCell)) {
+				this._searchOptions.asc_setActiveCell(activeCell);
+			} else {
+				engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+				engine.Reset();
+			}
+			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(true);
+			if (id != null) {
+				let elem = engine.Elements[id];
+				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
+			}
+			return res;
+		} else {
+			return new Error('You should use "Find" method before this.')
+		}
+	};
+
+	/**
+	 * Continues a search that was begun with the Find method. Finds the next cell that matches those same conditions and returns a Range object that represents that cell. This does not affect the selection or the active cell..
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Before - The cell before which you want the search to begin. If you don't specify this argument, the search starts from the last founded cell.
+	 * @returns {ApiRange} - returns null if range does not contains such text.
+	 * 
+	*/
+	ApiRange.prototype.FindPrevious = function(Before) {
+		if (this._searchOptions) {
+			let res = null;
+			let activeCell;
+			let engine;
+			this._searchOptions.asc_setScanForward(false);
+			if (Before instanceof ApiRange && Before.range.isOneCell() && this.range.containsRange(Before.range)) {
+				activeCell = { row: Before.range.bbox.r1, col: Before.range.bbox.c1 };
+				activeCell.row += (this._searchOptions.scanByRows ? -1 : 0);
+				activeCell.col += (!this._searchOptions.scanByRows ? -1 : 0);
+			} else {
+				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
+			}
+			if (JSON.stringify(this._searchOptions.activeCell) !== JSON.stringify(activeCell)) {
+				this._searchOptions.asc_setActiveCell(activeCell);
+			} else {
+				engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+				engine.Reset();
+			}
+			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(false);
+			if (id != null) {
+				let elem = engine.Elements[id];
+				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
+			}
+			return res;
+		} else {
+			return new Error('You should use "Find" method before this.')
+		}
+	};
+
+	/**
+	 * Replaces specific information to another one in a range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {String | undefined} What - The data to search for.
+	 * @param {String} Replacement - The replacement string.
+	 * @param {String} LookAt - Can be one of the following XlLookAt constants: xlWhole or xlPart.
+	 * @param {String} SearchOrder - Can be one of the following XlSearchOrder constants: xlByRows or xlByColumns.
+	 * @param {String} SearchDirection - Can be one of the following XlSearchDirection constants: xlNext or xlPrevious.
+	 * @param {Boolean} MatchCase - True to make the search case-sensitive. The default value is False.
+	 * @param {Boolean} ReplaceAll - True to replace all. The default value is True.
+	 * 
+	 */
+	ApiRange.prototype.Replace = function(What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll) {
+		if (typeof What === 'string' && typeof Replacement === 'string') {
+			let options = new Asc.asc_CFindOptions();
+			options.asc_setFindWhat(What);
+			options.asc_setReplaceWith(Replacement);
+			options.asc_setScanForward(SearchDirection != 'xlPrevious');
+			MatchCase && options.asc_setIsMatchCase(MatchCase);
+			options.asc_setIsWholeCell(LookAt === 'xlWhole');
+			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
+			options.asc_setSpecificRange(this.Address);
+			options.asc_setScanByRows(SearchOrder === 'xlByRows');
+			options.asc_setLookIn(Asc.c_oAscFindLookIn.Formulas);
+			if (typeof ReplaceAll !== 'boolean')
+				ReplaceAll = true;
+
+			options.asc_setIsReplaceAll((ReplaceAll === true));
+			this.range.worksheet.workbook.oApi.isReplaceAll = options.isReplaceAll;
+			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			engine.Reset();
+			engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
+			options.asc_setIsForMacros(true);
+			if (id != null) {
+				if (ReplaceAll)
+					engine.SetCurrent(id);
+				else
+					this.range.worksheet.workbook.oApi.wb.SelectSearchElement(id);
+
+				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
+			}
+		} else {
+			return new Error('Invalid type of parametr "What" or "Replacement.')
 		}
 	};
 
@@ -4310,6 +4593,7 @@
 	ApiWorksheet.prototype["GetAllShapes"] = ApiWorksheet.prototype.GetAllShapes;
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
 	ApiWorksheet.prototype["GetAllOleObjects"] = ApiWorksheet.prototype.GetAllOleObjects;
+	ApiWorksheet.prototype["Move"] = ApiWorksheet.prototype.Move;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -4347,6 +4631,7 @@
 	ApiRange.prototype["GetWrapText"] = ApiRange.prototype.GetWrapText;
 	ApiRange.prototype["SetFillColor"] = ApiRange.prototype.SetFillColor;
 	ApiRange.prototype["GetFillColor"] = ApiRange.prototype.GetFillColor;
+	ApiRange.prototype["GetNumberFormat"] = ApiRange.prototype.GetNumberFormat;
 	ApiRange.prototype["SetNumberFormat"] = ApiRange.prototype.SetNumberFormat;
 	ApiRange.prototype["SetBorders"] = ApiRange.prototype.SetBorders;
 	ApiRange.prototype["Merge"] = ApiRange.prototype.Merge;
@@ -4366,6 +4651,10 @@
 	ApiRange.prototype["GetAreas"] = ApiRange.prototype.GetAreas;
 	ApiRange.prototype["Copy"] = ApiRange.prototype.Copy;
 	ApiRange.prototype["Paste"] = ApiRange.prototype.Paste;
+	ApiRange.prototype["Find"] = ApiRange.prototype.Find;
+	ApiRange.prototype["FindNext"] = ApiRange.prototype.FindNext;
+	ApiRange.prototype["FindPrevious"] = ApiRange.prototype.FindPrevious;
+	ApiRange.prototype["Replace"] = ApiRange.prototype.Replace;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;

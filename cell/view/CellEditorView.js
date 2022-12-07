@@ -2639,6 +2639,13 @@
 				}
 				break;
 
+			case 110: //NumpadDecimal
+				var api = window["Asc"]["editor"];
+				t._addChars(api.asc_getDecimalSeparator());
+				event.stopPropagation();
+				event.preventDefault();
+				return false;
+
 			case 113: // F2
 				if (AscBrowser.isOpera) {
 					event.stopPropagation();

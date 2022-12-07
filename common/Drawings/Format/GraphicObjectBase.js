@@ -1674,7 +1674,18 @@
         return _geom.findConnector(_x, _y, this.convertPixToMM(AscCommon.global_mouseEvent.KoefPixToMM * AscCommon.TRACK_CIRCLE_RADIUS));
 
     };
+	CGraphicObjectBase.prototype.canConnectTo = function() {
+		let sPreset = this.getPresetGeom();
+		if(sPreset && AscFormat.LINE_PRESETS_MAP[sPreset])
+		{
+			return false;
+		}
+		return true;
+	};
     CGraphicObjectBase.prototype.findConnector = function(x, y){
+		if(!this.canConnectTo()) {
+			return null;
+		}
         var oConnGeom = this.findGeomConnector(x, y);
         if(oConnGeom){
             var _rot = this.rot;
@@ -1694,7 +1705,10 @@
         return null;
     };
     CGraphicObjectBase.prototype.findConnectionShape = function(x, y){
-        if(this.hit(x, y)){
+	    if(!this.canConnectTo()) {
+		    return null;
+	    }
+		if(this.hit(x, y)){
             return this;
         }
         return null;

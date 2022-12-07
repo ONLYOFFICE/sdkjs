@@ -109,8 +109,8 @@
 		let paragraph  = math.GetParagraph();
 		let mathBounds = math.GetBounds();
 
-		// TODO: Пока мы не отдаем границы трека, если формула находится в повернутой автофигуре
-		if (!mathBounds || !mathBounds.length || !paragraph || paragraph.Get_ParentTextTransform())
+		let oTextTransform = paragraph.Get_ParentTextTransform();
+		if (!mathBounds || !mathBounds.length || !paragraph)
 			return null;
 
 		let firstBounds = null;
@@ -161,6 +161,23 @@
 				if (y1 < bounds.Y + bounds.H)
 					y1 = bounds.Y + bounds.H;
 			}
+		}
+		if(oTextTransform)
+		{
+			let aX = [];
+			let aY = [];
+			aX.push(oTextTransform.TransformPointX(x0, y0));
+			aX.push(oTextTransform.TransformPointX(x0, y1));
+			aX.push(oTextTransform.TransformPointX(x1, y0));
+			aX.push(oTextTransform.TransformPointX(x1, y1));
+			aY.push(oTextTransform.TransformPointY(x0, y0));
+			aY.push(oTextTransform.TransformPointY(x0, y1));
+			aY.push(oTextTransform.TransformPointY(x1, y0));
+			aY.push(oTextTransform.TransformPointY(x1, y1));
+			x0 = Math.min.apply(Math, aX);
+			y0 = Math.min.apply(Math, aY);
+			x1 = Math.max.apply(Math, aX);
+			y1 = Math.max.apply(Math, aY);
 		}
 
 		let pos0 = this.DrawingDocument.ConvertCoordsToCursorWR(x0, y0, pageNum);

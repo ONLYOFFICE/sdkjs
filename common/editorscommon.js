@@ -452,7 +452,7 @@
 						 },
 		getImageUrl:     function (strPath)
 						 {
-							 return this.getUrl(this.mediaPrefix + strPath) || strPath;
+							 return this.getUrl(this.mediaPrefix + strPath);
 						 },
 		getImageLocal:   function (url)
 						 {
@@ -2534,7 +2534,7 @@
 		ipRe                  = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(((1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9])\.){3}(1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9]))(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?/i,
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
-		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa):\/\/)|(mailto:)).*/i,
+		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|smb):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
@@ -2554,7 +2554,7 @@
 				}
 				if (startLink) {
 					if (name) {
-						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" || (url[i - 1] === "'") && i === 1)) {
+						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" ||  url[i - 1] === "\\" || (url[i - 1] === "'") && i === 1)) {
 							break;
 						} else {
 							name.end--;
@@ -9200,6 +9200,15 @@
 	}
 
 	/**
+	 * @param unicode
+	 * @returns {boolean}
+	 */
+	function IsPunctuation(unicode)
+	{
+		return !!(AscCommon.g_aPunctuation[unicode])
+	}
+
+	/**
 	 * Присутствует ли символ заданного шрифта в шрифте ASCW3
 	 * @param sFontFamily
 	 * @param nUnicode
@@ -13148,6 +13157,121 @@
 		return res;
 	}
 
+	function getMemoryInfo() {
+		if(!(window.performance && window.performance.memory)) {
+			return "";
+		}
+		//https://gist.github.com/oryanmoshe/6b3ecd895c8a5eb9ae4ec4554f687737#file-window-performance-memory-1-js
+		return JSON.stringify(Object.getOwnPropertyNames(window.performance.memory.__proto__).reduce((acc,key) => {
+				if (key !== 'constructor')
+					acc[key] = window.performance.memory[key];
+				return acc;
+			}, {})
+		);
+	}
+	function getClientInfoString(type, opt_time, opt_memory) {
+		let res = type;
+		if (opt_time >= 0) {
+			res += ' time:' + Math.round(opt_time);
+		}
+		if (opt_memory) {
+			res += ' memory:' + opt_memory;
+		}
+		return res;
+	}
+	function sendClientLog(level, msg, api) {
+		if (!api) {
+			return;
+		}
+		api.CoAuthoringApi.sendClientLog(level, msg);
+	}
+
+	function getNativePrintRanges(sRanges, currentPageSrc, pagescount)
+	{
+		let pages = undefined;
+		switch (sRanges)
+		{
+			case "current":
+			{
+				let currentPage =  currentPageSrc;
+				if (undefined === currentPage)
+					currentPage = 1;
+				if (currentPage >= 1 && currentPage <= pagescount)
+				{
+					pages = new Array(pagescount);
+					pages[currentPage - 1] = true;
+				}
+				break;
+			}
+			case "all":
+			{
+				break;
+			}
+			default:
+			{
+				let ranges = sRanges.split(",");
+				for (let range = 0, rangesCount = ranges.length; range < rangesCount; range++)
+				{
+					if (ranges[range] === "")
+						continue;
+
+					let rangePages = ranges[range].split("-");
+					let rangeLen = rangePages.length;
+
+					let startPage = 1;
+					let endPage = pagescount;
+
+					switch (rangeLen)
+					{
+						case 0:
+						{
+							break;
+						}
+						case 1:
+						{
+							let pageNum = parseInt(rangePages[0]);
+							if (pageNum > 0 && pageNum <= pagescount)
+							{
+								startPage = pageNum;
+								endPage = pageNum;
+							}
+							break;
+						}
+						default:
+						{
+							if (rangePages[0] !== "")
+							{
+								let pageNum = parseInt(rangePages[0]);
+								if (pageNum > 0 && pageNum <= pagescount)
+								{
+									startPage = pageNum;
+								}
+							}
+							if (rangePages[1] !== "")
+							{
+								let pageNum = parseInt(rangePages[1]);
+								if (pageNum > 0 && pageNum <= pagescount)
+								{
+									endPage = pageNum;
+								}
+							}
+						}
+					}
+
+					if (startPage <= endPage)
+					{
+						if (pages === undefined)
+							pages = new Array(pagescount);
+
+						for (let i = startPage; i <= endPage; i++)
+							pages[i - 1] = true;
+					}
+				}
+			}
+		}
+		return pages;
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13229,6 +13353,7 @@
 	window["AscCommon"].ByteToHex = ByteToHex;
 	window["AscCommon"].IsDigit = IsDigit;
 	window["AscCommon"].IsLetter = IsLetter;
+	window["AscCommon"].IsPunctuation = window["AscCommon"]['IsPunctuation'] = IsPunctuation;
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
@@ -13334,6 +13459,11 @@
 	window["AscCommon"].generateHashParams = generateHashParams;
 	window["AscCommon"].fromModelAlgorithmName = fromModelAlgorithmName;
 	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;
+	window["AscCommon"].getMemoryInfo = getMemoryInfo;
+	window["AscCommon"].getClientInfoString = getClientInfoString;
+	window["AscCommon"].sendClientLog = sendClientLog;
+
+	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)

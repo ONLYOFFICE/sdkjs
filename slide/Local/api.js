@@ -112,7 +112,7 @@ Asc['asc_docs_api'].prototype._saveLocalCheck = function()
 	return this._saveCheck();
 };
 
-Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack)
+Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack, options)
 {
     if (!isResaveAttack && !isSaveAs && !this.asc_isDocumentCanSave())
         return;
@@ -139,10 +139,10 @@ Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isRes
 			this.CoAuthoringApi.onUnSaveLock();
 		
 		if (_isNaturalSave === true)
-			window["DesktopOfflineAppDocumentStartSave"](isSaveAs);
+			window["DesktopOfflineAppDocumentStartSave"](isSaveAs, undefined, undefined, undefined, options);
 	}
 };
-window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isForce, docinfo)
+window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isForce, docinfo, options)
 {
 	window.doadssIsSaveAs = isSaveAs;
 	if (true !== isForce && window.g_asc_plugins && AscCommon.EncryptionWorker.isNeedCrypt())
@@ -163,7 +163,17 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 		}
 	};
 
-	window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? editor.currentPassword : password, docinfo, 0, JSON.stringify(jsonOptions));
+	if (options && options.advancedOptions)
+	{
+		let nativeOptions = options.advancedOptions.asc_getNativeOptions();
+		if (nativeOptions)
+		{
+			jsonOptions["nativeOptions"] = nativeOptions;
+			jsonOptions["nativeOptions"]["currentPage"] = editor.getCurrentPage() + 1;
+		}
+	}
+
+	window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? editor.currentPassword : password, docinfo, (options && options.fileType) ? options.fileType : 0, JSON.stringify(jsonOptions));
 };
 window["DesktopOfflineAppDocumentEndSave"] = function(error, hash, password)
 {
@@ -213,7 +223,7 @@ Asc['asc_docs_api'].prototype.asc_DownloadAs = function(options)
 {
     if (options && options.isNaturalDownload)
         return this.asc_DownloadAsNatural(options);
-	this.asc_Save(false, true);
+	this.asc_Save(false, true, undefined, options);
 };
 
 Asc['asc_docs_api'].prototype.AddImageUrl = function(urls, imgProp, token, obj)

@@ -1882,12 +1882,15 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible, opt
         //Write HeaderFooter
         this.WriteTable(c_oSerTableTypes.HdrFtr, oBinaryHeaderFooterTableWriter);
 
-		var vbaMacros = this.Document.DrawingDocument.m_oWordControl.m_oApi.vbaMacros;
-		if (vbaMacros) {
+		var vbaProject = this.Document.DrawingDocument.m_oWordControl.m_oApi.vbaProject;
+		if (vbaProject) {
 			this.WriteTable(c_oSerTableTypes.VbaProject, {Write: function(){
-					t.memory.WriteByte(0);
-					t.memory.WriteULong(vbaMacros.length);
-					t.memory.WriteBuffer(vbaMacros, 0, vbaMacros.length);
+					var old = new AscCommon.CMemory(true);
+					pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
+					pptx_content_writer.BinaryFileWriter.ImportFromMemory(t.memory);
+					pptx_content_writer.BinaryFileWriter.WriteRecord4(0, vbaProject);
+					pptx_content_writer.BinaryFileWriter.ExportToMemory(t.memory);
+					pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
 				}});
 		}
 		//Write Footnotes
@@ -7750,8 +7753,11 @@ function BinaryFileReader(doc, openParams)
 						{
 							case 0:
 							{
-								let _len = this.stream.GetULong();
-								this.Document.DrawingDocument.m_oWordControl.m_oApi.vbaMacros = this.stream.GetBuffer(_len);
+								var fileStream = this.stream.ToFileStream();
+								let vbaProject = new AscCommon.VbaProject();
+								vbaProject.fromStream(fileStream);
+								this.Document.DrawingDocument.m_oWordControl.m_oApi.vbaProject = vbaProject;
+								this.stream.FromFileStream(fileStream);
 								break;
 							}
 							default:

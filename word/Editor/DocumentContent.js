@@ -2906,8 +2906,6 @@ CDocumentContent.prototype.Extend_ToPos                       = function(X, Y)
             break;
         }
 
-        this.Internal_Content_Add(this.Content.length, NewParagraph);
-
         if (NewParagraph.Pages[0].Bounds.Bottom > Y)
             break;
 

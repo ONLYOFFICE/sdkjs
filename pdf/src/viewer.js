@@ -685,6 +685,9 @@
 			}
 
 			this.paint();
+
+			if (this.Api && this.Api.printPreview)
+				this.Api.printPreview.update();
 		};
 
 		this.onUpdateStatistics = function(countParagraph, countWord, countSymbol, countSpace)

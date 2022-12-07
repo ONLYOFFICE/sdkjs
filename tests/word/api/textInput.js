@@ -96,4 +96,107 @@ $(function () {
 		AscTest.CorrectEnterText("3Zzz", "$");
 		assert.strictEqual(GetParagraphText(p), "He123ABCDDllo World!?12$", "Add text 'Zzz' with composite input and correct it from '3Zzz' to '$'");
 	});
+
+	QUnit.test("Test 'complex script' property on input", function (assert)
+	{
+		function CheckParagraphSplit(p, text, runCS, runText)
+		{
+			let count = runCS.length;
+			assert.strictEqual(p.GetElementsCount(), count, "Check runs count on entering '" + text + "'");
+
+			for (let index = 0; index < count; ++index)
+			{
+				let element = p.GetElement(index);
+
+				if (!(element instanceof AscWord.CRun))
+				{
+					assert.ok(false, "Not a run");
+					break;
+				}
+
+				assert.strictEqual(element.GetText(), runText[index], `Check run[${index}] text`);
+				assert.strictEqual(element.IsCS(), runCS[index], `Check run[${index}] CS`);
+			}
+		}
+		function CheckTextEnter(arrText, arrComposite, ...args)
+		{
+			AscTest.ClearDocument();
+
+			let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+			logicDocument.AddToContent(0, p);
+
+			let overallText = "";
+			for (let index = 0, count = arrText.length; index < count; ++index)
+			{
+				let text = arrText[index];
+				if (arrComposite[index])
+					AscTest.EnterTextCompositeInput(text);
+				else
+					AscTest.EnterText(text);
+
+				overallText += text;
+			}
+
+			CheckParagraphSplit(p, overallText, ...args);
+		}
+
+
+		CheckTextEnter(
+			["Abcෑඒ"],
+			[false],
+			[false, true],
+			["Abc", "ෑඒ"]
+
+		);
+		CheckTextEnter(
+			["Abc1ෑඒ"],
+			[false],
+			[false, true],
+			["Abc1", "ෑඒ"]
+		);
+		CheckTextEnter(
+			["Abc1ෑඒabc"],
+			[false],
+			[false, true, false],
+			["Abc1", "ෑඒ", "abc"]
+		);
+
+		// Композитный ввод всегда добавляет новый ран
+		CheckTextEnter(
+			["Abc", "ෑඒ"],
+			[false, true],
+			[false, true],
+			["Abc", "ෑඒ"]
+		);
+
+		CheckTextEnter(
+			["Abc", "ෑඒ", "efg"],
+			[false, true, false],
+			[false, true, false],
+			["Abc", "ෑඒ", "efg"]
+		);
+
+		// Проверяем, что если ран состоит только из Script_Common, то мы параметр CS подхватывается из следующего ввода
+		CheckTextEnter(
+			["1abc"],
+			[false],
+			[false],
+			["1abc"]
+		);
+
+		CheckTextEnter(
+			["2ෑඒ"],
+			[false],
+			[true],
+			["2ෑඒ"]
+		);
+
+		CheckTextEnter(
+			["3", "ෑඒ"],
+			[false, true],
+			[true, true],
+			["3", "ෑඒ"]
+		);
+
+	});
 });

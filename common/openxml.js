@@ -131,7 +131,7 @@
 		return this;
 	};
 	ContentTypes.prototype.toXml = function(writer) {
-		writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+		writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n");
 		writer.WriteXmlNodeStart("Types");
 		writer.WriteXmlString(" xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"");
 		writer.WriteXmlAttributesEnd();

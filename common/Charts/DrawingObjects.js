@@ -1785,6 +1785,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     _this.drawingDocument = null;
     _this.asyncImageEndLoaded = null;
     _this.CompositeInput = null;
+	_this.mathTrackHandler = null;
 
     _this.lastX = 0;
     _this.lastY = 0;
@@ -1975,7 +1976,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         _this.drawingDocument.TargetHtmlElement = document.getElementById('id_target_cursor');
         _this.drawingDocument.InitGuiCanvasShape(api.shapeElementId);
         _this.controller = new AscFormat.DrawingObjectsController(_this);
-
+	    _this.mathTrackHandler = new AscWord.CMathTrackHandler(_this.drawingDocument, api);
         _this.canEdit = function() { return api.canEdit(); };
 
         aImagesSync = [];
@@ -2090,17 +2091,21 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         return new Asc.Range(cmin, rmin, cmax, rmax, true);
     };
 
+	_this.getScreenPosition = function(X, Y) {
+		var _x = X * Asc.getCvtRatio(3, 0, worksheet._getPPIX()) + scrollOffset.getX();
+		var _y = Y * Asc.getCvtRatio(3, 0, worksheet._getPPIY()) + scrollOffset.getY();
+		return new AscCommon.asc_CRect(_x, _y, 0, 0 );
+	};
+	_this.convertCoordsToCursorWR = function(X, Y) {
+		return this.drawingArea.convertCoordsToCursorWR(X, Y);
+	};
 
     _this.getContextMenuPosition = function(){
-
         if(!worksheet){
             return new AscCommon.asc_CRect( 0, 0, 5, 5 );
         }
-        var oPos = this.controller.getContextMenuPosition(0);
-
-        var _x = oPos.X * Asc.getCvtRatio(3, 0, worksheet._getPPIX()) + scrollOffset.getX();
-        var _y = oPos.Y * Asc.getCvtRatio(3, 0, worksheet._getPPIY()) + scrollOffset.getY();
-        return new AscCommon.asc_CRect(_x, _y, 0, 0 );
+        let oPos = this.controller.getContextMenuPosition(0);
+		return _this.getScreenPosition(oPos.X, oPos.Y);
     };
 
     _this.recalculate =  function(all)
@@ -2267,6 +2272,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         _this.OnUpdateOverlay();
         _this.controller.updateSelectionState(true);
         AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
+		this.mathTrackHandler.Update();
     };
 
     _this.print = function(oOptions) {
@@ -2556,6 +2562,8 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 _this.controller.checkSelectedObjectsAndCallback(function(){
                     var MathElement = new AscCommonWord.MathMenu(Type);
                     _this.controller.paragraphAdd(MathElement, false);
+	                _this.controller.recalculate();
+					_this.controller.updateSelectionState();
                 }, [], false, AscDFH.historydescription_Spreadsheet_CreateGroup);
                 return;
             }
@@ -2590,13 +2598,15 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             worksheet.setSelectionShape(true);
         }
     };
-
-
     _this.setMathProps = function(MathProps)
     {
         _this.controller.setMathProps(MathProps);
     }
-
+    _this.convertMathView = function(isToLinear, isAll)
+    {
+        _this.controller.convertMathView(isToLinear, isAll);
+        _this.controller.updateSelectionState();
+    }
     _this.setListType = function(type, subtype, custom)
     {
         if(_this.controller.checkSelectedObjectsProtectionText())

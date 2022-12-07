@@ -30,6 +30,7 @@
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",
 			"cell/api.js",
+			"cell/api_plugins.js",
 			"common/spell/spell.js",
 			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js"

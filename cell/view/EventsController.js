@@ -996,6 +996,15 @@
 					}
 					return result;
 
+				case 110: //NumpadDecimal
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
+						return true;
+					}
+					window["Asc"]["editor"].wb.EnterText(this.view.Api.asc_getDecimalSeparator().charCodeAt(0), true);
+					//stop to prevent double enter
+					stop();
+					return result;
+
 				case 33: // PageUp
 					// Отключим стандартную обработку браузера нажатия PageUp
 					stop();

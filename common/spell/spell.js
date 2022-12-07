@@ -65,6 +65,10 @@ function CSpellchecker(settings)
 	if (this.isUseSharedWorker && (false === settings.useShared))
 		this.isUseSharedWorker = false;
 
+	// disable for WKWebView
+	if (this.isUseSharedWorker && (undefined !== window["webkit"]))
+		this.isUseSharedWorker = false;
+
 	this.worker = null;
 
 	this.languages = {

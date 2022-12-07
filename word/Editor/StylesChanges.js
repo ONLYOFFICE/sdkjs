@@ -126,6 +126,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Style_Hidden]          = [AscDFH.hi
 AscDFH.changesRelationMap[AscDFH.historyitem_Style_SemiHidden]      = [AscDFH.historyitem_Style_SemiHidden];
 AscDFH.changesRelationMap[AscDFH.historyitem_Style_UnhideWhenUsed]  = [AscDFH.historyitem_Style_UnhideWhenUsed];
 AscDFH.changesRelationMap[AscDFH.historyitem_Style_Link]            = [AscDFH.historyitem_Style_Link];
+AscDFH.changesRelationMap[AscDFH.historyitem_Style_StyleId]         = [AscDFH.historyitem_Style_StyleId];
 
 AscDFH.changesRelationMap[AscDFH.historyitem_Styles_Add]                 = [
 	AscDFH.historyitem_Styles_Add,
@@ -900,10 +901,10 @@ function CChangesStyleStyleId(Class, Old, New)
 {
 	CChangesStyleBaseStringProperty.call(this, Class, Old, New);
 }
-CChangesStyleLink.prototype = Object.create(CChangesStyleBaseStringProperty.prototype);
-CChangesStyleLink.prototype.constructor = CChangesStyleStyleId;
-CChangesStyleLink.prototype.Type = AscDFH.historyitem_Style_StyleId;
-CChangesStyleLink.prototype.private_SetValue = function(Value)
+CChangesStyleStyleId.prototype = Object.create(CChangesStyleBaseStringProperty.prototype);
+CChangesStyleStyleId.prototype.constructor = CChangesStyleStyleId;
+CChangesStyleStyleId.prototype.Type = AscDFH.historyitem_Style_StyleId;
+CChangesStyleStyleId.prototype.private_SetValue = function(Value)
 {
 	this.Class.StyleId = Value;
 };

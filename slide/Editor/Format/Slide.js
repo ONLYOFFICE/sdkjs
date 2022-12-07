@@ -1425,12 +1425,14 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         this.originY = this.getStartStridePos(this.stride, this.slideHeight);
     };
     CStrideData.prototype.getStartStridePos = function(stride, len) {
-        let nStrideCnt = (len / stride) >> 0;
-        return (((len - nStrideCnt * stride) / 2 + 0.5) >> 0) - stride;
+		let nCenterPos = len / 2 + 0.5 >> 0;
+        let nPos = nCenterPos - ((nCenterPos / stride >> 0) + 1)*stride;
+        return nPos;
     };
     CStrideData.prototype.getNearestLinearPoint = function(nDX, nOrigin) {
-        let nCX = nDX / this.stride >> 0;
-        let dRX = nDX - nCX * this.stride;
+		let nDX_ = Math.abs(nDX);
+        let nCX = nDX_ / this.stride >> 0;
+        let dRX = nDX_ - nCX * this.stride;
         let nX;
         if((dRX / this.stride) < 0.5) {
             nX = nCX * this.stride;
@@ -1438,6 +1440,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         else {
             nX = (nCX + 1) * this.stride;
         }
+		if(nDX < 0) {
+			nX = -nX;
+		}
         return nOrigin + nX;
     };
     CStrideData.prototype.getNearestPoint = function(x, y) {
@@ -1493,7 +1498,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         nStrideLine = nStrideInsideLine;
         nStrideLinePix = nStrideInsideLinePix;
         let nStartStrideVerPos = this.getStartStridePos(nStrideLine, nSlideHeight);
-        let nStartStrideHorPos = this.getStartStridePos(nStrideLine, nSlideHeight);
+        let nStartStrideHorPos = this.getStartStridePos(nStrideLine, nSlideWidth);
         let nStartInsideHorPos = this.getStartStridePos(nStrideInsideLine, nSlideWidth);
         let nStartInsideVerPos = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
         while(nStrideLinePix < nMinLineStridePix) {
@@ -1501,12 +1506,15 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             nStrideLinePix = ep(nStrideLine);
             //nStartStridePos = this.getStartStridePos(nStrideLine, nSlideHeight);
         }
+	    nStartStrideVerPos = this.getStartStridePos(nStrideLine, nSlideHeight);
+	    nStartStrideHorPos = this.getStartStridePos(nStrideLine, nSlideWidth);
         bPixel = nStrideInsideLinePix < AscCommon.AscBrowser.convertToRetinaValue(17, true);
 
         oGraphics.SaveGrState();
         oGraphics.transform3(new AscCommon.CMatrix());
         oGraphics.SetIntegerGrid(true);
         oGraphics.b_color1(0, 0, 0, 255);
+	    oGraphics._s();
 
         let nX, nY;
         let oT = oGraphics.m_oFullTransform;
@@ -1519,7 +1527,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             oImageCanvas.width = c(1);
             oImageCanvas.height = c(1);
             oImageContext = oImageCanvas.getContext("2d");
-            oImageContext.fillStyle = 'black';
+            oImageContext.fillStyle = 'white';
             oImageContext.fillRect(0, 0, oImageCanvas.width, oImageCanvas.height);
             oImageContext.fill();
         }
@@ -1527,7 +1535,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             oImageCanvas.width = c(3);
             oImageCanvas.height = c(3);
             oImageContext = oImageCanvas.getContext("2d");
-            oImageContext.fillStyle = 'black';
+            oImageContext.fillStyle = 'white';
             oImageContext.fillRect(c(1), 0, c(1), c(1));
             oImageContext.fillRect(0, c(1), c(1), c(1));
             oImageContext.fillRect(c(2), c(1), c(1), c(1));
@@ -1547,10 +1555,11 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 oContext.drawImage(oImageCanvas, nX - 1, nY - 1);
             }
         }
-
+		let sOldCompostiteOperation = oContext.globalCompositeOperation;
+	    oContext.globalCompositeOperation = "difference";
 
         nHorStart = this.getStartStridePos(nStrideInsideLine, nSlideWidth);
-        nVertStart = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
+        nVertStart = this.getStartStridePos(nStrideLine, nSlideHeight);
         let nVertPos = nVertStart;
         let nHorPos;
         while (nVertPos < nSlideHeight) {
@@ -1568,26 +1577,35 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
 
 
-        nHorStart = this.getStartStridePos(nStrideInsideLine, nSlideWidth);
-        nVertStart = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
-        nHorPos = nHorStart;
+		if(nStrideLine !== nStrideInsideLine) {
+			nHorStart = this.getStartStridePos(nStrideLine, nSlideWidth);
+			nVertStart = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
+			nHorPos = nHorStart;
+			let nVertLineStart = this.getStartStridePos(nStrideInsideLine, nSlideHeight);
 
-
-        while (nHorPos < nSlideWidth) {
-            if(nHorPos > 0) {
-                nVertPos = nVertStart;
-                while (nVertPos < nSlideHeight) {
-                    if(nVertPos > 0) {
-                        dp();
-                    }
-                    nVertPos += nStrideInsideLine;
-                }
-            }
-            nHorPos += nStrideLine;
-        }
+			while (nHorPos < nSlideWidth) {
+				if(nHorPos > 0) {
+					nVertPos = nVertStart;
+					while (nVertPos < nSlideHeight) {
+						if(nVertPos > 0) {
+							let nDistance = nVertPos - nVertLineStart;
+							let dVal1 = nDistance / nStrideLine;
+							let dVal2 = nDistance / nStrideLine >> 0;
+							if(!AscFormat.fApproxEqual(dVal1, dVal2)) {
+								dp();
+							}
+						}
+						nVertPos += nStrideInsideLine;
+					}
+				}
+				nHorPos += nStrideLine;
+			}
+		}
 
         oGraphics.df();
         oGraphics.RestoreGrState();
+
+	    oContext.globalCompositeOperation = sOldCompostiteOperation;
     };
     Slide.prototype.drawGrid = function(oGraphics) {
         let oApi = editor;
@@ -1601,7 +1619,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         if(!oContext) {
             return;
         }
-        if(oGraphics.IsThumbnail || oGraphics.animationDrawer || oGraphics.IsDemonstrationMode) {
+        if(oGraphics.IsThumbnail || oGraphics.animationDrawer ||
+	        oGraphics.IsDemonstrationMode || AscCommon.IsShapeToImageConverter) {
             return;
         }
 

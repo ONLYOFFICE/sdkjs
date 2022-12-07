@@ -2086,7 +2086,7 @@ CChartsDrawer.prototype =
 			stackedPerMax = step;
 		}
 
-		var maxPointsCount = 40;
+		var maxPointsCount = 600;
 		for (var i = 0; i < maxPointsCount; i++) {
 			if (this.calcProp.subType === 'stackedPer' && (minUnit + step * i) > stackedPerMax) {
 				break;
@@ -5577,6 +5577,17 @@ CChartsDrawer.prototype =
 			}
 		}
 		return res;
+	},
+
+	getNextArrElem: function (arr, index) {
+		let res = null;
+		for (let i = index + 1; i < arr.length; i++) {
+			if (arr[i]) {
+				res = arr[i];
+				break;
+			}
+		}
+		return res;
 	}
 };
 
@@ -6754,25 +6765,27 @@ drawLineChart.prototype = {
 			return;
 		}
 
-		if (this.cChartDrawer.nDimensionCount === 3) {
+		let chart3d = this.cChartDrawer.nDimensionCount === 3;
+		let perspectiveDepth, serDiff, gapDepth, depthSer, diffGapDepth;
+		if (chart3d) {
 			//сдвиг по OZ в глубину
-			var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
-			var seriaDiff = perspectiveDepth / this.seriesCount;
-			var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
-			var depthSeria = seriaDiff / ((gapDepth / 100) + 1);
-			var DiffGapDepth = (depthSeria * (gapDepth / 100)) / 2;
-			depthSeria = (perspectiveDepth / this.seriesCount - 2 * DiffGapDepth);
+			perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
+			serDiff = perspectiveDepth / this.seriesCount;
+			gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
+			depthSer = serDiff / ((gapDepth / 100) + 1);
+			diffGapDepth = (depthSer * (gapDepth / 100)) / 2;
+			depthSer = (perspectiveDepth / this.seriesCount - 2 * diffGapDepth);
 		}
 
-		var x, y, x1, y1, x2, y2, x3, y3, isSplineLine;
-		for (var i = 0; i < points.length; i++) {
+		let x, y, x1, y1, x2, y2, x3, y3, isSplineLine;
+		for (let i = 0; i < points.length; i++) {
 			isSplineLine = this.chart.series[i].smooth !== false;
 
 			if (!points[i]) {
 				continue;
 			}
 
-			for (var n = 0; n < points[i].length; n++) {
+			for (let n = 0; n < points[i].length; n++) {
 				if (!this.paths.series) {
 					this.paths.series = [];
 				}
@@ -6780,13 +6793,15 @@ drawLineChart.prototype = {
 					this.paths.series[i] = [];
 				}
 
-				if (points[i][n] != null && points[i][n + 1] != null) {
-					if (this.cChartDrawer.nDimensionCount === 3) {
-						x = points[i][n].x * this.chartProp.pxToMM;
-						y = points[i][n].y * this.chartProp.pxToMM;
+				let curPoint = points[i][n];
+				let nextPoint = AscFormat.DISP_BLANKS_AS_SPAN === this.cChartSpace.chart.dispBlanksAs && !chart3d ? this.cChartDrawer.getNextArrElem(points[i], n) : points[i][n+1];
+				if (curPoint != null && nextPoint != null) {
+					if (chart3d) {
+						x = curPoint.x * this.chartProp.pxToMM;
+						y = curPoint.y * this.chartProp.pxToMM;
 
-						x1 = points[i][n + 1].x * this.chartProp.pxToMM;
-						y1 = points[i][n + 1].y * this.chartProp.pxToMM;
+						x1 = nextPoint.x * this.chartProp.pxToMM;
+						y1 = nextPoint.y * this.chartProp.pxToMM;
 
 						if (!this.paths.series) {
 							this.paths.series = [];
@@ -6795,17 +6810,17 @@ drawLineChart.prototype = {
 							this.paths.series[i] = [];
 						}
 
-						var point1, point2, point3, point4, point5, point6, point7, point8, widthLine = 0.5;
-						point1 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, DiffGapDepth + seriaDiff * i);
-						point2 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, DiffGapDepth + seriaDiff * i);
-						point3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, DiffGapDepth + depthSeria + seriaDiff * i);
-						point4 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, DiffGapDepth + depthSeria + seriaDiff * i);
+						let point1, point2, point3, point4, point5, point6, point7, point8, widthLine = 0.5;
+						point1 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, diffGapDepth + serDiff * i);
+						point2 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, diffGapDepth + serDiff * i);
+						point3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - widthLine, diffGapDepth + depthSer + serDiff * i);
+						point4 = this.cChartDrawer._convertAndTurnPoint(x, y - widthLine, diffGapDepth + depthSer + serDiff * i);
 
 
-						point5 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, DiffGapDepth + seriaDiff * i);
-						point6 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, DiffGapDepth + seriaDiff * i);
-						point7 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, DiffGapDepth + depthSeria + seriaDiff * i);
-						point8 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, DiffGapDepth + depthSeria + seriaDiff * i);
+						point5 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, diffGapDepth + serDiff * i);
+						point6 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, diffGapDepth + serDiff * i);
+						point7 = this.cChartDrawer._convertAndTurnPoint(x1, y1 + widthLine, diffGapDepth + depthSer + serDiff * i);
+						point8 = this.cChartDrawer._convertAndTurnPoint(x, y + widthLine, diffGapDepth + depthSer + serDiff * i);
 
 						this.paths.series[i][n] = this.cChartDrawer.calculateRect3D([point1, point2, point3, point4, point5, point6, point7, point8]);
 					} else if (isSplineLine) {
@@ -6823,7 +6838,7 @@ drawLineChart.prototype = {
 
 						this.paths.series[i][n] = this.cChartDrawer.calculateSplineLine(x + 1, y, x1 + 1, y1, x2 + 1, y2, x3 + 1, y3, this.catAx, this.valAx);
 					} else {
-						this.paths.series[i][n] = this._calculateLine(points[i][n].x, points[i][n].y, points[i][n + 1].x, points[i][n + 1].y);
+						this.paths.series[i][n] = this._calculateLine(curPoint.x, curPoint.y, nextPoint.x, nextPoint.y);
 					}
 				}
 			}
@@ -12142,8 +12157,9 @@ drawScatterChart.prototype = {
 	},
 
 	_recalculateScatter: function () {
-		var seria, yVal, xVal, points, yNumCache, compiledMarkerSize, compiledMarkerSymbol, yPoint, idx, xPoint;
-		for (var i = 0; i < this.chart.series.length; i++) {
+		let seria, yVal, xVal, points, yNumCache, compiledMarkerSize, compiledMarkerSymbol, yPoint, idx, xPoint;
+		let dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
+		for (let i = 0; i < this.chart.series.length; i++) {
 			seria = this.chart.series[i];
 			yNumCache = this.cChartDrawer.getNumCache(seria.yVal);
 
@@ -12155,12 +12171,19 @@ drawScatterChart.prototype = {
 			compiledMarkerSymbol = seria && seria.compiledSeriesMarker ? seria.compiledSeriesMarker.symbol : null;
 
 			//idx не всегда начинается с нуля
-			for (var n = 0; n < yNumCache.ptCount; n++) {
+			for (let n = 0; n < yNumCache.ptCount; n++) {
 				idx = yNumCache.pts && undefined !== yNumCache.pts[n] ? yNumCache.pts[n].idx : null;
-				if (null === idx) {
-					continue;
+
+				if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO || dispBlanksAs === AscFormat.DISP_BLANKS_AS_GAP) {
+					if (yNumCache.pts[n-1] && yNumCache.pts[n] && yNumCache.pts[n].idx - yNumCache.pts[n-1].idx > 1) {
+						for (let k = 0; k < yNumCache.pts[n].idx - yNumCache.pts[n-1].idx - 1; k++) {
+							this.paths.points[i].push(null);
+							points[i].push(dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO ? {x: 0, y: 0} : null);
+						}
+					}
 				}
-				var values = this.cChartDrawer._getScatterPointVal(seria, idx);
+
+				let values = this.cChartDrawer._getScatterPointVal(seria, idx);
 				if(values){
 					yVal = values.y;
 					xVal = values.x;
@@ -12189,17 +12212,17 @@ drawScatterChart.prototype = {
 					}
 
 					if (yVal != null) {
-						var x = this.cChartDrawer.getYPosition(xVal, this.catAx);
-						var y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
-						this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol);
+						let x = this.cChartDrawer.getYPosition(xVal, this.catAx);
+						let y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
+						this.paths.points[i].push(this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol));
 						if (this.chart.series[i].errBars) {
-							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, i, n);
+							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, seria.idx, idx);
 						}
 
-						points[i][n] = {x: xVal, y: yVal};
+						points[i].push({x: xVal, y: yVal});
 					} else {
-						this.paths.points[i][n] = null;
-						points[i][n] = null;
+						this.paths.points[i].push(null);
+						points[i].push(null);
 					}
 				}
 

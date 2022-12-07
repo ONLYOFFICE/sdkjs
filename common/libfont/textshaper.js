@@ -247,7 +247,7 @@
 		{
 			if (nScript === this.GetTextScript(u))
 			{
-				log += AscCommon.IntToHex(u) + " ";
+				log += AscCommon.IntToHex(u) + " " + String.fromCodePoint(u) + " ";
 				Flush(false);
 			}
 		}

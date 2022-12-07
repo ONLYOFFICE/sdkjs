@@ -9398,7 +9398,7 @@ CMathContent.prototype.private_ReplaceAutoCorrect = function(AutoCorrectEngine) 
             } else {
                 this.Remove_FromContent(LastEl.ElPos, 1);
                 bDelete = true;
-                if (FirstEl.ElPos == LastEl.ElPos) {
+                if (FirstEl.ElPos == LastEl.ElPos && FirstEl.Element.Type != para_Math_Composition) {
                     FirstEl.ElPos--;
                 }
             }
@@ -9512,7 +9512,10 @@ CMathAutoCorrectEngine.prototype.private_Add_Element = function(Content) {
         if (Content[i].Type === 49) {
             var kStart = (i === nCount) ? Content[i].State.ContentPos : Content[i].Content.length;
             for (var k = kStart - 1; k >= 0; k--) {
-                this.Elements.unshift({Element: Content[i].Content[k], ElPos: i, ContPos: k});
+            var el = Content[i].Content[k];
+            this.Elements.unshift({Element: el, ElPos: i, ContPos: k});
+            if (el.bUpdateGaps && el != this.ActionElement)
+                this.ActionElement = el;
             }
         } else {
             this.Elements.unshift({Element: Content[i], ElPos: i});
@@ -10176,9 +10179,9 @@ var g_aMathAutoCorrectFracCharCodes =
     0x2E : 1, 0x2F : 1, 0x3A : 1, 0x3B : 1, 0x3C : 1, 0x3D : 1, 0x3E : 1,
     0x3F : 1, 0x40 : 1, 0x5B : 1, /*0x5C : 1,*/ 0x5D : 1, 0x5E : 1, 0x5F : 1,
     0x60 : 1, 0x7B : 1, /*0x7C : 1,*/ 0x7D : 1, 0x7E : 1, /*0x2592 : 1,*/ 0xD7 : 1,
-	0x221D: 1, 0x2248: 1, 0x2249: 1, 0x2261: 1, 0x2262: 1, 0x00D7 : 1, 0x00F7 : 1,
+	0x221D: 1, 0x2248: 1, 0x2249: 1, 0x2261: 1, 0x2262: 1, 0x00F7 : 1,
 	0x226A: 1, 0x226B: 1, 0x203C: 1, 0x2026: 1, 0x2237: 1, 0x2254: 1, 0x226E: 1,
-	0x226F: 1, 0x2260: 1, 0x2245: 1, 0x2213: 1, 0x00B1: 1, 0x2264: 1, 0x2192: 1,
+	0x226F: 1, 0x2260: 1, 0x2245: 1, 0x2213: 1, 0x00B1: 1, 0x2264: 1,
 	0x2265: 1, 0x2200: 1, 0x222A: 1, 0x2229: 1, 0x2205: 1, 0x00B0: 1, 0x2109: 1,
 	0x2103: 1, 0x2203: 1, 0x2204: 1, 0x2208: 1, 0x220B: 1, 0x2190: 1, 0x2191: 1,
 	0x2192: 1, 0x2193: 1, 0x2194: 1, 0x2234: 1, 0x2217: 1, 0x2219: 1, 0x22EE: 1,

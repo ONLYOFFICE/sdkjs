@@ -1107,7 +1107,7 @@ function BinaryPPTYLoader()
                 case 0:
                 {
                     var _id = s.GetString2();
-                    _style.Set_StyleId(_id);
+                    _style.SetStyleId(_id);
                    // _style.Id = _id;
 					if(AscCommon.isRealObject(this.presentation.TableStylesIdMap) && !bNotAddStyle)
 						this.presentation.TableStylesIdMap[_style.Id] = true;

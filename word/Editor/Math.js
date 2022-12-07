@@ -3690,9 +3690,10 @@ ParaMath.prototype.ConvertToUnicodeMath = function()
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 {
-	if (undefined === nInputType) {
-		var oLogicDocument = this.GetLogicDocument()
-		nInputType = oLogicDocument ? oLogicDocument.GetMathInputType() : Asc.c_oAscMathInputType.Unicode;
+	if (undefined === nInputType)
+	{
+		let oApi = Asc.editor || editor;
+		nInputType = oApi ? oApi.getMathInputType() : Asc.c_oAscMathInputType.Unicode;
 	}
 
 	if (isToLinear)
@@ -3704,10 +3705,12 @@ ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 	}
 	else
 	{
-		if (Asc.c_oAscMathInputType.Unicode === nInputType) {
+		if (Asc.c_oAscMathInputType.Unicode === nInputType)
+		{
 			this.ConvertFromUnicodeMath();
 		}
-		else if (Asc.c_oAscMathInputType.LaTeX === nInputType) {
+		else if (Asc.c_oAscMathInputType.LaTeX === nInputType)
+		{
 			this.ConvertFromLaTeX();
 		}
 	}

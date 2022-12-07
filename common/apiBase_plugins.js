@@ -36,106 +36,116 @@
 {
     /**
      * Plugin config.
-     * @typedef {Object} Config
+     * @typed {Object} Config
 	 *
-     * @property {string} name
+     * @pr {string} name
 	 * Plugin name which will be visible at the plugin toolbar.
      *
-	 * @property {?Object} nameLocale
+	 * @pr {?Object} nameLocale
 	 * Translations for the name field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the plugin name translation for each language. Example: { "fr" : "trFr", "de" : "deTr" }.
      *
-	 * @property {string} guid
+	 * @pr {string} guid
 	 * Plugin identifier. It must be of the asc.{UUID} type.
 	 *
-	 * @property {?string} [baseUrl=""]
+	 * @pr {?string} [baseUrl=""]
 	 * Path to the plugin. All the other paths are calculated relative to this path. In case the plugin is installed on the server, an additional parameter (path to the plugins) is added there. If baseUrl == "", the path to all plugins will be used.
      *
-	 * @property {Variation[]} variations
+	 * @pr {Variation[]} variations
 	 * Plugin variations, or subplugins, that are created inside the origin plugin.
      */
 
     /**
-     * The editors which the plugin is available for ("word" - text document editor, "cell" - spreadsheet editor, "slide" - presentation editor).
-     * @typedef {("word" | "slide" | "cell")} EditorType
+     * The editors which the plugin is available for:
+	 * * **word** - text document editor,
+	 * * **cell** - spreadsheet editor,
+	 * * **slide** - presentation editor.
+	 * @typedef {("word" | "cell" | "slide")} editorType
      */
 
     /**
-	 * The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "desktop" - the desktop editor data, "destop-external" - the main page data of the desktop app (system messages), "none" - no data will be send to the plugin from the editor.
-	 * @typedef {("none" | "text" | "ole" | "html" | "desktop")} InitDataType
+	 * The data type selected in the editor and sent to the plugin:
+     * * **text** - the text data,
+	 * * **html** - HTML formatted code,
+	 * * **ole** - OLE object data,
+     * * **desktop** - the desktop editor data,
+     * * **destop-external** - the main page data of the desktop app (system messages),
+     * * **none** - no data will be send to the plugin from the editor.
+	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none")} initDataType
      */
 
     /**
-     * Plugin event.
-     * @typedef {("onDocumentContentReady" | "onTargetPositionChanged" | "onClick" | "onInputHelperClear" | "onInputHelperInput")} EventType
+     * Plugin event ("onDocumentContentReady", "onTargetPositionChanged", onClick", "onInputHelperClear", "onInputHelperInput", etc.).
+     * @typedef {string} EventType
      */
 
     /**
      * Plugin variations, or subplugins, that are created inside the origin plugin.
-     * @typedef {Object} Variation
-     * @property {string} description
+     * @typed {Object} Variation
+     * @pr {string} description
 	 * The description, i.e. what describes your plugin the best way.
 	 *
-     * @property {?Object} descriptionLocale
+     * @pr {?Object} descriptionLocale
 	 * Translations for the description field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the plugin description translation for each language.
 	 *
-     * @property {string} url
+     * @pr {string} url
 	 * Plugin entry point, i.e. an HTML file which connects the plugin.js file (the base file needed for work with plugins) and launches the plugin code.
 	 *
-     * @property {string[]} icons (with support HiDPI)
+     * @pr {string[]} icons (with support HiDPI)
 	 * Plugin icon image files used in the editors. There can be several scaling types for plugin icons: 100%, 125%, 150%, 175%, 200%, etc.
 	 *
-     * @property {?boolean} [isViewer=true]
+     * @pr {?boolean} [isViewer=true]
 	 * Specifies if the plugin is working when the document is available in the viewer mode only or not.
 	 *
-	 * @property {boolean} isDisplayedInViewer
+	 * @pr {boolean} isDisplayedInViewer
 	 * Specifies if the plugin will be displayed in the viewer mode as well as in the editor mode (isDisplayedInViewer == true) or in the editor mode only (isDisplayedInViewer == false).
 	 *
-     * @property {EditorType[]} EditorsSupport
+     * @pr {EditorType[]} EditorsSupport
 	 * The editors which the plugin is available for ("word" - text document editor, "cell" - spreadsheet editor, "slide" - presentation editor).
 	 *
-     * @property {boolean} [isVisual=true]
+     * @pr {boolean} [isVisual=true]
 	 * Specifies if the plugin is visual (will open a window for some action, or introduce some additions to the editor panel interface) or non-visual (will provide a button (or buttons) which is going to apply some transformations or manipulations to the document).
      *
-	 * @property {boolean} [isModal=true]
+	 * @pr {boolean} [isModal=true]
 	 * Specifies if the opened plugin window is modal (used for visual plugins only, and if isInsideMode is not true).
 	 *
-	 * @property {boolean} [isInsideMode=false]
+	 * @pr {boolean} [isInsideMode=false]
 	 * Specifies if the plugin must be displayed inside the editor panel instead of its own window.
      *
-	 * @property {boolean} isCustomWindow
+	 * @pr {boolean} isCustomWindow
 	 * Specifies if the plugin uses a custom window, without standard borders and buttons (used for modal plugins only).
 	 *
-	 * @property {boolean} isSystem
+	 * @pr {boolean} isSystem
 	 * Specifies if the plugin is not displayed in the editor interface and is started in the background with the server (or desktop editors start) not interfering with the other plugins, so that they can work simultaneously.
      *
-	 * @property {InitDataType} initDataType
+	 * @pr {initDataType} initDataType
 	 * The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "desktop" - the desktop editor data, "destop-external" - the main page data of the desktop app (system messages), "none" - no data will be send to the plugin from the editor.
      *
-	 * @property {string} initData
+	 * @pr {string} initData
      * Is usually equal to "" - this is the data which is sent from the editor to the plugin at the plugin start (e.g. if initDataType == "text", the plugin will receive the selected text when run). It may also be equal to encryption in the encryption plugins.
 	 *
-	 * @property {?boolean} isUpdateOleOnResize
+	 * @pr {?boolean} isUpdateOleOnResize
 	 * Specifies if an OLE object must be redrawn when resized in the editor using the vector object draw type or not (used for OLE objects only, i.e. initDataType == "ole").
      *
-	 * @property {?Button[]} buttons
+	 * @pr {?Button[]} buttons
 	 * The list of skinnable plugin buttons used in the plugin interface (used for visual plugins with their own window only, i.e. isVisual == true && isInsideMode == false).
 	 *
-	 * @property {?boolean} [initOnSelectionChanged=true]
+	 * @pr {?boolean} [initOnSelectionChanged=true]
 	 * Specifies if the plugin watches the text selection events in the editor window.
 	 *
-	 * @property {number[]} size
+	 * @pr {number[]} size
 	 * Plugin window size.
 	 *
-	 * @property {EventType[]} events
+	 * @pr {EventType[]} events
      * Plugin events.
      */
 
     /**
-	 * The skinnable plugin button used in the plugin interface (used for visual plugins with their own window only, i.e. isVisual == true && isInsideMode == false).
-	 * @typedef {object} Button
+	 * The skinnable plugin button used in the plugin interface (used for visual plugins with their own window only, i.e. isVisual == true and isInsideMode == false).
+	 * @typedef { Object } Button
 	 * @property {string} text - The label which is displayed on the button.
-	 * @property {string} textLocale - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
-	 * @property {boolean} primary - Defines if the button is primary or not. The primary flag affects the button skin only.
+	 * @property {boolean} [primary] - Defines if the button is primary or not. The primary flag affects the button skin only.
+	 * @property {boolean} [isViewer] - Defines if the button is shown in the viewer mode only or not.
+	 * @property {localeTranslate} [textLocale] - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
 	 */
 
     /**
@@ -152,24 +162,24 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetVersion
-     * @returns {string} - Editor version.
+     * @returns {string} - The editor version.
      */
     Api.prototype["pluginMethod_GetVersion"] = function() { return this.GetVersion(); };
 
     /**
-     * Adds an OLE object to the document.
+     * Adds an OLE object to the current document position.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddOleObject
 	 * @this Api
      * @param {Object} data - The OLE object properties.
-     * @param {number} data.width - The object width measured in millimeters.
-     * @param {number} data.height - The object height measured in millimeters.
      * @param {string} data.data - OLE object data (internal format).
-     * @param {string} data.guid - An OLE object program identifier which must be of the asc.{UUID} type.
      * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
-     * @param {number} data.widthPix - The image width in pixels.
-     * @param {number} data.heightPix - The image height in pixels.
+     * @param {string} data.guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
+     * @param {number} data.width - The OLE object width measured in millimeters.
+     * @param {number} data.height - The OLE object height measured in millimeters.
+     * @param {number} data.widthPix - The OLE object image width in pixels.
+     * @param {number} data.heightPix - The OLE object image height in pixels.
     */
     Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data); };
 
@@ -179,42 +189,42 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EditOleObject
      * @param {Object} data - The OLE object properties.
-     * @param {number} data.width - The object width measured in millimeters.
-     * @param {number} data.height - The object height measured in millimeters.
      * @param {string} data.data - OLE object data (internal format).
-     * @param {string} data.objectId - An OLE object identifier.
      * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
-     * @param {number} data.widthPix - The image width in pixels.
-     * @param {number} data.heightPix - The image height in pixels.
+     * @param {string} data.objectId - The OLE object identifier.
+     * @param {number} data.width - The OLE object width measured in millimeters.
+     * @param {number} data.height - The OLE object height measured in millimeters.
+     * @param {number} data.widthPix - The OLE object image width in pixels.
+     * @param {number} data.heightPix - The OLE object image height in pixels.
      */
     Api.prototype["pluginMethod_EditOleObject"] = function(data) { return this.asc_editOleObject(data); };
 
     /**
 	 * An object containing the font information.
      * @typedef {Object} FontInfo
-     * @property {string} m_wsFontName
-     * @property {string} m_wsFontPath
-	 * @property {number} m_lIndex
-	 * @property {boolean} m_bBold
-	 * @property {boolean} m_bItalic
-	 * @property {boolean} m_bIsFixed
-	 * @property {number[]} m_aPanose
-	 * @property {number} m_ulUnicodeRange1
-	 * @property {number} m_ulUnicodeRange2
-	 * @property {number} m_ulUnicodeRange3
-	 * @property {number} m_ulUnicodeRange4
-	 * @property {number} m_ulCodePageRange1
-	 * @property {number} m_ulCodePageRange2
-	 * @property {number} m_usWeigth
-	 * @property {number} m_usWidth
-	 * @property {string} m_sFamilyClass
-	 * @property {string} m_eFontFormat
-	 * @property {number} m_shAvgCharWidth
-	 * @property {number} m_shAscent
-	 * @property {number} m_shDescent
-	 * @property {number} m_shLineGap
-	 * @property {number} m_shXHeight
-	 * @property {number} m_shCapHeight
+     * @property {string} m_wsFontName The font name.
+     * @property {string} m_wsFontPath The path to the file with the current font.
+	 * @property {number} m_lIndex The font number in the file if there is more than one font in the file.
+	 * @property {boolean} m_bBold Specifies if the font characters are bold or not.
+	 * @property {boolean} m_bItalic Specifies if the font characters are italic or not.
+	 * @property {boolean} m_bIsFixed Specifies if the current font is monospaced or not.
+	 * @property {Array.<number>} m_aPanose The PANOSE Typeface Classification Number, a compact 10-byte description of the font critical visual characteristics, such as contrast, weight, and serif style.
+	 * @property {number} m_ulUnicodeRange1 The Unicode range encompassed by the font file (Bits 0-31).
+	 * @property {number} m_ulUnicodeRange2 The Unicode range encompassed by the font file (Bits 32-63).
+	 * @property {number} m_ulUnicodeRange3 The Unicode range encompassed by the font file (Bits 64-95).
+	 * @property {number} m_ulUnicodeRange4 The Unicode range encompassed by the font file (Bits 96-127).
+	 * @property {number} m_ulCodePageRange1 The code pages encompassed by the font file (Bits 0-31).
+	 * @property {number} m_ulCodePageRange2 The code pages encompassed by the font file (Bits 32-63).
+	 * @property {number} m_usWeigth The visual weight (stroke blackness or thickness) of the font characters (1-1000).
+	 * @property {number} m_usWidth The relative change from the normal aspect ratio (width to height ratio).
+	 * @property {number} m_sFamilyClass The font family class which values are assigned by IBM to each font family.
+	 * @property {number} m_eFontFormat The specific file type(s) used to store font data: **0** - *.fon, **1** - *.ttf, **2** - *.ttf, *.otf (CFF), **3** - unknown font format.
+	 * @property {number} m_shAvgCharWidth The arithmetic average of the escapement (width) of all non-zero width glyphs in the font.
+	 * @property {number} m_shAscent The height above the baseline for a clipping region.
+	 * @property {number} m_shDescent The vertical extent below the baseline for a clipping region.
+	 * @property {number} m_shLineGap The typographic line gap for the current font.
+	 * @property {number} m_shXHeight The distance between the baseline and the approximate height of non-ascending lowercase letters measured in FUnits.
+	 * @property {number} m_shCapHeight The distance between the baseline and the approximate height of uppercase letters measured in FUnits.
      */
 
     /**
@@ -222,7 +232,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetFontList
-     * @returns {FontInfo[]} - An array of the FontInfo objects.
+     * @returns {FontInfo[]} - An array of the FontInfo objects containing the data about the used fonts.
      */
     Api.prototype["pluginMethod_GetFontList"] = function()
     {
@@ -257,7 +267,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias PasteHtml
-     * @param {string} htmlText - A string value that specifies the text in the HTML format to be pasted into the document.
+     * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
      */
     Api.prototype["pluginMethod_PasteHtml"] = function(htmlText)
     {
@@ -350,9 +360,9 @@
     };
 
     /**
-     * An object containing the macros data.
+     * An object containing the data about all the macros from the document.
      * @typedef {Object} Macros
-     * @property {string[]} macrosArray - An array of macros codes ([{"name": "Macros1", "value": "{macrosCode}"}]).
+     * @property {Array.<string>} macrosArray - An array of macros codes (*[{"name": "Macros1", "value": "{macrosCode}"}]*).
      * @property {number} current - A current macro index.
      */
 
@@ -361,7 +371,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetMacros
-     * @returns {Macros} - Document macros.
+     * @returns {Macros} - The Macros object containing the data about all the macros from the document
      */
     Api.prototype["pluginMethod_GetMacros"] = function()
     {
@@ -373,19 +383,32 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias SetMacros
-     * @param {Macros} data - An object containing the macros data.
+     * @param {Macros} data - The *Macros* object containing the data about all the macros from the document.
      */
     Api.prototype["pluginMethod_SetMacros"] = function(data)
     {
         return this.asc_setMacros(data);
     };
 
+	/**
+	 * Returns all VBA macros into a document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias GetVBAMacros
+	 * @returns {string | null} VBA xml macros.
+	 * @since 7.3.0
+	 */
+	Api.prototype["pluginMethod_GetVBAMacros"] = function()
+	{
+		return (this.vbaProject ? this.vbaProject.vbaXml : null);
+	};
+
     /**
      * Specifies the start action for long operations.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias StartAction
-     * @param {number} type - A value which defines an action type which can take 0 if this is an Information action or 1 if this is a BlockInteraction action.
+     * @param {number} type - A value which defines an action type which can take **0** if this is an *Information* action or **1** if this is a *BlockInteraction* action.
 	 * @param {string} description - A string value that specifies the description text for the start action of the operation.
      */
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
@@ -398,7 +421,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EndAction
-     * @param {number} type - A value which defines an action type which can take 0 if this is an Information action or 1 if this is a BlockInteraction action.
+     * @param {number} type - A value which defines an action type which can take **0** if this is the *Information* action or **1** if this is the *BlockInteraction* action.
      * @param {string} description - A string value that specifies the description text for the operation end action.
      */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
@@ -447,18 +470,23 @@
     };
 
     /**
-     * Encrypts the document (for crypto plugins).
+     * Encrypts the document.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias OnEncryption
-     * @param {object} obj - The encryption properties. This object can have the following values:
-     * * **type** - the type of encrypting operation ("generatePassword" - generates a password for the document, "getPasswordByFile" - sends the password when opening the document, "setPasswordByFile" - sets a password to the document, "encryptData" - encrypts changes when co-editing, "decryptData" - decrypts changes when co-editing),
-     * * **password** - a string value specifying the password to access the document,
-     * * **data** - encrypted/decrypted changes,
-     * * **check** - checks if the encryption/decryption operation is successful or not (used only for "encryptData"/"decryptData" types),
-     * * **docinfo** - an unencrypted part of the encrypted file,
-     * * **hash** - a string value specifying a file hash (sha256 by default),
-     * * **error** - a string value specifying an error that occurs (the "" value means that the operation is successful).
+     * @param {object} obj - The encryption properties.
+     * @param {string} obj.type - The type of encrypting operation:
+     * * **generatePassword** - generates a password for the document,
+     * * **getPasswordByFile** - sends the password when opening the document,
+     * * **setPasswordByFile** - sets a password to the document,
+     * * **encryptData** - encrypts changes when co-editing,
+     * * **decryptData** - decrypts changes when co-editing.
+     * @param {string} obj.password - A string value specifying the password to access the document.
+     * @param {string} obj.data - Encrypted/decrypted changes.
+     * @param {boolean} obj.check - Checks if the encryption/decryption operation is successful or not (used only for *encryptData* or *decryptData* types).
+     * @param {string} obj.docinfo - An unencrypted part of the encrypted file.
+     * @param {string} obj.hash - A string value specifying a file hash (*sha256* by default).
+     * @param {string} obj.error - A string value specifying an error that occurs (the "" value means that the operation is successful).
      */
     Api.prototype["pluginMethod_OnEncryption"] = function(obj)
     {
@@ -521,15 +549,54 @@
     };
 
     /**
+	 * An object containing the watermark properties.
+     * @typedef {Object} watermark_on_draw
+     * @property {float} transparent The watermark transparency degree.
+     * @property {string} type The {@link /docbuilder/global#ShapeType shape type} which specifies the preset shape geometry for the current watermark.
+	 * @property {number} width The watermark width measured in millimeters.
+	 * @property {number} height The watermark height measured in millimeters.
+	 * @property {number} rotate The watermark rotation angle measured in degrees.
+	 * @property {Array.<number>} margins The text margins measured in millimeters in the watermark shape.
+	 * @property {Array.<number>} fill The watermark fill color in the RGB format. The empty array [] means that the watermark has no fill.
+     * @property {number} stroke-width The watermark stroke width measured in millimeters.
+	 * @property {Array.<number>} stroke The watermark stroke color in the RGB format. The empty array [] means that the watermark stroke has no fill.
+	 * @property {number} align The vertical text align in the watermark shape: **0** - bottom, **1** - center, **4** - top.
+	 * @property {Array.<object>} paragraphs The array with paragraphs from the current watermark with their properties.
+	 * @property {number} paragraphs.align The horizontal text align in the current paragraph: **0** - right, **1** - left, **2** - center, **3** - justify.
+	 * @property {Array.<number>} paragraphs.fill The paragraph highlight in the RGB format. The empty array [] means that the paragraph is not highlighted.
+	 * @property {number} paragraphs.linespacing The text linespecing in the current paragraph.
+	 * @property {Array.<object>} paragraphs.runs The array with runs from the current paragraph with their properties.
+	 * @property {string} paragraphs.runs.text The run text.
+	 * @property {Array.<number>} paragraphs.runs.fill The text highlight in the RGB format. The empty array [] means that the text is not highlighted.
+	 * @property {string} paragraphs.runs.font-family The text font family.
+	 * @property {string} paragraphs.runs.font-size The text font size measured in points (pt).
+	 * @property {boolean} paragraphs.runs.bold Defines if the current text is displayed bold or not.
+	 * @property {boolean} paragraphs.runs.italic Defines if the current text is displayed italic or not.
+	 * @property {boolean} paragraphs.runs.strikeout Defines if the current text is displayed struck through or not.
+	 * @property {boolean} paragraphs.runs.underline Defines if the current text is displayed underlined or not.
+     */
+
+    /**
+	 * An object containing the form properties.
+     * @typedef {Object} fillForms
+     * @property {object} tags The form tags which specify the content for each form type with such a tag.
+     * @property {string} tags.text The text field value (some text).
+	 * @property {string} tags.checkBox The checkbox form value (**true** - checked, **false** - unchecked).
+	 * @property {string} tags.picture The image form value (a link to the image).
+	 * @property {string} tags.comboBox The combo box form value (one of the items from the combo box list values).
+     */
+
+    /**
      * Sets the properties to the document.
-	 * See {@link https://github.com/ONLYOFFICE/sdkjs-plugins/tree/master/examples/settings examples}
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias SetProperties
-     * @param {object} obj - Document properties.
-	 * @param {?boolean} obj.copyoutenabled - Disables copying from the editor if it is set to true.
-	 * @param {?boolean} obj.hideContentControlTrack - Disables tracking the content control if it is set to true.
-	 * @param {?string} obj.watermark_on_draw - A string value for watermark in JSON format.
+     * @param {object} obj - The document properties.
+	 * @param {?boolean} obj.copyoutenabled - Disables copying from the editor if it is set to **false**.
+	 * @param {?boolean} obj.hideContentControlTrack - Disables tracking the content control if it is set to **true**.
+	 * @param {?string} obj.watermark_on_draw - A string value for {@link global#watermark_on_draw watermark properties} in JSON format.
+     * @param {?boolean} obj.disableAutostartMacros - Sets a flag that specifies that macros are started automatically when the editor opens.
+     * @param {?string} obj.fillForms - Sets rules in JSON format for filling document {@link global#fillForms forms} by tags.
      */
     Api.prototype["pluginMethod_SetProperties"] = function(obj)
     {
@@ -738,10 +805,10 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias ShowInputHelper
-     * @param {string} guid - A string value which specifies a plugin identifier which must be of the asc.{UUID} type.
+     * @param {string} guid - A string value which specifies a plugin identifier which must be of the *asc.{UUID}* type.
      * @param {number} w - A number which specifies the window width measured in millimeters.
      * @param {number} h - A number which specifies the window height measured in millimeters.
-     * @param {boolean} isKeyboardTake - Defines if the keyboard is caught (true) or not (false).
+     * @param {boolean} isKeyboardTake - Defines if the keyboard is caught (**true**) or not (**alse**).
      */
     Api.prototype["pluginMethod_ShowInputHelper"] = function(guid, w, h, isKeyboardTake)
     {
@@ -825,8 +892,8 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias UnShowInputHelper
-     * @param {string} guid - A string value which specifies a plugin identifier which must be of the asc.{UUID} type.
-     * @param {string} isclear - Defines if the input context will be cleared (true) or not (false).
+     * @param {string} guid - A string value which specifies a plugin identifier which must be of the *asc.{UUID}* type.
+     * @param {string} isclear - Defines if the input context will be cleared (**true**) or not (**false**).
      */
     Api.prototype["pluginMethod_UnShowInputHelper"] = function(guid, isclear)
     {
@@ -875,7 +942,7 @@
     };
 
 	/**
-	 * The current selection type.
+	 * The current selection type ("none", "text", "drawing", or "slide").
 	 * @typedef {("none" | "text" | "drawing" | "slide")} SelectionType
 	 */
 
@@ -979,10 +1046,11 @@
      * @typeofeditors ["CDE"]
      * @alias ConvertDocument
      * @param {"markdown" | "html"} [sConvertType="markdown"] - Conversion type ("markdown" or "html").
-     * @param {bool} [bHtmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
-	 * @param {bool} [bBase64img=false] - Defines if the images will be created in the base64 format.
-	 * @param {bool} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
-	 * @param {bool} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket in the following way: \<tag>text\</tag>. By default, the opening angle brackets will be replaced with the special characters.
+     * @param {boolean} [bHtmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
+	 * @param {boolean} [bBase64img=false] - Defines if the images will be created in the base64 format.
+	 * @param {boolean} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {boolean} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket in the following way: \<tag>text\</tag>. By default, the opening angle brackets will be replaced with the special characters.
+     * @return {string} - The Markdown/HTML text.
      */
     Api.prototype["pluginMethod_ConvertDocument"] = function(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags)
     {
@@ -993,11 +1061,17 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CPE", "CSE"]
      * @alias GetSelectedText
-     * @param {prop} numbering - The resulting string display properties:
-     * * **NewLine** - defines if the resulting string will include line boundaries or not,
-     * * **NewLineParagraph** - defines if the resulting string will include paragraph line boundaries or not,
-     * * **Numbering** - defines if the resulting string will include numbering or not.
+     * @param {object} numbering - The resulting string display properties.
+     * @param {boolean} numbering.NewLine - Defines if the resulting string will include line boundaries or not.
+     * @param {boolean} numbering.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
+     * @param {boolean} numbering.Numbering - Defines if the resulting string will include numbering or not.
+     * @param {boolean} numbering.Math - Defines if the resulting string will include mathematical expressions or not.
+     * @param {string} numbering.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
+     * @param {string} numbering.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
+     * @param {string} numbering.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
+     * @param {string} numbering.TabSymbol - Defines how the tab will be specified in the resulting string.
      * @return {string} - Selected text.
+     * @since 7.1.0
      * @example
      * window.Asc.plugin.executeMethod("GetSelectedText", [{NewLine:true, NewLineParagraph:true, Numbering:true}])
      */
@@ -1039,6 +1113,7 @@
      * @param {string} [sParaTab=" "] - A character which is used to specify the tab in the source text.
      * @param {string} [sParaNewLine=" "] - A character which is used to specify the line break character in the source text.
      * @returns {boolean} - Always returns true.
+     * @since 7.1.0
      */
     Api.prototype["pluginMethod_ReplaceTextSmart"] = function(arrString, sParaTab, sParaNewLine)
     {
@@ -1079,8 +1154,9 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetFileToDownload
-     * @param {string} [format=" "] - The format in which you need to download the file.
+     * @param {string} [format=" "] - A format in which you need to download a file.
      * @returns {string} - URL to download the file in the specified format or error.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_GetFileToDownload"] = function(format)
 	{
@@ -1101,32 +1177,33 @@
 
 
     /**
-     * An object containing the font information.
+     * An object containing the information about the base64 encoded *png* image.
      * @typedef {Object} ImageData
-     * @property {string} src
-     * @property {number} width
-     * @property {number} height
+     * @property {string} src The image source in the base64 format.
+     * @property {number} width The image width in pixels.
+     * @property {number} height The image height in pixels.
      */
 
 	/**
-     * Returns an image data obtained from first of selected drawings.
-     * If there are no selected drawings it returns white rect.
+     * Returns the image data from the first of the selected drawings. If there are no drawings selected, the method returns a white rectangle.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetImageDataFromSelection
-     * @returns {?ImageData} - ImageData with png image encoded in base64 format or null if there are no selected objects.
+     * @returns {?ImageData} - The ImageData object containig the information about the base64 encoded png image.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_GetImageDataFromSelection"] = function()
 	{
 		return this.getImageDataFromSelection();
 	};
 	/**
-     * Replaces the first selected drawing
-     * If there are no selected drawings it inserts the image to the current position.
+     * Replaces the first selected drawing with the image specified in the parameters.
+     * If there are no drawings selected, the method inserts the image at the current position.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias PutImageDataToSelection
-     * @param {ImageData} oImageData - image encoded in base64 format.
+     * @param {ImageData} oImageData - The information about the base64 encoded *png* image.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
@@ -1255,12 +1332,22 @@
 		}
 	};
 
+    /**
+	 * The plugin object.
+     * @typedef {Object} PluginData
+     * @property {string} url The URL to plugin config.
+     * @property {string} guid The plugin identifier. It must be of the *asc.{UUID}* type.
+	 * @property {boolean} canRemoved Specifies if the plugin can be removed (**true**) or not (**false**).
+     * @property {object} obj The {@link /plugin/config config} of the installed plugin. The version is taken from the config and compared with the current one to check for updates.
+     */
+
 	/**
-    * Returns all installed plugins.
+    * Returns all the installed plugins.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetInstalledPlugins
-     * @returns {object[]} - Array of all installed plugins.
+     * @returns {PluginData[]} - An array of all the installed plugins.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_GetInstalledPlugins"] = function()
 	{
@@ -1318,12 +1405,13 @@
 		return returnArray;
 	};
 	/**
-    * Remove plugin with such guid.
+    * Removes a plugin with the specified GUID.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [guid] - The guid of plugins for removing.
+     * @param {string} [guid] - The plugin identifier. It must be of the *asc.{UUID}* type.
      * @alias RemovePlugin
-     * @returns {object} - Object with result.
+     * @returns {object} - An object with the result information.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
 	{
@@ -1358,26 +1446,26 @@
 		};
 	};
 	/**
-    * Install plugin with by url to config.
+    * Installs a plugin by the URL to the plugin config.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [url] - The url to plugin config for installing.
-     * @alias pluginMethod_InstallPlugin
-     * @returns {object} - Object with result.
-	 * 
+     * @param {string} [url] - The URL to the plugin config for installing.
+     * @alias InstallPlugin
+     * @returns {object} - An object with the result information.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_InstallPlugin"] = function(config)
 	{
 		return installPlugin(config, "Installed");
 	};
 	/**
-    * Update plugin with by url to config.
+    * Updates a plugin by the URL to the plugin config.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [url] - The url to plugin config for updating.
-     * @alias pluginMethod_UpdatePlugin
-     * @returns {object} - Object with result.
-	 * 
+     * @param {string} [url] - The URL to the plugin config for updating.
+     * @alias UpdatePlugin
+     * @returns {object} - An object with the result information.
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_UpdatePlugin"] = function(url, guid)
 	{
@@ -1385,12 +1473,13 @@
 	};
 
 	/**
-    * Show or hide buttons in header.
+    * Shows or hides buttons in the header.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [id] - The id of the button.
-     * @param {boolean} [bShow] - The flag show or hide the button.
+     * @param {string} [id] - The button ID.
+     * @param {boolean} [bShow] - The flag specifies whether the button is shown (**true**) or hidden (**false**).
      * @alias ShowButton 
+     * @since 7.2.0
      */
 	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
 	{

@@ -297,6 +297,10 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                     {
                         editor.sendEvent("asc_onUnLockDocumentProps");
                     }
+                    else if(Class === editor.WordControl.m_oLogicDocument.viewPrLock)
+                    {
+                        editor.sendEvent("asc_onUnLockViewProps");
+                    }
                 }
                 if(object.getObjectType && object.getObjectType() === AscDFH.historyitem_type_Slide && object.deleteLock === Class)
                 {

@@ -864,104 +864,104 @@ CChangesDocumentProtection.prototype.Redo = function () {
 	}
 };
 CChangesDocumentProtection.prototype.WriteToBinary = function (Writer) {
-	if (undefined !== this.NewAlgorithmName) {
+	if (null != this.NewAlgorithmName) {
 		Writer.WriteBool(true);
 		Writer.WriteByte(this.NewAlgorithmName);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewEdit) {
+	if (null != this.NewEdit) {
 		Writer.WriteBool(true);
 		Writer.WriteByte(this.NewEdit);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewEnforcement) {
+	if (null != this.NewEnforcement) {
 		Writer.WriteBool(true);
 		Writer.WriteBool(this.NewEnforcement);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewFormatting) {
+	if (null != this.NewFormatting) {
 		Writer.WriteBool(true);
 		Writer.WriteBool(this.NewFormatting);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewHashValue) {
+	if (null != this.NewHashValue) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewHashValue);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewSaltValue) {
+	if (null != this.NewSaltValue) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewSaltValue);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewSpinCount) {
+	if (null != this.NewSpinCount) {
 		Writer.WriteBool(true);
 		Writer.WriteLong(this.NewSpinCount);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewAlgIdExt) {
+	if (null != this.NewAlgIdExt) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewAlgIdExt);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewAlgIdExt) {
+	if (null != this.NewAlgIdExt) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewAlgIdExt);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewAlgIdExtSource) {
+	if (null != this.NewAlgIdExtSource) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewAlgIdExtSource);
 	} else {
 		Writer.WriteBool(false);
 	}
 
-	if (undefined !== this.NewCryptAlgorithmClass) {
+	if (null !== this.NewCryptAlgorithmClass) {
 		Writer.WriteBool(true);
 		Writer.WriteByte(this.NewCryptAlgorithmClass);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewCryptAlgorithmSid) {
+	if (null !== this.NewCryptAlgorithmSid) {
 		Writer.WriteBool(true);
 		Writer.WriteLong(this.NewCryptAlgorithmSid);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewCryptAlgorithmType) {
+	if (null !== this.NewCryptAlgorithmType) {
 		Writer.WriteBool(true);
 		Writer.WriteByte(this.NewCryptAlgorithmType);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewCryptProvider) {
+	if (null !== this.NewCryptProvider) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewCryptProvider);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewCryptProviderType) {
+	if (null !== this.NewCryptProviderType) {
 		Writer.WriteBool(true);
 		Writer.WriteByte(this.NewCryptProviderType);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewCryptProviderTypeExt) {
+	if (null !== this.NewCryptProviderTypeExt) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewCryptProviderTypeExt);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (undefined !== this.NewCryptProviderTypeExtSource) {
+	if (null !== this.NewCryptProviderTypeExtSource) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewCryptProviderTypeExtSource);
 	} else {
@@ -1023,6 +1023,44 @@ CChangesDocumentProtection.prototype.ReadFromBinary = function (Reader) {
 	}
 };
 CChangesDocumentProtection.prototype.CreateReverseChange = function () {
+	var ret = new CChangesDocumentProtection(this.Class);
+	
+	ret.OldAlgorithmName = this.NewAlgorithmName;
+	ret.OldEdit = this.NewEdit;
+	ret.OldEnforcement = this.NewEnforcement;
+	ret.OldFormatting = this.NewFormatting;
+	ret.OldHashValue = this.NewHashValue;
+	ret.OldSaltValue = this.NewSaltValue;
+	ret.OldSpinCount = this.NewSpinCount;
+	ret.OldAlgIdExt = this.NewAlgIdExt;
+	ret.OldAlgIdExtSource = this.NewAlgIdExtSource;
+	ret.OldCryptAlgorithmClass = this.NewCryptAlgorithmClass;
+	ret.OldCryptAlgorithmSid = this.NewCryptAlgorithmSid;
+	ret.OldCryptAlgorithmType = this.NewCryptAlgorithmType;
+	ret.OldCryptProvider = this.NewCryptProvider;
+	ret.OldCryptProviderType = this.NewCryptProviderType;
+	ret.OldCryptProviderTypeExt = this.NewCryptProviderTypeExt;
+	ret.OldCryptProviderTypeExtSource = this.NewCryptProviderTypeExtSource;
+
+	ret.NewAlgorithmName = this.OldAlgorithmName;
+	ret.NewEdit = this.OldEdit;
+	ret.NewEnforcement = this.OldEnforcement;
+	ret.NewFormatting = this.OldFormatting;
+	ret.NewHashValue = this.OldHashValue;
+	ret.NewSaltValue = this.OldSaltValue;
+	ret.NewSpinCount = this.OldSpinCount;
+	ret.NewAlgIdExt = this.OldAlgIdExt;
+	ret.NewAlgIdExtSource = this.OldAlgIdExtSource;
+	ret.NewCryptAlgorithmClass = this.OldCryptAlgorithmClass;
+	ret.NewCryptAlgorithmSid = this.OldCryptAlgorithmSid;
+	ret.NewCryptAlgorithmType = this.OldCryptAlgorithmType;
+	ret.NewCryptProvider = this.OldCryptProvider;
+	ret.NewCryptProviderType = this.OldCryptProviderType;
+	ret.NewCryptProviderTypeExt = this.OldCryptProviderTypeExt;
+	ret.NewCryptProviderTypeExtSource = this.OldCryptProviderTypeExtSource;
+	
+	return ret;
 };
+
 
 AscDFH.changesFactory[AscDFH.historydescription_Document_DocumentProtection] = CChangesDocumentProtection;

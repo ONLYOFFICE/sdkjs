@@ -1228,6 +1228,9 @@ CBlockLevelSdt.prototype.Set_CurrentElement = function(bUpdateStates, PageAbs, o
 };
 CBlockLevelSdt.prototype.Refresh_RecalcData2 = function(CurPage)
 {
+	if (!this.Parent)
+		return;
+
 	this.Parent.Refresh_RecalcData2(this.Index, this.private_GetRelativePageIndex(CurPage));
 };
 CBlockLevelSdt.prototype.Refresh_RecalcData = function(Data)
@@ -2398,8 +2401,12 @@ CBlockLevelSdt.prototype.private_UpdateDatePickerContent = function()
 };
 CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bCheckInner)
 {
-	if (AscCommon.changestype_Document_Content_Add === CheckType && this.Content.IsCursorAtBegin())
+	if (AscCommon.changestype_Document_Content_Add === CheckType
+		&& ((this.Content.IsCursorAtBegin() && !this.Get_DocumentPrev())
+			|| (this.Content.IsCursorAtEnd() && !this.Get_DocumentNext())))
+	{
 		return AscCommon.CollaborativeEditing.Add_CheckLock(false);
+	}
 
 	var isCheckContentControlLock = this.LogicDocument ? this.LogicDocument.IsCheckContentControlsLock() : true;
 
@@ -2617,6 +2624,27 @@ CBlockLevelSdt.prototype.CalculateTextToTable = function(oEngine)
 CBlockLevelSdt.prototype.CollectSelectedReviewChanges = function(oTrackManager)
 {
 	return this.Content.CollectSelectedReviewChanges(oTrackManager);
+};
+CBlockLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
+{
+	if (isBefore)
+	{
+		let prevElement = this.GetPrevDocumentElement();
+		if (prevElement && prevElement.Document_SetThisElementCurrent)
+		{
+			prevElement.Document_SetThisElementCurrent();
+			prevElement.MoveCursorToEndPos();
+		}
+	}
+	else
+	{
+		let nextElement = this.GetNextDocumentElement();
+		if (nextElement && nextElement.Document_SetThisElementCurrent)
+		{
+			nextElement.Document_SetThisElementCurrent();
+			nextElement.MoveCursorToStartPos();
+		}
+	}
 };
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

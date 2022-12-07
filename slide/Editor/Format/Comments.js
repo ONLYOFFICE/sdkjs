@@ -818,6 +818,40 @@ CCommentData.prototype =
         }
     },
 
+    ReadFromSimpleObject: function(oData)
+    {
+        if (!oData)
+            return;
+
+        if (oData["Text"])
+            this.m_sText = oData["Text"];
+
+        if (oData["Time"])
+            this.m_sTime = oData["Time"];
+
+        if (oData["UserName"])
+            this.m_sUserName = oData["UserName"];
+        
+        if (oData["UserId"])
+            this.m_sUserId = oData["UserId"];
+
+        if (oData["Solved"])
+            this.m_bSolved = oData["Solved"];
+
+        if (oData["UserData"])
+            this.m_sUserData = oData["UserData"];
+
+        if (oData["Replies"] && oData["Replies"].length)
+        {
+            for (var nIndex = 0, nCount = oData["Replies"].length; nIndex < nCount; ++nIndex)
+            {
+                var oCD = new CCommentData();
+                oCD.ReadFromSimpleObject(oData["Replies"][nIndex]);
+                this.m_aReplies.push(oCD);
+            }
+        }
+    },
+
     Write_ToBinary2: function(Writer)
     {
         // String            : m_sText
