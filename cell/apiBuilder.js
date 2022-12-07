@@ -125,7 +125,6 @@
 	 * @property {'xlDownward' | 'xlHorizontal' | 'xlUpward' | 'xlVertical'} Orientation - Sets an angle to the current cell range.
 	 * @property {ApiAreas} Areas - Returns a collection of the areas.
 	 * @property {ApiCharacters} Characters - Returns a Characters object that represents a range of characters within the object text. Use the Characters object to format characters within a text string.
-	 * 
 	 */
 	function ApiRange(range, areas) {
 		this.range = range;
@@ -3418,6 +3417,7 @@
 	 * @param {number} Start - The first character to be returned. If this argument is either 1 or omitted, this property returns a range of characters starting with the first character.
 	 * @param {number} Length - The number of characters to be returned. If this argument is omitted, this property returns the remainder of the string (everything after the Start character).
 	 * @return {ApiCharacters}
+	 * @since 7.4.0
 	 */
 	ApiRange.prototype.GetCharacters = function(Start, Length) {
 		let options = {
@@ -4607,6 +4607,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
+	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.GetCount = function () {
 		return this._options.length < 0 ? 0 : this._options.length;
@@ -4623,6 +4624,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
+	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.GetParent = function () {
 		return this._parent;
@@ -4638,6 +4640,7 @@
 	 * Deletes the object.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
+	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.Delete = function () {
 		if (this._options.start <= this._options.len) {
@@ -4674,6 +4677,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @param {String} String - A string value that represents the text of this range of characters.
+	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.Insert = function (String) {
 		this.Delete();
@@ -4736,6 +4740,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @param {String} Caption - A string value that represents the text of this range of characters.
+	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.SetCaption = function (Caption) {
 		this.Insert(Caption);
@@ -4746,6 +4751,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @param {String} Caption - A string value that represents the text of this range of characters.
+	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.GetCaption = function () {
 		let value = this._parent.range.getValue();
@@ -4769,6 +4775,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @param {String} Text - The text of this range of characters.
+	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.SetText = function (Text) {
 		this.Insert(Text)
@@ -4779,6 +4786,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @returns {String}
+	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.GetText = function () {
 		return this.GetCaption();
@@ -4798,9 +4806,9 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFont}
+	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.GetFont = function () {
-		// todo может сразу задать ему все значения и потом вернуть
 		return new ApiFont(this);
 	};
 
@@ -4822,6 +4830,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiCharacters}
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetParent = function () {
 		return this._object;
@@ -4838,6 +4847,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean || null}
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetBold = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -4869,6 +4879,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isBold - Specifies that the text characters are displayed bold.
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
 		if (typeof isBold !== 'boolean') {
@@ -4916,6 +4927,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean || null}
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetItalic = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -4947,6 +4959,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isItalic - Specifies that the text characters are displayed italic.
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
 		if (typeof isItalic !== 'boolean') {
@@ -4994,6 +5007,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {number || null}
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetSize = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -5025,6 +5039,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Size - Font size.
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
@@ -5072,6 +5087,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean || null}
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetStrikethrough = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -5103,6 +5119,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isStrikethrough - Specifies that the text characters are displayed strikethrough.
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
 		if (typeof isStrikethrough !== 'boolean') {
@@ -5150,9 +5167,9 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {string || null}
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetUnderline = function () {
-		// todo поправить возвращение
 		if (this._object instanceof ApiCharacters) {
 			let editor = this._object._parent.range.worksheet.workbook.oApi.wb.cellEditor;
 			let opt = this._object._options;
@@ -5208,6 +5225,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {string} Underline - type of underline.
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetUnderline = function (Underline) {
 		if (typeof Underline !== 'string') {
@@ -5280,6 +5298,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean || null}
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetSubscript = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -5311,6 +5330,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSubscript - Specifies that the text characters are displayed subscript.
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
 		if (typeof isSubscript !== 'boolean') {
@@ -5358,6 +5378,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean || null}
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetSuperscript = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -5389,6 +5410,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSuperscript - Specifies that the text characters are displayed superscript.
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
 		if (typeof isSuperscript !== 'boolean') {
@@ -5436,6 +5458,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {String || null}
+	 * @since 7.4.0
 	 */
 	 ApiFont.prototype.GetName = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -5467,6 +5490,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {String} FontName - Specifies a font name for characters.
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
 		if (typeof FontName !== 'string') {
@@ -5515,6 +5539,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor || null}
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetColor = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -5546,6 +5571,7 @@
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} Color - Specifies a font color for characters.
+	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetColor = function (Color) {
 		if (!Color instanceof ApiColor) {
