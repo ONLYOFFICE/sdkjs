@@ -3335,7 +3335,9 @@
 			  var startIndex = adjustPrint && adjustPrint.startPageIndex != null ? adjustPrint.startPageIndex : 0;
 			  var endIndex = adjustPrint && adjustPrint.endPageIndex != null  ? adjustPrint.endPageIndex + 1 : printPagesData.arrPages.length;
 			  if (startIndex > endIndex || startIndex > printPagesData.arrPages.length) {
-				  //error
+				  //Печать пустой страницы
+				  ws = t.getWorksheet();
+				  ws.drawForPrint(pdfPrinter, null);
 				  return pdfPrinter;
 			  }
 			  if (endIndex > printPagesData.arrPages.length) {
