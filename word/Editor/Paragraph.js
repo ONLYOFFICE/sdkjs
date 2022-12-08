@@ -90,8 +90,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
     this.Pages = []; // Массив страниц (CParaPage)
     this.Lines = []; // Массив строк (CParaLine)
 
-	this.EndInfo         = new CParagraphPageEndInfo();
-	this.EndInfoRecalcId = -1;
+	this.EndInfo = new CParagraphPageEndInfo();
 
     if(!(bFromPresentation === true))
     {
@@ -1443,27 +1442,31 @@ Paragraph.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 };
 Paragraph.prototype.RecalculateEndInfo = function()
 {
-	var oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument && oLogicDocument.GetRecalcId && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.GetRecalcId)
 		return;
 	
-	var oPRSI     = this.m_oPRSI;
-	var oPrevInfo = this.Parent.GetPrevElementEndInfo(this);
-	oPRSI.Reset(oPrevInfo);
+	let recalcId = logicDocument.GetRecalcId();
+	if (this.EndInfo.CheckRecalcId(recalcId))
+		return;
 	
-	for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
+	let prevEndInfo = this.Parent.GetPrevElementEndInfo(this);
+	if (prevEndInfo && !prevEndInfo.CheckRecalcId(recalcId))
+		return;
+	
+	let prsi = this.m_oPRSI;
+	prsi.Reset(prevEndInfo);
+	
+	for (let pos = 0, count = this.Content.length; pos < count; ++pos)
 	{
-		this.Content[nCurPos].RecalculateEndInfo(oPRSI);
+		this.Content[pos].RecalculateEndInfo(prsi);
 	}
 	
-	this.EndInfo.SetFromPRSI(oPRSI);
-	
-	if (oLogicDocument && oLogicDocument.GetRecalcId)
-		this.EndInfoRecalcId = oLogicDocument.GetRecalcId();
+	this.EndInfo.SetFromPRSI(prsi);
+	this.EndInfo.SetRecalcId(recalcId);
 };
 Paragraph.prototype.GetEndInfo = function()
 {
-	this.RecalculateEndInfo();
 	return this.EndInfo;
 };
 Paragraph.prototype.GetEndInfoByPage = function(CurPage)
@@ -18297,6 +18300,7 @@ function CParagraphPageEndInfo()
 	this.ComplexFields = []; // Массив незакрытых полей на данной странице
 
     this.RunRecalcInfo = null;
+	this.RecalcId     = -1;
 }
 CParagraphPageEndInfo.prototype.Copy = function()
 {
@@ -18351,6 +18355,14 @@ CParagraphPageEndInfo.prototype.IsEqual = function(oEndInfo)
 	}
 
 	return true;
+};
+CParagraphPageEndInfo.prototype.CheckRecalcId = function(recalcId)
+{
+	return this.RecalcId === recalcId;
+};
+CParagraphPageEndInfo.prototype.SetRecalcId = function(recalcId)
+{
+	this.RecalcId = recalcId;
 };
 
 function CParaPos(Range, Line, Page, Pos)
