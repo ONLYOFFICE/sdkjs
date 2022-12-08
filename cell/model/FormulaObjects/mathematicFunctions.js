@@ -3729,6 +3729,22 @@
 
 		let arg0 = arg[0], arg1 = arg[1];
 
+		if (cElementType.bool === arg0.type || cElementType.bool === arg1.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			if (cElementType.bool === arg0.getValue().type) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ) {
+			if (cElementType.bool === arg1.getValue().type) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.cross(arguments[1]);
 		}
@@ -3744,14 +3760,6 @@
 		}
 		if (cElementType.error === arg1.type) {
 			return arg1;
-		}
-
-		if (!(cElementType.number === arg0.type) || ( arg1 && !(cElementType.number === arg0.type) )) {
-			return new cError(cErrorType.wrong_value_type);
-		} else if(cElementType.number === arg0.type && cElementType.number === arg1.type) {
-			if (arg0.getValue() > arg1.getValue()) {
-				return new cError(cErrorType.not_numeric);
-			}
 		}
 
 		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
@@ -3775,10 +3783,16 @@
 			return arg1;
 		}
 
-		
+		if (!(cElementType.number === arg0.type) || ( arg1 && !(cElementType.number === arg0.type) )) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if(cElementType.number === arg0.type && cElementType.number === arg1.type) {
+			if (arg0.getValue() > arg1.getValue()) {
+				return new cError(cErrorType.not_numeric);
+			}
+		}
+
 		return new cNumber(randBetween(arg0.getValue(), arg1.getValue()));
 	};
-
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
