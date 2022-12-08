@@ -142,7 +142,9 @@ CDocProtect.prototype.isPassword = function () {
 	return this.algorithmName != null || this.cryptAlgorithmSid != null;
 };
 CDocProtect.prototype.setProps = function (oProps) {
-	History.Add(new CChangesDocumentProtection(this, this, oProps));
+	let doc = editor && editor.private_GetLogicDocument && editor.private_GetLogicDocument();
+	let userId = doc && doc.GetUserId && doc.GetUserId();
+	History.Add(new CChangesDocumentProtection(this, this, oProps, userId));
 	this.setFromInterface(oProps);
 };
 CDocProtect.prototype.setFromInterface = function (oProps) {

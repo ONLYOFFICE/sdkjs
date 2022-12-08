@@ -724,7 +724,7 @@ CChangesDocumentSettingsTrackRevisions.prototype.CreateReverseChange = function(
 	return new CChangesDocumentSettingsTrackRevisions(this.Class, this.New, this.Old, this.UserId);
 };
 
-function CChangesDocumentProtection(Class, Old, New) {
+function CChangesDocumentProtection(Class, Old, New, sUserId) {
 	AscDFH.CChangesBase.call(this, Class, Old, New);
 	if (Old && New) {
 		this.OldAlgorithmName = Old.algorithmName;
@@ -795,6 +795,7 @@ function CChangesDocumentProtection(Class, Old, New) {
 		this.NewCryptProviderTypeExt = undefined;
 		this.NewCryptProviderTypeExtSource = undefined;
 	}
+	this.UserId = sUserId;
 }
 
 CChangesDocumentProtection.prototype = Object.create(AscDFH.CChangesBase.prototype);
@@ -860,7 +861,7 @@ CChangesDocumentProtection.prototype.Redo = function () {
 				oDocument.Settings.DocumentProtection = this.Class;
 			}
 		}
-		api.sendEvent("asc_onChangeDocumentProtection");
+		api.sendEvent("asc_onChangeDocumentProtection", this.UserId);
 	}
 };
 CChangesDocumentProtection.prototype.WriteToBinary = function (Writer) {
@@ -967,6 +968,12 @@ CChangesDocumentProtection.prototype.WriteToBinary = function (Writer) {
 	} else {
 		Writer.WriteBool(false);
 	}
+	if (null !== this.UserId) {
+		Writer.WriteBool(true);
+		Writer.WriteString2(this.UserId);
+	} else {
+		Writer.WriteBool(false);
+	}
 };
 
 CChangesDocumentProtection.prototype.ReadFromBinary = function (Reader) {
@@ -1021,6 +1028,9 @@ CChangesDocumentProtection.prototype.ReadFromBinary = function (Reader) {
 	if (Reader.GetBool()) {
 		this.NewCryptProviderTypeExtSource = Reader.GetString2();
 	}
+	if (Reader.GetBool()) {
+		this.UserId = Reader.GetString2();
+	}
 };
 CChangesDocumentProtection.prototype.CreateReverseChange = function () {
 	var ret = new CChangesDocumentProtection(this.Class);
@@ -1058,6 +1068,8 @@ CChangesDocumentProtection.prototype.CreateReverseChange = function () {
 	ret.NewCryptProviderType = this.OldCryptProviderType;
 	ret.NewCryptProviderTypeExt = this.OldCryptProviderTypeExt;
 	ret.NewCryptProviderTypeExtSource = this.OldCryptProviderTypeExtSource;
+
+	ret.UserId = this.UserId;
 	
 	return ret;
 };
