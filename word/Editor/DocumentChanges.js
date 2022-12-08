@@ -828,7 +828,7 @@ CChangesDocumentProtection.prototype.Undo = function () {
 
 	editor.sendEvent("asc_onChangeDocumentProtection");
 };
-CChangesDocumentProtection.prototype.Redo = function () {
+CChangesDocumentProtection.prototype.Redo = function (sUserId) {
 	if (!this.Class) {
 		return;
 	}
@@ -861,8 +861,11 @@ CChangesDocumentProtection.prototype.Redo = function () {
 				oDocument.Settings.DocumentProtection = this.Class;
 			}
 		}
-		api.sendEvent("asc_onChangeDocumentProtection", this.UserId);
+		api.sendEvent("asc_onChangeDocumentProtection", sUserId);
 	}
+};
+CChangesDocumentProtection.prototype.Load = function () {
+	this.Redo(this.UserId);
 };
 CChangesDocumentProtection.prototype.WriteToBinary = function (Writer) {
 	if (null != this.NewAlgorithmName) {
