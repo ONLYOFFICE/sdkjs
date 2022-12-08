@@ -3721,11 +3721,7 @@
 
 		function f(a, b, r, c) {
 			if (cElementType.number === a.type && cElementType.number === b.type) {
-				if (a.getValue() > b.getValue()) {
-					return new cError(cErrorType.not_numeric);
-				} else {
-					this.array[r][c] = randBetween(a.getValue(), b.getValue());
-				}
+				this.array[r][c] = randBetween(a.getValue(), b.getValue());
 			} else {
 				this.array[r][c] = new cError(cErrorType.wrong_value_type);
 			}
@@ -3750,6 +3746,14 @@
 			return arg1;
 		}
 
+		if (!(cElementType.number === arg0.type) || ( arg1 && !(cElementType.number === arg0.type) )) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if(cElementType.number === arg0.type && cElementType.number === arg1.type) {
+			if (arg0.getValue() > arg1.getValue()) {
+				return new cError(cErrorType.not_numeric);
+			}
+		}
+
 		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
 			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
 				return new cError(cErrorType.not_available);
@@ -3769,14 +3773,6 @@
 				f.call(this, arg0, elem, r, c);
 			});
 			return arg1;
-		}
-
-		if (!(cElementType.number === arg0.type) || ( arg1 && !(cElementType.number === arg0.type) )) {
-			return new cError(cErrorType.wrong_value_type);
-		} else if(cElementType.number === arg0.type && cElementType.number === arg1.type) {
-			if (arg0.getValue() > arg1.getValue()) {
-				return new cError(cErrorType.not_numeric);
-			}
 		}
 
 		
