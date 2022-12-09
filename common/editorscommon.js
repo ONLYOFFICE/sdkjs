@@ -3451,7 +3451,7 @@
 				{
 					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
 				}
-			} else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType) {
+			} else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 			if (!range) {

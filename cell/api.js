@@ -691,43 +691,97 @@ var editor;
 		});
 	};
 
-	spreadsheet_api.prototype.asc_ImportXmlEnd = function (stream) {
+	spreadsheet_api.prototype.asc_ImportXmlEnd = function (stream, dataRef, newSheetName) {
 		var t = this;
 
-		//в этом случае запрашиваем бинарник
-		// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
-		let jsZlib = new AscCommon.ZLib();
-		if (!jsZlib.open(stream)) {
-			//t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
-			return false;
-		}
 
-		if (jsZlib.files && jsZlib.files.length) {
-			var binaryData = jsZlib.getFile(jsZlib.files[0]);
+		var doInsertXml = function (_dataRef, _ws) {
+			let jsZlib = new AscCommon.ZLib();
+			if (!jsZlib.open(stream)) {
+				//t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+				return false;
+			}
 
-			//заполняем через банарник
-			var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
-			//чтобы лишнего не читать, проставляю флаг копипаст
-			oBinaryFileReader.InitOpenManager.copyPasteObj = {
-				isCopyPaste: true, activeRange: null, selectAllSheet: true
-			};
+			if (jsZlib.files && jsZlib.files.length) {
+				var binaryData = jsZlib.getFile(jsZlib.files[0]);
 
+				//заполняем через банарник
+				var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+				//чтобы лишнего не читать, проставляю флаг копипаст
+				oBinaryFileReader.InitOpenManager.copyPasteObj = {
+					isCopyPaste: true, activeRange: null, selectAllSheet: true
+				};
 
-			var wb = new AscCommonExcel.Workbook();
-			wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
+				var wb = new AscCommonExcel.Workbook();
+				wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
 
-			AscFormat.ExecuteNoHistory(function () {
-				AscCommonExcel.executeInR1C1Mode(false, function () {
-					oBinaryFileReader.Read(binaryData, wb);
+				AscFormat.ExecuteNoHistory(function () {
+					AscCommonExcel.executeInR1C1Mode(false, function () {
+						oBinaryFileReader.Read(binaryData, wb);
+					});
 				});
-			});
 
-			if (wb.aWorksheets) {
-				var ws = t.wb.getWorksheet();
-				var arrSheets = wb.aWorksheets;
-				//test
-				AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange = "A1:R100";
-				t.wb.getWorksheet().setSelectionInfo('paste', {data: arrSheets[0], fromBinary: true, fontsNew: [], pasteAllSheet: true, wb: wb});
+				if (wb.aWorksheets) {
+					var arrSheets = wb.aWorksheets;
+					var pastedSheet = arrSheets && arrSheets[0];
+					if (pastedSheet) {
+						if (_ws) {
+							t.wbModel.setActive(_ws.index);
+						}
+						var ws = t.wb.getWorksheet();
+						if (_dataRef) {
+							ws.setSelection(_dataRef);
+						}
+						AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange = new Asc.Range(0, 0, Math.max(pastedSheet.nColsCount - 1, 0), Math.max(pastedSheet.nRowsCount - 1, 0)).getName();
+						t.wb.getWorksheet().setSelectionInfo('paste', {data: pastedSheet, fromBinary: true, fontsNew: [], pasteAllSheet: true, wb: wb});
+					}
+				}
+			}
+		};
+
+		var doCheckRange = function (_sDataRange) {
+			var result = parserHelp.parse3DRef(_sDataRange);
+			var _range;
+			if (result)
+			{
+				var sheetModel = t.wb.model.getWorksheetByName(result.sheet);
+				if (sheetModel)
+				{
+					_range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+				}
+			} else {
+				_range = AscCommonExcel.g_oRangeCache.getAscRange(_sDataRange);
+			}
+			if (!_range) {
+				_range = AscCommon.rx_defName.test(_sDataRange);
+			}
+			if (!_range) {
+				_range = parserHelp.isTable(_sDataRange, 0, true);
+			}
+
+			return _range ? {range: _range, sheetModel: sheetModel} : false;
+		};
+
+		var wb = this.wbModel;
+		if (newSheetName) {
+			this._isLockedAddWorksheets(function(res) {
+				if (res) {
+					History.Create_NewPoint();
+					History.StartTransaction();
+					t._addWorksheetsWithoutLock([newSheetName], wb.getActive());
+					doInsertXml();
+					History.EndTransaction();
+				} else {
+					//todo
+					t.sendEvent('asc_onError', c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
+				}
+			});
+		} else {
+			var _checkRange = doCheckRange(dataRef);
+			if (_checkRange) {
+				doInsertXml(_checkRange.range, _checkRange.sheetModel);
+			} else {
+				this.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
 			}
 		}
 	};
