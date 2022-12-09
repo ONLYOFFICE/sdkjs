@@ -3727,7 +3727,8 @@
 			}
 		}
 
-		let arg0 = arg[0], arg1 = arg[1];
+		let arg0 = arg[0] ? arg[0] : new cError(cErrorType.not_available);
+		let arg1 = arg[1] ? arg[1] : new cError(cErrorType.not_available);
 
 		if (cElementType.bool === arg0.type || cElementType.bool === arg1.type) {
 			return new cError(cErrorType.wrong_value_type);

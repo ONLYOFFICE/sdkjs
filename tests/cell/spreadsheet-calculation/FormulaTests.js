@@ -8341,7 +8341,7 @@ $(function () {
 		res = array.getElementRowCol(0, 1).getValue();
 		assert.ok(res === 3, "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,1]");
 		res = array.getElementRowCol(0, 2).getValue();
-		assert.ok(res === '', "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,2]");;
+		assert.ok(res === '', "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,2]");
 
 		ws.getRange2("A3").setValue("1.5");
 		ws.getRange2("A4").setValue("2.5");
@@ -8360,7 +8360,6 @@ $(function () {
 		ws.getRange2("A17").setValue("1/1/2000");
 		ws.getRange2("A18").setValue("2/2/2000");
 
-		// TODO добавить тестов по максимуму с учетом всех типов аргументов
 
 		// data in cells
 		oParser = new parserFormula("RANDBETWEEN(A3,A4)", "A2", ws);
@@ -8374,8 +8373,7 @@ $(function () {
 
 		oParser = new parserFormula("RANDBETWEEN(A11,A10)", "A2", ws);
 		assert.ok(oParser.parse(), "RANDBETWEEN(-0.01,0.01) in cells");
-		res = oParser.calculate().getValue();
-		assert.ok(res === 0, "Result RANDBETWEEN(-0.01,0.01) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result RANDBETWEEN(-0.01,0.01) in cells");
 
 		oParser = new parserFormula("RANDBETWEEN(A8,A7)", "A2", ws);
 		assert.ok(oParser.parse(), "RANDBETWEEN(55,25) in cells");
@@ -8442,23 +8440,19 @@ $(function () {
 		// special cases
 		oParser = new parserFormula("RANDBETWEEN(1.5,2.5)", "A1", ws);
 		assert.ok(oParser.parse());
-		res = oParser.calculate().getValue();
-		assert.ok(res === 2);
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result RANDBETWEEN(1.5,2.5)");
 
 		oParser = new parserFormula("RANDBETWEEN(-2.5,-1.5)", "A1", ws);
 		assert.ok(oParser.parse());
-		res = oParser.calculate().getValue();
-		assert.ok(res === -2);
+		assert.strictEqual(oParser.calculate().getValue(), -2, "Result RANDBETWEEN(-2.5,-1.5)");
 
 		oParser = new parserFormula("RANDBETWEEN(0.00000000005,0.1)", "A1", ws);
 		assert.ok(oParser.parse());
-		res = oParser.calculate().getValue();
-		assert.ok(res === 1);
+		assert.strictEqual(oParser.calculate().getValue(), 1, "RANDBETWEEN(0.00000000005,0.1)");
 
 		oParser = new parserFormula("RANDBETWEEN(-0.1,-0.00000000005)", "A1", ws);
 		assert.ok(oParser.parse());
-		res = oParser.calculate().getValue();
-		assert.ok(res === 0);
+		assert.strictEqual(oParser.calculate().getValue(), 0, "RANDBETWEEN(-0.1,-0.00000000005)");
 
 	});
 
