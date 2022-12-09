@@ -666,7 +666,7 @@ var editor;
 					if (!uint8Array)
 						return;
 
-					t._convertFromXml(uint8Array, callback);
+					t._convertFromXml({data: uint8Array, format: "xml"}, callback);
 				});
 			});
 			return;
