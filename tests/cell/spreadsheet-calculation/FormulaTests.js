@@ -8346,11 +8346,24 @@ $(function () {
 		assert.ok(oParser.parse(), "RANDBETWEEN('{1.5,2.5}',{2.5,3.5})");
 		let array = oParser.calculate();
 		res = array.getElementRowCol(0, 0).getValue();
-		assert.ok(res === 2, "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,0]");
+		assert.strictEqual(res, 2, "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,0] ");
 		res = array.getElementRowCol(0, 1).getValue();
-		assert.ok(res === 3, "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,1]");
+		assert.strictEqual(res, 3, "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,1] ");
 		res = array.getElementRowCol(0, 2).getValue();
-		assert.ok(res === '', "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,2]");
+		assert.strictEqual(res, "", "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,2] ");
+
+		oParser = new parserFormula("RANDBETWEEN(1,{5.5,3.5})", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(1,{5.5,3.5})");
+		array = oParser.calculate();
+		res = array.getElementRowCol(0, 0).getValue();
+		assert.ok(res >= 1 && res <= 5, "Result RANDBETWEEN(1,{5.5,3.5})[0,0]");
+		res = array.getElementRowCol(0, 1).getValue();
+		assert.ok(res >= 1 && res <= 5, "Result RANDBETWEEN(1,{5.5,3.5})[0,1]");
+		res = array.getElementRowCol(1, 0).getValue();
+		assert.strictEqual(res, "", "Result RANDBETWEEN(1,{5.5,3.5})[1,0] ");
+		res = array.getElementRowCol(2, 0).getValue();
+		assert.strictEqual(res, "#N/A", "Result RANDBETWEEN(1,{5.5,3.5})[2,0] ");
+
 
 		oParser = new parserFormula("RANDBETWEEN(null, undefined)", "A2", ws);
 		assert.ok(oParser.parse(), "RANDBETWEEN(null, undefined)");
@@ -8467,6 +8480,7 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 0, "RANDBETWEEN(-0.1,-0.00000000005)");
 
 	});
+
 	QUnit.test("Test: \"RANDARRAY\"", function (assert) {
 		ws.getRange2("A101").setValue("2");
 		ws.getRange2("A102").setValue("2");
