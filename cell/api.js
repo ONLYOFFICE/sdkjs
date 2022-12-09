@@ -574,7 +574,7 @@ var editor;
 		}
 	};
 
-	spreadsheet_api.prototype.asc_TextFromFileOrUrl = function (url, fileType, callback) {
+	spreadsheet_api.prototype._getFileFromUrl = function (url, fileType, callback) {
 		if (this.canEdit()) {
 			var document = {url: url, format: "XLSX"};
 			this.insertDocumentUrlsData = {
