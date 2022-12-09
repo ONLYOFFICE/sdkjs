@@ -692,10 +692,10 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_ImportXmlEnd = function (stream, dataRef, newSheetName) {
-		var t = this;
+		let t = this;
 
 
-		var doInsertXml = function (_dataRef, _ws) {
+		let doInsertXml = function (_dataRef, _ws) {
 			let jsZlib = new AscCommon.ZLib();
 			if (!jsZlib.open(stream)) {
 				//t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
@@ -703,16 +703,16 @@ var editor;
 			}
 
 			if (jsZlib.files && jsZlib.files.length) {
-				var binaryData = jsZlib.getFile(jsZlib.files[0]);
+				let binaryData = jsZlib.getFile(jsZlib.files[0]);
 
 				//заполняем через банарник
-				var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+				let oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
 				//чтобы лишнего не читать, проставляю флаг копипаст
 				oBinaryFileReader.InitOpenManager.copyPasteObj = {
 					isCopyPaste: true, activeRange: null, selectAllSheet: true
 				};
 
-				var wb = new AscCommonExcel.Workbook();
+				let wb = new AscCommonExcel.Workbook();
 				wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
 
 				AscFormat.ExecuteNoHistory(function () {
@@ -722,13 +722,13 @@ var editor;
 				});
 
 				if (wb.aWorksheets) {
-					var arrSheets = wb.aWorksheets;
-					var pastedSheet = arrSheets && arrSheets[0];
+					let arrSheets = wb.aWorksheets;
+					let pastedSheet = arrSheets && arrSheets[0];
 					if (pastedSheet) {
 						if (_ws) {
 							t.wbModel.setActive(_ws.index);
 						}
-						var ws = t.wb.getWorksheet();
+						let ws = t.wb.getWorksheet();
 						if (_dataRef) {
 							ws.setSelection(_dataRef);
 						}
@@ -739,12 +739,12 @@ var editor;
 			}
 		};
 
-		var doCheckRange = function (_sDataRange) {
-			var result = parserHelp.parse3DRef(_sDataRange);
-			var _range;
+		let doCheckRange = function (_sDataRange) {
+			let result = parserHelp.parse3DRef(_sDataRange);
+			let _range;
 			if (result)
 			{
-				var sheetModel = t.wb.model.getWorksheetByName(result.sheet);
+				let sheetModel = t.wb.model.getWorksheetByName(result.sheet);
 				if (sheetModel)
 				{
 					_range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
@@ -762,8 +762,9 @@ var editor;
 			return _range ? {range: _range, sheetModel: sheetModel} : false;
 		};
 
-		var wb = this.wbModel;
-		if (newSheetName) {
+		let wb = this.wbModel;
+		let alreadyAddedSheet = newSheetName && t.wb.model.getWorksheetByName(newSheetName);
+		if (newSheetName && !alreadyAddedSheet) {
 			this._isLockedAddWorksheets(function(res) {
 				if (res) {
 					History.Create_NewPoint();
@@ -777,7 +778,7 @@ var editor;
 				}
 			});
 		} else {
-			var _checkRange = doCheckRange(dataRef);
+			let _checkRange = doCheckRange(dataRef);
 			if (_checkRange) {
 				doInsertXml(_checkRange.range, _checkRange.sheetModel);
 			} else {
