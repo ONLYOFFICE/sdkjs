@@ -727,6 +727,8 @@ var editor;
 					if (pastedSheet) {
 						if (_ws) {
 							t.wbModel.setActive(_ws.index);
+							t.wb.updateWorksheetByModel();
+							t.wb.showWorksheet();
 						}
 						let ws = t.wb.getWorksheet();
 						if (_dataRef) {
@@ -741,10 +743,10 @@ var editor;
 
 		let doCheckRange = function (_sDataRange) {
 			let result = parserHelp.parse3DRef(_sDataRange);
-			let _range;
+			let _range, sheetModel;
 			if (result)
 			{
-				let sheetModel = t.wb.model.getWorksheetByName(result.sheet);
+				sheetModel = t.wb.model.getWorksheetByName(result.sheet);
 				if (sheetModel)
 				{
 					_range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
@@ -780,7 +782,10 @@ var editor;
 		} else {
 			let _checkRange = doCheckRange(dataRef);
 			if (_checkRange) {
+				History.Create_NewPoint();
+				History.StartTransaction();
 				doInsertXml(_checkRange.range, _checkRange.sheetModel);
+				History.EndTransaction();
 			} else {
 				this.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
 			}
