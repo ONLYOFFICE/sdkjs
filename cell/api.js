@@ -651,12 +651,12 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_ImportXmlStart = function (callback) {
-		var t = this;
+		let t = this;
 
 		if (window["AscDesktopEditor"]) {
 			// TODO: add translations
 			window["AscDesktopEditor"]["OpenFilenameDialog"]("xml", false, function (_file) {
-				var file = _file;
+				let file = _file;
 				if (Array.isArray(file))
 					file = file[0];
 				if (!file)
@@ -678,8 +678,8 @@ var editor;
 				return;
 			}
 
-			var format = AscCommon.GetFileExtension(files[0].name);
-			var reader = new FileReader();
+			let format = AscCommon.GetFileExtension(files[0].name);
+			let reader = new FileReader();
 			reader.onload = function () {
 				t._convertFromXml({data: new Uint8Array(reader.result), format: format}, callback);
 			};
@@ -794,9 +794,7 @@ var editor;
 
 
 	spreadsheet_api.prototype._convertFromXml = function (document, callback) {
-		var t = this;
-		var stream = null;
-		var oApi = this;
+		let stream = null;
 		this.insertDocumentUrlsData = {
 			imageMap: null, documents: [document], convertCallback: function (_api, url) {
 				_api.insertDocumentUrlsData.imageMap = url;
@@ -825,7 +823,7 @@ var editor;
 			}
 		};
 
-		var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.XLSY);
+		let options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.XLSY);
 		options.isNaturalDownload = true;
 		options.isGetTextFromUrl = true;
 		if (document.url) {
