@@ -8315,6 +8315,130 @@ $(function () {
 		res = oParser.calculate().getValue();
 		assert.ok(res >= -22 && res <= -1);
 
+		oParser = new parserFormula("RANDBETWEEN(DATE(2022,1,1), DATE(2022,4,12))", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(55, DATE(2022,4,12))");
+		res = oParser.calculate().getValue();
+		assert.ok(res >= 44562 && res <= 44663);
+
+		oParser = new parserFormula("RANDBETWEEN(55, DATE(2022,4,12))", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(55, DATE(2022,4,12))");
+		res = oParser.calculate().getValue();
+		assert.ok(res >= 55 && res <= 44663);
+
+		oParser = new parserFormula("RANDBETWEEN(DATE(2022,4,12), 55)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(DATE(2022,4,12), 55)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result RANDBETWEEN(DATE(2022,4,12), 55)");
+
+		oParser = new parserFormula("RANDBETWEEN(,)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(,)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result RANDBETWEEN(,) ");
+
+		oParser = new parserFormula("RANDBETWEEN({1.5,2.5},{2.5,3.5})", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN('{1.5,2.5}',{2.5,3.5})");
+		let array = oParser.calculate();
+		res = array.getElementRowCol(0, 0).getValue();
+		assert.ok(res === 2, "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,0]");
+		res = array.getElementRowCol(0, 1).getValue();
+		assert.ok(res === 3, "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,1]");
+		res = array.getElementRowCol(0, 2).getValue();
+		assert.ok(res === '', "Result RANDBETWEEN({1.5,2.5},{2.5,3.5})[0,2]");;
+
+		ws.getRange2("A3").setValue("1.5");
+		ws.getRange2("A4").setValue("2.5");
+		ws.getRange2("A5").setValue("13");
+		ws.getRange2("A6").setValue("23");
+		ws.getRange2("A7").setValue("25");
+		ws.getRange2("A8").setValue("55");
+		ws.getRange2("A9").setValue("-2");
+		ws.getRange2("A10").setValue("0.01");
+		ws.getRange2("A11").setValue("-0.01");
+		ws.getRange2("A12").setValue("#N/A");
+		ws.getRange2("A13").setValue("test1");
+		ws.getRange2("A14").setValue("TRUE");
+		ws.getRange2("A15").setValue("");
+		ws.getRange2("A16").setValue();
+		ws.getRange2("A17").setValue("1/1/2000");
+		ws.getRange2("A18").setValue("2/2/2000");
+
+		// TODO добавить тестов по максимуму с учетом всех типов аргументов
+
+		// data in cells
+		oParser = new parserFormula("RANDBETWEEN(A3,A4)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(1.5,2.5) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result RANDBETWEEN(1.5,2.5) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A3,A8)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(1.5,55) in cells");
+		res = oParser.calculate().getValue();
+		assert.ok(res >= 2 && res <= 55, "Result RANDBETWEEN(1.5,55) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A11,A10)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(-0.01,0.01) in cells");
+		res = oParser.calculate().getValue();
+		assert.ok(res === 0, "Result RANDBETWEEN(-0.01,0.01) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A8,A7)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(55,25) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result RANDBETWEEN(55,25) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A14,A14)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(TRUE,TRUE) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result RANDBETWEEN(TRUE,TRUE) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A14,A7)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(TRUE,25) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result RANDBETWEEN(TRUE,25) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A10,A14)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(0.01,TRUE) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result RANDBETWEEN(TRUE,25) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A12,A8)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(N/A,55) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result RANDBETWEEN(N/A,55) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A13,A13)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(test1,test1) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result RANDBETWEEN(test1,test1) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A15,A15)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN('','') in cells");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result RANDBETWEEN('','') in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A16,A16)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(,) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result RANDBETWEEN(,) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(,A15)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN('','') in cells");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result RANDBETWEEN('','') in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A15,)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN('','') in cells");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result RANDBETWEEN('','') in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A17,A17)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN('1/1/2000','1/1/2000') in cells");
+		assert.strictEqual(oParser.calculate().getValue(), 36526, "Result RANDBETWEEN('1/1/2000','1/1/2000') in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A17,A18)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN('1/1/2000','2/2/2000') in cells");
+		res = oParser.calculate().getValue();
+		assert.ok(res >= 36526 && res <= 36558, "Result RANDBETWEEN('1/1/2000','2/2/2000') in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A8,A18)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN(55,'2/2/2000') in cells");
+		res = oParser.calculate().getValue();
+		assert.ok(res >= 55 && res <= 36558, "Result RANDBETWEEN(55,'2/2/2000') in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A18,A8)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN('2/2/2000',55) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result RANDBETWEEN('2/2/2000',55) in cells");
+
+		oParser = new parserFormula("RANDBETWEEN(A3:A4,A5:A6)", "A2", ws);
+		assert.ok(oParser.parse(), "RANDBETWEEN('{1.5,2.5}',{13,23}) in cells");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result RANDBETWEEN({1.5,2.5},{13,23}) in cells");
+
 		// special cases
 		oParser = new parserFormula("RANDBETWEEN(1.5,2.5)", "A1", ws);
 		assert.ok(oParser.parse());
@@ -8336,7 +8460,6 @@ $(function () {
 		res = oParser.calculate().getValue();
 		assert.ok(res === 0);
 
-		// testArrayFormula2(assert, "RANDBETWEEN", 2, 2, true);
 	});
 
 	QUnit.test("Test: \"RANDARRAY\"", function (assert) {
