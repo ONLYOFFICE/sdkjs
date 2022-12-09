@@ -3735,14 +3735,18 @@
 		}
 
 		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-			if (cElementType.bool === arg0.getValue().type) {
-				return new cError(cErrorType.wrong_value_type);
+			if (arg0) {
+				if (cElementType.bool === arg0.getValue().type) {
+					return new cError(cErrorType.wrong_value_type);
+				}
 			}
 		}
 
 		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ) {
-			if (cElementType.bool === arg1.getValue().type) {
-				return new cError(cErrorType.wrong_value_type);
+			if (arg1) {
+				if (cElementType.bool === arg1.getValue().type) {
+					return new cError(cErrorType.wrong_value_type);
+				}
 			}
 		}
 
