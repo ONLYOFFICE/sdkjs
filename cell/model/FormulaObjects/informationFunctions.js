@@ -86,44 +86,36 @@
 			}
 
 			if(formatPart) {
-				if (formatPart === "D") {
-					switch(sFormat) {
-						case "dd-mmm-yy": {
-							formatInfo.decimalPlaces = 1;
-							break
-						}
-						case "dd-mmm": {
-							formatInfo.decimalPlaces = 2;
-							break
-						}
-						case "mmm-yy": {
-							formatInfo.decimalPlaces = 3;
-							break
-						}
-						case "m/d/yyyy": {
-							formatInfo.decimalPlaces = 4;
-							break
-						}
-						case "mm/dd": {
-							formatInfo.decimalPlaces = 5;
-							break
-						}
-						case "h:mm:ss AM/PM": {
-							formatInfo.decimalPlaces = 6;
-							break
-						}
-						case "h:mm AM/PM": {
-							formatInfo.decimalPlaces = 7;
-							break
-						}
-						case "h:mm:ss": {
-							formatInfo.decimalPlaces = 8;
-							break
-						}
-						case "h:mm": {
-							formatInfo.decimalPlaces = 9;
-							break
-						}
+				if(formatPart === "D") {
+					let regularD1 = /d+[\s\/-]m+[\s\/-]y+/gi,
+						regularD2 = /d+(\s|-|\/)m+;/gi,
+						regularD3 = /]m+(\s|-|\/)y+;/gi, // m+(\s|-|\/)y+; TODO maybe remove [$-9] in sFormat
+						regularD4 = /m+(\s|-|\/)d+(\s|-|\/)y+/gi,
+						regularD5 = /^m+(\s|-|\/)d+;/gi,
+						// D6-D9 types has difference with ms
+						regularD6 = /d+[\s\/-]m+[\s\/-]y+/gi, // !!! 
+						regularD7 = /d+[\s\/-]m+[\s\/-]y+/gi, // !!!
+						regularD8 = /d+[\s\/-]m+[\s\/-]y+/gi, // !!!
+						regularD9 = /d+[\s\/-]m+[\s\/-]y+/gi; // !!!
+
+					if(regularD1.test(sFormat)) {
+						formatInfo.decimalPlaces = 1;
+					} else if (regularD2.test(sFormat)) {
+						formatInfo.decimalPlaces = 2;
+					} else if (regularD3.test(sFormat)) {
+						formatInfo.decimalPlaces = 3;
+					} else if (regularD4.test(sFormat)) {
+						formatInfo.decimalPlaces = 4;
+					} else if (regularD5.test(sFormat)) {
+						formatInfo.decimalPlaces = 5;
+					} else if (regularD6.test(sFormat)) {
+						formatInfo.decimalPlaces = 6;
+					} else if (regularD7.test(sFormat)) {
+						formatInfo.decimalPlaces = 7;
+					} else if (regularD8.test(sFormat)) {
+						formatInfo.decimalPlaces = 8;
+					} else if (regularD9.test(sFormat)) {
+						formatInfo.decimalPlaces = 9;
 					}
 				}
 				res = new cString(formatPart + formatInfo.decimalPlaces + postfix);
