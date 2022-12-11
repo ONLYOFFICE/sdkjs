@@ -54,18 +54,17 @@
 	var argType = Asc.c_oAscFormulaArgumentType;
 
 	function getCellFormat(ws, row, col) {
-		var res = new cString("G");
-		var formatInfo, sFormat, numFormat;
+		let res = new cString("G");
+		let formatInfo, sFormat, numFormat;
 		ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
 			numFormat = cell ? cell.getNumFormat() : null;
 			formatInfo = numFormat ? numFormat.getTypeInfo() : null;
 			sFormat = numFormat ? numFormat.sFormat : null;
 		});
-
 		//такие форматы как дата не поддерживаются
 		//TODO функция нуждается в доработке
 		if(formatInfo) {
-			var postfix = "";
+			let postfix = "";
 			if(numFormat && (numFormat.oNegativeFormat && numFormat.oNegativeFormat.Color !== -1)) {
 				postfix += "-";
 			}
@@ -73,7 +72,7 @@
 				postfix += "()";
 			}
 
-			var formatPart;
+			let formatPart;
 			if(formatInfo.type === Asc.c_oAscNumFormatType.Number) {
 				formatPart = "F";
 			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Currency || formatInfo.type === Asc.c_oAscNumFormatType.Accounting) {
@@ -82,9 +81,51 @@
 				formatPart = "P";
 			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Scientific) {
 				formatPart = "S";
+			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Date) {
+				formatPart = "D";
 			}
 
 			if(formatPart) {
+				if (formatPart === "D") {
+					switch(sFormat) {
+						case "dd-mmm-yy": {
+							formatInfo.decimalPlaces = 1;
+							break
+						}
+						case "dd-mmm": {
+							formatInfo.decimalPlaces = 2;
+							break
+						}
+						case "mmm-yy": {
+							formatInfo.decimalPlaces = 3;
+							break
+						}
+						case "m/d/yyyy": {
+							formatInfo.decimalPlaces = 4;
+							break
+						}
+						case "mm/dd": {
+							formatInfo.decimalPlaces = 5;
+							break
+						}
+						case "h:mm:ss AM/PM": {
+							formatInfo.decimalPlaces = 6;
+							break
+						}
+						case "h:mm AM/PM": {
+							formatInfo.decimalPlaces = 7;
+							break
+						}
+						case "h:mm:ss": {
+							formatInfo.decimalPlaces = 8;
+							break
+						}
+						case "h:mm": {
+							formatInfo.decimalPlaces = 9;
+							break
+						}
+					}
+				}
 				res = new cString(formatPart + formatInfo.decimalPlaces + postfix);
 			}
 		}
