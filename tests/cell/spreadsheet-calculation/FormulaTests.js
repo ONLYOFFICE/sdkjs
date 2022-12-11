@@ -9174,10 +9174,6 @@ $(function () {
 		assert.ok(oParser.parse(), "CELL(contents,J2:J4).");
 		assert.strictEqual(oParser.calculate().getValue(), 1, "contents. Result of CELL(contents,J2:J4).");
 
-		oParser = new parserFormula('CELL("contents",B1:I4)', "A1", ws);
-		assert.ok(oParser.parse(), "CELL(contents,B1:I4).");
-		assert.strictEqual(oParser.calculate().getValue(), 0, "contents. Result of CELL(contents,B1:I4).");
-
 		oParser = new parserFormula('CELL("contents",)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(contents,).");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "contents. Result of CELL(contents,).");
