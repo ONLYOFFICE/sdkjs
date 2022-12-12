@@ -563,26 +563,38 @@ CWriteCommentData.prototype =
 
     CalculateAdditionalData : function()
     {
-        if (null == this.Data)
+        if (!this.Data)
+        {
             this.AdditionalData = "";
+        }
         else
         {
-            this.AdditionalData = "teamlab_data:";
-            this.AdditionalData += ("0;" + this.Data.m_sUserId.length + ";" + this.Data.m_sUserId + ";" );
-            this.AdditionalData += ("1;" + this.Data.m_sUserName.length + ";" + this.Data.m_sUserName + ";" );
-            this.AdditionalData += ("2;1;" + (this.Data.m_bSolved ? "1;" : "0;"));
-            if (this.Data.m_sOOTime)
+            let sUserId = this.Data.m_sUserId;
+            let sUserName = this.Data.m_sUserName;
+            if(typeof sUserId === "string" && sUserId.length > 0 &&
+                typeof sUserName === "string" && sUserName.length > 0)
             {
-                var WriteOOTime = new Date(this.Data.m_sOOTime - 0).toISOString().slice(0, 19) + 'Z';
-                this.AdditionalData += ("3;" + WriteOOTime.length + ";" + WriteOOTime + ";");
+                this.AdditionalData = "teamlab_data:";
+                this.AdditionalData += ("0;" + sUserId.length + ";" + sUserId + ";" );
+                this.AdditionalData += ("1;" + sUserName.length + ";" + sUserName + ";" );
+                this.AdditionalData += ("2;1;" + (this.Data.m_bSolved ? "1;" : "0;"));
+                if (this.Data.m_sOOTime)
+                {
+                    var WriteOOTime = new Date(this.Data.m_sOOTime - 0).toISOString().slice(0, 19) + 'Z';
+                    this.AdditionalData += ("3;" + WriteOOTime.length + ";" + WriteOOTime + ";");
+                }
+                if (this.Data.m_sGuid)
+                {
+                    this.AdditionalData += "4;" + this.Data.m_sGuid.length + ";" + this.Data.m_sGuid + ";";
+                }
+                if (this.Data.m_sUserData)
+                {
+                    this.AdditionalData += "5;" + this.Data.m_sUserData.length + ";" + this.Data.m_sUserData + ";";
+                }
             }
-            if (this.Data.m_sGuid)
+            else
             {
-                this.AdditionalData += "4;" + this.Data.m_sGuid.length + ";" + this.Data.m_sGuid + ";";
-            }
-            if (this.Data.m_sUserData)
-            {
-                this.AdditionalData += "5;" + this.Data.m_sUserData.length + ";" + this.Data.m_sUserData + ";";
+                this.AdditionalData = "";
             }
         }
     },
@@ -671,15 +683,6 @@ CCommentAuthor.prototype.Calculate = function() {
             this.Initials += (arr[i].substring(0, 1));
     }
 };
-    CCommentAuthor.prototype.toXml = function(writer) {
-        writer.WriteXmlNodeStart("p:cmAuthor");
-        writer.WriteXmlAttributeInt("id", this.Id);
-        writer.WriteXmlAttributeString("name", this.Name);
-        writer.WriteXmlAttributeString("initials", this.Initials);
-        writer.WriteXmlAttributeInt("lastIdx", this.LastId);
-        writer.WriteXmlAttributeInt("clrIdx", this.Id - 1);
-        writer.WriteXmlAttributesEnd(true);
-    };
 
 
 function CCommentData()
@@ -812,6 +815,40 @@ CCommentData.prototype =
             var Reply = new CCommentData();
             Reply.Read_FromAscCommentData( AscCommentData.asc_getReply(Index) );
             this.m_aReplies.push( Reply );
+        }
+    },
+
+    ReadFromSimpleObject: function(oData)
+    {
+        if (!oData)
+            return;
+
+        if (oData["Text"])
+            this.m_sText = oData["Text"];
+
+        if (oData["Time"])
+            this.m_sTime = oData["Time"];
+
+        if (oData["UserName"])
+            this.m_sUserName = oData["UserName"];
+        
+        if (oData["UserId"])
+            this.m_sUserId = oData["UserId"];
+
+        if (oData["Solved"])
+            this.m_bSolved = oData["Solved"];
+
+        if (oData["UserData"])
+            this.m_sUserData = oData["UserData"];
+
+        if (oData["Replies"] && oData["Replies"].length)
+        {
+            for (var nIndex = 0, nCount = oData["Replies"].length; nIndex < nCount; ++nIndex)
+            {
+                var oCD = new CCommentData();
+                oCD.ReadFromSimpleObject(oData["Replies"][nIndex]);
+                this.m_aReplies.push(oCD);
+            }
         }
     },
 

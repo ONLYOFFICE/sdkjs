@@ -3476,10 +3476,7 @@ CParagraphRecalculateStateWrap.prototype =
 				else if (oPrevNumPr)
 					oNumLvl = oNumbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
 
-				var oNumTextPr = Para.Get_CompiledPr2(false).TextPr.Copy();
-				oNumTextPr.Merge(Para.TextPr.Value);
-				oNumTextPr.Merge(oNumLvl.GetTextPr());
-                oNumTextPr.CheckFontScale();
+				var oNumTextPr = Para.GetNumberingTextPr();
 				var nNumSuff   = oNumLvl.GetSuff();
 				var nNumJc     = oNumLvl.GetJc();
 

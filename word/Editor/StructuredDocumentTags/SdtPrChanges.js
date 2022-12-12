@@ -732,3 +732,33 @@ CChangesSdtPrComplexFormPr.prototype.private_CreateObject = function()
 {
 	return new AscWord.CSdtComplexFormPr();
 };
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesSdtPrOForm(Class, Old, New)
+{
+	let sOld = null;
+	let sNew = null;
+	if(Old)
+	{
+		sOld = Old.Get_Id();
+	}
+	if(New)
+	{
+		sNew = Old.Get_Id();
+	}
+	AscDFH.CChangesBaseStringProperty.call(this, Class, sOld, sNew);
+}
+CChangesSdtPrOForm.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesSdtPrOForm.prototype.constructor = CChangesSdtPrOForm;
+CChangesSdtPrOForm.prototype.Type = AscDFH.historyitem_SdtPr_OForm;
+CChangesSdtPrOForm.prototype.private_SetValue = function(Value)
+{
+	let oValue = null;
+	if(Value)
+	{
+		oValue = AscCommon.g_oTableId.Get_ById(Value);
+	}
+	this.Class.Pr.OForm = oValue;
+};

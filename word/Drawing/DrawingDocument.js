@@ -1942,6 +1942,7 @@ function CDrawingDocument()
 
 	this.m_bIsDocumentCalculating = true;
 	this.m_arPrintingWaitEndRecalculate = null;
+	this.m_bUpdateAllPagesOnFirstRecalculate = false;
 
 	this.m_lTimerTargetId = -1;
 	this.m_dTargetX = -1;
@@ -2236,6 +2237,28 @@ function CDrawingDocument()
 		{
 			this.OnEndRecalculate(false);
 		}
+
+		if (this.m_bUpdateAllPagesOnFirstRecalculate)
+		{
+			this.m_bUpdateAllPagesOnFirstRecalculate = false;
+			this.m_nZoomType = 1;
+
+			if (true)
+			{
+				// имитируем isFull, чтобы пересчитался размер документа
+				if (this.m_lPagesCount > this.m_lCountCalculatePages)
+					this.m_arrPages.splice(this.m_lCountCalculatePages, this.m_lPagesCount - this.m_lCountCalculatePages);
+				this.m_lPagesCount = 0;
+
+				this.m_lDrawingFirst = -1;
+				this.m_lDrawingEnd = -1;
+			}
+
+			this.OnEndRecalculate(false);
+		}
+
+		if (this.m_oWordControl.m_oApi.printPreview && this.m_oWordControl.m_oApi.printPreview.page === index)
+			this.m_oWordControl.m_oApi.printPreview.update();
 	};
 
 	this.OnEndRecalculate = function (isFull, isBreak)
@@ -2336,7 +2359,13 @@ function CDrawingDocument()
 			this.m_oWordControl.OnScroll();
 
 			if (this.m_arPrintingWaitEndRecalculate)
+			{
+				var actionType = this.m_arPrintingWaitEndRecalculate[0];
 				this.m_oWordControl.m_oApi.downloadAs.apply(this.m_oWordControl.m_oApi, this.m_arPrintingWaitEndRecalculate);
+
+				this.m_oWordControl.ChangeReaderMode();
+				this.m_oWordControl.m_oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, actionType);
+			}
 		}
 
         if (isFull || isBreak)
@@ -2561,8 +2590,21 @@ function CDrawingDocument()
 			return false;
 		}
 
-		if (!this.m_bIsDocumentCalculating)
+		if (!this.m_bIsDocumentCalculating && (0 === this.m_oWordControl.ReaderModeCurrent))
 			return false;
+
+		if (1 === this.m_oWordControl.ReaderModeCurrent)
+		{
+			params.PrintInReaderMode = true;
+			// добавляем еще один longAction, чтобы убрать не после готовности pdf, а после возврата в reader mode
+			this.m_oWordControl.m_oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
+
+			// делаем через таймаут, чтобы fullRecalculate произошел не синхронно (чтобы были выставлены m_arPrintingWaitEndRecalculate)
+			var wordControl = this.m_oWordControl;
+			setTimeout(function(){
+				wordControl.ChangeReaderMode();
+			}, 10);
+		}
 
 		this.m_arPrintingWaitEndRecalculate = params;
 		this.m_oWordControl.m_oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
@@ -2718,6 +2760,24 @@ function CDrawingDocument()
 	this.FirePaint = function ()
 	{
 		this.m_oWordControl.OnScroll();
+	};
+
+	this.GetVisibleRegion = function()
+	{
+		let yOffset = 0;
+		if (this.m_oWordControl)
+			yOffset += this.m_oWordControl.Y;
+		if (true === this.m_oWordControl.m_bIsRuler)
+			yOffset += (7 * g_dKoef_mm_to_pix);
+
+		let height = 0;
+		if (this.m_oWordControl.m_oEditor)
+			height += AscCommon.AscBrowser.convertToRetinaValue(this.m_oWordControl.m_oEditor.HtmlElement.height);
+
+		let pos1 = this.ConvertCoordsFromCursor2(0, yOffset);
+		let pos2 = this.ConvertCoordsFromCursor2(0, yOffset + height);
+
+		return [{ Page : pos1.Page, Y : pos1.Y }, { Page : pos2.Page, Y : pos2.Y }];
 	};
 
 	this.ConvertCoordsFromCursor = function (x, y, bIsRul)
@@ -3491,9 +3551,12 @@ function CDrawingDocument()
 	};
 	this.DrawTarget = function ()
 	{
-		if (oThis.NeedTarget && oThis.m_oWordControl.IsFocus)
+		if (oThis.NeedTarget)
 		{
-			oThis.showTarget(!oThis.isShowTarget());
+			if (oThis.m_oWordControl.IsFocus && !oThis.m_oWordControl.m_oApi.isBlurEditor)
+				oThis.showTarget(!oThis.isShowTarget());
+			else
+				oThis.showTarget(true);
 		}
 	};
 
@@ -6473,7 +6536,7 @@ function CDrawingDocument()
 		}
 	};
 
-    this.privateGetParagraphByString = function(level, levelNum, counterCurrent, x, y, lineHeight, ctx, w, h)
+    this.privateGetParagraphByString = function(level, levelNum, counterCurrent, formats, startText, x, y, lineHeight, ctx, w, h, customTextPr)
     {
         var text = "";
         for (var i = 0; i < level.Text.length; i++)
@@ -6484,10 +6547,14 @@ function CDrawingDocument()
                     text += level.Text[i].Value;
                     break;
                 case Asc.c_oAscNumberingLvlTextType.Num:
+					let format = level.Format;
                     var correctNum = 1;
                     if (levelNum === level.Text[i].Value)
                         correctNum = counterCurrent;
-                    text += AscCommon.IntToNumberFormat(correctNum, level.Format, level.get_OLang());
+					else if (level.Text[i].Value < levelNum && formats && undefined !== formats[level.Text[i].Value])
+						format = formats[level.Text[i].Value];
+
+                    text += AscCommon.IntToNumberFormat(correctNum, format, level.get_OLang());
                     break;
                 default:
                     break;
@@ -6497,7 +6564,7 @@ function CDrawingDocument()
 		var api            = this.m_oWordControl.m_oApi;
 		var oLogicDocument = this.m_oWordControl.m_oLogicDocument;
 		if (!api || !oLogicDocument)
-			return;
+			return 0;
 
 		var oldViewMode = api.isViewMode;
         var oldMarks = api.ShowParaMarks;
@@ -6511,13 +6578,29 @@ function CDrawingDocument()
         //par.Pr = level.ParaPr.Copy();
 		var styles = this.m_oLogicDocument.Get_Styles();
 		par.Pr = (styles.Default && styles.Default.ParaPr) ? styles.Default.ParaPr.Copy() : new CParaPr();
-        var textPr = level.TextPr.Copy();
-        textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
-
+        var textPr;
+		if (customTextPr) {
+			textPr = customTextPr;
+		} else {
+			textPr = level.TextPr.Copy();
+			textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
+		}
         var parRun = new ParaRun(par);
         parRun.Set_Pr(textPr);
         parRun.AddText(text);
         par.AddToContent(0, parRun);
+
+		if (startText)
+		{
+			let headingRun    = new AscWord.CRun();
+			let headingTextPr = textPr.Copy();
+			headingTextPr.RFonts.SetAll("Arial");
+			headingTextPr.FontSize = headingTextPr.FontSizeCS = textPr.FontSize * 0.8;
+			headingRun.Set_Pr(headingTextPr);
+			headingRun.Set_Color(new CDocumentColor(122, 122, 122));
+			headingRun.AddText(startText);
+			par.AddToContent(1, headingRun);
+		}
 
         par.Reset(0, 0, 1000, 1000, 0, 0, 1);
         par.Recalculate_Page(0);
@@ -6544,10 +6627,10 @@ function CDrawingDocument()
         }
 
         // debug: text rect:
-        //ctx.beginPath();
-        //ctx.fillStyle = "#FFFF00";
-        //ctx.fillRect(xOffset, y, parW, parH);
-        //ctx.beginPath();
+        // ctx.beginPath();
+        // ctx.fillStyle = "#FFFF00";
+        // ctx.fillRect(xOffset, y, parW, parH);
+        // ctx.beginPath();
 
 		var backTextWidth = parW + 4; // 4 - чтобы линия никогде не была 'совсем рядом'
 		switch (level.Suff)
@@ -6589,6 +6672,8 @@ function CDrawingDocument()
 
         api.isViewMode = oldViewMode;
         api.ShowParaMarks = oldMarks;
+
+		return (Math.round(rPR * xOffset) + Math.round(backTextWidth * rPR));
     };
 
 	this.SetDrawImagePreviewBullet = function(id, props, level, is_multi_level, isNoCheckFonts)
@@ -6739,15 +6824,19 @@ function CDrawingDocument()
 			textYs.push(y + line_w); y += 2 * (line_w + line_distance);
 			textYs.push(y + line_w);
 
+			let left_offset = Math.round(text_base_offset_x * rPR);
+
 			for (var i = 0; i < textYs.length; i++)
 			{
-				this.privateGetParagraphByString(props.Lvl[level], level, i + 1, (text_base_offset_x- ((6.25 * AscCommon.g_dKoef_mm_to_pix)) >> 0),
+				let tempW = this.privateGetParagraphByString(props.Lvl[level], level, i + 1, null, null, (text_base_offset_x- ((6.25 * AscCommon.g_dKoef_mm_to_pix)) >> 0),
 					textYs[i], line_distance, ctx, width_px, height_px);
+
+				if (tempW > left_offset)
+					left_offset = tempW;
 			}
 
 			y = Math.round((offset + 2) * rPR);
-			var left_offset = Math.round(text_base_offset_x * rPR),
-				right_offset = Math.round((width_px - offsetBase) * rPR),
+			let right_offset = Math.round((width_px - offsetBase) * rPR),
 				y_dist = Math.round((line_w + line_distance) * rPR);
 
 			var left_offset2 = Math.round(offsetBase * rPR);
@@ -6815,7 +6904,7 @@ function CDrawingDocument()
 
 			for (var i = 0; i < 9; i++)
 			{
-                this.privateGetParagraphByString(props.Lvl[i], level, 1, textYs[i].x, textYs[i].y, line_distance, ctx, width_px, height_px);
+                this.privateGetParagraphByString(props.Lvl[i], level, 1, null, null, textYs[i].x, textYs[i].y, line_distance, ctx, width_px, height_px);
             }
         }
 
@@ -6896,7 +6985,7 @@ function CDrawingDocument()
 		if (this.m_oLogicDocument)
 			oDocState = this.m_oLogicDocument.StartNoHistoryMode();
 
-        for (var k = 0; k < 9; k++) 
+        for (var k = 0; k < 9; k++)
         {
 			// чтобы убрать отступ у i
 			props.Lvl[k].Align = 1;
@@ -6933,9 +7022,9 @@ function CDrawingDocument()
             ctx.stroke();
             ctx.beginPath();
 
-            text_base_offset_x += text_base_offset_dist;
+			text_base_offset_x += text_base_offset_dist;
 
-            this.privateGetParagraphByString(props.Lvl[k], k, 1, textYs.x, textYs.y, (height_px >> 1), ctx, width_px, height_px);
+            this.privateGetParagraphByString(props.Lvl[k], k, 1, null, null, textYs.x, textYs.y, (height_px >> 1), ctx, width_px, height_px);
         }
 
         if (oDocState)
@@ -7049,9 +7138,13 @@ function CDrawingDocument()
 			{
 				var arrTypes = 
 				[
-					c_oAscMultiLevelNumbering.MultiLevel1,
-					c_oAscMultiLevelNumbering.MultiLevel2,
-					c_oAscMultiLevelNumbering.MultiLevel3
+					c_oAscMultiLevelNumbering.MultiLevel_1_a_i,
+					c_oAscMultiLevelNumbering.MultiLevel_1_11_111,
+					c_oAscMultiLevelNumbering.MultiLevel_Bullet,
+					c_oAscMultiLevelNumbering.MultiLevel_Article_Section,
+					c_oAscMultiLevelNumbering.MultiLevel_Chapter,
+					c_oAscMultiLevelNumbering.MultiLevel_I_A_1,
+					c_oAscMultiLevelNumbering.MultiLevel_1_11_111_NoInd
 				];
 				for (var i = 0; i < arrTypes.length; i++)
 				{
@@ -7189,30 +7282,40 @@ function CDrawingDocument()
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
 			ctx.beginPath();
 			var line_distance = (height_px == 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 0 : 2));
-			var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
+
+			var shape = new AscFormat.CShape();
+			shape.extX = width_px * AscCommon.g_dKoef_pix_to_mm;
+			shape.extY = height_px * AscCommon.g_dKoef_pix_to_mm;
+			shape.contentWidth = shape.extX;
+			shape.createTextBody();
+			var par = shape.txBody.content.GetAllParagraphs()[0];
+
 			par.MoveCursorToStartPos();
 
 			par.Pr = new CParaPr();
 			var lvl = (type == 2) ? props[0][0] : props[0];
 			var textPr = lvl.TextPr.Copy();
 			textPr.FontSize = ((2 * line_distance * 72 / 96) >> 0) / 2;
+			par.TextPr.SetFontSize(textPr.FontSize);
 
 			var parRun = new ParaRun(par);
 			parRun.Set_Pr(textPr);
 			parRun.AddText(text);
 			par.AddToContent(0, parRun);
 
-			par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-			par.Recalculate_Page(0);
+			var parW = par.RecalculateMinMaxContentWidth().Max;
+			if (parW > shape.contentWidth) {
+				shape.findFitFontSizeForSmartArt(true);
+				parW = par.RecalculateMinMaxContentWidth().Max;
+			}
 
-			var bounds = par.Get_PageBounds(0);
+			parW = parW * AscCommon.g_dKoef_mm_to_pix;
 
-			var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-			var parH = (bounds.Bottom - bounds.Top);
+			line_distance = par.Get_EmptyHeight();
 			var x = (width_px - (parW >> 0)) >> 1;
-			var y = (height_px >> 1) + (parH >> 1);
+			var y = (height_px >> 1) + (line_distance >> 0);
 
-			this.privateGetParagraphByString(lvl, 0, 0, x, y, line_distance, ctx, width_px, height_px);
+			this.privateGetParagraphByString(lvl, 0, 0, null, null, x, y, line_distance, ctx, width_px, height_px, textPr);
 		}
 
 		for (var i = 1; i < id.length; i++)
@@ -7302,7 +7405,7 @@ function CDrawingDocument()
 				}
 
 				// для размеров окна 38 на 38
-				this.privateGetParagraphByString(props[i], 0, 0, x, y, line_distance, ctx, width_px, height_px);
+				this.privateGetParagraphByString(props[i], 0, 0, null, null, x, y, line_distance, ctx, width_px, height_px);
 			}
 			else
 			{
@@ -7319,6 +7422,14 @@ function CDrawingDocument()
 				var text_base_offset_x = offset + ((2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 				var text_base_offset_dist = (2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
 
+				let ind = 0;
+
+				// TODO: Переделать отрисовку на нормальную, с учетом всевозможных уровней.
+				//       Пока оставляю такую заглушку из-за бага 59031
+				let formats = null;
+				if (2 === type)
+					formats = [props[i][0].Format, props[i][1].Format, props[i][2].Format];
+
 				for (var j = 0; j < 3; j++)
 				{
 					ctx.moveTo(Math.round(text_base_offset_x * rPR), Math.round(y * rPR)); ctx.lineTo(Math.round((width_px - offsetBase) * rPR), Math.round(y * rPR));
@@ -7326,10 +7437,32 @@ function CDrawingDocument()
 					ctx.beginPath();
 					var textYx =  text_base_offset_x - ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0),
 						textYy = y + (line_w * 2.5);
-					this.privateGetParagraphByString((type == 2) ? props[i][j] : props[i], 0, 1 + ((type == 1) ? j : 0), textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
+
+					let startText = null;
+					if (2 === type && 4 <= i && i <= 7)
+						startText = " Heading " + (j + 1);
+
+
+					this.privateGetParagraphByString((type == 2) ? props[i][j] : props[i], 2 === type ? j : 0, 1 + ((type == 1) ? j : 0), formats, startText, textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
 					y += (line_w + line_distance);
-					if (type == 2)
-						text_base_offset_x += text_base_offset_dist;
+					if (type == 2 && j < 2)
+					{
+						let lvl = props[i][j + 1];
+						if (lvl.ParaPr && lvl.ParaPr.Ind && undefined !== lvl.ParaPr.Ind.Left && undefined !== lvl.ParaPr.Ind.FirstLine)
+						{
+							let lvlInd = lvl.ParaPr.Ind.Left + lvl.ParaPr.Ind.FirstLine;
+							if (lvlInd - ind > 0.05)
+								text_base_offset_x += text_base_offset_dist;
+							else if (ind - lvlInd > 0.05)
+								text_base_offset_x -= text_base_offset_dist;
+
+							ind = lvlInd;
+						}
+						else
+						{
+							text_base_offset_x += text_base_offset_dist;
+						}
+					}
 				}
 			}
 		}
@@ -8031,7 +8164,7 @@ function CDrawingDocument()
 	{
 		if (undefined === bIsFromDrawings)
 		{
-			if (this.m_oWordControl.m_oApi.ShowSnapLines)
+			if (this.m_oWordControl.m_oApi.ShowSmartGuides)
 			{
 				this.HorVerAnchors.push({Type: 0, Page: pageNum, Pos: xPos});
 			}
@@ -8051,7 +8184,7 @@ function CDrawingDocument()
 	{
 		if (undefined === bIsFromDrawings)
 		{
-			if (this.m_oWordControl.m_oApi.ShowSnapLines)
+			if (this.m_oWordControl.m_oApi.ShowSmartGuides)
 			{
 				this.HorVerAnchors.push({Type: 1, Page: pageNum, Pos: yPos});
 			}
@@ -8537,7 +8670,7 @@ CStylesPainter.prototype =
 				_dr_style.Id = i;
 
 				this.drawStyle(_api, graphics, _dr_style,
-					__Styles.Is_StyleDefault(style.Name) ? AscCommon.translateManager.getValue(style.Name) : style.Name);
+					__Styles.IsStyleDefaultByName(style.Name) ? AscCommon.translateManager.getValue(style.Name) : style.Name);
 				this.docStyles[cur_index] = new AscCommon.CStyleImage(style.Name, AscCommon.c_oAscStyleImage.Document,
 					_canvas.toDataURL("image/png"), style.uiPriority);
 

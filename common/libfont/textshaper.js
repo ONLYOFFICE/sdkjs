@@ -84,7 +84,7 @@
 	CTextShaper.prototype.AppendToString = function(oItem)
 	{
 		let nCodePoint = this.GetCodePoint(oItem);
-		this.private_CheckNewSegment(nCodePoint);
+		nCodePoint = this.private_CheckNewSegment(nCodePoint);
 		this.Buffer.push(oItem);
 		AscFonts.HB_AppendToString(nCodePoint);
 	};
@@ -110,6 +110,10 @@
 		this.FontSize = oFontInfo.Size;
 
 		AscFonts.HB_ShapeString(this, nFontId, oFontInfo.Style, this.FontId, this.GetLigaturesType(), nScript, nDirection, "en");
+
+		// Значит шрифт был подобран, вовзвращаем назад состояние отрисовщика
+		if (this.FontId.m_pFaceInfo.family_name !== oFontInfo.Name)
+			AscCommon.g_oTextMeasurer.SetFontInternal(oFontInfo.Name, AscFonts.MEASURE_FONTSIZE, oFontInfo.Style);
 
 		this.ClearBuffer();
 	};
@@ -145,28 +149,47 @@
 		this.private_CheckFont(nFontSlot);
 
 		let nFontId = this.FontId;
-		let isSubst = this.FontSubst;
-		if (AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED !== nScript || -1 === nFontId)
+		let isSubst;
+		if (AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED === nScript && this.FontSubst)
+		{
+			let oInfo = AscCommon.g_oTextMeasurer.GetFontBySymbol(nUnicode, -1 !== nFontId ? nFontId : null, true);
+			nFontId   = oInfo.Font;
+			nUnicode  = oInfo.CodePoint;
+			isSubst   = true;
+		}
+		else
 		{
 			isSubst = !AscCommon.g_oTextMeasurer.CheckUnicodeInCurrentFont(nUnicode);
 			if (-1 === nFontId || isSubst)
-				nFontId = AscCommon.g_oTextMeasurer.GetFontBySymbol(nUnicode, -1 !== nFontId ? nFontId : null);
-
-			if (this.FontId !== nFontId
-				&& -1 !== this.FontId
-				&& this.FontSubst
-				&& isSubst
-				&& this.private_CheckBufferInFont(nFontId))
-				this.FontId = nFontId;
-
-			if (this.FontId !== nFontId && -1 !== this.FontId)
-				this.FlushWord();
+			{
+				let oInfo = AscCommon.g_oTextMeasurer.GetFontBySymbol(nUnicode, -1 !== nFontId ? nFontId : null);
+				nFontId   = oInfo.Font;
+				nUnicode  = oInfo.CodePoint;
+			}
+			else
+			{
+				let nCurFontId = AscCommon.g_oTextMeasurer.GetCurrentFont();
+				if (nCurFontId)
+					nFontId = nCurFontId;
+			}
 		}
+
+		if (this.FontId !== nFontId
+			&& -1 !== this.FontId
+			&& this.FontSubst
+			&& isSubst
+			&& this.private_CheckBufferInFont(nFontId))
+			this.FontId = nFontId;
+
+		if (this.FontId !== nFontId && -1 !== this.FontId)
+			this.FlushWord();
 
 		this.Script    = AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED !== nScript || -1 === this.Script ? nScript : this.Script;
 		this.FontSlot  = AscWord.fontslot_None !== nFontSlot ? nFontSlot : this.FontSlot;
 		this.FontId    = nFontId;
 		this.FontSubst = isSubst;
+
+		return nUnicode;
 	};
 	CTextShaper.prototype.private_CheckFont = function(nFontSlot)
 	{
@@ -206,6 +229,30 @@
 	CTextShaper.prototype.FlushGrapheme = function(nGrapheme, nWidth, nCodePointsCount, isLigature)
 	{
 		this.BufferIndex += nCodePointsCount;
+	};
+	CTextShaper.prototype.PrintAllUnicodesByScript = function(nScript)
+	{
+		let log = "";
+
+		function Flush(isForce)
+		{
+			if (log.length > 100 || isForce)
+			{
+				console.log(log);
+				log = "";
+			}
+		}
+
+		for (let u = 0; u < 0x10FFFF; ++u)
+		{
+			if (nScript === this.GetTextScript(u))
+			{
+				log += AscCommon.IntToHex(u) + " " + String.fromCodePoint(u) + " ";
+				Flush(false);
+			}
+		}
+
+		Flush(true);
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------

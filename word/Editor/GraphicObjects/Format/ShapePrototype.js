@@ -883,7 +883,7 @@ CShape.prototype.Get_Numbering = function()
     {
         return oLogicDoc.Numbering;
     }
-    return new CNumbering();
+    return AscWord.DEFAULT_NUMBERING;
 };
 CShape.prototype.IsCell = function(isReturnCell)
 {
@@ -961,31 +961,6 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelect
 		}
 	}
 };
-
-CShape.prototype.GetParaDrawing = function()
-{
-    if(this.group)
-    {
-        var cur_group = this.group;
-        while(cur_group.group)
-        {
-            cur_group = cur_group.group;
-        }
-        if(cur_group.parent)
-        {
-            return cur_group.parent;
-        }
-    }
-    else
-    {
-        if(this.parent)
-        {
-            return this.parent;
-        }
-    }
-    return null;
-};
-
 
 CShape.prototype.Get_StartPage_Relative = function()
 {

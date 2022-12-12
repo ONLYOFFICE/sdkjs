@@ -175,7 +175,8 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         }
 
         var spDef = theme.spDef;
-        if(presetGeom !== "textRect")
+        let isTextRect = presetGeom && (presetGeom.indexOf("textRect") === 0);
+        if(!isTextRect)
         {
             if(spDef && spDef.style)
             {
@@ -204,7 +205,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         style.lnRef.Color.Calculate(theme, slide, layout, master);
         RGBA = style.lnRef.Color.RGBA;
 
-        if(presetGeom === "textRect")
+        if(isTextRect)
         {
             var ln, fill;
             ln = new AscFormat.CLn();
@@ -241,7 +242,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 pen.headEnd.setLen(AscFormat.LineEndSize.Mid);
             }
         }
-        if(presetGeom !== "textRect")
+        if(!isTextRect)
         {
             if(spDef && spDef.spPr )
             {
@@ -257,7 +258,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
             }
         }
 
-        var geometry = AscFormat.CreateGeometry(presetGeom !== "textRect" ? presetGeom : "rect");
+        var geometry = AscFormat.CreateGeometry(!isTextRect ? presetGeom : "rect");
 
         this.startGeom = geometry;
         if(pen.Fill)
@@ -660,7 +661,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
 
         shape.setBDeleted(false);
 
-        if(this.presetGeom === "textRect")
+        if(this.presetGeom && this.presetGeom.indexOf("textRect") === 0)
         {
             shape.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
             shape.setTxBox(true);
@@ -694,11 +695,14 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 fill.setFill(new AscFormat.CNoFill());
                 shape.spPr.setFill(fill);
             }
+            var body_pr = new AscFormat.CBodyPr();
+            body_pr.setDefault();
+            if(this.presetGeom === "textRectVertical") {
+                body_pr.setVert(AscFormat.nVertTTvert);
+            }
             if(bFromWord)
             {
                 shape.setTextBoxContent(new CDocumentContent(shape, DrawingDocument, 0, 0, 0, 0, false, false, false));
-                var body_pr = new AscFormat.CBodyPr();
-                body_pr.setDefault();
                 shape.setBodyPr(body_pr);
             }
             else
@@ -707,8 +711,6 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 var content = new AscFormat.CDrawingDocContent(shape.txBody, DrawingDocument, 0, 0, 0, 0, false, false, true);
                 shape.txBody.setParent(shape);
                 shape.txBody.setContent(content);
-                var body_pr = new AscFormat.CBodyPr();
-                body_pr.setDefault();
                 var bNeedCheckExtents = false;
                 if(drawingObjects){
                     if(!drawingObjects.cSld){

@@ -1468,12 +1468,12 @@ CFootnotesController.prototype.AddSignatureLine = function(oSignatureDrawing)
 
 	return this.CurFootnote.AddSignatureLine(oSignatureDrawing);
 };
-CFootnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CFootnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 	if (false === this.private_CheckFootnotesSelectionBeforeAction())
 		return false;
 
-	return this.CurFootnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
+	return this.CurFootnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CFootnotesController.prototype.EditChart = function(Chart)
 {

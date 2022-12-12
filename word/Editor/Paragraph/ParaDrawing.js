@@ -2081,7 +2081,7 @@ ParaDrawing.prototype.AddToDocument = function(oAnchorPos, oRunPr, oRun, oPictur
 	oSelectedContent.EndCollect();
 	oSelectedContent.SetMoveDrawing(true);
 	oSelectedContent.Insert(oAnchorPos, true);
-
+	this.SelectAsDrawing();
 	oAnchorParagraph.Clear_NearestPosArray();
 };
 ParaDrawing.prototype.AddToParagraph = function(oParagraph)
@@ -3300,6 +3300,13 @@ ParaDrawing.prototype.ToSearchElement = function(oProps)
 ParaDrawing.prototype.IsDrawing = function()
 {
 	return true;
+};
+ParaDrawing.prototype.CheckRunContent = function(fCheck)
+{
+	if(this.GraphicObj)
+	{
+		this.GraphicObj.checkRunContent(fCheck);
+	}
 };
 /**
  * Класс, описывающий текущее положение параграфа при рассчете позиции автофигуры.

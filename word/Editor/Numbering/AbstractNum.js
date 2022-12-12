@@ -228,6 +228,21 @@ CAbstractNum.prototype.SetLvlByFormat = function(nLvl, nType, sFormatText, nAlig
 	this.RecalculateRelatedParagraphs(nLvl);
 };
 /**
+ * Связываем заданный уровень с заданным стилем
+ * @param iLvl {number} 0..8
+ * @param styleId {string}
+ */
+CAbstractNum.prototype.SetLvlPStyle = function(iLvl, styleId)
+{
+	if ("number" !== typeof(iLvl) || iLvl < 0 || iLvl >= 9)
+		return;
+
+	var oLvlOld = this.Lvl[iLvl].Copy();
+
+	this.Lvl[iLvl].SetPStyle(styleId);
+	History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, this.Lvl[iLvl].Copy(), iLvl));
+};
+/**
  * Выставляем является ли данный уровень сквозным или каждый раз перестартовывать нумерацию
  * @param nLvl {number} 0..8
  * @param isRestart {boolean}

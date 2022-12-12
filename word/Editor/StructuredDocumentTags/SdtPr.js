@@ -73,6 +73,8 @@ function CSdtPr()
 	this.FormPr        = undefined;
 	this.PictureFormPr = undefined;
 	this.ComplexFormPr = undefined;
+
+	this.OForm         = undefined;
 }
 
 CSdtPr.prototype.Copy = function()
@@ -564,6 +566,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 		if (oContentControl.IsFixedForm() && !isCombChanged)
 			oContentControl.UpdateFixedFormSizeByCombWidth();
+
+		if (!this.TextFormPr.MultiLine)
+			oContentControl.CorrectSingleLineFormContent();
 	}
 
 	if (undefined !== this.PlaceholderText)
@@ -742,6 +747,17 @@ CContentControlPr.prototype.GetComplexFormPr = function()
 {
 	return this.ComplexFormPr;
 };
+CContentControlPr.prototype.GetNewKey = function()
+{
+	let logicDocument = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return "";
+
+	let formManager  = logicDocument.GetFormsManager();
+	let keyGenerator = formManager.GetKeyGenerator();
+
+	return keyGenerator.GetNewKey(this.CC);
+};
 
 /**
  * Класс с глобальными настройками для всех контейнеров
@@ -888,3 +904,4 @@ CContentControlPr.prototype['get_PictureFormPr']      = CContentControlPr.protot
 CContentControlPr.prototype['put_PictureFormPr']      = CContentControlPr.prototype.SetPictureFormPr;
 CContentControlPr.prototype['get_ComplexFormPr']      = CContentControlPr.prototype.GetComplexFormPr;
 CContentControlPr.prototype['put_ComplexFormPr']      = CContentControlPr.prototype.SetComplexFormPr;
+CContentControlPr.prototype['get_NewKey']             = CContentControlPr.prototype.GetNewKey;

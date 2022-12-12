@@ -275,7 +275,9 @@
 	window['AscWord'].CSdtFormPr = CSdtFormPr;
 
 	//---------------------------------------------interface export-----------------------------------------------------
+	window['AscCommon'].CSdtFormPr    = CSdtFormPr;
 	window['AscCommon']['CSdtFormPr'] = CSdtFormPr;
+	
 	CSdtFormPr.prototype['get_Key']      = CSdtFormPr.prototype.GetKey;
 	CSdtFormPr.prototype['put_Key']      = CSdtFormPr.prototype.SetKey;
 	CSdtFormPr.prototype['get_Label']    = CSdtFormPr.prototype.GetLabel;

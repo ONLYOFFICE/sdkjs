@@ -576,6 +576,18 @@
 		{
 			this.pos += nDif;
 		}
+		this.WriteWithLen = function(_this, callback)
+		{
+			let oldPos = this.GetCurPosition();
+			this.WriteULong(0);
+			callback.call(_this, this);
+			let curPos = this.GetCurPosition();
+			let len = curPos - oldPos;
+			this.Seek(oldPos);
+			this.WriteULong(len - 4);
+			this.Seek(curPos);
+			return len;
+		};
 		this.WriteBool          = function(val)
 		{
 			this.CheckSize(1);
@@ -989,6 +1001,13 @@
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3e);
 		};
+		this.WriteXmlNodeWithText = function(name, text)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd(false);
+			this.WriteXmlStringEncode(text.toString());
+			this.WriteXmlNodeEnd(name);
+		};
 		this.WriteXmlAttributesEnd = function(isEnd)
 		{
 			if (isEnd)
@@ -1401,12 +1420,13 @@
 		this.ctBrushColor2          = 23;
 		this.ctBrushAlpha1          = 24;
 		this.ctBrushAlpha2          = 25;
-		this.ctBrushTexturePath     = 26;
+		this.ctBrushTexturePathOld  = 26;
 		this.ctBrushTextureAlpha    = 27;
 		this.ctBrushTextureMode     = 28;
 		this.ctBrushRectable        = 29;
 		this.ctBrushRectableEnabled = 30;
 		this.ctBrushGradient        = 31;
+		this.ctBrushTexturePath     = 32;
 
 		// font
 		this.ctFontXML       = 40;
@@ -2444,7 +2464,7 @@
 					this.Memory.WriteLong(oTextFormPr.MaxCharacters);
 				}
 
-				var sValue = oForm.GetSelectedText(true);
+				let sValue = oForm.GetSelectedText(true);
 				if (sValue)
 				{
 					nFlag |= (1 << 22);
@@ -2457,11 +2477,36 @@
 				if (oTextFormPr.AutoFit)
 					nFlag |= (1 << 24);
 
-				var sPlaceHolderText = oForm.GetPlaceholderText();
+				let sPlaceHolderText = oForm.GetPlaceholderText();
 				if (sPlaceHolderText)
 				{
 					nFlag |= (1 << 25);
 					this.Memory.WriteString(sPlaceHolderText);
+				}
+
+				let format = oTextFormPr.GetFormat();
+				if (!format.IsEmpty())
+				{
+					nFlag |= (1 << 26);
+
+					this.Memory.WriteByte(format.GetType());
+
+					let formatSymbols = format.GetSymbols(false);
+
+					this.Memory.WriteLong(formatSymbols.length);
+					for (let index = 0, count = formatSymbols.length; index < count; ++index)
+					{
+						this.Memory.WriteLong(formatSymbols[index]);
+					}
+
+					let mask = "";
+
+					if (format.IsMask())
+						mask = format.GetMask();
+					else if (format.IsRegExp())
+						mask = format.GetRegExp();
+
+					this.Memory.WriteString(mask);
 				}
 			}
 			else if (oForm.IsComboBox() || oForm.IsDropDownList())

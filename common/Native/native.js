@@ -86,6 +86,9 @@ var AscBuilder = window["AscBuilder"];
 window["AscWord"] = {};
 var AscWord = window["AscWord"];
 
+window["AscJsonConverter"] = {};
+var AscJsonConverter = window["AscJsonConverter"];
+
 function Image()
 {
 	this.src = "";

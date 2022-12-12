@@ -1057,7 +1057,7 @@ CParagraphContentWithContentBase.prototype.IsUseInDocument = function()
 };
 CParagraphContentWithContentBase.prototype.IsUseInParagraph = function()
 {
-	return (this.Paragraph && this.Paragraph.Get_PosByElement(this));
+	return (this.Paragraph && !!this.Paragraph.Get_PosByElement(this));
 };
 CParagraphContentWithContentBase.prototype.SelectThisElement = function(nDirection, isUseInnerSelection)
 {
@@ -1268,14 +1268,21 @@ CParagraphContentWithParagraphLikeContent.prototype.Copy = function(Selected, oP
 		}
 	}
 
+	let newElementPos = 0;
 	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
 	{
-		var Item = this.Content[CurPos];
-
-		if (StartPos === CurPos || EndPos === CurPos)
-			NewElement.Add_ToContent(CurPos - StartPos, Item.Copy(Selected, oPr));
-		else
-			NewElement.Add_ToContent(CurPos - StartPos, Item.Copy(false, oPr));
+		let newItems = this.Content[CurPos].Copy(Selected && (StartPos === CurPos || EndPos === CurPos), oPr);
+		if (Array.isArray(newItems))
+		{
+			for (let newIndex = 0, newCount = newItems.length; newIndex < newCount; ++newIndex)
+			{
+				NewElement.AddToContent(newElementPos++, newItems[newIndex]);
+			}
+		}
+		else if (newItems)
+		{
+			NewElement.AddToContent(newElementPos++, newItems);
+		}
 	}
 
 	return NewElement;
@@ -1674,6 +1681,9 @@ CParagraphContentWithParagraphLikeContent.prototype.ConcatContent = function (It
 };
 CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
+	if (Count <= 0)
+		return;
+
 	for (var nIndex = Pos; nIndex < Pos + Count; ++nIndex)
 	{
 		this.Content[nIndex].PreDelete();

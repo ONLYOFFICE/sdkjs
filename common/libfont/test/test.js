@@ -34,6 +34,13 @@
 
 window["AscNotLoadAllScript"] = true;
 
+const fontslot_None     = 0x00;
+const fontslot_ASCII    = 0x01;
+const fontslot_EastAsia = 0x02;
+const fontslot_CS       = 0x04;
+const fontslot_HAnsi    = 0x08;
+const fontslot_Unknown  = 0x10;
+
 window.editor = {};
 window.editor.asyncFontsDocumentStartLoaded = function() {};
 window.editor.asyncFontsDocumentEndLoaded = function() {

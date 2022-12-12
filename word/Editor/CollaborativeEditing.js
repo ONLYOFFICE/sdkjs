@@ -138,7 +138,7 @@ CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Addition
 	var deleteIndex = ( null === AscCommon.History.SavedIndex ? null : SumIndex );
 	if (0 < aChanges.length || null !== deleteIndex)
 	{
-		this.private_OnSendOwnChanges(aChanges2, deleteIndex);
+		this.CoHistory.AddOwnChanges(aChanges2, deleteIndex);
 		editor.CoAuthoringApi.saveChanges(aChanges, deleteIndex, AdditionalInfo, editor.canUnlockDocument2, bCollaborative);
 		AscCommon.History.CanNotAddChanges = true;
 	}
@@ -204,6 +204,8 @@ CWordCollaborativeEditing.prototype.Release_Locks = function()
                 editor.sync_UnLockDocumentSchema();
             else if (this.m_aNeedUnlock[Index] instanceof AscCommon.CCore)
                 editor.sendEvent("asc_onLockCore", false);
+            else if (this.m_aNeedUnlock[Index] instanceof AscCommonWord.CDocProtect)
+                editor.sendEvent("asc_onLockDocumentProtection", false);
         }
         else if (AscCommon.locktype_Other3 === CurLockType)
         {
@@ -233,7 +235,7 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
 	}
 
 	this.m_oLogicDocument.ResumeRecalculate();
-	this.m_oLogicDocument.RecalculateByChanges(this.m_aAllChanges, this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
+	this.m_oLogicDocument.RecalculateByChanges(this.CoHistory.GetAllChanges(), this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
 	this.m_oLogicDocument.UpdateTracks();
 
     editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);

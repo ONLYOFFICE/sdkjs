@@ -348,7 +348,7 @@ c_oAscDateTimeFormat[lcid_deAT]     = c_oAscDateTimeFormat[lcid_deDE] = [
 	"yyyy-mm-dd",
 	"yy-mm-dd",
 	"dd/mm/yyyy",
-	"dd. Mmm. yyyy",
+	"dd. Mmm yyyy",
 	"dd/mm/yy",
 	"Mmmm yy",
 	"Mmm-yy",
@@ -367,7 +367,7 @@ c_oAscDateTimeFormat[lcid_deCH]     = [
 	"yyyy-mm-dd",
 	"yy-mm-dd",
 	"dd/mm/yyyy",
-	"dd. Mmm. yyyy",
+	"dd. Mmm yyyy",
 	"dd/mm/yy",
 	"Mmmm yy",
 	"Mmm-yy",
@@ -490,6 +490,25 @@ c_oAscDateTimeFormat[lcid_fiFI]     = [
 	"H.mm.ss am/pm",
 	"hh.mm",
 	"hh.mm.ss"
+];
+c_oAscDateTimeFormat[lcid_frCH]     = [
+	"mm/dd/yyyy",
+	"dddd, mmmm d, yyyy",
+	"mmmm d, yyyy",
+	"mm/dd/yy",
+	"yyyy-mm-dd",
+	"dd-mmm-yy",
+	"mm.dd.yyyy",
+	"mmm dd, yy",
+	"dd mmmm yyyy",
+	"mmmm yy",
+	"mmm-yy",
+	"mm/dd/yyyy hh:mm am/pm",
+	"mm/dd/yyyy hh:mm:ss am/pm",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
+	"hh:mm",
+	"hh:mm:ss",
 ];
 c_oAscDateTimeFormat[lcid_frFR]     = [
 	"dd/mm/yyyy",
@@ -740,7 +759,7 @@ c_oAscDateTimeFormat[lcid_svFI]     = [
 	"dd. mmm. yy",
 	"d/mm/yy",
 	"mmmm yy",
-	"mmm.-yy",
+	"mmm-yy",
 	"d. mm. yyyy hh:mm",
 	"d. mm. yyyy hh:mm:ss",
 	"H:mm am/pm",
@@ -856,6 +875,14 @@ c_oAscDateTimeFormat[lcid_enUS]     = [
 	"HH:mm",
 	"HH:mm:ss"
 ];
+
+var c_oAscEDocProtect = {
+	Comments: 0,
+	Forms: 1,
+	None: 2,
+	ReadOnly: 3,
+	TrackedChanges: 4
+};
 
 //------------------------------------------------------------export---------------------------------------------------
 var prot;
@@ -1038,3 +1065,10 @@ prot['Content'] = prot.Content;
 prot['Window']  = prot.Window;
 
 window['Asc']['c_oAscDateTimeFormat'] = window['Asc'].c_oAscDateTimeFormat = c_oAscDateTimeFormat;
+
+prot = window['Asc']['c_oAscEDocProtect'] = window['Asc'].c_oAscEDocProtect = c_oAscEDocProtect;
+prot['Comments']   = prot.Comments;
+prot['Forms'] = prot.Forms;
+prot['None']  = prot.None;
+prot['ReadOnly']  = prot.ReadOnly;
+prot['TrackedChanges']  = prot.TrackedChanges;

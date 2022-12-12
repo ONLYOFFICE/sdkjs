@@ -156,7 +156,7 @@
 
 					switch (cChar) {
 						case '&':
-							this.str.push(cChar);
+							this.str += cChar;
 							break;
 						case 'L':
 							this.setPortion(c_oPortionPosition.left);

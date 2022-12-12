@@ -117,14 +117,6 @@
 	{
 	};
 	/**
-	 * Проверяем является ли данный элемент диакритическим символом
-	 * @returns {boolean}
-	 */
-	CRunElementBase.prototype.IsDiacriticalSymbol = function()
-	{
-		return false;
-	};
-	/**
 	 * Может ли строка начинаться с данного элемента
 	 * @returns {boolean}
 	 */
@@ -286,6 +278,20 @@
 	 * @returns {boolean}
 	 */
 	CRunElementBase.prototype.IsReference = function()
+	{
+		return false;
+	};
+	/**
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsFieldChar = function()
+	{
+		return false;
+	};
+	/**
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsInstrText = function()
 	{
 		return false;
 	};

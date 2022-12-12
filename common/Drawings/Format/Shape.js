@@ -1044,6 +1044,7 @@ function SetXfrmFromMetrics(oDrawing, metrics)
 
 
 
+	const TEXT_RECT_ERROR = 0.01;
 
 function CShape()
 {
@@ -1179,7 +1180,7 @@ CShape.prototype.convertToWord = function (document) {
 };
 
 CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMath) {
-    var c = new CShape();
+    let c = new CShape();
     c.setWordShape(false);
     c.setBDeleted(false);
     c.setWorksheet(worksheet);
@@ -1194,21 +1195,26 @@ CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMat
         c.setStyle(this.style.createDuplicate());
     }
     if (this.textBoxContent) {
-        var tx_body = new AscFormat.CTextBody();
+        let tx_body = new AscFormat.CTextBody();
         tx_body.setParent(c);
         if (this.bodyPr) {
             tx_body.setBodyPr(this.bodyPr.createDuplicate());
         }
-        var new_content = new AscFormat.CDrawingDocContent(tx_body, drawingDocument, 0, 0, 0, 0, false, false, true);
-        new_content.Internal_Content_RemoveAll();
-        var paragraphs = this.textBoxContent.Content;
-
-        var index = 0;
-        for (var i = 0; i < paragraphs.length; ++i) {
-            var cur_par = paragraphs[i];
-            if (cur_par instanceof Paragraph) {
-                var new_paragraph = ConvertParagraphToPPTX(cur_par, drawingDocument, new_content, bIsAddMath);
-                new_content.Internal_Content_Add(index++, new_paragraph, false);
+        let new_content = new AscFormat.CDrawingDocContent(tx_body, drawingDocument, 0, 0, 0, 0, false, false, true);
+        let aContent = this.textBoxContent.Content;
+        let aNewParagraphs = [];
+        for (let nIdx = 0; nIdx < aContent.length; ++nIdx) {
+            let oCurElement = aContent[nIdx];
+            if (oCurElement instanceof AscCommonWord.Paragraph) {
+                let oParagraph = ConvertParagraphToPPTX(oCurElement, drawingDocument, new_content, bIsAddMath);
+                aNewParagraphs.push(oParagraph);
+            }
+        }
+        if(aNewParagraphs.length > 0) {
+            new_content.Internal_Content_RemoveAll();
+            for (let nIdx = 0; nIdx < aNewParagraphs.length; ++nIdx) {
+                let oParagraph = aNewParagraphs[nIdx];
+                new_content.Internal_Content_Add(nIdx, oParagraph, false);
             }
         }
         tx_body.setContent(new_content);
@@ -1220,152 +1226,6 @@ CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMat
         }
     }
     return c;
-};
-CShape.prototype.toXmlVML = function(writer, sMainCSS, sMainAttributes, sMainNodes, pId) {
-    if(this.isSignatureLine()) {
-        let oContext = writer.context;
-        let nShapeId = oContext.m_lObjectIdVML;
-        let strId = "_x0000_i" + oContext.m_lObjectIdVML;
-        let strSpid = "_x0000_s" + oContext.m_lObjectIdVML;
-        let strObjectid	= "_152504" + oContext.m_lObjectIdVML;
-        oContext.m_lObjectIdVML++;
-        let dL = 0, dT = 0, dW = 0, dH = 0;
-        let oXfrm = this.spPr.xfrm;
-        if (oXfrm)
-        {
-            if (oXfrm.offX !== null) dL = oXfrm.offX;
-            if (oXfrm.offY !== null) dT = oXfrm.offY;
-            if (oXfrm.extX !== null) dW = oXfrm.extX;
-            if (oXfrm.extY !== null) dH = oXfrm.extY;
-        }
-        let sCSS = "";
-        if(!sMainCSS)
-        {
-            sCSS += "position:absolute;";
-            if (this.group)
-            {
-                sCSS += ("left:" +	(dL / 100 + 0.5 >> 0) + ";");
-                sCSS += ("top:" + (dT / 100 + 0.5 >> 0) + ";");
-                sCSS += ("width:" +	(dW / 100 + 0.5 >> 0) + ";");
-                sCSS += ("height:" + (dH / 100 + 0.5 >> 0) + ";");
-            }
-            else
-            {
-                sCSS += ("left:" +	(dL / 12700 + 0.5 >> 0) + "pt;");
-                sCSS += ("top:" + (dT / 12700 + 0.5 >> 0) + "pt;");
-                sCSS += ("width:" +	(dW / 12700 + 0.5 >> 0) + "pt;");
-                sCSS += ("height:" + (dH / 12700 + 0.5 >> 0) + "pt;");
-            }
-        }
-        if (oXfrm)
-        {
-            if (oXfrm.rot !== null)
-            {
-                let nRot = oXfrm.rot * 180 + 0.5 >> 0;
-                sCSS += ("rotation:" + nRot + ";");
-            }
-            let bIsFH = oXfrm.flipH;
-            let bIsFV = oXfrm.flipV;
-            if (bIsFH && bIsFV)
-            {
-                sCSS += "flip:xy;";
-            }
-            else if (bIsFH)
-            {
-                sCSS += "flip:x;";
-            }
-            else if (bIsFV)
-            {
-                sCSS += "flip:y;";
-            }
-        }
-        writer.WriteXmlNodeStart("v:shape");
-        if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
-        {
-            if(!pId)
-            {
-                writer.WriteXmlAttributeString("id", strSpid);
-            }
-            else
-            {
-                writer.WriteXmlAttributeString("id", pId);
-                //writer.WriteXmlAttributeString("o:spid", strSpid);
-            }
-        }
-        else
-        {
-            writer.WriteXmlAttributeString("id", strId);
-            writer.WriteXmlAttributeString("o:spid", strSpid);
-        }
-        writer.WriteXmlAttributeString("type", "#_x0000_t75");
-        if (!sCSS)
-        {
-            writer.WriteXmlAttributeString("style", sMainCSS || "");
-        }
-        else
-        {
-            writer.WriteXmlAttributeString("style", (sMainCSS || "") + sCSS);
-        }
-        if (sMainAttributes)
-        {
-            writer.WriteXmlString(sMainAttributes);
-        }
-        writer.WriteXmlAttributeString("filled", "f");
-        let strNodeVal;
-        writer.WriteXmlAttributeString("stroked", "f");
-        writer.WriteXmlAttributesEnd();
-        writer.WriteXmlNodeStart("v:path");
-        writer.WriteXmlAttributeString("textboxrect", "0,0,0,0");
-        writer.WriteXmlAttributesEnd(true);
-        if(sMainNodes) {
-            writer.WriteXmlString(sMainNodes);
-        }
-        let sRasterImageId;
-        let oFill = this.spPr && this.spPr.Fill;
-        if(oFill && oFill.isBlipFill()) {
-            sRasterImageId = oFill.fill.RasterImageId;
-        }
-        if (sRasterImageId)
-        {
-            writer.WriteXmlNodeStart("v:imagedata");
-
-            if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
-            {
-                writer.WriteXmlAttributeString("o:relid", writer.context.getImageRId(sRasterImageId));
-            }
-            else
-            {
-                writer.WriteXmlAttributeString("r:id", writer.context.getImageRId(sRasterImageId));
-            }
-            writer.WriteXmlAttributeString("o:title", "");
-            writer.WriteXmlAttributesEnd();
-            writer.WriteXmlNodeEnd( "v:imagedata");
-        }
-        let oVMLSignatureLine = new AscFormat.CVMLSignatureLine();
-        oVMLSignatureLine.m_oId = this.signatureLine.id;
-        oVMLSignatureLine.m_sSuggestedSigner = this.signatureLine.signer;
-        oVMLSignatureLine.m_sSuggestedSigner2 = this.signatureLine.signer2;
-        oVMLSignatureLine.m_sSuggestedSignerEmail = this.signatureLine.email;
-        oVMLSignatureLine.m_oShowSignDate = this.signatureLine.showDate;
-        oVMLSignatureLine.m_sSigningInstructions = this.signatureLine.instructions;
-        oVMLSignatureLine.m_oIsSignatureLine = true;
-        oVMLSignatureLine.m_sProvid = "{00000000-0000-0000-0000-000000000000}"
-        oVMLSignatureLine.toXml(writer, "o:signatureline");
-        if(AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType && this.drawingBase) {
-            let oClientData = new AscFormat.CVMLClientData();
-            oClientData.m_oObjectType = AscFormat.EVmlClientDataObjectType.vmlclientdataobjecttypePict;
-            oClientData.m_oSizeWithCells = true;
-            let sAnchor = "";
-            sAnchor += this.drawingBase.from.toVmlXml();
-            sAnchor += ",";
-            sAnchor += this.drawingBase.to.toVmlXml();
-            oClientData.m_oAnchor = sAnchor;
-            oClientData.toXml(writer, "x:ClientData");
-        }
-        writer.WriteXmlNodeEnd("v:shape");
-        return;
-    }
-    AscFormat.CImageShape.prototype.toXmlVML.call(this, writer, sMainCSS, sMainAttributes, sMainNodes, pId);
 };
 CShape.prototype.convertFromSmartArt = function(bForce) {
     if (AscFormat.SmartArt && !bForce) {
@@ -1671,20 +1531,28 @@ CShape.prototype.getCurrentDocContentInSmartArt = function () {
 CShape.prototype.getBodyPr = function () {
     return AscFormat.ExecuteNoHistory(function () {
 
+        let ret;
         if (this.bWordShape) {
-            var ret = new AscFormat.CBodyPr();
+            ret = new AscFormat.CBodyPr();
             ret.setDefault();
             if (this.bodyPr)
                 ret.merge(this.bodyPr);
-            return ret;
         }
         else {
-            if (this.txBody && this.txBody.bodyPr)
-                return this.txBody.getCompiledBodyPr();
-            var ret = new AscFormat.CBodyPr();
-            ret.setDefault();
-            return ret;
+            if (this.txBody && this.txBody.bodyPr) {
+                ret = this.txBody.getCompiledBodyPr();
+            }
+            else {
+                ret = new AscFormat.CBodyPr();
+                ret.setDefault();
+            }
         }
+        let dScale = this.getScaleCoefficient();
+        ret.lIns *= dScale;
+        ret.tIns *= dScale;
+        ret.rIns *= dScale;
+        ret.bIns *= dScale;
+        return ret;
     }, this, []);
 };
 
@@ -2339,19 +2207,34 @@ CShape.prototype.getFullFlip = function () {
 };
 
 CShape.prototype.getTextRect = function () {
+    let oRect;
     if(this.txXfrm && this.spPr && this.spPr.xfrm) {
         var newL = this.txXfrm.offX - this.spPr.xfrm.offX;
         var newT = this.txXfrm.offY - this.spPr.xfrm.offY;
         var newR = newL + this.txXfrm.extX;
         var newB = newT + this.txXfrm.extY;
-        var oRect = {};
-        oRect.l = newL;
-        oRect.t = newT;
-        oRect.r = newR;
-        oRect.b = newB;
+        oRect = {};
+        let dScale = this.getScaleCoefficient();
+        oRect.l = newL * dScale;
+        oRect.t = newT * dScale;
+        oRect.r = newR * dScale;
+        oRect.b = newB * dScale;
+    }
+    else {
+        let _r = this.spPr && this.spPr.geometry && this.spPr.geometry.rect;
+        if(_r) {
+            oRect = {
+                l: _r.l,
+                t: _r.t,
+                r: _r.r,
+                b: _r.b
+            };
+        }
+    }
+    if(oRect) {
         return oRect;
     }
-    return this.spPr && this.spPr.geometry && this.spPr.geometry.rect ? this.spPr.geometry.rect : {
+    return {
         l: 0,
         t: 0,
         r: this.extX,
@@ -2359,12 +2242,13 @@ CShape.prototype.getTextRect = function () {
     };
 };
     CShape.prototype.checkTransformTextMatrixSmartArt = function (oMatrix, oContent, oBodyPr, bWordArtTransform, bIgnoreInsets) {
-        if (this.txXfrm) {
+        if (this.txXfrm && (this.isObjectInSmartArt && this.isObjectInSmartArt())) {
             var oSmartArt = this.group.group;
+            const bForceSlideTransform = oSmartArt.bForceSlideTransform;
             var diffX = 0;
             var diffY = 0;
             if (oSmartArt.group) {
-                if ((this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
+                if (bForceSlideTransform || (this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
                     var mainGroup = oSmartArt.group.getRelativePosition();
                     diffX = mainGroup.x;
                     diffY = mainGroup.y;
@@ -2405,15 +2289,16 @@ CShape.prototype.getTextRect = function () {
             var extX = (oRect.r - oRect.l) / 2;
             var extY = (oRect.b - oRect.t) / 2;
             var deltaTranslateX = 0, deltaTranslateY = 0;
-            if (deltaShape.parent && deltaShape.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet) {
+            if (bForceSlideTransform || (deltaShape.parent && deltaShape.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
                 deltaTranslateX = deltaShape.group.group.x;
                 deltaTranslateY = deltaShape.group.group.y;
             }
             var xc = deltaShape.localTransform.TransformPointX(oRect.l + extX, oRect.t + extY) - deltaTranslateX;
             var yc = deltaShape.localTransform.TransformPointY(oRect.l + extX, oRect.t + extY) - deltaTranslateY;
 
-            oRectShape.spPr.xfrm.setOffX(xc - extX);
-            oRectShape.spPr.xfrm.setOffY(yc - extY);
+            let dScale = this.getScaleCoefficient();
+            oRectShape.spPr.xfrm.setOffX((xc - extX) / dScale);
+            oRectShape.spPr.xfrm.setOffY((yc - extY) / dScale);
             oRectShape.spPr.xfrm.setExtX(this.txXfrm.extX);
             oRectShape.spPr.xfrm.setExtY(this.txXfrm.extY);
             // oRectShape.changeFlipH(this.spPr.xfrm.flipH); TODO: repair this
@@ -3071,9 +2956,11 @@ CShape.prototype.fillObject = function(copy, oPr){
     copy.setWordShape(this.bWordShape);
     copy.setBDeleted(this.bDeleted);
     copy.setLocks(this.locks);
-    copy.cachedImage = this.getBase64Img();
-    copy.cachedPixH = this.cachedPixH;
-    copy.cachedPixW = this.cachedPixW;
+    if(!oPr || false !== oPr.cacheImage) {
+        copy.cachedImage = this.getBase64Img();
+        copy.cachedPixH = this.cachedPixH;
+        copy.cachedPixW = this.cachedPixW;
+    }
     if (this.txXfrm) {
         copy.setTxXfrm(this.txXfrm.createDuplicate());
     }
@@ -3659,7 +3546,7 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 {
                     if(oParaDrawing.Extent && AscFormat.isRealNumber(oParaDrawing.Extent.W) && AscFormat.isRealNumber(oParaDrawing.Extent.H))
                     {
-                        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+                        let dScaleCoefficient = this.getScaleCoefficient();
                         this.extX = oParaDrawing.Extent.W * dScaleCoefficient;
                         this.extY = oParaDrawing.Extent.H * dScaleCoefficient;
                     }
@@ -4285,7 +4172,7 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
                }
                default:
                {
-                   penW/=2.0;
+                   penW /= 2.0;
                    break;
                }
            }
@@ -4345,15 +4232,15 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
         {
             if(dMaxWidthRec < w && (!this.bWordShape && !this.bCheckAutoFitFlag))
             {
-                oDocContent.RecalculateContent(w, h, nStartPage);
-                oRet.w = w + 0.001;
+                oRet.w = w + TEXT_RECT_ERROR;
+	            oDocContent.RecalculateContent(oRet.w, h, nStartPage);
                 oRet.contentH = oDocContent.GetSummaryHeight();
                 oRet.h = oRet.contentH;
             }
             else
             {
-                oDocContent.RecalculateContent(dMaxWidthRec, h, nStartPage);
-                oRet.w = dMaxWidthRec + 0.001;
+                oRet.w = dMaxWidthRec + TEXT_RECT_ERROR;
+	            oDocContent.RecalculateContent(oRet.w, h, nStartPage);
                 oRet.contentH = oDocContent.GetSummaryHeight();
                 oRet.h = oRet.contentH;
             }
@@ -4366,15 +4253,15 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
         {
             if(dMaxWidthRec < h && !this.bWordShape)
             {
-                oDocContent.RecalculateContent( h, h, nStartPage);
-                oRet.w = h + 0.001;
+	            oRet.w = h + TEXT_RECT_ERROR;
+                oDocContent.RecalculateContent( oRet.w, h, nStartPage);
                 oRet.contentH = oDocContent.GetSummaryHeight();
                 oRet.h = oRet.contentH;
             }
             else
             {
-                oDocContent.RecalculateContent(dMaxWidthRec, h, nStartPage);
-                oRet.w = dMaxWidthRec + 0.001;
+	            oRet.w = dMaxWidthRec + TEXT_RECT_ERROR;
+                oDocContent.RecalculateContent(oRet.w, h, nStartPage);
                 oRet.contentH = oDocContent.GetSummaryHeight();
                 oRet.h = oRet.contentH;
             }
@@ -4390,15 +4277,15 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
         {
             if(!(oBodyPr.vert === AscFormat.nVertTTvert || oBodyPr.vert === AscFormat.nVertTTvert270 || oBodyPr.vert === AscFormat.nVertTTeaVert))
             {
-                oRet.w = w + 0.001;
-                oRet.h = h + 0.001;
+                oRet.w = w + TEXT_RECT_ERROR;
+                oRet.h = h + TEXT_RECT_ERROR;
                 oRet.correctW = l_ins + r_ins;
                 oRet.correctH = t_ins + b_ins;
             }
             else
             {
-                oRet.w = h + 0.001;
-                oRet.h = w + 0.001;
+                oRet.w = h + TEXT_RECT_ERROR;
+                oRet.h = w + TEXT_RECT_ERROR;
                 oRet.correctW = t_ins + b_ins;
                 oRet.correctH = l_ins + r_ins;
             }
@@ -4410,15 +4297,15 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
             {
                 if(!(oBodyPr.vert === AscFormat.nVertTTvert || oBodyPr.vert === AscFormat.nVertTTvert270 || oBodyPr.vert === AscFormat.nVertTTeaVert))
                 {
-                    oRet.w = w + 0.001;
-                    oRet.h = h + 0.001;
+                    oRet.w = w + TEXT_RECT_ERROR;
+                    oRet.h = h + TEXT_RECT_ERROR;
                     oRet.correctW = l_ins + r_ins;
                     oRet.correctH = t_ins + b_ins;
                 }
                 else
                 {
-                    oRet.w = h + 0.001;
-                    oRet.h = w + 0.001;
+                    oRet.w = h + TEXT_RECT_ERROR;
+                    oRet.h = w + TEXT_RECT_ERROR;
                     oRet.correctW = t_ins + b_ins;
                     oRet.correctH = l_ins + r_ins;
                 }
@@ -4427,15 +4314,15 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
             {
                 if(!(oBodyPr.vert === AscFormat.nVertTTvert || oBodyPr.vert === AscFormat.nVertTTvert270 || oBodyPr.vert === AscFormat.nVertTTeaVert))
                 {
-                    oRet.w = h + 0.001;
-                    oRet.h = w + 0.001;
+                    oRet.w = h + TEXT_RECT_ERROR;
+                    oRet.h = w + TEXT_RECT_ERROR;
                     oRet.correctW = t_ins + b_ins;
                     oRet.correctH = l_ins + r_ins;
                 }
                 else
                 {
-                    oRet.w = w + 0.001;
-                    oRet.h = h + 0.001;
+                    oRet.w = w + TEXT_RECT_ERROR;
+                    oRet.h = h + TEXT_RECT_ERROR;
                     oRet.correctW = l_ins + r_ins;
                     oRet.correctH = t_ins + b_ins;
                 }
@@ -4834,7 +4721,7 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
         }
         return this.contentHeight > sizesOfTextRectContent.height;
     };
-    CShape.prototype.findFitFontSizeForSmartArt = function () {
+    CShape.prototype.findFitFontSizeForSmartArt = function (bMax) {
         const MAX_FONT_SIZE = 65;
 
         const content = this.getCurrentDocContentInSmartArt();
@@ -4848,7 +4735,13 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
 
             while (a !== averageAmount && b !== averageAmount) {
                 this.setFontSizeInSmartArt(scalesForSmartArt[averageAmount]);
-                if (content.RecalculateMinMaxContentWidth().Min > this.contentWidth || this.compareHeightOfBoundsTextInSmartArt()) {
+                let widthOfContent = content.RecalculateMinMaxContentWidth();
+                if (bMax) {
+                    widthOfContent = widthOfContent.Max;
+                } else {
+                    widthOfContent = widthOfContent.Min;
+                }
+                if (widthOfContent > this.contentWidth || this.compareHeightOfBoundsTextInSmartArt()) {
                     b = averageAmount;
                 } else {
                     a = averageAmount;
@@ -4923,8 +4816,8 @@ CShape.prototype.checkExtentsByDocContent = function(bForce, bNeedRecalc)
         this.recalcInfo.recalcTitle =  oOldRecalcTitle;
         this.recalcInfo.bRecalculatedTitle =  bOldRecalcTitle;
         AscFormat.CheckSpPrXfrm(this, true);
-        this.spPr.xfrm.setExtX(this.extX + 0.001);
-        this.spPr.xfrm.setExtY(this.extY + 0.001);
+        this.spPr.xfrm.setExtX(this.extX + TEXT_RECT_ERROR);
+        this.spPr.xfrm.setExtY(this.extY + TEXT_RECT_ERROR);
         if(!this.bWordShape || this.group)
         {
             this.spPr.xfrm.setOffX(this.x);
@@ -5610,7 +5503,8 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex,
         shape_drawer.fromShape2(this, graphics, geometry);
         shape_drawer.draw(geometry);
     }
-    if (!this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true  && !AscCommon.IsShapeToImageConverter)
+
+    if (!graphics.isSmartArtPreviewDrawer && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true  && !AscCommon.IsShapeToImageConverter)
     {
         var drawingObjects = this.getDrawingObjectsController();
         if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && graphics.IsTrack === undefined && (!drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this ))
@@ -5930,33 +5824,6 @@ CShape.prototype.getRotateAngle = function (x, y) {
     return same_flip ? angle : -angle;
 };
 
-CShape.prototype.getRectBounds = function () {
-    var transform = this.getTransformMatrix();
-    var w = this.extX;
-    var h = this.extY;
-    var rect_points = [{ x: 0, y: 0 }, { x: w, y: 0 }, { x: w, y: h }, { x: 0, y: h}];
-    var min_x, max_x, min_y, max_y;
-    min_x = transform.TransformPointX(rect_points[0].x, rect_points[0].y);
-    min_y = transform.TransformPointY(rect_points[0].x, rect_points[0].y);
-    max_x = min_x;
-    max_y = min_y;
-    var cur_x, cur_y;
-    for (var i = 1; i < 4; ++i) {
-        cur_x = transform.TransformPointX(rect_points[i].x, rect_points[i].y);
-        cur_y = transform.TransformPointY(rect_points[i].x, rect_points[i].y);
-        if (cur_x < min_x)
-            min_x = cur_x;
-        if (cur_x > max_x)
-            max_x = cur_x;
-
-        if (cur_y < min_y)
-            min_y = cur_y;
-        if (cur_y > max_y)
-            max_y = cur_y;
-    }
-    return { minX: min_x, maxX: max_x, minY: min_y, maxY: max_y };
-};
-
 CShape.prototype.getInvertTransform = function ()
 {
     return this.invertTransform ? this.invertTransform : new CMatrix();
@@ -6144,10 +6011,20 @@ CShape.prototype.getAllRasterImages = function(images)
 };
 CShape.prototype.getAllDocContents = function(aDocContents)
 {
-    if(this.textBoxContent){
+    if(this.textBoxContent)
+    {
         aDocContents.push(this.textBoxContent);
     }
 };
+
+    CShape.prototype.checkRunContent = function(fCallback)
+    {
+        let oContent = this.getDocContent();
+        if(oContent)
+        {
+            oContent.CheckRunContent(fCallback);
+        }
+    };
 
 CShape.prototype.changePositionInSmartArt = function (newX, newY) {
     if (this.isObjectInSmartArt()) {
@@ -7307,251 +7184,7 @@ CShape.prototype.getColumnNumber = function(){
         }
         return AscCommon.translateManager.getValue("Shape");
     };
-    
-    CShape.prototype.readAttrXml = function(name, reader) {
-        switch (name) {
-            case "useBgFill": {
-                //this.setUseBgFill(reader.GetValueBool());
-                break;
-            }
-            case "modelId": {
-                this.setModelId(reader.GetValue());
-                break;
-            }
-        }
-    };
-    CShape.prototype.readChildXml = function(name, reader) {
-        let oPr;
-        switch(name) {
-            case "nvCxnSpPr":
-            case "nvSpPr": {
-                oPr = new AscFormat.UniNvPr();
-                oPr.fromXml(reader);
-                this.setNvSpPr(oPr);
-                this.setLocks(oPr.getLocks());
-                break;
-            }
-            case "cNvSpPr": {
-                if(!this.nvSpPr) {
-                    this.setNvSpPr(new AscFormat.UniNvPr());
-                }
-                this.nvSpPr.nvUniSpPr.fromXml(reader);
-                this.setLocks(this.nvSpPr.getLocks());
-                break;
-            }
-            case "spPr": {
-                oPr = new AscFormat.CSpPr();
-                oPr.fromXml(reader);
-                this.setSpPr(oPr);
-                break;
-            }
-            case "style": {
-                oPr = new AscFormat.CShapeStyle();
-                oPr.fromXml(reader);
-                this.setStyle(oPr);
-                break;
-            }
-            case "txBody": {
-                oPr = new AscFormat.CTextBody();
-                oPr.fromXml(reader);
-                this.setTxBody(oPr);
-                break;
-            }
-            case "txbx": {
-                let oThis = this;
-                let elem = new CT_XmlNode(function(reader, name) {
-                    if ("txbxContent" === name) {
-                        let oTxBxContent = fReadTxBoxContentXML(reader, oThis);
-                        oThis.setTextBoxContent(oTxBxContent);
-                    }
-                    return new CT_XmlNode();
-                });
-                elem.fromXml(reader);
-                break;
-            }
-            case "txSp": {
-                let oThis = this;
-                let oTxSpNode = new CT_XmlNode(function(reader, name) {
-                    oThis.readChildXml(name, reader);
-                    return true;
-                });
-                oTxSpNode.fromXml(reader);
-                break;
-            }
-            case "bodyPr": {
-                let oBodyPr = new AscFormat.CBodyPr();
-                oBodyPr.fromXml(reader);
-                this.setBodyPr(oBodyPr);
-                break;
-            }
-            case "txXfrm": {
-                let oTxXfrm = new AscFormat.CXfrm();
-                oTxXfrm.fromXml(reader);
-                this.setTxXfrm(oTxXfrm);
-                break;
-            }
-        }
-    };
-    CShape.prototype.toXml = function(writer, sName) {
-        if(this.isSignatureLine()) {
-            writer.WriteXmlNodeStart("w:pict");
-            writer.WriteXmlAttributesEnd();
-            let oContext = writer.context;
-            let sMainCSS = "";
-            let sMainNodes = "";
-            let sMainAttributes = "";
-            let nDocType = oContext.docType;
-            if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_DOCX) {
-                if(!this.group && this.parent instanceof AscCommonWord.ParaDrawing) {
-                    let oMainProps = this.parent.GetVmlMainProps();
-                    sMainCSS = oMainProps.sMainCSS;
-                    sMainNodes = oMainProps.sMainNodes;
-                    sMainAttributes = oMainProps.sMainAttributes;
-                }
-            }
-            this.toXmlVML(writer, sMainCSS, sMainAttributes, sMainNodes, null)
-            writer.WriteXmlNodeEnd("w:pict");
-            return;
-        }
 
-        let name_ = sName || "a:sp";
-
-        let oContext = writer.context;
-        if		(oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
-            oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)	name_ = "wps:wsp";
-    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_XLSX)			name_ = "xdr:sp";
-    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_GRAPHICS)		name_ = "a:sp";
-    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING)	name_ = "cdr:sp";
-    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DIAGRAM)			name_ = "dgm:sp";
-    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)		name_ = "dsp:sp";
-    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_PPTX)		name_ = "p:sp";
-
-        writer.WriteXmlNodeStart(name_);
-
-        //writer.WriteXmlNullableAttributeBool("useBgFill", this.useBgFill);
-        writer.WriteXmlNullableAttributeString("macro", this.macro);
-        writer.WriteXmlNullableAttributeString("modelId", this.modelId);
-        writer.WriteXmlNullableAttributeBool("fLocksText", this.fLocksText);
-        writer.WriteXmlAttributesEnd();
-
-
-        if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
-            oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
-        {
-            if(this.nvSpPr) {
-                this.nvSpPr.cNvPr.toXml2("wps", writer);
-                this.nvSpPr.nvUniSpPr.toXmlSp(writer);
-            }
-            else {
-                writer.WriteXmlString("<wps:cNvPr id=\"0\" name=\"\"></wps:cNvPr><wps:cNvSpPr></wps:cNvSpPr>");
-            }
-        }
-        else {
-            if(this.nvSpPr) {
-                this.nvSpPr.toXmlSp(writer);
-            }
-        }
-
-        let bIsPresentStyle = false;
-        if (this.style &&  this.style.fillRef && (this.style.fillRef.idx !== null || this.style.fillRef.color && this.style.fillRef.color.color))
-        {
-            bIsPresentStyle = true;
-        }
-        if (writer.context.groupIndex > 1 && !bIsPresentStyle)
-        {
-            writer.context.flag += 0x02;
-        }
-        this.spPr.toXml(writer);
-        if (writer.context.groupIndex > 1 && !bIsPresentStyle)
-        {
-            writer.context.flag -= 0x02;
-        }
-        if (this.style)
-        {
-            writer.WriteXmlNullable(this.style);
-        }
-        if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
-            oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
-        {
-            let bIsWritedBodyPr = false;
-            if (this.textBoxContent)
-            {
-                // if (this.oTextBoxId)
-                //     writer.WriteXmlString("<wps:txbx id=\"" + this.oTextBoxId + "\">");
-                // else
-                    writer.WriteXmlString("<wps:txbx>");
-                    writer.WriteXmlString("<w:txbxContent>");
-                this.textBoxContent.Content.forEach(function(item) {
-                    CDocument.prototype.toXmlDocContentElem(writer, item);
-                });
-                writer.WriteXmlString("</w:txbxContent>");
-                writer.WriteXmlString("</wps:txbx>");
-
-                if (this.bodyPr)
-                {
-                    this.bodyPr.toXml(writer, "wps");
-                    bIsWritedBodyPr = true;
-                }
-            }
-            else if (this.txBody)
-            {
-                writer.WriteXmlNullable(this.txBody, "wps:txBody");
-            }
-
-            if (!bIsWritedBodyPr)
-            {
-                writer.WriteXmlString("<wps:bodyPr rot=\"0\"><a:prstTxWarp prst=\"textNoShape\"><a:avLst/></a:prstTxWarp><a:noAutofit/></wps:bodyPr>");
-            }
-        }
-    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_GRAPHICS)
-        {
-            writer.WriteXmlNodeStart("a:txSp");
-            writer.WriteXmlAttributesEnd();
-            writer.WriteXmlNullable(this.txBody, "a:txBody");
-            writer.WriteXmlString("<a:useSpRect/>");
-            writer.WriteXmlNodeEnd("a:txSp");
-        }
-        else
-        {
-            if (this.txBody)
-            {
-                let sTxBodyName;
-                if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_XLSX)
-                    sTxBodyName = "xdr:txBody";
-            else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING)
-                    sTxBodyName = "cdr:txBody";
-            else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DIAGRAM)
-                    sTxBodyName = "dgm:txBody";
-            else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)
-                    sTxBodyName = "dsp:txBody";
-            else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_PPTX)
-                    sTxBodyName = "p:txBody";
-
-
-                writer.WriteXmlNullable(this.txBody, sTxBodyName);
-            }
-        }
-
-        if (this.txXfrm && oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)
-        {
-            this.txXfrm.toXml(writer, "dsp:txXfrm");
-        }
-        writer.WriteXmlNodeEnd(name_);
-    };
-    function fReadTxBoxContentXML(reader, parent) {
-        var Content = [];
-        var depth = reader.GetDepth();
-        let oDrawingDoc = editor.WordControl.m_oLogicDocument.DrawingDocument;
-        let oTxBxContent = new AscCommonWord.CDocumentContent(parent, oDrawingDoc, 0, 0, 0, 20000, false, false);
-        while (reader.ReadNextSiblingNode(depth)) {
-            AscCommonWord.CDocument.prototype.fromXmlDocContentElem(reader, reader.GetNameNoNS(), Content, oDrawingDoc, oTxBxContent);
-
-        }
-        if (Content.length > 0) {
-            oTxBxContent.ReplaceContent(Content);
-        }
-        return oTxBxContent;
-    }
 
 function CreateBinaryReader(szSrc, offset, srcLen)
 {
@@ -7707,5 +7340,4 @@ function SaveRunsFormatting(aSourceContent, aCopyContent, oTheme, oColorMap, oPr
     window['AscFormat'].SaveContentSourceFormatting = SaveContentSourceFormatting;
     window['AscFormat'].hitToHandles = hitToHandles;
     window['AscFormat'].pHText = pHText;
-    window['AscFormat'].fReadTxBoxContentXML = fReadTxBoxContentXML;
 })(window);

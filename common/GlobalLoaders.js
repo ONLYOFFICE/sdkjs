@@ -76,6 +76,8 @@
         this.check_loaded_timer_id = -1;
         this.endLoadingCallback = null;
 
+        this.perfStart = 0;
+
         this.put_Api = function(_api)
         {
             this.Api = _api;
@@ -286,8 +288,16 @@
         var oThis = this;
         this._LoadFonts = function()
         {
+            if (this.bIsLoadDocumentFirst === true && 0 === this.perfStart && this.fonts_loading.length > 0) {
+                this.perfStart = performance.now();
+            }
             if (0 == this.fonts_loading.length)
             {
+                if (this.perfStart > 0) {
+                    let perfEnd = performance.now();
+                    AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onLoadFonts", perfEnd - this.perfStart), this.Api);
+                    this.perfStart = 0;
+                }
                 if (null != this.endLoadingCallback)
                 {
                     this.endLoadingCallback.call(this.Api);

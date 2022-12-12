@@ -131,6 +131,11 @@ var c_oAscError = Asc.c_oAscError;
 			}
 		}
 	};
+
+	spreadsheet_api.prototype._saveLocalCheck = function()
+	{
+		return this._saveCheck();
+	};
 	spreadsheet_api.prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack)
 	{
 		if (this.isFrameEditor() || AscCommon.c_oAscAdvancedOptionsAction.None !== this.advancedOptionsAction)
@@ -145,7 +150,7 @@ var c_oAscError = Asc.c_oAscError;
 			this.LastUserSavedIndex = AscCommon.History.UserSavedIndex;
 		}
 
-		if (true === this.canSave && this._saveCheck())
+		if (true === this.canSave && this._saveLocalCheck())
 		{
 			var _isNaturalSave = this.IsUserSave;
 			this.canSave = false;

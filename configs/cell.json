@@ -21,6 +21,7 @@
 			"cell/apiDefines.js",
 			"cell/utils/utils.js",
 			"cell/view/HandlerList.js",
+			"common/collaborativeHistory.js",
 			"common/CollaborativeEditingBase.js",
 			"cell/model/DrawingObjects/GlobalCounters.js",
 			"cell/model/CollaborativeEditing.js",
@@ -29,6 +30,7 @@
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",
 			"cell/api.js",
+			"cell/api_plugins.js",
 			"common/spell/spell.js",
 			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js"
@@ -38,6 +40,8 @@
 			"common/api/tableStylesPreviewGenerator.js",
 			"common/api/spellCheckSettings.js",
 			"common/api/addTextSettings.js",
+			"common/api/autoCorrectSettings.js",
+			"common/api/firstLetterExceptions.js",
 
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
@@ -76,7 +80,6 @@
 			"common/Drawings/States.js",
 			"common/Drawings/DrawingsChanges.js",
 			"common/Drawings/Format/Format.js",
-			"common/Drawings/Format/VML.js",
 			"common/Drawings/Format/CreateGeometry.js",
 			"common/Drawings/Format/Geometry.js",
 			"common/Drawings/Format/GraphicObjectBase.js",
@@ -224,6 +227,7 @@
 			"word/Editor/Paragraph_Recalculate.js",
 			"word/Editor/Sections.js",
 			"word/Editor/SectionsChanges.js",
+			"word/Editor/Numbering/NumberingApplicator.js",
 			"word/Editor/Numbering/NumberingCommon.js",
 			"word/Editor/Numbering/NumberingLvl.js",
 			"word/Editor/Numbering/AbstractNum.js",
@@ -259,6 +263,7 @@
 			"word/Editor/Table/TableCellChanges.js",
 			"word/Editor/StructuredDocumentTags/SdtBase.js",
 			"word/Editor/StructuredDocumentTags/BlockLevel.js",
+			"word/Editor/StructuredDocumentTags/FormKeyGenerator.js",
 			"word/Editor/StructuredDocumentTags/FormsManager.js",
 			"word/Editor/StructuredDocumentTags/FormToJson.js",
 			"word/Editor/StructuredDocumentTags/InlineLevel.js",
@@ -303,6 +308,7 @@
 			"word/Math/operators.js",
 			"word/Math/accent.js",
 			"word/Math/borderBox.js",
+			"word/Math/mathTrackHandler.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 
@@ -314,7 +320,7 @@
 
 			"common/versionHistory.js",
 			"common/clipboard_base.js",
-			"common/text_input.js",
+			"common/text_input2.js",
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",
@@ -322,13 +328,7 @@
 			"common/Native/native_graphics.js",
 			
 			"vendor/easysax.js",
-			"common/openxml.js",
-			"common/Shapes/SerializeXml.js",
-			"common/SerializeChartXml.js",
-			"common/SerializeMathXml.js",
-			"cell/model/SerializeXml.js",
-			"word/Editor/SerializeXml.js",
-			"word/Editor/SerializeXmlAssets.js"
+			"common/openxml.js"
 		],
 		"desktop": {
 			"min": [
@@ -348,6 +348,7 @@
 		"mobile": [
 			"common/libfont/engine/fonts_native.js",
 			"common/Charts/ChartStyles.js",
+			"common/SmartArts/SmartArtPresets.js",
 			"common/Native/Wrappers/TextMeasurerWrapper.js",
 			"common/Native/Wrappers/DrawingStream.js",
 			"common/Native/Wrappers/ShapeDrawer.js",

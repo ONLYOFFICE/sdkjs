@@ -54,9 +54,10 @@
 
 		// В мапе форм находятся вообще все формы. В списке находятся только самостоятельные формы, которые
 		// не являются частью другой формы
-		this.FormsMap   = {};
-		this.Forms      = [];
-		this.UpdateList = false;
+		this.FormsMap     = {};
+		this.Forms        = [];
+		this.UpdateList   = false;
+		this.KeyGenerator = new AscWord.CFormKeyGenerator(this);
 	}
 	CFormsManager.prototype.Register = function(oForm)
 	{
@@ -271,6 +272,85 @@
 
 		return true;
 	};
+	/**
+	 * @returns {AscWord.CFormKeyGenerator}
+	 */
+	CFormsManager.prototype.GetKeyGenerator = function()
+	{
+		return this.KeyGenerator;
+	};
+	/**
+	 * Получаем данные всех форм
+	 * @returns {object}
+	 */
+	CFormsManager.prototype.GetAllFormsData = function()
+	{
+		let data = {};
+		let allForms = this.GetAllForms();
+		let passedRadioGroups = {};
+		for (let index = 0, count = allForms.length; index < count; ++index)
+		{
+			let form = allForms[index];
+			let key  = form.GetFormKey();
+
+			if (form.IsRadioButton())
+			{
+				key = form.GetRadioButtonGroupKey();
+				if (passedRadioGroups[key])
+					continue;
+
+				passedRadioGroups[key] = true;
+			}
+
+			if (!key)
+				continue;
+
+			let val = {
+				"key"   : key,
+				"tag"   : form.GetTag(),
+				"value" : this.GetFormValue(form),
+				"type"  : "text"
+			};
+
+			if (data[key])
+			{
+				let oldVal = data[key];
+				if (Array.isArray(oldVal))
+					oldVal.push(oldVal);
+				else
+					data[key] = [oldVal, val];
+			}
+			else
+			{
+				data[key] = val;
+			}
+
+			if (form.IsComplexForm())
+				val["type"] = "complex";
+			else if (form.IsRadioButton())
+				val["type"] = "radioButton";
+			else if (form.IsCheckBox())
+				val["type"] = "checkBox";
+			else if (form.IsDropDownList())
+				val["type"] = "dropDownList";
+			else if (form.IsComboBox())
+				val["type"] = "comboBox";
+			else if (form.IsPicture())
+				val["type"] = "picture";
+		}
+
+		return data;
+	};
+	CFormsManager.prototype.GetFormValue = function(form)
+	{
+		if (!form)
+			return null;
+
+		if (form.IsRadioButton())
+			return this.GetRadioGroupValue(form.GetRadioButtonGroupKey());
+
+		return form.GetFormValue();
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -395,22 +475,39 @@
 	};
 	CFormsManager.prototype.OnChangeComplexForm = function(oForm)
 	{
-		let arrForms = this.GetAllForms();
+		let sKey          = oForm.GetFormKey();
+		let isPlaceholder = oForm.IsPlaceHolder();
+		let arrForms      = this.GetAllForms();
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oTempForm = arrForms[nIndex];
-			if (!oTempForm.IsComplexForm() || oTempForm === oForm)
+			if (!oTempForm.IsComplexForm()
+				|| oTempForm === oForm
+				|| sKey !== oTempForm.GetFormKey())
 				continue;
 
 			// TODO: Сейчас мы полностью перезаписываем содержимое поля. Можно проверить, что поле состоит из таких
 			//       же базовых подклассов и попробовать обновить их каждый по отдельности, что бы было меньше изменений
 
+			oTempForm.SetShowingPlcHdr(isPlaceholder);
 			oTempForm.RemoveAll();
 			for (let nPos = 0, nItemsCount = oForm.GetElementsCount(); nPos < nItemsCount; ++nPos)
 			{
 				oTempForm.AddToContent(nPos, oForm.GetElement(nPos).Copy());
 			}
 		}
+	};
+	CFormsManager.prototype.GetRadioGroupValue = function(groupKey)
+	{
+		let group = this.GetRadioButtons(groupKey);
+		for (let index = 0, count = group.length; index < count; ++index)
+		{
+			let radioButton = group[index];
+			if (radioButton.IsCheckBoxChecked() && radioButton.GetFormKey())
+				return radioButton.GetFormKey();
+		}
+
+		return "";
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

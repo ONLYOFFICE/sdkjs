@@ -1619,6 +1619,17 @@ function XmlParserContext(){
     this.commentDataById = {};
     this.oReadResult = new AscCommonWord.DocReadResult();
     this.maxZIndex = 0;
+
+    this.sdtPrWithFieldPath = [];
+    this.fieldMasterMap = {};
+
+    this.fieldMastersWithUserMasterPath = [];
+    this.userMasterMap = {};
+
+    this.fieldGroupsWithFieldMasterPath = [];
+    this.fieldWithFieldMastersPath = [];
+    this.userWithUserMastersPath = [];
+
     //xlsx
     this.sharedStrings = [];
     this.row = null;
@@ -1643,6 +1654,117 @@ XmlParserContext.prototype.clearSlideRelations = function() {
     this.layoutsMap = {};
     this.notesMastersMap = {};
 };
+XmlParserContext.prototype.clearFieldRelations = function() {
+    this.sdtPrWithFieldPath = [];
+    this.fieldMasterMap = {};
+};
+XmlParserContext.prototype.addSdtPrRelation = function(oSdtPr, sTarget) {
+    this.sdtPrWithFieldPath.push({sdtPr: oSdtPr, target: sTarget});
+};
+XmlParserContext.prototype.addFieldGroupRelation = function(oFieldGroup, sTarget) {
+    this.fieldGroupsWithFieldMasterPath.push({fieldGroup: oFieldGroup, target: sTarget});
+};
+XmlParserContext.prototype.addFieldMasterPath = function(oFieldMaster, sTarget) {
+    this.fieldMasterMap[sTarget] = oFieldMaster;
+};
+XmlParserContext.prototype.addFieldWithFieldMaterPath = function(oField, sTarget) {
+    this.fieldWithFieldMastersPath.push({field: oField, target: sTarget});
+};
+XmlParserContext.prototype.addUserWithUserMastersPath = function(oUser, sTarget) {
+    this.userWithUserMastersPath.push({user: oUser, target: sTarget});
+};
+XmlParserContext.prototype.assignFieldsToFieldMasters = function() {
+    for(let nFld = 0; nFld < this.fieldWithFieldMastersPath.length; ++nFld) {
+        let oPair = this.fieldWithFieldMastersPath[nFld];
+        let sTarget = oPair.target;
+        for(let sKey in this.fieldMasterMap) {
+            if(this.fieldMasterMap.hasOwnProperty(sKey)) {
+                if(sKey.indexOf(sTarget) > -1) {
+                    let oFieldMaster = this.fieldMasterMap[sKey];
+                    if(oFieldMaster) {
+                        oFieldMaster.setField(oPair.field);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+};
+XmlParserContext.prototype.assignFieldsToSdt = function() {
+    for(let nSdt = 0; nSdt < this.sdtPrWithFieldPath.length; ++nSdt) {
+        let oPair = this.sdtPrWithFieldPath[nSdt];
+        let oFieldMaster = this.fieldMasterMap[oPair.target];
+        if(oFieldMaster) {
+            oPair.sdtPr.OForm = oFieldMaster;
+        }
+    }
+};
+
+XmlParserContext.prototype.addFieldMasterRelation = function(oFieldMaster, sTarget) {
+    this.fieldMastersWithUserMasterPath.push({fieldMaster: oFieldMaster, target: sTarget});
+};
+XmlParserContext.prototype.addUserMasterPath = function(oUserMaster, sTarget) {
+    this.userMasterMap[sTarget] = oUserMaster;
+};
+XmlParserContext.prototype.assignFieldsToFieldGroup = function() {
+    for(let nFldGrp = 0; nFldGrp < this.fieldGroupsWithFieldMasterPath.length; ++nFldGrp) {
+        let oPair = this.fieldGroupsWithFieldMasterPath[nFldGrp];
+        let sTarget = oPair.target;
+        for(let sKey in this.fieldMasterMap) {
+            if(this.fieldMasterMap.hasOwnProperty(sKey)) {
+                if(sKey.indexOf(sTarget) > -1) {
+                    let oFieldMaster = this.fieldMasterMap[sKey];
+                    if(oFieldMaster) {
+                        oPair.fieldGroup.addField(oFieldMaster);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+};
+XmlParserContext.prototype.assignUsersToFieldMasters = function() {
+    for(let nPair = 0; nPair < this.fieldMastersWithUserMasterPath.length; ++nPair) {
+        let oPair = this.fieldMastersWithUserMasterPath[nPair];
+        let oUserMasterMaster = this.userMasterMap[oPair.target];
+        if(oUserMasterMaster) {
+            oPair.fieldMaster.addUser(oUserMasterMaster);
+        }
+    }
+};
+XmlParserContext.prototype.assignUsersToUserMasters = function() {
+    for(let nPair = 0; nPair < this.userWithUserMastersPath.length; ++nPair) {
+        let oPair = this.userWithUserMastersPath[nPair];
+        let sTarget = oPair.target;
+        for(let sKey in this.userMasterMap) {
+            if(this.userMasterMap.hasOwnProperty(sKey)) {
+                if(sKey.indexOf(sTarget) > -1) {
+                    let oUserMaster = this.userMasterMap[sKey];
+                    if(oUserMaster) {
+                        oUserMaster.addUser(oPair.user);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+};
+XmlParserContext.prototype.assignFormLinks = function() {
+    this.assignFieldsToSdt();
+    this.assignUsersToFieldMasters();
+    this.assignFieldsToFieldGroup();
+    this.assignFieldsToFieldMasters();
+    this.assignUsersToUserMasters();
+
+    this.sdtPrWithFieldPath = [];
+    this.fieldMasterMap = {};
+    this.fieldMastersWithUserMasterPath = [];
+    this.userMasterMap = {};
+    this.fieldGroupsWithFieldMasterPath = [];
+    this.fieldWithFieldMastersPath = [];
+    this.userWithUserMastersPath = [];
+};
+
 XmlParserContext.prototype.addTableStyle = function(sGuid, oStyle) {
     this.TableStylesMap[sGuid] = oStyle;
 };
@@ -1725,6 +1847,10 @@ function XmlWriterContext(editorId){
     this.paraIdIndex = 1;
     this.commentDataById = {};
     this.docSaveParams = null;
+
+    this.fieldMastersPartMap = {};
+    this.userMasterPartMap = {};
+
     //xlsx
     this.wb = null;
     this.sheetIds = [];
@@ -1763,6 +1889,12 @@ XmlWriterContext.prototype.addSlideMasterRel = function(sRel) {
 };
 XmlWriterContext.prototype.addNotesMasterRel = function(sRel) {
     this.notesMasterIdLst.push(sRel);
+};
+XmlWriterContext.prototype.addFieldMasterPart = function(oFieldMaster, oPart) {
+    this.fieldMastersPartMap[oFieldMaster.Id] = oPart;
+};
+XmlWriterContext.prototype.addUserMasterPart = function(oUserMaster, oPart) {
+    this.userMasterPartMap[oUserMaster.Id] = oPart;
 };
 XmlWriterContext.prototype.clearSlideLayoutRels = function() {
     this.sldLayoutIdLst.length = 0;
@@ -1843,6 +1975,11 @@ function CT_XmlNode(opt_elemReader) {
 
     this.elemReader = opt_elemReader || function(){};
 }
+CT_XmlNode.fromReader = function(reader, opt_elemReader) {
+	let node = new CT_XmlNode(opt_elemReader);
+	node.fromXml(reader);
+	return node;
+};
 CT_XmlNode.prototype.readAttr = function(reader) {
     while (reader.MoveToNextAttribute()) {
         this.attributes[reader.GetNameNoNS()] = reader.GetValue();

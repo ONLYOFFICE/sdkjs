@@ -220,7 +220,7 @@ $(function () {
 		assert.strictEqual(sheetMemory.getUint8(20, 0), 5);
 	});
 
-	QUnit.test("Test: \"copyRange\"", function (assert) {
+	QUnit.test("Test: \"copyRange1\"", function (assert) {
 
 		let sheetMemory = new SheetMemory(2, 100);
 		sheetMemory.checkIndex(10);
@@ -257,6 +257,92 @@ $(function () {
 		assert.strictEqual(sheetMemory.getUint8(13, 0), 5);
 	});
 
+	QUnit.test("Test: \"copyRange2\"", function (assert) {
+
+		let sheetMemory = new SheetMemory(2, 100);
+		sheetMemory.checkIndex(10);
+		sheetMemory.checkIndex(12);
+		sheetMemory.setUint8(10, 0, 1);
+		sheetMemory.setUint8(11, 0, 2);
+		sheetMemory.setUint8(12, 0, 3);
+
+		sheetMemory.copyRange(sheetMemory, 10, 13, 3);
+		assert.strictEqual(sheetMemory.getMinIndex(), 10);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 15);
+		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(11, 0), 2);
+		assert.strictEqual(sheetMemory.getUint8(12, 0), 3);
+		assert.strictEqual(sheetMemory.getUint8(13, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(14, 0), 2);
+		assert.strictEqual(sheetMemory.getUint8(15, 0), 3);
+
+		sheetMemory.copyRange(sheetMemory, 10, 12, 3);
+		assert.strictEqual(sheetMemory.getMinIndex(), 10);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 15);
+		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(11, 0), 2);
+		assert.strictEqual(sheetMemory.getUint8(12, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(13, 0), 2);
+		assert.strictEqual(sheetMemory.getUint8(14, 0), 3);
+		assert.strictEqual(sheetMemory.getUint8(15, 0), 3);
+
+		sheetMemory.copyRange(sheetMemory, 10, 11, 3);
+		assert.strictEqual(sheetMemory.getMinIndex(), 10);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 15);
+		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(11, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(12, 0), 2);
+		assert.strictEqual(sheetMemory.getUint8(13, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(14, 0), 3);
+		assert.strictEqual(sheetMemory.getUint8(15, 0), 3);
+
+		sheetMemory.copyRange(sheetMemory, 10, 10, 3);
+		assert.strictEqual(sheetMemory.getMinIndex(), 10);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 15);
+		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(11, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(12, 0), 2);
+		assert.strictEqual(sheetMemory.getUint8(13, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(14, 0), 3);
+		assert.strictEqual(sheetMemory.getUint8(15, 0), 3);
+
+
+		sheetMemory.copyRange(sheetMemory, 10, 9, 3);
+		assert.strictEqual(sheetMemory.getMinIndex(), 9);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 15);
+		assert.strictEqual(sheetMemory.getUint8(9, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(11, 0), 2);
+		assert.strictEqual(sheetMemory.getUint8(12, 0), 2);
+		assert.strictEqual(sheetMemory.getUint8(13, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(14, 0), 3);
+		assert.strictEqual(sheetMemory.getUint8(15, 0), 3);
+	});
+
+	QUnit.test("Test: \"copyRange3\"", function (assert) {
+
+		let sheetMemory = new SheetMemory(2, 100);
+		sheetMemory.checkIndex(10);
+		sheetMemory.checkIndex(12);
+		sheetMemory.setUint8(10, 0, 1);
+		sheetMemory.setUint8(11, 0, 2);
+		sheetMemory.setUint8(12, 0, 3);
+
+		sheetMemory.copyRange(sheetMemory, 9, 11, 2);
+		assert.strictEqual(sheetMemory.getMinIndex(), 10);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 12);
+		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(11, 0), 0);
+		assert.strictEqual(sheetMemory.getUint8(12, 0), 1);
+
+		sheetMemory.copyRange(sheetMemory, 12, 11, 2);
+		assert.strictEqual(sheetMemory.getMinIndex(), 10);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 12);
+		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(11, 0), 1);
+		assert.strictEqual(sheetMemory.getUint8(12, 0), 0);
+	});
+
 	QUnit.test("Test: \"copyRangeByChunk\"", function (assert) {
 
 		let sheetMemory = new SheetMemory(2, 100);
@@ -291,7 +377,7 @@ $(function () {
 		assert.strictEqual(sheetMemory.getUint8(20, 0), 1);
 	});
 
-	QUnit.test("Test: \"clear\"", function (assert) {
+	QUnit.test("Test: \"clear1\"", function (assert) {
 
 		let sheetMemory = new SheetMemory(2, 100);
 		sheetMemory.checkIndex(8);
@@ -303,6 +389,36 @@ $(function () {
 		sheetMemory.setUint8(12, 0, 5);
 
 		sheetMemory.clear(5, 15);
+		assert.strictEqual(sheetMemory.getMinIndex(), 8);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 12);
+		assert.strictEqual(sheetMemory.getUint8(8, 0), 0);
+		assert.strictEqual(sheetMemory.getUint8(9, 0), 0);
+		assert.strictEqual(sheetMemory.getUint8(10, 0), 0);
+		assert.strictEqual(sheetMemory.getUint8(11, 0), 0);
+		assert.strictEqual(sheetMemory.getUint8(12, 0), 0);
+	});
+
+	QUnit.test("Test: \"clear2\"", function (assert) {
+
+		let sheetMemory = new SheetMemory(2, 100);
+		sheetMemory.checkIndex(8);
+		sheetMemory.checkIndex(12);
+		sheetMemory.setUint8(8, 0, 1);
+		sheetMemory.setUint8(9, 0, 2);
+		sheetMemory.setUint8(10, 0, 3);
+		sheetMemory.setUint8(11, 0, 4);
+		sheetMemory.setUint8(12, 0, 5);
+
+		sheetMemory.clear(8, 11);
+		assert.strictEqual(sheetMemory.getMinIndex(), 8);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 12);
+		assert.strictEqual(sheetMemory.getUint8(8, 0), 0);
+		assert.strictEqual(sheetMemory.getUint8(9, 0), 0);
+		assert.strictEqual(sheetMemory.getUint8(10, 0), 0);
+		assert.strictEqual(sheetMemory.getUint8(11, 0), 4);
+		assert.strictEqual(sheetMemory.getUint8(12, 0), 5);
+
+		sheetMemory.clear(11, 13);
 		assert.strictEqual(sheetMemory.getMinIndex(), 8);
 		assert.strictEqual(sheetMemory.getMaxIndex(), 12);
 		assert.strictEqual(sheetMemory.getUint8(8, 0), 0);

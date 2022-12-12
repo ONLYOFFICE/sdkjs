@@ -370,7 +370,7 @@ CGroupShape.prototype.recalculateBounds = function()
     }
 
 
-    //if(!this.group)
+    if(!this.bForceGroupBounds)
     {
         var tr = this.localTransform;
         var arr_p_x = [];

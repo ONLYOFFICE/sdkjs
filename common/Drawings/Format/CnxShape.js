@@ -521,7 +521,7 @@
 
     CConnectionShape.prototype.copy = function (oPr) {
         var copy = new CConnectionShape();
-        this.fillObject(copy);
+        this.fillObject(copy, oPr);
         return copy;
     };
 
@@ -647,32 +647,34 @@
         if(oBeginDrawing && oEndDrawing){
             _startConnectionParams = oBeginDrawing.getConnectionParams(this.getStCxnIdx(), null);
             _endConnectionParams = oEndDrawing.getConnectionParams(this.getEndCxnIdx(), null);
-            _spPr = AscFormat.fCalculateSpPr(_startConnectionParams, _endConnectionParams, this.spPr.geometry.preset, this.pen.w);
-            _xfrm2 = _spPr.xfrm;
-            _xfrm.setExtX(_xfrm2.extX);
-            _xfrm.setExtY(_xfrm2.extY);
-            if(!this.group){
-                _xfrm.setOffX(_xfrm2.offX);
-                _xfrm.setOffY(_xfrm2.offY);
-                _xfrm.setFlipH(_xfrm2.flipH);
-                _xfrm.setFlipV(_xfrm2.flipV);
-                _xfrm.setRot(_xfrm2.rot);
-            }
-            else{
+            if(_startConnectionParams && _endConnectionParams) {
+                _spPr = AscFormat.fCalculateSpPr(_startConnectionParams, _endConnectionParams, this.spPr.geometry.preset, this.pen.w);
+                _xfrm2 = _spPr.xfrm;
+                _xfrm.setExtX(_xfrm2.extX);
+                _xfrm.setExtY(_xfrm2.extY);
+                if(!this.group){
+                    _xfrm.setOffX(_xfrm2.offX);
+                    _xfrm.setOffY(_xfrm2.offY);
+                    _xfrm.setFlipH(_xfrm2.flipH);
+                    _xfrm.setFlipV(_xfrm2.flipV);
+                    _xfrm.setRot(_xfrm2.rot);
+                }
+                else{
 
-                var _xc = _xfrm2.offX + _xfrm2.extX / 2.0;
-                var _yc = _xfrm2.offY + _xfrm2.extY / 2.0;
-                var xc = this.group.invertTransform.TransformPointX(_xc, _yc);
-                var yc = this.group.invertTransform.TransformPointY(_xc, _yc);
-                _xfrm.setOffX(xc - _xfrm2.extX / 2.0);
-                _xfrm.setOffY(yc - _xfrm2.extY / 2.0);
-                _xfrm.setFlipH(this.group.getFullFlipH() ? !_xfrm2.flipH : _xfrm2.flipH);
-                _xfrm.setFlipV(this.group.getFullFlipV() ? !_xfrm2.flipV : _xfrm2.flipV);
-                _xfrm.setRot(AscFormat.normalizeRotate(_xfrm2.rot - this.group.getFullRotate()));
+                    var _xc = _xfrm2.offX + _xfrm2.extX / 2.0;
+                    var _yc = _xfrm2.offY + _xfrm2.extY / 2.0;
+                    var xc = this.group.invertTransform.TransformPointX(_xc, _yc);
+                    var yc = this.group.invertTransform.TransformPointY(_xc, _yc);
+                    _xfrm.setOffX(xc - _xfrm2.extX / 2.0);
+                    _xfrm.setOffY(yc - _xfrm2.extY / 2.0);
+                    _xfrm.setFlipH(this.group.getFullFlipH() ? !_xfrm2.flipH : _xfrm2.flipH);
+                    _xfrm.setFlipV(this.group.getFullFlipV() ? !_xfrm2.flipV : _xfrm2.flipV);
+                    _xfrm.setRot(AscFormat.normalizeRotate(_xfrm2.rot - this.group.getFullRotate()));
+                }
+                this.spPr.setGeometry(_spPr.geometry.createDuplicate());
+                this.checkDrawingBaseCoords();
+                this.recalculate();
             }
-            this.spPr.setGeometry(_spPr.geometry.createDuplicate());
-            this.checkDrawingBaseCoords();
-            this.recalculate();
         }
         else if(oBeginDrawing || oEndDrawing){
             if(bMove){
@@ -766,26 +768,6 @@
                 }
             }
         }
-    };
-    CConnectionShape.prototype.toXml = function(writer, sNamespace) {
-        let namespace_ = sNamespace || "a";
-
-        if		(writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
-            writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)	namespace_ = "wps";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_XLSX)			namespace_ = "xdr";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_GRAPHICS)		namespace_ = "a";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING)	namespace_ = "cdr";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DIAGRAM)			namespace_ = "dgm";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)		namespace_ = "dsp";
-    else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_PPTX)		namespace_ = "p";
-
-        writer.WriteXmlNodeStart(namespace_ + ":cxnSp");
-        writer.WriteXmlNullableAttributeString("macro", this.macro);
-        writer.WriteXmlAttributesEnd();
-        this.nvSpPr.toXmlCxn(writer);
-        this.spPr.toXml(writer);
-        writer.WriteXmlNullable(this.style);
-        writer.WriteXmlNodeEnd(namespace_ + ":cxnSp");
     };
 
     window['AscFormat'] = window['AscFormat'] || {};

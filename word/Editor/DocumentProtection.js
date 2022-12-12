@@ -44,14 +44,6 @@ var ECryptAlgoritmName = {
 	SHA_512: 9,
 	WHIRLPOOL: 10
 };
-
-var EDocProtect = {
-	Comments: 0,
-	Forms: 1,
-	None: 2,
-	ReadOnly: 3,
-	TrackedChanges: 4
-};
 var ECryptAlgClass = {
 	Custom: 0,
 	Hash: 1
@@ -67,9 +59,11 @@ var ECryptProv = {
 };
 
 function CDocProtect() {
+	this.Id = AscCommon.g_oIdCounter.Get_NewId();
+
 	this.algorithmName = null;
 	this.edit = null;
-	this.enforcment = null;
+	this.enforcement = null;
 	this.formatting = null;
 	this.hashValue = null;
 	this.saltValue = null;
@@ -84,13 +78,132 @@ function CDocProtect() {
 	this.cryptProviderType = null;
 	this.cryptProviderTypeExt = null;
 	this.cryptProviderTypeExtSource = null;
+
+	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
+	AscCommon.g_oTableId.Add(this, this.Id);
+
+	this.Lock = new AscCommon.CLock();
+	this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
+
+	this.temporaryPassword = null;
 }
+CDocProtect.prototype.Get_Id = function () {
+	return this.Id;
+};
 CDocProtect.prototype.isOnlyView = function () {
-	return this.edit === EDocProtect.ReadOnly;
+	return this.edit === Asc.c_oAscEDocProtect.ReadOnly;
 };
-CDocProtect.prototype.getEnforcment = function () {
-	return this.enforcment;
+CDocProtect.prototype.getEnforcement = function () {
+	return this.enforcement;
 };
+CDocProtect.prototype.getRestrictionType = function () {
+	var res = null;
+	switch (this.edit) {
+		case Asc.c_oAscEDocProtect.Comments:
+			res = Asc.c_oAscRestrictionType.OnlyComments;
+			break;
+		case Asc.c_oAscEDocProtect.Forms:
+			res = Asc.c_oAscRestrictionType.OnlyForms;
+			break;
+		case Asc.c_oAscEDocProtect.ReadOnly:
+			res = Asc.c_oAscRestrictionType.View;
+			break;
+		case Asc.c_oAscEDocProtect.TrackedChanges:
+			//asc_SetLocalTrackRevisions
+			//asc_SetGlobalTrackRevisions
+			res = Asc.c_oAscRestrictionType.OnlySignatures;
+			break;
+	}
+	return res;
+};
+CDocProtect.prototype.generateHashParams = function () {
+	var params = AscCommon.generateHashParams();
+
+	this.saltValue = params.saltValue;
+	this.spinCount = params.spinCount;
+	//this.algorithmName = params.algorithmName;
+};
+CDocProtect.prototype.generateHashParams = function () {
+	var params = AscCommon.generateHashParams();
+
+	this.saltValue = params.saltValue;
+	this.spinCount = params.spinCount;
+	//this.algorithmName = params.algorithmName;
+};
+CDocProtect.prototype.getAlgorithmNameForCheck = function () {
+	if (this.algorithmName) {
+		return AscCommon.fromModelAlgorithmName(this.algorithmName);
+	} else if (this.cryptAlgorithmSid) {
+		return AscCommon.fromModelCryptAlgorithmSid(this.cryptAlgorithmSid);
+	}
+	return null;
+};
+CDocProtect.prototype.isPassword = function () {
+	return this.algorithmName != null || this.cryptAlgorithmSid != null;
+};
+CDocProtect.prototype.setProps = function (oProps) {
+	History.Add(new CChangesDocumentProtection(this, this, oProps));
+	this.setFromInterface(oProps);
+};
+CDocProtect.prototype.setFromInterface = function (oProps) {
+	this.edit = oProps.edit;
+	this.saltValue = oProps.saltValue;
+	this.spinCount = oProps.spinCount;
+	this.cryptAlgorithmSid = oProps.cryptAlgorithmSid;
+	this.hashValue = oProps.hashValue;
+
+	this.enforcement = oProps.enforcement;
+};
+CDocProtect.prototype.Refresh_RecalcData = function () {
+};
+CDocProtect.prototype.Copy = function () {
+	return AscFormat.ExecuteNoHistory(function () {
+		var oDocProtect = new CDocProtect();
+		oDocProtect.algorithmName = this.algorithmName;
+		oDocProtect.edit = this.edit;
+		oDocProtect.enforcement = this.enforcement;
+		oDocProtect.formatting = this.formatting;
+		oDocProtect.hashValue = this.hashValue;
+		oDocProtect.saltValue = this.saltValue;
+		oDocProtect.spinCount = this.spinCount;
+		oDocProtect.algIdExt = this.algIdExt;
+		oDocProtect.algIdExtSource = this.algIdExtSource;
+		oDocProtect.cryptAlgorithmClass = this.cryptAlgorithmClass;
+		oDocProtect.cryptAlgorithmSid = this.cryptAlgorithmSid;
+		oDocProtect.cryptAlgorithmType = this.cryptAlgorithmType;
+		oDocProtect.cryptProvider = this.cryptProvider;
+		oDocProtect.cryptProviderType = this.cryptProviderType;
+		oDocProtect.cryptProviderTypeExt = this.cryptProviderTypeExt;
+		oDocProtect.cryptProviderTypeExtSource = this.cryptProviderTypeExtSource;
+		return oDocProtect;
+	}, this, []);
+};
+/*CDocProtect.prototype.Write_ToBinary2 = function(Writer)
+{
+	Writer.WriteLong(AscDFH.historyitem_type_DocumentProtection);
+	Writer.WriteString2("" + this.Id);
+};
+CDocProtect.prototype.Read_FromBinary2 = function(Reader)
+{
+	this.Id = Reader.GetString2();
+};*/
+CDocProtect.prototype.asc_getIsPassword = function()
+{
+	return this.enforcement ? this.isPassword() : null
+};
+CDocProtect.prototype.asc_getEditType = function()
+{
+	return this.edit;
+};
+CDocProtect.prototype.asc_setPassword = function(val)
+{
+	this.temporaryPassword = val;
+};
+CDocProtect.prototype.asc_setEditType = function(val)
+{
+	this.edit = val;
+};
+
 
 function CWriteProtection() {
 	this.algorithmName = null;
@@ -109,3 +222,10 @@ function CWriteProtection() {
 	this.cryptProviderTypeExt = null;
 	this.cryptProviderTypeExtSource = null;
 }
+
+window['AscCommonWord'].CDocProtect = CDocProtect;
+prot = CDocProtect.prototype;
+prot["asc_getIsPassword"] = prot.asc_getIsPassword;
+prot["asc_getEditType"] = prot.asc_getEditType;
+prot["asc_setEditType"] = prot.asc_setEditType;
+prot["asc_setPassword"] = prot.asc_setPassword;

@@ -1040,7 +1040,7 @@ function CEditorPage(api)
 		if (this.retinaScaling != AscCommon.AscBrowser.retinaPixelRatio)
 		{
             this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
-            // сбросить кэш страниц
+			this.m_oDrawingDocument.ClearCachePages();
             this.onButtonTabsDraw();
 		}
 	};
@@ -3225,6 +3225,9 @@ function CEditorPage(api)
 
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_Before();
+
+		if (this.m_oApi.printPreview)
+			this.m_oApi.printPreview.resize();
 
 		var isDesktopVersion = (undefined !== window["AscDesktopEditor"]) ? true : false;
 

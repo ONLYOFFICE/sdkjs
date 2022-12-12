@@ -65,6 +65,10 @@ function CSpellchecker(settings)
 	if (this.isUseSharedWorker && (false === settings.useShared))
 		this.isUseSharedWorker = false;
 
+	// disable for WKWebView
+	if (this.isUseSharedWorker && (undefined !== window["webkit"]))
+		this.isUseSharedWorker = false;
+
 	this.worker = null;
 
 	this.languages = {
@@ -113,6 +117,8 @@ function CSpellchecker(settings)
 		"1053" : "sv_SE",
 		"1055" : "tr_TR",
 		"1058" : "uk_UA",
+		"2115" : "uz_Cyrl_UZ",
+		"1091" : "uz_Latn_UZ",
 		"1066" : "vi_VN",
 		"2067" : "nl_NL" // nl_BE
 	};

@@ -606,8 +606,8 @@ function CBinaryFileWriter()
 			this.WriteCustomProperties(presentation.CustomProperties, presentation.Api);
 
         // ViewProps
-		if (presentation.ViewProps)
-			this.WriteViewProps(presentation.ViewProps);
+		if (presentation.viewPr)
+			this.WriteViewProps(presentation.viewPr);
 
         // PresProps
 		this.WritePresProps(presentation);
@@ -769,7 +769,11 @@ function CBinaryFileWriter()
         {
             if(oTableStyleIdMap.hasOwnProperty(key))
             {
-                this.tableStylesGuides[key] = "{" + GUID() + "}"
+                const oStyle = AscCommon.g_oTableId.Get_ById(key);
+                if (oStyle)
+                {
+                    this.tableStylesGuides[key] = oStyle.GetStyleId() || AscCommon.CreateGUID();
+                }
             }
         }
 
@@ -1053,10 +1057,11 @@ function CBinaryFileWriter()
         this.StartMainRecord(c_oMainTables.CustomProperties);
         customProperties.toStream(this, api);
     };
-    this.WriteViewProps = function(viewprops)
+    this.WriteViewProps = function(viewPr)
     {
         this.StartMainRecord(c_oMainTables.ViewProps);
         this.StartRecord(c_oMainTables.ViewProps);
+        viewPr.toPPTY(this);
         this.EndRecord();
     };
     this.WritePresProps = function(presentation)
@@ -1220,11 +1225,8 @@ function CBinaryFileWriter()
                 this.EndRecord();
             }
         }
-        if (presentation.Api.vbaMacros) {
-            this.StartRecord(8);
-            this.WriteBuffer(presentation.Api.vbaMacros, 0, presentation.Api.vbaMacros.length);
-            this.EndRecord();
-        }
+        this.WriteRecord4(8, presentation.Api.vbaProject);
+
 		var macros = presentation.Api.macros.GetData();
 		if (macros) {
 			this.StartRecord(9);
@@ -5540,33 +5542,10 @@ function CBinaryFileWriter()
 
     function GetTableRowHeight(row)
     {
-        if (row.Pr.Height !== undefined && row.Pr.Height != null)
+        if (AscFormat.isRealNumber(row.Pr.Height.Value))
         {
-            let fMaxTopMargin = 0, fMaxBottomMargin = 0, fMaxTopBorder = 0, fMaxBottomBorder = 0;
-            for(let i = 0;  i < row.Content.length; ++i)
-            {
-                var oCell = row.Content[i];
-                var oMargins = oCell.GetMargins();
-                if(oMargins.Bottom.W > fMaxBottomMargin)
-                {
-                    fMaxBottomMargin = oMargins.Bottom.W;
-                }
-                if(oMargins.Top.W > fMaxTopMargin)
-                {
-                    fMaxTopMargin = oMargins.Top.W;
-                }
-                var oBorders = oCell.Get_Borders();
-                if(oBorders.Top.Size > fMaxTopBorder)
-                {
-                    fMaxTopBorder = oBorders.Top.Size;
-                }
-                if(oBorders.Bottom.Size > fMaxBottomBorder)
-                {
-                    fMaxBottomBorder = oBorders.Bottom.Size;
-                }
-            }
-            return (((row.Pr.Height.Value + fMaxBottomMargin + fMaxTopMargin + fMaxTopBorder/2 + fMaxBottomBorder/2) * 36000) >> 0);
-        }
+			return row.Pr.Height.Value * 36000 + 0.5 >> 0;
+		}
         return null;
     }
 

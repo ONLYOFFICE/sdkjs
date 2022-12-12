@@ -110,9 +110,9 @@ CDrawingsController.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
 	return this.DrawingObjects.addSignatureLine(oSignatureDrawing);
 };
-CDrawingsController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CDrawingsController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
-	this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
+	this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CDrawingsController.prototype.AddTextArt = function(nStyle)
 {
@@ -402,6 +402,10 @@ CDrawingsController.prototype.GetSelectionBounds = function()
 CDrawingsController.prototype.IsMovingTableBorder = function()
 {
 	return this.DrawingObjects.selectionIsTableBorder();
+};
+CDrawingsController.prototype.canEditTableOleObject = function()
+{
+	return this.DrawingObjects.canEditTableOleObject();
 };
 CDrawingsController.prototype.CheckPosInSelection = function(X, Y, PageAbs, NearPos)
 {

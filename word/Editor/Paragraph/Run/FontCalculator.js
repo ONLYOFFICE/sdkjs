@@ -56,10 +56,12 @@
 	{
 		this.Reset();
 
-		if (oDocContent.IsTextSelectionUse() && !oDocContent.IsSelectionEmpty())
-			this.HandleSelectionCase(oDocContent);
+		if (oDocContent.IsNumberingSelection())
+			this.HandleNumberingSelection(oDocContent);
+		else if (oDocContent.IsTextSelectionUse() && !oDocContent.IsSelectionEmpty())
+			this.HandleRegularSelection(oDocContent);
 		else
-			this.HandleCursorCase(oDocContent);
+			this.HandleNoSelection(oDocContent);
 
 		this.CheckResult();
 
@@ -81,7 +83,20 @@
 		this.FontSizeUnknown = null;
 		this.FontNameUnknown = null;
 	};
-	CFontCalculator.prototype.HandleSelectionCase = function(oDocContent)
+	CFontCalculator.prototype.HandleNumberingSelection = function(docContent)
+	{
+		let paragraph = docContent.GetCurrentParagraph();
+		if (!paragraph)
+			return;
+
+		let textPr = paragraph.GetNumberingTextPr();
+
+		this.Bold     = textPr.Bold;
+		this.Italic   = textPr.Italic;
+		this.FontSize = textPr.FontSize;
+		this.FontName = textPr.RFonts.Ascii ? textPr.RFonts.Ascii.Name : null;
+	};
+	CFontCalculator.prototype.HandleRegularSelection = function(oDocContent)
 	{
 		let oThis = this;
 		oDocContent.CheckSelectedRunContent(function(oRun, nStartPos, nEndPos)
@@ -138,7 +153,7 @@
 			return false;
 		});
 	};
-	CFontCalculator.prototype.HandleCursorCase = function(oDocContent)
+	CFontCalculator.prototype.HandleNoSelection = function(oDocContent)
 	{
 		let oParagraph = oDocContent.GetCurrentParagraph();
 		if (!oParagraph)

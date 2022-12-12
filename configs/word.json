@@ -19,6 +19,7 @@
 			"common/libfont/engine.js",
 			"common/libfont/loader.js",
 			"word/apiDefines.js",
+			"common/collaborativeHistory.js",
 			"common/CollaborativeEditingBase.js",
 			"word/Editor/CollaborativeEditing.js",
 			"common/macros.js",
@@ -29,13 +30,16 @@
 			"word/api_plugins.js",
 			"common/spell/spell.js",
 			"common/zlib/zlib.js",
-			"word/Editor/Table/TableLook.js"
+			"word/Editor/Table/TableLook.js",
+			"cell/utils/utils.js"
 		],
 		"common": [
 			"common/api/actionOnTimer.js",
 			"common/api/tableStylesPreviewGenerator.js",
 			"common/api/spellCheckSettings.js",
 			"common/api/addTextSettings.js",
+			"common/api/autoCorrectSettings.js",
+			"common/api/firstLetterExceptions.js",
 
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
@@ -54,6 +58,7 @@
 
 			"common/stringserialize.js",
 			"common/random.js",
+			"common/hash/hash.js",
 
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
@@ -73,7 +78,6 @@
 			"word/Editor/GraphicObjects/DrawingStates.js",
 			"common/Drawings/DrawingsChanges.js",
 			"common/Drawings/Format/Format.js",
-			"common/Drawings/Format/VML.js",
 			"common/Drawings/Format/CreateGeometry.js",
 			"common/Drawings/Format/Geometry.js",
 			"common/Drawings/Format/GraphicObjectBase.js",
@@ -118,7 +122,6 @@
 			"common/wordcopypaste.js",
 			"common/intervalTree.js",
 
-			"cell/utils/utils.js",
 			"cell/model/WorkbookElems.js",
 			"cell/model/Workbook.js",
 			"cell/model/Serialize.js",
@@ -177,6 +180,7 @@
 			"word/Editor/HyperlinkChanges.js",
 			"word/Editor/Field.js",
 			"word/Editor/FieldChanges.js",
+			"word/Editor/FormFieldChanges.js",
 			"word/Editor/Run.js",
 			"word/Editor/PresentationField.js",
 			"word/Editor/RunChanges.js",
@@ -187,6 +191,7 @@
 			"word/Editor/Paragraph_Recalculate.js",
 			"word/Editor/Sections.js",
 			"word/Editor/SectionsChanges.js",
+			"word/Editor/Numbering/NumberingApplicator.js",
 			"word/Editor/Numbering/NumberingCommon.js",
 			"word/Editor/Numbering/NumberingLvl.js",
 			"word/Editor/Numbering/AbstractNum.js",
@@ -223,6 +228,7 @@
 			"word/Editor/Table/TableCellChanges.js",
 			"word/Editor/StructuredDocumentTags/SdtBase.js",
 			"word/Editor/StructuredDocumentTags/BlockLevel.js",
+			"word/Editor/StructuredDocumentTags/FormKeyGenerator.js",
 			"word/Editor/StructuredDocumentTags/FormsManager.js",
 			"word/Editor/StructuredDocumentTags/FormToJson.js",
 			"word/Editor/StructuredDocumentTags/InlineLevel.js",
@@ -265,6 +271,7 @@
 			"word/Drawing/DrawingDocument.js",
 			"word/Drawing/GraphicsEvents.js",
 			"word/Drawing/Rulers.js",
+			"word/Drawing/printpreview.js",
 			"word/Drawing/HtmlPage.js",
 			"word/Drawing/documentrenderer.js",
 			"pdf/src/thumbnails.js",
@@ -287,6 +294,8 @@
 			"word/Math/operators.js",
 			"word/Math/accent.js",
 			"word/Math/borderBox.js",
+			"word/Math/mathTrackHandler.js",
+
 			"word/Editor/Styles/FixedFormDefaults.js",
 
 			"word/apiBuilder.js",
@@ -294,7 +303,7 @@
 			"word/fromToJSON.js",
 			"common/versionHistory.js",
 			"common/clipboard_base.js",
-			"common/text_input.js",
+			"common/text_input2.js",
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",
@@ -302,12 +311,7 @@
 			"common/Native/native_graphics.js",
 						
 			"vendor/easysax.js",
-			"common/openxml.js",
-			"common/Shapes/SerializeXml.js",
-			"common/SerializeChartXml.js",
-			"common/SerializeMathXml.js",
-			"word/Editor/SerializeXml.js",
-			"word/Editor/SerializeXmlAssets.js"
+			"common/openxml.js"
 		],
 		"desktop": {
 			"min": [
@@ -327,6 +331,7 @@
 		"mobile": [
 			"common/libfont/engine/fonts_native.js",
 			"common/Charts/ChartStyles.js",
+			"common/SmartArts/SmartArtPresets.js",
 			"common/Native/Wrappers/HtmlPage.js",
 			"common/Native/Wrappers/DrawingStream.js",
 			"common/Native/Wrappers/ShapeDrawer.js",

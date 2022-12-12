@@ -337,6 +337,11 @@
 		return window['SockJS'] || require('sockjs');
 	}
 
+	function getSocketIO()
+	{
+		return typeof window['io'] === 'function' ? window['io'] : require("socketio");
+	}
+
 	function getBaseUrl()
 	{
 		var indexHtml = window["location"]["href"];
@@ -346,6 +351,15 @@
 			indexHtml = indexHtml.substring(0, questInd);
 		}
     		return indexHtml.substring(0, indexHtml.lastIndexOf("/") + 1);
+	}
+	function getBaseUrlPathname()
+	{
+		let baseUrl = getBaseUrl();
+		return baseUrl.substring(getIndex(baseUrl, '/', 3));
+	}
+
+	function getIndex(str, substring, n) {
+		return str.split(substring).slice(0, n).join(substring).length;
 	}
 
 	function getEncodingParams()
@@ -438,7 +452,7 @@
 						 },
 		getImageUrl:     function (strPath)
 						 {
-							 return this.getUrl(this.mediaPrefix + strPath) || strPath;
+							 return this.getUrl(this.mediaPrefix + strPath);
 						 },
 		getImageLocal:   function (url)
 						 {
@@ -644,6 +658,43 @@
 		}
 		return stream;
 	}
+
+	function isPdfFormatFile(stream) {
+		let part = AscCommon.UTF8ArrayToString(stream, 0, 4096);//MIN_SIZE_BUFFER
+		return -1 !== part.indexOf("%PDF-");
+	}
+
+	function isDjvuFormatFile(stream) {
+		return stream.length > 4 && 0x41 == stream[0] && 0x54 == stream[1] && 0x26 == stream[2] &&
+			0x54 == stream[3] && 0x46 == stream[4] && 0x4f == stream[5] && 0x52 == stream[6] && 0x4d == stream[7];
+	}
+
+	function isXpsFormatFile(stream) {
+		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
+			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
+			return false;
+		}
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(stream)) {
+			return false;
+		}
+		let _relsBytes = jsZlib.getFile("_rels/.rels");
+		let _rels = _relsBytes ? AscCommon.UTF8ArrayToString(_relsBytes, 0, _relsBytes.length) : "";
+
+		//todo combine pieces
+		let _relsPieceBytes = jsZlib.getFile("_rels/.rels/[0].piece");
+		let _relsPiece = _relsPieceBytes ? AscCommon.UTF8ArrayToString(_relsPieceBytes, 0, _relsPieceBytes.length) : "";
+		jsZlib.close();
+
+		if (-1 !== _rels.indexOf("fixedrepresentation") && (-1 !== _rels.indexOf("/xps/") || -1 !== _rels.indexOf("/oxps/"))) {
+			return true;
+		}
+
+		return !!_relsPiece;
+	}
+	function checkNativeViewerSignature(stream) {
+		return isPdfFormatFile(stream) || isDjvuFormatFile(stream) || isXpsFormatFile(stream);
+	}
 	function checkStreamSignature(stream, Signature) {
 		if (stream.length > Signature.length) {
 			for(var i = 0 ; i < Signature.length; ++i){
@@ -655,37 +706,67 @@
 		}
 		return false;
 	}
-	function checkOOXMLSignature(stream, Signature) {
-		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
+	function checkOOXMLSignature(stream) {
+		return null !== getEditorByOOXMLSignature(stream);
+	}
+	function getEditorByBinSignature(stream, Signature) {
+		if (stream.length > 4) {
+			let signature = AscCommon.UTF8ArrayToString(stream, 0, 4);
+			switch(signature) {
+				case "DOCY":
+					return AscCommon.c_oEditorId.Word;
+				case "XLSY":
+					return AscCommon.c_oEditorId.Spreadsheet;
+				case "PPTY":
+					return AscCommon.c_oEditorId.Presentation;
+			}
+		}
+		return null;
+	}
+	function getEditorByOOXMLSignature(stream) {
+		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] &&
+			0x04 === stream[3])) {
 			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
-			return false;
+			return null;
 		}
 		let jsZlib = new AscCommon.ZLib();
 		if (!jsZlib.open(stream)) {
-			return false;
+			return null;
 		}
 		let contentTypesBytes = jsZlib.getFile("[Content_Types].xml");
 		let contentTypes = contentTypesBytes ? AscCommon.UTF8ArrayToString(contentTypesBytes, 0, contentTypesBytes.length) : "";
 		jsZlib.close();
 
-		return -1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
+		if (-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-word.document.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-word.template.macroEnabledTemplate.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.oform") ||
-			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.docxf") ||
-			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.docxf")) {
+			return AscCommon.c_oEditorId.Word;
+		} else if (-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-excel.template.macroEnabled.main+xml") ||
-			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.binary.macroEnabled.main") ||
-			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.binary.macroEnabled.main")) {
+			return AscCommon.c_oEditorId.Spreadsheet;
+		} else if (-1 !== contentTypes.indexOf(
+				"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml") ||
-			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml");
+			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml")) {
+			return AscCommon.c_oEditorId.Presentation;
+		} else {
+			return null;
+		}
 	}
+	function getEditorBySignature(stream) {
+		let res = getEditorByBinSignature(stream);
+		return null !== res ? res :getEditorByOOXMLSignature (stream);
+	}
+
 	function openFileCommand(docId, binUrl, changesUrl, changesToken, Signature, callback)
 	{
 		var nError = Asc.c_oAscError.ID.No, oResult = new OpenFileResult(), bEndLoadFile = false, bEndLoadChanges = false;
@@ -742,9 +823,14 @@
 					jsZlib.files.forEach(function(path){
 						let data = jsZlib.getFile(path);
 						if (data) {
-							if (path.endsWith('.json')) {
-								let text = AscCommon.UTF8ArrayToString(data, 0, data.length);
-								oResult.changes[parseInt(path.slice('changes'.length))] = JSON.parse(text);
+							if (path.endsWith('.bin') || path.endsWith('.json')) {
+								let index = parseInt(path.slice('changes'.length));
+								if(isBinaryChanges(data)) {
+									oResult.changes[index] = splitBinaryChanges(data);
+								} else {
+									let text = AscCommon.UTF8ArrayToString(data, 0, data.length);
+									oResult.changes[index] = JSON.parse(text);
+								}
 							} else {
 								oZipImages[path] = new Uint8Array(data);
 							}
@@ -862,9 +948,12 @@
 			case c_oAscServerError.ConvertLIMITS :
 				nRes = Asc.c_oAscError.ID.ConvertationOpenLimitError;
 				break;
+			case c_oAscServerError.ConvertPARAMS :
+				nRes = AscCommon.c_oAscAdvancedOptionsAction.Save === nAction ? Asc.c_oAscError.ID.ConvertationSaveError :
+						Asc.c_oAscError.ID.ConvertationOpenFormat;
+				break;
 			case c_oAscServerError.ConvertCONVERT_CORRUPTED :
 			case c_oAscServerError.ConvertLIBREOFFICE :
-			case c_oAscServerError.ConvertPARAMS :
 			case c_oAscServerError.ConvertNEED_PARAMS :
 			case c_oAscServerError.ConvertUnknownFormat :
 			case c_oAscServerError.ConvertReadFile :
@@ -954,6 +1043,11 @@
 			if (_img && _img.Image) {
 				return {width: _img.Image.width, height: _img.Image.height};
 			}
+		}
+		if (window["NATIVE_EDITOR_ENJINE"] && window["native"]["GetImageOriginalSize"]) {
+			var sizes = window["native"]["GetImageOriginalSize"](src);
+			if (sizes)
+				return {width:sizes["W"], height:sizes["H"]};
 		}
 		return {width: 0, height: 0};
 	}
@@ -1773,6 +1867,9 @@
 							if (!window.g_asc_plugins)
 								return;
 
+							if (!window.g_asc_plugins.api.licenseResult || !window.g_asc_plugins.api.licenseResult['advancedApi'])
+								return;
+
 							if (data["subType"] === "internalCommand")
 							{
 								// такие команды перечисляем здесь и считаем их функционалом
@@ -1945,6 +2042,19 @@
 				e.preventDefault();
 				var files = e.dataTransfer.files;
 				var nError = ValidateUploadImage(files);
+
+				if (nError === c_oAscServerError.UploadExtension && 1 === files.length)
+				{
+					let types = e.dataTransfer.types;
+					for (let i = 0, len = types.length; i < len; i++)
+					{
+						if (types[i] === "text" || types[i] === "text/plain" || types[i] === "text/html")
+						{
+							nError = c_oAscServerError.UploadCountFiles;
+							break;
+						}
+					}
+				}
 
                 var editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
                 editor.endInlineDropTarget(e);
@@ -2392,6 +2502,8 @@
 		rx_ref3D_quoted       = new XRegExp("^'(?<name_from>(?:''|[^\\[\\]'\\/*?:])*)(?::(?<name_to>(?:''|[^\\[\\]'\\/*?:])*))?'!"),
 		rx_ref3D_non_quoted_2 = new XRegExp("^(?<name_from>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*)(:(?<name_to>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*))?!", "i"),
 		rx_ref3D              = new XRegExp("^(?<name_from>[^:]+)(:(?<name_to>[^:]+))?!"),
+		rx_ref_external       = /^(\[{1}(\d*)\]{1})/,
+		rx_ref_external2      = /^(\[{1}(\d*)\]{1})/,
 		rx_number             = /^ *[+-]?\d*(\d|\.)\d*([eE][+-]?\d+)?/,
 		rx_RightParentheses   = /^ *\)/,
 		rx_Comma              = /^ *[,;] */,
@@ -2422,10 +2534,56 @@
 		ipRe                  = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(((1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9])\.){3}(1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9]))(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?/i,
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
-		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa):\/\/)|(mailto:)).*/i,
+		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|smb):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
+
+
+	function parseExternalLink(url) {
+		//var regExpExceptExternalLink = /('?[a-zA-Z0-9\s\[\]\.]{1,99})?'?!?\$?[a-zA-Z]{1,3}\$?[0-9]{1,7}(:\$?[a-zA-Z]{1,3}\$?[0-9]{1,7})?/;
+
+		//'path/[name]Sheet1'!A1
+		var path, name, startLink, i;
+		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
+			for (i = url.length - 1; i >= 0; i--) {
+				if (url[i] === "!" && url[i - 1] === "'") {
+					startLink = true;
+					i--;
+					continue;
+				}
+				if (startLink) {
+					if (name) {
+						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" ||  url[i - 1] === "\\" || (url[i - 1] === "'") && i === 1)) {
+							break;
+						} else {
+							name.end--;
+						}
+					} else {
+						if("]" === url[i]) {
+							name = {start: i, end: i};
+						}
+					}
+				}
+			}
+			if (name) {
+				var fullname = url.substring(0, name.start + 1);
+				path = url.substring(1, name.end - 1);
+				name = url.substring(name.end, name.start);
+				return {name: name, path: path, fullname: fullname};
+			}
+		} else if (url && url[0] === "[") { // [name]Sheet1!A1
+			for (i = 1; i < url.length; i++) {
+				if (url[i] === "]") {
+					return {name: url.substring(1, i), path: "", fullname:  url.substring(0, i + 1)};
+				}
+			}
+		} else if (true) { //https://s3.amazonaws.com/nct-files/xlsx/[ExternalLinksDestination.xlsx]Sheet1!A1:A2
+
+		}
+
+		return null;
+	}
 
 	function getUrlType(url)
 	{
@@ -2814,17 +2972,42 @@
 			this._reset();
 		}
 
-		var subSTR = formula.substring(start_pos),
-			match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		//проверям на [0-9] - в таком виде мы получаем ссылки при открытии.
+		var subSTR = formula.substring(start_pos);
+		var external = XRegExp.exec(subSTR, rx_ref_external);
+		var externalLength = 0;
+		if (external && external[2]) {
+			externalLength = external[0].length;
+			subSTR = formula.substring(start_pos + externalLength);
+			external = external[2];
+		} else {
+			//1. при вводе в ячейку
+			//проверям на наличие ссылки при вводе 'C:\Users\[test.xlsx]Sheet1'!$A$1 (с обратным слэшем тоже нужно распознать) / 'https://test.net/[test.xlsx]Sheet1'!$A$1
+			//необходимо вычленить имя файла и путь к нему, затем проверить путь
+			//если путь указан, то ссылка должна быть в одинарных кавычках, если указан просто название файла в [] - в мс это означает, что данный файл открыт, при его закрытии путь проставляется
+			//пока не реализовываем с открытыми файлами, работаем только с путями
+			external = parseExternalLink(subSTR);
+			if (external) {
+				externalLength = external.fullname.length;
+				subSTR = formula.substring(start_pos + externalLength);
+				if (-1 !== subSTR.indexOf("'")) {
+					externalLength += 1;
+				}
+				subSTR = subSTR.replace("'", "");
+				external = external.path + external.name;
+			}
+		}
+
+		var match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
 		if(!match && support_digital_start) {
 			match = XRegExp.exec(subSTR, rx_ref3D_non_quoted_2);
 		}
 
 		if (match != null)
 		{
-			this.pCurrPos += match[0].length;
+			this.pCurrPos += match[0].length + externalLength;
 			this.operand_str = match[1];
-			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null];
+			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
 		}
 		return [false, null, null];
 	};
@@ -3363,6 +3546,7 @@
 			}
 			else if (Asc.c_oAscSelectionDialogType.ConditionalFormattingRule === dialogType)
 			{
+
 				if (dataRange === null || dataRange === "")
 				{
 					return Asc.c_oAscError.ID.DataRangeError;
@@ -3372,9 +3556,18 @@
 					if (dataRange[0] === "=") {
 						dataRange = dataRange.slice(1);
 					}
+
 					if (!parserHelp.isArea(dataRange) && !parserHelp.isRef(dataRange) && !parserHelp.isTable(dataRange))
 					{
 						return Asc.c_oAscError.ID.DataRangeError;
+					}
+
+					if (model) {
+						var aRanges = AscCommonExcel.getRangeByRef(dataRange, model.getActiveWs())
+						if (aRanges && aRanges.length === 0)
+						{
+							return Asc.c_oAscError.ID.DataRangeError;
+						}
 					}
 				}
 			}
@@ -3835,9 +4028,17 @@
 		this.m_pData.Data.UseArray = true;
 		this.m_pData.Data.PosArray = this.m_aPositions;
 
-		Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
-		Binary_Writer.WriteLong(this.m_pData.Data.Type);
-		this.m_pData.Data.WriteToBinary(Binary_Writer);
+		if ((Asc.editor || editor).binaryChanges) {
+			Binary_Writer.WriteWithLen(this, function() {
+				Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
+				Binary_Writer.WriteLong(this.m_pData.Data.Type);
+				this.m_pData.Data.WriteToBinary(Binary_Writer);
+			});
+		} else {
+			Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
+			Binary_Writer.WriteLong(this.m_pData.Data.Type);
+			this.m_pData.Data.WriteToBinary(Binary_Writer);
+		}
 
 		var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
 
@@ -8999,6 +9200,15 @@
 	}
 
 	/**
+	 * @param unicode
+	 * @returns {boolean}
+	 */
+	function IsPunctuation(unicode)
+	{
+		return !!(AscCommon.g_aPunctuation[unicode])
+	}
+
+	/**
 	 * Присутствует ли символ заданного шрифта в шрифте ASCW3
 	 * @param sFontFamily
 	 * @param nUnicode
@@ -9449,6 +9659,26 @@
 		return "0" !== val && "false" !== val && "off" !== val;
 	}
 
+	function isBinaryChanges(data) {
+		return 'CHANGES\t' === AscCommon.UTF8ArrayToString(data, 0, 'CHANGES;'.length);
+	}
+	function splitBinaryChanges(data) {
+		let changes = [];
+		let stream = new AscCommon.FT_Stream2(data, data.length);
+		//skip header
+		let charCode = "\n".charCodeAt(0);
+		while(charCode !== stream.GetByte()) {
+			;
+		}
+		while (stream.GetCurPos() < stream.GetSize()) {
+			let oldPos = stream.GetCurPos();
+			let size = stream.GetULong();
+			changes.push(data.subarray(oldPos, oldPos + size));
+			stream.Skip2(size);
+		}
+		return changes;
+	}
+
 	function CUserCacheColor(nColor)
 	{
 		this.Light = null;
@@ -9541,11 +9771,18 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
+	function loadSmartArtPresets(onSuccess, onError) {
+		loadScript('../../../../sdkjs/common/SmartArts/SmartArtPresets.js', onSuccess, onError);
+	}
+
 	function getAltGr(e)
 	{
+		if (true === e["altGraphKey"])
+			return true;
+
 		var ctrlKey = e.metaKey || e.ctrlKey;
 		var altKey = e.altKey;
-		return (altKey && (AscBrowser.isMacOs ? !ctrlKey : ctrlKey));
+		return (altKey && ctrlKey);
 	}
 
 	function getColorSchemeByName(sName)
@@ -10015,7 +10252,7 @@
 
 
 		const textPr = numberInfo.textPr.Copy();
-		textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
+		textPr.FontSize = textPr.FontSizeCS = this.getFontSizeByLineHeight(line_distance);
 		if (bullet.m_sSrc) {
 			const formatBullet = new AscFormat.CBullet();
 			formatBullet.fillBulletImage(bullet.m_sSrc);
@@ -10086,15 +10323,21 @@
 			ctx.beginPath();
 			const textYx =  text_base_offset_x - ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 			const	textYy = y + (line_w * 2.5);
-
+			const nLineHeight = line_distance - 4;
+			textPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
 			if (bullet.m_sSrc) {
-				this.drawImageBulletsWithLines(bullet.m_sSrc, textPr, textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
+				this.drawImageBulletsWithLines(bullet.m_sSrc, textPr, textYx, textYy, nLineHeight, ctx, width_px, height_px);
 			} else {
-				this.privateGetParagraphByString(bullet.getDrawingText(j + 1), textPr, textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
+				this.privateGetParagraphByString(bullet.getDrawingText(j + 1), textPr, textYx, textYy, nLineHeight, ctx, width_px, height_px);
 			}
 			y += (line_w + line_distance);
 		}
 	}
+
+	CBulletPreviewDrawer.prototype.getFontSizeByLineHeight = function (nLineHeight)
+	{
+		return ((2 * nLineHeight * 72 / 96) >> 0) / 2;
+	};
 
 	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (divId, info)
 	{
@@ -10105,37 +10348,42 @@
 		const ctx = canvas.getContext("2d");
 		ctx.beginPath();
 
-
 		const lvl = info;
 		const text = lvl.bullet.getDrawingText();
-		const line_distance = (height_px === 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 1 : 2));
-
-
 
 		const oNewShape = new AscFormat.CShape();
 		oNewShape.createTextBody();
+		oNewShape.extX = width_px * AscCommon.g_dKoef_pix_to_mm;
+		oNewShape.extY = height_px * AscCommon.g_dKoef_pix_to_mm;
+		oNewShape.contentWidth = oNewShape.extX;
+
 		const par = oNewShape.txBody.content.GetAllParagraphs()[0];
 		par.MoveCursorToStartPos();
 		par.Pr = new AscCommonWord.CParaPr();
 
 		const parRun = new AscCommonWord.ParaRun(par);
 		const textPr = lvl.textPr.Copy();
-		textPr.FontSize = ((2 * line_distance * 72 / 96) >> 0) / 2;
 		parRun.Set_Pr(textPr);
 		parRun.AddText(text);
 		par.AddToContent(0, parRun);
 
-		par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-		par.Recalculate_Page(0);
+		let nLineHeight = (height_px === 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 1 : 2));
+		textPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
 
-		const bounds = par.Get_PageBounds(0);
+		par.TextPr.SetFontSize(textPr.FontSize);
 
-		const parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-		const parH = (bounds.Bottom - bounds.Top);
+		let parW = par.RecalculateMinMaxContentWidth().Max;
+		if (parW > oNewShape.contentWidth) {
+			oNewShape.findFitFontSizeForSmartArt(true);
+			parW = par.RecalculateMinMaxContentWidth().Max;
+		}
+
+		parW = parW * AscCommon.g_dKoef_mm_to_pix;
+
+		nLineHeight = par.Get_EmptyHeight();
 		const x = (width_px - (parW >> 0)) >> 1;
-		const y = (height_px >> 1) + (parH >> 0);
-
-		this.privateGetParagraphByString(text, textPr, x, y, line_distance, ctx, width_px, height_px);
+		const y = (height_px >> 1) + (nLineHeight >> 0);
+		this.privateGetParagraphByString(text, textPr, x, y, nLineHeight, ctx, width_px, height_px);
 	}
 
 	CBulletPreviewDrawer.prototype.privateGetParagraphByString = function(text, textPr, x, y, lineHeight, ctx, w, h)
@@ -10157,7 +10405,6 @@
 		//par.Pr = level.ParaPr.Copy();
 		par.Pr = new AscCommonWord.CParaPr();
 		textPr = textPr.Copy();
-		textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
 
 		const parRun = new AscCommonWord.ParaRun(par);
 		parRun.Set_Pr(textPr);
@@ -10909,7 +11156,11 @@
                 {
                     if (_array[i]["change"].length > _checkPrefixLen)
                     {
-                    	_prefix = _array[i]["change"].substr(0, _checkPrefixLen);
+						if((Asc.editor || editor).binaryChanges) {
+							_prefix = String.prototype.fromUtf8(_array[i]["change"], 0, _checkPrefixLen);
+						} else {
+							_prefix = _array[i]["change"].substr(0, _checkPrefixLen);
+						}
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;
@@ -10928,7 +11179,11 @@
                 {
                     if (_array[i].length > _checkPrefixLen)
                     {
-                        _prefix = _array[i].substr(0, _checkPrefixLen);
+						if((Asc.editor || editor).binaryChanges) {
+							_prefix = String.prototype.fromUtf8(_array[i], 0, _checkPrefixLen);
+						} else {
+							_prefix = _array[i].substr(0, _checkPrefixLen);
+						}
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;
@@ -10943,7 +11198,11 @@
                 {
                     if (_array[i].m_pData.length > _checkPrefixLen)
                     {
-                        _prefix = _array[i].m_pData.substr(0, _checkPrefixLen);
+						if((Asc.editor || editor).binaryChanges) {
+							_prefix = String.prototype.fromUtf8(_array[i].m_pData, 0, _checkPrefixLen);
+						} else {
+							_prefix = _array[i].m_pData.substr(0, _checkPrefixLen);
+						}
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;
@@ -12819,10 +13078,207 @@
 		return sAction.indexOf("ppaction://hlink") === 0;
 	}
 
+	function generateHashParams() {
+		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64()};
+	}
+
+	function fromModelAlgorithmName(alg) {
+		switch (alg) {
+			case AscCommon.c_oSerAlgorithmNameTypes.MD2 :
+				alg = AscCommon.HashAlgs.MD2;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.MD4 :
+				alg = AscCommon.HashAlgs.MD4;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.MD5 :
+				alg = AscCommon.HashAlgs.MD5;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_160 :
+				alg = AscCommon.HashAlgs.RMD160;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_1 :
+				alg = AscCommon.HashAlgs.SHA1;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_256 :
+				alg = AscCommon.HashAlgs.SHA256;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_384 :
+				alg = AscCommon.HashAlgs.SHA384;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_512 :
+				alg = AscCommon.HashAlgs.SHA512;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.WHIRLPOOL :
+				alg = AscCommon.HashAlgs.WHIRLPOOL;
+				break;
+			default:
+				alg = AscCommon.HashAlgs.SHA256;
+		}
+		return alg;
+	}
+
+	function fromModelCryptAlgorithmSid(alg) {
+		var res = null;
+		switch (alg) {
+			case AscCommon.c_oSerCryptAlgorithmSid.MD2 :
+				res = AscCommon.HashAlgs.MD2;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.MD4 :
+				res = AscCommon.HashAlgs.MD4;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.MD5 :
+				res = AscCommon.HashAlgs.MD5;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_1 :
+				res = AscCommon.HashAlgs.SHA1;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.MAC :
+				//alg = AscCommon.HashAlgs.SHA1;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.RIPEMD :
+				//alg = AscCommon.HashAlgs.SHA256;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.RIPEMD_160 :
+				//alg = AscCommon.HashAlgs.SHA384;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.HMAC :
+				//alg = AscCommon.HashAlgs.SHA512;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_256 :
+				res = AscCommon.HashAlgs.SHA256;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_384 :
+				res = AscCommon.HashAlgs.SHA384;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_512 :
+				res = AscCommon.HashAlgs.SHA512;
+				break;
+		}
+		return res;
+	}
+
+	function getMemoryInfo() {
+		if(!(window.performance && window.performance.memory)) {
+			return "";
+		}
+		//https://gist.github.com/oryanmoshe/6b3ecd895c8a5eb9ae4ec4554f687737#file-window-performance-memory-1-js
+		return JSON.stringify(Object.getOwnPropertyNames(window.performance.memory.__proto__).reduce((acc,key) => {
+				if (key !== 'constructor')
+					acc[key] = window.performance.memory[key];
+				return acc;
+			}, {})
+		);
+	}
+	function getClientInfoString(type, opt_time, opt_memory) {
+		let res = type;
+		if (opt_time >= 0) {
+			res += ' time:' + Math.round(opt_time);
+		}
+		if (opt_memory) {
+			res += ' memory:' + opt_memory;
+		}
+		return res;
+	}
+	function sendClientLog(level, msg, api) {
+		if (!api) {
+			return;
+		}
+		api.CoAuthoringApi.sendClientLog(level, msg);
+	}
+
+	function getNativePrintRanges(sRanges, currentPageSrc, pagescount)
+	{
+		let pages = undefined;
+		switch (sRanges)
+		{
+			case "current":
+			{
+				let currentPage =  currentPageSrc;
+				if (undefined === currentPage)
+					currentPage = 1;
+				if (currentPage >= 1 && currentPage <= pagescount)
+				{
+					pages = new Array(pagescount);
+					pages[currentPage - 1] = true;
+				}
+				break;
+			}
+			case "all":
+			{
+				break;
+			}
+			default:
+			{
+				let ranges = sRanges.split(",");
+				for (let range = 0, rangesCount = ranges.length; range < rangesCount; range++)
+				{
+					if (ranges[range] === "")
+						continue;
+
+					let rangePages = ranges[range].split("-");
+					let rangeLen = rangePages.length;
+
+					let startPage = 1;
+					let endPage = pagescount;
+
+					switch (rangeLen)
+					{
+						case 0:
+						{
+							break;
+						}
+						case 1:
+						{
+							let pageNum = parseInt(rangePages[0]);
+							if (pageNum > 0 && pageNum <= pagescount)
+							{
+								startPage = pageNum;
+								endPage = pageNum;
+							}
+							break;
+						}
+						default:
+						{
+							if (rangePages[0] !== "")
+							{
+								let pageNum = parseInt(rangePages[0]);
+								if (pageNum > 0 && pageNum <= pagescount)
+								{
+									startPage = pageNum;
+								}
+							}
+							if (rangePages[1] !== "")
+							{
+								let pageNum = parseInt(rangePages[1]);
+								if (pageNum > 0 && pageNum <= pagescount)
+								{
+									endPage = pageNum;
+								}
+							}
+						}
+					}
+
+					if (startPage <= endPage)
+					{
+						if (pages === undefined)
+							pages = new Array(pagescount);
+
+						for (let i = startPage; i <= endPage; i++)
+							pages[i - 1] = true;
+					}
+				}
+			}
+		}
+		return pages;
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
+	window["AscCommon"].getSocketIO = getSocketIO;
 	window["AscCommon"].getBaseUrl = getBaseUrl;
+	window["AscCommon"].getBaseUrlPathname = getBaseUrlPathname;
+	window["AscCommon"].getIndex = getIndex;
 	window["AscCommon"].getEncodingParams = getEncodingParams;
 	window["AscCommon"].getEncodingByBOM = getEncodingByBOM;
 	window["AscCommon"].saveWithParts = saveWithParts;
@@ -12873,6 +13329,8 @@
 	window["AscCommon"].initStreamFromResponse = initStreamFromResponse;
 	window["AscCommon"].checkStreamSignature = checkStreamSignature;
 	window["AscCommon"].checkOOXMLSignature = checkOOXMLSignature;
+	window["AscCommon"].checkNativeViewerSignature = checkNativeViewerSignature;
+	window["AscCommon"].getEditorBySignature = getEditorBySignature;
 
 	window["AscCommon"].DocumentUrls = DocumentUrls;
 	window["AscCommon"].OpenFileResult = OpenFileResult;
@@ -12885,7 +13343,7 @@
 	window["AscCommon"].MMToTwips = MMToTwips;
 	window["AscCommon"].RomanToInt = RomanToInt;
 	window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
-	window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
+	window["Asc"]["IntToNumberFormat"] = window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
 	window["AscCommon"].IsSpace = IsSpace;
 	window["AscCommon"].IntToHex = IntToHex;
 	window["AscCommon"].Int32ToHex = Int32ToHex;
@@ -12895,6 +13353,7 @@
 	window["AscCommon"].ByteToHex = ByteToHex;
 	window["AscCommon"].IsDigit = IsDigit;
 	window["AscCommon"].IsLetter = IsLetter;
+	window["AscCommon"].IsPunctuation = window["AscCommon"]['IsPunctuation'] = IsPunctuation;
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
@@ -12902,6 +13361,7 @@
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
+    window["AscCommon"].loadSmartArtPresets = loadSmartArtPresets;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;
@@ -12996,6 +13456,14 @@
 	window['AscCommon'].g_oCRC32  = g_oCRC32;
 	window["AscCommon"].RangeTopBottomIterator = RangeTopBottomIterator;
 	window["AscCommon"].IsLinkPPAction = IsLinkPPAction;
+	window["AscCommon"].generateHashParams = generateHashParams;
+	window["AscCommon"].fromModelAlgorithmName = fromModelAlgorithmName;
+	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;
+	window["AscCommon"].getMemoryInfo = getMemoryInfo;
+	window["AscCommon"].getClientInfoString = getClientInfoString;
+	window["AscCommon"].sendClientLog = sendClientLog;
+
+	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
@@ -13069,7 +13537,7 @@ window["asc_IsNeedBuildCryptedFile"] = function()
         }
         else
         {
-            if (0 != AscCommon.CollaborativeEditing.m_aAllChanges.length)
+            if (0 != AscCommon.CollaborativeEditing.GetAllChangesCount())
                 _returnValue = true;
         }
     }

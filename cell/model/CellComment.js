@@ -226,6 +226,40 @@ function (window, undefined) {
 			this.aReplies.push(comment.aReplies[i].clone(uniqueGuid));
 		}
 	};
+	asc_CCommentData.prototype.ReadFromSimpleObject = function(oData)
+    {
+        if (!oData)
+            return;
+
+        if (oData["Text"])
+            this.sText = oData["Text"];
+
+        if (oData["Time"])
+            this.sTime = oData["Time"];
+
+        if (oData["UserName"])
+            this.sUserName = oData["UserName"];
+        
+        if (oData["UserId"])
+            this.sUserId = oData["UserId"];
+
+        if (oData["Solved"])
+            this.bSolved = oData["Solved"];
+
+        if (oData["UserData"])
+            this.m_sUserData = oData["UserData"];
+
+        if (oData["Replies"] && oData["Replies"].length)
+        {
+            for (var nIndex = 0, nCount = oData["Replies"].length; nIndex < nCount; ++nIndex)
+            {
+                var oCD = new asc_CCommentData();
+                oCD.ReadFromSimpleObject(oData["Replies"][nIndex]);
+                this.aReplies.push(oCD);
+            }
+        }
+    };
+
 	asc_CCommentData.prototype.guid = function () {
 		function S4() {
 			return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);

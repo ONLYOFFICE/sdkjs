@@ -139,6 +139,11 @@ Asc['asc_docs_api'].prototype.SetDocumentModified = function(bValue)
     }
 };
 
+Asc['asc_docs_api'].prototype._saveLocalCheck = function()
+{
+	return !this.isLongAction();
+};
+
 Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack, options)
 {
 	if (!isResaveAttack && !isSaveAs && !this.asc_isDocumentCanSave())
@@ -152,7 +157,7 @@ Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isRes
 		this.LastUserSavedIndex = AscCommon.History.UserSavedIndex;
 	}
 
-    if (true === this.canSave && this._saveCheck())
+    if (true === this.canSave && this._saveLocalCheck())
 	{
 		var _isNaturalSave = this.IsUserSave;
 		this.canSave = false;
@@ -196,6 +201,16 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 			"openedAt" : editor.openedAt
 		}
 	};
+
+	if (options && options.advancedOptions)
+	{
+		let nativeOptions = options.advancedOptions.asc_getNativeOptions();
+		if (nativeOptions)
+		{
+			jsonOptions["nativeOptions"] = nativeOptions;
+			jsonOptions["nativeOptions"]["currentPage"] = editor.getCurrentPage() + 1;
+ 		}
+	}
 
 	window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? editor.currentPassword : password, docinfo, (options && options.fileType) ? options.fileType : 0, JSON.stringify(jsonOptions));
 };

@@ -210,6 +210,8 @@ CSdtBase.prototype.IsContentControlTemporary = function()
  */
 CSdtBase.prototype.SetFormPr = function(oFormPr)
 {
+	this.private_CheckKeyValueBeforeSet(oFormPr);
+
 	if ((!this.Pr.FormPr && oFormPr) || !this.Pr.FormPr.IsEqual(oFormPr))
 	{
 		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr));
@@ -221,7 +223,23 @@ CSdtBase.prototype.SetFormPr = function(oFormPr)
 
 		this.private_OnAddFormPr();
 	}
-}
+};
+CSdtBase.prototype.private_CheckKeyValueBeforeSet = function(formPr)
+{
+	if (!this.Pr.FormPr || !formPr)
+		return;
+
+	let newKey = formPr.GetKey();
+	if (!newKey)
+		newKey = "";
+
+	newKey = newKey.trim();
+
+	if ("" === newKey)
+		formPr.SetKey(this.Pr.FormPr.GetKey());
+	else
+		formPr.SetKey(newKey);
+};
 /**
  * Удаляем настройки специальных форм
  */
@@ -295,6 +313,14 @@ CSdtBase.prototype.GetFormKey = function()
 		return undefined;
 
 	return (this.Pr.FormPr.Key);
+};
+/**
+ * Проверяем, является ли данный контейнер чекбоксом
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsCheckBox = function()
+{
+	return false;
 };
 /**
  * Проверяем, является ли заданный контрол радио-кнопкой
@@ -751,4 +777,57 @@ CSdtBase.prototype.GetSubFormFromCurrentPosition = function(isForward)
 		return null;
 
 	return oParent.GetSubFormFromCurrentPosition(isForward);
+};
+CSdtBase.prototype.IsBuiltInTableOfContents = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && this.Pr.DocPartObj.Gallery === "Table of Contents");
+};
+CSdtBase.prototype.IsBuiltInWatermark = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && (this.Pr.DocPartObj.Gallery === "Watermarks" || this.Pr.DocPartObj.Gallery === "Watermark"));
+};
+CSdtBase.prototype.IsBuiltInUnique = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && true === this.Pr.DocPartObj.Unique);
+};
+CSdtBase.prototype.GetInnerText = function()
+{
+	return "";
+};
+CSdtBase.prototype.GetFormValue = function()
+{
+	if (!this.IsForm())
+		return null;
+
+	if (this.IsPlaceHolder())
+		return this.IsCheckBox() ? false : "";
+
+	if (this.IsComplexForm())
+	{
+		return this.GetInnerText();
+	}
+	else if (this.IsCheckBox())
+	{
+		return this.IsCheckBoxChecked();
+	}
+	else if (this.IsPictureForm())
+	{
+		let oImg;
+		let allDrawings = this.GetAllDrawingObjects();
+		for (let nDrawing = 0; nDrawing < allDrawings.length; ++nDrawing)
+		{
+			if (allDrawings[nDrawing].IsPicture())
+			{
+				oImg = allDrawings[nDrawing].GraphicObj;
+				break;
+			}
+		}
+
+		return oImg ? oImg.getBase64Img() : "";
+	}
+
+	return this.GetInnerText();
+};
+CSdtBase.prototype.MoveCursorOutsideForm = function(isBefore)
+{
 };

@@ -156,7 +156,7 @@
 		this.fKeyMouseMove = null;
 		//-----------------
 
-		this.objAutoComplete = {};
+		this.objAutoComplete = new Map();
 		this.sAutoComplete = null;
 		this.eventListeners = [];
 
@@ -396,7 +396,7 @@
 			}
 
 			// delete autoComplete
-			t.objAutoComplete = {};
+			t.objAutoComplete.clear();
 
 			// Сброс состояния редактора
 			t._setEditorState(c_oAscCellEditorState.editEnd);
@@ -408,6 +408,10 @@
 				return true;
 			}
 		};
+
+		if (this.isStartCompositeInput()) {
+			this.End_CompositeInput();
+		}
 
 		if (saveValue) {
 			// Пересчет делаем всегда для не пустой ячейки или если были изменения. http://bugzilla.onlyoffice.com/show_bug.cgi?id=34864
@@ -448,7 +452,7 @@
 		}
 
 		// delete autoComplete
-		this.objAutoComplete = {};
+		this.objAutoComplete.clear();
 
 		// Сброс состояния редактора
 		this._setEditorState(c_oAscCellEditorState.editEnd);
@@ -834,7 +838,7 @@
 		this.undoList = [];
 		this.redoList = [];
 		this.undoMode = false;
-		this.skipKeyPress = false;
+		this._setSkipKeyPress(false);
 
 		this.updateWizardMode(false);
 	};
@@ -1548,17 +1552,18 @@
 
 	CellEditor.prototype._updateCursorPosition = function (redrawText) {
 		// ToDo стоит переправить данную функцию
-		var h = this.canvas.height;
-		var y = -this.textRender.calcLineOffset(this.topLineIndex);
-		var cur = this.textRender.calcCharOffset(this.cursorPos);
-		var charsCount = this.textRender.getCharsCount();
-		var curLeft = asc_round(
-			((AscCommon.align_Right !== this.textFlags.textAlign || this.cursorPos !== charsCount) && cur !== null &&
+		let h = this.canvas.height;
+		let y = -this.textRender.calcLineOffset(this.topLineIndex);
+		let cur = this.textRender.calcCharOffset(this.cursorPos);
+		let charsCount = this.textRender.getCharsCount();
+		let textAlign = this.textFlags && this.textFlags.textAlign;
+		let curLeft = asc_round(
+			((AscCommon.align_Right !== textAlign || this.cursorPos !== charsCount) && cur !== null &&
 			cur.left !== null ? cur.left : this._getContentPosition()) * this.kx);
-		var curTop = asc_round(((cur !== null ? cur.top : 0) + y) * this.ky);
-		var curHeight = asc_round((cur !== null ? cur.height : this._getContentHeight()) * this.ky);
-		var i, dy, nCount = this.textRender.getLinesCount();
-		var zoom = this.getZoom();
+		let curTop = asc_round(((cur !== null ? cur.top : 0) + y) * this.ky);
+		let curHeight = asc_round((cur !== null ? cur.height : this._getContentHeight()) * this.ky);
+		let i, dy, nCount = this.textRender.getLinesCount();
+		let zoom = this.getZoom();
 
 		while (1 < nCount) {
 			if (curTop + curHeight - 1 > h) {
@@ -1620,7 +1625,7 @@
 			this.handlers.trigger( "updateMenuEditorCursorPosition", curTop, curHeight );
 		}
 
-		//var fCurrent = this._getEditableFunction(null, true);
+		//let fCurrent = this._getEditableFunction(null, true);
 		//console.log("func: " + fCurrent.func + " arg: " + fCurrent.argPos);
 		this._updateSelectionInfo();
 	};
@@ -2035,15 +2040,19 @@
 		return pos === end ? {index: i - 1, begin: begin, end: end} : undefined;
 	};
 
-	CellEditor.prototype._findFragmentToInsertInto = function ( pos ) {
-		var opt = this.options, i, begin, end;
+	CellEditor.prototype._findFragmentToInsertInto = function ( pos, fragments ) {
+		var i, begin, end;
 
-		for ( i = 0, begin = 0; i < opt.fragments.length; ++i ) {
-			end = begin + opt.fragments[i].getCharCodesLength();
+		if (!fragments) {
+			fragments = this.options.fragments;
+		}
+
+		for ( i = 0, begin = 0; i < fragments.length; ++i ) {
+			end = begin + fragments[i].getCharCodesLength();
 			if ( pos >= begin && pos <= end ) {
 				return {index: i, begin: begin, end: end};
 			}
-			if ( i < opt.fragments.length - 1 ) {
+			if ( i < fragments.length - 1 ) {
 				begin = end;
 			}
 		}
@@ -2137,19 +2146,23 @@
 		}
 	};
 
-	CellEditor.prototype._mergeFragments = function () {
-		var t = this, opt = t.options, i;
+	CellEditor.prototype._mergeFragments = function (fragments) {
+		var i;
+		
+		if (!fragments) {
+			fragments = this.options.fragments;
+		}
 
-		for (i = 0; i < opt.fragments.length;) {
-			if (opt.fragments[i].getCharCodesLength() < 1 && opt.fragments.length > 1) {
-				opt.fragments.splice(i, 1);
+		for (i = 0; i < fragments.length;) {
+			if (fragments[i].getCharCodesLength() < 1 && fragments.length > 1) {
+				fragments.splice(i, 1);
 				continue;
 			}
-			if (i < opt.fragments.length - 1) {
-				var fr = opt.fragments[i];
-				var nextFr = opt.fragments[i + 1];
+			if (i < fragments.length - 1) {
+				var fr = fragments[i];
+				var nextFr = fragments[i + 1];
 				if (fr.format.isEqual(nextFr.format)) {
-					opt.fragments.splice(i, 2, new Fragment({format: fr.format, charCodes: fr.getCharCodes().concat(nextFr.getCharCodes())}));
+					fragments.splice(i, 2, new Fragment({format: fr.format, charCodes: fr.getCharCodes().concat(nextFr.getCharCodes())}));
 					continue;
 				}
 			}
@@ -2279,7 +2292,7 @@
 	CellEditor.prototype._getAutoComplete = function (str) {
 		// ToDo можно ускорить делая поиск каждый раз не в большом массиве, а в уменьшенном (по предыдущим символам)
 		//TODO оставляю текст!
-		var oLastResult = this.objAutoComplete[str];
+		var oLastResult = this.objAutoComplete.get(str);
 		if (oLastResult) {
 			return oLastResult;
 		}
@@ -2292,7 +2305,8 @@
 				arrResult.push(arrAutoComplete[i]);
 			}
 		}
-		return this.objAutoComplete[str] = arrResult;
+		this.objAutoComplete.set(str, arrResult);
+		return arrResult;
 	};
 
 	CellEditor.prototype._updateSelectionInfo = function () {
@@ -2333,7 +2347,7 @@
 			t.lastKeyCode = event.which;
 		}
 
-		t.skipKeyPress = true;
+		t._setSkipKeyPress(true);
 		t.skipTLUpdate = false;
 
 		// определение ввода иероглифов
@@ -2402,87 +2416,13 @@
 				t._removeChars(ctrlKey ? kPrevWord : kPrevChar);
 				return false;
 
-			case 46:  // "del"
-				if (!this.enableKeyEvents || event.shiftKey) {
-					break;
-				}
+			case 32:  // "space"
 
-				if (hieroglyph) {
-					t._syncEditors();
-				}
+				t._addChars(String.fromCharCode(32));
 				event.stopPropagation();
 				event.preventDefault();
-				t._removeChars(ctrlKey ? kNextWord : kNextChar);
-				return true;
 
-			case 37:  // "left"
-				if (!this.enableKeyEvents) {
-					this._delayedUpdateCursorByTopLine();
-					break;
-				}
-
-				event.stopPropagation();
-				event.preventDefault();
-				if (!t.hasFocus) {
-					break;
-				}
-				if (hieroglyph) {
-					t._syncEditors();
-				}
-				kind = ctrlKey ? kPrevWord : kPrevChar;
-				event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
-				return false;
-
-			case 39:  // "right"
-				if (!this.enableKeyEvents) {
-					this._delayedUpdateCursorByTopLine();
-					break;
-				}
-
-				event.stopPropagation();
-				event.preventDefault();
-				if (!t.hasFocus) {
-					break;
-				}
-				if (hieroglyph) {
-					t._syncEditors();
-				}
-				kind = ctrlKey ? kNextWord : kNextChar;
-				event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
-				return false;
-
-			case 38:  // "up"
-				if (!this.enableKeyEvents) {
-					this._delayedUpdateCursorByTopLine();
-					break;
-				}
-
-				event.stopPropagation();
-				event.preventDefault();
-				if (!t.hasFocus) {
-					break;
-				}
-				if (hieroglyph) {
-					t._syncEditors();
-				}
-				event.shiftKey ? t._selectChars(kPrevLine) : t._moveCursor(kPrevLine);
-				return false;
-
-			case 40:  // "down"
-				if (!this.enableKeyEvents) {
-					this._delayedUpdateCursorByTopLine();
-					break;
-				}
-
-				event.stopPropagation();
-				event.preventDefault();
-				if (!t.hasFocus) {
-					break;
-				}
-				if (hieroglyph) {
-					t._syncEditors();
-				}
-				event.shiftKey ? t._selectChars(kNextLine) : t._moveCursor(kNextLine);
+				t._setSkipKeyPress(false);
 				return false;
 
 			case 35:  // "end"
@@ -2520,6 +2460,89 @@
 				kind = ctrlKey ? kBeginOfText : kBeginOfLine;
 				event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
 				return false;
+
+			case 37:  // "left"
+				if (!this.enableKeyEvents) {
+					this._delayedUpdateCursorByTopLine();
+					break;
+				}
+
+				event.stopPropagation();
+				event.preventDefault();
+				if (!t.hasFocus) {
+					break;
+				}
+				if (hieroglyph) {
+					t._syncEditors();
+				}
+				kind = ctrlKey ? kPrevWord : kPrevChar;
+				event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
+				return false;
+
+			case 38:  // "up"
+				if (!this.enableKeyEvents) {
+					this._delayedUpdateCursorByTopLine();
+					break;
+				}
+
+				event.stopPropagation();
+				event.preventDefault();
+				if (!t.hasFocus) {
+					break;
+				}
+				if (hieroglyph) {
+					t._syncEditors();
+				}
+				event.shiftKey ? t._selectChars(kPrevLine) : t._moveCursor(kPrevLine);
+				return false;
+
+			case 39:  // "right"
+				if (!this.enableKeyEvents) {
+					this._delayedUpdateCursorByTopLine();
+					break;
+				}
+
+				event.stopPropagation();
+				event.preventDefault();
+				if (!t.hasFocus) {
+					break;
+				}
+				if (hieroglyph) {
+					t._syncEditors();
+				}
+				kind = ctrlKey ? kNextWord : kNextChar;
+				event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
+				return false;
+
+			case 40:  // "down"
+				if (!this.enableKeyEvents) {
+					this._delayedUpdateCursorByTopLine();
+					break;
+				}
+
+				event.stopPropagation();
+				event.preventDefault();
+				if (!t.hasFocus) {
+					break;
+				}
+				if (hieroglyph) {
+					t._syncEditors();
+				}
+				event.shiftKey ? t._selectChars(kNextLine) : t._moveCursor(kNextLine);
+				return false;
+
+			case 46:  // "del"
+				if (!this.enableKeyEvents || event.shiftKey) {
+					break;
+				}
+
+				if (hieroglyph) {
+					t._syncEditors();
+				}
+				event.stopPropagation();
+				event.preventDefault();
+				t._removeChars(ctrlKey ? kNextWord : kNextChar);
+				return true;
 
 			case 53: // 5
 				if (ctrlKey) {
@@ -2624,6 +2647,13 @@
 				}
 				break;
 
+			case 110: //NumpadDecimal
+				var api = window["Asc"]["editor"];
+				t._addChars(api.asc_getDecimalSeparator());
+				event.stopPropagation();
+				event.preventDefault();
+				return false;
+
 			case 113: // F2
 				if (AscBrowser.isOpera) {
 					event.stopPropagation();
@@ -2651,11 +2681,11 @@
 					event.stopPropagation();
 					event.preventDefault();
 				}
-				t.skipKeyPress = false;
+				t._setSkipKeyPress(false);
 				return false;
 		}
 
-		t.skipKeyPress = false;
+		t._setSkipKeyPress(false);
 		t.skipTLUpdate = true;
 		return true;
 	};
@@ -2665,25 +2695,54 @@
 		var t = this;
 
 		if (!window['IS_NATIVE_EDITOR']) {
+			if (event.which < 32 || t.skipKeyPress) {
+				t._setSkipKeyPress(true);
+				return true;
+			}
+		}
 
+		let Code;
+		if (null != event.which) {
+			Code = event.which;
+		} else if (event.KeyCode) {
+			Code = event.KeyCode;
+		} else {
+			Code = 0;
+		}
+
+		return this.EnterText(Code);
+	};
+
+	CellEditor.prototype.EnterText = function (codePoints) {
+		var t = this;
+
+		if (!window['IS_NATIVE_EDITOR']) {
 			if (!t.isOpened || !t.enableKeyEvents || this.handlers.trigger('getWizard')) {
 				return true;
 			}
-
-			if (t.skipKeyPress || event.which < 32) {
-				t.skipKeyPress = true;
-				return true;
-			}
-
 			// определение ввода иероглифов
 			if (t.isTopLineActive && AscCommonExcel.getFragmentsLength(t.options.fragments) !== t.input.value.length) {
 				t._syncEditors();
 			}
 		}
 
+		t._setSkipKeyPress(false);
+
+		//TODO перевод из кода в символы!
+		var newChar;
+		if(Array.isArray(codePoints)) {
+			for(let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
+				newChar = String.fromCharCode(codePoints[nIdx]);
+				t._addChars(newChar);
+			}
+		}
+		else {
+			newChar = String.fromCharCode(codePoints);
+			t._addChars(newChar);
+		}
+
+		//TODO в случае добавляения массива - првоерить - возможно часть нужно вызывать каждый раз после _addChars
 		var tmpCursorPos;
-		var newChar = String.fromCharCode(event.which);
-		t._addChars(newChar);
 		// При первом быстром вводе стоит добавить в конце проценты (для процентного формата и только для числа)
 		if (t.options.isAddPersentFormat && AscCommon.isNumber(newChar)) {
 			t.options.isAddPersentFormat = false;
@@ -2929,6 +2988,9 @@
 		this._cleanSelection();
 		this._drawSelection();
 	};
+	CellEditor.prototype.isStartCompositeInput = function () {
+		return this.beginCompositePos !== -1 && this.compositeLength !== 0;
+	};
 	CellEditor.prototype.Set_CursorPosInCompositeText = function (nPos) {
 		if (-1 !== this.beginCompositePos) {
 			nPos = Math.min(nPos, this.compositeLength);
@@ -2951,6 +3013,19 @@
 		this._moveCursor(kBeginOfText);
 		this._selectChars(kEndOfText);
 		this.skipTLUpdate = tmp;
+	};
+	CellEditor.prototype._setSkipKeyPress = function (val) {
+		this.skipKeyPress = val;
+	};
+	CellEditor.prototype.getText = function (start, len) {
+		let chars = this.textRender.getChars(start, len);
+		let res = "";
+		for (let i in chars) {
+			if (chars.hasOwnProperty(i)) {
+				res += AscCommon.encodeSurrogateChar(chars[i]);
+			}
+		}
+		return res;
 	};
 
 

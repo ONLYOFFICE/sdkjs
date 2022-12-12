@@ -474,7 +474,7 @@
 	};
 
 	CConditionalFormattingRule.prototype.setLocation = function (location, ws, addToHistory) {
-		if (addToHistory) {
+		if (addToHistory && !History.TurnOffHistory) {
 			var getUndoRedoRange = function (_ranges) {
 				var needRanges = [];
 				for (var i = 0; i < _ranges.length; i++) {

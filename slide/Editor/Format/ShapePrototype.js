@@ -585,7 +585,7 @@ CShape.prototype.Get_Worksheet = function()
 };
 CShape.prototype.Get_Numbering =  function()
 {
-    return new CNumbering();
+    return AscWord.DEFAULT_NUMBERING;
 };
 CShape.prototype.getIsSingleBody = function(x, y)
 {

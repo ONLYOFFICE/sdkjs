@@ -51,6 +51,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_Calculate = 9;
 	window['AscCH'].historyitem_Workbook_PivotWorksheetSource = 10;
 	window['AscCH'].historyitem_Workbook_Date1904 = 11;
+	window['AscCH'].historyitem_Workbook_ChangeExternalReference = 12;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;
@@ -239,6 +240,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_PivotCacheId = 53;
 	window['AscCH'].historyitem_PivotTable_PivotFieldVisible = 54;
 	window['AscCH'].historyitem_PivotTable_UseAutoFormatting = 55;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetShowDataAs = 56;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseField = 57;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseItem = 58;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;
@@ -356,6 +360,7 @@ function (window, undefined) {
 function CHistory()
 {
 	this.workbook = null;
+	this.memory = new AscCommon.CMemory();
     this.Index    = -1;
     this.Points   = [];
     this.TurnOffHistory = 0;
@@ -647,7 +652,17 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			var curSheet = this.workbook.getWorksheetById(i);
 			if (curSheet)
 				this.workbook.getWorksheetById(i).updateSlicersByRange(Point.UpdateRigions[i]);
+
+			//this.workbook.oApi.onWorksheetChange(Point.UpdateRigions[i]);
 		}
+
+		// So far, the event call has been removed when undo/redo, since UpdateRigions does not always have the right range and you need to pick it up from another place
+		// if (Point.SelectRange) {
+		// 	this.workbook.oApi.onWorksheetChange(Point.SelectRange);
+		// }
+		// if (Point.SelectRangeRedo && (!Point.SelectRange || (Point.SelectRange && !Point.SelectRange.isEqual(Point.SelectRangeRedo)))) {
+		// 	this.workbook.oApi.onWorksheetChange(Point.SelectRangeRedo);
+		// }
 
 		if (oRedoObjectParam.bOnSheetsChanged)
 			this.workbook.handlers.trigger("asc_onSheetsChanged");
@@ -995,7 +1010,8 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 			SheetId : sheetid,
 			Range : null,
 			Data  : Data,
-			LocalChange: this.LocalChange
+			LocalChange: this.LocalChange,
+			bytes: undefined
 		};
 	if(null != range)
 		Item.Range = range.clone();
@@ -1137,7 +1153,6 @@ CHistory.prototype.StartTransaction = function()
 	}
 	this.Transaction++;
 };
-
 CHistory.prototype.EndTransaction = function()
 {
 	if (1 === this.Transaction && !this.Is_LastPointEmpty()) {
@@ -1146,6 +1161,7 @@ CHistory.prototype.EndTransaction = function()
 		if (wsView) {
 			wsView.updateTopLeftCell();
 		}
+		this.workbook && this.workbook.handlers.trigger("EndTransactionCheckSize");
 	}
 	this.Transaction--;
 	if(this.Transaction < 0)
@@ -1153,6 +1169,10 @@ CHistory.prototype.EndTransaction = function()
 	if (this.IsEndTransaction() && this.workbook) {
 		this.workbook.dependencyFormulas.unlockRecal();
 		this.workbook.handlers.trigger("updateCellWatches");
+
+		if (this.Is_LastPointEmpty()) {
+			this.Remove_LastPoint();
+		}
 	}
 };
 /** @returns {boolean} */
@@ -1233,18 +1253,39 @@ CHistory.prototype.GetSerializeArray = function()
 		for(var j = 0, length2 = point.Items.length; j < length2; ++j)
 		{
 			var elem = point.Items[j];
-			aPointChanges.push(new AscCommonExcel.UndoRedoItemSerializable(elem.Class, elem.Type, elem.SheetId, elem.Range, elem.Data, elem.LocalChange));
+			aPointChanges.push(new AscCommonExcel.UndoRedoItemSerializable(elem.Class, elem.Type, elem.SheetId, elem.Range, elem.Data, elem.LocalChange, elem.bytes));
 		}
 		aRes.push(aPointChanges);
 	}
 		return aRes;
+	};
+	CHistory.prototype.GetLocalChangesSize = function() {
+		let res = 0;
+		var i = 0;
+		if (null != this.SavedIndex) {
+			i = this.SavedIndex + 1;
+		}
+		for (; i <= this.Index; ++i) {
+			var point = this.Points[i];
+			for (var j = 0, length2 = point.Items.length; j < length2; ++j) {
+				let elem = point.Items[j];
+				if (!elem.bytes && this.workbook) {
+					let serializable = new AscCommonExcel.UndoRedoItemSerializable(elem.Class, elem.Type, elem.SheetId, elem.Range, elem.Data, elem.LocalChange);
+					elem.bytes = this.workbook._SerializeHistoryItem(this.memory, serializable);
+				}
+				if (elem.bytes) {
+					res += elem.bytes.length;
+				}
+			}
+		}
+		return res;
 	};
 	CHistory.prototype._CheckCanNotAddChanges = function() {
 		try {
 			if (this.CanNotAddChanges) {
 				var tmpErr = new Error();
 				if (tmpErr.stack) {
-					this.workbook.oApi.CoAuthoringApi.sendChangesError(tmpErr.stack);
+					AscCommon.sendClientLog("error", "changesError: " + tmpErr.stack, this.workbook.oApi);
 				}
 			}
 		} catch (e) {

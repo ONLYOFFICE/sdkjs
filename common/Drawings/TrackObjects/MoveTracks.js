@@ -749,10 +749,108 @@ function MoveChartObjectTrack(oObject, oChartSpace)
     };
 }
 
+
+    function CGuideTrack(oGuide) {
+	    this.guide = oGuide;
+	    this.x = 0;
+	    this.y = 0;
+    }
+    CGuideTrack.prototype.track = function(x, y)
+    {
+        this.bIsTracked = true;
+        let oPresentation = editor.WordControl.m_oLogicDocument;
+        this.x = Math.max(0, Math.min(x, oPresentation.GetWidthMM()));
+        this.y = Math.max(0, Math.min(y, oPresentation.GetHeightMM()));
+    };
+
+    CGuideTrack.prototype.draw = function(oAutoShapeTrack)
+    {
+        let oGraphics = oAutoShapeTrack.Graphics;
+        if(!oGraphics)
+        {
+            return;
+        }
+        let oWordControl = editor.WordControl;
+        let oDrawingDocument = oWordControl.m_oDrawingDocument;
+        let oPresentation = oWordControl.m_oLogicDocument;
+        let dZoom = oWordControl.m_nZoomValue / 100;
+        let dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix * dZoom;
+        // if(this.guide.isHorizontal()) {
+        //     let pos = oDrawingDocument.SlideCurrectRect.top + this.y * dKoef_mm_to_pix;
+        //     oOverlay.HorLine(pos, true);
+        // }
+        // else {
+        //     let pos = oDrawingDocument.SlideCurrectRect.left + this.x * dKoef_mm_to_pix;
+        //     oOverlay.VertLine(pos, true);
+        // }
+
+        let oOverlay = oAutoShapeTrack.m_oOverlay || oAutoShapeTrack;
+        if(oOverlay)
+        {
+            oOverlay.ClearAll = true;
+            oOverlay.CheckRect(0, 0, 5, 5);
+        }
+        oGraphics.SaveGrState();
+        oGraphics.SetIntegerGrid(true);
+        oGraphics.transform3(new AscCommon.CMatrix(), false);
+        let bOldVal = editor.isShowTableEmptyLineAttack;
+        editor.isShowTableEmptyLineAttack = true;
+        if(this.guide.isHorizontal()) {
+            oGraphics.DrawEmptyTableLine(0, this.y, oPresentation.GetWidthMM(), this.y);
+        }
+        else {
+            oGraphics.DrawEmptyTableLine(this.x, 0, this.x, oPresentation.GetHeightMM());
+        }
+        editor.isShowTableEmptyLineAttack = bOldVal;
+        oGraphics.RestoreGrState();
+    };
+	CGuideTrack.prototype.getPos = function () {
+		if(this.guide.isHorizontal()) {
+			return AscFormat.MmToGdPos(this.y);
+		}
+		else {
+			return AscFormat.MmToGdPos(this.x);
+		}
+	};
+    CGuideTrack.prototype.trackEnd = function()
+    {
+        if(!this.bIsTracked)
+        {
+            return;
+        }
+        History.Create_NewPoint(1);
+		this.guide.setPos(this.getPos());
+    };
+
+    CGuideTrack.prototype.getBounds = function ()
+    {
+        let oBoundsChecker = new  AscFormat.CSlideBoundsChecker();
+        let oPresentation = editor.WordControl.m_oLogicDocument;
+        let oBounds = oBoundsChecker.Bounds;
+        if(this.guide.isHorizontal()) {
+            oBounds.min_x = 0;
+            oBounds.max_x = oPresentation.GetWidthMM();
+            oBounds.min_y = this.y - 5;
+            oBounds.max_y = this.y + 5;
+        }
+        else {
+            oBounds.min_x = this.x - 5;
+            oBounds.max_x = this.x + 5;
+            oBounds.min_y = 0;
+            oBounds.max_y = oPresentation.GetHeightMM();
+        }
+        oBounds.posX = oBounds.min_x;
+        oBounds.posY = oBounds.min_y;
+        oBounds.extX = oBounds.max_x - oBounds.min_x;
+        oBounds.extY = oBounds.max_y - oBounds.min_y;
+        return oBounds;
+    };
+
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].MoveShapeImageTrack = MoveShapeImageTrack;
     window['AscFormat'].MoveGroupTrack = MoveGroupTrack;
     window['AscFormat'].MoveComment = MoveComment;
     window['AscFormat'].MoveChartObjectTrack = MoveChartObjectTrack;
+    window['AscFormat'].CGuideTrack = CGuideTrack;
 })(window);

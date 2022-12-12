@@ -58,8 +58,8 @@
 	// End of private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    var WriterToJSON   = window['AscCommon'].WriterToJSON;
-	var ReaderFromJSON = window['AscCommon'].ReaderFromJSON;
+    var WriterToJSON   = window['AscJsonConverter'].WriterToJSON;
+	var ReaderFromJSON = window['AscJsonConverter'].ReaderFromJSON;
 
 	WriterToJSON.prototype.SerPresentation = function(oPres)
 	{

@@ -44,7 +44,7 @@
 		 * -----------------------------------------------------------------------------
 		 */
 		var prot;
-		var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+		var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
 		var c_oAscMaxCellOrCommentLength = Asc.c_oAscMaxCellOrCommentLength;
 		var doc = window.document;
 		var copyPasteUseBinary = true;
@@ -395,6 +395,18 @@
 				ws.model.excludeHiddenRows(false);
 				ws.model.ignoreWriteFormulas(false);
 			}
+
+			if (ws && ws.workbook && !ws.workbook.getCellEditMode()) {
+				if (AscCommon.g_clipboardBase.bCut) {
+					//в данном случае не вырезаем, а записываем
+					if (!ws.isNeedSelectionCut() && false === ws.isMultiSelect()) {
+						ws.workbook.cutIdSheet = ws.model.Id;
+						ws.copyCutRange = [ws.model.selectionRange.getLast()];
+					}
+				} else {
+					ws.copyCutRange = ws.model.selectionRange.ranges;
+				}
+			}
 		};
 
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll) {
@@ -588,8 +600,19 @@
 					var oldCreator = wb.Core.creator;
 					var oldIdentifier = wb.Core.identifier;
 					var oldLanguage = wb.Core.language;
+					var oldTitle = wb.Core.title;
+					var oldCategory = wb.Core.category;
+					var oldContentStatus = wb.Core.contentStatus;
+
 					wb.Core.creator = wb.oApi && wb.oApi.CoAuthoringApi ? wb.oApi.CoAuthoringApi.getUserConnectionId() : null;
 					wb.Core.identifier = wb.oApi && wb.oApi.DocInfo ? wb.oApi.DocInfo.Id : null;
+
+					//для внешних данных необходимо протащить docInfo->ReferenceData
+					//пока беру данные поля, поскольку для копипаста они не используются. по названию не особо совпадают - пересмотреть
+					wb.Core.contentStatus = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["fileId"] : null;
+					wb.Core.category = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["portalName"] : null;
+
+					wb.Core.title = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.Title ? wb.oApi.DocInfo.Title : null;
 
 					//записываю изображение выделенного фрагмента. пока только для изоюражений
 					//выбрал для этого поле subject
@@ -628,6 +651,9 @@
 						wb.Core.identifier = oldIdentifier;
 						wb.Core.language = oldLanguage;
 						wb.Core.subject = oldSubject;
+						wb.Core.title = oldTitle;
+						wb.Core.category = oldCategory;
+						wb.Core.contentStatus = oldContentStatus;
 					}
 				}
 
@@ -1648,7 +1674,7 @@
 					}
 
 					//закрываем общую транзакцию _loadDataBeforePaste после загрузки шрифтов
-					worksheet.setSelectionInfo('paste', {data: pasteData, fromBinary: true, fontsNew: newFonts, pasteAllSheet: isPasteAll});
+					worksheet.setSelectionInfo('paste', {data: pasteData, fromBinary: true, fontsNew: newFonts, pasteAllSheet: isPasteAll, wb: tempWorkbook});
 				};
 
 				var doPasteIntoShape = function() {
@@ -1818,6 +1844,7 @@
 					var wsFrom = window["Asc"]["editor"].wb.getWorksheetById(window["Asc"]["editor"].wb.cutIdSheet);
 					var fromRange = wsFrom ? wsFrom.copyCutRange : null;
 					if(fromRange) {
+						fromRange = fromRange[0];
 						var aRange = ws.model.selectionRange.getLast();
 						var toRange = new Asc.Range(aRange.c1, aRange.r1, aRange.c1 + (fromRange.c2 - fromRange.c1), aRange.r1 + (fromRange.r2 - fromRange.r1));
 
@@ -1841,15 +1868,19 @@
 				return res;
 			},
 
-			_checkPastedInOriginalDoc: function(pastedWb) {
+			_checkPastedInOriginalDoc: function(pastedWb, notCheckUser) {
 				var res = false;
 
 				var api = window["Asc"]["editor"];
 				var curDocId = api.DocInfo && api.DocInfo.Id;
 				var curUserId = api.CoAuthoringApi && api.CoAuthoringApi.getUserConnectionId();
 
-				if(pastedWb && pastedWb.Core && pastedWb.Core.identifier === curDocId && pastedWb.Core.creator === curUserId) {
-					res = true;
+				if(pastedWb && pastedWb.Core && pastedWb.Core.identifier === curDocId) {
+					if (notCheckUser) {
+						res = true;
+					} else if (pastedWb.Core.creator === curUserId) {
+						res = true;
+					}
 				}
 
 				return res;
@@ -2028,6 +2059,8 @@
 								t._insertImagesFromBinary(worksheet, {Drawings: arr_shapes}, isIntoShape, true);
 							}
 						});
+					} else {
+						window['AscCommon'].g_specialPasteHelper.buttonInfo.clean();
 					}
 
 					return true;
@@ -2378,7 +2411,10 @@
 						}
 
 						var _copy = data.Drawings[i].graphicObject.copy(oCopyPr);
-
+						if(_copy.convertFromSmartArt) {
+							_copy.convertFromSmartArt(true);
+						}
+						_copy.clearChartDataCache();
 						oIdMap[data.Drawings[i].graphicObject.Id] = _copy.Id;
 						data.Drawings[i].graphicObject = _copy;
 						aCopies.push(data.Drawings[i].graphicObject);
@@ -2409,7 +2445,6 @@
 
 						drawingObject.graphicObject.setDrawingObjects(ws.objectRender);
 						drawingObject.graphicObject.setWorksheet(ws.model);
-						drawingObject.graphicObject.convertFromSmartArt();
 						xfrm.setOffX(curCol);
 						xfrm.setOffY(curRow);
 						drawingObject.graphicObject.addToDrawingObjects();
@@ -2578,6 +2613,10 @@
 					xfrm.setOffY(curRow);
 
 					drawingObject = ws.objectRender.cloneDrawingObject(drawingObject);
+					if(graphicObject.convertFromSmartArt) {
+						graphicObject.convertFromSmartArt(true);
+					}
+					graphicObject.clearChartDataCache();
 					graphicObject.setDrawingBase(drawingObject);
 					graphicObject.setDrawingObjects(ws.objectRender);
 					graphicObject.setWorksheet(ws.model);
@@ -2623,7 +2662,7 @@
 					History.TurnOn();
 
 					callback();
-				}, true);
+				});
 			},
 
 			_insertTableFromPresentation: function (ws, graphicFrame) {
@@ -2731,10 +2770,10 @@
 
 				var aImagesToDownload = this._getImageFromHtml(node, true);
 				var specialPasteProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
-				if (aImagesToDownload !== null &&
+				var api = Asc["editor"];
+				if (!api.isChartEditor && aImagesToDownload !== null &&
 					(!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
 				{
-					var api = Asc["editor"];
 					AscCommon.sendImgUrls(api, aImagesToDownload, function (data) {
 						for (var i = 0, length = Math.min(data.length, aImagesToDownload.length); i < length; ++i) {
 							var elem = data[i];
@@ -2749,7 +2788,7 @@
 						t.alreadyLoadImagesOnServer = true;
 						callBackAfterLoadImages();
 
-					}, true);
+					});
 
 				} else {
 					callBackAfterLoadImages();
@@ -3788,7 +3827,7 @@
 
 				var documentContentBounds = new DocumentContentBounds();
 				var coverDocument = documentContentBounds.getBounds(0, 0, documentContent);
-				this._parseChildren(coverDocument);
+				AscFormat.ExecuteNoHistory(this._parseChildren, this, [coverDocument]);
 
 				//не вставляем графику в редактор диаграмм
 				//если кроме графики есть ещё данные, то убираем только графику
@@ -3838,7 +3877,7 @@
 						t.aResult.props.oImageMap = oImageMap;
 						t.aResult.props.data = data;
 						worksheet.setSelectionInfo('paste', {data: t.aResult});
-					}, true);
+					});
 				} else {
 					worksheet.setSelectionInfo('paste', {data: t.aResult});
 				}
@@ -4362,37 +4401,47 @@
 					return backgroundColor;
 				};
 
-				var formatBorders = oldBorders ? oldBorders : new AscCommonExcel.Border();
+				var formatBorders;
+				if (oldBorders) {
+					formatBorders = oldBorders;
+				} else {
+					formatBorders = new AscCommonExcel.Border();
+					formatBorders.initDefault();
+				}
 				//top border for cell
-				if (top === cellTable.top && !formatBorders.t.s && borders.Top.Value !== 0/*border_None*/) {
+				if (top === cellTable.top && (!formatBorders.t || formatBorders.t.isEmpty()) && borders.Top.Value !== 0/*border_None*/) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Top.Size, 3, 1));
 					if (null !== borderStyleName) {
+						formatBorders.t = new AscCommonExcel.BorderProp();
 						formatBorders.t.setStyle(borderStyleName);
 						formatBorders.t.c = getBorderColor(borders.Top);
 					}
 				}
 				//left border for cell
-				if (left === cellTable.left && !formatBorders.l.s && borders.Left.Value !== 0/*border_None*/) {
+				if (left === cellTable.left && (!formatBorders.l || formatBorders.l.isEmpty()) && borders.Left.Value !== 0/*border_None*/) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Left.Size, 3, 1));
 					if (null !== borderStyleName) {
+						formatBorders.l = new AscCommonExcel.BorderProp();
 						formatBorders.l.setStyle(borderStyleName);
 						formatBorders.l.c = getBorderColor(borders.Left);
 					}
 				}
 				//bottom border for cell
-				if (top === cellTable.top + heightCell - 1 && !formatBorders.b.s &&
+				if (top === cellTable.top + heightCell - 1 && (!formatBorders.b || formatBorders.b.isEmpty()) &&
 					borders.Bottom.Value !== 0/*border_None*/) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Bottom.Size, 3, 1));
 					if (null !== borderStyleName) {
+						formatBorders.b = new AscCommonExcel.BorderProp();
 						formatBorders.b.setStyle(borderStyleName);
 						formatBorders.b.c = getBorderColor(borders.Bottom);
 					}
 				}
 				//right border for cell
-				if (left === cellTable.left + widthCell - 1 && !formatBorders.r.s &&
+				if (left === cellTable.left + widthCell - 1 && (!formatBorders.r || formatBorders.r.isEmpty()) &&
 					borders.Right.Value !== 0/*border_None*/) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Right.Size, 3, 1));
 					if (null !== borderStyleName) {
+						formatBorders.r = new AscCommonExcel.BorderProp();
 						formatBorders.r.setStyle(borderStyleName);
 						formatBorders.r.c = getBorderColor(borders.Right);
 					}

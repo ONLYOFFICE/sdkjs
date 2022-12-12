@@ -522,10 +522,10 @@ CBlockLevelSdt.prototype.AddSignatureLine = function(oSignatureDrawing)
 	this.private_ReplacePlaceHolderWithContent();
 	this.Content.AddSignatureLine(oSignatureDrawing);
 };
-CBlockLevelSdt.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CBlockLevelSdt.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 	this.private_ReplacePlaceHolderWithContent();
-	this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
+	this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CBlockLevelSdt.prototype.AddTextArt = function(nStyle)
 {
@@ -1228,6 +1228,9 @@ CBlockLevelSdt.prototype.Set_CurrentElement = function(bUpdateStates, PageAbs, o
 };
 CBlockLevelSdt.prototype.Refresh_RecalcData2 = function(CurPage)
 {
+	if (!this.Parent)
+		return;
+
 	this.Parent.Refresh_RecalcData2(this.Index, this.private_GetRelativePageIndex(CurPage));
 };
 CBlockLevelSdt.prototype.Refresh_RecalcData = function(Data)
@@ -1543,14 +1546,6 @@ CBlockLevelSdt.prototype.SetDocPartObj = function(sCategory, sGallery, isUnique)
 	this.Pr.DocPartObj.Category = sCategory;
 	this.Pr.DocPartObj.Gallery  = sGallery;
 	this.Pr.DocPartObj.Unique   = isUnique;
-};
-CBlockLevelSdt.prototype.IsBuiltInTableOfContents = function()
-{
-	return this.Pr.DocPartObj.Gallery === "Table of Contents";
-};
-CBlockLevelSdt.prototype.IsBuiltInUnique = function()
-{
-	return true === this.Pr.DocPartObj.Unique;
 };
 CBlockLevelSdt.prototype.SetContentControlLock = function(nLockType)
 {
@@ -2406,8 +2401,12 @@ CBlockLevelSdt.prototype.private_UpdateDatePickerContent = function()
 };
 CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bCheckInner)
 {
-	if (AscCommon.changestype_Document_Content_Add === CheckType && this.Content.IsCursorAtBegin())
+	if (AscCommon.changestype_Document_Content_Add === CheckType
+		&& ((this.Content.IsCursorAtBegin() && !this.Get_DocumentPrev())
+			|| (this.Content.IsCursorAtEnd() && !this.Get_DocumentNext())))
+	{
 		return AscCommon.CollaborativeEditing.Add_CheckLock(false);
+	}
 
 	var isCheckContentControlLock = this.LogicDocument ? this.LogicDocument.IsCheckContentControlsLock() : true;
 
@@ -2625,6 +2624,27 @@ CBlockLevelSdt.prototype.CalculateTextToTable = function(oEngine)
 CBlockLevelSdt.prototype.CollectSelectedReviewChanges = function(oTrackManager)
 {
 	return this.Content.CollectSelectedReviewChanges(oTrackManager);
+};
+CBlockLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
+{
+	if (isBefore)
+	{
+		let prevElement = this.GetPrevDocumentElement();
+		if (prevElement && prevElement.Document_SetThisElementCurrent)
+		{
+			prevElement.Document_SetThisElementCurrent();
+			prevElement.MoveCursorToEndPos();
+		}
+	}
+	else
+	{
+		let nextElement = this.GetNextDocumentElement();
+		if (nextElement && nextElement.Document_SetThisElementCurrent)
+		{
+			nextElement.Document_SetThisElementCurrent();
+			nextElement.MoveCursorToStartPos();
+		}
+	}
 };
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

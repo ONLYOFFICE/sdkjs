@@ -46,7 +46,7 @@
 		this.SdtSettings          = new CSdtGlobalSettings();
 		this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
 		this.WriteProtection      = undefined;
-		this.DocumentProtection   = undefined;
+		this.DocumentProtection   = undefined !== AscCommonWord.CDocProtect ? new AscCommonWord.CDocProtect() : null;
 
 		this.ListSeparator  = undefined;
 		this.DecimalSymbol  = undefined;

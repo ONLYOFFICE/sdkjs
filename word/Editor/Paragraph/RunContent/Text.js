@@ -77,6 +77,30 @@
 	}
 
 	/**
+	 * Символы, которые мы в любом случае считаем комбинированными, даже если текстовый шейпер их не объединил
+	 * с предыдущим символом в один глиф
+	 * @param nCodePoint {number}
+	 * @returns {boolean}
+	 */
+	function IsCombinedMark(nCodePoint)
+	{
+		return !!((0x0300 <= nCodePoint && nCodePoint <= 0x036F)
+			|| (0x0483 <= nCodePoint && nCodePoint <= 0x0487)
+			|| (0x1AB0 <= nCodePoint && nCodePoint <= 0x1ABE)
+			|| (0x1CD0 <= nCodePoint && nCodePoint <= 0x1CE0)
+			|| (0x1CE2 <= nCodePoint && nCodePoint <= 0x1CE8)
+			|| 0x1CED === nCodePoint
+			|| 0x1CF4 === nCodePoint
+			|| 0x1CF8 === nCodePoint
+			|| 0x1CF9 === nCodePoint
+			|| (0x1DC0 <= nCodePoint && nCodePoint <= 0x1DFF)
+			|| (0x20D0 <= nCodePoint && nCodePoint <= 0x20F0)
+			|| (0xFE00 <= nCodePoint && nCodePoint <= 0xFE00)
+			|| (0xFE20 <= nCodePoint && nCodePoint <= 0xFE2D)
+		);
+	}
+
+	/**
 	 * Класс представляющий текстовый символ
 	 * @param {Number} nCharCode - Юникодное значение символа
 	 * @constructor
@@ -116,6 +140,10 @@
 	CRunText.prototype.GetCodePoint = function()
 	{
 		return this.Value;
+	};
+	CRunText.prototype.GetScript = function()
+	{
+		return AscFonts.hb_get_script_by_unicode(this.GetCodePoint());
 	};
 	CRunText.prototype.SetGrapheme = function(nGrapheme)
 	{
@@ -323,17 +351,19 @@
 		}
 
 		let nFontSize = (((this.Flags >> 16) & 0xFFFF) / 64);
-		if (this.Flags & FLAGS_TEMPORARY)
+
+		if (this.IsNBSP())
+		{
+			this.DrawNonBreakingSpace(Context, X, Y, nFontSize);
+		}
+		else if (this.Flags & FLAGS_TEMPORARY)
 		{
 			if (AscFonts.NO_GRAPHEME !== this.TempGrapheme)
 				AscFonts.DrawGrapheme(this.TempGrapheme, Context, X, Y, nFontSize);
 		}
 		else if (AscFonts.NO_GRAPHEME !== this.Grapheme)
 		{
-			if (this.IsNBSP())
-				this.DrawNonBreakingSpace(Context, X, Y, nFontSize);
-			else
-				AscFonts.DrawGrapheme(this.Grapheme, Context, X, Y, nFontSize);
+			AscFonts.DrawGrapheme(this.Grapheme, Context, X, Y, nFontSize);
 		}
 
 		if (this.Flags & FLAGS_GAPS)
@@ -499,10 +529,6 @@
 
 		return AscWord.AUTOCORRECT_FLAGS_NONE;
 	};
-	CRunText.prototype.IsDiacriticalSymbol = function()
-	{
-		return !!(0x0300 <= this.Value && this.Value <= 0x036F);
-	};
 	CRunText.prototype.IsDot = function()
 	{
 		return (this.Value === 0x002E);
@@ -556,7 +582,7 @@
 	};
 	CRunText.prototype.IsCombiningMark = function()
 	{
-		return !!(this.Flags & FLAGS_TEMPORARY ? this.Flags & FLAGS_TEMPORARY_COMBINING_MARK : this.Flags & FLAGS_COMBINING_MARK);
+		return (!!(this.Flags & FLAGS_TEMPORARY ? this.Flags & FLAGS_TEMPORARY_COMBINING_MARK : this.Flags & FLAGS_COMBINING_MARK) || IsCombinedMark(this.Value));
 	};
 	CRunText.prototype.IsLigatureContinue = function()
 	{

@@ -240,30 +240,32 @@
                     _endConnectionParams = AscFormat.fCalculateConnectionInfo(_startConnectionParams, this.endX, this.endY);
                 }
             }
-            this.oSpPr = AscFormat.fCalculateSpPr(_startConnectionParams, _endConnectionParams, this.originalObject.spPr.geometry.preset, this.overlayObject.pen.w);
-            if(!this.originalObject.group){
-                this.oSpPr.xfrm.setOffX(this.oSpPr.xfrm.offX);
-                this.oSpPr.xfrm.setOffY(this.oSpPr.xfrm.offY);
-                this.oSpPr.xfrm.setFlipH(this.oSpPr.xfrm.flipH);
-                this.oSpPr.xfrm.setFlipV(this.oSpPr.xfrm.flipV);
-                this.oSpPr.xfrm.setRot(this.oSpPr.xfrm.rot);
-            }
-            else{
+            if(_startConnectionParams && _endConnectionParams) {
+                this.oSpPr = AscFormat.fCalculateSpPr(_startConnectionParams, _endConnectionParams, this.originalObject.spPr.geometry.preset, this.overlayObject.pen.w);
+                if(!this.originalObject.group){
+                    this.oSpPr.xfrm.setOffX(this.oSpPr.xfrm.offX);
+                    this.oSpPr.xfrm.setOffY(this.oSpPr.xfrm.offY);
+                    this.oSpPr.xfrm.setFlipH(this.oSpPr.xfrm.flipH);
+                    this.oSpPr.xfrm.setFlipV(this.oSpPr.xfrm.flipV);
+                    this.oSpPr.xfrm.setRot(this.oSpPr.xfrm.rot);
+                }
+                else{
 
-                var _xc = this.oSpPr.xfrm.offX + this.oSpPr.xfrm.extX / 2.0;
-                var _yc = this.oSpPr.xfrm.offY + this.oSpPr.xfrm.extY / 2.0;
-                var xc = this.originalObject.group.invertTransform.TransformPointX(_xc, _yc);
-                var yc = this.originalObject.group.invertTransform.TransformPointY(_xc, _yc);
-                this.oSpPr.xfrm.setOffX(xc - this.oSpPr.xfrm.extX / 2.0);
-                this.oSpPr.xfrm.setOffY(yc - this.oSpPr.xfrm.extY / 2.0);
-                this.oSpPr.xfrm.setFlipH(this.originalObject.group.getFullFlipH() ? !this.oSpPr.xfrm.flipH : this.oSpPr.xfrm.flipH);
-                this.oSpPr.xfrm.setFlipV(this.originalObject.group.getFullFlipV() ? !this.oSpPr.xfrm.flipV : this.oSpPr.xfrm.flipV);
-                this.oSpPr.xfrm.setRot(AscFormat.normalizeRotate(this.oSpPr.xfrm.rot - this.originalObject.group.getFullRotate()));
-            }
+                    var _xc = this.oSpPr.xfrm.offX + this.oSpPr.xfrm.extX / 2.0;
+                    var _yc = this.oSpPr.xfrm.offY + this.oSpPr.xfrm.extY / 2.0;
+                    var xc = this.originalObject.group.invertTransform.TransformPointX(_xc, _yc);
+                    var yc = this.originalObject.group.invertTransform.TransformPointY(_xc, _yc);
+                    this.oSpPr.xfrm.setOffX(xc - this.oSpPr.xfrm.extX / 2.0);
+                    this.oSpPr.xfrm.setOffY(yc - this.oSpPr.xfrm.extY / 2.0);
+                    this.oSpPr.xfrm.setFlipH(this.originalObject.group.getFullFlipH() ? !this.oSpPr.xfrm.flipH : this.oSpPr.xfrm.flipH);
+                    this.oSpPr.xfrm.setFlipV(this.originalObject.group.getFullFlipV() ? !this.oSpPr.xfrm.flipV : this.oSpPr.xfrm.flipV);
+                    this.oSpPr.xfrm.setRot(AscFormat.normalizeRotate(this.oSpPr.xfrm.rot - this.originalObject.group.getFullRotate()));
+                }
 
-            this.geometry = this.oSpPr.geometry;
-            this.overlayObject.geometry = this.geometry;
-            this.calculateTransform();
+                this.geometry = this.oSpPr.geometry;
+                this.overlayObject.geometry = this.geometry;
+                this.calculateTransform();
+            }
         }
 
 

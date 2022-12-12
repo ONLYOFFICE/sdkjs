@@ -48,7 +48,7 @@ var History = AscCommon.History;
 
 CShape.prototype.Get_Numbering =  function()
 {
-    return new CNumbering();
+    return AscWord.DEFAULT_NUMBERING;
 };
 
 CShape.prototype.IsUseInDocument = function(){

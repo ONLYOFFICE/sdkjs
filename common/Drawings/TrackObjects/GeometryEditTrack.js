@@ -534,6 +534,9 @@
                 oGmSelection.setGmEditPointIdx(this.addedPointIdx);
             }
         }
+        if(this.drawingObjects) {
+            this.drawingObjects.resetConnectors([this.originalObject]);
+        }
     };
 
     EditShapeGeometryTrack.prototype.convertToBezier = function() {

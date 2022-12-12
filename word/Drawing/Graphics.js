@@ -2134,6 +2134,7 @@ CGraphics.prototype =
             this._m(x, y);
             this._l(r, y);
             this.ds();
+            this._s();
             return;
         }
 
@@ -2197,6 +2198,8 @@ CGraphics.prototype =
                 break;
             }
         }
+
+        ctx.beginPath();
     },
     drawHorLine2 : function(align, y, x, r, penW)
     {
@@ -2224,6 +2227,7 @@ CGraphics.prototype =
             this._m(x, _y2);
             this._l(r, _y2);
             this.ds();
+            this._s();
             return;
         }
 
@@ -2274,6 +2278,8 @@ CGraphics.prototype =
                 break;
             }
         }
+
+        ctx.beginPath();
     },
     drawVerLine : function(align, x, y, b, penW)
     {
@@ -2293,6 +2299,7 @@ CGraphics.prototype =
             this._m(x, y);
             this._l(x, b);
             this.ds();
+            this._s();
             return;
         }
 
@@ -2353,6 +2360,8 @@ CGraphics.prototype =
                 break;
             }
         }
+
+        ctx.beginPath();
     },
 
     // мега крутые функции для таблиц
@@ -2374,6 +2383,7 @@ CGraphics.prototype =
             this._m(x, y);
             this._l(r, y);
             this.ds();
+            this._s();
             return;
         }
 
@@ -2490,6 +2500,8 @@ CGraphics.prototype =
                 break;
             }
         }
+
+        ctx.beginPath();
     },
 
     rect : function(x,y,w,h)
@@ -2502,23 +2514,23 @@ CGraphics.prototype =
             var tr = this.m_oFullTransform;
             if (0.0 === tr.shx && 0.0 === tr.shy)
             {
-                var _x = (this.m_oFullTransform.TransformPointX(x, y) + 0.5) >> 0;
-                var _y = (this.m_oFullTransform.TransformPointY(x, y) + 0.5) >> 0;
-                var _r = (this.m_oFullTransform.TransformPointX(x + w, y) + 0.5) >> 0;
-                var _b = (this.m_oFullTransform.TransformPointY(x, y + h) + 0.5) >> 0;
+                var _x = (tr.TransformPointX(x, y) + 0.5) >> 0;
+                var _y = (tr.TransformPointY(x, y) + 0.5) >> 0;
+                var _r = (tr.TransformPointX(x + w, y) + 0.5) >> 0;
+                var _b = (tr.TransformPointY(x, y + h) + 0.5) >> 0;
 
                 ctx.rect(_x, _y, _r - _x, _b - _y);
             }
             else
             {
-                var x1 = this.m_oFullTransform.TransformPointX(x, y);
-                var y1 = this.m_oFullTransform.TransformPointY(x, y);
-                var x2 = this.m_oFullTransform.TransformPointX(x + w, y);
-                var y2 = this.m_oFullTransform.TransformPointY(x + w, y);
-                var x3 = this.m_oFullTransform.TransformPointX(x + w, y + h);
-                var y3 = this.m_oFullTransform.TransformPointY(x + w, y + h);
-                var x4 = this.m_oFullTransform.TransformPointX(x, y + h);
-                var y4 = this.m_oFullTransform.TransformPointY(x, y + h);
+                var x1 = tr.TransformPointX(x, y);
+                var y1 = tr.TransformPointY(x, y);
+                var x2 = tr.TransformPointX(x + w, y);
+                var y2 = tr.TransformPointY(x + w, y);
+                var x3 = tr.TransformPointX(x + w, y + h);
+                var y3 = tr.TransformPointY(x + w, y + h);
+                var x4 = tr.TransformPointX(x, y + h);
+                var y4 = tr.TransformPointY(x, y + h);
 
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);

@@ -104,6 +104,10 @@
 
 		return null;
 	};
+	CTableId.prototype.GetById = function(id)
+	{
+		return this.GetClass(id);
+	}
 	CTableId.prototype.GetClass = function(id)
 	{
 		if (!id || !this.m_aPairs[id])
@@ -121,12 +125,16 @@
 		if (Class.Get_Id)
 			return Class.Get_Id();
 
-		if (Class.GetId())
+		if (Class.GetId)
 			return Class.GetId();
 
 		return null;
 	};
 	CTableId.prototype.Get_Id = function()
+	{
+		return this.Id;
+	};
+	CTableId.prototype.GetId = function()
 	{
 		return this.Id;
 	};
@@ -382,6 +390,15 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNodeData  ]     = AscFormat.SmartArtNodeData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
 
+		if (window['AscOForm'])
+		{
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster]  = AscOForm.CUserMaster;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User]        = AscOForm.CUser;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster] = AscOForm.CFieldMaster;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document]    = AscOForm.CDocument;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup]  = AscOForm.CFieldGroup;
+		}
+
 		if (window['AscCommonSlide'])
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_Slide]               = AscCommonSlide.Slide;
@@ -455,11 +472,19 @@
 
 		if (window['AscCommonExcel'])
 		{
-			this.m_oFactoryClass[AscDFH.historyitem_type_Sparkline] = AscCommonExcel.sparklineGroup;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Sparkline]            = AscCommonExcel.sparklineGroup;
 			this.m_oFactoryClass[AscDFH.historyitem_type_PivotTableDefinition] = Asc.CT_pivotTableDefinition;
 			this.m_oFactoryClass[AscDFH.historyitem_type_PivotWorksheetSource] = Asc.CT_WorksheetSource;
-			this.m_oFactoryClass[AscDFH.historyitem_type_NamedSheetView] = Asc.CT_NamedSheetView;
-			this.m_oFactoryClass[AscDFH.historyitem_type_DataValidation] = AscCommonExcel.CDataValidation;
+			this.m_oFactoryClass[AscDFH.historyitem_type_NamedSheetView]       = Asc.CT_NamedSheetView;
+			this.m_oFactoryClass[AscDFH.historyitem_type_DataValidation]       = AscCommonExcel.CDataValidation;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OleSizeSelection  ]   = AscCommonExcel.OleSizeSelectionRange;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPr]               = AscFormat.CViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CommonViewPr]         = AscFormat.CCommonViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CSldViewPr]           = AscFormat.CCSldViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CViewPr]              = AscFormat.CCViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPrScale]          = AscFormat.CViewPrScale;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPrGuide]          = AscFormat.CViewPrGuide;
+
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;

@@ -1513,7 +1513,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                     case 23:
                     {
                         var _listType = asc_menu_ReadParaListType(_params, _current);
-                        this.WordControl.m_oLogicDocument.SetParagraphNumbering( _listType );
+						this.put_ListType(_listType.asc_getListType(), _listType.asc_getListSubType());
                         break;
                     }
                     case 24:
@@ -6660,8 +6660,8 @@ function onApiShowRevisionsChange(data) {
                         changes.push((value.Get_Caps() ? '' : ("|Not|" + " ")) + "|All caps|");
                     if (value.Get_SmallCaps() !== undefined)
                         changes.push((value.Get_SmallCaps() ? '' : ("|Not|" + " ")) + "|Small caps|");
-                    if (value.Get_VertAlign() !== undefined)
-                        changes.push(((value.Get_VertAlign() == 1) ? "|Superscript|" : ((value.Get_VertAlign() == 2) ? "|Subscript|" : "|Baseline|")));
+                    if (value.GetVertAlign() !== undefined)
+                        changes.push(((value.GetVertAlign() === AscCommon.vertalign_SuperScript) ? "|Superscript|" : ((value.GetVertAlign() === AscCommon.vertalign_SubScript) ? "|Subscript|" : "|Baseline|")));
                     if (value.Get_Color() !== undefined)
                         changes.push("|Font color|");
                     if (value.Get_Highlight() !== undefined)

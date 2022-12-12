@@ -213,35 +213,6 @@ CAscSlideTransition.prototype.ToArray = function()
     return _ret;
 };
 
-CAscSlideTransition.prototype.readAttrXml = function(name, reader) {
-    switch(name) {
-        case "advClick": {
-            this.SlideAdvanceOnMouseClick = reader.GetValueBool();
-            break;
-        }
-        case "advTm": {
-            this.SlideAdvanceAfter = true;
-            this.SlideAdvanceDuration = reader.GetValueInt();
-            break;
-        }
-        case "dur": {
-            this.TransitionDuration = reader.GetValueInt();
-            break;
-        }
-        case "spd": {
-            let sDur = reader.GetValue();
-            if(this.TransitionDuration === undefined) {
-                if ("fast" === sDur)
-                    this.TransitionDuration = 250;
-                if ("med" === sDur)
-                    this.TransitionDuration = 500;
-                if ("slow" === sDur)
-                    this.TransitionDuration = 750;
-            }
-            break;
-        }
-    }
-};
 CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames, _paramValues) {
     if (_paramNames.length === _paramValues.length && typeof _type === "string" && _type.length > 0)
     {
@@ -417,25 +388,6 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
             this.TransitionType = c_oAscSlideTransitionTypes.Fade;
             this.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
         }
-    }
-};
-CAscSlideTransition.prototype.readChildXml = function(name, reader) {
-    if(name === "sndAc") {
-    }
-    else {
-        let oNode = new CT_XmlNode();
-        oNode.fromXml(reader);
-        let _type = reader.GetName();
-        let _paramNames = [];
-        let _paramValues = [];
-        let oAttributes = oNode.attributes;
-        for(let sAttr in oAttributes) {
-            if(oAttributes.hasOwnProperty(sAttr)) {
-                _paramNames.push(sAttr);
-                _paramValues.push(oAttributes[sAttr]);
-            }
-        }
-        this.parseXmlParameters(_type, _paramNames, _paramValues);
     }
 };
 CAscSlideTransition.prototype.fillXmlParams = function (aAttrNames, aAttrValues) {
@@ -728,87 +680,6 @@ CAscSlideTransition.prototype.fillXmlParams = function (aAttrNames, aAttrValues)
             break;
     }
     return sNodeName;
-};
-CAscSlideTransition.prototype.toXml = function(writer, name) {
-    writer.WriteXmlString("<mc:AlternateContent xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\"><mc:Choice xmlns:p14=\"http://schemas.microsoft.com/office/powerpoint/2010/main\" Requires=\"p14\">");
-
-    let sSpeed = null;
-    if (this.TransitionDuration < 250)
-        sSpeed = "fast";
-    else if (this.TransitionDuration > 1000)
-        sSpeed = "med";
-    else
-        sSpeed = "slow";
-
-    let nAdvTm = null;
-    if(this.SlideAdvanceAfter) {
-        nAdvTm = this.SlideAdvanceDuration;
-    }
-    let sNodeName = null, aAttrNames = [], aAttrValues = [];
-    sNodeName = this.fillXmlParams(aAttrNames, aAttrValues);
-    writer.WriteXmlNodeStart("p:transition");
-    writer.WriteXmlNullableAttributeString("spd", sSpeed);
-    writer.WriteXmlNullableAttributeString("p14:dur", this.TransitionDuration);
-    writer.WriteXmlNullableAttributeString("advClick", this.SlideAdvanceOnMouseClick);
-    writer.WriteXmlNullableAttributeString("advTm", nAdvTm);
-    writer.WriteXmlAttributesEnd();
-
-    if(sNodeName) {
-        writer.WriteXmlNodeStart(sNodeName);
-        for(let nAttr = 0; nAttr < aAttrNames.length; ++nAttr) {
-            writer.WriteXmlNullableAttributeString(aAttrNames[nAttr], aAttrValues[nAttr]);
-        }
-        writer.WriteXmlAttributesEnd(true);
-    }
-
-    writer.WriteXmlNodeEnd("p:transition");
-
-    writer.WriteXmlString("</mc:Choice><mc:Fallback>");
-
-    writer.WriteXmlNodeStart("p:transition");
-    writer.WriteXmlNullableAttributeString("spd", sSpeed);
-    writer.WriteXmlNullableAttributeString("advClick", this.SlideAdvanceOnMouseClick);
-    writer.WriteXmlNullableAttributeString("advTm", nAdvTm);
-    writer.WriteXmlAttributesEnd();
-
-    //old
-    if(sNodeName) {
-        if ((sNodeName !== "p:random") &&
-            (sNodeName !== "p:circle") &&
-            (sNodeName !== "p:dissolve") &&
-            (sNodeName !== "p:diamond") &&
-            (sNodeName !== "p:newsflash") &&
-            (sNodeName !== "p:plus") &&
-            (sNodeName !== "p:wedge") &&
-            (sNodeName !== "p:blinds") &&
-            (sNodeName !== "p:checker") &&
-            (sNodeName !== "p:comb") &&
-            (sNodeName !== "p:randomBar") &&
-            (sNodeName !== "p:cover") &&
-            (sNodeName !== "p:pull") &&
-            (sNodeName !== "p:cut") &&
-            (sNodeName !== "p:fade") &&
-            (sNodeName !== "p:push") &&
-            (sNodeName !== "p:wipe") &&
-            (sNodeName !== "p:strips") &&
-            (sNodeName !== "p:wheel") &&
-            (sNodeName !== "p:split") &&
-            (sNodeName !== "p:zoom")) {
-            writer.WriteXmlNodeStart("p:fade");
-            writer.WriteXmlAttributesEnd(true);
-        }
-        else {
-            writer.WriteXmlNodeStart(sNodeName);
-            for(let nAttr = 0; nAttr < aAttrNames.length; ++nAttr) {
-                writer.WriteXmlNullableAttributeString(aAttrNames[nAttr], aAttrValues[nAttr]);
-            }
-            writer.WriteXmlAttributesEnd(true);
-        }
-    }
-
-    writer.WriteXmlNodeEnd("p:transition");
-
-    writer.WriteXmlString("</mc:Fallback></mc:AlternateContent>");
 };
 
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideSetTransition] = CAscSlideTransition;

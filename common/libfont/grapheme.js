@@ -34,7 +34,7 @@
 
 (function(window)
 {
-	const FONTSIZE        = AscFonts.MEASURE_FONTSIZE || 72;
+	const FONTSIZE        = AscFonts.MEASURE_FONTSIZE || 576;
 	const STRING_MAX_LEN  = AscFonts.GRAPHEME_STRING_MAX_LEN || 1024;
 	const COEF            = AscFonts.GRAPHEME_COEF|| 25.4 / 72 / 64 / FONTSIZE;
 	const GRAPHEME_BUFFER = new Array(STRING_MAX_LEN);
@@ -86,7 +86,7 @@
 			let nOffsetY      = oGrapheme[nPos++];
 			let arrCodePoints = oGrapheme[nPos++];
 
-			oContext.tg(nGID, nX + nOffsetX * nKoef, nY + nOffsetY * nKoef, arrCodePoints);
+			oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints);
 			nX += nAdvanceX * nKoef;
 			nY += nAdvanceY * nKoef;
 		}

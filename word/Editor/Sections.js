@@ -827,6 +827,14 @@ CSectionPr.prototype.GetId = function()
 {
 	return this.Id;
 };
+CSectionPr.prototype.SetType = function(type)
+{
+	return this.Set_Type(type);
+};
+CSectionPr.prototype.GetType = function()
+{
+	return this.Get_Type();
+};
 /**
  * Проверяем, есть ли хоть один колонтитул в данной секции
  * @returns {boolean}

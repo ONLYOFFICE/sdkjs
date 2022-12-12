@@ -1996,10 +1996,17 @@ function CDrawingDocument()
 	};
 	this.DrawTarget      = function()
 	{
-		if (0 != oThis.SlidesCount && "block" != oThis.TargetHtmlElement.style.display && oThis.NeedTarget && !oThis.TransitionSlide.IsPlaying())
-			oThis.TargetHtmlElement.style.display = "block";
-		else
-			oThis.TargetHtmlElement.style.display = "none";
+		let isNeedTarget = (0 != oThis.SlidesCount) && oThis.NeedTarget && !oThis.TransitionSlide.IsPlaying();
+		let isShow = false;
+		if (isNeedTarget)
+		{
+			if (oThis.m_oWordControl.m_oApi.isBlurEditor)
+				isShow = true;
+			else if ("block" != oThis.TargetHtmlElement.style.display)
+				isShow = true;
+		}
+
+		oThis.TargetHtmlElement.style.display = isShow ? "block" : "none";
 	};
 	this.TargetShow      = function()
 	{
@@ -3162,7 +3169,7 @@ function CDrawingDocument()
 	{
 		if (undefined === bIsFromDrawings)
 		{
-			if (this.m_oWordControl.m_oApi.ShowSnapLines)
+			if (this.m_oWordControl.m_oApi.ShowSmartGuides)
 			{
 				this.HorVerAnchors.push({Type : 0, Pos : xPos});
 			}
@@ -3182,7 +3189,7 @@ function CDrawingDocument()
 	{
 		if (undefined === bIsFromDrawings)
 		{
-			if (this.m_oWordControl.m_oApi.ShowSnapLines)
+			if (this.m_oWordControl.m_oApi.ShowSmartGuides)
 			{
 				this.HorVerAnchors.push({Type : 1, Pos : yPos});
 			}
@@ -5349,6 +5356,27 @@ function CThumbnailsManager()
 		this.ShowPage(_page);
 	};
 
+	this.SelectSlides = function(aSelectedIdx)
+	{
+		if(aSelectedIdx.length > 0)
+		{
+			for (let i = 0; i < this.m_arrPages.length; i++)
+			{
+				this.m_arrPages[i].IsSelected = false;
+			}
+			let nCount = aSelectedIdx.length;
+			for (let nIdx = 0; nIdx < nCount; nIdx++)
+			{
+				let oPage = this.m_arrPages[aSelectedIdx[nIdx]];
+				if(oPage)
+				{
+					oPage.IsSelected = true;
+				}
+			}
+			this.OnUpdateOverlay();
+		}
+	};
+
 	this.UpdateInterface = function()
 	{
 		this.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
@@ -5439,20 +5467,7 @@ function CThumbnailsManager()
 			}
 			case Asc.c_oAscPresentationShortcutType.ShowContextMenu:
 			{
-				sSelectedIdx = this.GetSelectedArray();
-				var oMenuPos = this.GetThumbnailPagePosition(Math.min.apply(Math, sSelectedIdx));
-				if (oMenuPos)
-				{
-					var oData =
-					{
-						Type: Asc.c_oAscContextMenuTypes.Thumbnails,
-						X_abs : oMenuPos.X,
-						Y_abs : oMenuPos.Y,
-						IsSlideSelect : true,
-						IsSlideHidden: this.IsSlideHidden(sSelectedIdx)
-					};
-					editor.sync_ContextMenuCallback(new AscCommonSlide.CContextMenuData(oData));
-				}
+				this.showContextMenu();
 				bReturnValue = false;
 				bPreventDefault = false;
 				break;
@@ -5519,25 +5534,6 @@ function CThumbnailsManager()
 					{
 						oPresentation.moveSlidesNextPos();
 					}
-					var slidesCount = oDrawingDocument.SlidesCount;
-					if (!oEvent.ShiftKey)
-					{
-						if (oDrawingDocument.SlideCurrent < (slidesCount - 1))
-						{
-							this.m_oWordControl.GoToPage(oDrawingDocument.SlideCurrent + 1);
-						}
-					}
-					else if (oEvent.CtrlKey)
-					{
-						if (oDrawingDocument.SlidesCount > 0)
-						{
-							this.m_oWordControl.GoToPage(oDrawingDocument.SlidesCount - 1);
-						}
-					}
-					else
-					{
-						this.CorrectShiftSelect(false, false);
-					}
 					break;
 				}
 				case 36: // home
@@ -5588,24 +5584,6 @@ function CThumbnailsManager()
 					{
 						oPresentation.moveSlidesPrevPos();
 					}
-					if (!oEvent.ShiftKey)
-					{
-						if (oDrawingDocument.SlideCurrent > 0)
-						{
-							this.m_oWordControl.GoToPage(oDrawingDocument.SlideCurrent - 1);
-						}
-					}
-					else if (oEvent.CtrlKey)
-					{
-						if (oDrawingDocument.SlidesCount > 0)
-						{
-							this.m_oWordControl.GoToPage(0);
-						}
-					}
-					else
-					{
-						this.CorrectShiftSelect(true, false);
-					}
 					break;
 				}
 				case 77:
@@ -5646,6 +5624,55 @@ function CThumbnailsManager()
 			e.preventDefault();
 		}
 		return bReturnValue;
+	};
+
+	this.showContextMenu = function()
+	{
+		let sSelectedIdx = this.GetSelectedArray();
+		let oMenuPos = this.GetThumbnailPagePosition(Math.min.apply(Math, sSelectedIdx));
+		if (oMenuPos)
+		{
+			let oData =
+				{
+					Type: Asc.c_oAscContextMenuTypes.Thumbnails,
+					X_abs : oMenuPos.X,
+					Y_abs : oMenuPos.Y,
+					IsSlideSelect : true,
+					IsSlideHidden: this.IsSlideHidden(sSelectedIdx)
+				};
+			editor.sync_ContextMenuCallback(new AscCommonSlide.CContextMenuData(oData));
+		}
+	};
+
+	this.getSpecialPasteButtonCoords = function(sSlideId)
+	{
+		let nSlideIdx = null;
+		let oPresentation = this.m_oWordControl.m_oLogicDocument;
+		let aSlides = oPresentation.Slides;
+		for(let nSld = 0; nSld < aSlides.length; ++nSld)
+		{
+			if(aSlides[nSld].Get_Id() === sSlideId)
+			{
+				nSlideIdx = nSld;
+				break;
+			}
+		}
+		let oRect = this.GetThumbnailPagePosition(nSlideIdx);
+		if(!oRect)
+		{
+			return null;
+		}
+		let nX, nY;
+		if(editor.WordControl.m_oThumbnailsContainer.HtmlElement.style.display === "none")
+		{
+			nX = 0;
+		}
+		else
+		{
+			nX = oRect.X + oRect.W - AscCommon.specialPasteElemWidth;
+		}
+		nY = oRect.Y + oRect.H;
+		return {X: nX, Y: nY};
 	};
 }
 
