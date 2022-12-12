@@ -2294,11 +2294,11 @@ var editor;
 			return null;
 		}
 
+		var openXml = AscCommon.openXml;
+		var StaxParser = AscCommon.StaxParser;
 		var res = [];
 
 		AscFormat.ExecuteNoHistory(function() {
-			var openXml = AscCommon.openXml;
-
 			var xmlParserContext = new AscCommon.XmlParserContext();
 			xmlParserContext.DrawingDocument = this.wbModel.DrawingDocument;
 			var initOpenManager = xmlParserContext.InitOpenManager = AscCommonExcel.InitOpenManager ? new AscCommonExcel.InitOpenManager(null, wb) : null;
