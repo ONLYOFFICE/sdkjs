@@ -5230,14 +5230,11 @@ PasteProcessor.prototype =
 			oThis._AddNextPrevToContent(oThis.oDocument);
 
 			if (isPasteTextIntoList) {
-				//на время заполнения контента для вставки отключаем историю
-				oThis._Execute(node, {}, true, true, false);
-				oThis._AddNextPrevToContent(oThis.oDocument);
-
 				oThis._pasteText(oThis._getTextFromContent(oThis.aContent, {NewLineParagraph: true, Numbering: false}));
-			} else {
-				oThis.api.pre_Paste(fonts, images, executePasteWord);
+				return;
 			}
+
+			oThis.api.pre_Paste(fonts, images, executePasteWord);
 		};
 
 		this.oRootNode = node;
@@ -9623,7 +9620,13 @@ PasteProcessor.prototype =
 								dScaleKoef = dScaleKoef * oThis.dMaxWidth / nWidth;
 								bUseScaleKoef = true;
 							}
-
+							//закомментировал, потому что при вставке получаем изображения измененного размера
+							/*if(bUseScaleKoef)
+							 {
+							 var dTemp = nWidth;
+							 nWidth *= dScaleKoef;
+							 nHeight *= dScaleKoef;
+							 }*/
 							var oTargetDocument = oThis.oDocument;
 							var oDrawingDocument = oThis.oDocument.DrawingDocument;
 							if (oTargetDocument && oDrawingDocument) {
@@ -9663,6 +9666,8 @@ PasteProcessor.prototype =
 								if (oThis.oCurHyperlink) {
 									oThis.oCurRun = new ParaRun(oThis.oCurPar);
 								}
+
+								//oDocument.AddInlineImage(nWidth, nHeight, img);
 							}
 						}
 					}
