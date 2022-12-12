@@ -89,7 +89,7 @@
 				if(formatPart === "D") {
 					let regularD1 = /d+[\s\/-]m+[\s\/-]y+/gi, // d-mmm-yy || dd-mmm-yy
 						regularD2 = /d+(\s|-|\/)m+;/gi, // d-mmm || dd-mmm
-						regularD3 = /]m+(\s|-|\/)y+;/gi, // mmm-yy // m+(\s|-|\/)y+; TODO maybe remove [$-9] 
+						regularD3 = /]m+(\s|-|\/)y+;/gi, // mmm-yy  
 						regularD4 = /m+(\s|-|\/)d+(\s|-|\/)y+/gi, // m/d/yy || m/d/yy h:mm || mm/dd/yy
 						regularD5 = /^m+(\s|-|\/)d+;/gi, // mm/dd
 						regularD6 = /h+:m+:s+\sAM\/PM/gi, // h:mm:ss AM/PM

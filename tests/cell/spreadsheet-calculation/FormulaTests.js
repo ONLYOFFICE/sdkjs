@@ -9032,8 +9032,7 @@ $(function () {
 		ws.getRange2("J4").setValue("test2");
 		ws.getRange2("J5").setValue("07/12/2000");
 		ws.getRange2("J6").setValue("");
-
-
+		
 		oParser = new parserFormula('CELL("address",J3)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "$J$3");
@@ -9189,17 +9188,171 @@ $(function () {
 		// filename
 
 		// format
+		// G
+		ws.getRange2("H2").setValue("50");
+		// F0
+		ws.getRange2("H3").setValue("0");
+		ws.getRange2("H3").setNumFormat("0");
+		// ,0
+		ws.getRange2("H4").setValue("0");
+		ws.getRange2("H4").setNumFormat("#,##0");
+		// ,2
+		ws.getRange2("H54").setValue("0.00");
+		ws.getRange2("H54").setNumFormat("#,##0.00");
+		// F2
+		ws.getRange2("H5").setValue("0.00");
+		ws.getRange2("H5").setNumFormat("0.00");
+		// C0
+		ws.getRange2("H6").setValue("0");
+		ws.getRange2("H6").setNumFormat('#,##0;\\-#,##0');
+		// C0-
+		ws.getRange2("H7").setValue("0");
+		ws.getRange2("H7").setNumFormat('#,##0;[Red]\\-#,##0');
+		// C2
+		ws.getRange2("H8").setValue("0");
+		ws.getRange2("H8").setNumFormat('#,##0.00;\-#,##0.00');
+		// C2-
+		ws.getRange2("H9").setValue("0");
+		ws.getRange2("H9").setNumFormat('#,##0.00;[Red]\-#,##0.00');
+		// P0
+		ws.getRange2("H10").setValue("0");
+		ws.getRange2("H10").setNumFormat("0%");
+		// P2
+		ws.getRange2("H11").setValue("0");
+		ws.getRange2("H11").setNumFormat("0.00%");
+		// S2
+		ws.getRange2("H12").setValue("0");
+		ws.getRange2("H12").setNumFormat("0.00E+00");
+		// G
+		ws.getRange2("H13").setValue("0");
+		ws.getRange2("H13").setNumFormat("# ?/?");
+		// G
+		ws.getRange2("H113").setValue("0");
+		ws.getRange2("H113").setNumFormat("# ??/??");
+		// D1
+		ws.getRange2("H14").setValue("10 Apr 20");
+		// D2
+		ws.getRange2("H15").setValue("12-Jun");
+		// D3
+		ws.getRange2("H16").setValue("June-22");
+		// D4
+		ws.getRange2("H17").setValue("12/7/2022");
+		// D5
+		ws.getRange2("H18").setValue("05/12");
+		// D6
+		ws.getRange2("H19").setValue("12:00:00 AM");
+		// D7
+		ws.getRange2("H20").setValue("12:00 AM");
+		// D8
+		ws.getRange2("H21").setValue("12:00:00");
+		// D9
+		ws.getRange2("H22").setValue("12:00");
+		
+
+		oParser = new parserFormula('CELL("format",H3)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H3).");
+		assert.strictEqual(oParser.calculate().getValue(), "F0", "contents. Result of CELL(format,0).");	// F0
+
+		oParser = new parserFormula('CELL("format",H4)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H4).");
+		assert.strictEqual(oParser.calculate().getValue(), "F0", "contents. Result of CELL(format,H4).");	// ,0
+
+		oParser = new parserFormula('CELL("format",H54)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H54).");
+		assert.strictEqual(oParser.calculate().getValue(), "F2", "contents. Result of CELL(format,H54).");	// .2
+
+		oParser = new parserFormula('CELL("format",H5)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H5).");
+		assert.strictEqual(oParser.calculate().getValue(), "F2", "contents. Result of CELL(format,H5).");	// F2
+
+		oParser = new parserFormula('CELL("format",H6)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H6).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H6).");	// C0
+
+		oParser = new parserFormula('CELL("format",H7)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H7).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H7).");	// C0-
+
+		oParser = new parserFormula('CELL("format",H8)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H8).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H8).");	// C2
+
+		oParser = new parserFormula('CELL("format",H9)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H9).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H9).");	// C2-
+
+		oParser = new parserFormula('CELL("format",H10)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H10).");
+		assert.strictEqual(oParser.calculate().getValue(), "P0", "contents. Result of CELL(format,H10).");	// P0
+
+		oParser = new parserFormula('CELL("format",H11)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H11).");
+		assert.strictEqual(oParser.calculate().getValue(), "P2", "contents. Result of CELL(format,H11).");	// P2
+
+		oParser = new parserFormula('CELL("format",H12)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H12).");
+		assert.strictEqual(oParser.calculate().getValue(), "S2", "contents. Result of CELL(format,H12).");	// S2
+
+		oParser = new parserFormula('CELL("format",H13)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H13).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H13).");	// "G"
+
+		oParser = new parserFormula('CELL("format",H113)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H113).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H113).");	// "G"
+
+		oParser = new parserFormula('CELL("format",H2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,50).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,50).");	
+
+		oParser = new parserFormula('CELL("format",H14)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D1", "Format. Result of CELL(format,10 Apr 20).");	//D1
+
+		oParser = new parserFormula('CELL("format",H15)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,10 Apr 20).");	//D2
+
+		oParser = new parserFormula('CELL("format",H16)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,10 Apr 20).");	//D3
+
+		oParser = new parserFormula('CELL("format",H17)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D4", "Format. Result of CELL(format,10 Apr 20).");	//D4
+
+		oParser = new parserFormula('CELL("format",H18)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,10 Apr 20).");	//D5
+
+		oParser = new parserFormula('CELL("format",H19)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,10 Apr 20).");	//D6
+		
+		oParser = new parserFormula('CELL("format",H20)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,10 Apr 20).");	//D7
+
+		oParser = new parserFormula('CELL("format",H21)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,10 Apr 20).");	//D8
+
+		oParser = new parserFormula('CELL("format",H22)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,10 Apr 20).");	//D9
+
 		oParser = new parserFormula('CELL("format",J2)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,1).");
 		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,1).");
 
 		oParser = new parserFormula('CELL("format",J3)', "A1", ws);
-		assert.ok(oParser.parse(), "CELL(format,1).");
-		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,1).");
+		assert.ok(oParser.parse(), "CELL(format,string).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,string).");
 
 		oParser = new parserFormula('CELL("format",J5)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,07/12/2000).");
 		assert.strictEqual(oParser.calculate().getValue(), "D4", "Format. Result of CELL(format,07/12/2000).");
+		
 
 		// parentheses
 
