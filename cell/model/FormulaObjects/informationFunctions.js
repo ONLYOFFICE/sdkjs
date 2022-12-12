@@ -87,16 +87,15 @@
 
 			if(formatPart) {
 				if(formatPart === "D") {
-					let regularD1 = /d+[\s\/-]m+[\s\/-]y+/gi,
-						regularD2 = /d+(\s|-|\/)m+;/gi,
-						regularD3 = /]m+(\s|-|\/)y+;/gi, // m+(\s|-|\/)y+; TODO maybe remove [$-9] in sFormat
-						regularD4 = /m+(\s|-|\/)d+(\s|-|\/)y+/gi,
-						regularD5 = /^m+(\s|-|\/)d+;/gi,
-						// D6-D9 types has difference with ms
-						regularD6 = /d+[\s\/-]m+[\s\/-]y+/gi, // !!! 
-						regularD7 = /d+[\s\/-]m+[\s\/-]y+/gi, // !!!
-						regularD8 = /d+[\s\/-]m+[\s\/-]y+/gi, // !!!
-						regularD9 = /d+[\s\/-]m+[\s\/-]y+/gi; // !!!
+					let regularD1 = /d+[\s\/-]m+[\s\/-]y+/gi, // d-mmm-yy || dd-mmm-yy
+						regularD2 = /d+(\s|-|\/)m+;/gi, // d-mmm || dd-mmm
+						regularD3 = /]m+(\s|-|\/)y+;/gi, // mmm-yy // m+(\s|-|\/)y+; TODO maybe remove [$-9] 
+						regularD4 = /m+(\s|-|\/)d+(\s|-|\/)y+/gi, // m/d/yy || m/d/yy h:mm || mm/dd/yy
+						regularD5 = /^m+(\s|-|\/)d+;/gi, // mm/dd
+						regularD6 = /h+:m+:s+\sAM\/PM/gi, // h:mm:ss AM/PM
+						regularD7 = /h+:m+\sAM\/PM/gi, // h:mm AM/PM
+						regularD8 = /(((h|\[h\]):m+:ss;)|(\[\$-F400\]h:mm:ss))/gi, // h:mm:ss
+						regularD9 = /h+:m+;/gi; // h:mm
 
 					if(regularD1.test(sFormat)) {
 						formatInfo.decimalPlaces = 1;
@@ -116,6 +115,9 @@
 						formatInfo.decimalPlaces = 8;
 					} else if (regularD9.test(sFormat)) {
 						formatInfo.decimalPlaces = 9;
+					} else {
+						formatPart = "G";
+						formatInfo.decimalPlaces = "";
 					}
 				}
 				res = new cString(formatPart + formatInfo.decimalPlaces + postfix);
