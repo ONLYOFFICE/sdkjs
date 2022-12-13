@@ -9033,6 +9033,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"CELL\"", function (assert) {
+
 		ws.getRange2("J2").setValue("1");
 		ws.getRange2("J3").setValue("test");
 		ws.getRange2("J4").setValue("test2");
@@ -9224,9 +9225,10 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Contents. Result of CELL(contents,'J2').");
 
 		// filename 
+		// check for empty docinfo
 		// oParser = new parserFormula('CELL("filename",J2)', "A1", ws);
 		// assert.ok(oParser.parse(), "CELL(filename,J2).");
-		// assert.strictEqual(oParser.calculate().getValue(), "", "filename. Result of CELL(filename,J2).");
+		// assert.strictEqual(oParser.calculate(), "", "filename. Result of CELL(filename,J2).");
 
 		// oParser = new parserFormula('CELL("filename",J2:J4)', "A1", ws);
 		// assert.ok(oParser.parse(), "CELL(filename,J2:J4).");
@@ -9268,17 +9270,29 @@ $(function () {
 		ws.getRange2("H5").setValue("0.00");
 		ws.getRange2("H5").setNumFormat("0.00");
 		// C0
+		ws.getRange2("H66").setValue("0");
+		ws.getRange2("H66").setNumFormat('#,##0;\\-#,##0');
+		// C0 ms
 		ws.getRange2("H6").setValue("0");
-		ws.getRange2("H6").setNumFormat('#,##0;\\-#,##0');
+		ws.getRange2("H6").setNumFormat("$#,##0_);($#,##0)");
 		// C0-
+		ws.getRange2("H77").setValue("0");
+		ws.getRange2("H77").setNumFormat('#,##0;[Red]\\-#,##0');
+		// C0- ms 
 		ws.getRange2("H7").setValue("0");
-		ws.getRange2("H7").setNumFormat('#,##0;[Red]\\-#,##0');
+		ws.getRange2("H7").setNumFormat('$#,##0_);[Red]($#,##0)');
 		// C2
+		ws.getRange2("H88").setValue("0");
+		ws.getRange2("H88").setNumFormat('#,##0.00;\-#,##0.00');
+		// C2 ms
 		ws.getRange2("H8").setValue("0");
-		ws.getRange2("H8").setNumFormat('#,##0.00;\-#,##0.00');
+		ws.getRange2("H8").setNumFormat('$#,##0.00_);($#,##0.00)');
 		// C2-
+		ws.getRange2("H99").setValue("0");
+		ws.getRange2("H99").setNumFormat('#,##0.00;[Red]\-#,##0.00');
+		// C2- ms
 		ws.getRange2("H9").setValue("0");
-		ws.getRange2("H9").setNumFormat('#,##0.00;[Red]\-#,##0.00');
+		ws.getRange2("H9").setNumFormat('$#,##0.00_);[Red]($#,##0.00)');
 		// P0
 		ws.getRange2("H10").setValue("0");
 		ws.getRange2("H10").setNumFormat("0%");
@@ -9351,11 +9365,11 @@ $(function () {
 
 		oParser = new parserFormula('CELL("format",H4)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,H4).");
-		assert.strictEqual(oParser.calculate().getValue(), "F0", "contents. Result of CELL(format,H4).");	// ,0
+		assert.strictEqual(oParser.calculate().getValue(), ",0", "contents. Result of CELL(format,H4).");	// ,0
 
 		oParser = new parserFormula('CELL("format",H54)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,H54).");
-		assert.strictEqual(oParser.calculate().getValue(), "F2", "contents. Result of CELL(format,H54).");	// .2
+		assert.strictEqual(oParser.calculate().getValue(), ",2", "contents. Result of CELL(format,H54).");	// ,2
 
 		oParser = new parserFormula('CELL("format",H5)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,H5).");
@@ -9363,19 +9377,19 @@ $(function () {
 
 		oParser = new parserFormula('CELL("format",H6)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,H6).");
-		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H6).");	// C0
+		assert.strictEqual(oParser.calculate().getValue(), "С0", "contents. Result of CELL(format,H6).");	// C0
 
 		oParser = new parserFormula('CELL("format",H7)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,H7).");
-		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H7).");	// C0-
+		assert.strictEqual(oParser.calculate().getValue(), "С0-", "contents. Result of CELL(format,H7).");	// C0-
 
 		oParser = new parserFormula('CELL("format",H8)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,H8).");
-		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H8).");	// C2
+		assert.strictEqual(oParser.calculate().getValue(), "С2", "contents. Result of CELL(format,H8).");	// C2
 
 		oParser = new parserFormula('CELL("format",H9)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,H9).");
-		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H9).");	// C2-
+		assert.strictEqual(oParser.calculate().getValue(), "С2-", "contents. Result of CELL(format,H9).");	// C2-
 
 		oParser = new parserFormula('CELL("format",H10)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,H10).");
@@ -9420,9 +9434,6 @@ $(function () {
 		oParser = new parserFormula('CELL("format",H18)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
 		assert.strictEqual(oParser.calculate().getValue(), "D5", "Format. Result of CELL(format,10 Apr 20).");	//D5
-
-
-
 
 		oParser = new parserFormula('CELL("format",H19)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
@@ -9649,11 +9660,6 @@ $(function () {
 		oParser = new parserFormula('CELL("width",J)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(width,J).");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Width. Result of CELL(width,J).");
-
-		oParser = new parserFormula('CELL("width","J")', "A1", ws);
-		assert.ok(oParser.parse(), "CELL(width,'J').");
-		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Width. Result of CELL(width,'J').");
-
 
 		oParser = new parserFormula('CELL("width","J")', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(width,'J').");

@@ -85,6 +85,17 @@
 				formatPart = "D";
 			}
 
+			// ,0 and ,2 types
+			if(sFormat) {
+				if(sFormat === "#,##0") {
+					formatPart = ",0";
+					formatInfo.decimalPlaces = "";
+				} else if(sFormat === "#,##0.00") {
+					formatPart = ",2";
+					formatInfo.decimalPlaces = "";
+				}
+			}
+
 			if(formatPart) {
 				if(formatPart === "D") {
 					let regularD1 = /d+[\s\/-]m+[\s\/-]y+/gi, // d-mmm-yy || dd-mmm-yy
