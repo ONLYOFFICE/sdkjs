@@ -605,12 +605,17 @@ $(function () {
 
 	var oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp;
 	if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
-		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), {
+		let docInfo = new Asc.asc_CDocInfo();
+		docInfo.asc_putTitle("TeSt.xlsx");
+		let api = {
 			wb: {
 				getWorksheet: function () {
 				}
-			}
-		});
+			}, DocInfo: docInfo
+		};
+		window["Asc"]["editor"] = api;
+
+		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
 		AscCommon.History.init(wb);
 		wb.maxDigitWidth = 7;
 		wb.paddingPlusBorder = 5;
@@ -9644,6 +9649,11 @@ $(function () {
 		oParser = new parserFormula('CELL("width",J)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(width,J).");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Width. Result of CELL(width,J).");
+
+		oParser = new parserFormula('CELL("width","J")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(width,'J').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Width. Result of CELL(width,'J').");
+
 
 		oParser = new parserFormula('CELL("width","J")', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(width,'J').");
