@@ -71,6 +71,9 @@ AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_Ascii_Theme]    = CChange
 AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_HAnsi_Theme]    = CChangesParaTextPrRFontsHAnsiTheme;
 AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_CS_Theme]       = CChangesParaTextPrRFontsCSTheme;
 AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme] = CChangesParaTextPrRFontsEastAsiaTheme;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_BoldCS]                = CChangesParaTextPrBoldCS;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_ItalicCS]              = CChangesParaTextPrItalicCS;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Ligatures]             = CChangesParaTextPrLigatures;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -165,7 +168,10 @@ AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_Value]           = [
 	AscDFH.historyitem_TextPr_RFonts_Ascii_Theme,
 	AscDFH.historyitem_TextPr_RFonts_HAnsi_Theme,
 	AscDFH.historyitem_TextPr_RFonts_CS_Theme,
-	AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme
+	AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme,
+	AscDFH.historyitem_TextPr_BoldCS,
+	AscDFH.historyitem_TextPr_ItalicCS,
+	AscDFH.historyitem_TextPr_Ligatures
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts]          = [
 	AscDFH.historyitem_TextPr_RFonts,
@@ -265,6 +271,18 @@ AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts_CS_Theme] = [
 AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme] = [
 	AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme,
 	AscDFH.historyitem_TextPr_RFonts,
+	AscDFH.historyitem_TextPr_Value
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_BoldCS] = [
+	AscDFH.historyitem_TextPr_BoldCS,
+	AscDFH.historyitem_TextPr_Value
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_ItalicCS] = [
+	AscDFH.historyitem_TextPr_ItalicCS,
+	AscDFH.historyitem_TextPr_Value
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_Ligatures] = [
+	AscDFH.historyitem_TextPr_Ligatures,
 	AscDFH.historyitem_TextPr_Value
 ];
 
@@ -1574,7 +1592,7 @@ AscCommon.ExtendPrototype(CChangesParaTextPrRFontsAsciiTheme, CChangesParaTextPr
 CChangesParaTextPrRFontsAsciiTheme.prototype.Type = AscDFH.historyitem_TextPr_RFonts_Ascii_Theme;
 CChangesParaTextPrRFontsAsciiTheme.prototype.private_SetValue = function(sValue)
 {
-	this.Class.Value.RFonts.Ascii = sValue;
+	this.Class.Value.RFonts.AsciiTheme = sValue;
 };
 /**
  * @constructor
@@ -1624,3 +1642,52 @@ CChangesParaTextPrRFontsEastAsiaTheme.prototype.private_SetValue = function(sVal
 {
 	this.Class.Value.RFonts.EastAsiaTheme = sValue;
 };
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesParaTextPrBoldCS(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesParaTextPrBoldCS.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesParaTextPrBoldCS.prototype.constructor = CChangesParaTextPrBoldCS;
+CChangesParaTextPrBoldCS.prototype.Type = AscDFH.historyitem_TextPr_BoldCS;
+CChangesParaTextPrBoldCS.prototype.private_SetValue = function(Value)
+{
+	this.Class.Value.BoldCS = Value;
+};
+CChangesParaTextPrBoldCS.prototype.Merge = private_ParaTextPrChangesOnMergeValue;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesParaTextPrItalicCS(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesParaTextPrItalicCS.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesParaTextPrItalicCS.prototype.constructor = CChangesParaTextPrItalicCS;
+CChangesParaTextPrItalicCS.prototype.Type = AscDFH.historyitem_TextPr_ItalicCS;
+CChangesParaTextPrItalicCS.prototype.private_SetValue = function(Value)
+{
+	this.Class.Value.ItalicCS = Value;
+};
+CChangesParaTextPrItalicCS.prototype.Merge = private_ParaTextPrChangesOnMergeValue;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesParaTextPrLigatures(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesParaTextPrLigatures.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesParaTextPrLigatures.prototype.constructor = CChangesParaTextPrLigatures;
+CChangesParaTextPrLigatures.prototype.Type = AscDFH.historyitem_TextPr_Ligatures;
+CChangesParaTextPrLigatures.prototype.private_SetValue = function(Value)
+{
+	this.Class.Value.Ligatures = Value;
+};
+CChangesParaTextPrLigatures.prototype.Merge = private_ParaTextPrChangesOnMergeValue;
+

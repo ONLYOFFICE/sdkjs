@@ -297,22 +297,22 @@
             }
             else
             {
-                if(oElement instanceof ParaNewLine)
-                {
-                    if(oElement.BreakType === AscCommonWord.break_Line)
-                    {
-                        aCheckArray.push(0x000A);
-                    }
-                    else
-                    {
-                        aCheckArray.push(0x21A1);
-                    }
-                }
-                else if(oElement instanceof ParaTab)
+				if (oElement instanceof AscWord.CRunBreak)
+				{
+					if (oElement.IsLineBreak())
+					{
+						aCheckArray.push(0x000A);
+					}
+					else
+					{
+						aCheckArray.push(0x21A1);
+					}
+				}
+                else if(oElement instanceof AscWord.CRunTab)
                 {
                     aCheckArray.push(0x0009);
                 }
-                else if(oElement instanceof ParaSpace)
+                else if(oElement instanceof AscWord.CRunSpace)
                 {
                     aCheckArray.push(0x20);
                 }
@@ -333,11 +333,11 @@
         var sResultString = "";
         for(var i = 0; i < this.elements.length; ++i)
         {
-            if(this.elements[i] instanceof ParaText)
+            if(this.elements[i] instanceof AscWord.CRunText)
             {
-                sResultString += String.fromCharCode(this.elements[i].Value);
+                sResultString += String.fromCharCode(this.elements[i].GetCodePoint());
             }
-            else if(this.elements[i] instanceof ParaSpace)
+            else if(this.elements[i] instanceof AscWord.CRunSpace)
             {
                 sResultString += " ";
             }
@@ -1065,7 +1065,7 @@
             });
 
         };
-        AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, null, true);
+        AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, true);
         return null;
     };
     CDocumentComparison.prototype.getNewParaPrWithDiff = function(oElementPr, oPartnerPr)
@@ -2193,7 +2193,7 @@
         var bHaveRevisons2 = false;
         var oDoc2 = AscFormat.ExecuteNoHistory(function(){
 
-            var oBinaryFileReader, openParams        = {checkFileSize : /*this.isMobileVersion*/false, charCount : 0, parCount : 0, disableRevisions: true, noSendComments: true};
+            var oBinaryFileReader, openParams        = {disableRevisions: true, noSendComments: true};
             var oDoc2 = new CDocument(oApi.WordControl.m_oDrawingDocument, true);
             oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc2;
             oApi.WordControl.m_oLogicDocument = oDoc2;

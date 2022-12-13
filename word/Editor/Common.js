@@ -411,7 +411,7 @@ CTextToTableEngine.prototype.GetContentControl = function()
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 
-(function(window, undefined)
+(function(window)
 {
 	function private_CheckDrawingDocumentPosition(oDocPos)
 	{
@@ -551,9 +551,43 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 
 		return private_CompareDocumentPositions(oDocPos1, oDocPos2);
 	}
+	function AlignFontSize(nFontSize, nCoef)
+	{
+		if (1 === nCoef)
+			return nFontSize;
 
+		return (((nFontSize * nCoef * 2 + 0.5) | 0) / 2);
+	}
+	function TextToRunElements(sText, fHandle)
+	{
+		let arrElements = fHandle ? null : [];
+		for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			let nCharCode = oIterator.value();
+
+			let oElement = null;
+			if (9 === nCharCode)
+				oElement = new AscWord.CRunTab();
+			else if (10 === nCharCode)
+				oElement = new AscWord.CRunBreak(AscWord.break_Line);
+			else if (13 === nCharCode)
+				continue;
+			else if (AscCommon.IsSpace(nCharCode))
+				oElement = new AscWord.CRunSpace(nCharCode);
+			else
+				oElement = new AscWord.CRunText(nCharCode);
+
+			if (fHandle)
+				fHandle(oElement);
+			else
+				arrElements.push(oElement);
+		}
+		return fHandle ? null : arrElements;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscCommonWord'] = window['AscCommonWord'] || {};
-	window['AscCommonWord'].CompareDocumentPositions = CompareDocumentPositions;
+	window['AscWord'] = window['AscWord'] || {};
+	window['AscWord'].CompareDocumentPositions = CompareDocumentPositions;
+	window['AscWord'].AlignFontSize            = AlignFontSize;
+	window['AscWord'].TextToRunElements        = TextToRunElements;
 
 })(window);

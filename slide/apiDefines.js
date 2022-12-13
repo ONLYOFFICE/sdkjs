@@ -146,6 +146,317 @@ var c_oAscLockTypeElemPresentation = {
 	Presentation : 3
 };
 
+/** @enum {number} */
+var c_oAscSlideDgmBuildType = {
+	AllAtOnce:           0,
+	BreadthByLvl:        1,
+	BreadthByNode:       2,
+	CCW:                 3,
+	CCWIn:               4,
+	CCWOut:              5,
+	Cust:                6,
+	CW:                  7,
+	CWIn:                8,
+	CWOut:               9,
+	DepthByBranch:       10,
+	DepthByNode:         11,
+	Down:                12,
+	InByRing:            13,
+	OutByRing:           14,
+	Up:                  15,
+	Whole:               16
+};
+
+/** @enum {number} */
+var c_oAscSlideLayoutType = {
+	Blank:                   0,
+	Chart:                   1,
+	ChartAndTx:              2,
+	ClipArtAndTx:            3,
+	ClipArtAndVertTx:        4,
+	Cust:                    5,
+	Dgm:                     6,
+	FourObj:                 7,
+	MediaAndTx:              8,
+	Obj:                     9,
+	ObjAndTwoObj:            10,
+	ObjAndTx:                11,
+	ObjOnly:                 12,
+	ObjOverTx:               13,
+	ObjTx:                   14,
+	PicTx:                   15,
+	SecHead:                 16,
+	Tbl:                     17,
+	Title:                   18,
+	TitleOnly:               19,
+	TwoColTx:                20,
+	TwoObj:                  21,
+	TwoObjAndObj:            22,
+	TwoObjAndTx:             23,
+	TwoObjOverTx:            24,
+	TwoTxTwoObj:             25,
+	Tx:                      26,
+	TxAndChart:              27,
+	TxAndClipArt:            28,
+	TxAndMedia:              29,
+	TxAndObj:                30,
+	TxAndTwoObj:             31,
+	TxOverObj:               32,
+	VertTitleAndTx:          33,
+	VertTitleAndTxOverChart: 34,
+	VertTx:                  35
+};
+
+/** @enum {number} */
+var c_oAscColorSchemeIndex = {
+	Accent1:  0,
+	Accent2:  1,
+	Accent3:  2,
+	Accent4:  3,
+	Accent5:  4,
+	Accent6:  5,
+	Bg1:      6,
+	Bg2:      7,
+	Dk1:      8,
+	Dk2:      9,
+	FolHlink: 10,
+	Hlink:    11,
+	Lt1:      12,
+	Lt2:      13,
+	PhClr:    14,
+	Tx1:      15,
+	Tx2:      16
+};
+
+/** @enum {number} */
+var c_oAscConformanceType = {
+	Strict:       0,
+	Transitional: 1
+};
+
+/** @enum {number} */
+var c_oAscSlideBgBwModeType = {
+	Auto:       0,
+	Black:      1,
+	BlackGray:  2,
+	BlackWhite: 3,
+	Clr:        4,
+	Gray:       5,
+	GrayWhite:  6,
+	Hidden:     7,
+	InvGray:    8,
+	LtGray:     9,
+	White:      10
+};
+/** @enum {number} */
+var c_oAscSlideChartSubElementType = {
+	Category:     0,
+	GridLegend:   1,
+	PtInCategory: 2,
+	PtInSeries:   3,
+	Series:       4
+};
+/** @enum {number} */
+var c_oAscSlideAnimDgmBuildType = {
+	AllAtOnce:  0,
+	lvlAtOnce:  1,
+	lvlOne:     2,
+	one:        3
+};
+
+/** @enum {number} */
+var c_oAscSlideRuntimeTriggerType = {
+	All:   0,
+	First: 1,
+	Last:  2
+};
+/** @enum {number} */
+var c_oAscSlideTriggerEventType = {
+	Begin:       0,
+	End:         1,
+	OnBegin:     2,
+	OnClick:     3,
+	OnDblClick:  4,
+	OnEnd:       5,
+	OnMouseOut:  6,
+	OnMouseOver: 7,
+	OnNext:      8,
+	OnPrev:      9,
+	OnStopAudio: 10
+};
+/** @enum {number} */
+var c_oAscSlideNodeFillType = {
+	Freeze:     0,
+	Hold:       1,
+	Remove:     2,
+	Transition: 3
+};
+/** @enum {number} */
+var c_oAscSlideMasterRelationType = {
+	LastClick: 0,
+	NextClick: 1,
+	SameClick: 2
+};
+/** @enum {number} */
+var c_oAscSlideNodeType = {
+	AfterEffect:     0,
+	AfterGroup:      1,
+	ClickEffect:     2,
+	ClickPar:        3,
+	InteractiveSeq:  4,
+	MainSeq:         5,
+	TmRoot:          6,
+	WithEffect:      7,
+	WithGroup:       8
+};
+/** @enum {number} */
+var c_oAscSlidePresetClassType = {
+	Emph:      0,
+	Entr:      1,
+	Exit:      2,
+	Mediacall: 3,
+	Path:      4,
+	Verb:      5
+};
+/** @enum {number} */
+var c_oAscSlideRestartType = {
+	Always:        0,
+	Never:         1,
+	WhenNotActive: 2
+};
+/** @enum {number} */
+var c_oAscSlideSyncBehaviorType = {
+	CanSlip: 0,
+	Locked:  1
+};
+/** @enum {number} */
+var c_oAscSlidePrevAcType = {
+	None:      0,
+	SkipTimed: 1
+};
+/** @enum {number} */
+var c_oAscSlideNextAcType = {
+	None: 0,
+	Seek: 1
+};
+/** @enum {number} */
+var c_oAscSlideCalcModeType = {
+	Discrete: 0,
+	Lin:      1,
+	Fmla:     2
+};
+/** @enum {number} */
+var c_oAscSlideTLValueType = {
+	Num: 0,
+	Clr: 1,
+	Str: 2
+};
+/** @enum {number} */
+var c_oAscSlideTLAccumulateType = {
+	Always: 0,
+	None:   1
+};
+/** @enum {number} */
+var c_oAscSlideTLAdditiveType = {
+	Base: 0,
+	Mult: 1,
+	None: 2,
+	Repl: 3,
+	Sum:  4
+};
+/** @enum {number} */
+var c_oAscSlideTLOverrideType = {
+	ChildStyle: 0,
+	Normal:     1
+};
+/** @enum {number} */
+var c_oAscSlideTLTransformType = {
+	Img: 0,
+	Pt:  1
+};
+/** @enum {number} */
+var c_oAscSlideTLColorSpaceType = {
+	Rgb: 0,
+	Hsl: 1
+};
+/** @enum {number} */
+var c_oAscSlideTLOriginType = {
+	Parent: 0,
+	Layout: 1
+};
+/** @enum {number} */
+var c_oAscSlideTLPathEditMode = {
+	Fixed:    0,
+	Relative: 1
+};
+/** @enum {number} */
+var c_oAscSlideTLCommandType = {
+	Call: 0,
+	Evt:  1,
+	Verb: 2
+};
+/** @enum {number} */
+var c_oAscSlideAnimChartBuildType = {
+	AllAtOnce:  0,
+	Category:   1,
+	CategoryEl: 2,
+	Series:     3,
+	SeriesEl:   4
+};
+
+/** @enum {number} */
+var c_oAscSlideOleChartBuildType = {
+	AllAtOnce:  0,
+	Category:   1,
+	CategoryEl: 2,
+	Series:     3,
+	SeriesEl:   4
+};
+
+/** @enum {number} */
+var c_oAscSlideParaBuildType = {
+	AllAtOnce: 0,
+	Cust:      1,
+	P:         2,
+	Whole:     3
+};
+/** @enum {number} */
+var c_oAscSlideIterateType = {
+	El: 0,
+	Lt: 1,
+	Wd: 2
+};
+/** @enum {number} */
+var c_oAscBlendModeType = {
+	Darken:  0,
+	Lighten: 1,
+	Mult:    2,
+	Over:    3,
+	Screen:  4
+};
+/** @enum {number} */
+var c_oAscPresetShadowVal = {
+	shdw1:  0,
+	shdw2:  1,
+	shdw3:  2,
+	shdw4:  3,
+	shdw5:  4,
+	shdw6:  5,
+	shdw7:  6,
+	shdw8:  7,
+	shdw9:  8,
+	shdw10: 9,
+	shdw11: 10,
+	shdw12: 11,
+	shdw13: 12,
+	shdw14: 13,
+	shdw15: 14,
+	shdw16: 15,
+	shdw17: 16,
+	shdw18: 17,
+	shdw19: 18,
+	shdw20: 19
+};
 var c_oSerFormat = {
 	Version   : 1,
 	Signature : "PPTY"
@@ -581,6 +892,11 @@ window['AscFormat'].ENTRANCE_BASIC_ZOOM_IN_FROM_SCREEN_CENTER = window['AscForma
 
 window['AscFormat'].ENTRANCE_BASIC_SWIVEL_VERTICAL = window['AscFormat']["ENTRANCE_BASIC_SWIVEL_VERTICAL"] = 5;
 window['AscFormat'].ENTRANCE_BASIC_SWIVEL_HORIZONTAL = window['AscFormat']["ENTRANCE_BASIC_SWIVEL_HORIZONTAL"] = 10;
+
+
+window['AscFormat'].MOTION_CUSTOM_PATH_CURVE = window['AscFormat']["MOTION_CUSTOM_PATH_CURVE"] = 1;
+window['AscFormat'].MOTION_CUSTOM_PATH_LINE = window['AscFormat']["MOTION_CUSTOM_PATH_LINE"] = 2;
+window['AscFormat'].MOTION_CUSTOM_PATH_SCRIBBLE = window['AscFormat']["MOTION_CUSTOM_PATH_SCRIBBLE"] = 3;
 
 //animation node types
 window['AscFormat'].NODE_TYPE_AFTEREFFECT = window['AscFormat']["NODE_TYPE_AFTEREFFECT"] = 0;

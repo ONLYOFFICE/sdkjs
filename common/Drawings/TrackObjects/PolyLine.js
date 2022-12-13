@@ -144,8 +144,8 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
                 bClosed = true;
             }
         }
-        var _n = bClosed ? nLastIndex : nLastIndex + 1;
-        for( i = 1; i<_n; ++i)
+        var nMaxPtIdx = bClosed ? (nLastIndex - 1) : nLastIndex;
+        for( i = 1; i <= nMaxPtIdx; ++i)
         {
             if(this.arrPoint[i].x > xMax)
             {
@@ -232,8 +232,11 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
         for(nRange = 0; nRange < aRanges.length; ++nRange)
         {
             aRange = aRanges[nRange];
-            nEnd = aRange[1];
+            if(aRange[0] + 1 > nMaxPtIdx) {
+                break;
+            }
             nPt = aRange[0] + 1;
+            nEnd = Math.min(aRange[1], nMaxPtIdx);
             while(nPt <= nEnd)
             {
                 if(nPt + 2 <= nEnd)

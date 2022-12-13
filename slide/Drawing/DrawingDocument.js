@@ -977,7 +977,7 @@ function CDrawingDocument()
 			thpages[index].IsRecalc = true;
 		}
 
-		if (index == this.SlideCurrent)
+		if (index === this.SlideCurrent)
 		{
 			this.m_oWordControl.Thumbnails.LockMainObjType = true;
 
@@ -1996,10 +1996,17 @@ function CDrawingDocument()
 	};
 	this.DrawTarget      = function()
 	{
-		if (0 != oThis.SlidesCount && "block" != oThis.TargetHtmlElement.style.display && oThis.NeedTarget && !oThis.TransitionSlide.IsPlaying())
-			oThis.TargetHtmlElement.style.display = "block";
-		else
-			oThis.TargetHtmlElement.style.display = "none";
+		let isNeedTarget = (0 != oThis.SlidesCount) && oThis.NeedTarget && !oThis.TransitionSlide.IsPlaying();
+		let isShow = false;
+		if (isNeedTarget)
+		{
+			if (oThis.m_oWordControl.m_oApi.isBlurEditor)
+				isShow = true;
+			else if ("block" != oThis.TargetHtmlElement.style.display)
+				isShow = true;
+		}
+
+		oThis.TargetHtmlElement.style.display = isShow ? "block" : "none";
 	};
 	this.TargetShow      = function()
 	{
@@ -3162,7 +3169,7 @@ function CDrawingDocument()
 	{
 		if (undefined === bIsFromDrawings)
 		{
-			if (this.m_oWordControl.m_oApi.ShowSnapLines)
+			if (this.m_oWordControl.m_oApi.ShowSmartGuides)
 			{
 				this.HorVerAnchors.push({Type : 0, Pos : xPos});
 			}
@@ -3182,7 +3189,7 @@ function CDrawingDocument()
 	{
 		if (undefined === bIsFromDrawings)
 		{
-			if (this.m_oWordControl.m_oApi.ShowSnapLines)
+			if (this.m_oWordControl.m_oApi.ShowSmartGuides)
 			{
 				this.HorVerAnchors.push({Type : 1, Pos : yPos});
 			}
@@ -3429,125 +3436,7 @@ function CDrawingDocument()
 		this.InlineTextInNotes = false;
 	};
 
-	this.privateGetParagraphByString = function(level, levelNum, counterCurrent, x, y, lineHeight, ctx, w, h)
-    {
-        var text = "";
-        for (var i = 0; i < level.Text.length; i++)
-        {
-            switch (level.Text[i].Type)
-            {
-                case Asc.c_oAscNumberingLvlTextType.Text:
-                    text += level.Text[i].Value;
-                    break;
-                case Asc.c_oAscNumberingLvlTextType.Num:
-                    var correctNum = 1;
-                    if (levelNum === level.Text[i].Value)
-                        correctNum = counterCurrent;
-                    text += AscCommon.IntToNumberFormat(correctNum, level.Format, level.get_OLang());
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        var api = this.m_oWordControl.m_oApi;
-
-        History.TurnOff();
-        var oldViewMode = api.isViewMode;
-        var oldMarks = api.ShowParaMarks;
-
-        api.isViewMode = true;
-        api.ShowParaMarks = false;
-
-		var oNewShape = new AscFormat.CShape();
-		oNewShape.createTextBody();
-
-        var par = oNewShape.txBody.content.GetAllParagraphs()[0];
-        par.MoveCursorToStartPos();
-
-        //par.Pr = level.ParaPr.Copy();
-		par.Pr = new CParaPr();
-        var textPr = level.TextPr.Copy();
-        textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
-
-        var parRun = new ParaRun(par);
-        parRun.Set_Pr(textPr);
-        parRun.AddText(text);
-        par.AddToContent(0, parRun);
-
-        par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-        par.Recalculate_Page(0);
-
-        var baseLineOffset = par.Lines[0].Y;
-        var bounds = par.Get_PageBounds(0);
-
-        var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-        var parH = (bounds.Bottom - bounds.Top) * AscCommon.g_dKoef_mm_to_pix;
-
-        var yOffset = y - ((baseLineOffset * g_dKoef_mm_to_pix) >> 0);
-        var xOffset = x;
-        switch (level.Align)
-        {
-            case AscCommon.align_Right:
-                xOffset -= parW;
-                break;
-            case AscCommon.align_Center:
-                xOffset -= (parW >> 1);
-                break;
-            default:
-                break;
-        }
-
-        // debug: text rect:
-        //ctx.beginPath();
-        //ctx.fillStyle = "#FFFF00";
-        //ctx.fillRect(xOffset, y, parW, parH);
-        //ctx.beginPath();
-
-		var backTextWidth = parW + 4; // 4 - чтобы линия никогде не была 'совсем рядом'
-		switch (level.Suff)
-		{
-			case Asc.c_oAscNumberingSuff.Space:
-			case Asc.c_oAscNumberingSuff.None:
-				backTextWidth += 4;
-				break;
-			case Asc.c_oAscNumberingSuff.Tab:
-				break;
-			default:
-				break;
-		}
-
-        ctx.fillStyle = "#FFFFFF";
-		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-        ctx.fillRect(Math.round(rPR * xOffset), Math.round((y - lineHeight) * rPR), Math.round(backTextWidth * rPR), Math.round((lineHeight + (lineHeight >> 1)) * rPR));
-        ctx.beginPath();
-
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-        var graphics = new AscCommon.CGraphics();
-        graphics.init(ctx,
-			AscCommon.AscBrowser.convertToRetinaValue(w, true),
-			AscCommon.AscBrowser.convertToRetinaValue(h, true),
-			w * AscCommon.g_dKoef_pix_to_mm, h * AscCommon.g_dKoef_pix_to_mm);
-        graphics.m_oFontManager = AscCommon.g_fontManager;
-
-        graphics.m_oCoordTransform.tx = AscCommon.AscBrowser.convertToRetinaValue(xOffset, true);
-        graphics.m_oCoordTransform.ty = AscCommon.AscBrowser.convertToRetinaValue(yOffset, true);
-
-        graphics.transform(1, 0, 0, 1, 0, 0);
-
-        par.Draw(0, graphics);
-
-        ctx.restore();
-        ctx.restore();
-
-        History.TurnOn();
-        api.isViewMode = oldViewMode;
-        api.ShowParaMarks = oldMarks;
-    };
-
-	this.SetDrawImagePreviewBulletForMenu = function(id, type, props, isNoCheckFonts)
+/*	this.SetDrawImagePreviewBulletForMenu = function(id, type, props, isNoCheckFonts) TODO: For history, delete after 7.2 release
 	{
 		var text = AscCommon.translateManager.getValue("None");
 		if (!props)
@@ -3572,6 +3461,7 @@ function CDrawingDocument()
 						oLvl		= new Asc.CAscNumberingLvl(i),
 						oLvlTextPr	= new CTextPr(),
 						sLvlText	= "";
+					oLvlTextPr.Color = new AscCommonWord.CDocumentColor(0, 0, 0, false);
 					switch (i)
 					{
 						case 1:
@@ -3640,6 +3530,7 @@ function CDrawingDocument()
 					c_oAscNumberingLevel.UpperRomanDot_Right,
 					c_oAscNumberingLevel.LowerRomanDot_Right
 				];
+
 				for (var i = 0; i < arrTypes.length; i++)
 				{
 					var lvl = new CNumberingLvl();
@@ -3647,6 +3538,10 @@ function CDrawingDocument()
 					lvl.SetByType(arrTypes[i], 0);
 					lvl.FillToAscNumberingLvl(oLvl);
 					oLvl.Align = 1;
+					if(oLvl.TextPr)
+					{
+						oLvl.TextPr.Color = new AscCommonWord.CDocumentColor(0, 0, 0, false);
+					}
 					props.push(oLvl);
 				}
 			}
@@ -3880,7 +3775,7 @@ function CDrawingDocument()
 			}
 		}
 		History.TurnOn();
-	};
+	};*/
 
 	this.OnAnimPaneChanged = function(nSlideNum, oRect)
 	{
@@ -5461,6 +5356,27 @@ function CThumbnailsManager()
 		this.ShowPage(_page);
 	};
 
+	this.SelectSlides = function(aSelectedIdx)
+	{
+		if(aSelectedIdx.length > 0)
+		{
+			for (let i = 0; i < this.m_arrPages.length; i++)
+			{
+				this.m_arrPages[i].IsSelected = false;
+			}
+			let nCount = aSelectedIdx.length;
+			for (let nIdx = 0; nIdx < nCount; nIdx++)
+			{
+				let oPage = this.m_arrPages[aSelectedIdx[nIdx]];
+				if(oPage)
+				{
+					oPage.IsSelected = true;
+				}
+			}
+			this.OnUpdateOverlay();
+		}
+	};
+
 	this.UpdateInterface = function()
 	{
 		this.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
@@ -5551,20 +5467,7 @@ function CThumbnailsManager()
 			}
 			case Asc.c_oAscPresentationShortcutType.ShowContextMenu:
 			{
-				sSelectedIdx = this.GetSelectedArray();
-				var oMenuPos = this.GetThumbnailPagePosition(Math.min.apply(Math, sSelectedIdx));
-				if (oMenuPos)
-				{
-					var oData =
-					{
-						Type: Asc.c_oAscContextMenuTypes.Thumbnails,
-						X_abs : oMenuPos.X,
-						Y_abs : oMenuPos.Y,
-						IsSlideSelect : true,
-						IsSlideHidden: this.IsSlideHidden(sSelectedIdx)
-					};
-					editor.sync_ContextMenuCallback(new AscCommonSlide.CContextMenuData(oData));
-				}
+				this.showContextMenu();
 				bReturnValue = false;
 				bPreventDefault = false;
 				break;
@@ -5631,25 +5534,6 @@ function CThumbnailsManager()
 					{
 						oPresentation.moveSlidesNextPos();
 					}
-					var slidesCount = oDrawingDocument.SlidesCount;
-					if (!oEvent.ShiftKey)
-					{
-						if (oDrawingDocument.SlideCurrent < (slidesCount - 1))
-						{
-							this.m_oWordControl.GoToPage(oDrawingDocument.SlideCurrent + 1);
-						}
-					}
-					else if (oEvent.CtrlKey)
-					{
-						if (oDrawingDocument.SlidesCount > 0)
-						{
-							this.m_oWordControl.GoToPage(oDrawingDocument.SlidesCount - 1);
-						}
-					}
-					else
-					{
-						this.CorrectShiftSelect(false, false);
-					}
 					break;
 				}
 				case 36: // home
@@ -5700,24 +5584,6 @@ function CThumbnailsManager()
 					{
 						oPresentation.moveSlidesPrevPos();
 					}
-					if (!oEvent.ShiftKey)
-					{
-						if (oDrawingDocument.SlideCurrent > 0)
-						{
-							this.m_oWordControl.GoToPage(oDrawingDocument.SlideCurrent - 1);
-						}
-					}
-					else if (oEvent.CtrlKey)
-					{
-						if (oDrawingDocument.SlidesCount > 0)
-						{
-							this.m_oWordControl.GoToPage(0);
-						}
-					}
-					else
-					{
-						this.CorrectShiftSelect(true, false);
-					}
 					break;
 				}
 				case 77:
@@ -5758,6 +5624,55 @@ function CThumbnailsManager()
 			e.preventDefault();
 		}
 		return bReturnValue;
+	};
+
+	this.showContextMenu = function()
+	{
+		let sSelectedIdx = this.GetSelectedArray();
+		let oMenuPos = this.GetThumbnailPagePosition(Math.min.apply(Math, sSelectedIdx));
+		if (oMenuPos)
+		{
+			let oData =
+				{
+					Type: Asc.c_oAscContextMenuTypes.Thumbnails,
+					X_abs : oMenuPos.X,
+					Y_abs : oMenuPos.Y,
+					IsSlideSelect : true,
+					IsSlideHidden: this.IsSlideHidden(sSelectedIdx)
+				};
+			editor.sync_ContextMenuCallback(new AscCommonSlide.CContextMenuData(oData));
+		}
+	};
+
+	this.getSpecialPasteButtonCoords = function(sSlideId)
+	{
+		let nSlideIdx = null;
+		let oPresentation = this.m_oWordControl.m_oLogicDocument;
+		let aSlides = oPresentation.Slides;
+		for(let nSld = 0; nSld < aSlides.length; ++nSld)
+		{
+			if(aSlides[nSld].Get_Id() === sSlideId)
+			{
+				nSlideIdx = nSld;
+				break;
+			}
+		}
+		let oRect = this.GetThumbnailPagePosition(nSlideIdx);
+		if(!oRect)
+		{
+			return null;
+		}
+		let nX, nY;
+		if(editor.WordControl.m_oThumbnailsContainer.HtmlElement.style.display === "none")
+		{
+			nX = 0;
+		}
+		else
+		{
+			nX = oRect.X + oRect.W - AscCommon.specialPasteElemWidth;
+		}
+		nY = oRect.Y + oRect.H;
+		return {X: nX, Y: nY};
 	};
 }
 

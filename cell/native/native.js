@@ -475,6 +475,7 @@ function asc_menu_ReadAscFill_grad(_params, _cursor){
                         }
                     }
                 }
+                _cursor.pos++;
                 break;
             }
             case 255:
@@ -1726,9 +1727,9 @@ function asc_ReadCBorder(s, p) {
                 if (type == "thin") {
                     style = Asc.c_oAscBorderStyles.Thin;
                 } else if (type == "medium") {
-                    style = Asc.c_oAscBorderStyles.Medium; 
+                    style = Asc.c_oAscBorderStyles.Medium;
                 } else if (type == "thick") {
-                    style = Asc.c_oAscBorderStyles.Thick; 
+                    style = Asc.c_oAscBorderStyles.Thick;
                 }
                 break;
             }
@@ -2754,8 +2755,6 @@ function OfflineEditor () {
 
         window['AscFormat'].DrawingArea.prototype.drawSelection = function(drawingDocument) {
             
-            AscCommon.g_oTextMeasurer.Flush();
-            
             var canvas = this.worksheet.objectRender.getDrawingCanvas();
             var shapeCtx = canvas.shapeCtx;
             var shapeOverlayCtx = canvas.shapeOverlayCtx;
@@ -2998,8 +2997,6 @@ function OfflineEditor () {
             }
             
             window["native"]["SwitchMemoryLayer"]();
-            
-            AscCommon.g_oTextMeasurer.Flush();
             
             this.objectRender.showDrawingObjectsEx();
             
@@ -3463,7 +3460,9 @@ function OfflineEditor () {
         deviceScale = window["native"]["GetDeviceScale"]();
         sdkCheck = settings["sdkCheck"];
 
-        window.g_file_path = "native_open_file";
+        // в таблицах неправильно выставляются dpi. пока фиксируем.
+        AscCommon.global_mouseEvent.AscHitToHandlesEpsilon = 18;
+
         window.NATIVE_DOCUMENT_TYPE = "";
 
         var translations = this.initSettings["translations"];
@@ -3517,6 +3516,7 @@ function OfflineEditor () {
 
              var thenCallback = function() {
 
+                _api.setDrawGroupsRestriction();
             	t.asc_WriteAllWorksheets(true);
             	t.asc_WriteCurrentCell();
             
@@ -3569,7 +3569,8 @@ function OfflineEditor () {
             	}
             };
 
-            _api.asc_nativeOpenFile(window["native"]["GetFileString"](), undefined, true, window["native"]["GetXlsxPath"]()).then(thenCallback, thenCallback);
+            _api.asc_nativeOpenFile(window["native"]["GetFileString"](), undefined, true, window["native"]["GetXlsxPath"]());
+            thenCallback();
            
             // TODO: Implement frozen places
             // TODO: Implement Text Art Styles
@@ -3959,6 +3960,7 @@ function OfflineEditor () {
                                  width + region.columnOff, height + region.rowOff);
         }
         
+        worksheet.stringRender.fontNeedUpdate = true;
         worksheet.__drawCellsAndBorders(null,
                                         region.columnBeg, region.rowBeg, region.columnEnd, region.rowEnd,
                                         region.columnOff, region.rowOff, istoplayer);
@@ -4425,14 +4427,10 @@ var _s = new OfflineEditor();
 
 window["native"]["offline_of"] = function(arg) {_s.openFile(arg);}
 window["native"]["offline_stz"] = function(v) {_s.zoom = v; _api.asc_setZoom(v);}
-window["native"]["offline_ds"] = function(x, y, width, height, ratio, istoplayer) {
-    AscCommon.g_oTextMeasurer.Flush();
-    
+window["native"]["offline_ds"] = function(x, y, width, height, ratio, istoplayer) {    
     _s.drawSheet(x, y, width, height, ratio, istoplayer);
 }
 window["native"]["offline_dh"] = function(x, y, width, height, ratio, type) {
-    AscCommon.g_oTextMeasurer.Flush();
-    
     _s.drawHeader(x, y, width, height, type, ratio);
 }
 
@@ -4728,8 +4726,6 @@ window["native"]["offline_complete_cell"] = function(x, y) {return _s.getNearCel
 window["native"]["offline_keyboard_down"] = function(inputKeys) {
     var wb = _api.wb;
     var ws = _api.wb.getWorksheet();
-    
-    AscCommon.g_oTextMeasurer.Flush();
     
     var isFormulaEditMode = wb.isFormulaEditMode;
     wb.isFormulaEditMode = false;
@@ -5407,17 +5403,13 @@ window["native"]["offline_apply_event"] = function(type,params) {
             // document interface
             
         case 3: // ASC_MENU_EVENT_TYPE_UNDO
-        {
-            AscCommon.g_oTextMeasurer.Flush();
-            
+        {   
             _api.asc_Undo();
             _s.asc_WriteAllWorksheets(true);
             break;
         }
         case 4: // ASC_MENU_EVENT_TYPE_REDO
         {
-            AscCommon.g_oTextMeasurer.Flush();
-            
             _api.asc_Redo();
             _s.asc_WriteAllWorksheets(true);
             break;
@@ -6263,9 +6255,14 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
         case 4020: // ASC_SPREADSHEETS_EVENT_TYPE_GET_FORMULAS
         {
+            if (undefined !== params) {
+                var localizeData = JSON.parse(params);
+                _api.asc_setLocalization(localizeData);
+            }
+
             _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
-            
+
             var info = _api.asc_getFormulasInfo();
             if (info) {
                 _stream["WriteLong"](info.length);
@@ -6283,11 +6280,6 @@ window["native"]["offline_apply_event"] = function(type,params) {
                 }
             } else {
                 _stream["WriteLong"](0);
-            }
-            
-            if (undefined !== params) {
-                var localizeData = JSON.parse(params);
-                _api.asc_setLocalization(localizeData);
             }
             
             _return = _stream;
@@ -6481,7 +6473,32 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
             break;
         }
-            
+
+        case 21002: // ASC_COAUTH_EVENT_TYPE_REPLACE_URL_IMAGE
+        {
+            var urls = JSON.parse(params[0]);
+            AscCommon.g_oDocumentUrls.addUrls(urls);
+            var firstUrl;
+            for (var i in urls) {
+                if (urls.hasOwnProperty(i)) {
+                    firstUrl = urls[i];
+                    break;
+                }
+            }
+
+            var _src = firstUrl;
+
+            var imageProp = new Asc.asc_CImgProperty();
+            imageProp.ImageUrl = _src;
+
+            var ws = _api.wb.getWorksheet();
+            if (ws && ws.objectRender && ws.objectRender.controller) {
+                ws.objectRender.controller.setGraphicObjectProps(imageProp);
+            }
+
+            break;
+        }
+
         case 22000: // ASC_MENU_EVENT_TYPE_ADVANCED_OPTIONS
         {
             var obj = JSON.parse(params);
@@ -6832,8 +6849,8 @@ function onApiLongActionEnd(type, id) {
 function onApiError(id, level, errData) {
     var info = {
         "level" : level,
-        "id" : id,
-        "errData" : JSON.prune(errData, 4),
+        "id" : id
+        // "errData" : JSON.prune(errData, 4)
     };
     postDataAsJSONString(info, 26104); // ASC_MENU_EVENT_TYPE_API_ERROR
 }
@@ -7115,87 +7132,124 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
     
     setTimeout(function() {
                
-        //console.log("JS - openDocument()");
+               //console.log("JS - openDocument()");
                
-        t._openDocument(file.data);
+               t._openDocument(file.data);
 
-        var thenCallback = function() {
-            t.wb = new AscCommonExcel.WorkbookView(t.wbModel, t.controller, t.handlers,
-                                                window["_null_object"], window["_null_object"], t,
-                                                t.collaborativeEditing, t.fontRenderingMode);
+               var thenCallback = function() {
+               Asc.ReadDefTableStyles(t.wbModel);
+               t.wb = new AscCommonExcel.WorkbookView(t.wbModel, t.controller, t.handlers,
+                                                      window["_null_object"], window["_null_object"], t,
+                                                      t.collaborativeEditing, t.fontRenderingMode);
+               t.setDrawGroupsRestriction();
 
-            if (!sdkCheck) {
+               if (!sdkCheck) {
 
-                //console.log("OPEN FILE ONLINE");
+               //console.log("OPEN FILE ONLINE");
 
-                t.wb.showWorksheet(undefined, true);
+               t.wb.showWorksheet(undefined, true);
 
-                var ws = t.wb.getWorksheet();
-                window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
+               var ws = t.wb.getWorksheet();
+               window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
 
-                _s.asc_WriteAllWorksheets(true);
-                _s.asc_WriteCurrentCell();
+               _s.asc_WriteAllWorksheets(true);
+               _s.asc_WriteCurrentCell();
 
-                return;
-            }
+               return;
+               }
 
-            t.asc_CheckGuiControlColors();
-            t.sendColorThemes(_api.wbModel.theme);
-            t.asc_ApplyColorScheme(false);
+               t.asc_CheckGuiControlColors();
+               t.sendColorThemes(_api.wbModel.theme);
+               t.asc_ApplyColorScheme(false);
 
-            t.sendStandartTextures();
+               t.sendStandartTextures();
 
-            //console.log("JS - applyFirstLoadChanges() before");
+               //console.log("JS - applyFirstLoadChanges() before");
 
-            t._applyPreOpenLocks();
-            // Применяем пришедшие при открытии изменения
-            t._applyFirstLoadChanges();
-            // Go to if sent options
-            t.goTo();
+               t._applyPreOpenLocks();
+               // Применяем пришедшие при открытии изменения
+               t._applyFirstLoadChanges();
+               // Go to if sent options
+               t.goTo();
 
-            t.isDocumentLoadComplete = true;
+               t.isDocumentLoadComplete = true;
 
-            // Меняем тип состояния (на никакое)
-            t.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
+               // Меняем тип состояния (на никакое)
+               t.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
 
-            // Были ошибки при открытии, посылаем предупреждение
-            if (0 < t.wbModel.openErrors.length) {
-                t.sendEvent('asc_onError', c_oAscError.ID.OpenWarning, c_oAscError.Level.NoCritical);
-            }
+               // Были ошибки при открытии, посылаем предупреждение
+               if (0 < t.wbModel.openErrors.length) {
+               t.sendEvent('asc_onError', c_oAscError.ID.OpenWarning, c_oAscError.Level.NoCritical);
+               }
 
-            //console.log("JS - applyFirstLoadChanges() after");
+               //console.log("JS - applyFirstLoadChanges() after");
 
-            setTimeout(function() {
+               setTimeout(function() {
 
-                t.wb.showWorksheet(undefined, true);
-                //console.log("JS - showWorksheet()");
+                          t.wb.showWorksheet(undefined, true);
+                          //console.log("JS - showWorksheet()");
 
-                var ws = t.wb.getWorksheet();
-                //console.log("JS - getWorksheet()");
+                          var ws = t.wb.getWorksheet();
+                          //console.log("JS - getWorksheet()");
 
+                window["native"]["onTokenJWT"](_api.CoAuthoringApi.get_jwt());
                 window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
                 //console.log("JS - onEndLoadingFile()");
 
-                _s.asc_WriteAllWorksheets(true);
-                _s.asc_WriteCurrentCell();
+                          _s.asc_WriteAllWorksheets(true);
+                          _s.asc_WriteCurrentCell();
 
-                setInterval(function() {
+                          setInterval(function() {
 
-                    _api._autoSave();
+                                      _api._autoSave();
 
-                    testLockedObjects();
+                                      testLockedObjects();
 
-                }, 100);
+                                      }, 100);
 
-                //console.log("JS - openDocument()");
+                          //console.log("JS - openDocument()");
 
-            }, 5);
+                          }, 5);
         };
 
-        t.openDocumentFromZip(t.wbModel, window["native"]["GetXlsxPath"]()).then(thenCallback, thenCallback);
+        t.openDocumentFromZip(t.wbModel, window["native"]["GetXlsxPath"]());
+        thenCallback();
 
-    }, 5);
+               }, 5);
 };
+
+// The helper function, called from the native application,
+// returns information about the document as a JSON string.
+window["Asc"]["spreadsheet_api"].prototype["asc_nativeGetCoreProps"] = function() {
+    var props = (_api) ? _api.asc_getCoreProps() : null,
+        value;
+
+    if (props) {
+        var coreProps = {};
+        coreProps["asc_getModified"] = props.asc_getModified();
+
+        value = props.asc_getLastModifiedBy();
+        if (value)
+        coreProps["asc_getLastModifiedBy"] = AscCommon.UserInfoParser.getParsedName(value);
+
+        coreProps["asc_getTitle"] = props.asc_getTitle();
+        coreProps["asc_getSubject"] = props.asc_getSubject();
+        coreProps["asc_getDescription"] = props.asc_getDescription();
+        coreProps["asc_getCreated"] = props.asc_getCreated();
+
+        var authors = [];
+        value = props.asc_getCreator();//"123\"\"\"\<\>,456";
+        value && value.split(/\s*[,;]\s*/).forEach(function (item) {
+            authors.push(item);
+        });
+
+        coreProps["asc_getCreator"] = authors;
+
+        return coreProps;
+    }
+
+    return {};
+}
 
 window["AscCommon"].getFullImageSrc2 = function (src) {
     
@@ -7215,3 +7269,168 @@ window["AscCommon"].getFullImageSrc2 = function (src) {
     
     return src;
 }
+
+// // JSON.prune : a function to stringify any object without overflow
+// // two additional optional parameters :
+// //   - the maximal depth (default : 6)
+// //   - the maximal length of arrays (default : 50)
+// // You can also pass an "options" object.
+// // examples :
+// //   var json = JSON.prune(window)
+// //   var arr = Array.apply(0,Array(1000)); var json = JSON.prune(arr, 4, 20)
+// //   var json = JSON.prune(window.location, {inheritedProperties:true})
+// // Web site : http://dystroy.org/JSON.prune/
+// // JSON.prune on github : https://github.com/Canop/JSON.prune
+// // This was discussed here : http://stackoverflow.com/q/13861254/263525
+// // The code is based on Douglas Crockford's code : https://github.com/douglascrockford/JSON-js/blob/master/json2.js
+// // No effort was done to support old browsers. JSON.prune will fail on IE8.
+// (function () {
+// 	'use strict';
+
+// 	var DEFAULT_MAX_DEPTH = 6;
+// 	var DEFAULT_ARRAY_MAX_LENGTH = 50;
+// 	var DEFAULT_PRUNED_VALUE = '"-pruned-"';
+// 	var seen; // Same variable used for all stringifications
+// 	var iterator; // either forEachEnumerableOwnProperty, forEachEnumerableProperty or forEachProperty
+
+// 	// iterates on enumerable own properties (default behavior)
+// 	var forEachEnumerableOwnProperty = function(obj, callback) {
+// 		for (var k in obj) {
+// 			if (Object.prototype.hasOwnProperty.call(obj, k)) callback(k);
+// 		}
+// 	};
+// 	// iterates on enumerable properties
+// 	var forEachEnumerableProperty = function(obj, callback) {
+// 		for (var k in obj) callback(k);
+// 	};
+// 	// iterates on properties, even non enumerable and inherited ones
+// 	// This is dangerous
+// 	var forEachProperty = function(obj, callback, excluded) {
+// 		if (obj==null) return;
+// 		excluded = excluded || {};
+// 		Object.getOwnPropertyNames(obj).forEach(function(k){
+// 			if (!excluded[k]) {
+// 				callback(k);
+// 				excluded[k] = true;
+// 			}
+// 		});
+// 		forEachProperty(Object.getPrototypeOf(obj), callback, excluded);
+// 	};
+
+// 	Object.defineProperty(Date.prototype, "toPrunedJSON", {value:Date.prototype.toJSON});
+
+// 	var	cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+// 		escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+// 		meta = {	// table of character substitutions
+// 			'\b': '\\b',
+// 			'\t': '\\t',
+// 			'\n': '\\n',
+// 			'\f': '\\f',
+// 			'\r': '\\r',
+// 			'"' : '\\"',
+// 			'\\': '\\\\'
+// 		};
+
+// 	function quote(string) {
+// 		escapable.lastIndex = 0;
+// 		return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
+// 			var c = meta[a];
+// 			return typeof c === 'string'
+// 				? c
+// 				: '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+// 		}) + '"' : '"' + string + '"';
+// 	}
+
+
+// 	var prune = function (value, depthDecr, arrayMaxLength) {
+// 		var prunedString = DEFAULT_PRUNED_VALUE;
+// 		var replacer;
+// 		if (typeof depthDecr == "object") {
+// 			var options = depthDecr;
+// 			depthDecr = options.depthDecr;
+// 			arrayMaxLength = options.arrayMaxLength;
+// 			iterator = options.iterator || forEachEnumerableOwnProperty;
+// 			if (options.allProperties) iterator = forEachProperty;
+// 			else if (options.inheritedProperties) iterator = forEachEnumerableProperty
+// 			if ("prunedString" in options) {
+// 				prunedString = options.prunedString;
+// 			}
+// 			if (options.replacer) {
+// 				replacer = options.replacer;
+// 			}
+// 		} else {
+// 			iterator = forEachEnumerableOwnProperty;
+// 		}
+// 		seen = [];
+// 		depthDecr = depthDecr || DEFAULT_MAX_DEPTH;
+// 		arrayMaxLength = arrayMaxLength || DEFAULT_ARRAY_MAX_LENGTH;
+// 		function str(key, holder, depthDecr) {
+// 			var i, k, v, length, partial, value = holder[key];
+
+// 			if (value && typeof value === 'object' && typeof value.toPrunedJSON === 'function') {
+// 				value = value.toPrunedJSON(key);
+// 			}
+// 			if (value && typeof value.toJSON === 'function') {
+// 				value = value.toJSON();
+// 			}
+
+// 			switch (typeof value) {
+// 			case 'string':
+// 				return quote(value);
+// 			case 'number':
+// 				return isFinite(value) ? String(value) : 'null';
+// 			case 'boolean':
+// 			case 'null':
+// 				return String(value);
+// 			case 'object':
+// 				if (!value) {
+// 					return 'null';
+// 				}
+// 				if (depthDecr<=0 || seen.indexOf(value)!==-1) {
+// 					if (replacer) {
+// 						var replacement = replacer(value, prunedString, true);
+// 						return replacement===undefined ? undefined : ''+replacement;
+// 					}
+// 					return prunedString;
+// 				}
+// 				seen.push(value);
+// 				partial = [];
+// 				if (Object.prototype.toString.apply(value) === '[object Array]') {
+// 					length = Math.min(value.length, arrayMaxLength);
+// 					for (i = 0; i < length; i += 1) {
+// 						partial[i] = str(i, value, depthDecr-1) || 'null';
+// 					}
+// 					v = '[' + partial.join(',') + ']';
+// 					if (replacer && value.length>arrayMaxLength) return replacer(value, v, false);
+// 					return v;
+// 				}
+// 				if (value instanceof RegExp) {
+// 					return quote(value.toString());
+// 				}
+// 				iterator(value, function(k) {
+// 					try {
+// 						v = str(k, value, depthDecr-1);
+// 						if (v) partial.push(quote(k) + ':' + v);
+// 					} catch (e) {
+// 						// this try/catch due to forbidden accessors on some objects
+// 					}
+// 				});
+// 				return '{' + partial.join(',') + '}';
+// 			case 'function':
+// 			case 'undefined':
+// 				return replacer ? replacer(value, undefined, false) : undefined;
+// 			}
+// 		}
+// 		return str('', {'': value}, depthDecr);
+// 	};
+
+// 	prune.log = function() {
+// 		console.log.apply(console, Array.prototype.map.call(arguments, function(v) {
+// 			return JSON.parse(JSON.prune(v));
+// 		}));
+// 	};
+// 	prune.forEachProperty = forEachProperty; // you might want to also assign it to Object.forEachProperty
+
+// 	if (typeof module !== "undefined") module.exports = prune;
+// 	else JSON.prune = prune;
+// }());

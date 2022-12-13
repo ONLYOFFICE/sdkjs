@@ -35,6 +35,7 @@
 // ---------------------------------------------------------------
 function CAscSlideTransition()
 {
+    AscFormat.CBaseNoIdObject.call(this);
     this.TransitionType     = undefined;
     this.TransitionOption   = undefined;
     this.TransitionDuration = undefined;
@@ -44,6 +45,7 @@ function CAscSlideTransition()
     this.SlideAdvanceDuration       = undefined;
     this.ShowLoop                   = undefined;
 }
+AscFormat.InitClass(CAscSlideTransition, AscFormat.CBaseNoIdObject, 0);
 
 CAscSlideTransition.prototype.put_TransitionType = function(v) { this.TransitionType = v; };
 CAscSlideTransition.prototype.get_TransitionType = function() { return this.TransitionType; };
@@ -60,7 +62,6 @@ CAscSlideTransition.prototype.put_SlideAdvanceDuration = function(v) { this.Slid
 CAscSlideTransition.prototype.get_SlideAdvanceDuration = function() { return this.SlideAdvanceDuration; };
 CAscSlideTransition.prototype.put_ShowLoop = function(v) { this.ShowLoop = v; };
 CAscSlideTransition.prototype.get_ShowLoop = function() { return this.ShowLoop; };
-
 CAscSlideTransition.prototype.applyProps = function(v)
 {
     if (undefined !== v.TransitionType && null !== v.TransitionType)
@@ -79,7 +80,6 @@ CAscSlideTransition.prototype.applyProps = function(v)
     if (undefined !== v.ShowLoop && null !== v.ShowLoop)
         this.ShowLoop = v.ShowLoop;
 };
-
 CAscSlideTransition.prototype.createDuplicate = function(v)
 {
     var _slideT = new Asc.CAscSlideTransition();
@@ -95,7 +95,6 @@ CAscSlideTransition.prototype.createDuplicate = function(v)
 
     return _slideT;
 };
-
 CAscSlideTransition.prototype.makeDuplicate = function(_slideT)
 {
     if (!_slideT)
@@ -110,7 +109,6 @@ CAscSlideTransition.prototype.makeDuplicate = function(_slideT)
     _slideT.SlideAdvanceDuration       = this.SlideAdvanceDuration;
     _slideT.ShowLoop                   = this.ShowLoop;
 };
-
 CAscSlideTransition.prototype.setUndefinedOptions = function()
 {
     this.TransitionType     = undefined;
@@ -122,7 +120,6 @@ CAscSlideTransition.prototype.setUndefinedOptions = function()
     this.SlideAdvanceDuration       = undefined;
     this.ShowLoop                   = undefined;
 };
-
 CAscSlideTransition.prototype.setDefaultParams = function()
 {
     this.TransitionType     = c_oAscSlideTransitionTypes.None;
@@ -214,6 +211,475 @@ CAscSlideTransition.prototype.ToArray = function()
     _ret.push(this.SlideAdvanceDuration);
     _ret.push(this.ShowLoop);
     return _ret;
+};
+
+CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames, _paramValues) {
+    if (_paramNames.length === _paramValues.length && typeof _type === "string" && _type.length > 0)
+    {
+        var _len = _paramNames.length;
+        if ("p:fade" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Fade;
+            this.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
+
+            if (1 === _len && _paramNames[0] === "thruBlk" && _paramValues[0] === "1")
+            {
+                this.TransitionOption = c_oAscSlideTransitionParams.Fade_Through_Black;
+            }
+        }
+        else if ("p:push" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Push;
+            this.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+
+            if (1 === _len && _paramNames[0] === "dir")
+            {
+                if ("l" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+                if ("r" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                if ("d" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+            }
+        }
+        else if ("p:wipe" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Wipe;
+            this.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+
+            if (1 === _len && _paramNames[0] === "dir")
+            {
+                if ("u" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                if ("r" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                if ("d" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+            }
+        }
+        else if ("p:strips" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Wipe;
+            this.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
+
+            if (1 === _len && _paramNames[0] === "dir")
+            {
+                if ("rd" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
+                if ("ru" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
+                if ("lu" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
+            }
+        }
+        else if ("p:cover" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Cover;
+            this.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+
+            if (1 === _len && _paramNames[0] === "dir")
+            {
+                if ("u" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                if ("r" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                if ("d" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+                if ("rd" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
+                if ("ru" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
+                if ("lu" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
+                if ("ld" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
+            }
+        }
+        else if ("p:pull" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.UnCover;
+            this.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+
+            if (1 === _len && _paramNames[0] === "dir")
+            {
+                if ("u" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                if ("r" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                if ("d" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+                if ("rd" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
+                if ("ru" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
+                if ("lu" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
+                if ("ld" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
+            }
+        }
+        else if ("p:split" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Split;
+
+            var _is_vert = true;
+            var _is_out = true;
+
+            for (var i = 0; i < _len; i++)
+            {
+                if (_paramNames[i] === "orient")
+                {
+                    _is_vert = (_paramValues[i] === "vert") ? true : false;
+                }
+                else if (_paramNames[i] === "dir")
+                {
+                    _is_out = (_paramValues[i] === "out") ? true : false;
+                }
+            }
+
+            if (_is_vert)
+            {
+                if (_is_out)
+                    this.TransitionOption = c_oAscSlideTransitionParams.Split_VerticalOut;
+                else
+                    this.TransitionOption = c_oAscSlideTransitionParams.Split_VerticalIn;
+            }
+            else
+            {
+                if (_is_out)
+                    this.TransitionOption = c_oAscSlideTransitionParams.Split_HorizontalOut;
+                else
+                    this.TransitionOption = c_oAscSlideTransitionParams.Split_HorizontalIn;
+            }
+        }
+        else if ("p:wheel" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Clock;
+            this.TransitionOption = c_oAscSlideTransitionParams.Clock_Clockwise;
+        }
+        else if ("p14:wheelReverse" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Clock;
+            this.TransitionOption = c_oAscSlideTransitionParams.Clock_Counterclockwise;
+        }
+        else if ("p:wedge" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Clock;
+            this.TransitionOption = c_oAscSlideTransitionParams.Clock_Wedge;
+        }
+        else if ("p14:warp" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Zoom;
+            this.TransitionOption = c_oAscSlideTransitionParams.Zoom_Out;
+
+            if (1 === _len && _paramNames[0] === "dir")
+            {
+                if ("in" === _paramValues[0])
+                    this.TransitionOption = c_oAscSlideTransitionParams.Zoom_In;
+            }
+        }
+        else if ("p:newsflash" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Zoom;
+            this.TransitionOption = c_oAscSlideTransitionParams.Zoom_AndRotate;
+        }
+        else if ("p:none" !== _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Fade;
+            this.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
+        }
+    }
+};
+CAscSlideTransition.prototype.fillXmlParams = function (aAttrNames, aAttrValues) {
+    let sNodeName = null;
+    switch (this.TransitionType)
+    {
+        case c_oAscSlideTransitionTypes.Fade:
+        {
+            sNodeName = "p:fade";
+            switch (this.TransitionOption)
+            {
+                case c_oAscSlideTransitionParams.Fade_Smoothly:
+                {
+                    aAttrNames.push("thruBlk");
+                    aAttrValues.push("0");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Fade_Through_Black:
+                {
+                    aAttrNames.push("thruBlk");
+                    aAttrValues.push("1");
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        case c_oAscSlideTransitionTypes.Push:
+        {
+            sNodeName = "p:push";
+            switch (this.TransitionOption)
+            {
+                case c_oAscSlideTransitionParams.Param_Left:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("r");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_Right:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("l");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_Top:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("d");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_Bottom:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("u");
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        case c_oAscSlideTransitionTypes.Wipe:
+        {
+            switch (this.TransitionOption)
+            {
+                case c_oAscSlideTransitionParams.Param_Left:
+                {
+                    sNodeName = "p:wipe";
+                    aAttrNames.push("dir");
+                    aAttrValues.push("r");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_Right:
+                {
+                    sNodeName = "p:wipe";
+                    aAttrNames.push("dir");
+                    aAttrValues.push("l");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_Top:
+                {
+                    sNodeName = "p:wipe";
+                    aAttrNames.push("dir");
+                    aAttrValues.push("d");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_Bottom:
+                {
+                    sNodeName = "p:wipe";
+                    aAttrNames.push("dir");
+                    aAttrValues.push("u");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_TopLeft:
+                {
+                    sNodeName = "p:strips";
+                    aAttrNames.push("dir");
+                    aAttrValues.push("rd");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_TopRight:
+                {
+                    sNodeName = "p:strips";
+                    aAttrNames.push("dir");
+                    aAttrValues.push("ld");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_BottomLeft:
+                {
+                    sNodeName = "p:strips";
+                    aAttrNames.push("dir");
+                    aAttrValues.push("ru");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_BottomRight:
+                {
+                    sNodeName = "p:strips";
+                    aAttrNames.push("dir");
+                    aAttrValues.push("lu");
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        case c_oAscSlideTransitionTypes.Split:
+        {
+            sNodeName = "p:split";
+            switch (this.TransitionOption)
+            {
+                case c_oAscSlideTransitionParams.Split_HorizontalIn:
+                {
+                    aAttrNames.push("orient");
+                    aAttrNames.push("dir");
+                    aAttrValues.push("horz");
+                    aAttrValues.push("in");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Split_HorizontalOut:
+                {
+                    aAttrNames.push("orient");
+                    aAttrNames.push("dir");
+                    aAttrValues.push("horz");
+                    aAttrValues.push("out");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Split_VerticalIn:
+                {
+                    aAttrNames.push("orient");
+                    aAttrNames.push("dir");
+                    aAttrValues.push("vert");
+                    aAttrValues.push("in");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Split_VerticalOut:
+                {
+                    aAttrNames.push("orient");
+                    aAttrNames.push("dir");
+                    aAttrValues.push("vert");
+                    aAttrValues.push("out");
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        case c_oAscSlideTransitionTypes.UnCover:
+        case c_oAscSlideTransitionTypes.Cover:
+        {
+            if (this.TransitionType === c_oAscSlideTransitionTypes.Cover)
+                sNodeName = "p:cover";
+            else
+                sNodeName = "p:pull";
+
+            switch (this.TransitionOption)
+            {
+                case c_oAscSlideTransitionParams.Param_Left:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("r");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_Right:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("l");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_Top:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("d");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_Bottom:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("u");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_TopLeft:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("rd");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_TopRight:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("ld");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_BottomLeft:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("ru");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Param_BottomRight:
+                {
+                    aAttrNames.push("dir");
+                    aAttrValues.push("lu");
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        case c_oAscSlideTransitionTypes.Clock:
+        {
+            switch (this.TransitionOption)
+            {
+                case c_oAscSlideTransitionParams.Clock_Clockwise:
+                {
+                    sNodeName = "p:wheel";
+                    aAttrNames.push("spokes");
+                    aAttrValues.push("1");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Clock_Counterclockwise:
+                {
+                    sNodeName = "p14:wheelReverse";
+                    aAttrNames.push("spokes");
+                    aAttrValues.push("1");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Clock_Wedge:
+                {
+                    sNodeName = "p:wedge";
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        case c_oAscSlideTransitionTypes.Zoom:
+        {
+            switch (this.TransitionOption)
+            {
+                case c_oAscSlideTransitionParams.Zoom_In:
+                {
+                    sNodeName = "p14:warp";
+                    aAttrNames.push("dir");
+                    aAttrValues.push("in");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Zoom_Out:
+                {
+                    sNodeName = "p14:warp";
+                    aAttrNames.push("dir");
+                    aAttrValues.push("out");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Zoom_AndRotate:
+                {
+                    sNodeName = "p:newsflash";
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    return sNodeName;
 };
 
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideSetTransition] = CAscSlideTransition;

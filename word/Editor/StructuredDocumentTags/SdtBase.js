@@ -206,22 +206,40 @@ CSdtBase.prototype.IsContentControlTemporary = function()
 	return this.Pr.Temporary;
 };
 /**
- * @param {CSdtFormPr} oFormPr
+ * @param {AscWord.CSdtFormPr} oFormPr
  */
 CSdtBase.prototype.SetFormPr = function(oFormPr)
 {
+	this.private_CheckKeyValueBeforeSet(oFormPr);
+
 	if ((!this.Pr.FormPr && oFormPr) || !this.Pr.FormPr.IsEqual(oFormPr))
 	{
 		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr));
 		this.Pr.FormPr = oFormPr;
 
-		var oLogicDocument = this.GetLogicDocument();
+		let oLogicDocument = this.GetLogicDocument();
 		if (oLogicDocument)
-			oLogicDocument.RegisterForm(this);
+			oLogicDocument.GetFormsManager().Register(this);
 
 		this.private_OnAddFormPr();
 	}
-}
+};
+CSdtBase.prototype.private_CheckKeyValueBeforeSet = function(formPr)
+{
+	if (!this.Pr.FormPr || !formPr)
+		return;
+
+	let newKey = formPr.GetKey();
+	if (!newKey)
+		newKey = "";
+
+	newKey = newKey.trim();
+
+	if ("" === newKey)
+		formPr.SetKey(this.Pr.FormPr.GetKey());
+	else
+		formPr.SetKey(newKey);
+};
 /**
  * Удаляем настройки специальных форм
  */
@@ -234,13 +252,13 @@ CSdtBase.prototype.RemoveFormPr = function()
 
 		var oLogicDocument = this.GetLogicDocument();
 		if (oLogicDocument)
-			oLogicDocument.UnregisterForm(this);
+			oLogicDocument.GetFormsManager().Unregister(this);
 
 		this.private_OnAddFormPr();
 	}
 };
 /**
- * @returns {?CSdtFormPr}
+ * @returns {?AscWord.CSdtFormPr}
  */
 CSdtBase.prototype.GetFormPr = function()
 {
@@ -252,6 +270,10 @@ CSdtBase.prototype.GetFormPr = function()
 CSdtBase.prototype.IsForm = function()
 {
 	return (undefined !== this.Pr.FormPr);
+};
+CSdtBase.prototype.IsComplexForm = function()
+{
+	return (undefined !== this.Pr.ComplexFormPr);
 };
 /**
  * @returns {boolean}
@@ -291,6 +313,14 @@ CSdtBase.prototype.GetFormKey = function()
 		return undefined;
 
 	return (this.Pr.FormPr.Key);
+};
+/**
+ * Проверяем, является ли данный контейнер чекбоксом
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsCheckBox = function()
+{
+	return false;
 };
 /**
  * Проверяем, является ли заданный контрол радио-кнопкой
@@ -418,7 +448,15 @@ CSdtBase.prototype.CorrectXYToHitIn = function(X, Y, nPageAbs)
  */
 CSdtBase.prototype.ClearContentControlExt = function()
 {
-	if (this.IsCheckBox())
+	if (this.IsComplexForm())
+	{
+		let arrSubForms = this.GetAllChildForms();
+		for (let nIndex = 0, nCount = arrSubForms.length; nIndex < nCount; ++nIndex)
+		{
+			arrSubForms[nIndex].ClearContentControlExt();
+		}
+	}
+	else if (this.IsCheckBox())
 	{
 		this.SetCheckBoxChecked(false);
 	}
@@ -456,6 +494,28 @@ CSdtBase.prototype.IsFormFilled = function()
 	return true;
 }
 /**
+ * Проверка заполненности формы для составных форм
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsComplexFormFilled = function()
+{
+	let oMainForm = this.GetMainForm();
+	if (!oMainForm)
+		return false;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return true;
+
+	for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
+	{
+		if (!arrForms[nIndex].IsFormFilled())
+			return false;
+	}
+
+	return true;
+};
+/**
  * Оборачиваем форму в графический контейнер
  * @returns {?ParaDrawing}
  */
@@ -489,5 +549,285 @@ CSdtBase.prototype.IsPictureForm = function()
  * Функция обновления картиночной формы
  */
 CSdtBase.prototype.UpdatePictureFormLayout = function()
+{
+};
+/**
+ * Выставляем настройку, что заданный контрол является составным полем
+ * @param oPr {AscWord.CSdtComplexFormPr}
+ */
+CSdtBase.prototype.SetComplexFormPr = function(oPr)
+{
+	if (!this.Pr.ComplexFormPr || !this.Pr.ComplexFormPr.IsEqual(oPr))
+	{
+		let _oPr    = oPr ? oPr.Copy() : undefined;
+		let oChange = new CChangesSdtPrComplexFormPr(this, this.Pr.ComplexFormPr, _oPr);
+		AscCommon.History.Add(oChange);
+		oChange.Redo();
+	}
+};
+/**
+ * @returns {?AscWord.CSdtComplexFormPr}
+ */
+CSdtBase.prototype.GetComplexFormPr = function()
+{
+	return this.Pr.ComplexFormPr;
+}
+/**
+ * Получаем главную родительскую сложную форму
+ * @returns {?AscWord.CInlineLevelSdt}
+ */
+CSdtBase.prototype.GetMainComplexForm = function()
+{
+	let oMain = null;
+	if (this instanceof AscWord.CInlineLevelSdt || this.IsComplexForm())
+		oMain = this;
+
+	let oCur  = this;
+	while (true)
+	{
+		oCur = oCur.GetParent();
+		if (!oCur || !(oCur instanceof AscWord.CInlineLevelSdt) || !oCur.IsComplexForm())
+			break;
+
+		oMain = oCur;
+	}
+
+	return oMain;
+};
+CSdtBase.prototype.GetMainForm = function()
+{
+	if (!this.IsForm())
+		return null;
+
+	let oMain = this.GetMainComplexForm();
+	return oMain ? oMain : this;
+};
+/**
+ * Данная функция возвращает все дочерние формы по отношению к данной форме
+ * @returns {CSdtBase[]}
+ */
+CSdtBase.prototype.GetAllChildForms = function()
+{
+	let arrForms    = [];
+	let arrControls = this.GetAllContentControls();
+	for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+	{
+		let oControl = arrControls[nIndex];
+		if (oControl.IsForm())
+			arrForms.push(oControl);
+	}
+
+	return arrForms;
+};
+/**
+ * Получаем все простые подформы (т.е. если подформы - составное поле, то мы пробегаемся по её простым подформам)
+ * @param arrForms
+ * @returns {CSdtBase[]}
+ */
+CSdtBase.prototype.GetAllSubForms = function(arrForms)
+{
+	if (!arrForms)
+		arrForms = [];
+
+	let arrControls = this.GetAllContentControls();
+	for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+	{
+		let oControl = arrControls[nIndex];
+		if (!oControl.IsForm())
+			continue;
+
+		if (!oControl.IsComplexForm())
+			arrForms.push(oControl);
+	}
+
+	return arrForms;
+};
+/**
+ * Провяеряем является ли данная форма текущей, с учетом того, что она либо сама является составной формой, либо
+ * лежит в составной
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsCurrentComplexForm = function()
+{
+	if (this.IsCurrent())
+		return true;
+
+	let oMainComplexForm = this.GetMainComplexForm();
+	if (!oMainComplexForm)
+		return false;
+
+	if (oMainComplexForm.IsCurrent())
+		return true;
+
+	let arrForms = oMainComplexForm.GetAllChildForms();
+	for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
+	{
+		if (arrForms[nIndex].IsCurrent())
+			return true;
+	}
+
+	return false;
+};
+/**
+ * Является ли данная форма основной (а не подформой внутри другой формы)
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsMainForm = function()
+{
+	return (this === this.GetMainForm());
+};
+/**
+ * Возвращаем следующую простую подформу в составе сложной формы
+ * @returns {?CSdtBase}
+ */
+CSdtBase.prototype.GetNextSubForm = function()
+{
+	let oMainForm;
+	if (!this.IsForm()
+		|| this.IsComplexForm()
+		|| !(oMainForm = this.GetMainComplexForm())
+		|| oMainForm === this)
+		return null;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return null;
+
+	let nIndex = arrForms.indexOf(this);
+	if (-1 === nIndex)
+		return arrForms[0];
+
+	return (nIndex < arrForms.length - 1 ? arrForms[nIndex + 1] : this);
+};
+/**
+ * Возвращаем предыдущую простую подформу в составе сложной формы
+ * @returns {?CSdtBase}
+ */
+CSdtBase.prototype.GetPrevSubForm = function()
+{
+	let oMainForm;
+	if (!this.IsForm()
+		|| this.IsComplexForm()
+		|| !(oMainForm = this.GetMainComplexForm())
+		|| oMainForm === this)
+		return null;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return null;
+
+	let nIndex = arrForms.indexOf(this);
+	if (-1 === nIndex)
+		return arrForms[arrForms.length - 1];
+
+	return (nIndex > 0 ? arrForms[nIndex - 1] : this);
+};
+CSdtBase.prototype.GetSubFormFromCurrentPosition = function(isForward)
+{
+	let oMainForm;
+	if (!this.IsForm() || !(oMainForm = this.GetMainComplexForm()))
+		return null;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return null;
+
+	if (!this.IsComplexForm())
+		return this;
+
+	let nCurPos = this.State.ContentPos;
+	if (isForward)
+	{
+		for (let nPos = nCurPos + 1, nCount = this.Content.length; nPos < nCount; ++nPos)
+		{
+			let oElement = this.GetElement(nPos);
+			if (oElement instanceof AscWord.CInlineLevelSdt && oElement.IsForm())
+			{
+				if (!oElement.IsComplexForm())
+					return oElement;
+
+				let arrSubForms = oElement.GetAllSubForms();
+				if (arrSubForms.length)
+					return arrSubForms[0];
+			}
+		}
+	}
+	else
+	{
+		for (let nPos = nCurPos - 1; nPos >= 0; --nPos)
+		{
+			let oElement = this.GetElement(nPos);
+			if (oElement instanceof AscWord.CInlineLevelSdt && oElement.IsForm())
+			{
+				if (!oElement.IsComplexForm())
+					return oElement;
+
+				let arrSubForms = oElement.GetAllSubForms();
+				if (arrSubForms.length)
+					return arrSubForms[arrSubForms.length - 1];
+			}
+		}
+	}
+
+	let oParent = this.GetParent();
+	if (this === oMainForm
+		|| !oParent
+		|| !(oParent instanceof AscWord.CInlineLevelSdt)
+		|| !oParent.IsForm())
+		return null;
+
+	return oParent.GetSubFormFromCurrentPosition(isForward);
+};
+CSdtBase.prototype.IsBuiltInTableOfContents = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && this.Pr.DocPartObj.Gallery === "Table of Contents");
+};
+CSdtBase.prototype.IsBuiltInWatermark = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && (this.Pr.DocPartObj.Gallery === "Watermarks" || this.Pr.DocPartObj.Gallery === "Watermark"));
+};
+CSdtBase.prototype.IsBuiltInUnique = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && true === this.Pr.DocPartObj.Unique);
+};
+CSdtBase.prototype.GetInnerText = function()
+{
+	return "";
+};
+CSdtBase.prototype.GetFormValue = function()
+{
+	if (!this.IsForm())
+		return null;
+
+	if (this.IsPlaceHolder())
+		return this.IsCheckBox() ? false : "";
+
+	if (this.IsComplexForm())
+	{
+		return this.GetInnerText();
+	}
+	else if (this.IsCheckBox())
+	{
+		return this.IsCheckBoxChecked();
+	}
+	else if (this.IsPictureForm())
+	{
+		let oImg;
+		let allDrawings = this.GetAllDrawingObjects();
+		for (let nDrawing = 0; nDrawing < allDrawings.length; ++nDrawing)
+		{
+			if (allDrawings[nDrawing].IsPicture())
+			{
+				oImg = allDrawings[nDrawing].GraphicObj;
+				break;
+			}
+		}
+
+		return oImg ? oImg.getBase64Img() : "";
+	}
+
+	return this.GetInnerText();
+};
+CSdtBase.prototype.MoveCursorOutsideForm = function(isBefore)
 {
 };

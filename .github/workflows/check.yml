@@ -15,18 +15,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Use Node.js 12
+      - name: Use Node.js 14
         uses: actions/setup-node@v1
         with:
-            node-version: 12
+            node-version: 14
       - name: Run unit tests
         run: |
           npm install -g grunt-cli node-qunit-puppeteer
           npm install --prefix build
           grunt --gruntfile build/Gruntfile.js develop
-          node-qunit-puppeteer cell/.unit-tests/FormulaTests.html
-          node-qunit-puppeteer cell/.unit-tests/PivotTests.html
-          node-qunit-puppeteer cell/.unit-tests/CopyPasteTests.html
+          node-qunit-puppeteer tests/cell/spreadsheet-calculation/FormulaTests.html
+          node-qunit-puppeteer tests/cell/spreadsheet-calculation/PivotTests.html
+          node-qunit-puppeteer tests/cell/spreadsheet-calculation/CopyPasteTests.html
+          node-qunit-puppeteer tests/word/unit-tests/paragraphContentPos.html
+          node-qunit-puppeteer tests/word/document-calculation/paragraph.html
+          node-qunit-puppeteer tests/word/document-calculation/table/flowTablePosition.html
+          node-qunit-puppeteer tests/word/document-calculation/textShaper/textShaper.html
+          node-qunit-puppeteer tests/word/forms/forms.html
+          node-qunit-puppeteer tests/word/forms/complexForm.html
+          node-qunit-puppeteer tests/word/api/api.html
+          node-qunit-puppeteer tests/word/api/textInput.html
+          node-qunit-puppeteer tests/word/styles/paraPr.html
   builder-tests:
     runs-on: ubuntu-latest
     steps:
@@ -40,9 +49,8 @@ jobs:
            npm install -g grunt-cli
            npm install --prefix build
            grunt --level=WHITESPACE_ONLY --base build --gruntfile build/Gruntfile.js
-           docker pull onlyofficetestingrobot/doc-builder-testing:develop-latest
            docker run -v $PWD/deploy/sdkjs/common:/opt/onlyoffice/documentbuilder/sdkjs/common \
                       -v $PWD/deploy/sdkjs/word:/opt/onlyoffice/documentbuilder/sdkjs/word \
                       -v $PWD/deploy/sdkjs/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell \
                       -v $PWD/deploy/sdkjs/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide \
-                      onlyofficetestingrobot/doc-builder-testing:develop-latest
+                      onlyofficeqa/doc-builder-testing:next-release rake rspec_critical

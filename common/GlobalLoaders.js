@@ -76,6 +76,8 @@
         this.check_loaded_timer_id = -1;
         this.endLoadingCallback = null;
 
+        this.perfStart = 0;
+
         this.put_Api = function(_api)
         {
             this.Api = _api;
@@ -286,8 +288,16 @@
         var oThis = this;
         this._LoadFonts = function()
         {
+            if (this.bIsLoadDocumentFirst === true && 0 === this.perfStart && this.fonts_loading.length > 0) {
+                this.perfStart = performance.now();
+            }
             if (0 == this.fonts_loading.length)
             {
+                if (this.perfStart > 0) {
+                    let perfEnd = performance.now();
+                    AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onLoadFonts", perfEnd - this.perfStart), this.Api);
+                    this.perfStart = 0;
+                }
                 if (null != this.endLoadingCallback)
                 {
                     this.endLoadingCallback.call(this.Api);
@@ -456,11 +466,6 @@
 
         this.bIsLoadDocumentImagesNoByOrder = true;
         this.nNoByOrderCounter = 0;
-
-        this.loadImageCallBackCounter = 0;
-        this.loadImageCallBackCounterMax = 0;
-        this.loadImageCallBack = null;
-        this.loadImageCallBackArgs = null;
 
         this.isBlockchainSupport = false;
         var oThis = this;
@@ -732,10 +737,8 @@
                 return;
             }
 
-			this.loadImageCallBackCounter = 0;
-            this.loadImageCallBackCounterMax = arrAsync.length;
-			this.loadImageCallBack = loadImageCallBack;
-			this.loadImageCallBackArgs = loadImageCallBackArgs;
+            let asyncImageCounter = arrAsync.length;
+            const callback = loadImageCallBack.bind(this.Api, loadImageCallBackArgs);
 
 			for (i = 0; i < arrAsync.length; i++)
 			{
@@ -748,19 +751,19 @@
 				oImage.Image.onload = function ()
 				{
 					this.parentImage.Status = ImageLoadStatus.Complete;
-					oThis.loadImageCallBackCounter++;
+                    asyncImageCounter--;
 
-					if (oThis.loadImageCallBackCounter == oThis.loadImageCallBackCounterMax)
-					    oThis.LoadImagesWithCallbackEnd();
+					if (asyncImageCounter === 0)
+					    callback();
 				};
 				oImage.Image.onerror = function ()
 				{
 					this.parentImage.Image = null;
 					this.parentImage.Status = ImageLoadStatus.Complete;
-                    oThis.loadImageCallBackCounter++;
+                    asyncImageCounter--;
 
-					if (oThis.loadImageCallBackCounter == oThis.loadImageCallBackCounterMax)
-						oThis.LoadImagesWithCallbackEnd();
+					if (asyncImageCounter === 0)
+						callback();
 				};
 				AscCommon.backoffOnErrorImg(oImage.Image, function(img) {
 					oThis.loadImageByUrl(img, img.src);
@@ -768,15 +771,6 @@
 				//oImage.Image.crossOrigin = 'anonymous';
                 this.loadImageByUrl(oImage.Image, oImage.src, isDisableCrypto);
 			}
-        };
-
-        this.LoadImagesWithCallbackEnd = function()
-        {
-			this.loadImageCallBack.call(this.Api, this.loadImageCallBackArgs);
-			this.loadImageCallBack = null;
-			this.loadImageCallBackArgs = null;
-			this.loadImageCallBackCounterMax = 0;
-			this.loadImageCallBackCounter = 0;
         };
     }
 

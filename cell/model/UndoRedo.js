@@ -58,13 +58,14 @@ function (window, undefined) {
 	}
 
 //главный обьект для пересылки изменений
-	function UndoRedoItemSerializable(oClass, nActionType, nSheetId, oRange, oData, LocalChange) {
+	function UndoRedoItemSerializable(oClass, nActionType, nSheetId, oRange, oData, LocalChange, bytes) {
 		this.oClass = oClass;
 		this.nActionType = nActionType;
 		this.nSheetId = nSheetId;
 		this.oRange = oRange;
 		this.oData = oData;
 		this.LocalChange = LocalChange;
+		this.bytes = bytes;
 	}
 
 	UndoRedoItemSerializable.prototype.Serialize = function (oBinaryWriter, collaborativeEditing) {
@@ -447,6 +448,8 @@ function (window, undefined) {
 		this.ProtectedRangeData = 160;
 		this.ProtectedRangeDataInner = 161;
 
+		this.externalReference = 170;
+
 		this.Create = function (nType) {
 			switch (nType) {
 				case this.ValueMultiTextElem:
@@ -644,6 +647,8 @@ function (window, undefined) {
 					return new AscCommonExcel.UndoRedoData_ProtectedRange();
 				case this.ProtectedRangeDataInner:
 					return new Asc.CProtectedRange();
+				case this.externalReference:
+					return new AscCommonExcel.ExternalReference();
 			}
 			return null;
 		};
@@ -1742,65 +1747,48 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.activeCells:
 				return new UndoRedoData_BBox(this.activeCells);
-				break;
 			case this.Properties.styleName:
 				return this.styleName;
-				break;
 			case this.Properties.type:
 				return this.type;
-				break;
 			case this.Properties.cellId:
 				return this.cellId;
-				break;
 			case this.Properties.autoFiltersObject:
 				return this.autoFiltersObject;
-				break;
 			case this.Properties.addFormatTableOptionsObj:
 				return this.addFormatTableOptionsObj;
-				break;
 			case this.Properties.moveFrom:
 				return new UndoRedoData_BBox(this.moveFrom);
-				break;
 			case this.Properties.moveTo:
 				return new UndoRedoData_BBox(this.moveTo);
-				break;
 			case this.Properties.bWithoutFilter:
 				return this.bWithoutFilter;
-				break;
 			case this.Properties.displayName:
 				return this.displayName;
-				break;
 			case this.Properties.val:
 				return this.val;
-				break;
 			case this.Properties.ShowColumnStripes:
 				return this.ShowColumnStripes;
-				break;
 			case this.Properties.ShowFirstColumn:
 				return this.ShowFirstColumn;
-				break;
 			case this.Properties.ShowLastColumn:
 				return this.ShowLastColumn;
-				break;
 			case this.Properties.ShowRowStripes:
 				return this.ShowRowStripes;
-				break;
 			case this.Properties.HeaderRowCount:
 				return this.HeaderRowCount;
-				break;
 			case this.Properties.TotalsRowCount:
 				return this.TotalsRowCount;
-				break;
 			case this.Properties.color:
 				return this.color;
-				break;
 			case this.Properties.tablePart: {
 				var tablePart = this.tablePart;
 				if (tablePart) {
 					var memory = new AscCommon.CMemory();
-					var aDxfs = [];
-					var oBinaryTableWriter = new AscCommonExcel.BinaryTableWriter(memory, aDxfs, false, {});
-					var ws = window["Asc"]["editor"].wb ? window["Asc"]["editor"].wb.getWorksheetById(nSheetId) : null;
+					var wb = window["Asc"]["editor"].wb;
+					var initSaveManager = new AscCommonExcel.InitSaveManager(wb && wb.model);
+					var oBinaryTableWriter = new AscCommonExcel.BinaryTableWriter(memory, initSaveManager, false, {});
+					var ws = wb ? wb.getWorksheetById(nSheetId) : null;
 					oBinaryTableWriter.WriteTable(tablePart, ws ? ws.model : null);
 					tablePart = memory.GetBase64Memory();
 				}
@@ -1809,19 +1797,14 @@ function (window, undefined) {
 			}
 			case this.Properties.nCol:
 				return this.nCol;
-				break;
 			case this.Properties.nRow:
 				return this.nRow;
-				break;
 			case this.Properties.formula:
 				return this.formula;
-				break;
 			case this.Properties.totalFunction:
 				return this.totalFunction;
-				break;
 			case this.Properties.viewId:
 				return this.viewId;
-				break;
 		}
 
 		return null;
@@ -1897,8 +1880,8 @@ function (window, undefined) {
 					var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
 					nCurOffset = oBinaryFileReader.getbase64DecodedData2(value, 0, stream, nCurOffset);
 
-					var dxfs = [];
-					var oBinaryTableReader = new AscCommonExcel.Binary_TableReader(stream, null, null, dxfs);
+					var initOpenManager = new AscCommonExcel.InitOpenManager();
+					var oBinaryTableReader = new AscCommonExcel.Binary_TableReader(stream, initOpenManager);
 					oBinaryTableReader.stream = stream;
 					oBinaryTableReader.oReadResult = {
 						tableCustomFunc: []
@@ -2385,6 +2368,7 @@ function (window, undefined) {
 				}
 			}
 			wb.handlers.trigger("updateWorksheetByModel");
+			wb.handlers.trigger("changeCellWatches");
 		} else if (AscCH.historyitem_Workbook_SheetRemove == Type) {
 			if (bUndo) {
 				wb.insertWorksheet(Data.index, Data.sheet);
@@ -2401,6 +2385,7 @@ function (window, undefined) {
 				}
 			}
 			wb.handlers.trigger("updateWorksheetByModel");
+			wb.handlers.trigger("changeCellWatches");
 		} else if (AscCH.historyitem_Workbook_SheetMove == Type) {
 			if (bUndo) {
 				wb.replaceWorksheet(Data.to, Data.from);
@@ -2408,6 +2393,7 @@ function (window, undefined) {
 				wb.replaceWorksheet(Data.from, Data.to);
 			}
 			wb.handlers.trigger("updateWorksheetByModel");
+			wb.handlers.trigger("changeCellWatches");
 		} else if (AscCH.historyitem_Workbook_DefinedNamesChange === Type ||
 			AscCH.historyitem_Workbook_DefinedNamesChangeUndo === Type) {
 			var oldName, newName;
@@ -2441,6 +2427,35 @@ function (window, undefined) {
 				wrapper.readData(worksheetSource);
 				worksheetSource.fromWorksheetSource(worksheetSource, true);
 			}
+		}  else if(AscCH.historyitem_Workbook_Date1904 === Type) {
+			wb.setDate1904(bUndo ? Data.from : Data.to);
+			AscCommon.oNumFormatCache.cleanCache();
+		} else if (AscCH.historyitem_Workbook_ChangeExternalReference === Type) {
+			var from = bUndo ? Data.from : Data.to;
+			var to = bUndo ? Data.to : Data.from;
+			var externalReferenceIndex;
+
+			if (from && !to) {//удаление
+				from.initWorksheetsFromSheetDataSet();
+				externalReferenceIndex = wb.getExternalLinkIndexByName(from.Id);
+				if (externalReferenceIndex !== null) {
+					wb.externalReferences[externalReferenceIndex - 1] = from;
+				} else {
+					wb.externalReferences.push(from);
+				}
+			} else if (!from && to) { //добавление
+				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+				if (externalReferenceIndex !== null) {
+					wb.externalReferences.splice(externalReferenceIndex - 1, 1);
+				}
+			} else if (from && to) { //изменение
+				//TODO нужно сохранить ссылки на текущий лист
+				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+				if (externalReferenceIndex !== null) {
+					wb.externalReferences[externalReferenceIndex - 1] = from;
+				}
+			}
+			wb.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
@@ -2629,7 +2644,7 @@ function (window, undefined) {
 		var collaborativeEditing = wb.oApi.collaborativeEditing;
 		var workSheetView;
 		var changeFreezePane;
-		if (AscCH.historyitem_Worksheet_RemoveCell == Type) {
+		if (AscCH.historyitem_Worksheet_RemoveCell === Type) {
 			nRow = Data.nRow;
 			nCol = Data.nCol;
 			if (wb.bCollaborativeChanges) {
@@ -2656,10 +2671,10 @@ function (window, undefined) {
 			} else {
 				ws._removeCell(nRow, nCol);
 			}
-		} else if (AscCH.historyitem_Worksheet_ColProp == Type) {
+		} else if (AscCH.historyitem_Worksheet_ColProp === Type) {
 			index = Data.index;
 			if (wb.bCollaborativeChanges) {
-				if (AscCommonExcel.g_nAllColIndex == index) {
+				if (AscCommonExcel.g_nAllColIndex === index) {
 					range = new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0);
 				} else {
 					index = collaborativeEditing.getLockOtherColumn2(nSheetId, index);
@@ -2674,7 +2689,7 @@ function (window, undefined) {
 			var col = ws._getCol(index);
 			col.setWidthProp(bUndo ? Data.oOldVal : Data.oNewVal);
 			ws.initColumn(col);
-		} else if (AscCH.historyitem_Worksheet_RowProp == Type) {
+		} else if (AscCH.historyitem_Worksheet_RowProp === Type) {
 			index = Data.index;
 			if (wb.bCollaborativeChanges) {
 				index = collaborativeEditing.getLockOtherRow2(nSheetId, index);
@@ -2696,7 +2711,7 @@ function (window, undefined) {
 			//TODO для случая скрытия строк фильтром(undo), может два раза вызываться функция setColorStyleTable - пересмотреть
 			workSheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			workSheetView.model.autoFilters.reDrawFilter(null, index);
-		} else if (AscCH.historyitem_Worksheet_RowHide == Type) {
+		} else if (AscCH.historyitem_Worksheet_RowHide === Type) {
 			from = Data.from;
 			to = Data.to;
 			nRow = Data.bRow;
@@ -2720,14 +2735,14 @@ function (window, undefined) {
 
 			workSheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			workSheetView.model.autoFilters.reDrawFilter(new Asc.Range(0, from, ws.nColsCount - 1, to));
-		} else if (AscCH.historyitem_Worksheet_AddRows == Type || AscCH.historyitem_Worksheet_RemoveRows == Type) {
+		} else if (AscCH.historyitem_Worksheet_AddRows === Type || AscCH.historyitem_Worksheet_RemoveRows === Type) {
 			from = Data.from;
 			to = Data.to;
 			if (wb.bCollaborativeChanges) {
 				from = collaborativeEditing.getLockOtherRow2(nSheetId, from);
 				to = collaborativeEditing.getLockOtherRow2(nSheetId, to);
-				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_AddRows == Type) ||
-						(false == bUndo && AscCH.historyitem_Worksheet_RemoveRows == Type))) {
+				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_AddRows === Type) ||
+						(false == bUndo && AscCH.historyitem_Worksheet_RemoveRows === Type))) {
 					oLockInfo = new AscCommonExcel.asc_CLockInfo();
 					oLockInfo["sheetId"] = nSheetId;
 					oLockInfo["type"] = c_oAscLockTypeElem.Range;
@@ -2736,8 +2751,8 @@ function (window, undefined) {
 				}
 			}
 			range = new Asc.Range(0, from, gc_nMaxCol0, to);
-			if ((true == bUndo && AscCH.historyitem_Worksheet_AddRows == Type) ||
-				(false == bUndo && AscCH.historyitem_Worksheet_RemoveRows == Type)) {
+			if ((true == bUndo && AscCH.historyitem_Worksheet_AddRows === Type) ||
+				(false == bUndo && AscCH.historyitem_Worksheet_RemoveRows === Type)) {
 				ws.removeRows(from, to);
 				bInsert = false;
 				operType = c_oAscDeleteOptions.DeleteRows;
@@ -2755,6 +2770,7 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
+			worksheetView.shiftCellWatches(bInsert, operType, range);
 
 			if (wb.bCollaborativeChanges) {
 				changeFreezePane = worksheetView._getFreezePaneOffset(operType, range, bInsert);
@@ -2764,14 +2780,14 @@ function (window, undefined) {
 			}
 
 			//ws.shiftDataValidation(bInsert, operType, range);
-		} else if (AscCH.historyitem_Worksheet_AddCols == Type || AscCH.historyitem_Worksheet_RemoveCols == Type) {
+		} else if (AscCH.historyitem_Worksheet_AddCols === Type || AscCH.historyitem_Worksheet_RemoveCols === Type) {
 			from = Data.from;
 			to = Data.to;
 			if (wb.bCollaborativeChanges) {
 				from = collaborativeEditing.getLockOtherColumn2(nSheetId, from);
 				to = collaborativeEditing.getLockOtherColumn2(nSheetId, to);
-				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_AddCols == Type) ||
-						(false == bUndo && AscCH.historyitem_Worksheet_RemoveCols == Type))) {
+				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_AddCols === Type) ||
+						(false == bUndo && AscCH.historyitem_Worksheet_RemoveCols === Type))) {
 					oLockInfo = new AscCommonExcel.asc_CLockInfo();
 					oLockInfo["sheetId"] = nSheetId;
 					oLockInfo["type"] = c_oAscLockTypeElem.Range;
@@ -2781,8 +2797,8 @@ function (window, undefined) {
 			}
 
 			range = new Asc.Range(from, 0, to, gc_nMaxRow0);
-			if ((true == bUndo && AscCH.historyitem_Worksheet_AddCols == Type) ||
-				(false == bUndo && AscCH.historyitem_Worksheet_RemoveCols == Type)) {
+			if ((true == bUndo && AscCH.historyitem_Worksheet_AddCols === Type) ||
+				(false == bUndo && AscCH.historyitem_Worksheet_RemoveCols === Type)) {
 				ws.removeCols(from, to);
 				bInsert = false;
 				operType = c_oAscDeleteOptions.DeleteColumns;
@@ -2800,6 +2816,7 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
+			worksheetView.shiftCellWatches(bInsert, operType, range);
 
 			if (wb.bCollaborativeChanges) {
 				changeFreezePane = worksheetView._getFreezePaneOffset(operType, range, bInsert);
@@ -2809,8 +2826,8 @@ function (window, undefined) {
 			}
 
 			//ws.shiftDataValidation(bInsert, operType, range)
-		} else if (AscCH.historyitem_Worksheet_ShiftCellsLeft == Type ||
-			AscCH.historyitem_Worksheet_ShiftCellsRight == Type) {
+		} else if (AscCH.historyitem_Worksheet_ShiftCellsLeft === Type ||
+			AscCH.historyitem_Worksheet_ShiftCellsRight === Type) {
 			r1 = Data.r1;
 			c1 = Data.c1;
 			r2 = Data.r2;
@@ -2820,8 +2837,8 @@ function (window, undefined) {
 				c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, c1);
 				r2 = collaborativeEditing.getLockOtherRow2(nSheetId, r2);
 				c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, c2);
-				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsLeft == Type) ||
-						(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsRight == Type))) {
+				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsLeft === Type) ||
+						(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsRight === Type))) {
 					oLockInfo = new AscCommonExcel.asc_CLockInfo();
 					oLockInfo["sheetId"] = nSheetId;
 					oLockInfo["type"] = c_oAscLockTypeElem.Range;
@@ -2831,8 +2848,8 @@ function (window, undefined) {
 			}
 
 			range = ws.getRange3(r1, c1, r2, c2);
-			if ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsLeft == Type) ||
-				(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsRight == Type)) {
+			if ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsLeft === Type) ||
+				(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsRight === Type)) {
 				range.addCellsShiftRight();
 				bInsert = true;
 				operType = c_oAscInsertOptions.InsertCellsAndShiftRight;
@@ -2845,8 +2862,9 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range.bbox);
-		} else if (AscCH.historyitem_Worksheet_ShiftCellsTop == Type ||
-			AscCH.historyitem_Worksheet_ShiftCellsBottom == Type) {
+			worksheetView.shiftCellWatches(bInsert, operType, range.bbox);
+		} else if (AscCH.historyitem_Worksheet_ShiftCellsTop === Type ||
+			AscCH.historyitem_Worksheet_ShiftCellsBottom === Type) {
 			r1 = Data.r1;
 			c1 = Data.c1;
 			r2 = Data.r2;
@@ -2856,8 +2874,8 @@ function (window, undefined) {
 				c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, c1);
 				r2 = collaborativeEditing.getLockOtherRow2(nSheetId, r2);
 				c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, c2);
-				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsTop == Type) ||
-						(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsBottom == Type))) {
+				if (false == ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsTop === Type) ||
+						(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsBottom === Type))) {
 					oLockInfo = new AscCommonExcel.asc_CLockInfo();
 					oLockInfo["sheetId"] = nSheetId;
 					oLockInfo["type"] = c_oAscLockTypeElem.Range;
@@ -2867,8 +2885,8 @@ function (window, undefined) {
 			}
 
 			range = ws.getRange3(r1, c1, r2, c2);
-			if ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsTop == Type) ||
-				(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsBottom == Type)) {
+			if ((true == bUndo && AscCH.historyitem_Worksheet_ShiftCellsTop === Type) ||
+				(false == bUndo && AscCH.historyitem_Worksheet_ShiftCellsBottom === Type)) {
 				range.addCellsShiftBottom();
 				bInsert = true;
 				operType = c_oAscInsertOptions.InsertCellsAndShiftDown;
@@ -2881,6 +2899,7 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range.bbox);
+			worksheetView.shiftCellWatches(bInsert, operType, range.bbox);
 		} else if (AscCH.historyitem_Worksheet_Sort == Type) {
 			var bbox = Data.bbox;
 			var places = Data.places;
@@ -3302,6 +3321,26 @@ function (window, undefined) {
 				ws.addProtectedRange(Data.from);
 			} else {
 				ws.deleteProtectedRange(Data.id);
+			}
+		} else if (AscCH.historyitem_Worksheet_AddCellWatch === Type) {
+			if (Data.to) {
+				range = new Asc.Range(Data.to.c1, Data.to.r1, Data.to.c2, Data.to.r2);
+				if (bUndo) {
+					ws.deleteCellWatch(range);
+				} else {
+					ws.addCellWatch(range);
+				}
+				wb.handlers.trigger("changeCellWatches");
+			}
+		} else if (AscCH.historyitem_Worksheet_DelCellWatch === Type) {
+			if (Data.from) {
+				range = new Asc.Range(Data.from.c1, Data.from.r1, Data.from.c2, Data.from.r2);
+				if (bUndo) {
+					ws.addCellWatch(range);
+				} else {
+					ws.deleteCellWatch(range);
+				}
+				wb.handlers.trigger("changeCellWatches");
 			}
 		}
 	};
@@ -3872,6 +3911,9 @@ function (window, undefined) {
 			case AscCH.historyitem_PivotTable_SetGridDropZones:
 				pivotTable.asc_setGridDropZones(value);
 				break;
+			case AscCH.historyitem_PivotTable_UseAutoFormatting:
+				pivotTable.asc_setUseAutoFormatting(value);
+				break;
 			case AscCH.historyitem_PivotTable_SetFillDownLabelsDefault:
 				pivotTable.setFillDownLabelsDefault(value, false);
 				break;
@@ -4043,7 +4085,11 @@ function (window, undefined) {
 			return;
 		}
 		var fields;
-		if (AscCH.historyitem_PivotTable_DataFieldSetName === Type || Type === AscCH.historyitem_PivotTable_DataFieldSetSubtotal) {
+		if (Type === AscCH.historyitem_PivotTable_DataFieldSetName       ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetSubtotal   ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetShowDataAs ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseField  ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseItem ) {
 			fields = pivotTable.asc_getDataFields();
 		} else {
 			fields = pivotTable.asc_getPivotFields();
@@ -4095,6 +4141,15 @@ function (window, undefined) {
 			case AscCH.historyitem_PivotTable_DataFieldSetSubtotal:
 				field.asc_setSubtotal(value, pivotTable, index);
 				break;
+			case AscCH.historyitem_PivotTable_DataFieldSetShowDataAs:
+				field.asc_setShowDataAs(value, pivotTable, index);
+				break;
+			case AscCH.historyitem_PivotTable_DataFieldSetBaseField:
+				field.asc_setBaseField(value, pivotTable, index);
+				break;
+			case AscCH.historyitem_PivotTable_DataFieldSetBaseItem:
+				field.asc_setBaseItem(value, pivotTable, index);
+				break; 
 		}
 	};
 

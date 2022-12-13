@@ -431,7 +431,14 @@ function RotateTrackShapeImage(originalObject)
 
     this.trackEnd = function(bWord)
     {
-        if(!this.bIsTracked){
+        if(!this.bIsTracked)
+        {
+            return;
+        }
+        if(this.originalObject.animMotionTrack) 
+        {
+            this.originalObject.updateAnimation(this.originalObject.x, this.originalObject.y, 
+                this.originalObject.extX, this.originalObject.extY, this.angle);
             return;
         }
         AscFormat.CheckSpPrXfrm(this.originalObject);
@@ -896,8 +903,7 @@ function Chart3dAdjustTrack(oChartSpace, numHandle, startX, startY)
         if(!this.bIsTracked){
             return;
         }
-        oChartSpace.chart.setView3D(this.view3D.createDuplicate());
-        oChartSpace.setRecalculateInfo();
+        oChartSpace.changeView3d(this.view3D.createDuplicate());
     }
 }
 

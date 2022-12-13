@@ -353,8 +353,12 @@ function CDrawingDocument()
 
     this.ConvertCoordsToCursorWR = function(x, y, pageIndex, transform)
     {
-
-        return { X : 0, Y : 0, Error: true };
+	    let oRender = this.getDrawingObjects();
+		if(!oRender)
+		{
+			return { X : 0, Y : 0, Error: true };
+		}
+		return oRender.convertCoordsToCursorWR(x, y);
     };
 
     this.ConvertCoordsToCursor = function(x, y, pageIndex, bIsRul)
@@ -548,11 +552,6 @@ function CDrawingDocument()
         this.m_lTargetPage = pageIndex;
 
         this.CheckTargetDraw(x, y);
-    };
-
-    this.UpdateTarget2 = function(x, y, pageIndex)
-    {
-
     };
 
     this.UpdateTargetTimer = function()
@@ -1595,7 +1594,7 @@ function CDrawingDocument()
         spApi.isViewMode = oldViewMode;
     };
 
-    this.SetDrawImagePreviewBulletForMenu = function(id, type, spApi, props, isNoCheckFonts)
+/*    this.SetDrawImagePreviewBulletForMenu = function(id, type, spApi, props, isNoCheckFonts) // TODO: for history, delete after 7.2 release
     {
         if (!props)
         {
@@ -1858,7 +1857,7 @@ function CDrawingDocument()
                 }
             }
         }
-    };
+    };*/
 	this.CloseFile = function ()
 	{
 		this.ClearCachePages();

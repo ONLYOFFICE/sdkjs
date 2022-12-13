@@ -535,7 +535,18 @@
 	};
 	CDataValidation.prototype._getListValues = function (ws) {
 		var aValue, aData;
-		var list = this.formula1 && this.formula1.getValue(ws, false);
+
+		var f = this.formula1;
+		var offset;
+		if (f && f._formula) {
+			//если формула содержит ссылки на диапазоны, то в зависимости от активной области нужно их сдвинуть
+			offset = this.calculateOffset(ws);
+			if (offset) {
+				f = f.clone();
+			}
+		}
+
+		var list = f && f.getValue(ws, false, null, offset);
 		if (list && AscCommonExcel.cElementType.error !== list.type) {
 			if (AscCommonExcel.cElementType.string === list.type) {
 				aValue = list.getValue().split(AscCommon.FormulaSeparators.functionArgumentSeparatorDef);
@@ -1174,7 +1185,7 @@
 			}
 		}
 		if (_row !== null && _col !== null) {
-			var selectionRange = ws.selectionRange;
+			var selectionRange = ws.getSelection();
 			var activeCell = selectionRange.activeCell;
 			res = new AscCommon.CellBase(activeCell.row - _row, activeCell.col - _col);
 		}
@@ -1473,24 +1484,20 @@
 
 	CDataValidations.prototype._containRanges = function (_ranges1, _ranges2) {
 		//проверка на то, что диапазон второго range входит в дипапазон первого
+		var res = false;
 		if (_ranges1 && _ranges2 && _ranges1.length && _ranges2.length) {
 			for (var j = 0; j < _ranges1.length; j++) {
-				var _contains = false;
-				for (var n = 0; n < _ranges2.length; n++) {
-					if (_ranges1[j].containsRange(_ranges2[n])) {
-						_contains = true;
-						break;
-					}
-				}
-				if (!_contains) {
-					return false;
+				//проверяем, вошёл ли целиком массив диапазонов второго в один из первых
+				if (_ranges1[j].containsRanges(_ranges2)) {
+					res = true;
+					break;
 				}
 			}
 		} else {
-			return false;
+			res = false;
 		}
 
-		return true;
+		return res;
 	};
 
 	CDataValidations.prototype.clear = function (ws, ranges, addToHistory) {

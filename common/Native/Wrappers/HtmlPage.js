@@ -196,10 +196,6 @@ function CEditorPage(api)
     {
     };
 
-    this.ChangeReaderMode = function()
-    {
-    };
-
     this.IncreaseReaderFontSize = function()
     {
     };
@@ -438,6 +434,62 @@ function CEditorPage(api)
 
     this.checkMouseHandMode = function()
     {
+    };
+
+    this.ReaderModeCurrent = 0;
+    this.ReaderFontSizeCur = 2;
+    this.ReaderFontSizes   = [12, 14, 16, 18, 22, 28, 36, 48, 72];
+    this.ChangeReaderMode = function()
+    {
+        if (!this.m_oLogicDocument)
+            return;
+
+        if (this.ReaderModeCurrent)
+        {
+            this.m_oLogicDocument.SetDocumentPrintMode();
+            this.ReaderModeCurrent = 0;
+        }
+        else
+        {
+            this.SetNewMobileMode();
+            this.ReaderModeCurrent = 1;
+        }
+    };
+
+    this.SetNewMobileMode = function()
+    {
+        if (this.m_oLogicDocument)
+        {
+            let sectPr = this.m_oLogicDocument.GetSectionsInfo().Get(0).SectPr;
+            let scale = 2; // TODO: get deviceScale
+            const nPageW = sectPr.GetPageWidth() / scale;
+            const nPageH = sectPr.GetPageHeight() / scale;
+            const nScale = this.ReaderFontSizes[this.ReaderFontSizeCur] / 16;
+            this.m_oLogicDocument.SetDocumentReadMode(nPageW, nPageH, nScale);
+            return true;
+        }
+        return false;
+    };
+
+    this.IncreaseReaderFontSize = function()
+    {
+        if (this.ReaderFontSizeCur >= (this.ReaderFontSizes.length - 1))
+        {
+            this.ReaderFontSizeCur = this.ReaderFontSizes.length - 1;
+            return false;
+        }
+        this.ReaderFontSizeCur++;
+        return this.SetNewMobileMode();
+    };
+    this.DecreaseReaderFontSize = function()
+    {
+        if (this.ReaderFontSizeCur <= 0)
+        {
+            this.ReaderFontSizeCur = 0;
+            return false;
+        }
+        this.ReaderFontSizeCur--;
+        return this.SetNewMobileMode();
     };
 }
 

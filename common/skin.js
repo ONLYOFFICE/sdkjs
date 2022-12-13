@@ -140,6 +140,7 @@ var EditorSkins = {
 		Color                    : "#363636",
 		ColorActive              : "#363636",
 		ColorHighlighted         : "#6a6a70",
+		ColorFiltering           : "#008636",
 
 		BackgroundDark           : "#444444",
 		BackgroundDarkActive     : "#111111",
@@ -148,6 +149,7 @@ var EditorSkins = {
 		ColorDark                : "#ffffff",
 		ColorDarkActive          : "#ffffff",
 		ColorDarkHighlighted     : "#c1c1c1",
+		ColorDarkFiltering       : "#6BEC9F",
 
 		GroupDataBorder          : "#000000",
 		EditorBorder             : "#cbcbcb"
@@ -212,9 +214,9 @@ var EditorSkins = {
 		FormsContentControlsOutlineMoverActive : "#444444",
 
 		/* presentations */
-		BackgroundColorThumbnails       : "#666666",
-		BackgroundColorThumbnailsActive : "#666666",
-		BackgroundColorThumbnailsHover  : "#666666",
+		BackgroundColorThumbnails       : "#404040",
+		BackgroundColorThumbnailsActive : "#404040",
+		BackgroundColorThumbnailsHover  : "#404040",
 		ThumbnailsPageOutlineActive     : "#848484",
 		ThumbnailsPageOutlineHover      : "#CFCFCF",
 		ThumbnailsPageNumberText        : "#FFFFFF",
@@ -226,7 +228,7 @@ var EditorSkins = {
 		THEMES_THUMBNAIL_WIDTH  : 88,
 		THEMES_THUMBNAIL_HEIGHT : 40,
 
-		BorderSplitterColor                   : "#CBCBCB",
+		BorderSplitterColor                   : "#616161",
 		SupportNotes                          : true,
 		SplitterWidthMM                       : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,
@@ -254,6 +256,7 @@ var EditorSkins = {
 		Color                    : "#d9d9d9",
 		ColorActive              : "#d9d9d9",
 		ColorHighlighted         : "#d9d9d9",
+		ColorFiltering           : "#6BEC9F",
 
 		BackgroundDark           : "#111111",
 		BackgroundDarkActive     : "#333333",
@@ -262,6 +265,7 @@ var EditorSkins = {
 		ColorDark                : "#ffffff",
 		ColorDarkActive          : "#ffffff",
 		ColorDarkHighlighted     : "#ffffff",
+		ColorDarkFiltering       : "#6BEC9F",
 
 		GroupDataBorder          : "#ffffff",
 		EditorBorder             : "#2a2a2a"
@@ -296,7 +300,7 @@ function updateGlobalSkinColors(theme)
 
 		RulerDark                      : "canvas-ruler-margins-background",
 		RulerLight                     : "canvas-ruler-background",
-		RulerOutline                   : "border-toolbar",
+		RulerOutline                   : "canvas-ruler-border",
 		RulerMarkersOutlineColor       : "canvas-ruler-handle-border",
 		RulerMarkersOutlineColorOld    : "canvas-ruler-handle-border-disabled",
 		RulerMarkersFillColor          : "background-normal",

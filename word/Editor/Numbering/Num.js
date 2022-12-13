@@ -39,7 +39,7 @@
 
 /**
  * Класс представляющий нумерацию параграфов в документах
- * @param {CNumbering} oNumbering - ссылка на главный объект нумерации в документах
+ * @param {AscWord.CNumbering} oNumbering - ссылка на главный объект нумерации в документах
  * @param {string} sAbstractNumId - идентификатор абстрактной нумерации
  * @constructor
  */
@@ -268,6 +268,51 @@ CNum.prototype.SetLvlStart = function(nLvl, nStart)
 	}
 };
 /**
+ * Связываем данную нумерацию с заголовками
+ * @param styles {CStyles}
+ */
+CNum.prototype.LinkWithHeadings = function(styles)
+{
+	for (let iLvl = 0; iLvl <= 8; ++iLvl)
+	{
+		let styleId = styles.GetDefaultHeading(iLvl);
+		let style   = styles.Get(styleId);
+		if (style)
+		{
+			let paraPr = style.GetParaPr().Copy();
+			paraPr.NumPr = new CNumPr(this.GetId(), iLvl);
+			style.SetParaPr(paraPr);
+			this.LinkWithStyle(iLvl, styleId);
+		}
+	}
+};
+/**
+ * Связываем заданный уровень с заданным стилем
+ * @param {number} iLvl 0..8
+ * @param {string} styleId
+ */
+CNum.prototype.LinkWithStyle = function(iLvl, styleId)
+{
+	if ("number" !== typeof(iLvl) || iLvl < 0 || iLvl >= 9)
+		return;
+
+	if (this.private_HaveLvlOverride(iLvl))
+	{
+		var oNumberingLvl      = this.LvlOverride[iLvl].GetLvl();
+		var oNewNumberingLvl   = oNumberingLvl.Copy();
+		oNewNumberingLvl.SetPStyle(styleId);
+		this.SetLvlOverride(oNewNumberingLvl, iLvl);
+	}
+	else
+	{
+		var oAbstractNum = this.Numbering.GetAbstractNum(this.AbstractNumId);
+		if (!oAbstractNum)
+			return;
+
+		oAbstractNum.SetLvlPStyle(iLvl, styleId);
+	}
+};
+/**
  * Выставляем тип разделителя между табом и последующим текстом
  * @param nLvl {number} 0..8
  * @param nSuff {number}
@@ -347,10 +392,30 @@ CNum.prototype.RecalculateRelatedParagraphs = function(nLvl)
 	if (nLvl < 0 || nLvl > 8)
 		nLvl = undefined;
 
-	var oLogicDocument = editor.WordControl.m_oLogicDocument;
-	//добавляю проверку - при чтении из бинарника oLogicDocument - это CPresentation(вставка de->pe)
-	var arrParagraphs  = oLogicDocument.GetAllParagraphsByNumbering ? oLogicDocument.GetAllParagraphsByNumbering({NumId : this.Id, Lvl : nLvl}) : [];
+	let logicDocument = editor.WordControl.m_oLogicDocument;
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
 
+	let styleManager = logicDocument.GetStyles();
+	if (undefined !== nLvl)
+	{
+		let lvl   = this.GetLvl(nLvl);
+		let style = styleManager.Get(lvl.GetPStyle());
+		if (style)
+			logicDocument.Add_ChangedStyle(style.GetId());
+	}
+	else
+	{
+		for (let iLvl = 0; iLvl <= 8; ++iLvl)
+		{
+			let lvl   = this.GetLvl(iLvl);
+			let style = styleManager.Get(lvl.GetPStyle());
+			if (style)
+				logicDocument.Add_ChangedStyle(style.GetId());
+		}
+	}
+
+	var arrParagraphs = logicDocument.GetAllParagraphsByNumbering({NumId : this.Id, Lvl : nLvl});
 	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 	{
 		arrParagraphs[nIndex].RecalcCompiledPr();
@@ -476,9 +541,9 @@ CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTh
 
 
 	oContext.SetTextPr(oNumTextPr, oTheme);
-	oContext.SetFontSlot(fontslot_ASCII, dKoef);
+	oContext.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
 	g_oTextMeasurer.SetTextPr(oNumTextPr, oTheme);
-	g_oTextMeasurer.SetFontSlot(fontslot_ASCII, dKoef);
+	g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
 
 	for (var nTextIndex = 0, nTextLen = arrText.length; nTextIndex < nTextLen; ++nTextIndex)
 	{
@@ -486,12 +551,7 @@ CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTh
 		{
 			case numbering_lvltext_Text:
 			{
-				var Hint = oNumTextPr.RFonts.Hint;
-				var bCS  = oNumTextPr.CS;
-				var bRTL = oNumTextPr.RTL;
-				var lcid = oNumTextPr.Lang.EastAsia;
-
-				var FontSlot = g_font_detector.Get_FontClass(arrText[nTextIndex].Value.charCodeAt(0), Hint, lcid, bCS, bRTL);
+				var FontSlot = AscWord.GetFontSlotByTextPr(arrText[nTextIndex].Value.charCodeAt(0), oNumTextPr);
 
 				oContext.SetFontSlot(FontSlot, dKoef);
 				g_oTextMeasurer.SetFontSlot(FontSlot, dKoef);
@@ -503,8 +563,8 @@ CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTh
 			}
 			case numbering_lvltext_Num:
 			{
-				oContext.SetFontSlot(fontslot_ASCII, dKoef);
-				g_oTextMeasurer.SetFontSlot(fontslot_ASCII, dKoef);
+				oContext.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
+				g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
 				var langForTextNumbering = oNumTextPr.Lang;
 
 				var nCurLvl = arrText[nTextIndex].Value;
@@ -543,7 +603,7 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 	var dKoef   = oNumTextPr.VertAlign !== AscCommon.vertalign_Baseline ? AscCommon.vaKSize : 1;
 
 	oContext.SetTextPr(oNumTextPr, oTheme);
-	oContext.SetFontSlot(fontslot_ASCII, dKoef);
+	oContext.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
 	var nAscent = oContext.GetAscender();
 
 	for (var nTextIndex = 0, nTextLen = arrText.length; nTextIndex < nTextLen; ++nTextIndex)
@@ -552,12 +612,7 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 		{
 			case numbering_lvltext_Text:
 			{
-				var Hint = oNumTextPr.RFonts.Hint;
-				var bCS  = oNumTextPr.CS;
-				var bRTL = oNumTextPr.RTL;
-				var lcid = oNumTextPr.Lang.EastAsia;
-
-				var FontSlot = g_font_detector.Get_FontClass(arrText[nTextIndex].Value.charCodeAt(0), Hint, lcid, bCS, bRTL);
+				var FontSlot = AscWord.GetFontSlotByTextPr(arrText[nTextIndex].Value.charCodeAt(0), oNumTextPr);
 
 				oContext.SetFontSlot(FontSlot, dKoef);
 				nX += oContext.Measure(arrText[nTextIndex].Value).Width;
@@ -566,7 +621,7 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 			}
 			case numbering_lvltext_Num:
 			{
-				oContext.SetFontSlot(fontslot_ASCII, dKoef);
+				oContext.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
 				var nCurLvl = arrText[nTextIndex].Value;
 				var langForTextNumbering = oNumTextPr.Lang;
 				var T = "";

@@ -325,6 +325,51 @@ CRevisionsChange.prototype.IsParaPrChange = function()
 {
 	return (c_oAscRevisionsChangeType.ParaPr === this.Type);
 };
+CRevisionsChange.prototype.CheckHitByParagraphContentPos = function(oParagraph, oContentPos)
+{
+	if (this.IsComplexChange())
+	{
+		for (let nIndex = 0, nCount = this.SimpleChanges.length; nIndex < nCount; ++nIndex)
+		{
+			let oChange = this.SimpleChanges[nIndex];
+			if (oChange.GetElement() === oParagraph
+				&& oContentPos.Compare(oChange.StartPos) >= 0
+				&& oContentPos.Compare(oChange.EndPos) <= 0)
+				return true;
+		}
+		return false;
+	}
+	else
+	{
+		return (this.GetElement() === oParagraph
+			&& oContentPos.Compare(this.StartPos) >= 0
+			&& oContentPos.Compare(this.EndPos) <= 0);
+	}
+};
+/**
+ * Данная функция возвращает вес изменения. Если в текущей позиции у нас есть несколько изменений, чтобы мы использовали
+ * изменения в соответствии с их весом
+ * @returns {number}
+ */
+CRevisionsChange.prototype.GetWeight = function()
+{
+	switch (this.Type)
+	{
+		case Asc.c_oAscRevisionsChangeType.MoveMark:
+		case Asc.c_oAscRevisionsChangeType.MoveMarkRemove: return 100;
+		case Asc.c_oAscRevisionsChangeType.TextAdd:
+		case Asc.c_oAscRevisionsChangeType.TextRem: return 90;
+		case Asc.c_oAscRevisionsChangeType.TextPr: return 80;
+		case Asc.c_oAscRevisionsChangeType.ParaPr: return 70;
+		case Asc.c_oAscRevisionsChangeType.ParaAdd:
+		case Asc.c_oAscRevisionsChangeType.ParaRem: return 60;
+		case Asc.c_oAscRevisionsChangeType.RowsAdd:
+		case Asc.c_oAscRevisionsChangeType.RowsRem: return 50;
+		case Asc.c_oAscRevisionsChangeType.TablePr: return 40;
+	}
+
+	return 0;
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 CRevisionsChange.prototype['get_UserId'] = CRevisionsChange.prototype.GetUserId;

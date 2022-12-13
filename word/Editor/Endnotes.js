@@ -115,13 +115,13 @@ CEndnotesController.prototype.GetId = function()
 CEndnotesController.prototype.ResetSpecialEndnotes = function()
 {
 	var oSeparator = new CFootEndnote(this);
-	oSeparator.AddToParagraph(new ParaSeparator(), false);
+	oSeparator.AddToParagraph(new AscWord.CRunSeparator(), false);
 	var oParagraph = oSeparator.GetElement(0);
 	oParagraph.Set_Spacing({After : 0, Line : 1, LineRule : Asc.linerule_Auto}, false);
 	this.SetSeparator(oSeparator);
 
 	var oContinuationSeparator = new CFootEndnote(this);
-	oContinuationSeparator.AddToParagraph(new ParaContinuationSeparator(), false);
+	oContinuationSeparator.AddToParagraph(new AscWord.CRunContinuationSeparator(), false);
 	oParagraph = oContinuationSeparator.GetElement(0);
 	oParagraph.Set_Spacing({After : 0, Line : 1, LineRule : Asc.linerule_Auto}, false);
 	this.SetContinuationSeparator(oContinuationSeparator);
@@ -202,7 +202,7 @@ CEndnotesController.prototype.GetEndnotePrPos = function()
  * @param {CFootEndnote.array} arrEndnotesList
  * @returns {boolean}
  */
-CEndnotesController.prototype.Is_UseInDocument = function(sEndnoteId, arrEndnotesList)
+CEndnotesController.prototype.IsUseInDocument = function(sEndnoteId, arrEndnotesList)
 {
 	if (!arrEndnotesList)
 		arrEndnotesList = this.private_GetEndnotesLogicRange(null, null);
@@ -228,7 +228,7 @@ CEndnotesController.prototype.Is_UseInDocument = function(sEndnoteId, arrEndnote
  * @param oEndnote
  * return {boolean}
  */
-CEndnotesController.prototype.Is_ThisElementCurrent = function(oEndnote)
+CEndnotesController.prototype.IsThisElementCurrent = function(oEndnote)
 {
 	if (oEndnote === this.CurEndnote && docpostype_Endnotes === this.LogicDocument.GetDocPosType())
 		return true;
@@ -844,7 +844,7 @@ CEndnotesController.prototype.AddEndnoteRef = function()
 	var oStyles = this.LogicDocument.GetStyles();
 
 	var oRun = new ParaRun(oParagraph, false);
-	oRun.AddToContent(0, new ParaEndnoteRef(oEndnote), false);
+	oRun.AddToContent(0, new AscWord.CRunEndnoteRef(oEndnote), false);
 	oRun.SetRStyle(oStyles.GetDefaultEndnoteReference());
 	oParagraph.Add_ToContent(0, oRun);
 };
@@ -987,7 +987,7 @@ CEndnotesController.prototype.GetFirstParagraphs = function()
 	{
 		var oEndnote = this.Endnote[sId];
 		var oParagrpaph = oEndnote.GetFirstParagraph();
-		if(oParagrpaph && oParagrpaph.Is_UseInDocument())
+		if(oParagrpaph && oParagrpaph.IsUseInDocument())
 		{
 			aParagraphs.push(oParagrpaph);
 		}
@@ -1046,6 +1046,17 @@ CEndnotesController.prototype.GetNumberingInfo = function(oPara, oNumPr, oEndnot
 		return [oNumberingEngine.GetNumInfo(), oNumberingEngine.GetNumInfo(false)];
 
 	return oNumberingEngine.GetNumInfo();
+};
+CEndnotesController.prototype.CheckRunContent = function(fCheck)
+{
+	for (var sId in this.Endnote)
+	{
+		let oEndnote = this.Endnote[sId];
+		if (oEndnote.CheckRunContent(fCheck))
+			return true;
+	}
+
+	return false;
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Private area
@@ -1463,12 +1474,12 @@ CEndnotesController.prototype.AddImages = function(aImages)
 
 	return this.CurEndnote.AddImages(aImages);
 };
-CEndnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CEndnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 	if (false === this.private_CheckEndnotesSelectionBeforeAction())
 		return false;
 
-	return this.CurEndnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
+	return this.CurEndnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CEndnotesController.prototype.AddTextArt = function(nStyle)
 {
@@ -3027,7 +3038,7 @@ CEndnotesController.prototype.RestoreDocumentStateAfterLoadChanges = function(St
 	if (0 === State.EndnotesSelectDirection)
 	{
 		var oEndnote = State.CurEndnote;
-		if (oEndnote && true === this.Is_UseInDocument(oEndnote.GetId()))
+		if (oEndnote && true === this.IsUseInDocument(oEndnote.GetId()))
 		{
 			this.Selection.Start.Endnote = oEndnote;
 			this.Selection.End.Endnote   = oEndnote;
@@ -3080,7 +3091,7 @@ CEndnotesController.prototype.RestoreDocumentStateAfterLoadChanges = function(St
 		for (var nIndex = 0, nCount = arrEndnotesList.length; nIndex < nCount; ++nIndex)
 		{
 			var oEndnote = arrEndnotesList[nIndex];
-			if (true === this.Is_UseInDocument(oEndnote.GetId(), arrAllEndnotes))
+			if (true === this.IsUseInDocument(oEndnote.GetId(), arrAllEndnotes))
 			{
 				if (null === StartEndnote)
 					StartEndnote = oEndnote;

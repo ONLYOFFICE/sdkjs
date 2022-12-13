@@ -530,10 +530,12 @@
 								shiftRange.addCellsShiftBottom();
 								wsView.cellCommentator.updateCommentsDependencies(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox);
 								worksheet.shiftDataValidation(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox, true);
+								wsView.shiftCellWatches(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox);
 								moveToRange = new Asc.Range(filterRange.c1, filterRange.r1 + 1, filterRange.c2, filterRange.r2);
 							}
 							worksheet._moveRange(rangeWithoutDiff, moveToRange);
 							wsView.cellCommentator.moveRangeComments(rangeWithoutDiff, moveToRange);
+							wsView.moveCellWatches(rangeWithoutDiff, moveToRange);
 						} else if (!addNameColumn && styleName) {
 							if (filterRange.r1 === filterRange.r2) {
 								if (t._isEmptyCellsUnderRange(rangeWithoutDiff)) {
@@ -545,7 +547,8 @@
 										shiftRange = worksheet.getRange3(filterRange.r2, filterRange.c1, filterRange.r2, filterRange.c2);
 										shiftRange.addCellsShiftBottom();
 										wsView.cellCommentator.updateCommentsDependencies(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox);
-										worksheet.shiftDataValidation(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox, true)
+										worksheet.shiftDataValidation(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox, true);
+										wsView.shiftCellWatches(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox);
 									}
 								}
 							}
@@ -1432,6 +1435,7 @@
 							undo_apply();
 						} else {
 							this.isEmptyAutoFilters(cloneData.Ref);
+							worksheet.reinitRowsCount();
 						}
 						break;
 					case AscCH.historyitem_AutoFilter_ChangeTableStyle:
@@ -1955,7 +1959,10 @@
 						}
 					}
 
-					if (!bUndoChanges && !bRedoChanges /*&& !notAddToHistory*/ && oldFilter) {
+					//для случая, когда вставляем последнюю строку в ф/т, не добавляю эти сдвиги в историю
+					//это делается при undo в функции _shiftCellsBottom
+					//2 раза дублировать сдвиги не нужно
+					if (!bUndoChanges && !bRedoChanges /*&& !notAddToHistory*/ && oldFilter && !(displayNameFormatTable && insertType === c_oAscInsertOptions.InsertCellsAndShiftDown)) {
 						var changeElement = {
 							oldFilter: oldFilter, newFilterRef: filter.Ref.clone()
 						};
@@ -3208,7 +3215,7 @@
 				oHistoryObject.undo = oldObj;
 
 				if (redoObject) {
-					oHistoryObject.activeCells = redoObject.activeCells.clone();	// ToDo Слишком много клонирования, это долгая операция
+					oHistoryObject.activeCells = redoObject.activeCells && redoObject.activeCells.clone();	// ToDo Слишком много клонирования, это долгая операция
 					oHistoryObject.styleName = redoObject.styleName;
 					oHistoryObject.type = redoObject.type;
 					oHistoryObject.cellId = redoObject.cellId;
@@ -5058,12 +5065,12 @@
 			_generateNextColumnName: function (tableColumns, val) {
 				var tableColumnMap = [];
 				for (var i = 0; i < tableColumns.length; i++) {
-					tableColumnMap[tableColumns[i].Name] = 1;
+					tableColumnMap[tableColumns[i].Name.toLowerCase()] = 1;
 				}
 				var res = val;
 				var index = 2;
 				while (true) {
-					if (tableColumnMap[res]) {
+					if (tableColumnMap[res.toLowerCase()]) {
 						res = val + index;
 					} else {
 						break;
@@ -5785,11 +5792,50 @@
 			},
 
 			_isEmptyRange: function (ar, addDelta) {
+				if (addDelta == null) {
+					addDelta = 0;
+				}
 				var range = this.worksheet.getRange3(Math.max(0, ar.r1 - addDelta), Math.max(0, ar.c1 - addDelta), ar.r2 + addDelta, ar.c2 + addDelta);
 				var res = true;
 				range._foreachNoEmpty(function (cell) {
 					if (!cell.isNullText()) {
 						res = false;
+						return true;
+					}
+				});
+				return res;
+			},
+
+			_isContainEmptyCell: function (ar) {
+				var range = this.worksheet.getRange3(Math.max(0, ar.r1), Math.max(0, ar.c1), ar.r2, ar.c2);
+				var res = false;
+				range._foreach2(function (cell) {
+					if (!cell || cell.isNullText()) {
+						res = true;
+						return true;
+					}
+				});
+				return res;
+			},
+
+			_getFirstNotEmptyCell: function (ar) {
+				var range = this.worksheet.getRange3(Math.max(0, ar.r1), Math.max(0, ar.c1), ar.r2, ar.c2);
+				var res = null;
+				range._foreachNoEmpty(function (cell) {
+					if (!cell.isNullText()) {
+						res = cell;
+						return true;
+					}
+				});
+				return res;
+			},
+
+			_getFirstEmptyCellByRow: function (startRow, startCol, endCol) {
+				var range = this.worksheet.getRange3(startRow, startCol, this.worksheet.cellsByColRowsCount - 1, endCol);
+				var res = {nRow: this.worksheet.cellsByColRowsCount, nCol: startCol};
+				range._foreach2(function (cell, row, col) {
+					if (!cell || cell.isNullText()) {
+						res = {nRow: row, nCol: col};
 						return true;
 					}
 				});
@@ -5998,22 +6044,35 @@
 				return [filterArr, otherArr];
 			},
 
-			containInFilter: function(row, checkApplyFilter) {
+			containInFilter: function(row, checkApplyFilter, checkNamedSheetView, ignoreHeader) {
 				var ws = this.worksheet;
 				var tables = ws.TableParts;
 				var autoFilter = ws.AutoFilter;
+				var t = this;
+
+				var activeNamedSheetView = checkNamedSheetView && ws.getActiveNamedSheetViewId() !== null
+				var _isApplyFilter = function (_filter) {
+					if (activeNamedSheetView) {
+						var nsvFilter = ws.getNvsFilterByTableName(_filter.DisplayName);
+						return nsvFilter && nsvFilter.isApplyAutoFilter();
+					} else {
+						return _filter.isApplyAutoFilter();
+					}
+				};
+
+				var headerDiff = ignoreHeader ? 1 : 0;
 				if (tables) {
 					for (var i = 0; i < tables.length; i++) {
 						var tableFilter = tables[i].AutoFilter;
-						if (tableFilter && (!checkApplyFilter || (checkApplyFilter && tableFilter.isApplyAutoFilter()))) {
-							if (row >= tables[i].Ref.r1 && row <= tables[i].Ref.r2) {
+						if (tableFilter && (!checkApplyFilter || (checkApplyFilter && _isApplyFilter(tables[i])))) {
+							if (row >= tables[i].Ref.r1 + headerDiff && row <= tables[i].Ref.r2) {
 								return true;
 							}
 						}
 					}
 				}
-				if (autoFilter && (!checkApplyFilter || (checkApplyFilter && autoFilter.isApplyAutoFilter()))) {
-					if (row >= autoFilter.Ref.r1 && row <= autoFilter.Ref.r2) {
+				if (autoFilter && (!checkApplyFilter || (checkApplyFilter && _isApplyFilter(autoFilter)))) {
+					if (row >= autoFilter.Ref.r1 + headerDiff && row <= autoFilter.Ref.r2) {
 						return true;
 					}
 				}
@@ -6122,6 +6181,124 @@
 			cleanCollaborativeObj: function () {
 				this.applyCollaborativeChangedColumnsArr = [];
 				this.applyCollaborativeChangedRowsArr = [];
+			},
+
+			getAutoFiltersOptions: function (ws, filterProp, setViewProps) {
+				//get filter
+				var filter, autoFilter, displayName = null;
+				if (filterProp.id === null) {
+					autoFilter = ws.AutoFilter;
+					filter = ws.AutoFilter;
+				} else {
+					autoFilter = ws.TableParts[filterProp.id].AutoFilter;
+					filter = ws.TableParts[filterProp.id];
+					displayName = filter.DisplayName;
+				}
+
+				//get values
+				var colId = filterProp.colId;
+				if(filterProp.id === null) {
+					colId = ws.autoFilters._getTrueColId(filter, colId, true);
+				}
+
+				var openAndClosedValues = ws.autoFilters.getOpenAndClosedValues(filter, colId);
+				var values = openAndClosedValues.values;
+				var automaticRowCount = openAndClosedValues.automaticRowCount;
+				//для случае когда скрыто только пустое значение не отображаем customfilter
+				var ignoreCustomFilter = openAndClosedValues.ignoreCustomFilter;
+
+				var activeNamedSheetView = ws.getActiveNamedSheetViewId();
+				var nsvFilter;
+				var filters;
+				if (activeNamedSheetView !== null) {
+					nsvFilter = ws.getNvsFilterByTableName(filter.DisplayName);
+					if (nsvFilter) {
+						filters = nsvFilter.getColumnFilterByColId(colId);
+					}
+				} else {
+					filters = autoFilter.getFilterColumn(colId, true);
+				}
+
+				var rangeButton = new Asc.Range(autoFilter.Ref.c1 + colId, autoFilter.Ref.r1, autoFilter.Ref.c1 + colId, autoFilter.Ref.r1);
+				var cellId = ws.autoFilters._rangeToId(rangeButton);
+				var cell = ws.getRange3(rangeButton.r1, rangeButton.c1, rangeButton.r2, rangeButton.c2);
+				var columnName = cell.getValue();
+
+				//get filter object
+				var filterObj = new Asc.AutoFilterObj();
+				filterObj.convertFromFilterColumn(filters, ignoreCustomFilter);
+
+				//get sort
+				var sortVal = null;
+				var sortColor = null;
+				if (filter && filter.SortState && filter.SortState.SortConditions && filter.SortState.SortConditions[0]) {
+					var SortConditions = filter.SortState.SortConditions;
+
+					for(var i = 0; i < SortConditions.length; i++) {
+						var sortCondition = SortConditions[i];
+						if (rangeButton.c1 === sortCondition.Ref.c1) {
+
+							var conditionSortBy = SortConditions.ConditionSortBy;
+							switch (conditionSortBy) {
+								case Asc.ESortBy.sortbyCellColor:
+								{
+									sortVal = Asc.c_oAscSortOptions.ByColorFill;
+									sortColor = sortCondition.dxf && sortCondition.dxf.fill ? sortCondition.dxf.fill.bg() : null;
+									break;
+								}
+								case Asc.ESortBy.sortbyFontColor:
+								{
+									sortVal = Asc.c_oAscSortOptions.ByColorFont;
+									sortColor = sortCondition.dxf && sortCondition.dxf.font ? sortCondition.dxf.font.getColor() : null;
+									break;
+								}
+								default:
+								{
+									if (sortCondition.ConditionDescending) {
+										sortVal = Asc.c_oAscSortOptions.Descending;
+									} else {
+										sortVal = Asc.c_oAscSortOptions.Ascending;
+									}
+
+									break;
+								}
+							}
+						}
+					}
+				}
+
+				var ascColor = null;
+				if (null !== sortColor) {
+					ascColor = new Asc.asc_CColor();
+					ascColor.asc_putR(sortColor.getR());
+					ascColor.asc_putG(sortColor.getG());
+					ascColor.asc_putB(sortColor.getB());
+					ascColor.asc_putA(sortColor.getA());
+				}
+
+				setViewProps && setViewProps(autoFilter.Ref.c1 + colId, autoFilter.Ref.r1);
+
+				//set menu object
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+
+				autoFilterObject.asc_setSortState(sortVal);
+				autoFilterObject.asc_setCellId(cellId);
+				autoFilterObject.asc_setValues(values);
+				autoFilterObject.asc_setFilterObj(filterObj);
+				autoFilterObject.asc_setAutomaticRowCount(automaticRowCount);
+				autoFilterObject.asc_setDiplayName(displayName);
+				autoFilterObject.asc_setSortColor(ascColor);
+				autoFilterObject.asc_setColumnName(columnName);
+				autoFilterObject.asc_setSheetColumnName(AscCommon.g_oCellAddressUtils.colnumToColstr(rangeButton.c1 + 1));
+
+				var columnRange = new Asc.Range(colId + autoFilter.Ref.c1, autoFilter.Ref.r1 + 1, colId + autoFilter.Ref.c1, (automaticRowCount && automaticRowCount > autoFilter.Ref.r2) ? automaticRowCount : autoFilter.Ref.r2);
+
+				var filterTypes = ws.getRowColColors(columnRange);
+				autoFilterObject.asc_setIsTextFilter(filterTypes.text);
+				autoFilterObject.asc_setColorsFill(filterTypes.colors);
+				autoFilterObject.asc_setColorsFont(filterTypes.fontColors);
+
+				return autoFilterObject;
 			}
 		};
 

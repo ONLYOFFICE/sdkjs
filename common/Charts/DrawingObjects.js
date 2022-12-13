@@ -410,15 +410,16 @@ function roundPlus(x, n) { //x - число, n - количество знако
     return Math.round(x * m) / m;
 }
 
-// Класс для информации о ячейке для объектов ToDo возможно стоит поправить
 function CCellObjectInfo () {
 	this.col = 0;
 	this.row = 0;
 	this.colOff = 0;
 	this.rowOff = 0;
-	this.colOffPx = 0;
-	this.rowOffPx = 0;
 }
+CCellObjectInfo.prototype.initAfterSerialize = function() {
+	this.row = Math.max(0, this.row);
+	this.col = Math.max(0, this.col);
+};
 
 /** @constructor */
 function asc_CChartBinary(chart) {
@@ -1248,101 +1249,33 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             clearTimeout;
     })();
 
-    function DrawingObjects() {
-
-    //-----------------------------------------------------------------------------------
-    // Scroll offset
-    //-----------------------------------------------------------------------------------
-
-    var ScrollOffset = function() {
-
-        this.getX = function() {
-            return 2 * worksheet._getColLeft(0) - worksheet._getColLeft(worksheet.getFirstVisibleCol(true));
-        };
-
-        this.getY = function() {
-            return 2 * worksheet._getRowTop(0) - worksheet._getRowTop(worksheet.getFirstVisibleRow(true));
-        }
-    };
-
-    //-----------------------------------------------------------------------------------
-    // Private
-    //-----------------------------------------------------------------------------------
-
-    var _this = this;
-    var asc = window["Asc"];
-    var api = asc["editor"];
-    var worksheet = null;
-
-    var drawingCtx = null;
-    var overlayCtx = null;
-
-    var scrollOffset = new ScrollOffset();
-
-    var aObjects = [];
-    var aImagesSync = [];
-
-
-    var oStateBeforeLoadChanges = null;
-
-    _this.zoom = { last: 1, current: 1 };
-    _this.canEdit = null;
-    _this.drawingArea = null;
-    _this.drawingDocument = null;
-    _this.asyncImageEndLoaded = null;
-    _this.CompositeInput = null;
-
-    _this.lastX = 0;
-    _this.lastY = 0;
-
-    _this.nCurPointItemsLength = -1;
-
-    _this.bUpdateMetrics = true;
-    _this.shiftMap = {};
-
-    // Task timer
-    _this.animId = null;
-    _this.drawTask = null;
-
-    function drawTaskFunction() {
-        _this.drawingDocument.CheckTargetShow();
-        if(_this.drawTask) {
-            _this.showDrawingObjectsEx(_this.drawTask.getRect());
-            _this.drawTask = null;
-        }
-        _this.animId = null;
-    }
-
-    //-----------------------------------------------------------------------------------
-    // Create drawing
-    //-----------------------------------------------------------------------------------
 
     function DrawingBase(ws) {
         this.worksheet = ws;
 
-		this.Type = c_oAscCellAnchorType.cellanchorTwoCell;
-		this.Pos = { X: 0, Y: 0 };
+        this.Type = c_oAscCellAnchorType.cellanchorTwoCell;
+        this.Pos = { X: 0, Y: 0 };
 
-		this.editAs = c_oAscCellAnchorType.cellanchorTwoCell;
-		this.from = new CCellObjectInfo();
-		this.to = new CCellObjectInfo();
-		this.ext = { cx: 0, cy: 0 };
+        this.editAs = c_oAscCellAnchorType.cellanchorTwoCell;
+        this.from = new CCellObjectInfo();
+        this.to = new CCellObjectInfo();
+        this.ext = { cx: 0, cy: 0 };
 
-		this.graphicObject = null; // CImage, CShape, GroupShape or CChartAsGroup
+        this.graphicObject = null; // CImage, CShape, GroupShape or CChartAsGroup
 
         this.boundsFromTo =
-        {
-            from: new CCellObjectInfo(),
-            to  : new CCellObjectInfo()
-        };
+            {
+                from: new CCellObjectInfo(),
+                to  : new CCellObjectInfo()
+            };
     }
 
     //{ prototype
 
 
     DrawingBase.prototype.isUseInDocument = function() {
-        if(worksheet && worksheet.model){
-            var aDrawings = worksheet.model.Drawings;
+        if(this.worksheet && this.worksheet.model){
+            var aDrawings = this.worksheet.model.Drawings;
             for(var i = 0; i < aDrawings.length; ++i){
                 if(aDrawings[i] === this){
                     return true;
@@ -1388,7 +1321,22 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     };
 
     DrawingBase.prototype.getCanvasContext = function() {
-        return _this.drawingDocument.CanvasHitContext;
+        return this.getDrawingObjects().drawingDocument.CanvasHitContext;
+    };
+
+    DrawingBase.prototype.pxToMm = function(val) {
+        let oDrawingObjects = this.getDrawingObjects();
+        if(oDrawingObjects) {
+            return oDrawingObjects.pxToMm(val);
+        }
+        return 0;
+    };
+    DrawingBase.prototype.mmToPx = function(val) {
+        let oDrawingObjects = this.getDrawingObjects();
+        if(oDrawingObjects) {
+            return oDrawingObjects.mmToPx(val);
+        }
+        return 0;
     };
 
     // GraphicObject: x, y, extX, extY
@@ -1409,26 +1357,26 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             }
             case c_oAscCellAnchorType.cellanchorOneCell:
             {
-                if (worksheet) {
-					coordsFrom = _this.calculateCoords(_t.from);
-					metrics.x = pxToMm( coordsFrom.x );
-					metrics.y = pxToMm( coordsFrom.y );
-					metrics.extX = this.ext.cx;
-					metrics.extY = this.ext.cy;
+                if (this.worksheet) {
+                    coordsFrom = this.getDrawingObjects().calculateCoords(_t.from);
+                    metrics.x = this.pxToMm( coordsFrom.x );
+                    metrics.y = this.pxToMm( coordsFrom.y );
+                    metrics.extX = this.ext.cx;
+                    metrics.extY = this.ext.cy;
                 }
                 break;
             }
             case c_oAscCellAnchorType.cellanchorTwoCell:
             {
-				if (worksheet) {
-					coordsFrom = _this.calculateCoords(_t.from);
-					metrics.x = pxToMm( coordsFrom.x );
-					metrics.y = pxToMm( coordsFrom.y );
+                if (this.worksheet) {
+                    coordsFrom = this.getDrawingObjects().calculateCoords(_t.from);
+                    metrics.x = this.pxToMm( coordsFrom.x );
+                    metrics.y = this.pxToMm( coordsFrom.y );
 
-					coordsTo = _this.calculateCoords(_t.to);
-					metrics.extX = pxToMm( coordsTo.x - coordsFrom.x );
-					metrics.extY = pxToMm( coordsTo.y - coordsFrom.y );
-				}
+                    coordsTo = this.getDrawingObjects().calculateCoords(_t.to);
+                    metrics.extX = this.pxToMm( coordsTo.x - coordsFrom.x );
+                    metrics.extY = this.pxToMm( coordsTo.y - coordsFrom.y );
+                }
                 break;
             }
         }
@@ -1458,10 +1406,10 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             var fromX, fromY, toX, toY;
             if (AscFormat.checkNormalRotate(rot))
             {
-                fromX =  mmToPx(_t.graphicObject.x);
-                fromY =  mmToPx(_t.graphicObject.y);
-                toX = mmToPx(_t.graphicObject.x + _t.graphicObject.extX);
-                toY = mmToPx(_t.graphicObject.y + _t.graphicObject.extY);
+                fromX = this.mmToPx(_t.graphicObject.x);
+                fromY = this.mmToPx(_t.graphicObject.y);
+                toX = this.mmToPx(_t.graphicObject.x + _t.graphicObject.extX);
+                toY = this.mmToPx(_t.graphicObject.y + _t.graphicObject.extY);
                 ret.Pos.X = _t.graphicObject.x;
                 ret.Pos.Y = _t.graphicObject.y;
                 ret.ext.cx = _t.graphicObject.extX;
@@ -1472,30 +1420,30 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 var _xc, _yc;
                 _xc = _t.graphicObject.x + _t.graphicObject.extX/2;
                 _yc = _t.graphicObject.y + _t.graphicObject.extY/2;
-                fromX =  mmToPx(_xc - _t.graphicObject.extY/2);
-                fromY =  mmToPx(_yc - _t.graphicObject.extX/2);
-                toX = mmToPx(_xc + _t.graphicObject.extY/2);
-                toY = mmToPx(_yc + _t.graphicObject.extX/2);
+                fromX =  this.mmToPx(_xc - _t.graphicObject.extY/2);
+                fromY =  this.mmToPx(_yc - _t.graphicObject.extX/2);
+                toX = this.mmToPx(_xc + _t.graphicObject.extY/2);
+                toY = this.mmToPx(_yc + _t.graphicObject.extX/2);
                 ret.Pos.X = _xc - _t.graphicObject.extY/2;
                 ret.Pos.Y = _yc - _t.graphicObject.extX/2;
                 ret.ext.cx = _t.graphicObject.extY;
                 ret.ext.cy = _t.graphicObject.extX;
             }
 
-            var fromColCell = worksheet.findCellByXY(fromX, fromY, true, false, true);
-            var fromRowCell = worksheet.findCellByXY(fromX, fromY, true, true, false);
-            var toColCell = worksheet.findCellByXY(toX, toY, true, false, true);
-            var toRowCell = worksheet.findCellByXY(toX, toY, true, true, false);
+            var fromColCell = this.worksheet.findCellByXY(fromX, fromY, true, false, true);
+            var fromRowCell = this.worksheet.findCellByXY(fromX, fromY, true, true, false);
+            var toColCell = this.worksheet.findCellByXY(toX, toY, true, false, true);
+            var toRowCell = this.worksheet.findCellByXY(toX, toY, true, true, false);
 
             ret.from.col = fromColCell.col;
-            ret.from.colOff = pxToMm(fromColCell.colOff);
+            ret.from.colOff = this.pxToMm(fromColCell.colOff);
             ret.from.row = fromRowCell.row;
-            ret.from.rowOff = pxToMm(fromRowCell.rowOff);
+            ret.from.rowOff = this.pxToMm(fromRowCell.rowOff);
 
             ret.to.col = toColCell.col;
-            ret.to.colOff = pxToMm(toColCell.colOff);
+            ret.to.colOff = this.pxToMm(toColCell.colOff);
             ret.to.row = toRowCell.row;
-            ret.to.rowOff = pxToMm(toRowCell.rowOff);
+            ret.to.rowOff = this.pxToMm(toRowCell.rowOff);
             return ret;
         }
         return null;
@@ -1527,10 +1475,10 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             var fromX, fromY, toX, toY;
             if (AscFormat.checkNormalRotate(rot))
             {
-                fromX =  mmToPx(_t.graphicObject.x);
-                fromY =  mmToPx(_t.graphicObject.y);
-                toX = mmToPx(_t.graphicObject.x + _t.graphicObject.extX);
-                toY = mmToPx(_t.graphicObject.y + _t.graphicObject.extY);
+                fromX = this.mmToPx(_t.graphicObject.x);
+                fromY = this.mmToPx(_t.graphicObject.y);
+                toX = this.mmToPx(_t.graphicObject.x + _t.graphicObject.extX);
+                toY = this.mmToPx(_t.graphicObject.y + _t.graphicObject.extY);
                 this.Pos.X = _t.graphicObject.x;
                 this.Pos.Y = _t.graphicObject.y;
                 this.ext.cx = _t.graphicObject.extX;
@@ -1541,30 +1489,30 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 var _xc, _yc;
                 _xc = _t.graphicObject.x + _t.graphicObject.extX/2;
                 _yc = _t.graphicObject.y + _t.graphicObject.extY/2;
-                fromX =  mmToPx(_xc - _t.graphicObject.extY/2);
-                fromY =  mmToPx(_yc - _t.graphicObject.extX/2);
-                toX = mmToPx(_xc + _t.graphicObject.extY/2);
-                toY = mmToPx(_yc + _t.graphicObject.extX/2);
+                fromX = this.mmToPx(_xc - _t.graphicObject.extY/2);
+                fromY = this.mmToPx(_yc - _t.graphicObject.extX/2);
+                toX = this.mmToPx(_xc + _t.graphicObject.extY/2);
+                toY = this.mmToPx(_yc + _t.graphicObject.extX/2);
                 this.Pos.X = _xc - _t.graphicObject.extY/2;
                 this.Pos.Y = _yc - _t.graphicObject.extX/2;
                 this.ext.cx = _t.graphicObject.extY;
                 this.ext.cy = _t.graphicObject.extX;
             }
 
-            var fromColCell = worksheet.findCellByXY(fromX, fromY, true, false, true);
-            var fromRowCell = worksheet.findCellByXY(fromX, fromY, true, true, false);
-            var toColCell = worksheet.findCellByXY(toX, toY, true, false, true);
-            var toRowCell = worksheet.findCellByXY(toX, toY, true, true, false);
+            var fromColCell = this.worksheet.findCellByXY(fromX, fromY, true, false, true);
+            var fromRowCell = this.worksheet.findCellByXY(fromX, fromY, true, true, false);
+            var toColCell = this.worksheet.findCellByXY(toX, toY, true, false, true);
+            var toRowCell = this.worksheet.findCellByXY(toX, toY, true, true, false);
 
             _t.from.col = fromColCell.col;
-            _t.from.colOff = pxToMm(fromColCell.colOff);
+            _t.from.colOff = this.pxToMm(fromColCell.colOff);
             _t.from.row = fromRowCell.row;
-            _t.from.rowOff = pxToMm(fromRowCell.rowOff);
+            _t.from.rowOff = this.pxToMm(fromRowCell.rowOff);
 
             _t.to.col = toColCell.col;
-            _t.to.colOff = pxToMm(toColCell.colOff);
+            _t.to.colOff = this.pxToMm(toColCell.colOff);
             _t.to.row = toRowCell.row;
-            _t.to.rowOff = pxToMm(toRowCell.rowOff);
+            _t.to.rowOff = this.pxToMm(toRowCell.rowOff);
         }
     };
 
@@ -1577,8 +1525,8 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             var bounds = _t.graphicObject.bounds;
 
 
-            var fromX =  mmToPx(bounds.x > 0 ? bounds.x : 0), fromY =  mmToPx(bounds.y > 0 ? bounds.y : 0),
-                toX = mmToPx(bounds.x + bounds.w), toY = mmToPx(bounds.y + bounds.h);
+            var fromX =  this.mmToPx(bounds.x > 0 ? bounds.x : 0), fromY =  this.mmToPx(bounds.y > 0 ? bounds.y : 0),
+                toX = this.mmToPx(bounds.x + bounds.w), toY = this.mmToPx(bounds.y + bounds.h);
             if(toX < 0)
             {
                 toX = 0;
@@ -1588,47 +1536,47 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 toY = 0;
             }
 
-            var fromColCell = worksheet.findCellByXY(fromX, fromY, true, false, true);
-            var fromRowCell = worksheet.findCellByXY(fromX, fromY, true, true, false);
-            var toColCell = worksheet.findCellByXY(toX, toY, true, false, true);
-            var toRowCell = worksheet.findCellByXY(toX, toY, true, true, false);
+            var fromColCell = this.worksheet.findCellByXY(fromX, fromY, true, false, true);
+            var fromRowCell = this.worksheet.findCellByXY(fromX, fromY, true, true, false);
+            var toColCell = this.worksheet.findCellByXY(toX, toY, true, false, true);
+            var toRowCell = this.worksheet.findCellByXY(toX, toY, true, true, false);
 
             _t.boundsFromTo.from.col = fromColCell.col;
-            _t.boundsFromTo.from.colOff = pxToMm(fromColCell.colOff);
+            _t.boundsFromTo.from.colOff = this.pxToMm(fromColCell.colOff);
             _t.boundsFromTo.from.row = fromRowCell.row;
-            _t.boundsFromTo.from.rowOff = pxToMm(fromRowCell.rowOff);
+            _t.boundsFromTo.from.rowOff = this.pxToMm(fromRowCell.rowOff);
 
             _t.boundsFromTo.to.col = toColCell.col;
-            _t.boundsFromTo.to.colOff = pxToMm(toColCell.colOff);
+            _t.boundsFromTo.to.colOff = this.pxToMm(toColCell.colOff);
             _t.boundsFromTo.to.row = toRowCell.row;
-            _t.boundsFromTo.to.rowOff = pxToMm(toRowCell.rowOff);
+            _t.boundsFromTo.to.rowOff = this.pxToMm(toRowCell.rowOff);
         }
     };
 
     // Реальное смещение по высоте
     DrawingBase.prototype.getRealTopOffset = function() {
         var _t = this;
-        var val = _t.worksheet._getRowTop(_t.from.row) + mmToPx(_t.from.rowOff);
-        return asc.round(val);
+        var val = _t.worksheet._getRowTop(_t.from.row) + this.mmToPx(_t.from.rowOff);
+        return window["Asc"].round(val);
     };
 
     // Реальное смещение по ширине
     DrawingBase.prototype.getRealLeftOffset = function() {
         var _t = this;
-        var val = _t.worksheet._getColLeft(_t.from.col) + mmToPx(_t.from.colOff);
-        return asc.round(val);
+        var val = _t.worksheet._getColLeft(_t.from.col) + this.mmToPx(_t.from.colOff);
+        return window["Asc"].round(val);
     };
 
     // Ширина по координатам
     DrawingBase.prototype.getWidthFromTo = function() {
-        return (this.worksheet._getColLeft(this.to.col) + mmToPx(this.to.colOff) -
-			this.worksheet._getColLeft(this.from.col) - mmToPx(this.from.colOff));
+        return (this.worksheet._getColLeft(this.to.col) + this.mmToPx(this.to.colOff) -
+            this.worksheet._getColLeft(this.from.col) - this.mmToPx(this.from.colOff));
     };
 
     // Высота по координатам
     DrawingBase.prototype.getHeightFromTo = function() {
-        return this.worksheet._getRowTop(this.to.row) + mmToPx(this.to.rowOff) -
-			this.worksheet._getRowTop(this.from.row) - mmToPx(this.from.rowOff);
+        return this.worksheet._getRowTop(this.to.row) + this.mmToPx(this.to.rowOff) -
+            this.worksheet._getRowTop(this.from.row) - this.mmToPx(this.from.rowOff);
     };
 
     // Видимое смещение объекта от первой видимой строки
@@ -1650,12 +1598,9 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         off = (off > 0) ? off : 0;
         return withHeader ? headerColOff + off : off;
     };
-
     DrawingBase.prototype.getDrawingObjects = function() {
-        return _this;
+        return this.worksheet && this.worksheet.objectRender;
     };
-
-
     DrawingBase.prototype.checkTarget = function(target, bEdit) {
         if(!this.graphicObject) {
             return false;
@@ -1701,9 +1646,8 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 }
             }
         }
-       return bUpdateExtents;
+        return bUpdateExtents;
     };
-
     DrawingBase.prototype.draw = function (graphics) {
         if(this.graphicObject) {
             this.graphicObject.draw(graphics);
@@ -1729,7 +1673,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 var c2 = oB.to.col;
                 var r2 = oB.to.row;
                 oRange = new Asc.Range(c1, r1, c2, r2, true);
-                oClipRect =  worksheet.rangeToRectAbs(oRange, 3);
+                oClipRect =  this.worksheet.rangeToRectAbs(oRange, 3);
             }
             else {
                 oClipRect = oRect;
@@ -1773,6 +1717,102 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         }
         this.graphicObject.handleObject(fCallback);
     };
+    DrawingBase.prototype.initAfterSerialize = function(ws) {
+        if(!this.graphicObject) {
+            return;
+        }
+        let bIsShape = this.graphicObject.isShape();
+        let bIsImage = this.graphicObject.isImage();
+        if((bIsShape || bIsImage) && !this.graphicObject.spPr) {
+            return;
+        }
+        if(AscCommon.IsHiddenObj(this.graphicObject)) {
+            return;
+        }
+        this.graphicObject.setBDeleted(false);
+        this.from.initAfterSerialize();
+        this.to.initAfterSerialize();
+        this.graphicObject.setDrawingBase(this);
+        this.graphicObject.setWorksheet(ws);
+        let oXfrm = this.graphicObject.spPr && this.graphicObject.spPr.xfrm;
+        this.graphicObject.checkEmptySpPrAndXfrm(oXfrm);
+        if(this.clientData) {
+            this.graphicObject.setClientData(this.clientData);
+        }
+        ws.Drawings.push(this);
+    };
+
+    function DrawingObjects() {
+
+    //-----------------------------------------------------------------------------------
+    // Scroll offset
+    //-----------------------------------------------------------------------------------
+
+    var ScrollOffset = function() {
+
+        this.getX = function() {
+            return 2 * worksheet._getColLeft(0) - worksheet._getColLeft(worksheet.getFirstVisibleCol(true));
+        };
+
+        this.getY = function() {
+            return 2 * worksheet._getRowTop(0) - worksheet._getRowTop(worksheet.getFirstVisibleRow(true));
+        }
+    };
+
+    //-----------------------------------------------------------------------------------
+    // Private
+    //-----------------------------------------------------------------------------------
+
+    var _this = this;
+    var asc = window["Asc"];
+    var api = asc["editor"];
+    var worksheet = null;
+
+    var drawingCtx = null;
+    var overlayCtx = null;
+
+    var scrollOffset = new ScrollOffset();
+
+    var aObjects = [];
+    var aImagesSync = [];
+
+
+    var oStateBeforeLoadChanges = null;
+
+    _this.zoom = { last: 1, current: 1 };
+    _this.canEdit = null;
+    _this.drawingArea = null;
+    _this.drawingDocument = null;
+    _this.asyncImageEndLoaded = null;
+    _this.CompositeInput = null;
+	_this.mathTrackHandler = null;
+
+    _this.lastX = 0;
+    _this.lastY = 0;
+
+    _this.nCurPointItemsLength = -1;
+
+    _this.bUpdateMetrics = true;
+    _this.shiftMap = {};
+
+    // Task timer
+    _this.animId = null;
+    _this.drawTask = null;
+
+    function drawTaskFunction() {
+        _this.drawingDocument.CheckTargetShow();
+        if(_this.drawTask) {
+            _this.showDrawingObjectsEx(_this.drawTask.getRect());
+            _this.drawTask = null;
+        }
+        _this.animId = null;
+    }
+
+    //-----------------------------------------------------------------------------------
+    // Create drawing
+    //-----------------------------------------------------------------------------------
+
+
     //}
 
     //-----------------------------------------------------------------------------------
@@ -1889,6 +1929,13 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         return copyObject;
     };
 
+    _this.pxToMm = function(val) {
+        return pxToMm(val);
+    };
+
+    _this.mmToPx = function(val) {
+        return mmToPx(val);
+    };
 
     _this.createShapeAndInsertContent = function(oParaContent){
         var track_object = new AscFormat.NewShapeTrack("textRect", 0, 0, Asc['editor'].wbModel.theme, null, null, null, 0);
@@ -1915,7 +1962,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
     _this.init = function(currentSheet) {
 
-        var api = window["Asc"]["editor"];
+        const api = window["Asc"]["editor"];
         worksheet = currentSheet;
 
         drawingCtx = currentSheet.drawingGraphicCtx;
@@ -1929,17 +1976,16 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         _this.drawingDocument.TargetHtmlElement = document.getElementById('id_target_cursor');
         _this.drawingDocument.InitGuiCanvasShape(api.shapeElementId);
         _this.controller = new AscFormat.DrawingObjectsController(_this);
-
+	    _this.mathTrackHandler = new AscWord.CMathTrackHandler(_this.drawingDocument, api);
         _this.canEdit = function() { return api.canEdit(); };
 
         aImagesSync = [];
 
-		var i;
         aObjects = currentSheet.model.Drawings;
-        for (i = 0; currentSheet.model.Drawings && (i < currentSheet.model.Drawings.length); i++)
+        for (let i = 0; currentSheet.model.Drawings && (i < currentSheet.model.Drawings.length); i++)
         {
             aObjects[i] = _this.cloneDrawingObject(aObjects[i]);
-            var drawingObject = aObjects[i];
+            const drawingObject = aObjects[i];
             // Check drawing area
             drawingObject.drawingArea = _this.drawingArea;
             drawingObject.worksheet = currentSheet;
@@ -1947,19 +1993,25 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             drawingObject.graphicObject.setDrawingObjects(_this);
             drawingObject.graphicObject.getAllRasterImages(aImagesSync);
         }
+        aImagesSync = _this.checkImageBullets(currentSheet, aImagesSync);
 
-        for(i = 0; i < aImagesSync.length; ++i)
+        for(let i = 0; i < aImagesSync.length; ++i)
         {
-			var localUrl = aImagesSync[i];
-			if(api.DocInfo && api.DocInfo.get_OfflineApp()) {
-          AscCommon.g_oDocumentUrls.addImageUrl(localUrl, "/sdkjs/cell/document/media/" + localUrl);
-			}
+            const localUrl = aImagesSync[i];
+            if(api.DocInfo && api.DocInfo.get_OfflineApp()) {
+                const urlWithMedia = AscCommon.g_oDocumentUrls.mediaPrefix + localUrl;
+                if (api.imagesFromGeneralEditor && api.imagesFromGeneralEditor[urlWithMedia]) {
+                    AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.imagesFromGeneralEditor[urlWithMedia]);
+                } else {
+                    AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.documentUrl + urlWithMedia);
+                }
+            }
             aImagesSync[i] = AscCommon.getFullImageSrc2(localUrl);
         }
 
         if(aImagesSync.length > 0)
         {
-            var old_val = api.ImageLoader.bIsAsyncLoadDocumentImages;
+            const old_val = api.ImageLoader.bIsAsyncLoadDocumentImages;
             api.ImageLoader.bIsAsyncLoadDocumentImages = true;
             api.ImageLoader.LoadDocumentImages(aImagesSync);
             api.ImageLoader.bIsAsyncLoadDocumentImages = old_val;
@@ -1967,6 +2019,46 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 		_this.recalculate(true);
         worksheet.model.Drawings = aObjects;
     };
+
+    _this.checkImageBullets = function (currentSheet, arrImages) {
+        const aObjects = currentSheet.model.Drawings;
+        const arrContentsWithImageBullet = [];
+        const oBulletImages = {};
+        const arrBulletImagesAsync = [];
+
+        for (let i = 0; aObjects && (i < aObjects.length); i += 1) {
+            const drawingObject = aObjects[i];
+            drawingObject.graphicObject.getDocContentsWithImageBullets(arrContentsWithImageBullet);
+            drawingObject.graphicObject.getImageFromBulletsMap(oBulletImages);
+        }
+
+        for (let localUrl in oBulletImages) {
+            if(api.DocInfo && api.DocInfo.get_OfflineApp()) {
+                const urlWithMedia = AscCommon.g_oDocumentUrls.mediaPrefix + localUrl;
+                if (api.imagesFromGeneralEditor && api.imagesFromGeneralEditor[urlWithMedia]) {
+                    AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.imagesFromGeneralEditor[urlWithMedia]);
+                } else {
+                    AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.documentUrl + urlWithMedia);
+                }
+            }
+            const fullUrl = AscCommon.getFullImageSrc2(localUrl);
+            arrBulletImagesAsync.push(fullUrl);
+        }
+
+        api.ImageLoader.LoadImagesWithCallback(arrBulletImagesAsync, function () {
+            for (let i = 0; i < arrContentsWithImageBullet.length; i += 1) {
+                const oContent = arrContentsWithImageBullet[i];
+                oContent.Recalculate();
+                _this.showDrawingObjects();
+            }
+        });
+
+        const arrImagesWithoutImageBullets = arrImages.filter(function (sImageId) {
+           return !oBulletImages[sImageId];
+        });
+
+        return arrImagesWithoutImageBullets;
+    }
 
 
     _this.getSelectedDrawingsRange = function()
@@ -1999,17 +2091,21 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         return new Asc.Range(cmin, rmin, cmax, rmax, true);
     };
 
+	_this.getScreenPosition = function(X, Y) {
+		var _x = X * Asc.getCvtRatio(3, 0, worksheet._getPPIX()) + scrollOffset.getX();
+		var _y = Y * Asc.getCvtRatio(3, 0, worksheet._getPPIY()) + scrollOffset.getY();
+		return new AscCommon.asc_CRect(_x, _y, 0, 0 );
+	};
+	_this.convertCoordsToCursorWR = function(X, Y) {
+		return this.drawingArea.convertCoordsToCursorWR(X, Y);
+	};
 
     _this.getContextMenuPosition = function(){
-
         if(!worksheet){
             return new AscCommon.asc_CRect( 0, 0, 5, 5 );
         }
-        var oPos = this.controller.getContextMenuPosition(0);
-
-        var _x = oPos.X * Asc.getCvtRatio(3, 0, worksheet._getPPIX()) + scrollOffset.getX();
-        var _y = oPos.Y * Asc.getCvtRatio(3, 0, worksheet._getPPIY()) + scrollOffset.getY();
-        return new AscCommon.asc_CRect(_x, _y, 0, 0 );
+        let oPos = this.controller.getContextMenuPosition(0);
+		return _this.getScreenPosition(oPos.X, oPos.Y);
     };
 
     _this.recalculate =  function(all)
@@ -2147,7 +2243,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         if(!drawingCtx) {
             return;
         }
-        if (worksheet.model.index !== api.wb.model.getActive()) {
+        if (worksheet.model !== api.wb.model.getActiveWs()) {
             return;
         }
         if (!oUpdateRect) {
@@ -2176,6 +2272,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         _this.OnUpdateOverlay();
         _this.controller.updateSelectionState(true);
         AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
+		this.mathTrackHandler.Update();
     };
 
     _this.print = function(oOptions) {
@@ -2321,7 +2418,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 oSize = oImgP.asc_getOriginSize(api);
             }
             else {
-                oSize = new asc_CImageSize(Math.max((options.width * AscCommon.g_dKoef_pix_to_mm), 1),
+                oSize = new AscCommon.asc_CImageSize(Math.max((options.width * AscCommon.g_dKoef_pix_to_mm), 1),
                     Math.max((options.height * AscCommon.g_dKoef_pix_to_mm), 1), true);
             }
             var bCorrect = _this.calculateObjectMetrics(drawingObject, mmToPx(oSize.asc_getImageWidth()), mmToPx(oSize.asc_getImageHeight()));
@@ -2465,6 +2562,8 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 _this.controller.checkSelectedObjectsAndCallback(function(){
                     var MathElement = new AscCommonWord.MathMenu(Type);
                     _this.controller.paragraphAdd(MathElement, false);
+	                _this.controller.recalculate();
+					_this.controller.updateSelectionState();
                 }, [], false, AscDFH.historydescription_Spreadsheet_CreateGroup);
                 return;
             }
@@ -2499,14 +2598,16 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             worksheet.setSelectionShape(true);
         }
     };
-
-
     _this.setMathProps = function(MathProps)
     {
         _this.controller.setMathProps(MathProps);
     }
-
-    _this.setListType = function(type, subtype)
+    _this.convertMathView = function(isToLinear, isAll)
+    {
+        _this.controller.convertMathView(isToLinear, isAll);
+        _this.controller.updateSelectionState();
+    }
+    _this.setListType = function(type, subtype, custom)
     {
         if(_this.controller.checkSelectedObjectsProtectionText())
         {
@@ -2520,6 +2621,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
         NumberInfo.Type    = type;
         NumberInfo.SubType = subtype;
+        NumberInfo.Custom = custom;
         _this.controller.checkSelectedObjectsAndCallback(_this.controller.setParagraphNumbering, [AscFormat.fGetPresentationBulletByNumInfo(NumberInfo)], false, AscDFH.historydescription_Presentation_SetParagraphNumbering);
     };
 
@@ -2568,6 +2670,9 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                         AscShapeProp.textArtProperties.asc_putFill(oFill);
 
                         _this.setGraphicObjectProps(imgProps);
+                    }
+                    else if (obj && obj.fAfterUploadOleObjectImage) {
+                        obj.fAfterUploadOleObjectImage(_image.src);
                     }
 
                     _this.showDrawingObjects();
@@ -3438,26 +3543,42 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                     oGraphicObject = drawingObject.graphicObject;
                     bRecalculate = true;
                     if(oGraphicObject){
+                        var oldX = oGraphicObject.x;
+                        var oldY = oGraphicObject.y;
+                        var oldExtX = oGraphicObject.extX;
+                        var oldExtY = oGraphicObject.extY;
                         if(drawingObject.Type === AscCommon.c_oAscCellAnchorType.cellanchorTwoCell
                         && drawingObject.editAs !== AscCommon.c_oAscCellAnchorType.cellanchorTwoCell) {
                             if(drawingObject.editAs === AscCommon.c_oAscCellAnchorType.cellanchorAbsolute) {
                                 aObjectsForCheck.push({object: drawingObject, coords:  drawingObject._getGraphicObjectCoords()});
                             }
                             else {
-                                    var oldExtX = oGraphicObject.extX;
-                                    var oldExtY = oGraphicObject.extY;
                                     oGraphicObject.recalculateTransform();
                                     oGraphicObject.extX = oldExtX;
                                     oGraphicObject.extY = oldExtY;
                                     aObjectsForCheck.push({object: drawingObject, coords:  drawingObject._getGraphicObjectCoords()});
                             }
-                        }
-                        else {
+                        } else if (oGraphicObject.hasSmartArt && oGraphicObject.hasSmartArt()) { // fixme: this is a crutch for resizing columns and rows, fix after normal recalculate smartart
+                            if (oGraphicObject.spPr.xfrm.isZeroCh()) {
+                                oGraphicObject.updateCoordinatesAfterInternalResize();
+                            }
+                            oGraphicObject.recalculateTransform();
+                            var coefficient = 1;
+                            if (oldExtX !== oGraphicObject.extX) {
+                                coefficient = oGraphicObject.extX / oldExtX;
+                                oGraphicObject.extY *= oGraphicObject.extX / oldExtX;
+                            } else if (oldExtY !== oGraphicObject.extY) {
+                                coefficient = oGraphicObject.extY / oldExtY;
+                                oGraphicObject.extX *= coefficient;
+                            }
+                            if (coefficient !== 1) {
+                                oGraphicObject.changeSize(coefficient, coefficient);
+                                oGraphicObject.spPr.xfrm.setChExtX(oGraphicObject.spPr.xfrm.extX);
+                                oGraphicObject.spPr.xfrm.setChExtY(oGraphicObject.spPr.xfrm.extY);
+                            }
+                            aObjectsForCheck.push({object: drawingObject, coords:  drawingObject._getGraphicObjectCoords()});
+                        } else {
                             if(oGraphicObject.recalculateTransform) {
-                                var oldX = oGraphicObject.x;
-                                var oldY = oGraphicObject.y;
-                                var oldExtX = oGraphicObject.extX;
-                                var oldExtY = oGraphicObject.extY;
                                 oGraphicObject.recalculateTransform();
                                 var fDelta = 0.01;
                                 bRecalculate = false;
@@ -3500,6 +3621,9 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                             oC.Pos.X, oC.Pos.Y, oC.ext.cx, oC.ext.cy);
                     }
                     oGraphicObject.handleUpdateExtents();
+                    if (oGraphicObject.hasSmartArt && oGraphicObject.hasSmartArt()) {
+                        oGraphicObject.checkExtentsByDocContent(true, true);
+                    }
                     oGraphicObject.recalculate();
                 }
                 _this.showDrawingObjects();
@@ -3558,7 +3682,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     };
 
 
-    _this.addOleObject = function(fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect){
+    _this.addOleObject = function(fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect, arrImagesForAddToHistory){
         var drawingObject = _this.createDrawingObject();
         drawingObject.worksheet = worksheet;
 
@@ -3570,12 +3694,12 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
         var coordsFrom = _this.calculateCoords(drawingObject.from);
         _this.controller.resetSelection();
-        _this.controller.addOleObjectFromParams(pxToMm(coordsFrom.x), pxToMm(coordsFrom.y), fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect);
+        _this.controller.addOleObjectFromParams(pxToMm(coordsFrom.x), pxToMm(coordsFrom.y), fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect, arrImagesForAddToHistory);
         worksheet.setSelectionShape(true);
     };
 
-    _this.editOleObject = function(oOleObject, sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, bResize){
-        this.controller.editOleObjectFromParams(oOleObject, sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, bResize);
+    _this.editOleObject = function(oOleObject, sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, bResize, arrImagesForAddToHistory){
+        this.controller.editOleObjectFromParams(oOleObject, sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, bResize, arrImagesForAddToHistory);
     };
 
     _this.startEditCurrentOleObject = function(){
@@ -3974,6 +4098,19 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     //-----------------------------------------------------------------------------------
 
     _this.cleanWorksheet = function() {
+        if (worksheet) {
+            var model = worksheet.model;
+            History.Clear();
+            for (var i = 0; i < aObjects.length; i++) {
+                aObjects[i].graphicObject.deleteDrawingBase();
+            }
+            aObjects.length = 0;
+
+            var oAllRange = model.getRange3(0, 0, model.getRowsCount(), model.getColsCount());
+            oAllRange.cleanAll();
+
+            worksheet.endEditChart();
+        }
     };
 
     _this.getWordChartObject = function() {
@@ -3999,6 +4136,9 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         var settings;
         if(api.isChartEditor)
         {
+            if (!aObjects.length) {
+                return null;
+            }
             return _this.controller.getPropsFromChart(aObjects[0].graphicObject);
         }
         settings = _this.controller.getChartProps();
@@ -4025,6 +4165,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             settings.putSeparator(",");
             settings.putLine(true);
             settings.putShowMarker(false);
+            settings.putView3d(null);
         }
         else{
             if(true !== bNoLock){
@@ -4042,7 +4183,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 		worksheet.cleanSelection();
         worksheet.endEditChart();
         drawing.fillSelectedRanges(worksheet);
-        if (worksheet.isChartAreaEditMode) {
+        if (worksheet.isChartAreaEditMode || (api && api.isShowVisibleAreaOleEditor)) {
             worksheet._drawSelection();
         }
     };
@@ -4257,9 +4398,9 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         else
         {
             if (32 == nCharCode || 12288 == nCharCode)
-                oChar = new ParaSpace();
+                oChar = new AscWord.CRunSpace();
             else
-                oChar = new ParaText(nCharCode);
+                oChar = new AscWord.CRunText(nCharCode);
         }
 
         oRun.Add_ToContent(nPos, oChar, true);
@@ -4512,7 +4653,9 @@ ClickCounter.prototype.getClickCount = function() {
     prot["asc_setFormatCode"] = prot.asc_setFormatCode;
 
     window["AscFormat"].DrawingObjects = DrawingObjects;
+    window["AscFormat"].DrawingBase = DrawingBase;
     window["AscFormat"].ClickCounter = ClickCounter;
     window["AscFormat"].aSparklinesStyles = aSparklinesStyles;
     window["AscFormat"].CSparklineView = CSparklineView;
+    window["AscFormat"].CCellObjectInfo = CCellObjectInfo;
 })(window);

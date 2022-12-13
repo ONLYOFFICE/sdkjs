@@ -44,6 +44,10 @@ DrawingObjectsController.prototype.getTheme = function()
 {
     return this.drawingObjects.getTheme();
 };
+DrawingObjectsController.prototype.getPresentation = function()
+{
+    return  editor && editor.WordControl && editor.WordControl.m_oLogicDocument || null;
+};
 
 DrawingObjectsController.prototype.fitImagesToSlide = function()
 {
@@ -102,7 +106,7 @@ DrawingObjectsController.prototype.recalculateCurPos = function(bUpdateX, bUpdat
     var oTargetDocContent = this.getTargetDocContent(undefined, true);
     if(oTargetDocContent){
         oTargetDocContent.RecalculateCurPos(bUpdateX, bUpdateY);
-        editor.WordControl.m_oLogicDocument.NeedUpdateTargetForCollaboration = true;
+        this.getPresentation().NeedUpdateTargetForCollaboration = true;
     }
 };
 
@@ -137,18 +141,22 @@ DrawingObjectsController.prototype.getColorMap = function()
             }
         }
     }
-    return AscFormat.G_O_DEFAULT_COLOR_MAP;
+    return AscFormat.GetDefaultColorMap();
 };
 
 
 
 DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing, oleObject, e, x, y, pageIndex)
 {
-    var oPresentation = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
+    var oPresentation = this.getPresentation();
     if(oPresentation && (false === oPresentation.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props) || !oPresentation.CanEdit()))
     {
         if(oleObject.m_oMathObject) {
             editor.sendEvent("asc_onConvertEquationToMath", oleObject);
+        }
+        else if (oleObject.canEditTableOleObject())
+        {
+            editor.asc_doubleClickOnTableOleObject(oleObject);
         }
         else {
             var pluginData = new Asc.CPluginData();
@@ -186,18 +194,18 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndCallback = function(ca
             ];
         }
     }
-    if(editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(check_type, aCommentData, undefined, aAdditionaObjects) === false)
+	let oPresentation = this.getPresentation();
+    if(oPresentation.Document_Is_SelectionLocked(check_type, aCommentData, undefined, aAdditionaObjects) === false)
     {
         var nPointType = AscFormat.isRealNumber(nHistoryPointType) ? nHistoryPointType : AscDFH.historydescription_CommonControllerCheckSelected;
-        History.Create_NewPoint(nPointType);
+        oPresentation.StartAction(nPointType)
         callback.apply(this, args);
-        this.startRecalculate();
+        oPresentation.FinalizeAction();
     }
 };
 DrawingObjectsController.prototype.startRecalculate = function()
 {
-    editor.WordControl.m_oLogicDocument.Recalculate();
-//    editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+    this.getPresentation().Recalculate();
 };
 
 DrawingObjectsController.prototype.getDrawingObjects = function()
@@ -217,7 +225,7 @@ DrawingObjectsController.prototype.paragraphFormatPaste = function( CopyTextPr, 
 
 DrawingObjectsController.prototype.paragraphFormatPaste2 = function()
 {
-    return this.paragraphFormatPaste(editor.WordControl.m_oLogicDocument.CopyTextPr, null, true);
+    return this.paragraphFormatPaste(this.getPresentation().CopyTextPr, null, true);
 };
 DrawingObjectsController.prototype.getDrawingDocument = function()
 {
@@ -287,7 +295,7 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndFireCallback = functio
             ];
         }
     }
-    if(editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(check_type, aCommentData) === false)
+    if(this.getPresentation().Document_Is_SelectionLocked(check_type, aCommentData) === false)
     {
         callback.apply(this, args);
         this.startRecalculate();
@@ -360,6 +368,21 @@ DrawingObjectsController.prototype.editChart = function(binary)
         }
     }
 };
+DrawingObjectsController.prototype.addImage = function(sImageUrl, nPixW, nPixH, videoUrl, audioUrl)
+{
+    let oPresentation = this.getPresentation();
+    let _w = oPresentation.GetWidthMM();
+    let _h = oPresentation.GetHeightMM();
+    var __w = Math.max((nPixW * AscCommon.g_dKoef_pix_to_mm), 1);
+    var __h = Math.max((nPixH * AscCommon.g_dKoef_pix_to_mm), 1);
+    var fKoeff = Math.min(1.0, 1.0 / Math.max(__w / _w, __h / _h));
+    _w = Math.max(5, __w * fKoeff);
+    _h = Math.max(5, __h * fKoeff);
+    var Image = this.createImage(sImageUrl, (oPresentation.GetWidthMM() - _w) / 2, (oPresentation.GetHeightMM() - _h) / 2, _w, _h, videoUrl, audioUrl);
+    Image.setParent(this.drawingObjects);
+    Image.addToDrawingObjects();
+    this.selectObject(Image, 0);
+};
 
 DrawingObjectsController.prototype.handleSlideComments  =  function(e, x, y, pageIndex)
 {
@@ -431,6 +454,30 @@ DrawingObjectsController.prototype.handleSlideComments  =  function(e, x, y, pag
     }
 
 };
+DrawingObjectsController.prototype.isSnapToGrid = function()
+{
+    return this.getPresentation().isSnapToGrid();
+};
+DrawingObjectsController.prototype.getSnapNearestPos = function(dX, dY)
+{
+    if(!this.isSnapToGrid())
+    {
+        return null;
+    }
+    return this.getPresentation().getStrideData().getNearestPoint(dX, dY);
+};
+
+
+DrawingObjectsController.prototype.getHorGuidesPos = function() {
+    return this.getPresentation().getHorGuidesPos();
+
+};
+DrawingObjectsController.prototype.getVertGuidesPos = function() {
+    return this.getPresentation().getVertGuidesPos();
+};
+DrawingObjectsController.prototype.hitInGuide = function(x, y) {
+    return this.getPresentation().hitInGuide(x, y);
+};
 
 function PreMoveCommentState(drawingObjects, startX, startY, comment)
 {
@@ -468,7 +515,7 @@ PreMoveCommentState.prototype =
         var Coords = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR_Comment( this.comment.x, this.comment.y, this.drawingObjects.num);
         editor.sync_HideComment();
         editor.sync_ShowComment(this.comment.Id, Coords.X, Coords.Y );
-        editor.WordControl.m_oLogicDocument.noShowContextMenu = true;
+        this.drawingObjects.getPresentation().noShowContextMenu = true;
         this.drawingObjects.clearPreTrackObjects();
         this.drawingObjects.changeCurrentState(new AscFormat.NullState(this.drawingObjects));
     }
@@ -506,7 +553,7 @@ MoveCommentState.prototype =
 
     onMouseUp: function(e, x, y, pageIndex)
     {
-        var oPresentation = editor.WordControl.m_oLogicDocument;
+        var oPresentation = this.drawingObjects.getPresentation();
         var aCommentsData = [
             {
                 comment: this.comment,

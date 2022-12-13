@@ -59,6 +59,7 @@ var AnimationType = {
 };
 
 function GetClientWidth( elem ) {
+	if (!elem) return 0;
     var _w = elem.clientWidth;
     if ( 0 != _w )
         return _w;
@@ -74,6 +75,7 @@ function GetClientWidth( elem ) {
     return 0;
 }
 function GetClientHeight( elem ) {
+	if (!elem) return 0;
     var _w = elem.clientHeight;
     if ( 0 != _w )
         return _w;

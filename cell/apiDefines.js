@@ -44,13 +44,6 @@ function (window, undefined) {
   // Import
   var CColor = AscCommon.CColor;
 
-var c_oAscConfirm = {
-  ConfirmReplaceRange: 0,
-  ConfirmPutMergeRange: 1,
-  ConfirmReplaceFormulaInTable: 2,
-  ConfirmChangeProtectRange: 3
-};
-
 var c_oAscMergeOptions = {
   Disabled: -1,
   None: 0,
@@ -342,6 +335,8 @@ var c_oAscFormulaRangeBorderColor = [
   new CColor(55, 127, 158)
 ];
 
+var c_oAscVisibleAreaOleEditorBorderColor = new CColor(32, 139, 255);
+
   var selectionLineType = {
     None        : 0,
     Selection   : 1,
@@ -350,6 +345,16 @@ var c_oAscFormulaRangeBorderColor = [
     Promote     : 8,
     Dash        : 16,
     DashThick   : 32
+  };
+
+  var docChangedType = {
+    cellValue: 0,
+    rangeValues: 1,
+    sheetContent: 2,
+    sheetRemove: 3,
+    sheetRename: 4,
+    sheetChangeIndex: 5,
+    markModifiedSearch: 6
   };
 
   var c_oAscLockNameFrozenPane = "frozenPane";
@@ -546,7 +551,19 @@ var c_oAscPopUpSelectorType = {
 		showLockMessage: 3
 	};
 
-  
+  var c_oAscSearchBy = {
+    Workbook: 0,
+    Sheet: 1,
+    Range: 2
+  };
+
+  var c_nAscMaxAddCellWatchesCount = 10000;
+  var c_oAscExternalReferenceType = {
+    referenceData: 0,
+    link: 1,
+    path: 2
+  };
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -565,6 +582,7 @@ var c_oAscPopUpSelectorType = {
   window['AscCommonExcel'].c_oAscCoAuthoringDottedWidth = c_oAscCoAuthoringDottedWidth;
   window['AscCommonExcel'].c_oAscCoAuthoringDottedDistance = c_oAscCoAuthoringDottedDistance;
   window['AscCommonExcel'].c_oAscFormulaRangeBorderColor = c_oAscFormulaRangeBorderColor;
+  window['AscCommonExcel'].c_oAscVisibleAreaOleEditorBorderColor = c_oAscVisibleAreaOleEditorBorderColor;
   window['AscCommonExcel'].selectionLineType = selectionLineType;
   window['AscCommonExcel'].c_oAscLockNameFrozenPane = c_oAscLockNameFrozenPane;
   window['AscCommonExcel'].c_oAscLockNameTabColor = c_oAscLockNameTabColor;
@@ -572,6 +590,7 @@ var c_oAscPopUpSelectorType = {
   window['AscCommonExcel'].c_oAscLockLayoutOptions = c_oAscLockLayoutOptions;
   window['AscCommonExcel'].c_oAscHeaderFooterEdit = c_oAscHeaderFooterEdit;
   window['AscCommonExcel'].c_oAscLockPrintScaleOptions = c_oAscLockPrintScaleOptions;
+  window['AscCommonExcel'].docChangedType = docChangedType;
 
 
   window['AscCommonExcel'].c_kMaxPrintPages = c_kMaxPrintPages;
@@ -591,11 +610,6 @@ var c_oAscPopUpSelectorType = {
   prot['ByColorFont'] = prot.ByColorFont;
   prot['ByIcon'] = prot.ByIcon;
   prot['ByValue'] = prot.ByValue;
-  window['Asc']['c_oAscConfirm'] = window['Asc'].c_oAscConfirm = c_oAscConfirm;
-  prot = c_oAscConfirm;
-  prot['ConfirmReplaceRange'] = prot.ConfirmReplaceRange;
-  prot['ConfirmPutMergeRange'] = prot.ConfirmPutMergeRange;
-  prot['ConfirmChangeProtectRange'] = prot.ConfirmChangeProtectRange;
 
   prot['ConfirmReplaceFormulaInTable'] = prot.ConfirmReplaceFormulaInTable;
   window['Asc']['c_oAscMergeOptions'] = window['Asc'].c_oAscMergeOptions = c_oAscMergeOptions;
@@ -895,6 +909,19 @@ var c_oAscPopUpSelectorType = {
   prot['notExpandAndNotShowMessage'] = prot.notExpandAndNotShowMessage;
   prot['showExpandMessage'] = prot.showExpandMessage;
   prot['showLockMessage'] = prot.showLockMessage;
+
+  window['Asc']['c_oAscSearchBy'] = window['Asc'].c_oAscSearchBy = c_oAscSearchBy;
+  prot = c_oAscSearchBy;
+  prot['Workbook'] = prot.Workbook;
+  prot['Sheet'] = prot.Sheet;
+  prot['Range'] = prot.Range;
+
+  window['Asc']['c_nAscMaxAddCellWatchesCount'] = window['Asc'].c_nAscMaxAddCellWatchesCount = c_nAscMaxAddCellWatchesCount;
+  window['Asc']['c_oAscExternalReferenceType'] = window['Asc'].c_oAscExternalReferenceType = c_oAscExternalReferenceType;
+  prot = c_oAscExternalReferenceType;
+  prot['referenceData'] = prot.referenceData;
+  prot['link'] = prot.link;
+  prot['path'] = prot.path;
 
 
 })(window);

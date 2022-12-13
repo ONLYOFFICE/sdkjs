@@ -363,21 +363,6 @@
         return true;
     };
 
-    function CChangesDrawingsContentBool(Class, Type, Pos, Items, isAdd) {
-        this.Type = Type;
-        AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, isAdd);
-    }
-    CChangesDrawingsContentBool.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
-    CChangesDrawingsContentBool.prototype.constructor = CChangesDrawingsContentBool;
-    window['AscDFH'].CChangesDrawingsContentBool = CChangesDrawingsContentBool;
-
-    CChangesDrawingsContentBool.prototype.private_WriteItem = function (Writer, Item) {
-        Writer.WriteBool(Item);
-    };
-    // CChangesDrawingsContentBool.prototype.private_ReadItem = function (Reader) {
-    //     return Reader.GetULong();
-    // };
-
     function CChangesDrawingsContent(Class, Type, Pos, Items, isAdd) {
         this.Type = Type;
 		AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, isAdd);
@@ -519,14 +504,26 @@
     CChangesDrawingsContent.prototype.Copy = function()
     {
         var oChanges = new this.constructor(this.Class, this.Type, this.Pos, this.Items, this.Add);
+
         oChanges.UseArray = this.UseArray;
-        oChanges.Pos = this.Pos;
+
         for (var nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
             oChanges.PosArray[nIndex] = this.PosArray[nIndex];
 
         return oChanges;
     };
-
+    CChangesDrawingsContent.prototype.ConvertToSimpleChanges = function()
+    {
+        let arrSimpleActions = this.ConvertToSimpleActions();
+        let arrChanges       = [];
+        for (let nIndex = 0, nCount = arrSimpleActions.length; nIndex < nCount; ++nIndex)
+        {
+            let oAction = arrSimpleActions[nIndex];
+            let oChange = new this.constructor(this.Class, this.Type, oAction.Pos, [oAction.Item], oAction.Add);
+            arrChanges.push(oChange);
+        }
+        return arrChanges;
+    };
     CChangesDrawingsContent.prototype.CreateReverseChange = function(){
         var oRet = this.private_CreateReverseChange(this.constructor);
         oRet.Type = this.Type;
@@ -647,6 +644,23 @@
         return Reader.GetLong();
     };
     window['AscDFH'].CChangesDrawingsContentLong = CChangesDrawingsContentLong;
+
+
+
+    function CChangesDrawingsContentBool(Class, Type, Pos, Items, isAdd) {
+        this.Type = Type;
+        AscDFH.CChangesDrawingsContent.call(this, Class, Type, Pos, Items, isAdd);
+    }
+    CChangesDrawingsContentBool.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
+    CChangesDrawingsContentBool.prototype.constructor = CChangesDrawingsContentBool;
+    CChangesDrawingsContentBool.prototype.private_WriteItem = function (Writer, Item) {
+        Writer.WriteBool(Item);
+    };
+    CChangesDrawingsContentBool.prototype.private_ReadItem = function (Reader) {
+        return Reader.GetBool();
+    };
+    window['AscDFH'].CChangesDrawingsContentBool = CChangesDrawingsContentBool;
+
 
 
     function CChangesDrawingsContentLongMap(Class, Type, Pos, Items, isAdd){

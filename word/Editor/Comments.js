@@ -704,7 +704,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	{
 		var oMark = AscCommon.g_oTableId.Get_ById(this.RangeStart);
 
-		if (!oMark || !oMark.Is_UseInDocument())
+		if (!oMark || !oMark.IsUseInDocument())
 			return null;
 
 		return oMark.GetDocumentPositionFromObject();
@@ -1060,7 +1060,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 				continue;
 			}
 
-			if (!isAdded && (!oCurComment.IsQuoted() || AscCommonWord.CompareDocumentPositions(oCommentPos, oCurComment.GetDocumentPosition()) < 0))
+			if (!isAdded && (!oCurComment.IsQuoted() || AscWord.CompareDocumentPositions(oCommentPos, oCurComment.GetDocumentPosition()) < 0))
 			{
 				this.m_arrComments.splice(nIndex, 0, oComment);
 				isAdded = true;
@@ -1117,7 +1117,9 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 			this.private_UpdateCommentPosition(this.m_arrCommentsById[sId], oChangedComments);
 		}
 
-		this.LogicDocument.GetApi().sync_ChangeCommentLogicalPosition(oChangedComments, this.GetCommentsPositionsCount());
+		let oApi = this.LogicDocument.GetApi();
+		if (oApi)
+			oApi.sync_ChangeCommentLogicalPosition(oChangedComments, this.GetCommentsPositionsCount());
 	};
 	/**
 	 * Получаем количество комментариев, у которых есть логическая позиция в документе
@@ -1327,13 +1329,13 @@ ParaComment.prototype.SetParagraph = function(oParagraph)
 		oDocComments.AddMarkToCheck(this);
 	}
 };
-ParaComment.prototype.Is_UseInDocument = function()
+ParaComment.prototype.IsUseInDocument = function()
 {
 	var oParagraph = this.GetParagraph();
 	if (!oParagraph)
 		return false;
 
-	return oParagraph.Is_UseInDocument();
+	return oParagraph.IsUseInDocument();
 }
 ParaComment.prototype.RemoveMark = function()
 {

@@ -42,12 +42,14 @@
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetBg]          = AscDFH.CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterAddToNotesLst]  = AscDFH.CChangesDrawingsContentPresentation;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetName]        = AscDFH.CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetClrMap]      = AscDFH.CChangesDrawingsObject;
 
 
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesTheme]  = function(oClass, value){oClass.Theme = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetHF]          = function(oClass, value){oClass.hf = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesStyle]  = function(oClass, value){oClass.txStyles = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetName]        = function(oClass, value){oClass.cSld.name = value;};
+    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetClrMap]      = function(oClass, value){oClass.clrMap = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetBg]          = function(oClass, value, FromLoad){
         oClass.cSld.Bg = value;
         if(FromLoad){
@@ -73,9 +75,10 @@
     AscDFH.drawingContentChanges[AscDFH.historyitem_NotesMasterRemoveFromTree] = function(oClass){return oClass.cSld.spTree;};
     AscDFH.drawingContentChanges[AscDFH.historyitem_NotesMasterAddToNotesLst]  = function(oClass){return oClass.notesLst;};
 
-    function CNotesMaster(){
+    function CNotesMaster() {
+        AscFormat.CBaseFormatObject.call(this);
         this.clrMap = new AscFormat.ClrMap();
-        this.cSld =  new AscFormat.CSld();
+        this.cSld =  new AscFormat.CSld(this);
         this.hf = null;
         this.txStyles = null;
 
@@ -85,34 +88,21 @@
 
 
         this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
-        this.Id = AscCommon.g_oIdCounter.Get_NewId();
-        AscCommon.g_oTableId.Add(this, this.Id);
     }
-
+    AscFormat.InitClass(CNotesMaster, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_NotesMaster);
 
 
     CNotesMaster.prototype.getObjectType = function(){
         return AscDFH.historyitem_type_NotesMaster;
     };
 
-
-    CNotesMaster.prototype.Get_Id = function(){
-        return this.Id;
-    };
-
-
-    CNotesMaster.prototype.Write_ToBinary2 = function(w){
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Id);
-    };
-
-    CNotesMaster.prototype.Read_FromBinary2 = function(r){
-        this.Id = r.GetString();
-    };
-
     CNotesMaster.prototype.setTheme = function(pr){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetNotesTheme, this.Theme, pr));
         this.Theme = pr;
+    };
+    CNotesMaster.prototype.setClrMap = function(pr){
+        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetClrMap, this.clrMap, pr));
+        this.clrMap = pr;
     };
 
     CNotesMaster.prototype.setHF = function(pr){
@@ -194,9 +184,10 @@
         oPr.idMap = oIdMap;
         var i;
         var copy = new CNotesMaster();
-       // if(this.clrMap){
-       //     this.setClrMap(this.clrMap.createDuplicate());
-       // }
+        if(this.clrMap)
+        {
+            copy.setClrMap(this.clrMap.createDuplicate());
+        }
         if(typeof this.cSld.name === "string" && this.cSld.name.length > 0)
         {
             copy.setCSldName(this.cSld.name);

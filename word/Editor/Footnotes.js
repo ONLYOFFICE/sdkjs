@@ -115,13 +115,13 @@ CFootnotesController.prototype.Copy = function(oLogicDocument)
 CFootnotesController.prototype.ResetSpecialFootnotes = function()
 {
 	var oSeparator = new CFootEndnote(this);
-	oSeparator.AddToParagraph(new ParaSeparator(), false);
+	oSeparator.AddToParagraph(new AscWord.CRunSeparator(), false);
 	var oParagraph = oSeparator.GetElement(0);
 	oParagraph.Set_Spacing({After : 0, Line : 1, LineRule : Asc.linerule_Auto}, false);
 	this.SetSeparator(oSeparator);
 
 	var oContinuationSeparator = new CFootEndnote(this);
-	oContinuationSeparator.AddToParagraph(new ParaContinuationSeparator(), false);
+	oContinuationSeparator.AddToParagraph(new AscWord.CRunContinuationSeparator(), false);
 	oParagraph = oContinuationSeparator.GetElement(0);
 	oParagraph.Set_Spacing({After : 0, Line : 1, LineRule : Asc.linerule_Auto}, false);
 	this.SetContinuationSeparator(oContinuationSeparator);
@@ -703,7 +703,7 @@ CFootnotesController.prototype.HaveContinuesFootnotes = function(nPageAbs, nColu
  * @param {CFootEndnote.array} arrFootnotesList
  * @returns {boolean}
  */
-CFootnotesController.prototype.Is_UseInDocument = function(sFootnoteId, arrFootnotesList)
+CFootnotesController.prototype.IsUseInDocument = function(sFootnoteId, arrFootnotesList)
 {
 	if (!arrFootnotesList)
 		arrFootnotesList = this.private_GetFootnotesLogicRange(null, null);
@@ -729,7 +729,7 @@ CFootnotesController.prototype.Is_UseInDocument = function(sFootnoteId, arrFootn
  * @param oFootnote
  * return {boolean}
  */
-CFootnotesController.prototype.Is_ThisElementCurrent = function(oFootnote)
+CFootnotesController.prototype.IsThisElementCurrent = function(oFootnote)
 {
 	if (oFootnote === this.CurFootnote && docpostype_Footnotes === this.LogicDocument.GetDocPosType())
 		return true;
@@ -922,7 +922,7 @@ CFootnotesController.prototype.GetFirstParagraphs = function()
 	{
 		var oFootnote = this.Footnote[sId];
 		var oParagraph = oFootnote.GetFirstParagraph();
-		if(oParagraph && oParagraph.Is_UseInDocument())
+		if(oParagraph && oParagraph.IsUseInDocument())
 		{
 			aParagraphs.push(oParagraph);
 		}
@@ -1080,7 +1080,7 @@ CFootnotesController.prototype.AddFootnoteRef = function()
 	var oStyles = this.LogicDocument.Get_Styles();
 
 	var oRun = new ParaRun(oParagraph, false);
-	oRun.Add_ToContent(0, new ParaFootnoteRef(oFootnote), false);
+	oRun.Add_ToContent(0, new AscWord.CRunFootnoteRef(oFootnote), false);
 	oRun.Set_RStyle(oStyles.GetDefaultFootnoteReference());
 	oParagraph.Add_ToContent(0, oRun);
 };
@@ -1137,6 +1137,17 @@ CFootnotesController.prototype.GetNumberingInfo = function(oPara, oNumPr, oFootn
 		return [oNumberingEngine.GetNumInfo(), oNumberingEngine.GetNumInfo(false)];
 
 	return oNumberingEngine.GetNumInfo();
+};
+CFootnotesController.prototype.CheckRunContent = function(fCheck)
+{
+	for (var sId in this.Footnote)
+	{
+		let oFootnote = this.Footnote[sId];
+		if (oFootnote.CheckRunContent(fCheck))
+			return true;
+	}
+
+	return false;
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Private area
@@ -1457,12 +1468,12 @@ CFootnotesController.prototype.AddSignatureLine = function(oSignatureDrawing)
 
 	return this.CurFootnote.AddSignatureLine(oSignatureDrawing);
 };
-CFootnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CFootnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 	if (false === this.private_CheckFootnotesSelectionBeforeAction())
 		return false;
 
-	return this.CurFootnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
+	return this.CurFootnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CFootnotesController.prototype.EditChart = function(Chart)
 {
@@ -3095,7 +3106,7 @@ CFootnotesController.prototype.RestoreDocumentStateAfterLoadChanges = function(S
 	if (0 === State.FootnotesSelectDirection)
 	{
 		var oFootnote = State.CurFootnote;
-		if (oFootnote && true === this.Is_UseInDocument(oFootnote.Get_Id()))
+		if (oFootnote && true === this.IsUseInDocument(oFootnote.Get_Id()))
 		{
 			this.Selection.Start.Footnote = oFootnote;
 			this.Selection.End.Footnote   = oFootnote;
@@ -3148,7 +3159,7 @@ CFootnotesController.prototype.RestoreDocumentStateAfterLoadChanges = function(S
 		for (var nIndex = 0, nCount = arrFootnotesList.length; nIndex < nCount; ++nIndex)
 		{
 			var oFootnote = arrFootnotesList[nIndex];
-			if (true === this.Is_UseInDocument(oFootnote.Get_Id(), arrAllFootnotes))
+			if (true === this.IsUseInDocument(oFootnote.Get_Id(), arrAllFootnotes))
 			{
 				if (null === StartFootnote)
 					StartFootnote = oFootnote;

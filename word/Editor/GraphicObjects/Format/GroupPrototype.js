@@ -73,7 +73,7 @@ CGroupShape.prototype.handleUpdateLn = function()
 CGroupShape.prototype.getRecalcObject = CShape.prototype.getRecalcObject;
 CGroupShape.prototype.setRecalcObject = CShape.prototype.setRecalcObject;
 CGroupShape.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
-CGroupShape.prototype.Is_UseInDocument = CShape.prototype.Is_UseInDocument;
+CGroupShape.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 
 
 CGroupShape.prototype.getTargetDocContent = AscFormat.DrawingObjectsController.prototype.getTargetDocContent;
@@ -203,8 +203,13 @@ CGroupShape.prototype.recalcBounds = function()
     }
 };
 
-CGroupShape.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
-CGroupShape.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
+CGroupShape.prototype.recalcSmartArtCoords = function () {
+    var oSm = this.hasSmartArt(true);
+    if (oSm) {
+        oSm.bNeedUpdatePosition = true;
+    }
+};
+
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CGroupShape.prototype.getHierarchy = CShape.prototype.getHierarchy;
@@ -216,6 +221,7 @@ CGroupShape.prototype.handleUpdatePosition = function()
 {
     this.recalcBounds();
     this.recalcTransform();
+    this.recalcSmartArtCoords();
     this.addToRecalculate();
     for(var i = 0; i < this.spTree.length; ++i)
     {
@@ -364,7 +370,7 @@ CGroupShape.prototype.recalculateBounds = function()
     }
 
 
-    //if(!this.group)
+    if(!this.bForceGroupBounds)
     {
         var tr = this.localTransform;
         var arr_p_x = [];

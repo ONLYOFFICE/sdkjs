@@ -356,21 +356,23 @@
             }
             this.overlayGeometry.pathLst.length = 1;
             var oDrawPath = this.overlayGeometry.pathLst[0];
-            oDrawPath.ArrPathCommand.length = 0;
-            oDrawPath.stroke = true;
-            if(prevPoint) {
-                oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: prevPoint.X, Y: prevPoint.Y});
-                if(arrPathCommand[gmEditPoint.pathC1]) {
-                    oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC1]);
+            if(oDrawPath) {
+                oDrawPath.ArrPathCommand.length = 0;
+                oDrawPath.stroke = true;
+                if(prevPoint) {
+                    oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: prevPoint.X, Y: prevPoint.Y});
+                    if(arrPathCommand[gmEditPoint.pathC1]) {
+                        oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC1]);
+                    }
+                    if(arrPathCommand[gmEditPoint.pathC2]) {
+                        oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
+                    }
                 }
-                if(arrPathCommand[gmEditPoint.pathC2]) {
-                    oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
-                }
-            }
-            else {
-                oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: gmEditPoint.X, Y: gmEditPoint.Y});
-                if(arrPathCommand[gmEditPoint.pathC2]) {
-                    oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
+                else {
+                    oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: gmEditPoint.X, Y: gmEditPoint.Y});
+                    if(arrPathCommand[gmEditPoint.pathC2]) {
+                        oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
+                    }
                 }
             }
         }, this, []);
@@ -503,26 +505,37 @@
         var dExtY = this.yMax - this.yMin;
         var oSpPr = this.originalObject.spPr;
         var oXfrm = oSpPr.xfrm;
-        oXfrm.setExtX(dExtX);
-        oXfrm.setExtY(dExtY);
-        oXfrm.setRot(0);
-        //set new position
-        if(bWord) {
-            oXfrm.setOffX(0);
-            oXfrm.setOffY(0);
+        var oOffset;
+        if(this.originalObject.animMotionTrack) {
+            oOffset = this.getXfrmOffset();
+            this.originalObject.updateAnimation(oOffset.OffX, oOffset.OffY, dExtX, dExtY, 0, this.geometry, true);
         }
         else {
-            var oOffset = this.getXfrmOffset();
-            oXfrm.setOffX(oOffset.OffX);
-            oXfrm.setOffY(oOffset.OffY);
+            oXfrm.setExtX(dExtX);
+            oXfrm.setExtY(dExtY);
+            oXfrm.setRot(0);
+            //set new position
+            if(bWord && !this.originalObject.group) {
+                oXfrm.setOffX(0);
+                oXfrm.setOffY(0);
+            }
+            else {
+                oOffset = this.getXfrmOffset();
+                oXfrm.setOffX(oOffset.OffX);
+                oXfrm.setOffY(oOffset.OffY);
+            }
+            oSpPr.setGeometry(this.geometry.createDuplicate());
+            this.originalObject.checkDrawingBaseCoords();
         }
-        oSpPr.setGeometry(this.geometry.createDuplicate());
-        this.originalObject.checkDrawingBaseCoords();
+
         if(this.addedPointIdx !== null) {
             var oGmSelection = this.getGmSelection();
             if(oGmSelection) {
                 oGmSelection.setGmEditPointIdx(this.addedPointIdx);
             }
+        }
+        if(this.drawingObjects) {
+            this.drawingObjects.resetConnectors([this.originalObject]);
         }
     };
 
@@ -839,6 +852,7 @@
         AscFormat.ExecuteNoHistory(
             function(){
                 var geometry = this.geometry;
+                this.geometry.setPreset(null);
                 this.calculateMinMax();
                 var w = this.xMax - this.xMin, h = this.yMax - this.yMin;
                 var kw, kh, pathW, pathH;
@@ -1087,7 +1101,6 @@
                     X2: aCommands[nIdx++],
                     Y2: aCommands[nIdx++]
                 };
-
                 pathElem.splice(commandIndex, 1);
                 this.arrPathCommandsType[pathIndex].splice(commandIndex, 1);
 
@@ -1158,9 +1171,9 @@
                 pathElem = geometry.pathLst[pathIndex],
                 arrayCommands = geometry.pathLst[pathIndex].ArrPathCommand;
 
-            if(pathElem && pathElem.stroke === true && pathElem.fill === "none") {
-                return;
-            }
+            // if(pathElem && pathElem.stroke === true && pathElem.fill === "none") {
+            //     return;
+            // }
 
             var pathC1 = gmEditPoint.pathC1,
                 pathC2 = gmEditPoint.pathC2,

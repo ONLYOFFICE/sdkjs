@@ -277,7 +277,7 @@
         return {X: 0, Y: 0, XLimit: this.contentWidth, YLimit: 20000};
     };
     CTextBody.prototype.Get_Numbering = function() {
-        return new CNumbering();
+        return AscWord.DEFAULT_NUMBERING;
     };
     CTextBody.prototype.Set_CurrentElement = function(bUpdate, pageIndex) {
         if(this.parent.Set_CurrentElement) {
@@ -338,7 +338,53 @@
             }
             var old_start_page = this.content.StartPage;
             this.content.Set_StartPage(0);
-            this.content.Draw(0, graphics);
+            if (graphics.isSmartArtPreviewDrawer && graphics.m_oContext) {
+                const nContentHeight = this.parent.contentHeight;
+                const nLineHeight = 4 * AscCommon.g_dKoef_pix_to_mm;
+                graphics.save();
+                graphics.m_oContext.fillStyle = 'rgb(0,0,0)';
+
+                const nContentWidth = this.parent.contentWidth;
+                const nHeightStep = nContentHeight / this.content.Content.length;
+
+                for (let i = 0; i < this.content.Content.length; i += 1) {
+                    const oParagraph = this.content.Content[i];
+                    const nWidth = nContentWidth > 20 ? 20 : nContentWidth - nContentWidth * 0.3;
+                    const eJC = oParagraph.CompiledPr.Pr.ParaPr.Jc;
+                    let startX;
+                    const gap = 5;
+                    switch (eJC) {
+                        case AscCommon.align_Right: {
+                            startX = nContentWidth - (nWidth + gap);
+                            break;
+                        }
+                        case AscCommon.align_Justify:
+                        case AscCommon.align_Center: {
+                            startX = (nContentWidth - nWidth) / 2;
+                            break;
+                        }
+                        case AscCommon.align_Left:
+                        default: {
+                            startX = gap;
+                            break;
+                        }
+                    }
+
+                    const oBullet = oParagraph.PresentationPr && oParagraph.PresentationPr.Bullet;
+                    const Y = nHeightStep * i + nHeightStep / 2;
+
+                    if(oBullet && !oBullet.IsNone()) {
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX + nWidth / 2, startX + nWidth, nLineHeight);
+
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX, startX + nLineHeight, nLineHeight);
+                    } else {
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX, startX + nWidth, nLineHeight);
+                    }
+                }
+                graphics.restore();
+            } else {
+                this.content.Draw(0, graphics);
+            }
             this.content.Set_StartPage(old_start_page);
         }
     };
@@ -479,6 +525,9 @@
         var max_content_width = maxWidth - r_ins - l_ins;
         this.content.Reset(0, 0, max_content_width, 20000);
         this.content.Recalculate_Page(0, true);
+        return this.getContentWidth() + 2 + r_ins + l_ins;
+    };
+    CTextBody.prototype.getContentWidth = function() {
         var max_width = 0;
         for(var i = 0; i < this.content.Content.length; ++i) {
             var par = this.content.Content[i];
@@ -488,7 +537,7 @@
                 }
             }
         }
-        return max_width + 2 + r_ins + l_ins;
+        return max_width;
     };
     CTextBody.prototype.getMaxContentWidth = function(maxWidth, bLeft) {
         this.content.Reset(0, 0, maxWidth - 0.01, 20000);
@@ -511,14 +560,14 @@
     CTextBody.prototype.GetPrevElementEndInfo = function(CurElement) {
         return null;
     };
-    CTextBody.prototype.Is_UseInDocument = function(Id) {
+    CTextBody.prototype.IsUseInDocument = function(Id) {
         if(Id != undefined) {
             if(!this.content || this.content.Get_Id() !== Id) {
                 return false;
             }
         }
-        if(this.parent && this.parent.Is_UseInDocument) {
-            return this.parent.Is_UseInDocument();
+        if(this.parent && this.parent.IsUseInDocument) {
+            return this.parent.IsUseInDocument();
         }
         return false;
     };
@@ -528,9 +577,9 @@
         }
         return null;
     };
-    CTextBody.prototype.Is_ThisElementCurrent = function() {
-        if(this.parent && this.parent.Is_ThisElementCurrent) {
-            return this.parent.Is_ThisElementCurrent();
+    CTextBody.prototype.IsThisElementCurrent = function() {
+        if(this.parent && this.parent.IsThisElementCurrent) {
+            return this.parent.IsThisElementCurrent();
         }
         return false;
     };
@@ -551,8 +600,6 @@
         oContent.Recalculate_Page(0, true);
         return {w: oContent.Content[0].Lines[0].Ranges[0].W + 0.1, h: oContent.GetSummaryHeight() + 0.1};
     }
-
-
     function CheckNeedRecalcAutoFit(oBP1, oBP2) {
         if(AscCommon.isFileBuild()) {
             return false;

@@ -553,12 +553,16 @@
     CDocument.prototype.init = function()
     {
         this.pages = [];
-        if (this.viewer.file && this.viewer.file.isValid)
+        if (this.viewer.file && this.viewer.file.isValid())
         {
             var pages = this.viewer.file.pages;
+            let koef = 1;
             for (let i = 0, len = pages.length; i < len; i++)
-            {            
-                this.pages.push(new CPage(pages[i].W, pages[i].H));
+            {
+                koef = 1;
+                if (pages[i].Dpi > 1)
+                    koef = 100 / pages[i].Dpi;
+                this.pages.push(new CPage(koef * pages[i].W, koef * pages[i].H));
             }
         }
         

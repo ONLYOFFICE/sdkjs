@@ -78,9 +78,10 @@
         return editor.WordControl.m_oDrawingDocument.Notes_GetWidth();
     }
 
-    function CNotes(){
+    function CNotes() {
+        AscFormat.CBaseFormatObject.call(this);
         this.clrMap = null;
-        this.cSld = new AscFormat.CSld();
+        this.cSld = new AscFormat.CSld(this);
         this.showMasterPhAnim = null;
         this.showMasterSp     = null;
         this.slide            = null;
@@ -90,15 +91,11 @@
 
         this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
         this.kind = AscFormat.TYPE_KIND.NOTES;
-        this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
         this.Lock = new AscCommon.CLock();
-        AscCommon.g_oTableId.Add(this, this.Id);
-
-
         this.graphicObjects = new AscFormat.DrawingObjectsController(this);
     }
-
+    AscFormat.InitClass(CNotes, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Notes);
 
     CNotes.prototype.Clear_ContentChanges = function()
     {
@@ -114,25 +111,6 @@
     {
         this.m_oContentChanges.Refresh();
     };
-
-
-    CNotes.prototype.getObjectType = function(){
-        return AscDFH.historyitem_type_Notes;
-    };
-
-    CNotes.prototype.Get_Id = function () {
-        return this.Id;
-    };
-
-    CNotes.prototype.Write_ToBinary2 = function(w){
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Id);
-    };
-
-    CNotes.prototype.Read_FromBinary2 = function(r){
-        this.Id = r.GetString();
-    };
-
     CNotes.prototype.setClMapOverride = function(pr){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesSetClrMap, this.clrMap, pr));
         this.clrMap = pr;
@@ -340,10 +318,6 @@
         return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
     };
 
-    CNotes.prototype.checkGraphicObjectPosition = function()
-    {
-        return {x: 0, y: 0};
-    };
 
     CNotes.prototype.Clear_ContentChanges = function()
     {

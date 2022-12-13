@@ -41,11 +41,11 @@
  * Класс представляющий собой настройки текста (сейчас используется как настройка текста для конца параграфа)
  * @param oProps
  * @constructor
- * @extends {CRunElementBase}
+ * @extends {AscWord.CRunElementBase}
  */
 function ParaTextPr(oProps)
 {
-	CRunElementBase.call(this);
+	AscWord.CRunElementBase.call(this);
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
@@ -62,9 +62,9 @@ function ParaTextPr(oProps)
 		this.Value.Set_FromObject(oProps);
 
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-	g_oTableId.Add(this, this.Id);
+	AscCommon.g_oTableId.Add(this, this.Id);
 }
-ParaTextPr.prototype = Object.create(CRunElementBase.prototype);
+ParaTextPr.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaTextPr.prototype.constructor = ParaTextPr;
 
 ParaTextPr.prototype.Type = para_TextPr;
@@ -77,10 +77,6 @@ ParaTextPr.prototype.Copy = function()
 	var ParaTextPr_new = new ParaTextPr();
 	ParaTextPr_new.Set_Value(this.Value);
 	return ParaTextPr_new;
-};
-ParaTextPr.prototype.Is_RealContent = function()
-{
-	return true;
 };
 ParaTextPr.prototype.CanAddNumbering = function()
 {
@@ -123,22 +119,31 @@ ParaTextPr.prototype.GetCompiledPr = function()
 ParaTextPr.prototype.Apply_TextPr = function(TextPr)
 {
 	if (undefined !== TextPr.Bold)
-		this.Set_Bold(TextPr.Bold);
+	{
+		let _bold = null === TextPr.Bold ? undefined : TextPr.Bold;
+		this.SetBold(_bold);
+		this.SetBoldCS(_bold);
+	}
 
 	if (undefined !== TextPr.Italic)
-		this.Set_Italic(TextPr.Italic);
+	{
+		let _italic = null === TextPr.Italic ? undefined : TextPr.Italic;
+		this.SetItalic(_italic);
+		this.SetItalicCS(_italic);
+	}
 
 	if (undefined !== TextPr.Strikeout)
-		this.Set_Strikeout(TextPr.Strikeout);
+		this.SetStrikeout(TextPr.Strikeout);
 
 	if (undefined !== TextPr.Underline)
-		this.Set_Underline(TextPr.Underline);
+		this.SetUnderline(TextPr.Underline);
 
 	if (undefined !== TextPr.FontSize)
-		this.Set_FontSize(TextPr.FontSize);
-
-	if (undefined !== TextPr.FontSizeCS)
-		this.Set_FontSizeCS(TextPr.FontSizeCS);
+	{
+		let fontSize = null === TextPr.FontSize ? undefined : TextPr.FontSize;
+		this.SetFontSize(fontSize);
+		this.SetFontSizeCS(fontSize);
+	}
 
 	if (undefined !== TextPr.Color)
 	{
@@ -182,8 +187,13 @@ ParaTextPr.prototype.Apply_TextPr = function(TextPr)
 	if (undefined !== TextPr.Position)
 		this.Set_Position(TextPr.Position);
 
-	if (undefined != TextPr.RFonts)
-		this.Set_RFonts2(TextPr.RFonts);
+	if (TextPr.RFonts)
+	{
+		if (TextPr.FontFamily)
+			this.ApplyFontFamily(TextPr.FontFamily.Name);
+		else
+			this.Set_RFonts2(TextPr.RFonts);
+	}
 
 	if (undefined != TextPr.Lang)
 		this.Set_Lang(TextPr.Lang);
@@ -216,24 +226,20 @@ ParaTextPr.prototype.Apply_TextPr = function(TextPr)
 			this.Set_Unifill(undefined);
 		}
 	}
+
+	if (undefined !== TextPr.Ligatures)
+		this.SetLigatures(TextPr.Ligatures);
 };
 ParaTextPr.prototype.Clear_Style = function()
 {
-	// Пока удаляем все кроме настроек языка
-	if (undefined != this.Value.Bold)
-		this.Set_Bold(undefined);
-
-	if (undefined != this.Value.Italic)
-		this.Set_Italic(undefined);
-
-	if (undefined != this.Value.Strikeout)
-		this.Set_Strikeout(undefined);
-
-	if (undefined != this.Value.Underline)
-		this.Set_Underline(undefined);
-
-	if (undefined != this.Value.FontSize)
-		this.Set_FontSize(undefined);
+	this.SetBold(undefined);
+	this.SetBoldCS(undefined);
+	this.SetItalic(undefined);
+	this.SetItalicCS(undefined);
+	this.SetStrikeout(undefined);
+	this.SetUnderline(undefined);
+	this.SetFontSize(undefined);
+	this.SetFontSizeCS(undefined);
 
 	if (undefined != this.Value.Color)
 		this.Set_Color(undefined);
@@ -268,20 +274,11 @@ ParaTextPr.prototype.Clear_Style = function()
 	if (undefined != this.Value.Position)
 		this.Set_Position(undefined);
 
-	if (undefined != this.Value.RFonts.Ascii)
-		this.Set_RFonts_Ascii(undefined);
-
-	if (undefined != this.Value.RFonts.HAnsi)
-		this.Set_RFonts_HAnsi(undefined);
-
-	if (undefined != this.Value.RFonts.CS)
-		this.Set_RFonts_CS(undefined);
-
-	if (undefined != this.Value.RFonts.EastAsia)
-		this.Set_RFonts_EastAsia(undefined);
-
-	if (undefined != this.Value.RFonts.Hint)
-		this.Set_RFonts_Hint(undefined);
+	this.SetRFontsAscii(undefined);
+	this.SetRFontsHAnsi(undefined);
+	this.SetRFontsCS(undefined);
+	this.SetRFontsEastAsia(undefined);
+	this.SetRFontsHint(undefined);
 
 	if (undefined != this.Value.TextFill)
 		this.Set_TextFill(undefined);
@@ -289,7 +286,7 @@ ParaTextPr.prototype.Clear_Style = function()
 	if (undefined != this.Value.TextOutline)
 		this.Set_TextOutline(undefined);
 };
-ParaTextPr.prototype.Set_Bold = function(Value)
+ParaTextPr.prototype.SetBold = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -300,7 +297,7 @@ ParaTextPr.prototype.Set_Bold = function(Value)
 	History.Add(new CChangesParaTextPrBold(this, this.Value.Bold, Value));
 	this.Value.Bold = Value;
 };
-ParaTextPr.prototype.Set_Italic = function(Value)
+ParaTextPr.prototype.SetItalic = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -311,7 +308,7 @@ ParaTextPr.prototype.Set_Italic = function(Value)
 	History.Add(new CChangesParaTextPrItalic(this, this.Value.Italic, Value));
 	this.Value.Italic = Value;
 };
-ParaTextPr.prototype.Set_Strikeout = function(Value)
+ParaTextPr.prototype.SetStrikeout = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -322,7 +319,7 @@ ParaTextPr.prototype.Set_Strikeout = function(Value)
 	History.Add(new CChangesParaTextPrStrikeout(this, this.Value.Strikeout, Value));
 	this.Value.Strikeout = Value;
 };
-ParaTextPr.prototype.Set_Underline = function(Value)
+ParaTextPr.prototype.SetUnderline = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -333,7 +330,7 @@ ParaTextPr.prototype.Set_Underline = function(Value)
 	History.Add(new CChangesParaTextPrUnderline(this, this.Value.Underline, Value));
 	this.Value.Underline = Value;
 };
-ParaTextPr.prototype.Set_FontSize = function(Value)
+ParaTextPr.prototype.SetFontSize = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -465,18 +462,18 @@ ParaTextPr.prototype.Set_RFonts2 = function(oRFonts)
 	{
 		if (oRFonts.AsciiTheme)
 		{
-			this.Set_RFonts_Ascii(undefined);
+			this.SetRFontsAscii(undefined);
 			this.SetRFontsAsciiTheme(oRFonts.AsciiTheme);
 		}
 		else if (oRFonts.Ascii)
 		{
-			this.Set_RFonts_Ascii(oRFonts.Ascii);
+			this.SetRFontsAscii(oRFonts.Ascii);
 			this.SetRFontsAsciiTheme(undefined);
 		}
 		else
 		{
 			if (null === oRFonts.Ascii)
-				this.Set_RFonts_Ascii(undefined);
+				this.SetRFontsAscii(undefined);
 
 			if (null === oRFonts.AsciiTheme)
 				this.SetRFontsAsciiTheme(undefined);
@@ -484,18 +481,18 @@ ParaTextPr.prototype.Set_RFonts2 = function(oRFonts)
 
 		if (oRFonts.HAnsiTheme)
 		{
-			this.Set_RFonts_HAnsi(undefined);
+			this.SetRFontsHAnsi(undefined);
 			this.SetRFontsHAnsiTheme(oRFonts.HAnsiTheme);
 		}
 		else if (oRFonts.HAnsi)
 		{
-			this.Set_RFonts_HAnsi(oRFonts.HAnsi);
+			this.SetRFontsHAnsi(oRFonts.HAnsi);
 			this.SetRFontsHAnsiTheme(undefined);
 		}
 		else
 		{
 			if (null === oRFonts.HAnsi)
-				this.Set_RFonts_HAnsi(undefined);
+				this.SetRFontsHAnsi(undefined);
 
 			if (null === oRFonts.HAnsiTheme)
 				this.SetRFontsHAnsiTheme(undefined);
@@ -503,18 +500,18 @@ ParaTextPr.prototype.Set_RFonts2 = function(oRFonts)
 
 		if (oRFonts.CSTheme)
 		{
-			this.Set_RFonts_CS(undefined);
+			this.SetRFontsCS(undefined);
 			this.SetRFontsCSTheme(oRFonts.CSTheme);
 		}
 		else if (oRFonts.CS)
 		{
-			this.Set_RFonts_CS(oRFonts.CS);
+			this.SetRFontsCS(oRFonts.CS);
 			this.SetRFontsCSTheme(undefined);
 		}
 		else
 		{
 			if (null === oRFonts.CS)
-				this.Set_RFonts_CS(undefined);
+				this.SetRFontsCS(undefined);
 
 			if (null === oRFonts.CSTheme)
 				this.SetRFontsCSTheme(undefined);
@@ -522,40 +519,40 @@ ParaTextPr.prototype.Set_RFonts2 = function(oRFonts)
 
 		if (oRFonts.EastAsiaTheme)
 		{
-			this.Set_RFonts_EastAsia(undefined);
+			this.SetRFontsEastAsia(undefined);
 			this.SetRFontsEastAsiaTheme(oRFonts.EastAsiaTheme);
 		}
 		else if (oRFonts.EastAsia)
 		{
-			this.Set_RFonts_EastAsia(oRFonts.EastAsia);
+			this.SetRFontsEastAsia(oRFonts.EastAsia);
 			this.SetRFontsEastAsiaTheme(undefined);
 		}
 		else
 		{
 			if (null === oRFonts.EastAsia)
-				this.Set_RFonts_EastAsia(undefined);
+				this.SetRFontsEastAsia(undefined);
 
 			if (null === oRFonts.EastAsiaTheme)
 				this.SetRFontsEastAsiaTheme(undefined);
 		}
 
 		if (undefined !== oRFonts.Hint)
-			this.Set_RFonts_Hint(null === oRFonts.Hint ? undefined : oRFonts.Hint);
+			this.SetRFontsHint(null === oRFonts.Hint ? undefined : oRFonts.Hint);
 	}
 	else
 	{
-		this.Set_RFonts_Ascii(undefined);
+		this.SetRFontsAscii(undefined);
 		this.SetRFontsAsciiTheme(undefined);
-		this.Set_RFonts_HAnsi(undefined);
+		this.SetRFontsHAnsi(undefined);
 		this.SetRFontsHAnsiTheme(undefined);
-		this.Set_RFonts_CS(undefined);
+		this.SetRFontsCS(undefined);
 		this.SetRFontsCSTheme(undefined);
-		this.Set_RFonts_EastAsia(undefined);
+		this.SetRFontsEastAsia(undefined);
 		this.SetRFontsEastAsiaTheme(undefined);
-		this.Set_RFonts_Hint(undefined);
+		this.SetRFontsHint(undefined);
 	}
 };
-ParaTextPr.prototype.Set_RFonts_Ascii = function(Value)
+ParaTextPr.prototype.SetRFontsAscii = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -563,7 +560,7 @@ ParaTextPr.prototype.Set_RFonts_Ascii = function(Value)
 	History.Add(new CChangesParaTextPrRFontsAscii(this, this.Value.RFonts.Ascii, Value));
 	this.Value.RFonts.Ascii = Value;
 };
-ParaTextPr.prototype.Set_RFonts_HAnsi = function(Value)
+ParaTextPr.prototype.SetRFontsHAnsi = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -571,7 +568,7 @@ ParaTextPr.prototype.Set_RFonts_HAnsi = function(Value)
 	History.Add(new CChangesParaTextPrRFontsHAnsi(this, this.Value.RFonts.HAnsi, Value));
 	this.Value.RFonts.HAnsi = Value;
 };
-ParaTextPr.prototype.Set_RFonts_CS = function(Value)
+ParaTextPr.prototype.SetRFontsCS = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -579,7 +576,7 @@ ParaTextPr.prototype.Set_RFonts_CS = function(Value)
 	History.Add(new CChangesParaTextPrRFontsCS(this, this.Value.RFonts.CS, Value));
 	this.Value.RFonts.CS = Value;
 };
-ParaTextPr.prototype.Set_RFonts_EastAsia = function(Value)
+ParaTextPr.prototype.SetRFontsEastAsia = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -587,7 +584,7 @@ ParaTextPr.prototype.Set_RFonts_EastAsia = function(Value)
 	History.Add(new CChangesParaTextPrRFontsEastAsia(this, this.Value.RFonts.EastAsia, Value));
 	this.Value.RFonts.EastAsia = Value;
 };
-ParaTextPr.prototype.Set_RFonts_Hint = function(Value)
+ParaTextPr.prototype.SetRFontsHint = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -600,7 +597,7 @@ ParaTextPr.prototype.SetRFontsAsciiTheme = function(sValue)
 	var _sValue = (!sValue ? undefined : sValue);
 	if (_sValue !== this.Value.RFonts.AsciiTheme)
 	{
-		AscCommon.History.Add(new CChangesParaTextPrRFontsAsciiTheme(this, this.Value.RFonts.Ascii, _sValue));
+		AscCommon.History.Add(new CChangesParaTextPrRFontsAsciiTheme(this, this.Value.RFonts.AsciiTheme, _sValue));
 		this.Value.RFonts.AsciiTheme = _sValue;
 	}
 };
@@ -660,7 +657,7 @@ ParaTextPr.prototype.Set_Unifill = function(Value)
 	History.Add(new CChangesParaTextPrUnifill(this, this.Value.Unifill, Value));
 	this.Value.Unifill = Value;
 };
-ParaTextPr.prototype.Set_FontSizeCS = function(Value)
+ParaTextPr.prototype.SetFontSizeCS = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -681,6 +678,33 @@ ParaTextPr.prototype.Set_TextFill = function(Value)
 	History.Add(new CChangesParaTextPrTextFill(this, this.Value.TextFill, Value));
 	this.Value.TextFill = Value;
 };
+ParaTextPr.prototype.SetBoldCS = function(isBold)
+{
+	if (this.Value.BoldCS === isBold)
+		return;
+
+	let oChange = new CChangesParaTextPrBoldCS(this, this.Value.BoldCS, isBold);
+	AscCommon.History.Add(oChange);
+	oChange.Redo();
+};
+ParaTextPr.prototype.SetItalicCS = function(isItalic)
+{
+	if (this.Value.ItalicCS === isItalic)
+		return;
+
+	let oChange = new CChangesParaTextPrBoldCS(this, this.Value.ItalicCS, isItalic);
+	AscCommon.History.Add(oChange);
+	oChange.Redo();
+};
+ParaTextPr.prototype.SetLigatures = function(nType)
+{
+	if (this.Value.Ligatures === nType)
+		return;
+
+	let oChange = new CChangesParaTextPrLigatures(this, this.Value.Ligatures, nType);
+	AscCommon.History.Add(oChange);
+	oChange.Redo();
+};
 /**
  * Выставляем настройки (если какая-либо undefined, то такая настройка удаляется)
  * @param {CTextPr} oTextPr
@@ -691,6 +715,29 @@ ParaTextPr.prototype.SetPr = function(oTextPr)
 		oTextPr = new CTextPr();
 
 	this.Set_Value(oTextPr);
+};
+ParaTextPr.prototype.IncreaseDecreaseFontSize = function(isIncrease)
+{
+	let oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return;
+
+	let oTextPr = oParagraph.GetParaEndCompiledPr();
+	this.SetFontSizeCS(oTextPr.GetIncDecFontSizeCS(isIncrease));
+	this.SetFontSize(oTextPr.GetIncDecFontSize(isIncrease));
+};
+ParaTextPr.prototype.ApplyFontFamily = function(sFontName)
+{
+	this.SetRFontsAscii({Name : sFontName, Index : -1});
+	this.SetRFontsHAnsi({Name : sFontName, Index : -1});
+	this.SetRFontsCS({Name : sFontName, Index : -1});
+
+	this.SetRFontsAsciiTheme(undefined);
+	this.SetRFontsHAnsiTheme(undefined);
+	this.SetRFontsCSTheme(undefined);
+
+	this.SetRFontsEastAsia(undefined);
+	this.SetRFontsEastAsiaTheme(undefined);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Undo/Redo функции

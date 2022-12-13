@@ -414,7 +414,7 @@ function CEditorPage(api)
 
 		this.Splitter1Pos    = 67.5;
         this.Splitter1PosSetUp = this.Splitter1Pos;
-		this.Splitter2Pos    = (this.IsSupportNotes === true) ? 11 : 0;
+		this.Splitter2Pos    = (this.IsSupportNotes === true && this.m_oApi.isEmbedVersion !== true) ? 11 : 0;
 		this.Splitter3Pos = 0;//top of animation pane
 
 		this.OldSplitter1Pos = this.Splitter1Pos;
@@ -1040,7 +1040,7 @@ function CEditorPage(api)
 		if (this.retinaScaling != AscCommon.AscBrowser.retinaPixelRatio)
 		{
             this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
-            // сбросить кэш страниц
+			this.m_oDrawingDocument.ClearCachePages();
             this.onButtonTabsDraw();
 		}
 	};
@@ -3226,6 +3226,9 @@ function CEditorPage(api)
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_Before();
 
+		if (this.m_oApi.printPreview)
+			this.m_oApi.printPreview.resize();
+
 		var isDesktopVersion = (undefined !== window["AscDesktopEditor"]) ? true : false;
 
 		if (this.Splitter1Pos > 0.1 && !isDesktopVersion)
@@ -4169,7 +4172,7 @@ function CEditorPage(api)
 		if (!isRepaint && oWordControl.m_oNotesApi.IsRepaint)
 			isRepaint = true;
 
-		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi)
+		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi && oWordControl.IsNotesShown())
 			oWordControl.m_oNotesApi.CheckPaint();
 
 		if (oWordControl.m_oAnimPaneApi)

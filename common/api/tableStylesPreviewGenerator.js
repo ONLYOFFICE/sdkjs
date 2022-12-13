@@ -199,7 +199,8 @@
 		let _old_mode = editor.isViewMode;
 		editor.isViewMode = true;
 		editor.isShowTableEmptyLineAttack = this.LogicDocument.IsDocumentEditor();
-		oTable.Draw(0, oGraphics, false);
+		oGraphics.bIsDrawCellTextLines = true;
+		oTable.Draw(0, oGraphics);
 		editor.isShowTableEmptyLineAttack = false;
 		editor.isViewMode = _old_mode;
 	};

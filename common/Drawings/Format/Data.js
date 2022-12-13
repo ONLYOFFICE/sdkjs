@@ -37,9 +37,27 @@
    * @param {undefined} undefined
    */
   function (window, undefined) {
+/*
+The current module is designed to implement SmartArt support.
+At the moment, there is partial support for the format, its saving and editing.
+At the moment, there is support for the drawing.xml file - this should be abandoned, smart arts are built with information from the data.xml file, drawn by bypassing the layout.xml file.
+Need to support:
+1. The connection must be built data -> drawing, at the moment the opposite is happening.
+
+2. Rendering should take place according to the layout.xml file.
+
+3. Synchronous filling of a paragraph in data and drawing, at the moment this is not done correctly - available paragraphs are divided evenly and filled in contentpoints.
+CShape.prototype.copyTextInfoFromShapeToPoint = function (paddings) {
+Because of this, the display is sometimes not correct.
+
+4. Support placeholders for individual paragraphs. At the moment, there are two contents that replace each other when in focus and out of focus.
+
+5. Support changing the smartart tree to add new nodes.
+*/
     // imports
 
     var InitClass = AscFormat.InitClass;
+    var InitClassWithoutType = AscFormat.InitClassWithoutType;
     var CBaseFormatObject = AscFormat.CBaseFormatObject;
     var oHistory = AscCommon.History;
     var CChangeBool = AscDFH.CChangesDrawingsBool;
@@ -68,703 +86,709 @@
     var CGroupShape = AscFormat.CGroupShape;
 
     // consts
-    var Point_type_asst = 1;
-    var Point_type_doc = 2;
-    var Point_type_node = 0;
-    var Point_type_parTrans = 4;
-    var Point_type_pres = 3;
-    var Point_type_sibTrans = 5;
+    const GRAYSCALE_TRESHHOLD = 150;
 
-    var Cxn_type_parOf = 0;
-    var Cxn_type_presOf = 1;
-    var Cxn_type_presParOf = 2;
-    var Cxn_type_unknownRelationShip = 3;
+    const Point_type_asst = 1;
+    const Point_type_doc = 2;
+    const Point_type_node = 0;
+    const Point_type_parTrans = 4;
+    const Point_type_pres = 3;
+    const Point_type_sibTrans = 5;
 
-    var LayoutNode_type_b = 0;
-    var LayoutNode_type_t = 1;
+    const Cxn_type_parOf = 0;
+    const Cxn_type_presOf = 1;
+    const Cxn_type_presParOf = 2;
+    const Cxn_type_unknownRelationShip = 3;
 
-    var Alg_type_composite = 0;
-    var Alg_type_conn = 1;
-    var Alg_type_cycle = 2;
-    var Alg_type_hierChild = 3;
-    var Alg_type_hierRoot = 4;
-    var Alg_type_lin = 6;
-    var Alg_type_pyra = 5;
-    var Alg_type_snake = 9;
-    var Alg_type_sp = 7;
-    var Alg_type_tx = 8;
+    const LayoutNode_type_b = 0;
+    const LayoutNode_type_t = 1;
 
-    var Param_type_alignTx = 0;
-    var Param_type_ar = 1;
-    var Param_type_autoTxRot = 2;
-    var Param_type_begPts = 3;
-    var Param_type_begSty = 4;
-    var Param_type_bendPt = 5;
-    var Param_type_bkpt = 6;
-    var Param_type_bkPtFixedVal = 7;
-    var Param_type_chAlign = 8;
-    var Param_type_chDir = 9;
-    var Param_type_connRout = 10;
-    var Param_type_contDir = 11;
-    var Param_type_ctrShpMap = 12;
-    var Param_type_dim = 13;
-    var Param_type_dstNode = 14;
-    var Param_type_endPts = 15;
-    var Param_type_endSty = 16;
-    var Param_type_fallback = 17;
-    var Param_type_flowDir = 18;
-    var Param_type_grDir = 19;
-    var Param_type_hierAlign = 20;
-    var Param_type_horzAlign = 21;
-    var Param_type_linDir = 22;
-    var Param_type_lnSpAfChP = 23;
-    var Param_type_lnSpAfParP = 24;
-    var Param_type_lnSpCh = 25;
-    var Param_type_lnSpPar = 26;
-    var Param_type_nodeHorzAlign = 27;
-    var Param_type_nodeVertAlign = 28;
-    var Param_type_off = 29;
-    var Param_type_parTxLTRAlign = 30;
-    var Param_type_parTxRTLAlign = 31;
-    var Param_type_pyraAcctBkgdNode = 32;
-    var Param_type_pyraAcctPos = 33;
-    var Param_type_pyraAcctTxMar = 34;
-    var Param_type_pyraAcctTxNode = 35;
-    var Param_type_pyraLvlNode = 36;
-    var Param_type_rotPath = 37;
-    var Param_type_rtShortDist = 38;
-    var Param_type_secChAlign = 39;
-    var Param_type_secLinDir = 40;
-    var Param_type_shpTxLTRAlignCh = 41;
-    var Param_type_shpTxRTLAlignCh = 42;
-    var Param_type_spanAng = 43;
-    var Param_type_srcNode = 44;
-    var Param_type_stAng = 45;
-    var Param_type_stBulletLvl = 46;
-    var Param_type_stElem = 47;
-    var Param_type_txAnchorHorz = 48;
-    var Param_type_txAnchorHorzCh = 49;
-    var Param_type_txAnchorVert = 50;
-    var Param_type_txAnchorVertCh = 51;
-    var Param_type_txBlDir = 52;
-    var Param_type_txDir = 53;
-    var Param_type_vertAlign = 54;
-
-    var AxisType_value_ancst = 6;
-    var AxisType_value_ancstOrSelf = 7;
-    var AxisType_value_ch = 2;
-    var AxisType_value_des = 3;
-    var AxisType_value_desOrSelf = 4;
-    var AxisType_value_follow = 10;
-    var AxisType_value_followSib = 8;
-    var AxisType_value_none = 0;
-    var AxisType_value_par = 5;
-    var AxisType_value_preced = 11;
-    var AxisType_value_precedSib = 9;
-    var AxisType_value_root = 12;
-    var AxisType_value_self = 1;
-
-    var ElementType_value_all = 0;
-    var ElementType_value_asst = 5;
-    var ElementType_value_doc = 1;
-    var ElementType_value_node = 2;
-    var ElementType_value_nonAsst = 6;
-    var ElementType_value_nonNorm = 4;
-    var ElementType_value_norm = 3;
-    var ElementType_value_parTrans = 7;
-    var ElementType_value_pres = 8;
-    var ElementType_value_sibTrans = 9;
-
-    var If_op_equ = 0;
-    var If_op_gt = 2;
-    var If_op_gte = 4;
-    var If_op_lt = 3;
-    var If_op_lte = 5;
-    var If_op_neq = 1;
-
-    var If_func_cnt = 0;
-    var If_func_depth = 6;
-    var If_func_maxDepth = 7;
-    var If_func_pos = 1;
-    var If_func_posEven = 3;
-    var If_func_posOdd = 4;
-    var If_func_revPos = 2;
-    var If_func_var = 5;
-
-    var If_arg_animLvl = 0;
-    var If_arg_animOne = 1;
-    var If_arg_bulEnabled = 2;
-    var If_arg_chMax = 3;
-    var If_arg_chPref = 4;
-    var If_arg_dir = 5;
-    var If_arg_hierBranch = 6;
-    var If_arg_none = 7;
-    var If_arg_orgChart = 8;
-    var If_arg_resizeHandles = 9;
-
-    var Constr_for_ch = 1;
-    var Constr_for_des = 2;
-    var Constr_for_self = 0;
-
-    var Constr_op_equ = 1;
-    var Constr_op_gte = 2;
-    var Constr_op_lte = 3;
-    var Constr_op_none = 0;
-
-    var Constr_type_alignOff = 1;
-    var Constr_type_b = 5;
-    var Constr_type_begMarg = 2;
-    var Constr_type_begPad = 4;
-    var Constr_type_bendDist = 3;
-    var Constr_type_bMarg = 6;
-    var Constr_type_bOff = 7;
-    var Constr_type_connDist = 12;
-    var Constr_type_ctrX = 8;
-    var Constr_type_ctrXOff = 9;
-    var Constr_type_ctrY = 10;
-    var Constr_type_ctrYOff = 11;
-    var Constr_type_diam = 13;
-    var Constr_type_endMarg = 14;
-    var Constr_type_endPad = 15;
-    var Constr_type_h = 16;
-    var Constr_type_hArH = 17;
-    var Constr_type_hOff = 63; // TODO: add to constr type in x2t
-    var Constr_type_l = 18;
-    var Constr_type_lMarg = 19;
-    var Constr_type_lOff = 20;
-    var Constr_type_none = 0;
-    var Constr_type_primFontSz = 24;
-    var Constr_type_pyraAcctRatio = 25;
-    var Constr_type_r = 21;
-    var Constr_type_rMarg = 22;
-    var Constr_type_rOff = 23;
-    var Constr_type_secFontSz = 26;
-    var Constr_type_secSibSp = 28;
-    var Constr_type_sibSp = 27;
-    var Constr_type_sp = 29;
-    var Constr_type_stemThick = 30;
-    var Constr_type_t = 31;
-    var Constr_type_tMarg = 32;
-    var Constr_type_tOff = 33;
-    var Constr_type_userA = 34;
-    var Constr_type_userB = 35;
-    var Constr_type_userC = 36;
-    var Constr_type_userD = 37;
-    var Constr_type_userE = 38;
-    var Constr_type_userF = 39;
-    var Constr_type_userG = 40;
-    var Constr_type_userH = 41;
-    var Constr_type_userI = 42;
-    var Constr_type_userJ = 43;
-    var Constr_type_userK = 44;
-    var Constr_type_userL = 45;
-    var Constr_type_userM = 46;
-    var Constr_type_userN = 47;
-    var Constr_type_userO = 48;
-    var Constr_type_userP = 49;
-    var Constr_type_userQ = 50;
-    var Constr_type_userR = 51;
-    var Constr_type_userS = 52;
-    var Constr_type_userT = 53;
-    var Constr_type_userU = 54;
-    var Constr_type_userV = 55;
-    var Constr_type_userW = 56;
-    var Constr_type_userX = 57;
-    var Constr_type_userY = 58;
-    var Constr_type_userZ = 59;
-    var Constr_type_w = 60;
-    var Constr_type_wArH = 61;
-    var Constr_type_wOff = 62;
-
-    var kForInsFitFontSize = 71.12 / 360;
-
-    var ptToMm = 2.834645669291;
-
-    var LayoutShapeType_outputShapeType_conn = 0;
-    var LayoutShapeType_outputShapeType_none = 1;
-    var LayoutShapeType_shapeType_accentBorderCallout1 = 2;
-    var LayoutShapeType_shapeType_accentBorderCallout2 = 3;
-    var LayoutShapeType_shapeType_accentBorderCallout3 = 4;
-    var LayoutShapeType_shapeType_accentCallout1 = 5;
-    var LayoutShapeType_shapeType_accentCallout2 = 6;
-    var LayoutShapeType_shapeType_accentCallout3 = 7;
-    var LayoutShapeType_shapeType_actionButtonBackPrevious = 8;
-    var LayoutShapeType_shapeType_actionButtonBeginning = 9;
-    var LayoutShapeType_shapeType_actionButtonBlank = 10;
-    var LayoutShapeType_shapeType_actionButtonDocument = 11;
-    var LayoutShapeType_shapeType_actionButtonEnd = 12;
-    var LayoutShapeType_shapeType_actionButtonForwardNext = 13;
-    var LayoutShapeType_shapeType_actionButtonHelp = 14;
-    var LayoutShapeType_shapeType_actionButtonHome = 15;
-    var LayoutShapeType_shapeType_actionButtonInformation = 16;
-    var LayoutShapeType_shapeType_actionButtonMovie = 17;
-    var LayoutShapeType_shapeType_actionButtonReturn = 18;
-    var LayoutShapeType_shapeType_actionButtonSound = 19;
-    var LayoutShapeType_shapeType_arc = 20;
-    var LayoutShapeType_shapeType_bentArrow = 21;
-    var LayoutShapeType_shapeType_bentConnector2 = 22;
-    var LayoutShapeType_shapeType_bentConnector3 = 23;
-    var LayoutShapeType_shapeType_bentConnector4 = 24;
-    var LayoutShapeType_shapeType_bentConnector5 = 25;
-    var LayoutShapeType_shapeType_bentUpArrow = 26;
-    var LayoutShapeType_shapeType_bevel = 27;
-    var LayoutShapeType_shapeType_blockArc = 28;
-    var LayoutShapeType_shapeType_borderCallout1 = 29;
-    var LayoutShapeType_shapeType_borderCallout2 = 30;
-    var LayoutShapeType_shapeType_borderCallout3 = 31;
-    var LayoutShapeType_shapeType_bracePair = 32;
-    var LayoutShapeType_shapeType_bracketPair = 33;
-    var LayoutShapeType_shapeType_callout1 = 34;
-    var LayoutShapeType_shapeType_callout2 = 35;
-    var LayoutShapeType_shapeType_callout3 = 36;
-    var LayoutShapeType_shapeType_can = 37;
-    var LayoutShapeType_shapeType_chartPlus = 38;
-    var LayoutShapeType_shapeType_chartStar = 39;
-    var LayoutShapeType_shapeType_chartX = 40;
-    var LayoutShapeType_shapeType_chevron = 41;
-    var LayoutShapeType_shapeType_chord = 42;
-    var LayoutShapeType_shapeType_circularArrow = 43;
-    var LayoutShapeType_shapeType_cloud = 44;
-    var LayoutShapeType_shapeType_cloudCallout = 45;
-    var LayoutShapeType_shapeType_corner = 46;
-    var LayoutShapeType_shapeType_cornerTabs = 47;
-    var LayoutShapeType_shapeType_cube = 48;
-    var LayoutShapeType_shapeType_curvedConnector2 = 49;
-    var LayoutShapeType_shapeType_curvedConnector3 = 50;
-    var LayoutShapeType_shapeType_curvedConnector4 = 51;
-    var LayoutShapeType_shapeType_curvedConnector5 = 52;
-    var LayoutShapeType_shapeType_curvedDownArrow = 53;
-    var LayoutShapeType_shapeType_curvedLeftArrow = 54;
-    var LayoutShapeType_shapeType_curvedRightArrow = 55;
-    var LayoutShapeType_shapeType_curvedUpArrow = 56;
-    var LayoutShapeType_shapeType_decagon = 57;
-    var LayoutShapeType_shapeType_diagStripe = 58;
-    var LayoutShapeType_shapeType_diamond = 59;
-    var LayoutShapeType_shapeType_dodecagon = 60;
-    var LayoutShapeType_shapeType_donut = 61;
-    var LayoutShapeType_shapeType_doubleWave = 62;
-    var LayoutShapeType_shapeType_downArrow = 63;
-    var LayoutShapeType_shapeType_downArrowCallout = 64;
-    var LayoutShapeType_shapeType_ellipse = 65;
-    var LayoutShapeType_shapeType_ellipseRibbon = 66;
-    var LayoutShapeType_shapeType_ellipseRibbon2 = 67;
-    var LayoutShapeType_shapeType_flowChartAlternateProcess = 68;
-    var LayoutShapeType_shapeType_flowChartCollate = 69;
-    var LayoutShapeType_shapeType_flowChartConnector = 70;
-    var LayoutShapeType_shapeType_flowChartDecision = 71;
-    var LayoutShapeType_shapeType_flowChartDelay = 72;
-    var LayoutShapeType_shapeType_flowChartDisplay = 73;
-    var LayoutShapeType_shapeType_flowChartDocument = 74;
-    var LayoutShapeType_shapeType_flowChartExtract = 75;
-    var LayoutShapeType_shapeType_flowChartInputOutput = 76;
-    var LayoutShapeType_shapeType_flowChartInternalStorage = 77;
-    var LayoutShapeType_shapeType_flowChartMagneticDisk = 78;
-    var LayoutShapeType_shapeType_flowChartMagneticDrum = 79;
-    var LayoutShapeType_shapeType_flowChartMagneticTape = 80;
-    var LayoutShapeType_shapeType_flowChartManualInput = 81;
-    var LayoutShapeType_shapeType_flowChartManualOperation = 82;
-    var LayoutShapeType_shapeType_flowChartMerge = 83;
-    var LayoutShapeType_shapeType_flowChartMultidocument = 84;
-    var LayoutShapeType_shapeType_flowChartOfflineStorage = 85;
-    var LayoutShapeType_shapeType_flowChartOffpageConnector = 86;
-    var LayoutShapeType_shapeType_flowChartOnlineStorage = 87;
-    var LayoutShapeType_shapeType_flowChartOr = 88;
-    var LayoutShapeType_shapeType_flowChartPredefinedProcess = 89;
-    var LayoutShapeType_shapeType_flowChartPreparation = 90;
-    var LayoutShapeType_shapeType_flowChartProcess = 91;
-    var LayoutShapeType_shapeType_flowChartPunchedCard = 92;
-    var LayoutShapeType_shapeType_flowChartPunchedTape = 93;
-    var LayoutShapeType_shapeType_flowChartSort = 94;
-    var LayoutShapeType_shapeType_flowChartSummingJunction = 95;
-    var LayoutShapeType_shapeType_flowChartTerminator = 96;
-    var LayoutShapeType_shapeType_foldedCorner = 97;
-    var LayoutShapeType_shapeType_frame = 98;
-    var LayoutShapeType_shapeType_funnel = 99;
-    var LayoutShapeType_shapeType_gear6 = 100;
-    var LayoutShapeType_shapeType_gear9 = 101;
-    var LayoutShapeType_shapeType_halfFrame = 102;
-    var LayoutShapeType_shapeType_heart = 103;
-    var LayoutShapeType_shapeType_heptagon = 104;
-    var LayoutShapeType_shapeType_hexagon = 105;
-    var LayoutShapeType_shapeType_homePlate = 106;
-    var LayoutShapeType_shapeType_horizontalScroll = 107;
-    var LayoutShapeType_shapeType_irregularSeal1 = 108;
-    var LayoutShapeType_shapeType_irregularSeal2 = 109;
-    var LayoutShapeType_shapeType_leftArrow = 110;
-    var LayoutShapeType_shapeType_leftArrowCallout = 111;
-    var LayoutShapeType_shapeType_leftBrace = 112;
-    var LayoutShapeType_shapeType_leftBracket = 113;
-    var LayoutShapeType_shapeType_leftCircularArrow = 114;
-    var LayoutShapeType_shapeType_leftRightArrow = 115;
-    var LayoutShapeType_shapeType_leftRightArrowCallout = 116;
-    var LayoutShapeType_shapeType_leftRightCircularArrow = 117;
-    var LayoutShapeType_shapeType_leftRightRibbon = 118;
-    var LayoutShapeType_shapeType_leftRightUpArrow = 119;
-    var LayoutShapeType_shapeType_leftUpArrow = 120;
-    var LayoutShapeType_shapeType_lightningBolt = 121;
-    var LayoutShapeType_shapeType_line = 122;
-    var LayoutShapeType_shapeType_lineInv = 123;
-    var LayoutShapeType_shapeType_mathDivide = 124;
-    var LayoutShapeType_shapeType_mathEqual = 125;
-    var LayoutShapeType_shapeType_mathMinus = 126;
-    var LayoutShapeType_shapeType_mathMultiply = 127;
-    var LayoutShapeType_shapeType_mathNotEqual = 128;
-    var LayoutShapeType_shapeType_mathPlus = 129;
-    var LayoutShapeType_shapeType_moon = 130;
-    var LayoutShapeType_shapeType_nonIsoscelesTrapezoid = 131;
-    var LayoutShapeType_shapeType_noSmoking = 132;
-    var LayoutShapeType_shapeType_notchedRightArrow = 133;
-    var LayoutShapeType_shapeType_octagon = 134;
-    var LayoutShapeType_shapeType_parallelogram = 135;
-    var LayoutShapeType_shapeType_pentagon = 136;
-    var LayoutShapeType_shapeType_pie = 137;
-    var LayoutShapeType_shapeType_pieWedge = 138;
-    var LayoutShapeType_shapeType_plaque = 139;
-    var LayoutShapeType_shapeType_plaqueTabs = 140;
-    var LayoutShapeType_shapeType_plus = 141;
-    var LayoutShapeType_shapeType_quadArrow = 142;
-    var LayoutShapeType_shapeType_quadArrowCallout = 143;
-    var LayoutShapeType_shapeType_rect = 144;
-    var LayoutShapeType_shapeType_ribbon = 145;
-    var LayoutShapeType_shapeType_ribbon2 = 146;
-    var LayoutShapeType_shapeType_rightArrow = 147;
-    var LayoutShapeType_shapeType_rightArrowCallout = 148;
-    var LayoutShapeType_shapeType_rightBrace = 149;
-    var LayoutShapeType_shapeType_rightBracket = 150;
-    var LayoutShapeType_shapeType_round1Rect = 151;
-    var LayoutShapeType_shapeType_round2DiagRect = 152;
-    var LayoutShapeType_shapeType_round2SameRect = 153;
-    var LayoutShapeType_shapeType_roundRect = 154;
-    var LayoutShapeType_shapeType_rtTriangle = 155;
-    var LayoutShapeType_shapeType_smileyFace = 156;
-    var LayoutShapeType_shapeType_snip1Rect = 157;
-    var LayoutShapeType_shapeType_snip2DiagRect = 158;
-    var LayoutShapeType_shapeType_snip2SameRect = 159;
-    var LayoutShapeType_shapeType_snipRoundRect = 160;
-    var LayoutShapeType_shapeType_squareTabs = 161;
-    var LayoutShapeType_shapeType_star10 = 162;
-    var LayoutShapeType_shapeType_star12 = 163;
-    var LayoutShapeType_shapeType_star16 = 164;
-    var LayoutShapeType_shapeType_star24 = 165;
-    var LayoutShapeType_shapeType_star32 = 166;
-    var LayoutShapeType_shapeType_star4 = 167;
-    var LayoutShapeType_shapeType_star5 = 168;
-    var LayoutShapeType_shapeType_star6 = 169;
-    var LayoutShapeType_shapeType_star7 = 170;
-    var LayoutShapeType_shapeType_star8 = 171;
-    var LayoutShapeType_shapeType_straightConnector1 = 172;
-    var LayoutShapeType_shapeType_stripedRightArrow = 173;
-    var LayoutShapeType_shapeType_sun = 174;
-    var LayoutShapeType_shapeType_swooshArrow = 175;
-    var LayoutShapeType_shapeType_teardrop = 176;
-    var LayoutShapeType_shapeType_trapezoid = 177;
-    var LayoutShapeType_shapeType_triangle = 178;
-    var LayoutShapeType_shapeType_upArrow = 179;
-    var LayoutShapeType_shapeType_upArrowCallout = 180;
-    var LayoutShapeType_shapeType_upDownArrow = 181;
-    var LayoutShapeType_shapeType_upDownArrowCallout = 182;
-    var LayoutShapeType_shapeType_uturnArrow = 183;
-    var LayoutShapeType_shapeType_verticalScroll = 184;
-    var LayoutShapeType_shapeType_wave = 185;
-    var LayoutShapeType_shapeType_wedgeEllipseCallout = 186;
-    var LayoutShapeType_shapeType_wedgeRectCallout = 187;
-    var LayoutShapeType_shapeType_wedgeRoundRectCallout = 188;
+    const Alg_type_composite = 0;
+    const Alg_type_conn = 1;
+    const Alg_type_cycle = 2;
+    const Alg_type_hierChild = 3;
+    const Alg_type_hierRoot = 4;
+    const Alg_type_lin = 6;
+    const Alg_type_pyra = 5;
+    const Alg_type_snake = 9;
+    const Alg_type_sp = 7;
+    const Alg_type_tx = 8;
 
 
-    var AnimLvl_val_ctr = 1;
-    var AnimLvl_val_lvl = 2;
-    var AnimLvl_val_none = 0;
+    const Param_type_horzAlign = 0;
+    const Param_type_vertAlign = 1;
+    const Param_type_chDir = 2;
+    const Param_type_chAlign = 3;
+    const Param_type_secChAlign = 4;
+    const Param_type_linDir = 5;
+    const Param_type_secLinDir = 6;
+    const Param_type_stElem = 7;
+    const Param_type_bendPt = 8;
+    const Param_type_connRout = 9;
+    const Param_type_begSty = 10;
+    const Param_type_endSty = 11;
+    const Param_type_dim = 12;
+    const Param_type_rotPath = 13;
+    const Param_type_ctrShpMap = 14;
+    const Param_type_nodeHorzAlign = 15;
+    const Param_type_nodeVertAlign = 16;
+    const Param_type_fallback = 17;
+    const Param_type_txDir = 18;
+    const Param_type_pyraAcctPos = 19;
+    const Param_type_pyraAcctTxMar = 20;
+    const Param_type_txBlDir = 21;
+    const Param_type_txAnchorHorz = 22;
+    const Param_type_txAnchorVert = 23;
+    const Param_type_txAnchorHorzCh = 24;
+    const Param_type_txAnchorVertCh = 25;
+    const Param_type_parTxLTRAlign = 26;
+    const Param_type_parTxRTLAlign = 27;
+    const Param_type_shpTxLTRAlignCh = 28;
+    const Param_type_shpTxRTLAlignCh = 29;
+    const Param_type_autoTxRot = 30;
+    const Param_type_grDir = 31;
+    const Param_type_flowDir = 32;
+    const Param_type_contDir = 33;
+    const Param_type_bkpt = 34;
+    const Param_type_off = 35;
+    const Param_type_hierAlign = 36;
+    const Param_type_bkPtFixedVal = 37;
+    const Param_type_stBulletLvl = 38;
+    const Param_type_stAng = 39;
+    const Param_type_spanAng = 40;
+    const Param_type_ar = 41;
+    const Param_type_lnSpPar = 42;
+    const Param_type_lnSpAfParP = 43;
+    const Param_type_lnSpCh = 44;
+    const Param_type_lnSpAfChP = 45;
+    const Param_type_rtShortDist = 46;
+    const Param_type_alignTx = 47;
+    const Param_type_pyraLvlNode = 48;
+    const Param_type_pyraAcctBkgdNode = 49;
+    const Param_type_pyraAcctTxNode = 50;
+    const Param_type_srcNode = 51;
+    const Param_type_dstNode = 52;
+    const Param_type_begPts = 53;
+    const Param_type_endPts = 54;
 
-    var AnimOne_val_branch = 1;
-    var AnimOne_val_none = 0;
-    var AnimOne_val_one = 2;
+    const AxisType_value_ancst = 6;
+    const AxisType_value_ancstOrSelf = 7;
+    const AxisType_value_ch = 2;
+    const AxisType_value_des = 3;
+    const AxisType_value_desOrSelf = 4;
+    const AxisType_value_follow = 10;
+    const AxisType_value_followSib = 8;
+    const AxisType_value_none = 0;
+    const AxisType_value_par = 5;
+    const AxisType_value_preced = 11;
+    const AxisType_value_precedSib = 9;
+    const AxisType_value_root = 12;
+    const AxisType_value_self = 1;
 
-    var DiagramDirection_val_norm = 0;
-    var DiagramDirection_val_rev = 1;
+    const ElementType_value_all = 0;
+    const ElementType_value_asst = 5;
+    const ElementType_value_doc = 1;
+    const ElementType_value_node = 2;
+    const ElementType_value_nonAsst = 6;
+    const ElementType_value_nonNorm = 4;
+    const ElementType_value_norm = 3;
+    const ElementType_value_parTrans = 7;
+    const ElementType_value_pres = 8;
+    const ElementType_value_sibTrans = 9;
 
-    var HierBranch_val_hang = 0;
-    var HierBranch_val_init = 1;
-    var HierBranch_val_l = 2;
-    var HierBranch_val_r = 3;
-    var HierBranch_val_std = 4;
+    const If_op_equ = 0;
+    const If_op_neq = 1;
+    const If_op_gt = 2;
+    const If_op_lt = 3;
+    const If_op_gte = 4;
+    const If_op_lte = 5;
 
-    var ResizeHandles_val_exact = 0;
-    var ResizeHandles_val_rel = 1;
+    const boolOperator_none = 0;
+    const boolOperator_equ = 1;
+    const boolOperator_gte = 2;
+    const boolOperator_lte = 3;
 
-    var ClrLst_hueDir_ccw = 0;
-    var ClrLst_hueDir_cw = 1;
-    var ClrLst_meth_cycle = 0;
-    var ClrLst_meth_repeat = 1;
-    var ClrLst_meth_span = 2;
+    const If_func_cnt = 0;
+    const If_func_depth = 6;
+    const If_func_maxDepth = 7;
+    const If_func_pos = 1;
+    const If_func_posEven = 3;
+    const If_func_posOdd = 4;
+    const If_func_revPos = 2;
+    const If_func_var = 5;
 
-    var Camera_prst_isometricBottomDown = 0;
-    var Camera_prst_isometricBottomUp = 1;
-    var Camera_prst_isometricLeftDown = 2;
-    var Camera_prst_isometricLeftUp = 3;
-    var Camera_prst_isometricOffAxis1Left = 4;
-    var Camera_prst_isometricOffAxis1Right = 5;
-    var Camera_prst_isometricOffAxis1Top = 6;
-    var Camera_prst_isometricOffAxis2Left = 7;
-    var Camera_prst_isometricOffAxis2Right = 8;
-    var Camera_prst_isometricOffAxis2Top = 9;
-    var Camera_prst_isometricOffAxis3Bottom = 10;
-    var Camera_prst_isometricOffAxis3Left = 11;
-    var Camera_prst_isometricOffAxis3Right = 12;
-    var Camera_prst_isometricOffAxis4Bottom = 13;
-    var Camera_prst_isometricOffAxis4Left = 14;
-    var Camera_prst_isometricOffAxis4Right = 15;
-    var Camera_prst_isometricRightDown = 16;
-    var Camera_prst_isometricRightUp = 17;
-    var Camera_prst_isometricTopDown = 18;
-    var Camera_prst_isometricTopUp = 19;
-    var Camera_prst_legacyObliqueBottom = 20;
-    var Camera_prst_legacyObliqueBottomLeft = 21;
-    var Camera_prst_legacyObliqueBottomRight = 22;
-    var Camera_prst_legacyObliqueFront = 23;
-    var Camera_prst_legacyObliqueLeft = 24;
-    var Camera_prst_legacyObliqueRight = 25;
-    var Camera_prst_legacyObliqueTop = 26;
-    var Camera_prst_legacyObliqueTopLeft = 27;
-    var Camera_prst_legacyObliqueTopRight = 28;
-    var Camera_prst_legacyPerspectiveBottom = 29;
-    var Camera_prst_legacyPerspectiveBottomLeft = 30;
-    var Camera_prst_legacyPerspectiveBottomRight = 31;
-    var Camera_prst_legacyPerspectiveFront = 32;
-    var Camera_prst_legacyPerspectiveLeft = 33;
-    var Camera_prst_legacyPerspectiveRight = 34;
-    var Camera_prst_legacyPerspectiveTop = 35;
-    var Camera_prst_legacyPerspectiveTopLeft = 36;
-    var Camera_prst_legacyPerspectiveTopRight = 37;
-    var Camera_prst_obliqueBottom = 38;
-    var Camera_prst_obliqueBottomLeft = 39;
-    var Camera_prst_obliqueBottomRight = 40;
-    var Camera_prst_obliqueLeft = 41;
-    var Camera_prst_obliqueRight = 42;
-    var Camera_prst_obliqueTop = 43;
-    var Camera_prst_obliqueTopLeft = 44;
-    var Camera_prst_obliqueTopRight = 45;
-    var Camera_prst_orthographicFront = 46;
-    var Camera_prst_perspectiveAbove = 47;
-    var Camera_prst_perspectiveAboveLeftFacing = 48;
-    var Camera_prst_perspectiveAboveRightFacing = 49;
-    var Camera_prst_perspectiveBelow = 50;
-    var Camera_prst_perspectiveContrastingLeftFacing = 51;
-    var Camera_prst_perspectiveContrastingRightFacing = 52;
-    var Camera_prst_perspectiveFront = 53;
-    var Camera_prst_perspectiveHeroicExtremeLeftFacing = 54;
-    var Camera_prst_perspectiveHeroicExtremeRightFacing = 55;
-    var Camera_prst_perspectiveHeroicLeftFacing = 56;
-    var Camera_prst_perspectiveHeroicRightFacing = 57;
-    var Camera_prst_perspectiveLeft = 58;
-    var Camera_prst_perspectiveRelaxed = 59;
-    var Camera_prst_perspectiveRelaxedModerately = 60;
-    var Camera_prst_perspectiveRight = 61;
+    const If_arg_animLvl = 0;
+    const If_arg_animOne = 1;
+    const If_arg_bulEnabled = 2;
+    const If_arg_chMax = 3;
+    const If_arg_chPref = 4;
+    const If_arg_dir = 5;
+    const If_arg_hierBranch = 6;
+    const If_arg_none = 7;
+    const If_arg_orgChart = 8;
+    const If_arg_resizeHandles = 9;
 
-    var Sp3d_prstMaterial_clear = 0;
-    var Sp3d_prstMaterial_dkEdge = 1;
-    var Sp3d_prstMaterial_flat = 2;
-    var Sp3d_prstMaterial_legacyMatte = 3;
-    var Sp3d_prstMaterial_legacyMetal = 4;
-    var Sp3d_prstMaterial_legacyPlastic = 5;
-    var Sp3d_prstMaterial_legacyWireframe = 6;
-    var Sp3d_prstMaterial_matte = 7;
-    var Sp3d_prstMaterial_metal = 8;
-    var Sp3d_prstMaterial_plastic = 9;
-    var Sp3d_prstMaterial_powder = 10;
-    var Sp3d_prstMaterial_softEdge = 11;
-    var Sp3d_prstMaterial_softmetal = 12;
-    var Sp3d_prstMaterial_translucentPowder = 13;
-    var Sp3d_prstMaterial_warmMatte = 14;
+    const Constr_for_ch = 1;
+    const Constr_for_des = 2;
+    const Constr_for_self = 0;
 
-    var LightRig_dir_b = 0;
-    var LightRig_dir_bl = 1;
-    var LightRig_dir_br = 2;
-    var LightRig_dir_l = 3;
-    var LightRig_dir_r = 4;
-    var LightRig_dir_t = 5;
-    var LightRig_dir_tl = 6;
-    var LightRig_dir_tr = 7;
+    const Constr_op_equ = 1;
+    const Constr_op_gte = 2;
+    const Constr_op_lte = 3;
+    const Constr_op_none = 0;
 
-    var LightRig_rig_balanced = 0;
-    var LightRig_rig_brightRoom = 1;
-    var LightRig_rig_chilly = 2;
-    var LightRig_rig_contrasting = 3;
-    var LightRig_rig_flat = 4;
-    var LightRig_rig_flood = 5;
-    var LightRig_rig_freezing = 6;
-    var LightRig_rig_glow = 7;
-    var LightRig_rig_harsh = 8;
-    var LightRig_rig_legacyFlat1 = 9;
-    var LightRig_rig_legacyFlat2 = 10;
-    var LightRig_rig_legacyFlat3 = 11;
-    var LightRig_rig_legacyFlat4 = 12;
-    var LightRig_rig_legacyHarsh1 = 13;
-    var LightRig_rig_legacyHarsh2 = 14;
-    var LightRig_rig_legacyHarsh3 = 15;
-    var LightRig_rig_legacyHarsh4 = 16;
-    var LightRig_rig_legacyNormal1 = 17;
-    var LightRig_rig_legacyNormal2 = 18;
-    var LightRig_rig_legacyNormal3 = 19;
-    var LightRig_rig_legacyNormal4 = 20;
-    var LightRig_rig_morning = 21;
-    var LightRig_rig_soft = 22;
-    var LightRig_rig_sunrise = 23;
-    var LightRig_rig_sunset = 24;
-    var LightRig_rig_threePt = 25;
-    var LightRig_rig_twoPt = 26;
+    const Constr_type_alignOff = 1;
+    const Constr_type_b = 5;
+    const Constr_type_begMarg = 2;
+    const Constr_type_begPad = 4;
+    const Constr_type_bendDist = 3;
+    const Constr_type_bMarg = 6;
+    const Constr_type_bOff = 7;
+    const Constr_type_connDist = 12;
+    const Constr_type_ctrX = 8;
+    const Constr_type_ctrXOff = 9;
+    const Constr_type_ctrY = 10;
+    const Constr_type_ctrYOff = 11;
+    const Constr_type_diam = 13;
+    const Constr_type_endMarg = 14;
+    const Constr_type_endPad = 15;
+    const Constr_type_h = 16;
+    const Constr_type_hArH = 17;
+    const Constr_type_hOff = 63; // TODO: add to constr type in x2t
+    const Constr_type_l = 18;
+    const Constr_type_lMarg = 19;
+    const Constr_type_lOff = 20;
+    const Constr_type_none = 0;
+    const Constr_type_primFontSz = 24;
+    const Constr_type_pyraAcctRatio = 25;
+    const Constr_type_r = 21;
+    const Constr_type_rMarg = 22;
+    const Constr_type_rOff = 23;
+    const Constr_type_secFontSz = 26;
+    const Constr_type_secSibSp = 28;
+    const Constr_type_sibSp = 27;
+    const Constr_type_sp = 29;
+    const Constr_type_stemThick = 30;
+    const Constr_type_t = 31;
+    const Constr_type_tMarg = 32;
+    const Constr_type_tOff = 33;
+    const Constr_type_userA = 34;
+    const Constr_type_userB = 35;
+    const Constr_type_userC = 36;
+    const Constr_type_userD = 37;
+    const Constr_type_userE = 38;
+    const Constr_type_userF = 39;
+    const Constr_type_userG = 40;
+    const Constr_type_userH = 41;
+    const Constr_type_userI = 42;
+    const Constr_type_userJ = 43;
+    const Constr_type_userK = 44;
+    const Constr_type_userL = 45;
+    const Constr_type_userM = 46;
+    const Constr_type_userN = 47;
+    const Constr_type_userO = 48;
+    const Constr_type_userP = 49;
+    const Constr_type_userQ = 50;
+    const Constr_type_userR = 51;
+    const Constr_type_userS = 52;
+    const Constr_type_userT = 53;
+    const Constr_type_userU = 54;
+    const Constr_type_userV = 55;
+    const Constr_type_userW = 56;
+    const Constr_type_userX = 57;
+    const Constr_type_userY = 58;
+    const Constr_type_userZ = 59;
+    const Constr_type_w = 60;
+    const Constr_type_wArH = 61;
+    const Constr_type_wOff = 62;
 
-    var Bevel_prst_angle = 0;
-    var Bevel_prst_artDeco = 1;
-    var Bevel_prst_circle = 2;
-    var Bevel_prst_convex = 3;
-    var Bevel_prst_coolSlant = 4;
-    var Bevel_prst_cross = 5;
-    var Bevel_prst_divot = 6;
-    var Bevel_prst_hardEdge = 7;
-    var Bevel_prst_relaxedInset = 8;
-    var Bevel_prst_riblet = 9;
-    var Bevel_prst_slope = 10;
-    var Bevel_prst_softRound = 11;
+    const kForInsFitFontSize = 71.12 / 360;
 
-    var ParameterVal_arrowheadStyle_arr = 0;
-    var ParameterVal_arrowheadStyle_auto = 1;
-    var ParameterVal_arrowheadStyle_noArr = 2;
-    var ParameterVal_autoTextRotation_grav = 0;
-    var ParameterVal_autoTextRotation_none = 1;
-    var ParameterVal_autoTextRotation_upr = 2;
-    var ParameterVal_bendPoint_beg = 0;
-    var ParameterVal_bendPoint_def = 1;
-    var ParameterVal_bendPoint_end = 2;
-    var ParameterVal_breakpoint_bal = 0;
-    var ParameterVal_breakpoint_endCnv = 1;
-    var ParameterVal_breakpoint_fixed = 2;
-    var ParameterVal_centerShapeMapping_fNode = 0;
-    var ParameterVal_centerShapeMapping_none = 1;
-    var ParameterVal_childAlignment_b = 0;
-    var ParameterVal_childAlignment_l = 1;
-    var ParameterVal_childAlignment_r = 2;
-    var ParameterVal_childAlignment_t = 3;
-    var ParameterVal_childDirection_horz = 0;
-    var ParameterVal_childDirection_vert = 1;
-    var ParameterVal_connectorDimension_1D = 0;
-    var ParameterVal_connectorDimension_2D = 1;
-    var ParameterVal_connectorDimension_cust = 2;
-    var ParameterVal_connectorPoint_auto = 0;
-    var ParameterVal_connectorPoint_bCtr = 1;
-    var ParameterVal_connectorPoint_bL = 2;
-    var ParameterVal_connectorPoint_bR = 3;
-    var ParameterVal_connectorPoint_ctr = 4;
-    var ParameterVal_connectorPoint_midL = 5;
-    var ParameterVal_connectorPoint_midR = 6;
-    var ParameterVal_connectorPoint_radial = 7;
-    var ParameterVal_connectorPoint_tCtr = 8;
-    var ParameterVal_connectorPoint_tL = 9;
-    var ParameterVal_connectorPoint_tR = 10;
-    var ParameterVal_connectorRouting_bend = 0;
-    var ParameterVal_connectorRouting_curve = 1;
-    var ParameterVal_connectorRouting_longCurve = 2;
-    var ParameterVal_connectorRouting_stra = 3;
-    var ParameterVal_continueDirection_revDir = 0;
-    var ParameterVal_continueDirection_sameDir = 1;
-    var ParameterVal_diagramHorizontalAlignment_ctr = 0;
-    var ParameterVal_diagramHorizontalAlignment_l = 1;
-    var ParameterVal_diagramHorizontalAlignment_none = 2;
-    var ParameterVal_diagramHorizontalAlignment_r = 3;
-    var ParameterVal_diagramTextAlignment_ctr = 0;
-    var ParameterVal_diagramTextAlignment_l = 1;
-    var ParameterVal_diagramTextAlignment_r = 2;
-    var ParameterVal_fallbackDimension_1D = 0;
-    var ParameterVal_fallbackDimension_2D = 1;
-    var ParameterVal_flowDirection_col = 0;
-    var ParameterVal_flowDirection_row = 1;
-    var ParameterVal_growDirection_bL = 0;
-    var ParameterVal_growDirection_bR = 1;
-    var ParameterVal_growDirection_tL = 2;
-    var ParameterVal_growDirection_tR = 3;
-    var ParameterVal_hierarchyAlignment_bCtrCh = 0;
-    var ParameterVal_hierarchyAlignment_bCtrDes = 1;
-    var ParameterVal_hierarchyAlignment_bL = 2;
-    var ParameterVal_hierarchyAlignment_bR = 3;
-    var ParameterVal_hierarchyAlignment_lB = 4;
-    var ParameterVal_hierarchyAlignment_lCtrCh = 5;
-    var ParameterVal_hierarchyAlignment_lCtrDes = 6;
-    var ParameterVal_hierarchyAlignment_lT = 7;
-    var ParameterVal_hierarchyAlignment_rB = 8;
-    var ParameterVal_hierarchyAlignment_rCtrCh = 9;
-    var ParameterVal_hierarchyAlignment_rCtrDes = 10;
-    var ParameterVal_hierarchyAlignment_rT = 11;
-    var ParameterVal_hierarchyAlignment_tCtrCh = 12;
-    var ParameterVal_hierarchyAlignment_tCtrDes = 13;
-    var ParameterVal_hierarchyAlignment_tL = 14;
-    var ParameterVal_hierarchyAlignment_tR = 15;
-    var ParameterVal_linearDirection_fromB = 0;
-    var ParameterVal_linearDirection_fromL = 1;
-    var ParameterVal_linearDirection_fromR = 2;
-    var ParameterVal_linearDirection_fromT = 3;
-    var ParameterVal_nodeHorizontalAlignment_ctr = 0;
-    var ParameterVal_nodeHorizontalAlignment_l = 1;
-    var ParameterVal_nodeHorizontalAlignment_r = 2;
-    var ParameterVal_nodeVerticalAlignment_b = 0;
-    var ParameterVal_nodeVerticalAlignment_mid = 1;
-    var ParameterVal_nodeVerticalAlignment_t = 2;
-    var ParameterVal_offset_ctr = 0;
-    var ParameterVal_offset_off = 1;
-    var ParameterVal_pyramidAccentPosition_aft = 0;
-    var ParameterVal_pyramidAccentPosition_bef = 1;
-    var ParameterVal_pyramidAccentTextMargin_stack = 0;
-    var ParameterVal_pyramidAccentTextMargin_step = 1;
-    var ParameterVal_rotationPath_alongPath = 0;
-    var ParameterVal_rotationPath_none = 1;
-    var ParameterVal_secondaryChildAlignment_b = 0;
-    var ParameterVal_secondaryChildAlignment_l = 1;
-    var ParameterVal_secondaryChildAlignment_none = 2;
-    var ParameterVal_secondaryChildAlignment_r = 3;
-    var ParameterVal_secondaryChildAlignment_t = 4;
-    var ParameterVal_secondaryLinearDirection_fromB = 0;
-    var ParameterVal_secondaryLinearDirection_fromL = 1;
-    var ParameterVal_secondaryLinearDirection_fromR = 2;
-    var ParameterVal_secondaryLinearDirection_fromT = 3;
-    var ParameterVal_secondaryLinearDirection_none = 4;
-    var ParameterVal_startingElement_node = 0;
-    var ParameterVal_startingElement_trans = 1;
-    var ParameterVal_textAnchorHorizontal_ctr = 0;
-    var ParameterVal_textAnchorHorizontal_none = 1;
-    var ParameterVal_textAnchorVertical_b = 0;
-    var ParameterVal_textAnchorVertical_mid = 1;
-    var ParameterVal_textAnchorVertical_top = 2;
-    var ParameterVal_textBlockDirection_horz = 0;
-    var ParameterVal_textBlockDirection_vert = 1;
-    var ParameterVal_textDirection_fromB = 0;
-    var ParameterVal_textDirection_fromT = 1;
-    var ParameterVal_verticalAlignment_b = 0;
-    var ParameterVal_verticalAlignment_mid = 1;
-    var ParameterVal_verticalAlignment_none = 2;
-    var ParameterVal_verticalAlignment_t = 3;
+    const LayoutShapeType_outputShapeType_conn = 0;
+    const LayoutShapeType_outputShapeType_none = 1;
+    const LayoutShapeType_shapeType_accentBorderCallout1 = 2;
+    const LayoutShapeType_shapeType_accentBorderCallout2 = 3;
+    const LayoutShapeType_shapeType_accentBorderCallout3 = 4;
+    const LayoutShapeType_shapeType_accentCallout1 = 5;
+    const LayoutShapeType_shapeType_accentCallout2 = 6;
+    const LayoutShapeType_shapeType_accentCallout3 = 7;
+    const LayoutShapeType_shapeType_actionButtonBackPrevious = 8;
+    const LayoutShapeType_shapeType_actionButtonBeginning = 9;
+    const LayoutShapeType_shapeType_actionButtonBlank = 10;
+    const LayoutShapeType_shapeType_actionButtonDocument = 11;
+    const LayoutShapeType_shapeType_actionButtonEnd = 12;
+    const LayoutShapeType_shapeType_actionButtonForwardNext = 13;
+    const LayoutShapeType_shapeType_actionButtonHelp = 14;
+    const LayoutShapeType_shapeType_actionButtonHome = 15;
+    const LayoutShapeType_shapeType_actionButtonInformation = 16;
+    const LayoutShapeType_shapeType_actionButtonMovie = 17;
+    const LayoutShapeType_shapeType_actionButtonReturn = 18;
+    const LayoutShapeType_shapeType_actionButtonSound = 19;
+    const LayoutShapeType_shapeType_arc = 20;
+    const LayoutShapeType_shapeType_bentArrow = 21;
+    const LayoutShapeType_shapeType_bentConnector2 = 22;
+    const LayoutShapeType_shapeType_bentConnector3 = 23;
+    const LayoutShapeType_shapeType_bentConnector4 = 24;
+    const LayoutShapeType_shapeType_bentConnector5 = 25;
+    const LayoutShapeType_shapeType_bentUpArrow = 26;
+    const LayoutShapeType_shapeType_bevel = 27;
+    const LayoutShapeType_shapeType_blockArc = 28;
+    const LayoutShapeType_shapeType_borderCallout1 = 29;
+    const LayoutShapeType_shapeType_borderCallout2 = 30;
+    const LayoutShapeType_shapeType_borderCallout3 = 31;
+    const LayoutShapeType_shapeType_bracePair = 32;
+    const LayoutShapeType_shapeType_bracketPair = 33;
+    const LayoutShapeType_shapeType_callout1 = 34;
+    const LayoutShapeType_shapeType_callout2 = 35;
+    const LayoutShapeType_shapeType_callout3 = 36;
+    const LayoutShapeType_shapeType_can = 37;
+    const LayoutShapeType_shapeType_chartPlus = 38;
+    const LayoutShapeType_shapeType_chartStar = 39;
+    const LayoutShapeType_shapeType_chartX = 40;
+    const LayoutShapeType_shapeType_chevron = 41;
+    const LayoutShapeType_shapeType_chord = 42;
+    const LayoutShapeType_shapeType_circularArrow = 43;
+    const LayoutShapeType_shapeType_cloud = 44;
+    const LayoutShapeType_shapeType_cloudCallout = 45;
+    const LayoutShapeType_shapeType_corner = 46;
+    const LayoutShapeType_shapeType_cornerTabs = 47;
+    const LayoutShapeType_shapeType_cube = 48;
+    const LayoutShapeType_shapeType_curvedConnector2 = 49;
+    const LayoutShapeType_shapeType_curvedConnector3 = 50;
+    const LayoutShapeType_shapeType_curvedConnector4 = 51;
+    const LayoutShapeType_shapeType_curvedConnector5 = 52;
+    const LayoutShapeType_shapeType_curvedDownArrow = 53;
+    const LayoutShapeType_shapeType_curvedLeftArrow = 54;
+    const LayoutShapeType_shapeType_curvedRightArrow = 55;
+    const LayoutShapeType_shapeType_curvedUpArrow = 56;
+    const LayoutShapeType_shapeType_decagon = 57;
+    const LayoutShapeType_shapeType_diagStripe = 58;
+    const LayoutShapeType_shapeType_diamond = 59;
+    const LayoutShapeType_shapeType_dodecagon = 60;
+    const LayoutShapeType_shapeType_donut = 61;
+    const LayoutShapeType_shapeType_doubleWave = 62;
+    const LayoutShapeType_shapeType_downArrow = 63;
+    const LayoutShapeType_shapeType_downArrowCallout = 64;
+    const LayoutShapeType_shapeType_ellipse = 65;
+    const LayoutShapeType_shapeType_ellipseRibbon = 66;
+    const LayoutShapeType_shapeType_ellipseRibbon2 = 67;
+    const LayoutShapeType_shapeType_flowChartAlternateProcess = 68;
+    const LayoutShapeType_shapeType_flowChartCollate = 69;
+    const LayoutShapeType_shapeType_flowChartConnector = 70;
+    const LayoutShapeType_shapeType_flowChartDecision = 71;
+    const LayoutShapeType_shapeType_flowChartDelay = 72;
+    const LayoutShapeType_shapeType_flowChartDisplay = 73;
+    const LayoutShapeType_shapeType_flowChartDocument = 74;
+    const LayoutShapeType_shapeType_flowChartExtract = 75;
+    const LayoutShapeType_shapeType_flowChartInputOutput = 76;
+    const LayoutShapeType_shapeType_flowChartInternalStorage = 77;
+    const LayoutShapeType_shapeType_flowChartMagneticDisk = 78;
+    const LayoutShapeType_shapeType_flowChartMagneticDrum = 79;
+    const LayoutShapeType_shapeType_flowChartMagneticTape = 80;
+    const LayoutShapeType_shapeType_flowChartManualInput = 81;
+    const LayoutShapeType_shapeType_flowChartManualOperation = 82;
+    const LayoutShapeType_shapeType_flowChartMerge = 83;
+    const LayoutShapeType_shapeType_flowChartMultidocument = 84;
+    const LayoutShapeType_shapeType_flowChartOfflineStorage = 85;
+    const LayoutShapeType_shapeType_flowChartOffpageConnector = 86;
+    const LayoutShapeType_shapeType_flowChartOnlineStorage = 87;
+    const LayoutShapeType_shapeType_flowChartOr = 88;
+    const LayoutShapeType_shapeType_flowChartPredefinedProcess = 89;
+    const LayoutShapeType_shapeType_flowChartPreparation = 90;
+    const LayoutShapeType_shapeType_flowChartProcess = 91;
+    const LayoutShapeType_shapeType_flowChartPunchedCard = 92;
+    const LayoutShapeType_shapeType_flowChartPunchedTape = 93;
+    const LayoutShapeType_shapeType_flowChartSort = 94;
+    const LayoutShapeType_shapeType_flowChartSummingJunction = 95;
+    const LayoutShapeType_shapeType_flowChartTerminator = 96;
+    const LayoutShapeType_shapeType_foldedCorner = 97;
+    const LayoutShapeType_shapeType_frame = 98;
+    const LayoutShapeType_shapeType_funnel = 99;
+    const LayoutShapeType_shapeType_gear6 = 100;
+    const LayoutShapeType_shapeType_gear9 = 101;
+    const LayoutShapeType_shapeType_halfFrame = 102;
+    const LayoutShapeType_shapeType_heart = 103;
+    const LayoutShapeType_shapeType_heptagon = 104;
+    const LayoutShapeType_shapeType_hexagon = 105;
+    const LayoutShapeType_shapeType_homePlate = 106;
+    const LayoutShapeType_shapeType_horizontalScroll = 107;
+    const LayoutShapeType_shapeType_irregularSeal1 = 108;
+    const LayoutShapeType_shapeType_irregularSeal2 = 109;
+    const LayoutShapeType_shapeType_leftArrow = 110;
+    const LayoutShapeType_shapeType_leftArrowCallout = 111;
+    const LayoutShapeType_shapeType_leftBrace = 112;
+    const LayoutShapeType_shapeType_leftBracket = 113;
+    const LayoutShapeType_shapeType_leftCircularArrow = 114;
+    const LayoutShapeType_shapeType_leftRightArrow = 115;
+    const LayoutShapeType_shapeType_leftRightArrowCallout = 116;
+    const LayoutShapeType_shapeType_leftRightCircularArrow = 117;
+    const LayoutShapeType_shapeType_leftRightRibbon = 118;
+    const LayoutShapeType_shapeType_leftRightUpArrow = 119;
+    const LayoutShapeType_shapeType_leftUpArrow = 120;
+    const LayoutShapeType_shapeType_lightningBolt = 121;
+    const LayoutShapeType_shapeType_line = 122;
+    const LayoutShapeType_shapeType_lineInv = 123;
+    const LayoutShapeType_shapeType_mathDivide = 124;
+    const LayoutShapeType_shapeType_mathEqual = 125;
+    const LayoutShapeType_shapeType_mathMinus = 126;
+    const LayoutShapeType_shapeType_mathMultiply = 127;
+    const LayoutShapeType_shapeType_mathNotEqual = 128;
+    const LayoutShapeType_shapeType_mathPlus = 129;
+    const LayoutShapeType_shapeType_moon = 130;
+    const LayoutShapeType_shapeType_nonIsoscelesTrapezoid = 131;
+    const LayoutShapeType_shapeType_noSmoking = 132;
+    const LayoutShapeType_shapeType_notchedRightArrow = 133;
+    const LayoutShapeType_shapeType_octagon = 134;
+    const LayoutShapeType_shapeType_parallelogram = 135;
+    const LayoutShapeType_shapeType_pentagon = 136;
+    const LayoutShapeType_shapeType_pie = 137;
+    const LayoutShapeType_shapeType_pieWedge = 138;
+    const LayoutShapeType_shapeType_plaque = 139;
+    const LayoutShapeType_shapeType_plaqueTabs = 140;
+    const LayoutShapeType_shapeType_plus = 141;
+    const LayoutShapeType_shapeType_quadArrow = 142;
+    const LayoutShapeType_shapeType_quadArrowCallout = 143;
+    const LayoutShapeType_shapeType_rect = 144;
+    const LayoutShapeType_shapeType_ribbon = 145;
+    const LayoutShapeType_shapeType_ribbon2 = 146;
+    const LayoutShapeType_shapeType_rightArrow = 147;
+    const LayoutShapeType_shapeType_rightArrowCallout = 148;
+    const LayoutShapeType_shapeType_rightBrace = 149;
+    const LayoutShapeType_shapeType_rightBracket = 150;
+    const LayoutShapeType_shapeType_round1Rect = 151;
+    const LayoutShapeType_shapeType_round2DiagRect = 152;
+    const LayoutShapeType_shapeType_round2SameRect = 153;
+    const LayoutShapeType_shapeType_roundRect = 154;
+    const LayoutShapeType_shapeType_rtTriangle = 155;
+    const LayoutShapeType_shapeType_smileyFace = 156;
+    const LayoutShapeType_shapeType_snip1Rect = 157;
+    const LayoutShapeType_shapeType_snip2DiagRect = 158;
+    const LayoutShapeType_shapeType_snip2SameRect = 159;
+    const LayoutShapeType_shapeType_snipRoundRect = 160;
+    const LayoutShapeType_shapeType_squareTabs = 161;
+    const LayoutShapeType_shapeType_star10 = 162;
+    const LayoutShapeType_shapeType_star12 = 163;
+    const LayoutShapeType_shapeType_star16 = 164;
+    const LayoutShapeType_shapeType_star24 = 165;
+    const LayoutShapeType_shapeType_star32 = 166;
+    const LayoutShapeType_shapeType_star4 = 167;
+    const LayoutShapeType_shapeType_star5 = 168;
+    const LayoutShapeType_shapeType_star6 = 169;
+    const LayoutShapeType_shapeType_star7 = 170;
+    const LayoutShapeType_shapeType_star8 = 171;
+    const LayoutShapeType_shapeType_straightConnector1 = 172;
+    const LayoutShapeType_shapeType_stripedRightArrow = 173;
+    const LayoutShapeType_shapeType_sun = 174;
+    const LayoutShapeType_shapeType_swooshArrow = 175;
+    const LayoutShapeType_shapeType_teardrop = 176;
+    const LayoutShapeType_shapeType_trapezoid = 177;
+    const LayoutShapeType_shapeType_triangle = 178;
+    const LayoutShapeType_shapeType_upArrow = 179;
+    const LayoutShapeType_shapeType_upArrowCallout = 180;
+    const LayoutShapeType_shapeType_upDownArrow = 181;
+    const LayoutShapeType_shapeType_upDownArrowCallout = 182;
+    const LayoutShapeType_shapeType_uturnArrow = 183;
+    const LayoutShapeType_shapeType_verticalScroll = 184;
+    const LayoutShapeType_shapeType_wave = 185;
+    const LayoutShapeType_shapeType_wedgeEllipseCallout = 186;
+    const LayoutShapeType_shapeType_wedgeRectCallout = 187;
+    const LayoutShapeType_shapeType_wedgeRoundRectCallout = 188;
 
-    var FunctionValue_animLvlStr_ctr = 0;
-    var FunctionValue_animLvlStr_lvl = 1;
-    var FunctionValue_animLvlStr_none = 2;
-    var FunctionValue_animOneStr_branch = 0;
-    var FunctionValue_animOneStr_none = 1;
-    var FunctionValue_animOneStr_one = 2;
-    var FunctionValue_direction_norm = 0;
-    var FunctionValue_direction_rev = 1;
-    var FunctionValue_hierBranchStyle_hang = 0;
-    var FunctionValue_hierBranchStyle_init = 1;
-    var FunctionValue_hierBranchStyle_l = 2;
-    var FunctionValue_hierBranchStyle_r = 3;
-    var FunctionValue_hierBranchStyle_std = 4;
-    var FunctionValue_resizeHandlesStr_exact = 0;
-    var FunctionValue_resizeHandlesStr_rel = 1;
 
-    var Coordinate_universalMeasure_cm = 0;
-    var Coordinate_universalMeasure_mm = 1;
-    var Coordinate_universalMeasure_in = 2;
-    var Coordinate_universalMeasure_pt = 3;
-    var Coordinate_universalMeasure_pc = 4;
-    var Coordinate_universalMeasure_pi = 5;
+    const AnimLvl_val_ctr = 1;
+    const AnimLvl_val_lvl = 2;
+    const AnimLvl_val_none = 0;
 
-    var Constr_font_scale = 360;
+    const AnimOne_val_branch = 1;
+    const AnimOne_val_none = 0;
+    const AnimOne_val_one = 2;
+
+    const DiagramDirection_val_norm = 0;
+    const DiagramDirection_val_rev = 1;
+
+    const HierBranch_val_hang = 0;
+    const HierBranch_val_init = 1;
+    const HierBranch_val_l = 2;
+    const HierBranch_val_r = 3;
+    const HierBranch_val_std = 4;
+
+    const ResizeHandles_val_exact = 0;
+    const ResizeHandles_val_rel = 1;
+
+    const ClrLst_hueDir_ccw = 0;
+    const ClrLst_hueDir_cw = 1;
+    const ClrLst_meth_cycle = 0;
+    const ClrLst_meth_repeat = 1;
+    const ClrLst_meth_span = 2;
+
+    const Camera_prst_isometricBottomDown = 0;
+    const Camera_prst_isometricBottomUp = 1;
+    const Camera_prst_isometricLeftDown = 2;
+    const Camera_prst_isometricLeftUp = 3;
+    const Camera_prst_isometricOffAxis1Left = 4;
+    const Camera_prst_isometricOffAxis1Right = 5;
+    const Camera_prst_isometricOffAxis1Top = 6;
+    const Camera_prst_isometricOffAxis2Left = 7;
+    const Camera_prst_isometricOffAxis2Right = 8;
+    const Camera_prst_isometricOffAxis2Top = 9;
+    const Camera_prst_isometricOffAxis3Bottom = 10;
+    const Camera_prst_isometricOffAxis3Left = 11;
+    const Camera_prst_isometricOffAxis3Right = 12;
+    const Camera_prst_isometricOffAxis4Bottom = 13;
+    const Camera_prst_isometricOffAxis4Left = 14;
+    const Camera_prst_isometricOffAxis4Right = 15;
+    const Camera_prst_isometricRightDown = 16;
+    const Camera_prst_isometricRightUp = 17;
+    const Camera_prst_isometricTopDown = 18;
+    const Camera_prst_isometricTopUp = 19;
+    const Camera_prst_legacyObliqueBottom = 20;
+    const Camera_prst_legacyObliqueBottomLeft = 21;
+    const Camera_prst_legacyObliqueBottomRight = 22;
+    const Camera_prst_legacyObliqueFront = 23;
+    const Camera_prst_legacyObliqueLeft = 24;
+    const Camera_prst_legacyObliqueRight = 25;
+    const Camera_prst_legacyObliqueTop = 26;
+    const Camera_prst_legacyObliqueTopLeft = 27;
+    const Camera_prst_legacyObliqueTopRight = 28;
+    const Camera_prst_legacyPerspectiveBottom = 29;
+    const Camera_prst_legacyPerspectiveBottomLeft = 30;
+    const Camera_prst_legacyPerspectiveBottomRight = 31;
+    const Camera_prst_legacyPerspectiveFront = 32;
+    const Camera_prst_legacyPerspectiveLeft = 33;
+    const Camera_prst_legacyPerspectiveRight = 34;
+    const Camera_prst_legacyPerspectiveTop = 35;
+    const Camera_prst_legacyPerspectiveTopLeft = 36;
+    const Camera_prst_legacyPerspectiveTopRight = 37;
+    const Camera_prst_obliqueBottom = 38;
+    const Camera_prst_obliqueBottomLeft = 39;
+    const Camera_prst_obliqueBottomRight = 40;
+    const Camera_prst_obliqueLeft = 41;
+    const Camera_prst_obliqueRight = 42;
+    const Camera_prst_obliqueTop = 43;
+    const Camera_prst_obliqueTopLeft = 44;
+    const Camera_prst_obliqueTopRight = 45;
+    const Camera_prst_orthographicFront = 46;
+    const Camera_prst_perspectiveAbove = 47;
+    const Camera_prst_perspectiveAboveLeftFacing = 48;
+    const Camera_prst_perspectiveAboveRightFacing = 49;
+    const Camera_prst_perspectiveBelow = 50;
+    const Camera_prst_perspectiveContrastingLeftFacing = 51;
+    const Camera_prst_perspectiveContrastingRightFacing = 52;
+    const Camera_prst_perspectiveFront = 53;
+    const Camera_prst_perspectiveHeroicExtremeLeftFacing = 54;
+    const Camera_prst_perspectiveHeroicExtremeRightFacing = 55;
+    const Camera_prst_perspectiveHeroicLeftFacing = 56;
+    const Camera_prst_perspectiveHeroicRightFacing = 57;
+    const Camera_prst_perspectiveLeft = 58;
+    const Camera_prst_perspectiveRelaxed = 59;
+    const Camera_prst_perspectiveRelaxedModerately = 60;
+    const Camera_prst_perspectiveRight = 61;
+
+    const Sp3d_prstMaterial_clear = 0;
+    const Sp3d_prstMaterial_dkEdge = 1;
+    const Sp3d_prstMaterial_flat = 2;
+    const Sp3d_prstMaterial_legacyMatte = 3;
+    const Sp3d_prstMaterial_legacyMetal = 4;
+    const Sp3d_prstMaterial_legacyPlastic = 5;
+    const Sp3d_prstMaterial_legacyWireframe = 6;
+    const Sp3d_prstMaterial_matte = 7;
+    const Sp3d_prstMaterial_metal = 8;
+    const Sp3d_prstMaterial_plastic = 9;
+    const Sp3d_prstMaterial_powder = 10;
+    const Sp3d_prstMaterial_softEdge = 11;
+    const Sp3d_prstMaterial_softmetal = 12;
+    const Sp3d_prstMaterial_translucentPowder = 13;
+    const Sp3d_prstMaterial_warmMatte = 14;
+
+    const LightRig_dir_b = 0;
+    const LightRig_dir_bl = 1;
+    const LightRig_dir_br = 2;
+    const LightRig_dir_l = 4;
+    const LightRig_dir_r = 5;
+    const LightRig_dir_t = 6;
+    const LightRig_dir_tl = 7;
+    const LightRig_dir_tr = 8;
+
+    const LightRig_rig_balanced = 0;
+    const LightRig_rig_brightRoom = 1;
+    const LightRig_rig_chilly = 2;
+    const LightRig_rig_contrasting = 3;
+    const LightRig_rig_flat = 4;
+    const LightRig_rig_flood = 5;
+    const LightRig_rig_freezing = 6;
+    const LightRig_rig_glow = 7;
+    const LightRig_rig_harsh = 8;
+    const LightRig_rig_legacyFlat1 = 9;
+    const LightRig_rig_legacyFlat2 = 10;
+    const LightRig_rig_legacyFlat3 = 11;
+    const LightRig_rig_legacyFlat4 = 12;
+    const LightRig_rig_legacyHarsh1 = 13;
+    const LightRig_rig_legacyHarsh2 = 14;
+    const LightRig_rig_legacyHarsh3 = 15;
+    const LightRig_rig_legacyHarsh4 = 16;
+    const LightRig_rig_legacyNormal1 = 17;
+    const LightRig_rig_legacyNormal2 = 18;
+    const LightRig_rig_legacyNormal3 = 19;
+    const LightRig_rig_legacyNormal4 = 20;
+    const LightRig_rig_morning = 21;
+    const LightRig_rig_soft = 22;
+    const LightRig_rig_sunrise = 23;
+    const LightRig_rig_sunset = 24;
+    const LightRig_rig_threePt = 25;
+    const LightRig_rig_twoPt = 26;
+
+    const Bevel_prst_angle = 0;
+    const Bevel_prst_artDeco = 1;
+    const Bevel_prst_circle = 2;
+    const Bevel_prst_convex = 3;
+    const Bevel_prst_coolSlant = 4;
+    const Bevel_prst_cross = 5;
+    const Bevel_prst_divot = 6;
+    const Bevel_prst_hardEdge = 7;
+    const Bevel_prst_relaxedInset = 8;
+    const Bevel_prst_riblet = 9;
+    const Bevel_prst_slope = 10;
+    const Bevel_prst_softRound = 11;
+
+    const ParameterVal_arrowheadStyle_arr = 0;
+    const ParameterVal_arrowheadStyle_auto = 1;
+    const ParameterVal_arrowheadStyle_noArr = 2;
+    const ParameterVal_autoTextRotation_grav = 0;
+    const ParameterVal_autoTextRotation_none = 1;
+    const ParameterVal_autoTextRotation_upr = 2;
+    const ParameterVal_bendPoint_beg = 0;
+    const ParameterVal_bendPoint_def = 1;
+    const ParameterVal_bendPoint_end = 2;
+    const ParameterVal_breakpoint_bal = 0;
+    const ParameterVal_breakpoint_endCnv = 1;
+    const ParameterVal_breakpoint_fixed = 2;
+    const ParameterVal_centerShapeMapping_fNode = 0;
+    const ParameterVal_centerShapeMapping_none = 1;
+    const ParameterVal_childAlignment_b = 0;
+    const ParameterVal_childAlignment_l = 1;
+    const ParameterVal_childAlignment_r = 2;
+    const ParameterVal_childAlignment_t = 3;
+    const ParameterVal_childDirection_horz = 0;
+    const ParameterVal_childDirection_vert = 1;
+    const ParameterVal_connectorDimension_1D = 0;
+    const ParameterVal_connectorDimension_2D = 1;
+    const ParameterVal_connectorDimension_cust = 2;
+    const ParameterVal_connectorPoint_auto = 0;
+    const ParameterVal_connectorPoint_bCtr = 1;
+    const ParameterVal_connectorPoint_bL = 2;
+    const ParameterVal_connectorPoint_bR = 3;
+    const ParameterVal_connectorPoint_ctr = 4;
+    const ParameterVal_connectorPoint_midL = 5;
+    const ParameterVal_connectorPoint_midR = 6;
+    const ParameterVal_connectorPoint_radial = 7;
+    const ParameterVal_connectorPoint_tCtr = 8;
+    const ParameterVal_connectorPoint_tL = 9;
+    const ParameterVal_connectorPoint_tR = 10;
+    const ParameterVal_connectorRouting_bend = 0;
+    const ParameterVal_connectorRouting_curve = 1;
+    const ParameterVal_connectorRouting_longCurve = 2;
+    const ParameterVal_connectorRouting_stra = 3;
+    const ParameterVal_continueDirection_revDir = 0;
+    const ParameterVal_continueDirection_sameDir = 1;
+    const ParameterVal_diagramHorizontalAlignment_ctr = 0;
+    const ParameterVal_diagramHorizontalAlignment_l = 1;
+    const ParameterVal_diagramHorizontalAlignment_none = 2;
+    const ParameterVal_diagramHorizontalAlignment_r = 3;
+    const ParameterVal_diagramTextAlignment_ctr = 0;
+    const ParameterVal_diagramTextAlignment_l = 1;
+    const ParameterVal_diagramTextAlignment_r = 2;
+    const ParameterVal_fallbackDimension_1D = 0;
+    const ParameterVal_fallbackDimension_2D = 1;
+    const ParameterVal_flowDirection_col = 0;
+    const ParameterVal_flowDirection_row = 1;
+    const ParameterVal_growDirection_bL = 0;
+    const ParameterVal_growDirection_bR = 1;
+    const ParameterVal_growDirection_tL = 2;
+    const ParameterVal_growDirection_tR = 3;
+    const ParameterVal_hierarchyAlignment_bCtrCh = 0;
+    const ParameterVal_hierarchyAlignment_bCtrDes = 1;
+    const ParameterVal_hierarchyAlignment_bL = 2;
+    const ParameterVal_hierarchyAlignment_bR = 3;
+    const ParameterVal_hierarchyAlignment_lB = 4;
+    const ParameterVal_hierarchyAlignment_lCtrCh = 5;
+    const ParameterVal_hierarchyAlignment_lCtrDes = 6;
+    const ParameterVal_hierarchyAlignment_lT = 7;
+    const ParameterVal_hierarchyAlignment_rB = 8;
+    const ParameterVal_hierarchyAlignment_rCtrCh = 9;
+    const ParameterVal_hierarchyAlignment_rCtrDes = 10;
+    const ParameterVal_hierarchyAlignment_rT = 11;
+    const ParameterVal_hierarchyAlignment_tCtrCh = 12;
+    const ParameterVal_hierarchyAlignment_tCtrDes = 13;
+    const ParameterVal_hierarchyAlignment_tL = 14;
+    const ParameterVal_hierarchyAlignment_tR = 15;
+    const ParameterVal_linearDirection_fromB = 0;
+    const ParameterVal_linearDirection_fromL = 1;
+    const ParameterVal_linearDirection_fromR = 2;
+    const ParameterVal_linearDirection_fromT = 3;
+    const ParameterVal_nodeHorizontalAlignment_ctr = 0;
+    const ParameterVal_nodeHorizontalAlignment_l = 1;
+    const ParameterVal_nodeHorizontalAlignment_r = 2;
+    const ParameterVal_nodeVerticalAlignment_b = 0;
+    const ParameterVal_nodeVerticalAlignment_mid = 1;
+    const ParameterVal_nodeVerticalAlignment_t = 2;
+    const ParameterVal_offset_ctr = 0;
+    const ParameterVal_offset_off = 1;
+    const ParameterVal_pyramidAccentPosition_aft = 0;
+    const ParameterVal_pyramidAccentPosition_bef = 1;
+    const ParameterVal_pyramidAccentTextMargin_stack = 0;
+    const ParameterVal_pyramidAccentTextMargin_step = 1;
+    const ParameterVal_rotationPath_alongPath = 0;
+    const ParameterVal_rotationPath_none = 1;
+    const ParameterVal_secondaryChildAlignment_b = 0;
+    const ParameterVal_secondaryChildAlignment_l = 1;
+    const ParameterVal_secondaryChildAlignment_none = 2;
+    const ParameterVal_secondaryChildAlignment_r = 3;
+    const ParameterVal_secondaryChildAlignment_t = 4;
+    const ParameterVal_secondaryLinearDirection_fromB = 0;
+    const ParameterVal_secondaryLinearDirection_fromL = 1;
+    const ParameterVal_secondaryLinearDirection_fromR = 2;
+    const ParameterVal_secondaryLinearDirection_fromT = 3;
+    const ParameterVal_secondaryLinearDirection_none = 4;
+    const ParameterVal_startingElement_node = 0;
+    const ParameterVal_startingElement_trans = 1;
+    const ParameterVal_textAnchorHorizontal_ctr = 0;
+    const ParameterVal_textAnchorHorizontal_none = 1;
+    const ParameterVal_textAnchorVertical_b = 0;
+    const ParameterVal_textAnchorVertical_mid = 1;
+    const ParameterVal_textAnchorVertical_top = 2;
+    const ParameterVal_textBlockDirection_horz = 0;
+    const ParameterVal_textBlockDirection_vert = 1;
+    const ParameterVal_textDirection_fromB = 0;
+    const ParameterVal_textDirection_fromT = 1;
+    const ParameterVal_verticalAlignment_b = 0;
+    const ParameterVal_verticalAlignment_mid = 1;
+    const ParameterVal_verticalAlignment_none = 2;
+    const ParameterVal_verticalAlignment_t = 3;
+
+    const FunctionValue_animLvlStr_ctr = 0;
+    const FunctionValue_animLvlStr_lvl = 1;
+    const FunctionValue_animLvlStr_none = 2;
+    const FunctionValue_animOneStr_branch = 0;
+    const FunctionValue_animOneStr_none = 1;
+    const FunctionValue_animOneStr_one = 2;
+    const FunctionValue_direction_norm = 0;
+    const FunctionValue_direction_rev = 1;
+    const FunctionValue_hierBranchStyle_hang = 0;
+    const FunctionValue_hierBranchStyle_init = 1;
+    const FunctionValue_hierBranchStyle_l = 2;
+    const FunctionValue_hierBranchStyle_r = 3;
+    const FunctionValue_hierBranchStyle_std = 4;
+    const FunctionValue_resizeHandlesStr_exact = 0;
+    const FunctionValue_resizeHandlesStr_rel = 1;
+
+    const Coordinate_universalMeasure_cm = 0;
+    const Coordinate_universalMeasure_mm = 1;
+    const Coordinate_universalMeasure_in = 2;
+    const Coordinate_universalMeasure_pt = 3;
+    const Coordinate_universalMeasure_pc = 4;
+    const Coordinate_universalMeasure_pi = 5;
+
+    const Constr_font_scale = 360;
 
     if (!String.prototype.includes) {
       String.prototype.includes = function(search, start) {
@@ -792,7 +816,7 @@
     InitClass(DiagramData, CBaseFormatObject, AscDFH.historyitem_type_DiagramData);
 
     DiagramData.prototype.setDataModel = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DiagramDataDataModel, this.getDataModel(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DiagramDataDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
       this.setParentToChild(oPr);
     }
@@ -830,7 +854,6 @@
       return [this.dataModel];
     };
 
-
     changesFactory[AscDFH.historyitem_DataModelBg] = CChangeObject;
     changesFactory[AscDFH.historyitem_DataModelCxnLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_DataModelExtLst] = CChangeObject;
@@ -864,31 +887,31 @@
     InitClass(DataModel, CBaseFormatObject, AscDFH.historyitem_type_DataModel);
 
     DataModel.prototype.setBg = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelBg, this.getBg(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelBg, this.getBg(), oPr));
       this.bg = oPr;
       this.setParentToChild(oPr);
     }
 
     DataModel.prototype.setCxnLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelCxnLst, this.getCxnLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelCxnLst, this.getCxnLst(), oPr));
       this.cxnLst = oPr;
       this.setParentToChild(oPr);
     }
 
     DataModel.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     DataModel.prototype.setPtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelPtLst, this.getPtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelPtLst, this.getPtLst(), oPr));
       this.ptLst = oPr;
       this.setParentToChild(oPr);
     }
 
     DataModel.prototype.setWhole = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelWhole, this.getWhole(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelWhole, this.getWhole(), oPr));
       this.whole = oPr;
       this.setParentToChild(oPr);
     }
@@ -991,16 +1014,16 @@
 
     CCommonDataList.prototype.addToLst = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CCommonDataListAdd, nInsertIdx, [oPr], true));
-      this.list.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CCommonDataListAdd, nInsertIdx, [oPr], true));
+      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     CCommonDataList.prototype.removeFromLst = function (nIdx) {
       if (nIdx > -1 && nIdx < this.list.length) {
         this.list[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CCommonDataListRemove, nIdx, [this.list[nIdx]], false));
-        this.list.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CCommonDataListRemove, nIdx, [this.list[nIdx]], false));
+        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
       }
     };
 
@@ -1057,7 +1080,6 @@
     }
 
     InitClass(CxnLst, CCommonDataList, AscDFH.historyitem_type_CxnLst);
-
     CxnLst.prototype.readChild = function(nType, pReader) {
       var s = pReader.stream;
       switch (nType) {
@@ -1133,52 +1155,52 @@
     InitClass(Cxn, CBaseFormatObject, AscDFH.historyitem_type_Cxn);
 
     Cxn.prototype.setDestId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnDestId, this.getDestId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnDestId, this.getDestId(), pr));
       this.destId = pr;
     }
 
     Cxn.prototype.setDestOrd = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnDestOrd, this.getDestOrd(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnDestOrd, this.getDestOrd(), pr));
       this.destOrd = pr;
     }
 
     Cxn.prototype.setModelId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnModelId, this.getModelId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnModelId, this.getModelId(), pr));
       this.modelId = pr;
     }
 
     Cxn.prototype.setParTransId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnParTransId, this.getParTransId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnParTransId, this.getParTransId(), pr));
       this.parTransId = pr;
     }
 
     Cxn.prototype.setPresId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnPresId, this.getPresId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnPresId, this.getPresId(), pr));
       this.presId = pr;
     }
 
     Cxn.prototype.setSibTransId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSibTransId, this.getSibTransId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSibTransId, this.getSibTransId(), pr));
       this.sibTransId = pr;
     }
 
     Cxn.prototype.setSrcId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSrcId, this.getSrcId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSrcId, this.getSrcId(), pr));
       this.srcId = pr;
     }
 
     Cxn.prototype.setSrcOrd = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSrcOrd, this.getSrcOrd(), pr)); // TODO: srcord, type is long maybe
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSrcOrd, this.getSrcOrd(), pr)); // TODO: srcord, type is long maybe
       this.srcOrd = pr;
     }
 
     Cxn.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnType, this.getType(), pr));
       this.type = pr;
     }
 
     Cxn.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CxnExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CxnExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
@@ -1298,22 +1320,25 @@
     function Ext() {
       CBaseFormatObject.call(this);
       this.uri = null;
+      this.data = null;
+      this.dataName = null;
     }
 
     InitClass(Ext, CBaseFormatObject, AscDFH.historyitem_type_Ext);
 
     Ext.prototype.setUri = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ExtUri, this.getUri(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ExtUri, this.getUri(), pr));
       this.uri = pr;
-    }
+    };
 
     Ext.prototype.getUri = function () {
       return this.uri;
-    }
+    };
 
     Ext.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setUri(this.getUri());
-    }
+    };
+
 
     changesFactory[AscDFH.historyitem_BgFormatFill] = CChangeObjectNoId;
     changesFactory[AscDFH.historyitem_BgFormatEffect] = CChangeObjectNoId;
@@ -1338,13 +1363,13 @@
 
 
     BgFormat.prototype.setFill = function (oPr) {
-      oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_BgFormatFill, this.getFill(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_BgFormatFill, this.getFill(), oPr));
       this.fill = oPr;
       this.handleUpdateFill();
     }
 
     BgFormat.prototype.setEffect = function (oPr) {
-      oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_BgFormatEffect, this.getEffect(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_BgFormatEffect, this.getEffect(), oPr));
       this.effect = oPr;
       this.setParentToChild(oPr);
     }
@@ -1403,7 +1428,6 @@
     BgFormat.prototype.getChildren = function() {
       return [this.fill, this.effect];
     };
-
     BgFormat.prototype.getSmartArt = function() {
       var oCurParent = this.parent;
       while (oCurParent) {
@@ -1431,7 +1455,6 @@
         }
       }
     };
-
     BgFormat.prototype.Refresh_RecalcData2 = function(data)
     {
     };
@@ -1458,13 +1481,13 @@
     InitClass(Whole, CBaseFormatObject, AscDFH.historyitem_type_Whole);
 
     Whole.prototype.setEffect = function (oPr) {
-      oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_WholeEffect, this.getEffect(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_WholeEffect, this.getEffect(), oPr));
       this.effect = oPr;
       this.setParentToChild(oPr);
     }
 
     Whole.prototype.setLn = function (oPr) {
-      oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_WholeLn, this.getLn(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_WholeLn, this.getLn(), oPr));
       this.ln = oPr;
       this.setParentToChild(oPr);
     }
@@ -1565,43 +1588,6 @@
     drawingsChangesMap[AscDFH.historyitem_PointInfoAssociation] = function (oClass, value) {
       oClass.association = value;
     };
-    function PointInfo() {
-      CBaseFormatObject.call(this);
-      this.point = null;
-      this.association = null;
-    }
-    InitClass(PointInfo, CBaseFormatObject, AscDFH.historyitem_type_PointInfo);
-
-    PointInfo.prototype.getPoint = function () {
-      return this.point;
-    }
-
-    PointInfo.prototype.getAssociation = function () {
-      return this.association;
-    }
-
-    PointInfo.prototype.setPoint = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointInfoPoint, this.getPoint(), oPr));
-      this.point = oPr;
-      this.setParentToChild(oPr);
-    }
-    PointInfo.prototype.setAssociation = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointInfoAssociation, this.getAssociation(), oPr));
-      this.association = oPr;
-      this.setParentToChild(oPr);
-    }
-
-    PointInfo.prototype.fillObject = function (oCopy, oIdMap) {
-      if (this.point) {
-        oCopy.setPoint(this.getPoint().createDuplicate());
-      }
-      if (this.association) {
-        oCopy.setAssociation(this.getAssociation().createDuplicate());
-      }
-    }
-
-
-
 
     changesFactory[AscDFH.historyitem_PointCxnId] = CChangeString;
     changesFactory[AscDFH.historyitem_PointModelId] = CChangeString;
@@ -1662,12 +1648,12 @@
     };
 
     Point.prototype.setCxnId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PointCxnId, this.getCxnId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PointCxnId, this.getCxnId(), pr));
       this.cxnId = pr;
     }
 
     Point.prototype.setModelId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PointModelId, this.getModelId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PointModelId, this.getModelId(), pr));
       this.modelId = pr;
 
     }
@@ -1678,33 +1664,60 @@
       }
     }
 
+    Point.prototype.isRecalculateInsets = function () {
+      const insets = {Top: true, Bottom: true, Left: true, Right: true};
+      if (this.t) {
+        var bodyPr = this.t.bodyPr;
+        if (bodyPr) {
+          if (AscFormat.isRealNumber(bodyPr.tIns)) {
+            insets.Top = false;
+          }
+          if (AscFormat.isRealNumber(bodyPr.bIns)) {
+            insets.Bottom = false;
+          }
+          if (AscFormat.isRealNumber(bodyPr.lIns)) {
+            insets.Left = false;
+          }
+          if (AscFormat.isRealNumber(bodyPr.rIns)) {
+            insets.Right = false;
+          }
+        }
+      }
+      return insets;
+    }
+
     Point.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PointType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PointType, this.getType(), pr));
       this.type = pr;
     }
 
     Point.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Point.prototype.setPrSet = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointPrSet, this.getPrSet(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointPrSet, this.getPrSet(), oPr));
       this.prSet = oPr;
       this.setParentToChild(oPr);
     }
 
     Point.prototype.setSpPr = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointSpPr, this.getSpPr(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointSpPr, this.getSpPr(), oPr));
       this.spPr = oPr;
       this.setParentToChild(oPr);
     }
 
     Point.prototype.setT = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointT, this.getT(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointT, this.getT(), oPr));
       this.t = oPr;
       this.setParentToChild(oPr);
+    }
+
+    Point.prototype.setPhldrT = function(pr) {
+      var prSet = this.getPrSet();
+      prSet && prSet.setPhldrT(pr);
     }
 
     Point.prototype.getCxnId = function () {
@@ -2021,155 +2034,155 @@
 
 
     PrSet.prototype.setCoherent3DOff = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCoherent3DOff, this.getCoherent3DOff(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCoherent3DOff, this.getCoherent3DOff(), pr));
       this.coherent3DOff = pr;
-    }
+    };
 
     PrSet.prototype.setCsCatId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetCsCatId, this.getCsCatId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetCsCatId, this.getCsCatId(), pr));
       this.csCatId = pr;
-    }
+    };
 
     PrSet.prototype.setCsTypeId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetCsTypeId, this.getCsTypeId(), pr))
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetCsTypeId, this.getCsTypeId(), pr))
       this.csTypeId = pr;
-    }
+    };
 
     PrSet.prototype.setCustAng = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustAng, this.getCustAng(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustAng, this.getCustAng(), pr));
       this.custAng = pr;
-    }
+    };
 
     PrSet.prototype.setCustFlipHor = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustFlipHor, this.getCustFlipHor(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustFlipHor, this.getCustFlipHor(), pr));
       this.custFlipHor = pr;
-    }
+    };
 
     PrSet.prototype.setCustFlipVert = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustFlipVert, this.getCustFlipVert(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustFlipVert, this.getCustFlipVert(), pr));
       this.custFlipVert = pr;
-    }
+    };
 
     PrSet.prototype.setCustLinFactNeighborX = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactNeighborX, this.getCustLinFactNeighborX(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactNeighborX, this.getCustLinFactNeighborX(), pr));
       this.custLinFactNeighborX = pr;
-    }
+    };
 
     PrSet.prototype.setCustLinFactNeighborY = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactNeighborY, this.getCustLinFactNeighborY(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactNeighborY, this.getCustLinFactNeighborY(), pr));
       this.custLinFactNeighborY = pr;
-    }
+    };
 
     PrSet.prototype.setCustLinFactX = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactX, this.getCustLinFactX(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactX, this.getCustLinFactX(), pr));
       this.custLinFactX = pr;
-    }
+    };
 
     PrSet.prototype.setCustLinFactY = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactY, this.getCustLinFactY(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactY, this.getCustLinFactY(), pr));
       this.custLinFactY = pr;
-    }
+    };
 
     PrSet.prototype.setCustRadScaleInc = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustRadScaleInc, this.getCustRadScaleInc(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustRadScaleInc, this.getCustRadScaleInc(), pr));
       this.custRadScaleInc = pr;
-    }
+    };
 
     PrSet.prototype.setCustRadScaleRad = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustRadScaleRad, this.getCustRadScaleRad(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustRadScaleRad, this.getCustRadScaleRad(), pr));
       this.custRadScaleRad = pr;
-    }
+    };
 
     PrSet.prototype.setCustScaleX = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustScaleX, this.getCustScaleX(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustScaleX, this.getCustScaleX(), pr));
       this.custScaleX = pr;
-    }
+    };
 
     PrSet.prototype.setCustScaleY = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustScaleY, this.getCustScaleY(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustScaleY, this.getCustScaleY(), pr));
       this.custScaleY = pr;
-    }
+    };
 
     PrSet.prototype.setCustSzX = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustSzX, this.getCustSzX(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustSzX, this.getCustSzX(), pr));
       this.custSzX = pr;
-    }
+    };
 
     PrSet.prototype.setCustSzY = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustSzY, this.getCustSzY(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustSzY, this.getCustSzY(), pr));
       this.custSzY = pr;
-    }
+    };
 
     PrSet.prototype.setCustT = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustT, this.getCustT(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustT, this.getCustT(), pr));
       this.custT = pr;
-    }
+    };
 
     PrSet.prototype.setLoCatId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetLoCatId, this.getLoCatId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetLoCatId, this.getLoCatId(), pr));
       this.loCatId = pr;
-    }
+    };
 
     PrSet.prototype.setLoTypeId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetLoTypeId, this.getLoTypeId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetLoTypeId, this.getLoTypeId(), pr));
       this.loTypeId = pr;
-    }
+    };
 
     PrSet.prototype.setPhldr = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetPhldr, this.getPhldr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetPhldr, this.getPhldr(), pr));
       this.phldr = pr;
-    }
+    };
 
     PrSet.prototype.setPhldrT = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPhldrT, this.getPhldrT(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPhldrT, this.getPhldrT(), pr));
       this.phldrT = pr;
-    }
+    };
 
     PrSet.prototype.setPresAssocID = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresAssocID, this.getPresAssocID(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresAssocID, this.getPresAssocID(), pr));
       this.presAssocID = pr;
-    }
+    };
 
     PrSet.prototype.setPresName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresName, this.getPresName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresName, this.getPresName(), pr));
       this.presName = pr;
-    }
+    };
     PrSet.prototype.setPresStyleCnt = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetPresStyleCnt, this.getPresStyleCnt(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetPresStyleCnt, this.getPresStyleCnt(), pr));
       this.presStyleCnt = pr;
-    }
+    };
 
     PrSet.prototype.setPresStyleIdx = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetPresStyleIdx, this.getPresStyleIdx(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetPresStyleIdx, this.getPresStyleIdx(), pr));
       this.presStyleIdx = pr;
-    }
+    };
 
     PrSet.prototype.setPresStyleLbl = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresStyleLbl, this.getPresStyleLbl(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresStyleLbl, this.getPresStyleLbl(), pr));
       this.presStyleLbl = pr;
-    }
+    };
 
     PrSet.prototype.setQsCatId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetQsCatId, this.getQsCatId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetQsCatId, this.getQsCatId(), pr));
       this.qsCatId = pr;
-    }
+    };
 
     PrSet.prototype.setQsTypeId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetQsTypeId, this.getQsTypeId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetQsTypeId, this.getQsTypeId(), pr));
       this.qsTypeId = pr;
-    }
+    };
 
     PrSet.prototype.setStyle = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PrSetStyle, this.getStyle(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PrSetStyle, this.getStyle(), oPr));
       this.style = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     PrSet.prototype.setPresLayoutVars = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PrSetPresLayoutVars, this.getPresLayoutVars(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PrSetPresLayoutVars, this.getPresLayoutVars(), oPr));
       this.presLayoutVars = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     PrSet.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setCoherent3DOff(this.getCoherent3DOff());
@@ -2206,127 +2219,127 @@
       if (this.getPresLayoutVars()) {
         oCopy.setPresLayoutVars(this.presLayoutVars.createDuplicate(oIdMap));
       }
-    }
+    };
 
     PrSet.prototype.getCoherent3DOff = function () {
       return this.coherent3DOff;
-    }
+    };
 
     PrSet.prototype.getCsCatId = function () {
       return this.csCatId;
-    }
+    };
 
     PrSet.prototype.getCsTypeId = function () {
       return this.csTypeId;
-    }
+    };
 
     PrSet.prototype.getCustAng = function () {
       return this.custAng;
-    }
+    };
 
     PrSet.prototype.getCustFlipHor = function () {
       return this.custFlipHor;
-    }
+    };
 
     PrSet.prototype.getCustFlipVert = function () {
       return this.custFlipVert;
-    }
+    };
 
     PrSet.prototype.getCustLinFactNeighborX = function () {
       return this.custLinFactNeighborX;
-    }
+    };
 
     PrSet.prototype.getCustLinFactNeighborY = function () {
       return this.custLinFactNeighborY;
-    }
+    };
 
     PrSet.prototype.getCustLinFactX = function () {
       return this.custLinFactX;
-    }
+    };
 
     PrSet.prototype.getCustLinFactY = function () {
       return this.custLinFactY;
-    }
+    };
 
     PrSet.prototype.getCustRadScaleInc = function () {
       return this.custRadScaleInc;
-    }
+    };
 
     PrSet.prototype.getCustRadScaleRad = function () {
       return this.custRadScaleRad;
-    }
+    };
 
     PrSet.prototype.getCustScaleX = function () {
       return this.custScaleX;
-    }
+    };
 
     PrSet.prototype.getCustScaleY = function () {
       return this.custScaleY;
-    }
+    };
 
     PrSet.prototype.getCustSzX = function () {
       return this.custSzX;
-    }
+    };
 
     PrSet.prototype.getCustSzY = function () {
       return this.custSzY;
-    }
+    };
 
     PrSet.prototype.getCustT = function () {
       return this.custT;
-    }
+    };
 
     PrSet.prototype.getLoCatId = function () {
       return this.loCatId;
-    }
+    };
 
     PrSet.prototype.getLoTypeId = function () {
       return this.loTypeId;
-    }
+    };
 
     PrSet.prototype.getPhldr = function () {
       return this.phldr;
-    }
+    };
 
     PrSet.prototype.getPhldrT = function () {
       return this.phldrT;
-    }
+    };
 
     PrSet.prototype.getPresAssocID = function () {
       return this.presAssocID;
-    }
+    };
 
     PrSet.prototype.getPresName = function () {
       return this.presName;
-    }
+    };
 
     PrSet.prototype.getPresStyleCnt = function () {
       return this.presStyleCnt;
-    }
+    };
 
     PrSet.prototype.getPresStyleIdx = function () {
       return this.presStyleIdx;
-    }
+    };
 
     PrSet.prototype.getPresStyleLbl = function () {
       return this.presStyleLbl;
-    }
+    };
 
     PrSet.prototype.getQsCatId = function () {
       return this.qsCatId;
-    }
+    };
 
     PrSet.prototype.getQsTypeId = function () {
       return this.qsTypeId;
-    }
+    };
 
     PrSet.prototype.getStyle = function () {
       return this.style;
-    }
+    };
 
     PrSet.prototype.getPresLayoutVars = function () {
       return this.presLayoutVars;
-    }
+    };
 
     PrSet.prototype.privateWriteAttributes = function(pWriter) {
       pWriter._WriteBool2(1, this.coherent3DOff);
@@ -2335,14 +2348,14 @@
       pWriter._WriteInt2(4, this.custAng ? (this.custAng / AscFormat.cToRad + 0.5) >> 0 : null);
       pWriter._WriteBool2(5, this.custFlipHor);
       pWriter._WriteBool2(6, this.custFlipVert);
-      pWriter._WriteInt2(7, this.custLinFactNeighborX ? this.custLinFactNeighborX * 100000 : null);
-      pWriter._WriteInt2(8, this.custLinFactNeighborY ? this.custLinFactNeighborY * 100000 : null);
-      pWriter._WriteInt2(9, this.custLinFactX);
-      pWriter._WriteInt2(10, this.custLinFactY);
+      pWriter._WriteInt2(7, this.custLinFactNeighborX ? Math.floor(this.custLinFactNeighborX * 100000) : null);
+      pWriter._WriteInt2(8, this.custLinFactNeighborY ? Math.floor(this.custLinFactNeighborY * 100000) : null);
+      pWriter._WriteInt2(9, this.custLinFactX ? Math.floor(this.custLinFactX * 100000) : null);
+      pWriter._WriteInt2(10, this.custLinFactY ? Math.floor(this.custLinFactY * 100000) : null);
       pWriter._WriteInt2(11, this.custRadScaleInc);
       pWriter._WriteInt2(12, this.custRadScaleRad);
-      pWriter._WriteInt2(13, this.custScaleX ? this.custScaleX * 100000 : null);
-      pWriter._WriteInt2(14, this.custScaleY ? this.custScaleY * 100000 : null);
+      pWriter._WriteInt2(13, this.custScaleX ? Math.floor(this.custScaleX * 100000) : null);
+      pWriter._WriteInt2(14, this.custScaleY ? Math.floor(this.custScaleY * 100000) : null);
       pWriter._WriteInt2(15, this.custSzX);
       pWriter._WriteInt2(16, this.custSzY);
       pWriter._WriteBool2(17, this.custT);
@@ -2360,7 +2373,7 @@
     };
     PrSet.prototype.writeChildren = function(pWriter) {
       this.writeRecord2(pWriter, 0, this.presLayoutVars);
-      this.writeRecord2(pWriter, 1, this.style);
+      pWriter.WriteRecord2(1, this.style, pWriter.WriteShapeStyle);
     };
     PrSet.prototype.readAttribute = function(nType, pReader) {
       var oStream = pReader.stream;
@@ -2372,8 +2385,8 @@
       else if (6 === nType) this.setCustFlipVert(oStream.GetBool());
       else if (7 === nType) this.setCustLinFactNeighborX(oStream.GetLong() / 100000);
       else if (8 === nType) this.setCustLinFactNeighborY(oStream.GetLong() / 100000);
-      else if (9 === nType) this.setCustLinFactX(oStream.GetLong());
-      else if (10 === nType) this.setCustLinFactY(oStream.GetLong());
+      else if (9 === nType) this.setCustLinFactX(oStream.GetLong() / 100000);
+      else if (10 === nType) this.setCustLinFactY(oStream.GetLong() / 100000);
       else if (11 === nType) this.setCustRadScaleInc(oStream.GetLong());
       else if (12 === nType) this.setCustRadScaleRad(oStream.GetLong());
       else if (13 === nType) this.setCustScaleX(oStream.GetLong() / 100000);
@@ -2402,8 +2415,7 @@
           break;
         }
         case 1: {
-          this.setStyle(new StyleData());
-          this.style.fromPPTY(pReader);
+          this.setStyle(pReader.ReadShapeStyle());
           break;
         }
         default: {
@@ -2415,7 +2427,7 @@
 
     PrSet.prototype.getChildren = function() {
       return [this.presLayoutVars, this.style];
-    }
+    };
 
 
 
@@ -2482,111 +2494,111 @@
     InitClass(LayoutDef, CBaseFormatObject, AscDFH.historyitem_type_LayoutDef);
 
     LayoutDef.prototype.setDefStyle = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefDefStyle, this.getDefStyle(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefDefStyle, this.getDefStyle(), pr));
       this.defStyle = pr;
-    }
+    };
 
     LayoutDef.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefMinVer, this.getMinVer(), pr));
       this.minVer = pr;
-    }
+    };
 
     LayoutDef.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
-    }
+    };
 
     LayoutDef.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setClrData = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefClrData, this.getClrData(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefClrData, this.getClrData(), oPr));
       this.clrData = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setLayoutNode = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefLayoutNode, this.getLayoutNode(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefLayoutNode, this.getLayoutNode(), oPr));
       this.layoutNode = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setSampData = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefSampData, this.getSampData(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefSampData, this.getSampData(), oPr));
       this.sampData = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setStyleData = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefStyleData, this.getStyleData(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefStyleData, this.getStyleData(), oPr));
       this.styleData = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setTitle = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefTitle, this.getTitle(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefTitle, this.getTitle(), oPr));
       this.title = oPr;
       this.setParentToChild(oPr);
     };
 
     LayoutDef.prototype.setDesc = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefDesc, this.getDesc(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefDesc, this.getDesc(), oPr));
       this.desc = oPr;
       this.setParentToChild(oPr);
     };
 
     LayoutDef.prototype.getDefStyle = function () {
       return this.defStyle;
-    }
+    };
 
     LayoutDef.prototype.getMinVer = function () {
       return this.minVer;
-    }
+    };
 
     LayoutDef.prototype.getUniqueId = function () {
       return this.uniqueId;
-    }
+    };
 
     LayoutDef.prototype.getCatLst = function () {
       return this.catLst;
-    }
+    };
 
     LayoutDef.prototype.getClrData = function () {
       return this.clrData;
-    }
+    };
 
     LayoutDef.prototype.getDesc = function () {
       return this.desc;
-    }
+    };
 
     LayoutDef.prototype.getExtLst = function () {
       return this.extLst;
-    }
+    };
 
     LayoutDef.prototype.getLayoutNode = function () {
       return this.layoutNode;
-    }
+    };
 
     LayoutDef.prototype.getSampData = function () {
       return this.sampData;
-    }
+    };
 
     LayoutDef.prototype.getStyleData = function () {
       return this.styleData;
-    }
+    };
 
     LayoutDef.prototype.getTitle = function () {
       return this.title;
-    }
+    };
 
     LayoutDef.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setDefStyle(this.getDefStyle());
@@ -2616,7 +2628,7 @@
       if (this.getDesc()) {
         oCopy.setDesc(this.getDesc().createDuplicate(oIdMap));
       }
-    }
+    };
 
     LayoutDef.prototype.privateWriteAttributes = function(pWriter) {
       pWriter._WriteString2(0, this.uniqueId);
@@ -2685,13 +2697,12 @@
     LayoutDef.prototype.getChildren = function() {
       return [this.title, this.desc, this.catLst, this.sampData, this.styleData, this.clrData, this.layoutNode];
     };
-
     LayoutDef.prototype.startAlgorithm = function (pointTree) {
       var entry = this.getLayoutNode();
       if (entry) {
         entry.startAlgorithm(pointTree);
       }
-    }
+    };
 
 
     function CatLst() {
@@ -2734,12 +2745,12 @@
     InitClass(SCat, CBaseFormatObject, AscDFH.historyitem_type_SCat);
 
     SCat.prototype.setPri = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_SCatPri, this.getPri(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_SCatPri, this.getPri(), pr));
       this.pri = pr;
     }
 
     SCat.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_SCatType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SCatType, this.getType(), pr));
       this.type = pr;
     }
 
@@ -2789,12 +2800,12 @@
     InitClass(ClrData, CBaseFormatObject, AscDFH.historyitem_type_ClrData);
 
     ClrData.prototype.setUseDef = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ClrDataUseDef, this.getUseDef(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ClrDataUseDef, this.getUseDef(), pr));
       this.useDef = pr;
     }
 
     ClrData.prototype.setDataModel = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ClrDataDataModel, this.getDataModel(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ClrDataDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
       this.setParentToChild(oPr);
     }
@@ -2857,16 +2868,14 @@
       this.lang = null;
       this.val = null;
     }
-
     InitClass(Desc, CBaseFormatObject, AscDFH.historyitem_type_Desc);
-
     Desc.prototype.setLang = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescLang, this.getLang(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescLang, this.getLang(), pr));
       this.lang = pr;
     }
 
     Desc.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -2915,6 +2924,9 @@
       oClass.styleLbl = value;
     };
 
+    const EChOrder_chOrderB = 0;
+    const EChOrder_chOrderT = 0;
+
     function LayoutNode() {
       CCommonDataList.call(this);
       this.chOrder = null;
@@ -2926,40 +2938,40 @@
     InitClass(LayoutNode, CCommonDataList, AscDFH.historyitem_type_LayoutNode);
 
     LayoutNode.prototype.setChOrder = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LayoutNodeChOrder, this.getChOrder(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LayoutNodeChOrder, this.getChOrder(), pr));
       this.chOrder = pr;
-    }
+    };
 
     LayoutNode.prototype.setMoveWith = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeMoveWith, this.getMoveWith(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeMoveWith, this.getMoveWith(), pr));
       this.moveWith = pr;
-    }
+    };
 
     LayoutNode.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeName, this.getName(), pr));
       this.name = pr;
-    }
+    };
 
     LayoutNode.prototype.setStyleLbl = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeStyleLbl, this.getStyleLbl(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeStyleLbl, this.getStyleLbl(), pr));
       this.styleLbl = pr;
-    }
+    };
 
     LayoutNode.prototype.getChOrder = function () {
       return this.chOrder;
-    }
+    };
 
     LayoutNode.prototype.getMoveWith = function () {
       return this.moveWith;
-    }
+    };
 
     LayoutNode.prototype.getName = function () {
       return this.name;
-    }
+    };
 
     LayoutNode.prototype.getStyleLbl = function () {
       return this.styleLbl;
-    }
+    };
 
     LayoutNode.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setChOrder(this.getChOrder());
@@ -2982,7 +2994,10 @@
         case 0xb7: oElement = new RuleLst(); break;
         case 0xb8: oElement = new SShape(); break;
         case 0xb9: oElement = new VarLst(); break;
-        default:break;
+        default: {
+          pReader.stream.SkipRecord();
+          break;
+        }
       }
       if(oElement) {
         oElement.fromPPTY(pReader);
@@ -2993,6 +3008,7 @@
       pWriter._WriteString2(0, this.name);
       pWriter._WriteString2(1, this.styleLbl);
       pWriter._WriteString2(2, this.moveWith);
+      pWriter._WriteUChar2(3, this.chOrder);
     };
     LayoutNode.prototype.writeChildren = function(pWriter) {
       for(var nIndex = 0; nIndex < this.list.length; ++nIndex) {
@@ -3016,6 +3032,7 @@
       if (0 === nType) this.setName(oStream.GetString2());
       else if (1 === nType) this.setStyleLbl(oStream.GetString2());
       else if (2 === nType) this.setMoveWith(oStream.GetString2());
+      else if (3 === nType) this.setChOrder(oStream.GetUChar());
 
     };
     LayoutNode.prototype.readChild = function(nType, pReader) {
@@ -3030,7 +3047,7 @@
       return this.list.reduce(function (save, next) {
         return next instanceof ConstrLst ? next : save;
       }, undefined);
-    }
+    };
 
     LayoutNode.prototype.startAlgorithm = function (pointTree) {
       if (pointTree) {
@@ -3055,11 +3072,11 @@
           });
         }
       }
-    }
+    };
 
     LayoutNode.prototype.findPoint = function (pointInfo) {
 
-    }
+    };
 
 
     changesFactory[AscDFH.historyitem_AlgRev] = CChangeLong;
@@ -3094,33 +3111,33 @@
     InitClass(Alg, CBaseFormatObject, AscDFH.historyitem_type_Alg);
 
     Alg.prototype.setRev = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AlgRev, this.getRev(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AlgRev, this.getRev(), pr));
       this.rev = pr;
     }
 
     Alg.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AlgType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AlgType, this.getType(), pr));
       this.type = pr;
     }
 
     Alg.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AlgExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AlgExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Alg.prototype.addToLstParam = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.param.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_AlgAddParam, nInsertIdx, [oPr], true));
-      this.param.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_AlgAddParam, nInsertIdx, [oPr], true));
+      nInsertIdx === this.param.length ? this.param.push(oPr) : this.param.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     Alg.prototype.removeFromLstParam = function (nIdx) {
       if (nIdx > -1 && nIdx < this.param.length) {
         this.param[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_AlgRemoveParam, nIdx, [this.param[nIdx]], false));
-        this.param.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_AlgRemoveParam, nIdx, [this.param[nIdx]], false));
+        nIdx === this.param.length - 1 ? this.param.pop() : this.param.splice(nIdx, 1);
       }
     };
 
@@ -3364,328 +3381,328 @@
     InitClass(ParameterVal, CBaseFormatObject, AscDFH.historyitem_type_ParameterVal);
 
     ParameterVal.prototype.setArrowheadStyle = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValArrowheadStyle, this.getArrowheadStyle(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValArrowheadStyle, this.getArrowheadStyle(), pr));
       this.arrowheadStyle = pr;
-    }
+    };
 
     ParameterVal.prototype.setAutoTextRotation = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValAutoTextRotation, this.getAutoTextRotation(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValAutoTextRotation, this.getAutoTextRotation(), pr));
       this.autoTextRotation = pr;
-    }
+    };
 
     ParameterVal.prototype.setBendPoint = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValBendPoint, this.getBendPoint(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValBendPoint, this.getBendPoint(), pr));
       this.bendPoint = pr;
-    }
+    };
 
     ParameterVal.prototype.setBreakpoint = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValBreakpoint, this.getBreakpoint(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValBreakpoint, this.getBreakpoint(), pr));
       this.breakpoint = pr;
-    }
+    };
 
     ParameterVal.prototype.setCenterShapeMapping = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValCenterShapeMapping, this.getCenterShapeMapping(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValCenterShapeMapping, this.getCenterShapeMapping(), pr));
       this.centerShapeMapping = pr;
-    }
+    };
 
     ParameterVal.prototype.setChildAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValChildAlignment, this.getChildAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValChildAlignment, this.getChildAlignment(), pr));
       this.childAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setChildDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValChildDirection, this.getChildDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValChildDirection, this.getChildDirection(), pr));
       this.childDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setConnectorDimension = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorDimension, this.getConnectorDimension(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorDimension, this.getConnectorDimension(), pr));
       this.connectorDimension = pr;
-    }
+    };
 
     ParameterVal.prototype.setConnectorPoint = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorPoint, this.getConnectorPoint(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorPoint, this.getConnectorPoint(), pr));
       this.connectorPoint = pr;
-    }
+    };
 
     ParameterVal.prototype.setConnectorRouting = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorRouting, this.getConnectorRouting(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorRouting, this.getConnectorRouting(), pr));
       this.connectorRouting = pr;
-    }
+    };
 
     ParameterVal.prototype.setContinueDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValContinueDirection, this.getContinueDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValContinueDirection, this.getContinueDirection(), pr));
       this.continueDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setDiagramHorizontalAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramHorizontalAlignment, this.getDiagramHorizontalAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramHorizontalAlignment, this.getDiagramHorizontalAlignment(), pr));
       this.diagramHorizontalAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setDiagramTextAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramTextAlignment, this.getDiagramTextAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramTextAlignment, this.getDiagramTextAlignment(), pr));
       this.diagramTextAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setFallbackDimension = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValFallbackDimension, this.getFallbackDimension(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValFallbackDimension, this.getFallbackDimension(), pr));
       this.fallbackDimension = pr;
-    }
+    };
 
     ParameterVal.prototype.setFlowDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValFlowDirection, this.getFlowDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValFlowDirection, this.getFlowDirection(), pr));
       this.flowDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setGrowDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValGrowDirection, this.getGrowDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValGrowDirection, this.getGrowDirection(), pr));
       this.growDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setHierarchyAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValHierarchyAlignment, this.getHierarchyAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValHierarchyAlignment, this.getHierarchyAlignment(), pr));
       this.hierarchyAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setLinearDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValLinearDirection, this.getLinearDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValLinearDirection, this.getLinearDirection(), pr));
       this.linearDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setNodeHorizontalAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValNodeHorizontalAlignment, this.getNodeHorizontalAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValNodeHorizontalAlignment, this.getNodeHorizontalAlignment(), pr));
       this.nodeHorizontalAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setNodeVerticalAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValNodeVerticalAlignment, this.getNodeVerticalAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValNodeVerticalAlignment, this.getNodeVerticalAlignment(), pr));
       this.nodeVerticalAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setOffset = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValOffset, this.getOffset(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValOffset, this.getOffset(), pr));
       this.offset = pr;
-    }
+    };
 
     ParameterVal.prototype.setPyramidAccentPosition = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValPyramidAccentPosition, this.getPyramidAccentPosition(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValPyramidAccentPosition, this.getPyramidAccentPosition(), pr));
       this.pyramidAccentPosition = pr;
-    }
+    };
 
     ParameterVal.prototype.setPyramidAccentTextMargin = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValPyramidAccentTextMargin, this.getPyramidAccentTextMargin(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValPyramidAccentTextMargin, this.getPyramidAccentTextMargin(), pr));
       this.pyramidAccentTextMargin = pr;
-    }
+    };
 
     ParameterVal.prototype.setRotationPath = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValRotationPath, this.getRotationPath(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValRotationPath, this.getRotationPath(), pr));
       this.rotationPath = pr;
-    }
+    };
 
     ParameterVal.prototype.setSecondaryChildAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValSecondaryChildAlignment, this.getSecondaryChildAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValSecondaryChildAlignment, this.getSecondaryChildAlignment(), pr));
       this.secondaryChildAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setSecondaryLinearDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValSecondaryLinearDirection, this.getSecondaryLinearDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValSecondaryLinearDirection, this.getSecondaryLinearDirection(), pr));
       this.secondaryLinearDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setStartingElement = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValStartingElement, this.getStartingElement(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValStartingElement, this.getStartingElement(), pr));
       this.startingElement = pr;
-    }
+    };
 
     ParameterVal.prototype.setTextAnchorHorizontal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextAnchorHorizontal, this.getTextAnchorHorizontal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextAnchorHorizontal, this.getTextAnchorHorizontal(), pr));
       this.textAnchorHorizontal = pr;
-    }
+    };
 
     ParameterVal.prototype.setTextAnchorVertical = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextAnchorVertical, this.getTextAnchorVertical(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextAnchorVertical, this.getTextAnchorVertical(), pr));
       this.textAnchorVertical = pr;
-    }
+    };
 
     ParameterVal.prototype.setTextBlockDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextBlockDirection, this.getTextBlockDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextBlockDirection, this.getTextBlockDirection(), pr));
       this.textBlockDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setTextDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextDirection, this.getTextDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextDirection, this.getTextDirection(), pr));
       this.textDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setVerticalAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValVerticalAlignment, this.getVerticalAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValVerticalAlignment, this.getVerticalAlignment(), pr));
       this.verticalAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setBool = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ParameterValBool, this.getBool(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ParameterValBool, this.getBool(), pr));
       this.bool = pr;
-    }
+    };
 
     ParameterVal.prototype.setDouble = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ParameterValDouble, this.getDouble(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ParameterValDouble, this.getDouble(), pr));
       this.double = pr;
-    }
+    };
 
     ParameterVal.prototype.setInt = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValInt, this.getInt(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValInt, this.getInt(), pr));
       this.int = pr;
-    }
+    };
 
     ParameterVal.prototype.setStr = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ParameterValStr, this.getStr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ParameterValStr, this.getStr(), pr));
       this.str = pr;
-    }
+    };
 
     ParameterVal.prototype.getArrowheadStyle = function () {
       return this.arrowheadStyle;
-    }
+    };
 
     ParameterVal.prototype.getAutoTextRotation = function () {
       return this.autoTextRotation;
-    }
+    };
 
     ParameterVal.prototype.getBendPoint = function () {
       return this.bendPoint;
-    }
+    };
 
     ParameterVal.prototype.getBreakpoint = function () {
       return this.breakpoint;
-    }
+    };
 
     ParameterVal.prototype.getCenterShapeMapping = function () {
       return this.centerShapeMapping;
-    }
+    };
 
     ParameterVal.prototype.getChildAlignment = function () {
       return this.childAlignment;
-    }
+    };
 
     ParameterVal.prototype.getChildDirection = function () {
       return this.childDirection;
-    }
+    };
 
     ParameterVal.prototype.getConnectorDimension = function () {
       return this.connectorDimension;
-    }
+    };
 
     ParameterVal.prototype.getConnectorPoint = function () {
       return this.connectorPoint;
-    }
+    };
 
     ParameterVal.prototype.getConnectorRouting = function () {
       return this.connectorRouting;
-    }
+    };
 
     ParameterVal.prototype.getContinueDirection = function () {
       return this.continueDirection;
-    }
+    };
 
     ParameterVal.prototype.getDiagramHorizontalAlignment = function () {
       return this.diagramHorizontalAlignment;
-    }
+    };
 
     ParameterVal.prototype.getDiagramTextAlignment = function () {
       return this.diagramTextAlignment;
-    }
+    };
 
     ParameterVal.prototype.getFallbackDimension = function () {
       return this.fallbackDimension;
-    }
+    };
 
     ParameterVal.prototype.getFlowDirection = function () {
       return this.flowDirection;
-    }
+    };
 
     ParameterVal.prototype.getGrowDirection = function () {
       return this.growDirection;
-    }
+    };
 
     ParameterVal.prototype.getHierarchyAlignment = function () {
       return this.hierarchyAlignment;
-    }
+    };
 
     ParameterVal.prototype.getLinearDirection = function () {
       return this.linearDirection;
-    }
+    };
 
     ParameterVal.prototype.getNodeHorizontalAlignment = function () {
       return this.nodeHorizontalAlignment;
-    }
+    };
 
     ParameterVal.prototype.getNodeVerticalAlignment = function () {
       return this.nodeVerticalAlignment;
-    }
+    };
 
     ParameterVal.prototype.getOffset = function () {
       return this.offset;
-    }
+    };
 
     ParameterVal.prototype.getPyramidAccentPosition = function () {
       return this.pyramidAccentPosition;
-    }
+    };
 
     ParameterVal.prototype.getPyramidAccentTextMargin = function () {
       return this.pyramidAccentTextMargin;
-    }
+    };
 
     ParameterVal.prototype.getRotationPath = function () {
       return this.rotationPath;
-    }
+    };
 
     ParameterVal.prototype.getSecondaryChildAlignment = function () {
       return this.secondaryChildAlignment;
-    }
+    };
 
     ParameterVal.prototype.getSecondaryLinearDirection = function () {
       return this.secondaryLinearDirection;
-    }
+    };
 
     ParameterVal.prototype.getStartingElement = function () {
       return this.startingElement;
-    }
+    };
 
     ParameterVal.prototype.getTextAnchorHorizontal = function () {
       return this.textAnchorHorizontal;
-    }
+    };
 
     ParameterVal.prototype.getTextAnchorVertical = function () {
       return this.textAnchorVertical;
-    }
+    };
 
     ParameterVal.prototype.getTextBlockDirection = function () {
       return this.textBlockDirection;
-    }
+    };
 
     ParameterVal.prototype.getTextDirection = function () {
       return this.textDirection;
-    }
+    };
 
     ParameterVal.prototype.getVerticalAlignment = function () {
       return this.verticalAlignment;
-    }
+    };
 
     ParameterVal.prototype.getBool = function () {
       return this.bool;
-    }
+    };
 
     ParameterVal.prototype.getDouble = function () {
       return this.double;
-    }
+    };
 
     ParameterVal.prototype.getInt = function () {
       return this.int;
-    }
+    };
 
     ParameterVal.prototype.getStr = function () {
       return this.str;
-    }
+    };
 
     ParameterVal.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setArrowheadStyle(this.getArrowheadStyle());
@@ -3724,7 +3741,8 @@
       oCopy.setDouble(this.getDouble());
       oCopy.setInt(this.getInt());
       oCopy.setStr(this.getStr());
-    }
+    };
+
 
 
     changesFactory[AscDFH.historyitem_ParamType] = CChangeLong;
@@ -3745,12 +3763,12 @@
     InitClass(Param, CBaseFormatObject, AscDFH.historyitem_type_Param);
 
     Param.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParamType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParamType, this.getType(), pr));
       this.type = pr;
     }
 
     Param.prototype.setVal = function (oPr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ParamVal, this.getVal(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ParamVal, this.getVal(), oPr));
       this.val = oPr;
     }
 
@@ -3810,42 +3828,42 @@
     InitClass(Choose, CBaseFormatObject, AscDFH.historyitem_type_Choose);
 
     Choose.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ChooseName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ChooseName, this.getName(), pr));
       this.name = pr;
-    }
+    };
 
     Choose.prototype.setElse = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ChooseElse, this.getElse(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ChooseElse, this.getElse(), oPr));
       this.else = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     Choose.prototype.addToLstIf = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.if.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ChooseAddToLstIf, nInsertIdx, [oPr], true));
-      this.if.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ChooseAddToLstIf, nInsertIdx, [oPr], true));
+      nInsertIdx === this.if.length ? this.if.push(oPr) : this.if.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
-    }
+    };
 
     Choose.prototype.removeFromLstIf = function (nIdx) {
       if (nIdx > -1 && nIdx < this.if.length) {
         this.if[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ChooseRemoveFromLstIf, nIdx, [this.if[nIdx]], false));
-        this.if.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ChooseRemoveFromLstIf, nIdx, [this.if[nIdx]], false));
+        nIdx === this.if.length - 1 ? this.if.pop() : this.if.splice(nIdx, 1);
       }
-    }
+    };
 
     Choose.prototype.getName = function () {
       return this.name;
-    }
+    };
 
     Choose.prototype.getElse = function () {
       return this.else;
-    }
+    };
 
     Choose.prototype.getIf = function () {
       return this.if;
-    }
+    };
 
     Choose.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setName(this.getName());
@@ -3874,8 +3892,9 @@
       var s = pReader.stream;
       switch (nType) {
         case 0: {
-          this.addToLstIf(0, new If());
-          this.if[0].fromPPTY(pReader);
+          var ifObj = new If();
+          this.addToLstIf(this.if.length, ifObj);
+          ifObj.fromPPTY(pReader);
           break;
         }
         case 1: {
@@ -3907,7 +3926,7 @@
           this.else.startAlgorithm(pointTree, node);
         }
       }
-    }
+    };
 
 
 
@@ -3924,7 +3943,7 @@
     InitClass(Else, CCommonDataList, AscDFH.historyitem_type_Else);
 
     Else.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ElseName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ElseName, this.getName(), pr));
       this.name = pr;
     }
 
@@ -3951,7 +3970,10 @@
         case 0xb7: oElement = new RuleLst(); break;
         case 0xb8: oElement = new SShape(); break;
         case 0xb9: oElement = new VarLst(); break;
-        default:break;
+        default: {
+          pReader.stream.SkipRecord();
+          break;
+        }
       }
       if(oElement) {
         oElement.fromPPTY(pReader);
@@ -4004,7 +4026,7 @@
           element.startAlgorithm(pointTree, node);
         }
       });
-    }
+    };
 
     changesFactory[AscDFH.historyitem_IteratorAttributesAddAxis] = CChangeContent;
     changesFactory[AscDFH.historyitem_IteratorAttributesRemoveAxis] = CChangeContent;
@@ -4069,91 +4091,90 @@
 
     IteratorAttributes.prototype.addToLstAxis = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.axis.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesAddAxis, nInsertIdx, [oPr], true));
-      this.axis.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesAddAxis, nInsertIdx, [oPr], true));
+      nInsertIdx === this.axis.length ? this.axis.push(oPr) : this.axis.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstAxis = function (nIdx) {
       if (nIdx > -1 && nIdx < this.axis.length) {
         this.axis[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesRemoveAxis, nIdx, [this.axis[nIdx]], false));
-        this.axis.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesRemoveAxis, nIdx, [this.axis[nIdx]], false));
+        nIdx === this.axis.length - 1 ? this.axis.pop() : this.axis.splice(nIdx, 1);
       }
     };
 
     IteratorAttributes.prototype.addToLstCnt = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.cnt.length, Math.max(0, nIdx));
-      oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddCnt, nInsertIdx, [oPr], true));
-      this.cnt.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddCnt, nInsertIdx, [oPr], true));
+      nInsertIdx === this.cnt.length ? this.cnt.push(oPr) : this.cnt.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstCnt = function (nIdx) {
       if (nIdx > -1 && nIdx < this.cnt.length) {
         this.cnt[nIdx].setParent(null);
-        oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveCnt, nIdx, [this.cnt[nIdx]], false));
-        this.cnt.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveCnt, nIdx, [this.cnt[nIdx]], false));
+        nIdx === this.cnt.length - 1 ? this.cnt.pop() : this.cnt.splice(nIdx, 1);
       }
     };
 
     IteratorAttributes.prototype.addToLstHideLastTrans = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.hideLastTrans.length, Math.max(0, nIdx));
-      oHistory.Add(new AscDFH.CChangesDrawingsContentBool(this, AscDFH.historyitem_IteratorAttributesAddHideLastTrans, nInsertIdx, [oPr], true));
-      this.hideLastTrans.splice(nInsertIdx, 0, oPr);
-      this.setParentToChild(oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentBool(this, AscDFH.historyitem_IteratorAttributesAddHideLastTrans, nInsertIdx, [oPr], true));
+      nInsertIdx === this.hideLastTrans.length ? this.hideLastTrans.push(oPr) : this.hideLastTrans.splice(nInsertIdx, 0, oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstHideLastTrans = function (nIdx) {
       if (nIdx > -1 && nIdx < this.hideLastTrans.length) {
         this.hideLastTrans[nIdx].setParent(null);
-        oHistory.Add(new AscDFH.CChangesDrawingsContentBool(this, AscDFH.historyitem_IteratorAttributesRemoveHideLastTrans, nIdx, [this.hideLastTrans[nIdx]], false));
-        this.hideLastTrans.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentBool(this, AscDFH.historyitem_IteratorAttributesRemoveHideLastTrans, nIdx, [this.hideLastTrans[nIdx]], false));
+        nIdx === this.hideLastTrans.length - 1 ? this.hideLastTrans.pop() : this.hideLastTrans.splice(nIdx, 1);
       }
     };
 
     IteratorAttributes.prototype.addToLstPtType = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.ptType.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesAddPtType, nInsertIdx, [oPr], true));
-      this.ptType.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesAddPtType, nInsertIdx, [oPr], true));
+      nInsertIdx === this.ptType.length ? this.ptType.push(oPr) : this.ptType.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstPtType = function (nIdx) {
       if (nIdx > -1 && nIdx < this.ptType.length) {
         this.ptType[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesRemovePtType, nIdx, [this.ptType[nIdx]], false));
-        this.ptType.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesRemovePtType, nIdx, [this.ptType[nIdx]], false));
+        nIdx === this.ptType.length - 1 ? this.ptType.pop() : this.ptType.splice(nIdx, 1);
       }
     };
 
     IteratorAttributes.prototype.addToLstSt = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.st.length, Math.max(0, nIdx));
-      oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddSt, nInsertIdx, [oPr], true));
-      this.st.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddSt, nInsertIdx, [oPr], true));
+      nInsertIdx === this.st.length ? this.st.push(oPr) : this.st.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstSt = function (nIdx) {
       if (nIdx > -1 && nIdx < this.st.length) {
         this.st[nIdx].setParent(null);
-        oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveSt, nIdx, [this.st[nIdx]], false));
-        this.st.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveSt, nIdx, [this.st[nIdx]], false));
+        nIdx === this.st.length - 1 ? this.st.pop() : this.st.splice(nIdx, 1);
       }
     };
 
     IteratorAttributes.prototype.addToLstStep = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.step.length, Math.max(0, nIdx));
-      oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddStep, nInsertIdx, [oPr], true));
-      this.step.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddStep, nInsertIdx, [oPr], true));
+      nInsertIdx === this.step.length ? this.step.push(oPr) : this.step.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstStep = function (nIdx) {
       if (nIdx > -1 && nIdx < this.step.length) {
         this.step[nIdx].setParent(null);
-        oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveStep, nIdx, [this.step[nIdx]], false));
-        this.step.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveStep, nIdx, [this.step[nIdx]], false));
+        nIdx === this.step.length - 1 ? this.step.pop() : this.step.splice(nIdx, 1);
       }
     };
 
@@ -4199,18 +4220,104 @@
     InitClass(AxisType, CBaseFormatObject, AscDFH.historyitem_type_AxisType);
 
     AxisType.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AxisTypeVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AxisTypeVal, this.getVal(), pr));
       this.val = pr;
-    }
+    };
 
     AxisType.prototype.getVal = function () {
       return this.val;
-    }
-
+    };
     AxisType.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
-    }
-
+    };
+    AxisType.prototype.getTypeByteCode = function(sVal) {
+      switch (sVal) {
+        case "ancst": {
+          return AxisType_value_ancst;
+        }
+        case "ancstOrSelf": {
+          return AxisType_value_ancstOrSelf;
+        }
+        case "ch": {
+          return AxisType_value_ch;
+        }
+        case "des": {
+          return AxisType_value_des;
+        }
+        case "desOrSelf": {
+          return AxisType_value_desOrSelf;
+        }
+        case "follow": {
+          return AxisType_value_follow;
+        }
+        case "followSib": {
+          return AxisType_value_followSib;
+        }
+        case "none": {
+          return AxisType_value_none;
+        }
+        case "par": {
+          return AxisType_value_par;
+        }
+        case "preced": {
+          return AxisType_value_preced;
+        }
+        case "precedSib": {
+          return AxisType_value_precedSib;
+        }
+        case "root": {
+          return AxisType_value_root;
+        }
+        case "self": {
+          return AxisType_value_self;
+        }
+      }
+      return null;
+    };
+    AxisType.prototype.getType = function () {
+      switch (this.val) {
+        case AxisType_value_ancst: {
+          return "ancst";
+        }
+        case AxisType_value_ancstOrSelf: {
+          return "ancstOrSelf";
+        }
+        case AxisType_value_ch: {
+          return "ch";
+        }
+        case AxisType_value_des: {
+          return "des";
+        }
+        case AxisType_value_desOrSelf: {
+          return "desOrSelf";
+        }
+        case AxisType_value_follow: {
+          return "follow";
+        }
+        case AxisType_value_followSib: {
+          return "followSib";
+        }
+        case AxisType_value_none: {
+          return "none";
+        }
+        case AxisType_value_par: {
+          return "par";
+        }
+        case AxisType_value_preced: {
+          return "preced";
+        }
+        case AxisType_value_precedSib: {
+          return "precedSib";
+        }
+        case AxisType_value_root: {
+          return "root";
+        }
+        case AxisType_value_self: {
+          return "self";
+        }
+      }
+      return null;
+    };
     changesFactory[AscDFH.historyitem_ElementTypeVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ElementTypeVal] = function (oClass, value) {
       oClass.val = value;
@@ -4224,17 +4331,95 @@
     InitClass(ElementType, CBaseFormatObject, AscDFH.historyitem_type_ElementType);
 
     ElementType.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ElementTypeVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ElementTypeVal, this.getVal(), pr));
       this.val = pr;
-    }
+    };
 
     ElementType.prototype.getVal = function () {
       return this.val;
-    }
+    };
 
     ElementType.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
-    }
+    };
+    ElementType.prototype.getTypeByteCode = function(sVal) {
+      switch (sVal) {
+        case "all": {
+          return ElementType_value_all;
+        }
+        case "asst": {
+          return ElementType_value_asst;
+        }
+        case "doc": {
+          return ElementType_value_doc;
+        }
+        case "node": {
+          return ElementType_value_node;
+          break;
+        }
+        case "nonAsst": {
+          return ElementType_value_nonAsst;
+          break;
+        }
+        case "nonNorm": {
+          return ElementType_value_nonNorm;
+          break;
+        }
+        case "norm": {
+          return ElementType_value_norm;
+          break;
+        }
+        case "parTrans": {
+          return ElementType_value_parTrans;
+          break;
+        }
+        case "pres": {
+          return ElementType_value_pres;
+          break;
+        }
+        case "sibTrans": {
+          return ElementType_value_sibTrans;
+          break;
+        }
+      }
+      return null;
+    };
+    ElementType.prototype.getType = function() {
+
+      switch (this.val) {
+        case ElementType_value_all: {
+          return "all";
+        }
+        case ElementType_value_asst: {
+          return "asst";
+        }
+        case ElementType_value_doc: {
+          return "doc";
+        }
+        case ElementType_value_node: {
+          return "node";
+        }
+        case ElementType_value_nonAsst: {
+          return "nonAsst";
+        }
+        case ElementType_value_nonNorm: {
+          return "nonNorm";
+        }
+        case ElementType_value_norm: {
+          return "norm";
+        }
+        case ElementType_value_parTrans: {
+          return "parTrans";
+        }
+        case ElementType_value_pres: {
+          return "pres";
+        }
+        case ElementType_value_sibTrans: {
+          return "sibTrans";
+        }
+      }
+      return null;
+    };
 
     changesFactory[AscDFH.historyitem_FunctionValueAnimLvlStr] = CChangeLong;
     changesFactory[AscDFH.historyitem_FunctionValueAnimOneStr] = CChangeLong;
@@ -4279,75 +4464,75 @@
     InitClass(FunctionValue, CBaseFormatObject, AscDFH.historyitem_type_FunctionValue);
 
     FunctionValue.prototype.setAnimLvlStr = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueAnimLvlStr, this.getAnimLvlStr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueAnimLvlStr, this.getAnimLvlStr(), pr));
       this.animLvlStr = pr;
-    }
+    };
 
     FunctionValue.prototype.setAnimOneStr = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueAnimOneStr, this.getAnimOneStr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueAnimOneStr, this.getAnimOneStr(), pr));
       this.animOneStr = pr;
-    }
+    };
 
     FunctionValue.prototype.setDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueDirection, this.getDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueDirection, this.getDirection(), pr));
       this.direction = pr;
-    }
+    };
 
     FunctionValue.prototype.setHierBranchStyle = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueHierBranchStyle, this.getHierBranchStyle(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueHierBranchStyle, this.getHierBranchStyle(), pr));
       this.hierBranchStyle = pr;
-    }
+    };
 
     FunctionValue.prototype.setResizeHandlesStr = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueResizeHandlesStr, this.getResizeHandlesStr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueResizeHandlesStr, this.getResizeHandlesStr(), pr));
       this.resizeHandlesStr = pr;
-    }
+    };
 
     FunctionValue.prototype.setBool = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_FunctionValueBool, this.getBool(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_FunctionValueBool, this.getBool(), pr));
       this.bool = pr;
-    }
+    };
 
     FunctionValue.prototype.setInt = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueInt, this.getInt(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueInt, this.getInt(), pr));
       this.int = pr;
-    }
+    };
 
     FunctionValue.prototype.setVal = function (pr) {
       this.setInt(pr);
-    }
+    };
 
     FunctionValue.prototype.getVal = function () {
       return this.int;
-    }
+    };
 
     FunctionValue.prototype.getAnimLvlStr = function () {
       return this.animLvlStr;
-    }
+    };
 
     FunctionValue.prototype.getAnimOneStr = function () {
       return this.animOneStr;
-    }
+    };
 
     FunctionValue.prototype.getDirection = function () {
       return this.direction;
-    }
+    };
 
     FunctionValue.prototype.getHierBranchStyle = function () {
       return this.hierBranchStyle;
-    }
+    };
 
     FunctionValue.prototype.getResizeHandlesStr = function () {
       return this.resizeHandlesStr;
-    }
+    };
 
     FunctionValue.prototype.getBool = function () {
       return this.bool;
-    }
+    };
 
     FunctionValue.prototype.getInt = function () {
       return this.int;
-    }
+    };
 
     FunctionValue.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setAnimLvlStr(this.getAnimLvlStr());
@@ -4357,10 +4542,10 @@
       oCopy.setResizeHandlesStr(this.getResizeHandlesStr());
       oCopy.setBool(this.getBool());
       oCopy.setInt(this.getInt());
-    }
-
+    };
 
     changesFactory[AscDFH.historyitem_IfArg] = CChangeString;
+    changesFactory[AscDFH.historyitem_IfRef] = CChangeString;
     changesFactory[AscDFH.historyitem_IfFunc] = CChangeLong;
     changesFactory[AscDFH.historyitem_IfName] = CChangeString;
     changesFactory[AscDFH.historyitem_IfOp] = CChangeLong;
@@ -4369,6 +4554,9 @@
     changesFactory[AscDFH.historyitem_IfRemoveList] = CChangeContent;
     drawingsChangesMap[AscDFH.historyitem_IfArg] = function (oClass, value) {
       oClass.arg = value;
+    };
+    drawingsChangesMap[AscDFH.historyitem_IfRef] = function (oClass, value) {
+      oClass.ref = value;
     };
     drawingsChangesMap[AscDFH.historyitem_IfFunc] = function (oClass, value) {
       oClass.func = value;
@@ -4389,6 +4577,7 @@
       return oClass.list;
     };
 
+
     function If() {
       IteratorAttributes.call(this);
       this.arg = null;
@@ -4396,70 +4585,80 @@
       this.name = null;
       this.op = null;
       this.val = null;
+      this.ref = null;
       this.list = [];
     }
 
     InitClass(If, IteratorAttributes, AscDFH.historyitem_type_If);
 
     If.prototype.setArg = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfArg, this.getArg(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfArg, this.getArg(), pr));
       this.arg = pr;
-    }
+    };
 
     If.prototype.setFunc = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfFunc, this.getFunc(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfFunc, this.getFunc(), pr));
       this.func = pr;
-    }
+    };
+
+    If.prototype.setRef = function (pr) {
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfRef, this.getRef(), pr));
+      this.ref = pr;
+    };
 
     If.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfName, this.getName(), pr));
       this.name = pr;
-    }
+    };
 
     If.prototype.setOp = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfOp, this.getOp(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfOp, this.getOp(), pr));
       this.op = pr;
-    }
+    };
 
     If.prototype.setVal = function (oPr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfVal, this.getVal(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfVal, this.getVal(), oPr));
       this.val = oPr;
-    }
+    };
 
     If.prototype.addToLstList = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IfAddList, nInsertIdx, [oPr], true));
-      this.list.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IfAddList, nInsertIdx, [oPr], true));
+      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     If.prototype.removeFromLstList = function (nIdx) {
       if (nIdx > -1 && nIdx < this.list.length) {
         this.list[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IfRemoveList, nIdx, [this.list[nIdx]], false));
-        this.list.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IfRemoveList, nIdx, [this.list[nIdx]], false));
+        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
       }
     };
 
     If.prototype.getArg = function () {
       return this.arg;
-    }
+    };
+
+    If.prototype.getRef = function () {
+      return this.ref;
+    };
 
     If.prototype.getFunc = function () {
       return this.func;
-    }
+    };
 
     If.prototype.getName = function () {
       return this.name;
-    }
+    };
 
     If.prototype.getOp = function () {
       return this.op;
-    }
+    };
 
     If.prototype.getVal = function () {
       return this.val;
-    }
+    };
 
     If.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setArg(this.getArg());
@@ -4470,7 +4669,7 @@
       for (var nIdx = 0; nIdx < this.list.length; ++nIdx) {
         oCopy.addToLstList(nIdx, this.list[nIdx].createDuplicate(oIdMap));
       }
-      for (var nIdx = 0; nIdx < this.axis.length; ++nIdx) {
+      for (nIdx = 0; nIdx < this.axis.length; ++nIdx) {
         oCopy.addToLstAxis(nIdx, this.axis[nIdx].createDuplicate(oIdMap));
       }
       for (nIdx = 0; nIdx < this.cnt.length; ++nIdx) {
@@ -4488,7 +4687,7 @@
       for (nIdx = 0; nIdx < this.step.length; ++nIdx) {
         oCopy.addToLstStep(nIdx, this.step[nIdx]);
       }
-    }
+    };
 
     If.prototype.readElement = function(pReader, nType) {
       var oElement = null;
@@ -4502,7 +4701,10 @@
         case 0xb7: oElement = new RuleLst(); break;
         case 0xb8: oElement = new SShape(); break;
         case 0xb9: oElement = new VarLst(); break;
-        default:break;
+        default: {
+          pReader.stream.SkipRecord();
+          break;
+        }
       }
       if(oElement) {
         oElement.fromPPTY(pReader);
@@ -4600,7 +4802,7 @@
         });
       }
       return check;
-    }
+    };
 
 
     If.prototype.checkCondition = function (pointTree, nodeData) {
@@ -4632,7 +4834,7 @@
         default:
           return false;
       }
-    }
+    };
 
     If.prototype.funcVar = function (nodeData) {
       if (nodeData && nodeData.node) {
@@ -4664,7 +4866,7 @@
         }
       }
       return false;
-    }
+    };
 
     If.prototype.funcCnt = function (axis) {
       var count = 0;
@@ -4675,11 +4877,11 @@
         });
       });
       return this.compare(count);
-    }
+    };
 
     If.prototype.funcDepth = function (axis) {
       return this.compare(axis[0].data.depth);
-    }
+    };
 
     If.prototype.funcMaxDepth = function (axis) {
       var maxDepth = axis.reduce(function (acc, b) {
@@ -4689,23 +4891,23 @@
         return acc;
       }, 0);
       return this.compare(maxDepth);
-    }
+    };
 
     If.prototype.funcPos = function () {
 
-    }
+    };
 
     If.prototype.funcPosEven = function (axis) {
       return this.funcPos(axis) % 2 === 0;
-    }
+    };
 
     If.prototype.funcPosOdd = function (axis) {
       return this.funcPos(axis) % 2 === 1;
-    }
+    };
 
     If.prototype.funcRevPos = function () {
 
-    }
+    };
 
     If.prototype.compare = function (comparingArg) {
       var val = this.valAdapter(this.val);
@@ -4726,7 +4928,7 @@
         default:
           return false;
       }
-    }
+    };
 
     If.prototype.valAdapter = function (value) {
       var adaptVal;
@@ -4767,7 +4969,7 @@
         }
       }
       return adaptVal;
-    }
+    };
 
     function ConstrLst() {
       CCommonDataList.call(this);
@@ -4815,7 +5017,7 @@
       if (constrWithSecFont.length !== 0) {
         constrWithSecFont[0].constr.setConstr(pointTree, constrWithSecFont);
       }
-    }
+    };
 
 
 
@@ -4868,6 +5070,7 @@
       oClass.extLst = value;
     };
 
+
     function Constr() {
       CBaseFormatObject.call(this);
       this.fact = null;
@@ -4887,115 +5090,115 @@
     InitClass(Constr, CBaseFormatObject, AscDFH.historyitem_type_Constr);
 
     Constr.prototype.setFact = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ConstrFact, this.getFact(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ConstrFact, this.getFact(), pr));
       this.fact = pr;
-    }
+    };
 
     Constr.prototype.setFor = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrFor, this.getFor(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrFor, this.getFor(), pr));
       this.for = pr;
-    }
+    };
 
     Constr.prototype.setForName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ConstrForName, this.getForName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ConstrForName, this.getForName(), pr));
       this.forName = pr;
-    }
+    };
 
     Constr.prototype.setOp = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrOp, this.getOp(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrOp, this.getOp(), pr));
       this.op = pr;
-    }
+    };
 
     Constr.prototype.setPtType = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrPtType, this.getPtType(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrPtType, this.getPtType(), oPr));
       this.ptType = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     Constr.prototype.setRefFor = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrRefFor, this.getRefFor(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrRefFor, this.getRefFor(), pr));
       this.refFor = pr;
-    }
+    };
 
     Constr.prototype.setRefForName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ConstrRefForName, this.getRefForName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ConstrRefForName, this.getRefForName(), pr));
       this.refForName = pr;
-    }
+    };
 
     Constr.prototype.setRefPtType = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrRefPtType, this.getRefPtType(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrRefPtType, this.getRefPtType(), oPr));
       this.refPtType = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     Constr.prototype.setRefType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrRefType, this.getRefType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrRefType, this.getRefType(), pr));
       this.refType = pr;
-    }
+    };
 
     Constr.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrType, this.getType(), pr));
       this.type = pr;
-    }
+    };
 
     Constr.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ConstrVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ConstrVal, this.getVal(), pr));
       this.val = pr;
-    }
+    };
 
     Constr.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     Constr.prototype.getFact = function () {
       return this.fact;
-    }
+    };
 
     Constr.prototype.getFor = function () {
       return this.for;
-    }
+    };
 
     Constr.prototype.getForName = function () {
       return this.forName;
-    }
+    };
 
     Constr.prototype.getOp = function () {
       return this.op;
-    }
+    };
 
     Constr.prototype.getPtType = function () {
       return this.ptType;
-    }
+    };
 
     Constr.prototype.getRefFor = function () {
       return this.refFor;
-    }
+    };
 
     Constr.prototype.getRefForName = function () {
       return this.refForName;
-    }
+    };
 
     Constr.prototype.getRefPtType = function () {
       return this.refPtType;
-    }
+    };
 
     Constr.prototype.getRefType = function () {
       return this.refType;
-    }
+    };
 
     Constr.prototype.getType = function () {
       return this.type;
-    }
+    };
 
     Constr.prototype.getVal = function () {
       return this.val;
-    }
+    };
 
     Constr.prototype.getExtLst = function () {
       return this.extLst;
-    }
+    };
 
     Constr.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setFact(this.getFact());
@@ -5016,7 +5219,7 @@
       if (this.getRefPtType()) {
         oCopy.setRefPtType(this.getRefPtType().createDuplicate(oIdMap));
       }
-    }
+    };
 
     Constr.prototype.privateWriteAttributes = function(pWriter) {
       pWriter._WriteDoubleReal2(0, this.fact);
@@ -5192,7 +5395,7 @@
         }
       }
     return 1;
-    }
+    };
 
     Constr.prototype.getConstrVal = function (shape) {
       var result;
@@ -5349,7 +5552,7 @@
         result *= fact;
         return result;
       }
-    }
+    };
 
     Constr.prototype.getShapesFromAxis = function (transfer, isRef) {
       var node = transfer && transfer.node && transfer.node.parent;
@@ -5395,7 +5598,7 @@
         }
         return shapes;
       }
-    }
+    };
 
     Constr.prototype.getAxisFromParent = function (node, constrAxisType) {
       switch (constrAxisType) {
@@ -5408,7 +5611,7 @@
         default:
           return node.getAxis(AxisType_value_self);
       }
-    }
+    };
 
     Constr.prototype.setConstr = function (pointTree, transfer) {
       // var node = transfer;
@@ -5584,7 +5787,7 @@
             return;
         }
       }
-    }
+    };
 
     changesFactory[AscDFH.historyitem_PresOfExtLst] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_PresOfExtLst] = function (oClass, value) {
@@ -5599,7 +5802,7 @@
     InitClass(PresOf, IteratorAttributes, AscDFH.historyitem_type_PresOf);
 
     PresOf.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PresOfExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PresOfExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
@@ -5747,43 +5950,43 @@
     InitClass(Rule, CBaseFormatObject, AscDFH.historyitem_type_Rule);
 
     Rule.prototype.setFact = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleFact, this.getFact(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleFact, this.getFact(), pr));
       this.fact = pr;
     }
 
     Rule.prototype.setFor = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RuleFor, this.getFor(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RuleFor, this.getFor(), pr));
       this.for = pr;
     }
 
     Rule.prototype.setForName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_RuleForName, this.getForName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_RuleForName, this.getForName(), pr));
       this.forName = pr;
     }
 
     Rule.prototype.setMax = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleMax, this.getMax(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleMax, this.getMax(), pr));
       this.max = pr;
     }
 
     Rule.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RuleType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RuleType, this.getType(), pr));
       this.type = pr;
     }
 
     Rule.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleVal, this.getVal(), pr));
       this.val = pr;
     }
 
     Rule.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_RuleExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_RuleExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Rule.prototype.setPtType = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_RulePtType, this.getPtType(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_RulePtType, this.getPtType(), oPr));
       this.ptType = oPr;
       this.setParentToChild(oPr);
     }
@@ -5917,48 +6120,48 @@
     InitClass(SShape, CBaseFormatObject, AscDFH.historyitem_type_SShape);
 
     SShape.prototype.setBlip = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_SShapeBlip, this.getBlip(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SShapeBlip, this.getBlip(), pr));
       this.blip = pr;
     }
 
     SShape.prototype.setBlipPhldr = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeBlipPhldr, this.getBlipPhldr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeBlipPhldr, this.getBlipPhldr(), pr));
       this.blipPhldr = pr;
     }
 
     SShape.prototype.setHideGeom = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeHideGeom, this.getHideGeom(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeHideGeom, this.getHideGeom(), pr));
       this.hideGeom = pr;
     }
 
     SShape.prototype.setLkTxEntry = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeLkTxEntry, this.getLkTxEntry(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeLkTxEntry, this.getLkTxEntry(), pr));
       this.lkTxEntry = pr;
     }
 
     SShape.prototype.setRot = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_SShapeRot, this.getRot(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_SShapeRot, this.getRot(), pr));
       this.rot = pr;
     }
 
     SShape.prototype.setType = function (oPr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_SShapeType, this.getType(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SShapeType, this.getType(), oPr));
       this.type = oPr;
     }
 
     SShape.prototype.setZOrderOff = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_SShapeZOrderOff, this.getZOrderOff(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_SShapeZOrderOff, this.getZOrderOff(), pr));
       this.zOrderOff = pr;
     }
 
     SShape.prototype.setAdjLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SShapeAdjLst, this.getAdjLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SShapeAdjLst, this.getAdjLst(), oPr));
       this.adjLst = oPr;
       this.setParentToChild(oPr);
     }
 
     SShape.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SShapeExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SShapeExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
@@ -6088,12 +6291,12 @@
     InitClass(Adj, CBaseFormatObject, AscDFH.historyitem_type_Adj);
 
     Adj.prototype.setIdx = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AdjIdx, this.getIdx(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AdjIdx, this.getIdx(), pr));
       this.idx = pr;
     }
 
     Adj.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_AdjVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_AdjVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6178,55 +6381,55 @@
     InitClass(VarLst, CBaseFormatObject, AscDFH.historyitem_type_VarLst);
 
     VarLst.prototype.setAnimLvl = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstAnimLvl, this.getAnimLvl(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstAnimLvl, this.getAnimLvl(), oPr));
       this.animLvl = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setAnimOne = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstAnimOne, this.getAnimOne(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstAnimOne, this.getAnimOne(), oPr));
       this.animOne = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setBulletEnabled = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstBulletEnabled, this.getBulletEnabled(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstBulletEnabled, this.getBulletEnabled(), oPr));
       this.bulletEnabled = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setChMax = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstChMax, this.getChMax(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstChMax, this.getChMax(), oPr));
       this.chMax = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setChPref = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstChPref, this.getChPref(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstChPref, this.getChPref(), oPr));
       this.chPref = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setDir = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstDir, this.getDir(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstDir, this.getDir(), oPr));
       this.dir = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setHierBranch = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstHierBranch, this.getHierBranch(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstHierBranch, this.getHierBranch(), oPr));
       this.hierBranch = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setOrgChart = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstOrgChart, this.getOrgChart(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstOrgChart, this.getOrgChart(), oPr));
       this.orgChart = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setResizeHandles = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstResizeHandles, this.getResizeHandles(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstResizeHandles, this.getResizeHandles(), oPr));
       this.resizeHandles = oPr;
       this.setParentToChild(oPr);
     }
@@ -6399,7 +6602,7 @@
     InitClass(AnimLvl, CBaseFormatObject, AscDFH.historyitem_type_AnimLvl);
 
     AnimLvl.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimLvlVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimLvlVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6410,22 +6613,19 @@
     AnimLvl.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    AnimLvl.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? this.val : 0);
+    AnimLvl.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() || 0);
     };
-    AnimLvl.prototype.writeChildren = function(pWriter) {
+    AnimLvl.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(val);
     };
     AnimLvl.prototype.readAttribute = function(nType, pReader) {
       var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        if(nVal !== 0) {
-          this.setVal(nVal);
-        }
-      }
+      if (0 === nType) this.setIdx(oStream.GetULong());
+      else if (1 === nType) this.setVal(oStream.GetDouble());
     };
     AnimLvl.prototype.readChild = function(nType, pReader) {
-
     };
 
     changesFactory[AscDFH.historyitem_AnimOneVal] = CChangeLong;
@@ -6441,7 +6641,7 @@
     InitClass(AnimOne, CBaseFormatObject, AscDFH.historyitem_type_AnimOne);
 
     AnimOne.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimOneVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimOneVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6452,22 +6652,13 @@
     AnimOne.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    AnimOne.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? this.val : 0);
+    AnimOne.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() || 0);
     };
-    AnimOne.prototype.writeChildren = function(pWriter) {
-    };
-    AnimOne.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        if(nVal !== 0) {
-          this.setVal(nVal);
-        }
-      }
-    };
-    AnimOne.prototype.readChild = function(nType, pReader) {
 
+    AnimOne.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(val);
     };
 
     changesFactory[AscDFH.historyitem_BulletEnabledVal] = CChangeBool;
@@ -6483,7 +6674,7 @@
     InitClass(BulletEnabled, CBaseFormatObject, AscDFH.historyitem_type_BulletEnabled);
 
     BulletEnabled.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_BulletEnabledVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_BulletEnabledVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6494,20 +6685,13 @@
     BulletEnabled.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    BulletEnabled.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? (this.val ? 1 : 0) : 0);
+    BulletEnabled.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() ? 1 : 0);
     };
-    BulletEnabled.prototype.writeChildren = function(pWriter) {
-    };
-    BulletEnabled.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        this.setVal(nVal ? true : false);
-      }
-    };
-    BulletEnabled.prototype.readChild = function(nType, pReader) {
 
+    BulletEnabled.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(!!val);
     };
 
     changesFactory[AscDFH.historyitem_ChMaxVal] = CChangeLong;
@@ -6523,17 +6707,30 @@
     InitClass(ChMax, CBaseFormatObject, AscDFH.historyitem_type_ChMax);
 
     ChMax.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ChMaxVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ChMaxVal, this.getVal(), pr));
       this.val = pr;
-    }
+    };
 
     ChMax.prototype.getVal = function () {
       return this.val;
-    }
+    };
 
     ChMax.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
-    }
+    };
+
+    ChMax.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadIntFromPPTY();
+      this.setVal(val);
+    };
+    
+    ChMax.prototype.toPPTY = function (pWriter) {
+      var val = this.getVal();
+      pWriter.WriteIntToPPTY(val || 0);
+    };
+
+
+
 
     changesFactory[AscDFH.historyitem_ChPrefVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ChPrefVal] = function (oClass, value) {
@@ -6548,7 +6745,7 @@
     InitClass(ChPref, CBaseFormatObject, AscDFH.historyitem_type_ChPref);
 
     ChPref.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ChPrefVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ChPrefVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6559,6 +6756,15 @@
     ChPref.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
+
+    ChPref.prototype.fromPPTY = function (pReader) {
+      this.setVal(pReader.stream.ReadIntFromPPTY());
+    };
+
+    ChPref.prototype.toPPTY = function (pWriter) {
+      var val = this.getVal() || 0;
+      pWriter.WriteIntToPPTY(val);
+    };
 
     changesFactory[AscDFH.historyitem_DiagramDirectionVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_DiagramDirectionVal] = function (oClass, value) {
@@ -6573,7 +6779,7 @@
     InitClass(DiagramDirection, CBaseFormatObject, AscDFH.historyitem_type_DiagramDirection);
 
     DiagramDirection.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_DiagramDirectionVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_DiagramDirectionVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6584,23 +6790,16 @@
     DiagramDirection.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    DiagramDirection.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? this.val : 0);
-    };
-    DiagramDirection.prototype.writeChildren = function(pWriter) {
-    };
-    DiagramDirection.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        if(nVal !== 0) {
-          this.setVal(nVal);
-        }
-      }
-    };
-    DiagramDirection.prototype.readChild = function(nType, pReader) {
 
+    DiagramDirection.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() || 0);
     };
+
+    DiagramDirection.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(val);
+    };
+
 
     changesFactory[AscDFH.historyitem_HierBranchVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_HierBranchVal] = function (oClass, value) {
@@ -6615,7 +6814,7 @@
     InitClass(HierBranch, CBaseFormatObject, AscDFH.historyitem_type_HierBranch);
 
     HierBranch.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_HierBranchVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_HierBranchVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6626,23 +6825,16 @@
     HierBranch.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     };
-    HierBranch.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? this.val : 0);
-    };
-    HierBranch.prototype.writeChildren = function(pWriter) {
-    };
-    HierBranch.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        if(nVal !== 0) {
-          this.setVal(nVal);
-        }
-      }
-    };
-    HierBranch.prototype.readChild = function(nType, pReader) {
 
+    HierBranch.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() || 0);
     };
+
+    HierBranch.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(val);
+    };
+
 
     changesFactory[AscDFH.historyitem_OrgChartVal] = CChangeBool;
     drawingsChangesMap[AscDFH.historyitem_OrgChartVal] = function (oClass, value) {
@@ -6657,7 +6849,7 @@
     InitClass(OrgChart, CBaseFormatObject, AscDFH.historyitem_type_OrgChart);
 
     OrgChart.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_OrgChartVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_OrgChartVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6668,21 +6860,18 @@
     OrgChart.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    OrgChart.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? (this.val ? 1 : 0) : 0);
-    };
-    OrgChart.prototype.writeChildren = function(pWriter) {
-    };
-    OrgChart.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        this.setVal(nVal ? true : false);
-      }
-    };
-    OrgChart.prototype.readChild = function(nType, pReader) {
 
+    OrgChart.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() ? 1 : 0);
     };
+
+    OrgChart.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(!!val);
+    };
+
+
+
     changesFactory[AscDFH.historyitem_ResizeHandlesVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ResizeHandlesVal] = function (oClass, value) {
       oClass.val = value;
@@ -6696,7 +6885,7 @@
     InitClass(ResizeHandles, CBaseFormatObject, AscDFH.historyitem_type_ResizeHandles);
 
     ResizeHandles.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ResizeHandlesVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ResizeHandlesVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6707,23 +6896,16 @@
     ResizeHandles.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    ResizeHandles.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? this.val : 0);
-    };
-    ResizeHandles.prototype.writeChildren = function(pWriter) {
-    };
-    ResizeHandles.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        if(nVal !== 0) {
-          this.setVal(nVal);
-        }
-      }
-    };
-    ResizeHandles.prototype.readChild = function(nType, pReader) {
 
+    ResizeHandles.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() || 0);
     };
+
+    ResizeHandles.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(val);
+    };
+
 
 
     changesFactory[AscDFH.historyitem_ForEachName] = CChangeString;
@@ -6753,27 +6935,27 @@
     InitClass(ForEach, IteratorAttributes, AscDFH.historyitem_type_ForEach);
 
     ForEach.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ForEachName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ForEachName, this.getName(), pr));
       this.name = pr;
     }
 
     ForEach.prototype.setRef = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ForEachRef, this.getRef(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ForEachRef, this.getRef(), pr));
       this.ref = pr;
     }
 
     ForEach.prototype.addToLstList = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ForEachAddList, nInsertIdx, [oPr], true));
-      this.list.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ForEachAddList, nInsertIdx, [oPr], true));
+      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     ForEach.prototype.removeFromLstList = function (nIdx) {
       if (nIdx > -1 && nIdx < this.list.length) {
         this.list[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ForEachRemoveList, nIdx, [this.list[nIdx]], false));
-        this.list.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ForEachRemoveList, nIdx, [this.list[nIdx]], false));
+        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
       }
     };
 
@@ -6823,7 +7005,10 @@
         case 0xb7: oElement = new RuleLst(); break;
         case 0xb8: oElement = new SShape(); break;
         case 0xb9: oElement = new VarLst(); break;
-        default:break;
+        default: {
+          pReader.stream.SkipRecord();
+          break;
+        }
       }
       if(oElement) {
         oElement.fromPPTY(pReader);
@@ -6903,7 +7088,7 @@
           element.startAlgorithm(pointTree, node);
         }
       });
-    }
+    };
 
 
 
@@ -6925,12 +7110,12 @@
     InitClass(SampData, CBaseFormatObject, AscDFH.historyitem_type_SampData);
 
     SampData.prototype.setUseDef = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SampDataUseDef, this.getUseDef(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SampDataUseDef, this.getUseDef(), pr));
       this.useDef = pr;
     }
 
     SampData.prototype.setDataModel = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SampDataDataModel, this.getDataModel(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SampDataDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
       this.setParentToChild(oPr);
     }
@@ -6997,12 +7182,12 @@
     InitClass(StyleData, CBaseFormatObject, AscDFH.historyitem_type_StyleData);
 
     StyleData.prototype.setUseDef = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_StyleDataUseDef, this.getUseDef(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_StyleDataUseDef, this.getUseDef(), pr));
       this.useDef = pr;
     }
 
     StyleData.prototype.setDataModel = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDataDataModel, this.getDataModel(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDataDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
       this.setParentToChild(oPr);
     }
@@ -7070,12 +7255,12 @@
     InitClass(DiagramTitle, CBaseFormatObject, AscDFH.historyitem_type_DiagramTitle);
 
     DiagramTitle.prototype.setLang = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_DiagramTitleLang, this.getLang(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DiagramTitleLang, this.getLang(), pr));
       this.lang = pr;
     }
 
     DiagramTitle.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_DiagramTitleVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DiagramTitleVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -7171,64 +7356,64 @@
     InitClass(LayoutDefHdr, CBaseFormatObject, AscDFH.historyitem_type_LayoutDefHdr);
 
     LayoutDefHdr.prototype.setDefStyle = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrDefStyle, this.getDefStyle(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrDefStyle, this.getDefStyle(), pr));
       this.defStyle = pr;
     }
 
     LayoutDefHdr.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     LayoutDefHdr.prototype.setResId = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LayoutDefHdrResId, this.getResId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LayoutDefHdrResId, this.getResId(), pr));
       this.resId = pr;
     }
 
     LayoutDefHdr.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     LayoutDefHdr.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefHdrCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefHdrCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     LayoutDefHdr.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefHdrExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefHdrExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     LayoutDefHdr.prototype.addToLstTitle = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.title.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrAddTitle, nInsertIdx, [oPr], true));
-      this.title.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrAddTitle, nInsertIdx, [oPr], true));
+      nInsertIdx === this.title.length ? this.title.push(oPr) : this.title.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     LayoutDefHdr.prototype.removeFromLstTitle = function (nIdx) {
       if (nIdx > -1 && nIdx < this.title.length) {
         this.title[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrRemoveTitle, nIdx, [this.title[nIdx]], false));
-        this.title.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrRemoveTitle, nIdx, [this.title[nIdx]], false));
+        nIdx === this.title.length - 1 ? this.title.pop() : this.title.splice(nIdx, 1);
       }
     };
 
     LayoutDefHdr.prototype.addToLstDesc = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.desc.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrAddDesc, nInsertIdx, [oPr], true));
-      this.desc.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrAddDesc, nInsertIdx, [oPr], true));
+      nInsertIdx === this.desc.length ? this.desc.push(oPr) : this.desc.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     LayoutDefHdr.prototype.removeFromLstDesc = function (nIdx) {
       if (nIdx > -1 && nIdx < this.desc.length) {
         this.desc[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
-        this.desc.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
+        nIdx === this.desc.length - 1 ? this.desc.pop() : this.desc.splice(nIdx, 1);
       }
     };
 
@@ -7303,22 +7488,22 @@
     InitClass(RelIds, CBaseFormatObject, AscDFH.historyitem_type_RelIds);
 
     RelIds.prototype.setCs = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsCs, this.getCs(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsCs, this.getCs(), pr));
       this.cs = pr;
     }
 
     RelIds.prototype.setDm = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsDm, this.getDm(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsDm, this.getDm(), pr));
       this.dm = pr;
     }
 
     RelIds.prototype.setLo = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsLo, this.getLo(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsLo, this.getLo(), pr));
       this.lo = pr;
     }
 
     RelIds.prototype.setQs = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsQs, this.getQs(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsQs, this.getQs(), pr));
       this.qs = pr;
     }
 
@@ -7424,43 +7609,43 @@
     InitClass(ColorsDef, CBaseFormatObject, AscDFH.historyitem_type_ColorsDef);
 
     ColorsDef.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     ColorsDef.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     ColorsDef.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorsDef.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorsDef.prototype.setDesc = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefDesc, this.getDesc(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefDesc, this.getDesc(), oPr));
       this.desc = oPr;
       this.setParentToChild(oPr);
     };
 
     ColorsDef.prototype.setTitle = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefTitle, this.getTitle(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefTitle, this.getTitle(), oPr));
       this.title = oPr;
       this.setParentToChild(oPr);
     };
 
     ColorsDef.prototype.addToLstStyleLbl = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.styleLbl.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefAddStyleLbl, nInsertIdx, [oPr], true));
-      this.styleLbl.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefAddStyleLbl, nInsertIdx, [oPr], true));
+      nInsertIdx === this.styleLbl.length ? this.styleLbl.push(oPr) : this.styleLbl.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
       this.styleLblByName[oPr.name] = oPr;
     };
@@ -7468,8 +7653,8 @@
     ColorsDef.prototype.removeFromLstStyleLbl = function (nIdx) {
       if (nIdx > -1 && nIdx < this.styleLbl.length) {
         this.styleLbl[nIdx].setParent(null);
-        oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
-        var deleteObj = this.styleLbl.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
+        var deleteObj = nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1);
         delete this.styleLblByName[deleteObj[0].name];
       }
     };
@@ -7618,48 +7803,48 @@
     InitClass(ColorDefStyleLbl, CBaseFormatObject, AscDFH.historyitem_type_ColorDefStyleLbl);
 
     ColorDefStyleLbl.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorDefStyleLblName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorDefStyleLblName, this.getName(), pr));
       this.name = pr;
     }
 
     ColorDefStyleLbl.prototype.setEffectClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblEffectClrLst, this.getEffectClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblEffectClrLst, this.getEffectClrLst(), oPr));
       this.effectClrLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setFillClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblFillClrLst, this.getFillClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblFillClrLst, this.getFillClrLst(), oPr));
       this.fillClrLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setLinClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblLinClrLst, this.getLinClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblLinClrLst, this.getLinClrLst(), oPr));
       this.linClrLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setTxEffectClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxEffectClrLst, this.getTxEffectClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxEffectClrLst, this.getTxEffectClrLst(), oPr));
       this.txEffectClrLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setTxFillClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxFillClrLst, this.getTxFillClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxFillClrLst, this.getTxFillClrLst(), oPr));
       this.txFillClrLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setTxLinClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxLinClrLst, this.getTxLinClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxLinClrLst, this.getTxLinClrLst(), oPr));
       this.txLinClrLst = oPr;
       this.setParentToChild(oPr);
     }
@@ -7779,7 +7964,6 @@
       return [this.effectClrLst, this.fillClrLst, this.linClrLst, this.txEffectClrLst, this.txFillClrLst, this.txLinClrLst];
     };
 
-
     changesFactory[AscDFH.historyitem_CCommonDataClrListAdd] = CChangesContentNoId;
     changesFactory[AscDFH.historyitem_CCommonDataClrListRemove] = CChangesContentNoId;
     drawingConstructorsMap[AscDFH.historyitem_CCommonDataClrListAdd] = AscFormat.CUniColor;
@@ -7791,24 +7975,45 @@
       return oClass.list;
     };
 
+
     function CCommonDataClrList(type, ind, item, isAdd) {
       CBaseFormatObject.call(this, type, ind, item, isAdd);
       this.list = [];
+      this.hueDir = null;
+      this.meth = null;
     }
 
     InitClass(CCommonDataClrList, CBaseFormatObject, AscDFH.historyitem_type_CCommonDataClrList);
 
+    CCommonDataClrList.prototype.setHueDir = function (pr) {
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListHueDir, this.getHueDir(), pr));
+      this.hueDir = pr;
+    }
+
+    CCommonDataClrList.prototype.setMeth = function (pr) {
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListMeth, this.getMeth(), pr));
+      this.meth = pr;
+    }
+
+    CCommonDataClrList.prototype.getHueDir = function () {
+      return this.hueDir;
+    }
+
+    CCommonDataClrList.prototype.getMeth = function () {
+      return this.meth;
+    }
+
     CCommonDataClrList.prototype.addToLst = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListAdd, nInsertIdx, [oPr], true));
-      this.list.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListAdd, nInsertIdx, [oPr], true));
+      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
     };
 
     CCommonDataClrList.prototype.removeFromLst = function (nIdx) {
       if (nIdx > -1 && nIdx < this.list.length) {
         this.list[nIdx].setParent(null);
-        oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListRemove, nIdx, [this.list[nIdx]], false));
-        this.list.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListRemove, nIdx, [this.list[nIdx]], false));
+        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
       }
     };
 
@@ -7868,12 +8073,12 @@
     InitClass(ClrLst, CCommonDataClrList, AscDFH.historyitem_type_ClrLst);
 
     ClrLst.prototype.setHueDir = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ClrLstHueDir, this.getHueDir(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ClrLstHueDir, this.getHueDir(), pr));
       this.hueDir = pr;
     }
 
     ClrLst.prototype.setMeth = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ClrLstMeth, this.getMeth(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ClrLstMeth, this.getMeth(), pr));
       this.meth = pr;
     }
 
@@ -7911,7 +8116,6 @@
     }
 
     InitClass(LinClrLst, ClrLst, AscDFH.historyitem_type_LinClrLst);
-
     function TxEffectClrLst() {
       ClrLst.call(this);
     }
@@ -7988,59 +8192,59 @@
     InitClass(ColorsDefHdr, CBaseFormatObject, AscDFH.historyitem_type_ColorsDefHdr);
 
     ColorsDefHdr.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefHdrMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefHdrMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     ColorsDefHdr.prototype.setResId = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ColorsDefHdrResId, this.getResId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ColorsDefHdrResId, this.getResId(), pr));
       this.resId = pr;
     }
 
     ColorsDefHdr.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefHdrUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefHdrUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     ColorsDefHdr.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefHdrCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefHdrCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorsDefHdr.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefHdrExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefHdrExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorsDefHdr.prototype.addToLstTitle = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.title.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrAddTitle, nInsertIdx, [oPr], true));
-      this.title.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrAddTitle, nInsertIdx, [oPr], true));
+      nInsertIdx === this.title.length ? this.title.push(oPr) : this.title.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     ColorsDefHdr.prototype.removeFromLstTitle = function (nIdx) {
       if (nIdx > -1 && nIdx < this.title.length) {
         this.title[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrRemoveTitle, nIdx, [this.title[nIdx]], false));
-        this.title.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrRemoveTitle, nIdx, [this.title[nIdx]], false));
+        nIdx === this.title.length - 1 ? this.title.pop() : this.title.splice(nIdx, 1);
       }
     };
 
     ColorsDefHdr.prototype.addToLstDesc = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.desc.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrAddDesc, nInsertIdx, [oPr], true));
-      this.desc.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrAddDesc, nInsertIdx, [oPr], true));
+      nInsertIdx === this.desc.length ? this.desc.push(oPr) : this.desc.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     ColorsDefHdr.prototype.removeFromLstDesc = function (nIdx) {
       if (nIdx > -1 && nIdx < this.desc.length) {
         this.desc[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
-        this.desc.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
+        nIdx === this.desc.length - 1 ? this.desc.pop() : this.desc.splice(nIdx, 1);
       }
     };
 
@@ -8135,57 +8339,57 @@
     InitClass(StyleDef, CBaseFormatObject, AscDFH.historyitem_type_StyleDef);
 
     StyleDef.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     StyleDef.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     StyleDef.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDef.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDef.prototype.setScene3d = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefScene3d, this.getScene3d(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefScene3d, this.getScene3d(), oPr));
       this.scene3d = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDef.prototype.setTitle = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefTitle, this.getTitle(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefTitle, this.getTitle(), oPr));
       this.title = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDef.prototype.setDesc = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefDesc, this.getDesc(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefDesc, this.getDesc(), oPr));
       this.desc = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDef.prototype.addToLstStyleLbl = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.styleLbl.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefAddStyleLbl, nInsertIdx, [oPr], true));
-      this.styleLbl.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefAddStyleLbl, nInsertIdx, [oPr], true));
+      nInsertIdx === this.styleLbl.length ? this.styleLbl.push(oPr) : this.styleLbl.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     StyleDef.prototype.removeFromLstStyleLbl = function (nIdx) {
       if (nIdx > -1 && nIdx < this.styleLbl.length) {
         this.styleLbl[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
-        this.styleLbl.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
+        nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1);
       }
     };
 
@@ -8334,25 +8538,25 @@
     InitClass(Scene3d, CBaseFormatObject, AscDFH.historyitem_type_Scene3d);
 
     Scene3d.prototype.setBackdrop = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dBackdrop, this.getBackdrop(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dBackdrop, this.getBackdrop(), oPr));
       this.backdrop = oPr;
       this.setParentToChild(oPr);
     }
 
     Scene3d.prototype.setCamera = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dCamera, this.getCamera(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dCamera, this.getCamera(), oPr));
       this.camera = oPr;
       this.setParentToChild(oPr);
     }
 
     Scene3d.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Scene3d.prototype.setLightRig = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dLightRig, this.getLightRig(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dLightRig, this.getLightRig(), oPr));
       this.lightRig = oPr;
       this.setParentToChild(oPr);
     }
@@ -8417,7 +8621,7 @@
 
     Scene3d.prototype.getChildren = function () {
       return [this.camera, this.lightRig, this.backdrop];
-    }
+    };
 
 
     changesFactory[AscDFH.historyitem_StyleDefStyleLblName] = CChangeString;
@@ -8458,36 +8662,36 @@
     InitClass(StyleDefStyleLbl, CBaseFormatObject, AscDFH.historyitem_type_StyleDefStyleLbl);
 
     StyleDefStyleLbl.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefStyleLblName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefStyleLblName, this.getName(), pr));
       this.name = pr;
     }
 
     StyleDefStyleLbl.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDefStyleLbl.prototype.setScene3d = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblScene3d, this.getScene3d(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblScene3d, this.getScene3d(), oPr));
       this.scene3d = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDefStyleLbl.prototype.setSp3d = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblSp3d, this.getSp3d(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblSp3d, this.getSp3d(), oPr));
       this.sp3d = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDefStyleLbl.prototype.setStyle = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblStyle, this.getStyle(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblStyle, this.getStyle(), oPr));
       this.style = oPr;
       // this.setParentToChild(oPr); TODO: fix set Parent
     }
 
     StyleDefStyleLbl.prototype.setTxPr = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblTxPr, this.getTxPr(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblTxPr, this.getTxPr(), oPr));
       this.txPr = oPr;
       this.setParentToChild(oPr);
     }
@@ -8607,25 +8811,25 @@
     InitClass(Backdrop, CBaseFormatObject, AscDFH.historyitem_type_Backdrop);
 
     Backdrop.prototype.setAnchor = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropAnchor, this.getAnchor(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropAnchor, this.getAnchor(), oPr));
       this.anchor = oPr;
       this.setParentToChild(oPr);
     }
 
     Backdrop.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Backdrop.prototype.setNorm = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropNorm, this.getNorm(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropNorm, this.getNorm(), oPr));
       this.norm = oPr;
       this.setParentToChild(oPr);
     }
 
     Backdrop.prototype.setUp = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropUp, this.getUp(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropUp, this.getUp(), oPr));
       this.up = oPr;
       this.setParentToChild(oPr);
     }
@@ -8705,12 +8909,12 @@
     InitClass(Coordinate, CBaseFormatObject, AscDFH.historyitem_type_Coordinate);
 
     Coordinate.prototype.setCoordinateUnqualified = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CoordinateCoordinateUnqualified, this.getCoordinateUnqualified(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CoordinateCoordinateUnqualified, this.getCoordinateUnqualified(), pr));
       this.coordinateUnqualified = pr;
     }
 
     Coordinate.prototype.setUniversalMeasure = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CoordinateUniversalMeasure, this.getUniversalMeasure(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CoordinateUniversalMeasure, this.getUniversalMeasure(), pr));
       this.universalMeasure = pr;
     }
 
@@ -8750,31 +8954,31 @@
     InitClass(BackdropAnchor, CBaseFormatObject, AscDFH.historyitem_type_BackdropAnchor);
 
     BackdropAnchor.prototype.setX = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorX, this.getX(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorX, this.getX(), oPr));
       this.x = oPr;
-    }
+    };
 
     BackdropAnchor.prototype.setY = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorY, this.getY(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorY, this.getY(), oPr));
       this.y = oPr;
-    }
+    };
 
     BackdropAnchor.prototype.setZ = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorZ, this.getZ(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorZ, this.getZ(), oPr));
       this.z = oPr;
-    }
+    };
 
     BackdropAnchor.prototype.getX = function () {
       return this.x;
-    }
+    };
 
     BackdropAnchor.prototype.getY = function () {
       return this.y;
-    }
+    };
 
     BackdropAnchor.prototype.getZ = function () {
       return this.z;
-    }
+    };
 
     BackdropAnchor.prototype.fillObject = function (oCopy, oIdMap) {
       if (this.getX() !== null) {
@@ -8786,7 +8990,8 @@
       if (this.getZ() !== null) {
         oCopy.setZ(this.getZ());
       }
-    }
+    };
+
 
     function Drawing() {
       CGroupShape.call(this);
@@ -8803,7 +9008,6 @@
     Drawing.prototype.updateCoordinatesAfterInternalResize = function () {
 
     }
-
     Drawing.prototype.writeChildren = function(pWriter) {
       pWriter.WriteGroupShape(this, 0);
     };
@@ -8857,9 +9061,11 @@
       if(this.textLink !== null) {
         copy.setTextLink(this.textLink);
       }
-      copy.cachedImage = this.getBase64Img();
-      copy.cachedPixH = this.cachedPixH;
-      copy.cachedPixW = this.cachedPixW;
+      if(!oPr || false !== oPr.cacheImage) {
+        copy.cachedImage = this.getBase64Img();
+        copy.cachedPixH = this.cachedPixH;
+        copy.cachedPixW = this.cachedPixW;
+      }
       copy.setLocks(this.locks);
       if (this.group) {
         copy.setGroup(this.group);
@@ -8876,13 +9082,34 @@
       }
     };
 
+    Drawing.prototype.getResultScaleCoefficients = function() {
+      let oParaDrawing = AscFormat.getParaDrawing(this);
+      if(oParaDrawing) {
+        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+        return {cx: dScaleCoefficient, cy: dScaleCoefficient};
+      }
+      return {cx: 1, cy: 1};
+    };
+
     Drawing.prototype.setXfrmByParent = function () {
+      if (!this.spPr) {
+        this.setSpPr(new AscFormat.CSpPr());
+      }
+      if (!this.spPr.xfrm) {
+        this.spPr.setXfrm(new AscFormat.CXfrm());
+      }
       var oXfrm = this.spPr.xfrm;
-      if (oXfrm.isZero()) {
+      if (oXfrm.isNull() || oXfrm.isZero()) {
         var parent = this.group;
         if (parent && parent.spPr.xfrm) {
+          oXfrm.setOffX(0);
+          oXfrm.setOffY(0);
           oXfrm.setExtX(parent.spPr.xfrm.extX);
           oXfrm.setExtY(parent.spPr.xfrm.extY);
+          oXfrm.setChOffX(0);
+          oXfrm.setChOffY(0);
+          oXfrm.setChExtX(parent.spPr.xfrm.extX);
+          oXfrm.setChExtY(parent.spPr.xfrm.extY);
         }
       }
     };
@@ -8925,31 +9152,31 @@
     InitClass(BackdropNorm, CBaseFormatObject, AscDFH.historyitem_type_BackdropNorm);
 
     BackdropNorm.prototype.setDx = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDx, this.getDx(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDx, this.getDx(), oPr));
       this.dx = oPr;
-    }
+    };
 
     BackdropNorm.prototype.setDy = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDy, this.getDy(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDy, this.getDy(), oPr));
       this.dy = oPr;
-    }
+    };
 
     BackdropNorm.prototype.setDz = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDz, this.getDz(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDz, this.getDz(), oPr));
       this.dz = oPr;
-    }
+    };
 
     BackdropNorm.prototype.getDx = function () {
       return this.dx;
-    }
+    };
 
     BackdropNorm.prototype.getDy = function () {
       return this.dy;
-    }
+    };
 
     BackdropNorm.prototype.getDz = function () {
       return this.dz;
-    }
+    };
 
     BackdropNorm.prototype.fillObject = function (oCopy, oIdMap) {
       if (this.getDx()) {
@@ -8961,7 +9188,8 @@
       if (this.getDz()) {
         oCopy.setDz(this.getDz());
       }
-    }
+    };
+
 
 
     changesFactory[AscDFH.historyitem_BackdropUpDx] = CChangeLong;
@@ -8987,31 +9215,31 @@
     InitClass(BackdropUp, CBaseFormatObject, AscDFH.historyitem_type_BackdropUp);
 
     BackdropUp.prototype.setDx = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDx, this.getDx(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDx, this.getDx(), oPr));
       this.dx = oPr;
-    }
+    };
 
     BackdropUp.prototype.setDy = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDy, this.getDy(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDy, this.getDy(), oPr));
       this.dy = oPr;
-    }
+    };
 
     BackdropUp.prototype.setDz = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDz, this.getDz(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDz, this.getDz(), oPr));
       this.dz = oPr;
-    }
+    };
 
     BackdropUp.prototype.getDx = function () {
       return this.dx;
-    }
+    };
 
     BackdropUp.prototype.getDy = function () {
       return this.dy;
-    }
+    };
 
     BackdropUp.prototype.getDz = function () {
       return this.dz;
-    }
+    };
 
     BackdropUp.prototype.fillObject = function (oCopy, oIdMap) {
       if (this.getDx()) {
@@ -9023,7 +9251,8 @@
       if (this.getDz()) {
         oCopy.setDz(this.getDz());
       }
-    }
+    };
+
 
     changesFactory[AscDFH.historyitem_CameraFov] = CChangeDouble2;
     changesFactory[AscDFH.historyitem_CameraPrst] = CChangeLong;
@@ -9053,22 +9282,22 @@
     InitClass(Camera, CBaseFormatObject, AscDFH.historyitem_type_Camera);
 
     Camera.prototype.setFov = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_CameraFov, this.getFov(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_CameraFov, this.getFov(), pr));
       this.fov = pr;
     }
 
     Camera.prototype.setPrst = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CameraPrst, this.getPrst(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CameraPrst, this.getPrst(), pr));
       this.prst = pr;
     }
 
     Camera.prototype.setZoom = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_CameraZoom, this.getZoom(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_CameraZoom, this.getZoom(), pr));
       this.zoom = pr;
     }
 
     Camera.prototype.setRot = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CameraRot, this.getRot(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CameraRot, this.getRot(), oPr));
       this.rot = oPr;
       this.setParentToChild(oPr);
     }
@@ -9128,7 +9357,7 @@
 
     Camera.prototype.getChildren = function () {
       return [this.rot];
-    }
+    };
 
     changesFactory[AscDFH.historyitem_RotLat] = CChangeLong;
     changesFactory[AscDFH.historyitem_RotLon] = CChangeLong;
@@ -9153,17 +9382,17 @@
     InitClass(Rot, CBaseFormatObject, AscDFH.historyitem_type_Rot);
 
     Rot.prototype.setLat = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotLat, this.getLat(), pr))
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotLat, this.getLat(), pr))
       this.lat = pr;
     }
 
     Rot.prototype.setLon = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotLon, this.getLon(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotLon, this.getLon(), pr));
       this.lon = pr;
     }
 
     Rot.prototype.setRev = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotRev, this.getRev(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotRev, this.getRev(), pr));
       this.rev = pr;
     }
 
@@ -9222,17 +9451,17 @@
     InitClass(LightRig, CBaseFormatObject, AscDFH.historyitem_type_LightRig);
 
     LightRig.prototype.setDir = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LightRigDir, this.getDir(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LightRigDir, this.getDir(), pr));
       this.dir = pr;
     }
 
     LightRig.prototype.setRig = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LightRigRig, this.getRig(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LightRigRig, this.getRig(), pr));
       this.rig = pr;
     }
 
     LightRig.prototype.setRot = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LightRigRot, this.getRot(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LightRigRot, this.getRot(), oPr));
       this.rot = oPr;
       this.setParentToChild(oPr);
     }
@@ -9340,51 +9569,51 @@
     InitClass(Sp3d, CBaseFormatObject, AscDFH.historyitem_type_Sp3d);
 
     Sp3d.prototype.setContourW = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dContourW, this.getContourW(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dContourW, this.getContourW(), pr));
       this.contourW = pr;
     }
 
     Sp3d.prototype.setExtrusionH = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dExtrusionH, this.getExtrusionH(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dExtrusionH, this.getExtrusionH(), pr));
       this.extrusionH = pr;
     }
 
     Sp3d.prototype.setPrstMaterial = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dPrstMaterial, this.getPrstMaterial(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dPrstMaterial, this.getPrstMaterial(), pr));
       this.prstMaterial = pr;
     }
 
     Sp3d.prototype.setZ = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dZ, this.getZ(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dZ, this.getZ(), oPr));
       this.z = oPr;
     }
 
     Sp3d.prototype.setBevelB = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dBevelB, this.getBevelB(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dBevelB, this.getBevelB(), oPr));
       this.bevelB = oPr;
       this.setParentToChild(oPr);
     }
 
     Sp3d.prototype.setBevelT = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dBevelT, this.getBevelT(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dBevelT, this.getBevelT(), oPr));
       this.bevelT = oPr;
       this.setParentToChild(oPr);
     }
 
     Sp3d.prototype.setContourClr = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dContourClr, this.getContourClr(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dContourClr, this.getContourClr(), oPr));
       this.contourClr = oPr;
       this.setParentToChild(oPr);
     }
 
     Sp3d.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Sp3d.prototype.setExtrusionClr = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dExtrusionClr, this.getExtrusionClr(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dExtrusionClr, this.getExtrusionClr(), oPr));
       this.extrusionClr = oPr;
       this.setParentToChild(oPr);
     }
@@ -9462,7 +9691,7 @@
     InitClass(ContourClr, CBaseFormatObject, AscDFH.historyitem_type_ContourClr);
 
     ContourClr.prototype.setColor = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ContourClrColor, this.getColor(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ContourClrColor, this.getColor(), oPr));
       this.color = oPr;
       this.setParentToChild(oPr);
     }
@@ -9490,7 +9719,7 @@
     InitClass(ExtrusionClr, CBaseFormatObject, AscDFH.historyitem_type_ExtrusionClr);
 
     ExtrusionClr.prototype.setColor = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ExtrusionClrColor, this.getColor(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ExtrusionClrColor, this.getColor(), oPr));
       this.color = oPr;
       this.setParentToChild(oPr);
     }
@@ -9528,17 +9757,17 @@
     InitClass(Bevel, CBaseFormatObject, AscDFH.historyitem_type_Bevel);
 
     Bevel.prototype.setH = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelH, this.getH(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelH, this.getH(), pr));
       this.h = pr;
     }
 
     Bevel.prototype.setPrst = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelPrst, this.getPrst(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelPrst, this.getPrst(), pr));
       this.prst = pr;
     }
 
     Bevel.prototype.setW = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelW, this.getW(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelW, this.getW(), pr));
       this.w = pr;
     }
 
@@ -9591,13 +9820,13 @@
     InitClass(TxPr, CBaseFormatObject, AscDFH.historyitem_type_TxPr);
 
     TxPr.prototype.setFlatTx = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxPrFlatTx, this.getFlatTx(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxPrFlatTx, this.getFlatTx(), oPr));
       this.flatTx = oPr;
       this.setParentToChild(oPr);
     }
 
     TxPr.prototype.setSp3d = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxPrSp3d, this.getSp3d(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxPrSp3d, this.getSp3d(), oPr));
       this.sp3d = oPr;
       this.setParentToChild(oPr);
     }
@@ -9632,7 +9861,7 @@
     InitClass(FlatTx, CBaseFormatObject, AscDFH.historyitem_type_FlatTx);
 
     FlatTx.prototype.setZ = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_FlatTxZ, this.getZ(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_FlatTxZ, this.getZ(), oPr));
       this.z = oPr;
     }
 
@@ -9703,59 +9932,59 @@
     InitClass(StyleDefHdr, CBaseFormatObject, AscDFH.historyitem_type_StyleDefHdr);
 
     StyleDefHdr.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefHdrMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefHdrMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     StyleDefHdr.prototype.setResId = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_StyleDefHdrResId, this.getResId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_StyleDefHdrResId, this.getResId(), pr));
       this.resId = pr;
     }
 
     StyleDefHdr.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefHdrUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefHdrUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     StyleDefHdr.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefHdrCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefHdrCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDefHdr.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefHdrExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefHdrExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDefHdr.prototype.addToLstDesc = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.desc.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrAddDesc, nInsertIdx, [oPr], true));
-      this.desc.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrAddDesc, nInsertIdx, [oPr], true));
+      nInsertIdx === this.desc.length ? this.desc.push(oPr) : this.desc.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     StyleDefHdr.prototype.removeFromLstDesc = function (nIdx) {
       if (nIdx > -1 && nIdx < this.desc.length) {
         this.desc[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
-        this.desc.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
+        nIdx === this.desc.length - 1 ? this.desc.pop() : this.desc.splice(nIdx, 1);
       }
     };
 
     StyleDefHdr.prototype.addToLstList = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrAddList, nInsertIdx, [oPr], true));
-      this.list.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrAddList, nInsertIdx, [oPr], true));
+      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     StyleDefHdr.prototype.removeFromLstList = function (nIdx) {
       if (nIdx > -1 && nIdx < this.list.length) {
         this.list[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrRemoveList, nIdx, [this.list[nIdx]], false));
-        this.list.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrRemoveList, nIdx, [this.list[nIdx]], false));
+        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
       }
     };
 
@@ -9817,36 +10046,29 @@
 
     function ShapeSmartArtInfo() {
       CBaseFormatObject.call(this);
-      this.spPrPoint = null;
       this.shapePoint = null;
       this.contentPoint = [];
     }
     InitClass(ShapeSmartArtInfo, CBaseFormatObject, AscDFH.historyitem_type_ShapeSmartArtInfo);
 
-    ShapeSmartArtInfo.prototype.setSpPrPoint = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ShapeSmartArtInfoSpPrPoint, this.spPrPoint, oPr));
-      this.spPrPoint = oPr;
-      this.setParentToChild(oPr);
-    }
-
     ShapeSmartArtInfo.prototype.setShapePoint = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ShapeSmartArtInfoShapePoint, this.shapePoint, oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ShapeSmartArtInfoShapePoint, this.shapePoint, oPr));
       this.shapePoint = oPr;
       this.setParentToChild(oPr);
     }
 
     ShapeSmartArtInfo.prototype.addToLstContentPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.contentPoint.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint, nInsertIdx, [oPr], true));
-      this.contentPoint.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint, nInsertIdx, [oPr], true));
+      nInsertIdx === this.contentPoint.length ? this.contentPoint.push(oPr) : this.contentPoint.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     }
 
     ShapeSmartArtInfo.prototype.removeFromLstContentPoint = function (nIdx) {
       if (nIdx > -1 && nIdx < this.contentPoint.length) {
         this.contentPoint[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint, nIdx, [this.contentPoint[nIdx]], false));
-        this.contentPoint.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint, nIdx, [this.contentPoint[nIdx]], false));
+        nIdx === this.contentPoint.length - 1 ? this.contentPoint.pop() : this.contentPoint.splice(nIdx, 1);
       }
     }
 
@@ -9888,6 +10110,7 @@
       this.styleDef = null;
       this.parent = null;
       this.type = null;
+      this.bNeedUpdatePosition = true;
 
       this.calcGeometry = null;
     }
@@ -9901,16 +10124,169 @@
       return 'SmartArt';
     };
 
+    SmartArt.prototype.hasSmartArt = function (bRetSmartArt) {
+      return bRetSmartArt ? this : true;
+    }
+
+    SmartArt.prototype.getContrastDrawing = function () {
+      const arrShapes = this.spTree[0] && this.spTree[0].spTree;
+      if (arrShapes) {
+        arrShapes.forEach(function (oShape) {
+          if (oShape.spPr) {
+            if (oShape.spPr.Fill && oShape.spPr.Fill.fill && !(oShape.spPr.Fill.fill instanceof AscFormat.CNoFill)) {
+              let mods = null;
+              const id = oShape.spPr.Fill.fill.color.color.id;
+              let standardColor;
+              if (id === 0) {
+                standardColor = {R: 0x5B, G: 0x9B, B: 0xD5, A: 255};
+              } else if (id === 12) {
+                standardColor = {R: 255, G: 255, B: 255, A: 255};
+              } else {
+                standardColor = {R: 0, G: 0, B: 0, A: 255};
+              }
+
+              if (oShape.spPr.Fill.fill.color.Mods) {
+                mods = oShape.spPr.Fill.fill.color.Mods.Apply(standardColor);
+              }
+              const grayscaleValue = AscFormat.getGrayscaleValue(standardColor);
+
+              if (grayscaleValue < GRAYSCALE_TRESHHOLD) {
+                const oHeavyBrush = new AscFormat.CreateSolidFillRGB(211, 211, 211);
+                oShape.spPr.setFill(oHeavyBrush);
+              } else {
+                const oLightBrush = new AscFormat.CreateSolidFillRGB(255, 255, 255);
+                oShape.spPr.setFill(oLightBrush);
+              }
+              if (oShape.spPr.ln) {
+                const oPen = new AscFormat.CreateSolidFillRGB(0, 0, 0);
+                oShape.spPr.ln.setFill(oPen);
+                oShape.spPr.ln.setW(12700 * 3);
+              }
+            } else if (oShape.spPr.ln && oShape.spPr.ln.Fill && oShape.spPr.ln.Fill.fill && !(oShape.spPr.ln.Fill.fill instanceof AscFormat.CNoFill)) {
+              const oPen = new AscFormat.CreateSolidFillRGB(0, 0, 0);
+              oShape.spPr.ln.setFill(oPen);
+              oShape.spPr.ln.setW(12700 * 3);
+            }
+          }
+        });
+      }
+    }
+
     SmartArt.prototype.recalculate = function () {
     var oldParaMarks = editor && editor.ShowParaMarks;
       if (oldParaMarks) {
         editor.ShowParaMarks = false;
       }
       CGroupShape.prototype.recalculate.call(this);
+      if (this.group && this.bNeedUpdatePosition) {
+        this.bNeedUpdatePosition = false;
+        var group = this.getMainGroup();
+        group.updateCoordinatesAfterInternalResize();
+      }
       if (oldParaMarks) {
         editor.ShowParaMarks = oldParaMarks;
       }
     }
+
+    SmartArt.prototype.decorateParaDrawing = function (drawingObjects) {
+      var drawing = new ParaDrawing(this.spPr.xfrm.extX, this.spPr.xfrm.extY, this, drawingObjects.drawingDocument, drawingObjects.document, null);
+      drawing.setExtent(this.spPr.xfrm.extX, this.spPr.xfrm.extY);
+      drawing.Set_GraphicObject(this);
+      this.setParent(drawing);
+      drawing.CheckWH();
+      return drawing;
+    };
+
+
+    SmartArt.prototype.fillByPreset = function (nSmartArtType, bLoadOnlyDrawing) {
+      this.setDataModel(new AscFormat.DiagramData());
+      this.setColorsDef(new AscFormat.ColorsDef());
+      this.setLayoutDef(new AscFormat.LayoutDef());
+      this.setStyleDef(new AscFormat.StyleDef());
+      this.setDrawing(new AscFormat.Drawing());
+
+      const oApi = Asc.editor || editor;
+      if (oApi) {
+        const pReader = new AscCommon.BinaryPPTYLoader();
+        const drawingDocument = oApi.getDrawingDocument();
+        const logicDocument = oApi.getLogicDocument();
+        pReader.presentation = logicDocument;
+        pReader.DrawingDocument = drawingDocument;
+
+        let sData = AscCommon['g_oSmartArtDrawings'][nSmartArtType];
+        let data = AscCommon.Base64.decode(sData, true, undefined, undefined);
+        pReader.stream = new AscCommon.FileStream(data, data.length);
+        pReader.ReadSmartArtGroup(this.drawing);
+        this.drawing.setGroup(this);
+        this.addToSpTree(0, this.drawing);
+
+        if (!bLoadOnlyDrawing) {
+          sData = AscCommon['g_oSmartArtStyleDef'][nSmartArtType];
+          data = AscCommon.Base64.decode(sData, true, undefined, undefined);
+          pReader.stream = new AscCommon.FileStream(data, data.length);
+          this.styleDef.fromPPTY(pReader);
+
+          sData = AscCommon['g_oSmartArtLayoutDef'][nSmartArtType];
+          data = AscCommon.Base64.decode(sData, true, undefined, undefined);
+          pReader.stream = new AscCommon.FileStream(data, data.length);
+          this.layoutDef.fromPPTY(pReader);
+
+          sData = AscCommon['g_oSmartArtColorsDef'][nSmartArtType];
+          data = AscCommon.Base64.decode(sData, true, undefined, undefined);
+          pReader.stream = new AscCommon.FileStream(data, data.length);
+          this.colorsDef.fromPPTY(pReader);
+
+          sData = AscCommon['g_oSmartArtData'][nSmartArtType];
+          data = AscCommon.Base64.decode(sData, true, undefined, undefined);
+          pReader.stream = new AscCommon.FileStream(data, data.length);
+          this.dataModel.fromPPTY(pReader);
+          this.setConnections2();
+        }
+
+        this.setSpPr(new AscFormat.CSpPr());
+        this.spPr.setParent(this);
+        const smXfrm = new AscFormat.CXfrm();
+        smXfrm.fillStandardSmartArtXfrm();
+        this.spPr.setXfrm(smXfrm);
+        this.setBDeleted2(false);
+        this.x = smXfrm.offX;
+        this.y = smXfrm.offY;
+        this.extX = smXfrm.extX;
+        this.extY = smXfrm.extY;
+        this.drawing.setXfrmByParent();
+
+        if (!bLoadOnlyDrawing) {
+          this.checkNodePointsAfterRead();
+        }
+      }
+      return this;
+    };
+
+    SmartArt.prototype.fitToPageSize = function () {
+      const oApi = Asc.editor || editor;
+      if (oApi) {
+        const bFromWord = oApi.isDocumentEditor;
+        if (bFromWord) {
+          const logicDocument = oApi.getLogicDocument();
+          const curPage = logicDocument.Pages[logicDocument.controller_GetCurPage()];
+          const heightPage = curPage.Height - curPage.Margins.Top - (curPage.Height - curPage.Margins.Bottom);
+          const widthPage = curPage.Width - curPage.Margins.Left - (curPage.Width - curPage.Margins.Right);
+          const cH = widthPage / this.extX;
+          const cW = heightPage / this.extY;
+          if (cH < 1 || cW < 1) {
+            const minCoefficient = Math.min(cH, cW);
+            this.changeSize(minCoefficient, minCoefficient);
+          }
+        }
+      }
+    };
+
+    SmartArt.prototype.fitFontSize = function () {
+      this.spTree[0] && this.spTree[0].spTree.forEach(function (oShape) {
+        oShape.recalculateContent2()
+        oShape.findFitFontSizeForSmartArt();
+      });
+    };
 
     SmartArt.prototype.handleUpdateExtents = function(bExt)
     {
@@ -9977,35 +10353,39 @@
       var ptLst = this.getPtLst();
       var cxnLst = this.getCxnLst();
       var elements = [];
-      var ptLstWithNoType = [];
+      var nodePoints = [];
       var ptLstWithTypePres = [];
       var docPoint;
       if (cxnLst && ptLst) {
-        var cxnWithNoPres = cxnLst.filter(function (cxn) {return !cxn.type;});
+        var connectionsParOf = cxnLst.filter(function (cxn) {return !cxn.type;});
 
         ptLst.forEach(function (point) {
           if (point.type === Point_type_pres) {
             ptLstWithTypePres.push(point);
-          } else if (!point.type || point.type === Point_type_node) {
-            ptLstWithNoType.push(point);
+          } else if (!point.type || point.type === Point_type_node || point.type === Point_type_asst) {
+            nodePoints.push(point);
           } else if (point.type === Point_type_doc) {
             docPoint = point;
           }
         });
 
-        for (var i = 0; i < ptLstWithNoType.length + 1; i += 1) {
+        for (var i = 0; i <= nodePoints.length; i += 1) {
           var elem = new SmartArtNodeData();
 
-          if (i === ptLstWithNoType.length) {
+          if (i === nodePoints.length) {
             var mPoint = docPoint;
             elem.setDocPoint(mPoint);
 
           } else {
-            mPoint = ptLstWithNoType[i];
-            elem.setNodePoint(mPoint);
+            mPoint = nodePoints[i];
+            if (!mPoint.type || mPoint.type === Point_type_node) {
+              elem.setNodePoint(mPoint);
+            } else if (mPoint.type === Point_type_asst) {
+              elem.setAsstPoint(mPoint);
+            }
           }
 
-          cxnWithNoPres.forEach(function (cxn) {
+          connectionsParOf.forEach(function (cxn) {
             if (cxn.destId === mPoint.modelId) {
               elem.setCxn(cxn);
               if (ptMap) {
@@ -10056,7 +10436,8 @@
             for (var j = 0; j < cxnWithNoPres.length; j += 1) {
               var _cxn = cxnWithNoPres[j];
               var childData = elements.reduce(function (acc, next) {
-                if (next.nodePoint && next.nodePoint.modelId === _cxn.destId) {
+                var nodePoint = next.nodePoint || next.asstPoint;
+                if (nodePoint && nodePoint.modelId === _cxn.destId) {
                   return next;
                 }
                 return acc;
@@ -10081,7 +10462,7 @@
         return defaultColors[styleLbl];
       }
     }
-    
+
     SmartArt.prototype.getDefaultTxColorFromPoint = function (point) {
       var currentDefaultColors = this.getDefaultColorsForPoint(point);
       if (currentDefaultColors) {
@@ -10091,7 +10472,7 @@
         }
       }
     }
-    
+
     SmartArt.prototype.getSmartArtDefaultTxFill = function (shape) {
       var shapePoint = shape && shape.getSmartArtShapePoint();
       var defaultTxColorFromShape = shapePoint && this.getDefaultTxColorFromPoint(shapePoint);
@@ -10249,10 +10630,469 @@
           if (point.prSet && point.prSet.loTypeId) {
             var typeSplit = point.prSet.loTypeId.split('/');
             type = typeSplit[typeSplit.length - 1];
+            type = type.split('#')[0];
           }
         }
       });
-      return type;
+
+      switch (type) {
+        case "AccentedPicture": {
+          return Asc.c_oAscSmartArtTypes.AccentedPicture;
+        }
+        case "balance1": {
+          return Asc.c_oAscSmartArtTypes.Balance;
+        }
+        case "TitledPictureBlocks": {
+          return Asc.c_oAscSmartArtTypes.TitledPictureBlocks;
+        }
+        case "PictureAccentBlocks": {
+          return Asc.c_oAscSmartArtTypes.PictureAccentBlocks;
+        }
+        case "cycle5": {
+          return Asc.c_oAscSmartArtTypes.BlockCycle;
+        }
+        case "venn2": {
+          return Asc.c_oAscSmartArtTypes.StackedVenn;
+        }
+        case "equation2": {
+          return Asc.c_oAscSmartArtTypes.VerticalEquation;
+        }
+        case "vList5": {
+          return Asc.c_oAscSmartArtTypes.VerticalBlockList;
+        }
+        case "bProcess4": {
+          return Asc.c_oAscSmartArtTypes.VerticalBendingProcess;
+        }
+        case "vList2": {
+          return Asc.c_oAscSmartArtTypes.VerticalBulletList;
+        }
+        case "VerticalCurvedList": {
+          return Asc.c_oAscSmartArtTypes.VerticalCurvedList;
+        }
+        case "process2": {
+          return Asc.c_oAscSmartArtTypes.VerticalProcess;
+        }
+        case "list1": {
+          return Asc.c_oAscSmartArtTypes.VerticalBoxList;
+        }
+        case "vList4": {
+          return Asc.c_oAscSmartArtTypes.VerticalPictureList;
+        }
+        case "VerticalCircleList": {
+          return Asc.c_oAscSmartArtTypes.VerticalCircleList;
+        }
+        case "vList3": {
+          return Asc.c_oAscSmartArtTypes.VerticalPictureAccentList;
+        }
+        case "vList6": {
+          return Asc.c_oAscSmartArtTypes.VerticalArrowList;
+        }
+        case "chevron2": {
+          return Asc.c_oAscSmartArtTypes.VerticalChevronList;
+        }
+        case "VerticalAccentList": {
+          return Asc.c_oAscSmartArtTypes.VerticalAccentList;
+        }
+        case "target2": {
+          return Asc.c_oAscSmartArtTypes.NestedTarget;
+        }
+        case "funnel1": {
+          return Asc.c_oAscSmartArtTypes.Funnel;
+        }
+        case "arrow2": {
+          return Asc.c_oAscSmartArtTypes.UpwardArrow;
+        }
+        case "IncreasingArrowsProcess": {
+          return Asc.c_oAscSmartArtTypes.IncreasingArrowsProcess;
+        }
+        case "StepUpProcess": {
+          return Asc.c_oAscSmartArtTypes.StepUpProcess;
+        }
+        case "CircularPictureCallout": {
+          return Asc.c_oAscSmartArtTypes.CircularPictureCallout;
+        }
+        case "hierarchy2": {
+          return Asc.c_oAscSmartArtTypes.HorizontalHierarchy;
+        }
+        case "hierarchy5": {
+          return Asc.c_oAscSmartArtTypes.HorizontalLabeledHierarchy;
+        }
+        case "HorizontalMultiLevelHierarchy": {
+          return Asc.c_oAscSmartArtTypes.HorizontalMultiLevelHierarchy;
+        }
+        case "HorizontalOrganizationChart": {
+          return Asc.c_oAscSmartArtTypes.HorizontalOrganizationChart;
+        }
+        case "hList1": {
+          return Asc.c_oAscSmartArtTypes.HorizontalBulletList;
+        }
+        case "pList2": {
+          return Asc.c_oAscSmartArtTypes.HorizontalPictureList;
+        }
+        case "hChevron3": {
+          return Asc.c_oAscSmartArtTypes.ClosedChevronProcess;
+        }
+        case "hierarchy3": {
+          return Asc.c_oAscSmartArtTypes.HierarchyList;
+        }
+        case "hierarchy1": {
+          return Asc.c_oAscSmartArtTypes.Hierarchy;
+        }
+        case "CirclePictureHierarchy": {
+          return Asc.c_oAscSmartArtTypes.CirclePictureHierarchy;
+        }
+        case "hierarchy6": {
+          return Asc.c_oAscSmartArtTypes.LabeledHierarchy;
+        }
+        case "pyramid3": {
+          return Asc.c_oAscSmartArtTypes.InvertedPyramid;
+        }
+        case "HexagonCluster": {
+          return Asc.c_oAscSmartArtTypes.HexagonCluster;
+        }
+        case "CircleRelationship": {
+          return Asc.c_oAscSmartArtTypes.CircleRelationship;
+        }
+        case "CircleAccentTimeline": {
+          return Asc.c_oAscSmartArtTypes.CircleAccentTimeline;
+        }
+        case "bProcess2": {
+          return Asc.c_oAscSmartArtTypes.CircularBendingProcess;
+        }
+        case "arrow6": {
+          return Asc.c_oAscSmartArtTypes.ArrowRibbon;
+        }
+        case "venn3": {
+          return Asc.c_oAscSmartArtTypes.LinearVenn;
+        }
+        case "PictureLineup": {
+          return Asc.c_oAscSmartArtTypes.PictureLineup;
+        }
+        case "TitlePictureLineup": {
+          return Asc.c_oAscSmartArtTypes.TitlePictureLineup;
+        }
+        case "BendingPictureCaptionList": {
+          return Asc.c_oAscSmartArtTypes.BendingPictureCaptionList;
+        }
+        case "bList2": {
+          return Asc.c_oAscSmartArtTypes.BendingPictureAccentList;
+        }
+        case "matrix1": {
+          return Asc.c_oAscSmartArtTypes.TitledMatrix;
+        }
+        case "IncreasingCircleProcess": {
+          return Asc.c_oAscSmartArtTypes.IncreasingCircleProcess;
+        }
+        case "BendingPictureBlocks": {
+          return Asc.c_oAscSmartArtTypes.BendingPictureBlocks;
+        }
+        case "BendingPictureCaption": {
+          return Asc.c_oAscSmartArtTypes.BendingPictureCaption;
+        }
+        case "BendingPictureSemiTransparentText": {
+          return Asc.c_oAscSmartArtTypes.BendingPictureSemiTransparentText;
+        }
+        case "cycle6": {
+          return Asc.c_oAscSmartArtTypes.NonDirectionalCycle;
+        }
+        case "hProcess9": {
+          return Asc.c_oAscSmartArtTypes.ContinuousBlockProcess;
+        }
+        case "hList7": {
+          return Asc.c_oAscSmartArtTypes.ContinuousPictureList;
+        }
+        case "cycle3": {
+          return Asc.c_oAscSmartArtTypes.ContinuousCycle;
+        }
+        case "BlockDescendingList": {
+          return Asc.c_oAscSmartArtTypes.DescendingBlockList;
+        }
+        case "StepDownProcess": {
+          return Asc.c_oAscSmartArtTypes.StepDownProcess;
+        }
+        case "ReverseList": {
+          return Asc.c_oAscSmartArtTypes.ReverseList;
+        }
+        case "orgChart1": {
+          return Asc.c_oAscSmartArtTypes.OrganizationChart;
+        }
+        case "NameandTitleOrganizationalChart": {
+          return Asc.c_oAscSmartArtTypes.NameAndTitleOrganizationChart;
+        }
+        case "hProcess4": {
+          return Asc.c_oAscSmartArtTypes.AlternatingFlow;
+        }
+        case "pyramid2": {
+          return Asc.c_oAscSmartArtTypes.PyramidList;
+        }
+        case "PlusandMinus": {
+          return Asc.c_oAscSmartArtTypes.PlusAndMinus;
+        }
+        case "bProcess3": {
+          return Asc.c_oAscSmartArtTypes.RepeatingBendingProcess;
+        }
+        case "CaptionedPictures": {
+          return Asc.c_oAscSmartArtTypes.CaptionedPictures;
+        }
+        case "hProcess7": {
+          return Asc.c_oAscSmartArtTypes.DetailedProcess;
+        }
+        case "PictureStrips": {
+          return Asc.c_oAscSmartArtTypes.PictureStrips;
+        }
+        case "HalfCircleOrganizationChart": {
+          return Asc.c_oAscSmartArtTypes.HalfCircleOrganizationChart;
+        }
+        case "PhasedProcess": {
+          return Asc.c_oAscSmartArtTypes.PhasedProcess;
+        }
+        case "venn1": {
+          return Asc.c_oAscSmartArtTypes.BasicVenn;
+        }
+        case "hProcess11": {
+          return Asc.c_oAscSmartArtTypes.BasicTimeline;
+        }
+        case "chart3": {
+          return Asc.c_oAscSmartArtTypes.BasicPie;
+        }
+        case "matrix3": {
+          return Asc.c_oAscSmartArtTypes.BasicMatrix;
+        }
+        case "pyramid1": {
+          return Asc.c_oAscSmartArtTypes.BasicPyramid;
+        }
+        case "radial1": {
+          return Asc.c_oAscSmartArtTypes.BasicRadial;
+        }
+        case "target1": {
+          return Asc.c_oAscSmartArtTypes.BasicTarget;
+        }
+        case "default": {
+          return Asc.c_oAscSmartArtTypes.BasicBlockList;
+        }
+        case "process5": {
+          return Asc.c_oAscSmartArtTypes.BasicBendingProcess;
+        }
+        case "process1": {
+          return Asc.c_oAscSmartArtTypes.BasicProcess;
+        }
+        case "chevron1": {
+          return Asc.c_oAscSmartArtTypes.BasicChevronProcess;
+        }
+        case "cycle2": {
+          return Asc.c_oAscSmartArtTypes.BasicCycle;
+        }
+        case "OpposingIdeas": {
+          return Asc.c_oAscSmartArtTypes.OpposingIdeas;
+        }
+        case "arrow4": {
+          return Asc.c_oAscSmartArtTypes.OpposingArrows;
+        }
+        case "RandomtoResultProcess": {
+          return Asc.c_oAscSmartArtTypes.RandomToResultProcess;
+        }
+        case "SubStepProcess": {
+          return Asc.c_oAscSmartArtTypes.SubStepProcess;
+        }
+        case "PieProcess": {
+          return Asc.c_oAscSmartArtTypes.PieProcess;
+        }
+        case "process3": {
+          return Asc.c_oAscSmartArtTypes.AccentProcess;
+        }
+        case "AscendingPictureAccentProcess": {
+          return Asc.c_oAscSmartArtTypes.AscendingPictureAccentProcess;
+        }
+        case "hProcess10": {
+          return Asc.c_oAscSmartArtTypes.PictureAccentProcess;
+        }
+        case "radial3": {
+          return Asc.c_oAscSmartArtTypes.RadialVenn;
+        }
+        case "radial6": {
+          return Asc.c_oAscSmartArtTypes.RadialCycle;
+        }
+        case "RadialCluster": {
+          return Asc.c_oAscSmartArtTypes.RadialCluster;
+        }
+        case "radial2": {
+          return Asc.c_oAscSmartArtTypes.RadialList;
+        }
+        case "cycle7": {
+          return Asc.c_oAscSmartArtTypes.MultiDirectionalCycle;
+        }
+        case "radial5": {
+          return Asc.c_oAscSmartArtTypes.DivergingRadial;
+        }
+        case "arrow1": {
+          return Asc.c_oAscSmartArtTypes.DivergingArrows;
+        }
+        case "FramedTextPicture": {
+          return Asc.c_oAscSmartArtTypes.FramedTextPicture;
+        }
+        case "lProcess2": {
+          return Asc.c_oAscSmartArtTypes.GroupedList;
+        }
+        case "pyramid4": {
+          return Asc.c_oAscSmartArtTypes.SegmentedPyramid;
+        }
+        case "process4": {
+          return Asc.c_oAscSmartArtTypes.SegmentedProcess;
+        }
+        case "cycle8": {
+          return Asc.c_oAscSmartArtTypes.SegmentedCycle;
+        }
+        case "PictureGrid": {
+          return Asc.c_oAscSmartArtTypes.PictureGrid;
+        }
+        case "matrix2": {
+          return Asc.c_oAscSmartArtTypes.GridMatrix;
+        }
+        case "SpiralPicture": {
+          return Asc.c_oAscSmartArtTypes.SpiralPicture;
+        }
+        case "hList9": {
+          return Asc.c_oAscSmartArtTypes.StackedList;
+        }
+        case "pList1": {
+          return Asc.c_oAscSmartArtTypes.PictureCaptionList;
+        }
+        case "lProcess1": {
+          return Asc.c_oAscSmartArtTypes.ProcessList;
+        }
+        case "BubblePictureList": {
+          return Asc.c_oAscSmartArtTypes.BubblePictureList;
+        }
+        case "SquareAccentList": {
+          return Asc.c_oAscSmartArtTypes.SquareAccentList;
+        }
+        case "LinedList": {
+          return Asc.c_oAscSmartArtTypes.LinedList;
+        }
+        case "hList2": {
+          return Asc.c_oAscSmartArtTypes.PictureAccentList;
+        }
+        case "PictureAccentList": {
+          return Asc.c_oAscSmartArtTypes.TitledPictureAccentList;
+        }
+        case "SnapshotPictureList": {
+          return Asc.c_oAscSmartArtTypes.SnapshotPictureList;
+        }
+        case "hProcess3": {
+          return Asc.c_oAscSmartArtTypes.ContinuousArrowProcess;
+        }
+        case "CircleArrowProcess": {
+          return Asc.c_oAscSmartArtTypes.CircleArrowProcess;
+        }
+        case "hProcess6": {
+          return Asc.c_oAscSmartArtTypes.ProcessArrows;
+        }
+        case "vProcess5": {
+          return Asc.c_oAscSmartArtTypes.StaggeredProcess;
+        }
+        case "radial4": {
+          return Asc.c_oAscSmartArtTypes.ConvergingRadial;
+        }
+        case "arrow5": {
+          return Asc.c_oAscSmartArtTypes.ConvergingArrows;
+        }
+        case "hierarchy4": {
+          return Asc.c_oAscSmartArtTypes.TableHierarchy;
+        }
+        case "hList3": {
+          return Asc.c_oAscSmartArtTypes.TableList;
+        }
+        case "cycle1": {
+          return Asc.c_oAscSmartArtTypes.TextCycle;
+        }
+        case "hList6": {
+          return Asc.c_oAscSmartArtTypes.TrapezoidList;
+        }
+        case "DescendingProcess": {
+          return Asc.c_oAscSmartArtTypes.DescendingProcess;
+        }
+        case "lProcess3": {
+          return Asc.c_oAscSmartArtTypes.ChevronList;
+        }
+        case "equation1": {
+          return Asc.c_oAscSmartArtTypes.Equation;
+        }
+        case "arrow3": {
+          return Asc.c_oAscSmartArtTypes.CounterbalanceArrows;
+        }
+        case "target3": {
+          return Asc.c_oAscSmartArtTypes.TargetList;
+        }
+        case "cycle4": {
+          return Asc.c_oAscSmartArtTypes.CycleMatrix;
+        }
+        case "AlternatingPictureBlocks": {
+          return Asc.c_oAscSmartArtTypes.AlternatingPictureBlocks;
+        }
+        case "AlternatingPictureCircles": {
+          return Asc.c_oAscSmartArtTypes.AlternatingPictureCircles;
+        }
+        case "AlternatingHexagons": {
+          return Asc.c_oAscSmartArtTypes.AlternatingHexagonList;
+        }
+        case "gear1": {
+          return Asc.c_oAscSmartArtTypes.Gear;
+        }
+        case "architecture": {
+          return Asc.c_oAscSmartArtTypes.ArchitectureLayout;
+        }
+        case "chevronAccent+Icon": {
+          return Asc.c_oAscSmartArtTypes.ChevronAccentProcess;
+        }
+        case "CircleProcess": {
+          return Asc.c_oAscSmartArtTypes.CircleProcess;
+        }
+        case "ConvergingText": {
+          return Asc.c_oAscSmartArtTypes.ConvergingText;
+        }
+        case "HexagonRadial": {
+          return Asc.c_oAscSmartArtTypes.HexagonRadial;
+        }
+        case "InterconnectedBlockProcess": {
+          return Asc.c_oAscSmartArtTypes.InterconnectedBlockProcess;
+        }
+        case "rings+Icon": {
+          return Asc.c_oAscSmartArtTypes.InterconnectedRings;
+        }
+        case "Picture Frame": {
+          return Asc.c_oAscSmartArtTypes.PictureFrame;
+        }
+        case "pictureOrgChart+Icon": {
+          return Asc.c_oAscSmartArtTypes.PictureOrganizationChart;
+        }
+        case "RadialPictureList": {
+          return Asc.c_oAscSmartArtTypes.RadialPictureList;
+        }
+        case "TabList": {
+          return Asc.c_oAscSmartArtTypes.TabList;
+        }
+        case "TabbedArc+Icon": {
+          return Asc.c_oAscSmartArtTypes.TabbedArc;
+        }
+        case "ThemePictureAccent": {
+          return Asc.c_oAscSmartArtTypes.ThemePictureAccent;
+        }
+        case "ThemePictureAlternatingAccent": {
+          return Asc.c_oAscSmartArtTypes.ThemePictureAlternatingAccent;
+        }
+        case "ThemePictureGrid": {
+          return Asc.c_oAscSmartArtTypes.ThemePictureGrid;
+        }
+        case "VaryingWidthList": {
+          return Asc.c_oAscSmartArtTypes.VaryingWidthList;
+        }
+        case "BracketList": {
+          return Asc.c_oAscSmartArtTypes.VerticalBracketList;
+        }
+        default: {
+          return type;
+        }
+      }
     };
 
     SmartArt.prototype.getShapesForFitText = function (callShape) {
@@ -10260,14 +11100,15 @@
       var smartArtType = this.getTypeOfSmartArt();
       var shapeGeometry = callShape.getPresetGeom();
       var shapes = this.arrGraphicObjects.slice();
-      var association = callShape.getPointAssociation();
-      var prSet = association && association.prSet;
+      var callShapePoint = callShape.getSmartArtShapePoint();
+      var prSet = callShapePoint && callShapePoint.prSet;
       var getShapesFromPresStyleLbl = function(arrOfStyleLbl, returnThis) {
         if (prSet) {
           for (var i = 0; i < arrOfStyleLbl.length; i += 1) {
             if (prSet.presStyleLbl === arrOfStyleLbl[i]) {
               return shapes.filter(function (shape) {
-                var shapePrSet = shape.getPointAssociation() && shape.getPointAssociation().prSet;
+                var smartArtShapePoint = shape.getSmartArtShapePoint();
+                var shapePrSet = smartArtShapePoint && smartArtShapePoint.prSet;
                 return shapePrSet.presStyleLbl === arrOfStyleLbl[i];
               });
             }
@@ -10280,7 +11121,8 @@
           for (var i = 0; i < arrOfPresName.length; i += 1) {
             if (typeof prSet.presName === 'string' && prSet.presName.includes(arrOfPresName[i])) {
               return shapes.filter(function (shape) {
-                var shapePrSet = shape.getPointAssociation() && shape.getPointAssociation().prSet;
+                var smartArtShapePoint = shape.getSmartArtShapePoint();
+                var shapePrSet = smartArtShapePoint && smartArtShapePoint.prSet;
                 return typeof shapePrSet.presName === 'string' && shapePrSet.presName.includes(arrOfPresName[i]);
               });
             }
@@ -10296,246 +11138,222 @@
       }
 
       switch (smartArtType) {
-        case "PictureAccentBlocks":
-        case "cycle5":
-        case "venn2":
-        case "bProcess4":
-        case "vList2":
-        case "VerticalCurvedList":
-        case "process2":
-        case "list1":
-        case "vList4":
-        case "VerticalCircleList":
-        case "arrow2":
-        case "StepUpProcess":
-        case "hierarchy2":
-        case "HorizontalMultiLevelHierarchy":
-        case "HorizontalOrganizationChart":
-        case "hList1":
-        case "pList2":
-        case "hChevron3":
-        case "hierarchy1":
-        case "CirclePictureHierarchy":
-        case "HexagonCluster":
-        case "CircleRelationship":
-        case "CircleAccentTimeline":
-        case "bProcess2":
-        case "arrow6":
-        case "venn3":
-        case "PictureLineup":
-        case "BendingPictureCaptionList":
-        case "matrix1":
-        case "BendingPictureBlocks":
-        case "BendingPictureCaption":
-        case "BendingPictureSemiTransparentText":
-        case "cycle6":
-        case "hProcess9":
-        case "hList7":
-        case "cycle3":
-        case "StepDownProcess":
-        case "ReverseList":
-        case "orgChart1":
-        case "pyramid2":
-        case "PlusandMinus":
-        case "bProcess3":
-        case "CaptionedPictures":// TODO: think about it
-        case "PictureStrips":
-        case "HalfCircleOrganizationChart":
-        case "venn1":
-        case "hProcess11":
-        case "chart3":
-        case "matrix3":
-        case "target1":
-        case "default":
-        case "process5":
-        case "process1":
-        case "chevron1":
-        case "cycle2":
-        case "arrow4":
-        case "RandomtoResultProcess": // TODO: recalculate in next
-        case "process3":
-        case "hProcess10":
-        case "radial6": // TODO: think about it
-        case "cycle7":
-        case "arrow1":
-        case "FramedTextPicture":
-        case "pyramid4":
-        case "cycle8":
-        case "PictureGrid":
-        case "matrix2":
-        case "SpiralPicture":
-        case "pList1":
-        case "BubblePictureList":
-        case "SnapshotPictureList": // TODO: think about it
-        case "hProcess3":
-        case "CircleArrowProcess": // TODO: think about it
-        case "vProcess5":
-        case "radial4":
-        case "arrow5":
-        case "hierarchy4":
-        case "cycle1":
-        case "hList6":
-        case "DescendingProcess":
-        case "equation1":
-        case "arrow3":
-        case "AlternatingPictureBlocks":
-        case "AlternatingPictureCircles":
-        case "gear1":
+        case Asc.c_oAscSmartArtTypes.PictureAccentBlocks:
+        case Asc.c_oAscSmartArtTypes.BlockCycle:
+        case Asc.c_oAscSmartArtTypes.StackedVenn:
+        case Asc.c_oAscSmartArtTypes.VerticalBendingProcess:
+        case Asc.c_oAscSmartArtTypes.VerticalBulletList:
+        case Asc.c_oAscSmartArtTypes.VerticalCurvedList:
+        case Asc.c_oAscSmartArtTypes.VerticalProcess:
+        case Asc.c_oAscSmartArtTypes.VerticalBoxList:
+        case Asc.c_oAscSmartArtTypes.VerticalPictureList:
+        case Asc.c_oAscSmartArtTypes.VerticalCircleList:
+        case Asc.c_oAscSmartArtTypes.UpwardArrow:
+        case Asc.c_oAscSmartArtTypes.StepUpProcess:
+        case Asc.c_oAscSmartArtTypes.HorizontalHierarchy:
+        case Asc.c_oAscSmartArtTypes.HorizontalMultiLevelHierarchy:
+        case Asc.c_oAscSmartArtTypes.HorizontalOrganizationChart:
+        case Asc.c_oAscSmartArtTypes.HorizontalBulletList:
+        case Asc.c_oAscSmartArtTypes.HorizontalPictureList:
+        case Asc.c_oAscSmartArtTypes.ClosedChevronProcess:
+        case Asc.c_oAscSmartArtTypes.Hierarchy:
+        case Asc.c_oAscSmartArtTypes.CirclePictureHierarchy:
+        case Asc.c_oAscSmartArtTypes.HexagonCluster:
+        case Asc.c_oAscSmartArtTypes.CircleRelationship:
+        case Asc.c_oAscSmartArtTypes.CircleAccentTimeline:
+        case Asc.c_oAscSmartArtTypes.CircularBendingProcess:
+        case Asc.c_oAscSmartArtTypes.ArrowRibbon:
+        case Asc.c_oAscSmartArtTypes.LinearVenn:
+        case Asc.c_oAscSmartArtTypes.PictureLineup:
+        case Asc.c_oAscSmartArtTypes.BendingPictureCaptionList:
+        case Asc.c_oAscSmartArtTypes.TitledMatrix:
+        case Asc.c_oAscSmartArtTypes.BendingPictureBlocks:
+        case Asc.c_oAscSmartArtTypes.BendingPictureCaption:
+        case Asc.c_oAscSmartArtTypes.BendingPictureSemiTransparentText:
+        case Asc.c_oAscSmartArtTypes.NonDirectionalCycle:
+        case Asc.c_oAscSmartArtTypes.ContinuousBlockProcess:
+        case Asc.c_oAscSmartArtTypes.ContinuousPictureList:
+        case Asc.c_oAscSmartArtTypes.ContinuousCycle:
+        case Asc.c_oAscSmartArtTypes.StepDownProcess:
+        case Asc.c_oAscSmartArtTypes.ReverseList:
+        case Asc.c_oAscSmartArtTypes.OrganizationChart:
+        case Asc.c_oAscSmartArtTypes.PictureOrganizationChart:
+        case Asc.c_oAscSmartArtTypes.PyramidList:
+        case Asc.c_oAscSmartArtTypes.PlusAndMinus:
+        case Asc.c_oAscSmartArtTypes.RepeatingBendingProcess:
+        case Asc.c_oAscSmartArtTypes.CaptionedPictures:
+        case Asc.c_oAscSmartArtTypes.PictureStrips:
+        case Asc.c_oAscSmartArtTypes.HalfCircleOrganizationChart:
+        case Asc.c_oAscSmartArtTypes.BasicVenn:
+        case Asc.c_oAscSmartArtTypes.BasicTimeline:
+        case Asc.c_oAscSmartArtTypes.BasicPie:
+        case Asc.c_oAscSmartArtTypes.BasicMatrix:
+        case Asc.c_oAscSmartArtTypes.BasicTarget:
+        case Asc.c_oAscSmartArtTypes.BasicBlockList:
+        case Asc.c_oAscSmartArtTypes.BasicBendingProcess:
+        case Asc.c_oAscSmartArtTypes.BasicProcess:
+        case Asc.c_oAscSmartArtTypes.BasicChevronProcess:
+        case Asc.c_oAscSmartArtTypes.BasicCycle:
+        case Asc.c_oAscSmartArtTypes.OpposingArrows:
+        case Asc.c_oAscSmartArtTypes.RandomToResultProcess:
+        case Asc.c_oAscSmartArtTypes.AccentProcess:
+        case Asc.c_oAscSmartArtTypes.PictureAccentProcess:
+        case Asc.c_oAscSmartArtTypes.RadialCycle:
+        case Asc.c_oAscSmartArtTypes.MultiDirectionalCycle:
+        case Asc.c_oAscSmartArtTypes.DivergingArrows:
+        case Asc.c_oAscSmartArtTypes.FramedTextPicture:
+        case Asc.c_oAscSmartArtTypes.SegmentedPyramid:
+        case Asc.c_oAscSmartArtTypes.SegmentedCycle:
+        case Asc.c_oAscSmartArtTypes.PictureGrid:
+        case Asc.c_oAscSmartArtTypes.GridMatrix:
+        case Asc.c_oAscSmartArtTypes.SpiralPicture:
+        case Asc.c_oAscSmartArtTypes.PictureCaptionList:
+        case Asc.c_oAscSmartArtTypes.BubblePictureList:
+        case Asc.c_oAscSmartArtTypes.SnapshotPictureList:
+        case Asc.c_oAscSmartArtTypes.ContinuousArrowProcess:
+        case Asc.c_oAscSmartArtTypes.CircleArrowProcess:
+        case Asc.c_oAscSmartArtTypes.StaggeredProcess:
+        case Asc.c_oAscSmartArtTypes.ConvergingRadial:
+        case Asc.c_oAscSmartArtTypes.ConvergingArrows:
+        case Asc.c_oAscSmartArtTypes.TableHierarchy: //TODO: think about it
+        case Asc.c_oAscSmartArtTypes.ArchitectureLayout: //TODO: think about it
+        case Asc.c_oAscSmartArtTypes.TextCycle:
+        case Asc.c_oAscSmartArtTypes.TrapezoidList:
+        case Asc.c_oAscSmartArtTypes.DescendingProcess:
+        case Asc.c_oAscSmartArtTypes.Equation:
+        case Asc.c_oAscSmartArtTypes.CounterbalanceArrows:
+        case Asc.c_oAscSmartArtTypes.AlternatingPictureBlocks:
+        case Asc.c_oAscSmartArtTypes.AlternatingPictureCircles:
+        case Asc.c_oAscSmartArtTypes.ChevronAccentProcess:
+        case Asc.c_oAscSmartArtTypes.TabbedArc:
+        case Asc.c_oAscSmartArtTypes.ThemePictureAccent:
+        case Asc.c_oAscSmartArtTypes.VaryingWidthList:
+        case Asc.c_oAscSmartArtTypes.InterconnectedRings:
+        case Asc.c_oAscSmartArtTypes.ThemePictureAlternatingAccent:
+        case Asc.c_oAscSmartArtTypes.HexagonRadial:
+        case Asc.c_oAscSmartArtTypes.PictureFrame:
+        case Asc.c_oAscSmartArtTypes.TabList:
+        case Asc.c_oAscSmartArtTypes.VerticalBracketList:
+        case Asc.c_oAscSmartArtTypes.Gear: {
           return shapes;
-          break;
-        case "AlternatingHexagons":
+        }
+        case Asc.c_oAscSmartArtTypes.AlternatingHexagonList:
           return getShapesFromPresetGeom(['rect']);
-        case "LinedList":
+        case Asc.c_oAscSmartArtTypes.LinedList:
           return getShapesFromPresName(['tx1', 'tx2', 'tx3', 'tx4']);
-        case "SquareAccentList":
-        case "IncreasingCircleProcess":
-        case "PieProcess":
+        case Asc.c_oAscSmartArtTypes.SquareAccentList:
+        case Asc.c_oAscSmartArtTypes.IncreasingCircleProcess:
+        case Asc.c_oAscSmartArtTypes.PieProcess:
           return getShapesFromPresName(['Child', 'Parent']);
-        case "hList2":
+        case Asc.c_oAscSmartArtTypes.PictureAccentList:
           return getShapesFromPresStyleLbl(['node1', 'revTx']);
-        case "lProcess2": // TODO: check transform
+        case Asc.c_oAscSmartArtTypes.GroupedList:// TODO: check transform
           return getShapesFromPresStyleLbl(['bgShp', 'node1']);
-        case "PictureAccentList":
+        case Asc.c_oAscSmartArtTypes.InterconnectedBlockProcess:
+          return getShapesFromPresStyleLbl(['alignImgPlace1', 'node1']);
+        case Asc.c_oAscSmartArtTypes.TitledPictureAccentList:
           return getShapesFromPresStyleLbl(['lnNode1']); // TODO: think about it
-        case "vList5":
-        case "chevron2":
-        case "bList2":
-        case "hList9":
-        case "hProcess7":
-        case "vList6":
-        case "hProcess6":
-        case "SubStepProcess":
-        case "funnel1":
-        case "PhasedProcess":
-        case "cycle4":
-        case "pyramid1":
-        case "pyramid3":
-        case "vList3":
-        case "radial2":
-        case "TitledPictureBlocks":
-        case "OpposingIdeas":
-        case "hierarchy6":
-        case "hierarchy5":
-        case "IncreasingArrowsProcess":
+        case Asc.c_oAscSmartArtTypes.VerticalBlockList:
+        case Asc.c_oAscSmartArtTypes.VerticalChevronList:
+        case Asc.c_oAscSmartArtTypes.BendingPictureAccentList:
+        case Asc.c_oAscSmartArtTypes.StackedList:
+        case Asc.c_oAscSmartArtTypes.DetailedProcess:
+        case Asc.c_oAscSmartArtTypes.VerticalArrowList:
+        case Asc.c_oAscSmartArtTypes.ProcessArrows:
+        case Asc.c_oAscSmartArtTypes.SubStepProcess:
+        case Asc.c_oAscSmartArtTypes.Funnel:
+        case Asc.c_oAscSmartArtTypes.PhasedProcess:
+        case Asc.c_oAscSmartArtTypes.CycleMatrix:
+        case Asc.c_oAscSmartArtTypes.BasicPyramid:
+        case Asc.c_oAscSmartArtTypes.InvertedPyramid:
+        case Asc.c_oAscSmartArtTypes.VerticalPictureAccentList:
+        case Asc.c_oAscSmartArtTypes.RadialList:
+        case Asc.c_oAscSmartArtTypes.TitledPictureBlocks:
+        case Asc.c_oAscSmartArtTypes.OpposingIdeas:
+        case Asc.c_oAscSmartArtTypes.LabeledHierarchy:
+        case Asc.c_oAscSmartArtTypes.RadialPictureList:
+        case Asc.c_oAscSmartArtTypes.ConvergingText:
+        case Asc.c_oAscSmartArtTypes.CircleProcess:
+        case Asc.c_oAscSmartArtTypes.HorizontalLabeledHierarchy:
+        case Asc.c_oAscSmartArtTypes.IncreasingArrowsProcess: {
           return getShapesFromPresetGeom();
-        case "VerticalAccentList":
+        }
+        case Asc.c_oAscSmartArtTypes.VerticalAccentList:
           return getShapesFromPresStyleLbl(['revTx', 'solidFgAcc1']);
-        case "BlockDescendingList":
+        case Asc.c_oAscSmartArtTypes.DescendingBlockList:
           return getShapesFromPresName(['childText']);
-        case "hList3":
+        case Asc.c_oAscSmartArtTypes.TableList:
           return getShapesFromPresStyleLbl(['node1', 'dkBgShp']);
-        case "process4":
+        case Asc.c_oAscSmartArtTypes.SegmentedProcess:
           return getShapesFromPresStyleLbl(['node1', 'fgAccFollowNode1']);
-        case "target3":
+        case Asc.c_oAscSmartArtTypes.TargetList:
           return getShapesFromPresName(['СhTx', 'rect']); // TODO: think about it
-        case "hierarchy3":
+        case Asc.c_oAscSmartArtTypes.HierarchyList:
           return getShapesFromPresStyleLbl(['node1', 'bgAcc1']);
-        case "hProcess4":
+        case Asc.c_oAscSmartArtTypes.AlternatingFlow:
           return getShapesFromPresStyleLbl(['node1', 'bgAcc1']);
-        case "lProcess3":
+        case Asc.c_oAscSmartArtTypes.ChevronList:
           return getShapesFromPresStyleLbl(['node1', 'alignAccFollowNode1']);
-        case "lProcess1":
+        case Asc.c_oAscSmartArtTypes.ProcessList:
           return getShapesFromPresStyleLbl(['alignAccFollowNode1', 'node1']);
-        case "AscendingPictureAccentProcess":
+        case Asc.c_oAscSmartArtTypes.AscendingPictureAccentProcess:
           return getShapesFromPresStyleLbl(['node1', 'revTx']);
-        case "equation2":
+        case Asc.c_oAscSmartArtTypes.VerticalEquation:
           return getShapesFromPresName(['lastNode', 'node']);
-        case "radial1":
-        case "radial5": // TODO: think
+        case Asc.c_oAscSmartArtTypes.BasicRadial:
+        case Asc.c_oAscSmartArtTypes.DivergingRadial: // TODO: think
           return getShapesFromPresStyleLbl(['node1', 'node0']);
-        case "radial3":
+        case Asc.c_oAscSmartArtTypes.RadialVenn:
           return getShapesFromPresName(['centerShape', 'node']);
-        case "RadialCluster":
+        case Asc.c_oAscSmartArtTypes.RadialCluster:
           return [callShape];
-        case "NameandTitleOrganizationalChart":
+        case Asc.c_oAscSmartArtTypes.NameAndTitleOrganizationChart:
           return getShapesFromPresStyleLbl(['node0'], true);
-        case "balance1":
+        case Asc.c_oAscSmartArtTypes.Balance:
           return getShapesFromPresStyleLbl(['alignAccFollowNode1', 'node1']);
-        case "target2":
+        case Asc.c_oAscSmartArtTypes.NestedTarget:
           return getShapesFromPresStyleLbl(['node1', 'fgAcc1']);
-        case "AccentedPicture":
-        case "CircularPictureCallout":
+        case Asc.c_oAscSmartArtTypes.AccentedPicture:
+        case Asc.c_oAscSmartArtTypes.CircularPictureCallout:
           return getShapesFromPresStyleLbl(['revTx', 'node1']);
-        case "TitlePictureLineup":
+        case Asc.c_oAscSmartArtTypes.ThemePictureGrid:
+          return getShapesFromPresStyleLbl(['revTx', 'trBgShp']);
+        case Asc.c_oAscSmartArtTypes.TitlePictureLineup:
           return getShapesFromPresStyleLbl(['revTx', 'alignNode1']);
         default:
           return [];
       }
     }
-
-    SmartArt.prototype.setPointsForShapes = function () {
-      var oDrawing = this.getDrawing();
-      if(!oDrawing) {
-        return;
-      }
-      var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
-      var ptLst = dataModel.ptLst.list;
-      var cxnLst = dataModel.cxnLst.list;
-      oDrawing.spTree.forEach(function (shape) {
-        if (shape.isObjectInSmartArt()) {
-          var cxn;
-          var isPresParOf = true;
-          for (var i = 0; i < cxnLst.length; i += 1) {
-            if (cxnLst[i].type === 'presOf' && cxnLst[i].destId === shape.modelId) {
-              isPresParOf = false;
-              cxn = cxnLst[i];
-            }
-          }
-          if (isPresParOf) {
-            for (i = 0; i < cxnLst.length; i += 1) {
-              if (cxnLst[i].type === 'presParOf' && cxnLst[i].destId === shape.modelId) {
-                isPresParOf = false;
-                cxn = cxnLst[i];
-              }
-            }
-          }
-          var pointInfo = new PointInfo();
-          for (i = 0; i < ptLst.length; i += 1) {
-            if (cxn) {
-              if (cxn.destId === ptLst[i].modelId) {
-                pointInfo.setAssociation(ptLst[i]);
-              }
-              if (cxn.srcId === ptLst[i].modelId) {
-                pointInfo.setPoint(ptLst[i]);
-              }
-            }
-          }
-          shape.setSmartArtPoint(pointInfo);
-        }
-      })
-    };
-
     SmartArt.prototype.setParent = function (parent) {
-      History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SmartArtParent, this.parent, parent));
+      oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SmartArtParent, this.parent, parent));
       this.parent = parent;
     };
     SmartArt.prototype.setColorsDef = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtColorsDef, this.getColorsDef(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtColorsDef, this.getColorsDef(), oPr));
       this.colorsDef = oPr;
       oPr.setParent(this);
     };
     SmartArt.prototype.setType = function (oPr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_SmartArtType, this.type, oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SmartArtType, this.type, oPr));
       this.type = oPr;
     };
-
     SmartArt.prototype.setDrawing = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDrawing, this.getDrawing(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDrawing, this.getDrawing(), oPr));
       this.drawing = oPr;
       oPr.setParent(this);
     };
     SmartArt.prototype.setLayoutDef = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtLayoutDef, this.getLayoutDef(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtLayoutDef, this.getLayoutDef(), oPr));
       this.layoutDef = oPr;
       oPr.setParent(this);
     };
     SmartArt.prototype.setDataModel = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDataModel, this.getDataModel(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
       oPr.setParent(this);
     };
     SmartArt.prototype.setStyleDef = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtStyleDef, this.getStyleDef(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtStyleDef, this.getStyleDef(), oPr));
       this.styleDef = oPr;
       oPr.setParent(this);
     };
@@ -10577,85 +11395,96 @@
       }
     };
 
-    SmartArt.prototype.setConnections = function () {
+    SmartArt.prototype.getRelationOfContent = function () {
       var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
       if (dataModel) {
-        var connections = [];
+        var connections = {};
+        var ptMap = this.getPtMap();
+        var shapeMap = this.getShapeMap();
         var cxnLst = dataModel.cxnLst.list;
-        var ptLst = dataModel.ptLst.list;
-        cxnLst.forEach(function (cxn) {
-          ptLst.forEach(function (point) {
-            if (point.modelId === cxn.destId) {
-              var isCheck = connections.some(function (con) {
-                return con.id === cxn.destId;
-              });
-              if (!isCheck) {
-                connections.push({
-                  point: point,
-                  id: cxn.destId,
-                  conn: [],
-                  srcOrd: cxn.srcOrd,
-                  destOrd: cxn.destOrd
-                })
-              }
-            }
-          })
+        var presCxnLst = cxnLst.filter(function (cxn) {
+          return cxn.type === 'presOf';
         });
-        cxnLst.forEach(function (cxn) {
-          ptLst.forEach(function (point) {
-            if (point.modelId === cxn.srcId) {
-              connections.forEach(function (c) {
-                if (c.id === cxn.destId && point.type !== Point_type_pres/*&&  && point.type !== 3*/ /*&& (cxn.srcOrd !== c.srcOrd || cxn.destOrd !== c.destOrd)*/) {
-                  c.conn.push({
-                    point: point,
-                    srcOrd: cxn.srcOrd,
-                    destOrd: cxn.destOrd,
-                  });
-                }
-              })
-            }
-          });
-        })
-        var shapeMap = {};
-        var shapeTree = this.getDrawing().spTree;
-        var shapeLst = shapeTree.map(function (shape) {
-          shapeMap[shape.modelId] = shape;
-          return shape.modelId;
-        });
-        connections = connections.filter(function (conn) {
-          return shapeLst.indexOf(conn.id) !== -1;
-        })
-        connections.forEach(function (connect) {
-          var smartArtInfo = new ShapeSmartArtInfo();
-          var shape = shapeMap[connect.id];
-          smartArtInfo.setShapePoint(connect.point);
-          var content = shape.txBody && shape.txBody.content && shape.txBody.content.Content;
-          if (content && content.length) {
-            if (connect.conn.length === content.length) {
-              content.forEach(function (paragraph, idx) {
-                connect.conn.forEach(function (contentPoint) {
-                  if (contentPoint.srcOrd === connect.srcOrd && parseInt(contentPoint.destOrd) === idx) {
-                    smartArtInfo.addToLstContentPoint(smartArtInfo.contentPoint.length ,contentPoint.point);
-                  }
-                })
-              })
-            } else {
 
+        presCxnLst.forEach(function (cxn) {
+          var shape = shapeMap[cxn.destId];
+          if (shape) {
+            if (!connections[cxn.destId]) {
+              connections[cxn.destId] = [];
             }
-          } else if (connect.point.isBlipFillPlaceholder()) {
-
-            if (connect.conn.length !== 0) {
-              smartArtInfo.setSpPrPoint(connect.conn[0].point);
-            } else {
-              smartArtInfo.setSpPrPoint(connect.point);
-            }
+            connections[cxn.destId].push({
+              point: ptMap[cxn.srcId],
+              srcOrd: parseInt(cxn.srcOrd, 10),
+              destOrd: parseInt(cxn.destOrd, 10)
+            });
           }
-          shape.setShapeSmartArtInfo(smartArtInfo);
-        })
+        });
+
+        for (var key in connections) {
+          connections[key].sort(function (firstConnection, secondConnection) {
+            return firstConnection.destOrd - secondConnection.destOrd;
+          });
+        }
+
         return connections;
       }
-    }
+    };
 
+    SmartArt.prototype.getRelationOfShapes = function () {
+      var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
+      if (dataModel) {
+        var connections = {};
+        var ptMap = this.getPtMap();
+        var shapeMap = this.getShapeMap();
+        var cxnLst = dataModel.cxnLst.list;
+        var presCxnLst = cxnLst.filter(function (cxn) {
+          return cxn.type === 'presOf' || cxn.type === 'presParOf';
+        });
+
+        presCxnLst.forEach(function (cxn) {
+          var shape = shapeMap[cxn.destId];
+          if (shape) {
+            if (!connections[cxn.destId]) {
+              connections[cxn.destId] = ptMap[cxn.destId];
+            }
+          }
+        });
+        return connections;
+      }
+    };
+
+    SmartArt.prototype.setConnections2 = function () {
+      var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
+      if (dataModel) {
+
+        var shapeMap = this.getShapeMap();
+        var contentConnections = this.getRelationOfContent();
+        var shapeConnections = this.getRelationOfShapes();
+
+        for (var modelId in shapeMap) {
+          var shape = shapeMap[modelId];
+          var smartArtInfo = new ShapeSmartArtInfo();
+          shape.setShapeSmartArtInfo(smartArtInfo);
+          if (contentConnections[modelId]) {
+            contentConnections[modelId].forEach(function (el) {
+              smartArtInfo.addToLstContentPoint(smartArtInfo.contentPoint.length, el.point);
+            });
+          }
+          if (shapeConnections[modelId]) {
+            smartArtInfo.setShapePoint(shapeConnections[modelId]);
+          }
+        }
+      }
+    };
+
+    SmartArt.prototype.getShapeMap = function () {
+      var result = {};
+      var shapeTree = this.getDrawing().spTree;
+      shapeTree.forEach(function (shape) {
+        result[shape.modelId] = shape;
+      });
+      return result;
+    };
 
     SmartArt.prototype.privateWriteAttributes = null;
     SmartArt.prototype.writeChildren = function(pWriter) {
@@ -10683,8 +11512,7 @@
         case 1: {
           this.setDataModel(new DiagramData());
           this.dataModel.fromPPTY(pReader);
-          this.setPointsForShapes();
-          this.setConnections();
+          this.setConnections2();
           break;
         }
         case 2: {
@@ -10783,7 +11611,7 @@
 
     SmartArt.prototype.setXfrmByParent = function () {
       var oXfrm = this.spPr.xfrm;
-      if (oXfrm.isZero()) {
+      if (oXfrm.isZero && oXfrm.isZero()) {
         var parent = this.parent;
         if (parent instanceof AscCommonWord.ParaDrawing) {
           oXfrm.setExtX(parent.Extent.W);
@@ -10962,6 +11790,15 @@
     {
       var copy = new SmartArt();
       this.copy2(copy, oPr);
+      var drawing = copy.getDrawing();
+      if (drawing) {
+        for (var i = 0; i < drawing.spTree.length; i += 1) {
+          var obj = drawing.spTree[i];
+          if (obj.getObjectType() === AscDFH.historyitem_type_Shape) {
+            obj.copyTextInfoFromShapeToPoint();
+          }
+        }
+      }
       return copy;
     };
     SmartArt.prototype.copy2 = function(copy, oPr)
@@ -11000,12 +11837,13 @@
       if (this.colorsDef) {
         copy.setColorsDef(this.colorsDef.createDuplicate());
       }
-      copy.cachedImage = this.getBase64Img();
-      copy.cachedPixH = this.cachedPixH;
-      copy.cachedPixW = this.cachedPixW;
+      if(!oPr || false !== oPr.cacheImage) {
+        copy.cachedImage = this.getBase64Img();
+        copy.cachedPixH = this.cachedPixH;
+        copy.cachedPixW = this.cachedPixW;
+      }
       copy.setLocks(this.locks);
-      copy.setPointsForShapes();
-      copy.setConnections();
+      copy.setConnections2();
       return copy;
     };
     SmartArt.prototype.handleUpdateFill = function() {
@@ -11031,6 +11869,27 @@
     };
     SmartArt.prototype.getTypeName = function() {
       return AscCommon.translateManager.getValue("Diagram");
+    };
+    SmartArt.prototype.checkEmptySpPrAndXfrm = function(_xfrm) {
+      CGraphicObjectBase.prototype.checkEmptySpPrAndXfrm.call(this, _xfrm);
+      if(this.drawing) {
+        var oDrawing = this.drawing;
+        oDrawing.setSpPr(new AscFormat.CSpPr());
+        oDrawing.spPr.setParent(this);
+        oDrawing.spPr.setXfrm(this.spPr.xfrm.createDuplicate());
+        oDrawing.spPr.xfrm.setParent(oDrawing.spPr);
+        oDrawing.spPr.xfrm.setOffX(0);
+        oDrawing.spPr.xfrm.setOffY(0);
+      }
+    };
+    SmartArt.prototype.checkNodePointsAfterRead = function() {
+      let tree = this.createHierarchy();
+      tree.traverseBF(function (node) {
+        let nodePoint = node.data && (node.data.nodePoint || node.data.asstPoint);
+        if (nodePoint) {
+          nodePoint.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
+        }
+      });
     };
 
     function SmartArtTree(rootInfo, rootData, parent) {
@@ -11178,7 +12037,7 @@
 
     SmartArtNode.prototype.addToLstChildren = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.children.length, Math.max(0, nIdx));
-      this.children.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.children.length ? this.children.push(oPr) : this.children.splice(nInsertIdx, 0, oPr);
       oPr.depth = this.depth + 1;
       oPr.setParent(this);
     }
@@ -11186,7 +12045,7 @@
     SmartArtNode.prototype.removeFromLstChildren = function (nIdx) {
       if (nIdx > -1 && nIdx < this.children.length) {
         this.children[nIdx].setParent(null);
-        this.children.splice(nIdx, 1);
+        nIdx === this.children.length - 1 ? this.children.pop() : this.children.splice(nIdx, 1);
       }
     }
 
@@ -11413,7 +12272,7 @@
       this.docPoint = null;
       this.nodePoint = null;
       this.normPoint = [];
-      this.asstPoint = [];
+      this.asstPoint = null;
       this.presPoint = [];
       this.shapes = [];
     }
@@ -11425,17 +12284,17 @@
 
     SmartArtNodeData.prototype.addToLstSibPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.sibPoint.length, Math.max(0, nIdx));
-      this.sibPoint.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.sibPoint.length ? this.sibPoint.push(oPr) : this.sibPoint.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.addToLstNormPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.normPoint.length, Math.max(0, nIdx));
-      this.normPoint.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.normPoint.length ? this.normPoint.push(oPr) : this.normPoint.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.addToLstParPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.parPoint.length, Math.max(0, nIdx));
-      this.parPoint.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.parPoint.length ? this.parPoint.push(oPr) : this.parPoint.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.setDocPoint = function (oPr) {
@@ -11444,7 +12303,11 @@
 
     SmartArtNodeData.prototype.addToLstAsstPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.asstPoint.length, Math.max(0, nIdx));
-      this.asstPoint.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.asstPoint.length ? this.asstPoint.push(oPr) : this.asstPoint.splice(nInsertIdx, 0, oPr);
+    }
+
+    SmartArtNodeData.prototype.setAsstPoint = function (oPr) {
+      this.asstPoint = oPr;
     }
 
     SmartArtNodeData.prototype.setNodePoint = function (oPr) {
@@ -11523,25 +12386,25 @@
 
     SmartArtNodeData.prototype.addToLstShapes = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.shapes.length, Math.max(0, nIdx));
-      this.shapes.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.shapes.length ? this.shapes.push(oPr) : this.shapes.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.removeFromLstShapes = function (nIdx) {
       if (nIdx > -1 && nIdx < this.shapes.length) {
         this.shapes[nIdx].setParent(null);
-        this.shapes.splice(nIdx, 1);
+        nIdx === this.shapes.length - 1 ? this.shapes.pop() : this.shapes.splice(nIdx, 1);
       }
     }
 
     SmartArtNodeData.prototype.addToLstPresPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.presPoint.length, Math.max(0, nIdx));
-      this.presPoint.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.presPoint.length ? this.presPoint.push(oPr) : this.presPoint.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.removeFromLstPresPoint = function (nIdx) {
       if (nIdx > -1 && nIdx < this.presPoint.length) {
         this.presPoint[nIdx].setParent(null);
-        this.presPoint.splice(nIdx, 1);
+        nIdx === this.presPoint.length - 1 ? this.presPoint.pop() : this.presPoint.splice(nIdx, 1);
       }
     }
 
@@ -11575,6 +12438,810 @@
         }
       }
     }
+
+    // Акцентируемый рисунок
+    function SmartArtAccentedPicture() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtAccentedPicture, SmartArt);
+
+    // Баланс
+    function SmartArtBalance1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBalance1, SmartArt);
+
+    // Блоки рисунков с названиями
+    function SmartArtTitledPictureBlocks() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtTitledPictureBlocks, SmartArt);
+
+    // Блоки со смещенными рисунками
+    function SmartArtPictureAccentBlocks() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPictureAccentBlocks, SmartArt);
+    // Блочный цикл
+    function SmartArtCycle5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle5, SmartArt);
+
+    // Венна в столбик
+    function SmartArtVenn2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVenn2, SmartArt);
+
+    // Вертикальное уравнение
+    function SmartArtEquation2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtEquation2, SmartArt);
+
+    // Вертикальный блочный список
+    function SmartArtVList5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVList5, SmartArt);
+
+    // Вертикальный ломаный процесс
+    function SmartArtBProcess4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBProcess4, SmartArt);
+
+    // Вертикальный маркированный список
+    function SmartArtVList2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVList2, SmartArt);
+
+    // Вертикальный нелинейный список
+    function SmartArtVerticalCurvedList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVerticalCurvedList, SmartArt);
+
+    // Вертикальный процесс
+    function SmartArtProcess2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtProcess2, SmartArt);
+
+    // Вертикальный список
+    function SmartArtList1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtList1, SmartArt);
+
+    // Вертикальный список рисунков
+    function SmartArtVList4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVList4, SmartArt);
+
+    // Вертикальный список с кругами
+    function SmartArtVerticalCircleList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVerticalCircleList, SmartArt);
+
+    // Вертикальный список со смещенными рисунками
+    function SmartArtVList3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVList3, SmartArt);
+
+    // Вертикальный список со стрелкой
+    function SmartArtVList6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVList6, SmartArt);
+
+    // Вертикальный уголковый список
+    function SmartArtChevron2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtChevron2, SmartArt);
+
+    // Вертикальный уголковый список2
+    function SmartArtVerticalAccentList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVerticalAccentList, SmartArt);
+
+    // Вложенная целевая
+    function SmartArtTarget2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtTarget2, SmartArt);
+
+    // Воронка
+    function SmartArtFunnel1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtFunnel1, SmartArt);
+
+    // Восходящая стрелка
+    function SmartArtArrow2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow2, SmartArt);
+
+    // Восходящая стрелка процесса
+    function SmartArtIncreasingArrowsProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtIncreasingArrowsProcess, SmartArt);
+
+    // Восходящий процесс
+    function SmartArtStepUpProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtStepUpProcess, SmartArt);
+
+    // Выноска с круглыми рисунками
+    function SmartArtCircularPictureCallout() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCircularPictureCallout, SmartArt);
+
+    // Горизонтальная иерархия
+    function SmartArtHierarchy2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy2, SmartArt);
+
+    // Горизонтальная иерархия с подписями
+    function SmartArtHierarchy5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy5, SmartArt);
+
+    // Горизонтальная многоуровневая иерархия
+    function SmartArtHorizontalMultiLevelHierarchy() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHorizontalMultiLevelHierarchy, SmartArt);
+
+    // Горизонтальная организационная диаграмма
+    function SmartArtHorizontalOrganizationChart() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHorizontalOrganizationChart, SmartArt);
+
+    // Горизонтальный маркированный список
+    function SmartArtHList1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList1, SmartArt);
+
+    // Горизонтальный список рисунков
+    function SmartArtPList2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPList2, SmartArt);
+
+    // Закрытый уголковый процесс
+    function SmartArtHChevron3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHChevron3, SmartArt);
+
+    // Иерархический список
+    function SmartArtHierarchy3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy3, SmartArt);
+
+    // Иерархия
+    function SmartArtHierarchy1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy1, SmartArt);
+
+    // Иерархия с круглыми рисунками
+    function SmartArtCirclePictureHierarchy() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCirclePictureHierarchy, SmartArt);
+
+    // Иерархия с подписями
+    function SmartArtHierarchy6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy6, SmartArt);
+
+    // Инвертированная пирамида
+    function SmartArtPyramid3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPyramid3, SmartArt);
+
+    // Кластер шестиугольников
+    function SmartArtHexagonCluster() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHexagonCluster, SmartArt);
+
+    // Круг связей
+    function SmartArtCircleRelationship() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCircleRelationship, SmartArt);
+
+    // Круглая временная шкала
+    function SmartArtCircleAccentTimeline() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCircleAccentTimeline, SmartArt);
+
+    // Круглый ломаный процесс
+    function SmartArtBProcess2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBProcess2, SmartArt);
+
+    // Лента со стрелками
+    function SmartArtArrow6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow6, SmartArt);
+
+    // Линейная Венна
+    function SmartArtVenn3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVenn3, SmartArt);
+
+    // Линия рисунков
+    function SmartArtPictureLineup() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPictureLineup, SmartArt);
+
+    // Линия рисунков с названиями
+    function SmartArtTitlePictureLineup() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtTitlePictureLineup, SmartArt);
+
+    // Ломаный список рисунков с подписями
+    function SmartArtBendingPictureCaptionList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBendingPictureCaptionList, SmartArt);
+
+    // Ломаный список со смещенными рисунками
+    function SmartArtBList2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBList2, SmartArt);
+
+    // Матрица с заголовками
+    function SmartArtMatrix1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtMatrix1, SmartArt);
+
+    // Нарастающий процесс с кругами
+    function SmartArtIncreasingCircleProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtIncreasingCircleProcess, SmartArt);
+
+    // Нелинейные рисунки с блоками
+    function SmartArtBendingPictureBlocks() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBendingPictureBlocks, SmartArt);
+
+    // Нелинейные рисунки с подписями
+    function SmartArtBendingPictureCaption() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBendingPictureCaption, SmartArt);
+
+    // Нелинейные рисунки с полупрозрачным текстом
+    function SmartArtBendingPictureSemiTransparentText() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBendingPictureSemiTransparentText, SmartArt);
+
+    // Ненаправленный цикл
+    function SmartArtCycle6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle6, SmartArt);
+
+    // Непрерывный блочный процесс
+    function SmartArtHProcess9() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess9, SmartArt);
+
+    // Непрерывный список с рисунками
+    function SmartArtHList7() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList7, SmartArt);
+
+    // Непрерывный цикл
+    function SmartArtCycle3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle3, SmartArt);
+
+    // Нисходящий блочный список
+    function SmartArtBlockDescendingList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBlockDescendingList, SmartArt);
+
+    // Нисходящий процесс
+    function SmartArtStepDownProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtStepDownProcess, SmartArt);
+
+    // Обратный список
+    function SmartArtReverseList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtReverseList, SmartArt);
+
+    // Организационная диаграмма
+    function SmartArtOrgChart1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtOrgChart1, SmartArt);
+
+    // Организационная диаграмма с именами и должностями
+    function SmartArtNameandTitleOrganizationalChart() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtNameandTitleOrganizationalChart, SmartArt);
+
+    // Переменный поток
+    function SmartArtHProcess4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess4, SmartArt);
+
+    // Пирамидальный список
+    function SmartArtPyramid2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPyramid2, SmartArt);
+
+    // Плюс и минус
+    function SmartArtPlusandMinus() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPlusandMinus, SmartArt);
+
+    // Повторяющийся ломаный процесс
+    function SmartArtBProcess3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBProcess3, SmartArt);
+
+    // Подписанные рисунки
+    function SmartArtCaptionedPictures() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCaptionedPictures, SmartArt);
+
+    // Подробный процесс
+    function SmartArtHProcess7() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess7, SmartArt);
+
+    // Полосы рисунков
+    function SmartArtPictureStrips() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPictureStrips, SmartArt);
+
+    // Полукруглая организационная диаграмма
+    function SmartArtHalfCircleOrganizationChart() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHalfCircleOrganizationChart, SmartArt);
+
+    // Поэтапный процесс
+    function SmartArtPhasedProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPhasedProcess, SmartArt);
+
+    // Простая Венна
+    function SmartArtVenn1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVenn1, SmartArt);
+
+    // Простая временная шкала
+    function SmartArtHProcess11() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess11, SmartArt);
+
+    // Простая круговая
+    function SmartArtChart3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtChart3, SmartArt);
+
+    // Простая матрица
+    function SmartArtMatrix3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtMatrix3, SmartArt);
+
+    // Простая пирамида
+    function SmartArtPyramid1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPyramid1, SmartArt);
+
+    // Простая радиальная
+    function SmartArtRadial1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial1, SmartArt);
+
+    // Простая целевая
+    function SmartArtTarget1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtTarget1, SmartArt);
+
+    // Простой блочный список
+    function SmartArtDefault() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtDefault, SmartArt);
+
+    // Простой ломаный процесс
+    function SmartArtProcess5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtProcess5, SmartArt);
+
+    // Простой процесс
+    function SmartArtProcess1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtProcess1, SmartArt);
+
+    // Простой уголковый процесс
+    function SmartArtChevron1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtChevron1, SmartArt);
+
+    // Простой цикл
+    function SmartArtCycle2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle2, SmartArt);
+
+    // Противоположные идеи
+    function SmartArtOpposingIdeas() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtOpposingIdeas, SmartArt);
+
+    // Противостоящие стрелки
+    function SmartArtArrow4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow4, SmartArt);
+
+    // Процесс от случайности к результату
+    function SmartArtRandomtoResultProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRandomtoResultProcess, SmartArt);
+
+    // Процесс с вложенными шагами
+    function SmartArtSubStepProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtSubStepProcess, SmartArt);
+
+    // Процесс с круговой диаграммой
+    function SmartArtPieProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPieProcess, SmartArt);
+
+    // Процесс со смещением
+    function SmartArtProcess3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtProcess3, SmartArt);
+
+    // Процесс со смещенными по возрастанию рисунками
+    function SmartArtAscendingPictureAccentProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtAscendingPictureAccentProcess, SmartArt);
+
+    // Процесс со смещенными рисунками
+    function SmartArtHProcess10() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess10, SmartArt);
+
+    // Радиальная Венна
+    function SmartArtRadial3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial3, SmartArt);
+
+    // Радиальная циклическая
+    function SmartArtRadial6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial6, SmartArt);
+
+    // Радиальный кластер
+    function SmartArtRadialCluster() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadialCluster, SmartArt);
+
+    // Радиальный список
+    function SmartArtRadial2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial2, SmartArt);
+
+    // Разнонаправленный цикл
+    function SmartArtCycle7() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle7, SmartArt);
+
+    // Расходящаяся радиальная
+    function SmartArtRadial5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial5, SmartArt);
+
+    // Расходящиеся стрелки
+    function SmartArtArrow1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow1, SmartArt);
+
+    // Рисунок с текстом в рамке
+    function SmartArtFramedTextPicture() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtFramedTextPicture, SmartArt);
+
+    // Сгруппированный список
+    function SmartArtLProcess2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtLProcess2, SmartArt);
+
+    // Сегментированная пирамида
+    function SmartArtPyramid4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPyramid4, SmartArt);
+
+    // Сегментированный процесс
+    function SmartArtProcess4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtProcess4, SmartArt);
+
+    // Сегментированный цикл
+    function SmartArtCycle8() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle8, SmartArt);
+
+    // Сетка рисунков
+    function SmartArtPictureGrid() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPictureGrid, SmartArt);
+
+    // Сетчатая матрица
+    function SmartArtMatrix2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtMatrix2, SmartArt);
+
+    // Спираль рисунков
+    function SmartArtSpiralPicture() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtSpiralPicture, SmartArt);
+
+    // Список в столбик
+    function SmartArtHList9() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList9, SmartArt);
+
+    // Список названий рисунков
+    function SmartArtPList1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPList1, SmartArt);
+
+    // Список процессов
+    function SmartArtLProcess1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtLProcess1, SmartArt);
+
+    // Список рисунков с выносками
+    function SmartArtBubblePictureList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBubblePictureList, SmartArt);
+
+    // Список с квадратиками
+    function SmartArtSquareAccentList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtSquareAccentList, SmartArt);
+
+    // Список с линиями
+    function SmartArtLinedList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtLinedList, SmartArt);
+
+    // Список со смещенными рисунками
+    function SmartArtHList2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList2, SmartArt);
+
+    // Список со смещенными рисунками и заголовком
+    function SmartArtPictureAccentList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPictureAccentList, SmartArt);
+
+    // Список со снимками
+    function SmartArtSnapshotPictureList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtSnapshotPictureList, SmartArt);
+
+    // Стрелка непрерывного процесса
+    function SmartArtHProcess3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess3, SmartArt);
+
+    // Стрелка процесса с кругами
+    function SmartArtCircleArrowProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCircleArrowProcess, SmartArt);
+
+    // Стрелки процесса
+    function SmartArtHProcess6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess6, SmartArt);
+
+    // Ступенчатый процесс
+    function SmartArtVProcess5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVProcess5, SmartArt);
+
+    // Сходящаяся радиальная
+    function SmartArtRadial4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial4, SmartArt);
+
+    // Сходящиеся стрелки
+    function SmartArtArrow5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow5, SmartArt);
+
+    // Табличная иерархия
+    function SmartArtHierarchy4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy4, SmartArt);
+
+    // Табличный список
+    function SmartArtHList3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList3, SmartArt);
+
+    // Текстовый цикл
+    function SmartArtCycle1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle1, SmartArt);
+
+    // Трапецевидный список
+    function SmartArtHList6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList6, SmartArt);
+
+    // Убывающий процесс
+    function SmartArtDescendingProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtDescendingProcess, SmartArt);
+
+    // Уголковый список
+    function SmartArtLProcess3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtLProcess3, SmartArt);
+
+    // Уравнение
+    function SmartArtEquation1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtEquation1, SmartArt);
+
+    // Уравновешивающие стрелки
+    function SmartArtArrow3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow3, SmartArt);
+
+    // Целевой список
+    function SmartArtTarget3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtTarget3, SmartArt);
+
+    // Циклическая матрица
+    function SmartArtCycle4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle4, SmartArt);
+
+    // Чередующиеся блоки рисунков
+    function SmartArtAlternatingPictureBlocks() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtAlternatingPictureBlocks, SmartArt);
+
+    // Чередующиеся круги рисунков
+    function SmartArtAlternatingPictureCircles() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtAlternatingPictureCircles, SmartArt);
+
+    // Чередующиеся шестиугольники
+    function SmartArtAlternatingHexagons() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtAlternatingHexagons, SmartArt);
+
+    // Шестеренки
+    function SmartArtGear1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtGear1, SmartArt);
+
 
 
     window['AscFormat'] = window['AscFormat'] || {};
@@ -11637,7 +13304,6 @@
     window['AscFormat'].StyleDef               = StyleDef;
     window['AscFormat'].Scene3d                = Scene3d;
     window['AscFormat'].StyleDefStyleLbl       = StyleDefStyleLbl;
-    window['AscFormat'].Scene3d                = Scene3d;
     window['AscFormat'].Backdrop               = Backdrop;
     window['AscFormat'].BackdropNorm           = BackdropNorm;
     window['AscFormat'].BackdropUp             = BackdropUp;
@@ -11669,11 +13335,712 @@
     window['AscFormat'].Drawing                = Drawing;
     window['AscFormat'].DiagramData            = DiagramData;
     window['AscFormat'].FunctionValue          = FunctionValue;
-    window['AscFormat'].PointInfo              = PointInfo;
     window['AscFormat'].ShapeSmartArtInfo      = ShapeSmartArtInfo;
     window['AscFormat'].SmartArtTree           = SmartArtTree;
     window['AscFormat'].SmartArtNode           = SmartArtNode;
     window['AscFormat'].SmartArtNodeData       = SmartArtNodeData;
-    window['AscFormat'].ptToMm                 = ptToMm;
+
+    window['AscFormat'].Point_type_asst = Point_type_asst;
+    window['AscFormat'].Point_type_doc = Point_type_doc;
+    window['AscFormat'].Point_type_node = Point_type_node;
+    window['AscFormat'].Point_type_parTrans = Point_type_parTrans;
+    window['AscFormat'].Point_type_pres = Point_type_pres;
+    window['AscFormat'].Point_type_sibTrans = Point_type_sibTrans
+
+    window['AscFormat'].Cxn_type_parOf = Cxn_type_parOf;
+    window['AscFormat'].Cxn_type_presOf = Cxn_type_presOf;
+    window['AscFormat'].Cxn_type_presParOf = Cxn_type_presParOf;
+    window['AscFormat'].Cxn_type_unknownRelationShip = Cxn_type_unknownRelationShip;
+
+    window['AscFormat'].LayoutNode_type_b = LayoutNode_type_b;
+    window['AscFormat'].LayoutNode_type_t = LayoutNode_type_t;
+
+    window['AscFormat'].Alg_type_composite = Alg_type_composite;
+    window['AscFormat'].Alg_type_conn = Alg_type_conn;
+    window['AscFormat'].Alg_type_cycle = Alg_type_cycle;
+    window['AscFormat'].Alg_type_hierChild = Alg_type_hierChild;
+    window['AscFormat'].Alg_type_hierRoot = Alg_type_hierRoot;
+    window['AscFormat'].Alg_type_lin = Alg_type_lin;
+    window['AscFormat'].Alg_type_pyra = Alg_type_pyra;
+    window['AscFormat'].Alg_type_snake = Alg_type_snake;
+    window['AscFormat'].Alg_type_sp = Alg_type_sp;
+    window['AscFormat'].Alg_type_tx = Alg_type_tx;
+
+
+    window['AscFormat'].Param_type_horzAlign = Param_type_horzAlign;
+    window['AscFormat'].Param_type_vertAlign = Param_type_vertAlign;
+    window['AscFormat'].Param_type_chDir = Param_type_chDir;
+    window['AscFormat'].Param_type_chAlign = Param_type_chAlign;
+    window['AscFormat'].Param_type_secChAlign = Param_type_secChAlign;
+    window['AscFormat'].Param_type_linDir = Param_type_linDir;
+    window['AscFormat'].Param_type_secLinDir = Param_type_secLinDir;
+    window['AscFormat'].Param_type_stElem = Param_type_stElem;
+    window['AscFormat'].Param_type_bendPt = Param_type_bendPt;
+    window['AscFormat'].Param_type_connRout = Param_type_connRout;
+    window['AscFormat'].Param_type_begSty = Param_type_begSty;
+    window['AscFormat'].Param_type_endSty = Param_type_endSty;
+    window['AscFormat'].Param_type_dim = Param_type_dim;
+    window['AscFormat'].Param_type_rotPath = Param_type_rotPath;
+    window['AscFormat'].Param_type_ctrShpMap = Param_type_ctrShpMap;
+    window['AscFormat'].Param_type_nodeHorzAlign = Param_type_nodeHorzAlign;
+    window['AscFormat'].Param_type_nodeVertAlign = Param_type_nodeVertAlign;
+    window['AscFormat'].Param_type_fallback = Param_type_fallback;
+    window['AscFormat'].Param_type_txDir = Param_type_txDir;
+    window['AscFormat'].Param_type_pyraAcctPos = Param_type_pyraAcctPos;
+    window['AscFormat'].Param_type_pyraAcctTxMar = Param_type_pyraAcctTxMar;
+    window['AscFormat'].Param_type_txBlDir = Param_type_txBlDir;
+    window['AscFormat'].Param_type_txAnchorHorz = Param_type_txAnchorHorz;
+    window['AscFormat'].Param_type_txAnchorVert = Param_type_txAnchorVert;
+    window['AscFormat'].Param_type_txAnchorHorzCh = Param_type_txAnchorHorzCh;
+    window['AscFormat'].Param_type_txAnchorVertCh = Param_type_txAnchorVertCh;
+    window['AscFormat'].Param_type_parTxLTRAlign = Param_type_parTxLTRAlign;
+    window['AscFormat'].Param_type_parTxRTLAlign = Param_type_parTxRTLAlign;
+    window['AscFormat'].Param_type_shpTxLTRAlignCh = Param_type_shpTxLTRAlignCh;
+    window['AscFormat'].Param_type_shpTxRTLAlignCh = Param_type_shpTxRTLAlignCh;
+    window['AscFormat'].Param_type_autoTxRot = Param_type_autoTxRot;
+    window['AscFormat'].Param_type_grDir = Param_type_grDir;
+    window['AscFormat'].Param_type_flowDir = Param_type_flowDir;
+    window['AscFormat'].Param_type_contDir = Param_type_contDir;
+    window['AscFormat'].Param_type_bkpt = Param_type_bkpt;
+    window['AscFormat'].Param_type_off = Param_type_off;
+    window['AscFormat'].Param_type_hierAlign = Param_type_hierAlign;
+    window['AscFormat'].Param_type_bkPtFixedVal = Param_type_bkPtFixedVal;
+    window['AscFormat'].Param_type_stBulletLvl = Param_type_stBulletLvl;
+    window['AscFormat'].Param_type_stAng = Param_type_stAng;
+    window['AscFormat'].Param_type_spanAng = Param_type_spanAng;
+    window['AscFormat'].Param_type_ar = Param_type_ar;
+    window['AscFormat'].Param_type_lnSpPar = Param_type_lnSpPar;
+    window['AscFormat'].Param_type_lnSpAfParP = Param_type_lnSpAfParP;
+    window['AscFormat'].Param_type_lnSpCh = Param_type_lnSpCh;
+    window['AscFormat'].Param_type_lnSpAfChP = Param_type_lnSpAfChP;
+    window['AscFormat'].Param_type_rtShortDist = Param_type_rtShortDist;
+    window['AscFormat'].Param_type_alignTx = Param_type_alignTx;
+    window['AscFormat'].Param_type_pyraLvlNode = Param_type_pyraLvlNode;
+    window['AscFormat'].Param_type_pyraAcctBkgdNode = Param_type_pyraAcctBkgdNode;
+    window['AscFormat'].Param_type_pyraAcctTxNode = Param_type_pyraAcctTxNode;
+    window['AscFormat'].Param_type_srcNode = Param_type_srcNode;
+    window['AscFormat'].Param_type_dstNode = Param_type_dstNode;
+    window['AscFormat'].Param_type_begPts = Param_type_begPts;
+    window['AscFormat'].Param_type_endPts = Param_type_endPts;
+
+    window['AscFormat'].AxisType_value_ancst = AxisType_value_ancst;
+    window['AscFormat'].AxisType_value_ancstOrSelf = AxisType_value_ancstOrSelf;
+    window['AscFormat'].AxisType_value_ch = AxisType_value_ch;
+    window['AscFormat'].AxisType_value_des = AxisType_value_des;
+    window['AscFormat'].AxisType_value_desOrSelf = AxisType_value_desOrSelf;
+    window['AscFormat'].AxisType_value_follow = AxisType_value_follow;
+    window['AscFormat'].AxisType_value_followSib = AxisType_value_followSib;
+    window['AscFormat'].AxisType_value_none = AxisType_value_none;
+    window['AscFormat'].AxisType_value_par = AxisType_value_par;
+    window['AscFormat'].AxisType_value_preced = AxisType_value_preced;
+    window['AscFormat'].AxisType_value_precedSib = AxisType_value_precedSib;
+    window['AscFormat'].AxisType_value_root = AxisType_value_root;
+    window['AscFormat'].AxisType_value_self = AxisType_value_self;
+
+    window['AscFormat'].ElementType_value_all = ElementType_value_all;
+    window['AscFormat'].ElementType_value_asst = ElementType_value_asst;
+    window['AscFormat'].ElementType_value_doc = ElementType_value_doc;
+    window['AscFormat'].ElementType_value_node = ElementType_value_node;
+    window['AscFormat'].ElementType_value_nonAsst = ElementType_value_nonAsst;
+    window['AscFormat'].ElementType_value_nonNorm = ElementType_value_nonNorm;
+    window['AscFormat'].ElementType_value_norm = ElementType_value_norm;
+    window['AscFormat'].ElementType_value_parTrans = ElementType_value_parTrans;
+    window['AscFormat'].ElementType_value_pres = ElementType_value_pres;
+    window['AscFormat'].ElementType_value_sibTrans = ElementType_value_sibTrans;
+
+    window['AscFormat'].If_op_equ = If_op_equ;
+    window['AscFormat'].If_op_neq = If_op_neq;
+    window['AscFormat'].If_op_gt = If_op_gt;
+    window['AscFormat'].If_op_lt = If_op_lt;
+    window['AscFormat'].If_op_gte = If_op_gte;
+    window['AscFormat'].If_op_lte = If_op_lte;
+
+    window['AscFormat'].boolOperator_none = boolOperator_none;
+    window['AscFormat'].boolOperator_equ = boolOperator_equ;
+    window['AscFormat'].boolOperator_gte = boolOperator_gte;
+    window['AscFormat'].boolOperator_lte = boolOperator_lte;
+
+    window['AscFormat'].If_func_cnt = If_func_cnt;
+    window['AscFormat'].If_func_depth = If_func_depth;
+    window['AscFormat'].If_func_maxDepth = If_func_maxDepth;
+    window['AscFormat'].If_func_pos = If_func_pos;
+    window['AscFormat'].If_func_posEven = If_func_posEven;
+    window['AscFormat'].If_func_posOdd = If_func_posOdd;
+    window['AscFormat'].If_func_revPos = If_func_revPos;
+    window['AscFormat'].If_func_var = If_func_var;
+
+    window['AscFormat'].If_arg_animLvl = If_arg_animLvl;
+    window['AscFormat'].If_arg_animOne = If_arg_animOne;
+    window['AscFormat'].If_arg_bulEnabled = If_arg_bulEnabled;
+    window['AscFormat'].If_arg_chMax = If_arg_chMax;
+    window['AscFormat'].If_arg_chPref = If_arg_chPref;
+    window['AscFormat'].If_arg_dir = If_arg_dir;
+    window['AscFormat'].If_arg_hierBranch = If_arg_hierBranch;
+    window['AscFormat'].If_arg_none = If_arg_none;
+    window['AscFormat'].If_arg_orgChart = If_arg_orgChart;
+    window['AscFormat'].If_arg_resizeHandles = If_arg_resizeHandles;
+
+    window['AscFormat'].Constr_for_ch = Constr_for_ch;
+    window['AscFormat'].Constr_for_des = Constr_for_des;
+    window['AscFormat'].Constr_for_self = Constr_for_self;
+
+    window['AscFormat'].Constr_op_equ = Constr_op_equ;
+    window['AscFormat'].Constr_op_gte = Constr_op_gte;
+    window['AscFormat'].Constr_op_lte = Constr_op_lte;
+    window['AscFormat'].Constr_op_none = Constr_op_none;
+
+    window['AscFormat'].Constr_type_alignOff =Constr_type_alignOff;
+    window['AscFormat'].Constr_type_b =Constr_type_b;
+    window['AscFormat'].Constr_type_begMarg =Constr_type_begMarg;
+    window['AscFormat'].Constr_type_begPad =Constr_type_begPad;
+    window['AscFormat'].Constr_type_bendDist =Constr_type_bendDist;
+    window['AscFormat'].Constr_type_bMarg =Constr_type_bMarg;
+    window['AscFormat'].Constr_type_bOff =Constr_type_bOff;
+    window['AscFormat'].Constr_type_connDist = Constr_type_connDist;
+    window['AscFormat'].Constr_type_ctrX =Constr_type_ctrX;
+    window['AscFormat'].Constr_type_ctrXOff =Constr_type_ctrXOff;
+    window['AscFormat'].Constr_type_ctrY = Constr_type_ctrY;
+    window['AscFormat'].Constr_type_ctrYOff = Constr_type_ctrYOff;
+    window['AscFormat'].Constr_type_diam = Constr_type_diam;
+    window['AscFormat'].Constr_type_endMarg = Constr_type_endMarg;
+    window['AscFormat'].Constr_type_endPad = Constr_type_endPad;
+    window['AscFormat'].Constr_type_h = Constr_type_h;
+    window['AscFormat'].Constr_type_hArH = Constr_type_hArH;
+    window['AscFormat'].Constr_type_hOff = Constr_type_hOff;
+    window['AscFormat'].Constr_type_l = Constr_type_l;
+    window['AscFormat'].Constr_type_lMarg = Constr_type_lMarg;
+    window['AscFormat'].Constr_type_lOff = Constr_type_lOff;
+    window['AscFormat'].Constr_type_none =Constr_type_none;
+    window['AscFormat'].Constr_type_primFontSz = Constr_type_primFontSz;
+    window['AscFormat'].Constr_type_pyraAcctRatio = Constr_type_pyraAcctRatio;
+    window['AscFormat'].Constr_type_r = Constr_type_r;
+    window['AscFormat'].Constr_type_rMarg = Constr_type_rMarg;
+    window['AscFormat'].Constr_type_rOff = Constr_type_rOff;
+    window['AscFormat'].Constr_type_secFontSz = Constr_type_secFontSz;
+    window['AscFormat'].Constr_type_secSibSp = Constr_type_secSibSp;
+    window['AscFormat'].Constr_type_sibSp = Constr_type_sibSp;
+    window['AscFormat'].Constr_type_sp = Constr_type_sp;
+    window['AscFormat'].Constr_type_stemThick = Constr_type_stemThick;
+    window['AscFormat'].Constr_type_t = Constr_type_t;
+    window['AscFormat'].Constr_type_tMarg = Constr_type_tMarg;
+    window['AscFormat'].Constr_type_tOff = Constr_type_tOff;
+    window['AscFormat'].Constr_type_userA = Constr_type_userA;
+    window['AscFormat'].Constr_type_userB = Constr_type_userB;
+    window['AscFormat'].Constr_type_userC = Constr_type_userC;
+    window['AscFormat'].Constr_type_userD = Constr_type_userD;
+    window['AscFormat'].Constr_type_userE = Constr_type_userE;
+    window['AscFormat'].Constr_type_userF = Constr_type_userF;
+    window['AscFormat'].Constr_type_userG = Constr_type_userG;
+    window['AscFormat'].Constr_type_userH = Constr_type_userH;
+    window['AscFormat'].Constr_type_userI = Constr_type_userI;
+    window['AscFormat'].Constr_type_userJ = Constr_type_userJ;
+    window['AscFormat'].Constr_type_userK = Constr_type_userK;
+    window['AscFormat'].Constr_type_userL = Constr_type_userL;
+    window['AscFormat'].Constr_type_userM = Constr_type_userM;
+    window['AscFormat'].Constr_type_userN = Constr_type_userN;
+    window['AscFormat'].Constr_type_userO = Constr_type_userO;
+    window['AscFormat'].Constr_type_userP = Constr_type_userP;
+    window['AscFormat'].Constr_type_userQ = Constr_type_userQ;
+    window['AscFormat'].Constr_type_userR = Constr_type_userR;
+    window['AscFormat'].Constr_type_userS = Constr_type_userS;
+    window['AscFormat'].Constr_type_userT = Constr_type_userT;
+    window['AscFormat'].Constr_type_userU = Constr_type_userU;
+    window['AscFormat'].Constr_type_userV = Constr_type_userV;
+    window['AscFormat'].Constr_type_userW = Constr_type_userW;
+    window['AscFormat'].Constr_type_userX = Constr_type_userX;
+    window['AscFormat'].Constr_type_userY = Constr_type_userY;
+    window['AscFormat'].Constr_type_userZ = Constr_type_userZ;
+    window['AscFormat'].Constr_type_w = Constr_type_w;
+    window['AscFormat'].Constr_type_wArH = Constr_type_wArH;
+    window['AscFormat'].Constr_type_wOff = Constr_type_wOff;
+
+    window['AscFormat'].kForInsFitFontSize = kForInsFitFontSize;
+
+    window['AscFormat'].LayoutShapeType_outputShapeType_conn = LayoutShapeType_outputShapeType_conn;
+    window['AscFormat'].LayoutShapeType_outputShapeType_none = LayoutShapeType_outputShapeType_none;
+    window['AscFormat'].LayoutShapeType_shapeType_accentBorderCallout1 = LayoutShapeType_shapeType_accentBorderCallout1;
+    window['AscFormat'].LayoutShapeType_shapeType_accentBorderCallout2 = LayoutShapeType_shapeType_accentBorderCallout2;
+    window['AscFormat'].LayoutShapeType_shapeType_accentBorderCallout3 = LayoutShapeType_shapeType_accentBorderCallout3;
+    window['AscFormat'].LayoutShapeType_shapeType_accentCallout1 = LayoutShapeType_shapeType_accentCallout1;
+    window['AscFormat'].LayoutShapeType_shapeType_accentCallout2 = LayoutShapeType_shapeType_accentCallout2;
+    window['AscFormat'].LayoutShapeType_shapeType_accentCallout3 = LayoutShapeType_shapeType_accentCallout3;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonBackPrevious = LayoutShapeType_shapeType_actionButtonBackPrevious;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonBeginning = LayoutShapeType_shapeType_actionButtonBeginning;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonBlank = LayoutShapeType_shapeType_actionButtonBlank;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonDocument = LayoutShapeType_shapeType_actionButtonDocument;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonEnd = LayoutShapeType_shapeType_actionButtonEnd;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonForwardNext = LayoutShapeType_shapeType_actionButtonForwardNext;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonHelp = LayoutShapeType_shapeType_actionButtonHelp;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonHome = LayoutShapeType_shapeType_actionButtonHome;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonInformation = LayoutShapeType_shapeType_actionButtonInformation;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonMovie = LayoutShapeType_shapeType_actionButtonMovie;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonReturn = LayoutShapeType_shapeType_actionButtonReturn;
+    window['AscFormat'].LayoutShapeType_shapeType_actionButtonSound = LayoutShapeType_shapeType_actionButtonSound;
+    window['AscFormat'].LayoutShapeType_shapeType_arc = LayoutShapeType_shapeType_arc;
+    window['AscFormat'].LayoutShapeType_shapeType_bentArrow = LayoutShapeType_shapeType_bentArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_bentConnector2 = LayoutShapeType_shapeType_bentConnector2;
+    window['AscFormat'].LayoutShapeType_shapeType_bentConnector3 = LayoutShapeType_shapeType_bentConnector3;
+    window['AscFormat'].LayoutShapeType_shapeType_bentConnector4 = LayoutShapeType_shapeType_bentConnector4;
+    window['AscFormat'].LayoutShapeType_shapeType_bentConnector5 = LayoutShapeType_shapeType_bentConnector5;
+    window['AscFormat'].LayoutShapeType_shapeType_bentUpArrow = LayoutShapeType_shapeType_bentUpArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_bevel = LayoutShapeType_shapeType_bevel;
+    window['AscFormat'].LayoutShapeType_shapeType_blockArc = LayoutShapeType_shapeType_blockArc;
+    window['AscFormat'].LayoutShapeType_shapeType_borderCallout1 = LayoutShapeType_shapeType_borderCallout1;
+    window['AscFormat'].LayoutShapeType_shapeType_borderCallout2 = LayoutShapeType_shapeType_borderCallout2;
+    window['AscFormat'].LayoutShapeType_shapeType_borderCallout3 = LayoutShapeType_shapeType_borderCallout3;
+    window['AscFormat'].LayoutShapeType_shapeType_bracePair = LayoutShapeType_shapeType_bracePair;
+    window['AscFormat'].LayoutShapeType_shapeType_bracketPair = LayoutShapeType_shapeType_bracketPair;
+    window['AscFormat'].LayoutShapeType_shapeType_callout1 = LayoutShapeType_shapeType_callout1;
+    window['AscFormat'].LayoutShapeType_shapeType_callout2 = LayoutShapeType_shapeType_callout2;
+    window['AscFormat'].LayoutShapeType_shapeType_callout3 = LayoutShapeType_shapeType_callout3;
+    window['AscFormat'].LayoutShapeType_shapeType_can = LayoutShapeType_shapeType_can;
+    window['AscFormat'].LayoutShapeType_shapeType_chartPlus = LayoutShapeType_shapeType_chartPlus;
+    window['AscFormat'].LayoutShapeType_shapeType_chartStar = LayoutShapeType_shapeType_chartStar;
+    window['AscFormat'].LayoutShapeType_shapeType_chartX = LayoutShapeType_shapeType_chartX;
+    window['AscFormat'].LayoutShapeType_shapeType_chevron = LayoutShapeType_shapeType_chevron;
+    window['AscFormat'].LayoutShapeType_shapeType_chord = LayoutShapeType_shapeType_chord;
+    window['AscFormat'].LayoutShapeType_shapeType_circularArrow = LayoutShapeType_shapeType_circularArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_cloud = LayoutShapeType_shapeType_cloud;
+    window['AscFormat'].LayoutShapeType_shapeType_cloudCallout = LayoutShapeType_shapeType_cloudCallout;
+    window['AscFormat'].LayoutShapeType_shapeType_corner = LayoutShapeType_shapeType_corner;
+    window['AscFormat'].LayoutShapeType_shapeType_cornerTabs = LayoutShapeType_shapeType_cornerTabs;
+    window['AscFormat'].LayoutShapeType_shapeType_cube = LayoutShapeType_shapeType_cube;
+    window['AscFormat'].LayoutShapeType_shapeType_curvedConnector2 = LayoutShapeType_shapeType_curvedConnector2;
+    window['AscFormat'].LayoutShapeType_shapeType_curvedConnector3 = LayoutShapeType_shapeType_curvedConnector3;
+    window['AscFormat'].LayoutShapeType_shapeType_curvedConnector4 = LayoutShapeType_shapeType_curvedConnector4;
+    window['AscFormat'].LayoutShapeType_shapeType_curvedConnector5 = LayoutShapeType_shapeType_curvedConnector5;
+    window['AscFormat'].LayoutShapeType_shapeType_curvedDownArrow = LayoutShapeType_shapeType_curvedDownArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_curvedLeftArrow = LayoutShapeType_shapeType_curvedLeftArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_curvedRightArrow = LayoutShapeType_shapeType_curvedRightArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_curvedUpArrow = LayoutShapeType_shapeType_curvedUpArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_decagon = LayoutShapeType_shapeType_decagon;
+    window['AscFormat'].LayoutShapeType_shapeType_diagStripe = LayoutShapeType_shapeType_diagStripe;
+    window['AscFormat'].LayoutShapeType_shapeType_diamond = LayoutShapeType_shapeType_diamond;
+    window['AscFormat'].LayoutShapeType_shapeType_dodecagon = LayoutShapeType_shapeType_dodecagon;
+    window['AscFormat'].LayoutShapeType_shapeType_donut = LayoutShapeType_shapeType_donut;
+    window['AscFormat'].LayoutShapeType_shapeType_doubleWave = LayoutShapeType_shapeType_doubleWave;
+    window['AscFormat'].LayoutShapeType_shapeType_downArrow = LayoutShapeType_shapeType_downArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_downArrowCallout = LayoutShapeType_shapeType_downArrowCallout;
+    window['AscFormat'].LayoutShapeType_shapeType_ellipse = LayoutShapeType_shapeType_ellipse;
+    window['AscFormat'].LayoutShapeType_shapeType_ellipseRibbon = LayoutShapeType_shapeType_ellipseRibbon;
+    window['AscFormat'].LayoutShapeType_shapeType_ellipseRibbon2 = LayoutShapeType_shapeType_ellipseRibbon2;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartAlternateProcess = LayoutShapeType_shapeType_flowChartAlternateProcess;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartCollate = LayoutShapeType_shapeType_flowChartCollate;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartConnector = LayoutShapeType_shapeType_flowChartConnector;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartDecision = LayoutShapeType_shapeType_flowChartDecision;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartDelay = LayoutShapeType_shapeType_flowChartDelay;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartDisplay = LayoutShapeType_shapeType_flowChartDisplay;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartDocument = LayoutShapeType_shapeType_flowChartDocument;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartExtract = LayoutShapeType_shapeType_flowChartExtract;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartInputOutput = LayoutShapeType_shapeType_flowChartInputOutput;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartInternalStorage = LayoutShapeType_shapeType_flowChartInternalStorage;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartMagneticDisk = LayoutShapeType_shapeType_flowChartMagneticDisk;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartMagneticDrum = LayoutShapeType_shapeType_flowChartMagneticDrum;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartMagneticTape = LayoutShapeType_shapeType_flowChartMagneticTape;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartManualInput = LayoutShapeType_shapeType_flowChartManualInput;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartManualOperation = LayoutShapeType_shapeType_flowChartManualOperation;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartMerge = LayoutShapeType_shapeType_flowChartMerge;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartMultidocument = LayoutShapeType_shapeType_flowChartMultidocument;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartOfflineStorage = LayoutShapeType_shapeType_flowChartOfflineStorage;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartOffpageConnector = LayoutShapeType_shapeType_flowChartOffpageConnector;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartOnlineStorage = LayoutShapeType_shapeType_flowChartOnlineStorage;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartOr = LayoutShapeType_shapeType_flowChartOr;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartPredefinedProcess = LayoutShapeType_shapeType_flowChartPredefinedProcess;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartPreparation = LayoutShapeType_shapeType_flowChartPreparation;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartProcess = LayoutShapeType_shapeType_flowChartProcess;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartPunchedCard = LayoutShapeType_shapeType_flowChartPunchedCard;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartPunchedTape = LayoutShapeType_shapeType_flowChartPunchedTape;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartSort = LayoutShapeType_shapeType_flowChartSort;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartSummingJunction = LayoutShapeType_shapeType_flowChartSummingJunction;
+    window['AscFormat'].LayoutShapeType_shapeType_flowChartTerminator = LayoutShapeType_shapeType_flowChartTerminator;
+    window['AscFormat'].LayoutShapeType_shapeType_foldedCorner = LayoutShapeType_shapeType_foldedCorner;
+    window['AscFormat'].LayoutShapeType_shapeType_frame = LayoutShapeType_shapeType_frame;
+    window['AscFormat'].LayoutShapeType_shapeType_funnel = LayoutShapeType_shapeType_funnel;
+    window['AscFormat'].LayoutShapeType_shapeType_gear6 = LayoutShapeType_shapeType_gear6;
+    window['AscFormat'].LayoutShapeType_shapeType_gear9 = LayoutShapeType_shapeType_gear9;
+    window['AscFormat'].LayoutShapeType_shapeType_halfFrame = LayoutShapeType_shapeType_halfFrame;
+    window['AscFormat'].LayoutShapeType_shapeType_heart = LayoutShapeType_shapeType_heart;
+    window['AscFormat'].LayoutShapeType_shapeType_heptagon = LayoutShapeType_shapeType_heptagon;
+    window['AscFormat'].LayoutShapeType_shapeType_hexagon = LayoutShapeType_shapeType_hexagon;
+    window['AscFormat'].LayoutShapeType_shapeType_homePlate = LayoutShapeType_shapeType_homePlate;
+    window['AscFormat'].LayoutShapeType_shapeType_horizontalScroll = LayoutShapeType_shapeType_horizontalScroll;
+    window['AscFormat'].LayoutShapeType_shapeType_irregularSeal1 = LayoutShapeType_shapeType_irregularSeal1;
+    window['AscFormat'].LayoutShapeType_shapeType_irregularSeal2 = LayoutShapeType_shapeType_irregularSeal2;
+    window['AscFormat'].LayoutShapeType_shapeType_leftArrow = LayoutShapeType_shapeType_leftArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_leftArrowCallout = LayoutShapeType_shapeType_leftArrowCallout;
+    window['AscFormat'].LayoutShapeType_shapeType_leftBrace = LayoutShapeType_shapeType_leftBrace;
+    window['AscFormat'].LayoutShapeType_shapeType_leftBracket = LayoutShapeType_shapeType_leftBracket;
+    window['AscFormat'].LayoutShapeType_shapeType_leftCircularArrow = LayoutShapeType_shapeType_leftCircularArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_leftRightArrow = LayoutShapeType_shapeType_leftRightArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_leftRightArrowCallout = LayoutShapeType_shapeType_leftRightArrowCallout;
+    window['AscFormat'].LayoutShapeType_shapeType_leftRightCircularArrow = LayoutShapeType_shapeType_leftRightCircularArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_leftRightRibbon = LayoutShapeType_shapeType_leftRightRibbon;
+    window['AscFormat'].LayoutShapeType_shapeType_leftRightUpArrow = LayoutShapeType_shapeType_leftRightUpArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_leftUpArrow = LayoutShapeType_shapeType_leftUpArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_lightningBolt = LayoutShapeType_shapeType_lightningBolt;
+    window['AscFormat'].LayoutShapeType_shapeType_line = LayoutShapeType_shapeType_line;
+    window['AscFormat'].LayoutShapeType_shapeType_lineInv = LayoutShapeType_shapeType_lineInv;
+    window['AscFormat'].LayoutShapeType_shapeType_mathDivide = LayoutShapeType_shapeType_mathDivide;
+    window['AscFormat'].LayoutShapeType_shapeType_mathEqual = LayoutShapeType_shapeType_mathEqual;
+    window['AscFormat'].LayoutShapeType_shapeType_mathMinus = LayoutShapeType_shapeType_mathMinus;
+    window['AscFormat'].LayoutShapeType_shapeType_mathMultiply = LayoutShapeType_shapeType_mathMultiply;
+    window['AscFormat'].LayoutShapeType_shapeType_mathNotEqual = LayoutShapeType_shapeType_mathNotEqual;
+    window['AscFormat'].LayoutShapeType_shapeType_mathPlus = LayoutShapeType_shapeType_mathPlus;
+    window['AscFormat'].LayoutShapeType_shapeType_moon = LayoutShapeType_shapeType_moon;
+    window['AscFormat'].LayoutShapeType_shapeType_nonIsoscelesTrapezoid = LayoutShapeType_shapeType_nonIsoscelesTrapezoid;
+    window['AscFormat'].LayoutShapeType_shapeType_noSmoking = LayoutShapeType_shapeType_noSmoking;
+    window['AscFormat'].LayoutShapeType_shapeType_notchedRightArrow = LayoutShapeType_shapeType_notchedRightArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_octagon = LayoutShapeType_shapeType_octagon;
+    window['AscFormat'].LayoutShapeType_shapeType_parallelogram = LayoutShapeType_shapeType_parallelogram;
+    window['AscFormat'].LayoutShapeType_shapeType_pentagon = LayoutShapeType_shapeType_pentagon;
+    window['AscFormat'].LayoutShapeType_shapeType_pie = LayoutShapeType_shapeType_pie;
+    window['AscFormat'].LayoutShapeType_shapeType_pieWedge = LayoutShapeType_shapeType_pieWedge;
+    window['AscFormat'].LayoutShapeType_shapeType_plaque = LayoutShapeType_shapeType_plaque;
+    window['AscFormat'].LayoutShapeType_shapeType_plaqueTabs = LayoutShapeType_shapeType_plaqueTabs;
+    window['AscFormat'].LayoutShapeType_shapeType_plus = LayoutShapeType_shapeType_plus;
+    window['AscFormat'].LayoutShapeType_shapeType_quadArrow = LayoutShapeType_shapeType_quadArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_quadArrowCallout = LayoutShapeType_shapeType_quadArrowCallout;
+    window['AscFormat'].LayoutShapeType_shapeType_rect = LayoutShapeType_shapeType_rect;
+    window['AscFormat'].LayoutShapeType_shapeType_ribbon = LayoutShapeType_shapeType_ribbon;
+    window['AscFormat'].LayoutShapeType_shapeType_ribbon2 = LayoutShapeType_shapeType_ribbon2;
+    window['AscFormat'].LayoutShapeType_shapeType_rightArrow = LayoutShapeType_shapeType_rightArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_rightArrowCallout = LayoutShapeType_shapeType_rightArrowCallout;
+    window['AscFormat'].LayoutShapeType_shapeType_rightBrace = LayoutShapeType_shapeType_rightBrace;
+    window['AscFormat'].LayoutShapeType_shapeType_rightBracket = LayoutShapeType_shapeType_rightBracket;
+    window['AscFormat'].LayoutShapeType_shapeType_round1Rect = LayoutShapeType_shapeType_round1Rect;
+    window['AscFormat'].LayoutShapeType_shapeType_round2DiagRect = LayoutShapeType_shapeType_round2DiagRect;
+    window['AscFormat'].LayoutShapeType_shapeType_round2SameRect = LayoutShapeType_shapeType_round2SameRect;
+    window['AscFormat'].LayoutShapeType_shapeType_roundRect = LayoutShapeType_shapeType_roundRect;
+    window['AscFormat'].LayoutShapeType_shapeType_rtTriangle = LayoutShapeType_shapeType_rtTriangle;
+    window['AscFormat'].LayoutShapeType_shapeType_smileyFace = LayoutShapeType_shapeType_smileyFace;
+    window['AscFormat'].LayoutShapeType_shapeType_snip1Rect = LayoutShapeType_shapeType_snip1Rect;
+    window['AscFormat'].LayoutShapeType_shapeType_snip2DiagRect = LayoutShapeType_shapeType_snip2DiagRect;
+    window['AscFormat'].LayoutShapeType_shapeType_snip2SameRect = LayoutShapeType_shapeType_snip2SameRect;
+    window['AscFormat'].LayoutShapeType_shapeType_snipRoundRect = LayoutShapeType_shapeType_snipRoundRect;
+    window['AscFormat'].LayoutShapeType_shapeType_squareTabs = LayoutShapeType_shapeType_squareTabs;
+    window['AscFormat'].LayoutShapeType_shapeType_star10 = LayoutShapeType_shapeType_star10;
+    window['AscFormat'].LayoutShapeType_shapeType_star12 = LayoutShapeType_shapeType_star12;
+    window['AscFormat'].LayoutShapeType_shapeType_star16 = LayoutShapeType_shapeType_star16;
+    window['AscFormat'].LayoutShapeType_shapeType_star24 = LayoutShapeType_shapeType_star24;
+    window['AscFormat'].LayoutShapeType_shapeType_star32 = LayoutShapeType_shapeType_star32;
+    window['AscFormat'].LayoutShapeType_shapeType_star4 = LayoutShapeType_shapeType_star4;
+    window['AscFormat'].LayoutShapeType_shapeType_star5 = LayoutShapeType_shapeType_star5;
+    window['AscFormat'].LayoutShapeType_shapeType_star6 = LayoutShapeType_shapeType_star6;
+    window['AscFormat'].LayoutShapeType_shapeType_star7 = LayoutShapeType_shapeType_star7;
+    window['AscFormat'].LayoutShapeType_shapeType_star8 = LayoutShapeType_shapeType_star8;
+    window['AscFormat'].LayoutShapeType_shapeType_straightConnector1 = LayoutShapeType_shapeType_straightConnector1;
+    window['AscFormat'].LayoutShapeType_shapeType_stripedRightArrow = LayoutShapeType_shapeType_stripedRightArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_sun = LayoutShapeType_shapeType_sun;
+    window['AscFormat'].LayoutShapeType_shapeType_swooshArrow = LayoutShapeType_shapeType_swooshArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_teardrop = LayoutShapeType_shapeType_teardrop;
+    window['AscFormat'].LayoutShapeType_shapeType_trapezoid = LayoutShapeType_shapeType_trapezoid;
+    window['AscFormat'].LayoutShapeType_shapeType_triangle = LayoutShapeType_shapeType_triangle;
+    window['AscFormat'].LayoutShapeType_shapeType_upArrow = LayoutShapeType_shapeType_upArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_upArrowCallout = LayoutShapeType_shapeType_upArrowCallout;
+    window['AscFormat'].LayoutShapeType_shapeType_upDownArrow = LayoutShapeType_shapeType_upDownArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_upDownArrowCallout = LayoutShapeType_shapeType_upDownArrowCallout;
+    window['AscFormat'].LayoutShapeType_shapeType_uturnArrow = LayoutShapeType_shapeType_uturnArrow;
+    window['AscFormat'].LayoutShapeType_shapeType_verticalScroll = LayoutShapeType_shapeType_verticalScroll;
+    window['AscFormat'].LayoutShapeType_shapeType_wave = LayoutShapeType_shapeType_wave;
+    window['AscFormat'].LayoutShapeType_shapeType_wedgeEllipseCallout = LayoutShapeType_shapeType_wedgeEllipseCallout;
+    window['AscFormat'].LayoutShapeType_shapeType_wedgeRectCallout = LayoutShapeType_shapeType_wedgeRectCallout;
+    window['AscFormat'].LayoutShapeType_shapeType_wedgeRoundRectCallout = LayoutShapeType_shapeType_wedgeRoundRectCallout;
+
+
+    window['AscFormat'].AnimLvl_val_ctr = AnimLvl_val_ctr;
+    window['AscFormat'].AnimLvl_val_lvl = AnimLvl_val_lvl;
+    window['AscFormat'].AnimLvl_val_none = AnimLvl_val_none;
+
+    window['AscFormat'].AnimOne_val_branch = AnimOne_val_branch;
+    window['AscFormat'].AnimOne_val_none = AnimOne_val_none;
+    window['AscFormat'].AnimOne_val_one = AnimOne_val_one;
+
+    window['AscFormat'].DiagramDirection_val_norm = DiagramDirection_val_norm;
+    window['AscFormat'].DiagramDirection_val_rev = DiagramDirection_val_rev;
+
+    window['AscFormat'].HierBranch_val_hang = HierBranch_val_hang;
+    window['AscFormat'].HierBranch_val_init = HierBranch_val_init;
+    window['AscFormat'].HierBranch_val_l = HierBranch_val_l;
+    window['AscFormat'].HierBranch_val_r = HierBranch_val_r;
+    window['AscFormat'].HierBranch_val_std = HierBranch_val_std;
+
+    window['AscFormat'].ResizeHandles_val_exact = ResizeHandles_val_exact;
+    window['AscFormat'].ResizeHandles_val_rel = ResizeHandles_val_rel;
+
+    window['AscFormat'].ClrLst_hueDir_ccw = ClrLst_hueDir_ccw;
+    window['AscFormat'].ClrLst_hueDir_cw = ClrLst_hueDir_cw;
+    window['AscFormat'].ClrLst_meth_cycle = ClrLst_meth_cycle;
+    window['AscFormat'].ClrLst_meth_repeat = ClrLst_meth_repeat;
+    window['AscFormat'].ClrLst_meth_span = ClrLst_meth_span;
+
+    window['AscFormat'].Camera_prst_isometricBottomDown = Camera_prst_isometricBottomDown;
+    window['AscFormat'].Camera_prst_isometricBottomUp = Camera_prst_isometricBottomUp;
+    window['AscFormat'].Camera_prst_isometricLeftDown = Camera_prst_isometricLeftDown;
+    window['AscFormat'].Camera_prst_isometricLeftUp = Camera_prst_isometricLeftUp;
+    window['AscFormat'].Camera_prst_isometricOffAxis1Left = Camera_prst_isometricOffAxis1Left;
+    window['AscFormat'].Camera_prst_isometricOffAxis1Right = Camera_prst_isometricOffAxis1Right;
+    window['AscFormat'].Camera_prst_isometricOffAxis1Top = Camera_prst_isometricOffAxis1Top;
+    window['AscFormat'].Camera_prst_isometricOffAxis2Left = Camera_prst_isometricOffAxis2Left;
+    window['AscFormat'].Camera_prst_isometricOffAxis2Right = Camera_prst_isometricOffAxis2Right;
+    window['AscFormat'].Camera_prst_isometricOffAxis2Top = Camera_prst_isometricOffAxis2Top;
+    window['AscFormat'].Camera_prst_isometricOffAxis3Bottom = Camera_prst_isometricOffAxis3Bottom;
+    window['AscFormat'].Camera_prst_isometricOffAxis3Left = Camera_prst_isometricOffAxis3Left;
+    window['AscFormat'].Camera_prst_isometricOffAxis3Right = Camera_prst_isometricOffAxis3Right;
+    window['AscFormat'].Camera_prst_isometricOffAxis4Bottom = Camera_prst_isometricOffAxis4Bottom;
+    window['AscFormat'].Camera_prst_isometricOffAxis4Left = Camera_prst_isometricOffAxis4Left;
+    window['AscFormat'].Camera_prst_isometricOffAxis4Right = Camera_prst_isometricOffAxis4Right;
+    window['AscFormat'].Camera_prst_isometricRightDown = Camera_prst_isometricRightDown;
+    window['AscFormat'].Camera_prst_isometricRightUp = Camera_prst_isometricRightUp;
+    window['AscFormat'].Camera_prst_isometricTopDown = Camera_prst_isometricTopDown;
+    window['AscFormat'].Camera_prst_isometricTopUp = Camera_prst_isometricTopUp;
+    window['AscFormat'].Camera_prst_legacyObliqueBottom = Camera_prst_legacyObliqueBottom;
+    window['AscFormat'].Camera_prst_legacyObliqueBottomLeft = Camera_prst_legacyObliqueBottomLeft;
+    window['AscFormat'].Camera_prst_legacyObliqueBottomRight = Camera_prst_legacyObliqueBottomRight;
+    window['AscFormat'].Camera_prst_legacyObliqueFront = Camera_prst_legacyObliqueFront;
+    window['AscFormat'].Camera_prst_legacyObliqueLeft = Camera_prst_legacyObliqueLeft;
+    window['AscFormat'].Camera_prst_legacyObliqueRight = Camera_prst_legacyObliqueRight;
+    window['AscFormat'].Camera_prst_legacyObliqueTop = Camera_prst_legacyObliqueTop;
+    window['AscFormat'].Camera_prst_legacyObliqueTopLeft = Camera_prst_legacyObliqueTopLeft;
+    window['AscFormat'].Camera_prst_legacyObliqueTopRight = Camera_prst_legacyObliqueTopRight;
+    window['AscFormat'].Camera_prst_legacyPerspectiveBottom = Camera_prst_legacyPerspectiveBottom;
+    window['AscFormat'].Camera_prst_legacyPerspectiveBottomLeft = Camera_prst_legacyPerspectiveBottomLeft;
+    window['AscFormat'].Camera_prst_legacyPerspectiveBottomRight = Camera_prst_legacyPerspectiveBottomRight;
+    window['AscFormat'].Camera_prst_legacyPerspectiveFront = Camera_prst_legacyPerspectiveFront;
+    window['AscFormat'].Camera_prst_legacyPerspectiveLeft = Camera_prst_legacyPerspectiveLeft;
+    window['AscFormat'].Camera_prst_legacyPerspectiveRight = Camera_prst_legacyPerspectiveRight;
+    window['AscFormat'].Camera_prst_legacyPerspectiveTop = Camera_prst_legacyPerspectiveTop;
+    window['AscFormat'].Camera_prst_legacyPerspectiveTopLeft = Camera_prst_legacyPerspectiveTopLeft;
+    window['AscFormat'].Camera_prst_legacyPerspectiveTopRight = Camera_prst_legacyPerspectiveTopRight;
+    window['AscFormat'].Camera_prst_obliqueBottom = Camera_prst_obliqueBottom;
+    window['AscFormat'].Camera_prst_obliqueBottomLeft = Camera_prst_obliqueBottomLeft;
+    window['AscFormat'].Camera_prst_obliqueBottomRight = Camera_prst_obliqueBottomRight;
+    window['AscFormat'].Camera_prst_obliqueLeft = Camera_prst_obliqueLeft;
+    window['AscFormat'].Camera_prst_obliqueRight = Camera_prst_obliqueRight;
+    window['AscFormat'].Camera_prst_obliqueTop = Camera_prst_obliqueTop;
+    window['AscFormat'].Camera_prst_obliqueTopLeft = Camera_prst_obliqueTopLeft;
+    window['AscFormat'].Camera_prst_obliqueTopRight = Camera_prst_obliqueTopRight;
+    window['AscFormat'].Camera_prst_orthographicFront = Camera_prst_orthographicFront;
+    window['AscFormat'].Camera_prst_perspectiveAbove = Camera_prst_perspectiveAbove;
+    window['AscFormat'].Camera_prst_perspectiveAboveLeftFacing = Camera_prst_perspectiveAboveLeftFacing;
+    window['AscFormat'].Camera_prst_perspectiveAboveRightFacing = Camera_prst_perspectiveAboveRightFacing;
+    window['AscFormat'].Camera_prst_perspectiveBelow = Camera_prst_perspectiveBelow;
+    window['AscFormat'].Camera_prst_perspectiveContrastingLeftFacing = Camera_prst_perspectiveContrastingLeftFacing;
+    window['AscFormat'].Camera_prst_perspectiveContrastingRightFacing = Camera_prst_perspectiveContrastingRightFacing;
+    window['AscFormat'].Camera_prst_perspectiveFront = Camera_prst_perspectiveFront;
+    window['AscFormat'].Camera_prst_perspectiveHeroicExtremeLeftFacing = Camera_prst_perspectiveHeroicExtremeLeftFacing;
+    window['AscFormat'].Camera_prst_perspectiveHeroicExtremeRightFacing = Camera_prst_perspectiveHeroicExtremeRightFacing;
+    window['AscFormat'].Camera_prst_perspectiveHeroicLeftFacing = Camera_prst_perspectiveHeroicLeftFacing;
+    window['AscFormat'].Camera_prst_perspectiveHeroicRightFacing = Camera_prst_perspectiveHeroicRightFacing;
+    window['AscFormat'].Camera_prst_perspectiveLeft = Camera_prst_perspectiveLeft;
+    window['AscFormat'].Camera_prst_perspectiveRelaxed = Camera_prst_perspectiveRelaxed;
+    window['AscFormat'].Camera_prst_perspectiveRelaxedModerately = Camera_prst_perspectiveRelaxedModerately;
+    window['AscFormat'].Camera_prst_perspectiveRight = Camera_prst_perspectiveRight;
+
+    window['AscFormat'].Sp3d_prstMaterial_clear = Sp3d_prstMaterial_clear;
+    window['AscFormat'].Sp3d_prstMaterial_dkEdge = Sp3d_prstMaterial_dkEdge;
+    window['AscFormat'].Sp3d_prstMaterial_flat = Sp3d_prstMaterial_flat;
+    window['AscFormat'].Sp3d_prstMaterial_legacyMatte = Sp3d_prstMaterial_legacyMatte;
+    window['AscFormat'].Sp3d_prstMaterial_legacyMetal = Sp3d_prstMaterial_legacyMetal;
+    window['AscFormat'].Sp3d_prstMaterial_legacyPlastic = Sp3d_prstMaterial_legacyPlastic;
+    window['AscFormat'].Sp3d_prstMaterial_legacyWireframe = Sp3d_prstMaterial_legacyWireframe;
+    window['AscFormat'].Sp3d_prstMaterial_matte = Sp3d_prstMaterial_matte;
+    window['AscFormat'].Sp3d_prstMaterial_metal = Sp3d_prstMaterial_metal;
+    window['AscFormat'].Sp3d_prstMaterial_plastic = Sp3d_prstMaterial_plastic;
+    window['AscFormat'].Sp3d_prstMaterial_powder = Sp3d_prstMaterial_powder;
+    window['AscFormat'].Sp3d_prstMaterial_softEdge = Sp3d_prstMaterial_softEdge;
+    window['AscFormat'].Sp3d_prstMaterial_softmetal = Sp3d_prstMaterial_softmetal;
+    window['AscFormat'].Sp3d_prstMaterial_translucentPowder = Sp3d_prstMaterial_translucentPowder;
+    window['AscFormat'].Sp3d_prstMaterial_warmMatte = Sp3d_prstMaterial_warmMatte;
+
+    window['AscFormat'].LightRig_dir_b = LightRig_dir_b;
+    window['AscFormat'].LightRig_dir_bl = LightRig_dir_bl;
+    window['AscFormat'].LightRig_dir_br = LightRig_dir_br;
+    window['AscFormat'].LightRig_dir_l = LightRig_dir_l;
+    window['AscFormat'].LightRig_dir_r = LightRig_dir_r;
+    window['AscFormat'].LightRig_dir_t = LightRig_dir_t;
+    window['AscFormat'].LightRig_dir_tl = LightRig_dir_tl;
+    window['AscFormat'].LightRig_dir_tr = LightRig_dir_tr;
+
+    window['AscFormat'].LightRig_rig_balanced = LightRig_rig_balanced;
+    window['AscFormat'].LightRig_rig_brightRoom = LightRig_rig_brightRoom;
+    window['AscFormat'].LightRig_rig_chilly = LightRig_rig_chilly;
+    window['AscFormat'].LightRig_rig_contrasting = LightRig_rig_contrasting;
+    window['AscFormat'].LightRig_rig_flat = LightRig_rig_flat;
+    window['AscFormat'].LightRig_rig_flood = LightRig_rig_flood;
+    window['AscFormat'].LightRig_rig_freezing = LightRig_rig_freezing;
+    window['AscFormat'].LightRig_rig_glow = LightRig_rig_glow;
+    window['AscFormat'].LightRig_rig_harsh = LightRig_rig_harsh;
+    window['AscFormat'].LightRig_rig_legacyFlat1 = LightRig_rig_legacyFlat1;
+    window['AscFormat'].LightRig_rig_legacyFlat2 = LightRig_rig_legacyFlat2;
+    window['AscFormat'].LightRig_rig_legacyFlat3 = LightRig_rig_legacyFlat3;
+    window['AscFormat'].LightRig_rig_legacyFlat4 = LightRig_rig_legacyFlat4;
+    window['AscFormat'].LightRig_rig_legacyHarsh1 = LightRig_rig_legacyHarsh1;
+    window['AscFormat'].LightRig_rig_legacyHarsh2 = LightRig_rig_legacyHarsh2;
+    window['AscFormat'].LightRig_rig_legacyHarsh3 = LightRig_rig_legacyHarsh3;
+    window['AscFormat'].LightRig_rig_legacyHarsh4 = LightRig_rig_legacyHarsh4;
+    window['AscFormat'].LightRig_rig_legacyNormal1 = LightRig_rig_legacyNormal1;
+    window['AscFormat'].LightRig_rig_legacyNormal2 = LightRig_rig_legacyNormal2;
+    window['AscFormat'].LightRig_rig_legacyNormal3 = LightRig_rig_legacyNormal3;
+    window['AscFormat'].LightRig_rig_legacyNormal4 = LightRig_rig_legacyNormal4;
+    window['AscFormat'].LightRig_rig_morning = LightRig_rig_morning;
+    window['AscFormat'].LightRig_rig_soft = LightRig_rig_soft;
+    window['AscFormat'].LightRig_rig_sunrise = LightRig_rig_sunrise;
+    window['AscFormat'].LightRig_rig_sunset = LightRig_rig_sunset;
+    window['AscFormat'].LightRig_rig_threePt = LightRig_rig_threePt;
+    window['AscFormat'].LightRig_rig_twoPt = LightRig_rig_twoPt;
+
+    window['AscFormat'].Bevel_prst_angle = Bevel_prst_angle;
+    window['AscFormat'].Bevel_prst_artDeco = Bevel_prst_artDeco;
+    window['AscFormat'].Bevel_prst_circle = Bevel_prst_circle;
+    window['AscFormat'].Bevel_prst_convex = Bevel_prst_convex;
+    window['AscFormat'].Bevel_prst_coolSlant = Bevel_prst_coolSlant;
+    window['AscFormat'].Bevel_prst_cross = Bevel_prst_cross;
+    window['AscFormat'].Bevel_prst_divot = Bevel_prst_divot;
+    window['AscFormat'].Bevel_prst_hardEdge = Bevel_prst_hardEdge;
+    window['AscFormat'].Bevel_prst_relaxedInset = Bevel_prst_relaxedInset;
+    window['AscFormat'].Bevel_prst_riblet = Bevel_prst_riblet;
+    window['AscFormat'].Bevel_prst_slope = Bevel_prst_slope;
+    window['AscFormat'].Bevel_prst_softRound = Bevel_prst_softRound;
+
+    window['AscFormat'].ParameterVal_arrowheadStyle_arr = ParameterVal_arrowheadStyle_arr;
+    window['AscFormat'].ParameterVal_arrowheadStyle_auto = ParameterVal_arrowheadStyle_auto;
+    window['AscFormat'].ParameterVal_arrowheadStyle_noArr = ParameterVal_arrowheadStyle_noArr;
+    window['AscFormat'].ParameterVal_autoTextRotation_grav = ParameterVal_autoTextRotation_grav;
+    window['AscFormat'].ParameterVal_autoTextRotation_none = ParameterVal_autoTextRotation_none;
+    window['AscFormat'].ParameterVal_autoTextRotation_upr = ParameterVal_autoTextRotation_upr;
+    window['AscFormat'].ParameterVal_bendPoint_beg = ParameterVal_bendPoint_beg;
+    window['AscFormat'].ParameterVal_bendPoint_def = ParameterVal_bendPoint_def;
+    window['AscFormat'].ParameterVal_bendPoint_end = ParameterVal_bendPoint_end;
+    window['AscFormat'].ParameterVal_breakpoint_bal = ParameterVal_breakpoint_bal;
+    window['AscFormat'].ParameterVal_breakpoint_endCnv = ParameterVal_breakpoint_endCnv;
+    window['AscFormat'].ParameterVal_breakpoint_fixed = ParameterVal_breakpoint_fixed;
+    window['AscFormat'].ParameterVal_centerShapeMapping_fNode = ParameterVal_centerShapeMapping_fNode;
+    window['AscFormat'].ParameterVal_centerShapeMapping_none = ParameterVal_centerShapeMapping_none;
+    window['AscFormat'].ParameterVal_childAlignment_b = ParameterVal_childAlignment_b;
+    window['AscFormat'].ParameterVal_childAlignment_l = ParameterVal_childAlignment_l;
+    window['AscFormat'].ParameterVal_childAlignment_r = ParameterVal_childAlignment_r;
+    window['AscFormat'].ParameterVal_childAlignment_t = ParameterVal_childAlignment_t;
+    window['AscFormat'].ParameterVal_childDirection_horz = ParameterVal_childDirection_horz;
+    window['AscFormat'].ParameterVal_childDirection_vert = ParameterVal_childDirection_vert;
+    window['AscFormat'].ParameterVal_connectorDimension_1D = ParameterVal_connectorDimension_1D;
+    window['AscFormat'].ParameterVal_connectorDimension_2D = ParameterVal_connectorDimension_2D;
+    window['AscFormat'].ParameterVal_connectorDimension_cust = ParameterVal_connectorDimension_cust;
+    window['AscFormat'].ParameterVal_connectorPoint_auto = ParameterVal_connectorPoint_auto;
+    window['AscFormat'].ParameterVal_connectorPoint_bCtr = ParameterVal_connectorPoint_bCtr;
+    window['AscFormat'].ParameterVal_connectorPoint_bL = ParameterVal_connectorPoint_bL;
+    window['AscFormat'].ParameterVal_connectorPoint_bR = ParameterVal_connectorPoint_bR;
+    window['AscFormat'].ParameterVal_connectorPoint_ctr = ParameterVal_connectorPoint_ctr;
+    window['AscFormat'].ParameterVal_connectorPoint_midL = ParameterVal_connectorPoint_midL;
+    window['AscFormat'].ParameterVal_connectorPoint_midR = ParameterVal_connectorPoint_midR;
+    window['AscFormat'].ParameterVal_connectorPoint_radial = ParameterVal_connectorPoint_radial;
+    window['AscFormat'].ParameterVal_connectorPoint_tCtr = ParameterVal_connectorPoint_tCtr;
+    window['AscFormat'].ParameterVal_connectorPoint_tL = ParameterVal_connectorPoint_tL;
+    window['AscFormat'].ParameterVal_connectorPoint_tR = ParameterVal_connectorPoint_tR;
+    window['AscFormat'].ParameterVal_connectorRouting_bend = ParameterVal_connectorRouting_bend;
+    window['AscFormat'].ParameterVal_connectorRouting_curve = ParameterVal_connectorRouting_curve;
+    window['AscFormat'].ParameterVal_connectorRouting_longCurve = ParameterVal_connectorRouting_longCurve;
+    window['AscFormat'].ParameterVal_connectorRouting_stra = ParameterVal_connectorRouting_stra;
+    window['AscFormat'].ParameterVal_continueDirection_revDir = ParameterVal_continueDirection_revDir;
+    window['AscFormat'].ParameterVal_continueDirection_sameDir = ParameterVal_continueDirection_sameDir;
+    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_ctr = ParameterVal_diagramHorizontalAlignment_ctr;
+    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_l = ParameterVal_diagramHorizontalAlignment_l;
+    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_none = ParameterVal_diagramHorizontalAlignment_none;
+    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_r = ParameterVal_diagramHorizontalAlignment_r;
+    window['AscFormat'].ParameterVal_diagramTextAlignment_ctr = ParameterVal_diagramTextAlignment_ctr;
+    window['AscFormat'].ParameterVal_diagramTextAlignment_l = ParameterVal_diagramTextAlignment_l;
+    window['AscFormat'].ParameterVal_diagramTextAlignment_r = ParameterVal_diagramTextAlignment_r;
+    window['AscFormat'].ParameterVal_fallbackDimension_1D = ParameterVal_fallbackDimension_1D;
+    window['AscFormat'].ParameterVal_fallbackDimension_2D = ParameterVal_fallbackDimension_2D;
+    window['AscFormat'].ParameterVal_flowDirection_col = ParameterVal_flowDirection_col;
+    window['AscFormat'].ParameterVal_flowDirection_row = ParameterVal_flowDirection_row;
+    window['AscFormat'].ParameterVal_growDirection_bL = ParameterVal_growDirection_bL;
+    window['AscFormat'].ParameterVal_growDirection_bR = ParameterVal_growDirection_bR;
+    window['AscFormat'].ParameterVal_growDirection_tL = ParameterVal_growDirection_tL;
+    window['AscFormat'].ParameterVal_growDirection_tR = ParameterVal_growDirection_tR;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_bCtrCh = ParameterVal_hierarchyAlignment_bCtrCh;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_bCtrDes = ParameterVal_hierarchyAlignment_bCtrDes;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_bL = ParameterVal_hierarchyAlignment_bL;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_bR = ParameterVal_hierarchyAlignment_bR;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_lB = ParameterVal_hierarchyAlignment_lB;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_lCtrCh = ParameterVal_hierarchyAlignment_lCtrCh;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_lCtrDes = ParameterVal_hierarchyAlignment_lCtrDes;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_lT = ParameterVal_hierarchyAlignment_lT;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_rB = ParameterVal_hierarchyAlignment_rB;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_rCtrCh = ParameterVal_hierarchyAlignment_rCtrCh;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_rCtrDes = ParameterVal_hierarchyAlignment_rCtrDes;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_rT = ParameterVal_hierarchyAlignment_rT;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_tCtrCh = ParameterVal_hierarchyAlignment_tCtrCh;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_tCtrDes = ParameterVal_hierarchyAlignment_tCtrDes;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_tL = ParameterVal_hierarchyAlignment_tL;
+    window['AscFormat'].ParameterVal_hierarchyAlignment_tR = ParameterVal_hierarchyAlignment_tR;
+    window['AscFormat'].ParameterVal_linearDirection_fromB = ParameterVal_linearDirection_fromB;
+    window['AscFormat'].ParameterVal_linearDirection_fromL = ParameterVal_linearDirection_fromL;
+    window['AscFormat'].ParameterVal_linearDirection_fromR = ParameterVal_linearDirection_fromR;
+    window['AscFormat'].ParameterVal_linearDirection_fromT = ParameterVal_linearDirection_fromT;
+    window['AscFormat'].ParameterVal_nodeHorizontalAlignment_ctr = ParameterVal_nodeHorizontalAlignment_ctr;
+    window['AscFormat'].ParameterVal_nodeHorizontalAlignment_l = ParameterVal_nodeHorizontalAlignment_l;
+    window['AscFormat'].ParameterVal_nodeHorizontalAlignment_r = ParameterVal_nodeHorizontalAlignment_r;
+    window['AscFormat'].ParameterVal_nodeVerticalAlignment_b = ParameterVal_nodeVerticalAlignment_b;
+    window['AscFormat'].ParameterVal_nodeVerticalAlignment_mid = ParameterVal_nodeVerticalAlignment_mid;
+    window['AscFormat'].ParameterVal_nodeVerticalAlignment_t = ParameterVal_nodeVerticalAlignment_t;
+    window['AscFormat'].ParameterVal_offset_ctr = ParameterVal_offset_ctr;
+    window['AscFormat'].ParameterVal_offset_off = ParameterVal_offset_off;
+    window['AscFormat'].ParameterVal_pyramidAccentPosition_aft = ParameterVal_pyramidAccentPosition_aft;
+    window['AscFormat'].ParameterVal_pyramidAccentPosition_bef = ParameterVal_pyramidAccentPosition_bef;
+    window['AscFormat'].ParameterVal_pyramidAccentTextMargin_stack = ParameterVal_pyramidAccentTextMargin_stack;
+    window['AscFormat'].ParameterVal_pyramidAccentTextMargin_step = ParameterVal_pyramidAccentTextMargin_step;
+    window['AscFormat'].ParameterVal_rotationPath_alongPath = ParameterVal_rotationPath_alongPath;
+    window['AscFormat'].ParameterVal_rotationPath_none = ParameterVal_rotationPath_none;
+    window['AscFormat'].ParameterVal_secondaryChildAlignment_b = ParameterVal_secondaryChildAlignment_b;
+    window['AscFormat'].ParameterVal_secondaryChildAlignment_l = ParameterVal_secondaryChildAlignment_l;
+    window['AscFormat'].ParameterVal_secondaryChildAlignment_none = ParameterVal_secondaryChildAlignment_none;
+    window['AscFormat'].ParameterVal_secondaryChildAlignment_r = ParameterVal_secondaryChildAlignment_r;
+    window['AscFormat'].ParameterVal_secondaryChildAlignment_t = ParameterVal_secondaryChildAlignment_t;
+    window['AscFormat'].ParameterVal_secondaryLinearDirection_fromB = ParameterVal_secondaryLinearDirection_fromB;
+    window['AscFormat'].ParameterVal_secondaryLinearDirection_fromL = ParameterVal_secondaryLinearDirection_fromL;
+    window['AscFormat'].ParameterVal_secondaryLinearDirection_fromR = ParameterVal_secondaryLinearDirection_fromR;
+    window['AscFormat'].ParameterVal_secondaryLinearDirection_fromT = ParameterVal_secondaryLinearDirection_fromT;
+    window['AscFormat'].ParameterVal_secondaryLinearDirection_none = ParameterVal_secondaryLinearDirection_none;
+    window['AscFormat'].ParameterVal_startingElement_node = ParameterVal_startingElement_node;
+    window['AscFormat'].ParameterVal_startingElement_trans = ParameterVal_startingElement_trans;
+    window['AscFormat'].ParameterVal_textAnchorHorizontal_ctr = ParameterVal_textAnchorHorizontal_ctr;
+    window['AscFormat'].ParameterVal_textAnchorHorizontal_none = ParameterVal_textAnchorHorizontal_none;
+    window['AscFormat'].ParameterVal_textAnchorVertical_b = ParameterVal_textAnchorVertical_b;
+    window['AscFormat'].ParameterVal_textAnchorVertical_mid = ParameterVal_textAnchorVertical_mid;
+    window['AscFormat'].ParameterVal_textAnchorVertical_top = ParameterVal_textAnchorVertical_top;
+    window['AscFormat'].ParameterVal_textBlockDirection_horz = ParameterVal_textBlockDirection_horz;
+    window['AscFormat'].ParameterVal_textBlockDirection_vert = ParameterVal_textBlockDirection_vert;
+    window['AscFormat'].ParameterVal_textDirection_fromB = ParameterVal_textDirection_fromB;
+    window['AscFormat'].ParameterVal_textDirection_fromT = ParameterVal_textDirection_fromT;
+    window['AscFormat'].ParameterVal_verticalAlignment_b = ParameterVal_verticalAlignment_b;
+    window['AscFormat'].ParameterVal_verticalAlignment_mid = ParameterVal_verticalAlignment_mid;
+    window['AscFormat'].ParameterVal_verticalAlignment_none = ParameterVal_verticalAlignment_none;
+    window['AscFormat'].ParameterVal_verticalAlignment_t = ParameterVal_verticalAlignment_t;
+
+    window['AscFormat'].FunctionValue_animLvlStr_ctr = FunctionValue_animLvlStr_ctr;
+    window['AscFormat'].FunctionValue_animLvlStr_lvl = FunctionValue_animLvlStr_lvl;
+    window['AscFormat'].FunctionValue_animLvlStr_none = FunctionValue_animLvlStr_none;
+    window['AscFormat'].FunctionValue_animOneStr_branch = FunctionValue_animOneStr_branch;
+    window['AscFormat'].FunctionValue_animOneStr_none = FunctionValue_animOneStr_none;
+    window['AscFormat'].FunctionValue_animOneStr_one = FunctionValue_animOneStr_one;
+    window['AscFormat'].FunctionValue_direction_norm = FunctionValue_direction_norm;
+    window['AscFormat'].FunctionValue_direction_rev = FunctionValue_direction_rev;
+    window['AscFormat'].FunctionValue_hierBranchStyle_hang = FunctionValue_hierBranchStyle_hang;
+    window['AscFormat'].FunctionValue_hierBranchStyle_init = FunctionValue_hierBranchStyle_init;
+    window['AscFormat'].FunctionValue_hierBranchStyle_l = FunctionValue_hierBranchStyle_l;
+    window['AscFormat'].FunctionValue_hierBranchStyle_r = FunctionValue_hierBranchStyle_r;
+    window['AscFormat'].FunctionValue_hierBranchStyle_std = FunctionValue_hierBranchStyle_std;
+    window['AscFormat'].FunctionValue_resizeHandlesStr_exact = FunctionValue_resizeHandlesStr_exact;
+    window['AscFormat'].FunctionValue_resizeHandlesStr_rel = FunctionValue_resizeHandlesStr_rel;
+
+    window['AscFormat'].Coordinate_universalMeasure_cm = Coordinate_universalMeasure_cm;
+    window['AscFormat'].Coordinate_universalMeasure_mm = Coordinate_universalMeasure_mm;
+    window['AscFormat'].Coordinate_universalMeasure_in = Coordinate_universalMeasure_in;
+    window['AscFormat'].Coordinate_universalMeasure_pt = Coordinate_universalMeasure_pt;
+    window['AscFormat'].Coordinate_universalMeasure_pc = Coordinate_universalMeasure_pc;
+    window['AscFormat'].Coordinate_universalMeasure_pi = Coordinate_universalMeasure_pi;
+
+    window['AscFormat'].EChOrder_chOrderB = EChOrder_chOrderB;
+    window['AscFormat'].EChOrder_chOrderT = EChOrder_chOrderT;
 
   })(window)

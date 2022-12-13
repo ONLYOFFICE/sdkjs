@@ -433,6 +433,12 @@
 
 			this.ColumnWidth = tblProp.ColumnWidth;
 			this.RowHeight   = tblProp.RowHeight;
+
+			this.FrameWidth = tblProp.FrameWidth;
+			this.FrameHeight = tblProp.FrameHeight;
+			this.FrameX = tblProp.FrameX;
+			this.FrameY = tblProp.FrameY;
+			this.FrameLockAspect = tblProp.FrameLockAspect;
 		}
 		else
 		{
@@ -469,6 +475,46 @@
 	CTableProp.prototype.put_Width = function (v)
 	{
 		this.TableWidth = v;
+	};
+	CTableProp.prototype.get_FrameWidth = function ()
+	{
+		return this.FrameWidth;
+	};
+	CTableProp.prototype.put_FrameWidth = function (v)
+	{
+		this.FrameWidth = v;
+	};
+	CTableProp.prototype.get_FrameHeight = function ()
+	{
+		return this.FrameHeight;
+	};
+	CTableProp.prototype.put_FrameHeight = function (v)
+	{
+		this.FrameHeight = v;
+	};
+	CTableProp.prototype.get_FrameX = function ()
+	{
+		return this.FrameX;
+	};
+	CTableProp.prototype.put_FrameX = function (v)
+	{
+		this.FrameX = v;
+	};
+	CTableProp.prototype.get_FrameY = function ()
+	{
+		return this.FrameY;
+	};
+	CTableProp.prototype.put_FrameY = function (v)
+	{
+		this.FrameY = v;
+	};
+	CTableProp.prototype.get_FrameLockAspect = function ()
+	{
+		return this.FrameLockAspect;
+	};
+	CTableProp.prototype.put_FrameLockAspect = function (v)
+	{
+		this.FrameLockAspect = v;
 	};
 	CTableProp.prototype.get_Spacing = function ()
 	{
@@ -796,6 +842,16 @@
 	CTableProp.prototype['put_ColumnWidth'] = CTableProp.prototype.put_ColumnWidth;
 	CTableProp.prototype['get_RowHeight'] = CTableProp.prototype.get_RowHeight;
 	CTableProp.prototype['put_RowHeight'] = CTableProp.prototype.put_RowHeight;
+	CTableProp.prototype['get_FrameWidth'] = CTableProp.prototype.get_FrameWidth;
+	CTableProp.prototype['put_FrameWidth'] = CTableProp.prototype.put_FrameWidth;
+	CTableProp.prototype['get_FrameHeight'] = CTableProp.prototype.get_FrameHeight;
+	CTableProp.prototype['put_FrameHeight'] = CTableProp.prototype.put_FrameHeight;
+	CTableProp.prototype['get_FrameX'] = CTableProp.prototype.get_FrameX;
+	CTableProp.prototype['put_FrameX'] = CTableProp.prototype.put_FrameX;
+	CTableProp.prototype['get_FrameY'] = CTableProp.prototype.get_FrameY;
+	CTableProp.prototype['put_FrameY'] = CTableProp.prototype.put_FrameY;
+	CTableProp.prototype['get_FrameLockAspect'] = CTableProp.prototype.get_FrameLockAspect;
+	CTableProp.prototype['put_FrameLockAspect'] = CTableProp.prototype.put_FrameLockAspect;
 
 // ---------------------------------------------------------------
 	function CBorders(obj)
@@ -1861,7 +1917,7 @@
 					_this.Api.sendEvent("asc_onWatermarkImageLoaded");
 				});
 			}
-		}, false, undefined, token);
+		}, undefined, token);
 	};
 	CAscWatermarkProperties.prototype['put_ImageUrl2'] = CAscWatermarkProperties.prototype.put_ImageUrl2 = function (sUrl) {
 		this.ImageUrl = sUrl;
@@ -1946,7 +2002,7 @@
 					_this.sendEvent("asc_onWatermarkImageLoaded");
 				});
 			}
-		}, false, undefined, token);
+		}, undefined, token);
 	};
 
 	CAscWatermarkProperties.prototype['drawTexture'] = CAscWatermarkProperties.prototype.drawTexture = function () {
@@ -2230,7 +2286,7 @@
 
 	/**
 	* Класс для настроек конвертации текста в таблицу
-	* oSelectedContent {CSelectedContent}
+	* oSelectedContent {AscCommonWord.CSelectedContent}
 	* @constructor
 	*/
 	function CAscTextToTableProperties(oSelectedContent)

@@ -238,7 +238,7 @@ CBorderBox.prototype.ClassType = AscDFH.historyitem_type_borderBox;
 CBorderBox.prototype.kind      = MATH_BORDER_BOX;
 CBorderBox.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();
@@ -559,6 +559,20 @@ CBorderBox.prototype.Get_InterfaceProps = function()
 {
     return new CMathMenuBorderBox(this);
 };
+CBorderBox.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var strSymbol = String.fromCharCode(9645);
+	var strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement());
+	var strStartBracet = (strBase.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
+	var strCloseBracet = (strBase.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
+	
+	if (true === isLaTeX) {
+		strTemp = '\\rect' + strStartBracet + strBase + strCloseBracet;
+	} else {
+		strTemp = strSymbol + strStartBracet + strBase + strCloseBracet;
+	}
+	return strTemp;
+};
 
 /**
  *
@@ -798,7 +812,7 @@ CBox.prototype.ClassType = AscDFH.historyitem_type_box;
 CBox.prototype.kind      = MATH_BOX;
 CBox.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();
@@ -945,6 +959,31 @@ CBox.prototype.Apply_ForcedBreak = function(Props)
     if(Props.Action & c_oMathMenuAction.DeleteForcedBreak)
         Props.Action ^= c_oMathMenuAction.DeleteForcedBreak;
 };
+CBox.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var strSymbol;
+
+	if (true === isLaTeX) {
+		strSymbol = '\\rect';
+	} else {
+		strSymbol = String.fromCharCode(9633);
+	}
+	
+	var Base = this.getBase().GetTextOfElement(isLaTeX);
+
+	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
+	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
+
+	if (isLaTeX) {
+		Base = strStartBracet + Base + strCloseBracet;
+	}
+	
+	strTemp =
+		strSymbol
+		+ Base
+
+	return strTemp;
+};
 
 /**
  *
@@ -1015,7 +1054,7 @@ CBar.prototype.ClassType = AscDFH.historyitem_type_bar;
 CBar.prototype.kind      = MATH_BAR;
 CBar.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();
@@ -1082,6 +1121,28 @@ CBar.prototype.raw_SetLinePos = function(Value)
     this.RecalcInfo.bProps = true;
     this.ApplyProperties();
 };
+CBar.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "",
+        strSymbol,
+        strBase,
+        strStartBracket = this.GetStartBracetForGetTextContent(isLaTeX),
+        strCloseBracket = this.GetEndBracetForGetTextContent(isLaTeX);
+
+    if (!isLaTeX) {
+        strSymbol = (this.Pr.pos) ? "▁" : "¯";
+    } else {
+        strSymbol = (this.Pr.pos) ? "\\underline" : "\\overline";
+    }
+	strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement(isLaTeX));
+	
+	strTemp =
+		strSymbol
+		+ strStartBracket
+		+ strBase
+		+ strCloseBracket;
+
+	return strTemp;
+}
 
 /**
  *
@@ -1215,7 +1276,7 @@ CPhantom.prototype.ClassType = AscDFH.historyitem_type_phant;
 CPhantom.prototype.kind      = MATH_PHANTOM;
 CPhantom.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();

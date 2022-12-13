@@ -32,6 +32,8 @@
 
 "use strict";
 
+// OLD CODE. THIS FILE IS NOT USED. SEE ./character.js
+
 (function (window, undefined)
 {
 
@@ -884,8 +886,8 @@
 			}
 			*/
 
-            if (_param[4] != (_select.m_ulCodePageRange1 & _param[4]))
-                continue;
+			if (_param[4] != (_select.m_ulCodePageRange1 & _param[4]))
+				continue;
 
 			if (_param[5] != (_select.m_ulCodePageRange2 & _param[5]))
 				continue;
@@ -1032,43 +1034,43 @@
 			}
 
 			this.FontsByRange[_range.Name] = _fontName;
-            this.FontsByRangeCount++;
+			this.FontsByRangeCount++;
 			return _fontName;
 		},
 
 		getFontsByString : function(_text)
 		{
 			var oldCount = this.FontsByRangeCount;
-            for (var i = 0; i < _text.length; ++i)
-            {
-                var nUnicode = null;
-                var nCharCode = _text.charCodeAt(i);
-                if (AscCommon.isLeadingSurrogateChar(nCharCode))
-                {
-                    if (i + 1 < _text.length)
-                    {
-                        i++;
-                        var nTrailingChar = _text.charCodeAt(i);
-                        nUnicode = AscCommon.decodeSurrogateChar(nCharCode, nTrailingChar);
-                    }
-                }
-                else
-                    nUnicode = nCharCode;
+			for (var i = 0; i < _text.length; ++i)
+			{
+				var nUnicode = null;
+				var nCharCode = _text.charCodeAt(i);
+				if (AscCommon.isLeadingSurrogateChar(nCharCode))
+				{
+					if (i + 1 < _text.length)
+					{
+						i++;
+						var nTrailingChar = _text.charCodeAt(i);
+						nUnicode = AscCommon.decodeSurrogateChar(nCharCode, nTrailingChar);
+					}
+				}
+				else
+					nUnicode = nCharCode;
 
-                AscFonts.FontPickerByCharacter.getFontBySymbol(nUnicode);
-            }
-            return (this.FontsByRangeCount != oldCount);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(nUnicode);
+			}
+			return (this.FontsByRangeCount != oldCount);
 		},
 
-        getFontsByString2 : function(_array)
-        {
-            var oldCount = this.FontsByRangeCount;
-            for (var i = 0; i < _array.length; ++i)
-            {
-                AscFonts.FontPickerByCharacter.getFontBySymbol(_array[i]);
-            }
-            return (this.FontsByRangeCount != oldCount);
-        },
+		getFontsByString2 : function(_array)
+		{
+			var oldCount = this.FontsByRangeCount;
+			for (var i = 0; i < _array.length; ++i)
+			{
+				AscFonts.FontPickerByCharacter.getFontBySymbol(_array[i]);
+			}
+			return (this.FontsByRangeCount != oldCount);
+		},
 
 		isExtendFonts : function()
 		{
@@ -1077,11 +1079,11 @@
 
 		extendFonts : function(fonts)
 		{
-            if (this.ExtendFontsByRangeCount == this.FontsByRangeCount)
-            	return;
+			if (this.ExtendFontsByRangeCount == this.FontsByRangeCount)
+				return;
 
-            var isFound = false;
-            for (var i in this.FontsByRange)
+			var isFound = false;
+			for (var i in this.FontsByRange)
 			{
 				isFound = false;
 				for (var j in fonts)
@@ -1097,12 +1099,12 @@
 					fonts[fonts.length] = new AscFonts.CFont(this.FontsByRange[i], 0, "", 0, null);
 			}
 
-            this.ExtendFontsByRangeCount = this.FontsByRangeCount;
+			this.ExtendFontsByRangeCount = this.FontsByRangeCount;
 		}
 	};
 
-    window['AscFonts'] = window['AscFonts'] || {};
-    window['AscFonts'].IsCheckSymbols = false;
-    window['AscFonts'].FontPickerByCharacter = new CFontByCharacter();
+	window['AscFonts'] = window['AscFonts'] || {};
+	window['AscFonts'].IsCheckSymbols = false;
+	window['AscFonts'].FontPickerByCharacter = new CFontByCharacter();
 
 })(window);

@@ -34,6 +34,10 @@
 
 (function(window, undefined)
 {
+	const NON_LETTER_SYMBOLS = [];
+	NON_LETTER_SYMBOLS[0x00A0] = 1;
+	NON_LETTER_SYMBOLS[0x00AE] = 1;
+
 	const CHECKED_LIMIT = 2000;
 
 	/**
@@ -44,14 +48,14 @@
 	 */
 	function CParagraphSpellCheckerCollector(oSpellChecker, isForceFullCheck)
 	{
-		this.ContentPos   = new CParagraphContentPos();
+		this.ContentPos   = new AscWord.CParagraphContentPos();
 		this.SpellChecker = oSpellChecker;
 
 		this.CurLcid  = -1;
 		this.bWord    = false;
 		this.sWord    = "";
-		this.StartPos = null; // CParagraphContentPos
-		this.EndPos   = null; // CParagraphContentPos
+		this.StartPos = null; // AscWord.CParagraphContentPos
+		this.EndPos   = null; // AscWord.CParagraphContentPos
 		this.Prefix   = null;
 
 		// Защита от проверки орфографии в большом параграфе
@@ -146,12 +150,12 @@
 		}
 	};
 	/**
-	 * @param {CRunElementBase} oElement
+	 * @param {AscWord.CRunElementBase} oElement
 	 * @param {CTextPr} oTextPr
 	 */
 	CParagraphSpellCheckerCollector.prototype.HandleRunElement = function(oElement, oTextPr)
 	{
-		if (oElement.IsText() && !oElement.IsPunctuation() && !oElement.IsNBSP() && !oElement.Is_SpecialSymbol())
+		if (this.IsWordLetter(oElement))
 		{
 			if (!this.bWord)
 			{
@@ -198,6 +202,19 @@
 		this.FlushWord();
 
 		this.CurLcid = nLang;
+	};
+	CParagraphSpellCheckerCollector.prototype.IsPunctuation = function(oElement)
+	{
+		if (!oElement.IsPunctuation())
+			return false;
+
+		// Исключения, полученнные опытным путем
+		let nUnicode = oElement.GetCodePoint();
+		return (!(0x2019 === nUnicode && lcid_frFR === this.CurLcid));
+	};
+	CParagraphSpellCheckerCollector.prototype.IsWordLetter = function(oElement)
+	{
+		return (oElement.IsText() && !this.IsPunctuation(oElement) && !NON_LETTER_SYMBOLS[oElement.GetCodePoint()]);
 	};
 
 	/**

@@ -32,6 +32,11 @@
 
 "use strict";
 
+var footnote_ContinuationNotice  = 0;
+var footnote_ContinuationSeparator   = 1;
+var footnote_Normal = 2;
+var footnote_Separator   = 3;
+
 /**
  * Класс представляющий сноску в документе.
  * @param {CDocumentControllerBase} DocumentController
@@ -127,11 +132,11 @@ CFootEndnote.prototype.AddDefaultFootnoteContent = function(sText)
 	if (sText)
 		oRun.AddText(sText);
 	else
-		oRun.AddToContent(0, new ParaFootnoteRef(this));
+		oRun.AddToContent(0, new AscWord.CRunFootnoteRef(this));
 
 	oParagraph.AddToContent(0, oRun);
 	oRun = new ParaRun(oParagraph, false);
-	oRun.AddToContent(0, new ParaSpace());
+	oRun.AddToContent(0, new AscWord.CRunSpace());
 	oParagraph.AddToContent(1, oRun);
 
 	this.MoveCursorToEndPos(false);
@@ -147,11 +152,11 @@ CFootEndnote.prototype.AddDefaultEndnoteContent = function(sText)
 	if (sText)
 		oRun.AddText(sText);
 	else
-		oRun.AddToContent(0, new ParaEndnoteRef(this));
+		oRun.AddToContent(0, new AscWord.CRunEndnoteRef(this));
 
 	oParagraph.AddToContent(0, oRun);
 	oRun = new ParaRun(oParagraph, false);
-	oRun.AddToContent(0, new ParaSpace());
+	oRun.AddToContent(0, new AscWord.CRunSpace());
 	oParagraph.AddToContent(1, oRun);
 
 	this.MoveCursorToEndPos(false);
@@ -262,7 +267,7 @@ CFootEndnote.prototype.ConvertFootnoteType = function(isToFootnote)
 };
 CFootEndnote.prototype.SetRef = function(oRef)
 {
-	if (oRef && (oRef instanceof ParaFootnoteReference || oRef instanceof ParaEndnoteReference))
+	if (oRef && (oRef instanceof AscWord.CRunFootnoteReference || oRef instanceof AscWord.CRunEndnoteReference))
 		this.Ref = oRef;
 };
 CFootEndnote.prototype.GetRef = function()

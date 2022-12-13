@@ -268,15 +268,13 @@
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;
 
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
-		}
-
 		var res = null;
 		for (var i = 0; i < arg.length; i++) {
 			var argN = argClone[i];
-			if (cElementType.string === argN.type) {
+			if (cElementType.error === argN.type) {
+				res = argN;
+				break;
+			} else if (cElementType.string === argN.type) {
 				res = new cError(cErrorType.wrong_value_type);
 				break;
 			} else if (cElementType.number === argN.type || cElementType.bool === argN.type) {

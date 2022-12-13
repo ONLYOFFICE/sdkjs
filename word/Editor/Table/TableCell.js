@@ -125,6 +125,11 @@ CTableCell.prototype =
         return this.Id;
     },
 
+	GetId : function()
+	{
+		return this.Id;
+	},
+
     Get_Theme : function()
     {
         return this.Row.Table.Get_Theme();
@@ -431,11 +436,6 @@ CTableCell.prototype =
     //-----------------------------------------------------------------------------------
     // Функции, к которым идет обращение из контента
     //-----------------------------------------------------------------------------------
-    OnContentRecalculate : function(bChange, bForceRecalc)
-    {
-        this.Row.Table.Internal_RecalculateFrom( this.Row.Index, this.Index, bChange, false );
-    },
-
     OnContentReDraw : function(StartPage, EndPage)
     {
         this.Row.Table.Parent.OnContentReDraw( StartPage, EndPage );
@@ -563,12 +563,12 @@ CTableCell.prototype =
         return true;
     },
 
-    Is_UseInDocument : function(Id)
+	IsUseInDocument : function(Id)
     {
-        if ( null != this.Row )
-            return this.Row.Is_UseInDocument(this.Get_Id());
+		if (!this.Row)
+			return false;
 
-        return false;
+		return this.Row.IsUseInDocument(this.GetId());
     },
 
     Get_PageContentStartPos : function(PageNum)
@@ -598,14 +598,14 @@ CTableCell.prototype =
         Table.Document_SetThisElementCurrent(bUpdateStates);
     },
 
-    Is_ThisElementCurrent : function()
+	IsThisElementCurrent : function()
     {
         var Table = this.Row.Table;
         if ( false === Table.Selection.Use && this === Table.CurCell )
         {
             var Parent = Table.Parent;
             if ((Parent instanceof AscFormat.CGraphicFrame) || docpostype_Content === Parent.GetDocPosType() && false === Parent.Selection.Use && this.Index === Parent.CurPos.ContentPos )
-                return Table.Parent.Is_ThisElementCurrent();
+                return Table.Parent.IsThisElementCurrent();
         }
 
         return false;
@@ -682,6 +682,35 @@ CTableCell.prototype =
         return this.Content.Get_PagesCount();
     },
 
+    Content_Draw_Line : function (pGraphics)
+    {
+        const oParagraph = this.Content.Get_FirstParagraph();
+        if (oParagraph)
+        {
+            const nLineWidth = oParagraph.XLimit - oParagraph.X;
+            const nOffset = nLineWidth * 0.2;
+            const nLeftOffset = oParagraph.X + nOffset;
+            const nRightOffset = oParagraph.XLimit - nOffset;
+
+            const oTextPr = oParagraph.Get_FirstTextPr();
+            if (oTextPr.Unifill)
+            {
+                const oColor = oTextPr.Unifill.getRGBAColor();
+                pGraphics.p_color(oColor.R, oColor.G, oColor.B, 255);
+            }
+            else if (oTextPr.Color)
+            {
+                const oColor = oTextPr.Color;
+                pGraphics.p_color(oColor.r, oColor.g, oColor.b, 255);
+            }
+            else
+            {
+                pGraphics.p_color(0, 0, 0, 255);
+            }
+            pGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, oParagraph.Y + (this.Row.Height / 2), nLeftOffset, nRightOffset, 4 * AscCommon.g_dKoef_pix_to_mm);
+        }
+    },
+
     Content_Draw : function(PageIndex, pGraphics)
     {
         var TextDirection = this.Get_TextDirection();
@@ -699,7 +728,14 @@ CTableCell.prototype =
             pGraphics.transform3(_transform);
         }
 
-        this.Content.Draw(PageIndex, pGraphics);
+        if (pGraphics.bIsDrawCellTextLines)
+        {
+            this.Content_Draw_Line(pGraphics);
+        }
+        else
+        {
+            this.Content.Draw(PageIndex, pGraphics);
+        }
         if (bNeedRestore)
         {
             pGraphics.RestoreGrState();
@@ -1858,6 +1894,10 @@ CTableCell.prototype =
 
     Refresh_RecalcData : function(Data)
     {
+		let oTable = this.GetTable();
+		if (!oTable)
+			return;
+
         var bNeedRecalc = false;
 
         var Type = Data.Type;
@@ -1886,7 +1926,7 @@ CTableCell.prototype =
             }
         }
 
-        this.Row.Table.RecalcInfo.RecalcBorders();
+		oTable.RecalcInfo.RecalcBorders();
 
         this.Refresh_RecalcData2( 0, 0 );
     },
@@ -2713,3 +2753,4 @@ CTableCellRecalculateObject.prototype =
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTableCell = CTableCell;
+window['AscWord'].CTableCell = CTableCell;

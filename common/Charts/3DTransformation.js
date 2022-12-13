@@ -357,11 +357,19 @@ Processor3D.prototype._recalculateCameraDiff = function () {
 Processor3D.prototype.calculateZPositionValAxis = function () {
 	var result = 0;
 	if (!this.view3D.getRAngAx()) {
-		var angleOyAbs = Math.abs(this.angleOy);
-		if ((angleOyAbs >= Math.PI / 2 && angleOyAbs < Math.PI) || (angleOyAbs >= 3 * Math.PI / 2 && angleOyAbs < 2 * Math.PI))
-			result = this.depthPerspective;
+		result = this.orientationCatAx !== ORIENTATION_MIN_MAX ? this.depthPerspective : 0;
+		if (this.chartsDrawer.calcProp.type !== AscFormat.c_oChartTypes.HBar) {
+			var angleOyAbs = Math.abs(this.angleOy);
+			if ((angleOyAbs >= Math.PI / 2 && angleOyAbs < Math.PI) || (angleOyAbs >= 3 * Math.PI / 2 && angleOyAbs < 2 * Math.PI))
+				result = this.orientationCatAx !== ORIENTATION_MIN_MAX ? 0 : this.depthPerspective;
+		} else {
+			if (this.orientationCatAx !== ORIENTATION_MIN_MAX) {
+				result = Math.cos(this.angleOy) > 0 ? this.depthPerspective : 0;
+			} else {
+				result = Math.cos(this.angleOy) > 0 ? 0 : this.depthPerspective;
+			}
+		}
 	} else if (this.chartsDrawer.calcProp.type !== AscFormat.c_oChartTypes.HBar && this.orientationCatAx !== ORIENTATION_MIN_MAX && this.depthPerspective !== undefined) {
-		//if(this.chartSpace.chart.plotArea.valAx && this.chartSpace.chart.plotArea.valAx.yPoints && this.chartSpace.chart.plotArea.catAx.posY === this.chartSpace.chart.plotArea.valAx.yPoints[0].pos)
 		result = this.depthPerspective;
 	} else if (this.chartsDrawer.calcProp.type === AscFormat.c_oChartTypes.HBar && this.orientationCatAx !== ORIENTATION_MIN_MAX && this.depthPerspective !== undefined) {
 		//if(this.chartSpace.chart.plotArea.valAx && this.chartSpace.chart.plotArea.valAx.yPoints && this.chartSpace.chart.plotArea.catAx.posY === this.chartSpace.chart.plotArea.valAx.yPoints[0].pos)
@@ -374,7 +382,11 @@ Processor3D.prototype.calculateZPositionValAxis = function () {
 Processor3D.prototype.calculateZPositionCatAxis = function () {
 	var result = 0;
 	if (!this.view3D.getRAngAx()) {
-		result = Math.cos(this.angleOy) > 0 ? 0 : this.depthPerspective;
+		if (this.chartsDrawer.calcProp.type === AscFormat.c_oChartTypes.HBar && this.orientationValAx !== ORIENTATION_MIN_MAX) {
+			result = Math.cos(this.angleOy) > 0 ? this.depthPerspective : 0;
+		} else {
+			result = Math.cos(this.angleOy) > 0 ? 0 : this.depthPerspective;
+		}
 	} else if (this.chartsDrawer.calcProp.type !== AscFormat.c_oChartTypes.HBar && this.orientationValAx !== ORIENTATION_MIN_MAX && this.depthPerspective !== undefined) {
 		if (this.chartSpace.chart.plotArea.valAx && this.chartSpace.chart.plotArea.valAx.yPoints && this.chartSpace.chart.plotArea.catAx.posY === this.chartSpace.chart.plotArea.valAx.yPoints[0].pos)
 			result = this.depthPerspective;
@@ -383,6 +395,12 @@ Processor3D.prototype.calculateZPositionCatAxis = function () {
 	}
 
 	return result;
+};
+	
+Processor3D.prototype.calculateXPositionSerAxis = function () {
+	if (!this.view3D.getRAngAx()) {
+		return Math.sin(this.angleOy) > 0;
+	}
 };
 
 Processor3D.prototype.calculateFloorPosition = function () {
@@ -2700,5 +2718,7 @@ CSortFaces.prototype =
 	window['AscFormat'].Processor3D = Processor3D;
 	window['AscFormat'].Point3D = Point3D;
 	window['AscFormat'].CSortFaces = CSortFaces;
+	window['AscFormat'].global3DPersperctive = global3DPersperctive;
+	window['AscFormat'].globalBasePercent = globalBasePercent;
 	window['AscCommon'].c_oChartFloorPosition = c_oChartFloorPosition;
 })(window);

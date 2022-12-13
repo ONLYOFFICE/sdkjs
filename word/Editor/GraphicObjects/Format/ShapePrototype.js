@@ -883,7 +883,7 @@ CShape.prototype.Get_Numbering = function()
     {
         return oLogicDoc.Numbering;
     }
-    return new CNumbering();
+    return AscWord.DEFAULT_NUMBERING;
 };
 CShape.prototype.IsCell = function(isReturnCell)
 {
@@ -898,7 +898,7 @@ CShape.prototype.hitInTextRect = function(x, y)
     return this.hitInTextRectWord(x, y);
 };
 
-CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
+CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection)
 {
     var oLogicDoc = this.getLogicDocument();
     if(!oLogicDoc)
@@ -906,25 +906,35 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
         return;
     }
 	var para_drawing;
+    var main_group;
+    let oSelector;
 	if (this.group)
 	{
-		var main_group = this.group.getMainGroup();
+		main_group = this.group.getMainGroup();
 		para_drawing   = main_group.parent;
+        oSelector = main_group;
 	}
 	else
 	{
 		para_drawing = this.parent;
+        oSelector = oLogicDoc.DrawingObjects;
 	}
 
-
-	if (para_drawing && para_drawing.DocumentContent)
+	let oDocumentContent = para_drawing ? para_drawing.GetDocumentContent() : null;
+	if (oDocumentContent)
 	{
         var nPageIndex = AscFormat.isRealNumber(pageIndex) ? pageIndex : para_drawing.PageNum;
 		var drawing_objects = oLogicDoc.DrawingObjects;
 
-        this.SetControllerTextSelection(drawing_objects, nPageIndex);
+        if(bNoTextSelection !== true) {
+            this.SetControllerTextSelection(drawing_objects, nPageIndex);
+        }
+        else {
+            oSelector.resetSelection();
+            oSelector.selectObject(this, nPageIndex);
+        }
 
-		var hdr_ftr = para_drawing.DocumentContent.IsHdrFtr(true);
+		var hdr_ftr = oDocumentContent.IsHdrFtr(true);
 		if (hdr_ftr)
 		{
 			hdr_ftr.Content.SetDocPosType(AscCommonWord.docpostype_DrawingObjects);
@@ -952,31 +962,6 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 	}
 };
 
-CShape.prototype.GetParaDrawing = function()
-{
-    if(this.group)
-    {
-        var cur_group = this.group;
-        while(cur_group.group)
-        {
-            cur_group = cur_group.group;
-        }
-        if(cur_group.parent)
-        {
-            return cur_group.parent;
-        }
-    }
-    else
-    {
-        if(this.parent)
-        {
-            return this.parent;
-        }
-    }
-    return null;
-};
-
-
 CShape.prototype.Get_StartPage_Relative = function()
 {
     return 0;
@@ -1002,7 +987,7 @@ CShape.prototype.GetPrevElementEndInfo = function(CurElement)
     }
     return null;
 };
-CShape.prototype.Is_ThisElementCurrent = function(CurElement)
+CShape.prototype.IsThisElementCurrent = function(CurElement)
 {
     var oLogicDoc = this.getLogicDocument();
     if(!oLogicDoc)
@@ -1011,7 +996,7 @@ CShape.prototype.Is_ThisElementCurrent = function(CurElement)
     }
     return oLogicDoc.DrawingObjects.getTargetDocContent() === this.getDocContent();
 };
-CShape.prototype.Is_UseInDocument = function()
+CShape.prototype.IsUseInDocument = function()
 {
     if(this.group)
     {
@@ -1020,14 +1005,14 @@ CShape.prototype.Is_UseInDocument = function()
         {
             if(aSpTree[i] === this)
             {
-                return this.group.Is_UseInDocument();
+                return this.group.IsUseInDocument();
             }
         }
         return false;
     }
-    if(this.parent && this.parent.Is_UseInDocument && this.parent.GraphicObj === this)
+    if(this.parent && this.parent.IsUseInDocument && this.parent.GraphicObj === this)
     {
-        return this.parent.Is_UseInDocument();
+        return this.parent.IsUseInDocument();
     }
     return false;
 };
@@ -1211,7 +1196,7 @@ CShape.prototype.Get_ColorMap = function()
     {
         return oLogicDoc.Get_ColorMap();
     }
-    return AscFormat.DEFAULT_COLOR_MAP;
+    return AscFormat.GetDefaultColorMap();
 };
 
 CShape.prototype.Is_TopDocument = function(bReturn)

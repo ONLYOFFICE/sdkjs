@@ -132,7 +132,7 @@ ParaHyperlink.prototype.Add = function(Item)
 			var CurPos  = this.State.ContentPos;
 			var CurItem = this.Content[CurPos];
 
-			var CurContentPos = new CParagraphContentPos();
+			var CurContentPos = new AscWord.CParagraphContentPos();
 			CurItem.Get_ParaContentPos(false, false, CurContentPos);
 
 			var NewItem = CurItem.Split(CurContentPos, 0);

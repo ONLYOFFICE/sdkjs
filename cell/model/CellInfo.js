@@ -38,7 +38,7 @@
  */
 	function (window, undefined) {
 	// Import
-	var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+	var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
 
 	/** @constructor */
 	function asc_CBorder(style, color) {

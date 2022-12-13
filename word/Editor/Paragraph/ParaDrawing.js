@@ -54,11 +54,11 @@ var c_oAscAlignV         = Asc.c_oAscAlignV;
 /**
  * Оберточный класс для автофигур и картинок. Именно он непосредственно лежит в ране.
  * @constructor
- * @extends {CRunElementBase}
+ * @extends {AscWord.CRunElementBase}
  */
 function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 {
-	CRunElementBase.call(this);
+	AscWord.CRunElementBase.call(this);
 
 	this.Id          = AscCommon.g_oIdCounter.Get_NewId();
 	this.DrawingType = drawing_Inline;
@@ -128,7 +128,7 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.AllowOverlap = true;
 
 	//привязка к параграфу
-	this.Locked = null;
+	this.Locked = false;
 
 	//скрытые drawing'и
 	this.Hidden = null;
@@ -183,18 +183,16 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.LineTop = null;
 	this.LineBottom = null;
 	//------------------------------------------------------------
-	g_oTableId.Add(this, this.Id);
+	AscCommon.g_oTableId.Add(this, this.Id);
 
 	if (this.graphicObjects)
 	{
 		this.Set_RelativeHeight(this.graphicObjects.getZIndex());
-		if (History.Is_On() && !g_oTableId.m_bTurnOff)
-		{
+		if (History.CanRegisterClasses())
 			this.graphicObjects.addGraphicObject(this);
-		}
 	}
 }
-ParaDrawing.prototype = Object.create(CRunElementBase.prototype);
+ParaDrawing.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaDrawing.prototype.constructor = ParaDrawing;
 
 ParaDrawing.prototype.Type = para_Drawing;
@@ -216,15 +214,26 @@ ParaDrawing.prototype.Get_Type = function()
 {
 	return this.Type;
 };
-ParaDrawing.prototype.Get_Width = function()
+ParaDrawing.prototype.GetWidth = function()
 {
 	return this.Width;
 };
-ParaDrawing.prototype.Get_WidthVisible = function()
+ParaDrawing.prototype.GetInlineWidth = function()
+{
+	if (!this.IsInline())
+		return 0;
+
+	return this.Width;
+};
+ParaDrawing.prototype.Get_Height = function()
+{
+	return this.Height;
+};
+ParaDrawing.prototype.GetWidthVisible = function()
 {
 	return this.WidthVisible;
 };
-ParaDrawing.prototype.Set_WidthVisible = function(WidthVisible)
+ParaDrawing.prototype.SetWidthVisible = function(WidthVisible)
 {
 	this.WidthVisible = WidthVisible;
 };
@@ -294,6 +303,11 @@ ParaDrawing.prototype.GetParagraph = function()
 ParaDrawing.prototype.GetRun = function()
 {
 	return this.Get_Run();
+};
+ParaDrawing.prototype.GetDocumentContent = function()
+{
+	let oParagraph = this.GetParagraph();
+	return (oParagraph ? oParagraph.GetParent() : null);
 };
 ParaDrawing.prototype.Get_Run = function()
 {
@@ -501,21 +515,17 @@ ParaDrawing.prototype.Get_Props = function(OtherProps)
 
 	return Props;
 };
-ParaDrawing.prototype.Is_UseInDocument = function()
+ParaDrawing.prototype.IsUseInDocument = function()
 {
 	if (this.Parent)
 	{
 		var Run = this.Parent.Get_DrawingObjectRun(this.Id);
 		if (Run)
 		{
-			return Run.Is_UseInDocument(this.Get_Id());
+			return Run.IsUseInDocument(this.GetId());
 		}
 	}
 	return false;
-};
-ParaDrawing.prototype.IsUseInDocument = function()
-{
-	return this.Is_UseInDocument();
 };
 ParaDrawing.prototype.CheckGroupSizes = function()
 {
@@ -897,11 +907,11 @@ ParaDrawing.prototype.Get_Bounds = function()
 	return {Left : X - this.EffectExtent.L - InsL, Top : Y - this.EffectExtent.T - InsT, Bottom : Y + H + this.EffectExtent.B +  InsB, Right : X + W + this.EffectExtent.R + InsR};
 
 };
-ParaDrawing.prototype.Search = function(Str, Props, SearchEngine, Type)
+ParaDrawing.prototype.Search = function(SearchEngine, Type)
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.Search === "function")
 	{
-		this.GraphicObj.Search(Str, Props, SearchEngine, Type)
+		this.GraphicObj.Search(SearchEngine, Type)
 	}
 };
 ParaDrawing.prototype.Set_Props = function(Props)
@@ -1257,6 +1267,28 @@ ParaDrawing.prototype.Measure = function()
 		}
 	}
 };
+ParaDrawing.prototype.GetScaleCoefficient = function ()
+{
+	let oParagraph = this.GetParagraph();
+	let oLogicDocument;
+
+	if (oParagraph
+		&& (oLogicDocument = oParagraph.GetLogicDocument())
+		&& oLogicDocument.IsDocumentEditor())
+	{
+		let oLayout = oLogicDocument.Layout;
+		oLogicDocument.Layout = oLogicDocument.Layouts.Print;
+		let oSectPr = oParagraph.Get_SectPr();
+		oLogicDocument.Layout = oLayout;
+
+		if (!oSectPr)
+			return 1;
+
+		return oLogicDocument.GetDocumentLayout().GetScaleBySection(oSectPr);
+	}
+
+	return 1;
+};
 ParaDrawing.prototype.IsNeedSaveRecalculateObject = function()
 {
 	return true;
@@ -1301,10 +1333,6 @@ ParaDrawing.prototype.Reassign_ImageUrls = function(mapUrls)
 };
 ParaDrawing.prototype.PrepareRecalculateObject = function()
 {
-};
-ParaDrawing.prototype.Is_RealContent = function()
-{
-	return true;
 };
 ParaDrawing.prototype.CanAddNumbering = function()
 {
@@ -1414,6 +1442,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 
 	var OtherFlowObjects = editor.WordControl.m_oLogicDocument.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
 	var bInline          = this.Is_Inline();
+	this.Internal_Position.SetScaleFactor(this.GetScaleCoefficient());
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
@@ -1531,7 +1560,8 @@ ParaDrawing.prototype.deselect = function()
 
 ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 {
-	var _x = x, _y = y;
+	let _x = x;
+	let _y = y;
 
 	this.graphicObjects.removeById(pageIndex, this.Get_Id());
 	if (AscFormat.isRealNumber(oldPageNum))
@@ -1857,8 +1887,8 @@ ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 	var NewParaDrawing = this.Copy();
 	var RunPr = this.Remove_FromDocument(false);
 
-	this.DocumentContent.Select_DrawingObject(NewParaDrawing.GetId());
-	NewParaDrawing.Add_ToDocument(NearPos, true, RunPr, undefined, oPictureCC);
+	NewParaDrawing.AddToDocument(NearPos, RunPr, undefined, oPictureCC);
+	NewParaDrawing.SelectAsDrawing();
 };
 ParaDrawing.prototype.Get_ParentTextTransform = function()
 {
@@ -2000,59 +2030,65 @@ ParaDrawing.prototype.SelectAsText = function()
 	oDocument.RemoveSelection();
 	oDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
 };
-ParaDrawing.prototype.Add_ToDocument = function(NearPos, bRecalculate, RunPr, Run, oPictureCC)
+ParaDrawing.prototype.SelectAsDrawing = function()
 {
-	NearPos.Paragraph.Check_NearestPos(NearPos);
+	let oParagraph = this.GetParagraph();
+	let oRun       = this.GetRun();
+	if (!oParagraph || !oRun)
+		return;
 
-	var LogicDocument = this.DrawingDocument.m_oLogicDocument;
+	let oDocument = oParagraph.GetLogicDocument();
+	if (!oDocument)
+		return;
 
-	var Para       = new Paragraph(this.DrawingDocument, LogicDocument);
-	var DrawingRun = new ParaRun(Para);
-	DrawingRun.Add_ToContent(0, this);
+	oDocument.RemoveSelection();
+	oDocument.Select_DrawingObject(this.GetId());
+};
+ParaDrawing.prototype.AddToDocument = function(oAnchorPos, oRunPr, oRun, oPictureCC)
+{
+	let oAnchorParagraph = oAnchorPos.Paragraph;
+	oAnchorParagraph.Check_NearestPos(oAnchorPos);
 
-	if (RunPr)
-		DrawingRun.Set_Pr(RunPr.Copy());
+	let oInsertParagraph = new AscCommonWord.Paragraph(this.DrawingDocument);
+	var oDrawingRun = new AscCommonWord.ParaRun();
+	oDrawingRun.AddToContent(0, this);
 
-	if (Run)
-		DrawingRun.SetReviewTypeWithInfo(Run.GetReviewType(), Run.GetReviewInfo());
+	if (oRunPr)
+		oDrawingRun.SetPr(oRunPr.Copy());
+
+	if (oRun)
+		oDrawingRun.SetReviewTypeWithInfo(oRun.GetReviewType(), oRun.GetReviewInfo());
 
 	if (oPictureCC)
 	{
-		var oSdt = new CInlineLevelSdt();
+		let oSdt = new CInlineLevelSdt();
 		oSdt.SetPicturePr(true);
 		oSdt.ReplacePlaceHolderWithContent();
-		oSdt.AddToContent(0, DrawingRun);
-		Para.Add_ToContent(0, oSdt);
+		oSdt.AddToContent(0, oDrawingRun);
+		oInsertParagraph.AddToContent(0, oSdt);
 
-		var oFormPr = oPictureCC.GetFormPr();
+		let oFormPr = oPictureCC.GetFormPr();
 		if (oFormPr)
 			oSdt.SetFormPr(oFormPr.Copy());
 	}
 	else
 	{
-		Para.Add_ToContent(0, DrawingRun);
+		oInsertParagraph.AddToContent(0, oDrawingRun);
 	}
 
-	var SelectedElement = new CSelectedElement(Para, false);
-	var SelectedContent = new CSelectedContent();
-	SelectedContent.Add(SelectedElement);
-	SelectedContent.SetMoveDrawing(true);
-	SelectedContent.DrawingObjects.push(this);
-
-	NearPos.Paragraph.Parent.InsertContent(SelectedContent, NearPos);
-	NearPos.Paragraph.Clear_NearestPosArray();
-	NearPos.Paragraph.Correct_Content();
-	this.Set_Parent(NearPos.Paragraph);
-	if (false != bRecalculate)
-		LogicDocument.Recalculate();
+	let oSelectedContent = new AscCommonWord.CSelectedContent();
+	oSelectedContent.Add(new AscCommonWord.CSelectedElement(oInsertParagraph, false));
+	oSelectedContent.EndCollect();
+	oSelectedContent.SetMoveDrawing(true);
+	oSelectedContent.Insert(oAnchorPos, true);
+	this.SelectAsDrawing();
+	oAnchorParagraph.Clear_NearestPosArray();
 };
-ParaDrawing.prototype.Add_ToDocument2 = function(Paragraph)
+ParaDrawing.prototype.AddToParagraph = function(oParagraph)
 {
-	var DrawingRun = new ParaRun(Paragraph);
-	DrawingRun.Add_ToContent(0, this);
-
-	Paragraph.Add_ToContent(0, DrawingRun);
-	this.Set_Parent(Paragraph);
+	let oRun = new AscCommonWord.ParaRun();
+	oRun.AddToContent(0, this);
+	oParagraph.AddToContent(0, oRun);
 };
 ParaDrawing.prototype.UpdateCursorType = function(X, Y, PageIndex)
 {
@@ -2971,6 +3007,18 @@ ParaDrawing.prototype.copy = function()
 	c.setEffectExtent(EE.L, EE.T, EE.R, EE.B);
 	return c;
 };
+ParaDrawing.prototype.SetDrawingPrFromDrawing = function(oAnotherDrawing)
+{
+	this.Set_DrawingType(oAnotherDrawing.DrawingType);
+	var d = oAnotherDrawing.Distance;
+	this.Set_PositionH(oAnotherDrawing.PositionH.RelativeFrom, oAnotherDrawing.PositionH.Align, oAnotherDrawing.PositionH.Value, oAnotherDrawing.PositionH.Percent);
+	this.Set_PositionV(oAnotherDrawing.PositionV.RelativeFrom, oAnotherDrawing.PositionV.Align, oAnotherDrawing.PositionV.Value, oAnotherDrawing.PositionV.Percent);
+	this.Set_Distance(d.L, d.T, d.R, d.B);
+	this.Set_AllowOverlap(oAnotherDrawing.AllowOverlap);
+	this.Set_WrappingType(oAnotherDrawing.wrappingType);
+	this.Set_BehindDoc(oAnotherDrawing.behindDoc);
+	this.docPr.setFromOther(oAnotherDrawing.docPr);
+};
 ParaDrawing.prototype.OnContentReDraw = function()
 {
 	if (this.Parent && this.Parent.Parent)
@@ -3081,6 +3129,8 @@ ParaDrawing.prototype.Get_ObjectType = function()
 
 	return AscDFH.historyitem_type_Drawing;
 };
+ParaDrawing.prototype.getObjectType = ParaDrawing.prototype.Get_ObjectType;
+
 ParaDrawing.prototype.GetAllContentControls = function(arrContentControls)
 {
 	if(this.GraphicObj)
@@ -3199,6 +3249,11 @@ ParaDrawing.prototype.GetPicture = function()
 {
 	return this.GraphicObj.getObjectType() === AscDFH.historyitem_type_ImageShape ? this.GraphicObj : null;
 };
+ParaDrawing.prototype.GetPictureUrl = function()
+{
+	let oPicture = this.GetPicture();
+	return (oPicture ? oPicture.getImageUrl() : null);
+};
 /**
  * Является ли объект фигурой
  * @returns {boolean}
@@ -3238,13 +3293,20 @@ ParaDrawing.prototype.IsComparable = function(oDrawing)
 ParaDrawing.prototype.ToSearchElement = function(oProps)
 {
 	if (this.IsInline())
-		return new CSearchTextSpecialGraphicObject();
+		return new AscCommonWord.CSearchTextSpecialGraphicObject();
 
 	return null;
 };
 ParaDrawing.prototype.IsDrawing = function()
 {
 	return true;
+};
+ParaDrawing.prototype.CheckRunContent = function(fCheck)
+{
+	if(this.GraphicObj)
+	{
+		this.GraphicObj.checkRunContent(fCheck);
+	}
 };
 /**
  * Класс, описывающий текущее положение параграфа при рассчете позиции автофигуры.
@@ -3270,11 +3332,16 @@ function CParagraphLayout(X, Y, PageNum, LastItemW, ColumnStartX, ColumnEndX, Le
 	this.ParagraphTop  = ParagraphTop;
 }
 /**
- * Класс, описывающий позицию автофигуры на странице.
+ * Класс, описывающий позицию автофигуры на странице
  * @constructor
  */
 function CAnchorPosition()
 {
+	// Данный коэффициент говорит нам насколько изменены все относительные позиции
+	// Используется в режиме чтения, когда реальный размер страницы, на которой мы рисуем, меньшее, чем тот,
+	// что задан в настройках
+	this.ScaleFactor   = 1;
+
 	// Рассчитанные координаты
 	this.CalcX         = 0;
 	this.CalcY         = 0;
@@ -3304,6 +3371,10 @@ function CAnchorPosition()
 	this.Page_X        = 0;
 	this.Page_Y        = 0;
 }
+CAnchorPosition.prototype.SetScaleFactor = function(nScale)
+{
+	this.ScaleFactor = nScale;
+};
 CAnchorPosition.prototype.Set = function(W, H, Rot, EffectExtent, YOffset, ParaLayout, PageLimits)
 {
 	this.W = W;
@@ -3443,7 +3514,9 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					}
 				}
 				else
-					this.CalcX = this.ColumnStartX + Value;
+				{
+					this.CalcX = this.ColumnStartX + Value * this.ScaleFactor;
+				}
 
 				break;
 			}
@@ -3523,7 +3596,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else
 				{
-					this.CalcX = this.Margin_H + Value;
+					this.CalcX = this.Margin_H + Value * this.ScaleFactor;
 				}
 
 				break;
@@ -3562,7 +3635,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else
 				{
-					this.CalcX = Value + this.Page_X;
+					this.CalcX = Value * this.ScaleFactor + this.Page_X;
 				}
 
 				break;
@@ -3753,7 +3826,7 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				}
 				else
 				{
-					this.CalcY = this.Margin_V + Value;
+					this.CalcY = this.Margin_V + Value * this.ScaleFactor;
 				}
 
 				break;
@@ -3794,7 +3867,7 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				}
 				else
 				{
-					this.CalcY = Value + this.Page_Y;
+					this.CalcY = Value * this.ScaleFactor + this.Page_Y;
 				}
 
 				break;
@@ -3851,7 +3924,9 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 						this.CalcY = this.Top_Margin * Value / 100 + Shift;
 				}
 				else
-					this.CalcY = Y_s + Value;
+				{
+					this.CalcY = Y_s + Value * this.ScaleFactor;
+				}
 
 				break;
 			}

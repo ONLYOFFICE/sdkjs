@@ -496,6 +496,8 @@
 		this.len    = 0;
 		this.pos    = 0;
 
+		this.context = null;
+
 		if (true !== bIsNoInit)
 			this.Init();
 
@@ -552,6 +554,16 @@
 				res[i] = this.data[i];
 			return res;
 		}
+		this.GetDataUint8   = function(pos, len)
+		{
+			if (undefined === pos) {
+				pos = 0;
+			}
+			if (undefined === len) {
+				len = this.GetCurPosition() - pos;
+			}
+			return this.data.slice(pos, pos + len);
+		}
 		this.GetCurPosition     = function()
 		{
 			return this.pos;
@@ -564,6 +576,18 @@
 		{
 			this.pos += nDif;
 		}
+		this.WriteWithLen = function(_this, callback)
+		{
+			let oldPos = this.GetCurPosition();
+			this.WriteULong(0);
+			callback.call(_this, this);
+			let curPos = this.GetCurPosition();
+			let len = curPos - oldPos;
+			this.Seek(oldPos);
+			this.WriteULong(len - 4);
+			this.Seek(curPos);
+			return len;
+		};
 		this.WriteBool          = function(val)
 		{
 			this.CheckSize(1);
@@ -877,89 +901,117 @@
 				{
 					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
 				}
-				switch (code)
-				{
-					case 0x26:
-						//&
-						this.WriteUtf8Char(0x26);
-						this.WriteUtf8Char(0x61);
-						this.WriteUtf8Char(0x6d);
-						this.WriteUtf8Char(0x70);
-						this.WriteUtf8Char(0x3b);
-						break;
-					case 0x27:
-						//'
-						this.WriteUtf8Char(0x26);
-						this.WriteUtf8Char(0x61);
-						this.WriteUtf8Char(0x70);
-						this.WriteUtf8Char(0x6f);
-						this.WriteUtf8Char(0x73);
-						this.WriteUtf8Char(0x3b);
-						break;
-					case 0x3c:
-						//<
-						this.WriteUtf8Char(0x26);
-						this.WriteUtf8Char(0x6c);
-						this.WriteUtf8Char(0x74);
-						this.WriteUtf8Char(0x3b);
-						break;
-					case 0x3e:
-						//>
-						this.WriteUtf8Char(0x26);
-						this.WriteUtf8Char(0x67);
-						this.WriteUtf8Char(0x74);
-						this.WriteUtf8Char(0x3b);
-						break;
-					case 0x22:
-						//"
-						this.WriteUtf8Char(0x26);
-						this.WriteUtf8Char(0x71);
-						this.WriteUtf8Char(0x75);
-						this.WriteUtf8Char(0x6f);
-						this.WriteUtf8Char(0x74);
-						this.WriteUtf8Char(0x3b);
-						break;
-					default:
-						this.WriteUtf8Char(code);
-						break;
-				}
+				this.WriteXmlCharCode(code);
+			}
+		};
+		this.WriteXmlCharCode = function(code)
+		{
+			switch (code)
+			{
+				case 0x26:
+					//&
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x61);
+					this.WriteUtf8Char(0x6d);
+					this.WriteUtf8Char(0x70);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x27:
+					//'
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x61);
+					this.WriteUtf8Char(0x70);
+					this.WriteUtf8Char(0x6f);
+					this.WriteUtf8Char(0x73);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3c:
+					//<
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x6c);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3e:
+					//>
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x67);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x22:
+					//"
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x71);
+					this.WriteUtf8Char(0x75);
+					this.WriteUtf8Char(0x6f);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				default:
+					this.WriteUtf8Char(code);
+					break;
 			}
 		};
 		this.WriteXmlBool = function(val)
 		{
 			this.WriteXmlString(val ? '1' : '0');
 		};
+		this.WriteXmlByte = function(val)
+		{
+			this.WriteXmlInt(val);
+		};
+		this.WriteXmlSByte = function(val)
+		{
+			this.WriteXmlInt(val);
+		};
+		this.WriteXmlInt = function(val)
+		{
+			this.WriteXmlString(val.toFixed(0));
+		};
+		this.WriteXmlUInt = function(val)
+		{
+			this.WriteXmlInt(val);
+		};
+		this.WriteXmlInt64 = function(val)
+		{
+			this.WriteXmlInt(val);
+		};
+		this.WriteXmlUInt64 = function(val)
+		{
+			this.WriteXmlInt(val);
+		};
+		this.WriteXmlDouble = function(val)
+		{
+			this.WriteXmlNumber(val);
+		};
 		this.WriteXmlNumber = function(val)
 		{
 			this.WriteXmlString(val.toString());
 		};
-		this.WriteXmlNodeStart = function(name, isClose)
+		this.WriteXmlNodeStart = function(name)
 		{
 			this.WriteUtf8Char(0x3c);
 			this.WriteXmlString(name);
-			if(isClose)
-			{
-				this.WriteUtf8Char(0x3e);
-			}
 		};
-		this.WriteXmlNodeEnd = function(name, isEmpty, isEnd)
+		this.WriteXmlNodeEnd = function(name)
 		{
-			if (isEmpty)
-			{
-				if (isEnd)
-					this.WriteUtf8Char(0x2f);
-				this.WriteUtf8Char(0x3e);
-			}
-			else
-			{
-				this.WriteUtf8Char(0x3c);
+			this.WriteUtf8Char(0x3c);
+			this.WriteUtf8Char(0x2f);
+			this.WriteXmlString(name);
+			this.WriteUtf8Char(0x3e);
+		};
+		this.WriteXmlNodeWithText = function(name, text)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd(false);
+			this.WriteXmlStringEncode(text.toString());
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlAttributesEnd = function(isEnd)
+		{
+			if (isEnd)
 				this.WriteUtf8Char(0x2f);
-				this.WriteXmlString(name);
-				this.WriteUtf8Char(0x3e);
-			}
-		};
-		this.WriteXmlAttributesEnd = function(name)
-		{
 			this.WriteUtf8Char(0x3e);
 		};
 		this.WriteXmlAttributeString = function(name, val)
@@ -968,7 +1020,7 @@
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3d);
 			this.WriteUtf8Char(0x22);
-			this.WriteXmlString(val);
+			this.WriteXmlString(val.toString());
 			this.WriteUtf8Char(0x22);
 		};
 		this.WriteXmlAttributeStringEncode = function(name, val)
@@ -977,16 +1029,329 @@
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3d);
 			this.WriteUtf8Char(0x22);
-			this.WriteXmlStringEncode(val);
+			this.WriteXmlStringEncode(val.toString());
 			this.WriteUtf8Char(0x22);
 		};
 		this.WriteXmlAttributeBool = function(name, val)
 		{
 			this.WriteXmlAttributeString(name, val ? '1' : '0');
 		};
+		this.WriteXmlAttributeByte = function(name, val)
+		{
+			this.WriteXmlAttributeInt(name, val);
+		};
+		this.WriteXmlAttributeSByte = function(name, val)
+		{
+			this.WriteXmlAttributeInt(name, val);
+		};
+		this.WriteXmlAttributeInt = function(name, val)
+		{
+			this.WriteXmlAttributeString(name, val.toFixed(0));
+		};
+		this.WriteXmlAttributeUInt = function(name, val)
+		{
+			this.WriteXmlAttributeInt(name, val);
+		};
+		this.WriteXmlAttributeInt64 = function(name, val)
+		{
+			this.WriteXmlAttributeInt(name, val);
+		};
+		this.WriteXmlAttributeUInt64 = function(name, val)
+		{
+			this.WriteXmlAttributeInt(name, val);
+		};
+		this.WriteXmlAttributeDouble = function(name, val)
+		{
+			this.WriteXmlAttributeNumber(name, val);
+		};
 		this.WriteXmlAttributeNumber = function(name, val)
 		{
 			this.WriteXmlAttributeString(name, val.toString());
+		};
+		this.WriteXmlNullable = function(val, name)
+		{
+			if (val) {
+				val.toXml(this, name);
+			}
+		};
+		//пересмотреть, куча аргументов
+		this.WriteXmlArray = function(val, name, opt_parentName, needWriteCount, ns, childns)
+		{
+			if (!ns) {
+				ns = "";
+			}
+			if (!childns) {
+				childns = "";
+			}
+			if(val && val.length > 0) {
+				if(opt_parentName) {
+					this.WriteXmlNodeStart(ns + opt_parentName);
+					if (needWriteCount) {
+						this.WriteXmlNullableAttributeNumber("count", val.length);
+					}
+					this.WriteXmlAttributesEnd();
+				}
+				val.forEach(function(elem, index){
+					elem.toXml(this, name, childns, childns, index);
+				}, this);
+				if(opt_parentName) {
+					this.WriteXmlNodeEnd(ns + opt_parentName);
+				}
+			}
+		};
+		this.WriteXmlNullableAttributeString = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeString(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeStringEncode = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeStringEncode(name, val)
+			}
+		};
+		this.WriteXmlNonEmptyAttributeStringEncode = function(name, val)
+		{
+			if (val) {
+				this.WriteXmlAttributeStringEncode(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeBool = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeBool(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeBool2 = function(name, val)
+		{
+			//добавлюя по аналогии с x2t
+			if (null !== val && undefined !== val) {
+				this.WriteXmlNullableAttributeString(name, val ? "1": "0")
+			}
+		};
+		this.WriteXmlNullableAttributeByte = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeByte(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeSByte = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeSByte(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeInt = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeInt(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeUInt = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeUInt(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeInt64 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeInt64(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeUInt64 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeUInt64(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeDouble = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeDouble(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeNumber = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeNumber(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeIntWithKoef = function(name, val, koef)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeInt(name, val * koef)
+			}
+		};
+		this.WriteXmlNullableAttributeUIntWithKoef = function(name, val, koef)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeUInt(name, val * koef)
+			}
+		};
+		this.WriteXmlAttributeBoolIfTrue = function(name, val)
+		{
+			if (val) {
+				this.WriteXmlAttributeBool(name, val)
+			}
+		};
+		this.WriteXmlValueString = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlString(val.toString());
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueStringEncode = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributeString("xml:space", "preserve");
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlStringEncode(val.toString());
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueStringEncode2 = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlStringEncode(val.toString());
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueBool = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlBool(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueByte = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlByte(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueSByte = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlSByte(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueInt = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlInt(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueUInt = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlUInt(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueInt64 = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlInt64(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueUInt64 = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlUInt64(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueDouble = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlDouble(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueNumber = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlNumber(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlNullableValueString = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueString(name, val)
+			}
+		};
+		this.WriteXmlNullableValueStringEncode = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueStringEncode(name, val)
+			}
+		};
+		this.WriteXmlNullableValueStringEncode2 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueStringEncode2(name, val)
+			}
+		};
+		this.WriteXmlNullableValueBool = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueBool(name, val)
+			}
+		};
+		this.WriteXmlNullableValueByte = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueByte(name, val)
+			}
+		};
+		this.WriteXmlNullableValueSByte = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueSByte(name, val)
+			}
+		};
+		this.WriteXmlNullableValueInt = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueInt(name, val)
+			}
+		};
+		this.WriteXmlNullableValueUInt = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueUInt(name, val)
+			}
+		};
+		this.WriteXmlNullableValueInt64 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueInt64(name, val)
+			}
+		};
+		this.WriteXmlNullableValueUInt64 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueUInt64(name, val)
+			}
+		};
+		this.WriteXmlNullableValueDouble = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueDouble(name, val)
+			}
+		};
+		this.WriteXmlNullableValueNumber = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueNumber(name, val)
+			}
 		};
 		this.XlsbStartRecord = function(type, len) {
 			//Type
@@ -1011,6 +1376,24 @@
 			}
 		};
 		this.XlsbEndRecord = function() {
+		};
+		//все аргументы сохраняю как в x2t, ns - префикс пока не использую
+		this.WritingValNode = function(ns, name, val) {
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributeString("val", val);
+			this.WriteXmlAttributesEnd(true);
+		};
+		this.WritingValNodeEncodeXml = function(ns, name, val) {
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlNullableAttributeStringEncode("val", val);
+			this.WriteXmlAttributesEnd(true);
+		};
+		this.WritingValNodeIf = function(ns, name, cond, val) {
+			this.WriteXmlNodeStart(name);
+			if (cond) {
+				this.WriteXmlAttributeString("val", val);
+			}
+			this.WriteXmlAttributesEnd(true);
 		};
 	}
 
@@ -1037,12 +1420,13 @@
 		this.ctBrushColor2          = 23;
 		this.ctBrushAlpha1          = 24;
 		this.ctBrushAlpha2          = 25;
-		this.ctBrushTexturePath     = 26;
+		this.ctBrushTexturePathOld  = 26;
 		this.ctBrushTextureAlpha    = 27;
 		this.ctBrushTextureMode     = 28;
 		this.ctBrushRectable        = 29;
 		this.ctBrushRectableEnabled = 30;
 		this.ctBrushGradient        = 31;
+		this.ctBrushTexturePath     = 32;
 
 		// font
 		this.ctFontXML       = 40;
@@ -1427,7 +1811,7 @@
 				_src = srcLocal;
 			}
 
-			this.Memory.WriteString(_src);
+			this.Memory.WriteString2(_src);
 			this.Memory.WriteByte(CommandType.ctBrushTextureMode);
 			this.Memory.WriteByte(mode);
 		},
@@ -1483,6 +1867,45 @@
 			}
 
 			var _colors = gradFill.colors;
+			var firstColor = null;
+			var lastColor = null;
+
+			if (_colors.length > 0)
+			{
+				if (_colors[0].pos > 0)
+				{
+					firstColor = {
+						color : {
+							RGBA : {
+								R : _colors[0].color.RGBA.R,
+								G : _colors[0].color.RGBA.G,
+								B : _colors[0].color.RGBA.B,
+								A : _colors[0].color.RGBA.A
+							}
+						},
+						pos : 0
+					};
+					_colors.unshift(firstColor);
+				}
+
+				var posLast = _colors.length - 1;
+				if (_colors[posLast].pos < 100000)
+				{
+					lastColor = {
+						color : {
+							RGBA : {
+								R : _colors[posLast].color.RGBA.R,
+								G : _colors[posLast].color.RGBA.G,
+								B : _colors[posLast].color.RGBA.B,
+								A : _colors[posLast].color.RGBA.A
+							}
+						},
+						pos : 100000
+					};
+					_colors.push(lastColor);
+				}
+			}
+
 			this.Memory.WriteByte(2);
 			this.Memory.WriteLong(_colors.length);
 
@@ -1499,6 +1922,11 @@
 				else
 					this.Memory.WriteByte(transparent);
 			}
+
+			if (firstColor)
+				_colors.shift();
+			if (lastColor)
+				_colors.pop();
 
 			this.Memory.WriteByte(AscCommon.g_nodeAttributeEnd);
 		},
@@ -1775,29 +2203,25 @@
             this.Memory.WriteDouble(x);
             this.Memory.WriteDouble(y);
 		},
-		tg           : function(gid, x, y)
+		tg           : function(gid, x, y, codepoints)
 		{
-			if (window["native"] !== undefined)
-			{
-				// TODO:
-				return;
-			}
-
+			/*
 			var _old_pos = this.Memory.pos;
-
 			g_fontApplication.LoadFont(this.m_oFont.Name, AscCommon.g_font_loader, AscCommon.g_oTextMeasurer.m_oManager, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0), 72, 72);
 			AscCommon.g_oTextMeasurer.m_oManager.LoadStringPathCode(gid, true, x, y, this);
-
 			// start (1) + draw(1) + typedraw(4) + end(1) = 7!
 			if ((this.Memory.pos - _old_pos) < 8)
 				this.Memory.pos = _old_pos;
+			*/
 
-			/*
-			 this.Memory.WriteByte(CommandType.ctDrawTextCodeGid);
-			 this.Memory.WriteLong(gid);
-			 this.Memory.WriteDouble(x);
-			 this.Memory.WriteDouble(y);
-			 */
+			this.Memory.WriteByte(CommandType.ctDrawTextCodeGid);
+			this.Memory.WriteLong(gid);
+			this.Memory.WriteDouble(x);
+			this.Memory.WriteDouble(y);
+			var count = codepoints ? codepoints.length : 0;
+			this.Memory.WriteLong(count);
+			for (var i = 0; i < count; i++)
+				this.Memory.WriteLong(codepoints[i]);
 		},
 		charspace    : function(space)
 		{
@@ -1846,6 +2270,22 @@
 		{
 			this.Memory.WriteByte(CommandType.ctBrushRectableEnabled);
 			this.Memory.WriteBool(bIsEnabled);
+		},
+
+		SetFontInternal : function(name, size, style)
+		{
+			// TODO: remove m_oFontSlotFont
+			var _lastFont = this.m_oFontSlotFont;
+			_lastFont.Name = name;
+			_lastFont.Size = size;
+			_lastFont.Bold = (style & AscFonts.FontStyle.FontStyleBold) ? true : false;
+			_lastFont.Italic = (style & AscFonts.FontStyle.FontStyleItalic) ? true : false;
+
+			this.m_oFontTmp.FontFamily.Name = _lastFont.Name;
+			this.m_oFontTmp.Bold = _lastFont.Bold;
+			this.m_oFontTmp.Italic = _lastFont.Italic;
+			this.m_oFontTmp.FontSize = _lastFont.Size;
+			this.SetFont(this.m_oFontTmp);
 		},
 
 		SetFontSlot : function(slot, fontSizeKoef)
@@ -2024,7 +2464,7 @@
 					this.Memory.WriteLong(oTextFormPr.MaxCharacters);
 				}
 
-				var sValue = oForm.GetSelectedText(true);
+				let sValue = oForm.GetSelectedText(true);
 				if (sValue)
 				{
 					nFlag |= (1 << 22);
@@ -2037,11 +2477,36 @@
 				if (oTextFormPr.AutoFit)
 					nFlag |= (1 << 24);
 
-				var sPlaceHolderText = oForm.GetPlaceholderText();
+				let sPlaceHolderText = oForm.GetPlaceholderText();
 				if (sPlaceHolderText)
 				{
 					nFlag |= (1 << 25);
 					this.Memory.WriteString(sPlaceHolderText);
+				}
+
+				let format = oTextFormPr.GetFormat();
+				if (!format.IsEmpty())
+				{
+					nFlag |= (1 << 26);
+
+					this.Memory.WriteByte(format.GetType());
+
+					let formatSymbols = format.GetSymbols(false);
+
+					this.Memory.WriteLong(formatSymbols.length);
+					for (let index = 0, count = formatSymbols.length; index < count; ++index)
+					{
+						this.Memory.WriteLong(formatSymbols[index]);
+					}
+
+					let mask = "";
+
+					if (format.IsMask())
+						mask = format.GetMask();
+					else if (format.IsRegExp())
+						mask = format.GetRegExp();
+
+					this.Memory.WriteString(mask);
 				}
 			}
 			else if (oForm.IsComboBox() || oForm.IsDropDownList())
@@ -2542,10 +3007,10 @@
 			if (0 != this.m_lPagesCount)
 				this.m_arrayPages[this.m_lPagesCount - 1].FillTextCode(x, y, text);
 		},
-		tg                       : function(gid, x, y)
+		tg                       : function(gid, x, y, codePoints)
 		{
 			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].tg(gid, x, y);
+				this.m_arrayPages[this.m_lPagesCount - 1].tg(gid, x, y, codePoints);
 		},
 		FillText2                : function(x, y, text)
 		{
@@ -2928,6 +3393,12 @@
 				else
 					_page.m_oGrFonts = _page.m_oTextPr.RFonts;
 			}
+		},
+
+		SetFontInternal : function(name, size, style)
+		{
+			if (0 != this.m_lPagesCount)
+				this.m_arrayPages[this.m_lPagesCount - 1].SetFontInternal(name, size, style);
 		},
 
 		SetFontSlot : function(slot, fontSizeKoef)

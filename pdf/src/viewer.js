@@ -211,6 +211,17 @@
 		this.mouseDownLinkObject = null;
 
 		this.isFocusOnThumbnails = false;
+		this.isDocumentContentReady = false;
+
+		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
+		if (!this.isXP && AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
+			this.isXP = true;
+
+		if (this.isXP)
+		{
+			AscCommon.g_oHtmlCursor.register("grab", "grab", "7 8", "pointer");
+			AscCommon.g_oHtmlCursor.register("grabbing", "grabbing", "6 6", "pointer");
+		}
 
 		var oThis = this;
 
@@ -254,7 +265,7 @@
 			elements += "<div id=\"id_vertical_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
 			elements += "<div id=\"id_horizontal_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
 		
-			this.parent.style.backgroundColor = this.backgroundColor;
+			//this.parent.style.backgroundColor = this.backgroundColor; <= this color from theme
 			this.parent.innerHTML = elements;
 
 			this.canvas = document.getElementById("id_viewer");
@@ -458,7 +469,7 @@
 			this.paint();
 		};
 
-		this.resize = function()
+		this.resize = function(isDisablePaint)
 		{
 			this.isFocusOnThumbnails = false;
 
@@ -563,7 +574,7 @@
 			if (this.scrollY >= this.scrollMaxY)
 				this.scrollY = this.scrollMaxY;
 
-			if (this.zoomCoordinate)
+			if (this.zoomCoordinate && this.isDocumentContentReady)
 			{
 				var newPoint = this.ConvertCoordsToCursor(this.zoomCoordinate.x, this.zoomCoordinate.y, this.zoomCoordinate.index);
 				// oldsize используется чтобы при смене ориентации экрана был небольшой скролл
@@ -583,7 +594,8 @@
 			if (this.thumbnails)
 				this.thumbnails.resize();
 
-			this.timerSync();
+			if (true !== isDisablePaint)
+				this.timerSync();
 
 			if (this.Api.WordControl.MobileTouchManager)
 				this.Api.WordControl.MobileTouchManager.Resize();
@@ -673,6 +685,9 @@
 			}
 
 			this.paint();
+
+			if (this.Api && this.Api.printPreview)
+				this.Api.printPreview.update();
 		};
 
 		this.onUpdateStatistics = function(countParagraph, countWord, countSymbol, countSpace)
@@ -728,6 +743,7 @@
 				if (this.file && this.file.isNeedPassword())
 				{
 					window["AscViewer"].setFilePassword(this.file, password);
+					this.Api.currentPassword = password;
 				}
 			}
 			else
@@ -764,7 +780,26 @@
 
 			// в интерфейсе есть проблема - нужно посылать onDocumentContentReady после setAdvancedOptions
 			setTimeout(function(){
+
+				if (!_t.isStarted)
+				{
+					AscCommon.addMouseEvent(_t.canvas, "down", _t.onMouseDown);
+					AscCommon.addMouseEvent(_t.canvas, "move", _t.onMouseMove);
+					AscCommon.addMouseEvent(_t.canvas, "up", _t.onMouseUp);
+
+					_t.parent.onmousewheel = _t.onMouseWhell;
+					if (_t.parent.addEventListener)
+						_t.parent.addEventListener("DOMMouseScroll", _t.onMouseWhell, false);
+
+					_t.startTimer();
+				}
+
 				_t.sendEvent("onFileOpened");
+
+				_t.sendEvent("onPagesCount", _t.file.pages.length);
+				_t.sendEvent("onCurrentPageChanged", 0);
+
+				_t.sendEvent("onStructure", _t.structure);
 			}, 0);
 
 			this.file.onRepaintPages = this.onUpdatePages.bind(this);
@@ -772,27 +807,7 @@
 			this.currentPage = -1;
 			this.structure = this.file.getStructure();
 
-			this.sendEvent("onPagesCount", this.file.pages.length);
-			this.sendEvent("onCurrentPageChanged", 0);
-
-			setTimeout(function(){
-				oThis.sendEvent("onStructure", oThis.structure);
-			}, 100);
-
-			this.resize();
-
-			if (!this.isStarted)
-			{
-				AscCommon.addMouseEvent(this.canvas, "down", this.onMouseDown);
-				AscCommon.addMouseEvent(this.canvas, "move", this.onMouseMove);
-				AscCommon.addMouseEvent(this.canvas, "up", this.onMouseUp);
-		
-				this.parent.onmousewheel = this.onMouseWhell;
-				if (this.parent.addEventListener)
-					this.parent.addEventListener("DOMMouseScroll", this.onMouseWhell, false);
-				
-				this.startTimer();				
-			}
+			this.resize(true);
 
 			if (this.thumbnails)
 				this.thumbnails.init(this);
@@ -815,8 +830,8 @@
 		};
 		this.calculateZoomToWidth = function()
 		{
-			if (0 === this.file.pages.length)
-				return;
+			if (!this.file || !this.file.isValid())
+				return 1;
 
 			var maxWidth = 0;
 			for (let i = 0, len = this.file.pages.length; i < len; i++)
@@ -827,14 +842,14 @@
 			}
 
 			if (maxWidth < 1)
-				return;
+				return 1;
 
 			return (this.width - 2 * this.betweenPages) / maxWidth;
 		};
 		this.calculateZoomToHeight = function()
 		{
-			if (0 === this.file.pages.length)
-				return;
+			if (!this.file || !this.file.isValid())
+				return 1;
 
 			var maxHeight = 0;
 			var maxWidth = 0;
@@ -849,7 +864,7 @@
 			}
 
 			if (maxWidth < 1 || maxHeight < 1)
-				return;
+				return 1;
 
 			var zoom1 = (this.width - 2 * this.betweenPages) / maxWidth;
 			var zoom2 = (this.height - 2 * this.betweenPages) / maxHeight;
@@ -904,9 +919,16 @@
 
 		this.getPagesCount = function()
 		{
-			if (!this.file || !this.file.isValid)
+			if (!this.file || !this.file.isValid())
 				return 0;
 			return this.file.pages.length;
+		};
+
+		this.getDocumentInfo = function()
+		{
+			if (!this.file || !this.file.isValid())
+				return 0;
+			return this.file.getDocumentInfo();
 		};
 
 		this.navigate = function(id)
@@ -968,7 +990,10 @@
 			}
 			else
 			{
-				this.sendEvent("onHyperlinkClick", link["link"]);
+				var url = link["link"];
+				var typeUrl = AscCommon.getUrlType(url);
+				url = AscCommon.prepareUrl(url, typeUrl);
+				this.sendEvent("onHyperlinkClick", url);
 			}
 
 			//console.log(link["link"]);
@@ -993,7 +1018,7 @@
 
 		this.recalculatePlaces = function()
 		{
-			if (!this.file || !this.file.isValid)
+			if (!this.file || !this.file.isValid())
 				return;
 
 			// здесь картинки не обнуляем
@@ -1043,6 +1068,12 @@
 
 		this.setCursorType = function(cursor)
 		{
+			if (this.isXP)
+			{
+				this.canvas.style.cursor = AscCommon.g_oHtmlCursor.value(cursor);
+				return;
+			}
+
 			this.canvas.style.cursor = cursor;
 		};
 
@@ -1195,7 +1226,8 @@
 		this.onMouseUp = function(e)
 		{
 			oThis.isFocusOnThumbnails = false;
-			AscCommon.stopEvent(e);
+			if (e && e.preventDefault)
+				e.preventDefault();
 
 			var mouseButton = AscCommon.getMouseButton(e || {});
 			if (mouseButton !== 0)
@@ -1991,6 +2023,8 @@
 				if ((pageCoords.y + pageCoords.h) > y)
 					break;
 			}
+			if (pageIndex > this.endVisiblePage)
+				pageIndex = this.endVisiblePage;
 
 			if (!pageCoords)
 				pageCoords = {x:0, y:0, w:1, h:1};
@@ -2053,26 +2087,23 @@
 			return (text_format.Text === "") ? false : true;
 		};
 
-		this.findText = function(text, isMachingCase, isNext, callback)
+		this.findText = function(text, isMachingCase, isWholeWords, isNext, callback)
 		{
-			if (this.isFullTextMessage)
-				return bRetValue;
-
 			if (!this.isFullText)
 			{
-				this.fullTextMessageCallbackArgs = [text, isMachingCase, isNext, callback];
+				this.fullTextMessageCallbackArgs = [text, isMachingCase, isWholeWords, isNext, callback];
 				this.fullTextMessageCallback = function() {
-					this.file.findText(this.fullTextMessageCallbackArgs[0], this.fullTextMessageCallbackArgs[1], this.fullTextMessageCallbackArgs[2]);
+					this.file.findText(this.fullTextMessageCallbackArgs[0], this.fullTextMessageCallbackArgs[1], this.fullTextMessageCallbackArgs[2], this.fullTextMessageCallbackArgs[3]);
 					this.onUpdateOverlay();
 
-					if (this.fullTextMessageCallbackArgs[3])
-						this.fullTextMessageCallbackArgs[3](this.SearchResults.Count);
+					if (this.fullTextMessageCallbackArgs[4])
+						this.fullTextMessageCallbackArgs[4].call(this.Api, this.SearchResults.Current, this.SearchResults.Count);
 				};
 				this.showTextMessage();
 				return true; // async
 			}
 
-			this.file.findText(text, isMachingCase, isNext);
+			this.file.findText(text, isMachingCase, isWholeWords, isNext);
 			this.onUpdateOverlay();
 			return false;
 		};
@@ -2149,6 +2180,38 @@
 			}
 		};
 
+		this.SelectSearchElement = function(elmId)
+		{
+			var nSearchedId = 0, nPage;
+			var nMatchesCount = 0;
+			for (nPage = 0; nPage < this.SearchResults.Pages.length; nPage++)
+			{
+				for (var nMatch = 0; nMatch < this.SearchResults.Pages[nPage].length; nMatch++)
+				{
+					nMatchesCount++;
+
+					if (nMatchesCount - 1 == elmId)
+					{
+						nSearchedId = nMatch;
+						break;
+					}
+				}
+				if (nMatchesCount - 1 == elmId)
+				{
+					nSearchedId = nMatch;
+					break;
+				}
+			}
+
+			this.CurrentSearchNavi = this.SearchResults.Pages[nPage][nSearchedId];
+			this.SearchResults.CurrentPage = nPage;
+			this.SearchResults.Current = nSearchedId;
+			this.SearchResults.CurMatchIdx = elmId;
+            this.ToSearchResult();
+			this.onUpdateOverlay();
+			this.Api.sync_setSearchCurrent(elmId, this.SearchResults.Count);
+		};
+		
 		this.OnKeyDown = function(e)
 		{
 			var bRetValue = false;
@@ -2187,6 +2250,11 @@
 				{
 					this.m_oScrollHorApi.scrollByX(-40);
 				}
+				else if (this.isFocusOnThumbnails)
+				{
+					if (this.currentPage > 0)
+						this.navigateToPage(this.currentPage - 1);
+				}
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 38 ) // Top Arrow
@@ -2197,8 +2265,14 @@
 				}
 				else
 				{
-					if (this.currentPage > 0)
-						this.navigateToPage(this.currentPage - 1);
+					var nextPage = -1;
+					if (this.thumbnails)
+						nextPage = this.currentPage - this.thumbnails.countPagesInBlock;
+					if (nextPage < 0)
+						nextPage = this.currentPage - 1;
+
+					if (nextPage >= 0)
+						this.navigateToPage(nextPage);
 				}
 				bRetValue = true;
 			}
@@ -2207,6 +2281,11 @@
 				if (!this.isFocusOnThumbnails && this.isVisibleHorScroll)
 				{
 					this.m_oScrollHorApi.scrollByX(40);
+				}
+				else if (this.isFocusOnThumbnails)
+				{
+					if (this.currentPage < (this.getPagesCount() - 1))
+						this.navigateToPage(this.currentPage + 1);
 				}
 				bRetValue = true;
 			}
@@ -2218,8 +2297,19 @@
 				}
 				else
 				{
-					if (this.currentPage < (this.getPagesCount() - 1))
-						this.navigateToPage(this.currentPage + 1);
+					var pagesCount = this.getPagesCount();
+					var nextPage = pagesCount;
+					if (this.thumbnails)
+					{
+						nextPage = this.currentPage + this.thumbnails.countPagesInBlock;
+						if (nextPage >= pagesCount)
+							nextPage = pagesCount - 1;
+					}
+					if (nextPage >= pagesCount)
+						nextPage = this.currentPage + 1;
+
+					if (nextPage < pagesCount)
+						this.navigateToPage(nextPage);
 				}
 				bRetValue = true;
 			}
@@ -2244,7 +2334,7 @@
 			}
 			else if ( e.KeyCode == 80 && true === e.CtrlKey ) // Ctrl + P + ...
 			{
-				// TODO: print
+				this.Api.onPrint();
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 83 && true === e.CtrlKey ) // Ctrl + S + ...

@@ -461,7 +461,7 @@ CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, Chart
 CDocumentContentElementBase.prototype.AddImages = function(aImages)
 {
 };
-CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 };
 CDocumentContentElementBase.prototype.AddSignatureLine = function(oSignatureDrawing)
@@ -1164,10 +1164,6 @@ CDocumentContentElementBase.prototype.GetHdrFtr = function()
  */
 CDocumentContentElementBase.prototype.IsUseInDocument = function(sId)
 {
-	return this.Is_UseInDocument(sId);
-};
-CDocumentContentElementBase.prototype.Is_UseInDocument = function(sId)
-{
 	return false;
 };
 /**
@@ -1176,6 +1172,10 @@ CDocumentContentElementBase.prototype.Is_UseInDocument = function(sId)
  * @returns {boolean}
  */
 CDocumentContentElementBase.prototype.CheckRunContent = function(fCheck)
+{
+	return false;
+};
+CDocumentContentElementBase.prototype.CheckSelectedRunContent = function(fCheck)
 {
 	return false;
 };

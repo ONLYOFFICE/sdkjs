@@ -791,6 +791,10 @@ CAutoshapeTrack.prototype =
     {
     },
 
+    SetFontInternal : function(name, size, style)
+    {
+    },
+
     SetFontSlot : function(slot, fontSizeKoef)
     {
     },

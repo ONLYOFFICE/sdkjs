@@ -38,8 +38,6 @@
 var CShape = AscFormat.CShape;
 var CImageShape = AscFormat.CImageShape;
 
-CImageShape.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
-CImageShape.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CImageShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CImageShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CImageShape.prototype.getHierarchy = CShape.prototype.getHierarchy;
@@ -47,9 +45,8 @@ CImageShape.prototype.getParentObjects = CShape.prototype.getParentObjects;
 CImageShape.prototype.recalculateTransform = CShape.prototype.recalculateTransform;
 CImageShape.prototype.recalculateBounds = CShape.prototype.recalculateBounds;
 CImageShape.prototype.getRotateAngle = CShape.prototype.getRotateAngle;
-CImageShape.prototype.setWorksheet = CShape.prototype.setWorksheet;
 CImageShape.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
-CImageShape.prototype.Is_UseInDocument = CShape.prototype.Is_UseInDocument;
+CImageShape.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
     CImageShape.prototype.getEditorType = function()
     {
         return 0;

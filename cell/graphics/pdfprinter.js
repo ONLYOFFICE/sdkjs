@@ -771,6 +771,11 @@ CPdfPrinter.prototype =
         return this.DocumentRenderer.SetTextPr(textPr);
     },
 
+    SetFontInternal : function(name, size, style)
+    {
+        return this.DocumentRenderer.SetFontInternal(name, size, style);
+    },
+
     SetFontSlot : function(slot, fontSizeKoef)
     {
         return this.DocumentRenderer.SetFontSlot(slot, fontSizeKoef);

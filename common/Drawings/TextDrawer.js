@@ -1291,7 +1291,7 @@ CTextDrawer.prototype =
 
                             if(bStart2)
                             {
-                                if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                                if(oLastObjectToDraw.geometry.isEmpty())
                                 {
                                     oLastObjectToDraw.resetBrushPen(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), x, y)
                                 }
@@ -1313,7 +1313,7 @@ CTextDrawer.prototype =
 
                             if(bStart2)
                             {
-                                if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                                if(oLastObjectToDraw.geometry.isEmpty())
                                 {
                                     oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
                                 }
@@ -1335,7 +1335,7 @@ CTextDrawer.prototype =
 
                             if(bStart2)
                             {
-                                if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                                if(oLastObjectToDraw.geometry.isEmpty())
                                 {
                                     oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
                                 }
@@ -1359,7 +1359,7 @@ CTextDrawer.prototype =
 
                             if(bStart2)
                             {
-                                if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                                if(oLastObjectToDraw.geometry.isEmpty())
                                 {
                                     oLastObjectToDraw.resetBrushPen(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), x, y);
                                 }
@@ -1381,7 +1381,7 @@ CTextDrawer.prototype =
 
                             if(bStart2)
                             {
-                                if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                                if(oLastObjectToDraw.geometry.isEmpty())
                                 {
                                     oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
                                 }
@@ -1408,7 +1408,7 @@ CTextDrawer.prototype =
 
                     if(bStart2)
                     {
-                        if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                        if(oLastObjectToDraw.geometry.isEmpty())
                         {
                             oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
                         }
@@ -1617,6 +1617,16 @@ CTextDrawer.prototype =
     {
         this.FillTextCode(x, y, text.charCodeAt(0));
     },
+
+    CheckAddNewPath : function(x, y)
+    {
+
+        if(this.m_bDivGlyphs === true)
+        {
+            this.Get_PathToDraw(false, true, x, y);
+        }
+    },
+
     FillTextCode : function(x,y,code)
     {
         //var _is_face_index_no_0 = (_font_info.faceIndexR <= 0 && _font_info.faceIndexI <= 0 && _font_info.faceIndexB <= 0 && _font_info.faceIndexBI <= 0);
@@ -1624,10 +1634,7 @@ CTextDrawer.prototype =
         //if (code < 0xFFFF && (_is_face_index_no_0 || window["native"] !== undefined))
         //    return;
 
-        if(this.m_bDivGlyphs === true)
-        {
-            this.Get_PathToDraw(false, true, x, y);
-        }
+        this.CheckAddNewPath(x, y);
         AscCommon.g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
 
         if (null != this.LastFontOriginInfo.Replace)
@@ -1662,6 +1669,23 @@ CTextDrawer.prototype =
     },
     put_TextureBoundsEnabled : function(bIsEnabled)
     {
+    },
+
+    SetFontInternal : function(name, size, style)
+    {
+        var fontinfo = g_fontApplication.GetFontInfo(name, style);
+        if (this.m_oFont.Name !== fontinfo.Name)
+        {
+            this.m_oFont.Name = fontinfo.Name;
+        }
+        if (this.m_oFont.FontSize !== size)
+        {
+            this.m_oFont.FontSize = size;
+        }
+        if (this.m_oFont.Style != style)
+        {
+            this.m_oFont.Style = style;
+        }
     },
 
     SetFontSlot : function(slot, fontSizeKoef)
@@ -2237,7 +2261,7 @@ CTextDrawer.prototype =
                 var oColor = oTextPr.Color;
                 if(oColor.Auto && oTextPr.FontRef && oTextPr.FontRef.Color && this.m_oTheme)
                 {
-                    var oColorMap = AscFormat.DEFAULT_COLOR_MAP;
+                    var oColorMap = AscFormat.GetDefaultColorMap();
                     var oApi = window && window.editor;
                     if(oApi)
                     {

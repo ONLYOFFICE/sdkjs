@@ -846,8 +846,9 @@
 	exportObj["Date"] = exportObj.Date;
 
 	AscCommon.ContentControlTrack = {
-		Hover 	: 0,
-		In 		: 1
+		Hover : 0,
+		In    : 1,
+		Main  : 2
 	};
 
 	// показ диалогов в мобильной версии должен быть только по клику
@@ -966,37 +967,21 @@
 		this.isForm = this.base.IsForm();
 		this.formInfo = null;
 		this.state = state;
+
 		this.isFixedForm = this.base.IsFixedForm();
-
-		this.geom = geom;
-		this.rects = undefined;
-		this.paths = undefined;
-
-		if (undefined === geom[0].Points)
-			this.rects = geom;
-		else
-			this.paths = geom;
 
 		this.OffsetX = 0;
 		this.OffsetY = 0;
 
-		this.transform = this.base.Get_ParentTextTransform ? this.base.Get_ParentTextTransform() : null;
-		if (this.transform && this.transform.IsIdentity())
-			this.transform = null;
-		if (this.transform && this.transform.IsIdentity2())
-		{
-			this.OffsetX = this.transform.tx;
-			this.OffsetY = this.transform.ty;
-			this.transform = null;
-		}
-		this.invertTransform = this.transform ? AscCommon.global_MatrixTransformer.Invert(this.transform) : null;
+		this.transform       = null;
+		this.invertTransform = null;
+
+		this.UpdateTransform();
 
 		this.Pos = { X : 0, Y : 0, Page : 0 };
 
 		this.ComboRect = null;
 		this.Buttons = []; // header buttons
-
-		this.GetPosition();
 
 		this.Name = this.base.GetAlias();
 		if (this.base.IsBuiltInTableOfContents && this.base.IsBuiltInTableOfContents())
@@ -1015,11 +1000,52 @@
 		if (this.parent.document.m_oLogicDocument)
 			this.IsFillFormsMode = this.parent.document.m_oLogicDocument.IsFillingFormMode();
 
+		this.geom  = undefined;
+		this.rects = undefined;
+		this.paths = undefined;
+
+		this.UpdateGeom(geom);
+	}
+
+	CContentControlTrack.prototype.UpdateTransform = function()
+	{
+		this.OffsetX = 0;
+		this.OffsetY = 0;
+
+		this.isFixedForm = this.base.IsFixedForm();
+		this.transform   = this.base.Get_ParentTextTransform ? this.base.Get_ParentTextTransform() : null;
+
+		if (this.transform && this.transform.IsIdentity())
+			this.transform = null;
+		if (this.transform && this.transform.IsIdentity2())
+		{
+			this.OffsetX = this.transform.tx;
+			this.OffsetY = this.transform.ty;
+			this.transform = null;
+		}
+		this.invertTransform = this.transform ? AscCommon.global_MatrixTransformer.Invert(this.transform) : null;
+	};
+	CContentControlTrack.prototype.UpdateGeom = function(geom)
+	{
+		this.UpdateTransform();
+
+		this.geom  = geom;
+		this.rects = undefined;
+		this.paths = undefined;
+
+		if (undefined === geom[0].Points)
+			this.rects = geom;
+		else
+			this.paths = geom;
+
+		this.formInfo = null;
+		this.Pos      = { X : 0, Y : 0, Page : 0 };
+
+		this.GetPosition();
 		this.CalculateNameRect();
 		this.CalculateMoveRect();
 		this.CalculateButtons();
-	}
-
+	};
 	CContentControlTrack.prototype.IsUseMoveRect = function()
 	{
 		if (this.IsNoButtons || this.IsFillFormsMode || this.isFixedForm)
@@ -2203,7 +2229,14 @@
 			// всегда должен быть максимум один hover и in
 			for (var i = 0; i < this.ContentControlObjects.length; i++)
 			{
-				if (state == this.ContentControlObjects[i].state)
+				if (state === this.ContentControlObjects[i].state && obj === this.ContentControlObjects[i].base)
+				{
+					this.ContentControlObjects[i].UpdateGeom(geom);
+					return;
+				}
+
+				if (state == this.ContentControlObjects[i].state
+					|| (!obj && AscCommon.ContentControlTrack.In === state && AscCommon.ContentControlTrack.Main === this.ContentControlObjects[i].state))
 				{
 					if (-2 != this.ContentControlObjects[i].ActiveButtonIndex)
 						isActiveRemove = true;
