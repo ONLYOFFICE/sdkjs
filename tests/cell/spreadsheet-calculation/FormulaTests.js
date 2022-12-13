@@ -9228,18 +9228,19 @@ $(function () {
 		assert.ok(oParser.parse(), "CELL(contents,'J2').");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Contents. Result of CELL(contents,'J2').");
 
-		// filename 
+		// filename
+		let sheetName = ws.sName;
 		oParser = new parserFormula('CELL("filename",J2)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(filename,J2).");
-		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]Sheet1", "filename. Result of CELL(filename,J2).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]" + sheetName, "filename. Result of CELL(filename,J2).");
 
 		oParser = new parserFormula('CELL("filename",J2:J4)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(filename,J2:J4).");
-		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]Sheet1", "filename. Result of CELL(filename,J2:J4).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]" + sheetName, "filename. Result of CELL(filename,J2:J4).");
 
 		oParser = new parserFormula('CELL("filename",H23)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(filename,H23).");
-		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]Sheet1", "filename. Result of CELL(filename,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]" + sheetName, "filename. Result of CELL(filename,H23).");
 		
 		oParser = new parserFormula('CELL("filename",{1,2,3,4,5})', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(filename,{1,2,3,4,5}).");
