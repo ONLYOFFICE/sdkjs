@@ -174,19 +174,19 @@
 		//в случае одного аргумента необходимо следить всегда за последней измененной ячейкой
 		//так же при сборке необходимо записывать данные об последней измененной ячейке
 		//нужно дли это ?
-		var arg0 = arg[0];
-		var arg1 = arg[1];
+		let arg0 = arg[0];
+		let arg1 = arg[1];
 		arg0 = arg0.tocString();
 
-		if (arg0 instanceof cError) {
+		if (cElementType.error === arg0.type) {
 			return arg0;
 		} else {
-			var str = arg0.toString().toUpperCase();
+			let str = arg0.toString().toUpperCase();
 
 			//если первый аргумент из набора тех, которые не требуют значения второго аргумента, то обрабатываем его частично
-			var needCheckVal2Arg = {"CONTENTS": 1, "TYPE": 1};
+			let needCheckVal2Arg = {"CONTENTS": 1, "TYPE": 1};
 
-			var cell, bbox;
+			let cell, bbox;
 			if(arg1) {
 				//TODO добавил заглушку, на случай если приходит массив.
 				// необходимо пересмотреть - сейчас мы рассматриваем как функции массива все дочерние элементы аргумента с типом .reference
@@ -194,10 +194,10 @@
 					arg1 = arg1.getElementRowCol(0,0);
 				}
 
-				var isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;
+				let isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;
 				if (isRangeArg1 || cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 					if (needCheckVal2Arg[str]) {
-						var _tempValue = isRangeArg1 ? arg1.getValueByRowCol(0,0) : arg1.getValue();
+						let _tempValue = isRangeArg1 ? arg1.getValueByRowCol(0,0) : arg1.getValue();
 						if (_tempValue instanceof cError) {
 							return _tempValue;
 						}
@@ -209,7 +209,7 @@
 				}
 			}
 
-			var res, numFormat;
+			let res, numFormat;
 			switch (str) {
 				case "COL": {
 					res = new cNumber(bbox.c1 + 1);
@@ -232,10 +232,10 @@
 				}
 				case "FILENAME": {
 					//TODO без пути
-					var docInfo = window["Asc"]["editor"].DocInfo;
-					var fileName = docInfo ? docInfo.get_Title() : "";
-					var _ws = arg1.getWS();
-					var sheetName = _ws ? _ws.getName() : null;
+					let docInfo = window["Asc"]["editor"].DocInfo;
+					let fileName = docInfo ? docInfo.get_Title() : "";
+					let _ws = arg1.getWS();
+					let sheetName = _ws ? _ws.getName() : null;
 					if (sheetName) {
 						res = new cString("[" + fileName + "]" + sheetName);
 					} else {
@@ -273,12 +273,12 @@
 				case "WIDTH": {
 					//return array
 					//{width 1 column; is default}
-					var col = ws._getCol(bbox.c1);
-					var props = col ? col.getWidthProp() : null;
-					var isDefault = !props.CustomWidth;
-					var width, colWidthPx;
+					let col = ws._getCol(bbox.c1);
+					let props = col ? col.getWidthProp() : null;
+					let isDefault = !props.CustomWidth;
+					let width, colWidthPx;
 					if(isDefault) {
-						var defaultColWidthChars = ws.charCountToModelColWidth(ws.getBaseColWidth());
+						let defaultColWidthChars = ws.charCountToModelColWidth(ws.getBaseColWidth());
 						colWidthPx = ws.modelColWidthToColWidth(defaultColWidthChars);
 						colWidthPx = Asc.ceil(colWidthPx / 8) * 8;
 						width = ws.colWidthToCharCount(colWidthPx);
@@ -298,8 +298,8 @@
 				case "PREFIX": {
 					// ' = left; " = right; ^ = centered; \ =
 					cell = ws.getCell3(bbox.r1, bbox.c1);
-					var align = cell.getAlign();
-					var alignHorizontal = align.getAlignHorizontal();
+					let align = cell.getAlign();
+					let alignHorizontal = align.getAlignHorizontal();
 					if(cell.isNullTextString()) {
 						res = new cString('');
 					} else if(alignHorizontal === null || alignHorizontal === AscCommon.align_Left) {
@@ -319,7 +319,12 @@
 				case "PROTECT": {
 					//TODO
 					//default - protect, do not support on open
-					res = new cNumber(1);
+					cell = ws.getCell3(bbox.r1, bbox.c1);
+					if(cell.getLocked()) {
+						res = new cNumber(1);
+					} else {
+						res = new cNumber(0);
+					}
 					break;
 				}
 				case "FORMAT": {

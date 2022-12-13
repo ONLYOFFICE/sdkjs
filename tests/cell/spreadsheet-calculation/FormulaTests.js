@@ -9225,34 +9225,33 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Contents. Result of CELL(contents,'J2').");
 
 		// filename 
-		// check for empty docinfo
-		// oParser = new parserFormula('CELL("filename",J2)', "A1", ws);
-		// assert.ok(oParser.parse(), "CELL(filename,J2).");
-		// assert.strictEqual(oParser.calculate(), "", "filename. Result of CELL(filename,J2).");
+		oParser = new parserFormula('CELL("filename",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,J2).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]Sheet1", "filename. Result of CELL(filename,J2).");
 
-		// oParser = new parserFormula('CELL("filename",J2:J4)', "A1", ws);
-		// assert.ok(oParser.parse(), "CELL(filename,J2:J4).");
-		// assert.strictEqual(oParser.calculate().getValue(), "", "filename. Result of CELL(filename,J2:J4).");
+		oParser = new parserFormula('CELL("filename",J2:J4)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,J2:J4).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]Sheet1", "filename. Result of CELL(filename,J2:J4).");
 
-		// oParser = new parserFormula('CELL("filename",H23)', "A1", ws);
-		// assert.ok(oParser.parse(), "CELL(filename,H23).");
-		// assert.strictEqual(oParser.calculate().getValue(), "", "filename. Result of CELL(filename,H23).");
+		oParser = new parserFormula('CELL("filename",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]Sheet1", "filename. Result of CELL(filename,H23).");
 		
-		// oParser = new parserFormula('CELL("filename",{1,2,3,4,5})', "A1", ws);
-		// assert.ok(oParser.parse(), "CELL(filename,{1,2,3,4,5}).");
-		// assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,{1,2,3,4,5}).");
+		oParser = new parserFormula('CELL("filename",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,{1,2,3,4,5}).");
 
-		// oParser = new parserFormula('CELL("filename",)', "A1", ws);
-		// assert.ok(oParser.parse(), "CELL(filename,).");
-		// assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,).");
+		oParser = new parserFormula('CELL("filename",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,).");
 
-		// oParser = new parserFormula('CELL("filename",J)', "A1", ws);
-		// assert.ok(oParser.parse(), "CELL(filename,J).");
-		// assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,J).");
+		oParser = new parserFormula('CELL("filename",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,J).");
 
-		// oParser = new parserFormula('CELL("filename","J2")', "A1", ws);
-		// assert.ok(oParser.parse(), "CELL(filename,'J2').");
-		// assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,'J2').");
+		oParser = new parserFormula('CELL("filename","J2")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,'J2').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,'J2').");
 
 		// format
 		// G
