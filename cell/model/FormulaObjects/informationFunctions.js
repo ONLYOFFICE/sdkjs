@@ -81,7 +81,7 @@
 				formatPart = "P";
 			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Scientific) {
 				formatPart = "S";
-			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Date) {
+			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Date || formatInfo.type === Asc.c_oAscNumFormatType.Time) {
 				formatPart = "D";
 			}
 
