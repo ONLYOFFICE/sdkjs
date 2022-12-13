@@ -4896,6 +4896,131 @@ CChartsDrawer.prototype =
 		}
 	},
 
+	isConeIntersection: function (hbar, subType, startX, startY, height, gapDepth, individualBarValue, perspectiveDepth,
+		val, nullPositionOX, maxH, minH) {
+		var wUp, lUp, wDown, lDown;
+		var value, l1, l2, l3, l4;
+		var pyramidX1, pyramidX2, pyramidY1, pyramidY2, rectX1, rectX2, rectY1, rectY2;
+		if (subType === "stacked" || subType === "stackedPer") {
+			value = maxH;
+			if (val < 0 && minH) {
+				value = minH;
+			}
+		} else {
+			value = height;
+			if (maxH) {
+				value = hbar ? -maxH : maxH;
+			} 
+			if (minH && val < 0) {
+				value = hbar ? -minH: minH;
+			}
+		}
+		if (this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+			if (subType === "stacked" || subType === "stackedPer") {
+				if (hbar) {
+					startX = val < 0 ? --startX : ++startX;
+				} else {
+					startY = val < 0 ? ++startY : --startY;
+				}
+			}
+		}
+
+		// рассчитываем большую и малую полуось оснований усеченного конуса через нахождение точек пересечения линий пирамиды и параллелепипеда
+		if (hbar) {
+			pyramidX1 = startY + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startY, pyramidY2 = nullPositionOX;
+			rectX1 = startY, rectY1 = startX + height;
+			rectX2 = startY + individualBarValue, rectY2 = startX + height;
+
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startY + individualBarValue;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startX + height;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startX + height;
+
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+		
+			wUp = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lUp = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+
+			pyramidX1 = startY + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startY, pyramidY2 = nullPositionOX;
+			rectX1 = startY + individualBarValue, rectY1 = startX;
+			rectX2 = startY, rectY2 = startX;
+
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startY + individualBarValue;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startX;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startX;
+
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+		
+			wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+		} else {
+			// координаты точек ребра пирамиды в плоскости x, y
+			pyramidX1 = startX + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startX, pyramidY2 = nullPositionOX;
+			// координаты точек стороны пересекающего прямоугольника
+			rectX1 = startX, rectY1 = startY - height;
+			rectX2 = startX + individualBarValue, rectY2 = startY - height;
+
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startX + individualBarValue;
+			pyramidY2 = nullPositionOX;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startY - height;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startY - height;
+
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			pyramidY2 = nullPositionOX;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+		
+			wUp = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lUp = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+
+			pyramidX1 = startX + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startX, pyramidY2 = nullPositionOX;
+			rectX1 = startX, rectY1 = startY;
+			rectX2 = startX + individualBarValue, rectY2 = startY;
+
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startX + individualBarValue;
+			pyramidY2 = nullPositionOX;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startY;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startY;
+
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			pyramidY2 = nullPositionOX;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+		
+			wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+		}
+
+		return { wUp: wUp, lUp: lUp, wDown: wDown, lDown: lDown };		
+	},
+
 	getStartStackedPyramidPosition: function (val, chart, valAx, j, chartProp, summBarVal, maxVal, nullPositionOX1, subType, 
 		ptCount, axisMax, axisMin, testMaxHeight, testMinHeight, type, hBar) {
 
@@ -5286,196 +5411,6 @@ CChartsDrawer.prototype =
 		var paths = this.calculateCylinder(points, val, checkPathMethod, false, isNotAllPointsVisible, cone);
 
 		return paths;
-	},
-
-	calculateCylinder: function (points, val, isNotOnlyFrontFaces, notDraw, isNotAllPointsVisible, cone) {
-		var res;
-		var segmentPoints = points[0];
-		var segmentPoints2 = points[1];
-		var point1 = points[2];
-		var point2 = points[3];
-		var point4 = points[4];
-		var point5 = points[5];
-		var point6 = points[6];
-		var point8 = points[7];
-		var sortCylinderPoints1 = points[8];
-		var sortCylinderPoints2 = points[9];
-
-		var frontPaths = [];
-		var darkPaths = [];
-
-		// условие для конусов
-		var isVisibleReverse = cone ? isNotAllPointsVisible : true;
-
-		var addPathToArr = function (isFront, face, index) {
-			frontPaths[index] = null;
-			darkPaths[index] = null;
-
-			if (isFront) {
-				frontPaths[index] = face;
-			} else {
-				darkPaths[index] = face;
-			}
-		};
-
-		var face, faceFront;
-
-		//front
-		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, isNotAllPointsVisible);
-		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
-			sortCylinderPoints2[0], val, !isVisibleReverse), faceFront, 0);
-
-		//down
-		if (val === 0) {
-			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
-			addPathToArr(true, face, 1);
-		} else {
-			if (cone) {
-				if (this._isVisibleVerge3D(point4, point1, point2, val)) {
-					face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
-					addPathToArr(true, face, 1);
-				} else {
-					face = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, true, true, true);
-					addPathToArr(true, face, 1);
-				}
-			} else {
-				face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
-				addPathToArr(this._isVisibleVerge3D(point4, point1, point2, val), face, 1);
-			}
-		}
-
-		//up
-		if (!notDraw) {
-			if (val === 0) {
-				face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
-				addPathToArr(true, face, 4);
-			} else {
-				if (cone) {
-					if (this._isVisibleVerge3D(point6, point5, point8, val)) {
-						face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
-						addPathToArr(true, face, 4);
-					} else {
-						face = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, true, false, true, true);
-						addPathToArr(true, face, 4);
-					}
-				} else {
-					face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
-					addPathToArr(this._isVisibleVerge3D(point6, point5, point8, val), face, 4);
-				}
-			}
-		}
-
-		//unfront
-		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, isNotAllPointsVisible);
-		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
-			sortCylinderPoints2[0], val, isVisibleReverse), faceFront, 5);
-
-		if (!isNotOnlyFrontFaces) {
-			res = frontPaths;
-		} else {
-			res = { frontPaths: frontPaths, darkPaths: darkPaths };
-		}
-
-		return res;
-	},
-
-	_calculatePathFaceCylinder: function(segmentPoints, segmentPoints2, up, down, isConvertPxToMM, check)
-	{
-		var pxToMm = 1;
-		if(isConvertPxToMM)
-		{
-			pxToMm = this.calcProp.pxToMM;
-		}
-
-		var pathId = this.cChartSpace.AllocPath();
-		var path  = this.cChartSpace.GetPath(pathId);
-
-		var pathH = this.calcProp.pathH;
-		var pathW = this.calcProp.pathW;
-
-		if (up) {
-			for (var i = 0; i < segmentPoints2.length; i++) {
-				if (i % 2 === 0) {
-					path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
-				}
-			}
-			if (check) {
-				for (var i = segmentPoints2.length - 1; i >= 0; i--) {
-					if (i % 2 === 0) {
-						path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
-					}
-				}
-			} else {
-				path.lnTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH)
-			}
-		} else if (down) {
-			for (var i = 0; i < segmentPoints.length; i++) {
-				if (i % 2 === 0) {
-					path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
-				}
-			}
-			if (check) {
-				for (var i = segmentPoints.length - 1; i >= 0; i--) {
-					if (i % 2 === 0) {
-						path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
-					}
-				}
-			} else {
-				path.lnTo(segmentPoints[0].x / pxToMm * pathW, segmentPoints[0].y / pxToMm * pathH)
-			}
-		} else {
-			var endIndex = 0;
-			var startIndex = segmentPoints.length - 1;
-
-			if (!check) {
-				path.moveTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH)
-				for (var i = 0; i < segmentPoints2.length; i++) {
-					if (i % 2 === 0) {
-						path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
-					}
-				}
-				path.lnTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH);
-
-				path.moveTo(segmentPoints[0].x / pxToMm * pathW, segmentPoints[0].y / pxToMm * pathH)
-				for (var i = 0; i < segmentPoints.length; i++) {
-					if (i % 2 === 0) {
-						path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
-					}
-				}
-				path.lnTo(segmentPoints[0].x / pxToMm * pathW, segmentPoints[0].y / pxToMm * pathH)
-
-			} else if (segmentPoints2.length === 1) {
-				path.lnTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH);
-				path.lnTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH);
-
-				for (var k = endIndex; k <= startIndex; k++) {
-					if (k % 2 === 0) {
-						path.lnTo(segmentPoints[k].x / pxToMm * pathW, segmentPoints[k].y / pxToMm * pathH);
-					}
-				}
-				path.lnTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH);
-
-			} else {
-
-				path.moveTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH)
-
-				for (var k = endIndex; k <= startIndex; k++) {
-					if (k % 2 === 0) {
-						path.lnTo(segmentPoints[k].x / pxToMm * pathW, segmentPoints[k].y / pxToMm * pathH);
-					}
-				}
-
-				for (k = startIndex; endIndex <= k; k--) {
-					if (k % 2 === 0) {
-						path.lnTo(segmentPoints2[k].x / pxToMm * pathW, segmentPoints2[k].y / pxToMm * pathH);
-					}
-				}
-				path.lnTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH);
-			}
-
-		}
-
-		return pathId;
 	},
 
 	checkingPenForDrawing: function (shape, verge) {
@@ -6527,7 +6462,7 @@ drawBarChart.prototype = {
 		var gapDepth = depths.gapDepth, perspectiveDepth = depths.perspectiveDepth;
 
 		var point1, point2, point3, point4, point5, point6, point7, point8;
-		var isNotDrawDownVerge, paths2, paths, points, points, paths;
+		var isNotDrawDownVerge, paths2, paths, points, points, paths, nullPositionOX;
 
 		var x12 = startX, y12 = startY, z12 = 0 + gapDepth;
 		var x22 = startX, y22 = startY, z22 = perspectiveDepth + gapDepth;
@@ -6547,43 +6482,6 @@ drawBarChart.prototype = {
 		point7 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72);
 		point8 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82);
 
-
-		var needAddOnlyFrontFace = this.subType === "standard";
-		var nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;
-
-		var t = this;
-		var dRadius1, dRadius2, uRadius1, uRadius2;
-		var calcCylinderProps = function (bCone) {
-			//большая и малая полуось оснований усеченного конуса
-			if (bCone) {
-				// за оси эллипса берем 1/2 длин ребер оснований усеченной пирамиды
-				points = t.cChartDrawer.isConeIntersection(false, t.subType, startX, startY, height, gapDepth, individualBarWidth, perspectiveDepth, val, nullPositionOX, maxH, minH);
-
-				if (t.val === 0) {
-					uRadius1 = 0;
-					uRadius2 = 0;
-					dRadius1 = points.wDown;
-					dRadius2 = points.lDown;
-				} else if ((t.subType === "stacked" || t.subType === "stackedPer") && t.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
-					uRadius1 = points.wUp !== 0 ? points.wUp : individualBarWidth / 2;
-					uRadius2 = points.lUp !== 0 ? points.lUp : perspectiveDepth / 2;
-					dRadius1 = points.wDown;
-					dRadius2 = points.lDown;
-				} else {
-					uRadius1 = points.wUp;
-					uRadius2 = points.lUp;
-					dRadius1 = points.wDown !== 0 ? points.wDown : individualBarWidth / 2;
-					dRadius2 = points.lDown !== 0 ? points.lDown : perspectiveDepth/ 2;
-				}
-
-			} else {
-				//большая и малая полуось эллипса
-				dRadius1 = individualBarWidth / 2;
-				dRadius2 = perspectiveDepth / 2;
-			}
-		};
-
-
 		var facePoints;
 		switch (type) {
 			case AscFormat.BAR_SHAPE_PYRAMID:
@@ -6597,22 +6495,16 @@ drawBarChart.prototype = {
 				break
 			}
 			case AscFormat.BAR_SHAPE_CYLINDER: {
-				//paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, this.subType !== "standard", false, false);
-
-				calcCylinderProps();
-				this.cChartDrawer.calcShapesHelper.setProps(startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth, needAddOnlyFrontFace, val, false, dRadius1, dRadius2);
-				paths = this.cChartDrawer.calcShapesHelper.getCylinder();
-
+				paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth,
+					perspectiveDepth, this.subType !== "standard", false, false);
 				break;
 			}
 			case AscFormat.BAR_SHAPE_CONE:
 			case AscFormat.BAR_SHAPE_CONETOMAX: {
-				//paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, this.subType !== "standard", false, this.subType, nullPositionOX, maxH, minH);
-
-				calcCylinderProps(true);
-				this.cChartDrawer.calcShapesHelper.setProps(startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth, needAddOnlyFrontFace, val, false, dRadius1, dRadius2, uRadius1, uRadius2);
-				paths = this.cChartDrawer.calcShapesHelper.getCone();
-
+				var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) :
+					this.catAx.posY * this.chartProp.pxToMM;
+				paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth,
+					perspectiveDepth, this.subType !== "standard", false, this.subType, nullPositionOX, maxH, minH);
 				break;
 			}
 			default: {
@@ -6685,6 +6577,199 @@ drawBarChart.prototype = {
 				arr[cubeCount].isValZero = val === 0;
 			}
 	
+			for (var k = 0; k < paths.frontPaths.length; k++) {
+				if (null === paths.frontPaths[k] && null === paths.darkPaths[k]) {
+					continue;
+				}
+				//this.sortZIndexPaths.push({seria: i, point: idx, verge: k, paths: paths[k], points: arrPoints2[k], points2: arrPoints[k], plainEquation: plainEquation});
+
+				var plainEquation = this.cChartDrawer.getPlainEquation(arrPoints2[k][0], arrPoints2[k][1], arrPoints2[k][2], arrPoints2[k][3]);
+				var plainArea = this.cChartDrawer.getAreaQuadrilateral(arrPoints[k][0], arrPoints[k][1], arrPoints[k][2], arrPoints[k][3]);
+				arr[cubeCount].faces.push({
+					seria: serNum,
+					point: idx,
+					verge: k,
+					frontPaths: paths.frontPaths[k],
+					darkPaths: paths.darkPaths[k],
+					points: arrPoints2[k],
+					points2: arrPoints[k],
+					plainEquation: plainEquation,
+					plainArea: plainArea,
+					shapeType: type,
+				});
+			}
+		}
+
+		return {
+			paths: paths,
+			paths2: paths2,
+			facePoints: facePoints,
+		};
+	},
+
+	_calculateRect3DNew: function (startX, startY, individualBarWidth, height, val, serNum, type, maxH, minH, arr, cubeCount, idx, testHeight) {
+		var depths = this.getDepths(serNum);
+		var gapDepth = depths.gapDepth, perspectiveDepth = depths.perspectiveDepth;
+
+		var point1, point2, point3, point4, point5, point6, point7, point8;
+		var isNotDrawDownVerge, paths2, paths, points, points, paths;
+
+		var x12 = startX, y12 = startY, z12 = 0 + gapDepth;
+		var x22 = startX, y22 = startY, z22 = perspectiveDepth + gapDepth;
+		var x32 = startX + individualBarWidth, y32 = startY, z32 = perspectiveDepth + gapDepth;
+		var x42 = startX + individualBarWidth, y42 = startY, z42 = 0 + gapDepth;
+		var x52 = startX, y52 = startY - height, z52 = 0 + gapDepth;
+		var x62 = startX, y62 = startY - height, z62 = perspectiveDepth + gapDepth;
+		var x72 = startX + individualBarWidth, y72 = startY - height, z72 = perspectiveDepth + gapDepth;
+		var x82 = startX + individualBarWidth, y82 = startY - height, z82 = 0 + gapDepth;
+
+		point1 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12);
+		point2 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22);
+		point3 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32);
+		point4 = this.cChartDrawer._convertAndTurnPoint(x42, y42, z42);
+		point5 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52);
+		point6 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62);
+		point7 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72);
+		point8 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82);
+
+
+		var needAddOnlyFrontFace = this.subType === "standard";
+		var nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;
+
+		var t = this;
+		var dRadius1, dRadius2, uRadius1, uRadius2;
+		var calcCylinderProps = function (bCone) {
+			//большая и малая полуось оснований усеченного конуса
+			if (bCone) {
+				// за оси эллипса берем 1/2 длин ребер оснований усеченной пирамиды
+				points = t.cChartDrawer.isConeIntersection(false, t.subType, startX, startY, height, gapDepth, individualBarWidth, perspectiveDepth, val, nullPositionOX, maxH, minH);
+
+				if (t.val === 0) {
+					uRadius1 = 0;
+					uRadius2 = 0;
+					dRadius1 = points.wDown;
+					dRadius2 = points.lDown;
+				} else if ((t.subType === "stacked" || t.subType === "stackedPer") && t.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+					uRadius1 = points.wUp !== 0 ? points.wUp : individualBarWidth / 2;
+					uRadius2 = points.lUp !== 0 ? points.lUp : perspectiveDepth / 2;
+					dRadius1 = points.wDown;
+					dRadius2 = points.lDown;
+				} else {
+					uRadius1 = points.wUp;
+					uRadius2 = points.lUp;
+					dRadius1 = points.wDown !== 0 ? points.wDown : individualBarWidth / 2;
+					dRadius2 = points.lDown !== 0 ? points.lDown : perspectiveDepth/ 2;
+				}
+
+			} else {
+				//большая и малая полуось эллипса
+				dRadius1 = individualBarWidth / 2;
+				dRadius2 = perspectiveDepth / 2;
+			}
+		};
+
+
+		var facePoints;
+		switch (type) {
+			case AscFormat.BAR_SHAPE_PYRAMID:
+			case AscFormat.BAR_SHAPE_PYRAMIDTOMAX: {
+				var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) :
+					this.catAx.posY * this.chartProp.pxToMM;
+				paths = this.cChartDrawer.calculatePyramid(false, this.subType, startX, startY, height, gapDepth,
+					individualBarWidth, perspectiveDepth, val, nullPositionOX, maxH, minH);
+
+				paths = paths.paths;
+				break
+			}
+			case AscFormat.BAR_SHAPE_CYLINDER: {
+				//paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, this.subType !== "standard", false, false);
+
+				calcCylinderProps();
+				this.cChartDrawer.calcShapesHelper.setProps(startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth, needAddOnlyFrontFace, val, false, dRadius1, dRadius2);
+				paths = this.cChartDrawer.calcShapesHelper.getCylinder();
+
+				break;
+			}
+			case AscFormat.BAR_SHAPE_CONE:
+			case AscFormat.BAR_SHAPE_CONETOMAX: {
+				//paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, this.subType !== "standard", false, this.subType, nullPositionOX, maxH, minH);
+
+				calcCylinderProps(true);
+				this.cChartDrawer.calcShapesHelper.setProps(startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth, needAddOnlyFrontFace, val, false, dRadius1, dRadius2, uRadius1, uRadius2);
+				paths = this.cChartDrawer.calcShapesHelper.getCone();
+
+				break;
+			}
+			default: {
+				points = [point1, point2, point3, point4, point5, point6, point7, point8];
+				paths = this.cChartDrawer.calculateRect3D(points, val, null, this.subType !== "standard", false);
+				break;
+			}
+		}
+
+		facePoints = [[point1, point4, point8, point5], [point1, point2, point3, point4],
+			[point1, point2, point6, point5], [point4, point8, point7, point3], [point5, point6, point7, point8],
+			[point2, point3, point7, point6]];
+
+		//paths2 для расчета подписей, в дальнейшем нужно оптимизировать этот процесс
+		points = [point1, point2, point3, point4, point5, point6, point7, point8];
+		paths2 = this.cChartDrawer.calculateRect3D(points, val, isNotDrawDownVerge);
+
+		if (this.subType !== "standard") {
+
+			height = testHeight;
+			x12 = startX, y12 = startY, z12 = 0 + gapDepth;
+			x22 = startX, y22 = startY, z22 = perspectiveDepth + gapDepth;
+			x32 = startX + individualBarWidth, y32 = startY, z32 = perspectiveDepth + gapDepth;
+			x42 = startX + individualBarWidth, y42 = startY, z42 = 0 + gapDepth;
+			x52 = startX, y52 = startY - height, z52 = 0 + gapDepth;
+			x62 = startX, y62 = startY - height, z62 = perspectiveDepth + gapDepth;
+			x72 = startX + individualBarWidth, y72 = startY - height, z72 = perspectiveDepth + gapDepth;
+			x82 = startX + individualBarWidth, y82 = startY - height, z82 = 0 + gapDepth;
+
+			point1 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12);
+			point2 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22);
+			point3 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32);
+			point4 = this.cChartDrawer._convertAndTurnPoint(x42, y42, z42);
+			point5 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52);
+			point6 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62);
+			point7 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72);
+			point8 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82);
+
+			var point11 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12, null, null, true);
+			var point22 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22, null, null, true);
+			var point33 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32, null, null, true);
+			var point44 = this.cChartDrawer._convertAndTurnPoint(x42, y42, z42, null, null, true);
+			var point55 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52, null, null, true);
+			var point66 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62, null, null, true);
+			var point77 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72, null, null, true);
+			var point88 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82, null, null, true);
+
+			var controlPoint = this.cChartDrawer._convertAndTurnPoint(x12 + individualBarWidth / 2, y12 - height / 2, z12);
+
+			var arrPoints = [[point1, point4, point8, point5], [point1, point2, point3, point4],
+				[point1, point2, point6, point5], [point4, point8, point7, point3], [point5, point6, point7, point8],
+				[point6, point2, point3, point7]];
+
+			var arrPoints2 = [[point11, point44, point88, point55], [point11, point22, point33, point44],
+				[point11, point22, point66, point55], [point44, point88, point77, point33],
+				[point55, point66, point77, point88], [point66, point22, point33, point77]];
+
+			if (!arr) {
+				arr = [];
+			}
+			if (!arr[cubeCount]) {
+				arr[cubeCount] = {};
+			}
+			if (!arr[cubeCount].faces) {
+				arr[cubeCount].faces = [];
+				arr[cubeCount].arrPoints = [point11, point22, point33, point44, point55, point66, point77, point88];
+				arr[cubeCount].z = controlPoint.z;
+				arr[cubeCount].y = controlPoint.y;
+				arr[cubeCount].x = controlPoint.x;
+				arr[cubeCount].isValZero = val === 0;
+			}
+
 			for (var k = 0; k < paths.frontPaths.length; k++) {
 				if (null === paths.frontPaths[k] && null === paths.darkPaths[k]) {
 					continue;
