@@ -9204,6 +9204,10 @@ $(function () {
 		assert.ok(oParser.parse(), "CELL(contents,J2:J4).");
 		assert.strictEqual(oParser.calculate().getValue(), 1, "Contents. Result of CELL(contents,J2:J4).");
 
+		oParser = new parserFormula('CELL("contents",J5)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(contents,07/12/2000)");
+		assert.strictEqual(oParser.calculate().getValue(), 36719, "Contents. Result of CELL(contents,07/12/2000).");
+
 		oParser = new parserFormula('CELL("contents",H23)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(contents,H23).");
 		assert.strictEqual(oParser.calculate().getValue(), "", "Contents. Result of CELL(contents,H23).");

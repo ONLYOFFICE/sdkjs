@@ -317,7 +317,6 @@
 					break;
 				}
 				case "PROTECT": {
-					//TODO
 					//default - protect, do not support on open
 					cell = ws.getCell3(bbox.r1, bbox.c1);
 					if(cell.getLocked()) {
