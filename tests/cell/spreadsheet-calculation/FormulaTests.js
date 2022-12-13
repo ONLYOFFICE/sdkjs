@@ -612,6 +612,8 @@ $(function () {
 			}
 		});
 		AscCommon.History.init(wb);
+		wb.maxDigitWidth = 7;
+		wb.paddingPlusBorder = 5;
 
 		AscCommon.g_oTableId.init();
 		if (this.User) {
@@ -9026,7 +9028,6 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"CELL\"", function (assert) {
-
 		ws.getRange2("J2").setValue("1");
 		ws.getRange2("J3").setValue("test");
 		ws.getRange2("J4").setValue("test2");
@@ -9414,6 +9415,9 @@ $(function () {
 		oParser = new parserFormula('CELL("format",H18)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
 		assert.strictEqual(oParser.calculate().getValue(), "D5", "Format. Result of CELL(format,10 Apr 20).");	//D5
+
+
+
 
 		oParser = new parserFormula('CELL("format",H19)', "A1", ws);
 		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
