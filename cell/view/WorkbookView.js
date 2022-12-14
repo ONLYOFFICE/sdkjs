@@ -4953,7 +4953,7 @@
 							}
 
 							if (jsZlib.files && jsZlib.files.length) {
-								var binaryData = jsZlib.getFile(jsZlib.files[0])
+								var binaryData = jsZlib.getFile(jsZlib.files[0]);
 
 								//заполняем через банарник
 								var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
@@ -4973,13 +4973,13 @@
 								});
 
 								if (wb.aWorksheets) {
-									eR && eR.updateData(wb.aWorksheets);
+									eR && eR.updateData(wb.aWorksheets, _arrAfterPromise[i].data);
 								}
 							}
 						} else {
 							var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, stream);
 							if (updatedData) {
-								eR && eR.updateData(updatedData);
+								eR && eR.updateData(updatedData, _arrAfterPromise[i].data);
 							}
 						}
 					} else {
@@ -5021,8 +5021,8 @@
 					var arrAfterPromise = [];
 
 					var aRequests = [];
-					t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream, externalReferenceId) {
-						arrAfterPromise.push({stream: _stream, externalReferenceId: externalReferenceId});
+					t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream, externalReferenceId, oData) {
+						arrAfterPromise.push({stream: _stream, externalReferenceId: externalReferenceId, data: oData});
 						if (aRequests.length === arrAfterPromise.length) {
 							doUpdateData(arrAfterPromise);
 						}
@@ -5074,10 +5074,10 @@
 						AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
 							if (httpRequest) {
 								var stream = AscCommon.initStreamFromResponse(httpRequest);
-								resolve(_resolve(stream, eR.externalReference.Id));
+								resolve(_resolve(stream, eR.externalReference.Id, oData));
 							} else {
 								//reject - не вызываю, чтобы выполнились все запросы
-								resolve(_resolve(null, eR.externalReference.Id));
+								resolve(_resolve(null, eR.externalReference.Id, oData));
 							}
 						}, "arraybuffer");
 					};
@@ -5092,14 +5092,14 @@
 									successfulLoadFileMap[sFileUrl] = 1;
 									loadFile(fileUrlAfterConvert);
 								} else if (!successfulLoadFileMap[sFileUrl]) {
-									resolve(_resolve(null, eR.externalReference.Id));
+									resolve(_resolve(null, eR.externalReference.Id, oData));
 								}
 							});
 					} else {
 						if (sFileUrl) {
 							loadFile(sFileUrl);
 						} else {
-							resolve(_resolve(null, eR.externalReference.Id));
+							resolve(_resolve(null, eR.externalReference.Id, oData));
 						}
 					}
 				});

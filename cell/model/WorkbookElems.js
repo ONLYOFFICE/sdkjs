@@ -14162,7 +14162,7 @@ QueryTableField.prototype.clone = function() {
 		return newObj;
 	};
 
-	ExternalReference.prototype.updateData = function (arr) {
+	ExternalReference.prototype.updateData = function (arr, oPortalData) {
 		var t = this;
 		var isChanged = false;
 		var cloneER = this.clone();
@@ -14189,6 +14189,13 @@ QueryTableField.prototype.clone = function() {
 					}
 				}
 			}
+		}
+
+		var oReferenceData = oPortalData && oPortalData.referenceData;
+		//data from portal, need update reference data
+		if (oReferenceData && (!this.referenceData || (this.referenceData["portalName"] !== oReferenceData["portalName"] || this.referenceData["fileId"] !== oReferenceData["fileId"]))) {
+			this.setReferenceData(oReferenceData["fileId"], oReferenceData["portalName"]);
+			isChanged = true;
 		}
 
 		if (isChanged && History.Is_On()) {
