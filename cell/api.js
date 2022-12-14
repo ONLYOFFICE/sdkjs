@@ -819,6 +819,8 @@ var editor;
 
 				if (stream) {
 					callback(stream);
+				} else {
+					callback(null);
 				}
 			}
 		};
