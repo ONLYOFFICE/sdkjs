@@ -13995,7 +13995,7 @@
 				if (-1 === pasteLinkIndex) {
 					_getPasteLinkIndex();
 				}
-				if (pasteLink != null) {
+				if (pasteLinkIndex != null) {
 					isLinkToOtherWorkbook = true;
 				}
 				t._pasteCellLink(range, fromRow, fromCol, arrFormula, pasteSheetLinkName, pasteLinkIndex);
