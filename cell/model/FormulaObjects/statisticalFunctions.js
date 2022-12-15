@@ -8468,7 +8468,6 @@ function (window, undefined) {
 	cMODE.prototype.inheritFormat = true;
 	cMODE.prototype.argumentsType = [[argType.array]];
 	cMODE.prototype.Calculate = function (arg) {
-
 		function mode(x) {
 
 			var medArr = [], t, i;
@@ -8513,6 +8512,47 @@ function (window, undefined) {
 			}
 		}
 
+		function modeMult(x) {
+			let medArr = [], t, i;
+
+			for (i = 0; i < x.length; i++) {
+				t = x[i].tocNumber();
+				if (cElementType.number === t.type) {
+					medArr.push(t.getValue())
+				}
+			}
+
+			medArr.sort(fSortAscending);
+
+			if (medArr.length < 1) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				let resultArr = [], res = new cArray();
+
+				const obj = medArr.reduce((acc, elem) => {
+					acc[elem] = (acc[elem] || 0) + 1;
+					return acc;
+				}, {});
+
+				const maxEntry = Math.max(...Object.values(obj));
+
+				for (const [key, value] of Object.entries(obj)) {
+					if(!(value < maxEntry)) {
+						resultArr.push(new cNumber(key));
+					}
+				}
+
+				for (let i = 0; i < medArr.length; i++) {
+					if(!resultArr[i]) {
+						resultArr[i] = new cError(cErrorType.not_available);
+					}
+				}
+
+				res.fillFromArray(resultArr);
+				return res;
+			}
+		}
+		
 		var arr0 = [];
 
 		for (var j = 0; j < arg.length; j++) {
@@ -8543,6 +8583,8 @@ function (window, undefined) {
 			}
 
 		}
+
+		// return modeMult(arr0);
 		return mode(arr0);
 
 	};
