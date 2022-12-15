@@ -929,49 +929,49 @@ CChangesDocumentProtection.prototype.WriteToBinary = function (Writer) {
 		Writer.WriteBool(false);
 	}
 
-	if (null !== this.NewCryptAlgorithmClass) {
+	if (null != this.NewCryptAlgorithmClass) {
 		Writer.WriteBool(true);
 		Writer.WriteByte(this.NewCryptAlgorithmClass);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (null !== this.NewCryptAlgorithmSid) {
+	if (null != this.NewCryptAlgorithmSid) {
 		Writer.WriteBool(true);
 		Writer.WriteLong(this.NewCryptAlgorithmSid);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (null !== this.NewCryptAlgorithmType) {
+	if (null != this.NewCryptAlgorithmType) {
 		Writer.WriteBool(true);
 		Writer.WriteByte(this.NewCryptAlgorithmType);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (null !== this.NewCryptProvider) {
+	if (null != this.NewCryptProvider) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewCryptProvider);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (null !== this.NewCryptProviderType) {
+	if (null != this.NewCryptProviderType) {
 		Writer.WriteBool(true);
 		Writer.WriteByte(this.NewCryptProviderType);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (null !== this.NewCryptProviderTypeExt) {
+	if (null != this.NewCryptProviderTypeExt) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewCryptProviderTypeExt);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (null !== this.NewCryptProviderTypeExtSource) {
+	if (null != this.NewCryptProviderTypeExtSource) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewCryptProviderTypeExtSource);
 	} else {
 		Writer.WriteBool(false);
 	}
-	if (null !== this.UserId) {
+	if (null != this.UserId) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.UserId);
 	} else {
