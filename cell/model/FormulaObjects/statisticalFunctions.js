@@ -8511,7 +8511,57 @@ function (window, undefined) {
 				}
 			}
 		}
+		
+		let arr0 = [];
 
+		for (let j = 0; j < arg.length; j++) {
+
+			if (cElementType.cellsRange === arg[j].type || cElementType.cellsRange3D === arg[j].type) {
+				arg[j].foreach2(function (elem) {
+					if (cElementType.number === elem.type) {
+						arr0.push(elem);
+					}
+				});
+			} else if (cElementType.cell === arg[j].type || cElementType.cell3D === arg[j].type) {
+				let a = arg[j].getValue();
+				if (cElementType.number === a.type) {
+					arr0.push(a);
+				}
+			} else if (cElementType.array === arg[j].type) {
+				arg[j].foreach(function (elem) {
+					if (cElementType.number === elem.type) {
+						arr0.push(elem);
+					}
+				});
+			} else if (cElementType.number === arg[j].type || cElementType.bool === arg[j].type) {
+				arr0.push(arg[j].tocNumber());
+			} else if (cElementType.string === arg[j].type) {
+				continue;
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+		}
+
+		return mode(arr0);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {cPERCENTILE}
+	 */
+	//TODO разницы в работе функций cMODE_MULT и cMODE не нашёл, но в LO обработки немного разные. проверить!
+	function cMODE_MULT() {
+	}
+
+	//***array-formula***
+	//TODO другое поведение для формул массива!!!
+	cMODE_MULT.prototype = Object.create(cBaseFunction.prototype);
+	cMODE_MULT.prototype.constructor = cMODE_MULT;
+	cMODE_MULT.prototype.name = 'MODE.MULT';
+	cMODE_MULT.prototype.isXLFN = true;
+	cMODE_MULT.prototype.argumentsType = [[argType.array]];
+	cMODE_MULT.prototype.Calculate = function (arg) {
 		function modeMult(x) {
 			let medArr = [], t, i;
 
@@ -8527,14 +8577,14 @@ function (window, undefined) {
 			if (medArr.length < 1) {
 				return new cError(cErrorType.wrong_value_type);
 			} else {
-				let resultArr = [], res = new cArray();
+				let resultArr = [], A = [], res = new cArray();
 
-				const obj = medArr.reduce((acc, elem) => {
+				const obj = medArr.reduce(function (acc, elem) {
 					acc[elem] = (acc[elem] || 0) + 1;
 					return acc;
 				}, {});
 
-				const maxEntry = Math.max(...Object.values(obj));
+				const maxEntry = Math.max.apply(null, Object.values(obj));
 
 				for (const [key, value] of Object.entries(obj)) {
 					if(!(value < maxEntry)) {
@@ -8542,68 +8592,54 @@ function (window, undefined) {
 					}
 				}
 
-				for (let i = 0; i < medArr.length; i++) {
-					if(!resultArr[i]) {
-						resultArr[i] = new cError(cErrorType.not_available);
+				for (let i = 0; i < x.length; i++) {
+					if(!A[i]) {
+						A[i] = [];
+					}
+					for (let j = 0; j < x.length; j++) {
+						if(!A[i][j]) {
+							if(resultArr[i]) {
+								A[i][j] = resultArr[i];
+							}
+						}
 					}
 				}
 
-				res.fillFromArray(resultArr);
+				res.fillFromArray(A);
 				return res;
 			}
 		}
-		
-		var arr0 = [];
 
-		for (var j = 0; j < arg.length; j++) {
-
-			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
+		let arr0 = [];
+		for (let j = 0; j < arg.length; j++) {
+			if (cElementType.cellsRange === arg[j].type || cElementType.cellsRange3D === arg[j].type) {
 				arg[j].foreach2(function (elem) {
-					if (elem instanceof cNumber) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
 					}
 				});
-			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
-				var a = arg[j].getValue();
-				if (a instanceof cNumber) {
+			} else if (cElementType.cell === arg[j].type || cElementType.cell3D === arg[j].type) {
+				let a = arg[j].getValue();
+				if (cElementType.number === a.type) {
 					arr0.push(a);
 				}
-			} else if (arg[j] instanceof cArray) {
+			} else if (cElementType.array === arg[j].type) {
 				arg[j].foreach(function (elem) {
-					if (elem instanceof cNumber) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
 					}
 				});
-			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
+			} else if (cElementType.number === arg[j].type || cElementType.bool === arg[j].type) {
 				arr0.push(arg[j].tocNumber());
-			} else if (arg[j] instanceof cString) {
+			} else if (cElementType.string === arg[j].type) {
 				continue;
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
-
 		}
 
-		// return modeMult(arr0);
-		return mode(arr0);
-
-	};
-
-	/**
-	 * @constructor
-	 * @extends {cPERCENTILE}
-	 */
-	//TODO разницы в работе функций cMODE_MULT и cMODE не нашёл, но в LO обработки немного разные. проверить!
-	function cMODE_MULT() {
+		return modeMult(arr0);
 	}
-
-	//***array-formula***
-	//TODO другое поведение для формул массива!!!
-	cMODE_MULT.prototype = Object.create(cMODE.prototype);
-	cMODE_MULT.prototype.constructor = cMODE_MULT;
-	cMODE_MULT.prototype.name = 'MODE.MULT';
-	cMODE_MULT.prototype.isXLFN = true;
-	cMODE_MULT.prototype.argumentsType = [[argType.array]];
 
 	/**
 	 * @constructor

@@ -11583,7 +11583,10 @@ $(function () {
 
 		oParser = new parserFormula("MODE.MULT(F202:F213)", "F1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 1);
+		let array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1);
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 3);
 
 	});
 
