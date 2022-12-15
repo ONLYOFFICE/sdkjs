@@ -3333,7 +3333,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	{
 		if (StartIndex > 0)
 		{
-			// В текущей схеме нам достаточно обновсить у предыдущего элемента RecalcId. По хорошему
+			// В текущей схеме нам достаточно обновить у предыдущего элемента RecalcId. По хорошему
 			// это надо делать у всех элементов до StartIndex
 			let lastParagraph = this.Content[StartIndex - 1].GetLastParagraph();
 			if (lastParagraph)
