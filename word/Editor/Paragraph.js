@@ -1465,6 +1465,18 @@ Paragraph.prototype.RecalculateEndInfo = function()
 	this.EndInfo.SetFromPRSI(prsi);
 	this.EndInfo.SetRecalcId(recalcId);
 };
+/**
+ * Данная функция вызывается, когда с данным элементом, и с элементами до него не произошло никаких изменений и мы
+ * просто актуализируем EndInfo.RecalcId
+ */
+Paragraph.prototype.UpdateEndInfoRecalcId = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.GetRecalcId)
+		return;
+	
+	this.EndInfo.SetRecalcId(logicDocument.GetRecalcId());
+};
 Paragraph.prototype.GetEndInfo = function()
 {
 	return this.EndInfo;

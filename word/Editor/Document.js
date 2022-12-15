@@ -3330,7 +3330,18 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     // а если изменения касались только секций, тогда пересчитываем основную часть документа только с того места, где
     // остановился предыдущий пересчет, либо с того места, где изменения секций приводят к пересчету документа.
     if (true === MainChange)
-        this.FullRecalc.MainStartPos = StartIndex;
+	{
+		if (StartIndex > 0)
+		{
+			// В текущей схеме нам достаточно обновсить у предыдущего элемента RecalcId. По хорошему
+			// это надо делать у всех элементов до StartIndex
+			let lastParagraph = this.Content[StartIndex - 1].GetLastParagraph();
+			if (lastParagraph)
+				lastParagraph.UpdateEndInfoRecalcId();
+		}
+		
+		this.FullRecalc.MainStartPos = StartIndex;
+	}
 
     this.DrawingDocument.OnStartRecalculate(StartPage);
 
