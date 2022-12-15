@@ -14070,10 +14070,10 @@ QueryTableField.prototype.clone = function() {
 		if (r.GetBool()) {
 			this.referenceData = {};
 			if (r.GetBool()) {
-				this.referenceData["fileId"] = r.GetString2();
+				this.referenceData["fileKey"] = r.GetString2();
 			}
 			if (r.GetBool()) {
-				this.referenceData["portalName"] = r.GetString2();
+				this.referenceData["instanceId"] = r.GetString2();
 			}
 		}
 	};
@@ -14116,15 +14116,15 @@ QueryTableField.prototype.clone = function() {
 
 		if (null != this.referenceData) {
 			w.WriteBool(true);
-			if (null != this.referenceData["fileId"]) {
+			if (null != this.referenceData["fileKey"]) {
 				w.WriteBool(true);
-				w.WriteString2(this.referenceData["fileId"]);
+				w.WriteString2(this.referenceData["fileKey"]);
 			} else {
 				w.WriteBool(false);
 			}
-			if (null != this.referenceData["portalName"]) {
+			if (null != this.referenceData["instanceId"]) {
 				w.WriteBool(true);
-				w.WriteString2(this.referenceData["portalName"]);
+				w.WriteString2(this.referenceData["instanceId"]);
 			} else {
 				w.WriteBool(false);
 			}
@@ -14155,8 +14155,8 @@ QueryTableField.prototype.clone = function() {
 		if (null != this.referenceData) {
 
 			newObj.referenceData = {};
-			newObj.referenceData["fileId"] = this.referenceData["fileId"];
-			newObj.referenceData["portalName"] = this.referenceData["portalName"];
+			newObj.referenceData["fileKey"] = this.referenceData["fileKey"];
+			newObj.referenceData["instanceId"] = this.referenceData["instanceId"];
 		}
 
 		return newObj;
@@ -14193,8 +14193,8 @@ QueryTableField.prototype.clone = function() {
 
 		var oReferenceData = oPortalData && oPortalData.referenceData;
 		//data from portal, need update reference data
-		if (oReferenceData && (!this.referenceData || (this.referenceData["portalName"] !== oReferenceData["portalName"] || this.referenceData["fileId"] !== oReferenceData["fileId"]))) {
-			this.setReferenceData(oReferenceData["fileId"], oReferenceData["portalName"]);
+		if (oReferenceData && (!this.referenceData || (this.referenceData["instanceId"] !== oReferenceData["instanceId"] || this.referenceData["fileKey"] !== oReferenceData["fileKey"]))) {
+			this.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
 			isChanged = true;
 		}
 
@@ -14420,8 +14420,8 @@ QueryTableField.prototype.clone = function() {
 		if (!this.referenceData) {
 			this.referenceData = {};
 		}
-		this.referenceData["portalName"] = portalName;
-		this.referenceData["fileId"] = fileId;
+		this.referenceData["instanceId"] = portalName;
+		this.referenceData["fileKey"] = fileId;
 	};
 
 	function asc_CExternalReference() {

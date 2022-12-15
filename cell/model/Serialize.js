@@ -3492,15 +3492,15 @@
             var oThis = this;
 
             if (externalReference.referenceData) {
-                 if (externalReference.referenceData["fileId"]) {
+                 if (externalReference.referenceData["fileKey"]) {
                      oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalFileId);
                      oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                     oThis.memory.WriteString2(externalReference.referenceData["fileId"].replaceAll('\"',"'"));
+                     oThis.memory.WriteString2(externalReference.referenceData["fileKey"].replaceAll('\"',"'"));
                  }
-                 if (externalReference.referenceData["portalName"]) {
+                 if (externalReference.referenceData["instanceId"]) {
                      oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalPortalName);
                      oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                     oThis.memory.WriteString2(externalReference.referenceData["portalName"]);
+                     oThis.memory.WriteString2(externalReference.referenceData["instanceId"]);
                  }
              }
 
