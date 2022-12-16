@@ -11563,6 +11563,117 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), mode([1, 9, 5, 5, 9, 5, 6, 6]));
 
+		ws.getRange2("G2").setValue("1");
+		ws.getRange2("G3").setValue("1");
+		ws.getRange2("G4").setValue("2");
+		ws.getRange2("G5").setValue("2");
+		ws.getRange2("G6").setValue("3");
+
+		ws.getRange2("G7").setValue("test2");
+		ws.getRange2("G8").setValue("#N/A");
+		ws.getRange2("G9").setValue("TRUE");
+		ws.getRange2("G10").setValue("{1;1;2;2;3}");
+
+		oParser = new parserFormula("MODE(G2:G6)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(G2:G6)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 1);
+
+		// number
+		oParser = new parserFormula("MODE(12)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(12)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE(12)");
+
+		oParser = new parserFormula("MODE(-12)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(-12)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.MULT(-12)");
+
+		oParser = new parserFormula("MODE(0.0000000000002)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(0.0000000000002)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE(0.0000000000002)");
+
+		oParser = new parserFormula("MODE(0.0000000000002, 0.0000000000002, 0.0000000000003)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(0.0000000000002, 0.0000000000002, 0.0000000000003)");
+		assert.strictEqual(oParser.calculate().getValue(), 0.0000000000002, "Result MODE(0.0000000000002, 0.0000000000002, 0.0000000000003)");
+
+		oParser = new parserFormula("MODE(-0.0000000000002)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(-0.0000000000002)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE(-0.0000000000002)");
+
+		oParser = new parserFormula("MODE(-0.0000000000002, -0.0000000000002, -0.0000000000003)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(-0.0000000000002, -0.0000000000002, -0.0000000000003)");
+		assert.strictEqual(oParser.calculate().getValue(), -0.0000000000002, "Result MODE(-0.0000000000002, -0.0000000000002, -0.0000000000003)");
+
+		oParser = new parserFormula("MODE(999999999999999999999999999999)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(999999999999999999999999999999)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE(999999999999999999999999999999)");
+
+		oParser = new parserFormula("MODE(-999999999999999999999999999999)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(-999999999999999999999999999999)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE(-999999999999999999999999999999)");
+
+		oParser = new parserFormula("MODE(G6)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(3)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE(3)");
+
+		// string
+		oParser = new parserFormula("MODE(hello)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(hello)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE('hello')");
+
+		oParser = new parserFormula("MODE(G7)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(test2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE(test2)");
+
+		// bool
+		oParser = new parserFormula("MODE(TRUE)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE(TRUE)");
+
+		oParser = new parserFormula("MODE(FALSE)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE(FALSE)");
+
+		oParser = new parserFormula("MODE(G9)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE(TRUE)");
+
+		// array
+		oParser = new parserFormula("MODE({2;2;3})", "H1", ws);
+		assert.ok(oParser.parse(), "MODE({2;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result in MODE({2;2;3})");
+
+		oParser = new parserFormula("MODE({1;1;2;2;3})", "H1", ws);
+		assert.ok(oParser.parse(), "MODE({1;1;2;2;3})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 1, "Result in MODE({1;1;2;2;3})");
+
+		oParser = new parserFormula("MODE(G10)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE({1;1;2;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result in MODE({1;1;2;2;3})");
+
+		oParser = new parserFormula("MODE({TRUE;2;3})", "H1", ws);
+		assert.ok(oParser.parse(), "MODE({TRUE;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result in MODE({TRUE;2;3})");
+
+		// multiple args
+		oParser = new parserFormula("MODE(12,12,13,13)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(12,12,13,13)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 12, "Result in MODE(12,12,13,13)");
+
+		oParser = new parserFormula("MODE(1,2,3,4,5,6,7,8,9,10)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(1,2,3,4,5,6,7,8,9,10)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE(1,2,3,4,5,6,7,8,9,10)");
+
+		oParser = new parserFormula("MODE(G6,G6,G5)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(3,3,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "Result in [0,0] MODE(3,3,2)");
+
+		oParser = new parserFormula("MODE({1,2,3,4,5,6,7,8,9,10},10,10,11,11,11)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE(1,2,3,4,5,6,7,8,9,10)");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Result MODE({1,2,3,4,5,6,7,8,9,10},10,10,11,11,11)");
+
 		testArrayFormula2(assert, "mode", 1, 8, null, true);
 	});
 
@@ -11590,6 +11701,7 @@ $(function () {
 		ws.getRange2("G7").setValue("test2");
 		ws.getRange2("G8").setValue("#N/A");
 		ws.getRange2("G9").setValue("TRUE");
+		ws.getRange2("G10").setValue("{1;1;2;2;3}");
 
 		// base case
 		oParser = new parserFormula("MODE.MULT(F202:F213)", "F1", ws);
@@ -11610,31 +11722,39 @@ $(function () {
 		// number
 		oParser = new parserFormula("MODE.MULT(12)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(12)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 12, "Result MODE.MULT(12)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.MULT(12)");
 
 		oParser = new parserFormula("MODE.MULT(-12)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(-12)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), -12, "Result MODE.MULT(-12)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.MULT(-12)");
 
 		oParser = new parserFormula("MODE.MULT(0.0000000000002)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(0.0000000000002)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.0000000000002, "Result MODE.MULT(0.0000000000002)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.MULT(0.0000000000002)");
+
+		oParser = new parserFormula("MODE.MULT(0.0000000000002, 0.0000000000002, 0.0000000000003)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.MULT(0.0000000000002, 0.0000000000002, 0.0000000000003)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.0000000000002, "Result MODE.MULT(0.0000000000002, 0.0000000000002, 0.0000000000003)");
 
 		oParser = new parserFormula("MODE.MULT(-0.0000000000002)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(-0.0000000000002)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), -0.0000000000002, "Result MODE.MULT(-0.0000000000002)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.MULT(-0.0000000000002)");
+
+		oParser = new parserFormula("MODE.MULT(-0.0000000000002, -0.0000000000002, -0.0000000000003)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.MULT(-0.0000000000002, -0.0000000000002, -0.0000000000003)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), -0.0000000000002, "Result MODE.MULT(-0.0000000000002, -0.0000000000002, -0.0000000000003)");
 
 		oParser = new parserFormula("MODE.MULT(999999999999999999999999999999)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(999999999999999999999999999999)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 999999999999999999999999999999, "Result MODE.MULT(999999999999999999999999999999)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.MULT(999999999999999999999999999999)");
 
 		oParser = new parserFormula("MODE.MULT(-999999999999999999999999999999)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(-999999999999999999999999999999)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), -999999999999999999999999999999, "Result MODE.MULT(-999999999999999999999999999999)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.MULT(-999999999999999999999999999999)");
 
 		oParser = new parserFormula("MODE.MULT(G6)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(3)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 3, "Result MODE.MULT(3)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.MULT(3)");
 
 		// string
 		oParser = new parserFormula("MODE.MULT(hello)", "H1", ws);
@@ -11648,11 +11768,11 @@ $(function () {
 		// bool
 		oParser = new parserFormula("MODE.MULT(TRUE)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(TRUE)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, "Result MODE.MULT(TRUE)"); // should be #value
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE.MULT(TRUE)");
 
 		oParser = new parserFormula("MODE.MULT(FALSE)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(FALSE)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, "Result MODE.MULT(FALSE)"); // should be #VALUE!
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE.MULT(FALSE)");
 
 		oParser = new parserFormula("MODE.MULT(G9)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(TRUE)");
@@ -11674,11 +11794,39 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 2, "Result in [1,1] MODE.MULT({1;1;2;2;3})");
 		assert.strictEqual(array.getElementRowCol(3,3).getValue(), "", "Result in [3,3] MODE.MULT({1;1;2;2;3})");
 
-		// ms have different result
+		oParser = new parserFormula("MODE.MULT(G10)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.MULT({1;1;2;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result in MODE.MULT({1;1;2;2;3})");
+
 		oParser = new parserFormula("MODE.MULT({TRUE;2;3})", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT({TRUE;2;3})");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, "Result in [0,0] MODE.MULT({TRUE;2;3})");
-		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 3, "Result in [1,0] MODE.MULT({TRUE;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result in [0,0] MODE.MULT({TRUE;2;3})");
+
+		// date
+
+		// multiple args
+		oParser = new parserFormula("MODE.MULT(12,12,13,13)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.MULT(12,12,13,13)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 12, "Result in [0,0] MODE.MULT(12,12,13,13)");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 13, "Result in [1,0] MODE.MULT(12,12,13,13)");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 12, "Result in [0,1] MODE.MULT(12,12,13,13)");
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 13, "Result in [1,1] MODE.MULT(12,12,13,13)");
+		assert.strictEqual(array.getElementRowCol(2,2).getValue(), "", "Result in [2,2] MODE.MULT(12,12,13,13)");
+
+		oParser = new parserFormula("MODE.MULT(1,2,3,4,5,6,7,8,9,10)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.MULT(1,2,3,4,5,6,7,8,9,10)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.MULT(1,2,3,4,5,6,7,8,9,10)");
+
+		oParser = new parserFormula("MODE.MULT(G6,G6,G5)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.MULT(3,3,2)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 3, "Result in [0,0] MODE.MULT(3,3,2)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), "", "Result in [1,0] MODE.MULT(3,3,2)");
+
+		oParser = new parserFormula("MODE.MULT({1,2,3,4,5,6,7,8,9,10},10,10,11,11,11)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.MULT(1,2,3,4,5,6,7,8,9,10)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 10, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},10,10,11,11,11)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 11, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},10,10,11,11,11)");
 
 	});
 

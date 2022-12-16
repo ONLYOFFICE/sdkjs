@@ -8503,7 +8503,7 @@ function (window, undefined) {
 					nMaxIndex = i - 1;
 				}
 				if (nMax == 1 && nCount == 1) {
-					return new cError(cErrorType.wrong_value_type);
+					return new cError(cErrorType.not_available);
 				} else if (nMax == 1) {
 					return new cNumber(nOldVal);
 				} else {
@@ -8533,7 +8533,7 @@ function (window, undefined) {
 						arr0.push(elem);
 					}
 				});
-			} else if (cElementType.number === arg[j].type || cElementType.bool === arg[j].type) {
+			} else if (cElementType.number === arg[j].type) {
 				arr0.push(arg[j].tocNumber());
 			} else if (cElementType.string === arg[j].type) {
 				continue;
@@ -8606,8 +8606,12 @@ function (window, undefined) {
 					}
 				}
 
-				res.fillFromArray(A);
-				return res;
+				if(maxEntry === 1) {
+					return new cError(cErrorType.not_available);
+				} else {
+					res.fillFromArray(A);
+					return res;
+				}
 			}
 		}
 
@@ -8630,7 +8634,7 @@ function (window, undefined) {
 						arr0.push(elem);
 					}
 				});
-			} else if (cElementType.number === arg[j].type || cElementType.bool === arg[j].type) {
+			} else if (cElementType.number === arg[j].type) {
 				arr0.push(arg[j].tocNumber());
 			} else if (cElementType.string === arg[j].type) {
 				continue;
