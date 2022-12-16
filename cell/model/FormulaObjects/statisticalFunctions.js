@@ -8596,6 +8596,7 @@ function (window, undefined) {
 					if(!A[i]) {
 						A[i] = [];
 					}
+					// TODO fix column amount
 					for (let j = 0; j < x.length; j++) {
 						if(!A[i][j]) {
 							if(resultArr[i]) {
