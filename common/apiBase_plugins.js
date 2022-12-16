@@ -1450,7 +1450,7 @@
     * Installs a plugin by the URL to the plugin config.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [url] - The URL to the plugin config for installing.
+     * @param {object} [config] - The plugin config for installing.
      * @alias InstallPlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
@@ -1463,12 +1463,12 @@
     * Updates a plugin by the URL to the plugin config.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [url] - The URL to the plugin config for updating.
+     * @param {object} [config] - The plugin config for updating.
      * @alias UpdatePlugin
      * @returns {object} - An object with the result information.
-     * @since 7.2.0
+     * @since 7.3.0
      */
-	Api.prototype["pluginMethod_UpdatePlugin"] = function(url, guid)
+	Api.prototype["pluginMethod_UpdatePlugin"] = function(config)
 	{
 		return installPlugin(config, "Updated");
 	};
