@@ -11843,6 +11843,116 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 4);
 
+		ws.getRange2("G2").setValue("1");
+		ws.getRange2("G3").setValue("1");
+		ws.getRange2("G4").setValue("2");
+		ws.getRange2("G5").setValue("2");
+		ws.getRange2("G6").setValue("3");
+
+		ws.getRange2("G7").setValue("test2");
+		ws.getRange2("G8").setValue("#N/A");
+		ws.getRange2("G9").setValue("TRUE");
+		ws.getRange2("G10").setValue("{1;1;2;2;3}");
+
+		oParser = new parserFormula("MODE.SNGL(G2:G6)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(G2:G6)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 1);
+
+		// number
+		oParser = new parserFormula("MODE.SNGL(12)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(12)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.SNGL(12)");
+
+		oParser = new parserFormula("MODE.SNGL(-12)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(-12)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.SNGL(-12)");
+
+		oParser = new parserFormula("MODE.SNGL(0.0000000000002)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(0.0000000000002)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.SNGL(0.0000000000002)");
+
+		oParser = new parserFormula("MODE.SNGL(0.0000000000002, 0.0000000000002, 0.0000000000003)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(0.0000000000002, 0.0000000000002, 0.0000000000003)");
+		assert.strictEqual(oParser.calculate().getValue(), 0.0000000000002, "Result MODE.SNGL(0.0000000000002, 0.0000000000002, 0.0000000000003)");
+
+		oParser = new parserFormula("MODE.SNGL(-0.0000000000002)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(-0.0000000000002)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.SNGL(-0.0000000000002)");
+
+		oParser = new parserFormula("MODE.SNGL(-0.0000000000002, -0.0000000000002, -0.0000000000003)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(-0.0000000000002, -0.0000000000002, -0.0000000000003)");
+		assert.strictEqual(oParser.calculate().getValue(), -0.0000000000002, "Result MODE.SNGL(-0.0000000000002, -0.0000000000002, -0.0000000000003)");
+
+		oParser = new parserFormula("MODE.SNGL(999999999999999999999999999999)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(999999999999999999999999999999)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.SNGL(999999999999999999999999999999)");
+
+		oParser = new parserFormula("MODE.SNGL(-999999999999999999999999999999)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(-999999999999999999999999999999)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.SNGL(-999999999999999999999999999999)");
+
+		oParser = new parserFormula("MODE.SNGL(G6)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(3)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.SNGL(3)");
+
+		// string
+		oParser = new parserFormula("MODE.SNGL(hello)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(hello)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE.SNGL('hello')");
+
+		oParser = new parserFormula("MODE.SNGL(G7)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(test2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE.SNGL(test2)");
+
+		// bool
+		oParser = new parserFormula("MODE.SNGL(TRUE)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE.SNGL(TRUE)");
+
+		oParser = new parserFormula("MODE.SNGL(FALSE)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE.SNGL(FALSE)");
+
+		oParser = new parserFormula("MODE.SNGL(G9)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MODE.SNGL(TRUE)");
+
+		// array
+		oParser = new parserFormula("MODE.SNGL({2;2;3})", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL({2;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result in MODE.SNGL({2;2;3})");
+
+		oParser = new parserFormula("MODE.SNGL({1;1;2;2;3})", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL({1;1;2;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result in MODE.SNGL({1;1;2;2;3})");
+
+		oParser = new parserFormula("MODE.SNGL(G10)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL({1;1;2;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result in MODE.SNGL({1;1;2;2;3})");
+
+		oParser = new parserFormula("MODE.SNGL({TRUE;2;3})", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL({TRUE;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result in MODE.SNGL({TRUE;2;3})");
+
+		// multiple args
+		oParser = new parserFormula("MODE.SNGL(12,12,13,13)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(12,12,13,13)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 12, "Result in MODE.SNGL(12,12,13,13)");
+
+		oParser = new parserFormula("MODE.SNGL(1,2,3,4,5,6,7,8,9,10)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(1,2,3,4,5,6,7,8,9,10)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MODE.SNGL(1,2,3,4,5,6,7,8,9,10)");
+
+		oParser = new parserFormula("MODE.SNGL(G6,G6,G5)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(3,3,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "Result in MODE.SNGL(3,3,2)");
+
+		oParser = new parserFormula("MODE.SNGL({1,2,3,4,5,6,7,8,9,10},10,10,11,11,11)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.SNGL(1,2,3,4,5,6,7,8,9,10)");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Result MODE.SNGL({1,2,3,4,5,6,7,8,9,10},10,10,11,11,11)");
+
 	});
 
 	QUnit.test("Test: \"NUMBERVALUE\"", function (assert) {
