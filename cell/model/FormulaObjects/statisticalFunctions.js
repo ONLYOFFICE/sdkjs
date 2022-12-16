@@ -8592,20 +8592,13 @@ function (window, undefined) {
 					}
 				}
 
-				for (let i = 0; i < x.length; i++) {
+				for (let i = 0; i < resultArr.length; i++) {
 					if(!A[i]) {
 						A[i] = [];
 					}
-					// TODO fix column amount
-					for (let j = 0; j < x.length; j++) {
-						if(!A[i][j]) {
-							if(resultArr[i]) {
-								A[i][j] = resultArr[i];
-							}
-						}
-					}
+					A[i][0] = resultArr[i];
 				}
-
+				
 				if(maxEntry === 1) {
 					return new cError(cErrorType.not_available);
 				} else {

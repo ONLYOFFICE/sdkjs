@@ -11790,9 +11790,9 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result in [0,0] MODE.MULT({1;1;2;2;3})");
 		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, "Result in [1,0] MODE.MULT({1;1;2;2;3})");
 		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "", "Result in [2,0] MODE.MULT({1;1;2;2;3})");
-		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 1, "Result in [0,1] MODE.MULT({1;1;2;2;3})");
-		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 2, "Result in [1,1] MODE.MULT({1;1;2;2;3})");
-		assert.strictEqual(array.getElementRowCol(3,3).getValue(), "", "Result in [3,3] MODE.MULT({1;1;2;2;3})");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "", "Result in [0,1] MODE.MULT({1;1;2;2;3})");
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), "", "Result in [1,1] MODE.MULT({1;1;2;2;3})");
+		assert.strictEqual(array.getElementRowCol(3,3).getValue(), "#N/A", "Result in [3,3] MODE.MULT({1;1;2;2;3})");
 
 		oParser = new parserFormula("MODE.MULT(G10)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT({1;1;2;2;3})");
@@ -11810,9 +11810,9 @@ $(function () {
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 12, "Result in [0,0] MODE.MULT(12,12,13,13)");
 		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 13, "Result in [1,0] MODE.MULT(12,12,13,13)");
-		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 12, "Result in [0,1] MODE.MULT(12,12,13,13)");
-		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 13, "Result in [1,1] MODE.MULT(12,12,13,13)");
-		assert.strictEqual(array.getElementRowCol(2,2).getValue(), "", "Result in [2,2] MODE.MULT(12,12,13,13)");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "", "Result in [0,1] MODE.MULT(12,12,13,13)");
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), "", "Result in [1,1] MODE.MULT(12,12,13,13)");
+		assert.strictEqual(array.getElementRowCol(2,2).getValue(), "#N/A", "Result in [2,2] MODE.MULT(12,12,13,13)");
 
 		oParser = new parserFormula("MODE.MULT(1,2,3,4,5,6,7,8,9,10)", "H1", ws);
 		assert.ok(oParser.parse(), "MODE.MULT(1,2,3,4,5,6,7,8,9,10)");
