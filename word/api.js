@@ -13039,6 +13039,9 @@ background-repeat: no-repeat;\
 				} else {
 					//пробуем снять защиту
 					if (documentProtection && hash && (hash[0] === documentProtection.hashValue || hash[1] === documentProtection.hashValue)) {
+						salt = null;
+						alg = null;
+						spinCount = null;
 						callback(true);
 					} else {
 						//неверный пароль
