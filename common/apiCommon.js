@@ -192,6 +192,16 @@
 		return oCanvas;
 	}
 
+	function isValidJs(str) {
+		try {
+			eval("throw 0;" + str);
+		} catch(e) {
+			if (e === 0)
+				return true;
+		}
+		return false;
+	}
+
 	var c_oLicenseResult = {
 		Error         : 1,
 		Expired       : 2,
@@ -6807,6 +6817,7 @@
     window["AscCommon"].CWatermarkOnDraw = CWatermarkOnDraw;
     window["AscCommon"].isFileBuild = isFileBuild;
     window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
+    window["AscCommon"].isValidJs = isValidJs;
 
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;
 	window["Asc"]["CPlugin"] = window["Asc"].CPlugin = CPlugin;
