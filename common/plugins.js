@@ -1348,6 +1348,21 @@
 						};
 					};
 
+					function isValidJs(str) {
+						try {
+							eval("throw 0;" + str);
+						} catch(e) {
+							if (e === 0)
+								return true;
+						}
+						return false;
+					};
+
+					if ( !isValidJs(value) ) {
+						console.error('Invalid JS.');
+						return;
+					}
+
 					if (pluginData.getAttribute("interface"))
 					{
 						var _script = "(function(Api, window, alert, document, XMLHttpRequest){\r\n" + "\"use strict\"" + ";\r\n" + value + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
@@ -1357,16 +1372,8 @@
 					{
 						window.g_asc_plugins.api._beforeEvalCommand();
 						AscFonts.IsCheckSymbols = true;
-
 						var _script = "(function(Api, window, alert, document, XMLHttpRequest){\r\n" + "\"use strict\"" + ";\r\n" + value + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
-						try
-						{
-							eval(_script);
-						}
-						catch (err)
-						{
-							console.error(err);
-						}
+						eval(_script);
 						AscFonts.IsCheckSymbols = false;
 
 						if (pluginData.getAttribute("recalculate") == true)
