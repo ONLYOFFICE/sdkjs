@@ -8550,7 +8550,6 @@ function (window, undefined) {
 	 * @constructor
 	 * @extends {cPERCENTILE}
 	 */
-	//TODO разницы в работе функций cMODE_MULT и cMODE не нашёл, но в LO обработки немного разные. проверить!
 	function cMODE_MULT() {
 	}
 
@@ -8560,26 +8559,17 @@ function (window, undefined) {
 	cMODE_MULT.prototype.constructor = cMODE_MULT;
 	cMODE_MULT.prototype.name = 'MODE.MULT';
 	cMODE_MULT.prototype.isXLFN = true;
+	cMODE_MULT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cMODE_MULT.prototype.arrayIndexes = {0: 1};
 	cMODE_MULT.prototype.argumentsType = [[argType.array]];
 	cMODE_MULT.prototype.Calculate = function (arg) {
-		function modeMult(x) {
-			let medArr = [], t, i;
-
-			for (i = 0; i < x.length; i++) {
-				t = x[i].tocNumber();
-				if (cElementType.number === t.type) {
-					medArr.push(t.getValue())
-				}
-			}
-
-			medArr.sort(fSortAscending);
-
-			if (medArr.length < 1) {
+		function modeMult(numArray) {
+			if (numArray.length < 1) {
 				return new cError(cErrorType.wrong_value_type);
 			} else {
-				let resultArr = [], A = [], res = new cArray();
+				let resultArr = [], numArraySorted = [], A = [], res = new cArray();
 
-				const obj = medArr.reduce(function (acc, elem) {
+				const obj = numArray.reduce(function (acc, elem) {
 					acc[elem] = (acc[elem] || 0) + 1;
 					return acc;
 				}, {});
@@ -8588,15 +8578,23 @@ function (window, undefined) {
 
 				for (const [key, value] of Object.entries(obj)) {
 					if(!(value < maxEntry)) {
-						resultArr.push(new cNumber(key));
+						// resultArr.push(new cNumber(key));
+						resultArr.push(+key);
 					}
 				}
 
-				for (let i = 0; i < resultArr.length; i++) {
+				// sorting for
+				for (let i = 0; i < numArray.length; i++) {
+					if(resultArr.includes(numArray[i]) && !(numArraySorted.includes(numArray[i]))) {
+						numArraySorted.push(numArray[i]);
+					}
+				}
+
+				for (let i = 0; i < numArraySorted.length; i++) {
 					if(!A[i]) {
 						A[i] = [];
 					}
-					A[i][0] = resultArr[i];
+					A[i][0] = new cNumber(numArraySorted[i]);
 				}
 				
 				if(maxEntry === 1) {
@@ -8613,22 +8611,22 @@ function (window, undefined) {
 			if (cElementType.cellsRange === arg[j].type || cElementType.cellsRange3D === arg[j].type) {
 				arg[j].foreach2(function (elem) {
 					if (cElementType.number === elem.type) {
-						arr0.push(elem);
+						arr0.push(elem.toNumber());
 					}
 				});
 			} else if (cElementType.cell === arg[j].type || cElementType.cell3D === arg[j].type) {
 				let a = arg[j].getValue();
 				if (cElementType.number === a.type) {
-					arr0.push(a);
+					arr0.push(a.toNumber());
 				}
 			} else if (cElementType.array === arg[j].type) {
 				arg[j].foreach(function (elem) {
 					if (cElementType.number === elem.type) {
-						arr0.push(elem);
+						arr0.push(elem.toNumber());
 					}
 				});
 			} else if (cElementType.number === arg[j].type) {
-				arr0.push(arg[j].tocNumber());
+				arr0.push(arg[j].toNumber());
 			} else if (cElementType.string === arg[j].type) {
 				continue;
 			} else {
