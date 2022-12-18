@@ -5195,170 +5195,169 @@
 	cVDB.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cVDB.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number,
 		argType.number, argType.logical];
-	cVDB.prototype.Calculate = function (arg) {
-		var cost = arg[0], salvage = arg[1], life = arg[2], startPeriod = arg[3], endPeriod = arg[4],
-			factor = arg[5] && !(arg[5] instanceof cEmpty) ? arg[5] : new cNumber(2),
-			flag = arg[6] && !(arg[6] instanceof cEmpty) ? arg[6] : new cBool(false);
-
-		function getVDB(cost, fRest, life, life1, startPeriod, factor) {
-			var res = 0, loopEnd = end = Math.ceil(startPeriod), temp, sln = 0, rest = cost - fRest, sln1 = false, ddb;
-
-			for (var i = 1; i <= loopEnd; i++) {
-				if (!sln1) {
-
-					ddb = getDDB(cost, fRest, life, i, factor);
-					sln = rest / (life1 - (i - 1));
-
-					if (sln > ddb) {
-						temp = sln;
-						sln1 = true;
+		cVDB.prototype.Calculate = function (arg) {
+			let cost = arg[0], salvage = arg[1], life = arg[2], startPeriod = arg[3], endPeriod = arg[4],
+				factor = arg[5] && !(cElementType.empty === arg[5].type) ? arg[5] : new cNumber(2),
+				flag = arg[6] && !(cElementType.empty === arg[6].type) ? arg[6] : new cBool(false);
+	
+			function getVDB(cost, fRest, life, life1, startPeriod, factor) {
+				let res = 0, loopEnd = end = Math.ceil(startPeriod), temp, sln = 0, rest = cost - fRest, sln1 = false, ddb;
+	
+				for (let i = 1; i <= loopEnd; i++) {
+					if (!sln1) {
+	
+						ddb = getDDB(cost, fRest, life, i, factor);
+						sln = rest / (life1 - (i - 1));
+	
+						if (sln > ddb) {
+							temp = sln;
+							sln1 = true;
+						} else {
+							temp = ddb;
+							rest -= ddb;
+						}
+	
 					} else {
-						temp = ddb;
-						rest -= ddb;
+						temp = sln;
 					}
-
-				} else {
-					temp = sln;
+	
+					if (i == loopEnd) {
+						temp *= ( startPeriod + 1.0 - end );
+					}
+	
+					res += temp;
 				}
-
-				if (i == loopEnd) {
-					temp *= ( startPeriod + 1.0 - end );
-				}
-
-				res += temp;
+				return res;
 			}
-			return res;
-		}
-
-
-		if (cost instanceof cArea || cost instanceof cArea3D) {
-			cost = cost.cross(arguments[1]);
-		} else if (cost instanceof cArray) {
-			cost = cost.getElementRowCol(0, 0);
-		}
-
-		if (salvage instanceof cArea || salvage instanceof cArea3D) {
-			salvage = salvage.cross(arguments[1]);
-		} else if (salvage instanceof cArray) {
-			salvage = salvage.getElementRowCol(0, 0);
-		}
-
-		if (life instanceof cArea || life instanceof cArea3D) {
-			life = life.cross(arguments[1]);
-		} else if (life instanceof cArray) {
-			life = life.getElementRowCol(0, 0);
-		}
-
-		if (startPeriod instanceof cArea || startPeriod instanceof cArea3D) {
-			startPeriod = startPeriod.cross(arguments[1]);
-		} else if (startPeriod instanceof cArray) {
-			startPeriod = startPeriod.getElementRowCol(0, 0);
-		}
-
-		if (endPeriod instanceof cArea || endPeriod instanceof cArea3D) {
-			endPeriod = endPeriod.cross(arguments[1]);
-		} else if (endPeriod instanceof cArray) {
-			endPeriod = endPeriod.getElementRowCol(0, 0);
-		}
-
-		if (factor instanceof cArea || factor instanceof cArea3D) {
-			factor = factor.cross(arguments[1]);
-		} else if (factor instanceof cArray) {
-			factor = factor.getElementRowCol(0, 0);
-		}
-
-		if (flag instanceof cArea || flag instanceof cArea3D) {
-			flag = flag.cross(arguments[1]);
-		} else if (flag instanceof cArray) {
-			flag = flag.getElementRowCol(0, 0);
-		}
-
-		cost = cost.tocNumber();
-		salvage = salvage.tocNumber();
-		life = life.tocNumber();
-		startPeriod = startPeriod.tocNumber();
-		endPeriod = endPeriod.tocNumber();
-		factor = factor.tocNumber();
-		flag = flag.tocBool();
-
-		if (cost instanceof cError) {
-			return cost;
-		}
-		if (salvage instanceof cError) {
-			return salvage;
-		}
-		if (life instanceof cError) {
-			return life;
-		}
-		if (startPeriod instanceof cError) {
-			return startPeriod;
-		}
-		if (endPeriod instanceof cError) {
-			return endPeriod;
-		}
-		if (factor instanceof cError) {
-			return factor;
-		}
-		if (flag instanceof cError) {
-			return flag;
-		}
-		if (flag.type === cElementType.string) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		cost = cost.getValue();
-		salvage = salvage.getValue();
-		life = life.getValue();
-		startPeriod = startPeriod.getValue();
-		endPeriod = endPeriod.getValue();
-		factor = factor.getValue();
-		flag = flag.toBool();
-
-		if (life === 0 && startPeriod === 0 && endPeriod === 0) {
-			return new cError(cErrorType.division_by_zero);
-		}
-
-		if (cost < salvage || life < 0 || startPeriod < 0 || life < startPeriod || startPeriod > endPeriod ||
-			life < endPeriod || factor < 0) {
-			return new cError(cErrorType.not_numeric);
-		}
-
-		var start = Math.floor(startPeriod), end = Math.ceil(endPeriod);
-
-		var res = 0;
-		if (flag) {
-			for (var i = start + 1; i <= end; i++) {
-				var ddb = getDDB(cost, salvage, life, i, factor);
-
-				if (i == start + 1) {
-					ddb *= ( Math.min(endPeriod, start + 1) - startPeriod );
-				} else if (i == end) {
-					ddb *= ( endPeriod + 1 - end );
-				}
-
-				res += ddb;
+	
+			if (cElementType.cellsRange === cost.type || cElementType.cellsRange3D === cost.type) {
+				cost = cost.cross(arguments[1]);
+			} else if (cElementType.array === cost.type) {
+				cost = cost.getElementRowCol(0, 0);
 			}
-		} else {
-
-			var life1 = life;
-
-			if (!Math.approxEqual(startPeriod, Math.floor(startPeriod))) {
-				if (factor > 1) {
-					if (startPeriod > life / 2 || Math.approxEqual(startPeriod, life / 2)) {
-						var fPart = startPeriod - life / 2;
-						startPeriod = life / 2;
-						endPeriod -= fPart;
-						life1 += 1;
+	
+			if (cElementType.cellsRange === salvage.type || cElementType.cellsRange3D === salvage.type) {
+				salvage = salvage.cross(arguments[1]);
+			} else if (cElementType.array === salvage.type) {
+				salvage = salvage.getElementRowCol(0, 0);
+			}
+	
+			if (cElementType.cellsRange === life.type || cElementType.cellsRange3D === life.type) {
+				life = life.cross(arguments[1]);
+			} else if (cElementType.array === life.type) {
+				life = life.getElementRowCol(0, 0);
+			}
+	
+			if (cElementType.cellsRange === startPeriod.type || cElementType.cellsRange3D === startPeriod.type) {
+				startPeriod = startPeriod.cross(arguments[1]);
+			} else if (cElementType.array === startPeriod.type) {
+				startPeriod = startPeriod.getElementRowCol(0, 0);
+			}
+	
+			if (cElementType.cellsRange === endPeriod.type || cElementType.cellsRange3D === endPeriod.type) {
+				endPeriod = endPeriod.cross(arguments[1]);
+			} else if (cElementType.array === endPeriod.type) {
+				endPeriod = endPeriod.getElementRowCol(0, 0);
+			}
+	
+			if (cElementType.cellsRange === factor.type || cElementType.cellsRange3D === factor.type) {
+				factor = factor.cross(arguments[1]);
+			} else if (cElementType.array === factor.type) {
+				factor = factor.getElementRowCol(0, 0);
+			}
+	
+			if (cElementType.cellsRange === flag.type || cElementType.cellsRange3D === flag.type) {
+				flag = flag.cross(arguments[1]);
+			} else if (cElementType.array === flag.type) {
+				flag = flag.getElementRowCol(0, 0);
+			}
+	
+			cost = cost.tocNumber();
+			salvage = salvage.tocNumber();
+			life = life.tocNumber();
+			startPeriod = startPeriod.tocNumber();
+			endPeriod = endPeriod.tocNumber();
+			factor = factor.tocNumber();
+			flag = flag.tocBool();
+	
+			if (cElementType.error === cost.type) {
+				return cost;
+			}
+			if (cElementType.error === salvage.type) {
+				return salvage;
+			}
+			if (cElementType.error === life.type) {
+				return life;
+			}
+			if (cElementType.error === startPeriod.type) {
+				return startPeriod;
+			}
+			if (cElementType.error === endPeriod.type) {
+				return endPeriod;
+			}
+			if (cElementType.error === factor.type) {
+				return factor;
+			}
+			if (cElementType.error === flag.type) {
+				return flag;
+			}
+			if (flag.type === cElementType.string) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+	
+			cost = cost.getValue();
+			salvage = salvage.getValue();
+			life = life.getValue();
+			startPeriod = startPeriod.getValue();
+			endPeriod = endPeriod.getValue();
+			factor = factor.getValue();
+			flag = flag.toBool();
+	
+			if (life === 0 && startPeriod === 0 && endPeriod === 0) {
+				return new cError(cErrorType.division_by_zero);
+			}
+	
+			if (cost < 0 || salvage < 0 || life < 0 || startPeriod < 0 || endPeriod < 0 || factor < 0 || life < startPeriod || startPeriod > endPeriod ||
+				life < endPeriod) {
+				return new cError(cErrorType.not_numeric);
+			}
+	
+			let start = Math.floor(startPeriod), end = Math.ceil(endPeriod);
+	
+			let res = 0;
+			if (flag) {
+				for (let i = start + 1; i <= end; i++) {
+					let ddb = getDDB(cost, salvage, life, i, factor);
+	
+					if (i == start + 1) {
+						ddb *= ( Math.min(endPeriod, start + 1) - startPeriod );
+					} else if (i == end) {
+						ddb *= ( endPeriod + 1 - end );
+					}
+	
+					res += ddb;
+				}
+			} else {
+	
+				let life1 = life;
+	
+				if (!Math.approxEqual(startPeriod, Math.floor(startPeriod))) {
+					if (factor > 1) {
+						if (startPeriod > life / 2 || Math.approxEqual(startPeriod, life / 2)) {
+							let fPart = startPeriod - life / 2;
+							startPeriod = life / 2;
+							endPeriod -= fPart;
+							life1 += 1;
+						}
 					}
 				}
+	
+				cost -= getVDB(cost, salvage, life, life1, startPeriod, factor);
+				res = getVDB(cost, salvage, life, life - startPeriod, endPeriod - startPeriod, factor);
 			}
-
-			cost -= getVDB(cost, salvage, life, life1, startPeriod, factor);
-			res = getVDB(cost, salvage, life, life - startPeriod, endPeriod - startPeriod, factor);
-		}
-
-		return new cNumber(res);
-	};
+	
+			return new cNumber(res);
+		};
 
 	/**
 	 * @constructor
