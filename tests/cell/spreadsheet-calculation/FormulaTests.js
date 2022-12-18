@@ -11841,6 +11841,48 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 10, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},10,10,11,11,11)");
 		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 11, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},10,10,11,11,11)");
 
+		oParser = new parserFormula("MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10})", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 2, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 3, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 4, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(4,0).getValue(), 5, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(5,0).getValue(), 6, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(6,0).getValue(), 7, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(7,0).getValue(), 8, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(8,0).getValue(), 9, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(9,0).getValue(), 10, "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(10,0).getValue(), "", "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "", "Result MODE.MULT({1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10},{1,2,3,4,5,6,7,8,9,10}");
+
+		oParser = new parserFormula("MODE.MULT(G2:G4,G5:G6,G2:G6,G3:G5)", "H1", ws);
+		assert.ok(oParser.parse(), "MODE.MULT(1,1,2,2,3,1,1,2,2,3,1,2,2)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, "Result MODE.MULT(1,1,2,2,3,1,1,2,2,3,1,2,2)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "", "Result MODE.MULT(1,1,2,2,3,1,1,2,2,3,1,2,2)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), "", "Result MODE.MULT(1,1,2,2,3,1,1,2,2,3,1,2,2)");
+
+		// ctrl shift enter cases
+		oParser = new parserFormula("MODE.MULT(G2:G4,G5:G6,G2:G6,G3:G5)", "H1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("G2:G6").bbox);
+		assert.ok(oParser.parse(), "MODE.MULT(1,1,2,2,3,1,1,2,2,3,1,2,2)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result in [0,0] MODE.MULT(1,1,2,2,3,1,1,2,2,3,1,2,2)");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result in [1,0] MODE.MULT(1,1,2,2,3,1,1,2,2,3,1,2,2)");	// 2
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result in [0,1] MODE.MULT(1,1,2,2,3,1,1,2,2,3,1,2,2)");	// 2
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result in [1,1] MODE.MULT(1,1,2,2,3,1,1,2,2,3,1,2,2)");	// 2
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "#N/A", "Result in [2,2] MODE.MULT(1,1,2,2,3,1,1,2,2,3,1,2,2)");
+
+		oParser = new parserFormula("MODE.MULT({10;11;10;11})", "H1:K8", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("H1:K8").bbox);
+		assert.ok(oParser.parse(), "MODE.MULT({10;11;10;11})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 10, "Result in [0,0] MODE.MULT({10;11;10;11})");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 11, "Result in [1,0] MODE.MULT({10;11;10;11})");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result in [0,1] MODE.MULT({10;11;10;11})");	// 10
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result in [1,1] MODE.MULT({10;11;10;11})");	// 11
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "#N/A", "Result in [2,2] MODE.MULT({10;11;10;11})");
+
 	});
 
 	QUnit.test("Test: \"MODE.SNGL \"", function (assert) {

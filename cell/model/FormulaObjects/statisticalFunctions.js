@@ -8560,7 +8560,6 @@ function (window, undefined) {
 	cMODE_MULT.prototype.name = 'MODE.MULT';
 	cMODE_MULT.prototype.isXLFN = true;
 	cMODE_MULT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
-	cMODE_MULT.prototype.arrayIndexes = {0: 1};
 	cMODE_MULT.prototype.argumentsType = [[argType.array]];
 	cMODE_MULT.prototype.Calculate = function (arg) {
 		function modeMult(numArray) {
