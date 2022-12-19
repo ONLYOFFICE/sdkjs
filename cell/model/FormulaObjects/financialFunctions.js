@@ -5325,6 +5325,17 @@
 			let start = Math.floor(startPeriod), end = Math.ceil(endPeriod);
 	
 			let res = 0;
+
+			if (cost < salvage) {
+				if (startPeriod >= 1 || flag) {
+					return new cNumber(res);
+				} else {
+					let tempMinus = Math.abs(cost - salvage);
+					res = tempMinus * (endPeriod - startPeriod) > tempMinus ? tempMinus : tempMinus * (endPeriod - startPeriod);
+					return new cNumber(res);
+				}
+			}
+
 			if (flag) {
 				for (let i = start + 1; i <= end; i++) {
 					let ddb = getDDB(cost, salvage, life, i, factor);
