@@ -7314,16 +7314,16 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 				oThis.memory.WriteLong(oDocProtect.cryptAlgorithmSid);
 			});
 		}
-		if (oDocProtect.CryptAlgorithmType)
+		if (oDocProtect.cryptAlgorithmType)
 		{
 			this.bs.WriteItem(c_oDocProtect.CryptAlgorithmType, function () {
-				oThis.memory.WriteByte(oDocProtect.CryptAlgorithmType);
+				oThis.memory.WriteByte(oDocProtect.cryptAlgorithmType);
 			});
 		}
-		if (oDocProtect.CryptProvider)
+		if (oDocProtect.cryptProvider)
 		{
-			this.bs.WriteItem(c_oDocProtect.CryptProvider, function () {
-				oThis.memory.WriteString2(oDocProtect.CryptProvider);
+			this.bs.WriteItem(c_oDocProtect.cryptProvider, function () {
+				oThis.memory.WriteString2(oDocProtect.cryptProvider);
 			});
 		}
 		if (oDocProtect.cryptProviderType)

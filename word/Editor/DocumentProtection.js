@@ -153,6 +153,7 @@ CDocProtect.prototype.setFromInterface = function (oProps) {
 	this.spinCount = oProps.spinCount;
 	this.cryptAlgorithmSid = oProps.cryptAlgorithmSid;
 	this.hashValue = oProps.hashValue;
+	this.cryptAlgorithmType = oProps.cryptAlgorithmType;
 
 	this.enforcement = oProps.enforcement;
 };
