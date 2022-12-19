@@ -11889,8 +11889,8 @@ $(function () {
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result in [0,0] MODE.MULT({1,2,5,5,5,4,4,4,7,7,7,2,2,1,1}");
 		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result in [1,0] MODE.MULT({1,2,5,5,5,4,4,4,7,7,7,2,2,1,1}");
-		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 4, "Result in [2,0] MODE.MULT({1,2,5,5,5,4,4,4,7,7,7,2,2,1,1}");	// should be 5
-		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 5, "Result in [3,0] MODE.MULT({1,2,5,5,5,4,4,4,7,7,7,2,2,1,1}");	// should be 4
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 5, "Result in [2,0] MODE.MULT({1,2,5,5,5,4,4,4,7,7,7,2,2,1,1}");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 4, "Result in [3,0] MODE.MULT({1,2,5,5,5,4,4,4,7,7,7,2,2,1,1}");
 		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 7, "Result in [4,0] MODE.MULT({1,2,5,5,5,4,4,4,7,7,7,2,2,1,1}");
 		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "", "Result in [5,0] MODE.MULT({1,2,5,5,5,4,4,4,7,7,7,2,2,1,1}");
 

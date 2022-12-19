@@ -8566,46 +8566,25 @@ function (window, undefined) {
 			if (numArray.length < 1) {
 				return new cError(cErrorType.wrong_value_type);
 			} else {
-				let res = new cArray();
-
-				const obj = numArray.reduce(function (acc, elem) {
-					acc[elem] = (acc[elem] || 0) + 1;
-					return acc;
-				}, {});
-
-				const maxEntry = Math.max.apply(null, Object.values(obj));
-
-
-				/*for (const [key, value] of Object.entries(obj)) {
-					if(!(value < maxEntry)) {
-						// resultArr.push(new cNumber(key));
-						resultArr.push(+key);
-					}
+				let res = new cArray(), i, maxEntry = 0;
+				let elemMap = new Map();
+				for (i = 0; i < numArray.length; i++) {
+					let key = numArray[i];
+					let _elemIndex = elemMap.get(key);
+					let index = !_elemIndex ? 1 : _elemIndex + 1;
+					elemMap.set(key, index);
+					maxEntry = Math.max(maxEntry, index);
 				}
-
-				// sorting for
-				for (let i = 0; i < numArray.length; i++) {
-					if(resultArr.includes(numArray[i]) && !(numArraySorted.includes(numArray[i]))) {
-						numArraySorted.push(numArray[i]);
-					}
-				}
-
-				for (let i = 0; i < numArraySorted.length; i++) {
-					if(!A[i]) {
-						A[i] = [];
-					}
-					A[i][0] = new cNumber(numArraySorted[i]);
-				}*/
 
 				if(maxEntry === 1) {
 					return new cError(cErrorType.not_available);
 				} else {
-					for (let i in obj) {
-						if(!(obj[i] < maxEntry)) {
+					elemMap.forEach(function (_val, _key) {
+						if(!(_val < maxEntry)) {
 							res.addRow();
-							res.addElement(new cNumber(i));
+							res.addElement(new cNumber(_key));
 						}
-					}
+					});
 					return res;
 				}
 			}
