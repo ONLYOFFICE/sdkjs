@@ -8566,7 +8566,7 @@ function (window, undefined) {
 			if (numArray.length < 1) {
 				return new cError(cErrorType.wrong_value_type);
 			} else {
-				let resultArr = [], numArraySorted = [], A = [], res = new cArray();
+				let res = new cArray();
 
 				const obj = numArray.reduce(function (acc, elem) {
 					acc[elem] = (acc[elem] || 0) + 1;
@@ -8575,7 +8575,8 @@ function (window, undefined) {
 
 				const maxEntry = Math.max.apply(null, Object.values(obj));
 
-				for (const [key, value] of Object.entries(obj)) {
+
+				/*for (const [key, value] of Object.entries(obj)) {
 					if(!(value < maxEntry)) {
 						// resultArr.push(new cNumber(key));
 						resultArr.push(+key);
@@ -8594,12 +8595,17 @@ function (window, undefined) {
 						A[i] = [];
 					}
 					A[i][0] = new cNumber(numArraySorted[i]);
-				}
-				
+				}*/
+
 				if(maxEntry === 1) {
 					return new cError(cErrorType.not_available);
 				} else {
-					res.fillFromArray(A);
+					for (let i in obj) {
+						if(!(obj[i] < maxEntry)) {
+							res.addRow();
+							res.addElement(new cNumber(i));
+						}
+					}
 					return res;
 				}
 			}
