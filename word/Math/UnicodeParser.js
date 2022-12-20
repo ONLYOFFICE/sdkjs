@@ -1526,13 +1526,24 @@
 	};
 	CUnicodeParser.prototype.IsExpLiteral = function ()
 	{
-		return this.IsElementLiteral() || this.oLookahead.class === oLiteralNames.operatorLiteral[0];
+		return this.IsElementLiteral() || this.oLookahead.class === oLiteralNames.operatorLiteral[0] || this.oLookahead.data === "/"
 	};
 	CUnicodeParser.prototype.GetExpLiteral = function (isSkipSpaces)
 	{
 		const oExpLiteral = [];
 
 		while (this.IsExpLiteral()) {
+
+			if (this.oLookahead.data === "/")
+			{
+					this.EatToken(this.oLookahead.class)
+					oExpLiteral.push({
+						type: oLiteralNames.fractionLiteral[num],
+						up: null,
+						down: null,
+						fracType: null,
+					})
+			}
 
 			if (isSkipSpaces && this.oLookahead.class === oLiteralNames.spaceLiteral[0])
 				this.EatToken(oLiteralNames.spaceLiteral[0]);
