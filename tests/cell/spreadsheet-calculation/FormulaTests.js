@@ -16724,75 +16724,75 @@ $(function () {
 		// bug case
 		oParser = new parserFormula("VDB(100,300,8,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,300,8,0,1)");
-		assert.strictEqual(oParser.calculate().getValue(), -200, "Result of VDB(100,300,8,0,1)");	// -200
+		assert.strictEqual(oParser.calculate().getValue(), -200, "Result of VDB(100,300,8,0,1)");
 
 		oParser = new parserFormula("VDB(0,10000,8,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(0,10000,8,0,1)");
-		assert.strictEqual(oParser.calculate().getValue(), -10000, "Result of VDB(0,10000,8,0,1)");	// -10000
+		assert.strictEqual(oParser.calculate().getValue(), -10000, "Result of VDB(0,10000,8,0,1)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,1)");
-		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,1)");	// -100
+		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,1)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,0.75)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,0.75)");
-		assert.strictEqual(oParser.calculate().getValue(), -75, "Result of VDB(100,200,8,0,0.75)");	// -75
+		assert.strictEqual(oParser.calculate().getValue(), -75, "Result of VDB(100,200,8,0,0.75)");	
 
 		oParser = new parserFormula("VDB(100,200,8,0.70,0.75)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0.70,0.75)");
-		assert.strictEqual(oParser.calculate().getValue().toFixed() - 0, -5, "Result of VDB(100,200,8,0.70,0.75)");	// -5
+		assert.strictEqual(oParser.calculate().getValue().toFixed() - 0, -5, "Result of VDB(100,200,8,0.70,0.75)");
 
 		oParser = new parserFormula("VDB(100,200,8,1,0.75)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0.70,0.75)");
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of VDB(100,200,8,0.70,0.75)");	// #NUM!
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of VDB(100,200,8,0.70,0.75)");
 
 		oParser = new parserFormula("VDB(100,200,8,0.70,8)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0.70,8)");
-		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0.70,8)");	// -100?
+		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0.70,8)");
 
 		oParser = new parserFormula("VDB(100,200,8,1,2)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,1,2)");
-		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,1,2)");	// 0
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,1,2)");
 
 		oParser = new parserFormula("VDB(100,200,8,1,8)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,1,8)");
-		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,1,8)");	// 0
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,1,8)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,8,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,8,1)");
-		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,8,1)");	// -100
+		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,8,1)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,8,-1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,8,-1)");
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of VDB(100,200,8,0,8,-1)");	// #NUM!
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of VDB(100,200,8,0,8,-1)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,8,10000000)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,8,10000000)");
-		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,8,10000000)");	// -100
+		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,8,10000000)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,8,0.75)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,8,0.75)");
-		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,8,0.75)");	// -100
+		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,8,0.75)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,1,5,TRUE)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,1,5,TRUE)");
-		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,0,1,5,TRUE)");	// 0
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,0,1,5,TRUE)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,1,1,FALSE)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,1,1,FALSE)");
-		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,1,1,FALSE)");	// -100
+		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,1,1,FALSE)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,1,1,0)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,1,1,0)");
-		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,1,1,0)");	// -100
+		assert.strictEqual(oParser.calculate().getValue(), -100, "Result of VDB(100,200,8,0,1,1,0)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,1,1,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,1,1,1)");
-		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,0,1,1,1)");	// 0
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,0,1,1,1)");
 
 		oParser = new parserFormula("VDB(100,200,8,0,1,1,123)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100,200,8,0,1,1,123)");
-		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,0,1,1,123)");	// 0
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,0,1,1,123)");
 
 		// normal case
 		oParser = new parserFormula("VDB(100000,11000,8,0,1)", "A2", ws);
