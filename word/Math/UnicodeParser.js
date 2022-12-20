@@ -1526,7 +1526,7 @@
 	};
 	CUnicodeParser.prototype.IsExpLiteral = function ()
 	{
-		return this.IsElementLiteral() || this.oLookahead.class === oLiteralNames.operatorLiteral[0] || this.oLookahead.data === "/"
+		return this.IsElementLiteral() || this.oLookahead.class === oLiteralNames.operatorLiteral[0] || this.oLookahead.data === "/";
 	};
 	CUnicodeParser.prototype.GetExpLiteral = function (isSkipSpaces)
 	{
