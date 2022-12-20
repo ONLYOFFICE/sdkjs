@@ -5332,7 +5332,7 @@
 				} else {
 					let tempMinus = Math.abs(cost - salvage);
 					res = tempMinus * (endPeriod - startPeriod) > tempMinus ? tempMinus : tempMinus * (endPeriod - startPeriod);
-					return new cNumber(res);
+					return new cNumber(res * -1);
 				}
 			}
 
