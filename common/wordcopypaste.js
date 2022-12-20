@@ -5079,9 +5079,6 @@ PasteProcessor.prototype =
 		var fPasteHtmlWordCallback = function (fonts, images) {
 			var executePasteWord = function () {
 
-				oThis._Execute(node, {}, true, true, false);
-				oThis._AddNextPrevToContent(oThis.oDocument);
-
 				if (false === oThis.bNested) {
 					if (oThis.aNeedRecalcImgSize) {
 						for (var i = 0; i < oThis.aNeedRecalcImgSize.length; i++) {
@@ -5091,11 +5088,10 @@ PasteProcessor.prototype =
 								if (drawing && img) {
 									var imgSize = oThis._getImgSize(img);
 
-
-
-									if (imgSize) {
-										//drawing.GraphicObj.spPr.xfrm.setExtX(imgSize.width * 20);
-										//drawing.GraphicObj.spPr.xfrm.setExtY(imgSize.height * 20);
+									if (imgSize && drawing.Extent && (drawing.Extent.H !== imgSize.height || drawing.Extent.W !== imgSize.width)) {
+										drawing.setExtent(imgSize.width, imgSize.height);
+										drawing.GraphicObj.spPr.xfrm.setExtX(imgSize.width);
+										drawing.GraphicObj.spPr.xfrm.setExtY(imgSize.height);
 									}
 								}
 							} else {
