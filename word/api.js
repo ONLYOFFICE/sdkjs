@@ -13033,7 +13033,7 @@ background-repeat: no-repeat;\
 					props.cryptAlgorithmSid = alg;
 					props.hashValue = calculatedHashValue;
 					props.enforcement = props.edit !== Asc.c_oAscEDocProtect.None;
-					props.cryptAlgorithmType = cryptAlgorithmType;
+					props.cryptProviderType = cryptProviderType;
 
 					oDocument.SetProtection(props);
 					oDocument.UpdateInterface();
@@ -13049,7 +13049,7 @@ background-repeat: no-repeat;\
 		props.temporaryPassword = null;
 		let documentProtection = oDocument.Settings.DocumentProtection;
 		let salt, alg, spinCount;
-		let cryptAlgorithmType = ECryptProv.RsaAES;
+		let cryptProviderType = ECryptAlgType.TypeAny;
 		if (password !== "" && password != null) {
 			if (documentProtection) {
 				salt = documentProtection.saltValue;
@@ -13082,7 +13082,7 @@ background-repeat: no-repeat;\
 						salt = null;
 						alg = null;
 						spinCount = null;
-						cryptAlgorithmType = null;
+						cryptProviderType = null;
 						callback(true);
 					} else {
 						//неверный пароль
