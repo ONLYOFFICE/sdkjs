@@ -6405,7 +6405,7 @@ PasteProcessor.prototype =
 				}
 			} else {
 				var src = node.getAttribute("src");
-				if (src)
+				if (src && !this._checkSkipMath(node))
 					this.oImages[src] = src;
 			}
 		}
@@ -6474,6 +6474,26 @@ PasteProcessor.prototype =
 			}
 		}
 	},
+
+	_checkSkipMath: function (node) {
+		if (!this.pasteInExcel && this.apiEditor["asc_isSupportFeature"]("ooxml")) {
+			let parent = node && node.parentNode;
+			if (parent && parent.nodeName.toLowerCase() === "span") {
+				parent = parent && parent.parentNode;
+			}
+			if (parent && parent.nodeName.toLowerCase() === "p") {
+				for (let i = 0; i < parent.childNodes.length; i++) {
+					let child = parent.childNodes[i];
+					if (child && child.nodeName.toLowerCase() === "#comment" && -1 !== child.nodeValue.indexOf("[if gte msEquation 12]")) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	},
+
 	_getMsoCommentText: function (node) {
 		var res = "";
 		var bMsoAnnotation = false;
