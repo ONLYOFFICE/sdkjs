@@ -16861,11 +16861,11 @@ $(function () {
 
 		oParser = new parserFormula("VDB(100000,11000,8,0,1,,)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1,,)");
-		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,11000,8,0,1,,)");	// 11250
+		assert.strictEqual(oParser.calculate().getValue(), 11125, "Result of VDB(100000,11000,8,0,1,,)");
 
 		oParser = new parserFormula("VDB(100000,11000,8,0,1,)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1,)");
-		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,11000,8,0,1,)");	// 11250 
+		assert.strictEqual(oParser.calculate().getValue(), 11125, "Result of VDB(100000,11000,8,0,1,)");
 
 		oParser = new parserFormula("VDB(TRUE,11000,8,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(TRUE,11000,8,0,1)");
@@ -16917,7 +16917,11 @@ $(function () {
 
 		oParser = new parserFormula("VDB(100000,11000,9999999999999999999999999999,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,9999999999999999999999999999,0,1)");
-		assert.strictEqual(oParser.calculate().getValue(), 8.9e-24, "Result of VDB(100000,11000,9999999999999999999999999999,0,1)");	// 0 
+		assert.strictEqual(oParser.calculate().getValue(), 8.9e-24, "Result of VDB(100000,11000,9999999999999999999999999999,0,1)"); // 2E-23
+
+		oParser = new parserFormula("VDB(100000,11000,9999999999999999999999999999,0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,11000,9999999999999999999999999999,0,1)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 0, "Result of VDB(100000,11000,9999999999999999999999999999,0,1)");
 
 		oParser = new parserFormula("VDB(100000,11000,string,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,string,0,1)");
@@ -16938,15 +16942,15 @@ $(function () {
 
 		oParser = new parserFormula("VDB(100000,11000,8,{1},5)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,{1},5)");
-		assert.strictEqual(oParser.calculate().getValue(), 51269.53125, "Result of VDB(100000,11000,8,{1},5)");	// 0
+		assert.strictEqual(oParser.calculate().getValue(), 51269.53125, "Result of VDB(100000,11000,8,{1},5)");	// (return arr)
 
 		oParser = new parserFormula("VDB(100000,11000,8,{1;2;3;4;5},5)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,{1;2;3;4;5},5)");
-		assert.strictEqual(oParser.calculate().getValue(), 51269.53125, "Result of VDB(100000,11000,8,{1;2;3;4;5},5)");	// 0 (return arr)
+		assert.strictEqual(oParser.calculate().getValue(), 51269.53125, "Result of VDB(100000,11000,8,{1;2;3;4;5},5)");	// (return arr)
 
 		oParser = new parserFormula("VDB(100000,11000,8,{5;4;3;2;1},5)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,{5;4;3;2;1},5)");
-		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100000,11000,8,{5;4;3;2;1},5)");	// 0 (return arr)
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100000,11000,8,{5;4;3;2;1},5)");	// (return arr)
 
 		// arg[4]
 		oParser = new parserFormula("VDB(100000,11000,8,0,TRUE)", "A2", ws);
@@ -16967,11 +16971,11 @@ $(function () {
 
 		oParser = new parserFormula("VDB(100000,11000,8,0,{1;2;3;4;5})", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,{1;2;3;4;5})");
-		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,11000,8,0,{1;2;3;4;5})");	// 25000 (return arr)
+		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,11000,8,0,{1;2;3;4;5})");	// (return arr)
 
 		oParser = new parserFormula("VDB(100000,11000,8,0,{5;4;3;2;1})", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,{5;4;3;2;1})");
-		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 76269.53, "Result of VDB(100000,11000,8,0,{5;4;3;2;1})");	// 76269.53 (return arr)
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 76269.53, "Result of VDB(100000,11000,8,0,{5;4;3;2;1})");	// (return arr)
 
 		// arg[5]
 		oParser = new parserFormula("VDB(100000,11000,8,0,1,2)", "A2", ws);

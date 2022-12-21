@@ -5196,9 +5196,17 @@
 	cVDB.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number,
 		argType.number, argType.logical];
 		cVDB.prototype.Calculate = function (arg) {
-			let cost = arg[0], salvage = arg[1], life = arg[2], startPeriod = arg[3], endPeriod = arg[4],
-				factor = arg[5] && !(cElementType.empty === arg[5].type) ? arg[5] : new cNumber(2),
-				flag = arg[6] && !(cElementType.empty === arg[6].type) ? arg[6] : new cBool(false);
+			let cost = arg[0], salvage = arg[1], life = arg[2], startPeriod = arg[3], endPeriod = arg[4], factor,
+			flag = arg[6] && !(cElementType.empty === arg[6].type) ? arg[6] : new cBool(false);
+
+			// in ms factor = 0 if arg is empty and factor = 2 if undefined
+			if(arg[5] === undefined) {
+				factor = new cNumber(2);
+			} else if(cElementType.empty === arg[5].type) {
+				factor = new cNumber(0);
+			} else {
+				factor = arg[5];
+			}
 	
 			function getVDB(cost, fRest, life, life1, startPeriod, factor) {
 				let res = 0, loopEnd = end = Math.ceil(startPeriod), temp, sln = 0, rest = cost - fRest, sln1 = false, ddb;
