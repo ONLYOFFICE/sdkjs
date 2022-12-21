@@ -257,13 +257,13 @@
 				arrBracketContent = this.GetContentOfBracket()
 			}
 
-			if (this.oLookahead.class === undefined) {
-				this.RestoreState();
-				return {
-					type: oLiteralNames.charLiteral[num],
-					value: strLeftSymbol,
-				}
-			}
+			// if (this.oLookahead.class === undefined) {
+			// 	this.RestoreState();
+			// 	return {
+			// 		type: oLiteralNames.charLiteral[num],
+			// 		value: strLeftSymbol,
+			// 	}
+			// }
 
 			if (this.oLookahead.class === oLiteralNames.opCloseBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0]) {
 				strRightSymbol = this.EatToken(this.oLookahead.class).data;
@@ -326,18 +326,29 @@
 			this.oLookahead.data === "." || this.oLookahead.data === "," ||
 			this.IsOverUnderBarLiteral() ||
 			this.IsTextLiteral() ||
-			this.oLookahead.data === "/"
+			this.IsSpecialSymbol()
 		);
 	};
+	CLaTeXParser.prototype.IsSpecialSymbol = function ()
+	{
+		return this.oLookahead.data === "/" ||
+			this.oLookahead.data === "■" ||
+			this.oLookahead.data === "&" ||
+			this.oLookahead.data === "@"
+	}
+	CLaTeXParser.prototype.GetSpecialSymbol = function ()
+	{
+		return {
+			type: oLiteralNames.charLiteral[num],
+			value: this.EatToken(this.oLookahead.class).data
+		}
+	}
 	CLaTeXParser.prototype.GetElementLiteral = function ()
 	{
-		if  (this.oLookahead.data === "." || this.oLookahead.data === ",") {
-			return {
-				type: oLiteralNames.charLiteral[num],
-				value: this.EatToken(this.oLookahead.class).data
-			}
+		if  (this.IsSpecialSymbol()) {
+			return this.GetSpecialSymbol()
 		}
-		if (this.IsFractionLiteral()) {
+		else if (this.IsFractionLiteral()) {
 			return this.GetFractionLiteral();
 		}
 		else if (this.oLookahead.class === oLiteralNames.numberLiteral[0]) {
@@ -470,8 +481,7 @@
 	{
 		return (
 			this.oLookahead.class === "\\begin{equation}" ||
-			this.oLookahead.class === "\\end{equation}" ||
-			(this.oLookahead.data === "&" && !this.isNowMatrix)
+			this.oLookahead.class === "\\end{equation}"
 		)
 	};
 	CLaTeXParser.prototype.SkipLiteral = function ()
@@ -771,8 +781,9 @@
 	CLaTeXParser.prototype.IsMatrixLiteral = function ()
 	{
 		return (
-			this.oLookahead.class === oLiteralNames.matrixLiteral[0] || 
-			this.oLookahead.data === "█"
+			this.oLookahead.class === oLiteralNames.matrixLiteral[0] &&
+			this.oLookahead.data !== "█" &&
+			this.oLookahead.data !== "■"
 		)
 	};
 	CLaTeXParser.prototype.GetMatrixLiteral = function ()
@@ -805,8 +816,9 @@
 				strMatrixType = "‖";
 				break;
 			case "\\begin{array}":
-			case "■":
-			case "█":
+			case "\\begin{equation}":
+			// case "■":
+			// case "█":
 			default:
 				strMatrixType = "";
 		}
@@ -816,8 +828,9 @@
 		this.EatToken(this.oLookahead.class);
 		this.SkipFreeSpace();
 
-		if (this.oLookahead.data === "{") {
-			this.EatToken(this.oLookahead.class);
+		while (this.oLookahead.data === "[")
+		{
+			this.GetArguments(1);
 		}
 
 		let arrMatrixContent = [];

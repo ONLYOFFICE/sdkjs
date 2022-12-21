@@ -1532,8 +1532,8 @@
 	{
 		const oExpLiteral = [];
 
-		while (this.IsExpLiteral()) {
-
+		while (this.IsExpLiteral())
+		{
 			if (this.oLookahead.data === "/")
 			{
 					this.EatToken(this.oLookahead.class)

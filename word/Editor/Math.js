@@ -3691,7 +3691,6 @@ ParaMath.prototype.ConvertToUnicodeMath = function()
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 {
-    debugger
 	if (undefined === nInputType)
 	{
 		let oApi = Asc.editor || editor;
