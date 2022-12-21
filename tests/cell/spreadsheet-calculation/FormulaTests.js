@@ -16795,6 +16795,34 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(100,200,8,0,1,1,123)");
 
 		// normal case
+		oParser = new parserFormula("VDB(,11000,8,0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(,11000,8,0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), -11000, "Result of VDB(,11000,8,0,1)");
+
+		oParser = new parserFormula("VDB({1},11000,8,0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB({1},11000,8,0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), -10999, "Result of VDB({1},11000,8,0,1)");
+
+		oParser = new parserFormula("VDB({100000;15000},11000,8,0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB({100000;15000},11000,8,0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB({100000;15000},11000,8,0,1)");	// (return arr)
+
+		oParser = new parserFormula("VDB(100000,,8,0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,,8,0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,,8,0,1)");
+
+		oParser = new parserFormula("VDB(100000,{1},8,0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,{1},8,0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,{1},8,0,1)");
+
+		oParser = new parserFormula("VDB(100000,{1},8,1,5)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,{1},8,1,5)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 51269.53, "Result of VDB(100000,{1},8,1,5)");
+
+		oParser = new parserFormula("VDB(100000,{11000;25000;30000},8,0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,{11000;25000;30000},8,0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,{11000;25000;30000},8,0,1)");	// (return arr)
+
 		oParser = new parserFormula("VDB(100000,11000,8,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1)");
 		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,11000,8,0,1)");
@@ -16899,6 +16927,7 @@ $(function () {
 		assert.ok(oParser.parse(), "VDB(FALSE,FALSE,8,0,1)");
 		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(FALSE,FALSE,8,0,1)");
 
+		// arg[2]
 		oParser = new parserFormula("VDB(100000,11000,TRUE,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,TRUE,0,1)");
 		assert.strictEqual(oParser.calculate().getValue(), 89000, "Result of VDB(100000,11000,TRUE,0,1)");
@@ -16926,6 +16955,14 @@ $(function () {
 		oParser = new parserFormula("VDB(100000,11000,string,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,string,0,1)");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of VDB(100000,11000,string,0,1)");	
+
+		oParser = new parserFormula("VDB(100000,11000,{2},0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,11000,{2},0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 89000, "Result of VDB(100000,11000,{2},0,1)");	
+
+		oParser = new parserFormula("VDB(100000,11000,{9;5;8},0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,11000,{9;5;8},0,1)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 22222.22, "Result of VDB(100000,11000,{9;5;8},0,1)");	// (return arr)
 
 		// arg[3]
 		oParser = new parserFormula("VDB(100000,11000,8,TRUE,1)", "A2", ws);
@@ -17022,6 +17059,14 @@ $(function () {
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1,format)");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of VDB(100000,11000,8,0,1,format)");
 
+		oParser = new parserFormula("VDB(100000,11000,8,0,1,{1})", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1,{1})");
+		assert.strictEqual(oParser.calculate().getValue(), 12500, "Result of VDB(100000,11000,8,0,1,{1})");	
+
+		oParser = new parserFormula("VDB(100000,11000,8,0,1,{5;2;3;4;5})", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1,{5;2;3;4;5})");
+		assert.strictEqual(oParser.calculate().getValue(), 62500, "Result of VDB(100000,11000,8,0,1,{5;2;3;4;5})");	// (return arr)
+
 		// arg[6]
 		oParser = new parserFormula("VDB(100000,11000,8,0,1,2,0)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1,2,0)");
@@ -17067,10 +17112,30 @@ $(function () {
 		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1,2,format)");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of VDB(100000,11000,8,0,1,2,format)");
 
+		oParser = new parserFormula("VDB(100000,11000,8,0,1,2,{1})", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1,2,{1})");
+		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,11000,8,0,1,2,{1})");
+
+		oParser = new parserFormula("VDB(100000,11000,8,0,1,2,{-1})", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1,2,{-1})");
+		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,11000,8,0,1,2,{-1})");
+
+		oParser = new parserFormula("VDB(100000,11000,8,0,1,2,{5;2;3;4;5})", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(100000,11000,8,0,1,2,{5;2;3;4;5})");
+		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB(100000,11000,8,0,1,2,{5;2;3;4;5})");	// (return arr)
+
 		
 		oParser = new parserFormula("VDB(TRUE,TRUE,TRUE,TRUE,TRUE)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(TRUE,TRUE,TRUE,TRUE,TRUE)");
 		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of VDB(TRUE,TRUE,TRUE,TRUE,TRUE)");
+
+		oParser = new parserFormula("VDB({100000},{11000},{8},{0},{1},{2},{-1})", "A2", ws);
+		assert.ok(oParser.parse(), "VDB({100000},{11000},{8},{0},{1},{2},{-1})");
+		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB({100000},{11000},{8},{0},{1},{2},{-1})");
+
+		oParser = new parserFormula("VDB({100000,25000},{11000,25000},{8,5,8},{0,1,2},{1,0,-1},{2,1,3},{-1,0,1})", "A2", ws);
+		assert.ok(oParser.parse(), "VDB({100000,25000},{11000,25000},{8,5,8},{0,1,2},{1,0,-1},{2,1,3},{-1,0,1})");
+		assert.strictEqual(oParser.calculate().getValue(), 25000, "Result of VDB({100000,25000},{11000,25000},{8,5,8},{0,1,2},{1,0,-1},{2,1,3},{-1,0,1})");	// (return arr [25000, #NUM!, #N/A])
 
 
 		testArrayFormula2(assert, "VDB", 5, 7);
