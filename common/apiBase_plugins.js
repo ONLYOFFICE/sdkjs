@@ -70,8 +70,8 @@
      * * **desktop** - the desktop editor data,
      * * **destop-external** - the main page data of the desktop app (system messages),
      * * **none** - no data will be send to the plugin from the editor.
-	 * * **sign** - plugin for keychain.
-	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none")} initDataType
+	 * * **sign** - the sign for the keychain plugin.
+	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
      */
 
     /**
@@ -392,7 +392,7 @@
     };
 
 	/**
-	 * Returns all VBA macros into a document.
+	 * Returns all VBA macros from the document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias GetVBAMacros

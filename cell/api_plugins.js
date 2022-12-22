@@ -44,17 +44,22 @@
     var Api = window["Asc"]["spreadsheet_api"];
 
     /**
+	 * @typedef {Object} CommentData
+	 * The comment data.
+	 * @property {string} UserName - The comment author.
+	 * @property {string} Text - The comment text.
+	 * @property {string} Time - The time when the comment was posted (in milliseconds).
+	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
+	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
+	 */
+
+	/**
 	 * Adds a comment to the workbook.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @alias AddComment
-	 * @param {object}  oCommentData - An object which contains the comment data
-	 * @param {string}  oCommentData.UserName - the comment author
-	 * @param {string}  oCommentData.Text - the comment text
-	 * @param {string}  oCommentData.Time - the comment time
-	 * @param {boolean}  oCommentData.Solved - is the comment resolved
-	 * @param {undefined | array} oCommentData.Replies - an array of replies, they are in the same format as oCommentData
-	 * @return {string | null} - returns null if the comment cannot be added.
+	 * @param {CommentData}  oCommentData - An object which contains the comment data.
+	 * @return {string | null} - The comment ID in the string format or null if the comment cannot be added.
 	 * @since 7.3.0
 	 */
 	Api.prototype["pluginMethod_AddComment"] = function(oCommentData)
@@ -79,7 +84,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @alias ChangeComment
 	 * @param {string} sId - The comment ID.
-	 * @param {object} oCommentData - An object which contains the new comment data: "comment" - the comment text, "author" - the comment author.
+	 * @param {CommentData} oCommentData - An object which contains the new comment data.
 	 * @return {boolean}
 	 * @since 7.3.0
 	 */
@@ -104,7 +109,6 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @alias RemoveComments
-	 * @return {undefined}
 	 * @since 7.3.0
 	 */
 	Api.prototype["pluginMethod_RemoveComments"] = function(arrIds)
