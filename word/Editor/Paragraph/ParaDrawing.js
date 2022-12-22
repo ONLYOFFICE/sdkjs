@@ -1289,6 +1289,10 @@ ParaDrawing.prototype.GetScaleCoefficient = function ()
 
 	return 1;
 };
+ParaDrawing.prototype.createPlaceholderControl = function (arrObjects)
+{
+	this.GraphicObj && this.GraphicObj.createPlaceholderControl(arrObjects);
+};
 ParaDrawing.prototype.IsNeedSaveRecalculateObject = function()
 {
 	return true;

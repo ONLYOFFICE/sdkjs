@@ -30,7 +30,8 @@
 			"slide/api_plugins.js",
 			"common/spell/spell.js",
 			"common/zlib/zlib.js",
-			"word/Editor/Table/TableLook.js"
+			"word/Editor/Table/TableLook.js",
+			"cell/utils/utils.js"
 		],
 		"common": [
 			"common/api/actionOnTimer.js",
@@ -39,6 +40,7 @@
 			"common/api/addTextSettings.js",
 			"common/api/autoCorrectSettings.js",
 			"common/api/firstLetterExceptions.js",
+			"common/api/restrictionSettings.js",
 
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
@@ -57,6 +59,7 @@
 
 			"common/stringserialize.js",
 			"common/random.js",
+			"common/keychainstorage.js",
 
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
@@ -122,7 +125,6 @@
 			"common/wordcopypaste.js",
 			"common/intervalTree.js",
 
-			"cell/utils/utils.js",
 			"cell/model/WorkbookElems.js",
 			"cell/model/Workbook.js",
 			"cell/model/Serialize.js",
@@ -147,6 +149,7 @@
 			"word/Editor/Numbering/Numbering.js",
 			"word/Drawing/GraphicsEvents.js",
 			"word/Drawing/Rulers.js",
+			"word/Drawing/printpreview.js",
 			"word/Editor/DocumentContentElementBase.js",
 			"word/Editor/Table.js",
 			"word/Editor/Table/TableChanges.js",

@@ -40,6 +40,7 @@
     RandObj.prototype.buffer = function() { return this.buf; };
     RandObj.prototype.base64 = function() { return AscCommon.Base64.encode(this.buf); };
     RandObj.prototype.hex = function() { return AscCommon.Hex.encode(this.buf); };
+    RandObj.prototype.base58 = function() { return AscCommon.Base58.encode(this.buf); };
 
     AscCommon.randomBytes = function(count)
     {

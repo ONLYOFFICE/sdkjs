@@ -531,10 +531,13 @@ ParaRun.prototype.GetText = function(oText)
 	return oText.Text;
 };
 
-ParaRun.prototype.GetTextOfElement = function(isLaTeX) {
+ParaRun.prototype.GetTextOfElement = function(isLaTeX)
+{
     var str = "";
 	for (var i = 0; i < this.Content.length; i++) {
-		str += this.Content[i].GetTextOfElement(isLaTeX);
+		if (this.Content[i]) {
+			str += this.Content[i].GetTextOfElement(isLaTeX);
+		}
 	}
 	//???
 	if (str === 'mod') {
@@ -542,6 +545,88 @@ ParaRun.prototype.GetTextOfElement = function(isLaTeX) {
 	}
 	return str;
 };
+ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTeX)
+{
+	const arrBracketsInfo = [];
+
+	for (let intCounter = 0; intCounter < this.Content.length; intCounter++)
+	{
+		let strContent = String.fromCharCode(this.Content[intCounter].value);
+		let intCount = null;
+
+		if ((strContent === "{" || strContent === "}") && isLaTeX)
+			continue;
+
+		if (AscMath.MathLiterals.lBrackets.IsIncludes(strContent))
+			intCount = -1;
+		else if (AscMath.MathLiterals.rBrackets.IsIncludes(strContent))
+			intCount = 1;
+		else if (AscMath.MathLiterals.lrBrackets.IsIncludes(strContent))
+			intCount = 0;
+		else if (AscMath.MathLiterals.operators.IsIncludes(strContent))
+			intCount = 2;
+
+		if (intCount !== null)
+			arrBracketsInfo.push([intCounter, intCount]);
+	}
+
+	return arrBracketsInfo;
+}
+ParaRun.prototype.MathAutocorrection_GetOperatorInfo = function ()
+{
+	const arrOperatorContent = [];
+
+	for (let intCounter = 0; intCounter < this.Content.length; intCounter++)
+	{
+		let strContent = String.fromCharCode(this.Content[intCounter].value);
+
+		if (AscMath.MathLiterals.operators.IsIncludes(strContent))
+			arrOperatorContent.push(intCounter);
+	}
+
+	return arrOperatorContent;
+}
+
+ParaRun.prototype.MathAutocorrection_GetSlashesInfo = function ()
+{
+	const arrOperatorContent = [];
+
+	for (let intCounter = 0; intCounter < this.Content.length; intCounter++)
+	{
+		let strContent = String.fromCharCode(this.Content[intCounter].value);
+
+		if (strContent === "\\")
+			arrOperatorContent.push(intCounter);
+	}
+
+	return arrOperatorContent;
+}
+
+ParaRun.prototype.MathAutocorrection_IsLastElement = function(type)
+{
+	if (this.Content.length === 0)
+		return false;
+
+	let oLastElement = this.Content[this.Content.length - 1];
+	let strLastElement = String.fromCharCode(oLastElement.value);
+	return type.IsIncludes(strLastElement);
+}
+
+ParaRun.prototype.MathAutoCorrection_DeleteLastSpace = function()
+{
+	if (this.Content.length === 0)
+		return false;
+
+	let oLastElement = this.Content[this.Content.length - 1];
+	if (oLastElement.value === 32)
+	{
+		this.Remove_FromContent(this.Content.length - 1, 1);
+		return true;
+	}
+
+	return false;
+}
+
 
 // Проверяем пустой ли ран
 ParaRun.prototype.Is_Empty = function(oProps)

@@ -214,10 +214,21 @@ NullState.prototype =
 
         this.startTargetTextObject = AscFormat.getTargetTextObject(this.drawingObjects);
         var start_target_doc_content, end_target_doc_content;
+        let nStartPage;
         if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
         {
             this.drawingObjects.setStartTrackPos(x, y, pageIndex);
             start_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
+            nStartPage = start_target_doc_content && start_target_doc_content.Get_AbsolutePage();
+        }
+        const oThis = this;
+        const fRecalculatePages = function() {
+            oThis.drawingObjects.checkChartTextSelection(true);
+            oThis.drawingObjects.drawingDocument.OnRecalculatePage( pageIndex, oThis.drawingObjects.document.Pages[pageIndex] );
+            if (AscFormat.isRealNumber(nStartPage) && pageIndex !== nStartPage) {
+                oThis.drawingObjects.drawingDocument.OnRecalculatePage(nStartPage, oThis.drawingObjects.document.Pages[nStartPage]);
+            }
+            oThis.drawingObjects.drawingDocument.OnEndRecalculate( false, true );
         }
 
         if(selection.wrapPolygonSelection)
@@ -281,9 +292,7 @@ NullState.prototype =
                     if((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                     {
 
-                        this.drawingObjects.checkChartTextSelection(true);
-                        this.drawingObjects.drawingDocument.OnRecalculatePage( pageIndex, this.drawingObjects.document.Pages[pageIndex] );
-                        this.drawingObjects.drawingDocument.OnEndRecalculate( false, true );
+                        fRecalculatePages();
                     }
                 }
                 return ret;
@@ -299,9 +308,7 @@ NullState.prototype =
                         if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                         {
 
-                            this.drawingObjects.checkChartTextSelection(true);
-                            this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-                            this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+                            fRecalculatePages();
                         }
                     }
                     return ret;
@@ -322,10 +329,7 @@ NullState.prototype =
                     end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
                     if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                     {
-
-                        this.drawingObjects.checkChartTextSelection(true);
-                        this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-                        this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+                        fRecalculatePages();
                     }
                 }
                 return ret;
@@ -343,9 +347,7 @@ NullState.prototype =
                     end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
                     if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                     {
-                        this.drawingObjects.checkChartTextSelection(true);
-                        this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-                        this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+                        fRecalculatePages();
                     }
                 }
                 return ret;
@@ -365,9 +367,7 @@ NullState.prototype =
                     end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
                     if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                     {
-                        this.drawingObjects.checkChartTextSelection(true);
-                        this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-                        this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+                        fRecalculatePages();
                     }
                 }
                 return ret;
@@ -383,9 +383,7 @@ NullState.prototype =
                         end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
                         if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content)) {
 
-                            this.drawingObjects.checkChartTextSelection(true);
-                            this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-                            this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+                            fRecalculatePages();
                         }
                     }
                     return ret;
@@ -394,9 +392,7 @@ NullState.prototype =
         }
         if(start_target_doc_content)
         {
-            this.drawingObjects.checkChartTextSelection(true);
-            this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-            this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+            fRecalculatePages();
         }
         return null;
 

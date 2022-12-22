@@ -305,29 +305,19 @@ function (window, undefined) {
 			matrix = [[arg1]];
 		}
 
-		var dimension = arg1.getDimensions();
-		let res;
-		for (let i = 1; i < arg.length; i++) {
-			let _arg = arg[i];
-
-			if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type) {
-				//_arg = _arg.getValue2(0,0);
-				return new cError(cErrorType.wrong_value_type);
-			} else if (cElementType.array === _arg.type) {
-				//_arg = _arg.getElementRowCol(0, 0);
-				return new cError(cErrorType.wrong_value_type);
+		let pushData = function (_argInside) {
+			_argInside = _argInside.tocNumber();
+			if (_argInside.type === cElementType.error) {
+				error = _argInside;
+				return false;
 			}
-
-			_arg = _arg.tocNumber();
-			if (_arg.type === cElementType.error) {
-				return _arg;
-			}
-			_arg = _arg.toNumber();
-			let reverse = _arg < 0;
-			_arg = Math.abs(_arg);
-			_arg = parseInt(_arg);
-			if (_arg < 1 || (_arg > dimension.col && byCol) || (_arg > dimension.row && !byCol)) {
-				return new cError(cErrorType.wrong_value_type);
+			_argInside = _argInside.toNumber();
+			let reverse = _argInside < 0;
+			_argInside = Math.abs(_argInside);
+			_argInside = parseInt(_argInside);
+			if (_argInside < 1 || (_argInside > dimension.col && byCol) || (_argInside > dimension.row && !byCol)) {
+				error = new cError(cErrorType.wrong_value_type);
+				return false;
 			}
 
 			if (!res) {
@@ -335,9 +325,44 @@ function (window, undefined) {
 			}
 
 			if (byCol) {
-				res.pushCol(matrix, reverse ? dimension.col - (_arg - 1) - 1 : _arg - 1);
+				res.pushCol(matrix, reverse ? dimension.col - (_argInside - 1) - 1 : _argInside - 1);
 			} else {
-				res.pushRow(matrix, reverse ? dimension.row - (_arg - 1) - 1 : _arg - 1);
+				res.pushRow(matrix, reverse ? dimension.row - (_argInside - 1) - 1 : _argInside - 1);
+			}
+
+			return true;
+		};
+
+		let dimension = arg1.getDimensions();
+		let res;
+		let error;
+		for (let i = 1; i < arg.length; i++) {
+			let _arg = arg[i];
+
+			if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type || cElementType.array === _arg.type) {
+				let argDimensions = _arg.getDimensions();
+				if (argDimensions.col === 1 || argDimensions.row === 1) {
+					let byCol = argDimensions.row > 1;
+					for (let j = 0; j < Math.max(argDimensions.col, argDimensions.row); j++) {
+						if (cElementType.array === _arg.type) {
+							if (!pushData(_arg.getElementRowCol(!byCol ? 0 : j, !byCol ? j : 0))) {
+								return error;
+							}
+						} else {
+							if (!pushData(_arg.getValue2(!byCol ? 0 : j, !byCol ? j : 0))) {
+								return error;
+							}
+						}
+					}
+				} else {
+					return new cError(cErrorType.wrong_value_type);
+				}
+
+				continue;
+			}
+
+			if (!pushData(_arg)) {
+				return error;
 			}
 		}
 

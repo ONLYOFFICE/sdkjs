@@ -246,9 +246,30 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl, oPr)
 	oContentControl.SetPlaceholder(this.private_CopyPlaceholder(oPr));
 	oContentControl.SetContentControlEquation(this.Pr.Equation);
 	oContentControl.SetContentControlTemporary(this.Pr.Temporary);
-
+	
 	if (undefined !== this.Pr.FormPr)
-		oContentControl.SetFormPr(this.Pr.FormPr);
+	{
+		let formPr = this.Pr.FormPr.Copy();
+		
+		let fieldMaster   = formPr.GetFieldMaster();
+		let logicDocument = this.GetLogicDocument();
+		let oform         = logicDocument ? logicDocument.GetOFormDocument() : null;
+		
+		// Если у нас не начато действие, то мы не должны создавать или регистрировать
+		// никакие поля
+		if (oform && fieldMaster && logicDocument.IsActionStarted())
+		{
+			let newFieldMaster = oform.getFormat().createFieldMaster();
+			fieldMaster.copyTo(newFieldMaster);
+			formPr.SetFieldMaster(newFieldMaster);
+		}
+		else
+		{
+			formPr.SetFieldMaster(undefined);
+		}
+		
+		oContentControl.SetFormPr(formPr);
+	}
 
 	if (undefined !== this.Pr.TextForm)
 		oContentControl.SetTextFormPr(this.Pr.TextForm);

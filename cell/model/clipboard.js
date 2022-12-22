@@ -53,7 +53,7 @@
 		var c_oSpecialPasteProps = Asc.c_oSpecialPasteProps;
 
 		var c_MaxStringLength = 536870888;
-		
+		var notSupportExternalReferenceFileFormat = {"csv": 1};
 
 		function number2color(n) {
 			if( typeof(n)==="string" && n.indexOf("rgb")>-1)
@@ -609,8 +609,10 @@
 
 					//для внешних данных необходимо протащить docInfo->ReferenceData
 					//пока беру данные поля, поскольку для копипаста они не используются. по названию не особо совпадают - пересмотреть
-					wb.Core.contentStatus = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["fileId"] : null;
-					wb.Core.category = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["portalName"] : null;
+					if (wb.oApi && wb.oApi.DocInfo && !notSupportExternalReferenceFileFormat[wb.oApi.DocInfo.Format]) {
+						wb.Core.contentStatus = wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["fileKey"] : null;
+						wb.Core.category = wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["instanceId"] : null;
+					}
 
 					wb.Core.title = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.Title ? wb.oApi.DocInfo.Title : null;
 
@@ -2310,7 +2312,7 @@
 
 			_insertImagesFromBinary: function (ws, data, isIntoShape, needShowSpecialProps, savePosition, pastedWb) {
 				var activeCell = ws.model.selectionRange.activeCell;
-				var curCol, drawingObject, curRow, startCol, startRow, xfrm, aImagesSync = [], activeRow, activeCol, tempArr, offX, offY, rot;
+				var curCol, drawingObject, curRow, startCol, startRow, xfrm, aImagesSync = [], activeRow, activeCol, offX, offY, rot;
 
 				//отдельная обработка для вставки одной таблички из презентаций
 				drawingObject = data.Drawings[0];
@@ -2399,6 +2401,7 @@
 					var oCopyPr = new AscFormat.CCopyObjectProperties();
 					oCopyPr.idMap = oIdMap;
 					ws.objectRender.controller.resetSelection();
+					let aDrawings = [];
 					for (i = 0; i < data.Drawings.length; i++) {
 
 						if (slicersNames && data.Drawings[i].graphicObject.getObjectType() === AscDFH.historyitem_type_SlicerView) {
@@ -2447,25 +2450,28 @@
 						drawingObject.graphicObject.setWorksheet(ws.model);
 						xfrm.setOffX(curCol);
 						xfrm.setOffY(curRow);
-						drawingObject.graphicObject.addToDrawingObjects();
-						drawingObject.graphicObject.checkDrawingBaseCoords();
-						drawingObject.graphicObject.recalculate();
-						drawingObject.graphicObject.select(ws.objectRender.controller, 0);
-
-						tempArr = [];
-						drawingObject.graphicObject.getAllRasterImages(tempArr);
-
-						if (tempArr.length) {
-							for (var n = 0; n < tempArr.length; n++) {
-								aImagesSync.push(tempArr[n]);
-							}
-						}
+						aDrawings.push(drawingObject.graphicObject);
+						drawingObject.graphicObject.getAllRasterImages(aImagesSync);
 					}
+
+					let dShift = ws.objectRender.controller.getDrawingsPasteShift(aDrawings);
+					for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+						let oDrawing = aDrawings[nDrawing];
+						if(dShift > 0) {
+							oDrawing.shiftXfrm(dShift, dShift);
+						}
+						oDrawing.addToDrawingObjects();
+						oDrawing.checkDrawingBaseCoords();
+						oDrawing.recalculate();
+						oDrawing.select(ws.objectRender.controller, 0);
+					}
+
 					AscFormat.fResetConnectorsIds(aCopies, oIdMap);
 					if (aImagesSync.length > 0) {
 						window["Asc"]["editor"].ImageLoader.LoadDocumentImages(aImagesSync);
 					}
 					ws.objectRender.controller.updateSelectionState();
+					ws.objectRender.controller.updatePlaceholders();
 					ws.objectRender.showDrawingObjects();
 
 					if (needShowSpecialProps) {
@@ -2538,6 +2544,7 @@
 				var api = window["Asc"]["editor"];
 				var addImagesFromWord = data.props.addImagesFromWord;
 				//определяем стартовую позицию, если изображений несколько вставляется
+				let aDrawings = [];
 				for (var i = 0; i < addImagesFromWord.length; i++) {
 					if (para_Math === addImagesFromWord[i].image.Type) {
 						graphicObject = ws.objectRender.createShapeAndInsertContent(addImagesFromWord[i].image);
@@ -2629,12 +2636,19 @@
 						graphicObject.checkDrawingBaseCoords();
 						graphicObject.checkExtentsByDocContent();
 					}
-					graphicObject.addToDrawingObjects();
-					graphicObject.checkDrawingBaseCoords();
-					graphicObject.recalculate();
-					if (0 === data.content.length) {
-						graphicObject.select(ws.objectRender.controller, 0);
+					aDrawings.push(graphicObject);
+				}
+				let dShift = ws.objectRender.controller.getDrawingsPasteShift(aDrawings);
+				ws.objectRender.controller.resetSelection();
+				for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+					let oDrawing = aDrawings[nDrawing];
+					if(dShift > 0) {
+						oDrawing.shiftXfrm(dShift, dShift);
 					}
+					oDrawing.addToDrawingObjects();
+					oDrawing.checkDrawingBaseCoords();
+					oDrawing.recalculate();
+					oDrawing.select(ws.objectRender.controller, 0);
 				}
 
 				var old_val = api.ImageLoader.bIsAsyncLoadDocumentImages;
@@ -2644,6 +2658,7 @@
 
 				ws.objectRender.showDrawingObjects();
 				ws.setSelectionShape(true);
+				ws.objectRender.controller.updatePlaceholders();
 				ws.objectRender.controller.updateOverlay();
 				History.EndTransaction();
 			},

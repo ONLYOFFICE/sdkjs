@@ -1576,6 +1576,13 @@
 				t.handlers.trigger("canvasClick");
 			}
 
+			if (!(asc["editor"].isStartAddShape || this.getSelectionDialogMode() || this.getCellEditMode() && !this.handlers.trigger("stopCellEditing"))) {
+				const isPlaceholder = t.handlers.trigger("onPointerDownPlaceholder", coord.x, coord.y);
+				if (isPlaceholder) {
+					return;
+				}
+			}
+
 			if (asc["editor"].isStartAddShape || graphicsInfo) {
 				// При выборе диапазона не нужно выделять автофигуру
 				if (this.getSelectionDialogMode()) {

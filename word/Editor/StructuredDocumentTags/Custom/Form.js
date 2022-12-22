@@ -51,6 +51,8 @@
 		this.Fixed    = false;
 		this.Border   = undefined;
 		this.Shd      = undefined;
+		this.Field    = undefined;
+		this.RoleName = undefined; // Данное поле только для работы с интерфейсом, в бинарник его не пишем
 	}
 	CSdtFormPr.prototype.Copy = function()
 	{
@@ -66,6 +68,14 @@
 
 		if (this.Shd)
 			oFormPr.Shd = this.Shd.Copy();
+		
+		// При простом копировании настроек нельзя делать копию fieldMaster, т.к. копирование делается вне какого-либо
+		// действия. Поэтом, просто копируем здесь ссылку. Реальное копирование объекта должно происходить в момент
+		// его вставки куда-либо
+		if (this.Field)
+			oFormPr.Field = this.Field;
+		
+		oFormPr.RoleName = this.RoleName;
 
 		return oFormPr;
 	};
@@ -77,7 +87,9 @@
 			&& this.HelpText === oOther.HelpText
 			&& this.Required === oOther.Required
 			&& IsEqualStyleObjects(this.Border, oOther.Border)
-			&& IsEqualStyleObjects(this.Shd, oOther.Shd));
+			&& IsEqualStyleObjects(this.Shd, oOther.Shd)
+			&& this.Field === oOther.Field
+			&& this.RoleName === oOther.RoleName);
 	};
 	CSdtFormPr.prototype.WriteToBinary = function(oWriter)
 	{
@@ -120,6 +132,12 @@
 			this.Shd.WriteToBinary(oWriter)
 			nFlags |= 32;
 		}
+		
+		if (undefined !== this.Field)
+		{
+			oWriter.WriteString2(this.Field.GetId());
+			nFlags |= 64;
+		}
 
 		var nEndPos = oWriter.GetCurPosition();
 		oWriter.Seek(nStartPos);
@@ -152,6 +170,12 @@
 		{
 			this.Shd = new CDocumentShd();
 			this.Shd.ReadFromBinary(oReader);
+		}
+		
+		if (nFlags & 64)
+		{
+			let fieldId = oReader.GetString2();
+			this.Field = AscCommon.g_oTableId.GetById(fieldId);
 		}
 	};
 	CSdtFormPr.prototype.Write_ToBinary = function(oWriter)
@@ -271,6 +295,38 @@
 			});
 		}
 	};
+	CSdtFormPr.prototype.SetFieldMaster = function(fieldMaster)
+	{
+		this.Field = null !== fieldMaster ? fieldMaster : undefined;
+	};
+	CSdtFormPr.prototype.GetFieldMaster = function()
+	{
+		return this.Field ? this.Field : null;
+	};
+	CSdtFormPr.prototype.GetAscRole = function()
+	{
+		// Приоритет у роли выставленной через интерфейс, т.к. выставление в класс формы еще могло не произойти
+		// но название роли мы должны уже отдавать новое
+		if (this.RoleName)
+			return this.RoleName;
+		
+		if (this.Field && this.Field.getUserCount())
+			return this.Field.getFirstUser().getRole();
+		
+		return "Anyone";
+	};
+	CSdtFormPr.prototype.SetAscRole = function(roleName)
+	{
+		return this.SetRole(roleName);
+	};
+	CSdtFormPr.prototype.GetRole = function()
+	{
+		return this.RoleName;
+	};
+	CSdtFormPr.prototype.SetRole = function(roleName)
+	{
+		this.RoleName = null !== roleName ? roleName : undefined;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CSdtFormPr = CSdtFormPr;
 
@@ -287,8 +343,11 @@
 	CSdtFormPr.prototype['get_Required'] = CSdtFormPr.prototype.GetRequired;
 	CSdtFormPr.prototype['put_Required'] = CSdtFormPr.prototype.SetRequired;
 	CSdtFormPr.prototype['get_Fixed']    = CSdtFormPr.prototype.GetFixed;
+	CSdtFormPr.prototype['put_Fixed']    = CSdtFormPr.prototype.SetFixed;
 	CSdtFormPr.prototype['get_Border']   = CSdtFormPr.prototype.GetAscBorder;
 	CSdtFormPr.prototype['put_Border']   = CSdtFormPr.prototype.SetAscBorder;
 	CSdtFormPr.prototype['get_Shd']      = CSdtFormPr.prototype.GetAscShd;
 	CSdtFormPr.prototype['put_Shd']      = CSdtFormPr.prototype.SetAscShd;
+	CSdtFormPr.prototype['get_Role']     = CSdtFormPr.prototype.GetAscRole;
+	CSdtFormPr.prototype['put_Role']     = CSdtFormPr.prototype.SetAscRole;
 })(window);

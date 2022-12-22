@@ -161,6 +161,7 @@
 
 		this.file = null;
 		this.isStarted = false;
+		this.isCMapLoading = false;
 
 		this.scrollWidth = this.Api.isMobileVersion ? 0 : 14;
 		this.isVisibleHorScroll = false;
@@ -685,6 +686,9 @@
 			}
 
 			this.paint();
+
+			if (this.Api && this.Api.printPreview)
+				this.Api.printPreview.update();
 		};
 
 		this.onUpdateStatistics = function(countParagraph, countWord, countSymbol, countSpace)
@@ -714,6 +718,98 @@
 		this.endStatistics = function()
 		{
 			this.statistics.process = false;
+		};
+
+		this.checkLoadCMap = function()
+		{
+			if (false === this.isCMapLoading)
+			{
+				if (!this.file.isNeedCMap())
+				{
+					this.onDocumentReady();
+					return;
+				}
+
+				this.isCMapLoading = true;
+
+				this.cmap_load_index = 0;
+				this.cmap_load_max = 3;
+			}
+
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', "../../../../sdkjs/pdf/src/engine/cmap.bin", true);
+			xhr.responseType = 'arraybuffer';
+
+			if (xhr.overrideMimeType)
+				xhr.overrideMimeType('text/plain; charset=x-user-defined');
+			else
+				xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
+
+			var _t = this;
+			xhr.onload = function()
+			{
+				if (this.status === 200)
+				{
+					_t.isCMapLoading = false;
+					_t.file.setCMap(new Uint8Array(this.response));
+					_t.onDocumentReady();
+				}
+			};
+			xhr.onerror = function()
+			{
+				_t.cmap_load_index++;
+				if (_t.cmap_load_index < _t.cmap_load_max)
+				{
+					_t.checkLoadCMap();
+					return;
+				}
+
+				// error!
+				_t.isCMapLoading = false;
+				_t.onDocumentReady();
+			};
+
+			xhr.send(null);
+		};
+
+		this.onDocumentReady = function()
+		{
+			var _t = this;
+			// в интерфейсе есть проблема - нужно посылать onDocumentContentReady после setAdvancedOptions
+			setTimeout(function(){
+
+				if (!_t.isStarted)
+				{
+					AscCommon.addMouseEvent(_t.canvas, "down", _t.onMouseDown);
+					AscCommon.addMouseEvent(_t.canvas, "move", _t.onMouseMove);
+					AscCommon.addMouseEvent(_t.canvas, "up", _t.onMouseUp);
+
+					_t.parent.onmousewheel = _t.onMouseWhell;
+					if (_t.parent.addEventListener)
+						_t.parent.addEventListener("DOMMouseScroll", _t.onMouseWhell, false);
+
+					_t.startTimer();
+				}
+
+				_t.sendEvent("onFileOpened");
+
+				_t.sendEvent("onPagesCount", _t.file.pages.length);
+				_t.sendEvent("onCurrentPageChanged", 0);
+
+				_t.sendEvent("onStructure", _t.structure);
+			}, 0);
+
+			this.file.onRepaintPages = this.onUpdatePages.bind(this);
+			this.file.onUpdateStatistics = this.onUpdateStatistics.bind(this);
+			this.currentPage = -1;
+			this.structure = this.file.getStructure();
+
+			this.resize(true);
+
+			if (this.thumbnails)
+				this.thumbnails.init(this);
+
+			this.setMouseLockMode(true);
 		};
 
 		this.open = function(data, password)
@@ -774,42 +870,7 @@
 			}
 
 			this.pagesInfo.setCount(this.file.pages.length);
-
-			// в интерфейсе есть проблема - нужно посылать onDocumentContentReady после setAdvancedOptions
-			setTimeout(function(){
-
-				if (!_t.isStarted)
-				{
-					AscCommon.addMouseEvent(_t.canvas, "down", _t.onMouseDown);
-					AscCommon.addMouseEvent(_t.canvas, "move", _t.onMouseMove);
-					AscCommon.addMouseEvent(_t.canvas, "up", _t.onMouseUp);
-
-					_t.parent.onmousewheel = _t.onMouseWhell;
-					if (_t.parent.addEventListener)
-						_t.parent.addEventListener("DOMMouseScroll", _t.onMouseWhell, false);
-
-					_t.startTimer();
-				}
-
-				_t.sendEvent("onFileOpened");
-
-				_t.sendEvent("onPagesCount", _t.file.pages.length);
-				_t.sendEvent("onCurrentPageChanged", 0);
-
-				_t.sendEvent("onStructure", _t.structure);
-			}, 0);
-
-			this.file.onRepaintPages = this.onUpdatePages.bind(this);
-			this.file.onUpdateStatistics = this.onUpdateStatistics.bind(this);
-			this.currentPage = -1;
-			this.structure = this.file.getStructure();
-
-			this.resize(true);
-
-			if (this.thumbnails)
-				this.thumbnails.init(this);
-
-			this.setMouseLockMode(true);
+			this.checkLoadCMap();
 		};
 
 		this.setZoom = function(value)

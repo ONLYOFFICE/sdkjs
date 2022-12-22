@@ -131,7 +131,7 @@
 		return this;
 	};
 	ContentTypes.prototype.toXml = function(writer) {
-		writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+		writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n");
 		writer.WriteXmlNodeStart("Types");
 		writer.WriteXmlString(" xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"");
 		writer.WriteXmlAttributesEnd();
@@ -233,9 +233,12 @@
 		this.cntTypes = new ContentTypes();
 		this.fileNameIndexes = {};
 
+		this.openFromZip();
+	};
+	
+	openXml.OpenXmlPackage.prototype.openFromZip = function(){
 		openFromZip(this.zip, this);
 	};
-
 	openXml.OpenXmlPackage.prototype.removePart = function (uri) {
 		var removePart = this.parts[uri];
 		if(removePart) {
@@ -607,6 +610,9 @@
 			writer.WriteXmlAttributeString("TargetMode", this.targetMode);
 		}
 		writer.WriteXmlAttributesEnd(true);
+	};
+	openXml.OpenXmlRelationship.prototype.getFullPath = function() {
+		return this.targetFullName;
 	};
 
 	openXml.MimeTypes = {

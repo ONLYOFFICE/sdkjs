@@ -814,6 +814,15 @@ DrawingArea.prototype.reinitRanges = function() {
         this.frozenPlaces[i].initRange();
     }
 };
+DrawingArea.prototype.convertCoordsToCursorWR = function(x, y) {
+	let oFrozenPlace = this.frozenPlaces[0];
+	let oWS = this.worksheet;
+	let canvas = oWS.objectRender.getDrawingCanvas();
+	let shapeCtx = canvas.shapeCtx;
+	let nXT = AscCommon.AscBrowser.convertToRetinaValue(shapeCtx.m_oCoordTransform.sx * x + oFrozenPlace.getHorizontalScroll(), false);
+	let nYT = AscCommon.AscBrowser.convertToRetinaValue(shapeCtx.m_oCoordTransform.sy * y + oFrozenPlace.getVerticalScroll(), false);
+	return {X: nXT, Y: nYT, Error: false};
+};
 
 DrawingArea.prototype.drawSelection = function(drawingDocument) {
 	var oWS = this.worksheet;
@@ -849,6 +858,26 @@ DrawingArea.prototype.drawSelection = function(drawingDocument) {
 		oWatermark.zoom = 1.0;
 		oWatermark.Generate();
 		oWatermark.Draw(ctx, ctx.canvas.width, ctx.canvas.height);
+	}
+
+	if (this.api) {
+		const oDrawingDocument = this.api.getDrawingDocument();
+		if (oDrawingDocument && oDrawingDocument.placeholders.objects.length) {
+			const oRect = {};
+			const nOffsetX = 2 * oWS.cellsLeft - oWS._getColLeft(oWS.visibleRange.c1);
+			const nOffsetY = 2 * oWS.cellsTop - oWS._getRowTop(oWS.visibleRange.r1);
+			oRect.left   = nOffsetX;
+			oRect.right  = nOffsetX + ctx.canvas.width;
+			oRect.top    = nOffsetY;
+			oRect.bottom = nOffsetY + ctx.canvas.height;
+			var pxToMm = Asc.getCvtRatio(0/*mm*/, 3/*px*/, oWS._getPPIX());
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(oWS.cellsLeft, oWS.cellsTop, ctx.canvas.width, ctx.canvas.height);
+			ctx.clip();
+			oDrawingDocument.placeholders.draw(trackOverlay, oWS.workbook.model.nActive, oRect, ctx.canvas.width * pxToMm, ctx.canvas.height * pxToMm);
+			ctx.restore();
+		}
 	}
 };
 

@@ -108,7 +108,8 @@ var c_oAscSelectionDialogType = {
   PrintTitles: 8,
   Function: 9,
   DataValidation: 10,
-  ConditionalFormattingRule: 11
+  ConditionalFormattingRule: 11,
+  ImportXml: 12
 };
 
 var c_oAscScrollType = {
@@ -307,7 +308,8 @@ var c_oTargetType = {
   FrozenAnchorV: 15,
   GroupRow: 16,
   GroupCol: 17,
-  TableSelectionChange: 18
+  TableSelectionChange: 18,
+  Placeholder: 19
 };
 
 var c_oAscAutoFilterTypes = {
@@ -657,6 +659,7 @@ var c_oAscPopUpSelectorType = {
   prot['PrintTitles'] = prot.PrintTitles;
   prot['Function'] = prot.Function;
   prot['DataValidation'] = prot.DataValidation;
+  prot['ImportXml'] = prot.ImportXml;
   prot['ConditionalFormattingRule'] = prot.ConditionalFormattingRule;
 
   window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;

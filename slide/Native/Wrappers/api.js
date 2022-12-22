@@ -2856,6 +2856,7 @@ function NativeOpenFileP(_params, documentInfo){
         stream["WriteLong"](nIndex);
         window["native"]["OnCallMenuEvent"](8093, stream); // ASC_PRESENTATIONS_EVENT_TYPE_THEME_INDEX
     });
+    _api.asc_registerCallback('asc_onError', onApiError);
 
     // Edit
 
@@ -3189,6 +3190,15 @@ function onApiSendThemeColors(theme_colors, standart_colors) {
         });
     }
     postDataAsJSONString(colors, 2417); // ASC_MENU_EVENT_TYPE_THEMECOLORS
+}
+
+function onApiError(id, level, errData) {
+    var info = {
+        "level" : level,
+        "id" : id,
+        "errData" : JSON.prune(errData, 4),
+    };
+    postDataAsJSONString(info, 26104); // ASC_MENU_EVENT_TYPE_API_ERROR
 }
 Asc['asc_docs_api'].prototype.UpdateTextPr = function(TextPr)
 {

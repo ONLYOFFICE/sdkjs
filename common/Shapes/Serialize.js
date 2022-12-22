@@ -1078,7 +1078,7 @@ function BinaryPPTYLoader()
             this.ReadTableStyle();
         }
 
-        if(!this.presentation.globalTableStyles.Style[this.presentation.DefaultTableStyleId])
+        if(this.presentation && this.presentation.globalTableStyles && !this.presentation.globalTableStyles.Style[this.presentation.DefaultTableStyleId])
         {
             this.presentation.DefaultTableStyleId = _old_default;
         }
@@ -1112,15 +1112,18 @@ function BinaryPPTYLoader()
 					if(AscCommon.isRealObject(this.presentation.TableStylesIdMap) && !bNotAddStyle)
 						this.presentation.TableStylesIdMap[_style.Id] = true;
 
-                    const oOldStyle = this.presentation.globalTableStyles.GetStyleByStyleId(_id);
-                    if (oOldStyle)
+                    if (this.presentation && this.presentation.globalTableStyles)
                     {
-                        this.presentation.globalTableStyles.Remove(oOldStyle.GetId());
-                        this.presentation.globalTableStyles.Add(_style);
-                    }
-                    else
-                    {
-                        this.map_table_styles[_id] = _style;
+                        const oOldStyle = this.presentation.globalTableStyles.GetStyleByStyleId(_id);
+                        if (oOldStyle)
+                        {
+                            this.presentation.globalTableStyles.Remove(oOldStyle.GetId());
+                            this.presentation.globalTableStyles.Add(_style);
+                        }
+                        else
+                        {
+                            this.map_table_styles[_id] = _style;
+                        }
                     }
                     break;
                 }
@@ -1280,7 +1283,7 @@ function BinaryPPTYLoader()
 		}
 		else
 		{
-			if(this.presentation.globalTableStyles)
+			if(this.presentation && this.presentation.globalTableStyles)
 				this.presentation.globalTableStyles.Add(_style);
 		}
     };
@@ -7798,7 +7801,7 @@ function BinaryPPTYLoader()
             {
                 _table.Set_TableStyle(this.map_table_styles[props.style].Id);
             }
-            else if (this.presentation && this.presentation.globalTableStyles.GetStyleByStyleId(props.style))
+            else if (this.presentation && this.presentation.globalTableStyles && this.presentation.globalTableStyles.GetStyleByStyleId(props.style))
             {
                 style = this.presentation.globalTableStyles.GetStyleByStyleId(props.style);
                 _table.Set_TableStyle(style.GetId());

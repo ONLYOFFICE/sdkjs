@@ -10920,9 +10920,11 @@
                         for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
                             oRef = aParsedRef[nRef];
                             oSeriesRef = aParsedSeriesRef[nRef];
-                            if(oSeriesRef.bbox.r1 !== oRef.bbox.r1 || oSeriesRef.bbox.r2 !== oRef.bbox.r2) {
-                                break;
-                            }
+							let oSerBB = oSeriesRef.bbox;
+							let oRefBB = oSeriesRef.bbox;
+							if(oSerBB.r1 > oRefBB.r2 || oRefBB.r1 > oSerBB.r2) {// check empty intersection (bug 59334)
+								break;
+							}
                         }
                         if(nRef === aParsedRef.length) {
                             bLvlsByRows = false;
@@ -15826,8 +15828,7 @@
                             for(nRow = oRange.bbox.r1; nRow <= oRange.bbox.r2; ++nRow) {
                                 for(nCol = oRange.bbox.c1; nCol <= oRange.bbox.c2; ++nCol) {
                                     oCell = oWS.getCell3(nRow, nCol);
-                                    var value = oCell.getNumberValue();
-                                    if(!AscFormat.isRealNumber(value)) {
+                                    if(!CChartDataRefs.prototype.privateCheckCellValueNumberOrEmpty(oCell)) {
                                         oResult.setError(Asc.c_oAscError.ID.DataRangeError);
                                         return;
                                     }

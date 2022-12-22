@@ -42,6 +42,7 @@
 			"common/api/addTextSettings.js",
 			"common/api/autoCorrectSettings.js",
 			"common/api/firstLetterExceptions.js",
+			"common/api/restrictionSettings.js",
 
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
@@ -61,6 +62,7 @@
 			"common/stringserialize.js",
 			"common/random.js",
 			"common/hash/hash.js",
+			"common/keychainstorage.js",
 
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
@@ -164,6 +166,7 @@
 			"cell/view/WorksheetView.js",
 			"cell/view/DrawingObjectsController.js",
 			"cell/model/DrawingObjects/Graphics.js",
+			"word/Drawing/buttons.js",
 			"word/Drawing/ShapeDrawer.js",
 			"cell/model/DrawingObjects/DrawingDocument.js",
 			"cell/model/DrawingObjects/Format/ShapePrototype.js",

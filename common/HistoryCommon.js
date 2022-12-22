@@ -1260,6 +1260,21 @@
 			case AscDFH.historydescription_Collaborative_Undo:
 				sString = "Collaborative_Undo";
 				break;
+			case AscDFH.historydescription_Document_AddPlaceholderImages:
+				sString = "Document_AddPlaceholderImages";
+				break;
+			case AscDFH.historydescription_OForm_AddRole:
+				sString = "OForm_AddRole";
+				break;
+			case AscDFH.historydescription_OForm_RemoveRole:
+				sString = "OForm_RemoveRole";
+				break;
+			case AscDFH.historydescription_OForm_EditRole:
+				sString = "OForm_EditRole";
+				break;
+			case AscDFH.historydescription_OForm_ChangeRoleOrder:
+				sString = "OForm_ChangeRoleOrder";
+				break;
 		}
 		return sString;
 	}
@@ -1689,20 +1704,11 @@
 	window['AscDFH'].historyitem_type_ViewPrScale            = 2116 << 16;
 	window['AscDFH'].historyitem_type_ViewPrGuide            = 2117 << 16;
 
-	window['AscDFH'].historyitem_type_oform_UserMaster       = 2200 << 16;
-	window['AscDFH'].historyitem_type_User                   = 2201 << 16;
-	window['AscDFH'].historyitem_type_SignInfo               = 2202 << 16;
-	window['AscDFH'].historyitem_type_CipherInfo             = 2203 << 16;
-	window['AscDFH'].historyitem_type_FormFieldMaster        = 2204 << 16;
-	window['AscDFH'].historyitem_type_FormField              = 2205 << 16;
-	window['AscDFH'].historyitem_type_EncryptedData          = 2206 << 16;
-	window['AscDFH'].historyitem_type_KeyInfo                = 2207 << 16;
-	window['AscDFH'].historyitem_type_MainDocument           = 2208 << 16;
-	window['AscDFH'].historyitem_type_FieldsGroup            = 2209 << 16;
-	window['AscDFH'].historyitem_type_FormDate               = 2210 << 16;
-	window['AscDFH'].historyitem_type_SignRequest            = 2211 << 16;
-	window['AscDFH'].historyitem_type_FieldContent           = 2212 << 16;
-
+	window['AscDFH'].historyitem_type_OForm_UserMaster       = 2200 << 16;
+	window['AscDFH'].historyitem_type_OForm_User             = 2201 << 16;
+	window['AscDFH'].historyitem_type_OForm_FieldMaster      = 2202 << 16;
+	window['AscDFH'].historyitem_type_OForm_Document         = 2203 << 16;
+	window['AscDFH'].historyitem_type_OForm_FieldGroup       = 2204 << 16;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -3965,64 +3971,6 @@
 
 	AscDFH.historyitem_ViewPrGuideOrient         = AscDFH.historyitem_type_ViewPrGuide | 1;
 	AscDFH.historyitem_ViewPrGuidePos            = AscDFH.historyitem_type_ViewPrGuide | 2;
-
-
-	AscDFH.historyitem_UserMasterUserId       = AscDFH.historyitem_type_UserMaster | 1;
-	AscDFH.historyitem_UserMasterSignInfo     = AscDFH.historyitem_type_UserMaster | 2;
-	AscDFH.historyitem_UserMasterCipherInfo   = AscDFH.historyitem_type_UserMaster | 3;
-	AscDFH.historyitem_UserMasterRole         = AscDFH.historyitem_type_UserMaster | 4;
-	AscDFH.historyitem_UserMasterUser         = AscDFH.historyitem_type_UserMaster | 5;
-
-	AscDFH.historyitem_UserEmail             = AscDFH.historyitem_type_User | 1;
-	AscDFH.historyitem_UserTelephone         = AscDFH.historyitem_type_User | 2;
-
-	AscDFH.historyitem_SignInfo_PublicKey       = AscDFH.historyitem_type_SignInfo | 1;
-	AscDFH.historyitem_SignInfo_X509            = AscDFH.historyitem_type_SignInfo | 2;
-	AscDFH.historyitem_SignInfo_ImageValid      = AscDFH.historyitem_type_SignInfo | 3;
-	AscDFH.historyitem_SignInfo_ImageInvalid    = AscDFH.historyitem_type_SignInfo | 4;
-
-	AscDFH.historyitem_CipherInfo_PublicKey    = AscDFH.historyitem_type_CipherInfo | 1;
-
-	AscDFH.historyitem_FormFieldMaster_FieldId     = AscDFH.historyitem_type_FormFieldMaster | 1;
-	AscDFH.historyitem_FormFieldMaster_User        = AscDFH.historyitem_type_FormFieldMaster | 2;
-	AscDFH.historyitem_FormFieldMaster_Field       = AscDFH.historyitem_type_FormFieldMaster | 3;
-	AscDFH.historyitem_FormFieldMaster_SignRequest = AscDFH.historyitem_type_FormFieldMaster | 4;
-
-	AscDFH.historyitem_FormField_EncryptedData = AscDFH.historyitem_type_FormField | 1;
-	AscDFH.historyitem_FormField_Content       = AscDFH.historyitem_type_FormField | 2;
-	AscDFH.historyitem_FormField_FieldMaster   = AscDFH.historyitem_type_FormField | 3;
-
-	AscDFH.historyitem_EncryptedData_Method   = AscDFH.historyitem_type_EncryptedData | 1;
-	AscDFH.historyitem_EncryptedData_Value    = AscDFH.historyitem_type_EncryptedData | 2;
-	AscDFH.historyitem_EncryptedData_KeyInfo  = AscDFH.historyitem_type_EncryptedData | 3;
-
-
-	AscDFH.historyitem_KeyInfo_User    = AscDFH.historyitem_type_KeyInfo | 1;
-	AscDFH.historyitem_KeyInfo_Value   = AscDFH.historyitem_type_KeyInfo | 2;
-
-	AscDFH.historyitem_MainDocument_Author = AscDFH.historyitem_type_MainDocument | 1;
-	AscDFH.historyitem_MainDocument_Date = AscDFH.historyitem_type_MainDocument | 2;
-	AscDFH.historyitem_MainDocument_Description = AscDFH.historyitem_type_MainDocument | 32;
-	AscDFH.historyitem_MainDocument_Type = AscDFH.historyitem_type_MainDocument | 4;
-	AscDFH.historyitem_MainDocument_Application = AscDFH.historyitem_type_MainDocument | 5;
-	AscDFH.historyitem_MainDocument_DocumentId = AscDFH.historyitem_type_MainDocument | 6;
-	AscDFH.historyitem_MainDocument_FieldsGroups = AscDFH.historyitem_type_MainDocument | 7;
-	AscDFH.historyitem_MainDocument_User = AscDFH.historyitem_type_MainDocument | 8;
-
-
-	AscDFH.historyitem_FieldsGroup_Id = AscDFH.historyitem_type_FieldsGroup | 1;
-	AscDFH.historyitem_FieldsGroup_Weight = AscDFH.historyitem_type_FieldsGroup | 2;
-	AscDFH.historyitem_FieldsGroup_Field = AscDFH.historyitem_type_FieldsGroup | 3;
-
-
-	AscDFH.historyitem_FormDate_Format = AscDFH.historyitem_type_FormDate | 1;
-	AscDFH.historyitem_FormDate_Value = AscDFH.historyitem_type_FormDate | 2;
-
-	AscDFH.historyitem_SignRequest_User = AscDFH.historyitem_type_SignRequest | 1;
-
-	AscDFH.historyitem_FieldContent_AddItem    = AscDFH.historyitem_type_FieldContent | 1;
-	AscDFH.historyitem_FieldContent_RemoveItem = AscDFH.historyitem_type_FieldContent | 2;
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -4446,6 +4394,11 @@
 	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0199;
 	window['AscDFH'].historydescription_Document_DocumentProtection                 = 0x019a;
 	window['AscDFH'].historydescription_Collaborative_Undo                          = 0x019b;
+	window['AscDFH'].historydescription_Document_AddPlaceholderImages               = 0x019c;
+	window['AscDFH'].historydescription_OForm_AddRole                               = 0x019d;
+	window['AscDFH'].historydescription_OForm_RemoveRole                            = 0x019e;
+	window['AscDFH'].historydescription_OForm_EditRole                              = 0x019f;
+	window['AscDFH'].historydescription_OForm_ChangeRoleOrder                       = 0x01a0;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5449,4 +5402,23 @@
 		this.Old = Reader.GetDouble();
 	};
 	window['AscDFH'].CChangesBaseDoubleValue = CChangesBaseDoubleValue;
+	//------------------------------------------------------------------------------------------------------------------
+	function DoNotRecalculate()
+	{
+		return false;
+	}
+	window['AscDFH'].InheritPropertyChange = function(changeClass, baseChange, type, setFunction, needRecalculate)
+	{
+		window['AscDFH'].changesFactory[type]   = changeClass;
+
+		changeClass.prototype                   = Object.create(baseChange.prototype);
+		changeClass.prototype.constructor       = changeClass;
+		changeClass.prototype.Type              = type;
+		changeClass.prototype.private_SetValue  = setFunction;
+
+		if (undefined !== needRecalculate && !needRecalculate)
+			changeClass.prototype.IsNeedRecalculate = DoNotRecalculate;
+
+	};
+
 })(window);

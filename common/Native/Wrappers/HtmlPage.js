@@ -131,6 +131,10 @@ function CEditorPage(api)
     {
     };
 
+    this.ScrollToAbsolutePosition = function(x, y, PageNum, isBottom)
+    {
+    };
+
     this.onButtonTabsClick = function()
     {
     };

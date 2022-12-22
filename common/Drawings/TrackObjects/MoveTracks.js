@@ -751,26 +751,9 @@ function MoveChartObjectTrack(oObject, oChartSpace)
 
 
     function CGuideTrack(oGuide) {
-
-    AscFormat.ExecuteNoHistory(function () {
-        this.guide = oGuide;
-        this.x = 0;
-        this.y = 0;
-
-        var oPen = new AscFormat.CLn();
-        oPen.w = 15000;
-        oPen.Fill = AscFormat.CreateSolidFillRGBA(255, 255, 255, 255);
-        let dExtX, dExtY;
-        let oPresentation = editor.WordControl.m_oLogicDocument;
-        if(this.guide.isHorizontal()) {
-            dExtX = oPresentation.GetWidthMM();
-            dExtY = 0;
-        }
-        else {
-            dExtX = 0;
-            dExtY = oPresentation.GetHeightMM();
-        }
-        }, this, []);
+	    this.guide = oGuide;
+	    this.x = 0;
+	    this.y = 0;
     }
     CGuideTrack.prototype.track = function(x, y)
     {
@@ -821,7 +804,14 @@ function MoveChartObjectTrack(oObject, oChartSpace)
         editor.isShowTableEmptyLineAttack = bOldVal;
         oGraphics.RestoreGrState();
     };
-
+	CGuideTrack.prototype.getPos = function () {
+		if(this.guide.isHorizontal()) {
+			return AscFormat.MmToGdPos(this.y);
+		}
+		else {
+			return AscFormat.MmToGdPos(this.x);
+		}
+	};
     CGuideTrack.prototype.trackEnd = function()
     {
         if(!this.bIsTracked)
@@ -829,13 +819,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
             return;
         }
         History.Create_NewPoint(1);
-
-        if(this.guide.isHorizontal()) {
-            this.guide.setPos(AscFormat.MmToGdPos(this.y));
-        }
-        else {
-            this.guide.setPos(AscFormat.MmToGdPos(this.x));
-        }
+		this.guide.setPos(this.getPos());
     };
 
     CGuideTrack.prototype.getBounds = function ()

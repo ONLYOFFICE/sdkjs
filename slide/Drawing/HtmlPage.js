@@ -3226,6 +3226,9 @@ function CEditorPage(api)
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_Before();
 
+		if (this.m_oApi.printPreview)
+			this.m_oApi.printPreview.resize();
+
 		var isDesktopVersion = (undefined !== window["AscDesktopEditor"]) ? true : false;
 
 		if (this.Splitter1Pos > 0.1 && !isDesktopVersion)

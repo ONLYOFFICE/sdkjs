@@ -163,6 +163,28 @@ DrawingObjectsController.prototype.updateOverlay = function()
 {
     this.drawingObjects.OnUpdateOverlay();
 };
+DrawingObjectsController.prototype.updatePlaceholders = function ()
+{
+    const oWS = Asc.editor && Asc.editor.wbModel && Asc.editor.wbModel.getActiveWs();
+    if (oWS)
+    {
+        const arrRet = [];
+        const arrDrawingObjects = oWS.Drawings;
+        for (let i = 0; i < arrDrawingObjects.length; i += 1)
+        {
+            const oGraphicObject = arrDrawingObjects[i] && arrDrawingObjects[i].graphicObject;
+            if (oGraphicObject)
+            {
+                oGraphicObject.createPlaceholderControl(arrRet);
+            }
+        }
+        const oDrawingDocument = this.getDrawingDocument();
+        if (oDrawingDocument && oDrawingDocument.placeholders)
+        {
+            oDrawingDocument.placeholders.update(arrRet);
+        }
+    }
+};
 DrawingObjectsController.prototype.recalculate = function(bAll, Point, bCheckPoint)
 {
     if(bCheckPoint !== false)
@@ -194,6 +216,7 @@ DrawingObjectsController.prototype.recalculate2 = function(bAll)
         }
     }
     this.objectsForRecalculate = {};
+    this.updatePlaceholders();
 };
 
 

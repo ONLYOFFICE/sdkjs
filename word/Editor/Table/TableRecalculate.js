@@ -1188,8 +1188,17 @@ CTable.prototype.private_RecalculateBorders = function()
             var VMergeCount = this.Internal_GetVertMergeCount( CurRow, CurGridCol, GridSpan );
 
             var CellMargins = Cell.GetMargins();
-            if ( CellMargins.Bottom.W > MaxBotMargin[CurRow + VMergeCount - 1] )
-                MaxBotMargin[CurRow + VMergeCount - 1] = CellMargins.Bottom.W;
+			if(!this.bPresentation)
+			{
+				if ( CellMargins.Bottom.W > MaxBotMargin[CurRow + VMergeCount - 1] )
+					MaxBotMargin[CurRow + VMergeCount - 1] = CellMargins.Bottom.W;
+			}
+			else
+			{
+				let oTopCell = this.Internal_Get_StartMergedCell(CurRow, CurGridCol, GridSpan);
+				let oTopMargins = oTopCell.GetMargins();
+				MaxBotMargin[CurRow] = Math.max(MaxBotMargin[CurRow], oTopMargins.Bottom.W);
+			}
 
             var CellBorders = Cell.Get_Borders();
             if ( true === bSpacing_Top )
@@ -2433,8 +2442,11 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         	nMaxTopBorder = nHeaderMaxTopBorder;
 
         // Добавляем ширину верхней границы у текущей строки
-        Y           += nMaxTopBorder;
-        TableHeight += nMaxTopBorder;
+        if(!this.bPresentation)
+        {
+	        Y           += nMaxTopBorder;
+	        TableHeight += nMaxTopBorder;
+        }
 
         // Если таблица с расстоянием между ячейками, тогда добавляем его
         if (FirstRow === CurRow)
@@ -2502,8 +2514,16 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 		}
 
 		var RowH = Row.Get_Height();
-		// В данном значении не учитываются маргины
-		var RowHValue = RowH.Value + this.MaxBotMargin[CurRow] + MaxTopMargin;
+		var RowHValue;
+		if(!this.bPresentation)
+		{
+			// В данном значении не учитываются маргины
+			RowHValue = RowH.Value + this.MaxBotMargin[CurRow] + MaxTopMargin;
+		}
+		else
+		{
+			RowHValue = RowH.Value;
+		}
 
 		// В таблице с отступами размер отступа входит в значение высоты строки
 		if (null !== CellSpacing)
@@ -2537,6 +2557,12 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             var CellMar  = Cell.GetMargins();
 
             Row.Update_CellInfo(CurCell);
+	
+			// Обновляем сразу EndInfo, т.к. мы можем начать пересчет следующей ячейки, до окончания полного пересчета
+			// предыдущей ячейки в строке. Кроме того пересчет EndInfo внутри параграфа, в любом случае, выполняется
+			// не более одного раза за текущий Document.RecalcId, поэтому, можем не боятся, что пересчет EndInfo
+			// вызовется несколько раз для параграфа
+			Cell.Content.RecalculateEndInfo();
 
             var CellMetrics   = Row.Get_CellInfo( CurCell );
 
@@ -2572,11 +2598,6 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             {
                 CurGridCol += GridSpan;
                 Merged_Cell.push( Cell );
-
-				// Приходится здесь обновлять EndInfo, т.к. мы можем начать пересчет следующей ячейки, до
-				// окончания полного пересчета предыдущей ячейки в строке
-				Cell.Content.RecalculateEndInfo();
-
                 continue;
             }
             else
@@ -2648,10 +2669,6 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             Cell.Content.Set_ClipInfo(CellPageIndex, Page.X + CellMetrics.X_cell_start, Page.X + CellMetrics.X_cell_end);
             if ( CellPageIndex < Cell.PagesCount )
             {
-            	// Приходится здесь обновлять EndInfo, т.к. мы можем начать пересчет следующей ячейки, до
-				// окончания полного пересчета предыдущей ячейки в строке
-            	Cell.Content.RecalculateEndInfo();
-
                 if ( true === bCanShift )
                 {
 					Cell.ShiftCell(0, ShiftDx, ShiftDy);
@@ -3156,8 +3173,11 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             var TempCellSpacing = this.Content[TempCurRow].Get_CellSpacing();
             var Y_0 = this.RowsInfo[TempCurRow].Y[CurPage];
 
-            if ( null === TempCellSpacing )
-                Y_0 += MaxTopBorder[TempCurRow];
+			if(!this.bPresentation)
+			{
+				if ( null === TempCellSpacing )
+					Y_0 += MaxTopBorder[TempCurRow];
+			}
 
             Y_0 += CellMar.Top.W;
 

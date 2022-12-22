@@ -2120,11 +2120,7 @@
 
 		private_TrackRangesPositions();
 
-		var color = new Asc.asc_CColor();
-		color.r    = r;
-		color.g    = g;
-		color.b    = b;
-		color.Auto = false;
+		let oShd = private_GetShd(sType, r, g, b, false);
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -2135,34 +2131,8 @@
 			return null;
 		}
 
-		var Shd = new CDocumentShd();
-		var _Shd;
-		if (sType === "nil")
-		{
-			_Shd = {Value : Asc.c_oAscShdNil};
-			Shd.Set_FromObject(_Shd);
-			Document.SetParagraphShd(_Shd);
-		}
-		else if (sType === "clear")
-		{
-			var Unifill        = new AscFormat.CUniFill();
-			Unifill.fill       = new AscFormat.CSolidFill();
-			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
-			_Shd = {
-				Value   : Asc.c_oAscShdClear,
-				Color   : {
-					r : color.asc_getR(),
-					g : color.asc_getG(),
-					b : color.asc_getB()
-				},
-				Unifill : Unifill
-			};
-			
-			Shd.Set_FromObject(_Shd);
-			Document.SetParagraphShd(_Shd);
-		}
-
-		this.TextPr.Shd = Shd;
+		Document.SetParagraphShd(oShd);
+		this.TextPr.Shd = oShd;
 		
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -7631,56 +7601,6 @@
 	{
 		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : nPosition}));
-		this.Paragraph.SetApplyToAll(false);
-		
-		return this;
-	};
-	/**
-	 * Specifies the shading applied to the contents of the current paragraph.
-	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
-	 * @param {ShdType} sType - The shading type applied to the contents of the current paragraph.
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @returns {ApiParagraph} this
-	 */
-	ApiParagraph.prototype.SetShd = function(sType, r, g, b)
-	{
-		var color = new Asc.asc_CColor();
-		color.r    = r;
-		color.g    = g;
-		color.b    = b;
-		color.Auto = false;
-
-		this.Paragraph.SetApplyToAll(true);
-
-		var Shd = new CDocumentShd();
-		var _Shd;
-		if (sType === "nil")
-		{
-			_Shd = {Value : Asc.c_oAscShdNil};
-			Shd.Set_FromObject(_Shd);
-			this.Paragraph.SetParagraphShd(_Shd);
-		}
-		else if (sType === "clear")
-		{
-			var Unifill        = new AscFormat.CUniFill();
-			Unifill.fill       = new AscFormat.CSolidFill();
-			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
-			_Shd = {
-				Value   : Asc.c_oAscShdClear,
-				Color   : {
-					r : color.asc_getR(),
-					g : color.asc_getG(),
-					b : color.asc_getB()
-				},
-				Unifill : Unifill
-			};
-			
-			Shd.Set_FromObject(_Shd);
-			this.Paragraph.SetParagraphShd(_Shd);
-		}
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;

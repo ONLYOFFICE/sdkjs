@@ -203,6 +203,15 @@
     {
         return this.nativeFile ? this.nativeFile["getDocumentInfo"]() : null;
     };
+    CFile.prototype.isNeedCMap = function()
+    {
+        return this.nativeFile ? this.nativeFile["isNeedCMap"]() : false;
+    };
+    CFile.prototype.setCMap = function(data)
+    {
+        if (this.nativeFile)
+            this.nativeFile["setCMap"](data);
+    };
 
     CFile.prototype.getPage = function(pageIndex, width, height, isNoUseCacheManager, backgroundColor)
     {

@@ -676,19 +676,28 @@ CChangesSdtPrFormPr.prototype.constructor = CChangesSdtPrFormPr;
 CChangesSdtPrFormPr.prototype.Type = AscDFH.historyitem_SdtPr_FormPr;
 CChangesSdtPrFormPr.prototype.private_SetValue = function(Value)
 {
-	this.Class.Pr.FormPr = Value;
-
-	let oLogicDocument = this.Class.GetLogicDocument();
-	if (oLogicDocument)
+	let form = this.Class;
+	
+	let oldFieldMaster = form.Pr.FormPr ? form.Pr.FormPr.Field : undefined;
+	let newFieldMaster = Value ? Value.Field : undefined;
+	
+	if (oldFieldMaster && oldFieldMaster !== newFieldMaster)
+		oldFieldMaster.setLogicField(null);
+	
+	if (newFieldMaster && newFieldMaster !== oldFieldMaster)
+		newFieldMaster.setLogicField(form)
+	
+	form.Pr.FormPr = Value;
+	
+	let logicDocument = form.GetLogicDocument();
+	let formManager   = logicDocument ? logicDocument.GetFormsManager() : null;
+	if (formManager)
 	{
-		let oFormsManager = oLogicDocument.GetFormsManager();
-
 		if (Value)
-			oFormsManager.Register(this.Class);
+			formManager.Register(form);
 		else
-			oFormsManager.Unregister(this.Class);
+			formManager.Unregister(form);
 	}
-
 };
 CChangesSdtPrFormPr.prototype.private_CreateObject = function()
 {

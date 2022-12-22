@@ -132,6 +132,22 @@ CGraphicPage.prototype =
         }
     },
 
+    getPlaceholdersControls: function (arrObjects) {
+        const arrRet = arrObjects || [];
+        for (let i = 0; i < this.beforeTextObjects.length; i += 1) {
+            const oDrawingObject = this.beforeTextObjects[i];
+            oDrawingObject.createPlaceholderControl(arrRet);
+        }
+        for (let i = 0; i < this.inlineObjects.length; i += 1) {
+            const oDrawingObject = this.inlineObjects[i];
+            oDrawingObject.createPlaceholderControl(arrRet);
+        }
+        for (let i = 0; i < this.behindDocObjects.length; i += 1) {
+            const oDrawingObject = this.behindDocObjects[i];
+            oDrawingObject.createPlaceholderControl(arrRet);
+        }
+        return arrRet;
+    },
 
     concatPage: function(page)
     {

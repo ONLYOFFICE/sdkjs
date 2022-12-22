@@ -3323,8 +3323,10 @@ function CDrawingDocument()
         var oWordControl = this.m_oWordControl;
 		var bIsReturn = false;
 
-        if (this.placeholders.onPointerDown(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
-            bIsReturn = true;
+        if (this.placeholders.onPointerDown(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM())) {
+			bIsReturn = true;
+			this.m_oWordControl.onMouseUpMainSimple();
+		}
 
         if (bIsReturn)
 		{
@@ -4937,6 +4939,57 @@ function CThumbnailsManager()
 		}
 	};
 
+	this.DrawAnimLabel = function(oGraphics, nX, nY, oColor)
+	{
+		let fCX = function(nVal)
+		{
+			return AscCommon.AscBrowser.convertToRetinaValue(nVal, true) + nX;
+		};
+		let fCY = function(nVal)
+		{
+			return AscCommon.AscBrowser.convertToRetinaValue(nVal, true) +nY;
+		};
+		oGraphics.b_color1(oColor.R, oColor.G, oColor.B, 255);
+		oGraphics.SaveGrState();
+		oGraphics.SetIntegerGrid(true);
+		let oCtx = oGraphics.m_oContext;
+		oCtx.beginPath();
+		oCtx.moveTo(fCX(10.5), fCY(4));
+		oCtx.lineTo(fCX(12), fCY(8));
+		oCtx.lineTo(fCX(16), fCY(8));
+		oCtx.lineTo(fCX(12.5), fCY(10.5));
+		oCtx.lineTo(fCX(14), fCY(15));
+		oCtx.lineTo(fCX(10.5), fCY(12.5));
+		oCtx.lineTo(fCX(7), fCY(15));
+		oCtx.lineTo(fCX(8.5), fCY(10.5));
+		oCtx.lineTo(fCX(5), fCY(8));
+		oCtx.lineTo(fCX(9), fCY(8));
+		oCtx.lineTo(fCX(10.5), fCY(4));
+		oCtx.closePath();
+		oCtx.fill();
+
+		oCtx.beginPath();
+		oCtx.moveTo(fCX(6), fCY(5))
+		oCtx.lineTo(fCX(9), fCY(5));
+		oCtx.lineTo(fCX(9), fCY(4))
+		oCtx.lineTo(fCX(6), fCY(4));
+		oCtx.lineTo(fCX(6), fCY(5))
+		oCtx.closePath();
+		oCtx.fill();
+
+		oCtx.beginPath();
+		oCtx.moveTo(fCX(4), fCY(7));
+		oCtx.lineTo(fCX(8), fCY(7));
+		oCtx.lineTo(fCX(8), fCY(6));
+		oCtx.lineTo(fCX(4), fCY(6));
+		oCtx.lineTo(fCX(4), fCY(7));
+		oCtx.closePath();
+		oCtx.fill();
+		oCtx.beginPath();
+		oGraphics.RestoreGrState();
+	};
+
+
 	this.OnPaint = function()
 	{
 		if (!this.m_bIsVisible)
@@ -4996,7 +5049,9 @@ function CThumbnailsManager()
 				text_color = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.ThumbnailsLockColor);
 			g.b_color1(text_color.R, text_color.G, text_color.B, 255);
 
-			var _bounds = g.t("" + (i + 1), (_digit_distance - num_slide_text_width) / 2, (page.top * g_dKoef_pix_to_mm + 3 * AscCommon.AscBrowser.retinaPixelRatio), true);
+			let dX = (_digit_distance - num_slide_text_width) / 2;
+			let dY = page.top * g_dKoef_pix_to_mm + 3 * AscCommon.AscBrowser.retinaPixelRatio;
+			let _bounds = g.t("" + (i + 1), dX, dY, true);
 			if (_logicDocument.Slides[i] && !_logicDocument.Slides[i].isVisible())
 			{
 				context.lineWidth = 1;
@@ -5006,6 +5061,13 @@ function CThumbnailsManager()
 				context.lineTo(_bounds.r + 3, _bounds.b);
 				context.stroke();
 				context.beginPath();
+			}
+			if(_logicDocument.isSlideAnimated(i))
+			{
+				let nX = (_bounds.x + _bounds.r) / 2 - AscCommon.AscBrowser.convertToRetinaValue(9.5, true);
+				let nY = _bounds.b + 3;
+				let oColor = text_color;
+				this.DrawAnimLabel(g, nX, nY, oColor);
 			}
 		}
 

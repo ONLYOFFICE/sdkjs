@@ -1120,10 +1120,8 @@
         if (DocState.EndPos)
             this.Add_DocumentPosition(DocState.EndPos);
 
-		if (DocState.ViewPosTop)
-			this.Add_DocumentPosition(DocState.ViewPosTop);
-		if (DocState.ViewPosBottom)
-			this.Add_DocumentPosition(DocState.ViewPosBottom);
+		if (DocState.AnchorPos)
+			this.Add_DocumentPosition(DocState.AnchorPos);
 
         if (DocState.FootnotesStart && DocState.FootnotesStart.Pos)
             this.Add_DocumentPosition(DocState.FootnotesStart.Pos);
@@ -1147,10 +1145,8 @@
         if (DocState.EndPos)
             this.Update_DocumentPosition(DocState.EndPos);
 
-		if (DocState.ViewPosTop)
-			this.Update_DocumentPosition(DocState.ViewPosTop);
-		if (DocState.ViewPosBottom)
-			this.Update_DocumentPosition(DocState.ViewPosBottom);
+		if (DocState.AnchorPos)
+			this.Update_DocumentPosition(DocState.AnchorPos);
 
         if (DocState.FootnotesStart && DocState.FootnotesStart.Pos)
             this.Update_DocumentPosition(DocState.FootnotesStart.Pos);

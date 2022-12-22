@@ -574,8 +574,7 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	if (undefined !== this.PlaceholderText)
 		oContentControl.SetPlaceholderText(this.PlaceholderText);
 
-	if (undefined !== this.FormPr)
-		oContentControl.SetFormPr(this.FormPr);
+	this.SetFormPrToContentControl(oContentControl);
 
 	if (undefined !== this.PictureFormPr && oContentControl.IsInlineLevel())
 	{
@@ -585,6 +584,76 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 	if (undefined !== this.ComplexFormPr)
 		oContentControl.SetComplexFormPr(this.ComplexFormPr);
+};
+CContentControlPr.prototype.SetFormPrToContentControl = function(contentControl)
+{
+	if (!this.FormPr)
+		return;
+	
+	let newKey = this.FormPr.GetKey();
+	let oldKey = contentControl.GetFormKey();
+	
+	let newRole     = this.FormPr.GetRole();
+	let fieldMaster = contentControl.GetFieldMaster();
+	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
+	let oldRole     = userMaster ? userMaster.getRole() : null;
+	
+	let isKeyChanged = newKey && newKey !== oldKey;
+	let isRoleChanged = newRole && newRole !== oldRole;
+	
+	if (isKeyChanged && isRoleChanged)
+	{
+		// Такого не должно быть, ключ и роль не должны меняться одновременно, но если все же произошло,
+		// то выставляем все как задано в настройках, не делая ничего дополнительного
+	}
+	else if (isKeyChanged)
+	{
+		this.OnSetKeyToForm(newKey, contentControl);
+	}
+	else if (isRoleChanged)
+	{
+		this.OnSetRoleToForm(newRole, contentControl);
+	}
+	
+	contentControl.SetFormPr(this.FormPr);
+};
+CContentControlPr.prototype.OnSetKeyToForm = function(newKey, form)
+{
+	let logicDocument = form.GetLogicDocument();
+	if (!logicDocument)
+		return;
+	
+	let formManager = logicDocument.GetFormsManager();
+	let role = formManager.GetRoleByKey(newKey, form.GetSpecificType());
+	if (!role)
+		return;
+	
+	this.FormPr.SetRole(role);
+};
+CContentControlPr.prototype.OnSetRoleToForm = function(newRole, form)
+{
+	let logicDocument = form.GetLogicDocument();
+	if (!logicDocument)
+		return;
+	
+	let formManager = logicDocument.GetFormsManager();
+	let allForms = formManager.GetAllFormsByKey(form.GetFormKey(), form.GetSpecificType());
+	
+	for (let index = 0, formCount = allForms.length; index < formCount; ++index)
+	{
+		let curForm = allForms[index];
+		if (curForm !== form)
+		{
+			let formPr = curForm.GetFormPr();
+			if (!formPr)
+				continue;
+			
+			let newFormPr = formPr.Copy();
+			newFormPr.SetRole(newRole);
+			newFormPr.SetFieldMaster(null);
+			curForm.SetFormPr(newFormPr);
+		}
+	}
 };
 CContentControlPr.prototype.GetId = function()
 {

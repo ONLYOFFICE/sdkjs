@@ -1752,49 +1752,76 @@
     });
   };
 
+  function CNativeSocket(settings)
+  {
+    this.engine = window['SockJS'];
+    this.settings = settings;
+    this.io = this;
+    this.settings["type"] = "socketio";
+  }
+  CNativeSocket.prototype.open = function() { return this.engine.open(this.settings); };
+  CNativeSocket.prototype.send = function(message) { return this.engine.send(message); };
+  CNativeSocket.prototype.close = function() { return this.engine.close(); };
+  CNativeSocket.prototype.emit = function(message, data) { return this.send(JSON.stringify(data)); };
+
+  CNativeSocket.prototype.reconnectionAttempts = function(val) { this.settings["reconnectionAttempts"] = val; };
+  CNativeSocket.prototype.reconnectionDelay    = function(val) { this.settings["reconnectionDelay"] = val; };
+  CNativeSocket.prototype.reconnectionDelayMax = function(val) { this.settings["reconnectionDelayMax"] = val; };
+  CNativeSocket.prototype.randomizationFactor  = function(val) { this.settings["randomizationFactor"] = val; };
+
 	DocsCoApi.prototype._initSocksJs = function () {
 		var t = this;
         let socket;
 		if (window['IS_NATIVE_EDITOR']) {
-          //todo native
-			// sockjs = this.sockjs = window['SockJS'];
-			// sockjs.open();
-		} else {
-          let io = AscCommon.getSocketIO();
-          socket = io({
-            "path": this.socketio_url,
-            "transports": ["websocket", "polling"],
-            "closeOnBeforeunload": false,
-            "reconnectionAttempts": 15,
-            "reconnectionDelay": 500,
-            "reconnectionDelayMax": 10000,
-            "randomizationFactor": 0.5,
-            "auth": {
-              "token": this.jwtOpen
-            }
-          });
-          socket.on("connect", function () {
-            t._onServerOpen();
-          });
-          socket.on("message", function (data) {
-            t._onServerMessage(data);
-          });
-          socket.on("error", function (data) {
-            console.error("socket.error:" + JSON.stringify(data));
-          });
-          socket.on("disconnect", function (reason) {
-            t._onServerClose(false, reason);
-          });
-          socket.io.on("reconnect_failed", () => {
-            t._onServerClose(true);
-          });
-          socket.io.engine.on('close', (event) => {
-            if (event === "forced close") {
-              t._onServerClose(true);
-            }
-          });
+			socket = this.sockjs = new CNativeSocket({
+        "path": this.socketio_url,
+        "transports": ["websocket", "polling"],
+        "closeOnBeforeunload": false,
+        "reconnectionAttempts": 15,
+        "reconnectionDelay": 500,
+        "reconnectionDelayMax": 10000,
+        "randomizationFactor": 0.5,
+        "auth": {
+          "token": this.jwtOpen
         }
-        this.socketio = socket;
+      });
+			socket.open();
+		} else {
+      let io = AscCommon.getSocketIO();
+      socket = io({
+        "path": this.socketio_url,
+        "transports": ["websocket", "polling"],
+        "closeOnBeforeunload": false,
+        "reconnectionAttempts": 15,
+        "reconnectionDelay": 500,
+        "reconnectionDelayMax": 10000,
+        "randomizationFactor": 0.5,
+        "auth": {
+          "token": this.jwtOpen
+        }
+      });
+      socket.on("connect", function () {
+        t._onServerOpen();
+      });
+      socket.on("message", function (data) {
+        t._onServerMessage(data);
+      });
+      socket.on("error", function (data) {
+        console.error("socket.error:" + JSON.stringify(data));
+      });
+      socket.on("disconnect", function (reason) {
+        t._onServerClose(false, reason);
+      });
+      socket.io.on("reconnect_failed", () => {
+        t._onServerClose(true);
+      });
+      socket.io.engine.on('close', (event) => {
+        if (event === "forced close") {
+          t._onServerClose(true);
+        }
+      });
+    }
+    this.socketio = socket;
 
 		return socket;
 	};
