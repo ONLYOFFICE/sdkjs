@@ -5446,6 +5446,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "");
 
+		oParser = new parserFormula("TEXTBEFORE(\"\",\",\",\"test\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTBEFORE(\"\",\",\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("TEXTBEFORE(B1,\",\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
 		/*oParser = new parserFormula( "TEXTBEFORE(B9:C10;B13:C14;B9:C10;B9:C10;B9:C10;B9:C10)", "A1", ws );
 		assert.ok( oParser.parse() );
 		assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );*/
@@ -5553,6 +5565,22 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "12333");
 
 		oParser = new parserFormula("TEXTAFTER(12333;123;3;TRUE;TRUE)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("TEXTAFTER(\"\",\",\",\"test\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTAFTER(\"\",\",\",\"test\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTAFTER(\"\",\",\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("TEXTAFTER(B1,\",\")", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 	});
