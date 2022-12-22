@@ -19171,17 +19171,122 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
 	});
 
-	/*QUnit.test("Test: \"MINVERSE\"", function (assert) {
+	QUnit.test("Test: \"MINVERSE\"", function (assert) {
+		// 2x2 matrix
+		ws.getRange2("A202").setValue("1");
+		ws.getRange2("A203").setValue("3");
+		ws.getRange2("B202").setValue("2");
+		ws.getRange2("B203").setValue("4");
+		// 3x3 matrix + 4x4 matrix + 5x5 matrix
+		ws.getRange2("A204").setValue("2");
+		ws.getRange2("A205").setValue("6");
+		ws.getRange2("A206").setValue("5");
+		ws.getRange2("A207").setValue("3");
+		ws.getRange2("A208").setValue("125");
+		ws.getRange2("B204").setValue("5");
+		ws.getRange2("B205").setValue("3");
+		ws.getRange2("B206").setValue("-2");
+		ws.getRange2("B207").setValue("2");
+		ws.getRange2("B208").setValue("-1.5");
+		ws.getRange2("C204").setValue("7");
+		ws.getRange2("C205").setValue("4");
+		ws.getRange2("C206").setValue("-3");
+		ws.getRange2("C207").setValue("4");
+		ws.getRange2("C208").setValue("-1");
+		ws.getRange2("D204").setValue("12");
+		ws.getRange2("D205").setValue("-2");
+		ws.getRange2("D206").setValue("7");
+		ws.getRange2("D207").setValue("5");
+		ws.getRange2("D208").setValue("2.5");
+		ws.getRange2("E204").setValue("14.5");
+		ws.getRange2("E205").setValue("-3");
+		ws.getRange2("E206").setValue("35");
+		ws.getRange2("E207").setValue("309");
+		ws.getRange2("E208").setValue("-25");
 
-		ws.getRange2( "A202" ).setValue( "4" );
-		ws.getRange2( "A203" ).setValue( "2" );
-		ws.getRange2( "B202" ).setValue( "-1" );
-		ws.getRange2( "B203" ).setValue( "0" );
+		// false matrixes
 
-		oParser = new parserFormula( "MINVERSE({4,-1;2,0})", "A2", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), 0 );
-	} );*/
+		ws.getRange2("J20").setValue("");
+		ws.getRange2("J21").setValue("TRUE");
+		ws.getRange2("J22").setValue("#N/A");
+		ws.getRange2("J23").setValue("{2;3;4;5}");
+
+		oParser = new parserFormula("MINVERSE(A202:B203)", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE(A202:B203)");
+		let array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), -2, "Result [0,0] MINVERSE(A202:B203)");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 1, "Result [0,1] MINVERSE(A202:B203)");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 1.5, "Result [1,0] MINVERSE(A202:B203)");
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), -0.5, "Result [1,1] MINVERSE(A202:B203)");
+
+		oParser = new parserFormula("MINVERSE(A204:C206)", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE(A204:C206)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result [0,0] MINVERSE(A204:C206)");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), -38, "Result [1,0] MINVERSE(A204:C206)");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 27, "Result [2,0] MINVERSE(A204:C206)");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), -1, "Result [0,1] MINVERSE(A204:C206)");
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 41, "Result [1,1] MINVERSE(A204:C206)");
+		assert.strictEqual(array.getElementRowCol(2,1).getValue(), -29, "Result [2,1] MINVERSE(A204:C206)");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 1, "Result [0,2] MINVERSE(A204:C206)");
+		assert.strictEqual(array.getElementRowCol(1,2).getValue(), -34, "Result [1,2] MINVERSE(A204:C206)");
+		assert.strictEqual(array.getElementRowCol(2,2).getValue(), 24, "Result [2,2] MINVERSE(A204:C206)");
+
+		oParser = new parserFormula("MINVERSE(A204:D207)", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE(A204:D207)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue().toFixed(5) - 0, -0.04108, "Result [0,0] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue().toFixed(5) - 0, 0.47025, "Result [1,0] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue().toFixed(5) - 0, -0.26629, "Result [2,0] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(3,0).getValue().toFixed(5) - 0, 0.04958, "Result [3,0] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue().toFixed(5) - 0, 0.10057, "Result [0,1] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(1,1).getValue().toFixed(5) - 0, 0.33144, "Result [1,1] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(2,1).getValue().toFixed(5) - 0, -0.17564, "Result [2,1] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(3,1).getValue().toFixed(5) - 0, -0.05241, "Result [3,1] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue().toFixed(5) - 0, 0.07790, "Result [0,2] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(1,2).getValue().toFixed(5) - 0, 0.07365, "Result [1,2] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(2,2).getValue().toFixed(5) - 0, -0.15014, "Result [2,2] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(3,2).getValue().toFixed(5) - 0, 0.04391, "Result [3,2] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(0,3).getValue().toFixed(5) - 0, 0.02975, "Result [0,3] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(1,3).getValue().toFixed(5) - 0, -1.09915, "Result [1,3] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(2,3).getValue().toFixed(5) - 0, 0.77904, "Result [2,3] MINVERSE(A204:D207)");
+		assert.strictEqual(array.getElementRowCol(3,3).getValue().toFixed(5) - 0, -0.00142, "Result [3,3] MINVERSE(A204:D207)");
+
+		oParser = new parserFormula("MINVERSE(A204:E208)", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE(A204:E208)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue().toFixed(5) - 0, -0.00516, "Result [0,0] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue().toFixed(5) - 0, -0.60923, "Result [1,0] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue().toFixed(5) - 0, 0.49022, "Result [2,0] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(3,0).getValue().toFixed(5) - 0, 0.05601, "Result [3,0] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(4,0).getValue().toFixed(5) - 0, -0.00326, "Result [4,0] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue().toFixed(5) - 0, 0.02070, "Result [0,1] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(1,1).getValue().toFixed(5) - 0, 2.73184, "Result [1,1] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(2,1).getValue().toFixed(5) - 0, -1.85786, "Result [2,1] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(3,1).getValue().toFixed(5) - 0, -0.06672, "Result [3,1] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(4,1).getValue().toFixed(5) - 0, 0.00725, "Result [4,1] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue().toFixed(5) - 0, 0.01274, "Result [0,2] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(1,2).getValue().toFixed(5) - 0, 2.03215, "Result [1,2] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(2,2).getValue().toFixed(5) - 0, -1.52268, "Result [2,2] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(3,2).getValue().toFixed(5) - 0, 0.03223, "Result [3,2] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(4,2).getValue().toFixed(5) - 0, 0.00591, "Result [4,2] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(0,3).getValue().toFixed(5) - 0, -0.00047, "Result [0,3] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(1,3).getValue().toFixed(5) - 0, -0.19109, "Result [1,3] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(2,3).getValue().toFixed(5) - 0, 0.14266, "Result [2,3] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(3,3).getValue().toFixed(5) - 0, -0.00683, "Result [3,3] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(4,3).getValue().toFixed(5) - 0, 0.00274, "Result [4,3] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(0,4).getValue().toFixed(5) - 0, 0.00659, "Result [0,4] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(1,4).getValue().toFixed(5) - 0, -0.19808, "Result [1,4] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(2,4).getValue().toFixed(5) - 0, 0.13882, "Result [2,4] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(3,4).getValue().toFixed(5) - 0, 0.00118, "Result [3,4] MINVERSE(A204:E208)");
+		assert.strictEqual(array.getElementRowCol(4,4).getValue().toFixed(5) - 0, -0.0006, "Result [4,4] MINVERSE(A204:E208)");
+
+
+		oParser = new parserFormula("MINVERSE({1;3;2;4})", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE({1;3;2;4})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MINVERSE({1;3;2;4})");
+
+	});
 
 	QUnit.test("Test: \"FIND\"", function (assert) {
 		ws.getRange2("A101").setValue("Miriam McGovern");
