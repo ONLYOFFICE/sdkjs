@@ -6036,6 +6036,22 @@ $(function () {
 		/*oParser = new parserFormula("TEXTSPLIT(C3,C5:D5,C6:D6,C59:D59,{TRUE,FALSE},C11)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test1");*/
+
+		ws.getRange2("A2").setValue("Do. Or do not. There is no try. -Anonymous");
+		oParser = new parserFormula("TEXTSPLIT(A2,,\".\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), " Or do not");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), " There is no try");
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 0).getValue(), " -Anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,{\".\";\"-\"})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), " Or do not");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), " There is no try");
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 0).getValue(), " ");
+		assert.strictEqual(oParser.calculate().getElementRowCol(4, 0).getValue(), "Anonymous");
 	});
 
 	function putStackData() {

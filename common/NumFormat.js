@@ -5102,4 +5102,7 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 	window["AscCommon"].g_aAdditionalCurrencySymbols = g_aAdditionalCurrencySymbols;
 	window["AscCommon"].NumFormatType = NumFormatType;
 
+	window["AscCommon"].escapeRegExp = escapeRegExp;
+
+
 })(window);

@@ -2410,11 +2410,11 @@ function (window, undefined) {
 							sRegExp += "|";
 						}
 
-						sRegExp += _array[row][col];
+						sRegExp += AscCommon.escapeRegExp(_array[row][col] + "");
 					}
 				}
 			} else {
-				sRegExp += "[" + _array + "]";
+				sRegExp += "[" + AscCommon.escapeRegExp(_array + "") + "]";
 			}
 
 			return _match_mode ? new RegExp(sRegExp, "i") : new RegExp(sRegExp);
@@ -2453,6 +2453,8 @@ function (window, undefined) {
 			text = text.getValue2(0, 0);
 		} else if (cElementType.array === text.type) {
 			text = text.getValue2(0, 0);
+		} else if (text.type === cElementType.cell3D || text.type === cElementType.cell) {
+			text = text.getValue();
 		}
 
 		text = text.tocString();
@@ -2498,7 +2500,7 @@ function (window, undefined) {
 			res.fillFromArray(newArray);
 		}
 
-		return res ? res : new cError(cErrorType.not_available);
+		return res && res.isValidArray() ? res : new cError(cErrorType.not_available);
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------

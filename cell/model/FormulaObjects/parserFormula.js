@@ -70,6 +70,14 @@ function (window, undefined) {
 
 	var TOK_SUBTYPE_UNION = 15;
 
+	function getArrayCopy(arr) {
+		var newArray = [];
+		for (var i = 0; i < arr.length; i++) {
+			newArray[i] = arr[i].slice();
+		}
+		return newArray
+	}
+
 	function ParsedThing(value, type, subtype, pos, length) {
 		this.value = value;
 		this.type = type;
@@ -560,6 +568,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let arr = [];
 		if (this.getMatrix) {
 			arr = this.getMatrix();
+			arr = getArrayCopy(arr);
+
 			if (putValue || checkOnError) {
 				for (let i = 0; i < arr.length; i++) {
 					if (arr[i]) {
