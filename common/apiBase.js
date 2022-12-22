@@ -272,11 +272,6 @@
 			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
 		});
 
-		AscCommon.loadSmartArtBinary(function (err) {
-			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingBinError, c_oAscError.Level.NoCritical);
-		});
-
-
 		var oldOnError = window.onerror;
 		window.onerror = function(errorMsg, url, lineNumber, column, errorObj) {
 			//send only first error to reduce number of requests. also following error may be consequences of first
@@ -2635,6 +2630,10 @@
 		this.chartPreviewManager   = new AscCommon.ChartPreviewManager();
 		this.smartArtPreviewManager   = new AscCommon.SmartArtPreviewDrawer();
 		this.textArtPreviewManager = new AscCommon.TextArtPreviewManager();
+
+		AscCommon.loadSmartArtBinary(function (err) {
+			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingBinError, c_oAscError.Level.NoCritical);
+		});
 
 		AscFormat.initStyleManager();
 
