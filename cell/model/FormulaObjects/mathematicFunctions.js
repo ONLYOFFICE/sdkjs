@@ -2710,8 +2710,8 @@
 			let i, j;
 			for (i = 0; i < A.length; i++) {
 				for (j = 0; j < A[i].length; j++) {
-					if (A[i][j] instanceof cEmpty || A[i][j] instanceof cString) {
-						return new cError(cErrorType.not_available);
+					if(cElementType.empty === A[i][j].type || cElementType.string === A[i][j].type) {
+						return new cError(cErrorType.wrong_value_type);
 					} else {
 						A[i][j] = A[i][j].getValue();
 					}
@@ -2738,15 +2738,35 @@
 		}
 
 		let arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			if (arg0.getDimensions().col === 1 && arg0.getDimensions().row === 1) {
+				arg0 = arg0.getMatrix();
+				return new cNumber(1 / arg0);
+			}
 			arg0 = arg0.getMatrix();
+		} else if (cElementType.array === arg0.type) {
+			if (arg0.getCountElement() === 1 && arg0.getCountElementInRow() === 1) {
+				arg0 = arg0.getMatrix();
+				return new cNumber(1 / arg0);
+			}
+			arg0 = arg0.getMatrix();
+		} else if (cElementType.number === arg0.type) {
+			return new cNumber(1 / arg0);
+		} else if (cElementType.cell === arg0.type) {
+			let arg0Val = arg0.getValue();
+			if (cElementType.number === arg0Val.type) {
+				return new cNumber(1 / arg0Val);
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
 		} else {
 			return new cError(cErrorType.not_available);
 		}
 
-		if (arg0[0].length != arg0.length) {
-			return new cError(cErrorType.wrong_value_type);
-		}
+		// ???
+		// if (arg0[0].length != arg0.length) {
+		// 	return new cError(cErrorType.wrong_value_type);
+		// }
 
 		return InverseMatrix(arg0);
 	};

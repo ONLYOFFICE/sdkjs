@@ -19206,6 +19206,9 @@ $(function () {
 
 		// false matrixes
 
+		ws.getRange2("J17").setValue("");
+		ws.getRange2("J18").setValue("10");
+		ws.getRange2("J19").setValue("");
 		ws.getRange2("J20").setValue("");
 		ws.getRange2("J21").setValue("TRUE");
 		ws.getRange2("J22").setValue("#N/A");
@@ -19281,10 +19284,29 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(3,4).getValue().toFixed(5) - 0, 0.00118, "Result [3,4] MINVERSE(A204:E208)");
 		assert.strictEqual(array.getElementRowCol(4,4).getValue().toFixed(5) - 0, -0.0006, "Result [4,4] MINVERSE(A204:E208)");
 
+		oParser = new parserFormula("MINVERSE(TRUE)", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE(TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MINVERSE(TRUE)");
 
-		oParser = new parserFormula("MINVERSE({1;3;2;4})", "A2", ws);
-		assert.ok(oParser.parse(), "MINVERSE({1;3;2;4})");
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MINVERSE({1;3;2;4})");
+		oParser = new parserFormula("MINVERSE(10)", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE(10)");
+		assert.strictEqual(oParser.calculate().getValue(), 0.1, "Result MINVERSE(10)");
+
+		oParser = new parserFormula("MINVERSE(str)", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE(str)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result MINVERSE(str)");
+
+		oParser = new parserFormula("MINVERSE({10})", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE({10})");
+		assert.strictEqual(oParser.calculate().getValue(), 0.1, "Result MINVERSE({10})");
+
+		oParser = new parserFormula("MINVERSE(J17:J20)", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE(J17:J20)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result MINVERSE(J17:J20)");
+
+		oParser = new parserFormula("MINVERSE(J18:J18)", "A2", ws);
+		assert.ok(oParser.parse(), "MINVERSE(J18:J18)");
+		assert.strictEqual(oParser.calculate().getValue(), 0.1, "Result MINVERSE(J18:J18)");
 
 	});
 
