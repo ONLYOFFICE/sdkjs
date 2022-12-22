@@ -131,6 +131,8 @@
 
 		this.MathMenuLoad          = false;
 
+		this.mathInputType = Asc.c_oAscMathInputType.Unicode;
+
 		// CoAuthoring and Chat
 		this.User                   = undefined;
 		this.CoAuthoringApi         = new AscCommon.CDocsCoApi();
@@ -191,7 +193,7 @@
 		this.disableAutostartMacros = false;
 		this.macros = null;
 		this.vbaMacros = null;
-		this.vbaMacrosXml = null;
+		this.vbaProject = null;
 
         this.openFileCryptBinary = null;
 
@@ -627,10 +629,14 @@
 	baseEditorsApi.prototype.asc_setViewMode                 = function()
 	{
 	};
-	baseEditorsApi.prototype.asc_setRestriction              = function(val)
+	/**
+	 * @param val
+	 * @param additionalSettings {AscCommon.CRestrictionSettings}
+	 */
+	baseEditorsApi.prototype.asc_setRestriction              = function(val, additionalSettings)
 	{
 		this.restrictions = val;
-		this.onUpdateRestrictions();
+		this.onUpdateRestrictions(additionalSettings);
 	};
 	baseEditorsApi.prototype.getViewMode                     = function()
 	{
@@ -828,15 +834,19 @@
 
 	baseEditorsApi.prototype.asc_SaveDrawingAsPicture = function()
 	{
-		let oImageData = this.getImageDataFromSelection();
-		if(oImageData)
+		let oController = this.getGraphicController();
+		if(oController)
 		{
-			let a = document.createElement("a");
-			let sSrc = oImageData.src;
-			a.href = sSrc;
-			let sExt = sSrc.substring("data:image/".length, sSrc.indexOf(";base64"));
-			a.download = AscCommon.translateManager.getValue("Picture") + "." + sExt;
-			a.click();
+			let oImageData = oController.getImageDataForSaving();
+			if(oImageData)
+			{
+				let a = document.createElement("a");
+				let sSrc = oImageData.src;
+				a.href = sSrc;
+				let sExt = sSrc.substring("data:image/".length, sSrc.indexOf(";base64"));
+				a.download = AscCommon.translateManager.getValue("Picture") + "." + sExt;
+				a.click();
+			}
 		}
 	};
 	baseEditorsApi.prototype.canEdit                         = function()
@@ -1157,50 +1167,57 @@
 		const oSmartArt = new AscFormat.SmartArt();
 		oSmartArt.fillByPreset(nSmartArtType);
 		const oLogicDocument = this.getLogicDocument();
-		const oDrawingObjects = this.getDrawingObjects();
 		const oController = this.getGraphicController();
+		const oDrawingObjects = this.getDrawingObjects();
 		if (!bFromWord) {
-			if (oDrawingObjects) {
-				oSmartArt.setDrawingObjects(oDrawingObjects);
-			}
-			if (oDrawingObjects.cSld) {
-				oSmartArt.setParent(oDrawingObjects);
-				oSmartArt.setRecalculateInfo();
-			}
+					if (oDrawingObjects) {
+						oSmartArt.setDrawingObjects(oDrawingObjects);
+					}
+					if (oDrawingObjects.cSld) {
+						oSmartArt.setParent(oDrawingObjects);
+						oSmartArt.setRecalculateInfo();
+					}
 
-			if (oDrawingObjects.getWorksheetModel) {
-				oSmartArt.setWorksheet(oDrawingObjects.getWorksheetModel());
-			}
-			oSmartArt.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
-			oSmartArt.checkDrawingBaseCoords();
-
-			if (oController) {
-				oController.checkChartTextSelection();
-				oController.resetSelection();
-				oSmartArt.select(oController, 0);
-			}
-			oSmartArt.fitFontSize();
-			oController.startRecalculate();
-			oDrawingObjects.sendGraphicObjectProps();
+					if (oDrawingObjects.getWorksheetModel) {
+						const oWSView = oDrawingObjects.getWorksheetModel();
+						oSmartArt.setWorksheet(oWSView);
+					}
+					oSmartArt.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+					oSmartArt.checkDrawingBaseCoords();
+					oSmartArt.fitFontSize();
+					if (oController) {
+						oController.checkChartTextSelection();
+						oController.resetSelection();
+						oSmartArt.select(oController, 0);
+						if (oDrawingObjects.getWorksheet) {
+							const oWS = oDrawingObjects.getWorksheet();
+							if (oWS) {
+								oWS.setSelectionShape(true);
+							}
+						}
+					}
+					oController.startRecalculate();
+					oDrawingObjects.sendGraphicObjectProps();
 		} else {
 			if (true === oLogicDocument.Selection.Use) {
 				oLogicDocument.Remove(1, true);
 			}
 			oSmartArt.fitToPageSize();
 			oSmartArt.fitFontSize();
-			const oParaDrawing = oSmartArt.decorateParaDrawing(oDrawingObjects);
+			const oParaDrawing = oSmartArt.decorateParaDrawing(oController);
 			oSmartArt.setXfrmByParent();
-			if (oDrawingObjects) {
-				oDrawingObjects.resetSelection2();
+			if (oController) {
+				oController.resetSelection2();
 				oLogicDocument.AddToParagraph(oParaDrawing);
 				oLogicDocument.Select_DrawingObject(oParaDrawing.Get_Id());
 				oLogicDocument.Recalculate();
-				oDrawingObjects.clearTrackObjects();
-				oDrawingObjects.clearPreTrackObjects();
-				oDrawingObjects.updateOverlay();
-				oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
 			}
 		}
+		oController.clearTrackObjects();
+		oController.clearPreTrackObjects();
+		oController.updateOverlay();
+		oController.changeCurrentState(new AscFormat.NullState(oController));
+		oController.updateSelectionState();
 		return oSmartArt;
 	};
 	baseEditorsApi.prototype.forceSave = function()
@@ -1566,6 +1583,7 @@
 					t.setViewModeDisconnect(AscCommon.getEnableDownloadByCloseCode(code));
 					t.disconnectOnSave = {code: code, reason: reason};
 				} else {
+					t.CoAuthoringApi.sendClientLog('debug', 'disconnect code:' + code + ';reason:' + reason);
 					t.CoAuthoringApi.disconnect(code, reason);
 				}
 			}
@@ -2551,7 +2569,13 @@
 	};
 	baseEditorsApi.prototype.asc_getUrlType = function(url)
 	{
-		return AscCommon.getUrlType(url);
+		let res = AscCommon.getUrlType(url);
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]() &&
+			(res === AscCommon.c_oAscUrlType.Invalid || !(AscCommon.rx_allowedProtocols.test(url) || /^(www.)|@/i.test(url))))
+		{
+			res = AscCommon.c_oAscUrlType.Unsafe;
+		}
+		return res;
 	};
 	baseEditorsApi.prototype.asc_prepareUrl = function(url)
 	{
@@ -2958,11 +2982,12 @@
         AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
     };
 
-    baseEditorsApi.prototype["asc_registerPlaceholderCallback"] = function(type, callback)
+    baseEditorsApi.prototype["asc_registerPlaceholderCallback"] = function(nType, fCallback)
     {
-    	if (this.WordControl && this.WordControl.m_oDrawingDocument && this.WordControl.m_oDrawingDocument.placeholders)
+		const oDrawingDocument = this.getDrawingDocument();
+    	if (oDrawingDocument && oDrawingDocument.placeholders)
 		{
-            this.WordControl.m_oDrawingDocument.placeholders.registerCallback(type, callback);
+			oDrawingDocument.placeholders.registerCallback(nType, fCallback);
 		}
     };
     baseEditorsApi.prototype["asc_uncheckPlaceholders"] = function()
@@ -3923,12 +3948,18 @@
 	baseEditorsApi.prototype.asc_ConvertMathView = function(isToLinear, isAll)
 	{
 	};
+	baseEditorsApi.prototype.getMathInputType = function()
+	{
+		return this.mathInputType;
+	};
 	baseEditorsApi.prototype.asc_GetMathInputType = function()
 	{
-		return Asc.c_oAscMathInputType.Unicode;
+		return this.getMathInputType();
 	};
 	baseEditorsApi.prototype.asc_SetMathInputType = function(type)
-	{};
+	{
+		this.mathInputType = type;
+	};
 
 	baseEditorsApi.prototype.getFileAsFromChanges = function()
 	{
@@ -4168,6 +4199,31 @@
 
 	baseEditorsApi.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight)
 	{
+	};
+
+	// ---------------------------------------------------- oform ---------------------------------------------
+	baseEditorsApi.prototype.signOform = function()
+	{
+		// TODO:
+		// 1) делаем архив oform
+		// 2) прогоняем архив через модуль для подписи. считаем хэши и делаем архив - и отдаем хмл для подписи
+		// 3) вызываем плагин для подписи
+		// 4) получаем подпись и информацию о подписи.
+		// 5) добавляем эти данные в архив
+
+		// TODO: проверить, есть ли плагин для подписи
+
+		let plugin = window.g_asc_plugins ? window.g_asc_plugins.getSign() : null;
+		if (!plugin)
+		{
+			this.sendEvent('asc_onError', c_oAscError.ID.Unknown, c_oAscError.Level.NoCritical);
+			return;
+		}
+
+		let startData = new Asc.CPluginData();
+		startData.setAttribute("data", "test_sign_data");
+
+		this.asc_pluginRun(plugin.guid, 0, startData);
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------

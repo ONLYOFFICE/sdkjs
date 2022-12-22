@@ -320,9 +320,10 @@
         if((!this.content || this.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.parent.isEmptyPlaceholder() && !this.checkCurrentPlaceholder()) {
             if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2) {
                 if(graphics.IsNoSupportTextDraw) {
-                    var _w2 = this.content2.XLimit;
-                    var _h2 = this.content2.GetSummaryHeight();
+                    let _w2 = this.content2.XLimit;
+                    let _h2 = this.content2.GetSummaryHeight();
                     graphics.rect(this.content2.X, this.content2.Y, _w2, _h2);
+					return;
                 }
 
                 this.content2.Set_StartPage(0);
@@ -331,16 +332,17 @@
         }
         else if(this.content) {
             if(graphics.IsNoSupportTextDraw) {
-                var bEmpty = this.content.IsEmpty();
-                var _w = bEmpty ? 0.1 : this.content.XLimit;
-                var _h = this.content.GetSummaryHeight();
+                let bEmpty = this.content.IsEmpty();
+                let _w = bEmpty ? 0.1 : this.content.XLimit;
+                let _h = this.content.GetSummaryHeight();
                 graphics.rect(this.content.X, this.content.Y, _w, _h);
+				return;
             }
             var old_start_page = this.content.StartPage;
             this.content.Set_StartPage(0);
             if (graphics.isSmartArtPreviewDrawer && graphics.m_oContext) {
                 const nContentHeight = this.parent.contentHeight;
-                const nLineHeight = 3;
+                const nLineHeight = 4 * AscCommon.g_dKoef_pix_to_mm;
                 graphics.save();
                 graphics.m_oContext.fillStyle = 'rgb(0,0,0)';
 
@@ -349,7 +351,7 @@
 
                 for (let i = 0; i < this.content.Content.length; i += 1) {
                     const oParagraph = this.content.Content[i];
-                    const nWidth = nContentWidth > 30 ? 30 : nContentWidth - nContentWidth * 0.3;
+                    const nWidth = nContentWidth > 20 ? 20 : nContentWidth - nContentWidth * 0.3;
                     const eJC = oParagraph.CompiledPr.Pr.ParaPr.Jc;
                     let startX;
                     const gap = 5;
@@ -371,17 +373,14 @@
                     }
 
                     const oBullet = oParagraph.PresentationPr && oParagraph.PresentationPr.Bullet;
-                    const Y = nHeightStep * i + (nHeightStep - nLineHeight) / 2;
+                    const Y = nHeightStep * i + nHeightStep / 2;
 
                     if(oBullet && !oBullet.IsNone()) {
-                        graphics.rect(startX + nWidth / 4, Y, nWidth - nWidth / 4, nLineHeight);
-                        graphics.df();
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX + nWidth / 2, startX + nWidth, nLineHeight);
 
-                        graphics.rect(startX, Y, nLineHeight, nLineHeight);
-                        graphics.df();
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX, startX + nLineHeight, nLineHeight);
                     } else {
-                        graphics.rect(startX, Y, nWidth, nLineHeight);
-                        graphics.df();
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX, startX + nWidth, nLineHeight);
                     }
                 }
                 graphics.restore();

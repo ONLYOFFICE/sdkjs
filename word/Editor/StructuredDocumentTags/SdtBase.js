@@ -210,16 +210,14 @@ CSdtBase.prototype.IsContentControlTemporary = function()
  */
 CSdtBase.prototype.SetFormPr = function(oFormPr)
 {
+	this.private_CheckFieldMasterBeforeSet(oFormPr);
 	this.private_CheckKeyValueBeforeSet(oFormPr);
 
 	if ((!this.Pr.FormPr && oFormPr) || !this.Pr.FormPr.IsEqual(oFormPr))
 	{
-		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr));
-		this.Pr.FormPr = oFormPr;
-
-		let oLogicDocument = this.GetLogicDocument();
-		if (oLogicDocument)
-			oLogicDocument.GetFormsManager().Register(this);
+		let change = new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr);
+		AscCommon.History.Add(change);
+		change.Redo();
 
 		this.private_OnAddFormPr();
 	}
@@ -239,6 +237,53 @@ CSdtBase.prototype.private_CheckKeyValueBeforeSet = function(formPr)
 		formPr.SetKey(this.Pr.FormPr.GetKey());
 	else
 		formPr.SetKey(newKey);
+};
+CSdtBase.prototype.private_CheckFieldMasterBeforeSet = function(formPr)
+{
+	if (!formPr || !formPr.GetRole())
+		return;
+	
+	let roleName = formPr.GetRole();
+	if (!roleName)
+		return;
+	
+	// Настройки formPr могут прийти в интерфейс с заполненным fieldMaster, если в интерфейсе меняется роль, значит
+	// она будет здесь выставлена и имеет больший приоритет, чем выставленный fieldMaster
+	
+	formPr.SetFieldMaster(null);
+	formPr.SetRole(null);
+	
+	let logicDocument = this.GetLogicDocument();
+	let oform;
+	
+	if (!logicDocument
+		|| !window['AscOForm']
+		|| !(oform = logicDocument.GetOFormDocument())
+		|| !logicDocument.IsActionStarted())
+		return;
+	
+	let role = oform.getRole(roleName);
+	let userMaster;
+	if (!role || !(userMaster = role.getUserMaster()))
+		return;
+	
+	let fieldMaster;
+	if (this.Pr.FormPr && this.Pr.FormPr.GetFieldMaster())
+		fieldMaster = this.Pr.FormPr.GetFieldMaster();
+	
+	if (!fieldMaster)
+		fieldMaster = oform.getFormat().createFieldMaster();
+	else
+		oform.getFormat().addFieldMaster(fieldMaster);
+	
+	if (1 !== fieldMaster.getUserCount() || userMaster !== fieldMaster.getUser(0))
+	{
+		fieldMaster.clearUsers();
+		fieldMaster.addUser(userMaster);
+	}
+	
+	fieldMaster.setLogicField(this);
+	formPr.SetFieldMaster(fieldMaster);
 };
 /**
  * Удаляем настройки специальных форм
@@ -830,4 +875,68 @@ CSdtBase.prototype.GetFormValue = function()
 };
 CSdtBase.prototype.MoveCursorOutsideForm = function(isBefore)
 {
+};
+CSdtBase.prototype.GetFieldMaster = function()
+{
+	let formPr = this.GetFormPr();
+	if (!formPr)
+		return null;
+	
+	return formPr.GetFieldMaster();
+};
+/**
+ * Получаем название роли данного поля
+ * @returns {string}
+ */
+CSdtBase.prototype.GetFormRole = function()
+{
+	let fieldMaster = this.GetFieldMaster();
+	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
+	return userMaster ? userMaster.getRole() : "";
+};
+CSdtBase.prototype.SetFieldMaster = function(fieldMaster)
+{
+	if (!fieldMaster)
+		return;
+	
+	let formPr = this.GetFormPr();
+	if (!formPr)
+		return;
+	
+	let newFormPr = formPr.Copy();
+	newFormPr.Field = fieldMaster;
+	this.SetFormPr(newFormPr);
+};
+CSdtBase.prototype.GetFormShd = function()
+{
+	let formPr = this.GetFormPr();
+	if (!formPr)
+		return null;
+	
+	return formPr.GetShd();
+};
+CSdtBase.prototype.GetFormHighlightColor = function(defaultColor)
+{
+	if (undefined === defaultColor)
+	{
+		let logicDocument = this.GetLogicDocument();
+		defaultColor = logicDocument && logicDocument.GetSpecialFormsHighlight ? logicDocument.GetSpecialFormsHighlight() : null;
+	}
+	
+	let formPr = this.GetFormPr();
+	if (!formPr)
+		defaultColor;
+	
+	let fieldMaster = formPr.GetFieldMaster();
+	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
+	let userColor   = userMaster ? userMaster.getColor() : null;
+	
+	let logicDocument = this.GetLogicDocument();
+	let oform         = logicDocument ? logicDocument.GetOFormDocument() : null;
+	let currentUser   = oform ? oform.getCurrentUserMaster() : null;
+	
+	if (!currentUser || currentUser === userMaster)
+		return userColor ? userColor : defaultColor;
+	
+	return defaultColor;
 };

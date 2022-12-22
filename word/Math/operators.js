@@ -4054,16 +4054,17 @@ CDelimiter.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strStartSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
 	var strEndSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
+
 	var strSeparatorSymbol = isLaTeX ? "\\mid" : "∣";
+
 	if (strStartSymbol === "\uffff") {
 		strStartSymbol = ' '
 	}
 
-   strTemp += strStartSymbol;
+    strTemp += strStartSymbol;
+
 	for (var intCount = 0; intCount < this.Content.length; intCount++) {
-        if (isLaTeX && this.Content && this.Content.length === 1 && this.Content[0].Content.length && this.Content[0].Content[1] && this.Content[0].Content.length > 1 && this.Content[0].Content[1].Type === 51) {
-            return this.Content[0].Content[1].GetTextOfElement(isLaTeX, strStartSymbol+strEndSymbol);
-        }
+
 		strTemp += this.CheckIsEmpty(this.Content[intCount].GetTextOfElement(isLaTeX));
 
 		if (strSeparatorSymbol && this.Content.length > 1 && intCount < this.Content.length - 1) {

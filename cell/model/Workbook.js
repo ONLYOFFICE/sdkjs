@@ -481,10 +481,18 @@
 		forEachSheetListeners: function(sheetId, callback) {
 			var sheetContainer = this.sheetListeners[sheetId];
 			if (sheetContainer) {
-				for (var i in sheetContainer.cellMap) {
+				var i, j;
+				for (i in sheetContainer.cellMap) {
 					if (sheetContainer.cellMap[i]) {
-						for (var j in sheetContainer.cellMap[i].listeners) {
+						for (j in sheetContainer.cellMap[i].listeners) {
 							callback(sheetContainer.cellMap[i].listeners[j]);
+						}
+					}
+				}
+				for (i in sheetContainer.areaMap) {
+					if (sheetContainer.areaMap[i]) {
+						for (j in sheetContainer.areaMap[i].listeners) {
+							callback(sheetContainer.areaMap[i].listeners[j]);
 						}
 					}
 				}
@@ -812,6 +820,9 @@
 		},
 		removeDefName: function(sheetId, name) {
 			this._removeDefName(sheetId, name, AscCH.historyitem_Workbook_DefinedNamesChange);
+			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
+				this.wb.handlers.trigger("updateCellWatches");
+			}
 		},
 		editDefinesNames: function(oldUndoName, newUndoName) {
 			var res = null;
@@ -2072,7 +2083,7 @@
 		this.lastFindCells = {};
 		this.oleSize = null;
 		if (oApi && oApi.isEditOleMode) {
-			this.oleSize = new AscCommonExcel.OleSizeSelectionRange(null, new Asc.Range(0, 0, 10, 10));
+			this.oleSize = new AscCommonExcel.OleSizeSelectionRange(null, new Asc.Range(0, 0, 6, 9));
 		}
 
 		//при копировании листа с одного wb на другой необходимо менять в стеке
@@ -2128,6 +2139,44 @@
 		}
 		if (bSnapshot) {
 			this.snapshot = this._getSnapshot();
+		}
+	};
+	Workbook.prototype.addImages = function (aImages, oPlaceholder) {
+		const oApi = Asc.editor;
+		if (oPlaceholder && undefined !== oPlaceholder.id && aImages.length === 1 && aImages[0].Image) {
+			const oController = oApi.getGraphicController();
+			const oDrawingObjects = oApi.getDrawingObjects();
+			const oPlaceholderTarget = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
+			if (oPlaceholderTarget) {
+				if (oPlaceholderTarget.isObjectInSmartArt && oPlaceholderTarget.isObjectInSmartArt()) {
+					const oSmartArtGroup = oPlaceholderTarget.group.getMainGroup();
+					const oSmartArtId = oSmartArtGroup && oSmartArtGroup.Id;
+					this.checkObjectsLock([oSmartArtId], function (bLock) {
+						if (bLock) {
+							History.Create_NewPoint();
+							oController.resetSelection();
+							oPlaceholderTarget.applyImagePlaceholderCallback && oPlaceholderTarget.applyImagePlaceholderCallback(aImages, oPlaceholder);
+							oController.selectObject(oSmartArtGroup, 0);
+							oController.selection.groupSelection = oSmartArtGroup;
+							oSmartArtGroup.selectObject(oPlaceholderTarget, 0);
+							const oWS = oApi.wb.getWorksheet();
+							if (oWS) {
+								oWS.setSelectionShape(true);
+							}
+							oSmartArtGroup.addToRecalculate();
+							oController.startRecalculate();
+							if (oDrawingObjects) {
+								oDrawingObjects.sendGraphicObjectProps();
+							}
+							oController.clearPreTrackObjects();
+							oController.clearTrackObjects();
+							oController.updateOverlay();
+							oController.changeCurrentState(new AscFormat.NullState(oController));
+							oController.updateSelectionState();
+						}
+					});
+				}
+			}
 		}
 	};
 	Workbook.prototype.getOleSize = function () {
@@ -4291,7 +4340,7 @@
 	Workbook.prototype.getExternalLinkByReferenceData = function (referenceData) {
 		for (var i = 0; i < this.externalReferences.length; i++) {
 			if (this.externalReferences[i].referenceData) {
-				if (this.externalReferences[i].referenceData["fileId"] === referenceData["fileId"] && this.externalReferences[i].referenceData["portalName"] === referenceData["portalName"]) {
+				if (this.externalReferences[i].referenceData["fileKey"] === referenceData["fileKey"] && this.externalReferences[i].referenceData["instanceId"] === referenceData["instanceId"]) {
 					return {index: i + 1, val: this.externalReferences};
 				}
 			}
@@ -5115,6 +5164,9 @@
 	Worksheet.prototype.setDirtyConditionalFormatting = function(range) {
 		if (!range) {
 			range = new AscCommonExcel.MultiplyRange([new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0)]);
+		} else if (range.ranges && range.getUnionRange) {
+			//объединяю в один
+			range = new AscCommonExcel.MultiplyRange([range.getUnionRange()]);
 		}
 		if (this.updateConditionalFormattingRange) {
 			this.updateConditionalFormattingRange.union2(range);
@@ -11479,6 +11531,38 @@
 		}
 		this.aCellWatches = [];
 		this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
+	};
+
+	Worksheet.prototype.deleteCellWatchesByRange = function (range, addToHistory) {
+		for (var i = 0; i < this.aCellWatches.length; i++) {
+			if (range.containsRange(this.aCellWatches[i].r)) {
+				this.deleteCellWatch(this.aCellWatches[i].r, addToHistory);
+				i--;
+			}
+		}
+	};
+
+	Worksheet.prototype.getCellWatchesByRange = function (range) {
+		let res = [];
+		for (var i = 0; i < this.aCellWatches.length; i++) {
+			if (range.containsRange(this.aCellWatches[i].r)) {
+				res.push(this.aCellWatches[i]);
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.checkImportXmlLocationForError = function(ranges) {
+		for (var i = 0; i < ranges.length; ++i) {
+			var range = ranges[i];
+			if (this.autoFilters.isIntersectionTable(range)) {
+				return c_oAscError.ID.PivotOverlap;
+			}
+			if (this.inPivotTable(range)) {
+				return c_oAscError.ID.PivotOverlap;
+			}
+		}
+		return c_oAscError.ID.No;
 	};
 
 //-------------------------------------------------------------------------------------------------

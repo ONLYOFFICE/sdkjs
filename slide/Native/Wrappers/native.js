@@ -1443,7 +1443,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
 
         case 10020: // ASC_SOCKET_EVENT_TYPE_MESSAGE
         {
-            this.CoAuthoringApi._CoAuthoringApi._onServerMessage(_params);
+            this.CoAuthoringApi._CoAuthoringApi._onServerMessage(_params ? JSON.parse(_params) : {});
             break;
         }
 

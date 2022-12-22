@@ -955,6 +955,23 @@
 			return this.guidAsyncMethod;
 		},
 
+		/* sign methods */
+		getSign : function()
+		{
+			let _count = this.plugins.length;
+			for (let i = 0; i < _count; i++)
+			{
+				var _variation = this.plugins[i].variations[0];
+				if (_variation)
+				{
+					if ("sign" === _variation.initDataType)
+						return this.plugins[i];
+				}
+			}
+
+			return null;
+		},
+
         /* encryption methods ------------- */
         getEncryption : function()
         {
@@ -1331,16 +1348,28 @@
 						};
 					};
 
+					if ( !AscCommon.isValidJs(value) )
+					{
+						console.error('Invalid JS.');
+						return;
+					}
+
 					if (pluginData.getAttribute("interface"))
 					{
 						var _script = "(function(Api, window, alert, document, XMLHttpRequest){\r\n" + "\"use strict\"" + ";\r\n" + value + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
-						eval(_script);
+						try
+						{
+							eval(_script);
+						}
+						catch (err)
+						{
+							console.error(err);
+						}
 					}
 					else if (!window.g_asc_plugins.api.isLongAction() && (pluginData.getAttribute("resize") || window.g_asc_plugins.api.asc_canPaste()))
 					{
 						window.g_asc_plugins.api._beforeEvalCommand();
 						AscFonts.IsCheckSymbols = true;
-
 						var _script = "(function(Api, window, alert, document, XMLHttpRequest){\r\n" + "\"use strict\"" + ";\r\n" + value + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
 						try
 						{

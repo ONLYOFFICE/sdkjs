@@ -130,6 +130,13 @@ var document_recalcresult_FastRange     = 0x0001 | document_recalcresult_FastFla
 var document_recalcresult_FastParagraph = 0x0002 | document_recalcresult_FastFlag;
 var document_recalcresult_LongRecalc    = 0x00FF;
 
+AscWord.ViewPositionType = {
+	Common         : 0x00,
+	Cursor         : 0x01,
+	SelectionStart : 0x02,
+	SelectionEnd   : 0x03
+};
+
 function CDocumentColumnProps()
 {
     this.W     = 0;
@@ -2153,6 +2160,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		isFastCollaboration : false,
 	};
 
+	this.OFormDocument           = window['AscOForm'] && false !== isMainLogicDocument ? new AscOForm.OForm(this) : null;
 	this.FormsManager            = new AscWord.CFormsManager(this);
 	this.CurrentForm             = null;
 	this.HighlightRequiredFields = false;  // Выделяем ли обязательные поля
@@ -2253,6 +2261,9 @@ CDocument.prototype.On_EndLoad                     = function()
     {
         this.Set_FastCollaborativeEditing(true);
     }
+
+	if (this.OFormDocument)
+		this.OFormDocument.onEndLoad();
 
 	this.End_SilentMode();
 };
@@ -2583,6 +2594,17 @@ CDocument.prototype.UpdateSelection = function(isRemoveEmptySelection)
 		this.private_UpdateSelection();
 	}
 };
+CDocument.prototype.UpdatePlaceholders = function ()
+{
+	if (this.Action.Start)
+	{
+		this.Action.UpdatePlaceholders = true;
+    }
+	else
+	{
+		this.private_UpdatePlaceholders();
+	}
+};
 /**
  * Сообщаем документу, что потребуется обновить состояние интерфейса
  * @param {?boolean} bSaveCurRevisionChange
@@ -2764,23 +2786,29 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	if (this.Action.UpdateTracks)
 		this.private_UpdateDocumentTracks();
 
-	this.Action.Start           = false;
-	this.Action.Depth           = 0;
-	this.Action.PointsCount     = 0;
-	this.Action.Recalculate     = false;
-	this.Action.CancelAction    = false;
-	this.Action.UpdateSelection = false;
-	this.Action.UpdateInterface = false;
-	this.Action.UpdateRulers    = false;
-	this.Action.UpdateUndoRedo  = false;
-	this.Action.UpdateTracks    = false;
-	this.Action.Redraw.Start    = undefined;
-	this.Action.Redraw.End      = undefined;
-	this.Action.Additional      = {};
+	if (this.Action.UpdatePlaceholders)
+		this.private_UpdatePlaceholders();
+
+	this.Action.Start              = false;
+	this.Action.Depth              = 0;
+	this.Action.PointsCount        = 0;
+	this.Action.Recalculate        = false;
+	this.Action.CancelAction       = false;
+	this.Action.UpdateSelection    = false;
+	this.Action.UpdateInterface    = false;
+	this.Action.UpdateRulers       = false;
+	this.Action.UpdateUndoRedo     = false;
+	this.Action.UpdateTracks       = false;
+	this.Action.UpdatePlaceholders = false;
+	this.Action.Redraw.Start       = undefined;
+	this.Action.Redraw.End         = undefined;
+	this.Action.Additional         = {};
 	this.Api.checkChangesSize();
 };
 CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 {
+	this.Action.Additional.Start = true;
+	
 	this.Comments.CheckMarks();
 
 	if (this.Action.Additional.TrackMove)
@@ -2793,7 +2821,10 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 		this.private_FinalizeValidateForm();
 
 	if (this.Action.CancelAction)
+	{
+		this.Action.Additional.Start = false;
 		return;
+	}
 
 	if (this.Action.Additional.FormChange)
 		this.private_FinalizeFormChange();
@@ -2809,6 +2840,11 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 
 	if (this.Action.Additional.ContentControlChange)
 		this.private_FinalizeContentControlChange();
+	
+	if (this.OFormDocument)
+		this.OFormDocument.onEndAction();
+	
+	this.Action.Additional.Start = false;
 };
 /**
  * Пересчитываем нумерацию строк
@@ -2817,6 +2853,19 @@ CDocument.prototype.RecalculateLineNumbers = function()
 {
 	this.UpdateLineNumbersInfo();
 	this.Redraw(-1, -1);
+};
+CDocument.prototype.private_UpdatePlaceholders = function ()
+{
+	const arrRet = [];
+	const graphicPages = this.DrawingObjects.graphicPages;
+	for (let i = 0; i < graphicPages.length; i += 1)
+	{
+		graphicPages[i] && graphicPages[i].getPlaceholdersControls(arrRet);
+	}
+    if (this.DrawingDocument.placeholders)
+    {
+      this.DrawingDocument.placeholders.update(arrRet);
+    }
 };
 CDocument.prototype.private_FinalizeRemoveTrackMove = function()
 {
@@ -3237,6 +3286,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 		{
 			this.DrawingDocument.ClearCachePages();
 			this.DrawingDocument.FirePaint();
+			this.UpdatePlaceholders();
 			return document_recalcresult_LongRecalc;
 		}
 		else if (ChangeIndex >= this.Content.length)
@@ -3298,6 +3348,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 			{
 				// // Recalculation LOG
 				// console.log("No need to recalc");
+				this.UpdatePlaceholders();
 				return document_recalcresult_LongRecalc;
 			}
 
@@ -3336,7 +3387,18 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     // а если изменения касались только секций, тогда пересчитываем основную часть документа только с того места, где
     // остановился предыдущий пересчет, либо с того места, где изменения секций приводят к пересчету документа.
     if (true === MainChange)
-        this.FullRecalc.MainStartPos = StartIndex;
+	{
+		if (StartIndex > 0)
+		{
+			// В текущей схеме нам достаточно обновить у предыдущего элемента RecalcId. По хорошему
+			// это надо делать у всех элементов до StartIndex
+			let lastParagraph = this.Content[StartIndex - 1].GetLastParagraph();
+			if (lastParagraph)
+				lastParagraph.UpdateEndInfoRecalcId();
+		}
+		
+		this.FullRecalc.MainStartPos = StartIndex;
+	}
 
     this.DrawingDocument.OnStartRecalculate(StartPage);
 
@@ -3353,7 +3415,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	{
 		this.Recalculate_Page();
 	}
-
+	this.UpdatePlaceholders();
     return document_recalcresult_LongRecalc;
 };
 /**
@@ -3435,7 +3497,11 @@ CDocument.prototype.private_RecalculateFastRunRange = function(arrChanges, nStar
 
 			// // Recalculation LOG
 			// console.log("Fast Recalculation RunRange, PageIndex=" + nPageIndex);
-
+			const oGraphicPage = this.DrawingObjects.graphicPages[nPageIndex];
+			if (!!(oGraphicPage && oGraphicPage.getAllDrawings().length))
+			{
+				this.UpdatePlaceholders();
+			}
 			return true;
 		}
 	}
@@ -3529,11 +3595,17 @@ CDocument.prototype.private_RecalculateFastParagraph = function(arrChanges, nSta
 
 		if (bCanFastRecalc)
 		{
+			let bUpdatePlaceholders = false;
 			for (var nPageIndex in oFastPages)
 			{
 				// // Recalculation LOG
 				// console.log("Fast Recalculation Paragraph, PageIndex=" + nPageIndex);
 				this.DrawingDocument.OnRecalculatePage(oFastPages[nPageIndex], this.Pages[nPageIndex]);
+				if (!bUpdatePlaceholders)
+				{
+					const oGraphicPage = this.DrawingObjects.graphicPages[nPageIndex];
+					bUpdatePlaceholders = !!(oGraphicPage && oGraphicPage.getAllDrawings().length);
+				}
 			}
 
 			this.DrawingDocument.OnEndRecalculate(false, true);
@@ -3550,7 +3622,10 @@ CDocument.prototype.private_RecalculateFastParagraph = function(arrChanges, nSta
 						oTopDocument.OnFastRecalculate();
 				}
 			}
-
+			if (bUpdatePlaceholders)
+            {
+            	this.UpdatePlaceholders();
+			}
 			return true;
 		}
 	}
@@ -3652,7 +3727,7 @@ CDocument.prototype.Recalculate_Page = function()
 					{
 						if (this.private_IsStartTimeoutOnRecalc(PageIndex))
 						{
-							if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+							if (window["native"] && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
 							{
 								//if (window["native"]["WC_CheckSuspendRecalculate"]())
 								//    return;
@@ -4432,7 +4507,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
             {
 				if (this.private_IsStartTimeoutOnRecalc(_PageIndex))
                 {
-                    if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+                    if (window["native"] && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
 					{
 						//if (window["native"]["WC_CheckSuspendRecalculate"]())
 						//    return;
@@ -4463,7 +4538,11 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 		{
 			this.FullRecalc.Continue = true;
 		}
-    }
+	}
+	else
+	{
+		this.UpdatePlaceholders();
+	}
 };
 CDocument.prototype.private_IsStartTimeoutOnRecalc = function(nPageAbs)
 {
@@ -5051,7 +5130,7 @@ CDocument.prototype.private_RecalculateHdrFtrPageCountUpdate = function()
 
 			if (window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] === true)
 			{
-				if (nPageAbs >= this.HdrFtrRecalc.PageIndex + 5 && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+				if (nPageAbs >= this.HdrFtrRecalc.PageIndex + 5 && window["native"] && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
 				{
 					//if (window["native"]["WC_CheckSuspendRecalculate"]())
 					//    return;1
@@ -5264,46 +5343,49 @@ CDocument.prototype.CheckTargetUpdate = function()
 };
 CDocument.prototype.CheckViewPosition = function()
 {
-	if (!this.ViewPosition)
-		return;
-
-	let topDocPos    = this.ViewPosition.Top;
-	let bottomDocPos = this.ViewPosition.Bottom;
-
-	if (!topDocPos[0]
-		|| this !== topDocPos[0].Class
-		|| !bottomDocPos[0]
-		|| this !== bottomDocPos[0].Class)
+	if (!this.ViewPosition || !this.ViewPosition.AnchorPos)
 	{
+		this.RecalculateCurPos();
+		return;
+	}
+	
+	let anchorPos = this.ViewPosition.AnchorPos;
+	let alignTop  = this.ViewPosition.AlignTop;
+	let distance  = this.ViewPosition.Distance;
+	
+	if (!anchorPos[0] || this !== anchorPos[0].Class)
+	{
+		this.RecalculateCurPos();
+		
 		this.ViewPosition     = null;
 		this.NeedUpdateTarget = false;
 		return;
 	}
-
-	let nInDocumentPosition = bottomDocPos[0].Position;
+	
+	let nInDocumentPosition = anchorPos[0].Position;
 	if (this.FullRecalc.Id && this.FullRecalc.StartIndex <= nInDocumentPosition)
 		return;
-
+	
 	this.ViewPosition     = null;
 	this.NeedUpdateTarget = false;
-
+	
 	function GetXY(docPos)
 	{
 		let run = docPos[docPos.length - 1].Class;
 		if (!run || !(run instanceof AscWord.CRun))
 			return {Page : 0, Y : 0, X : 0, H : 0};
-
+		
 		let paragraph = run.GetParagraph();
-
+		
 		let state = paragraph.SaveSelectionState();
 		paragraph.RemoveSelection();
-
+		
 		run.SetThisElementCurrentInParagraph();
 		run.State.ContentPos = docPos[docPos.length - 1].Position;
-
+		
 		let posInfo = paragraph.RecalculateCurPos(false, false, false, true);
 		paragraph.LoadSelectionState(state);
-
+		
 		return {
 			Page : posInfo.PageNum,
 			X    : 0,
@@ -5311,12 +5393,14 @@ CDocument.prototype.CheckViewPosition = function()
 			H    : posInfo.Height
 		}
 	}
-
-	let top    = GetXY(topDocPos);
-	let bottom = GetXY(bottomDocPos);
-
-	let height = (top.Page === bottom.Page ? bottom.Y - top.Y - top.H : bottom.Y);
-	this.DrawingDocument.m_oWordControl.ScrollToPosition(top.X, top.Y + top.H, top.Page, height);
+	
+	let anchor = GetXY(anchorPos);
+	if (alignTop)
+		this.DrawingDocument.m_oWordControl.ScrollToAbsolutePosition(anchor.X, anchor.Y - distance, anchor.Page);
+	else
+		this.DrawingDocument.m_oWordControl.ScrollToAbsolutePosition(anchor.X, anchor.Y + distance, anchor.Page, true);
+	
+	this.RecalculateCurPos();
 };
 CDocument.prototype.RecalculateCurPos = function()
 {
@@ -7383,6 +7467,7 @@ CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
 
         if (docpostype_DrawingObjects === this.CurPos.Type && (true != this.IsInDrawing(X, Y, this.CurPage) || ( nInDrawing === DRAWING_ARRAY_TYPE_BEHIND && true === bInText )))
         {
+            this.DrawingObjects.OnMouseDown(MouseEvent, X, Y, this.CurPage);
             this.DrawingObjects.resetSelection();
             bOldSelectionIsCommon = false;
         }
@@ -14622,10 +14707,10 @@ CDocument.prototype.Save_DocumentStateBeforeLoadChanges = function(isRemoveSelec
 	State.StartPos   = [];
 	State.EndPos     = [];
 
+	this.Controller.SaveDocumentStateBeforeLoadChanges(State);
+	
 	if (isStoreViewPosition)
 		this.private_StoreViewPositions(State);
-
-	this.Controller.SaveDocumentStateBeforeLoadChanges(State);
 
 	// TODO: Разобраться зачем здесь делается RemoveSelection, по логике надо вынести за пределы данной функции
 	if (false !== isRemoveSelection)
@@ -14683,108 +14768,142 @@ CDocument.prototype.private_GetXYByDocumentPosition = function(docPos)
 };
 CDocument.prototype.private_StoreViewPositions = function(state)
 {
-	let viewPort = this.DrawingDocument.GetVisibleRegion();
-
-	let topPos    = this.GetDocumentPositionByXY(viewPort[0].Page, 0, viewPort[0].Y);
-	let bottomPos = this.GetDocumentPositionByXY(viewPort[1].Page, 0, viewPort[1].Y);
-
-	if (!topPos)
-		return;
-
-	if (!bottomPos)
-		bottomPos = topPos;
-
-	state.ViewPosTop    = topPos;
-	state.ViewPosBottom = bottomPos;
-
-	let _topPos    = topPos;
-	let _bottomPos = bottomPos;
-	if (viewPort[0].Page === viewPort[1].Page)
+	if (this.ViewPosition)
 	{
-		let pageIndex = viewPort[0].Page;
-
-		let y0 = viewPort[0].Y;
-		let y1 = viewPort[1].Y;
-		let y  = y0;
-
-
-		let xyInfo = this.private_GetXYByDocumentPosition(_topPos);
-		while (xyInfo.Y < y0 && y < y1)
+		// Сюда попадаем, когда мы еще не успели обработать предыдущую расчитанную позицию, но при этом
+		// прошло несколько пересчетов, которые могли поменять значения позиции, поэтому мы должны использовать
+		// начально расчитанные значения
+		state.AnchorAlignTop = this.ViewPosition.AlignTop;
+		state.AnchorDistance = this.ViewPosition.Distance;
+		state.AnchorType     = this.ViewPosition.Type;
+		state.AnchorPos      = this.ViewPosition.AnchorPos;
+		return;
+	}
+	
+	let viewPort = this.DrawingDocument.GetVisibleRegion();
+	if (!viewPort)
+		return;
+	
+	let selectionBounds = this.GetSelectionBounds();
+	
+	let cursorY, cursorH, cursorPage = -1;
+	let anchorType = AscWord.ViewPositionType.Common;
+	if (selectionBounds)
+	{
+		if (this.IsSelectionUse())
 		{
-			y += 10;
-			_topPos = this.GetDocumentPositionByXY(pageIndex, 0, y);
-			if (!_topPos)
-				continue;
-
-			xyInfo = this.private_GetXYByDocumentPosition(_topPos);
+			if (selectionBounds.Direction > 0)
+			{
+				cursorY    = selectionBounds.End.Y;
+				cursorH    = selectionBounds.End.H;
+				cursorPage = selectionBounds.End.Page;
+				anchorType = AscWord.ViewPositionType.SelectionEnd;
+			}
+			else
+			{
+				cursorY    = selectionBounds.Start.Y;
+				cursorH    = selectionBounds.Start.H;
+				cursorPage = selectionBounds.Start.Page;
+				anchorType = AscWord.ViewPositionType.SelectionStart;
+			}
 		}
-
-		if (_topPos)
-			state.ViewPosTop = _topPos;
-
-		y = y1;
-		xyInfo = this.private_GetXYByDocumentPosition(_bottomPos);
-		while (xyInfo.Y + xyInfo.H > y1 && y > y0)
+		else
 		{
-			y -= 10;
-			_bottomPos = this.GetDocumentPositionByXY(pageIndex, 0, y);
-			if (!_bottomPos)
-				continue;
-
-			xyInfo = this.private_GetXYByDocumentPosition(_bottomPos);
+			cursorY    = selectionBounds.Start.Y;
+			cursorH    = selectionBounds.End.Y - selectionBounds.Start.Y;
+			cursorPage = selectionBounds.Start.Page;
+			anchorType = AscWord.ViewPositionType.Cursor;
 		}
-
-		if (_bottomPos)
-			state.ViewPosBottom = _bottomPos;
+	}
+	
+	// TODO: Решить проблему, когда видно больше 2 страниц и курсор находится на средней странице
+	if (-1 !== cursorPage
+		&& ((viewPort[0].Page === cursorPage && cursorY + cursorH > viewPort[0].Y)
+			|| (viewPort[1].Page === cursorPage && cursorY < viewPort[1].Y)))
+	{
+		let distance = 0;
+		let alignTop = true;
+		
+		if (viewPort[0].Page === cursorPage)
+		{
+			distance = cursorY - viewPort[0].Y;
+			alignTop = true;
+		}
+		else
+		{
+			distance = viewPort[1].Y - cursorY;
+			alignTop = false;
+		}
+		
+		state.AnchorAlignTop = alignTop;
+		state.AnchorDistance = distance
+		state.AnchorType     = anchorType;
+		state.AnchorPos      = null;
 	}
 	else
 	{
-		let pageIndex = viewPort[0].Page;
-
-		let y0 = viewPort[0].Y;
-		let y1 = this.Pages[pageIndex] ? this.Pages[pageIndex].Height : 297;
-		let y  = y0;
-
-
-		let xyInfo = this.private_GetXYByDocumentPosition(_topPos);
-		while (xyInfo.Y < y0 && y < y1)
+		let anchorPos = this.GetDocumentPositionByXY(viewPort[0].Page, 0, viewPort[0].Y);
+		if (!anchorPos)
+			return;
+		
+		let xyInfo = this.private_GetXYByDocumentPosition(anchorPos);
+		
+		let _anchorPos = anchorPos;
+		if (viewPort[0].Page === viewPort[1].Page)
 		{
-			y += 10;
-			_topPos = this.GetDocumentPositionByXY(pageIndex, 0, y);
-			if (!_topPos)
-				continue;
-
-			xyInfo = this.private_GetXYByDocumentPosition(_topPos);
+			let pageIndex = viewPort[0].Page;
+			
+			let y0 = viewPort[0].Y;
+			let y1 = viewPort[1].Y;
+			let y  = y0;
+			
+			let _xyInfo = this.private_GetXYByDocumentPosition(_anchorPos);
+			while (_xyInfo.Y < y0 && y < y1)
+			{
+				y += 10;
+				_anchorPos = this.GetDocumentPositionByXY(pageIndex, 0, y);
+				if (!_anchorPos)
+					continue;
+				
+				_xyInfo = this.private_GetXYByDocumentPosition(_anchorPos);
+			}
 		}
-
-		if (y >= y1)
-			_topPos = this.GetDocumentPositionByXY(pageIndex + 1, 0, 0);
-
-		if (_topPos)
-			state.ViewPosTop = _topPos;
-
-		pageIndex = viewPort[1].Page;
-
-		y0 = 0;
-		y1 = viewPort[1].Y;
-		y  = y1;
-
-		xyInfo = this.private_GetXYByDocumentPosition(_bottomPos);
-		while (xyInfo.Y + xyInfo.H > y1 && y > y0)
+		else
 		{
-			y -= 10;
-			_bottomPos = this.GetDocumentPositionByXY(pageIndex, 0, y);
-			if (!_bottomPos)
-				continue;
-
-			xyInfo = this.private_GetXYByDocumentPosition(_bottomPos);
+			let pageIndex = viewPort[0].Page;
+			
+			let y0 = viewPort[0].Y;
+			let y1 = this.Pages[pageIndex] ? this.Pages[pageIndex].Height : 297;
+			let y  = y0;
+			
+			
+			let _xyInfo = this.private_GetXYByDocumentPosition(_anchorPos);
+			while (_xyInfo.Y < y0 && y < y1)
+			{
+				y += 10;
+				_anchorPos = this.GetDocumentPositionByXY(pageIndex, 0, y);
+				if (!_anchorPos)
+					continue;
+				
+				_xyInfo = this.private_GetXYByDocumentPosition(_anchorPos);
+			}
+			
+			if (y >= y1)
+				_anchorPos = this.GetDocumentPositionByXY(pageIndex + 1, 0, 0);
 		}
-
-		if (y <= 0)
-			_bottomPos = this.GetDocumentPositionByXY(pageIndex - 1, 0, MEASUREMENT_MAX_MM_VALUE);
-
-		if (_bottomPos)
-			state.ViewPosBottom = _bottomPos;
+		
+		if (_anchorPos)
+		{
+			anchorPos = _anchorPos;
+			xyInfo = this.private_GetXYByDocumentPosition(anchorPos);
+		}
+		
+		// TODO: Надо проверить, что совпали страница viewPort[0].Page и xyInfo.Page
+		
+		state.AnchorType     = AscWord.ViewPositionType.Common;
+		state.AnchorPos      = anchorPos;
+		state.AnchorAlignTop = true;
+		state.AnchorDistance = xyInfo.Y - viewPort[0].Y;
 	}
 };
 CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State)
@@ -14824,10 +14943,26 @@ CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State)
 		}
 	}
 
-	if (State.ViewPosTop)
-		this.ViewPosition = {Top : State.ViewPosTop, Bottom : State.ViewPosBottom ? State.ViewPosBottom : State.ViewPosTop};
+	if (undefined !== State.AnchorType)
+	{
+		this.ViewPosition = {
+			AnchorPos : State.AnchorPos,
+			AlignTop  : State.AnchorAlignTop,
+			Distance  : State.AnchorDistance,
+			Type      : State.AnchorType
+		};
+		
+		if (AscWord.ViewPositionType.Cursor === this.ViewPosition.Type)
+			this.ViewPosition.AnchorPos = State.Pos;
+		else if (AscWord.ViewPositionType.SelectionStart === this.ViewPosition.Type)
+			this.ViewPosition.AnchorPos = State.StartPos;
+		else if (AscWord.ViewPositionType.SelectionEnd === this.ViewPosition.Type)
+			this.ViewPosition.AnchorPos = State.EndPos;
+	}
 	else
+	{
 		this.ViewPosition = null;
+	}
 
 	this.UpdateSelection();
 
@@ -16109,6 +16244,9 @@ CDocument.prototype.AddComplexForm = function(oPr, formPr)
 		oRun.ApplyTextPr(oTextPr);
 		oCC.SelectContentControl();
 	}
+	
+	if (_formPr.GetFixed())
+		oCC.ConvertFormToFixed();
 
 	this.UpdateSelection();
 	this.UpdateTracks();
@@ -18377,6 +18515,35 @@ CDocument.prototype.controller_AddInlineImage = function(W, H, Img, Chart, bFlow
 	else
 	{
 		Item.AddInlineImage(W, H, Img, Chart, bFlow);
+	}
+};
+CDocument.prototype.AddPlaceholderImages = function (aImages, oPlaceholder)
+{
+	if (oPlaceholder && undefined !== oPlaceholder.id && aImages.length === 1 && aImages[0].Image)
+	{
+		const oController = editor.getGraphicController();
+		const oPlaceholderTarget = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
+		if (oPlaceholderTarget)
+		{
+			if (oPlaceholderTarget.isObjectInSmartArt && oPlaceholderTarget.isObjectInSmartArt())
+			{
+				
+				if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, false, false))
+				{
+					this.StartAction(AscDFH.historydescription_Document_AddPlaceholderImages);
+					oPlaceholderTarget.applyImagePlaceholderCallback && oPlaceholderTarget.applyImagePlaceholderCallback(aImages, oPlaceholder);
+					const nDrawingPage = oPlaceholderTarget.Get_AbsolutePage();
+					if (AscFormat.isRealNumber(nDrawingPage))
+					{
+						oPlaceholderTarget.Set_CurrentElement(false, nDrawingPage, true);
+					}
+					this.Document_UpdateSelectionState();
+					this.Document_UpdateUndoRedoState();
+					this.Recalculate();
+					this.FinalizeAction();
+				}
+			}
+		}
 	}
 };
 CDocument.prototype.controller_AddImages = function(aImages)
@@ -24801,6 +24968,13 @@ CDocument.prototype.OnChangeContentControl = function(oControl)
 	this.Action.Additional.ContentControlChange[sId] = oControl;
 };
 /**
+ * @returns {?AscOForm.CDocument}
+ */
+CDocument.prototype.GetOFormDocument = function()
+{
+	return this.OFormDocument;
+};
+/**
  * @returns {AscWord.CFormsManager}
  */
 CDocument.prototype.GetFormsManager = function()
@@ -26362,6 +26536,20 @@ CDocument.prototype.CheckAllRunContent = function(fCheck)
 	this.Endnotes.CheckRunContent(private_check);
 };
 
+/**
+ * @param {Asc.c_oAscMathInputType} nType
+ */
+CDocument.prototype.SetMathInputType = function(nType)
+{
+	this.MathInputType = nType;
+};
+/**
+ * @returns {Asc.c_oAscMathInputType}
+ */
+CDocument.prototype.GetMathInputType = function()
+{
+	return this.MathInputType;
+};
 
 /**
  * Функция конвертации вида формулы из линейного в профессиональный и наоборот
@@ -26378,10 +26566,7 @@ CDocument.prototype.ConvertMathView = function(isToLinear, isAll)
 	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ConvertMathView);
-
-		var oLogicDocument = this.GetLogicDocument()
-		var nInputType = oLogicDocument ? oLogicDocument.GetMathInputType() : Asc.c_oAscMathInputType.Unicode;
-
+		var nInputType = this.Api.getMathInputType();
 		if (isAll || !this.IsTextSelectionUse())
 		{
 			this.RemoveTextSelection();
@@ -26397,20 +26582,6 @@ CDocument.prototype.ConvertMathView = function(isToLinear, isAll)
         this.UpdateTracks();
         this.FinalizeAction();
 	}
-};
-/**
- * @param {Asc.c_oAscMathInputType} nType
- */
-CDocument.prototype.SetMathInputType = function(nType)
-{
-	this.MathInputType = nType;
-};
-/**
- * @returns {Asc.c_oAscMathInputType}
- */
-CDocument.prototype.GetMathInputType = function()
-{
-	return this.MathInputType;
 };
 
 function CDocumentSelectionState()

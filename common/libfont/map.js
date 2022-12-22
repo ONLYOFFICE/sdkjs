@@ -925,6 +925,10 @@
 			if (undefined !== oSelect.shCapHeight)
 				nCurPenalty += this.GetCapHeightPenalty(oSelect.shCapHeight);
 
+			// для математики - важнее наличие символов и похожих метрик, чем параметры
+			if (oSelect.wsName === "Cambria Math" && nNamePenalty < 1500)
+				nCurPenalty = nNamePenalty;
+
 			return { Penalty : nCurPenalty, NamePenalty : nNamePenalty };
 		},
 
@@ -1066,7 +1070,7 @@
 			if (sReqName.replace(/[\s-,]/g, '').toLowerCase() == sMyName.replace(/[\s-,]/g, '').toLowerCase())
 				return 100;
 
-			if (-1 != sReqName.indexOf(sMyName) || -1 != sMyName.indexOf(sReqName))
+			if (-1 !== sReqName.indexOf(sMyName) || -1 !== sMyName.indexOf(sReqName))
 			{
 				if (g_fontApplication.g_fontDictionary.CheckLikeFonts(sMyName, sReqName))
 					return 700;
@@ -1074,7 +1078,10 @@
 			}
 
 			if (g_fontApplication.g_fontDictionary.CheckLikeFonts(sMyName, sReqName))
-				return 1000;
+			{
+				// заменяемые шрифты считаем ближе, чем те, что содержат имена в себе
+				return 999;
+			}
 
 			return this.CheckEqualFonts2(sReqName, sMyName);
 		},

@@ -3075,6 +3075,7 @@ CGraphicObjects.prototype =
     },
 
     moveSelectedObjects: DrawingObjectsController.prototype.moveSelectedObjects,
+    moveSelectedObjectsByDir: DrawingObjectsController.prototype.moveSelectedObjectsByDir,
 
     cursorMoveLeft: DrawingObjectsController.prototype.cursorMoveLeft,
 
@@ -4579,6 +4580,10 @@ CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHei
         }
     }
 };
+CGraphicObjects.prototype.getSelectionImageData = DrawingObjectsController.prototype.getSelectionImageData;
+CGraphicObjects.prototype.getImageDataForSaving = DrawingObjectsController.prototype.getImageDataForSaving;
+CGraphicObjects.prototype.getPresentation = DrawingObjectsController.prototype.getPresentation;
+
 CGraphicObjects.prototype.getHorGuidesPos = function() {
     return [];
 }

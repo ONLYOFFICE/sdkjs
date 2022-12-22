@@ -10366,6 +10366,7 @@ CDocumentColor.prototype.ConvertToUniColor = function()
 {
 	return AscFormat.CreateUniColorRGB(this.r, this.g, this.b);
 };
+AscWord.CDocumentColor = CDocumentColor;
 
 function CDocumentShd()
 {
@@ -10436,6 +10437,12 @@ CDocumentShd.prototype =
             this.FillRef = undefined;
         }
     }
+};
+CDocumentShd.fromObject = function(val)
+{
+	let shd = new CDocumentShd();
+	shd.Set_FromObject(val);
+	return shd;
 };
 CDocumentShd.prototype.Copy = function()
 {
@@ -18161,6 +18168,7 @@ window["AscWord"].CParaPr = CParaPr;
 window["AscWord"].CStyle  = CStyle;
 window["AscWord"].CNumPr  = CNumPr;
 window["AscWord"].CBorder = CDocumentBorder;
+window["AscWord"].CShd    = CDocumentShd;
 
 
 // Создаем глобальные дефолтовые стили, чтобы быстро можно было отдать дефолтовые настройки

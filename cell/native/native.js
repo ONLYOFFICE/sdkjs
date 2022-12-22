@@ -6441,7 +6441,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
         case 10020: // ASC_SOCKET_EVENT_TYPE_MESSAGE
         {
-            _api.CoAuthoringApi._CoAuthoringApi._onServerMessage(params);
+            _api.CoAuthoringApi._CoAuthoringApi._onServerMessage(params ? JSON.parse(params) : {});
             break;
         }
             

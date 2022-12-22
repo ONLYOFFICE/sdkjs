@@ -452,7 +452,7 @@
 						 },
 		getImageUrl:     function (strPath)
 						 {
-							 return this.getUrl(this.mediaPrefix + strPath) || strPath;
+							 return this.getUrl(this.mediaPrefix + strPath);
 						 },
 		getImageLocal:   function (url)
 						 {
@@ -1597,6 +1597,10 @@
 		MaxFileSize:      25000000, //25 mb
 		SupportedFormats: ["txt", "csv"]
 	};
+	var c_oAscXmlUploadProp = {
+		MaxFileSize:      25000000, //25 mb
+		SupportedFormats: ["xml"]
+	};
 
 	/**
 	 *
@@ -2021,6 +2025,11 @@
 			callback(Asc.c_oAscError.ID.Unknown);
 		}
 	}
+	function ShowXmlFileDialog(callback) {
+		if (false === _ShowFileDialog(getAcceptByArray(c_oAscXmlUploadProp.SupportedFormats), false, false, ValidateUploadXml, callback)) {
+			callback(Asc.c_oAscError.ID.Unknown);
+		}
+	}
 
 	function InitDragAndDrop(oHtmlElement, callback)
 	{
@@ -2367,6 +2376,10 @@
 	{
 		return ValidateUpload(files, c_oAscServerError.UploadDocumentExtension, c_oAscServerError.UploadDocumentContentLength, c_oAscServerError.UploadDocumentCountFiles, c_oAscTextUploadProp);
 	}
+	function ValidateUploadXml(files)
+	{
+		return ValidateUpload(files, c_oAscServerError.UploadDocumentExtension, c_oAscServerError.UploadDocumentContentLength, c_oAscServerError.UploadDocumentCountFiles, c_oAscXmlUploadProp);
+	}
 
 	function CanDropFiles(event)
 	{
@@ -2534,6 +2547,7 @@
 		ipRe                  = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(((1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9])\.){3}(1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9]))(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?/i,
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
+		fileRe                = /^((file):\/\/)[^'`"%^{}<>].*/i,//reserved symbols from word 2010
 		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|smb):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
@@ -2554,7 +2568,7 @@
 				}
 				if (startLink) {
 					if (name) {
-						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" || (url[i - 1] === "'") && i === 1)) {
+						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" ||  url[i - 1] === "\\" || (url[i - 1] === "'") && i === 1)) {
 							break;
 						} else {
 							name.end--;
@@ -2585,8 +2599,25 @@
 		return null;
 	}
 
+	function isValidFileUrl(url) {
+		if(!url.startsWith("file:")) {
+			return false;
+		}
+		if (true || AscBrowser.isIE) {
+			return url.strongMatch(fileRe);
+		}
+		try {
+			//https://stackoverflow.com/a/43467144
+			new URL(url);
+		} catch (err) {
+			return false;
+		}
+		return true;
+	}
 	function getUrlType(url)
 	{
+		//todo validate blob, ftp, http, https, ws, wss, file with new URL https://nodejs.org/api/url.html#special-schemes
+		//they are special-schemes https://url.spec.whatwg.org/#origin
 		var checkvalue = url.replace(new RegExp(' ', 'g'), '%20');
 		var isEmail;
 		var isvalid = checkvalue.strongMatch(hostnameRe);
@@ -2596,6 +2627,8 @@
 			return AscCommon.c_oAscUrlType.Http;
 		} else if (checkvalue.strongMatch(emailRe)) {
 			return AscCommon.c_oAscUrlType.Email;
+		} else if (checkvalue.startsWith("file:")) {
+			return isValidFileUrl(checkvalue) ? AscCommon.c_oAscUrlType.Unsafe : AscCommon.c_oAscUrlType.Invalid;
 		} else if (checkvalue.strongMatch(rx_allowedProtocols)) {
 			return AscCommon.c_oAscUrlType.Unsafe;
 		} else {
@@ -3428,7 +3461,7 @@
 				}
 			}
 		}
-		else if(Asc.c_oAscSelectionDialogType.PivotTableData === dialogType || Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType)
+		else if(Asc.c_oAscSelectionDialogType.PivotTableData === dialogType || Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
 		{
 			result = parserHelp.parse3DRef(dataRange);
 			if (result)
@@ -3438,7 +3471,7 @@
 				{
 					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
 				}
-			} else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType) {
+			} else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 			if (!range) {
@@ -3522,7 +3555,7 @@
 					return Asc.c_oAscError.ID.PivotLabledColumns;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType)
+			else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
 			{
 				var location = Asc.CT_pivotTableDefinition.prototype.parseDataRef(dataRange);
 				if (location) {
@@ -3530,8 +3563,12 @@
 					if (!sheetModel) {
 						sheetModel = model.getActiveWs();
 					}
-					var newRange = new Asc.Range(location.bbox.c1, location.bbox.r1, location.bbox.c1 + AscCommonExcel.NEW_PIVOT_LAST_COL_OFFSET, location.bbox.r1 + AscCommonExcel.NEW_PIVOT_LAST_ROW_OFFSET);
-					return sheetModel.checkPivotReportLocationForError([newRange]);
+					if (Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
+						return sheetModel.checkImportXmlLocationForError([location.bbox]);
+					} else {
+						var newRange = new Asc.Range(location.bbox.c1, location.bbox.r1, location.bbox.c1 + AscCommonExcel.NEW_PIVOT_LAST_COL_OFFSET, location.bbox.r1 + AscCommonExcel.NEW_PIVOT_LAST_ROW_OFFSET);
+						return sheetModel.checkPivotReportLocationForError([newRange]);
+					}
 				} else {
 					return Asc.c_oAscError.ID.DataRangeError;
 				}
@@ -9258,6 +9295,33 @@
 
 		return result;
 	}
+	
+	/**
+	 * Функция сравнивает две строки (они могут быть не заданы)
+	 * @param s1 {?string}
+	 * @param s2 {?string}
+	 * @returns {-1 | 0 | 1}
+	 */
+	function CompareStrings(s1, s2)
+	{
+		if ((undefined === s1 && undefined === s2)
+			|| (null === s1 && null === s2)
+			|| ("" === s1 && "" === s2))
+			return 0;
+		
+		if (!s1 && !s2)
+			return false;
+		else if (!s1 && s2)
+			return -1;
+		else if (s1 && !s2)
+			return 1;
+		else if (s1 < s2)
+			return -1;
+		else if (s2 > s2)
+			return 1;
+		
+		return 0;
+	}
 
 	function IsAbbreviation(sWord)
 	{
@@ -13186,6 +13250,92 @@
 		api.CoAuthoringApi.sendClientLog(level, msg);
 	}
 
+	function getNativePrintRanges(sRanges, currentPageSrc, pagescount)
+	{
+		let pages = undefined;
+		switch (sRanges)
+		{
+			case "current":
+			{
+				let currentPage =  currentPageSrc;
+				if (undefined === currentPage)
+					currentPage = 1;
+				if (currentPage >= 1 && currentPage <= pagescount)
+				{
+					pages = new Array(pagescount);
+					pages[currentPage - 1] = true;
+				}
+				break;
+			}
+			case "all":
+			{
+				break;
+			}
+			default:
+			{
+				let ranges = sRanges.split(",");
+				for (let range = 0, rangesCount = ranges.length; range < rangesCount; range++)
+				{
+					if (ranges[range] === "")
+						continue;
+
+					let rangePages = ranges[range].split("-");
+					let rangeLen = rangePages.length;
+
+					let startPage = 1;
+					let endPage = pagescount;
+
+					switch (rangeLen)
+					{
+						case 0:
+						{
+							break;
+						}
+						case 1:
+						{
+							let pageNum = parseInt(rangePages[0]);
+							if (pageNum > 0 && pageNum <= pagescount)
+							{
+								startPage = pageNum;
+								endPage = pageNum;
+							}
+							break;
+						}
+						default:
+						{
+							if (rangePages[0] !== "")
+							{
+								let pageNum = parseInt(rangePages[0]);
+								if (pageNum > 0 && pageNum <= pagescount)
+								{
+									startPage = pageNum;
+								}
+							}
+							if (rangePages[1] !== "")
+							{
+								let pageNum = parseInt(rangePages[1]);
+								if (pageNum > 0 && pageNum <= pagescount)
+								{
+									endPage = pageNum;
+								}
+							}
+						}
+					}
+
+					if (startPage <= endPage)
+					{
+						if (pages === undefined)
+							pages = new Array(pagescount);
+
+						for (let i = startPage; i <= endPage; i++)
+							pages[i - 1] = true;
+					}
+				}
+			}
+		}
+		return pages;
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13222,6 +13372,7 @@
 	window["AscCommon"].ShowDocumentFileDialog = ShowDocumentFileDialog;
 	window["AscCommon"].ShowSpreadsheetFileDialog = ShowSpreadsheetFileDialog;
 	window["AscCommon"].ShowTextFileDialog = ShowTextFileDialog;
+	window["AscCommon"].ShowXmlFileDialog = ShowXmlFileDialog;
 	window["AscCommon"].InitDragAndDrop = InitDragAndDrop;
 	window["AscCommon"].UploadImageFiles = UploadImageFiles;
     window["AscCommon"].UploadImageUrls = UploadImageUrls;
@@ -13271,6 +13422,7 @@
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].CompareStrings = CompareStrings;
 
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
@@ -13376,6 +13528,8 @@
 	window["AscCommon"].getMemoryInfo = getMemoryInfo;
 	window["AscCommon"].getClientInfoString = getClientInfoString;
 	window["AscCommon"].sendClientLog = sendClientLog;
+
+	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)

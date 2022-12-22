@@ -1065,17 +1065,55 @@ var GLOBAL_PATH_COUNT = 0;
         return dlbl;
     }
     function fLayoutHorLabelsBox(oLabelsBox, fY, fXStart, fXEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth) {
-        var fAxisLength = fXEnd - fXStart;
-        var nLabelsCount = oLabelsBox.aLabels.length;
+        let fAxisLength = fXEnd - fXStart;
+        let nLabelsCount = oLabelsBox.aLabels.length;
 
-        var bOnTickMark_ = bOnTickMark && nLabelsCount > 1;
-        var nIntervalCount = bOnTickMark_ ? nLabelsCount - 1 : nLabelsCount;
-        var fInterval = fAxisLength / nIntervalCount;
+        let bOnTickMark_ = bOnTickMark && nLabelsCount > 1;
+        let nIntervalCount = bOnTickMark_ ? nLabelsCount - 1 : nLabelsCount;
+        let fInterval = fAxisLength / nIntervalCount;
+		let fForceContentWidth_ = fForceContentWidth;
         if(!bForceVertical || true) {//TODO: implement for vertical labels
-            var fMaxMinWidth = oLabelsBox.checkMaxMinWidth();
-            var fCheckInterval = AscFormat.isRealNumber(fForceContentWidth) ? fForceContentWidth : Math.abs(fInterval);
+            let fMaxMinWidth = oLabelsBox.checkMaxMinWidth();
+	        let fCheckInterval;
+			if(AscFormat.isRealNumber(fForceContentWidth)) {
+				fCheckInterval = fForceContentWidth;
+			}
+			else {
+				fCheckInterval = Math.abs(fInterval);
+				let nMinInterval = -1;
+				let nLastIdx = -1;
+				for(let nLbl = 0; nLbl < nLabelsCount; ++nLbl) {
+					let oLbl = oLabelsBox.aLabels[nLbl];
+					if(oLbl) {
+						if(nLastIdx === -1) {
+							nLastIdx = nLbl;
+						}
+						else {
+							let nIdxInterval = nLbl - nLastIdx;
+							if(nMinInterval === -1) {
+								nMinInterval = nIdxInterval;
+							}
+							else {
+								nMinInterval = Math.min(nMinInterval, nIdxInterval);
+							}
+							if(nMinInterval === 1) {
+								break;
+							}
+						}
+					}
+				}
+				if(nMinInterval > 0) {
+					fCheckInterval *= nMinInterval;
+					if(!fForceContentWidth_) {
+						fForceContentWidth_ = fCheckInterval;
+					}
+					else {
+						fForceContentWidth_ = Math.max(fCheckInterval, fForceContentWidth_);
+					}
+				}
+			}
             if(fMaxMinWidth <= fCheckInterval) {
-                oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, fForceContentWidth);
+                oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, fForceContentWidth_);
             }
             else {
                 oLabelsBox.layoutHorRotated(fY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark_);
@@ -4138,8 +4176,10 @@ var GLOBAL_PATH_COUNT = 0;
 
                         var bTickSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) || nPtsLen >= SKIP_LBL_LIMIT;
                         var nTickLblSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) ? oAxis.tickLblSkip : (nPtsLen < SKIP_LBL_LIMIT ? 1 : (Math.floor(nPtsLen / SKIP_LBL_LIMIT) + 1));
-                        for(i = 0; i < nPtsLen; ++i) {
-                            if(!bTickSkip || ((i % nTickLblSkip) === 0)) {
+                        let nLastNoEmptyLblIdx = -1;
+						for(i = 0; i < nPtsLen; ++i) {
+                            if(!bTickSkip ||
+	                            nLastNoEmptyLblIdx === -1 ||((i - nLastNoEmptyLblIdx) >= nTickLblSkip)) {
                                 var oPt = oLit.getPtByIndex(i);
                                 if(oPt) {
                                     var sPt;
@@ -4159,9 +4199,12 @@ var GLOBAL_PATH_COUNT = 0;
                                         sPt = oPt.val + "";
                                     }
                                     aStrings.push(sPt);
+									if(typeof sPt === "string" && sPt.length > 0) {
+										nLastNoEmptyLblIdx = i;
+									}
                                 }
                                 else {
-                                    aStrings.push("");
+                                    aStrings.push(null);
                                 }
                             }
                             else {
@@ -8048,18 +8091,6 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
     };
-    CChartSpace.prototype.createImage = function () {
-        var nCoefficient = Asc.getCvtRatio(3, 0, this.drawingBase.worksheet._getPPIX());
-        var oWorkbook = this.drawingBase.worksheet && this.drawingBase.worksheet.workbook;
-        oWorkbook.setOleSize(null);
-        var oDrawingContext = AscCommonExcel.getContext(this.extX * nCoefficient, this.extY * nCoefficient, oWorkbook);
-        var oGraphics = AscCommonExcel.getGraphics(oDrawingContext);
-        const oOldTransform = this.transform.CreateDublicate();
-        this.transform.Reset();
-        this.draw(oGraphics);
-        this.transform = oOldTransform;
-        return oDrawingContext.toDataURL();
-    }
     CChartSpace.prototype.checkDrawingCache = function(graphics) {
         if(window["NATIVE_EDITOR_ENJINE"] || graphics.RENDERER_PDF_FLAG || this.isSparkline || this.bPreview || graphics.PrintPreview) {
             return false;

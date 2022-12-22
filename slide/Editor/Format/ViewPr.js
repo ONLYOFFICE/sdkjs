@@ -875,4 +875,5 @@
     window['AscFormat'].CViewPrScale = CScale;
     window['AscFormat'].CViewPrGuide = CGuide;
     window['AscFormat'].MmToGdPos = MmToGdPos;
+    window['AscFormat'].GdPosToMm = GdPosToMm;
 }) (window);

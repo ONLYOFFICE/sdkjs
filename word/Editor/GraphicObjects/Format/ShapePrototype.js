@@ -926,11 +926,19 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelect
         var nPageIndex = AscFormat.isRealNumber(pageIndex) ? pageIndex : para_drawing.PageNum;
 		var drawing_objects = oLogicDoc.DrawingObjects;
 
-        if(bNoTextSelection !== true) {
+        if(bNoTextSelection !== true) 
+		{
             this.SetControllerTextSelection(drawing_objects, nPageIndex);
         }
-        else {
+        else 
+		{
             oSelector.resetSelection();
+			if(oSelector !== oLogicDoc.DrawingObjects)
+			{
+				oLogicDoc.DrawingObjects.resetSelection();
+				oLogicDoc.DrawingObjects.selection.groupSelection = oSelector;
+				oLogicDoc.DrawingObjects.selectObject(oSelector, nPageIndex);
+			}
             oSelector.selectObject(this, nPageIndex);
         }
 

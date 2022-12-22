@@ -682,6 +682,35 @@ CTableCell.prototype =
         return this.Content.Get_PagesCount();
     },
 
+    Content_Draw_Line : function (pGraphics)
+    {
+        const oParagraph = this.Content.Get_FirstParagraph();
+        if (oParagraph)
+        {
+            const nLineWidth = oParagraph.XLimit - oParagraph.X;
+            const nOffset = nLineWidth * 0.2;
+            const nLeftOffset = oParagraph.X + nOffset;
+            const nRightOffset = oParagraph.XLimit - nOffset;
+
+            const oTextPr = oParagraph.Get_FirstTextPr();
+            if (oTextPr.Unifill)
+            {
+                const oColor = oTextPr.Unifill.getRGBAColor();
+                pGraphics.p_color(oColor.R, oColor.G, oColor.B, 255);
+            }
+            else if (oTextPr.Color)
+            {
+                const oColor = oTextPr.Color;
+                pGraphics.p_color(oColor.r, oColor.g, oColor.b, 255);
+            }
+            else
+            {
+                pGraphics.p_color(0, 0, 0, 255);
+            }
+            pGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, oParagraph.Y + (this.Row.Height / 2), nLeftOffset, nRightOffset, 4 * AscCommon.g_dKoef_pix_to_mm);
+        }
+    },
+
     Content_Draw : function(PageIndex, pGraphics)
     {
         var TextDirection = this.Get_TextDirection();
@@ -699,7 +728,14 @@ CTableCell.prototype =
             pGraphics.transform3(_transform);
         }
 
-        this.Content.Draw(PageIndex, pGraphics);
+        if (pGraphics.bIsDrawCellTextLines)
+        {
+            this.Content_Draw_Line(pGraphics);
+        }
+        else
+        {
+            this.Content.Draw(PageIndex, pGraphics);
+        }
         if (bNeedRestore)
         {
             pGraphics.RestoreGrState();

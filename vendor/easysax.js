@@ -1975,6 +1975,11 @@ function CT_XmlNode(opt_elemReader) {
 
     this.elemReader = opt_elemReader || function(){};
 }
+CT_XmlNode.fromReader = function(reader, opt_elemReader) {
+	let node = new CT_XmlNode(opt_elemReader);
+	node.fromXml(reader);
+	return node;
+};
 CT_XmlNode.prototype.readAttr = function(reader) {
     while (reader.MoveToNextAttribute()) {
         this.attributes[reader.GetNameNoNS()] = reader.GetValue();

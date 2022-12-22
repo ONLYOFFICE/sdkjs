@@ -57,7 +57,7 @@
  	* The callback function which is called when the specified range of the current sheet changes.
  	* <note>Please note that the event is not called for the undo/redo operations.</note>
 	* @event Api#onWorksheetChange
-	* @property {ApiRange} range - The modified range represented as the ApiRange object.
+	* @param {ApiRange} range - The modified range represented as the ApiRange object.
  	*/
 
 	/**

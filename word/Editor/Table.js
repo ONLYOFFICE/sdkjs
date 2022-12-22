@@ -17793,8 +17793,11 @@ CTable.prototype.Resize = function(nWidth, nHeight)
 	}
 	else
 	{
-		nSummaryHeight -= this.RowsInfo[this.RowsInfo.length - 1].MaxBotBorder;
-		nMinHeight     -= this.RowsInfo[this.RowsInfo.length - 1].MaxBotBorder;
+		if(!this.bPresentation)
+		{
+			nSummaryHeight -= this.RowsInfo[this.RowsInfo.length - 1].MaxBotBorder;
+			nMinHeight     -= this.RowsInfo[this.RowsInfo.length - 1].MaxBotBorder;
+		}
 	}
 
 	if (this.Pages.length <= 0)
@@ -17833,26 +17836,28 @@ CTable.prototype.Resize = function(nWidth, nHeight)
 			var oRowH = oRow.GetHeight();
 			var nNewH = arrRowsH[nCurRow] / nTableSumH * (nSummaryHeight + nDiffY);
 
-			if (null !== nCellSpacing)
-				nNewH += nCellSpacing;
-			else if (this.RowsInfo[nCurRow] && this.RowsInfo[nCurRow].TopDy[0])
-				nNewH -= this.RowsInfo[nCurRow].TopDy[0];
-
-			var nTopMargin = 0,
-				nBotMargin = 0;
-			for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+			if(!this.bPresentation)
 			{
-				var oCell    = oRow.GetCell(nCurCell);
-				var oMargins = oCell.GetMargins();
+				if (null !== nCellSpacing)
+					nNewH += nCellSpacing;
+				else if (this.RowsInfo[nCurRow] && this.RowsInfo[nCurRow].TopDy[0])
+					nNewH -= this.RowsInfo[nCurRow].TopDy[0];
 
-				if (oMargins.Top.W > nTopMargin)
-					nTopMargin = oMargins.Top.W;
+				var nTopMargin = 0,
+					nBotMargin = 0;
+				for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+				{
+					var oCell    = oRow.GetCell(nCurCell);
+					var oMargins = oCell.GetMargins();
 
-				if (oMargins.Bottom.W > nBotMargin)
-					nBotMargin = oMargins.Bottom.W;
+					if (oMargins.Top.W > nTopMargin)
+						nTopMargin = oMargins.Top.W;
+
+					if (oMargins.Bottom.W > nBotMargin)
+						nBotMargin = oMargins.Bottom.W;
+				}
+				nNewH -= nTopMargin + nBotMargin;
 			}
-
-			nNewH -= nTopMargin + nBotMargin;
 
 			oRow.SetHeight(nNewH, oRowH.HRule === Asc.linerule_Exact ? Asc.linerule_Exact : Asc.linerule_AtLeast);
 		}
@@ -17914,26 +17919,30 @@ CTable.prototype.Resize = function(nWidth, nHeight)
 				var oRowH = oRow.GetHeight();
 				var nNewH = arrNewH[nCurRow];
 
-				if (null !== nCellSpacing)
-					nNewH += nCellSpacing;
-				else if (this.RowsInfo[nCurRow] && this.RowsInfo[nCurRow].TopDy[0])
-					nNewH -= this.RowsInfo[nCurRow].TopDy[0];
 
-				var nTopMargin = 0,
-					nBotMargin = 0;
-				for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+
+				if(!this.bPresentation)
 				{
-					var oCell    = oRow.GetCell(nCurCell);
-					var oMargins = oCell.GetMargins();
+					if (null !== nCellSpacing)
+						nNewH += nCellSpacing;
+					else if (this.RowsInfo[nCurRow] && this.RowsInfo[nCurRow].TopDy[0])
+						nNewH -= this.RowsInfo[nCurRow].TopDy[0];
 
-					if (oMargins.Top.W > nTopMargin)
-						nTopMargin = oMargins.Top.W;
+					var nTopMargin = 0,
+						nBotMargin = 0;
+					for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+					{
+						var oCell    = oRow.GetCell(nCurCell);
+						var oMargins = oCell.GetMargins();
 
-					if (oMargins.Bottom.W > nBotMargin)
-						nBotMargin = oMargins.Bottom.W;
+						if (oMargins.Top.W > nTopMargin)
+							nTopMargin = oMargins.Top.W;
+
+						if (oMargins.Bottom.W > nBotMargin)
+							nBotMargin = oMargins.Bottom.W;
+					}
+					nNewH -= nTopMargin + nBotMargin;
 				}
-
-				nNewH -= nTopMargin + nBotMargin;
 
 				oRow.SetHeight(nNewH, oRowH.HRule === Asc.linerule_Exact ? Asc.linerule_Exact : Asc.linerule_AtLeast);
 			}

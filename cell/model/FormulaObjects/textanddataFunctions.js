@@ -96,8 +96,8 @@ function (window, undefined) {
 			return match_end;
 		}
 
-		instance_num = instance_num.toNumber();
-		if (instance_num === 0 || (instance_num > text.length && newArgs[2].type !== cElementType.empty)) {
+		instance_num = instance_num.toNumber ? instance_num.toNumber() : 0;
+		if (instance_num === 0 || (instance_num > text.length && newArgs[2] && newArgs[2].type !== cElementType.empty)) {
 			//Excel returns a #VALUE! error if instance_num = 0 or if instance_num is greater than the length of text.
 			return new cError(cErrorType.wrong_value_type);
 		}
