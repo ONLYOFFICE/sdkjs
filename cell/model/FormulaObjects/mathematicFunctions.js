@@ -2738,18 +2738,11 @@
 		}
 
 		let arg0 = arg[0];
-		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			if (arg0.getDimensions().col === 1 && arg0.getDimensions().row === 1) {
-				arg0 = arg0.getMatrix();
-				return new cNumber(1 / arg0);
-			}
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type) {
 			arg0 = arg0.getMatrix();
-		} else if (cElementType.array === arg0.type) {
-			if (arg0.getCountElement() === 1 && arg0.getCountElementInRow() === 1) {
-				arg0 = arg0.getMatrix();
-				return new cNumber(1 / arg0);
+			if (arg0.length === 1 && arg0[0].length === 1) {
+				return new cNumber(1 / arg0[0]);
 			}
-			arg0 = arg0.getMatrix();
 		} else if (cElementType.number === arg0.type) {
 			return new cNumber(1 / arg0);
 		} else if (cElementType.cell === arg0.type) {
