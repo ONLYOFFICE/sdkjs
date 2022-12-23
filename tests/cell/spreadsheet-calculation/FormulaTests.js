@@ -6052,6 +6052,39 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), " There is no try");
 		assert.strictEqual(oParser.calculate().getElementRowCol(3, 0).getValue(), " ");
 		assert.strictEqual(oParser.calculate().getElementRowCol(4, 0).getValue(), "Anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,{\".\";\"d\"})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), " Or ");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), "o not");
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 0).getValue(), " There is no try");
+		assert.strictEqual(oParser.calculate().getElementRowCol(4, 0).getValue(), " -Anonymous");
+
+		ws.getRange2("C1").setValue("1");
+		oParser = new parserFormula("TEXTSPLIT(A2,C1,C1,C1,C1,C1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "do. or do not. there is no try. -anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,C1,C1,C1,C1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "do. or do not. there is no try. -anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,,C1,C1,C1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,C1,,C1,C1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "do. or do not. there is no try. -anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,C1,,,C1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,C1,,,)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous");
 	});
 
 	function putStackData() {
