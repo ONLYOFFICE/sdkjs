@@ -2739,10 +2739,10 @@
 
 		let arg0 = arg[0];
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type) {
-			arg0 = arg0.getMatrix();
-			if (arg0.length === 1 && arg0[0].length === 1) {
-				return new cNumber(1 / arg0[0]);
+			if (arg0.isOneElement()) {
+				return new cNumber (1 / arg0.getFirstElement());
 			}
+			arg0 = arg0.getMatrix();
 		} else if (cElementType.number === arg0.type) {
 			return new cNumber(1 / arg0);
 		} else if (cElementType.cell === arg0.type) {
