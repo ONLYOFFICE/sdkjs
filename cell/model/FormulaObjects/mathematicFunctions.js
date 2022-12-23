@@ -2760,13 +2760,12 @@
 				return new cError(cErrorType.wrong_value_type);
 			}
 		} else {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.wrong_value_type);
 		}
 
-		// ???
-		// if (arg0[0].length != arg0.length) {
-		// 	return new cError(cErrorType.wrong_value_type);
-		// }
+		if (arg0[0].length != arg0.length) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
 		return InverseMatrix(arg0);
 	};
