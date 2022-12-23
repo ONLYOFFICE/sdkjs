@@ -226,9 +226,12 @@ function CWriteProtection() {
 	this.cryptProviderTypeExtSource = null;
 }
 
+//--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'].CDocProtect = CDocProtect;
 prot = CDocProtect.prototype;
 prot["asc_getIsPassword"] = prot.asc_getIsPassword;
 prot["asc_getEditType"] = prot.asc_getEditType;
 prot["asc_setEditType"] = prot.asc_setEditType;
 prot["asc_setPassword"] = prot.asc_setPassword;
+
+window['AscCommonWord'].ECryptAlgType = ECryptAlgType;

@@ -13067,7 +13067,7 @@ background-repeat: no-repeat;\
 		props.temporaryPassword = null;
 		let documentProtection = oDocument.Settings.DocumentProtection;
 		let salt, alg, spinCount;
-		let cryptProviderType = ECryptAlgType.TypeAny;
+		let cryptProviderType = AscCommonWord.ECryptAlgType.TypeAny;
 		if (password !== "" && password != null) {
 			if (documentProtection) {
 				salt = documentProtection.saltValue;
