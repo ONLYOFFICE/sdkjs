@@ -6675,6 +6675,21 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
 
+		oParser = new parserFormula("WRAPROWS(1,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPROWS(1,-100)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPROWS(1,)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPROWS(1,\"asd\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 	});
 
 	QUnit.test("Test: \"WRAPCOLS\"", function (assert) {
@@ -6827,6 +6842,22 @@ $(function () {
 		oParser = new parserFormula("WRAPCOLS(1,3, B1:B2)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		oParser = new parserFormula("WRAPCOLS(1,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPCOLS(1,-100)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPCOLS(1,)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPCOLS(1,\"asd\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
 	});
 

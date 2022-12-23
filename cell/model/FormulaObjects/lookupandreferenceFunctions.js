@@ -3011,7 +3011,7 @@ function (window, undefined) {
 		arg2 = arg2.toNumber();
 
 		if (arg2 < 1) {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.not_numeric);
 		}
 
 		let arg3 = arg[2] ? arg[2] : new cError(cErrorType.not_available);
