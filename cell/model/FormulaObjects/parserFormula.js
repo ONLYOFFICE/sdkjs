@@ -532,8 +532,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseType.prototype.getDimensions = function () {
 		return {col: 1, row: 1};
 	};
-	cBaseType.prototype.getFirstElement2 = function () {
-		return this;
+	cBaseType.prototype.isOneElement = function () {
+		let dimensions = this.getDimensions();
+		if (dimensions.col === 1 && dimensions.row === 1) {
+			return true;
+		}
+		return false;
 	};
 	cBaseType.prototype.getExternalLinkStr = function (externalLink, locale) {
 		var wb = Asc["editor"] && Asc["editor"].wb;
@@ -1234,12 +1238,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
-	cArea.prototype.isOneElement = function () {
-		if (this.getDimensions().col === 1 && this.getDimensions().row === 1) {
-			return true;
-		}
-		return false;
-	}
 	cArea.prototype.getFirstElement = function () {
 		return this.getValueByRowCol(0, 0);
 	}
@@ -1607,12 +1605,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
-	cArea3D.prototype.isOneElement = function () {
-		if (this.getDimensions().col === 1 && this.getDimensions().row === 1) {
-			return true;
-		}
-		return false;
-	}
 	cArea3D.prototype.getFirstElement = function () {
 		return this.getValueByRowCol(0, 0);
 	}
@@ -2773,12 +2765,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 
-	cArray.prototype.isOneElement = function () {
-		if (this.countElementInRow[0] === 1 && this.countElement === 1) {
-			return true;
-		}
-		return false;
-	};
 	cArray.prototype.getFirstElement = function () {
 		return this.getElementRowCol(0,0);	
 	}
