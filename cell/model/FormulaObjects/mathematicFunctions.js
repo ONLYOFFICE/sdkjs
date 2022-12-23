@@ -2737,12 +2737,22 @@
 			return res;
 		}
 
+		function _getArrayCopy(arr) {
+			var newArray = [];
+			for (var i = 0; i < arr.length; i++) {
+				newArray[i] = arr[i].slice();
+			}
+			return newArray
+		}
+
 		let arg0 = arg[0];
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type) {
 			if (arg0.isOneElement()) {
 				return new cNumber (1 / arg0.getFirstElement());
 			}
 			arg0 = arg0.getMatrix();
+			//TODO при мерже релиза, перейти на функцию getArrayCopy/ добавить параметр getMatrix для генерации копии
+			arg0 = _getArrayCopy(arg0);
 		} else if (cElementType.number === arg0.type) {
 			return new cNumber(1 / arg0);
 		} else if (cElementType.cell === arg0.type) {

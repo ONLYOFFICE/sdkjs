@@ -19293,9 +19293,9 @@ $(function () {
 		oParser = new parserFormula("MINVERSE({10,0;0,10})", "A2", ws);
 		assert.ok(oParser.parse(), "MINVERSE({10,0;0,10})");
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.1, "Result [0,0] MINVERSE({10,0;0,10})");
-		// assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, "Result [0,1] MINVERSE({10,0;0,10})");	// died on this test
-		// assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0.1, "Result [1,0] MINVERSE({10,0;0,10})");
-		// assert.strictEqual(oParser.calculate().getElementRowCol(1,1).getValue(), 0, "Result [1,1] MINVERSE({10,0;0,10})");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 0, "Result [0,1] MINVERSE({10,0;0,10})");	// died on this test
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, "Result [1,0] MINVERSE({10,0;0,10})");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,1).getValue(), 0.1, "Result [1,1] MINVERSE({10,0;0,10})");
 
 		oParser = new parserFormula("MINVERSE(TRUE)", "A2", ws);
 		assert.ok(oParser.parse(), "MINVERSE(TRUE)");
