@@ -496,73 +496,110 @@
 			basis = arg[6] && !(cElementType.empty === arg[6].type) ? arg[6] : new cNumber(0),
 			calcMethod = arg[7] && !(cElementType.empty === arg[7].type) ? arg[7] : new cBool(true);
 
-		// type check
-		if (cElementType.cellsRange === issue.type || cElementType.cellsRange3D === issue.type) {
+		// ------------------------- arg0 type check -------------------------//
+		if (cElementType.cell === issue.type) {
+			issue = issue.getValue();
+		} else if (cElementType.cellsRange === issue.type || cElementType.cellsRange3D === issue.type) {
 			issue = issue.cross(arguments[1]);
 		} else if (cElementType.array === issue.type) {
 			issue = issue.getElementRowCol(0, 0);
-		} else if (cElementType.bool === issue.type) {
+		}
+
+		if (cElementType.bool === issue.type) {
 			issue = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.empty === issue.type) {
 			issue = new cError(cErrorType.not_available);
 		}
 
-		if (cElementType.cellsRange === firstInterest.type || cElementType.cellsRange3D === firstInterest.type) {
+		// ------------------------- arg1 type check -------------------------//
+		if (cElementType.cell === firstInterest.type) {
+			firstInterest = firstInterest.getValue();
+		} else if (cElementType.cellsRange === firstInterest.type || cElementType.cellsRange3D === firstInterest.type) {
 			firstInterest = firstInterest.cross(arguments[1]);
 		} else if (cElementType.array === firstInterest.type) {
 			firstInterest = firstInterest.getElementRowCol(0, 0);
-		} else if (cElementType.bool === firstInterest.type) {
+		}
+
+		if (cElementType.bool === firstInterest.type) {
 			firstInterest = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.empty === firstInterest.type) {
 			firstInterest = new cError(cErrorType.not_available);
 		}
 
-		if (cElementType.cellsRange === settlement.type || cElementType.cellsRange3D === settlement.type) {
+		// ------------------------- arg2 type check -------------------------//
+		if (cElementType.cell === settlement.type) {
+			settlement = settlement.getValue();
+		} else if (cElementType.cellsRange === settlement.type || cElementType.cellsRange3D === settlement.type) {
 			settlement = settlement.cross(arguments[1]);
 		} else if (cElementType.array === settlement.type) {
 			settlement = settlement.getElementRowCol(0, 0);
-		} else if (cElementType.bool === settlement.type) {
+		}
+
+		if (cElementType.bool === settlement.type) {
 			settlement = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.empty === settlement.type) {
 			settlement = new cError(cErrorType.not_available);
 		}
 
-		if (cElementType.cellsRange === rate.type || cElementType.cellsRange3D === rate.type) {
+		// ------------------------- arg3 type check -------------------------//
+		if (cElementType.cell === rate.type) {
+			rate = rate.getValue();
+		} else if (cElementType.cellsRange === rate.type || cElementType.cellsRange3D === rate.type) {
 			rate = rate.cross(arguments[1]);
 		} else if (cElementType.array === rate.type) {
 			rate = rate.getElementRowCol(0, 0);
-		} else if (cElementType.bool === rate.type) {
+		}
+
+		if (cElementType.bool === rate.type) {
 			rate = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.empty === rate.type) {
 			rate = new cError(cErrorType.not_available);
 		}
 
-		if (cElementType.cellsRange === par.type || cElementType.cellsRange3D === par.type) {
+		// ------------------------- arg4 type check -------------------------//
+		if (cElementType.cell === par.type) {
+			par = par.getValue();
+		} else if (cElementType.cellsRange === par.type || cElementType.cellsRange3D === par.type) {
 			par = par.cross(arguments[1]);
 		} else if (cElementType.array === par.type) {
 			par = par.getElementRowCol(0, 0);
-		} else if (cElementType.bool === par.type) {
+		}
+
+		if (cElementType.bool === par.type) {
 			par = new cError(cErrorType.wrong_value_type);
 		}
 
-		if (cElementType.cellsRange === frequency.type || cElementType.cellsRange3D === frequency.type) {
+		// ------------------------- arg5 type check -------------------------//
+		if (cElementType.cell === frequency.type) {
+			frequency = frequency.getValue();
+		} else if (cElementType.cellsRange === frequency.type || cElementType.cellsRange3D === frequency.type) {
 			frequency = frequency.cross(arguments[1]);
 		} else if (cElementType.array === frequency.type) {
 			frequency = frequency.getElementRowCol(0, 0);
-		} else if (cElementType.bool === frequency.type) {
+		}
+
+		if (cElementType.bool === frequency.type) {
 			frequency = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.empty === frequency.type) {
 			frequency = new cError(cErrorType.not_available);
 		}
 
-		if (cElementType.cellsRange === basis.type || cElementType.cellsRange3D === basis.type) {
+		// ------------------------- arg6 type check -------------------------//
+		if (cElementType.cell === basis.type) {
+			basis = basis.getValue();
+		} else if (cElementType.cellsRange === basis.type || cElementType.cellsRange3D === basis.type) {
 			basis = basis.cross(arguments[1]);
 		} else if (cElementType.array === basis.type) {
 			basis = basis.getElementRowCol(0, 0);
-		} else if (cElementType.bool === basis.type) {
-			basis = new cError(cErrorType.wrong_value_type);
 		}
 
+		if (cElementType.bool === basis.type) {
+			basis = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.empty === basis.type) {
+			basis = new cError(cErrorType.not_available);
+		}
+
+		// ------------------------- arg7 type check -------------------------//
 		if (cElementType.cellsRange === calcMethod.type || cElementType.cellsRange3D === calcMethod.type) {
 			calcMethod = calcMethod.cross(arguments[1]);
 		} else if (cElementType.array === calcMethod.type) {
