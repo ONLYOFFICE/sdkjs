@@ -15977,6 +15977,7 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 82.50);
 
+		// normal case
 		// arg[0]
 		oParser = new parserFormula("ACCRINT(TRUE,39691,39769,1,1000,2,0)", "A2", ws);
 		assert.ok(oParser.parse(), "ACCRINT(TRUE,39691,39769,1,1000,2,0)");
@@ -16007,7 +16008,6 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(-0.75,39691,39769,1,1000,2,0)");
 
 		oParser = new parserFormula("ACCRINT('str',39691,39769,1,1000,2,0)", "A2", ws);
-		// assert.ok(oParser.parse(), "ACCRINT('str',39691,39769,1,1000,2,0)");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of ACCRINT('str',39691,39769,1,1000,2,0)");
 
 		oParser = new parserFormula("ACCRINT(,39691,39769,1,1000,2,0)", "A2", ws);
@@ -16020,7 +16020,7 @@ $(function () {
 
 		oParser = new parserFormula("ACCRINT({1000;1200},39691,39769,1,1000,2,0)", "A2", ws);
 		assert.ok(oParser.parse(), "ACCRINT({1000;1200},11000,5000,8,0,2)");
-		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 106136.11, "Result of ACCRINT({1000;1200},11000,5000,8,0,2)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 106136.11, "Result of ACCRINT({1000;1200},39691,39769,1,1000,2,0)");
 
 		oParser = new parserFormula("ACCRINT({39508;1000;1200;1400},39691,39769,1,1000,2,0)", "A2", ws);
 		assert.ok(oParser.parse(), "ACCRINT({39508},39691,39769,1,1000,2,0)");
@@ -16032,7 +16032,422 @@ $(function () {
 
 		oParser = new parserFormula("ACCRINT({TRUE;2500},39691,39769,1,1000,2,0)", "A2", ws);
 		assert.ok(oParser.parse(), "ACCRINT({TRUE;2500},39691,39769,1,1000,2,0)");
-		assert.strictEqual(oParser.calculate().getValue(), 108875, "Result of ACCRINT({TRUE;2500},39691,39769,1,1000,2,0))");	// #VALUE!
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT({TRUE;2500},39691,39769,1,1000,2,0))");
+
+		// TODO cells, cellsrange
+
+		// arg[1]
+		oParser = new parserFormula("ACCRINT(39508,TRUE,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,TRUE,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,TRUE,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,FALSE,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,FALSE,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,FALSE,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,0,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,0,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,0,39769,1,1000,2,0)");	
+
+		oParser = new parserFormula("ACCRINT(39508,1,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,1,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,1,39769,1,1000,2,0)");	// 711.11
+
+		oParser = new parserFormula("ACCRINT(39508,0.75,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,0.75,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,0.75,39769,1,1000,2,0)");	
+
+		oParser = new parserFormula("ACCRINT(39508,-1,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,-1,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,-1,39769,1,1000,2,0)");	
+
+		oParser = new parserFormula("ACCRINT(39508,-0.75,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,-0.75,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,-0.75,39769,1,1000,2,0)");	
+
+		oParser = new parserFormula("ACCRINT(39508,'str',39769,1,1000,2,0)", "A2", ws);
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of ACCRINT(39508,'str',39769,1,1000,2,0)");	
+
+		oParser = new parserFormula("ACCRINT(39508,,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of ACCRINT(39508,,39769,1,1000,2,0)");	
+
+		oParser = new parserFormula("ACCRINT(39508,{1},39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,{1},39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,{1},39769,1,1000,2,0)");	// 711.11
+
+		oParser = new parserFormula("ACCRINT(39508,{-1},39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,{-1},39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,{-1},39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,{1000;1200},39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,{1000;1200},39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 711.11, "Result of ACCRINT(39508,{1000;1200},39769,1,1000,2,0)");	
+
+		oParser = new parserFormula("ACCRINT(39508,{39691;1000;1200;1400},39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,{39691;1000;1200;1400},39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,{39691;1000;1200;1400},39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,{TRUE;2500},39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,{TRUE;2500},39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,{TRUE;2500},39769,1,1000,2,0)");
+
+		// arg[2]
+		oParser = new parserFormula("ACCRINT(39508,39691,TRUE,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,TRUE,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,TRUE,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,FALSE,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,FALSE,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,FALSE,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,0,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,0,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,0,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,1,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,1,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,1,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,-1,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,-1,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,-1,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,0.75,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,0.75,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,0.75,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,-0.75,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,-0.75,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,-0.75,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,100000,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,100000,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 165622.22, "Result of ACCRINT(39508,39691,100000,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,999999999999999999999,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,999999999999999999999,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,999999999999999999999,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,'str',1,1000,2,0)", "A2", ws);
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of ACCRINT(39508,39691,'str',1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of ACCRINT(39508,39691,,1,1000,2,0)");	
+
+		oParser = new parserFormula("ACCRINT(39508,39691,{1},1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,{1},1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,{1},1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,{-1},1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,{-1},1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,{-1},1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,{100000;1200},1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,{100000;1200},1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 165622.22, "Result of ACCRINT(39508,39691,{100000;1200},1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,{39769;1000;1200},1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,{30769;1000;1200},1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,{39769;1000;1200},1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,{TRUE;2500},1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,{TRUE;2500},1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,{TRUE;2500},1,1000,2,0)");
+
+		// arg[3]
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,TRUE,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,TRUE,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,TRUE,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,FALSE,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,FALSE,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,FALSE,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,0,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,0,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,0,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,-1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,-1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,-1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,0.75,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,0.75,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 535.42, "Result of ACCRINT(39508,39691,39769,0.75,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,-0.75,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,-0.75,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,-0.75,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,100000,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,100000,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 71388888.89, "Result of ACCRINT(39508,39691,39769,100000,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,999999999999999999999,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,999999999999999999999,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), 7.138888888888889e+23, "Result of ACCRINT(39508,39691,39769,999999999999999999999,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,'str',1000,2,0)", "A2", ws);
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of ACCRINT(39508,39691,39769,'str',1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of ACCRINT(39508,39691,39769,,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,{1},1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,{1},1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,{1},1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,{-1},1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,{-1},1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,{-1},1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,{1000;1200},1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,{1000;1200},1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713888.89, "Result of ACCRINT(39508,39691,39769,{1000;1200},1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,{TRUE;2500},1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,{TRUE;2500},1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,{TRUE;2500},1000,2,0)");
+
+		// arg[4]
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,TRUE,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,TRUE,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,1,TRUE,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,FALSE,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,FALSE,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,1,FALSE,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,0,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,0,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,0,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(4) - 0, 0.7139, "Result of ACCRINT(39508,39691,39769,1,1,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,-1,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,-1,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,-1,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,0.75,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,0.75,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(6) - 0, 0.535417, "Result of ACCRINT(39508,39691,39769,1,0.75,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,-0.75,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,-0.75,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,-0.75,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,100000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,100000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 71388.89, "Result of ACCRINT(39508,39691,39769,1,100000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,999999999999999999999,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,999999999999999999999,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), 713888888888888900000, "Result of ACCRINT(39508,39691,39769,1,999999999999999999999,2,0)");	// 7.13889E+20
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,'str',2,0)", "A2", ws);
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of ACCRINT(39508,39691,39769,1,'str',2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,{1},2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,{1},2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(4) - 0, 0.7139, "Result of ACCRINT(39508,39691,39769,1,{1},2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,{-1},2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,{-1},2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,{-1},2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,{1000;1200},2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,{1000;1200},2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,{1000;1200},2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,{TRUE;2500},2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,{TRUE;2500},2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,1,{TRUE;2500},2,0)");
+		
+		// arg[5]
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,TRUE,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,TRUE,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,1,1000,TRUE,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,FALSE,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,FALSE,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,1,1000,FALSE,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,0,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,0,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,0,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,1,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,4,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,4,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,4,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,8,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,8,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,8,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,-1,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,-1,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,-1,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,0.75,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,0.75,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,0.75,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,-0.75,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,-0.75,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,-0.75,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,100000,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,100000,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,100000,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,999999999999999999999,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,999999999999999999999,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,999999999999999999999,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,'str',0)", "A2", ws);
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of ACCRINT(39508,39691,39769,1,1000,'str',0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of ACCRINT(39508,39691,39769,1,1000,,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,{1},0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,{1},0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,{1},0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,{-1},0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,{-1},0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,{-1},0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,{1000;1200},0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,{1000;1200},0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,{1000;1200},0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,{TRUE;2500},0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,{TRUE;2500},0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,1,1000,{TRUE;2500},0)");
+
+		// arg[6]
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,TRUE)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,1,1000,1,TRUE)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,FALSE)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,1,1000,1,FALSE)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,1,0)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,1)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,1)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 2275.34, "Result of ACCRINT(39508,39691,39769,1,1000,1,1)");	// 709.24
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,2)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,2)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 2286.11, "Result of ACCRINT(39508,39691,39769,1,1000,1,2)");	// 725
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,3)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,3)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 2276.71, "Result of ACCRINT(39508,39691,39769,1,1000,1,3)");	// 715.07
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,4)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,4)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 2283.33, "Result of ACCRINT(39508,39691,39769,1,1000,1,4)-");	// 708.36
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,1,-1)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,0.75)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,0.75)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,1,0.75)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,-0.75)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,-0.75)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,1,-0.75)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,100000)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,100000)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,1,100000)");
+		
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,999999999999999999999)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,999999999999999999999)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,1,999999999999999999999)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,'str')", "A2", ws);
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of ACCRINT(39508,39691,39769,1,1000,1,'str')");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,,)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,,)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,1,,)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,{1})", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,{1})");
+		assert.strictEqual(oParser.calculate().getValue().toFixed() - 0, 2275, "Result of ACCRINT(39508,39691,39769,1,1000,1,{1})"); // 709.24
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,{-1})", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,{-1})");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,1,{-1})");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,{1000;1200})", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,{1000;1200})");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(39508,39691,39769,1,1000,1,{1000;1200})");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,{TRUE;2500})", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,{TRUE;2500})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(39508,39691,39769,1,1000,1,{TRUE;2500})");
+
+		// arg[7]
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,0;TRUE)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,0;TRUE)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,1,0;TRUE)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,0;FALSE)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,0;FALSE)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 711.11, "Result of ACCRINT(39508,39691,39769,1,1000,1,0;FALSE)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,0;)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,0;)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,1,0;)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,0;'str')", "A2", ws);
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of ACCRINT(39508,39691,39769,1,1000,1,0;'str')");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,0;1)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,0;1)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,1,0;1)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,0;-1)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,0;-1)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,1,0;-1)");
+
+		oParser = new parserFormula("ACCRINT(39508,39691,39769,1,1000,1,0,{TRUE;2500})", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(39508,39691,39769,1,1000,1,0,{TRUE;2500})");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT(39508,39691,39769,1,1000,1,0,{TRUE;2500})");
+
 
 		ws.getRange2("A100").setValue("39508");
 		ws.getRange2("A101").setValue("39691");
@@ -16044,15 +16459,15 @@ $(function () {
 
 		oParser = new parserFormula("ACCRINT(A100,A101,A102,A103,A104,A105,A106)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89);	// 714
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89);	
 
 		oParser = new parserFormula("ACCRINT(A100,A101,A102,A103,A104,A105,A106,FALSE)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 711.11);	// 711
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 711.11);	
 
 		oParser = new parserFormula("ACCRINT(A100,A101,A102,A103,A104,A105,A106,TRUE)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89);	//714
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89);	
 
 		testArrayFormula2(assert, "ACCRINT", 6, 8, true);
 	});
