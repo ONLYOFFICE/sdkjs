@@ -487,57 +487,92 @@
 	cACCRINT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cACCRINT.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
 	cACCRINT.prototype.Calculate = function (arg) {
-		var issue = arg[0], firstInterest = arg[1], settlement = arg[2], rate = arg[3],
-			par = arg[4] && !(arg[4] instanceof cEmpty) ? arg[4] : new cNumber(1000), frequency = arg[5],
-			basis = arg[6] && !(arg[6] instanceof cEmpty) ? arg[6] : new cNumber(0),
-			calcMethod = arg[7] && !(arg[7] instanceof cEmpty) ? arg[7] : new cBool(true);
+		let issue = arg[0], 
+			firstInterest = arg[1], 
+			settlement = arg[2], 
+			rate = arg[3],
+			par = arg[4] && !(cElementType.empty === arg[4].type) ? arg[4] : new cNumber(1000),
+			frequency = arg[5],
+			basis = arg[6] && !(cElementType.empty === arg[6].type) ? arg[6] : new cNumber(0),
+			calcMethod = arg[7] && !(cElementType.empty === arg[7].type) ? arg[7] : new cBool(true);
 
-		if (issue instanceof cArea || issue instanceof cArea3D) {
+		// type check
+		if (cElementType.cellsRange === issue.type || cElementType.cellsRange3D === issue.type) {
 			issue = issue.cross(arguments[1]);
-		} else if (issue instanceof cArray) {
+		} else if (cElementType.array === issue.type) {
 			issue = issue.getElementRowCol(0, 0);
+		} else if (cElementType.string === issue.type) {
+			issue = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.bool === issue.type) {
+			issue = new cError(cErrorType.wrong_value_type);
 		}
 
-		if (firstInterest instanceof cArea || firstInterest instanceof cArea3D) {
+		if (cElementType.cellsRange === firstInterest.type || cElementType.cellsRange3D === firstInterest.type) {
 			firstInterest = firstInterest.cross(arguments[1]);
-		} else if (firstInterest instanceof cArray) {
+		} else if (cElementType.array === firstInterest.type) {
 			firstInterest = firstInterest.getElementRowCol(0, 0);
+		} else if (cElementType.string === firstInterest.type) {
+			firstInterest = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.bool === firstInterest.type) {
+			firstInterest = new cError(cErrorType.wrong_value_type);
 		}
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
+		if (cElementType.cellsRange === settlement.type || cElementType.cellsRange3D === settlement.type) {
 			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		} else if (cElementType.array === settlement.type) {
 			settlement = settlement.getElementRowCol(0, 0);
+		} else if (cElementType.string === settlement.type) {
+			settlement = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.bool === settlement.type) {
+			settlement = new cError(cErrorType.wrong_value_type);
 		}
 
-		if (rate instanceof cArea || rate instanceof cArea3D) {
+		if (cElementType.cellsRange === rate.type || cElementType.cellsRange3D === rate.type) {
 			rate = rate.cross(arguments[1]);
-		} else if (rate instanceof cArray) {
+		} else if (cElementType.array === rate.type) {
 			rate = rate.getElementRowCol(0, 0);
+		} else if (cElementType.string === rate.type) {
+			rate = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.bool === rate.type) {
+			rate = new cError(cErrorType.wrong_value_type);
 		}
 
-		if (par instanceof cArea || par instanceof cArea3D) {
+		if (cElementType.cellsRange === par.type || cElementType.cellsRange3D === par.type) {
 			par = par.cross(arguments[1]);
-		} else if (par instanceof cArray) {
+		} else if (cElementType.array === par.type) {
 			par = par.getElementRowCol(0, 0);
+		} else if (cElementType.string === par.type) {
+			par = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.bool === par.type) {
+			par = new cError(cErrorType.wrong_value_type);
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
+		if (cElementType.cellsRange === frequency.type || cElementType.cellsRange3D === frequency.type) {
 			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		} else if (cElementType.array === frequency.type) {
 			frequency = frequency.getElementRowCol(0, 0);
+		} else if (cElementType.string === frequency.type) {
+			frequency = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.bool === frequency.type) {
+			frequency = new cError(cErrorType.wrong_value_type);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
+		if (cElementType.cellsRange === basis.type || cElementType.cellsRange3D === basis.type) {
 			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+		} else if (cElementType.array === basis.type) {
 			basis = basis.getElementRowCol(0, 0);
+		} else if (cElementType.string === basis.type) {
+			basis = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.bool === basis.type) {
+			basis = new cError(cErrorType.wrong_value_type);
 		}
 
-		if (calcMethod instanceof cArea || calcMethod instanceof cArea3D) {
+		if (cElementType.cellsRange === calcMethod.type || cElementType.cellsRange3D === calcMethod.type) {
 			calcMethod = calcMethod.cross(arguments[1]);
-		} else if (calcMethod instanceof cArray) {
+		} else if (cElementType.array === calcMethod.type) {
 			calcMethod = calcMethod.getElementRowCol(0, 0);
+		} else if (cElementType.string === calcMethod.type) {
+			calcMethod = new cError(cErrorType.wrong_value_type);
 		}
 
 		issue = issue.tocNumber();
@@ -549,28 +584,28 @@
 		basis = basis.tocNumber();
 		calcMethod = calcMethod.tocBool();
 
-		if (issue instanceof cError) {
+		if (cElementType.error === issue.type) {
 			return issue;
 		}
-		if (firstInterest instanceof cError) {
+		if (cElementType.error === firstInterest.type) {
 			return firstInterest;
 		}
-		if (settlement instanceof cError) {
+		if (cElementType.error === settlement.type) {
 			return settlement;
 		}
-		if (rate instanceof cError) {
+		if (cElementType.error === rate.type) {
 			return rate;
 		}
-		if (par instanceof cError) {
+		if (cElementType.error === par.type) {
 			return par;
 		}
-		if (frequency instanceof cError) {
+		if (cElementType.error === frequency.type) {
 			return frequency;
 		}
-		if (basis instanceof cError) {
+		if (cElementType.error === basis.type) {
 			return basis;
 		}
-		if (calcMethod instanceof cError) {
+		if (cElementType.error === calcMethod.type) {
 			return calcMethod;
 		}
 
@@ -590,7 +625,7 @@
 		}
 
 		function addMonth(orgDate, numMonths, returnLastDay) {
-			var newDate = new cDate(orgDate);
+			let newDate = new cDate(orgDate);
 			newDate.addMonths(numMonths);
 			if (returnLastDay) {
 				newDate.setUTCDate(newDate.getDaysInMonth());
@@ -598,7 +633,7 @@
 			return newDate;
 		}
 
-		var iss = cDate.prototype.getDateFromExcel(issue), fInter = cDate.prototype.getDateFromExcel(firstInterest),
+		let iss = cDate.prototype.getDateFromExcel(issue), fInter = cDate.prototype.getDateFromExcel(firstInterest),
 			settl = cDate.prototype.getDateFromExcel(settlement), numMonths = 12 / frequency, numMonthsNeg = -numMonths,
 			endMonth = fInter.lastDayOfMonth(), coupPCD, firstDate, startDate, endDate, res, days, coupDays;
 
