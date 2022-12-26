@@ -501,48 +501,46 @@
 			issue = issue.cross(arguments[1]);
 		} else if (cElementType.array === issue.type) {
 			issue = issue.getElementRowCol(0, 0);
-		} else if (cElementType.string === issue.type) {
-			issue = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.bool === issue.type) {
 			issue = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.empty === issue.type) {
+			issue = new cError(cErrorType.not_available);
 		}
 
 		if (cElementType.cellsRange === firstInterest.type || cElementType.cellsRange3D === firstInterest.type) {
 			firstInterest = firstInterest.cross(arguments[1]);
 		} else if (cElementType.array === firstInterest.type) {
 			firstInterest = firstInterest.getElementRowCol(0, 0);
-		} else if (cElementType.string === firstInterest.type) {
-			firstInterest = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.bool === firstInterest.type) {
 			firstInterest = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.empty === firstInterest.type) {
+			firstInterest = new cError(cErrorType.not_available);
 		}
 
 		if (cElementType.cellsRange === settlement.type || cElementType.cellsRange3D === settlement.type) {
 			settlement = settlement.cross(arguments[1]);
 		} else if (cElementType.array === settlement.type) {
 			settlement = settlement.getElementRowCol(0, 0);
-		} else if (cElementType.string === settlement.type) {
-			settlement = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.bool === settlement.type) {
 			settlement = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.empty === settlement.type) {
+			settlement = new cError(cErrorType.not_available);
 		}
 
 		if (cElementType.cellsRange === rate.type || cElementType.cellsRange3D === rate.type) {
 			rate = rate.cross(arguments[1]);
 		} else if (cElementType.array === rate.type) {
 			rate = rate.getElementRowCol(0, 0);
-		} else if (cElementType.string === rate.type) {
-			rate = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.bool === rate.type) {
 			rate = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.empty === rate.type) {
+			rate = new cError(cErrorType.not_available);
 		}
 
 		if (cElementType.cellsRange === par.type || cElementType.cellsRange3D === par.type) {
 			par = par.cross(arguments[1]);
 		} else if (cElementType.array === par.type) {
 			par = par.getElementRowCol(0, 0);
-		} else if (cElementType.string === par.type) {
-			par = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.bool === par.type) {
 			par = new cError(cErrorType.wrong_value_type);
 		}
@@ -551,18 +549,16 @@
 			frequency = frequency.cross(arguments[1]);
 		} else if (cElementType.array === frequency.type) {
 			frequency = frequency.getElementRowCol(0, 0);
-		} else if (cElementType.string === frequency.type) {
-			frequency = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.bool === frequency.type) {
 			frequency = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.empty === frequency.type) {
+			frequency = new cError(cErrorType.not_available);
 		}
 
 		if (cElementType.cellsRange === basis.type || cElementType.cellsRange3D === basis.type) {
 			basis = basis.cross(arguments[1]);
 		} else if (cElementType.array === basis.type) {
 			basis = basis.getElementRowCol(0, 0);
-		} else if (cElementType.string === basis.type) {
-			basis = new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.bool === basis.type) {
 			basis = new cError(cErrorType.wrong_value_type);
 		}
@@ -571,8 +567,6 @@
 			calcMethod = calcMethod.cross(arguments[1]);
 		} else if (cElementType.array === calcMethod.type) {
 			calcMethod = calcMethod.getElementRowCol(0, 0);
-		} else if (cElementType.string === calcMethod.type) {
-			calcMethod = new cError(cErrorType.wrong_value_type);
 		}
 
 		issue = issue.tocNumber();
@@ -618,8 +612,8 @@
 		basis = Math.floor(basis.getValue());
 		calcMethod = calcMethod.toBool();
 
-		if (issue < startRangeCurrentDateSystem || firstInterest < startRangeCurrentDateSystem ||
-			settlement < startRangeCurrentDateSystem || issue >= settlement || rate <= 0 || par <= 0 || basis < 0 ||
+		if (issue < startRangeCurrentDateSystem || issue <= 0 || issue >= settlement || firstInterest < startRangeCurrentDateSystem ||
+			settlement < startRangeCurrentDateSystem || rate <= 0 || par <= 0 || basis < 0 ||
 			basis > 4 || (frequency != 1 && frequency != 2 && frequency != 4)) {
 			return new cError(cErrorType.not_numeric);
 		}
@@ -633,8 +627,11 @@
 			return newDate;
 		}
 
-		let iss = cDate.prototype.getDateFromExcel(issue), fInter = cDate.prototype.getDateFromExcel(firstInterest),
-			settl = cDate.prototype.getDateFromExcel(settlement), numMonths = 12 / frequency, numMonthsNeg = -numMonths,
+		let iss = cDate.prototype.getDateFromExcel(issue), 
+			fInter = cDate.prototype.getDateFromExcel(firstInterest),
+			settl = cDate.prototype.getDateFromExcel(settlement), 
+			numMonths = 12 / frequency, 
+			numMonthsNeg = -numMonths,
 			endMonth = fInter.lastDayOfMonth(), coupPCD, firstDate, startDate, endDate, res, days, coupDays;
 
 		if (settl > fInter && calcMethod) {

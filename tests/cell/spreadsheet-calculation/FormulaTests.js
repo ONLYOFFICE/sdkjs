@@ -15977,6 +15977,63 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 82.50);
 
+		// arg[0]
+		oParser = new parserFormula("ACCRINT(TRUE,39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(TRUE,39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(TRUE,39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(FALSE,39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(FALSE,39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of ACCRINT(FALSE,39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(1,39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(1,39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), 108875, "Result of ACCRINT(1,39691,39769,1,1000,2,0)");	// 0
+
+		oParser = new parserFormula("ACCRINT(0,39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(0,39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(0,39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(0.75,39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(0.75,39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(0.75,39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(-1,39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(-1,39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(-1,39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(-0.75,39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(-0.75,39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT(-0.75,39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT('str',39691,39769,1,1000,2,0)", "A2", ws);
+		// assert.ok(oParser.parse(), "ACCRINT('str',39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of ACCRINT('str',39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT(,39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(,39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of ACCRINT(,39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT({1},39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT({1},39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), 108875, "Result of ACCRINT({1},39691,39769,1,1000,2,0)");	// 0
+
+		oParser = new parserFormula("ACCRINT({1000;1200},39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT({1000;1200},11000,5000,8,0,2)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 106136.11, "Result of ACCRINT({1000;1200},11000,5000,8,0,2)");
+
+		oParser = new parserFormula("ACCRINT({39508;1000;1200;1400},39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT({39508},39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 713.89, "Result of ACCRINT({39508},39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT({-1},39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT({-1},39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of ACCRINT({-1},39691,39769,1,1000,2,0)");
+
+		oParser = new parserFormula("ACCRINT({TRUE;2500},39691,39769,1,1000,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT({TRUE;2500},39691,39769,1,1000,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), 108875, "Result of ACCRINT({TRUE;2500},39691,39769,1,1000,2,0))");	// #VALUE!
+
 		ws.getRange2("A100").setValue("39508");
 		ws.getRange2("A101").setValue("39691");
 		ws.getRange2("A102").setValue("39769");
