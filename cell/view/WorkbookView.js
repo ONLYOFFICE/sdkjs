@@ -2721,6 +2721,48 @@
             }
         };
 
+		var getFunctionInfo = function (_name) {
+			var _res = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[name] : name)
+			var _parseResult = t.cellEditor._parseResult;
+
+			//получаем массив аргументов
+			_res.argumentsValue = _parseResult.getArgumentsValue(t.cellEditor._formula.Formula);
+			if (_res.argumentsValue) {
+				var argumentsType = _parseResult.activeFunction.func.argumentsType;
+				_res.argumentsResult = [];
+				for (var i = 0; i < _res.argumentsValue.length; i++) {
+					var argType = null;
+					if (argumentsType) {
+						if (typeof argumentsType[i] == 'object') {
+							argType = argumentsType[i][0];
+						} else if (i > argumentsType.length - 1) {
+							var lastArgType = argumentsType[argumentsType.length - 1];
+							if (typeof lastArgType == 'object') {
+								argType = lastArgType[(i - (argumentsType.length - 1)) % lastArgType.length]
+							}
+						} else {
+							argType = argumentsType[i];
+						}
+					}
+					//вычисляем результат каждого аргумента
+					var argCalc = ws.calculateWizardFormula(_res.argumentsValue[i], argType);
+					_res.argumentsResult[i] = argCalc.str;
+				}
+			}
+
+			//get result
+			var sArguments = _res.argumentsValue.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
+			if (argCalc.obj && argCalc.obj.type !== AscCommonExcel.cElementType.error) {
+				var funcCalc = ws.calculateWizardFormula(name + '(' + sArguments + ')');
+				_res.functionResult = funcCalc.str;
+				if (funcCalc.obj && funcCalc.obj.type !== AscCommonExcel.cElementType.error) {
+					_res.formulaResult = ws.calculateWizardFormula(t.cellEditor._formula).str;
+				}
+			}
+
+			return _res;
+		};
+
 		var wsView = this.getWorksheet();
 		var ws = this.getActiveWS();
         var addFunction = function (name, cellEditMode) {
@@ -2749,42 +2791,7 @@
 				}
 
 				if (name) {
-					res = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[name] : name)
-
-					//получаем массив аргументов
-					res.argumentsValue = parseResult.getArgumentsValue(t.cellEditor._formula.Formula);
-					if (res.argumentsValue) {
-						var argumentsType = parseResult.activeFunction.func.argumentsType;
-						res.argumentsResult = [];
-						for (var i = 0; i < res.argumentsValue.length; i++) {
-							var argType = null;
-							if (argumentsType) {
-								if (typeof argumentsType[i] == 'object') {
-									argType = argumentsType[i][0];
-								} else if (i > argumentsType.length - 1) {
-									var lastArgType = argumentsType[argumentsType.length - 1];
-									if (typeof lastArgType == 'object') {
-										argType = lastArgType[(i - (argumentsType.length - 1)) % lastArgType.length]
-									}
-								} else {
-									argType = argumentsType[i];
-								}
-							}
-							//вычисляем результат каждого аргумента
-							var argCalc = ws.calculateWizardFormula(res.argumentsValue[i], argType);
-							res.argumentsResult[i] = argCalc.str;
-						}
-					}
-
-					//get result
-					var sArguments = res.argumentsValue.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
-					if (argCalc.obj && argCalc.obj.type !== AscCommonExcel.cElementType.error) {
-						var funcCalc = ws.calculateWizardFormula(name + '(' + sArguments + ')');
-						res.functionResult = funcCalc.str;
-						if (funcCalc.obj && funcCalc.obj.type !== AscCommonExcel.cElementType.error) {
-							res.formulaResult = ws.calculateWizardFormula(t.cellEditor._formula).str;
-						}
-					}
+					res = getFunctionInfo(name);
 
 					t.cellEditor.lastRangePos = parseResult.argPosArr[0].start;
 					t.cellEditor.lastRangeLength = parseResult.argPosArr[parseResult.argPosArr.length - 1].end - parseResult.argPosArr[0].start;
@@ -2793,20 +2800,21 @@
 					t.cellEditor._cleanSelection();
 				}
 			} else {
+				let cellRange;
 				if (name) {
-					let autoComplete = true, cellRange;
-					if (autoComplete) {
-						cellRange = wsView.autoCompleteFormula(name);
-					}
+					cellRange = wsView.autoCompleteFormula(name);
+
 					if (!cellRange.notEditCell && cellRange.text) {
 						var bLocale = AscCommonExcel.oFormulaLocaleInfo.Parse;
 						var cFormulaList = (bLocale && AscCommonExcel.cFormulaFunctionLocalized) ? AscCommonExcel.cFormulaFunctionLocalized : AscCommonExcel.cFormulaFunction;
 
-						name = name + "(" + cellRange.text + ")";
 					}
 				}
 
-				t.cellEditor.insertFormula(name);
+				t.cellEditor.insertFormula(name, null, cellRange && cellRange.text);
+				if (cellRange) {
+					res = getFunctionInfo(name);
+				}
 			}
 
 			// ToDo send info from selection

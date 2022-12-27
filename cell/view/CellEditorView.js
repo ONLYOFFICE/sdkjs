@@ -595,7 +595,7 @@
 		this.skipTLUpdate = true;
 	};
 
-	CellEditor.prototype.insertFormula = function (functionName, isDefName) {
+	CellEditor.prototype.insertFormula = function (functionName, isDefName, sRange) {
 		this.skipTLUpdate = false;
 
 		// ToDo check selection formula in wizard for delete
@@ -614,7 +614,7 @@
 		if (functionName) {
 			addText += functionName;
 			if (!isDefName) {
-				addText += '()';
+				addText += sRange ? '(' + sRange + ')' : '()';
 			}
 		}
 
