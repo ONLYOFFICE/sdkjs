@@ -3028,15 +3028,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var newArgs = [];
 		var indexArr = null;
 
+		var excludeHiddenRows = this && this.excludeHiddenRows;
+		var excludeErrorsVal = this && this.excludeErrorsVal;
+		var excludeNestedStAg = this && this.excludeNestedStAg;
 		for (var i = 0; i < args.length; i++) {
 			var arg = args[i];
 
 			//для массивов отдельная ветка
 			if (typeArray && cElementType.array === typeArray[i]) {
 				if (cElementType.cellsRange === arg.type || cElementType.array === arg.type) {
-					newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
+					newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg);
 				} else if (cElementType.cellsRange3D === arg.type) {
-					newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg)[0];
+					newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg)[0];
 				} else if (cElementType.error === arg.type) {
 					newArgs[i] = arg;
 				} else {

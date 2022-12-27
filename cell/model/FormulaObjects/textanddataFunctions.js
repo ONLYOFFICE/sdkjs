@@ -67,7 +67,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['NotRealised'].push(cBAHTTEXT, cJIS, cPHONETIC);
 
 	function calcBeforeAfterText(arg, arg1, isAfter) {
-		let newArgs = cBaseFunction.prototype._prepareArguments.call(this, arg, arg1, true, null, true).args;
+		let newArgs = cBaseFunction.prototype._prepareArguments.call(this, arg, arg1, null, null, true).args;
 		let text = newArgs[0];
 		text = text.tocString();
 		if (text.type === cElementType.error) {
@@ -75,12 +75,42 @@ function (window, undefined) {
 		}
 		text = text.toString();
 
-		let delimiter = newArgs[1];
-		delimiter = delimiter.tocString();
-		if (delimiter.type === cElementType.error) {
-			return delimiter;
+		let delimiter;
+		if (cElementType.cellsRange === arg[1].type || cElementType.array === arg[1].type || cElementType.cellsRange3D === arg[1].type) {
+			let isError;
+			arg[1].foreach2(function (v) {
+				v = v.tocString();
+				if (v.type === cElementType.error) {
+					isError = v;
+				}
+				if (!delimiter) {
+					delimiter = [];
+				}
+				delimiter.push(v.toString());
+			});
+			if (isError) {
+				return isError;
+			}
+		} else {
+			delimiter = arg[1].tocString();
+			if (delimiter.type === cElementType.error) {
+				return delimiter;
+			}
+			delimiter = [delimiter.toString()];
 		}
-		delimiter = delimiter.toString();
+
+		let doSearch = function (_text, aDelimiters) {
+			let needIndex = null;
+			for (let j = 0; j < aDelimiters.length; j++) {
+				let nextDelimiter = match_mode ? aDelimiters[j].toLowerCase() : aDelimiters[j];
+				let nextIndex = isReverseSearch ? modifiedText.lastIndexOf(nextDelimiter, startPos) : modifiedText.indexOf(nextDelimiter, startPos);
+				if (needIndex === null || needIndex === -1 || (nextIndex < needIndex && !isReverseSearch) || (nextIndex > needIndex && isReverseSearch)) {
+					needIndex = nextIndex;
+					modifiedDelimiter = nextDelimiter;
+				}
+			}
+			return needIndex;
+		};
 
 		//instance_num - при отрицательном вхождении поиск с конца начинается
 		let instance_num = newArgs[2] && !(newArgs[2].type === cElementType.empty) ? newArgs[2] : new cNumber(1);
@@ -109,7 +139,7 @@ function (window, undefined) {
 
 		//calculate
 		let modifiedText = match_mode ? text.toLowerCase() : text;
-		let modifiedDelimiter = match_mode ? delimiter.toLowerCase() : delimiter;
+		let modifiedDelimiter;
 
 		let isReverseSearch = instance_num < 0;
 		let foundIndex = -1;
@@ -117,7 +147,7 @@ function (window, undefined) {
 		let repeatZero = 0;
 		let match_end_active = false;
 		for (let i = 0; i < Math.abs(instance_num); i++) {
-			foundIndex = isReverseSearch ? modifiedText.lastIndexOf(modifiedDelimiter ,startPos) : modifiedText.indexOf(modifiedDelimiter ,startPos);
+			foundIndex = doSearch(modifiedText, delimiter);
 			if (foundIndex === 0) {
 				repeatZero++;
 			}
