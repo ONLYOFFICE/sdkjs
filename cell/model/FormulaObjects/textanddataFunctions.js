@@ -104,7 +104,7 @@ function (window, undefined) {
 			for (let j = 0; j < aDelimiters.length; j++) {
 				let nextDelimiter = match_mode ? aDelimiters[j].toLowerCase() : aDelimiters[j];
 				let nextIndex = isReverseSearch ? modifiedText.lastIndexOf(nextDelimiter, startPos) : modifiedText.indexOf(nextDelimiter, startPos);
-				if (needIndex === null || needIndex === -1 || (nextIndex < needIndex && !isReverseSearch) || (nextIndex > needIndex && isReverseSearch)) {
+				if (needIndex === null || needIndex === -1 || (((nextIndex < needIndex && !isReverseSearch) || (nextIndex > needIndex && isReverseSearch)) && nextIndex !== -1)) {
 					needIndex = nextIndex;
 					modifiedDelimiter = nextDelimiter;
 				}

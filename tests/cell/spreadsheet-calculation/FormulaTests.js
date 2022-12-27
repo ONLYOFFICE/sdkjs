@@ -5589,9 +5589,23 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 
-		/*oParser = new parserFormula( "TEXTBEFORE(B9:C10;B13:C14;B9:C10;B9:C10;B9:C10;B9:C10)", "A1", ws );
-		assert.ok( oParser.parse() );
-		assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );*/
+		ws.getRange2("A1").setValue("TRUE1Brown,Jim");
+
+		oParser = new parserFormula("TEXTBEFORE(A1,{\"i\",\"n\",\"b\"})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE1Brow");
+
+		oParser = new parserFormula("TEXTBEFORE(A1,{\"i\",\"n\",TRUE})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "");
+
+		oParser = new parserFormula("TEXTBEFORE(A1,{\"i\",\"n\",#VALUE!})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTBEFORE(A1,{\"i\",\"J\",\"o\",\"O\",\"m\"})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE1Br");
 	});
 
 	QUnit.test("Test: \"TEXTAFTER\"", function (assert) {
@@ -5714,6 +5728,25 @@ $(function () {
 		oParser = new parserFormula("TEXTAFTER(B1,\",\")", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		ws.getRange2("A1").setValue("TRUE1Brown,Jim");
+
+		oParser = new parserFormula("TEXTAFTER(A1,{\"i\",\"n\",\"b\"})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), ",Jim");
+
+		oParser = new parserFormula("TEXTAFTER(A1,{\"i\",\"n\",TRUE})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "1Brown,Jim");
+
+		oParser = new parserFormula("TEXTAFTER(A1,{\"i\",\"n\",#VALUE!})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTAFTER(A1,{\"i\",\"J\",\"o\",\"O\",\"m\"})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "wn,Jim");
+
 	});
 
 	QUnit.test("Test: \"TEXTSPLIT\"", function (assert) {
