@@ -5677,7 +5677,7 @@ $(function () {
 
 		oParser = new parserFormula("TEXTAFTER(C3:D4;C6:D7;-8;TRUE;TRUE;\"error\")", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "txttextTeXttextText234text stext text");
+		assert.strictEqual(oParser.calculate().getValue(), "");
 
 		oParser = new parserFormula("TEXTAFTER(C3;\"asdasd\";-8;TRUE;TRUE)", "A1", ws);
 		assert.ok(oParser.parse());
