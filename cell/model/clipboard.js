@@ -3145,6 +3145,7 @@
 
 				oPasteProcessor.map_font_index = window["Asc"]["editor"].FontLoader.map_font_index;
 				oPasteProcessor.bIsDoublePx = false;
+				oPasteProcessor.pasteInPresentationShape = true;
 
 				var newFonts;
 				//если находимся внутри диаграммы убираем ссылки
