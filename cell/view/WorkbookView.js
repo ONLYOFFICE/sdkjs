@@ -2721,6 +2721,7 @@
             }
         };
 
+		var wsView = this.getWorksheet();
 		var ws = this.getActiveWS();
         var addFunction = function (name, cellEditMode) {
         	t.setWizardMode(true);
@@ -2792,6 +2793,19 @@
 					t.cellEditor._cleanSelection();
 				}
 			} else {
+				if (name) {
+					let autoComplete = true, cellRange;
+					if (autoComplete) {
+						cellRange = wsView.autoCompleteFormula(name);
+					}
+					if (!cellRange.notEditCell && cellRange.text) {
+						var bLocale = AscCommonExcel.oFormulaLocaleInfo.Parse;
+						var cFormulaList = (bLocale && AscCommonExcel.cFormulaFunctionLocalized) ? AscCommonExcel.cFormulaFunctionLocalized : AscCommonExcel.cFormulaFunction;
+
+						name = name + "(" + cellRange.text + ")";
+					}
+				}
+
 				t.cellEditor.insertFormula(name);
 			}
 
