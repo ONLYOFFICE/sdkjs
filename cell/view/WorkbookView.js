@@ -2714,29 +2714,32 @@
     };
 
     WorkbookView.prototype.startWizard = function (name, doCleanCellContent) {
-        var t = this;
-        var callback = function (success) {
+        let t = this;
+        let callback = function (success) {
             if (success) {
                 addFunction(name);
             }
         };
 
-		var getFunctionInfo = function (_name) {
-			var _res = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[name] : name)
-			var _parseResult = t.cellEditor._parseResult;
+        //need check all functions
+        let allowCompleteFunctions = {"SUM": 1, "AVERAGE": 1, "COUNT": 1, "MAX": 1, "MIN": 1, "COUNTA": 1, "STDEV": 1};
+		let getFunctionInfo = function (_name) {
+			let _res = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[_name] : _name);
+			let _parseResult = t.cellEditor._parseResult;
 
 			//получаем массив аргументов
 			_res.argumentsValue = _parseResult.getArgumentsValue(t.cellEditor._formula.Formula);
+			let argCalc;
 			if (_res.argumentsValue) {
-				var argumentsType = _parseResult.activeFunction.func.argumentsType;
+				let argumentsType = _parseResult.activeFunction.func.argumentsType;
 				_res.argumentsResult = [];
-				for (var i = 0; i < _res.argumentsValue.length; i++) {
-					var argType = null;
+				for (let i = 0; i < _res.argumentsValue.length; i++) {
+					let argType = null;
 					if (argumentsType) {
 						if (typeof argumentsType[i] == 'object') {
 							argType = argumentsType[i][0];
 						} else if (i > argumentsType.length - 1) {
-							var lastArgType = argumentsType[argumentsType.length - 1];
+							let lastArgType = argumentsType[argumentsType.length - 1];
 							if (typeof lastArgType == 'object') {
 								argType = lastArgType[(i - (argumentsType.length - 1)) % lastArgType.length]
 							}
@@ -2745,15 +2748,15 @@
 						}
 					}
 					//вычисляем результат каждого аргумента
-					var argCalc = ws.calculateWizardFormula(_res.argumentsValue[i], argType);
+					argCalc = ws.calculateWizardFormula(_res.argumentsValue[i], argType);
 					_res.argumentsResult[i] = argCalc.str;
 				}
 			}
 
 			//get result
-			var sArguments = _res.argumentsValue.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
+			let sArguments = _res.argumentsValue.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
 			if (argCalc.obj && argCalc.obj.type !== AscCommonExcel.cElementType.error) {
-				var funcCalc = ws.calculateWizardFormula(name + '(' + sArguments + ')');
+				let funcCalc = ws.calculateWizardFormula(_name + '(' + sArguments + ')');
 				_res.functionResult = funcCalc.str;
 				if (funcCalc.obj && funcCalc.obj.type !== AscCommonExcel.cElementType.error) {
 					_res.formulaResult = ws.calculateWizardFormula(t.cellEditor._formula).str;
@@ -2763,26 +2766,26 @@
 			return _res;
 		};
 
-		var wsView = this.getWorksheet();
-		var ws = this.getActiveWS();
-        var addFunction = function (name, cellEditMode) {
+		let wsView = this.getWorksheet();
+		let ws = this.getActiveWS();
+        let addFunction = function (name, cellEditMode) {
         	t.setWizardMode(true);
 			if (doCleanCellContent || !t.cellEditor.isFormula()) {
                 t.cellEditor.selectionBegin = 0;
                 t.cellEditor.selectionEnd = t.cellEditor.textRender.getEndOfText();
             }
 
-			var res;
+			let res;
 			if (!name && t.cellEditor._formula && t.cellEditor._parseResult) {
-				var parseResult = t.cellEditor._parseResult;
+				let parseResult = t.cellEditor._parseResult;
 				name = parseResult.activeFunction && parseResult.activeFunction.func && parseResult.activeFunction.func.name;
 
 				if (cellEditMode) {
 					//ищем общую функцию, в которой находится курсор
 					//если начало и конец селекта в одной функции - показываем настройки для неё, если в разных - добавляем новую
-					var _start = t.cellEditor.selectionBegin !== -1 ? t.cellEditor.selectionBegin : t.cellEditor.cursorPos;
-					var _end = t.cellEditor.selectionEnd !== -1 ? t.cellEditor.selectionEnd : t.cellEditor.cursorPos;
-					var activeFunction = parseResult.getActiveFunction(_start, _end);
+					let _start = t.cellEditor.selectionBegin !== -1 ? t.cellEditor.selectionBegin : t.cellEditor.cursorPos;
+					let _end = t.cellEditor.selectionEnd !== -1 ? t.cellEditor.selectionEnd : t.cellEditor.cursorPos;
+					let activeFunction = parseResult.getActiveFunction(_start, _end);
 					if (activeFunction) {
 						parseResult.activeFunction = activeFunction;
 						parseResult.argPosArr = activeFunction.args;
@@ -2801,19 +2804,17 @@
 				}
 			} else {
 				let cellRange;
-				if (name) {
-					cellRange = wsView.autoCompleteFormula(name);
+				let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
+					AscCommonExcel.cFormulaFunction;
 
-					if (!cellRange.notEditCell && cellRange.text) {
-						var bLocale = AscCommonExcel.oFormulaLocaleInfo.Parse;
-						var cFormulaList = (bLocale && AscCommonExcel.cFormulaFunctionLocalized) ? AscCommonExcel.cFormulaFunctionLocalized : AscCommonExcel.cFormulaFunction;
-
-					}
+				let trueName = oFormulaList[name] && oFormulaList[name].prototype && oFormulaList[name].prototype.name;
+				if (allowCompleteFunctions[trueName]) {
+					cellRange = wsView.autoCompleteFormula(trueName);
 				}
 
 				t.cellEditor.insertFormula(name, null, cellRange && cellRange.text);
 				if (cellRange) {
-					res = getFunctionInfo(name);
+					res = getFunctionInfo(trueName);
 				}
 			}
 
