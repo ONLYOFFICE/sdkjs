@@ -5606,6 +5606,33 @@ $(function () {
 		oParser = new parserFormula("TEXTBEFORE(A1,{\"i\",\"J\",\"o\",\"O\",\"m\"})", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "TRUE1Br");
+
+
+		ws.getRange2("A1").setValue("test125test2test3test4FALSEtest5");
+		ws.getRange2("B4").setValue("w");
+		ws.getRange2("C4").setValue("FALSE");
+		ws.getRange2("B5").setValue("tE");
+		ws.getRange2("C5").setValue("125te");
+
+		oParser = new parserFormula("TEXTBEFORE(A1,B4:C5)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "test");
+
+		oParser = new parserFormula("TEXTBEFORE(A1,B4:C5, 0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTBEFORE(A1,B4:C5, 1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "test");
+
+		oParser = new parserFormula("TEXTBEFORE(A1,B4:C5, 2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "test125test2test3test4");
+
+		oParser = new parserFormula("TEXTBEFORE(A1,B4:C5, 3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 	});
 
 	QUnit.test("Test: \"TEXTAFTER\"", function (assert) {
@@ -5746,6 +5773,39 @@ $(function () {
 		oParser = new parserFormula("TEXTAFTER(A1,{\"i\",\"J\",\"o\",\"O\",\"m\"})", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "wn,Jim");
+
+		ws.getRange2("A1").setValue("test125test2test3test4FALSEtest5");
+		ws.getRange2("B4").setValue("w");
+		ws.getRange2("B5").setValue("test");
+		ws.getRange2("C4").setValue("FALSE");
+		ws.getRange2("C5").setValue("125");
+
+		oParser = new parserFormula("TEXTAFTER(A1,B4:C5)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "125test2test3test4FALSEtest5");
+
+		ws.getRange2("B5").setValue("tE");
+		ws.getRange2("C5").setValue("125te");
+
+		oParser = new parserFormula("TEXTAFTER(A1,B4:C5)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "st2test3test4FALSEtest5");
+
+		oParser = new parserFormula("TEXTAFTER(A1,B4:C5, 0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTAFTER(A1,B4:C5, 1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "st2test3test4FALSEtest5");
+
+		oParser = new parserFormula("TEXTAFTER(A1,B4:C5, 2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "test5");
+
+		oParser = new parserFormula("TEXTAFTER(A1,B4:C5, 3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 
 	});
 

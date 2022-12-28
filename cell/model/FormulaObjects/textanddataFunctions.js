@@ -91,6 +91,9 @@ function (window, undefined) {
 			if (isError) {
 				return isError;
 			}
+			if (!delimiter) {
+				delimiter = [""];
+			}
 		} else {
 			delimiter = arg[1].tocString();
 			if (delimiter.type === cElementType.error) {
@@ -100,11 +103,11 @@ function (window, undefined) {
 		}
 
 		let doSearch = function (_text, aDelimiters) {
-			let needIndex = null;
+			let needIndex = -1;
 			for (let j = 0; j < aDelimiters.length; j++) {
 				let nextDelimiter = match_mode ? aDelimiters[j].toLowerCase() : aDelimiters[j];
 				let nextIndex = isReverseSearch ? modifiedText.lastIndexOf(nextDelimiter, startPos) : modifiedText.indexOf(nextDelimiter, startPos);
-				if (needIndex === null || needIndex === -1 || (((nextIndex < needIndex && !isReverseSearch) || (nextIndex > needIndex && isReverseSearch)) && nextIndex !== -1)) {
+				if (needIndex === -1 || (((nextIndex < needIndex && !isReverseSearch) || (nextIndex > needIndex && isReverseSearch)) && nextIndex !== -1)) {
 					needIndex = nextIndex;
 					modifiedDelimiter = nextDelimiter;
 				}
@@ -2325,6 +2328,7 @@ function (window, undefined) {
 	cTEXTBEFORE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
 	cTEXTBEFORE.prototype.isXLFN = true;
+	cTEXTBEFORE.prototype.arrayIndexes = {1: 1};
 	cTEXTBEFORE.prototype.Calculate = function (arg) {
 		return calcBeforeAfterText(arg, arguments[1]);
 	};
@@ -2345,6 +2349,7 @@ function (window, undefined) {
 	cTEXTAFTER.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTEXTAFTER.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
 	cTEXTAFTER.prototype.isXLFN = true;
+	cTEXTAFTER.prototype.arrayIndexes = {1: 1};
 	cTEXTAFTER.prototype.Calculate = function (arg) {
 		return calcBeforeAfterText(arg, arguments[1], true);
 	};
