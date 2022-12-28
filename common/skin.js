@@ -258,14 +258,14 @@ var EditorSkins = {
 		ColorHighlighted         : "#d9d9d9",
 		ColorFiltering           : "#6BEC9F",
 
-		BackgroundDark           : "#111111",
-		BackgroundDarkActive     : "#333333",
-		BackgroundDarkHighlighted: "#000000",
+		BackgroundDark           : "#55B27B",
+		BackgroundDarkActive     : "#7AFFAF",
+		BackgroundDarkHighlighted: "#6EE59F",
 
-		ColorDark                : "#ffffff",
-		ColorDarkActive          : "#ffffff",
-		ColorDarkHighlighted     : "#ffffff",
-		ColorDarkFiltering       : "#6BEC9F",
+		ColorDark                : "#363636",
+		ColorDarkActive          : "#363636",
+		ColorDarkHighlighted     : "#363636",
+		ColorDarkFiltering       : "#ffffff",
 
 		GroupDataBorder          : "#ffffff",
 		EditorBorder             : "#2a2a2a"
@@ -361,14 +361,6 @@ function updateGlobalSkinColors(theme)
 		Color                           : "text-normal",
 		ColorActive                     : "text-normal",
 		ColorHighlighted                : "text-normal",
-
-		BackgroundDark                  : "canvas-dark-cell-title",
-		BackgroundDarkActive            : "canvas-dark-cell-title-selected",
-		BackgroundDarkHighlighted       : "canvas-dark-cell-title-hover",
-
-		ColorDark                       : "text-contrast-background",
-		ColorDarkActive                 : "text-contrast-background",
-		ColorDarkHighlighted            : "text-contrast-background",
 
 		GroupDataBorder                 : "canvas-high-contrast",
 		EditorBorder                    : "border-toolbar"
