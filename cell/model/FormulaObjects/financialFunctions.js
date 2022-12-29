@@ -686,6 +686,7 @@
 
 		firstDate = new cDate(iss > coupPCD ? iss : coupPCD);
 		days = AscCommonExcel.days360(firstDate, settl, basis);
+		// TODO пересмотреть выполнение функции getcoupdays при basis !== 0
 		coupDays = getcoupdays(coupPCD, fInter, frequency, basis).getValue();
 		res = days / coupDays;
 		startDate = new cDate(coupPCD);
