@@ -16576,6 +16576,31 @@ $(function () {
 		assert.ok(oParser.parse(), "ACCRINT(60,39691,39769,1,1000,2,0,FALSE)");
 		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 1213.89, "Result of ACCRINT(60,39691,39769,1,1000,2,0,FALSE)");	// 1219.44
 
+		oParser = new parserFormula("ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 10, "Result of ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1)");
+
+		oParser = new parserFormula("ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,0)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,0)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 10, "Result of ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,0)");	
+
+		oParser = new parserFormula("ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,1)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,1)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 19.93, "Result of ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,1)");	// 9.97
+
+		oParser = new parserFormula("ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,2)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,2)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 20, "Result of ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,2)");	// 10.14
+
+		oParser = new parserFormula("ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,3)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,3)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 19.95, "Result of ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,3)");	// 10
+
+		oParser = new parserFormula("ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,4)", "A2", ws);
+		assert.ok(oParser.parse(), "ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,4)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 20.03, "Result of ACCRINT(DATE(2020,1,1),DATE(2020,7,1),DATE(2020,12,31),0.1,100,1,4)");	// 9.97
+
+
 		testArrayFormula2(assert, "ACCRINT", 6, 8, true);
 	});
 
