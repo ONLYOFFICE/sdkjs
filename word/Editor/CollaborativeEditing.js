@@ -499,11 +499,13 @@ CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
 		if (this.m_oLogicDocument && this.m_oLogicDocument.ClearListsCache)
 			this.m_oLogicDocument.ClearListsCache();
 
-		if (this.m_oLogicDocument && this.m_oLogicDocument.Settings && this.m_oLogicDocument.Settings.DocumentProtection &&
-			this.m_oLogicDocument.Settings.DocumentProtection.IsNeedUpdate())
+		if (this.m_oLogicDocument && this.m_oLogicDocument.Settings && this.m_oLogicDocument.Settings.DocumentProtection)
 		{
-			oApi.asc_OnProtectionUpdate();
-			this.m_oLogicDocument.Settings.DocumentProtection.SetNeedUpdate(false);
+			let updateFromUser = this.m_oLogicDocument.Settings.DocumentProtection.GetNeedUpdate();
+			if (updateFromUser) {
+				oApi.asc_OnProtectionUpdate(updateFromUser);
+				this.m_oLogicDocument.Settings.DocumentProtection.SetNeedUpdate(null);
+			}
 		}
 	}
 };

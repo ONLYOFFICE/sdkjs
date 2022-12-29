@@ -95,7 +95,7 @@ CDocProtect.prototype.SetNeedUpdate = function(isNeed)
 {
 	this.NeedUpdate = isNeed;
 };
-CDocProtect.prototype.IsNeedUpdate = function()
+CDocProtect.prototype.GetNeedUpdate = function()
 {
 	return this.NeedUpdate;
 };

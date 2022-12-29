@@ -864,23 +864,21 @@ CChangesDocumentProtection.prototype.Redo = function (sUserId, isLoadChanges) {
 				oDocument.Settings.DocumentProtection = this.Class;
 			}
 		}
+
 		if (!isLoadChanges) {
 			api.asc_OnProtectionUpdate(sUserId);
+		} else {
+			if (oDocument && oDocument.Settings) {
+				var _docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
+				if (_docProtection) {
+					_docProtection.SetNeedUpdate(sUserId);
+				}
+			}
 		}
 	}
 };
 CChangesDocumentProtection.prototype.Load = function () {
 	this.Redo(this.UserId, true);
-	var api = Asc.editor || editor;
-	if (api) {
-		let oDocument = api.private_GetLogicDocument();
-		if (oDocument && oDocument.Settings) {
-			var docProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
-			if (docProtection) {
-				docProtection.SetNeedUpdate(true);
-			}
-		}
-	}
 };
 CChangesDocumentProtection.prototype.WriteToBinary = function (Writer) {
 	if (null != this.NewAlgorithmName) {
