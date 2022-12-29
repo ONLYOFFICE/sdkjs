@@ -84,20 +84,20 @@ function CDocProtect() {
 
 	this.Lock = new AscCommon.CLock();
 	this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
-	this.NeedUpdate = null;
+	this.NeedUpdateByUser = null;
 
 	this.temporaryPassword = null;
 }
 CDocProtect.prototype.Get_Id = function () {
 	return this.Id;
 };
-CDocProtect.prototype.SetNeedUpdate = function(isNeed)
+CDocProtect.prototype.SetNeedUpdate = function(userId)
 {
-	this.NeedUpdate = isNeed;
+	this.NeedUpdateByUser = userId;
 };
 CDocProtect.prototype.GetNeedUpdate = function()
 {
-	return this.NeedUpdate;
+	return this.NeedUpdateByUser;
 };
 CDocProtect.prototype.isOnlyView = function () {
 	return this.edit === Asc.c_oAscEDocProtect.ReadOnly;
