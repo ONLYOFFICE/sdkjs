@@ -149,7 +149,7 @@ var EditorSkins = {
 		ColorDark                : "#ffffff",
 		ColorDarkActive          : "#ffffff",
 		ColorDarkHighlighted     : "#c1c1c1",
-		ColorDarkFiltering       : "#6BEC9F",
+		ColorDarkFiltering       : "#7AFFAF",
 
 		GroupDataBorder          : "#000000",
 		EditorBorder             : "#cbcbcb"
@@ -262,9 +262,9 @@ var EditorSkins = {
 		BackgroundDarkActive     : "#7AFFAF",
 		BackgroundDarkHighlighted: "#6EE59F",
 
-		ColorDark                : "#363636",
-		ColorDarkActive          : "#363636",
-		ColorDarkHighlighted     : "#363636",
+		ColorDark                : "#333",
+		ColorDarkActive          : "#333",
+		ColorDarkHighlighted     : "#333",
 		ColorDarkFiltering       : "#ffffff",
 
 		GroupDataBorder          : "#ffffff",
@@ -366,9 +366,11 @@ function updateGlobalSkinColors(theme)
 		BackgroundDarkActive            : "canvas-dark-cell-title-selected",
 		BackgroundDarkHighlighted       : "canvas-dark-cell-title-hover",
 
-		ColorDark                       : "text-contrast-background",
-		ColorDarkActive                 : "text-contrast-background",
-		ColorDarkHighlighted            : "text-contrast-background",
+		ColorDark                       : "canvas-dark-cell-title-text",
+		ColorDarkActive                 : "canvas-dark-cell-title-text",
+		ColorDarkHighlighted            : "canvas-dark-cell-title-text",
+
+		ColorDarkFiltering              : "canvas-dark-cell-title-text-filtered",
 
 		GroupDataBorder                 : "canvas-high-contrast",
 		EditorBorder                    : "border-toolbar"
