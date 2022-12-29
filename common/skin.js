@@ -358,6 +358,10 @@ function updateGlobalSkinColors(theme)
 		BorderActive                    : "canvas-cell-title-border-selected",
 		BorderHighlighted               : "canvas-cell-title-border-hover",
 
+		Color                           : "text-normal",
+		ColorActive                     : "text-normal",
+		ColorHighlighted                : "text-normal",
+
 		BackgroundDark                  : "canvas-dark-cell-title",
 		BackgroundDarkActive            : "canvas-dark-cell-title-selected",
 		BackgroundDarkHighlighted       : "canvas-dark-cell-title-hover",
@@ -365,10 +369,6 @@ function updateGlobalSkinColors(theme)
 		ColorDark                       : "text-contrast-background",
 		ColorDarkActive                 : "text-contrast-background",
 		ColorDarkHighlighted            : "text-contrast-background",
-
-		Color                           : "text-normal",
-		ColorActive                     : "text-normal",
-		ColorHighlighted                : "text-normal",
 
 		GroupDataBorder                 : "canvas-high-contrast",
 		EditorBorder                    : "border-toolbar"
