@@ -498,6 +498,13 @@ CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
 
 		if (this.m_oLogicDocument && this.m_oLogicDocument.ClearListsCache)
 			this.m_oLogicDocument.ClearListsCache();
+
+		if (this.m_oLogicDocument && this.m_oLogicDocument.Settings && this.m_oLogicDocument.Settings.DocumentProtection &&
+			this.m_oLogicDocument.Settings.DocumentProtection.IsNeedUpdate())
+		{
+			oApi.asc_OnProtectionUpdate();
+			this.m_oLogicDocument.Settings.DocumentProtection.SetNeedUpdate(false);
+		}
 	}
 };
 CWordCollaborativeEditing.prototype.private_RecalculateDocument = function(arrChanges)

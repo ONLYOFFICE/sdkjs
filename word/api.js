@@ -11681,6 +11681,11 @@ background-repeat: no-repeat;\
 		this.sendEvent("asc_onBookmarksUpdate");
 	};
 
+	asc_docs_api.prototype.asc_OnProtectionUpdate = function(sUserId)
+	{
+		this.sendEvent("asc_onChangeDocumentProtection", sUserId);
+	};
+
 	asc_docs_api.prototype.asc_GetHeadingLevel = function(sStyleName)
 	{
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
@@ -13058,7 +13063,7 @@ background-repeat: no-repeat;\
 					oDocument.SetProtection(props);
 					oDocument.UpdateInterface();
 					oDocument.FinalizeAction();
-					t.sendEvent("asc_onChangeDocumentProtection");
+					t.asc_OnProtectionUpdate();
 				}
 			} else {
 				t.sendEvent("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
@@ -13107,7 +13112,7 @@ background-repeat: no-repeat;\
 					} else {
 						//неверный пароль
 						t.sendEvent("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
-						t.sendEvent("asc_onChangeDocumentProtection");
+						t.asc_OnProtectionUpdate();
 						t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 					}
 				}

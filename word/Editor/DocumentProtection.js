@@ -84,11 +84,20 @@ function CDocProtect() {
 
 	this.Lock = new AscCommon.CLock();
 	this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
+	this.NeedUpdate = null;
 
 	this.temporaryPassword = null;
 }
 CDocProtect.prototype.Get_Id = function () {
 	return this.Id;
+};
+CDocProtect.prototype.SetNeedUpdate = function(isNeed)
+{
+	this.NeedUpdate = isNeed;
+};
+CDocProtect.prototype.IsNeedUpdate = function()
+{
+	return this.NeedUpdate;
 };
 CDocProtect.prototype.isOnlyView = function () {
 	return this.edit === Asc.c_oAscEDocProtect.ReadOnly;
