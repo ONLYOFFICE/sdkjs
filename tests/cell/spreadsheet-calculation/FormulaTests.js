@@ -3541,6 +3541,50 @@ $(function () {
 
 	QUnit.test("Test: \"MAX\"", function (assert) {
 
+		oParser = new parserFormula("MAX(-1, TRUE)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+	
+		oParser = new parserFormula("MAX(0, FALSE)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(0, FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of MAX(0, FALSE)");
+	
+		oParser = new parserFormula("MAX(25, 25.1, 25.01, 25.02, 25.2, 25.222, 25.333, 25.3334)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(25, 25.1, 25.01, 25.02, 25.2, 25.222, 25.333, 25.3334)");
+		assert.strictEqual(oParser.calculate().getValue(), 25.3334, "Result of MAX(25, 25.1, 25.01, 25.02, 25.2, 25.222, 25.333, 25.3334)");
+	
+		oParser = new parserFormula("MAX(TRUE, FALSE)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(TRUE, FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MAX(TRUE, FALSE)");
+	
+		oParser = new parserFormula("MAX(FALSE, FALSE)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(FALSE, FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of MAX(FALSE, FALSE)");
+	
+		oParser = new parserFormula("MAX(str)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(str)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of MAX(str)");
+	
+		oParser = new parserFormula("MAX(49.08 - 432.81, 0)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(49.08 - 432.81, 0)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of MAX(49.08 - 432.81, 0)");
+	
+		oParser = new parserFormula("MAX(49.08 - 432.81, 9,99999999999999E+43)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(49.08 - 432.81, 9,99999999999999E+43)");
+		assert.strictEqual(oParser.calculate().getValue(), 9.9999999999999e+56, "Result of MAX(49.08 - 432.81, 9,99999999999999E+43)");
+	
+		oParser = new parserFormula("MAX(49.08 - 432.81, {9,99999999999999E+43})", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(49.08 - 432.81, {9,99999999999999E+43})");
+		assert.strictEqual(oParser.calculate().getValue(), 9.9999999999999e+56, "Result of MAX(49.08 - 432.81, {9,99999999999999E+43})");
+	
+		oParser = new parserFormula("MAX(49.08 - 432.81, {12,13;14,15})", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(49.08 - 432.81, {12,13;14,15})");
+		assert.strictEqual(oParser.calculate().getValue(), 15, "Result of MAX(49.08 - 432.81, {12,13;14,15})");
+
+		oParser = new parserFormula("MAX({1,1,TRUE,2})", "A1", ws);
+		assert.ok(oParser.parse(), "MAX({1,1,TRUE,2})");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of MAX({1,1,TRUE,2})");
+
 		ws.getRange2("S5").setValue("1");
 		ws.getRange2("S6").setValue(numDivFact(-1, 2));
 		ws.getRange2("S7").setValue(numDivFact(1, 4));
@@ -3555,27 +3599,81 @@ $(function () {
 		ws.getRange2("S7").setValue("qwe");
 		ws.getRange2("S8").setValue("");
 		ws.getRange2("S9").setValue("-1");
+
+		ws.getRange2("J10").setValue();
+		ws.getRange2("J11").setValue("");
+		ws.getRange2("J12").setValue("10");
+		ws.getRange2("J13").setValue("7");
+		ws.getRange2("J14").setValue("2");
+		ws.getRange2("J15").setValue("27");
+		ws.getRange2("J16").setValue("TRUE");
+		ws.getRange2("J17").setValue("FALSE");
+		ws.getRange2("J18").setValue("#N/A");
+		ws.getRange2("J19").setValue("{2;3;4;5}");
+		ws.getRange2("J20").setValue("{999;2;3;4;5}");
+		ws.getRange2("J21").setValue("9.99999999999999E+43");
+		ws.getRange2("J22").setValue("-9.99999999999999E+43");
+		ws.getRange2("J23").setValue("0.000009");
+		ws.getRange2("J24").setValue("-0.000009");
+		ws.getRange2("J25").setValue("255");
+		// string
+		ws.getRange2("J25").setNumFormat("@");
+
+		oParser = new parserFormula("MAX(J10)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(J10)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of MAX(J10)");
+
+		oParser = new parserFormula("MAX(J11)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(J11)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of MAX(J11)");
+
+		oParser = new parserFormula("MAX(J12)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(J12)");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Result of MAX(J12)");
+
+		oParser = new parserFormula("MAX(J10:J17,J19:J24)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(J12:J19)");
+		assert.strictEqual(oParser.calculate().getValue(), 9.99999999999999E+43, "Result of MAX(J12:J19)");
+
+		oParser = new parserFormula("MAX(J12:J19)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(J12:J19)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of MAX(J12:J19)");	
+
+		oParser = new parserFormula("MAX(J10:J25)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(J10:J25)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of MAX(J10:J25)");
+		
+		oParser = new parserFormula("MAX(J25, J10:J17)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(J25, J10:J17)");
+		assert.strictEqual(oParser.calculate().getValue(), 255, "Result of MAX(J25, J10:J17)");
+
+		oParser = new parserFormula("MAX(J25, J10:J17, J18)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(J25, J10:J17, J18)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of MAX(J25, J10:J17, J18)");
+
 		oParser = new parserFormula("MAX(S5)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
 		oParser = new parserFormula("MAX(S6)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
+
 		oParser = new parserFormula("MAX(S7)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
+
 		oParser = new parserFormula("MAX(S8)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
+
 		oParser = new parserFormula("MAX(S5:S9)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
 		oParser = new parserFormula("MAX(S6:S9)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), -1);
-		oParser = new parserFormula("MAX(-1, TRUE)", "A1", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 1);
 
 		testArrayFormula2(assert, "MAX", 1, 8, null, true);
 	});
