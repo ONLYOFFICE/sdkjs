@@ -33,7 +33,6 @@
 $(function () {
 
 	Asc.spreadsheet_api.prototype._init = function () {
-		this._loadModules();
 	};
 	Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
 		callback();
