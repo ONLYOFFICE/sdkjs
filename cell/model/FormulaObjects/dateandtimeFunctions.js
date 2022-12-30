@@ -1446,51 +1446,97 @@
 	cNETWORKDAYS.prototype.arrayIndexes = {2: 1};
 	cNETWORKDAYS.prototype.argumentsType = [argType.any, argType.any, argType.any];
 	cNETWORKDAYS.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
+		let argClone = oArguments.args;
 
-		argClone[0] = argClone[0].tocNumber();
-		argClone[1] = argClone[1].tocNumber();
+		let arg0 = arg[0] ? arg[0] : new cNumber(0),
+			arg1 = arg[1] ? arg[1] : new cNumber(0),
+			arg2 = arg[2];
 
-		var argError;
+		// arg0 type check
+		if (cElementType.cell === arg0.type) {
+			arg0 = fArg.getValue();
+		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			if (arg0.isOneElement()) {
+				arg0 = fArg.getFirstElement();
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === arg0.type) {
+			arg0 = arg0.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.bool === arg0.type) {
+			arg0 = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.empty === arg0.type) {
+			arg0 = new cNumber(0);
+		}
+
+		// arg1 type check
+		if (cElementType.cell === arg1.type) {
+			arg1 = arg1.getValue();
+		} else if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			if (arg1.isOneElement()) {
+				arg1 = arg1.getFirstElement();
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === arg1.type) {
+			arg1 = arg1.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.bool === arg1.type) {
+			arg1 = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.empty === arg1.type) {
+			arg1 = new cNumber(0);
+		}
+
+		arg0 = arg0.tocNumber();
+		arg1 = arg1.tocNumber();
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		let val0 = arg0.getValue(), val1 = arg1.getValue();
+
+		if (val0 < 0 || val1 < 0) {
+			return new cError(cErrorType.not_numeric);
+		}
+
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
-		}
-
-		var arg0 = argClone[0], arg1 = argClone[1], arg2 = arg[2];
-		var val0 = arg0.getValue(), val1 = arg1.getValue();
-
-		if (val0 < 0) {
-			return new cError(cErrorType.not_numeric);
-		}
-		if (val1 < 0) {
-			return new cError(cErrorType.not_numeric);
 		}
 
 		val0 = getCorrectDate(val0);
 		val1 = getCorrectDate(val1);
 
 		//Holidays
-		var holidays = getHolidays(arg2);
-		if (holidays instanceof cError) {
+		let holidays = getHolidays(arg2);
+		if (holidays.type === cElementType.error) {
 			return holidays;
 		}
 
-		var calcDate = function () {
-			var count = 0;
-			var start = val0;
-			var end = val1;
-			var dif = val1 - val0;
+		const calcDate = function () {
+			let count = 0;
+			let start = val0;
+			let end = val1;
+			let dif = val1 - val0;
 			if (dif < 0) {
 				start = val1;
 				end = val0;
 			}
 
-			var difAbs = ( end - start );
+			let difAbs = ( end - start );
 			difAbs = ( difAbs + (c_msPerDay) ) / c_msPerDay;
 
-			for (var i = 0; i < difAbs; i++) {
-				var date = new cDate(start);
+			for (let i = 0; i < difAbs; i++) {
+				let date = new cDate(start);
 				date.setUTCDate(start.getUTCDate() + i);
 				if (date.getUTCDay() !== 6 && date.getUTCDay() !== 0 && !_includeInHolidays(date, holidays)) {
 					count++;
@@ -1748,7 +1794,7 @@
 		}
 
 		//LO - не округляет. ms - округляет.
-		hour = parseInt(hour.getValue());
+		hour = parseInt(hour.getValue());Т
 		minute = parseInt(minute.getValue());
 		second = parseInt(second.getValue());
 
