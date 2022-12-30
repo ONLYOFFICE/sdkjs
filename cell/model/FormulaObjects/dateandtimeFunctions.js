@@ -1506,6 +1506,8 @@
 
 		if (val0 < 0 || val1 < 0) {
 			return new cError(cErrorType.not_numeric);
+		} else if (val0 === 0 && val1 === 0) {
+			return new cNumber(0);
 		}
 
 		let argError;

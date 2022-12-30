@@ -4375,23 +4375,48 @@ $(function () {
 		ws.getRange2("A111").setValue("#N/A");
 		ws.getRange2("A112").setValue("99999999999999999999");
 		ws.getRange2("A113").setValue("-99999999999999999999");
+		ws.getRange2("A114").setValue("str");
+		ws.getRange2("A115").setValue("str2");
 		
 		// bug case
 		oParser = new parserFormula("NETWORKDAYS(A101,A101)", "A2", ws);
-		assert.ok(oParser.parse(), "NETWORKDAYS(,)");
-		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of NETWORKDAYS(,)");	// 0
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
 
 		oParser = new parserFormula("NETWORKDAYS(A101:A101,A101:A101)", "A2", ws);
-		assert.ok(oParser.parse(), "NETWORKDAYS(,)");
-		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of NETWORKDAYS(,)");	// 0
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);	
+
+		// normal cases
+		oParser = new parserFormula("NETWORKDAYS(A102,A102)", "A2", ws);
+		assert.ok(oParser.parse(), "NETWORKDAYS(A102,A102)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of NETWORKDAYS('','')");
+
+		oParser = new parserFormula("NETWORKDAYS(A102:A102,A102:A102)", "A2", ws);
+		assert.ok(oParser.parse(), "NETWORKDAYS(A102:A102,A102:A102)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of NETWORKDAYS('','')");
+
+		oParser = new parserFormula("NETWORKDAYS(A103,A104)", "A2", ws);
+		assert.ok(oParser.parse(), "NETWORKDAYS(A103,A104)");
+		assert.strictEqual(oParser.calculate().getValue(), 7, "Result of NETWORKDAYS(0,9)");	// 6
 
 		oParser = new parserFormula("NETWORKDAYS(A104:A104,A104:A104)", "A2", ws);
-		assert.ok(oParser.parse(), "NETWORKDAYS(9,9)");
-		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of NETWORKDAYS(9,9)");  
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
 
 		oParser = new parserFormula("NETWORKDAYS(A106,A107)", "A2", ws);
-		assert.ok(oParser.parse(), "NETWORKDAYS(TRUE,FALSE)");
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of NETWORKDAYS(TRUE,FALSE)");
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("NETWORKDAYS(A111,A105)", "A2", ws);
+		assert.ok(oParser.parse(), "NETWORKDAYS(A114,A115)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of NETWORKDAYS(str,str2)");	
+
+		oParser = new parserFormula("NETWORKDAYS(A114,A115)", "A2", ws);
+		assert.ok(oParser.parse(), "NETWORKDAYS(A114,A115)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of NETWORKDAYS(str,str2)");
+	
+		testArrayFormula2(assert, "NETWORKDAYS", 2, 3, true, null);
 	});
 
 	QUnit.test("Test: \"NETWORKDAYS.INTL\"", function (assert) {
