@@ -5164,6 +5164,8 @@
 	Worksheet.prototype.setDirtyConditionalFormatting = function(range) {
 		if (!range) {
 			range = new AscCommonExcel.MultiplyRange([new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0)]);
+		} else if (range && range.isNull && range.isNull()) {
+			return;
 		} else if (range.ranges && range.getUnionRange) {
 			//объединяю в один
 			range = new AscCommonExcel.MultiplyRange([range.getUnionRange()]);
@@ -7826,7 +7828,9 @@
 	Worksheet.prototype.onUpdateRanges = function(ranges) {
 		this.workbook.updateSparklineCache(this.sName, ranges);
 		// ToDo do not update conditional formatting on hidden sheet
-		this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(ranges));
+		if (ranges && ranges.length) {
+			this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(ranges));
+		}
 		//this.workbook.handlers.trigger("toggleAutoCorrectOptions", null,true);
 	};
 	Worksheet.prototype.updateSparklineCache = function (sheet, ranges) {

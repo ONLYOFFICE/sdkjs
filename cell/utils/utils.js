@@ -1755,6 +1755,12 @@
 			});
 		};
 
+		MultiplyRange.prototype.isNull = function() {
+			if (!this.ranges || 0 === this.ranges.length || (1 === this.ranges.length && this.ranges[0] == null)) {
+				return true;
+			}
+			return false;
+		};
 
 		function VisibleRange(visibleRange, offsetX, offsetY) {
 			this.visibleRange = visibleRange;
