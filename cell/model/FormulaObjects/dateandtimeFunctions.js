@@ -1455,10 +1455,10 @@
 
 		// arg0 type check
 		if (cElementType.cell === arg0.type) {
-			arg0 = fArg.getValue();
+			arg0 = arg0.getValue();
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			if (arg0.isOneElement()) {
-				arg0 = fArg.getFirstElement();
+				arg0 = arg0.getFirstElement();
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -1794,7 +1794,7 @@
 		}
 
 		//LO - не округляет. ms - округляет.
-		hour = parseInt(hour.getValue());Т
+		hour = parseInt(hour.getValue());
 		minute = parseInt(minute.getValue());
 		second = parseInt(second.getValue());
 
