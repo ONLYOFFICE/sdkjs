@@ -3052,6 +3052,10 @@ CMathBounds.prototype.CheckLineBound = function(Line, Range)
     {
         this.Bounds[Line] = [];
     }
+    else if (undefined === this.Bounds[Line])
+    {
+        this.Bounds[Line] = [];
+    }
 
     if(this.Bounds[Line].length <= Range)
     {
