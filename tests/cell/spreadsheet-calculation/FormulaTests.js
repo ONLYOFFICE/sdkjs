@@ -4334,9 +4334,26 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), -22);
 
+		oParser = new parserFormula("NETWORKDAYS(DATE(1700,1,1),DATE(1700,2,2))", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 23);
+
 		oParser = new parserFormula("NETWORKDAYS(DATE(2006,1,1),DATE(2006,2,1),{\"01-02-2006\",\"01-16-2006\"})", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 21);
+
+		oParser = new parserFormula("NETWORKDAYS(0,0)", "A2", ws);
+		assert.ok(oParser.parse(), "NETWORKDAYS(0,0)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of NETWORKDAYS(0,0)");
+
+		// TODO in js new Date(1900,0,1) === monday, in ms 01.01.1990 === sunday 
+		oParser = new parserFormula("NETWORKDAYS(1,1)", "A2", ws);
+		assert.ok(oParser.parse(), "NETWORKDAYS(1,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of NETWORKDAYS(1,1)");	//0
+
+		oParser = new parserFormula("NETWORKDAYS(2,2)", "A2", ws);
+		assert.ok(oParser.parse(), "NETWORKDAYS(2,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of NETWORKDAYS(2,2)");
 
 		oParser = new parserFormula("NETWORKDAYS(1,11)", "A2", ws);
 		assert.ok(oParser.parse(), "NETWORKDAYS(1,11)");
@@ -4361,6 +4378,10 @@ $(function () {
 		oParser = new parserFormula("NETWORKDAYS(TRUE,11)", "A2", ws);
 		assert.ok(oParser.parse(), "NETWORKDAYS(TRUE,11)");
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of NETWORKDAYS(TRUE,11)");
+
+		oParser = new parserFormula("NETWORKDAYS(#VALUE!,#NUM!)", "A2", ws);
+		assert.ok(oParser.parse(), "NETWORKDAYS(#VALUE!,#NUM!)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of NETWORKDAYS(#VALUE!,#NUM!)");
 
 		ws.getRange2("A101").setValue();
 		ws.getRange2("A102").setValue("");
@@ -4415,7 +4436,9 @@ $(function () {
 		oParser = new parserFormula("NETWORKDAYS(A114,A115)", "A2", ws);
 		assert.ok(oParser.parse(), "NETWORKDAYS(A114,A115)");
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of NETWORKDAYS(str,str2)");
-	
+		
+
+		
 		testArrayFormula2(assert, "NETWORKDAYS", 2, 3, true, null);
 	});
 
