@@ -1431,6 +1431,10 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
                     // Значит мы в каком-то элементе, тогда надо выделить данный элемент
                     oContent.ParentElement.Select_WholeElement();
 
+                    // выставляем выделение для родительского элемента
+                    // TODO нужно понять почему mathContent.Select_WholeElement() не выделяет родительский элемент
+                    this.Parent.SelectFotMath();
+
                     return true;
                 }
 

@@ -4197,13 +4197,6 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 				this.Selection.Start    = false;
 				this.Selection.Flag     = selectionflag_Common;
 
-				// TODO: Это плохой код, внутри классов должен выставляться селект целиком
-				//       надо посмотреть для чего это было сделано
-
-				//this.Selection.StartPos = ContentPos;
-				//this.Selection.EndPos   = ContentPos;
-				//this.Correct_Content(ContentPos, ContentPos);
-				//this.Document_SetThisElementCurrent(false);
 				return true;
 			}
 
@@ -18207,6 +18200,17 @@ Paragraph.prototype.IsEmptyBetweenClasses = function(class1, class2)
 	this.LoadSelectionState(state);
 	return result;
 };
+Paragraph.prototype.SelectFotMath = function()
+{
+	this.Selection.Use      = true;
+	this.Selection.Start    = false;
+	this.Selection.StartManually = false;
+	this.Selection.EndManually   = false;
+	this.Selection.StartPos      = this.CurPos.ContentPos;
+	this.Selection.EndPos        = this.CurPos.ContentPos;
+
+	this.Document_SetThisElementCurrent(false);
+}
 
 Paragraph.prototype.asc_getText = function()
 {
