@@ -574,6 +574,8 @@
 		["Β"],
 		["□", oNamesOfLiterals.boxLiteral[0]],
 		["\\Bmatrix", oNamesOfLiterals.matrixLiteral[0]],
+		["\\left", true],
+		["\\right", true],
 		["Χ"],
 		["ⅅ"],
 		["Δ"],
@@ -1513,7 +1515,7 @@
 									)
 								}
 							}
-							else if (oTokens.value && oTokens.value.type === oNamesOfLiterals.functionWithLimitLiteral[num]) {
+							else if (oTokens.value && oTokens.value.type === oNamesOfLiterals.functionWithLimitLiteral[num]){
 								let oFuncWithLimit = oContext.Add_FunctionWithTypeLimit(
 									{},
 									null,
@@ -1607,7 +1609,7 @@
 							);
 							if (typeof oTokens.value === "object") {
 								UnicodeArgument(
-									oTokens.value,
+									oTokens.value.value,
 									oNamesOfLiterals.bracketBlockLiteral[num],
 									oFuncWithLimit.getFName().Content[0].getFName()
 								)
@@ -2606,12 +2608,12 @@
 	{
 		let isConvert = false;
 	
-		if (oCMathContent.Type === 49) {
-
-			for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++) {
-
-				if (oCMathContent.Content[nCount].value === 92) {
-
+		if (oCMathContent.Type === 49)
+		{
+			for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++)
+			{
+				if (oCMathContent.Content[nCount].value === 92)
+				{
 					let str = oCMathContent.Content[nCount].GetTextOfElement();
 					let intStart = nCount;
 					let intEnd = 0;

@@ -1179,7 +1179,6 @@ ParaMath.prototype.GetCompiledDefaultTextPr = function()
  */
 ParaMath.prototype.Add = function(Item)
 {
-    debugger
     var LogicDocument  = (this.Paragraph ? this.Paragraph.LogicDocument : undefined);
     var TrackRevisions = (LogicDocument && true === LogicDocument.IsTrackRevisions() ? true : false);
 
@@ -3667,6 +3666,7 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 };
 ParaMath.prototype.ConvertFromLaTeX = function()
 {
+    this.Root.CorrectAllMathWords();
 	var strLaTeX = this.GetText(true);
 	this.Root.Remove_Content(0, this.Root.Content.length);
     this.Root.Correct_Content(true);

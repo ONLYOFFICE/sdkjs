@@ -4050,28 +4050,42 @@ CDelimiter.prototype.GetTextOfElement = function(isLaTeX) {
 	//	if end bracket doesn't show:	(...┤ => (...
 	//	else:							(...) => (...)
 	//if start and close braketets non-standart add \open, \close
-
 	var strTemp = "";
 	var strStartSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
-	var strEndSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
+	var strEndSymbol = this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
 
 	var strSeparatorSymbol = isLaTeX ? "\\mid" : "∣";
 
-	if (strStartSymbol === "\uffff") {
-		strStartSymbol = ' '
-	}
+    if (isLaTeX)
+    {
+        strStartSymbol = strStartSymbol === "" ? "." : strStartSymbol;
+        strTemp += "\\left" + strStartSymbol;
+    }
+    else
+    {
+        strStartSymbol = strStartSymbol === "" ? "├" : strStartSymbol;
+        strTemp += strStartSymbol;
+    }
 
-    strTemp += strStartSymbol;
+	for (let intCount = 0; intCount < this.Content.length; intCount++)
+    {
+		strTemp += this.Content[intCount].GetMultipleContentForGetText(isLaTeX, true);
 
-	for (var intCount = 0; intCount < this.Content.length; intCount++) {
-
-		strTemp += this.CheckIsEmpty(this.Content[intCount].GetTextOfElement(isLaTeX));
-
-		if (strSeparatorSymbol && this.Content.length > 1 && intCount < this.Content.length - 1) {
+		if (strSeparatorSymbol && this.Content.length > 1 && intCount < this.Content.length - 1)
 			strTemp += strSeparatorSymbol;
-		}
 	}
-    strTemp += strEndSymbol;
+
+    if (isLaTeX)
+    {
+        strEndSymbol = strEndSymbol === "" ? "." : strEndSymbol;
+        strTemp += "\\right" + strEndSymbol;
+    }
+    else
+    {
+        strEndSymbol = strEndSymbol === "" ? "┤" : strEndSymbol;
+        strTemp += strEndSymbol;
+    }
+
 	return strTemp;
 }
 

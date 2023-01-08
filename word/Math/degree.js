@@ -545,17 +545,21 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strTypeOfScript = this.Pr.type === 1 ? '^' : '_';
 
-	var oBase = this.getBase();
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
+	var strIterator = this.getIterator().GetMultipleContentForGetText(isLaTeX);
 
-	var strBase = this.CheckIsEmpty(oBase.GetTextOfElement(isLaTeX));
-	var strIterator = this.CheckIsEmpty(this.getIterator().GetTextOfElement(isLaTeX));
-	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
-	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
+    // if (strBase.length > 1)
+    // {
+    //     if (strBase[0] !== "{" && strBase[0] !== "(") {
+    //         if (isLaTeX)
+    //             strBase = "{" + strBase + "}";
+    //         else
+    //             strBase = "(" + strBase + ")";
+    //     }
+    // }
 
 	if (isLaTeX)
     {
-		strIterator = strStartBracet + strIterator + strCloseBracet;
-		
 		switch (strBase) {
 			case 'cos':
 			case 'sin':
@@ -594,11 +598,6 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	}
     else
     {
-		strIterator = strStartBracet + strIterator + strCloseBracet;
-		
-		if (strBase.length > 1 && strIterator.length > 1) {
-			strBase = '〖'+ strBase +'〗';
-		}
 		strTemp = strBase + strTypeOfScript + strIterator;
 	}
 	return strTemp;
@@ -1257,51 +1256,33 @@ CDegreeSubSup.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos !== 0 && false === this.Is_SelectInside(); // находимся в итераторе
 };
-CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX) {
-	var strTemp = "";
-	var Base = this.getBase().GetTextOfElement(isLaTeX);
-	var strLower = this.CheckIsEmpty(this.getLowerIterator().GetTextOfElement(isLaTeX));
-	var strUpper = this.CheckIsEmpty(this.getUpperIterator().GetTextOfElement(isLaTeX));
-	var isPreScript = this.Pr.type === -1;
+CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
+{
+	let strTemp = "";
+	let Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
+	let strLower = this.getLowerIterator().GetMultipleContentForGetText(isLaTeX);
+	let strUpper = this.getUpperIterator().GetMultipleContentForGetText(isLaTeX);
+
+	let isPreScript = this.Pr.type === -1;
 	
-    if (isLaTeX) {
-		strLower = '{' + strLower + '}';
-		strUpper = '{' + strUpper + '}';
-		Base = '{'+ Base +'}';
-
-		if(strLower.length === 0 || strLower === '⬚') {
+    if (isLaTeX)
+    {
+		if(strLower.length === 0 || strLower === '⬚')
 			strLower = '{}'
-		}
-		if(strUpper.length === 0 || strUpper === '⬚') {
+		if(strUpper.length === 0 || strUpper === '⬚')
 			strUpper = '{}'
-		}
 
-		if (true === isPreScript) {
+		if (true === isPreScript)
 			strTemp = '{' + '_' + strLower + '^' + strUpper + '}' + Base;
-		}
-        else {
+        else
 			strTemp = Base + '_' + strLower + '^' + strUpper;
-		}
-
-	} else {
-		strLower = '(' + strLower + ')';
-		
-        if(strLower.length === 0) {
-			strLower = '()'
-		}
-
-		strUpper = '(' + strUpper + ')';
-		
-        if(strUpper.length === 0) {
-			strUpper = '()'
-		}
-
-		if (true === isPreScript) {
+	}
+    else
+    {
+		if (true === isPreScript)
 			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base;
-		}
-        else {
+        else
 			strTemp = Base + '_' + strLower + '^' + strUpper;
-		}
 	}
 	return strTemp;
 };
