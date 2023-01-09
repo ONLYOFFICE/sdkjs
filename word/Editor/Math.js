@@ -3666,7 +3666,7 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 };
 ParaMath.prototype.ConvertFromLaTeX = function()
 {
-    this.Root.CorrectAllMathWords();
+    this.Root.CorrectAllMathWords(true);
 	var strLaTeX = this.GetText(true);
 	this.Root.Remove_Content(0, this.Root.Content.length);
     this.Root.Correct_Content(true);
@@ -3681,7 +3681,7 @@ ParaMath.prototype.ConvertToLaTeX = function()
 };
 ParaMath.prototype.ConvertFromUnicodeMath = function()
 {
-    this.Root.CorrectAllMathWords();
+    this.Root.CorrectAllMathWords(false);
 	var strUnicode = this.GetText();
 	this.Root.Remove_Content(0,this.Root.Content.length);
     this.Root.Correct_Content(true);

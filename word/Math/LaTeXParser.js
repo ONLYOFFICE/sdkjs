@@ -344,7 +344,6 @@
 	CLaTeXParser.prototype.IsSpecialSymbol = function ()
 	{
 		return this.oLookahead.data === "/" ||
-			this.oLookahead.data === "■" ||
 			this.oLookahead.data === "&" ||
 			this.oLookahead.data === "@"
 	}
@@ -808,9 +807,9 @@
 	CLaTeXParser.prototype.IsMatrixLiteral = function ()
 	{
 		return (
-			this.oLookahead.class === oLiteralNames.matrixLiteral[0] &&
-			this.oLookahead.data !== "█" &&
-			this.oLookahead.data !== "■"
+			this.oLookahead.class === oLiteralNames.matrixLiteral[0] ||
+			this.oLookahead.data === "█" ||
+			this.oLookahead.data === "■"
 		)
 	};
 	CLaTeXParser.prototype.GetMatrixLiteral = function ()
@@ -849,10 +848,15 @@
 			default:
 				strMatrixType = "";
 		}
-		
+
 		this.isNowMatrix = true;
 
 		this.EatToken(this.oLookahead.class);
+
+		if (this.oLookahead.data === "{")
+		{
+			this.EatToken(this.oLookahead.class);
+		}
 		this.SkipFreeSpace();
 
 		while (this.oLookahead.data === "[")
@@ -954,22 +958,22 @@
 
 		return arrRow;
 	};
-	CLaTeXParser.prototype.IsExpressionLiteral = function(strBreakType)
+	CLaTeXParser.prototype.IsExpressionLiteral = function(strBreak)
 	{
 		const arrEndOfExpression = ["}", "\\endgroup", "\\end", "┤"];
 
 		//todo refactor
 		return 	this.IsElementLiteral() &&
+				this.oLookahead.data !== strBreak &&
 				this.oLookahead.data !== this.EscapeSymbol &&
-				!arrEndOfExpression.includes(this.oLookahead.data) &&
-				((this.EscapeSymbol && !this.EscapeSymbol.includes(this.oLookahead.data)) || !strBreakType)
+				!arrEndOfExpression.includes(this.oLookahead.data)
 	};
-	CLaTeXParser.prototype.GetExpressionLiteral = function (strBreakSymbol, strBreakType)
+	CLaTeXParser.prototype.GetExpressionLiteral = function (strBreakSymbol)
 	{
 		this.EscapeSymbol = strBreakSymbol;
 		const arrExpList = [];
 
-		while (this.IsExpressionLiteral(strBreakType))
+		while (this.IsExpressionLiteral(strBreakSymbol))
 		{
 			if (this.IsPreScript())
 				arrExpList.push(this.GetPreScriptLiteral());
@@ -977,6 +981,7 @@
 				arrExpList.push(this.GetWrapperElementLiteral());
 		}
 
+		this.EscapeSymbol = undefined;
 		return this.GetContentOfLiteral(arrExpList)
 	};
 	CLaTeXParser.prototype.EatToken = function (tokenType)

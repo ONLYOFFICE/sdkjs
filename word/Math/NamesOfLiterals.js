@@ -568,71 +568,34 @@
 			oNamesOfLiterals.charLiteral[0]
 		],
 
+		["\\matrix", oNamesOfLiterals.matrixLiteral[0]],
+		["\\array", oNamesOfLiterals.matrixLiteral[0]],
+
 		["┴", true],
-		["Α"],
+
 		["̿", MathLiterals.accent.id], //todo
 		["Β"],
 		["□", oNamesOfLiterals.boxLiteral[0]],
 		["\\Bmatrix", oNamesOfLiterals.matrixLiteral[0]],
 		["\\left", true],
 		["\\right", true],
-		["Χ"],
-		["ⅅ"],
-		["Δ"],
-		["≜"],
-		["⇓"],
-		["Ε"],
-		["Η"],
-		["Γ"],
-		["Γ"],
-		["ℑ"],
-		["Ι"],
-		["Κ"],
-		["Λ"],
-		["⇐"],
 		["⇔", oNamesOfLiterals.operatorLiteral[0]],
-		["⟸"],
-		["⟺"],
-		["⟹"],
-		["Μ"],
-		["Ν"],
-		["Ο"],
-		["Ω"],
-		["Φ"],
-		["Π"],
-		["Ψ"],
 		["⟫", oNamesOfLiterals.opCloseBracket[0]],
 		["⟧", oNamesOfLiterals.opCloseBracket[0]],
-		["ℜ"],
-		["Ρ"],
 		["⇒", oNamesOfLiterals.operatorLiteral[0]],
-		["Σ"],
-		["Τ"],
-		["Θ"],
 		["̳", MathLiterals.accent.id], //check
-		["⇑"],
-		["⇕"],
-		["Υ"],
 		["‖", oNamesOfLiterals.opOpenCloseBracket[0]],
 		["⒩", oNamesOfLiterals.matrixLiteral[0]],
-		["Ξ"],
-		["Ζ"],
 		["┴", true],
 		["́", MathLiterals.accent.id],
-		["ℵ"],
-		["α"],
 		["∐", oNamesOfLiterals.opNaryLiteral[0]],
-		["∠"],
 		["∳", oNamesOfLiterals.opNaryLiteral[0]],
 		["≈", oNamesOfLiterals.operatorLiteral[0]],
-		["⬆"],
-		["∗"],
 		["≍", oNamesOfLiterals.operatorLiteral[0]],
 		["¦", oNamesOfLiterals.overLiteral[0]], //LateX true
 		["■", oNamesOfLiterals.matrixLiteral[0]],
 		["‵", MathLiterals.accent.id],
 		["̅", MathLiterals.accent.id],
-		["∵"],
 		["〖", oNamesOfLiterals.opOpenBracket[0]], //Unicode  LaTeX: ["\\begin{"],
 		["\\begin{", true],
 		["\\begin{equation}", oNamesOfLiterals.matrixLiteral[0]],
@@ -645,9 +608,6 @@
 		["\\begin{vmatrix}", oNamesOfLiterals.matrixLiteral[0]],
 		["\\begin{Vmatrix}", oNamesOfLiterals.matrixLiteral[0]],
 		["┬", true],
-		["ℶ"],
-		["β"],
-		["ℶ"],
 		["\\bmatrix", oNamesOfLiterals.matrixLiteral[0]],
 		["\\bmod", " mod ", oNamesOfLiterals.charLiteral[0]],
 		["⋂", oNamesOfLiterals.opNaryLiteral[0]], // todo in unicode NaryOp REFACTOR ["⋂", oNamesOfLiterals.opNaryLiteral[0]],
@@ -661,16 +621,11 @@
 		["⋀", oNamesOfLiterals.opNaryLiteral[0]],
 		["\\binom", true],
 		["⊥", oNamesOfLiterals.operatorLiteral[0]],
-		["⋈"],
 		["□", oNamesOfLiterals.boxLiteral[0]],
-		["⊡"],
-		["⊟"],
 		["\\boxplus", "⊞"],
 		["⟨", oNamesOfLiterals.opOpenBracket[0]],
 		["\\break", "⤶"],
 		["̆", MathLiterals.accent.id],
-		["∙"],
-		["∩"],
 		["\\cr", "\\\\", true],
 		["█", true],//Ⓒ
 		["∛", oNamesOfLiterals.sqrtLiteral[0]], //oNamesOfLiterals.opBuildupLiteral[0] to functionLiteral?
@@ -707,13 +662,6 @@
 		["♢"],
 		["÷", oNamesOfLiterals.operatorLiteral[0]],
 		["̇", MathLiterals.accent.id],
-		["≐"],
-		["…"],
-		["↓"],
-		["⬇"],
-		["ⅇ"],
-		["ℓ"],
-		["∅"],
 		[" ", oNamesOfLiterals.spaceLiteral[0]], // [" ", oNamesOfLiterals.spaceLiteral[0]], // 1em space
 		["〗", oNamesOfLiterals.opCloseBracket[0]], //LaTeX ["\\end{"],
 		["\\end{equation}", true],
@@ -1054,6 +1002,14 @@
 			oNamesOfLiterals.functionLiteral[0]
 		],
 	];
+
+	const arrDoNotConvertWordsForLaTeX = [
+		"\\left",
+		"\\right",
+		"\\array",
+		"\\matrix",
+	];
+
 	const functionNames = [
 		"tan", "tanh", "sup", "sinh", "sin", "sec", "ker", "hom",
 		"arg", "arctan", "arcsin", "arcsec", "arccsc", "arccot", "arccos",
@@ -2559,7 +2515,7 @@
 		'>>': "≫",
 	}
 
-	function CorrectWordOnCursor(oCMathContent)
+	function CorrectWordOnCursor(oCMathContent, IsLaTeX)
 	{
 		let isConvert = false;
 		let oContent = oCMathContent.Content[oCMathContent.CurPos];
@@ -2591,7 +2547,7 @@
 
 		if (oContent.State.ContentPos - 1 > intStart)
 		{
-			let strCorrection = AutoCorrection[str];
+			let strCorrection = ConvertWord(str, IsLaTeX);
 			if (strCorrection)
 			{
 				oContent.RemoveFromContent(intStart, oContent.State.ContentPos - 1 - intStart + 1, true);
@@ -2604,7 +2560,23 @@
 		}
 		return isConvert;
 	}
-	function CorrectAllWords (oCMathContent)
+	function ConvertWord(str, IsLaTeX)
+	{
+		if (!IsNotConvertedLaTeXWords(str) || !IsLaTeX)
+		{
+			return AutoCorrection[str];
+		}
+	};
+
+	function IsNotConvertedLaTeXWords(str)
+	{
+		if (arrDoNotConvertWordsForLaTeX.includes(str))
+			return true;
+
+		return false;
+	}
+
+	function CorrectAllWords (oCMathContent, isLaTeX)
 	{
 		let isConvert = false;
 	
@@ -2637,9 +2609,8 @@
 
 					if (intEnd > intStart) {
 
-						let strCorrection = AutoCorrection[str];
+						let strCorrection = ConvertWord(str, isLaTeX);
 						if (strCorrection) {
-
 							nCount -= (intEnd - intStart);
 							oCMathContent.RemoveFromContent(intStart, intEnd - intStart + 1, true);
 							oCMathContent.AddText(strCorrection, intStart);
@@ -2652,7 +2623,7 @@
 		else
 		{
 			for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++) {
-				isConvert = CorrectAllWords(oCMathContent.Content[nCount]) || isConvert;
+				isConvert = CorrectAllWords(oCMathContent.Content[nCount], isLaTeX) || isConvert;
 			}
 		}
 	
