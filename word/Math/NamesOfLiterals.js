@@ -607,6 +607,12 @@
 		["\\begin{Bmatrix}", oNamesOfLiterals.matrixLiteral[0]],
 		["\\begin{vmatrix}", oNamesOfLiterals.matrixLiteral[0]],
 		["\\begin{Vmatrix}", oNamesOfLiterals.matrixLiteral[0]],
+		["\\matrix{", oNamesOfLiterals.matrixLiteral[0]],
+		["\\pmatrix{", oNamesOfLiterals.matrixLiteral[0]],
+		["\\bmatrix{", oNamesOfLiterals.matrixLiteral[0]],
+		["\\Bmatrix{", oNamesOfLiterals.matrixLiteral[0]],
+		["\\vmatrix{", oNamesOfLiterals.matrixLiteral[0]],
+		["\\Vmatrix{", oNamesOfLiterals.matrixLiteral[0]],
 		["┬", true],
 		["\\bmatrix", oNamesOfLiterals.matrixLiteral[0]],
 		["\\bmod", " mod ", oNamesOfLiterals.charLiteral[0]],
@@ -664,7 +670,7 @@
 		["̇", MathLiterals.accent.id],
 		[" ", oNamesOfLiterals.spaceLiteral[0]], // [" ", oNamesOfLiterals.spaceLiteral[0]], // 1em space
 		["〗", oNamesOfLiterals.opCloseBracket[0]], //LaTeX ["\\end{"],
-		["\\end{equation}", true],
+		["\\end{equation}", "endOfMatrix"],
 		["\\end{array}", "endOfMatrix"],
 		["\\end{cases}", "endOfMatrix"],
 		["\\end{matrix}", "endOfMatrix"],
@@ -1007,6 +1013,8 @@
 		"\\left",
 		"\\right",
 		"\\array",
+		"\\begin",
+		"\\end",
 		"\\matrix",
 	];
 

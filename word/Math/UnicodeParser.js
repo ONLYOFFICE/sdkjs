@@ -1497,15 +1497,17 @@
 	};
 	CUnicodeParser.prototype.GetArrayLiteral = function ()
 	{
-		if (this.oLookahead.data === "■")
-			this.EatToken(this.oLookahead.class);
+		let type = this.EatToken(this.oLookahead.class).data;
 
 		if (this.oLookahead.data !== "(")
 		{
 			return {
 				type: oLiteralNames.charLiteral[num],
-				value: "■"
+				value: type
 			}
+		}
+		else {
+			this.EatToken(this.oLookahead.class);
 		}
 
 		const arrMatrixContent = this.GetRowsLiteral();
