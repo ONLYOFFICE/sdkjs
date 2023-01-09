@@ -227,8 +227,6 @@ function CDrawingDocument()
     this.Overlay = null;
     this.IsTextMatrixUse = false;
 
-    this.placeholders = new AscCommon.DrawingPlaceholders(this);
-
     this.getDrawingObjects = function()
     {
         var oWs = Asc.editor.wb.getWorksheet();
@@ -355,12 +353,8 @@ function CDrawingDocument()
 
     this.ConvertCoordsToCursorWR = function(x, y, pageIndex, transform)
     {
-	    let oRender = this.getDrawingObjects();
-		if(!oRender)
-		{
-			return { X : 0, Y : 0, Error: true };
-		}
-		return oRender.convertCoordsToCursorWR(x, y);
+
+        return { X : 0, Y : 0, Error: true };
     };
 
     this.ConvertCoordsToCursor = function(x, y, pageIndex, bIsRul)
