@@ -1429,7 +1429,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range where the hyperlink will be added to.
 	 * @param {string} sAddress - The link address.
-	 * @param {string} subAddress - The subaddress of the hyperlink.
+	 * @param {string} subAddress - The link subaddress to insert internal sheet hyperlinks.
 	 * @param {string} sScreenTip - The screen tip text.
 	 * @param {string} sTextToDisplay - The link text that will be displayed on the sheet.
 	 * */
