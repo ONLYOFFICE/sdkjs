@@ -1208,7 +1208,7 @@ function (window, undefined) {
 				cElementType.array === arg1.type) &&
 				(cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type ||
 					cElementType.array === arg2.type) )) {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {
@@ -1372,7 +1372,7 @@ function (window, undefined) {
 				if(index === undefined) {
 					index = _func.binarySearchByRange(arg0, arg1);
 
-					if (index < 0) {
+					if (index === undefined || index < 0) {
 						return new cError(cErrorType.not_available);
 					}
 				}
