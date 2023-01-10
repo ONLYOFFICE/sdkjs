@@ -14623,6 +14623,7 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().getValue(), "black");
 
+		ws.getRange2("A101").setValue("0");
 		ws.getRange2("A102").setValue("1");
 		ws.getRange2("A103").setValue("");
 		ws.getRange2("A104").setValue("3");
@@ -14655,6 +14656,30 @@ $(function () {
 		assert.ok(oParser.parse(), "LOOKUP(A102:A103,A102:A105,B102:B105)");
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of LOOKUP(A102:A103,A102:A105,B102:B105)");
 
+		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,TRUE)", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of LOOKUP(A102:A102,A102:A105,TRUE)");
+
+		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,1)", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of LOOKUP(A102:A102,A102:A105,1)");
+
+		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,a)", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,a)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of LOOKUP(A102:A102,A102:A105,a)");
+
+		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,A102:A102)", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP(A102:A102,A102:A105,A102:A102)");
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 1, "Result of LOOKUP(A102:A102,A102:A105,A102:A102)");
+
+		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,A103:A103)", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP(1,A102:A105,A103:A103)");
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "", "Result of LOOKUP(1,A102:A105,A103:A103)");
+
+		oParser = new parserFormula("LOOKUP(A102:A102,A102:A105,A104:A104)", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP(1,A102:A105,A104:A104)");
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 3, "Result of LOOKUP(1,A102:A105,A104:A104)");
+
 		oParser = new parserFormula("LOOKUP(A102,A102:A105,)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(1,A102:A105,)");
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of LOOKUP(1,A102:A105,)");
@@ -14682,6 +14707,18 @@ $(function () {
 		oParser = new parserFormula("LOOKUP({12,13,14,15},A102:A105,B102:B105)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP({12,13,14,15},A102:A105,B102:B105)");
 		assert.strictEqual(oParser.calculate().getValue().getValue(), "c", "Result of LOOKUP({12,13,14,15},A102:A105,B102:B105)");	//d
+
+		oParser = new parserFormula("LOOKUP({0},A101:A105,A101:A105)", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP({0},A101:A105,A101:A105)");
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 0, "Result of LOOKUP({0},A101:A105,A101:A105)");
+
+		oParser = new parserFormula("LOOKUP({2},{0,1,2,3,4},B102:B108)", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP({2},{0,1,2,3,4},B102:B108)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of LOOKUP({2},{0,1,2,3,4},B102:B108)");	//c
+
+		oParser = new parserFormula("LOOKUP({2},{0,1,2,3,4},{10,11,12,13,14})", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP({2},{0,1,2,3,4},{10,11,12,13,14})");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of LOOKUP({2},{0,1,2,3,4},{10,11,12,13,14})");
 
 		oParser = new parserFormula("LOOKUP(3,A102:A106,B102:B106)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(3,A102:A106,B102:B106)");
