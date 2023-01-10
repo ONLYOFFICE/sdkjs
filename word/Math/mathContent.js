@@ -6453,7 +6453,18 @@ CMathContent.prototype.Refresh_ContentChanges = function()
 };
 CMathContent.prototype.IsOneElementInContentForGetText = function()
 {
-    return this.Content.length === 1;
+    let count = this.Content.length;
+
+    if (count === 2 && this.Content[this.Content.length - 1].Content.length === 0)
+    {
+        count--
+    }
+    if (count === 1 && this.Content[0].Content.length > 1)
+    {
+        count++
+    }
+    
+    return count === 1;
 }
 CMathContent.prototype.IsFirstLetterIsBracket = function (isLaTeX)
 {
@@ -6479,7 +6490,7 @@ CMathContent.prototype.GetMultipleContentForGetText = function(isLaTeX, isNotBra
         if (isMustBeBracketsInLaTeX === true && isLaTeX)
         {
             str = this.GetTextOfElement(isLaTeX);
-            if (str[0] !== "{")
+            if (str.length > 0 && str[0] !== "{")
             {
                 str = "{" + this.GetTextOfElement(isLaTeX) + "}";
             }
@@ -6487,7 +6498,7 @@ CMathContent.prototype.GetMultipleContentForGetText = function(isLaTeX, isNotBra
 
         if (isMustBeBracketsInUnicode === true && !isLaTeX)
         {
-            if (str[0] !== "(")
+            if (str.length > 0 && str[0] !== "(")
             {
                 str =  "(" + this.GetTextOfElement(isLaTeX) + ")";
             }
