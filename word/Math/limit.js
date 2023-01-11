@@ -325,14 +325,15 @@ CLimit.prototype.GetTextOfElement = function(isLaTeX) {
 
 	if (isLaTeX)
     {
-		strLimitSymbol = (this.Pr.type == 1) ? "^" : "_";
+        strLimitSymbol = (this.Pr.type == 1) ? "\\above" : "\\below";
 		if (strFuncName === 'lim' ||
 			strFuncName === 'log' ||
 			strFuncName === 'max' ||
 			strFuncName === 'min' ||
 			strFuncName === 'ln')
         {
-				strFuncName = '\\' + strFuncName;
+            strLimitSymbol = (this.Pr.type == 1) ? "^" : "_";
+            strFuncName = '\\' + strFuncName;
 		}
 	}
     else
@@ -458,10 +459,7 @@ CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
     }
     if (isLaTeX)
     {
-        if (strArgument.slice(0, 6) === "\\left." && strArgument.slice(strArgument.length - 7, strArgument.length) === "\\right.")
-        {
-            strArgument = "{" + strArgument.slice(6, strArgument.length - 7) + "}";
-        }
+        strArgument = "{" + strArgument + "}";
     }
 	//	Unicode
 	//	if strArgument is block.. such as (2+1), then don't add brackets

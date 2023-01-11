@@ -4054,7 +4054,7 @@ CDelimiter.prototype.GetTextOfElement = function(isLaTeX) {
 	var strStartSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
 	var strEndSymbol = this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
 
-	var strSeparatorSymbol = isLaTeX ? "\\mid" : "∣";
+	var strSeparatorSymbol = isLaTeX ? "\\mid " : "∣";
 
     if (isLaTeX)
     {
@@ -4543,17 +4543,28 @@ CGroupCharacter.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var intStartCode = this.Pr.chr || this.operator.Get_CodeChr();
 	var strStart = String.fromCharCode(intStartCode);
-	var Base = this.getBase().GetTextOfElement();
-	var strStartBracet = (Base.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
-	var strCloseBracet = (Base.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
+	var Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
 
-	if (true === isLaTeX) {
-		if (intStartCode === 9182)
-			strStart = '\\overbrace';
-		else if (intStartCode === 9183)
-			strStart = '\\underbrace';
+	if (true === isLaTeX)
+    {
+        if (intStartCode === 9182 || intStartCode === 9183)
+        {
+            if (intStartCode === 9182)
+                strStart = '\\overbrace';
+            else if (intStartCode === 9183)
+                strStart = '\\underbrace';
+
+            strTemp = strStart + Base;
+        }
+        else
+            strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
 	}
-	strTemp = strStart + strStartBracet + Base + strCloseBracet;
+    else
+    {
+        let pos = this.Pr.pos === 1 ? "┴" : "┬";
+        strStart += pos;
+    }
+	strTemp = strStart + Base;
 	return strTemp;
 };
 

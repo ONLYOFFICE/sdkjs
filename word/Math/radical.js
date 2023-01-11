@@ -766,7 +766,7 @@ CRadical.prototype.GetTextOfElement = function(isLaTeX)
 {
 	var strTemp = "";
 	var strDegree = this.getDegree().GetMultipleContentForGetText(isLaTeX, true);
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 
 	if (isLaTeX)
     {
