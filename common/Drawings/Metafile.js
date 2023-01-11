@@ -1507,6 +1507,7 @@
 		this.ctHyperlink = 160;
 		this.ctLink      = 161;
 		this.ctFormField = 162;
+		this.ctDocInfo   = 163;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;
@@ -2666,6 +2667,15 @@
 			this.Memory.Seek(nStartPos);
 			this.Memory.WriteLong(nEndPos - nStartPos);
 			this.Memory.Seek(nEndPos);
+		},
+
+		DocInfo : function()
+		{
+			this.Memory.WriteByte(CommandType.ctDocInfo);
+			this.Memory.WriteString(title);
+			this.Memory.WriteString(creator);
+			this.Memory.WriteString(subject);
+			this.Memory.WriteString(keywords);
 		}
 	};
 
