@@ -5688,7 +5688,7 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
     if (oElement.value === 32)
     {
         //конвертация слов атокоррекции (\binomial)
-        if (this.CorrectWordOnCursor()) {
+        if (this.CorrectWordOnCursor(nInputType === 1)) {
             this.AddContentForAutoCorrection(arrNextContent);
         };
     }
@@ -5829,13 +5829,13 @@ CMathContent.prototype.AddContentForAutoCorrection = function(arrNewElements, is
         }
     }
 };
-CMathContent.prototype.CorrectWordOnCursor = function()
+CMathContent.prototype.CorrectWordOnCursor = function(IsLaTeX)
 {
-    return AscMath.CorrectWordOnCursor(this);
+    return AscMath.CorrectWordOnCursor(this, IsLaTeX);
 };
-CMathContent.prototype.CorrectAllMathWords = function()
+CMathContent.prototype.CorrectAllMathWords = function(IsLaTeX)
 {
-    return AscMath.CorrectAllWords(this);
+    return AscMath.CorrectAllWords(this, IsLaTeX);
 };
 CMathContent.prototype.GetBracketOperatorInfo = function (isLaTeX)
 {

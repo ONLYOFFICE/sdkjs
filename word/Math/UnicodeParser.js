@@ -75,7 +75,7 @@
 	};
 	CUnicodeParser.prototype.WriteDataAsCharLiteral = function(arrExp)
 	{
-		if (arrExp.length === 1 && arrExp[arrExp.length - 1].type === oLiteralNames.charLiteral[num])
+		if (arrExp.length === 1 &&  arrExp[arrExp.length - 1] !== undefined && arrExp[arrExp.length - 1].type === oLiteralNames.charLiteral[num])
 		{
 			arrExp[arrExp.length - 1].value += this.EatToken(this.oLookahead.class).data;
 		}
@@ -1313,6 +1313,13 @@
 				}
 			}
 		}
+		else
+		{
+			return {
+				type: oLiteralNames.charLiteral[num],
+				value: "█"
+			}
+		}
 		return this.WriteSavedTokens();
 	};
 	CUnicodeParser.prototype.GetFactorLiteral = function ()
@@ -1490,9 +1497,15 @@
 	};
 	CUnicodeParser.prototype.GetArrayLiteral = function ()
 	{
-		let strStart = this.EatToken(this.oLookahead.class).data;
-		if (strStart === "■" && this.oLookahead.data === "(") {
+		if (this.oLookahead.data === "■")
 			this.EatToken(this.oLookahead.class);
+
+		if (this.oLookahead.data !== "(")
+		{
+			return {
+				type: oLiteralNames.charLiteral[num],
+				value: "■"
+			}
 		}
 
 		const arrMatrixContent = this.GetRowsLiteral();
