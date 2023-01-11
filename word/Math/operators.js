@@ -4562,7 +4562,8 @@ CGroupCharacter.prototype.GetTextOfElement = function(isLaTeX) {
     else
     {
         let pos = this.Pr.pos === 1 ? "┴" : "┬";
-        strStart += pos;
+        if (intStartCode !== 9182 && intStartCode !== 9183)
+            strStart += pos;
     }
 	strTemp = strStart + Base;
 	return strTemp;

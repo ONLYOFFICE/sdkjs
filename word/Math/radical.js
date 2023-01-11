@@ -766,7 +766,7 @@ CRadical.prototype.GetTextOfElement = function(isLaTeX)
 {
 	var strTemp = "";
 	var strDegree = this.getDegree().GetMultipleContentForGetText(isLaTeX, true);
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX);
 
 	if (isLaTeX)
     {
@@ -775,10 +775,6 @@ CRadical.prototype.GetTextOfElement = function(isLaTeX)
             strDegree = '[' + strDegree + ']';
         }
 
-        if (strBase[0] !== "{")
-        {
-            strBase = "{" + strBase + "}";
-        }
 
         strTemp = '\\sqrt' + strDegree + strBase;
     }
@@ -796,7 +792,7 @@ CRadical.prototype.GetTextOfElement = function(isLaTeX)
             if (strDegree.length > 0)
                 strDegree = strDegree + '&';
 
-            strTemp = strRadicalSymbol + "(" + strDegree + strBase + ")";
+            strTemp = strRadicalSymbol + strDegree + strBase;
         }
 	}
 

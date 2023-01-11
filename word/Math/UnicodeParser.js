@@ -336,9 +336,11 @@
 	CUnicodeParser.prototype.GetBoxLiteral = function ()
 	{
 		this.SaveTokensWhileReturn();
-		if (this.oLookahead.data === "□") {
+		if (this.oLookahead.data === "□")
+		{
 			this.EatToken(this.oLookahead.class);
-			if (this.IsOperandLiteral()) {
+			if (this.IsOperandLiteral())
+			{
 				const oToken = this.GetOperandLiteral();
 				return {
 					type: oLiteralNames.boxLiteral[num],
@@ -348,28 +350,29 @@
 		}
 		return this.WriteSavedTokens();
 	};
+	CUnicodeParser.prototype.isRectLiteral = function ()
+	{
+		return this.oLookahead.data === "▭";
+	};
 	CUnicodeParser.prototype.GetRectLiteral = function ()
 	{
 		this.SaveTokensWhileReturn();
-		if (this.oLookahead.data === "▭") {
+
+		if (this.oLookahead.data === "▭")
+		{
 			this.EatToken(this.oLookahead.class);
 			this.SkipSpace();
-			if (this.IsOperandLiteral()) {
+			if (this.IsOperandLiteral())
+			{
 				const oToken = this.GetOperandLiteral();
 				return {
-					type: oLiteralNames.rectLiteral[num],
+					type: oLiteralNames.borderBoxLiteral[num],
 					value: oToken,
 				};
 			}
 		}
-		return {
-			type: oLiteralNames.charLiteral[num],
-			value:  "▭",
-		}
-	};
-	CUnicodeParser.prototype.isRectLiteral = function ()
-	{
-		return this.oLookahead.data === "▭";
+
+		return this.WriteSavedTokens();
 	};
 	CUnicodeParser.prototype.GetHBracketLiteral = function ()
 	{
