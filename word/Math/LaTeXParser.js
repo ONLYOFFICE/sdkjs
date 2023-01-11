@@ -154,15 +154,16 @@
 
 		if (this.oLookahead.data === "'" || this.oLookahead.data === "''")
 		{
-			strAccent = this.EatToken(this.oLookahead.class).data;
-			oResultAccent = {
-				type: oLiteralNames.subSupLiteral[num],
-				value: oBase,
-				up: {
-					type: oLiteralNames.charLiteral[num],
-					value: strAccent,
-				}
-			};
+			return this.GetSubSupLiteral(oBase);
+			// strAccent = this.EatToken(this.oLookahead.class).data;
+			// oResultAccent = {
+			// 	type: oLiteralNames.subSupLiteral[num],
+			// 	value: oBase,
+			// 	up: {
+			// 		type: oLiteralNames.charLiteral[num],
+			// 		value: strAccent,
+			// 	}
+			// };
 		}
 		else
 		{
@@ -331,11 +332,9 @@
 			this.IsBoxLiteral() ||
 			this.oLookahead.class === oLiteralNames.opDecimal[0] ||
 			this.IsMatrixLiteral() ||
-			this.IsSkipLiteral() ||
 			this.IsHBracket() ||
 			this.oLookahead.data === "┬" ||
 			this.oLookahead.data === "┴" ||
-			this.oLookahead.data === "." || this.oLookahead.data === "," ||
 			this.IsOverUnderBarLiteral() ||
 			this.IsTextLiteral() ||
 			this.IsSpecialSymbol()
@@ -345,7 +344,9 @@
 	{
 		return this.oLookahead.data === "/" ||
 			this.oLookahead.data === "&" ||
-			this.oLookahead.data === "@"
+			this.oLookahead.data === "@" ||
+			this.oLookahead.data === "." ||
+			this.oLookahead.data === ","
 	}
 	CLaTeXParser.prototype.GetSpecialSymbol = function ()
 	{
@@ -421,9 +422,6 @@
 		else if (this.IsMatrixLiteral()) {
 			return this.GetMatrixLiteral();
 		}
-		else if (this.IsSkipLiteral()) {
-			this.SkipLiteral();
-		}
 		else if (this.oLookahead.data === "┬") {
 			this.EatToken(this.oLookahead.class);
 			let oContent = this.GetArguments(2);
@@ -488,17 +486,6 @@
 
 		return strText;
 	}
-	CLaTeXParser.prototype.IsSkipLiteral = function ()
-	{
-		return (
-			this.oLookahead.class === "\\begin{equation}" ||
-			this.oLookahead.class === "\\end{equation}"
-		)
-	};
-	CLaTeXParser.prototype.SkipLiteral = function ()
-	{
-		this.EatToken(this.oLookahead.class);
-	};
 	CLaTeXParser.prototype.IsFuncLiteral = function ()
 	{
 		return this.oLookahead.class === oLiteralNames.functionLiteral[0] || this.oLookahead.class === oLiteralNames.opNaryLiteral[0]
@@ -655,6 +642,14 @@
 			oBaseContent = oBaseContent.value;
 		}
 
+		if (this.oLookahead.data === "'" || this.oLookahead.data === "''")
+		{
+			oUpContent = {
+				type: oLiteralNames.charLiteral[num],
+				value: this.EatToken(this.oLookahead.class).data
+			}
+		}
+
 		if (this.oLookahead.class === "_")
 		{
 			oDownContent = this.GetPartOfSupSup();
@@ -700,12 +695,22 @@
 	};
 	CLaTeXParser.prototype.GetPartOfSupSup = function ()
 	{
+		let oElement;
 		let strSymbol = this.oLookahead.class;
 		this.EatToken(strSymbol);
 
-		let oElement = (this.oLookahead.data === "{")
-			? this.GetArguments(1)
-			: this.GetElementLiteral();
+		if (this.oLookahead.data === "'" || this.oLookahead.data === "''")
+		{
+			oElement = {
+				type: oLiteralNames.charLiteral[num],
+				value: this.EatToken(this.oLookahead.class).data
+			}
+		}
+		else {
+			oElement = (this.oLookahead.data === "{")
+				? this.GetArguments(1)
+				: this.GetElementLiteral();
+		}
 
 		if (this.oLookahead.class === strSymbol) {
 			oElement = this.GetSubSupLiteral(oElement, true);
@@ -812,9 +817,46 @@
 			this.oLookahead.data === "■"
 		)
 	};
+	CLaTeXParser.prototype.IsAlignBlockForArray = function ()
+	{
+		if (this.oLookahead.data !== "{")
+			return false;
+
+		this.SaveState(this.oLookahead);
+
+		let oAlignBlock = this.GetArguments(1);
+
+		const IsAlignContent = function (str)
+		{
+			let arr = [];
+			for (let i = 0; i < str.length; i++)
+			{
+				if (str[i] === "l" || str[i] === "c" || str[i] === "r")
+					arr.push(true);
+			}
+
+			if (arr.length === str.length)
+				return true;
+
+			return false;
+		}
+
+		if (oAlignBlock.type === oLiteralNames.charLiteral[num])
+		{
+			let strAlignBlock = oAlignBlock.value.trim();
+
+			if (IsAlignContent(strAlignBlock))
+				return strAlignBlock;
+		}
+		else
+		{
+			this.RestoreState();
+		}
+	}
 	CLaTeXParser.prototype.GetMatrixLiteral = function ()
 	{
 		let strMatrixType;
+
 		switch (this.oLookahead.data) {
 			case "\\begin{cases}":
 				strMatrixType = "{";
@@ -853,10 +895,14 @@
 
 		this.EatToken(this.oLookahead.class);
 
-		if (this.oLookahead.data === "{")
+		while (this.oLookahead.data === "[")
 		{
-			this.EatToken(this.oLookahead.class);
+			this.GetArguments(1);
 		}
+
+		//TODO align
+		let align = this.IsAlignBlockForArray();
+
 		this.SkipFreeSpace();
 
 		while (this.oLookahead.data === "[")
@@ -866,32 +912,37 @@
 
 		let arrMatrixContent = [];
 
-		while (this.oLookahead.data !== "}" && this.oLookahead.class !== "endOfMatrix") {
+		while (this.oLookahead.data !== "}" && this.oLookahead.class !== "endOfMatrix")
+		{
 			arrMatrixContent.push(this.GetRayOfMatrixLiteral());
 		}
 
 		let intMaxLengthOfMatrixRow = -Infinity;
 		let intIndexOfMaxMatrixRow = -1;
 
-		for (let i = 0; i < arrMatrixContent.length; i++) {
+		for (let i = 0; i < arrMatrixContent.length; i++)
+		{
 			let arrContent = arrMatrixContent[i];
 			intMaxLengthOfMatrixRow = arrContent.length;
 			intIndexOfMaxMatrixRow = i;
 		}
 
-		for (let i = 0; i < arrMatrixContent.length; i++) {
+		for (let i = 0; i < arrMatrixContent.length; i++)
+		{
 
 			if (i !== intIndexOfMaxMatrixRow) {
 
 				let arrMatrix = arrMatrixContent[i];
 
-				for (let j = arrMatrix.length; j < intMaxLengthOfMatrixRow; j++) {
+				for (let j = arrMatrix.length; j < intMaxLengthOfMatrixRow; j++)
+				{
 					arrMatrix.push({});
 				}
 			}
 		}
 
-		if (this.oLookahead.data === "}" || this.oLookahead.class === "endOfMatrix") {
+		if (this.oLookahead.data === "}" || this.oLookahead.class === "endOfMatrix")
+		{
 			this.EatToken(this.oLookahead.class)
 		}
 
@@ -1026,28 +1077,29 @@
 	};
 	CLaTeXParser.prototype.GetContentOfLiteral = function (oContent)
 	{
-		if (Array.isArray(oContent)) {
-			if (oContent.length === 1) {
+		if (Array.isArray(oContent))
+		{
+			if (oContent.length === 1)
 				return oContent[0];
-			}
+
 			return oContent;
 		}
+
 		return oContent;
 	};
 	function ConvertLaTeXToTokensList(str, oContext, isGetOnlyTokens)
 	{
-		if (undefined === str || null === str) {
-			return
-		}
+		if (undefined === str || null === str)
+			return;
+
 		const oConverter = new CLaTeXParser(true);
 		const oTokens = oConverter.Parse(str);
 
-		if (!isGetOnlyTokens) {
+		if (!isGetOnlyTokens)
 			ConvertTokens(oTokens, oContext);
-		}
-		else {
+		else
 			return oTokens;
-		}
+
 		return true;
 	};
 
