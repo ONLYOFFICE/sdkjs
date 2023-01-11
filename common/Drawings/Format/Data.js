@@ -1790,14 +1790,37 @@ Because of this, the display is sometimes not correct.
     }
 
     Point.prototype.isBlipFillPlaceholder = function () {
-      var imagePlaceholderArrStylelbl = ['alignImgPlace1', 'bgImgPlace1', 'fgImgPlace1'];
-      var imagePlaceholderArrName = ['Image', 'image', 'imageRepeatNode', 'pictRect'];
-      var pointAssociationPrSet = this.prSet;
-      return pointAssociationPrSet && ((imagePlaceholderArrStylelbl.indexOf(pointAssociationPrSet.presStyleLbl) !== -1) ||
-        (imagePlaceholderArrName.indexOf(pointAssociationPrSet.presName) !== -1) ||
-        (pointAssociationPrSet.presName === 'rect1' && pointAssociationPrSet.presStyleLbl === 'bgShp') ||
-        (pointAssociationPrSet.presName === 'rect1' && pointAssociationPrSet.presStyleLbl === 'lnNode1') ||
-        (pointAssociationPrSet.presName === 'adorn' && pointAssociationPrSet.presStyleLbl === 'fgAccFollowNode1'))
+      //TODO: The method is a crutch. in the future, you need to determine the picture placeholder from the layout.xml file
+      const pointAssociationPrSet = this.prSet;
+      if (pointAssociationPrSet) {
+        const sStyleLbl = pointAssociationPrSet.presStyleLbl;
+        const sName = pointAssociationPrSet.presName;
+        const oExcludes = {
+          'node1': ['imageRepeatNode'],
+          'alignImgPlace1': ['ChildAccent', 'bentUpArrow1', 'ParentShape1', 'ParentShape2', 'Text1', 'Text2', 'Text3', 'Text4', 'Text5', 'Text6'],
+          'bgImgPlace1': ['LeftNode', 'RightNode', 'Background'],
+        };
+        if (oExcludes[sStyleLbl]) {
+          if (oExcludes[sStyleLbl].indexOf(sName) !== -1) {
+            return false;
+          }
+        }
+        const imagePlaceholderArrStylelbl = ['alignImgPlace1', 'bgImgPlace1', 'fgImgPlace1'];
+        const imagePlaceholderArrName = ['Image', 'imageRepeatNode', 'pictRect'];
+        let bCheckImagePlaceholderStyleLbl = imagePlaceholderArrStylelbl.indexOf(sStyleLbl) !== -1;
+        let bCheckImagePlaceholderName = false;
+        if (sName) {
+          bCheckImagePlaceholderName = imagePlaceholderArrName.indexOf(sName) !== -1 || sName.indexOf('image') !== -1;
+        }
+
+        return (bCheckImagePlaceholderStyleLbl ||
+          bCheckImagePlaceholderName ||
+          (sName === 'rect1' && sStyleLbl === 'bgShp') ||
+          (sName === 'rect1' && sStyleLbl === 'lnNode1') ||
+          (sName === 'adorn' && sStyleLbl === 'fgAccFollowNode1'));
+      }
+
+      return false;
     }
 
     Point.prototype.fillObject = function (oCopy, oIdMap) {
