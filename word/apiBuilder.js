@@ -6871,7 +6871,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
 	 */
-	ApiDocument.prototype.GetStatistic = function()
+	ApiDocument.prototype.GetStatistics = function()
 	{
 		let oLogicDocument = this.Document;
 		
@@ -18508,7 +18508,7 @@
 	ApiDocument.prototype["SetControlsHighlight"]        = ApiDocument.prototype.SetControlsHighlight;
 	ApiDocument.prototype["GetAllComments"]              = ApiDocument.prototype.GetAllComments;
 	ApiDocument.prototype["GetCommentById"]              = ApiDocument.prototype.GetCommentById;
-	ApiDocument.prototype["GetStatistic"]              	 = ApiDocument.prototype.GetStatistic;
+	ApiDocument.prototype["GetStatistics"]               = ApiDocument.prototype.GetStatistics;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
 	ApiDocument.prototype["ReplaceCurrentImage"]         = ApiDocument.prototype.ReplaceCurrentImage;
