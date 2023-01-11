@@ -5650,17 +5650,18 @@ CMathContent.prototype.ConvertContentView = function(intStart, intEnd, nInputTyp
 }
 CMathContent.prototype.SplitContentByContentPos = function()
 {
-
     var oCurrentObj = this.Content[this.CurPos];
     var CursorPos = oCurrentObj.State.ContentPos;
     var arrContent = [];
 
-    if (CursorPos < oCurrentObj.Content.length) {
+    if (CursorPos < oCurrentObj.Content.length)
+    {
         var oNewRun = oCurrentObj.Split_Run(CursorPos);
         arrContent.push(oNewRun);
     }
 
-    for (let i = this.CurPos + 1; i < this.Content.length; i++) {
+    for (let i = this.CurPos + 1; i < this.Content.length; i++)
+    {
         arrContent.push(this.Content[i].Copy());
     }
 
@@ -5692,7 +5693,10 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
     // convert word near cursor (\int, \sqrt, \alpha...)
     if (oElement.value === 32)
     {
-        if (this.CorrectWordOnCursor()) return;
+        //конвертация слов атокоррекции (\binomial)
+        if (this.CorrectWordOnCursor()) {
+            this.AddContentForAutoCorrection(arrNextContent);
+        };
     }
 
     // check is needed start autocorrection
@@ -5701,10 +5705,6 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
         this.AddContentForAutoCorrection(arrNextContent);
         return;
     }
-
-    // if (nInputType === 1) {
-    //     this.CorrectAllMathWords();
-    // }
 
     // delete placeholder symbol TODO refactor to normal method
     if (this.Content.length > 1 && this.Content[this.Content.length - 1].Content[0] &&
@@ -5900,19 +5900,20 @@ CMathContent.prototype.IsLastElement = function (type)
     return false;
 }
 //авто-конвертации контента ВНУТРИ скобок, не самих скобок
-CMathContent.prototype.ConvertContentInLastBracketBlock = function(nInputType)
+CMathContent.prototype.ConvertContentInLastBracketBlock = function(nInputType, isAll)
 {
-    if ((this.IsLastElement(AscMath.MathLiterals.rBrackets) || this.IsLastElement(AscMath.MathLiterals.lrBrackets)))
+    if ((this.IsLastElement(AscMath.MathLiterals.rBrackets) || this.IsLastElement(AscMath.MathLiterals.lrBrackets)) ||  this.Content[this.Content.length - 1].GetTextOfElement() === " ")
     {
         const oBracketsContent = this.GetBracketOperatorInfo(nInputType === 1);
         const Brackets = new ProceedBrackets(oBracketsContent);
+
         if (Brackets.intCounter === 0)
         {
             let pair = Brackets.BracketsPair[0][0];
             const Result = [pair[2], pair[0] + 1];
 
             if (Result.length === 2)
-                this.CutConvertAndPaste(Result, nInputType, true);
+                this.CutConvertAndPaste(Result, nInputType);
         }
     }
 };
@@ -6388,7 +6389,7 @@ CMathContent.prototype.CheckAutoCorrectionBrackets = function(nInputType)
 
     return Brackets;
 }
-CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isContentNotParaRun)
+CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType)
 {
     let isCurPos = false;
     if (arrPos.length === 0)
@@ -6437,7 +6438,7 @@ CMathContent.prototype.DeleteEndSpace = function()
 }
 CMathContent.prototype.IsStartAutoCorrection = function(nInputType, intCode)
 {
-    return AscMath.IsStartAutoCorrection(nInputType, intCode) &&
+    return  AscMath.IsStartAutoCorrection(nInputType, intCode) &&
         !(
             this.IsLastElement(AscMath.MathLiterals.lBrackets)
             || this.IsLastElement(AscMath.MathLiterals.lrBrackets)
@@ -6459,30 +6460,30 @@ CMathContent.prototype.Refresh_ContentChanges = function()
 };
 CMathContent.prototype.GetTextOfElement = function(isLaTeX)
 {
-	var str = "";
-	for (var i = 0; i < this.Content.length; i++) {
+	let str = "";
+	for (let i = 0; i < this.Content.length; i++) {
 		str += this.Content[i].GetTextOfElement(isLaTeX);
 	}
 	return str;
 };
 CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 {
-	if (undefined === isLaTeX || null === isLaTeX) {
+	if (undefined === isLaTeX || null === isLaTeX)
 		isLaTeX = false;
-	}
 
-	var str = "";
-	var StartPos = 0; 
-	var EndPos = this.Content.length;
+	let str = "";
+	let StartPos = 0;
+	let EndPos = this.Content.length;
+
 	if (bSelectedText) {
 		StartPos = (this.Selection.Use == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
 		EndPos   = (this.Selection.Use == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
 	}
 
-	for (var i = StartPos; i <= EndPos; i++) {
-		if (this.Content[i] !== undefined) {
+	for (let i = StartPos; i <= EndPos; i++)
+    {
+		if (this.Content[i] !== undefined)
 			str += this.Content[i].GetTextOfElement(isLaTeX);
-		}
 	}
 
 	return {str: str};
