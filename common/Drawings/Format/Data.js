@@ -11383,11 +11383,14 @@ Because of this, the display is sometimes not correct.
             if (!connections[cxn.destId]) {
               connections[cxn.destId] = [];
             }
-            connections[cxn.destId].push({
-              point: ptMap[cxn.srcId],
-              srcOrd: parseInt(cxn.srcOrd, 10),
-              destOrd: parseInt(cxn.destOrd, 10)
-            });
+            if (ptMap[cxn.srcId]) {
+              connections[cxn.destId].push({
+                point: ptMap[cxn.srcId],
+                srcOrd: parseInt(cxn.srcOrd, 10),
+                destOrd: parseInt(cxn.destOrd, 10)
+              });
+            }
+
           }
         });
 
