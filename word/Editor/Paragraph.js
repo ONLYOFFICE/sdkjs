@@ -18207,6 +18207,17 @@ Paragraph.prototype.IsEmptyBetweenClasses = function(class1, class2)
 	this.LoadSelectionState(state);
 	return result;
 };
+Paragraph.prototype.SelectFotMath = function()
+{
+	this.Selection.Use      = true;
+	this.Selection.Start    = false;
+	this.Selection.StartManually = false;
+	this.Selection.EndManually   = false;
+	this.Selection.StartPos      = this.CurPos.ContentPos;
+	this.Selection.EndPos        = this.CurPos.ContentPos;
+
+	this.Document_SetThisElementCurrent(false);
+}
 
 Paragraph.prototype.asc_getText = function()
 {
