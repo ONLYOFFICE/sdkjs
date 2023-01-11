@@ -4197,6 +4197,14 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 				this.Selection.Start    = false;
 				this.Selection.Flag     = selectionflag_Common;
 
+				// TODO: Это плохой код, внутри классов должен выставляться селект целиком
+				//       надо посмотреть для чего это было сделано
+
+				//this.Selection.StartPos = ContentPos;
+				//this.Selection.EndPos   = ContentPos;
+				//this.Correct_Content(ContentPos, ContentPos);
+				//this.Document_SetThisElementCurrent(false);
+
 				return true;
 			}
 
