@@ -9591,33 +9591,37 @@ CPresentation.prototype.InsertContent = function (Content) {
 				let oTextSelection = oController.selection.textSelection;
 				if(oIsSingleTable && oTextSelection && oTextSelection.isTable()) {
 					let oTable = oTextSelection.graphicObject;
-					let oCurCell = oTable.CurCell;
-					if(oCurCell) {
-						oCurCell.InsertTableContent(oIsSingleTable);
-
-						let nMaxCellsCount = 0;
-						for (let nRow = 0; nRow < oTable.Content.length; nRow++) {
-							let oRow = oTable.Content[nRow];
-							if (nMaxCellsCount < oRow.Content.length)
-								nMaxCellsCount = oRow.Content.length;
-						}
-						for (let nRow = 0; nRow < oTable.Content.length; nRow++) {
-							let oRow = oTable.Content[nRow];
-							let aCells = oRow.Content;
-							let nCellsCount = 0;
-							for (let nCell = 0; nCell < aCells.length; nCell++) {
-								nCellsCount += aCells[nCell].GetGridSpan();
-							}
-							if (nCellsCount < nMaxCellsCount) {
-								for (let nCell = nCellsCount; nCell < nMaxCellsCount; nCell++) {
-									oRow.Add_Cell(oRow.Get_CellsCount(), oRow, null, true);
-								}
-							}
-						}
-
-						bInsert = true;
-						nNeedFocusType = FOCUS_OBJECT_MAIN;
-					}
+                    let oCurParagraph = oTable.GetCurrentParagraph();
+                    if(oCurParagraph) {
+                        let oParaParent = oCurParagraph.GetParent();
+                        if(oParaParent) {
+                            let oCurCell = oParaParent.IsTableCellContent(true);
+                            if(oCurCell) {
+                                oCurCell.InsertTableContent(oIsSingleTable);
+                                let nMaxCellsCount = 0;
+                                for (let nRow = 0; nRow < oTable.Content.length; nRow++) {
+                                    let oRow = oTable.Content[nRow];
+                                    if (nMaxCellsCount < oRow.Content.length)
+                                        nMaxCellsCount = oRow.Content.length;
+                                }
+                                for (let nRow = 0; nRow < oTable.Content.length; nRow++) {
+                                    let oRow = oTable.Content[nRow];
+                                    let aCells = oRow.Content;
+                                    let nCellsCount = 0;
+                                    for (let nCell = 0; nCell < aCells.length; nCell++) {
+                                        nCellsCount += aCells[nCell].GetGridSpan();
+                                    }
+                                    if (nCellsCount < nMaxCellsCount) {
+                                        for (let nCell = nCellsCount; nCell < nMaxCellsCount; nCell++) {
+                                            oRow.Add_Cell(oRow.Get_CellsCount(), oRow, null, true);
+                                        }
+                                    }
+                                }
+                                bInsert = true;
+                                nNeedFocusType = FOCUS_OBJECT_MAIN;
+                            }
+                        }
+                    }
 				}
 				if(!bInsert) {
 					oController.resetSelection();

@@ -7365,6 +7365,16 @@ window["Asc"]["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wr
     _api.asc_AddText(text, settings);
 }
 
+window["Asc"]["asc_docs_api"].prototype["asc_nativeGetDocumentProtection"] = function() {
+    var props = (_api) ? _api.asc_getDocumentProtection() : null;
+    if (props) {
+        return {
+            "asc_getEditType": props.asc_getEditType()
+        }
+    }
+    return {};
+}
+
 window["AscCommon"].getFullImageSrc2 = function(src) {
     var start = src.slice(0, 6);
     if (0 === start.indexOf("theme") && editor.ThemeLoader) {

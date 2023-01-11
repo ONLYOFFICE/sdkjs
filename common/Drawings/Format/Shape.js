@@ -4581,15 +4581,22 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
             this.txBody.content.CheckRunContent(function (paraRun) {
                 if (!currentFontSize) {
                     currentFontSize = paraRun.Get_FontSize();
+                    return true;
                 }
-                paraRun.SetFontSize(fontSize);
             });
-            this.txBody.content.Content.forEach(function (paragraph) {
-                if (!currentFontSize) {
-                    currentFontSize = paragraph.TextPr.Value.FontSize;
-                }
-                paragraph.TextPr.SetFontSize(fontSize);
-            });
+            if (!currentFontSize) {
+                this.txBody.content.Content.forEach(function (paragraph) {
+                    if (!currentFontSize) {
+                        currentFontSize = paragraph.TextPr.Value.FontSize;
+                        return true;
+                    }
+                });
+            }
+            const bOldApplyToAll = this.txBody.content.ApplyToAll;
+            this.txBody.content.ApplyToAll = true;
+            this.txBody.content.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize: (Math.min(fontSize, 300))}));
+            this.txBody.content.ApplyToAll = bOldApplyToAll;
+
             const oBodyPr = this.getBodyPr && this.getBodyPr();
             if (oBodyPr) {
                 const paddings = {};
@@ -4724,6 +4731,22 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
         }
         return this.contentHeight > sizesOfTextRectContent.height;
     };
+    CShape.prototype.checkFitContentForSmartArt = function () {
+        // почему-то у майков не подбирается шрифт для ширины, если вставлено только уравнение
+        const oContent = this.getCurrentDocContentInSmartArt();
+        if (oContent) {
+            for (let i = 0; i < oContent.Content.length; i += 1) {
+                const oParagraph = oContent.Content[i];
+                for (let j = 0; j < oParagraph.Content.length; j += 1) {
+                    const oElement = oParagraph.Content[j];
+                    if (oElement.Type !== para_Math && !oElement.Is_Empty({SkipEnd: true})) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    };
     CShape.prototype.findFitFontSizeForSmartArt = function (bMax) {
         const MAX_FONT_SIZE = 65;
 
@@ -4735,16 +4758,23 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
             let a = 0;
             let b = scalesForSmartArt.length - 1;
             let averageAmount = Math.floor((a + b) / 2);
-
+            const bNeedCheckWidth = this.checkFitContentForSmartArt();
             while (a !== averageAmount && b !== averageAmount) {
                 this.setFontSizeInSmartArt(scalesForSmartArt[averageAmount]);
-                let widthOfContent = content.RecalculateMinMaxContentWidth();
-                if (bMax) {
-                    widthOfContent = widthOfContent.Max;
+                let bCheck;
+                if (bNeedCheckWidth) {
+                    let widthOfContent = content.RecalculateMinMaxContentWidth();
+                    if (bMax) {
+                        widthOfContent = widthOfContent.Max;
+                    } else {
+                        widthOfContent = widthOfContent.Min;
+                    }
+                    bCheck = widthOfContent > this.contentWidth || this.compareHeightOfBoundsTextInSmartArt();
                 } else {
-                    widthOfContent = widthOfContent.Min;
+                    bCheck = this.compareHeightOfBoundsTextInSmartArt();
                 }
-                if (widthOfContent > this.contentWidth || this.compareHeightOfBoundsTextInSmartArt()) {
+
+                if (bCheck) {
                     b = averageAmount;
                 } else {
                     a = averageAmount;
@@ -4998,12 +5028,7 @@ CShape.prototype.checkExtentsByDocContent = function(bForce, bNeedRecalc)
             }
             if (this.isPlaceholderInSmartArt()) {
                 var isNotEmptyShape = oContent.Content.some(function (paragraph) {
-                    return paragraph.Content.some(function (paraRun) {
-                        if (paraRun.Content.length > 1 || paraRun.Content.length === 1 && paraRun.Content[0].Value !== undefined) {
-                            return true;
-                        }
-                        return false;
-                    });
+                    return !paragraph.Is_Empty({SkipEnd: true, SkipPlcHldr: false});
                 });
                 if (isNotEmptyShape) {
                     pointContent.forEach(function (point) {

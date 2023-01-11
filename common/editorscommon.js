@@ -3840,7 +3840,7 @@
 						// Some data has been received; however, neither responseText nor responseBody is available.
 						break;
 					case 4:
-						if (httpRequest.status === 200 || httpRequest.status === 1223 || url.indexOf("file:") == 0)
+						if (httpRequest.status === 200 || httpRequest.status === 1223 || location.href.indexOf("file:") == 0)
 						{
 							if (typeof success === "function")
 								success(httpRequest);
