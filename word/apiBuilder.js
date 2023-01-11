@@ -6864,6 +6864,47 @@
 
 		return true;
 	};
+
+	/**
+	 * Gets the statistic of document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {object}
+	 */
+	ApiDocument.prototype.GetStatistics = function()
+	{
+		let oLogicDocument = this.Document;
+		
+		oLogicDocument.Statistics.StartPos = 0;
+        oLogicDocument.Statistics.CurPage  = 0;
+
+        oLogicDocument.Statistics.Pages           = 0;
+        oLogicDocument.Statistics.Words           = 0;
+        oLogicDocument.Statistics.Paragraphs      = 0;
+        oLogicDocument.Statistics.SymbolsWOSpaces = 0;
+        oLogicDocument.Statistics.SymbolsWhSpaces = 0;
+
+		oLogicDocument.Statistics.Update_Pages(this.Pages.length);
+		for (let CurPage = 0, PagesCount = oLogicDocument.Pages.length; CurPage < PagesCount; ++CurPage)
+		{
+			oLogicDocument.DrawingObjects.documentStatistics(CurPage, oLogicDocument.Statistics);
+		}
+
+		let Count = oLogicDocument.Content.length;
+		for (let Index = oLogicDocument.Statistics.StartPos; Index < Count; ++Index)
+		{
+			let Element = oLogicDocument.Content[Index];
+			Element.CollectDocumentStatistics(oLogicDocument.Statistics);
+		}
+
+		return {
+            "PageCount"      : oLogicDocument.Statistics.Pages,
+            "WordsCount"     : oLogicDocument.Statistics.Words,
+            "ParagraphCount" : oLogicDocument.Statistics.Paragraphs,
+            "SymbolsCount"   : oLogicDocument.Statistics.SymbolsWOSpaces,
+            "SymbolsWSCount" : oLogicDocument.Statistics.SymbolsWhSpaces
+        }
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -18467,6 +18508,7 @@
 	ApiDocument.prototype["SetControlsHighlight"]        = ApiDocument.prototype.SetControlsHighlight;
 	ApiDocument.prototype["GetAllComments"]              = ApiDocument.prototype.GetAllComments;
 	ApiDocument.prototype["GetCommentById"]              = ApiDocument.prototype.GetCommentById;
+	ApiDocument.prototype["GetStatistics"]               = ApiDocument.prototype.GetStatistics;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
 	ApiDocument.prototype["ReplaceCurrentImage"]         = ApiDocument.prototype.ReplaceCurrentImage;

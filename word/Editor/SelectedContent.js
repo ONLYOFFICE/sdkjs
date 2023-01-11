@@ -156,8 +156,27 @@
 		if (((oParentShape && !oParentShape.isForm()) || true === oDocContent.IsFootnote()) && true === this.HaveShape())
 			return false;
 
-		// В заголовки диаграмм не вставляем формулы и любые DrawingObjects
-		if (oParagraph.bFromDocument === false && (this.DrawingObjects.length > 0 || this.HaveMath() || this.HaveTable()))
+		// В заголовки диаграмм не вставляем формулы
+		if(this.HaveMath())
+		{
+			if(oParagraph.bFromDocument === false)
+			{
+				let oDrawing = oDocContent.Is_DrawingShape(true);
+				if(oDrawing)
+				{
+					let nDrawingType = null;
+					if(oDrawing.getObjectType) 
+					{
+						nDrawingType = oDrawing.getObjectType();
+					}
+					if(nDrawingType !== AscDFH.historyitem_type_Shape)
+					{
+						return false;
+					}
+				}
+			}
+		}
+		if (oParagraph.bFromDocument === false && (this.DrawingObjects.length > 0 || this.HaveTable()))
 			return false;
 
 		let oParaAnchorPos = oParagraph.Get_ParaNearestPos(oAnchorPos);

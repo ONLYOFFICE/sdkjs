@@ -3778,9 +3778,12 @@ DrawingObjectsController.prototype =
         {
             if(!this.document)
             {
-                if ( null != HyperProps.Text && "" != HyperProps.Text && true === content.IsSelectionUse() )
+                if ( null != HyperProps.Text && "" != HyperProps.Text )
                 {
-                    this.removeCallback(-1, undefined, undefined, undefined, undefined, true);
+                    if (true === content.IsSelectionUse())
+                    {
+                        this.removeCallback(-1, undefined, undefined, undefined, undefined, true);
+                    }
                     bCheckExtents = true;
                 }
             }

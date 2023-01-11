@@ -236,10 +236,18 @@
     CViewPr.prototype.toXml = function (writer, name) {
     };
     CViewPr.prototype.DEFAULT_GRID_SPACING = 360000;
+    CViewPr.prototype.MAX_GRID_SPACING = 2*914400;//2 inches
     CViewPr.prototype.getGridSpacing = function () {
         let oSpacing = this.gridSpacing;
         if(oSpacing) {
-            return oSpacing.cx || this.DEFAULT_GRID_SPACING;
+            if(AscFormat.isRealNumber(oSpacing.cx) && oSpacing.cx > 0) {
+                let nGridSpacing = oSpacing.cx;
+                while(nGridSpacing > this.MAX_GRID_SPACING) {
+                    nGridSpacing /= 1000;
+                }
+                return nGridSpacing
+            }
+            return this.DEFAULT_GRID_SPACING;
         }
         return  this.DEFAULT_GRID_SPACING;
     };

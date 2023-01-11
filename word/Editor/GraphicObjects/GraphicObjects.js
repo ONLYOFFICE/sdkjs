@@ -3362,16 +3362,24 @@ CGraphicObjects.prototype =
             }
             else
             {
-                var first_selected = this.selectedObjects[0];
-                var arr_drawings_ = [];
-                for(var i = 0; i < this.selectedObjects.length; ++i)
-                {
-                    this.selectedObjects[i].parent.PreDelete();
-                    this.selectedObjects[i].parent.Remove_FromDocument(false);
-                    arr_drawings_.push(this.selectedObjects[i].parent);
-                }
+                let aSelectedObjects = [].concat(this.selectedObjects);
+                let oFirstSelected = aSelectedObjects[0];
+                let oFirstParaDrawing = oFirstSelected.parent;
                 this.resetSelection();
-                first_selected.parent.GoTo_Text();
+                if(oFirstParaDrawing) 
+                {
+                    oFirstParaDrawing.GoTo_Text();
+                }
+                for(let nDrawing = 0; nDrawing < aSelectedObjects.length; ++nDrawing)
+                {
+                    let oSp = aSelectedObjects[nDrawing];
+                    let oParaDrawing = oSp.parent;
+                    if(oParaDrawing) 
+                    {
+                        oParaDrawing.PreDelete();
+                        oParaDrawing.Remove_FromDocument(false);
+                    }
+                }
                 this.document.Recalculate();
             }
         }
