@@ -9276,6 +9276,46 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 43214);
 
+		oParser = new parserFormula("TRUNC(43214.43214)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 43214);
+
+		oParser = new parserFormula("TRUNC(43214.43214, 0.25678)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 43214);
+
+		oParser = new parserFormula("TRUNC(43214.43214, 1.25678)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 43214.4);
+
+		oParser = new parserFormula("TRUNC(-43214.43214, 1.25678)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -43214.4);
+
+		oParser = new parserFormula("TRUNC(-43214.43214, -2.25678)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -43200);
+
+		oParser = new parserFormula("TRUNC(43214.43214, -2.25678)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 43200);
+
+		oParser = new parserFormula("TRUNC(44.3244, -2.25678)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		oParser = new parserFormula("TRUNC(444.3244, -2.25678)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 400);
+
+		oParser = new parserFormula("TRUNC(0.43214, 10)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.43214);
+
+		oParser = new parserFormula("TRUNC(0.4321443214432144321443214432144321443214, 100)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.43214432144321435);
+
 		oParser = new parserFormula("TRUNC(43214, 10)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 43214);
@@ -9295,6 +9335,175 @@ $(function () {
 		oParser = new parserFormula("TRUNC(123.23423,1)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 123.2);
+
+		// bool
+		oParser = new parserFormula("TRUNC(TRUE,1)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(TRUE,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of TRUNC(TRUE,1)");
+
+		oParser = new parserFormula("TRUNC(FALSE,1)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(FALSE,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of TRUNC(FALSE,1)");
+
+		oParser = new parserFormula("TRUNC(123.123,TRUE)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(123.123,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), 123.1, "Result of TRUNC(123.123,TRUE)");
+
+		oParser = new parserFormula("TRUNC(123.123,FALSE)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(123.123,FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), 123, "Result of TRUNC(123.123,FALSE)");
+
+		oParser = new parserFormula("TRUNC(TRUE,TRUE)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(TRUE,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of TRUNC(TRUE,TRUE)");
+
+		oParser = new parserFormula("TRUNC(FALSE,FALSE)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(FALSE,FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of TRUNC(FALSE,FALSE)");
+
+		// string
+		oParser = new parserFormula("TRUNC(\"string\",1)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(string,1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of TRUNC(string,1)");
+
+		oParser = new parserFormula("TRUNC(\"252.252\",1)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('252.252',1)");
+		assert.strictEqual(oParser.calculate().getValue(), 252.2, "Result of TRUNC('252.252',1)");
+
+		oParser = new parserFormula("TRUNC(\"252.252s\",1)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('252.252s',1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of TRUNC('252.252s',1)");
+
+		oParser = new parserFormula("TRUNC(\"252.252\",\"1\")", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('252.252','1')");
+		assert.strictEqual(oParser.calculate().getValue(), 252.2, "Result of TRUNC('252.252','1')");
+
+		oParser = new parserFormula("TRUNC(\"252.252\",\"1s\")", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('252.252','1s')");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of TRUNC('252.252','1s')");
+		
+		ws.getRange2("E101").setValue("123.335");
+		ws.getRange2("E102").setValue("2");
+		ws.getRange2("E103").setValue("231.13");
+		ws.getRange2("E104").setValue("959.00001");
+		ws.getRange2("E105").setValue("0.30000000000000004");
+		ws.getRange2("E106").setValue("1.7999999999999998");
+		ws.getRange2("E107").setValue("str");
+		ws.getRange2("E108").setValue("TRUE");
+		ws.getRange2("E109").setValue("#N/A");
+		ws.getRange2("E110").setValue("");
+		ws.getRange2("E111").setValue();
+		ws.getRange2("E112").setValue("22.22");
+		ws.getRange2("E112").setNumFormat("@");
+
+		// cell|cellsrange
+		oParser = new parserFormula("TRUNC(E101,E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('252.252','1')");
+		assert.strictEqual(oParser.calculate().getValue(), 123.33, "Result of TRUNC('252.252','1')");
+
+		oParser = new parserFormula("TRUNC(E101:E101,E102:E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('252.252','1')");
+		assert.strictEqual(oParser.calculate().getValue(), 123.33, "Result of TRUNC('252.252','1')");
+
+		oParser = new parserFormula("TRUNC(E101:E102,E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(E101:E102,'1')");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of TRUNC(E101:E102,'1')");
+
+		oParser = new parserFormula("TRUNC(E101,E102:E104)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(E101,E102:E104)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of TRUNC(E101,E102:E104)");
+
+		oParser = new parserFormula("TRUNC(E106,E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(E106,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1.79, "Result of TRUNC(E106,2)");
+
+		oParser = new parserFormula("TRUNC(E107,E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('str',2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of TRUNC('str',2)");
+
+		oParser = new parserFormula("TRUNC(E108,E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('22.22','2')");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of TRUNC('22.22','2')");
+
+		oParser = new parserFormula("TRUNC(E109,E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('22.22','2')");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of TRUNC('22.22','2')");
+
+		oParser = new parserFormula("TRUNC(E110,E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('22.22','2')");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of TRUNC('22.22','2')");
+
+		oParser = new parserFormula("TRUNC(E111,E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('22.22','2')");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of TRUNC('22.22','2')");
+
+		oParser = new parserFormula("TRUNC(E112,E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('22.22','2')");
+		assert.strictEqual(oParser.calculate().getValue(), 22.22, "Result of TRUNC('22.22','2')");
+
+		oParser = new parserFormula("TRUNC(,2)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of TRUNC(,2)");
+		
+		oParser = new parserFormula("TRUNC(2,E110)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(2,'')");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of TRUNC(2,'')");
+
+		oParser = new parserFormula("TRUNC(2,E111)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(2,'')");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of TRUNC(2,'')");
+
+		oParser = new parserFormula("TRUNC(2,)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(2,)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of TRUNC(2,)");
+
+
+		oParser = new parserFormula("TRUNC(E101:E101,E102)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC('252.252','1')");
+		assert.strictEqual(oParser.calculate().getValue(), 123.33, "Result of TRUNC('252.252','1')");
+
+		// array
+		oParser = new parserFormula("TRUNC({2,3,5,12},2)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC({2,3,5,12},2)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of TRUNC({2,3,5,12},2)");
+
+		oParser = new parserFormula("TRUNC({999.025,3,5,12},2)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC({999.025,3,5,12},2)");
+		assert.strictEqual(oParser.calculate().getValue(), 999.02, "Result of TRUNC({999.025,3,5,12},2)");
+
+		oParser = new parserFormula("TRUNC({999.025,3,5,12},{3,2,25})", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC({999.025,3,5,12},{3,2,25})");
+		assert.strictEqual(oParser.calculate().getValue(), 999.025, "Result of TRUNC({999.025,3,5,12},{3,2,25})");
+
+		// err
+		oParser = new parserFormula("TRUNC(#N/A,2)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(#N/A,2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of TRUNC(#N/A,2)");
+
+		oParser = new parserFormula("TRUNC(2,#VALUE!)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(2,#VALUE!)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of TRUNC(2,#VALUE!)");
+
+		oParser = new parserFormula("TRUNC(#N/A,#VALUE!)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(#N/A,#VALUE!)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of TRUNC(#N/A,#VALUE!)");
+
+		// bug cases
+		oParser = new parserFormula("TRUNC(2.1999999999999997,1)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(2.1999999999999997,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 2.1, "Result of TRUNC(2.1999999999999997,1)");
+
+		oParser = new parserFormula("TRUNC((0.6*3),1)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC((0.6*3),1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1.8, "Result of TRUNC((0.6*3),1)");
+
+		oParser = new parserFormula("TRUNC((0.4*1)+(0.6*3),1)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC((0.4*1)+(0.6*3),1)");
+		assert.strictEqual(oParser.calculate().getValue(), 2.1, "Result of TRUNC((0.4*1)+(0.6*3),1)");	// 2.2
+
+		oParser = new parserFormula("TRUNC(0.1+0.2,1)", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC(0.1+0.2,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 0.3, "Result of TRUNC(0.1+0.2,1)");
 
 		testArrayFormula2(assert, "TRUNC", 1, 2);
 	});
