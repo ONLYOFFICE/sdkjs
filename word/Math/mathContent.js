@@ -5670,17 +5670,12 @@ CMathContent.prototype.SplitContentByContentPos = function()
 };
 CMathContent.prototype.Process_AutoCorrect = function (oElement)
 {
-    debugger
     let isConvert = false;
 
     var oLogicDocument = this.GetLogicDocument();
     var nInputType = oLogicDocument
         ? oLogicDocument. Api.getMathInputType()
         : Asc.c_oAscMathInputType.Unicode;
-
-    var isLaTeX_AutoCorrection_Allow = false;
-    if (isLaTeX_AutoCorrection_Allow === false && nInputType === 1)
-        return;
 
     // split content bu cursor position
     const arrNextContent = this.SplitContentByContentPos();
@@ -5906,7 +5901,7 @@ CMathContent.prototype.ConvertContentInLastBracketBlock = function(nInputType, i
         const oBracketsContent = this.GetBracketOperatorInfo(nInputType === 1);
         const Brackets = new ProceedBrackets(oBracketsContent);
 
-        if (Brackets.intCounter === 0)
+        if (Brackets.intCounter === 0 && Brackets.BracketsPair.length > 0)
         {
             let pair = Brackets.BracketsPair[0][0];
             const Result = [pair[2], pair[0] + 1];
@@ -6258,7 +6253,6 @@ ContentIterator.prototype.ResetParaRunCursor = function()
 }
 ContentIterator.prototype.CheckRules = function ()
 {
-    debugger
     const rules = [
         //true обозначает обычный текст или блоки контента (CFraction, CLimit, CDegree...);
         // ["_"],
@@ -6457,12 +6451,92 @@ CMathContent.prototype.Refresh_ContentChanges = function()
 {
 	this.m_oContentChanges.Refresh();
 };
+CMathContent.prototype.IsOneElementInContentForGetText = function()
+{
+    return this.Content.length === 1;
+}
+CMathContent.prototype.IsFirstLetterIsBracket = function (isLaTeX)
+{
+    let firstElement = this.Content[this.Content.length - 1];
+
+    if (isLaTeX && firstElement.GetTextOfElement(isLaTeX)[0] === "{")
+    {
+        return true;
+    }
+    else if (!isLaTeX && firstElement.GetTextOfElement(isLaTeX)[0] === "(")
+    {
+        return true;
+    }
+
+    return false;
+}
+CMathContent.prototype.GetMultipleContentForGetText = function(isLaTeX, isNotBrackets, isMustBeBracketsInLaTeX, isMustBeBracketsInUnicode)
+{
+    let str = "";
+
+    if ((isMustBeBracketsInLaTeX && isLaTeX) || (isMustBeBracketsInUnicode && !isLaTeX))
+    {
+        if (isMustBeBracketsInLaTeX === true && isLaTeX)
+        {
+            str = this.GetTextOfElement(isLaTeX);
+            if (str[0] !== "{")
+            {
+                str = "{" + this.GetTextOfElement(isLaTeX) + "}";
+            }
+        }
+
+        if (isMustBeBracketsInUnicode === true && !isLaTeX)
+        {
+            if (str[0] !== "(")
+            {
+                str =  "(" + this.GetTextOfElement(isLaTeX) + ")";
+            }
+        }
+
+        return str;
+    }
+
+    if (this.IsOneElementInContentForGetText() || this.IsFirstLetterIsBracket(isLaTeX))
+    {
+        str = this.GetTextOfElement(isLaTeX)
+    }
+    else
+    {
+        if (isNotBrackets)
+        {
+            str = this.GetTextOfElement(isLaTeX)
+        }
+        else
+        {
+            str = (isLaTeX === true)
+                ?  "{" + this.GetTextOfElement(isLaTeX) + "}"
+                :  "(" + this.GetTextOfElement(isLaTeX) + ")";
+        }
+    }
+
+    if (!isLaTeX && isNotBrackets && str[0] === "├" && str[str.length - 1] === "┤")
+    {
+        return str.slice(1,str.length - 1);
+    }
+
+    return this.CheckIsEmpty(str);
+}
+CMathContent.prototype.CheckIsEmpty = function(strAtom)
+{
+    if (strAtom === '⬚')
+        return "";
+    else
+        return strAtom;
+}
 CMathContent.prototype.GetTextOfElement = function(isLaTeX)
 {
 	let str = "";
-	for (let i = 0; i < this.Content.length; i++) {
+
+	for (let i = 0; i < this.Content.length; i++)
+    {
 		str += this.Content[i].GetTextOfElement(isLaTeX);
 	}
+
 	return str;
 };
 CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)

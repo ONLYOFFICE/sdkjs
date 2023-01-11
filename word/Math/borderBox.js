@@ -562,15 +562,15 @@ CBorderBox.prototype.Get_InterfaceProps = function()
 CBorderBox.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strSymbol = String.fromCharCode(9645);
-	var strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement());
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 	var strStartBracet = (strBase.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
 	var strCloseBracet = (strBase.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
 	
-	if (true === isLaTeX) {
+	if (true === isLaTeX)
 		strTemp = '\\rect' + strStartBracet + strBase + strCloseBracet;
-	} else {
+	else
 		strTemp = strSymbol + strStartBracet + strBase + strCloseBracet;
-	}
+
 	return strTemp;
 };
 
@@ -1128,12 +1128,12 @@ CBar.prototype.GetTextOfElement = function(isLaTeX) {
         strStartBracket = this.GetStartBracetForGetTextContent(isLaTeX),
         strCloseBracket = this.GetEndBracetForGetTextContent(isLaTeX);
 
-    if (!isLaTeX) {
+    if (!isLaTeX)
         strSymbol = (this.Pr.pos) ? "▁" : "¯";
-    } else {
+    else
         strSymbol = (this.Pr.pos) ? "\\underline" : "\\overline";
-    }
-	strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement(isLaTeX));
+
+	strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 	
 	strTemp =
 		strSymbol

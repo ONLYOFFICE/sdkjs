@@ -150,7 +150,7 @@
 		let strAccent,
 			oResultAccent;
 
-		this.oLookahead.data = MathLiterals.accent.toSymbols[this.oLookahead.data];
+		//this.oLookahead.data = MathLiterals.accent.toSymbols[this.oLookahead.data];
 
 		if (this.oLookahead.data === "'" || this.oLookahead.data === "''")
 		{
@@ -223,37 +223,48 @@
 		return (
 			this.oLookahead.class === oLiteralNames.opOpenBracket[0] ||
 			this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0] ||
-			this.oLookahead.data === "├"
+			this.oLookahead.data === "├" ||
+			this.oLookahead.data === "\\left"
 		);
 	};
 	CLaTeXParser.prototype.GetBracketLiteral = function ()
 	{
 		let arrBracketContent, strLeftSymbol, strRightSymbol;
-		if (this.oLookahead.data === "├") {
+
+		if (this.oLookahead.data === "├" || this.oLookahead.data === "\\left")
+		{
 			this.EatToken(this.oLookahead.class);
+
 			if (this.oLookahead.class === oLiteralNames.opOpenBracket[0] || this.oLookahead.data === "." || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0]) {
 				strLeftSymbol = this.EatToken(this.oLookahead.class).data;
 			}
+
 			arrBracketContent = this.GetContentOfBracket();
-			if (this.oLookahead.data === "┤") {
-				this.EatToken("┤");
+
+			if (this.oLookahead.data === "┤" || this.oLookahead.data === "\\right")
+			{
+				this.EatToken(this.oLookahead.class);
 				if (this.oLookahead.class === oLiteralNames.opCloseBracket[0] || this.oLookahead.data === "." || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0]) {
 					strRightSymbol = this.EatToken(this.oLookahead.class).data;
 				}
 			}
 		}
-		else if (this.oLookahead.class === oLiteralNames.opOpenBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0]) {
+		else if (this.oLookahead.class === oLiteralNames.opOpenBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0])
+		{
 			strLeftSymbol = this.EatToken(this.oLookahead.class).data;
 			
-			if (this.oLookahead.data === "_" || this.oLookahead.data === "^") {
+			if (this.oLookahead.data === "_" || this.oLookahead.data === "^")
+			{
 				return this.GetPreScriptLiteral()
 			}
 
-			if (strLeftSymbol === "|" || strLeftSymbol === "‖") {
+			if (strLeftSymbol === "|" || strLeftSymbol === "‖")
+			{
 				this.SaveState(this.oLookahead);
 				arrBracketContent = this.GetContentOfBracket(strLeftSymbol)
 			}
-			else {
+			else
+			{
 				arrBracketContent = this.GetContentOfBracket()
 			}
 
@@ -265,7 +276,8 @@
 			// 	}
 			// }
 
-			if (this.oLookahead.class === oLiteralNames.opCloseBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0]) {
+			if (this.oLookahead.class === oLiteralNames.opCloseBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0])
+			{
 				strRightSymbol = this.EatToken(this.oLookahead.class).data;
 			}
 		}
@@ -628,28 +640,43 @@
 	CLaTeXParser.prototype.GetSubSupLiteral = function (oBaseContent, isSingle)
 	{
 		let isLimits, oDownContent, oUpContent, oThirdContent;
-		if (undefined === oBaseContent) {
+
+		if (undefined === oBaseContent)
+		{
 			oBaseContent = this.GetElementLiteral();
 		}
-		if (this.oLookahead.class === "\\limits") {
+		if (this.oLookahead.class === "\\limits")
+		{
 			this.EatToken("\\limits");
 			isLimits = true;
 		}
-		if (this.oLookahead.class === "_") {
+
+		if (oBaseContent.type === oLiteralNames.bracketBlockLiteral[num] && oBaseContent.left === "{" && oBaseContent.right === "}")
+		{
+			oBaseContent = oBaseContent.value;
+		}
+
+		if (this.oLookahead.class === "_")
+		{
 			oDownContent = this.GetPartOfSupSup();
-			if (this.oLookahead.class === "^" && isSingle !== true) {
+			if (this.oLookahead.class === "^" && isSingle !== true)
+			{
 				oUpContent = this.GetPartOfSupSup();
 			}
-			else if (oDownContent && oDownContent.down === undefined && oDownContent.base) {
+			else if (oDownContent && oDownContent.down === undefined && oDownContent.base)
+			{
 				oDownContent = oDownContent.base;
 			}
 		}
-		else if (this.oLookahead.class === "^") {
+		else if (this.oLookahead.class === "^")
+		{
 			oUpContent = this.GetPartOfSupSup();
-			if (this.oLookahead.class === "_" && isSingle !== true) {
+			if (this.oLookahead.class === "_" && isSingle !== true)
+			{
 				oDownContent = this.GetPartOfSupSup();
 			}
-			else if (oUpContent && oUpContent.up === undefined && oUpContent.base) {
+			else if (oUpContent && oUpContent.up === undefined && oUpContent.base)
+			{
 				oUpContent = oUpContent.base;
 			}
 		}
@@ -817,8 +844,8 @@
 				break;
 			case "\\begin{array}":
 			case "\\begin{equation}":
-			// case "■":
-			// case "█":
+			case "■":
+			//case "█":
 			default:
 				strMatrixType = "";
 		}

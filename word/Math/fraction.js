@@ -614,51 +614,44 @@ CFraction.prototype.raw_SetFractionType = function(FractionType)
     this.Pr.type = FractionType;
     this.fillContent();
 };
-CFraction.prototype.GetTextOfElement = function(isLaTeX) {
-	var strTemp = "";
-	var strNumerator = this.CheckIsEmpty(this.getNumerator().GetTextOfElement(isLaTeX));
-	var strDenominator = this.CheckIsEmpty(this.getDenominator().GetTextOfElement(isLaTeX));
-	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
-	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
+CFraction.prototype.GetTextOfElement = function(isLaTeX)
+{
+	let strTemp = "";
+	let strNumerator = this.getNumerator().GetMultipleContentForGetText(isLaTeX);
+	let strDenominator = this.getDenominator().GetMultipleContentForGetText(isLaTeX);
 
-	if (strNumerator === '()') {
-		strNumerator = '';
-	}
-	if (strDenominator === '()') {
-		strDenominator = '';
-	}
+	if (true === isLaTeX)
+    {
+        if (strNumerator[0] !== "{")
+            strNumerator = "{" + strNumerator + "}";
+        if (strDenominator[0] !== "{")
+            strDenominator = "{" + strDenominator + "}";
 
-	if (strNumerator.length > 1 && strNumerator[0] !== strStartBracet && strNumerator[-1] !== strCloseBracet || isLaTeX) {
-		strNumerator = strStartBracet + strNumerator + strCloseBracet;
-	}
-	if (strDenominator.length > 1 && strDenominator[0] !== strStartBracet && strDenominator[-1] !== strCloseBracet || isLaTeX) {
-		strDenominator = strStartBracet + strDenominator + strCloseBracet;
-	}
-
-	if (true === isLaTeX) {
-		switch (this.Pr.type) {
+		switch (this.Pr.type)
+        {
 			case 0:	strTemp += '\\frac'; break;
 			case 1:	strTemp += '\\sfrac'; break;
 			case 2:	strTemp += '\\cfrac'; break;
 			default: strTemp += '\\frac';  break;
 		}
+
 		strTemp += strNumerator + strDenominator;
-	} else {
+	}
+    else
+    {
 		strTemp += strNumerator;
-		switch (this.Pr.type) {
+		switch (this.Pr.type)
+        {
 			case 0:	strTemp += '/';	break;
 			case 1:	strTemp += '⁄';	break;
 			case 2:	strTemp += '⊘';	break;
 			case 3:	strTemp += String.fromCharCode(166); break;
 			default:strTemp += String.fromCharCode(47); break;
 		}
-		strTemp += strDenominator;
-		strTemp = "〖" + strTemp + "〗";
-	}
 
-    if (!isLaTeX) {
-        strTemp = " " + strTemp;
-    }
+		strTemp += strDenominator;
+		strTemp = strTemp;
+	}
 	return strTemp;
 };
 /**

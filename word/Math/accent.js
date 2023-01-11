@@ -690,12 +690,13 @@ CAccent.prototype.Get_InterfaceProps = function()
 };
 CAccent.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
-	var strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement(isLaTeX));
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 	var strAccent = String.fromCharCode(this.Pr.chr);
 	var strStartBracet = (strBase.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
 	var strCloseBracet = (strBase.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
 	
-	if (isLaTeX) {
+	if (isLaTeX)
+    {
 		var intAccentCode = strAccent.charCodeAt();
 		switch (intAccentCode) {
 			case 0:		strAccent = '\\hat'; 				break;
@@ -717,7 +718,9 @@ CAccent.prototype.GetTextOfElement = function(isLaTeX) {
 			default:	strAccent = '\\hat';				break;
 		}
 		strTemp = strAccent + strStartBracet + strBase + strCloseBracet
-	} else {
+	}
+    else
+    {
 		strTemp = strStartBracet + strBase + strCloseBracet + strAccent;
 	}
 	return strTemp;
