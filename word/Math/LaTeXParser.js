@@ -474,6 +474,19 @@
 		this.EatToken(this.oLookahead.class);
 		let oContent = this.GetArguments(1);
 
+		if(base.type === oLiteralNames.functionLiteral[num])
+		{
+			this.SkipFreeSpace();
+			let third = this.GetArguments(1);
+			return {
+				type: oLiteralNames.functionWithLimitLiteral[num],
+				value: base.value,
+				up: !isBelow ? oContent : undefined,
+				down: isBelow ? oContent : undefined,
+				third: third,
+			}
+		}
+
 		return {
 			type: oLiteralNames.belowAboveLiteral[num],
 			base: base,
@@ -521,7 +534,8 @@
 		if (this.oLookahead.class === "\\limits") {
 			this.EatToken("\\limits");
 		}
-		let oThirdContent = !this.IsSubSup()
+
+		let oThirdContent = !this.IsSubSup() && !this.IsGetBelowAboveLiteral()
 			? this.GetArguments(1)
 			: undefined;
 
