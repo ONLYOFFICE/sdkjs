@@ -1288,6 +1288,16 @@
 		return intLenOfRule;
 	}
 
+	function GetPrForFunction(oIndex)
+	{
+		let isHide = true;
+		if (oIndex)
+			isHide = false;
+
+		return {
+			degHide: isHide,
+		}
+	}
 	// Convert tokens to math objects
 	function ConvertTokens(oTokens, oContext)
 	{
@@ -1537,7 +1547,14 @@
 						)
 					}
 					else if (oTokens.value && oTokens.value.type === oNamesOfLiterals.opNaryLiteral[num]) {
-						let oNary = oContext.Add_NAry({chr: oTokens.value.value.charCodeAt(0)}, null, null, null);
+
+						let Pr = {
+							chr: oTokens.value.value.charCodeAt(0),
+							supHide: oTokens.down !== undefined,
+							subHide: oTokens.up !== undefined,
+						}
+
+						let oNary = oContext.Add_NAry(Pr, null, null, null);
 						ConvertTokens(
 							oTokens.third,
 							oNary.getBase(),
@@ -1591,36 +1608,22 @@
 					}
 					break;
 				case oNamesOfLiterals.functionWithLimitLiteral[num]:
-					let oFuncWithLimit = oContext.Add_FunctionWithLimit(
-						{},
-						null,
-						null,
-					);
-					if (typeof oTokens.value === "object") {
-						UnicodeArgument(
-							oTokens.value.value,
-							oNamesOfLiterals.bracketBlockLiteral[num],
-							oFuncWithLimit.getFName().Content[0].getFName()
-						)
-					}
-					else {
-						oFuncWithLimit
-							.getFName()
-							.Content[0]
-							.getFName()
-							.Add_Text(oTokens.value);
-					}
+					var MathFunc = new CMathFunc({});
+					oContext.Add_Element(MathFunc);
 
-					let oLimitIterator = oFuncWithLimit
-						.getFName()
-						.Content[0]
-						.getIterator();
+					var FuncName = MathFunc.getFName();
+
+					var Limit = new CLimit({ctrPrp : new CTextPr(), type : oTokens.down !== undefined ? LIMIT_LOW : LIMIT_UP});
+					FuncName.Add_Element(Limit);
+
+					var LimitName = Limit.getFName();
+					LimitName.Add_Text(oTokens.value);
 
 					if (oTokens.up || oTokens.down) {
 						UnicodeArgument(
 							oTokens.up === undefined ? oTokens.down : oTokens.up,
 							oNamesOfLiterals.bracketBlockLiteral[num],
-							oLimitIterator
+							Limit.getIterator()
 						)
 					}
 
@@ -1628,7 +1631,7 @@
 						UnicodeArgument(
 							oTokens.third,
 							oNamesOfLiterals.bracketBlockLiteral[num],
-							oFuncWithLimit.getArgument()
+							MathFunc.getArgument(),
 						)
 					}
 
@@ -1701,8 +1704,9 @@
 
 					break;
 				case oNamesOfLiterals.sqrtLiteral[num]:
+					let Pr = GetPrForFunction(oTokens.index);
 					let oRadical = oContext.Add_Radical(
-						{},
+						Pr,
 						null,
 						null
 					);

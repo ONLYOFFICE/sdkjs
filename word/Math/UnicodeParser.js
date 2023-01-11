@@ -571,13 +571,9 @@
 
 		this.SkipSpace();
 
-		if (!this.IsExpSubSupLiteral())
-			oContent = this.GetElementLiteral();
-
 		return {
 			type: oLiteralNames.functionLiteral[num],
 			value: oName,
-			third: oContent
 		}
 	};
 	CUnicodeParser.prototype.IsExpBracketLiteral = function ()
@@ -1034,6 +1030,19 @@
 			isBelow = false;
 
 		oBelowAbove = this.GetElementLiteral();
+
+		if(base.type === oLiteralNames.functionLiteral[num])
+		{
+			this.SkipSpace();
+			let third = this.GetOperandLiteral();
+			return {
+				type: oLiteralNames.functionWithLimitLiteral[num],
+				value: base.value,
+				up: strType === "┴" ? oBelowAbove : undefined,
+				down: strType !== "┴" ? oBelowAbove : undefined,
+				third: third,
+			}
+		}
 
 		return {
 			type: oLiteralNames.belowAboveLiteral[num],
