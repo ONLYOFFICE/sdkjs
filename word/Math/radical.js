@@ -762,22 +762,26 @@ CRadical.prototype.Is_ContentUse = function(MathContent)
 
     return false;
 };
-CRadical.prototype.GetTextOfElement = function(isLaTex) {
+CRadical.prototype.GetTextOfElement = function(isLaTeX)
+{
 	var strTemp = "";
+	var strDegree = this.getDegree().GetMultipleContentForGetText(isLaTeX, true);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX);
 
-	var strDegree = this.CheckIsEmpty(this.getDegree().GetTextOfElement(isLaTex));
-	var strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement(isLaTex));
-	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTex);
-	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTex);
+	if (isLaTeX)
+    {
+        if (strDegree.length > 0)
+        {
+            strDegree = '[' + strDegree + ']';
+        }
 
-	if (strDegree.length > 0 && isLaTex)
-		strDegree =  '[' + strDegree + ']';
+        if (strBase[0] !== "{")
+        {
+            strBase = "{" + strBase + "}";
+        }
 
-	if (strBase.length > 1 && (strDegree === "3" || strDegree === "4" || strDegree === '') )
-		strBase = strStartBracet + strBase + strCloseBracet;
-
-	if (isLaTex)
-		strTemp = '\\sqrt' + strDegree + strBase;
+        strTemp = '\\sqrt' + strDegree + strBase;
+    }
 	else
     {
 		var strRadicalSymbol = "√";
@@ -792,14 +796,10 @@ CRadical.prototype.GetTextOfElement = function(isLaTex) {
             if (strDegree.length > 0)
                 strDegree = strDegree + '&';
 
-            if (strDegree.length >= 1)
-                strTemp = strRadicalSymbol + strStartBracet + strDegree + strBase + strCloseBracet;
-            else
-                strTemp = strRadicalSymbol + strDegree + strBase;
+            strTemp = strRadicalSymbol + "(" + strDegree + strBase + ")";
         }
 	}
-    if (!isLaTex)
-        strTemp = "〖" + strTemp + "〗";
+
 	return strTemp;
 };
 

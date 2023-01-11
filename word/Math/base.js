@@ -3021,13 +3021,6 @@ CMathBase.prototype.GetEndBracetForGetTextContent = function(isLaTeX) {
 	else
 		return ')';
 };
-CMathBase.prototype.CheckIsEmpty = function(strAtom) {
-	if (strAtom === '⬚') {
-		return "";
-	} else {
-		return strAtom
-	}
-};
 
 function CMathBasePr()
 {

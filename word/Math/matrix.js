@@ -971,7 +971,8 @@ CMathMatrix.prototype.Is_DeletedItem = function (Action) {
 CMathMatrix.prototype.Get_DeletedItemsThroughInterface = function () {
 	return [];
 };
-CMathMatrix.prototype.GetTextOfElement = function (isLaTeX, strBrackets) {
+CMathMatrix.prototype.GetTextOfElement = function (isLaTeX, strBrackets)
+{
 	var strMatrixSymbol;
 	if (isLaTeX) {
 		switch (strBrackets) {

@@ -95,6 +95,10 @@
 	CUnicodeParser.prototype.GetOpCloseLiteral = function ()
 	{
 		let oCloseLiteral;
+
+		if (this.oLookahead.class === "┤")
+			this.EatToken(this.oLookahead.class);
+
 		if (this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0]) {
 			oCloseLiteral = this.EatToken(oLiteralNames.opOpenCloseBracket[0]);
 			return oCloseLiteral.data;
@@ -196,7 +200,9 @@
 			this.SkipSpace();
 			oExp = this.GetContentOfBracket();
 			this.SkipSpace();
-			this.EatToken("┤");
+
+			if (this.oLookahead.class === "┤")
+				this.EatToken("┤");
 
 			if (this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0] || this.oLookahead.class === oLiteralNames.opCloseBracket[0])
 				strCloseLiteral = this.EatBracket().data;
@@ -465,7 +471,7 @@
 					this.EatToken(this.oLookahead.class);
 
 					if (this.IsOperandLiteral())
-						oContent = this.GetExpLiteral();;
+						oContent = this.GetExpLiteral();
 				}
 				else
 				{
@@ -554,10 +560,11 @@
 	{
 		let oContent;
 		let oName = this.EatToken(this.oLookahead.class).data;
+
 		this.SkipSpace();
-		if (!this.IsExpSubSupLiteral()) {
+
+		if (!this.IsExpSubSupLiteral())
 			oContent = this.GetElementLiteral();
-		}
 
 		return {
 			type: oLiteralNames.functionLiteral[num],
@@ -575,7 +582,7 @@
 	};
 	CUnicodeParser.prototype.IsOpCloserLiteral = function()
 	{
-		return this.oLookahead.class === oLiteralNames.opCloseBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0]
+		return this.oLookahead.class === oLiteralNames.opCloseBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0] || this.oLookahead.class === "┤"
 	}
 	CUnicodeParser.prototype.GetExpBracketLiteral = function ()
 	{
@@ -583,11 +590,12 @@
 			strClose,
 			oExp;
 
-		if (this.oLookahead.class === oLiteralNames.opOpenBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0]) {
+		if (this.oLookahead.class === oLiteralNames.opOpenBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0])
+		{
 			strOpen = this.GetOpOpenLiteral();
-			if (strOpen === "|" || strOpen === "‖") {
+
+			if (strOpen === "|" || strOpen === "‖")
 				this.strBreakSymbol.push(strOpen);
-			}
 
 			if (this.IsPreScriptLiteral() && strOpen === "(") {
 				return this.GetPreScriptLiteral();
@@ -601,25 +609,21 @@
 				}
 			}
 
-			if (this.IsOpCloserLiteral()) {
-				strClose = this.GetOpCloserLiteral();
-				this.strBreakSymbol.shift();
+			if (this.oLookahead.class === "┤")
+				this.EatToken("┤");
 
-				return {
-					type: oLiteralNames.bracketBlockLiteral[num],
-					value: oExp,
-					left: strOpen,
-					right: strClose,
-				};
 
-			}
-			else {
-				if (oExp.length > 0 && oExp && Array.isArray(oExp[0])) {
-					oExp[0].unshift({ type: oLiteralNames.charLiteral[num], value: strOpen})
-				}
+			if (this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0] || this.oLookahead.class === oLiteralNames.opCloseBracket[0])
+				strClose = this.GetOpCloseLiteral();
+			else
+				strClose = ".";
 
-				return oExp;
-			}
+			return {
+				type: oLiteralNames.bracketBlockLiteral[num],
+				value: oExp,
+				left: strOpen,
+				right: strClose,
+			};
 		}
 		else if (this.oLookahead.class === "├") {
 			return this.EatCloseOrOpenBracket();
@@ -1016,20 +1020,37 @@
 			oAboveLiteral,
 			strType;
 
-		if (this.oLookahead.class === "┬" || this.oLookahead.class === "┴") {
+		if (this.oLookahead.class === "┬" || this.oLookahead.class === "┴")
+		{
 			strType = this.EatToken(this.oLookahead.class).data;
-			if (strType === "┬") {
-				oBelowLiteral = this.GetSoOperandLiteral();
-			}
-			else if (strType === "┴") {
-				oAboveLiteral = this.GetSoOperandLiteral();
-			}
+
+			if (strType === "┬")
+				oBelowLiteral = this.GetOperandLiteral();
+			else if (strType === "┴")
+				oAboveLiteral = this.GetOperandLiteral();
 		}
+
+		this.SkipSpace();
+		let third = this.GetOperandLiteral();
+
+		if (Array.isArray(third) && third.length === 0)
+		{
+			third = undefined;
+		}
+
+		// if (base.type !== oLiteralNames.functionLiteral[num] && base.type !== oLiteralNames.functionWithLimitLiteral[num])
+		// {
+		// 	return {
+		// 		type: oLiteralNames.
+		// 	}
+		// }
+
 		return {
 			type: oLiteralNames.functionWithLimitLiteral[num],
 			value: base,
 			up: oAboveLiteral,
-			down: oBelowLiteral
+			down: oBelowLiteral,
+			third : third,
 		};
 	};
 	CUnicodeParser.prototype.IsScriptBelowOrAboveContent = function ()
