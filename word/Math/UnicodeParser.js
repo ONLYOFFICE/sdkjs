@@ -1038,37 +1038,46 @@
 	};
 	CUnicodeParser.prototype.GetFractionLiteral = function (oNumerator)
 	{
-		if (undefined === oNumerator) {
+		let oOperand,
+			strOpOver,
+			strLiteralType,
+			intTypeFraction;
+
+		if (undefined === oNumerator)
 			oNumerator = this.GetOperandLiteral();
-		}
-		if (this.oLookahead.class === oLiteralNames.overLiteral[0]) {
-			const strOpOver = this.EatToken(oLiteralNames.overLiteral[0]).data;
-			let intTypeFraction;
-			let strLiteralType = (strOpOver === "¦" || strOpOver === "⒞")
+
+		if (this.oLookahead.class === oLiteralNames.overLiteral[0])
+		{
+			strOpOver = this.EatToken(oLiteralNames.overLiteral[0]).data;
+
+			strLiteralType = (strOpOver === "¦" || strOpOver === "⒞")
 				? oLiteralNames.binomLiteral[num]
 				: oLiteralNames.fractionLiteral[num];
 
-			if (strOpOver === "⁄") {
-				intTypeFraction = 1;
-			}
-			if (strOpOver === "⊘") {
-				intTypeFraction = 2;
-			}
+			intTypeFraction = this.GetFractionType(strOpOver);
 
-			if (this.IsOperandLiteral()) {
-				let oOperand = this.GetFractionLiteral();
-				return {
-					type: strLiteralType,
-					up: oNumerator,
-					down: oOperand,
-					fracType: intTypeFraction,
-				};
-			}
+			if (this.IsOperandLiteral())
+				oOperand = this.GetFractionLiteral();
+
+			return {
+				type: strLiteralType,
+				up: oNumerator || {},
+				down: oOperand || {},
+				fracType: intTypeFraction,
+			};
 		}
-		else {
+		else
+		{
 			return oNumerator;
 		}
 	};
+	CUnicodeParser.prototype.GetFractionType = function(str)
+	{
+		switch (str) {
+			case "⁄" : return 1
+			case "⊘" : return 2
+		}
+	}
 	CUnicodeParser.prototype.IsFractionLiteral = function ()
 	{
 		return this.IsOperandLiteral();
