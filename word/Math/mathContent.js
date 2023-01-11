@@ -2496,10 +2496,9 @@ CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect
 			this.ParentElement.SetCurrentMathContent(this);
 
 		if (this.Content[this.CurPos])
-			this.Content[this.CurPos].MoveCursorToStartPos();
+            this.CurPos += nCount;
 	}
-
-	this.Correct_Content(true);
+    this.Correct_Content(true);
 	this.Correct_ContentPos(-1);
 };
 CMathContent.prototype.Set_ParaMath = function(ParaMath, Parent)
