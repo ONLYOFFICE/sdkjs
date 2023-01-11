@@ -1179,6 +1179,7 @@ ParaMath.prototype.GetCompiledDefaultTextPr = function()
  */
 ParaMath.prototype.Add = function(Item)
 {
+    debugger
     var LogicDocument  = (this.Paragraph ? this.Paragraph.LogicDocument : undefined);
     var TrackRevisions = (LogicDocument && true === LogicDocument.IsTrackRevisions() ? true : false);
 
