@@ -8460,10 +8460,9 @@ CStyles.prototype =
 
 	GetStyleByStyleId: function (sStyleId)
 	{
-		const arrStylesId = Object.keys(this.Style);
-		for (let i = 0; i < arrStylesId.length; i += 1)
+		for (let sId in this.Style)
 		{
-			const oStyle = this.Style[arrStylesId[i]];
+			const oStyle = this.Style[sId];
 			if (oStyle.GetStyleId() === sStyleId)
 				return oStyle;
 		}
