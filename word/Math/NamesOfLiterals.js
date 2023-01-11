@@ -334,6 +334,7 @@
 		mathOperatorLiteral: 		[12, "MathOperatorLiteral"],
 		rectLiteral: 				[13, "RectLiteral"],
 		boxLiteral: 				[14, "BoxLiteral"],
+		borderBoxLiteral:			[58, "BorderBoxLiteral"],
 		preScriptLiteral: 			[15, "PreScriptLiteral"],
 		mathFontLiteral: 			[16, "MathFontLiteral"],
 		overLiteral: 				[17, "OverLiteral"],
@@ -817,34 +818,25 @@
 		["]", oNamesOfLiterals.opCloseBracket[0]],
 		["⌉", oNamesOfLiterals.opCloseBracket[0]],
 		["⋰"],
+
+		["\\box", oNamesOfLiterals.boxLiteral[0]],
+		["\\fbox", oNamesOfLiterals.rectLiteral[0]],
+		["\\rect", oNamesOfLiterals.rectLiteral[0]],
+
 		["▭", oNamesOfLiterals.rectLiteral[0]],
 		["▭", oNamesOfLiterals.rectLiteral[0]],
 		["⌋", oNamesOfLiterals.opCloseBracket[0]],
-		["ρ"],
-		["⃑"],
 		["┤", true],
-		["→"],
-		["⇁"],
-		["⇀"],
 		["⎱", oNamesOfLiterals.opCloseBracket[0]],
 		["⒭", oNamesOfLiterals.sqrtLiteral[0]], //check
 		["|", oNamesOfLiterals.opOpenCloseBracket[0]],
 		["⁄", oNamesOfLiterals.overLiteral[0]],
 		["⁄", oNamesOfLiterals.overLiteral[0]], //Script
-		["↘"],
-		["∖"],
-		["σ"],
 		["∼", oNamesOfLiterals.operatorLiteral[0]],
 		["≃", oNamesOfLiterals.operatorLiteral[0]],
-		["⬍"],
-		["⌣"],
-		["♠"],
-		["⊓"],
-		["⊔"],
 		["√", oNamesOfLiterals.sqrtLiteral[0]],
 		["⊑", oNamesOfLiterals.operatorLiteral[0]],
 		["⊒", oNamesOfLiterals.operatorLiteral[0]],
-		["⋆"],
 		["⊂", oNamesOfLiterals.operatorLiteral[0]],
 		["⊆", oNamesOfLiterals.operatorLiteral[0]],
 		["█", true],
@@ -854,10 +846,6 @@
 		["⊃", oNamesOfLiterals.operatorLiteral[0]],
 		["⊇", oNamesOfLiterals.operatorLiteral[0]],
 		["√", oNamesOfLiterals.sqrtLiteral[0]],
-		["↙"],
-		["τ"],
-		["∴"],
-		["θ"],
 		[" ", oNamesOfLiterals.spaceLiteral[0]], //[" ", oNamesOfLiterals.spaceLiteral[0]], // 5/18em space thick math space
 		[" ", oNamesOfLiterals.spaceLiteral[0]],
 		["̃", MathLiterals.accent.id],
@@ -873,32 +861,17 @@
 		["▁", true],
 		["⏝", oNamesOfLiterals.hBracketLiteral[0]],
 		["┬", true],
-		["↑"],
-		["↕"],
-		["⊎"],
-		["υ"],
 		["┐", oNamesOfLiterals.opCloseBracket[0]],
-		["ε"],
-		["φ"],
-		["ϖ"],
-		["∝"],
-		["ϱ"],
-		["ς"],
-		["ϑ"],
 		["│", true],
 		["⊢", oNamesOfLiterals.operatorLiteral[0]],
 		["⋮"],
 		["⃗", MathLiterals.accent.id],
 		["∨", oNamesOfLiterals.operatorLiteral[0]],
 		["|", oNamesOfLiterals.opOpenCloseBracket[0]],
-		["⇳"],
 		[" ", oNamesOfLiterals.spaceLiteral[0]], //[" ", oNamesOfLiterals.spaceLiteral[0]], // 6/18em space very thick math space
 		["∧", oNamesOfLiterals.operatorLiteral[0]],
 		["̂", MathLiterals.accent.id], //["\\hat", MathLiterals.accent.id, 770],
 		["℘"],//0x2118
-		["≀"],
-		["ξ"],
-		["ζ"],
 		["‌", oNamesOfLiterals.spaceLiteral[0]],
 		["​", oNamesOfLiterals.spaceLiteral[0]], //["​", oNamesOfLiterals.spaceLiteral[0]], // zero-width space
 
@@ -1021,7 +994,10 @@
 		"\\end",
 		"\\matrix",
 		"\\below",
-		"\\above"
+		"\\above",
+		"\\box",
+		"\\fbox",
+		"\\rect",
 	];
 
 	const functionNames = [
@@ -1808,6 +1784,14 @@
 						oBox.getBase(),
 					)
 					break;
+				case oNamesOfLiterals.borderBoxLiteral[num]:
+					let BorderBox = oContext.Add_BorderBox({}, null);
+					UnicodeArgument(
+						oTokens.value,
+						oNamesOfLiterals.bracketBlockLiteral[num],
+						BorderBox.getBase(),
+					)
+					break;
 				case oNamesOfLiterals.rectLiteral[num]:
 					let oBorderBox = oContext.Add_BorderBox({}, null);
 					UnicodeArgument(
@@ -1829,7 +1813,7 @@
 					let LIMIT_TYPE = (oTokens.isBelow === true) ? LIMIT_LOW : LIMIT_UP;
 					if (oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1)
 					{
-						var Group = new CGroupCharacter({ctrPrp : new CTextPr(), chr: oTokens.base.value.charCodeAt(0), pos: LIMIT_TYPE, vertJc : VJUST_BOT });
+						var Group = new CGroupCharacter({ctrPrp : new CTextPr(), chr: oTokens.base.value.charCodeAt(0), pos: LIMIT_TYPE, vertJc : 0 });
 						oContext.Add_Element(Group);
 
 						UnicodeArgument(

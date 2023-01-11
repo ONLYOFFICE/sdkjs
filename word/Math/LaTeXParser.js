@@ -593,6 +593,19 @@
 			value: oContent,
 		}
 	};
+	CLaTeXParser.prototype.GetBorderBoxLiteral = function ()
+	{
+		return this.oLookahead.class === oLiteralNames.borderBoxLiteral[0];
+	}
+	CLaTeXParser.prototype.IsGetBorderBoxLiteral = function ()
+	{
+		this.EatToken(this.oLookahead.class);
+		let oContent = this.GetArguments(1);
+		return {
+			type: oLiteralNames.borderBoxLiteral[num],
+			value: oContent,
+		}
+	}
 	CLaTeXParser.prototype.IsHBracket = function ()
 	{
 		return this.oLookahead.class === oLiteralNames.hBracketLiteral[0]

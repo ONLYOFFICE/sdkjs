@@ -566,9 +566,9 @@ CBorderBox.prototype.GetTextOfElement = function(isLaTeX) {
 	var strCloseBracet = (strBase.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
 	
 	if (true === isLaTeX)
-		strTemp = '\\box' + strStartBracet + strBase + strCloseBracet;
+		strTemp = '\\rect' + strStartBracet + strBase + strCloseBracet;
 	else
-		strTemp = "□" + strStartBracet + strBase + strCloseBracet;
+		strTemp = "▭" + strStartBracet + strBase + strCloseBracet;
 
 	return strTemp;
 };
