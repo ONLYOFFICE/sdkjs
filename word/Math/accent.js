@@ -721,6 +721,10 @@ CAccent.prototype.GetTextOfElement = function(isLaTeX) {
 	}
     else
     {
+        if (strBase.length === 0)
+        {
+            strBase = "()";
+        }
 		strTemp = strStartBracet + strBase + strCloseBracet + strAccent;
 	}
 	return strTemp;
