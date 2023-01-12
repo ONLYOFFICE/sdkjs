@@ -58,6 +58,7 @@ function CPdfPrinter(fontManager, font)
 	   this.DocumentRenderer.InitPicker(fontManager);
     }
     this.DocumentRenderer.VectorMemoryForPrint = new AscCommon.CMemory();
+    this.DocumentRenderer.DocInfo();
 
     this.font = font;
     this.Transform = new AscCommon.CMatrix();

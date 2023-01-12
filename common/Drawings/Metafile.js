@@ -2667,15 +2667,6 @@
 			this.Memory.Seek(nStartPos);
 			this.Memory.WriteLong(nEndPos - nStartPos);
 			this.Memory.Seek(nEndPos);
-		},
-
-		DocInfo : function()
-		{
-			this.Memory.WriteByte(CommandType.ctDocInfo);
-			this.Memory.WriteString(title);
-			this.Memory.WriteString(creator);
-			this.Memory.WriteString(subject);
-			this.Memory.WriteString(keywords);
 		}
 	};
 
@@ -3477,6 +3468,19 @@
 		{
 			if (0 !== this.m_lPagesCount)
 				this.m_arrayPages[this.m_lPagesCount - 1].AddFormField(nX, nY, nW, nH, nBaseLineOffset, oForm);
+		},
+
+		DocInfo : function()
+		{
+			var props = (_api) ? _api.asc_getCoreProps() : null;
+			if (props)
+			{
+				this.Memory.WriteByte(CommandType.ctDocInfo);
+				this.Memory.WriteString(props.asc_getTitle());
+				this.Memory.WriteString(props.asc_getCreator());
+				this.Memory.WriteString(props.asc_getSubject());
+				this.Memory.WriteString(props.asc_getKeywords());
+			}
 		}
 	};
 

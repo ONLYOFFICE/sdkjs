@@ -2568,6 +2568,7 @@ function CDrawingDocument()
 		Renderer.isPrintMode = isPrint ? true : false;
 		Renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
 		Renderer.VectorMemoryForPrint = new AscCommon.CMemory();
+		Renderer.DocInfo();
 		var old_marks = this.m_oWordControl.m_oApi.ShowParaMarks;
 		this.m_oWordControl.m_oApi.ShowParaMarks = false;
 		this.RenderDocument(Renderer);
@@ -2616,6 +2617,7 @@ function CDrawingDocument()
         var _this = this.printedDocument ? this.printedDocument.DrawingDocument : this;
 		var Renderer = new AscCommon.CDocumentRenderer();
         Renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
+        Renderer.DocInfo();
 
 		var old_marks = this.m_oWordControl.m_oApi.ShowParaMarks;
 		this.m_oWordControl.m_oApi.ShowParaMarks = false;
@@ -2665,6 +2667,7 @@ function CDrawingDocument()
 		var renderer = this.m_oDocRenderer;
 		renderer.Memory.Seek(0);
 		renderer.VectorMemoryForPrint.ClearNoAttack();
+		renderer.DocInfo();
 
 		for (var i = start; i <= end; i++)
 		{
