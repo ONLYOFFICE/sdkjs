@@ -6618,6 +6618,14 @@
 		}
     };
 
+	WorksheetView.prototype._checkCacheInitSector = function (row) {
+		var s = this.cache.sectors;
+		var sectorNumber = Asc.floor(row / kRowsCacheSize);
+		if (!s[sectorNumber]) {
+			s[sectorNumber] = true;
+		}
+	};
+
 
     // ----- Cell text cache -----
 
@@ -7021,6 +7029,7 @@
 		cache.indent = indent;
 
         this._fetchCellCacheText(col, row);
+        this._checkCacheInitSector(row);
 
         if (!angle && !verticalText && (cto.leftSide !== 0 || cto.rightSide !== 0)) {
             this._addErasedBordersToCache(col - cto.leftSide, col + cto.rightSide, row);
@@ -16908,6 +16917,9 @@
 		//t.model.workbook.dependencyFormulas.unlockRecal();
 
 		this.canChangeColWidth = isNotHistory ? c_oAscCanChangeColWidth.none : c_oAscCanChangeColWidth.numbers;
+		if (bbox && !bbox.isOneCell()) {
+			this.cache.reset();
+		}
 		this._updateRange(bbox);
 		if (bbox && (bbox.getType() === c_oAscSelectionType.RangeMax || bbox.getType() === c_oAscSelectionType.RangeCol)) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
