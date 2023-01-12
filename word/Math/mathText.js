@@ -1039,6 +1039,10 @@ CMathText.prototype.GetTextOfElement = function(isLaTeX) {
 
 	return "";
 };
+CMathText.prototype.GetCodePoint = function()
+{
+    return this.value;
+};
 /*CMathText.prototype.Recalculate_Reset = function(StartRange, StartLine, PRS)
 {
     var bNotUpdate = PRS !== null && PRS!== undefined && PRS.bFastRecalculate == true;
