@@ -264,6 +264,7 @@
 	cIFS.prototype.constructor = cIFS;
 	cIFS.prototype.name = 'IFS';
 	cIFS.prototype.argumentsMin = 2;
+	cIFS.prototype.isXLFN = true;
 	cIFS.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;
