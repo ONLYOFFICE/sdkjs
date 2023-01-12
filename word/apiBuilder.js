@@ -2760,7 +2760,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text. (Required).
 	 * @param {string} sAutor - The author's name (Optional).
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @returns {?ApiComment} - returns null if the comment was not add.
 	 */
 	ApiRange.prototype.AddComment = function(sText, sAutor)
 	{
@@ -4044,6 +4044,16 @@
      * @typedef {("simple" | "online" | "classic" | "distinctive" | "centered" | "formal")} TofStyle
 	 * **/
 
+	/**
+	 * Possible values for the text format of text form content.
+	 * **"none"**       - no format
+	 * **"digit"**     	- can be write only digist
+	 * **"letter"**		- can be write only letters
+	 * **"mask"**		- will be apply arbitrary mask
+	 * **"regExp"**		- will be apply regular expression
+	 * @typedef {"none" | "digit" | "letter" | "mask" | "regExp"} FormatType
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Base Api
@@ -4938,7 +4948,7 @@
 	 * @param {ApiRun[] | DocumentElement} oElement - The element where a comment will be added. May be applyed to any element which has an AddComment method.
 	 * @param {string} sText - The comment text.
 	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if comment was not add.
+	 * @returns {?ApiComment} - returns null if comment was not add.
 	 */
 	Api.prototype.AddComment = function(oElement, sText, sAutor)
 	{
@@ -5934,7 +5944,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text. Required.
 	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @returns {?ApiComment} - returns null if the comment was not add.
 	 */
 	ApiDocument.prototype.AddComment = function(sText, sAutor)
 	{
@@ -6368,7 +6378,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sId
-	 * @returns {ApiComment?}
+	 * @returns {?ApiComment}
 	 */
 	ApiDocument.prototype.GetCommentById = function(sId) 
 	{
@@ -7279,7 +7289,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text. Required.
 	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @returns {?ApiComment} - returns null if the comment was not add.
 	 */
 	ApiParagraph.prototype.AddComment = function(sText, sAutor)
 	{
@@ -8768,6 +8778,9 @@
 	 */
 	ApiRun.prototype.AddPageBreak = function()
 	{
+		if (this.Run.GetParentForm())
+			return false;
+
 		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Page));
 	};
 	/**
@@ -8786,6 +8799,9 @@
 	 */
 	ApiRun.prototype.AddColumnBreak = function()
 	{
+		if (this.Run.GetParentForm())
+			return false;
+
 		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Column));
 	};
 	/**
@@ -8806,7 +8822,7 @@
 	 */ 
 	ApiRun.prototype.AddDrawing = function(oDrawing)
 	{
-		if (!(oDrawing instanceof ApiDrawing))
+		if (!(oDrawing instanceof ApiDrawing) || this.Run.GetParentForm())
 			return false;
 
 		this.Run.Add_ToContent(this.Run.Content.length, oDrawing.Drawing);
@@ -8873,6 +8889,9 @@
 	 */
 	ApiRun.prototype.AddHyperlink = function(sLink, sScreenTipText)
 	{
+		if (this.Run.GetParentForm())
+			return null;
+
 		if (typeof(sLink) !== "string" || sLink === "" || sLink.length > Asc.c_nMaxHyperlinkLength)
 			return null;
 		if (typeof(sScreenTipText) !== "string")
@@ -8953,20 +8972,23 @@
      * Returns a content control that contains the current run.
      * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-     * @return {ApiBlockLvlSdt | ApiInlineLvlSdt | null} - returns null if parent content control doesn't exist.  
+     * @return {ApiForm | ApiBlockLvlSdt | ApiInlineLvlSdt } - returns null if parent content control doesn't exist.  
      */
     ApiRun.prototype.GetParentContentControl = function()
     {
-        var RunPosition = this.Run.GetDocumentPositionFromObject();
+        let RunPosition = this.Run.GetDocumentPositionFromObject();
+		let oParentForm = this.Run.GetParentForm();
+		if (oParentForm)
+			return private_CheckForm(oParentForm);
 
-        for (var Index = RunPosition.length - 1; Index >= 1; Index--)
+        for (let Index = RunPosition.length - 1; Index >= 1; Index--)
         {
             if (RunPosition[Index].Class)
             {
                 if (RunPosition[Index].Class.Parent && RunPosition[Index].Class.Parent instanceof CBlockLevelSdt)
                     return new ApiBlockLvlSdt(RunPosition[Index].Class);
                 else if (RunPosition[Index].Class instanceof CInlineLevelSdt)
-                    return new ApiInlineLvlSdt(RunPosition[Index].Class);
+                    return private_CheckForm(RunPosition[Index].Class);
             }
         }
 
@@ -9363,7 +9385,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text. Required.
 	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @returns {?ApiComment} - returns null if the comment was not add.
 	 */
 	ApiRun.prototype.AddComment = function(sText, sAutor)
 	{
@@ -10632,7 +10654,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text. Required.
 	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @returns {?ApiComment} - returns null if the comment was not add.
 	 */
 	ApiTable.prototype.AddComment = function(sText, sAutor)
 	{
@@ -15577,14 +15599,10 @@
 			this.Sdt.SetShowingPlcHdr(false);
 		}
 
-		if (undefined !== nPos)
-		{
-			this.Sdt.AddToContent(nPos, oParaElement);
-		}
-		else
-		{
-			private_PushElementToParagraph(this.Sdt, oParaElement);
-		}
+		if (typeof(nPos) != "number" || nPos < 0 && nPos > this.GetElementsCount())
+			nPos = this.GetElementsCount();
+		
+		this.Sdt.AddToContent(nPos, oParaElement);
 
 		return true;
 	};
@@ -15867,7 +15885,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text. Required.
 	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @returns {?ApiComment} - returns null if the comment was not add.
 	 */
 	ApiInlineLvlSdt.prototype.AddComment = function(sText, sAutor)
 	{
@@ -16457,7 +16475,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text. Required.
 	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @returns {?ApiComment} - returns null if the comment was not add.
 	 */
 	ApiBlockLvlSdt.prototype.AddComment = function(sText, sAutor)
 	{
@@ -16592,6 +16610,16 @@
 			sKey = "";
 		return sKey;
 	};
+
+	Object.defineProperty(ApiFormBase.prototype, "key", {
+		get: function () {
+			return this.GetFormKey();
+		},
+		set: function(sKey) {
+			return this.SetFormKey(sKey);
+		}
+	});
+
 	/**
 	 * Sets a key to the current form.
 	 * @memberof ApiFormBase
@@ -16634,6 +16662,16 @@
 
 		return sTip;
 	};
+
+	Object.defineProperty(ApiFormBase.prototype, "tip", {
+		get: function () {
+			return this.GetTipText();
+		},
+		set: function(sTip) {
+			return this.SetTipText(sTip);
+		}
+	});
+
 	/**
 	 * Sets the tip text to the current form.
 	 * @memberof ApiFormBase
@@ -16652,6 +16690,7 @@
 		this.Sdt.SetFormPr(oFormPr);
 		return true;
 	};
+
 	/**
 	 * Checks if the current form is required.
 	 * @memberof ApiFormBase
@@ -16662,6 +16701,16 @@
 	{
 		return this.Sdt.IsFormRequired();
 	};
+
+	Object.defineProperty(ApiFormBase.prototype, "required", {
+		get: function () {
+			return this.IsRequired();
+		},
+		set: function(bRequired) {
+			return this.SetRequired(bRequired);
+		}
+	});
+
 	/**
 	 * Specifies if the current form should be required.
 	 * @memberof ApiFormBase
@@ -16833,6 +16882,30 @@
         
         return new ApiShape(oShape);
     };
+
+	/**
+	 * Returns the placeholder text from the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 */
+	ApiFormBase.prototype.GetPlaceholderText = function()
+	{
+		if (this.Sdt.IsCheckBox() || this.Sdt.IsRadioButton())
+			return "";
+
+		return this.Sdt.GetPlaceholderText();
+	};
+
+	Object.defineProperty(ApiFormBase.prototype, "placeholder", {
+		get: function() {
+			return this.GetPlaceholderText();
+		},
+		set: function(sText) {
+			return this.SetPlaceholderText(sText);
+		}
+	});
+
 	/**
 	 * Sets the placeholder text to the current form.
 	 * *Can't be set to checkbox or radio button.*
@@ -16851,6 +16924,7 @@
 		this.Sdt.SetPlaceholderText(sText);
 		return true;
 	};
+
 	/**
 	 * Sets the text properties to the current form.
 	 * *This method is used only for text and combo box forms.*
@@ -16920,6 +16994,49 @@
 		return new this.constructor(oSdt);
 	};
 
+	/**
+	 * Adds a string tag to the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sTag - The tag which will be added to the current form.
+	 */
+	ApiFormBase.prototype.SetTag = function(sTag)
+	{
+		this.Sdt.SetTag(sTag);
+	};
+	
+	/**
+	 * Returns the tag attribute for the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 */
+	ApiFormBase.prototype.GetTag = function()
+	{
+		return this.Sdt.GetTag();
+	};
+
+	/**
+	 * Removes a form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiFormBase.prototype.Delete = function()
+	{
+		var oParentPara = this.Sdt.GetParagraph();
+		if (oParentPara)
+		{
+			this.Sdt.PreDelete();
+			var nPosInPara = this.Sdt.GetPosInParent();
+			oParentPara.RemoveFromContent(nPosInPara, 1);
+
+			return true;
+		}
+
+		return false;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiTextForm
@@ -16936,6 +17053,16 @@
 	{
 		return this.Sdt.IsAutoFitContent();
 	};
+
+	Object.defineProperty(ApiTextForm.prototype, "autoFit", {
+		get: function() {
+			return this.IsAutoFit();
+		},
+		set: function(bAutoFit) {
+			return this.SetAutoFit(bAutoFit);
+		}
+	});
+
 	/**
 	 * Specifies if the text form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @memberof ApiTextForm
@@ -16966,6 +17093,16 @@
 	{
 		return this.Sdt.IsMultiLineForm();
 	};
+
+	Object.defineProperty(ApiTextForm.prototype, "multiLine", {
+		get: function() {
+			return this.IsMultiline();
+		},
+		set: function(bMultiline) {
+			return this.SetMultiline(bMultiline);
+		}
+	});
+
 	/**
 	 * Specifies if the current text form should be miltiline.
 	 * @memberof ApiTextForm
@@ -17002,6 +17139,16 @@
 
 		return oPr.GetMaxCharacters();
 	};
+
+	Object.defineProperty(ApiTextForm.prototype, "maxCharacters", {
+		get: function() {
+			return this.GetCharactersLimit();
+		},
+		set: function(nChars) {
+			return this.SetCharactersLimit(nChars);
+		}
+	});
+
 	/**
 	 * Sets a limit to the text form characters.
 	 * @memberof ApiTextForm
@@ -17043,6 +17190,16 @@
 		let oPr = this.Sdt.GetTextFormPr();
 		return oPr ? oPr.IsComb() : false;
 	};
+
+	Object.defineProperty(ApiTextForm.prototype, "comb", {
+		get: function() {
+			return this.IsComb();
+		},
+		set: function(bComb) {
+			return this.SetComb(bComb);
+		}
+	});
+
 	/**
 	 * Specifies if the text form should be a comb of characters with the same cell width.
 	 * The maximum number of characters must be set to a positive value.
@@ -17072,6 +17229,33 @@
 		this.Sdt.SetTextFormPr(oPr);
 		return true;
 	};
+
+	/**
+	 * Gets the cell width of the comb of characters.
+	 * @memberof ApiTextForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {mm}
+	 */
+	ApiTextForm.prototype.GetCellWidth = function()
+	{
+		if (!this.IsComb())
+			return 0;
+
+		let nWidth = this.Sdt.GetTextFormPr().GetWidth();
+		nWidth = Math.round(nWidth / 72 / 20 * 25.4 + 0.5);
+
+		return nWidth;
+	};
+
+	Object.defineProperty(ApiTextForm.prototype, "cellWidth", {
+		get: function() {
+			return this.GetCellWidth();
+		},
+		set: function(nCellWidth) {
+			return this.SetCellWidth(nCellWidth);
+		}
+	});
+
 	/**
 	 * Sets the cell width to the applied comb of characters.
 	 * @memberof ApiTextForm
@@ -17095,6 +17279,7 @@
 		this.Sdt.SetTextFormPr(oPr);
 		return true;
 	};
+
 	/**
 	 * Sets the text to the current text form.
 	 * @memberof ApiTextForm
@@ -17110,6 +17295,104 @@
 
 		this.Sdt.SetInnerText(_sText);
 		return true;
+	};
+
+	/**
+	 * Sets the format type to the current form.
+	 * @memberof ApiTextForm
+	 * @param {FormatType} sFormat - The format type for the entered text.
+	 * @param {string} sMask - the mask of the format (only for format "mask" and "regExp").
+	 * Note: Default value of *sMask* for rexExp format is ".", default value of *sMask* for "mask" format is '*'. 
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiTextForm.prototype.SetFormat = function(sFormat, sMask)
+	{
+		let oPr = this.Sdt.GetTextFormPr().Copy();
+		switch (sFormat)
+		{
+			case "none":
+				oPr.Format.SetNone();
+				break;
+			case "digit":
+				oPr.Format.SetDigit();
+				break;
+			case "letter":
+				oPr.Format.SetLetter();
+				break;
+			case "mask":
+				if (typeof(sMask) != "string" || sMask == "")
+					sMask = "*";
+				oPr.Format.SetMask(sMask);
+				break;
+			case "regExp":
+				if (typeof(sMask) != "string" || sMask == "")
+					sMask = ".";
+				oPr.Format.SetRegExp(sMask);
+				break;
+			default:
+				return false;
+		}
+
+		this.Sdt.SetTextFormPr(oPr);
+		return true;
+	};
+
+	/**
+	 * Gets the format type of the current form.
+	 * @memberof ApiTextForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {Array} - contains two elements, first is a format type, second is a mask (mask is undefined if format isn't a "mask" or "regular").
+	 */
+	ApiTextForm.prototype.GetFormat = function()
+	{
+		let oPr = this.Sdt.GetTextFormPr();
+
+		switch (oPr.Format.BaseFormat)
+		{
+			case Asc.TextFormFormatType.None:
+				return ["none"];
+			case Asc.TextFormFormatType.Digit:
+				return ["digit"];
+			case Asc.TextFormFormatType.Letter:
+				return ["letter"];
+			case Asc.TextFormFormatType.Mask:
+				return ["mask", oPr.Format.GetMask()];
+			case Asc.TextFormFormatType.RegExp:
+				return ["regExp", oPr.Format.GetRegExp()];
+		}
+
+		return [];
+	};
+
+	/**
+	 * Sets the allowed symbols for the current form.
+	 * @memberof ApiTextForm
+	 * @param {string} [sSyblols=""] - allowed symbols set.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiTextForm.prototype.SetAllowedSymbols = function(sSyblols)
+	{
+		if (typeof(sSyblols) != "string")
+			sSyblols = "";
+
+		let oPr = this.Sdt.GetTextFormPr().Copy();
+		oPr.SetFormatSymbols(sSyblols);
+		
+		this.Sdt.SetTextFormPr(oPr);
+		return true;
+	};
+
+	/**
+	 * Gets the allowed symbols of the current form.
+	 * @memberof ApiTextForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {string} - allowed symbols set.
+	 */
+	ApiTextForm.prototype.GetAllowedSymbols = function()
+	{
+		return this.Sdt.GetTextFormPr().GetFormatSymbols();
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -17146,6 +17429,16 @@
 
 		return sScaleFlag;
 	};
+
+	Object.defineProperty(ApiPictureForm.prototype, "scaleFlag", {
+		get: function() {
+			return this.GetScaleFlag();
+		},
+		set: function(sScaleFlag) {
+			return this.SetScaleFlag(sScaleFlag);
+		}
+	});
+
 	/**
 	 * Sets the scaling condition to the current picture form.
 	 * @memberof ApiPictureForm
@@ -17205,6 +17498,16 @@
 	{
 		return this.Sdt.GetPictureFormPr().IsConstantProportions();
 	};
+
+	Object.defineProperty(ApiPictureForm.prototype, "lockAspectRatio", {
+		get: function() {
+			return this.IsLockAspectRatio();
+		},
+		set: function(isLock) {
+			return this.SetLockAspectRatio(isLock);
+		}
+	});
+
 	/**
 	 * Sets the picture position inside the current form:
 	 * * <b>0</b> - the picture is placed on the left/top;
@@ -17219,8 +17522,10 @@
 	ApiPictureForm.prototype.SetPicturePosition = function(nShiftX, nShiftY)
 	{
 		let oPr = this.Sdt.GetPictureFormPr().Copy();
-		oPr.SetShiftX(Math.max(0, Math.min(100, GetNumberParameter(nShiftX, 50))) / 100);
-		oPr.SetShiftY(Math.max(0, Math.min(100, GetNumberParameter(nShiftY, 50))) / 100);
+		if (nShiftX != undefined)
+			oPr.SetShiftX(Math.max(0, Math.min(100, GetNumberParameter(nShiftX, 50))) / 100);
+		if (nShiftY != undefined)
+			oPr.SetShiftY(Math.max(0, Math.min(100, GetNumberParameter(nShiftY, 50))) / 100);
 		this.Sdt.SetPictureFormPr(oPr);
 		this.Sdt.UpdatePictureFormLayout();
 		return true;
@@ -17236,6 +17541,37 @@
 		let oPr = this.Sdt.GetPictureFormPr();
 		return [(oPr.GetShiftX() * 100) | 0, (oPr.GetShiftY() * 100) | 0];
 	};
+
+	/**
+	 * Gets the horizontal picture position inside the picture form measured in percent.
+	 * @memberof ApiPictureForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {percentage}
+	 */
+	Object.defineProperty(ApiPictureForm.prototype, "shiftX", {
+		get: function() {
+			return this.GetPicturePosition()[0];
+		},
+		set: function(nShiftX) {
+			return this.SetPicturePosition(nShiftX);
+		}
+	});
+
+	/**
+	 * Gets the vertical picture position inside the picture form measured in percent.
+	 * @memberof ApiPictureForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {percentage}
+	 */
+	Object.defineProperty(ApiPictureForm.prototype, "shiftY", {
+		get: function() {
+			return this.GetPicturePosition()[1];
+		},
+		set: function(nShiftY) {
+			return this.SetPicturePosition(undefined, nShiftY);
+		}
+	});
+
 	/**
 	 * Respects the form border width when scaling the image.
 	 * @memberof ApiPictureForm
@@ -17261,6 +17597,15 @@
 	{
 		return this.Sdt.GetPictureFormPr().IsRespectBorders();
 	};
+
+	Object.defineProperty(ApiPictureForm.prototype, "respectBorders", {
+		get: function() {
+			return this.IsRespectBorders();
+		},
+		set: function(isRespect) {
+			return this.SetRespectBorders(isRespect);
+		}
+	});
 	/**
 	 * Returns an image in the base64 format from the current picture form.
 	 * @memberof ApiPictureForm
@@ -17420,6 +17765,7 @@
 
 		return true;
 	};
+
 	/**
 	 * Checks if the combo box text can be edited.
 	 * @memberof ApiComboBoxForm
@@ -17431,6 +17777,53 @@
 		return (this.Sdt.IsComboBox());
 	};
 
+	Object.defineProperty(ApiComboBoxForm.prototype, "editable", {
+		get: function() {
+			return this.IsEditable();
+		}
+	});
+
+	/**
+	 * Checks if the combobox form content is autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * @memberof ApiComboBoxForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiComboBoxForm.prototype.IsAutoFit = function()
+	{
+		return this.Sdt.IsAutoFitContent();
+	};
+
+	Object.defineProperty(ApiComboBoxForm.prototype, "autoFit", {
+		get: function() {
+			return this.IsAutoFit();
+		},
+		set: function(bAutoFit) {
+			return this.SetAutoFit(bAutoFit);
+		}
+	});
+
+	/**
+	 * Specifies if the combobox form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * @memberof ApiComboBoxForm
+	 * @param {boolean} bAutoFit - Defines if the combobox form content is autofit (true) or not (false).
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiComboBoxForm.prototype.SetAutoFit = function(bAutoFit)
+	{
+		if (typeof(bAutoFit) !== "boolean" || !this.IsFixed())
+			return false;
+		if (bAutoFit === this.IsAutoFit())
+			return true;
+
+		var oPr = this.Sdt.GetComboBoxPr().Copy();
+		oPr.SetAutoFit(bAutoFit);
+
+		this.Sdt.SetComboBoxPr(oPr);
+		return true;
+	};
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiCheckBoxForm
@@ -17472,6 +17865,13 @@
 	{
 		return this.Sdt.IsRadioButton();
 	};
+
+	Object.defineProperty(ApiCheckBoxForm.prototype, "radio", {
+		get: function() {
+			return this.IsRadioButton();
+		}
+	});
+
 	/**
 	 * Returns the radio group key if the current checkbox is a radio button.
 	 * @memberof ApiCheckBoxForm
@@ -17500,6 +17900,129 @@
 		this.Sdt.SetCheckBoxPr(oPr);
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiComplexForm
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiComplexForm class.
+	 * @memberof ApiComplexForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {"complexForm"}
+	 */
+	ApiComplexForm.prototype.GetClassType = function()
+	{
+		return "complexForm";
+	};
+
+	/**
+	 * Returns the child forms of current complex form.
+	 * @memberof ApiComplexForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiForm[]}
+	 */
+	ApiComplexForm.prototype.GetChildForms = function()
+	{
+		let aChilds = [];
+		for (let i = 0; i < this.Sdt.Content.length; i++)
+		{
+			if (this.Sdt.Content[i].IsForm && this.Sdt.Content[i].IsForm())
+			{
+				aChilds.push(ToApiForm(this.Sdt.Content[i]));
+			}
+		}
+
+		return aChilds;
+	};
+
+	/**
+	 * Gets count of child elements.
+	 * @memberof ApiComplexForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {Number}
+	 */
+	ApiComplexForm.prototype.GetElementsCount = function()
+	{
+		return this.Sdt.GetElementsCount();
+	};
+
+	/**
+	 * Returns an element of the current complex form using the position specified.
+	 * @memberof ApiComplexForm
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} nPos
+	 * @returns {ApiRun | ApiForm}
+	 */
+	ApiComplexForm.prototype.GetElement = function(nPos)
+	{
+		if (typeof(nPos) != "number" || nPos < 0 || nPos >= this.Sdt.Content.length)
+			return null;
+
+		return private_GetSupportedParaElement(this.Sdt.Content[nPos]);
+	};
+
+	/**
+	 * Adds an element to complex field by specifed position.
+	 * @memberof ApiComplexForm
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiForm | ApiRun} oElement - form element (ApiForm) or text element (ApiRun).
+	 * @param {Number} [nPos=this.GetElementsCount()] - pos to add element.
+	 * @returns {boolean}
+	 */
+	ApiComplexForm.prototype.AddElement = function(oElement, nPos)
+	{
+		oElement = oElement.private_GetImpl();
+		if ((oElement instanceof ParaRun) == false && (oElement instanceof CInlineLevelSdt) == false)
+			return false;
+
+		if (oElement.IsForm && oElement.IsForm() == false || oElement.IsForm && oElement.IsForm() == true && oElement.IsComplexForm() == true)
+			return false;
+
+		if (oElement.IsUseInDocument())
+			return false;
+		
+		if (this.Sdt.IsShowingPlcHdr())
+		{
+			this.Sdt.RemoveFromContent(0, this.Sdt.GetElementsCount(), false);
+			this.Sdt.SetShowingPlcHdr(false);
+		}
+
+		if (typeof(nPos) != "number" || nPos < 0 || nPos > this.GetElementsCount())
+			nPos = this.GetElementsCount();
+		
+		this.Sdt.AddToContent(nPos, oElement);
+
+		return true;
+	};
+
+	/**
+	 * Removes the specified count of elements from complex form by specified position.
+	 * @memberof ApiComplexForm
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} nPos
+	 * @param {Number} [nCount = 1]
+	 * @returns {boolean}
+	 */
+	ApiComplexForm.prototype.RemoveElements = function(nPos, nCount)
+	{
+		if (typeof(nPos) != "number" || nPos < 0 || nPos >= this.GetElementsCount())
+			return false;
+		if (typeof(nCount) != "number" || nCount <= 0)
+			return nCount = 1;
+		if (nCount > this.GetElementsCount() - nPos)
+			nCount = this.GetElementsCount() - nPos;
+
+		this.Sdt.RemoveFromContent(nPos, nCount);
+		if (this.Sdt.Content.length === 0)
+		{
+			this.Sdt.SetShowingPlcHdr(true);
+			this.Sdt.private_FillPlaceholderContent();
+		}
+
+		return true;
+	};
 
 	/**
 	 * Converts the ApiBlockLvlSdt object into the JSON object.
@@ -18182,7 +18705,7 @@
 	 * Gets the quote text of comment.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @returns {Number?}
+	 * @returns {String}
 	 */
 	ApiComment.prototype.GetQuoteText = function () {
 		return this.Comment.GetData().GetQuoteText();
@@ -18192,7 +18715,7 @@
 	 * Gets count of the comment replies.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @returns {Number?}
+	 * @returns {Number}
 	 */
 	ApiComment.prototype.GetRepliesCount = function () {
 		return this.Comment.GetData().Get_RepliesCount();
@@ -18203,7 +18726,7 @@
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @param {Number} [nIndex = 0]
-	 * @returns {ApiCommentReply?}
+	 * @returns {?ApiCommentReply}
 	 */
 	ApiComment.prototype.GetReply = function (nIndex) {
 		if (typeof(nIndex) != "number" || nIndex < 0 || nIndex >= this.GetRepliesCount())
@@ -18224,7 +18747,7 @@
 	 * @param {String} sAutorName - Optional.
 	 * @param {String} sUserId - Optional.
 	 * @param {Number} [nPos=this.GetRepliesCount()]
-	 * @returns {ApiComment?} - this.
+	 * @returns {?ApiComment} - this.
 	 */
 	ApiComment.prototype.AddReply = function (sText, sAutorName, sUserId, nPos) {
 		if (typeof(sText) !== "string" || sText === "")
@@ -18253,7 +18776,7 @@
 	 * @param {Number} [nPos = 0]
 	 * @param {Number} [nCount = 1]
 	 * @param {boolean} [bRemoveAll = false] - indicates whether to remove all
-	 * @returns {ApiComment?} - this.
+	 * @returns {ApiComment} - this.
 	 */
 	ApiComment.prototype.RemoveReplies = function (nPos, nCount, bRemoveAll) {
 		if (typeof(nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
@@ -19046,7 +19569,6 @@
 	ApiInlineLvlSdt.prototype["GetPlaceholderText"]     = ApiInlineLvlSdt.prototype.GetPlaceholderText;
 	ApiInlineLvlSdt.prototype["SetPlaceholderText"]     = ApiInlineLvlSdt.prototype.SetPlaceholderText;
 	ApiInlineLvlSdt.prototype["IsForm"]                 = ApiInlineLvlSdt.prototype.IsForm;
-	ApiInlineLvlSdt.prototype["GetForm"]                = ApiInlineLvlSdt.prototype.GetForm;
 
 	ApiBlockLvlSdt.prototype["GetClassType"]            = ApiBlockLvlSdt.prototype.GetClassType;
 	ApiBlockLvlSdt.prototype["SetLock"]                 = ApiBlockLvlSdt.prototype.SetLock;
@@ -19097,9 +19619,14 @@
 	ApiFormBase.prototype["GetText"]             = ApiFormBase.prototype.GetText;
 	ApiFormBase.prototype["Clear"]               = ApiFormBase.prototype.Clear;
 	ApiFormBase.prototype["GetWrapperShape"]     = ApiFormBase.prototype.GetWrapperShape;
+	ApiFormBase.prototype["GetPlaceholderText"]  = ApiFormBase.prototype.GetPlaceholderText;
 	ApiFormBase.prototype["SetPlaceholderText"]  = ApiFormBase.prototype.SetPlaceholderText;
 	ApiFormBase.prototype["SetTextPr"]           = ApiFormBase.prototype.SetTextPr;
 	ApiFormBase.prototype["GetTextPr"]           = ApiFormBase.prototype.GetTextPr;
+	ApiFormBase.prototype["SetTag"]              = ApiFormBase.prototype.SetTag;
+	ApiFormBase.prototype["GetTag"]              = ApiFormBase.prototype.GetTag;
+	ApiFormBase.prototype["Copy"]                = ApiFormBase.prototype.Copy;
+	ApiFormBase.prototype["Delete"]              = ApiFormBase.prototype.Delete;
 
 	ApiTextForm.prototype["IsAutoFit"]           = ApiTextForm.prototype.IsAutoFit;
 	ApiTextForm.prototype["SetAutoFit"]          = ApiTextForm.prototype.SetAutoFit;
@@ -19109,35 +19636,45 @@
 	ApiTextForm.prototype["SetCharactersLimit"]  = ApiTextForm.prototype.SetCharactersLimit;
 	ApiTextForm.prototype["IsComb"]              = ApiTextForm.prototype.IsComb;
 	ApiTextForm.prototype["SetComb"]             = ApiTextForm.prototype.SetComb;
+	ApiTextForm.prototype["GetCellWidth"]        = ApiTextForm.prototype.GetCellWidth;
 	ApiTextForm.prototype["SetCellWidth"]        = ApiTextForm.prototype.SetCellWidth;
 	ApiTextForm.prototype["SetText"]             = ApiTextForm.prototype.SetText;
-	ApiTextForm.prototype["Copy"]                = ApiTextForm.prototype.Copy;
+	ApiTextForm.prototype["SetFormat"]           = ApiTextForm.prototype.SetFormat;
+	ApiTextForm.prototype["GetFormat"]           = ApiTextForm.prototype.GetFormat;
+	ApiTextForm.prototype["SetAllowedSymbols"]   = ApiTextForm.prototype.SetAllowedSymbols;
+	ApiTextForm.prototype["GetAllowedSymbols"]   = ApiTextForm.prototype.GetAllowedSymbols;
 
 	ApiPictureForm.prototype["GetScaleFlag"]       = ApiPictureForm.prototype.GetScaleFlag;
 	ApiPictureForm.prototype["SetScaleFlag"]       = ApiPictureForm.prototype.SetScaleFlag;
 	ApiPictureForm.prototype["SetLockAspectRatio"] = ApiPictureForm.prototype.SetLockAspectRatio;
-	ApiPictureForm.prototype["IsLockAspectRatio"] = ApiPictureForm.prototype.IsLockAspectRatio;
+	ApiPictureForm.prototype["IsLockAspectRatio"]  = ApiPictureForm.prototype.IsLockAspectRatio;
 	ApiPictureForm.prototype["SetPicturePosition"] = ApiPictureForm.prototype.SetPicturePosition;
 	ApiPictureForm.prototype["GetPicturePosition"] = ApiPictureForm.prototype.GetPicturePosition;
-	ApiPictureForm.prototype["SetRespectBorders"] = ApiPictureForm.prototype.SetRespectBorders;
-	ApiPictureForm.prototype["IsRespectBorders"] = ApiPictureForm.prototype.IsRespectBorders;
+	ApiPictureForm.prototype["SetRespectBorders"]  = ApiPictureForm.prototype.SetRespectBorders;
+	ApiPictureForm.prototype["IsRespectBorders"]   = ApiPictureForm.prototype.IsRespectBorders;
 	ApiPictureForm.prototype["GetImage"]           = ApiPictureForm.prototype.GetImage;
 	ApiPictureForm.prototype["SetImage"]           = ApiPictureForm.prototype.SetImage;
-	ApiPictureForm.prototype["Copy"]               = ApiPictureForm.prototype.Copy;
 
 	ApiComboBoxForm.prototype["GetListValues"]       = ApiComboBoxForm.prototype.GetListValues;
 	ApiComboBoxForm.prototype["SetListValues"]       = ApiComboBoxForm.prototype.SetListValues;
 	ApiComboBoxForm.prototype["SelectListValue"]     = ApiComboBoxForm.prototype.SelectListValue;
 	ApiComboBoxForm.prototype["SetText"]             = ApiComboBoxForm.prototype.SetText;
 	ApiComboBoxForm.prototype["IsEditable"]          = ApiComboBoxForm.prototype.IsEditable;
-	ApiComboBoxForm.prototype["Copy"]                = ApiComboBoxForm.prototype.Copy;
+	ApiComboBoxForm.prototype["IsAutoFit"]           = ApiComboBoxForm.prototype.IsAutoFit;
+	ApiComboBoxForm.prototype["SetAutoFit"]          = ApiComboBoxForm.prototype.SetAutoFit;
 
 	ApiCheckBoxForm.prototype["SetChecked"]    = ApiCheckBoxForm.prototype.SetChecked;
 	ApiCheckBoxForm.prototype["IsChecked"]     = ApiCheckBoxForm.prototype.IsChecked;
 	ApiCheckBoxForm.prototype["IsRadioButton"] = ApiCheckBoxForm.prototype.IsRadioButton;
 	ApiCheckBoxForm.prototype["GetRadioGroup"] = ApiCheckBoxForm.prototype.GetRadioGroup;
 	ApiCheckBoxForm.prototype["SetRadioGroup"] = ApiCheckBoxForm.prototype.SetRadioGroup;
-	ApiCheckBoxForm.prototype["Copy"]          = ApiCheckBoxForm.prototype.Copy;
+
+	ApiComplexForm.prototype["GetClassType"]     = ApiComplexForm.prototype.GetClassType;
+	ApiComplexForm.prototype["GetChildForms"]    = ApiComplexForm.prototype.GetChildForms;
+	ApiComplexForm.prototype["GetElementsCount"] = ApiComplexForm.prototype.GetElementsCount;
+	ApiComplexForm.prototype["GetElement"]       = ApiComplexForm.prototype.GetElement;
+	ApiComplexForm.prototype["AddElement"]       = ApiComplexForm.prototype.AddElement;
+	ApiComplexForm.prototype["RemoveElements"]   = ApiComplexForm.prototype.RemoveElements;
 
 	ApiComment.prototype["GetClassType"]	= ApiComment.prototype.GetClassType;
 	ApiComment.prototype["GetText"]			= ApiComment.prototype.GetText;
@@ -19311,8 +19848,6 @@
 			return private_CheckForm(oElement);
 		else if (oElement instanceof ParaHyperlink)
 			return new ApiHyperlink(oElement);
-		else if (oElement instanceof ApiFormBase)
-			return (new ApiInlineLvlSdt(oElement)).GetForm();
 		else
 			return new ApiUnsupported();
 	}
