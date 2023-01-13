@@ -3568,6 +3568,10 @@ $(function () {
 		oParser = new parserFormula("MAX(49.08 - 432.81, 0)", "A1", ws);
 		assert.ok(oParser.parse(), "MAX(49.08 - 432.81, 0)");
 		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of MAX(49.08 - 432.81, 0)");
+
+		oParser = new parserFormula("MAX(FALSE,-1-2,3-8,FALSE,TRUE)", "A1", ws);
+		assert.ok(oParser.parse(), "MAX(FALSE,-1-2,3-8,FALSE,TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MAX(FALSE,-1-2,3-8,FALSE,TRUE)");
 	
 		oParser = new parserFormula("MAX(49.08 - 432.81, 9,99999999999999E+43)", "A1", ws);
 		assert.ok(oParser.parse(), "MAX(49.08 - 432.81, 9,99999999999999E+43)");
@@ -3584,6 +3588,14 @@ $(function () {
 		oParser = new parserFormula("MAX({1,1,TRUE,2})", "A1", ws);
 		assert.ok(oParser.parse(), "MAX({1,1,TRUE,2})");
 		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of MAX({1,1,TRUE,2})");
+
+		oParser = new parserFormula("MAX({1,1,TRUE,2},{1,2,3,4,5,6,7,8,9,11,1})", "A1", ws);
+		assert.ok(oParser.parse(), "MAX({1,1,TRUE,2},{1,2,3,4,5,6,7,8,9,11,1})");
+		assert.strictEqual(oParser.calculate().getValue(), 11, "Result of MAX({1,1,TRUE,2},{1,2,3,4,5,6,7,8,9,11,1})");
+
+		oParser = new parserFormula("MAX({1,1,TRUE,2},{12;12;13;11},{1,2,3,4,5,6,7,8,9,11,1})", "A1", ws);
+		assert.ok(oParser.parse(), "MAX({1,1,TRUE,2},{12;12;13;11},{1,2,3,4,5,6,7,8,9,11,1})");
+		assert.strictEqual(oParser.calculate().getValue(), 13, "Result of MAX({1,1,TRUE,2},{12;12;13;11},{1,2,3,4,5,6,7,8,9,11,1})");
 
 		ws.getRange2("S5").setValue("1");
 		ws.getRange2("S6").setValue(numDivFact(-1, 2));
@@ -3632,8 +3644,8 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 10, "Result of MAX(J12)");
 
 		oParser = new parserFormula("MAX(J10:J17,J19:J24)", "A1", ws);
-		assert.ok(oParser.parse(), "MAX(J12:J19)");
-		assert.strictEqual(oParser.calculate().getValue(), 9.99999999999999E+43, "Result of MAX(J12:J19)");
+		assert.ok(oParser.parse(), "MAX(J10:J17,J19:J24)");
+		assert.strictEqual(oParser.calculate().getValue(), 9.99999999999999E+43, "Result of MAX(J10:J17,J19:J24)");
 
 		oParser = new parserFormula("MAX(J12:J19)", "A1", ws);
 		assert.ok(oParser.parse(), "MAX(J12:J19)");
@@ -3649,7 +3661,7 @@ $(function () {
 
 		oParser = new parserFormula("MAX(J25, J10:J17, J18)", "A1", ws);
 		assert.ok(oParser.parse(), "MAX(J25, J10:J17, J18)");
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of MAX(J25, J10:J17, J18)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of MAX(J25, J10:J17, J18)");	
 
 		oParser = new parserFormula("MAX(S5)", "A1", ws);
 		assert.ok(oParser.parse());
