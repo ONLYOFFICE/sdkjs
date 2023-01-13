@@ -2665,7 +2665,7 @@ function CDrawingDocument()
 		var renderer = this.m_oDocRenderer;
 		renderer.Memory.Seek(0);
 		renderer.VectorMemoryForPrint.ClearNoAttack();
-		renderer.DocInfo();
+		renderer.DocInfo(this.m_oWordControl.m_oApi);
 
 		for (var i = start; i <= end; i++)
 		{

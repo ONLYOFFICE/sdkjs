@@ -3470,9 +3470,9 @@
 				this.m_arrayPages[this.m_lPagesCount - 1].AddFormField(nX, nY, nW, nH, nBaseLineOffset, oForm);
 		},
 
-		DocInfo : function()
+		DocInfo : function(api)
 		{
-			var props = (_api) ? _api.asc_getCoreProps() : null;
+			var props = (api) ? api.asc_getCoreProps() : null;
 			if (props)
 			{
 				this.Memory.WriteByte(CommandType.ctDocInfo);
