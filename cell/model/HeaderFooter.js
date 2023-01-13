@@ -52,11 +52,13 @@
 		this.field = val;
 	}
 	HeaderFooterField.prototype.getText = function (ws, indexPrintPage, countPrintPages) {
-		var res = "";
-		var api = window["Asc"]["editor"];
+		let res = "";
+		let api = window["Asc"]["editor"];
+		let pageSetup = ws.model && ws.model.PagePrintOptions && ws.model.PagePrintOptions.pageSetup;
 		switch(this.field) {
 			case asc.c_oAscHeaderFooterField.pageNumber: {
-				res = indexPrintPage + 1 + "";
+				let firstPageNumber = (pageSetup && pageSetup.useFirstPageNumber && pageSetup.firstPageNumber) ? pageSetup.firstPageNumber : 1;
+				res = indexPrintPage + firstPageNumber + "";
 				break;
 			}
 			case asc.c_oAscHeaderFooterField.pageCount: {
