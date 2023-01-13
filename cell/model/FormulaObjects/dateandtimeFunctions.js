@@ -305,6 +305,15 @@
 		return val;
 	}
 
+	function getCorrectDate2(val) {
+		if (!AscCommon.bDate1904) {
+			val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+		} else {
+			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+		}
+		return val;
+	}
+
 	function getWeekends(val) {
 		var res = [];
 		if (val) {
@@ -1449,12 +1458,12 @@
 		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
 		let argClone = oArguments.args;
 
-		let arg0 = arg[0] ? arg[0] : new cNumber(0),
-			arg1 = arg[1] ? arg[1] : new cNumber(0),
+		let arg0 = arg[0],
+			arg1 = arg[1],
 			arg2 = arg[2];
 
 		// arg0 type check
-		if (cElementType.cell === arg0.type) {
+		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
 			arg0 = arg0.getValue();
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			if (arg0.isOneElement()) {
@@ -1473,7 +1482,7 @@
 		}
 
 		// arg1 type check
-		if (cElementType.cell === arg1.type) {
+		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 			arg1 = arg1.getValue();
 		} else if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			if (arg1.isOneElement()) {
@@ -1502,7 +1511,7 @@
 			return arg1;
 		}
 
-		let val0 = arg0.getValue(), val1 = arg1.getValue();
+		let val0 = Math.trunc(arg0.getValue()), val1 = Math.trunc(arg1.getValue());
 
 		if (val0 < 0 || val1 < 0) {
 			return new cError(cErrorType.not_numeric);
@@ -1515,8 +1524,8 @@
 			return argError;
 		}
 
-		val0 = getCorrectDate(val0);
-		val1 = getCorrectDate(val1);
+		val0 = getCorrectDate2(val0);
+		val1 = getCorrectDate2(val1);
 
 		//Holidays
 		let holidays = getHolidays(arg2);
@@ -1539,7 +1548,7 @@
 
 			for (let i = 0; i < difAbs; i++) {
 				let date = new cDate(start);
-				date.setUTCDate(start.getUTCDate() + i);
+				date.setUTCDate(start.getUTCDate2() + i);
 				if (date.getUTCDay() !== 6 && date.getUTCDay() !== 0 && !_includeInHolidays(date, holidays)) {
 					count++;
 				}

@@ -3488,6 +3488,12 @@
 				return date;
 			}
 		};
+		
+		cDate.prototype.getUTCDate2 = function () {
+			let date = Date.prototype.getUTCDate.call(this);
+
+			return date;
+		}
 
 		cDate.prototype.getUTCMonth = function () {
 			var year = Date.prototype.getUTCFullYear.call(this);
