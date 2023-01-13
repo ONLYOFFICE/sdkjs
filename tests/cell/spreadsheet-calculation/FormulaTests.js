@@ -9497,6 +9497,9 @@ $(function () {
 		assert.ok(oParser.parse(), "TRUNC((0.6*3),1)");
 		assert.strictEqual(oParser.calculate().getValue(), 1.8, "Result of TRUNC((0.6*3),1)");
 
+		// TODO fix floating point number precision problem 
+		// TODO in js 0.6 * 3 = 1.7999999999999998 
+		// https://0.30000000000000004.com/
 		oParser = new parserFormula("TRUNC((0.4*1)+(0.6*3),1)", "A1", ws);
 		assert.ok(oParser.parse(), "TRUNC((0.4*1)+(0.6*3),1)");
 		assert.strictEqual(oParser.calculate().getValue(), 2.1, "Result of TRUNC((0.4*1)+(0.6*3),1)");	// 2.2

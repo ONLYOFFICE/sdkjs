@@ -5464,8 +5464,7 @@
 			} else if (!Number.isInteger(b)) {
 				b = +b.toFixed();
 			}
-			// TODO fix floating point number precision problem 
-			// let roundedA = parseFloat(a).toPrecision(12);
+			// TODO fix floating point number precision problem
 			let numDegree = Math.pow(10, b);
 
 			return new cNumber(Math.trunc(a*numDegree) / numDegree);
