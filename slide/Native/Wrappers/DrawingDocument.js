@@ -336,7 +336,6 @@ CDrawingDocument.prototype.ToRenderer = function()
     var Renderer                             = new AscCommon.CDocumentRenderer();
     Renderer.IsNoDrawingEmptyPlaceholder     = true;
     Renderer.VectorMemoryForPrint            = new AscCommon.CMemory();
-    Renderer.DocInfo();
     var old_marks                            = this.m_oWordControl.m_oApi.ShowParaMarks;
     this.m_oWordControl.m_oApi.ShowParaMarks = false;
     this.RenderDocument(Renderer);
@@ -352,7 +351,6 @@ CDrawingDocument.prototype.ToRenderer = function()
 CDrawingDocument.prototype.ToRenderer2    = function()
 {
     var Renderer = new AscCommon.CDocumentRenderer();
-    Renderer.DocInfo();
 
     var old_marks                            = this.m_oWordControl.m_oApi.ShowParaMarks;
     this.m_oWordControl.m_oApi.ShowParaMarks = false;
@@ -397,7 +395,6 @@ CDrawingDocument.prototype.ToRendererPart = function(noBase64)
     var renderer = this.m_oDocRenderer;
     renderer.Memory.Seek(0);
     renderer.VectorMemoryForPrint.ClearNoAttack();
-    renderer.DocInfo();
 
     for (var i = start; i <= end; i++)
     {

@@ -2834,7 +2834,6 @@ CDrawingDocument.prototype =
     {
         var Renderer = new AscCommon.CDocumentRenderer();
         Renderer.VectorMemoryForPrint = new AscCommon.CMemory();
-        Renderer.DocInfo();
         var old_marks = this.m_oWordControl.m_oApi.ShowParaMarks;
         this.m_oWordControl.m_oApi.ShowParaMarks = false;
         this.RenderDocument(Renderer);
