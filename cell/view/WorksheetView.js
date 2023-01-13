@@ -16917,9 +16917,6 @@
 		//t.model.workbook.dependencyFormulas.unlockRecal();
 
 		this.canChangeColWidth = isNotHistory ? c_oAscCanChangeColWidth.none : c_oAscCanChangeColWidth.numbers;
-		if (bbox && !bbox.isOneCell()) {
-			this.cache.reset();
-		}
 		this._updateRange(bbox);
 		if (bbox && (bbox.getType() === c_oAscSelectionType.RangeMax || bbox.getType() === c_oAscSelectionType.RangeCol)) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
