@@ -5692,7 +5692,6 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
     if (nInputType === 0)
         this.ConvertContentInLastBracketBlock(nInputType);
 
-    debugger
     // convert word near cursor (\int, \sqrt, \alpha...)
     if (oElement.value === 32)
     {
