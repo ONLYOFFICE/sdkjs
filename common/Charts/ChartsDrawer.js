@@ -15732,14 +15732,14 @@ CErrBarsDraw.prototype = {
 			switch (errBars.errValType) {
 				case AscFormat.st_errvaltypeCUST: {
 					//TODO numRef ?
-					var numLit = errBars.plus.numLit || (errBars.plus.numRef && errBars.plus.numRef.numCache);
+					var numLit = errBars.plus && (errBars.plus.numLit || (errBars.plus.numRef && errBars.plus.numRef.numCache));
 					if (errBars.plus && numLit) {
 						plusErrVal = numLit.getPtByIndex(numLit.ptCount === 1 ? 0 : val);
 						if (plusErrVal) {
 							plusErrVal = plusErrVal.val;
 						}
 					}
-					numLit = errBars.minus.numLit || (errBars.minus.numRef && errBars.minus.numRef.numCache);
+					numLit = errBars.minus && (errBars.minus.numLit || (errBars.minus.numRef && errBars.minus.numRef.numCache));
 					if (errBars.minus && numLit) {
 						minusErrVal = numLit.getPtByIndex(numLit.ptCount === 1 ? 0 : val);
 						if (minusErrVal) {
