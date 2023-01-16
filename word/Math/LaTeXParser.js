@@ -500,7 +500,6 @@
 	}
 	CLaTeXParser.prototype.GetTextLiteral = function ()
 	{
-		debugger
 		this.EatToken(this.oLookahead.class);
 		let oContent = this.GetTextArgument();
 

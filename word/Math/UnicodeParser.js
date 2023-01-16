@@ -303,7 +303,6 @@
 	}
 	CUnicodeParser.prototype.GetTextLiteral = function ()
 	{
-		debugger
 		let strSymbol = this.EatToken(this.oLookahead.class);
 		let strExp = "";
 
@@ -558,14 +557,21 @@
 	};
 	CUnicodeParser.prototype.GetNameOfFunction = function ()
 	{
-		let oContent;
-		let oName = this.EatToken(this.oLookahead.class).data;
+		let oContent,
+			oName = this.EatToken(this.oLookahead.class).data,
+			oThird;
 
 		this.SkipSpace();
+
+		if (!this.IsExpSubSupLiteral())
+		{
+			oThird = this.GetElementLiteral();
+		}
 
 		return {
 			type: oLiteralNames.functionLiteral[num],
 			value: oName,
+			third: oThird,
 		}
 	};
 	CUnicodeParser.prototype.IsExpBracketLiteral = function ()
