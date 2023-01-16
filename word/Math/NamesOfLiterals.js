@@ -2600,17 +2600,14 @@
 			}
 		}
 
-		if (oContent.State.ContentPos - 1 > intStart)
+		if (oContent.Content.length - 1 > intStart)
 		{
 			let strCorrection = ConvertWord(str, IsLaTeX);
 			if (strCorrection)
 			{
-				oContent.RemoveFromContent(intStart, oContent.State.ContentPos - 1 - intStart + 1, true);
+				oContent.RemoveFromContent(intStart, oContent.Content.length - intStart, true);
 				oContent.AddText(strCorrection, intStart);
 				isConvert = true;
-				
-				oCMathContent.Correct_Content(true);
-				oContent.State.ContentPos = intStart + 1;
 			}
 		}
 		return isConvert;
