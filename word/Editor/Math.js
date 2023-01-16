@@ -3680,6 +3680,7 @@ ParaMath.prototype.ConvertToLaTeX = function()
 	var strLatex = this.GetText(true);
 	this.Root.Remove_Content(0,this.Root.Content.length);
 	this.Root.Add_Text(strLatex, this.Paragraph);
+    this.Root.CurPos = this.Root.Content.length - 1;
 };
 ParaMath.prototype.ConvertFromUnicodeMath = function()
 {
@@ -3724,11 +3725,12 @@ ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 		}
 	}
 };
-ParaMath.prototype.SplitSelectedContent = function() {
+ParaMath.prototype.SplitSelectedContent = function()
+{
     var oSelection = this.GetSelectContent();
     var oContent = oSelection.Content;
     oContent.SplitSelectedContent();
-}
+};
 ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
 {
     this.SplitSelectedContent();
@@ -3742,11 +3744,12 @@ ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
         isToLinear
     );
 };
-ParaMath.prototype.SplitSelectedContent = function() {
+ParaMath.prototype.SplitSelectedContent = function()
+{
     var oSelection = this.GetSelectContent();
     var oContent = oSelection.Content;
     oContent.SplitSelectedContent();
-}
+};
 ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
 {
 	if (oCollector.IsExceedLimit())
