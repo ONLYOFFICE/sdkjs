@@ -10220,13 +10220,19 @@ drawPieChart.prototype = {
 		var oCommand1, calcPath, oCommand0;
 		// циклом находим крайнюю точку
 		for (var i = 0; i < this.paths.series.length; i++) {
-			calcPath = this.paths.series[i][numCache[i].val].insidePath;
-			calcPath = this.cChartSpace.GetPath(calcPath).getCommandByIndex(1);
-			if (calcPath) {
-				oCommand1 = calcPath;
+			calcPath = null;
+			if (this.paths.series[i] && numCache[i] && null != numCache[i].val && this.paths.series[i][numCache[i].val]) {
+				calcPath = this.paths.series[i][numCache[i].val].insidePath;
+				calcPath = null != calcPath && this.cChartSpace.GetPath(calcPath).getCommandByIndex(1);
+				if (calcPath) {
+					oCommand1 = calcPath;
+				}
 			}
 		}
 
+		if (!oCommand1) {
+			return;
+		}
 		if (!AscFormat.isRealNumber(path)) {
 			return;
 		}
