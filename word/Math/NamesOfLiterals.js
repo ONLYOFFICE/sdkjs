@@ -1374,6 +1374,7 @@
 				case oNamesOfLiterals.specialIndexOperatorLiteral[num]:
 				case oNamesOfLiterals.opDecimal[num]:
 				case oNamesOfLiterals.charLiteral[num]:
+				case oNamesOfLiterals.spaceLiteral[num]:
 				case oNamesOfLiterals.operatorLiteral[num]:
 				case oNamesOfLiterals.mathOperatorLiteral[num]:
 				case oNamesOfLiterals.numberLiteral[num]:
@@ -1740,8 +1741,6 @@
 						oNamesOfLiterals.bracketBlockLiteral[num],
 						oFunc.getArgument()
 					)
-					break;
-				case oNamesOfLiterals.spaceLiteral[num]:
 					break;
 				case oNamesOfLiterals.mathFontLiteral[num]:
 					ConvertTokens(
@@ -2608,6 +2607,7 @@
 				oContent.RemoveFromContent(intStart, oContent.Content.length - intStart, true);
 				oContent.AddText(strCorrection, intStart);
 				isConvert = true;
+				oContent.State.ContentPos = intStart + 1;
 			}
 		}
 		return isConvert;
