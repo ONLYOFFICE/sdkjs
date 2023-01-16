@@ -600,10 +600,18 @@ CopyProcessor.prototype =
 						oTarget = oHyperlink;
 						bOmitHyperlink = true;
 					} else if (realTarget && !this.instructionHyperlinkStart) {
+						//TODO close all bookmarks before change content. need to reconsider
+						if (bookmarkLevel > 0) {
+							while(bookmarkLevel > 0) {
+								closeBookmarks(bookmarkLevel);
+								bookmarkLevel--;
+							}
+						}
 						oTarget = realTarget;
 						bOmitHyperlink = false;
 						realTarget = null;
 					}
+
 
 					if (!oSpan.isEmptyChild()) {
 						this.parse_para_TextPr(item.Get_CompiledTextPr(), oSpan);
