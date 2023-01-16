@@ -119,11 +119,12 @@
 			for (let innerIndex = 0, innerCount = mathBounds[index].length; innerIndex < innerCount; ++innerIndex)
 			{
 				let bounds = mathBounds[index][innerIndex];
-				if (bounds.W < 0.001 || bounds.H < 0.001)
-					continue;
 
 				if (!firstBounds)
 					firstBounds = bounds;
+
+				if (bounds.W < 0.001 || bounds.H < 0.001)
+					continue;
 
 				if (this.PageNum === bounds.Page)
 				{
