@@ -120,11 +120,11 @@
 			{
 				let bounds = mathBounds[index][innerIndex];
 
-				if (!firstBounds)
-					firstBounds = bounds;
-
 				if (bounds.W < 0.001 || bounds.H < 0.001)
 					continue;
+				
+				if (!firstBounds)
+					firstBounds = bounds;
 
 				if (this.PageNum === bounds.Page)
 				{
@@ -133,7 +133,10 @@
 				}
 			}
 		}
-
+		
+		if (!firstBounds)
+			return null;
+		
 		let pageNum = firstBounds.Page;
 		let x0 = firstBounds.X;
 		let y0 = firstBounds.Y;
