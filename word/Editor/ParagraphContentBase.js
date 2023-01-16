@@ -2377,6 +2377,19 @@ CParagraphContentWithParagraphLikeContent.prototype.GetAllTables = function(oPro
 
 	return arrTables;
 };
+CParagraphContentWithParagraphLikeContent.prototype.GetAllParaMaths = function(oProps, arrParaMaths)
+{
+	if (!arrParaMaths)
+		arrParaMaths = [];
+
+	for (var nCurPos = 0, nLen = this.Content.length; nCurPos < nLen; ++nCurPos)
+	{
+		if (para_Math === this.Content[nCurPos].Type)
+			arrParaMaths.push(this.Content[nCurPos])
+	}
+
+	return arrParaMaths;
+};
 CParagraphContentWithParagraphLikeContent.prototype.Get_ClassesByPos = function(Classes, ContentPos, Depth)
 {
     Classes.push(this);

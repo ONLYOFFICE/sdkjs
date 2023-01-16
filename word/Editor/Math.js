@@ -896,7 +896,6 @@ CMathPageInfo.prototype.Update_CurrentPage = function(Page, ParaLine)
 };
 CMathPageInfo.prototype.Update_CurrentWrap = function(DispDef, bInline)
 {
-    if(this.WPages[this.CurPage].NeedUpdateWrap == true)
     {
         var WrapState;
 
@@ -3748,19 +3747,6 @@ ParaMath.prototype.SplitSelectedContent = function() {
     var oContent = oSelection.Content;
     oContent.SplitSelectedContent();
 }
-ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
-{
-    this.SplitSelectedContent();
-
-    var oSelection = this.GetSelectContent();
-
-    oSelection.Content.ConvertContentView(
-        oSelection.Start,
-        oSelection.End,
-        nInputType,
-        isToLinear
-    );
-};
 ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
 {
 	if (oCollector.IsExceedLimit())

@@ -998,6 +998,11 @@ CHeaderFooter.prototype =
 		return this.Content.GetAllTables(oProps, arrTables);
 	},
 
+    GetAllParaMaths : function(oProps, arrParaMaths)
+    {
+        return this.Content.GetAllParaMaths(oProps, arrParaMaths);
+    },
+
 	GetAllDrawingObjects : function(arrDrawings)
 	{
 		return this.Content.GetAllDrawingObjects(arrDrawings);

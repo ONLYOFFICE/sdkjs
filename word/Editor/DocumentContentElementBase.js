@@ -443,6 +443,10 @@ CDocumentContentElementBase.prototype.GetAllTables = function(oProps, arrTables)
 {
 	return [];
 };
+CDocumentContentElementBase.prototype.GetAllParaMaths = function(oProps, arrParaMaths)
+{
+	return [];
+};
 CDocumentContentElementBase.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth, StartFlag, EndFlag)
 {
 };

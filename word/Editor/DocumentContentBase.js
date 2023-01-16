@@ -1635,6 +1635,19 @@ CDocumentContentBase.prototype.GetAllTables = function(oProps, arrTables)
 	return arrTables;
 };
 /**
+ * Получаем массив таблиц по заданному критерию
+ * @param oProps
+ * @param [arrTables=undefined]
+ * @returns {Paragraph[]}
+ */
+CDocumentContentBase.prototype.GetAllParaMaths = function(oProps, arrParaMaths)
+{
+	if (!arrParaMaths)
+		arrParaMaths = [];
+
+	return arrParaMaths;
+};
+/**
  * Выделяем заданную нумерацию
  * @param oNumPr {CNumPr}
  * @param oPara {Paragraph} - текущий парограф

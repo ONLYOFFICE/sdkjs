@@ -6371,9 +6371,10 @@ CMathContent.prototype.CheckAutoCorrectionBrackets = function(nInputType)
         if (
             arrPosition.length === 2 &&
             Brackets.intCounter === 0 &&
-            arrPosition[0] === arrPos[2] && arrPosition[1] === arrPos[0]
+            arrPosition[0] === arrPos[2] && arrPosition[1] + 1 === arrPos[0]
 
         ) {
+            arrPosition[1]++;
             this.CutConvertAndPaste(arrPosition, nInputType);
             return Brackets;
         }
@@ -6385,12 +6386,12 @@ CMathContent.prototype.CheckAutoCorrectionBrackets = function(nInputType)
 CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType)
 {
     let isCurPos = false;
+
     if (arrPos.length === 0)
         arrPos = [0, 0];
 
-    if (arrPos[0] < 0) {
+    if (arrPos[0] < 0)
         arrPos[0] = 0;
-    }
 
     let strContent = "";
     for (let i = this.CurPos; i >= arrPos[0]; i--)

@@ -362,7 +362,7 @@
 		specialIndexBracketLiteral: [39, "specialScriptBracketLiteral"],
 		specialIndexOperatorLiteral: [40, "specialScriptBracketLiteral"],
 
-		textLiteral: 				[41, "textLiteral"],
+		textPlainLiteral: 				[41, "textPlainLiteral"],
 		nthrtLiteral: 				[42, "nthrtLiteral"],
 		fourthrtLiteral: 			[43, "fourthrtLiteral"],
 		cubertLiteral: 				[44, "cubertLiteral"],
@@ -1301,6 +1301,8 @@
 	// Convert tokens to math objects
 	function ConvertTokens(oTokens, oContext)
 	{
+		Paragraph = oContext.Paragraph;
+
 		if (typeof oTokens === "object")
 		{
 			if (oTokens.type === "LaTeXEquation" || oTokens.type === "UnicodeEquation")
@@ -1338,6 +1340,8 @@
 			oContext.Add_Text(oTokens);
 		}
 	}
+
+	let Paragraph = null;
 	// Find token in all types for convert
 	function SelectObject (oTokens, oContext)
 	{
@@ -1372,7 +1376,6 @@
 				case oNamesOfLiterals.charLiteral[num]:
 				case oNamesOfLiterals.operatorLiteral[num]:
 				case oNamesOfLiterals.mathOperatorLiteral[num]:
-				case oNamesOfLiterals.textLiteral[num]:
 				case oNamesOfLiterals.numberLiteral[num]:
 					if (oTokens.decimal) {
 						ConvertTokens(
@@ -1389,8 +1392,17 @@
 						oContext.Add_Text(oTokens.value);
 					}
 					break;
+				case oNamesOfLiterals.textPlainLiteral[num]:
+					oContext.Add_Text(oTokens.value, Paragraph, STY_PLAIN);
+					break
 				case oNamesOfLiterals.opNaryLiteral[num]:
-					let oNary = oContext.Add_NAry({chr: oTokens.value.charCodeAt(0)}, null, null, null);
+					let lPr = {
+						chr: oTokens.value.charCodeAt(0),
+						subHide: true,
+						supHide: true,
+					}
+
+					let oNary = oContext.Add_NAry(lPr, null, null, null);
 					if (oTokens.third) {
 						UnicodeArgument(
 							oTokens.third,
@@ -1550,8 +1562,8 @@
 
 						let Pr = {
 							chr: oTokens.value.value.charCodeAt(0),
-							supHide: oTokens.down !== undefined,
-							subHide: oTokens.up !== undefined,
+							subHide: oTokens.down === undefined,
+							supHide: oTokens.up === undefined,
 						}
 
 						let oNary = oContext.Add_NAry(Pr, null, null, null);

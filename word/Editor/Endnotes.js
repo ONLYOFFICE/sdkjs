@@ -980,6 +980,19 @@ CEndnotesController.prototype.GetAllTables = function(oProps, arrTables)
 
 	return arrTables;
 };
+CEndnotesController.prototype.GetAllParaMaths = function(oProps, arrParaMaths)
+{
+	if (!arrParaMaths)
+		arrParaMaths = [];
+
+	for (var sId in this.Endnote)
+	{
+		var oEndnote = this.Endnote[sId];
+		oEndnote.GetAllParaMaths(oProps, arrParaMaths);
+	}
+
+	return arrParaMaths;
+};
 CEndnotesController.prototype.GetFirstParagraphs = function()
 {
 	var aParagraphs = [];

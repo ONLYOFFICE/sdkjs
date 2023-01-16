@@ -2633,6 +2633,11 @@ ParaDrawing.prototype.GetAllTables = function(oProps, arrTables)
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.GetAllTables === "function")
 		this.GraphicObj.GetAllTables(oProps, arrTables);
 };
+ParaDrawing.prototype.GetAllParaMaths = function(oProps, arrParaMaths)
+{
+	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.GetAllParaMaths === "function")
+		this.GraphicObj.GetAllParaMaths(oProps, arrParaMaths);
+};
 ParaDrawing.prototype.GetAllDocContents = function(aDocContents)
 {
 	var _ret = Array.isArray(aDocContents) ? aDocContents : [];
