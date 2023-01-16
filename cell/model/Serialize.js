@@ -3256,7 +3256,7 @@
             if (slicerCachesExt) {
                 this.bs.WriteItem(c_oSerWorkbookTypes.SlicerCachesExt, function () {oThis.WriteSlicerCaches(slicerCachesExt/*, oThis.tableIds, oThis.sheetIds*/);});
             }
-			if (!this.isCopyPaste && this.wb.externalReferences.length > 0) {
+			if (this.wb.externalReferences.length > 0) {
 
             /*<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <externalLink xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main">
@@ -3502,7 +3502,7 @@
                      oThis.memory.WriteByte(c_oSerPropLenType.Variable);
                      oThis.memory.WriteString2(externalReference.referenceData["instanceId"]);
                  }
-             }
+            }
 
             switch (externalReference.Type) {
                 case 0:

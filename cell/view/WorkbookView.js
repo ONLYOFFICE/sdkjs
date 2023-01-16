@@ -1980,7 +1980,7 @@
 			  return sImageBase64;
 		  });
 	  }, this, []);
-  }
+  };
 
   WorkbookView.prototype._checkStopCellEditorInFormulas = function() {
 	  if (this.isCellEditMode && this.isFormulaEditMode && this.cellEditor.canEnterCellRange()) {
