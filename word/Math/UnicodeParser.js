@@ -135,7 +135,7 @@
 
 		if (this.oLookahead.class === "▒") {
 			this.EatToken("▒");
-			oContent = this.GetOperandLiteral()
+			oContent = this.GetElementLiteral()
 
 			if (oContent.type === oLiteralNames.bracketBlockLiteral[num] && oContent.left === "(" && oContent.right === ")")
 			{
@@ -299,34 +299,26 @@
 	};
 	CUnicodeParser.prototype.IsTextLiteral = function ()
 	{
-		return (this.oLookahead.class === "\"" || this.oLookahead.class === "\'") && !this.isTextLiteral
+		return (this.oLookahead.data === "\"" || this.oLookahead.data === "\'") && !this.isTextLiteral
 	}
 	CUnicodeParser.prototype.GetTextLiteral = function ()
 	{
+		debugger
 		let strSymbol = this.EatToken(this.oLookahead.class);
 		let strExp = "";
-		this.oTokenizer.SaveState();
-		this.saveLookahead = this.oLookahead;
 
-		while (this.oLookahead.class !== "\"" && this.oLookahead.class !== "\'" && this.oLookahead.class !== undefined) {
+		while (this.oLookahead.data !== "\"" && this.oLookahead.data !== "\'" && this.oLookahead.class !== undefined) {
 			strExp += this.EatToken(this.oLookahead.class).data;
 		}
 
-		if (this.oLookahead.class === undefined) {
-			this.oTokenizer.RestoreState();
-			this.oLookahead = this.saveLookahead;
-			this.saveLookahead = undefined;
-			return {
-				type: oLiteralNames.charLiteral[num],
-				value: strSymbol,
-			}
+		if (this.oLookahead.data !== "\"" && this.oLookahead.data !== "\'" )
+		{
+			this.EatToken(this.oLookahead.class);
 		}
-		else {
-			this.EatToken(this.oLookahead.class)
-			return {
-				type: oLiteralNames.textLiteral[num],
-				value: strExp,
-			}
+
+		return {
+			type: oLiteralNames.textPlainLiteral[num],
+			value: strExp,
 		}
 	}
 	CUnicodeParser.prototype.IsBoxLiteral = function ()
@@ -909,7 +901,7 @@
 
 			) {
 				this.EatToken("▒");
-				oThirdSoOperand = this.GetOperandLiteral();
+				oThirdSoOperand = this.GetElementLiteral();
 				return {
 					type: oLiteralNames.subSupLiteral[num],
 					value: oBase,
@@ -1254,7 +1246,10 @@
 	};
 	CUnicodeParser.prototype.GetEntityLiteral = function ()
 	{
-		if (this.IsAtomsLiteral()) {
+		if (this.IsTextLiteral()) {
+			return this.GetTextLiteral()
+		}
+		else if (this.IsAtomsLiteral()) {
 			return this.GetAtomsLiteral();
 		}
 		else if (this.IsExpBracketLiteral()) {
@@ -1265,9 +1260,6 @@
 		}
 		else if (this.IsOpNaryLiteral()) {
 			return this.GetOpNaryLiteral();
-		}
-		else if (this.IsTextLiteral()) {
-			return this.GetTextLiteral()
 		}
 
 	};

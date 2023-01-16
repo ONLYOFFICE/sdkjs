@@ -496,15 +496,16 @@
 	}
 	CLaTeXParser.prototype.IsTextLiteral = function ()
 	{
-		return this.oLookahead.class === "\\text"
+		return this.oLookahead.data === "\\text"
 	}
 	CLaTeXParser.prototype.GetTextLiteral = function ()
 	{
-		this.EatToken("\\text");
+		debugger
+		this.EatToken(this.oLookahead.class);
 		let oContent = this.GetTextArgument();
 
 		return {
-			type: oLiteralNames.textLiteral[num],
+			type: oLiteralNames.textPlainLiteral[num],
 			value: oContent,
 		}
 	}
