@@ -12098,6 +12098,7 @@
 			DataOld = this.getValueData();
 		//[{text:"",format:TextFormat},{}...]
 		var xfTableAndCond = this.getCompiledStyleCustom(true, false, true);
+		var oldFP = this.formulaParsed;
 		this.setFormulaInternal(null);
 		this.cleanText();
 		this._setValue2(array, undefined, xfTableAndCond);
@@ -12114,6 +12115,7 @@
 			var cell = this.ws.getCell3(this.nRow, this.nCol);
 			cell.removeHyperlink();
 		}
+		this.checkRemoveExternalReferences(this.formulaParsed, oldFP);
 	};
 	Cell.prototype.setValueForValidation = function(array, formula, callback, isCopyPaste, byRef) {
 		this.setFormulaInternal(null, true);
