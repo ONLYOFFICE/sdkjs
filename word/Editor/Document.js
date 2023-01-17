@@ -26631,9 +26631,17 @@ CDocument.prototype.ConvertAllMathView = function(isToLinear)
     var arrMaths = [];
     var arrParagraphs = this.GetAllParagraphs();
 
-    for (let i = 0; i < arrParagraphs.length; i++)
+    if (!this.IsSelectionLocked(AscCommon.changestype_None, {
+        Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+        Elements  : arrParagraphs,
+        CheckType : AscCommon.changestype_Paragraph_Content
+    }))
     {
-        arrParagraphs[i].GetAllParaMaths(arrMaths)
+        for (let i = 0; i < arrParagraphs.length; i++)
+        {
+            let currentParagraph = arrParagraphs[i];
+            currentParagraph.GetAllParaMaths(arrMaths)
+        }
     }
 
     if (arrMaths.length === 0)
