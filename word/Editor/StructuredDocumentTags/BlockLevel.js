@@ -491,10 +491,6 @@ CBlockLevelSdt.prototype.GetAllTables = function(oProps, arrTables)
 {
 	return this.Content.GetAllTables(oProps, arrTables);
 };
-CBlockLevelSdt.prototype.GetAllParaMaths = function(oProps, arrParaMaths)
-{
-	return this.Content.GetAllParaMaths(oProps, arrParaMaths);
-};
 CBlockLevelSdt.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth, StartFlag, EndFlag)
 {
 	this.Content.SetContentSelection(StartDocPos, EndDocPos, Depth, StartFlag, EndFlag);

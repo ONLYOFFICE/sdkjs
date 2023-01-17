@@ -915,19 +915,6 @@ CFootnotesController.prototype.GetAllTables = function(oProps, arrTables)
 
 	return arrTables;
 };
-CFootnotesController.prototype.GetAllParaMaths = function(oProps, arrParaMaths)
-{
-	if (!arrParaMaths)
-		arrParaMaths = [];
-
-	for (var sId in this.Footnote)
-	{
-		var oFootnote = this.Footnote[sId];
-		oFootnote.GetAllParaMaths(oProps, arrParaMaths);
-	}
-
-	return arrParaMaths;
-};
 CFootnotesController.prototype.GetFirstParagraphs = function()
 {
 	var aParagraphs = [];

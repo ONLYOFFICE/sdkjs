@@ -594,7 +594,7 @@ Paragraph.prototype.GetAllTables = function(oProps, arrTables)
 
 	return arrTables;
 };
-Paragraph.prototype.GetAllParaMaths = function(oProps, arrParaMaths)
+Paragraph.prototype.GetAllParaMaths = function(arrParaMaths)
 {
 	if (!arrParaMaths)
 		arrParaMaths = [];

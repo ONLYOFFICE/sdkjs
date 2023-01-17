@@ -14598,36 +14598,6 @@ CDocument.prototype.GetAllUsedParagraphStyles = function ()
     }
     return aStyles;
 };
-CDocument.prototype.GetAllParaMaths = function (oProps, arrParaMaths)
-{
-    if (!arrParaMaths)
-        arrParaMaths = [];
-
-    if (!oProps)
-        oProps = {};
-
-    if (oProps && true === oProps.OnlyMainDocument)
-    {
-        for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
-        {
-            this.Content[nIndex].GetAllParaMaths(oProps, arrParaMaths);
-        }
-    }
-    else
-    {
-        this.SectionsInfo.GetAllParaMaths(oProps, arrParaMaths);
-
-        for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
-        {
-            this.Content[nIndex].GetAllParaMaths(oProps, arrParaMaths);
-        }
-
-        this.Footnotes.GetAllParaMaths(oProps, arrParaMaths);
-        this.Endnotes.GetAllParaMaths(oProps, arrParaMaths);
-    }
-
-    return arrParaMaths;
-}
 CDocument.prototype.TurnOffHistory = function()
 {
 	this.History.TurnOff();
@@ -26659,7 +26629,12 @@ CDocument.prototype.ConvertMathView = function(isToLinear, isAll)
 CDocument.prototype.ConvertAllMathView = function(isToLinear)
 {
     var arrMaths = [];
-    this.GetAllParaMaths({OnlyMainDocument: true}, arrMaths);
+    var arrParagraphs = this.GetAllParagraphs();
+
+    for (let i = 0; i < arrParagraphs.length; i++)
+    {
+        arrParagraphs[i].GetAllParaMaths(arrMaths)
+    }
 
     if (arrMaths.length === 0)
         return;
@@ -26805,33 +26780,6 @@ CDocumentSectionsInfo.prototype =
 				SectPr.FooterEven.GetAllTables(oProps, arrTables);
 		}
 	},
-
-    GetAllParaMaths : function(oProps, arrParaMaths)
-    {
-        var Count = this.Elements.length;
-        for (var Index = 0; Index < Count; Index++)
-        {
-            var SectPr = this.Elements[Index].SectPr;
-
-            if (null != SectPr.HeaderFirst)
-                SectPr.HeaderFirst.GetAllParaMaths(oProps, arrParaMaths);
-
-            if (null != SectPr.HeaderDefault)
-                SectPr.HeaderDefault.GetAllParaMaths(oProps, arrParaMaths);
-
-            if (null != SectPr.HeaderEven)
-                SectPr.HeaderEven.GetAllParaMaths(oProps, arrParaMaths);
-
-            if (null != SectPr.FooterFirst)
-                SectPr.FooterFirst.GetAllParaMaths(oProps, arrParaMaths);
-
-            if (null != SectPr.FooterDefault)
-                SectPr.FooterDefault.GetAllParaMaths(oProps, arrParaMaths);
-
-            if (null != SectPr.FooterEven)
-                SectPr.FooterEven.GetAllParaMaths(oProps, arrParaMaths);
-        }
-    },
 
 	GetAllDrawingObjects : function(arrDrawings)
     {

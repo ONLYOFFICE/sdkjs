@@ -654,11 +654,6 @@ CShape.prototype.GetAllTables = function(oProps, arrTables)
 	var oContent = this.getDocContent();
 	return oContent ? oContent.GetAllTables(oProps, arrTables) : [];
 };
-CShape.prototype.GetAllParaMaths = function(oProps, arrParaMaths)
-{
-    var oContent = this.getDocContent();
-    return oContent ? oContent.GetAllParaMaths(oProps, arrParaMaths) : [];
-};
 CShape.prototype.getArrayWrapIntervals = function(x0,y0, x1, y1, Y0Sp, Y1Sp, LeftField, RightField, arr_intervals, bMathWrap)
 {
     return this.parent.getArrayWrapIntervals(x0,y0, x1, y1, Y0Sp, Y1Sp, LeftField, RightField, arr_intervals, bMathWrap);
