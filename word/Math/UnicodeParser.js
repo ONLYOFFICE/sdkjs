@@ -899,13 +899,17 @@
 			oContent = this.GetScriptSpecialContent(oBase);
 		}
 
-		if (this.oLookahead.class === "▒") {
+		this.SkipSpace();
+
+		if (this.oLookahead.class === "▒")
+		{
 			if (oBase.type === oLiteralNames.opBuildupLiteral[num] ||
 				oBase.type === oLiteralNames.opNaryLiteral[num] ||
 				oBase.type === oLiteralNames.functionLiteral[num] ||
 				oBase.type === oLiteralNames.functionWithLimitLiteral[num]
 
-			) {
+			)
+			{
 				this.EatToken("▒");
 				oThirdSoOperand = this.GetElementLiteral();
 				return {
@@ -916,17 +920,20 @@
 					third: oThirdSoOperand,
 				};
 			}
-			else {
+			else
+			{
 				this.EatToken(this.oLookahead.class);
 				return oContent;
 			}
 		}
-		else if (this.oLookahead.class === oLiteralNames.spaceLiteral[0]) {
+		else if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
+		{
 			if (
 				oBase.type === oLiteralNames.functionLiteral[num] ||
 				oBase.type === oLiteralNames.functionWithLimitLiteral[num] ||
 				oBase.type === oLiteralNames.opNaryLiteral[num]
-			) {
+			)
+			{
 				this.SkipSpace();
 
 				if (this.oLookahead.class)
