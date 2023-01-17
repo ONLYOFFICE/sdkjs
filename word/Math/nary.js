@@ -851,7 +851,7 @@ CNary.prototype.GetTextOfElement = function(isLaTeX)
 			default: break;
 		}
 
-        strBase = "{" + strBase + "}";
+        strBase = strBase;
 	}
     else
     {
