@@ -1583,11 +1583,17 @@
 		{
 			if (this.oLookahead.data === "/")
 			{
+					let down;
 					this.EatToken(this.oLookahead.class)
+					if (this.oLookahead.class)
+					{
+						down = this.GetElementLiteral()
+					}
+
 					oExpLiteral.push({
 						type: oLiteralNames.fractionLiteral[num],
 						up: null,
-						down: null,
+						down: down,
 						fracType: null,
 					})
 			}
