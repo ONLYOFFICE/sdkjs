@@ -1793,6 +1793,8 @@
 					break;
 				case oNamesOfLiterals.boxLiteral[num]:
 					let oBox = oContext.Add_Box({}, null);
+					var BoxMathContent = oBox.getBase();
+					BoxMathContent.SetArgSize(-1);
 					UnicodeArgument(
 						oTokens.value,
 						oNamesOfLiterals.bracketBlockLiteral[num],
