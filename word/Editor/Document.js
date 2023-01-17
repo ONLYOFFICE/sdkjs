@@ -26639,20 +26639,11 @@ CDocument.prototype.ConvertAllMathView = function(isToLinear)
     if (arrMaths.length === 0)
         return;
 
-    if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+    var nInputType = this.Api.getMathInputType();
+
+    for (let i = 0; i < arrMaths.length; i++)
     {
-        this.StartAction(AscDFH.historydescription_Document_ConvertMathView);
-        var nInputType = this.Api.getMathInputType();
-
-        for (let i = 0; i < arrMaths.length; i++)
-        {
-            arrMaths[i].ConvertView(isToLinear, nInputType);
-        }
-
-        this.Recalculate();
-        this.UpdateInterface();
-        this.UpdateTracks();
-        this.FinalizeAction();
+        arrMaths[i].ConvertView(isToLinear, nInputType);
     }
 };
 
