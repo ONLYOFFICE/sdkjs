@@ -6276,6 +6276,17 @@ ContentIterator.prototype.CheckRules = function ()
         ["∛", true],
         ["∜", true],
         ["▭", true],
+
+        ["́" ],
+        ["̂" ],
+        ["̌" ],
+        ["̃" ],
+        ["̀" ],
+        ["̇" ],
+        ["̈" ],
+        ["⃛" ],
+        ["̄" ],
+        ["⃗" ],
     ];
 
     for (let j = 0; j < rules.length; j++)
