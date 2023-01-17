@@ -473,6 +473,9 @@
 		["⋉", oNamesOfLiterals.operatorLiteral[0]],
 		["⋊", oNamesOfLiterals.operatorLiteral[0]],
 		["▷", oNamesOfLiterals.operatorLiteral[0]],
+		["<", oNamesOfLiterals.operatorLiteral[0]],
+		[">", oNamesOfLiterals.operatorLiteral[0]],
+		["!", oNamesOfLiterals.operatorLiteral[0]],
 
 		["(", oNamesOfLiterals.opOpenBracket[0]],
 		[")", oNamesOfLiterals.opCloseBracket[0]],
@@ -482,7 +485,6 @@
 		["^", true],
 		["_", true],
 
-		// ["!", oNamesOfLiterals.charLiteral[0]],
 		// ["!!", "‼", oNamesOfLiterals.charLiteral[0]],
 		// ["...", "…"],
 		// ["::", "∷"],
@@ -2571,14 +2573,17 @@
 		'>>': "≫",
 	}
 
-	function CorrectWordOnCursor(oCMathContent, IsLaTeX)
+	function CorrectWordOnCursor(oCMathContent, IsLaTeX, pos)
 	{
+		if (pos < 1 || pos === undefined)
+			pos = 1;
+
 		let isConvert = false;
 		let oContent = oCMathContent.Content[oCMathContent.CurPos];
 		let str = "";
 		let intStart = 0;
 
-		for (let nCount = oContent.Content.length - 1; nCount >= 0; nCount--)
+		for (let nCount = oContent.Content.length - pos; nCount >= 0; nCount--)
 		{
 			let oElement = oContent.Content[nCount];
 			let intCode = oElement.value;
