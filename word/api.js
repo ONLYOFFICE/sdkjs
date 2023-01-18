@@ -9049,7 +9049,14 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_ConvertMathView = function(isToLinear, isAll)
 	{
-		this.private_GetLogicDocument().ConvertMathView(isToLinear, isAll);
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		if (isAll)
+			logicDocument.ConvertAllMathView(isToLinear);
+		else
+			logicDocument.ConvertMathView(isToLinear);
 	};
 	asc_docs_api.prototype.asc_AddPageCount = function()
 	{

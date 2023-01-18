@@ -26587,24 +26587,20 @@ CDocument.prototype.GetMathInputType = function()
 /**
  * Функция конвертации вида формулы из линейного в профессиональный и наоборот
  * @param {boolean} isToLinear
- * @param {boolean} isAll
  */
-CDocument.prototype.ConvertMathView = function(isToLinear, isAll)
+CDocument.prototype.ConvertMathView = function(isToLinear)
 {
 	var oInfo = this.GetSelectedElementsInfo();
 	var oMath = oInfo.GetMath();
 	if (!oMath)
 		return;
-
+	
 	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ConvertMathView);
-		var nInputType = this.Api.getMathInputType();
-        if (isAll)
-        {
-            this.ConvertAllMathView(isToLinear);
-        }
-		else if (!this.IsTextSelectionUse())
+		let nInputType = this.Api.getMathInputType();
+		
+		if (!this.IsTextSelectionUse())
 		{
 			this.RemoveTextSelection();
 			oMath.ConvertView(isToLinear, nInputType);
@@ -26612,47 +26608,56 @@ CDocument.prototype.ConvertMathView = function(isToLinear, isAll)
 		else
 		{
 			oMath.ConvertViewBySelection(isToLinear, nInputType);
-        }
-
-        this.Recalculate();
-        this.UpdateInterface();
-        this.UpdateTracks();
-        this.FinalizeAction();
+		}
+		
+		this.Recalculate();
+		this.UpdateInterface();
+		this.UpdateTracks();
+		this.FinalizeAction();
 	}
 };
-
 /**
  * Функция конвертации вида всех формул из линейного в профессиональный и наоборот
  * @param {boolean} isToLinear
- * @param {boolean} isAll
  */
 CDocument.prototype.ConvertAllMathView = function(isToLinear)
 {
-    var arrMaths = [];
-    var arrParagraphs = this.GetAllParagraphs();
-
-    if (!this.IsSelectionLocked(AscCommon.changestype_None, {
-        Type      : AscCommon.changestype_2_ElementsArray_and_Type,
-        Elements  : arrParagraphs,
-        CheckType : AscCommon.changestype_Paragraph_Content
-    }))
-    {
-        for (let i = 0; i < arrParagraphs.length; i++)
-        {
-            let currentParagraph = arrParagraphs[i];
-            currentParagraph.GetAllParaMaths(arrMaths)
-        }
-    }
-
-    if (arrMaths.length === 0)
-        return;
-
-    var nInputType = this.Api.getMathInputType();
-
-    for (let i = 0; i < arrMaths.length; i++)
-    {
-        arrMaths[i].ConvertView(isToLinear, nInputType);
-    }
+	let allMaths          = [];
+	let allParagraphs     = this.GetAllParagraphs();
+	let paragraphsToCheck = [];
+	
+	for (let paraIndex = 0, parasCount = allParagraphs.length; paraIndex < parasCount; ++paraIndex)
+	{
+		let paragraph  = allParagraphs[paraIndex];
+		let mathsCount = allMaths.length;
+		paragraph.GetAllParaMaths(allMaths);
+		
+		if (mathsCount !== allMaths.length)
+			paragraphsToCheck.push(paragraph);
+	}
+	
+	if (!allMaths.length || !paragraphsToCheck.length)
+		return;
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_None, {
+		Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+		Elements  : paragraphsToCheck,
+		CheckType : AscCommon.changestype_Paragraph_Content
+	}))
+		return;
+	
+	this.StartAction(AscDFH.historydescription_Document_ConvertMathView);
+	let inputType = this.Api.getMathInputType();
+	
+	for (let mathIndex = 0, mathsCount = allMaths.length; mathIndex < mathsCount; ++mathIndex)
+	{
+		allMaths[mathIndex].ConvertView(isToLinear, inputType);
+	}
+	
+	this.Recalculate();
+	this.UpdateInterface();
+	this.UpdateTracks();
+	this.FinalizeAction();
 };
 
 function CDocumentSelectionState()
