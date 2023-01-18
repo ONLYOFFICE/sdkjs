@@ -850,8 +850,6 @@ CNary.prototype.GetTextOfElement = function(isLaTeX)
 			case 10752: strStartCode = '\\bigodot';		break;
 			default: break;
 		}
-
-        strBase = strBase;
 	}
     else
     {
