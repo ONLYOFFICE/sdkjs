@@ -912,8 +912,8 @@
 		["\\hat", MathLiterals.accent.id],
 		["\\dot", MathLiterals.accent.id],
 
-		// ["\""],
-		// ["\'"],
+		["\"",  oNamesOfLiterals.charLiteral[0]],
+		["\'",  oNamesOfLiterals.charLiteral[0]],
 
 		["\\quad", oNamesOfLiterals.spaceLiteral[0]], // 1 em (nominally, the height of the font)
 		// ["\\qquad", [8193, 8193], oNamesOfLiterals.spaceLiteral[0]], // 2em
@@ -1006,7 +1006,7 @@
 		"tan", "tanh", "sup", "sinh", "sin", "sec", "ker", "hom",
 		"arg", "arctan", "arcsin", "arcsec", "arccsc", "arccot", "arccos",
 		"inf", "gcd", "exp", "dim", "det", "deg", "csc", "coth", "cot",
-		"cosh", "cos", "Pr", "lg", "ln", "log", "sgn",
+		"cosh", "cos", "Pr", "lg", "ln", "log", "sgn", "sech"
 	];
 	const limitFunctions = [
 		"lim", "min", "max",
@@ -1210,6 +1210,9 @@
 			"|": 124,
 			"〖": -1,
 			"〗": -1,
+			"⟨" : 10216,
+			"⟩": 10217,
+
 		}
 		if (code) {
 			let strBracket = oBrackets[code];
@@ -1606,10 +1609,11 @@
 							null,
 							null
 						);
-						ConvertTokens(
+						UnicodeArgument(
 							oTokens.value,
+							oNamesOfLiterals.bracketBlockLiteral[num],
 							SubSup.getBase(),
-						);
+						)
 						UnicodeArgument(
 							oTokens.up,
 							oNamesOfLiterals.bracketBlockLiteral[num],
@@ -1695,10 +1699,19 @@
 
 					break;
 				case oNamesOfLiterals.bracketBlockLiteral[num]:
+
+					let arr = [null]
+					if (oTokens.counter > 1 && oTokens.value.length < oTokens.counter)
+					{
+						for (let i = 0; i < oTokens.counter - 1; i++)
+						{
+							arr.push(null);
+						}
+					}
 					let oBracket = oContext.Add_DelimiterEx(
 						new CTextPr(),
-						oTokens.value.length ? oTokens.value.length : 1,
-						[null],
+						oTokens.value.length ? oTokens.value.length : oTokens.counter || 1,
+						arr,
 						GetBracketCode(oTokens.left),
 						GetBracketCode(oTokens.right),
 					);
@@ -2580,10 +2593,14 @@
 
 		let isConvert = false;
 		let oContent = oCMathContent.Content[oCMathContent.CurPos];
+
+		if (oCMathContent.GetLastTextElement() === " " || oCMathContent.IsLastElement(AscMath.MathLiterals.operators))
+			pos--;
+
 		let str = "";
 		let intStart = 0;
 
-		for (let nCount = oContent.Content.length - pos; nCount >= 0; nCount--)
+		for (let nCount = oContent.Content.length - 1 - pos; nCount >= 0; nCount--)
 		{
 			let oElement = oContent.Content[nCount];
 			let intCode = oElement.value;
@@ -2609,12 +2626,13 @@
 		if (oContent.Content.length - 1 > intStart)
 		{
 			let strCorrection = ConvertWord(str, IsLaTeX);
+
 			if (strCorrection)
 			{
-				oContent.RemoveFromContent(intStart, oContent.Content.length - intStart, true);
+				oContent.RemoveFromContent(intStart, oContent.Content.length - intStart - pos, true);
 				oContent.AddText(strCorrection, intStart);
 				isConvert = true;
-				oContent.State.ContentPos = intStart + 1;
+				oContent.State.ContentPos = oContent.Content.length;
 			}
 		}
 		return isConvert;

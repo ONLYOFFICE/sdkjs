@@ -1114,7 +1114,6 @@
 	{
 		let oArgument = [];
 		while (intCountOfArguments > 0) {
-			this.SkipFreeSpace();
 			if (this.oLookahead.data === "{") {
 				this.EatToken(this.oLookahead.class);
 				oArgument.push(this.GetExpressionLiteral());

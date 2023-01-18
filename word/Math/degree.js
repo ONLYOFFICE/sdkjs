@@ -544,8 +544,7 @@ CDegree.prototype.Can_ModifyArgSize = function()
 CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strTypeOfScript = this.Pr.type === 1 ? '^' : '_';
-
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX);
 	var strIterator = this.getIterator().GetMultipleContentForGetText(isLaTeX);
 
     // if (strBase.length > 1)
@@ -1279,10 +1278,12 @@ CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
 	}
     else
     {
+
 		if (true === isPreScript)
 			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base;
-        else
-			strTemp = Base + '_' + strLower + '^' + strUpper;
+        else {
+            strTemp = Base + '_' + strLower + '^' + strUpper;
+        }
 	}
 	return strTemp;
 };

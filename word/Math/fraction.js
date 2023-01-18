@@ -617,8 +617,8 @@ CFraction.prototype.raw_SetFractionType = function(FractionType)
 CFraction.prototype.GetTextOfElement = function(isLaTeX)
 {
 	let strTemp = "";
-	let strNumerator = this.getNumerator().GetMultipleContentForGetText(isLaTeX, true);
-	let strDenominator = this.getDenominator().GetMultipleContentForGetText(isLaTeX, true);
+	let strNumerator = this.getNumerator().GetMultipleContentForGetText(isLaTeX, );
+	let strDenominator = this.getDenominator().GetMultipleContentForGetText(isLaTeX, );
 
 	if (true === isLaTeX)
     {
