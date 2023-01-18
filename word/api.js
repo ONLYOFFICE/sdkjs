@@ -13035,8 +13035,8 @@ background-repeat: no-repeat;\
 		let curDocProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
 		if (curDocProtection) {
 			//пытаемся выставить такие же настройки
-			let curIsProtect = curDocProtection.edit != null && curDocProtection.edit !== Asc.c_oAscEDocProtect.None;
-			let isPropsProtect = props.edit != null && props.edit !== Asc.c_oAscEDocProtect.None;
+			let curIsProtect = curDocProtection.edit != null && curDocProtection.edit !== Asc.c_oAscEDocProtect.None && curDocProtection.enforcement !== false;
+			let isPropsProtect = props.edit != null && props.edit !== Asc.c_oAscEDocProtect.None && props.enforcement !== false;
 			if (curIsProtect === isPropsProtect) {
 				return;
 			}

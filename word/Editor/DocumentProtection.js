@@ -205,7 +205,7 @@ CDocProtect.prototype.asc_getIsPassword = function()
 };
 CDocProtect.prototype.asc_getEditType = function()
 {
-	return this.edit;
+	return this.enforcement !== false ? this.edit : Asc.c_oAscEDocProtect.None;
 };
 CDocProtect.prototype.asc_setPassword = function(val)
 {
@@ -214,6 +214,9 @@ CDocProtect.prototype.asc_setPassword = function(val)
 CDocProtect.prototype.asc_setEditType = function(val)
 {
 	this.edit = val;
+	if (this.edit != null) {
+		this.enforcement = true;
+	}
 };
 
 
