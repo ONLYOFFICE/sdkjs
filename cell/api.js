@@ -8193,18 +8193,18 @@ var editor;
 	{
 		let wb = this.wb;
 		if (!wb)
-			return;
+			return false;
 
-		wb.EnterText(codePoints);
+		return wb.EnterText(codePoints);
 	};
 
 	spreadsheet_api.prototype.asc_correctEnterText = function(oldValue, newValue)
 	{
 		let wb = this.wb;
 		if (!wb)
-			return;
+			return false;
 
-		wb.CorrectEnterText(oldValue, newValue);
+		return wb.CorrectEnterText(oldValue, newValue);
 	};
 
 	spreadsheet_api.prototype.asc_getExternalReferences = function() {
