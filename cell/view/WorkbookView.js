@@ -4980,10 +4980,6 @@
 						let wb = eR.getWb();
 						let editor;
 						if (!t.Api["asc_isSupportFeature"]("ooxml")) {
-							editor = AscCommon.getEditorByBinSignature(stream);
-							if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
-								continue;
-							}
 							//в этом случае запрашиваем бинарник
 							// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
 							let jsZlib = new AscCommon.ZLib();
@@ -4994,6 +4990,11 @@
 
 							if (jsZlib.files && jsZlib.files.length) {
 								var binaryData = jsZlib.getFile(jsZlib.files[0]);
+
+								editor = AscCommon.getEditorByBinSignature(binaryData);
+								if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
+									continue;
+								}
 
 								//заполняем через банарник
 								var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
