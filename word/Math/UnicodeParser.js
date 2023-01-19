@@ -202,11 +202,9 @@
 			else
 				strOpenLiteral = ".";
 
-			this.SkipSpace();
 			let arrContent = this.GetContentOfBracket();
 			oExp = arrContent[0];
 			let counter = arrContent[1];
-			this.SkipSpace();
 
 			if (this.oLookahead.class === "┤")
 				this.EatToken("┤");
@@ -355,7 +353,7 @@
 		if (this.oLookahead.data === "▭")
 		{
 			this.EatToken(this.oLookahead.class);
-			this.SkipSpace();
+			this.EatOneSpace();
 			if (this.IsOperandLiteral())
 			{
 				const oToken = this.GetOperandLiteral();
@@ -374,7 +372,7 @@
 		let oUp, oDown, oOperand;
 		if (this.IsOperandLiteral()) {
 			let strHBracket = this.EatToken(oLiteralNames.hBracketLiteral[0]).data;
-			this.SkipSpace();
+			this.EatOneSpace();
 			oOperand = this.GetOperandLiteral("custom");
 			if (this.oLookahead.data === "_" || this.oLookahead.data === "^" || this.oLookahead.data === "┬" || this.oLookahead.data === "┴") {
 				if (this.oLookahead.data === "_" || this.oLookahead.data === "┬") {
@@ -407,12 +405,12 @@
 	CUnicodeParser.prototype.GetRootLiteral = function ()
 	{
 		this.EatToken(this.oLookahead.class);
-		this.SkipSpace();
+		this.EatOneSpace();
 		let oIndex = this.GetExpLiteral();
 		let oBase;
 		if (this.oLookahead.data === "▒") {
 			this.EatToken(this.oLookahead.class);
-			this.SkipSpace();
+			this.EatOneSpace();
 			oBase = this.GetExpLiteral();
 		}
 		return {
@@ -463,10 +461,11 @@
 		if (this.IsOpOpenLiteral()) {
 			this.GetOpOpenLiteral();
 
-			if (this.IsOperandLiteral()) {
-				this.SkipSpace();
+			if (this.IsOperandLiteral())
+			{
+				this.EatOneSpace();
 				oIndex = this.GetExpLiteral();
-				this.SkipSpace();
+				this.EatOneSpace();
 
 				if (this.oLookahead.data === "&")
 				{
@@ -487,9 +486,9 @@
 		}
 		else if (this.IsOperandLiteral())
 		{
-			this.SkipSpace();
+			this.EatOneSpace();
 			oContent = this.GetOperandLiteral();
-			this.SkipSpace();
+			this.EatOneSpace();
 		}
 
 		return {
@@ -537,7 +536,7 @@
 		else if (this.oLookahead.data === "▁" || this.oLookahead.data === "¯") {
 			if (this.IsOperandLiteral()) {
 				let strUnderOverLine = this.EatToken(this.oLookahead.class).data;
-				this.SkipSpace();
+				this.EatOneSpace();
 				let oOperand = this.GetOperandLiteral("custom");
 				oFunctionContent = {
 					type: oLiteralNames.overBarLiteral[num],
@@ -564,7 +563,7 @@
 			oName = this.EatToken(this.oLookahead.class).data,
 			oThird;
 
-		this.SkipSpace();
+		this.EatOneSpace();
 
 		if (!this.IsExpSubSupLiteral())
 		{
@@ -656,7 +655,7 @@
 		let intCountOfBracketBlock = 1;
 		while (this.IsExpLiteral() || this.oLookahead.data === "∣" || this.oLookahead.data === "│" || this.oLookahead.data === "ⓜ" || this.oLookahead.data === "│") {
 			if (this.IsExpLiteral()) {
-				let oToken = this.GetExpLiteral(true);
+				let oToken = this.GetExpLiteral();
 				if ((oToken && !Array.isArray(oToken)) || Array.isArray(oToken) && oToken.length > 0) {
 					arrContent.push(oToken)
 				}
@@ -705,7 +704,7 @@
 			this.EatToken(oLiteralNames.opCloseBracket[0]);
 		}
 
-		this.SkipSpace();
+		this.EatOneSpace();
 		oBase = this.GetElementLiteral();
 
 		return {
@@ -911,10 +910,7 @@
 			oContent = this.GetScriptSpecialContent(oBase);
 		}
 
-		if (this.oLookahead.class === oLiteralNames.spaceLiteral[num])
-		{
-			this.EatToken(this.oLookahead.class);
-		}
+		this.EatOneSpace();
 
 		if (this.oLookahead.class === "▒")
 		{
@@ -967,15 +963,23 @@
 
 		return oContent;
 	};
+	CUnicodeParser.prototype.EatOneSpace = function()
+	{
+		if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
+		{
+			this.EatToken(this.oLookahead.class);
+		}
+
+	}
 	CUnicodeParser.prototype.GetScriptStandardContentLiteral = function (oBase)
 	{
-		this.SaveTokensWhileReturn();
 		let oFirstElement;
 		let oSecondElement;
 
 		if (this.oLookahead.data === "_")
 		{
 			this.EatToken(this.oLookahead.class);
+			this.EatOneSpace();
 			if (this.IsSoOperandLiteral()) {
 				oFirstElement = (oBase && oBase.type === oLiteralNames.opNaryLiteral[1])
 					? this.GetSoOperandLiteral("custom")
@@ -1007,6 +1011,7 @@
 		else if (this.oLookahead.data === "^")
 		{
 			this.EatToken(this.oLookahead.class);
+			this.EatOneSpace();
 			if (this.IsSoOperandLiteral())
 			{
 				oSecondElement = (oBase && oBase.type === oLiteralNames.opNaryLiteral[1])
@@ -1039,7 +1044,6 @@
 				};
 			}
 		}
-		return this.WriteSavedTokens();
 	};
 	CUnicodeParser.prototype.IsScriptStandardContentLiteral = function ()
 	{
@@ -1060,7 +1064,7 @@
 
 		if(base.type === oLiteralNames.functionLiteral[num])
 		{
-			this.SkipSpace();
+			this.EatOneSpace();
 			let third = this.GetOperandLiteral();
 			return {
 				type: oLiteralNames.functionWithLimitLiteral[num],
@@ -1604,7 +1608,7 @@
 	{
 		return this.IsElementLiteral() || this.oLookahead.class === oLiteralNames.operatorLiteral[0] || this.oLookahead.data === "/";
 	};
-	CUnicodeParser.prototype.GetExpLiteral = function (isSkipSpaces)
+	CUnicodeParser.prototype.GetExpLiteral = function ()
 	{
 		const oExpLiteral = [];
 
@@ -1626,9 +1630,6 @@
 						fracType: null,
 					})
 			}
-
-			if (isSkipSpaces && this.oLookahead.class === oLiteralNames.spaceLiteral[0])
-				this.EatToken(oLiteralNames.spaceLiteral[0]);
 			
 			else if (this.IsElementLiteral()) {
 
