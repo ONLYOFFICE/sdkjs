@@ -4968,23 +4968,28 @@
 
 				var updatedReferences = [];
 				for (var i = 0; i < _arrAfterPromise.length; i++) {
-					var externalReferenceId = _arrAfterPromise[i].externalReferenceId;
-					var stream = _arrAfterPromise[i].stream;
-					var eR = t.model.getExternalReferenceById(externalReferenceId);
+					let externalReferenceId = _arrAfterPromise[i].externalReferenceId;
+					let stream = _arrAfterPromise[i].stream;
+					let eR = t.model.getExternalReferenceById(externalReferenceId);
 					if (stream && eR) {
 						updatedReferences.push(eR);
 						//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
 						//использую общий wb для externalReferences. поскольку внутри
 						//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
 						//необходимо проверить, ссылкой на 2 листа одной книги
-						var wb = eR.getWb();
+						let wb = eR.getWb();
+						let editor;
 						if (!t.Api["asc_isSupportFeature"]("ooxml")) {
+							editor = AscCommon.getEditorByBinSignature(stream);
+							if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
+								continue;
+							}
 							//в этом случае запрашиваем бинарник
 							// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
 							let jsZlib = new AscCommon.ZLib();
 							if (!jsZlib.open(stream)) {
 								t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
-								return false;
+								continue;
 							}
 
 							if (jsZlib.files && jsZlib.files.length) {
@@ -5012,7 +5017,11 @@
 								}
 							}
 						} else {
-							var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, stream);
+							editor = AscCommon.getEditorByOOXMLSignature(stream);
+							if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
+								continue;
+							}
+							let updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, stream);
 							if (updatedData) {
 								eR && eR.updateData(updatedData, _arrAfterPromise[i].data);
 							}
@@ -5027,15 +5036,15 @@
 				History.EndTransaction();
 
 				//кроме пересчёта нужно изменить ссылку на лист во всех диапазонах, которые используют данную ссылку
-				for (var j = 0; i < updatedReferences.length; j++) {
-					for (var n in updatedReferences[j].worksheets) {
-						var prepared = t.model.dependencyFormulas.prepareChangeSheet(updatedReferences[j].worksheets[n].getId());
+				for (let j = 0; i < updatedReferences.length; j++) {
+					for (let n in updatedReferences[j].worksheets) {
+						let prepared = t.model.dependencyFormulas.prepareChangeSheet(updatedReferences[j].worksheets[n].getId());
 						t.model.dependencyFormulas.dependencyFormulas.changeSheet(prepared);
 					}
 				}
 
 				//t.model.dependencyFormulas.calcTree();
-				var ws = t.getWorksheet();
+				let ws = t.getWorksheet();
 				ws.draw();
 
 				t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
@@ -5087,30 +5096,30 @@
 		if (!requests) {
 			return;
 		}
-		var t = this;
+		let t = this;
 		//чтобы потом понять что нужно обновлять, сохраняю сооветсвие, количество запросов соответсвует количеству externalReferences
 		//для этого создаю на все Promise, и если data[i].error -> возвращаю null
 
-		var successfulLoadFileMap = {};
-		var getPromise = function (oData, eR, _resolve) {
+		let successfulLoadFileMap = {};
+		let getPromise = function (oData, eR, _resolve) {
 			return function () {
 
 				return new Promise(function (resolve) {
-					var sFileUrl = oData && !oData.error ? oData.url : null;
-					var isExternalLink = eR.isExternalLink();
+					let sFileUrl = oData && !oData["error"] ? oData["url"] : null;
+					let isExternalLink = eR.isExternalLink();
 
 					//если ссылка на внешний источник, пробуем получить контент
-					if (!sFileUrl && oData.error && isExternalLink) {
+					if (!sFileUrl && oData["error"] && isExternalLink) {
 						sFileUrl = eR.data;
 					}
 
-					var resolveStream = function (stream) {
+					let resolveStream = function (stream) {
 						resolve(_resolve(stream, eR.externalReference.Id, oData));
 					};
 					//получаем контент файла
-					var loadFile = function (_fileUrl) {
+					let loadFile = function (_fileUrl) {
 						AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
-							var stream;
+							let stream;
 							if (httpRequest) {
 								stream = AscCommon.initStreamFromResponse(httpRequest);
 							} else {
@@ -5122,7 +5131,7 @@
 					};
 
 					//если открыть на клиенте не можем, то запрашиваем бинарник
-					var isXlsx = eR.externalReference && eR.externalReference.isXlsx();
+					let isXlsx = eR.externalReference && eR.externalReference.isXlsx();
 					let outputFormat = t.Api["asc_isSupportFeature"]("ooxml") ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY;
 					let fileType = oData["fileType"];
 					let token = oData["token"];
@@ -5154,11 +5163,11 @@
 		};
 
 
-		for (var i = 0; i < data.length; i++) {
-			var _oData = data && data[i];
-			var _eR = externalReferences[i];
+		for (let i = 0; i < data.length; i++) {
+			let _oData = data && data[i];
+			let _eR = externalReferences[i];
 
-			if (_oData && _eR && (_eR.isExternalLink() || !_oData.error)) {
+			if (_oData && _eR && (_eR.isExternalLink() || !_oData["error"])) {
 				requests.push(getPromise(_oData, _eR, resolveFunc));
 			}
 		}

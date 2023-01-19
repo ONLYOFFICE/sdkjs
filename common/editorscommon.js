@@ -13570,6 +13570,10 @@
 	window["AscCommon"].sendClientLog = sendClientLog;
 
 	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
+
+	window["AscCommon"].getEditorByBinSignature = getEditorByBinSignature;
+	window["AscCommon"].getEditorByOOXMLSignature = getEditorByOOXMLSignature;
+
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
