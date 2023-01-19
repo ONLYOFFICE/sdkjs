@@ -14170,10 +14170,13 @@ QueryTableField.prototype.clone = function() {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
 			if (this.worksheets && this.worksheets[sheetName]) {
+				let wsTo = this.worksheets[sheetName];
 				//меняем лист
 				AscFormat.ExecuteNoHistory(function(){
 					AscCommonExcel.executeInR1C1Mode(false, function () {
-						t.worksheets[sheetName].copyFrom(arr[i], t.worksheets[sheetName].sName);
+						var oAllRange = wsTo.getRange3(0, 0, wsTo.getRowsCount(), wsTo.getColsCount());
+						oAllRange.cleanAll();
+						wsTo.copyFrom(arr[i], wsTo.sName);
 					});
 				});
 				//this.worksheets[sheetName] = arr[i];
@@ -14566,8 +14569,12 @@ QueryTableField.prototype.clone = function() {
 						continue;
 					}
 					var range = sheet.getRange2(externalCell.Ref);
-					range._foreachNoEmpty(function (cell) {
-						isChanged = externalCell.initFromCell(cell, true);
+					range._foreach(function (cell) {
+
+						let changedCell = externalCell.initFromCell(cell, true);
+						if (!isChanged) {
+							isChanged = changedCell;
+						}
 
 						var api_sheet = Asc['editor'];
 						var wb = api_sheet.wbModel;
