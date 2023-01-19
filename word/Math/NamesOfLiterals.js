@@ -1506,7 +1506,7 @@
 							null,
 							null
 						);
-						SubSup.getBase().Add_Text(oTokens.value.value)
+						SubSup.getBase().Add_Text(oTokens.value.value, Paragraph, STY_PLAIN)
 
 						if (oTokens.up) {
 							UnicodeArgument(
@@ -1544,7 +1544,7 @@
 							.getFName()
 							.Content[0]
 							.getFName()
-							.Add_Text(oTokens.value.value);
+							.Add_Text(oTokens.value.value, Paragraph, STY_PLAIN);
 
 						let oLimitIterator = oFuncWithLimit
 							.getFName()
@@ -1636,7 +1636,7 @@
 					FuncName.Add_Element(Limit);
 
 					var LimitName = Limit.getFName();
-					LimitName.Add_Text(oTokens.value);
+					LimitName.Add_Text(oTokens.value, Paragraph, STY_PLAIN);
 
 					if (oTokens.up || oTokens.down) {
 						UnicodeArgument(
@@ -1750,7 +1750,7 @@
 					break;
 				case oNamesOfLiterals.functionLiteral[num]:
 					let oFunc = oContext.Add_Function({}, null, null);
-					oFunc.getFName().Add_Text(oTokens.value);
+					oFunc.getFName().Add_Text(oTokens.value, Paragraph, STY_PLAIN);
 					UnicodeArgument(
 						oTokens.third,
 						oNamesOfLiterals.bracketBlockLiteral[num],
