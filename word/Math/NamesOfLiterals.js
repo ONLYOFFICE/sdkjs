@@ -1000,6 +1000,29 @@
 		"\\box",
 		"\\fbox",
 		"\\rect",
+
+		"\\sum",
+		"\\prod",
+		"\\amalg",
+		"\\coprod",
+		"\\bigwedge",
+		"\\bigvee",
+		"\\bigcup",
+		"\\bigcap",
+		"\\bigsqcup",
+		"\\biguplus",
+		"\\bigodot",
+		"\\bigoplus",
+		"\\bigotimes",
+		"\\int",
+		"\\iint",
+		"\\iiint",
+		"\\iiiint",
+		"\\oint",
+		"\\oiint",
+		"\\oiiint",
+		"\\coint",
+		"\\aouint",
 	];
 
 	const functionNames = [
@@ -2632,9 +2655,9 @@
 				oContent.RemoveFromContent(intStart, oContent.Content.length - intStart - pos, true);
 				oContent.AddText(strCorrection, intStart);
 				isConvert = true;
-				oContent.State.ContentPos = oContent.Content.length;
 			}
 		}
+		oContent.MoveCursorToEndPos();
 		return isConvert;
 	}
 	function ConvertWord(str, IsLaTeX)
@@ -2748,16 +2771,12 @@
 			)
 		}
 	}
-	function GetConvertContent(nInputType, strConversionData)
+	function GetConvertContent(nInputType, strConversionData, oContext)
 	{
-		const oTempObject = new CMathContent();
-
+		oContext.CurPos++;
 		nInputType === Asc.c_oAscMathInputType.Unicode
-			? AscMath.CUnicodeConverter(strConversionData, oTempObject)
-			: AscMath.ConvertLaTeXToTokensList(strConversionData, oTempObject);
-
-		oTempObject.Correct_Content(true);
-		return oTempObject;
+			? AscMath.CUnicodeConverter(strConversionData, oContext)
+			: AscMath.ConvertLaTeXToTokensList(strConversionData, oContext);
 	}
 
 	// const LaTeXWordList = {

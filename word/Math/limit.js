@@ -455,7 +455,10 @@ CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
 
     if (!isLaTeX)
     {
-      strArgument =  " 〖" + strArgument + "〗";
+        if (!this.getArgument().IsOneElementInContentForGetText())
+        {
+            strArgument =  " 〖" + strArgument + "〗";
+        }
     }
     if (isLaTeX)
     {

@@ -547,16 +547,6 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX);
 	var strIterator = this.getIterator().GetMultipleContentForGetText(isLaTeX);
 
-    // if (strBase.length > 1)
-    // {
-    //     if (strBase[0] !== "{" && strBase[0] !== "(") {
-    //         if (isLaTeX)
-    //             strBase = "{" + strBase + "}";
-    //         else
-    //             strBase = "(" + strBase + ")";
-    //     }
-    // }
-
 	if (isLaTeX)
     {
 		switch (strBase) {

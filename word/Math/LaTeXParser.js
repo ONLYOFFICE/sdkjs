@@ -127,7 +127,8 @@
 	};
 	CLaTeXParser.prototype.GetSpaceLiteral = function ()
 	{
-		return this.ReadTokensWhileEnd(oLiteralNames.spaceLiteral);
+		//todo LaTex skip all normal spaces
+		this.ReadTokensWhileEnd(oLiteralNames.spaceLiteral);
 	};
 	CLaTeXParser.prototype.GetNumberLiteral = function ()
 	{
