@@ -12467,6 +12467,16 @@ background-repeat: no-repeat;\
 			return _memory.ImData.data;
 		}
 	};
+	
+	function EscapingCharacters(word)
+	{
+		word = word.replaceAll("&", "&#38;");
+		word = word.replaceAll("<", "&#60;");
+		word = word.replaceAll(">", "&#62;");
+		word = word.replaceAll("\"", "&#34;");
+		word = word.replaceAll("\'", "&#39;");
+		return word;
+	}
 
 	window["asc_docs_api"].prototype["asc_nativeGetHtml"] = function()
 	{
@@ -12478,19 +12488,40 @@ background-repeat: no-repeat;\
 		oCopyProcessor.Start();
 		var _ret = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
 		if (oCore.asc_getTitle())
-			_ret += ("<title>" + oCore.asc_getTitle() + "</title>");
+		{
+			var title = EscapingCharacters(oCore.asc_getTitle());
+			_ret += ("<title>" + title + "</title>");
+		}
 		if (oCore.asc_getCreator())
-			_ret += ("<meta name=\"creator\" content=\"" + oCore.asc_getCreator() + "\" />");
+		{
+			var creator = EscapingCharacters(oCore.asc_getCreator());
+			_ret += ("<meta name=\"creator\" content=\"" + creator + "\" />");
+		}
 		if (oCore.asc_getDescription())
-			_ret += ("<meta name=\"description\" content=\"" + oCore.asc_getDescription() + "\" />");
+		{
+			var description = EscapingCharacters(oCore.asc_getDescription());
+			_ret += ("<meta name=\"description\" content=\"" + description + "\" />");
+		}
 		if (oCore.asc_getKeywords())
-			_ret += ("<meta name=\"keywords\" content=\"" + oCore.asc_getKeywords() + "\" />");
+		{
+			var keywords = EscapingCharacters(oCore.asc_getKeywords());
+			_ret += ("<meta name=\"keywords\" content=\"" + keywords + "\" />");
+		}
 		if (oCore.asc_getSubject())
-			_ret += ("<meta name=\"subject\" content=\"" + oCore.asc_getSubject() + "\" />");
+		{
+			var subject = EscapingCharacters(oCore.asc_getSubject());
+			_ret += ("<meta name=\"subject\" content=\"" + subject + "\" />");
+		}
 		if (oCore.asc_getIdentifier())
-			_ret += ("<meta name=\"identifier\" content=\"" + oCore.asc_getIdentifier() + "\" />");
+		{
+			var identifier = EscapingCharacters(oCore.asc_getIdentifier());
+			_ret += ("<meta name=\"identifier\" content=\"" + identifier + "\" />");
+		}
 		if (oCore.asc_getLanguage())
-			_ret += ("<meta name=\"language\" content=\"" + oCore.asc_getLanguage() + "\" />");
+		{
+			var language = EscapingCharacters(oCore.asc_getLanguage());
+			_ret += ("<meta name=\"language\" content=\"" + language + "\" />");
+		}
 		_ret += ("</head><body>" + oCopyProcessor.getInnerHtml() + "</body></html>");
 
 		this.WordControl.m_oLogicDocument.RemoveSelection();
