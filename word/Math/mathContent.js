@@ -5307,6 +5307,7 @@ CMathContent.prototype.private_FindCurrentPosInContent = function()
     }
     else
     {
+        this.private_CorrectCurPos();
         Pos = this.CurPos;
     }
 
