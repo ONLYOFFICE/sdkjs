@@ -12472,10 +12472,27 @@ background-repeat: no-repeat;\
 	{
 		var _old                           = PasteElementsId.copyPasteUseBinary;
 		PasteElementsId.copyPasteUseBinary = false;
+		var oCore = this.asc_getCoreProps();
 		this.WordControl.m_oLogicDocument.SelectAll();
 		var oCopyProcessor = new AscCommon.CopyProcessor(this);
 		oCopyProcessor.Start();
-		var _ret = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head><body>" + oCopyProcessor.getInnerHtml() + "</body></html>";
+		var _ret = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
+		if (oCore.asc_getTitle())
+			_ret += ("<title>" + oCore.asc_getTitle() + "</title>");
+		if (oCore.asc_getCreator())
+			_ret += ("<meta name=\"creator\" content=\"" + oCore.asc_getCreator() + "\" />");
+		if (oCore.asc_getDescription())
+			_ret += ("<meta name=\"description\" content=\"" + oCore.asc_getDescription() + "\" />");
+		if (oCore.asc_getKeywords())
+			_ret += ("<meta name=\"keywords\" content=\"" + oCore.asc_getKeywords() + "\" />");
+		if (oCore.asc_getSubject())
+			_ret += ("<meta name=\"subject\" content=\"" + oCore.asc_getSubject() + "\" />");
+		if (oCore.asc_getIdentifier())
+			_ret += ("<meta name=\"identifier\" content=\"" + oCore.asc_getIdentifier() + "\" />");
+		if (oCore.asc_getLanguage())
+			_ret += ("<meta name=\"language\" content=\"" + oCore.asc_getLanguage() + "\" />");
+		_ret += ("</head><body>" + oCopyProcessor.getInnerHtml() + "</body></html>");
+
 		this.WordControl.m_oLogicDocument.RemoveSelection();
 		PasteElementsId.copyPasteUseBinary = _old;
 		return _ret;
