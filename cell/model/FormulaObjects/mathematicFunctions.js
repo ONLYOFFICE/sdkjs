@@ -5456,6 +5456,8 @@
 	cTRUNC.prototype.inheritFormat = true;
 	cTRUNC.prototype.argumentsType = [argType.number, argType.number];
 	cTRUNC.prototype.Calculate = function (arg) {
+		// TODO fix floating point number precision problem (IEEE754)
+		// https://0.30000000000000004.com/
 
 		function truncHelper(a, b) {
 			//TODO возможно стоит добавить ограничения для коэффициента b(ms не ограничивает; LO - максимальные значения 20/-20)
@@ -5464,7 +5466,7 @@
 			} else if (!Number.isInteger(b)) {
 				b = +b.toFixed();
 			}
-			// TODO fix floating point number precision problem
+
 			let numDegree = Math.pow(10, b);
 
 			return new cNumber(Math.trunc(a*numDegree) / numDegree);
