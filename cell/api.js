@@ -662,11 +662,12 @@ var editor;
 				if (!file)
 					return;
 
-				window["AscDesktopEditor"]["loadLocalFile"](file, function(uint8Array) {
-					if (!uint8Array)
-						return;
-
-					t._convertFromXml({data: uint8Array, format: "xml"}, callback);
+				window["AscDesktopEditor"]["convertFile"](file, 0x2002, function (convertedFile) {
+					let stream = null;
+					if (convertedFile) {
+						stream = convertedFile["get"](/*Editor.bin*/);
+					}
+					callback(stream);
 				});
 			});
 			return;
