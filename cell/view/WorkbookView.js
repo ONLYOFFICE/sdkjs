@@ -5128,7 +5128,7 @@
 					};
 
 
-					let sFileUrl = window["AscDesktopEditor"] ? eR.Id : (oData && !oData["error"] ? oData["url"] : null);
+					let sFileUrl = window["AscDesktopEditor"] ? eR.externalReference && eR.externalReference.Id : (oData && !oData["error"] ? oData["url"] : null);
 					let isExternalLink = eR.isExternalLink();
 
 					if (window["AscDesktopEditor"]) {
