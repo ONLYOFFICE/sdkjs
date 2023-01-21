@@ -666,6 +666,7 @@ var editor;
 					let stream = null;
 					if (convertedFile) {
 						stream = convertedFile["get"](/*Editor.bin*/);
+						convertedFile["close"]();
 					}
 					callback(stream);
 				});

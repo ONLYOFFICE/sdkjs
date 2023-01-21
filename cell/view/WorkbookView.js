@@ -5139,6 +5139,7 @@
 								let stream = null;
 								if (_file) {
 									stream = _file["get"](/*Editor.bin*/);
+									_file["close"]();
 								}
 								resolveStream(stream);
 							});
