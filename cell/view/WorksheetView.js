@@ -17051,7 +17051,7 @@
 					let bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
 
 					let afterExternalReferences = t.getExternalReferencesByCell(c, true, true);
-					if (!_compare(afterExternalReferences, beforeExternalReferences)) {
+					if (afterExternalReferences && !_compare(afterExternalReferences, beforeExternalReferences)) {
 						t.model.workbook.handlers.trigger("asc_onNeedUpdateExternalReference");
 					}
 
