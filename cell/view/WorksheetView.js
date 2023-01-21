@@ -17035,17 +17035,23 @@
 						}
 					}
 
-					var bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
+					let _compare = function (_oldReferenceIds, _newReferenceIds) {
+						if (_oldReferenceIds && _newReferenceIds && _oldReferenceIds.length === _newReferenceIds.length) {
+							for (let i = 0; i < _newReferenceIds.length; i++) {
+								if (_oldReferenceIds[i] !== _newReferenceIds[i]) {
+									return false;
+								}
+							}
+							return true;
+						}
+						return false;
+					};
 
-					var tempCell;
-					c._foreachNoEmpty(function (cell) {
-						tempCell = cell;
-					});
-					if (tempCell) {
+					let beforeExternalReferences = t.getExternalReferencesByCell(c, null, true);
+					let bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
 
-					}
-
-					if (t.getExternalReferencesByCell(c, true)) {
+					let afterExternalReferences = t.getExternalReferencesByCell(c, true, true);
+					if (!_compare(afterExternalReferences, beforeExternalReferences)) {
 						t.model.workbook.handlers.trigger("asc_onNeedUpdateExternalReference");
 					}
 
@@ -24282,7 +24288,7 @@
 		this.workbook.doUpdateExternalReference(externalReferences);
 	};
 
-	WorksheetView.prototype.getExternalReferencesByCell = function (c, initStructure) {
+	WorksheetView.prototype.getExternalReferencesByCell = function (c, initStructure, opt_get_only_ids) {
 		let t = this;
 		let externalReferences = [];
 		t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
@@ -24293,7 +24299,7 @@
 						if ((AscCommonExcel.cElementType.cellsRange3D === fP.outStack[i].type || AscCommonExcel.cElementType.cell3D === fP.outStack[i].type) && fP.outStack[i].externalLink) {
 							let eR = t.model.workbook.getExternalWorksheet(fP.outStack[i].externalLink);
 							if (eR) {
-								externalReferences.push(eR.getAscLink());
+								externalReferences.push(opt_get_only_ids ? eR.Id : eR.getAscLink());
 								if (initStructure) {
 									eR.initRows(fP.outStack[i].getRange());
 								}
