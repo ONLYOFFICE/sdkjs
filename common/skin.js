@@ -358,9 +358,9 @@ function updateGlobalSkinColors(theme)
 		BorderActive                    : "canvas-cell-title-border-selected",
 		BorderHighlighted               : "canvas-cell-title-border-hover",
 
-		Color                           : "text-normal",
-		ColorActive                     : "text-normal",
-		ColorHighlighted                : "text-normal",
+		Color                           : "canvas-cell-title",
+		ColorActive                     : "canvas-cell-title",
+		ColorHighlighted                : "canvas-cell-title",
 
 		BackgroundDark                  : "canvas-dark-cell-title",
 		BackgroundDarkActive            : "canvas-dark-cell-title-selected",
