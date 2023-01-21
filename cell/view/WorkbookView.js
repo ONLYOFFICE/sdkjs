@@ -5053,36 +5053,39 @@
 
 			this.model.handlers.trigger("asc_onStartUpdateExternalReference", true);
 
+			let doPromise = function (data) {
+				//создаём запросы
+				var arrAfterPromise = [];
+
+				var aRequests = [];
+				t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream, externalReferenceId, oData) {
+					arrAfterPromise.push({stream: _stream, externalReferenceId: externalReferenceId, data: oData});
+					if (aRequests.length === arrAfterPromise.length) {
+						doUpdateData(arrAfterPromise);
+					}
+				});
+
+				if (!aRequests.length) {
+					t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
+					return;
+				}
+
+				var _promise = Promise.resolve();
+				for (let i in aRequests) {
+					_promise = _promise.then(aRequests[i]);
+				}
+			};
+
 			if (window["AscDesktopEditor"]) {
 				//TODO для декстопа необходима функция получения файлов + при копипасте нужно записывать путь файла(и знать путь текущего файла, чтобы вычислить относительный)
 				//десктоп
 				//var arrAfterPromise = getFilesContent(externalReferences);
 				//doUpdateData(arrAfterPromise);
+				doPromise();
 			} else {
 				//портал
 				//получаем ссылку на файл через asc_onUpdateExternalReference от портала
-				t._getExternalReferenceData(externalReferences, function (data) {
-					//создаём запросы
-					var arrAfterPromise = [];
-
-					var aRequests = [];
-					t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream, externalReferenceId, oData) {
-						arrAfterPromise.push({stream: _stream, externalReferenceId: externalReferenceId, data: oData});
-						if (aRequests.length === arrAfterPromise.length) {
-							doUpdateData(arrAfterPromise);
-						}
-					});
-
-					if (!aRequests.length) {
-						t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
-						return;
-					}
-
-					var _promise = Promise.resolve();
-					for (let i in aRequests) {
-						_promise = _promise.then(aRequests[i]);
-					}
-				});
+				t._getExternalReferenceData(externalReferences, doPromise);
 			}
 		}
 	};
@@ -5106,13 +5109,6 @@
 			return function () {
 
 				return new Promise(function (resolve) {
-					let sFileUrl = oData && !oData["error"] ? oData["url"] : null;
-					let isExternalLink = eR.isExternalLink();
-
-					//если ссылка на внешний источник, пробуем получить контент
-					if (!sFileUrl && oData["error"] && isExternalLink) {
-						sFileUrl = eR.data;
-					}
 
 					let resolveStream = function (stream) {
 						resolve(_resolve(stream, eR.externalReference.Id, oData));
@@ -5131,31 +5127,57 @@
 						}, "arraybuffer");
 					};
 
-					//если открыть на клиенте не можем, то запрашиваем бинарник
-					let isXlsx = eR.externalReference && eR.externalReference.isXlsx();
-					let outputFormat = t.Api["asc_isSupportFeature"]("ooxml") ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY;
-					let fileType = oData["fileType"];
-					let token = oData["token"];
-					let directUrl = oData["directUrl"];
 
-					//если внешняя ссылка, то конвертируем в xlsx
-					if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api["asc_isSupportFeature"]("ooxml")) {
-						t.Api._getFileFromUrl(sFileUrl, fileType, token, outputFormat,
-							function (fileUrlAfterConvert) {
-								if (fileUrlAfterConvert) {
-									successfulLoadFileMap[sFileUrl] = 1;
-									loadFile(fileUrlAfterConvert);
-								} else if (!successfulLoadFileMap[sFileUrl]) {
-									resolve(_resolve(null, eR.externalReference.Id, oData));
+					let sFileUrl = window["AscDesktopEditor"] ? eR.Id : (oData && !oData["error"] ? oData["url"] : null);
+					let isExternalLink = eR.isExternalLink();
+
+					if (window["AscDesktopEditor"]) {
+						//TODO isExternalLink
+						if (sFileUrl) {
+							//resolveStream(stream);
+							window["AscDesktopEditor"]["convertFile"](sFileUrl, 0x2002, function (_file) {
+								let stream = null;
+								if (_file) {
+									stream = _file["get"](/*Editor.bin*/);
 								}
-							});
-					} else {
-						if (directUrl || sFileUrl) {
-							t.Api._downloadOriginalFile(directUrl, sFileUrl, fileType, token, function(stream){
 								resolveStream(stream);
 							});
+
 						} else {
 							resolve(_resolve(null, eR.externalReference.Id, oData));
+						}
+					} else {
+						//если ссылка на внешний источник, пробуем получить контент
+						if (!sFileUrl && oData["error"] && isExternalLink) {
+							sFileUrl = eR.data;
+						}
+
+						//если открыть на клиенте не можем, то запрашиваем бинарник
+						let isXlsx = eR.externalReference && eR.externalReference.isXlsx();
+						let outputFormat = t.Api["asc_isSupportFeature"]("ooxml") ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY;
+						let fileType = oData["fileType"];
+						let token = oData["token"];
+						let directUrl = oData["directUrl"];
+
+						//если внешняя ссылка, то конвертируем в xlsx
+						if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api["asc_isSupportFeature"]("ooxml")) {
+							t.Api._getFileFromUrl(sFileUrl, fileType, token, outputFormat,
+								function (fileUrlAfterConvert) {
+									if (fileUrlAfterConvert) {
+										successfulLoadFileMap[sFileUrl] = 1;
+										loadFile(fileUrlAfterConvert);
+									} else if (!successfulLoadFileMap[sFileUrl]) {
+										resolve(_resolve(null, eR.externalReference.Id, oData));
+									}
+								});
+						} else {
+							if (directUrl || sFileUrl) {
+								t.Api._downloadOriginalFile(directUrl, sFileUrl, fileType, token, function(stream){
+									resolveStream(stream);
+								});
+							} else {
+								resolve(_resolve(null, eR.externalReference.Id, oData));
+							}
 						}
 					}
 				});
@@ -5168,7 +5190,7 @@
 			let _oData = data && data[i];
 			let _eR = externalReferences[i];
 
-			if (_oData && _eR && (_eR.isExternalLink() || !_oData["error"])) {
+			if (window["AscDesktopEditor"] || (_oData && _eR && (_eR.isExternalLink() || !_oData["error"]))) {
 				requests.push(getPromise(_oData, _eR, resolveFunc));
 			}
 		}
