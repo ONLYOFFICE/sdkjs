@@ -5141,7 +5141,7 @@
 									stream = _file["get"](/*Editor.bin*/);
 									_file["close"]();
 								}
-								resolveStream(stream);
+								resolveStream(new Uint8Array(stream));
 							});
 
 						} else {
@@ -5187,7 +5187,8 @@
 		};
 
 
-		for (let i = 0; i < data.length; i++) {
+		let _length = data ? data.length : externalReferences.length;
+		for (let i = 0; i < _length; i++) {
 			let _oData = data && data[i];
 			let _eR = externalReferences[i];
 
