@@ -13126,9 +13126,19 @@
 			var isAllowPasteLink = function () {
 				var _res = false;
 				var api = window["Asc"]["editor"];
-				//wb.Core.title -> DocInfo.ReferenceData.fileId
-				//wb.Core.category -> DocInfo.ReferenceData.portalName
-				if (pasteInfo.wb && pasteInfo.wb.Core && pasteInfo.wb.Core.title && pasteInfo.wb.Core.category) {
+
+				//for portals:
+				//wb.Core.contentStatus -> DocInfo.ReferenceData.fileKey
+				//wb.Core.category -> DocInfo.ReferenceData.instanceId
+
+				//for desktops:
+				//contentStatus -> filePath
+
+				if (window["AscDesktopEditor"]) {
+					if (window["AscDesktopEditor"]["LocalFileGetSaved"]() && pasteInfo.wb.Core.contentStatus && !pasteInfo.wb.Core.category) {
+						_res = true;
+					}
+				} else if (pasteInfo.wb && pasteInfo.wb.Core && pasteInfo.wb.Core.contentStatus && pasteInfo.wb.Core.category) {
 					//работаем внутри одного портала
 					//если разные документу, то вставляем ссылку на другой документ, если один и тот же, то вставляем обычную ссылку
 					if (api.DocInfo && api.DocInfo.ReferenceData && pasteInfo.wb.Core.category === api.DocInfo.ReferenceData["instanceId"]) {
@@ -14764,22 +14774,22 @@
 		//1 - вставляем в эту же книгу и на другой лист
 		//-1 - вставляем в другую книгу и сслыка на неё уже есть
 		//-2 - вставляем в другую книгу и ссылки на неё ешё нет
-		var type = null;
-		var index = null;
-		var sheet = null;
+
+		let type = null;
+		let index = null;
+		let sheet = null;
 		if (pastedWb) {
 			//вставляем в этот же документ. но исходный лист уже мог измениться/удалиться и тп
 			//TODO просмотреть все эти случаи, ms desktop и online ведут себя по-разному
 			//сейчас сравниваю по имени
 
 			//TODO обработать: при вставке из одного и того же документа(открытого разными юзерами) с листа, который ещё не был добавлен другим юзером в режиме строго совместного редактирования
-
-			var sameDoc = pastedWb && AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor && AscCommonExcel.g_clipboardExcel.pasteProcessor._checkPastedInOriginalDoc(pastedWb, true);
-			var sameSheet = sameDoc && pastedWb.aWorksheets[0].sName === this.model.sName;
-			var externalSheetSameWb;
+			let sameDoc = AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor && AscCommonExcel.g_clipboardExcel.pasteProcessor._checkPastedInOriginalDoc(pastedWb, true);
+			let sameSheet = sameDoc && pastedWb.aWorksheets[0].sName === this.model.sName;
+			let externalSheetSameWb;
 			if (!sameSheet && sameDoc) {
-				var sName = pastedWb.aWorksheets[0].sName;
-				for (var i = 0; i < this.model.workbook.aWorksheets.length; i++) {
+				let sName = pastedWb.aWorksheets[0].sName;
+				for (let i = 0; i < this.model.workbook.aWorksheets.length; i++) {
 					if (this.model.workbook.aWorksheets[i].sName === sName) {
 						externalSheetSameWb = sName;
 					}
@@ -14792,19 +14802,28 @@
 				type = 1;
 				sheet = externalSheetSameWb;
 			} else {
-				//сначала ищем по дополнительной информации
-				//fileId -> contentStatus, portalName -> category
-				var referenceData;
-				if (pastedWb && pastedWb.Core) {
-					referenceData = {};
-					referenceData["fileKey"] = pastedWb.Core.contentStatus;
-					referenceData["instanceId"] = pastedWb.Core.category;
-				}
-				var externalReference = referenceData && this.model.workbook.getExternalLinkByReferenceData(referenceData);
-				externalReference = externalReference && externalReference.index;
-				if (null == externalReference) {
-					//потом пробуем по имени найти
-					externalReference = pastedWb && pastedWb.Core && this.model.workbook.getExternalLinkIndexByName(pastedWb.Core.title);
+				let externalReference;
+				if (window["AscDesktopEditor"]) {
+					let fromPath = pastedWb.Core.contentStatus;
+					let thisPath = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
+					//TODO вычисляем относительный:
+					let relativePath = 123;
+					externalReference = this.model.workbook.getExternalLinkIndexByName(relativePath);
+				} else {
+					//сначала ищем по дополнительной информации
+					//fileId -> contentStatus, portalName -> category
+					let referenceData;
+					if (pastedWb && pastedWb.Core) {
+						referenceData = {};
+						referenceData["fileKey"] = pastedWb.Core.contentStatus;
+						referenceData["instanceId"] = pastedWb.Core.category;
+					}
+					externalReference = referenceData && this.model.workbook.getExternalLinkByReferenceData(referenceData);
+					externalReference = externalReference && externalReference.index;
+					if (null == externalReference) {
+						//потом пробуем по имени найти
+						externalReference = pastedWb && pastedWb.Core && this.model.workbook.getExternalLinkIndexByName(pastedWb.Core.title);
+					}
 				}
 
 				//если всё-таки не нашли, то добавляем новый external reference
