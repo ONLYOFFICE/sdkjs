@@ -573,7 +573,7 @@
 
 		if (!this.IsExpSubSupLiteral())
 		{
-			oThird = this.GetElementLiteral();
+			oThird = this.GetOperandLiteral();
 		}
 
 		return {
@@ -713,6 +713,7 @@
 		this.EatOneSpace();
 		oBase = this.GetElementLiteral();
 
+		this.EatOneSpace();
 		return {
 			type: oLiteralNames.preScriptLiteral[num],
 			value: oBase,
@@ -967,6 +968,8 @@
 			}
 		}
 
+		this.EatOneSpace();
+
 		return oContent;
 	};
 	CUnicodeParser.prototype.EatOneSpace = function()
@@ -1138,6 +1141,8 @@
 			if (this.IsOperandLiteral())
 				oOperand = this.GetFractionLiteral();
 
+			this.EatOneSpace();
+
 			return {
 				type: strLiteralType,
 				up: oNumerator || {},
@@ -1172,6 +1177,7 @@
 	CUnicodeParser.prototype.GetOperatorLiteral = function ()
 	{
 		const oOperator = this.EatToken(oLiteralNames.operatorLiteral[0]);
+		this.EatOneSpace();
 		return {
 			type: oLiteralNames.operatorLiteral[num],
 			value: oOperator.data,

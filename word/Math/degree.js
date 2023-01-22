@@ -587,7 +587,7 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	}
     else
     {
-		strTemp = strBase + strTypeOfScript + strIterator;
+		strTemp = strBase + strTypeOfScript + strIterator + " ";
 	}
 	return strTemp;
 };
@@ -1274,6 +1274,8 @@ CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
         else {
             strTemp = Base + '_' + strLower + '^' + strUpper;
         }
+
+        strTemp += " ";
 	}
 	return strTemp;
 };

@@ -650,7 +650,7 @@ CFraction.prototype.GetTextOfElement = function(isLaTeX)
 		}
 
 		strTemp += strDenominator;
-		strTemp = strTemp;
+		strTemp += " ";
 	}
 	return strTemp;
 };

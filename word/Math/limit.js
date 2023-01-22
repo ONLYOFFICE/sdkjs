@@ -459,6 +459,10 @@ CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
         {
             strArgument =  " 〖" + strArgument + "〗";
         }
+        else
+        {
+            strArgument = " " + strArgument;
+        }
     }
     if (isLaTeX)
     {
@@ -504,7 +508,7 @@ CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
 		}
 	}
 
-	strTemp =  strFuncName + strArgument;
+	strTemp = strFuncName + strArgument;
 
 	return strTemp;
 };
