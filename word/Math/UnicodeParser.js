@@ -1394,16 +1394,7 @@
 		{
 			let oEntity = this.GetEntityLiteral();
 
-			if (this.oLookahead.data === "!" || this.oLookahead.data === "‼")
-			{
-				let strType = this.EatToken(this.oLookahead.class).data;
-				return {
-					type: oLiteralNames.factorialLiteral[num],
-					exp: oEntity,
-					value: strType,
-				};
-			}
-			else if (this.IsDiacriticsLiteral())
+			if (this.IsDiacriticsLiteral())
 			{
 				const oDiacritic = this.GetDiacriticsLiteral();
 				if (oDiacritic === "''" || oDiacritic === "'")
