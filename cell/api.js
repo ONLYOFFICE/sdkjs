@@ -8224,9 +8224,6 @@ var editor;
 
 	spreadsheet_api.prototype.asc_updateExternalReferences = function(arr) {
 		if (this.canEdit()) {
-			if (!arr) {
-				arr = this.wb.getExternalReferences();
-			}
 			this.wb.updateExternalReferences(arr);
 		}
 	};

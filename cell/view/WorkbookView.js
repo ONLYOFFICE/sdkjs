@@ -5025,7 +5025,7 @@
 									eR && eR.updateData(wb.aWorksheets, _arrAfterPromise[i].data);
 								}
 							}
-							
+
 						} else {
 							editor = AscCommon.getEditorByOOXMLSignature(stream);
 							if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
