@@ -270,7 +270,7 @@
 
 		switch (this.oLookahead.data) {
 			case "-":
-				this.EatToken(oLiteralNames.operatorLiteral[0]);
+				let minus = this.EatToken(oLiteralNames.operatorLiteral[0]);
 				if (this.IsOperandLiteral()) {
 					const operand = this.GetOperandLiteral();
 					return {
@@ -278,6 +278,12 @@
 						value: operand,
 					};
 				}
+
+				return {
+					type: oLiteralNames.charLiteral[num],
+					value: minus.data,
+				}
+
 				break;
 			case "-∞":
 				const token = this.EatToken(oLiteralNames.operatorLiteral[0]);
@@ -881,6 +887,7 @@
 	};
 	CUnicodeParser.prototype.GetExpSubSupLiteral = function (oBase)
 	{
+		debugger
 		let oThirdSoOperand, 
 		oContent;
 
@@ -980,69 +987,92 @@
 		{
 			this.EatToken(this.oLookahead.class);
 			this.EatOneSpace();
-			if (this.IsSoOperandLiteral()) {
+
+			if (this.IsSoOperandLiteral())
+			{
 				oFirstElement = (oBase && oBase.type === oLiteralNames.opNaryLiteral[1])
 					? this.GetSoOperandLiteral("custom")
 					: this.GetSoOperandLiteral("_");
+			}
+			else if (this.IsExpLiteral())
+			{
+				oFirstElement = this.GetExpLiteral();
+			}
 
-				// Get second element
-				if (this.oLookahead.data === "^" && !this.isOneSubSup)
+			// Get second element
+			if (this.oLookahead.data === "^" && !this.isOneSubSup)
+			{
+				this.EatToken(this.oLookahead.class);
+				this.EatOneSpace();
+
+				if (this.IsSoOperandLiteral())
 				{
-					this.EatToken(this.oLookahead.class);
-
-					if (this.IsSoOperandLiteral())
-					{
-						oSecondElement = this.GetSoOperandLiteral("^");
-						return {
-							type: oLiteralNames.subSupLiteral[num],
-							value: oBase,
-							down: oFirstElement,
-							up: oSecondElement,
-						};
-					}
+					oSecondElement = this.GetSoOperandLiteral("^");
 				}
+				else if (this.IsExpLiteral())
+				{
+					oSecondElement = this.GetExpLiteral();
+				}
+
 				return {
 					type: oLiteralNames.subSupLiteral[num],
 					value: oBase,
 					down: oFirstElement,
+					up: oSecondElement,
 				};
 			}
+			return {
+				type: oLiteralNames.subSupLiteral[num],
+				value: oBase,
+				down: oFirstElement,
+			};
 		}
 		else if (this.oLookahead.data === "^")
 		{
 			this.EatToken(this.oLookahead.class);
 			this.EatOneSpace();
+
 			if (this.IsSoOperandLiteral())
 			{
 				oSecondElement = (oBase && oBase.type === oLiteralNames.opNaryLiteral[1])
 					? this.GetSoOperandLiteral("custom")
 					: this.GetSoOperandLiteral("^");
+			}
+			else if (this.IsExpLiteral())
+			{
+				oSecondElement = this.GetExpLiteral();
+			}
 
-				if (oSecondElement.value === "′" || oSecondElement.value === "′′" || oSecondElement === "‵")
+			if (oSecondElement && (oSecondElement.value === "′" || oSecondElement.value === "′′" || oSecondElement === "‵"))
+			{
+				oSecondElement = oSecondElement.value;
+			}
+
+			if (this.oLookahead.data === "_")
+			{
+				this.EatToken(this.oLookahead.class);
+
+				if (this.IsSoOperandLiteral()) {
+					oFirstElement = this.GetSoOperandLiteral("_");
+				}
+				else if (this.IsExpLiteral())
 				{
-					oSecondElement = oSecondElement.value;
+					oFirstElement = this.GetExpLiteral();
 				}
 
-				if (this.oLookahead.data === "_")
-				{
-					this.EatToken(this.oLookahead.class);
-					if (this.IsSoOperandLiteral())
-					{
-						oFirstElement = this.GetSoOperandLiteral("_");
-						return {
-							type: oLiteralNames.subSupLiteral[num],
-							value: oBase,
-							down: oFirstElement,
-							up: oSecondElement,
-						};
-					}
-				}
 				return {
 					type: oLiteralNames.subSupLiteral[num],
 					value: oBase,
+					down: oFirstElement,
 					up: oSecondElement,
 				};
 			}
+
+			return {
+				type: oLiteralNames.subSupLiteral[num],
+				value: oBase,
+				up: oSecondElement,
+			};
 		}
 	};
 	CUnicodeParser.prototype.IsScriptStandardContentLiteral = function ()
@@ -1647,6 +1677,17 @@
 			
 			if (this.oLookahead.class === oLiteralNames.operatorLiteral[0]) {
 				oExpLiteral.push(this.GetOperatorLiteral())
+			}
+			else if (!this.IsOpCloserLiteral()) {
+				let str = this.EatToken(this.oLookahead.class).data;
+
+				str && oExpLiteral.push(
+					{
+						type: oLiteralNames.charLiteral[num],
+						value: str,
+					}
+				);
+
 			}
 		}
 

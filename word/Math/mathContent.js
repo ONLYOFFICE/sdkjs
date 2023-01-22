@@ -3100,6 +3100,7 @@ CMathContent.prototype.private_LoadFromMenuAccent = function(Type, Pr, oSelected
             break;
 
         case c_oAscMathType.Accent_BorderBoxCustom :
+            debugger
             var BorderBox = this.Add_BorderBox(Pr, null);
             var MathContent = BorderBox.getBase();
             MathContent.Add_Script(false, {ctrPrp : Pr.ctrPrp, type : DEGREE_SUPERSCRIPT}, "a", "2", null);
@@ -5679,6 +5680,7 @@ CMathContent.prototype.SplitContentByContentPos = function()
 };
 CMathContent.prototype.Process_AutoCorrect = function (oElement)
 {
+    debugger
     let isConvert = false;
     var oLogicDocument = this.GetLogicDocument();
     var nInputType = oLogicDocument
@@ -5743,10 +5745,10 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
         let Bracket = this.CheckAutoCorrectionBrackets(nInputType, true);
 
         // proceed rules (1/2, 1_2 ...)
-        isConvert = this.CheckAutoCorrectionRules(nInputType);
+        isConvert = Bracket.intCounter >= 0 ? this.CheckAutoCorrectionRules(nInputType) : false;
 
         // else - convert content until first operator
-        if (!isConvert && Bracket.intCounter === 0 && Bracket.isConvert === false)
+        if (isConvert === false && Bracket.intCounter >= 0 && Bracket.isConvert === false)
             this.CheckWhileOperatorContent(Bracket.OperatorsPos, nInputType, true);
     }
     else // LaTex
@@ -5772,15 +5774,10 @@ CMathContent.prototype.GetLastContent = function ()
 
     return oContent;
 }
-CMathContent.prototype.GetLastTextElement = function ()
-{
-    let oContent = this.GetLastContent();
-    if (oContent)
-        return String.fromCharCode(oContent.value);
-}
-CMathContent.prototype.GetPreLastTextElement = function ()
+CMathContent.prototype.GetPreLastContent = function()
 {
     let oContent = this;
+
     while (oContent && oContent.Content && oContent.Content.length > 0)
     {
         if (oContent.Content[oContent.Content.length - 1] &&
@@ -5795,6 +5792,17 @@ CMathContent.prototype.GetPreLastTextElement = function ()
         }
     }
 
+    return oContent;
+}
+CMathContent.prototype.GetLastTextElement = function ()
+{
+    let oContent = this.GetLastContent();
+    if (oContent)
+        return String.fromCharCode(oContent.value);
+}
+CMathContent.prototype.GetPreLastTextElement = function ()
+{
+    let oContent = this.GetPreLastContent();
     if (oContent)
         return String.fromCharCode(oContent.value);
 }
@@ -6499,7 +6507,18 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
     let arrContentTypes = [];
     let isSpace = false;
 
-    if (this.GetLastTextElement() === " ")
+
+    let lastOperator;
+    if (this.IsLastElement(AscMath.MathLiterals.operators))
+    {
+        lastOperator = this.GetLastTextElement();
+        let lastContent = this.Content[this.Content.length - 1];
+        if (lastContent && lastContent.Content.length >= 1)
+        {
+            lastContent.Remove_FromContent(lastContent.Content.length - 1, 1);
+        }
+    }
+    else if (this.GetLastTextElement() === " ")
     {
         isSpace = this.DeleteEndSpace();
         for (let i = 0; i < this.Content.length; i++) {
@@ -6543,6 +6562,10 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
 
         if (isEqual)
             this.Add_TextOnPos(this.Content.length, ' ');
+    }
+    else if (lastOperator)
+    {
+        this.Add_TextOnPos(this.Content.length, lastOperator);
     }
 };
 CMathContent.prototype.IsLastTextElementRBracket = function()
