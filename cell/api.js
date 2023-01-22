@@ -668,7 +668,7 @@ var editor;
 						stream = convertedFile["get"](/*Editor.bin*/);
 						convertedFile["close"]();
 					}
-					callback(stream);
+					callback(new Uint8Array(stream));
 				});
 			});
 			return;
@@ -698,47 +698,51 @@ var editor;
 
 
 		let doInsertXml = function (_dataRef, _ws) {
-			let jsZlib = new AscCommon.ZLib();
-			if (!jsZlib.open(stream)) {
-				//t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
-				return false;
+			let binaryData = stream;
+			if (!window["AscDesktopEditor"]) {
+				//xlst
+				let jsZlib = new AscCommon.ZLib();
+				if (!jsZlib.open(stream)) {
+					//t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+					return false;
+				}
+
+				if (jsZlib.files && jsZlib.files.length) {
+					binaryData = jsZlib.getFile(jsZlib.files[0]);
+				}
 			}
 
-			if (jsZlib.files && jsZlib.files.length) {
-				let binaryData = jsZlib.getFile(jsZlib.files[0]);
+			//заполняем через банарник
+			let oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+			//чтобы лишнего не читать, проставляю флаг копипаст
+			oBinaryFileReader.InitOpenManager.copyPasteObj = {
+				isCopyPaste: true, activeRange: null, selectAllSheet: true
+			};
 
-				//заполняем через банарник
-				let oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
-				//чтобы лишнего не читать, проставляю флаг копипаст
-				oBinaryFileReader.InitOpenManager.copyPasteObj = {
-					isCopyPaste: true, activeRange: null, selectAllSheet: true
-				};
+			let wb = new AscCommonExcel.Workbook();
+			wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
 
-				let wb = new AscCommonExcel.Workbook();
-				wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
-
-				AscFormat.ExecuteNoHistory(function () {
-					AscCommonExcel.executeInR1C1Mode(false, function () {
-						oBinaryFileReader.Read(binaryData, wb);
-					});
+			AscFormat.ExecuteNoHistory(function () {
+				AscCommonExcel.executeInR1C1Mode(false, function () {
+					oBinaryFileReader.Read(binaryData, wb);
 				});
+			});
 
-				if (wb.aWorksheets) {
-					let arrSheets = wb.aWorksheets;
-					let pastedSheet = arrSheets && arrSheets[0];
-					if (pastedSheet) {
-						if (_ws) {
-							t.wbModel.setActive(_ws.index);
-							t.wb.updateWorksheetByModel();
-							t.wb.showWorksheet();
-						}
-						let ws = t.wb.getWorksheet();
-						if (_dataRef) {
-							ws.setSelection(_dataRef);
-						}
-						AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange = new Asc.Range(0, 0, Math.max(pastedSheet.nColsCount - 1, 0), Math.max(pastedSheet.nRowsCount - 1, 0)).getName();
-						t.wb.getWorksheet().setSelectionInfo('paste', {data: pastedSheet, fromBinary: true, fontsNew: [], pasteAllSheet: true, wb: wb});
+			if (wb.aWorksheets) {
+				let arrSheets = wb.aWorksheets;
+				let pastedSheet = arrSheets && arrSheets[0];
+				if (pastedSheet) {
+					if (_ws) {
+						t.wbModel.setActive(_ws.index);
+						t.wb.updateWorksheetByModel();
+						t.wb.showWorksheet();
 					}
+					let ws = t.wb.getWorksheet();
+					if (_dataRef) {
+						ws.setSelection(_dataRef);
+					}
+					AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange = new Asc.Range(0, 0, Math.max(pastedSheet.nColsCount - 1, 0), Math.max(pastedSheet.nRowsCount - 1, 0)).getName();
+					t.wb.getWorksheet().setSelectionInfo('paste', {data: pastedSheet, fromBinary: true, fontsNew: [], pasteAllSheet: true, wb: wb});
 				}
 			}
 		};
