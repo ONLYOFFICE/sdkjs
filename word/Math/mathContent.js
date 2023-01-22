@@ -3100,7 +3100,6 @@ CMathContent.prototype.private_LoadFromMenuAccent = function(Type, Pr, oSelected
             break;
 
         case c_oAscMathType.Accent_BorderBoxCustom :
-            debugger
             var BorderBox = this.Add_BorderBox(Pr, null);
             var MathContent = BorderBox.getBase();
             MathContent.Add_Script(false, {ctrPrp : Pr.ctrPrp, type : DEGREE_SUPERSCRIPT}, "a", "2", null);
@@ -5680,7 +5679,6 @@ CMathContent.prototype.SplitContentByContentPos = function()
 };
 CMathContent.prototype.Process_AutoCorrect = function (oElement)
 {
-    debugger
     let isConvert = false;
     var oLogicDocument = this.GetLogicDocument();
     var nInputType = oLogicDocument

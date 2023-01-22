@@ -887,7 +887,6 @@
 	};
 	CUnicodeParser.prototype.GetExpSubSupLiteral = function (oBase)
 	{
-		debugger
 		let oThirdSoOperand, 
 		oContent;
 
@@ -1629,10 +1628,19 @@
 		}
 		const oOperandLiteral = this.GetOperandLiteral();
 		
-		if (this.oLookahead.class === oLiteralNames.overLiteral[0])
-			return this.GetFractionLiteral(oOperandLiteral);
-		else
-			return oOperandLiteral;
+		if (this.oLookahead.class === oLiteralNames.overLiteral[0]) {
+			if (!Array.isArray(oOperandLiteral))
+			{
+				return this.GetFractionLiteral(oOperandLiteral)
+			}
+			else
+			{
+				let frac = this.GetFractionLiteral(oOperandLiteral.pop());
+				oOperandLiteral.push(frac);
+			}
+		}
+
+		return oOperandLiteral;
 	};
 	CUnicodeParser.prototype.IsExpLiteral = function ()
 	{
@@ -1677,17 +1685,6 @@
 			
 			if (this.oLookahead.class === oLiteralNames.operatorLiteral[0]) {
 				oExpLiteral.push(this.GetOperatorLiteral())
-			}
-			else if (!this.IsOpCloserLiteral()) {
-				let str = this.EatToken(this.oLookahead.class).data;
-
-				str && oExpLiteral.push(
-					{
-						type: oLiteralNames.charLiteral[num],
-						value: str,
-					}
-				);
-
 			}
 		}
 
