@@ -701,6 +701,7 @@ var editor;
 			let binaryData = stream;
 			if (!window["AscDesktopEditor"]) {
 				//xlst
+				binaryData = null;
 				let jsZlib = new AscCommon.ZLib();
 				if (!jsZlib.open(stream)) {
 					//t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
@@ -710,6 +711,10 @@ var editor;
 				if (jsZlib.files && jsZlib.files.length) {
 					binaryData = jsZlib.getFile(jsZlib.files[0]);
 				}
+			}
+
+			if (!binaryData) {
+				return;
 			}
 
 			//заполняем через банарник
@@ -8219,6 +8224,9 @@ var editor;
 
 	spreadsheet_api.prototype.asc_updateExternalReferences = function(arr) {
 		if (this.canEdit()) {
+			if (!arr) {
+				arr = this.wb.getExternalReferences();
+			}
 			this.wb.updateExternalReferences(arr);
 		}
 	};
