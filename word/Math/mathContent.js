@@ -5718,6 +5718,15 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
         }
     }
 
+    if (this.IsLastElement(AscMath.MathLiterals.operators))
+    {
+        let strPreLast = this.GetPreLastTextElement();
+        if (strPreLast === "_" || strPreLast === "^")
+        {
+            return
+        }
+    }
+
     // check is needed start autocorrection
     if (!this.IsStartAutoCorrection(nInputType, oElement.value))
     {
