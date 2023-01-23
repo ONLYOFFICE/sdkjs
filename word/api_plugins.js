@@ -53,19 +53,19 @@
     /**
      * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
      * A value that defines if it is possible to delete and/or edit the content control or not:
-	 * * **0** - only deleting
-	 * * **1** - disable deleting or editing
-	 * * **2** - only editing
-	 * * **3** - full access
+	 * * <b>0</b> - only deleting
+	 * * <b>1</b> - disable deleting or editing
+	 * * <b>2</b> - only editing
+	 * * <b>3</b> - full access
      */
 
     /**
      * @typedef {(1 | 2 | 3 | 4)} ContentControlType
      * A numeric value that specifies the content control type:
-	 * * **1** - block content control
-	 * * **2** - inline content control
-	 * * **3** - row content control
-	 * * **4** - cell content control
+	 * * <b>1</b> - block content control
+	 * * <b>2</b> - inline content control
+	 * * <b>3</b> - row content control
+	 * * <b>4</b> - cell content control
      */
 
     /**
@@ -396,7 +396,7 @@
 	};
     /**
      * Moves a cursor to the beginning of the current editing area (document body, footer/header, footnote, or autoshape).
-	 * This method is similar to pressing the **Ctrl + Home** keyboard shortcut.
+	 * This method is similar to pressing the <b>Ctrl + Home</b> keyboard shortcut.
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias MoveCursorToStart
@@ -415,7 +415,7 @@
     };
     /**
      * Moves a cursor to the end of the current editing area (document body, footer/header, footnote, or autoshape).
-	 * This method is similar to pressing the **Ctrl + End** keyboard shortcut.
+	 * This method is similar to pressing the <b>Ctrl + End</b> keyboard shortcut.
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias MoveCursorToEnd
@@ -553,10 +553,10 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias SetDisplayModeInReview
 	 * @param {string} [sMode="edit"] - The display mode:
-	 * * **edit** - all changes are displayed,
-	 * * **simple** - all changes are displayed but the balloons are turned off,
-	 * * **final** - all accepted changes are displayed,
-	 * * **original** - all rejected changes are displayed.
+	 * * <b>edit</b> - all changes are displayed,
+	 * * <b>simple</b> - all changes are displayed but the balloons are turned off,
+	 * * <b>final</b> - all accepted changes are displayed,
+	 * * <b>original</b> - all rejected changes are displayed.
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_SetDisplayModeInReview"] = function(sMode)
 	{
@@ -578,7 +578,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias AddContentControl
-	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: **1** (block), **2** (inline), **3** (row), or **4** (cell).
+	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: <b>1</b> (block), <b>2</b> (inline), <b>3</b> (row), or <b>4</b> (cell).
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @returns {ContentControl} - A JSON object containing the data about the created content control.
 	 * @example
@@ -656,8 +656,8 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias AddContentControlList
-	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: **1** (block), **2** (inline), **3** (row), or **4** (cell).
-	 * @param {Array<String, String>}  [List = [{Display, Value}]] - A list of the content control elements that consists of two items: **Display** - an item that will be displayed to the user in the content control list, **Value** - a value of each item from the content control list.
+	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: <b>1</b> (block), <b>2</b> (inline), <b>3</b> (row), or <b>4</b> (cell).
+	 * @param {Array<String, String>}  [List = [{Display, Value}]] - A list of the content control elements that consists of two items: <b>Display</b> - an item that will be displayed to the user in the content control list, <b>Value</b> - a value of each item from the content control list.
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @example
 	 * var type = 1; //1 - ComboBox  0 - DropDownList

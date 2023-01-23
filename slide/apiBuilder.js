@@ -296,17 +296,17 @@
 
     /**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * * **"none"** - not display the selected tick labels.
-     * * **"nextTo"** - set the position of the selected tick labels next to the main label.
-     * * **"low"** - set the position of the selected tick labels in the part of the chart with lower values.
-     * * **"high"** - set the position of the selected tick labels in the part of the chart with higher values.
+     * * <b>"none"</b> - not display the selected tick labels.
+     * * <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
+     * * <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
+     * * <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
      * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
      * **/
 
     /**
      * The type of a fill which uses an image as a background.
-     * * **"tile"** - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
-     * * **"stretch"** - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
+     * * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
+     * * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
      * */
 

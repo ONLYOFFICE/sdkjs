@@ -56,21 +56,21 @@
 
     /**
      * The editors which the plugin is available for:
-	 * * **word** - text document editor,
-	 * * **cell** - spreadsheet editor,
-	 * * **slide** - presentation editor.
+	 * * <b>word</b> - text document editor,
+	 * * <b>cell</b> - spreadsheet editor,
+	 * * <b>slide</b> - presentation editor.
 	 * @typedef {("word" | "cell" | "slide")} editorType
      */
 
     /**
 	 * The data type selected in the editor and sent to the plugin:
-     * * **text** - the text data,
-	 * * **html** - HTML formatted code,
-	 * * **ole** - OLE object data,
-     * * **desktop** - the desktop editor data,
-     * * **destop-external** - the main page data of the desktop app (system messages),
-     * * **none** - no data will be send to the plugin from the editor.
-	 * * **sign** - the sign for the keychain plugin.
+     * * <b>text</b> - the text data,
+	 * * <b>html</b> - HTML formatted code,
+	 * * <b>ole</b> - OLE object data,
+     * * <b>desktop</b> - the desktop editor data,
+     * * <b>destop-external</b> - the main page data of the desktop app (system messages),
+     * * <b>none</b> - no data will be send to the plugin from the editor,
+	 * * <b>sign</b> - the sign for the keychain plugin.
 	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
      */
 
@@ -219,7 +219,7 @@
 	 * @property {number} m_usWeigth The visual weight (stroke blackness or thickness) of the font characters (1-1000).
 	 * @property {number} m_usWidth The relative change from the normal aspect ratio (width to height ratio).
 	 * @property {number} m_sFamilyClass The font family class which values are assigned by IBM to each font family.
-	 * @property {number} m_eFontFormat The specific file type(s) used to store font data: **0** - *.fon, **1** - *.ttf, **2** - *.ttf, *.otf (CFF), **3** - unknown font format.
+	 * @property {number} m_eFontFormat The specific file type(s) used to store font data: <b>0</b> - *.fon, <b>1</b> - *.ttf, <b>2</b> - *.ttf, *.otf (CFF), <b>3</b> - unknown font format.
 	 * @property {number} m_shAvgCharWidth The arithmetic average of the escapement (width) of all non-zero width glyphs in the font.
 	 * @property {number} m_shAscent The height above the baseline for a clipping region.
 	 * @property {number} m_shDescent The vertical extent below the baseline for a clipping region.
@@ -409,7 +409,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias StartAction
-     * @param {number} type - A value which defines an action type which can take **0** if this is an *Information* action or **1** if this is a *BlockInteraction* action.
+     * @param {number} type - A value which defines an action type which can take <b>0</b> if this is an *Information* action or <b>1</b> if this is a *BlockInteraction* action.
 	 * @param {string} description - A string value that specifies the description text for the start action of the operation.
      */
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
@@ -422,7 +422,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EndAction
-     * @param {number} type - A value which defines an action type which can take **0** if this is the *Information* action or **1** if this is the *BlockInteraction* action.
+     * @param {number} type - A value which defines an action type which can take <b>0</b> if this is the *Information* action or <b>1</b> if this is the *BlockInteraction* action.
      * @param {string} description - A string value that specifies the description text for the operation end action.
      */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
@@ -477,11 +477,11 @@
      * @alias OnEncryption
      * @param {object} obj - The encryption properties.
      * @param {string} obj.type - The type of encrypting operation:
-     * * **generatePassword** - generates a password for the document,
-     * * **getPasswordByFile** - sends the password when opening the document,
-     * * **setPasswordByFile** - sets a password to the document,
-     * * **encryptData** - encrypts changes when co-editing,
-     * * **decryptData** - decrypts changes when co-editing.
+     * * <b>generatePassword</b> - generates a password for the document,
+     * * <b>getPasswordByFile</b> - sends the password when opening the document,
+     * * <b>setPasswordByFile</b> - sets a password to the document,
+     * * <b>encryptData</b> - encrypts changes when co-editing,
+     * * <b>decryptData</b> - decrypts changes when co-editing.
      * @param {string} obj.password - A string value specifying the password to access the document.
      * @param {string} obj.data - Encrypted/decrypted changes.
      * @param {boolean} obj.check - Checks if the encryption/decryption operation is successful or not (used only for *encryptData* or *decryptData* types).
@@ -561,9 +561,9 @@
 	 * @property {Array.<number>} fill The watermark fill color in the RGB format. The empty array [] means that the watermark has no fill.
      * @property {number} stroke-width The watermark stroke width measured in millimeters.
 	 * @property {Array.<number>} stroke The watermark stroke color in the RGB format. The empty array [] means that the watermark stroke has no fill.
-	 * @property {number} align The vertical text align in the watermark shape: **0** - bottom, **1** - center, **4** - top.
+	 * @property {number} align The vertical text align in the watermark shape: <b>0</b> - bottom, <b>1</b> - center, <b>4</b> - top.
 	 * @property {Array.<object>} paragraphs The array with paragraphs from the current watermark with their properties.
-	 * @property {number} paragraphs.align The horizontal text align in the current paragraph: **0** - right, **1** - left, **2** - center, **3** - justify.
+	 * @property {number} paragraphs.align The horizontal text align in the current paragraph: <b>0</b> - right, <b>1</b> - left, <b>2</b> - center, <b>3</b> - justify.
 	 * @property {Array.<number>} paragraphs.fill The paragraph highlight in the RGB format. The empty array [] means that the paragraph is not highlighted.
 	 * @property {number} paragraphs.linespacing The text linespecing in the current paragraph.
 	 * @property {Array.<object>} paragraphs.runs The array with runs from the current paragraph with their properties.
@@ -582,7 +582,7 @@
      * @typedef {Object} fillForms
      * @property {object} tags The form tags which specify the content for each form type with such a tag.
      * @property {string} tags.text The text field value (some text).
-	 * @property {string} tags.checkBox The checkbox form value (**true** - checked, **false** - unchecked).
+	 * @property {string} tags.checkBox The checkbox form value (<b>true</b> - checked, <b>false</b> - unchecked).
 	 * @property {string} tags.picture The image form value (a link to the image).
 	 * @property {string} tags.comboBox The combo box form value (one of the items from the combo box list values).
      */
@@ -1517,10 +1517,17 @@
 	};
 
 	/**
-	 * On drop event. Use this method for external drag&drop emulation.
+	 * Implements the external drag&drop emulation.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {object} The event object
+	 * @param {object} obj The drag&drop emulation properties.
+     * @param {string} obj.type - The drag&drop event type:
+     * * <b>onbeforedrop</b> - an event that is fired when the selected text or element is dragged;
+     * * <b>ondrop</b> - an event that is fired when the selected text or element is dropped on a valid drop target.
+     * @param {number} obj.x - The horizontal coordinate (in pixels) at which the mouse was clicked, relative to the left edge of the entire document.
+     * @param {number} obj.y - The vertical coordinate (in pixels) at which the mouse was clicked, relative to the top edge of the entire document.
+     * @param {string} obj.html - The dragged HTML element.
+     * @param {string} obj.text - The dragged text.
 	 * @alias OnDropEvent
 	 * @since 7.3.0
 	 */

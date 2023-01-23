@@ -46,21 +46,22 @@ window.startPluginApi = function() {
 
 	/**
 	 * The editors which the plugin is available for:
-	 * * **word** - text document editor,
-	 * * **cell** - spreadsheet editor,
-	 * * **slide** - presentation editor.
+	 * * <b>word</b> - text document editor,
+	 * * <b>cell</b> - spreadsheet editor,
+	 * * <b>slide</b> - presentation editor.
 	 * @typedef {("word" | "cell" | "slide")} editorType
 	 * */
 
 	/**
 	 * The data type selected in the editor and sent to the plugin:
-     * * **text** - the text data,
-	 * * **html** - HTML formatted code,
-	 * * **ole** - OLE object data,
-     * * **desktop** - the desktop editor data,
-     * * **destop-external** - the main page data of the desktop app (system messages),
-     * * **none** - no data will be send to the plugin from the editor.
-	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none")} initDataType
+     * * <b>text</b> - the text data,
+	 * * <b>html</b> - HTML formatted code,
+	 * * <b>ole</b> - OLE object data,
+     * * <b>desktop</b> - the desktop editor data,
+     * * <b>destop-external</b> - the main page data of the desktop app (system messages),
+     * * <b>none</b> - no data will be send to the plugin from the editor,
+	 * * <b>sign</b> - the sign for the keychain plugin.
+	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
      */
 
 	/**
@@ -84,10 +85,10 @@ window.startPluginApi = function() {
 	/**
      * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
      * A value that defines if it is possible to delete and/or edit the content control or not:
-	 * * **0** - only deleting
-	 * * **1** - disable deleting or editing
-	 * * **2** - only editing
-	 * * **3** - full access
+	 * * <b>0</b> - only deleting
+	 * * <b>1</b> - disable deleting or editing
+	 * * <b>2</b> - only editing
+	 * * <b>3</b> - full access
      */
 
 	/**
@@ -190,7 +191,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias button
 	 * @description The function called when any of the plugin buttons is clicked. It defines the buttons used with the plugin and the plugin behavior when they are clicked.
-	 * @param {number} buttonIndex - Defines the button index in the {@link /plugin/config#buttons buttons} array of the *config.json* file. If *id == -1*, then the plugin considers that the **Close** window cross button has been clicked or its operation has been somehow interrupted.
+	 * @param {number} buttonIndex - Defines the button index in the {@link /plugin/config#buttons buttons} array of the *config.json* file. If *id == -1*, then the plugin considers that the <b>Close</b> window cross button has been clicked or its operation has been somehow interrupted.
 	 */
 
 	/**
@@ -225,12 +226,12 @@ window.startPluginApi = function() {
 	 * @alias inputHelper_onSelectItem
 	 * @description The function called when the user is trying to select an item from the input helper.
 	 * @param {object} item - Defines the selected item:
-	 * * **text** - the item text,  
-	 * **type**: string,  
-	 * **example**: "name";
-	 * * **id** - the item index,  
-	 * **type**: string,  
-	 * **example**: "1".
+	 * * <b>text</b> - the item text,  
+	 * <b>type</b>: string,  
+	 * <b>example</b>: "name";
+	 * * <b>id</b> - the item index,  
+	 * <b>type</b>: string,  
+	 * <b>example</b>: "1".
 	 */
 
 	/**
@@ -248,12 +249,12 @@ window.startPluginApi = function() {
 	 * @alias onInputHelperInput
 	 * @description The function called when the user is trying to input the text and the input helper appears.
 	 * @param {object} data - Defines the text which the user inputs:
-	 * * **add** - defines if the text is added to the current text (**true**) or this is the beginning of the text (**false**),  
-	 * **type**: boolean,  
-	 * **example**: true;
-	 * * **text** - the text which the user inputs,  
-	 * **type**: string,  
-	 * **example**: "text".
+	 * * <b>add</b> - defines if the text is added to the current text (**true**) or this is the beginning of the text (**false**),  
+	 * <b>type</b>: boolean,  
+	 * <b>example</b>: true;
+	 * * <b>text</b> - the text which the user inputs,  
+	 * <b>type</b>: string,  
+	 * <b>example</b>: "text".
 	 */
 
 	/**
@@ -288,12 +289,12 @@ window.startPluginApi = function() {
      * @alias onExternalPluginMessage
      * @description The function called to show the editor integrator message.
      * @param {Object} data - Defines the editor integrator message:
-	 * * **type** - the message type,  
-	 * **type**: string,  
-	 * **example**: "close";
-	 * * **text** - the message text,  
-	 * **type**: string,  
-	 * **example**: "text".
+	 * * <b>type</b> - the message type,  
+	 * <b>type</b>: string,  
+	 * <b>example</b>: "close";
+	 * * <b>text</b> - the message text,  
+	 * <b>type</b>: string,  
+	 * <b>example</b>: "text".
      */
 
 	/**
@@ -395,9 +396,9 @@ window.startPluginApi = function() {
 	 * 
 	 * The *callback* is the result that the command returns. It is an optional parameter. In case it is missing, the {@link Plugin#onCommandCallback window.Asc.plugin.onCommandCallback} function will be used to return the result of the command execution.
 	 * 
-	 * The second parameter is the JavaScript code for working with **ONLYOFFICE Document Builder** {@link /docbuilder/basic API} 
+	 * The second parameter is the JavaScript code for working with <b>ONLYOFFICE Document Builder</b> {@link /docbuilder/basic API} 
 	 * that allows the plugin to send structured data inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
-	 * <note>**ONLYOFFICE Document Builder** commands can be only used to create content and insert it to the document editor
+	 * <note><b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor
 	 * (using the *Api.GetDocument().InsertContent(...)*). This limitation exists due to the co-editing feature in the online editors.
 	 * If it is necessary to create a plugin for the desktop editors to work with local files, no such limitation is applied.</note>
 	 * 
@@ -517,11 +518,11 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias callCommand
 	 * @description Defines the method used to send the data back to the editor.
-	 * It replaces the {@link Plugin#executeCommand executeCommand} method when working with texts in order to simplify the syntax of the script that is necessary to pass to the editors using **ONLYOFFICE Document Builder** {@link /docbuilder/basic API}.
+	 * It replaces the {@link Plugin#executeCommand executeCommand} method when working with texts in order to simplify the syntax of the script that is necessary to pass to the editors using <b>ONLYOFFICE Document Builder</b> {@link /docbuilder/basic API}.
 	 * It allows the plugin to send structured data that can be inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
 	 * 
 	 * The *callback* is the result that the command returns. It is an optional parameter. In case it is missing, the {@link Plugin#onCommandCallback window.Asc.plugin.onCommandCallback} function will be used to return the result of the command execution.
-     * <note>**ONLYOFFICE Document Builder** commands can be only used to create content and insert it to the document editor (using the *Api.GetDocument().InsertContent(...)*).
+     * <note><b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor (using the *Api.GetDocument().InsertContent(...)*).
 	 * This limitation exists due to the co-editing feature in the online editors. If it is necessary to create a plugin for desktop editors to work with local files, no such limitation is applied.</note>
      * 
 	 * This method is executed in its own context isolated from other JavaScript data. If some parameters or other data need to be passed to this method, use {@link /plugin/scope Asc.scope} object.
