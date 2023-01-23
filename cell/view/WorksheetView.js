@@ -192,8 +192,9 @@
 		let toTree = to.split("/");
 		if (fromTree[0] === toTree[0]) {
 			if (fromTree.length > toTree.length) {
-				// "/" + to
-				return "/" + to.substring(fromTree[0].length);
+				// "/" + from
+				// from root: "/root/from1.xlsx"
+				return "/" + fromTree.substring(to[0].length);
 			} else {
 				//if from is part of to
 				let fromIsPartOfTo = true;
@@ -204,19 +205,22 @@
 					}
 				}
 				if (fromIsPartOfTo) {
+					// "inside/inside2/inseide3/inside4/from2.xlsx"
+					// "from2.xlsx"
 					let path = "";
 					for (let i = fromTree.length - 1; i < toTree.length; i++) {
 						path += path === "" ? "" : "/" + toTree[i];
 					}
 					return path;
 				} else {
+					// from root: "/root/from1.xlsx"
 					return "/" + to.substring(fromTree[0].length);
 				}
 			}
 		}
 
 		//return absolute path
-		//file:///C:\root\from1.xlsx
+		// "file:///C:\root\from1.xlsx"
 		return "file:///" + toTree.replaceAll("/", "\\");
 	}
 
