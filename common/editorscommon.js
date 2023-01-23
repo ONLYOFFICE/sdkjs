@@ -13574,6 +13574,18 @@
 	window["AscCommon"].getEditorByBinSignature = getEditorByBinSignature;
 	window["AscCommon"].getEditorByOOXMLSignature = getEditorByOOXMLSignature;
 
+	window["AscCommon"].escapeHtmlCharacters = function(word)
+	{
+		if (!word)
+			return "";
+		word = word.replaceAll("&", "&#38;");
+		word = word.replaceAll("<", "&#60;");
+		word = word.replaceAll(">", "&#62;");
+		word = word.replaceAll("\"", "&#34;");
+		word = word.replaceAll("\'", "&#39;");
+		return word;
+	}
+
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
