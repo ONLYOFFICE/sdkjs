@@ -200,19 +200,6 @@
 		this.EatToken(this.oLookahead.class);
 		const oResult = this.GetArguments(2);
 
-		if (type === oLiteralNames.binomLiteral[num]) {
-			return {
-				type: oLiteralNames.bracketBlockLiteral[num],
-				left: "(",
-				right: ")",
-				value: {
-					type: type,
-					up: oResult[0],
-					down: oResult[1],
-				}
-			}
-		}
-
 		return {
 			type: type,
 			up: oResult[0],

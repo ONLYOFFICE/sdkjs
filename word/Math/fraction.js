@@ -632,6 +632,7 @@ CFraction.prototype.GetTextOfElement = function(isLaTeX)
 			case 0:	strTemp += '\\frac'; break;
 			case 1:	strTemp += '\\sfrac'; break;
 			case 2:	strTemp += '\\cfrac'; break;
+            case 3: strTemp += '\\binom'; break;
 			default: strTemp += '\\frac';  break;
 		}
 
