@@ -183,6 +183,43 @@
 		return [pivotCollapseButtonClose, pivotCollapseButtonOpen];
 	}
 
+	function buildRelativePath (from, to) {
+		if (!from || !to) {
+			return null;
+		}
+
+		let fromTree = from.split("/");
+		let toTree = to.split("/");
+		if (fromTree[0] === toTree[0]) {
+			if (fromTree.length > toTree.length) {
+				// "/" + to
+				return "/" + to.substring(fromTree[0].length);
+			} else {
+				//if from is part of to
+				let fromIsPartOfTo = true;
+				for (let i = 0; i < fromTree.length - 1; i++) {
+					if (fromTree[i] !== toTree[i]) {
+						fromIsPartOfTo = false;
+						break;
+					}
+				}
+				if (fromIsPartOfTo) {
+					let path = "";
+					for (let i = fromTree.length - 1; i < toTree.length; i++) {
+						path += path === "" ? "" : "/" + toTree[i];
+					}
+					return path;
+				} else {
+					return "/" + to.substring(fromTree[0].length);
+				}
+			}
+		}
+
+		//return absolute path
+		//file:///C:\root\from1.xlsx
+		return "file:///" + toTree.replaceAll("/", "\\");
+	}
+
 	function CacheColumn() {
 	    this.left = 0;
 		this.width = 0;
@@ -14806,8 +14843,8 @@
 				if (window["AscDesktopEditor"]) {
 					let fromPath = pastedWb.Core.contentStatus;
 					let thisPath = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
-					//TODO вычисляем относительный:
-					let relativePath = 123;
+					let relativePath = buildRelativePath(fromPath, thisPath);
+					console.log(relativePath);
 					externalReference = this.model.workbook.getExternalLinkIndexByName(relativePath);
 				} else {
 					//сначала ищем по дополнительной информации
@@ -14839,6 +14876,8 @@
 
 		return type !== null ? {type: type, index: index, sheet: sheet} : null;
 	};
+
+
 
 	WorksheetView.prototype.showSpecialPasteOptions = function (options/*, range, positionShapeContent*/) {
 		var specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
