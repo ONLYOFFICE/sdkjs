@@ -183,23 +183,25 @@
 		return [pivotCollapseButtonClose, pivotCollapseButtonOpen];
 	}
 
-	function buildRelativePath (from, to) {
-		if (!from || !to) {
+
+
+	function buildRelativePath (fromPath, thisPath) {
+		if (!fromPath || !thisPath) {
 			return null;
 		}
 
-		let fromTree = from.split("/");
-		let toTree = to.split("/");
-		if (fromTree[0] === toTree[0]) {
-			if (fromTree.length > toTree.length) {
+		let fromTree = fromPath.split("/");
+		let thisTree = thisPath.split("/");
+		if (fromTree[0] === thisTree[0]) {
+			if (fromTree.length < thisTree.length) {
 				// "/" + from
 				// from root: "/root/from1.xlsx"
-				return "/" + fromTree.substring(to[0].length);
+				return fromPath.substring(thisTree[0].length);
 			} else {
-				//if from is part of to
+				//if this is part of from
 				let fromIsPartOfTo = true;
-				for (let i = 0; i < fromTree.length - 1; i++) {
-					if (fromTree[i] !== toTree[i]) {
+				for (let i = 0; i < thisTree.length - 1; i++) {
+					if (fromTree[i] !== thisTree[i]) {
 						fromIsPartOfTo = false;
 						break;
 					}
@@ -208,20 +210,20 @@
 					// "inside/inside2/inseide3/inside4/from2.xlsx"
 					// "from2.xlsx"
 					let path = "";
-					for (let i = fromTree.length - 1; i < toTree.length; i++) {
-						path += path === "" ? "" : "/" + toTree[i];
+					for (let i = thisTree.length - 1; i < fromTree.length; i++) {
+						path += (path === "" ? "" : "/") + fromTree[i];
 					}
 					return path;
 				} else {
 					// from root: "/root/from1.xlsx"
-					return "/" + to.substring(fromTree[0].length);
+					return fromPath.substring(thisTree[0].length);
 				}
 			}
 		}
 
 		//return absolute path
 		// "file:///C:\root\from1.xlsx"
-		return "file:///" + toTree.replaceAll("/", "\\");
+		return "file:///" + fromPath.replaceAll("/", "\\");
 	}
 
 	function CacheColumn() {
@@ -14815,6 +14817,39 @@
 		//1 - вставляем в эту же книгу и на другой лист
 		//-1 - вставляем в другую книгу и сслыка на неё уже есть
 		//-2 - вставляем в другую книгу и ссылки на неё ешё нет
+
+
+		/*let path1 = "C:/test1/testInside/testinside12/testInsied21/test1.xlsx";
+		let path2 = "C:/test1/testInside/testInsied11/testinsied22/test2.xlsx";
+		let need = "/test1/testInside/testinside12/testInsied21/test1.xlsx";
+		let real = buildRelativePath(path1, path2);
+		console.log("need: " + need + " real: " + real);
+		console.log(real === need);
+
+		// "/root/from1.xlsx"
+		path1 = "C:/root/test.xlsx";
+		path2 = "C:/root/inside/inside2/inseide3/inside4/test.xlsx";
+		need = "/root/test.xlsx";
+		real = buildRelativePath(path1, path2);
+		console.log("need: " + need + " real: " + real);
+		console.log(real === need);
+
+		// "inside/inside2/inseide3/inside4/from2.xlsx"
+		path1 = "C:/root/inside/inside2/inseide3/inside4/test.xlsx";
+		path2 = "C:/root/test.xlsx";
+		need = "inside/inside2/inseide3/inside4/test.xlsx";
+		real = buildRelativePath(path1, path2);
+		console.log("need: " + need + " real: " + real);
+		console.log(real === need);
+
+
+		path1 = "D:/root/inside/inside2/inseide3/inside4/test.xlsx";
+		path2 = "C:/root/test.xlsx";
+		need = "file:///D:\\root\\inside\\inside2\\inseide3\\inside4\\test.xlsx";
+		real = buildRelativePath(path1, path2);
+		console.log("need: " + need + " real: " + real);
+		console.log(real === need);*/
+		
 
 		let type = null;
 		let index = null;
