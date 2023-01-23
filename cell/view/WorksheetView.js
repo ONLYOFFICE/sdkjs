@@ -13210,7 +13210,10 @@
 				//contentStatus -> filePath
 
 				if (window["AscDesktopEditor"]) {
-					if (window["AscDesktopEditor"]["LocalFileGetSaved"]() && pasteInfo.wb.Core.contentStatus && !pasteInfo.wb.Core.category) {
+					let _core = pasteInfo.wb.Core;
+					let pasteProcessor = AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor;
+					let sameDoc = pasteProcessor && pasteProcessor._checkPastedInOriginalDoc(pasteInfo.wb, true);
+					if (sameDoc || (_core.contentStatus && !_core.category && window["AscDesktopEditor"]["LocalFileGetSaved"]())) {
 						_res = true;
 					}
 				} else if (pasteInfo.wb && pasteInfo.wb.Core && pasteInfo.wb.Core.contentStatus && pasteInfo.wb.Core.category) {
