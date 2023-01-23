@@ -668,7 +668,7 @@ var editor;
 						stream = convertedFile["get"](/*Editor.bin*/);
 						convertedFile["close"]();
 					}
-					callback(new Uint8Array(stream));
+					callback(stream ? new Uint8Array(stream) : null);
 				});
 			});
 			return;

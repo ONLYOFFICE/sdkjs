@@ -5150,7 +5150,7 @@
 									stream = _file["get"](/*Editor.bin*/);
 									_file["close"]();
 								}
-								resolveStream(new Uint8Array(stream));
+								resolveStream(stream ? new Uint8Array(stream) : null);
 							});
 
 						} else {

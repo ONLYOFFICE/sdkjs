@@ -184,8 +184,40 @@
 	}
 
 
+	function testRelativePaths() {
+		let path1 = "C:/test1/testInside/testinside12/testInsied21/test1.xlsx";
+		let path2 = "C:/test1/testInside/testInsied11/testinsied22/test2.xlsx";
+		let need = "/test1/testInside/testinside12/testInsied21/test1.xlsx";
+		let real = buildRelativePath(path1, path2);
+		console.log("need: " + need + " real: " + real);
+		console.log(real === need);
 
-	function buildRelativePath (fromPath, thisPath) {
+		// "/root/from1.xlsx"
+		path1 = "C:/root/test.xlsx";
+		path2 = "C:/root/inside/inside2/inseide3/inside4/test.xlsx";
+		need = "/root/test.xlsx";
+		real = buildRelativePath(path1, path2);
+		console.log("need: " + need + " real: " + real);
+		console.log(real === need);
+
+		// "inside/inside2/inseide3/inside4/from2.xlsx"
+		path1 = "C:/root/inside/inside2/inseide3/inside4/test.xlsx";
+		path2 = "C:/root/test.xlsx";
+		need = "inside/inside2/inseide3/inside4/test.xlsx";
+		real = buildRelativePath(path1, path2);
+		console.log("need: " + need + " real: " + real);
+		console.log(real === need);
+
+
+		path1 = "D:/root/inside/inside2/inseide3/inside4/test.xlsx";
+		path2 = "C:/root/test.xlsx";
+		need = "file:///D:\\root\\inside\\inside2\\inseide3\\inside4\\test.xlsx";
+		real = buildRelativePath(path1, path2);
+		console.log("need: " + need + " real: " + real);
+		console.log(real === need);
+	}
+
+	function buildRelativePath(fromPath, thisPath) {
 		if (!fromPath || !thisPath) {
 			return null;
 		}
@@ -14020,13 +14052,16 @@
 				} else if (linkInfo.type === -2) {
 					//добавляем
 					var referenceData;
-					if (pastedWb && pastedWb.Core) {
-						referenceData = {};
-						referenceData["fileKey"] = pastedWb.Core.contentStatus;
-						referenceData["instanceId"] = pastedWb.Core.category;
-					}
-
 					var name = pastedWb.Core.title;
+					if (window["AscDesktopEditor"]) {
+						name = linkInfo.path;
+					} else {
+						if (pastedWb && pastedWb.Core) {
+							referenceData = {};
+							referenceData["fileKey"] = pastedWb.Core.contentStatus;
+							referenceData["instanceId"] = pastedWb.Core.category;
+						}
+					}
 
 					var pastedSheetName = pastedWb.aWorksheets[0].sName;
 					var newExternalReference = new AscCommonExcel.ExternalReference();
@@ -14818,42 +14853,10 @@
 		//-1 - вставляем в другую книгу и сслыка на неё уже есть
 		//-2 - вставляем в другую книгу и ссылки на неё ешё нет
 
-
-		/*let path1 = "C:/test1/testInside/testinside12/testInsied21/test1.xlsx";
-		let path2 = "C:/test1/testInside/testInsied11/testinsied22/test2.xlsx";
-		let need = "/test1/testInside/testinside12/testInsied21/test1.xlsx";
-		let real = buildRelativePath(path1, path2);
-		console.log("need: " + need + " real: " + real);
-		console.log(real === need);
-
-		// "/root/from1.xlsx"
-		path1 = "C:/root/test.xlsx";
-		path2 = "C:/root/inside/inside2/inseide3/inside4/test.xlsx";
-		need = "/root/test.xlsx";
-		real = buildRelativePath(path1, path2);
-		console.log("need: " + need + " real: " + real);
-		console.log(real === need);
-
-		// "inside/inside2/inseide3/inside4/from2.xlsx"
-		path1 = "C:/root/inside/inside2/inseide3/inside4/test.xlsx";
-		path2 = "C:/root/test.xlsx";
-		need = "inside/inside2/inseide3/inside4/test.xlsx";
-		real = buildRelativePath(path1, path2);
-		console.log("need: " + need + " real: " + real);
-		console.log(real === need);
-
-
-		path1 = "D:/root/inside/inside2/inseide3/inside4/test.xlsx";
-		path2 = "C:/root/test.xlsx";
-		need = "file:///D:\\root\\inside\\inside2\\inseide3\\inside4\\test.xlsx";
-		real = buildRelativePath(path1, path2);
-		console.log("need: " + need + " real: " + real);
-		console.log(real === need);*/
-		
-
 		let type = null;
 		let index = null;
 		let sheet = null;
+		let relativePath;
 		if (pastedWb) {
 			//вставляем в этот же документ. но исходный лист уже мог измениться/удалиться и тп
 			//TODO просмотреть все эти случаи, ms desktop и online ведут себя по-разному
@@ -14882,8 +14885,7 @@
 				if (window["AscDesktopEditor"]) {
 					let fromPath = pastedWb.Core.contentStatus;
 					let thisPath = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
-					let relativePath = buildRelativePath(fromPath, thisPath);
-					console.log(relativePath);
+					relativePath = buildRelativePath(fromPath, thisPath);
 					externalReference = this.model.workbook.getExternalLinkIndexByName(relativePath);
 				} else {
 					//сначала ищем по дополнительной информации
@@ -14913,7 +14915,7 @@
 			}
 		}
 
-		return type !== null ? {type: type, index: index, sheet: sheet} : null;
+		return type !== null ? {type: type, index: index, sheet: sheet, path: relativePath} : null;
 	};
 
 
