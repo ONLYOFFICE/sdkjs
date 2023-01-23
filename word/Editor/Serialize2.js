@@ -1763,7 +1763,7 @@ function getThemeFontType(name) {
 	return 0;
 }
 
-function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, bOForm, isCompatible, opt_memory, docParts)
+function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible, opt_memory, docParts)
 {
     this.memory = opt_memory || new AscCommon.CMemory();
     this.Document = doc;
@@ -1779,7 +1779,7 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, bOForm, isCompati
 		nNumIdIndex: null,
 		oUsedStyleMap: null
 	};
-	this.saveParams = new DocSaveParams(bMailMergeDocx, bMailMergeHtml, bOForm, isCompatible, docParts);
+	this.saveParams = new DocSaveParams(bMailMergeDocx, bMailMergeHtml, isCompatible, docParts);
 	this.WriteToMemory = function(addHeader)
 	{
 		pptx_content_writer._Start();
@@ -1869,7 +1869,7 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, bOForm, isCompati
 		this.WriteTable(c_oSerTableTypes.Settings, new BinarySettingsTableWriter(this.memory, this.Document, this.saveParams));
 
 		let oform = this.Document.GetOFormDocument();
-		if (this.saveParams.bOForm && oform) {
+		if (oform) {
 			let jsZlib = new AscCommon.ZLib();
 			jsZlib.create();
 			oform.toZip(jsZlib, this.saveParams.fieldMastersPartMap);
@@ -1955,7 +1955,7 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, bOForm, isCompati
 						doc.Styles = glossaryDocument.GetStyles();
 						doc.Footnotes = glossaryDocument.GetFootnotes();
 						doc.Endnotes = glossaryDocument.GetEndnotes();
-						var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(doc, undefined, undefined, undefined, t.saveParams.isCompatible, t.memory, docParts);
+						var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(doc, undefined, undefined, t.saveParams.isCompatible, t.memory, docParts);
 						oBinaryFileWriter.WriteToMemory(false);
 					}});
 			}, this, []);
@@ -6590,13 +6590,11 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (complexFormPr) {
 			this.bs.WriteItem(c_oSerSdt.ComplexFormPr, function (){oThis.WriteSdtComplexFormPr(complexFormPr)});
 		}
-		if (this.saveParams.bOForm) {
-			let fieldMaster = oSdt.GetFieldMaster && oSdt.GetFieldMaster();
-			if (fieldMaster) {
-				let sTarget = this.saveParams.fieldMastersPartMap[fieldMaster.Id];
-				if (sTarget) {
-					oThis.bs.WriteItem(c_oSerSdt.OformMaster, function (){oThis.memory.WriteString3(sTarget);});
-				}
+		let fieldMaster = oSdt.GetFieldMaster && oSdt.GetFieldMaster();
+		if (fieldMaster) {
+			let sTarget = this.saveParams.fieldMastersPartMap[fieldMaster.Id];
+			if (sTarget) {
+				oThis.bs.WriteItem(c_oSerSdt.OformMaster, function (){oThis.memory.WriteString3(sTarget);});
 			}
 		}
 	};
@@ -17190,10 +17188,9 @@ CFontsCharMap.prototype =
             this.CurrentFontInfo.CharArray[_find] = true;
     }
 }
-function DocSaveParams(bMailMergeDocx, bMailMergeHtml, bOForm, isCompatible, docParts) {
+function DocSaveParams(bMailMergeDocx, bMailMergeHtml, isCompatible, docParts) {
 	this.bMailMergeDocx = bMailMergeDocx;
 	this.bMailMergeHtml = bMailMergeHtml;
-	this.bOForm = bOForm;
 	this.trackRevisionId = 0;
 	this.footnotes = {};
 	this.footnotesIndex = 0;

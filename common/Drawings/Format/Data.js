@@ -790,20 +790,6 @@ Because of this, the display is sometimes not correct.
 
     const Constr_font_scale = 360;
 
-    if (!String.prototype.includes) {
-      String.prototype.includes = function(search, start) {
-        if (typeof start !== 'number') {
-          start = 0;
-        }
-
-        if (start + search.length > this.length) {
-          return false;
-        } else {
-          return this.indexOf(search, start) !== -1;
-        }
-      };
-    }
-
     changesFactory[AscDFH.historyitem_DiagramDataDataModel] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_DiagramDataDataModel] = function (oClass, value) {
       oClass.dataModel = value;

@@ -8854,11 +8854,9 @@ background-repeat: no-repeat;\
 				oLogicDocument = this.WordControl.m_oLogicDocument;
 			var oBinaryFileWriter;
 			if (null != options.oMailMergeSendData && c_oAscFileType.HTML === options.oMailMergeSendData.get_MailFormat())
-				oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(oLogicDocument, false, true, false, options.compatible);
-			else if (c_oAscFileType.DOCXF === fileType || c_oAscFileType.OFORM === fileType)
-				oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(oLogicDocument, false, false, true, options.compatible);
+				oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(oLogicDocument, false, true, options.compatible);
 			else
-				oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(oLogicDocument, undefined, undefined, undefined, options.compatible);
+				oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(oLogicDocument, undefined, undefined, options.compatible);
 			dataContainer.data = oBinaryFileWriter.Write(oAdditionalData["nobase64"]);
 		}
 		if (null != options.oMailMergeSendData)
@@ -12456,7 +12454,7 @@ background-repeat: no-repeat;\
 			}
 			return new Uint8Array(0);
 		} else {
-			var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
+			var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument, undefined, undefined, undefined, undefined, undefined);
 			var _memory           = oBinaryFileWriter.memory;
 
 			oBinaryFileWriter.Write(true);
@@ -12467,15 +12465,53 @@ background-repeat: no-repeat;\
 			return _memory.ImData.data;
 		}
 	};
-
+	
 	window["asc_docs_api"].prototype["asc_nativeGetHtml"] = function()
 	{
 		var _old                           = PasteElementsId.copyPasteUseBinary;
 		PasteElementsId.copyPasteUseBinary = false;
+		var oCore = this.asc_getCoreProps();
 		this.WordControl.m_oLogicDocument.SelectAll();
 		var oCopyProcessor = new AscCommon.CopyProcessor(this);
 		oCopyProcessor.Start();
-		var _ret = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head><body>" + oCopyProcessor.getInnerHtml() + "</body></html>";
+		var _ret = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
+		if (oCore.asc_getTitle())
+		{
+			var title = AscCommon.escapeHtmlCharacters(oCore.asc_getTitle());
+			_ret += ("<title>" + title + "</title>");
+		}
+		if (oCore.asc_getCreator())
+		{
+			var creator = AscCommon.escapeHtmlCharacters(oCore.asc_getCreator());
+			_ret += ("<meta name=\"creator\" content=\"" + creator + "\" />");
+		}
+		if (oCore.asc_getDescription())
+		{
+			var description = AscCommon.escapeHtmlCharacters(oCore.asc_getDescription());
+			_ret += ("<meta name=\"description\" content=\"" + description + "\" />");
+		}
+		if (oCore.asc_getKeywords())
+		{
+			var keywords = AscCommon.escapeHtmlCharacters(oCore.asc_getKeywords());
+			_ret += ("<meta name=\"keywords\" content=\"" + keywords + "\" />");
+		}
+		if (oCore.asc_getSubject())
+		{
+			var subject = AscCommon.escapeHtmlCharacters(oCore.asc_getSubject());
+			_ret += ("<meta name=\"subject\" content=\"" + subject + "\" />");
+		}
+		if (oCore.asc_getIdentifier())
+		{
+			var identifier = AscCommon.escapeHtmlCharacters(oCore.asc_getIdentifier());
+			_ret += ("<meta name=\"identifier\" content=\"" + identifier + "\" />");
+		}
+		if (oCore.asc_getLanguage())
+		{
+			var language = AscCommon.escapeHtmlCharacters(oCore.asc_getLanguage());
+			_ret += ("<meta name=\"language\" content=\"" + language + "\" />");
+		}
+		_ret += ("</head><body>" + oCopyProcessor.getInnerHtml() + "</body></html>");
+
 		this.WordControl.m_oLogicDocument.RemoveSelection();
 		PasteElementsId.copyPasteUseBinary = _old;
 		return _ret;

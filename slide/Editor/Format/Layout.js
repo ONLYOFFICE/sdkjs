@@ -168,9 +168,12 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
             copy.setMatchingName(this.matchingName);
         }
 
-        if(copy.showMasterPhAnim !== this.showMasterPhAnim){
+        if(copy.showMasterPhAnim !== this.showMasterPhAnim) {
             copy.setShowPhAnim(this.showMasterPhAnim);
         }
+	    if(copy.showMasterSp !== this.showMasterSp) {
+			copy.setShowMasterSp(this.showMasterSp);
+	    }
         if(this.type !== copy.type){
             copy.setType(this.type);
         }

@@ -51,14 +51,6 @@
 	{
 		this.OFormRole = roleName;
 	};
-	CRestrictionSettings.prototype.SetResetNone = function(resetNone)
-	{
-		this.ResetNone = resetNone;
-	};
-	CRestrictionSettings.prototype.IsResetNone = function()
-	{
-		return this.ResetNone;
-	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CRestrictionSettings    = CRestrictionSettings;
@@ -66,7 +58,5 @@
 	
 	CRestrictionSettings.prototype['get_OFormRole'] = CRestrictionSettings.prototype.GetOFormRole;
 	CRestrictionSettings.prototype['put_OFormRole'] = CRestrictionSettings.prototype.SetOFormRole;
-	CRestrictionSettings.prototype['get_ResetNone'] = CRestrictionSettings.prototype.IsResetNone;
-	CRestrictionSettings.prototype['put_ResetNone'] = CRestrictionSettings.prototype.SetResetNone;
 	
 })(window);

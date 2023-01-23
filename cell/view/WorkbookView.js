@@ -4979,18 +4979,26 @@
 						//необходимо проверить, ссылкой на 2 листа одной книги
 						let wb = eR.getWb();
 						let editor;
-						if (!t.Api["asc_isSupportFeature"]("ooxml")) {
+						if (!t.Api["asc_isSupportFeature"]("ooxml") || window["AscDesktopEditor"]) {
 							//в этом случае запрашиваем бинарник
 							// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
-							let jsZlib = new AscCommon.ZLib();
-							if (!jsZlib.open(stream)) {
-								t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
-								continue;
+
+							let binaryData = stream;
+							if (!window["AscDesktopEditor"]) {
+								//xlst
+								binaryData = null;
+								let jsZlib = new AscCommon.ZLib();
+								if (!jsZlib.open(stream)) {
+									t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+									continue;
+								}
+
+								if (jsZlib.files && jsZlib.files.length) {
+									binaryData = jsZlib.getFile(jsZlib.files[0]);
+								}
 							}
 
-							if (jsZlib.files && jsZlib.files.length) {
-								var binaryData = jsZlib.getFile(jsZlib.files[0]);
-
+							if (binaryData) {
 								editor = AscCommon.getEditorByBinSignature(binaryData);
 								if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
 									continue;
@@ -5017,6 +5025,7 @@
 									eR && eR.updateData(wb.aWorksheets, _arrAfterPromise[i].data);
 								}
 							}
+
 						} else {
 							editor = AscCommon.getEditorByOOXMLSignature(stream);
 							if (editor !== AscCommon.c_oEditorId.Spreadsheet) {

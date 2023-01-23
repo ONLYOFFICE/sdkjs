@@ -701,6 +701,7 @@ var editor;
 			let binaryData = stream;
 			if (!window["AscDesktopEditor"]) {
 				//xlst
+				binaryData = null;
 				let jsZlib = new AscCommon.ZLib();
 				if (!jsZlib.open(stream)) {
 					//t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
@@ -710,6 +711,10 @@ var editor;
 				if (jsZlib.files && jsZlib.files.length) {
 					binaryData = jsZlib.getFile(jsZlib.files[0]);
 				}
+			}
+
+			if (!binaryData) {
+				return;
 			}
 
 			//заполняем через банарник
@@ -8698,6 +8703,7 @@ var editor;
   prot["asc_getAddPivotTableOptions"] = prot.asc_getAddPivotTableOptions;
   prot["asc_insertPivotNewWorksheet"] = prot.asc_insertPivotNewWorksheet;
   prot["asc_insertPivotExistingWorksheet"] = prot.asc_insertPivotExistingWorksheet;
+  prot["asc_refreshAllPivots"] = prot.asc_refreshAllPivots;
 	// signatures
   prot["asc_addSignatureLine"] 		     = prot.asc_addSignatureLine;
   prot["asc_CallSignatureDblClickEvent"] = prot.asc_CallSignatureDblClickEvent;
