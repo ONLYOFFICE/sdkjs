@@ -183,40 +183,6 @@
 		return [pivotCollapseButtonClose, pivotCollapseButtonOpen];
 	}
 
-
-	function testRelativePaths() {
-		let path1 = "C:/test1/testInside/testinside12/testInsied21/test1.xlsx";
-		let path2 = "C:/test1/testInside/testInsied11/testinsied22/test2.xlsx";
-		let need = "/test1/testInside/testinside12/testInsied21/test1.xlsx";
-		let real = buildRelativePath(path1, path2);
-		console.log("need: " + need + " real: " + real);
-		console.log(real === need);
-
-		// "/root/from1.xlsx"
-		path1 = "C:/root/test.xlsx";
-		path2 = "C:/root/inside/inside2/inseide3/inside4/test.xlsx";
-		need = "/root/test.xlsx";
-		real = buildRelativePath(path1, path2);
-		console.log("need: " + need + " real: " + real);
-		console.log(real === need);
-
-		// "inside/inside2/inseide3/inside4/from2.xlsx"
-		path1 = "C:/root/inside/inside2/inseide3/inside4/test.xlsx";
-		path2 = "C:/root/test.xlsx";
-		need = "inside/inside2/inseide3/inside4/test.xlsx";
-		real = buildRelativePath(path1, path2);
-		console.log("need: " + need + " real: " + real);
-		console.log(real === need);
-
-
-		path1 = "D:/root/inside/inside2/inseide3/inside4/test.xlsx";
-		path2 = "C:/root/test.xlsx";
-		need = "file:///D:\\root\\inside\\inside2\\inseide3\\inside4\\test.xlsx";
-		real = buildRelativePath(path1, path2);
-		console.log("need: " + need + " real: " + real);
-		console.log(real === need);
-	}
-
 	function buildRelativePath(fromPath, thisPath) {
 		if (!fromPath || !thisPath) {
 			return null;
@@ -24563,5 +24529,6 @@
     window["AscCommonExcel"].WorksheetView = WorksheetView;
 
 	window['AscCommonExcel'].getPivotButtonsForLoad = getPivotButtonsForLoad;
+	window['AscCommonExcel'].buildRelativePath = buildRelativePath;
 
 })(window);

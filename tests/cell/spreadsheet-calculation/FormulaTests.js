@@ -17736,8 +17736,38 @@ $(function () {
 		oParser = new parserFormula(_f, 'A2', ws);
 		assert.ok(oParser.parse(), _f);
 		assert.strictEqual(oParser.calculate().getValue(), 3, _f);
+	});
+
+	QUnit.test("Test: \"test relative reference from absolute\"", function (assert) {
+		//by test external reference
+		//use when insert external link from clipboard
+
+		let path1 = "C:/test1/testInside/testinside12/testInsied21/test1.xlsx";
+		let path2 = "C:/test1/testInside/testInsied11/testinsied22/test2.xlsx";
+		let need = "/test1/testInside/testinside12/testInsied21/test1.xlsx";
+		let real = AscCommonExcel.buildRelativePath(path1, path2);
+		assert.strictEqual(need, real);
+
+		// "/root/from1.xlsx"
+		path1 = "C:/root/test.xlsx";
+		path2 = "C:/root/inside/inside2/inseide3/inside4/test.xlsx";
+		need = "/root/test.xlsx";
+		real = AscCommonExcel.buildRelativePath(path1, path2);
+		assert.strictEqual(need, real);
+
+		// "inside/inside2/inseide3/inside4/from2.xlsx"
+		path1 = "C:/root/inside/inside2/inseide3/inside4/test.xlsx";
+		path2 = "C:/root/test.xlsx";
+		need = "inside/inside2/inseide3/inside4/test.xlsx";
+		real = AscCommonExcel.buildRelativePath(path1, path2);
+		assert.strictEqual(need, real);
 
 
+		path1 = "D:/root/inside/inside2/inseide3/inside4/test.xlsx";
+		path2 = "C:/root/test.xlsx";
+		need = "file:///D:\\root\\inside\\inside2\\inseide3\\inside4\\test.xlsx";
+		real = AscCommonExcel.buildRelativePath(path1, path2);
+		assert.strictEqual(need, real);
 	});
 
 	wb.dependencyFormulas.unlockRecal();
