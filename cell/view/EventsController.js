@@ -775,6 +775,7 @@
 		/** @param event {KeyboardEvent} */
 		asc_CEventsController.prototype._onWindowKeyDown = function (event) {
 			var t = this, dc = 0, dr = 0, canEdit = this.canEdit(), action = false, enterOptions;
+			var macOs = AscCommon.AscBrowser.isMacOs;
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
 			var macCmdKey = AscCommon.AscBrowser.isMacOs && event.metaKey;
 			var shiftKey = event.shiftKey;
@@ -974,7 +975,7 @@
 					if (t.getCellEditMode()) {
 						return true;
 					}
-					var isSelectColumns = !AscBrowser.isMacOs && ctrlKey || AscBrowser.isMacOs && event.altKey;
+					var isSelectColumns = ctrlKey;
 					// Обработать как обычный текст
 					if (!isSelectColumns && !shiftKey) {
 						//теперь пробел обрабатывается на WindowKeyDown
@@ -990,8 +991,7 @@
 					stop();
 					if (isSelectColumns) {
 						t.handlers.trigger("selectColumnsByRange");
-					}
-					if (shiftKey) {
+					} else if (shiftKey) {
 						t.handlers.trigger("selectRowsByRange");
 					}
 					return result;
@@ -1206,10 +1206,22 @@
 					}
 					stop();
 					return result;
-
+				case 84:
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode || !macOs) {
+						return true;
+					}
+					if (macCmdKey && shiftKey) {
+						this.handlers.trigger('addFunction',
+							AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale['SUM'] :
+								'SUM', Asc.c_oAscPopUpSelectorType.Func, true);
+						stop();
+					} else {
+						t._setSkipKeyPress(false);
+					}
+					return result;
 				case 61:  // Firefox, Opera (+/=)
 				case 187: // +/=
-					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode || macOs) {
 						return true;
 					}
 

@@ -6504,7 +6504,8 @@ DrawingObjectsController.prototype =
     onKeyDown: function(e)
     {
         var ctrlKey = e.metaKey || e.ctrlKey;
-		var macCmdKey = AscCommon.AscBrowser.isMacOs && e.metaKey;
+		var bIsMacOs = AscCommon.AscBrowser.isMacOs;
+		var macCmdKey = bIsMacOs && e.metaKey;
 
         var drawingObjectsController = this;
         var bRetValue = false;
@@ -6787,7 +6788,7 @@ DrawingObjectsController.prototype =
         }
         else if ( e.keyCode == 67) // C
         {
-            if(e.altKey)
+            if(e.altKey && (!bIsMacOs || bIsMacOs && true === ctrlKey))
             {
                 var oSelector = this.selection.groupSelection || this;
                 var aSelected = oSelector.selectedObjects;
@@ -6863,7 +6864,7 @@ DrawingObjectsController.prototype =
         }
         else if ( e.keyCode == 83) //  S - save
         {
-            if(e.altKey)
+            if(e.altKey && (!bIsMacOs || bIsMacOs && true === ctrlKey))
             {
                 var oSelector = this.selection.groupSelection || this;
                 var aSelected = oSelector.selectedObjects;
