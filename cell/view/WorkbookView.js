@@ -4962,6 +4962,7 @@
 			// })
 
 
+			let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 			var doUpdateData = function (_arrAfterPromise) {
 				History.Create_NewPoint();
 				History.StartTransaction();
@@ -4979,12 +4980,12 @@
 						//необходимо проверить, ссылкой на 2 листа одной книги
 						let wb = eR.getWb();
 						let editor;
-						if (!t.Api["asc_isSupportFeature"]("ooxml") || window["AscDesktopEditor"]) {
+						if (!t.Api["asc_isSupportFeature"]("ooxml") || isLocalDesktop) {
 							//в этом случае запрашиваем бинарник
 							// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
 
 							let binaryData = stream;
-							if (!window["AscDesktopEditor"]) {
+							if (!isLocalDesktop) {
 								//xlst
 								binaryData = null;
 								let jsZlib = new AscCommon.ZLib();
@@ -5085,7 +5086,7 @@
 				}
 			};
 
-			if (window["AscDesktopEditor"]) {
+			if (isLocalDesktop) {
 				//TODO для декстопа необходима функция получения файлов + при копипасте нужно записывать путь файла(и знать путь текущего файла, чтобы вычислить относительный)
 				//десктоп
 				//var arrAfterPromise = getFilesContent(externalReferences);
@@ -5113,6 +5114,7 @@
 		//чтобы потом понять что нужно обновлять, сохраняю сооветсвие, количество запросов соответсвует количеству externalReferences
 		//для этого создаю на все Promise, и если data[i].error -> возвращаю null
 
+		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		let successfulLoadFileMap = {};
 		let getPromise = function (oData, eR, _resolve) {
 			return function () {
@@ -5136,11 +5138,10 @@
 						}, "arraybuffer");
 					};
 
-
-					let sFileUrl = window["AscDesktopEditor"] ? eR.externalReference && eR.externalReference.Id : (oData && !oData["error"] ? oData["url"] : null);
+					let sFileUrl = isLocalDesktop ? eR.externalReference && eR.externalReference.Id : (oData && !oData["error"] ? oData["url"] : null);
 					let isExternalLink = eR.isExternalLink();
 
-					if (window["AscDesktopEditor"]) {
+					if (isLocalDesktop) {
 						//TODO isExternalLink
 						if (sFileUrl) {
 							//resolveStream(stream);
@@ -5201,7 +5202,7 @@
 			let _oData = data && data[i];
 			let _eR = externalReferences[i];
 
-			if (window["AscDesktopEditor"] || (_oData && _eR && (_eR.isExternalLink() || !_oData["error"]))) {
+			if (isLocalDesktop || (_oData && _eR && (_eR.isExternalLink() || !_oData["error"]))) {
 				requests.push(getPromise(_oData, _eR, resolveFunc));
 			}
 		}

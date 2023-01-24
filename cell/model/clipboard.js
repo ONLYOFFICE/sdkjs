@@ -609,7 +609,8 @@
 
 					//для внешних данных необходимо протащить docInfo->ReferenceData
 					//пока беру данные поля, поскольку для копипаста они не используются. по названию не особо совпадают - пересмотреть
-					if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["LocalFileGetSaved"]()) {
+					let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
+					if (isLocalDesktop && window["AscDesktopEditor"]["LocalFileGetSaved"]()) {
 						wb.Core.contentStatus = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
 						wb.Core.category = null;
 					} else if (wb.oApi && wb.oApi.DocInfo && !notSupportExternalReferenceFileFormat[wb.oApi.DocInfo.Format]) {

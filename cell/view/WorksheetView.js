@@ -13175,7 +13175,7 @@
 				//for desktops:
 				//contentStatus -> filePath
 
-				if (window["AscDesktopEditor"]) {
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
 					let _core = pasteInfo.wb.Core;
 					let pasteProcessor = AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor;
 					let sameDoc = pasteProcessor && pasteProcessor._checkPastedInOriginalDoc(pasteInfo.wb, true);
@@ -14022,7 +14022,7 @@
 					//добавляем
 					var referenceData;
 					var name = pastedWb.Core.title;
-					if (window["AscDesktopEditor"]) {
+					if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
 						name = linkInfo.path;
 					} else {
 						if (pastedWb && pastedWb.Core) {
@@ -14851,7 +14851,7 @@
 				sheet = externalSheetSameWb;
 			} else {
 				let externalReference;
-				if (window["AscDesktopEditor"]) {
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
 					let fromPath = pastedWb.Core.contentStatus;
 					let thisPath = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
 					relativePath = buildRelativePath(fromPath, thisPath);
