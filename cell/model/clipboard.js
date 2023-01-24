@@ -1697,6 +1697,16 @@
 					worksheet.objectRender.controller.checkPasteInText(callback);
 				};
 
+				let getFontsFromDrawings = function (_drawings) {
+					let _fonts = {};
+					if (_drawings) {
+						for (var i = 0; i < _drawings.length; i++) {
+							_drawings[i].graphicObject.getAllFonts(_fonts);
+						}
+					}
+					return _fonts;
+				};
+
 				var res = false;
 				if (isCellEditMode) {
 					res = this._getTextFromWorksheet(pasteData);
@@ -1709,27 +1719,27 @@
 								doPasteData();
 							}
 						} else if (window["NativeCorrectImageUrlOnPaste"]) {
-							var url;
-							for (var i = 0, length = aPastedImages.length; i < length; ++i) {
-								url = window["NativeCorrectImageUrlOnPaste"](aPastedImages[i].Url);
-								aPastedImages[i].Url = url;
+							newFonts = getFontsFromDrawings(pasteData.Drawings);
+							worksheet._loadFonts(newFonts, function () {
+								var url;
+								for (var i = 0, length = aPastedImages.length; i < length; ++i) {
+									url = window["NativeCorrectImageUrlOnPaste"](aPastedImages[i].Url);
+									aPastedImages[i].Url = url;
 
-								var imageElem = aPastedImages[i];
-								if (null != imageElem) {
-									imageElem.SetUrl(url);
+									var imageElem = aPastedImages[i];
+									if (null != imageElem) {
+										imageElem.SetUrl(url);
+									}
 								}
-							}
 
-							t._insertImagesFromBinary(worksheet, pasteData, isIntoShape, null, isPasteAll, tempWorkbook);
-							if(isPasteAll) {
-								doPasteData();
-							}
+								t._insertImagesFromBinary(worksheet, pasteData, isIntoShape, null, isPasteAll, tempWorkbook);
+								if(isPasteAll) {
+									doPasteData();
+								}
+							});
 						} else if (!(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
 
-							newFonts = {};
-							for (var i = 0; i < pasteData.Drawings.length; i++) {
-								pasteData.Drawings[i].graphicObject.getAllFonts(newFonts);
-							}
+							newFonts = getFontsFromDrawings(pasteData.Drawings);
 
 							worksheet._loadFonts(newFonts, function () {
 								if (aPastedImages && aPastedImages.length) {
