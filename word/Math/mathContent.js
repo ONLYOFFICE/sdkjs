@@ -5694,6 +5694,8 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
     // split content by cursor position
     const arrNextContent = this.SplitContentByContentPos();
 
+    this.CorrectSpecialWordOnCursor(nInputType);
+
     // convert content of bracket block, near cursor for Unicode (1/2) -> ( CFraction )
     if (nInputType === 0)
         this.ConvertContentInLastBracketBlock(nInputType);
@@ -5933,6 +5935,14 @@ CMathContent.prototype.CorrectAllMathWords = function(IsLaTeX)
 {
     return AscMath.CorrectAllWords(this, IsLaTeX);
 };
+CMathContent.prototype.ConvertAllSpecialWords = function (IsLaTeX)
+{
+    return AscMath.CorrectAllSpecialWords(this, IsLaTeX)
+}
+CMathContent.prototype.CorrectSpecialWordOnCursor = function (IsLaTeX)
+{
+    return AscMath.CorrectSpecialWordOnCursor(this, IsLaTeX)
+}
 CMathContent.prototype.GetBracketOperatorInfo = function (isLaTeX)
 {
     const arrContent = {};

@@ -523,6 +523,11 @@
 			this.EatToken("\\limits");
 		}
 
+		if (this.oLookahead.data === " ")
+		{
+			this.EatToken(this.oLookahead.class);
+		}
+
 		let oThirdContent = !this.IsSubSup() && !this.IsGetBelowAboveLiteral()
 			? this.GetArguments(1)
 			: undefined;

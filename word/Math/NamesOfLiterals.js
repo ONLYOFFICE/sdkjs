@@ -407,6 +407,24 @@
 
 	};
 
+	const SpecialAutoCorrection = {
+		"!!" : "‼",
+		"...": "…",
+		"::" : "∷",
+		":=" : "≔",
+		"~=" : "≅",
+		"+-" : "±",
+		"-+" : "∓",
+		"<<" : "≪",
+		"<=" : "≤",
+		"->" : "→",
+		">=" : "≥",
+		">>" : "≫",
+
+		"/<" : "≮",
+		"/=" : "≠"
+	}
+
 	const wordAutoCorrection = [
 		//Char
 		[
@@ -2125,11 +2143,6 @@
 	}
 
 	const AutoCorrection = {
-		"!!": "‼",
-		"...": "…",
-		"::": "∷",
-		":=": "≔",
-		
 		"\\above": "┴",
 		"\\acute": "́",
 		"\\aleph": "ℵ",
@@ -2641,14 +2654,33 @@
 		"\\zwnj": "‌",
 		"\\zwsp": "​",
 
-		"~=": "≅",
-		"+-": "±",
-		"-+": "∓",
-		"<<": "≪",
-		"<=": "≤",
-		"->": "→",
-		">=": "≥",
-		'>>': "≫",
+		'/\\approx' : "≉",
+		'/\\asymp'	: '≭',
+		'/\\cong'	: '≇',
+		'/\\equiv'	: '≢',
+		'/\\exists'	: '∄',
+		'/\\ge'		: '≱',
+		'/\\gtrless': '≹',
+		'/\\in'		: '∉',
+		'/\\le'		: '≰',
+		'/\\lessgtr': '≸',
+		'/\\ni'		: '∌',
+		'/\\prec'	: '⊀',
+		'/\\preceq' : '⋠',
+		'/\\sim'	: '≁',
+		'/\\simeq'	: '≄',
+		'/\\sqsubseteq' : '⋢',
+		'/\\sqsuperseteq': '⋣',
+		'/\\sqsupseteq' : '⋣',
+		'/\\subset': '⊄',
+		'/\\subseteq': '⊈',
+		'/\\succ': '⊁',
+		'/\\succeq': '⋡',
+		'/\\supset': '⊅',
+		'/\\superset': '⊅',
+		'/\\superseteq': '⊉',
+		'/\\supseteq': '⊉',
+
 	}
 
 	function CorrectWordOnCursor(oCMathContent, IsLaTeX, pos)
@@ -2675,14 +2707,19 @@
 			if (nCount === oContent.Content.length - 1 && intCode === 32)
 				continue;
 			
-			let isContinue = ((intCode >= 97 && intCode <= 122) || (intCode >= 65 && intCode <= 90) || intCode === 92); // a-zA-z && 0-9
+			let isContinue = ((intCode >= 97 && intCode <= 122) || (intCode >= 65 && intCode <= 90) || intCode === 92 || intCode === 47); // a-zA-z && 0-9
 
 			if (!isContinue)
 				return false;
 
 			str = oElement.GetTextOfElement() + str;
 
-			if (intCode === 92) {
+			if (intCode === 92 || intCode === 47)
+			{
+				if (nCount >= 1 && oContent.Content[nCount - 1].value === 47)
+				{
+					continue;
+				}
 				isConvert = true;
 				break;
 			}
@@ -2701,6 +2738,33 @@
 		}
 		oContent.MoveCursorToEndPos();
 		return isConvert;
+	}
+	function CorrectSpecialWordOnCursor(oCMathContent, IsLaTeX)
+	{
+		let isConvert = false;
+		let oContent = oCMathContent.Content[oCMathContent.CurPos];
+
+		if (oContent.Type === 49)
+		{
+			for (let nCount = oContent.Content.length - 1; nCount >= 1; nCount--)
+			{
+				let strNext = oContent.Content[nCount].GetTextOfElement();
+				let strPrev = oContent.Content[nCount - 1].GetTextOfElement();
+				if (CorrectSpecial(oContent, nCount, strPrev, strNext)) {
+					nCount--;
+					isConvert = true
+				}
+			}
+
+			oContent.MoveCursorToEndPos();
+			return isConvert;
+		}
+		else
+		{
+			for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++) {
+				isConvert = CorrectAllSpecialWords(oCMathContent.Content[nCount], isLaTeX) || isConvert;
+			}
+		}
 	}
 	function ConvertWord(str, IsLaTeX)
 	{
@@ -2771,6 +2835,61 @@
 	
 		return isConvert;
 	}
+	function CorrectAllSpecialWords(oCMathContent, isLaTeX)
+	{
+		debugger
+		let isConvert = false;
+
+		if (oCMathContent.Type === 49)
+		{
+			for (let nCount = oCMathContent.Content.length - 1; nCount >= 1; nCount--)
+			{
+				let str = oCMathContent.Content[nCount].GetTextOfElement();
+				let strPrev = oCMathContent.Content[nCount - 1].GetTextOfElement();
+				if (CorrectSpecial(oCMathContent, nCount, strPrev, str))
+					nCount--;
+			}
+		}
+		else
+		{
+			for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++) {
+				isConvert = CorrectAllSpecialWords(oCMathContent.Content[nCount], isLaTeX) || isConvert;
+			}
+		}
+
+		return isConvert;
+	}
+	function CorrectSpecial(oCMathContent, nCount, strPrev, strNext)
+	{
+		for (let i = 0; i < g_DefaultAutoCorrectMathSymbolsList.length; i++)
+		{
+			let current = g_DefaultAutoCorrectMathSymbolsList[i];
+			if (current[0] === strPrev + strNext)
+			{
+				let data = current[1],
+					str = "";
+
+				if (Array.isArray(data))
+				{
+					for (let count = 0; i < data.length; i++)
+					{
+						data[count] = String.fromCharCode(data[count]);
+					}
+					str = data.join("");
+				}
+				else {
+					str = String.fromCharCode(data);
+				}
+
+				if (str)
+				{
+					oCMathContent.RemoveFromContent(nCount - 1, 2, true);
+					oCMathContent.AddText(str, nCount- 1);
+					return true;
+				}
+			}
+		}
+	}
 	function IsStartAutoCorrection(nInputType, intCode)
 	{
 		if (nInputType === 0) // Unicode
@@ -2821,62 +2940,6 @@
 			: AscMath.ConvertLaTeXToTokensList(strConversionData, oContext);
 	}
 
-	// const LaTeXWordList = {
-	// 	"\\backslash" : "\\",
-	// 	"\\begin{array}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{cases}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{matrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{pmatrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{bmatrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{Bmatrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{vmatrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{Vmatrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{equation}" : true,
-	// 	"\\begin{" : true,
-	// 	"pmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"bmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\bmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"Bmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"vmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"Vmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\bmod": " mod ",
-	// 	"\\binom": true,
-	// 	"\\boxed": true,
-	// 	"\\cr": "\\\\",
-	// 	"\\cfrac": true,
-	// 	"\\dfrac{": true,
-	// 	"\\end{" : oNamesOfLiterals.opCloseBracket[0],
-	// 	"\\start": oNamesOfLiterals.opOpenBracket[0],
-	//
-	// 	"\\end{equation}":"endOfMatrix",
-	// 	"\\end{array}":"endOfMatrix",
-	// 	"\\end{cases}":"endOfMatrix",
-	// 	"\\end{matrix}":"endOfMatrix",
-	// 	"\\end{pmatrix}":"endOfMatrix",
-	// 	"\\end{bmatrix}":"endOfMatrix",
-	// 	"\\end{Bmatrix}":"endOfMatrix",
-	// 	"\\end{vmatrix}":"endOfMatrix",
-	// 	"\\end{Vmatrix}":"endOfMatrix",
-	//
-	// 	"frac": true,
-	//
-	// }
-	//
-	// const specialScriptNumberLiteral = [
-	// 	"⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸",
-	// 	"⁹", "ⁱ", "ⁿ", "⁺", "⁻", "⁼", "⁽", "⁾",
-	// ];
-	// const specialIndexNumberLiteral = [
-	// 	"₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈",
-	// 	"₉", "₊", "₋", "₌", "₍", "₎",
-	// ]
-	//AutoCerrection 
-	// ["!", undefined, oNamesOfLiterals.charLiteral[0]],
-	// ["!!", "‼", oNamesOfLiterals.charLiteral[0]],
-	// ["...", "…"],
-	// ["::", "∷"],
-	// [":=", "≔"],
-
 	//--------------------------------------------------------export----------------------------------------------------
 	window["AscMath"] = window["AscMath"] || {};
 	window["AscMath"].oNamesOfLiterals = oNamesOfLiterals;
@@ -2891,6 +2954,8 @@
 	window["AscMath"].AutoCorrection = AutoCorrection;
 	window["AscMath"].CorrectWordOnCursor = CorrectWordOnCursor;
 	window["AscMath"].CorrectAllWords = CorrectAllWords;
+	window["AscMath"].CorrectAllSpecialWords = CorrectAllSpecialWords;
+	window["AscMath"].CorrectSpecialWordOnCursor = CorrectSpecialWordOnCursor;
 	window["AscMath"].IsStartAutoCorrection = IsStartAutoCorrection;
 	window["AscMath"].GetConvertContent = GetConvertContent;
 	window["AscMath"].MathLiterals = MathLiterals;
