@@ -317,7 +317,7 @@
 			strExp += this.EatToken(this.oLookahead.class).data;
 		}
 
-		if (this.oLookahead.data !== "\"" && this.oLookahead.data !== "\'" )
+		if (this.oLookahead.data === "\"" || this.oLookahead.data === "\'" )
 		{
 			this.EatToken(this.oLookahead.class);
 		}

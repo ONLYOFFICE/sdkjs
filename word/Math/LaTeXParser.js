@@ -535,9 +535,10 @@
 			}
 		}
 		else if (oFuncContent.class === oLiteralNames.opNaryLiteral[0]) {
+			let str = MathLiterals.nary.toSymbols[oFuncContent.data];
 			oOutput = {
 				type: oLiteralNames.opNaryLiteral[num],
-				value: oFuncContent.data,
+				value: str,
 			}
 		}
 		else {
@@ -857,7 +858,8 @@
 		return (
 			this.oLookahead.class === oLiteralNames.matrixLiteral[0] ||
 			this.oLookahead.data === "█" ||
-			this.oLookahead.data === "■"
+			this.oLookahead.data === "■" ||
+			this.oLookahead.data === "\\substack"
 		)
 	};
 	CLaTeXParser.prototype.IsAlignBlockForArray = function ()
@@ -928,6 +930,7 @@
 				break;
 			case "\\begin{array}":
 			case "\\begin{equation}":
+			case "\\substack":
 			case "■":
 			//case "█":
 			default:
@@ -936,7 +939,12 @@
 
 		this.isNowMatrix = true;
 
-		this.EatToken(this.oLookahead.class);
+		let name = this.EatToken(this.oLookahead.class).data;
+
+		if (name === "\\substack")
+		{
+			this.EatToken(this.oLookahead.class);
+		}
 
 		while (this.oLookahead.data === "[")
 		{

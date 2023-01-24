@@ -539,10 +539,6 @@ ParaRun.prototype.GetTextOfElement = function(isLaTeX)
 			str += this.Content[i].GetTextOfElement(isLaTeX);
 		}
 	}
-	//???
-	if (str === 'mod') {
-		str = '\\bmod'
-	}
 	return str;
 };
 ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTeX)

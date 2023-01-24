@@ -4554,18 +4554,20 @@ CGroupCharacter.prototype.GetTextOfElement = function(isLaTeX) {
             else if (intStartCode === 9183)
                 strStart = '\\underbrace';
 
-            strTemp = strStart + Base;
+            strStart = strStart + Base;
         }
         else
             strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
+
+        strTemp = strStart;
 	}
     else
     {
         let pos = this.Pr.pos === 1 ? "┴" : "┬";
         if (intStartCode !== 9182 && intStartCode !== 9183)
             strStart += pos;
+        strTemp = strStart + Base;
     }
-	strTemp = strStart + Base;
 	return strTemp;
 };
 

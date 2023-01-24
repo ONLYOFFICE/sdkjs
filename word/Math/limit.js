@@ -340,8 +340,8 @@ CLimit.prototype.GetTextOfElement = function(isLaTeX) {
     {
 		strLimitSymbol = (this.Pr.type == 1) ? "┴" : "┬";
 	}
-	
-	if (strArgument.length > 1)
+
+	if (strArgument.length > 1 || isLaTeX)
 		strArgument = strStartBracet + strArgument + strCloseBracet;
 
 	strTemp = strFuncName + strLimitSymbol+ strArgument;
