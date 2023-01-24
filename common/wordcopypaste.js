@@ -6489,7 +6489,7 @@ PasteProcessor.prototype =
 			if (parent && parent.nodeName.toLowerCase() === "span") {
 				parent = parent && parent.parentNode;
 			}
-			if (parent && parent.nodeName.toLowerCase() === "p") {
+			if (parent && (parent.nodeName.toLowerCase() === "p" || parent.nodeName.toLowerCase() === "body")) {
 				for (let i = 0; i < parent.childNodes.length; i++) {
 					let child = parent.childNodes[i];
 					if (child && child.nodeName.toLowerCase() === "#comment" && -1 !== child.nodeValue.indexOf("[if gte msEquation 12]")) {
