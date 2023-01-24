@@ -5686,7 +5686,7 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
         : Asc.c_oAscMathInputType.Unicode;
 
     // LaTeX autocorrection disabled
-    if (nInputType === 1)
+    if (nInputType === 1 || oElement.value === 39 || oElement.value === 34)
         return;
 
     let lastElement = this.GetLastTextElement();
@@ -6282,8 +6282,13 @@ ContentIterator.prototype.GetNextFromCurrentElement = function (nextRule)
             let intCurrent = intCode = this.CurrentElement.GetNext();
             let strCurrent = String.fromCharCode(intCode);
 
-            if (AscMath.MathLiterals.rBrackets.IsIncludes(strCurrent))
-               return this.CheckBracket(strCurrent);
+            if (strCurrent === "\"" || strCurrent === "\'")
+            {
+                return this.CheckTextLiteral(strCurrent);
+            }
+            if (AscMath.MathLiterals.rBrackets.IsIncludes(strCurrent)) {
+                return this.CheckBracket(strCurrent);
+            }
             else if (AscMath.MathLiterals.lBrackets.IsIncludes(strCurrent))
             {
                 this.CurrentElement.Cursor++;
@@ -6323,6 +6328,31 @@ ContentIterator.prototype.GetNextFromCurrentElement = function (nextRule)
     }
 };
 
+ContentIterator.prototype.CheckTextLiteral = function(literal)
+{
+    while (this.CurrentElement)
+    {
+        if (!this.CurrentElement.IsHasContent() && this.cursor > 0)
+        {
+            this.cursor--;
+            this.CreateCurrentElement();
+        }
+
+        if (!(this.CurrentElement instanceof ParaRunIterator))
+        {
+            this.cursor--;
+            this.CreateCurrentElement();
+        }
+        else if (this.CurrentElement.IsHasContent())
+        {
+            let intCurrent = this.CurrentElement.GetNext();
+            let strCurrent = String.fromCharCode(intCurrent);
+
+            if (strCurrent === literal)
+                return true;
+        }
+    }
+}
 ContentIterator.prototype.CheckBracket = function(strCurrent)
 {
     this.intBracketCounter--;
@@ -6747,7 +6777,7 @@ CMathContent.prototype.GetMultipleContentForGetText = function(isLaTeX, isNotBra
         else
         {
             str = this.GetTextOfElement(isLaTeX);
-            if (!AscMath.functionNames.includes(str))
+            if (!AscMath.functionNames.includes(str) && !(str[0] === "\"" && str[str.length-1] === "\""))
             {
                 str = (isLaTeX === true)
                     ?  "{" + this.GetTextOfElement(isLaTeX) + "}"
