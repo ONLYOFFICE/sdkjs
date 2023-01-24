@@ -8598,12 +8598,8 @@
 
 	/**
      * Adds a caption paragraph after (or before) the current paragraph.
-	 * <note>
-	 * 	<ol>
-	 * 		<li>The current paragraph must be in the document (not in the footer/header).</li>
-	 * 		<li>If the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.</li>
-	 * 	</ol>
-	 * </note>
+	 * <note>Please note that the current paragraph must be in the document (not in the footer/header).
+	 * And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.</note>
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
      * @param {string} sAdditional - The additional text.
