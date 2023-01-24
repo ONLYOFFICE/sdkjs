@@ -3668,14 +3668,11 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 ParaMath.prototype.ConvertFromLaTeX = function()
 {
 	var strLaTeX = this.GetText(true);
-	this.Root.Remove_Content(0, this.Root.Content.length);
-    this.Root.Add_Text(strLaTeX);
-    this.Root.ConvertAllSpecialWords(true);
-    this.Root.CorrectAllMathWords(true);
-    strLaTeX = this.GetText(true);
     this.Root.Remove_Content(0, this.Root.Content.length);
     this.Root.Correct_Content(true);
     AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);
+    this.Root.ConvertAllSpecialWords(true);
+    this.Root.CorrectAllMathWords(true);
 	this.Root.Correct_Content(true);
 };
 ParaMath.prototype.ConvertToLaTeX = function()

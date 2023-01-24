@@ -5836,12 +5836,7 @@ CMathContent.prototype.CheckWhileOperatorContent = function(arrOperatorsList, nI
         let prevLen = arrContentTypes.length - 1;
         let isEqual = true;
 
-        if (this.Content.length - 1 > arrContentTypes.length)
-        {
-            isEqual = false;
-        }
-
-        for (let i = this.Content.length - 1; i >= 0 && prevLen > this.Content.length - 1; i--, prevLen--)
+        for (let i = this.Content.length - 1; i >= 0 && prevLen >= this.Content.length - 1; i--, prevLen--)
         {
             let currentContent = this.Content[i].Type;
             let prevContent = arrContentTypes[prevLen];
@@ -6560,7 +6555,7 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
     {
         isSpace = this.DeleteEndSpace();
         for (let i = 0; i < this.Content.length; i++) {
-            arrContentTypes.push(this.Content[i].Type);
+            arrContentTypes.push(this.Content[i].constructor.name);
         }
     }
 
@@ -6582,19 +6577,15 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
         let prevLen = arrContentTypes.length - 1;
         let isEqual = true;
 
-        if (this.Content.length - 1 > arrContentTypes.length) {
-            isEqual = false;
-        }
-
-        for (let i = this.Content.length - 1; i >= 0 && prevLen > this.Content.length - 1; i--, prevLen--) {
-            let currentContent = this.Content[i].Type;
+        for (let i = this.Content.length - 1; i >= 0; i--, prevLen--) {
+            let currentContent = this.Content[i].constructor.name;
             let prevContent = arrContentTypes[prevLen];
 
-            if (prevContent === 49 && currentContent !== 49) {
+            if (prevContent !== currentContent) {
                 isEqual = false;
             }
 
-            if (currentContent !== 49)
+            if (currentContent !== "ParaRun")
                 break;
         }
 
@@ -6634,10 +6625,13 @@ CMathContent.prototype.CheckAutoCorrectionBrackets = function(nInputType)
     {
         const arrPos = Brackets.BracketsPair[0][0];
         if (arrPosition.length === 2 && Brackets.intCounter === 0)
-            this.CutConvertAndPaste(arrPos, nInputType);
+        {
+            arrPosition[1]++;
+            this.CutConvertAndPaste(arrPosition, nInputType);
             Brackets.isConvert = true;
             if (this.GetLastTextElement() === " ")
                 this.DeleteEndSpace();
+        }
     }
 
     return Brackets;
@@ -6663,7 +6657,7 @@ CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType)
 
         if (i === arrPos[0] && CurrentContent instanceof ParaRun)
         {
-            for (let j = CurrentContent.Content.length - 1; j >= arrPos[1] && j >= 0; j--)
+            for (let j = CurrentContent.Content.length - 1; j >= arrPos[1] && j >= arrPos[1]; j--)
             {
                 strContent = CurrentContent.Content[j].GetTextOfElement(nInputType === 1) + strContent;
                 CurrentContent.Remove_FromContent(j, 1);
@@ -6671,10 +6665,14 @@ CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType)
         }
         else
         {
-            if (CurrentContent.Type !== 49)
-                strContent ="〖" + CurrentContent.GetTextOfElement(nInputType === 1) + "〗"+ strContent;
-            else
-                strContent = CurrentContent.GetTextOfElement(nInputType === 1) + strContent;
+            if (CurrentContent.Type !== 49) {
+                strContent = "〖" + CurrentContent.GetTextOfElement(nInputType === 1).trim() + "〗" + strContent;
+                strContent = strContent.trim();
+            }
+            else {
+                strContent = CurrentContent.GetTextOfElement(nInputType === 1).trim() + strContent;
+                strContent = strContent.trim();
+            }
             this.Remove_FromContent(i, 1);
         }
     }
