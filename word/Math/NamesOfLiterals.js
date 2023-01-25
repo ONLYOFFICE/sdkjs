@@ -162,7 +162,7 @@
 			"↼", "↔", "≤", "⬄", "⬌", "≪", "⇋", "↦", "⊨",
 			"∓", "≠", "↗", "¬", "≠", "∌", "∉", "∉", "ν",
 			"↖", "ο", "⊙", "⊖", "⊕", "⊗", "⊥", "±",
-			"≺", "≼", "∶", "⋰", "→", "⇁", "⇀", "↘",
+			"≺", "≼", "∶", "⋰", "→", "⇁", "⇀", "↘", "∝",
 			"∼", "≃", "⬍", "⊑", "⊒", "⋆", "⊂", "⊆", "≻", "≽",
 			"⊃", "⊇", "×", "⊤", "→", "‼", "∷", "≔", "∩", "∪",
 			"∆", "∞", "⁢", "/", ">", "<", "_", "^", ".", ",",
@@ -848,7 +848,7 @@
 		["≼", oNamesOfLiterals.operatorLiteral[0]],
 		["′", MathLiterals.accent.id],
 		["∏", oNamesOfLiterals.opNaryLiteral[0]], //oNamesOfLiterals.functionLiteral[0]
-		["∝"],
+		["∝", oNamesOfLiterals.operatorLiteral[0]],
 		["ψ"],
 		["∜", oNamesOfLiterals.sqrtLiteral[0]],
 		["〉", oNamesOfLiterals.opCloseBracket[0]],
