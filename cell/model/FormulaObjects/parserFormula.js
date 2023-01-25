@@ -1425,6 +1425,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea3D.prototype.getWS = function () {
 		return this.wsFrom;
 	};
+	cArea3D.prototype.getWsId = function () {
+		return this.wsFrom && this.wsFrom.Id;
+	};
 	cArea3D.prototype.cross = function (arg, ws) {
 		if (!this.isSingleSheet()) {
 			return new cError(cErrorType.wrong_value_type);
