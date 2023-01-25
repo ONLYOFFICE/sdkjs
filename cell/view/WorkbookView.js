@@ -5157,7 +5157,7 @@
 						} else {
 							resolve(_resolve(null, eR.externalReference.Id, oData));
 						}
-					} else {
+					} else if (!window["NATIVE_EDITOR_ENJINE"]) {
 						//если ссылка на внешний источник, пробуем получить контент
 						if (!sFileUrl && oData["error"] && isExternalLink) {
 							sFileUrl = eR.data;
@@ -5190,6 +5190,8 @@
 								resolve(_resolve(null, eR.externalReference.Id, oData));
 							}
 						}
+					} else {
+						resolveStream(null);
 					}
 				});
 			}

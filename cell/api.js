@@ -653,7 +653,7 @@ var editor;
 	spreadsheet_api.prototype.asc_ImportXmlStart = function (callback) {
 		let t = this;
 
-		if (window["AscDesktopEditor"]) {
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
 			// TODO: add translations
 			window["AscDesktopEditor"]["OpenFilenameDialog"]("(*xml)", false, function (_file) {
 				let file = _file;
@@ -671,26 +671,27 @@ var editor;
 					callback(stream ? new Uint8Array(stream) : null);
 				});
 			});
-			return;
+		} else if (!window["NATIVE_EDITOR_ENJINE"]) {
+			AscCommon.ShowXmlFileDialog(function (error, files) {
+				if (Asc.c_oAscError.ID.No !== error) {
+					t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+					return;
+				}
+
+				let format = AscCommon.GetFileExtension(files[0].name);
+				let reader = new FileReader();
+				reader.onload = function () {
+					t._convertFromXml({data: new Uint8Array(reader.result), format: format}, callback);
+				};
+				reader.onerror = function () {
+					t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
+				};
+
+				reader.readAsArrayBuffer(files[0]);
+			});
+		} else {
+			callback(null);
 		}
-
-		AscCommon.ShowXmlFileDialog(function (error, files) {
-			if (Asc.c_oAscError.ID.No !== error) {
-				t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-				return;
-			}
-
-			let format = AscCommon.GetFileExtension(files[0].name);
-			let reader = new FileReader();
-			reader.onload = function () {
-				t._convertFromXml({data: new Uint8Array(reader.result), format: format}, callback);
-			};
-			reader.onerror = function () {
-				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
-			};
-
-			reader.readAsArrayBuffer(files[0]);
-		});
 	};
 
 	spreadsheet_api.prototype.asc_ImportXmlEnd = function (stream, dataRef, newSheetName) {
