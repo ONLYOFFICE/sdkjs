@@ -432,16 +432,23 @@ var editor;
 		return true;
     };
 
-  spreadsheet_api.prototype._printDesktop = function (options) {
-    window.AscDesktopEditor_PrintOptions = options;
+	spreadsheet_api.prototype._printDesktop = function (options) {
+		let advOpt = options && options.advancedOptions;
+		if (advOpt && advOpt.asc_getNativeOptions() && advOpt.asc_getNativeOptions()["quickPrint"]) {
+			advOpt.ignorePrintArea = true;
+			advOpt.printType = Asc.c_oAscPrintType.EntireWorkbook;
+		}
 
-    let desktopOptions = {};
-    if (options && options.advancedOptions)
-      desktopOptions["nativeOptions"] = options.advancedOptions.asc_getNativeOptions();
+		window.AscDesktopEditor_PrintOptions = options;
 
-    window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
-    return true;
-  };
+		let desktopOptions = {};
+		if (advOpt) {
+			desktopOptions["nativeOptions"] = advOpt.asc_getNativeOptions();
+		}
+
+		window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
+		return true;
+	};
 
   spreadsheet_api.prototype.asc_ChangePrintArea = function(type) {
 	var ws = this.wb.getWorksheet();
