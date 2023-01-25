@@ -14532,7 +14532,7 @@ QueryTableField.prototype.clone = function() {
 			var addedRowMap = [];
 			for (var i = 0; i < ranges.length; i++) {
 				var range = sheet.getRange3(ranges[i].r1, ranges[i].c1, ranges[i].r2, ranges[i].c2);
-				range._foreachNoEmpty(function (cell) {
+				range._foreach(function (cell) {
 					if (!addedRowMap[cell.nRow]) {
 						var row = new ExternalRow();
 						row.R = cell.nRow + 1;
