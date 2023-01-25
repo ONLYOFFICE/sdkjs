@@ -6014,6 +6014,7 @@ CMathContent.prototype.ConvertContentInLastBracketBlock = function(nInputType)
 
             if (Result.length === 2)
             {
+                Result[0]++;
                 this.CutConvertAndPaste(Result, nInputType);
                 Brackets.isConvert = true;
             }
