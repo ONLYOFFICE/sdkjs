@@ -1891,7 +1891,7 @@
 					}
 					break;
 				case oNamesOfLiterals.boxLiteral[num]:
-					let oBox = oContext.Add_Box({}, null);
+					let oBox = oContext.Add_Box({opEmu : 1}, null);
 					var BoxMathContent = oBox.getBase();
 					BoxMathContent.SetArgSize(-1);
 					UnicodeArgument(
@@ -3038,7 +3038,6 @@
 	}
 	function CorrectAllSpecialWords(oCMathContent, isLaTeX)
 	{
-		debugger
 		let isConvert = false;
 
 		if (oCMathContent.Type === 49)

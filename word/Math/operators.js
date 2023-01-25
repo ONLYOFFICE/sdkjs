@@ -4560,6 +4560,8 @@ CGroupCharacter.prototype.GetTextOfElement = function(isLaTeX) {
             strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
 
         strTemp = strStart;
+        if (Base)
+            strTemp += Base;
 	}
     else
     {

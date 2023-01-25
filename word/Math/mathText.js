@@ -1039,7 +1039,7 @@ CMathText.prototype.GetTextOfElement = function(isLaTeX) {
         let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];
         if (str)
         {
-            return str + " ";
+            return str;
         }
 
     }
