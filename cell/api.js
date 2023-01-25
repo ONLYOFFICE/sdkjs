@@ -3213,8 +3213,8 @@ var editor;
 			}
 			this.asc_Resize();
 		}
-
-		if (this.asc_getExternalReferences()) {
+		
+		if (this.canEdit() && this.asc_getExternalReferences()) {
 			this.handlers.trigger("asc_onNeedUpdateExternalReferenceOnOpen");
 		}
 		//this.asc_Resize(); // Убрал, т.к. сверху приходит resize (http://bugzilla.onlyoffice.com/show_bug.cgi?id=14680)
@@ -8229,15 +8229,17 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_updateExternalReferences = function(arr) {
-		if (this.canEdit()) {
-			this.wb.updateExternalReferences(arr);
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
 		}
+		this.wb.updateExternalReferences(arr);
 	};
 
 	spreadsheet_api.prototype.asc_removeExternalReferences = function(arr) {
-		if (this.canEdit()) {
-			this.wb.removeExternalReferences(arr);
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
 		}
+		this.wb.removeExternalReferences(arr);
 	};
 
 	spreadsheet_api.prototype.asc_fillHandleDone = function(range) {
