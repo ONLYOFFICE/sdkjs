@@ -3689,8 +3689,8 @@ ParaMath.prototype.ConvertFromLaTeX = function()
     this.Root.Remove_Content(0, this.Root.Content.length);
     this.Root.Correct_Content(true);
     AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);
-    this.Root.ConvertAllSpecialWords(true);
     this.Root.CorrectAllMathWords(true);
+    this.Root.ConvertAllSpecialWords(true);
 	this.Root.Correct_Content(true);
 };
 ParaMath.prototype.ConvertToLaTeX = function()

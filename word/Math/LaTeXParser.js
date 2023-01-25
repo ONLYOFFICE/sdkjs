@@ -169,6 +169,10 @@
 		else
 		{
 			strAccent = this.EatToken(this.oLookahead.class).data;
+
+			if (MathLiterals.accent.toSymbols[strAccent])
+				strAccent = MathLiterals.accent.toSymbols[strAccent];
+
 			oBase = this.GetArguments(1);
 			oBase = this.GetContentOfLiteral(oBase);
 
@@ -281,20 +285,26 @@
 	{
 		let arrContent = [];
 		let intCountOfBracketBlock = 1;
-		while (this.IsElementLiteral() || this.oLookahead.data === "∣" || this.oLookahead.data === "ⓜ") {
-			if (this.IsElementLiteral()) {
+
+		while (this.IsElementLiteral() || this.oLookahead.data === "∣" || this.oLookahead.data === "\\mid"|| this.oLookahead.data === "ⓜ")
+		{
+			if (this.IsElementLiteral())
+			{
 				let oToken = [this.GetExpressionLiteral(strLeftSymbol)];
-				if ((oToken && !Array.isArray(oToken)) || Array.isArray(oToken) && oToken.length > 0) {
+				if ((oToken && !Array.isArray(oToken)) || Array.isArray(oToken) && oToken.length > 0)
+				{
 					arrContent.push(oToken)
 				}
-
-			} else {
+			}
+			else
+			{
 				this.EatToken(this.oLookahead.class);
 				intCountOfBracketBlock++;
 			}
 		}
 
-		while (arrContent.length < intCountOfBracketBlock) {
+		while (arrContent.length < intCountOfBracketBlock)
+		{
 			arrContent.push([]);
 		}
 

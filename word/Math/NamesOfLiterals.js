@@ -615,7 +615,7 @@
 		["\\array", oNamesOfLiterals.matrixLiteral[0]],
 		["\\above", true],
 		["\\below", true],
-
+		["\\mid", true],
 		["┴", true],
 
 		["̿", MathLiterals.accent.id], //todo
@@ -1891,9 +1891,7 @@
 					}
 					break;
 				case oNamesOfLiterals.boxLiteral[num]:
-					let oBox = oContext.Add_Box({opEmu : 1}, null);
-					var BoxMathContent = oBox.getBase();
-					BoxMathContent.SetArgSize(-1);
+					let oBox = oContext.Add_Box({ctrPrp: new CTextPr(), opEmu : 1}, null);
 					UnicodeArgument(
 						oTokens.value,
 						oNamesOfLiterals.bracketBlockLiteral[num],
@@ -1926,10 +1924,14 @@
 					);
 					break;
 				case oNamesOfLiterals.belowAboveLiteral[num]:
-					let LIMIT_TYPE = (oTokens.isBelow === true) ? LIMIT_LOW : LIMIT_UP;
+					let LIMIT_TYPE = (oTokens.isBelow === false) ? VJUST_BOT : VJUST_TOP;
 					if (oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1)
 					{
-						var Group = new CGroupCharacter({ctrPrp : new CTextPr(), chr: oTokens.base.value.charCodeAt(0), pos: LIMIT_TYPE, vertJc : 0 });
+						let Pr = (LIMIT_TYPE == VJUST_TOP)
+							? {ctrPrp : new CTextPr(), pos :LIMIT_TYPE, chr : oTokens.base.value.charCodeAt(0)}
+							: {ctrPrp : new CTextPr(), vertJc : LIMIT_TYPE, chr : oTokens.base.value.charCodeAt(0)};
+
+						var Group = new CGroupCharacter(Pr);
 						oContext.Add_Element(Group);
 
 						UnicodeArgument(
