@@ -657,10 +657,13 @@ var editor;
 			// TODO: add translations
 			window["AscDesktopEditor"]["OpenFilenameDialog"]("(*xml)", false, function (_file) {
 				let file = _file;
-				if (Array.isArray(file))
+				if (Array.isArray(file)) {
 					file = file[0];
-				if (!file)
+				}
+				if (!file) {
+					callback(null);
 					return;
+				}
 
 				window["AscDesktopEditor"]["convertFile"](file, 0x2002, function (convertedFile) {
 					let stream = null;
@@ -675,6 +678,7 @@ var editor;
 			AscCommon.ShowXmlFileDialog(function (error, files) {
 				if (Asc.c_oAscError.ID.No !== error) {
 					t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+					callback(null);
 					return;
 				}
 
@@ -685,6 +689,7 @@ var editor;
 				};
 				reader.onerror = function () {
 					t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
+					callback(null);
 				};
 
 				reader.readAsArrayBuffer(files[0]);
@@ -704,7 +709,7 @@ var editor;
 				//xlst
 				binaryData = null;
 				let jsZlib = new AscCommon.ZLib();
-				if (!jsZlib.open(stream)) {
+				if (!stream || !jsZlib.open(stream)) {
 					//t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
 					return false;
 				}
