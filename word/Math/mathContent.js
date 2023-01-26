@@ -6344,7 +6344,7 @@ ContentIterator.prototype.CheckTextLiteral = function(literal)
             this.CreateCurrentElement();
         }
 
-        if (!(this.CurrentElement instanceof ParaRunIterator))
+        if (!(this.CurrentElement instanceof ParaRunIterator) || this.CurrentElement.Cursor < 0)
         {
             this.cursor--;
             this.CreateCurrentElement();
