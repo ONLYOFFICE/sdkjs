@@ -5456,66 +5456,71 @@
 	cTRUNC.prototype.inheritFormat = true;
 	cTRUNC.prototype.argumentsType = [argType.number, argType.number];
 	cTRUNC.prototype.Calculate = function (arg) {
+		// TODO fix floating point number precision problem (IEEE754)
+		// https://0.30000000000000004.com/
 
 		function truncHelper(a, b) {
 			//TODO возможно стоит добавить ограничения для коэффициента b(ms не ограничивает; LO - максимальные значения 20/-20)
-			if(b > 20) {
+			if (b > 20) {
 				b = 20;
+			} else if (!Number.isInteger(b)) {
+				b = +b.toFixed();
 			}
 
-			var numDegree = Math.pow(10, b);
+			let numDegree = Math.pow(10, b);
+
 			return new cNumber(Math.trunc(a*numDegree) / numDegree);
 		}
 
-		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(0);
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1]);
-		}
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1]);
-		}
+		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(0);
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
-		}
-
-		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
-			arg0 = arg0.getValue();
-			if (arg0 instanceof cError) {
-				return arg0;
-			} else if (arg0 instanceof cString) {
-				return new cError(cErrorType.wrong_value_type);
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			if (arg0.isOneElement()) {
+				arg0 = arg0.getFirstElement();
 			} else {
-				arg0 = arg0.tocNumber();
+				arg0 = new cError(cErrorType.wrong_value_type);
 			}
+		} else if (cElementType.array === arg0.type) {
+			arg0 = arg0.getElementRowCol(0,0);
+		} 
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			if (arg1.isOneElement()) {
+				arg1 = arg1.getFirstElement();
+			} else {
+				arg1 = new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === arg1.type) {
+			arg1 = arg1.getElementRowCol(0,0);
+		} 
+
+		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			arg0 = arg0.getValue().tocNumber();
 		} else {
 			arg0 = arg0.tocNumber();
 		}
 
-		if (arg1 instanceof cRef || arg1 instanceof cRef3D) {
-			arg1 = arg1.getValue();
-			if (arg1 instanceof cError) {
-				return arg1;
-			} else if (arg1 instanceof cString) {
-				return new cError(cErrorType.wrong_value_type);
-			} else {
-				arg1 = arg1.tocNumber();
-			}
+		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			arg1 = arg1.getValue().tocNumber();
 		} else {
 			arg1 = arg1.tocNumber();
 		}
 
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
 			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
-					var a = elem;
-					var b = arg1.getElementRowCol(r, c);
-					if (a instanceof cNumber && b instanceof cNumber) {
+					let a = elem;
+					let b = arg1.getElementRowCol(r, c);
+					if (cElementType.number === a.type && cElementType.number === b.type) {
 						this.array[r][c] = truncHelper(a.getValue(), b.getValue())
 					} else {
 						this.array[r][c] = new cError(cErrorType.wrong_value_type);
@@ -5523,22 +5528,22 @@
 				});
 				return arg0;
 			}
-		} else if (arg0 instanceof cArray) {
+		} else if (cElementType.array === arg0.type) {
 			arg0.foreach(function (elem, r, c) {
-				var a = elem;
-				var b = arg1;
-				if (a instanceof cNumber && b instanceof cNumber) {
+				let a = elem;
+				let b = arg1;
+				if (cElementType.number === a.type && cElementType.number === b.type) {
 					this.array[r][c] = truncHelper(a.getValue(), b.getValue())
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			});
 			return arg0;
-		} else if (arg1 instanceof cArray) {
+		} else if (cElementType.array === arg1.type) {
 			arg1.foreach(function (elem, r, c) {
-				var a = arg0;
-				var b = elem;
-				if (a instanceof cNumber && b instanceof cNumber) {
+				let a = arg0;
+				let b = elem;
+				if (cElementType.number === a.type && cElementType.number === b.type) {
 					this.array[r][c] = truncHelper(a.getValue(), b.getValue())
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);

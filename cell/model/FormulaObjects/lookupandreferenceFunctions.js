@@ -1170,26 +1170,38 @@ function (window, undefined) {
 	cLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
 	cLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference];
 	cLOOKUP.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = 2 === arg.length ? arg1 : arg[2], resC = -1, resR = -1,
+		let arg0 = arg[0], arg1 = arg[1], arg2 = 2 === arg.length ? arg1 : arg[2], resC = -1, resR = -1,
 			t = this, res;
+
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			if (arg0.isOneElement()) {
+				arg0 = arg0.getFirstElement();
+			} else {
+				arg0 = new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === arg0.type) {
+			arg0 = arg0.getElementRowCol(0, 0);
+		}
+
+
+		if (cElementType.cell === arg0.type) {
+			arg0 = arg0.getValue();
+		}
 
 		if (cElementType.error === arg0.type) {
 			return arg0;
-		}
-		if (cElementType.cell === arg0.type) {
-			arg0 = arg0.getValue();
 		}
 
 		function arrFinder(arr) {
 			if (arr.getRowCount() > arr.getCountElementInRow()) {
 				//ищем в первом столбце
 				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
-				var arrCol = arr.getCol(0);
+				let arrCol = arr.getCol(0);
 				resR = _func.binarySearch(arg0, arrCol);
 			} else {
 				//ищем в первой строке
 				resR = arr.getRowCount() > 1 ? 1 : 0;
-				var arrRow = arr.getRow(0);
+				let arrRow = arr.getRow(0);
 				resC = _func.binarySearch(arg0, arrRow);
 			}
 		}
@@ -1198,7 +1210,7 @@ function (window, undefined) {
 				cElementType.array === arg1.type) &&
 				(cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type ||
 					cElementType.array === arg2.type) )) {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {
@@ -1217,13 +1229,13 @@ function (window, undefined) {
 
 		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {
 
-			var _arg1, _arg2;
+			let _arg1, _arg2;
 
 			_arg1 = cElementType.array === arg1.type ? arg1 : arg2;
 
 			_arg2 = cElementType.array === arg2.type ? arg1 : arg2;
 
-			var BBox = _arg2.getBBox0();
+			let BBox = _arg2.getBBox0();
 
 			if (_arg1.getRowCount() !== (BBox.r2 - BBox.r1) && _arg1.getCountElementInRow() !== (BBox.c2 - BBox.c1)) {
 				return new cError(cErrorType.not_available);
@@ -1235,7 +1247,7 @@ function (window, undefined) {
 				return new cError(cErrorType.not_available);
 			}
 
-			var c = new CellAddress(BBox.r1 + resR, BBox.c1 + resC, 0);
+			let c = new CellAddress(BBox.r1 + resR, BBox.c1 + resC, 0);
 			_arg2.getWS()._getCellNoEmpty(c.getRow0(), c.getCol0(), function (cell) {
 				res = checkTypeCell(cell);
 			});
@@ -1323,8 +1335,8 @@ function (window, undefined) {
 				var bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;
 				var index;
 
-				var _getValue = function(n) {
-					var r, c;
+				const _getValue = function(n) {
+					let r, c;
 					if(bVertical) {
 						r = n;
 						c = 0;
@@ -1332,19 +1344,19 @@ function (window, undefined) {
 						r = 0;
 						c = n;
 					}
-					var res = arg1.getValueByRowCol(r, c);
+					let res = arg1.getValueByRowCol(r, c);
 					return res ? res : new cEmpty();
 				};
 
-				var length = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1;
-				var lastValue = _getValue(length);
+				let length = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1;
+				let lastValue = _getValue(length);
 				if(lastValue && lastValue.value < arg0.value) {
 					//в этом случае фукнция бинарного поиска одаст последний элемент. для конкретного случая это неверно
 					//Если функции не удается найти искомое_значение, то в просматриваемом_векторе выбирается наибольшее значение, которое меньше искомого_значения или равно ему.
-					var diff = null;
-					var endNumber;
-					for(var i = 0; i <= length; i++) {
-						var tempValue = _getValue(i);
+					let diff = null;
+					let endNumber;
+					for(let i = 0; i <= length; i++) {
+						let tempValue = _getValue(i);
 						if(cElementType.number === tempValue.type) {
 							if(tempValue.value <= arg0.value && (null === diff || diff > (arg0.value - tempValue.value))) {
 								index = i;
@@ -1362,7 +1374,7 @@ function (window, undefined) {
 				if(index === undefined) {
 					index = _func.binarySearchByRange(arg0, arg1);
 
-					if (index < 0) {
+					if (index === undefined || index < 0) {
 						return new cError(cErrorType.not_available);
 					}
 				}
@@ -1383,7 +1395,7 @@ function (window, undefined) {
 			}*/
 
 
-			var ws = cElementType.cellsRange3D === arg1.type && arg1.isSingleSheet() ? arg1.getWS() : arg1.ws;
+			let ws = cElementType.cellsRange3D === arg1.type && arg1.isSingleSheet() ? arg1.getWS() : arg1.ws;
 
 			if (cElementType.cellsRange3D === arg1.type) {
 				if (arg1.isSingleSheet()) {
@@ -1398,18 +1410,30 @@ function (window, undefined) {
 			}
 
 			AscCommonExcel.executeInR1C1Mode(false, function () {
-				var b = arg2.getBBox0();
+				let b = arg2.getBBox0();
 				if (2 === arg.length) {
-					if (bVertical) {
-						res = new cRef(ws.getCell3(b.r1 + 0, b.c1 + index).getName(), ws);
+					if (!bVertical) {
+						// return the lookup value
+						// res = new cRef(ws.getCell3(b.r1 + 0, b.c1 + index).getName(), ws);
+						// return the last element in column (like in ms)
+						res = new cRef(ws.getCell3(b.r2, b.c1 + index).getName(), ws);
 					} else {
-						res = new cRef(ws.getCell3(b.r1 + index, b.c1 + 0).getName(), ws);
+						// return the lookup value
+						// res = new cRef(ws.getCell3(b.r1 + index, b.c1 + 0).getName(), ws);
+						// return the last element in row (like in ms)
+						res = new cRef(ws.getCell3(b.r1 + index, b.c2).getName(), ws);
 					}
 				} else {
 					if (1 === arg2RowsLength) {
-						res = new cRef(ws.getCell3(b.r1 + 0, b.c1 + index).getName(), ws);
+						// return the lookup value
+						// res = new cRef(ws.getCell3(b.r1 + 0, b.c1 + index).getName(), ws);
+						// return the last element in column (like in ms)
+						res = new cRef(ws.getCell3(b.r2, b.c1 + index).getName(), ws);
 					} else {
-						res = new cRef(ws.getCell3(b.r1 + index, b.c1 + 0).getName(), ws);
+						// return the lookup value
+						// res = new cRef(ws.getCell3(b.r1 + index, b.c1 + 0).getName(), ws);
+						// return the last element in row (like in ms)
+						res = new cRef(ws.getCell3(b.r1 + index, b.c2).getName(), ws);
 					}
 				}
 			});
