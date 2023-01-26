@@ -14719,7 +14719,7 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 	ExternalCell.prototype.clone = function () {
-		var newObj = new ExternalRow();
+		var newObj = new ExternalCell();
 
 		newObj.Ref = this.Ref;
 		newObj.CellType = this.CellType;
