@@ -1006,7 +1006,8 @@
 		getNextTableName: function() {
 			var sNewName;
 			var collaborativeIndexUser = "";
-			if (this.wb.oApi.collaborativeEditing.getCollaborativeEditing()) {
+			var api = window["Asc"]["editor"];
+			if (api && api.collaborativeEditing && api.collaborativeEditing.getCollaborativeEditing()) {
 				collaborativeIndexUser = "_" + this.wb.oApi.CoAuthoringApi.get_indexUser();
 			}
 			do {

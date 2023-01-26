@@ -5013,7 +5013,7 @@
 								};
 
 								if (!wb) {
-									wb = new AscCommonExcel.Workbook();
+									wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
 									wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
 								}
 								AscFormat.ExecuteNoHistory(function () {
