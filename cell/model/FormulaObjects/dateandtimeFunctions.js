@@ -1524,6 +1524,7 @@
 			return argError;
 		}
 
+		//function weekday also don't separate < 60
 		val0 = getCorrectDate2(val0);
 		val1 = getCorrectDate2(val1);
 
@@ -1548,7 +1549,7 @@
 
 			for (let i = 0; i < difAbs; i++) {
 				let date = new cDate(start);
-				date.setUTCDate(start.getUTCDate2() + i);
+				date.setUTCDate(Date.prototype.getUTCDate.call(start) + i);
 				if (date.getUTCDay() !== 6 && date.getUTCDay() !== 0 && !_includeInHolidays(date, holidays)) {
 					count++;
 				}
