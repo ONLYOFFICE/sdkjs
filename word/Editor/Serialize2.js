@@ -6590,13 +6590,6 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (complexFormPr) {
 			this.bs.WriteItem(c_oSerSdt.ComplexFormPr, function (){oThis.WriteSdtComplexFormPr(complexFormPr)});
 		}
-		let fieldMaster = oSdt.GetFieldMaster && oSdt.GetFieldMaster();
-		if (fieldMaster) {
-			let sTarget = this.saveParams.fieldMastersPartMap[fieldMaster.Id];
-			if (sTarget) {
-				oThis.bs.WriteItem(c_oSerSdt.OformMaster, function (){oThis.memory.WriteString3(sTarget);});
-			}
-		}
 	};
 	this.WriteSdtCheckBox = function (val)
 	{
@@ -6724,6 +6717,13 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		}
 		if (val.Shd) {
 			oThis.bs.WriteItem(c_oSerSdt.FormPrShd, function(){oThis.bs.WriteShd(val.Shd)});
+		}
+		let fieldMaster = val.GetFieldMaster && val.GetFieldMaster();
+		if (fieldMaster) {
+			let sTarget = this.saveParams.fieldMastersPartMap[fieldMaster.Id];
+			if (sTarget) {
+				oThis.bs.WriteItem(c_oSerSdt.OformMaster, function (){oThis.memory.WriteString3(sTarget);});
+			}
 		}
 	};
 	this.WriteSdtTextFormPr = function (val)
@@ -13040,7 +13040,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if (c_oSerSdt.FormPr === type && oSdt.SetFormPr) {
 			var formPr = new AscWord.CSdtFormPr();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadSdtFormPr(t, l, formPr);
+				return oThis.ReadSdtFormPr(t, l, formPr, oSdt);
 			});
 			oSdt.SetFormPr(formPr);
 		} else if (c_oSerSdt.TextFormPr === type && oSdt.SetTextFormPr) {
@@ -13055,14 +13055,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				return oThis.ReadSdtComplexFormPr(t, l, complexFormPr);
 			});
 			oSdt.SetComplexFormPr(complexFormPr);
-		} else if (c_oSerSdt.OformMaster === type) {
-			var sTarget = this.stream.GetString2LE(length);
-			//todo
-			if (-1 !== sTarget.indexOf("oform")) {
-				sTarget = sTarget.substring(sTarget.indexOf("oform") + "oform".length);
-			}
-			sTarget = sTarget.replace(/\\/g, "/");
-			this.oReadResult.sdtPrWithFieldPath.push({sdt: oSdt, target: sTarget});
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -13163,7 +13155,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		}
 		return res;
 	};
-	this.ReadSdtFormPr = function(type, length, val) {
+	this.ReadSdtFormPr = function(type, length, val, oSdt) {
 		var oThis = this;
 		var res = c_oSerConstants.ReadOk;
 		if (c_oSerSdt.FormPrKey === type) {
@@ -13182,6 +13174,14 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if (c_oSerSdt.FormPrShd === type) {
 			val.Shd = new CDocumentShd();
 			ReadDocumentShd(length, this.bcr, val.Shd);
+		} else if (c_oSerSdt.OformMaster === type) {
+			var sTarget = this.stream.GetString2LE(length);
+			//todo
+			if (-1 !== sTarget.indexOf("oform")) {
+				sTarget = sTarget.substring(sTarget.indexOf("oform") + "oform".length);
+			}
+			sTarget = sTarget.replace(/\\/g, "/");
+			this.oReadResult.sdtPrWithFieldPath.push({sdt: oSdt, target: sTarget});
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
