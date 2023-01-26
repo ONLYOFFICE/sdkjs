@@ -14440,12 +14440,13 @@ QueryTableField.prototype.clone = function() {
 		return this.data;
 	};
 	asc_CExternalReference.prototype.asc_getSource = function () {
-		if (this.externalReference && this.externalReference.Id) {
-			var lastIndex = this.externalReference.Id.lastIndexOf('/');
+		let id = this.externalReference && this.externalReference.Id;
+		if (id) {
+			let lastIndex =0 === id.indexOf("file:///") ? id.lastIndexOf('\\') : id.lastIndexOf('/');
 			if (lastIndex === -1) {
-				lastIndex = this.externalReference.Id.lastIndexOf('/\/');
+				lastIndex = id.lastIndexOf('/\/');
 			}
-			return lastIndex === -1 ? this.externalReference.Id : this.externalReference.Id.substr(lastIndex + 1);
+			return lastIndex === -1 ? id : id.substr(lastIndex + 1);
 		}
 		return null;
 	};

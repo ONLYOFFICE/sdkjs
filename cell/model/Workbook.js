@@ -4141,13 +4141,21 @@
 			//предполагаем, что здесь уже лежит ссылка в грамотном виде
 			//ищем последний слэш или двоеточие и разделяем на части
 			res = res.Id;
+			var lastSlash = "/";
+			var checkPrefix = "file:///";
+			var prefixFile = "";
+			if (0 === res.indexOf(checkPrefix)) {
+				res = res.substring(8);
+				prefixFile = checkPrefix;
+				lastSlash = "\\";
+			}
 			for (var i = res.length - 1; i >= 0; i--) {
-				if (res[i] === "/" || res[i] === ":") {
-					return {path: res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
+				if (res[i] === lastSlash || res[i] === ":") {
+					return {path: prefixFile + res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
 				}
 			}
 			if (res) {
-				res = {path: "", name: res};
+				res = {path: prefixFile + "", name: res};
 			}
 		}
 		return res ? res : null;

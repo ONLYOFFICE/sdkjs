@@ -78,6 +78,23 @@ function (window, undefined) {
 		return newArray
 	}
 
+	function generate3DLink(externalPath, sheet, range) {s
+		let filePrefix = "file:///";
+		if (externalPath && 0 === externalPath.indexOf(filePrefix)) {
+			//"file:///C:\root\from1.xlsx"
+			sheet = sheet.split(":");
+			var wsFrom = sheet[0], wsTo = sheet[1] === undefined ? wsFrom : sheet[1];
+			wsFrom = wsFrom.replace(/'/g, "''");
+			wsTo = wsTo.replace(/'/g, "''");
+			return "'" + externalPath + (wsFrom !== wsTo ? wsFrom + ":" + wsTo : wsFrom) + "'!" + range;
+		} else {
+			if (!externalPath) {
+				externalPath = "";
+			}
+			return parserHelp.get3DRef(externalPath + sheet, range);
+		}
+	}
+	
 	function ParsedThing(value, type, subtype, pos, length) {
 		this.value = value;
 		this.type = type;
@@ -1404,7 +1421,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var wsTo = this.wsTo.getName();
 		var name = this.bbox ? this.bbox.getName() : this.value;
 		var exPath = this.getExternalLinkStr(this.externalLink, true);
-		return  parserHelp.get3DRef(wsFrom !== wsTo ? (exPath + wsFrom + ':' + wsTo) : (exPath + wsFrom), name);
+		return generate3DLink(exPath, wsFrom !== wsTo ? (wsFrom + ':' + wsTo) : wsFrom, name);
 	};
 	cArea3D.prototype.tocNumber = function () {
 		return this.getValue()[0].tocNumber();
@@ -1814,7 +1831,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cRef3D.prototype.toLocaleString = function () {
 		var exPath = this.getExternalLinkStr(this.externalLink, true);
-		return parserHelp.get3DRef(exPath + this.ws.getName(), this.range.getName());
+		return generate3DLink(exPath, this.ws.getName(), this.range.getName());
 	};
 	cRef3D.prototype.getWS = function () {
 		return this.ws;
