@@ -1206,26 +1206,12 @@
 					}
 					stop();
 					return result;
-				case 84:
-					if (!canEdit || t.getCellEditMode() || selectionDialogMode || !macOs) {
-						return true;
-					}
-					if (macCmdKey && shiftKey) {
-						this.handlers.trigger('addFunction',
-							AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale['SUM'] :
-								'SUM', Asc.c_oAscPopUpSelectorType.Func, true);
-						stop();
-					} else {
-						t._setSkipKeyPress(false);
-					}
-					return result;
 				case 61:  // Firefox, Opera (+/=)
 				case 187: // +/=
-					if (!canEdit || t.getCellEditMode() || selectionDialogMode || macOs) {
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
 						return true;
 					}
-
-					if (event.altKey) {
+					if (event.altKey && (!macOs || (macOs && event.ctrlKey))) {
 						this.handlers.trigger('addFunction',
 							AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale['SUM'] :
 								'SUM', Asc.c_oAscPopUpSelectorType.Func, true);
