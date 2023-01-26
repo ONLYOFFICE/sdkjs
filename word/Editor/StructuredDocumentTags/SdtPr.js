@@ -489,8 +489,10 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 
 	if (oContentControl.IsForm())
 	{
-		this.FormPr = oContentControl.GetFormPr().Copy();
-		this.FormPr.SetFixed(oContentControl.IsFixedForm());
+		let mainForm = oContentControl.IsMainForm() ? oContentControl : oContentControl.GetMainForm();
+		
+		this.FormPr = mainForm.GetFormPr().Copy();
+		this.FormPr.SetFixed(mainForm.IsFixedForm());
 	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)
@@ -590,10 +592,37 @@ CContentControlPr.prototype.SetFormPrToContentControl = function(contentControl)
 	if (!this.FormPr)
 		return;
 	
-	let newKey = this.FormPr.GetKey();
+	let formPr = this.FormPr;
+	
+	let newRole = formPr.GetRole();
+	if (contentControl.IsForm() && !contentControl.IsMainForm())
+	{
+		// Ключ у подформы должен сохраняться
+		let oldKey    = contentControl.GetFormKey();
+		let newFormPr = formPr.Copy();
+		newFormPr.SetKey(oldKey);
+		contentControl.SetFormPr(newFormPr);
+
+		contentControl = contentControl.GetMainForm();
+		if (!contentControl)
+			return;
+
+		formPr = contentControl.GetFormPr().Copy();
+		formPr.SetRole(newRole);
+	}
+
+	if (contentControl.IsComplexForm())
+	{
+		let subForms = contentControl.GetAllSubForms();
+		for (let index = 0, count = subForms.length; index < count; ++index)
+		{
+			subForms[index].SetFormRole(newRole);
+		}
+	}
+	
+	let newKey = formPr.GetKey();
 	let oldKey = contentControl.GetFormKey();
 	
-	let newRole     = this.FormPr.GetRole();
 	let fieldMaster = contentControl.GetFieldMaster();
 	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
 	let oldRole     = userMaster ? userMaster.getRole() : null;
@@ -615,7 +644,7 @@ CContentControlPr.prototype.SetFormPrToContentControl = function(contentControl)
 		this.OnSetRoleToForm(newRole, contentControl);
 	}
 	
-	contentControl.SetFormPr(this.FormPr);
+	contentControl.SetFormPr(formPr);
 };
 CContentControlPr.prototype.OnSetKeyToForm = function(newKey, form)
 {

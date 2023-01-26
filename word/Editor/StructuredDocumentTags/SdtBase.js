@@ -925,6 +925,15 @@ CSdtBase.prototype.GetFormRole = function()
 	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
 	return userMaster ? userMaster.getRole() : "";
 };
+CSdtBase.prototype.SetFormRole = function(roleName)
+{
+	if (!this.IsForm() || roleName === this.GetFormRole())
+		return;
+	
+	let formPr = this.GetFormPr().Copy();
+	formPr.SetRole(roleName);
+	this.SetFormPr(formPr);
+};
 CSdtBase.prototype.SetFieldMaster = function(fieldMaster)
 {
 	if (!fieldMaster)
@@ -954,7 +963,21 @@ CSdtBase.prototype.GetFormHighlightColor = function(defaultColor)
 		defaultColor = logicDocument && logicDocument.GetSpecialFormsHighlight ? logicDocument.GetSpecialFormsHighlight() : null;
 	}
 	
+	let logicDocument = this.GetLogicDocument();
+	
+	if (!logicDocument || !this.IsForm())
+		return defaultColor;
+	
 	let formPr = this.GetFormPr();
+	if (!this.IsMainForm())
+	{
+		let mainForm = this.GetMainForm();
+		if (!mainForm)
+			return defaultColor;
+		
+		formPr = mainForm.GetFormPr();
+	}
+	
 	if (!formPr)
 		return defaultColor;
 	
@@ -962,7 +985,6 @@ CSdtBase.prototype.GetFormHighlightColor = function(defaultColor)
 	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
 	let userColor   = userMaster ? userMaster.getColor() : null;
 	
-	let logicDocument = this.GetLogicDocument();
 	let oform         = logicDocument ? logicDocument.GetOFormDocument() : null;
 	let currentUser   = oform ? oform.getCurrentUserMaster() : null;
 	
