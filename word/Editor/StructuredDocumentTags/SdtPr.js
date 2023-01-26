@@ -637,8 +637,12 @@ CContentControlPr.prototype.OnSetRoleToForm = function(newRole, form)
 		return;
 	
 	let formManager = logicDocument.GetFormsManager();
-	let allForms = formManager.GetAllFormsByKey(form.GetFormKey(), form.GetSpecificType());
 	
+	let formKey = form.GetFormKey();
+	if (!formKey || "" === formKey)
+		return;
+	
+	let allForms = formManager.GetAllFormsByKey(formKey, form.GetSpecificType());
 	for (let index = 0, formCount = allForms.length; index < formCount; ++index)
 	{
 		let curForm = allForms[index];

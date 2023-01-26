@@ -360,6 +360,23 @@ CSdtBase.prototype.GetFormKey = function()
 	return (this.Pr.FormPr.Key);
 };
 /**
+ * Задаем новый ключ для специальной формы
+ * @param key {string}
+ */
+CSdtBase.prototype.SetFormKey = function(key)
+{
+	if (this.GetFormKey() === key)
+		return;
+	
+	let formPr = this.GetFormPr();
+	if (!formPr)
+		return;
+	
+	formPr = formPr.Copy();
+	formPr.Key = key;
+	this.SetFormPr(formPr);
+};
+/**
  * Проверяем, является ли данный контейнер чекбоксом
  * @returns {boolean}
  */
@@ -393,6 +410,20 @@ CSdtBase.prototype.GetRadioButtonGroupKey = function()
 		return undefined;
 
 	return (this.Pr.CheckBox.GroupKey);
+};
+/**
+ * Задаем групповой ключ для радио кнопки
+ * @param {string }groupKey
+ */
+CSdtBase.prototype.SetRadioButtonGroupKey = function(groupKey)
+{
+	let checkBoxPr = this.Pr.CheckBox;
+	if (!this.IsRadioButton() || !checkBoxPr)
+		return;
+	
+	checkBoxPr = checkBoxPr.Copy();
+	checkBoxPr.SetGroupKey(groupKey);
+	this.SetCheckBoxPr(checkBoxPr);
 };
 /**
  * Для чекбоксов и радио-кнопок получаем состояние

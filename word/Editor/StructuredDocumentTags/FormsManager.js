@@ -374,6 +374,35 @@
 		
 		return "";
 	};
+	CFormsManager.prototype.OnEndLoad = function()
+	{
+		// Проверим, что у всех форм есть ключи
+		let keyGenerator = this.GetKeyGenerator();
+		let allForms     = this.GetAllForms();
+		for (let index = 0, count = allForms.length; index < count; ++index)
+		{
+			let form = allForms[index];
+			
+			if (form.IsRadioButton())
+			{
+				let key = form.GetRadioButtonGroupKey();
+				if (key && "" !== key)
+					continue;
+				
+				key = keyGenerator.GetNewKey(form);
+				form.SetRadioButtonGroupKey(key);
+			}
+			else
+			{
+				let key = form.GetFormKey();
+				if (key && "" !== key)
+					continue;
+				
+				key = keyGenerator.GetNewKey(form);
+				form.SetFormKey(key);
+			}
+		}
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

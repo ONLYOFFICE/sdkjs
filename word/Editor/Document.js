@@ -2262,6 +2262,8 @@ CDocument.prototype.On_EndLoad                     = function()
     {
         this.Set_FastCollaborativeEditing(true);
     }
+	
+	this.FormsManager.OnEndLoad();
 
 	if (this.OFormDocument)
 		this.OFormDocument.onEndLoad();
