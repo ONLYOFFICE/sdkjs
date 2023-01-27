@@ -125,6 +125,10 @@
 	{
 		return this.ReadTokensWhileEnd(oLiteralNames.charLiteral)
 	};
+	CLaTeXParser.prototype.GetOtherLiteral = function ()
+	{
+		return this.ReadTokensWhileEnd(oLiteralNames.otherLiteral)
+	};
 	CLaTeXParser.prototype.GetSpaceLiteral = function ()
 	{
 		//todo LaTex skip all normal spaces
@@ -335,7 +339,8 @@
 			this.oLookahead.data === "\\above" ||
 			this.IsOverUnderBarLiteral() ||
 			this.IsTextLiteral() ||
-			this.IsSpecialSymbol()
+			this.IsSpecialSymbol() ||
+			this.oLookahead.class === oLiteralNames.otherLiteral[0]
 		);
 	};
 	CLaTeXParser.prototype.IsSpecialSymbol = function ()
@@ -370,6 +375,10 @@
 		else if (this.oLookahead.class === oLiteralNames.charLiteral[0])
 		{
 			return this.GetCharLiteral();
+		}
+		else if (this.oLookahead.class === oLiteralNames.otherLiteral[0])
+		{
+			return this.GetOtherLiteral();
 		}
 		else if (this.oLookahead.class === oLiteralNames.opDecimal[0])
 		{
