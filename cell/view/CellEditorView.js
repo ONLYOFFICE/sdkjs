@@ -367,6 +367,11 @@
 		var opt = this.options;
 		var t = this;
 
+		var api = window["Asc"]["editor"];
+		if (api && !api.canUndoRedoByRestrictions()) {
+			saveValue = false;
+		}
+
 		var localSaveValueCallback = function(isSuccess) {
 			if(!isSuccess) {
 				t.setFocus(true);
