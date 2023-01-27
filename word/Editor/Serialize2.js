@@ -11461,13 +11461,8 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			if (run.GetElementsCount() > Asc.c_dMaxParaRunContentLength && !(paragraphContent instanceof CInlineLevelSdt && paragraphContent.IsForm())) {
 				this.oReadResult.runsToSplit.push(run);
 			}
-	
-			if (this.nCurCommentsCount > 0)
-			{
-				let runText = run.GetText();
-				for (var commentId in this.oCurComments)
-					this.oCurComments[commentId] += runText;
-			}
+			
+			this.AppendQuoteToCurrentComments(run.GetText());
         }
 		else if (c_oSerParType.CommentStart === type)
         {
@@ -11525,6 +11520,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = this.bcr.Read1(length, function(t, l){
                 return oThis.boMathr.ReadMathOMathPara(t,l,paragraphContent, props);
 			});
+			
+			if (props.Math)
+				this.AppendQuoteToCurrentComments(props.Math.GetText());
 		}
 		else if ( c_oSerParType.OMath == type )
 		{	
@@ -11535,12 +11533,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			});
 			oMath.Root.Correct_Content(true);
 			
-			if (this.nCurCommentsCount > 0)
-			{
-				let mathText = oMath.GetText();
-				for (var commentId in this.oCurComments)
-					this.oCurComments[commentId] += mathText;
-			}
+			this.AppendQuoteToCurrentComments(oMath.GetText());
 		}
 		else if ( c_oSerParType.MRun == type )
 		{
@@ -11647,7 +11640,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		    res = c_oSerConstants.ReadUnknown;
         return res;
     };
-	
+	this.AppendQuoteToCurrentComments = function(text) {
+		if (!text || this.nCurCommentsCount <= 0)
+			return;
+		
+		for (let commentId in this.oCurComments)
+			this.oCurComments[commentId] += text;
+	};
 	this.ReadFldChar = function (type, length, run) {
 		var res = c_oSerConstants.ReadOk;
 		if (c_oSer_FldSimpleType.CharType === type) {
@@ -15286,6 +15285,9 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
                 return oThis.ReadMathArg(t,l,oMath.Root, paragraphContent);
             });
             oMath.Root.Correct_Content(true);
+			
+			if (props)
+				props.Math = oMath;
         }
 		else if (c_oSer_OMathContentType.OMathParaPr === type)
 		{
