@@ -3802,8 +3802,9 @@ CMathContent.prototype.GetSelectContent = function(isAll)
 };
 CMathContent.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseContentPos)
 {
-    if (true !== this.ParentElement.Is_ContentUse(this))
-        return false;
+	if ((this.IsPlaceholder() && UseContentPos)
+		|| true !== this.ParentElement.Is_ContentUse(this))
+		return false;
 
     if (false === UseContentPos && para_Math_Run === this.Content[this.Content.length - 1].Type)
     {
@@ -3864,8 +3865,9 @@ CMathContent.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseC
 };
 CMathContent.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, UseContentPos, StepEnd)
 {
-    if (true !== this.ParentElement.Is_ContentUse(this))
-        return false;
+	if ((this.IsPlaceholder() && UseContentPos)
+		|| true !== this.ParentElement.Is_ContentUse(this))
+		return false;
 
     if (false === UseContentPos && para_Math_Run === this.Content[0].Type)
     {
