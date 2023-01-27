@@ -584,10 +584,36 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 		}
 		return fHandle ? null : arrElements;
 	}
+	function TextToMathRunElements(sText, fHandle)
+	{
+		let arrElements = fHandle ? null : [];
+		for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			let nCharCode = oIterator.value();
+			
+			let oElement = null;
+			if (0x0026 === nCharCode)
+			{
+				oElement = new AscWord.CMathAmp();
+			}
+			else
+			{
+				oElement = new AscWord.CMathText(false);
+				oElement.add(nCharCode);
+			}
+		
+			if (fHandle)
+				fHandle(oElement);
+			else
+				arrElements.push(oElement);
+		}
+		return fHandle ? null : arrElements;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CompareDocumentPositions = CompareDocumentPositions;
 	window['AscWord'].AlignFontSize            = AlignFontSize;
 	window['AscWord'].TextToRunElements        = TextToRunElements;
+	window['AscWord'].TextToMathRunElements    = TextToMathRunElements;
 
 })(window);

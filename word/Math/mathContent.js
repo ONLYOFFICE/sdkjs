@@ -3260,38 +3260,26 @@ CMathContent.prototype.Add_Element = function(Element)
     this.Internal_Content_Add(this.CurPos, Element, false);
     this.CurPos++;
 };
-CMathContent.prototype.Add_Text = function(sText, Paragraph, MathStyle)
+CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle)
 {
-    this.Paragraph = Paragraph;
-
-    if (sText)
-    {
-        var MathRun = new ParaRun(this.Paragraph, true);
-        var arrChars = AscCommon.convertUTF16toUnicode(sText);
-
-        for (var nCharPos = 0; nCharPos < arrChars.length; nCharPos++)
-        {
-            var oText = null;
-            let content = arrChars[nCharPos];
-
-            if (0x0026 == content)
-                oText = new CMathAmp();
-            else
-            {
-                oText = new CMathText(false);
-                oText.add(content);
-            }
-            MathRun.Add(oText, true);
-        }
-
-        MathRun.Set_RFont_ForMathRun();
-
-        if (undefined !== MathStyle && null !== MathStyle)
-            MathRun.Math_Apply_Style(MathStyle);
-
-        this.Internal_Content_Add(this.CurPos, MathRun, false);
-        this.CurPos++;
-    }
+	if (!text)
+		return;
+	
+	this.Paragraph = paragraph;
+	
+	let run = new AscWord.CRun(this.Paragraph, true);
+	AscWord.TextToMathRunElements(text, function(item)
+	{
+		run.Add(item, true);
+	});
+	
+	run.Set_RFont_ForMathRun();
+	
+	if (mathStyle)
+		run.Math_Apply_Style(mathStyle);
+	
+	this.AddToContent(this.CurPos, run, false);
+	this.CurPos++;
 };
 
 CMathContent.prototype.Add_TextOnPos = function(nPos, sText, Paragraph, MathStyle)

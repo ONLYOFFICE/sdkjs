@@ -1439,4 +1439,7 @@ var q_Math_BreakOperators =
     0x00D7: 1, 0x00F7:  1
 };
 
-
+//--------------------------------------------------------export----------------------------------------------------
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CMathText = CMathText;
+window['AscWord'].CMathAmp = CMathAmp;
