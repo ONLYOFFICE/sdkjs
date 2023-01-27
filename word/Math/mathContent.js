@@ -3267,16 +3267,19 @@ CMathContent.prototype.Add_Text = function(sText, Paragraph, MathStyle)
     if (sText)
     {
         var MathRun = new ParaRun(this.Paragraph, true);
+        var arrChars = AscCommon.convertUTF16toUnicode(sText);
 
-        for (var nCharPos = 0, nTextLen = sText.length; nCharPos < nTextLen; nCharPos++)
+        for (var nCharPos = 0; nCharPos < arrChars.length; nCharPos++)
         {
             var oText = null;
-            if (0x0026 == sText.charCodeAt(nCharPos))
+            let content = arrChars[nCharPos];
+
+            if (0x0026 == content)
                 oText = new CMathAmp();
             else
             {
                 oText = new CMathText(false);
-                oText.addTxt(sText[nCharPos]);
+                oText.add(content);
             }
             MathRun.Add(oText, true);
         }
