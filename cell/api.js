@@ -980,11 +980,15 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_Undo = function() {
+    if (!this.canUndoRedoByRestrictions())
+      return;
     this.wb.undo();
     this.wb.restoreFocus();
   };
 
   spreadsheet_api.prototype.asc_Redo = function() {
+    if (!this.canUndoRedoByRestrictions())
+      return;
     this.wb.redo();
     this.wb.restoreFocus();
   };
@@ -7745,10 +7749,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.onUpdateRestrictions = function () {
-    var oHistory = AscCommon.History;
-    if (this.isRestrictionSignatures() && oHistory && !oHistory.Have_Changes()) {
-        oHistory.Clear();
-    }
+    this._onUpdateDocumentCanUndoRedo();
   };
   spreadsheet_api.prototype.isShowShapeAdjustments = function()
   {
