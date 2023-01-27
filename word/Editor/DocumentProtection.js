@@ -154,6 +154,9 @@ CDocProtect.prototype.setProps = function (oProps) {
 	let doc = editor && editor.private_GetLogicDocument && editor.private_GetLogicDocument();
 	let userId = doc && doc.GetUserId && doc.GetUserId();
 	History.Add(new CChangesDocumentProtection(this, this, oProps, userId));
+	if (doc && doc.Settings && oProps.edit === Asc.c_oAscEDocProtect.TrackedChanges) {
+		History.Add(new CChangesDocumentSettingsTrackRevisions(doc, doc.Settings.TrackRevisions, true, doc.GetUserId()));
+	}
 	this.setFromInterface(oProps);
 };
 CDocProtect.prototype.setFromInterface = function (oProps) {
