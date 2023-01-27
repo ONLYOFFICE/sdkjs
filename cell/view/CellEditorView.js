@@ -530,10 +530,18 @@
 	};
 
 	CellEditor.prototype.undo = function () {
+		var api = window["Asc"]["editor"];
+		if (api && !api.canUndoRedoByRestrictions()) {
+			return;
+		}
 		this._performAction( this.undoList, this.redoList );
 	};
 
 	CellEditor.prototype.redo = function () {
+		var api = window["Asc"]["editor"];
+		if (api && !api.canUndoRedoByRestrictions()) {
+			return;
+		}
 		this._performAction( this.redoList, this.undoList );
 	};
 
