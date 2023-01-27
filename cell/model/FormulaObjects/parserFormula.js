@@ -78,7 +78,7 @@ function (window, undefined) {
 		return newArray
 	}
 
-	function generate3DLink(externalPath, sheet, range) {s
+	function generate3DLink(externalPath, sheet, range) {
 		let filePrefix = "file:///";
 		if (externalPath && 0 === externalPath.indexOf(filePrefix)) {
 			//"file:///C:\root\from1.xlsx"
