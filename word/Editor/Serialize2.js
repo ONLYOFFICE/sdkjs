@@ -6944,7 +6944,7 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		this.bs.WriteItem(c_oSer_SettingsType.MathPr, function(){oThis.WriteMathPr();});
 		this.bs.WriteItem(c_oSer_SettingsType.TrackRevisions, function(){
 			let trackRevisionsFlag = oThis.Document.GetGlobalTrackRevisions();
-			if (!trackRevisionsFlag && oThis.Document.GetLocalTrackRevisions()) {
+			if (!trackRevisionsFlag) {
 				//if applied trackedChanges protection, ms write w:trackRevisions default(default -> true)
 				let documentProtection = oThis.Document.Settings && oThis.Document.Settings.DocumentProtection;
 				if (documentProtection && documentProtection.edit === Asc.c_oAscEDocProtect.TrackedChanges) {
