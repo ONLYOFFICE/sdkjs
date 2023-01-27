@@ -83,7 +83,7 @@
 		cFLOOR_MATH, cGCD, cINT, cISO_CEILING, cLCM, cLN, cLOG, cLOG10, cMDETERM, cMINVERSE, cMMULT, cMOD, cMROUND,
 		cMULTINOMIAL, cMUNIT, cODD, cPI, cPOWER, cPRODUCT, cQUOTIENT, cRADIANS, cRAND, cRANDARRAY, cRANDBETWEEN, cROMAN, cROUND, cROUNDDOWN,
 		cROUNDUP, cSEC, cSECH, cSERIESSUM, cSIGN, cSIN, cSINH, cSQRT, cSQRTPI, cSUBTOTAL, cSUM, cSUMIF, cSUMIFS,
-		cSUMPRODUCT, cSUMSQ, cSUMX2MY2, cSUMX2PY2, cSUMXMY2, cTAN, cTANH, cTRUNC);
+		cSUMPRODUCT, cSUMSQ, cSUMX2MY2, cSUMX2PY2, cSUMXMY2, cTAN, cTANH, cTRUNC, cSEQUENCE);
 
 	var cSubTotalFunctionType = {
 		includes: {
@@ -5554,6 +5554,150 @@
 
 		return truncHelper(arg0.getValue(), arg1.getValue());
 	};
+
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cSEQUENCE() {
+	}
+
+	cSEQUENCE.prototype = Object.create(cBaseFunction.prototype);
+	cSEQUENCE.prototype.constructor = cSEQUENCE;
+	cSEQUENCE.prototype.name = 'SEQUENCE';
+	cSEQUENCE.prototype.argumentsMin = 1;
+	cSEQUENCE.prototype.argumentsMax = 4;
+	cSEQUENCE.prototype.inheritFormat = true;
+	cSEQUENCE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cSEQUENCE.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number];
+	cSEQUENCE.prototype.Calculate = function (arg) {
+		const MAX_ARRAY_SIZE = 1048576;
+
+		function sequenceArray(arr) {
+			let res = new cArray();
+
+			for(let i = 0; i < rows; i++) {
+				if(!arr[i]) {
+					arr[i] = [];
+				}
+				for(let j = 0; j < columns; j++) {
+					if(!arr[i][j]) {
+						arr[i][j] = new cNumber(start);
+						start += step;
+					}
+				}
+			}
+			res.fillFromArray(arr);
+			return res;
+		}
+
+		let rows = arg[0], 
+			columns = arg[1] ? arg[1] : new cNumber(1),
+			start = arg[2] ? arg[2] : new cNumber(1),
+			step = arg[3] ? arg[3] : new cNumber(1),
+			resArr = [];
+
+		// ------------------------- arg0 type check -------------------------//
+		if (cElementType.cell === rows.type || cElementType.cell3D === rows.type) {
+			rows = rows.getValue();
+		} else if (cElementType.cellsRange === rows.type || cElementType.cellsRange3D === rows.type) {
+			if (rows.isOneElement()) {
+				rows = rows.getFirstElement();
+			} else {
+				rows = new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === rows.type) {
+			rows = rows.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.empty === rows.type) {
+			// TODO should be #CALC error
+			rows = new cError(cErrorType.wrong_value_type);
+		}
+
+		// ------------------------- arg1 type check -------------------------//
+		if (cElementType.cell === columns.type || cElementType.cell3D === columns.type) {
+			columns = columns.getValue();
+		} else if (cElementType.cellsRange === columns.type || cElementType.cellsRange3D === columns.type) {
+			if (columns.isOneElement()) {
+				columns = columns.getFirstElement();
+			} else {
+				columns = new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === columns.type) {
+			columns = columns.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.empty === columns.type) {
+			// TODO should be #CALC error
+			columns = new cError(cErrorType.wrong_value_type);
+		}
+
+		// ------------------------- arg2 type check -------------------------//
+		if (cElementType.cell === start.type || cElementType.cell3D === start.type) {
+			start = start.getValue();
+		} else if (cElementType.cellsRange === start.type || cElementType.cellsRange3D === start.type) {
+			if (start.isOneElement()) {
+				start = start.getFirstElement();
+			} else {
+				start = new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === start.type) {
+			start = start.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.empty === start.type) {
+			start = new cNumber(0);
+		}
+
+		// ------------------------- arg3 type check -------------------------//
+		if (cElementType.cell === step.type || cElementType.cell3D === step.type) {
+			step = step.getValue();
+		} else if (cElementType.cellsRange === step.type || cElementType.cellsRange3D === step.type) {
+			if (step.isOneElement()) {
+				step = step.getFirstElement();
+			} else {
+				step = new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === step.type) {
+			step = step.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.empty === step.type) {
+			step = new cNumber(0);
+		}
+
+		rows = rows.tocNumber();
+		columns = columns.tocNumber();
+		start = start.tocNumber();
+		step = step.tocNumber();
+
+		if (cElementType.error === rows.type) {
+			return rows;
+		}
+		if (cElementType.error === columns.type) {
+			return columns;
+		}
+		if (cElementType.error === start.type) {
+			return start;
+		}
+		if (cElementType.error === step.type) {
+			return step;
+		}
+
+		rows = Math.floor(rows.getValue());
+		columns = Math.floor(columns.getValue());
+		start = Math.floor(start.getValue());
+		step = Math.floor(step.getValue());
+
+		if (rows < 1 || columns < 1 || (rows * columns) > MAX_ARRAY_SIZE) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		return sequenceArray(resArr);
+	};
+
 
 	var g_oSUMIFSCache = new SUMIFSCache();
 
