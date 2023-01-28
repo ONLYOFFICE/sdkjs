@@ -8433,7 +8433,6 @@ function BinaryFileReader(doc, openParams)
 
 		var docProtection = this.Document.Settings && this.Document.Settings.DocumentProtection;
 		if (docProtection) {
-			//this.Document.applyProtection()
 			var restrictionType = docProtection.getRestrictionType();
 			var enforcement = docProtection.getEnforcement();
 			if (enforcement !== false && restrictionType !== null) {

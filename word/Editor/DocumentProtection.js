@@ -118,9 +118,6 @@ CDocProtect.prototype.getRestrictionType = function () {
 			res = Asc.c_oAscRestrictionType.View;
 			break;
 		case Asc.c_oAscEDocProtect.TrackedChanges:
-			//asc_SetLocalTrackRevisions
-			//asc_SetGlobalTrackRevisions
-			res = Asc.c_oAscRestrictionType.OnlySignatures;
 			break;
 	}
 	return res;
