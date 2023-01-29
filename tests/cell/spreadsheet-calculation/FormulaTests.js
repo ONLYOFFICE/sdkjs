@@ -21828,6 +21828,39 @@ $(function () {
 		testArrayFormula2(assert, "ADDRESS", 2, 5);
 	});
 
+	QUnit.test("Test: \"SEQUENCE\"", function (assert) {
+
+		oParser = new parserFormula("SEQUENCE(2)", "A2", ws);
+		assert.ok(oParser.parse(), "SEQUENCE(2)");
+		let array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(2)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SEQUENCE(2)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result of SEQUENCE(2)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of SEQUENCE(2)[0,0]");
+
+		oParser = new parserFormula("SEQUENCE(2,3)", "A2", ws);
+		assert.ok(oParser.parse(), "SEQUENCE(2,3)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(2,3)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, "Result of SEQUENCE(2,3)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 3, "Result of SEQUENCE(2,3)[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", "Result of SEQUENCE(2,3)[0,3]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, "Result of SEQUENCE(2,3)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5, "Result of SEQUENCE(2,3)[1,1]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 6, "Result of SEQUENCE(2,3)[1,2]");
+		assert.strictEqual(array.getElementRowCol(1, 3).getValue(), "", "Result of SEQUENCE(2,3)[1,3]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", "Result of SEQUENCE(2,3)[2,0]");
+
+		oParser = new parserFormula("SEQUENCE(,2)", "A2", ws);
+		assert.ok(oParser.parse(), "SEQUENCE(,2)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(,2)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, "Result of SEQUENCE(,2)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of SEQUENCE(,2)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of SEQUENCE(,2)[0,0]");
+
+	});
+
 	QUnit.test("Test: \"reference argument test\"", function (assert) {
 		ws.getRange2("A1").setValue("1");
 		ws.getRange2("A2").setValue("2");

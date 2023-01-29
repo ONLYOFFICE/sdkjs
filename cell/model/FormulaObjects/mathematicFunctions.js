@@ -5574,29 +5574,26 @@
 	cSEQUENCE.prototype.Calculate = function (arg) {
 		const MAX_ARRAY_SIZE = 1048576;
 
-		function sequenceArray(arr) {
-			let res = new cArray();
+		function sequenceArray(start, step) {
+			let res = new cArray(),
+				startNum = start,
+				stepNum = step;
 
-			for(let i = 0; i < rows; i++) {
-				if(!arr[i]) {
-					arr[i] = [];
-				}
+			for (let i = 0; i < rows; i++) {
+				res.addRow();
 				for(let j = 0; j < columns; j++) {
-					if(!arr[i][j]) {
-						arr[i][j] = new cNumber(start);
-						start += step;
-					}
+					res.addElement(new cNumber(startNum));
+					startNum += stepNum;
 				}
 			}
-			res.fillFromArray(arr);
+			
 			return res;
 		}
 
 		let rows = arg[0], 
 			columns = arg[1] ? arg[1] : new cNumber(1),
 			start = arg[2] ? arg[2] : new cNumber(1),
-			step = arg[3] ? arg[3] : new cNumber(1),
-			resArr = [];
+			step = arg[3] ? arg[3] : new cNumber(1);
 
 		// ------------------------- arg0 type check -------------------------//
 		if (cElementType.cell === rows.type || cElementType.cell3D === rows.type) {
@@ -5647,10 +5644,6 @@
 			start = start.getElementRowCol(0, 0);
 		}
 
-		if (cElementType.empty === start.type) {
-			start = new cNumber(0);
-		}
-
 		// ------------------------- arg3 type check -------------------------//
 		if (cElementType.cell === step.type || cElementType.cell3D === step.type) {
 			step = step.getValue();
@@ -5662,10 +5655,6 @@
 			}
 		} else if (cElementType.array === step.type) {
 			step = step.getElementRowCol(0, 0);
-		}
-
-		if (cElementType.empty === step.type) {
-			step = new cNumber(0);
 		}
 
 		rows = rows.tocNumber();
@@ -5695,7 +5684,7 @@
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		return sequenceArray(resArr);
+		return sequenceArray(start, step);
 	};
 
 
