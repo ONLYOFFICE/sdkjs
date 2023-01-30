@@ -5602,14 +5602,12 @@
 			rows = arg[0];
 		}
 
-		
 		if ((!arg[1]) || cElementType.empty === arg[1].type) {
 			columns = new cNumber(1);
 		} else {
 			columns = arg[1];
 		}
 		
-
 		if ((!arg[2]) || cElementType.empty === arg[2].type) {
 			start = new cNumber(1);
 		} else {
