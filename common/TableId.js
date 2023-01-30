@@ -390,15 +390,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNodeData  ]     = AscFormat.SmartArtNodeData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
 
-		if (AscCommon.IsSupportOFormFeature())
-		{
-			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster]  = AscOForm.CUserMaster;
-			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User]        = AscOForm.CUser;
-			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster] = AscOForm.CFieldMaster;
-			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document]    = AscOForm.CDocument;
-			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup]  = AscOForm.CFieldGroup;
-		}
-
 		if (window['AscCommonSlide'])
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_Slide]               = AscCommonSlide.Slide;
@@ -488,6 +479,8 @@
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;
+		
+		this.InitOFormClasses();
 	};
 	CTableId.prototype.GetClassFromFactory = function(nType)
 	{
@@ -498,6 +491,25 @@
 	};
 	CTableId.prototype.Refresh_RecalcData = function(Data)
 	{
+	};
+	CTableId.prototype.InitOFormClasses = function()
+	{
+		if (AscCommon.IsSupportOFormFeature())
+		{
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster]  = AscOForm.CUserMaster;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User]        = AscOForm.CUser;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster] = AscOForm.CFieldMaster;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document]    = AscOForm.CDocument;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup]  = AscOForm.CFieldGroup;
+		}
+		else
+		{
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup];
+		}
 	};
 	//-----------------------------------------------------------------------------------
 	// Функции для работы с совместным редактирования

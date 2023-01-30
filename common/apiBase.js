@@ -475,7 +475,10 @@
 				}
 				
 				if (false === this.documentOpenOptions["oform"] && AscCommon.IsSupportOFormFeature())
+				{
 					window["Asc"]["Addons"]["forms"] = false;
+					AscCommon.g_oTableId.InitOFormClasses();
+				}
 			}
 		}
 
