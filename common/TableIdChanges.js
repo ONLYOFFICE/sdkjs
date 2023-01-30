@@ -83,6 +83,9 @@
 	};
 	CChangesTableIdAdd.prototype.Load = function(Color)
 	{
+		if (!this.NewClass)
+			return;
+		
 		this.Class.m_aPairs[this.Id] = this.NewClass;
 	};
 	CChangesTableIdAdd.prototype.RefreshRecalcData = function()

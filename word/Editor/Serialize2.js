@@ -7874,8 +7874,8 @@ function BinaryFileReader(doc, openParams)
 			var stLen = this.stream.GetULongLE();
 			let data = this.stream.GetBufferUint8(stLen);
 			let jsZlib = new AscCommon.ZLib();
-			if (jsZlib.open(new Uint8Array(data))) {
-				let oform = this.Document.GetOFormDocument();
+			let oform = this.Document.GetOFormDocument();
+			if (oform && jsZlib.open(new Uint8Array(data))) {
 				oform.fromZip(jsZlib, this.oReadResult.sdtPrWithFieldPath);
 			}
 		}

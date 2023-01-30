@@ -69,13 +69,13 @@
 	};
 	CTableId.prototype.Add = function(Class, Id)
 	{
-		if (false === this.m_bTurnOff)
-		{
-			Class.Id          = Id;
-			this.m_aPairs[Id] = Class;
-
-			AscCommon.History.Add(new AscCommon.CChangesTableIdAdd(this, Id, Class));
-		}
+		if (this.m_bTurnOff || !Class)
+			return;
+		
+		Class.Id          = Id;
+		this.m_aPairs[Id] = Class;
+		
+		AscCommon.History.Add(new AscCommon.CChangesTableIdAdd(this, Id, Class));
 	};
 	CTableId.prototype.TurnOff = function()
 	{
@@ -390,7 +390,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNodeData  ]     = AscFormat.SmartArtNodeData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
 
-		if (window['AscOForm'])
+		if (AscCommon.IsSupportOFormFeature())
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster]  = AscOForm.CUserMaster;
 			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User]        = AscOForm.CUser;
