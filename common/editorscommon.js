@@ -3669,6 +3669,9 @@
 		this.m_bRead = false;
 		this.m_nIdCounterLoad = 0; // Счетчик Id для загрузки
 		this.m_nIdCounterEdit = 0; // Счетчик Id для работы
+		
+		this.m_nOFormLoadCounter = 0;
+		this.m_nOFormEditCounter = 0;
 	}
 
 	CIdCounter.prototype.Get_NewId = function ()
@@ -3698,6 +3701,16 @@
 		this.m_bLoad = true;
 		this.m_nIdCounterLoad = 0; // Счетчик Id для загрузки
 		this.m_nIdCounterEdit = 0; // Счетчик Id для работы
+
+		this.m_nOFormLoadCounter = 0;
+		this.m_nOFormEditCounter = 0;
+	};
+	CIdCounter.prototype.GetNewIdForOForm = function()
+	{
+		if (true === this.m_bLoad || null === this.m_sUserId)
+			return ("_oform_" + (++this.m_nOFormLoadCounter));
+		else
+			return ("" + this.m_sUserId + "_oform_" + (++this.m_nOFormEditCounter));
 	};
 
 	function CLock()
