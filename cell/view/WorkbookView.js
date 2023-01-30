@@ -5334,7 +5334,7 @@
 		var elem = this.Elements[nId];
 		if (elem) {
 			var ws = this.wb.getWorksheet();
-			if (elem.index !== ws.index) {
+			if (elem.index !== ws.model.index) {
 				this.wb.model.handlers.trigger('undoRedoHideSheet', elem.index);
 				ws = this.wb.getWorksheet(elem.index);
 			}

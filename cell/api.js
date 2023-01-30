@@ -4005,27 +4005,22 @@ var editor;
 
   spreadsheet_api.prototype.asc_findText = function(options, callback) {
     var result = null;
-    if (window["NATIVE_EDITOR_ENJINE"]) {
-      if (this.wb.findCellText(options)) {
-        var ws = this.wb.getWorksheet();
-        var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
-        result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
-      }
-    } else {
-		//***searchEngine
-		var SearchEngine = this.wb.Search(options);
-		var Id = this.wb.GetSearchElementId(!options || options.scanForward);
 
-		if (null != Id) {
-			this.wb.SelectSearchElement(Id);
-		}
+	//***searchEngine
+	var SearchEngine = this.wb.Search(options);
+	var Id = this.wb.GetSearchElementId(!options || options.scanForward);
 
+	if (null != Id) {
+		this.wb.SelectSearchElement(Id);
+	}
+
+	if (window["NATIVE_EDITOR_ENJINE"]) {
+		var ws = this.wb.getWorksheet();
+		var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
+		result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
+	} else {
 		result = SearchEngine.Count;
-
-		/* var d = this.wb.findCellText(options);
-		 this.controller.scroll(d);
-		 result = !!d;*/
-    }
+	}
 
     if (callback)
       callback(result);

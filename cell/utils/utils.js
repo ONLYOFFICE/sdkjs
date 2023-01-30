@@ -3131,7 +3131,16 @@
 		asc_CFindOptions.prototype.asc_setIsWholeCell = function (val) {this.isWholeCell = val;};
 		asc_CFindOptions.prototype.asc_setIsWholeWord = function (val) {this.isWholeWord = val;};
 		asc_CFindOptions.prototype.asc_changeSingleWord = function (val) { this.isChangeSingleWord = val; };
-		asc_CFindOptions.prototype.asc_setScanOnOnlySheet = function (val) {this.scanOnOnlySheet = val;};
+		asc_CFindOptions.prototype.asc_setScanOnOnlySheet = function (val) {
+			//TODO не стал менять native.js, поставил условие для scanOnOnlySheet
+			if (val === true) {
+				this.scanOnOnlySheet = Asc.c_oAscSearchBy.Sheet;
+			} else if (val === false) {
+				this.scanOnOnlySheet = Asc.c_oAscSearchBy.Workbook;
+			} else {
+				this.scanOnOnlySheet = val;
+			}
+		};
 		asc_CFindOptions.prototype.asc_setLookIn = function (val) {this.lookIn = val;};
 		asc_CFindOptions.prototype.asc_setReplaceWith = function (val) {this.replaceWith = val;};
 		asc_CFindOptions.prototype.asc_setIsReplaceAll = function (val) {this.isReplaceAll = val;};
