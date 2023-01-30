@@ -5590,10 +5590,42 @@
 			return res;
 		}
 
-		let rows = arg[0], 
-			columns = arg[1] ? arg[1] : new cNumber(1),
-			start = arg[2] ? arg[2] : new cNumber(1),
-			step = arg[3] ? arg[3] : new cNumber(1);
+		let rows, columns, start, step;
+
+		// need to add all args empty check
+		if (cElementType.empty === arg[0].type) {
+			if (cElementType.empty === arg[1].type && cElementType.empty === arg[2].type && cElementType.empty === arg[3].type) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			rows = new cNumber(1);
+		} else {
+			rows = arg[0];
+		}
+
+		
+		if ((!arg[1]) || cElementType.empty === arg[1].type) {
+			columns = new cNumber(1);
+		} else {
+			columns = arg[1];
+		}
+		
+
+		if ((!arg[2]) || cElementType.empty === arg[2].type) {
+			start = new cNumber(1);
+		} else {
+			start = arg[2];
+		}
+
+		if ((!arg[3]) || cElementType.empty === arg[3].type) {
+			step = new cNumber(1);
+		} else {
+			step = arg[3];
+		}
+
+		// rows = arg[0],
+		// columns = arg[1] ? arg[1] : new cNumber(1),
+		// start = arg[2] ? arg[2] : new cNumber(1),
+		// step = arg[3] ? arg[3] : new cNumber(1);
 
 		// ------------------------- arg0 type check -------------------------//
 		if (cElementType.cell === rows.type || cElementType.cell3D === rows.type) {
