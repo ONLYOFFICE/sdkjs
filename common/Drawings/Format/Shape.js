@@ -4860,10 +4860,10 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
         const arrMainContentPoints = this.getSmartArtPointContent();
         if (!arrMainContentPoints) return;
         const bIsFitText = arrMainContentPoints.every(function (point) {
-            return point && point.prSet && point.prSet.phldrT && !point.prSet.custT && !point.prSet.phldr;
+            return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
         });
         let bIsPlaceholder = arrMainContentPoints.every(function (point) {
-            return point && point.prSet && point.prSet.phldrT && !point.prSet.custT && point.prSet.phldr;
+            return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && point.prSet.phldr;
         });
 
         if (!bIsFitText && !bIsPlaceholder) {
@@ -4880,10 +4880,10 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
             const oShape = arrShapes[i];
             var contentPoints = oShape.getSmartArtPointContent();
             const isPlaceholder = contentPoints.every(function (point) {
-                return point && point.prSet && point.prSet.phldrT && !point.prSet.custT && point.prSet.phldr;
+                return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && point.prSet.phldr;
             });
             const isNotPlaceholder = contentPoints.every(function (point) {
-                return point && point.prSet && point.prSet.phldrT && !point.prSet.custT && !point.prSet.phldr;
+                return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
             });
             if (isPlaceholder) {
                 arrPlaceholders.push(oShape);
