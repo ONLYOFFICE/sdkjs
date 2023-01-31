@@ -257,7 +257,7 @@ CSdtBase.prototype.private_CheckFieldMasterBeforeSet = function(formPr)
 	let oform;
 	
 	if (!logicDocument
-		|| !window['AscOForm']
+		|| !AscCommon.IsSupportOFormFeature()
 		|| !(oform = logicDocument.GetOFormDocument())
 		|| !logicDocument.IsActionStarted())
 		return;
