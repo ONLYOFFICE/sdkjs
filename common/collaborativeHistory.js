@@ -403,6 +403,7 @@
 		this.CorrectReveredChanges(reverseChanges);
 
 		localHistory.Update_PointInfoItem(pointIndex, pointIndex, pointIndex, 0, null);
+		localHistory.ConvertPointItemsToSimpleChanges(pointIndex);
 
 		return localHistory.Points[pointIndex];
 	};
