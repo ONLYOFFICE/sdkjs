@@ -167,7 +167,7 @@
 		}
 		return res;
 	};
-	CUserProtectedRange.prototype.asc_setRef = function (val) {
+	CUserProtectedRange.prototype.asc_setRef = function (val, opt_convert_to_obj) {
 		if (val) {
 			if (val[0] === "=") {
 				val = val.slice(1);
@@ -176,13 +176,18 @@
 			if (!val) {
 				return;
 			}
-			if (-1 !== val.indexOf("!")) {
-				var is3DRef = AscCommon.parserHelp.parse3DRef(val);
-				if (is3DRef) {
-					val = is3DRef.range;
+			if (opt_convert_to_obj) {
+				if (-1 !== val.indexOf("!")) {
+					var is3DRef = AscCommon.parserHelp.parse3DRef(val);
+					if (is3DRef) {
+						val = is3DRef.range;
+						this._wsId = is3DRef.sheet;
+					}
 				}
+				this.ref = AscCommonExcel.g_oRangeCache.getAscRange(val);
+			} else {
+				this.ref = val;
 			}
-			this.ref = AscCommonExcel.g_oRangeCache.getAscRange(val);
 		}
 	};
 	CUserProtectedRange.prototype.asc_setName = function (val) {

@@ -5206,6 +5206,71 @@
 		this.doUpdateExternalReference(arr);
 	};
 
+	//*****user range protect*****
+	WorkbookView.prototype.editUserProtectedRanges = function(oldObj, newObj) {
+		//ToDo проверка defName.ref на знак "=" в начале ссылки. знака нет тогда это либо число либо строка, так делает Excel.
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+
+		var ws = this.getWorksheet(), t = this;
+
+
+		var doEdit = function(res) {
+			if (res) {
+
+				History.Create_NewPoint();
+				History.StartTransaction();
+
+				if (oldObj && newObj) {
+					//change obj
+					if (oldObj._ws === newObj._ws) {
+						//change
+						newObj._ws.editUserProtectedRanges(oldObj, newObj);
+					} else {
+						//remove
+						oldObj._ws.editUserProtectedRanges(oldObj, null);
+						//add
+						newObj._ws.editUserProtectedRanges(null, newObj);
+					}
+				} else if (oldObj) {
+					//remove
+					oldObj._ws.editUserProtectedRanges(oldObj, null);
+				} else if (newObj) {
+					//add
+					newObj._ws.editUserProtectedRanges(null, newObj);
+				}
+
+				History.EndTransaction();
+
+				/*t.handlers.trigger("asc_onEditDefName", oldName, newName);
+				//условие исключает второй вызов asc_onRefreshDefNameList(первый в unlockDefName)
+				if(!(t.collaborativeEditing.getCollaborativeEditing() && t.collaborativeEditing.getFast()))
+				{
+					t.handlers.trigger("asc_onRefreshDefNameList");
+				}*/
+
+			} else {
+				t.handlers.trigger("asc_onError", c_oAscError.ID.LockCreateDefName, c_oAscError.Level.NoCritical);
+			}
+		};
+		
+
+		//TODO продумать локи!
+		/*var callback = function() {
+			ws._isLockedDefNames(editDefinedNamesCallback, defNameId);
+		};
+		
+		if (tableRange) {
+			ws._isLockedCells( tableRange, null, callback );
+		} else {
+			callback();
+		}*/
+
+		doEdit(true);
+	};
+
+
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {
 		this.wb = wb;

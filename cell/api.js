@@ -8244,6 +8244,17 @@ var editor;
 		return false;
 	};
 
+	spreadsheet_api.prototype.asc_setUserProtectedRange = function (obj) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+		}
+
+		this.wb.editUserProtectedRanges(null, obj);
+	};
 
 
   /*

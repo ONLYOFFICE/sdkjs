@@ -11565,6 +11565,43 @@
 		return c_oAscError.ID.No;
 	};
 
+	//*****user range protect*****
+	Worksheet.prototype.editUserProtectedRanges = function(oldObj, newObj) {
+
+		var res = null;
+
+
+		if (!AscCommon.rx_defName.test(getDefNameIndex(newUndoName.name)) || newUndoName.name.length > g_nDefNameMaxLength) {
+			return res;
+		}
+		if (oldUndoName) {
+			res = this.getDefNameByName(oldUndoName.name, oldUndoName.sheetId);
+		} else {
+			res = this.addDefName(newUndoName.name, newUndoName.ref, newUndoName.sheetId, false, newUndoName.type, newUndoName.isXLNM);
+		}
+		History.Create_NewPoint();
+		if (res && oldUndoName) {
+			if (oldUndoName.name != newUndoName.name) {
+				this.buildDependency();
+
+				res = this._delDefName(res.name, res.sheetId);
+				res.setUndoDefName(newUndoName, isSlicer);
+				this._addDefName(res);
+
+				var notifyData = {type: c_oNotifyType.ChangeDefName, from: oldUndoName, to: newUndoName};
+				this._broadcastDefName(oldUndoName.name, notifyData);
+
+				this.addToChangedDefName(res);
+			} else {
+				res.setUndoDefName(newUndoName);
+			}
+		}
+		History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_DefinedNamesChange, null, null,
+			new UndoRedoData_FromTo(oldUndoName, newUndoName));
+
+		return res;
+	};
+
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;
