@@ -1431,7 +1431,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
 
         case 10000: // ASC_SOCKET_EVENT_TYPE_OPEN
         {
-            this.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("open");
+            this.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("connect");
             break;
         }
 
@@ -1443,13 +1443,13 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
 
         case 10020: // ASC_SOCKET_EVENT_TYPE_MESSAGE
         {
-            this.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("message", params ? JSON.parse(params) : {});
+            this.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("message", _params ? JSON.parse(_params) : {});
             break;
         }
 
         case 11010: // ASC_SOCKET_EVENT_TYPE_ON_DISCONNECT
         {
-            this.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("disconnect", params || "");
+            this.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("disconnect", _params || "");
             break;
         }
 

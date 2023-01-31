@@ -6429,7 +6429,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
         case 10000: // ASC_SOCKET_EVENT_TYPE_OPEN
         {
-            _api.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("open");
+            _api.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("connect");
             break;
         }
             
