@@ -5730,7 +5730,7 @@ var editor;
 	  obj.asc_setRef("Sheet1!A1:A2");
 	  obj.asc_setName("test");
 	  obj.asc_setUsers(["test"]);
-	  asc_setUserProtectedRange(obj);
+	  this.asc_setUserProtectedRange(obj);
   	return;
 
   	var ws = this.wb.getWorksheet();

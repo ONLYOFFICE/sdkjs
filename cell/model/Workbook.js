@@ -11595,7 +11595,7 @@
 			}
 
 			if (addToHistory) {
-				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, this.getId(), null,
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeUserProtectedRange, this.getId(), null,
 					new UndoRedoData_FromTo(oldObj, newObj));
 			}
 		}

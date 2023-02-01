@@ -52,7 +52,7 @@
 	};
 
 	CUserProtectedRange.prototype.getType = function () {
-		return AscCommonExcel.UndoRedoDataTypes.ProtectedRangeDataInner;
+		return AscCommonExcel.UndoRedoDataTypes.UserProtectedRange;
 	};
 
 	CUserProtectedRange.prototype.clone = function(ws) {
@@ -71,10 +71,10 @@
 		if (null != this.ref) {
 			w.WriteBool(true);
 
-			w.WriteLong(this.ref[i].r1);
-			w.WriteLong(this.ref[i].c1);
-			w.WriteLong(this.ref[i].r2);
-			w.WriteLong(this.ref[i].c2);
+			w.WriteLong(this.ref.r1);
+			w.WriteLong(this.ref.c1);
+			w.WriteLong(this.ref.r2);
+			w.WriteLong(this.ref.c2);
 		} else {
 			w.WriteBool(false);
 		}
@@ -121,7 +121,7 @@
 			var c1 = r.GetLong();
 			var r2 = r.GetLong();
 			var c2 = r.GetLong();
-			this.sqref = new Asc.Range(c1, r1, c2, r2);
+			this.ref = new Asc.Range(c1, r1, c2, r2);
 		}
 		if (r.GetBool()) {
 			this.name = r.GetString2();
@@ -167,7 +167,7 @@
 		}
 		return res;
 	};
-	CUserProtectedRange.prototype.asc_setRef = function (val, opt_convert_to_obj) {
+	CUserProtectedRange.prototype.asc_setRef = function (val) {
 		if (val) {
 			if (val[0] === "=") {
 				val = val.slice(1);
@@ -176,18 +176,21 @@
 			if (!val) {
 				return;
 			}
-			if (opt_convert_to_obj) {
-				if (-1 !== val.indexOf("!")) {
-					var is3DRef = AscCommon.parserHelp.parse3DRef(val);
-					if (is3DRef) {
-						val = is3DRef.range;
-						this._wsId = is3DRef.sheet;
-					}
+
+			let sheetName;
+			if (-1 !== val.indexOf("!")) {
+				var is3DRef = AscCommon.parserHelp.parse3DRef(val);
+				if (is3DRef) {
+					val = is3DRef.range;
+					sheetName = is3DRef.sheet;
 				}
-				this.ref = AscCommonExcel.g_oRangeCache.getAscRange(val);
-			} else {
-				this.ref = val;
 			}
+			let api = window["Asc"]["editor"];
+			let wbModel = api.wbModel;
+			if (wbModel) {
+				this._ws = sheetName ? wbModel.getWorksheetByName(sheetName) : wbModel.getActiveWs();
+			}
+			this.ref = AscCommonExcel.g_oRangeCache.getAscRange(val);
 		}
 	};
 	CUserProtectedRange.prototype.asc_setName = function (val) {

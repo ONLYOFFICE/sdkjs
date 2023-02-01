@@ -5224,7 +5224,7 @@
 
 				if (oldObj && newObj) {
 					//change obj
-					if (oldObj._ws === newObj._ws) {
+					if (oldObj._ws === newObj._ws && oldObj._ws && newObj._ws) {
 						//change
 						newObj._ws.editUserProtectedRanges(oldObj, newObj, true);
 					} else {
@@ -5233,10 +5233,10 @@
 						//add
 						newObj._ws.editUserProtectedRanges(null, newObj, true);
 					}
-				} else if (oldObj) {
+				} else if (oldObj && oldObj._ws) {
 					//remove
 					oldObj._ws.editUserProtectedRanges(oldObj, null, true);
-				} else if (newObj) {
+				} else if (newObj && newObj._ws) {
 					//add
 					newObj._ws.editUserProtectedRanges(null, newObj, true);
 				}

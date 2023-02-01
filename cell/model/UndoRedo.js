@@ -448,6 +448,8 @@ function (window, undefined) {
 		this.ProtectedRangeData = 160;
 		this.ProtectedRangeDataInner = 161;
 
+		this.UserProtectedRange = 165;
+
 		this.externalReference = 170;
 
 		this.Create = function (nType) {
@@ -649,6 +651,8 @@ function (window, undefined) {
 					return new Asc.CProtectedRange();
 				case this.externalReference:
 					return new AscCommonExcel.ExternalReference();
+				case this.UserProtectedRange:
+					return new Asc.CUserProtectedRange();
 			}
 			return null;
 		};
