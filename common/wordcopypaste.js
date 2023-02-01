@@ -7066,7 +7066,7 @@ PasteProcessor.prototype =
 						msoListIgnoreSymbol = "ol" === node.parentElement.nodeName.toLowerCase() ? "1." : ".";
 					}
 
-					if (null == NumId && this.pasteInExcel !== true && !this.oMsoHeadStylesListMap[listId]) {
+					if (null == NumId && this.pasteInPresentationShape !== true && !this.oMsoHeadStylesListMap[listId]) {
 						this.oMsoHeadStylesListMap[listId] = this._findElemFromMsoHeadStyle("@list", listName);
 						var _msoNum = this._tryGenerateNumberingFromMsoStyle(this.oMsoHeadStylesListMap[listId], node);
 						if (_msoNum) {
@@ -7078,7 +7078,7 @@ PasteProcessor.prototype =
 					var num = listObj.type;
 					var startPos = listObj.startPos;
 
-					if (null == NumId && this.pasteInExcel !== true)//create new NumId
+					if (null == NumId && this.pasteInPresentationShape !== true)//create new NumId
 					{
 						// Создаем нумерацию
 						var oNum = this.oLogicDocument.GetNumbering().CreateNum();
@@ -7145,7 +7145,7 @@ PasteProcessor.prototype =
 						this.msoListMap[listId] = NumId;
 					}
 
-					if (this.pasteInExcel !== true && Para.bFromDocument === true) {
+					if (this.pasteInPresentationShape !== true && Para.bFromDocument === true) {
 						Para.SetNumPr(NumId, level);
 					}
 				} else {
@@ -7187,7 +7187,7 @@ PasteProcessor.prototype =
 								NumId = PrevNumPr.NumId;
 						}
 					}
-					if (null == NumId && this.pasteInExcel !== true) {
+					if (null == NumId && this.pasteInPresentationShape !== true) {
 						// Создаем нумерацию
 						var oNum = this.oLogicDocument.GetNumbering().CreateNum();
 						NumId = oNum.GetId();
@@ -7244,7 +7244,7 @@ PasteProcessor.prototype =
 						setListTextPr(oNum);
 					}
 
-					if (this.pasteInExcel !== true && Para.bFromDocument === true) {
+					if (this.pasteInPresentationShape !== true && Para.bFromDocument === true) {
 						Para.ApplyNumPr(NumId, 0);
 					}
 				}
@@ -10007,7 +10007,7 @@ PasteProcessor.prototype =
 					oThis.oCurHyperlink = oOldHyperlink;
 					oThis.oCurHyperlinkContentPos = oOldHyperlinkContentPos;
 					if (oHyperlink.Content.length > 0) {
-						if (oThis.pasteInExcel) {
+						if (oThis.pasteInPresentationShape) {
 							var TextPr = new CTextPr();
 							TextPr.Unifill = AscFormat.CreateUniFillSchemeColorWidthTint(11, 0);
 							TextPr.Underline = true;
@@ -10185,7 +10185,7 @@ PasteProcessor.prototype =
 			parseNumbering();
 
 			//IMAGE
-			if ("img" === sNodeName && (bPresentation || (!bPresentation && this.pasteInExcel !== true))) {
+			if ("img" === sNodeName && (bPresentation || (!bPresentation && this.pasteInPresentationShape !== true))) {
 				return parseImage();
 			}
 
