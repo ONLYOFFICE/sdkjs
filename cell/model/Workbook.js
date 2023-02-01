@@ -4360,10 +4360,12 @@
 	Workbook.prototype.getExternalReferences = function () {
 		var res = null;
 		for (var i = 0; i < this.externalReferences.length; i++) {
-			if (!res) {
-				res = [];
+			if (this.externalReferences[i].getAscLink) {
+				if (!res) {
+					res = [];
+				}
+				res.push(this.externalReferences[i].getAscLink());
 			}
-			res.push(this.externalReferences[i].getAscLink())
 		}
 		return res;
 	};
