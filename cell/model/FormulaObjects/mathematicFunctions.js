@@ -5572,9 +5572,10 @@
 	cSEQUENCE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSEQUENCE.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number];
 	cSEQUENCE.prototype.Calculate = function (arg) {
-		// TODO после реализации авторазвертывания пересмотреть поведение функции при получении в качестве аргументов cellsRange
-		
-		const MAX_ARRAY_SIZE = 1048576;
+		// TODO after implementing array autoexpanding, reconsider the behavior of the function when receiving cellsRange as arguments
+		const MAX_ROWS = 1048576;
+		const MAX_COLUMNS = 16384;
+		const EXPECTED_MAX = 10223960;
 		let rows, columns, start, step;
 
 		function sequenceArray(start, step) {
@@ -5705,7 +5706,7 @@
 		start = Math.floor(start.getValue());
 		step = Math.floor(step.getValue());
 
-		if (rows < 1 || columns < 1 || (rows * columns) > MAX_ARRAY_SIZE) {
+		if (rows < 1 || columns < 1 || (rows * columns) > EXPECTED_MAX) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
