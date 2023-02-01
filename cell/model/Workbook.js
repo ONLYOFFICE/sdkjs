@@ -4727,6 +4727,8 @@
 		this.sheetProtection = null;
 		this.aProtectedRanges = [];
 		this.aCellWatches = [];
+		
+		this.userProtectedRanges = [];
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -11566,39 +11568,54 @@
 	};
 
 	//*****user range protect*****
-	Worksheet.prototype.editUserProtectedRanges = function(oldObj, newObj) {
+	Worksheet.prototype.editUserProtectedRanges = function(oldObj, newObj, addToHistory) {
 
 		var res = null;
 
 
-		if (!AscCommon.rx_defName.test(getDefNameIndex(newUndoName.name)) || newUndoName.name.length > g_nDefNameMaxLength) {
+		/*if (!AscCommon.rx_defName.test(getDefNameIndex(newUndoName.name)) || newUndoName.name.length > g_nDefNameMaxLength) {
 			return res;
-		}
-		if (oldUndoName) {
-			res = this.getDefNameByName(oldUndoName.name, oldUndoName.sheetId);
-		} else {
-			res = this.addDefName(newUndoName.name, newUndoName.ref, newUndoName.sheetId, false, newUndoName.type, newUndoName.isXLNM);
-		}
-		History.Create_NewPoint();
-		if (res && oldUndoName) {
-			if (oldUndoName.name != newUndoName.name) {
-				this.buildDependency();
+		}*/
 
-				res = this._delDefName(res.name, res.sheetId);
-				res.setUndoDefName(newUndoName, isSlicer);
-				this._addDefName(res);
 
-				var notifyData = {type: c_oNotifyType.ChangeDefName, from: oldUndoName, to: newUndoName};
-				this._broadcastDefName(oldUndoName.name, notifyData);
+		if (oldObj || newObj) {
+			if (oldObj) {
+				let modelUserRange = this.getUserProtectedRangeById(oldObj.Id);
+				if (modelUserRange) {
+					//TODO clone
+					if (newObj) {
+						this.userProtectedRanges[modelUserRange.index] = newObj;
+					} else {
+						this.userProtectedRanges.splice(modelUserRange.index, 1);
+					}
+				}
+			} else if (newObj) {
+				//TODO clone
+				this.userProtectedRanges.push(newObj);
+			}
 
-				this.addToChangedDefName(res);
-			} else {
-				res.setUndoDefName(newUndoName);
+			if (addToHistory) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, this.getId(), null,
+					new UndoRedoData_FromTo(oldObj, newObj));
 			}
 		}
-		History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_DefinedNamesChange, null, null,
-			new UndoRedoData_FromTo(oldUndoName, newUndoName));
 
+		return res;
+	};
+
+	Worksheet.prototype.getUserProtectedRangeById = function(id) {
+		var res = null;
+		if(!this.userProtectedRanges)
+			return res;
+
+		for(var i = 0; i < this.userProtectedRanges.length; i++)
+		{
+			if(this.userProtectedRanges[i].Id === id)
+			{
+				res = {obj: this.userProtectedRanges[i], index: i};
+				break;
+			}
+		}
 		return res;
 	};
 

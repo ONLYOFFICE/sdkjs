@@ -158,6 +158,7 @@
 			"cell/model/CellInfo.js",
 			"cell/model/Slicer.js",
 			"cell/model/NamedSheetViews.js",
+			"cell/model/protectRange.js",
 			"cell/view/mobileTouch.js",
 			"cell/view/StringRender.js",
 			"cell/view/CellTextRender.js",

@@ -3342,6 +3342,16 @@ function (window, undefined) {
 				}
 				wb.handlers.trigger("changeCellWatches");
 			}
+		} else if (AscCH.historyitem_Worksheet_ChangeUserProtectedRange === Type) {
+			//TODO lock ?
+			//var _r1 = updateData.r1 > 0 ? collaborativeEditing.getLockOtherRow2(nSheetId, updateData.r1 - 1) : null;
+			//var _c1 = updateData.c1 > 0 ? collaborativeEditing.getLockOtherColumn2(nSheetId, updateData.c1 - 1) : null;
+
+			if (bUndo) {
+				ws.editUserProtectedRanges(Data.to, Data.from);
+			} else {
+				ws.editUserProtectedRanges(Data.from, Data.to);
+			}
 		}
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {

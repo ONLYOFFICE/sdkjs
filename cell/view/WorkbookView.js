@@ -5226,19 +5226,19 @@
 					//change obj
 					if (oldObj._ws === newObj._ws) {
 						//change
-						newObj._ws.editUserProtectedRanges(oldObj, newObj);
+						newObj._ws.editUserProtectedRanges(oldObj, newObj, true);
 					} else {
 						//remove
-						oldObj._ws.editUserProtectedRanges(oldObj, null);
+						oldObj._ws.editUserProtectedRanges(oldObj, null, true);
 						//add
-						newObj._ws.editUserProtectedRanges(null, newObj);
+						newObj._ws.editUserProtectedRanges(null, newObj, true);
 					}
 				} else if (oldObj) {
 					//remove
-					oldObj._ws.editUserProtectedRanges(oldObj, null);
+					oldObj._ws.editUserProtectedRanges(oldObj, null, true);
 				} else if (newObj) {
 					//add
-					newObj._ws.editUserProtectedRanges(null, newObj);
+					newObj._ws.editUserProtectedRanges(null, newObj, true);
 				}
 
 				History.EndTransaction();

@@ -5726,7 +5726,14 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-    var ws = this.wb.getWorksheet();
+		var obj = new Asc.CUserProtectedRange();
+	  obj.asc_setRef("Sheet1!A1:A2");
+	  obj.asc_setName("test");
+	  obj.asc_setUsers(["test"]);
+	  asc_setUserProtectedRange(obj);
+  	return;
+
+  	var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {
@@ -8256,6 +8263,30 @@ var editor;
 		this.wb.editUserProtectedRanges(null, obj);
 	};
 
+	spreadsheet_api.prototype.asc_changeUserProtectedRange = function (oldObj, newObj) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+		}
+
+		this.wb.editUserProtectedRanges(oldObj, newObj);
+	};
+
+	spreadsheet_api.prototype.asc_deleteUserProtectedRange = function (obj) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+		}
+
+		this.wb.editUserProtectedRanges(obj, null);
+	};
+
 
   /*
    * Export
@@ -8806,6 +8837,11 @@ var editor;
 
   prot["asc_ImportXmlStart"] = prot.asc_ImportXmlStart;
   prot["asc_ImportXmlEnd"]   = prot.asc_ImportXmlEnd;
+
+  prot["asc_setUserProtectedRange"] = prot.asc_setUserProtectedRange;
+  prot["asc_changeUserProtectedRange"]   = prot.asc_changeUserProtectedRange;
+  prot["asc_deleteUserProtectedRange"]   = prot.asc_deleteUserProtectedRange;
+
 
 
 
