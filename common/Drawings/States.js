@@ -403,13 +403,14 @@ NullState.prototype =
     {
         this.drawingObjects.checkRedrawOnChangeCursorPosition(oStartContent, oStartPara);
     },
-    onMouseDown: function(e, x, y, pageIndex, bTextFlag)
+    onMouseDown: function(e, x, y, pageIndex)
     {
         let start_target_doc_content, end_target_doc_content, selected_comment_index = -1;
         let oStartPara = null;
         let bHandleMode = this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE;
         let sHitGuideId = this.drawingObjects.hitInGuide(x, y);
         let oAnimPlayer = this.drawingObjects.getAnimationPlayer && this.drawingObjects.getAnimationPlayer();
+		let oAPI = this.drawingObjects.getEditorApi();
         if(bHandleMode)
         {
             start_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
@@ -422,6 +423,29 @@ NullState.prototype =
                 }
             }
             this.startTargetTextObject = AscFormat.getTargetTextObject(this.drawingObjects);
+        }
+		else
+		{
+			if(oAPI.editorId === AscCommon.c_oEditorId.Presentation)
+			{
+				if(oAPI.isFormatPainterOn())
+				{
+					let oPainterData = oAPI.getFormatPainterData();
+					let sType = "default";
+					if(oPainterData)
+					{
+						if(oPainterData.isDrawingData())
+						{
+							sType = AscCommon.kCurFormatPainterDrawing;
+						}
+						else
+						{
+							sType = AscCommon.kCurFormatPainterWord;
+						}
+					}
+					return {cursorType: sType, objectId: "1"};
+				}
+			}
         }
         var ret;
         ret = this.drawingObjects.handleSlideComments(e, x, y, pageIndex);
@@ -2003,10 +2027,10 @@ TextAddState.prototype =
         {
             if(oApi.editorId === AscCommon.c_oEditorId.Presentation)
             {
-                if(AscCommon.c_oAscFormatPainterState.kOff !== oApi.isPaintFormat)
+                if(oApi.isFormatPainterOn())
                 {
                     this.drawingObjects.paragraphFormatPaste2();
-                    if (AscCommon.c_oAscFormatPainterState.kOn === oApi.isPaintFormat)
+                    if (oApi.isFormatPainterOn())
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
                     }
@@ -2028,6 +2052,10 @@ TextAddState.prototype =
                         oApi.sync_MarkerFormatCallback(true);
                     }
                 }
+            }
+			else if(oApi.editorId === AscCommon.c_oEditorId.Spreadsheet)
+			{
+				this.drawingObjects.checkFormatPainterOnMouseEvent();
             }
         }
     }

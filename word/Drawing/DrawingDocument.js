@@ -2086,26 +2086,55 @@ function CDrawingDocument()
 	};
 	this.SetCursorType = function (sType, Data)
 	{
-		if ("" == this.m_sLockedCursorType)
+		let oAPI = this.m_oWordControl.m_oApi;
+		let oHTMLElement = this.m_oWordControl.m_oMainContent.HtmlElement;
+		if ("" === this.m_sLockedCursorType)
 		{
-            if ("text" == sType)
+            if ("text" === sType)
             {
-                if (AscCommon.c_oAscFormatPainterState.kOff !== this.m_oWordControl.m_oApi.isPaintFormat)
-                    this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterWord);
-                else if (this.m_oWordControl.m_oApi.isMarkerFormat)
-                    this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");
-                else if (this.m_oWordControl.m_oApi.isDrawTablePen)
-                    this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tablepen");
-                else if (this.m_oWordControl.m_oApi.isDrawTableErase)
-                    this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tableeraser");
+                if (oAPI.isFormatPainterOn())
+                {
+					let oData = oAPI.getFormatPainterData();
+					if(!oData.isDrawingData())
+					{
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterWord);
+					}
+					else
+					{
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterDrawing);
+					}
+                }
+                else if (oAPI.isMarkerFormat)
+                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");
+                else if (oAPI.isDrawTablePen)
+                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tablepen");
+                else if (oAPI.isDrawTableErase)
+                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tableeraser");
                 else
-                    this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
             }
             else
-                this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+            {
+	            if (oAPI.isFormatPainterOn())
+	            {
+		            let oData = oAPI.getFormatPainterData();
+		            if(oData.isDrawingData())
+		            {
+			            oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterDrawing);
+		            }
+					else
+		            {
+			            oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+		            }
+	            }
+				else
+	            {
+		            oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+	            }
+            }
 		}
 		else
-			this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
+			oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
 
 		if ("undefined" === typeof(Data) || null === Data)
 			Data = new AscCommon.CMouseMoveData();

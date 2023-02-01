@@ -6019,6 +6019,10 @@ CTable.prototype.AddNewParagraph = function()
 {
 	this.CurCell.Content.AddNewParagraph();
 };
+CTable.prototype.GetFormatPainterData = function()
+{
+	return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
+};
 CTable.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
 {
 	this.Selection.Use  = true;
@@ -6119,7 +6123,7 @@ CTable.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextP
 		this.CurCell.Content.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
 	}
 };
-CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CTable.prototype.PasteFormatting = function(oData)
 {
 	if (this.IsCellSelection())
 	{
@@ -6132,13 +6136,13 @@ CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 
 			var Cell_Content = Cell.Content;
 			Cell_Content.SetApplyToAll(true);
-			Cell.Content.PasteFormatting(TextPr, ParaPr, true);
+			Cell.Content.PasteFormatting(oData);
 			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
 	{
-		this.CurCell.Content.PasteFormatting(TextPr, ParaPr, false);
+		this.CurCell.Content.PasteFormatting(oData);
 	}
 };
 CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)

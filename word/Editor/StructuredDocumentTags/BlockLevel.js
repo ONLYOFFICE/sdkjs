@@ -467,6 +467,10 @@ CBlockLevelSdt.prototype.AddNewParagraph = function()
 	this.private_ReplacePlaceHolderWithContent();
 	return this.Content.AddNewParagraph();
 };
+CBlockLevelSdt.prototype.GetFormatPainterData = function()
+{
+	return this.Content.GetFormatPainterData();
+};
 CBlockLevelSdt.prototype.Get_SelectionState2 = function()
 {
 	var oState  = new CDocumentSelectionState();
@@ -699,9 +703,9 @@ CBlockLevelSdt.prototype.GetSelectedContent = function(oSelectedContent)
 		return this.Content.GetSelectedContent(oSelectedContent);
 	}
 };
-CBlockLevelSdt.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CBlockLevelSdt.prototype.PasteFormatting = function(oData)
 {
-	return this.Content.PasteFormatting(TextPr, ParaPr, ApplyPara);
+	return this.Content.PasteFormatting(oData);
 };
 CBlockLevelSdt.prototype.GetCurPosXY = function()
 {

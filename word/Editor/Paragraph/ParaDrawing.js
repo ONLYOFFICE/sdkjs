@@ -2357,10 +2357,10 @@ ParaDrawing.prototype.isTextSelectionUse = function()
 		return this.GraphicObj.isTextSelectionUse();
 	return false;
 };
-ParaDrawing.prototype.paragraphFormatPaste = function( CopyTextPr, CopyParaPr, Bool )
+ParaDrawing.prototype.pasteFormatting = function(oData)
 {
-	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.isTextSelectionUse === "function")
-		return this.GraphicObj.paragraphFormatPaste(CopyTextPr, CopyParaPr, Bool);
+	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.pasteFormatting === "function")
+		return this.GraphicObj.pasteFormatting(oData);
 };
 ParaDrawing.prototype.getNearestPos = function(x, y, pageIndex)
 {

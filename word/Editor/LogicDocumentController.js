@@ -61,6 +61,10 @@ CLogicDocumentController.prototype.AddNewParagraph = function(bRecalculate, bFor
 {
 	return this.LogicDocument.controller_AddNewParagraph(bRecalculate, bForceAdd);
 };
+CLogicDocumentController.prototype.GetFormatPainterData = function()
+{
+	return this.LogicDocument.controller_GetFormatPainterData();
+};
 CLogicDocumentController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {
 	this.LogicDocument.controller_AddInlineImage(nW, nH, oImage, oChart, bFlow);
@@ -267,9 +271,9 @@ CLogicDocumentController.prototype.UpdateCursorType = function(X, Y, PageAbs, Mo
 {
 	this.LogicDocument.controller_UpdateCursorType(X, Y, PageAbs, MouseEvent);
 };
-CLogicDocumentController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CLogicDocumentController.prototype.PasteFormatting = function(oData)
 {
-	this.LogicDocument.controller_PasteFormatting(TextPr, ParaPr);
+	this.LogicDocument.controller_PasteFormatting(oData);
 };
 CLogicDocumentController.prototype.IsSelectionUse = function()
 {
