@@ -1500,7 +1500,8 @@ var editor;
 	spreadsheet_api.prototype.asc_initPrintPreview = function (containerId, options) {
 		var curElem = document.getElementById(containerId);
 		if (curElem) {
-			var canvasId = containerId + "-canvas"
+			var isInitCanvas = false;
+			var canvasId = containerId + "-canvas";
 			var canvas = document.getElementById(canvasId);
 			if (!canvas) {
 				canvas = document.createElement('canvas');
@@ -1511,7 +1512,10 @@ var editor;
 				canvas.style.border = "1px solid";
 				canvas.style.borderColor = "#" + this.wb.defaults.worksheetView.cells.defaultState.border.get_hex();
 				curElem.appendChild(canvas);
+				isInitCanvas = true;
+			}
 
+			if (!this.wb.printPreviewState.getCtx() || isInitCanvas) {
 				this.wb.printPreviewState.setCtx(new asc.DrawingContext({
 					canvas: canvas, units: 0/*px*/, fmgrGraphics: this.wb.fmgrGraphics, font: this.wb.m_oFont
 				}));
