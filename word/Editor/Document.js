@@ -11879,7 +11879,7 @@ CDocument.prototype.private_UpdateFormInnerText = function(form, text)
 		Type      : AscCommon.changestype_2_Element_and_Type,
 		Element   : paragraph,
 		CheckType : AscCommon.changestype_Paragraph_Content
-	}, true, this.IsFormFieldEditing()))
+	}, true, this.IsFillingFormMode()))
 	{
 		this.StartAction(AscDFH.historydescription_Document_CorrectFormTextByFormat);
 
