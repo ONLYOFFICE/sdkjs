@@ -3708,12 +3708,12 @@ CMathContent.prototype.Get_ParaContentPos = function(bSelection, bStart, Content
 			if (true === bStart && nPos > 0)
 			{
 				ContentPos.Add(nPos - 1);
-				this.Content[nPos - 1].Get_EndPos(false, ContentPos, ContentPos.Get_Depth() + 1);
+				this.Content[nPos - 1].Get_EndPos(false, ContentPos, ContentPos.GetDepth() + 1);
 			}
 			else
 			{
 				ContentPos.Add(nPos + 1);
-				this.Content[nPos + 1].Get_StartPos(ContentPos, ContentPos.Get_Depth() + 1);
+				this.Content[nPos + 1].Get_StartPos(ContentPos, ContentPos.GetDepth() + 1);
 			}
 		}
 		else
