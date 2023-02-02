@@ -1845,7 +1845,7 @@ var editor;
 											var relationship = externalWorkbookPart.getRelationship(oExternalReference.val.externalBook.Id);
 											//подменяем id на target
 											if (relationship && relationship.targetFullName) {
-												oExternalReference.val.externalBook.Id = relationship.targetFullName;
+												oExternalReference.val.externalBook.Id = AscCommonExcel.decodeXmlPath(relationship.targetFullName);
 											}
 											wb.externalReferences.push(oExternalReference.val.externalBook);
 

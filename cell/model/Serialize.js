@@ -60,6 +60,7 @@
             res = res.replaceAll("\\'", "\"");
         }
 
+        res = res.replace(/&apos;/g,"'");
         res = res.replace(/&amp;/g,'&');
         res = res.replace(/%20/g,' ');
         res = res.replace(/%23/g,'#');
