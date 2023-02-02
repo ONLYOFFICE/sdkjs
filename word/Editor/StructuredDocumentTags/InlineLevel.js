@@ -1042,7 +1042,8 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 
 	if (this.IsContentControlEquation())
 		return;
-
+	
+	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
 	let oMainForm;
 	if (this.IsForm() && (oMainForm = this.GetMainForm()) && oMainForm !== this)
 	{
@@ -1052,16 +1053,18 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 		}
 		else
 		{
-			oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
-
 			// В режиме заполнения, у внутренних текстовых форм и чекбоксов не рисуем собственный трек, а только внешний
 			if (oLogicDocument.IsFillingFormMode()
 				&& (this.IsTextForm() || this.IsCheckBox()))
+			{
+				oDrawingDocument.OnDrawContentControl(null, nType);
+				oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
 				return;
+			}
+
+			oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
 		}
 	}
-
-	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
 	
 	if (undefined !== X && undefined !== Y && undefined !== nCurPage)
 	{
