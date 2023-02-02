@@ -21694,6 +21694,9 @@ CDocument.prototype.CheckOFormUserMaster = function(form)
 	if (!currentUserMaster || !form || !form.IsForm())
 		return true;
 	
+	if (!form.IsMainForm())
+		form = form.GetMainForm();
+	
 	let fieldMaster = form.GetFieldMaster();
 	if (!fieldMaster)
 		return false;
