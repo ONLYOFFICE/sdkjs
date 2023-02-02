@@ -583,7 +583,7 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 			default: break;
 		}
         
-		strTemp = strBase + strTypeOfScript + strIterator;
+		strTemp = strBase.trim() + strTypeOfScript + strIterator;
 	}
     else
     {
