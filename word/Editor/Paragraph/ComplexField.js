@@ -491,6 +491,8 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case fieldtype_NOTEREF:
 			this.private_UpdateNOTEREF();
 			break;
+		case fieldtype_ADDIN:
+			break;
 	}
 	this.StartUpdate = false;
 
@@ -545,6 +547,9 @@ CComplexField.prototype.CalculateValue = function()
 			break;
 		case fieldtype_NOTEREF:
 			sResult = this.private_CalculateNOTEREF();
+			break;
+		case fieldtype_ADDIN:
+			sResult = "";
 			break;
 
 	}
@@ -1685,6 +1690,24 @@ CComplexField.prototype.ChangeInstruction = function(sNewInstruction)
 	this.InstructionCF      = [];
 	this.private_UpdateInstruction();
 };
+CComplexField.prototype.CheckType = function(type)
+{
+	if (!this.IsValid())
+		return false;
+	
+	let instruction = this.GetInstruction();
+	if (!instruction)
+		return false;
+	
+	return instruction.GetType() === type;
+};
+CComplexField.prototype.IsAddin = function()
+{
+	return this.CheckType(fieldtype_ADDIN);
+};
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CComplexField = CComplexField;
+
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CComplexField = CComplexField;

@@ -22832,6 +22832,32 @@ CDocument.prototype.GetAllFields = function(isUseSelection)
 	return arrFields;
 };
 /**
+ * Получаем список всех полей заданного аддона
+ * @param {string} addinName
+ * @param {boolen} [bySelection=false]
+ * @returns {Array.CComplexField}
+ */
+CDocument.prototype.GetAllAddinFields = function(addinName, bySelection)
+{
+	if (!addinName)
+		return [];
+	
+	let allFields   = this.GetAllFields(bySelection);
+	let addinFields = [];
+	allFields.forEach(function(field)
+	{
+		if (!(field instanceof AscWord.CComplexField)
+			|| !field.IsAddin())
+			return;
+		
+		let instruction = field.GetInstruction();
+		if (addinName === instruction.GetName())
+			addinFields.push(field);
+	});
+	
+	return addinFields;
+};
+/**
  * Обновляем поля в документе по выледелнию или вообще все
  * @param isBySelection {boolean}
  */
