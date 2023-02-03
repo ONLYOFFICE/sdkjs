@@ -8522,7 +8522,7 @@
 		oParaTo.GetAllSeqFieldsByType(sCaption, aTempCompFlds);
 		if (aTempCompFlds.length === 0)
 			return false;
-		if (nRefTo === 7 && oParaTo.asc_canAddRefToCaptionText(typeRec.displayValue) === false)
+		if (nRefTo === 7 && oParaTo.CanAddRefAfterSEQ(sCaption) === false)
 		{
 			console.log("The request reference is empty.");
 			return false;
