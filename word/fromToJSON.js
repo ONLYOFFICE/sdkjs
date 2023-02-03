@@ -12170,7 +12170,7 @@
 	ReaderFromJSON.prototype.StyleFromJSON = function(oParsedStyle)
 	{
 		var sStyleName       = oParsedStyle["name"];
-		var nNextId          = oParsedStyle["next"];
+		var nNextId          = oParsedStyle["next"] != undefined ? oParsedStyle["next"] : null;
 		var nStyleType       = styletype_Paragraph;
 		var bNoCreateTablePr = !oParsedStyle["tblStylePr"];
 		var nBasedOnId       = oParsedStyle["basedOn"];
@@ -12191,7 +12191,6 @@
 				break;
 		}
 		var oStyle = new CStyle(sStyleName, nBasedOnId, nNextId, nStyleType, bNoCreateTablePr);
-		this.RestoredStylesMap[oParsedStyle.styleId] = oStyle;
 
 		oParsedStyle["link"] != undefined && oStyle.SetLink(oParsedStyle["link"]);
 		oParsedStyle["customStyle"] != undefined && oStyle.SetCustom(oParsedStyle["customStyle"]);
@@ -12242,6 +12241,8 @@
 					oStyle = oExistingStyle;
 			}
 		}
+
+		this.RestoredStylesMap[oParsedStyle.styleId] = oStyle;
 
 		return oStyle;
 	};
@@ -16834,13 +16835,13 @@
 				oResult["color"] = {};
 
 				if (this.Color.Auto != null)
-					oResult["auto"] = this.Color.Auto;
+					oResult["color"]["auto"] = this.Color.Auto;
 				if (this.Color.r != null)
-					oResult["r"] = this.Color.r;
+					oResult["color"]["r"] = this.Color.r;
 				if (this.Color.g != null)
-					oResult["g"] = this.Color.g;
+					oResult["color"]["g"] = this.Color.g;
 				if (this.Color.b != null)
-					oResult["b"] = this.Color.b;
+					oResult["color"]["b"] = this.Color.b;
 			}
 
 			if (this.CS != null)

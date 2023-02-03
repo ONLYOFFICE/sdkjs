@@ -4700,16 +4700,15 @@
 		var oDocument = this.GetDocument();
 		var oParsedObj  = JSON.parse(sMessage);
 		var oResult = null;
+		if (oParsedObj["styles"])
+			oReader.StylesFromJSON(oParsedObj["styles"]);
+			
 		switch (oParsedObj["type"])
 		{
 			case "document":
 				if (oParsedObj["numbering"])
 				{
 					oReader.parsedNumbering = oParsedObj["numbering"];
-				}
-				if (oParsedObj["styles"])
-				{
-					oReader.StylesFromJSON(oParsedObj["styles"]);
 				}
 				if (oParsedObj["textPr"])
 				{
