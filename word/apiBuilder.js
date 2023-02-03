@@ -4702,7 +4702,7 @@
 		var oResult = null;
 		if (oParsedObj["styles"])
 			oReader.StylesFromJSON(oParsedObj["styles"]);
-			
+
 		switch (oParsedObj["type"])
 		{
 			case "document":
@@ -11534,7 +11534,7 @@
 	ApiStyle.prototype.ToJSON = function(bWriteNumberings)
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
-		var oJSON = oWriter.SerStyle(this.Style);
+		var oJSON = oWriter.SerWordStyle(this.Style);
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		return JSON.stringify(oJSON);
