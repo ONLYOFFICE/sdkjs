@@ -42,6 +42,7 @@ function (window, undefined) {
 // Import
 var cToDeg = AscFormat.cToDeg;
 var ORIENTATION_MIN_MAX = AscFormat.ORIENTATION_MIN_MAX;
+var ORIENTATION_MAX_MIN = AscFormat.ORIENTATION_MAX_MIN;
 var Point3D = AscFormat.Point3D;
 
 var c_oAscTickMark = Asc.c_oAscTickMark;
@@ -6206,6 +6207,8 @@ drawBarChart.prototype = {
 		var height = point.compiledDlb.extY;
 
 		var centerX, centerY;
+		//TODO check revert valAx orientation for other charts labels
+		var maxMinAxis = this.valAx && this.valAx.scaling && this.valAx.scaling.orientation === ORIENTATION_MAX_MIN;
 
 		switch (point.compiledDlb.dLblPos) {
 			case c_oAscChartDataLabelsPos.bestFit: {
@@ -6223,7 +6226,7 @@ drawBarChart.prototype = {
 			case c_oAscChartDataLabelsPos.inBase: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y;
-				if (point.val > 0) {
+				if ((point.val > 0 && !maxMinAxis) || (point.val < 0 && maxMinAxis)) {
 					centerY = y - height;
 				}
 				break;
@@ -6231,7 +6234,7 @@ drawBarChart.prototype = {
 			case c_oAscChartDataLabelsPos.inEnd: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y - h;
-				if (point.val < 0) {
+				if ((point.val < 0 && !maxMinAxis) || (point.val > 0 && maxMinAxis)) {
 					centerY = centerY - height;
 				}
 				break;
@@ -6239,7 +6242,7 @@ drawBarChart.prototype = {
 			case c_oAscChartDataLabelsPos.outEnd: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y - h - height;
-				if (point.val < 0) {
+				if ((point.val < 0 && !maxMinAxis) || (point.val > 0 && maxMinAxis)) {
 					centerY = centerY + height;
 				}
 				break;
