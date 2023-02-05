@@ -11579,19 +11579,21 @@
 
 
 		if (oldObj || newObj) {
+			let cloneNewOnj = newObj.clone();
+			cloneNewOnj.Id = newObj.Id;
+			cloneNewOnj._ws = this;
 			if (oldObj) {
 				let modelUserRange = this.getUserProtectedRangeById(oldObj.Id);
 				if (modelUserRange) {
 					//TODO clone
-					if (newObj) {
-						this.userProtectedRanges[modelUserRange.index] = newObj;
+					if (cloneNewOnj) {
+						this.userProtectedRanges[modelUserRange.index] = cloneNewOnj;
 					} else {
 						this.userProtectedRanges.splice(modelUserRange.index, 1);
 					}
 				}
-			} else if (newObj) {
-				//TODO clone
-				this.userProtectedRanges.push(newObj);
+			} else if (cloneNewOnj) {
+				this.userProtectedRanges.push(cloneNewOnj);
 			}
 
 			if (addToHistory) {

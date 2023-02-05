@@ -2644,6 +2644,7 @@ var editor;
 
           t._onUpdateCFLock(lockElem);
           t._onUpdateProtectedRangesLock(lockElem);
+          t._onUpdateUserProtectedRange(lockElem);
 
 
           var ws = t.wb.getWorksheet();
@@ -5730,7 +5731,7 @@ var editor;
 	  obj.asc_setRef("Sheet1!A1:A2");
 	  obj.asc_setName("test");
 	  obj.asc_setUsers(["test"]);
-	  this.asc_setUserProtectedRange(obj);
+	  this.asc_addUserProtectedRange(obj);
   	return;
 
   	var ws = this.wb.getWorksheet();
@@ -8251,7 +8252,7 @@ var editor;
 		return false;
 	};
 
-	spreadsheet_api.prototype.asc_setUserProtectedRange = function (obj) {
+	spreadsheet_api.prototype.asc_addUserProtectedRange = function (obj) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return false;
 		}
@@ -8287,6 +8288,16 @@ var editor;
 		this.wb.editUserProtectedRanges(obj, null);
 	};
 
+	spreadsheet_api.prototype._onUpdateUserProtectedRange = function(lockElem) {
+		if( lockElem.Element["sheetId"] == -1 && lockElem.Element["rangeOrObjectId"] != -1 && !this.collaborativeEditing.getFast() ){
+			var dN = this.wbModel.dependencyFormulas.getDefNameByNodeId(lockElem.Element["rangeOrObjectId"]);
+			if (dN) {
+				dN.isLock = lockElem.UserId;
+				this.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+			}
+			//this.handlers.trigger("asc_onLockDefNameManager",Asc.c_oAscDefinedNameReason.LockDefNameManager);
+		}
+	};
 
   /*
    * Export
@@ -8838,7 +8849,7 @@ var editor;
   prot["asc_ImportXmlStart"] = prot.asc_ImportXmlStart;
   prot["asc_ImportXmlEnd"]   = prot.asc_ImportXmlEnd;
 
-  prot["asc_setUserProtectedRange"] = prot.asc_setUserProtectedRange;
+  prot["asc_addUserProtectedRange"] = prot.asc_addUserProtectedRange;
   prot["asc_changeUserProtectedRange"]   = prot.asc_changeUserProtectedRange;
   prot["asc_deleteUserProtectedRange"]   = prot.asc_deleteUserProtectedRange;
 

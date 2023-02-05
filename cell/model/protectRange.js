@@ -43,6 +43,7 @@
 		this.warningText = null;
 
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
+		this._ws = null;
 
 		return this;
 	}
@@ -113,6 +114,13 @@
 		} else {
 			w.WriteBool(false);
 		}
+
+		if (null != this.Id) {
+			w.WriteBool(true);
+			w.WriteString2(this.Id);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	CUserProtectedRange.prototype.Read_FromBinary2 = function(r) {
@@ -139,6 +147,10 @@
 
 		if (r.GetBool()) {
 			this.warningText = r.GetString2();
+		}
+
+		if (r.GetBool()) {
+			this.Id = r.GetString2();
 		}
 	};
 

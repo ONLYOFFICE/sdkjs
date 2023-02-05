@@ -3474,7 +3474,7 @@
     page.pageWidth = sizes.width;
     page.scale = 1;
     return page;
-  }
+  };
   
   WorkbookView.prototype.printForOleObject = function (ws, oRange) {
     var sizes = ws.getRangePosition(oRange);
@@ -3485,7 +3485,7 @@
 		previewOleObjectContext.isNotDrawBackground = !this.Api.isFromSheetEditor;
     ws.drawForPrint(previewOleObjectContext, page, 0, 1);
     return previewOleObjectContext;
-  }
+  };
 
 	WorkbookView.prototype.printSheetPrintPreview = function(index) {
 		var printPreviewState = this.printPreviewState;
@@ -3609,7 +3609,7 @@
   };
   WorkbookView.prototype.scrollAndResizeToRange = function (r1, c1, r2, c2) {
     this.getWorksheet().scrollAndResizeToRange(r1, c1, r2, c2);
-  }
+  };
   WorkbookView.prototype.onShowDrawingObjects = function() {
       var oWSView = this.getWorksheet();
       var oDrawingsRender;
@@ -5213,8 +5213,7 @@
 			return;
 		}
 
-		var ws = this.getWorksheet(), t = this;
-
+		var t = this;
 
 		var doEdit = function(res) {
 			if (res) {
@@ -5243,12 +5242,12 @@
 
 				History.EndTransaction();
 
-				/*t.handlers.trigger("asc_onEditDefName", oldName, newName);
+				//t.handlers.trigger("asc_onEditDefName", oldName, newName);
+
 				//условие исключает второй вызов asc_onRefreshDefNameList(первый в unlockDefName)
-				if(!(t.collaborativeEditing.getCollaborativeEditing() && t.collaborativeEditing.getFast()))
-				{
-					t.handlers.trigger("asc_onRefreshDefNameList");
-				}*/
+				if (!(t.collaborativeEditing.getCollaborativeEditing() && t.collaborativeEditing.getFast())) {
+					t.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+				}
 
 			} else {
 				t.handlers.trigger("asc_onError", c_oAscError.ID.LockCreateDefName, c_oAscError.Level.NoCritical);
@@ -5256,18 +5255,53 @@
 		};
 		
 
-		//TODO продумать локи!
-		/*var callback = function() {
-			ws._isLockedDefNames(editDefinedNamesCallback, defNameId);
+		var callbackLockObj = function(res) {
+			if (res) {
+				if (wsViewFrom) {
+					wsViewFrom._isLockedUserProtectedRange(doEdit, lockId);
+				} else if (wsViewTo) {
+					wsViewTo._isLockedUserProtectedRange(doEdit, lockId);
+				}
+			}
 		};
-		
-		if (tableRange) {
-			ws._isLockedCells( tableRange, null, callback );
-		} else {
-			callback();
-		}*/
 
-		doEdit(true);
+		//когда меняем диапазон с одного листа на другой, два раза нужно лочить, вначале на одном листе, потом на другом
+		let wsFrom = oldObj ? oldObj._ws : null;
+		let wsTo = newObj ? newObj._ws : null;
+
+		let wsViewFrom = oldObj ? oldObj._ws : null;
+		let wsViewTo = newObj ? newObj._ws : null;
+
+		for (let i = 0; i < this.wsViews.length; i++) {
+			if (this.wsViews[i].model === wsFrom) {
+				wsViewFrom = this.wsViews[i];
+			}
+			if (this.wsViews[i].model === wsTo) {
+				wsViewTo = this.wsViews[i];
+			}
+		}
+
+		let lockId = oldObj ? oldObj.Id : newObj.Id;
+		let lockRangeFrom = oldObj ? oldObj.ref : null;
+		let lockRangeTo = newObj ? newObj.ref : null;
+
+		function callback (res) {
+			if (res) {
+				if (wsViewFrom && wsViewTo) {
+					wsViewTo._isLockedCells(lockRangeTo, null, callbackLockObj);
+				} else if (wsTo) {
+					callbackLockObj(true);
+				}
+			}
+		}
+
+		if (wsViewFrom) {
+			wsViewFrom._isLockedCells(lockRangeFrom, null, callback);
+		} else if (wsViewTo) {
+			wsViewTo._isLockedCells(lockRangeTo, null, callback);
+		} else {
+			callback(true);
+		}
 	};
 
 
