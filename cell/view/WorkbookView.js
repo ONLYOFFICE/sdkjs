@@ -5304,6 +5304,12 @@
 		}
 	};
 
+	WorkbookView.prototype.unlockUserProtectedRanges = function() {
+		this.model.unlockUserProtectedRanges();
+		this.handlers.trigger("asc_onRefreshDefNameList");
+		//this.handlers.trigger("asc_onLockDefNameManager", Asc.c_oAscDefinedNameReason.OK);
+	};
+
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {

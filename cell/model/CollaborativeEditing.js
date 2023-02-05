@@ -396,6 +396,8 @@
 				this.handlers.trigger("unlockCF");
 				this.handlers.trigger("unlockProtectedRange");
 
+				this.handlers.trigger("unlockUserProtectedRanges");
+
 				if (0 === this.m_nUseType)
 					this.m_nUseType = 1;
 			} else if(this.m_bIsCollaborativeWithLiveViewer) {

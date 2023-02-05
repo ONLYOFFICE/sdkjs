@@ -44,6 +44,7 @@
 
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 		this._ws = null;
+		this.isLock = null;
 
 		return this;
 	}
@@ -216,6 +217,9 @@
 			}
 		}
 	};
+	CUserProtectedRange.prototype.asc_getIsLock = function () {
+		return this.isLock;
+	};
 
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -234,5 +238,7 @@
 	prot["asc_setUsers"] = prot.asc_setUsers;
 
 	prot["asc_getId"] = prot.asc_getId;
+
+	prot["asc_getIsLock"] = prot.asc_getIsLock;
 
 })(window);

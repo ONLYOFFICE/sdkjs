@@ -2570,6 +2570,9 @@ var editor;
       },
       "checkProtectedRangeRemoveLock": function(lockElem) {
       	return t._onCheckProtectedRangeRemoveLock(lockElem);
+      },
+      "unlockUserProtectedRanges": function() {
+      	t._onUnlockUserProtectedRanges.apply(t, arguments);
       }
     }, this.getViewMode());
 
@@ -8288,15 +8291,27 @@ var editor;
 		this.wb.editUserProtectedRanges(obj, null);
 	};
 
-	spreadsheet_api.prototype._onUpdateUserProtectedRange = function(lockElem) {
-		if( lockElem.Element["sheetId"] == -1 && lockElem.Element["rangeOrObjectId"] != -1 && !this.collaborativeEditing.getFast() ){
-			var dN = this.wbModel.dependencyFormulas.getDefNameByNodeId(lockElem.Element["rangeOrObjectId"]);
-			if (dN) {
-				dN.isLock = lockElem.UserId;
-				this.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+	spreadsheet_api.prototype._onUpdateUserProtectedRange = function (lockElem) {
+		let _element = lockElem.Element;
+		let isNeedObject = _element["sheetId"] !== -1 && _element["rangeOrObjectId"] !== -1;
+		let isNeedType = isNeedObject && c_oAscLockTypeElemSubType.UserProtectedRange === _element.subType &&
+			c_oAscLockTypeElem.Object === _element["type"];
+
+		if (isNeedType && !this.collaborativeEditing.getFast()) {
+			let sheet = this.wbModel.getWorksheetById(_element["sheetId"]);
+			if (sheet) {
+				var userRange = sheet.getUserProtectedRangeById(_element["rangeOrObjectId"]);
+				if (userRange) {
+					userRange.isLock = lockElem.UserId;
+					this.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+				}
 			}
 			//this.handlers.trigger("asc_onLockDefNameManager",Asc.c_oAscDefinedNameReason.LockDefNameManager);
 		}
+	};
+
+	spreadsheet_api.prototype._onUnlockUserProtectedRanges = function() {
+		this.wb.unlockUserProtectedRanges();
 	};
 
   /*

@@ -4385,6 +4385,12 @@
 		return null;
 	};
 
+	Workbook.prototype.unlockUserProtectedRanges = function(){
+		this.forEach(function (ws) {
+			ws.unlockUserProtectedRanges();
+		});
+	};
+
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
 	var tempHelpUnit = new Uint8Array(tempHelp);
@@ -11619,6 +11625,14 @@
 			}
 		}
 		return res;
+	};
+
+	Worksheet.prototype.unlockUserProtectedRanges = function(){
+		if (this.userProtectedRanges) {
+			for (let i = 0; i < this.userProtectedRanges.length; i++) {
+				this.userProtectedRanges.isLock = null;
+			}
+		}
 	};
 
 //-------------------------------------------------------------------------------------------------
