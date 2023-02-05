@@ -573,7 +573,7 @@
     {
         var element = document.getElementById(this.id);
 
-        if (0 === element.offsetWidth)
+        if (0 === element.offsetWidth || !this.canvas)
             return;
 
         // размер панели
