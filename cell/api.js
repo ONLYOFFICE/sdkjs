@@ -8264,7 +8264,7 @@ var editor;
 			return;
 		}
 
-		this.wb.editUserProtectedRanges(null, obj);
+		this.wb.changeUserProtectedRanges(null, obj);
 	};
 
 	spreadsheet_api.prototype.asc_changeUserProtectedRange = function (oldObj, newObj) {
@@ -8276,10 +8276,10 @@ var editor;
 			return;
 		}
 
-		this.wb.editUserProtectedRanges(oldObj, newObj);
+		this.wb.changeUserProtectedRanges(oldObj, newObj);
 	};
 
-	spreadsheet_api.prototype.asc_deleteUserProtectedRange = function (obj) {
+	spreadsheet_api.prototype.asc_deleteUserProtectedRange = function (arr) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return false;
 		}
@@ -8288,7 +8288,7 @@ var editor;
 			return;
 		}
 
-		this.wb.editUserProtectedRanges(obj, null);
+		this.wb.deleteUserProtectedRanges(arr);
 	};
 
 	spreadsheet_api.prototype.asc_getUserProtectedRanges = function(sheetName) {
@@ -8316,7 +8316,7 @@ var editor;
 	spreadsheet_api.prototype._onUpdateUserProtectedRange = function (lockElem) {
 		let _element = lockElem.Element;
 		let isNeedObject = _element["sheetId"] !== -1 && _element["rangeOrObjectId"] !== -1;
-		let isNeedType = isNeedObject && c_oAscLockTypeElemSubType.UserProtectedRange === _element.subType &&
+		let isNeedType = isNeedObject && AscCommonExcel.c_oAscLockTypeElemSubType.UserProtectedRange === _element.subType &&
 			c_oAscLockTypeElem.Object === _element["type"];
 
 		if (isNeedType && !this.collaborativeEditing.getFast()) {

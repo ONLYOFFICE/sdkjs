@@ -724,7 +724,9 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			DeleteRowContainsLockedCell: 1033,
 			CannotUseCommandProtectedSheet: 1034,
 
-			FillAllRowsWarning: 1040
+			FillAllRowsWarning: 1040,
+
+			ProtectedRangeByOtherUser: 1050
 		}
 	};
 
@@ -4106,6 +4108,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['DeleteRowContainsLockedCell']      = prot.DeleteRowContainsLockedCell;
 	prot['FillAllRowsWarning']               = prot.FillAllRowsWarning;
 	prot['CannotUseCommandProtectedSheet']   = prot.CannotUseCommandProtectedSheet;
+	prot['ProtectedRangeByOtherUser']        = prot.ProtectedRangeByOtherUser;
+
 
 
 

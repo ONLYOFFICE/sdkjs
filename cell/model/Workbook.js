@@ -11630,10 +11630,27 @@
 	Worksheet.prototype.unlockUserProtectedRanges = function(){
 		if (this.userProtectedRanges) {
 			for (let i = 0; i < this.userProtectedRanges.length; i++) {
-				this.userProtectedRanges.isLock = null;
+				this.userProtectedRanges[i].isLock = null;
 			}
 		}
 	};
+
+	Worksheet.prototype.isIntersectionOtherUserProtectedRanges = function(range){
+		let res = false;
+		if (this.userProtectedRanges) {
+			let oApi = Asc.editor;
+			let sUserId = oApi.DocInfo.get_UserId();
+			for (let i = 0; i < this.userProtectedRanges.length; i++) {
+				let curUserProtectedRange = this.userProtectedRanges[i];
+				if (curUserProtectedRange.ref.intersection(range) && !curUserProtectedRange.usersMap[sUserId]) {
+					res = true;
+					break;
+				}
+			}
+		}
+		return res;
+	};
+
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;

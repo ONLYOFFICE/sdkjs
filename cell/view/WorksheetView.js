@@ -15212,12 +15212,6 @@
 		return this.collaborativeEditing.lock(arrLocks, newCallback);
     };
 
-	WorksheetView.prototype._isLockedUserProtectedRange = function (callback, id) {
-		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object,
-			c_oAscLockTypeElemSubType.UserProtectedRange, this.model.getId(), id);
-		this.collaborativeEditing.lock([lockInfo], callback);
-	};
-
     WorksheetView.prototype._onChangeSheetViewSettings = function (type) {
 		if (AscCH.historyitem_Worksheet_SetDisplayHeadings === type) {
 			this._calcHeaderRowHeight(); //ToDo оставить только _calcHeaderRowHeight, а в нем выставить необходимость обновления
