@@ -969,7 +969,8 @@
     // Отключаемся сами
     this.isCloseCoAuthoring = true;
     if (opt_code) {
-      this.socketio.disconnect();//todo (opt_code, opt_reason);
+      this.onDisconnect(opt_reason, opt_code);
+      this.socketio.disconnect();
     } else {
       this._send({"type": "close"});
       this._state = ConnectionState.ClosedCoAuth;
