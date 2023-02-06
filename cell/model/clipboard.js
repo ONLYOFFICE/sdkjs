@@ -1856,6 +1856,12 @@
 							return true;
 						}
 
+						if (ws.model.isUserProtectedRangesIntersection(toRange)) {
+							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+							ws.handlers.trigger("cleanCutData", true);
+							return;
+						}
+
 						var wsTo = ws.model.Id !== wsFrom.model.Id ? ws : null;
 						wsFrom.applyCutRange(fromRange, toRange, wsTo);
 						ws.handlers.trigger("cleanCutData", true);

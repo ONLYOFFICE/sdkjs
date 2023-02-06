@@ -155,6 +155,14 @@
 		}
 	};
 
+	CUserProtectedRange.prototype.intersection = function(range) {
+		return this.ref.intersection(range);
+	};
+
+	CUserProtectedRange.prototype.isUserCanEdit = function(userId) {
+		return this.usersMap[userId];
+	};
+
 	CUserProtectedRange.prototype.asc_getRef = function () {
 		var result = null;
 

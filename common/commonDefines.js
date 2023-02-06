@@ -726,7 +726,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 
 			FillAllRowsWarning: 1040,
 
-			ProtectedRangeByOtherUser: 1050
+			ProtectedRangeByOtherUser: 1050,
+			CannotEditUserProtectedRange: 1051
 		}
 	};
 
@@ -4109,6 +4110,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['FillAllRowsWarning']               = prot.FillAllRowsWarning;
 	prot['CannotUseCommandProtectedSheet']   = prot.CannotUseCommandProtectedSheet;
 	prot['ProtectedRangeByOtherUser']        = prot.ProtectedRangeByOtherUser;
+	prot['CannotEditUserProtectedRange']     = prot.CannotEditUserProtectedRange;
 
 
 

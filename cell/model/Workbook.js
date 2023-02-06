@@ -4391,6 +4391,17 @@
 		});
 	};
 
+	Workbook.prototype.isUserProtectedRangesIntersection = function(range, userId){
+		let res = false;
+		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
+			if (this.aWorksheets[i].userProtectedRangesIntersection(range, userId)) {
+				return true;
+			}
+		}
+		return res;
+	};
+
+
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
 	var tempHelpUnit = new Uint8Array(tempHelp);
@@ -11326,6 +11337,12 @@
 		if (!wsTo) {
 			wsTo = this;
 		}
+
+		if (wsTo.isUserProtectedRangesIntersection(oBBoxTo) || (wsFrom && wsFrom.isUserProtectedRangesIntersection(oBBoxFrom))) {
+			wsTo.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return;
+		}
+
 		if (wsTo.getSheetProtection()) {
 			return;
 		}
@@ -11642,7 +11659,25 @@
 			let sUserId = oApi.DocInfo.get_UserId();
 			for (let i = 0; i < this.userProtectedRanges.length; i++) {
 				let curUserProtectedRange = this.userProtectedRanges[i];
-				if (curUserProtectedRange.ref.intersection(range) && !curUserProtectedRange.usersMap[sUserId]) {
+				if (curUserProtectedRange.intersection(range) && !curUserProtectedRange.isUserCanEdit(sUserId)) {
+					res = true;
+					break;
+				}
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.isUserProtectedRangesIntersection = function(range, userId){
+		let res = false;
+		if (!userId) {
+			let oApi = Asc.editor;
+			userId = oApi.DocInfo.get_UserId();
+		}
+		if (this.userProtectedRanges) {
+			for (let i = 0; i < this.userProtectedRanges.length; i++) {
+				let curUserProtectedRange = this.userProtectedRanges[i];
+				if ((!range || curUserProtectedRange.intersection(range))&& !curUserProtectedRange.isUserCanEdit(userId)) {
 					res = true;
 					break;
 				}

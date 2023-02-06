@@ -4013,14 +4013,28 @@ var editor;
       return;
     }
 
-    var ws = this.wb.getWorksheet();
+    var wb = this.wb;
+    var ws = wb.getWorksheet();
+    if (this.wb) {
+    	//check user protected range. if sheet at least one protected for this user range
+    	if (options.isReplaceAll) {
+			if (options.scanOnOnlySheet === Asc.c_oAscSearchBy.Workbook && wb.model.isUserProtectedRangesIntersection()) {
+				this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+				return;
+			} else if (options.scanOnOnlySheet === Asc.c_oAscSearchBy.Sheet && ws.isUserProtectedRangesIntersection()) {
+				this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+				return;
+			}
+		}
+	}
+
     if (ws.model.getSheetProtection()) {
         this.handlers.trigger("asc_onError", c_oAscError.ID.CannotUseCommandProtectedSheet, c_oAscError.Level.NoCritical);
         return;
     }
 
     options.lookIn = Asc.c_oAscFindLookIn.Formulas; // При замене поиск только в формулах
-    this.wb.replaceCellText(options);
+	  wb.replaceCellText(options);
   };
 
   spreadsheet_api.prototype.asc_endFindText = function() {
