@@ -1246,8 +1246,14 @@ function CDocumentFieldsManager()
 
 	this.m_aComplexFields = [];
 	this.m_oCurrentComplexField = null;
+	
+	this.ComplexFieldCounter = 0;
 }
 
+CDocumentFieldsManager.prototype.GetNewComplexFieldId = function()
+{
+	return (++this.ComplexFieldCounter);
+};
 CDocumentFieldsManager.prototype.Register_Field = function(oField)
 {
     this.m_aFields.push(oField);
@@ -22888,7 +22894,7 @@ CDocument.prototype.AddAddinField = function(data)
 	this.FinalizeAction();
 };
 /**
- * Обновляем поля в документе по выледелнию или вообще все
+ * Update fields in the document by selection or all
  * @param isBySelection {boolean}
  */
 CDocument.prototype.UpdateFields = function(isBySelection)

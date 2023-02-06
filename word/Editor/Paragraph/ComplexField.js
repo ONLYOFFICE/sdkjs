@@ -346,22 +346,26 @@ ParaInstrText.prototype.GetReplacementItem = function()
 	return this.Replacement;
 };
 
-function CComplexField(oLogicDocument)
+function CComplexField(logicDocument)
 {
-	this.LogicDocument   = oLogicDocument;
+	this.LogicDocument   = logicDocument;
 	this.Current         = false;
 	this.BeginChar       = null;
 	this.EndChar         = null;
 	this.SeparateChar    = null;
 	this.InstructionLine = "";
 	this.Instruction     = null;
-	this.Id              = null;
+	this.FieldId         = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetFieldsManager().GetNewComplexFieldId() : null;
 
 	this.InstructionLineSrc = "";
 	this.InstructionCF      = [];
 
 	this.StartUpdate = false;
 }
+CComplexField.prototype.GetFieldId = function()
+{
+	return this.FieldId;
+};
 CComplexField.prototype.SetCurrent = function(isCurrent)
 {
 	this.Current = isCurrent;
