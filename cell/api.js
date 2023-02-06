@@ -8291,6 +8291,28 @@ var editor;
 		this.wb.editUserProtectedRanges(obj, null);
 	};
 
+	spreadsheet_api.prototype.asc_getUserProtectedRanges = function(sheetName) {
+		if (!this.wb) {
+			return null;
+		}
+
+		let res = [];
+		if (sheetName) {
+			let sheet = this.wb.model.getWorksheetByName(sheetName);
+			for (let i = 0; i < sheet.userProtectedRanges.length; i++) {
+				res.push(sheet.userProtectedRanges[i]);
+			}
+		} else {
+			this.wb.model.forEach(function (ws) {
+				for (let i = 0; i < ws.userProtectedRanges.length; i++) {
+					res.push(ws.userProtectedRanges[i]);
+				}
+			});
+		}
+
+		return res;
+	};
+
 	spreadsheet_api.prototype._onUpdateUserProtectedRange = function (lockElem) {
 		let _element = lockElem.Element;
 		let isNeedObject = _element["sheetId"] !== -1 && _element["rangeOrObjectId"] !== -1;
@@ -8867,6 +8889,8 @@ var editor;
   prot["asc_addUserProtectedRange"] = prot.asc_addUserProtectedRange;
   prot["asc_changeUserProtectedRange"]   = prot.asc_changeUserProtectedRange;
   prot["asc_deleteUserProtectedRange"]   = prot.asc_deleteUserProtectedRange;
+  prot["asc_getUserProtectedRanges"]   = prot.asc_getUserProtectedRanges;
+
 
 
 

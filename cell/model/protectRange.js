@@ -160,7 +160,11 @@
 
 		if (this.ref) {
 			result = this.ref.getAbsName();
+			if (this._ws) {
+				result = this._ws.getName() + "!" + result;
+			}
 		}
+
 		return result ? "=" + result : null;
 	};
 	CUserProtectedRange.prototype.asc_getName = function () {
