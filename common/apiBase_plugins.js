@@ -1442,8 +1442,8 @@
 		}
 
 		return {
-			type : "Removed",
-			guid : removedPlugin ? removedPlugin.guid : ""
+			"type" : "Removed",
+			"guid" : removedPlugin ? removedPlugin.guid : ""
 		};
 	};
 	/**
