@@ -5215,7 +5215,7 @@
 
 		var t = this;
 
-		if (!oldObj._ws || !newObj._ws) {
+		if ((oldObj && !oldObj._ws) || (newObj && !newObj._ws)) {
 			return;
 		}
 
@@ -5367,8 +5367,8 @@
 		let aLockInfo = [];
 		let lockInfo;
 		for (let i = 0; i < aIds.length; i++) {
-			lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object,
-				c_oAscLockTypeElemSubType.UserProtectedRange, aIds[i].ws.getId(), aIds[i].id);
+			lockInfo = this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Object,
+				AscCommonExcel.c_oAscLockTypeElemSubType.UserProtectedRange, aIds[i].ws.getId(), aIds[i].id);
 			aLockInfo.push(lockInfo);
 		}
 
