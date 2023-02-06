@@ -35,44 +35,60 @@
 (function(window)
 {
 	/**
-	 * ADDIN field
+	 * Class for working with adding field data
 	 * @constructor
-	 * @extends AscWord.CFieldInstructionBase
 	 */
-	function CFieldInstructionADDIN()
+	function CAddinFieldData()
 	{
-		AscWord.CFieldInstructionBase.call(this);
-		this.Name  = null;
-		this.Value = null;
+		this.Field   = undefined;
+		this.Value   = undefined;
+		this.Content = undefined;
 	}
-	CFieldInstructionADDIN.prototype = Object.create(AscWord.CFieldInstructionBase.prototype);
-	CFieldInstructionADDIN.prototype.constructor = CFieldInstructionADDIN;
-	CFieldInstructionADDIN.prototype.Type = fieldtype_ADDIN;
-	
-	CFieldInstructionADDIN.prototype.SetValue = function(value)
+	CAddinFieldData.prototype.SetField = function(field)
+	{
+		this.Field = field;
+	};
+	CAddinFieldData.prototype.SetValue = function(value)
 	{
 		this.Value = value;
 	};
-	CFieldInstructionADDIN.prototype.GetValue = function()
+	CAddinFieldData.prototype.GetValue = function()
 	{
 		return this.Value;
 	};
-	CFieldInstructionADDIN.prototype.ToString = function()
+	CAddinFieldData.prototype.SetContent = function(content)
 	{
-		let result = " ADDIN ";
-		if (!this.Name)
-			return result;
+		this.Content = content;
+	};
+	CAddinFieldData.prototype.GetContent = function()
+	{
+		return this.Content;
+	};
+	CAddinFieldData.FromObject = function(obj)
+	{
+		let newData = new CAddinFieldData();
+		if (!obj)
+			return newData;
 		
-		result += this.Name + " ";
+		if (undefined !== obj.Field)
+			newData.SetField(obj.Field);
+		else if (undefined !== obj["Field"])
+			newData.SetField(obj["Field"]);
 		
-		if (this.Value)
-			result += this.Value + " ";
+		if (undefined !== obj.Value)
+			newData.SetValue(obj.Value);
+		else if (undefined !== obj["Value"])
+			newData.SetValue(obj["Value"]);
 		
-		return result;
+		if (undefined !== obj.Content)
+			newData.SetContent(obj.Content);
+		else if (undefined !== obj["Content"])
+			newData.SetContent(obj["Content"]);
+		
+		return newData;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'] = window['AscWord'] || {};
-	window['AscWord'].CFieldInstructionADDIN = CFieldInstructionADDIN;
+	window['AscWord'].CAddinFieldData = CAddinFieldData;
 	
 })(window);
 

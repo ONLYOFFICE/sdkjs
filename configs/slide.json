@@ -206,6 +206,8 @@
 			"word/Editor/Paragraph/ParaDrawingChanges.js",
 			"word/Editor/Paragraph/ParagraphContentPos.js",
 			"word/Editor/Paragraph/ComplexFieldInstruction.js",
+			"word/Editor/Paragraph/ComplexFields/Addin.js",
+			"word/Editor/Paragraph/ComplexFields/AddinData.js",
 			"word/Editor/Paragraph/ComplexField.js",
 			"word/Editor/Paragraph/ParaRevisionMove.js",
 			"word/Editor/Paragraph/GraphemesCounter.js",

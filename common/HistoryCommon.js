@@ -4399,6 +4399,7 @@
 	window['AscDFH'].historydescription_OForm_RemoveRole                            = 0x019e;
 	window['AscDFH'].historydescription_OForm_EditRole                              = 0x019f;
 	window['AscDFH'].historydescription_OForm_ChangeRoleOrder                       = 0x01a0;
+	window['AscDFH'].historydescription_Document_AddAddinField                      = 0x01a1;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

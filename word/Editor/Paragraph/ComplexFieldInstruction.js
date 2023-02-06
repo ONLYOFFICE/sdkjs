@@ -2281,11 +2281,6 @@ CFieldInstructionParser.prototype.private_ReadADDIN = function()
 {
 	this.Result = new AscWord.CFieldInstructionADDIN();
 	
-	if (!this.private_ReadNext())
-		return;
-	
-	this.Result.SetName(this.Buffer);
-	
 	if (this.private_ReadTillEnd())
 		this.Result.SetValue(this.Buffer);
 };

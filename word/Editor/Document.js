@@ -22833,29 +22833,59 @@ CDocument.prototype.GetAllFields = function(isUseSelection)
 };
 /**
  * Получаем список всех полей заданного аддона
- * @param {string} addinName
- * @param {boolen} [bySelection=false]
+ * @param {boolean} [bySelection=false]
  * @returns {Array.CComplexField}
  */
-CDocument.prototype.GetAllAddinFields = function(addinName, bySelection)
+CDocument.prototype.GetAllAddinFields = function(bySelection)
 {
-	if (!addinName)
-		return [];
-	
 	let allFields   = this.GetAllFields(bySelection);
 	let addinFields = [];
 	allFields.forEach(function(field)
 	{
-		if (!(field instanceof AscWord.CComplexField)
-			|| !field.IsAddin())
-			return;
-		
-		let instruction = field.GetInstruction();
-		if (addinName === instruction.GetName())
+		if ((field instanceof AscWord.CComplexField) && field.IsAddin())
 			addinFields.push(field);
 	});
 	
 	return addinFields;
+};
+/**
+ * Create Addin field by data
+ * @param {AscWord.CAddinFieldData} data
+ */
+CDocument.prototype.AddAddinField = function(data)
+{
+	if (!data)
+		return;
+	
+	let instruction = data.GetValue();
+	if (!instruction)
+		return;
+	
+	let innerText = data.GetContent();
+	if (!innerText)
+		innerText = "    ";
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+		return;
+	
+	this.StartAction(AscDFH.historydescription_Document_AddAddinField);
+	
+	if (this.IsTextSelectionUse())
+		this.RemoveBeforePaste();
+	else if (this.IsSelectionUse())
+		this.RemoveSelection();
+	
+	let field = this.AddFieldWithInstruction(" ADDIN " + instruction);
+	if (field)
+	{
+		field.SelectFieldValue();
+		this.AddText(innerText);
+	}
+	
+	this.Recalculate();
+	this.UpdateInterface();
+	this.UpdateSelection();
+	this.FinalizeAction();
 };
 /**
  * Обновляем поля в документе по выледелнию или вообще все
