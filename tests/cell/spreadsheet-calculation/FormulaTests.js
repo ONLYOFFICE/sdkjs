@@ -22271,6 +22271,83 @@ $(function () {
 		assert.ok(oParser.parse(), 'SEQUENCE(2,2,2,G18)');
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of SEQUENCE(2,2,2,G18)");
 
+		// array/cellsRange tests
+		oParser = new parserFormula('SEQUENCE({1,2;2,3})', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE({1,2;2,3})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE({1,2;2,3})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, "Result of SEQUENCE({1,2;2,3})[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE({1,2;2,3})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, "Result of SEQUENCE({1,2;2,3})[1,1]");
+
+		oParser = new parserFormula('SEQUENCE(1,{2,2;2,2})', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(1,{2,2;2,2})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(1,{2,2;2,2})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, "Result of SEQUENCE(1,{2,2;2,2})[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE(1,{2,2;2,2})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, "Result of SEQUENCE(1,{2,2;2,2})[1,1]");
+
+		oParser = new parserFormula('SEQUENCE(1,2,{2,2;2,2})', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(1,2,{2,2;2,2})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of SEQUENCE(1,2,{2,2;2,2})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, "Result of SEQUENCE(1,2,{2,2;2,2})[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result of SEQUENCE(1,2,{2,2;2,2})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2, "Result of SEQUENCE(1,2,{2,2;2,2})[1,1]");
+
+		oParser = new parserFormula('SEQUENCE(1,2,4,{2,2;2,2})', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(1,2,4,{2,2;2,2})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, "Result of SEQUENCE(1,2,2,{2,2;2,2})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 4, "Result of SEQUENCE(1,2,2,{2,2;2,2})[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, "Result of SEQUENCE(1,2,2,{2,2;2,2})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, "Result of SEQUENCE(1,2,2,{2,2;2,2})[1,1]");
+
+
+		oParser = new parserFormula('SEQUENCE({1,2,3},{1,2},1,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE({1,2,3},{1,2},1,1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE({1,2,3},{1,2},1,1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, "Result of SEQUENCE({1,2,3},{1,2},1,1)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", "Result of SEQUENCE({1,2,3},{1,2},1,1)[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of SEQUENCE({1,2,3},{1,2},1,1)[1,0]");
+
+		oParser = new parserFormula('SEQUENCE({1,2,3;3,2,1},{1;2},1,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE({1,2,3;3,2,1},{1;2},1,1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#N/A", "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[0,1]");		// 1
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[1,0]");		// 1
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#N/A", "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[1,0]");
+
+		
+		oParser = new parserFormula('SEQUENCE(1,1,,{1,2;3,4})', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(1,1,,{1,2;3,4})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(1,1,,{1,2;3,4})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, "Result of SEQUENCE(1,1,,{1,2;3,4})[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE(1,1,,{1,2;3,4})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, "Result of SEQUENCE(1,1,,{1,2;3,4})[1,1]");
+
+		oParser = new parserFormula('SEQUENCE(1,1,G10,{1,2;3,4})', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(1,1,G10,{1,2;3,4})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 0, "Result of SEQUENCE(1,1,G10,{1,2;3,4})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, "Result of SEQUENCE(1,1,G10,{1,2;3,4})[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 0, "Result of SEQUENCE(1,1,G10,{1,2;3,4})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 0, "Result of SEQUENCE(1,1,G10,{1,2;3,4})[1,1]");
+
+		oParser = new parserFormula('SEQUENCE(1,1,G11,{1,2;3,4})', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(1,1,G11,{1,2;3,4})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 0, "Result of SEQUENCE(1,1,G11,{1,2;3,4})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, "Result of SEQUENCE(1,1,G11,{1,2;3,4})[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 0, "Result of SEQUENCE(1,1,G11,{1,2;3,4})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 0, "Result of SEQUENCE(1,1,G11,{1,2;3,4})[1,1]");
+
 		// Max array size (10223960?)
 		// oParser = new parserFormula('SEQUENCE(10223960,2,1,1)', "A2", ws);
 		// assert.ok(oParser.parse(), 'SEQUENCE(10223960,2,1,1)');
