@@ -1609,6 +1609,14 @@
 				this.spTree[nSp].clearChartDataCache();
 			}
 		};
+		CGroupShape.prototype.pasteFormatting = function (oFormatData) {
+			if(!oFormatData) {
+				return;
+			}
+			for (let nSp = 0; nSp < this.spTree.length; ++nSp) {
+				this.spTree[nSp].pasteFormatting(oFormatData);
+			}
+		};
 
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};

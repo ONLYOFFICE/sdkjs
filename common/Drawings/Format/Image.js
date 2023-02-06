@@ -804,6 +804,13 @@
 		};
 
 
+		CImageShape.prototype.pasteFormatting = function (oFormatData) {
+			if (!oFormatData) {
+				return;
+			}
+			this.pasteDrawingFormatting(oFormatData.Drawing);
+		};
+
 		function CreateBrushFromBlipFill(oBlipFill) {
 			if (!oBlipFill) {
 				return null;

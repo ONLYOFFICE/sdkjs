@@ -1202,6 +1202,7 @@
 			var content = this.getDocContent();
 
 			this.recalcInfo.recalculateShapeStyleForParagraph = true;
+			this.recalcInfo.recalculateContent2 = true;
 			if (this.recalcTextStyles)
 				this.recalcTextStyles();
 			if (content) {
@@ -6576,6 +6577,36 @@
 				}
 			}
 			return true;
+		};
+
+		CShape.prototype.pasteFormatting = function (oFormatData) {
+			if(!oFormatData)
+				return;
+			let oDrawing = oFormatData.Drawing;
+			if(oDrawing) {
+				this.pasteDrawingFormatting(oFormatData.Drawing);
+			}
+			if(oFormatData.ParaPr || oFormatData.TextPr) {
+				let oContent = this.getDocContent();
+				if(oContent) {
+					let bApplyToAll = true;
+					let oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
+					if(oController) {
+						if(AscFormat.getTargetTextObject(oController) === this) {
+							bApplyToAll = false;
+						}
+					}
+					if(bApplyToAll) {
+						oContent.SetApplyToAll(true);
+					}
+					let fDocContentMethod = AscCommonWord.CDocumentContent.prototype.PasteFormatting;
+					let fTableMethod = AscCommonWord.CTable.prototype.PasteFormatting;
+					this.applyTextFunction(fDocContentMethod, fTableMethod, [oFormatData]);
+					if(bApplyToAll) {
+						oContent.SetApplyToAll(false);
+					}
+				}
+			}
 		};
 
 

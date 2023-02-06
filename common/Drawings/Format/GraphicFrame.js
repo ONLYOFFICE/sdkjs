@@ -307,9 +307,9 @@
 		return false;
 	};
 
-	CGraphicFrame.prototype.paragraphFormatPaste = function (CopyTextPr, CopyParaPr, Bool) {
+	CGraphicFrame.prototype.pasteFormatting = function (oFormatData) {
 		if (isRealObject(this.graphicObject)) {
-			this.graphicObject.PasteFormatting(CopyTextPr, CopyParaPr, Bool);
+			this.graphicObject.PasteFormatting(oFormatData);
 
 			this.recalcInfo.recalculateContent = true;
 			this.recalcInfo.recalculateTransformText = true;

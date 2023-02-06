@@ -876,18 +876,14 @@ function CDrawingDocument()
 
 	this.SetCursorType     = function(sType, Data)
 	{
-		var elem = this.m_oWordControl.m_oMainContent.HtmlElement;
+		let elem = this.m_oWordControl.m_oMainContent.HtmlElement;
 		if (this.m_oWordControl.DemonstrationManager.Mode)
 			elem = this.m_oWordControl.DemonstrationManager.Canvas;
 
-		if ("" == this.m_sLockedCursorType)
+		let oApi = this.m_oWordControl.m_oApi;
+		if ("" === this.m_sLockedCursorType)
 		{
-			if (this.m_oWordControl.m_oApi.isPaintFormat && (("default" == sType) || ("text" == sType)))
-				this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterWord);
-			else if (this.m_oWordControl.m_oApi.isMarkerFormat)
-				this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");
-			else
-                elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+			elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
 		}
 		else
             elem.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);

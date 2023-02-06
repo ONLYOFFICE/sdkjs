@@ -4308,18 +4308,18 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     
     _this.checkCursorDrawingObject = function(x, y) {
 
-        var offsets = _this.drawingArea.getOffsets(x, y);
-       // console.log('getOffsets: ' + x + ':' + y);
+        let offsets = _this.drawingArea.getOffsets(x, y);
+	    let objectInfo = null;
+	    let oApi = Asc.editor || editor;
         if ( offsets ) {
-            var objectInfo = { cursor: null, id: null, object: null };
-            var graphicObjectInfo = _this.controller.isPointInDrawingObjects( pxToMm(x - offsets.x), pxToMm(y - offsets.y) );
-           // console.log('isPointInDrawingObjects: ' + pxToMm(x - offsets.x) + ':' + pxToMm(y - offsets.y));
+            let graphicObjectInfo = _this.controller.isPointInDrawingObjects( pxToMm(x - offsets.x), pxToMm(y - offsets.y) );
+
             if ( graphicObjectInfo && graphicObjectInfo.objectId ) {
+	            objectInfo = { cursor: null, id: null, object: null };
                 objectInfo.object = _this.getDrawingBase(graphicObjectInfo.objectId);
-                if(objectInfo.object){
+                if(objectInfo.object) {
                     objectInfo.id = graphicObjectInfo.objectId;
-                    var sCursorType = graphicObjectInfo.cursorType;
-                    var oApi = Asc.editor || editor;
+                    let sCursorType = graphicObjectInfo.cursorType;
                     if(oApi) {
                         if(!oApi.isShowShapeAdjustments()) {
                             if(sCursorType !== "text") {
@@ -4332,13 +4332,17 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                     objectInfo.macro = graphicObjectInfo.macro;
                     objectInfo.tooltip = graphicObjectInfo.tooltip;
                 }
-                else{
-                    return null;
-                }
-                return objectInfo;
             }
         }
-        return null;
+		if(oApi.isFormatPainterOn()) {
+			if(objectInfo) {
+				let oData = oApi.getFormatPainterData();
+				if(oData && oData.isDrawingData()) {
+					objectInfo.cursor = AscCommon.kCurFormatPainterDrawing;
+				}
+			}
+		}
+        return objectInfo;
     };
 
     _this.getPositionInfo = function(x, y) {

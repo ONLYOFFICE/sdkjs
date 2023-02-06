@@ -220,10 +220,7 @@ CDrawingDocument.prototype.SetCursorType = function(sType, Data)
     var sResultCursorType = sType;
     if ("" === this.m_sLockedCursorType)
     {
-        if (this.m_oWordControl.m_oApi.isPaintFormat && (("default" === sType) || ("text" === sType)))
-            sResultCursorType = AscCommon.kCurFormatPainterWord;
-        else
-            sResultCursorType = sType;
+		sResultCursorType = sType;
     }
     else
         sResultCursorType = this.m_sLockedCursorType;

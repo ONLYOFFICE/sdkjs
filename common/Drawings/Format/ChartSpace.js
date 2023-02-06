@@ -2125,6 +2125,12 @@ function (window, undefined) {
 		}
 		return null;
 	};
+	CChartSpace.prototype.getChartTitle = function () {
+		if (this.chart && this.chart.title) {
+			return this.chart.title;
+		}
+		return null;
+	};
 	CChartSpace.prototype.getAllTitles = function () {
 		var ret = [];
 		if (this.chart) {
@@ -9123,6 +9129,22 @@ function (window, undefined) {
 			return true;
 
 		return false;
+	};
+
+	CChartSpace.prototype.pasteFormatting = function (oFormatData) {
+		if(!oFormatData)
+			return;
+		let oTextPr = oFormatData.TextPr;
+		if(!oTextPr) {
+			return;
+		}
+		let oTitle = this.getChartTitle();
+		if(oTitle) {
+			oTitle.checkDocContent();
+			let fDocContentMethod = AscCommonWord.CDocumentContent.prototype.PasteFormatting;
+			let fTableMethod = AscCommonWord.CTable.prototype.PasteFormatting;
+			oTitle.applyTextFunction(fDocContentMethod, fTableMethod, [oFormatData]);
+		}
 	};
 
 	function CAdditionalStyleData() {

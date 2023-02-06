@@ -1291,6 +1291,21 @@
 					return this.curState instanceof AscFormat.NullState;
 				},
 
+				checkFormatPainterOnMouseEvent: function () {
+					let oAPI = this.getEditorApi();
+					if (oAPI.isFormatPainterOn()) {
+						let oData = oAPI.getFormatPainterData();
+						if (oData) {
+							if (oData.isDrawingData()) {
+								this.pasteFormattingWithPoint(oData.getDocData());
+								this.resetTracking();
+								oAPI.sendPaintFormatEvent(AscCommon.c_oAscFormatPainterState.kOff);
+								return true;
+							}
+						}
+					}
+				},
+
 				handleAdjustmentHit: function (hit, selectedObject, group, pageIndex, bWord) {
 					if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
 						this.arrPreTrackObjects.length = 0;
@@ -1303,9 +1318,11 @@
 
 							this.resetInternalSelection();
 							this.changeCurrentState(new AscFormat.PreChangeAdjState(this, selectedObject));
+							this.checkFormatPainterOnMouseEvent();
 						} else {
 							group.resetInternalSelection();
 							this.changeCurrentState(new AscFormat.PreChangeAdjInGroupState(this, group));
+							this.checkFormatPainterOnMouseEvent();
 						}
 						return true;
 					} else {
@@ -1419,10 +1436,12 @@
 									this.resetInternalSelection();
 									this.updateOverlay();
 									this.changeCurrentState(new AscFormat.PreRotateState(this, selectedObject));
+									this.checkFormatPainterOnMouseEvent();
 								} else {
 									group.resetInternalSelection();
 									this.updateOverlay();
 									this.changeCurrentState(new AscFormat.PreRotateInGroupState(this, group, selectedObject));
+									this.checkFormatPainterOnMouseEvent();
 								}
 							}
 						} else {
@@ -1439,6 +1458,7 @@
 									this.updateOverlay();
 
 									this.changeCurrentState(new AscFormat.PreResizeState(this, selectedObject, card_direction));
+									this.checkFormatPainterOnMouseEvent();
 								} else {
 
 									if (!selectedObject.isCrop && !selectedObject.cropObject) {
@@ -1447,6 +1467,7 @@
 									this.updateOverlay();
 
 									this.changeCurrentState(new AscFormat.PreResizeInGroupState(this, group, selectedObject, card_direction));
+									this.checkFormatPainterOnMouseEvent();
 								}
 							}
 						}
@@ -1558,7 +1579,7 @@
 							if (object.getObjectType() === AscDFH.historyitem_type_OleObject && this.handleOleObjectDoubleClick) {
 								this.handleOleObjectDoubleClick(drawing, object, e, x, y, pageIndex);
 								return true;
-							} else if (2 == e.ClickCount && drawing instanceof AscCommonWord.ParaDrawing && drawing.IsMathEquation()) {
+							} else if (2 === e.ClickCount && drawing instanceof AscCommonWord.ParaDrawing && drawing.IsMathEquation()) {
 								this.handleMathDrawingDoubleClick(drawing, e, x, y, pageIndex);
 								return true;
 							}
@@ -1600,10 +1621,12 @@
 								else {
 									this.changeCurrentState(new AscFormat.PreMoveInlineObject(this, object, is_selected, !bInSelect, pageIndex, x, y, bGroupSelection));
 								}
+								this.checkFormatPainterOnMouseEvent();
 							} else {
 								group.resetInternalSelection();
 								this.updateOverlay();
 								this.changeCurrentState(new AscFormat.PreMoveInGroupState(this, group, x, y, e.ShiftKey, e.CtrlKey, object, is_selected));
+								this.checkFormatPainterOnMouseEvent();
 							}
 						}
 						return true;
@@ -1654,6 +1677,7 @@
 						this.arrPreTrackObjects.length = 0;
 						this.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(title, drawing));
 						this.changeCurrentState(new AscFormat.PreMoveState(this, x, y, false, false, drawing, true, true));
+						this.checkFormatPainterOnMouseEvent();
 						this.updateSelectionState();
 						this.updateOverlay();
 
@@ -2796,6 +2820,27 @@
 						}
 					}
 					return nRet;
+				},
+
+				pasteFormattingWithPoint: function (oData) {
+					let oThis = this;
+					this.checkSelectedObjectsAndCallback(function () {
+						oThis.pasteFormatting(oData);
+					}, [], false, 0);
+				},
+				pasteFormatting: function (oData) {
+					if (!oData)
+						return;
+					if(!oData.isDrawingData()) {
+						if(!AscFormat.getTargetTextObject(this)) {
+							return;
+						}
+					}
+					let aSelectedObjects = this.selectedObjects;
+					for (let nDrawing = 0; nDrawing < aSelectedObjects.length; ++nDrawing) {
+						let oSelectedDrawing = aSelectedObjects[nDrawing];
+						oSelectedDrawing.pasteFormatting(oData);
+					}
 				},
 
 				applyTextFunction: function (docContentFunction, tableFunction, args) {
@@ -6515,6 +6560,7 @@
 				resetTracking: function () {
 					this.changeCurrentState(new AscFormat.NullState(this));
 					this.clearTrackObjects();
+					this.clearPreTrackObjects();
 					this.updateOverlay();
 				},
 
@@ -7585,6 +7631,43 @@
 						}
 					}
 					return dShift;
+				},
+
+				getFormatPainterData: function () {
+					let oTargetDocContent = this.getTargetDocContent();
+					if (oTargetDocContent) {
+						let oTextPr = oTargetDocContent.GetDirectTextPr();
+						let oParaPr = oTargetDocContent.GetDirectParaPr();
+						return new CDocumentFormatPainterData(oTextPr, oParaPr, null);
+					}
+					let aSelectedObjects = this.getSelectedArray();
+					if (aSelectedObjects.length === 1) {
+						let oDrawing = aSelectedObjects[0];
+						if (oDrawing.isShape() || oDrawing.isImage()) {
+							return new CDocumentFormatPainterData(null, null, oDrawing);
+						}
+						if (oDrawing.isTable()) {
+							let oTable = oDrawing.graphicObject;
+							let oCell = oTable.CurCell;
+							if (oCell) {
+								let oContent = oCell.Content;
+								let oTextPr = oContent.GetDirectTextPr();
+								let oParaPr = oContent.GetDirectParaPr();
+								return new CDocumentFormatPainterData(oTextPr, oParaPr, null);
+							}
+						} else if (oDrawing.isChart()) {
+							let oChartTitle = oDrawing.getChartTitle();
+							if (oChartTitle) {
+								let oContent = oChartTitle.getDocContent();
+								if (oContent) {
+									let oTextPr = oContent.GetDirectTextPr();
+									let oParaPr = oContent.GetDirectParaPr();
+									return new CDocumentFormatPainterData(oTextPr, oParaPr, null);
+								}
+							}
+						}
+					}
+					return null;
 				},
 
 				getEditorApi: function () {
@@ -10366,6 +10449,7 @@
 
 				this.drawingObjects.swapTrackObjects();
 				this.drawingObjects.changeCurrentState(new GeometryEditState(this.drawingObjects, this.majorObject, this.startX, this.startY));
+				this.checkFormatPainterOnMouseEvent();
 				this.drawingObjects.OnMouseMove(e, x, y, pageIndex);
 			}
 		};
@@ -10456,6 +10540,7 @@
 				} else {
 					this.drawingObjects.addPreTrackObject(new AscFormat.EditShapeGeometryTrack(this.drawing, this.drawingObjects));
 					this.drawingObjects.changeCurrentState(new PreGeometryEditState(this.drawingObjects, this.drawing, x, y, oHit));
+					this.checkFormatPainterOnMouseEvent();
 					return true;
 				}
 			}

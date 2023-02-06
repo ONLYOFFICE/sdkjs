@@ -3128,6 +3128,44 @@
 	CGraphicObjectBase.prototype.clearChartDataCache = function () {
 
 	};
+	CGraphicObjectBase.prototype.pasteFormatting = function (oFormatData) {
+	};
+
+	CGraphicObjectBase.prototype.pasteDrawingFormatting = function (oDrawing) {
+		if(!oDrawing) {
+			return;
+		}
+		if(!this.spPr || !this.setStyle) {
+			return;
+		}
+		if(oDrawing.spPr) {
+			let oSpPr = oDrawing.spPr;
+			let oFill = null, oLn = null;
+			if(oSpPr.Fill) {
+				oFill = oSpPr.Fill.createDuplicate();
+			}
+			if(oSpPr.ln) {
+				oLn = oSpPr.ln.createDuplicate();
+			}
+			if(!this.spPr) {
+				this.setSpPr(new AscFormat.CSpPr());
+			}
+			let oImgSpPr = this.spPr;
+			oImgSpPr.setFill(oFill);
+			oImgSpPr.setLn(oLn);
+		}
+		else {
+			if(this.spPr) {
+				this.setSpPr(null);
+			}
+		}
+		if(oDrawing.style) {
+			this.setStyle(oDrawing.style.createDuplicate());
+		}
+		else{
+			this.setStyle(null);
+		}
+	};
 
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
