@@ -4947,9 +4947,6 @@ CPresentation.prototype.AddNewParagraph = function (bRecalculate) {
 	oController && oController.checkSelectedObjectsAndCallback(oController.addNewParagraph, [], false, AscDFH.historydescription_Presentation_AddNewParagraph);
 	this.Document_UpdateInterfaceState();
 };
-CPresentation.prototype.GetFormatPainterData = function () {
-	return null;
-};
 CPresentation.prototype.Search = function (oProps) {
 	if (true === this.SearchEngine.Compare(oProps))
 		return this.SearchEngine;
