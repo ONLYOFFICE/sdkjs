@@ -97,10 +97,10 @@
 	/**
 	 * @typedef {('none' | 'comments' | 'forms' | 'readOnly')} DocumentEditingRestrictions
 	 * A value that specifies editing restriction of the document:
-	 * * <b>none</b> - block content control
-	 * * <b>comments</b> - inline content control
-	 * * <b>forms</b> - row content control
-	 * * <b>readOnly</b> - cell content control*
+	 * * <b>none</b> - no editing restrictions
+	 * * <b>comments</b> - allow editing of comments
+	 * * <b>forms</b> - allow editing of form fields
+	 * * <b>readOnly</b> - allow no editing
 	 */
 
     var Api = window["asc_docs_api"];
