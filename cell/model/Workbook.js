@@ -4394,7 +4394,7 @@
 	Workbook.prototype.isUserProtectedRangesIntersection = function(range, userId){
 		let res = false;
 		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
-			if (this.aWorksheets[i].userProtectedRangesIntersection(range, userId)) {
+			if (this.aWorksheets[i].isUserProtectedRangesIntersection(range, userId)) {
 				return true;
 			}
 		}
