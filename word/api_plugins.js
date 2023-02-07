@@ -1087,7 +1087,7 @@
 	window["asc_docs_api"].prototype["pluginMethod_AddAddinField"] = function(data)
 	{
 		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument || !Array.isArray(arrData))
+		if (!logicDocument)
 			return;
 		
 		logicDocument.AddAddinField(AscWord.CAddinFieldData.FromObject(data));

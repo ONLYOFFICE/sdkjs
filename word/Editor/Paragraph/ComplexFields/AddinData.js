@@ -54,7 +54,7 @@
 	};
 	CAddinFieldData.prototype.SetValue = function(value)
 	{
-		this.Value = value;
+		this.Value = "" + value;
 	};
 	CAddinFieldData.prototype.GetValue = function()
 	{
@@ -62,7 +62,7 @@
 	};
 	CAddinFieldData.prototype.SetContent = function(content)
 	{
-		this.Content = content;
+		this.Content = "" + content;
 	};
 	CAddinFieldData.prototype.GetContent = function()
 	{

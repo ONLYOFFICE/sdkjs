@@ -66,7 +66,9 @@
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
 	drawingDocument.CanvasHitContext = drawingDocument.CanvasHit.getContext('2d');
-
+	
+	window['asc_docs_api'] = AscCommon.baseEditorsApi;
+	
 	const editor = new AscCommon.baseEditorsApi({});
 	editor.WordControl = drawingDocument;
 	editor.WordControl.m_oDrawingDocument = drawingDocument;
@@ -84,6 +86,8 @@
 	editor.asc_GetRevisionsChangesStack = function(){return []};
 	editor.private_GetLogicDocument = function(){return this.WordControl.m_oLogicDocument;};
 	editor.asc_getKeyboardLanguage = function(){return -1;};
+	
+	
 
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = drawingDocument;

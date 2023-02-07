@@ -45,8 +45,9 @@ const allTests = [
 	'word/api/api.html',
 	'word/api/textInput.html',
 	'word/styles/paraPr.html',
+	'word/plugins/pluginsApi.html',
 	
-	
+
 	'oform/xml/oformXml.html'
 ];
 
