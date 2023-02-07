@@ -93,6 +93,15 @@
      * @example
      * {"Id": 100, "Tag": "CC_Tag", "Lock": 3}
      */
+	
+	/**
+	 * @typedef {('none' | 'comments' | 'forms' | 'readOnly')} DocumentEditingRestrictions
+	 * A value that specifies editing restriction of the document:
+	 * * <b>none</b> - block content control
+	 * * <b>comments</b> - inline content control
+	 * * <b>forms</b> - row content control
+	 * * <b>readOnly</b> - cell content control*
+	 */
 
     var Api = window["asc_docs_api"];
 
@@ -1109,6 +1118,36 @@
 			return;
 		
 		logicDocument.RemoveComplexFieldWrapper(fieldId);
+	};
+	/**
+	 * Set document editing restrictions
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias SetEditingRestrictions
+	 * @param {DocumentEditingRestrictions} restrictions
+	 * @since 7.3.3
+	 * @example
+	 * window.Asc.plugin.executeMethod("SetEditingRestrictions");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_SetEditingRestrictions"] = function(restrictions)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		let _restrictions = null;
+		switch (restrictions)
+		{
+			case "comments": _restrictions = Asc.c_oAscRestrictionType.OnlyComments; break;
+			case "forms": _restrictions = Asc.c_oAscRestrictionType.OnlyForms; break;
+			case "readOnly": _restrictions = Asc.c_oAscRestrictionType.View; break;
+			case "none": _restrictions = Asc.c_oAscRestrictionType.None; break;
+		}
+		
+		if (null === _restrictions)
+			return;
+		
+		this.asc_setRestriction(_restrictions);
 	};
 
 	function private_ReadContentControlCommonPr(commonPr)

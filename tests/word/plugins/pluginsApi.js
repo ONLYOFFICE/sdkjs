@@ -122,5 +122,16 @@ $(function () {
 		assert.strictEqual(p.GetText(), "1 ", "Check the text of the third paragraph");
 	});
 	
+	QUnit.test("Test SetEditingRestrictions", function(assert)
+	{
+		AscTest.ClearDocument();
+		MoveToNewParagraph();
+		
+		assert.strictEqual(logicDocument.CanEdit(), true, "Check if we can edit new document");
+		
+		PluginsApi.pluginMethod_SetEditingRestrictions("readOnly");
+		assert.strictEqual(logicDocument.CanEdit(), false, "Set read only restriction and check if we can edit document");
+	});
+	
 	
 });
