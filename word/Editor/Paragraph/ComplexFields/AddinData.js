@@ -40,13 +40,17 @@
 	 */
 	function CAddinFieldData()
 	{
-		this.Field   = undefined;
+		this.FieldId = undefined;
 		this.Value   = undefined;
 		this.Content = undefined;
 	}
-	CAddinFieldData.prototype.SetField = function(field)
+	CAddinFieldData.prototype.SetFieldId = function(fieldId)
 	{
-		this.Field = field;
+		this.FieldId = "" + fieldId;
+	};
+	CAddinFieldData.prototype.GetFieldId = function()
+	{
+		return this.FieldId;
 	};
 	CAddinFieldData.prototype.SetValue = function(value)
 	{
@@ -70,10 +74,10 @@
 		if (!obj)
 			return newData;
 		
-		if (undefined !== obj.Field)
-			newData.SetField(obj.Field);
-		else if (undefined !== obj["Field"])
-			newData.SetField(obj["Field"]);
+		if (undefined !== obj.FieldId)
+			newData.SetFieldId(obj.FieldId);
+		else if (undefined !== obj["FieldId"])
+			newData.SetFieldId(obj["FieldId"]);
 		
 		if (undefined !== obj.Value)
 			newData.SetValue(obj.Value);
@@ -86,6 +90,20 @@
 			newData.SetContent(obj["Content"]);
 		
 		return newData;
+	};
+	CAddinFieldData.FromField = function(field)
+	{
+		if (!field
+			|| !(field instanceof AscWord.CComplexField)
+			|| !field.IsAddin()
+			|| null === field.GetFieldId())
+			return null;
+		
+		let data = new CAddinFieldData();
+		data.SetFieldId(field.GetFieldId());
+		data.SetValue(field.GetInstruction().GetValue());
+		data.SetContent(field.GetFieldValueText());
+		return data;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CAddinFieldData = CAddinFieldData;

@@ -1252,7 +1252,7 @@ function CDocumentFieldsManager()
 
 CDocumentFieldsManager.prototype.GetNewComplexFieldId = function()
 {
-	return (++this.ComplexFieldCounter);
+	return "" + (++this.ComplexFieldCounter);
 };
 CDocumentFieldsManager.prototype.Register_Field = function(oField)
 {
@@ -22881,12 +22881,83 @@ CDocument.prototype.AddAddinField = function(data)
 	else if (this.IsSelectionUse())
 		this.RemoveSelection();
 	
-	let field = this.AddFieldWithInstruction(" ADDIN " + instruction);
+	let field = this.AddFieldWithInstruction(" ADDIN " + instruction + " ");
 	if (field)
 	{
 		field.SelectFieldValue();
 		this.AddText(innerText);
 	}
+	
+	this.Recalculate();
+	this.UpdateInterface();
+	this.UpdateSelection();
+	this.FinalizeAction();
+};
+/**
+ * Update addin fields
+ * @param arrData
+ */
+CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
+{
+	if (!arrData || !Array.isArray(arrData))
+		return;
+	
+	let allFields   = this.GetAllFields();
+	let paragraphs  = [];
+	let addinFields = {};
+	arrData.forEach(function(data)
+	{
+		let fieldId = data.GetFieldId();
+		for (let index = 0, count = allFields.length; index < count; ++index)
+		{
+			if (allFields[index] instanceof AscWord.CComplexField && allFields[index].GetFieldId() === fieldId)
+			{
+				addinFields[fieldId] = allFields[index];
+				break;
+			}
+		}
+	});
+	
+	for (let fieldId in addinFields)
+	{
+		let field = addinFields[fieldId];
+		field.SelectField();
+		let selectedParagraphs = this.GetSelectedParagraphs();
+		for (let index = 0, count = selectedParagraphs.length; index < count; ++index)
+		{
+			if (-1 === paragraphs.indexOf(selectedParagraphs[index]))
+				paragraphs.push(selectedParagraphs[index]);
+		}
+	}
+	
+	if (this.IsSelectionLocked(changestype_None, {
+		Type      : changestype_2_ElementsArray_and_Type,
+		Elements  : paragraphs,
+		CheckType : AscCommon.changestype_Paragraph_Content
+	}))
+		return;
+	
+	this.StartAction();
+	
+	let logicDocument = this;
+	arrData.forEach(function(data)
+	{
+		let field = addinFields[data.GetFieldId()];
+		if (!field)
+			return;
+		
+		let value = data.GetValue();
+		if (value)
+			field.ChangeInstruction(" ADDIN " + value + " ");
+		
+		let content = data.GetContent();
+		if (content)
+		{
+			field.SelectFieldValue();
+			logicDocument.Remove();
+			logicDocument.AddText(content);
+		}
+	});
 	
 	this.Recalculate();
 	this.UpdateInterface();

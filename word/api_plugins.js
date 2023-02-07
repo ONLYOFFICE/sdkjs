@@ -748,6 +748,14 @@
 	 * @property {?number} WidthPix - The OLE object image width in pixels.
 	 * @property {?number} HeightPix - The OLE object image height in pixels.
 	 */
+	
+	/**
+	 * @typedef {Object} AddinFieldData
+	 * The addin field data.
+	 * @property {string} FieldId - An identifier of the field
+	 * @property {string} Value - The value of the field.
+	 * @property {string} Content - The text content of the field.
+	 */
 
 	/**
 	 * Returns all OLE object data for objects which can be opened by the specified plugin.
@@ -1015,6 +1023,74 @@
 			this.asc_GetPrevRevisionsChange();
 		else
 			this.asc_GetNextRevisionsChange();
+	};
+	/**
+	 * Get all addin fields from the current document
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias GetAllAddinFields
+	 * @since 7.3.3
+	 * @example
+	 * window.Asc.plugin.executeMethod("GetAllAddinFields");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_GetAllAddinFields"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return [];
+		
+		let result = [];
+		let fields = logicDocument.GetAllAddinFields();
+		fields.forEach(function(field)
+		{
+			let fieldData = AscWord.CAddinFieldData.FromField(field);
+			if (fieldData)
+				result.push(fieldData);
+		});
+		
+		return result;
+	};
+	/**
+	 * Update addin fields with the specified data
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias UpdateAddinFields
+	 * @param {AddinFieldData[]} arrData - An array of addin field data
+	 * @since 7.3.3
+	 * @example
+	 * window.Asc.plugin.executeMethod("UpdateAddinFields");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_UpdateAddinFields"] = function(arrData)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !Array.isArray(arrData))
+			return;
+		
+		let arrAddinData = [];
+		arrData.forEach(function(data)
+		{
+			arrAddinData.push(AscWord.CAddinFieldData.FromObject(data));
+		})
+		
+		logicDocument.UpdateAddinFieldsByData(arrAddinData);
+	};
+	/**
+	 * Create new addin field
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias AddAddinField
+	 * @param {AddinFieldData} data - addin field data
+	 * @since 7.3.3
+	 * @example
+	 * window.Asc.plugin.executeMethod("AddAddinField");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_AddAddinField"] = function(data)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !Array.isArray(arrData))
+			return;
+		
+		logicDocument.AddAddinField(AscWord.CAddinFieldData.FromObject(data));
 	};
 
 	function private_ReadContentControlCommonPr(commonPr)
