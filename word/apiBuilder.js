@@ -3076,7 +3076,7 @@
 	}
 
 	/**
-	 * Class representing a document text form.
+	 * Class representing a document text field.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {boolean} comb - Specifies if the text form should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
@@ -3095,7 +3095,7 @@
 	ApiTextForm.prototype.constructor = ApiTextForm;
 
 	/**
-	 * Class representing a document combo box form.
+	 * Class representing a document combo box / dropdown list.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {boolean} editable - Specifies if the combo box text can be edited.
@@ -3115,7 +3115,7 @@
 	ApiComboBoxForm.prototype.constructor = ApiComboBoxForm;
 
 	/**
-	 * Class representing a document checkbox form.
+	 * Class representing a document checkbox / radio button.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {boolean} radio - Specifies if the current checkbox is a radio button. In this case, the key parameter is considered as an identifier for the group of radio buttons.
@@ -3155,7 +3155,7 @@
 	ApiPictureForm.prototype.constructor = ApiPictureForm;
 
 	/**
-	 * Class representing a complex form.
+	 * Class representing a complex field.
 	 * @param oSdt
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
@@ -17430,7 +17430,7 @@
 		return true;
 	};
 	/**
-	 * Checks if the combo box text can be edited.
+	 * Checks if the combo box text can be edited. If it is not editable, then this form is a dropdown list.
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -17493,7 +17493,7 @@
 		return (sRadioGroup ? sRadioGroup : "");
 	};
 	/**
-	 * Sets the radio group key to the current checkbox.
+	 * Sets the radio group key to the current radio button.
 	 * @memberof ApiCheckBoxForm
 	 * @param {string} sKey - Radio group key.
 	 * @typeofeditors ["CDE", "CFE"]
