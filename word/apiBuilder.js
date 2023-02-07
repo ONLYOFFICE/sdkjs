@@ -3079,11 +3079,11 @@
 	 * Class representing a document text field.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} comb - Specifies if the text form should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
-	 * @property {number} maxCharacters - The maximum number of characters in the text form.
+	 * @property {boolean} comb - Specifies if the text field should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
+	 * @property {number} maxCharacters - The maximum number of characters in the text field.
 	 * @property {number} cellWidth - The cell width for each character measured in millimeters. If this parameter is not specified or equal to 0 or less, then the width will be set automatically.
-	 * @property {boolean} multiLine - Specifies if the current fixed size text form is multiline or not.
-	 * @property {boolean} autoFit - Specifies if the text form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * @property {boolean} multiLine - Specifies if the current fixed size text field is multiline or not.
+	 * @property {boolean} autoFit - Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiTextForm(oSdt)
@@ -16936,7 +16936,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Checks if the text form content is autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * Checks if the text field content is autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -16946,9 +16946,9 @@
 		return this.Sdt.IsAutoFitContent();
 	};
 	/**
-	 * Specifies if the text form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bAutoFit - Defines if the text form content is autofit (true) or not (false).
+	 * @param {boolean} bAutoFit - Defines if the text field content is autofit (true) or not (false).
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
@@ -16966,7 +16966,7 @@
 		return true;
 	};
 	/**
-	 * Checks if the current text form is multiline.
+	 * Checks if the current text field is multiline.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -16976,11 +16976,11 @@
 		return this.Sdt.IsMultiLineForm();
 	};
 	/**
-	 * Specifies if the current text form should be miltiline.
+	 * Specifies if the current text field should be miltiline.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bMultiline - Defines if the current text form is multiline (true) or not (false).
+	 * @param {boolean} bMultiline - Defines if the current text field is multiline (true) or not (false).
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @returns {boolean} - return false, if the text form is not fixed size.
+	 * @returns {boolean} - return false, if the text field is not fixed size.
 	 */
 	ApiTextForm.prototype.SetMultiline = function(bMultiline)
 	{
@@ -16998,7 +16998,7 @@
 		return true;
 	};
 	/**
-	 * Returns a limit of the text form characters.
+	 * Returns a limit of the text field characters.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {number} - if this method returns -1 -> the form has no limit for characters
@@ -17012,9 +17012,9 @@
 		return oPr.GetMaxCharacters();
 	};
 	/**
-	 * Sets a limit to the text form characters.
+	 * Sets a limit to the text field characters.
 	 * @memberof ApiTextForm
-	 * @param {number} nChars - The maximum number of characters in the text form. If this parameter is equal to -1, no limit will be set.
+	 * @param {number} nChars - The maximum number of characters in the text field. If this parameter is equal to -1, no limit will be set.
 	 * A limit is required to be set if a comb of characters is applied.
 	 * Maximum value for this parameter is 1000000.
 	 * @typeofeditors ["CDE", "CFE"]
@@ -17042,7 +17042,7 @@
 		return true;
 	};
 	/**
-	 * Checks if the text form is a comb of characters with the same cell width.
+	 * Checks if the text field is a comb of characters with the same cell width.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -17053,10 +17053,10 @@
 		return oPr ? oPr.IsComb() : false;
 	};
 	/**
-	 * Specifies if the text form should be a comb of characters with the same cell width.
+	 * Specifies if the text field should be a comb of characters with the same cell width.
 	 * The maximum number of characters must be set to a positive value.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bComb - Defines if the text form is a comb of characters (true) or not (false).
+	 * @param {boolean} bComb - Defines if the text field is a comb of characters (true) or not (false).
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
@@ -17105,9 +17105,9 @@
 		return true;
 	};
 	/**
-	 * Sets the text to the current text form.
+	 * Sets the text to the current text field.
 	 * @memberof ApiTextForm
-	 * @param {string} sText - The text that will be set to the current text form.
+	 * @param {string} sText - The text that will be set to the current text field.
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
