@@ -11656,12 +11656,14 @@
 		let res = false;
 		if (this.userProtectedRanges) {
 			let oApi = Asc.editor;
-			let sUserId = oApi.DocInfo.get_UserId();
-			for (let i = 0; i < this.userProtectedRanges.length; i++) {
-				let curUserProtectedRange = this.userProtectedRanges[i];
-				if (curUserProtectedRange.intersection(range) && !curUserProtectedRange.isUserCanEdit(sUserId)) {
-					res = true;
-					break;
+			let sUserId = oApi.DocInfo && oApi.DocInfo.get_UserId();
+			if (sUserId) {
+				for (let i = 0; i < this.userProtectedRanges.length; i++) {
+					let curUserProtectedRange = this.userProtectedRanges[i];
+					if (curUserProtectedRange.intersection(range) && !curUserProtectedRange.isUserCanEdit(sUserId)) {
+						res = true;
+						break;
+					}
 				}
 			}
 		}
@@ -11672,9 +11674,9 @@
 		let res = false;
 		if (!userId) {
 			let oApi = Asc.editor;
-			userId = oApi.DocInfo.get_UserId();
+			userId = oApi.DocInfo && oApi.DocInfo.get_UserId();
 		}
-		if (this.userProtectedRanges) {
+		if (this.userProtectedRanges && userId) {
 			for (let i = 0; i < this.userProtectedRanges.length; i++) {
 				let curUserProtectedRange = this.userProtectedRanges[i];
 				if ((!range || curUserProtectedRange.intersection(range))&& !curUserProtectedRange.isUserCanEdit(userId)) {
