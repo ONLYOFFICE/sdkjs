@@ -6282,7 +6282,7 @@ var editor;
 		}
 	};
 	spreadsheet_api.prototype._onUpdateDocumentCanUndoRedo = function () {
-		AscCommon.History._sendCanUndoRedo();
+		AscCommon.History && AscCommon.History._sendCanUndoRedo();
 	};
 
   spreadsheet_api.prototype._onCheckCommentRemoveLock = function(lockElem) {
