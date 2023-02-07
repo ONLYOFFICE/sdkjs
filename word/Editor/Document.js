@@ -22937,7 +22937,7 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 	}))
 		return;
 	
-	this.StartAction();
+	this.StartAction(AscDFH.historydescription_Document_UpdateAddinFields);
 	
 	let logicDocument = this;
 	arrData.forEach(function(data)
@@ -22958,6 +22958,52 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 			logicDocument.AddText(content);
 		}
 	});
+	
+	this.Recalculate();
+	this.UpdateInterface();
+	this.UpdateSelection();
+	this.FinalizeAction();
+};
+/**
+ * Remove field wrapper
+ * @param {string} [fieldId=undefined] if not specified then remove wrapper from current field
+ */
+CDocument.prototype.RemoveComplexFieldWrapper = function(fieldId)
+{
+	let field;
+	if (fieldId)
+	{
+		let allFields = this.GetAllFields();
+		for (let index = 0, count = allFields.length; index < count; ++index)
+		{
+			if (allFields[index] instanceof AscWord.CComplexField && allFields[index].GetFieldId() === fieldId)
+			{
+				field = allFields[index];
+				break;
+			}
+		}
+	}
+	else
+	{
+		field = this.GetCurrentComplexField();
+	}
+	
+	if (!field || !(field instanceof AscWord.CComplexField))
+		return;
+	
+	field.SelectField();
+	let paragraphs = this.GetSelectedParagraphs();
+	
+	if (this.IsSelectionLocked(changestype_None, {
+		Type      : changestype_2_ElementsArray_and_Type,
+		Elements  : paragraphs,
+		CheckType : AscCommon.changestype_Paragraph_Content
+	}))
+		return;
+	
+	this.StartAction(AscDFH.historydescription_Document_RemoveComplexFieldWrapper);
+	
+	field.RemoveFieldWrap();
 	
 	this.Recalculate();
 	this.UpdateInterface();

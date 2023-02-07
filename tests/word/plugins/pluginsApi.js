@@ -99,5 +99,28 @@ $(function () {
 			"Remove the paragraph with the first field and check get addin function");
 	});
 	
+	QUnit.test("Test RemoveFieldWrapper", function(assert)
+	{
+		AscTest.ClearDocument();
+		MoveToNewParagraph();
+		assert.strictEqual(logicDocument.GetAllFields().length, 0, "Check the number of all fields in the empty document");
+		
+		MoveToNewParagraph();
+		logicDocument.AddFieldWithInstruction("PAGE");
+		
+		let p = MoveToNewParagraph();
+		let field = logicDocument.AddFieldWithInstruction("PAGE");
+		assert.strictEqual(logicDocument.GetAllFields().length, 2, "Add two PAGE fields and check count of all fields");
+		
+		logicDocument.UpdateFields(false);
+		
+		assert.strictEqual(p.GetText(), "1 ", "Check the text of the third paragraph");
+		
+		let fieldId = field.GetFieldId();
+		PluginsApi.pluginMethod_RemoveFieldWrapper(fieldId);
+		assert.strictEqual(logicDocument.GetAllFields().length, 1, "Remove field wrapper from second field and check number of fields");
+		assert.strictEqual(p.GetText(), "1 ", "Check the text of the third paragraph");
+	});
+	
 	
 });

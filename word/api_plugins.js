@@ -1092,6 +1092,24 @@
 		
 		logicDocument.AddAddinField(AscWord.CAddinFieldData.FromObject(data));
 	};
+	/**
+	 * Remove field wrapper, leave only the content of the field
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias RemoveFieldWrapper
+	 * @param {string} [fieldId=undefined] - remove wrapper for specified field, if not specified then remove from current field
+	 * @since 7.3.3
+	 * @example
+	 * window.Asc.plugin.executeMethod("RemoveFieldWrapper");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_RemoveFieldWrapper"] = function(fieldId)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		logicDocument.RemoveComplexFieldWrapper(fieldId);
+	};
 
 	function private_ReadContentControlCommonPr(commonPr)
 	{
