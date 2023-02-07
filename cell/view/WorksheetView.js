@@ -17403,11 +17403,6 @@
     };
 
 	WorksheetView.prototype.addAutoFilter = function (styleName, addFormatTableOptionsObj) {
-		//TODO
-		/*if (this.model.isUserProtectedRangesIntersection(new Asc.Range(0, r1, gc_nMaxCol0, r2))) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
-			return false;
-		}*/
 		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
 			return;
 		}
@@ -17570,6 +17565,12 @@
 		}
 
 		var checkFilterRange = filterInfo ? filterInfo.rangeWithoutDiff : filterRange;
+
+		if (this.model.isUserProtectedRangesIntersection(checkFilterRange)) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return false;
+		}
+
 		if (t._checkAddAutoFilter(checkFilterRange, styleName, addFormatTableOptionsObj) === true) {
 			var _doAdd = function () {
 				t._isLockedAll(onChangeAutoFilterCallback);
@@ -17604,7 +17605,35 @@
 			return;
 		}
 
+		var t = this;
+		var ar = this.model.selectionRange.getLast().clone();
+
+		//check user range protect
 		var isChangeStyle = Asc.c_oAscChangeFilterOptions.style === optionType;
+		var isTablePartsContainsRange = this.model.autoFilters._isTablePartsContainsRange(ar);
+		var filterRange = null;
+		if (isChangeStyle) {
+			if (isTablePartsContainsRange !== null) {
+				filterRange = isTablePartsContainsRange.Ref;
+			}
+		} else {
+			if (!val) {
+				if (isTablePartsContainsRange && isTablePartsContainsRange.Ref) {
+					filterRange = isTablePartsContainsRange.Ref;
+				} else if (this.model.AutoFilter) {
+					filterRange = this.model.AutoFilter.Ref;
+				}
+
+			} else {
+				var filterInfo = this.model.autoFilters._getFilterInfoByAddTableProps(ar);
+				filterRange = filterInfo.filterRange;
+			}
+		}
+		if (filterRange && this.model.isUserProtectedRangesIntersection(filterRange)) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return;
+		}
+
 		var isProtectFilter = this.model.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter);
 		var isProtectFormat = this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells);
 		if (!window['AscCommonExcel'].filteringMode || (!isChangeStyle && isProtectFilter) || (isChangeStyle && isProtectFormat)) {
@@ -17616,9 +17645,6 @@
 
 		this.model.workbook.handlers.trigger("cleanCutData", true, true);
 		this.model.workbook.handlers.trigger("cleanCopyData", true);
-
-		var t = this;
-		var ar = this.model.selectionRange.getLast().clone();
 
 		var onChangeAutoFilterCallback = function (isSuccess) {
 			if (false === isSuccess) {
@@ -17633,17 +17659,11 @@
 				case Asc.c_oAscChangeFilterOptions.filter: {
 					//DELETE
 					if (!val) {
-						var filterRange = null;
-						var tablePartsContainsRange = t.model.autoFilters._isTablePartsContainsRange(ar);
-						if (tablePartsContainsRange && tablePartsContainsRange.Ref) {
-							filterRange = tablePartsContainsRange.Ref.clone();
-						} else if (t.model.AutoFilter) {
-							filterRange = t.model.AutoFilter.Ref;
-						}
-
 						if (null === filterRange) {
 							return;
 						}
+
+						filterRange = filterRange && filterRange.clone();
 
 						var deleteFilterCallBack = function (_success) {
 							if (!_success) {
@@ -17680,9 +17700,6 @@
 							}
 						};
 
-						var filterInfo = t.model.autoFilters._getFilterInfoByAddTableProps(ar);
-						filterRange = filterInfo.filterRange;
-
 						t._isLockedCells(filterRange, null, addFilterCallBack)
 					}
 
@@ -17706,16 +17723,8 @@
 						t.draw();
 					};
 
-					var filterRange;
-					//calculate lock range and callback parameters
-					var isTablePartsContainsRange = t.model.autoFilters._isTablePartsContainsRange(ar);
-					if (isTablePartsContainsRange !== null)//if one of the tableParts contains activeRange
-					{
-						filterRange = isTablePartsContainsRange.Ref.clone();
-					}
-
+					filterRange = filterRange && filterRange.clone();
 					t._isLockedCells(filterRange, /*subType*/null, changeStyleFilterCallBack);
-
 					break;
 				}
 			}
