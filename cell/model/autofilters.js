@@ -262,6 +262,27 @@
 				for (var i = 0; i < this.values.length; ++i) {
 					this.values[i].visible = !!visible[this.values[i].val];
 				}
+			},
+
+			getFilterRef: function(ws, activeCell) {
+				let res = null;
+				if (activeCell) {
+					if (ws.AutoFilter && ws.AutoFilter.Ref.contains(activeCell.col, activeCell.row)) {
+						res = ws.AutoFilter.Ref;
+					} else {
+						let table = ws.autoFilter._getTableIntersectionWithActiveCell(activeCell);
+						if (table) {
+							res = table.Ref;
+						}
+					}
+
+				} else if (!this.displayName) {
+					res = ws.AutoFilter && ws.AutoFilter.Ref;
+				} else {
+					let table = ws.getTableByName(this.displayName);
+					res = table && table.Ref;
+				}
+				return res;
 			}
 		};
 		

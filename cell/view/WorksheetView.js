@@ -17403,9 +17403,6 @@
     };
 
 	WorksheetView.prototype.addAutoFilter = function (styleName, addFormatTableOptionsObj) {
-		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
-			return;
-		}
 		// Проверка глобального лока
 		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
 			return;
@@ -17419,9 +17416,6 @@
 		if (!window['AscCommonExcel'].filteringMode) {
 			return;
 		}
-
-		this.model.workbook.handlers.trigger("cleanCutData", true, true);
-		this.model.workbook.handlers.trigger("cleanCopyData", true);
 
 		var t = this;
 		var ar = this.model.selectionRange.getLast().clone();
@@ -17565,13 +17559,11 @@
 		}
 
 		var checkFilterRange = filterInfo ? filterInfo.rangeWithoutDiff : filterRange;
-
-		if (this.model.isUserProtectedRangesIntersection(checkFilterRange)) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
-			return false;
-		}
-
 		if (t._checkAddAutoFilter(checkFilterRange, styleName, addFormatTableOptionsObj) === true) {
+
+			this.model.workbook.handlers.trigger("cleanCutData", true, true);
+			this.model.workbook.handlers.trigger("cleanCopyData", true);
+
 			var _doAdd = function () {
 				t._isLockedAll(onChangeAutoFilterCallback);
 				t._isLockedDefNames(null, null);
@@ -17760,6 +17752,12 @@
 			}
 		}
 
+		let filterRange = autoFilterObject && autoFilterObject.getFilterRef(this.model);
+		if (filterRange && this.model.isUserProtectedRangesIntersection(filterRange)) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return;
+		}
+
 		var nActive = t.model.getActiveNamedSheetViewId();
 		var onChangeAutoFilterCallback = function (isSuccess) {
 			if (false === isSuccess && nActive === null) {
@@ -17808,6 +17806,13 @@
 	WorksheetView.prototype.reapplyAutoFilter = function (tableName) {
 		var t = this;
 		var ar = this.model.selectionRange.getLast().clone();
+
+		let filter = tableName ? ws.getTableByName(tableName) : this.model.AutoFilter;
+		if (filter && filter.Ref && this.model.isUserProtectedRangesIntersection(filter.Ref)) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return;
+		}
+
 		var onChangeAutoFilterCallback = function (isSuccess) {
 			if (false === isSuccess) {
 				return;
@@ -17890,6 +17895,12 @@
 		var t = this;
 		var activeCell = this.model.selectionRange.activeCell.clone();
 		var ar = this.model.selectionRange.getLast().clone();
+
+		let filterRange = autoFilterObject && autoFilterObject.getFilterRef(this.model, activeCell);
+		if (filterRange && this.model.isUserProtectedRangesIntersection(filterRange)) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return;
+		}
 
 		//нельзя применять если столбец, где находится активная ячейка, не определен
 		if (!this.model.getColDataNoEmpty(activeCell.col)) {
@@ -18037,9 +18048,14 @@
 				activeRangeOrCellId = AscCommonExcel.g_oRangeCache.getAscRange(cellId);
 				activeCellOrCellId = new AscCommon.CellBase(activeRangeOrCellId.r1, activeRangeOrCellId.c1);
 			}
+
 			//TODO проверка защиты
 			var pivotTable = this.model.inPivotTable(activeRangeOrCellId);
 			if (pivotTable) {
+				if (pivotTable.location && pivotTable.location.ref && this.model.isUserProtectedRangesIntersection(pivotTable.location.ref)) {
+					this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+					return;
+				}
 				if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.pivotTables)) {
 					return;
 				}
@@ -18048,9 +18064,6 @@
 			}
 		}
 
-		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.sort)) {
-			return;
-		}
 		//autoFilters
 		var sortProps = t.model.autoFilters.getPropForSort(cellId, ar, displayName);
 		var cloneSortProps = sortProps;
@@ -18131,6 +18144,13 @@
 			doSortRange = activeRange;
 		}
 
+		if (doSortRange && this.model.isUserProtectedRangesIntersection(doSortRange)) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return;
+		}
+		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.sort)) {
+			return;
+		}
 
 		this.checkProtectRangeOnEdit([doSortRange], function (success) {
 			if (success) {
@@ -18942,6 +18962,10 @@
 	};
 
 	WorksheetView.prototype._checkAddAutoFilter = function (activeRange, styleName, oTableProps, filterByCellContextMenu) {
+		if (this.model.isUserProtectedRangesIntersection(activeRange)) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return false;
+		}
 		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
 			return;
 		}
@@ -19055,7 +19079,7 @@
 		}
 
 		let rowButton;
-		let colButton
+		let colButton;
 		let autoFilterObject = this.model.autoFilters.getAutoFiltersOptions(this.model, filterProp, function (r, c) {
 			rowButton = r;
 			colButton = c;
@@ -22670,10 +22694,6 @@
 		var sortSettings = null;
 		var t = this;
 
-		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.sort)) {
-			return;
-		}
-
 		//todo добавить локи
 
 		//перед этой функцией необходимо вызвать getSelectionSortInfo - необходимо ли расширять
@@ -22681,6 +22701,15 @@
 		//если мультиселект - дизейбл кнопки sort
 		var selection = t.model.selectionRange.getLast();
 
+		//TODO is it need here?
+		if (t.model.isUserProtectedRangesIntersection(selection)) {
+			t.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return false;
+		}
+
+		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.sort)) {
+			return;
+		}
 		if (this.model.getSheetProtection()) {
 			if (!(t.model.protectedRangesContainsRange(selection) || !t.model.isLockedRange(selection))) {
 				this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
@@ -22870,6 +22899,11 @@
 		var t = this;
 		var selection = t.model.selectionRange.getLast();
 
+		if (t.model.isUserProtectedRangesIntersection(selection)) {
+			t.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return false;
+		}
+
 		if (this.model.getSheetProtection()) {
 			if (!(t.model.protectedRangesContainsRange(selection) || !t.model.isLockedRange(selection))) {
 				this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
@@ -22970,9 +23004,6 @@
 			return;
 		}
 
-		if (this.model.getSheetProtection()) {
-			return;
-		}
 
 		var t = this;
 		var api = window["Asc"]["editor"];
@@ -22981,6 +23012,15 @@
 		var oAutoExpansionTable = t.model.autoFilters.checkTableAutoExpansion(bbox);
 
 		if (oAutoExpansionTable && !applyByArray) {
+
+			if (this.model.isUserProtectedRangesIntersection(oAutoExpansionTable.range)) {
+				this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+				return;
+			}
+			if (this.model.getSheetProtection()) {
+				return;
+			}
+
 			var callback = function (success) {
 				if (!success) {
 					return;
