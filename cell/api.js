@@ -2734,6 +2734,8 @@ var editor;
           t._onUpdateHeaderFooterLock(lockElem);
           //эвент о локе в меню опции scale во вкладке layout
           t._onUpdatePrintScaleLock(lockElem);
+          /*снимаем лок c защищенных юзером диапазонов*/
+          t.handlers.trigger("asc_onLockUserProtectedManager");
         }
       }
     };
@@ -8338,11 +8340,11 @@ var editor;
 			if (sheet) {
 				var userRange = sheet.getUserProtectedRangeById(_element["rangeOrObjectId"]);
 				if (userRange) {
-					userRange.isLock = lockElem.UserId;
+					userRange.obj.isLock = lockElem.UserId;
 					this.handlers.trigger("asc_onRefreshUserProtectedRangesList");
 				}
 			}
-			//this.handlers.trigger("asc_onLockDefNameManager",Asc.c_oAscDefinedNameReason.LockDefNameManager);
+			this.handlers.trigger("asc_onLockUserProtectedManager", true);
 		}
 	};
 

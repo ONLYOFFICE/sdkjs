@@ -11602,9 +11602,11 @@
 
 
 		if (oldObj || newObj) {
-			let cloneNewOnj = newObj.clone();
-			cloneNewOnj.Id = newObj.Id;
-			cloneNewOnj._ws = this;
+			let cloneNewOnj = newObj && newObj.clone();
+			if (cloneNewOnj) {
+				cloneNewOnj.Id = newObj.Id;
+				cloneNewOnj._ws = this;
+			}
 			if (oldObj) {
 				let modelUserRange = this.getUserProtectedRangeById(oldObj.Id);
 				if (modelUserRange) {

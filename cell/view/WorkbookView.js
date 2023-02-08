@@ -5225,42 +5225,36 @@
 			return;
 		}
 
-		var doEdit = function(res) {
-			if (res) {
+		var doEdit = function() {
+			History.Create_NewPoint();
+			History.StartTransaction();
 
-				History.Create_NewPoint();
-				History.StartTransaction();
-
-				if (oldObj && newObj) {
-					//change obj
-					if (oldObj._ws === newObj._ws && oldObj._ws && newObj._ws) {
-						//change
-						newObj._ws.editUserProtectedRanges(oldObj, newObj, true);
-					} else {
-						//remove
-						oldObj._ws.editUserProtectedRanges(oldObj, null, true);
-						//add
-						newObj._ws.editUserProtectedRanges(null, newObj, true);
-					}
-				} else if (oldObj && oldObj._ws) {
+			if (oldObj && newObj) {
+				//change obj
+				if (oldObj._ws === newObj._ws && oldObj._ws && newObj._ws) {
+					//change
+					newObj._ws.editUserProtectedRanges(oldObj, newObj, true);
+				} else {
 					//remove
 					oldObj._ws.editUserProtectedRanges(oldObj, null, true);
-				} else if (newObj && newObj._ws) {
 					//add
 					newObj._ws.editUserProtectedRanges(null, newObj, true);
 				}
+			} else if (oldObj && oldObj._ws) {
+				//remove
+				oldObj._ws.editUserProtectedRanges(oldObj, null, true);
+			} else if (newObj && newObj._ws) {
+				//add
+				newObj._ws.editUserProtectedRanges(null, newObj, true);
+			}
 
-				History.EndTransaction();
+			History.EndTransaction();
 
-				//t.handlers.trigger("asc_onEditDefName", oldName, newName);
+			//t.handlers.trigger("asc_onEditDefName", oldName, newName);
 
-				//условие исключает второй вызов asc_onRefreshDefNameList(первый в unlockDefName)
-				if (!(t.collaborativeEditing.getCollaborativeEditing() && t.collaborativeEditing.getFast())) {
-					t.handlers.trigger("asc_onRefreshUserProtectedRangesList");
-				}
-
-			} else {
-				t.handlers.trigger("asc_onError", c_oAscError.ID.LockCreateDefName, c_oAscError.Level.NoCritical);
+			//условие исключает второй вызов asc_onRefreshDefNameList(первый в unlockDefName)
+			if (!(t.collaborativeEditing.getCollaborativeEditing() && t.collaborativeEditing.getFast())) {
+				t.handlers.trigger("asc_onRefreshUserProtectedRangesList");
 			}
 		};
 		
