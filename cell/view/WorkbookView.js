@@ -3429,6 +3429,27 @@
 		return oRet;
 	};
 
+	WorkbookView.prototype.executeWithoutPreview = function (runFunction) {
+		if (!this.printPreviewState) {
+			runFunction();
+			return;
+		}
+
+		let oldState = this.printPreviewState.isStart();
+		let oldZoom = this.getZoom();
+		if (oldState) {
+			this.printPreviewState.start = false;
+			if (null != this.printPreviewState.realZoom) {
+				this.changeZoom(this.printPreviewState.realZoom, true, true);
+			}
+		}
+		runFunction();
+		this.printPreviewState.start = oldState;
+		if (this.printPreviewState.start) {
+			this.changeZoom(oldZoom, true, true);
+		}
+	};
+
   WorkbookView.prototype.getSimulatePageForOleObject = function (sizes, oRange) {
     var page = new AscCommonExcel.CPagePrint();
     page.indexWorksheet = 0;
