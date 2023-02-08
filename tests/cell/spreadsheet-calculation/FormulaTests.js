@@ -22317,11 +22317,41 @@ $(function () {
 		assert.ok(oParser.parse(), 'SEQUENCE({1,2,3;3,2,1},{1;2},1,1)');
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[0,0]");
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#N/A", "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[0,1]");		// 1
-		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[0,1]");		
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1, "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[0,2]");		
 		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[1,0]");
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[1,0]");		// 1
-		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#N/A", "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[1,1]");		
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 1, "Result of SEQUENCE({1,2,3;3,2,1},{1;2},1,1)[1,2]");
+
+		oParser = new parserFormula('SEQUENCE(1,{1,2,3;3,2,1},{1;2},1)', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(1,{1,2,3;3,2,1},{1;2},1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(1,{1,2,3;3,2,1},{1;2},1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, "Result of SEQUENCE(1,{1,2,3;3,2,1},{1;2},1)[0,1]");		
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1, "Result of SEQUENCE(1,{1,2,3;3,2,1},{1;2},1)[0,2]");		
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result of SEQUENCE(1,{1,2,3;3,2,1},{1;2},1)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2, "Result of SEQUENCE(1,{1,2,3;3,2,1},{1;2},1)[1,1]");		
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 2, "Result of SEQUENCE(1,{1,2,3;3,2,1},{1;2},1)[1,2]");	
+
+		oParser = new parserFormula('SEQUENCE(1,1,{1,2,3;3,2,1},{1;2})', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(1,1,{1,2,3;3,2,1},{1;2})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(1,1,{1,2,3;3,2,1},{1;2})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, "Result of SEQUENCE(1,1,{1,2,3;3,2,1},{1;2})[0,1]");		
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 3, "Result of SEQUENCE(1,1,{1,2,3;3,2,1},{1;2})[0,2]");		
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, "Result of SEQUENCE(1,1,{1,2,3;3,2,1},{1;2})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2, "Result of SEQUENCE(1,1,{1,2,3;3,2,1},{1;2})[1,1]");		
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 1, "Result of SEQUENCE(1,1,{1,2,3;3,2,1},{1;2})[1,2]");
+
+		oParser = new parserFormula('SEQUENCE({1;2},1,1,{1,2,3;3,2,1})', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE({1;2},1,1,{1,2,3;3,2,1})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE({1;2},1,1,{1,2,3;3,2,1})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, "Result of SEQUENCE({1;2},1,1,{1,2,3;3,2,1})[0,1]");		
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1, "Result of SEQUENCE({1;2},1,1,{1,2,3;3,2,1})[0,2]");		
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE({1;2},1,1,{1,2,3;3,2,1})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, "Result of SEQUENCE({1;2},1,1,{1,2,3;3,2,1})[1,1]");		
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 1, "Result of SEQUENCE({1;2},1,1,{1,2,3;3,2,1})[1,2]");	
 
 		
 		oParser = new parserFormula('SEQUENCE(1,1,,{1,2;3,4})', "A2", ws);
