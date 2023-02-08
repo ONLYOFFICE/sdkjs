@@ -5606,14 +5606,11 @@ CMathContent.prototype.ConvertContentView = function(intStart, intEnd, nInputTyp
             this.Remove_FromContent(intStart, intCount);
             this.Add_TextOnPos(intStart, strContent);
 
-            if (this.Content[intStart])
-            {
-                this.Content[intStart].SelectAll();
+            this.Content[intStart].SelectAll();
 
-                this.Selection.Use      = true;
-                this.Selection.StartPos = intStart;
-                this.Selection.EndPos   = intStart;
-            }
+            this.Selection.Use      = true;
+            this.Selection.StartPos = intStart;
+            this.Selection.EndPos   = intStart;
         }
         else
         {
