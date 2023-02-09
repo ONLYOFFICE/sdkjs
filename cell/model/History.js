@@ -359,6 +359,8 @@ function (window, undefined) {
 
 	window['AscCH'].historyitem_Protected_SetPassword = 34;
 
+	window['AscCH'].historyitem_UserProtectedRange_Ref = 1;
+
 function CHistory()
 {
 	this.workbook = null;

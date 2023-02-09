@@ -151,16 +151,31 @@
 		}
 
 		if (r.GetBool()) {
-			this.Id = r.GetString2();
+			this.Id = r.GetString2();m
 		}
 	};
-
 	CUserProtectedRange.prototype.intersection = function(range) {
 		return this.ref.intersection(range);
 	};
-
 	CUserProtectedRange.prototype.isUserCanEdit = function(userId) {
 		return this.usersMap[userId];
+	};
+	CUserProtectedRange.prototype.isInRange = function(bbox) {
+		return bbox.containsRange(this.ref);
+	};
+	CUserProtectedRange.prototype.setOffset = function(offset, addToHistory) {
+		var ref = this.ref.clone();
+		ref.setOffset(offset);
+		this.setLocation(ref, addToHistory);
+	};
+	CUserProtectedRange.prototype.setLocation = function(ref, addToHistory) {
+		if (addToHistory) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoUserProtectedRange, AscCH.historyitem_UserProtectedRange_Ref,
+				this._ws ? this._ws.getId() : null, null,
+				new AscCommonExcel.UndoRedoData_UserProtectedRange(this.Get_Id(),
+					new AscCommonExcel.UndoRedoData_BBox(this.ref), new AscCommonExcel.UndoRedoData_BBox(ref)));
+		}
+		this.ref = ref;
 	};
 
 	CUserProtectedRange.prototype.asc_getRef = function () {

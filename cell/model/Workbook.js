@@ -5837,6 +5837,7 @@
 		var redrawTablesArr = this.autoFilters.insertRows("delCell", oActualRange, c_oAscDeleteOptions.DeleteRows);
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oActualRange, offset);
+			this.updateUserProtectedRangesOffset(oActualRange, offset);
 		}
 		if (false == this.workbook.bUndoChanges && (false == this.workbook.bRedoChanges || this.workbook.bCollaborativeChanges)) {
 			History.LocalChange = true;
@@ -5937,6 +5938,7 @@
 		var redrawTablesArr = this.autoFilters.insertRows("insCell", oActualRange, c_oAscInsertOptions.InsertColumns);
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oActualRange, offset);
+			this.updateUserProtectedRangesOffset(oActualRange, offset);
 		}
 		if (false == this.workbook.bUndoChanges && (false == this.workbook.bRedoChanges || this.workbook.bCollaborativeChanges)) {
 			History.LocalChange = true;
@@ -6017,6 +6019,7 @@
 		var redrawTablesArr = this.autoFilters.insertColumn(oActualRange, nDif);
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oActualRange, offset);
+			this.updateUserProtectedRangesOffset(oActualRange, offset);
 		}
 		if (false == this.workbook.bUndoChanges && (false == this.workbook.bRedoChanges || this.workbook.bCollaborativeChanges)) {
 			History.LocalChange = true;
@@ -6094,6 +6097,7 @@
 		var redrawTablesArr = this.autoFilters.insertColumn(oActualRange, count);
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oActualRange, offset);
+			this.updateUserProtectedRangesOffset(oActualRange, offset);
 		}
 		if (false == this.workbook.bUndoChanges && (false == this.workbook.bRedoChanges || this.workbook.bCollaborativeChanges)) {
 			History.LocalChange = true;
@@ -7416,6 +7420,7 @@
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
+			this.updateUserProtectedRangesOffset(oBBox, offset);
 		}
 
 		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell){
@@ -7461,6 +7466,7 @@
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
+			this.updateUserProtectedRangesOffset(oBBox, offset);
 		}
 
 		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell){
@@ -7502,6 +7508,7 @@
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
+			this.updateUserProtectedRangesOffset(oBBox, offset);
 		}
 
 		this._updateFormulasParents(oActualRange.r1, oActualRange.c1, oActualRange.r2, oActualRange.c2, oBBox, offset, renameRes.shiftedShared);
@@ -7562,6 +7569,7 @@
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
+			this.updateUserProtectedRangesOffset(oBBox, offset);
 		}
 
 		this._updateFormulasParents(oActualRange.r1, oActualRange.c1, oActualRange.r2, oActualRange.c2, oBBox, offset, renameRes.shiftedShared);
@@ -11630,6 +11638,16 @@
 		return res;
 	};
 
+	Worksheet.prototype.deleteUserProtectedRanges = function (range) {
+		for (var i = this.userProtectedRanges.length - 1; i >= 0; --i) {
+			var userProtectedRange = this.userProtectedRanges[i];
+			if (range.containsRange(userProtectedRange.ref)) {
+				this.editUserProtectedRanges(userProtectedRange, null, true);
+			}
+		}
+		return true;
+	};
+
 	Worksheet.prototype.getUserProtectedRangeById = function(id) {
 		var res = null;
 		if(!this.userProtectedRanges)
@@ -11688,6 +11706,44 @@
 			}
 		}
 		return res;
+	};
+
+	Worksheet.prototype.updateUserProtectedRangesOffset = function (range, offset) {
+		if (offset.row < 0 || offset.col < 0) {
+			this.deleteUserProtectedRanges(range);
+		}
+		var bboxShift = AscCommonExcel.shiftGetBBox(range, 0 !== offset.col);
+		this.moveUserProtectedRangesOffset(bboxShift, offset);
+	};
+	Worksheet.prototype.moveUserProtectedRangesOffset = function (range, offset) {
+		var userProtectedRange;
+		for (var i = 0; i < this.userProtectedRanges.length; ++i) {
+			userProtectedRange = this.userProtectedRanges[i];
+			if (userProtectedRange.isInRange(range)) {
+				userProtectedRange.setOffset(offset, true);
+			}
+		}
+	};
+
+	Worksheet.prototype._movePivots = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo) {
+		if (!wsTo) {
+			wsTo = this;
+		}
+		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
+			if (copyRange) {
+				wsTo.deletePivotTables(oBBoxTo);
+				this.copyPivotTable(oBBoxFrom, offset, wsTo);
+			} else {
+				if (this === wsTo) {
+					this.deletePivotTablesOnMove(oBBoxFrom, oBBoxTo);
+					this.movePivotOffset(oBBoxFrom, offset);
+				} else {
+					this.copyPivotTable(oBBoxFrom, offset, wsTo);
+					this._movePivotSlicerWsRefs(oBBoxTo, this, wsTo);
+					this.deletePivotTables(oBBoxFrom, true);
+				}
+			}
+		}
 	};
 
 
