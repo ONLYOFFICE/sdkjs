@@ -14574,12 +14574,10 @@ Paragraph.prototype.GetTextAroundSearchResult = function(nId)
 
 	this.LoadSelectionState(oState);
 
-	let sResult;
+	let result = ["", "", ""];
 	if (sTargetText.length >= nMaxLen)
 	{
-		sResult = "\<b\>";
-		sResult += sTargetText.substr(0, nMaxLen - 1);
-		sResult += "\</b\>...";
+		result[1] = sTargetText.substr(0, nMaxLen - 1) + "...";
 	}
 	else
 	{
@@ -14610,24 +14608,25 @@ Paragraph.prototype.GetTextAroundSearchResult = function(nId)
 		{
 			nBeforeCount = Math.min(arrBefore.length, nExtraCount - arrAfter.length);
 		}
-
-		sResult = "";
+		
+		result[0] = "";
 		for (let nPos = nBeforeCount - 1;  nPos >= 0; --nPos)
 		{
 			let oItem = arrBefore[nPos];
-			sResult += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
+			result[0] += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
 		}
 
-		sResult += "\<b\>" + sTargetText + "\</b\>";
-
+		result[1] = sTargetText;
+		
+		result[2] = "";
 		for (let nPos = 0; nPos < nAfterCount; ++nPos)
 		{
 			let oItem = arrAfter[nPos];
-			sResult += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
+			result[2] += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
 		}
 	}
 
-	return sResult;
+	return result;
 };
 //----------------------------------------------------------------------------------------------------------------------
 Paragraph.prototype.Get_SectionPr = function()
