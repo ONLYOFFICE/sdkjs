@@ -34,7 +34,7 @@
 
 (function (window) {
 
-	function CUserProtectedRange(/*ws*/) {
+	function CUserProtectedRange(ws) {
 		this.ref = null;
 		this.name = null;
 		this.usersMap  = null;
@@ -43,7 +43,7 @@
 		this.warningText = null;
 
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
-		this._ws = null;
+		this._ws = ws;
 		this.isLock = null;
 
 		return this;

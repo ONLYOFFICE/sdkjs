@@ -7385,6 +7385,7 @@
 		this.moveConditionalFormatting(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 		this.moveSparklineGroup(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 		this.moveProtectedRange(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
+		this._moveUserProtectedRange(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 
 
 		if(true == this.workbook.bUndoChanges || true == this.workbook.bRedoChanges) {
@@ -11725,23 +11726,34 @@
 		}
 	};
 
-	Worksheet.prototype._movePivots = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo) {
+	Worksheet.prototype._moveUserProtectedRange = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo) {
 		if (!wsTo) {
 			wsTo = this;
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			if (copyRange) {
-				wsTo.deletePivotTables(oBBoxTo);
-				this.copyPivotTable(oBBoxFrom, offset, wsTo);
+				wsTo.deleteUserProtectedRanges(oBBoxTo);
+				this.copyUserProtectedRanges(oBBoxFrom, offset, wsTo);
 			} else {
 				if (this === wsTo) {
-					this.deletePivotTablesOnMove(oBBoxFrom, oBBoxTo);
-					this.movePivotOffset(oBBoxFrom, offset);
+					this.moveUserProtectedRangesOffset(oBBoxFrom, offset);
 				} else {
-					this.copyPivotTable(oBBoxFrom, offset, wsTo);
-					this._movePivotSlicerWsRefs(oBBoxTo, this, wsTo);
-					this.deletePivotTables(oBBoxFrom, true);
+					this.copyUserProtectedRanges(oBBoxFrom, offset, wsTo);
+					this.deleteUserProtectedRanges(oBBoxFrom);
 				}
+			}
+		}
+	};
+
+	Worksheet.prototype.copyUserProtectedRanges = function (range, offset, wsTo) {
+		var t = this;
+		var userProtectedRange;
+		for (var i = this.userProtectedRanges.length - 1; i >= 0; --i) {
+			userProtectedRange = this.userProtectedRanges[i];
+			if (userProtectedRange.isInRange(range)) {
+				var newUserProtectedRange = userProtectedRange.clone(wsTo);
+				newUserProtectedRange.setOffset(offset, false);
+				wsTo.editUserProtectedRanges(null, newUserProtectedRange, true);
 			}
 		}
 	};
