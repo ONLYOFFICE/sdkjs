@@ -24256,6 +24256,18 @@
 		return false;
 	};
 
+	WorksheetView.prototype.isUserProtectActiveCell = function () {
+		var t = this;
+		var wsModel = this.model;
+		if (wsModel.userProtectedRanges && wsModel.userProtectedRanges.length) {
+			var activeCell = wsModel.selectionRange && wsModel.selectionRange.activeCell;
+			if (activeCell) {
+				return this.model.isUserProtectedRangesIntersection(new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
+			}
+		}
+		return false;
+	};
+
 	WorksheetView.prototype.executeWithFirstActiveCellInMerge = function (runFunction) {
 		var wsModel = this.model;
 		var activeCell = wsModel.selectionRange && wsModel.selectionRange.activeCell;

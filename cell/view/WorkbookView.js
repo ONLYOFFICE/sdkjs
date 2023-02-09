@@ -591,6 +591,11 @@
 					if (!this.canEdit()) {
 						return;
 					}
+					if (this.isUserProtectActiveCell()) {
+						this.input.blur();
+						this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+						return;
+					}
 					if (this.isProtectActiveCell()) {
 						this.input.blur();
 						this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
@@ -808,6 +813,8 @@
 			  }, "canEdit": function () {
 				  return self.canEdit();
 			  }, "isProtectActiveCell": function () {
+				  return self.isProtectActiveCell();
+			  }, "isUserProtectActiveCell": function () {
 				  return self.isProtectActiveCell();
 			  }, "getFormulaRanges": function () {
 			      return self.isActive() ? self.getWorksheet().oOtherRanges : null;
@@ -1959,7 +1966,14 @@
 			needBlur = true;
 		}
 	}
-    ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit, null, needBlurFunc);
+	let checkRange = new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1);
+	if (ws.model.isIntersectionOtherUserProtectedRanges(checkRange)) {
+	  //error
+	  needBlurFunc && needBlurFunc();
+	  this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+	  return;
+	}
+    ws.checkProtectRangeOnEdit([checkRange], doEdit, null, needBlurFunc);
   };
 
   /**
@@ -2030,6 +2044,11 @@
 		  };
 		  var selection = ws._getSelection();
 		  var ranges = selection && selection.ranges;
+		  if (ws.model.isIntersectionOtherUserProtectedRanges(ranges)) {
+			  //error
+			  this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+			  return;
+		  }
 		  if (!ws.objectRender.selectedGraphicObjectsExists()) {
 			  ws.checkProtectRangeOnEdit(ranges, doDelete);
 		  } else {
@@ -2399,6 +2418,14 @@
 			return false;
 		}
 		return ws.isProtectActiveCell();
+	};
+
+	WorkbookView.prototype.isUserProtectActiveCell = function() {
+		var ws = this.getWorksheet();
+		if (!ws) {
+			return false;
+		}
+		return ws.isUserProtectActiveCell();
 	};
 
     WorkbookView.prototype.getDialogSheetName = function () {

@@ -2893,6 +2893,10 @@
 		if (!this.handlers.trigger("canEdit") || this.loadFonts) {
 			return true;
 		}
+		if (this.handlers.trigger("isUserProtectActiveCell")) {
+			this.handlers.trigger("asc_onError", Asc.c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return true;
+		}
 		if (this.handlers.trigger("isProtectActiveCell")) {
 			return true;
 		}
