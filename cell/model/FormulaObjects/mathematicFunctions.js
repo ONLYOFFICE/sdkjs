@@ -294,12 +294,24 @@
 		for (let i = 0; i < maxRows; i++) {
 			res.addRow();
 			for (let j = 0; j < maxColumns; j++) {
-				// TODO add single row check (SEQUENCE({1,2,3;3,2,1},{1,2},1,1))
 				let elem,
 					rowVal = isSingleRow ? (isSingleRowInArray ? rows.array[i][0] : rows) : (rows.array[i] ? rows.array[i][j] : false),
 					columnVal = isSingleColumn ? (isSingleColumnInArray ? columns.array[i][0] : columns) : (columns.array[i] ? columns.array[i][j] : false),
 					startVal = isSingleStart ? (isSingleStartInArray ? start.array[i][0] : start) : (start.array[i] ? start.array[i][j] : false),
 					stepVal = isSingleStep ? (isSingleStepInArray ? step.array[i][0] : step) : (step.array[i] ? step.array[i][j] : false);
+
+				if (!isSingleRow && !isSingleRowInArray && rows.rowCount === 1) {
+					rowVal = rows.array[0][j];
+				}
+				if (!isSingleColumn && !isSingleColumnInArray && columns.rowCount === 1) {
+					columnVal = columns.array[0][j];
+				}
+				if (!isSingleStart && !isSingleStartInArray && start.rowCount === 1) {
+					startVal = start.array[0][j];
+				}
+				if (!isSingleStep && !isSingleStepInArray && step.rowCount === 1) {
+					stepVal = step.array[0][j];
+				}
 
 				// empty val in i-j array position check
 				if (!rowVal || !columnVal || !startVal || !stepVal) {
@@ -331,31 +343,6 @@
 		}
 		return res;
 	};
-
-	// ???
-	function helper(args, func) {
-		let resLength = 0, res = [];
-
-		for (let i = 0; i < args.length; i++) {
-            if (Array.isArray(args[i])) {
-                resLength = resLength < args[i].length ? args[i].length : resLength;
-            }
-		}
-
-        if (resLength < 1) {
-            return false;
-        }
-		
-        for (let i = 0; i < resLength; i++) {
-			res.push(func(args[i]));
-		}
-
-		return res;
-	}
-
-	console.log(helper([3,[1,2],[1,2,3],2], function (elem) {
-		return Array.isArray(elem) ? elem.reduce((a, b) => a + b) : elem;
-	}));
 
 	/**
 	 * @constructor
