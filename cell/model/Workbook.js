@@ -11713,8 +11713,8 @@
 		if (offset.row < 0 || offset.col < 0) {
 			this.deleteUserProtectedRanges(range);
 		}
-		var bboxShift = AscCommonExcel.shiftGetBBox(range, 0 !== offset.col);
-		this.moveUserProtectedRangesOffset(bboxShift, offset);
+
+		this.shiftUserProtectedRanges(range, offset);
 	};
 	Worksheet.prototype.moveUserProtectedRangesOffset = function (range, offset) {
 		var userProtectedRange;
@@ -11754,6 +11754,22 @@
 				var newUserProtectedRange = userProtectedRange.clone(wsTo);
 				newUserProtectedRange.setOffset(offset, false);
 				wsTo.editUserProtectedRanges(null, newUserProtectedRange, true);
+			}
+		}
+	};
+
+	Worksheet.prototype.shiftUserProtectedRanges = function (range, offset, wsTo) {
+		var t = this;
+		var userProtectedRange;
+		for (var i = this.userProtectedRanges.length - 1; i >= 0; --i) {
+			userProtectedRange = this.userProtectedRanges[i];
+
+			if (range.isIntersectForShift(userProtectedRange.ref, offset)) {
+				let newRef = userProtectedRange.ref.clone();
+				newRef.forShift(range, offset);
+				if (!userProtectedRange.ref.isEqual(newRef)) {
+					userProtectedRange.setLocation(newRef, true);
+				}
 			}
 		}
 	};
