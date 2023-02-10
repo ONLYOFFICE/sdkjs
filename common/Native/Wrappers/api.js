@@ -6739,6 +6739,7 @@ function onApiShowRevisionsChange(data) {
                     }
                     break;
                 case Asc.c_oAscRevisionsChangeType.TablePr:
+                case Asc.c_oAscRevisionsChangeType.TableRowPr:
                     commonChanges.push("|Table Settings Changed|");
                     break;
                 case Asc.c_oAscRevisionsChangeType.RowsAdd:

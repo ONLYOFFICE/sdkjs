@@ -18865,54 +18865,78 @@ CTable.prototype.GetPrReviewColor = function()
 };
 CTable.prototype.CheckRevisionsChanges = function(oRevisionsManager)
 {
+	// TODO: Пока у нас нет отдельного типа для изменений настроек у строки
+	//       поэтому мы их передаем как у всей таблицы
+	
 	var nRowsCount = this.GetRowsCount();
 	if (nRowsCount <= 0)
 		return;
-
-	var sTableId = this.GetId();
-	if (true === this.HavePrChange())
+	
+	let tableId       = this.GetId();
+	let table         = this;
+	let tablePrChange = false;
+	function private_FlushTablePrChange(reviewInfo, startRow, endRow)
 	{
-		var oChange = new CRevisionsChange();
-		oChange.put_Paragraph(this);
-		oChange.put_StartPos(0);
-		oChange.put_EndPos(nRowsCount - 1);
-		oChange.put_Type(c_oAscRevisionsChangeType.TablePr);
-		oChange.put_UserId(this.Pr.ReviewInfo.GetUserId());
-		oChange.put_UserName(this.Pr.ReviewInfo.GetUserName());
-		oChange.put_DateTime(this.Pr.ReviewInfo.GetDateTime());
-		oRevisionsManager.AddChange(sTableId, oChange);
+		let change = new CRevisionsChange();
+		change.put_Paragraph(table);
+		change.put_StartPos(startRow);
+		change.put_EndPos(endRow);
+		change.put_Type(c_oAscRevisionsChangeType.TablePr);
+		change.put_UserId(reviewInfo.GetUserId());
+		change.put_UserName(reviewInfo.GetUserName());
+		change.put_DateTime(reviewInfo.GetDateTime());
+		oRevisionsManager.AddChange(tableId, change);
+		tablePrChange = true;
 	}
+	
+	if (this.HavePrChange())
+		private_FlushTablePrChange(this.Pr.ReviewInfo, 0, nRowsCount - 1);
 
-	var oTable = this;
 	function private_FlushTableChange(nType, nStartRow, nEndRow)
 	{
 		if (reviewtype_Common === nType)
 			return;
 
-		var oRow           = oTable.GetRow(nStartRow);
+		var oRow           = table.GetRow(nStartRow);
 		var oRowReviewInfo = oRow.GetReviewInfo();
 
 		var oChange = new CRevisionsChange();
-		oChange.put_Paragraph(oTable);
+		oChange.put_Paragraph(table);
 		oChange.put_StartPos(nStartRow);
 		oChange.put_EndPos(nEndRow);
 		oChange.put_Type(nType === reviewtype_Add ? c_oAscRevisionsChangeType.RowsAdd : c_oAscRevisionsChangeType.RowsRem);
 		oChange.put_UserId(oRowReviewInfo.GetUserId());
 		oChange.put_UserName(oRowReviewInfo.GetUserName());
 		oChange.put_DateTime(oRowReviewInfo.GetDateTime());
-		oRevisionsManager.AddChange(sTableId, oChange);
+		oRevisionsManager.AddChange(tableId, oChange);
+	}
+	
+	function private_FlushTableRowPrChange(reviewInfo, startRow, endRow)
+	{
+		let change = new CRevisionsChange();
+		change.put_Paragraph(table);
+		change.put_StartPos(startRow);
+		change.put_EndPos(endRow);
+		change.put_Type(c_oAscRevisionsChangeType.TableRowPr);
+		change.put_UserId(reviewInfo.GetUserId());
+		change.put_UserName(reviewInfo.GetUserName());
+		change.put_DateTime(reviewInfo.GetDateTime());
+		oRevisionsManager.AddChange(tableId, change);
 	}
 
 	var nType     = reviewtype_Common;
 	var nStartRow = 0;
 	var nEndRow   = 0;
 	var sUserId   = "";
-
+	
 	for (var nCurRow = 0; nCurRow < nRowsCount; ++nCurRow)
 	{
 		var oRow           = this.GetRow(nCurRow);
 		var nRowReviewType = oRow.GetReviewType();
 		var oRowReviewInfo = oRow.GetReviewInfo();
+		
+		if (!tablePrChange && oRow.HavePrChange() && oRow.Pr.ReviewInfo)
+			private_FlushTableRowPrChange(oRow.Pr.ReviewInfo, oRow.GetIndex(), oRow.GetIndex());
 
 		if (reviewtype_Common === nType)
 		{
