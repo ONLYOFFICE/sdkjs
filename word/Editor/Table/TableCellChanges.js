@@ -849,10 +849,16 @@ CChangesTableCellPr.prototype.private_CreateObject = function()
 };
 CChangesTableCellPr.prototype.private_SetValue = function(Value)
 {
-	var oCell = this.Class;
-	oCell.Pr = Value;
-	oCell.Recalc_CompiledPr();
-	oCell.private_UpdateTableGrid();
+	let cell = this.Class;
+	
+	let trackRevisions = !!(cell.Pr.PrChange || Value.PrChange);
+	
+	cell.Pr = Value;
+	cell.Recalc_CompiledPr();
+	cell.private_UpdateTableGrid();
+	
+	if (trackRevisions)
+		cell.private_UpdateTrackRevisions();
 };
 CChangesTableCellPr.prototype.Merge = function(oChange)
 {

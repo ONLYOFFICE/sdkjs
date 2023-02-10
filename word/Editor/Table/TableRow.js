@@ -334,11 +334,16 @@ CTableRow.prototype =
 
 	Set_Pr : function(RowPr)
 	{
+		let isHavePrChange = this.HavePrChange();
+		
 		this.private_AddPrChange();
 		History.Add(new CChangesTableRowPr(this, this.Pr, RowPr));
 		this.Pr = RowPr;
 		this.Recalc_CompiledPr();
 		this.private_UpdateTableGrid();
+		
+		if (isHavePrChange || this.HavePrChange())
+			this.private_UpdateTrackRevisions();
 	},
 
     Get_Before : function()

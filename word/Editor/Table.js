@@ -16392,8 +16392,14 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 
 		isAllSelected = true;
 	}
-
-	if ((bAll || (isCellSelection && !this.ApplyToAll)) && (undefined === nType || c_oAscRevisionsChangeType.TablePr === nType || c_oAscRevisionsChangeType.RowsAdd === nType || c_oAscRevisionsChangeType.RowsRem === nType))
+	
+	if ((bAll || (isCellSelection && !this.ApplyToAll))
+		&& (undefined === nType
+			|| c_oAscRevisionsChangeType.TablePr === nType
+			|| c_oAscRevisionsChangeType.RowsAdd === nType
+			|| c_oAscRevisionsChangeType.RowsRem === nType
+			|| c_oAscRevisionsChangeType.TableRowPr === nType
+		))
 	{
 		if (isAllSelected && (undefined === nType || c_oAscRevisionsChangeType.TablePr === nType) && this.HavePrChange())
 		{
@@ -16410,8 +16416,12 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 
 		for (var nSelectedRowIndex = 0, nSelectedRowsCount = arrSelectedRows.length; nSelectedRowIndex < nSelectedRowsCount; ++nSelectedRowIndex)
 		{
-			var nCurRow        = arrSelectedRows[nSelectedRowIndex];
-			var oRow           = this.GetRow(nCurRow);
+			var nCurRow = arrSelectedRows[nSelectedRowIndex];
+			var oRow    = this.GetRow(nCurRow);
+			
+			if (oRow.HavePrChange() && (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType))
+				oRow.AcceptPrChange();
+			
 			var nRowReviewType = oRow.GetReviewType();
 			if (reviewtype_Add === nRowReviewType && (undefined === nType || c_oAscRevisionsChangeType.RowsAdd === nType))
 			{
@@ -16497,7 +16507,12 @@ CTable.prototype.RejectRevisionChanges = function(nType, bAll)
 		isCellSelection = true;
 	}
 
-	if ((bAll || (this.IsCellSelection() && !this.ApplyToAll)) && (undefined === nType || c_oAscRevisionsChangeType.TablePr === nType || c_oAscRevisionsChangeType.RowsAdd === nType || c_oAscRevisionsChangeType.RowsRem === nType))
+	if ((bAll || (this.IsCellSelection() && !this.ApplyToAll))
+		&& (undefined === nType
+			|| c_oAscRevisionsChangeType.TablePr === nType
+			|| c_oAscRevisionsChangeType.RowsAdd === nType
+			|| c_oAscRevisionsChangeType.RowsRem === nType
+			|| c_oAscRevisionsChangeType.TableRowPr === nType))
 	{
 		if (isAllSelected && (undefined === nType || c_oAscRevisionsChangeType.TablePr === nType) && this.HavePrChange())
 		{
@@ -16514,8 +16529,12 @@ CTable.prototype.RejectRevisionChanges = function(nType, bAll)
 
 		for (var nSelectedRowIndex = 0, nSelectedRowsCount = arrSelectedRows.length; nSelectedRowIndex < nSelectedRowsCount; ++nSelectedRowIndex)
 		{
-			var nCurRow        = arrSelectedRows[nSelectedRowIndex];
-			var oRow           = this.GetRow(nCurRow);
+			var nCurRow = arrSelectedRows[nSelectedRowIndex];
+			var oRow    = this.GetRow(nCurRow);
+			
+			if (oRow.HavePrChange() && (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType))
+				oRow.RejectPrChange();
+			
 			var nRowReviewType = oRow.GetReviewType();
 			if (reviewtype_Add === nRowReviewType && (undefined === nType || c_oAscRevisionsChangeType.RowsAdd === nType))
 			{

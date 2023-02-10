@@ -1176,11 +1176,16 @@ CTableCell.prototype =
 
 	Set_Pr : function(CellPr)
 	{
+		let isHavePrChange = this.HavePrChange();
+		
 		this.private_AddPrChange();
 		History.Add(new CChangesTableCellPr(this, this.Pr, CellPr));
 		this.Pr = CellPr;
 		this.Recalc_CompiledPr();
 		this.private_UpdateTableGrid();
+		
+		if (isHavePrChange || this.HavePrChange())
+			this.private_UpdateTrackRevisions();
 	},
 
     Copy_Pr : function(OtherPr, bCopyOnlyVisualProps)

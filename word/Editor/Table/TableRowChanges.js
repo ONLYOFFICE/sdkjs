@@ -607,10 +607,16 @@ CChangesTableRowPr.prototype.private_CreateObject = function()
 };
 CChangesTableRowPr.prototype.private_SetValue = function(Value)
 {
-	var oRow = this.Class;
-	oRow.Pr = Value;
-	oRow.Recalc_CompiledPr();
-	oRow.private_UpdateTableGrid();
+	let row = this.Class;
+
+	let trackRevisions = !!(row.Pr.PrChange || Value.PrChange);
+	
+	row.Pr = Value;
+	row.Recalc_CompiledPr();
+	row.private_UpdateTableGrid();
+	
+	if (trackRevisions)
+		row.private_UpdateTrackRevisions();
 };
 CChangesTableRowPr.prototype.Merge = function(oChange)
 {
