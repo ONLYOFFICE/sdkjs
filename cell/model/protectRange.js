@@ -247,6 +247,9 @@
 	CUserProtectedRange.prototype.asc_getIsLock = function () {
 		return this.isLock;
 	};
+	CUserProtectedRange.prototype.asc_getId = function () {
+		return this.Id;
+	};
 
 
 	//----------------------------------------------------------export----------------------------------------------------
