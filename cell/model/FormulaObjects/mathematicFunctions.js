@@ -180,7 +180,7 @@
 		return sumX(arg0, arg1, false);
 	};
 
-	function getArrayHelper(args, func) {
+	function getArrayHelper2(args, func) {
 		// check for arrays and find max length
 		let isContainsArray = false,
 			maxRows = 1,
@@ -211,18 +211,18 @@
 
 				for (let k = 0; k < args.length; k++) {
 					let value = args[k];
-					if (cElementType.array === value.type || cElementType.cellsRange === value.type) {
+					if (cElementType.array === value.type) {
 						if (value.isOneElement()) {
 							// single row with single element {}
 							values.push(value.getFirstElement());
 							continue;
 						} else if (value.getCountElementInRow() !== 1 && value.rowCount === 1) {
 							// single row with many elements {1,2,3}
-							values.push(value.array[0][j]);
+							values.push(value.array[0] ? value.array[0][j] : value.array[0]);
 							continue;
 						} else if (value.getCountElementInRow() === 1 && value.rowCount !== 1) {
 							// many rows with single element {1;2;3;4}
-							values.push(value.array[i][0]);
+							values.push(value.array[i] ? value.array[i][0] : value.array[i]);
 							continue;
 						} else {
 							values.push(value.array[i] ? value.array[i][j] : new cError(cErrorType.not_available));
@@ -234,7 +234,75 @@
 				resultArr.addElement(func(values));
 			}
 		}
+		return resultArr;
+	}
 
+	function getArrayHelper(args, func) {
+		// check for arrays and find max length
+		let isContainsArray = false,
+			maxRows = 1,
+			maxColumns = 1;
+		
+		for (let i = 0; i < args.length; i++) {
+			if (cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) {
+				maxRows = args[i].getDimensions().row > maxRows ? args[i].getDimensions().row : maxRows;
+				maxColumns = args[i].getDimensions().col > maxColumns ? args[i].getDimensions().col : maxColumns;
+				isContainsArray = true;
+			}
+		}
+
+		if (!isContainsArray) {
+			return false;
+		}
+
+		let resultArr = new cArray();
+
+		for (let i = 0; i < maxRows; i++) {
+			resultArr.addRow();
+			for (let j = 0; j < maxColumns; j++) {
+				let values = [];
+
+				for (let k = 0; k < args.length; k++) {
+					let value = args[k];
+					if (cElementType.array === value.type) {
+						if (value.isOneElement()) {
+							// single row with single element {}
+							values.push(value.getFirstElement());
+							continue;
+						} else if (value.getCountElementInRow() !== 1 && value.rowCount === 1) {
+							// single row with many elements {1,2,3}
+							values.push(value.array[0] ? value.array[0][j] : value.array[0]);
+							continue;
+						} else if (value.getCountElementInRow() === 1 && value.rowCount !== 1) {
+							// many rows with single element {1;2;3;4}
+							values.push(value.array[i] ? value.array[i][0] : value.array[i]);
+							continue;
+						} else {
+							values.push(value.array[i] ? value.array[i][j] : new cError(cErrorType.not_available));
+						}
+					} else if (cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type) {
+						if (value.isOneElement()) {
+							// single row with single element С17:C17
+							values.push(value.getFirstElement());
+							continue;
+						} else if (value.getDimensions().col !== 1 && value.getDimensions().row  === 1) {
+							// single row with many elements С17:E17
+							values.push(value.getValueByRowCol(0, j));
+							continue;
+						} else if (value.getDimensions().col === 1 && value.getDimensions().row !== 1) {
+							// many rows with single element C17:C20
+							values.push(value.getValueByRowCol(i, 0));
+							continue;
+						} else {
+							values.push(value.getValueByRowCol(i, j) ? value.getValueByRowCol(i, j) : new cError(cErrorType.not_available));
+						}
+					} else {
+						values.push(args[k]);
+					}
+				}
+				resultArr.addElement(func(values));
+			}
+		}
 		return resultArr;
 	}
 
