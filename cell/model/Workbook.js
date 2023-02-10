@@ -11692,6 +11692,7 @@
 	};
 
 	Worksheet.prototype.isUserProtectedRangesIntersection = function(range, userId){
+		//range - array of ranges or range
 		let res = false;
 		if (!userId) {
 			let oApi = Asc.editor;
@@ -11700,7 +11701,13 @@
 		if (this.userProtectedRanges && userId) {
 			for (let i = 0; i < this.userProtectedRanges.length; i++) {
 				let curUserProtectedRange = this.userProtectedRanges[i];
-				if ((!range || curUserProtectedRange.intersection(range))&& !curUserProtectedRange.isUserCanEdit(userId)) {
+				if (range && range.length) {
+					for (let j = 0; j < range.length; j++) {
+						if (curUserProtectedRange.intersection(range[j])&& !curUserProtectedRange.isUserCanEdit(userId)) {
+							return true;
+						}
+					}
+				} else if ((!range || curUserProtectedRange.intersection(range))&& !curUserProtectedRange.isUserCanEdit(userId)) {
 					res = true;
 					break;
 				}
