@@ -68,7 +68,7 @@
 		rt_FMLA_ERROR: 11,
 		rt_BEGIN_SHEET_DATA: 145,
 		rt_END_SHEET_DATA: 146
-	}
+	};
 //dif:
 //Version:2 добавлены свойства колонок и строк CustomWidth, CustomHeight(раньше считались true)
     /** @enum */
@@ -325,7 +325,9 @@
         ProtectedRange: 43,
         CellWatches: 44,
         CellWatch: 45,
-        CellWatchR: 46
+        CellWatchR: 46,
+        UserProtectedRanges: 47,
+        UserProtectedRange: 48,
     };
     /** @enum */
     var c_oSerWorksheetPropTypes =
@@ -1106,7 +1108,19 @@
         SecurityDescriptor: 6
 	};
 
-	var c_oSerWorkbookProtection = {
+    var c_oSerUserProtectedRangeTypes = {
+        SqRef: 0,
+        Name: 1,
+        Users: 2,
+        User: 3,
+        UserId: 4,
+        UserGroups: 5,
+        UserGroup: 6,
+        UserGroupId: 7,
+        WarningText: 8
+    };
+
+    var c_oSerWorkbookProtection = {
 		WorkbookAlgorithmName: 0,
 		WorkbookSpinCount: 1,
 		WorkbookHashValue: 2,
@@ -3901,6 +3915,9 @@
             if (ws.aCellWatches && ws.aCellWatches.length > 0) {
                 this.bs.WriteItem(c_oSerWorksheetsTypes.CellWatches, function(){oThis.WriteCellWatches(ws.aCellWatches);});
             }
+            if (ws.userProtectedRanges && ws.userProtectedRanges.length > 0) {
+                this.bs.WriteItem(c_oSerWorksheetsTypes.UserProtectedRanges, function(){oThis.WriteUserProtectedRanges(ws.userProtectedRanges);});
+            }
         };
 		this.WriteDataValidations = function(dataValidations)
 		{
@@ -5602,7 +5619,72 @@
             if (null !== drawing.graphicObject) {
                 this.bs.WriteItem(c_oSer_LegacyDrawingHF.DrawingShape, function(){pptx_content_writer.WriteDrawing(oThis.memory, drawing.graphicObject, null, null, null);});
             }
-        }
+        };
+        this.WriteUserProtectedRanges = function (aUserProtectedRanges) {
+            var oThis = this;
+            for (var i = 0, length = aUserProtectedRanges.length; i < length; ++i) {
+                this.bs.WriteItem(c_oSerWorksheetsTypes.UserProtectedRange, function () {
+                    oThis.WriteUserProtectedRange(aUserProtectedRanges[i]);
+                });
+            }
+        };
+        this.WriteUserProtectedRange = function (oUserProtectedRange) {
+            var oThis = this;
+            if (null != oUserProtectedRange.name) {
+                this.memory.WriteByte(c_oSerUserProtectedRangeTypes.Name);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(oUserProtectedRange.name);
+            }
+
+            if (null != oUserProtectedRange.ref) {
+                this.memory.WriteByte(c_oSerUserProtectedRangeTypes.SqRef);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                var sqRef = getSqRefString(oUserProtectedRange.sqref);
+                this.memory.WriteString2(sqRef);
+            }
+
+            if (null != this.usersMap) {
+                let users = this.asc_getUsers();
+                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.Users, function () {
+                    oThis.WriteUserProtectedRangeUsers(users);
+                });
+            }
+
+            if (null != this.userGroupsMap) {
+                let users = this.asc_getUserGroups();
+                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.UserGroups, function () {
+                    oThis.WriteUserProtectedRangeUserGroups(users);
+                });
+            }
+
+            if (null != this.warningText) {
+                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.WarningText, function () {
+                    oThis.memory.WriteString2(oThis.warningText);//WriteString2 ?
+                });
+            }
+        };
+
+        this.WriteUserProtectedRangeUsers = function (users) {
+            var oThis = this;
+            for (var i = 0, length = users.length; i < length; ++i) {
+                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.User, function () {
+                    oThis.memory.WriteByte(c_oSerUserProtectedRangeTypes.UserId);
+                    oThis.memory.WriteByte(c_oSerPropLenType.Variable);
+                    oThis.memory.WriteString2(users[i]);
+                });
+            }
+        };
+
+        this.WriteUserProtectedRangeUserGroups = function (userGroups) {
+            var oThis = this;
+            for (var i = 0, length = userGroups.length; i < length; ++i) {
+                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.UserGroups, function () {
+                    oThis.memory.WriteByte(c_oSerUserProtectedRangeTypes.UserGroupId);
+                    oThis.memory.WriteByte(c_oSerPropLenType.Variable);
+                    oThis.memory.WriteString2(groups[i]);
+                });
+            }
+        };
     }
 	/** @constructor */
 	function BinaryOtherTableWriter(memory, wb)
