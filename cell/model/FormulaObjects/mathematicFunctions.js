@@ -187,7 +187,11 @@
 			maxColumns = 1;
 		
 		for (let i = 0; i < args.length; i++) {
-			if (cElementType.array === args[i].type || cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type) {
+			if (cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type) {
+				// TODO check for an array of empty values
+				args[i] = args[i].getFullArray();
+			} 
+			if (cElementType.array === args[i].type) {
 				maxRows = args[i].getDimensions().row > maxRows ? args[i].getDimensions().row : maxRows;
 				maxColumns = args[i].getDimensions().col > maxColumns ? args[i].getDimensions().col : maxColumns;
 				isContainsArray = true;
@@ -203,10 +207,34 @@
 		for (let i = 0; i < maxRows; i++) {
 			resultArr.addRow();
 			for (let j = 0; j < maxColumns; j++) {
-				resultArr.addElement(func(args, i, j));
+				let values = [];
+
+				for (let k = 0; k < args.length; k++) {
+					let value = args[k];
+					if (cElementType.array === value.type || cElementType.cellsRange === value.type) {
+						if (value.isOneElement()) {
+							// single row with single element {}
+							values.push(value.getFirstElement());
+							continue;
+						} else if (value.getCountElementInRow() !== 1 && value.rowCount === 1) {
+							// single row with many elements {1,2,3}
+							values.push(value.array[0][j]);
+							continue;
+						} else if (value.getCountElementInRow() === 1 && value.rowCount !== 1) {
+							// many rows with single element {1;2;3;4}
+							values.push(value.array[i][0]);
+							continue;
+						} else {
+							values.push(value.array[i] ? value.array[i][j] : new cError(cErrorType.not_available));
+						}
+					} else {
+						values.push(args[k]);
+					}
+				}
+				resultArr.addElement(func(values));
 			}
 		}
-		
+
 		return resultArr;
 	}
 
@@ -5618,133 +5646,40 @@
 			return res;
 		}
 
-		function sequenceRangeArray(args, row, col) {
+		function sequenceRangeArray(args) {
 			const EXPECTED_MAX_ARRAY = 10223960;
-			let rows, isSingleRow = false, isSingleRowInArray = false,
-				columns, isSingleColumn = false, isSingleColumnInArray = false,
-				start, isSingleStart = false, isSingleStartInArray = false,
-				step, isSingleStep = false, isSingleStepInArray = false;
+			let rowVal = args[0],
+				columnVal = args[1],
+				startVal = args[2],
+				stepVal = args[3];
 	
-			// check empty or undefined
-			if ((!args[0]) || cElementType.empty === args[0].type) {
-				rows = new cNumber(1);
-			} else {
-				rows = args[0];
-			}
-	
-			if ((!args[1]) || cElementType.empty === args[1].type) {
-				columns = new cNumber(1);
-			} else {
-				columns = args[1];
-			}
-	
-			if ((!args[2]) || cElementType.empty === args[2].type) {
-				start = new cNumber(1);
-			} else {
-				start = args[2];
-			}
-	
-			if ((!args[3]) || cElementType.empty === args[3].type) {
-				step = new cNumber(1);
-			} else {
-				step = args[3];
-			}
-	
-			// ------------------------- arg0 type check -------------------------//
-			if (cElementType.cellsRange === rows.type || cElementType.cellsRange3D === rows.type || cElementType.array === rows.type) {
-				if (rows.isOneElement()) {
-					isSingleRow = true;
-					rows = rows.getFirstElement();
-				} else if (rows.getCountElementInRow() === 1) {
-					isSingleRowInArray = true;
-					isSingleRow = true;
-				}
-			} else {
-				isSingleRow = true;
-				rows = rows.tocNumber();
-			}
-	
-			if (cElementType.empty === rows.type) {
-				// TODO should be #CALC error
-				rows = new cError(cErrorType.wrong_value_type);
-			}
-	
-			// ------------------------- arg1 type check -------------------------//
-			if (cElementType.cellsRange === columns.type || cElementType.cellsRange3D === columns.type || cElementType.array === columns.type) {
-				if (columns.isOneElement()) {
-					isSingleColumn = true;
-					columns = columns.getFirstElement();
-				} else if (columns.getCountElementInRow() === 1) {
-					isSingleColumnInArray = true;
-					isSingleColumn = true;
-				}
-			} else {
-				isSingleColumn = true;
-				columns = columns.tocNumber();
-			}
-	
-			if (cElementType.empty === columns.type) {
-				// TODO should be #CALC error
-				columns = new cError(cErrorType.wrong_value_type);
-			}
-	
-			// ------------------------- arg2 type check -------------------------//
-			if (cElementType.cellsRange === start.type || cElementType.cellsRange3D === start.type || cElementType.array === start.type) {
-				if (start.isOneElement()) {
-					isSingleStart = true;
-					start = start.getFirstElement();
-				} else if (start.getCountElementInRow() === 1) {
-					isSingleStartInArray = true;
-					isSingleStart = true;
-				}
-			} else {
-				isSingleStart = true;
-				start = start.tocNumber();
-			}
-	
-			// ------------------------- arg3 type check -------------------------//
-			if (cElementType.cellsRange === step.type || cElementType.cellsRange3D === step.type || cElementType.array === step.type) {
-				if (step.isOneElement()) {
-					isSingleStep = true;
-					step = step.getFirstElement();
-				} else if (step.getCountElementInRow() === 1) {
-					isSingleStepInArray = true;
-					isSingleStep = true;
-				}
-			} else {
-				isSingleStep = true;
-				step = step.tocNumber();
-			}
-	
-			let elem,
-				rowVal = isSingleRow ? (isSingleRowInArray ? rows.array[row][0] : rows) : (rows.array[row] ? rows.array[row][col] : false),
-				columnVal = isSingleColumn ? (isSingleColumnInArray ? columns.array[row][0] : columns) : (columns.array[row] ? columns.array[row][col] : false),
-				startVal = isSingleStart ? (isSingleStartInArray ? start.array[row][0] : start) : (start.array[row] ? start.array[row][col] : false),
-				stepVal = isSingleStep ? (isSingleStepInArray ? step.array[row][0] : step) : (step.array[row] ? step.array[row][col] : false);
-	
-			if (!isSingleRow && !isSingleRowInArray && rows.rowCount === 1) {
-				rowVal = rows.array[0][col];
-			}
-			if (!isSingleColumn && !isSingleColumnInArray && columns.rowCount === 1) {
-				columnVal = columns.array[0][col];
-			}
-			if (!isSingleStart && !isSingleStartInArray && start.rowCount === 1) {
-				startVal = start.array[0][col];
-			}
-			if (!isSingleStep && !isSingleStepInArray && step.rowCount === 1) {
-				stepVal = step.array[0][col];
-			}
-	
-			// empty val in i-j array position check
+			// undefined val check
 			if (!rowVal || !columnVal || !startVal || !stepVal) {
-				elem = new cError(cErrorType.not_available);
-				return elem;
-			} else {
-				rowVal = rowVal.tocNumber();
-				columnVal = columnVal.tocNumber();
-				startVal = startVal.tocNumber();
-				stepVal = stepVal.tocNumber();
+				return new cError(cErrorType.not_available);;
 			}
+	
+			// ------------------------- arg0 empty val check -------------------------//
+			if (cElementType.empty === rowVal.type) {
+				rowVal = new cNumber(1);
+			}
+			// ------------------------- arg1 empty type check -------------------------//
+			if (cElementType.empty === columnVal.type) {
+				columnVal = new cNumber(1);
+			}
+			// ------------------------- arg2 empty type check -------------------------//
+			if (cElementType.empty === startVal.type) {
+				startVal = new cNumber(1);
+			}
+			// ------------------------- arg3 empty type check -------------------------//
+			if (cElementType.empty === stepVal.type) {
+				stepVal = new cNumber(1);
+			}
+	
+			let elem;
+			rowVal = rowVal.tocNumber();
+			columnVal = columnVal.tocNumber();
+			startVal = startVal.tocNumber();
+			stepVal = stepVal.tocNumber();
 			
 			if (cElementType.error === rowVal.type) {
 				elem = rowVal;
@@ -5790,14 +5725,6 @@
  
 		if (cElementType.cell === rows.type || cElementType.cell3D === rows.type) {
 			rows = rows.getValue();
-		} else if (cElementType.cellsRange === rows.type || cElementType.cellsRange3D === rows.type) {
-			if (rows.isOneElement()) {
-				rows = rows.getFirstElement();
-			} else {
-				rows = new cError(cErrorType.wrong_value_type);
-			}
-		} else if (cElementType.array === rows.type) {
-			rows = rows.getElementRowCol(0, 0);
 		}
 
 		if (cElementType.empty === rows.type) {
@@ -5814,14 +5741,6 @@
 
 		if (cElementType.cell === columns.type || cElementType.cell3D === columns.type) {
 			columns = columns.getValue();
-		} else if (cElementType.cellsRange === columns.type || cElementType.cellsRange3D === columns.type) {
-			if (columns.isOneElement()) {
-				columns = columns.getFirstElement();
-			} else {
-				columns = new cError(cErrorType.wrong_value_type);
-			}
-		} else if (cElementType.array === columns.type) {
-			columns = columns.getElementRowCol(0, 0);
 		}
 
 		if (cElementType.empty === columns.type) {
@@ -5838,14 +5757,6 @@
 
 		if (cElementType.cell === start.type || cElementType.cell3D === start.type) {
 			start = start.getValue();
-		} else if (cElementType.cellsRange === start.type || cElementType.cellsRange3D === start.type) {
-			if (start.isOneElement()) {
-				start = start.getFirstElement();
-			} else {
-				start = new cError(cErrorType.wrong_value_type);
-			}
-		} else if (cElementType.array === start.type) {
-			start = start.getElementRowCol(0, 0);
 		}
 
 		// ------------------------- arg3 type check -------------------------//
@@ -5857,14 +5768,6 @@
 
 		if (cElementType.cell === step.type || cElementType.cell3D === step.type) {
 			step = step.getValue();
-		} else if (cElementType.cellsRange === step.type || cElementType.cellsRange3D === step.type) {
-			if (step.isOneElement()) {
-				step = step.getFirstElement();
-			} else {
-				step = new cError(cErrorType.wrong_value_type);
-			}
-		} else if (cElementType.array === step.type) {
-			step = step.getElementRowCol(0, 0);
 		}
 
 		rows = rows.tocNumber();

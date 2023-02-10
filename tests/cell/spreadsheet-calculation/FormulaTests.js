@@ -21848,8 +21848,33 @@ $(function () {
 		ws.getRange2("G16").setValue("2s");
 		ws.getRange2("G17").setValue("#N/A");
 		ws.getRange2("G18").setValue("{2;3;4;5}");
+		ws.getRange2("G19").setValue("1");
+		ws.getRange2("G20").setValue("2");
+		ws.getRange2("G21").setValue("3");
+		ws.getRange2("G22").setValue("4");
+		ws.getRange2("H19").setValue("5");
+		ws.getRange2("H20").setValue("6");
+		ws.getRange2("H21").setValue("7");
+		ws.getRange2("H22").setValue("8");
 
+		// cellsRange
+		oParser = new parserFormula('SEQUENCE(G19:G22)', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(G19:G22)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(G19:G22)[0,0]");		// 0
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SEQUENCE(G19:G22)[0,1]");		
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE(G19:G22)[1,0]");		// 0
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 1, "Result of SEQUENCE(G19:G22)[2,0]");		// 0
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 1, "Result of SEQUENCE(G19:G22)[3,0]");		// 0
 
+		// oParser = new parserFormula('SEQUENCE(G19:G22, G19:G20, G21:G22)', "A2", ws);
+		// assert.ok(oParser.parse(), 'SEQUENCE(G19:G22, G19:G20, G21:G22)');
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(G19:G22, G19:G20, G21:G22)[0,0]");		
+		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SEQUENCE(G19:G22, G19:G20, G21:G22)[0,1]");		
+		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE(G19:G22, G19:G20, G21:G22)[1,0]");		
+		// assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 1, "Result of SEQUENCE(G19:G22, G19:G20, G21:G22)[2,0]");		
+		// assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 1, "Result of SEQUENCE(G19:G22, G19:G20, G21:G22)[3,0]");		
 
 
 		oParser = new parserFormula('SEQUENCE(G10)', "A2", ws);
