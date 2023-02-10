@@ -8763,7 +8763,8 @@ Paragraph.prototype.SelectAll = function(Direction)
 
 	this.Selection.StartManually = false;
 	this.Selection.EndManually   = false;
-
+	
+	this.Set_ParaContentPos(EndPos, true, -1, -1);
 	this.Set_SelectionContentPos(StartPos, EndPos);
 };
 Paragraph.prototype.Select_Math = function(ParaMath)
