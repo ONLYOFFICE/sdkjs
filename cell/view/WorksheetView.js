@@ -9959,6 +9959,11 @@
             }
         }
 
+		isIntersection = this.model.isUserProtectedRangesIntersection(ar);
+		if (true === isIntersection) {
+			cell_info.isUserProtected = true;
+		}
+
 		if (null !== curTablePart) {
 			var tableAr = curTablePart.Ref.clone();
 			isIntersection = this._recalcRangeByInsertRowsAndColumns(sheetId, tableAr);

@@ -11694,6 +11694,10 @@
 	Worksheet.prototype.isUserProtectedRangesIntersection = function(range, userId){
 		//range - array of ranges or range
 		let res = false;
+		if (!this.userProtectedRanges || !this.userProtectedRanges.length) {
+			return res;
+		}
+
 		if (!userId) {
 			let oApi = Asc.editor;
 			userId = oApi.DocInfo && oApi.DocInfo.get_UserId();

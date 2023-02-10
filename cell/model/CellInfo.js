@@ -208,6 +208,9 @@
 		this.selectedColsCount = null;
 		this.isLockedHeaderFooter = false;
 
+		//user protection range info
+		this.isUserProtected = null;
+
 		// ToDo not used
 		this.border = null;
 	}
@@ -280,6 +283,9 @@
 	};
 	asc_CCellInfo.prototype.asc_getLockedHeaderFooter = function () {
 		return this.isLockedHeaderFooter;
+	};
+	asc_CCellInfo.prototype.asc_getUserProtected = function () {
+		return this.isUserProtected;
 	};
 
 	/** @constructor */
@@ -409,6 +415,8 @@
 	prot["asc_getDataValidation"] = prot.asc_getDataValidation;
 	prot["asc_getSelectedColsCount"] = prot.asc_getSelectedColsCount;
 	prot["asc_getLockedHeaderFooter"] = prot.asc_getLockedHeaderFooter;
+	prot["asc_getUserProtected"] = prot.asc_getUserProtected;
+
 
 	window["Asc"].asc_CDefName = window["Asc"]["asc_CDefName"] = asc_CDefName;
 	prot = asc_CDefName.prototype;
