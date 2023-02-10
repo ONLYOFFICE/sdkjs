@@ -8353,6 +8353,13 @@ var editor;
 		this.wb.unlockUserProtectedRanges();
 	};
 
+	spreadsheet_api.prototype.asc_checkUserProtectedRangeName = function(checkName) {
+		if (!this.wbModel) {
+			return;
+		}
+		return this.wbModel.checkUserProtectedRangeName(checkName);
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -8903,10 +8910,12 @@ var editor;
   prot["asc_ImportXmlStart"] = prot.asc_ImportXmlStart;
   prot["asc_ImportXmlEnd"]   = prot.asc_ImportXmlEnd;
 
-  prot["asc_addUserProtectedRange"] = prot.asc_addUserProtectedRange;
-  prot["asc_changeUserProtectedRange"]   = prot.asc_changeUserProtectedRange;
-  prot["asc_deleteUserProtectedRange"]   = prot.asc_deleteUserProtectedRange;
-  prot["asc_getUserProtectedRanges"]   = prot.asc_getUserProtectedRanges;
+  prot["asc_addUserProtectedRange"]       = prot.asc_addUserProtectedRange;
+  prot["asc_changeUserProtectedRange"]    = prot.asc_changeUserProtectedRange;
+  prot["asc_deleteUserProtectedRange"]    = prot.asc_deleteUserProtectedRange;
+  prot["asc_getUserProtectedRanges"]      = prot.asc_getUserProtectedRanges;
+  prot["asc_checkUserProtectedRangeName"] = prot.asc_checkUserProtectedRangeName;
+
 
 
 

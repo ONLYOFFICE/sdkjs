@@ -151,7 +151,7 @@
 		}
 
 		if (r.GetBool()) {
-			this.Id = r.GetString2();m
+			this.Id = r.GetString2();
 		}
 	};
 	CUserProtectedRange.prototype.intersection = function(range) {

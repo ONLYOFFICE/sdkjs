@@ -4401,6 +4401,16 @@
 		return res;
 	};
 
+	Workbook.prototype.checkUserProtectedRangeName = function (name) {
+		var res = c_oAscDefinedNameReason.OK;
+		//TODO пересмотреть проверку на rx_defName
+		if (!AscCommon.rx_defName.test(name.toLowerCase()) || name.length > g_nDefNameMaxLength) {
+			return c_oAscDefinedNameReason.WrongName;
+		}
+
+		return res;
+	};
+
 
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
