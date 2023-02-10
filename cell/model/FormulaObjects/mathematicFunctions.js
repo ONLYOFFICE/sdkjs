@@ -180,63 +180,6 @@
 		return sumX(arg0, arg1, false);
 	};
 
-	function getArrayHelper2(args, func) {
-		// check for arrays and find max length
-		let isContainsArray = false,
-			maxRows = 1,
-			maxColumns = 1;
-		
-		for (let i = 0; i < args.length; i++) {
-			if (cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type) {
-				// TODO check for an array of empty values
-				args[i] = args[i].getFullArray();
-			} 
-			if (cElementType.array === args[i].type) {
-				maxRows = args[i].getDimensions().row > maxRows ? args[i].getDimensions().row : maxRows;
-				maxColumns = args[i].getDimensions().col > maxColumns ? args[i].getDimensions().col : maxColumns;
-				isContainsArray = true;
-			}
-		}
-
-		if (!isContainsArray) {
-			return false;
-		}
-
-		let resultArr = new cArray();
-
-		for (let i = 0; i < maxRows; i++) {
-			resultArr.addRow();
-			for (let j = 0; j < maxColumns; j++) {
-				let values = [];
-
-				for (let k = 0; k < args.length; k++) {
-					let value = args[k];
-					if (cElementType.array === value.type) {
-						if (value.isOneElement()) {
-							// single row with single element {}
-							values.push(value.getFirstElement());
-							continue;
-						} else if (value.getCountElementInRow() !== 1 && value.rowCount === 1) {
-							// single row with many elements {1,2,3}
-							values.push(value.array[0] ? value.array[0][j] : value.array[0]);
-							continue;
-						} else if (value.getCountElementInRow() === 1 && value.rowCount !== 1) {
-							// many rows with single element {1;2;3;4}
-							values.push(value.array[i] ? value.array[i][0] : value.array[i]);
-							continue;
-						} else {
-							values.push(value.array[i] ? value.array[i][j] : new cError(cErrorType.not_available));
-						}
-					} else {
-						values.push(args[k]);
-					}
-				}
-				resultArr.addElement(func(values));
-			}
-		}
-		return resultArr;
-	}
-
 	function getArrayHelper(args, func) {
 		// check for arrays and find max length
 		let isContainsArray = false,
@@ -271,11 +214,11 @@
 							continue;
 						} else if (value.getCountElementInRow() !== 1 && value.rowCount === 1) {
 							// single row with many elements {1,2,3}
-							values.push(value.array[0] ? value.array[0][j] : value.array[0]);
+							values.push(value.array[0] ? value.array[0][j] : new cError(cErrorType.not_available));
 							continue;
 						} else if (value.getCountElementInRow() === 1 && value.rowCount !== 1) {
 							// many rows with single element {1;2;3;4}
-							values.push(value.array[i] ? value.array[i][0] : value.array[i]);
+							values.push(value.array[i] ? value.array[i][0] : new cError(cErrorType.not_available));
 							continue;
 						} else {
 							values.push(value.array[i] ? value.array[i][j] : new cError(cErrorType.not_available));
@@ -287,11 +230,11 @@
 							continue;
 						} else if (value.getDimensions().col !== 1 && value.getDimensions().row  === 1) {
 							// single row with many elements С17:E17
-							values.push(value.getValueByRowCol(0, j));
+							values.push(value.getValueByRowCol(0, j) ? value.getValueByRowCol(0, j) : new cError(cErrorType.not_available));
 							continue;
 						} else if (value.getDimensions().col === 1 && value.getDimensions().row !== 1) {
 							// many rows with single element C17:C20
-							values.push(value.getValueByRowCol(i, 0));
+							values.push(value.getValueByRowCol(i, 0) ? value.getValueByRowCol(i, 0) : new cError(cErrorType.not_available));
 							continue;
 						} else {
 							values.push(value.getValueByRowCol(i, j) ? value.getValueByRowCol(i, j) : new cError(cErrorType.not_available));
@@ -300,7 +243,7 @@
 						values.push(args[k]);
 					}
 				}
-				resultArr.addElement(func(values));
+				resultArr.addElement(func(true, values));
 			}
 		}
 		return resultArr;
@@ -5698,14 +5641,14 @@
 	cSEQUENCE.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number];
 	cSEQUENCE.prototype.Calculate = function (arg) {
 		// TODO after implementing array autoexpanding, reconsider the behavior of the function when receiving cellsRange as arguments
-		function sequenceArray (start, step) {
+		function sequenceArray (row, column, start, step) {
 			let res = new cArray(),
 				startNum = start,
 				stepNum = step;
 
-			for (let i = 0; i < rows; i++) {
+			for (let i = 0; i < row; i++) {
 				res.addRow();
-				for(let j = 0; j < columns; j++) {
+				for(let j = 0; j < column; j++) {
 					res.addElement(new cNumber(startNum));
 					startNum += stepNum;
 				}
@@ -5714,7 +5657,9 @@
 			return res;
 		}
 
-		function sequenceRangeArray(args) {
+
+		function sequenceRangeArrayGeneral (isRange = true, args) {
+			// TODO add check for empty cell in range(0)
 			const EXPECTED_MAX_ARRAY = 10223960;
 			let rowVal = args[0],
 				columnVal = args[1],
@@ -5727,46 +5672,84 @@
 			}
 	
 			// ------------------------- arg0 empty val check -------------------------//
+
 			if (cElementType.empty === rowVal.type) {
+				if (cElementType.empty === columnVal.type && cElementType.empty === startVal.type && cElementType.empty === stepVal.type) {
+					return new cError(cErrorType.wrong_value_type);
+				}
 				rowVal = new cNumber(1);
 			}
+	 
+			if (cElementType.cell === rowVal.type || cElementType.cell3D === rowVal.type) {
+				rowVal = rowVal.getValue();
+				if (cElementType.empty === rowVal.type) {
+					// TODO should be #CALC error
+					rowVal = new cError(cErrorType.wrong_value_type);
+				}
+			}
+
 			// ------------------------- arg1 empty type check -------------------------//
 			if (cElementType.empty === columnVal.type) {
 				columnVal = new cNumber(1);
 			}
+	
+			if (cElementType.cell === columnVal.type || cElementType.cell3D === columnVal.type) {
+				columnVal = columnVal.getValue();
+				if (cElementType.empty === columnVal.type) {
+					// TODO should be #CALC error
+					columnVal = new cError(cErrorType.wrong_value_type);
+				}
+			}
+			
 			// ------------------------- arg2 empty type check -------------------------//
 			if (cElementType.empty === startVal.type) {
 				startVal = new cNumber(1);
 			}
+
+			if (cElementType.cell === startVal.type || cElementType.cell3D === startVal.type) {
+				startVal = startVal.getValue();
+			}
+
 			// ------------------------- arg3 empty type check -------------------------//
 			if (cElementType.empty === stepVal.type) {
 				stepVal = new cNumber(1);
 			}
+
+			if (cElementType.cell === stepVal.type || cElementType.cell3D === stepVal.type) {
+				stepVal = stepVal.getValue();
+			}
 	
-			let elem;
 			rowVal = rowVal.tocNumber();
 			columnVal = columnVal.tocNumber();
 			startVal = startVal.tocNumber();
 			stepVal = stepVal.tocNumber();
-			
+
 			if (cElementType.error === rowVal.type) {
-				elem = rowVal;
-			} else if (cElementType.error === columnVal.type) {
-				elem = columnVal;
-			} else if (cElementType.error === startVal.type) {
-				elem = startVal;
-			} else if (cElementType.error === stepVal.type) {
-				elem = stepVal;
-			} else if (Math.floor(rowVal.getValue()) < 1 || Math.floor(columnVal.getValue()) < 1 || (Math.floor(rowVal.getValue()) * Math.floor(columnVal.getValue())) > EXPECTED_MAX_ARRAY) {
-				elem = new cError(cErrorType.wrong_value_type);
-			} else {
-				elem = new cNumber(startVal);
+				return rowVal;
 			}
-	
-			return elem;
+			if (cElementType.error === columnVal.type) {
+				return columnVal;
+			}
+			if (cElementType.error === startVal.type) {
+				return startVal;
+			}
+			if (cElementType.error === stepVal.type) {
+				return stepVal;
+			}
+
+			rowVal = Math.floor(rowVal.getValue());
+			columnVal = Math.floor(columnVal.getValue());
+			startVal = Math.floor(startVal.getValue());
+			stepVal = Math.floor(stepVal.getValue());
+
+			if (rowVal < 1 || columnVal < 1 || (rowVal * columnVal) > EXPECTED_MAX_ARRAY) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			// elem = new cNumber(startVal);
+			return isRange ? new cNumber(startVal) : sequenceArray(rowVal, columnVal, startVal, stepVal);
 		}
 
-		const EXPECTED_MAX_ARRAY = 10223960;
 		let arg0 = arg[0],
 			arg1 = arg[1] ? arg[1] : new cNumber(1),
 			arg2 = arg[2] ? arg[2] : new cNumber(1),
@@ -5774,98 +5757,13 @@
 			res;
 
 		// if range/array type, call arrayHelper
-		res = getArrayHelper([arg0, arg1, arg2, arg3], sequenceRangeArray);
+		res = getArrayHelper([arg0, arg1, arg2, arg3], sequenceRangeArrayGeneral);
 
 		if (res) {
 			return res;
 		}
 
-		let rows, columns, start, step;
-		// ------------------------- arg0 type check -------------------------//
-		if (cElementType.empty === arg[0].type) {
-			if (cElementType.empty === arg[1].type && cElementType.empty === arg[2].type && cElementType.empty === arg[3].type) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-			rows = new cNumber(1);
-		} else {
-			rows = arg[0];
-		}
- 
-		if (cElementType.cell === rows.type || cElementType.cell3D === rows.type) {
-			rows = rows.getValue();
-		}
-
-		if (cElementType.empty === rows.type) {
-			// TODO should be #CALC error
-			rows = new cError(cErrorType.wrong_value_type);
-		}
-
-		// ------------------------- arg1 type check -------------------------//
-		if ((!arg[1]) || cElementType.empty === arg[1].type) {
-			columns = new cNumber(1);
-		} else {
-			columns = arg[1];
-		}
-
-		if (cElementType.cell === columns.type || cElementType.cell3D === columns.type) {
-			columns = columns.getValue();
-		}
-
-		if (cElementType.empty === columns.type) {
-			// TODO should be #CALC error
-			columns = new cError(cErrorType.wrong_value_type);
-		}
-
-		// ------------------------- arg2 type check -------------------------//
-		if ((!arg[2]) || cElementType.empty === arg[2].type) {
-			start = new cNumber(1);
-		} else {
-			start = arg[2];
-		}
-
-		if (cElementType.cell === start.type || cElementType.cell3D === start.type) {
-			start = start.getValue();
-		}
-
-		// ------------------------- arg3 type check -------------------------//
-		if ((!arg[3]) || cElementType.empty === arg[3].type) {
-			step = new cNumber(1);
-		} else {
-			step = arg[3];
-		}
-
-		if (cElementType.cell === step.type || cElementType.cell3D === step.type) {
-			step = step.getValue();
-		}
-
-		rows = rows.tocNumber();
-		columns = columns.tocNumber();
-		start = start.tocNumber();
-		step = step.tocNumber();
-
-		if (cElementType.error === rows.type) {
-			return rows;
-		}
-		if (cElementType.error === columns.type) {
-			return columns;
-		}
-		if (cElementType.error === start.type) {
-			return start;
-		}
-		if (cElementType.error === step.type) {
-			return step;
-		}
-
-		rows = Math.floor(rows.getValue());
-		columns = Math.floor(columns.getValue());
-		start = Math.floor(start.getValue());
-		step = Math.floor(step.getValue());
-
-		if (rows < 1 || columns < 1 || (rows * columns) > EXPECTED_MAX_ARRAY) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		return sequenceArray(start, step);
+		return res ? res : sequenceRangeArrayGeneral(false, [arg0, arg1, arg2, arg3]);
 	};
 
 

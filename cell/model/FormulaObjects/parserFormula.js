@@ -1031,7 +1031,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 	cArea.prototype.getValueByRowCol = function (i, j) {
-		var res, r;
+		let dimensons = this.getDimensions(), res, r;
+		if (i > dimensons.row - 1 || j > dimensons.col - 1) {
+			return res;
+		}
 		r = this.getRange();
 		r.worksheet._getCellNoEmpty(r.bbox.r1 + i, r.bbox.c1 + j, function(cell) {
 			if(cell) {
@@ -1382,7 +1385,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return (null == _val[0]) ? new cEmpty() : _val[0];
 	};
 	cArea3D.prototype.getValueByRowCol = function (i, j) {
-		var r = this.getRanges(), res;
+		let dimensons = this.getDimensions(),
+			r = this.getRanges(), res;
+			
+		if (i > dimensons.row - 1 || j > dimensons.col - 1) {
+			return res;
+		}
 
 		if (r[0]) {
 			r[0].worksheet._getCellNoEmpty(r[0].bbox.r1 + i, r[0].bbox.c1 + j, function (cell) {
