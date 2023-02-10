@@ -5639,7 +5639,7 @@
             if (null != oUserProtectedRange.ref) {
                 this.memory.WriteByte(c_oSerUserProtectedRangeTypes.SqRef);
                 this.memory.WriteByte(c_oSerPropLenType.Variable);
-                var sqRef = getSqRefString(oUserProtectedRange.sqref);
+                var sqRef = getSqRefString(oUserProtectedRange.ref);
                 this.memory.WriteString2(sqRef);
             }
 
@@ -5678,10 +5678,10 @@
         this.WriteUserProtectedRangeUserGroups = function (userGroups) {
             var oThis = this;
             for (var i = 0, length = userGroups.length; i < length; ++i) {
-                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.UserGroups, function () {
+                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.UserGroup, function () {
                     oThis.memory.WriteByte(c_oSerUserProtectedRangeTypes.UserGroupId);
                     oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                    oThis.memory.WriteString2(groups[i]);
+                    oThis.memory.WriteString2(userGroups[i]);
                 });
             }
         };
