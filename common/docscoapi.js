@@ -1123,8 +1123,24 @@
 
   DocsCoApi.prototype._onRefreshToken = function(jwt) {
     this.jwtOpen = undefined;
+    if (this.socketio) {
+      if (this.socketio.auth) {
+        this.socketio.auth.token = this.jwtOpen;
+      }
+      if (this.socketio.io && this.socketio.io.setOpenToken) {
+        this.socketio.io.setOpenToken(delay);
+      }
+    }
     if (jwt) {
       this.jwtSession = jwt;
+      if (this.socketio) {
+        if (this.socketio.auth) {
+          this.socketio.auth.session = this.jwtSession;
+        }
+        if (this.socketio.io && this.socketio.io.setSessionToken) {
+          this.socketio.io.setSessionToken(this.jwtSession);
+        }
+      }
     }
   };
 
@@ -1775,6 +1791,16 @@
   CNativeSocket.prototype.reconnectionDelay    = function(val) { this.settings["reconnectionDelay"] = val; };
   CNativeSocket.prototype.reconnectionDelayMax = function(val) { this.settings["reconnectionDelayMax"] = val; };
   CNativeSocket.prototype.randomizationFactor  = function(val) { this.settings["randomizationFactor"] = val; };
+  CNativeSocket.prototype.setOpenToken = function (val) {
+    if (this.settings["auth"]) {
+      this.settings["auth"]["token"] = val;
+    }
+  };
+  CNativeSocket.prototype.setSessionToken = function (val) {
+    if (this.settings["auth"]) {
+      this.settings["auth"]["session"] = val;
+    }
+  };
 
   CNativeSocket.prototype.on = function(name, callback) {
     if (!this.events.hasOwnProperty(name))
@@ -1804,7 +1830,8 @@
         "reconnectionDelayMax": 10000,
         "randomizationFactor": 0.5,
         "auth": {
-          "token": this.jwtOpen
+          "token": this.jwtOpen,
+          "session": this.jwtSession
         }
       };
       if (window['IS_NATIVE_EDITOR']) {
