@@ -5658,21 +5658,20 @@
 		}
 
 
-		function sequenceRangeArrayGeneral (isRange = true, args) {
-			// TODO add check for empty cell in range(0)
+		function sequenceRangeArrayGeneral (isRange, args) {
 			const EXPECTED_MAX_ARRAY = 10223960;
 			let rowVal = args[0],
 				columnVal = args[1],
 				startVal = args[2],
 				stepVal = args[3];
 	
+			// TODO make unique check for startVal(undefined in some cases may be 0)
 			// undefined val check
 			if (!rowVal || !columnVal || !startVal || !stepVal) {
 				return new cError(cErrorType.not_available);;
 			}
 	
 			// ------------------------- arg0 empty val check -------------------------//
-
 			if (cElementType.empty === rowVal.type) {
 				if (cElementType.empty === columnVal.type && cElementType.empty === startVal.type && cElementType.empty === stepVal.type) {
 					return new cError(cErrorType.wrong_value_type);
@@ -5705,7 +5704,6 @@
 			if (cElementType.empty === startVal.type) {
 				startVal = new cNumber(1);
 			}
-
 			if (cElementType.cell === startVal.type || cElementType.cell3D === startVal.type) {
 				startVal = startVal.getValue();
 			}
@@ -5714,11 +5712,10 @@
 			if (cElementType.empty === stepVal.type) {
 				stepVal = new cNumber(1);
 			}
-
 			if (cElementType.cell === stepVal.type || cElementType.cell3D === stepVal.type) {
 				stepVal = stepVal.getValue();
 			}
-	
+			
 			rowVal = rowVal.tocNumber();
 			columnVal = columnVal.tocNumber();
 			startVal = startVal.tocNumber();
