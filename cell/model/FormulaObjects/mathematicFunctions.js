@@ -211,33 +211,28 @@
 						if (value.isOneElement()) {
 							// single row with single element {}
 							values.push(value.getFirstElement());
-							continue;
 						} else if (value.getCountElementInRow() !== 1 && value.rowCount === 1) {
 							// single row with many elements {1,2,3}
 							values.push(value.array[0] ? value.array[0][j] : new cError(cErrorType.not_available));
-							continue;
 						} else if (value.getCountElementInRow() === 1 && value.rowCount !== 1) {
 							// many rows with single element {1;2;3;4}
 							values.push(value.array[i] ? value.array[i][0] : new cError(cErrorType.not_available));
-							continue;
 						} else {
 							values.push(value.array[i] ? value.array[i][j] : new cError(cErrorType.not_available));
 						}
 					} else if (cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type) {
+						let valueDimensions = value.getDimensions();
 						if (value.isOneElement()) {
 							// single row with single element С17:C17
 							values.push(value.getFirstElement());
-							continue;
-						} else if (value.getDimensions().col !== 1 && value.getDimensions().row  === 1) {
+						} else if (valueDimensions.col !== 1 && valueDimensions.row  === 1) {
 							// single row with many elements С17:E17
-							values.push(value.getValueByRowCol(0, j) ? value.getValueByRowCol(0, j) : new cError(cErrorType.not_available));
-							continue;
-						} else if (value.getDimensions().col === 1 && value.getDimensions().row !== 1) {
+							values.push(value.getValueByRowCol(0, j));
+						} else if (valueDimensions.col === 1 && valueDimensions.row !== 1) {
 							// many rows with single element C17:C20
-							values.push(value.getValueByRowCol(i, 0) ? value.getValueByRowCol(i, 0) : new cError(cErrorType.not_available));
-							continue;
+							values.push(value.getValueByRowCol(i, 0));
 						} else {
-							values.push(value.getValueByRowCol(i, j) ? value.getValueByRowCol(i, j) : new cError(cErrorType.not_available));
+							values.push(value.getValueByRowCol(i, j));
 						}
 					} else {
 						values.push(args[k]);
@@ -5665,10 +5660,8 @@
 				startVal = args[2],
 				stepVal = args[3];
 	
-			// TODO make unique check for startVal(undefined in some cases may be 0)
-			// undefined val check
-			if (!rowVal || !columnVal || !startVal || !stepVal) {
-				return new cError(cErrorType.not_available);;
+			if (!rowVal || !columnVal) {
+				return new cError(cErrorType.not_available);
 			}
 	
 			// ------------------------- arg0 empty val check -------------------------//
@@ -5681,26 +5674,20 @@
 	 
 			if (cElementType.cell === rowVal.type || cElementType.cell3D === rowVal.type) {
 				rowVal = rowVal.getValue();
-				if (cElementType.empty === rowVal.type) {
-					// TODO should be #CALC error
-					rowVal = new cError(cErrorType.wrong_value_type);
-				}
 			}
 
 			// ------------------------- arg1 empty type check -------------------------//
 			if (cElementType.empty === columnVal.type) {
 				columnVal = new cNumber(1);
 			}
-	
 			if (cElementType.cell === columnVal.type || cElementType.cell3D === columnVal.type) {
 				columnVal = columnVal.getValue();
-				if (cElementType.empty === columnVal.type) {
-					// TODO should be #CALC error
-					columnVal = new cError(cErrorType.wrong_value_type);
-				}
 			}
 			
 			// ------------------------- arg2 empty type check -------------------------//
+			if (!startVal) {
+				startVal = new cNumber(0);
+			}
 			if (cElementType.empty === startVal.type) {
 				startVal = new cNumber(1);
 			}
@@ -5709,13 +5696,16 @@
 			}
 
 			// ------------------------- arg3 empty type check -------------------------//
+			if (!stepVal) {
+				stepVal = new cNumber(0);
+			}
 			if (cElementType.empty === stepVal.type) {
 				stepVal = new cNumber(1);
 			}
 			if (cElementType.cell === stepVal.type || cElementType.cell3D === stepVal.type) {
 				stepVal = stepVal.getValue();
 			}
-			
+
 			rowVal = rowVal.tocNumber();
 			columnVal = columnVal.tocNumber();
 			startVal = startVal.tocNumber();
@@ -5743,7 +5733,6 @@
 				return new cError(cErrorType.wrong_value_type);
 			}
 
-			// elem = new cNumber(startVal);
 			return isRange ? new cNumber(startVal) : sequenceArray(rowVal, columnVal, startVal, stepVal);
 		}
 

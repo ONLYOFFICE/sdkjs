@@ -21859,6 +21859,26 @@ $(function () {
 		ws.getRange2("J19").setValue("3");
 		ws.getRange2("K19").setValue("4");
 
+		ws.getRange2("C102").setValue("1");
+		ws.getRange2("D102").setValue("2");
+		ws.getRange2("E102").setValue("3");
+		ws.getRange2("F102").setValue("4");
+		ws.getRange2("E103").setValue("");
+		ws.getRange2("F103").setValue("");
+
+		oParser = new parserFormula('SEQUENCE(C102:F102,C102:D102,E102:F103)', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(C102:F102,C102:D102,E102:F103)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[1,0]");			// 0
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[2,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 4, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[1,1]");			// 0
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[2,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#N/A", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[1,2]");		// 0
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[2,2]");
+
 		// cellsRange
 		oParser = new parserFormula('SEQUENCE(G19:G22)', "A2", ws);
 		assert.ok(oParser.parse(), 'SEQUENCE(G19:G22)');
