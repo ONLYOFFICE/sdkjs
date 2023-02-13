@@ -8336,12 +8336,14 @@ var editor;
 		let isNeedType = isNeedObject && AscCommonExcel.c_oAscLockTypeElemSubType.UserProtectedRange === _element.subType &&
 			c_oAscLockTypeElem.Object === _element["type"];
 
-		if (isNeedType && !this.collaborativeEditing.getFast()) {
+		if (isNeedType) {
 			let sheet = this.wbModel.getWorksheetById(_element["sheetId"]);
 			if (sheet) {
 				var userRange = sheet.getUserProtectedRangeById(_element["rangeOrObjectId"]);
 				if (userRange) {
-					userRange.obj.isLock = lockElem.UserId;
+					if (!this.collaborativeEditing.getFast()) {
+						userRange.obj.isLock = lockElem.UserId;
+					}
 					this.handlers.trigger("asc_onRefreshUserProtectedRangesList");
 				}
 			}

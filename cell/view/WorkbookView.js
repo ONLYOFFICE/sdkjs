@@ -5305,11 +5305,13 @@
 		let wsViewFrom;
 		let wsViewTo;
 		for (let i = 0; i < this.wsViews.length; i++) {
-			if (this.wsViews[i].model === wsFrom) {
-				wsViewFrom = this.wsViews[i];
-			}
-			if (this.wsViews[i].model === wsTo) {
-				wsViewTo = this.wsViews[i];
+			if (this.wsViews[i]) {
+				if (this.wsViews[i].model === wsFrom) {
+					wsViewFrom = this.wsViews[i];
+				}
+				if (this.wsViews[i].model === wsTo) {
+					wsViewTo = this.wsViews[i];
+				}
 			}
 		}
 
@@ -5380,7 +5382,7 @@
 
 	WorkbookView.prototype.unlockUserProtectedRanges = function() {
 		this.model.unlockUserProtectedRanges();
-		this.handlers.trigger("asc_onRefreshDefNameList");
+		this.handlers.trigger("asc_onRefreshUserProtectedRangesList");
 		//this.handlers.trigger("asc_onLockDefNameManager", Asc.c_oAscDefinedNameReason.OK);
 	};
 
