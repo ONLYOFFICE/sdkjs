@@ -53,17 +53,29 @@ $(function () {
 	};
 	AscCommonExcel.WorkbookView.prototype.showWorksheet = function () {
 	};
+	AscCommonExcel.WorkbookView.prototype.recalculateDrawingObjects = function () {
+	};
 	AscCommonExcel.WorksheetView.prototype._init = function () {
 	};
 	AscCommonExcel.WorksheetView.prototype.updateRanges = function () {
 	};
 	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function () {
 	};
-	AscCommonExcel.WorksheetView.prototype.setSelection = function () {
+	AscCommonExcel.WorksheetView.prototype.cleanSelection = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._drawSelection = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._scrollToRange = function () {
 	};
 	AscCommonExcel.WorksheetView.prototype.draw = function () {
 	};
 	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._initCellsArea = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.getZoom = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._prepareCellTextMetricsCache = function () {
 	};
 
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
@@ -79,7 +91,7 @@ $(function () {
 	};
 	window["Asc"]["editor"] = api;
 
-	var wb, ws;
+	var wb, ws, wsview;
 
 	function openDocument() {
 		AscCommon.g_oTableId.init();
@@ -96,22 +108,29 @@ $(function () {
 			return null;
 		});
 
+		wsview = api.wb.getWorksheet();
+		wsview.objectRender = {};
+		wsview.objectRender.updateDrawingObject = function () {
+		};
+		wsview.handlers = {};
+		wsview.handlers.trigger = function () {
+		};
 		ws = api.wbModel.aWorksheets[0];
 	}
 
 	function create(ref, name) {
 		let obj = new Asc.CUserProtectedRange(ws);
 		obj.asc_setRef(ref);
-		obj.asc_setName("test");
+		obj.asc_setName(name);
 		//obj.asc_setUsers("");
 		api.asc_addUserProtectedRange(obj);
 		return obj;
 	}
 
-	function testCreate(init) {
+	function testCreate() {
 		QUnit.test("Test: create", function (assert) {
 			//ADD
-			init("B2:B5", "test1");
+			create("B2:B5", "test");
 
 			AscCommon.History.Undo();
 			assert.strictEqual(ws.userProtectedRanges.length, 0, "undo add test");
@@ -119,9 +138,9 @@ $(function () {
 			assert.strictEqual(ws.userProtectedRanges[0].asc_getName(), "test", "name compare");
 			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "ref compare");
 
-			init("D2:E5", "test2");
+			create("D2:E5", "test2");
 			assert.strictEqual(ws.userProtectedRanges.length, 2, "add test");
-			assert.strictEqual(ws.userProtectedRanges[1].asc_getName(), "test", "name compare");
+			assert.strictEqual(ws.userProtectedRanges[1].asc_getName(), "test2", "name compare");
 			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "ref compare");
 
 			AscCommon.History.Undo();
@@ -148,50 +167,69 @@ $(function () {
 			assert.strictEqual(ws.userProtectedRanges.length, 2, "delete_test_6");
 			AscCommon.History.Redo();
 			assert.strictEqual(ws.userProtectedRanges.length, 0, "delete_test_7");
-			AscCommon.History.Undo();
-
 		});
 	}
 
-	function testChange(init) {
+	function testChange() {
 		QUnit.test("Test: change", function (assert) {
-			init("B2:B5", "test1");
+			create("B2:B5", "test1");
 
+			let obj = ws.userProtectedRanges[0].clone(ws);
+			obj.asc_setRef("B2:B10");
+
+			api.asc_changeUserProtectedRange(ws.userProtectedRanges[0], obj);
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$10", "change ref compare1");
 			AscCommon.History.Undo();
-			assert.strictEqual(ws.userProtectedRanges.length, 0, "undo add test");
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "change ref compare2");
 			AscCommon.History.Redo();
-			assert.strictEqual(ws.userProtectedRanges[0].asc_getName(), "test", "name compare");
-			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "ref compare");
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$10", "change ref compare3");
 
-			init("D2:E5", "test2");
-			assert.strictEqual(ws.userProtectedRanges.length, 2, "add test");
-			assert.strictEqual(ws.userProtectedRanges[1].asc_getName(), "test", "name compare");
-			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "ref compare");
-
+			obj = ws.userProtectedRanges[0].clone(ws);
+			obj.asc_setName("test2");
+			api.asc_changeUserProtectedRange(ws.userProtectedRanges[0], obj);
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getName(), "test2", "change name compare1");
 			AscCommon.History.Undo();
-			AscCommon.History.Undo();
-			assert.strictEqual(ws.userProtectedRanges.length, 0, "undo add test");
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getName(), "test1", "change name compare2");
 			AscCommon.History.Redo();
-			AscCommon.History.Redo();
-			assert.strictEqual(ws.userProtectedRanges.length, 2, "redo add test");
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getName(), "test2", "change name compare3");
 
-			//DELETE
 			api.asc_deleteUserProtectedRange([ws.userProtectedRanges[0]]);
-			assert.strictEqual(ws.userProtectedRanges.length, 1, "delete_test_1");
-			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", "ref compare");
-			AscCommon.History.Undo();
-			assert.strictEqual(ws.userProtectedRanges.length, 2, "delete_test_2");
-			AscCommon.History.Redo();
-			assert.strictEqual(ws.userProtectedRanges.length, 1, "delete_test_3");
-			AscCommon.History.Undo();
-			assert.strictEqual(ws.userProtectedRanges.length, 2, "delete_test_4");
+			assert.strictEqual(ws.userProtectedRanges.length, 0, "delete_test_8");
+		});
+	}
 
-			api.asc_deleteUserProtectedRange([ws.userProtectedRanges[0], ws.userProtectedRanges[1]]);
-			assert.strictEqual(ws.userProtectedRanges.length, 0, "delete_test_5");
+	function testManipulation() {
+		QUnit.test("Test: change", function (assert) {
+			create("B2:B5", "test1");
+			create("D2:E5", "test2");
+
+			wsview.setSelection(new Asc.Range(0, 0, 0, AscCommon.gc_nMaxRow0));
+			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertColumns);
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$C$2:$C$5", "insert columns ref compare1");
+			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$E$2:$F$5", "insert columns ref compare2");
+
 			AscCommon.History.Undo();
-			assert.strictEqual(ws.userProtectedRanges.length, 2, "delete_test_6");
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "insert columns ref compare3");
+			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "insert columns ref compare4");
+
 			AscCommon.History.Redo();
-			assert.strictEqual(ws.userProtectedRanges.length, 0, "delete_test_7");
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$C$2:$C$5", "insert columns ref compare5");
+			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$E$2:$F$5", "insert columns ref compare6");
+			AscCommon.History.Undo();
+
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "insert columns ref compare7");
+			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "insert columns ref compare8");
+
+
+			wsview.setSelection(new Asc.Range(1, 0, 3, AscCommon.gc_nMaxRow0));
+			wsview.changeWorksheet("delCell", Asc.c_oAscInsertOptions.InsertColumns);
+
+			assert.strictEqual(ws.userProtectedRanges.length, 1, "delete columns ref compare1");
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "delete columns ref compare2");
+			AscCommon.History.Undo();
+			assert.strictEqual(ws.userProtectedRanges.length, 2, "delete columns ref compare3");
+			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", "delete columns ref compare4");
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", "delete columns ref compare5");
 			AscCommon.History.Undo();
 
 		});
@@ -202,7 +240,8 @@ $(function () {
 	function startTests() {
 		QUnit.start();
 
-		testCreate(create);
-		testChange(create);
+		testCreate();
+		testChange();
+		testManipulation();
 	}
 });
