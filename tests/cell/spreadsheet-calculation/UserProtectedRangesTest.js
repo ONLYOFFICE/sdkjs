@@ -283,7 +283,23 @@ $(function () {
 			assert.strictEqual(ws.userProtectedRanges.length, 2, "delete columns ref compare3");
 			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", "delete columns ref compare4");
 			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", "delete columns ref compare5");
+			AscCommon.History.Redo();
+			assert.strictEqual(ws.userProtectedRanges.length, 1, "delete columns ref compare1");
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "delete columns ref compare2");
 			AscCommon.History.Undo();
+
+			wsview.setSelection(new Asc.Range(0, 1, 2, 4));
+			wsview.changeWorksheet("delCell", Asc.c_oAscDeleteOptions.DeleteCellsAndShiftLeft);
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$E$2:$E$5", "insert columns ref compare17");
+			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$G$2:$H$5", "insert columns ref compare18");
+			AscCommon.History.Undo();
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "insert columns ref compare19");
+			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "insert columns ref compare20");
+			AscCommon.History.Redo();
+			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$E$2:$E$5", "insert columns ref compare21");
+			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$G$2:$H$5", "insert columns ref compare22");
+			AscCommon.History.Undo();
+
 
 		});
 	}
