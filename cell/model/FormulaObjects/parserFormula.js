@@ -1381,12 +1381,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return (null == _val[0]) ? new cEmpty() : _val[0];
 	};
 	cArea3D.prototype.getValueByRowCol = function (i, j) {
-		let dimensons = this.getDimensions(),
-			r = this.getRanges(), res;
-
-		if (i > dimensons.row - 1 || j > dimensons.col - 1) {
-			return res;
-		}
+		let r = this.getRanges(), res;
 
 		if (r[0]) {
 			r[0].worksheet._getCellNoEmpty(r[0].bbox.r1 + i, r[0].bbox.c1 + j, function (cell) {

@@ -254,10 +254,10 @@
 		return resultArr;
 	}
 
-	let _getValueByRowCol = function (array, _row, _col) {
+	const _getValueByRowCol = function (array, _row, _col) {
 		let sizes = array.getDimensions();
 		if (_row > sizes.row - 1 || _col > sizes.col - 1) {
-			return false;
+			return new cError(cErrorType.not_available);
 		}
 		let res = array.getValueByRowCol(_row, _col);
 		return res;
@@ -5678,10 +5678,6 @@
 				columnVal = args[1],
 				startVal = args[2],
 				stepVal = args[3];
-	
-			if (rowVal === false || columnVal === false || startVal === false || stepVal === false) {
-				return new cError(cErrorType.not_available);
-			}
 	
 			// ------------------------- arg0 empty val check -------------------------//
 			if (!rowVal) {
