@@ -11701,7 +11701,7 @@
 		return res;
 	};
 
-	Worksheet.prototype.isUserProtectedRangesIntersection = function(range, userId){
+	Worksheet.prototype.isUserProtectedRangesIntersection = function(range, userId, notCheckUser){
 		//range - array of ranges or range
 		let res = false;
 		if (!this.userProtectedRanges || !this.userProtectedRanges.length) {
@@ -11717,11 +11717,11 @@
 				let curUserProtectedRange = this.userProtectedRanges[i];
 				if (range && range.length) {
 					for (let j = 0; j < range.length; j++) {
-						if (curUserProtectedRange.intersection(range[j])&& !curUserProtectedRange.isUserCanEdit(userId)) {
+						if (curUserProtectedRange.intersection(range[j])&& (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId))) {
 							return true;
 						}
 					}
-				} else if ((!range || curUserProtectedRange.intersection(range))&& !curUserProtectedRange.isUserCanEdit(userId)) {
+				} else if ((!range || curUserProtectedRange.intersection(range))&& (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId))) {
 					res = true;
 					break;
 				}

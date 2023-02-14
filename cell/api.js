@@ -7518,8 +7518,15 @@ var editor;
 
 	spreadsheet_api.prototype.asc_setProtectedSheet = function (props) {
 		// Проверка глобального лока
-		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit() || !this.wb) {
 			return false;
+		}
+
+		var wsView = this.wb.getWorksheet();
+		var ws = wsView && wsView.model;
+		if (ws && ws.isUserProtectedRangesIntersection(null, null, true)) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			return;
 		}
 
 		if (!props) {
@@ -7533,7 +7540,6 @@ var editor;
 			//this.asc_closeCellEditor(true);
 		}
 
-		var wsView = this.wb.getWorksheet();
 		var i = this.wbModel.getActive();
 		var sheetId = this.wbModel.getWorksheet(i).getId();
 		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null, sheetId,
