@@ -198,12 +198,12 @@ $(function () {
 		});
 	}
 
-	function checkUndoRedo(fBefore, fAfter) {
-		fAfter();
+	function checkUndoRedo(fBefore, fAfter, desc) {
+		fAfter("after_" + desc);
 		AscCommon.History.Undo();
-		fBefore();
+		fBefore("undo_" + desc);
 		AscCommon.History.Redo();
-		fAfter();
+		fAfter("redo_" + desc);
 		AscCommon.History.Undo();
 	}
 
@@ -212,69 +212,105 @@ $(function () {
 			create("B2:B5", "test1");
 			create("D2:E5", "test2");
 
-			let beforeFunc = function() {
-				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "before_reference_val");
-				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "before_reference_val_2");
+			let beforeFunc = function(desc) {
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_2");
 			};
 
 			wsview.setSelection(new Asc.Range(0, 0, 0, AscCommon.gc_nMaxRow0));
 			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertColumns);
-			checkUndoRedo(beforeFunc, function (){
-				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$C$2:$C$5", "insert columns ref compare1");
-				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$E$2:$F$5", "insert columns ref compare2");
-			});
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$C$2:$C$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$E$2:$F$5", desc + "_val_2");
+			}, "insert_1");
 
 			wsview.setSelection(new Asc.Range(4, 0, 4, AscCommon.gc_nMaxRow0));
 			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertColumns);
-			checkUndoRedo(beforeFunc, function (){
-				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "insert columns ref compare9");
-				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$F$5", "insert columns ref compare10");
-			});
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$F$5", desc + "_val_2");
+			}, "insert_2");
 
 			wsview.setSelection(new Asc.Range(0, 1, 2, 4));
 			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertCellsAndShiftRight);
-			checkUndoRedo(beforeFunc, function (){
-				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$E$2:$E$5", "insert columns ref compare17");
-				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$G$2:$H$5", "insert columns ref compare18");
-			});
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$E$2:$E$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$G$2:$H$5", desc + "_val_2");
+			}, "insert_3");
 
 			wsview.setSelection(new Asc.Range(0, 1, 2, 3));
 			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertCellsAndShiftRight);
-			checkUndoRedo(beforeFunc, function (){
-				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "insert columns ref compare19");
-				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "insert columns ref compare20");
-			});
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_2");
+			}, "insert_4");
 
 
 			wsview.setSelection(new Asc.Range(0, 0, 3, 0));
 			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertCellsAndShiftDown);
-			checkUndoRedo(beforeFunc, function (){
-				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$3:$B$6", "insert columns ref compare19");
-				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "insert columns ref compare20");
-			});
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$3:$B$6", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_2");
+			}, "insert_5");
 
 			//delete cells
 			wsview.setSelection(new Asc.Range(1, 0, 3, AscCommon.gc_nMaxRow0));
 			wsview.changeWorksheet("delCell", Asc.c_oAscDeleteOptions.DeleteColumns);
-			checkUndoRedo(beforeFunc, function (){
-				assert.strictEqual(ws.userProtectedRanges.length, 1, "delete columns ref compare1");
-				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "delete columns ref compare2");
-			});
+			checkUndoRedo(function(desc) {
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_2");
+			}, function (desc){
+				assert.strictEqual(ws.userProtectedRanges.length, 1, desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_2");
+			}, "delete_1");
 
 
-			/*wsview.setSelection(new Asc.Range(0, 1, 2, 4));
+			wsview.setSelection(new Asc.Range(0, 1, 2, 4));
 			wsview.changeWorksheet("delCell", Asc.c_oAscDeleteOptions.DeleteCellsAndShiftLeft);
-			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$E$2:$E$5", "insert columns ref compare17");
-			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$G$2:$H$5", "insert columns ref compare18");
-			AscCommon.History.Undo();
-			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "insert columns ref compare19");
-			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "insert columns ref compare20");
-			AscCommon.History.Redo();
-			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$E$2:$E$5", "insert columns ref compare21");
-			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$G$2:$H$5", "insert columns ref compare22");
-			AscCommon.History.Undo();*/
+			checkUndoRedo(function(desc) {
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_2");
+			}, function (desc){
+				assert.strictEqual(ws.userProtectedRanges.length, 1, desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$A$2:$B$5", desc + "_val_2");
+			}, "delete_2");
 
+			wsview.setSelection(new Asc.Range(0, 0, 3, 0));
+			wsview.changeWorksheet("delCell", Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop);
+			checkUndoRedo(function(desc) {
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_2");
+			}, function (desc){
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$1:$B$4", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_2");
+			}, "delete_3");
 
+			wsview.setSelection(new Asc.Range(0, 0, 6, 10));
+			wsview.changeWorksheet("delCell", Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop);
+			checkUndoRedo(function(desc) {
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_2");
+			}, function (desc){
+				assert.strictEqual(ws.userProtectedRanges.length, 0, "delete columns ref compare1", desc + "_val_1");
+			}, "delete_4");
+
+			wsview.setSelection(new Asc.Range(0, 0, 6, 10));
+			wsview.changeWorksheet("delCell", Asc.c_oAscDeleteOptions.DeleteColumns);
+			checkUndoRedo(function(desc) {
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_2");
+			}, function (desc){
+				assert.strictEqual(ws.userProtectedRanges.length, 0, desc + "_val_1");
+			}, "delete_5");
+
+			wsview.setSelection(new Asc.Range(0, 0, 6, AscCommon.gc_nMaxRow0));
+			wsview.changeWorksheet("delCell", Asc.c_oAscDeleteOptions.DeleteColumns);
+			checkUndoRedo(function(desc) {
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_2");
+			}, function (desc){
+				assert.strictEqual(ws.userProtectedRanges.length, 0, desc + "_val_1");
+			});
 		});
 	}
 
