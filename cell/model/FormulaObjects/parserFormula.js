@@ -1031,17 +1031,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 	cArea.prototype.getValueByRowCol = function (i, j) {
-		let dimensons = this.getDimensions(), res, r;
-		if (i > dimensons.row - 1 || j > dimensons.col - 1) {
-			return res;
-		}
+		let res, r;
 		r = this.getRange();
 		r.worksheet._getCellNoEmpty(r.bbox.r1 + i, r.bbox.c1 + j, function(cell) {
 			if(cell) {
 				res = checkTypeCell(cell);
 			}
 		});
-
 		return res;
 	};
 	cArea.prototype.getRange = function () {
@@ -1387,7 +1383,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea3D.prototype.getValueByRowCol = function (i, j) {
 		let dimensons = this.getDimensions(),
 			r = this.getRanges(), res;
-			
+
 		if (i > dimensons.row - 1 || j > dimensons.col - 1) {
 			return res;
 		}

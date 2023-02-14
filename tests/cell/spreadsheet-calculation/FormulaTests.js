@@ -21830,15 +21830,6 @@ $(function () {
 
 	QUnit.test("Test: \"SEQUENCE\"", function (assert) {
 
-		// arg[0] tests (rows)
-		oParser = new parserFormula("SEQUENCE(2)", "A2", ws);
-		assert.ok(oParser.parse(), "SEQUENCE(2)");
-		let array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(2)[0,0]");
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SEQUENCE(2)[0,1]");
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result of SEQUENCE(2)[1,0]");
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of SEQUENCE(2)[1,1]");
-
 		ws.getRange2("G10").setValue("");
 		ws.getRange2("G11").setValue();
 		ws.getRange2("G12").setValue("10");
@@ -21866,28 +21857,28 @@ $(function () {
 		ws.getRange2("E103").setValue("");
 		ws.getRange2("F103").setValue("");
 
-		oParser = new parserFormula('SEQUENCE(C102:F102,C102:D102,E102:F103)', "A2", ws);
-		assert.ok(oParser.parse(), 'SEQUENCE(C102:F102,C102:D102,E102:F103)');
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[0,0]");
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[1,0]");			// 0
-		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[2,0]");
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 4, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[0,1]");
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[1,1]");			// 0
-		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[2,1]");
-		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[0,2]");
-		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#N/A", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[1,2]");		// 0
-		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[2,2]");
-
 		// cellsRange
 		oParser = new parserFormula('SEQUENCE(G19:G22)', "A2", ws);
 		assert.ok(oParser.parse(), 'SEQUENCE(G19:G22)');
-		array = oParser.calculate();
+		let array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(G19:G22)[0,0]");
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SEQUENCE(G19:G22)[0,1]");		
 		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of SEQUENCE(G19:G22)[1,0]");
 		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 1, "Result of SEQUENCE(G19:G22)[2,0]");
 		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 1, "Result of SEQUENCE(G19:G22)[3,0]");
+
+		oParser = new parserFormula('SEQUENCE(C102:F102,C102:D102,E102:F103)', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(C102:F102,C102:D102,E102:F103)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 0, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[2,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 4, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 0, "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[1,1]");
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[2,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#N/A", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[1,2]");		
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "", "Result of SEQUENCE(C102:F102,C102:D102,E102:F103)[2,2]");
 
 		oParser = new parserFormula('SEQUENCE(G19:G22, G19:G20, G21:G22)', "A2", ws);
 		assert.ok(oParser.parse(), 'SEQUENCE(G19:G22, G19:G20, G21:G22)');
@@ -21971,6 +21962,15 @@ $(function () {
 		assert.ok(oParser.parse(), 'SEQUENCE(G18)');
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of SEQUENCE(G18)");
 
+		// arg[0] tests (rows)
+		oParser = new parserFormula("SEQUENCE(2)", "A2", ws);
+		assert.ok(oParser.parse(), "SEQUENCE(2)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(2)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SEQUENCE(2)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result of SEQUENCE(2)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of SEQUENCE(2)[1,1]");
+
 		oParser = new parserFormula("SEQUENCE(0.9)", "A2", ws);
 		assert.ok(oParser.parse(), "SEQUENCE(0.9)");
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of SEQUENCE(0.9)");	// #CALC!
@@ -22016,6 +22016,38 @@ $(function () {
 		oParser = new parserFormula('SEQUENCE(FALSE)', "A2", ws);
 		assert.ok(oParser.parse(), 'SEQUENCE(FALSE)');
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of SEQUENCE(FALSE)");		// #CALC!
+
+		oParser = new parserFormula("SEQUENCE(,)", "A2", ws);
+		assert.ok(oParser.parse(), "SEQUENCE(,)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(,)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SEQUENCE(,)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of SEQUENCE(,)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of SEQUENCE(,)[1,1]");
+
+		oParser = new parserFormula("SEQUENCE(,,)", "A2", ws);
+		assert.ok(oParser.parse(), "SEQUENCE(,,)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(,,)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SEQUENCE(,,)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of SEQUENCE(,,)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of SEQUENCE(,,)[1,1]");
+
+		oParser = new parserFormula("SEQUENCE(,,,)", "A2", ws);
+		assert.ok(oParser.parse(), "SEQUENCE(,,,)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(,,,)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SEQUENCE(,,,)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of SEQUENCE(,,,)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of SEQUENCE(,,,)[1,1]");
+
+		oParser = new parserFormula("SEQUENCE(,,,2)", "A2", ws);
+		assert.ok(oParser.parse(), "SEQUENCE(,,,2)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SEQUENCE(,,,2)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SEQUENCE(,,,2)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of SEQUENCE(,,,2)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of SEQUENCE(,,,2)[1,1]");
 
 		// arg[1] tests (columns)
 		oParser = new parserFormula("SEQUENCE(2,3)", "A2", ws);
