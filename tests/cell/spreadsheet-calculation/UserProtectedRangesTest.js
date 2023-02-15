@@ -80,6 +80,16 @@ $(function () {
 
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 	};
+	AscCommonExcel.WorksheetView.prototype._isLockedCells = function (range, subType, callback) {
+		callback(true);
+	};
+	AscCommonExcel.WorksheetView.prototype._isLockedAll = function (callback) {
+		callback(true);
+	};
+	AscCommonExcel.WorksheetView.prototype._isLockedFrozenPane = function (callback) {
+		callback(true);
+	};
+
 
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
@@ -318,6 +328,9 @@ $(function () {
 			}, function (desc){
 				assert.strictEqual(ws.userProtectedRanges.length, 0, desc + "_val_1");
 			});
+
+			AscCommon.History.Undo();
+			AscCommon.History.Undo();
 		});
 	}
 
@@ -331,9 +344,61 @@ $(function () {
 				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_2");
 			};
 
+			//try change. intersection with protected ranges
 			wsview.setSelection(new Asc.Range(4, 0, 4, AscCommon.gc_nMaxRow0));
 			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertColumns);
+			beforeFunc("check_insert_1");
+
+			wsview.setSelection(new Asc.Range(4, 0, 4, 5));
+			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertCellsAndShiftRight);
 			beforeFunc("check_insert_2");
+
+			wsview.setSelection(new Asc.Range(4, 0, 4, 5));
+			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertCellsAndShiftDown);
+			beforeFunc("check_insert_3");
+
+			wsview.setSelection(new Asc.Range(4, 0, 4, AscCommon.gc_nMaxRow0));
+			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertRows);
+			beforeFunc("check_insert_4");
+
+			wsview.setSelection(new Asc.Range(4, 0, 4, AscCommon.gc_nMaxRow0));
+			wsview.changeWorksheet("delCell", Asc.c_oAscDeleteOptions.DeleteColumns);
+			beforeFunc("check_delete_1");
+
+			wsview.setSelection(new Asc.Range(4, 0, 4, 5));
+			wsview.changeWorksheet("delCell", Asc.c_oAscDeleteOptions.DeleteCellsAndShiftLeft);
+			beforeFunc("check_delete_2");
+
+			wsview.setSelection(new Asc.Range(4, 0, 4, 5));
+			wsview.changeWorksheet("delCell", Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop);
+			beforeFunc("check_delete_3");
+
+			wsview.setSelection(new Asc.Range(4, 0, 4, AscCommon.gc_nMaxRow0));
+			wsview.changeWorksheet("insCell", Asc.c_oAscDeleteOptions.DeleteRows);
+			beforeFunc("check_delete_4");
+
+
+			//next actions must be interrupted and  actions will not add into history
+			let historyPointsLength = History.Points.length;
+			wsview.setSelection(new Asc.Range(4, 0, 4, AscCommon.gc_nMaxRow0));
+			wsview.changeWorksheet("colWidth", 12);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_1");
+			wsview.changeWorksheet("showCols", 12);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_2");
+			wsview.changeWorksheet("hideCols", 12);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_3");
+			wsview.changeWorksheet("rowHeight", 12);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_4");
+			wsview.changeWorksheet("showRows", 12);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_5");
+			wsview.changeWorksheet("hideRows", 12);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_6");
+			wsview.changeWorksheet("groupRows", 12);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_7");
+			wsview.changeWorksheet("groupCols", 12);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_8");
+			wsview.changeWorksheet("clearOutline", 12);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_9");
 
 			AscCommon.History.Undo();
 			AscCommon.History.Undo();
@@ -345,9 +410,9 @@ $(function () {
 	function startTests() {
 		QUnit.start();
 
-		testCheckProtect();
 		testCreate();
 		testChange();
 		testManipulationRange();
+		testCheckProtect();
 	}
 });
