@@ -348,6 +348,8 @@ $(function () {
 		QUnit.test("Test: change_protect", function (assert) {
 			ws.getRange2("A1").setValue("1");
 			ws.getRange2("A2").setValue("3");
+			ws.getRange2("E3").setValue("1");
+			ws.getRange2("E4").setValue("3");
 			create("B2:B5", "test1", ["user1"]);
 			create("D2:E5", "test2", ["user2"]);
 
@@ -414,13 +416,13 @@ $(function () {
 			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_9");
 
 			//try change cell value
-			wsview.setSelection(ws.getRange2("E3").bbox);
+			wsview.setSelection(ws.getRange2("E3:E4").bbox);
 			api.asc_insertInCell("SUM", Asc.c_oAscPopUpSelectorType.Func, true);
 			api.wb._checkStopCellEditorInFormulas();
 			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_11");
 
 			//try change cell settings
-			wsview.setSelection(ws.getRange2("E3").bbox);
+			wsview.setSelection(ws.getRange2("E3:E4").bbox);
 			api.asc_setCellBold(true);
 			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_12");
 
@@ -439,6 +441,10 @@ $(function () {
 			api.asc_increaseFontSize();
 			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_16");
 
+			//try add filter
+			/*wsview.setSelection(ws.getRange2("A1:A2").bbox);
+			api.asc_addAutoFilter();
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_16");*/
 
 			AscCommon.History.Undo();
 			AscCommon.History.Undo();
