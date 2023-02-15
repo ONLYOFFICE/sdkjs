@@ -3735,6 +3735,9 @@ function (window, undefined) {
 			case AscCH.historyitem_Layout_Scale:
 				pageSetup.asc_setScale(value);
 				break;
+			case AscCH.historyitem_Layout_FirstPageNumber:
+				pageSetup.asc_setFitToHeight(value);
+				break;
 		}
 
 		this.wb.oApi._onUpdateLayoutMenu(nSheetId);
