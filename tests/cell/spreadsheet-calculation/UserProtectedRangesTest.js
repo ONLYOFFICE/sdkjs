@@ -84,6 +84,7 @@ $(function () {
 	};
 	AscCommonExcel.WorksheetView.prototype._isLockedCells = function (range, subType, callback) {
 		callback(true);
+		return true;
 	};
 	AscCommonExcel.WorksheetView.prototype._isLockedAll = function (callback) {
 		callback(true);
@@ -91,7 +92,10 @@ $(function () {
 	AscCommonExcel.WorksheetView.prototype._isLockedFrozenPane = function (callback) {
 		callback(true);
 	};
-
+	AscCommonExcel.WorksheetView.prototype._updateVisibleColsCount = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._calcActiveCellOffset = function () {
+	};
 
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
@@ -123,6 +127,10 @@ $(function () {
 		wsview = api.wb.getWorksheet();
 		wsview.objectRender = {};
 		wsview.objectRender.updateDrawingObject = function () {
+		};
+		wsview.objectRender.updateSizeDrawingObjects = function () {
+		};
+		wsview.objectRender.selectedGraphicObjectsExists = function () {
 		};
 		wsview.handlers = {};
 		wsview.handlers.trigger = function () {
@@ -338,6 +346,8 @@ $(function () {
 
 	function testCheckProtect() {
 		QUnit.test("Test: change_protect", function (assert) {
+			ws.getRange2("A1").setValue("1");
+			ws.getRange2("A2").setValue("3");
 			create("B2:B5", "test1", ["user1"]);
 			create("D2:E5", "test2", ["user2"]);
 
@@ -381,6 +391,7 @@ $(function () {
 
 
 			//next actions must be interrupted and  actions will not add into history
+			//try change ws
 			let historyPointsLength = History.Points.length;
 			wsview.setSelection(new Asc.Range(4, 3, 4, AscCommon.gc_nMaxRow0));
 			wsview.changeWorksheet("colWidth", 12);
@@ -402,9 +413,32 @@ $(function () {
 			wsview.changeWorksheet("clearOutline", 12);
 			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_9");
 
+			//try change cell value
+			wsview.setSelection(ws.getRange2("E3").bbox);
 			api.asc_insertInCell("SUM", Asc.c_oAscPopUpSelectorType.Func, true);
-			//wb._checkStopCellEditorInFormulas();
-			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_10");
+			api.wb._checkStopCellEditorInFormulas();
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_11");
+
+			//try change cell settings
+			wsview.setSelection(ws.getRange2("E3").bbox);
+			api.asc_setCellBold(true);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_12");
+
+			api.asc_setCellItalic(true);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_13");
+
+			api.asc_setCellUnderline(true);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_14");
+
+			api.asc_setCellStrikeout(true);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_15");
+
+			api.asc_setCellSuperscript(true);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_16");
+
+			api.asc_increaseFontSize();
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_16");
+
 
 			AscCommon.History.Undo();
 			AscCommon.History.Undo();

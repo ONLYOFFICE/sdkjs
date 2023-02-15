@@ -5747,13 +5747,6 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-		var obj = new Asc.CUserProtectedRange();
-	  obj.asc_setRef("Sheet1!A1:A2");
-	  obj.asc_setName("test");
-	  obj.asc_setUsers(["test"]);
-	  this.asc_addUserProtectedRange(obj);
-  	return;
-
   	var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
