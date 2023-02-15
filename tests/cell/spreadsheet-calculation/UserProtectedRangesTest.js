@@ -55,6 +55,8 @@ $(function () {
 	};
 	AscCommonExcel.WorkbookView.prototype.recalculateDrawingObjects = function () {
 	};
+	AscCommonExcel.WorkbookView.prototype.restoreFocus = function () {
+	};
 	AscCommonExcel.WorksheetView.prototype._init = function () {
 	};
 	AscCommonExcel.WorksheetView.prototype.updateRanges = function () {
@@ -380,7 +382,7 @@ $(function () {
 
 			//next actions must be interrupted and  actions will not add into history
 			let historyPointsLength = History.Points.length;
-			wsview.setSelection(new Asc.Range(4, 0, 4, AscCommon.gc_nMaxRow0));
+			wsview.setSelection(new Asc.Range(4, 3, 4, AscCommon.gc_nMaxRow0));
 			wsview.changeWorksheet("colWidth", 12);
 			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_1");
 			wsview.changeWorksheet("showCols", 12);
@@ -399,6 +401,10 @@ $(function () {
 			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_8");
 			wsview.changeWorksheet("clearOutline", 12);
 			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_9");
+
+			api.asc_insertInCell("SUM", Asc.c_oAscPopUpSelectorType.Func, true);
+			//wb._checkStopCellEditorInFormulas();
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_10");
 
 			AscCommon.History.Undo();
 			AscCommon.History.Undo();
