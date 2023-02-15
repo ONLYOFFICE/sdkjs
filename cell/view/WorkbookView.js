@@ -593,7 +593,7 @@
 					}
 					if (this.isUserProtectActiveCell()) {
 						this.input.blur();
-						this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+						this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 						return;
 					}
 					if (this.isProtectActiveCell()) {

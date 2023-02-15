@@ -2894,7 +2894,7 @@
 			return true;
 		}
 		if (this.handlers.trigger("isUserProtectActiveCell")) {
-			this.handlers.trigger("asc_onError", Asc.c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.handlers.trigger("asc_onError", Asc.c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return true;
 		}
 		if (this.handlers.trigger("isProtectActiveCell")) {

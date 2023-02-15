@@ -1857,7 +1857,7 @@
 						}
 
 						if (ws.model.isUserProtectedRangesIntersection(toRange)) {
-							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 							ws.handlers.trigger("cleanCutData", true);
 							return;
 						}

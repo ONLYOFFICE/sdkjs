@@ -1040,7 +1040,7 @@
 	// mouseX - это разница стартовых координат от мыши при нажатии и границы
 	WorksheetView.prototype.changeColumnWidth = function (col, x2, mouseX) {
 		if (this.model.isUserProtectedRangesIntersection(new Asc.Range(col, 0, col, gc_nMaxRow0))) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;
 		}
 		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatColumns)) {
@@ -1181,7 +1181,7 @@
 	// mouseY - это разница стартовых координат от мыши при нажатии и границы
 	WorksheetView.prototype.changeRowHeight = function (row, y2, mouseY) {
 		if (this.model.isUserProtectedRangesIntersection(new Asc.Range(0, row, gc_nMaxCol0, row))) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;
 		}
 		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatRows)) {
@@ -9683,7 +9683,7 @@
 				expandRange = this.model.autoFilters.checkExpandRangeForSort(expandRange);
 
 				if (this.model.isUserProtectedRangesIntersection(expandRange)) {
-					return c_oAscError.ID.CannotEditUserProtectedRange;
+					return c_oAscError.ID.ProtectedRangeByOtherUser;
 				}
 
 				if (this.model.getSheetProtection()) {
@@ -10544,7 +10544,7 @@
         }
 
 		if (this.model.isUserProtectedRangesIntersection(to)) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;
 		}
 
@@ -11255,7 +11255,7 @@
             };
 
 			if (this.model.isUserProtectedRangesIntersection(changedRange)) {
-				this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 				return;
 			}
 
@@ -11887,7 +11887,7 @@
         }
 		if (this.model.isUserProtectedRangesIntersection(arnFrom) || this.model.isUserProtectedRangesIntersection(arnTo)) {
 			this._cleanSelectionMoveRange();
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;
 		}
 		if (this.model.getSheetProtection() && (this.model.isLockedRange(arnFrom) || this.model.isLockedRange(arnTo))) {
@@ -12506,7 +12506,7 @@
                         break;
                     case "hyperlink":
 						if (t.model.isUserProtectedRangesIntersection(new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row))) {
-							t.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+							t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 							return;
 						}
 						if (t.model.getSheetProtection(Asc.c_oAscSheetProtectType.insertHyperlinks)) {
@@ -12647,7 +12647,7 @@
 		}
 
 		if (this.model.isUserProtectedRangesIntersection(checkRange)) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return false;
 		}
 
@@ -15508,7 +15508,7 @@
 		}
 		if (checkUserRanges) {
 			if (t.model.isUserProtectedRangesIntersection(checkUserRanges)) {
-				t.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+				t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 				return false;
 			}
 		}
@@ -16259,7 +16259,7 @@
 	};
     WorksheetView.prototype.autoFitColumnsWidth = function (col) {
 		if (this.model.isUserProtectedRangesIntersection(new Asc.Range(col, 0, col, gc_nMaxRow0))) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return false;
 		}
 
@@ -16314,7 +16314,7 @@
 
     WorksheetView.prototype.autoFitRowHeight = function (r1, r2) {
 		if (this.model.isUserProtectedRangesIntersection(new Asc.Range(0, r1, gc_nMaxCol0, r2))) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return false;
 		}
     	if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatRows)) {
@@ -17627,7 +17627,7 @@
 			}
 		}
 		if (filterRange && this.model.isUserProtectedRangesIntersection(filterRange)) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;
 		}
 
@@ -17759,7 +17759,7 @@
 
 		let filterRange = autoFilterObject && autoFilterObject.getFilterRef(this.model);
 		if (filterRange && this.model.isUserProtectedRangesIntersection(filterRange)) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;
 		}
 
@@ -17814,7 +17814,7 @@
 
 		let filter = tableName ? ws.getTableByName(tableName) : this.model.AutoFilter;
 		if (filter && filter.Ref && this.model.isUserProtectedRangesIntersection(filter.Ref)) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;
 		}
 
@@ -17903,7 +17903,7 @@
 
 		let filterRange = autoFilterObject && autoFilterObject.getFilterRef(this.model, activeCell);
 		if (filterRange && this.model.isUserProtectedRangesIntersection(filterRange)) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;
 		}
 
@@ -18058,7 +18058,7 @@
 			var pivotTable = this.model.inPivotTable(activeRangeOrCellId);
 			if (pivotTable) {
 				if (pivotTable.location && pivotTable.location.ref && this.model.isUserProtectedRangesIntersection(pivotTable.location.ref)) {
-					this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+					this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 					return;
 				}
 				if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.pivotTables)) {
@@ -18150,7 +18150,7 @@
 		}
 
 		if (doSortRange && this.model.isUserProtectedRangesIntersection(doSortRange)) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;
 		}
 		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.sort)) {
@@ -18968,7 +18968,7 @@
 
 	WorksheetView.prototype._checkAddAutoFilter = function (activeRange, styleName, oTableProps, filterByCellContextMenu) {
 		if (this.model.isUserProtectedRangesIntersection(activeRange)) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return false;
 		}
 		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
@@ -22708,7 +22708,7 @@
 
 		//TODO is it need here?
 		if (t.model.isUserProtectedRangesIntersection(selection)) {
-			t.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return false;
 		}
 
@@ -22905,7 +22905,7 @@
 		var selection = t.model.selectionRange.getLast();
 
 		if (t.model.isUserProtectedRangesIntersection(selection)) {
-			t.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+			t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return false;
 		}
 
@@ -23019,7 +23019,7 @@
 		if (oAutoExpansionTable && !applyByArray) {
 
 			if (this.model.isUserProtectedRangesIntersection(oAutoExpansionTable.range)) {
-				this.handlers.trigger("asc_onError", c_oAscError.ID.CannotEditUserProtectedRange, c_oAscError.Level.NoCritical);
+				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 				return;
 			}
 			if (this.model.getSheetProtection()) {
