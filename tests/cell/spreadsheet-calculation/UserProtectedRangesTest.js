@@ -116,13 +116,20 @@ $(function () {
 		wsview.handlers.trigger = function () {
 		};
 		ws = api.wbModel.aWorksheets[0];
+
+		api.DocInfo = new Asc.asc_CDocInfo();
+		var userInfo = new Asc.asc_CUserInfo();
+		userInfo.asc_putId("user3");
+		api.DocInfo.put_UserInfo(userInfo);
 	}
 
-	function create(ref, name) {
+	function create(ref, name, users) {
 		let obj = new Asc.CUserProtectedRange(ws);
 		obj.asc_setRef(ref);
 		obj.asc_setName(name);
-		//obj.asc_setUsers("");
+		if (users) {
+			obj.asc_setUsers(users);
+		}
 		api.asc_addUserProtectedRange(obj);
 		return obj;
 	}
@@ -130,7 +137,7 @@ $(function () {
 	function testCreate() {
 		QUnit.test("Test: create", function (assert) {
 			//ADD
-			create("B2:B5", "test");
+			create("B2:B5", "test", ["user3"]);
 
 			AscCommon.History.Undo();
 			assert.strictEqual(ws.userProtectedRanges.length, 0, "undo add test");
@@ -138,7 +145,7 @@ $(function () {
 			assert.strictEqual(ws.userProtectedRanges[0].asc_getName(), "test", "name compare");
 			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "ref compare");
 
-			create("D2:E5", "test2");
+			create("D2:E5", "test2", ["user3"]);
 			assert.strictEqual(ws.userProtectedRanges.length, 2, "add test");
 			assert.strictEqual(ws.userProtectedRanges[1].asc_getName(), "test2", "name compare");
 			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "ref compare");
@@ -172,7 +179,7 @@ $(function () {
 
 	function testChange() {
 		QUnit.test("Test: change", function (assert) {
-			create("B2:B5", "test1");
+			create("B2:B5", "test1", ["user3"]);
 
 			let obj = ws.userProtectedRanges[0].clone(ws);
 			obj.asc_setRef("B2:B10");
@@ -207,10 +214,10 @@ $(function () {
 		AscCommon.History.Undo();
 	}
 
-	function testManipulation() {
+	function testManipulationRange() {
 		QUnit.test("Test: change", function (assert) {
-			create("B2:B5", "test1");
-			create("D2:E5", "test2");
+			create("B2:B5", "test1", ["user3"]);
+			create("D2:E5", "test2", ["user3"]);
 
 			let beforeFunc = function(desc) {
 				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_1");
@@ -314,13 +321,33 @@ $(function () {
 		});
 	}
 
+	function testCheckProtect() {
+		QUnit.test("Test: change_protect", function (assert) {
+			create("B2:B5", "test1", ["user1"]);
+			create("D2:E5", "test2", ["user2"]);
+
+			let beforeFunc = function(desc) {
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_2");
+			};
+
+			wsview.setSelection(new Asc.Range(4, 0, 4, AscCommon.gc_nMaxRow0));
+			wsview.changeWorksheet("insCell", Asc.c_oAscInsertOptions.InsertColumns);
+			beforeFunc("check_insert_2");
+
+			AscCommon.History.Undo();
+			AscCommon.History.Undo();
+		});
+	}
+
 	QUnit.module("UserProtectedRanges");
 
 	function startTests() {
 		QUnit.start();
 
+		testCheckProtect();
 		testCreate();
 		testChange();
-		testManipulation();
+		testManipulationRange();
 	}
 });

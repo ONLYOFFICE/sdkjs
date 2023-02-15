@@ -158,7 +158,7 @@
 		return this.ref.intersection(range);
 	};
 	CUserProtectedRange.prototype.isUserCanEdit = function(userId) {
-		return this.usersMap[userId];
+		return this.usersMap && this.usersMap[userId];
 	};
 	CUserProtectedRange.prototype.isInRange = function(bbox) {
 		return bbox.containsRange(this.ref);

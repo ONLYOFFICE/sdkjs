@@ -15503,9 +15503,8 @@
 			}
 		} else if (prop === "delCell" && (val === c_oAscDeleteOptions.DeleteCellsAndShiftLeft || c_oAscDeleteOptions.DeleteCellsAndShiftTop)) {
 			checkUserRanges = arn;
-		} else {
-			checkUserRanges = null;
 		}
+
 		if (checkUserRanges) {
 			if (t.model.isUserProtectedRangesIntersection(checkUserRanges)) {
 				t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
