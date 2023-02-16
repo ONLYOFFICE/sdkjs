@@ -3736,7 +3736,7 @@ function (window, undefined) {
 				pageSetup.asc_setScale(value);
 				break;
 			case AscCH.historyitem_Layout_FirstPageNumber:
-				pageSetup.asc_setFitToHeight(value);
+				pageSetup.asc_setFirstPageNumber(value);
 				break;
 		}
 
