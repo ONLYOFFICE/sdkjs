@@ -14194,7 +14194,7 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 
-		var oReferenceData = oPortalData && oPortalData.referenceData;
+		var oReferenceData = oPortalData && oPortalData["referenceData"];
 		//data from portal, need update reference data
 		if (oReferenceData && (!this.referenceData || (this.referenceData["instanceId"] !== oReferenceData["instanceId"] || this.referenceData["fileKey"] !== oReferenceData["fileKey"]))) {
 			this.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
