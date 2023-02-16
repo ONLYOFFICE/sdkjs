@@ -1282,6 +1282,9 @@ Paragraph.prototype.OnContentChange = function()
 	this.SpellChecker.ClearCollector();
 	this.RecalcInfo.NeedSpellCheck();
 	this.RecalcInfo.NeedShapeText();
+	
+	if (this.Parent && this.Parent.OnContentChange)
+		this.Parent.OnContentChange();
 };
 Paragraph.prototype.Clear_ContentChanges = function()
 {

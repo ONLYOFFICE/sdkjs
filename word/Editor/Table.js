@@ -14665,6 +14665,7 @@ CTable.prototype.private_RemoveRow = function(nIndex)
 
 	this.private_CheckCurCell();
 	this.private_UpdateTableGrid();
+	this.OnContentChange();
 };
 CTable.prototype.private_AddRow = function(Index, CellsCount, bReIndexing, _NewRow)
 {
@@ -14711,6 +14712,7 @@ CTable.prototype.private_AddRow = function(Index, CellsCount, bReIndexing, _NewR
 
 	this.private_CheckCurCell();
 	this.private_UpdateTableGrid();
+	this.OnContentChange();
 
 	return NewRow;
 };

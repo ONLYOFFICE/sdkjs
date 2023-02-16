@@ -7259,6 +7259,7 @@ CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, 
 		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
 
 	this.private_ReindexContent(Position);
+	this.OnContentChange();
 };
 CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, isCorrectContent)
 {
@@ -7293,6 +7294,7 @@ CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, i
 		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
 
 	this.private_ReindexContent(Position);
+	this.OnContentChange();
 };
 CDocumentContent.prototype.Clear_ContentChanges = function()
 {

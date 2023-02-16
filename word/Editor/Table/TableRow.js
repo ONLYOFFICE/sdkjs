@@ -604,6 +604,7 @@ CTableRow.prototype =
 
 		this.private_CheckCurCell();
 		this.private_UpdateTableGrid();
+		this.OnContentChange();
 	},
 
 	Add_Cell : function(Index, Row, Cell, bReIndexing)
@@ -641,6 +642,7 @@ CTableRow.prototype =
 
 		this.private_CheckCurCell();
 		this.private_UpdateTableGrid();
+		this.OnContentChange();
 
 		return Cell;
 	},
@@ -1170,7 +1172,12 @@ CTableRow.prototype.GetAllDrawingObjects = function(drawingObjects)
 	
 	return drawingObjects;
 };
-
+CTableRow.prototype.OnContentChange = function()
+{
+	let table = this.GetTable();
+	if (table)
+		table.OnContentChange();
+};
 CTableRow.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 {
 	var nSearchStartIdx, nIdx, oResult, oContent;

@@ -2355,3 +2355,8 @@ CDocumentContentBase.prototype.CountElementsInFrame = function(nStartIndex)
 
 	return nFlowsCount;
 };
+CDocumentContentBase.prototype.OnContentChange = function()
+{
+	if (this.Parent && this.Parent.OnContentChange)
+		this.Parent.OnContentChange();
+};

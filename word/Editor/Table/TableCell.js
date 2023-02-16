@@ -2716,6 +2716,12 @@ CTableCell.prototype.private_GetRowTopMargin = function()
 
 	return nTop;
 };
+CTableCell.prototype.OnContentChange = function()
+{
+	let table = this.GetTable();
+	if (table)
+		table.OnContentChange();
+};
 
 
 function CTableCellRecalculateObject()

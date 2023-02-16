@@ -2645,6 +2645,15 @@ CBlockLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 		}
 	}
 };
+CBlockLevelSdt.prototype.OnContentChange = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+		logicDocument.OnChangeContentControl(this);
+	
+	if (this.Parent && this.Parent.OnContentChange)
+		this.Parent.OnContentChange();
+};
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;
