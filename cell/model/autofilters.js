@@ -467,6 +467,8 @@
 			//добавляю флаг, чтобы не протаскивать через несколько функций
 			this.isAddTotalRow = null;
 
+			this.redoColumnName = null;
+
 			return this;
 		}
 
@@ -1251,6 +1253,10 @@
 			// Redo
 			Redo: function (type, data) {
 				History.TurnOff();
+
+				//translate on redo - we use action language
+				this.redoColumnName = data.redoColumnName;
+
 				switch (type) {
 					case AscCH.historyitem_AutoFilter_Add:
 						this.addAutoFilter(data.styleName, data.activeCells, data.addFormatTableOptionsObj, null, data);
@@ -1311,6 +1317,7 @@
 						this.renameTableColumn(null, null, data);
 						break;
 				}
+				this.redoColumnName = null;
 				History.TurnOn();
 			},
 
@@ -3234,6 +3241,7 @@
 					oHistoryObject.totalFunction = redoObject.totalFunction;
 					oHistoryObject.viewId = ws.getActiveNamedSheetViewId();
 					oHistoryObject._type = type;
+					oHistoryObject.redoColumnName = AscCommon.translateManager.getValue("Column");
 				}
 
 				return oHistoryObject;
@@ -4959,20 +4967,20 @@
 			},
 
 			_generateColumnNameWithoutTitle: function (ref) {
-				var tableColumns = [], newTableColumn;
-				var range = this.worksheet.getRange3(ref.r1, ref.c1, ref.r1, ref.c2);
-				var defaultName = 'Column';
-				var uniqueColumns = {}, val, valTemplate, valLower, index = 1, isDuplicate = false, emptyCells = false;
-				var valuesAndMap = range._getValuesAndMap(true);
-				var values = valuesAndMap.values;
-				var length = values.length;
+				let tableColumns = [], newTableColumn;
+				let range = this.worksheet.getRange3(ref.r1, ref.c1, ref.r1, ref.c2);
+				let defaultName = this.redoColumnName ? this.redoColumnName : AscCommon.translateManager.getValue("Column");
+				let uniqueColumns = {}, val, valTemplate, valLower, index = 1, isDuplicate = false, emptyCells = false;
+				let valuesAndMap = range._getValuesAndMap(true);
+				let values = valuesAndMap.values;
+				let length = values.length;
 				if (0 === length) {
 					// Выделили всю строку без значений
 					length = ref.c2 - ref.c1 + 1;
 					emptyCells = true;
 				}
-				var map = valuesAndMap.map;
-				for (var i = 0; i < length; ++i) {
+				let map = valuesAndMap.map;
+				for (let i = 0; i < length; ++i) {
 					if (emptyCells || '' === (valTemplate = val = values[i].v)) {
 						valTemplate = defaultName;
 						val = valTemplate + index;
@@ -4996,7 +5004,7 @@
 							newTableColumn = new AscCommonExcel.TableColumn();
 							if (val.length >= AscCommon.c_oAscMaxTableColumnTextLength) {
 								val = val.substring(0, AscCommon.c_oAscMaxTableColumnTextLength - 1);
-								var cell = this.worksheet.getRange3(ref.r1, ref.c1 + i, ref.r1, ref.c1 + i);
+								let cell = this.worksheet.getRange3(ref.r1, ref.c1 + i, ref.r1, ref.c1 + i);
 								cell.setValue(val);
 							}
 							newTableColumn.Name = val;
@@ -5010,7 +5018,8 @@
 			},
 
 			_generateColumnName: function (tableColumns, indexInsertColumn) {
-				var index = 1;
+				let index = 1;
+				let columnName = this.redoColumnName ? this.redoColumnName : AscCommon.translateManager.getValue("Column");
 				var isSequence = false;
 				if (indexInsertColumn != undefined) {
 					if (indexInsertColumn < 0) {
@@ -5019,10 +5028,10 @@
 					var nameStart;
 					var nameEnd;
 					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].Name) {
-						nameStart = tableColumns[indexInsertColumn].Name.split("Column");
+						nameStart = tableColumns[indexInsertColumn].Name.split(columnName);
 					}
 					if (tableColumns[indexInsertColumn + 1] && tableColumns[indexInsertColumn + 1].Name) {
-						nameEnd = tableColumns[indexInsertColumn + 1].Name.split("Column");
+						nameEnd = tableColumns[indexInsertColumn + 1].Name.split(columnName);
 					}
 					if (nameStart && nameStart[1] && nameEnd && nameEnd[1] && !isNaN(parseInt(nameStart[1])) && !isNaN(parseInt(nameEnd[1])) && ((parseInt(nameStart[1]) + 1) == parseInt(nameEnd[1]))) {
 						isSequence = true;
@@ -5033,17 +5042,17 @@
 				if (indexInsertColumn == undefined || !isSequence) {
 					for (i = 0; i < tableColumns.length; i++) {
 						if (tableColumns[i].Name) {
-							name = tableColumns[i].Name.split("Column");
+							name = tableColumns[i].Name.split(columnName);
 						}
-						if (name && name[1] && !isNaN(parseFloat(name[1])) && index == parseFloat(name[1])) {
+						if (name && name[1] && !isNaN(parseFloat(name[1])) && index === parseFloat(name[1])) {
 							index++;
 							i = -1;
 						}
 					}
-					return "Column" + index;
+					return columnName + index;
 				} else {
 					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].Name) {
-						name = tableColumns[indexInsertColumn].Name.split("Column");
+						name = tableColumns[indexInsertColumn].Name.split(columnName);
 					}
 					if (name && name[1] && !isNaN(parseFloat(name[1]))) {
 						index = parseFloat(name[1]) + 1;
@@ -5051,14 +5060,14 @@
 
 					for (i = 0; i < tableColumns.length; i++) {
 						if (tableColumns[i].Name) {
-							name = tableColumns[i].Name.split("Column");
+							name = tableColumns[i].Name.split(columnName);
 						}
 						if (name && name[1] && !isNaN(parseFloat(name[1])) && index == parseFloat(name[1])) {
 							index = parseInt((index - 1) + "2");
 							i = -1;
 						}
 					}
-					return "Column" + index;
+					return columnName + index;
 				}
 			},
 
@@ -5868,18 +5877,18 @@
 
 			_generateColumnName2: function (tableColumns) {
 				// ToDo почему 2 функции generateColumnName?
-				var columnName = "Column";
-				//var indexColumn = name[1]; name - не определено!
-				var indexColumn = undefined;
-				var nextIndex;
+				let columnName = this.redoColumnName ? this.redoColumnName : AscCommon.translateManager.getValue("Column");
+				//let indexColumn = name[1]; name - не определено!
+				let indexColumn = undefined;
+				let nextIndex;
 
 				//ищем среди tableColumns, возможно такое имя уже имеется
-				var tableColumnsNameMap = null;
-				var checkNextName = function () {
-					var nextName = columnName + nextIndex;
+				let tableColumnsNameMap = null;
+				let checkNextName = function () {
+					let nextName = columnName + nextIndex;
 					if (!tableColumnsNameMap) {
 						tableColumnsNameMap = {};
-						for (var i = 0; i < tableColumns.length; i++) {
+						for (let i = 0; i < tableColumns.length; i++) {
 							if (tableColumns[i]) {
 								tableColumnsNameMap[tableColumns[i].Name] = 1;
 							}
@@ -5892,7 +5901,7 @@
 				};
 
 				//если сменилась первая цифра
-				var checkChangeIndex = function () {
+				let checkChangeIndex = function () {
 					if ((nextIndex + 1).toString().substr(0, 1) !== (indexColumn).toString().substr(0, 1)) {
 						return true;
 					} else {
@@ -5904,9 +5913,9 @@
 				{
 					indexColumn = parseFloat(indexColumn);
 					nextIndex = indexColumn + 1;
-					var string = "";
+					let string = "";
 
-					var firstInput = true;
+					let firstInput = true;
 					while (checkNextName() === false) {
 						if (firstInput === true) {
 							string += "1";
@@ -5934,16 +5943,16 @@
 			},
 
 			_getFilterInfoByAddTableProps: function (ar, addFormatTableOptionsObj, bTable) {
-				var tempRange = new Asc.Range(ar.c1, ar.r1, ar.c2, ar.r2);
-				var addNameColumn, filterRange, bIsManualOptions = false;
-				var ws = this.worksheet;
+				let tempRange = new Asc.Range(ar.c1, ar.r1, ar.c2, ar.r2);
+				let addNameColumn, filterRange, bIsManualOptions = false;
+				let ws = this.worksheet;
 
-				var _isOneCell = function (_range) {
-					var res = null;
+				let _isOneCell = function (_range) {
+					let res = null;
 					if (_range.isOneCell()) {
 						res = true;
 					} else if (!bTable) {
-						var merged = ws.getMergedByCell(_range.r1, _range.c1);
+						let merged = ws.getMergedByCell(_range.r1, _range.c1);
 						if (merged && merged.isEqual(_range)) {
 							res = true;
 						}
@@ -5968,7 +5977,7 @@
 				}
 
 				//expand range
-				var tablePartsContainsRange = this._isTablePartsContainsRange(tempRange);
+				let tablePartsContainsRange = this._isTablePartsContainsRange(tempRange);
 				if (tablePartsContainsRange) {
 					filterRange = tablePartsContainsRange.Ref.clone();
 				} else if (_isOneCell(tempRange) && !bIsManualOptions) {
@@ -5979,7 +5988,7 @@
 						//меняем range в зависимости от последних ячеек со значениями
 						//ms ещё смотрит на аналогичные значения для начала диапазона
 						//TODO если будут такие переменные со значениями начала диапазона - сделать аналогично MS
-						var definedRange = new Asc.Range(0, 0, this.worksheet.nColsCount - 1, this.worksheet.nRowsCount - 1);
+						let definedRange = new Asc.Range(0, 0, this.worksheet.nColsCount - 1, this.worksheet.nRowsCount - 1);
 						filterRange = tempRange.intersection(definedRange);
 						if (!filterRange) {
 							filterRange = tempRange;
@@ -5989,7 +5998,7 @@
 					}
 				}
 
-				var rangeWithoutDiff = filterRange.clone();
+				let rangeWithoutDiff = filterRange.clone();
 				if (addNameColumn) {
 					filterRange.r2 = filterRange.r2 + 1;
 				}
