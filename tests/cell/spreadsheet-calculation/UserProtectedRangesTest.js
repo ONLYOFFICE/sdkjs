@@ -339,6 +339,26 @@ $(function () {
 				assert.strictEqual(ws.userProtectedRanges.length, 0, desc + "_val_1");
 			});
 
+			wsview.moveRangeHandle(ws.getRange2("D2:E5").bbox, ws.getRange2("D10:E13").bbox);
+			checkUndoRedo(function(desc) {
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_2");
+			}, function (desc){
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$10:$E$13", desc + "_val_2");
+			}, "move_1");
+
+			wsview.moveRangeHandle(ws.getRange2("D2:E5").bbox, ws.getRange2("D10:E13").bbox, true);
+			checkUndoRedo(function(desc) {
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_2");
+			}, function (desc){
+				assert.strictEqual(ws.userProtectedRanges.length, 3, desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_1");
+				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$D$2:$E$5", desc + "_val_2");
+				assert.strictEqual(ws.userProtectedRanges[2].asc_getRef(), "=Sheet1!$D$10:$E$13", desc + "_val_3");
+			}, "move_2");
+
 			AscCommon.History.Undo();
 			AscCommon.History.Undo();
 		});
@@ -445,6 +465,10 @@ $(function () {
 			/*wsview.setSelection(ws.getRange2("A1:A2").bbox);
 			api.asc_addAutoFilter();
 			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_16");*/
+
+			//move
+			wsview.moveRangeHandle(ws.getRange2("D2:E5").bbox, ws.getRange2("D10:E13").bbox);
+			assert.strictEqual(historyPointsLength, History.Points.length, "history_test_16");
 
 			AscCommon.History.Undo();
 			AscCommon.History.Undo();
