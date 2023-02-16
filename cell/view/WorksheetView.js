@@ -3284,13 +3284,17 @@
 		}
 
 
+		//scale only int
+		wScale = wScale >> 0;
+		hScale = hScale >> 0;
+
 		var minScale;
 		if(width && height) {
-			minScale = Math.min(Math.round(wScale), Math.round(hScale));
+			minScale = Math.min(wScale, hScale);
 		} else if(width) {
-			minScale = Math.round(wScale);
+			minScale = wScale;
 		} else {
-			minScale = Math.round(hScale);
+			minScale = hScale;
 		}
 
 		if(minScale < 10) {
