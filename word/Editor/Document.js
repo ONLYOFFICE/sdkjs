@@ -1917,11 +1917,12 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		UpdateInterface : false,
 		UpdateRulers    : false,
 		UpdateUndoRedo  : false,
-		UpadteStates    : false,
+		UpdateStates    : false,
 		Redraw          : {
 			Start : undefined,
 			End   : undefined
 		},
+		UndoRedo        : false, // В текущий момент идет действие Undo/Redo
 
 		Additional : {}
 	};
@@ -2821,6 +2822,25 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.UpdatePlaceholders = false;
 	
 	this.Action.UpdateStates = false;
+};
+CDocument.prototype.StartUndoRedoAction = function()
+{
+	this.Action.UndoRedo = true;
+	
+	this.DrawingDocument.EndTrackTable(null, true);
+	this.DrawingObjects.TurnOffCheckChartSelection();
+	this.BookmarksManager.SetNeedUpdate(true);
+};
+CDocument.prototype.FinalizeUndoRedoAction = function()
+{
+	if (!this.Action.UndoRedo)
+		return;
+	
+	if (this.Action.Additional.ContentControlChange)
+		this.private_FinalizeContentControlChange();
+	
+	this.Action.UndoRedo   = false;
+	this.Action.Additional = {};
 };
 CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 {
@@ -12298,12 +12318,10 @@ CDocument.prototype.Document_Undo = function(Options)
 	{
 		if (this.History.Can_Undo())
 		{
-			this.DrawingDocument.EndTrackTable(null, true);
-			this.DrawingObjects.TurnOffCheckChartSelection();
-			this.BookmarksManager.SetNeedUpdate(true);
-
-			var arrChanges = this.History.Undo(Options);
-			this.UpdateAfterUndoRedo(arrChanges);
+			this.StartUndoRedoAction();
+			let changes = this.History.Undo(Options);
+			this.UpdateAfterUndoRedo(changes);
+			this.FinalizeUndoRedoAction();
 		}
 	}
 
@@ -12321,12 +12339,10 @@ CDocument.prototype.Document_Redo = function()
 
 	if (this.History.Can_Redo())
 	{
-		this.DrawingDocument.EndTrackTable(null, true);
-		this.DrawingObjects.TurnOffCheckChartSelection();
-		this.BookmarksManager.SetNeedUpdate(true);
-
-		var arrChanges = this.History.Redo();
-		this.UpdateAfterUndoRedo(arrChanges);
+		this.StartUndoRedoAction();
+		let changes = this.History.Redo();
+		this.UpdateAfterUndoRedo(changes);
+		this.FinalizeUndoRedoAction();
 	}
 
 	if (this.IsFillingFormMode())
@@ -25205,7 +25221,7 @@ CDocument.prototype.AddParaMath = function(nType)
 };
 CDocument.prototype.OnChangeContentControl = function(oControl)
 {
-	if (!this.Action.Start)
+	if (!this.Action.Start && !this.Action.UndoRedo)
 		return;
 
 	if (!this.Action.Additional.ContentControlChange)
