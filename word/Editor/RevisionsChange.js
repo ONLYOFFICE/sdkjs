@@ -310,7 +310,8 @@ CRevisionsChange.prototype.IsTextChange = function()
 CRevisionsChange.prototype.IsTableRowChange = function()
 {
 	return (c_oAscRevisionsChangeType.RowsAdd === this.Type
-		|| c_oAscRevisionsChangeType.RowsRem === this.Type);
+		|| c_oAscRevisionsChangeType.RowsRem === this.Type
+		|| c_oAscRevisionsChangeType.TableRowPr === this.Type);
 };
 CRevisionsChange.prototype.IsTablePrChange = function()
 {

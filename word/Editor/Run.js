@@ -8706,6 +8706,10 @@ ParaRun.prototype.Get_CompiledPr = function(bCopy)
     {
         this.RecalcInfo.TextPr = false;
         this.CompiledPr = this.Internal_Compile_Pr();
+		
+		// Пока настройки параграфа не считаются скомпилированными, мы не можем считать скомпилированными настройки рана
+		if (this.Paragraph && !this.Paragraph.IsParaPrCompiled())
+			this.RecalcInfo.TextPr = true;
     }
 
     if ( false === bCopy )

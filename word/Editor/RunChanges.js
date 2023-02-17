@@ -524,6 +524,7 @@ CChangesRunBold.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.OnContentChange();
 };
 CChangesRunBold.prototype.Load = function(Color)
 {

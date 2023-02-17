@@ -256,9 +256,19 @@ CTableCell.prototype =
     // Формируем конечные свойства параграфа на основе стиля и прямых настроек.
     Get_CompiledPr : function(bCopy)
     {
+		let forceCompile = false;
+		if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+		{
+			let logicDocument = this.GetLogicDocument();
+			if (logicDocument
+				&& logicDocument.IsDocumentEditor()
+				&& logicDocument.CompileStyleOnLoad)
+				forceCompile = true;
+		}
+		
         if ( true === this.CompiledPr.NeedRecalc )
         {
-            if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+            if (!forceCompile && (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead))
             {
                 this.CompiledPr.Pr     = g_oDocumentDefaultTableCellPr;
                 this.CompiledPr.ParaPr = g_oDocumentDefaultParaPr;
@@ -272,7 +282,7 @@ CTableCell.prototype =
                 this.CompiledPr.Pr         = FullPr.CellPr;
                 this.CompiledPr.ParaPr     = FullPr.ParaPr;
                 this.CompiledPr.TextPr     = FullPr.TextPr;
-                this.CompiledPr.NeedRecalc = false;
+                this.CompiledPr.NeedRecalc = forceCompile;
             }
         }
 
@@ -937,8 +947,7 @@ CTableCell.prototype =
 
 	RecalculateMinMaxContentWidth : function(isRotated, nPctWidth)
 	{
-		var oTable         = this.GetTable();
-		var oLogicDocument = oTable ? oTable.GetLogicDocument() : null;
+		var oLogicDocument = this.GetLogicDocument();
 
 		if (undefined === isRotated)
 			isRotated = false;
@@ -1176,11 +1185,16 @@ CTableCell.prototype =
 
 	Set_Pr : function(CellPr)
 	{
+		let isHavePrChange = this.HavePrChange();
+		
 		this.private_AddPrChange();
 		History.Add(new CChangesTableCellPr(this, this.Pr, CellPr));
 		this.Pr = CellPr;
 		this.Recalc_CompiledPr();
 		this.private_UpdateTableGrid();
+		
+		if (isHavePrChange || this.HavePrChange())
+			this.private_UpdateTrackRevisions();
 	},
 
     Copy_Pr : function(OtherPr, bCopyOnlyVisualProps)
@@ -2043,6 +2057,18 @@ CTableCell.prototype.GetTable = function()
 	return oRow.GetTable();
 };
 /**
+ * Доступ к главному классу документа
+ * @returns {CDocument|null}
+ */
+CTableCell.prototype.GetLogicDocument = function()
+{
+	let table = this.GetTable();
+	if (table)
+		return table.GetLogicDocument();
+	
+	return null;
+};
+/**
  * Доступ к родительскому классу для родительской таблицы
  * @returns {null|*}
  */
@@ -2710,6 +2736,12 @@ CTableCell.prototype.private_GetRowTopMargin = function()
 	}
 
 	return nTop;
+};
+CTableCell.prototype.OnContentChange = function()
+{
+	let table = this.GetTable();
+	if (table)
+		table.OnContentChange();
 };
 
 

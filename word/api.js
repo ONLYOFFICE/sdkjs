@@ -6453,8 +6453,16 @@ background-repeat: no-repeat;\
 		if (null != _image)//картинка уже должна быть загружена
 		{
             this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
-			this.WordControl.m_oLogicDocument.AddOleObject(fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect, arrImagesForAddToHistory);
+			let oDrawing = this.WordControl.m_oLogicDocument.AddOleObject(fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect, arrImagesForAddToHistory);
             this.WordControl.m_oLogicDocument.FinalizeAction();
+			if(window.g_asc_plugins)
+			{
+				if(oDrawing)
+				{
+					let oData = oDrawing.GraphicObj.getDataObject();
+					window.g_asc_plugins.onPluginEvent("onInsertOleObjects", [oData]);
+				}
+			}
 		}
 	};
 

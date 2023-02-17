@@ -6739,6 +6739,7 @@ function onApiShowRevisionsChange(data) {
                     }
                     break;
                 case Asc.c_oAscRevisionsChangeType.TablePr:
+                case Asc.c_oAscRevisionsChangeType.TableRowPr:
                     commonChanges.push("|Table Settings Changed|");
                     break;
                 case Asc.c_oAscRevisionsChangeType.RowsAdd:
@@ -7353,7 +7354,7 @@ window["asc_docs_api"].prototype["asc_nativeSetContentControlDatePickerDate"] = 
     var oPr = oContentControl.GetContentControlPr().get_DateTimePr();
     oPr.put_FullDate(new  Date(textDate));
 
-    _api.asc_SetContentControlDatePickerPr(oPr, sId);
+    _api.asc_SetContentControlDatePickerPr(oPr, sId, true);
 }
 
 window["Asc"]["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wrapWithSpaces) {

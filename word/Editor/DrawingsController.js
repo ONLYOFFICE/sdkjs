@@ -116,7 +116,7 @@ CDrawingsController.prototype.AddSignatureLine = function(oSignatureDrawing)
 };
 CDrawingsController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
-	this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+	return this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CDrawingsController.prototype.AddTextArt = function(nStyle)
 {

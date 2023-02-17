@@ -1484,7 +1484,7 @@ CEndnotesController.prototype.AddImages = function(aImages)
 CEndnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 	if (false === this.private_CheckEndnotesSelectionBeforeAction())
-		return false;
+		return null;
 
 	return this.CurEndnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };

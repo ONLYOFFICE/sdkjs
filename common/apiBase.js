@@ -2340,28 +2340,40 @@
 
 	baseEditorsApi.prototype.asc_addOleObject = function(oPluginData)
 	{
-		if(this.isViewMode){
+		if(this.isViewMode) {
 			return;
 		}
-		var oThis      = this;
-		var sImgSrc    = oPluginData["imgSrc"];
-		var nWidthPix  = oPluginData["widthPix"];
-		var nHeightPix = oPluginData["heightPix"];
-		var fWidthMM   = oPluginData["width"];
-		var fHeightMM  = oPluginData["height"];
-		var sData      = oPluginData["data"];
-		var sGuid      = oPluginData["guid"];
-		var bSelect    = (oPluginData["select"] === true || oPluginData["select"] === false) ? oPluginData["select"] : true;
+		let oThis      = this;
+		let sImgSrc    = oPluginData["imgSrc"];
+		let nWidthPix  = oPluginData["widthPix"];
+		let nHeightPix = oPluginData["heightPix"];
+		let fWidthMM   = oPluginData["width"];
+		let fHeightMM  = oPluginData["height"];
+		let sData      = oPluginData["data"];
+		let sGuid      = oPluginData["guid"];
+		let bSelect    = (oPluginData["select"] === true || oPluginData["select"] === false) ? oPluginData["select"] : true;
+		let bPlugin    = oPluginData["plugin"] === true && !!window.g_asc_plugins;
 		if (typeof sImgSrc === "string" && sImgSrc.length > 0 && typeof sData === "string"
 			&& typeof sGuid === "string" && sGuid.length > 0
 			/*&& AscFormat.isRealNumber(nWidthPix) && AscFormat.isRealNumber(nHeightPix)*/
 			&& AscFormat.isRealNumber(fWidthMM) && AscFormat.isRealNumber(fHeightMM)
 		)
-
-		this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
 		{
-			oThis.asc_addOleObjectAction(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), sData, sGuid, fWidthMM, fHeightMM, nWidthPix, nHeightPix, bSelect);
-		});
+			let sMethodGuid;
+			if(bPlugin)
+			{
+				sMethodGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
+			}
+			this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
+			{
+				oThis.asc_addOleObjectAction(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), sData, sGuid, fWidthMM, fHeightMM, nWidthPix, nHeightPix, bSelect);
+				if(bPlugin)
+				{
+					window.g_asc_plugins.onPluginMethodReturn(sMethodGuid);
+				}
+			});
+		}
+
 	};
 
 	baseEditorsApi.prototype.asc_editOleObject = function(oPluginData)

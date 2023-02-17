@@ -195,6 +195,22 @@
 			|| sFontName === 'Source Code Pro';
 	}
 
+	function private_CheckDrawingOnAdd(oApiDrawing) {
+		if(window.g_asc_plugins)
+		{
+			let oDrawing = oApiDrawing.Drawing;
+			if(oDrawing)
+			{
+				if(oDrawing.GraphicObj &&
+					oDrawing.GraphicObj.getObjectType() === AscDFH.historyitem_type_OleObject)
+				{
+					let oData = oDrawing.GraphicObj.getDataObject();
+					window.g_asc_plugins.onPluginEvent("onInsertOleObjects", [oData]);
+				}
+			}
+		}
+	}
+
 	/**
 	 * Class representing a container for paragraphs and tables.
 	 * @param Document
@@ -7302,7 +7318,7 @@
 		oRun.Add_ToContent(0, oDrawing.Drawing);
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		oDrawing.Drawing.Set_Parent(oRun);
-
+		private_CheckDrawingOnAdd(oDrawing);
 		return new ApiRun(oRun);
 	};
 
@@ -8907,7 +8923,7 @@
 
 		this.Run.Add_ToContent(this.Run.Content.length, oDrawing.Drawing);
 		oDrawing.Drawing.Set_Parent(this.Run);
-
+		private_CheckDrawingOnAdd(oDrawing);
 		return true;
 	};
 	/**

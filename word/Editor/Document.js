@@ -1934,11 +1934,12 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		UpdateInterface : false,
 		UpdateRulers    : false,
 		UpdateUndoRedo  : false,
-		UpadteStates    : false,
+		UpdateStates    : false,
 		Redraw          : {
 			Start : undefined,
 			End   : undefined
 		},
+		UndoRedo        : false, // В текущий момент идет действие Undo/Redo
 
 		Additional : {}
 	};
@@ -2050,6 +2051,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.ForceDrawFormHighlight    = null;  // null - редактор решает рисовать или нет в зависимости от других параметров
 	this.ConcatParagraphsOnRemove  = false; // Во время удаления объединять ли первый и последний параграфы
 	this.StartCheckTextFormFormat  = false; // Флаг, что в данный момент мы уже проверяем формат текстовых форм, чтобы не вызывать повторно
+	this.CompileStyleOnLoad        = false; // Компилировать ли принудительно стили во время загрузки
 
 
 	this.DrawTableMode = {
@@ -2325,6 +2327,9 @@ CDocument.prototype.private_UpdateFieldsOnEndLoad = function()
 	let openedAt = this.Api ? this.Api.openedAt : undefined;
 	if (undefined === openedAt)
 		return;
+	
+	// Для правильного обновления полей нам нужно, чтобы стили компилировались в обход флага загрузки
+	this.CompileStyleOnLoad = true;
 
 	this.ProcessComplexFields();
 	this.controller_GetAllFields(false, arrFields);
@@ -2339,6 +2344,8 @@ CDocument.prototype.private_UpdateFieldsOnEndLoad = function()
 			oField.UpdateTIME(openedAt);
 		}
 	}
+	
+	this.CompileStyleOnLoad = false;
 
 	//console.log("FieldUpdateTime : " + ((performance.now() - nTime) / 1000) + "s");
 };
@@ -2836,6 +2843,25 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.UpdatePlaceholders = false;
 	
 	this.Action.UpdateStates = false;
+};
+CDocument.prototype.StartUndoRedoAction = function()
+{
+	this.Action.UndoRedo = true;
+	
+	this.DrawingDocument.EndTrackTable(null, true);
+	this.DrawingObjects.TurnOffCheckChartSelection();
+	this.BookmarksManager.SetNeedUpdate(true);
+};
+CDocument.prototype.FinalizeUndoRedoAction = function()
+{
+	if (!this.Action.UndoRedo)
+		return;
+	
+	if (this.Action.Additional.ContentControlChange)
+		this.private_FinalizeContentControlChange();
+	
+	this.Action.UndoRedo   = false;
+	this.Action.Additional = {};
 };
 CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 {
@@ -5954,7 +5980,7 @@ CDocument.prototype.AddImages = function(aImages){
 
 CDocument.prototype.AddOleObject  = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
-	this.Controller.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+	return this.Controller.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CDocument.prototype.EditOleObject = function(oOleObject, sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, arrImagesForAddToHistory)
 {
@@ -12319,12 +12345,10 @@ CDocument.prototype.Document_Undo = function(Options)
 	{
 		if (this.History.Can_Undo())
 		{
-			this.DrawingDocument.EndTrackTable(null, true);
-			this.DrawingObjects.TurnOffCheckChartSelection();
-			this.BookmarksManager.SetNeedUpdate(true);
-
-			var arrChanges = this.History.Undo(Options);
-			this.UpdateAfterUndoRedo(arrChanges);
+			this.StartUndoRedoAction();
+			let changes = this.History.Undo(Options);
+			this.UpdateAfterUndoRedo(changes);
+			this.FinalizeUndoRedoAction();
 		}
 	}
 
@@ -12342,12 +12366,10 @@ CDocument.prototype.Document_Redo = function()
 
 	if (this.History.Can_Redo())
 	{
-		this.DrawingDocument.EndTrackTable(null, true);
-		this.DrawingObjects.TurnOffCheckChartSelection();
-		this.BookmarksManager.SetNeedUpdate(true);
-
-		var arrChanges = this.History.Redo();
-		this.UpdateAfterUndoRedo(arrChanges);
+		this.StartUndoRedoAction();
+		let changes = this.History.Redo();
+		this.UpdateAfterUndoRedo(changes);
+		this.FinalizeUndoRedoAction();
 	}
 
 	if (this.IsFillingFormMode())
@@ -18674,11 +18696,12 @@ CDocument.prototype.controller_AddOleObject = function(W, H, nWidthPix, nHeightP
 	if (true == this.Selection.Use)
 		this.Remove(1, true);
 
-	var Item = this.Content[this.CurPos.ContentPos];
+	let Item = this.Content[this.CurPos.ContentPos];
+	let Drawing;
 	if (type_Paragraph == Item.GetType())
 	{
-		var Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-		var Image = this.DrawingObjects.createOleObject(Data, sApplicationId, Img, 0, 0, W, H, nWidthPix, nHeightPix, arrImagesForAddToHistory);
+		Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
+		let Image = this.DrawingObjects.createOleObject(Data, sApplicationId, Img, 0, 0, W, H, nWidthPix, nHeightPix, arrImagesForAddToHistory);
 		Image.setParent(Drawing);
 		Drawing.Set_GraphicObject(Image);
 		this.AddToParagraph(Drawing);
@@ -18689,8 +18712,9 @@ CDocument.prototype.controller_AddOleObject = function(W, H, nWidthPix, nHeightP
 	}
 	else
 	{
-		Item.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+		Drawing = Item.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 	}
+	return Drawing;
 };
 CDocument.prototype.controller_AddTextArt = function(nStyle)
 {
@@ -25229,7 +25253,7 @@ CDocument.prototype.AddParaMath = function(nType)
 };
 CDocument.prototype.OnChangeContentControl = function(oControl)
 {
-	if (!this.Action.Start)
+	if (!this.Action.Start && !this.Action.UndoRedo)
 		return;
 
 	if (!this.Action.Additional.ContentControlChange)

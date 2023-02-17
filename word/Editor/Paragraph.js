@@ -1295,6 +1295,9 @@ Paragraph.prototype.OnContentChange = function()
 	this.SpellChecker.ClearCollector();
 	this.RecalcInfo.NeedSpellCheck();
 	this.RecalcInfo.NeedShapeText();
+	
+	if (this.Parent && this.Parent.OnContentChange)
+		this.Parent.OnContentChange();
 };
 Paragraph.prototype.Clear_ContentChanges = function()
 {
@@ -8776,7 +8779,8 @@ Paragraph.prototype.SelectAll = function(Direction)
 
 	this.Selection.StartManually = false;
 	this.Selection.EndManually   = false;
-
+	
+	this.Set_ParaContentPos(EndPos, true, -1, -1);
 	this.Set_SelectionContentPos(StartPos, EndPos);
 };
 Paragraph.prototype.Select_Math = function(ParaMath)
@@ -10568,6 +10572,12 @@ Paragraph.prototype.private_CompileParaPr = function(isForce)
 {
 	if (!this.CompiledPr.NeedRecalc)
 		return;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument
+		&& logicDocument.IsDocumentEditor()
+		&& logicDocument.CompileStyleOnLoad)
+		isForce = true;
 
 	if (this.Parent && (isForce || (true !== AscCommon.g_oIdCounter.m_bLoad && true !== AscCommon.g_oIdCounter.m_bRead)))
 	{
@@ -10748,6 +10758,10 @@ Paragraph.prototype.Internal_CompiledParaPrPresentation = function(Lvl, bNoMerge
 Paragraph.prototype.Recalc_CompileParaPr = function()
 {
 	this.CompiledPr.NeedRecalc = true;
+};
+Paragraph.prototype.IsParaPrCompiled = function()
+{
+	return !this.CompiledPr.NeedRecalc;
 };
 Paragraph.prototype.Internal_CalculateAutoSpacing = function(Value, UseAuto, Para)
 {
@@ -14591,12 +14605,10 @@ Paragraph.prototype.GetTextAroundSearchResult = function(nId)
 
 	this.LoadSelectionState(oState);
 
-	let sResult;
+	let result = ["", "", ""];
 	if (sTargetText.length >= nMaxLen)
 	{
-		sResult = "\<b\>";
-		sResult += sTargetText.substr(0, nMaxLen - 1);
-		sResult += "\</b\>...";
+		result[1] = sTargetText.substr(0, nMaxLen - 1) + "...";
 	}
 	else
 	{
@@ -14627,24 +14639,25 @@ Paragraph.prototype.GetTextAroundSearchResult = function(nId)
 		{
 			nBeforeCount = Math.min(arrBefore.length, nExtraCount - arrAfter.length);
 		}
-
-		sResult = "";
+		
+		result[0] = "";
 		for (let nPos = nBeforeCount - 1;  nPos >= 0; --nPos)
 		{
 			let oItem = arrBefore[nPos];
-			sResult += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
+			result[0] += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
 		}
 
-		sResult += "\<b\>" + sTargetText + "\</b\>";
-
+		result[1] = sTargetText;
+		
+		result[2] = "";
 		for (let nPos = 0; nPos < nAfterCount; ++nPos)
 		{
 			let oItem = arrAfter[nPos];
-			sResult += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
+			result[2] += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
 		}
 	}
 
-	return sResult;
+	return result;
 };
 //----------------------------------------------------------------------------------------------------------------------
 Paragraph.prototype.Get_SectionPr = function()

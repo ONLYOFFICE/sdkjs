@@ -413,9 +413,9 @@
 			if (!this.Elements[sId])
 				continue;
 
-			let sText = this.Elements[sId].GetTextAroundSearchResult(sId);
-			this.TextArround[sId] = sText;
-			arrResult.push([sId, sText]);
+			let textAround = this.Elements[sId].GetTextAroundSearchResult(sId);
+			this.TextArround[sId] = textAround;
+			arrResult.push([sId, textAround]);
 		}
 
 		if (arrResult.length)

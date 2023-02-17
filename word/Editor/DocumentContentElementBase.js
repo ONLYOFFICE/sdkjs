@@ -467,6 +467,7 @@ CDocumentContentElementBase.prototype.AddImages = function(aImages)
 };
 CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
@@ -1246,6 +1247,14 @@ CDocumentContentElementBase.prototype.CalculateTextToTable = function(oEngine){}
  * @param arrChanges
  */
 CDocumentContentElementBase.prototype.GetSelectedReviewChanges = function(arrChanges, oTrackChanges) {return arrChanges ? arrChanges : [];};
+/**
+ * Прокидываем наверх событие об изменении содержимого данного элемента
+ */
+CDocumentContentElementBase.prototype.OnContentChange = function()
+{
+	if (this.Parent && this.Parent.OnContentChange)
+		this.Parent.OnContentChange();
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

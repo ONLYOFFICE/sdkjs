@@ -529,7 +529,7 @@ CBlockLevelSdt.prototype.AddSignatureLine = function(oSignatureDrawing)
 CBlockLevelSdt.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 	this.private_ReplacePlaceHolderWithContent();
-	this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+	return this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CBlockLevelSdt.prototype.AddTextArt = function(nStyle)
 {
@@ -2648,6 +2648,15 @@ CBlockLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 			nextElement.MoveCursorToStartPos();
 		}
 	}
+};
+CBlockLevelSdt.prototype.OnContentChange = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+		logicDocument.OnChangeContentControl(this);
+	
+	if (this.Parent && this.Parent.OnContentChange)
+		this.Parent.OnContentChange();
 };
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

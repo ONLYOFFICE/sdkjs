@@ -258,6 +258,21 @@
 		if (false !== isLocalTrack)
 			oLogicDocument.SetLocalTrackRevisions(isLocalTrack);
 
+		if (window.g_asc_plugins)
+		{
+			let aAllOleObjects = [];
+			let aAllOleObjectsData = [];
+			for(let nDrawing = 0; nDrawing < this.DrawingObjects.length; ++nDrawing)
+			{
+				this.DrawingObjects[nDrawing].GetAllOleObjects(null, aAllOleObjects);
+			}
+			for(let nOle = 0; nOle < aAllOleObjects.length; ++nOle)
+			{
+				aAllOleObjectsData.push(aAllOleObjects[nOle].getDataObject())
+			}
+			window.g_asc_plugins.onPluginEvent("onInsertOleObjects", aAllOleObjectsData);
+		}
+
 		return true;
 	};
 	CSelectedContent.prototype.ReplaceContent = function(oDocContent, isSelect)
