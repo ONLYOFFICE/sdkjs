@@ -7143,7 +7143,7 @@
 		var textBound = cache.textBound;
 		var rowInfo = this.rows[row];
 		// update row's descender
-		if (va !== Asc.c_oAscVAlign.Top && va !== Asc.c_oAscVAlign.Center && !mergeType && !cache.angle) {
+		if (rowInfo && va !== Asc.c_oAscVAlign.Top && va !== Asc.c_oAscVAlign.Center && !mergeType && !cache.angle) {
 			// ToDo move descender in model
 			var newDescender = tm.height - tm.baseline;
 			if (newDescender > this._getRowDescender(row)) {
