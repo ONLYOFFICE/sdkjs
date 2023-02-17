@@ -185,6 +185,10 @@
 	{
 		return { W : 100, H : 100 };
 	};
+	CMobileDelegateSimple.prototype.GetScrollerOffset = function()
+	{
+		return { W : 0, H : 0 };
+	};
 	CMobileDelegateSimple.prototype.GetScrollPosition = function()
 	{
 		return null;
@@ -194,6 +198,10 @@
 		return;
 	};
 	CMobileDelegateSimple.prototype.ScrollEnd = function(_scroll)
+	{
+		return;
+	};
+	CMobileDelegateSimple.prototype.LockScrollStartPos = function()
 	{
 		return;
 	};
@@ -252,6 +260,8 @@
 	};
 	CMobileDelegateEditor.prototype.GetZoom = function()
 	{
+		if (this.IsNativeViewer())
+			return this.DrawingDocument.m_oDocumentRenderer.zoom * 100;
 		return this.HtmlPage.m_nZoomValue;
 	};
 	CMobileDelegateEditor.prototype.SetZoom = function(_value)
@@ -461,6 +471,12 @@
 	};
 	CMobileDelegateEditor.prototype.GetZoomFit = function()
 	{
+		if (this.IsNativeViewer())
+		{
+			var zoomValue = this.DrawingDocument.m_oDocumentRenderer.calculateZoomToWidth();
+			return (zoomValue * 100 - 0.5) >> 0;
+		}
+
 		var Zoom = 100;
 
 		var w = this.HtmlPage.m_oEditor.AbsolutePosition.R - this.HtmlPage.m_oEditor.AbsolutePosition.L;
@@ -484,34 +500,62 @@
 	};
 	CMobileDelegateEditor.prototype.GetScrollerParent = function()
 	{
+		if (this.IsNativeViewer())
+			return document.getElementById(this.Api.HtmlElementName);
 		return this.HtmlPage.m_oMainView.HtmlElement;
 	};
 	CMobileDelegateEditor.prototype.GetScrollerSize = function()
 	{
+		if (this.IsNativeViewer())
+			return { W : this.DrawingDocument.m_oDocumentRenderer.documentWidth, H : this.DrawingDocument.m_oDocumentRenderer.documentHeight };
 		return { W : this.HtmlPage.m_dDocumentWidth, H : this.HtmlPage.m_dDocumentHeight };
+	};
+	CMobileDelegateEditor.prototype.GetScrollerOffset = function()
+	{
+		return { W : 0, H : this.HtmlPage.offsetTop };
 	};
 	CMobileDelegateEditor.prototype.ScrollTo = function(_scroll)
 	{
+		var isNativeViewer = this.IsNativeViewer();
+		var horScrollApi = !isNativeViewer ? this.HtmlPage.m_oScrollHorApi : this.DrawingDocument.m_oDocumentRenderer.m_oScrollHorApi;
+		var verScrollApi = !isNativeViewer ? this.HtmlPage.m_oScrollVerApi : this.DrawingDocument.m_oDocumentRenderer.m_oScrollVerApi;
+
 		this.HtmlPage.NoneRepaintPages = (true === _scroll.isAnimating) ? true : false;
-		if (_scroll.directionLocked == "v")
+
+		switch (_scroll.directionLocked)
 		{
-			this.HtmlPage.m_oScrollVerApi.scrollToY(-_scroll.y);
-		}
-		else if (_scroll.directionLocked == "h")
-		{
-			this.HtmlPage.m_oScrollHorApi.scrollToX(-_scroll.x);
-		}
-		else if (_scroll.directionLocked == "n")
-		{
-			this.HtmlPage.m_oScrollHorApi.scrollToX(-_scroll.x);
-			this.HtmlPage.m_oScrollVerApi.scrollToY(-_scroll.y);
+			case "v":
+			{
+				verScrollApi.scrollToY(-_scroll.y);
+				break;
+			}
+			case "h":
+			{
+				horScrollApi.scrollToX(-_scroll.x);
+				break;
+			}
+			case "n":
+			{
+				horScrollApi.scrollToX(-_scroll.x);
+				verScrollApi.scrollToY(-_scroll.y);
+				break;
+			}
+			default:
+				break;
 		}
 	};
 	CMobileDelegateEditor.prototype.ScrollEnd = function(_scroll)
 	{
 		this.HtmlPage.NoneRepaintPages = (true === _scroll.isAnimating) ? true : false;
+		if (this.IsNativeViewer())
+			this.DrawingDocument.m_oDocumentRenderer.paint();
+
 		this.HtmlPage.OnScroll();
 		_scroll.manager.OnScrollAnimationEnd();
+	};
+	CMobileDelegateEditor.prototype.LockScrollStartPos = function()
+	{
+		this.HtmlPage.mobileScrollStartPos = this.HtmlPage.m_dScrollY;
 	};
 	CMobileDelegateEditor.prototype.GetSelectionRectsBounds = function()
 	{
@@ -520,6 +564,12 @@
 	CMobileDelegateEditor.prototype.IsReader = function()
 	{
 		return (null != this.DrawingDocument.m_oDocumentRenderer);
+	};
+	CMobileDelegateEditor.prototype.IsNativeViewer = function()
+	{
+		if (null != this.DrawingDocument.m_oDocumentRenderer)
+			return this.Api.isUseNativeViewer;
+		return false;
 	};
 
 	CMobileDelegateEditor.prototype.Logic_GetNearestPos = function(x, y, page)
@@ -1042,19 +1092,26 @@
 	};
 
 	// изменился размер документа/экрана => нужно перескитать вспомогательный элемент для скролла
-	CMobileTouchManagerBase.prototype.Resize = function()
+	CMobileTouchManagerBase.prototype.UpdateScrolls = function()
 	{
-		this.delegate.Resize();
-		this.CheckZoomCriticalValues();
 		if (this.iScroll != null)
 		{
 			var _size = this.delegate.GetScrollerSize();
-			this.iScroll.scroller.style.width = _size.W + "px";
-			this.iScroll.scroller.style.height = _size.H + "px";
+			var _offset = this.delegate.GetScrollerOffset();
+
+			this.iScroll.scroller.style.width  = (_size.W + _offset.W) + "px";
+			this.iScroll.scroller.style.height = (_size.H + _offset.H) + "px";
 
 			var _position = this.delegate.GetScrollPosition();
 			this.iScroll.refresh(_position);
 		}
+	};
+	CMobileTouchManagerBase.prototype.Resize = function()
+	{
+		this.delegate.Resize();
+		this.CheckZoomCriticalValues();
+
+		this.UpdateScrolls();
 
 		if (this.isMobileContextMenuShowResize)
 			this.SendShowContextMenu();
@@ -1978,7 +2035,7 @@
 			{
 				this.delegate.HtmlPage.NoneRepaintPages = true;
 
-				this.ZoomDistance = this.getPointerDistance(e);
+				this.ZoomDistance = this.getPointerDistance(e, true);
 				this.ZoomValue    = this.delegate.GetZoom();
 
 				break;
@@ -2066,6 +2123,15 @@
 			{
 				// здесь нужно запускать отрисовку, если есть анимация зума
 				this.delegate.HtmlPage.NoneRepaintPages = false;
+
+				if (this.delegate.IsNativeViewer && this.delegate.IsNativeViewer())
+				{
+					this.delegate.DrawingDocument.m_oDocumentRenderer.paint();
+					// очищаем координаты зума для мобильного веба
+					this.delegate.DrawingDocument.m_oDocumentRenderer.skipClearZoomCoord = false;
+					this.delegate.DrawingDocument.m_oDocumentRenderer.clearZoomCoord();
+				}
+
 				this.delegate.HtmlPage.m_bIsFullRepaint = true;
 				this.delegate.HtmlPage.OnScroll();
 
@@ -2144,6 +2210,10 @@
 	};
 	CMobileTouchManagerBase.prototype.checkPointerMultiTouchRemove = function(e)
 	{
+		// на андроиде не приходит onCompositeEnd - поэтому заглушка
+		if (AscCommon.AscBrowser.isAndroid && AscCommon.g_inputContext)
+			AscCommon.g_inputContext.apiCompositeEnd();
+
 		if (!this.checkPointerEvent(e))
 			return;
 
@@ -2166,7 +2236,7 @@
 
 		return true;
 	};
-	CMobileTouchManagerBase.prototype.getPointerDistance = function(e)
+	CMobileTouchManagerBase.prototype.getPointerDistance = function(e, bFixZoomCoord)
 	{
 		var isPointers = this.checkPointerEvent(e);
 		if (e.touches && (e.touches.length > 1) && !isPointers)
@@ -2176,6 +2246,12 @@
 
 			var _x2 = (e.touches[1].pageX !== undefined) ? e.touches[1].pageX : e.touches[1].clientX;
 			var _y2 = (e.touches[1].pageY !== undefined) ? e.touches[1].pageY : e.touches[1].clientY;
+
+			// запоминаем координаты между тачами только на старте
+			if (bFixZoomCoord && this.delegate.IsNativeViewer && this.delegate.IsNativeViewer()) {
+				this.delegate.DrawingDocument.m_oDocumentRenderer.fixZoomCoord( ( ( _x1 + _x2 ) / 2 ), ( ( _y1 + _y2 ) / 2 ) );
+				this.delegate.DrawingDocument.m_oDocumentRenderer.skipClearZoomCoord = true;
+			}
 
 			return Math.sqrt((_x1 - _x2) * (_x1 - _x2) + (_y1 - _y2) * (_y1 - _y2));
 		}
@@ -2194,6 +2270,11 @@
 				++_counter;
 				if (_counter > 1)
 					break;
+			}
+			// запоминаем координаты между тачами только на старте
+			if (bFixZoomCoord && this.delegate.IsNativeViewer && this.delegate.IsNativeViewer()) {
+				this.delegate.DrawingDocument.m_oDocumentRenderer.fixZoomCoord( ( ( _touch1.X + _touch2.X ) / 2 ), ( ( _touch1.Y + _touch2.Y ) / 2 ) );
+				this.delegate.DrawingDocument.m_oDocumentRenderer.skipClearZoomCoord = true;
 			}
 
 			return Math.sqrt((_touch1.X - _touch2.X) * (_touch1.X - _touch2.X) + (_touch1.Y - _touch2.Y) * (_touch1.Y - _touch2.Y));

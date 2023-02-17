@@ -424,6 +424,10 @@ CDocumentContentElementBase.prototype.AddNewParagraph = function()
 {
 
 };
+CDocumentContentElementBase.prototype.GetFormatPainterData = function()
+{
+	return null;
+};
 CDocumentContentElementBase.prototype.Get_SelectionState2 = function()
 {
 	return null;
@@ -461,7 +465,7 @@ CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, Chart
 CDocumentContentElementBase.prototype.AddImages = function(aImages)
 {
 };
-CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 };
 CDocumentContentElementBase.prototype.AddSignatureLine = function(oSignatureDrawing)
@@ -566,7 +570,7 @@ CDocumentContentElementBase.prototype.SetTableProps = function(oProps)
 CDocumentContentElementBase.prototype.GetSelectedContent = function(oSelectedContent)
 {
 };
-CDocumentContentElementBase.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CDocumentContentElementBase.prototype.PasteFormatting = function(oData)
 {
 };
 CDocumentContentElementBase.prototype.GetCurPosXY = function()
@@ -1164,10 +1168,6 @@ CDocumentContentElementBase.prototype.GetHdrFtr = function()
  */
 CDocumentContentElementBase.prototype.IsUseInDocument = function(sId)
 {
-	return this.Is_UseInDocument(sId);
-};
-CDocumentContentElementBase.prototype.Is_UseInDocument = function(sId)
-{
 	return false;
 };
 /**
@@ -1176,6 +1176,10 @@ CDocumentContentElementBase.prototype.Is_UseInDocument = function(sId)
  * @returns {boolean}
  */
 CDocumentContentElementBase.prototype.CheckRunContent = function(fCheck)
+{
+	return false;
+};
+CDocumentContentElementBase.prototype.CheckSelectedRunContent = function(fCheck)
 {
 	return false;
 };

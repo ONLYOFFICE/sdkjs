@@ -60,6 +60,10 @@
         }
     };
 
+    CDrawingDocContent.prototype.CanAddComment = function() {
+        return false;
+    };
+
     CDrawingDocContent.prototype.getFontSizeForConstr = function () {
         return this.Content.reduce(function (pAcc, paragraph) {
             var maxFontSizeInParagraph = paragraph.Content.reduce(function (acc, paraRun) {
@@ -67,7 +71,24 @@
             }, 0);
             return maxFontSizeInParagraph > pAcc ? maxFontSizeInParagraph : pAcc;
         }, 0);
-    }
+    };
+
+    CDrawingDocContent.prototype.getBulletImages = function (arrImages) {
+        var aParagraphs = this.Content;
+        var sImageId;
+        for(var nPar = 0; nPar < aParagraphs.length; ++nPar)
+        {
+            var oPr = aParagraphs[nPar].Pr;
+            if(oPr.Bullet)
+            {
+                sImageId = oPr.Bullet.getImageBulletURL();
+                if(sImageId)
+                {
+                    arrImages.push(sImageId);
+                }
+            }
+        }
+    };
 
     CDrawingDocContent.prototype.GetFieldByType = function (sType) {
         var sType_ = sType.toLowerCase();
@@ -767,17 +788,19 @@
             }
         }
     };
-    CDrawingDocContent.prototype.Is_Empty = function()
+    CDrawingDocContent.prototype.Is_Empty = function(bDefault)
     {
-        if (this.isDocumentContentInSmartArtShape()) {
-            var oShape = this.Parent.parent;
-            var contentPoints = oShape.getSmartArtPointContent();
-            if (contentPoints && contentPoints.length !== 0) {
-                var isPhldr = contentPoints.every(function (point) {
-                    return point && point.prSet && point.prSet.phldr;
-                });
-                if (isPhldr) {
-                    return true;
+        if (!bDefault) {
+            if (this.isDocumentContentInSmartArtShape()) {
+                var oShape = this.Parent.parent;
+                var contentPoints = oShape.getSmartArtPointContent();
+                if (contentPoints && contentPoints.length !== 0) {
+                    var isPhldr = contentPoints.every(function (point) {
+                        return point && point.prSet && point.prSet.phldr;
+                    });
+                    if (isPhldr) {
+                        return true;
+                    }
                 }
             }
         }
@@ -845,6 +868,10 @@
     	}
 
     	return this.private_GetElementPageIndex(ElementPos, PageIndex, ResultColumn, ColumnsCount);
+    }
+
+    function fReadParagraphs(reader) {
+
     }
 
     AscFormat.CDrawingDocContent = CDrawingDocContent;

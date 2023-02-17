@@ -900,6 +900,50 @@ CGraphics.prototype =
         //    this.m_oTransform.sy,this.m_oTransform.tx,this.m_oTransform.ty);
     },
 
+    SetFontInternal : function(name, size, style)
+    {
+        var _lastFont     = this.IsUseFonts2 ? this.m_oLastFont2 : this.m_oLastFont;
+        var _font_manager = this.IsUseFonts2 ? this.m_oFontManager2 : this.m_oFontManager;
+
+        _lastFont.Name = name;
+        _lastFont.Size = size;
+
+        if (_lastFont.Name != _lastFont.SetUpName || _lastFont.Size != _lastFont.SetUpSize || style != _lastFont.SetUpStyle || !_font_manager.m_pFont)
+        {
+            _lastFont.SetUpName = _lastFont.Name;
+            _lastFont.SetUpSize = _lastFont.Size;
+            _lastFont.SetUpStyle = style;
+
+            g_fontApplication.LoadFont(_lastFont.SetUpName, AscCommon.g_font_loader, _font_manager, _lastFont.SetUpSize, _lastFont.SetUpStyle, this.m_dDpiX, this.m_dDpiY, this.m_oTransform, this.LastFontOriginInfo);
+
+            var _mD = _lastFont.SetUpMatrix;
+            var _mS = this.m_oTransform;
+            _mD.sx = _mS.sx;
+            _mD.sy = _mS.sy;
+            _mD.shx = _mS.shx;
+            _mD.shy = _mS.shy;
+            _mD.tx = _mS.tx;
+            _mD.ty = _mS.ty;
+        }
+        else
+        {
+            var _mD = _lastFont.SetUpMatrix;
+            var _mS = this.m_oTransform;
+
+            if (_mD.sx != _mS.sx || _mD.sy != _mS.sy || _mD.shx != _mS.shx || _mD.shy != _mS.shy || _mD.tx != _mS.tx || _mD.ty != _mS.ty)
+            {
+                _mD.sx = _mS.sx;
+                _mD.sy = _mS.sy;
+                _mD.shx = _mS.shx;
+                _mD.shy = _mS.shy;
+                _mD.tx = _mS.tx;
+                _mD.ty = _mS.ty;
+
+                _font_manager.SetTextMatrix(_mD.sx,_mD.shy,_mD.shx,_mD.sy,_mD.tx,_mD.ty);
+            }
+        }
+    },
+
     GetTextPr : function()
     {
         return this.m_oTextPr;
@@ -1100,7 +1144,7 @@ CGraphics.prototype =
         }
     },
 
-    tg : function(text,x,y)
+    tg : function(text,x,y,codepoints)
     {
         if (this.m_bIsBreak)
             return;
@@ -1112,7 +1156,7 @@ CGraphics.prototype =
 
         try
         {
-            _font_manager.LoadString3C(text,_x,_y);
+            _font_manager.LoadString3C(text,_x,_y,codepoints);
         }
         catch(err)
         {
@@ -2078,12 +2122,33 @@ CGraphics.prototype =
 
         if (this.m_bIntegerGrid)
         {
-            var _x = (this.m_oFullTransform.TransformPointX(x,y) + 0.5) >> 0;
-            var _y = (this.m_oFullTransform.TransformPointY(x,y) + 0.5) >> 0;
-            var _r = (this.m_oFullTransform.TransformPointX(x+w,y) + 0.5) >> 0;
-            var _b = (this.m_oFullTransform.TransformPointY(x,y+h) + 0.5) >> 0;
+            var tr = this.m_oFullTransform;
+            if (0.0 === tr.shx && 0.0 === tr.shy)
+            {
+                var _x = (tr.TransformPointX(x, y) + 0.5) >> 0;
+                var _y = (tr.TransformPointY(x, y) + 0.5) >> 0;
+                var _r = (tr.TransformPointX(x + w, y) + 0.5) >> 0;
+                var _b = (tr.TransformPointY(x, y + h) + 0.5) >> 0;
 
-            ctx.rect(_x, _y, _r - _x, _b - _y);
+                ctx.rect(_x, _y, _r - _x, _b - _y);
+            }
+            else
+            {
+                var x1 = tr.TransformPointX(x, y);
+                var y1 = tr.TransformPointY(x, y);
+                var x2 = tr.TransformPointX(x + w, y);
+                var y2 = tr.TransformPointY(x + w, y);
+                var x3 = tr.TransformPointX(x + w, y + h);
+                var y3 = tr.TransformPointY(x + w, y + h);
+                var x4 = tr.TransformPointX(x, y + h);
+                var y4 = tr.TransformPointY(x, y + h);
+
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.lineTo(x3, y3);
+                ctx.lineTo(x4, y4);
+                ctx.closePath();
+            }
         }
         else
         {

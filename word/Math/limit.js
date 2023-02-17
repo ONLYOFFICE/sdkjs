@@ -225,7 +225,7 @@ CLimit.prototype.kind      = MATH_LIMIT;
 
 CLimit.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(2);
+    this.Fill_LogicalContent(2, props.content);
 
     // посмотреть GetAllFonts
     this.setProperties(props);
@@ -315,6 +315,38 @@ CLimit.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos == 1 && false === this.Is_SelectInside();
 };
+CLimit.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var strLimitSymbol = "";
+	var strFuncName = this.getFName().GetMultipleContentForGetText(isLaTeX, true);
+	var strArgument = this.getIterator().GetMultipleContentForGetText(isLaTeX, true);
+	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
+	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
+
+	if (isLaTeX)
+    {
+        strLimitSymbol = (this.Pr.type == 1) ? "\\above" : "\\below";
+		if (strFuncName === 'lim' ||
+			strFuncName === 'log' ||
+			strFuncName === 'max' ||
+			strFuncName === 'min' ||
+			strFuncName === 'ln')
+        {
+            strLimitSymbol = (this.Pr.type == 1) ? "^" : "_";
+            strFuncName = '\\' + strFuncName;
+		}
+	}
+    else
+    {
+		strLimitSymbol = (this.Pr.type == 1) ? "┴" : "┬";
+	}
+
+	if (strArgument.length > 1 || isLaTeX)
+		strArgument = strStartBracet + strArgument + strCloseBracet;
+
+	strTemp = strFuncName + strLimitSymbol+ strArgument;
+	return strTemp;
+};
 
 /**
  *
@@ -374,7 +406,7 @@ CMathFunc.prototype.kind      = MATH_FUNCTION;
 
 CMathFunc.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(2);
+    this.Fill_LogicalContent(2, props.content);
 
     this.setProperties(props);
     this.fillContent();
@@ -416,6 +448,71 @@ CMathFunc.prototype.fillContent = function()
     this.elements[0][0] = this.getFName();
     this.elements[0][1] = this.getArgument();
 };
+CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var strFuncName = this.getFName().GetMultipleContentForGetText(isLaTeX, true);
+	var strArgument = this.getArgument().GetMultipleContentForGetText(isLaTeX, true);
+
+    if (!isLaTeX)
+    {
+        if (!this.getArgument().IsOneElementInContentForGetText())
+        {
+            strArgument =  " 〖" + strArgument + "〗";
+        }
+        else
+        {
+            strArgument = " " + strArgument;
+        }
+    }
+    if (isLaTeX)
+    {
+        strArgument = "{" + strArgument + "}";
+    }
+	//	Unicode
+	//	if strArgument is block.. such as (2+1), then don't add brackets
+
+	if (isLaTeX) {
+		switch (strFuncName) {
+			case 'cos':
+			case 'sin':
+			case 'tan':
+			case 'sec':
+			case 'cot':
+			case 'csc':
+			case 'arcsin':
+			case 'arccos':
+			case 'arctan':
+			case 'arcsec':
+			case 'arccot':
+			case 'arccsc':
+			case 'sinh':
+			case 'cosh':
+			case 'tanh':
+			case 'coth':
+			case 'sech':
+			case 'csch':
+			case 'srcsinh':
+			case 'arctanh':
+			case 'arcsech':
+			case 'arccosh':
+			case 'arccoth':
+			case 'arccsch':
+			case 'log':
+
+			case 'lin':
+			case 'ln':
+			case 'max':
+			case 'min':
+			case 'exp': strFuncName = '\\'+ strFuncName; break;
+			default: break;
+		}
+	}
+
+	strTemp = strFuncName + strArgument;
+
+	return strTemp;
+};
+
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

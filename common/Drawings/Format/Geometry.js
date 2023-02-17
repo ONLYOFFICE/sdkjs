@@ -63,6 +63,44 @@ var FORMULA_TYPE_MULT_DIV = 0,
     FORMULA_TYPE_VALUE = 15,
     FORMULA_TYPE_MIN = 16;
 
+var MAP_FMLA_TO_TYPE = {};
+    MAP_FMLA_TO_TYPE["*/"] = FORMULA_TYPE_MULT_DIV;
+    MAP_FMLA_TO_TYPE["+-"] = FORMULA_TYPE_PLUS_MINUS;
+    MAP_FMLA_TO_TYPE["+/"] = FORMULA_TYPE_PLUS_DIV;
+    MAP_FMLA_TO_TYPE["?:"] = FORMULA_TYPE_IF_ELSE;
+    MAP_FMLA_TO_TYPE["abs"] = FORMULA_TYPE_ABS;
+    MAP_FMLA_TO_TYPE["at2"] = FORMULA_TYPE_AT2;
+    MAP_FMLA_TO_TYPE["cat2"] = FORMULA_TYPE_CAT2;
+    MAP_FMLA_TO_TYPE["cos"] = FORMULA_TYPE_COS;
+    MAP_FMLA_TO_TYPE["max"] = FORMULA_TYPE_MAX;
+    MAP_FMLA_TO_TYPE["min"] = FORMULA_TYPE_MIN;
+    MAP_FMLA_TO_TYPE["mod"] = FORMULA_TYPE_MOD;
+    MAP_FMLA_TO_TYPE["pin"] = FORMULA_TYPE_PIN;
+    MAP_FMLA_TO_TYPE["sat2"] = FORMULA_TYPE_SAT2;
+    MAP_FMLA_TO_TYPE["sin"] = FORMULA_TYPE_SIN;
+    MAP_FMLA_TO_TYPE["sqrt"] = FORMULA_TYPE_SQRT;
+    MAP_FMLA_TO_TYPE["tan"] = FORMULA_TYPE_TAN;
+    MAP_FMLA_TO_TYPE["val"] = FORMULA_TYPE_VALUE;
+
+
+    var MAP_TYPE_TO_FMLA = {};
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_MULT_DIV] =   "*/";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_PLUS_MINUS] =   "+-";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_PLUS_DIV] =   "+/";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_IF_ELSE] =   "?:";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_ABS] =   "abs";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_AT2] =   "at2";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_CAT2] =   "cat2";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_COS] =   "cos";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_MAX] =   "max";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_MIN] =   "min";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_MOD] =   "mod";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_PIN] =   "pin";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_SAT2] =   "sat2";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_SIN] =   "sin";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_SQRT] =   "sqrt";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_TAN] =   "tan";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_VALUE] =   "val";
 
 var cToRad = Math.PI/(60000*180);
 var cToDeg = 1/cToRad;
@@ -113,6 +151,9 @@ function SAt2(x, y, z)
 {
     return  x*(Math.sin(Math.atan2(z, y)));
 }
+
+
+
 
 function CalculateGuideValue(name, formula, x, y, z, gdLst)
 {
@@ -791,76 +832,50 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
     AscDFH.changesFactory[AscDFH.historyitem_GeometrySetParent] = AscDFH.CChangesDrawingsObject;
     AscDFH.drawingContentChanges[AscDFH.historyitem_GeometryAddPath] = function(oClass){return oClass.pathLst;};
 
-function Geometry()
-{
-    this.gdLstInfo      = [];
-    this.gdLst          = {};
-    this.avLst          = {};
-
-    this.cnxLstInfo     = [];
-    this.cnxLst         = [];
-
-    this.ahXYLstInfo    = [];
-    this.ahXYLst        = [];
-
-    this.ahPolarLstInfo = [];
-    this.ahPolarLst     = [];
-    this.pathLst        = [];
-    this.preset = null;
-    this.rectS = null;
-
-    this.parent = null;
-
-    this.bDrawSmart = false;
-
-
-    this.Id = AscCommon.g_oIdCounter.Get_NewId();
-    AscCommon.g_oTableId.Add(this, this.Id);
-}
-
-Geometry.prototype=
-{
-    Get_Id: function()
+    function Geometry()
     {
-        return this.Id;
-    },
+        AscFormat.CBaseFormatObject.call(this);
+        this.gdLstInfo      = [];
+        this.gdLst          = {};
+        this.avLst          = {};
 
-    getObjectType: function()
-    {
-        return AscDFH.historyitem_type_Geometry;
-    },
+        this.cnxLstInfo     = [];
+        this.cnxLst         = [];
 
-    Write_ToBinary2: function(w)
-    {
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Get_Id());
-    },
+        this.ahXYLstInfo    = [];
+        this.ahXYLst        = [];
 
-    Read_FromBinary2: function(r)
-    {
-        this.Id = r.GetString2();
-    },
+        this.ahPolarLstInfo = [];
+        this.ahPolarLst     = [];
+        this.pathLst        = [];
+        this.preset = null;
+        this.rectS = null;
 
-    Refresh_RecalcData: function(data)
+        this.parent = null;
+
+        this.bDrawSmart = false;
+    }
+    AscFormat.InitClass(Geometry, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Geometry);
+    Geometry.prototype.Refresh_RecalcData = function(data)
     {
         if(this.parent && this.parent.handleUpdateGeometry)
         {
             this.parent.handleUpdateGeometry();
         }
-    },
+    };
 
-    isEmpty: function()
+    Geometry.prototype.isEmpty = function()
     {
         if(this.pathLst.length === 0)
             return true;
         if(this.pathLst.length === 1)
         {
-            return this.pathLst[0].ArrPathCommandInfo.length === 0;
+            return this.pathLst[0].isEmpty();
         }
         return false;
-    },
+    };
 
-    createDuplicate: function()
+    Geometry.prototype.createDuplicate = function()
     {
         var g = new Geometry();
         for(var i = 0; i < this.gdLstInfo.length; ++i)
@@ -897,21 +912,21 @@ Geometry.prototype=
             g.AddRect(this.rectS.l, this.rectS.t, this.rectS.r, this.rectS.b);
         }
         return g;
-    },
+    };
 
-    setParent: function(pr)
+    Geometry.prototype.setParent = function(pr)
     {
         History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GeometrySetParent, this.parent, pr));
         this.parent = pr;
-    },
+    };
 
-    setPreset: function(preset)
+    Geometry.prototype.setPreset = function(preset)
     {
         History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_GeometrySetPreset, this.preset, preset));
         this.preset = preset;
-    },
+    };
 
-    AddAdj: function(name, formula, x)
+    Geometry.prototype.AddAdj = function(name, formula, x)
     {
         var OldValue = null;
         if(this.gdLst[name] !== null && this.gdLst[name] !== undefined){
@@ -932,18 +947,18 @@ Geometry.prototype=
         }
         this.gdLst[name] = dVal;
         this.avLst[name] = true;
-    },
+    };
 
-    setAdjValue: function(name, val)
+    Geometry.prototype.setAdjValue = function(name, val)
     {
         this.AddAdj(name, 15, val + "");
         if(this.parent && this.parent.handleUpdateGeometry)
         {
             this.parent.handleUpdateGeometry();
         }
-    },
+    };
 
-    CheckCorrect: function(){
+    Geometry.prototype.CheckCorrect = function(){
         if(!this.parent){
             return false;
         }
@@ -951,9 +966,9 @@ Geometry.prototype=
             return false;
         }
         return true;
-    },
+    };
 
-    AddGuide: function(name, formula, x, y, z)
+    Geometry.prototype.AddGuide = function(name, formula, x, y, z)
     {
         History.CanAddChanges() && History.Add(new CChangesGeometryAddGuide(this, name, formula, x, y, z));
         this.gdLstInfo.push(
@@ -964,9 +979,9 @@ Geometry.prototype=
                 y: y,
                 z: z
             });
-    },
+    };
 
-    AddCnx: function(ang, x, y)
+    Geometry.prototype.AddCnx = function(ang, x, y)
     {
         History.CanAddChanges() && History.Add(new CChangesGeometryAddCnx(this, ang, x, y));
         this.cnxLstInfo.push(
@@ -975,9 +990,9 @@ Geometry.prototype=
                 x:x,
                 y:y
             });
-    },
+    };
 
-    AddHandleXY: function(gdRefX, minX, maxX, gdRefY, minY, maxY, posX, posY)
+    Geometry.prototype.AddHandleXY = function(gdRefX, minX, maxX, gdRefY, minY, maxY, posX, posY)
     {
         History.CanAddChanges() && History.Add(new CChangesGeometryAddHandleXY(this, gdRefX, minX, maxX, gdRefY, minY, maxY, posX, posY));
         this.ahXYLstInfo.push(
@@ -993,9 +1008,9 @@ Geometry.prototype=
                 posX:posX,
                 posY:posY
             });
-    },
+    };
 
-    AddHandlePolar: function(gdRefAng, minAng, maxAng, gdRefR, minR, maxR, posX, posY)
+    Geometry.prototype.AddHandlePolar = function(gdRefAng, minAng, maxAng, gdRefR, minR, maxR, posX, posY)
     {
         History.CanAddChanges() && History.Add(new CChangesGeometryAddHandlePolar(this, gdRefR, minR, maxR, gdRefAng, minAng, maxAng, posX, posY));
         this.ahPolarLstInfo.push(
@@ -1011,15 +1026,15 @@ Geometry.prototype=
                 posX:posX,
                 posY:posY
             })
-    },
+    };
 
-    AddPath: function(pr)
+    Geometry.prototype.AddPath = function(pr)
     {
         History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_GeometryAddPath, this.pathLst.length, [pr], true));
         this.pathLst.push(pr);
-    },
+    };
 
-    AddPathCommand: function(command, x1, y1, x2, y2, x3, y3)
+    Geometry.prototype.AddPathCommand = function(command, x1, y1, x2, y2, x3, y3)
     {
         switch(command)
         {
@@ -1065,9 +1080,9 @@ Geometry.prototype=
                 break;
             }
         }
-    },
+    };
 
-    AddRect: function(l, t, r, b)
+    Geometry.prototype.AddRect = function(l, t, r, b)
     {
         History.CanAddChanges() && History.Add(new CChangesGeometryAddRect(this, l, t, r, b));
         this.rectS = {};
@@ -1075,9 +1090,9 @@ Geometry.prototype=
         this.rectS.t = t;
         this.rectS.r = r;
         this.rectS.b = b;
-    },
+    };
 
-    findConnector: function(x, y, distanse){
+    Geometry.prototype.findConnector = function(x, y, distanse){
         var dx, dy;
         for(var i = 0; i < this.cnxLst.length; i++)
         {
@@ -1090,10 +1105,9 @@ Geometry.prototype=
             }
         }
         return null;
-    },
+    };
 
-
-    drawConnectors: function(overlay, transform){
+    Geometry.prototype.drawConnectors = function(overlay, transform){
 
         var dOldAlpha;
 
@@ -1111,9 +1125,9 @@ Geometry.prototype=
             oGraphics.put_GlobalAlpha(true, dOldAlpha);
         }
 
-    },
+    };
 
-    Recalculate: function(w, h, bResetPathsInfo)
+    Geometry.prototype.Recalculate = function(w, h, bResetPathsInfo)
     {
         this.gdLst["_3cd4"]= 16200000;
         this.gdLst["_3cd8"]= 8100000;
@@ -1206,9 +1220,9 @@ Geometry.prototype=
             delete this.ahXYLstInfo;
             delete this.ahPolarLstInfo;
         }
-    },
+    };
 
-    getMaxPathPolygonLength: function()
+    Geometry.prototype.getMaxPathPolygonLength = function()
     {
         var aByPaths = this.getArrayPolygonsByPaths(AscFormat.PATH_DIV_EPSILON);
 
@@ -1222,8 +1236,9 @@ Geometry.prototype=
             }
         }
         return dLength;
-    },
-    getMinPathPolygonLength: function()
+    };
+
+    Geometry.prototype.getMinPathPolygonLength = function()
     {
         var aByPaths = this.getArrayPolygonsByPaths(AscFormat.PATH_DIV_EPSILON);
 
@@ -1237,9 +1252,9 @@ Geometry.prototype=
             }
         }
         return dLength;
-    },
+    };
 
-    draw: function(shape_drawer)
+    Geometry.prototype.draw = function(shape_drawer)
     {
         if(shape_drawer.Graphics && shape_drawer.Graphics.bDrawSmart || this.bDrawSmart)
         {
@@ -1248,21 +1263,21 @@ Geometry.prototype=
         }
         for (var i=0, n=this.pathLst.length; i<n;++i)
             this.pathLst[i].draw(shape_drawer, i);
-    },
+    };
 
-    drawSmart: function(shape_drawer)
+    Geometry.prototype.drawSmart = function(shape_drawer)
     {
         for (var i=0, n=this.pathLst.length; i<n;++i)
             this.pathLst[i].drawSmart(shape_drawer);
-    },
+    };
 
-    check_bounds: function(checker)
+    Geometry.prototype.check_bounds = function(checker)
     {
         for(var i=0, n=this.pathLst.length; i<n;++i)
             this.pathLst[i].check_bounds(checker, this);
-    },
+    };
 
-    drawAdjustments: function(drawingDocument, transform, bTextWarp)
+    Geometry.prototype.drawAdjustments = function(drawingDocument, transform, bTextWarp)
     {
         var oApi = Asc.editor || editor;
         var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
@@ -1280,9 +1295,9 @@ Geometry.prototype=
         _adj_count = _adjustments.length;
         for(_adj_index = 0; _adj_index < _adj_count; ++_adj_index)
             drawingDocument.DrawAdjustment(transform, _adjustments[_adj_index].posX, _adjustments[_adj_index].posY, bTextWarp);
-    },
+    };
 
-    canFill: function()
+    Geometry.prototype.canFill = function()
     {
         if(this.preset === "line")
             return false;
@@ -1292,9 +1307,9 @@ Geometry.prototype=
                 return true;
         }
         return  false;
-    },
+    };
 
-    hitInInnerArea: function(canvasContext, x, y)
+    Geometry.prototype.hitInInnerArea = function(canvasContext, x, y)
     {
         var _path_list = this.pathLst;
         var _path_count = _path_list.length;
@@ -1305,9 +1320,9 @@ Geometry.prototype=
                 return true;
         }
         return false;
-    },
+    };
 
-    hitInPath: function(canvasContext, x, y, oAddingPoint)
+    Geometry.prototype.hitInPath = function(canvasContext, x, y, oAddingPoint)
     {
         var _path_list = this.pathLst;
         var _path_count = _path_list.length;
@@ -1318,9 +1333,9 @@ Geometry.prototype=
                 return true;
         }
         return false;
-    },
+    };
 
-    hitToAdj: function(x, y, distanse)
+    Geometry.prototype.hitToAdj = function(x, y, distanse)
     {
         var dx, dy;
         for(var i=0; i<this.ahXYLst.length; i++)
@@ -1345,15 +1360,14 @@ Geometry.prototype=
             }
         }
         return {hit: false, adjPolarFlag: null, adjNum: null};
-    },
+    };
 
-    getArrayPolygonsByPaths: function(epsilon)
+    Geometry.prototype.getArrayPolygonsByPaths = function(epsilon)
     {
         return GetArrayPolygonsByPaths(epsilon, this.pathLst);
-    },
+    };
 
-
-    getArrayPolygons: function(epsilon)
+    Geometry.prototype.getArrayPolygons = function(epsilon)
     {
         var used_epsilon;
         if(typeof epsilon !== "number" || isNaN(epsilon))
@@ -1489,15 +1503,14 @@ Geometry.prototype=
             }
         }
         return arr_polygons;
-    },
+    };
 
-
-    getBounds: function()
+    Geometry.prototype.getBounds = function()
     {
 
-    },
+    };
 
-    getNewWHByTextRect: function(dTextWidth, dTextHeight, dGeometryWidth, dGeometryHeight)
+    Geometry.prototype.getNewWHByTextRect = function(dTextWidth, dTextHeight, dGeometryWidth, dGeometryHeight)
     {
         var dDelta = 0;
         var dWi = dTextWidth, dHi = dTextHeight, dWNext, dHNext;
@@ -1544,31 +1557,108 @@ Geometry.prototype=
             while(dDelta > EPSILON_TEXT_AUTOFIT && iter_Count < MAX_ITER_COUNT);
             return {W: dWi, H: dGeometryHeight, bError: dDelta > EPSILON_TEXT_AUTOFIT};
         }
-    },
+    };
 
-    checkBetweenPolygons: function(oBoundsController, oPolygonWrapper1, oPolygonWrapper2) {
+    Geometry.prototype.checkBetweenPolygons = function(oBoundsController, oPolygonWrapper1, oPolygonWrapper2) {
         var aPathLst = this.pathLst;
         for(var i = 0; i < aPathLst.length; ++i)
         {
             aPathLst[i].checkBetweenPolygons(oBoundsController, oPolygonWrapper1, oPolygonWrapper2);
         }
-    },
-    checkByPolygon: function(oPolygon, bFlag, XLimit, ContentHeight, dKoeff, oBounds) {
+    };
+
+    Geometry.prototype.checkByPolygon = function(oPolygon, bFlag, XLimit, ContentHeight, dKoeff, oBounds) {
         var aPathLst = this.pathLst;
         for(var i = 0; i < aPathLst.length; ++i)
         {
             aPathLst[i].checkByPolygon(oPolygon, bFlag, XLimit, ContentHeight, dKoeff, oBounds);
         }
-    },
+    };
 
-    transform: function (oTransform, dKoeff) {
+    Geometry.prototype.transform = function (oTransform, dKoeff) {
         var aPathLst = this.pathLst;
         for(var i = 0; i < aPathLst.length; ++i)
         {
             aPathLst[i].transform(oTransform, dKoeff);
         }
+    };
+
+
+    function CAvLst(oGeometry, bAdjustments) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.bAdjustments = bAdjustments;
+        this.geometry = oGeometry;
     }
-};
+    AscFormat.InitClass(CAvLst, AscFormat.CBaseNoIdObject, 0);
+
+    function CAhLst(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+    }
+    AscFormat.InitClass(CAhLst, AscFormat.CBaseNoIdObject, 0);
+    function CCxnLst(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+    }
+    AscFormat.InitClass(CCxnLst, AscFormat.CBaseNoIdObject, 0);
+    function CPathLst(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+    }
+    AscFormat.InitClass(CPathLst, AscFormat.CBaseNoIdObject, 0);
+
+    function CPos() {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.x = null;
+        this.y = null;
+    }
+    AscFormat.InitClass(CPos, AscFormat.CBaseNoIdObject, 0);
+    function CAhPolar(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+        this.pos = null;
+        this.gdRefAng = null;
+        this.gdRefR = null;
+        this.maxAng = null;
+        this.maxR = null;
+        this.minAng = null;
+        this.minR = null;
+    }
+    AscFormat.InitClass(CAhPolar, AscFormat.CBaseNoIdObject, 0);
+
+    function CCxn(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+        this.pos = null;
+        this.ang = null;
+    }
+    AscFormat.InitClass(CCxn, AscFormat.CBaseNoIdObject, 0);
+
+    function CAhXY(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+        this.pos = null;
+        this.gdRefX = null;
+        this.gdRefY = null;
+        this.maxX = null;
+        this.maxY = null;
+        this.minX = null;
+        this.minY = null;
+    }
+    AscFormat.InitClass(CAhXY, AscFormat.CBaseNoIdObject, 0);
+
+    function CGuide(oGeometry, bAdj) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+        this.bAdj = bAdj;
+        this.fmla = null;
+        this.name = null;
+        this.x = null;
+        this.y = null;
+        this.z = null;
+    }
+    AscFormat.InitClass(CGuide, AscFormat.CBaseNoIdObject, 0);
+
 
 
 
@@ -1676,6 +1766,16 @@ function ComparisonEdgeByTopPoint(graphEdge1, graphEdge2)
     window['AscFormat'].Geometry = Geometry;
     window['AscFormat'].GraphEdge = GraphEdge;
     window['AscFormat'].PathAccumulator = PathAccumulator;
+    window['AscFormat'].CGeomPt = CPos;
+    window['AscFormat'].CAvLst = CAvLst;
+    window['AscFormat'].CAhLst = CAhLst;
+    window['AscFormat'].CCxnLst = CCxnLst;
+    window['AscFormat'].CPathLst = CPathLst;
+    window['AscFormat'].CPos = CPos;
+    window['AscFormat'].CAhPolar = CAhPolar;
+    window['AscFormat'].CCxn = CCxn;
+    window['AscFormat'].CAhXY = CAhXY;
+    window['AscFormat'].CGuide = CGuide;
 
     window['AscFormat'].EPSILON_TEXT_AUTOFIT = EPSILON_TEXT_AUTOFIT;
     window['AscFormat'].MAX_ITER_COUNT = MAX_ITER_COUNT;
@@ -1702,4 +1802,6 @@ function ComparisonEdgeByTopPoint(graphEdge1, graphEdge2)
     window['AscFormat'].FORMULA_TYPE_TAN = FORMULA_TYPE_TAN;
     window['AscFormat'].FORMULA_TYPE_VALUE = FORMULA_TYPE_VALUE;
     window['AscFormat'].FORMULA_TYPE_MIN = FORMULA_TYPE_MIN;
+    window['AscFormat'].MAP_FMLA_TO_TYPE = MAP_FMLA_TO_TYPE;
+    window['AscFormat'].MAP_TYPE_TO_FMLA = MAP_TYPE_TO_FMLA;
 })(window);

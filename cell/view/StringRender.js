@@ -161,7 +161,7 @@
 				0x9: 1,
 				0xB: 1,
 				0xC: 1,
-				0x2020: 1,
+				0x0020: 1,
 				0x2000: 1,
 				0x2001: 1,
 				0x2002: 1,
@@ -187,7 +187,7 @@
 				0x9: 1,
 				0xB: 1,
 				0xC: 1,
-				0x2020: 1,
+				0x0020: 1,
 				0x2000: 1,
 				0x2001: 1,
 				0x2002: 1,
@@ -520,6 +520,29 @@
 			return s;
 		};
 
+		StringRender.prototype._filterChars = function(chars, wrap) {
+			var res = [];
+			if (chars) {
+				for (var i = 0; i < chars.length; i++) {
+					if (0xD === chars[i] && 0xA === chars[i + 1]) {
+						//\r\n
+						if (wrap) {
+							res.push(0xA);
+						}
+						i++;
+					} else if (0xA === chars[i]) {
+						//\r
+						if (wrap) {
+							res.push(0xA);
+						}
+					} else {
+						res.push(chars[i]);
+					}
+				}
+			}
+			return res;
+		};
+
 		/**
 		 * @param {Number} startCh
 		 * @param {Number} endCh
@@ -787,6 +810,9 @@
 			while (charProp.total * w + width + w <= maxWidth) {
 				insertRepeatChars();
 				charProp.total += 1;
+				if (w === 0) {
+					break;
+				}
 			}
 
 			if (0 === charProp.total)
@@ -813,14 +839,13 @@
 			var wrapNL = this.flags && this.flags.wrapOnlyNL;
 			var verticalText = this.flags && this.flags.verticalText;
 			var hasRepeats = false;
-			var i, j, fr, fmt, text, p, p_ = {}, pIndex, startCh;
+			var i, j, fr, fmt, chars, p, p_ = {}, pIndex, startCh;
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
 
-			function measureFragment(frg) {
+			function measureFragment(_chars) {
 				var j, chc, chw, chPos, isNL, isSP, isHP, tm;
-				var _tL = frg.getCharCodesLength();
-				for (chPos = self.chars.length, j = 0; j < _tL; ++j, ++chPos) {
-					chc = frg.getCharCode(j);
+				for (chPos = self.chars.length, j = 0; j < _chars.length; ++j, ++chPos) {
+					chc = _chars[j];
 					tm = ctx.measureChar(null, 0/*px units*/, chc);
 					chw = tm.width;
 
@@ -846,7 +871,7 @@
 							// move hyphenation position
 							hpPos = chPos + 1;
 						} else if (isEastAsian) {
-							if (0 !== j && !(AscCommon.g_aPunctuation[frg.getCharCode(j - 1)] &
+							if (0 !== j && !(AscCommon.g_aPunctuation[_chars[j - 1]] &
 								AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E)) {
 								// move hyphenation position
@@ -865,7 +890,7 @@
 
 						if (isEastAsian) {
 							// move hyphenation position
-							if (j !== _tL && !(AscCommon.g_aPunctuation[frg.getCharCode(j + 1)] &
+							if (j !== _chars.length && !(AscCommon.g_aPunctuation[_chars[j + 1]] &
 								AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E)) {
 								hpPos = chPos + 1;
@@ -903,9 +928,8 @@
 				if (fr.isInitCharCodes()) {
 					fr.initText();
 				}
-				text = this._filterText(fr.getFragmentText(), wrap || wrapNL);
-				fr.initCharCodes();
-				var textLength = fr.getCharCodesLength();
+				chars = this._filterChars(fr.getCharCodes(), wrap || wrapNL);
+				//fr.initCharCodes();
 
 				pIndex = this.chars.length;
 				p = this.charProps[pIndex];
@@ -937,7 +961,7 @@
 				}
 
 				if (fmt.getSkip()) {
-					this._getCharPropAt(pIndex).skip = textLength;
+					this._getCharPropAt(pIndex).skip = chars.length;
 				}
 
 				if (fmt.getRepeat()) {
@@ -949,8 +973,8 @@
 					hasRepeats = true;
 				}
 
-				if (textLength < 1) {continue;}
-				measureFragment(fr);
+				if (chars.length < 1) {continue;}
+				measureFragment(chars);
 
 				// для italic текста прибавляем к концу строки разницу между charWidth и BBox
 				for (j = startCh; font.getItalic() && j < this.charWidths.length; ++j) {
@@ -1068,6 +1092,10 @@
 				}
 
 				if (isSO || ul) {
+
+					if (angle && window["IS_NATIVE_EDITOR"])
+						ctx.nativeTextDecorationTransform(true);
+
 					x2 = x1 + dw;
 					fsz = prop.font.getSize();
 					lw = asc_round(fsz * ppiy / 72 / 18) || 1;
@@ -1076,15 +1104,18 @@
 					   .beginPath();
 					dy = (lw / 2); dy = dy >> 0;
 					if (ul) {
-						y = asc_round(y1 + bl + prop.lm.d * 0.4);
+						y = asc_round(y1 + bl + prop.lm.d * 0.4 * zoom);
 						ctx.lineHor(x1, y + dy, x2 + 1/*px*/); // ToDo вопрос тут
 					}
 					if (isSO) {
 						dy += 1;
-						y = asc_round(y1 + bl - prop.lm.a * 0.275);
+						y = asc_round(y1 + bl - prop.lm.a * 0.275 * zoom);
 						ctx.lineHor(x1, y - dy, x2 + 1/*px*/); // ToDo вопрос тут
 					}
 					ctx.stroke();
+
+					if (angle && window["IS_NATIVE_EDITOR"])
+						ctx.nativeTextDecorationTransform(false);
 				}
 
 				return dw;

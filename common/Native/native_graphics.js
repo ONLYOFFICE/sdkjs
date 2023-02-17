@@ -35,6 +35,8 @@ function CNativeGraphics()
 {
     this.Native = CreateNativeGraphics();
 
+    this.isNativeGraphics = true;
+
     this.width        = 0;
     this.height       = 0;
     this.m_dWidthMM   = 0;
@@ -273,6 +275,12 @@ CNativeGraphics.prototype =
             this.m_oGrFonts = this.m_oTextPr.RFonts;
         }
     },
+
+    SetFontInternal : function(name, size, style)
+    {
+        this.Native["SetFont"](name, -1, size, style);
+    },
+
     SetFontSlot : function(slot, fontSizeKoef)
     {
         var _lastFont = {FontFamily : {Name : "Arial", Index : -1}, FontSize : 16, Italic : true, Bold : true};
@@ -344,10 +352,9 @@ CNativeGraphics.prototype =
     {
         this.Native["FillTextCode"](x, y, lUnicode);
     },
-    tg : function(text, x, y)
+    tg : function(code, x, y)
     {
-        var _code = text.charCodeAt(0);
-        this.Native["tg"](_code, x, y);
+        this.Native["tg"](code, x, y);
     },
     charspace : function(space)
     {
@@ -728,5 +735,10 @@ CNativeGraphics.prototype =
     GetPen : function()
     {
         return { Color : this.Native["GetPenColor"]()};
+    },
+
+    Destroy : function()
+    {
+        this.Native["Destroy"]();
     }
 };

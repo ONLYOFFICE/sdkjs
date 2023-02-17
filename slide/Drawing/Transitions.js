@@ -2632,6 +2632,7 @@ function CDemonstrationManager(htmlpage)
     this.isMouseDown = false;
     this.StartSlideNum = -1;
     this.TmpSlideVisible = -1;
+    this.LastMoveTime = null;
 
     var oThis = this;
 
@@ -3616,6 +3617,22 @@ function CDemonstrationManager(htmlpage)
         return false;
     };
 
+    this.CheckHideCursor = function()
+    {
+        if(!oThis.Canvas)
+        {
+            return;
+        }
+        var nShowTime = 3000;
+        if(oThis.LastMoveTime !== null && (new Date()).getTime() - oThis.LastMoveTime > nShowTime)
+        {
+            if(oThis.Canvas.style.cursor !== "none" && oThis.Canvas.style.cursor !== "pointer")
+            {
+                oThis.Canvas.style.cursor = "none";
+            }
+        }
+    };
+
     this.onMouseDown = function(e)
     {
         var documentMI = oThis.documentMouseInfo(e);
@@ -3674,6 +3691,7 @@ function CDemonstrationManager(htmlpage)
 
     this.onMouseMove = function(e)
     {
+        oThis.LastMoveTime = (new Date()).getTime();
         if (true)
         {
             var documentMI = oThis.documentMouseInfo(e);

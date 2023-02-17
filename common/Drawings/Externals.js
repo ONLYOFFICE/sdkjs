@@ -515,13 +515,6 @@ function CFontFileLoader(id)
     
     this.LoadFontNative = function()
     {
-		if (window["use_native_fonts_only"] === true)
-		{
-			// all font engine now native
-			this.Status = 0;
-			return;
-		}
-		
         var __font_data_idx = g_fonts_streams.length;
         var _data = window["native"]["GetFontBinary"](this.Id);
         g_fonts_streams[__font_data_idx] = new AscFonts.FontStream(_data, _data.length);
@@ -547,7 +540,7 @@ CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback, isEmbed)
 		if (-1 != this.Status)
 			return true;
 
-		this.callback = null;
+		this.callback = _callback;
 		this.Status = 2;
 		window["AscDesktopEditor"]["LoadFontBase64"](this.Id);
 		this._callback_font_load();

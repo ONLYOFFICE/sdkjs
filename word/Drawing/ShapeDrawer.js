@@ -349,19 +349,23 @@ CShapeDrawer.prototype =
                 _arr[indexD] *= this.StrokeWidth;
             this.Graphics.p_dash(_arr);
         }
+        else if (this.Graphics.RENDERER_PDF_FLAG)
+        {
+            this.Graphics.p_dash(null);
+        }
     },
 
     fromShape2 : function(shape, graphics, geom)
     {
         this.fromShape(shape, graphics);
 
-        if (!geom)
+        if (!geom && !graphics.bDrawRectWithLines)
         {
             this.IsRectShape = true;
         }
         else
         {
-            if (geom.preset == "rect")
+            if (geom.preset == "rect" && !graphics.bDrawRectWithLines)
                 this.IsRectShape = true;
         }
     },
@@ -1861,6 +1865,8 @@ function ShapeToImageConverter(shape, pageIndex)
         else
             _ret.ImageUrl = "";
     }
+    if (_canvas.isNativeGraphics === true)
+        _canvas.Destroy();
     return _ret;
 }
 

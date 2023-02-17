@@ -36,7 +36,8 @@
         username = '',
         _reviewPermissions,
         reviewGroups,
-        commentGroups;
+        commentGroups,
+        userInfoGroups;
 
     var _intersection = function (arr1, arr2) {
         if (arr1 && arr2) {
@@ -106,6 +107,13 @@
             }
         },
 
+        setUserInfoPermissions: function(groups) {
+            if (groups) {
+                if  (typeof groups == 'object' && groups.length>=0)
+                    userInfoGroups = groups;
+            }
+        },
+
         getCommentPermissions: function(permission) {
             if (parse && commentGroups) {
                 return commentGroups[permission];
@@ -145,7 +153,11 @@
         },
 
         isUserVisible: function(username) {
-            return this.canEditReview(username) || this.canViewComment(username) || this.canEditComment(username) || this.canDeleteComment(username);
+            if (!parse || !userInfoGroups) return true;
+
+            var groups = this.getParsedGroups(username);
+            groups && (groups.length==0) && (groups = [""]);
+            return _intersection(userInfoGroups, groups);
         }
     }
 
@@ -158,6 +170,7 @@
     UserInfoParser['getParsedName'] = UserInfoParser.getParsedName;
     UserInfoParser['setReviewPermissions'] = UserInfoParser.setReviewPermissions;
     UserInfoParser['setCommentPermissions'] = UserInfoParser.setCommentPermissions;
+    UserInfoParser['setUserInfoPermissions'] = UserInfoParser.setUserInfoPermissions;
     UserInfoParser['canEditReview'] = UserInfoParser.canEditReview;
     UserInfoParser['canViewComment'] = UserInfoParser.canViewComment;
     UserInfoParser['canEditComment'] = UserInfoParser.canEditComment;

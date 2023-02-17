@@ -56,6 +56,7 @@ var fieldtype_FORMULA    = 0x0010;
 var fieldtype_SEQ        = 0x0011;
 var fieldtype_STYLEREF   = 0x0012;
 var fieldtype_NOTEREF    = 0x0013;
+var fieldtype_ADDIN      = 0x0014;
 
 
 //--------------------------------------------------------export----------------------------------------------------
@@ -79,6 +80,7 @@ window['AscCommonWord'].fieldtype_FORMULA    = fieldtype_FORMULA;
 window['AscCommonWord'].fieldtype_SEQ        = fieldtype_SEQ;
 window['AscCommonWord'].fieldtype_STYLEREF   = fieldtype_STYLEREF;
 window['AscCommonWord'].fieldtype_NOTEREF    = fieldtype_NOTEREF;
+window['AscCommonWord'].fieldtype_ADDIN      = fieldtype_ADDIN;
 
 
 /**
@@ -118,6 +120,10 @@ CFieldInstructionBase.prototype.CheckInstructionLine = function(sLine)
 {
 	return (this.InstructionLine === sLine);
 };
+//--------------------------------------------------------export----------------------------------------------------
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CFieldInstructionBase = CFieldInstructionBase;
+
 /**
 * FORMULA field
 * @constructor
@@ -1577,12 +1583,23 @@ CFieldInstructionParser.prototype.GetInstructionClass = function(sLine)
 
 	return this.Result;
 };
+CFieldInstructionParser.prototype.InitParaFieldArguments = function(Type, sLine, oParaFiles)
+{
+	this.Line   = sLine;
+	this.Pos    = 0;
+	this.Buffer = "";
+	this.Result = null;
+
+	oParaFiles.FieldType = Type;
+	oParaFiles.Arguments = this.private_ReadArguments().slice(1);
+	//todo Switches
+	oParaFiles.Switches = this.Pos < this.Line.length ? [this.Line.substring(this.Pos)] : [];
+};
 CFieldInstructionParser.prototype.private_Parse = function()
 {
 	if (!this.private_ReadNext())
 		return this.private_ReadREF("");
-
-
+	
 	var sBuffer = this.Buffer.toUpperCase();
 	if("PAGE" === sBuffer)
 	{
@@ -1631,6 +1648,10 @@ CFieldInstructionParser.prototype.private_Parse = function()
 	else if ("DATE" === sBuffer)
 	{
 		this.private_ReadDATE();
+	}
+	else if ("ADDIN" === sBuffer)
+	{
+		this.private_ReadADDIN();
 	}
 	else if(sBuffer.indexOf("=") === 0)
 	{
@@ -1694,6 +1715,11 @@ CFieldInstructionParser.prototype.private_ReadNext = function()
 		return true;
 
 	return false;
+};
+CFieldInstructionParser.prototype.private_ReadTillEnd = function()
+{
+	this.Buffer = this.Line.substr(this.Pos).trim();
+	return !!this.Buffer;
 };
 CFieldInstructionParser.prototype.private_ReadArguments = function()
 {
@@ -2250,4 +2276,11 @@ CFieldInstructionParser.prototype.private_ReadDATE = function()
 			}
 		}
 	}
+};
+CFieldInstructionParser.prototype.private_ReadADDIN = function()
+{
+	this.Result = new AscWord.CFieldInstructionADDIN();
+	
+	if (this.private_ReadTillEnd())
+		this.Result.SetValue(this.Buffer);
 };

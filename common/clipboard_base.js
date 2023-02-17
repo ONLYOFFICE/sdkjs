@@ -1063,6 +1063,9 @@
 		return res;
 	}
 
+
+	const specialPasteElemHeight = 22;
+	const specialPasteElemWidth = 33;
 	function CSpecialPasteHelper()
 	{
 		this.Api = null;
@@ -1331,6 +1334,9 @@
 	var g_clipboardBase = new CClipboardBase();
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].g_clipboardBase = g_clipboardBase;
+
+	window['AscCommon'].specialPasteElemHeight = specialPasteElemHeight;
+	window['AscCommon'].specialPasteElemWidth = specialPasteElemWidth;
 
 	var g_specialPasteHelper = new CSpecialPasteHelper();
 	window['AscCommon'].g_specialPasteHelper = g_specialPasteHelper;

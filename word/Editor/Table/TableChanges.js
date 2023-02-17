@@ -859,7 +859,7 @@ CChangesTableTableLook.prototype.private_SetValue = function(Value)
 };
 CChangesTableTableLook.prototype.private_CreateObject = function()
 {
-	return new CTableLook();
+	return new AscCommon.CTableLook();
 };
 /**
  * @constructor

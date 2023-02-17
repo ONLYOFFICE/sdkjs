@@ -467,6 +467,8 @@
 			//добавляю флаг, чтобы не протаскивать через несколько функций
 			this.isAddTotalRow = null;
 
+			this.redoColumnName = null;
+
 			return this;
 		}
 
@@ -530,10 +532,12 @@
 								shiftRange.addCellsShiftBottom();
 								wsView.cellCommentator.updateCommentsDependencies(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox);
 								worksheet.shiftDataValidation(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox, true);
+								wsView.shiftCellWatches(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox);
 								moveToRange = new Asc.Range(filterRange.c1, filterRange.r1 + 1, filterRange.c2, filterRange.r2);
 							}
 							worksheet._moveRange(rangeWithoutDiff, moveToRange);
 							wsView.cellCommentator.moveRangeComments(rangeWithoutDiff, moveToRange);
+							wsView.moveCellWatches(rangeWithoutDiff, moveToRange);
 						} else if (!addNameColumn && styleName) {
 							if (filterRange.r1 === filterRange.r2) {
 								if (t._isEmptyCellsUnderRange(rangeWithoutDiff)) {
@@ -545,7 +549,8 @@
 										shiftRange = worksheet.getRange3(filterRange.r2, filterRange.c1, filterRange.r2, filterRange.c2);
 										shiftRange.addCellsShiftBottom();
 										wsView.cellCommentator.updateCommentsDependencies(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox);
-										worksheet.shiftDataValidation(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox, true)
+										worksheet.shiftDataValidation(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox, true);
+										wsView.shiftCellWatches(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox);
 									}
 								}
 							}
@@ -1248,6 +1253,10 @@
 			// Redo
 			Redo: function (type, data) {
 				History.TurnOff();
+
+				//translate on redo - we use action language
+				this.redoColumnName = data.redoColumnName;
+
 				switch (type) {
 					case AscCH.historyitem_AutoFilter_Add:
 						this.addAutoFilter(data.styleName, data.activeCells, data.addFormatTableOptionsObj, null, data);
@@ -1432,6 +1441,7 @@
 							undo_apply();
 						} else {
 							this.isEmptyAutoFilters(cloneData.Ref);
+							worksheet.reinitRowsCount();
 						}
 						break;
 					case AscCH.historyitem_AutoFilter_ChangeTableStyle:
@@ -1955,7 +1965,10 @@
 						}
 					}
 
-					if (!bUndoChanges && !bRedoChanges /*&& !notAddToHistory*/ && oldFilter) {
+					//для случая, когда вставляем последнюю строку в ф/т, не добавляю эти сдвиги в историю
+					//это делается при undo в функции _shiftCellsBottom
+					//2 раза дублировать сдвиги не нужно
+					if (!bUndoChanges && !bRedoChanges /*&& !notAddToHistory*/ && oldFilter && !(displayNameFormatTable && insertType === c_oAscInsertOptions.InsertCellsAndShiftDown)) {
 						var changeElement = {
 							oldFilter: oldFilter, newFilterRef: filter.Ref.clone()
 						};
@@ -3208,7 +3221,7 @@
 				oHistoryObject.undo = oldObj;
 
 				if (redoObject) {
-					oHistoryObject.activeCells = redoObject.activeCells.clone();	// ToDo Слишком много клонирования, это долгая операция
+					oHistoryObject.activeCells = redoObject.activeCells && redoObject.activeCells.clone();	// ToDo Слишком много клонирования, это долгая операция
 					oHistoryObject.styleName = redoObject.styleName;
 					oHistoryObject.type = redoObject.type;
 					oHistoryObject.cellId = redoObject.cellId;
@@ -3228,6 +3241,7 @@
 					oHistoryObject.viewId = ws.getActiveNamedSheetViewId();
 					oHistoryObject._type = type;
 				}
+				oHistoryObject.redoColumnName = AscCommon.translateManager.getValue("Column");
 
 				return oHistoryObject;
 			},
@@ -4952,20 +4966,20 @@
 			},
 
 			_generateColumnNameWithoutTitle: function (ref) {
-				var tableColumns = [], newTableColumn;
-				var range = this.worksheet.getRange3(ref.r1, ref.c1, ref.r1, ref.c2);
-				var defaultName = 'Column';
-				var uniqueColumns = {}, val, valTemplate, valLower, index = 1, isDuplicate = false, emptyCells = false;
-				var valuesAndMap = range._getValuesAndMap(true);
-				var values = valuesAndMap.values;
-				var length = values.length;
+				let tableColumns = [], newTableColumn;
+				let range = this.worksheet.getRange3(ref.r1, ref.c1, ref.r1, ref.c2);
+				let defaultName = this._getColumnName();
+				let uniqueColumns = {}, val, valTemplate, valLower, index = 1, isDuplicate = false, emptyCells = false;
+				let valuesAndMap = range._getValuesAndMap(true);
+				let values = valuesAndMap.values;
+				let length = values.length;
 				if (0 === length) {
 					// Выделили всю строку без значений
 					length = ref.c2 - ref.c1 + 1;
 					emptyCells = true;
 				}
-				var map = valuesAndMap.map;
-				for (var i = 0; i < length; ++i) {
+				let map = valuesAndMap.map;
+				for (let i = 0; i < length; ++i) {
 					if (emptyCells || '' === (valTemplate = val = values[i].v)) {
 						valTemplate = defaultName;
 						val = valTemplate + index;
@@ -4989,7 +5003,7 @@
 							newTableColumn = new AscCommonExcel.TableColumn();
 							if (val.length >= AscCommon.c_oAscMaxTableColumnTextLength) {
 								val = val.substring(0, AscCommon.c_oAscMaxTableColumnTextLength - 1);
-								var cell = this.worksheet.getRange3(ref.r1, ref.c1 + i, ref.r1, ref.c1 + i);
+								let cell = this.worksheet.getRange3(ref.r1, ref.c1 + i, ref.r1, ref.c1 + i);
 								cell.setValue(val);
 							}
 							newTableColumn.Name = val;
@@ -5003,7 +5017,8 @@
 			},
 
 			_generateColumnName: function (tableColumns, indexInsertColumn) {
-				var index = 1;
+				let index = 1;
+				let columnName = this._getColumnName();
 				var isSequence = false;
 				if (indexInsertColumn != undefined) {
 					if (indexInsertColumn < 0) {
@@ -5012,10 +5027,10 @@
 					var nameStart;
 					var nameEnd;
 					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].Name) {
-						nameStart = tableColumns[indexInsertColumn].Name.split("Column");
+						nameStart = tableColumns[indexInsertColumn].Name.split(columnName);
 					}
 					if (tableColumns[indexInsertColumn + 1] && tableColumns[indexInsertColumn + 1].Name) {
-						nameEnd = tableColumns[indexInsertColumn + 1].Name.split("Column");
+						nameEnd = tableColumns[indexInsertColumn + 1].Name.split(columnName);
 					}
 					if (nameStart && nameStart[1] && nameEnd && nameEnd[1] && !isNaN(parseInt(nameStart[1])) && !isNaN(parseInt(nameEnd[1])) && ((parseInt(nameStart[1]) + 1) == parseInt(nameEnd[1]))) {
 						isSequence = true;
@@ -5026,17 +5041,17 @@
 				if (indexInsertColumn == undefined || !isSequence) {
 					for (i = 0; i < tableColumns.length; i++) {
 						if (tableColumns[i].Name) {
-							name = tableColumns[i].Name.split("Column");
+							name = tableColumns[i].Name.split(columnName);
 						}
-						if (name && name[1] && !isNaN(parseFloat(name[1])) && index == parseFloat(name[1])) {
+						if (name && name[1] && !isNaN(parseFloat(name[1])) && index === parseFloat(name[1])) {
 							index++;
 							i = -1;
 						}
 					}
-					return "Column" + index;
+					return columnName + index;
 				} else {
 					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].Name) {
-						name = tableColumns[indexInsertColumn].Name.split("Column");
+						name = tableColumns[indexInsertColumn].Name.split(columnName);
 					}
 					if (name && name[1] && !isNaN(parseFloat(name[1]))) {
 						index = parseFloat(name[1]) + 1;
@@ -5044,26 +5059,34 @@
 
 					for (i = 0; i < tableColumns.length; i++) {
 						if (tableColumns[i].Name) {
-							name = tableColumns[i].Name.split("Column");
+							name = tableColumns[i].Name.split(columnName);
 						}
 						if (name && name[1] && !isNaN(parseFloat(name[1])) && index == parseFloat(name[1])) {
 							index = parseInt((index - 1) + "2");
 							i = -1;
 						}
 					}
-					return "Column" + index;
+					return columnName + index;
 				}
+			},
+
+			_getColumnName: function () {
+				//on redo use language on action moment
+				if (this.redoColumnName && this.worksheet && this.worksheet.workbook && this.worksheet.workbook.bRedoChanges) {
+					return this.redoColumnName;
+				}
+				return AscCommon.translateManager ? AscCommon.translateManager.getValue("Column") : "Column";
 			},
 
 			_generateNextColumnName: function (tableColumns, val) {
 				var tableColumnMap = [];
 				for (var i = 0; i < tableColumns.length; i++) {
-					tableColumnMap[tableColumns[i].Name] = 1;
+					tableColumnMap[tableColumns[i].Name.toLowerCase()] = 1;
 				}
 				var res = val;
 				var index = 2;
 				while (true) {
-					if (tableColumnMap[res]) {
+					if (tableColumnMap[res.toLowerCase()]) {
 						res = val + index;
 					} else {
 						break;
@@ -5785,11 +5808,50 @@
 			},
 
 			_isEmptyRange: function (ar, addDelta) {
+				if (addDelta == null) {
+					addDelta = 0;
+				}
 				var range = this.worksheet.getRange3(Math.max(0, ar.r1 - addDelta), Math.max(0, ar.c1 - addDelta), ar.r2 + addDelta, ar.c2 + addDelta);
 				var res = true;
 				range._foreachNoEmpty(function (cell) {
 					if (!cell.isNullText()) {
 						res = false;
+						return true;
+					}
+				});
+				return res;
+			},
+
+			_isContainEmptyCell: function (ar) {
+				var range = this.worksheet.getRange3(Math.max(0, ar.r1), Math.max(0, ar.c1), ar.r2, ar.c2);
+				var res = false;
+				range._foreach2(function (cell) {
+					if (!cell || cell.isNullText()) {
+						res = true;
+						return true;
+					}
+				});
+				return res;
+			},
+
+			_getFirstNotEmptyCell: function (ar) {
+				var range = this.worksheet.getRange3(Math.max(0, ar.r1), Math.max(0, ar.c1), ar.r2, ar.c2);
+				var res = null;
+				range._foreachNoEmpty(function (cell) {
+					if (!cell.isNullText()) {
+						res = cell;
+						return true;
+					}
+				});
+				return res;
+			},
+
+			_getFirstEmptyCellByRow: function (startRow, startCol, endCol) {
+				var range = this.worksheet.getRange3(startRow, startCol, this.worksheet.cellsByColRowsCount - 1, endCol);
+				var res = {nRow: this.worksheet.cellsByColRowsCount, nCol: startCol};
+				range._foreach2(function (cell, row, col) {
+					if (!cell || cell.isNullText()) {
+						res = {nRow: row, nCol: col};
 						return true;
 					}
 				});
@@ -5822,18 +5884,18 @@
 
 			_generateColumnName2: function (tableColumns) {
 				// ToDo почему 2 функции generateColumnName?
-				var columnName = "Column";
-				//var indexColumn = name[1]; name - не определено!
-				var indexColumn = undefined;
-				var nextIndex;
+				let columnName = this._getColumnName();
+				//let indexColumn = name[1]; name - не определено!
+				let indexColumn = undefined;
+				let nextIndex;
 
 				//ищем среди tableColumns, возможно такое имя уже имеется
-				var tableColumnsNameMap = null;
-				var checkNextName = function () {
-					var nextName = columnName + nextIndex;
+				let tableColumnsNameMap = null;
+				let checkNextName = function () {
+					let nextName = columnName + nextIndex;
 					if (!tableColumnsNameMap) {
 						tableColumnsNameMap = {};
-						for (var i = 0; i < tableColumns.length; i++) {
+						for (let i = 0; i < tableColumns.length; i++) {
 							if (tableColumns[i]) {
 								tableColumnsNameMap[tableColumns[i].Name] = 1;
 							}
@@ -5846,7 +5908,7 @@
 				};
 
 				//если сменилась первая цифра
-				var checkChangeIndex = function () {
+				let checkChangeIndex = function () {
 					if ((nextIndex + 1).toString().substr(0, 1) !== (indexColumn).toString().substr(0, 1)) {
 						return true;
 					} else {
@@ -5858,9 +5920,9 @@
 				{
 					indexColumn = parseFloat(indexColumn);
 					nextIndex = indexColumn + 1;
-					var string = "";
+					let string = "";
 
-					var firstInput = true;
+					let firstInput = true;
 					while (checkNextName() === false) {
 						if (firstInput === true) {
 							string += "1";
@@ -5888,16 +5950,16 @@
 			},
 
 			_getFilterInfoByAddTableProps: function (ar, addFormatTableOptionsObj, bTable) {
-				var tempRange = new Asc.Range(ar.c1, ar.r1, ar.c2, ar.r2);
-				var addNameColumn, filterRange, bIsManualOptions = false;
-				var ws = this.worksheet;
+				let tempRange = new Asc.Range(ar.c1, ar.r1, ar.c2, ar.r2);
+				let addNameColumn, filterRange, bIsManualOptions = false;
+				let ws = this.worksheet;
 
-				var _isOneCell = function (_range) {
-					var res = null;
+				let _isOneCell = function (_range) {
+					let res = null;
 					if (_range.isOneCell()) {
 						res = true;
 					} else if (!bTable) {
-						var merged = ws.getMergedByCell(_range.r1, _range.c1);
+						let merged = ws.getMergedByCell(_range.r1, _range.c1);
 						if (merged && merged.isEqual(_range)) {
 							res = true;
 						}
@@ -5922,7 +5984,7 @@
 				}
 
 				//expand range
-				var tablePartsContainsRange = this._isTablePartsContainsRange(tempRange);
+				let tablePartsContainsRange = this._isTablePartsContainsRange(tempRange);
 				if (tablePartsContainsRange) {
 					filterRange = tablePartsContainsRange.Ref.clone();
 				} else if (_isOneCell(tempRange) && !bIsManualOptions) {
@@ -5933,7 +5995,7 @@
 						//меняем range в зависимости от последних ячеек со значениями
 						//ms ещё смотрит на аналогичные значения для начала диапазона
 						//TODO если будут такие переменные со значениями начала диапазона - сделать аналогично MS
-						var definedRange = new Asc.Range(0, 0, this.worksheet.nColsCount - 1, this.worksheet.nRowsCount - 1);
+						let definedRange = new Asc.Range(0, 0, this.worksheet.nColsCount - 1, this.worksheet.nRowsCount - 1);
 						filterRange = tempRange.intersection(definedRange);
 						if (!filterRange) {
 							filterRange = tempRange;
@@ -5943,7 +6005,7 @@
 					}
 				}
 
-				var rangeWithoutDiff = filterRange.clone();
+				let rangeWithoutDiff = filterRange.clone();
 				if (addNameColumn) {
 					filterRange.r2 = filterRange.r2 + 1;
 				}
@@ -5998,22 +6060,35 @@
 				return [filterArr, otherArr];
 			},
 
-			containInFilter: function(row, checkApplyFilter) {
+			containInFilter: function(row, checkApplyFilter, checkNamedSheetView, ignoreHeader) {
 				var ws = this.worksheet;
 				var tables = ws.TableParts;
 				var autoFilter = ws.AutoFilter;
+				var t = this;
+
+				var activeNamedSheetView = checkNamedSheetView && ws.getActiveNamedSheetViewId() !== null
+				var _isApplyFilter = function (_filter) {
+					if (activeNamedSheetView) {
+						var nsvFilter = ws.getNvsFilterByTableName(_filter.DisplayName);
+						return nsvFilter && nsvFilter.isApplyAutoFilter();
+					} else {
+						return _filter.isApplyAutoFilter();
+					}
+				};
+
+				var headerDiff = ignoreHeader ? 1 : 0;
 				if (tables) {
 					for (var i = 0; i < tables.length; i++) {
 						var tableFilter = tables[i].AutoFilter;
-						if (tableFilter && (!checkApplyFilter || (checkApplyFilter && tableFilter.isApplyAutoFilter()))) {
-							if (row >= tables[i].Ref.r1 && row <= tables[i].Ref.r2) {
+						if (tableFilter && (!checkApplyFilter || (checkApplyFilter && _isApplyFilter(tables[i])))) {
+							if (row >= tables[i].Ref.r1 + headerDiff && row <= tables[i].Ref.r2) {
 								return true;
 							}
 						}
 					}
 				}
-				if (autoFilter && (!checkApplyFilter || (checkApplyFilter && autoFilter.isApplyAutoFilter()))) {
-					if (row >= autoFilter.Ref.r1 && row <= autoFilter.Ref.r2) {
+				if (autoFilter && (!checkApplyFilter || (checkApplyFilter && _isApplyFilter(autoFilter)))) {
+					if (row >= autoFilter.Ref.r1 + headerDiff && row <= autoFilter.Ref.r2) {
 						return true;
 					}
 				}
@@ -6122,6 +6197,124 @@
 			cleanCollaborativeObj: function () {
 				this.applyCollaborativeChangedColumnsArr = [];
 				this.applyCollaborativeChangedRowsArr = [];
+			},
+
+			getAutoFiltersOptions: function (ws, filterProp, setViewProps) {
+				//get filter
+				var filter, autoFilter, displayName = null;
+				if (filterProp.id === null) {
+					autoFilter = ws.AutoFilter;
+					filter = ws.AutoFilter;
+				} else {
+					autoFilter = ws.TableParts[filterProp.id].AutoFilter;
+					filter = ws.TableParts[filterProp.id];
+					displayName = filter.DisplayName;
+				}
+
+				//get values
+				var colId = filterProp.colId;
+				if(filterProp.id === null) {
+					colId = ws.autoFilters._getTrueColId(filter, colId, true);
+				}
+
+				var openAndClosedValues = ws.autoFilters.getOpenAndClosedValues(filter, colId);
+				var values = openAndClosedValues.values;
+				var automaticRowCount = openAndClosedValues.automaticRowCount;
+				//для случае когда скрыто только пустое значение не отображаем customfilter
+				var ignoreCustomFilter = openAndClosedValues.ignoreCustomFilter;
+
+				var activeNamedSheetView = ws.getActiveNamedSheetViewId();
+				var nsvFilter;
+				var filters;
+				if (activeNamedSheetView !== null) {
+					nsvFilter = ws.getNvsFilterByTableName(filter.DisplayName);
+					if (nsvFilter) {
+						filters = nsvFilter.getColumnFilterByColId(colId);
+					}
+				} else {
+					filters = autoFilter.getFilterColumn(colId, true);
+				}
+
+				var rangeButton = new Asc.Range(autoFilter.Ref.c1 + colId, autoFilter.Ref.r1, autoFilter.Ref.c1 + colId, autoFilter.Ref.r1);
+				var cellId = ws.autoFilters._rangeToId(rangeButton);
+				var cell = ws.getRange3(rangeButton.r1, rangeButton.c1, rangeButton.r2, rangeButton.c2);
+				var columnName = cell.getValue();
+
+				//get filter object
+				var filterObj = new Asc.AutoFilterObj();
+				filterObj.convertFromFilterColumn(filters, ignoreCustomFilter);
+
+				//get sort
+				var sortVal = null;
+				var sortColor = null;
+				if (filter && filter.SortState && filter.SortState.SortConditions && filter.SortState.SortConditions[0]) {
+					var SortConditions = filter.SortState.SortConditions;
+
+					for(var i = 0; i < SortConditions.length; i++) {
+						var sortCondition = SortConditions[i];
+						if (rangeButton.c1 === sortCondition.Ref.c1) {
+
+							var conditionSortBy = SortConditions.ConditionSortBy;
+							switch (conditionSortBy) {
+								case Asc.ESortBy.sortbyCellColor:
+								{
+									sortVal = Asc.c_oAscSortOptions.ByColorFill;
+									sortColor = sortCondition.dxf && sortCondition.dxf.fill ? sortCondition.dxf.fill.bg() : null;
+									break;
+								}
+								case Asc.ESortBy.sortbyFontColor:
+								{
+									sortVal = Asc.c_oAscSortOptions.ByColorFont;
+									sortColor = sortCondition.dxf && sortCondition.dxf.font ? sortCondition.dxf.font.getColor() : null;
+									break;
+								}
+								default:
+								{
+									if (sortCondition.ConditionDescending) {
+										sortVal = Asc.c_oAscSortOptions.Descending;
+									} else {
+										sortVal = Asc.c_oAscSortOptions.Ascending;
+									}
+
+									break;
+								}
+							}
+						}
+					}
+				}
+
+				var ascColor = null;
+				if (null !== sortColor) {
+					ascColor = new Asc.asc_CColor();
+					ascColor.asc_putR(sortColor.getR());
+					ascColor.asc_putG(sortColor.getG());
+					ascColor.asc_putB(sortColor.getB());
+					ascColor.asc_putA(sortColor.getA());
+				}
+
+				setViewProps && setViewProps(autoFilter.Ref.c1 + colId, autoFilter.Ref.r1);
+
+				//set menu object
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+
+				autoFilterObject.asc_setSortState(sortVal);
+				autoFilterObject.asc_setCellId(cellId);
+				autoFilterObject.asc_setValues(values);
+				autoFilterObject.asc_setFilterObj(filterObj);
+				autoFilterObject.asc_setAutomaticRowCount(automaticRowCount);
+				autoFilterObject.asc_setDiplayName(displayName);
+				autoFilterObject.asc_setSortColor(ascColor);
+				autoFilterObject.asc_setColumnName(columnName);
+				autoFilterObject.asc_setSheetColumnName(AscCommon.g_oCellAddressUtils.colnumToColstr(rangeButton.c1 + 1));
+
+				var columnRange = new Asc.Range(colId + autoFilter.Ref.c1, autoFilter.Ref.r1 + 1, colId + autoFilter.Ref.c1, (automaticRowCount && automaticRowCount > autoFilter.Ref.r2) ? automaticRowCount : autoFilter.Ref.r2);
+
+				var filterTypes = ws.getRowColColors(columnRange);
+				autoFilterObject.asc_setIsTextFilter(filterTypes.text);
+				autoFilterObject.asc_setColorsFill(filterTypes.colors);
+				autoFilterObject.asc_setColorsFont(filterTypes.fontColors);
+
+				return autoFilterObject;
 			}
 		};
 

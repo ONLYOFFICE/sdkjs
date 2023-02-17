@@ -442,6 +442,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var c_nVersionNoBase64 = 10;
 	var c_dMaxParaRunContentLength = 256;
 	var c_nMaxHyperlinkLength = 2083;
+	var c_sNativeViewerFormats = '.pdf.xps.oxps.djvu';
 
 	//files type for Saving & DownloadAs
 	var c_oAscFileType = {
@@ -450,7 +451,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		PDFA    : 0x0209,
 		DJVU    : 0x0203,
 		XPS     : 0x0204,
-		HTML    : 0x0803,
 
 		// Word
 		DOCX : 0x0041,
@@ -458,7 +458,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		ODT  : 0x0043,
 		RTF  : 0x0044,
 		TXT  : 0x0045,
-		HTML_TODO  : 0x0046,
+		HTML : 0x0046,
 		MHT  : 0x0047,
 		EPUB : 0x0048,
 		FB2  : 0x0049,
@@ -524,10 +524,10 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	};
 
 	var c_oAscTextAssociation = {
-		Char: 0,
-		Line: 1,
-		NoFrames: 2,
-		Block: 3
+		BlockChar : 0,
+		BlockLine : 1,
+		PlainLine : 2,
+		PlainParagraph : 3
 	};
 
 	var c_oAscError = {
@@ -567,6 +567,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			LoadingScriptError    : -24,
 			EditingError          :	-25,
 			LoadingFontError      : -26,
+			LoadingBinError       : -27,
 
 			SplitCellMaxRows     : -30,
 			SplitCellMaxCols     : -31,
@@ -594,6 +595,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			FTRangeIncludedOtherTables       : -57,
 			ChangeFilteredRangeError         : -58,
 
+			CanNotPasteImage: -63,
 			PasteMaxRangeError   : -64,
 			PastInMergeAreaError : -65,
 			CopyMultiselectAreaError : -66,
@@ -601,12 +603,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			MoveSlicerError: 68,
 			PasteMultiSelectError : -69,
 
-			DataRangeError   : -75,
-			CannotMoveRange  : -74,
-			ErrorInFormula   : -73,
-			InvalidReference : -72,
-			NoSingleRowCol   : -71,
 			NoValues         : -70,
+			NoSingleRowCol   : -71,
+			InvalidReference : -72,
+			ErrorInFormula   : -73,
+			CannotMoveRange  : -74,
+			DataRangeError   : -75,
 
 			MaxDataSeriesError : -80,
 			CannotFillRange    : -81,
@@ -614,6 +616,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			ConvertationOpenError      : -82,
             ConvertationSaveError      : -83,
 			ConvertationOpenLimitError : -84,
+			ConvertationOpenFormat     : -85,
 
 			UserDrop : -100,
 			Warning  : -101,
@@ -694,6 +697,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 
 			Password : -1000,
 
+			ComplexFieldEmptyTOC : -1101,
+			ComplexFieldNoTOC    : -1102,
+
+			TextFormWrongFormat : -1201,
+
 			SecondaryAxis: 1001,
 			ComboSeriesError: 1002,
 
@@ -767,6 +775,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		                      // открывается именно просмотрщик.
 	};
 
+	var c_oAscLocalRestrictionType = {
+		None		: 0x00,
+		ReadOnly	: 0x01,
+		Locked		: 0x02,
+		Nosafe		: 0x04
+	};
+
 	// Режимы отрисовки
 	var c_oAscFontRenderingModeType = {
 		noHinting             : 1,
@@ -785,6 +800,16 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Download  : 'asc_onDownloadUrl',
 		Print     : 'asc_onPrintUrl',
 		MailMerge : 'asc_onSaveMailMerge'
+	};
+
+	var c_oAscFrameDataType = {
+		SendImageUrls: 0,
+		GetLoadedImages: 1,
+		OpenFrame: 2,
+		ShowImageDialogInFrame: 3,
+		GetUrlsFromImageDialog: 4,
+		SkipStartEndAction: 5,
+		StartUploadImageAction: 6
 	};
 
 	var CellValueType = {
@@ -849,7 +874,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Math           : 9,
 		MailMerge      : 10,
 		ContentControl : 11,
-		Animation      : 12
+		Animation      : 12,
+		Text           : 13 // viewer
 	};
 
 	var c_oAscLineDrawingRule = {
@@ -917,8 +943,9 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	};
 
 	var vertalign_Baseline    = 0;
-	var vertalign_SuperScript = 1;
-	var vertalign_SubScript   = 2;
+	var vertalign_SubScript   = 1;
+	var vertalign_SuperScript = 2;
+
 	var hdrftr_Header         = 0x01;
 	var hdrftr_Footer         = 0x02;
 
@@ -1698,11 +1725,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		b: 0,
 		bl: 1,
 		br: 2,
-		l: 3,
-		r: 4,
-		t: 5,
-		tl: 6,
-		tr: 7
+		l: 4,
+		r: 5,
+		t: 6,
+		tl: 7,
+		tr: 8
 	}
 
 	var ST_LightRigType = {
@@ -1957,7 +1984,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var c_oAscUrlType         = {
 		Invalid : 0,
 		Http    : 1,
-		Email   : 2
+		Email   : 2,
+		Unsafe   : 3
 	};
 
 	var c_oAscCellTextDirection = {
@@ -2328,6 +2356,9 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var changestype_SlideHide                 = 75;
 	var changestype_CorePr                    = 76;
 	var changestype_Document_Settings         = 77; // Изменение общих настроек документа Document.Settings
+	var changestype_Timing                    = 78;
+	var changestype_ViewPr                    = 79;
+	var changestype_DocumentProtection        = 80;
 
 	var changestype_2_InlineObjectMove       = 1; // Передвигаем объект в заданную позцию (проверяем место, в которое пытаемся передвинуть)
 	var changestype_2_HdrFtr                 = 2; // Изменения с колонтитулом
@@ -2478,6 +2509,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	g_aPunctuation[0x205C] = PUNCTUATION_FLAG_BASE;                                     // ⁜
 	g_aPunctuation[0x205D] = PUNCTUATION_FLAG_BASE;                                     // ⁝
 	g_aPunctuation[0x205E] = PUNCTUATION_FLAG_BASE;                                     // ⁞
+	g_aPunctuation[0x2420] = PUNCTUATION_FLAG_BASE;                                     // ␠
+	g_aPunctuation[0x2421] = PUNCTUATION_FLAG_BASE;                                     // ␡
+	g_aPunctuation[0x2422] = PUNCTUATION_FLAG_BASE;                                     // ␢
+	g_aPunctuation[0x2423] = PUNCTUATION_FLAG_BASE;                                     // ␣
+	g_aPunctuation[0x2424] = PUNCTUATION_FLAG_BASE;                                     // ␤
+	g_aPunctuation[0x2425] = PUNCTUATION_FLAG_BASE;                                     // ␥
+	g_aPunctuation[0x2426] = PUNCTUATION_FLAG_BASE;                                     // ␦
 
 	// Не смотря на то что следующий набор символов идет в блоке CJK Symbols and Punctuation
 	// Word не считает их как EastAsian script (w:lang->w:eastAsian)
@@ -2617,6 +2655,442 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		divide: 4
 	};
 
+	var c_oAbstractNumMultiLvlTypes = {
+		HybridMultiLevel: 0,
+		MultiLevel: 1,
+		SingleLevel: 2
+	};
+
+
+	var c_oAscSmartArtTypes = {
+		AccentedPicture: 0, // Акцентируемый рисунок
+		Balance: 1, // Баланс
+		TitledPictureBlocks: 2, // Блоки рисунков с названиями
+		PictureAccentBlocks: 3, // Блоки со смещенными рисунками
+		BlockCycle: 4, // Блочный цикл
+		StackedVenn: 5, // Венна в столбик
+		VerticalEquation: 6, // Вертикальное уравнение
+		VerticalBlockList: 7, // Вертикальный блочный список
+		VerticalBendingProcess: 8, // Вертикальный ломаный процесс
+		VerticalBulletList: 9, // Вертикальный маркированный список
+		VerticalCurvedList: 10, // Вертикальный нелинейный список
+		VerticalProcess: 11, // Вертикальный процесс
+		VerticalBoxList: 12, // Вертикальный список
+		VerticalPictureList: 13, // Вертикальный список рисунков
+		VerticalCircleList: 14, // Вертикальный список с кругами
+		VerticalPictureAccentList: 15, // Вертикальный список со смещенными рисунками
+		VerticalArrowList: 16, // Вертикальный список со стрелкой
+		VerticalChevronList: 17, // Вертикальный уголковый список
+		VerticalAccentList: 18, // Вертикальный уголковый список2
+		NestedTarget: 19, // Вложенная целевая
+		Funnel: 20, // Воронка
+		UpwardArrow: 21, // Восходящая стрелка
+		IncreasingArrowsProcess: 22, // Восходящая стрелка процесса
+		StepUpProcess: 23, // Восходящий процесс
+		CircularPictureCallout: 24, // Выноска с круглыми рисунками
+		HorizontalHierarchy: 25, // Горизонтальная иерархия
+		HorizontalLabeledHierarchy: 26, // Горизонтальная иерархия с подписями
+		HorizontalMultiLevelHierarchy: 27, // Горизонтальная многоуровневая иерархия
+		HorizontalOrganizationChart: 28, // Горизонтальная организационная диаграмма
+		HorizontalBulletList: 29, // Горизонтальный маркированный список
+		HorizontalPictureList: 30, // Горизонтальный список рисунков
+		ClosedChevronProcess: 31, // Закрытый уголковый процесс
+		HierarchyList: 32, // Иерархический список
+		Hierarchy: 33, // Иерархия
+		CirclePictureHierarchy: 34, // Иерархия с круглыми рисунками
+		LabeledHierarchy: 35, // Иерархия с подписями
+		InvertedPyramid: 36, // Инвертированная пирамида
+		HexagonCluster: 37, // Кластер шестиугольников
+		CircleRelationship: 38, // Круг связей
+		CircleAccentTimeline: 39, // Круглая временная шкала
+		CircularBendingProcess: 40, // Круглый ломаный процесс
+		ArrowRibbon: 41, // Лента со стрелками
+		LinearVenn: 42, // Линейная Венна
+		PictureLineup: 43, // Линия рисунков
+		TitlePictureLineup: 44, // Линия рисунков с названиями
+		BendingPictureCaptionList: 45, // Ломаный список рисунков с подписями
+		BendingPictureAccentList: 46, // Ломаный список со смещенными рисунками
+		TitledMatrix: 47, // Матрица с заголовками
+		IncreasingCircleProcess: 48, // Нарастающий процесс с кругами
+		BendingPictureBlocks: 49, // Нелинейные рисунки с блоками
+		BendingPictureCaption: 50, // Нелинейные рисунки с подписями
+		BendingPictureSemiTransparentText: 51, // Нелинейные рисунки с полупрозрачным текстом
+		NonDirectionalCycle: 52, // Ненаправленный цикл
+		ContinuousBlockProcess: 53, // Непрерывный блочный процесс
+		ContinuousPictureList: 54, // Непрерывный список с рисунками
+		ContinuousCycle: 55, // Непрерывный цикл
+		DescendingBlockList: 56, // Нисходящий блочный список
+		StepDownProcess: 57, // Нисходящий процесс
+		ReverseList: 58, // Обратный список
+		OrganizationChart: 59, // Организационная диаграмма
+		NameAndTitleOrganizationChart: 60, // Организационная диаграмма с именами и должностями
+		AlternatingFlow: 61, // Переменный поток
+		PyramidList: 62, // Пирамидальный список
+		PlusAndMinus: 63, // Плюс и минус
+		RepeatingBendingProcess: 64, // Повторяющийся ломаный процесс
+		CaptionedPictures: 65, // Подписанные рисунки
+		DetailedProcess: 66, // Подробный процесс
+		PictureStrips: 67, // Полосы рисунков
+		HalfCircleOrganizationChart: 68, // Полукруглая организационная диаграмма
+		PhasedProcess: 69, // Поэтапный процесс
+		BasicVenn: 70, // Простая Венна
+		BasicTimeline: 71, // Простая временная шкала
+		BasicPie: 72, // Простая круговая
+		BasicMatrix: 73, // Простая матрица
+		BasicPyramid: 74, // Простая пирамида
+		BasicRadial: 75, // Простая радиальная
+		BasicTarget: 76, // Простая целевая
+		BasicBlockList: 77, // Простой блочный список
+		BasicBendingProcess: 78, // Простой ломаный процесс
+		BasicProcess: 79, // Простой процесс
+		BasicChevronProcess: 80, // Простой уголковый процесс
+		BasicCycle: 81, // Простой цикл
+		OpposingIdeas: 82, // Противоположные идеи
+		OpposingArrows: 83, // Противостоящие стрелки
+		RandomToResultProcess: 84, // Процесс от случайности к результату
+		SubStepProcess: 85, // Процесс с вложенными шагами
+		PieProcess: 86, // Процесс с круговой диаграммой
+		AccentProcess: 87, // Процесс со смещением
+		AscendingPictureAccentProcess: 88, // Процесс со смещенными по возрастанию рисунками
+		PictureAccentProcess: 89, // Процесс со смещенными рисунками
+		RadialVenn: 90, // Радиальная Венна
+		RadialCycle: 91, // Радиальная циклическая
+		RadialCluster: 92, // Радиальный кластер
+		RadialList: 93, // Радиальный список
+		MultiDirectionalCycle: 94, // Разнонаправленный цикл
+		DivergingRadial: 95, // Расходящаяся радиальная
+		DivergingArrows: 96, // Расходящиеся стрелки
+		FramedTextPicture: 97, // Рисунок с текстом в рамке
+		GroupedList: 98, // Сгруппированный список
+		SegmentedPyramid: 99, // Сегментированная пирамида
+		SegmentedProcess: 100, // Сегментированный процесс
+		SegmentedCycle: 101, // Сегментированный цикл
+		PictureGrid: 102, // Сетка рисунков
+		GridMatrix: 103, // Сетчатая матрица
+		SpiralPicture: 104, // Спираль рисунков
+		StackedList: 105, // Список в столбик
+		PictureCaptionList: 106, // Список названий рисунков
+		ProcessList: 107, // Список процессов
+		BubblePictureList: 108, // Список рисунков с выносками
+		SquareAccentList: 109, // Список с квадратиками
+		LinedList: 110, // Список с линиями
+		PictureAccentList: 111, // Список со смещенными рисунками
+		TitledPictureAccentList: 112, // Список со смещенными рисунками и заголовком
+		SnapshotPictureList: 113, // Список со снимками
+		ContinuousArrowProcess: 114, // Стрелка непрерывного процесса
+		CircleArrowProcess: 115, // Стрелка процесса с кругами
+		ProcessArrows: 116, // Стрелки процесса
+		StaggeredProcess: 117, // Ступенчатый процесс
+		ConvergingRadial: 118, // Сходящаяся радиальная
+		ConvergingArrows: 119, // Сходящиеся стрелки
+		TableHierarchy: 120, // Табличная иерархия
+		TableList: 121, // Табличный список
+		TextCycle: 122, // Текстовый цикл
+		TrapezoidList: 123, // Трапецевидный список
+		DescendingProcess: 124, // Убывающий процесс
+		ChevronList: 125, // Уголковый список
+		Equation: 126, // Уравнение
+		CounterbalanceArrows: 127, // Уравновешивающие стрелки
+		TargetList: 128, // Целевой список
+		CycleMatrix: 129, // Циклическая матрица
+		AlternatingPictureBlocks: 130, // Чередующиеся блоки рисунков
+		AlternatingPictureCircles: 131, // Чередующиеся круги рисунков
+		AlternatingHexagonList: 132, // Чередующиеся шестиугольники
+		Gear: 133, // Шестеренки
+
+		// Office.com
+		ArchitectureLayout: 134,
+		ChevronAccentProcess: 135,
+		CircleProcess: 136,
+		ConvergingText: 137,
+		HexagonRadial: 138,
+		InterconnectedBlockProcess: 139,
+		InterconnectedRings: 140,
+		PictureFrame: 141,
+		PictureOrganizationChart: 142,
+		RadialPictureList: 143,
+		TabList: 144,
+		TabbedArc: 145,
+		ThemePictureAccent: 146,
+		ThemePictureAlternatingAccent: 147,
+		ThemePictureGrid: 148,
+		VaryingWidthList: 149,
+		VerticalBracketList: 150
+	};
+
+	var c_oAscSmartArtListTypes = [
+		c_oAscSmartArtTypes.BasicBlockList,
+		c_oAscSmartArtTypes.AlternatingHexagonList,
+		c_oAscSmartArtTypes.PictureCaptionList,
+		c_oAscSmartArtTypes.LinedList,
+		c_oAscSmartArtTypes.VerticalBulletList,
+		c_oAscSmartArtTypes.VerticalBoxList,
+		c_oAscSmartArtTypes.VerticalBracketList,
+		c_oAscSmartArtTypes.VaryingWidthList,
+		c_oAscSmartArtTypes.TabList,
+		c_oAscSmartArtTypes.HorizontalBulletList,
+		c_oAscSmartArtTypes.SquareAccentList,
+		c_oAscSmartArtTypes.PictureAccentList,
+		c_oAscSmartArtTypes.BendingPictureAccentList,
+		c_oAscSmartArtTypes.StackedList,
+		c_oAscSmartArtTypes.IncreasingCircleProcess,
+		c_oAscSmartArtTypes.PieProcess,
+		c_oAscSmartArtTypes.DetailedProcess,
+		c_oAscSmartArtTypes.GroupedList,
+		c_oAscSmartArtTypes.HorizontalPictureList,
+		c_oAscSmartArtTypes.ContinuousPictureList,
+		c_oAscSmartArtTypes.PictureStrips,
+		c_oAscSmartArtTypes.VerticalPictureList,
+		c_oAscSmartArtTypes.AlternatingPictureBlocks,
+		c_oAscSmartArtTypes.VerticalPictureAccentList,
+		c_oAscSmartArtTypes.TitledPictureAccentList,
+		c_oAscSmartArtTypes.VerticalBlockList,
+		c_oAscSmartArtTypes.VerticalChevronList,
+		c_oAscSmartArtTypes.VerticalAccentList,
+		c_oAscSmartArtTypes.VerticalArrowList,
+		c_oAscSmartArtTypes.TrapezoidList,
+		c_oAscSmartArtTypes.DescendingBlockList,
+		c_oAscSmartArtTypes.TableList,
+		c_oAscSmartArtTypes.SegmentedProcess,
+		c_oAscSmartArtTypes.VerticalCurvedList,
+		c_oAscSmartArtTypes.PyramidList,
+		c_oAscSmartArtTypes.TargetList,
+		c_oAscSmartArtTypes.HierarchyList,
+		c_oAscSmartArtTypes.VerticalCircleList,
+		c_oAscSmartArtTypes.TableHierarchy,
+		c_oAscSmartArtTypes.ArchitectureLayout
+	];
+
+	var c_oAscSmartArtProcessTypes = [
+		c_oAscSmartArtTypes.BasicProcess,
+		c_oAscSmartArtTypes.StepUpProcess,
+		c_oAscSmartArtTypes.StepDownProcess,
+		c_oAscSmartArtTypes.AccentProcess,
+		c_oAscSmartArtTypes.PictureAccentProcess,
+		c_oAscSmartArtTypes.AlternatingFlow,
+		c_oAscSmartArtTypes.IncreasingCircleProcess,
+		c_oAscSmartArtTypes.PieProcess,
+		c_oAscSmartArtTypes.ContinuousBlockProcess,
+		c_oAscSmartArtTypes.IncreasingArrowsProcess,
+		c_oAscSmartArtTypes.InterconnectedBlockProcess,
+		c_oAscSmartArtTypes.ContinuousArrowProcess,
+		c_oAscSmartArtTypes.ConvergingText,
+		c_oAscSmartArtTypes.ProcessArrows,
+		c_oAscSmartArtTypes.CircleAccentTimeline,
+		c_oAscSmartArtTypes.BasicTimeline,
+		c_oAscSmartArtTypes.CircleProcess,
+		c_oAscSmartArtTypes.BasicChevronProcess,
+		c_oAscSmartArtTypes.ChevronAccentProcess,
+		c_oAscSmartArtTypes.ClosedChevronProcess,
+		c_oAscSmartArtTypes.ChevronList,
+		c_oAscSmartArtTypes.VerticalChevronList,
+		c_oAscSmartArtTypes.SubStepProcess,
+		c_oAscSmartArtTypes.PhasedProcess,
+		c_oAscSmartArtTypes.RandomToResultProcess,
+		c_oAscSmartArtTypes.VerticalProcess,
+		c_oAscSmartArtTypes.StaggeredProcess,
+		c_oAscSmartArtTypes.ProcessList,
+		c_oAscSmartArtTypes.SegmentedProcess,
+		c_oAscSmartArtTypes.CircleArrowProcess,
+		c_oAscSmartArtTypes.BasicBendingProcess,
+		c_oAscSmartArtTypes.RepeatingBendingProcess,
+		c_oAscSmartArtTypes.VerticalBendingProcess,
+		c_oAscSmartArtTypes.ContinuousPictureList,
+		c_oAscSmartArtTypes.DetailedProcess,
+		c_oAscSmartArtTypes.VerticalArrowList,
+		c_oAscSmartArtTypes.AscendingPictureAccentProcess,
+		c_oAscSmartArtTypes.UpwardArrow,
+		c_oAscSmartArtTypes.DescendingProcess,
+		c_oAscSmartArtTypes.CircularBendingProcess,
+		c_oAscSmartArtTypes.Equation,
+		c_oAscSmartArtTypes.VerticalEquation,
+		c_oAscSmartArtTypes.Funnel,
+		c_oAscSmartArtTypes.Gear,
+		c_oAscSmartArtTypes.ArrowRibbon,
+		c_oAscSmartArtTypes.OpposingArrows,
+		c_oAscSmartArtTypes.ConvergingArrows,
+		c_oAscSmartArtTypes.DivergingArrows
+	];
+	var c_oAscSmartArtCycleTypes = [
+		c_oAscSmartArtTypes.BasicCycle,
+		c_oAscSmartArtTypes.TextCycle,
+		c_oAscSmartArtTypes.BlockCycle,
+		c_oAscSmartArtTypes.NonDirectionalCycle,
+		c_oAscSmartArtTypes.ContinuousCycle,
+		c_oAscSmartArtTypes.MultiDirectionalCycle,
+		c_oAscSmartArtTypes.SegmentedCycle,
+		c_oAscSmartArtTypes.BasicPie,
+		c_oAscSmartArtTypes.HexagonRadial,
+		c_oAscSmartArtTypes.RadialCycle,
+		c_oAscSmartArtTypes.BasicRadial,
+		c_oAscSmartArtTypes.DivergingRadial,
+		c_oAscSmartArtTypes.RadialVenn,
+		c_oAscSmartArtTypes.CycleMatrix,
+		c_oAscSmartArtTypes.Gear,
+		c_oAscSmartArtTypes.RadialCluster,
+		c_oAscSmartArtTypes.CircleArrowProcess
+
+];
+	var c_oAscSmartArtHierarchyTypes = [
+		c_oAscSmartArtTypes.OrganizationChart,
+		c_oAscSmartArtTypes.PictureOrganizationChart,
+		c_oAscSmartArtTypes.NameAndTitleOrganizationChart,
+		c_oAscSmartArtTypes.HalfCircleOrganizationChart,
+		c_oAscSmartArtTypes.CirclePictureHierarchy,
+		c_oAscSmartArtTypes.Hierarchy,
+		c_oAscSmartArtTypes.LabeledHierarchy,
+		c_oAscSmartArtTypes.TableHierarchy,
+		c_oAscSmartArtTypes.HorizontalOrganizationChart,
+		c_oAscSmartArtTypes.ArchitectureLayout,
+		c_oAscSmartArtTypes.HorizontalMultiLevelHierarchy,
+		c_oAscSmartArtTypes.HorizontalHierarchy,
+		c_oAscSmartArtTypes.HorizontalLabeledHierarchy,
+		c_oAscSmartArtTypes.HierarchyList,
+		c_oAscSmartArtTypes.LinedList
+
+	];
+	var c_oAscSmartArtRelationshipTypes = [
+		c_oAscSmartArtTypes.Balance,
+		c_oAscSmartArtTypes.CircleRelationship,
+		c_oAscSmartArtTypes.Funnel,
+		c_oAscSmartArtTypes.Gear,
+		c_oAscSmartArtTypes.HexagonCluster,
+		c_oAscSmartArtTypes.OpposingIdeas,
+		c_oAscSmartArtTypes.PlusAndMinus,
+		c_oAscSmartArtTypes.ReverseList,
+		c_oAscSmartArtTypes.ArrowRibbon,
+		c_oAscSmartArtTypes.CounterbalanceArrows,
+		c_oAscSmartArtTypes.ConvergingArrows,
+		c_oAscSmartArtTypes.DivergingArrows,
+		c_oAscSmartArtTypes.OpposingArrows,
+		c_oAscSmartArtTypes.SegmentedPyramid,
+		c_oAscSmartArtTypes.TableHierarchy,
+		c_oAscSmartArtTypes.ArchitectureLayout,
+		c_oAscSmartArtTypes.TargetList,
+		c_oAscSmartArtTypes.NestedTarget,
+		c_oAscSmartArtTypes.GroupedList,
+		c_oAscSmartArtTypes.ContinuousPictureList,
+		c_oAscSmartArtTypes.HierarchyList,
+		c_oAscSmartArtTypes.PictureAccentList,
+		c_oAscSmartArtTypes.Equation,
+		c_oAscSmartArtTypes.VerticalEquation,
+		c_oAscSmartArtTypes.ConvergingRadial,
+		c_oAscSmartArtTypes.RadialCluster,
+		c_oAscSmartArtTypes.RadialList,
+		c_oAscSmartArtTypes.TabbedArc,
+		c_oAscSmartArtTypes.RadialCycle,
+		c_oAscSmartArtTypes.BasicRadial,
+		c_oAscSmartArtTypes.DivergingRadial,
+		c_oAscSmartArtTypes.NonDirectionalCycle,
+		c_oAscSmartArtTypes.BasicTarget,
+		c_oAscSmartArtTypes.CycleMatrix,
+		c_oAscSmartArtTypes.BasicPie,
+		c_oAscSmartArtTypes.BasicVenn,
+		c_oAscSmartArtTypes.LinearVenn,
+		c_oAscSmartArtTypes.StackedVenn,
+		c_oAscSmartArtTypes.RadialVenn,
+		c_oAscSmartArtTypes.InterconnectedRings
+	];
+	var c_oAscSmartArtMatrixTypes = [
+		c_oAscSmartArtTypes.BasicMatrix,
+		c_oAscSmartArtTypes.TitledMatrix,
+		c_oAscSmartArtTypes.GridMatrix,
+		c_oAscSmartArtTypes.CycleMatrix
+	];
+	var c_oAscSmartArtPyramidTypes = [
+		c_oAscSmartArtTypes.BasicPyramid,
+		c_oAscSmartArtTypes.InvertedPyramid,
+		c_oAscSmartArtTypes.PyramidList,
+		c_oAscSmartArtTypes.SegmentedPyramid
+	];
+	var c_oAscSmartArtPictureTypes = [
+		c_oAscSmartArtTypes.AccentedPicture,
+		c_oAscSmartArtTypes.CircularPictureCallout,
+		c_oAscSmartArtTypes.PictureCaptionList,
+		c_oAscSmartArtTypes.RadialPictureList,
+		c_oAscSmartArtTypes.SnapshotPictureList,
+		c_oAscSmartArtTypes.SpiralPicture,
+		c_oAscSmartArtTypes.CaptionedPictures,
+		c_oAscSmartArtTypes.BendingPictureCaption,
+		c_oAscSmartArtTypes.PictureFrame,
+		c_oAscSmartArtTypes.BendingPictureSemiTransparentText,
+		c_oAscSmartArtTypes.BendingPictureBlocks,
+		c_oAscSmartArtTypes.BendingPictureCaptionList,
+		c_oAscSmartArtTypes.TitledPictureBlocks,
+		c_oAscSmartArtTypes.PictureGrid,
+		c_oAscSmartArtTypes.PictureAccentBlocks,
+		c_oAscSmartArtTypes.PictureStrips,
+		c_oAscSmartArtTypes.ThemePictureAccent,
+		c_oAscSmartArtTypes.ThemePictureGrid,
+		c_oAscSmartArtTypes.ThemePictureAlternatingAccent,
+		c_oAscSmartArtTypes.TitledPictureAccentList,
+		c_oAscSmartArtTypes.AlternatingPictureBlocks,
+		c_oAscSmartArtTypes.AscendingPictureAccentProcess,
+		c_oAscSmartArtTypes.AlternatingPictureCircles,
+		c_oAscSmartArtTypes.TitlePictureLineup,
+		c_oAscSmartArtTypes.PictureLineup,
+		c_oAscSmartArtTypes.FramedTextPicture,
+		c_oAscSmartArtTypes.HexagonCluster,
+		c_oAscSmartArtTypes.BubblePictureList,
+		c_oAscSmartArtTypes.CirclePictureHierarchy,
+		c_oAscSmartArtTypes.HorizontalPictureList,
+		c_oAscSmartArtTypes.ContinuousPictureList,
+		c_oAscSmartArtTypes.VerticalPictureList,
+		c_oAscSmartArtTypes.VerticalPictureAccentList,
+		c_oAscSmartArtTypes.BendingPictureAccentList,
+		c_oAscSmartArtTypes.PictureAccentList,
+		c_oAscSmartArtTypes.PictureAccentProcess
+	];
+	var c_oAscSmartArtOfficeComTypes = [
+		c_oAscSmartArtTypes.PictureOrganizationChart,
+		c_oAscSmartArtTypes.ChevronAccentProcess,
+		c_oAscSmartArtTypes.RadialPictureList,
+		c_oAscSmartArtTypes.VerticalBracketList,
+		c_oAscSmartArtTypes.InterconnectedBlockProcess,
+		c_oAscSmartArtTypes.TabbedArc,
+		c_oAscSmartArtTypes.ThemePictureAccent,
+		c_oAscSmartArtTypes.VaryingWidthList,
+		c_oAscSmartArtTypes.ConvergingText,
+		c_oAscSmartArtTypes.InterconnectedRings,
+		c_oAscSmartArtTypes.ArchitectureLayout,
+		c_oAscSmartArtTypes.ThemePictureAlternatingAccent,
+		c_oAscSmartArtTypes.ThemePictureGrid,
+		c_oAscSmartArtTypes.CircleProcess,
+		c_oAscSmartArtTypes.HexagonRadial,
+		c_oAscSmartArtTypes.PictureFrame,
+		c_oAscSmartArtTypes.TabList
+	];
+
+	var c_oAscSmartArtSectionNames = {
+		List:         0,
+		Process:      1,
+		Cycle:        2,
+		Hierarchy:    3,
+		Relationship: 4,
+		Matrix:       5,
+		Pyramid:      6,
+		Picture:      7,
+		OfficeCom:    8
+	};
+
+	var c_oAscSmartArtSections = {};
+	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.List]         = c_oAscSmartArtListTypes;
+	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.Process]      = c_oAscSmartArtProcessTypes;
+	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.Cycle]        = c_oAscSmartArtCycleTypes;
+	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.Hierarchy]    = c_oAscSmartArtHierarchyTypes;
+	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.Relationship] = c_oAscSmartArtRelationshipTypes;
+	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.Matrix]       = c_oAscSmartArtMatrixTypes;
+	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.Pyramid]      = c_oAscSmartArtPyramidTypes;
+	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.Picture]      = c_oAscSmartArtPictureTypes;
+	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.OfficeCom]    = c_oAscSmartArtOfficeComTypes;
+
+
+	var c_oAscJSONNumberingType = {
+		Remove : "remove",
+		Bullet : "bullet",
+		Number : "number",
+		Hybrid : "hybrid"
+	};
 
 	/** @enum {number} */
 	var c_oAscNumberingFormat = {
@@ -2684,16 +3158,29 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		UpperRoman                   : 61,
 		VietnameseCounting           : 62,
 
-		BulletFlag   : 0x1000,
-		NumberedFlag : 0x2000,
+		BulletFlag                   : 0x1000,
+		NumberedFlag                 : 0x2000,
 
-		Ea1JpnKor             : 0x3000,
-		CircleNumWdBlack      : 0x4000,
-		Ea1JpnChsDb           : 0x5000,
-		Ea1Cht                : 0x6000,
-		CircleNumWdWhitePlain : 0x7000
+		Ea1JpnKor                    : 0x3000,
+		CircleNumWdBlack             : 0x3001,
+		Ea1JpnChsDb                  : 0x3002,
+		Ea1Cht                       : 0x3003,
+		CircleNumWdWhitePlain        : 0x3004,
 
+		CustomGreece                 : 0x4000,
+		CustomDecimalFourZero        : 0x4001,
+		CustomDecimalThreeZero       : 0x4002,
+		CustomDecimalTwoZero         : 0x4003
 	};
+
+	var c_oAscCustomNumberingFormatAssociation = {
+		'α, β, γ, ...': c_oAscNumberingFormat.CustomGreece,
+		'00001, 00002, 00003, ...': c_oAscNumberingFormat.CustomDecimalFourZero,
+		'0001, 0002, 0003, ...': c_oAscNumberingFormat.CustomDecimalThreeZero,
+		'001, 002, 003, ...': c_oAscNumberingFormat.CustomDecimalTwoZero
+	};
+
+	var c_oAscAllNumberingTypes = [c_oAscNumberingFormat.Aiueo, c_oAscNumberingFormat.AiueoFullWidth, c_oAscNumberingFormat.ArabicAbjad, c_oAscNumberingFormat.ArabicAlpha, c_oAscNumberingFormat.BahtText, c_oAscNumberingFormat.CardinalText, c_oAscNumberingFormat.Chicago, c_oAscNumberingFormat.ChineseCounting, c_oAscNumberingFormat.ChineseCountingThousand, c_oAscNumberingFormat.ChineseLegalSimplified, c_oAscNumberingFormat.Chosung, c_oAscNumberingFormat.Decimal, c_oAscNumberingFormat.DecimalEnclosedCircle, c_oAscNumberingFormat.DecimalEnclosedCircleChinese, c_oAscNumberingFormat.DecimalEnclosedFullstop, c_oAscNumberingFormat.DecimalEnclosedParen, c_oAscNumberingFormat.DecimalFullWidth, c_oAscNumberingFormat.DecimalFullWidth2, c_oAscNumberingFormat.DecimalHalfWidth, c_oAscNumberingFormat.DecimalZero, c_oAscNumberingFormat.Ganada, c_oAscNumberingFormat.Hebrew1, c_oAscNumberingFormat.Hebrew2, c_oAscNumberingFormat.Hex, c_oAscNumberingFormat.HindiConsonants, c_oAscNumberingFormat.HindiCounting, c_oAscNumberingFormat.HindiNumbers, c_oAscNumberingFormat.HindiVowels, c_oAscNumberingFormat.IdeographDigital, c_oAscNumberingFormat.IdeographEnclosedCircle, c_oAscNumberingFormat.IdeographLegalTraditional, c_oAscNumberingFormat.IdeographTraditional, c_oAscNumberingFormat.IdeographZodiac, c_oAscNumberingFormat.IdeographZodiacTraditional, c_oAscNumberingFormat.Iroha, c_oAscNumberingFormat.IrohaFullWidth, c_oAscNumberingFormat.JapaneseCounting, c_oAscNumberingFormat.JapaneseDigitalTenThousand, c_oAscNumberingFormat.JapaneseLegal, c_oAscNumberingFormat.KoreanCounting, c_oAscNumberingFormat.KoreanDigital, c_oAscNumberingFormat.KoreanDigital2, c_oAscNumberingFormat.KoreanLegal, c_oAscNumberingFormat.LowerLetter, c_oAscNumberingFormat.LowerRoman, c_oAscNumberingFormat.NumberInDash, c_oAscNumberingFormat.Ordinal, c_oAscNumberingFormat.OrdinalText, c_oAscNumberingFormat.RussianLower, c_oAscNumberingFormat.RussianUpper, c_oAscNumberingFormat.TaiwaneseCounting, c_oAscNumberingFormat.TaiwaneseCountingThousand, c_oAscNumberingFormat.TaiwaneseDigital, c_oAscNumberingFormat.ThaiCounting, c_oAscNumberingFormat.ThaiLetters, c_oAscNumberingFormat.ThaiNumbers, c_oAscNumberingFormat.UpperLetter, c_oAscNumberingFormat.UpperRoman, c_oAscNumberingFormat.VietnameseCounting, c_oAscNumberingFormat.CustomGreece, c_oAscNumberingFormat.CustomDecimalFourZero, c_oAscNumberingFormat.CustomDecimalThreeZero, c_oAscNumberingFormat.CustomDecimalTwoZero,];
 
 	/** enum {number} */
 	var c_oAscNumberingSuff = {
@@ -2839,7 +3326,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		DropDownList : 4,
 		DateTime     : 5,
 
-		TOC          : 10
+		TOC          : 10,
+		Complex      : 11
 	};
 
 	var c_oAscDefNameType = {
@@ -3317,6 +3805,82 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Simple   : 3
 	};
 
+	var c_oAscMathInputType = {
+		Unicode : 0,
+		LaTeX   : 1
+	};
+
+	const LigaturesFlags = {
+		Standard     : 0x01, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_STANDARD,
+		Contextual   : 0x02, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_CONTEXTUAL,
+		Historical   : 0x04, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_HISTORICAL,
+		Discretional : 0x08  //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_DISCRETIONARY
+	};
+
+	const LigaturesType = {
+		None                             : 0x00,
+		Standard                         : LigaturesFlags.Standard,
+		Contextual                       : LigaturesFlags.Contextual,
+		Historical                       : LigaturesFlags.Historical,
+		Discretional                     : LigaturesFlags.Discretional,
+		StandardContextual               : LigaturesFlags.Standard | LigaturesFlags.Contextual,
+		StandardHistorical               : LigaturesFlags.Standard | LigaturesFlags.Historical,
+		ContextualHistorical             : LigaturesFlags.Contextual | LigaturesFlags.Historical,
+		StandardDiscretional             : LigaturesFlags.Standard | LigaturesFlags.Discretional,
+		ContextualDiscretional           : LigaturesFlags.Contextual | LigaturesFlags.Discretional,
+		HistoricalDiscretional           : LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		StandardContextualHistorical     : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Historical,
+		StandardContextualDiscretional   : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Discretional,
+		StandardHistoricalDiscretional   : LigaturesFlags.Standard | LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		ContextualHistoricalDiscretional : LigaturesFlags.Contextual | LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		All                              : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Historical | LigaturesFlags.Discretional
+	};
+
+	const CombFormWidthRule = {
+		AtLeast : 0,
+		Auto    : 1,
+		Exact   : 2
+	};
+
+	const UnderlineType = {
+		Dash            : 0,
+		DashDotDotHeavy : 1,
+		DashDotHeavy    : 2,
+		DashedHeavy     : 3,
+		DashLong        : 4,
+		DashLongHeavy   : 5,
+		DotDash         : 6,
+		DotDotDash      : 7,
+		Dotted          : 8,
+		DottedHeavy     : 9,
+		Double          : 10,
+		None            : 11,
+		Single          : 12,
+		Thick           : 13,
+		Wave            : 14,
+		WavyDouble      : 15,
+		WavyHeavy       : 16,
+		Words           : 17
+	};
+
+	const DocumentView = {
+		MasterPages : 0,
+		None        : 1,
+		Normal      : 2,
+		Outline     : 3,
+		Print       : 4,
+		Web         : 5
+	};
+
+	var c_oAscConfirm = {
+		ConfirmReplaceRange: 0,
+		ConfirmPutMergeRange: 1,
+		ConfirmReplaceFormulaInTable: 2,
+		ConfirmChangeProtectRange: 3,
+		ConfirmMaxChangesSize: 4,
+		ConfirmAddCellWatches: 5
+	};
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -3329,6 +3893,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window['Asc']['c_nVersionNoBase64'] = window['Asc'].c_nVersionNoBase64 = c_nVersionNoBase64;
 	window['Asc']['c_dMaxParaRunContentLength'] = window['Asc'].c_dMaxParaRunContentLength = c_dMaxParaRunContentLength;
 	window['Asc']['c_nMaxHyperlinkLength'] = window['Asc'].c_nMaxHyperlinkLength = c_nMaxHyperlinkLength;
+	window['Asc']['c_sNativeViewerFormats'] = window['Asc'].c_sNativeViewerFormats = c_sNativeViewerFormats;
 	window['Asc']['c_oAscFileType'] = window['Asc'].c_oAscFileType = c_oAscFileType;
 	window['Asc'].g_oLcidNameToIdMap = g_oLcidNameToIdMap;
 	window['Asc'].availableIdeographLanguages = availableIdeographLanguages;
@@ -3346,7 +3911,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ODT']                  = prot.ODT;
 	prot['RTF']                  = prot.RTF;
 	prot['TXT']                  = prot.TXT;
-	prot['HTML_TODO']                = prot.HTML_TODO;
 	prot['MHT']                  = prot.MHT;
 	prot['EPUB']                 = prot.EPUB;
 	prot['FB2']                  = prot.FB2;
@@ -3404,10 +3968,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ICO']                  = prot.ICO;
 
 	window['Asc']['c_oAscTextAssociation'] = window['Asc'].c_oAscTextAssociation = c_oAscTextAssociation;
-	prot['Char']                  = prot.Char;
-	prot['Line']                  = prot.Line;
-	prot['NoFrames']              = prot.NoFrames;
-	prot['Block']                 = prot.Block;
+	prot = c_oAscTextAssociation;
+	prot['BlockChar'] = prot.BlockChar;
+	prot['BlockLine'] = prot.BlockLine;
+	prot['PlainLine'] = prot.PlainLine;
+	prot['PlainParagraph'] = prot.PlainParagraph;
 
 	window['Asc']['c_oAscError'] = window['Asc'].c_oAscError = c_oAscError;
 	prot                                     = c_oAscError;
@@ -3469,6 +4034,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['PasteSlicerError']                 = prot.PasteSlicerError;
 	prot['MoveSlicerError']                  = prot.MoveSlicerError;
 	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
+	prot['CanNotPasteImage']                 = prot.CanNotPasteImage;
 	prot['DataRangeError']                   = prot.DataRangeError;
 	prot['CannotMoveRange']                  = prot.CannotMoveRange;
 	prot['MaxDataSeriesError']               = prot.MaxDataSeriesError;
@@ -3476,6 +4042,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ConvertationOpenError']            = prot.ConvertationOpenError;
 	prot['ConvertationSaveError']            = prot.ConvertationSaveError;
 	prot['ConvertationOpenLimitError']       = prot.ConvertationOpenLimitError;
+	prot['ConvertationOpenFormat']       	 = prot.ConvertationOpenFormat;
 	prot['UserDrop']                         = prot.UserDrop;
 	prot['Warning']                          = prot.Warning;
 	prot['UpdateVersion']                    = prot.UpdateVersion;
@@ -3523,6 +4090,9 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['LargeRangeWarning']                = prot.LargeRangeWarning;
 	prot['LockedEditView']                   = prot.LockedEditView;
 	prot['Password']                         = prot.Password;
+	prot['ComplexFieldEmptyTOC']             = prot.ComplexFieldEmptyTOC;
+	prot['ComplexFieldNoTOC']                = prot.ComplexFieldNoTOC;
+	prot['TextFormWrongFormat']              = prot.TextFormWrongFormat;
 	prot['SecondaryAxis']                    = prot.SecondaryAxis;
 	prot['ComboSeriesError']                 = prot.ComboSeriesError;
 
@@ -3617,7 +4187,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Image']                     = prot.Image;
 	prot['Header']                    = prot.Header;
 	prot['Hyperlink']                 = prot.Hyperlink;
-
 	prot['SpellCheck']                = prot.SpellCheck;
 	prot['Shape']                     = prot.Shape;
 	prot['Slide']                     = prot.Slide;
@@ -3625,6 +4194,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Math']                      = prot.Math;
 	prot['MailMerge']                 = prot.MailMerge;
 	prot['ContentControl']            = prot.ContentControl;
+	prot['Animation']                 = prot.Animation;
+	prot['Text']                      = prot.Text;
 	window['Asc']['linerule_AtLeast'] = window['Asc'].linerule_AtLeast = linerule_AtLeast;
 	window['Asc']['linerule_Auto'] = window['Asc'].linerule_Auto = linerule_Auto;
 	window['Asc']['linerule_Exact'] = window['Asc'].linerule_Exact = linerule_Exact;
@@ -3862,7 +4433,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Page']                           = prot.Page;
 	prot['Paragraph']                      = prot.Paragraph;
 	prot['TopMargin']                      = prot.TopMargin;
-	window['Asc']['c_oAscBorderStyles'] = window['AscCommon'].c_oAscBorderStyles = c_oAscBorderStyles;
+	window['Asc']['c_oAscBorderStyles'] = window['Asc'].c_oAscBorderStyles = c_oAscBorderStyles;
 	prot                         = c_oAscBorderStyles;
 	prot['None']                 = prot.None;
 	prot['Double']               = prot.Double;
@@ -4121,13 +4692,24 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['OnlySignatures'] = c_oAscRestrictionType.OnlySignatures;
 	prot['View']           = c_oAscRestrictionType.View;
 
+	prot = window['Asc']['c_oAscLocalRestrictionType'] = window['Asc'].c_oAscLocalRestrictionType = c_oAscLocalRestrictionType;
+	prot['None']     = c_oAscLocalRestrictionType.None;
+	prot['ReadOnly'] = c_oAscLocalRestrictionType.ReadOnly;
+	prot['Locked']   = c_oAscLocalRestrictionType.Locked;
+	prot['Nosafe']   = c_oAscLocalRestrictionType.Nosafe;
+
 
 	prot =  window["AscCommon"]["c_oAscCellAnchorType"] = window["AscCommon"].c_oAscCellAnchorType = c_oAscCellAnchorType;
 	prot["cellanchorAbsolute"] = prot.cellanchorAbsolute;
 	prot["cellanchorOneCell"] = prot.cellanchorOneCell;
 	prot["cellanchorTwoCell"] = prot.cellanchorTwoCell;
 
-    window['AscCommon']                             = window['AscCommon'] || {};
+	prot = window['Asc'];
+	prot["vertalign_Baseline"]    = vertalign_Baseline;
+	prot["vertalign_SuperScript"] = vertalign_SuperScript;
+	prot["vertalign_SubScript"]   = vertalign_SubScript;
+
+	window['AscCommon']                             = window['AscCommon'] || {};
 	window["AscCommon"].g_cCharDelimiter            = g_cCharDelimiter;
 	window["AscCommon"].g_cGeneralFormat            = g_cGeneralFormat;
 	window["AscCommon"].bDate1904                   = false;
@@ -4135,7 +4717,10 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].DownloadType                = DownloadType;
 	window["AscCommon"].CellValueType               = CellValueType;
 	window["AscCommon"].c_oAscChartDefines          = c_oAscChartDefines;
-	window["AscCommon"].c_oAscStyleImage            = c_oAscStyleImage;
+	window['Asc']['c_oAscStyleImage']               = window['Asc'].c_oAscStyleImage = window["AscCommon"].c_oAscStyleImage = c_oAscStyleImage;
+	c_oAscStyleImage["Default"] = c_oAscStyleImage.Default;
+	c_oAscStyleImage["Document"] = c_oAscStyleImage.Document;
+
 	window["AscCommon"].c_oAscLineDrawingRule       = c_oAscLineDrawingRule;
 	window["AscCommon"].vertalign_Baseline          = vertalign_Baseline;
 	window["AscCommon"].vertalign_SuperScript       = vertalign_SuperScript;
@@ -4174,6 +4759,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].c_oAscMaxFormulaReferenceLength = c_oAscMaxFormulaReferenceLength;
 	window["AscCommon"].c_oAscMaxTableColumnTextLength = c_oAscMaxTableColumnTextLength;
 
+	window["AscCommon"].c_oAscFrameDataType = c_oAscFrameDataType;
+
+	prot =  window["AscCommon"]["c_oAscUrlType"] = window["AscCommon"].c_oAscUrlType = c_oAscUrlType;
+	prot["Invalid"] = prot.Invalid;
+	prot["Http"] = prot.Http;
+	prot["Email"] = prot.Email;
+	prot["Unsafe"] = prot.Unsafe;
 
 	window["AscCommon"].locktype_None   = locktype_None;
 	window["AscCommon"].locktype_Mine   = locktype_Mine;
@@ -4216,6 +4808,9 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].changestype_SlideHide                 = changestype_SlideHide;
 	window["AscCommon"].changestype_CorePr                    = changestype_CorePr;
 	window["AscCommon"].changestype_Document_Settings         = changestype_Document_Settings;
+	window["AscCommon"].changestype_Timing                    = changestype_Timing;
+	window["AscCommon"].changestype_ViewPr                    = changestype_ViewPr;
+	window["AscCommon"].changestype_DocumentProtection        = changestype_DocumentProtection;
 
 	window["AscCommon"].changestype_2_InlineObjectMove        = changestype_2_InlineObjectMove;
 	window["AscCommon"].changestype_2_HdrFtr                  = changestype_2_HdrFtr;
@@ -4289,22 +4884,267 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['multiply'] = prot.multiply;
 	prot['divide'] = prot.divide;
 
+	window['Asc']['c_oAbstractNumMultiLvlTypes'] = window['Asc'].c_oAbstractNumMultiLvlTypes = c_oAbstractNumMultiLvlTypes;
+	prot = c_oAbstractNumMultiLvlTypes;
+	prot['HybridMultiLevel'] = prot.HybridMultiLevel;
+	prot['MultiLevel']       = prot.MultiLevel;
+	prot['SingleLevel']      = prot.SingleLevel;
+
+	window['Asc']['c_oAscSmartArtTypes'] = window['Asc'].c_oAscSmartArtTypes = c_oAscSmartArtTypes;
+	prot = c_oAscSmartArtTypes;
+	prot['AccentedPicture']                   = prot.AccentedPicture;
+	prot['Balance']                           = prot.Balance;
+	prot['TitledPictureBlocks']               = prot.TitledPictureBlocks;
+	prot['PictureAccentBlocks']               = prot.PictureAccentBlocks;
+	prot['BlockCycle']                        = prot.BlockCycle;
+	prot['StackedVenn']                       = prot.StackedVenn;
+	prot['VerticalEquation']                  = prot.VerticalEquation;
+	prot['VerticalBlockList']                 = prot.VerticalBlockList;
+	prot['VerticalBendingProcess']            = prot.VerticalBendingProcess;
+	prot['VerticalBulletList']                = prot.VerticalBulletList;
+	prot['VerticalCurvedList']                = prot.VerticalCurvedList;
+	prot['VerticalProcess']                   = prot.VerticalProcess;
+	prot['VerticalBoxList']                   = prot.VerticalBoxList;
+	prot['VerticalPictureList']               = prot.VerticalPictureList;
+	prot['VerticalCircleList']                = prot.VerticalCircleList;
+	prot['VerticalPictureAccentList']         = prot.VerticalPictureAccentList;
+	prot['VerticalArrowList']                 = prot.VerticalArrowList;
+	prot['VerticalChevronList']               = prot.VerticalChevronList;
+	prot['VerticalAccentList']                = prot.VerticalAccentList;
+	prot['NestedTarget']                      = prot.NestedTarget;
+	prot['Funnel']                            = prot.Funnel;
+	prot['UpwardArrow']                       = prot.UpwardArrow;
+	prot['IncreasingArrowsProcess']           = prot.IncreasingArrowsProcess;
+	prot['StepUpProcess']                     = prot.StepUpProcess;
+	prot['CircularPictureCallout']            = prot.CircularPictureCallout;
+	prot['HorizontalHierarchy']               = prot.HorizontalHierarchy;
+	prot['HorizontalLabeledHierarchy']        = prot.HorizontalLabeledHierarchy;
+	prot['HorizontalMultiLevelHierarchy']     = prot.HorizontalMultiLevelHierarchy;
+	prot['HorizontalOrganizationChart']       = prot.HorizontalOrganizationChart;
+	prot['HorizontalBulletList']              = prot.HorizontalBulletList;
+	prot['HorizontalPictureList']             = prot.HorizontalPictureList;
+	prot['ClosedChevronProcess']              = prot.ClosedChevronProcess;
+	prot['HierarchyList']                     = prot.HierarchyList;
+	prot['Hierarchy']                         = prot.Hierarchy;
+	prot['CirclePictureHierarchy']            = prot.CirclePictureHierarchy;
+	prot['LabeledHierarchy']                  = prot.LabeledHierarchy;
+	prot['InvertedPyramid']                   = prot.InvertedPyramid;
+	prot['HexagonCluster']                    = prot.HexagonCluster;
+	prot['CircleRelationship']                = prot.CircleRelationship;
+	prot['CircleAccentTimeline']              = prot.CircleAccentTimeline;
+	prot['CircularBendingProcess']            = prot.CircularBendingProcess;
+	prot['ArrowRibbon']                       = prot.ArrowRibbon;
+	prot['LinearVenn']                        = prot.LinearVenn;
+	prot['PictureLineup']                     = prot.PictureLineup;
+	prot['TitlePictureLineup']                = prot.TitlePictureLineup;
+	prot['BendingPictureCaptionList']         = prot.BendingPictureCaptionList;
+	prot['BendingPictureAccentList']          = prot.BendingPictureAccentList;
+	prot['TitledMatrix']                      = prot.TitledMatrix;
+	prot['IncreasingCircleProcess']           = prot.IncreasingCircleProcess;
+	prot['BendingPictureBlocks']              = prot.BendingPictureBlocks;
+	prot['BendingPictureCaption']             = prot.BendingPictureCaption;
+	prot['BendingPictureSemiTransparentText'] = prot.BendingPictureSemiTransparentText;
+	prot['NonDirectionalCycle']               = prot.NonDirectionalCycle;
+	prot['ContinuousBlockProcess']            = prot.ContinuousBlockProcess;
+	prot['ContinuousPictureList']             = prot.ContinuousPictureList;
+	prot['ContinuousCycle']                   = prot.ContinuousCycle;
+	prot['DescendingBlockList']               = prot.DescendingBlockList;
+	prot['StepDownProcess']                   = prot.StepDownProcess;
+	prot['ReverseList']                       = prot.ReverseList;
+	prot['OrganizationChart']                 = prot.OrganizationChart;
+	prot['NameAndTitleOrganizationChart']     = prot.NameAndTitleOrganizationChart;
+	prot['AlternatingFlow']                   = prot.AlternatingFlow;
+	prot['PyramidList']                       = prot.PyramidList;
+	prot['PlusAndMinus']                      = prot.PlusAndMinus;
+	prot['RepeatingBendingProcess']           = prot.RepeatingBendingProcess;
+	prot['CaptionedPictures']                 = prot.CaptionedPictures;
+	prot['DetailedProcess']                   = prot.DetailedProcess;
+	prot['PictureStrips']                     = prot.PictureStrips;
+	prot['HalfCircleOrganizationChart']       = prot.HalfCircleOrganizationChart;
+	prot['PhasedProcess']                     = prot.PhasedProcess;
+	prot['BasicVenn']                         = prot.BasicVenn;
+	prot['BasicTimeline']                     = prot.BasicTimeline;
+	prot['BasicPie']                          = prot.BasicPie;
+	prot['BasicMatrix']                       = prot.BasicMatrix;
+	prot['BasicPyramid']                      = prot.BasicPyramid;
+	prot['BasicRadial']                       = prot.BasicRadial;
+	prot['BasicTarget']                       = prot.BasicTarget;
+	prot['BasicBlockList']                    = prot.BasicBlockList;
+	prot['BasicBendingProcess']               = prot.BasicBendingProcess;
+	prot['BasicProcess']                      = prot.BasicProcess;
+	prot['BasicChevronProcess']               = prot.BasicChevronProcess;
+	prot['BasicCycle']                        = prot.BasicCycle;
+	prot['OpposingIdeas']                     = prot.OpposingIdeas;
+	prot['OpposingArrows']                    = prot.OpposingArrows;
+	prot['RandomToResultProcess']             = prot.RandomToResultProcess;
+	prot['SubStepProcess']                    = prot.SubStepProcess;
+	prot['PieProcess']                        = prot.PieProcess;
+	prot['AccentProcess']                     = prot.AccentProcess;
+	prot['AscendingPictureAccentProcess']     = prot.AscendingPictureAccentProcess;
+	prot['PictureAccentProcess']              = prot.PictureAccentProcess;
+	prot['RadialVenn']                        = prot.RadialVenn;
+	prot['RadialCycle']                       = prot.RadialCycle;
+	prot['RadialCluster']                     = prot.RadialCluster;
+	prot['RadialList']                        = prot.RadialList;
+	prot['MultiDirectionalCycle']             = prot.MultiDirectionalCycle;
+	prot['DivergingRadial']                   = prot.DivergingRadial;
+	prot['DivergingArrows']                   = prot.DivergingArrows;
+	prot['FramedTextPicture']                 = prot.FramedTextPicture;
+	prot['GroupedList']                       = prot.GroupedList;
+	prot['SegmentedPyramid']                  = prot.SegmentedPyramid;
+	prot['SegmentedProcess']                  = prot.SegmentedProcess;
+	prot['SegmentedCycle']                    = prot.SegmentedCycle;
+	prot['PictureGrid']                       = prot.PictureGrid;
+	prot['GridMatrix']                        = prot.GridMatrix;
+	prot['SpiralPicture']                     = prot.SpiralPicture;
+	prot['StackedList']                       = prot.StackedList;
+	prot['PictureCaptionList']                = prot.PictureCaptionList;
+	prot['ProcessList']                       = prot.ProcessList;
+	prot['BubblePictureList']                 = prot.BubblePictureList;
+	prot['SquareAccentList']                  = prot.SquareAccentList;
+	prot['LinedList']                         = prot.LinedList;
+	prot['PictureAccentList']                 = prot.PictureAccentList;
+	prot['TitledPictureAccentList']           = prot.TitledPictureAccentList;
+	prot['SnapshotPictureList']               = prot.SnapshotPictureList;
+	prot['ContinuousArrowProcess']            = prot.ContinuousArrowProcess;
+	prot['CircleArrowProcess']                = prot.CircleArrowProcess;
+	prot['ProcessArrows']                     = prot.ProcessArrows;
+	prot['StaggeredProcess']                  = prot.StaggeredProcess;
+	prot['ConvergingRadial']                  = prot.ConvergingRadial;
+	prot['ConvergingArrows']                  = prot.ConvergingArrows;
+	prot['TableHierarchy']                    = prot.TableHierarchy;
+	prot['TableList']                         = prot.TableList;
+	prot['TextCycle']                         = prot.TextCycle;
+	prot['TrapezoidList']                     = prot.TrapezoidList;
+	prot['DescendingProcess']                 = prot.DescendingProcess;
+	prot['ChevronList']                       = prot.ChevronList;
+	prot['Equation']                          = prot.Equation;
+	prot['CounterbalanceArrows']              = prot.CounterbalanceArrows;
+	prot['TargetList']                        = prot.TargetList;
+	prot['CycleMatrix']                       = prot.CycleMatrix;
+	prot['AlternatingPictureBlocks']          = prot.AlternatingPictureBlocks;
+	prot['AlternatingPictureCircles']         = prot.AlternatingPictureCircles;
+	prot['AlternatingHexagonList']            = prot.AlternatingHexagonList;
+	prot['Gear']                              = prot.Gear;
+	prot['ArchitectureLayout']                = prot.ArchitectureLayout;
+	prot['ChevronAccentProcess']              = prot.ChevronAccentProcess;
+	prot['CircleProcess']                     = prot.CircleProcess;
+	prot['ConvergingText']                    = prot.ConvergingText;
+	prot['HexagonRadial']                     = prot.HexagonRadial;
+	prot['InterconnectedBlockProcess']        = prot.InterconnectedBlockProcess;
+	prot['InterconnectedRings']               = prot.InterconnectedRings;
+	prot['PictureFrame']                      = prot.PictureFrame;
+	prot['PictureOrganizationChart']          = prot.PictureOrganizationChart;
+	prot['RadialPictureList']                 = prot.RadialPictureList;
+	prot['TabList']                           = prot.TabList;
+	prot['TabbedArc']                         = prot.TabbedArc;
+	prot['ThemePictureAccent']                = prot.ThemePictureAccent;
+	prot['ThemePictureAlternatingAccent']     = prot.ThemePictureAlternatingAccent;
+	prot['ThemePictureGrid']                  = prot.ThemePictureGrid;
+	prot['VaryingWidthList']                  = prot.VaryingWidthList;
+	prot['VerticalBracketList']               = prot.VerticalBracketList;
+
+	window['Asc']['c_oAscSmartArtSectionNames'] = window['Asc'].c_oAscSmartArtSectionNames = c_oAscSmartArtSectionNames;
+	prot = c_oAscSmartArtSectionNames;
+	prot['List']         = prot.List;
+	prot['Process']      = prot.Process;
+	prot['Cycle']        = prot.Cycle;
+	prot['Hierarchy']    = prot.Hierarchy;
+	prot['Relationship'] = prot.Relationship;
+	prot['Matrix']       = prot.Matrix;
+	prot['Pyramid']      = prot.Pyramid;
+	prot['Picture']      = prot.Picture;
+	prot['OfficeCom']    = prot.OfficeCom;
+
+	window['Asc']['c_oAscJSONNumberingType'] = window['Asc'].c_oAscJSONNumberingType = c_oAscJSONNumberingType;
+	prot = c_oAscJSONNumberingType;
+	prot["Remove"] = prot.Remove;
+	prot["Bullet"] = prot.Bullet;
+	prot["Number"] = prot.Number;
+	prot["Hybrid"] = prot.Hybrid;
+
 	window['Asc']['c_oAscNumberingFormat'] = window['Asc'].c_oAscNumberingFormat = c_oAscNumberingFormat;
 	prot = c_oAscNumberingFormat;
-	prot['None']                    = prot.None;
-	prot['Bullet']                  = prot.Bullet;
-	prot['Decimal']                 = prot.Decimal;
-	prot['LowerRoman']              = prot.LowerRoman;
-	prot['UpperRoman']              = prot.UpperRoman;
-	prot['LowerLetter']             = prot.LowerLetter;
-	prot['UpperLetter']             = prot.UpperLetter;
-	prot['DecimalZero']             = prot.DecimalZero;
-	prot['DecimalEnclosedCircle']   = prot.DecimalEnclosedCircle;
-	prot['RussianLower']            = prot.RussianLower;
-	prot['RussianUpper']            = prot.RussianUpper;
-	prot['ChineseCounting']         = prot.ChineseCounting;
-	prot['ChineseCountingThousand'] = prot.ChineseCountingThousand;
-	prot['ChineseLegalSimplified']  = prot.ChineseLegalSimplified;
+	prot['Aiueo']                        = prot.Aiueo;
+	prot['AiueoFullWidth']               = prot.AiueoFullWidth;
+	prot['ArabicAbjad']                  = prot.ArabicAbjad;
+	prot['ArabicAlpha']                  = prot.ArabicAlpha;
+	prot['BahtText']                     = prot.BahtText;
+	prot['Bullet']                       = prot.Bullet;
+	prot['CardinalText']                 = prot.CardinalText;
+	prot['Chicago']                      = prot.Chicago;
+	prot['ChineseCounting']              = prot.ChineseCounting;
+	prot['ChineseCountingThousand']      = prot.ChineseCountingThousand;
+	prot['ChineseLegalSimplified']       = prot.ChineseLegalSimplified;
+	prot['Chosung']                      = prot.Chosung;
+	prot['Custom']                       = prot.Custom;
+	prot['Decimal']                      = prot.Decimal;
+	prot['DecimalEnclosedCircle']        = prot.DecimalEnclosedCircle;
+	prot['DecimalEnclosedCircleChinese'] = prot.DecimalEnclosedCircleChinese;
+	prot['DecimalEnclosedFullstop']      = prot.DecimalEnclosedFullstop;
+	prot['DecimalEnclosedParen']         = prot.DecimalEnclosedParen;
+	prot['DecimalFullWidth']             = prot.DecimalFullWidth;
+	prot['DecimalFullWidth2']            = prot.DecimalFullWidth2;
+	prot['DecimalHalfWidth']             = prot.DecimalHalfWidth;
+	prot['DecimalZero']                  = prot.DecimalZero;
+	prot['DollarText']                   = prot.DollarText;
+	prot['Ganada']                       = prot.Ganada;
+	prot['Hebrew1']                      = prot.Hebrew1;
+	prot['Hebrew2']                      = prot.Hebrew2;
+	prot['Hex']                          = prot.Hex;
+	prot['HindiConsonants']              = prot.HindiConsonants;
+	prot['HindiCounting']                = prot.HindiCounting;
+	prot['HindiNumbers']                 = prot.HindiNumbers;
+	prot['HindiVowels']                  = prot.HindiVowels;
+	prot['IdeographDigital']             = prot.IdeographDigital;
+	prot['IdeographEnclosedCircle']      = prot.IdeographEnclosedCircle;
+	prot['IdeographLegalTraditional']    = prot.IdeographLegalTraditional;
+	prot['IdeographTraditional']         = prot.IdeographTraditional;
+	prot['IdeographZodiac']              = prot.IdeographZodiac;
+	prot['IdeographZodiacTraditional']   = prot.IdeographZodiacTraditional;
+	prot['Iroha']                        = prot.Iroha;
+	prot['IrohaFullWidth']               = prot.IrohaFullWidth;
+	prot['JapaneseCounting']             = prot.JapaneseCounting;
+	prot['JapaneseDigitalTenThousand']   = prot.JapaneseDigitalTenThousand;
+	prot['JapaneseLegal']                = prot.JapaneseLegal;
+	prot['KoreanCounting']               = prot.KoreanCounting;
+	prot['KoreanDigital']                = prot.KoreanDigital;
+	prot['KoreanDigital2']               = prot.KoreanDigital2;
+	prot['KoreanLegal']                  = prot.KoreanLegal;
+	prot['LowerLetter']                  = prot.LowerLetter;
+	prot['LowerRoman']                   = prot.LowerRoman;
+	prot['None']                         = prot.None;
+	prot['NumberInDash']                 = prot.NumberInDash;
+	prot['Ordinal']                      = prot.Ordinal;
+	prot['OrdinalText']                  = prot.OrdinalText;
+	prot['RussianLower']                 = prot.RussianLower;
+	prot['RussianUpper']                 = prot.RussianUpper;
+	prot['TaiwaneseCounting']            = prot.TaiwaneseCounting;
+	prot['TaiwaneseCountingThousand']    = prot.TaiwaneseCountingThousand;
+	prot['TaiwaneseDigital']             = prot.TaiwaneseDigital;
+	prot['ThaiCounting']                 = prot.ThaiCounting;
+	prot['ThaiLetters']                  = prot.ThaiLetters;
+	prot['ThaiNumbers']                  = prot.ThaiNumbers;
+	prot['UpperLetter']                  = prot.UpperLetter;
+	prot['UpperRoman']                   = prot.UpperRoman;
+	prot['VietnameseCounting']           = prot.VietnameseCounting;
+
+	window['Asc']['c_oAscAllNumberingTypes'] = window['Asc'].c_oAscAllNumberingTypes = c_oAscAllNumberingTypes;
+
+	// new presentation types
+	prot['Ea1JpnKor']                    = prot.Ea1JpnKor;
+	prot['CircleNumWdBlack']             = prot.CircleNumWdBlack;
+	prot['Ea1JpnChsDb']                  = prot.Ea1JpnChsDb;
+	prot['Ea1Cht']                       = prot.Ea1Cht;
+	prot['CircleNumWdWhitePlain']        = prot.CircleNumWdWhitePlain;
+
+	//custom types
+	prot['CustomGreece']                 = prot.CustomGreece;
+	prot['CustomDecimalFourZero']        = prot.CustomDecimalFourZero;
+	prot['CustomDecimalThreeZero']       = prot.CustomDecimalThreeZero;
+	prot['CustomDecimalTwoZero']         = prot.CustomDecimalTwoZero;
+
+	window['Asc']['c_oAscCustomNumberingFormatAssociation'] = window['Asc'].c_oAscCustomNumberingFormatAssociation = c_oAscCustomNumberingFormatAssociation;
 
 	window['Asc']['c_oAscNumberingSuff'] = window['Asc'].c_oAscNumberingSuff = c_oAscNumberingSuff;
 	prot = c_oAscNumberingSuff;
@@ -4423,6 +5263,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['DropDownList'] = c_oAscContentControlSpecificType.DropDownList;
 	prot['DateTime']     = c_oAscContentControlSpecificType.DateTime;
 	prot['TOC']          = c_oAscContentControlSpecificType.TOC;
+	prot['Complex']      = c_oAscContentControlSpecificType.Complex;
 
 	window['Asc']['c_oAscDefNameType'] = window['Asc'].c_oAscDefNameType = c_oAscDefNameType;
 	prot = c_oAscDefNameType;
@@ -4487,21 +5328,30 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Original'] = prot.Original;
 	prot['Simple']   = prot.Simple;
 
+	prot = window['Asc']['c_oAscMathInputType'] = window['Asc'].c_oAscMathInputType = c_oAscMathInputType;
+	prot['Unicode'] = prot.Unicode;
+	prot['LaTeX']   = prot.LaTeX;
+
 	window['AscFormat'] = window['AscFormat'] || {};
 
 	window['AscFormat'].text_fit_No         = window['AscFormat']['text_fit_No']         = 0;
     window['AscFormat'].text_fit_Auto       = window['AscFormat']['text_fit_Auto']       = 1;
     window['AscFormat'].text_fit_NormAuto   = window['AscFormat']['text_fit_NormAuto']   = 2;
 
-	//Overflow Types
-    window['AscFormat'].nOTClip = window['AscFormat']['nOTClip'] = 0;
-    window['AscFormat'].nOTEllipsis = window['AscFormat']['nOTEllipsis'] = 1;
-	window['AscFormat'].nOTOwerflow = window['AscFormat']['nOTOwerflow'] = 2;
+	//Vert Overflow Types
+    window['AscFormat'].nVOTClip = window['AscFormat']['nVOTClip'] = 0;
+    window['AscFormat'].nVOTEllipsis = window['AscFormat']['nVOTEllipsis'] = 1;
+	window['AscFormat'].nVOTOverflow = window['AscFormat']['nVOTOverflow'] = 2;
+
+	//Hor OverFlow Types
+	window['AscFormat'].nHOTClip = window['AscFormat']['nHOTClip'] = 0;
+	window['AscFormat'].nHOTOverflow = window['AscFormat']['nHOTOverflow'] = 1;
 
     window['AscFormat'].BULLET_TYPE_BULLET_NONE = window['AscFormat']['BULLET_TYPE_BULLET_NONE'] = 0;
     window['AscFormat'].BULLET_TYPE_BULLET_CHAR = window['AscFormat']['BULLET_TYPE_BULLET_CHAR'] = 1;
     window['AscFormat'].BULLET_TYPE_BULLET_AUTONUM = window['AscFormat']['BULLET_TYPE_BULLET_AUTONUM'] = 2;
-    window['AscFormat'].BULLET_TYPE_BULLET_BLIP = window['AscFormat']['BULLET_TYPE_BULLET_BLIP'] = 3;	window['AscCommon'].c_oAscRectAlignType = c_oAscRectAlignType;
+    window['AscFormat'].BULLET_TYPE_BULLET_BLIP = window['AscFormat']['BULLET_TYPE_BULLET_BLIP'] = 3;
+	window['AscCommon'].c_oAscRectAlignType = c_oAscRectAlignType;
 	window['AscCommon'].ST_HueDir = ST_HueDir;
 	window['AscCommon'].ST_ClrAppMethod = ST_ClrAppMethod;
 	window['AscCommon'].ST_AnimLvlStr = ST_AnimLvlStr;
@@ -4530,5 +5380,65 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window['AscCommon'].ST_TLAnimateEffectTransition = ST_TLAnimateEffectTransition;
 	window['AscCommon'].c_oAscOleObjectTypes = c_oAscOleObjectTypes;
 	window['AscCommon'].ST_CxnType = ST_CxnType;
-	
-	})(window);
+
+	prot = window['Asc']['LigaturesType'] = window['Asc'].LigaturesType = LigaturesType;
+	prot['None']                             = prot.None;
+	prot['Standard']                         = prot.Standard;
+	prot['Contextual']                       = prot.Contextual;
+	prot['Historical']                       = prot.Historical;
+	prot['Discretional']                     = prot.Discretional;
+	prot['StandardContextual']               = prot.StandardContextual;
+	prot['StandardHistorical']               = prot.StandardHistorical;
+	prot['ContextualHistorical']             = prot.ContextualHistorical;
+	prot['StandardDiscretional']             = prot.StandardDiscretional;
+	prot['ContextualDiscretional']           = prot.ContextualDiscretional;
+	prot['HistoricalDiscretional']           = prot.HistoricalDiscretional;
+	prot['StandardContextualHistorical']     = prot.StandardContextualHistorical;
+	prot['StandardContextualDiscretional']   = prot.StandardContextualDiscretional;
+	prot['StandardHistoricalDiscretional']   = prot.StandardHistoricalDiscretional;
+	prot['ContextualHistoricalDiscretional'] = prot.ContextualHistoricalDiscretional;
+	prot['All']                              = prot.All;
+
+	prot = window['Asc']['CombFormWidthRule'] = window['Asc'].CombFormWidthRule = CombFormWidthRule;
+	prot['Auto']    = prot.Auto;
+	prot['AtLeast'] = prot.AtLeast;
+	prot['Exact']   = prot.Exact;
+
+	prot = window['Asc']['UnderlineType'] = window['Asc'].UnderlineType = UnderlineType;
+	prot['Dash']            = prot.Dash;
+	prot['DashDotDotHeavy'] = prot.DashDotDotHeavy;
+	prot['DashDotHeavy']    = prot.DashDotHeavy;
+	prot['DashedHeavy']     = prot.DashedHeavy;
+	prot['DashLong']        = prot.DashLong;
+	prot['DashLongHeavy']   = prot.DashLongHeavy;
+	prot['DotDash']         = prot.DotDash;
+	prot['DotDotDash']      = prot.DotDotDash;
+	prot['Dotted']          = prot.Dotted;
+	prot['DottedHeavy']     = prot.DottedHeavy;
+	prot['Double']          = prot.Double;
+	prot['None']            = prot.None;
+	prot['Single']          = prot.Single;
+	prot['Thick']           = prot.Thick;
+	prot['Wave']            = prot.Wave;
+	prot['WavyDouble']      = prot.WavyDouble;
+	prot['WavyHeavy']       = prot.WavyHeavy;
+	prot['Words']           = prot.Words;
+
+	prot = window['Asc']['DocumentView'] = window['Asc'].DocumentView = DocumentView;
+	prot['MasterPages'] = prot.MasterPages;
+	prot['None']        = prot.None;
+	prot['Normal']      = prot.Normal;
+	prot['Outline']     = prot.Outline;
+	prot['Print']       = prot.Print;
+	prot['Web']         = prot.Web;
+
+	prot = window['Asc']['c_oAscConfirm'] = window['Asc'].c_oAscConfirm = c_oAscConfirm;
+	prot['ConfirmReplaceRange'] = prot.ConfirmReplaceRange;
+	prot['ConfirmPutMergeRange'] = prot.ConfirmPutMergeRange;
+	prot['ConfirmChangeProtectRange'] = prot.ConfirmChangeProtectRange;
+	prot['ConfirmMaxChangesSize'] = prot.ConfirmMaxChangesSize;
+	prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
+
+	window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
+
+})(window);

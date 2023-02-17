@@ -429,7 +429,7 @@ function RotateTrackShapeImage(originalObject)
 
     };
 
-    this.trackEnd = function()
+    this.trackEnd = function(bWord)
     {
         if(!this.bIsTracked)
         {
@@ -442,7 +442,7 @@ function RotateTrackShapeImage(originalObject)
             return;
         }
         AscFormat.CheckSpPrXfrm(this.originalObject);
-        this.originalObject.changeRot(this.angle);
+        this.originalObject.changeRot(this.angle, bWord);
     };
 
     this.getBounds = function()
@@ -903,8 +903,7 @@ function Chart3dAdjustTrack(oChartSpace, numHandle, startX, startY)
         if(!this.bIsTracked){
             return;
         }
-        oChartSpace.chart.setView3D(this.view3D.createDuplicate());
-        oChartSpace.setRecalculateInfo();
+        oChartSpace.changeView3d(this.view3D.createDuplicate());
     }
 }
 

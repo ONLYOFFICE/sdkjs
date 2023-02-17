@@ -39,7 +39,7 @@
 function CMathNaryPr()
 {
     this.chr     = undefined;
-    this.chrType = NARY_INTEGRAL;
+    this.chrType = undefined;
     this.grow    = false;
     this.limLoc  = undefined;
     this.subHide = false;
@@ -191,7 +191,7 @@ CNary.prototype.kind      = MATH_NARY;
   
 CNary.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(3);
+    this.Fill_LogicalContent(3, props.content);
 
     this.setProperties(props);
     this.fillContent();
@@ -455,7 +455,7 @@ CNary.prototype.getSign = function(chrCode, chrType)
 };
 CNary.prototype.setCtrPrp = function(txtPrp)
 {
-    this.CtrPrp.Merge(txtPrp); // only runPrp for paragraph
+    CMathBase.prototype.setCtrPrp.call(this, txtPrp);// only runPrp for paragraph
     //this.RunPrp.setTxtPrp(txtPrp);
 
     if(this.elements.length > 0 && !this.elements[0][0].IsJustDraw())
@@ -815,7 +815,65 @@ CNary.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos !== 2 && false === this.Is_SelectInside();
 };
+CNary.prototype.GetTextOfElement = function(isLaTeX)
+{
+	var strTemp = "";
 
+	var strStartCode = String.fromCharCode(this.Pr.chr || this.getSign().chrCode);
+	var strSupContent = this.getSupMathContent().GetMultipleContentForGetText(isLaTeX, undefined, true);
+	var strSubContent = this.getSubMathContent().GetMultipleContentForGetText(isLaTeX, undefined, true);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
+
+    if (true === isLaTeX)
+    {
+        switch (strStartCode.codePointAt())
+        {
+            case 8747:	strStartCode = '\\int';			break;
+            case 8748:	strStartCode = '\\iint';		break;
+            case 8749:	strStartCode = '\\iiint';		break;
+            case 8750:
+            case 8755:	strStartCode = '\\oint';		break;
+            case 8751:	strStartCode = '\\oiint';		break;
+            case 8752:	strStartCode = '\\oiiint';		break;
+            case 8721:	strStartCode = '\\sum';			break;
+            case 8719:	strStartCode = '\\prod';		break;
+            case 8720:	strStartCode = '\\coprod';		break;
+            case 8899:	strStartCode = '\\bigcup';		break;
+            case 8898:	strStartCode = '\\bigcap';		break;
+            case 8897:	strStartCode = '\\bigvee';		break;
+            case 8896:	strStartCode = '\\bigwedge';	break;
+            case 10753:	strStartCode = '\\bigoplus';	break;
+            case 10754:	strStartCode = '\\bigotimes';	break;
+            case 10756:	strStartCode = '\\biguplus';	break;
+            case 10764:	strStartCode = '\\iiiint';		break;
+            case 10758: strStartCode = '\\bigsqcup';	break;
+            case 10752: strStartCode = '\\bigodot';		break;
+            default: break;
+        }
+        if (strSupContent.length === 0 && strSubContent.length === 0)
+        {
+            strStartCode += " ";
+        }
+    }
+    else if (false === isLaTeX && strBase.length > 0)
+    {
+        strBase = '▒' + strBase;
+	}
+
+	strTemp += strStartCode;
+
+	if (strSupContent.length > 0)
+    {
+		strTemp += "^" + strSupContent;
+	}
+	if (strSubContent.length > 0)
+    {
+		strTemp += "_" + strSubContent;
+	}
+	strTemp += strBase;
+
+	return strTemp;
+};
 
 /**
  *

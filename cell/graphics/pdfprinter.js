@@ -42,12 +42,14 @@ function CPdfPrinter(fontManager, font)
     this._ppiX = 96;
     this._ppiY = 96;
     this._zoom = 1;
+    var CoreDocInfo = null;
 
     if (window.Asc && window.Asc.editor)
     {
         this._zoom = window.Asc.editor.asc_getZoom();
         this._ppiX = 96;
         this._ppiY = 96;
+        CoreDocInfo = window.Asc.editor.asc_getCoreProps();
     }
 
     vector_koef = 25.4 / (this._ppiX * this._zoom);
@@ -58,6 +60,7 @@ function CPdfPrinter(fontManager, font)
 	   this.DocumentRenderer.InitPicker(fontManager);
     }
     this.DocumentRenderer.VectorMemoryForPrint = new AscCommon.CMemory();
+    this.DocumentRenderer.DocInfo(CoreDocInfo);
 
     this.font = font;
     this.Transform = new AscCommon.CMatrix();
@@ -769,6 +772,11 @@ CPdfPrinter.prototype =
     SetTextPr : function(textPr)
     {
         return this.DocumentRenderer.SetTextPr(textPr);
+    },
+
+    SetFontInternal : function(name, size, style)
+    {
+        return this.DocumentRenderer.SetFontInternal(name, size, style);
     },
 
     SetFontSlot : function(slot, fontSizeKoef)

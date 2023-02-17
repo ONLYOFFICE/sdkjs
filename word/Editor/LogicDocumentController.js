@@ -61,6 +61,10 @@ CLogicDocumentController.prototype.AddNewParagraph = function(bRecalculate, bFor
 {
 	return this.LogicDocument.controller_AddNewParagraph(bRecalculate, bForceAdd);
 };
+CLogicDocumentController.prototype.GetFormatPainterData = function()
+{
+	return this.LogicDocument.controller_GetFormatPainterData();
+};
 CLogicDocumentController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {
 	this.LogicDocument.controller_AddInlineImage(nW, nH, oImage, oChart, bFlow);
@@ -69,9 +73,9 @@ CLogicDocumentController.prototype.AddImages = function(aImages)
 {
 	this.LogicDocument.controller_AddImages(aImages);
 };
-CLogicDocumentController.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId)
+CLogicDocumentController.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
-	this.LogicDocument.controller_AddOleObject(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId);
+	this.LogicDocument.controller_AddOleObject(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CLogicDocumentController.prototype.AddTextArt = function(nStyle)
 {
@@ -267,9 +271,9 @@ CLogicDocumentController.prototype.UpdateCursorType = function(X, Y, PageAbs, Mo
 {
 	this.LogicDocument.controller_UpdateCursorType(X, Y, PageAbs, MouseEvent);
 };
-CLogicDocumentController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CLogicDocumentController.prototype.PasteFormatting = function(oData)
 {
-	this.LogicDocument.controller_PasteFormatting(TextPr, ParaPr);
+	this.LogicDocument.controller_PasteFormatting(oData);
 };
 CLogicDocumentController.prototype.IsSelectionUse = function()
 {

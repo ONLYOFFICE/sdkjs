@@ -113,11 +113,9 @@ CGroupShape.prototype.recalcBounds = function()
     this.recalcInfo.recalculateBounds = true;
 };
 
-CGroupShape.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
 CGroupShape.prototype.getDrawingObjectsController =  CShape.prototype.getDrawingObjectsController;
-CGroupShape.prototype.Is_UseInDocument =  CShape.prototype.Is_UseInDocument;
+CGroupShape.prototype.IsUseInDocument =  CShape.prototype.IsUseInDocument;
 
-CGroupShape.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CGroupShape.prototype.getHierarchy = CShape.prototype.getHierarchy;

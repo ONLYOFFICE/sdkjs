@@ -52,132 +52,13 @@
 	var languages = window['Asc'].g_oLcidIdToNameMap;
 	var availableIdeographLanguages = window['Asc'].availableIdeographLanguages;
 	var availableBidiLanguages = window['Asc'].availableBidiLanguages;
+	const fontslot_ASCII    = 0x01;
 
-	String.prototype.sentenceCase = function ()
-	{
-		var trimStr = this.trim();
-		if (trimStr.length === 0)
-		{
-			return "";
-		} else if (trimStr.length === 1)
-		{
-			return trimStr[0].toUpperCase();
-		}
-		return trimStr[0].toUpperCase() + trimStr.slice(1);
-	}
-	String.prototype['sentenceCase'] = String.prototype.sentenceCase;
-
-	if (typeof String.prototype.startsWith !== 'function')
-	{
-		String.prototype.startsWith = function (str)
-		{
-			return this.indexOf(str) === 0;
-		};
-		String.prototype['startsWith'] = String.prototype.startsWith;
-	}
-	if (typeof String.prototype.endsWith !== 'function')
-	{
-		String.prototype.endsWith = function (suffix)
-		{
-			return this.indexOf(suffix, this.length - suffix.length) !== -1;
-		};
-		String.prototype['endsWith'] = String.prototype.endsWith;
-	}
-	if (!String.prototype.trim) {
-		(function() {
-			// Вырезаем BOM и неразрывный пробел
-			String.prototype.trim = function() {
-				var reg = new RegExp('^[\\s\uFEFF\xA0]+|[\\s\uFEFF\xA0]+$', 'g');
-				return this.replace(reg, '');
-			};
-		})();
-	}
-	if (typeof String.prototype.repeat !== 'function')
-	{
-		String.prototype.repeat = function (count)
-		{
-			'use strict';
-			if (this == null)
-			{
-				throw new TypeError('can\'t convert ' + this + ' to object');
-			}
-			var str = '' + this;
-			count = +count;
-			if (count != count)
-			{
-				count = 0;
-			}
-			if (count < 0)
-			{
-				throw new RangeError('repeat count must be non-negative');
-			}
-			if (count == Infinity)
-			{
-				throw new RangeError('repeat count must be less than infinity');
-			}
-			count = Math.floor(count);
-			if (str.length == 0 || count == 0)
-			{
-				return '';
-			}
-			// Обеспечение того, что count является 31-битным целым числом, позволяет нам значительно
-			// соптимизировать главную часть функции. Впрочем, большинство современных (на август
-			// 2014 года) браузеров не обрабатывают строки, длиннее 1 << 28 символов, так что:
-			if (str.length * count >= 1 << 28)
-			{
-				throw new RangeError('repeat count must not overflow maximum string size');
-			}
-			var rpt = '';
-			for (; ;)
-			{
-				if ((count & 1) == 1)
-				{
-					rpt += str;
-				}
-				count >>>= 1;
-				if (count == 0)
-				{
-					break;
-				}
-				str += str;
-			}
-			return rpt;
-		};
-		String.prototype['repeat'] = String.prototype.repeat;
-	}
-	if (typeof String.prototype.padStart !== 'function') {
-		String.prototype.padStart = function padStart(targetLength,padString) {
-			targetLength = targetLength>>0; //floor if number or convert non-number to 0;
-			padString = String(padString || ' ');
-			if (this.length > targetLength) {
-				return String(this);
-			}
-			else {
-				targetLength = targetLength-this.length;
-				if (targetLength > padString.length) {
-					padString += padString.repeat(targetLength/padString.length); //append to original to ensure we are longer than needed
-				}
-				return padString.slice(0,targetLength) + String(this);
-			}
-		};
-		String.prototype['padStart'] = String.prototype.padStart;
-	}
 	Number.isInteger = Number.isInteger || function(value) {
 		return typeof value === 'number' && Number.isFinite(value) && !(value % 1);
 	};
 	Number.isFinite = Number.isFinite || function(value) {
 		return typeof value === 'number' && isFinite(value);
-	};
-// Extend javascript String type
-	String.prototype.strongMatch = function (regExp)
-	{
-		if (regExp && regExp instanceof RegExp)
-		{
-			var arr = this.toString().match(regExp);
-			return !!(arr && arr.length > 0 && arr[0].length == this.length);
-		}
-
-		return false;
 	};
 
 	RegExp.escape = function ( text ) {
@@ -335,85 +216,11 @@
 	{
 		return window['SockJS'] || require('sockjs');
 	}
-	function getJSZipUtils()
+
+	function getSocketIO()
 	{
-		return window['JSZipUtils'] || require('jsziputils');
+		return typeof window['io'] === 'function' ? window['io'] : require("socketio");
 	}
-	function getJSZip()
-	{
-		return window['JSZip'] || require('jszip');
-	}
-
-	function JSZipWrapper() {
-		this.files = {};
-	}
-
-	JSZipWrapper.prototype.loadAsync = function(data, options) {
-		var t = this;
-
-		if (window["native"]) {
-			return new Promise(function(resolve, reject) {
-
-				var retFiles = null;
-				if (options && options["base64"] === true)
-					retFiles = window["native"]["ZipOpenBase64"](data);
-				else
-					retFiles = window["native"]["ZipOpen"](data);
-
-				if (null != retFiles)
-				{
-					for (var id in retFiles) {
-						t.files[id] = new JSZipObjectWrapper(retFiles[id]);
-					}
-
-					resolve(t);
-				}
-				else
-				{
-					reject(new Error("Failed archive"));
-				}
-
-			});
-		}
-
-		return AscCommon.getJSZip().loadAsync(data, options).then(function(zip){
-			for (var id in zip.files) {
-				t.files[id] = new JSZipObjectWrapper(zip.files[id]);
-			}
-			return t;
-		});
-	};
-	JSZipWrapper.prototype.close = function() {
-		if (window["native"])
-			window["native"]["ZipClose"]();
-	};
-
-	function JSZipObjectWrapper(data) {
-		this.data = data;
-	}
-	JSZipObjectWrapper.prototype.async = function(type) {
-
-		if (window["native"]) {
-			var t = this;
-
-			return new Promise(function(resolve, reject) {
-
-				var ret = window["native"]["ZipFileAsString"](t.data);
-
-				if (null != ret)
-				{
-					resolve(ret);
-				}
-				else
-				{
-					reject(new Error("Failed file in archive"));
-				}
-
-			});
-		}
-
-		return this.data.async(type);
-	};
 
 	function getBaseUrl()
 	{
@@ -424,6 +231,15 @@
 			indexHtml = indexHtml.substring(0, questInd);
 		}
     		return indexHtml.substring(0, indexHtml.lastIndexOf("/") + 1);
+	}
+	function getBaseUrlPathname()
+	{
+		let baseUrl = getBaseUrl();
+		return baseUrl.substring(getIndex(baseUrl, '/', 3));
+	}
+
+	function getIndex(str, substring, n) {
+		return str.split(substring).slice(0, n).join(substring).length;
 	}
 
 	function getEncodingParams()
@@ -722,6 +538,43 @@
 		}
 		return stream;
 	}
+
+	function isPdfFormatFile(stream) {
+		let part = AscCommon.UTF8ArrayToString(stream, 0, 4096);//MIN_SIZE_BUFFER
+		return -1 !== part.indexOf("%PDF-");
+	}
+
+	function isDjvuFormatFile(stream) {
+		return stream.length > 4 && 0x41 == stream[0] && 0x54 == stream[1] && 0x26 == stream[2] &&
+			0x54 == stream[3] && 0x46 == stream[4] && 0x4f == stream[5] && 0x52 == stream[6] && 0x4d == stream[7];
+	}
+
+	function isXpsFormatFile(stream) {
+		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
+			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
+			return false;
+		}
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(stream)) {
+			return false;
+		}
+		let _relsBytes = jsZlib.getFile("_rels/.rels");
+		let _rels = _relsBytes ? AscCommon.UTF8ArrayToString(_relsBytes, 0, _relsBytes.length) : "";
+
+		//todo combine pieces
+		let _relsPieceBytes = jsZlib.getFile("_rels/.rels/[0].piece");
+		let _relsPiece = _relsPieceBytes ? AscCommon.UTF8ArrayToString(_relsPieceBytes, 0, _relsPieceBytes.length) : "";
+		jsZlib.close();
+
+		if (-1 !== _rels.indexOf("fixedrepresentation") && (-1 !== _rels.indexOf("/xps/") || -1 !== _rels.indexOf("/oxps/"))) {
+			return true;
+		}
+
+		return !!_relsPiece;
+	}
+	function checkNativeViewerSignature(stream) {
+		return isPdfFormatFile(stream) || isDjvuFormatFile(stream) || isXpsFormatFile(stream);
+	}
 	function checkStreamSignature(stream, Signature) {
 		if (stream.length > Signature.length) {
 			for(var i = 0 ; i < Signature.length; ++i){
@@ -733,16 +586,77 @@
 		}
 		return false;
 	}
+	function checkOOXMLSignature(stream) {
+		return null !== getEditorByOOXMLSignature(stream);
+	}
+	function getEditorByBinSignature(stream, Signature) {
+		if (stream.length > 4) {
+			let signature = AscCommon.UTF8ArrayToString(stream, 0, 4);
+			switch(signature) {
+				case "DOCY":
+					return AscCommon.c_oEditorId.Word;
+				case "XLSY":
+					return AscCommon.c_oEditorId.Spreadsheet;
+				case "PPTY":
+					return AscCommon.c_oEditorId.Presentation;
+			}
+		}
+		return null;
+	}
+	function getEditorByOOXMLSignature(stream) {
+		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] &&
+			0x04 === stream[3])) {
+			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
+			return null;
+		}
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(stream)) {
+			return null;
+		}
+		let contentTypesBytes = jsZlib.getFile("[Content_Types].xml");
+		let contentTypes = contentTypesBytes ? AscCommon.UTF8ArrayToString(contentTypesBytes, 0, contentTypesBytes.length) : "";
+		jsZlib.close();
+
+		if (-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-word.document.macroEnabled.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-word.template.macroEnabledTemplate.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.oform") ||
+			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.docxf")) {
+			return AscCommon.c_oEditorId.Word;
+		} else if (-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.macroEnabled.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-excel.template.macroEnabled.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.binary.macroEnabled.main")) {
+			return AscCommon.c_oEditorId.Spreadsheet;
+		} else if (-1 !== contentTypes.indexOf(
+				"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.template.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml")) {
+			return AscCommon.c_oEditorId.Presentation;
+		} else {
+			return null;
+		}
+	}
+	function getEditorBySignature(stream) {
+		let res = getEditorByBinSignature(stream);
+		return null !== res ? res :getEditorByOOXMLSignature (stream);
+	}
+
 	function openFileCommand(docId, binUrl, changesUrl, changesToken, Signature, callback)
 	{
-		var bError = false, oResult = new OpenFileResult(), bEndLoadFile = false, bEndLoadChanges = false;
+		var nError = Asc.c_oAscError.ID.No, oResult = new OpenFileResult(), bEndLoadFile = false, bEndLoadChanges = false;
 		var onEndOpen = function ()
 		{
 			if (bEndLoadFile && bEndLoadChanges)
 			{
 				if (callback)
 				{
-					callback(bError, oResult);
+					callback(nError, oResult);
 				}
 			}
 		};
@@ -763,12 +677,12 @@
 							oResult.bSerFormat = checkStreamSignature(stream, Signature);
 							oResult.data = stream;
 						} else {
-							bError = true;
+							nError = Asc.c_oAscError.ID.Unknown;
 						}
 					}
 					else
 					{
-						bError = true;
+						nError = Asc.c_oAscError.ID.DownloadError;
 					}
 					bEndLoadFile = true;
 					onEndOpen();
@@ -780,37 +694,34 @@
 			oZipImages = {};
 			AscCommon.DownloadOriginalFile(docId, changesUrl, 'changesUrl', changesToken, function () {
 				bEndLoadChanges = true;
-				bError = true;
+				nError = Asc.c_oAscError.ID.DownloadError;
 				onEndOpen();
 			}, function(data) {
 				oResult.changes = [];
-				getJSZip().loadAsync(data).then(function (zipChanges)
-				{
-					var relativePaths = [];
-					var promises = [];
-					zipChanges.forEach(function (relativePath, file)
-					{
-						relativePaths.push(relativePath);
-						promises.push(file.async(relativePath.endsWith('.json') ? 'string' : 'uint8array'));
-					});
-					Promise.all(promises).then(function (values)
-					{
-						var relativePath;
-						for (var i = 0; i < values.length; ++i)
-						{
-							if ((relativePath = relativePaths[i]).endsWith('.json'))
-							{
-								oResult.changes[parseInt(relativePath.slice('changes'.length))] = JSON.parse(values[i]);
-							}
-							else
-							{
-								oZipImages[relativePath] = values[i];
+				let jsZlib = new AscCommon.ZLib();
+				if (jsZlib.open(data)) {
+					jsZlib.files.forEach(function(path){
+						let data = jsZlib.getFile(path);
+						if (data) {
+							if (path.endsWith('.bin') || path.endsWith('.json')) {
+								let index = parseInt(path.slice('changes'.length));
+								if(isBinaryChanges(data)) {
+									oResult.changes[index] = splitBinaryChanges(data);
+								} else {
+									let text = AscCommon.UTF8ArrayToString(data, 0, data.length);
+									oResult.changes[index] = JSON.parse(text);
+								}
+							} else {
+								oZipImages[path] = new Uint8Array(data);
 							}
 						}
-						bEndLoadChanges = true;
-						onEndOpen();
 					});
-				});
+					jsZlib.close();
+				} else {
+					nError = Asc.c_oAscError.ID.Unknown;
+				}
+				bEndLoadChanges = true;
+				onEndOpen();
 			});
 		}
 		else
@@ -832,7 +743,7 @@
                 oResult.bSerFormat = checkStreamSignature(stream, Signature);
 				oResult.data = stream;
             } else {
-                bError = true;
+				nError = Asc.c_oAscError.ID.Unknown;
             }
  
             bEndLoadFile = true;
@@ -917,9 +828,12 @@
 			case c_oAscServerError.ConvertLIMITS :
 				nRes = Asc.c_oAscError.ID.ConvertationOpenLimitError;
 				break;
+			case c_oAscServerError.ConvertPARAMS :
+				nRes = AscCommon.c_oAscAdvancedOptionsAction.Save === nAction ? Asc.c_oAscError.ID.ConvertationSaveError :
+						Asc.c_oAscError.ID.ConvertationOpenFormat;
+				break;
 			case c_oAscServerError.ConvertCONVERT_CORRUPTED :
 			case c_oAscServerError.ConvertLIBREOFFICE :
-			case c_oAscServerError.ConvertPARAMS :
 			case c_oAscServerError.ConvertNEED_PARAMS :
 			case c_oAscServerError.ConvertUnknownFormat :
 			case c_oAscServerError.ConvertReadFile :
@@ -1009,6 +923,11 @@
 			if (_img && _img.Image) {
 				return {width: _img.Image.width, height: _img.Image.height};
 			}
+		}
+		if (window["NATIVE_EDITOR_ENJINE"] && window["native"]["GetImageOriginalSize"]) {
+			var sizes = window["native"]["GetImageOriginalSize"](src);
+			if (sizes)
+				return {width:sizes["W"], height:sizes["H"]};
 		}
 		return {width: 0, height: 0};
 	}
@@ -1114,109 +1033,77 @@
 
 	function CUnicodeStringEmulator(array)
 	{
-        this.arr = array;
-        this.len = this.arr.length;
-        this.pos = 0;
-    }
+		this.arr = array;
+		this.len = this.arr.length;
+		this.pos = 0;
+	}
 
-    CUnicodeStringEmulator.prototype =
+	CUnicodeStringEmulator.prototype.getUnicodeIterator = function()
 	{
-		getUnicodeIterator : function()
-		{
-			return this;
-		},
-
-        isOutside : function()
-        {
-            return (this.pos >= this.len);
-        },
-        isInside : function()
-        {
-            return (this.pos < this.len);
-        },
-        value : function()
-        {
-            if (this.pos >= this.len)
-                return 0;
-            return this.arr[this.pos];
-        },
-        next : function()
-        {
-            this.pos++;
-        },
-        position : function()
-        {
-            return this.pos;
-        }
+		return this;
 	};
-    CUnicodeStringEmulator.prototype.check = CUnicodeStringEmulator.prototype.isInside;
-
-    function CUnicodeIterator(str)
-    {
-        this._position = 0;
-        this._index = 0;
-        this._str = str;
-    }
-    CUnicodeIterator.prototype =
+	CUnicodeStringEmulator.prototype.isOutside = function()
 	{
-		isOutside : function()
-		{
-			return (this._index >= this._str.length);
-		},
-		isInside : function()
-		{
-			return (this._index < this._str.length);
-		},
-		value : function()
-		{
-			if (this._index >= this._str.length)
-				return 0;
+		return (this.pos >= this.len);
+	};
+	CUnicodeStringEmulator.prototype.isInside = function()
+	{
+		return (this.pos < this.len);
+	};
+	CUnicodeStringEmulator.prototype.value = function()
+	{
+		if (this.pos >= this.len)
+			return 0;
+		return this.arr[this.pos];
+	};
+	CUnicodeStringEmulator.prototype.next = function()
+	{
+		this.pos++;
+	};
+	CUnicodeStringEmulator.prototype.position = function()
+	{
+		return this.pos;
+	};
+	CUnicodeStringEmulator.prototype.check = CUnicodeStringEmulator.prototype.isInside;
 
-			var nCharCode = this._str.charCodeAt(this._index);
-			if (!AscCommon.isLeadingSurrogateChar(nCharCode))
-				return nCharCode;
-
-			if ((this._str.length - 1) == this._index)
-				return nCharCode; // error
-
-			var nTrailingChar = this._str.charCodeAt(this._index + 1);
-			return AscCommon.decodeSurrogateChar(nCharCode, nTrailingChar);
-		},
-		next : function()
-		{
-			if (this._index >= this._str.length)
-				return;
-
-			this._position++;
-			if (!AscCommon.isLeadingSurrogateChar(this._str.charCodeAt(this._index)))
-			{
-				++this._index;
-				return;
-			}
-
-			if (this._index == (this._str.length - 1))
-			{
-				++this._index;
-				return;
-			}
-
-			this._index += 2;
-		},
-		position : function()
-		{
-			return this._position;
+	var UTF8Decoder = typeof TextDecoder !== "undefined" ? new TextDecoder("utf8") : undefined;
+	function UTF8ArrayToString(u8Array, idx, maxBytesToRead) {
+		var endIdx = idx + maxBytesToRead;
+		var endPtr = idx;
+		while (u8Array[endPtr] && !(endPtr >= endIdx)) {
+			++endPtr;
 		}
-	};
-
-    CUnicodeIterator.prototype.check = CUnicodeIterator.prototype.isInside;
-
-    /**
-	 * @returns {CUnicodeIterator}
-     */
-    String.prototype.getUnicodeIterator = function()
-    {
-        return new CUnicodeIterator(this);
-    };
+		if (endPtr - idx > 16 && u8Array.subarray && UTF8Decoder) {
+			return UTF8Decoder.decode(u8Array.subarray(idx, endPtr));
+		} else {
+			var str = "";
+			while (idx < endPtr) {
+				var u0 = u8Array[idx++];
+				if (!(u0 & 128)) {
+					str += String.fromCharCode(u0);
+					continue;
+				}
+				var u1 = u8Array[idx++] & 63;
+				if ((u0 & 224) == 192) {
+					str += String.fromCharCode((u0 & 31) << 6 | u1);
+					continue;
+				}
+				var u2 = u8Array[idx++] & 63;
+				if ((u0 & 240) == 224) {
+					u0 = (u0 & 15) << 12 | u1 << 6 | u2;
+				} else {
+					u0 = (u0 & 7) << 18 | u1 << 12 | u2 << 6 | u8Array[idx++] & 63;
+				}
+				if (u0 < 65536) {
+					str += String.fromCharCode(u0);
+				} else {
+					var ch = u0 - 65536;
+					str += String.fromCharCode(55296 | ch >> 10, 56320 | ch & 1023);
+				}
+			}
+		}
+		return str;
+	}
 
 	function test_ws_name2()
 	{
@@ -1514,6 +1401,10 @@
 		MaxFileSize:      25000000, //25 mb
 		SupportedFormats: ["txt", "csv"]
 	};
+	var c_oAscXmlUploadProp = {
+		MaxFileSize:      25000000, //25 mb
+		SupportedFormats: ["xml"]
+	};
 
 	/**
 	 *
@@ -1563,7 +1454,6 @@
 				return 'pdf';
 				break;
 			case c_oAscFileType.HTML:
-			case c_oAscFileType.HTML_TODO:
 				return 'html';
 				break;
 			// Word
@@ -1785,7 +1675,10 @@
 							if (!window.g_asc_plugins)
 								return;
 
-							if (data["subType"] == "internalCommand")
+							if (!window.g_asc_plugins.api.licenseResult || !window.g_asc_plugins.api.licenseResult['advancedApi'])
+								return;
+
+							if (data["subType"] === "internalCommand")
 							{
 								// такие команды перечисляем здесь и считаем их функционалом
 								switch (data.data.type)
@@ -1793,12 +1686,17 @@
 									case "onbeforedrop":
 									case "ondrop":
 									{
-										window.g_asc_plugins.api.privateDropEvent(data.data);
+										window.g_asc_plugins.api["plugin_Method_OnDropEvent"](data.data);
 										return;
 									}
 									default:
 										break;
 								}
+							}
+							if (data["subType"] === "connector")
+							{
+								window.g_asc_plugins.externalConnectorMessage(data["data"]);
+								return;
 							}
 
 							window.g_asc_plugins.sendToAllPlugins(event.data);
@@ -1883,10 +1781,10 @@
 	}
 	function ShowImageFileDialog(documentId, documentUserId, jwt, callback, callbackOld)
 	{
-		if (false === _ShowFileDialog("image/*", true, true, ValidateUploadImage, callback)) {
+		if (false === _ShowFileDialog(getAcceptByArray(c_oAscImageUploadProp.SupportedFormats), true, true, ValidateUploadImage, callback)) {
 			//todo remove this compatibility
 			var frameWindow = GetUploadIFrame();
-			var url = sUploadServiceLocalUrlOld + '/' + documentId + '/' + documentUserId + '/' + g_oDocumentUrls.getMaxIndex();
+			var url = sUploadServiceLocalUrlOld + '/' + documentId;
 			if (jwt)
 			{
 				url += '?token=' + encodeURIComponent(jwt);
@@ -1931,6 +1829,11 @@
 			callback(Asc.c_oAscError.ID.Unknown);
 		}
 	}
+	function ShowXmlFileDialog(callback) {
+		if (false === _ShowFileDialog(getAcceptByArray(c_oAscXmlUploadProp.SupportedFormats), false, false, ValidateUploadXml, callback)) {
+			callback(Asc.c_oAscError.ID.Unknown);
+		}
+	}
 
 	function InitDragAndDrop(oHtmlElement, callback)
 	{
@@ -1952,6 +1855,19 @@
 				e.preventDefault();
 				var files = e.dataTransfer.files;
 				var nError = ValidateUploadImage(files);
+
+				if (nError === c_oAscServerError.UploadExtension && 1 === files.length)
+				{
+					let types = e.dataTransfer.types;
+					for (let i = 0, len = types.length; i < len; i++)
+					{
+						if (types[i] === "text" || types[i] === "text/plain" || types[i] === "text/html")
+						{
+							nError = c_oAscServerError.UploadCountFiles;
+							break;
+						}
+					}
+				}
 
                 var editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
                 editor.endInlineDropTarget(e);
@@ -2021,7 +1937,7 @@
 				'x-url': url
 			},
 			success: function(resp) {
-				fSuccess(resp.response);
+				fSuccess(AscCommon.initStreamFromResponse(resp));
 			},
 			error: fError
 		});
@@ -2043,6 +1959,8 @@
 			tempLink.style.display = 'none';
 			tempLink.href = blobURL;
 			tempLink.setAttribute('download', filename);
+			//to prevent click hook in web-apps/vendor/framework7-react/node_modules/framework7/esm/modules/clicks/clicks.js
+			tempLink.classList.add("external");
 
 			// Safari thinks _blank anchor are pop ups. We only want to set _blank
 			// target if the browser does not support the HTML5 download attribute.
@@ -2063,11 +1981,24 @@
 		}
 	}
 
+	function getImageFileFromDataURL(dataUrl) {
+		var arr = dataUrl.split(',');
+		var mime = arr[0].match(/:(.*?);/)[1];
+		var u8arr = AscCommon.Base64.decode(arr[1]);
+		return new File([u8arr], '1.' + mime.split('/')[1], {type:mime});
+	}
+
+	function uploadDataUrlAsFile(dataUrl, obj, callback) {
+		var file = getImageFileFromDataURL(dataUrl);
+		var nError = ValidateUploadImage([file]);
+		callback(nError, [file], obj);
+	}
+
 	function UploadImageFiles(files, documentId, documentUserId, jwt, callback)
 	{
 		if (files.length > 0)
 		{
-			var url = sUploadServiceLocalUrl + '/' + documentId + '/' + documentUserId + '/' + g_oDocumentUrls.getMaxIndex();
+			var url = sUploadServiceLocalUrl + '/' + documentId;
 
 			var aFiles = [];
 			for(var i = files.length - 1;  i > - 1; --i){
@@ -2096,7 +2027,7 @@
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
 
-                            url = sUploadServiceLocalUrl + '/' + documentId + '/' + documentUserId + '/' + g_oDocumentUrls.getMaxIndex();
+                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -2130,7 +2061,7 @@
     {
         if (files.length > 0)
         {
-            var url = sUploadServiceLocalUrl + '/' + documentId + '/' + documentUserId + '/' + g_oDocumentUrls.getMaxIndex();
+            var url = sUploadServiceLocalUrl + '/' + documentId;
 
             var aFiles = [];
             for(var i = files.length - 1;  i > - 1; --i){
@@ -2164,7 +2095,7 @@
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
 
-                            url = sUploadServiceLocalUrl + '/' + documentId + '/' + documentUserId + '/' + g_oDocumentUrls.getMaxIndex();
+                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -2248,6 +2179,10 @@
 	function ValidateUploadText(files)
 	{
 		return ValidateUpload(files, c_oAscServerError.UploadDocumentExtension, c_oAscServerError.UploadDocumentContentLength, c_oAscServerError.UploadDocumentCountFiles, c_oAscTextUploadProp);
+	}
+	function ValidateUploadXml(files)
+	{
+		return ValidateUpload(files, c_oAscServerError.UploadDocumentExtension, c_oAscServerError.UploadDocumentContentLength, c_oAscServerError.UploadDocumentCountFiles, c_oAscXmlUploadProp);
 	}
 
 	function CanDropFiles(event)
@@ -2384,6 +2319,8 @@
 		rx_ref3D_quoted       = new XRegExp("^'(?<name_from>(?:''|[^\\[\\]'\\/*?:])*)(?::(?<name_to>(?:''|[^\\[\\]'\\/*?:])*))?'!"),
 		rx_ref3D_non_quoted_2 = new XRegExp("^(?<name_from>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*)(:(?<name_to>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*))?!", "i"),
 		rx_ref3D              = new XRegExp("^(?<name_from>[^:]+)(:(?<name_to>[^:]+))?!"),
+		rx_ref_external       = /^(\[{1}(\d*)\]{1})/,
+		rx_ref_external2      = /^(\[{1}(\d*)\]{1})/,
 		rx_number             = /^ *[+-]?\d*(\d|\.)\d*([eE][+-]?\d+)?/,
 		rx_RightParentheses   = /^ *\)/,
 		rx_Comma              = /^ *[,;] */,
@@ -2410,30 +2347,102 @@
 
 		rx_ControlSymbols     = /^ *[\u0000-\u001F\u007F-\u009F] */,
 
-		emailRe               = /^(mailto:)?([a-z0-9'\._-]+@[a-z0-9\.-]+\.[a-z0-9]{2,4})([a-яё0-9\._%+-=\? :&]*)/i,
+		emailRe               = /^(mailto:)?([a-z0-9'\._+-]+@[a-z0-9\.+-]+\.[a-z0-9]{2,4})([a-яё0-9\._%+-=\? :&]*)/i,
 		ipRe                  = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(((1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9])\.){3}(1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9]))(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?/i,
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
+		fileRe                = /^((file):\/\/)[^'`"%^{}<>].*/i,//reserved symbols from word 2010
+		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|smb):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
 
+
+	function parseExternalLink(url) {
+		//var regExpExceptExternalLink = /('?[a-zA-Z0-9\s\[\]\.]{1,99})?'?!?\$?[a-zA-Z]{1,3}\$?[0-9]{1,7}(:\$?[a-zA-Z]{1,3}\$?[0-9]{1,7})?/;
+
+		//'path/[name]Sheet1'!A1
+		var path, name, startLink, i;
+		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
+			for (i = url.length - 1; i >= 0; i--) {
+				if (url[i] === "!" && url[i - 1] === "'") {
+					startLink = true;
+					i--;
+					continue;
+				}
+				if (startLink) {
+					if (name) {
+						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" ||  url[i - 1] === "\\" || (url[i - 1] === "'") && i === 1)) {
+							break;
+						} else {
+							name.end--;
+						}
+					} else {
+						if("]" === url[i]) {
+							name = {start: i, end: i};
+						}
+					}
+				}
+			}
+			if (name) {
+				var fullname = url.substring(0, name.start + 1);
+				path = url.substring(1, name.end - 1);
+				name = url.substring(name.end, name.start);
+				return {name: name, path: path, fullname: fullname};
+			}
+		} else if (url && url[0] === "[") { // [name]Sheet1!A1
+			for (i = 1; i < url.length; i++) {
+				if (url[i] === "]") {
+					return {name: url.substring(1, i), path: "", fullname:  url.substring(0, i + 1)};
+				}
+			}
+		} else if (true) { //https://s3.amazonaws.com/nct-files/xlsx/[ExternalLinksDestination.xlsx]Sheet1!A1:A2
+
+		}
+
+		return null;
+	}
+
+	function isValidFileUrl(url) {
+		if(!url.startsWith("file:")) {
+			return false;
+		}
+		if (true || AscBrowser.isIE) {
+			return url.strongMatch(fileRe);
+		}
+		try {
+			//https://stackoverflow.com/a/43467144
+			new URL(url);
+		} catch (err) {
+			return false;
+		}
+		return true;
+	}
 	function getUrlType(url)
 	{
+		//todo validate blob, ftp, http, https, ws, wss, file with new URL https://nodejs.org/api/url.html#special-schemes
+		//they are special-schemes https://url.spec.whatwg.org/#origin
 		var checkvalue = url.replace(new RegExp(' ', 'g'), '%20');
 		var isEmail;
 		var isvalid = checkvalue.strongMatch(hostnameRe);
 		!isvalid && (isvalid = checkvalue.strongMatch(ipRe));
 		!isvalid && (isvalid = checkvalue.strongMatch(localRe));
-		isEmail = checkvalue.strongMatch(emailRe);
-		!isvalid && (isvalid = isEmail);
-
-		return isvalid ? (isEmail ? AscCommon.c_oAscUrlType.Email : AscCommon.c_oAscUrlType.Http) : AscCommon.c_oAscUrlType.Invalid;
+		if (isvalid) {
+			return AscCommon.c_oAscUrlType.Http;
+		} else if (checkvalue.strongMatch(emailRe)) {
+			return AscCommon.c_oAscUrlType.Email;
+		} else if (checkvalue.startsWith("file:")) {
+			return isValidFileUrl(checkvalue) ? AscCommon.c_oAscUrlType.Unsafe : AscCommon.c_oAscUrlType.Invalid;
+		} else if (checkvalue.strongMatch(rx_allowedProtocols)) {
+			return AscCommon.c_oAscUrlType.Unsafe;
+		} else {
+			return AscCommon.c_oAscUrlType.Invalid
+		}
 	}
 
 	function prepareUrl(url, type)
 	{
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(url))
+		if (!rx_allowedProtocols.test(url))
 		{
 			url = ( (AscCommon.c_oAscUrlType.Email == type) ? 'mailto:' : 'http://' ) + url;
 		}
@@ -2800,17 +2809,42 @@
 			this._reset();
 		}
 
-		var subSTR = formula.substring(start_pos),
-			match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		//проверям на [0-9] - в таком виде мы получаем ссылки при открытии.
+		var subSTR = formula.substring(start_pos);
+		var external = XRegExp.exec(subSTR, rx_ref_external);
+		var externalLength = 0;
+		if (external && external[2]) {
+			externalLength = external[0].length;
+			subSTR = formula.substring(start_pos + externalLength);
+			external = external[2];
+		} else {
+			//1. при вводе в ячейку
+			//проверям на наличие ссылки при вводе 'C:\Users\[test.xlsx]Sheet1'!$A$1 (с обратным слэшем тоже нужно распознать) / 'https://test.net/[test.xlsx]Sheet1'!$A$1
+			//необходимо вычленить имя файла и путь к нему, затем проверить путь
+			//если путь указан, то ссылка должна быть в одинарных кавычках, если указан просто название файла в [] - в мс это означает, что данный файл открыт, при его закрытии путь проставляется
+			//пока не реализовываем с открытыми файлами, работаем только с путями
+			external = parseExternalLink(subSTR);
+			if (external) {
+				externalLength = external.fullname.length;
+				subSTR = formula.substring(start_pos + externalLength);
+				if (-1 !== subSTR.indexOf("'")) {
+					externalLength += 1;
+				}
+				subSTR = subSTR.replace("'", "");
+				external = external.path + external.name;
+			}
+		}
+
+		var match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
 		if(!match && support_digital_start) {
 			match = XRegExp.exec(subSTR, rx_ref3D_non_quoted_2);
 		}
 
 		if (match != null)
 		{
-			this.pCurrPos += match[0].length;
+			this.pCurrPos += match[0].length + externalLength;
 			this.operand_str = match[1];
-			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null];
+			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
 		}
 		return [false, null, null];
 	};
@@ -3231,7 +3265,7 @@
 				}
 			}
 		}
-		else if(Asc.c_oAscSelectionDialogType.PivotTableData === dialogType || Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType)
+		else if(Asc.c_oAscSelectionDialogType.PivotTableData === dialogType || Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
 		{
 			result = parserHelp.parse3DRef(dataRange);
 			if (result)
@@ -3241,7 +3275,7 @@
 				{
 					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
 				}
-			} else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType) {
+			} else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 			if (!range) {
@@ -3322,10 +3356,10 @@
 			else if (Asc.c_oAscSelectionDialogType.PivotTableData === dialogType)
 			{
 				if (!Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRange)) {
-					return c_oAscError.ID.PivotLabledColumns;
+					return Asc.c_oAscError.ID.PivotLabledColumns;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType)
+			else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
 			{
 				var location = Asc.CT_pivotTableDefinition.prototype.parseDataRef(dataRange);
 				if (location) {
@@ -3333,8 +3367,12 @@
 					if (!sheetModel) {
 						sheetModel = model.getActiveWs();
 					}
-					var newRange = new Asc.Range(location.bbox.c1, location.bbox.r1, location.bbox.c1 + AscCommonExcel.NEW_PIVOT_LAST_COL_OFFSET, location.bbox.r1 + AscCommonExcel.NEW_PIVOT_LAST_ROW_OFFSET);
-					return sheetModel.checkPivotReportLocationForError([newRange]);
+					if (Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
+						return sheetModel.checkImportXmlLocationForError([location.bbox]);
+					} else {
+						var newRange = new Asc.Range(location.bbox.c1, location.bbox.r1, location.bbox.c1 + AscCommonExcel.NEW_PIVOT_LAST_COL_OFFSET, location.bbox.r1 + AscCommonExcel.NEW_PIVOT_LAST_ROW_OFFSET);
+						return sheetModel.checkPivotReportLocationForError([newRange]);
+					}
 				} else {
 					return Asc.c_oAscError.ID.DataRangeError;
 				}
@@ -3349,6 +3387,7 @@
 			}
 			else if (Asc.c_oAscSelectionDialogType.ConditionalFormattingRule === dialogType)
 			{
+
 				if (dataRange === null || dataRange === "")
 				{
 					return Asc.c_oAscError.ID.DataRangeError;
@@ -3358,9 +3397,18 @@
 					if (dataRange[0] === "=") {
 						dataRange = dataRange.slice(1);
 					}
+
 					if (!parserHelp.isArea(dataRange) && !parserHelp.isRef(dataRange) && !parserHelp.isTable(dataRange))
 					{
 						return Asc.c_oAscError.ID.DataRangeError;
+					}
+
+					if (model) {
+						var aRanges = AscCommonExcel.getRangeByRef(dataRange, model.getActiveWs())
+						if (aRanges && aRanges.length === 0)
+						{
+							return Asc.c_oAscError.ID.DataRangeError;
+						}
 					}
 				}
 			}
@@ -3476,6 +3524,8 @@
 	var g_oHtmlCursor = new CHTMLCursor();
 	var kCurFormatPainterWord = 'de-formatpainter';
 	g_oHtmlCursor.register(kCurFormatPainterWord, "text_copy", "2 11", "pointer");
+	var kCurFormatPainterDrawing = 'drawing-formatpainter';
+	g_oHtmlCursor.register(kCurFormatPainterDrawing, "shape_copy", "2 11", "pointer");
 
 	function asc_ajax(obj)
 	{
@@ -3596,7 +3646,7 @@
 						// Some data has been received; however, neither responseText nor responseBody is available.
 						break;
 					case 4:
-						if (httpRequest.status === 200 || httpRequest.status === 1223)
+						if (httpRequest.status === 200 || httpRequest.status === 1223 || location.href.indexOf("file:") == 0)
 						{
 							if (typeof success === "function")
 								success(httpRequest);
@@ -3621,6 +3671,9 @@
 		this.m_bRead = false;
 		this.m_nIdCounterLoad = 0; // Счетчик Id для загрузки
 		this.m_nIdCounterEdit = 0; // Счетчик Id для работы
+
+		this.m_nOFormLoadCounter = 0;
+		this.m_nOFormEditCounter = 0;
 	}
 
 	CIdCounter.prototype.Get_NewId = function ()
@@ -3650,6 +3703,16 @@
 		this.m_bLoad = true;
 		this.m_nIdCounterLoad = 0; // Счетчик Id для загрузки
 		this.m_nIdCounterEdit = 0; // Счетчик Id для работы
+
+		this.m_nOFormLoadCounter = 0;
+		this.m_nOFormEditCounter = 0;
+	};
+	CIdCounter.prototype.GetNewIdForOForm = function()
+	{
+		if (true === this.m_bLoad || null === this.m_sUserId)
+			return ("_oform_" + (++this.m_nOFormLoadCounter));
+		else
+			return ("" + this.m_sUserId + "_oform_" + (++this.m_nOFormEditCounter));
 	};
 
 	function CLock()
@@ -3821,9 +3884,17 @@
 		this.m_pData.Data.UseArray = true;
 		this.m_pData.Data.PosArray = this.m_aPositions;
 
-		Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
-		Binary_Writer.WriteLong(this.m_pData.Data.Type);
-		this.m_pData.Data.WriteToBinary(Binary_Writer);
+		if ((Asc.editor || editor).binaryChanges) {
+			Binary_Writer.WriteWithLen(this, function() {
+				Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
+				Binary_Writer.WriteLong(this.m_pData.Data.Type);
+				this.m_pData.Data.WriteToBinary(Binary_Writer);
+			});
+		} else {
+			Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
+			Binary_Writer.WriteLong(this.m_pData.Data.Type);
+			this.m_pData.Data.WriteToBinary(Binary_Writer);
+		}
 
 		var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
 
@@ -3977,7 +4048,6 @@
 	/**
 	 * Конвертируем нумерацию {a b ... z aa bb ... zz aaa bbb ... zzz ...} в число
 	 * @param sLetters
-	 * @constructor
 	 */
 	function LatinNumberingToInt(sLetters)
 	{
@@ -8522,10 +8592,36 @@
 		return vietnameseCounting(nValue, digits).join(' ');
 	}
 
+	function IntToCustomGreece(nValue) {
+		nValue = repeatNumberingLvl(nValue, 9999);
+		const greeceNumbersMap = {
+			1: ['α', 'β', 'γ', 'δ', 'ε', 'στ', 'ζ', 'η', 'θ'],
+			10: ['ι', 'κ', 'λ', 'μ', 'ν', 'ξ', 'ο', 'π', 'ϟ'],
+			100: ['ρ', 'σ', 'τ', 'υ', 'φ', 'χ', 'ψ', 'ω', 'ϡ'],
+		};
+
+		const sResult = [];
+		const groups = {};
+		groups[1000] = Math.floor(nValue / 1000);
+		nValue %= 1000;
+		groups[100] = Math.floor(nValue / 100);
+		nValue %= 100;
+		groups[10] = Math.floor(nValue / 10);
+		nValue %= 10;
+		groups[1] = nValue;
+		if (groups[1000]) sResult.push(',' + greeceNumbersMap[1][groups[1000] - 1]);
+		if (groups[100]) sResult.push(greeceNumbersMap[100][groups[100] - 1]);
+		if (groups[10]) sResult.push(greeceNumbersMap[10][groups[10] - 1]);
+		if (groups[1]) sResult.push(greeceNumbersMap[1][groups[1] - 1]);
+
+		return sResult.join('');
+	}
+
 	/**
 	 * Переводим числовое значение в строку с заданным форматом нумерации
 	 * @param nValue {number}
 	 * @param nFormat {Asc.c_oAscNumberingFormat}
+	 * @param [oLang] {AscCommonWord.CLang}
 	 * @returns {string}
 	 */
 	function IntToNumberFormat(nValue, nFormat, oLang)
@@ -8554,6 +8650,33 @@
 			case Asc.c_oAscNumberingFormat.Decimal:
 			{
 				sResult = "" + nValue;
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.CustomDecimalFourZero:
+			{
+				sResult = "" + nValue;
+				if (sResult.length === 1) sResult = '0000' + sResult;
+				else if (sResult.length === 2) sResult = '000' + sResult;
+				else if (sResult.length === 3) sResult = '00' + sResult;
+				else if (sResult.length === 4) sResult = '0' + sResult;
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.CustomDecimalThreeZero:
+			{
+				sResult = "" + nValue;
+				if (sResult.length === 1) sResult = '000' + sResult;
+				else if (sResult.length === 2) sResult = '00' + sResult;
+				else if (sResult.length === 3) sResult = '0' + sResult;
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.CustomDecimalTwoZero:
+			{
+				sResult = "" + nValue;
+				if (sResult.length === 1) sResult = '00' + sResult;
+				else if (sResult.length === 2) sResult = '0' + sResult;
 				break;
 			}
 
@@ -8649,6 +8772,7 @@
 			}
 
 			case Asc.c_oAscNumberingFormat.DecimalFullWidth:
+			case Asc.c_oAscNumberingFormat.DecimalFullWidth2:
 			case Asc.c_oAscNumberingFormat.DecimalHalfWidth:
 			{
 				var zeroInHex = nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth ? 0xFF10 : 0x0030;
@@ -8808,6 +8932,8 @@
 			case Asc.c_oAscNumberingFormat.VietnameseCounting:
 				sResult = IntToVietnameseCounting(nValue);
 				break;
+			case Asc.c_oAscNumberingFormat.CustomGreece:
+				sResult = IntToCustomGreece(nValue);
 		}
 
 		return sResult;
@@ -8857,6 +8983,59 @@
 			sRes = "0" + sRes;
 		return sRes;
 	}
+	/**
+	 * Переводим числовое значение в Hex строку
+	 * @param nValue
+	 * @returns {string}
+	 */
+	function Int32ToHex(nValue)
+	{
+		return nValue.toString(16).padStart(8, "0").toUpperCase();
+	}
+	/**
+	 * Переводим числовое значение в Hex строку
+	 * @param nValue
+	 * @returns {string}
+	 */
+	function Int32ToHexOrNull(nValue)
+	{
+		if(null === nValue || undefined === nValue) {
+			return nValue;
+		} else {
+			return Int32ToHex(nValue);
+		}
+	}
+	/**
+	 * Переводим числовое значение в Hex строку
+	 * @param nValue
+	 * @returns {string}
+	 */
+	function Int16ToHex(nValue)
+	{
+		return nValue.toString(16).padStart(4, "0").toUpperCase();
+	}
+	/**
+	 * Переводим числовое значение в Hex строку
+	 * @param nValue
+	 * @returns {string}
+	 */
+	function Int16ToHexOrNull(nValue)
+	{
+		if(null === nValue || undefined === nValue) {
+			return nValue;
+		} else {
+			return Int16ToHex(nValue);
+		}
+	}
+	/**
+	 * Переводим числовое значение в Hex строку
+	 * @param nValue
+	 * @returns {string}
+	 */
+	function ByteToHex(nValue)
+	{
+		return nValue.toString(16).padStart(2, "0").toUpperCase();
+	}
 
 	/**
 	 * Проверяем является ли заданный юникод цифрой
@@ -8869,13 +9048,33 @@
 	}
 
 	/**
-	 * Проверяем является ли заданный юникод цифрой
+	 * Проверяем является ли заданный юникод буквой
 	 * @param nUnicode {number}
 	 * @returns {boolean}
 	 */
 	function IsLetter(nUnicode)
 	{
-		return (String.fromCodePoint(nUnicode).search(new RegExp("^\\p{L}", 'u')) !== -1);
+		let result = false;
+		let s = String.fromCodePoint(nUnicode);
+		try
+		{
+			result = (-1 !== s.search(new RegExp("^\\p{L}", 'u')));
+		}
+		catch (err)
+		{
+			result = (-1 !== s.search(new RegExp("^(?:[A-Za-z\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u037F\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u052F\u0531-\u0556\u0559\u0560-\u0588\u05D0-\u05EA\u05EF-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u0860-\u086A\u0870-\u0887\u0889-\u088E\u08A0-\u08C9\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0980\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u09FC\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0AF9\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C39\u0C3D\u0C58-\u0C5A\u0C5D\u0C60\u0C61\u0C80\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D04-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D54-\u0D56\u0D5F-\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E86-\u0E8A\u0E8C-\u0EA3\u0EA5\u0EA7-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F5\u13F8-\u13FD\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16F1-\u16F8\u1700-\u1711\u171F-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1878\u1880-\u1884\u1887-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191E\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4C\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1C80-\u1C88\u1C90-\u1CBA\u1CBD-\u1CBF\u1CE9-\u1CEC\u1CEE-\u1CF3\u1CF5\u1CF6\u1CFA\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2183\u2184\u2C00-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005\u3006\u3031-\u3035\u303B\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312F\u3131-\u318E\u31A0-\u31BF\u31F0-\u31FF\u3400-\u4DBF\u4E00-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA69D\uA6A0-\uA6E5\uA717-\uA71F\uA722-\uA788\uA78B-\uA7CA\uA7D0\uA7D1\uA7D3\uA7D5-\uA7D9\uA7F2-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA8FD\uA8FE\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uA9E0-\uA9E4\uA9E6-\uA9EF\uA9FA-\uA9FE\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA7E-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uAB30-\uAB5A\uAB5C-\uAB69\uAB70-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]|\uD800[\uDC00-\uDC0B\uDC0D-\uDC26\uDC28-\uDC3A\uDC3C\uDC3D\uDC3F-\uDC4D\uDC50-\uDC5D\uDC80-\uDCFA\uDE80-\uDE9C\uDEA0-\uDED0\uDF00-\uDF1F\uDF2D-\uDF40\uDF42-\uDF49\uDF50-\uDF75\uDF80-\uDF9D\uDFA0-\uDFC3\uDFC8-\uDFCF]|\uD801[\uDC00-\uDC9D\uDCB0-\uDCD3\uDCD8-\uDCFB\uDD00-\uDD27\uDD30-\uDD63\uDD70-\uDD7A\uDD7C-\uDD8A\uDD8C-\uDD92\uDD94\uDD95\uDD97-\uDDA1\uDDA3-\uDDB1\uDDB3-\uDDB9\uDDBB\uDDBC\uDE00-\uDF36\uDF40-\uDF55\uDF60-\uDF67\uDF80-\uDF85\uDF87-\uDFB0\uDFB2-\uDFBA]|\uD802[\uDC00-\uDC05\uDC08\uDC0A-\uDC35\uDC37\uDC38\uDC3C\uDC3F-\uDC55\uDC60-\uDC76\uDC80-\uDC9E\uDCE0-\uDCF2\uDCF4\uDCF5\uDD00-\uDD15\uDD20-\uDD39\uDD80-\uDDB7\uDDBE\uDDBF\uDE00\uDE10-\uDE13\uDE15-\uDE17\uDE19-\uDE35\uDE60-\uDE7C\uDE80-\uDE9C\uDEC0-\uDEC7\uDEC9-\uDEE4\uDF00-\uDF35\uDF40-\uDF55\uDF60-\uDF72\uDF80-\uDF91]|\uD803[\uDC00-\uDC48\uDC80-\uDCB2\uDCC0-\uDCF2\uDD00-\uDD23\uDE80-\uDEA9\uDEB0\uDEB1\uDF00-\uDF1C\uDF27\uDF30-\uDF45\uDF70-\uDF81\uDFB0-\uDFC4\uDFE0-\uDFF6]|\uD804[\uDC03-\uDC37\uDC71\uDC72\uDC75\uDC83-\uDCAF\uDCD0-\uDCE8\uDD03-\uDD26\uDD44\uDD47\uDD50-\uDD72\uDD76\uDD83-\uDDB2\uDDC1-\uDDC4\uDDDA\uDDDC\uDE00-\uDE11\uDE13-\uDE2B\uDE3F\uDE40\uDE80-\uDE86\uDE88\uDE8A-\uDE8D\uDE8F-\uDE9D\uDE9F-\uDEA8\uDEB0-\uDEDE\uDF05-\uDF0C\uDF0F\uDF10\uDF13-\uDF28\uDF2A-\uDF30\uDF32\uDF33\uDF35-\uDF39\uDF3D\uDF50\uDF5D-\uDF61]|\uD805[\uDC00-\uDC34\uDC47-\uDC4A\uDC5F-\uDC61\uDC80-\uDCAF\uDCC4\uDCC5\uDCC7\uDD80-\uDDAE\uDDD8-\uDDDB\uDE00-\uDE2F\uDE44\uDE80-\uDEAA\uDEB8\uDF00-\uDF1A\uDF40-\uDF46]|\uD806[\uDC00-\uDC2B\uDCA0-\uDCDF\uDCFF-\uDD06\uDD09\uDD0C-\uDD13\uDD15\uDD16\uDD18-\uDD2F\uDD3F\uDD41\uDDA0-\uDDA7\uDDAA-\uDDD0\uDDE1\uDDE3\uDE00\uDE0B-\uDE32\uDE3A\uDE50\uDE5C-\uDE89\uDE9D\uDEB0-\uDEF8]|\uD807[\uDC00-\uDC08\uDC0A-\uDC2E\uDC40\uDC72-\uDC8F\uDD00-\uDD06\uDD08\uDD09\uDD0B-\uDD30\uDD46\uDD60-\uDD65\uDD67\uDD68\uDD6A-\uDD89\uDD98\uDEE0-\uDEF2\uDF02\uDF04-\uDF10\uDF12-\uDF33\uDFB0]|\uD808[\uDC00-\uDF99]|\uD809[\uDC80-\uDD43]|\uD80B[\uDF90-\uDFF0]|[\uD80C\uD81C-\uD820\uD822\uD840-\uD868\uD86A-\uD86C\uD86F-\uD872\uD874-\uD879\uD880-\uD883\uD885-\uD887][\uDC00-\uDFFF]|\uD80D[\uDC00-\uDC2F\uDC41-\uDC46]|\uD811[\uDC00-\uDE46]|\uD81A[\uDC00-\uDE38\uDE40-\uDE5E\uDE70-\uDEBE\uDED0-\uDEED\uDF00-\uDF2F\uDF40-\uDF43\uDF63-\uDF77\uDF7D-\uDF8F]|\uD81B[\uDE40-\uDE7F\uDF00-\uDF4A\uDF50\uDF93-\uDF9F\uDFE0\uDFE1\uDFE3]|\uD821[\uDC00-\uDFF7]|\uD823[\uDC00-\uDCD5\uDD00-\uDD08]|\uD82B[\uDFF0-\uDFF3\uDFF5-\uDFFB\uDFFD\uDFFE]|\uD82C[\uDC00-\uDD22\uDD32\uDD50-\uDD52\uDD55\uDD64-\uDD67\uDD70-\uDEFB]|\uD82F[\uDC00-\uDC6A\uDC70-\uDC7C\uDC80-\uDC88\uDC90-\uDC99]|\uD835[\uDC00-\uDC54\uDC56-\uDC9C\uDC9E\uDC9F\uDCA2\uDCA5\uDCA6\uDCA9-\uDCAC\uDCAE-\uDCB9\uDCBB\uDCBD-\uDCC3\uDCC5-\uDD05\uDD07-\uDD0A\uDD0D-\uDD14\uDD16-\uDD1C\uDD1E-\uDD39\uDD3B-\uDD3E\uDD40-\uDD44\uDD46\uDD4A-\uDD50\uDD52-\uDEA5\uDEA8-\uDEC0\uDEC2-\uDEDA\uDEDC-\uDEFA\uDEFC-\uDF14\uDF16-\uDF34\uDF36-\uDF4E\uDF50-\uDF6E\uDF70-\uDF88\uDF8A-\uDFA8\uDFAA-\uDFC2\uDFC4-\uDFCB]|\uD837[\uDF00-\uDF1E\uDF25-\uDF2A]|\uD838[\uDC30-\uDC6D\uDD00-\uDD2C\uDD37-\uDD3D\uDD4E\uDE90-\uDEAD\uDEC0-\uDEEB]|\uD839[\uDCD0-\uDCEB\uDFE0-\uDFE6\uDFE8-\uDFEB\uDFED\uDFEE\uDFF0-\uDFFE]|\uD83A[\uDC00-\uDCC4\uDD00-\uDD43\uDD4B]|\uD83B[\uDE00-\uDE03\uDE05-\uDE1F\uDE21\uDE22\uDE24\uDE27\uDE29-\uDE32\uDE34-\uDE37\uDE39\uDE3B\uDE42\uDE47\uDE49\uDE4B\uDE4D-\uDE4F\uDE51\uDE52\uDE54\uDE57\uDE59\uDE5B\uDE5D\uDE5F\uDE61\uDE62\uDE64\uDE67-\uDE6A\uDE6C-\uDE72\uDE74-\uDE77\uDE79-\uDE7C\uDE7E\uDE80-\uDE89\uDE8B-\uDE9B\uDEA1-\uDEA3\uDEA5-\uDEA9\uDEAB-\uDEBB]|\uD869[\uDC00-\uDEDF\uDF00-\uDFFF]|\uD86D[\uDC00-\uDF39\uDF40-\uDFFF]|\uD86E[\uDC00-\uDC1D\uDC20-\uDFFF]|\uD873[\uDC00-\uDEA1\uDEB0-\uDFFF]|\uD87A[\uDC00-\uDFE0]|\uD87E[\uDC00-\uDE1D]|\uD884[\uDC00-\uDF4A\uDF50-\uDFFF]|\uD888[\uDC00-\uDFAF])")));
+		}
+
+		return result;
+	}
+
+	/**
+	 * @param unicode
+	 * @returns {boolean}
+	 */
+	function IsPunctuation(unicode)
+	{
+		return !!(AscCommon.g_aPunctuation[unicode])
 	}
 
 	/**
@@ -8893,29 +9092,111 @@
 				|| 0x2610 === nUnicode));
 	}
 
-	function private_IsAbbreviation(sWord) {
-		if (sWord.toUpperCase() === sWord) {
-			// Корейские символы считаются символами в верхнем регистре, но при этом мы не должны считать их аббревиатурой
-			for (var nPos = 0, nLen = sWord.length; nPos < nLen; ++nPos) {
-				var nCharCode = sWord.charCodeAt(nPos);
-				if ((0xAC00 <= nCharCode && nCharCode <= 0xD7A3)
-					|| (0x1100 <= nCharCode && nCharCode <= 0x11FF)
-					|| (0x3130 <= nCharCode && nCharCode <= 0x318F)
-					|| (0xA960 <= nCharCode && nCharCode <= 0xA97F)
-					|| (0xD7B0 <= nCharCode && nCharCode <= 0xD7FF)
-					|| (0x4E00 <= nCharCode && nCharCode <= 0x9FFF)
-					|| (0x3400 <= nCharCode && nCharCode <= 0x4DBF)
-					|| (0x20000 <= nCharCode && nCharCode <= 0x2A6DF)
-			        || (0x2A700 <= nCharCode && nCharCode <= 0x2B73F)
-			        || (0x2B740 <= nCharCode && nCharCode <= 0x2B81F)
-			        || (0x2B820 <= nCharCode && nCharCode <= 0x2CEAF)
-					|| (0xF900 <= nCharCode && nCharCode <= 0xFAFF)
-			        || (0x2F800 <= nCharCode && nCharCode <= 0x2FA1F))
-					return false;
-			}
-			return true;
+	function ExecuteNoHistory(f, oLogicDocument, oThis, args)
+	{
+		// TODO: Надо перевести все редакторы на StartNoHistoryMode/EndNoHistoryMode
+
+		let oState = null, isTableId = false;
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor && oLogicDocument.IsDocumentEditor())
+		{
+			oState = oLogicDocument.StartNoHistoryMode();
 		}
-		return false;
+		else
+		{
+			AscCommon.History.TurnOff && AscCommon.History.TurnOff();
+
+			if (AscCommon.g_oTableId && !AscCommon.g_oTableId.IsOn())
+			{
+				AscCommon.g_oTableId.TurnOff();
+				isTableId = true;
+			}
+		}
+
+		let result = f.apply(oThis, args);
+
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor && oLogicDocument.IsDocumentEditor())
+		{
+			oLogicDocument.EndNoHistoryMode(oState);
+		}
+		else
+		{
+			AscCommon.History.TurnOn && AscCommon.History.TurnOn();
+			if (isTableId)
+				AscCommon.g_oTableId.TurnOn();
+		}
+
+		return result;
+	}
+
+	/**
+	 * Функция сравнивает две строки (они могут быть не заданы)
+	 * @param s1 {?string}
+	 * @param s2 {?string}
+	 * @returns {-1 | 0 | 1}
+	 */
+	function CompareStrings(s1, s2)
+	{
+		if ((undefined === s1 && undefined === s2)
+			|| (null === s1 && null === s2)
+			|| ("" === s1 && "" === s2))
+			return 0;
+
+		if (!s1 && !s2)
+			return false;
+		else if (!s1 && s2)
+			return -1;
+		else if (s1 && !s2)
+			return 1;
+		else if (s1 < s2)
+			return -1;
+		else if (s2 > s2)
+			return 1;
+
+		return s1 === s2 ? 0 : -1;
+	}
+
+	function IsAbbreviation(sWord)
+	{
+		for (var oIterator = sWord.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			var nCharCode = oIterator.value();
+			if (IsHangul(nCharCode) || IsCJKIdeographs(nCharCode))
+				return false;
+
+			if (0x73 === nCharCode)
+			{
+				oIterator.next();
+				if (oIterator.check())
+					return false;
+
+				break;
+			}
+
+			let sChar = String.fromCodePoint(nCharCode);
+			if (sChar.toUpperCase() !== sChar)
+				return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Проверяем поддержку заданного функционала
+	 * @param type
+	 * @returns {boolean}
+	 */
+	function IsSupportAscFeature(type)
+	{
+		return !!(window["Asc"] && window["Asc"]["Addons"] && window["Asc"]["Addons"][type] === true);
+	}
+
+	/**
+	 * Проверяем поддержку всего функционала, связанного с oform
+	 * @returns {boolean}
+	 */
+	function IsSupportOFormFeature()
+	{
+		return !!(window['AscOForm'] && IsSupportAscFeature("forms"));
 	}
 
 	var g_oUserColorById = {}, g_oUserNextColorIndex = 0;
@@ -8980,8 +9261,337 @@
 		}
 		return null;
 	}
+	function getColorFromXml2(reader) {
+		var theme, rgb, tint;
+
+		var GetDefaultRGBAByIndex = function (index) {
+			var unR, unG, unB, unA = 255;
+			switch(index) {
+				case 0 : unR = 0x00; unG = 0x00; unB = 0x00; break;
+				case 1 : unR = 0xFF; unG = 0xFF; unB = 0xFF; break;
+				case 2 : unR = 0xFF; unG = 0x00; unB = 0x00; break;
+				case 3 : unR = 0x00; unG = 0xFF; unB = 0x00; break;
+				case 4 : unR = 0x00; unG = 0x00; unB = 0xFF; break;
+
+				case 5 : unR = 0xFF; unG = 0xFF; unB = 0x00; break;
+				case 6 : unR = 0xFF; unG = 0x00; unB = 0xFF; break;
+				case 7 : unR = 0x00; unG = 0xFF; unB = 0xFF; break;
+				case 8 : unR = 0x00; unG = 0x00; unB = 0x00; break;
+				case 9 : unR = 0xFF; unG = 0xFF; unB = 0xFF; break;
+
+				case 10: unR = 0xFF; unG = 0x00; unB = 0x00; break;
+				case 11: unR = 0x00; unG = 0xFF; unB = 0x00; break;
+				case 12: unR = 0x00; unG = 0x00; unB = 0xFF; break;
+				case 13: unR = 0xFF; unG = 0xFF; unB = 0x00; break;
+				case 14: unR = 0xFF; unG = 0x00; unB = 0xFF; break;
+
+				case 15: unR = 0x00; unG = 0xFF; unB = 0xFF; break;
+				case 16: unR = 0x80; unG = 0x00; unB = 0x00; break;
+				case 17: unR = 0x00; unG = 0x80; unB = 0x00; break;
+				case 18: unR = 0x00; unG = 0x00; unB = 0x80; break;
+				case 19: unR = 0x80; unG = 0x80; unB = 0x00; break;
+
+				case 20: unR = 0x80; unG = 0x00; unB = 0x80; break;
+				case 21: unR = 0x00; unG = 0x80; unB = 0x80; break;
+				case 22: unR = 0xC0; unG = 0xC0; unB = 0xC0; break;
+				case 23: unR = 0x80; unG = 0x80; unB = 0x80; break;
+				case 24: unR = 0x99; unG = 0x99; unB = 0xFF; break;
+
+				case 25: unR = 0x99; unG = 0x33; unB = 0x66; break;
+				case 26: unR = 0xFF; unG = 0xFF; unB = 0xCC; break;
+				case 27: unR = 0xCC; unG = 0xFF; unB = 0xFF; break;
+				case 28: unR = 0x66; unG = 0x00; unB = 0x66; break;
+				case 29: unR = 0xFF; unG = 0x80; unB = 0x80; break;
+
+				case 30: unR = 0x00; unG = 0x66; unB = 0xCC; break;
+				case 31: unR = 0xCC; unG = 0xCC; unB = 0xFF; break;
+				case 32: unR = 0x00; unG = 0x00; unB = 0x80; break;
+				case 33: unR = 0xFF; unG = 0x00; unB = 0xFF; break;
+				case 34: unR = 0xFF; unG = 0xFF; unB = 0x00; break;
+
+				case 35: unR = 0x00; unG = 0xFF; unB = 0xFF; break;
+				case 36: unR = 0x80; unG = 0x00; unB = 0x80; break;
+				case 37: unR = 0x80; unG = 0x00; unB = 0x00; break;
+				case 38: unR = 0x00; unG = 0x80; unB = 0x80; break;
+				case 39: unR = 0x00; unG = 0x00; unB = 0xFF; break;
+
+				case 40: unR = 0x00; unG = 0xCC; unB = 0xFF; break;
+				case 41: unR = 0xCC; unG = 0xFF; unB = 0xFF; break;
+				case 42: unR = 0xCC; unG = 0xFF; unB = 0xCC; break;
+				case 43: unR = 0xFF; unG = 0xFF; unB = 0x99; break;
+				case 44: unR = 0x99; unG = 0xCC; unB = 0xFF; break;
+
+				case 45: unR = 0xFF; unG = 0x99; unB = 0xCC; break;
+				case 46: unR = 0xCC; unG = 0x99; unB = 0xFF; break;
+				case 47: unR = 0xFF; unG = 0xCC; unB = 0x99; break;
+				case 48: unR = 0x33; unG = 0x66; unB = 0xFF; break;
+				case 49: unR = 0x33; unG = 0xCC; unB = 0xCC; break;
+
+				case 50: unR = 0x99; unG = 0xCC; unB = 0x00; break;
+				case 51: unR = 0xFF; unG = 0xCC; unB = 0x00; break;
+				case 52: unR = 0xFF; unG = 0x99; unB = 0x00; break;
+				case 53: unR = 0xFF; unG = 0x66; unB = 0x00; break;
+				case 54: unR = 0x66; unG = 0x66; unB = 0x99; break;
+
+				case 55: unR = 0x96; unG = 0x96; unB = 0x96; break;
+				case 56: unR = 0x00; unG = 0x33; unB = 0x66; break;
+				case 57: unR = 0x33; unG = 0x99; unB = 0x66; break;
+				case 58: unR = 0x00; unG = 0x33; unB = 0x00; break;
+				case 59: unR = 0x33; unG = 0x33; unB = 0x00; break;
+
+				case 60: unR = 0x99; unG = 0x33; unB = 0x00; break;
+				case 61: unR = 0x99; unG = 0x33; unB = 0x66; break;
+				case 62: unR = 0x33; unG = 0x33; unB = 0x99; break;
+				case 63: unR = 0x33; unG = 0x33; unB = 0x33; break;
+				case 64: unR = 0x00; unG = 0x00; unB = 0x00; break;
+
+				case 65: unR = 0xFF; unG = 0xFF; unB = 0xFF; break;
+				default: return null;
+			}
+
+			return (unR << 16) + (unG << 8) + unB;
+		}
+
+		while (reader.MoveToNextAttribute()) {
+			if ("auto" === reader.GetName()) {
+			} else if ("theme" === reader.GetName()) {
+				theme = reader.GetValue();
+			} else if ("tint" === reader.GetName()) {
+				tint = reader.GetValue();
+			} else if ("rgb" === reader.GetName()) {
+				rgb = reader.GetValue();
+				rgb = 0x00ffffff & "0x"+ rgb;
+			} else if ("indexed" === reader.GetName()) {
+				rgb = GetDefaultRGBAByIndex(reader.GetValueInt());
+			}
+		}
+
+		if(null != theme) {
+			return AscCommonExcel.g_oColorManager.getThemeColor(getNumFromXml(theme), getNumFromXml(tint));
+		} else if(null != rgb){
+			return new AscCommonExcel.RgbColor(rgb);
+		}
+
+		return null;
+	}
+	function writeColorToXml(writer, name, color, ns) {
+
+		/*writer.StartNodeWithNS(node_ns, node_name);
+		writer.StartAttributes();
+		WritingStringNullableAttrBool(L"auto", m_oAuto);
+		WritingStringNullableAttrInt(L"indexed", m_oIndexed, m_oIndexed->GetValue());
+		if(m_oRgb.IsInit() && !m_oIndexed.IsInit())
+		{
+			int nIndex = OOX::Spreadsheet::CIndexedColors::GetDefaultIndexByRGBA(m_oRgb->Get_R(), m_oRgb->Get_G(), m_oRgb->Get_B(), m_oRgb->Get_A());
+			if(-1 == nIndex)
+			{
+				WritingStringAttrString(L"rgb", m_oRgb->ToString());
+			}
+			else
+			{
+				WritingStringAttrInt(L"indexed", nIndex);
+			}
+		}
+		WritingStringNullableAttrInt(L"theme", m_oThemeColor, m_oThemeColor->GetValue());
+		WritingStringNullableAttrDouble(L"tint", m_oTint, m_oTint->GetValue());
+
+		writer.EndAttributesAndNode();*/
+
+		var GetDefaultIndexByRGBA = function (unR, unG, unB, unA) {
+			if (255 != unA) {
+				return -1;
+			}
+			var nIndex = -1;
+			if (unR == 0x00 && unG == 0x00 && unB == 0x00) {
+				nIndex = 64;
+			} else if (unR == 0xFF && unG == 0xFF && unB == 0xFF) {
+				nIndex = 65;
+			} else if (unR == 0x00 && unG == 0x00 && unB == 0x00) {
+				nIndex = 0;
+			} else if (unR == 0xFF && unG == 0xFF && unB == 0xFF) {
+				nIndex = 1;
+			} else if (unR == 0xFF && unG == 0x00 && unB == 0x00) {
+				nIndex = 2;
+			} else if (unR == 0x00 && unG == 0xFF && unB == 0x00) {
+				nIndex = 3;
+			} else if (unR == 0x00 && unG == 0x00 && unB == 0xFF) {
+				nIndex = 4;
+			} else if (unR == 0xFF && unG == 0xFF && unB == 0x00) {
+				nIndex = 5;
+			} else if (unR == 0xFF && unG == 0x00 && unB == 0xFF) {
+				nIndex = 6;
+			} else if (unR == 0x00 && unG == 0xFF && unB == 0xFF) {
+				nIndex = 7;
+			} else if (unR == 0x00 && unG == 0x00 && unB == 0x00) {
+				nIndex = 8;
+			} else if (unR == 0xFF && unG == 0xFF && unB == 0xFF) {
+				nIndex = 9;
+			} else if (unR == 0xFF && unG == 0x00 && unB == 0x00) {
+				nIndex = 10;
+			} else if (unR == 0x00 && unG == 0xFF && unB == 0x00) {
+				nIndex = 11;
+			} else if (unR == 0x00 && unG == 0x00 && unB == 0xFF) {
+				nIndex = 12;
+			} else if (unR == 0xFF && unG == 0xFF && unB == 0x00) {
+				nIndex = 13;
+			} else if (unR == 0xFF && unG == 0x00 && unB == 0xFF) {
+				nIndex = 14;
+			} else if (unR == 0x00 && unG == 0xFF && unB == 0xFF) {
+				nIndex = 15;
+			} else if (unR == 0x80 && unG == 0x00 && unB == 0x00) {
+				nIndex = 16;
+			} else if (unR == 0x00 && unG == 0x80 && unB == 0x00) {
+				nIndex = 17;
+			} else if (unR == 0x00 && unG == 0x00 && unB == 0x80) {
+				nIndex = 18;
+			} else if (unR == 0x80 && unG == 0x80 && unB == 0x00) {
+				nIndex = 19;
+			} else if (unR == 0x80 && unG == 0x00 && unB == 0x80) {
+				nIndex = 20;
+			} else if (unR == 0x00 && unG == 0x80 && unB == 0x80) {
+				nIndex = 21;
+			} else if (unR == 0xC0 && unG == 0xC0 && unB == 0xC0) {
+				nIndex = 22;
+			} else if (unR == 0x80 && unG == 0x80 && unB == 0x80) {
+				nIndex = 23;
+			} else if (unR == 0x99 && unG == 0x99 && unB == 0xFF) {
+				nIndex = 24;
+			} else if (unR == 0x99 && unG == 0x33 && unB == 0x66) {
+				nIndex = 25;
+			} else if (unR == 0xFF && unG == 0xFF && unB == 0xCC) {
+				nIndex = 26;
+			} else if (unR == 0xCC && unG == 0xFF && unB == 0xFF) {
+				nIndex = 27;
+			} else if (unR == 0x66 && unG == 0x00 && unB == 0x66) {
+				nIndex = 28;
+			} else if (unR == 0xFF && unG == 0x80 && unB == 0x80) {
+				nIndex = 29;
+			} else if (unR == 0x00 && unG == 0x66 && unB == 0xCC) {
+				nIndex = 30;
+			} else if (unR == 0xCC && unG == 0xCC && unB == 0xFF) {
+				nIndex = 31;
+			} else if (unR == 0x00 && unG == 0x00 && unB == 0x80) {
+				nIndex = 32;
+			} else if (unR == 0xFF && unG == 0x00 && unB == 0xFF) {
+				nIndex = 33;
+			} else if (unR == 0xFF && unG == 0xFF && unB == 0x00) {
+				nIndex = 34;
+			} else if (unR == 0x00 && unG == 0xFF && unB == 0xFF) {
+				nIndex = 35;
+			} else if (unR == 0x80 && unG == 0x00 && unB == 0x80) {
+				nIndex = 36;
+			} else if (unR == 0x80 && unG == 0x00 && unB == 0x00) {
+				nIndex = 37;
+			} else if (unR == 0x00 && unG == 0x80 && unB == 0x80) {
+				nIndex = 38;
+			} else if (unR == 0x00 && unG == 0x00 && unB == 0xFF) {
+				nIndex = 39;
+			} else if (unR == 0x00 && unG == 0xCC && unB == 0xFF) {
+				nIndex = 40;
+			} else if (unR == 0xCC && unG == 0xFF && unB == 0xFF) {
+				nIndex = 41;
+			} else if (unR == 0xCC && unG == 0xFF && unB == 0xCC) {
+				nIndex = 42;
+			} else if (unR == 0xFF && unG == 0xFF && unB == 0x99) {
+				nIndex = 43;
+			} else if (unR == 0x99 && unG == 0xCC && unB == 0xFF) {
+				nIndex = 44;
+			} else if (unR == 0xFF && unG == 0x99 && unB == 0xCC) {
+				nIndex = 45;
+			} else if (unR == 0xCC && unG == 0x99 && unB == 0xFF) {
+				nIndex = 46;
+			} else if (unR == 0xFF && unG == 0xCC && unB == 0x99) {
+				nIndex = 47;
+			} else if (unR == 0x33 && unG == 0x66 && unB == 0xFF) {
+				nIndex = 48;
+			} else if (unR == 0x33 && unG == 0xCC && unB == 0xCC) {
+				nIndex = 49;
+			} else if (unR == 0x99 && unG == 0xCC && unB == 0x00) {
+				nIndex = 50;
+			} else if (unR == 0xFF && unG == 0xCC && unB == 0x00) {
+				nIndex = 51;
+			} else if (unR == 0xFF && unG == 0x99 && unB == 0x00) {
+				nIndex = 52;
+			} else if (unR == 0xFF && unG == 0x66 && unB == 0x00) {
+				nIndex = 53;
+			} else if (unR == 0x66 && unG == 0x66 && unB == 0x99) {
+				nIndex = 54;
+			} else if (unR == 0x96 && unG == 0x96 && unB == 0x96) {
+				nIndex = 55;
+			} else if (unR == 0x00 && unG == 0x33 && unB == 0x66) {
+				nIndex = 56;
+			} else if (unR == 0x33 && unG == 0x99 && unB == 0x66) {
+				nIndex = 57;
+			} else if (unR == 0x00 && unG == 0x33 && unB == 0x00) {
+				nIndex = 58;
+			} else if (unR == 0x33 && unG == 0x33 && unB == 0x00) {
+				nIndex = 59;
+			} else if (unR == 0x99 && unG == 0x33 && unB == 0x00) {
+				nIndex = 60;
+			} else if (unR == 0x99 && unG == 0x33 && unB == 0x66) {
+				nIndex = 61;
+			} else if (unR == 0x33 && unG == 0x33 && unB == 0x99) {
+				nIndex = 62;
+			} else if (unR == 0x33 && unG == 0x33 && unB == 0x33) {
+				nIndex = 63;
+			}
+			return nIndex;
+		};
+
+		if (!ns) {
+			ns = "";
+		}
+
+		writer.WriteXmlNodeStart(ns + name);
+
+
+		if (color.rgb && !color.theme) {
+			var nIndex = GetDefaultIndexByRGBA(color.getR(), color.getG(), color.getB(), 255);
+			if (-1 === nIndex) {
+				//TODO проверить rgb
+				var hex = IntToHex(color.getRgb()).toUpperCase();
+				if (hex.length === 4) {
+					hex = "00" + hex;
+				}
+				writer.WriteXmlAttributeString("rgb", "FF" + hex);
+			} else {
+				writer.WriteXmlAttributeNumber("indexed", nIndex);
+			}
+		}
+
+		writer.WriteXmlNullableAttributeNumber("theme", color.theme);
+		writer.WriteXmlNullableAttributeDouble("tint", color.tint);
+
+		//TODO ?
+		if (!color.rgb && !color.theme && !color.tint) {
+			writer.WriteXmlNullableAttributeBool("auto", 1);
+		}
+
+		writer.WriteXmlAttributesEnd(true);
+	}
+
 	function getBoolFromXml(val) {
 		return "0" !== val && "false" !== val && "off" !== val;
+	}
+
+	function isBinaryChanges(data) {
+		return 'CHANGES\t' === AscCommon.UTF8ArrayToString(data, 0, 'CHANGES;'.length);
+	}
+	function splitBinaryChanges(data) {
+		let changes = [];
+		let stream = new AscCommon.FT_Stream2(data, data.length);
+		//skip header
+		let charCode = "\n".charCodeAt(0);
+		while(charCode !== stream.GetByte()) {
+			;
+		}
+		while (stream.GetCurPos() < stream.GetSize()) {
+			let oldPos = stream.GetCurPos();
+			let size = stream.GetULong();
+			changes.push(data.subarray(oldPos, oldPos + size));
+			stream.Skip2(size);
+		}
+		return changes;
 	}
 
 	function CUserCacheColor(nColor)
@@ -9076,11 +9686,42 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
+	function loadSmartArtBinary(fOnError) {
+		if (window["NATIVE_EDITOR_ENJINE"]) {
+			return;
+		}
+		loadFileContent('../../../../sdkjs/common/SmartArts/SmartArts.bin', function (httpRequest) {
+			if (httpRequest && httpRequest.response) {
+				const arrStream = AscCommon.initStreamFromResponse(httpRequest);
+
+				AscCommon.g_oBinarySmartArts = {
+					shifts: {},
+					stream: arrStream
+				}
+
+				const oFileStream = new AscCommon.FileStream(arrStream, arrStream.length);
+				oFileStream.GetUChar();
+				const nLength = oFileStream.GetULong();
+				while (nLength + 4 > oFileStream.cur) {
+					const nType = oFileStream.GetUChar();
+					const nPosition = oFileStream.GetULong();
+					AscCommon.g_oBinarySmartArts.shifts[nType] = nPosition;
+				}
+			} else {
+				fOnError(httpRequest);
+			}
+
+		}, 'arraybuffer');
+	}
+
 	function getAltGr(e)
 	{
+		if (true === e["altGraphKey"])
+			return true;
+
 		var ctrlKey = e.metaKey || e.ctrlKey;
 		var altKey = e.altKey;
-		return (altKey && (AscBrowser.isMacOs ? !ctrlKey : ctrlKey));
+		return (altKey && ctrlKey);
 	}
 
 	function getColorSchemeByName(sName)
@@ -9215,6 +9856,38 @@
 		return nStartIndex_;
 	}
 
+	// Данный список шрифтов используется совместно с настройкой BalanceSingleByteDoubleByteWidth
+	// если список будет изменяться, то проверить работу этой настройки с новыми шрифтами, если работать не будет, тогда
+	// надо будет иметь два разных списка
+	const EAST_ASIA_FONTS = [
+		"MingLiU", "PMingLiU", "MingLiU_HKSCS-ExtB", "MingLiU-ExtB",
+		"SimSun", "NSimSun", "SimSun-ExtA", "SimSun-ExtB",
+		"MS Mincho",
+		"Batang",
+		"Arial Unicode MS",
+		"Microsoft JhengHei", "Microsoft YaHei", "SimHei", "DengXian",
+		"Meiryo", "MS Gothic", "MS PGothic", "MS UI Gothic", "Yu Gothic",
+		"Dotum", "Gulim", "Malgun Gothic"
+	];
+
+	function IsEastAsianFont(sName)
+	{
+		for (let oIterator = sName.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			let	nUnicode = oIterator.value();
+			if (isEastAsianScript(nUnicode))
+				return true;
+		}
+
+		for (let nIndex = 0, nCount = EAST_ASIA_FONTS.length; nIndex < nCount; ++nIndex)
+		{
+			if (sName === EAST_ASIA_FONTS[nIndex])
+				return true;
+		}
+
+		return false;
+	}
+
 	function isEastAsianScript(value)
 	{
 		// Bopomofo (3100–312F)
@@ -9288,7 +9961,1263 @@
 			|| (0xA490 <= value && value <= 0xA4CF));
 	}
 
+	function IsHangul(nCharCode)
+	{
+		if (nCharCode < 0x1100)
+			return false;
+
+		return (IsHangulSyllables(nCharCode)
+			|| IsHangulCompatibilityJamo(nCharCode)
+			|| IsHangulJamo(nCharCode)
+			|| IsHangulJamoExtendedA(nCharCode)
+			|| IsHangulJamoExtendedB(nCharCode));
+	}
+	function IsCJKIdeographs(nCharCode)
+	{
+		if (nCharCode < 0x3400)
+			return false;
+
+		return (IsCJKUnifiedIdeographs(nCharCode)
+			|| IsCJKUnifiedIdeographsExtensionA(nCharCode)
+			|| IsCJKUnifiedIdeographsExtensionB(nCharCode)
+			|| IsCJKUnifiedIdeographsExtensionC(nCharCode)
+			|| IsCJKUnifiedIdeographsExtensionD(nCharCode)
+			|| IsCJKUnifiedIdeographsExtensionE(nCharCode)
+			|| IsCJKUnifiedIdeographsExtensionF(nCharCode)
+			|| IsCJKUnifiedIdeographsExtensionG(nCharCode)
+			|| IsCJKCompatibilityIdeographs(nCharCode)
+			|| IsCJKCompatibilityIdeographsSupplement(nCharCode));
+	}
+
+	function IsHangulSyllables(nCharCode)
+	{
+		return (0xAC00 <= nCharCode && nCharCode <= 0xD7AF);
+	}
+	function IsHangulJamo(nCharCode)
+	{
+		return (0x1100 <= nCharCode && nCharCode <= 0x11FF);
+	}
+	function IsHangulJamoExtendedA(nCharCode)
+	{
+		return (0xA960 <= nCharCode && nCharCode <= 0xA97F);
+	}
+	function IsHangulJamoExtendedB(nCharCode)
+	{
+		return (0xD7B0 <= nCharCode && nCharCode <= 0xD7FF);
+	}
+	function IsHangulCompatibilityJamo(nCharCode)
+	{
+		return (0x3130 <= nCharCode && nCharCode <= 0x318F);
+	}
+	function IsCJKUnifiedIdeographs(nCharCode)
+	{
+		return (0x4E00 <= nCharCode && nCharCode <= 0x9FFF);
+	}
+	function IsCJKUnifiedIdeographsExtensionA(nCharCode)
+	{
+		return (0x3400 <= nCharCode && nCharCode <= 0x4DBF);
+	}
+	function IsCJKUnifiedIdeographsExtensionB(nCharCode)
+	{
+		return (0x20000 <= nCharCode && nCharCode <= 0x2A6DF);
+	}
+	function IsCJKUnifiedIdeographsExtensionC(nCharCode)
+	{
+		return (0x2A700 <= nCharCode && nCharCode <= 0x2B73F);
+	}
+	function IsCJKUnifiedIdeographsExtensionD(nCharCode)
+	{
+		return (0x2B740 <= nCharCode && nCharCode <= 0x2B81F);
+	}
+	function IsCJKUnifiedIdeographsExtensionE(nCharCode)
+	{
+		return (0x2B820 <= nCharCode && nCharCode <= 0x2CEAF);
+	}
+	function IsCJKUnifiedIdeographsExtensionF(nCharCode)
+	{
+		return (0x2CEB0 <= nCharCode && nCharCode <= 0x2EBEF);
+	}
+	function IsCJKUnifiedIdeographsExtensionG(nCharCode)
+	{
+		return (0x30000 <= nCharCode && nCharCode <= 0x3134F);
+	}
+	function IsCJKCompatibilityIdeographs(nCharCode)
+	{
+		return (0xF900 <= nCharCode && nCharCode <= 0xFAFF);
+	}
+	function IsCJKCompatibilityIdeographsSupplement(nCharCode)
+	{
+		return (0x2F800 <= nCharCode && nCharCode <= 0x2FA1F);
+	}
+
+
+	function IsComplexScript(nCharCode)
+	{
+		return ((0x0590 <= nCharCode && nCharCode <= 0x074F)
+			|| (0x0780 <= nCharCode && nCharCode <= 0x07BF)
+			|| (0x0900 <= nCharCode && nCharCode <= 0x109F)
+			|| (0x1780 <= nCharCode && nCharCode <= 0x18AF)
+			|| (0x200C <= nCharCode && nCharCode <= 0x200F)
+			|| (0x202A <= nCharCode && nCharCode <= 0x202F)
+			|| (0x2670 <= nCharCode && nCharCode <= 0x2671)
+			|| (0xFB1D <= nCharCode && nCharCode <= 0xFB4F));
+	}
+
 	var g_oIdCounter = new CIdCounter();
+
+	function CEventListenerInfo(listeningElement, eventName, listener, useCapture) {
+		this.eventName = eventName;
+		this.listener = listener;
+		this.listeningElement = listeningElement;
+		this.useCapture = useCapture;
+	}
+
+	const asc_PreviewBulletType = {
+		text: 0,
+		char: 1,
+		image: 2,
+		number: 3,
+		multiLevel: 4
+	}
+	window["Asc"].asc_PreviewBulletType = window["Asc"]["asc_PreviewBulletType"] = asc_PreviewBulletType;
+	asc_PreviewBulletType["text"] = asc_PreviewBulletType.text;
+	asc_PreviewBulletType["char"] = asc_PreviewBulletType.char;
+	asc_PreviewBulletType["image"] = asc_PreviewBulletType.image;
+	asc_PreviewBulletType["number"] = asc_PreviewBulletType.number;
+	asc_PreviewBulletType["multiLevel"] = asc_PreviewBulletType.multiLevel;
+	function CBulletPreviewDrawerBase()
+	{
+		this.m_arrNumberingLvl = [];
+		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
+		this.m_oLogicDocument = this.m_oApi.WordControl && this.m_oApi.WordControl.m_oLogicDocument;
+		this.m_oDrawingDocument = this.m_oLogicDocument && this.m_oLogicDocument.DrawingDocument;
+		this.m_oLang = this.m_oApi.asc_GetPossibleNumberingLanguage();
+
+		this.m_oPrimaryTextColor = new AscCommonWord.CDocumentColor(0, 0, 0);
+		// для словесного текста используем цвет контрастнее
+		this.m_oSecondaryTextColor = new AscCommonWord.CDocumentColor(121, 121, 121);
+		this.m_oSecondaryLineTextColor = new AscCommonWord.CDocumentColor(203, 203, 203);
+		this.m_oBackgroundColor = new AscCommonWord.CDocumentColor(255, 255, 255);
+
+		this.m_nAmountOfLvls = 9;
+	}
+
+	CBulletPreviewDrawerBase.prototype.cleanTextPr = function (oTextPr)
+	{
+		oTextPr.VertAlign  = undefined;
+		oTextPr.RStyle     = undefined;
+		oTextPr.Position   = undefined; // Смещение по Y
+
+		oTextPr.BoldCS     = undefined;
+		oTextPr.ItalicCS   = undefined;
+		oTextPr.FontSizeCS = undefined;
+		oTextPr.CS         = undefined;
+		oTextPr.RTL        = undefined;
+		oTextPr.FontRef    = undefined;
+		oTextPr.Shd        = undefined;
+		oTextPr.Vanish     = undefined;
+		oTextPr.Ligatures  = undefined;
+		oTextPr.TextOutline    = undefined;
+		oTextPr.TextFill       = undefined;
+		oTextPr.PrChange       = undefined;
+		oTextPr.ReviewInfo     = undefined;
+	};
+	CBulletPreviewDrawerBase.prototype.drawImageBulletsWithLine = function (oImageInfo, nX, nY, nLineHeight, oGraphics, oStyleTextOptions, oTextPr) {
+		const oImage = oImageInfo.image;
+		if (oImage)
+		{
+			const sFullImageSrc = oImage.src;
+			const oSizes = AscCommon.getSourceImageSize(sFullImageSrc);
+			const nImageHeight = oSizes.height;
+			const nImageWidth = oSizes.width;
+			const nAdaptImageHeight = nLineHeight;
+			const nAdaptImageWidth = (nImageWidth * nAdaptImageHeight / (nImageHeight ? nImageHeight : 1));
+
+			for (let i = 0; i < oImageInfo.amount; i += 1)
+			{
+				this.cleanParagraphField(oGraphics, nX * AscCommon.g_dKoef_pix_to_mm, (nY - nLineHeight) * AscCommon.g_dKoef_pix_to_mm, (nAdaptImageWidth + 2) * AscCommon.g_dKoef_pix_to_mm, (nLineHeight + (nLineHeight >> 1)) * AscCommon.g_dKoef_pix_to_mm);
+				oGraphics.drawImage(sFullImageSrc, nX * AscCommon.g_dKoef_pix_to_mm, (nY - nAdaptImageHeight * (0.85)) * AscCommon.g_dKoef_pix_to_mm, nAdaptImageWidth * AscCommon.g_dKoef_pix_to_mm, nAdaptImageHeight * AscCommon.g_dKoef_pix_to_mm);
+				nX += nAdaptImageWidth;
+			}
+			this.drawStyleText(oGraphics, oStyleTextOptions, nX, nY, nLineHeight, oTextPr);
+		}
+	};
+
+	CBulletPreviewDrawerBase.prototype.getFirstLineIndent = function (oLvl, nCustomNumberPosition, nCustomIndentSize, nCustomStopTab)
+	{
+		const nSuff = oLvl.GetSuff();
+		const nNumberPosition = AscFormat.isRealNumber(nCustomNumberPosition) ? nCustomNumberPosition : oLvl.GetNumberPosition();
+		let nXPositionOfLine;
+		if (nSuff === Asc.c_oAscNumberingSuff.Tab)
+		{
+			const nStopTab = AscFormat.isRealNumber(nCustomStopTab) || nCustomStopTab === null ? nCustomStopTab : oLvl.GetStopTab();
+			const nIndentSize = AscFormat.isRealNumber(nCustomIndentSize) ? nCustomIndentSize : oLvl.GetIndentSize();
+			if (AscFormat.isRealNumber(nStopTab))
+			{
+				nXPositionOfLine = Math.max(nStopTab, nNumberPosition);
+			}
+			else
+			{
+				nXPositionOfLine =  Math.max(nNumberPosition, nIndentSize);
+			}
+
+		}
+		else
+		{
+			nXPositionOfLine = nNumberPosition;
+		}
+
+		return nXPositionOfLine;
+	}
+
+	CBulletPreviewDrawerBase.prototype.getFontSizeByLineHeight = function (nLineHeight)
+	{
+		return ((2 * nLineHeight * 72 / 96) >> 0) / 2;
+	};
+
+	CBulletPreviewDrawerBase.prototype.getLvlTextWidth = function (sText, oTextPr)
+	{
+		const oParagraph = this.getParagraphWithText(sText, oTextPr);
+
+
+		oParagraph.Reset(0, 0, 1000, 1000, 0, 0, 1);
+		oParagraph.Recalculate_Page(0);
+		oParagraph.LineNumbersInfo = null;
+
+		return oParagraph.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+	};
+
+	CBulletPreviewDrawerBase.prototype.getHeadingTextInformation = function (oLvl, nTextXPosition, nTextYPosition, oColor)
+	{
+		if (!this.m_oLogicDocument) return null;
+
+		const oStyles = this.m_oLogicDocument.Get_Styles();
+		const oStyle = oStyles.Get(oLvl.GetPStyle());
+		if (oStyle)
+		{
+			const sName = oStyle.Get_Name();
+			const sParagraphText = " " + AscCommon.translateManager.getValue(sName);
+			return {addingText: sParagraphText, startPositionX: nTextXPosition, startPositionY: nTextYPosition, color: oColor.Copy()};
+		}
+		return null;
+	};
+
+	CBulletPreviewDrawerBase.prototype.convertAscToNumberingLvl = function (arrAscLvl)
+	{
+		const arrResult = [];
+		for (let i = 0; i < arrAscLvl.length; i += 1)
+		{
+			let oLvl;
+			if (arrAscLvl[i] instanceof  Asc.CAscNumberingLvl)
+			{
+				oLvl = new AscCommonWord.CNumberingLvl();
+				oLvl.FillFromAscNumberingLvl(arrAscLvl[i]);
+			}
+			else
+			{
+				oLvl = arrAscLvl[i].Copy();
+			}
+
+			arrResult.push(oLvl);
+		}
+		return arrResult;
+	}
+
+	CBulletPreviewDrawerBase.prototype.getCanvas = function (sDivId)
+	{
+		if (!sDivId) return;
+		const oDivElement = document.getElementById(sDivId);
+		const nWidth_px = oDivElement.clientWidth;
+		const nHeight_px = oDivElement.clientHeight;
+
+		let oCanvas = oDivElement.firstChild;
+		if (!oCanvas)
+		{
+			oCanvas = document.createElement('canvas');
+			oCanvas.style.cssText = "padding:0;margin:0;user-select:none;";
+			oCanvas.style.width = nWidth_px + "px";
+			oCanvas.style.height = nHeight_px + "px";
+			if (nWidth_px > 0 && nHeight_px > 0)
+			{
+				oDivElement.appendChild(oCanvas);
+			}
+		}
+
+		oCanvas.width = AscCommon.AscBrowser.convertToRetinaValue(nWidth_px, true);
+		oCanvas.height = AscCommon.AscBrowser.convertToRetinaValue(nHeight_px, true);
+		return oCanvas;
+	}
+
+	CBulletPreviewDrawerBase.prototype.getGraphics = function (oCanvas)
+	{
+		if (!oCanvas) return;
+		const nHeight_px = oCanvas.clientHeight;
+		const nWidth_px = oCanvas.clientWidth;
+		const nRetinaWidth = oCanvas.width;
+		const nRetinaHeight = oCanvas.height;
+		const oContext = oCanvas.getContext("2d");
+
+		const oGraphics = new AscCommon.CGraphics();
+		oGraphics.init(oContext,
+			nRetinaWidth,
+			nRetinaHeight,
+			nWidth_px * AscCommon.g_dKoef_pix_to_mm,
+			nHeight_px * AscCommon.g_dKoef_pix_to_mm);
+		oGraphics.m_oFontManager = AscCommon.g_fontManager;
+
+		oGraphics.SetIntegerGrid(true);
+		oGraphics.transform(1, 0, 0, 1, 0, 0);
+
+		if (this.m_oApi && this.m_oApi.isDarkMode)
+		{
+			oGraphics.darkModeOverride3();
+		}
+
+		oGraphics.b_color1(this.m_oBackgroundColor.r, this.m_oBackgroundColor.g, this.m_oBackgroundColor.b, 255);
+		oGraphics.rect(0, 0, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
+		oGraphics.df();
+
+		return oGraphics;
+	};
+
+	CBulletPreviewDrawerBase.prototype.getParagraphWithText = function (sText, oTextPr)
+	{
+		const oLogicDocument = this.m_oLogicDocument;
+
+		const oShape = new AscFormat.CShape();
+		oShape.createTextBody();
+		const oParagraph = oShape.txBody.content.GetAllParagraphs()[0];
+		oParagraph.MoveCursorToStartPos();
+
+		const oStyles = oLogicDocument && oLogicDocument.Get_Styles();
+		if (oStyles && oStyles.Default && oStyles.Default.ParaPr)
+		{
+			oParagraph.Pr = oStyles.Default.ParaPr.Copy();
+		}
+		else
+		{
+			oParagraph.Pr = new AscCommonWord.CParaPr();
+		}
+		const oParaRun = new AscCommonWord.ParaRun(oParagraph);
+		oParaRun.Set_Pr(oTextPr);
+		oParaRun.AddText(sText);
+		oParagraph.AddToContent(0, oParaRun);
+
+		return oParagraph;
+	}
+
+
+	CBulletPreviewDrawerBase.prototype.drawTextWithLvlInformation = function(sText, oLvl, nX, nY, nLineHeight, oGraphics, oParagraphTextOptions)
+	{
+		const oTextPr = oLvl.GetTextPr().Copy();
+
+		const nSuff = oLvl.GetSuff();
+		const nAlign = oLvl.GetJc();
+		oTextPr.FontSize = oTextPr.FontSizeCS = oTextPr.FontSize || this.getFontSizeByLineHeight(nLineHeight);
+
+		let oParagraph = this.getParagraphWithText(sText, oTextPr);
+		if (!oParagraph) return null;
+
+		oParagraph.Reset(0, 0, 1000, 1000, 0, 0, 1);
+		oParagraph.Recalculate_Page(0);
+		oParagraph.LineNumbersInfo = null;
+
+		const nNumberingTextWidth = oParagraph.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+		const nBaseLineOffset = oParagraph.Lines[0].Y;
+		const nYOffset = nY - ((nBaseLineOffset * AscCommon.g_dKoef_mm_to_pix) >> 0);
+		let nXOffset = nX;
+
+		if (nAlign === AscCommon.align_Right) {
+			nXOffset -= nNumberingTextWidth;
+		} else if (nAlign === AscCommon.align_Center) {
+			nXOffset -= (nNumberingTextWidth >> 1);
+		}
+
+		let nBackTextWidth = nNumberingTextWidth + 4; // 4 - чтобы линия никогда не была 'совсем рядом'
+		if (nSuff === Asc.c_oAscNumberingSuff.Space ||
+			nSuff === Asc.c_oAscNumberingSuff.None)
+		{
+			nBackTextWidth += 4;
+		}
+
+		this.cleanParagraphField(oGraphics, nXOffset * AscCommon.g_dKoef_pix_to_mm, (nY - nLineHeight) * AscCommon.g_dKoef_pix_to_mm, nBackTextWidth * AscCommon.g_dKoef_pix_to_mm, (nLineHeight + (nLineHeight >> 1)) * AscCommon.g_dKoef_pix_to_mm);
+		this.drawParagraph(oGraphics, oParagraph, nXOffset, nYOffset);
+
+		// рисуем текст вместо черты текста
+		this.drawStyleText(oGraphics, oParagraphTextOptions, nXOffset + nBackTextWidth, nY, nLineHeight, oTextPr);
+	};
+
+	CBulletPreviewDrawerBase.prototype.drawStyleText = function (oGraphics, oParagraphTextOptions, nXEndPositionOfNumbering, nY, nLineHeight, oNumberingTextPr)
+	{
+		if (oParagraphTextOptions)
+		{
+			const sParagraphText = oParagraphTextOptions.addingText;
+			const oHeadingTextPr = new AscCommonWord.CTextPr();
+			oHeadingTextPr.RFonts.SetAll("Arial");
+			oHeadingTextPr.FontSize = oHeadingTextPr.FontSizeCS = oNumberingTextPr.FontSize * 0.8;
+			oHeadingTextPr.Color = oParagraphTextOptions.color.Copy();
+
+			const oParagraph = this.getParagraphWithText(sParagraphText, oHeadingTextPr);
+			if (!oParagraph) return;
+
+			oParagraph.Reset(0, 0, 1000, 1000, 0, 0, 1);
+			oParagraph.Recalculate_Page(0);
+			oParagraph.LineNumbersInfo = null;
+
+			const nParagraphTextWidth = oParagraph.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+			const nBaseLineOffset = oParagraph.Lines[0].Y;
+
+			const nYOffset = nY - ((nBaseLineOffset * AscCommon.g_dKoef_mm_to_pix) >> 0);
+			const nTextXOffset = Math.max(nXEndPositionOfNumbering, oParagraphTextOptions.startPositionX);
+
+			this.cleanParagraphField(oGraphics, nTextXOffset * AscCommon.g_dKoef_pix_to_mm, (nY - nLineHeight) * AscCommon.g_dKoef_pix_to_mm, (nParagraphTextWidth + 2) * AscCommon.g_dKoef_pix_to_mm, (nLineHeight + (nLineHeight >> 1)) * AscCommon.g_dKoef_pix_to_mm);
+			this.drawParagraph(oGraphics, oParagraph, nTextXOffset, nYOffset);
+		}
+	}
+
+	CBulletPreviewDrawerBase.prototype.cleanParagraphField = function (oGraphics, nX, nY, nWidth, nHeight)
+	{
+		oGraphics._s();
+		oGraphics.b_color1(this.m_oBackgroundColor.r, this.m_oBackgroundColor.g, this.m_oBackgroundColor.b, 255);
+		oGraphics.rect(nX, nY, nWidth, nHeight);
+		oGraphics.df();
+		oGraphics._e();
+	};
+
+	CBulletPreviewDrawerBase.prototype.drawParagraph = function (oGraphics, oParagraph, nXOffset, nYOffset)
+	{
+		const oApi = this.m_oApi;
+
+		oGraphics._s();
+		oGraphics.save();
+		oGraphics.SetIntegerGrid(true);
+
+		oGraphics.m_oCoordTransform.tx = AscCommon.AscBrowser.convertToRetinaValue(nXOffset, true);
+		oGraphics.m_oCoordTransform.ty = AscCommon.AscBrowser.convertToRetinaValue(nYOffset, true);
+
+		const bOldViewMode = oApi.isViewMode;
+		const bOldMarks = oApi.ShowParaMarks;
+		oApi.isViewMode = true;
+		oApi.ShowParaMarks = false;
+
+		oGraphics.transform(1, 0, 0, 1, 0, 0);
+		oParagraph.Draw(0, oGraphics);
+
+		oApi.isViewMode = bOldViewMode;
+		oApi.ShowParaMarks = bOldMarks;
+
+		oGraphics.m_oCoordTransform.tx = 0;
+		oGraphics.m_oCoordTransform.ty = 0;
+		oGraphics.transform(1, 0, 0, 1, 0, 0);
+
+		oGraphics.restore();
+	};
+
+	CBulletPreviewDrawerBase.prototype.checkEachLvl = function (callback)
+	{
+		for (let i = 0; i < this.m_arrNumberingLvl.length; i += 1)
+		{
+			if (Array.isArray(this.m_arrNumberingLvl[i]))
+			{
+				for (let j = 0; j < this.m_arrNumberingLvl[i].length; j += 1)
+				{
+					callback(this.m_arrNumberingLvl[i][j], j, this.m_arrNumberingLvl[i]);
+				}
+			}
+			else
+			{
+				callback(this.m_arrNumberingLvl[i], i, this.m_arrNumberingLvl);
+			}
+		}
+	};
+
+	CBulletPreviewDrawerBase.prototype.checkFonts = function (fCallback)
+	{
+		const oApi = this.m_oApi;
+		const oFontsDict = {};
+		const oThis = this;
+		this.checkEachLvl(function (oLvl) {
+			const sText = oLvl.GetSymbols();
+			if (sText)
+			{
+				AscFonts.FontPickerByCharacter.checkTextLight(sText);
+			}
+			const oTextPr = oLvl.GetTextPr();
+			oThis.cleanTextPr(oTextPr);
+			if (oTextPr && oTextPr.RFonts)
+			{
+				if (oTextPr.RFonts.Ascii) oFontsDict[oTextPr.RFonts.Ascii.Name] = true;
+				if (oTextPr.RFonts.EastAsia) oFontsDict[oTextPr.RFonts.EastAsia.Name] = true;
+				if (oTextPr.RFonts.HAnsi) oFontsDict[oTextPr.RFonts.HAnsi.Name] = true;
+				if (oTextPr.RFonts.CS) oFontsDict[oTextPr.RFonts.CS.Name] = true;
+			}
+		});
+
+		const arrFonts = [];
+		for (let sFamilyName in oFontsDict)
+		{
+			arrFonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(sFamilyName), 0, "", 0, null));
+		}
+		AscFonts.FontPickerByCharacter.extendFonts(arrFonts);
+
+		if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(arrFonts))
+		{
+			return fCallback();
+		}
+
+		const oLoader = new AscCommon.CGlobalFontLoader();
+		oLoader.put_Api(oApi);
+		oLoader.LoadDocumentFonts2(arrFonts, Asc.c_oAscAsyncActionType.Information, fCallback);
+	};
+
+	CBulletPreviewDrawerBase.prototype.draw = function () {};
+
+	CBulletPreviewDrawerBase.prototype.checkFontsAndDraw = function ()
+	{
+		const oThis = this;
+		this.checkFonts(function ()
+		{
+			oThis.draw();
+		});
+	};
+
+
+	function CBulletPreviewDrawer(arrLvlInfo, nType)
+	{
+		CBulletPreviewDrawerBase.call(this);
+		this.m_nType = nType;
+		this.m_nCountOfLines = 3;
+		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
+		this.m_arrNumberingLvl = arrLvlInfo.map(function (oDrawingInfo) {return oDrawingInfo.arrLvls});
+		this.m_arrNumberingInfo = arrLvlInfo;
+		this.m_nSingleBulletFontSizeCoefficient = 0.6;
+		this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
+		this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.1375;
+
+		this.m_nMultiLvlIndentCoefficient = 1 / AscCommon.AscBrowser.retinaPixelRatio;
+	}
+	CBulletPreviewDrawer.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
+	CBulletPreviewDrawer.prototype.constructor = CBulletPreviewDrawer;
+
+	CBulletPreviewDrawer.prototype.drawSingleBullet = function (sDivId, arrLvls)
+	{
+		const oCanvas = this.getCanvas(sDivId);
+		if (!oCanvas) return;
+
+		const oGraphics = this.getGraphics(oCanvas);
+		const oLvl = arrLvls[0];
+		const nHeight_px = oCanvas.clientHeight;
+		const nWidth_px = oCanvas.clientWidth;
+		const drawingContent = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
+		if (typeof drawingContent !== "string")
+		{
+			const oImage = drawingContent.image;
+			if (oImage)
+			{
+				const oFormatBullet = new AscFormat.CBullet();
+				oFormatBullet.fillBulletImage(oImage.src);
+				oFormatBullet.drawSquareImage(sDivId, 0.125);
+			}
+		}
+		else
+		{
+			const nMaxFontSize = nHeight_px * this.m_nSingleBulletFontSizeCoefficient;
+			// для буллетов решено не уменьшать их превью, как и в word
+			//const oFitInformation = this.getInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, nMaxFontSize, nMaxFontSize);
+			//const oFitTextPr = oFitInformation.textPr;
+			const oTextPr = oLvl.GetTextPr();
+			oTextPr.FontSize = oTextPr.FontSizeCS = nMaxFontSize;
+			oLvl.SetJc(AscCommon.align_Left);
+			const oCalculationPosition = this.getXYForCenterPosition(oLvl, nWidth_px, nHeight_px);
+			const nX = oCalculationPosition.nX;
+			const nY = oCalculationPosition.nY;
+			const nLineHeight = oCalculationPosition.nLineHeight;
+			const sText = drawingContent;
+			this.drawTextWithLvlInformation(sText, oLvl, nX, nY, nLineHeight, oGraphics);
+		}
+	};
+
+	CBulletPreviewDrawer.prototype.getInformationWithFitFontSize = function (oLvl, nMaxWidth, nMaxHeight, nMinFontSize, nMaxFontSize)
+	{
+		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
+		if (typeof sText !== "string") return;
+		const oNewShape = new AscFormat.CShape();
+		oNewShape.createTextBody();
+		oNewShape.extX = nMaxWidth;
+		oNewShape.extY = nMaxHeight;
+		oNewShape.contentWidth = oNewShape.extX;
+		oNewShape.setPaddings({Left: 0, Top: 0, Right: 0, Bottom: 0});
+
+		const oParagraph = oNewShape.txBody.content.GetAllParagraphs()[0];
+		oParagraph.MoveCursorToStartPos();
+
+		const oLogicDocument = this.m_oLogicDocument;
+
+		const oStyles = oLogicDocument && oLogicDocument.Get_Styles();
+		if (oStyles && oStyles.Default && oStyles.Default.ParaPr)
+		{
+			oParagraph.Pr = oStyles.Default.ParaPr.Copy();
+		}
+		else
+		{
+			oParagraph.Pr = new AscCommonWord.CParaPr();
+		}
+
+		const oParaRun = new AscCommonWord.ParaRun(oParagraph);
+		const oTextPr = oLvl.GetTextPr().Copy();
+		oParaRun.Set_Pr(oTextPr);
+		oParaRun.AddText(sText);
+		oParagraph.AddToContent(0, oParaRun);
+
+		oTextPr.FontSize = nMaxFontSize;
+
+		oParagraph.TextPr.SetFontSize(oTextPr.FontSize);
+		// TODO: add function after merge, add set new font size
+		let nParagraphWidth = oParagraph.RecalculateMinMaxContentWidth().Max;
+		if (nParagraphWidth > oNewShape.contentWidth) {
+			const nNewFontSize = oNewShape.findFitFontSize(nMinFontSize, nMaxFontSize, true);
+			if (nNewFontSize !== null)
+			{
+				oNewShape.setFontSizeInSmartArt(nNewFontSize);
+			}
+		}
+
+		return oTextPr;
+	};
+
+
+	CBulletPreviewDrawer.prototype.getWidthHeightGlyphs = function (sText, oTextPr)
+	{
+		AscCommon.g_oTextMeasurer.SetTextPr(oTextPr);
+		const oSumInformation = {Width: 0, rasterOffsetX: 0, Height: 0, Ascent: 0, rasterOffsetY: 0};
+		let bFirstGlyphSymbol = false;
+		let nRemoveRightOffset = 0;
+		for (const oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			const nValue = oIterator.value();
+			const nFontSlot = AscWord.GetFontSlotByTextPr(nValue, oTextPr);
+			AscCommon.g_oTextMeasurer.SetFontSlot(nFontSlot, 1);
+			const oInfo = AscCommon.g_oTextMeasurer.Measure2Code(nValue);
+
+			// в ворде крайние пробелы в превью буллетов прижимаются к глифу, а не к ширине символа
+			if (!bFirstGlyphSymbol)
+			{
+				if (oInfo.WidthG)
+				{
+					oSumInformation.rasterOffsetX = oInfo.rasterOffsetX;
+					const nWidthWithRightOffset = oInfo.Width - oInfo.rasterOffsetX;
+					oSumInformation.Width += nWidthWithRightOffset;
+					nRemoveRightOffset = nWidthWithRightOffset - oInfo.WidthG;
+					bFirstGlyphSymbol = true;
+				}
+				else
+				{
+					oSumInformation.Width += oInfo.Width;
+				}
+
+			}
+			else
+			{
+				oSumInformation.Width += oInfo.Width;
+				if (oInfo.WidthG)
+				{
+					nRemoveRightOffset = oInfo.Width - oInfo.rasterOffsetX - oInfo.WidthG;
+				}
+			}
+
+			if (oSumInformation.Ascent + oSumInformation.rasterOffsetY < oInfo.Ascent + oInfo.rasterOffsetY)
+			{
+				oSumInformation.rasterOffsetY = oInfo.rasterOffsetY;
+				oSumInformation.Ascent = oInfo.Ascent;
+				oSumInformation.Height = oInfo.Height;
+			}
+		}
+		oSumInformation.Width -= nRemoveRightOffset;
+		return oSumInformation;
+	};
+
+	CBulletPreviewDrawer.prototype.getXYForCenterPosition = function (oLvl, nWidth, nHeight)
+	{
+		// Здесь будем считать позицию отрисовки
+		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
+		if (typeof sText !== 'string') return;
+		const oTextPr = oLvl.GetTextPr().Copy();
+		const oSumInformation = this.getWidthHeightGlyphs(sText, oTextPr);
+
+		 const nX = (nWidth >> 1) - Math.round((oSumInformation.Width / 2 + oSumInformation.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
+		 const nY = (nHeight >> 1) + Math.round((oSumInformation.Height / 2 + (oSumInformation.Ascent - oSumInformation.Height + oSumInformation.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
+		return {nX: nX, nY: nY, nLineHeight: oSumInformation.Height};
+	};
+
+	CBulletPreviewDrawer.prototype.drawSingleLvlWithLines = function (sDivId, arrLvls)
+	{
+		const nCountOfLines = this.m_nCountOfLines;
+		const oCanvas = this.getCanvas(sDivId);
+		if (!oCanvas) return;
+
+		const oGraphics = this.getGraphics(oCanvas);
+		oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
+
+		const oLvl = arrLvls[0];
+		oLvl.SetJc(AscCommon.align_Left);
+
+		const oTextPr = oLvl.GetTextPr();
+
+		const nWidth_px = oCanvas.clientWidth;
+		const nHeight_px = oCanvas.clientHeight;
+		const oContext = oCanvas.getContext("2d");
+		oContext.beginPath();
+
+		const nOffsetBase = 4;
+		const nLineWidth = 2;
+		// считаем расстояние между линиями
+		const nLineDistance = Math.floor(((nHeight_px - (nOffsetBase << 2)) - nLineWidth * nCountOfLines) / nCountOfLines);
+		// убираем погрешность в offset
+		const nOffset = (nHeight_px - (nLineWidth * nCountOfLines + nLineDistance * nCountOfLines)) >> 1;
+
+		const nTextBaseOffsetX = nOffset + Math.floor(2.25 * AscCommon.g_dKoef_mm_to_pix);
+
+		let nY = nOffset + 11;
+		for (let j = 0; j < nCountOfLines; j += 1)
+		{
+			const nYmm = Math.round(nY) * AscCommon.g_dKoef_pix_to_mm;
+			const nTextBaseXmm = Math.round(nTextBaseOffsetX) * AscCommon.g_dKoef_pix_to_mm;
+			const nWidthmm = Math.round((nWidth_px - nOffsetBase)) * AscCommon.g_dKoef_pix_to_mm;
+			const nWidthLinemm = 2 * AscCommon.g_dKoef_pix_to_mm;
+
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nYmm, nTextBaseXmm, nWidthmm, nWidthLinemm);
+			const nTextYx =  nTextBaseOffsetX - Math.floor(3.25 * AscCommon.g_dKoef_mm_to_pix);
+			const nTextYy = nY + (nLineWidth * 2.5);
+			const nLineHeight = nLineDistance - 4;
+			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
+			const drawingContent = oLvl.GetDrawingContent([oLvl], 0, j + 1, this.m_oLang);
+			if (typeof drawingContent !== "string")
+			{
+				this.drawImageBulletsWithLine(drawingContent, nTextYx, nTextYy, nLineHeight, oGraphics);
+			}
+			else
+			{
+				this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx, nTextYy, nLineHeight, oGraphics);
+			}
+			nY += (nLineWidth + nLineDistance);
+		}
+		this.cleanParagraphField(oGraphics, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, 0, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
+	};
+
+	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (sDivId, arrLvls, nFontSizeCoefficient)
+	{
+		const oCanvas = this.getCanvas(sDivId);
+		if (!oCanvas) return;
+		const oGraphics = this.getGraphics(oCanvas);
+
+		const oLvl = arrLvls[0];
+		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
+		if (typeof sText !== 'string') return;
+		const nHeight_px = oCanvas.clientHeight;
+		const nWidth_px = oCanvas.clientWidth;
+		const nMaxFontSize = nWidth_px * nFontSizeCoefficient;
+
+		const oFitTextPr = this.getInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, 5, nMaxFontSize);
+		oLvl.SetTextPr(oFitTextPr);
+		const oCalculationPosition = this.getXYForCenterPosition(oLvl, nWidth_px, nHeight_px);
+		const nX = oCalculationPosition.nX;
+		const nY = oCalculationPosition.nY;
+		const nLineHeight = oCalculationPosition.nLineHeight;
+
+		this.drawTextWithLvlInformation(sText, oLvl, nX, nY, nLineHeight, oGraphics);
+	};
+
+	CBulletPreviewDrawer.prototype.getHeadingTextInformation = function (oLvl, nTextXPosition, nTextYPosition)
+	{
+		return CBulletPreviewDrawerBase.prototype.getHeadingTextInformation.call(this, oLvl, nTextXPosition, nTextYPosition, this.m_oSecondaryTextColor.Copy());
+	};
+
+	CBulletPreviewDrawer.prototype.drawMultiLevelBullet = function (sDivId, arrLvls)
+	{
+		const nCountOfLines = this.m_nCountOfLines;
+		const oCanvas = this.getCanvas(sDivId);
+		if (!oCanvas) return;
+
+		const oGraphics = this.getGraphics(oCanvas);
+		oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
+
+		const nHeight_px = oCanvas.clientHeight;
+		const nWidth_px = oCanvas.clientWidth;
+
+		const nOffsetBase = 4;
+		const nLineWidth = 2;
+		const nLineDistance = Math.floor(((nHeight_px - (nOffsetBase << 2)) - nLineWidth * nCountOfLines) / nCountOfLines);
+		const nLineHeight = nLineDistance - 4;
+		const nOffset = (nHeight_px - (nLineWidth * nCountOfLines + nLineDistance * nCountOfLines)) >> 1;
+		let nY = nOffset + 11;
+
+		for (let i = 0; i < nCountOfLines; i += 1)
+		{
+			const oLvl = arrLvls[i];
+			oLvl.SetJc(AscCommon.align_Left);
+			const oTextPr = oLvl.GetTextPr();
+			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
+			const nNumberPosition = oLvl.GetNumberPosition();
+			const nTextYx =  nOffsetBase + (nNumberPosition) * this.m_nMultiLvlIndentCoefficient;
+			const nTextYy = nY + (nLineWidth * 2.5);
+			const nXPositionOfLine = nOffsetBase + (this.getFirstLineIndent(oLvl) * this.m_nMultiLvlIndentCoefficient) << 0;
+
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nXPositionOfLine * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+
+			const drawingContent = oLvl.GetDrawingContent(arrLvls, i, 1, this.m_oLang);
+			const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nXPositionOfLine, nTextYy);
+			if (typeof drawingContent !== 'string')
+			{
+				this.drawImageBulletsWithLine(drawingContent, nTextYx, nTextYy, nLineHeight, oGraphics, oParagraphTextOptions, oTextPr);
+			}
+			else
+			{
+				this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx, nTextYy, nLineHeight, oGraphics, oParagraphTextOptions);
+			}
+			nY += (nLineWidth + nLineDistance);
+		}
+		this.cleanParagraphField(oGraphics, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, 0, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
+	};
+
+	CBulletPreviewDrawer.prototype.draw = function ()
+	{
+		AscFormat.ExecuteNoHistory(function () {
+			for (let i = 0; i < this.m_arrNumberingInfo.length; i++)
+			{
+				const oDrawingInfo = this.m_arrNumberingInfo[i];
+				const sId = oDrawingInfo.divId;
+				const arrLvls = oDrawingInfo.arrLvls;
+
+				if (this.m_nType === 0)
+				{
+					if (oDrawingInfo.isRemoving)
+					{
+						this.drawNoneTextPreview(sId, arrLvls, this.m_nSingleBulletNoneFontSizeCoefficient);
+					}
+					else
+					{
+						this.drawSingleBullet(sId, arrLvls);
+					}
+				}
+				else if (this.m_nType === 1)
+				{
+					if (oDrawingInfo.isRemoving)
+					{
+						this.drawNoneTextPreview(sId, arrLvls, this.m_nLvlWithLinesNoneFontSizeCoefficient);
+					}
+					else
+					{
+						this.drawSingleLvlWithLines(sId, arrLvls);
+					}
+				}
+				else if (this.m_nType === 2)
+				{
+					if (oDrawingInfo.isRemoving)
+					{
+						this.drawNoneTextPreview(sId, arrLvls, this.m_nLvlWithLinesNoneFontSizeCoefficient);
+					}
+					else
+					{
+						this.drawMultiLevelBullet(sId, arrLvls);
+					}
+				}
+			}
+		}, this, []);
+
+
+	};
+
+	function CBulletPreviewDrawerChangeList(arrId, arrAscLvl) {
+		CBulletPreviewDrawerBase.call(this);
+		this.m_arrNumberingLvl = this.convertAscToNumberingLvl(arrAscLvl.Lvl);
+		this.m_arrId = arrId;
+	}
+	CBulletPreviewDrawerChangeList.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
+	CBulletPreviewDrawerChangeList.prototype.constructor = CBulletPreviewDrawerChangeList;
+
+	CBulletPreviewDrawerChangeList.prototype.getHeadingTextInformation = function (oLvl, nTextXPosition, nTextYPosition)
+	{
+		return CBulletPreviewDrawerBase.prototype.getHeadingTextInformation.call(this, oLvl, nTextXPosition, nTextYPosition, this.m_oSecondaryTextColor.Copy());
+	};
+
+	CBulletPreviewDrawerChangeList.prototype.getScaleCoefficientForMultiLevel = function (arrLvl, nWorkspaceWidth)
+	{
+		let nMaxNumberPosition = arrLvl[0].GetNumberPosition();
+		for (let i = 1; i < arrLvl.length; i += 1)
+		{
+			const oLvl = arrLvl[i];
+			const nNumberPosition = oLvl.GetNumberPosition();
+			if (nMaxNumberPosition < nNumberPosition)
+			{
+				nMaxNumberPosition = nNumberPosition;
+			}
+		}
+
+		const nNumberPositionScale = nWorkspaceWidth / (nMaxNumberPosition * AscCommon.g_dKoef_mm_to_pix);
+		const nThresholdScaleCoefficient = 0.3 / AscBrowser.retinaPixelRatio;
+		if (nNumberPositionScale < nThresholdScaleCoefficient)
+		{
+			return nNumberPositionScale;
+		}
+		return nThresholdScaleCoefficient;
+	};
+	CBulletPreviewDrawerChangeList.prototype.draw = function ()
+	{
+		AscFormat.ExecuteNoHistory(function ()
+		{
+			const nAmountOfPreview = Math.min(this.m_arrNumberingLvl.length, this.m_arrId.length);
+			const nOffsetBase = 5;
+			const nLineWidth = 2;
+
+			// посчитаем нужные переменные для одного canvas
+			let sDivId = this.m_arrId[0];
+			let oCanvas = this.getCanvas(sDivId);
+			const nHeight_px = oCanvas.clientHeight;
+			const nWidth_px = oCanvas.clientWidth;
+
+			const nY = (nHeight_px >> 1) - (nLineWidth >> 1);
+			const nLineHeight = (nHeight_px >> 1);
+			const nScaleCoefficient = this.getScaleCoefficientForMultiLevel(this.m_arrNumberingLvl, nWidth_px - nOffsetBase * 6);
+
+			for (let i = 0; i < nAmountOfPreview; i += 1)
+			{
+				const oLvl = this.m_arrNumberingLvl[i];
+				oLvl.Jc = AscCommon.align_Left;
+				const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, 1, this.m_oLang);
+				sDivId = this.m_arrId[i];
+				oCanvas = this.getCanvas(sDivId);
+				if (!oCanvas) return;
+				const oGraphics = this.getGraphics(oCanvas);
+				oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
+
+				const oTextPr = oLvl.GetTextPr();
+				oTextPr.FontSize = oTextPr.FontSizeCS = this.getFontSizeByLineHeight(nLineHeight);
+
+				const nNumberPosition = oLvl.GetNumberPosition();
+				const nXLinePosition = nOffsetBase + (this.getFirstLineIndent(oLvl) * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0;
+				const nTextYx = nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient;
+				const nTextYy = nY + (nLineWidth << 1);
+				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nXLinePosition * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+				const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nXLinePosition, nTextYy);
+				if (typeof drawingContent === "string")
+				{
+					this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx, nTextYy, (nHeight_px >> 1), oGraphics, oParagraphTextOptions);
+				}
+				else
+				{
+					if (drawingContent.image)
+					{
+						this.drawImageBulletsWithLine(drawingContent, nTextYx, nTextYy, (nHeight_px >> 1), oGraphics, oParagraphTextOptions, oTextPr);
+					}
+				}
+
+				this.cleanParagraphField(oGraphics, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, 0, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
+			}
+		}, this, []);
+
+	};
+
+	function CBulletPreviewDrawerAdvancedOptions(sDivId, props, nLvl, bIsMultiLvlAdvanceOptions)
+	{
+		CBulletPreviewDrawerBase.call(this);
+		this.m_sId = sDivId;
+		this.m_arrNumberingLvl = this.convertAscToNumberingLvl(props.Lvl);
+		this.m_nCurrentLvl = nLvl;
+		this.m_bIsMultiLvl = bIsMultiLvlAdvanceOptions;
+		this.m_oCanvas = this.getCanvas(this.m_sId);
+		this.m_oGraphics = this.getGraphics(this.m_oCanvas);
+		this.m_nScaleIndentsCoefficient = 0.55;
+	}
+	CBulletPreviewDrawerAdvancedOptions.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
+	CBulletPreviewDrawerAdvancedOptions.prototype.constructor = CBulletPreviewDrawerAdvancedOptions;
+
+	CBulletPreviewDrawerAdvancedOptions.prototype.addControlMultiLvl = function ()
+	{
+		if (!this.m_bIsMultiLvl || !this.m_oCanvas) return;
+		const oThis = this;
+		AscCommon.addMouseEvent(this.m_oCanvas, "down", function(e) {
+			AscCommon.stopEvent(e);
+			const nOffsetBase = 10;
+			const nLineWidth = 4;
+			const nHeight = parseInt(this.style.height, 10);
+			const nLineDistance = Math.floor(((nHeight - (nOffsetBase << 1)) - nLineWidth * 10) / 9);
+			const nOffset = (nHeight - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
+			const nCurrentLvl = oThis.m_nCurrentLvl;
+
+			let nYPos = e.pageY;
+			if (!AscFormat.isRealNumber(nYPos))
+			{
+				nYPos = e.clientY;
+			}
+			nYPos = (nYPos * AscCommon.AscBrowser.zoom);
+			const oClientRect = this.getBoundingClientRect();
+
+			if (AscFormat.isRealNumber(oClientRect.y))
+			{
+				nYPos -= oClientRect.y;
+			}
+			else if (AscFormat.isRealNumber(oClientRect.top))
+			{
+				nYPos -= oClientRect.top;
+			}
+
+			let nChangedCurrentLvl = 8;
+			let nY = nOffset + 2;
+			for (let i = 0; i < oThis.m_arrNumberingLvl.length; i++)
+			{
+				nY += (nLineWidth + nLineDistance);
+				if (i === nCurrentLvl)
+				{
+					nY += (nLineWidth + nLineDistance);
+				}
+
+				if (nYPos < (nY - ((nLineWidth + nLineDistance) >> 1)))
+				{
+					nChangedCurrentLvl = i;
+					break;
+				}
+			}
+			oThis.m_oApi.sendEvent("asc_onPreviewLevelChange", nChangedCurrentLvl);
+		});
+	};
+
+	CBulletPreviewDrawerAdvancedOptions.prototype.getHeadingTextInformation = function (oLvl, nTextXPosition, nTextYPosition)
+	{
+		return CBulletPreviewDrawerBase.prototype.getHeadingTextInformation.call(this, oLvl, nTextXPosition, nTextYPosition, this.m_oPrimaryTextColor.Copy());
+	};
+
+	CBulletPreviewDrawerAdvancedOptions.prototype.drawMultiLvlAdvancedOptions = function ()
+	{
+		const oCanvas = this.m_oCanvas;
+		if (!oCanvas) return;
+
+		const oGraphics = this.m_oGraphics;
+		const nHeight_px = oCanvas.clientHeight;
+		const nWidth_px = oCanvas.clientWidth;
+
+		const nOffsetBase = 10;
+		const nLineWidth = 4;
+		// считаем расстояние между линиями
+		const nLineDistance = Math.floor(((nHeight_px - (nOffsetBase << 1)) - nLineWidth * 10) / 9);
+		// убираем погрешность в offset
+		const nOffset = (nHeight_px - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
+		const nCurrentLvl = this.m_nCurrentLvl;
+
+		oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
+
+		let nY = nOffset + 2;
+		for (let i = 0; i < this.m_arrNumberingLvl.length; i += 1)
+		{
+			const oLvl = this.m_arrNumberingLvl[i];
+			const oTextPr = oLvl.GetTextPr();
+			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineDistance);
+			const nNumberPosition = oLvl.GetNumberPosition();
+			const nTextYx = (nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
+			const nIndentSize = (nOffsetBase + oLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
+			const nTextYy = nY + nLineWidth;
+			const nOffsetText = nOffsetBase + (this.getFirstLineIndent(oLvl) * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
+
+			if (i === nCurrentLvl)
+			{
+				oGraphics.p_color(this.m_oPrimaryTextColor.r, this.m_oPrimaryTextColor.g, this.m_oPrimaryTextColor.b, 255);
+
+				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nOffsetText * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+				nY += (nLineWidth + nLineDistance);
+				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+
+				oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
+			}
+			else
+			{
+				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nOffsetText * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+			}
+
+			const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nOffsetText, nTextYy);
+			const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, 1, this.m_oLang);
+			if (typeof drawingContent === "string")
+			{
+				this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx,  nTextYy, nLineDistance, oGraphics, oParagraphTextOptions);
+			}
+			else
+			{
+				if (drawingContent.image)
+				{
+					this.drawImageBulletsWithLine(drawingContent, nTextYx, nTextYy, nLineDistance, oGraphics, oParagraphTextOptions, oTextPr);
+				}
+			}
+
+			nY += (nLineWidth + nLineDistance);
+		}
+		this.cleanParagraphField(oGraphics, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, 0, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
+
+	};
+	CBulletPreviewDrawerAdvancedOptions.prototype.getScaleCoefficientForSingleLevel = function (nWorkspaceWidth)
+	{
+		const nCurrentLvl = this.m_nCurrentLvl;
+		const oCurrentLvl = this.m_arrNumberingLvl[nCurrentLvl];
+
+		const nNumberPosition = Math.round(oCurrentLvl.GetNumberPosition() * AscCommon.g_dKoef_mm_to_pix);
+		const nIndentSize = Math.round(oCurrentLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix);
+		const nTabSize = Math.round(oCurrentLvl.GetStopTab() * AscCommon.g_dKoef_mm_to_pix);
+
+		const nNumberPositionScaleCoefficient = nWorkspaceWidth / nNumberPosition;
+		const nIndentSizeScaleCoefficient = nWorkspaceWidth / nIndentSize;
+		const nTabSizeScaleCoefficient = nWorkspaceWidth / nTabSize;
+		const nScaleCoefficient = Math.min(nNumberPositionScaleCoefficient, nIndentSizeScaleCoefficient, nTabSizeScaleCoefficient);
+		if (nScaleCoefficient < 1)
+		{
+			return nScaleCoefficient;
+		}
+		return 1;
+	};
+	CBulletPreviewDrawerAdvancedOptions.prototype.drawSingleLvlAdvancedOptions = function ()
+	{
+		const oCanvas = this.m_oCanvas;
+		if (!oCanvas) return;
+		const oGraphics = this.m_oGraphics;
+		const nHeight_px = oCanvas.clientHeight;
+		const nWidth_px = oCanvas.clientWidth;
+
+		const nOffsetBase = 10;
+		const nLineWidth = 4;
+		const nCurrentLvl = this.m_nCurrentLvl;
+		const oCurrentLvl = this.m_arrNumberingLvl[nCurrentLvl];
+		const oTextPr = oCurrentLvl.GetTextPr();
+
+		const nLineDistance = (((nHeight_px - (nOffsetBase << 1)) - nLineWidth * 10) / 9) << 0;
+		oTextPr.FontSize = oTextPr.FontSizeCS = this.getFontSizeByLineHeight(nLineDistance);
+		let nMaxTextWidth = 0;
+		for (let i = 0; i < 3; i += 1)
+		{
+			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, i + 1, this.m_oLang);
+			if (typeof drawingContent === 'string')
+			{
+				const nTextWidth = this.getLvlTextWidth(drawingContent, oTextPr);
+				if (nMaxTextWidth < nTextWidth)
+				{
+					nMaxTextWidth = nTextWidth;
+				}
+			}
+			else
+			{
+				if (drawingContent.image)
+				{
+					const sFullImageSrc = drawingContent.image.src;
+					const oSizes = AscCommon.getSourceImageSize(sFullImageSrc);
+					const nImageHeight = oSizes.height;
+					const nImageWidth = oSizes.width;
+					nMaxTextWidth = (nImageWidth * nLineDistance / (nImageHeight ? nImageHeight : 1)) * drawingContent.amount;
+					break;
+				}
+			}
+
+		}
+		nMaxTextWidth = nMaxTextWidth >> 0;
+		const nOffset = (nHeight_px - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
+
+		oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
+
+		let nY = nOffset + 2 + 2 * (nLineWidth + nLineDistance);
+
+		const arrTextYy = [];
+		arrTextYy.push(nY + nLineWidth); nY += 2 * (nLineWidth + nLineDistance);
+		arrTextYy.push(nY + nLineWidth); nY += 2 * (nLineWidth + nLineDistance);
+		arrTextYy.push(nY + nLineWidth);
+
+		nY = nOffset + 2;
+		const nRightOffset = nWidth_px - nOffsetBase;
+		const nYDist = nLineWidth + nLineDistance;
+
+		const nLeftOffset2 = nOffsetBase;
+		const nRightOffset2 = nWidth_px - nOffsetBase;
+
+		// Здесь получаем коэффициент, чтобы при открытии всегда видеть отступ текста
+		const nScaleCoefficient = this.getScaleCoefficientForSingleLevel(nWidth_px - nOffsetBase * 5);
+		let nNumberPosition = nOffsetBase + ((oCurrentLvl.GetNumberPosition() * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
+		let nIndentSize = nOffsetBase + ((oCurrentLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
+		const nRawTabSize = oCurrentLvl.GetStopTab();
+		let nTabSize;
+		if (AscFormat.isRealNumber(nRawTabSize))
+		{
+			nTabSize = nOffsetBase + ((nRawTabSize * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
+		}
+
+		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
+		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
+
+		oGraphics.p_color(this.m_oPrimaryTextColor.r, this.m_oPrimaryTextColor.g, this.m_oPrimaryTextColor.b, 255);
+		let nTextYx = nNumberPosition;
+		let nOffsetTextX;
+		// если при прилегании к правому краю левый край текста упирается в оффсет, то линии текста должны двигаться вправо(это относится ко всем типам прилегания)
+		if ((nTextYx - nMaxTextWidth) < nLeftOffset2)
+		{
+			nTextYx = nLeftOffset2 + nMaxTextWidth;
+			nIndentSize += (nTextYx - nNumberPosition);
+			nIndentSize = nIndentSize >> 0;
+
+			nOffsetTextX = this.getFirstLineIndent(oCurrentLvl, nTextYx * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, AscFormat.isRealNumber(nTabSize) ? (nTabSize + (nTextYx - nNumberPosition)) * AscCommon.g_dKoef_pix_to_mm : null);
+
+			const nCurrentAlign = oCurrentLvl.Jc;
+			oCurrentLvl.Jc = AscCommon.align_Left;
+			// считаем позицию отдельно, чтобы нумерация по горизонтали начиналась с одного и того же места
+			if (nCurrentAlign === AscCommon.align_Right)
+			{
+				nTextYx -= nMaxTextWidth;
+			}
+			else if (nCurrentAlign === AscCommon.align_Center)
+			{
+				nTextYx -= nMaxTextWidth >> 1;
+			}
+		}
+		else
+		{
+			nOffsetTextX = this.getFirstLineIndent(oCurrentLvl, nTextYx * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, AscFormat.isRealNumber(nTabSize) ? nTabSize * AscCommon.g_dKoef_pix_to_mm : null);
+		}
+
+		for (let i = 0; i < 3; i += 1)
+		{
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nOffsetTextX, nRightOffset * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, nRightOffset * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
+		}
+
+		oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
+
+		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
+		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+
+		for (let i = 0; i < arrTextYy.length; i += 1)
+		{
+			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, i + 1, this.m_oLang);
+			const nTextYy = arrTextYy[i];
+			if (typeof drawingContent === "string")
+			{
+				this.drawTextWithLvlInformation(drawingContent, oCurrentLvl, nTextYx, nTextYy, nLineDistance, oGraphics);
+			}
+			else
+			{
+				if (drawingContent.image)
+				{
+					this.drawImageBulletsWithLine(drawingContent, nTextYx, nTextYy, nLineDistance, oGraphics);
+				}
+			}
+		}
+		this.cleanParagraphField(oGraphics, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, 0, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
+	};
+	CBulletPreviewDrawerAdvancedOptions.prototype.draw = function ()
+	{
+		AscFormat.ExecuteNoHistory(function ()
+		{
+			if (this.m_bIsMultiLvl)
+			{
+				this.drawMultiLvlAdvancedOptions();
+				this.addControlMultiLvl();
+			}
+			else
+			{
+				this.drawSingleLvlAdvancedOptions();
+			}
+		}, this, []);
+	};
 
 	window.Asc.g_signature_drawer = null;
 	function CSignatureDrawer(id, api, w, h)
@@ -9909,7 +11838,11 @@
                 {
                     if (_array[i]["change"].length > _checkPrefixLen)
                     {
-                    	_prefix = _array[i]["change"].substr(0, _checkPrefixLen);
+						if((Asc.editor || editor).binaryChanges) {
+							_prefix = String.prototype.fromUtf8(_array[i]["change"], 0, _checkPrefixLen);
+						} else {
+							_prefix = _array[i]["change"].substr(0, _checkPrefixLen);
+						}
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;
@@ -9928,7 +11861,11 @@
                 {
                     if (_array[i].length > _checkPrefixLen)
                     {
-                        _prefix = _array[i].substr(0, _checkPrefixLen);
+						if((Asc.editor || editor).binaryChanges) {
+							_prefix = String.prototype.fromUtf8(_array[i], 0, _checkPrefixLen);
+						} else {
+							_prefix = _array[i].substr(0, _checkPrefixLen);
+						}
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;
@@ -9943,7 +11880,11 @@
                 {
                     if (_array[i].m_pData.length > _checkPrefixLen)
                     {
-                        _prefix = _array[i].m_pData.substr(0, _checkPrefixLen);
+						if((Asc.editor || editor).binaryChanges) {
+							_prefix = String.prototype.fromUtf8(_array[i].m_pData, 0, _checkPrefixLen);
+						} else {
+							_prefix = _array[i].m_pData.substr(0, _checkPrefixLen);
+						}
                         if (-1 != _prefix.indexOf(this.cryptoPrefix))
                         {
                             isCrypted = true;
@@ -10533,9 +12474,25 @@
 			{
 				this.MathSelectPolygons.length = 0;
 			}
-			var arrBounds = oMath.Get_Bounds();
+			var arrBounds = oMath.GetBounds();
 			if (arrBounds.length <= 0)
 				return;
+
+			if (!oMath.IsEmpty()
+				&& 1 === arrBounds.length
+				&& 1 === arrBounds[0].length
+				&& (arrBounds[0][0].W < 0.001 || arrBounds[0][0].H < 0.001))
+			{
+				let tmpBounds = arrBounds[0][0];
+				arrBounds = [[{
+						Page : tmpBounds.Page,
+						X    : tmpBounds.X,
+						Y    : tmpBounds.Y,
+						W    : Math.max(tmpBounds.W, 0.1),
+						H    : Math.max(tmpBounds.H, 0.1)
+					}]];
+			}
+
 			var MPolygon = new CPolygon();
 			MPolygon.fill(arrBounds);
 			this.MathPolygons = MPolygon.GetPaths(PixelError);
@@ -11049,6 +13006,72 @@
 		this.CheckStyleDisplay();
 	};
 
+	function CFormatPainter(oApi) {
+		this.api = oApi;
+		this.state = AscCommon.c_oAscFormatPainterState.kOff;
+		this.data = null
+	}
+	CFormatPainter.prototype.isOn = function() {
+		return !this.isOff();
+	};
+	CFormatPainter.prototype.isOff = function() {
+		return this.state === AscCommon.c_oAscFormatPainterState.kOff;
+	};
+	CFormatPainter.prototype.toggle = function() {
+		if(this.isOn()) {
+			this.changeState(AscCommon.c_oAscFormatPainterState.kOff);
+		}
+		else {
+			this.changeState(AscCommon.c_oAscFormatPainterState.kOn);
+		}
+	};
+	CFormatPainter.prototype.setState = function(nState) {
+		this.state = nState;
+	};
+	CFormatPainter.prototype.getState = function(nState) {
+		return this.state;
+	};
+	CFormatPainter.prototype.toggleState = function() {
+		if(this.isOn()) {
+			this.setState(AscCommon.c_oAscFormatPainterState.kOff);
+		}
+		else {
+			this.setState(AscCommon.c_oAscFormatPainterState.kOn);
+		}
+	};
+	CFormatPainter.prototype.putState = function(nState) {
+		if(nState !== null && nState !== undefined) {
+			this.setState(nState);
+		}
+		else {
+			this.toggleState();
+		}
+	};
+	CFormatPainter.prototype.changeState = function(nState) {
+		this.setState(nState);
+		if(this.isOn()) {
+			this.checkData();
+		}
+	};
+	CFormatPainter.prototype.checkData = function() {
+		this.data = this.api.retrieveFormatPainterData();
+		return this.data;
+	};
+	CFormatPainter.prototype.clearData = function() {
+		this.data = null;
+	};
+
+	function CFormatPainterDataBase() {
+
+	}
+	CFormatPainterDataBase.prototype.isDrawingData = function()
+	{
+		return false;
+	};
+	CFormatPainterDataBase.prototype.getDocData = function()
+	{
+		return null;
+	};
 
 	//------------------------------------------------------------fill polyfill--------------------------------------------
 	if (!Array.prototype.findIndex) {
@@ -11200,6 +13223,11 @@
 			}
 			//todo quotes
 			if (textQualifier) {
+				if (!row.length) {
+					matrix.push(row.split(delimiterChar));
+					continue;
+				}
+
 				var _text = "";
 				var startQualifier = false;
 				for (var j = 0; j < row.length; j++) {
@@ -11284,6 +13312,10 @@
 		}
 		return null;
 	}
+	function valueToInt(value, def, radix) {
+		var num = parseInt(value, radix);
+		return !isNaN(num) ? num : def;
+	}
 
 	function valueToMm(value) {
 		var obj = valueToMmType(value);
@@ -11291,6 +13323,81 @@
 			return obj.val;
 		}
 		return null;
+	}
+	function universalMeasureToPt(val, koef, def) {
+		var nVal = parseFloat(val);
+		var nRes = def;
+		if (!isNaN(nVal)) {
+			if (-1 != val.indexOf("mm"))
+				nRes = nVal * 72 / (2.54 * 10);
+			else if (-1 != val.indexOf("cm"))
+				nRes = nVal * 72 / 2.54;
+			else if (-1 != val.indexOf("in"))
+				nRes = nVal * 72;
+			else if (-1 != val.indexOf("pt"))
+				nRes = nVal;
+			else if (-1 != val.indexOf("pc") || -1 != val.indexOf("pi"))
+				nRes = nVal * 12;
+			else if (-1 != val.indexOf("px"))
+				nRes = nVal / AscCommon.g_dDpiX;
+			else
+				nRes = nVal * koef;
+		}
+		return nRes;
+	}
+	function universalMeasureToTwips(val, koef, def) {
+		var nVal = parseFloat(val);
+		var nRes = def;
+		if (!isNaN(nVal)) {
+			if (-1 != val.indexOf("mm"))
+				nRes = nVal * 72 / (2.54 * 10 * 20);
+			else if (-1 != val.indexOf("cm"))
+				nRes = nVal * 72 / (2.54 * 20);
+			else if (-1 != val.indexOf("in"))
+				nRes = nVal * 72 / 20;
+			else if (-1 != val.indexOf("pt"))
+				nRes = nVal / 20;
+			else if (-1 != val.indexOf("pc") || -1 != val.indexOf("pi"))
+				nRes = nVal * 12 / 20;
+			else if (-1 != val.indexOf("px"))
+				nRes = nVal / (AscCommon.g_dDpiX * 20);
+			else
+				nRes = nVal * koef;
+		}
+		return nRes;
+	}
+	function universalMeasureToMm(val, koef, def) {
+		var nVal = parseFloat(val);
+		var nRes = def;
+		if (!isNaN(nVal)) {
+			if (-1 != val.indexOf("mm"))
+				nRes = nVal;
+			else if (-1 != val.indexOf("cm"))
+				nRes = nVal * 10;
+			else if (-1 != val.indexOf("in"))
+				nRes = nVal * 2.54 * 10;
+			else if (-1 != val.indexOf("pt"))
+				nRes = nVal * 2.54 * 10 / 72;
+			else if (-1 != val.indexOf("pc") || -1 != val.indexOf("pi"))
+				nRes = nVal * 12 * 2.54 * 10 / 72;
+			else if (-1 != val.indexOf("px"))
+				nRes = nVal * AscCommon.g_dKoef_pix_to_mm;
+			else
+				nRes = nVal * koef;
+		}
+		return nRes;
+	}
+	function universalMeasureToUnsignedPt(val, koef, def) {
+		var res = universalMeasureToPt(val, koef, def);
+		return res >= 0 ? res : def;
+	}
+	function universalMeasureToUnsignedTwips(val, koef, def) {
+		var res = universalMeasureToPt(val, koef, def);
+		return res >= 0 ? res : def;
+	}
+	function universalMeasureToUnsignedMm(val, koef, def) {
+		var res = universalMeasureToMm(val, koef, def);
+		return res >= 0 ? res : def;
 	}
 
 	function arrayMove(array, from, to) {
@@ -11492,10 +13599,17 @@
 			return;
 		}
 
-		var data = element.getContext("2d").getImageData(0, 0, element.width, element.height);
+		var data = null;
+		if(element.width > 0 && element.height > 0)
+		{
+			data = element.getContext("2d").getImageData(0, 0, element.width, element.height);
+		}
 		element.width = width;
 		element.height = height;
-		element.getContext("2d").putImageData(data, 0, 0);
+		if(data)
+		{
+			element.getContext("2d").putImageData(data, 0, 0);
+		}
 	};
 
 	function calculateCanvasSize(element, is_correction, is_wait_correction)
@@ -11728,12 +13842,207 @@
 		return sAction.indexOf("ppaction://hlink") === 0;
 	}
 
+	function generateHashParams() {
+		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64()};
+	}
+
+	function fromModelAlgorithmName(alg) {
+		switch (alg) {
+			case AscCommon.c_oSerAlgorithmNameTypes.MD2 :
+				alg = AscCommon.HashAlgs.MD2;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.MD4 :
+				alg = AscCommon.HashAlgs.MD4;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.MD5 :
+				alg = AscCommon.HashAlgs.MD5;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_160 :
+				alg = AscCommon.HashAlgs.RMD160;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_1 :
+				alg = AscCommon.HashAlgs.SHA1;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_256 :
+				alg = AscCommon.HashAlgs.SHA256;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_384 :
+				alg = AscCommon.HashAlgs.SHA384;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_512 :
+				alg = AscCommon.HashAlgs.SHA512;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.WHIRLPOOL :
+				alg = AscCommon.HashAlgs.WHIRLPOOL;
+				break;
+			default:
+				alg = AscCommon.HashAlgs.SHA256;
+		}
+		return alg;
+	}
+
+	function fromModelCryptAlgorithmSid(alg) {
+		var res = null;
+		switch (alg) {
+			case AscCommon.c_oSerCryptAlgorithmSid.MD2 :
+				res = AscCommon.HashAlgs.MD2;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.MD4 :
+				res = AscCommon.HashAlgs.MD4;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.MD5 :
+				res = AscCommon.HashAlgs.MD5;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_1 :
+				res = AscCommon.HashAlgs.SHA1;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.MAC :
+				//alg = AscCommon.HashAlgs.SHA1;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.RIPEMD :
+				//alg = AscCommon.HashAlgs.SHA256;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.RIPEMD_160 :
+				//alg = AscCommon.HashAlgs.SHA384;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.HMAC :
+				//alg = AscCommon.HashAlgs.SHA512;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_256 :
+				res = AscCommon.HashAlgs.SHA256;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_384 :
+				res = AscCommon.HashAlgs.SHA384;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_512 :
+				res = AscCommon.HashAlgs.SHA512;
+				break;
+		}
+		return res;
+	}
+
+	function getMemoryInfo() {
+		if(!(window.performance && window.performance.memory)) {
+			return "";
+		}
+		//https://gist.github.com/oryanmoshe/6b3ecd895c8a5eb9ae4ec4554f687737#file-window-performance-memory-1-js
+		return JSON.stringify(Object.getOwnPropertyNames(window.performance.memory.__proto__).reduce((acc,key) => {
+				if (key !== 'constructor')
+					acc[key] = window.performance.memory[key];
+				return acc;
+			}, {})
+		);
+	}
+	function getClientInfoString(type, opt_time, opt_memory) {
+		let res = type;
+		if (opt_time >= 0) {
+			res += ' time:' + Math.round(opt_time);
+		}
+		if (opt_memory) {
+			res += ' memory:' + opt_memory;
+		}
+		return res;
+	}
+	function sendClientLog(level, msg, api) {
+		if (!api) {
+			return;
+		}
+		api.CoAuthoringApi.sendClientLog(level, msg);
+	}
+
+	function getNativePrintRanges(sRanges, currentPageSrc, pagescount)
+	{
+		let pages = undefined;
+		switch (sRanges)
+		{
+			case "current":
+			{
+				let currentPage =  currentPageSrc;
+				if (undefined === currentPage)
+					currentPage = 1;
+				if (currentPage >= 1 && currentPage <= pagescount)
+				{
+					pages = new Array(pagescount);
+					pages[currentPage - 1] = true;
+				}
+				break;
+			}
+			case "all":
+			{
+				break;
+			}
+			default:
+			{
+				let ranges = sRanges.split(",");
+				for (let range = 0, rangesCount = ranges.length; range < rangesCount; range++)
+				{
+					if (ranges[range] === "")
+						continue;
+
+					let rangePages = ranges[range].split("-");
+					let rangeLen = rangePages.length;
+
+					let startPage = 1;
+					let endPage = pagescount;
+
+					switch (rangeLen)
+					{
+						case 0:
+						{
+							break;
+						}
+						case 1:
+						{
+							let pageNum = parseInt(rangePages[0]);
+							if (pageNum > 0 && pageNum <= pagescount)
+							{
+								startPage = pageNum;
+								endPage = pageNum;
+							}
+							break;
+						}
+						default:
+						{
+							if (rangePages[0] !== "")
+							{
+								let pageNum = parseInt(rangePages[0]);
+								if (pageNum > 0 && pageNum <= pagescount)
+								{
+									startPage = pageNum;
+								}
+							}
+							if (rangePages[1] !== "")
+							{
+								let pageNum = parseInt(rangePages[1]);
+								if (pageNum > 0 && pageNum <= pagescount)
+								{
+									endPage = pageNum;
+								}
+							}
+						}
+					}
+
+					if (startPage <= endPage)
+					{
+						if (pages === undefined)
+							pages = new Array(pagescount);
+
+						for (let i = startPage; i <= endPage; i++)
+							pages[i - 1] = true;
+					}
+				}
+			}
+		}
+		return pages;
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
-	window["AscCommon"].getJSZipUtils = getJSZipUtils;
-	window["AscCommon"].getJSZip = getJSZip;
+	window["AscCommon"].getSocketIO = getSocketIO;
 	window["AscCommon"].getBaseUrl = getBaseUrl;
+	window["AscCommon"].getBaseUrlPathname = getBaseUrlPathname;
+	window["AscCommon"].getIndex = getIndex;
 	window["AscCommon"].getEncodingParams = getEncodingParams;
 	window["AscCommon"].getEncodingByBOM = getEncodingByBOM;
 	window["AscCommon"].saveWithParts = saveWithParts;
@@ -11752,9 +14061,10 @@
 	window["AscCommon"].encodeSurrogateChar = encodeSurrogateChar;
 	window["AscCommon"].convertUnicodeToUTF16 = convertUnicodeToUTF16;
 	window["AscCommon"].convertUTF16toUnicode = convertUTF16toUnicode;
+	window["AscCommon"].UTF8ArrayToString = UTF8ArrayToString;
 	window["AscCommon"].build_local_rx = build_local_rx;
 	window["AscCommon"].GetFileName = GetFileName;
-	window["AscCommon"].GetFileExtension = GetFileExtension;
+	window["AscCommon"]['GetFileExtension'] = window["AscCommon"].GetFileExtension = GetFileExtension;
 	window["AscCommon"].changeFileExtention = changeFileExtention;
 	window["AscCommon"].getExtentionByFormat = getExtentionByFormat;
 	window["AscCommon"].InitOnMessage = InitOnMessage;
@@ -11762,10 +14072,12 @@
 	window["AscCommon"].ShowDocumentFileDialog = ShowDocumentFileDialog;
 	window["AscCommon"].ShowSpreadsheetFileDialog = ShowSpreadsheetFileDialog;
 	window["AscCommon"].ShowTextFileDialog = ShowTextFileDialog;
+	window["AscCommon"].ShowXmlFileDialog = ShowXmlFileDialog;
 	window["AscCommon"].InitDragAndDrop = InitDragAndDrop;
 	window["AscCommon"].UploadImageFiles = UploadImageFiles;
     window["AscCommon"].UploadImageUrls = UploadImageUrls;
 	window["AscCommon"].DownloadOriginalFile = DownloadOriginalFile;
+	window["AscCommon"].uploadDataUrlAsFile = uploadDataUrlAsFile;
 	window["AscCommon"].DownloadFileFromBytes = DownloadFileFromBytes;
 	window["AscCommon"].CanDropFiles = CanDropFiles;
 	window["AscCommon"].getUrlType = getUrlType;
@@ -11776,9 +14088,14 @@
 	window["AscCommon"].readValAttr = readValAttr;
 	window["AscCommon"].getNumFromXml = getNumFromXml;
 	window["AscCommon"].getColorFromXml = getColorFromXml;
+	window["AscCommon"].getColorFromXml2 = getColorFromXml2;
+	window["AscCommon"].writeColorToXml = writeColorToXml;
 	window["AscCommon"].getBoolFromXml = getBoolFromXml;
 	window["AscCommon"].initStreamFromResponse = initStreamFromResponse;
 	window["AscCommon"].checkStreamSignature = checkStreamSignature;
+	window["AscCommon"].checkOOXMLSignature = checkOOXMLSignature;
+	window["AscCommon"].checkNativeViewerSignature = checkNativeViewerSignature;
+	window["AscCommon"].getEditorBySignature = getEditorBySignature;
 
 	window["AscCommon"].DocumentUrls = DocumentUrls;
 	window["AscCommon"].OpenFileResult = OpenFileResult;
@@ -11791,17 +14108,28 @@
 	window["AscCommon"].MMToTwips = MMToTwips;
 	window["AscCommon"].RomanToInt = RomanToInt;
 	window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
-	window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
+	window["Asc"]["IntToNumberFormat"] = window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
 	window["AscCommon"].IsSpace = IsSpace;
 	window["AscCommon"].IntToHex = IntToHex;
+	window["AscCommon"].Int32ToHex = Int32ToHex;
+	window["AscCommon"].Int32ToHexOrNull = Int32ToHexOrNull;
+	window["AscCommon"].Int16ToHex = Int16ToHex;
+	window["AscCommon"].Int16ToHexOrNull = Int16ToHexOrNull;
+	window["AscCommon"].ByteToHex = ByteToHex;
 	window["AscCommon"].IsDigit = IsDigit;
 	window["AscCommon"].IsLetter = IsLetter;
+	window["AscCommon"].IsPunctuation = window["AscCommon"]['IsPunctuation'] = IsPunctuation;
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
+	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].CompareStrings = CompareStrings;
+	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;
+	window["AscCommon"].IsSupportOFormFeature = IsSupportOFormFeature;
 
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
+	window["AscCommon"].loadSmartArtBinary = loadSmartArtBinary;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;
@@ -11809,11 +14137,12 @@
 	window["AscCommon"].checkAddColorScheme = checkAddColorScheme;
 	window["AscCommon"].getIndexColorSchemeInArray = getIndexColorSchemeInArray;
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
+	window["AscCommon"].IsEastAsianFont = IsEastAsianFont;
+	window["AscCommon"].IsComplexScript = IsComplexScript;
 	window["AscCommon"].CMathTrack = CMathTrack;
 	window["AscCommon"].CPolygon = CPolygon;
 	window['AscCommon'].CDrawingCollaborativeTargetBase = CDrawingCollaborativeTargetBase;
 
-	window["AscCommon"].JSZipWrapper = JSZipWrapper;
 	window["AscCommon"].g_oDocumentUrls = g_oDocumentUrls;
 	window["AscCommon"].FormulaTablePartInfo = FormulaTablePartInfo;
 	window["AscCommon"].cBoolLocal = cBoolLocal;
@@ -11824,8 +14153,10 @@
 	window["AscCommon"].rx_space = rx_space;
 	window["AscCommon"].rx_defName = rx_defName;
 	window["AscCommon"].rx_r1c1DefError = rx_r1c1DefError;
+	window["AscCommon"].rx_allowedProtocols = rx_allowedProtocols;
 
 	window["AscCommon"].kCurFormatPainterWord = kCurFormatPainterWord;
+	window["AscCommon"].kCurFormatPainterDrawing = kCurFormatPainterDrawing;
 	window["AscCommon"].parserHelp = parserHelp;
 	window["AscCommon"].g_oIdCounter = g_oIdCounter;
 
@@ -11837,6 +14168,12 @@
 	window["AscCommon"].isEmptyObject = isEmptyObject;
 
 	window["AscCommon"].getSourceImageSize = getSourceImageSize;
+
+	window["AscCommon"].CEventListenerInfo = CEventListenerInfo;
+
+	window["AscCommon"].CBulletPreviewDrawer = window["AscCommon"]["CBulletPreviewDrawer"] = CBulletPreviewDrawer;
+	window["AscCommon"].CBulletPreviewDrawerChangeList = window["AscCommon"]["CBulletPreviewDrawerChangeList"] = CBulletPreviewDrawerChangeList;
+	window["AscCommon"].CBulletPreviewDrawerAdvancedOptions = window["AscCommon"]["CBulletPreviewDrawerAdvancedOptions"] = CBulletPreviewDrawerAdvancedOptions;
 
 	window["AscCommon"].CSignatureDrawer = window["AscCommon"]["CSignatureDrawer"] = CSignatureDrawer;
 	var prot = CSignatureDrawer.prototype;
@@ -11853,6 +14190,13 @@
 
 	window["AscCommon"].valueToMm = valueToMm;
 	window["AscCommon"].valueToMmType = valueToMmType;
+	window["AscCommon"].valueToInt = valueToInt;
+	window["AscCommon"].universalMeasureToMm = universalMeasureToMm;
+	window["AscCommon"].universalMeasureToUnsignedMm = universalMeasureToUnsignedMm;
+	window["AscCommon"].universalMeasureToPt = universalMeasureToPt;
+	window["AscCommon"].universalMeasureToUnsignedPt = universalMeasureToUnsignedPt;
+	window["AscCommon"].universalMeasureToTwips = universalMeasureToTwips;
+	window["AscCommon"].universalMeasureToUnsignedTwips = universalMeasureToUnsignedTwips;
 	window["AscCommon"].arrayMove = arrayMove;
 	window["AscCommon"].getRangeArray = getRangeArray;
 	window["AscCommon"].isEqualSortedArrays = isEqualSortedArrays;
@@ -11861,7 +14205,7 @@
 
 	window["AscCommon"].calculateCanvasSize = calculateCanvasSize;
 
-	window["AscCommon"].private_IsAbbreviation = private_IsAbbreviation;
+	window["AscCommon"].IsAbbreviation = IsAbbreviation;
 
 	window["AscCommon"].getTextDelta = getTextDelta;
 
@@ -11883,6 +14227,32 @@
 	window['AscCommon'].g_oCRC32  = g_oCRC32;
 	window["AscCommon"].RangeTopBottomIterator = RangeTopBottomIterator;
 	window["AscCommon"].IsLinkPPAction = IsLinkPPAction;
+	window["AscCommon"].generateHashParams = generateHashParams;
+	window["AscCommon"].fromModelAlgorithmName = fromModelAlgorithmName;
+	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;
+	window["AscCommon"].getMemoryInfo = getMemoryInfo;
+	window["AscCommon"].getClientInfoString = getClientInfoString;
+	window["AscCommon"].sendClientLog = sendClientLog;
+
+	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
+
+	window["AscCommon"].getEditorByBinSignature = getEditorByBinSignature;
+	window["AscCommon"].getEditorByOOXMLSignature = getEditorByOOXMLSignature;
+
+	window["AscCommon"].escapeHtmlCharacters = function(word)
+	{
+		if (!word)
+			return "";
+		word = word.replaceAll("&", "&#38;");
+		word = word.replaceAll("<", "&#60;");
+		word = word.replaceAll(">", "&#62;");
+		word = word.replaceAll("\"", "&#34;");
+		word = word.replaceAll("\'", "&#39;");
+		return word;
+	}
+	window["AscCommon"].CFormatPainter = CFormatPainter;
+	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
+
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
@@ -11956,7 +14326,7 @@ window["asc_IsNeedBuildCryptedFile"] = function()
         }
         else
         {
-            if (0 != AscCommon.CollaborativeEditing.m_aAllChanges.length)
+            if (0 != AscCommon.CollaborativeEditing.GetAllChangesCount())
                 _returnValue = true;
         }
     }
@@ -12172,7 +14542,7 @@ window["NativeFileOpen_error"] = function(error, _file_hash, _docInfo)
     }
     else if ("error" == error)
     {
-        _api.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
+        _api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.Critical);
         return;
     }
 };

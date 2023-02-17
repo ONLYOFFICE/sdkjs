@@ -51,7 +51,7 @@ var c_oMainTables = {
     VmlDrawing		: 5,
     TableStyles		: 6,
     PresProps		: 7,
-	JsaProject		: 8,
+    Customs 		: 8,
 
     Themes			: 20,
     ThemeOverride	: 21,
@@ -262,6 +262,18 @@ function CBinaryFileWriter()
         this.data[this.pos++] = (val >>> 8)&0xFF;
         this.data[this.pos++] = (val >>> 16)&0xFF;
         this.data[this.pos++] = (val >>> 24)&0xFF;
+    };
+    this.WriteIntToPPTY = function (val)
+    {
+        this.WriteUChar(g_nodeAttributeStart);
+        this._WriteInt1(0, val);
+        this.WriteUChar(g_nodeAttributeEnd);
+    };
+    this.WriteByteToPPTY = function (val)
+    {
+        this.WriteUChar(g_nodeAttributeStart);
+        this._WriteChar1(0, val);
+        this.WriteUChar(g_nodeAttributeEnd);
     };
     this.WriteDouble = function(val)
     {
@@ -594,11 +606,14 @@ function CBinaryFileWriter()
 			this.WriteCustomProperties(presentation.CustomProperties, presentation.Api);
 
         // ViewProps
-		if (presentation.ViewProps)
-			this.WriteViewProps(presentation.ViewProps);
+		if (presentation.viewPr)
+			this.WriteViewProps(presentation.viewPr);
 
         // PresProps
 		this.WritePresProps(presentation);
+
+        //Customs
+        this.WriteCustomXml(presentation);
 
         // presentation
         this.WritePresentation(presentation);
@@ -754,7 +769,11 @@ function CBinaryFileWriter()
         {
             if(oTableStyleIdMap.hasOwnProperty(key))
             {
-                this.tableStylesGuides[key] = "{" + GUID() + "}"
+                const oStyle = AscCommon.g_oTableId.Get_ById(key);
+                if (oStyle)
+                {
+                    this.tableStylesGuides[key] = oStyle.GetStyleId() || AscCommon.CreateGUID();
+                }
             }
         }
 
@@ -1038,10 +1057,11 @@ function CBinaryFileWriter()
         this.StartMainRecord(c_oMainTables.CustomProperties);
         customProperties.toStream(this, api);
     };
-    this.WriteViewProps = function(viewprops)
+    this.WriteViewProps = function(viewPr)
     {
         this.StartMainRecord(c_oMainTables.ViewProps);
         this.StartRecord(c_oMainTables.ViewProps);
+        viewPr.toPPTY(this);
         this.EndRecord();
     };
     this.WritePresProps = function(presentation)
@@ -1101,6 +1121,16 @@ function CBinaryFileWriter()
             this.EndRecord();
         }
         this.EndRecord();
+    };
+
+    this.WriteCustomXml = function(presentation)
+    {
+        if(!presentation.CustomXmlData)
+        {
+            return;
+        }
+        this.StartMainRecord(c_oMainTables.Customs);
+        this.WriteBuffer(presentation.CustomXmlData, 0, presentation.CustomXmlData.length);
     };
 
     this.WritePresentation = function(presentation)
@@ -1195,11 +1225,8 @@ function CBinaryFileWriter()
                 this.EndRecord();
             }
         }
-        if (presentation.Api.vbaMacros) {
-            this.StartRecord(8);
-            this.WriteBuffer(presentation.Api.vbaMacros, 0, presentation.Api.vbaMacros.length);
-            this.EndRecord();
-        }
+        this.WriteRecord4(8, presentation.Api.vbaProject);
+
 		var macros = presentation.Api.macros.GetData();
 		if (macros) {
 			this.StartRecord(9);
@@ -1392,294 +1419,17 @@ function CBinaryFileWriter()
 
             oThis.WriteUChar(g_nodeAttributeStart);
 
-            switch (_transition.TransitionType)
-            {
-                case c_oAscSlideTransitionTypes.Fade:
-                {
-                    oThis._WriteString2(0, "p:fade");
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Fade_Smoothly:
-                        {
-                            oThis._WriteString2(1, "thruBlk");
-                            oThis._WriteString2(2, "0");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Fade_Through_Black:
-                        {
-                            oThis._WriteString2(1, "thruBlk");
-                            oThis._WriteString2(2, "1");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
+            let sNodeName = null, aAttrNames = [], aAttrValues = [];
+            sNodeName = _transition.fillXmlParams(aAttrNames, aAttrValues);
+            if(sNodeName) {
+                oThis._WriteString2(0, sNodeName);
+                for(let nAttr = 0; nAttr < aAttrNames.length; ++nAttr) {
+                    oThis._WriteString2(1, aAttrNames[nAttr]);
                 }
-                case c_oAscSlideTransitionTypes.Push:
-                {
-                    oThis._WriteString2(0, "p:push");
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Param_Left:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "r");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Right:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "l");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Top:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "d");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Bottom:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "u");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
+                for(let nAttr = 0; nAttr < aAttrValues.length; ++nAttr) {
+                    oThis._WriteString2(2, aAttrValues[nAttr]);
                 }
-                case c_oAscSlideTransitionTypes.Wipe:
-                {
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Param_Left:
-                        {
-                            oThis._WriteString2(0, "p:wipe");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "r");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Right:
-                        {
-                            oThis._WriteString2(0, "p:wipe");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "l");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Top:
-                        {
-                            oThis._WriteString2(0, "p:wipe");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "d");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Bottom:
-                        {
-                            oThis._WriteString2(0, "p:wipe");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "u");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_TopLeft:
-                        {
-                            oThis._WriteString2(0, "p:strips");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "rd");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_TopRight:
-                        {
-                            oThis._WriteString2(0, "p:strips");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "ld");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_BottomLeft:
-                        {
-                            oThis._WriteString2(0, "p:strips");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "ru");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_BottomRight:
-                        {
-                            oThis._WriteString2(0, "p:strips");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "lu");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                case c_oAscSlideTransitionTypes.Split:
-                {
-                    oThis._WriteString2(0, "p:split");
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Split_HorizontalIn:
-                        {
-                            oThis._WriteString2(1, "orient");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "horz");
-                            oThis._WriteString2(2, "in");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Split_HorizontalOut:
-                        {
-                            oThis._WriteString2(1, "orient");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "horz");
-                            oThis._WriteString2(2, "out");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Split_VerticalIn:
-                        {
-                            oThis._WriteString2(1, "orient");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "vert");
-                            oThis._WriteString2(2, "in");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Split_VerticalOut:
-                        {
-                            oThis._WriteString2(1, "orient");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "vert");
-                            oThis._WriteString2(2, "out");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                case c_oAscSlideTransitionTypes.UnCover:
-                case c_oAscSlideTransitionTypes.Cover:
-                {
-                    if (_transition.TransitionType == c_oAscSlideTransitionTypes.Cover)
-                        oThis._WriteString2(0, "p:cover");
-                    else
-                        oThis._WriteString2(0, "p:pull");
-
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Param_Left:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "r");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Right:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "l");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Top:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "d");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Bottom:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "u");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_TopLeft:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "rd");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_TopRight:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "ld");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_BottomLeft:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "ru");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_BottomRight:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "lu");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                case c_oAscSlideTransitionTypes.Clock:
-                {
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Clock_Clockwise:
-                        {
-                            oThis._WriteString2(0, "p:wheel");
-                            oThis._WriteString2(1, "spokes");
-                            oThis._WriteString2(2, "1");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Clock_Counterclockwise:
-                        {
-                            oThis._WriteString2(0, "p14:wheelReverse");
-                            oThis._WriteString2(1, "spokes");
-                            oThis._WriteString2(2, "1");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Clock_Wedge:
-                        {
-                            oThis._WriteString2(0, "p:wedge");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                case c_oAscSlideTransitionTypes.Zoom:
-                {
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Zoom_In:
-                        {
-                            oThis._WriteString2(0, "p14:warp");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "in");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Zoom_Out:
-                        {
-                            oThis._WriteString2(0, "p14:warp");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "out");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Zoom_AndRotate:
-                        {
-                            oThis._WriteString2(0, "p:newsflash");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                default:
-                    break;
             }
-
             oThis.WriteUChar(g_nodeAttributeEnd);
 
             oThis.EndRecord();
@@ -2228,8 +1978,13 @@ function CBinaryFileWriter()
         if(rPr.TextOutline)
             oThis.WriteRecord1(0, rPr.TextOutline, oThis.WriteLn);
 
-        if(rPr.Unifill)
+        var color = rPr.Color;
+        if (color && !(rPr.Unifill && rPr.Unifill.fill)) {
+            var unifill = AscFormat.CreateSolidFillRGBA(color.r, color.g, color.b, 255);
+            oThis.WriteRecord1(1, unifill, oThis.WriteUniFill);
+        } else if(rPr.Unifill) {
             oThis.WriteRecord1(1, rPr.Unifill, oThis.WriteUniFill);
+        }
 
         if (rPr.RFonts)
         {
@@ -2247,10 +2002,12 @@ function CBinaryFileWriter()
             oThis.WriteRecord1(7, hlinkObj, oThis.WriteHyperlink);
         }
 
-        if (rPr.HighlightColor)
-        {
+        if (rPr.HighlightColor) {
             oThis.WriteRecord1(12, rPr.HighlightColor, oThis.WriteHighlightColor);
+        } else if (rPr.HighLight && rPr.HighLight !== AscCommonWord.highlight_None) {
+            oThis.WriteRecord1(12, rPr.HighLight.ConvertToUniColor(), oThis.WriteHighlightColor);
         }
+
     };
 
     this.WriteHighlightColor = function (HighlightColor) {
@@ -3119,12 +2876,12 @@ function CBinaryFileWriter()
                         var _num = (fill.srcRect.t * 1000) >> 0;
                         oThis._WriteString1(1, "" + _num);
                     }
-                    if (fill.srcRect.l != null)
+                    if (fill.srcRect.r != null)
                     {
                         var _num = ((100 - fill.srcRect.r) * 1000) >> 0;
                         oThis._WriteString1(2, "" + _num);
                     }
-                    if (fill.srcRect.l != null)
+                    if (fill.srcRect.b != null)
                     {
                         var _num = ((100 - fill.srcRect.b) * 1000) >> 0;
                         oThis._WriteString1(3, "" + _num);
@@ -3748,12 +3505,12 @@ function CBinaryFileWriter()
         oThis._WriteString2(1, ole.m_sData);
         oThis._WriteInt2(2, ratio * ole.m_nPixWidth);
         oThis._WriteInt2(3, ratio * ole.m_nPixHeight);
-        oThis._WriteUChar2(4, 0);
+        oThis._WriteUChar2(4, ole.m_nDrawAspect);
         oThis._WriteUChar2(5, 0);
         oThis._WriteString2(7, ole.m_sObjectFile);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
-        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && ole.m_aBinaryData !== null)
+        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && ole.m_aBinaryData.length !== 0)
         {
             oThis.WriteRecord1(1, ole.m_nOleType, function(val){
                 oThis.WriteUChar(val);
@@ -3775,7 +3532,14 @@ function CBinaryFileWriter()
         }
         else
         {
-            nvGraphicFramePr = {};
+            if(grObj.getUniNvProps)
+            {
+                nvGraphicFramePr = grObj.getUniNvProps();
+            }
+            if(!nvGraphicFramePr)
+            {
+                nvGraphicFramePr = {};
+            }
         }
         nvGraphicFramePr.locks = grObj.locks;
         var nObjectType = grObj.getObjectType();
@@ -3882,78 +3646,7 @@ function CBinaryFileWriter()
 
     this.GenerateTableWriteGrid = function(table)
     {
-        var TableGrid = {};
-
-        var _rows = table.Content;
-        var _cols = table.TableGrid;
-
-        var _cols_count = _cols.length;
-        var _rows_count = _rows.length;
-
-        TableGrid.Rows = new Array(_rows_count);
-
-        for (var i = 0; i < _rows_count; i++)
-        {
-            TableGrid.Rows[i] = {};
-            TableGrid.Rows[i].Cells = [];
-
-            var _index = 0;
-            var _cells_len = _rows[i].Content.length;
-            for (var j = 0; j < _cells_len; j++)
-            {
-                var _cell = _rows[i].Content[j];
-
-                var _cell_info = {};
-                _cell_info.Cell = _cell;
-                _cell_info.row_span = 1;
-                _cell_info.grid_span = (_cell.Pr.GridSpan === undefined || _cell.Pr.GridSpan == null) ? 1 : _cell.Pr.GridSpan;
-                _cell_info.hMerge = false;
-                _cell_info.vMerge = false;
-                _cell_info.isEmpty = false;
-
-                if (_cell.Pr.VMerge == vmerge_Continue)
-                    _cell_info.vMerge = true;
-
-                TableGrid.Rows[i].Cells.push(_cell_info);
-                if (_cell_info.grid_span > 1)
-                {
-                    for (var t = _cell_info.grid_span - 1; t > 0; t--)
-                    {
-                        var _cell_info_empty = {};
-                        _cell_info_empty.isEmpty = true;
-                        _cell_info_empty.vMerge = _cell_info.vMerge;
-
-                        TableGrid.Rows[i].Cells.push(_cell_info_empty);
-                    }
-                }
-            }
-        }
-
-        for (var i = 0; i < _cols_count; i++)
-        {
-            var _index = 0;
-            while (_index < _rows_count)
-            {
-                var _count = 1;
-                for (var j = _index + 1; j < _rows_count; j++)
-                {
-                    if (i >= TableGrid.Rows[j].Cells.length)
-                        continue;
-
-                    if (TableGrid.Rows[j].Cells[i].vMerge !== true)
-                        break;
-
-                    ++_count;
-                }
-
-                if (i < TableGrid.Rows[_index].Cells.length)
-                    TableGrid.Rows[_index].Cells[i].row_span = _count;
-
-                _index += _count;
-            }
-        }
-
-        return TableGrid;
+        return GenerateTableWriteGrid(table);
     };
 
     this.WriteEmptyTableCell = function(_info)
@@ -3990,27 +3683,10 @@ function CBinaryFileWriter()
     {
         oThis.WriteUChar(g_nodeAttributeStart);
 
-        if (row.Pr.Height !== undefined && row.Pr.Height != null){
-			var fMaxTopMargin = 0, fMaxBottomMargin = 0, fMaxTopBorder = 0, fMaxBottomBorder = 0;
-			for(i = 0;  i < row.Content.length; ++i){
-				var oCell = row.Content[i];
-				var oMargins = oCell.GetMargins();
-				if(oMargins.Bottom.W > fMaxBottomMargin){
-					fMaxBottomMargin = oMargins.Bottom.W;
-				}
-				if(oMargins.Top.W > fMaxTopMargin){
-					fMaxTopMargin = oMargins.Top.W;
-				}
-				var oBorders = oCell.Get_Borders();
-				if(oBorders.Top.Size > fMaxTopBorder){
-					fMaxTopBorder = oBorders.Top.Size;
-				}
-				if(oBorders.Bottom.Size > fMaxBottomBorder){
-					fMaxBottomBorder = oBorders.Bottom.Size;
-				}
-			}
-            oThis._WriteInt1(0, ( (row.Pr.Height.Value + fMaxBottomMargin + fMaxTopMargin + fMaxTopBorder/2 + fMaxBottomBorder/2) * 36000) >> 0);
-		}
+        let nHeight = GetTableRowHeight(row);
+        if(nHeight !== null) {
+            oThis._WriteInt1(0, nHeight);
+        }
 
         oThis.WriteUChar(g_nodeAttributeEnd);
 
@@ -4185,12 +3861,12 @@ function CBinaryFileWriter()
         {
             oThis._WriteString1(0, oThis.tableStylesGuides[obj.style]);
         }
-        oThis._WriteBool1(2, obj.look.m_bFirst_Row);
-        oThis._WriteBool1(3, obj.look.m_bFirst_Col);
-        oThis._WriteBool1(4, obj.look.m_bLast_Row);
-        oThis._WriteBool1(5, obj.look.m_bLast_Col);
-        oThis._WriteBool1(6, obj.look.m_bBand_Hor);
-        oThis._WriteBool1(7, obj.look.m_bBand_Ver);
+        oThis._WriteBool1(2, obj.look.IsFirstRow());
+        oThis._WriteBool1(3, obj.look.IsFirstCol());
+        oThis._WriteBool1(4, obj.look.IsLastRow());
+        oThis._WriteBool1(5, obj.look.IsLastCol());
+        oThis._WriteBool1(6, obj.look.IsBandHor());
+        oThis._WriteBool1(7, obj.look.IsBandVer());
 
         oThis.WriteUChar(g_nodeAttributeEnd);
 
@@ -4587,7 +4263,7 @@ function CBinaryFileWriter()
         oThis.WriteUChar(g_nodeAttributeStart);
         oThis._WriteInt1(0, cNvPr.id);
         oThis._WriteString1(1, cNvPr.name);
-		oThis._WriteBool1(2, cNvPr.isHidden);
+		oThis._WriteBool2(2, cNvPr.isHidden);
 		oThis._WriteString2(3, cNvPr.title);
 		oThis._WriteString2(4, cNvPr.descr);
 		oThis._WriteBool2(5, cNvPr.form);
@@ -5732,7 +5408,7 @@ function CBinaryFileWriter()
             _writer._WriteString2(1, ole.m_sData);
 			_writer._WriteInt2(2, ratio * ole.m_nPixWidth);
 			_writer._WriteInt2(3, ratio * ole.m_nPixHeight);
-            _writer._WriteUChar2(4, 0);
+            _writer._WriteUChar2(4, ole.m_nDrawAspect);
             _writer._WriteUChar2(5, 0);
 			_writer._WriteString2(7, ole.m_sObjectFile);
             _writer.WriteUChar(g_nodeAttributeEnd);
@@ -5787,9 +5463,97 @@ function CBinaryFileWriter()
         };
     }
 
+    function GenerateTableWriteGrid(table)
+    {
+        var TableGrid = {};
+
+        var _rows = table.Content;
+        var _cols = table.TableGrid;
+
+        var _cols_count = _cols.length;
+        var _rows_count = _rows.length;
+
+        TableGrid.Rows = new Array(_rows_count);
+
+        for (var i = 0; i < _rows_count; i++)
+        {
+            TableGrid.Rows[i] = {};
+            TableGrid.Rows[i].Cells = [];
+
+            var _index = 0;
+            var _cells_len = _rows[i].Content.length;
+            for (var j = 0; j < _cells_len; j++)
+            {
+                var _cell = _rows[i].Content[j];
+
+                var _cell_info = {};
+                _cell_info.Cell = _cell;
+                _cell_info.row_span = 1;
+                _cell_info.grid_span = (_cell.Pr.GridSpan === undefined || _cell.Pr.GridSpan == null) ? 1 : _cell.Pr.GridSpan;
+                _cell_info.hMerge = false;
+                _cell_info.vMerge = false;
+                _cell_info.isEmpty = false;
+
+                if (_cell.Pr.VMerge == vmerge_Continue)
+                    _cell_info.vMerge = true;
+
+                TableGrid.Rows[i].Cells.push(_cell_info);
+                if (_cell_info.grid_span > 1)
+                {
+                    for (var t = _cell_info.grid_span - 1; t > 0; t--)
+                    {
+                        var _cell_info_empty = {};
+                        _cell_info_empty.isEmpty = true;
+                        _cell_info_empty.vMerge = _cell_info.vMerge;
+
+                        TableGrid.Rows[i].Cells.push(_cell_info_empty);
+                    }
+                }
+            }
+        }
+
+        for (var i = 0; i < _cols_count; i++)
+        {
+            var _index = 0;
+            while (_index < _rows_count)
+            {
+                var _count = 1;
+                for (var j = _index + 1; j < _rows_count; j++)
+                {
+                    if (i >= TableGrid.Rows[j].Cells.length)
+                        continue;
+
+                    if (TableGrid.Rows[j].Cells[i].vMerge !== true)
+                        break;
+
+                    ++_count;
+                }
+
+                if (i < TableGrid.Rows[_index].Cells.length)
+                    TableGrid.Rows[_index].Cells[i].row_span = _count;
+
+                _index += _count;
+            }
+        }
+
+        return TableGrid;
+    }
+
+
+    function GetTableRowHeight(row)
+    {
+        if (AscFormat.isRealNumber(row.Pr.Height.Value))
+        {
+			return row.Pr.Height.Value * 36000 + 0.5 >> 0;
+		}
+        return null;
+    }
+
     //--------------------------------------------------------export----------------------------------------------------
     window['AscCommon'] = window['AscCommon'] || {};
     window['AscCommon'].GUID = GUID;
+    window['AscCommon'].GenerateTableWriteGrid = GenerateTableWriteGrid;
+    window['AscCommon'].GetTableRowHeight = GetTableRowHeight;
     window['AscCommon'].c_oMainTables = c_oMainTables;
     window['AscCommon'].CBinaryFileWriter = CBinaryFileWriter;
     window['AscCommon'].pptx_content_writer = new CPPTXContentWriter();

@@ -65,21 +65,33 @@ StartAddNewShape.prototype =
     {
         if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR)
             return {objectId: "1", bMarker: true, cursorType: "crosshair"};
-        this.startX = x;
-        this.startY = y;
+
+        let dStartX = x;
+        let dStartY = y;
+        let oNearestPos = this.drawingObjects.getSnapNearestPos(x, y);
+        if(oNearestPos)
+        {
+            dStartX = oNearestPos.x;
+            dStartY = oNearestPos.y;
+        }
+        this.startX = dStartX;
+        this.startY = dStartY;
         this.drawingObjects.arrPreTrackObjects.length = 0;
         var layout = null, master = null, slide = null;
-        if(this.drawingObjects.drawingObjects && this.drawingObjects.drawingObjects.cSld &&  this.drawingObjects.drawingObjects.getParentObjects)
+        if(this.drawingObjects.drawingObjects && this.drawingObjects.drawingObjects.cSld)
         {
-            var oParentObjects = this.drawingObjects.drawingObjects.getParentObjects();
-            if(isRealObject(oParentObjects))
+            if(this.drawingObjects.drawingObjects.getParentObjects)
             {
-                layout = oParentObjects.layout;
-                master = oParentObjects.master;
-                slide = oParentObjects.slide;
+                var oParentObjects = this.drawingObjects.drawingObjects.getParentObjects();
+                if(isRealObject(oParentObjects))
+                {
+                    layout = oParentObjects.layout;
+                    master = oParentObjects.master;
+                    slide = oParentObjects.slide;
+                }
             }
         }
-        this.drawingObjects.arrPreTrackObjects.push(new AscFormat.NewShapeTrack(this.preset, x, y, this.drawingObjects.getTheme(), master, layout, slide, 0, this.drawingObjects));
+        this.drawingObjects.arrPreTrackObjects.push(new AscFormat.NewShapeTrack(this.preset, dStartX, dStartY, this.drawingObjects.getTheme(), master, layout, slide, 0, this.drawingObjects));
         this.bStart = true;
         this.drawingObjects.swapTrackObjects();
     },
@@ -90,7 +102,15 @@ StartAddNewShape.prototype =
         {
             if(!this.bMoved && (Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA ))
                 this.bMoved = true;
-            this.drawingObjects.arrTrackObjects[0].track(e, x, y);
+            let oNearestPos = this.drawingObjects.getSnapNearestPos(x, y);
+            let dX = x;
+            let dY = y;
+            if(oNearestPos)
+            {
+                dX = oNearestPos.x;
+                dY = oNearestPos.y;
+            }
+            this.drawingObjects.arrTrackObjects[0].track(e, dX, dY);
             this.drawingObjects.updateOverlay();
         }
         else
@@ -105,9 +125,11 @@ StartAddNewShape.prototype =
                 this.drawingObjects.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
                 this.drawingObjects.changeCurrentState(oOldState);
 
-                if(oResult){
-                    var oObject = AscCommon.g_oTableId.Get_ById(oResult.objectId);
-                    this.drawingObjects.connector = oObject;
+                if(oResult) {
+                    let oObject = AscCommon.g_oTableId.Get_ById(oResult.objectId);
+					if(oObject.canConnectTo && oObject.canConnectTo()) {
+						this.drawingObjects.connector = oObject;
+					}
                 }
                 if(this.drawingObjects.connector !== this.oldConnector){
                     this.oldConnector = this.drawingObjects.connector;
@@ -139,6 +161,7 @@ StartAddNewShape.prototype =
             var oTrack = this.drawingObjects.arrTrackObjects[0];
             if(oTrack instanceof AscFormat.PolyLine)
             {
+
                 if(!oTrack.canCreateShape())
                 {
                     this.drawingObjects.clearTrackObjects();
@@ -159,6 +182,107 @@ StartAddNewShape.prototype =
                     return;
                 }
             }
+            if(this.bAnimCustomPath) {
+                this.drawingObjects.clearTrackObjects();
+                this.drawingObjects.clearPreTrackObjects();
+                this.drawingObjects.updateOverlay();
+                this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+                let oApi = this.drawingObjects.getEditorApi();
+                let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                if(oPresentation) {
+                    let oCurSlide = oPresentation.GetCurrentSlide();
+                    if(oCurSlide) {
+                        if(oPresentation.IsSelectionLocked(AscCommon.changestype_Timing) === false) {
+                            oPresentation.StartAction(0);
+                            let oTiming = oCurSlide.timing;
+                            let aAddedEffects;
+                            aAddedEffects = oCurSlide.addAnimation(AscFormat.PRESET_CLASS_PATH, AscFormat.MOTION_SQUARE, 0, this.bReplace);
+                            oTiming = oCurSlide.timing;
+                            if(!oTiming) {
+                                oPresentation.FinalizeAction();
+                                return;
+                            }
+                            for(let nEffect = 0; nEffect < aAddedEffects.length; ++nEffect) {
+                                let oEffect = aAddedEffects[nEffect];
+                                if(!oEffect) {
+                                    continue;
+                                }
+                                let oPathShape = null;
+                                oEffect.traverse(function(oChild) {
+                                    if(oChild.getObjectType() === AscDFH.historyitem_type_AnimMotion) {
+                                        oPathShape = oChild.createPathShape();
+                                        return true;
+                                    }
+                                    return false;
+                                });
+                                if(!oPathShape) {
+                                    continue;
+                                }
+                                let oPolylineShape = AscFormat.ExecuteNoHistory(function () {
+                                    return oTrack.getShape(false, oPresentation.drawingDocument, oCurSlide.graphicObjects);
+                                }, this, []);
+                                if(!oPolylineShape) {
+                                    continue;
+                                }
+                                let oSpPr = oPolylineShape.spPr;
+                                let oXfrm = oSpPr.xfrm;
+                                let oGeometry = null;
+                                let oPath = null;
+                                let dOffX = oXfrm.offX;
+                                let dOffY = oXfrm.offY;
+                                let oObjectBounds = oPathShape.objectBounds;
+                                if(oSpPr.geometry) {
+                                    oGeometry = oSpPr.geometry.createDuplicate();
+                                    oGeometry.Recalculate(oXfrm.extX, oXfrm.extY);
+                                    if(aAddedEffects.length > 1) {
+                                        oPath = oGeometry.pathLst[0];
+                                        if(oPath && oObjectBounds) {
+                                            let oFirstCommand = oPath.ArrPathCommand[0];
+                                            if(oFirstCommand && oFirstCommand.id === AscFormat.moveTo) {
+                                                dOffX = oObjectBounds.x + oObjectBounds.w/2 - oFirstCommand.X;
+                                                dOffY = oObjectBounds.y + oObjectBounds.h/2 - oFirstCommand.Y;
+                                            }
+                                        }
+                                    }
+                                }
+                                oPathShape.updateAnimation(dOffX, dOffY, oXfrm.extX, oXfrm.extY, oXfrm.rot, oGeometry);
+                                oEffect.cTn.setPresetID(AscFormat.MOTION_CUSTOM_PATH);
+                                oEffect.cTn.setPresetSubtype(0);
+                            }
+                            oPresentation.FinalizeAction();
+                            if(Asc["editor"])
+                            {
+                                if(!e.fromWindow || this.bStart)
+                                {
+                                    Asc["editor"].asc_endAddShape();
+                                }
+                            }
+                            else if(editor && editor.sync_EndAddShape)
+                            {
+                                editor.sync_EndAddShape();
+                            }
+                            oPresentation.Document_UpdateInterfaceState();
+                            if(this.bPreview && aAddedEffects.length > 0) {
+                                let oTiming = oCurSlide.timing;
+                                if(oTiming) {
+                                    oCurSlide.graphicObjects.resetSelection();
+                                    oTiming.resetSelection();
+                                    for(let nEffect = 0; nEffect < aAddedEffects.length; ++nEffect) {
+                                        aAddedEffects[nEffect].select();
+                                    }
+                                    oPresentation.StartAnimationPreview();
+                                    oTiming.checkSelectedAnimMotionShapes();
+                                }
+                            }
+                            else {
+                                oPresentation.DrawingDocument.OnRecalculatePage(oPresentation.CurPage, oCurSlide);
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+
             var callback = function(bLock, isClickMouseEvent){
 
                 if(bLock)
@@ -234,25 +358,26 @@ function checkEmptyPlaceholderContent(content)
     if(!content){
         return content;
     }
-    if(content.Parent && content.Parent.parent){
+    var oShape = content.Parent && content.Parent.parent;
+    if (oShape) {
         if(content.Is_Empty()){
-            if(content.Parent.parent.isPlaceholder && content.Parent.parent.isPlaceholder()) {
+            if(oShape.isPlaceholder && oShape.isPlaceholder()) {
                 return content;
             }
-            if(content.isDocumentContentInSmartArtShape && content.isDocumentContentInSmartArtShape) {
+            if(content.isDocumentContentInSmartArtShape && content.isDocumentContentInSmartArtShape()) {
                 return content;
             }
         }
-        if(content.Parent.parent.txWarpStruct){
+        if(oShape.txWarpStruct){
             return content;
         }
-        if(content.Parent.parent.recalcInfo && content.Parent.parent.recalcInfo.warpGeometry){
+        if(oShape.recalcInfo && oShape.recalcInfo.warpGeometry){
             return content;
         }
         var oBodyPr;
-        if(content.Parent.parent.getBodyPr){
-            oBodyPr = content.Parent.parent.getBodyPr();
-            if(oBodyPr.vertOverflow !== AscFormat.nOTOwerflow){
+        if(oShape.getBodyPr){
+            oBodyPr = oShape.getBodyPr();
+            if(oBodyPr.vertOverflow !== AscFormat.nVOTOverflow){
                 return content;
             }
         }
@@ -278,11 +403,14 @@ NullState.prototype =
     {
         this.drawingObjects.checkRedrawOnChangeCursorPosition(oStartContent, oStartPara);
     },
-    onMouseDown: function(e, x, y, pageIndex, bTextFlag)
+    onMouseDown: function(e, x, y, pageIndex)
     {
-        var start_target_doc_content, end_target_doc_content, selected_comment_index = -1;
-        var oStartPara = null;
-        var bHandleMode = this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE;
+        let start_target_doc_content, end_target_doc_content, selected_comment_index = -1;
+        let oStartPara = null;
+        let bHandleMode = this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE;
+        let sHitGuideId = this.drawingObjects.hitInGuide(x, y);
+        let oAnimPlayer = this.drawingObjects.getAnimationPlayer && this.drawingObjects.getAnimationPlayer();
+		let oAPI = this.drawingObjects.getEditorApi();
         if(bHandleMode)
         {
             start_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
@@ -296,9 +424,32 @@ NullState.prototype =
             }
             this.startTargetTextObject = AscFormat.getTargetTextObject(this.drawingObjects);
         }
+		else
+		{
+			if(oAPI.editorId === AscCommon.c_oEditorId.Presentation)
+			{
+				if(oAPI.isFormatPainterOn())
+				{
+					let oPainterData = oAPI.getFormatPainterData();
+					let sType = "default";
+					if(oPainterData)
+					{
+						if(oPainterData.isDrawingData())
+						{
+							sType = AscCommon.kCurFormatPainterDrawing;
+						}
+						else
+						{
+							sType = AscCommon.kCurFormatPainterWord;
+						}
+					}
+					return {cursorType: sType, objectId: "1"};
+				}
+			}
+        }
         var ret;
         ret = this.drawingObjects.handleSlideComments(e, x, y, pageIndex);
-        if(ret )
+        if(ret)
         {
             if(ret.result)
             {
@@ -368,12 +519,22 @@ NullState.prototype =
 
         if(bHandleMode)
         {
-            var bRet =  this.drawingObjects.checkChartTextSelection(true);
+            let bRet =  this.drawingObjects.checkChartTextSelection(true);
             if(e.ClickCount < 2)
             {
                 this.drawingObjects.resetSelection(undefined, undefined, undefined, !!handleAnimLables);
+                if(handleAnimLables)
+                {
+                    if(oTiming)
+                    {
+                        oTiming.checkSelectedAnimMotionShapes();
+                    }
+                }
             }
-            if(start_target_doc_content || selected_comment_index > -1 || bRet || handleAnimLables)
+            if(start_target_doc_content ||
+                selected_comment_index > -1 ||
+                bRet ||
+                handleAnimLables)
             {
                 this.drawingObjects.drawingObjects.showDrawingObjects();
             }
@@ -387,7 +548,6 @@ NullState.prototype =
                     this.drawingObjects.changeCurrentState(new TrackSelectionRect(this.drawingObjects));
                 }
             }
-            var oAnimPlayer = this.drawingObjects.getAnimationPlayer && this.drawingObjects.getAnimationPlayer();
             if(oAnimPlayer) 
             {
                 if(oAnimPlayer.onClick()) 
@@ -419,15 +579,37 @@ NullState.prototype =
                 }
             }
         }
+	    if(!oAnimPlayer)
+	    {
+		    let oGuide = AscCommon.g_oTableId.Get_ById(sHitGuideId);
+		    if(oGuide)
+		    {
+			    if(!bHandleMode)
+			    {
+				    let bHor = oGuide.isHorizontal();
+				    return {cursorType: bHor ? "ns-resize" : "ew-resize", objectId: "1"};
+			    }
+			    else
+			    {
+					if(e.Button !== AscCommon.g_mouse_button_right)
+					{
+						this.drawingObjects.addPreTrackObject(new AscFormat.CGuideTrack(oGuide));
+						this.drawingObjects.changeCurrentState(new TrackGuideState(this.drawingObjects, oGuide, x, y))
+					}
+				    return true;
+			    }
+
+		    }
+	    }
         return null;
     },
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        var aDrawings = this.drawingObjects.getDrawingArray();
-        var _x = x, _y = y, oDrawing;
+        let aDrawings = this.drawingObjects.getDrawingArray();
+        let _x = x, _y = y, oDrawing;
         this.lastMoveHandler = null;
-        for(var nDrawing = aDrawings.length - 1; nDrawing > -1; --nDrawing) {
+        for(let nDrawing = aDrawings.length - 1; nDrawing > -1; --nDrawing) {
             oDrawing = aDrawings[nDrawing];
             if(oDrawing.onMouseMove(e, _x, _y)) {
                 this.lastMoveHandler = oDrawing;
@@ -480,8 +662,6 @@ NullState.prototype =
 function TrackSelectionRect(drawingObjects)
 {
     this.drawingObjects = drawingObjects;
-
-
 }
 
 TrackSelectionRect.prototype =
@@ -502,37 +682,44 @@ TrackSelectionRect.prototype =
     onMouseUp: function(e, x, y, pageIndex)
     {
         var _glyph_index;
-        var _glyphs_array = this.drawingObjects.getDrawingArray();
-        var _glyph, _glyph_transform;
-        var _xlt, _ylt, _xrt, _yrt, _xrb, _yrb, _xlb, _ylb;
-
-        var _rect_l = Math.min(this.drawingObjects.selectionRect.x, this.drawingObjects.selectionRect.x + this.drawingObjects.selectionRect.w);
-        var _rect_r = Math.max(this.drawingObjects.selectionRect.x, this.drawingObjects.selectionRect.x + this.drawingObjects.selectionRect.w);
-        var _rect_t = Math.min(this.drawingObjects.selectionRect.y, this.drawingObjects.selectionRect.y + this.drawingObjects.selectionRect.h);
-        var _rect_b = Math.max(this.drawingObjects.selectionRect.y, this.drawingObjects.selectionRect.y + this.drawingObjects.selectionRect.h);
-        for(_glyph_index = 0; _glyph_index < _glyphs_array.length; ++_glyph_index)
+        var _glyphs_array;
+        if(this.drawingObjects.drawingObjects && this.drawingObjects.drawingObjects.cSld)
         {
-            _glyph = _glyphs_array[_glyph_index];
-            _glyph_transform = _glyph.transform;
+            _glyphs_array = this.drawingObjects.drawingObjects.cSld.spTree;
+        }
+        if(_glyphs_array)
+        {
+            var _glyph, _glyph_transform;
+            var _xlt, _ylt, _xrt, _yrt, _xrb, _yrb, _xlb, _ylb;
 
-            _xlt = _glyph_transform.TransformPointX(0, 0);
-            _ylt = _glyph_transform.TransformPointY(0, 0);
-
-            _xrt = _glyph_transform.TransformPointX( _glyph.extX, 0);
-            _yrt = _glyph_transform.TransformPointY( _glyph.extX, 0);
-
-            _xrb = _glyph_transform.TransformPointX( _glyph.extX, _glyph.extY);
-            _yrb = _glyph_transform.TransformPointY( _glyph.extX, _glyph.extY);
-
-            _xlb = _glyph_transform.TransformPointX(0, _glyph.extY);
-            _ylb = _glyph_transform.TransformPointY(0, _glyph.extY);
-
-            if((_xlb >= _rect_l && _xlb <= _rect_r) && (_xrb >= _rect_l && _xrb <= _rect_r)
-                && (_xlt >= _rect_l && _xlt <= _rect_r) && (_xrt >= _rect_l && _xrt <= _rect_r) &&
-                (_ylb >= _rect_t && _ylb <= _rect_b) && (_yrb >= _rect_t && _yrb <= _rect_b)
-                && (_ylt >= _rect_t && _ylt <= _rect_b) && (_yrt >= _rect_t && _yrt <= _rect_b))
+            var _rect_l = Math.min(this.drawingObjects.selectionRect.x, this.drawingObjects.selectionRect.x + this.drawingObjects.selectionRect.w);
+            var _rect_r = Math.max(this.drawingObjects.selectionRect.x, this.drawingObjects.selectionRect.x + this.drawingObjects.selectionRect.w);
+            var _rect_t = Math.min(this.drawingObjects.selectionRect.y, this.drawingObjects.selectionRect.y + this.drawingObjects.selectionRect.h);
+            var _rect_b = Math.max(this.drawingObjects.selectionRect.y, this.drawingObjects.selectionRect.y + this.drawingObjects.selectionRect.h);
+            for(_glyph_index = 0; _glyph_index < _glyphs_array.length; ++_glyph_index)
             {
-                this.drawingObjects.selectObject(_glyph, pageIndex);
+                _glyph = _glyphs_array[_glyph_index];
+                _glyph_transform = _glyph.transform;
+
+                _xlt = _glyph_transform.TransformPointX(0, 0);
+                _ylt = _glyph_transform.TransformPointY(0, 0);
+
+                _xrt = _glyph_transform.TransformPointX( _glyph.extX, 0);
+                _yrt = _glyph_transform.TransformPointY( _glyph.extX, 0);
+
+                _xrb = _glyph_transform.TransformPointX( _glyph.extX, _glyph.extY);
+                _yrb = _glyph_transform.TransformPointY( _glyph.extX, _glyph.extY);
+
+                _xlb = _glyph_transform.TransformPointX(0, _glyph.extY);
+                _ylb = _glyph_transform.TransformPointY(0, _glyph.extY);
+
+                if((_xlb >= _rect_l && _xlb <= _rect_r) && (_xrb >= _rect_l && _xrb <= _rect_r)
+                    && (_xlt >= _rect_l && _xlt <= _rect_r) && (_xrt >= _rect_l && _xrt <= _rect_r) &&
+                    (_ylb >= _rect_t && _ylb <= _rect_b) && (_yrb >= _rect_t && _yrb <= _rect_b)
+                    && (_ylt >= _rect_t && _ylt <= _rect_b) && (_yrt >= _rect_t && _yrt <= _rect_b))
+                {
+                    this.drawingObjects.selectObject(_glyph, pageIndex);
+                }
             }
         }
         this.drawingObjects.selectionRect = null;
@@ -543,6 +730,82 @@ TrackSelectionRect.prototype =
 
 };
 
+
+
+
+    function TrackGuideState(drawingObjects, oGuide, dStartX, dStartY) {
+        this.drawingObjects = drawingObjects;
+        this.guide = oGuide;
+        this.tracked = false;
+        this.startX = dStartX;
+        this.startY = dStartY;
+        let oTrack = this.drawingObjects.arrPreTrackObjects[0];
+        if(oTrack) {
+            let dPos = AscFormat.GdPosToMm(this.guide.pos);
+	        dPos = (dPos * 10 + 0.5 >> 0) / 10;
+            let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(dStartX, dStartY, 0);
+            editor.sendEvent("asc_onTrackGuide", dPos, oConvertedPos.X, oConvertedPos.Y);
+        }
+    }
+    TrackGuideState.prototype.onMouseDown = function (e, x, y, pageIndex) {
+        if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR) {
+            let bHor = this.guide.isHorizontal();
+            return {cursorType: bHor ? "ns-resize" : "ew-resize" , objectId: "1"};
+        }
+        return null;
+    };
+    TrackGuideState.prototype.onMouseMove = function (e, x, y, pageIndex) {
+        if(!e.IsLocked) {
+            return this.onMouseUp(e, x, y, pageIndex);
+        }
+        let bHor = this.guide.isHorizontal();
+        if(!this.tracked) {
+            if(bHor && Math.abs(y - this.startY) > MOVE_DELTA ||
+                !bHor && Math.abs(x - this.startX) > MOVE_DELTA) {
+                this.tracked = true;
+                this.drawingObjects.swapTrackObjects();
+                this.onMouseMove(e, x, y, pageIndex);
+                return;
+            }
+        }
+        else {
+            let oTrack = this.drawingObjects.arrTrackObjects[0];
+            if(oTrack) {
+	            let oNearestPos = this.drawingObjects.getSnapNearestPos(x, y);
+				let dX = x;
+				let dY = y;
+	            if(oNearestPos) {
+		            dX = oNearestPos.x;
+		            dY = oNearestPos.y;
+	            }
+                oTrack.track(dX, dY);
+                let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(bHor ? x : dX, !bHor ? y : dY, 0);
+				let dGdPos = oTrack.getPos();
+	            let dPos = AscFormat.GdPosToMm(dGdPos);
+	            dPos = (dPos * 10 + 0.5 >> 0) / 10;
+                editor.sendEvent("asc_onTrackGuide", dPos, oConvertedPos.X, oConvertedPos.Y)
+                this.drawingObjects.updateOverlay();
+            }
+        }
+    };
+    TrackGuideState.prototype.onMouseUp = function (e, x, y, pageIndex) {
+        if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR) {
+            let bHor = this.guide.isHorizontal();
+            return {cursorType: bHor ? "ew-resize" : "ns-resize", objectId: "1"};
+        }
+        if(this.tracked) {
+            let oPresentation = editor.WordControl.m_oLogicDocument;
+            if(false === oPresentation.Document_Is_SelectionLocked(AscCommon.changestype_ViewPr, undefined, undefined, [])) {
+                this.drawingObjects.trackEnd();
+                oPresentation.Recalculate();
+            }
+        }
+        this.drawingObjects.clearPreTrackObjects();
+        this.drawingObjects.clearTrackObjects();
+        this.drawingObjects.updateOverlay();
+        this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+        editor.sendEvent("asc_onTrackGuide");
+    };
 
 function PreChangeAdjState(drawingObjects, majorObject)
 {
@@ -1071,15 +1334,23 @@ ResizeState.prototype =
         }
         var start_arr = this.drawingObjects.getDrawingArray();
         var coords = AscFormat.CheckCoordsNeedPage(x, y, pageIndex, this.majorObject.selectStartPage, this.drawingObjects.getDrawingDocument());
-        var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, coords.x, coords.y, start_arr);
-        this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e, x, y);
+        let dX = coords.x;
+        let dY = coords.y;
+        let oNearestPos = this.drawingObjects.getSnapNearestPos(coords.x, coords.y);
+        if(oNearestPos)
+        {
+            dX = oNearestPos.x;
+            dY = oNearestPos.y;
+        }
+        var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, dX, dY, start_arr, this.drawingObjects);
+        this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e, dX, dY);
         if(this.drawingObjects.drawingObjects.cSld)
         {
-            if(AscFormat.isRealNumber(resize_coef.snapX))
+            if(AscFormat.isRealNumber(resize_coef.snapX) && !resize_coef.horGuideSnap)
             {
                 this.drawingObjects.getDrawingDocument().DrawVerAnchor(pageIndex, resize_coef.snapX);
             }
-            if(AscFormat.isRealNumber(resize_coef.snapY))
+            if(AscFormat.isRealNumber(resize_coef.snapY) && !resize_coef.vertGuideSnap)
             {
                 this.drawingObjects.getDrawingDocument().DrawHorAnchor(pageIndex, resize_coef.snapY);
             }
@@ -1091,7 +1362,7 @@ ResizeState.prototype =
 };
 
 
-function PreMoveState(drawingObjects,  startX, startY, shift, ctrl, majorObject, majorObjectIsSelected, bInside)
+function PreMoveState(drawingObjects,  startX, startY, shift, ctrl, majorObject, majorObjectIsSelected, bInside, bGroupSelection)
 {
     this.drawingObjects = drawingObjects;
     this.majorObject = majorObject;
@@ -1101,6 +1372,7 @@ function PreMoveState(drawingObjects,  startX, startY, shift, ctrl, majorObject,
     this.ctrl = ctrl;
     this.majorObjectIsSelected = majorObjectIsSelected;
     this.bInside = bInside;
+    this.bGroupSelection = bGroupSelection;
 }
 
 PreMoveState.prototype =
@@ -1118,10 +1390,7 @@ PreMoveState.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        if(this.drawingObjects.isSlideShow())
-        {
-            return;
-        }
+
         if(!e.IsLocked)
         {
             this.onMouseUp(e, x, y, pageIndex);
@@ -1129,6 +1398,11 @@ PreMoveState.prototype =
         }
         if(Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA || pageIndex !== this.majorObject.selectStartPage)
         {
+            if(this.drawingObjects.isSlideShow())
+            {
+                this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+                return;
+            }
             this.drawingObjects.swapTrackObjects();
             this.drawingObjects.changeCurrentState(new MoveState(this.drawingObjects, this.majorObject, this.startX, this.startY));
             this.drawingObjects.OnMouseMove(e, x, y, pageIndex);
@@ -1187,108 +1461,87 @@ MoveState.prototype =
             this.onMouseUp(e, x, y, pageIndex);
             return;
         }
-        var _arr_track_objects = this.drawingObjects.arrTrackObjects;
-        var _objects_count = _arr_track_objects.length;
-        var _object_index;
-
-        var result_x, result_y;
+        let aTracks = this.drawingObjects.arrTrackObjects;
+        let nTracksCount = aTracks.length;
+        let nTrack;
+        let bIsSlide = false;
+        if(this.drawingObjects &&
+            this.drawingObjects.drawingObjects &&
+            this.drawingObjects.drawingObjects.cSld)
+        {
+            bIsSlide = true;
+        }
+        let dResultX, dResultY;
         if(!e.ShiftKey)
         {
-            result_x = x;
-            result_y = y;
+            dResultX = x;
+            dResultY = y;
         }
         else
         {
-            var abs_dist_x = Math.abs(this.startX - x);
-            var abs_dist_y = Math.abs(this.startY - y);
-            if(abs_dist_x > abs_dist_y)
+            let dAbsDistX = Math.abs(this.startX - x);
+            let dAbsDistY = Math.abs(this.startY - y);
+            if(dAbsDistX > dAbsDistY)
             {
-                result_x = x;
-                result_y = this.startY;
+                dResultX = x;
+                dResultY = this.startY;
             }
             else
             {
-                result_x = this.startX;
-                result_y = y;
+                dResultX = this.startX;
+                dResultY = y;
             }
         }
+        let aDrawings = this.drawingObjects.getAllObjectsOnPage(0);
+        let dMinDx = null, dMinDy = null;
+        let dDx, dDy;
+        let dCurDx = dResultX - this.startX;
+        let dCurDy = dResultY - this.startY;
+        let aSnapX = [], aSnapY = [];
+        let oCurTrackOriginal;
+        let aTrackSnapX, aTrackSnapY;
+        let nSnapPos;
+        let oSnapData;
 
-
-        var startPos = {x: this.startX, y: this.startY};
-        var start_arr = this.drawingObjects.getAllObjectsOnPage(0);
-        var min_dx = null, min_dy = null;
-        var dx, dy;
-        var snap_x = [], snap_y = [];
-
-        var snapHorArray = [], snapVerArray = [];
-
+        let aVertGuidesPos = this.drawingObjects.getVertGuidesPos();
+        let aHorGuidesPos = this.drawingObjects.getHorGuidesPos();
 
         //-------------------------------------------------
-        for(var track_index = 0; track_index < _arr_track_objects.length; ++track_index)
+        for(nTrack = 0; nTrack < nTracksCount; ++nTrack)
         {
-            var cur_track_original_shape = _arr_track_objects[track_index].originalObject;
-            var trackSnapArrayX = cur_track_original_shape.snapArrayX;
-            if(!trackSnapArrayX)
+            oCurTrackOriginal = aTracks[nTrack].originalObject;
+            aTrackSnapX = oCurTrackOriginal.snapArrayX;
+            if(!aTrackSnapX)
             {
                 continue;
             }
-            var curDX =  result_x - startPos.x;
 
-
-            for(snap_index = 0; snap_index < trackSnapArrayX.length; ++snap_index)
+            if(aDrawings.length > 0)
             {
-                var snap_obj = AscFormat.GetMinSnapDistanceXObjectByArrays(trackSnapArrayX[snap_index] + curDX, snapHorArray);
-                if(isRealObject(snap_obj))
+                for(nSnapPos = 0; nSnapPos < aTrackSnapX.length; ++nSnapPos)
                 {
-                    dx = snap_obj.dist;
-                    if(dx !== null)
+                    oSnapData = AscFormat.GetMinSnapDistanceXObject(aTrackSnapX[nSnapPos] + dCurDx, aDrawings, undefined, aVertGuidesPos);
+                    if(oSnapData)
                     {
-                        if(min_dx === null)
+                        dDx = oSnapData.dist;
+                        if(dDx !== null)
                         {
-                            min_dx = dx;
-                            snap_x.push(snap_obj.pos);
-                        }
-                        else
-                        {
-                            if(AscFormat.fApproxEqual(min_dx, dx, 0.01)){
-                                snap_x.push(snap_obj.pos);
-                            }
-                            else if(Math.abs(min_dx) > Math.abs(dx))
+                            if(dMinDx === null)
                             {
-                                min_dx = dx;
-                                snap_x.length = 0;
-                                snap_x.push(snap_obj.pos);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if(start_arr.length > 0)
-            {
-                for(var snap_index = 0; snap_index < trackSnapArrayX.length; ++snap_index)
-                {
-                    var snap_obj = AscFormat.GetMinSnapDistanceXObject(trackSnapArrayX[snap_index] + curDX, start_arr);
-                    if(isRealObject(snap_obj))
-                    {
-                        dx = snap_obj.dist;
-                        if(dx !== null)
-                        {
-                            if(min_dx === null)
-                            {
-                                min_dx = dx;
-                                snap_x.push(snap_obj.pos);
+                                dMinDx = dDx;
+                               !oSnapData.guide && aSnapX.push(oSnapData.pos);
                             }
                             else
                             {
-                                if(AscFormat.fApproxEqual(min_dx, dx, 0.01)){
-                                    snap_x.push(snap_obj.pos);
-                                }
-                                else if(Math.abs(min_dx) > Math.abs(dx))
+                                if(AscFormat.fApproxEqual(dMinDx, dDx, 0.01))
                                 {
-                                    min_dx = dx;
-                                    snap_x.length = 0;
-                                    snap_x.push(snap_obj.pos);
+                                    !oSnapData.guide && aSnapX.push(oSnapData.pos);
+                                }
+                                else if(Math.abs(dMinDx) > Math.abs(dDx))
+                                {
+                                    dMinDx = dDx;
+                                    aSnapX.length = 0;
+                                    !oSnapData.guide && aSnapX.push(oSnapData.pos);
                                 }
                             }
                         }
@@ -1296,77 +1549,46 @@ MoveState.prototype =
                 }
             }
         }
-        if(result_x === this.startX)
+        if(AscFormat.fApproxEqual(dResultX, this.startX))
         {
-            min_dx = 0;
+            dMinDx = 0;
         }
 
         //-----------------------------
-        for(track_index = 0; track_index < _arr_track_objects.length; ++track_index)
+        for(nTrack = 0; nTrack < aTracks.length; ++nTrack)
         {
-            cur_track_original_shape = _arr_track_objects[track_index].originalObject;
-            var trackSnapArrayY = cur_track_original_shape.snapArrayY;
-            if(!trackSnapArrayY)
+            oCurTrackOriginal = aTracks[nTrack].originalObject;
+            aTrackSnapY = oCurTrackOriginal.snapArrayY;
+            if(!aTrackSnapY)
             {
                 continue;
             }
-            var curDY =  result_y - startPos.y;
-
-
-            for(snap_index = 0; snap_index < trackSnapArrayY.length; ++snap_index)
+            if(aDrawings.length > 0)
             {
-                var snap_obj = AscFormat.GetMinSnapDistanceYObjectByArrays(trackSnapArrayY[snap_index] + curDY, snapVerArray);
-                if(isRealObject(snap_obj))
+                for(nSnapPos = 0; nSnapPos < aTrackSnapY.length; ++nSnapPos)
                 {
-                    dy = snap_obj.dist;
-                    if(dy !== null)
+                    oSnapData = AscFormat.GetMinSnapDistanceYObject(aTrackSnapY[nSnapPos] + dCurDy, aDrawings, undefined, aHorGuidesPos);
+                    if(oSnapData)
                     {
-                        if(min_dy === null)
+                        dDy = oSnapData.dist;
+                        if(dDy !== null)
                         {
-                            min_dy = dy;
-                            snap_y.push(snap_obj.pos);
-                        }
-                        else
-                        {
-                            if(AscFormat.fApproxEqual(min_dy, dy, 0.01)){
-                                snap_y.push(snap_obj.pos);
-                            }
-                            else if(Math.abs(min_dy) > Math.abs(dy))
+                            if(dMinDy === null)
                             {
-                                min_dy = dy;
-                                snap_y.length = 0;
-                                snap_y.push(snap_obj.pos);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if(start_arr.length > 0)
-            {
-                for(snap_index = 0; snap_index < trackSnapArrayY.length; ++snap_index)
-                {
-                    var snap_obj = AscFormat.GetMinSnapDistanceYObject(trackSnapArrayY[snap_index] + curDY, start_arr);
-                    if(isRealObject(snap_obj))
-                    {
-                        dy = snap_obj.dist;
-                        if(dy !== null)
-                        {
-                            if(min_dy === null)
-                            {
-                                min_dy = dy;
-                                snap_y.push(snap_obj.pos);
+                                dMinDy = dDy;
+                                !oSnapData.guide && aSnapY.push(oSnapData.pos);
                             }
                             else
                             {
-                                if(AscFormat.fApproxEqual(min_dy, dy, 0.01)){
-                                    snap_y.push(snap_obj.pos);
-                                }
-                                else if(Math.abs(min_dy) > Math.abs(dy))
+                                if(AscFormat.fApproxEqual(dMinDy, dDy, 0.01))
                                 {
-                                    min_dy = dy;
-                                    snap_y.length = 0;
-                                    snap_y.push(snap_obj.pos);
+                                    !oSnapData.guide && aSnapY.push(oSnapData.pos);
+                                }
+                                else if(Math.abs(dMinDy) > Math.abs(dDy))
+                                {
+                                    dMinDy = dDy;
+                                    aSnapY.length = 0;
+                                    !oSnapData.guide && aSnapY.push(oSnapData.pos);
                                 }
                             }
                         }
@@ -1374,41 +1596,68 @@ MoveState.prototype =
                 }
             }
         }
-        if(result_y === this.startY)
+        if(AscFormat.fApproxEqual(dResultY, this.startY))
         {
-            min_dy = 0;
+            dMinDy = 0;
         }
 
-        if(min_dx === null || Math.abs(min_dx) > SNAP_DISTANCE)
-            min_dx = 0;
+        let oMajorBounds = this.majorObject.getRectBounds();
+        let oNearestSnapPos = this.drawingObjects.getSnapNearestPos(oMajorBounds.l + dCurDx, oMajorBounds.t + dCurDy);
+        if(dMinDx === null || Math.abs(dMinDx) > SNAP_DISTANCE)
+        {
+            dMinDx = 0;
+            if(oNearestSnapPos)
+            {
+                if(!AscFormat.fApproxEqual(dResultX, this.startX))
+                {
+                    let dDeltaX = oNearestSnapPos.x - oMajorBounds.x;
+                    dMinDx = dDeltaX - dResultX + this.startX;
+                }
+            }
+        }
         else
         {
-            if(this.drawingObjects.drawingObjects.cSld)
+            if(bIsSlide)
             {
-                for(var i = 0; i < snap_x.length; ++i){
-                    this.drawingObjects.getDrawingDocument().DrawVerAnchor(pageIndex, snap_x[i]);
+                for(nSnapPos = 0; nSnapPos < aSnapX.length; ++nSnapPos)
+                {
+                    this.drawingObjects.getDrawingDocument().DrawVerAnchor(pageIndex, aSnapX[nSnapPos]);
                 }
 
             }
         }
 
-        if(min_dy === null || Math.abs(min_dy) > SNAP_DISTANCE)
-            min_dy = 0;
+        if(dMinDy === null || Math.abs(dMinDy) > SNAP_DISTANCE)
+        {
+            dMinDy = 0;
+            if(oNearestSnapPos)
+            {
+                if(!AscFormat.fApproxEqual(dResultY, this.startY))
+                {
+                    let dDeltaY = oNearestSnapPos.y - oMajorBounds.y;
+                    dMinDy = dDeltaY - dResultY + this.startY;
+                }
+            }
+        }
         else
         {
-            if(this.drawingObjects.drawingObjects.cSld)
+            if(bIsSlide)
             {
-                for(var i = 0; i < snap_y.length; ++i){
-                    this.drawingObjects.getDrawingDocument().DrawHorAnchor(pageIndex, snap_y[i]);
+                for(nSnapPos = 0; nSnapPos < aSnapY.length; ++nSnapPos)
+                {
+                    this.drawingObjects.getDrawingDocument().DrawHorAnchor(pageIndex, aSnapY[nSnapPos]);
                 }
             }
         }
 
-        var tx = result_x - this.startX + min_dx, ty = result_y - this.startY + min_dy;
-        var check_position = this.drawingObjects.drawingObjects.checkGraphicObjectPosition(this.rectX + tx, this.rectY + ty, this.rectW, this.rectH);
-        for(_object_index = 0; _object_index < _objects_count; ++_object_index)
-            _arr_track_objects[_object_index].track(tx + check_position.x, ty + check_position.y, pageIndex);
-        this.bSamePos = (AscFormat.fApproxEqual(tx + check_position.x, 0) && AscFormat.fApproxEqual(ty + check_position.y, 0));
+        dDx = dResultX - this.startX + dMinDx;
+        dDy = dResultY - this.startY + dMinDy;
+        let oCheckPosition = this.drawingObjects.checkGraphicObjectPosition(this.rectX + dDx, this.rectY + dDy, this.rectW, this.rectH);
+        for(nTrack = 0; nTrack < nTracksCount; ++nTrack)
+        {
+            aTracks[nTrack].track(dDx + oCheckPosition.x, dDy + oCheckPosition.y, pageIndex);
+        }
+        this.bSamePos = (AscFormat.fApproxEqual(dDx + oCheckPosition.x, 0) && AscFormat.fApproxEqual(dDy + oCheckPosition.y, 0));
         this.drawingObjects.updateOverlay();
     },
 
@@ -1434,10 +1683,6 @@ PreMoveInGroupState.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        if(this.drawingObjects.isSlideShow())
-        {
-            return;
-        }
         if(!e.IsLocked)
         {
             this.onMouseUp(e, x, y, pageIndex);
@@ -1445,6 +1690,12 @@ PreMoveInGroupState.prototype =
         }
         if(Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA || pageIndex !== this.majorObject.selectStartPage)
         {
+            if(this.drawingObjects.isSlideShow())
+            {
+
+                this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+                return;
+            }
             this.drawingObjects.swapTrackObjects();
             this.drawingObjects.changeCurrentState(new MoveInGroupState(this.drawingObjects, this.majorObject, this.group, this.startX, this.startY));
             this.drawingObjects.OnMouseMove(e, x, y, pageIndex);
@@ -1776,17 +2027,21 @@ TextAddState.prototype =
         {
             if(oApi.editorId === AscCommon.c_oEditorId.Presentation)
             {
-                if(AscCommon.c_oAscFormatPainterState.kOff !== oApi.isPaintFormat)
+	            let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                if(oApi.isFormatPainterOn())
                 {
                     this.drawingObjects.paragraphFormatPaste2();
-                    if (AscCommon.c_oAscFormatPainterState.kOn === oApi.isPaintFormat)
+                    if (oApi.isFormatPainterOn())
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
+						if(oPresentation)
+						{
+							oPresentation.OnMouseMove(e, x, y, pageIndex)
+						}
                     }
                 }
                 else if(oApi.isMarkerFormat)
                 {
-                    var oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
                     if(oPresentation)
                     {
                         if(oPresentation.HighlightColor)
@@ -1802,16 +2057,22 @@ TextAddState.prototype =
                     }
                 }
             }
+			else if(oApi.editorId === AscCommon.c_oEditorId.Spreadsheet)
+			{
+				this.drawingObjects.checkFormatPainterOnMouseEvent();
+            }
         }
     }
 };
 
 
-function SplineBezierState(drawingObjects)
+function SplineBezierState(drawingObjects, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
-
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 SplineBezierState.prototype =
 {
@@ -1823,9 +2084,11 @@ SplineBezierState.prototype =
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.addPreTrackObject(new AscFormat.Spline(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
         this.drawingObjects.arrPreTrackObjects[0].path.push(new AscFormat.SplineCommandMoveTo(x, y));
-        this.drawingObjects.changeCurrentState(new SplineBezierState33(this.drawingObjects, x, y,pageIndex));
-        this.drawingObjects.checkChartTextSelection();
-        this.drawingObjects.resetSelection();
+        this.drawingObjects.changeCurrentState(new SplineBezierState33(this.drawingObjects, x, y,pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
+        if(!this.bAnimCustomPath) {
+            this.drawingObjects.checkChartTextSelection();
+            this.drawingObjects.resetSelection();
+        }
         this.drawingObjects.updateOverlay();
     },
 
@@ -1848,12 +2111,14 @@ SplineBezierState.prototype =
 };
 
 
-function SplineBezierState33(drawingObjects, startX, startY, pageIndex)
+function SplineBezierState33(drawingObjects, startX, startY, pageIndex, bAnimCustomPath, bReplace, bPreview)
 {
-
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
     this.pageIndex = pageIndex;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 
 SplineBezierState33.prototype =
@@ -1885,7 +2150,7 @@ SplineBezierState33.prototype =
         }
         this.drawingObjects.swapTrackObjects();
         this.drawingObjects.arrTrackObjects[0].path.push(new AscFormat.SplineCommandLineTo(tr_x, tr_y));
-        this.drawingObjects.changeCurrentState(new SplineBezierState2(this.drawingObjects, this.pageIndex));
+        this.drawingObjects.changeCurrentState(new SplineBezierState2(this.drawingObjects, this.pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
         this.drawingObjects.updateOverlay();
     },
 
@@ -1894,11 +2159,14 @@ SplineBezierState33.prototype =
     }
 };
 
-function SplineBezierState2(drawingObjects,pageIndex)
+function SplineBezierState2(drawingObjects,pageIndex, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
     this.pageIndex = pageIndex;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 
 SplineBezierState2.prototype =
@@ -1960,18 +2228,21 @@ SplineBezierState2.prototype =
                 tr_x = tr_point.x;
                 tr_y = tr_point.y;
             }
-            this.drawingObjects.changeCurrentState(new SplineBezierState3(this.drawingObjects,tr_x, tr_y, this.pageIndex));
+            this.drawingObjects.changeCurrentState(new SplineBezierState3(this.drawingObjects,tr_x, tr_y, this.pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
         }
     }
 };
 
-function SplineBezierState3(drawingObjects, startX, startY,pageIndex)
+function SplineBezierState3(drawingObjects, startX, startY, pageIndex, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.startX = startX;
     this.startY = startY;
     this.polylineFlag = true;
-    this.pageIndex =pageIndex;
+    this.pageIndex = pageIndex;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 
 SplineBezierState3.prototype =
@@ -2041,7 +2312,7 @@ SplineBezierState3.prototype =
 
         spline.path.push(new AscFormat.SplineCommandBezier(x4, y4, x5, y5, x6, y6));
         this.drawingObjects.updateOverlay();
-        this.drawingObjects.changeCurrentState(new SplineBezierState4(this.drawingObjects, this.pageIndex));
+        this.drawingObjects.changeCurrentState(new SplineBezierState4(this.drawingObjects, this.pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
     },
 
     onMouseUp: function(e, x, y, pageIndex)
@@ -2064,11 +2335,14 @@ SplineBezierState3.prototype =
 };
 
 
-function SplineBezierState4(drawingObjects, pageIndex)
+function SplineBezierState4(drawingObjects, pageIndex, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
     this.pageIndex = pageIndex;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 
 
@@ -2179,19 +2453,21 @@ SplineBezierState4.prototype =
                 tr_x = tr_point.X;
                 tr_y = tr_point.Y;
             }
-            this.drawingObjects.changeCurrentState(new SplineBezierState5(this.drawingObjects, tr_x, tr_y, this.pageIndex));
+            this.drawingObjects.changeCurrentState(new SplineBezierState5(this.drawingObjects, tr_x, tr_y, this.pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
         }
     }
 };
 
-function SplineBezierState5(drawingObjects, startX, startY,pageIndex)
+function SplineBezierState5(drawingObjects, startX, startY,pageIndex, bAnimCustomPath, bReplace, bPreview)
 {
-
     this.drawingObjects = drawingObjects;
     this.startX = startX;
     this.startY = startY;
     this.polylineFlag = true;
     this.pageIndex = pageIndex;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 
 }
 
@@ -2276,7 +2552,7 @@ SplineBezierState5.prototype =
 
         spline.path.push(new AscFormat.SplineCommandBezier(x4, y4, x5, y5, x6, y6));
         this.drawingObjects.updateOverlay();
-        this.drawingObjects.changeCurrentState(new SplineBezierState4(this.drawingObjects, this.pageIndex));
+        this.drawingObjects.changeCurrentState(new SplineBezierState4(this.drawingObjects, this.pageIndex, this.bAnimCustomPath, this.bReplace, this.bPreview));
     },
 
     onMouseUp: function(e, x, y, pageIndex)
@@ -2290,11 +2566,13 @@ SplineBezierState5.prototype =
     }
 };
 
-function PolyLineAddState(drawingObjects)
+function PolyLineAddState(drawingObjects, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
-
     this.polylineFlag = true;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 
 PolyLineAddState.prototype =
@@ -2307,11 +2585,13 @@ PolyLineAddState.prototype =
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.addTrackObject(new AscFormat.PolyLine(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
         this.drawingObjects.arrTrackObjects[0].addPoint(x, y);
-        this.drawingObjects.checkChartTextSelection();
-        this.drawingObjects.resetSelection();
+        if(!this.bAnimCustomPath) {
+            this.drawingObjects.checkChartTextSelection();
+            this.drawingObjects.resetSelection();
+        }
         this.drawingObjects.updateOverlay();
         var _min_distance = this.drawingObjects.convertPixToMM(1);
-        this.drawingObjects.changeCurrentState(new PolyLineAddState2(this.drawingObjects, _min_distance));
+        this.drawingObjects.changeCurrentState(new PolyLineAddState2(this.drawingObjects, _min_distance, this.bAnimCustomPath, this.bReplace, this.bPreview));
     },
 
     onMouseMove: function()
@@ -2333,10 +2613,13 @@ PolyLineAddState.prototype =
 };
 
 
-function PolyLineAddState2(drawingObjects, minDistance)
+function PolyLineAddState2(drawingObjects, minDistance, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 
 }
 PolyLineAddState2.prototype =
@@ -2395,11 +2678,13 @@ PolyLineAddState2.prototype =
 
 
 
-function AddPolyLine2State(drawingObjects)
+function AddPolyLine2State(drawingObjects, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.polylineFlag = true;
-
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 AddPolyLine2State.prototype =
 {
@@ -2409,12 +2694,14 @@ AddPolyLine2State.prototype =
             return {objectId: "1", bMarker: true, cursorType: "crosshair"};
         this.drawingObjects.startTrackPos = {x: x, y: y, pageIndex : pageIndex};
         this.drawingObjects.checkChartTextSelection();
-        this.drawingObjects.resetSelection();
+        if(!this.bAnimCustomPath) {
+            this.drawingObjects.resetSelection();
+        }
         this.drawingObjects.updateOverlay();
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.addPreTrackObject(new AscFormat.PolyLine(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
         this.drawingObjects.arrPreTrackObjects[0].addPoint(x, y);
-        this.drawingObjects.changeCurrentState(new AddPolyLine2State2(this.drawingObjects, x, y));
+        this.drawingObjects.changeCurrentState(new AddPolyLine2State2(this.drawingObjects, x, y, this.bAnimCustomPath, this.bReplace, this.bPreview));
     },
 
     onMouseMove: function(e, x, y, pageIndex)
@@ -2425,12 +2712,15 @@ AddPolyLine2State.prototype =
     }
 };
 
-function AddPolyLine2State2(drawingObjects, x, y)
+function AddPolyLine2State2(drawingObjects, x, y, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
     this.X = x;
     this.Y = y;
     this.polylineFlag = true;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 
 
 }
@@ -2474,7 +2764,7 @@ AddPolyLine2State2.prototype =
             }
             this.drawingObjects.swapTrackObjects();
             this.drawingObjects.arrTrackObjects[0].tryAddPoint(tr_x, tr_y);
-            this.drawingObjects.changeCurrentState(new AddPolyLine2State3(this.drawingObjects));
+            this.drawingObjects.changeCurrentState(new AddPolyLine2State3(this.drawingObjects, this.bAnimCustomPath, this.bReplace, this.bPreview));
         }
     },
 
@@ -2483,7 +2773,7 @@ AddPolyLine2State2.prototype =
     }
 };
 
-function AddPolyLine2State3(drawingObjects)
+function AddPolyLine2State3(drawingObjects, bAnimCustomPath, bReplace, bPreview)
 {
     this.drawingObjects = drawingObjects;
 
@@ -2492,6 +2782,9 @@ function AddPolyLine2State3(drawingObjects)
 
 
     this.polylineFlag = true;
+    this.bAnimCustomPath = bAnimCustomPath;
+    this.bReplace = bReplace;
+    this.bPreview = bPreview;
 }
 AddPolyLine2State3.prototype =
 {

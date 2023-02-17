@@ -132,6 +132,22 @@ CGraphicPage.prototype =
         }
     },
 
+    getPlaceholdersControls: function (arrObjects) {
+        const arrRet = arrObjects || [];
+        for (let i = 0; i < this.beforeTextObjects.length; i += 1) {
+            const oDrawingObject = this.beforeTextObjects[i];
+            oDrawingObject.createPlaceholderControl(arrRet);
+        }
+        for (let i = 0; i < this.inlineObjects.length; i += 1) {
+            const oDrawingObject = this.inlineObjects[i];
+            oDrawingObject.createPlaceholderControl(arrRet);
+        }
+        for (let i = 0; i < this.behindDocObjects.length; i += 1) {
+            const oDrawingObject = this.behindDocObjects[i];
+            oDrawingObject.createPlaceholderControl(arrRet);
+        }
+        return arrRet;
+    },
 
     concatPage: function(page)
     {
@@ -163,7 +179,13 @@ CGraphicPage.prototype =
         this.flowTables = [];
     },
 
-
+    getAllDrawings: function ()
+    {
+        var aAllDrawings = [].concat(this.behindDocObjects);
+        aAllDrawings = aAllDrawings.concat(this.inlineObjects);
+        aAllDrawings = aAllDrawings.concat(this.beforeTextObjects);
+        return aAllDrawings;
+    },
 
     CheckRange: function(X0, Y0, X1, Y1, Y0sp, Y1Ssp, LeftField, RightField, HdrFtrRanges, docContent, bMathWrap)
     {

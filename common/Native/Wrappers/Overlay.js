@@ -621,7 +621,7 @@ CAutoshapeTrack.prototype =
     {
     },
 
-    DrawGeometryEdit: function (matrix, pathLst, gmEditList, gmEditPoint)
+    DrawGeometryEdit: function (matrix, pathLst, gmEditList, gmEditPoint, oBounds)
     {
     },
 
@@ -788,6 +788,10 @@ CAutoshapeTrack.prototype =
     {
     },
     GetTextPr : function()
+    {
+    },
+
+    SetFontInternal : function(name, size, style)
     {
     },
 

@@ -718,6 +718,7 @@
 
 	function CT_ColumnFilter() {
 		this.filter = null;
+		this.dxf = null;
 		//this.extLst
 
 		//нужно ли?
@@ -733,25 +734,25 @@
 		s._WriteString2(1, this.id);
 		s.WriteUChar(AscCommon.g_nodeAttributeEnd);
 
-		var dxfs = [];
+		var initSaveManager = new AscCommonExcel.InitSaveManager();
 		if (null !== this.filter) {
 			s.StartRecord(1);
 			s.WriteULong(1);
 			s.StartRecord(0);
 			var tmp = new AscCommon.CMemory(true);
 			s.ExportToMemory(tmp);
-			var btw = new AscCommonExcel.BinaryTableWriter(tmp, dxfs, false, {});
+			var btw = new AscCommonExcel.BinaryTableWriter(tmp, initSaveManager, false, {});
 			btw.WriteFilterColumn(this.filter);
 			s.ImportFromMemory(tmp);
 			s.EndRecord();
 			s.EndRecord();
 		}
-		if (dxfs.length > 0) {
+		if (initSaveManager && initSaveManager.aDxfs.length > 0) {
 			s.StartRecord(0);
 			var tmp = new AscCommon.CMemory(true);
 			s.ExportToMemory(tmp);
 			var bstw = new AscCommonExcel.BinaryStylesTableWriter(tmp, null, null);
-			bstw.WriteDxf(dxfs[0]);
+			bstw.WriteDxf(initSaveManager.aDxfs[0]);
 			s.ImportFromMemory(tmp);
 			s.EndRecord();
 		}
@@ -804,8 +805,9 @@
 						s.Skip2(1); // type
 						var _stream = new AscCommon.FT_Stream2();
 						_stream.FromFileStream(s);
-						var oReadResult = new AscCommonWord.DocReadResult(null);
-						var bwtr = new AscCommonExcel.Binary_TableReader(_stream, oReadResult, null, dxfs);
+						var initOpenManager = new AscCommonExcel.InitOpenManager();
+						initOpenManager.Dxfs = dxfs;
+						var bwtr = new AscCommonExcel.Binary_TableReader(_stream, initOpenManager);
 						this.filter = bwtr.ReadFilterColumnExternal();
 						_stream.ToFileStream2(s);
 					}
@@ -864,6 +866,8 @@
 		var res = new CT_ColumnFilter();
 		res.filter = this.filter ? this.filter.clone() : null;
 		res.colId = this.colId;
+
+		this.dxf = this.dxf ? this.dxf.clone() : null;
 
 		return res;
 	};
@@ -957,30 +961,30 @@
 		s.WriteUChar(AscCommon.g_nodeAttributeEnd);
 
 		// s.WriteRecord4(1, this.richSortCondition);
-		var dxfs = [];
+		var initSaveManager = new AscCommonExcel.InitSaveManager();
 		if (null !== this.sortCondition) {
 			s.StartRecord(2);
 			var tmp = new AscCommon.CMemory(true);
 			s.ExportToMemory(tmp);
-			var btw = new AscCommonExcel.BinaryTableWriter(tmp, dxfs, false, {});
+			var btw = new AscCommonExcel.BinaryTableWriter(tmp, initSaveManager, false, {});
 			//dxfId is absent in sortCondition
 			if (this.sortCondition.dxf) {
-				dxfs.push(this.sortCondition.dxf);
+				initSaveManager.aDxfs.push(this.sortCondition.dxf);
 				this.sortCondition.dxf = null;
 			}
 			btw.WriteSortCondition(this.sortCondition);
-			if (dxfs.length > 0) {
-				this.sortCondition.dxf = dxfs[0];
+			if (initSaveManager.aDxfs.length > 0) {
+				this.sortCondition.dxf = initSaveManager.aDxfs[0];
 			}
 			s.ImportFromMemory(tmp);
 			s.EndRecord();
 		}
-		if (dxfs.length > 0) {
+		if (initSaveManager && initSaveManager.aDxfs.length > 0) {
 			s.StartRecord(0);
 			var tmp = new AscCommon.CMemory(true);
 			s.ExportToMemory(tmp);
 			var bstw = new AscCommonExcel.BinaryStylesTableWriter(tmp, null, null);
-			bstw.WriteDxf(dxfs[0]);
+			bstw.WriteDxf(initSaveManager.aDxfs[0]);
 			s.ImportFromMemory(tmp);
 			s.EndRecord();
 		}
@@ -1035,8 +1039,9 @@
 				case 2: {
 					var _stream = new AscCommon.FT_Stream2();
 					_stream.FromFileStream(s);
-					var oReadResult = new AscCommonWord.DocReadResult(null);
-					var bwtr = new AscCommonExcel.Binary_TableReader(_stream, oReadResult, null, dxfs);
+					var initOpenManager = new AscCommonExcel.InitOpenManager();
+					initOpenManager.Dxfs = dxfs;
+					var bwtr = new AscCommonExcel.Binary_TableReader(_stream, initOpenManager);
 					this.sortCondition = bwtr.ReadSortConditionExternal();
 					//dxfId is absent in sortCondition
 					if ((Asc.ESortBy.sortbyCellColor === this.sortCondition.ConditionSortBy ||
@@ -1096,7 +1101,7 @@
 
 		var obj;
 		if (reader.GetBool()) {
-			obj = new AscCommonExcel.FilterColumn();
+			obj = new AscCommonExcel.SortCondition();
 			obj.Read_FromBinary2(reader);
 			this.sortCondition = obj;
 		}
@@ -1129,5 +1134,6 @@
 	window["Asc"]["CT_NsvFilter"] = window['Asc'].CT_NsvFilter = CT_NsvFilter;
 	window["Asc"]["CT_ColumnFilter"] = window['Asc'].CT_ColumnFilter = CT_ColumnFilter;
 	window["Asc"]["CT_SortRule"] = window['Asc'].CT_SortRule = CT_SortRule;
+	window["Asc"]["CT_SortRules"] = window['Asc'].CT_SortRules = CT_SortRules;
 
 })(window);

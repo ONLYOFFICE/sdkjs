@@ -32,43 +32,10 @@
 
 "use strict";
 
-function CSpellchecker(settings)
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommon'].spellcheckGetLanguages = function()
 {
-	this.api = settings.api;
-	this.useWasm = false;
-	var webAsmObj = window["WebAssembly"];
-	if (typeof webAsmObj === "object")
-	{
-		if (typeof webAsmObj["Memory"] === "function")
-		{
-			if ((typeof webAsmObj["instantiateStreaming"] === "function") || (typeof webAsmObj["instantiate"] === "function"))
-				this.useWasm = true;
-		}
-	}
-
-	this.enginePath = "./spell/";
-	if (settings && settings.enginePath)
-	{
-		this.enginePath = settings.enginePath;
-		if (this.enginePath.substring(this.enginePath.length - 1) != "/")
-			this.enginePath += "/";
-	}
-
-	var dictionariesPath = "./../dictionaries";
-	if (settings && settings.dictionariesPath)
-	{
-		dictionariesPath = settings.dictionariesPath;
-		if (dictionariesPath.substring(dictionariesPath.length - 1) == "/")
-			dictionariesPath = dictionariesPath.substr(0, dictionariesPath.length - 1);
-	}
-
-	this.isUseSharedWorker = !!window.SharedWorker;
-	if (this.isUseSharedWorker && (false === settings.useShared))
-		this.isUseSharedWorker = false;
-
-	this.worker = null;
-
-	this.languages = {
+	return {
 		"1068" : "az_Latn_AZ",
 		"1026" : "bg_BG",
 		"1027" : "ca_ES",
@@ -114,9 +81,53 @@ function CSpellchecker(settings)
 		"1053" : "sv_SE",
 		"1055" : "tr_TR",
 		"1058" : "uk_UA",
+		"2115" : "uz_Cyrl_UZ",
+		"1091" : "uz_Latn_UZ",
 		"1066" : "vi_VN",
 		"2067" : "nl_NL" // nl_BE
 	};
+};
+
+function CSpellchecker(settings)
+{
+	this.useWasm = false;
+	var webAsmObj = window["WebAssembly"];
+	if (typeof webAsmObj === "object")
+	{
+		if (typeof webAsmObj["Memory"] === "function")
+		{
+			if ((typeof webAsmObj["instantiateStreaming"] === "function") || (typeof webAsmObj["instantiate"] === "function"))
+				this.useWasm = true;
+		}
+	}
+
+	this.enginePath = "./spell/";
+	if (settings && settings.enginePath)
+	{
+		this.enginePath = settings.enginePath;
+		if (this.enginePath.substring(this.enginePath.length - 1) != "/")
+			this.enginePath += "/";
+	}
+
+	var dictionariesPath = "./../dictionaries";
+	if (settings && settings.dictionariesPath)
+	{
+		dictionariesPath = settings.dictionariesPath;
+		if (dictionariesPath.substring(dictionariesPath.length - 1) == "/")
+			dictionariesPath = dictionariesPath.substr(0, dictionariesPath.length - 1);
+	}
+
+	this.isUseSharedWorker = !!window.SharedWorker;
+	if (this.isUseSharedWorker && (false === settings.useShared))
+		this.isUseSharedWorker = false;
+
+	// disable for WKWebView
+	if (this.isUseSharedWorker && (undefined !== window["webkit"]))
+		this.isUseSharedWorker = false;
+
+	this.worker = null;
+
+	this.languages = AscCommon.spellcheckGetLanguages();
 
 	this.stop = function()
 	{
@@ -137,6 +148,8 @@ function CSpellchecker(settings)
 		this.worker = null;
 	};
 
+	this.restartCallback = function() { console.log("restart"); }
+
 	this.restart = function()
 	{
 		this.stop();
@@ -146,7 +159,17 @@ function CSpellchecker(settings)
 
 		if (this.isUseSharedWorker)
 		{
-			this.worker = new SharedWorker(worker_src, "onlyoffice-spellchecker");
+			try
+			{
+				// may be security errors
+				this.worker = new SharedWorker(worker_src, "onlyoffice-spellchecker");
+			}
+			catch (err)
+			{
+				this.isUseSharedWorker = false;
+				return this.restart();
+			}
+
 			this.worker.creator = this;
 			this.worker.onerror = function() {
 				var creator = this.creator;
@@ -164,12 +187,16 @@ function CSpellchecker(settings)
 			// для "обычного воркера" - обрабатываем ошибку, чтобы он не влиял на работу редактора
 			// и если ошибка из wasm модуля - то просто попробуем js версию - и рестартанем
 			this.worker.onerror = function(e) {
-				AscCommon.stopEvent(e);
+				if (e.preventDefault)
+					e.preventDefault();
+				if (e.stopPropagation)
+					e.stopPropagation();
+				
 				if (_t.useWasm)
 				{
 					_t.useWasm = false;
 					_t.restart();
-					_t.api.asc_restartCheckSpelling();
+					_t.restartCallback && _t.restartCallback();
 				}
 			};
 

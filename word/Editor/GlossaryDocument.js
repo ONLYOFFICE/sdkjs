@@ -70,7 +70,7 @@ function CGlossaryDocument(oLogicDocument)
 	};
 
 	// TODO: Реализовать работу нумерации, стилей, сносок, заданных в контентах по-нормальному
-	this.Numbering = new CNumbering();
+	this.Numbering = new AscWord.CNumbering();
 	this.Styles    = new CStyles();
 	this.Footnotes = new CFootnotesController(oLogicDocument);
 	this.Endnotes  = new CEndnotesController(oLogicDocument);
@@ -97,7 +97,7 @@ CGlossaryDocument.prototype.Get_Id = function()
 	return this.Id;
 };
 /**
- * @return {CNumbering}
+ * @return {AscWord.CNumbering}
  */
 CGlossaryDocument.prototype.GetNumbering = function()
 {
@@ -233,7 +233,7 @@ CGlossaryDocument.prototype.private_CreateDefaultTextFormPlaceholder = function(
 	var oParagraph = oDocPart.GetFirstParagraph();
 	var oRun       = new ParaRun();
 	oParagraph.AddToContent(0, oRun);
-	oRun.AddToContent(0, new ParaText(0x0020));
+	oRun.AddToContent(0, new AscWord.CRunText(0x0020));
 
 	oDocPart.SetDocPartBehavior(c_oAscDocPartBehavior.Content);
 	oDocPart.SetDocPartCategory("Common", c_oAscDocPartGallery.Placeholder);

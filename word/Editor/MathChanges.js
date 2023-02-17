@@ -209,6 +209,7 @@ CChangesMathContentAddItem.prototype.Undo = function()
 {
 	var oMathContent = this.Class;
 	oMathContent.Content.splice(this.Pos, this.Items.length);
+	oMathContent.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 };
 CChangesMathContentAddItem.prototype.Redo = function()
 {
@@ -218,6 +219,7 @@ CChangesMathContentAddItem.prototype.Redo = function()
 	var Array_end   = oMathContent.Content.slice(this.Pos);
 
 	oMathContent.Content = Array_start.concat(this.Items, Array_end);
+	oMathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 
 	for (var nIndex = 0; nIndex < this.Items.length; ++nIndex)
 	{
@@ -248,6 +250,7 @@ CChangesMathContentAddItem.prototype.Load = function(Color)
 		if (null != Element)
 		{
 			oMathContent.Content.splice(Pos, 0, Element);
+			oMathContent.private_UpdateSelectionPosOnAdd(Pos, 1);
 
 			if (Element.SetParagraph)
 				Element.SetParagraph(oMathContent.Paragraph);
@@ -290,6 +293,7 @@ CChangesMathContentRemoveItem.prototype.Undo = function()
 	var Array_end   = oMathContent.Content.slice(this.Pos);
 
 	oMathContent.Content = Array_start.concat(this.Items, Array_end);
+	oMathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 
 	for (var nIndex = 0; nIndex < this.Items.length; ++nIndex)
 	{
@@ -305,6 +309,7 @@ CChangesMathContentRemoveItem.prototype.Redo = function()
 {
 	var oMathContent = this.Class;
 	oMathContent.Content.splice(this.Pos, this.Items.length);
+	oMathContent.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 };
 CChangesMathContentRemoveItem.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -325,6 +330,7 @@ CChangesMathContentRemoveItem.prototype.Load = function(Color)
 			continue;
 
 		oMathContent.Content.splice(ChangesPos, 1);
+		oMathContent.private_UpdateSelectionPosOnRemove(ChangesPos, 1);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oMathContent, ChangesPos, 1);
 	}
 };

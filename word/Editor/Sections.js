@@ -89,7 +89,7 @@ function CSectionPr(LogicDocument)
 	this.LnNumType     = undefined;
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 CSectionPr.prototype =
@@ -215,6 +215,32 @@ CSectionPr.prototype =
 
         return HdrFtrs;
     },
+
+	RemoveEmptyHdrFtrs : function()
+	{
+		function IsEmpty(oHeader)
+		{
+			return (oHeader && oHeader.GetContent().GetElementsCount() <= 0);
+		}
+
+		if (IsEmpty(this.HeaderFirst))
+			this.Set_Header_First(null);
+
+		if (IsEmpty(this.HeaderEven))
+			this.Set_Header_Even(null);
+
+		if (IsEmpty(this.HeaderDefault))
+			this.Set_Header_Default(null);
+
+		if (IsEmpty(this.FooterFirst))
+			this.Set_Footer_First(null);
+
+		if (IsEmpty(this.FooterEven))
+			this.Set_Footer_Even(null);
+
+		if (IsEmpty(this.FooterDefault))
+			this.Set_Footer_Default(null);
+	},
 
     Compare_PageSize : function(OtherSectionPr)
     {
@@ -422,6 +448,16 @@ CSectionPr.prototype =
     {
         return this.TitlePage;
     },
+
+	IsTitlePage : function()
+	{
+		return this.TitlePage;
+	},
+
+	IsEvenAndOdd : function()
+	{
+		return EvenAndOddHeaders;
+	},
     
     GetHdrFtr : function(bHeader, bFirst, bEven)
     {
@@ -791,6 +827,14 @@ CSectionPr.prototype.GetId = function()
 {
 	return this.Id;
 };
+CSectionPr.prototype.SetType = function(type)
+{
+	return this.Set_Type(type);
+};
+CSectionPr.prototype.GetType = function()
+{
+	return this.Get_Type();
+};
 /**
  * Проверяем, есть ли хоть один колонтитул в данной секции
  * @returns {boolean}
@@ -1152,6 +1196,10 @@ CSectionPr.prototype.GetColumnWidth = function(nColIndex)
 {
 	return this.Columns.Get_ColumnWidth(nColIndex);
 };
+CSectionPr.prototype.GetMinColumnWidth = function()
+{
+	return this.Columns.GetMinColumnWidth();
+};
 CSectionPr.prototype.GetColumnSpace = function(nColIndex)
 {
 	return this.Columns.Get_ColumnSpace(nColIndex);
@@ -1348,6 +1396,24 @@ CSectionPr.prototype.GetLineNumbersRestart = function()
 CSectionPr.prototype.GetLineNumbersDistance = function()
 {
 	return (this.LnNumType ? this.LnNumType.Distance : undefined);
+};
+CSectionPr.prototype.RemoveHeader = function(oHeader)
+{
+	if (!oHeader)
+		return;
+
+	if (this.HeaderDefault === oHeader)
+		this.Set_Header_Default(null);
+	else if (this.HeaderEven === oHeader)
+		this.Set_Header_Even(null);
+	else if (this.HeaderFirst === oHeader)
+		this.Set_Header_First(null);
+	else if (this.FooterDefault === oHeader)
+		this.Set_Footer_Default(null);
+	else if (this.FooterEven === oHeader)
+		this.Set_Footer_Even(null);
+	else if (this.FooterFirst === oHeader)
+		this.Set_Footer_First(null);
 };
 
 
@@ -1635,8 +1701,7 @@ CSectionColumns.prototype.Get_ColumnWidth = function(ColIndex)
 {
 	if (true === this.EqualWidth)
 	{
-		var nFrameW = this.SectPr.GetContentFrameWidth();
-		return this.Num > 0 ? (nFrameW - this.Space * (this.Num - 1)) / this.Num : nFrameW;
+		return this.private_GetEqualColumnWidth();
 	}
 	else
 	{
@@ -1667,6 +1732,32 @@ CSectionColumns.prototype.Get_ColumnSpace = function(ColIndex)
 
 		return this.Cols[ColIndex].Space;
 	}
+};
+CSectionColumns.prototype.GetMinColumnWidth = function()
+{
+	if (true === this.EqualWidth)
+	{
+		return this.private_GetEqualColumnWidth();
+	}
+	else
+	{
+		if (this.Cols.length <= 0)
+			return 0;
+
+		let nWidth = this.Cols[0].W;
+		for (let nColumn = 1, nColumnsCount = this.Cols.length; nColumn < nColumnsCount; ++nColumn)
+		{
+			if (this.Cols[nColumn].W < nWidth)
+				nWidth = this.Cols[nColumn].W;
+		}
+
+		return nWidth;
+	}
+};
+CSectionColumns.prototype.private_GetEqualColumnWidth = function()
+{
+	let nFrameW = this.SectPr.GetContentFrameWidth();
+	return this.Num > 0 ? (nFrameW - this.Space * (this.Num - 1)) / this.Num : nFrameW;
 };
 
 function CSectionLayoutColumnInfo(X, XLimit)
@@ -1885,6 +1976,7 @@ CSectionLnNumType.prototype.GetRestart = function()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CSectionPr = CSectionPr;
+window['AscWord'].CSectionPr = CSectionPr;
 
 window['Asc']['CSectionLnNumType'] = window['Asc'].CSectionLnNumType = CSectionLnNumType;
 CSectionLnNumType.prototype["get_CountBy"]  = CSectionLnNumType.prototype.GetCountBy;

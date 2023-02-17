@@ -127,8 +127,9 @@
 		this.pages[index].isPainted = true;
 	};
 
-	function CHtmlPage(id)
+	function CHtmlPage(id, api)
 	{
+		this.Api = api;
 		this.parent = document.getElementById(id);
 		this.thumbnails = null;
 
@@ -147,6 +148,8 @@
 
 		this.zoomMode = ZoomMode.Custom;
 		this.zoom 	= 1;
+		this.zoomCoordinate = null;
+		this.skipClearZoomCoord = false;
 		
 		this.drawingPages = [];
 		this.isRepaint = false;
@@ -158,8 +161,9 @@
 
 		this.file = null;
 		this.isStarted = false;
+		this.isCMapLoading = false;
 
-		this.scrollWidth = 14;
+		this.scrollWidth = this.Api.isMobileVersion ? 0 : 14;
 		this.isVisibleHorScroll = false;
 
 		this.m_oScrollHorApi = null;
@@ -180,12 +184,45 @@
 		this.endVisiblePage = -1;
 		this.pagesInfo = new CDocumentPagesInfo();
 
+		this.statistics = {
+			paragraph : 0,
+			words : 0,
+			symbols : 0,
+			spaces : 0,
+			process : false
+		};
+
 		this.handlers = {};
 
 		this.overlay = null;
 		this.timerScrollSelect = -1;
 
 		this.SearchResults = null;
+		this.isClearPages = false;
+
+		this.isFullText = false;
+		this.isFullTextMessage = false;
+		this.fullTextMessageCallback = null;
+		this.fullTextMessageCallbackArgs = null;
+
+		this.isMouseDown = false;
+		this.isMouseMoveBetweenDownUp = false;
+		this.mouseMoveEpsilon = 5;
+		this.mouseDownCoords = { X : 0, Y : 0 };
+		this.mouseDownLinkObject = null;
+
+		this.isFocusOnThumbnails = false;
+		this.isDocumentContentReady = false;
+
+		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
+		if (!this.isXP && AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
+			this.isXP = true;
+
+		if (this.isXP)
+		{
+			AscCommon.g_oHtmlCursor.register("grab", "grab", "7 8", "pointer");
+			AscCommon.g_oHtmlCursor.register("grabbing", "grabbing", "6 6", "pointer");
+		}
 
 		var oThis = this;
 
@@ -205,17 +242,29 @@
 				this.resize();
 		};
 
+		this.updateDarkMode = function()
+		{
+			this.isClearPages = true;
+
+			if (this.thumbnails)
+			{
+				this.thumbnails.updateSkin();
+				this.thumbnails.clearCachePages();
+			}
+
+			if (this.resize)
+				this.resize();
+		};
+
 		this.createComponents = function()
 		{
-			this.updateSkin();
-
 			var elements = "";
 			elements += "<canvas id=\"id_viewer\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 			elements += "<canvas id=\"id_overlay\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 			elements += "<div id=\"id_vertical_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
 			elements += "<div id=\"id_horizontal_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
 		
-			this.parent.style.backgroundColor = this.backgroundColor;
+			//this.parent.style.backgroundColor = this.backgroundColor; <= this color from theme
 			this.parent.innerHTML = elements;
 
 			this.canvas = document.getElementById("id_viewer");
@@ -227,13 +276,15 @@
 			this.overlay = new AscCommon.COverlay();
 			this.overlay.m_oControl = { HtmlElement : this.canvasOverlay };
 			this.overlay.m_bIsShow = true;
+
+			this.updateSkin();
 		};
-		this.createComponents();
 
 		this.setThumbnailsControl = function(thumbnails)
 		{
 			this.thumbnails = thumbnails;
 			this.thumbnails.viewer = this;
+			this.thumbnails.checkPageEmptyStyle();
 			if (this.isStarted)
 			{
 				this.thumbnails.init();
@@ -342,9 +393,19 @@
 				isViewerTask = oThis.thumbnails.checkTasks(isViewerTask);
 			}
 
-			if (!isViewerTask)
+			if (!isViewerTask && !oThis.Api.WordControl.NoneRepaintPages)
 			{
 				oThis.checkPagesText();
+
+				if (this.isFullTextMessage)
+				{
+					var countSync = 10;
+					while ((countSync > 0) && !this.isFullText)
+					{
+						oThis.checkPagesText();
+						--countSync;
+					}
+				}
 			}
 
 			if (!oThis.UseRequestAnimationFrame)
@@ -386,9 +447,6 @@
 			settings.targetColor = GlobalSkin.ScrollerTargetColor;
 			settings.targetHoverColor = GlobalSkin.ScrollerTargetHoverColor;
 			settings.targetActiveColor = GlobalSkin.ScrollerTargetActiveColor;
-
-			settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
-			settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
 			return settings;
 		};
 
@@ -396,21 +454,30 @@
 		{
 			this.scrollX = pos;
 			this.scrollMaxX = maxPos;
+			if (this.Api.WordControl.MobileTouchManager && this.Api.WordControl.MobileTouchManager.iScroll)
+				this.Api.WordControl.MobileTouchManager.iScroll.x = - Math.max(0, Math.min(pos, maxPos));
+
 			this.paint();
 		};
 		this.scrollVertical = function(pos, maxPos)
 		{
 			this.scrollY = pos;
 			this.scrollMaxY = maxPos;
+			if (this.Api.WordControl.MobileTouchManager && this.Api.WordControl.MobileTouchManager.iScroll)
+				this.Api.WordControl.MobileTouchManager.iScroll.y = - Math.max(0, Math.min(pos, maxPos));
+
 			this.paint();
 		};
 
-		this.resize = function()
+		this.resize = function(isDisablePaint)
 		{
-			var rect = this.canvas.getBoundingClientRect();
-			this.x = rect.x;
-			this.y = rect.y;
+			this.isFocusOnThumbnails = false;
 
+			var rect = this.canvas.getBoundingClientRect();
+			this.x = rect.left;
+			this.y = rect.top;
+
+			var oldsize = {w: this.width, h: this.height};
 			this.width = this.parent.offsetWidth - this.scrollWidth;
 			this.height = this.parent.offsetHeight;
 
@@ -419,7 +486,10 @@
 			else if (this.zoomMode === ZoomMode.Page)
 				this.zoom = this.calculateZoomToHeight();
 
-			var lastPosition = this.getFirstPagePosition();
+			// в мобильной версии мы будем получать координаты от MobileTouchManager (до этого момента они уже должны быть) и не нужно их запоминать, так как мы перетрём нужные нам значения
+			// ну а если их нет и зум произошёл не от тача, то запоминаем их как при обычном зуме
+			if (!this.zoomCoordinate)
+				this.fixZoomCoord( (this.width >> 1), (this.height >> 1) );
 
 			this.sendEvent("onZoom", this.zoom, this.zoomMode);
 
@@ -504,16 +574,34 @@
 			if (this.scrollY >= this.scrollMaxY)
 				this.scrollY = this.scrollMaxY;
 
-			if (lastPosition)
+			if (this.zoomCoordinate && this.isDocumentContentReady)
 			{
-				var drawingPage = this.drawingPages[lastPosition.page];
-				var newScrollY = drawingPage.Y + lastPosition.scrollY - lastPosition.y;
+				var newPoint = this.ConvertCoordsToCursor(this.zoomCoordinate.x, this.zoomCoordinate.y, this.zoomCoordinate.index);
+				// oldsize используется чтобы при смене ориентации экрана был небольшой скролл
+				var shiftX = this.Api.isMobileVersion ? ( (oldsize.w - this.width) >> 1) : 0;
+				var shiftY = this.Api.isMobileVersion ? ( (oldsize.h - this.height) >> 1) : 0;
+				var newScrollX = this.scrollX + newPoint.x - this.zoomCoordinate.xShift + shiftX;
+				var newScrollY = this.scrollY + newPoint.y - this.zoomCoordinate.yShift + shiftY;
+				newScrollX = Math.max(0, Math.min(newScrollX, this.scrollMaxX) );
+				newScrollY = Math.max(0, Math.min(newScrollY, this.scrollMaxY) );
+				if (this.scrollY == 0 && !this.Api.isMobileVersion)
+					newScrollY = 0;
 
-				if (newScrollY < this.scrollMaxY)
-					this.m_oScrollVerApi.scrollToY(newScrollY);
+				this.m_oScrollVerApi.scrollToY(newScrollY);
+				this.m_oScrollHorApi.scrollToX(newScrollX);
 			}
 
-			this.timerSync();
+			if (this.thumbnails)
+				this.thumbnails.resize();
+
+			if (true !== isDisablePaint)
+				this.timerSync();
+
+			if (this.Api.WordControl.MobileTouchManager)
+				this.Api.WordControl.MobileTouchManager.Resize();
+
+			if (!this.Api.isMobileVersion || !this.skipClearZoomCoord)
+				this.clearZoomCoord();
 		};
 
 		this.onLoadModule = function()
@@ -597,6 +685,130 @@
 			}
 
 			this.paint();
+
+			if (this.Api && this.Api.printPreview)
+				this.Api.printPreview.update();
+		};
+
+		this.onUpdateStatistics = function(countParagraph, countWord, countSymbol, countSpace)
+		{
+			this.statistics.paragraph += countParagraph;
+			this.statistics.words += countWord;
+			this.statistics.symbols += countSymbol;
+			this.statistics.spaces += countSpace;
+
+			if (this.statistics.process)
+			{
+				this.Api.sync_DocInfoCallback({
+					PageCount: this.getPagesCount(),
+					WordsCount: this.statistics.words,
+					ParagraphCount: this.statistics.paragraph,
+					SymbolsCount: this.statistics.symbols,
+					SymbolsWSCount: (this.statistics.symbols + this.statistics.spaces)
+				});
+			}
+		};
+
+		this.startStatistics = function()
+		{
+			this.statistics.process = true;
+		};
+
+		this.endStatistics = function()
+		{
+			this.statistics.process = false;
+		};
+
+		this.checkLoadCMap = function()
+		{
+			if (false === this.isCMapLoading)
+			{
+				if (!this.file.isNeedCMap())
+				{
+					this.onDocumentReady();
+					return;
+				}
+
+				this.isCMapLoading = true;
+
+				this.cmap_load_index = 0;
+				this.cmap_load_max = 3;
+			}
+
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', "../../../../sdkjs/pdf/src/engine/cmap.bin", true);
+			xhr.responseType = 'arraybuffer';
+
+			if (xhr.overrideMimeType)
+				xhr.overrideMimeType('text/plain; charset=x-user-defined');
+			else
+				xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
+
+			var _t = this;
+			xhr.onload = function()
+			{
+				if (this.status === 200 || location.href.indexOf("file:") == 0)
+				{
+					_t.isCMapLoading = false;
+					_t.file.setCMap(new Uint8Array(this.response));
+					_t.onDocumentReady();
+				}
+			};
+			xhr.onerror = function()
+			{
+				_t.cmap_load_index++;
+				if (_t.cmap_load_index < _t.cmap_load_max)
+				{
+					_t.checkLoadCMap();
+					return;
+				}
+
+				// error!
+				_t.isCMapLoading = false;
+				_t.onDocumentReady();
+			};
+
+			xhr.send(null);
+		};
+
+		this.onDocumentReady = function()
+		{
+			var _t = this;
+			// в интерфейсе есть проблема - нужно посылать onDocumentContentReady после setAdvancedOptions
+			setTimeout(function(){
+
+				if (!_t.isStarted)
+				{
+					AscCommon.addMouseEvent(_t.canvas, "down", _t.onMouseDown);
+					AscCommon.addMouseEvent(_t.canvas, "move", _t.onMouseMove);
+					AscCommon.addMouseEvent(_t.canvas, "up", _t.onMouseUp);
+
+					_t.parent.onmousewheel = _t.onMouseWhell;
+					if (_t.parent.addEventListener)
+						_t.parent.addEventListener("DOMMouseScroll", _t.onMouseWhell, false);
+
+					_t.startTimer();
+				}
+
+				_t.sendEvent("onFileOpened");
+
+				_t.sendEvent("onPagesCount", _t.file.pages.length);
+				_t.sendEvent("onCurrentPageChanged", 0);
+
+				_t.sendEvent("onStructure", _t.structure);
+			}, 0);
+
+			this.file.onRepaintPages = this.onUpdatePages.bind(this);
+			this.file.onUpdateStatistics = this.onUpdateStatistics.bind(this);
+			this.currentPage = -1;
+			this.structure = this.file.getStructure();
+
+			this.resize(true);
+
+			if (this.thumbnails)
+				this.thumbnails.init(this);
+
+			this.setMouseLockMode(true);
 		};
 
 		this.open = function(data, password)
@@ -612,13 +824,18 @@
 				if (!this.file)
 				{
 					this.file = window["AscViewer"].createFile(data);
-					this.SearchResults = this.file.SearchResults;
-					this.file.viewer = this;
+
+					if (this.file)
+					{
+						this.SearchResults = this.file.SearchResults;
+						this.file.viewer = this;
+					}
 				}
 
-				if (this.file.isNeedPassword())
+				if (this.file && this.file.isNeedPassword())
 				{
 					window["AscViewer"].setFilePassword(this.file, password);
+					this.Api.currentPassword = password;
 				}
 			}
 			else
@@ -627,50 +844,32 @@
 					this.file.close();
 
 				this.file = window["AscViewer"].createFile(data);
-				this.SearchResults = this.file.SearchResults;
-				this.file.viewer = this;
+
+				if (this.file)
+				{
+					this.SearchResults = this.file.SearchResults;
+					this.file.viewer = this;
+				}
 			}
 
+			if (!this.file)
+			{
+				this.Api.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
+				return;
+			}
+
+			var _t = this;
 			if (this.file.isNeedPassword())
 			{
-				this.sendEvent("onNeedPassword");
+				// при повторном вводе пароля - проблемы в интерфейсе, если синхронно
+				setTimeout(function(){
+					_t.sendEvent("onNeedPassword");
+				}, 100);
 				return;
 			}
 
 			this.pagesInfo.setCount(this.file.pages.length);
-
-			this.sendEvent("onFileOpened");
-
-			this.file.onRepaintPages = this.onUpdatePages.bind(this);
-			this.currentPage = -1;
-			this.structure = this.file.getStructure();
-
-			this.sendEvent("onPagesCount", this.file.pages.length);
-			this.sendEvent("onCurrentPageChanged", 0);
-
-			setTimeout(function(){
-				oThis.sendEvent("onStructure", oThis.structure);
-			}, 100);
-
-			this.resize();
-
-			if (!this.isStarted)
-			{
-				AscCommon.addMouseEvent(this.canvas, "down", this.onMouseDown);
-				AscCommon.addMouseEvent(this.canvas, "move", this.onMouseMove);
-				AscCommon.addMouseEvent(this.canvas, "up", this.onMouseUp);
-		
-				this.parent.onmousewheel = this.onMouseWhell;
-				if (this.parent.addEventListener)
-					this.parent.addEventListener("DOMMouseScroll", this.onMouseWhell, false);
-				
-				this.startTimer();				
-			}
-
-			if (this.thumbnails)
-				this.thumbnails.init(this);
-
-			this.setMouseLockMode(true);
+			this.checkLoadCMap();
 		};
 
 		this.setZoom = function(value)
@@ -688,8 +887,8 @@
 		};
 		this.calculateZoomToWidth = function()
 		{
-			if (0 === this.file.pages.length)
-				return;
+			if (!this.file || !this.file.isValid())
+				return 1;
 
 			var maxWidth = 0;
 			for (let i = 0, len = this.file.pages.length; i < len; i++)
@@ -700,14 +899,14 @@
 			}
 
 			if (maxWidth < 1)
-				return;
+				return 1;
 
 			return (this.width - 2 * this.betweenPages) / maxWidth;
 		};
 		this.calculateZoomToHeight = function()
 		{
-			if (0 === this.file.pages.length)
-				return;
+			if (!this.file || !this.file.isValid())
+				return 1;
 
 			var maxHeight = 0;
 			var maxWidth = 0;
@@ -722,12 +921,32 @@
 			}
 
 			if (maxWidth < 1 || maxHeight < 1)
-				return;
+				return 1;
 
 			var zoom1 = (this.width - 2 * this.betweenPages) / maxWidth;
 			var zoom2 = (this.height - 2 * this.betweenPages) / maxHeight;
 
 			return Math.min(zoom1, zoom2);
+		};
+		this.fixZoomCoord = function(x, y)
+		{
+			if (this.Api.isMobileVersion)
+			{
+				x -= this.x;
+				y -= this.y;
+			}
+			this.zoomCoordinate = this.getPageByCoords2(x, y);
+			if (this.zoomCoordinate)
+			{
+				this.zoomCoordinate.xShift = x;
+				this.zoomCoordinate.yShift = y;
+			}
+		};
+
+		this.clearZoomCoord = function()
+		{
+			// нужно очищать, чтобы при любом ресайзе мы не скролились к последней сохранённой точке
+			this.zoomCoordinate = null;
 		};
 
 		this.getFirstPagePosition = function()
@@ -753,7 +972,20 @@
 		this.setMouseLockMode = function(isEnabled)
 		{
 			this.MouseHandObject = isEnabled ? {} : null;
-			this.overlay.Clear();
+		};
+
+		this.getPagesCount = function()
+		{
+			if (!this.file || !this.file.isValid())
+				return 0;
+			return this.file.pages.length;
+		};
+
+		this.getDocumentInfo = function()
+		{
+			if (!this.file || !this.file.isValid())
+				return 0;
+			return this.file.getDocumentInfo();
 		};
 
 		this.navigate = function(id)
@@ -762,17 +994,28 @@
 			if (!item)
 				return;
 
-			var drawingPage = this.drawingPages[item["page"]];
+			var pageIndex = item["page"];
+			var drawingPage = this.drawingPages[pageIndex];
 			if (!drawingPage)
 				return;
 
 			var posY = drawingPage.Y;
 			posY -= this.betweenPages;
-			//posY += item["Y"];
+
+			var yOffset = item["y"];
+			if (yOffset)
+			{
+				yOffset *= (drawingPage.H / this.file.pages[pageIndex].H);
+				yOffset = yOffset >> 0;
+				posY += yOffset;
+			}
+
+			if (posY > this.scrollMaxY)
+				posY = this.scrollMaxY;
 			this.m_oScrollVerApi.scrollToY(posY);
 		};
 
-		this.navigateToPage = function(pageNum)
+		this.navigateToPage = function(pageNum, yOffset)
 		{
 			var drawingPage = this.drawingPages[pageNum];
 			if (!drawingPage)
@@ -780,6 +1023,16 @@
 
 			var posY = drawingPage.Y;
 			posY -= this.betweenPages;
+
+			if (yOffset)
+			{
+				yOffset *= (drawingPage.H / this.file.pages[pageNum].H);
+				yOffset = yOffset >> 0;
+				posY += yOffset;
+			}
+
+			if (posY > this.scrollMaxY)
+				posY = this.scrollMaxY;
 			this.m_oScrollVerApi.scrollToY(posY);
 		};
 
@@ -790,11 +1043,14 @@
 
 			if ("#" === link["link"].charAt(0))
 			{
-				this.navigateToPage(parseInt(link["link"].substring(1)));
+				this.navigateToPage(parseInt(link["link"].substring(1)), link["dest"]);
 			}
 			else
 			{
-				this.sendEvent("onHyperlinkClick", link["link"]);
+				var url = link["link"];
+				var typeUrl = AscCommon.getUrlType(url);
+				url = AscCommon.prepareUrl(url, typeUrl);
+				this.sendEvent("onHyperlinkClick", url);
 			}
 
 			//console.log(link["link"]);
@@ -819,18 +1075,29 @@
 
 		this.recalculatePlaces = function()
 		{
-			if (!this.file || !this.file.isValid)
+			if (!this.file || !this.file.isValid())
 				return;
 
-			this.drawingPages = [];
+			// здесь картинки не обнуляем
 			for (let i = 0, len = this.file.pages.length; i < len; i++)
 			{
-				this.drawingPages.push({ 
-					X : 0,
-					Y : 0,
-					W : (this.file.pages[i].W * 96 * this.zoom / this.file.pages[i].Dpi) >> 0,
-					H : (this.file.pages[i].H * 96 * this.zoom / this.file.pages[i].Dpi) >> 0,
-				});
+				if (!this.drawingPages[i])
+				{
+					this.drawingPages[i] = {
+						X : 0,
+						Y : 0,
+						W : (this.file.pages[i].W * 96 * this.zoom / this.file.pages[i].Dpi) >> 0,
+						H : (this.file.pages[i].H * 96 * this.zoom / this.file.pages[i].Dpi) >> 0,
+						Image : undefined
+					};
+				}
+				else
+				{
+					this.drawingPages[i].X = 0;
+					this.drawingPages[i].Y = 0;
+					this.drawingPages[i].W = (this.file.pages[i].W * 96 * this.zoom / this.file.pages[i].Dpi) >> 0;
+					this.drawingPages[i].H = (this.file.pages[i].H * 96 * this.zoom / this.file.pages[i].Dpi) >> 0;
+				}
 			}
 
 			this.documentWidth = 0;
@@ -858,12 +1125,94 @@
 
 		this.setCursorType = function(cursor)
 		{
+			if (this.isXP)
+			{
+				this.canvas.style.cursor = AscCommon.g_oHtmlCursor.value(cursor);
+				return;
+			}
+
 			this.canvas.style.cursor = cursor;
+		};
+
+		this.getPageLinkByMouse = function()
+		{
+			var pageObject = this.getPageByCoords(AscCommon.global_mouseEvent.X - this.x, AscCommon.global_mouseEvent.Y - this.y);
+			if (!pageObject)
+				return null;
+
+			var pageLinks = this.pagesInfo.pages[pageObject.index];
+			if (pageLinks.links)
+			{
+				for (var i = 0, len = pageLinks.links.length; i < len; i++)
+				{
+					if (pageObject.x >= pageLinks.links[i]["x"] && pageObject.x <= (pageLinks.links[i]["x"] + pageLinks.links[i]["w"]) &&
+						pageObject.y >= pageLinks.links[i]["y"] && pageObject.y <= (pageLinks.links[i]["y"] + pageLinks.links[i]["h"]))
+					{
+						return pageLinks.links[i];
+					}
+				}
+			}
+			return null;
 		};
 
 		this.onMouseDown = function(e)
 		{
+			oThis.isFocusOnThumbnails = false;
 			AscCommon.stopEvent(e);
+
+			var mouseButton = AscCommon.getMouseButton(e || {});
+			if (mouseButton !== 0)
+			{
+				if (2 === mouseButton)
+				{
+					var posX = e.pageX || e.clientX;
+					var posY = e.pageY || e.clientY;
+
+					var x = posX - oThis.x;
+					var y = posY - oThis.y;
+
+					var isInSelection = false;
+					if (oThis.overlay.m_oContext)
+					{
+						var pixX = AscCommon.AscBrowser.convertToRetinaValue(x, true);
+						var pixY = AscCommon.AscBrowser.convertToRetinaValue(y, true);
+
+						if (pixX >= 0 && pixY >= 0 && pixX < oThis.canvasOverlay.width && pixY < oThis.canvasOverlay.height)
+						{
+							var pixelOnOverlay = oThis.overlay.m_oContext.getImageData(pixX, pixY, 1, 1);
+							if (Math.abs(pixelOnOverlay.data[0] - 51) < 10 &&
+								Math.abs(pixelOnOverlay.data[1] - 102) < 10 &&
+								Math.abs(pixelOnOverlay.data[2] - 204) < 10)
+							{
+								isInSelection = true;
+							}
+						}
+					}
+
+					if (isInSelection)
+					{
+						oThis.Api.sync_BeginCatchSelectedElements();
+						oThis.Api.sync_ChangeLastSelectedElement(Asc.c_oAscTypeSelectElement.Text, undefined);
+						oThis.Api.sync_EndCatchSelectedElements();
+
+						oThis.Api.sync_ContextMenuCallback({
+							Type: Asc.c_oAscContextMenuTypes.Common,
+							X_abs: x,
+							Y_abs: y
+						});
+					}
+					else
+					{
+						oThis.Api.sync_BeginCatchSelectedElements();
+						oThis.Api.sync_EndCatchSelectedElements();
+						oThis.removeSelection();
+						oThis.Api.sendEvent("asc_onContextMenu", undefined);
+					}
+				}
+				return;
+			}
+
+			oThis.isMouseDown = true;
 
 			if (!oThis.file || !oThis.file.isValid())
 				return;
@@ -871,52 +1220,77 @@
 			AscCommon.check_MouseDownEvent(e, true);
 			AscCommon.global_mouseEvent.LockMouse();
 
-			if (AscCommon.global_keyboardEvent.CtrlKey)
+			oThis.mouseDownCoords.X = AscCommon.global_mouseEvent.X;
+			oThis.mouseDownCoords.Y = AscCommon.global_mouseEvent.Y;
+
+			oThis.isMouseMoveBetweenDownUp = false;
+			oThis.mouseDownLinkObject = oThis.getPageLinkByMouse();
+
+			// нажали мышь - запомнили координаты и находимся ли на ссылке
+			// при выходе за epsilon на mouseMove - сэмулируем нажатие
+			// так что тут только курсор
+
+			var cursorType;
+			if (oThis.mouseDownLinkObject)
+				cursorType = "pointer";
+			else
 			{
-				var pageObject = oThis.getPageByCoords(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
-				if (pageObject)
-				{
-					// links
-					var pageLinks = oThis.pagesInfo.pages[pageObject.index];
-					if (pageLinks.links)
-					{
-						for (var i = 0, len = pageLinks.links.length; i < len; i++)
-						{
-							if (pageObject.x >= pageLinks.links[i]["x"] && pageObject.x <= (pageLinks.links[i]["x"] + pageLinks.links[i]["w"]) &&
-								pageObject.y >= pageLinks.links[i]["y"] && pageObject.y <= (pageLinks.links[i]["y"] + pageLinks.links[i]["h"]))
-							{
-								oThis.setCursorType("pointer");
-								oThis.navigateToLink(pageLinks.links[i]);
-								return;
-							}
-						}
-					}
-				}
+				if (oThis.MouseHandObject)
+					cursorType = "grabbing";
+				else
+					cursorType = "default";
 			}
 
+			oThis.setCursorType(cursorType);
+
+			if (!oThis.MouseHandObject && !oThis.mouseDownLinkObject)
+			{
+				// ждать смысла нет
+				oThis.isMouseMoveBetweenDownUp = true;
+				oThis.onMouseDownEpsilon();
+			}
+		};
+
+		this.onMouseDownEpsilon = function()
+		{
 			if (oThis.MouseHandObject)
 			{
-				oThis.MouseHandObject.X = AscCommon.global_mouseEvent.X;
-				oThis.MouseHandObject.Y = AscCommon.global_mouseEvent.Y;
+				if (oThis.mouseDownLinkObject)
+				{
+					// если нажали на ссылке - то не зажимаем лапу
+					oThis.setCursorType("pointer");
+					return;
+				}
+				// режим лапы. просто начинаем режим Active - зажимаем лапу
+				oThis.setCursorType("grabbing");
+				oThis.MouseHandObject.X = oThis.mouseDownCoords.X;
+				oThis.MouseHandObject.Y = oThis.mouseDownCoords.Y;
 				oThis.MouseHandObject.Active = true;
 				oThis.MouseHandObject.ScrollX = oThis.scrollX;
 				oThis.MouseHandObject.ScrollY = oThis.scrollY;
-				oThis.setCursorType("grabbing");
 				return;
 			}
 
-			var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
-			oThis.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			var pageObjectLogic = this.getPageByCoords2(oThis.mouseDownCoords.X - oThis.x, oThis.mouseDownCoords.Y - oThis.y);
+			this.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 
-			if (-1 === oThis.timerScrollSelect && AscCommon.global_mouseEvent.IsLocked)
+			if (-1 === this.timerScrollSelect && AscCommon.global_mouseEvent.IsLocked)
 			{
-				oThis.timerScrollSelect = setInterval(oThis.selectWheel, 20);
+				this.timerScrollSelect = setInterval(this.selectWheel, 20);
 			}
 		};
-		
+
 		this.onMouseUp = function(e)
 		{
-			AscCommon.stopEvent(e);
+			oThis.isFocusOnThumbnails = false;
+			if (e && e.preventDefault)
+				e.preventDefault();
+
+			var mouseButton = AscCommon.getMouseButton(e || {});
+			if (mouseButton !== 0)
+				return;
+
+			oThis.isMouseDown = false;
 
 			if (!oThis.file || !oThis.file.isValid())
 				return;
@@ -938,17 +1312,66 @@
 
 				e.srcElement = AscCommon.global_mouseEvent.Sender;
 				// ------------------------------------------------------
+
+				AscCommon.Window_OnMouseUp(e);
 			}
 
 			AscCommon.check_MouseUpEvent(e);
-			if (oThis.MouseHandObject && oThis.MouseHandObject.Active)
-			{				
+
+			if (oThis.MouseHandObject)
+			{
+				if (oThis.mouseDownLinkObject)
+				{
+					// смотрим - если совпало со ссылкой при нажатии - то переходим по ней
+					var mouseUpLinkObject = oThis.getPageLinkByMouse();
+					if (mouseUpLinkObject === oThis.mouseDownLinkObject)
+					{
+						oThis.navigateToLink(mouseUpLinkObject);
+					}
+
+					// если нет - то ничего не делаем
+					if (mouseUpLinkObject)
+						oThis.setCursorType("pointer");
+					else
+						oThis.setCursorType("grab");
+				}
+				else if (!oThis.isMouseMoveBetweenDownUp)
+				{
+					oThis.setCursorType("grab");
+
+					// делаем клик в логическом документе, чтобы сбросить селект, если он был
+					var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
+					oThis.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+					oThis.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+				}
+				else
+				{
+					oThis.setCursorType("grab");
+				}
+
+				oThis.isMouseMoveBetweenDownUp = false;
 				oThis.MouseHandObject.Active = false;
-				oThis.setCursorType("grab");
+				oThis.mouseDownLinkObject = null;
 				return;
 			}
 
-			oThis.file.onMouseUp();
+			if (oThis.mouseDownLinkObject)
+			{
+				// значит не уходили с ссылки
+				// проверим - остались ли на ней
+				var mouseUpLinkObject = oThis.getPageLinkByMouse();
+				if (mouseUpLinkObject === oThis.mouseDownLinkObject)
+				{
+					oThis.navigateToLink(mouseUpLinkObject);
+				}
+			}
+
+			// если было нажатие - то отжимаем
+			if (oThis.isMouseMoveBetweenDownUp)
+				oThis.file.onMouseUp();
+
+			oThis.isMouseMoveBetweenDownUp = false;
+			oThis.mouseDownLinkObject = null;
 
 			if (-1 !== oThis.timerScrollSelect)
 			{
@@ -963,11 +1386,28 @@
 				return;
 
 			AscCommon.check_MouseMoveEvent(e);
+			if (e && e.preventDefault)
+				e.preventDefault();
+
+			// если мышка нажата и еще не вышли за eps - то проверяем, модет вышли сейчас?
+			// и, если вышли - то эмулируем
+			if (oThis.isMouseDown && !oThis.isMouseMoveBetweenDownUp)
+			{
+				var offX = Math.abs(oThis.mouseDownCoords.X - AscCommon.global_mouseEvent.X);
+				var offY = Math.abs(oThis.mouseDownCoords.Y - AscCommon.global_mouseEvent.Y);
+
+				if (offX > oThis.mouseMoveEpsilon || offY > oThis.mouseMoveEpsilon)
+				{
+					oThis.isMouseMoveBetweenDownUp = true;
+					oThis.onMouseDownEpsilon();
+				}
+			}
 
 			if (oThis.MouseHandObject)
 			{
 				if (oThis.MouseHandObject.Active)
 				{
+					// двигаем рукой
 					oThis.setCursorType("grabbing");
 
 					var scrollX = AscCommon.global_mouseEvent.X - oThis.MouseHandObject.X;
@@ -990,40 +1430,76 @@
 
 					return;
 				}
-			}
-
-			var pageObject = oThis.getPageByCoords(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
-			if (pageObject && !oThis.file.Selection.IsSelection)
-			{
-				// links
-				var pageLinks = oThis.pagesInfo.pages[pageObject.index];
-				if (pageLinks.links)
+				else
 				{
-					for (var i = 0, len = pageLinks.links.length; i < len; i++)
+					if (oThis.isMouseDown)
 					{
-						if (pageObject.x >= pageLinks.links[i]["x"] && pageObject.x <= (pageLinks.links[i]["x"] + pageLinks.links[i]["w"]) &&
-							pageObject.y >= pageLinks.links[i]["y"] && pageObject.y <= (pageLinks.links[i]["y"] + pageLinks.links[i]["h"]))
+						if (oThis.mouseDownLinkObject)
 						{
+							// не меняем курсор с "ссылочного", если зажимали на ссылке
 							oThis.setCursorType("pointer");
-							return;
+						}
+						else
+						{
+							// даже если не двигали еще и ждем eps, все равно курсор меняем на зажатый
+							oThis.setCursorType("grabbing");
 						}
 					}
+					else
+					{
+						// просто водим мышкой - тогда смотрим, на ссылке или нет, чтобы выставить курсор
+						var mouseMoveLinkObject = oThis.getPageLinkByMouse();
+						if (mouseMoveLinkObject)
+							oThis.setCursorType("pointer");
+						else
+							oThis.setCursorType("grab");
+					}
 				}
-			}
-
-			if (oThis.MouseHandObject)
-			{
-				oThis.setCursorType("grab");
+				return;
 			}
 			else
 			{
-				oThis.setCursorType("default");
+				if (oThis.mouseDownLinkObject)
+				{
+					// селект начат на ссылке. смотрим, нужно ли начать реально селект
+					if (oThis.isMouseMoveBetweenDownUp)
+					{
+						// вышли за eps
+						oThis.mouseDownLinkObject = null;
+						oThis.setCursorType("default");
+					}
+					else
+					{
+						oThis.setCursorType("pointer");
+					}
+				}
 
-				var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
-				oThis.file.onMouseMove(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+				if (oThis.isMouseDown)
+				{
+					if (oThis.isMouseMoveBetweenDownUp)
+					{
+						// нажатая мышка - курсор всегда default (так как за eps вышли)
+						oThis.setCursorType("default");
+
+						var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
+						oThis.file.onMouseMove(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+					}
+					else
+					{
+						// пока на ссылке
+						oThis.setCursorType("pointer");
+					}
+				}
+				else
+				{
+					var mouseMoveLinkObject = oThis.getPageLinkByMouse();
+					if (mouseMoveLinkObject)
+						oThis.setCursorType("pointer");
+					else
+						oThis.setCursorType("default");
+				}
 			}
-
-			AscCommon.stopEvent(e);
+			return false;
 		};
 
 		this.onMouseWhell = function(e)
@@ -1210,7 +1686,7 @@
 
 		this.drawSearchPlaces = function(dKoefX, dKoefY, xDst, yDst, places)
 		{
-			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+			var rPR = 1;//AscCommon.AscBrowser.retinaPixelRatio;
 			var len = places.length;
 
 			var ctx = this.overlay.m_oContext;
@@ -1355,7 +1831,7 @@
 				}
 			}
 
-			if (!this.MouseHandObject)
+			//if (!this.MouseHandObject)
 			{
 				ctx.fillStyle = "rgba(51,102,204,255)";
 				ctx.beginPath();
@@ -1374,12 +1850,12 @@
 
 		this._paint = function()
 		{
-			if (!this.file.isValid())
+			if (!this.file || !this.file.isValid())
 				return;
 
 			this.canvas.width = this.canvas.width;
 			let ctx = this.canvas.getContext("2d");
-			ctx.strokeStyle = "#000000";
+			ctx.strokeStyle = AscCommon.GlobalSkin.PageOutline;
 			let lineW = AscCommon.AscBrowser.retinaPixelRatio >> 0;
 			ctx.lineWidth = lineW;
 
@@ -1427,39 +1903,52 @@
 			this.startVisiblePage = lStartPage;
 			this.endVisiblePage = lEndPage;
 
+			var isStretchPaint = this.Api.WordControl.NoneRepaintPages;
+			if (this.isClearPages)
+				isStretchPaint = false;
+
 			for (let i = lStartPage; i <= lEndPage; i++)
 			{
 				// отрисовываем страницу
 				let page = this.drawingPages[i];
+				if (!page)
+					break;
 
 				let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 				let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-				if (!this.file.cacheManager)
+				if (!isStretchPaint)
 				{
-					if (page.Image && ((page.Image.width != w) || (page.Image.height != h)))
-						delete page.Image;
-				}
-				else
-				{
-					if (page.Image && ((page.Image.width < w) || (page.Image.height < h)))
+					if (!this.file.cacheManager)
 					{
-						if (this.file.cacheManager)
-							this.file.cacheManager.unlock(page.Image);
-						
-						delete page.Image;	
+						if (this.isClearPages || (page.Image && ((page.Image.requestWidth != w) || (page.Image.requestHeight != h))))
+							delete page.Image;
+					}
+					else
+					{
+						if (this.isClearPages || (page.Image && ((page.Image.requestWidth < w) || (page.Image.requestHeight < h))))
+						{
+							if (this.file.cacheManager)
+								this.file.cacheManager.unlock(page.Image);
+
+							delete page.Image;
+						}
 					}
 				}
-				
-				if (!page.Image)
-					page.Image = this.file.getPage(i, w, h);
+
+				if (!page.Image && !isStretchPaint)
+				{
+					page.Image = this.file.getPage(i, w, h, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
+					if (this.Api.watermarkDraw)
+						this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
+				}
 
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
 				let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
 				if (page.Image)
 				{
-					ctx.drawImage(page.Image, 0, 0, w, h, x, y, w, h);
+					ctx.drawImage(page.Image, 0, 0, page.Image.width, page.Image.height, x, y, w, h);
 					this.pagesInfo.setPainted(i);
 				}
 				else
@@ -1472,7 +1961,8 @@
 				this.pageDetector.addPage(i, x, y, w, h);
 			}
 
-			this.updateCurrentPage(this.pageDetector.getCurrentPage());
+			this.isClearPages = false;
+			this.updateCurrentPage(this.pageDetector.getCurrentPage(this.currentPage));
 		};
 
 		this.checkPagesLinks = function()
@@ -1498,10 +1988,10 @@
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return false;
 
-			var pagesCount = this.pagesInfo.pages.length;
-			if (this.pagesInfo.countTextPages === pagesCount)
-				return false;
+			if (this.isFullText)
+				return;
 
+			var pagesCount = this.file.pages.length;
 			var isCommands = false;
 			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 			{
@@ -1534,14 +2024,31 @@
 				}
 			}
 
+			if (this.pagesInfo.countTextPages === pagesCount)
+			{
+				this.file.destroyText();
+
+				this.isFullText = true;
+				if (this.isFullTextMessage)
+					this.unshowTextMessage();
+
+				if (this.statistics.process)
+				{
+					this.endStatistics();
+					this.Api.sync_GetDocInfoEndCallback();
+				}
+			}
+
 			return isCommands;
 		};
 
-		this.getPageByCoords = function(x, y)
+		this.getPageByCoords = function(xInp, yInp)
 		{
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return null;
 
+			var x = xInp * AscCommon.AscBrowser.retinaPixelRatio;
+			var y = yInp * AscCommon.AscBrowser.retinaPixelRatio;
 			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 			{
 				var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
@@ -1569,10 +2076,12 @@
 			var pageIndex = 0;
 			for (pageIndex = this.startVisiblePage; pageIndex <= this.endVisiblePage; pageIndex++)
 			{
-				var pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
+				pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
 				if ((pageCoords.y + pageCoords.h) > y)
 					break;
 			}
+			if (pageIndex > this.endVisiblePage)
+				pageIndex = this.endVisiblePage;
 
 			if (!pageCoords)
 				pageCoords = {x:0, y:0, w:1, h:1};
@@ -1580,27 +2089,186 @@
 			var pixToMM = (25.4 / this.file.pages[pageIndex].Dpi);
 			return {
 				index : pageIndex,
-				x : this.file.pages[pageIndex].W * pixToMM * (x - pageCoords.x) / pageCoords.w,
-				y : this.file.pages[pageIndex].H * pixToMM * (y - pageCoords.y) / pageCoords.h
+				x : this.file.pages[pageIndex].W * pixToMM * (x * AscCommon.AscBrowser.retinaPixelRatio - pageCoords.x) / pageCoords.w,
+				y : this.file.pages[pageIndex].H * pixToMM * (y * AscCommon.AscBrowser.retinaPixelRatio - pageCoords.y) / pageCoords.h
 			};
+		};
+
+		this.ConvertCoordsToCursor = function(x, y, pageIndex)
+		{
+			var dKoef = (this.zoom * g_dKoef_mm_to_pix);
+			var rPR = 1;//AscCommon.AscBrowser.retinaPixelRatio;
+			let yPos = this.scrollY >> 0;
+			let xCenter = this.width >> 1;
+			if (this.documentWidth > this.width)
+			{
+				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+			}
+
+			let page = this.drawingPages[pageIndex];
+
+			let _w = (page.W * rPR) >> 0;
+			let _h = (page.H * rPR) >> 0;
+			let _x = ( (xCenter * rPR) >> 0) - (_w >> 1);
+			let _y = ( (page.Y - yPos) * rPR) >> 0;
+
+			var x_pix = (_x + x * dKoef) >> 0;
+			var y_pix = (_y + y * dKoef) >> 0;
+			var w_pix = (_w * dKoef) >> 0;
+			var h_pix = (_h * dKoef) >> 0
+
+			return ( {x : x_pix, y : y_pix, w : w_pix, h: h_pix} );
 		};
 
 		this.Copy = function(_text_format)
 		{
 			return this.file.copy(_text_format);
 		};
-
-		this.findText = function(text, isMachingCase, isNext)
+		this.selectAll = function()
 		{
-			this.file.findText(text, isMachingCase, isNext);
+			return this.file.selectAll();
+		};
+		this.removeSelection = function()
+		{
+			var pageObjectLogic = this.getPageByCoords2(AscCommon.global_mouseEvent.X - this.x, AscCommon.global_mouseEvent.Y - this.y);
+			this.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			this.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+		};
+
+		this.isCanCopy = function()
+		{
+			// TODO: нужно прерываться после первого же символа
+			var text_format = { Text : "" };
+			this.Copy(text_format);
+			text_format.Text = text_format.Text.replace(new RegExp("\n", 'g'), "");
+			return (text_format.Text === "") ? false : true;
+		};
+
+		this.findText = function(text, isMachingCase, isWholeWords, isNext, callback)
+		{
+			if (!this.isFullText)
+			{
+				this.fullTextMessageCallbackArgs = [text, isMachingCase, isWholeWords, isNext, callback];
+				this.fullTextMessageCallback = function() {
+					this.file.findText(this.fullTextMessageCallbackArgs[0], this.fullTextMessageCallbackArgs[1], this.fullTextMessageCallbackArgs[2], this.fullTextMessageCallbackArgs[3]);
+					this.onUpdateOverlay();
+
+					if (this.fullTextMessageCallbackArgs[4])
+						this.fullTextMessageCallbackArgs[4].call(this.Api, this.SearchResults.Current, this.SearchResults.Count);
+				};
+				this.showTextMessage();
+				return true; // async
+			}
+
+			this.file.findText(text, isMachingCase, isWholeWords, isNext);
 			this.onUpdateOverlay();
+			return false;
 		};
 
 		this.ToSearchResult = function()
 		{
-			// TODO: scroll to CurrentSearchNavi
+			var naviG = this.CurrentSearchNavi;
+
+			var navi = naviG[0];
+			var x    = navi.X;
+			var y    = navi.Y;
+
+			if (navi.Transform)
+			{
+				var xx = navi.Transform.TransformPointX(x, y);
+				var yy = navi.Transform.TransformPointY(x, y);
+
+				x = xx;
+				y = yy;
+			}
+
+			var drawingPage = this.drawingPages[navi.PageNum];
+			if (!drawingPage)
+				return;
+
+			var offsetBorder = 30;
+
+			var scale = this.file.pages[navi.PageNum].Dpi / 25.4;
+			var dKoefX = scale * drawingPage.W / this.file.pages[navi.PageNum].W;
+			var dKoefY = scale * drawingPage.H / this.file.pages[navi.PageNum].H;
+
+			var nX = drawingPage.X + dKoefX * x;
+			var nY = drawingPage.Y + dKoefY * y;
+			var nY2 = drawingPage.Y + dKoefY * (y + navi.H);
+
+			if (this.m_oScrollHorApi)
+				nX -= this.m_oScrollHorApi.scrollHCurrentX;
+			nY -= this.m_oScrollVerApi.scrollVCurrentY;
+			nY2 -= this.m_oScrollVerApi.scrollVCurrentY;
+
+			var boxX = 0;
+			var boxY = 0;
+			var boxR = this.width;
+			var boxB = this.height;
+
+			var nValueScrollHor = 0;
+			if (nX < boxX)
+			{
+				nValueScrollHor = nX - boxX - offsetBorder;
+			}
+			if (nX > boxR)
+			{
+				nValueScrollHor = nX - boxR + offsetBorder;
+			}
+
+			var nValueScrollVer = 0;
+			if (nY < boxY)
+			{
+				nValueScrollVer = nY - boxY - offsetBorder;
+			}
+			if (nY2 > boxB)
+			{
+				nValueScrollVer = nY2 - boxB + offsetBorder;
+			}
+
+			if (0 !== nValueScrollHor)
+			{
+				this.m_bIsUpdateTargetNoAttack = true;
+				this.m_oScrollHorApi.scrollByX(nValueScrollHor);
+			}
+			if (0 !== nValueScrollVer)
+			{
+				this.m_oScrollVerApi.scrollByY(nValueScrollVer);
+			}
 		};
 
+		this.SelectSearchElement = function(elmId)
+		{
+			var nSearchedId = 0, nPage;
+			var nMatchesCount = 0;
+			for (nPage = 0; nPage < this.SearchResults.Pages.length; nPage++)
+			{
+				for (var nMatch = 0; nMatch < this.SearchResults.Pages[nPage].length; nMatch++)
+				{
+					nMatchesCount++;
+
+					if (nMatchesCount - 1 == elmId)
+					{
+						nSearchedId = nMatch;
+						break;
+					}
+				}
+				if (nMatchesCount - 1 == elmId)
+				{
+					nSearchedId = nMatch;
+					break;
+				}
+			}
+
+			this.CurrentSearchNavi = this.SearchResults.Pages[nPage][nSearchedId];
+			this.SearchResults.CurrentPage = nPage;
+			this.SearchResults.Current = nSearchedId;
+			this.SearchResults.CurMatchIdx = elmId;
+            this.ToSearchResult();
+			this.onUpdateOverlay();
+			this.Api.sync_setSearchCurrent(elmId, this.SearchResults.Count);
+		};
+		
 		this.OnKeyDown = function(e)
 		{
 			var bRetValue = false;
@@ -1635,30 +2303,95 @@
 			}
 			else if ( e.KeyCode == 37 ) // Left Arrow
 			{
+				if (!this.isFocusOnThumbnails && this.isVisibleHorScroll)
+				{
+					this.m_oScrollHorApi.scrollByX(-40);
+				}
+				else if (this.isFocusOnThumbnails)
+				{
+					if (this.currentPage > 0)
+						this.navigateToPage(this.currentPage - 1);
+				}
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 38 ) // Top Arrow
 			{
+				if (!this.isFocusOnThumbnails)
+				{
+					this.m_oScrollVerApi.scrollByY(-40);
+				}
+				else
+				{
+					var nextPage = -1;
+					if (this.thumbnails)
+						nextPage = this.currentPage - this.thumbnails.countPagesInBlock;
+					if (nextPage < 0)
+						nextPage = this.currentPage - 1;
+
+					if (nextPage >= 0)
+						this.navigateToPage(nextPage);
+				}
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 39 ) // Right Arrow
 			{
+				if (!this.isFocusOnThumbnails && this.isVisibleHorScroll)
+				{
+					this.m_oScrollHorApi.scrollByX(40);
+				}
+				else if (this.isFocusOnThumbnails)
+				{
+					if (this.currentPage < (this.getPagesCount() - 1))
+						this.navigateToPage(this.currentPage + 1);
+				}
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 40 ) // Bottom Arrow
 			{
+				if (!this.isFocusOnThumbnails)
+				{
+					this.m_oScrollVerApi.scrollByY(40);
+				}
+				else
+				{
+					var pagesCount = this.getPagesCount();
+					var nextPage = pagesCount;
+					if (this.thumbnails)
+					{
+						nextPage = this.currentPage + this.thumbnails.countPagesInBlock;
+						if (nextPage >= pagesCount)
+							nextPage = pagesCount - 1;
+					}
+					if (nextPage >= pagesCount)
+						nextPage = this.currentPage + 1;
+
+					if (nextPage < pagesCount)
+						this.navigateToPage(nextPage);
+				}
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 65 && true === e.CtrlKey ) // Ctrl + A
 			{
 				bRetValue = true;
+				if (this.isFullTextMessage)
+					return bRetValue;
 
-				// TODO: waiting if not loaded
-				this.selectAll();
+				if (!this.isFullText)
+				{
+					this.fullTextMessageCallbackArgs = [];
+					this.fullTextMessageCallback = function() {
+						this.file.selectAll();
+					};
+					this.showTextMessage();
+				}
+				else
+				{
+					this.file.selectAll();
+				}
 			}
 			else if ( e.KeyCode == 80 && true === e.CtrlKey ) // Ctrl + P + ...
 			{
-				// TODO: print
+				this.Api.onPrint();
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 83 && true === e.CtrlKey ) // Ctrl + S + ...
@@ -1669,6 +2402,41 @@
 
 			return bRetValue;
 		};
+
+		this.showTextMessage = function()
+		{
+			if (this.isFullTextMessage)
+				return;
+
+			this.isFullTextMessage = true;
+			this.Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		};
+
+		this.unshowTextMessage = function()
+		{
+			this.isFullTextMessage = false;
+			this.Api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+
+			if (this.fullTextMessageCallback)
+			{
+				this.fullTextMessageCallback.apply(this, this.fullTextMessageCallbackArgs);
+				this.fullTextMessageCallback = null;
+				this.fullTextMessageCallbackArgs = null;
+			}
+		};
+
+		this.getTextCommandsSize = function()
+		{
+			var result = 0;
+			for (var i = 0; i < this.file.pages.length; i++)
+			{
+				if (this.file.pages[i].text)
+					result += this.file.pages[i].text.length;
+			}
+			return result;
+		};
+
+		this.createComponents();
 	}
 
 	function CCurrentPageDetector(w, h)
@@ -1683,7 +2451,7 @@
 	{
 		this.pages.push({ num : num, x : x, y : y, w : w, h : h });
 	};
-	CCurrentPageDetector.prototype.getCurrentPage = function()
+	CCurrentPageDetector.prototype.getCurrentPage = function(currentPage)
 	{
 		var count = this.pages.length;
 		var visibleH = 0;
@@ -1708,6 +2476,16 @@
 		}
 
 		page = this.pages[pageNum];
+		if (!page)
+		{
+			return {
+				num : currentPage,
+				x : 0,
+				y : 0,
+				r : 1,
+				b : 1
+			};
+		}
 
 		var x = 0;
 		if (page.x < 0) 

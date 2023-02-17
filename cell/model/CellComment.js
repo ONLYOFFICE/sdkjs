@@ -226,6 +226,40 @@ function (window, undefined) {
 			this.aReplies.push(comment.aReplies[i].clone(uniqueGuid));
 		}
 	};
+	asc_CCommentData.prototype.ReadFromSimpleObject = function(oData)
+    {
+        if (!oData)
+            return;
+
+        if (oData["Text"])
+            this.sText = oData["Text"];
+
+        if (oData["Time"])
+            this.sTime = oData["Time"];
+
+        if (oData["UserName"])
+            this.sUserName = oData["UserName"];
+        
+        if (oData["UserId"])
+            this.sUserId = oData["UserId"];
+
+        if (oData["Solved"])
+            this.bSolved = oData["Solved"];
+
+        if (oData["UserData"])
+            this.m_sUserData = oData["UserData"];
+
+        if (oData["Replies"] && oData["Replies"].length)
+        {
+            for (var nIndex = 0, nCount = oData["Replies"].length; nIndex < nCount; ++nIndex)
+            {
+                var oCD = new asc_CCommentData();
+                oCD.ReadFromSimpleObject(oData["Replies"][nIndex]);
+                this.aReplies.push(oCD);
+            }
+        }
+    };
+
 	asc_CCommentData.prototype.guid = function () {
 		function S4() {
 			return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
@@ -386,6 +420,10 @@ function (window, undefined) {
 			this.sText = this.sText.slice(prefix.length);
 		}
 	};
+	asc_CCommentData.prototype.isValidThreadComment = function () {
+		//CT_ThreadedComment.personId, CT_ThreadedComment.id, CT_Person.id also required but they generated
+		return !!this.sUserName;
+	};
 
 /** @constructor */
 function CCellCommentator(currentSheet) {
@@ -521,6 +559,9 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 		this.drawingCtx.setFillStyle(this.commentIconColor);
 		var commentCell, mergedRange, nCol, nRow, x, y, metrics;
 		var aComments = this.model.aComments;
+		var zoom = this.worksheet.getZoom();
+		var size = AscCommon.AscBrowser.convertToRetinaValue(6, true) * zoom;
+		var borderW = 1;
 		for (var i = 0; i < aComments.length; ++i) {
 			commentCell = aComments[i];
 			if (this._checkHidden(commentCell) || !AscCommon.UserInfoParser.canViewComment(commentCell.sUserName)) {
@@ -538,9 +579,9 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 				x = metrics.left + metrics.width;
 				y = metrics.top;
 				this.drawingCtx.beginPath();
-				this.drawingCtx.moveTo(x - 7, y);
-				this.drawingCtx.lineTo(x - 1, y);
-				this.drawingCtx.lineTo(x - 1, y + 6);
+				this.drawingCtx.moveTo(x - (size + borderW), y);
+				this.drawingCtx.lineTo(x - borderW, y);
+				this.drawingCtx.lineTo(x - borderW, y + size);
 				this.drawingCtx.fill();
 			}
 		}

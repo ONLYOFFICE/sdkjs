@@ -326,7 +326,10 @@ CShapeDrawer.prototype =
             var _arr = AscCommon.DashPatternPresets[this.Ln.prstDash].slice();
             for (var indexD = 0; indexD < _arr.length; indexD++)
                 _arr[indexD] *= this.StrokeWidth;
-            // this.NativeGraphics["PD_p_dash"](_arr);
+            if (this.Graphics && this.Graphics.RENDERER_PDF_FLAG)
+                this.Graphics.p_dash(_arr);
+            else
+                this.NativeGraphics && this.NativeGraphics["PD_p_dash"](_arr);
         }
     },
     
@@ -579,7 +582,7 @@ CShapeDrawer.prototype =
             this._e();
         }
         this.NativeGraphics["PD_EndShapeDraw"]();
-        // this.NativeGraphics["PD_p_dash"]([]);
+        this.NativeGraphics["PD_p_dash"]([]);
     },
 
     drawPDF : function(geom)
@@ -801,12 +804,12 @@ CShapeDrawer.prototype =
                 var _fc = _fill.fgClr && _fill.fgClr.RGBA || {R: 0, G: 0, B: 0, A: 255};
                 var _bc = _fill.bgClr && _fill.bgClr.RGBA || {R: 255, G: 255, B: 255, A: 255};
 
-                var __fa = (null === this.UniFill.transparent) ? _fc.A : 255;
-                var __ba = (null === this.UniFill.transparent) ? _bc.A : 255;
+                var __fa = (null === this.UniFill.transparent) ? _fc.A : (this.UniFill.transparent >> 0);
+                var __ba = (null === this.UniFill.transparent) ? _bc.A : (this.UniFill.transparent >> 0);
 
-                this.NativeGraphics["PD_put_BrushPattern"](_patt_name);
                 this.NativeGraphics["PD_b_color1"](_fc.R, _fc.G, _fc.B, __fa);
                 this.NativeGraphics["PD_b_color2"](_bc.R, _bc.G, _bc.B, __ba);
+                this.NativeGraphics["PD_put_BrushPattern"](_patt_name);
                 break;
             }
             default:
@@ -1003,7 +1006,7 @@ CShapeDrawer.prototype =
             }
 
             var rgba = this.StrokeUniColor;
-            this.Graphics.p_width(this.StrokeWidth);
+            this.Graphics.p_width(1000 * this.StrokeWidth);
             this.Graphics.p_color(rgba.R, rgba.G, rgba.B, rgba.A);
         }
 
@@ -1076,7 +1079,7 @@ CShapeDrawer.prototype =
                     var _url64 = "";
                     try
                     {
-                        _url64 = _pattern.Canvas.toDataURL("image/png");
+                        _url64 = _pattern.toDataURL("image/png");
                     }
                     catch (err)
                     {

@@ -2846,9 +2846,8 @@ CAutoshapeTrack.prototype =
         ctx.fill();
     },
 
-    DrawGeometryEdit: function (matrix, pathLst, gmEditList, gmEditPoint) {
+    DrawGeometryEdit: function (matrix, pathLst, gmEditList, gmEditPoint, oBounds) {
         var overlay = this.m_oOverlay;
-        overlay.Clear();
         var ctx = overlay.m_oContext;
         ctx.lineWidth = Math.round(rPR);
 
@@ -2914,6 +2913,11 @@ CAutoshapeTrack.prototype =
         }
         ctx.stroke();
         ctx.fill();
+        var pointX1 = (xDst + dKoefX * oBounds.min_x) >> 0;
+        var pointY1 = (yDst + dKoefY * oBounds.min_y) >> 0;
+        var pointX2 = (xDst + dKoefX * oBounds.max_x + 0.5) >> 0;
+        var pointY2 = (yDst + dKoefY * oBounds.max_y + 0.5) >> 0;
+        overlay.CheckRect(pointX1, pointY1, pointX2 - pointX1, pointY2 - pointY1);
     },
 
     DrawEditWrapPointsPolygon : function(points, matrix)

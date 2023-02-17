@@ -52,56 +52,78 @@
 	 this.pivotTables = true;
 	 this.selectUnlockedCells = false;*/
 
-	var c_oSerProtectedAlgorithmNameTypes = {
-		MD2: 1,
-		MD4: 2,
-		MD5: 3,
-		RIPEMD_128: 4,
-		RIPEMD_160: 5,
-		SHA_1: 6,
-		SHA_256: 7,
-		SHA_384: 8,
-		SHA_512: 9,
-		WHIRLPOOL: 10
-	};
-
-	function fromModelAlgoritmName(alg) {
-		switch (alg) {
-			case c_oSerProtectedAlgorithmNameTypes.MD2 :
-				alg = AscCommon.HashAlgs.MD2;
+	function FromXml_ST_AlgorithmName(str) {
+		var alg = null;
+		switch (str) {
+			case "MD2" :
+				alg = AscCommon.c_oSerAlgorithmNameTypes.MD2;
 				break;
-			case c_oSerProtectedAlgorithmNameTypes.MD4 :
-				alg = AscCommon.HashAlgs.MD4;
+			case "MD4" :
+				alg = AscCommon.c_oSerAlgorithmNameTypes.MD4;
 				break;
-			case c_oSerProtectedAlgorithmNameTypes.MD5 :
-				alg = AscCommon.HashAlgs.MD5;
+			case "MD5" :
+				alg = AscCommon.c_oSerAlgorithmNameTypes.MD5;
 				break;
-			case c_oSerProtectedAlgorithmNameTypes.RIPEMD_160 :
-				alg = AscCommon.HashAlgs.RMD160;
+			case "RIPEMD-128" :
+				alg = AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_128;
 				break;
-			case c_oSerProtectedAlgorithmNameTypes.SHA_1 :
-				alg = AscCommon.HashAlgs.SHA1;
+			case "RIPEMD-160" :
+				alg = AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_160;
 				break;
-			case c_oSerProtectedAlgorithmNameTypes.SHA_256 :
-				alg = AscCommon.HashAlgs.SHA256;
+			case "SHA-1" :
+				alg = AscCommon.c_oSerAlgorithmNameTypes.SHA1;
 				break;
-			case c_oSerProtectedAlgorithmNameTypes.SHA_384 :
-				alg = AscCommon.HashAlgs.SHA384;
+			case "SHA-256" :
+				alg = AscCommon.c_oSerAlgorithmNameTypes.SHA_256;
 				break;
-			case c_oSerProtectedAlgorithmNameTypes.SHA_512 :
-				alg = AscCommon.HashAlgs.SHA512;
+			case "SHA-384" :
+				alg = AscCommon.c_oSerAlgorithmNameTypes.SHA_384;
 				break;
-			case c_oSerProtectedAlgorithmNameTypes.WHIRLPOOL :
-				alg = AscCommon.HashAlgs.WHIRLPOOL;
+			case "SHA-512" :
+				alg = AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 				break;
-			default:
-				alg = AscCommon.HashAlgs.SHA256;
+			case "WHIRLPOOL" :
+				alg = AscCommon.c_oSerAlgorithmNameTypes.WHIRLPOOL;
+				break;
 		}
 		return alg;
 	}
 
-	function generateHashParams() {
-		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64(), algorithmName: c_oSerProtectedAlgorithmNameTypes.SHA_512};
+	function ToXml_ST_AlgorithmName(alg) {
+		var str = null;
+		switch (alg) {
+			case  AscCommon.c_oSerAlgorithmNameTypes.MD2:
+				str = "MD2";
+				break;
+			case  AscCommon.c_oSerAlgorithmNameTypes.MD4:
+				str = "MD4";
+				break;
+			case  AscCommon.c_oSerAlgorithmNameTypes.MD5:
+				str = "MD5";
+				break;
+			case  AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_128:
+				str = "RIPEMD-128";
+				break;
+			case  AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_160:
+				str = "RIPEMD-160";
+				break;
+			case  AscCommon.c_oSerAlgorithmNameTypes.SHA1:
+				str = "SHA-1";
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_256 :
+				str = "SHA-256";
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_384 :
+				str = "SHA-384";
+				break;
+			case  AscCommon.c_oSerAlgorithmNameTypes.SHA_512:
+				str = "SHA-512";
+				break;
+			case  AscCommon.c_oSerAlgorithmNameTypes.WHIRLPOOL:
+				str = "WHIRLPOOL";
+				break;
+		}
+		return str;
 	}
 
 	function getPasswordHash(password, getString) {
@@ -498,10 +520,10 @@
 		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedSheet
 		this.setSheet(!this.sheet);
 		if (this.sheet && password) {
-			var hashParams = generateHashParams();
+			var hashParams = AscCommon.generateHashParams();
 			this.saltValue = hashParams.saltValue;
 			this.spinCount = hashParams.spinCount;
-			this.algorithmName = hashParams.algorithmName;
+			this.algorithmName =  AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 		}
 		this.temporaryPassword = password;
 		if (callback) {
@@ -802,10 +824,10 @@
 		this.setLockStructure(!this.lockStructure);
 
 		if (this.lockStructure && password) {
-			var hashParams = generateHashParams();
+			var hashParams = AscCommon.generateHashParams();
 			this.workbookSaltValue = hashParams.saltValue;
 			this.workbookSpinCount = hashParams.spinCount;
-			this.workbookAlgorithmName = hashParams.algorithmName;
+			this.workbookAlgorithmName =  AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 		}
 		this.temporaryPassword = password;
 		if (callback) {
@@ -873,6 +895,9 @@
 		this.hashValue = null;
 		this.saltValue = null;
 		this.spinCount = null;
+
+		//пока прогоняю только на запись/чтение xml
+		this.securityDescriptors = null;
 
 		this._ws = ws;
 		this.isLock = null;
@@ -1179,7 +1204,9 @@
 
 		if (this.sqref) {
 			this.sqref.forEach(function (item) {
-				arrResult.push(item.getAbsName());
+				if (item) {
+					arrResult.push(item.getAbsName());
+				}
 			});
 		}
 		return "=" + arrResult.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
@@ -1238,10 +1265,10 @@
 	};
 	CProtectedRange.prototype.asc_setPassword = function (val) {
 		if (val) {
-			var hashParams = generateHashParams();
+			var hashParams = AscCommon.generateHashParams();
 			this.saltValue = hashParams.saltValue;
 			this.spinCount = hashParams.spinCount;
-			this.algorithmName = hashParams.algorithmName;
+			this.algorithmName =  AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 		}
 		//генерируем хэш
 		this.temporaryPassword = val;
@@ -1253,7 +1280,7 @@
 		return this.isLock;
 	};
 	CProtectedRange.prototype.asc_checkPassword = function (val, callback) {
-		var checkHash = {password: val, salt: this.saltValue, spinCount: this.spinCount, alg: fromModelAlgoritmName(this.algorithmName)};
+		var checkHash = {password: val, salt: this.saltValue, spinCount: this.spinCount, alg: AscCommon.fromModelAlgorithmName(this.algorithmName)};
 		AscCommon.calculateProtectHash([checkHash], function (hash) {
 			callback(hash && hash[0] === this.hashValue);
 		});
@@ -1361,7 +1388,8 @@
 	prot["asc_checkPassword"] = prot.asc_checkPassword;
 	prot["asc_getId"] = prot.asc_getId;
 
-	window["AscCommonExcel"].fromModelAlgoritmName = fromModelAlgoritmName;
 	window["AscCommonExcel"].getPasswordHash = getPasswordHash;
+	window["AscCommonExcel"].FromXml_ST_AlgorithmName = FromXml_ST_AlgorithmName;
+	window["AscCommonExcel"].ToXml_ST_AlgorithmName   = ToXml_ST_AlgorithmName;
 
 })(window);

@@ -237,8 +237,28 @@ window.onload = function()
 			is_correction);
 	};
 	///
+
+	var api = {
+		isMobileVersion : false,
+
+		getPageBackgroundColor : function() {
+	    	// TODO: get color from theme
+			if (this.isDarkMode)
+				return [0x3A, 0x3A, 0x3A];
+			return [0xFF, 0xFF, 0xFF];
+	    },
+
+	    WordControl : {
+	    	NoneRepaintPages : false
+	    },
+
+	    sendEvent : function() {
+
+	    }
+	};
+
 	AscFonts.g_fontApplication.Init();
-	window.Viewer = new AscCommon.CViewer("mainPanel");
+	window.Viewer = new AscCommon.CViewer("mainPanel", api);
 	window.Thumbnails = new AscCommon.ThumbnailsControl("panelThimbnailsNatural");
 	window.Viewer.setThumbnailsControl(window.Thumbnails);
 	

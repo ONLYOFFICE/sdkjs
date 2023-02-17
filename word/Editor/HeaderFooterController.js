@@ -71,6 +71,10 @@ CHdrFtrController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd)
 {
 	return this.HdrFtr.AddNewParagraph(bRecalculate, bForceAdd);
 };
+CHdrFtrController.prototype.GetFormatPainterData = function()
+{
+	return this.HdrFtr.GetFormatPainterData();
+};
 CHdrFtrController.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
 	this.HdrFtr.AddSignatureLine(oSignatureDrawing);
@@ -83,9 +87,9 @@ CHdrFtrController.prototype.AddImages = function(aImages)
 {
 	this.HdrFtr.AddImages(aImages);
 };
-CHdrFtrController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+CHdrFtrController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
-	this.HdrFtr.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+	this.HdrFtr.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CHdrFtrController.prototype.AddTextArt = function(nStyle)
 {
@@ -297,9 +301,9 @@ CHdrFtrController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEven
 {
 	this.HdrFtr.UpdateCursorType(X, Y, PageAbs, MouseEvent);
 };
-CHdrFtrController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CHdrFtrController.prototype.PasteFormatting = function(oData)
 {
-	this.HdrFtr.PasteFormatting(TextPr, ParaPr, false);
+	this.HdrFtr.PasteFormatting(oData);
 };
 CHdrFtrController.prototype.IsSelectionUse = function()
 {
@@ -462,7 +466,7 @@ CHdrFtrController.prototype.SaveDocumentStateBeforeLoadChanges = function(State)
 CHdrFtrController.prototype.RestoreDocumentStateAfterLoadChanges = function(State)
 {
 	var HdrFtr = State.HdrFtr;
-	if (null !== HdrFtr && undefined !== HdrFtr && true === HdrFtr.Is_UseInDocument())
+	if (null !== HdrFtr && undefined !== HdrFtr && true === HdrFtr.IsUseInDocument())
 	{
 		this.HdrFtr.Set_CurHdrFtr(HdrFtr);
 		var HdrFtrContent = HdrFtr.Get_DocumentContent();

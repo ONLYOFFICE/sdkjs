@@ -98,6 +98,10 @@ CDrawingsController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 {
 	return this.DrawingObjects.addNewParagraph(bRecalculate, bForceAdd);
 };
+CDrawingsController.prototype.GetFormatPainterData = function()
+{
+	return this.DrawingObjects.getFormatPainterData();
+};
 CDrawingsController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {
 	return this.DrawingObjects.addInlineImage(nW, nH, oImage, oChart, bFlow);
@@ -110,9 +114,9 @@ CDrawingsController.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
 	return this.DrawingObjects.addSignatureLine(oSignatureDrawing);
 };
-CDrawingsController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+CDrawingsController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
-	this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+	this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CDrawingsController.prototype.AddTextArt = function(nStyle)
 {
@@ -403,6 +407,10 @@ CDrawingsController.prototype.IsMovingTableBorder = function()
 {
 	return this.DrawingObjects.selectionIsTableBorder();
 };
+CDrawingsController.prototype.canEditTableOleObject = function()
+{
+	return this.DrawingObjects.canEditTableOleObject();
+};
 CDrawingsController.prototype.CheckPosInSelection = function(X, Y, PageAbs, NearPos)
 {
 	return this.DrawingObjects.selectionCheck(X, Y, PageAbs, NearPos);
@@ -420,9 +428,9 @@ CDrawingsController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEv
 	// TODO: Надо вызывать не у LogicDocument, а у DocumentContent заданного
 	this.LogicDocument.controller_UpdateCursorType(X, Y, PageAbs, MouseEvent);
 };
-CDrawingsController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CDrawingsController.prototype.PasteFormatting = function(oData)
 {
-	this.DrawingObjects.paragraphFormatPaste(TextPr, ParaPr, false);
+	this.DrawingObjects.pasteFormatting(oData);
 };
 CDrawingsController.prototype.IsSelectionUse = function()
 {
@@ -476,8 +484,13 @@ CDrawingsController.prototype.GetSelectedElementsInfo = function(oInfo)
 	var oParaDrawing = this.DrawingObjects.getMajorParaDrawing();
 	if (oParaDrawing && oParaDrawing.IsForm())
 	{
-		var oInnerForm = oParaDrawing.GetInnerForm();
-		if (oInnerForm && oInnerForm !== oInfo.GetInlineLevelSdt())
+		let oInnerForm = oParaDrawing.GetInnerForm();
+		let oInlineSdt = oInfo.GetInlineLevelSdt();
+
+		if (oInnerForm
+			&& (!oInlineSdt
+				|| !oInlineSdt.IsForm()
+				|| oInnerForm !== oInlineSdt.GetMainForm()))
 		{
 			oInfo.SetInlineLevelSdt(oInnerForm);
 			oInfo.SetFixedFormShape(true);

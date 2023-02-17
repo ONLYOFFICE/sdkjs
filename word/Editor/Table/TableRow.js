@@ -114,6 +114,11 @@ CTableRow.prototype =
         return this.Id;
     },
 
+	GetId : function()
+	{
+		return this.Id;
+	},
+
 	// Создаем копию данного объекта
 	Copy : function(Table, oPr)
 	{
@@ -135,12 +140,18 @@ CTableRow.prototype =
 		Row.private_UpdateTableGrid();
         if(oPr && oPr.Comparison)
         {
-            oPr.Comparison.updateReviewInfo(Row, reviewtype_Add, true);
+            if (oPr.SkipUpdateInfo) {
+                oPr.Comparison.saveReviewInfo(Row, this);
+            } else if (oPr.bSaveCustomReviewType) {
+                oPr.Comparison.saveCustomReviewInfo(Row, this, oPr.Comparison.nInsertChangesType);
+            } else {
+                oPr.Comparison.updateReviewInfo(Row, oPr.Comparison.nInsertChangesType);
+            }
         }
 		return Row;
 	},
 
-    Is_UseInDocument : function(Id)
+	IsUseInDocument : function(Id)
     {
         var bUse = false;
         if ( null != Id )
@@ -159,7 +170,7 @@ CTableRow.prototype =
             bUse = true;
 
         if ( true === bUse && null != this.Table )
-            return this.Table.Is_UseInDocument(this.Get_Id());
+            return this.Table.IsUseInDocument(this.Get_Id());
 
         return false;
     },
@@ -277,10 +288,10 @@ CTableRow.prototype =
             RowPr.TableCellSpacing = TablePr.TablePr.TableCellSpacing;
 
         // Совместим настройки с настройками для групп строк
-        if ( true === TableLook.Is_BandHor() )
+        if ( true === TableLook.IsBandHor() )
         {
             var RowBandSize = TablePr.TablePr.TableStyleRowBandSize;
-            var _CurIndex   = ( true != TableLook.Is_FirstRow() ? CurIndex : CurIndex - 1 );
+            var _CurIndex   = ( true != TableLook.IsFirstRow() ? CurIndex : CurIndex - 1 );
             var GroupIndex = ( 1 != RowBandSize ? Math.floor( _CurIndex / RowBandSize ) : _CurIndex );
             if ( 0 === GroupIndex % 2 )
                 RowPr.Merge(TablePr.TableBand1Horz.TableRowPr);
@@ -289,13 +300,13 @@ CTableRow.prototype =
         }
 
         // Совместим настройки с настройками для последней строки
-        if ( true === TableLook.Is_LastRow() && this.Table.Content.length - 1 === CurIndex )
+        if ( true === TableLook.IsLastRow() && this.Table.Content.length - 1 === CurIndex )
         {
             RowPr.Merge(TablePr.TableLastRow.TableRowPr);
         }
 
         // Совместим настройки с настройками для первой строки
-        if ( true === TableLook.Is_FirstRow() && ( 0 === CurIndex || true === this.Pr.TableHeader )  )
+        if ( true === TableLook.IsFirstRow() && ( 0 === CurIndex || true === this.Pr.TableHeader )  )
         {
             RowPr.Merge(TablePr.TableFirstRow.TableRowPr);
         }
@@ -674,40 +685,39 @@ CTableRow.prototype =
         return this.Table.Get_ParentObject_or_DocumentPos(this.Table.Index);
     },
 
-    Refresh_RecalcData : function(Data)
-    {
-        var bNeedRecalc = false;
+	Refresh_RecalcData : function(Data)
+	{
+		let oTable = this.GetTable();
+		if (!oTable)
+			return;
 
-        var Type = Data.Type;
+		let isNeedRecalc = false;
+		switch (Data.Type)
+		{
+			case AscDFH.historyitem_TableRow_Before:
+			case AscDFH.historyitem_TableRow_After:
+			case AscDFH.historyitem_TableRow_CellSpacing:
+			case AscDFH.historyitem_TableRow_Height:
+			case AscDFH.historyitem_TableRow_AddCell:
+			case AscDFH.historyitem_TableRow_RemoveCell:
+			case AscDFH.historyitem_TableRow_TableHeader:
+			case AscDFH.historyitem_TableRow_Pr:
+			{
+				isNeedRecalc = true;
+				break;
+			}
+		}
 
-        switch ( Type )
-        {
-            case AscDFH.historyitem_TableRow_Before:
-            case AscDFH.historyitem_TableRow_After:
-            case AscDFH.historyitem_TableRow_CellSpacing:
-            case AscDFH.historyitem_TableRow_Height:
-            case AscDFH.historyitem_TableRow_AddCell:
-            case AscDFH.historyitem_TableRow_RemoveCell:
-            case AscDFH.historyitem_TableRow_TableHeader:
-            case AscDFH.historyitem_TableRow_Pr:
-            {
-                bNeedRecalc = true;
-                break;
-            }
-        }
+		for (let nCurCell = 0, nCellsCount = this.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+		{
+			oTable.RecalcInfo.Add_Cell(this.GetCell(nCurCell));
+		}
 
-        // Добавляем все ячейки для пересчета
-        var CellsCount = this.Get_CellsCount();
-        for ( var CurCell = 0; CurCell < CellsCount; CurCell++ )
-        {
-            this.Table.RecalcInfo.Add_Cell( this.Get_Cell(CurCell) );
-        }
+		oTable.RecalcInfo.RecalcBorders();
 
-        this.Table.RecalcInfo.RecalcBorders();
-
-        if ( true === bNeedRecalc )
-            this.Refresh_RecalcData2( 0, 0 );
-    },
+		if (isNeedRecalc)
+			this.Refresh_RecalcData2(0, 0);
+	},
 
     Refresh_RecalcData2 : function(CellIndex, Page_rel)
     {

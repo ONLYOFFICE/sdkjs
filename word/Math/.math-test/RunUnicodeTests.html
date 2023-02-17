@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Mocha Tests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://unpkg.com/mocha/mocha.css" />
+    <script src="../NamesOfLiterals.js"></script>
+    <script src="../UnicodeParser.js"></script>
+</head>
+<body>
+<div id="mocha"></div>
+
+<script src="https://unpkg.com/chai/chai.js"></script>
+<script src="https://unpkg.com/mocha/mocha.js"></script>
+
+<script type="text/javascript" src="./UnicodeTestsList/literal-tests.js"></script>
+<script type="text/javascript" src="./UnicodeTestsList/fraction-test.js"></script>
+<script type="text/javascript" src="./UnicodeTestsList/sqrt-tests.js"></script>
+<script type="text/javascript" src="./UnicodeTestsList/script-tests.js"></script>
+<script type="text/javascript" src="./UnicodeTestsList/aboveAndBelow-test.js"></script>
+<script type="text/javascript" src="./UnicodeTestsList/hbrack-tests.js"></script>
+<script type="text/javascript" src="./UnicodeTestsList/brackets-test.js"></script>
+<script type="text/javascript" src="./UnicodeTestsList/complex-stuff.js"></script>
+<script type="text/javascript" src="./UnicodeTestsList/box-tests.js"></script>
+<script type="text/javascript" src="./UnicodeTestsList/special_scripts-tests.js"></script>
+
+<script class="mocha-init">
+	mocha.setup('bdd');
+	mocha.checkLeaks();
+</script>
+
+<script type="module" class="mocha-exec">
+	const assert = chai.assert;
+	const parser = window.AscCommonWord.CUnicodeConverter;
+
+	const sqrt = window.AscCommonWord.sqrt;
+	const box = window.AscCommonWord.box;
+	const bracket = window.AscCommonWord.bracket;
+	const fraction = window.AscCommonWord.fraction;
+	const literal = window.AscCommonWord.literal;
+	const aboveBelow = window.AscCommonWord.aboveBelow;
+	const complex = window.AscCommonWord.complex;
+	const hbrack = window.AscCommonWord.hbrack;
+	const script = window.AscCommonWord.script;
+	const special = window.AscCommonWord.special;
+
+	describe("Проверка работоспособности простых литералов", function () {
+		literal(test);
+	});
+	describe("Проверка работоспособности деления", function () {
+		fraction(test);
+	});
+	describe("Проверка работоспособности радикалов", function () {
+		sqrt(test);
+	});
+	describe("Проверка работоспособности скриптов", function () {
+		script(test);
+	});
+	describe("Проверка работоспособности below/above", function () {
+		aboveBelow(test);
+	});
+	describe("Проверка работоспособности hBrack", function () {
+		hbrack(test);
+	});
+	describe("Проверка работоспособности скобок", function () {
+		bracket(test);
+	});
+	describe("Проверка работоспособности комплексных выражений", function () {
+		complex(test);
+	});
+	describe("Проверка box", function () {
+		box(test);
+	});
+	describe("Проверка special_scripts", function () {
+		special(test);
+	});
+
+	function test(program, expected, description = "Без описания") {
+		it(description, function () {
+			const ast = parser(program);
+			assert.deepEqual(
+				ast,
+				expected,
+				`Get:\n${JSON.stringify(ast,null, 2)}\nExpected:\n${JSON.stringify(expected,null, 2)}`
+			);
+		});
+	}
+	mocha.run();
+</script>
+</body>
+</html>

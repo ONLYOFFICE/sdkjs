@@ -69,7 +69,6 @@ CChartSpace.prototype.check_bounds = CShape.prototype.check_bounds;
 CChartSpace.prototype.Get_Theme = CShape.prototype.Get_Theme;
 CChartSpace.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
 CChartSpace.prototype.Get_AbsolutePage = CShape.prototype.Get_AbsolutePage;
-CChartSpace.prototype.GetParaDrawing = CShape.prototype.GetParaDrawing;
 
 CChartSpace.prototype.handleUpdateFill = function()
 {
@@ -254,8 +253,6 @@ CChartSpace.prototype.setRecalcObject = CShape.prototype.setRecalcObject;
 
 CChartSpace.prototype.createResizeTrack = CShape.prototype.createResizeTrack;
 CChartSpace.prototype.createMoveTrack = CShape.prototype.createMoveTrack;
-CChartSpace.prototype.getRectBounds = CShape.prototype.getRectBounds;
-
 CChartSpace.prototype.recalculate = function()
 {
     if(this.bDeleted)
@@ -525,7 +522,7 @@ CChartSpace.prototype.updateTransformMatrix  = function()
     this.checkShapeChildTransform(oParentTransform);
 };
 CChartSpace.prototype.getArrayWrapIntervals = CShape.prototype.getArrayWrapIntervals;
-CChartSpace.prototype.Is_UseInDocument = CShape.prototype.Is_UseInDocument;
+CChartSpace.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
 //CChartSpace.prototype.Refresh_RecalcData = function(data)
 //{

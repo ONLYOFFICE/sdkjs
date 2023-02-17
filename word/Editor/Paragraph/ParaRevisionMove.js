@@ -79,8 +79,10 @@ CParaRevisionMove.prototype.GetId = function()
 {
 	return this.Get_Id();
 };
-CParaRevisionMove.prototype.Copy = function(Selected)
+CParaRevisionMove.prototype.Copy = function(Selected, oPr)
 {
+	if (oPr && oPr.Comparison)
+		return new CParaRevisionMove(this.Start, this.From, this.Name, this.ReviewInfo.Copy());
 	return new CParaRevisionMove(this.Start, this.From, this.Name);
 };
 CParaRevisionMove.prototype.Refresh_RecalcData = function()
@@ -159,9 +161,15 @@ CParaRevisionMove.prototype.GetReviewInfo = function()
 };
 CParaRevisionMove.prototype.PreDelete = function()
 {
-	var oParagraph = this.GetParagraph();
+	const oParagraph = this.GetParagraph();
 	if (oParagraph && oParagraph.LogicDocument)
-		oParagraph.LogicDocument.RemoveTrackMoveMarks(this.GetMarkId());
+	{
+		const oTrackRevisionManager = oParagraph.LogicDocument.TrackRevisionsManager;
+		if (!oTrackRevisionManager.SkipPreDeleteMoveMarks)
+		{
+			oParagraph.LogicDocument.RemoveTrackMoveMarks(this.GetMarkId());
+		}
+	}
 };
 CParaRevisionMove.prototype.IsUseInDocument = function()
 {
@@ -170,7 +178,7 @@ CParaRevisionMove.prototype.IsUseInDocument = function()
 	if (!oParagraph || !this.Paragraph.Get_PosByElement(this))
 		return false;
 
-	return oParagraph.Is_UseInDocument();
+	return oParagraph.IsUseInDocument();
 };
 CParaRevisionMove.prototype.GetReviewChange = function()
 {
@@ -205,11 +213,11 @@ CParaRevisionMove.prototype.GetSelectedElementsInfo = function(oInfo)
 /**
  * Класс для обозначения элемента начала/конца переноса текста во время рецензирования внутри рана
  * @constructor
- * @extends {CRunElementBase}
+ * @extends {AscWord.CRunElementBase}
  */
 function CRunRevisionMove(isStart, isFrom, sName, oInfo)
 {
-	CRunElementBase.call(this);
+	AscWord.CRunElementBase.call(this);
 
 	this.Start = isStart;
 	this.From  = isFrom;
@@ -229,12 +237,14 @@ function CRunRevisionMove(isStart, isFrom, sName, oInfo)
 	}
 }
 
-CRunRevisionMove.prototype = Object.create(CRunElementBase.prototype);
+CRunRevisionMove.prototype = Object.create(AscWord.CRunElementBase.prototype);
 CRunRevisionMove.prototype.constructor = CRunRevisionMove;
 CRunRevisionMove.prototype.Type = para_RevisionMove;
 
-CRunRevisionMove.prototype.Copy = function()
+CRunRevisionMove.prototype.Copy = function(oPr)
 {
+	if (oPr && oPr.Comparison)
+		return new CRunRevisionMove(this.Start, this.From, this.Name, this.ReviewInfo.Copy());
 	return new CRunRevisionMove(this.Start, this.From, this.Name);
 };
 CRunRevisionMove.prototype.Write_ToBinary  = function(oWriter)
@@ -310,12 +320,18 @@ CRunRevisionMove.prototype.PreDelete = function()
 	var oLogicDocument = oParagraph ? oParagraph.LogicDocument : null;
 
 	if (oLogicDocument)
-		oLogicDocument.RemoveTrackMoveMarks(this.GetMarkId());
+	{
+		const oTrackRevisionManager = oParagraph.LogicDocument.TrackRevisionsManager;
+		if (!oTrackRevisionManager.SkipPreDeleteMoveMarks)
+		{
+			oLogicDocument.RemoveTrackMoveMarks(this.GetMarkId());
+		}
+	}
 };
 CRunRevisionMove.prototype.IsUseInDocument = function()
 {
 	var oRun = this.GetRun();
-	return (oRun && -1 !== oRun.GetElementPosition(this) && oRun.Is_UseInDocument());
+	return (oRun && -1 !== oRun.GetElementPosition(this) && oRun.IsUseInDocument());
 };
 CRunRevisionMove.prototype.GetReviewChange = function()
 {
@@ -339,6 +355,7 @@ CRunRevisionMove.prototype.RemoveThisMarkFromDocument = function()
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
+window['AscWord'] = window['AscWord'] || {};
 
 window['AscCommon'].CParaRevisionMove = CParaRevisionMove;
-window['AscCommon'].CRunRevisionMove  = CRunRevisionMove;
+window['AscWord'].CRunRevisionMove  = CRunRevisionMove;

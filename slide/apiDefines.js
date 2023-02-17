@@ -893,6 +893,11 @@ window['AscFormat'].ENTRANCE_BASIC_ZOOM_IN_FROM_SCREEN_CENTER = window['AscForma
 window['AscFormat'].ENTRANCE_BASIC_SWIVEL_VERTICAL = window['AscFormat']["ENTRANCE_BASIC_SWIVEL_VERTICAL"] = 5;
 window['AscFormat'].ENTRANCE_BASIC_SWIVEL_HORIZONTAL = window['AscFormat']["ENTRANCE_BASIC_SWIVEL_HORIZONTAL"] = 10;
 
+
+window['AscFormat'].MOTION_CUSTOM_PATH_CURVE = window['AscFormat']["MOTION_CUSTOM_PATH_CURVE"] = 1;
+window['AscFormat'].MOTION_CUSTOM_PATH_LINE = window['AscFormat']["MOTION_CUSTOM_PATH_LINE"] = 2;
+window['AscFormat'].MOTION_CUSTOM_PATH_SCRIBBLE = window['AscFormat']["MOTION_CUSTOM_PATH_SCRIBBLE"] = 3;
+
 //animation node types
 window['AscFormat'].NODE_TYPE_AFTEREFFECT = window['AscFormat']["NODE_TYPE_AFTEREFFECT"] = 0;
 window['AscFormat'].NODE_TYPE_AFTERGROUP = window['AscFormat']["NODE_TYPE_AFTERGROUP"] = 1;

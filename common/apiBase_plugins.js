@@ -35,106 +35,118 @@
 (function(window, undefined)
 {
     /**
-     * Plugin config
-     * @typedef {Object} Config
+     * Plugin config.
+     * @typed {Object} Config
 	 *
-     * @property {string} name
+     * @pr {string} name
 	 * Plugin name which will be visible at the plugin toolbar.
      *
-	 * @property {?Object} nameLocale
-	 * Plugin name translations. Example: { "fr" : "trFr", "de" : "deTr" }
+	 * @pr {?Object} nameLocale
+	 * Translations for the name field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the plugin name translation for each language. Example: { "fr" : "trFr", "de" : "deTr" }.
      *
-	 * @property {string} guid Plugin id
+	 * @pr {string} guid
 	 * Plugin identifier. It must be of the asc.{UUID} type.
 	 *
-	 * @property {?string} [baseUrl=""]
-	 * Path to the plugin. All the other paths are calculated relative to this path. In case the plugin is installed on the server, an additional parameter (path to the plugins) is added there. If baseUrl == "" the path to all plugins will be used.
+	 * @pr {?string} [baseUrl=""]
+	 * Path to the plugin. All the other paths are calculated relative to this path. In case the plugin is installed on the server, an additional parameter (path to the plugins) is added there. If baseUrl == "", the path to all plugins will be used.
      *
-	 * @property {Variation[]} variations
-	 * Plugin variations or "subplugins" - see the Plugin variations section
+	 * @pr {Variation[]} variations
+	 * Plugin variations, or subplugins, that are created inside the origin plugin.
      */
 
     /**
-     * Editors possible values
-     * @typedef {("word" | "slide" | "cell")} EditorType
+     * The editors which the plugin is available for:
+	 * * <b>word</b> - text document editor,
+	 * * <b>cell</b> - spreadsheet editor,
+	 * * <b>slide</b> - presentation editor.
+	 * @typedef {("word" | "cell" | "slide")} editorType
      */
 
     /**
-	 * Init data types
-	 * @typedef {("none" | "text" | "ole" | "html" | "desktop")} InitDataType
+	 * The data type selected in the editor and sent to the plugin:
+     * * <b>text</b> - the text data,
+	 * * <b>html</b> - HTML formatted code,
+	 * * <b>ole</b> - OLE object data,
+     * * <b>desktop</b> - the desktop editor data,
+     * * <b>destop-external</b> - the main page data of the desktop app (system messages),
+     * * <b>none</b> - no data will be send to the plugin from the editor,
+	 * * <b>sign</b> - the sign for the keychain plugin.
+	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
      */
 
     /**
-     * Event types
-     * @typedef {("onDocumentContentReady" | "onTargetPositionChanged" | "onClick" | "onInputHelperClear" | "onInputHelperInput")} EventType
+     * Plugin event ("onDocumentContentReady", "onTargetPositionChanged", onClick", "onInputHelperClear", "onInputHelperInput", etc.).
+     * @typedef {string} EventType
      */
 
     /**
-     * Plugin variation
-     * @typedef {Object} Variation
-     * @property {string} description
+     * Plugin variations, or subplugins, that are created inside the origin plugin.
+     * @typed {Object} Variation
+     * @pr {string} description
 	 * The description, i.e. what describes your plugin the best way.
 	 *
-     * @property {?Object} descriptionLocale
-	 * The description translations (see config.nameLocale)
+     * @pr {?Object} descriptionLocale
+	 * Translations for the description field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the plugin description translation for each language.
 	 *
-     * @property {string} url
-	 * Plugin entry point, i.e. HTML file which connects the pluginBase.js (the base file needed for work with plugins) file and launches the plugin code.
+     * @pr {string} url
+	 * Plugin entry point, i.e. an HTML file which connects the plugin.js file (the base file needed for work with plugins) and launches the plugin code.
 	 *
-     * @property {string[]} icons List icons (with support hi-dpi)
-	 * Plugin icon image files used in the editors: for common screens and with doubled resolution for retina screens.
+     * @pr {string[]} icons (with support HiDPI)
+	 * Plugin icon image files used in the editors. There can be several scaling types for plugin icons: 100%, 125%, 150%, 175%, 200%, etc.
 	 *
-     * @property {?boolean} [isViewer=true]
-	 * Specifies if the plugin is available when the document is available in viewer mode only or not.
+     * @pr {?boolean} [isViewer=true]
+	 * Specifies if the plugin is working when the document is available in the viewer mode only or not.
 	 *
-	 * @property {boolean} isDisplayedInViewer
-	 * Specifies if the plugin will be displayed in viewer mode as well as in editor mode (isDisplayedInViewer == true) or in the editor mode only (isDisplayedInViewer == false).
+	 * @pr {boolean} isDisplayedInViewer
+	 * Specifies if the plugin will be displayed in the viewer mode as well as in the editor mode (isDisplayedInViewer == true) or in the editor mode only (isDisplayedInViewer == false).
 	 *
-     * @property {EditorType[]} EditorsSupport
-	 * The editors which the plugin is available for.
+     * @pr {EditorType[]} EditorsSupport
+	 * The editors which the plugin is available for ("word" - text document editor, "cell" - spreadsheet editor, "slide" - presentation editor).
 	 *
-     * @property {boolean} [isVisual=true]
+     * @pr {boolean} [isVisual=true]
 	 * Specifies if the plugin is visual (will open a window for some action, or introduce some additions to the editor panel interface) or non-visual (will provide a button (or buttons) which is going to apply some transformations or manipulations to the document).
      *
-	 * @property {boolean} [isModal=true]
-	 * Specifies if the opened plugin window is modal, i.e. a separate modal window must be opened, or not (used for visual plugins only). The following rule must be observed at all times: isModal != isInsideMode.
+	 * @pr {boolean} [isModal=true]
+	 * Specifies if the opened plugin window is modal (used for visual plugins only, and if isInsideMode is not true).
 	 *
-	 * @property {boolean} [isInsideMode=false]
-	 * Specifies if the plugin must be displayed inside the editor panel instead of its own window (used for visual non-modal plugins only). The following rule must be observed at all times: isModal != isInsideMode.
+	 * @pr {boolean} [isInsideMode=false]
+	 * Specifies if the plugin must be displayed inside the editor panel instead of its own window.
      *
-	 * @property {boolean} isCustomWindow
-	 * For modal plugins only. Is using custom window, without standard borders & buttons.
+	 * @pr {boolean} isCustomWindow
+	 * Specifies if the plugin uses a custom window, without standard borders and buttons (used for modal plugins only).
 	 *
-	 * @property {boolean} isSystem
-	 * Specifies if the plugin is not displayed in the editor interface and is started in background with the server (or desktop editors start) not interfering with the other plugins, so that they can work simultaneously.
+	 * @pr {boolean} isSystem
+	 * Specifies if the plugin is not displayed in the editor interface and is started in the background with the server (or desktop editors start) not interfering with the other plugins, so that they can work simultaneously.
      *
-	 * @property {InitDataType} initDataType
-	 * The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "none" - no data will be send to the plugin from the editor.
+	 * @pr {initDataType} initDataType
+	 * The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "desktop" - the desktop editor data, "destop-external" - the main page data of the desktop app (system messages), "none" - no data will be send to the plugin from the editor.
      *
-	 * @property {string} initData
-     * Is always equal to "" - this is the data which is sent from the editor to the plugin at the plugin start (e.g. if initDataType == "text", the plugin will receive the selected text when run).
+	 * @pr {string} initData
+     * Is usually equal to "" - this is the data which is sent from the editor to the plugin at the plugin start (e.g. if initDataType == "text", the plugin will receive the selected text when run). It may also be equal to encryption in the encryption plugins.
 	 *
-	 * @property {?boolean} isUpdateOleOnResize
-	 * Specifies if the OLE object must be redrawn when resized in the editor using the vector object draw type or not (used for OLE objects only, i.e. initDataType == "ole").
+	 * @pr {?boolean} isUpdateOleOnResize
+	 * Specifies if an OLE object must be redrawn when resized in the editor using the vector object draw type or not (used for OLE objects only, i.e. initDataType == "ole").
      *
-	 * @property {?Button[]} buttons
-	 * The list of skinnable plugin buttons used in the plugin interface (used for visual plugins with their own window only, i.e. isVisual == true && isInsideMode == false). The buttons can be primary or not, the primary flag affecting the button skin only.
+	 * @pr {?Button[]} buttons
+	 * The list of skinnable plugin buttons used in the plugin interface (used for visual plugins with their own window only, i.e. isVisual == true && isInsideMode == false).
 	 *
-	 * @property {?boolean} [initOnSelectionChanged=true]
+	 * @pr {?boolean} [initOnSelectionChanged=true]
 	 * Specifies if the plugin watches the text selection events in the editor window.
 	 *
-	 * @property {number[]} size
-	 * Size window on start
+	 * @pr {number[]} size
+	 * Plugin window size.
 	 *
-	 * @property {EventType[]} events
+	 * @pr {EventType[]} events
+     * Plugin events.
      */
 
     /**
-	 * Plugin buttons
-	 * @typedef {object} Button
-	 * @property {string} text
-	 * @property {string} textLocale
-	 * @property {boolean} primary
+	 * The skinnable plugin button used in the plugin interface (used for visual plugins with their own window only, i.e. isVisual == true and isInsideMode == false).
+	 * @typedef { Object } Button
+	 * @property {string} text - The label which is displayed on the button.
+	 * @property {boolean} [primary] - Defines if the button is primary or not. The primary flag affects the button skin only.
+	 * @property {boolean} [isViewer] - Defines if the button is shown in the viewer mode only or not.
+	 * @property {localeTranslate} [textLocale] - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
 	 */
 
     /**
@@ -147,80 +159,81 @@
     var Api = window["AscCommon"].baseEditorsApi;
 
     /**
-     * Get version of editor
+     * Returns the editor version.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetVersion
-     * @returns {string} version
+     * @returns {string} - The editor version.
      */
     Api.prototype["pluginMethod_GetVersion"] = function() { return this.GetVersion(); };
 
     /**
-     * Adding ole object to editor
+     * Adds an OLE object to the current document position.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddOleObject
 	 * @this Api
-     * @param {Object} data The properties for object.
-     * @param {number} data.width Width object in millimeters.
-     * @param {number} data.height Height object in millimeters.
-     * @param {string} data.data Data for ole object (internal format).
-     * @param {string} data.guid Ole object program identifier
-     * @param {string} data.imgSrc Ole object graphic presentation
-     * @param {number} data.widthPix Width imgSrc in pixels
-     * @param {number} data.heightPix Height imgSrc in pixels
+     * @param {Object} data - The OLE object properties.
+     * @param {string} data.data - OLE object data (internal format).
+     * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
+     * @param {string} data.guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
+     * @param {number} data.width - The OLE object width measured in millimeters.
+     * @param {number} data.height - The OLE object height measured in millimeters.
+     * @param {number} data.widthPix - The OLE object image width in pixels.
+     * @param {number} data.heightPix - The OLE object image height in pixels.
     */
     Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data); };
 
     /**
-     * Edit ole object to editor
+     * Edits an OLE object in the document.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EditOleObject
-     * @param {Object} data The properties for object.
-     * @param {number} data.width Width object in millimeters.
-     * @param {number} data.height Height object in millimeters.
-     * @param {string} data.data Data for ole object (internal format).
-     * @param {string} data.objectId Ole object identifier
-     * @param {string} data.imgSrc Ole object graphic presentation
-     * @param {number} data.widthPix Width imgSrc in pixels
-     * @param {number} data.heightPix Height imgSrc in pixels
+     * @param {Object} data - The OLE object properties.
+     * @param {string} data.data - OLE object data (internal format).
+     * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
+     * @param {string} data.objectId - The OLE object identifier.
+     * @param {number} data.width - The OLE object width measured in millimeters.
+     * @param {number} data.height - The OLE object height measured in millimeters.
+     * @param {number} data.widthPix - The OLE object image width in pixels.
+     * @param {number} data.heightPix - The OLE object image height in pixels.
      */
     Api.prototype["pluginMethod_EditOleObject"] = function(data) { return this.asc_editOleObject(data); };
 
     /**
-	 * @typedef {Object} FontInfo
-     * @property {string} m_wsFontName
-     * @property {string} m_wsFontPath
-	 * @property {number} m_lIndex
-	 * @property {boolean} m_bBold
-	 * @property {boolean} m_bItalic
-	 * @property {boolean} m_bIsFixed
-	 * @property {number[]} m_aPanose
-	 * @property {number} m_ulUnicodeRange1
-	 * @property {number} m_ulUnicodeRange2
-	 * @property {number} m_ulUnicodeRange3
-	 * @property {number} m_ulUnicodeRange4
-	 * @property {number} m_ulCodePageRange1
-	 * @property {number} m_ulCodePageRange2
-	 * @property {number} m_usWeigth
-	 * @property {number} m_usWidth
-	 * @property {string} m_sFamilyClass
-	 * @property {string} m_eFontFormat
-	 * @property {number} m_shAvgCharWidth
-	 * @property {number} m_shAscent
-	 * @property {number} m_shDescent
-	 * @property {number} m_shLineGap
-	 * @property {number} m_shXHeight
-	 * @property {number} m_shCapHeight
+	 * An object containing the font information.
+     * @typedef {Object} FontInfo
+     * @property {string} m_wsFontName The font name.
+     * @property {string} m_wsFontPath The path to the file with the current font.
+	 * @property {number} m_lIndex The font number in the file if there is more than one font in the file.
+	 * @property {boolean} m_bBold Specifies if the font characters are bold or not.
+	 * @property {boolean} m_bItalic Specifies if the font characters are italic or not.
+	 * @property {boolean} m_bIsFixed Specifies if the current font is monospaced or not.
+	 * @property {Array.<number>} m_aPanose The PANOSE Typeface Classification Number, a compact 10-byte description of the font critical visual characteristics, such as contrast, weight, and serif style.
+	 * @property {number} m_ulUnicodeRange1 The Unicode range encompassed by the font file (Bits 0-31).
+	 * @property {number} m_ulUnicodeRange2 The Unicode range encompassed by the font file (Bits 32-63).
+	 * @property {number} m_ulUnicodeRange3 The Unicode range encompassed by the font file (Bits 64-95).
+	 * @property {number} m_ulUnicodeRange4 The Unicode range encompassed by the font file (Bits 96-127).
+	 * @property {number} m_ulCodePageRange1 The code pages encompassed by the font file (Bits 0-31).
+	 * @property {number} m_ulCodePageRange2 The code pages encompassed by the font file (Bits 32-63).
+	 * @property {number} m_usWeigth The visual weight (stroke blackness or thickness) of the font characters (1-1000).
+	 * @property {number} m_usWidth The relative change from the normal aspect ratio (width to height ratio).
+	 * @property {number} m_sFamilyClass The font family class which values are assigned by IBM to each font family.
+	 * @property {number} m_eFontFormat The specific file type(s) used to store font data: <b>0</b> - *.fon, <b>1</b> - *.ttf, <b>2</b> - *.ttf, *.otf (CFF), <b>3</b> - unknown font format.
+	 * @property {number} m_shAvgCharWidth The arithmetic average of the escapement (width) of all non-zero width glyphs in the font.
+	 * @property {number} m_shAscent The height above the baseline for a clipping region.
+	 * @property {number} m_shDescent The vertical extent below the baseline for a clipping region.
+	 * @property {number} m_shLineGap The typographic line gap for the current font.
+	 * @property {number} m_shXHeight The distance between the baseline and the approximate height of non-ascending lowercase letters measured in FUnits.
+	 * @property {number} m_shCapHeight The distance between the baseline and the approximate height of uppercase letters measured in FUnits.
      */
 
     /**
-     * Get fonts list
+     * Returns the fonts list.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetFontList
-     * @returns {FontInfo[]}
+     * @returns {FontInfo[]} - An array of the FontInfo objects containing the data about the used fonts.
      */
     Api.prototype["pluginMethod_GetFontList"] = function()
     {
@@ -228,21 +241,17 @@
     };
 
     /**
-     * Insert text to editor
+     * Inserts text into the document.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias InputText
-	 * @param {string} text Text for insert
-	 * @param {string} textReplace Replace last text
+	 * @param {string} text - A string value that specifies the text to be inserted into the document.
+	 * @param {string} textReplace - A string value that specifies the text to be replaced with a new text.
      */
     Api.prototype["pluginMethod_InputText"] = function(text, textReplace)
     {
         if (this.isViewMode || !AscCommon.g_inputContext)
             return;
-
-        var codes = [];
-        for (var i = text.getUnicodeIterator(); i.check(); i.next())
-            codes.push(i.value());
 
         if (textReplace)
         {
@@ -250,21 +259,24 @@
                 AscCommon.g_inputContext.emulateKeyDownApi(8);
         }
 
-        AscCommon.g_inputContext.apiInputText(codes);
+        AscCommon.g_inputContext.addText(text);
         AscCommon.g_inputContext.keyPressInput = "";
     };
 
     /**
-     * Paste <html> into editor
+     * Pastes text in the HTML format into the document.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias PasteHtml
-     * @param {string} htmlText Text in html format
+     * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
      */
     Api.prototype["pluginMethod_PasteHtml"] = function(htmlText)
     {
         if (!AscCommon.g_clipboardBase)
             return null;
+
+		if (this.isViewMode)
+			return null;
 
         var _elem = document.getElementById("pmpastehtml");
         if (_elem)
@@ -334,11 +346,11 @@
     };
 
     /**
-     * Paste text into editor
+     * Pastes text into the document.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias PasteText
-     * @param {string} text Text
+     * @param {string} text - A string value that specifies the text to be pasted into the document.
      */
     Api.prototype["pluginMethod_PasteText"] = function(text)
     {
@@ -349,17 +361,18 @@
     };
 
     /**
+     * An object containing the data about all the macros from the document.
      * @typedef {Object} Macros
-     * @property {string[]} macrosArray Macros codes
-     * @property {number} current Current index
+     * @property {Array.<string>} macrosArray - An array of macros codes (*[{"name": "Macros1", "value": "{macrosCode}"}]*).
+     * @property {number} current - A current macro index.
      */
 
     /**
-     * Get all macroses in document
+     * Returns the document macros.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetMacros
-     * @returns {Macros} Document macroses
+     * @returns {Macros} - The Macros object containing the data about all the macros from the document
      */
     Api.prototype["pluginMethod_GetMacros"] = function()
     {
@@ -367,24 +380,37 @@
     };
 
     /**
-     * Set all macroses in document
+     * Sets macros to the document.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias SetMacros
-     * @param {Macros} data Document macroses
+     * @param {Macros} data - The *Macros* object containing the data about all the macros from the document.
      */
     Api.prototype["pluginMethod_SetMacros"] = function(data)
     {
         return this.asc_setMacros(data);
     };
 
+	/**
+	 * Returns all VBA macros from the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias GetVBAMacros
+	 * @returns {string | null} VBA xml macros.
+	 * @since 7.3.0
+	 */
+	Api.prototype["pluginMethod_GetVBAMacros"] = function()
+	{
+		return (this.vbaProject ? this.vbaProject.vbaXml : null);
+	};
+
     /**
-     * Loader for long operations
+     * Specifies the start action for long operations.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias StartAction
-     * @param {number} type Type action: 0 = Information, 1 = BlockInteraction
-	 * @param {string} description Description text for action
+     * @param {number} type - A value which defines an action type which can take <b>0</b> if this is an *Information* action or <b>1</b> if this is a *BlockInteraction* action.
+	 * @param {string} description - A string value that specifies the description text for the start action of the operation.
      */
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
     {
@@ -392,12 +418,12 @@
     };
 
     /**
-     * Loader for long operations
+     * Specifies the end action for long operations.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EndAction
-     * @param {number} type Type action: 0 = Information, 1 = BlockInteraction
-     * @param {string} description Description text for action
+     * @param {number} type - A value which defines an action type which can take <b>0</b> if this is the *Information* action or <b>1</b> if this is the *BlockInteraction* action.
+     * @param {string} description - A string value that specifies the description text for the operation end action.
      */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
     {
@@ -445,11 +471,23 @@
     };
 
     /**
-     * OnEncryption event (for crypto plugins)
+     * Encrypts the document.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias OnEncryption
-     * @param {object} obj Properties
+     * @param {object} obj - The encryption properties.
+     * @param {string} obj.type - The type of encrypting operation:
+     * * <b>generatePassword</b> - generates a password for the document,
+     * * <b>getPasswordByFile</b> - sends the password when opening the document,
+     * * <b>setPasswordByFile</b> - sets a password to the document,
+     * * <b>encryptData</b> - encrypts changes when co-editing,
+     * * <b>decryptData</b> - decrypts changes when co-editing.
+     * @param {string} obj.password - A string value specifying the password to access the document.
+     * @param {string} obj.data - Encrypted/decrypted changes.
+     * @param {boolean} obj.check - Checks if the encryption/decryption operation is successful or not (used only for *encryptData* or *decryptData* types).
+     * @param {string} obj.docinfo - An unencrypted part of the encrypted file.
+     * @param {string} obj.hash - A string value specifying a file hash (*sha256* by default).
+     * @param {string} obj.error - A string value specifying an error that occurs (the "" value means that the operation is successful).
      */
     Api.prototype["pluginMethod_OnEncryption"] = function(obj)
     {
@@ -512,18 +550,85 @@
     };
 
     /**
-     * Set properties for editor
-	 * see {@link https://github.com/ONLYOFFICE/sdkjs-plugins/tree/master/examples/settings examples}
+	 * An object containing the watermark properties.
+     * @typedef {Object} watermark_on_draw
+     * @property {float} transparent The watermark transparency degree.
+     * @property {string} type The {@link /docbuilder/global#ShapeType shape type} which specifies the preset shape geometry for the current watermark.
+	 * @property {number} width The watermark width measured in millimeters.
+	 * @property {number} height The watermark height measured in millimeters.
+	 * @property {number} rotate The watermark rotation angle measured in degrees.
+	 * @property {Array.<number>} margins The text margins measured in millimeters in the watermark shape.
+	 * @property {Array.<number>} fill The watermark fill color in the RGB format. The empty array [] means that the watermark has no fill.
+     * @property {number} stroke-width The watermark stroke width measured in millimeters.
+	 * @property {Array.<number>} stroke The watermark stroke color in the RGB format. The empty array [] means that the watermark stroke has no fill.
+	 * @property {number} align The vertical text align in the watermark shape: <b>0</b> - bottom, <b>1</b> - center, <b>4</b> - top.
+	 * @property {Array.<object>} paragraphs The array with paragraphs from the current watermark with their properties.
+	 * @property {number} paragraphs.align The horizontal text align in the current paragraph: <b>0</b> - right, <b>1</b> - left, <b>2</b> - center, <b>3</b> - justify.
+	 * @property {Array.<number>} paragraphs.fill The paragraph highlight in the RGB format. The empty array [] means that the paragraph is not highlighted.
+	 * @property {number} paragraphs.linespacing The text linespecing in the current paragraph.
+	 * @property {Array.<object>} paragraphs.runs The array with runs from the current paragraph with their properties.
+	 * @property {string} paragraphs.runs.text The run text.
+	 * @property {Array.<number>} paragraphs.runs.fill The text highlight in the RGB format. The empty array [] means that the text is not highlighted.
+	 * @property {string} paragraphs.runs.font-family The text font family.
+	 * @property {string} paragraphs.runs.font-size The text font size measured in points (pt).
+	 * @property {boolean} paragraphs.runs.bold Defines if the current text is displayed bold or not.
+	 * @property {boolean} paragraphs.runs.italic Defines if the current text is displayed italic or not.
+	 * @property {boolean} paragraphs.runs.strikeout Defines if the current text is displayed struck through or not.
+	 * @property {boolean} paragraphs.runs.underline Defines if the current text is displayed underlined or not.
+     */
+
+    /**
+	 * An object containing the form properties.
+     * @typedef {Object} fillForms
+     * @property {object} tags The form tags which specify the content for each form type with such a tag.
+     * @property {string} tags.text The text field value (some text).
+	 * @property {string} tags.checkBox The checkbox form value (<b>true</b> - checked, <b>false</b> - unchecked).
+	 * @property {string} tags.picture The image form value (a link to the image).
+	 * @property {string} tags.comboBox The combo box form value (one of the items from the combo box list values).
+     */
+
+    /**
+     * Sets the properties to the document.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias SetProperties
-     * @param {object} obj
-	 * @param {?boolean} obj.copyoutenabled Disable copying from editor if true
-	 * @param {?boolean} obj.hideContentControlTrack Disable content control track if true
-	 * @param {?string} obj.watermark_on_draw Watermark in json format
+     * @param {object} obj - The document properties.
+	 * @param {?boolean} obj.copyoutenabled - Disables copying from the editor if it is set to **false**.
+	 * @param {?boolean} obj.hideContentControlTrack - Disables tracking the content control if it is set to **true**.
+	 * @param {?string} obj.watermark_on_draw - A string value for {@link global#watermark_on_draw watermark properties} in JSON format.
+     * @param {?boolean} obj.disableAutostartMacros - Sets a flag that specifies that macros are started automatically when the editor opens.
+     * @param {?string} obj.fillForms - Sets rules in JSON format for filling document {@link global#fillForms forms} by tags.
      */
     Api.prototype["pluginMethod_SetProperties"] = function(obj)
     {
+		if (!this.isDocumentLoadComplete && obj)
+		{
+			if (!this.setPropertiesObj)
+			{
+				this.setPropertiesObj = obj;
+			}
+			else
+			{
+				for (var item in obj)
+					this.setPropertiesObj[item] = obj[item];
+			}
+			return;
+		}
+
+		if (this.setPropertiesObj)
+		{
+			if (!obj)
+			{
+				obj = this.setPropertiesObj;
+			}
+			else
+			{
+				for (var item in this.setPropertiesObj)
+					if (!obj[item]) obj[item] = this.setPropertiesObj[item];
+			}
+			delete this.setPropertiesObj;
+		}
+
         if (!obj)
             return;
 
@@ -580,7 +685,116 @@
                 case "disableAutostartMacros":
                 {
                     this.disableAutostartMacros = true;
+					break;
                 }
+				case "fillForms":
+				{
+					if (this.editorId !== AscCommon.c_oEditorId.Word
+						|| !this.WordControl
+						|| !this.WordControl.m_oLogicDocument)
+						break;
+
+					let oLogicDocument = this.WordControl.m_oLogicDocument;
+
+					let oMap;
+					try
+					{
+						oMap = (typeof obj[prop] === "string") ? JSON.parse(obj[prop]) : obj[prop];
+					}
+					catch (err)
+					{
+						oMap = {};
+					}
+
+					if (oMap["tags"])
+					{
+						let arrControls = oLogicDocument.GetAllContentControls();
+
+						let oTags         = {};
+						let arrCheckLocks = [];
+						let arrUrls       = [];
+
+						for (let sTag in oMap["tags"])
+						{
+							oTags[sTag] = [];
+							for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+							{
+								let oForm = arrControls[nIndex];
+								if (oForm
+									&& oForm.IsForm()
+									&& sTag === oForm.GetTag())
+								{
+									oTags[sTag].push(oForm);
+
+									let oElement;
+									if (oForm.IsInlineLevel())
+										oElement = oForm.GetParagraph();
+									else
+										oElement = oForm;
+
+									if (oElement && -1 === arrCheckLocks.indexOf(oElement))
+										arrCheckLocks.push(oElement);
+
+									if (oMap["tags"][sTag]["picture"])
+										arrUrls.push(oMap["tags"][sTag]["picture"]);
+								}
+							}
+						}
+
+						function FillForms()
+						{
+							if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_None, {
+								Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+								Elements  : arrCheckLocks,
+								CheckType : AscCommon.changestype_Paragraph_Content
+							}))
+							{
+								oLogicDocument.StartAction(AscDFH.historydescription_Document_FillFormsByTags);
+
+								for (let sTag in oTags)
+								{
+									let oValue = oMap["tags"][sTag];
+									for (let nFormIndex = 0, nFormsCount = oTags[sTag].length; nFormIndex < nFormsCount; ++nFormIndex)
+									{
+										let oForm = oTags[sTag][nFormIndex];
+										if (oForm.IsComboBox() || oForm.IsDropDownList())
+										{
+											if (oValue["comboBox"])
+												oForm.SelectListItem(oValue["comboBox"]);
+											else if (oForm.IsComboBox() && oValue["text"])
+												oForm.SetInnerText(oValue["text"]);
+										}
+										else if (oForm.IsPictureForm())
+										{
+											let oPicture = oForm.GetPicture();
+											if (oValue["picture"] && oPicture)
+												oPicture.setBlipFill(AscFormat.CreateBlipFillRasterImageId(oValue["picture"]));
+										}
+										else if (oForm.IsCheckBox())
+										{
+											if (oValue["checkBox"])
+												oForm.SetCheckBoxChecked(!!oValue["checkBox"]);
+										}
+										else
+										{
+											oForm.SetInnerText(oValue["text"]);
+										}
+									}
+								}
+
+								oLogicDocument.Recalculate();
+								oLogicDocument.FinalizeAction();
+							}
+						}
+
+						if (this.ImageLoader && arrUrls.length)
+							this.ImageLoader.LoadImagesWithCallback(arrUrls, FillForms, []);
+						else
+							FillForms();
+					}
+
+					break
+				}
                 default:
                     break;
             }
@@ -588,14 +802,14 @@
     };
 
     /**
-     * Show input helper
+     * Shows the input helper.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias ShowInputHelper
-     * @param {string} guid Guid helper
-     * @param {number} w Width
-     * @param {number} h Height
-     * @param {boolean} isKeyboardTake Is catch keyboard
+     * @param {string} guid - A string value which specifies a plugin identifier which must be of the *asc.{UUID}* type.
+     * @param {number} w - A number which specifies the window width measured in millimeters.
+     * @param {number} h - A number which specifies the window height measured in millimeters.
+     * @param {boolean} isKeyboardTake - Defines if the keyboard is caught (**true**) or not (**alse**).
      */
     Api.prototype["pluginMethod_ShowInputHelper"] = function(guid, w, h, isKeyboardTake)
     {
@@ -675,11 +889,12 @@
     };
 
     /**
-     * Unshow input helper
+     * Unshows the input helper.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias UnShowInputHelper
-     * @param {string} guid Guid helper
+     * @param {string} guid - A string value which specifies a plugin identifier which must be of the *asc.{UUID}* type.
+     * @param {string} isclear - Defines if the input context will be cleared (**true**) or not (**false**).
      */
     Api.prototype["pluginMethod_UnShowInputHelper"] = function(guid, isclear)
     {
@@ -716,11 +931,11 @@
         }
     };
     /**
-     * Send message to co-authoring chat.
+     * Sends a message to the co-authoring chat.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias CoAuthoringChatSendMessage
-     * @param {string} sText
+     * @param {string} sText - Message text.
      */
     Api.prototype["pluginMethod_CoAuthoringChatSendMessage"] = function(sText)
     {
@@ -728,16 +943,16 @@
     };
 
 	/**
-	 * A current selection type
+	 * The current selection type ("none", "text", "drawing", or "slide").
 	 * @typedef {("none" | "text" | "drawing" | "slide")} SelectionType
 	 */
 
 	/**
-	 * Get current selection type
+	 * Returns the type of the current selection.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias GetSelectionType
-	 * @param {SelectionType} selection type
+	 * @returns {SelectionType} - The selection type.
 	 */
 	Api.prototype["pluginMethod_GetSelectionType"] = function()
 	{
@@ -827,28 +1042,37 @@
 		return "none";
 	};
      /**
-     * Convert doc content to markdown.
+     * Converts a document to Markdown or HTML text.
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias ConvertDocument
-     * @param {"markdown" | "html"} [sConvertType="markdown"] - type of converting.
-     * @param {bool} [bHtmlHeadings=false] - If you have used multiple Heading 1 headings in your Doc, set this param true to demote all heading levels to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
-	 * @param {bool} [bBase64img=false] - set this param true if you want images to be created in base64 format.
-	 * @param {bool} [bDemoteHeadings=false] - Not all Markdown renderers handle Markdown-style IDs. If that is the case for your target platform, set this param true to generate HTML headings and IDs.
-	 * @param {bool} [bRenderHTMLTags=false] - By default, angle brackets (<) will be replaced by the &lt; entity. If you really want to embed HTML tags in your Markdown, set this param true to preserve them.
-	 * Or, if you just want to use an occasional HTML tag, you can escape the opening angle bracket like this: \<tag>text\</tag>.
+     * @param {"markdown" | "html"} [sConvertType="markdown"] - Conversion type ("markdown" or "html").
+     * @param {boolean} [bHtmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
+	 * @param {boolean} [bBase64img=false] - Defines if the images will be created in the base64 format.
+	 * @param {boolean} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {boolean} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket in the following way: \<tag>text\</tag>. By default, the opening angle brackets will be replaced with the special characters.
+     * @return {string} - The Markdown/HTML text.
      */
     Api.prototype["pluginMethod_ConvertDocument"] = function(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags)
     {
         return this.ConvertDocument(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
     };
     /**
-     * Get selection in document in text format
+     * Returns the selected text from the document.
      * @memberof Api
      * @typeofeditors ["CDE", "CPE", "CSE"]
      * @alias GetSelectedText
-     * @param {prop} numbering is an option that includes numbering in the return value.
-     * @return {string} selected text
+     * @param {object} numbering - The resulting string display properties.
+     * @param {boolean} numbering.NewLine - Defines if the resulting string will include line boundaries or not.
+     * @param {boolean} numbering.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
+     * @param {boolean} numbering.Numbering - Defines if the resulting string will include numbering or not.
+     * @param {boolean} numbering.Math - Defines if the resulting string will include mathematical expressions or not.
+     * @param {string} numbering.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
+     * @param {string} numbering.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
+     * @param {string} numbering.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
+     * @param {string} numbering.TabSymbol - Defines how the tab will be specified in the resulting string.
+     * @return {string} - Selected text.
+     * @since 7.1.0
      * @example
      * window.Asc.plugin.executeMethod("GetSelectedText", [{NewLine:true, NewLineParagraph:true, Numbering:true}])
      */
@@ -859,14 +1083,14 @@
         {
             properties =
             {
-                NewLine : (prop.hasOwnProperty("NewLine")) ? prop.NewLine : true,
-                NewLineParagraph : (prop.hasOwnProperty("NewLineParagraph")) ? prop.NewLineParagraph : true,
-                Numbering : (prop.hasOwnProperty("Numbering")) ? prop.Numbering : true,
-                Math : (prop.hasOwnProperty("Math")) ? prop.Math : true,
-                TableCellSeparator: prop.TableCellSeparator,
-                TableRowSeparator: prop.TableRowSeparator,
-                ParaSeparator: prop.ParaSeparator,
-                TabSymbol: prop.TabSymbol
+                NewLine : (prop.hasOwnProperty("NewLine")) ? prop["NewLine"] : true,
+                NewLineParagraph : (prop.hasOwnProperty("NewLineParagraph")) ? prop["NewLineParagraph"] : true,
+                Numbering : (prop.hasOwnProperty("Numbering")) ? prop["Numbering"] : true,
+                Math : (prop.hasOwnProperty("Math")) ? prop["Math"] : true,
+                TableCellSeparator: prop["TableCellSeparator"],
+                TableRowSeparator: prop["TableRowSeparator"],
+                ParaSeparator: prop["ParaSeparator"],
+                TabSymbol: prop["TabSymbol"]
             }
         }
         else
@@ -882,28 +1106,483 @@
         return this.asc_GetSelectedText(false, properties);
     };
     /**
-     * Replaces each paragraph(or text in cell) in the select with the corresponding text from an array of strings.
+     * Replaces each paragraph (or text in cell) in the select with the corresponding text from an array of strings.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @alias GetSelectedText
-     * @param {Array} arrString - represents an array of strings.
-     * @param {string} [sParaTab=" "] - specifies which character to use to define the tab in the source text.
-     * @param {string} [sParaNewLine=" "] - specifies which character to use to specify the line break character in the source text.
+     * @alias ReplaceTextSmart
+     * @param {Array} arrString - An array of replacement strings.
+     * @param {string} [sParaTab=" "] - A character which is used to specify the tab in the source text.
+     * @param {string} [sParaNewLine=" "] - A character which is used to specify the line break character in the source text.
+     * @returns {boolean} - Always returns true.
+     * @since 7.1.0
      */
     Api.prototype["pluginMethod_ReplaceTextSmart"] = function(arrString, sParaTab, sParaNewLine)
     {
-        this.asc_canPaste();
-        this.ReplaceTextSmart(arrString, sParaTab, sParaNewLine);
-        this.asc_Recalculate(true);
-        switch (this.editorId)
-        {
-            case AscCommon.c_oEditorId.Spreadsheet:
-                this.asc_endPaste();
-                break;
-            case AscCommon.c_oEditorId.Word:
-            case AscCommon.c_oEditorId.Presentation:
-                this.WordControl.m_oLogicDocument.FinalizeAction();
-                break;
-        }
+		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		this.incrementCounterLongAction();
+
+		function ReplaceTextSmart()
+		{
+			this.asc_canPaste();
+			this.ReplaceTextSmart(arrString, sParaTab, sParaNewLine);
+			this.asc_Recalculate(true);
+			switch (this.editorId)
+			{
+				case AscCommon.c_oEditorId.Spreadsheet:
+					this.asc_endPaste();
+					break;
+				case AscCommon.c_oEditorId.Word:
+				case AscCommon.c_oEditorId.Presentation:
+					this.WordControl.m_oLogicDocument.FinalizeAction();
+					break;
+			}
+
+			this.decrementCounterLongAction();
+
+			if (guid)
+				window.g_asc_plugins.onPluginMethodReturn(guid, true);
+		}
+
+		let sOverAll = "";
+		for (let nIndex = 0, nCount = arrString.length; nIndex < nCount; ++nIndex)
+			sOverAll += arrString[nIndex];
+
+		AscFonts.FontPickerByCharacter.checkText(sOverAll, this, ReplaceTextSmart);
+        return true;
     };
+	/**
+     * Returns the current file to download in the specified format.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias GetFileToDownload
+     * @param {string} [format=" "] - A format in which you need to download a file.
+     * @returns {string} - URL to download the file in the specified format or error.
+     * @since 7.2.0
+     */
+	Api.prototype["pluginMethod_GetFileToDownload"] = function(format)
+	{
+		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		let dwnldF = Asc.c_oAscFileType[format] || Asc.c_oAscFileType[this.DocInfo.Format.toUpperCase()];
+		let opts = new Asc.asc_CDownloadOptions(dwnldF);
+		let _t = this;
+		opts.callback = function() {
+			_t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
+			_t.fCurCallback = function(res) {
+				let data = (res.status == "ok") ? res.data : "error";
+				if (guid)
+					window.g_asc_plugins.onPluginMethodReturn(guid, data);
+			};
+		}
+		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
+	};
+
+
+    /**
+     * An object containing the information about the base64 encoded *png* image.
+     * @typedef {Object} ImageData
+     * @property {string} src The image source in the base64 format.
+     * @property {number} width The image width in pixels.
+     * @property {number} height The image height in pixels.
+     */
+
+	/**
+     * Returns the image data from the first of the selected drawings. If there are no drawings selected, the method returns a white rectangle.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias GetImageDataFromSelection
+     * @returns {?ImageData} - The ImageData object containig the information about the base64 encoded png image.
+     * @since 7.2.0
+     */
+	Api.prototype["pluginMethod_GetImageDataFromSelection"] = function()
+	{
+		return this.getImageDataFromSelection();
+	};
+	/**
+     * Replaces the first selected drawing with the image specified in the parameters.
+     * If there are no drawings selected, the method inserts the image at the current position.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias PutImageDataToSelection
+     * @param {ImageData} oImageData - The information about the base64 encoded *png* image.
+     * @since 7.2.0
+     */
+	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
+	{
+        this._beforeEvalCommand();
+		this.putImageToSelection(oImageData["src"], oImageData["width"], oImageData["height"]);
+        this._afterEvalCommand();
+	};
+
+	function getLocalStorageItem(key)
+	{
+		try
+		{
+			return JSON.parse(window.localStorage.getItem(key));
+		}
+		catch (e)
+		{
+			return null;
+		}
+	}
+	function setLocalStorageItem(key, value)
+	{
+		try
+		{
+			window.localStorage.setItem(key, JSON.stringify(value));
+			return true;
+		}
+		catch (e)
+		{
+		}
+		return false;
+	}
+
+	function installPlugin(config, loadFuncName)
+	{
+		if (!config)
+		{
+			return {
+				"type" : loadFuncName,
+				"guid" : ""
+			};
+		}
+
+		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
+		if (!currentInstalledPlugins)
+			currentInstalledPlugins = {};
+		currentInstalledPlugins[config["guid"]] = config;
+		setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
+
+		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		if (currentRemovedPlugins && currentRemovedPlugins[config["guid"]])
+		{
+			delete currentRemovedPlugins[config["guid"]];
+			setLocalStorageItem("asc_plugins_removed", currentRemovedPlugins);
+		}
+
+		window.g_asc_plugins.api.disableCheckInstalledPlugins = true;
+		window.g_asc_plugins.loadExtensionPlugins([config], true);
+		delete window.g_asc_plugins.api.disableCheckInstalledPlugins;
+
+		return {
+			"type" : loadFuncName,
+			"guid" : config["guid"]
+		};
+	}
+
+	Api.prototype.checkInstalledPlugins = function()
+	{
+		if (this.disableCheckInstalledPlugins)
+			return;
+
+		let arrayPlugins = [];
+
+		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
+		if (currentInstalledPlugins)
+		{
+			for (let item in currentInstalledPlugins)
+			{
+				if (currentInstalledPlugins[item]["guid"])
+					arrayPlugins.push(currentInstalledPlugins[item]);
+			}
+		}
+
+		if (window["Asc"]["extensionPlugins"] && window["Asc"]["extensionPlugins"].length)
+		{
+			let arrayExtensions = window["Asc"]["extensionPlugins"];
+			for (let i = 0, len = arrayExtensions.length; i < len; i++)
+				arrayPlugins.push(arrayExtensions[i]);
+		}
+
+		let isInstalledPresent = window.g_asc_plugins.loadExtensionPlugins(arrayPlugins, undefined, true);
+
+		let isRemovedPresent = false;
+		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+
+		if (currentRemovedPlugins)
+		{
+			for (let guid in currentRemovedPlugins)
+			{
+				if (guid)
+				{
+					if (window.g_asc_plugins.unregister(guid))
+						isRemovedPresent = true;
+				}
+			}
+		}
+
+		// этот метод может быть вызван из интерфейса - нужен таймаут для web-apps
+		if (isRemovedPresent || isInstalledPresent) {
+
+			setTimeout(function () {
+
+				// в принципе можно не удалять, так как если ничего не поменялось - то не зайдем второй раз сюда.
+				// но зачем еще раз парсить
+				window.g_asc_plugins.api.disableCheckInstalledPlugins = true;
+
+				if (isRemovedPresent)
+					window.g_asc_plugins.api.sendEvent("asc_onPluginsReset");
+
+				if (isInstalledPresent || isRemovedPresent)
+					window.g_asc_plugins.updateInterface();
+
+				delete window.g_asc_plugins.api.disableCheckInstalledPlugins;
+
+			}, 10);
+
+		}
+	};
+
+    /**
+	 * The plugin object.
+     * @typedef {Object} PluginData
+     * @property {string} url The URL to plugin config.
+     * @property {string} guid The plugin identifier. It must be of the *asc.{UUID}* type.
+	 * @property {boolean} canRemoved Specifies if the plugin can be removed (**true**) or not (**false**).
+     * @property {object} obj The {@link /plugin/config config} of the installed plugin. The version is taken from the config and compared with the current one to check for updates.
+     */
+
+	/**
+    * Returns all the installed plugins.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias GetInstalledPlugins
+     * @returns {PluginData[]} - An array of all the installed plugins.
+     * @since 7.2.0
+     */
+	Api.prototype["pluginMethod_GetInstalledPlugins"] = function()
+	{
+		/*
+			формат объекта 
+			{
+				url: url на конфиг (хотя по факту он не нужен, так как конфиг есть в этом объекте и внутри маркетплейса тоже),
+				guid: guid плагина,
+				canRemoved: флаг, может ли быть удалён плагин или нет (true/false),
+				obj: конфиг установленного плагина (от туда берется версия и сравнивается с текущей для проверки обновлений)
+			}
+		*/
+
+		let baseUrl = window.location.href;
+		let posQ = baseUrl.indexOf("?");
+		if (-1 !== posQ)
+			baseUrl = baseUrl.substr(0, posQ);
+
+		let pluginsArray = window.g_asc_plugins.plugins.concat(window.g_asc_plugins.systemPlugins);
+		let returnArray = [];
+
+		for (let i = 0, len = pluginsArray.length; i < len; i++)
+		{
+			if (pluginsArray[i].isConnector)
+				continue;
+			returnArray.push({
+				"baseUrl" : baseUrl,
+				"guid" : pluginsArray[i].guid,
+				"canRemoved" : true,
+				"obj" : pluginsArray[i].serialize(),
+				"removed" : false
+			});
+		}
+
+		// нужно послать и удаленные. так как удаленный может не быть в сторе. тогда его никак не установить обратно
+		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+
+		if (currentRemovedPlugins)
+		{
+			for (let guid in currentRemovedPlugins)
+			{
+				if (currentRemovedPlugins[guid])
+				{
+					returnArray.push({
+						"baseUrl" : baseUrl,
+						"guid": currentRemovedPlugins[guid]["guid"],
+						"canRemoved": true,
+						"obj": currentRemovedPlugins[guid],
+						"removed" : true
+					});
+				}
+			}
+		}
+
+		return returnArray;
+	};
+	/**
+    * Removes a plugin with the specified GUID.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [guid] - The plugin identifier. It must be of the *asc.{UUID}* type.
+     * @alias RemovePlugin
+     * @returns {object} - An object with the result information.
+     * @since 7.2.0
+     */
+	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
+	{
+		let removedPlugin = window.g_asc_plugins.unregister(guid);
+
+		if (removedPlugin)
+		{
+			let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+			if (!currentRemovedPlugins)
+				currentRemovedPlugins = {};
+			currentRemovedPlugins[removedPlugin.guid] = removedPlugin.serialize();
+			setLocalStorageItem("asc_plugins_removed", currentRemovedPlugins);
+
+			let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
+			if (currentInstalledPlugins && currentInstalledPlugins[removedPlugin.guid])
+			{
+				delete currentInstalledPlugins[removedPlugin.guid];
+				setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
+			}
+
+			this.disableCheckInstalledPlugins = true;
+
+			this.sendEvent("asc_onPluginsReset");
+			window.g_asc_plugins.updateInterface();
+
+			delete this.disableCheckInstalledPlugins;
+		}
+
+		return {
+			"type" : "Removed",
+			"guid" : removedPlugin ? removedPlugin.guid : ""
+		};
+	};
+	/**
+    * Installs a plugin by the URL to the plugin config.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {object} [config] - The plugin config for installing.
+     * @alias InstallPlugin
+     * @returns {object} - An object with the result information.
+     * @since 7.2.0
+     */
+	Api.prototype["pluginMethod_InstallPlugin"] = function(config)
+	{
+		return installPlugin(config, "Installed");
+	};
+	/**
+    * Updates a plugin by the URL to the plugin config.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {object} [config] - The plugin config for updating.
+     * @alias UpdatePlugin
+     * @returns {object} - An object with the result information.
+     * @since 7.3.0
+     */
+	Api.prototype["pluginMethod_UpdatePlugin"] = function(config)
+	{
+		return installPlugin(config, "Updated");
+	};
+
+	/**
+    * Shows or hides buttons in the header.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [id] - The button ID.
+     * @param {boolean} [bShow] - The flag specifies whether the button is shown (**true**) or hidden (**false**).
+     * @alias ShowButton 
+     * @since 7.2.0
+     */
+	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
+	{
+		if (bShow) {
+			this.sendEvent("asc_onPluginShowButton", id);
+		} else {
+			this.sendEvent("asc_onPluginHideButton", id);
+		}
+	};
+
+	Api.prototype["pluginMethod_GetKeychainStorageInfo"] = function(keys)
+	{
+		if (!this.keychainStorage)
+			this.keychainStorage = new AscCrypto.Storage.CStorageLocalStorage();
+
+		var guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
+
+		this.keychainStorage.command(keys, function(retObj){
+			window.g_asc_plugins.onPluginMethodReturn(guidAsync, retObj);
+		});
+	};
+
+	Api.prototype["pluginMethod_SetKeychainStorageInfo"] = function(items)
+	{
+		var guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
+
+		this.keychainStorage.command(items, function(retObj){
+			window.g_asc_plugins.onPluginMethodReturn(guidAsync, retObj);
+		});
+	};
+
+	Api.prototype["pluginMethod_OnSignWithKeychain"] = function(data)
+	{
+	};
+
+	/**
+	 * Implements the external drag&drop emulation.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {object} obj The drag&drop emulation properties.
+     * @param {string} obj.type - The drag&drop event type:
+     * * <b>onbeforedrop</b> - an event that is fired when the selected text or element is dragged;
+     * * <b>ondrop</b> - an event that is fired when the selected text or element is dropped on a valid drop target.
+     * @param {number} obj.x - The horizontal coordinate (in pixels) at which the mouse was clicked, relative to the left edge of the entire document.
+     * @param {number} obj.y - The vertical coordinate (in pixels) at which the mouse was clicked, relative to the top edge of the entire document.
+     * @param {string} obj.html - The dragged HTML element.
+     * @param {string} obj.text - The dragged text.
+	 * @alias OnDropEvent
+	 * @since 7.3.0
+	 */
+	Api.prototype["pluginMethod_OnDropEvent"] = function(obj)
+	{
+		if (!obj || !obj["type"])
+			return;
+
+		var e = {
+			pageX : obj["x"],
+			pageY : obj["y"]
+		};
+
+		switch (obj.type)
+		{
+			case "onbeforedrop":
+			{
+				this.beginInlineDropTarget(e);
+				break;
+			}
+			case "ondrop":
+			{
+				this.endInlineDropTarget(e);
+
+				if (obj["html"])
+					this["pluginMethod_PasteHtml"](obj["html"]);
+				else if (obj["text"])
+					this["pluginMethod_PasteText"](obj["text"]);
+
+				break;
+			}
+			default:
+				break;
+		}
+	};
+
+    /**
+     * Gets the document language.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CPE"]
+     * @alias GetDocumentLang
+     * @returns {string} 
+     */
+    Api.prototype["pluginMethod_GetDocumentLang"] = function()
+    {
+        let langCode = 1033; // en-US
+        let langName = "en-US";
+
+        if (this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.GetDefaultLanguage)
+            langCode = this.WordControl.m_oLogicDocument.GetDefaultLanguage();
+
+        if (window["Common"])
+            langName = window["Common"]["util"]['LanguageInfo']['getLocalLanguageName'](langCode)[0];
+
+        return langName;
+    };
+
 })(window);

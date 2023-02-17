@@ -260,74 +260,6 @@ function MoveShapeImageTrack(originalObject)
             if(this.originalObject.selectStartPage !== this.pageIndex)
                 this.originalObject.selectStartPage = this.pageIndex;
         }
-
-        if (this.originalObject.isObjectInSmartArt()) {
-            var _rot = this.originalObject.rot;
-            var isSwapBounds = ((_rot >= Math.PI / 4) && (_rot <= 3 * Math.PI / 4)) || ((_rot >= 5 * Math.PI / 4) && (_rot <= 7 * Math.PI / 4));
-            if (isSwapBounds) {
-                var l = this.x + (this.originalObject.extX - this.originalObject.extY) / 2;
-                var t = this.y + (this.originalObject.extY - this.originalObject.extX) / 2;
-                var b = t + this.originalObject.extX;
-                var r = l + this.originalObject.extY;
-            } else {
-                l = this.x;
-                t = this.y;
-                b = t + this.originalObject.extY;
-                r = l + this.originalObject.extX;
-            }
-            // var _rot = this.originalObject.rot;
-            //
-            // if (((_rot >= Math.PI / 4) && (_rot <= 3 * Math.PI / 4)) || ((_rot >= 5 * Math.PI / 4) && (_rot <= 7 * Math.PI / 4))) {
-            //     this.x = this.x - (this.originalObject.extX - this.originalObject.extX);
-            // }
-            // } else {
-            //
-            // }
-
-            if (l < 0) {
-                this.x = this.x - l;
-            }
-            if (t < 0) {
-                this.y = this.y - t + 0.00001; // TODO: fix this
-            }
-            var oSmartArt = this.originalObject.group && this.originalObject.group.group;
-            if(oSmartArt) {
-                if (oSmartArt.extX < r) {
-                    this.x = oSmartArt.extX - this.originalObject.bounds.w;
-                }
-                if (oSmartArt.extY < b) {
-                    this.y = oSmartArt.extY - (b - t);
-                }
-            }
-            var point = this.originalObject.getSmartArtShapePoint();
-            if (point) {
-                var prSet = point.getPrSet();
-                var originalPosX = this.originalObject.x;
-                var originalPosY = this.originalObject.y;
-                var defaultExtX = this.originalObject.extX;
-                var defaultExtY = this.originalObject.extY;
-                if (prSet) {
-                    if (prSet.custScaleX) {
-                        defaultExtX /= prSet.custScaleX;
-                    }
-                    if (prSet.custScaleY) {
-                        defaultExtY /= prSet.custScaleY;
-                    }
-                    if (prSet.custLinFactNeighborX) {
-                        originalPosX -= (prSet.custLinFactNeighborX) * defaultExtX;
-                    }
-                    if (prSet.custLinFactNeighborY) {
-                        originalPosY -= (prSet.custLinFactNeighborY) * defaultExtY;
-                    }
-                    if (this.x !== this.originalObject.x) {
-                        prSet.setCustLinFactNeighborX(((this.x - originalPosX) / defaultExtX));
-                    }
-                    if (this.y !== this.originalObject.y) {
-                        prSet.setCustLinFactNeighborY(((this.y - originalPosY) / defaultExtY));
-                    }
-                }
-            }
-        }
         var scale_coefficients, ch_off_x, ch_off_y;
         if(this.originalObject.isCrop)
         {
@@ -383,6 +315,39 @@ function MoveShapeImageTrack(originalObject)
                 this.x = 0;
                 this.y = 0;
             }
+        }
+        if (this.originalObject.isObjectInSmartArt()) {
+            var _rot = this.originalObject.rot;
+            var isNormalRotate = AscFormat.checkNormalRotate(_rot);
+            if (isNormalRotate) {
+                var l = this.x;
+                var t = this.y;
+                var b = t + this.originalObject.extY;
+                var r = l + this.originalObject.extX;
+            } else {
+                l = this.x + (this.originalObject.extX - this.originalObject.extY) / 2;
+                t = this.y + (this.originalObject.extY - this.originalObject.extX) / 2;
+                b = t + this.originalObject.extX;
+                r = l + this.originalObject.extY;
+            }
+            var oSmartArt = this.originalObject.group && this.originalObject.group.group;
+            if (oSmartArt.extX < (r - l) || oSmartArt.extY < (b - t)) {
+                return;
+            }
+
+            if (l < 0) {
+                this.x = this.x - l;
+            }
+            if (t < 0) {
+                this.y = this.y - t + 0.00001; // TODO: fix this
+            }
+            if (oSmartArt.extX < r) {
+                this.x = this.x - (r - oSmartArt.extX);
+            }
+            if (oSmartArt.extY < b) {
+                this.y = this.y - (b - oSmartArt.extY);
+            }
+            this.originalObject.changePositionInSmartArt(this.x, this.y);
         }
         var _xfrm = this.originalObject.spPr.xfrm;
         var _x = _xfrm.offX;
@@ -457,10 +422,10 @@ function MoveShapeImageTrack(originalObject)
         if(this.originalObject.isCrop)
         {
             AscFormat.ExecuteNoHistory(
-                function () {
-                    this.originalObject.checkDrawingBaseCoords();
-                },
-                this, []
+              function () {
+                  this.originalObject.checkDrawingBaseCoords();
+              },
+              this, []
             );
             this.originalObject.transform = this.transform;
             this.originalObject.invertTransform = AscCommon.global_MatrixTransformer.Invert(this.transform);
@@ -784,10 +749,108 @@ function MoveChartObjectTrack(oObject, oChartSpace)
     };
 }
 
+
+    function CGuideTrack(oGuide) {
+	    this.guide = oGuide;
+	    this.x = 0;
+	    this.y = 0;
+    }
+    CGuideTrack.prototype.track = function(x, y)
+    {
+        this.bIsTracked = true;
+        let oPresentation = editor.WordControl.m_oLogicDocument;
+        this.x = Math.max(0, Math.min(x, oPresentation.GetWidthMM()));
+        this.y = Math.max(0, Math.min(y, oPresentation.GetHeightMM()));
+    };
+
+    CGuideTrack.prototype.draw = function(oAutoShapeTrack)
+    {
+        let oGraphics = oAutoShapeTrack.Graphics;
+        if(!oGraphics)
+        {
+            return;
+        }
+        let oWordControl = editor.WordControl;
+        let oDrawingDocument = oWordControl.m_oDrawingDocument;
+        let oPresentation = oWordControl.m_oLogicDocument;
+        let dZoom = oWordControl.m_nZoomValue / 100;
+        let dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix * dZoom;
+        // if(this.guide.isHorizontal()) {
+        //     let pos = oDrawingDocument.SlideCurrectRect.top + this.y * dKoef_mm_to_pix;
+        //     oOverlay.HorLine(pos, true);
+        // }
+        // else {
+        //     let pos = oDrawingDocument.SlideCurrectRect.left + this.x * dKoef_mm_to_pix;
+        //     oOverlay.VertLine(pos, true);
+        // }
+
+        let oOverlay = oAutoShapeTrack.m_oOverlay || oAutoShapeTrack;
+        if(oOverlay)
+        {
+            oOverlay.ClearAll = true;
+            oOverlay.CheckRect(0, 0, 5, 5);
+        }
+        oGraphics.SaveGrState();
+        oGraphics.SetIntegerGrid(true);
+        oGraphics.transform3(new AscCommon.CMatrix(), false);
+        let bOldVal = editor.isShowTableEmptyLineAttack;
+        editor.isShowTableEmptyLineAttack = true;
+        if(this.guide.isHorizontal()) {
+            oGraphics.DrawEmptyTableLine(0, this.y, oPresentation.GetWidthMM(), this.y);
+        }
+        else {
+            oGraphics.DrawEmptyTableLine(this.x, 0, this.x, oPresentation.GetHeightMM());
+        }
+        editor.isShowTableEmptyLineAttack = bOldVal;
+        oGraphics.RestoreGrState();
+    };
+	CGuideTrack.prototype.getPos = function () {
+		if(this.guide.isHorizontal()) {
+			return AscFormat.MmToGdPos(this.y);
+		}
+		else {
+			return AscFormat.MmToGdPos(this.x);
+		}
+	};
+    CGuideTrack.prototype.trackEnd = function()
+    {
+        if(!this.bIsTracked)
+        {
+            return;
+        }
+        History.Create_NewPoint(1);
+		this.guide.setPos(this.getPos());
+    };
+
+    CGuideTrack.prototype.getBounds = function ()
+    {
+        let oBoundsChecker = new  AscFormat.CSlideBoundsChecker();
+        let oPresentation = editor.WordControl.m_oLogicDocument;
+        let oBounds = oBoundsChecker.Bounds;
+        if(this.guide.isHorizontal()) {
+            oBounds.min_x = 0;
+            oBounds.max_x = oPresentation.GetWidthMM();
+            oBounds.min_y = this.y - 5;
+            oBounds.max_y = this.y + 5;
+        }
+        else {
+            oBounds.min_x = this.x - 5;
+            oBounds.max_x = this.x + 5;
+            oBounds.min_y = 0;
+            oBounds.max_y = oPresentation.GetHeightMM();
+        }
+        oBounds.posX = oBounds.min_x;
+        oBounds.posY = oBounds.min_y;
+        oBounds.extX = oBounds.max_x - oBounds.min_x;
+        oBounds.extY = oBounds.max_y - oBounds.min_y;
+        return oBounds;
+    };
+
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].MoveShapeImageTrack = MoveShapeImageTrack;
     window['AscFormat'].MoveGroupTrack = MoveGroupTrack;
     window['AscFormat'].MoveComment = MoveComment;
     window['AscFormat'].MoveChartObjectTrack = MoveChartObjectTrack;
+    window['AscFormat'].CGuideTrack = CGuideTrack;
 })(window);

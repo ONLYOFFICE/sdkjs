@@ -79,7 +79,7 @@ function CEditorPage(api)
 	// ------------------------------------------------------------------
 	this.Name           = "";
 	this.IsSupportNotes = true;
-	this.IsSupportAnimPane = true;
+	this.IsSupportAnimPane = false;
 
 	this.EditorType = "presentations";
 
@@ -414,7 +414,7 @@ function CEditorPage(api)
 
 		this.Splitter1Pos    = 67.5;
         this.Splitter1PosSetUp = this.Splitter1Pos;
-		this.Splitter2Pos    = (this.IsSupportNotes === true) ? 11 : 0;
+		this.Splitter2Pos    = (this.IsSupportNotes === true && this.m_oApi.isEmbedVersion !== true) ? 11 : 0;
 		this.Splitter3Pos = 0;//top of animation pane
 
 		this.OldSplitter1Pos = this.Splitter1Pos;
@@ -637,6 +637,11 @@ function CEditorPage(api)
 		this.m_oAnimPaneTimeline.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
 		this.m_oAnimPaneTimelineContainer.AddControl(this.m_oAnimPaneTimeline);
 
+
+		if(!this.IsSupportAnimPane)
+		{
+			this.m_oAnimationPaneContainer.HtmlElement.style.display = "none";
+		}
 		// ----------
 
 		this.m_oMainView = CreateControlContainer("id_main_view");
@@ -982,6 +987,7 @@ function CEditorPage(api)
 			this.m_oNotes.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oNotesContainer.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oBottomPanesContainer.HtmlElement.style.borderTop = ("1px solid " + GlobalSkin.BorderSplitterColor);
+			this.m_oBottomPanesContainer.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oAnimationPaneContainer.HtmlElement.style.borderTop = ("1px solid " + GlobalSkin.BorderSplitterColor);
 		}
 
@@ -1034,7 +1040,7 @@ function CEditorPage(api)
 		if (this.retinaScaling != AscCommon.AscBrowser.retinaPixelRatio)
 		{
             this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
-            // сбросить кэш страниц
+			this.m_oDrawingDocument.ClearCachePages();
             this.onButtonTabsDraw();
 		}
 	};
@@ -1928,17 +1934,20 @@ function CEditorPage(api)
 
 	this.hitToSplitter = function()
 	{
-		var oWordControl = oThis;
 
-		var x1 = oWordControl.Splitter1Pos * g_dKoef_mm_to_pix;
-		var x2 = (oWordControl.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix;
 
-		var _x = global_mouseEvent.X - oWordControl.X;
-		var _y = global_mouseEvent.Y - oWordControl.Y;
+		let nResult = 0;
+		let oWordControl = oThis;
+
+		let x1 = oWordControl.Splitter1Pos * g_dKoef_mm_to_pix;
+		let x2 = (oWordControl.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix;
+
+		let _x = global_mouseEvent.X - oWordControl.X;
+		let _y = global_mouseEvent.Y - oWordControl.Y;
 
 		if (_x >= x1 && _x <= x2 && _y >= 0 && _y <= oWordControl.Height && (oThis.IsUseNullThumbnailsSplitter || (oThis.Splitter1Pos != 0)))
 		{
-			return 1;
+			nResult = 1;
 		}
 		else if (_x >= x2 && _x <= oWordControl.Width)
 		{
@@ -1948,7 +1957,7 @@ function CEditorPage(api)
 
 			if(_y >= y1 && _y <= y2)
 			{
-				return 2;
+				nResult = 2;
 			}
 			else
 			{
@@ -1958,12 +1967,41 @@ function CEditorPage(api)
 					y2 = oWordControl.Height - (oWordControl.Splitter3Pos * g_dKoef_mm_to_pix);
 					if(_y >= y1 && _y <= y2)
 					{
-						return 3;
+						nResult = 3;
 					}
 				}
 			}
 		}
-		return 0;
+
+		//check event sender to prevent tracking after click on menu elements (bug 60586)
+		if(nResult !== 0)
+		{
+			if(global_mouseEvent.Sender)
+			{
+				let oThContainer, oMainContainer, oBodyElement;
+				let oSender = global_mouseEvent.Sender;
+				if(this.m_oThumbnailsContainer)
+				{
+					oThContainer = this.m_oThumbnailsContainer.HtmlElement;
+				}
+				if(this.m_oMainParent)
+				{
+					oMainContainer = this.m_oMainParent.HtmlElement;
+				}
+				if(this.m_oBody)
+				{
+					oBodyElement = this.m_oBody.HtmlElement;
+				}
+				if(!(oThContainer && oThContainer.contains(oSender) ||
+					oMainContainer && oMainContainer.contains(oSender) ||
+					oBodyElement && oSender.contains(oBodyElement)))
+				{
+					return 0;
+				}
+			}
+
+		}
+		return nResult;
 	};
 
 	this.onBodyMouseDown = function(e)
@@ -1974,18 +2012,19 @@ function CEditorPage(api)
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
 			return;
 
-		if (oThis.SplitterType != 0)
+		if (oThis.SplitterType !== 0)
 			return;
 
-		var _isCatch = false;
+		let _isCatch = false;
 
-		var downClick = global_mouseEvent.ClickCount;
+		let downClick = global_mouseEvent.ClickCount;
 		AscCommon.check_MouseDownEvent(e, true);
 		global_mouseEvent.ClickCount = downClick;
 		global_mouseEvent.LockMouse();
 
-		var oWordControl = oThis;
-		var nSplitter = oThis.hitToSplitter();
+		let oWordControl = oThis;
+		let nSplitter = 0;
+		nSplitter = oThis.hitToSplitter();
 		if(nSplitter > 0)
 		{
 			if(nSplitter === 1)
@@ -2369,9 +2408,11 @@ function CEditorPage(api)
 
 		if (oWordControl.m_oDrawingDocument.InlineTextTrackEnabled)
 		{
-			var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
-			if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
-				return;
+			if (oWordControl.m_oLogicDocument.IsFocusOnNotes()) {
+				var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
+				if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
+					return;
+			}
 		}
 
 		oWordControl.StartUpdateOverlay();
@@ -2461,9 +2502,11 @@ function CEditorPage(api)
 
 		if (oWordControl.m_oDrawingDocument.InlineTextTrackEnabled)
 		{
-			var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
-			if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
-				return;
+			if (oWordControl.m_oLogicDocument.IsFocusOnNotes()) {
+				var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
+				if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
+					return;
+			}
 		}
 
 		oWordControl.StartUpdateOverlay();
@@ -3216,6 +3259,9 @@ function CEditorPage(api)
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_Before();
 
+		if (this.m_oApi.printPreview)
+			this.m_oApi.printPreview.resize();
+
 		var isDesktopVersion = (undefined !== window["AscDesktopEditor"]) ? true : false;
 
 		if (this.Splitter1Pos > 0.1 && !isDesktopVersion)
@@ -3686,7 +3732,7 @@ function CEditorPage(api)
 		{
 			var dGlobalAplpha = ctx.globalAlpha;
 			ctx.globalAlpha = 1.0;
-			drDoc.DrawMathTrack(overlay);
+			drDoc.DrawMathTrack(isDrawNotes ? overlayNotes : overlay);
 			ctx.globalAlpha = dGlobalAplpha;
 		}
 
@@ -3897,7 +3943,7 @@ function CEditorPage(api)
 			_c.m_nCurrentTimeClearCache = 0;
 			_c.m_oDrawingDocument.CheckFontCache();
 		}
-        oThis.m_oLogicDocument.ContinueCheckSpelling();
+        oThis.m_oLogicDocument.ContinueSpellCheck();
 	};
 	this.OnScroll       = function()
 	{
@@ -4159,7 +4205,7 @@ function CEditorPage(api)
 		if (!isRepaint && oWordControl.m_oNotesApi.IsRepaint)
 			isRepaint = true;
 
-		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi)
+		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi && oWordControl.IsNotesShown())
 			oWordControl.m_oNotesApi.CheckPaint();
 
 		if (oWordControl.m_oAnimPaneApi)
@@ -4182,7 +4228,10 @@ function CEditorPage(api)
 		}
 
 		oWordControl.m_oDrawingDocument.Collaborative_TargetsUpdate(isRepaint);
-
+		if (oThis.DemonstrationManager.Mode && !oThis.m_oApi.isReporterMode)
+		{
+			oThis.DemonstrationManager.CheckHideCursor();
+		}
 		oWordControl.m_nPaintTimerId = setTimeout(oWordControl.onTimerScroll, oWordControl.m_nTimerScrollInterval);
 		//window.requestAnimationFrame(oWordControl.onTimerScroll);
 	};

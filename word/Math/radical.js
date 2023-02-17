@@ -437,7 +437,7 @@ CRadical.prototype.kind      = MATH_RADICAL;
 CRadical.prototype.init = function(props)
 {
     this.setProperties(props);
-    this.Fill_LogicalContent(2);
+    this.Fill_LogicalContent(2, props.content);
 
     this.fillContent();
 };
@@ -761,6 +761,49 @@ CRadical.prototype.Is_ContentUse = function(MathContent)
         return true;
 
     return false;
+};
+CRadical.prototype.GetTextOfElement = function(isLaTeX)
+{
+	var strTemp = "";
+	var strDegree = this.getDegree().GetMultipleContentForGetText(isLaTeX, true);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
+
+	if (isLaTeX)
+    {
+        if (strDegree.length > 0)
+            strDegree = '[' + strDegree + ']';
+
+        strTemp = '\\sqrt' + strDegree + "{" + strBase + "}";
+    }
+	else
+    {
+		var strRadicalSymbol = "√";
+
+        if (strDegree === "3" || strDegree === "4")
+        {
+            strRadicalSymbol = strDegree === "3" ?  "∛" : "∜";
+            strTemp = strRadicalSymbol + strBase;
+        }
+        else
+        {
+            if (strDegree.length > 0)
+            {
+                strDegree = "(" + strDegree + '&';
+                if (strBase[0] != "(" && strBase[strBase.length - 1] !== ")")
+                {
+                    strBase = strBase + ")";
+                }
+            }
+            else
+            {
+                strBase = "(" + strBase + ")";
+            }
+
+            strTemp = strRadicalSymbol + strDegree + strBase;
+        }
+	}
+
+	return strTemp;
 };
 
 /**

@@ -140,6 +140,7 @@ var EditorSkins = {
 		Color                    : "#363636",
 		ColorActive              : "#363636",
 		ColorHighlighted         : "#6a6a70",
+		ColorFiltering           : "#008636",
 
 		BackgroundDark           : "#444444",
 		BackgroundDarkActive     : "#111111",
@@ -148,6 +149,7 @@ var EditorSkins = {
 		ColorDark                : "#ffffff",
 		ColorDarkActive          : "#ffffff",
 		ColorDarkHighlighted     : "#c1c1c1",
+		ColorDarkFiltering       : "#7AFFAF",
 
 		GroupDataBorder          : "#000000",
 		EditorBorder             : "#cbcbcb"
@@ -212,9 +214,9 @@ var EditorSkins = {
 		FormsContentControlsOutlineMoverActive : "#444444",
 
 		/* presentations */
-		BackgroundColorThumbnails       : "#666666",
-		BackgroundColorThumbnailsActive : "#666666",
-		BackgroundColorThumbnailsHover  : "#666666",
+		BackgroundColorThumbnails       : "#404040",
+		BackgroundColorThumbnailsActive : "#404040",
+		BackgroundColorThumbnailsHover  : "#404040",
 		ThumbnailsPageOutlineActive     : "#848484",
 		ThumbnailsPageOutlineHover      : "#CFCFCF",
 		ThumbnailsPageNumberText        : "#FFFFFF",
@@ -226,7 +228,7 @@ var EditorSkins = {
 		THEMES_THUMBNAIL_WIDTH  : 88,
 		THEMES_THUMBNAIL_HEIGHT : 40,
 
-		BorderSplitterColor                   : "#CBCBCB",
+		BorderSplitterColor                   : "#616161",
 		SupportNotes                          : true,
 		SplitterWidthMM                       : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,
@@ -254,14 +256,16 @@ var EditorSkins = {
 		Color                    : "#d9d9d9",
 		ColorActive              : "#d9d9d9",
 		ColorHighlighted         : "#d9d9d9",
+		ColorFiltering           : "#6BEC9F",
 
-		BackgroundDark           : "#111111",
-		BackgroundDarkActive     : "#333333",
-		BackgroundDarkHighlighted: "#000000",
+		BackgroundDark           : "#55B27B",
+		BackgroundDarkActive     : "#7AFFAF",
+		BackgroundDarkHighlighted: "#6EE59F",
 
-		ColorDark                : "#ffffff",
-		ColorDarkActive          : "#ffffff",
-		ColorDarkHighlighted     : "#ffffff",
+		ColorDark                : "#333",
+		ColorDarkActive          : "#333",
+		ColorDarkHighlighted     : "#333",
+		ColorDarkFiltering       : "#ffffff",
 
 		GroupDataBorder          : "#ffffff",
 		EditorBorder             : "#2a2a2a"
@@ -296,7 +300,7 @@ function updateGlobalSkinColors(theme)
 
 		RulerDark                      : "canvas-ruler-margins-background",
 		RulerLight                     : "canvas-ruler-background",
-		RulerOutline                   : "border-toolbar",
+		RulerOutline                   : "canvas-ruler-border",
 		RulerMarkersOutlineColor       : "canvas-ruler-handle-border",
 		RulerMarkersOutlineColorOld    : "canvas-ruler-handle-border-disabled",
 		RulerMarkersFillColor          : "background-normal",
@@ -354,17 +358,19 @@ function updateGlobalSkinColors(theme)
 		BorderActive                    : "canvas-cell-title-border-selected",
 		BorderHighlighted               : "canvas-cell-title-border-hover",
 
-		Color                           : "text-normal",
-		ColorActive                     : "text-normal",
-		ColorHighlighted                : "text-normal",
+		Color                           : "canvas-cell-title",
+		ColorActive                     : "canvas-cell-title",
+		ColorHighlighted                : "canvas-cell-title",
 
 		BackgroundDark                  : "canvas-dark-cell-title",
 		BackgroundDarkActive            : "canvas-dark-cell-title-selected",
 		BackgroundDarkHighlighted       : "canvas-dark-cell-title-hover",
 
-		ColorDark                       : "text-contrast-background",
-		ColorDarkActive                 : "text-contrast-background",
-		ColorDarkHighlighted            : "text-contrast-background",
+		ColorDark                       : "canvas-dark-cell-title-text",
+		ColorDarkActive                 : "canvas-dark-cell-title-text",
+		ColorDarkHighlighted            : "canvas-dark-cell-title-text",
+
+		ColorDarkFiltering              : "canvas-dark-cell-title-text-filtered",
 
 		GroupDataBorder                 : "canvas-high-contrast",
 		EditorBorder                    : "border-toolbar"
