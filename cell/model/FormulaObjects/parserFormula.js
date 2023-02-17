@@ -2795,7 +2795,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		res.fillFromArray(newArray);
 		return res;
 	};
-
 	cArray.prototype.getFirstElement = function () {
 		return this.getElementRowCol(0,0);	
 	}

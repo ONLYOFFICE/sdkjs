@@ -67,7 +67,7 @@ function (window, undefined) {
 	var _func = AscCommonExcel._func;
 
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
-	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFORMULATEXT,
+	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFILTER, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE, cTAKE,
 		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS, cXMATCH);
 
@@ -720,6 +720,138 @@ function (window, undefined) {
 		}
 
 		return new cError(cErrorType.wrong_value_type);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cFILTER() {
+	}
+
+	//***array-formula***
+	cFILTER.prototype = Object.create(cBaseFunction.prototype);
+	cFILTER.prototype.constructor = cFILTER;
+	cFILTER.prototype.name = 'FILTER';
+	cFILTER.prototype.argumentsMin = 2;
+	cFILTER.prototype.argumentsMax = 3;
+	cFILTER.prototype.isXLFN = true;
+	cFILTER.prototype.arrayIndexes = {0: 1, 1: 1};
+	cFILTER.prototype.argumentsType = [argType.reference, argType.reference, argType.any];
+	cFILTER.prototype.Calculate = function (arg) {
+		function columnModeLoop () {
+			let resArr = new cArray();
+			// columns mode
+			// ??? как заполнять столбцы по очереди? как объединить столбцы в массиве
+			// Возможно надо создать пустой массив и пушить колонку с помощью .pushcol
+			for (let i = 0; i < initColumns; i++) {
+				let val = arg1.getElementRowCol(0, i);
+				let tempArr = [];
+				if (val.value) {
+					for (let k = 0; k < initRows; k++) {
+						// let tempArr = [];
+						// tempArr[k] = tempArr[k] ? tempArr[k][0] : tempArr[k];
+						// tempArr[k][0] = tempArr(arg0.getValueByRowCol(k, i));
+						// tempArr[k] = [arg0.getValueByRowCol(k, i)];
+						// resultArrColumn.addRow();
+						// resultArrColumn.addElement(arg0.getValueByRowCol(k, i));
+						// temp.addRow();
+						// temp.addElement(arg0.getValueByRowCol(k, i));
+						// ??? maybe get col.length of array
+						// resultArrColumn.pushCol(temp, i);
+						// resultArrColumn.pushCol(tempArr, 0);
+						tempArr[k] = [arg0.getValueByRowCol(k, i)];
+					}
+					resArr.pushCol(tempArr, 0);
+				}
+			}
+
+			return resArr;
+		}
+
+		function rowModeLoop () {
+			let resArr = new cArray();
+			// rows mode
+			for (let i = 0; i < initRows; i++) {
+				let val = arg1.getElementRowCol(i, 0);
+				if (val.value) {
+					resArr.addRow();
+					for (let j = 0; j < initColumns; j++) {
+						resArr.addElement(arg0.getValueByRowCol(i, j));
+					}
+				}
+			}
+
+			return resArr;
+		}
+ 
+		let resultArr = new cArray(),
+			arg0 = arg[0],
+			arg1 = arg[1],
+			arg2 = arg[2],
+			baseMode = false,		// val && range || val && val
+			rangeMode = false;		// range && range 
+
+		// ??? 4 options: 1) range && range; 2) range && value; 3) value && range; 4) value && value
+		if ((cElementType.array === arg0.type || cElementType.cellsRange === arg0.type) && (cElementType.array === arg1.type || cElementType.cellsRange === arg1.type)) {
+			// 1) range && range
+			rangeMode = true;
+		} else if ((cElementType.array === arg0.type || cElementType.cellsRange === arg0.type) && (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type)) {
+			// 2) range && value
+			// Return array arg0 if arg1 = true and if array arg0 is one-dimensional
+			let arg0Dimensons = arg0.getDimensions();
+			arg1 = arg1.tocBool();
+			if (cElementType.error === arg1.type) {
+				return arg1;
+			} else if ((arg0Dimensons.row > 1 && arg0Dimensons.col > 1) || !arg1.value) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				return arg0;
+			}
+		} else if ((cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type) && (cElementType.array === arg1.type || cElementType.cellsRange === arg1.type)) {
+			// 3) value && range
+			baseMode = true;
+			arg1 = arg1.isOneElement() ? arg1.getFirstElement() : new cError(cErrorType.wrong_value_type);
+		} else {
+			// 4) value && value
+			baseMode = true;
+			arg1 = arg1.tocBool();
+		}
+		
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		if (rangeMode) {
+			let initRows = arg0.getDimensions().row,
+				initColumns = arg0.getDimensions().col,
+				lookingArrayDimensions = arg1.getDimensions();
+			// check for matching array sizes
+			if (lookingArrayDimensions.row === 1 && lookingArrayDimensions.col === initColumns) {
+				resultArr = columnModeLoop();
+			} else if (lookingArrayDimensions.row === initRows && lookingArrayDimensions.col === 1) {
+				resultArr = rowModeLoop();
+			} else {
+				// the size of the desired array does not match the initial
+				return new cError(cErrorType.wrong_value_type);
+			}
+			resultArr = resultArr.countElement > 0 ? resultArr : new cError(cErrorType.not_available);
+		} else if (baseMode) {
+			if (arg1.value) {
+				if (cElementType.cell === arg0.type) {
+					arg0 = arg0.getValue();
+				} 
+				resultArr = arg0;
+			} else {
+				// should be #CALC!
+				resultArr = new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		return resultArr;
 	};
 
 	/**
