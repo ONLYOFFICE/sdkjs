@@ -1317,7 +1317,6 @@
 						this.renameTableColumn(null, null, data);
 						break;
 				}
-				this.redoColumnName = null;
 				History.TurnOn();
 			},
 
@@ -3241,8 +3240,8 @@
 					oHistoryObject.totalFunction = redoObject.totalFunction;
 					oHistoryObject.viewId = ws.getActiveNamedSheetViewId();
 					oHistoryObject._type = type;
-					oHistoryObject.redoColumnName = AscCommon.translateManager.getValue("Column");
 				}
+				oHistoryObject.redoColumnName = AscCommon.translateManager.getValue("Column");
 
 				return oHistoryObject;
 			},
@@ -4969,7 +4968,7 @@
 			_generateColumnNameWithoutTitle: function (ref) {
 				let tableColumns = [], newTableColumn;
 				let range = this.worksheet.getRange3(ref.r1, ref.c1, ref.r1, ref.c2);
-				let defaultName = this.redoColumnName ? this.redoColumnName : AscCommon.translateManager.getValue("Column");
+				let defaultName = this._getColumnName();
 				let uniqueColumns = {}, val, valTemplate, valLower, index = 1, isDuplicate = false, emptyCells = false;
 				let valuesAndMap = range._getValuesAndMap(true);
 				let values = valuesAndMap.values;
@@ -5019,7 +5018,7 @@
 
 			_generateColumnName: function (tableColumns, indexInsertColumn) {
 				let index = 1;
-				let columnName = this.redoColumnName ? this.redoColumnName : AscCommon.translateManager.getValue("Column");
+				let columnName = this._getColumnName();
 				var isSequence = false;
 				if (indexInsertColumn != undefined) {
 					if (indexInsertColumn < 0) {
@@ -5069,6 +5068,14 @@
 					}
 					return columnName + index;
 				}
+			},
+
+			_getColumnName: function () {
+				//on redo use language on action moment
+				if (this.redoColumnName && this.worksheet && this.worksheet.workbook && this.worksheet.workbook.bRedoChanges) {
+					return this.redoColumnName;
+				}
+				return AscCommon.translateManager.getValue("Column");
 			},
 
 			_generateNextColumnName: function (tableColumns, val) {
@@ -5877,7 +5884,7 @@
 
 			_generateColumnName2: function (tableColumns) {
 				// ToDo почему 2 функции generateColumnName?
-				let columnName = this.redoColumnName ? this.redoColumnName : AscCommon.translateManager.getValue("Column");
+				let columnName = this._getColumnName();
 				//let indexColumn = name[1]; name - не определено!
 				let indexColumn = undefined;
 				let nextIndex;
