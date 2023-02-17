@@ -5075,7 +5075,7 @@
 				if (this.redoColumnName && this.worksheet && this.worksheet.workbook && this.worksheet.workbook.bRedoChanges) {
 					return this.redoColumnName;
 				}
-				return AscCommon.translateManager.getValue("Column");
+				return AscCommon.translateManager ? AscCommon.translateManager.getValue("Column") : "Column";
 			},
 
 			_generateNextColumnName: function (tableColumns, val) {
