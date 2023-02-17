@@ -2036,6 +2036,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.ForceDrawFormHighlight    = null;  // null - редактор решает рисовать или нет в зависимости от других параметров
 	this.ConcatParagraphsOnRemove  = false; // Во время удаления объединять ли первый и последний параграфы
 	this.StartCheckTextFormFormat  = false; // Флаг, что в данный момент мы уже проверяем формат текстовых форм, чтобы не вызывать повторно
+	this.CompileStyleOnLoad        = false; // Компилировать ли принудительно стили во время загрузки
 
 
 	this.DrawTableMode = {
@@ -2311,6 +2312,9 @@ CDocument.prototype.private_UpdateFieldsOnEndLoad = function()
 	let openedAt = this.Api ? this.Api.openedAt : undefined;
 	if (undefined === openedAt)
 		return;
+	
+	// Для правильного обновления полей нам нужно, чтобы стили компилировались в обход флага загрузки
+	this.CompileStyleOnLoad = true;
 
 	this.ProcessComplexFields();
 	this.controller_GetAllFields(false, arrFields);
@@ -2325,6 +2329,8 @@ CDocument.prototype.private_UpdateFieldsOnEndLoad = function()
 			oField.UpdateTIME(openedAt);
 		}
 	}
+	
+	this.CompileStyleOnLoad = false;
 
 	//console.log("FieldUpdateTime : " + ((performance.now() - nTime) / 1000) + "s");
 };

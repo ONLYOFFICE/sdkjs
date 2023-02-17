@@ -8334,9 +8334,19 @@ CTable.prototype.Recalc_CompiledPr2 = function()
  */
 CTable.prototype.Get_CompiledPr = function(bCopy)
 {
+	let forceCompile = false;
+	if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+	{
+		let logicDocument = this.GetLogicDocument();
+		if (logicDocument
+			&& logicDocument.IsDocumentEditor()
+			&& logicDocument.CompileStyleOnLoad)
+			forceCompile = true;
+	}
+	
 	if (true === this.CompiledPr.NeedRecalc)
 	{
-		if ((true === AscCommon.g_oIdCounter.m_bLoad && true === AscCommon.g_oIdCounter.m_bRead) || !this.Parent)
+		if ((!forceCompile && (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)) || !this.Parent)
 		{
 			this.CompiledPr.Pr         = {
 				TextPr : g_oDocumentDefaultTextPr,
@@ -8365,7 +8375,7 @@ CTable.prototype.Get_CompiledPr = function(bCopy)
 		else
 		{
 			this.CompiledPr.Pr         = this.Internal_Compile_Pr();
-			this.CompiledPr.NeedRecalc = false;
+			this.CompiledPr.NeedRecalc = forceCompile;
 		}
 	}
 

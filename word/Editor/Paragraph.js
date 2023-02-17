@@ -10559,6 +10559,12 @@ Paragraph.prototype.private_CompileParaPr = function(isForce)
 {
 	if (!this.CompiledPr.NeedRecalc)
 		return;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument
+		&& logicDocument.IsDocumentEditor()
+		&& logicDocument.CompileStyleOnLoad)
+		isForce = true;
 
 	if (this.Parent && (isForce || (true !== AscCommon.g_oIdCounter.m_bLoad && true !== AscCommon.g_oIdCounter.m_bRead)))
 	{
@@ -10739,6 +10745,10 @@ Paragraph.prototype.Internal_CompiledParaPrPresentation = function(Lvl, bNoMerge
 Paragraph.prototype.Recalc_CompileParaPr = function()
 {
 	this.CompiledPr.NeedRecalc = true;
+};
+Paragraph.prototype.IsParaPrCompiled = function()
+{
+	return !this.CompiledPr.NeedRecalc;
 };
 Paragraph.prototype.Internal_CalculateAutoSpacing = function(Value, UseAuto, Para)
 {

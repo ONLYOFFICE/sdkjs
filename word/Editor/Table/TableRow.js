@@ -250,9 +250,19 @@ CTableRow.prototype =
     // Формируем конечные свойства параграфа на основе стиля и прямых настроек.
     Get_CompiledPr : function(bCopy)
     {
+		let forceCompile = false;
+		if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+		{
+			let logicDocument = this.GetLogicDocument();
+			if (logicDocument
+				&& logicDocument.IsDocumentEditor()
+				&& logicDocument.CompileStyleOnLoad)
+				forceCompile = true;
+		}
+		
         if ( true === this.CompiledPr.NeedRecalc )
         {
-            if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+            if (!forceCompile && (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead))
             {
                 this.CompiledPr.Pr         = g_oDocumentDefaultTableRowPr;
                 this.CompiledPr.NeedRecalc = true;
@@ -260,7 +270,7 @@ CTableRow.prototype =
             else
             {
                 this.CompiledPr.Pr         = this.Internal_Compile_Pr();
-                this.CompiledPr.NeedRecalc = false;
+                this.CompiledPr.NeedRecalc = forceCompile;
             }
         }
 
@@ -795,6 +805,18 @@ CTableRow.prototype =
 CTableRow.prototype.GetTable = function()
 {
 	return this.Table;
+};
+/**
+ * Доступ к главному классу документа
+ * @returns {CDocument|null}
+ */
+CTableRow.prototype.GetLogicDocument = function()
+{
+	let table = this.GetTable();
+	if (table)
+		return table.GetLogicDocument();
+	
+	return null;
 };
 /**
  * Получаем номер данной строки в родительской таблице
