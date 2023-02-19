@@ -4175,51 +4175,40 @@ background-repeat: no-repeat;\
 			}
 		});
 	};
-	asc_docs_api.prototype.asc_GetCurrentNumberingJson = function(isSingleLevel)
+	asc_docs_api.prototype.sync_UpdateListPatterns = function (oNumPr, bCheckRemove)
 	{
-		let logicDocument = this.private_GetLogicDocument();
-		let numPr = logicDocument.GetSelectedNum();
-		if (!numPr)
-			return null;
-
-		let numManager = logicDocument.GetNumbering();
-		let num = numManager.GetNum(numPr.NumId);
-		if (!num)
-			return null;
-
-		let result = {
-			Type : "unknown",
-			Lvl  : []
-		};
-
-		if (isSingleLevel)
+		let oJSON;
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
 		{
-			let numLvl = num.GetLvl(numPr.Lvl);
-			result.Type = numLvl.IsBulleted() ? "bullet" : "number";
-			result.Lvl[0] = numLvl.ToJson();
-		}
-		else
-		{
-			let isBulleted = false;
-			let isNumbered = false;
-
-			for (let ilvl = 0; ilvl < 9; ++ilvl)
+			const oNumbering = oLogicDocument.GetNumbering();
+			if (oNumPr && oNumPr.NumId)
 			{
-				let numLvl = num.GetLvl(ilvl);
-				isBulleted = isBulleted || numLvl.IsBulleted();
-				isNumbered = isNumbered || numLvl.IsNumbered();
-				result.Lvl[ilvl] = numLvl.ToJson();
+				const oNum = oNumbering.GetNum(oNumPr.NumId);
+				oJSON = oNum.GetJSONNumbering();
 			}
-
-			if (isBulleted && isNumbered)
-				result.Type = Asc.c_oAscJSONNumberingType.Hybrid;
-			else if (isNumbered)
-				result.Type = Asc.c_oAscJSONNumberingType.Number;
-			else if (isBulleted)
-				result.Type = Asc.c_oAscJSONNumberingType.Bullet;
 		}
+		editor.sendEvent('asc_updateListPatterns', oJSON, bCheckRemove);
+	};
+	asc_docs_api.prototype.asc_GetAllJSONNums = function ()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+		{
+			return oLogicDocument.GetAllJSONNums();
+		}
+		return [];
+	}
 
-		return result;
+	asc_docs_api.prototype.asc_GetCurrentNumberingJson = function(bIsSingleLevel)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		let oNumPr = oLogicDocument.GetSelectedNum();
+		if (!oNumPr)
+			return null;
+
+		let oNumManager = oLogicDocument.GetNumbering();
+		return oNumManager.GetJSONNumbering(oNumPr, bIsSingleLevel);
 	};
 	asc_docs_api.prototype.asc_ContinueNumbering = function()
 	{
@@ -13912,6 +13901,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_IsShowListIndentsSettings']             = asc_docs_api.prototype.asc_IsShowListIndentsSettings;
 	asc_docs_api.prototype['put_ListTypeCustom']                        = asc_docs_api.prototype.put_ListTypeCustom;
 	asc_docs_api.prototype['asc_GetCurrentNumberingJson']               = asc_docs_api.prototype.asc_GetCurrentNumberingJson;
+	asc_docs_api.prototype['sync_UpdateListPatterns']                   = asc_docs_api.prototype.sync_UpdateListPatterns;
+	asc_docs_api.prototype['asc_GetAllJSONNums']                        = asc_docs_api.prototype.asc_GetAllJSONNums;
 	asc_docs_api.prototype['asc_ContinueNumbering']                     = asc_docs_api.prototype.asc_ContinueNumbering;
 	asc_docs_api.prototype['asc_RestartNumbering']                      = asc_docs_api.prototype.asc_RestartNumbering;
 	asc_docs_api.prototype['asc_GetCurrentNumberingId']                 = asc_docs_api.prototype.asc_GetCurrentNumberingId;

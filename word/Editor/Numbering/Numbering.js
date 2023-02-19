@@ -193,6 +193,15 @@
 		return oAbstractNum;
 	};
 	/**
+	 * Remove oNum references
+	 * @param oNum {CNum}
+	 */
+	CNumbering.prototype.Remove = function (oNum)
+	{
+		delete this.Num[oNum.GetId()];
+		delete this.AbstractNum[oNum.AbstractNumId];
+	}
+	/**
 	 * Создаем новую нумерацию
 	 * @returns {CNum}
 	 */
@@ -325,6 +334,21 @@
 	{
 		return 0 === Object.keys(this.Num).length;
 	};
+	/**
+	 * Getting JSON from numPr
+	 * @param oNumPr {CNumPr}
+	 * @param [bIsSingleLevel] {boolean}
+	 * @returns {Object}
+	 */
+	CNumbering.prototype.GetJSONNumbering = function (oNumPr, bIsSingleLevel)
+	{
+		let oNum = this.GetNum(oNumPr.NumId);
+		if (!oNum)
+			return null;
+
+		return oNum.GetJSONNumbering(bIsSingleLevel);
+	}
+
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumbering        = CNumbering;
 	window["AscWord"].DEFAULT_NUMBERING = new CNumbering();

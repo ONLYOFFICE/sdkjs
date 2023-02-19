@@ -14581,6 +14581,39 @@ CDocument.prototype.UnlockPanelStyles = function(isUpdate)
 	if (true === isUpdate)
 		this.UpdateStylePanel();
 };
+CDocument.prototype.GetAllJSONNums = function ()
+{
+	const arrResult = [];
+	const oNumMap = {};
+	const arrParagraphs = this.GetAllParagraphs();
+	for (let nParagraphIndex = 0; nParagraphIndex < arrParagraphs.length; nParagraphIndex += 1)
+	{
+		const oParagraph = arrParagraphs[nParagraphIndex];
+		const oNumPr = oParagraph.GetNumPr();
+		if (oNumPr && !oNumMap[oNumPr.NumId])
+		{
+			const oNumbering = this.GetNumbering();
+			const oNum = oNumbering.GetNum(oNumPr.NumId);
+			if (oNum)
+			{
+				oNumMap[oNumPr.NumId] = oNum;
+			}
+		}
+	}
+	const oExistingMap = {};
+	for (let sNumId in oNumMap)
+	{
+		// TODO: need to distinguish the created multilevel lists from single-level lists by property in the format
+		const oJSON = oNumMap[sNumId].GetJSONNumbering();
+		const sJSON = JSON.stringify(oJSON);
+		if (!oExistingMap[sJSON])
+		{
+			oExistingMap[sJSON] = true;
+			arrResult.push(oJSON);
+		}
+	}
+	return arrResult;
+};
 CDocument.prototype.GetAllParagraphs = function(Props, ParaArray)
 {
 	if (Props && true === Props.OnlyMainDocument && true === Props.All && null !== this.AllParagraphsList)

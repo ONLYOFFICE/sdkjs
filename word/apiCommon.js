@@ -1700,10 +1700,84 @@
 
 		return this.Lvl[nLvl];
 	};
+	CAscNumbering.prototype.get_JSONNumbering = function (bIsSingleLevel)
+	{
+		const oNumManager = AscWord.DEFAULT_NUMBERING;
+		const oNum = oNumManager.CreateNum();
+		oNum.FillFromAscNum(this);
+		const oJSON = oNum.GetJSONNumbering(bIsSingleLevel);
+		oNumManager.Remove(oNum);
+		return oJSON;
+	};
+	CAscNumbering.prototype.put_FromJSON = function (oJSON)
+	{
+		const oNumManager = AscWord.DEFAULT_NUMBERING;
+		if (typeof oJSON === 'string')
+		{
+			oJSON = JSON.parse(oJSON);
+		}
+		const oNum = oNumManager.CreateNum();
+		const arrLvl = oJSON["Lvl"];
+		if (arrLvl.length < 9)
+		{
+			if (oJSON["Type"] === Asc.c_oAscJSONNumberingType.Bullet)
+			{
+				oNum.CreateDefault(Asc.c_oAscMultiLevelNumbering.Bullet);
+			}
+			else
+			{
+				oNum.CreateDefault(Asc.c_oAscMultiLevelNumbering.Numbered);
+			}
+		}
+		for (let i = 0; i < arrLvl.length; i += 1)
+		{
+			oNum.SetLvl(AscCommonWord.CNumberingLvl.FromJson(arrLvl[i]), i);
+		}
+		oNum.FillToAscNum(this);
+		oNumManager.Remove(oNum);
+	};
 	window['Asc']['CAscNumbering'] = window['Asc'].CAscNumbering = CAscNumbering;
-	CAscNumbering.prototype['get_InternalId'] = CAscNumbering.prototype.get_InternalId;
-	CAscNumbering.prototype['get_Lvl']        = CAscNumbering.prototype.get_Lvl;
+	CAscNumbering.prototype['get_InternalId']    = CAscNumbering.prototype.get_InternalId;
+	CAscNumbering.prototype['get_Lvl']           = CAscNumbering.prototype.get_Lvl;
+	CAscNumbering.prototype['get_JSONNumbering'] = CAscNumbering.prototype.get_JSONNumbering;
+	CAscNumbering.prototype['put_FromJSON']      = CAscNumbering.prototype.put_FromJSON;
 
+	/**
+	 *
+	 * @param oNumPr {CNumPr}
+	 * @constructor
+	 */
+	function CAscWordListType(oNumPr)
+	{
+		this.oNumPr = oNumPr;
+	}
+
+	CAscWordListType.prototype.is_List = function ()
+	{
+		return !!this.oNumPr;
+	};
+
+	CAscWordListType.prototype.get_JSON = function (bIsSingleLevel)
+	{
+		if (!this.IsList())
+		{
+			return null;
+		}
+		const oApi = Asc.editor || editor;
+		const oLogicDocument = oApi && oApi.private_GetLogicDocument();
+		if (oLogicDocument)
+		{
+			const oNumManager = oLogicDocument.GetNumbering();
+			if (oNumManager)
+			{
+				return oNumManager.GetJSONNumbering(this.oNumPr, bIsSingleLevel);
+			}
+		}
+		return null;
+	};
+	window['Asc']['CAscWordListType'] = window['Asc'].CAscWordListType = CAscWordListType;
+	CAscWordListType.prototype['get_JSON']    = CAscNumbering.prototype.get_JSON;
+	CAscWordListType.prototype['is_List']    = CAscNumbering.prototype.is_List;
 
 	/**
 	 * Класс для работы с текстом конкретного уровня нумерации

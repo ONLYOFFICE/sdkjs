@@ -216,6 +216,47 @@ CNum.prototype.SetLvlByFormat = function(nLvl, nType, sFormatText, nAlign)
 	}
 };
 /**
+ * Get JSON object to store in localStorage
+ * @param bIsSingleLevel {boolean}
+ * @returns {{Type: string, Lvl: *[]}}
+ */
+CNum.prototype.GetJSONNumbering = function(bIsSingleLevel)
+{
+	let oResult = {
+		Type : "unknown",
+		Lvl  : []
+	};
+
+	if (bIsSingleLevel)
+	{
+		let oNumLvl = this.GetLvl(oNumPr.Lvl);
+		oResult.Type = oNumLvl.IsBulleted() ? Asc.c_oAscJSONNumberingType.Bullet : Asc.c_oAscJSONNumberingType.Number;
+		oResult.Lvl[0] = oNumLvl.ToJson();
+	}
+	else
+	{
+		let bIsBulleted = false;
+		let bIsNumbered = false;
+
+		for (let iLvl = 0; iLvl < 9; ++iLvl)
+		{
+			let numLvl = this.GetLvl(iLvl);
+			bIsBulleted = bIsBulleted || numLvl.IsBulleted();
+			bIsNumbered = bIsNumbered || numLvl.IsNumbered();
+			oResult.Lvl[iLvl] = numLvl.ToJson();
+		}
+
+		if (bIsBulleted && bIsNumbered)
+			oResult.Type = Asc.c_oAscJSONNumberingType.Hybrid;
+		else if (bIsNumbered)
+			oResult.Type = Asc.c_oAscJSONNumberingType.Number;
+		else if (bIsBulleted)
+			oResult.Type = Asc.c_oAscJSONNumberingType.Bullet;
+	}
+
+	return oResult;
+}
+/**
  * Выставляем является ли данный уровень сквозным или каждый раз перестартовывать нумерацию
  * @param nLvl {number} 0..8
  * @param isRestart {boolean}
