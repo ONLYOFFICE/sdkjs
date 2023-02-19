@@ -1141,7 +1141,6 @@ function(window, undefined) {
 	}
 
 	function CAxisGrid() {
-		this.nType = 0;//0 - horizontal, 1 - vertical, 2 - series axis
 		this.fStart = 0.0;
 		this.fStride = 0.0;
 		this.bOnTickMark = true;
@@ -4192,10 +4191,9 @@ function(window, undefined) {
 		if (!oAxis) {
 			return;
 		}
-		var oAxisGrid = new CAxisGrid();
+		let oAxisGrid = new CAxisGrid();
 		oAxis.grid = oAxisGrid;
 
-		// oAxis.nType = 0;//0 - horizontal, 1 - vertical, 2 - series axis
 		var nOrientation = oAxis.scaling && AscFormat.isRealNumber(oAxis.scaling.orientation) ? oAxis.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
 		var aStrings = this.getLabelsForAxis(oAxis);
 		var nCrossType = this.getAxisCrossType(oAxis);
@@ -4217,8 +4215,6 @@ function(window, undefined) {
 				oAxisGrid.fStride = -fInterval;
 			}
 		} else if (oAxis.axPos === AscFormat.AX_POS_B || oAxis.axPos === AscFormat.AX_POS_T) {
-
-			oAxisGrid.nType = 0;
 			fInterval = oRect.w / nIntervalsCount;
 			if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
 				oAxisGrid.fStart = oRect.x;
@@ -4229,7 +4225,6 @@ function(window, undefined) {
 			}
 		} else {
 			oAxis.yPoints = [];
-			oAxisGrid.nType = 1;
 			fInterval = oRect.h / nIntervalsCount;
 			if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
 				oAxisGrid.fStart = oRect.y + oRect.h;
@@ -4505,12 +4500,6 @@ function(window, undefined) {
 				}
 			}
 		}
-		// function CAxisGrid(){
-		//     this.nType = 0;//0 - horizontal, 1 - vertical, 2 - series axis
-		//     this.fStart = 0.0;
-		//     this.fStride = 0.0;
-		//     this.nCount = 0;
-		// }
 		if(nIndex < 2) {
 			let fDiff;
 			let fPrecision = 0.01;
@@ -4922,13 +4911,12 @@ function(window, undefined) {
 				}
 			}
 
-			var oChartSize;
-
-			var oFirstChart = oPlotArea.charts[0];
+			let oChartSize;
+			let oFirstChart = oPlotArea.charts[0];
 			if(oFirstChart && oFirstChart.getObjectType() === AscDFH.historyitem_type_RadarChart) {
-				var oCatAx, oValAx;
-				var oAx;
-				for(var nAx = 0; nAx < oFirstChart.axId.length; ++nAx) {
+				let oCatAx, oValAx;
+				let oAx;
+				for(let nAx = 0; nAx < oFirstChart.axId.length; ++nAx) {
 					oAx = oFirstChart.axId[nAx];
 					if(oAx.getObjectType() === AscDFH.historyitem_type_CatAx ||
 						oAx.getObjectType() === AscDFH.historyitem_type_DateAx) {
@@ -4940,9 +4928,9 @@ function(window, undefined) {
 				}
 				if(oCatAx && oValAx) {
 
-					var oCatLabels = oCatAx.labels;
-					var dCatLabelsHeight = 0;
-					var dCatLabelsWidth = 0;
+					let oCatLabels = oCatAx.labels;
+					let dCatLabelsHeight = 0;
+					let dCatLabelsWidth = 0;
 					if(oCatLabels) {
 						dCatLabelsWidth = oCatLabels.maxMinWidth;
 
@@ -4965,32 +4953,35 @@ function(window, undefined) {
 					this.chart.plotArea.extY = oChartSize.h;
 					this.chart.plotArea.localTransform.Reset();
 					AscCommon.global_MatrixTransformer.TranslateAppend(this.chart.plotArea.localTransform, oChartSize.startX, oChartSize.startY);
-					var dX = Math.max(5, oChartSize.startX + dCatLabelsWidth);
-					var dY = Math.max(5, oChartSize.startY + dCatLabelsHeight);
-					var extX = Math.max(5, oChartSize.w - 2*dCatLabelsWidth);
-					var extY = Math.max(5, oChartSize.h - 2*dCatLabelsHeight);
-					var dCenterX = dX + extX / 2;
-					var dCenterY = dY + extY / 2;
-					var dLength = Math.min(extX/2, extY/2)
+					let dX = Math.max(5, oChartSize.startX + dCatLabelsWidth);
+					let dY = Math.max(5, oChartSize.startY + dCatLabelsHeight);
+					let extX = Math.max(5, oChartSize.w - 2*dCatLabelsWidth);
+					let extY = Math.max(5, oChartSize.h - 2*dCatLabelsHeight);
+					let dCenterX = dX + extX / 2;
+					let dCenterY = dY + extY / 2;
+					let dLength = Math.min(extX/2, extY/2)
 					oValAx.posX = dCenterX;
 					oRect = {x: 0, y: dY, w: 0, h: dCenterY - dY};
 					this.calculateAxisGrid(oValAx, oRect);
-					oValAx.grid.calculatePoints(oValAx.yPoints, bOnTickMark, oCurAxis.scale);
-					var fPosStart = oValAx.grid.fStart;
-					var fPosEnd = oValAx.grid.fStart + oCurAxis.grid.nCount * oCurAxis.grid.fStride;
+					oValAx.grid.calculatePoints(oValAx.yPoints, bOnTickMark, oValAx.scale);
+					let fPosStart = oValAx.grid.fStart;
+					let fPosEnd = oValAx.grid.fStart + oValAx.grid.nCount * oValAx.grid.fStride;
 					fLayoutVertLabelsBox(oValAx.labels, dCenterX, fPosStart, fPosEnd, true, -DEFAULT_LBLS_DISTANCE, true);
 					if(oCatLabels) {
-						var fAngleInterval = 2*Math.PI / oCatLabels.count;
-						for(var nLabel = 0; nLabel < oCatLabels.aLabels.length; ++nLabel) {
-							var oLabel = oCatLabels.aLabels[nLabel];
-							if(oLabel) {
-								oSize = oLabel.tx.rich.getContentOneStringSizes();
-								var fAngle = fAngleInterval*nLabel;
-								var dQuad = fAngle / (Math.PI/2);
-								var nQuad = dQuad >> 0;
-								var oTransform = oLabel.localTransformText;
+						const nLblsLength = oCatLabels.aLabels.length;
+						const fAngleInterval = 2*Math.PI / nLblsLength;
+
+						for(let nLblIdx = 0; nLblIdx < nLblsLength; ++nLblIdx) {
+							let oLbl = oCatLabels.aLabels[nLblIdx];
+							if(oLbl) {
+								let oLblTxBody = oLbl.tx.rich;
+								oSize = oLblTxBody.getContentOneStringSizes();
+								let fAngle = fAngleInterval*nLblIdx;
+								let dQuad = fAngle / (Math.PI/2);
+								let nQuad = dQuad >> 0;
+								let oTransform = oLbl.localTransformText;
 								oTransform.Reset();
-								var dNewX = 0, dNewY = 0;
+								let dNewX = 0, dNewY = 0;
 								if(AscFormat.fApproxEqual(dQuad, nQuad, 0.01)) {
 									if(AscFormat.fApproxEqual(fAngle, 0, 0.5) || AscFormat.fApproxEqual(fAngle, 2*Math.PI, 0.5)) {
 										dNewX = dCenterX - oSize.w / 2;
@@ -5027,9 +5018,10 @@ function(window, undefined) {
 										dNewY = dCenterY - Math.cos(fAngle) * dLength - oSize.h;
 									}
 								}
-								var oFirstPara = oLabel.tx.rich.content.Content[0];
+								let oLblTxContent = oLblTxBody.content;
+								let oFirstPara = oLblTxContent.Content[0];
 								if(oFirstPara.CompiledPr.Pr.ParaPr.Jc === AscCommon.align_Center) {
-									dNewX = dNewX + oSize.w/2 - oLabel.tx.rich.content.XLimit/2;
+									dNewX = dNewX + oSize.w/2 - oLblTxContent.XLimit/2;
 								}
 								global_MatrixTransformer.TranslateAppend(oTransform, dNewX, dNewY);
 							}
