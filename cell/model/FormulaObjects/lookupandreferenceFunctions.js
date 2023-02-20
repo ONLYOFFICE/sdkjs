@@ -739,27 +739,14 @@ function (window, undefined) {
 	cFILTER.prototype.arrayIndexes = {0: 1, 1: 1};
 	cFILTER.prototype.argumentsType = [argType.reference, argType.reference, argType.any];
 	cFILTER.prototype.Calculate = function (arg) {
-		function columnModeLoop () {
+		function columnModeLoop (rows, columns) {
 			let resArr = new cArray();
 			// columns mode
-			// ??? как заполнять столбцы по очереди? как объединить столбцы в массиве
-			// Возможно надо создать пустой массив и пушить колонку с помощью .pushcol
-			for (let i = 0; i < initColumns; i++) {
+			for (let i = 0; i < columns; i++) {
 				let val = arg1.getElementRowCol(0, i);
 				let tempArr = [];
 				if (val.value) {
-					for (let k = 0; k < initRows; k++) {
-						// let tempArr = [];
-						// tempArr[k] = tempArr[k] ? tempArr[k][0] : tempArr[k];
-						// tempArr[k][0] = tempArr(arg0.getValueByRowCol(k, i));
-						// tempArr[k] = [arg0.getValueByRowCol(k, i)];
-						// resultArrColumn.addRow();
-						// resultArrColumn.addElement(arg0.getValueByRowCol(k, i));
-						// temp.addRow();
-						// temp.addElement(arg0.getValueByRowCol(k, i));
-						// ??? maybe get col.length of array
-						// resultArrColumn.pushCol(temp, i);
-						// resultArrColumn.pushCol(tempArr, 0);
+					for (let k = 0; k < rows; k++) {
 						tempArr[k] = [arg0.getValueByRowCol(k, i)];
 					}
 					resArr.pushCol(tempArr, 0);
@@ -769,14 +756,14 @@ function (window, undefined) {
 			return resArr;
 		}
 
-		function rowModeLoop () {
+		function rowModeLoop (rows, columns) {
 			let resArr = new cArray();
 			// rows mode
-			for (let i = 0; i < initRows; i++) {
+			for (let i = 0; i < rows; i++) {
 				let val = arg1.getElementRowCol(i, 0);
 				if (val.value) {
 					resArr.addRow();
-					for (let j = 0; j < initColumns; j++) {
+					for (let j = 0; j < columns; j++) {
 						resArr.addElement(arg0.getValueByRowCol(i, j));
 					}
 				}
@@ -801,6 +788,7 @@ function (window, undefined) {
 			// Return array arg0 if arg1 = true and if array arg0 is one-dimensional
 			let arg0Dimensons = arg0.getDimensions();
 			arg1 = arg1.tocBool();
+			// TODO cEmpty check
 			if (cElementType.error === arg1.type) {
 				return arg1;
 			} else if ((arg0Dimensons.row > 1 && arg0Dimensons.col > 1) || !arg1.value) {
@@ -831,9 +819,9 @@ function (window, undefined) {
 				lookingArrayDimensions = arg1.getDimensions();
 			// check for matching array sizes
 			if (lookingArrayDimensions.row === 1 && lookingArrayDimensions.col === initColumns) {
-				resultArr = columnModeLoop();
+				resultArr = columnModeLoop(initRows, initColumns);
 			} else if (lookingArrayDimensions.row === initRows && lookingArrayDimensions.col === 1) {
-				resultArr = rowModeLoop();
+				resultArr = rowModeLoop(initRows, initColumns);
 			} else {
 				// the size of the desired array does not match the initial
 				return new cError(cErrorType.wrong_value_type);
