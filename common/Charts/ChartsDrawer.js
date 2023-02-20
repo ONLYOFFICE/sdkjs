@@ -1807,27 +1807,24 @@ CChartsDrawer.prototype =
 	},
 
 	_getAxisValues2: function (axis, chartSpace, isStackedType, isScatter) {
-		var isOx = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T;
+		let isOx = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T;
 		//для оси категорий берем интервал 1
-		var arrayValues;
+		let arrayValues;
 		if(AscDFH.historyitem_type_CatAx === axis.getObjectType() || AscDFH.historyitem_type_DateAx === axis.getObjectType()) {
 			arrayValues = [];
-			var max = axis.max;
-			for(var i = axis.min; i <= max; i++) {
+			let max = axis.max;
+			for(let i = axis.min; i <= max; i++) {
 				arrayValues.push(i);
 			}
 			return arrayValues;
 		}
 
-		//chartProp.chart.plotArea.valAx.scaling.logBase
-		var axisMin, axisMax, firstDegree, step;
+		let yMin = axis.min;
+		let yMax = axis.max;
+		let logBase = axis.scaling && axis.scaling.logBase;
 
-		var yMin = axis.min;
-		var yMax = axis.max;
-		var logBase = axis.scaling && axis.scaling.logBase;
-
-		var manualMin = axis.scaling && axis.scaling.min !== null ? axis.scaling.min : null;
-		var manualMax = axis.scaling && axis.scaling.max !== null ? axis.scaling.max : null;
+		let manualMin = axis.scaling && axis.scaling.min !== null ? axis.scaling.min : null;
+		let manualMax = axis.scaling && axis.scaling.max !== null ? axis.scaling.max : null;
 
 		if (logBase) {
 			yMax = Math.abs(yMax);
@@ -1836,59 +1833,67 @@ CChartsDrawer.prototype =
 			return arrayValues;
 		}
 
-		//максимальное и минимальное значение(по документации excel)
-		var isRadarChart = axis.parent.chart.getObjectType() === AscDFH.historyitem_type_RadarChart;
-		var isDefaultMinMax = isStackedType || isRadarChart;
-
-		var trueMinMax = this._getTrueMinMax(yMin, yMax, isDefaultMinMax, isScatter);
-
-		//TODO временная проверка для некорректных минимальных и максимальных значений
-		if (manualMax && manualMin && manualMax < manualMin) {
-			if (manualMax < 0) {
-				manualMax = 0;
-			} else {
-				manualMin = 0;
-			}
-		}
-
-		axisMin = manualMin !== null && manualMin !== undefined ? manualMin : trueMinMax.min;
-		axisMax = manualMax !== null && manualMax !== undefined ? manualMax : trueMinMax.max;
-
-		//TODO пересмотреть зависимость значений оси от типа диаграммы
-		/*var percentChartMax = 100;
-		if (this.calcProp.subType === 'stackedPer' && axisMax > percentChartMax && manualMax === null) {
-			axisMax = percentChartMax;
-		}
-		if (this.calcProp.subType === 'stackedPer' && axisMin < -percentChartMax && manualMin === null) {
-			axisMin = -percentChartMax;
-		}*/
-
-		if (axisMax < axisMin) {
-			if(axisMax > 0) {
-				manualMax = 2 * axisMin;
-				axisMax = manualMax;
-			} else {
-				axisMin = 2 * axisMax;
-			}
-		}
-
-		//приводим к первому порядку
-		firstDegree = this._getFirstDegree((Math.abs(axisMax - axisMin)) / 10);
-
 		var bIsManualStep = false;
-		//находим шаг
-		if (axis && axis.majorUnit != null) {
-			step = axis.majorUnit;
-			bIsManualStep = true;
-		} else {
-			//было следующее условие - isOx || c_oChartTypes.HBar === this.calcProp.type
-			if (isOx /*&& !isScatter && axisMin !== 0 && axisMax !== 0*/) {
-				step = this._getStep(firstDegree.val + (firstDegree.val / 10) * 3);
-			} else {
-				step = this._getStep(firstDegree.val);
+		let t = this;
+		let calcAxisMinMax = function (isDefaultMinMax) {
+			let trueMinMax = t._getTrueMinMax(yMin, yMax, isDefaultMinMax, isScatter);
+			let _axisMin, _axisMax, _step, firstDegree;
+			//TODO временная проверка для некорректных минимальных и максимальных значений
+			if (manualMax && manualMin && manualMax < manualMin) {
+				if (manualMax < 0) {
+					manualMax = 0;
+				} else {
+					manualMin = 0;
+				}
 			}
 
-			step = step * firstDegree.numPow;
+			_axisMin = manualMin !== null && manualMin !== undefined ? manualMin : trueMinMax.min;
+			_axisMax = manualMax !== null && manualMax !== undefined ? manualMax : trueMinMax.max;
+
+			if (_axisMax < _axisMin) {
+				if(_axisMax > 0) {
+					manualMax = 2 * _axisMin;
+					_axisMax = manualMax;
+				} else {
+					_axisMin = 2 * _axisMax;
+				}
+			}
+
+			//приводим к первому порядку
+			firstDegree = t._getFirstDegree((Math.abs(_axisMax - _axisMin)) / 10);
+
+			//находим шаг
+			if (axis && axis.majorUnit != null) {
+				_step = axis.majorUnit;
+				bIsManualStep = true;
+			} else {
+				//было следующее условие - isOx || c_oChartTypes.HBar === this.calcProp.type
+				if (isOx /*&& !isScatter && axisMin !== 0 && axisMax !== 0*/) {
+					_step = t._getStep(firstDegree.val + (firstDegree.val / 10) * 3);
+				} else {
+					_step = t._getStep(firstDegree.val);
+				}
+
+				_step = _step * firstDegree.numPow;
+			}
+			return {step: _step, axisMin: _axisMin, axisMax: _axisMax};
+		};
+
+		//максимальное и минимальное значение(по документации excel)
+		let isRadarChart = axis.parent.chart.getObjectType() === AscDFH.historyitem_type_RadarChart;
+		let axisMin, axisMax, step;
+		let minMaxCalc = calcAxisMinMax(isStackedType);
+		if (isRadarChart) {
+			//step get from common calculation
+			step = minMaxCalc.step;
+			//max/min get from default min/max
+			minMaxCalc = calcAxisMinMax(true);
+			axisMin = minMaxCalc.axisMin;
+			axisMax = minMaxCalc.axisMax;
+		} else {
+			step = minMaxCalc.step;
+			axisMin = minMaxCalc.axisMin;
+			axisMax = minMaxCalc.axisMax;
 		}
 		
 		if (isNaN(step) || step === 0) {
@@ -1903,7 +1908,7 @@ CChartsDrawer.prototype =
 
 		//проверка на переход в другой диапазон из-за ограничения по высоте
 		if (!bIsManualStep && !chartSpace.isSparkline) {
-			var props = {
+			let props = {
 				arrayValues: arrayValues,
 				step: step,
 				axisMin: axisMin,
@@ -2150,7 +2155,7 @@ CChartsDrawer.prototype =
 
 			arrayValues[i] = minUnit + step * i;
 
-			if (axisMax == 0 && axisMin < 0 && arrayValues[i] == axisMax) {
+			if (axisMax === 0 && axisMin < 0 && arrayValues[i] === axisMax || (this.calcProp.type === c_oChartTypes.Radar && arrayValues[i] === axisMax)) {
 				break;
 			} else if ((manualMax != null && arrayValues[i] >= axisMax) || (manualMax == null && arrayValues[i] > axisMax)) {
 				if (this.calcProp.subType === 'stackedPer') {
@@ -12406,7 +12411,7 @@ drawRadarChart.prototype = {
 
 		var minValue;
 		if (orientation) {
-			minValue = Math.abs(yPoints[0].val) < Math.abs(valueMinMax.min) ? yPoints[0].val : valueMinMax.min;
+			minValue = yPoints[0].val < valueMinMax.min ? yPoints[0].val : valueMinMax.min;
 
 			val += Math.abs(minValue);
 			if (tempVal === minValue) {
@@ -12421,7 +12426,7 @@ drawRadarChart.prototype = {
 				}
 			}
 		} else {
-			minValue = Math.abs(yPoints[yPoints.length - 1].val) < Math.abs(valueMinMax.max) ? yPoints[yPoints.length - 1].val : valueMinMax.max;
+			minValue = yPoints[yPoints.length - 1].val < valueMinMax.max ? yPoints[yPoints.length - 1].val : valueMinMax.max;
 			val -= Math.abs(minValue);
 
 			if (tempVal === minValue) {
