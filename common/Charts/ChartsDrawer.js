@@ -2018,6 +2018,7 @@ CChartsDrawer.prototype =
 		//минимальное значение оси
 		//TODO use axisMin
 		var minUnit = 0;
+		var isRadarChart = this.calcProp.type === c_oChartTypes.Radar;
 
 		if (manualMin != null) {
 			minUnit = manualMin;
@@ -2026,7 +2027,7 @@ CChartsDrawer.prototype =
 			minUnit = parseInt(axisMin / step) * step;
 		} else {
 			if (axisMin < 0) {
-				while (minUnit >= axisMin) {
+				while ((!isRadarChart && minUnit >= axisMin) || (isRadarChart && minUnit > axisMin)) {
 					minUnit -= step;
 				}
 			} else if (axisMin > 0) {
@@ -12426,7 +12427,7 @@ drawRadarChart.prototype = {
 				}
 			}
 		} else {
-			minValue = yPoints[yPoints.length - 1].val < valueMinMax.max ? yPoints[yPoints.length - 1].val : valueMinMax.max;
+			minValue = yPoints[yPoints.length - 1].val > valueMinMax.max ? yPoints[yPoints.length - 1].val : valueMinMax.max;
 			val -= Math.abs(minValue);
 
 			if (tempVal === minValue) {
