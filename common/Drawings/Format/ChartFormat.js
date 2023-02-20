@@ -7826,6 +7826,34 @@
             }
         }
     };
+	CAxisBase.prototype.getAllCharts = function() {
+		let oPlotArea = this.parent;
+		if(!oPlotArea)
+			return [];
+		return oPlotArea.getChartsForAxis(this);
+	};
+	CAxisBase.prototype.isRadarAxis = function() {
+		let aCharts = this.getAllCharts();
+		for(let nChart = 0; nChart < aCharts.length; ++nChart) {
+			if(aCharts[nChart].getObjectType() === AscDFH.historyitem_type_RadarChart) {
+				return true;
+			}
+		}
+		return false;
+	};
+	CAxisBase.prototype.isRadarCategories = function() {
+		if(this.isRadarAxis()) {
+			let nType = this.getObjectType();
+			if(nType === AscDFH.historyitem_type_CatAx ||
+				nType === AscDFH.historyitem_type_DateAx) {
+				return true;
+			}
+		}
+		return false;
+	};
+	CAxisBase.prototype.isSeriesAxis = function() {
+		return this.getObjectType() === AscDFH.historyitem_type_SerAx;
+	};
 
     function getBaseLog(x, y) {
         return Math.log(y) / Math.log(x);

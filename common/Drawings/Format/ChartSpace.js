@@ -3758,7 +3758,7 @@ function(window, undefined) {
 			return AscFormat.CROSS_BETWEEN_MID_CAT;
 		}
 		if (oAxis.getObjectType() === AscDFH.historyitem_type_SerAx) {
-			var oChart = this.chart.plotArea.getChartsForAxis(oAxis)[0];
+			var oChart = oAxis.getAllCharts()[0];
 			if (oChart) {
 				if (oChart.getObjectType() === AscDFH.historyitem_type_SurfaceChart) {
 					return AscFormat.CROSS_BETWEEN_MID_CAT;
@@ -3770,7 +3770,7 @@ function(window, undefined) {
 		}
 		var oCrossAxis = oAxis.crossAx;
 		if (oCrossAxis && oCrossAxis.getObjectType() === AscDFH.historyitem_type_ValAx) {
-			var oChart = this.chart.plotArea.getChartsForAxis(oCrossAxis)[0];
+			var oChart = oCrossAxis.getAllCharts()[0];
 			if (oChart) {
 				var nChartType = oChart.getObjectType();
 				if (nChartType === AscDFH.historyitem_type_ScatterChart) {
@@ -4087,7 +4087,7 @@ function(window, undefined) {
 					}
 				}
 				var nPtsLength = 0;
-				var aChartsForAxis = oPlotArea.getChartsForAxis(oAxis);
+				var aChartsForAxis = oAxis.getAllCharts();
 				for (i = 0; i < aChartsForAxis.length; ++i) {
 					var oChart = aChartsForAxis[i];
 					for (var j = 0; j < oChart.series.length; ++j) {
@@ -4191,49 +4191,60 @@ function(window, undefined) {
 		if (!oAxis) {
 			return;
 		}
+
 		let oAxisGrid = new CAxisGrid();
 		oAxis.grid = oAxisGrid;
-
-		var nOrientation = oAxis.scaling && AscFormat.isRealNumber(oAxis.scaling.orientation) ? oAxis.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
-		var aStrings = this.getLabelsForAxis(oAxis);
-		var nCrossType = this.getAxisCrossType(oAxis);
-		var bOnTickMark = ((nCrossType === AscFormat.CROSS_BETWEEN_MID_CAT) && (aStrings.length > 1));
-		var nIntervalsCount = bOnTickMark ? (aStrings.length - 1) : (aStrings.length);
-		var fInterval;
-		oAxisGrid.nCount = nIntervalsCount;
-		oAxisGrid.bOnTickMark = bOnTickMark;
-		oAxisGrid.aStrings = aStrings;
-		if (oAxis.getObjectType() === AscDFH.historyitem_type_SerAx) {
-			this.checkPrecalculateChartObject();
-			var dDepth = this.getDepthPerspective();
-			fInterval = dDepth / nIntervalsCount;
-			if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
-				oAxisGrid.fStart = 0;
-				oAxisGrid.fStride = fInterval;
-			} else {
-				oAxisGrid.fStart = dDepth;
-				oAxisGrid.fStride = -fInterval;
-			}
-		} else if (oAxis.axPos === AscFormat.AX_POS_B || oAxis.axPos === AscFormat.AX_POS_T) {
-			fInterval = oRect.w / nIntervalsCount;
-			if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
-				oAxisGrid.fStart = oRect.x;
-				oAxisGrid.fStride = fInterval;
-			} else {
-				oAxisGrid.fStart = oRect.x + oRect.w;
-				oAxisGrid.fStride = -fInterval;
-			}
+		let aStrings = this.getLabelsForAxis(oAxis);
+		if(oAxis.isRadarCategories()) {
+			let nIntervalsCount = (aStrings.length - 1);
+			oAxisGrid.nCount = nIntervalsCount;
+			oAxisGrid.bOnTickMark = true;
+			oAxisGrid.aStrings = aStrings;
+			oAxisGrid.fStart = 0;
+			oAxisGrid.fStride = 2*Math.PI / nIntervalsCount;
 		} else {
-			oAxis.yPoints = [];
-			fInterval = oRect.h / nIntervalsCount;
-			if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
-				oAxisGrid.fStart = oRect.y + oRect.h;
-				oAxisGrid.fStride = -fInterval;
+			let nOrientation = oAxis.scaling && AscFormat.isRealNumber(oAxis.scaling.orientation) ? oAxis.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
+			let nCrossType = this.getAxisCrossType(oAxis);
+			let bOnTickMark = ((nCrossType === AscFormat.CROSS_BETWEEN_MID_CAT) && (aStrings.length > 1));
+			let nIntervalsCount = bOnTickMark ? (aStrings.length - 1) : (aStrings.length);
+			let fInterval;
+			oAxisGrid.nCount = nIntervalsCount;
+			oAxisGrid.bOnTickMark = bOnTickMark;
+			oAxisGrid.aStrings = aStrings;
+			if (oAxis.getObjectType() === AscDFH.historyitem_type_SerAx) {
+				this.checkPrecalculateChartObject();
+				var dDepth = this.getDepthPerspective();
+				fInterval = dDepth / nIntervalsCount;
+				if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+					oAxisGrid.fStart = 0;
+					oAxisGrid.fStride = fInterval;
+				} else {
+					oAxisGrid.fStart = dDepth;
+					oAxisGrid.fStride = -fInterval;
+				}
+			} else if (oAxis.axPos === AscFormat.AX_POS_B || oAxis.axPos === AscFormat.AX_POS_T) {
+				fInterval = oRect.w / nIntervalsCount;
+				if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+					oAxisGrid.fStart = oRect.x;
+					oAxisGrid.fStride = fInterval;
+				} else {
+					oAxisGrid.fStart = oRect.x + oRect.w;
+					oAxisGrid.fStride = -fInterval;
+				}
 			} else {
-				oAxisGrid.fStart = oRect.y;
-				oAxisGrid.fStride = fInterval;
+				oAxis.yPoints = [];
+				fInterval = oRect.h / nIntervalsCount;
+				if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+					oAxisGrid.fStart = oRect.y + oRect.h;
+					oAxisGrid.fStride = -fInterval;
+				} else {
+					oAxisGrid.fStart = oRect.y;
+					oAxisGrid.fStride = fInterval;
+				}
 			}
 		}
+
+
 	};
 	CChartSpace.prototype.getView3d = function () {
 		return this.chart.getView3d();
@@ -4402,10 +4413,14 @@ function(window, undefined) {
 			oCurAxis.yPoints = null;
 			oCurAxis.zPoints = null;
 			let aPoints = null;
-			if(oCurAxis.getObjectType() === AscDFH.historyitem_type_SerAx) {
+			if(oCurAxis.isSeriesAxis()) {
 				//TODO
 			}
-			else if(oCurAxis.axPos === AscFormat.AX_POS_B || oCurAxis.axPos === AscFormat.AX_POS_T) {
+			else if(oCurAxis.isRadarCategories()) {
+
+				oCurAxis.grid.calculatePoints(aPoints, bOnTickMark, oCurAxis.scale);
+			}
+			else if(oCurAxis.isHorizontal()) {
 				oCurAxis.posY = fAxisPos;
 				oCurAxis.xPoints = [];
 				aPoints = oCurAxis.xPoints;
