@@ -2205,29 +2205,11 @@ CGraphicObjects.prototype =
                 ParaPr = parent_para.Get_CompiledPr2(true).ParaPr;
                 if (ParaPr)
                 {
-                    var NumType    = -1;
-                    var NumSubType = -1;
-
-                    var oNumPr = parent_para.GetNumPr();
-                    if (oNumPr && oNumPr.IsValid())
-                    {
-                    	var oNum = this.document.GetNumbering().GetNum(oNumPr.NumId);
-                        if (oNum && oNum.GetLvl(oNumPr.Lvl))
-                        {
-                            var oInfo = oNum.GetLvl(oNumPr.Lvl).GetPresetType();
-
-                            NumType    = oInfo.Type;
-                            NumSubType = oInfo.SubType;
-                        }
-                    }
-
-                    ParaPr.ListType = { Type : NumType, SubType : NumSubType };
-
                     editor.sync_ParaSpacingLine( ParaPr.Spacing );
                     editor.Update_ParaInd(ParaPr.Ind);
                     editor.sync_PrAlignCallBack(ParaPr.Jc);
                     editor.sync_ParaStyleName(ParaPr.StyleName);
-                    editor.sync_ListType(ParaPr.ListType);
+                    editor.sync_ListType(ParaPr.NumPr);
                 }
             }
         }

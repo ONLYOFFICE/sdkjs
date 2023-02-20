@@ -162,7 +162,7 @@
 		{
 			this.Paragraphs[index].RemoveNumPr();
 		}
-
+		document.UpdateBulletPresets(undefined, true);
 		return true;
 	};
 	CNumberingApplicator.prototype.ApplyBulleted = function()
@@ -238,7 +238,7 @@
 
 		this.SetLastBulleted(numId, ilvl);
 		this.ApplyNumPr(numId, ilvl);
-
+		this.Document.UpdateBulletPresets(undefined, true);
 		return true;
 	};
 	CNumberingApplicator.prototype.ApplyBulletedToCurrent = function()
@@ -272,6 +272,7 @@
 
 		num.SetLvl(lvl, numPr.Lvl);
 		this.SetLastBulleted(numPr.NumId, numPr.Lvl);
+		this.Document.UpdateBulletPresets(undefined, true);
 		return true;
 	};
 	CNumberingApplicator.prototype.ApplyNumbered = function()
@@ -358,7 +359,7 @@
 
 		this.SetLastNumbered(numId, ilvl);
 		this.ApplyNumPr(numId, ilvl);
-
+		this.Document.UpdateBulletPresets(undefined, true);
 		return true;
 	};
 	CNumberingApplicator.prototype.ApplyNumberedToCurrent = function()
@@ -403,6 +404,7 @@
 			num.SetLvl(lvl, numPr.Lvl);
 
 		this.SetLastNumbered(numPr.NumId, numPr.Lvl);
+		this.Document.UpdateBulletPresets(undefined, true);
 		return true;
 	};
 	CNumberingApplicator.prototype.ApplySingleLevel = function()
@@ -422,6 +424,7 @@
 				numLvl.ResetNumberedText(commonNumPr.Lvl);
 				num.SetLvl(numLvl, commonNumPr.Lvl);
 				this.SetLastSingleLevel(commonNumPr.NumId, commonNumPr.Lvl);
+				this.Document.UpdateBulletPresets(undefined, true);
 			}
 		}
 		else
@@ -444,6 +447,7 @@
 
 			this.ApplyNumPr(numId, ilvl);
 			this.SetLastSingleLevel(numId, ilvl);
+			this.Document.UpdateBulletPresets(undefined, true);
 		}
 
 		return true;
@@ -490,6 +494,7 @@
 			this.LinkNumWithHeadings(num);
 		}
 
+		this.Document.UpdateBulletPresets(undefined, true);
 		return true;
 	};
 	CNumberingApplicator.prototype.GetPrevNumPr = function()

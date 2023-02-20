@@ -14581,6 +14581,10 @@ CDocument.prototype.UnlockPanelStyles = function(isUpdate)
 	if (true === isUpdate)
 		this.UpdateStylePanel();
 };
+CDocument.prototype.UpdateBulletPresets = function (oNumPr, bForce)
+{
+	this.History.Add_UpdateListPresets(oNumPr, bForce);
+}
 CDocument.prototype.GetAllJSONNums = function ()
 {
 	const arrResult = [];
@@ -15893,18 +15897,24 @@ CDocument.prototype.private_RecalculateNumbering = function(Elements)
 
 	for (var Index = 0, Count = Elements.length; Index < Count; ++Index)
 	{
-		var Element = Elements[Index];
+		const Element = Elements[Index];
 		if (type_Paragraph === Element.Get_Type())
-			this.History.Add_RecalcNumPr(Element.GetNumPr());
-		else if (type_Paragraph === Element.Get_Type())
 		{
-			var ParaArray = [];
+			const oNumPr = Element.GetNumPr();
+			this.History.Add_RecalcNumPr(oNumPr);
+			this.UpdateBulletPresets(oNumPr);
+		}
+		else if (Element.GetAllParagraphs)
+		{
+			const ParaArray = [];
 			Element.GetAllParagraphs({All : true}, ParaArray);
 
 			for (var ParaIndex = 0, ParasCount = ParaArray.length; ParaIndex < ParasCount; ++ParaIndex)
 			{
-				var Para = ParaArray[ParaIndex];
-				this.History.Add_RecalcNumPr(Element.GetNumPr());
+				const Para = ParaArray[ParaIndex];
+				const oNumPr = Para.GetNumPr();
+				this.History.Add_RecalcNumPr(oNumPr);
+				this.UpdateBulletPresets(oNumPr);
 			}
 		}
 	}

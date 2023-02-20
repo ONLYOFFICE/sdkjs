@@ -2333,22 +2333,6 @@ background-repeat: no-repeat;\
 		else
 			ParaPr.StyleName = this.WordControl.m_oLogicDocument.Styles.Style[ParaPr.PStyle].Name;
 
-		var NumType    = -1;
-		var NumSubType = -1;
-		if (!(null == ParaPr.NumPr || 0 === ParaPr.NumPr.NumId || "0" === ParaPr.NumPr.NumId))
-		{
-			var oNum = this.WordControl.m_oLogicDocument.GetNumbering().GetNum(ParaPr.NumPr.NumId);
-
-			if (oNum && oNum.GetLvl(ParaPr.NumPr.Lvl))
-			{
-				var res    = oNum.GetLvl(ParaPr.NumPr.Lvl).GetPresetType();
-				NumType    = res.Type;
-				NumSubType = res.SubType;
-			}
-		}
-
-		ParaPr.ListType = {Type : NumType, SubType : NumSubType};
-
 		if (undefined !== ParaPr.FramePr && undefined !== ParaPr.FramePr.Wrap)
 		{
 			if (AscCommonWord.wrap_NotBeside === ParaPr.FramePr.Wrap)
@@ -2363,7 +2347,7 @@ background-repeat: no-repeat;\
 		this.Update_ParaInd(ParaPr.Ind);
 		this.sync_PrAlignCallBack(ParaPr.Jc);
 		this.sync_ParaStyleName(ParaPr.StyleName);
-		this.sync_ListType(ParaPr.ListType);
+		this.sync_ListType(ParaPr.NumPr);
 		this.sync_PrPropCallback(ParaPr);
 	};
 
@@ -4175,20 +4159,9 @@ background-repeat: no-repeat;\
 			}
 		});
 	};
-	asc_docs_api.prototype.sync_UpdateListPatterns = function (oNumPr, bCheckRemove)
+	asc_docs_api.prototype.sync_UpdateListPatterns = function ()
 	{
-		let oJSON;
-		const oLogicDocument = this.private_GetLogicDocument();
-		if (oLogicDocument)
-		{
-			const oNumbering = oLogicDocument.GetNumbering();
-			if (oNumPr && oNumPr.NumId)
-			{
-				const oNum = oNumbering.GetNum(oNumPr.NumId);
-				oJSON = oNum.GetJSONNumbering();
-			}
-		}
-		editor.sendEvent('asc_updateListPatterns', oJSON, bCheckRemove);
+		editor.sendEvent('asc_updateListPatterns', this.asc_GetAllJSONNums());
 	};
 	asc_docs_api.prototype.asc_GetAllJSONNums = function ()
 	{
@@ -4843,7 +4816,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.sync_ListType          = function(NumPr)
 	{
-		this.sendEvent("asc_onListType", new AscCommon.asc_CListType(NumPr));
+		this.sendEvent("asc_onListType", new Asc.CAscWordListType(NumPr));
 	};
 	asc_docs_api.prototype.sync_TextColor         = function(TextPr)
 	{

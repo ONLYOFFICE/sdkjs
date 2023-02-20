@@ -581,6 +581,7 @@ CChangesParagraphNumbering.prototype.private_SetValue = function(Value)
 	var oParagraph = this.Class;
 	oParagraph.Pr.NumPr = Value;
 
+	History.Add_UpdateListPresets(undefined, true);
 	oParagraph.private_RefreshNumbering(oParagraph.Pr.NumPr);
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);

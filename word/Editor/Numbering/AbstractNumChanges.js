@@ -109,6 +109,7 @@ CChangesAbstractNumLvlChange.prototype.private_SetValue = function(Value)
 	var oAbstractNum = this.Class;
 	oAbstractNum.Lvl[this.Index] = Value;
 	oAbstractNum.Recalc_CompiledPr(this.Index);
+	History.Add_UpdateListPresets(undefined, true);
 };
 CChangesAbstractNumLvlChange.prototype.Load = function(Color)
 {

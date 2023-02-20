@@ -131,6 +131,7 @@ CChangesNumLvlOverrideChange.prototype.private_SetValue = function(Value)
 	var oNum = this.Class;
 	oNum.LvlOverride[this.Lvl] = Value;
 	oNum.RecalculateRelatedParagraphs(this.Lvl);
+	History.Add_UpdateListPresets(undefined, true);
 };
 CChangesNumLvlOverrideChange.prototype.Load = function(Color)
 {

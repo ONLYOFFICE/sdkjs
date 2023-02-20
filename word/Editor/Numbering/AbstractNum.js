@@ -457,6 +457,7 @@ CAbstractNum.prototype.Process_EndLoad = function(Data)
 	{
 		// Пересчитываем стили у все параграфов с данной нумерацией
 		this.Recalc_CompiledPr(iLvl);
+		History.Add_UpdateListPresets(undefined, true);
 	}
 };
 CAbstractNum.prototype.Recalc_CompiledPr = function(nLvl)

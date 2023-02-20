@@ -811,6 +811,8 @@ CNum.prototype.Process_EndLoad = function(oData)
 {
 	if (undefined !== oData.Lvl)
 		this.RecalculateRelatedParagraphs(oData.Lvl);
+
+	History.Add_UpdateListPresets(undefined, true);
 };
 /**
  * Проверяем есть ли у нас LvlOverride с перезаписанным уровнем
