@@ -94,8 +94,8 @@
     var c_oAscChangeSelectionFormatTable = asc.c_oAscChangeSelectionFormatTable;
     var asc_CSelectionMathInfo = AscCommonExcel.asc_CSelectionMathInfo;
 
-    var pageBreakPreviewMode = false;
-	var pageBreakPreviewModeOverlay = false;
+    var pageBreakPreviewMode = true;
+	var pageBreakPreviewModeOverlay = true;
 
 	var c_maxColFillDataCount = 10000;
 
@@ -3978,7 +3978,7 @@
 		if (range === undefined) {
 			range = this.visibleRange;
 		}
-		if(!printScale) {
+		if (!printScale) {
 			printScale = this.getPrintScale();
 		}
 		var ctx = drawingCtx || this.drawingCtx;
@@ -4000,10 +4000,10 @@
 		var y1 = this._getRowTop(range.r1) - offsetY;
 		var x2 = Math.min(this._getColLeft(range.c2 + 1) - offsetX, widthCtx);
 		var y2 = Math.min(this._getRowTop(range.r2 + 1) - offsetY, heightCtx);
-    if (!ctx.isNotDrawBackground) {
-      ctx.setFillStyle(this.settings.cells.defaultState.background)
-        .fillRect(x1, y1, x2 - x1, y2 - y1);
-    }
+		if (!ctx.isNotDrawBackground) {
+			ctx.setFillStyle(this.settings.cells.defaultState.background)
+				.fillRect(x1, y1, x2 - x1, y2 - y1);
+		}
 
 		//рисуем текст для преварительного просмотра
 		this._drawPageBreakPreviewText(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height, visiblePrintPages);
@@ -4012,9 +4012,9 @@
 			.setLineWidth(1).beginPath();
 
 		var i, d, l;
-    if (ctx.isPreviewOleObjectContext) {
-      ctx.lineVerPrevPx(1, y1, y2);
-    }
+		if (ctx.isPreviewOleObjectContext) {
+			ctx.lineVerPrevPx(1, y1, y2);
+		}
 		if (needDrawFirstVLine) {
 			ctx.lineVerPrevPx(x1, y1, y2);
 		}
@@ -4025,9 +4025,9 @@
 				ctx.lineVerPrevPx(d, y1, y2);
 			}
 		}
-    if (ctx.isPreviewOleObjectContext) {
-      ctx.lineHorPrevPx(x1, 1, x2);
-    }
+		if (ctx.isPreviewOleObjectContext) {
+			ctx.lineHorPrevPx(x1, 1, x2);
+		}
 		if (needDrawFirstHLine) {
 			ctx.lineHorPrevPx(x1, y1, x2);
 		}
@@ -4053,7 +4053,7 @@
 			y2 = Math.min(this._getRowTop(clearRange.r2 + 1) - offsetY - (clearRange.r2 === pivotRange.r2 ? 1 : 0), heightCtx);
 
 			ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-        }
+		}
 
 		//рисуем текст для преварительного просмотра
 		this._drawPageBreakPreviewLines(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height, visiblePrintPages);
@@ -4733,7 +4733,7 @@
 				y2 = this._getRowTop(intersection.r2 + 1) - offsetY;
 
 				//рисуем линии, ограничивающие страницы
-				ctx.setStrokeStyle(this.settings.activeCellBorderColor);
+				ctx.setStrokeStyle(new CColor(0, 0, 208));
 				ctx.setLineWidth(3).beginPath();
 
 				var pageRange;
@@ -4987,6 +4987,7 @@
 					//TODO подобрать такой размер шрифта, чтобы у текста была нужная нам ширина(1/3 от ширины страницы)
 					var font = new AscCommonExcel.Font();
 					font.fs = getOptimalFontSize(widthPage, heightPage);
+					font.c = new CColor(150, 150, 150);
 					var str = new AscCommonExcel.Fragment();
 					str.setFragmentText(basePageString + (index + 1));
 					str.format = font;
