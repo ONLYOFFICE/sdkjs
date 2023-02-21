@@ -22572,6 +22572,38 @@ $(function () {
 		ws.getRange2("H15").setValue("10");
 
 		// value && value
+		oParser = new parserFormula('FILTER(12,"0")', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"0")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"0")');
+		
+		oParser = new parserFormula('FILTER(12,"1")', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"1")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"1")');
+
+		oParser = new parserFormula('FILTER(12,"TRUE")', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"TRUE")');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Result of FILTER(12,"TRUE")');
+
+		oParser = new parserFormula('FILTER(12,"FALSE")', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"FALSE")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"FALSE")');		// #CALC!
+
+		oParser = new parserFormula('FILTER(12,"0",25)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"0",25)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"0",25)');
+		
+		oParser = new parserFormula('FILTER(12,"1",25)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"1",25)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"1",25)');
+
+		oParser = new parserFormula('FILTER(12,"TRUE",25)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"TRUE",25)');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Result of FILTER(12,"TRUE",25)');
+
+		oParser = new parserFormula('FILTER(12,"FALSE",25)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"FALSE")');
+		assert.strictEqual(oParser.calculate().getValue(), 25, 'Result of FILTER(12,"FALSE")');
+
 		oParser = new parserFormula('FILTER(12,TRUE)', "A2", ws);
 		assert.ok(oParser.parse(), 'FILTER(12,TRUE)');
 		assert.strictEqual(oParser.calculate().getValue(), 12, 'Result of FILTER(12,TRUE)');
@@ -22646,6 +22678,11 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER("12", {FALSE})');	// #CALC!
 
 		// range && value
+		oParser = new parserFormula('FILTER({1;2;3},FALSE,25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},FALSE,25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 25, 'Result of FILTER({1;2;3},FALSE,25)');
+
 		oParser = new parserFormula('FILTER({1,2,3},TRUE)', "A2", ws);
 		assert.ok(oParser.parse(), 'FILTER({1,2,3},TRUE)');
 		array = oParser.calculate();
@@ -22802,10 +22839,30 @@ $(function () {
 		array = oParser.calculate();
 		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3},{FALSE;TRUE})');
 
-		oParser = new parserFormula('FILTER({1;2;3},FALSE,25)', "C2", ws);
-		assert.ok(oParser.parse(), 'FILTER({1;2;3},FALSE,25)');
+		oParser = new parserFormula("FILTER(F10:H15,(F10:F15>5)*(F10:F15<9))", "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))");
 		array = oParser.calculate();
-		assert.strictEqual(array.getValue(), 25, 'Result of FILTER({1;2;3},FALSE,25)');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 7, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 22, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 0, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[0,2]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[1,2]');
+
+		oParser = new parserFormula("FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))", "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[0,2]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), -10, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), -5, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[2,0]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 0, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[3,0]');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 5, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[4,0]');
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 10, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[5,0]');
 
 	});
 
