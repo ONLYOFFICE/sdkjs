@@ -745,6 +745,13 @@ function (window, undefined) {
 			for (let i = 0; i < columns; i++) {
 				let val = isArg1Range ? arg1.getValueByRowCol(0, i) : arg1.getElementRowCol(0, i);
 				let tempArr = [];
+
+				val = val.tocBool();
+				if (cElementType.bool !== val.type) {
+					resArr = new cError(cErrorType.wrong_value_type);
+					break;
+				}
+
 				if (val.value) {
 					for (let k = 0; k < rows; k++) {
 						tempArr[k] = [isArg0Range ? arg0.getValueByRowCol(k, i) : arg0.getElementRowCol(k, i)];
@@ -761,6 +768,13 @@ function (window, undefined) {
 			// rows mode
 			for (let i = 0; i < rows; i++) {
 				let val = isArg1Range ? arg1.getValueByRowCol(i, 0) : arg1.getElementRowCol(i, 0);
+
+				val = val.tocBool();
+				if (cElementType.bool !== val.type) {
+					resArr = new cError(cErrorType.wrong_value_type);
+					break;
+				}
+
 				if (val.value) {
 					resArr.addRow();
 					for (let j = 0; j < columns; j++) {
@@ -835,19 +849,9 @@ function (window, undefined) {
 				lookingArrayDimensions = arg1.getDimensions(),
 				arg0Type = arg0.type,
 				arg1Type = arg1.type;
-			let isArg0Range, isArg1Range;
 
-			if (arg0Type === cElementType.array) {
-				isArg0Range = false;
-			} else {
-				isArg0Range = true;
-			}
-
-			if (arg1Type === cElementType.array) {
-				isArg1Range = false;
-			} else {
-				isArg1Range = true;
-			}
+			let isArg0Range = arg0Type === cElementType.array ? false : true,
+				isArg1Range = arg1Type === cElementType.array ? false : true;
 
 			// check for matching array sizes
 			if (lookingArrayDimensions.row === 1 && lookingArrayDimensions.col === initColumns) {
@@ -858,7 +862,12 @@ function (window, undefined) {
 				// the size of the desired array does not match the initial
 				return new cError(cErrorType.wrong_value_type);
 			}
-			resultArr = resultArr.countElement > 0 ? resultArr : (arg2 ? arg2 : new cError(cErrorType.not_available));
+
+			if (resultArr.type === cElementType.error) {
+				return resultArr;
+			} else {	
+				resultArr = resultArr.countElement > 0 ? resultArr : (arg2 ? arg2 : new cError(cErrorType.not_available));
+			}
 		} else if (baseMode) {
 			if (arg1.value) {
 				if (cElementType.cell === arg0.type) {

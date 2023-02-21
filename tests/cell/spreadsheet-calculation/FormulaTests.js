@@ -22747,6 +22747,66 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", 'Result of FILTER(F10:H15,F10:F15>8)[2,1]');
 		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "", 'Result of FILTER(F10:H15,F10:F15>8)[2,2]');
 
+		oParser = new parserFormula("FILTER({1;2;3;4},{FALSE;0;1;1},25)", "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER({1;2;3;4},{FALSE;0;1;1},25)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, 'Result of FILTER({1;2;3;4},{FALSE;0;1;1},25)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{FALSE;0;1;1},25)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, 'Result of FILTER({1;2;3;4},{FALSE;0;1;1},25)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{FALSE;0;1;1},25)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER({1;2;3;4},{FALSE;0;1;1},25)[2,0]');
+
+		oParser = new parserFormula('FILTER({1;2;3;4},{"FALSE";0;1;1},25)', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3;4},{"FALSE";0;1;1},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, 'Result of FILTER({1;2;3;4},{"FALSE";0;1;1},25)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;1;1},25)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, 'Result of FILTER({1;2;3;4},{"FALSE";0;1;1},25)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;1;1},25)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;1;1},25)[2,0]');
+
+		oParser = new parserFormula('FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, 'Result of FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, 'Result of FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)[2,0]');
+
+		oParser = new parserFormula('FILTER({1;2;3;4},{FALSE;"0";1;1},25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3;4},{FALSE;"0";1;1},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3;4},{FALSE;"0";1;1},25)');
+
+		oParser = new parserFormula('FILTER({1;2;3;4},{FALSE;0;1;"str"},25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3;4},{FALSE;0;1;"str"},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3;4},{FALSE;0;1;"str"},25)');
+
+		oParser = new parserFormula('FILTER({1;2;3;4;5},{FALSE;0;1;"str"},25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3;4;5},{FALSE;0;1;"str"},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3;4;5},{FALSE;0;1;"str"},25)');
+
+		oParser = new parserFormula('FILTER({1;2;3},{FALSE;TRUE},25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},{FALSE;TRUE},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3},{FALSE;TRUE},25)');
+
+		oParser = new parserFormula('FILTER({1;2;3},{FALSE;TRUE})', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},{FALSE;TRUE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3},{FALSE;TRUE})');
+
+		oParser = new parserFormula('FILTER({1;2;3},FALSE,25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},FALSE,25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 25, 'Result of FILTER({1;2;3},FALSE,25)');
+
 	});
 
 	QUnit.test("Test: \"reference argument test\"", function (assert) {
