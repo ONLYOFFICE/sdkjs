@@ -47,12 +47,14 @@
 		this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
 		this.WriteProtection      = undefined;
 		this.DocumentProtection   = undefined !== AscCommonWord.CDocProtect ? new AscCommonWord.CDocProtect() : null;
-
-		this.ListSeparator  = undefined;
-		this.DecimalSymbol  = undefined;
-		this.GutterAtTop    = false;
-		this.MirrorMargins  = false;
-		this.TrackRevisions = false; // Флаг рецензирования, который записан в самом файле
+		
+		this.AutoHyphenation = false;
+		this.HyphenationZone = undefined;
+		this.ListSeparator   = undefined;
+		this.DecimalSymbol   = undefined;
+		this.GutterAtTop     = false;
+		this.MirrorMargins   = false;
+		this.TrackRevisions  = false; // Флаг рецензирования, который записан в самом файле
 
 		// Compatibility
 		this.SplitPageBreakAndParaMark        = false;
