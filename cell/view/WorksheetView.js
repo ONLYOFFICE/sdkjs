@@ -4152,20 +4152,6 @@
 					mergedCells[AscCommonExcel.getCellIndex(mc.r1, mc.c1)] = mc;
 					col = mc.c2;
 
-					/*for (let n = mc.c1; n <= mc.c2; n++) {
-						if (this.pagesModeDataContains(n, row) === false) {
-							var width = this._getColumnWidth(n);
-							var x = this._getColLeft(n) - 1;
-							var y = top - 1;
-							var w = width + 1;
-							var h = height + 1;
-
-							let _fill = new AscCommonExcel.Fill();
-							_fill.fromColor(this.settings.cells.defaultState.border);
-							AscCommonExcel.drawFillCell(ctx, graphics, _fill, new AscCommon.asc_CRect(x - offsetX, y - offsetY, w, h));
-						}
-					}*/
-
 					continue;
 				}
 			}
