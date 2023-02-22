@@ -4010,7 +4010,7 @@
 		}
 
 		//рисуем текст для преварительного просмотра
-		this._drawPageBreakPreviewText(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height);
+		//this._drawPageBreakPreviewText(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height);
 
 		ctx.setStrokeStyle(this.settings.cells.defaultState.border)
 			.setLineWidth(1).beginPath();
@@ -4104,15 +4104,18 @@
 			mc = mergedCells[i];
 			this._drawRowBG(drawingCtx, mc.r1, mc.c1, mc.c1, offsetX, offsetY, null, mc, cfIterator);
 		}
+
+		this._drawPageBreakPreviewText(drawingCtx, range, offsetXForDraw, offsetYForDraw);
+
 		this._drawSparklines(drawingCtx, range, offsetX, offsetY);
 		this._drawCellsBorders(drawingCtx, range, offsetX, offsetY, mergedCells);
+
+		this._drawPageBreakPreviewLines(drawingCtx, range, offsetXForDraw, offsetYForDraw);
 
 		if (!drawingCtx && !window['IS_NATIVE_EDITOR']) {
 			// restore canvas' original clipping range
 			this.drawingCtx.restore();
 		}
-
-		this._drawPageBreakPreviewLines(drawingCtx, range, offsetXForDraw, offsetYForDraw)
 	};
 
     /** Рисует спарклайны */
@@ -4700,7 +4703,7 @@
 		return null;
 	};
 
-	WorksheetView.prototype._drawPageBreakPreviewLines = function (drawingCtx, range, leftFieldInPx, topFieldInPx, width, height) {
+	WorksheetView.prototype._drawPageBreakPreviewLines = function (drawingCtx, range, leftFieldInPx, topFieldInPx) {
 		if(!pageBreakPreviewMode) {
 			return;
 		}
@@ -4730,60 +4733,21 @@
 			}
 		}
 
-		var i, d, d1;
+		var i;
 		var x1, x2, y1, y2;
 		var pageBreakPreview = true;
 		if(pageBreakPreview) {
-			var startRange = printPages[0] ? printPages[0].page.pageRange : null;
-			var endRange = printPages[0] ? printPages[printPages.length - 1].page.pageRange : null;
-			var unionRange = startRange ? new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2) : null;
-
-			//вначале закрашииваем непечатную область
-			var fillRanges = [];
-			var intersection = unionRange ? range.intersection(unionRange) : null;
-			/*ctx.setFillStyle(this.settings.cells.defaultState.border);
-			if(intersection) {
-				//закрашиываем всю область обноавления за исключением области пересечения
-				fillRanges = intersection.difference(range);
-			} else {
-				fillRanges.push(range);
-			}
-
-			if(fillRanges) {
-				ctx.setFillStyle(this.settings.cells.defaultState.border);
-				for(i = 0; i < fillRanges.length; i++) {
-					x1 = Math.max(this._getColLeft(fillRanges[i].c1), this._getColLeft(range.c1));
-					y1 = Math.max(this._getRowTop(fillRanges[i].r1), this._getRowTop(range.r1));
-					x2 = Math.min(this._getColLeft(fillRanges[i].c2 + 1) - this.cellsLeft, this._getColLeft(range.c2 + 1) - this.cellsLeft);
-					y2 = Math.min(this._getRowTop(fillRanges[i].r2 + 1) - this.cellsTop, this._getRowTop(range.r2 + 1) - this.cellsTop);
-
-					ctx.fillRect(x1 - offsetX, y1 - offsetY, x2 - offsetX, y2 - offsetY);
-				}
-			}*/
-
-
 			if(true || printPages[0] && intersection) {
-				/*x1 = this._getColLeft(intersection.c1) - offsetX;
-				y1 = this._getRowTop(intersection.r1) - offsetY;
-				x2 = this._getColLeft(intersection.c2 + 1) - offsetX;
-				y2 = this._getRowTop(intersection.r2 + 1) - offsetY;*/
-
 				//рисуем линии, ограничивающие страницы
 				ctx.setStrokeStyle(new CColor(0, 0, 208));
 				ctx.setLineWidth(3).beginPath();
 
 				var pageRange;
 				var pageIntersection;
-				for (i = 0, d = 0, d1 = 0; i < printPages.length; ++i) {
+				for (i = 0; i < printPages.length; ++i) {
 					pageRange = printPages[i].page.pageRange;
 					pageIntersection = pageRange.intersection(range);
-					/*if(!pageIntersection) {
-						if(pageRange.r1 > range.r2 && pageRange.c1 > range.c2) {
-							break;
-						} else {
-							continue;
-						}
-					}*/
+
 					if (pageIntersection) {
 						//left
 						if (pageIntersection.c1 === pageRange.c1) {
@@ -4817,17 +4781,7 @@
 							y1 = this._getRowTop(pageRange.r2 + 1) - offsetY;
 							ctx.lineHorPrevPx(x1, y1, x2);
 						}
-						/*d = this._getColLeft(pageRange.c2 + 1) - offsetX;
-						d1 = this._getRowTop(pageRange.r2 + 1) - offsetY;
-						if(d > x1 && d1 > 0) {
-							ctx.lineVerPrevPx(d, y1 - frozenY, y2);
-						}
-						if(d1 > y1 && d > 0) {
-							ctx.lineHorPrevPx(x1 - frozenX, d1, x2);
-						}*/
 					}
-
-
 				}
 
 				ctx.stroke();
