@@ -1266,7 +1266,31 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea.prototype.getFirstElement = function () {
 		return this.getValueByRowCol(0, 0);
-	}
+	};
+	cArea.prototype._getCol = function (colIndex) {
+		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+			return null;
+		}
+
+		let col = [];
+		for (let i = 0; i < this.getDimensions().row; i++) {
+			col[i] = [];
+			col[i].push(this.getValueByRowCol(i, colIndex));
+		}
+		return col;
+	};
+	cArea.prototype.getRow = function (rowIndex) {
+		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+			return null;
+		}
+
+		let row = [];
+		for (let j = 0; j < this.getDimensions().col; j++) {
+			row.push(this.getValueByRowCol(rowIndex, j));
+		}
+		return row;
+	};
+
 
 	/**
 	 * @constructor
@@ -1637,7 +1661,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea3D.prototype.getFirstElement = function () {
 		return this.getValueByRowCol(0, 0);
-	}
+	};
+	cArea3D.prototype._getCol = function (colIndex) {
+		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+			return null;
+		}
+
+		let col = [];
+		for (let i = 0; i < this.getDimensions().row; i++) {
+			col[i] = [];
+			col[i].push(this.getValueByRowCol(i, colIndex));
+		}
+		return col;
+	};
+	cArea3D.prototype.getRow = function (rowIndex) {
+		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+			return null;
+		}
+
+		let row = [];
+		for (let j = 0; j < this.getDimensions().col; j++) {
+			row.push(this.getValueByRowCol(rowIndex, j));
+		}
+		return row;
+	};
 
 	/**
 	 * @constructor
@@ -2528,6 +2575,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var col = [];
 		for (var i = 0; i < this.rowCount; i++) {
 			col.push(this.array[i][colIndex]);
+		}
+		return col;
+	};
+	cArray.prototype._getCol = function (colIndex) {
+		let col = [];
+		for (let i = 0; i < this.rowCount; i++) {
+			col[i] = [];
+			col[i].push(this.array[i][colIndex]);
 		}
 		return col;
 	};

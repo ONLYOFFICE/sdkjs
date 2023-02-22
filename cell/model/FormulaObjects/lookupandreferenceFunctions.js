@@ -739,51 +739,28 @@ function (window, undefined) {
 	cFILTER.prototype.arrayIndexes = {0: 1, 1: 1};
 	cFILTER.prototype.argumentsType = [argType.reference, argType.reference, argType.any];
 	cFILTER.prototype.Calculate = function (arg) {
-		function columnModeLoop (rows, columns) {
+		function rangeModeLoop (rows, columns, isColumnMode) {
 			let resArr = new cArray();
-			// columns mode
-			for (let i = 0; i < columns; i++) {
-				let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(0, i) : arg1.getElementRowCol(0, i);
-				let tempArr = [];
 
-				val = val.tocBool();
-				val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
-				if (cElementType.error === val.type) {
-					resArr = val;
-					break;
-				}
+			outer: for (let i = 0; i < rows; i++) {
+				for (let j = 0; j < columns; j++) {
+					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
 
-				if (val) {
-					for (let k = 0; k < rows; k++) {
-						tempArr[k] = [arg0.getValueByRowCol ? arg0.getValueByRowCol(k, i) : arg0.getElementRowCol(k, i)];
+					val = val.tocBool();
+					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
+					if (cElementType.error === val.type) {
+						resArr = val;
+						break outer;
 					}
-					resArr.pushCol(tempArr, 0);
+
+					if (val) {
+						isColumnMode ? resArr.pushCol(arg0._getCol(j), 0) : resArr.array.push(arg0.getRow(i));
+					}
 				}
 			}
 
-			return resArr;
-		}
-
-		function rowModeLoop (rows, columns) {
-			let resArr = new cArray();
-			// rows mode
-			for (let i = 0; i < rows; i++) {
-				let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, 0) : arg1.getElementRowCol(i, 0);
-
-				val = val.tocBool();
-				val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
-
-				if (cElementType.error === val.type) {
-					resArr = val;
-					break;
-				}
-				
-				if (val) {
-					resArr.addRow();
-					for (let j = 0; j < columns; j++) {
-						resArr.addElement(arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.getElementRowCol(i, j));
-					}
-				}
+			if (!isColumnMode && cElementType.error !== resArr.type) {
+				resArr.recalculate();
 			}
 
 			return resArr;
@@ -830,7 +807,6 @@ function (window, undefined) {
 		} else {
 			// 4) value && value
 			baseMode = true;
-			arg1 = arg1.tocBool();
 		}
 		
 		if (cElementType.error === arg0.type) {
@@ -848,9 +824,9 @@ function (window, undefined) {
 
 			// check for matching array sizes
 			if (lookingArrayDimensions.row === 1 && lookingArrayDimensions.col === initColumns) {
-				resultArr = columnModeLoop(initRows, initColumns);
+				resultArr = rangeModeLoop(lookingArrayDimensions.row, lookingArrayDimensions.col, true);
 			} else if (lookingArrayDimensions.row === initRows && lookingArrayDimensions.col === 1) {
-				resultArr = rowModeLoop(initRows, initColumns);
+				resultArr = rangeModeLoop(lookingArrayDimensions.row, lookingArrayDimensions.col, false);
 			} else {
 				// the size of the desired array does not match the initial
 				return new cError(cErrorType.wrong_value_type);
