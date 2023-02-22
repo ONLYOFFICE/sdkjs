@@ -4105,11 +4105,15 @@
 			this._drawRowBG(drawingCtx, mc.r1, mc.c1, mc.c1, offsetX, offsetY, null, mc, cfIterator);
 		}
 
+		//this text draw in excel: after cell bg, sparklines
+		// but before cells borders, cells text, grid
+		//TODO need change all rendering sequence
 		this._drawPageBreakPreviewText(drawingCtx, range, offsetXForDraw, offsetYForDraw);
 
 		this._drawSparklines(drawingCtx, range, offsetX, offsetY);
 		this._drawCellsBorders(drawingCtx, range, offsetX, offsetY, mergedCells);
 
+		//draw after other
 		this._drawPageBreakPreviewLines(drawingCtx, range, offsetXForDraw, offsetYForDraw);
 
 		if (!drawingCtx && !window['IS_NATIVE_EDITOR']) {
