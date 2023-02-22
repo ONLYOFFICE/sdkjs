@@ -4192,12 +4192,13 @@
 				for (let r = mc.r1; r <= mc.r2; r++) {
 					for (let n = mc.c1; n <= mc.c2; n++) {
 						if (this.pagesModeDataContains(n, r) === false) {
+							var _height = this._getRowHeight(r);
 							var _top = this._getRowTop(r);
 							var _width = this._getColumnWidth(n);
 							var _x = this._getColLeft(n) - 1;
 							var _y = _top - 1;
 							var _w = _width + 1;
-							var _h = height + 1;
+							var _h = _height + 1;
 
 							let _fill = new AscCommonExcel.Fill();
 							_fill.fromColor(this.settings.cells.defaultState.border);
