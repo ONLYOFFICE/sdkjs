@@ -3147,6 +3147,7 @@ function CParagraphRecalculateStateWrap(Para)
     this.SectPr          = null; // настройки секции, к которой относится данный параграф
 	this.CondensedSpaces = false;
 	this.BalanceSBDB     = false; // BalanceSingleByteDoubleByteWidth
+	this.AutoHyphenation = false;
 
 	this.Fast            = false; // Быстрый ли пересчет
 
@@ -3285,6 +3286,7 @@ CParagraphRecalculateStateWrap.prototype =
 
 		this.CondensedSpaces = Paragraph.IsCondensedSpaces();
 		this.BalanceSBDB     = Paragraph.IsBalanceSingleByteDoubleByteWidth();
+		this.AutoHyphenation = Paragraph.IsAutoHyphenation();
 
 		this.Page               = CurPage;
 		this.RunRecalcInfoLast  = (0 === CurPage ? null : Paragraph.Pages[CurPage - 1].EndInfo.RunRecalcInfo);
@@ -3998,6 +4000,10 @@ CParagraphRecalculateStateWrap.prototype.IsLastElementInWord = function(oRun, nP
 	}
 
 	return (!oNextItem || !oNextItem.IsText());
+};
+CParagraphRecalculateStateWrap.prototype.IsAutoHyphenation = function()
+{
+	return this.AutoHyphenation;
 };
 
 function CParagraphRecalculateStateCounter()

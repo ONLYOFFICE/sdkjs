@@ -52,6 +52,7 @@
 	const FLAGS_TEMPORARY_COMBINING_MARK    = 0x00001000; // 12 бит
 	const FLAGS_VISIBLE_WIDTH               = 0x00002000; // 13 бит
 	const FLAGS_GAPS                        = 0x00004000; // 14 бит
+	const FLAGS_SPACEAFTER_HYPHENATE        = 0x00008000; // 15
 
 	// 16-31 биты зарезервированы под FontSize
 
@@ -68,6 +69,7 @@
 	const FLAGS_NON_VISIBLE_WIDTH               = FLAGS_MASK ^ FLAGS_VISIBLE_WIDTH;
 	const FLAGS_NON_TEMPORARY_COMBINING_MARK    = FLAGS_MASK ^ FLAGS_TEMPORARY_COMBINING_MARK;
 	const FLAGS_NON_GAPS                        = FLAGS_MASK ^ FLAGS_GAPS;
+	const FLAGS_NON_SPACEAFTER_HYPHENATE        = FLAGS_MASK ^ FLAGS_SPACEAFTER_HYPHENATE;
 
 	function CreateNonBreakingHyphen()
 	{
@@ -433,7 +435,14 @@
 	};
 	CRunText.prototype.IsSpaceAfter = function()
 	{
-		return !!(this.Flags & FLAGS_SPACEAFTER);
+		return !!((this.Flags & FLAGS_SPACEAFTER) || (this.Flags & FLAGS_SPACEAFTER_HYPHENATE));
+	};
+	CRunText.prototype.SetHyphenate = function(isHyphen)
+	{
+		if (isHyphen)
+			this.Flags |= FLAGS_SPACEAFTER_HYPHENATE;
+		else
+			this.Flags &= FLAGS_NON_SPACEAFTER_HYPHENATE;
 	};
 	/**
 	 * Получаем символ для проверки орфографии
