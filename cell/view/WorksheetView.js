@@ -4059,8 +4059,7 @@
 			ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
 		}
 
-		//рисуем текст для преварительного просмотра
-		this._drawPageBreakPreviewLines(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height);
+		//this._drawPageBreakPreviewLines(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height);
 	};
 
     WorksheetView.prototype._drawCellsAndBorders = function (drawingCtx, range, offsetXForDraw, offsetYForDraw) {
@@ -4112,6 +4111,8 @@
 			// restore canvas' original clipping range
 			this.drawingCtx.restore();
 		}
+
+		this._drawPageBreakPreviewLines(drawingCtx, range, offsetXForDraw, offsetYForDraw)
 	};
 
     /** Рисует спарклайны */
@@ -4761,11 +4762,11 @@
 			}*/
 
 
-			if(printPages[0] && intersection) {
-				x1 = this._getColLeft(intersection.c1) - offsetX;
+			if(true || printPages[0] && intersection) {
+				/*x1 = this._getColLeft(intersection.c1) - offsetX;
 				y1 = this._getRowTop(intersection.r1) - offsetY;
 				x2 = this._getColLeft(intersection.c2 + 1) - offsetX;
-				y2 = this._getRowTop(intersection.r2 + 1) - offsetY;
+				y2 = this._getRowTop(intersection.r2 + 1) - offsetY;*/
 
 				//рисуем линии, ограничивающие страницы
 				ctx.setStrokeStyle(new CColor(0, 0, 208));
@@ -4776,22 +4777,57 @@
 				for (i = 0, d = 0, d1 = 0; i < printPages.length; ++i) {
 					pageRange = printPages[i].page.pageRange;
 					pageIntersection = pageRange.intersection(range);
-					if(!pageIntersection) {
+					/*if(!pageIntersection) {
 						if(pageRange.r1 > range.r2 && pageRange.c1 > range.c2) {
 							break;
 						} else {
 							continue;
 						}
+					}*/
+					if (pageIntersection) {
+						//left
+						if (pageIntersection.c1 === pageRange.c1) {
+							//draw left range border from page r1 to r2
+							x1 = this._getColLeft(pageRange.c1) - offsetX;
+							y1 = this._getRowTop(pageRange.r1) - offsetY;
+							y2 = this._getRowTop(pageRange.r2 + 1) - offsetY;
+							ctx.lineVerPrevPx(x1, y1, y2);
+						}
+						//right
+						if (pageIntersection.c2 === pageRange.c2) {
+							//draw right range border from page r1 to r2
+							x1 = this._getColLeft(pageRange.c2 + 1) - offsetX;
+							y1 = this._getRowTop(pageRange.r1) - offsetY;
+							y2 = this._getRowTop(pageRange.r2 + 1) - offsetY;
+							ctx.lineVerPrevPx(x1, y1, y2);
+						}
+						//top
+						if (pageIntersection.r1 === pageRange.r1) {
+							//draw top range border from page c1 to c2
+							x1 = this._getColLeft(pageRange.c1) - offsetX;
+							x2 = this._getColLeft(pageRange.c2 + 1) - offsetX;
+							y1 = this._getRowTop(pageRange.r1) - offsetY;
+							ctx.lineHorPrevPx(x1, y1, x2);
+						}
+						//bottom
+						if (pageIntersection.r2 === pageRange.r2) {
+							//draw bottom range border from page c1 to c2
+							x1 = this._getColLeft(pageRange.c1) - offsetX;
+							x2 = this._getColLeft(pageRange.c2 + 1) - offsetX;
+							y1 = this._getRowTop(pageRange.r2 + 1) - offsetY;
+							ctx.lineHorPrevPx(x1, y1, x2);
+						}
+						/*d = this._getColLeft(pageRange.c2 + 1) - offsetX;
+						d1 = this._getRowTop(pageRange.r2 + 1) - offsetY;
+						if(d > x1 && d1 > 0) {
+							ctx.lineVerPrevPx(d, y1 - frozenY, y2);
+						}
+						if(d1 > y1 && d > 0) {
+							ctx.lineHorPrevPx(x1 - frozenX, d1, x2);
+						}*/
 					}
 
-					d = this._getColLeft(pageRange.c2 + 1) - offsetX;
-					d1 = this._getRowTop(pageRange.r2 + 1) - offsetY;
-					if(d > x1 && d1 > 0) {
-						ctx.lineVerPrevPx(d, y1 - frozenY, y2);
-					}
-					if(d1 > y1 && d > 0) {
-						ctx.lineHorPrevPx(x1 - frozenX, d1, x2);
-					}
+
 				}
 
 				ctx.stroke();
