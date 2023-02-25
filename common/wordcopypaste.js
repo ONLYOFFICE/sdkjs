@@ -9229,21 +9229,19 @@ PasteProcessor.prototype =
 				if (!_node || oThis._IsBlockElem(_node.nodeName.toLowerCase())) {
 					return false;
 				}
-				if (_node) {
-					let _previousSibling = _node.previousSibling;
-					while (_previousSibling) {
-						if (oThis._IsBlockElem(_previousSibling.nodeName.toLowerCase())) {
-							return false;
-						}
-						let siblingText = _previousSibling.textContent;
-						if (siblingText && siblingText.length) {
-							return siblingText.charCodeAt(siblingText.length - 1) !== 32;
-						}
-						_previousSibling = _previousSibling.previousSibling;
-					}
-					return _node.parentNode && checkPreviousNotSpaceText(_node.parentNode);
-				}
 
+				let _previousSibling = _node.previousSibling;
+				while (_previousSibling) {
+					if (oThis._IsBlockElem(_previousSibling.nodeName.toLowerCase())) {
+						return false;
+					}
+					let siblingText = _previousSibling.textContent;
+					if (siblingText && siblingText.length) {
+						return siblingText.charCodeAt(siblingText.length - 1) !== 32;
+					}
+					_previousSibling = _previousSibling.previousSibling;
+				}
+				return _node.parentNode && checkPreviousNotSpaceText(_node.parentNode);
 			};
 
 			var _removeSpaces = function (_text, saveBefore) {
@@ -9275,12 +9273,12 @@ PasteProcessor.prototype =
 				//TODO must use in all cases. while in hotfix commit only special case
 				//in develop: use this code for all cases
 				var checkSpaces = value.replace(/(\s)/g, '');
-				if (checkSpaces) {
+				if (checkSpaces === "") {
 					if (!checkPreviousNotSpaceText(node)) {
-						//remove all spaces, exception non-breaking spaces
+						//remove all spaces, exception non-breaking spaces + space after
 						value = _removeSpaces(value);
 					} else {
-						//replace duplicated spaces
+						//replace duplicated spaces before + after, exception non-breaking spaces
 						value = _removeSpaces(value, true);
 					}
 				}
