@@ -754,15 +754,15 @@ function (window, undefined) {
 					}
 
 					if (val) {
-						isColumnMode ? resArr.pushCol(arg0._getCol(j), 0) : resArr.array.push(arg0.getRow(i));
+						isColumnMode ? resArr.pushCol(arg0._getCol(j), 0) : resArr.pushRow(arg0._getRow(i), 0);
 					}
 				}
 			}
 
-			if (!isColumnMode && cElementType.error !== resArr.type) {
-				resArr.recalculate();
-			}
-
+			// if (cElementType.error !== resArr.type) {
+			// 	resArr.recalculate();
+			// }
+			
 			return resArr;
 		}
  
@@ -835,7 +835,7 @@ function (window, undefined) {
 			if (resultArr.type === cElementType.error) {
 				return resultArr;
 			} else {
-				resultArr = resultArr.countElement > 0 ? resultArr : (arg2 ? arg2 : new cError(cErrorType.not_available));
+				resultArr = resultArr.countElement > 0 || resultArr.rowCount > 0 ? resultArr : (arg2 ? arg2 : new cError(cErrorType.not_available));
 			}
 		} else if (baseMode) {
 			arg1 = arg1.tocBool();

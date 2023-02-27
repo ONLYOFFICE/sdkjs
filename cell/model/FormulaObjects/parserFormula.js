@@ -1279,14 +1279,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return col;
 	};
-	cArea.prototype.getRow = function (rowIndex) {
+	cArea.prototype._getRow = function (rowIndex) {
 		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
 			return null;
 		}
 
-		let row = [];
+		let row = [[]];
 		for (let j = 0; j < this.getDimensions().col; j++) {
-			row.push(this.getValueByRowCol(rowIndex, j));
+			row[0].push(this.getValueByRowCol(rowIndex, j));
 		}
 		return row;
 	};
@@ -2570,6 +2570,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return null;
 		}
 		return this.array[rowIndex];
+	};
+	cArray.prototype._getRow = function (rowIndex) {
+		if (rowIndex < 0 || rowIndex > this.array.length - 1) {
+			return null;
+		}
+		return [this.array[rowIndex]];
 	};
 	cArray.prototype.getCol = function (colIndex) {
 		var col = [];
