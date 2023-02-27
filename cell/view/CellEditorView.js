@@ -473,7 +473,6 @@
 		if (this.input) {
 			if (AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea) {
 				AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea.focus();
-				console.log("sdf")
 			} else {
 				this.input.blur();
 			}
