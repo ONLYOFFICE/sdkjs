@@ -1662,7 +1662,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea3D.prototype.getFirstElement = function () {
 		return this.getValueByRowCol(0, 0);
 	};
-	cArea.prototype._getCol = function (colIndex) {
+	cArea3D.prototype._getCol = function (colIndex) {
 		if (colIndex < 0 || colIndex > this.getDimensions().col) {
 			return null;
 		}
@@ -1674,7 +1674,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return col;
 	};
-	cArea.prototype._getRow = function (rowIndex) {
+	cArea3D.prototype._getRow = function (rowIndex) {
 		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
 			return null;
 		}
