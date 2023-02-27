@@ -470,14 +470,7 @@
 	};
 
 	CellEditor.prototype._blur = function () {
-		if (this.input) {
-			if (window["Asc"]["editor"].wb && window["Asc"]["editor"].wb.element) {
-				window["Asc"]["editor"].wb.element.focus();
-				//AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea.focus();
-			} else {
-				this.input.blur();
-			}
-		}
+		this.handlers.trigger("doEditorFocus");
 	};
 
 	CellEditor.prototype.setTextStyle = function (prop, val) {

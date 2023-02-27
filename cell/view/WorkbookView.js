@@ -825,7 +825,9 @@
 				  self.handlers.trigger("asc_onFormulaInfo", fName, pos);
 			  }, "onSelectionEnd" : function () {
 				  self.handlers.trigger("asc_onSelectionEnd");
-        }
+			  }, "doEditorFocus" : function () {
+				  self._setEditorFocus();
+			  }
 		  }, this.defaults.worksheetView.cells.padding);
 
 	  this.wsViewHandlers = new AscCommonExcel.asc_CHandlersList(/*handlers*/{
@@ -1967,16 +1969,14 @@
   };
 
   WorkbookView.prototype._blurCellEditor = function () {
-	  if (this.cellEditor) {
-		//must execute only this
-		//this.input === this.cellEditor.input
-	  	this.cellEditor._blur();
-	  } else if (AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea) {
-		  AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea.focus();
-	  } else {
-		  this.input && this.input.blur();
-	  }
+	 this._setEditorFocus();
   };
+
+  WorkbookView.prototype._setEditorFocus = function () {
+	 this.element && this.element.focus();
+  };
+
+
 
 
   /**
