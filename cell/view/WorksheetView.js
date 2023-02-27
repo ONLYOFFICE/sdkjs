@@ -4866,11 +4866,13 @@
 		var basePageString = "Page ";
 
 		var getOptimalFontSize = function(width, height) {
-			var needWidth = width / 3;
-			var needHeight = height / 3;
+			var kf = 3.04;
+			var needWidth = width / kf;
+			var needHeight = height / kf;
 
 			//TODO максмальный размер выбрал произвольно. изменить! + оптимизировать алгоритм по равенству
 			var font = new AscCommonExcel.Font();
+			font.fn = "Arial";
 			var str;
 			var i = 0, j = 100, k, textMetrics;
 			while (i <= j) {
@@ -4931,6 +4933,7 @@
 
 					//TODO подобрать такой размер шрифта, чтобы у текста была нужная нам ширина(1/3 от ширины страницы)
 					var font = new AscCommonExcel.Font();
+					font.fn = "Arial";
 					font.fs = getOptimalFontSize(widthPage, heightPage);
 					font.c = new CColor(150, 150, 150);
 					var str = new AscCommonExcel.Fragment();
