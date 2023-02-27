@@ -732,14 +732,10 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                 case close:
                 {
                     canvasContext.closePath();
-                    if(canvasContext.isPointInPath(x, y))
-                    {
-                        return true;
-                    }
                 }
             }
         }
-        return false;
+	    return !!canvasContext.isPointInPath(x, y);
     };
     Path.prototype.hitInPath = function(canvasContext, x, y, oAddingPoint, _path_index)
     {
@@ -1445,21 +1441,13 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     case close:
                     {
                         canvasContext.closePath();
-                        if(canvasContext.isPointInPath(x, y))
-                        {
-                            return true;
-                        }
                         i+=1;
                         break;
                     }
                 }
             }
             canvasContext.closePath();
-            if(canvasContext.isPointInPath(x, y))
-            {
-                return true;
-            }
-            return false;
+            return !!canvasContext.isPointInPath(x, y);
         },
 
         hitInPath: function(canvasContext, x, y)
