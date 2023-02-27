@@ -1976,9 +1976,6 @@
 	 this.element && this.element.focus();
   };
 
-
-
-
   /**
    *
    * @return { string } base64 image
