@@ -1662,7 +1662,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea3D.prototype.getFirstElement = function () {
 		return this.getValueByRowCol(0, 0);
 	};
-	cArea3D.prototype._getCol = function (colIndex) {
+	cArea.prototype._getCol = function (colIndex) {
 		if (colIndex < 0 || colIndex > this.getDimensions().col) {
 			return null;
 		}
@@ -1674,14 +1674,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return col;
 	};
-	cArea3D.prototype.getRow = function (rowIndex) {
+	cArea.prototype._getRow = function (rowIndex) {
 		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
 			return null;
 		}
 
-		let row = [];
+		let row = [[]];
 		for (let j = 0; j < this.getDimensions().col; j++) {
-			row.push(this.getValueByRowCol(rowIndex, j));
+			row[0].push(this.getValueByRowCol(rowIndex, j));
 		}
 		return row;
 	};

@@ -749,8 +749,7 @@ function (window, undefined) {
 					val = val.tocBool();
 					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
 					if (cElementType.error === val.type) {
-						resArr = val;
-						return resArr;
+						return val;
 					}
 
 					if (val) {
@@ -828,7 +827,7 @@ function (window, undefined) {
 			if (resultArr.type === cElementType.error) {
 				return resultArr;
 			} else {
-				resultArr = resultArr.countElement > 0 || resultArr.rowCount > 0 ? resultArr : ((cElementType.empty !== arg2.type) ? arg2 : new cError(cErrorType.not_available));
+				resultArr = (resultArr.countElement > 0 || resultArr.rowCount > 0) ? resultArr : ((cElementType.empty !== arg2.type) ? arg2 : new cError(cErrorType.wrong_value_type));
 			}
 		} else if (baseMode) {
 			arg1 = arg1.tocBool();
