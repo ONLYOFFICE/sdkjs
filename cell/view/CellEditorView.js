@@ -471,8 +471,9 @@
 
 	CellEditor.prototype._blur = function () {
 		if (this.input) {
-			if (AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea) {
-				AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea.focus();
+			if (window["Asc"]["editor"].wb && window["Asc"]["editor"].wb.element) {
+				window["Asc"]["editor"].wb.element.focus();
+				//AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea.focus();
 			} else {
 				this.input.blur();
 			}
