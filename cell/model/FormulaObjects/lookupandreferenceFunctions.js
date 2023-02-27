@@ -758,10 +758,6 @@ function (window, undefined) {
 					}
 				}
 			}
-
-			// if (cElementType.error !== resArr.type) {
-			// 	resArr.recalculate();
-			// }
 			
 			return resArr;
 		}
