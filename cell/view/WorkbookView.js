@@ -584,7 +584,7 @@
       if (this.input && this.input.addEventListener) {
 				var eventInfo = new AscCommon.CEventListenerInfo(this.input, "focus", function () {
 					if (this.Api.isEditVisibleAreaOleEditor) {
-						this.input.blur();
+						this._blurCellEditor();
 						return;
 					}
 					this.input.isFocused = true;
@@ -592,7 +592,7 @@
 						return;
 					}
 					if (this.isProtectActiveCell()) {
-						this.input.blur();
+						this._blurCellEditor();
 						this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 						return;
 					}
@@ -1909,7 +1909,7 @@
     var activeWsModel = this.model.getActiveWs();
     if (activeWsModel.inPivotTable(activeCellRange)) {
 		if (t.input.isFocused) {
-			t.input.blur();
+			t._blurCellEditor();
 		}
 		this.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
 		return;
@@ -1959,12 +1959,25 @@
 	var needBlurFunc;
 	if (t.input && t.input.isFocused) {
 		needBlurFunc = function () {
-			t.input && t.input.blur();
+			t._blurCellEditor();
 			needBlur = true;
 		}
 	}
     ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit, null, needBlurFunc);
   };
+
+  WorkbookView.prototype._blurCellEditor = function () {
+	  if (this.cellEditor) {
+		//must execute only this
+		//this.input === this.cellEditor.input
+	  	this.cellEditor._blur();
+	  } else if (AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea) {
+		  AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea.focus();
+	  } else {
+		  this.input && this.input.blur();
+	  }
+  };
+
 
   /**
    *
@@ -3037,7 +3050,7 @@
 
   WorkbookView.prototype.setOleSize = function (oPr) {
     this.model.setOleSize(oPr);
-  }
+  };
   WorkbookView.prototype.setSelectionDialogMode = function (selectionDialogType, selectRange) {
       var newSelectionDialogMode = c_oAscSelectionDialogType.None !== selectionDialogType;
 

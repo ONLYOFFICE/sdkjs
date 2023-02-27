@@ -392,7 +392,7 @@
 					window.removeEventListener("mouseup", t.fKeyMouseUp, false);
 					window.removeEventListener("mousemove", t.fKeyMouseMove, false);
 				}
-				t.input.blur();
+				t._blur();
 				t._updateTopLineActive(false);
 				t.input.isFocused = false;
 				t._updateCursor();
@@ -448,7 +448,7 @@
 				window.removeEventListener("mouseup", this.fKeyMouseUp, false);
 				window.removeEventListener("mousemove", this.fKeyMouseMove, false);
 			}
-			this.input.blur();
+			this._blur();
 			this._updateTopLineActive(false);
 			this.input.isFocused = false;
 			this._updateCursor();
@@ -467,6 +467,17 @@
 		}
 
 		return true;
+	};
+
+	CellEditor.prototype._blur = function () {
+		if (this.input) {
+			if (AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea) {
+				AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea.focus();
+				console.log("sdf")
+			} else {
+				this.input.blur();
+			}
+		}
 	};
 
 	CellEditor.prototype.setTextStyle = function (prop, val) {
