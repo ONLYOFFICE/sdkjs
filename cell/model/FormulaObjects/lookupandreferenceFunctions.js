@@ -742,7 +742,7 @@ function (window, undefined) {
 		function rangeModeLoop (rows, columns, isColumnMode) {
 			let resArr = new cArray();
 
-			outer: for (let i = 0; i < rows; i++) {
+			for (let i = 0; i < rows; i++) {
 				for (let j = 0; j < columns; j++) {
 					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
 
@@ -750,7 +750,7 @@ function (window, undefined) {
 					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
 					if (cElementType.error === val.type) {
 						resArr = val;
-						break outer;
+						return resArr;
 					}
 
 					if (val) {
@@ -772,9 +772,6 @@ function (window, undefined) {
 		if (cElementType.empty === arg0.type || cElementType.empty === arg1.type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		if (cElementType.empty === arg2.type) {
-			arg2 = false;
-		}
 
 		if (cElementType.error === arg0.type) {
 			return arg0;
@@ -783,7 +780,7 @@ function (window, undefined) {
 			return arg1;
 		}
 
-		// ??? 4 options: 1) range && range; 2) range && value; 3) value && range; 4) value && value
+		// 4 options: 1) range && range; 2) range && value; 3) value && range; 4) value && value
 		if ((cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) && (cElementType.array === arg1.type || cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type)) {
 			// 1) range && range
 			rangeMode = true;
@@ -831,7 +828,7 @@ function (window, undefined) {
 			if (resultArr.type === cElementType.error) {
 				return resultArr;
 			} else {
-				resultArr = resultArr.countElement > 0 || resultArr.rowCount > 0 ? resultArr : (arg2 ? arg2 : new cError(cErrorType.not_available));
+				resultArr = resultArr.countElement > 0 || resultArr.rowCount > 0 ? resultArr : ((cElementType.empty !== arg2.type) ? arg2 : new cError(cErrorType.not_available));
 			}
 		} else if (baseMode) {
 			arg1 = arg1.tocBool();
@@ -846,7 +843,7 @@ function (window, undefined) {
 				resultArr = arg0;
 			} else {
 				// should be #CALC!
-				resultArr = arg2 ? arg2 : new cError(cErrorType.wrong_value_type);
+				resultArr = (cElementType.empty !== arg2.type) ? arg2 : new cError(cErrorType.wrong_value_type);
 			}
 		}
 
