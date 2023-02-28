@@ -23039,9 +23039,36 @@ $(function () {
 
 		ws.getRange2("D10").setValue("19");
 		ws.getRange2("D11").setValue("#N/A");
+		ws.getRange2("D12").setValue("0");
 		ws.getRange2("E10").setValue("str");
 		ws.getRange2("E11").setValue("TRUE");
+		ws.getRange2("E12").setValue("1");
 
+		// array|range && array|range|value
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11)');
+		assert.strictEqual(oParser.calculate().getValue(), "19, str, #N/A, TRUE", 'Result of ARRAYTOTEXT(D10:E11)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11,1)');
+		assert.strictEqual(oParser.calculate().getValue(), '{19,"str";#N/A,TRUE}', 'Result of ARRAYTOTEXT(D10:E11,1)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11,2)');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Result of ARRAYTOTEXT(D10:E11,2)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11, D10:E12)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11, D10:E11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[1,0]');				// #N/A
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "19, str, #N/A, TRUE", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), '{19,"str";#N/A,TRUE}', 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[2,1]');
+
+
+		// value && array|range|value
 		oParser = new parserFormula('ARRAYTOTEXT(,0)', "A2", ws);
 		assert.ok(oParser.parse(), 'ARRAYTOTEXT(,0)');
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(,0)');
@@ -23053,10 +23080,6 @@ $(function () {
 		oParser = new parserFormula('ARRAYTOTEXT(,B11)', "A2", ws);
 		assert.ok(oParser.parse(), 'ARRAYTOTEXT(,B11)');
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(,B11)');
-
-		oParser = new parserFormula('ARRAYTOTEXT(D10:E11)', "A2", ws);
-		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11)');
-		assert.strictEqual(oParser.calculate().getValue(), "19, str, #N/A, TRUE", 'Result of ARRAYTOTEXT()');
 
 		oParser = new parserFormula('ARRAYTOTEXT(12)', "A2", ws);
 		assert.ok(oParser.parse(), 'ARRAYTOTEXT(12)');

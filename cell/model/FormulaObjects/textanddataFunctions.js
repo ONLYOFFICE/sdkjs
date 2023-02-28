@@ -187,39 +187,55 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
-		function defaultMode (rows, columns) {
-			let resArr = [];
-				
-			for (let i = 0; i < rows; i++) {
-				for (let j = 0; j < columns; j++) {
-					let val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.getElementRowCol(i, j);
-					resArr.push(val.getValue());
-				}
+		function multiMode (rows, columns, format, arg0) {
+			let resStr = "";
+
+			if (format !== 0 && format !== 1) {
+				return new cError(cErrorType.wrong_value_type);
 			}
-			return new cString(resArr.join(", "));
-		}
-
-		function strictMode (rows, columns) {
-			let resStr = "{";
+			// single val
+			if (rows === false && columns === false) {
+				let val = arg0;
+				if (cElementType.string === val.type && format === 1) {
+					val = `"${val.getValue()}"`;
+				} else {
+					val = val.getValue().toString();
+				}
+				return format === 1 ? new cString(`{${val}}`) : new cString(val);
+			}
 
 			for (let i = 0; i < rows; i++) {
 				for (let j = 0; j < columns; j++) {
 					let val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.getElementRowCol(i, j);
-					if (cElementType.string === val.type) {
+					if (cElementType.string === val.type && format === 1) {
 						val = `"${val.getValue()}"`;
 					} else {
 						val = val.getValue().toString();
 					}
 
-					if (columns - 1 === j) {
+					if (columns - 1 === j && format === 1) {
 						resStr += val + ";";
 						continue;
 					} 
-					resStr += val + ",";
+					resStr += format === 1 ? val + "," : val + ", ";
 				}
 			}
 
-			return new cString(resStr.slice(0, -1) + "}");
+			return format === 1 ? new cString(`{${resStr.slice(0, -1)}}`) : new cString(resStr.slice(0, -2));
+		}
+
+		function rangeModeFunc (arg0rows, arg0columns, arg1rows, arg1columns) {
+			let resArr = new cArray();
+
+			for (let i = 0; i < arg1rows; i++) {
+				resArr.addRow();
+				for (let j = 0; j < arg1columns; j++) {
+					let format = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
+					resArr.addElement(multiMode(arg0rows, arg0columns, format.getValue(), arg0));
+				}
+			}
+
+			return resArr;
 		}
 
 		let arg0 = arg[0],
@@ -252,26 +268,21 @@ function (window, undefined) {
 
 		if (cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			if (rangeMode) {
-				// call and return array helper
-			} else if (arg1 === 0) {
-				return new cString(arg0.getValue().toString());
-			} else if (arg1 === 1) {
-				if (cElementType.string === arg0.type) {
-					return new cString(`{"${arg0.getValue().toString()}"}`);
-				}
-				return new cString(`{${arg0.getValue().toString()}}`);
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}		
+				// ? value && array/range
+				// call and array helper
+				const arg1Dimensions = arg1.getDimensions();
+				return rangeModeFunc(false, false, arg1Dimensions.row, arg1Dimensions.col);
+			}
+			return multiMode(false, false, arg1, arg0);		
 		} else {
 			const arg0Dimensons = arg0.getDimensions();
-			if (arg1 === 0) {
-				return defaultMode(arg0Dimensons.row, arg0Dimensons.col);
-			} else if (arg1 === 1) {
-				return strictMode(arg0Dimensons.row, arg0Dimensons.col);
-			} else {
-				return new cError(cErrorType.wrong_value_type);
+			if (rangeMode) {
+				// ? array/range && array/range
+				// call array helper
+				const arg1Dimensions = arg1.getDimensions();
+				return rangeModeFunc(arg0Dimensons.row, arg0Dimensons.col, arg1Dimensions.row, arg1Dimensions.col);
 			}
+			return multiMode(arg0Dimensons.row, arg0Dimensons.col, arg1, arg0);
 		}
 	};
 
