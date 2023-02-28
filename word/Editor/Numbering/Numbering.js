@@ -346,7 +346,7 @@
 		if (!oNum)
 			return null;
 
-		return oNum.GetJSONNumbering(bIsSingleLevel);
+		return oNum.GetJSONNumbering(bIsSingleLevel, oNumPr.Lvl);
 	}
 
 	//---------------------------------------------------------export---------------------------------------------------

@@ -220,7 +220,7 @@ CNum.prototype.SetLvlByFormat = function(nLvl, nType, sFormatText, nAlign)
  * @param bIsSingleLevel {boolean}
  * @returns {{Type: string, Lvl: *[]}}
  */
-CNum.prototype.GetJSONNumbering = function(bIsSingleLevel)
+CNum.prototype.GetJSONNumbering = function(bIsSingleLevel, nLvl)
 {
 	let oResult = {
 		Type : "unknown",
@@ -229,7 +229,7 @@ CNum.prototype.GetJSONNumbering = function(bIsSingleLevel)
 
 	if (bIsSingleLevel)
 	{
-		let oNumLvl = this.GetLvl(oNumPr.Lvl);
+		let oNumLvl = this.GetLvl(nLvl);
 		oResult.Type = oNumLvl.IsBulleted() ? Asc.c_oAscJSONNumberingType.Bullet : Asc.c_oAscJSONNumberingType.Number;
 		oResult.Lvl[0] = oNumLvl.ToJson();
 	}

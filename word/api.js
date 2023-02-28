@@ -2347,7 +2347,6 @@ background-repeat: no-repeat;\
 		this.Update_ParaInd(ParaPr.Ind);
 		this.sync_PrAlignCallBack(ParaPr.Jc);
 		this.sync_ParaStyleName(ParaPr.StyleName);
-		this.sync_ListType(ParaPr.NumPr);
 		this.sync_PrPropCallback(ParaPr);
 	};
 
@@ -4171,6 +4170,67 @@ background-repeat: no-repeat;\
 			return oLogicDocument.GetAllJSONNums();
 		}
 		return [];
+	};
+
+	asc_docs_api.prototype.asc_IsCurrentNumberingPreset = function (oJSON, bIsSingleNumbering)
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+		{
+			return false;
+		}
+		const oStyles = oLogicDocument.GetStyles();
+		const oParaPr = oLogicDocument.GetCalculatedParaPr();
+		const oNumPr = oParaPr.NumPr;
+		const oNumbering = oLogicDocument.GetNumbering();
+		const oNum = oNumPr && oNumPr.NumId && oNumbering.GetNum(oNumPr.NumId);
+		if (!(oNum instanceof AscCommonWord.CNum))
+		{
+			return false;
+		}
+
+		if (typeof oJSON === 'string')
+		{
+			oJSON = JSON.parse(oJSON);
+		}
+		if (oJSON["Lvl"] && oJSON["Lvl"].length > 0)
+		{
+			if (bIsSingleNumbering)
+			{
+				const oLvl = oJSON["Lvl"][0];
+				const oConvertingLvl = AscCommonWord.CNumberingLvl.FromJson(oLvl);
+				const oCurrentParagraphLvl = oNum.GetLvl(oNumPr.Lvl);
+				return oCurrentParagraphLvl.ComparePreviewNumbering(oConvertingLvl);
+			}
+			else if (oJSON["Lvl"].length === 9)
+			{
+				const bIsHeading = oJSON["Headings"];
+				const arrConvertingLvl = [];
+				for (let i = 0; i < oJSON["Lvl"].length; i += 1)
+				{
+					arrConvertingLvl.push(AscCommonWord.CNumberingLvl.FromJson(oJSON["Lvl"][i]));
+				}
+				for (let i = 0; i < arrConvertingLvl.length; i += 1)
+				{
+					const oCurrentParagraphLvl = oNum.GetLvl(i);
+					if (bIsHeading)
+					{
+						const sStyleId = oCurrentParagraphLvl.GetPStyle();
+						const sDefaultHeadingId = oStyles.GetDefaultHeading(i);
+						if (sStyleId !== sDefaultHeadingId)
+						{
+							return false;
+						}
+					}
+					if (!oCurrentParagraphLvl.ComparePreviewNumbering(arrConvertingLvl[i]))
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 
 	asc_docs_api.prototype.asc_GetCurrentNumberingJson = function(bIsSingleLevel)
@@ -4813,10 +4873,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.sync_PrAlignCallBack   = function(value)
 	{
 		this.sendEvent("asc_onPrAlign", value);
-	};
-	asc_docs_api.prototype.sync_ListType          = function(NumPr)
-	{
-		this.sendEvent("asc_onListType", new Asc.CAscWordListType(NumPr));
 	};
 	asc_docs_api.prototype.sync_TextColor         = function(TextPr)
 	{
@@ -13874,6 +13930,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_IsShowListIndentsSettings']             = asc_docs_api.prototype.asc_IsShowListIndentsSettings;
 	asc_docs_api.prototype['put_ListTypeCustom']                        = asc_docs_api.prototype.put_ListTypeCustom;
 	asc_docs_api.prototype['asc_GetCurrentNumberingJson']               = asc_docs_api.prototype.asc_GetCurrentNumberingJson;
+	asc_docs_api.prototype['asc_IsCurrentNumberingPreset']              = asc_docs_api.prototype.asc_IsCurrentNumberingPreset;
 	asc_docs_api.prototype['sync_UpdateListPatterns']                   = asc_docs_api.prototype.sync_UpdateListPatterns;
 	asc_docs_api.prototype['asc_GetAllJSONNums']                        = asc_docs_api.prototype.asc_GetAllJSONNums;
 	asc_docs_api.prototype['asc_ContinueNumbering']                     = asc_docs_api.prototype.asc_ContinueNumbering;
@@ -13914,7 +13971,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['getFocusObject']                            = asc_docs_api.prototype.getFocusObject;
 	asc_docs_api.prototype['sync_VerticalAlign']                        = asc_docs_api.prototype.sync_VerticalAlign;
 	asc_docs_api.prototype['sync_PrAlignCallBack']                      = asc_docs_api.prototype.sync_PrAlignCallBack;
-	asc_docs_api.prototype['sync_ListType']                             = asc_docs_api.prototype.sync_ListType;
 	asc_docs_api.prototype['sync_TextColor']                            = asc_docs_api.prototype.sync_TextColor;
 	asc_docs_api.prototype['sync_TextHighLight']                        = asc_docs_api.prototype.sync_TextHighLight;
 	asc_docs_api.prototype['sync_TextSpacing']                          = asc_docs_api.prototype.sync_TextSpacing;

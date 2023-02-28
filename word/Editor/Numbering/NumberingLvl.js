@@ -219,6 +219,38 @@ CNumberingLvl.prototype.IsLegalStyle = function()
 {
 	return this.IsLgl;
 };
+
+CNumberingLvl.prototype.ComparePreviewNumbering = function(oLvl)
+{
+	if (this.Format !== oLvl.Format)
+		return false;
+
+	if (this.LvlText.length !== oLvl.LvlText.length)
+		return false;
+
+	for (let nLvlTextIndex = 0; nLvlTextIndex < this.LvlText.length; nLvlTextIndex += 1)
+	{
+		const oCurrentTextElement = this.LvlText[nLvlTextIndex];
+		const oCompareTextElement = oLvl.LvlText[nLvlTextIndex];
+
+		if (!oCurrentTextElement.ComparePreviewNumbering(oCompareTextElement))
+			return false;
+	}
+
+	if (this.Jc !== oLvl.Jc)
+		return false;
+
+	if (this.Suff !== oLvl.Suff)
+		return false;
+
+	if (!this.TextPr.Is_Equal(oLvl.TextPr))
+		return false;
+
+	if (!this.ParaPr.Is_Equal(oLvl.ParaPr))
+		return false;
+
+	return true;
+}
 /**
  * Выставляем значения по умолчанию для заданного уровня
  * @param nLvl {number} 0..8
@@ -1999,6 +2031,16 @@ CNumberingLvlTextString.prototype.Copy = function()
 {
 	return new CNumberingLvlTextString(this.Value);
 };
+CNumberingLvlTextString.prototype.ComparePreviewNumbering = function (oAnotherElement)
+{
+	if (this.Type !== oAnotherElement.Type)
+		return false;
+
+	if (this.Value !==  oAnotherElement.Value)
+		return false;
+
+	return true;
+};
 CNumberingLvlTextString.prototype.WriteToBinary = function(Writer)
 {
 	// Long   : numbering_lvltext_Text
@@ -2039,6 +2081,16 @@ CNumberingLvlTextNum.prototype.GetValue = function()
 CNumberingLvlTextNum.prototype.Copy = function()
 {
 	return new CNumberingLvlTextNum(this.Value);
+};
+CNumberingLvlTextNum.prototype.ComparePreviewNumbering = function (oAnotherElement)
+{
+	if (this.Type !== oAnotherElement.Type)
+		return false;
+
+	if (this.Value !==  oAnotherElement.Value)
+		return false;
+
+	return true;
 };
 CNumberingLvlTextNum.prototype.WriteToBinary = function(Writer)
 {
