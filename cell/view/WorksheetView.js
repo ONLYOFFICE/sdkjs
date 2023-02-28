@@ -3285,7 +3285,7 @@
 
 
 		//scale only int
-		wScale = wScale >> 0;
+		/*wScale = wScale >> 0;
 		hScale = hScale >> 0;
 
 		var minScale;
@@ -3295,6 +3295,17 @@
 			minScale = wScale;
 		} else {
 			minScale = hScale;
+		}*/
+
+		//TODO revert old version for standardtester on hotfix
+		//up commented code is true, after release need change
+		var minScale;
+		if(width && height) {
+			minScale = Math.min(Math.round(wScale), Math.round(hScale));
+		} else if(width) {
+			minScale = Math.round(wScale);
+		} else {
+			minScale = Math.round(hScale);
 		}
 
 		if(minScale < 10) {
