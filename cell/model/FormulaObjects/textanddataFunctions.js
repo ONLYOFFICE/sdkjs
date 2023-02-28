@@ -58,7 +58,7 @@ function (window, undefined) {
 	var argType = Asc.c_oAscFormulaArgumentType;
 
 	cFormulaFunctionGroup['TextAndData'] = cFormulaFunctionGroup['TextAndData'] || [];
-	cFormulaFunctionGroup['TextAndData'].push(cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
+	cFormulaFunctionGroup['TextAndData'].push(cARRAYTOTEXT, cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
 		cEXACT, cFIND, cFINDB, cFIXED, cJIS, cLEFT, cLEFTB, cLEN, cLENB, cLOWER, cMID, cMIDB, cNUMBERVALUE, cPHONETIC,
 		cPROPER, cREPLACE, cREPLACEB, cREPT, cRIGHT, cRIGHTB, cSEARCH, cSEARCHB, cSUBSTITUTE, cT, cTEXT, cTEXTJOIN,
 		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE, cTEXTBEFORE, cTEXTAFTER, cTEXTSPLIT);
@@ -170,6 +170,111 @@ function (window, undefined) {
 			return new cString(isAfter ? text.substring(foundIndex + (((repeatZero > 1 || match_end_active) && match_end && isReverseSearch ) ? 0 : modifiedDelimiter.length), text.length) : text.substring(0, foundIndex));
 		}
 	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cARRAYTOTEXT() {
+	}
+
+	cARRAYTOTEXT.prototype = Object.create(cBaseFunction.prototype);
+	cARRAYTOTEXT.prototype.constructor = cARRAYTOTEXT;
+	cARRAYTOTEXT.prototype.name = 'ARRAYTOTEXT';
+	cARRAYTOTEXT.prototype.isXLFN = true;
+	cARRAYTOTEXT.prototype.argumentsMin = 1;
+	cARRAYTOTEXT.prototype.argumentsMax = 2;
+	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1};
+	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
+	cARRAYTOTEXT.prototype.Calculate = function (arg) {
+		function defaultMode (rows, columns) {
+			let resArr = [];
+				
+			for (let i = 0; i < rows; i++) {
+				for (let j = 0; j < columns; j++) {
+					let val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.getElementRowCol(i, j);
+					resArr.push(val.getValue());
+				}
+			}
+			return new cString(resArr.join(", "));
+		}
+
+		function strictMode (rows, columns) {
+			let resStr = "{";
+
+			for (let i = 0; i < rows; i++) {
+				for (let j = 0; j < columns; j++) {
+					let val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.getElementRowCol(i, j);
+					if (cElementType.string === val.type) {
+						val = `"${val.getValue()}"`;
+					} else {
+						val = val.getValue().toString();
+					}
+
+					if (columns - 1 === j) {
+						resStr += val + ";";
+						continue;
+					} 
+					resStr += val + ",";
+				}
+			}
+
+			return new cString(resStr.slice(0, -1) + "}");
+		}
+
+		let arg0 = arg[0],
+			arg1 = arg[1] ? arg[1] : new cNumber(0),
+			rangeMode;	// arg1 is range/array
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		if (cElementType.empty === arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			if (cElementType.empty === arg0.getValue().type) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
+			// arg1 is not array/cellsRange
+			arg1 = arg1.tocNumber().getValue();
+			rangeMode = false;
+		} else {
+			// arg1 is array/cellsRange and need to call array helper
+			rangeMode = true;
+		}
+
+		if (cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
+			if (rangeMode) {
+				// call and return array helper
+			} else if (arg1 === 0) {
+				return new cString(arg0.getValue().toString());
+			} else if (arg1 === 1) {
+				if (cElementType.string === arg0.type) {
+					return new cString(`{"${arg0.getValue().toString()}"}`);
+				}
+				return new cString(`{${arg0.getValue().toString()}}`);
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}		
+		} else {
+			const arg0Dimensons = arg0.getDimensions();
+			if (arg1 === 0) {
+				return defaultMode(arg0Dimensons.row, arg0Dimensons.col);
+			} else if (arg1 === 1) {
+				return strictMode(arg0Dimensons.row, arg0Dimensons.col);
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+	};
+
 
 	/**
 	 * @constructor

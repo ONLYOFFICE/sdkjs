@@ -23031,6 +23031,95 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"ARRAYTOTEXT\"", function (assert) {
+		let array;
+
+		ws.getRange2("B10").setValue("");
+		ws.getRange2("B11").setValue();
+
+		ws.getRange2("D10").setValue("19");
+		ws.getRange2("D11").setValue("#N/A");
+		ws.getRange2("E10").setValue("str");
+		ws.getRange2("E11").setValue("TRUE");
+
+		oParser = new parserFormula('ARRAYTOTEXT(,0)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(,0)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(,0)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(,B10)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(,B10)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(,B10)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(,B11)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(,B11)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(,B11)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11)');
+		assert.strictEqual(oParser.calculate().getValue(), "19, str, #N/A, TRUE", 'Result of ARRAYTOTEXT()');
+
+		oParser = new parserFormula('ARRAYTOTEXT(12)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(12)');
+		assert.strictEqual(oParser.calculate().getValue(), "12", 'Result of ARRAYTOTEXT(12)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(12,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(12,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "{12}", 'Result of ARRAYTOTEXT(12,1)');
+
+		oParser = new parserFormula('ARRAYTOTEXT("12")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("12")');
+		assert.strictEqual(oParser.calculate().getValue(), "12", 'Result of ARRAYTOTEXT("12")');
+
+		oParser = new parserFormula('ARRAYTOTEXT(TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE", 'Result of ARRAYTOTEXT(TRUE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), "FALSE", 'Result of ARRAYTOTEXT(FALSE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(#N/A)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(#N/A)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of ARRAYTOTEXT(#N/A)');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str")');
+		assert.strictEqual(oParser.calculate().getValue(), "str", 'Result of ARRAYTOTEXT("str")');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", "0")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", "0")');
+		assert.strictEqual(oParser.calculate().getValue(), 'str', 'Result of ARRAYTOTEXT("str", "0")');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", "1")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", "1")');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT("str", "1")');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", "1s")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", "1s")');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Result of ARRAYTOTEXT("str", "1s")');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str",FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str",FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), "str", 'Result of ARRAYTOTEXT("str",FALSE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT("str", TRUE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", 1)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", 1)');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT("str", 1)');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", 12)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", 12)');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Result of ARRAYTOTEXT("str", 12)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(#NUM!, #N/A)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(#NUM!, #N/A)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of ARRAYTOTEXT(#NUM!, #N/A)');
+
+	});
+
 	QUnit.test("Test: \"reference argument test\"", function (assert) {
 		ws.getRange2("A1").setValue("1");
 		ws.getRange2("A2").setValue("2");
