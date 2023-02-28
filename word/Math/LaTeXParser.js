@@ -472,7 +472,7 @@
 		this.EatToken(this.oLookahead.class);
 		let oContent = this.GetArguments(1);
 
-		if(base.type === oLiteralNames.functionLiteral[num])
+		if(base && base.type === oLiteralNames.functionLiteral[num])
 		{
 			this.SkipFreeSpace();
 			let third = this.GetArguments(1);
@@ -678,6 +678,21 @@
 			return oWrapperContent;
 		}
 	};
+	CLaTeXParser.prototype.GetWrapperElement2 = function ()
+	{
+		let oWrapperContent = this.GetElementLiteral();
+
+		if (this.oLookahead.class === MathLiterals.accent.id)
+		{
+			return this.GetAccentLiteral(oWrapperContent);
+		}
+		else if (this.IsGetBelowAboveLiteral())
+		{
+			return this.GetBelowAboveLiteral(oWrapperContent)
+		}
+
+		return oWrapperContent;
+	};
 	CLaTeXParser.prototype.IsSubSup = function ()
 	{
 		return (this.oLookahead.class === "^" || this.oLookahead.class === "_");
@@ -728,7 +743,7 @@
 			{
 				oDownContent = this.GetPartOfSupSup();
 			}
-			else if (oUpContent && oUpContent.up === undefined && oUpContent.base)
+			else if (oUpContent && oUpContent.up === undefined && oUpContent.base && oUpContent.type !== "BelowAboveLiteral")
 			{
 				oUpContent = oUpContent.base;
 			}
@@ -768,7 +783,7 @@
 		else {
 			oElement = (this.oLookahead.data === "{")
 				? this.GetArguments(1)
-				: this.GetElementLiteral();
+				: this.GetWrapperElement2();
 		}
 
 		if (this.oLookahead.class === strSymbol) {

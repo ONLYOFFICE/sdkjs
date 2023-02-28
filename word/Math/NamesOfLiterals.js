@@ -1925,7 +1925,7 @@
 					break;
 				case oNamesOfLiterals.belowAboveLiteral[num]:
 					let LIMIT_TYPE = (oTokens.isBelow === false) ? VJUST_BOT : VJUST_TOP;
-					if (oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1)
+					if (oTokens.base && oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1)
 					{
 						let Pr = (LIMIT_TYPE == VJUST_TOP)
 							? {ctrPrp : new CTextPr(), pos :LIMIT_TYPE, chr : oTokens.base.value.charCodeAt(0)}
