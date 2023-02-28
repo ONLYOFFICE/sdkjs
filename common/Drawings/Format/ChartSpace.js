@@ -1151,11 +1151,14 @@ function(window, undefined) {
 	}
 
 	CAxisGrid.prototype.calculatePoints = function(aPoints, bOnTickMark, aScale) {
-		var fStartSeriesPos = 0.0;
+		if(!Array.isArray(aPoints)) {
+			return;
+		}
+		let fStartSeriesPos = 0.0;
 		if(!this.bOnTickMark) {
 			fStartSeriesPos = this.fStride / 2.0;
 		}
-		for(var j = 0; j < this.aStrings.length; ++j) {
+		for(let j = 0; j < this.aStrings.length; ++j) {
 			aPoints.push({
 				val: aScale[j],
 				pos: this.fStart + j * this.fStride + fStartSeriesPos
@@ -4196,7 +4199,7 @@ function(window, undefined) {
 		oAxis.grid = oAxisGrid;
 		let aStrings = this.getLabelsForAxis(oAxis);
 		if(oAxis.isRadarCategories()) {
-			let nIntervalsCount = (aStrings.length - 1);
+			let nIntervalsCount = aStrings.length - 1;
 			oAxisGrid.nCount = nIntervalsCount;
 			oAxisGrid.bOnTickMark = true;
 			oAxisGrid.aStrings = aStrings;
