@@ -1671,7 +1671,72 @@
 	CAscStyle.prototype['get_StyleId']        = CAscStyle.prototype.get_StyleId;
 	CAscStyle.prototype['get_TranslatedName'] = CAscStyle.prototype.get_TranslatedName;
 
-
+	/**
+	 * Document numbering collector
+	 * @param oLogicDocument {AscCommonWord.CDocument}
+	 * @constructor
+	 */
+	function CAscWordNumberingCollector(oLogicDocument)
+	{
+		this.singleBullet = {};
+		this.singleNumbering = {};
+		this.multiLevel = {};
+		this.checkNumMap = {};
+		this.Numbering = oLogicDocument.GetNumbering();
+	}
+	CAscWordNumberingCollector.prototype.GetInterfaceDocumentPresets = function ()
+	{
+		return {
+			"singleBullet": Object.keys(this.singleBullet),
+			"singleNumbering": Object.keys(this.singleNumbering),
+			"multiLevel": Object.keys(this.multiLevel)
+		};
+	}
+	CAscWordNumberingCollector.prototype.AddNum = function (sNumId)
+	{
+		if (!this.checkNumMap[sNumId])
+		{
+			const oNum = this.Numbering.GetNum(sNumId);
+			if (oNum)
+			{
+				this.CheckSingleLvl(oNum);
+				this.CheckMultiLvl(oNum);
+			}
+			this.checkNumMap[sNumId] = true;
+		}
+	};
+	CAscWordNumberingCollector.prototype.CheckSingleLvl = function (oNum)
+	{
+		for (let i = 0; i < 9; i += 1)
+		{
+			const oJSON = oNum.GetJSONNumbering(true, i);
+			if (oJSON["Type"] === Asc.c_oAscJSONNumberingType.Number)
+			{
+				this.AddToSingleNumbered(JSON.stringify(oJSON));
+			}
+			else if (oJSON["Type"] === Asc.c_oAscJSONNumberingType.Bullet)
+			{
+				this.AddToSingleBullet(JSON.stringify(oJSON));
+			}
+		}
+	};
+	CAscWordNumberingCollector.prototype.CheckMultiLvl = function (oNum)
+	{
+		this.AddToMultiLvl(JSON.stringify(oNum.GetJSONNumbering()));
+	};
+	CAscWordNumberingCollector.prototype.AddToMultiLvl = function (sJSON)
+	{
+		this.multiLevel[sJSON] = true;
+	};
+	CAscWordNumberingCollector.prototype.AddToSingleBullet = function (sJSON)
+	{
+		this.singleBullet[sJSON] = true;
+	};
+	CAscWordNumberingCollector.prototype.AddToSingleNumbered = function (sJSON)
+	{
+		this.singleNumbering[sJSON] = true;
+	};
+	window['Asc']['CAscWordNumberingCollector'] = window['Asc'].CAscWordNumberingCollector = CAscWordNumberingCollector;
 	/**
 	 * Класс для работы с настройками нумерации
 	 * @constructor
@@ -1718,7 +1783,7 @@
 		}
 		const oNum = oNumManager.CreateNum();
 		const arrLvl = oJSON["Lvl"];
-		if (arrLvl.length < 9)
+		if (!arrLvl || arrLvl.length < 9)
 		{
 			if (oJSON["Type"] === Asc.c_oAscJSONNumberingType.Bullet)
 			{
@@ -1729,9 +1794,12 @@
 				oNum.CreateDefault(Asc.c_oAscMultiLevelNumbering.Numbered);
 			}
 		}
-		for (let i = 0; i < arrLvl.length; i += 1)
+		if (arrLvl)
 		{
-			oNum.SetLvl(AscCommonWord.CNumberingLvl.FromJson(arrLvl[i]), i);
+			for (let i = 0; i < arrLvl.length; i += 1)
+			{
+				oNum.SetLvl(AscCommonWord.CNumberingLvl.FromJson(arrLvl[i]), i);
+			}
 		}
 		oNum.FillToAscNum(this);
 		oNumManager.Remove(oNum);

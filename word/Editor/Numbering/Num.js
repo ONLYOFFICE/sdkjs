@@ -218,20 +218,22 @@ CNum.prototype.SetLvlByFormat = function(nLvl, nType, sFormatText, nAlign)
 /**
  * Get JSON object to store in localStorage
  * @param bIsSingleLevel {boolean}
+ * @param [nLvl=0] {number}
  * @returns {{Type: string, Lvl: *[]}}
  */
 CNum.prototype.GetJSONNumbering = function(bIsSingleLevel, nLvl)
 {
+	nLvl = nLvl || 0;
 	let oResult = {
-		Type : "unknown",
-		Lvl  : []
+		"Type" : "unknown",
+		"Lvl"  : []
 	};
 
 	if (bIsSingleLevel)
 	{
 		let oNumLvl = this.GetLvl(nLvl);
-		oResult.Type = oNumLvl.IsBulleted() ? Asc.c_oAscJSONNumberingType.Bullet : Asc.c_oAscJSONNumberingType.Number;
-		oResult.Lvl[0] = oNumLvl.ToJson();
+		oResult["Type"] = oNumLvl.IsBulleted() ? Asc.c_oAscJSONNumberingType.Bullet : Asc.c_oAscJSONNumberingType.Number;
+		oResult["Lvl"][0] = oNumLvl.ToJson(undefined, {isSingleLvlPresetJSON: true});
 	}
 	else
 	{
@@ -243,15 +245,15 @@ CNum.prototype.GetJSONNumbering = function(bIsSingleLevel, nLvl)
 			let numLvl = this.GetLvl(iLvl);
 			bIsBulleted = bIsBulleted || numLvl.IsBulleted();
 			bIsNumbered = bIsNumbered || numLvl.IsNumbered();
-			oResult.Lvl[iLvl] = numLvl.ToJson();
+			oResult["Lvl"][iLvl] = numLvl.ToJson();
 		}
 
 		if (bIsBulleted && bIsNumbered)
-			oResult.Type = Asc.c_oAscJSONNumberingType.Hybrid;
+			oResult["Type"] = Asc.c_oAscJSONNumberingType.Hybrid;
 		else if (bIsNumbered)
-			oResult.Type = Asc.c_oAscJSONNumberingType.Number;
+			oResult["Type"] = Asc.c_oAscJSONNumberingType.Number;
 		else if (bIsBulleted)
-			oResult.Type = Asc.c_oAscJSONNumberingType.Bullet;
+			oResult["Type"] = Asc.c_oAscJSONNumberingType.Bullet;
 	}
 
 	return oResult;

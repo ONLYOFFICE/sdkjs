@@ -14664,33 +14664,18 @@ CDocument.prototype.GetAllJSONNums = function ()
 	const arrResult = [];
 	const oNumMap = {};
 	const arrParagraphs = this.GetAllParagraphs();
+	const oNumberingCollector = new Asc.CAscWordNumberingCollector(this);
 	for (let nParagraphIndex = 0; nParagraphIndex < arrParagraphs.length; nParagraphIndex += 1)
 	{
 		const oParagraph = arrParagraphs[nParagraphIndex];
 		const oNumPr = oParagraph.GetNumPr();
-		if (oNumPr && !oNumMap[oNumPr.NumId])
+		if (oNumPr && oNumPr.NumId)
 		{
-			const oNumbering = this.GetNumbering();
-			const oNum = oNumbering.GetNum(oNumPr.NumId);
-			if (oNum)
-			{
-				oNumMap[oNumPr.NumId] = oNum;
-			}
+			oNumberingCollector.AddNum(oNumPr.NumId);
 		}
 	}
-	const oExistingMap = {};
-	for (let sNumId in oNumMap)
-	{
-		// TODO: need to distinguish the created multilevel lists from single-level lists by property in the format
-		const oJSON = oNumMap[sNumId].GetJSONNumbering();
-		const sJSON = JSON.stringify(oJSON);
-		if (!oExistingMap[sJSON])
-		{
-			oExistingMap[sJSON] = true;
-			arrResult.push(oJSON);
-		}
-	}
-	return arrResult;
+	const oRes = oNumberingCollector.GetInterfaceDocumentPresets();
+	return oRes;
 };
 CDocument.prototype.GetAllParagraphs = function(Props, ParaArray)
 {

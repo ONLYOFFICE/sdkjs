@@ -233,7 +233,7 @@ CNumberingLvl.prototype.IsEqualPreview = function(oLvl, oPr)
 		const oCurrentTextElement = this.LvlText[nLvlTextIndex];
 		const oCompareTextElement = oLvl.LvlText[nLvlTextIndex];
 
-		if (!oCurrentTextElement.IsEqual(oCompareTextElement))
+		if (!oCurrentTextElement.IsEqual(oCompareTextElement, oPr))
 			return false;
 	}
 
@@ -2097,12 +2097,13 @@ CNumberingLvlTextNum.prototype.Copy = function()
 {
 	return new CNumberingLvlTextNum(this.Value);
 };
-CNumberingLvlTextNum.prototype.IsEqual = function (oAnotherElement)
+CNumberingLvlTextNum.prototype.IsEqual = function (oAnotherElement, oPr)
 {
+	const bIsSingleLvlPreviewPresetEquals = oPr && oPr.isSingleLvlPreviewPreset;
 	if (this.Type !== oAnotherElement.Type)
 		return false;
 
-	if (this.Value !==  oAnotherElement.Value)
+	if (!bIsSingleLvlPreviewPresetEquals && this.Value !==  oAnotherElement.Value)
 		return false;
 
 	return true;

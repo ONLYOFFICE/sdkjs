@@ -3789,12 +3789,13 @@
 
 		return aResult;
 	};
-	WriterToJSON.prototype.SerParaPr = function(oParaPr)
+	WriterToJSON.prototype.SerParaPr = function(oParaPr, oPr)
 	{
-		if (!oParaPr)
+		oPr = oPr || {};
+		if (!oParaPr || (oPr.isSingleLvlPresetJSON && oParaPr.Is_Empty(oPr)))
 			return undefined;
 
-		let oResult = oParaPr.ToJson(true);
+		let oResult = oParaPr.ToJson(true, oPr);
 		if (oParaPr.PStyle != null)
 			oResult["pStyle"] = this.AddWordStyleForWrite(oParaPr.PStyle);
 
@@ -7703,12 +7704,12 @@
 
 		return oResult;
 	};
-	WriterToJSON.prototype.SerTextPr = function(oTextPr)
+	WriterToJSON.prototype.SerTextPr = function(oTextPr, oPr)
 	{
 		if (!oTextPr)
 			return undefined;
-		
-		let oResult = oTextPr.ToJson(true)
+
+		let oResult = oTextPr.ToJson(true, oPr)
 		if (oTextPr.RStyle != null)
 			oResult["rStyle"] = this.AddWordStyleForWrite(oTextPr.RStyle);
 		
@@ -16233,7 +16234,7 @@
 		}
 	};
 
-	AscWord.CNumberingLvl.prototype.ToJson = function(nLvl)
+	AscWord.CNumberingLvl.prototype.ToJson = function(nLvl, oPr)
 	{
 		let oResult = {};
 
@@ -16293,10 +16294,10 @@
 		}
 
 		if (this.ParaPr && !this.ParaPr.IsEmpty())
-			oResult["pPr"] = WriterToJSON.prototype.SerParaPr(this.ParaPr);
+			oResult["pPr"] = WriterToJSON.prototype.SerParaPr(this.ParaPr, oPr);
 
 		if (this.TextPr && !this.TextPr.IsEmpty())
-			oResult["rPr"] = WriterToJSON.prototype.SerTextPr(this.TextPr); 
+			oResult["rPr"] = WriterToJSON.prototype.SerTextPr(this.TextPr, oPr);
 
 		if (undefined !== this.Restart && null !== this.Restart && -1 !== this.Restart)
 			oResult["restart"] = this.Restart;
@@ -16389,8 +16390,9 @@
 		numLvl.FromJson(json);
 		return numLvl;
 	};
-	AscWord.CParaPr.prototype.ToJson = function(bFromDocument)
+	AscWord.CParaPr.prototype.ToJson = function(bFromDocument, oPr)
 	{
+		oPr = oPr || {};
 		var oResult = {};
 		if (bFromDocument === false)
 		{
@@ -16499,7 +16501,7 @@
 			if (this.FramePr != null)
 				oResult["framePr"] = WriterToJSON.prototype.SerFramePr(this.FramePr);
 
-			if (this.Ind && !this.Ind.IsEmpty())
+			if (this.Ind && !this.Ind.IsEmpty() && !oPr.isSingleLvlPresetJSON)
 				oResult["ind"] = WriterToJSON.prototype.SerParaInd(this.Ind);
 
 			if (sJc != null)
@@ -16732,8 +16734,9 @@
 		paraPr.FromJson(json, bFromDocument);
 		return paraPr;
 	};
-	AscWord.CTextPr.prototype.ToJson = function(bFromDocument)
+	AscWord.CTextPr.prototype.ToJson = function(bFromDocument, oPr)
 	{
+		oPr = oPr || {};
 		let oResult = {};
 		if (bFromDocument === false)
 		{
@@ -16936,11 +16939,14 @@
 			if (this.Spacing != null)
 				oResult["spacing"] = private_MM2Twips(this.Spacing);	
 			if (this.Strikeout != null)
-				oResult["strike"] = this.Strikeout;	
-			if (this.FontSize != null)
-				oResult["sz"] = 2.0 * this.FontSize;	
-			if (this.FontSizeCS != null)
-				oResult["szCs"] = 2.0 * this.FontSizeCS;	
+				oResult["strike"] = this.Strikeout;
+			if (!oPr.isSingleLvlPresetJSON)
+			{
+				if (this.FontSize != null)
+					oResult["sz"] = 2.0 * this.FontSize;
+				if (this.FontSizeCS != null)
+					oResult["szCs"] = 2.0 * this.FontSizeCS;
+			}
 			if (this.Underline != null)
 				oResult["u"] = this.Underline;	
 			if (this.Vanish != null)
