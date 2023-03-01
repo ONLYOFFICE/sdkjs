@@ -13514,88 +13514,6 @@ CTextPr.prototype.Copy = function(bCopyPrChange, oPr)
 
 	return TextPr;
 };
-CTextPr.prototype.ComparePreviewNumbering = function (oTextPr)
-{
-	if (!oTextPr)
-		return false;
-
-	if (this.Bold !== oTextPr.Bold)
-		return false;
-
-	if (this.Italic !== oTextPr.Italic)
-		return false;
-
-	if (this.Strikeout !== oTextPr.Strikeout)
-		return false;
-
-	if (this.Underline !== oTextPr.Underline)
-		return false;
-
-	if ((undefined === this.FontFamily && undefined !== oTextPr.FontFamily) || (undefined !== this.FontFamily && (undefined === oTextPr.FontFamily || this.FontFamily.Name !== oTextPr.FontFamily.Name)))
-		return false;
-
-	if ((undefined === this.Color && undefined !== oTextPr.Color) || (undefined !== this.Color && (undefined === oTextPr.Color || true !== this.Color.Compare(oTextPr.Color))))
-		return false;
-
-	if ((undefined === this.HighLight && undefined !== oTextPr.HighLight) || (undefined !== this.HighLight && (undefined === oTextPr.HighLight || (highlight_None === this.HighLight && highlight_None !== oTextPr.HighLight) || (highlight_None !== this.HighLight && highlight_None === oTextPr.HighLight) || (highlight_None !== this.HighLight && highlight_None !== oTextPr.HighLight && true !== this.HighLight.Compare(oTextPr.HighLight)))))
-		return false;
-
-	if ((undefined === this.Spacing && undefined !== oTextPr.Spacing) || (undefined !== this.Spacing && (undefined === oTextPr.Spacing || Math.abs(this.Spacing - oTextPr.Spacing) >= 0.001)))
-		return false;
-
-	if (this.DStrikeout !== oTextPr.DStrikeout)
-		return false;
-
-	if (this.Caps !== oTextPr.Caps)
-		return false;
-
-	if (this.SmallCaps !== oTextPr.SmallCaps)
-		return false;
-
-	if ((undefined === this.Position && undefined !== oTextPr.Position) || (undefined !== this.Position && (undefined === oTextPr.Position || Math.abs(this.Position - oTextPr.Position) >= 0.001)))
-		return false;
-
-	if (true !== this.RFonts.Is_Equal(oTextPr.RFonts))
-		return false;
-
-	if (this.BoldCS !== oTextPr.BoldCS)
-		return false;
-
-	if (this.ItalicCS !== oTextPr.ItalicCS)
-		return false;
-
-	if (this.CS !== oTextPr.CS)
-		return false;
-
-	if (this.RTL !== oTextPr.RTL)
-		return false;
-
-	if (true !== this.Lang.Is_Equal(oTextPr.Lang))
-		return false;
-
-	if ((undefined === this.Unifill && undefined !== oTextPr.Unifill) || (undefined !== this.Unifill && (undefined === oTextPr.Unifill || true !== this.Unifill.IsIdentical(oTextPr.Unifill))))
-		return false;
-
-	if ((undefined === this.TextOutline && undefined !== oTextPr.TextOutline) || (undefined !== this.TextOutline && (undefined === oTextPr.TextOutline || true !== this.TextOutline.IsIdentical(oTextPr.TextOutline))))
-		return false;
-
-	if ((undefined === this.TextFill && undefined !== oTextPr.TextFill) || (undefined !== this.TextFill && (undefined === oTextPr.TextFill || true !== this.TextFill.IsIdentical(oTextPr.TextFill))))
-		return false;
-
-	if ((undefined === this.HighlightColor && undefined !== oTextPr.HighlightColor) || (undefined !== this.HighlightColor && (undefined === oTextPr.HighlightColor || true !== this.HighlightColor.IsIdentical(oTextPr.HighlightColor))))
-		return false;
-
-	if (this.Vanish !== oTextPr.Vanish)
-		return false;
-
-	if (this.Ligatures !== oTextPr.Ligatures)
-		return false;
-
-	if (!IsEqualStyleObjects(this.Shd, oTextPr.Shd))
-		return false;
-
-	return false;
-}
 CTextPr.prototype.createDuplicateForSmartArt = function(oPr)
 {
 	var TextPr       = new CTextPr();
@@ -14745,7 +14663,7 @@ CTextPr.prototype.isEqual = function(TextPrOld, TextPrNew)
 	}
 	return true;
 };
-CTextPr.prototype.Is_Equal = function(TextPr)
+CTextPr.prototype.Is_Equal = function(TextPr, oPr)
 {
 	if (!TextPr)
 		return false;
@@ -17586,10 +17504,12 @@ CParaPr.prototype.isEqual = function(ParaPrUOld,ParaPrNew)
 	}
 	return true;
 };
-CParaPr.prototype.Is_Equal = function(ParaPr)
+CParaPr.prototype.Is_Equal = function(ParaPr, oPr)
 {
+	const bIsEqualPreviewPreset = !!(oPr && (oPr.isSingleLvlPreviewPreset || oPr.isMultiLvlPreviewPreset));
+
 	return !(this.ContextualSpacing !== ParaPr.ContextualSpacing
-		|| true !== IsEqualStyleObjects(this.Ind, ParaPr.Ind)
+		|| true !== (IsEqualStyleObjects(this.Ind, ParaPr.Ind) || bIsEqualPreviewPreset)
 		|| this.Jc !== ParaPr.Jc
 		|| this.KeepLines !== ParaPr.KeepLines
 		|| this.KeepNext !== ParaPr.KeepNext
@@ -17602,7 +17522,7 @@ CParaPr.prototype.Is_Equal = function(ParaPr)
 		|| true !== IsEqualStyleObjects(this.Brd.Right, ParaPr.Brd.Right)
 		|| true !== IsEqualStyleObjects(this.Brd.Top, ParaPr.Brd.Top)
 		|| this.WidowControl !== ParaPr.WidowControl
-		|| true !== IsEqualStyleObjects(this.Tabs, ParaPr.Tabs)
+		|| true !== (IsEqualStyleObjects(this.Tabs, ParaPr.Tabs) || bIsEqualPreviewPreset)
 		|| true !== IsEqualStyleObjects(this.NumPr, ParaPr.NumPr)
 		|| this.PStyle !== ParaPr.PStyle
 		|| true !== IsEqualStyleObjects(this.FramePr, ParaPr.FramePr)

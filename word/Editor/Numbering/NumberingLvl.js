@@ -220,7 +220,7 @@ CNumberingLvl.prototype.IsLegalStyle = function()
 	return this.IsLgl;
 };
 
-CNumberingLvl.prototype.ComparePreviewNumbering = function(oLvl)
+CNumberingLvl.prototype.IsEqualPreview = function(oLvl, oPr)
 {
 	if (this.Format !== oLvl.Format)
 		return false;
@@ -233,7 +233,7 @@ CNumberingLvl.prototype.ComparePreviewNumbering = function(oLvl)
 		const oCurrentTextElement = this.LvlText[nLvlTextIndex];
 		const oCompareTextElement = oLvl.LvlText[nLvlTextIndex];
 
-		if (!oCurrentTextElement.ComparePreviewNumbering(oCompareTextElement))
+		if (!oCurrentTextElement.IsEqual(oCompareTextElement))
 			return false;
 	}
 
@@ -242,11 +242,26 @@ CNumberingLvl.prototype.ComparePreviewNumbering = function(oLvl)
 
 	if (this.Suff !== oLvl.Suff)
 		return false;
+	if (oPr.isMultiLvlPreviewPreset)
+	{
+		const nCurNumberPosition = this.GetNumberPosition() - oPr.isMultiLvlPreviewPreset.paragraphInd.numberPosition;
+		const nCompareNumberPosition = oLvl.GetNumberPosition() - oPr.isMultiLvlPreviewPreset.jsonInd.numberPosition;
+		if (!AscFormat.fApproxEqual(nCurNumberPosition - nCompareNumberPosition, 0, 0.00001))
+		{
+			return false;
+		}
 
-	if (!this.TextPr.Is_Equal(oLvl.TextPr))
+		const nCurIndentSize = this.GetIndentSize() - oPr.isMultiLvlPreviewPreset.paragraphInd.indentSize;
+		const nCompareIndentSize = oLvl.GetIndentSize() - oPr.isMultiLvlPreviewPreset.jsonInd.indentSize;
+		if (!AscFormat.fApproxEqual(nCurIndentSize - nCompareIndentSize, 0, 0.00001))
+		{
+			return false;
+		}
+	}
+	if (!this.TextPr.Is_Equal(oLvl.TextPr, oPr))
 		return false;
 
-	if (!this.ParaPr.Is_Equal(oLvl.ParaPr))
+	if (!this.ParaPr.Is_Equal(oLvl.ParaPr, oPr))
 		return false;
 
 	return true;
@@ -2031,7 +2046,7 @@ CNumberingLvlTextString.prototype.Copy = function()
 {
 	return new CNumberingLvlTextString(this.Value);
 };
-CNumberingLvlTextString.prototype.ComparePreviewNumbering = function (oAnotherElement)
+CNumberingLvlTextString.prototype.IsEqual = function (oAnotherElement)
 {
 	if (this.Type !== oAnotherElement.Type)
 		return false;
@@ -2082,7 +2097,7 @@ CNumberingLvlTextNum.prototype.Copy = function()
 {
 	return new CNumberingLvlTextNum(this.Value);
 };
-CNumberingLvlTextNum.prototype.ComparePreviewNumbering = function (oAnotherElement)
+CNumberingLvlTextNum.prototype.IsEqual = function (oAnotherElement)
 {
 	if (this.Type !== oAnotherElement.Type)
 		return false;

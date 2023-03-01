@@ -14584,7 +14584,81 @@ CDocument.prototype.UnlockPanelStyles = function(isUpdate)
 CDocument.prototype.UpdateBulletPresets = function (oNumPr, bForce)
 {
 	this.History.Add_UpdateListPresets(oNumPr, bForce);
-}
+};
+CDocument.prototype.IsCurrentNumberingPreset = function (oJSON, bIsSingleNumbering)
+{
+	if (typeof oJSON === 'string')
+	{
+		oJSON = JSON.parse(oJSON);
+	}
+	const oParaPr = this.GetCalculatedParaPr();
+	const oNumPr = oParaPr.NumPr;
+	const oNumbering = this.GetNumbering();
+	const oNum = oNumPr && oNumPr.NumId && oNumbering.GetNum(oNumPr.NumId);
+
+	if (!(oNum instanceof AscCommonWord.CNum))
+	{
+		if (oJSON["Type"] === Asc.c_oAscJSONNumberingType.Remove)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	if (oJSON["Lvl"] && oJSON["Lvl"].length > 0)
+	{
+		if (bIsSingleNumbering)
+		{
+			const oLvl = oJSON["Lvl"][0];
+			const oConvertingLvl = AscCommonWord.CNumberingLvl.FromJson(oLvl);
+			const oCurrentParagraphLvl = oNum.GetLvl(oNumPr.Lvl);
+			return oCurrentParagraphLvl.IsEqualPreview(oConvertingLvl, {isSingleLvlPreviewPreset: true});
+		}
+		else if (oJSON["Lvl"].length === 9)
+		{
+			const oStyles = this.GetStyles();
+			const bIsHeading = oJSON["Headings"];
+			const arrConvertingLvl = [];
+			for (let i = 0; i < oJSON["Lvl"].length; i += 1)
+			{
+				arrConvertingLvl.push(AscCommonWord.CNumberingLvl.FromJson(oJSON["Lvl"][i]));
+			}
+			const oFirstParagraphLvl = oNum.GetLvl(0);
+			const oJSONIndent = {
+				numberPosition: arrConvertingLvl[0].GetNumberPosition(),
+				indentSize: arrConvertingLvl[0].GetIndentSize()
+			};
+			const oParagraphNumberingIndent = {
+				numberPosition: oFirstParagraphLvl.GetNumberPosition(),
+				indentSize: oFirstParagraphLvl.GetIndentSize()
+			};
+			const oPr = {isMultiLvlPreviewPreset: {jsonInd: oJSONIndent, paragraphInd: oParagraphNumberingIndent}};
+			for (let i = 0; i < arrConvertingLvl.length; i += 1)
+			{
+				const oCurrentParagraphLvl = oNum.GetLvl(i);
+				const sStyleId = oCurrentParagraphLvl.GetPStyle();
+				if (bIsHeading)
+				{
+					const sDefaultHeadingId = oStyles.GetDefaultHeading(i);
+					if (sStyleId !== sDefaultHeadingId)
+					{
+						return false;
+					}
+				}
+				else if (sStyleId)
+				{
+					return false;
+				}
+				if (!oCurrentParagraphLvl.IsEqualPreview(arrConvertingLvl[i], oPr))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+	return false;
+};
 CDocument.prototype.GetAllJSONNums = function ()
 {
 	const arrResult = [];
