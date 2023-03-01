@@ -4141,7 +4141,7 @@ background-repeat: no-repeat;\
 		if (!logicDocument)
 			return;
 
-		new Promise(function(resolve)
+		return new Promise(function(resolve)
 		{
 			let symbols = AscWord.GetNumberingSymbols(_numInfo);
 			if (symbols && symbols.length)
@@ -4150,12 +4150,29 @@ background-repeat: no-repeat;\
 				resolve();
 		}).then(function()
 		{
+			let oRes = null;
 			if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
 			{
 				logicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphNumbering);
 				logicDocument.SetParagraphNumbering(_numInfo);
 				logicDocument.FinalizeAction();
+
+				if (!_numInfo["Lvl"] || _numInfo["Lvl"].length === 0)
+				{
+					const oParaPr = logicDocument.GetCalculatedParaPr();
+					const oNumPr = oParaPr.NumPr;
+					if (oNumPr)
+					{
+						const oNumbering = logicDocument.GetNumbering();
+						oRes = oNumbering.GetJSONNumbering(oNumPr, true);
+					}
+				}
+				else
+				{
+					oRes = _numInfo;
+				}
 			}
+			return oRes;
 		});
 	};
 	asc_docs_api.prototype.sync_UpdateListPatterns = function ()
