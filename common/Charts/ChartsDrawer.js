@@ -5679,6 +5679,24 @@ CChartsDrawer.prototype =
 			}
 		}
 		return res;
+	},
+
+	getNextCachePoint: function (oNumCache, index, dispBlanksAs) {
+		let pt = oNumCache.getPtByIndex(index + 1);
+		if (!pt) {
+			if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_SPAN) {
+				//search next real pt
+				for (let i = index + 2; i < oNumCache.ptCount; i++) {
+					pt = oNumCache.getPtByIndex(i);
+					if (pt) {
+						break;
+					}
+				}
+			} else if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO) {
+				pt = {val: 0, idx: index + 1};
+			}
+		}
+		return pt;
 	}
 };
 
@@ -12137,8 +12155,9 @@ drawRadarChart.prototype = {
 			summValues = Math.abs(yPoints[0].val) + Math.abs(yPoints[yPoints.length - 1].val);
 		}
 
-		var y, y1, x, x1, val, nextVal, seria, dataSeries, min, max;
-		var tempAngle = 2 * Math.PI / numCache.length;
+		let dispBlanksAs = this.cChartSpace.chart.dispBlanksAs;
+
+		var y, y1, x, x1, val, nextVal, seria, dataSeries;
 		var radius, radius1, xFirst, yFirst, calcPath, points;
 		for (var i = 0; i < this.chart.series.length; i++) {
 
@@ -12155,7 +12174,8 @@ drawRadarChart.prototype = {
 			if (dataSeries.length === 1) {
 				n = 0;
 				//рассчитываем значения
-				val = this._getYVal(n, i);
+				let pt = oNumCache.getPtByIndex(n);
+				val = this._getYVal(pt.val);
 
 				//точки находятся внутри диапазона
 				y = val * maxRadius;
@@ -12163,8 +12183,9 @@ drawRadarChart.prototype = {
 
 				radius = y;
 
-				y = yCenter - radius * Math.cos(n * tempAngle);
-				x = x + radius * Math.sin(n * tempAngle);
+				let alpha = this._getAlpha(n);
+				y = yCenter - radius * Math.cos(alpha);
+				x = x + radius * Math.sin(alpha);
 
 				if (!this.paths.points) {
 					this.paths.points = [];
@@ -12179,10 +12200,20 @@ drawRadarChart.prototype = {
 				if (fillPath) {
 					calcPath = this._calculateFillPath();
 				}
-				for (var n = 0; n < dataSeries.length - 1; n++) {
+				for (var n = 0; n < oNumCache.ptCount - 1; n++) {
+
+					let pt = oNumCache.getPtByIndex(n);
+					if (!pt) {
+						continue;
+					}
+					let nextPt = this.cChartDrawer.getNextCachePoint(oNumCache, n, dispBlanksAs);
+					if (!nextPt) {
+						continue;
+					}
+
 					//рассчитываем значения
-					val = this._getYVal(n, i, valueMinMax);
-					nextVal = this._getYVal(n + 1, i, valueMinMax);
+					val = this._getYVal(pt.val, valueMinMax);
+					nextVal = this._getYVal(nextPt.val, valueMinMax);
 
 					if (this.valAx.scaling.logBase && (val < 0)) {
 						break;
@@ -12197,8 +12228,8 @@ drawRadarChart.prototype = {
 					radius = y;
 					radius1 = y1;
 
-					let alpha1 = this._getAlpha(n, tempAngle);
-					let alpha2 = this._getAlpha(n + 1, tempAngle);
+					let alpha1 = this._getAlpha(pt.idx);
+					let alpha2 = this._getAlpha(nextPt.idx);
 
 					y = yCenter - radius * Math.cos(alpha1);
 					y1 = yCenter - radius1 * Math.cos(alpha2);
@@ -12251,8 +12282,7 @@ drawRadarChart.prototype = {
 		}
 	},
 
-	_getAlpha: function (numPoint, tempAngle) {
-		//tempAngle - temporary, if alphaPoints in null
+	_getAlpha: function (numPoint) {
 		let res = null;
 		if (this.catAx && this.catAx.alphaPoints) {
 			for (let i = 0; i < this.catAx.alphaPoints.length; i++) {
@@ -12260,8 +12290,6 @@ drawRadarChart.prototype = {
 					return this.catAx.alphaPoints[i].pos;
 				}
 			}
-		} else {
-			return tempAngle * numPoint;
 		}
 		return res;
 	},
@@ -12409,21 +12437,12 @@ drawRadarChart.prototype = {
 		}
 	},
 
-	_getYVal: function (n, i, valueMinMax) {
-		var val = 0, tempVal;
-		var numCache;
+	_getYVal: function (val, valueMinMax) {
 		var yPoints = this.valAx.yPoints;
+		val = parseFloat(val);
+		let tempVal = val;
 
-		numCache = this.cChartDrawer.getNumCache(this.chart.series[i].val);
-		if (!numCache) {
-			return;
-		}
 		var orientation = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX;
-
-		val = parseFloat(numCache.pts[n].val);
-
-		tempVal = val;
-
 		var minValue;
 		if (orientation) {
 			minValue = yPoints[0].val < valueMinMax.min ? yPoints[0].val : valueMinMax.min;
