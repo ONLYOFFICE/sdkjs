@@ -669,6 +669,12 @@ function(window, undefined) {
 	};
 	CLabelsBox.prototype.hit = function (x, y) {
 		if(this.bRadarCat) {
+			for(let nLbl = 0; nLbl < this.aLabels.length; ++nLbl) {
+				let oLbl = this.aLabels[nLbl];
+				if(oLbl && oLbl.hit(x, y)) {
+					return true;
+				}
+			}
 			return false;
 		}
 		var tx, ty;
@@ -1054,6 +1060,16 @@ function(window, undefined) {
 			}
 		}
 		return dFontSize * (25.4 / 72) * dStakeOffset;
+	};
+	CLabelsBox.prototype.drawSelect = function(drawingDocument, isDrawHandles) {
+		if(this.bRadarCat) {
+			for(let nLbl = 0; nLbl < this.aLabels.length; ++nLbl) {
+				drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.chartSpace.transform, this.x, this.y, this.extX, this.extY, false, false, undefined, isDrawHandles);
+			}
+		}
+		else {
+			drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.chartSpace.transform, this.x, this.y, this.extX, this.extY, false, false, undefined, isDrawHandles);
+		}
 	};
 
 	function fCreateLabel(sText, idx, oParent, oChart, oTxPr, oSpPr, oDrawingDocument) {

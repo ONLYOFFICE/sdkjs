@@ -4640,7 +4640,7 @@ CChartsDrawer.prototype =
 			var yPoints = axis.yPoints;
 			var orientation = axis.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX;
 			var trueWidth = this.calcProp.trueWidth;
-			var xCenter = (this.calcProp.chartGutter._left + trueWidth / 2) / this.calcProp.pxToMM;
+			var xCenter = axis.posX;
 
 			var yCenter, trueHeight;
 			if (yPoints.length > 0) {
@@ -12144,7 +12144,7 @@ drawRadarChart.prototype = {
 		var yPoints = this.valAx.yPoints;
 		var trueWidth = this.chartProp.trueWidth;
 
-		var xCenter = (this.chartProp.chartGutter._left + trueWidth / 2) / this.chartProp.pxToMM;
+		var xCenter = this.valAx.posX;
 		var yCenter = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
 
 		var valueMinMax, summValues, maxRadius;
