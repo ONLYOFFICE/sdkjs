@@ -187,43 +187,6 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
-		// function multiModeOld (rows, columns, format, arg0) {
-		// 	let resStr = "";
-
-		// 	if (format !== 0 && format !== 1) {
-		// 		return new cError(cErrorType.wrong_value_type);
-		// 	}
-		// 	// single val check
-		// 	if (rows === false && columns === false) {
-		// 		let val = arg0;
-		// 		if (cElementType.string === val.type && format === 1) {
-		// 			val = `"${val.getValue()}"`;
-		// 		} else {
-		// 			val = val.getValue().toString();
-		// 		}
-		// 		return format === 1 ? new cString(`{${val}}`) : new cString(val);
-		// 	}
-
-		// 	for (let i = 0; i < rows; i++) {
-		// 		for (let j = 0; j < columns; j++) {
-		// 			let val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.getElementRowCol(i, j);
-		// 			if (cElementType.string === val.type && format === 1) {
-		// 				val = `"${val.getValue()}"`;
-		// 			} else {
-		// 				val = val.getValue().toString();
-		// 			}
-
-		// 			if (columns - 1 === j && format === 1) {
-		// 				resStr += val + ";";
-		// 				continue;
-		// 			} 
-		// 			resStr += format === 1 ? val + "," : val + ", ";
-		// 		}
-		// 	}
-
-		// 	return format === 1 ? new cString(`{${resStr.slice(0, -1)}}`) : new cString(resStr.slice(0, -2));
-		// }
-
 		function multiMode (array, format) {
 			let resStr = "", arg0Dimensions;
 
@@ -258,20 +221,6 @@ function (window, undefined) {
 
 			return format === 1 ? new cString("{" + resStr.slice(0, -1) + "}") : new cString(resStr.slice(0, -2));
 		}
-
-		// function rangeModeFuncOld (arg0rows, arg0columns, arg1rows, arg1columns) {
-		// 	let resArr = new cArray();
-
-		// 	for (let i = 0; i < arg1rows; i++) {
-		// 		resArr.addRow();
-		// 		for (let j = 0; j < arg1columns; j++) {
-		// 			let format = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
-		// 			resArr.addElement(multiMode(arg0rows, arg0columns, format.getValue(), arg0));
-		// 		}
-		// 	}
-
-		// 	return resArr;
-		// }
 
 		function rangeModeFunc (arg0, arg1) {
 			let resArr = new cArray(),

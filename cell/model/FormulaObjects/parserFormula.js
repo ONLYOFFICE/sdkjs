@@ -8357,6 +8357,70 @@ function parserFormula( formula, parent, _ws ) {
 		return bRes;
 	}
 
+	function getArrayHelper(args, func) {
+		// check for arrays and find max length
+		let isContainsArray = false,
+			maxRows = 1,
+			maxColumns = 1;
+		
+		for (let i = 0; i < args.length; i++) {
+			if (cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) {
+				let argDimensions = args[i].getDimensions();
+				maxRows = argDimensions.row > maxRows ? argDimensions.row : maxRows;
+				maxColumns = argDimensions.col > maxColumns ? argDimensions.col : maxColumns;
+				isContainsArray = true;
+			}
+		}
+
+		if (!isContainsArray) {
+			return false;
+		}
+
+		let resultArr = new cArray();
+
+		for (let i = 0; i < maxRows; i++) {
+			resultArr.addRow();
+			for (let j = 0; j < maxColumns; j++) {
+				let values = [];
+
+				for (let k = 0; k < args.length; k++) {
+					let value = args[k];
+
+					if (cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) {
+						let valueDimensions = value.getDimensions();
+						if (value.isOneElement()) {
+							// single row with single element
+							value = value.getFirstElement();
+						} else if (valueDimensions.col !== 1 && valueDimensions.row  === 1) {
+							// single row with many elements
+							value = _getValueInRange(value, 0, j);
+						} else if (valueDimensions.col === 1 && valueDimensions.row !== 1) {
+							// many rows with single element
+							value = _getValueInRange(value, i, 0);
+						} else {
+							value = _getValueInRange(value, i, j);
+						}
+					} 
+
+					values.push(value);
+				}
+				resultArr.addElement(func(true, values));
+			}
+		}
+
+		return resultArr;
+	}
+
+	// if went beyond the cellsRange
+	const _getValueInRange = function (array, _row, _col) {
+		let sizes = array.getDimensions();
+		if (_row > sizes.row - 1 || _col > sizes.col - 1) {
+			return new cError(cErrorType.not_available);
+		}
+		let res = array.getValueByRowCol ? array.getValueByRowCol(_row, _col) : array.getElementRowCol(_row, _col);
+		return res;
+	}
+
 	/*
 	 * Code below has been taken from OpenOffice Source.
 	 */
@@ -8735,5 +8799,6 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertRefToRowCol = convertRefToRowCol;
 	window['AscCommonExcel'].convertAreaToArray = convertAreaToArray;
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
+	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
 
 })(window);
