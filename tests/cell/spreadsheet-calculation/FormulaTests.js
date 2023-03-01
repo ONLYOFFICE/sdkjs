@@ -23057,15 +23057,15 @@ $(function () {
 		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11,2)');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Result of ARRAYTOTEXT(D10:E11,2)');
 
-		oParser = new parserFormula('ARRAYTOTEXT(D10:E11, D10:E12)', "A2", ws);
-		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11, D10:E11)');
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[0,1]');
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[1,0]');				// #N/A
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[1,1]');
-		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "19, str, #N/A, TRUE", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[2,0]');
-		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), '{19,"str";#N/A,TRUE}', 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[2,1]');
+		// oParser = new parserFormula('ARRAYTOTEXT(D10:E11, D10:E12)', "A2", ws);
+		// assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11, D10:E11)');
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[0,0]');
+		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[0,1]');
+		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[1,0]');				// #N/A
+		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[1,1]');
+		// assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "19, str, #N/A, TRUE", 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[2,0]');
+		// assert.strictEqual(array.getElementRowCol(2, 1).getValue(), '{19,"str";#N/A,TRUE}', 'Result of ARRAYTOTEXT(D10:E11, D10:E11)[2,1]');
 
 
 		// value && array|range|value

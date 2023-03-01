@@ -187,33 +187,68 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
-		function multiMode (rows, columns, format, arg0) {
-			let resStr = "";
+		// function multiModeOld (rows, columns, format, arg0) {
+		// 	let resStr = "";
+
+		// 	if (format !== 0 && format !== 1) {
+		// 		return new cError(cErrorType.wrong_value_type);
+		// 	}
+		// 	// single val check
+		// 	if (rows === false && columns === false) {
+		// 		let val = arg0;
+		// 		if (cElementType.string === val.type && format === 1) {
+		// 			val = `"${val.getValue()}"`;
+		// 		} else {
+		// 			val = val.getValue().toString();
+		// 		}
+		// 		return format === 1 ? new cString(`{${val}}`) : new cString(val);
+		// 	}
+
+		// 	for (let i = 0; i < rows; i++) {
+		// 		for (let j = 0; j < columns; j++) {
+		// 			let val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.getElementRowCol(i, j);
+		// 			if (cElementType.string === val.type && format === 1) {
+		// 				val = `"${val.getValue()}"`;
+		// 			} else {
+		// 				val = val.getValue().toString();
+		// 			}
+
+		// 			if (columns - 1 === j && format === 1) {
+		// 				resStr += val + ";";
+		// 				continue;
+		// 			} 
+		// 			resStr += format === 1 ? val + "," : val + ", ";
+		// 		}
+		// 	}
+
+		// 	return format === 1 ? new cString(`{${resStr.slice(0, -1)}}`) : new cString(resStr.slice(0, -2));
+		// }
+
+		function multiMode (array, format) {
+			let resStr = "", arg0Dimensions;
 
 			if (format !== 0 && format !== 1) {
 				return new cError(cErrorType.wrong_value_type);
 			}
-			// single val
-			if (rows === false && columns === false) {
-				let val = arg0;
-				if (cElementType.string === val.type && format === 1) {
-					val = `"${val.getValue()}"`;
-				} else {
-					val = val.getValue().toString();
-				}
-				return format === 1 ? new cString(`{${val}}`) : new cString(val);
+			// single val check
+			if (cElementType.array !== array.type && cElementType.cellsRange !== array.type && cElementType.cellsRange3D !== array.type) {
+				let tempArr = new cArray();
+				tempArr.addElement(array);
+				array = tempArr;
 			}
 
-			for (let i = 0; i < rows; i++) {
-				for (let j = 0; j < columns; j++) {
-					let val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.getElementRowCol(i, j);
+			arg0Dimensions = array.getDimensions();
+
+			for (let i = 0; i < arg0Dimensions.row; i++) {
+				for (let j = 0; j < arg0Dimensions.col; j++) {
+					let val = array.getValueByRowCol ? array.getValueByRowCol(i, j) : array.getElementRowCol(i, j);
 					if (cElementType.string === val.type && format === 1) {
-						val = `"${val.getValue()}"`;
+						val = '"' + val.getValue() + '"';
 					} else {
 						val = val.getValue().toString();
 					}
 
-					if (columns - 1 === j && format === 1) {
+					if (arg0Dimensions.col - 1 === j && format === 1) {
 						resStr += val + ";";
 						continue;
 					} 
@@ -221,17 +256,33 @@ function (window, undefined) {
 				}
 			}
 
-			return format === 1 ? new cString(`{${resStr.slice(0, -1)}}`) : new cString(resStr.slice(0, -2));
+			return format === 1 ? new cString("{" + resStr.slice(0, -1) + "}") : new cString(resStr.slice(0, -2));
 		}
 
-		function rangeModeFunc (arg0rows, arg0columns, arg1rows, arg1columns) {
-			let resArr = new cArray();
+		// function rangeModeFuncOld (arg0rows, arg0columns, arg1rows, arg1columns) {
+		// 	let resArr = new cArray();
 
-			for (let i = 0; i < arg1rows; i++) {
+		// 	for (let i = 0; i < arg1rows; i++) {
+		// 		resArr.addRow();
+		// 		for (let j = 0; j < arg1columns; j++) {
+		// 			let format = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
+		// 			resArr.addElement(multiMode(arg0rows, arg0columns, format.getValue(), arg0));
+		// 		}
+		// 	}
+
+		// 	return resArr;
+		// }
+
+		function rangeModeFunc (arg0, arg1) {
+			let resArr = new cArray(),
+				arg0Dimensions = arg0.getDimensions(),
+				arg1Dimensions = arg1.getDimensions();
+
+			for (let i = 0; i < arg1Dimensions.row; i++) {
 				resArr.addRow();
-				for (let j = 0; j < arg1columns; j++) {
+				for (let j = 0; j < arg1Dimensions.col; j++) {
 					let format = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
-					resArr.addElement(multiMode(arg0rows, arg0columns, format.getValue(), arg0));
+					resArr.addElement(multiMode(arg0, format));
 				}
 			}
 
@@ -266,23 +317,20 @@ function (window, undefined) {
 			rangeMode = true;
 		}
 
+
+		// ??? maybe delete this?
 		if (cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			if (rangeMode) {
 				// ? value && array/range
-				// call and array helper
-				const arg1Dimensions = arg1.getDimensions();
-				return rangeModeFunc(false, false, arg1Dimensions.row, arg1Dimensions.col);
+				return rangeModeFunc(arg0, arg1);
 			}
-			return multiMode(false, false, arg1, arg0);		
+			return multiMode(arg0, arg1);
 		} else {
-			const arg0Dimensons = arg0.getDimensions();
 			if (rangeMode) {
 				// ? array/range && array/range
-				// call array helper
-				const arg1Dimensions = arg1.getDimensions();
-				return rangeModeFunc(arg0Dimensons.row, arg0Dimensons.col, arg1Dimensions.row, arg1Dimensions.col);
+				return rangeModeFunc(arg0, arg1);
 			}
-			return multiMode(arg0Dimensons.row, arg0Dimensons.col, arg1, arg0);
+			return multiMode(arg0, arg1);
 		}
 	};
 
