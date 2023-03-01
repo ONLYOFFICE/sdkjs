@@ -232,8 +232,13 @@ CNum.prototype.GetJSONNumbering = function(bIsSingleLevel, nLvl)
 	if (bIsSingleLevel)
 	{
 		let oNumLvl = this.GetLvl(nLvl);
-		oResult["Type"] = oNumLvl.IsBulleted() ? Asc.c_oAscJSONNumberingType.Bullet : Asc.c_oAscJSONNumberingType.Number;
-		oResult["Lvl"][0] = oNumLvl.ToJson(undefined, {isSingleLvlPresetJSON: true});
+		if (oNumLvl.IsOneLvlNum())
+		{
+			oNumLvl = oNumLvl.Copy();
+			oNumLvl.ResetNumberedText(0);
+			oResult["Type"] = oNumLvl.IsBulleted() ? Asc.c_oAscJSONNumberingType.Bullet : Asc.c_oAscJSONNumberingType.Number;
+			oResult["Lvl"][0] = oNumLvl.ToJson(undefined, {isSingleLvlPresetJSON: true});
+		}
 	}
 	else
 	{

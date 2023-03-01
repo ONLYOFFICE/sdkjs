@@ -1682,6 +1682,7 @@
 		this.singleNumbering = {};
 		this.multiLevel = {};
 		this.checkNumMap = {};
+		this.checkSingleLvlMap = {};
 		this.Numbering = oLogicDocument.GetNumbering();
 	}
 	CAscWordNumberingCollector.prototype.GetInterfaceDocumentPresets = function ()
@@ -1692,24 +1693,40 @@
 			"multiLevel": Object.keys(this.multiLevel)
 		};
 	}
-	CAscWordNumberingCollector.prototype.AddNum = function (sNumId)
+	CAscWordNumberingCollector.prototype.AddNum = function (oNumPr)
 	{
+		const sNumId = oNumPr.NumId;
+		const nLvl = oNumPr.Lvl;
 		if (!this.checkNumMap[sNumId])
 		{
 			const oNum = this.Numbering.GetNum(sNumId);
 			if (oNum)
 			{
-				this.CheckSingleLvl(oNum);
 				this.CheckMultiLvl(oNum);
 			}
 			this.checkNumMap[sNumId] = true;
+			this.checkSingleLvlMap[sNumId] = {};
+		}
+		if (!this.checkSingleLvlMap[sNumId][nLvl])
+		{
+			const oNum = this.Numbering.GetNum(sNumId);
+			if (oNum)
+			{
+				this.CheckSingleLvl(oNum, nLvl);
+				this.checkSingleLvlMap[sNumId][nLvl] = true;
+			}
+			else
+			{
+				for (let i = 0; i < 9; i += 1)
+				{
+					this.checkSingleLvlMap[sNumId][i] = true;
+				}
+			}
 		}
 	};
-	CAscWordNumberingCollector.prototype.CheckSingleLvl = function (oNum)
+	CAscWordNumberingCollector.prototype.CheckSingleLvl = function (oNum, nLvl)
 	{
-		for (let i = 0; i < 9; i += 1)
-		{
-			const oJSON = oNum.GetJSONNumbering(true, i);
+			const oJSON = oNum.GetJSONNumbering(true, nLvl);
 			if (oJSON["Type"] === Asc.c_oAscJSONNumberingType.Number)
 			{
 				this.AddToSingleNumbered(JSON.stringify(oJSON));
@@ -1718,7 +1735,6 @@
 			{
 				this.AddToSingleBullet(JSON.stringify(oJSON));
 			}
-		}
 	};
 	CAscWordNumberingCollector.prototype.CheckMultiLvl = function (oNum)
 	{

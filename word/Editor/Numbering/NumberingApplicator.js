@@ -420,7 +420,9 @@
 			if (num)
 			{
 				let oldNumLvl = num.GetLvl(commonNumPr.Lvl);
-				numLvl.SetParaPr(oldNumLvl.GetParaPr());
+				const oNewParaPr = oldNumLvl.GetParaPr().Copy();
+				oNewParaPr.Merge(numLvl.GetParaPr());
+				numLvl.SetParaPr(oNewParaPr);
 				numLvl.ResetNumberedText(commonNumPr.Lvl);
 				num.SetLvl(numLvl, commonNumPr.Lvl);
 				this.SetLastSingleLevel(commonNumPr.NumId, commonNumPr.Lvl);
@@ -434,7 +436,9 @@
 			let ilvl  = !commonNumPr || !commonNumPr.Lvl ? 0 : commonNumPr.Lvl;
 
 			let oldNumLvl = num.GetLvl(commonNumPr.Lvl);
-			numLvl.SetParaPr(oldNumLvl.GetParaPr());
+			const oNewParaPr = oldNumLvl.GetParaPr().Copy();
+			oNewParaPr.Merge(numLvl.GetParaPr());
+			numLvl.SetParaPr(oNewParaPr);
 			numLvl.ResetNumberedText(ilvl);
 			num.SetLvl(numLvl, ilvl);
 

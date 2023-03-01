@@ -164,6 +164,27 @@ CNumberingLvl.prototype.GetOLang = function()
 	return this.TextPr && this.TextPr.Lang;
 };
 /**
+ * Checking if there is one num in a level
+ * @returns {boolean}
+ * @constructor
+ */
+CNumberingLvl.prototype.IsOneLvlNum = function ()
+{
+	let nCount = 0;
+	for (let i = 0; i < this.LvlText.length; i += 1)
+	{
+		if (this.LvlText[i].IsLvl())
+		{
+			nCount += 1;
+		}
+		if (nCount === 2)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+/**
  * Выставляем содержимое нумерации
  */
 CNumberingLvl.prototype.SetLvlText = function(arrLvlText)

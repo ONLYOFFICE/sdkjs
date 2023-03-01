@@ -14669,13 +14669,12 @@ CDocument.prototype.GetAllJSONNums = function ()
 	{
 		const oParagraph = arrParagraphs[nParagraphIndex];
 		const oNumPr = oParagraph.GetNumPr();
-		if (oNumPr && oNumPr.NumId)
+		if (oNumPr && oNumPr.NumId && (typeof oNumPr.Lvl === 'number'))
 		{
-			oNumberingCollector.AddNum(oNumPr.NumId);
+			oNumberingCollector.AddNum(oNumPr);
 		}
 	}
-	const oRes = oNumberingCollector.GetInterfaceDocumentPresets();
-	return oRes;
+	return oNumberingCollector.GetInterfaceDocumentPresets();
 };
 CDocument.prototype.GetAllParagraphs = function(Props, ParaArray)
 {
