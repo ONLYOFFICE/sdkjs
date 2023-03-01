@@ -1159,14 +1159,13 @@ function(window, undefined) {
 		}
 	}
 
-	function fLayoutRadarCatLabelsBox(oLabelsBox, oRect) {
-		if(oLabelsBox) {
+	function fLayoutRadarCatLabelsBox(oLabelsBox, oRect, aAlphaPoints) {
+		if(oLabelsBox && aAlphaPoints) {
 			const nLblsLength = oLabelsBox.aLabels.length;
 			const fAngleInterval = 2*Math.PI / nLblsLength;
 			let dMinX = 10000, dMinY = 10000, dMaxX = -dMinX, dMaxY = -dMinY;
 
 			let dCatLabelsHeight = 0;
-			let dCatLabelsWidth = oLabelsBox.maxMinWidth;
 
 			for(let nLabel = 0; nLabel < oLabelsBox.aLabels.length; ++nLabel) {
 				var oLabel = oLabelsBox.aLabels[nLabel];
@@ -1187,10 +1186,11 @@ function(window, undefined) {
 
 			for(let nLblIdx = 0; nLblIdx < nLblsLength; ++nLblIdx) {
 				let oLbl = oLabelsBox.aLabels[nLblIdx];
-				if(oLbl) {
+				let oAlphaPt = aAlphaPoints[nLblIdx];
+				if(oLbl && oAlphaPt) {
 					let oLblTxBody = oLbl.tx.rich;
 					let oSize = oLblTxBody.getContentOneStringSizes();
-					let fAngle = fAngleInterval*nLblIdx;
+					let fAngle = oAlphaPt.pos;
 					let dQuad = fAngle / (Math.PI/2);
 					let nQuad = dQuad >> 0;
 					let oTransform = oLbl.localTransformText;
@@ -4313,15 +4313,21 @@ function(window, undefined) {
 		let oAxisGrid = new CAxisGrid();
 		oAxis.grid = oAxisGrid;
 		let aStrings = this.getLabelsForAxis(oAxis);
+		let nOrientation = oAxis.scaling && AscFormat.isRealNumber(oAxis.scaling.orientation) ? oAxis.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
 		if(oAxis.isRadarCategories()) {
 			let nIntervalsCount = aStrings.length;
 			oAxisGrid.nCount = nIntervalsCount;
 			oAxisGrid.bOnTickMark = true;
 			oAxisGrid.aStrings = aStrings;
-			oAxisGrid.fStart = 0;
-			oAxisGrid.fStride = 2*Math.PI / nIntervalsCount;
+			if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+				oAxisGrid.fStart = 0;
+				oAxisGrid.fStride = 2*Math.PI / nIntervalsCount;
+			} else {
+				oAxisGrid.fStart = 2*Math.PI;
+				oAxisGrid.fStride = -2*Math.PI / nIntervalsCount;
+			}
 		} else {
-			let nOrientation = oAxis.scaling && AscFormat.isRealNumber(oAxis.scaling.orientation) ? oAxis.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
+
 			let nCrossType = this.getAxisCrossType(oAxis);
 			let bOnTickMark = ((nCrossType === AscFormat.CROSS_BETWEEN_MID_CAT) && (aStrings.length > 1));
 			let nIntervalsCount = bOnTickMark ? (aStrings.length - 1) : (aStrings.length);
@@ -4551,7 +4557,10 @@ function(window, undefined) {
 			else if(oCurAxis.isRadarCategories()) {
 				oCurAxis.alphaPoints = [];
 				aPoints = oCurAxis.alphaPoints;
-				fLayoutRadarCatLabelsBox(oLabelsBox, oRect);
+				if (null !== aPoints) {
+					oCurAxis.grid.calculatePoints(aPoints, bOnTickMark, oCurAxis.scale);
+				}
+				fLayoutRadarCatLabelsBox(oLabelsBox, oRect, aPoints);
 			}
 			else if(oCurAxis.isHorizontal()) {
 				oCurAxis.posY = fAxisPos;
@@ -4588,6 +4597,10 @@ function(window, undefined) {
 						}
 					}
 				}
+
+				if (null !== aPoints) {
+					oCurAxis.grid.calculatePoints(aPoints, bOnTickMark, oCurAxis.scale);
+				}
 			}
 			else {//vertical axis
 				fDistanceSign = -fDistanceSign;
@@ -4599,6 +4612,9 @@ function(window, undefined) {
 							fDistanceSign = -fDistanceSign;
 						}
 					}
+				}
+				if(oCurAxis.isRadarAxis()) {
+					fDistanceSign = 1;
 				}
 				oCurAxis.posX = fAxisPos;
 				oCurAxis.yPoints = [];
@@ -4621,9 +4637,12 @@ function(window, undefined) {
 						}
 					}
 				}
+
+				if (null !== aPoints) {
+					oCurAxis.grid.calculatePoints(aPoints, bOnTickMark, oCurAxis.scale);
+				}
 			}
 			if (null !== aPoints) {
-				oCurAxis.grid.calculatePoints(aPoints, bOnTickMark, oCurAxis.scale);
 				if(aPoints.length > 1) {
 					let fNullPos;
 					let oP1 = aPoints[0];
