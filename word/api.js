@@ -8042,6 +8042,7 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 		//this.WordControl.m_oLogicDocument.Document_UpdateRulersState();
 		this.WordControl.m_oLogicDocument.Document_UpdateSelectionState();
+		this.sync_UpdateListPatterns();
 		this.LoadedObject = null;
 
 		this.WordControl.InitControl();
