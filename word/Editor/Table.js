@@ -19796,6 +19796,7 @@ function CTableRowsInfo()
 	this.X0           = 0;
 	this.X1           = 0;
 	this.MaxBotBorder = 0;
+	this.VMerged      = false;
 }
 CTableRowsInfo.prototype.Init = function()
 {
