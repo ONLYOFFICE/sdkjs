@@ -21110,6 +21110,18 @@
 			case Asc.c_oAscNumberingFormat.VietnameseCounting:
 				sVal = "vietnameseCounting";
 				break;
+			case Asc.c_oAscNumberingFormat.CustomGreece:
+				sVal = "customGreece";
+				break;
+			case Asc.c_oAscNumberingFormat.CustomDecimalFourZero:
+				sVal = "customDecimalFourZero";
+				break;
+			case Asc.c_oAscNumberingFormat.CustomDecimalThreeZero:
+				sVal = "customDecimalThreeZero";
+				break;
+			case Asc.c_oAscNumberingFormat.CustomDecimalTwoZero:
+				sVal = "customDecimalTwoZero";
+				break;
 		}
 
 		return sVal;
@@ -21307,6 +21319,18 @@
 				break;
 			case "vietnameseCounting":
 				nVal = Asc.c_oAscNumberingFormat.VietnameseCounting;
+				break;
+			case "customGreece":
+				nVal = Asc.c_oAscNumberingFormat.CustomGreece;
+				break;
+			case "customDecimalFourZero":
+				nVal = Asc.c_oAscNumberingFormat.CustomDecimalFourZero;
+				break;
+			case "customDecimalThreeZero":
+				nVal = Asc.c_oAscNumberingFormat.CustomDecimalThreeZero;
+				break;
+			case "customDecimalTwoZero":
+				nVal = Asc.c_oAscNumberingFormat.CustomDecimalTwoZero;
 				break;
 		}
 
