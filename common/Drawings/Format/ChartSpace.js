@@ -1064,7 +1064,10 @@ function(window, undefined) {
 	CLabelsBox.prototype.drawSelect = function(drawingDocument, isDrawHandles) {
 		if(this.bRadarCat) {
 			for(let nLbl = 0; nLbl < this.aLabels.length; ++nLbl) {
-				drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.chartSpace.transform, this.x, this.y, this.extX, this.extY, false, false, undefined, isDrawHandles);
+				let oLbl = this.aLabels[nLbl];
+				if(oLbl) {
+					drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.chartSpace.transform, oLbl.x, oLbl.y, oLbl.extX, oLbl.extY, false, false, undefined, isDrawHandles);
+				}
 			}
 		}
 		else {
@@ -1238,6 +1241,11 @@ function(window, undefined) {
 					dMinY = Math.min(dMinY, dNewY);
 					dMaxX = Math.max(dMaxX, dNewX + oSize.w);
 					dMaxY = Math.max(dMaxY, dNewY + oSize.h);
+					oLbl.extX = oSize.w;
+					oLbl.extY = oSize.h;
+					oLbl.x = dNewX;
+					oLbl.y = dNewY;
+					global_MatrixTransformer.TranslateAppend(oLbl.localTransform, dNewX, dNewY);
 					if(oFirstPara.CompiledPr.Pr.ParaPr.Jc === AscCommon.align_Center) {
 						dNewX = dNewX + oSize.w/2 - oLblTxContent.XLimit/2;
 					}
@@ -1475,7 +1483,7 @@ function(window, undefined) {
 				}
 			} else if (this.selection.axisLbls) {
 				var oLabels = this.selection.axisLbls.labels;
-				drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.transform, oLabels.x, oLabels.y, oLabels.extX, oLabels.extY, false, false, undefined, isDrawHandles);
+				oLabels.drawSelect(drawingDocument, isDrawHandles);
 			} else if (this.selection.hiLowLines) {
 				if (this.chartObj) {
 					var oDrawChart = this.chartObj.charts[this.selection.chart];
