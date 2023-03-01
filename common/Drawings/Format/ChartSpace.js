@@ -668,6 +668,9 @@ function(window, undefined) {
 		return this.maxMinWidth >= 0.0 ? this.maxMinWidth : 0.0;
 	};
 	CLabelsBox.prototype.hit = function (x, y) {
+		if(this.bRadarCat) {
+			return false;
+		}
 		var tx, ty;
 		if (this.chartSpace && this.chartSpace.invertTransform) {
 			tx = this.chartSpace.invertTransform.TransformPointX(x, y);
@@ -1229,6 +1232,7 @@ function(window, undefined) {
 			oLabelsBox.y = dMinY;
 			oLabelsBox.extX = dMaxX - dMinX;
 			oLabelsBox.extY = dMaxY - dMinY;
+			oLabelsBox.bRadarCat = true;
 		}
 	}
 
@@ -4294,7 +4298,7 @@ function(window, undefined) {
 		oAxis.grid = oAxisGrid;
 		let aStrings = this.getLabelsForAxis(oAxis);
 		if(oAxis.isRadarCategories()) {
-			let nIntervalsCount = aStrings.length - 1;
+			let nIntervalsCount = aStrings.length;
 			oAxisGrid.nCount = nIntervalsCount;
 			oAxisGrid.bOnTickMark = true;
 			oAxisGrid.aStrings = aStrings;

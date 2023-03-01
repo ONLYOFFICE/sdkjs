@@ -12285,10 +12285,9 @@ drawRadarChart.prototype = {
 	_getAlpha: function (numPoint) {
 		let res = null;
 		if (this.catAx && this.catAx.alphaPoints) {
-			for (let i = 0; i < this.catAx.alphaPoints.length; i++) {
-				if (numPoint === this.catAx.alphaPoints[i].val - 1) {
-					return this.catAx.alphaPoints[i].pos;
-				}
+			let oPt =this.catAx.alphaPoints[numPoint];
+			if(oPt) {
+				return oPt.pos;
 			}
 		}
 		return res;
