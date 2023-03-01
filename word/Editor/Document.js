@@ -14661,8 +14661,6 @@ CDocument.prototype.IsCurrentNumberingPreset = function (oJSON, bIsSingleNumberi
 };
 CDocument.prototype.GetAllJSONNums = function ()
 {
-	const arrResult = [];
-	const oNumMap = {};
 	const arrParagraphs = this.GetAllParagraphs();
 	const oNumberingCollector = new Asc.CAscWordNumberingCollector(this);
 	for (let nParagraphIndex = 0; nParagraphIndex < arrParagraphs.length; nParagraphIndex += 1)

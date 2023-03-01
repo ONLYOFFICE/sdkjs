@@ -4167,6 +4167,16 @@ background-repeat: no-repeat;\
 						oRes = oNumbering.GetJSONNumbering(oNumPr, true);
 					}
 				}
+				else if (_numInfo["Headings"])
+				{
+					const oParaPr = logicDocument.GetCalculatedParaPr();
+					const oNumPr = oParaPr.NumPr;
+					if (oNumPr)
+					{
+						const oNumbering = logicDocument.GetNumbering();
+						oRes = oNumbering.GetJSONNumbering(oNumPr);
+					}
+				}
 				else
 				{
 					oRes = _numInfo;

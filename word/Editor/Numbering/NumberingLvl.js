@@ -1596,7 +1596,8 @@ CNumberingLvl.prototype.private_ReadLvlTextFromBinary = function(oReader)
  */
 CNumberingLvl.prototype.IsBulleted = function()
 {
-	return this.GetFormat() === Asc.c_oAscNumberingFormat.Bullet;
+	const nFormat = this.GetFormat();
+	return nFormat === Asc.c_oAscNumberingFormat.Bullet || nFormat === Asc.c_oAscNumberingFormat.None;
 };
 /**
  * Проверяем является ли данный уровень нумерованным
