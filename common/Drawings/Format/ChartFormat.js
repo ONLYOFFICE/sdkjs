@@ -7568,6 +7568,9 @@
     CAxisBase.prototype.isHorizontal = function() {
         return this.axPos === AX_POS_B || this.axPos === AX_POS_T;
     };
+    CAxisBase.prototype.isVertical = function() {
+        return this.axPos === AX_POS_L || this.axPos === AX_POS_R;
+    };
     CAxisBase.prototype.getGridlinesSetting = function() {
         if(!this.majorGridlines && !this.minorGridlines)
             return Asc.c_oAscGridLinesSettings.none;
@@ -7846,6 +7849,16 @@
 			let nType = this.getObjectType();
 			if(nType === AscDFH.historyitem_type_CatAx ||
 				nType === AscDFH.historyitem_type_DateAx) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	CAxisBase.prototype.isRadarValues = function() {
+		if(this.isRadarAxis()) {
+			let nType = this.getObjectType();
+			if(nType === AscDFH.historyitem_type_ValAx) {
 				return true;
 			}
 		}
