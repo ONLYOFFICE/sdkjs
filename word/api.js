@@ -4172,6 +4172,13 @@ background-repeat: no-repeat;\
 		return [];
 	};
 
+	asc_docs_api.prototype.asc_CompareNumberingPresets = function(oJSON1, oJSON2)
+	{
+		const sJSON1 = typeof oJSON1 === 'string' ? oJSON1 : JSON.stringify(oJSON1);
+		const sJSON2 = typeof oJSON2 === 'string' ? oJSON2 : JSON.stringify(oJSON2);
+
+		return sJSON1 === sJSON2;
+	};
 	asc_docs_api.prototype.asc_IsCurrentNumberingPreset = function (oJSON, bIsSingleNumbering)
 	{
 		const oLogicDocument = this.private_GetLogicDocument();
@@ -13932,6 +13939,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['put_ListTypeCustom']                        = asc_docs_api.prototype.put_ListTypeCustom;
 	asc_docs_api.prototype['asc_GetCurrentNumberingJson']               = asc_docs_api.prototype.asc_GetCurrentNumberingJson;
 	asc_docs_api.prototype['asc_IsCurrentNumberingPreset']              = asc_docs_api.prototype.asc_IsCurrentNumberingPreset;
+	asc_docs_api.prototype['asc_CompareNumberingPresets']               = asc_docs_api.prototype.asc_CompareNumberingPresets;
 	asc_docs_api.prototype['sync_UpdateListPatterns']                   = asc_docs_api.prototype.sync_UpdateListPatterns;
 	asc_docs_api.prototype['asc_GetAllJSONNums']                        = asc_docs_api.prototype.asc_GetAllJSONNums;
 	asc_docs_api.prototype['asc_ContinueNumbering']                     = asc_docs_api.prototype.asc_ContinueNumbering;
