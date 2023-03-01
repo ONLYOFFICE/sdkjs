@@ -12091,6 +12091,7 @@ function drawRadarChart(chart, chartsDrawer) {
 	this.chart = chart;
 	this.radarStyle = null;
 	this.valAx = null;
+	this.catAx = null;
 
 	this.paths = {};
 	this.fillPaths = [];
@@ -12107,6 +12108,7 @@ drawRadarChart.prototype = {
 		this.paths = {};
 		this.radarStyle = this.chart.radarStyle;
 		this.valAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_ValAx);
+		this.catAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_CatAx);
 
 		this._calculateLines();
 		if (this.radarStyle === AscFormat.RADAR_STYLE_FILLED) {
@@ -12115,33 +12117,27 @@ drawRadarChart.prototype = {
 	},
 
 	_calculateLines: function (fillPath) {
-		//соответствует подписям оси значений(OY)
-		var yPoints = this.valAx.yPoints;
-		var trueWidth = this.chartProp.trueWidth;
-
-		var xCenter = (this.chartProp.chartGutter._left + trueWidth / 2) / this.chartProp.pxToMM;
-		var yCenter = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;//(this.chartProp.chartGutter._top + trueHeight / 2) / this.chartProp.pxToMM;
-
-		var y, y1, x, x1, val, nextVal, seria, dataSeries, min, max;
-
 		var numCache = this.cChartDrawer.getNumCache(this.chart.series[0].val).pts;
 		if (!numCache) {
 			return;
 		}
 
-		var valueMinMax, summValues, maxRadius;
+		//соответствует подписям оси значений(OY)
+		var yPoints = this.valAx.yPoints;
+		var trueWidth = this.chartProp.trueWidth;
 
+		var xCenter = (this.chartProp.chartGutter._left + trueWidth / 2) / this.chartProp.pxToMM;
+		var yCenter = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
+
+		var valueMinMax, summValues, maxRadius;
 		if (yPoints && yPoints.length > 1) {
 
 			maxRadius = yPoints[0].pos - yPoints[yPoints.length - 1].pos;
 			valueMinMax = this._getMinMaxValue();
-
-			min = valueMinMax.min;
-			max = valueMinMax.max;
-
-			summValues = Math.abs(yPoints[0].val) + Math.abs(yPoints[yPoints.length - 1].val); // Math.abs(min) + Math.abs(max);//Math.abs(yPoints[0].val) + Math.abs(yPoints[yPoints.length - 1].val);
+			summValues = Math.abs(yPoints[0].val) + Math.abs(yPoints[yPoints.length - 1].val);
 		}
 
+		var y, y1, x, x1, val, nextVal, seria, dataSeries, min, max;
 		var tempAngle = 2 * Math.PI / numCache.length;
 		var radius, radius1, xFirst, yFirst, calcPath, points;
 		for (var i = 0; i < this.chart.series.length; i++) {
@@ -12201,11 +12197,14 @@ drawRadarChart.prototype = {
 					radius = y;
 					radius1 = y1;
 
-					y = yCenter - radius * Math.cos(n * tempAngle);
-					y1 = yCenter - radius1 * Math.cos((n + 1) * tempAngle);
+					let alpha1 = this._getAlpha(n, tempAngle);
+					let alpha2 = this._getAlpha(n + 1, tempAngle);
 
-					x = x + radius * Math.sin(n * tempAngle);
-					x1 = x1 + radius1 * Math.sin((n + 1) * tempAngle);
+					y = yCenter - radius * Math.cos(alpha1);
+					y1 = yCenter - radius1 * Math.cos(alpha2);
+
+					x = x + radius * Math.sin(alpha1);
+					x1 = x1 + radius1 * Math.sin(alpha2);
 
 					//AscFormat.RADAR_STYLE_MARKER AscFormat.RADAR_STYLE_FILLED  AscFormat.RADAR_STYLE_STANDARD
 					if (fillPath) {
@@ -12250,6 +12249,21 @@ drawRadarChart.prototype = {
 				}
 			}
 		}
+	},
+
+	_getAlpha: function (numPoint, tempAngle) {
+		//tempAngle - temporary, if alphaPoints in null
+		let res = null;
+		if (this.catAx && this.catAx.alphaPoints) {
+			for (let i = 0; i < this.catAx.alphaPoints.length; i++) {
+				if (numPoint === this.catAx.alphaPoints[i].val - 1) {
+					return this.catAx.alphaPoints[i].pos;
+				}
+			}
+		} else {
+			return tempAngle * numPoint;
+		}
+		return res;
 	},
 
 	_calculateFillPath: function () {
