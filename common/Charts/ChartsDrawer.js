@@ -955,12 +955,15 @@ CChartsDrawer.prototype =
 
 		//исключение - когда среди диаграмм есть груговая
 		var pieChart = null;
+		var radarChart = null;
 		var charts = plotArea.charts;
 		for(i = 0; i < charts.length; i++) {
 			var chartType = this._getChartType(charts[i]);
 			if(c_oChartTypes.Pie === chartType || c_oChartTypes.DoughnutChart === chartType) {
 				pieChart = charts[i];
 				break;
+			} else if (c_oChartTypes.Radar === chartType) {
+				radarChart = charts[i];
 			}
 		}
 		var is3dChart = this._isSwitchCurrent3DChart(chartSpace);
@@ -980,6 +983,21 @@ CChartsDrawer.prototype =
 			right += (width - pieSize)/2;
 			top += (height - pieSize)/2;
 			bottom += (height - pieSize)/2;
+		}
+
+		if (radarChart && (calculateTop || calculateBottom)) {
+			let radius, centerX, centerY;
+			centerY = chartSpace.extY - calculateBottom;
+			radius = centerY - calculateTop;
+
+			calculateBottom = chartSpace.extY - calculateTop - 2*radius;
+
+			let valAx = this.getAxisFromAxId(radarChart.axId, AscDFH.historyitem_type_ValAx);
+			centerX = valAx && valAx.posX;
+			if (centerX) {
+				calculateLeft = centerX - radius;
+				calculateRight = chartSpace.extX - calculateLeft - radius * 2;
+			}
 		}
 
 		if(null === pieChart || is3dChart) {
@@ -12194,7 +12212,7 @@ drawRadarChart.prototype = {
 			let pt, nextPt, alpha1, alpha2;
 			let isOnePoint = oNumCache.ptCount === 1;
 			for (n = 0; n < (isOnePoint ? oNumCache.ptCount : oNumCache.ptCount); n++) {
-
+				//first point
 				pt = oNumCache.getPtByIndex(n);
 				if (!pt) {
 					continue;
@@ -12202,6 +12220,7 @@ drawRadarChart.prototype = {
 				radius = this._getRadius(pt.val, valueMinMax);
 				alpha1 = this._getAlpha(pt.idx);
 
+				//second point
 				if (!isOnePoint) {
 					nextPt = this.cChartDrawer.getNextCachePoint(oNumCache, n, dispBlanksAs);
 					if (!nextPt) {
@@ -12212,9 +12231,9 @@ drawRadarChart.prototype = {
 				}
 
 				y = yCenter - radius * Math.cos(alpha1);
-				y1 = !isOnePoint ? yCenter - radius1 * Math.cos(alpha2) : null;
-
 				x = xCenter + radius * Math.sin(alpha1);
+
+				y1 = !isOnePoint ? yCenter - radius1 * Math.cos(alpha2) : null;
 				x1 = !isOnePoint ? xCenter + radius1 * Math.sin(alpha2) : null;
 
 				if (isOnePoint) {
