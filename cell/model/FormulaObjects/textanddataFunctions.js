@@ -190,6 +190,10 @@ function (window, undefined) {
 		function arrayToTextGeneral (array, format) {
 			let resStr = "", arg0Dimensions;
 
+			if (!format) {
+				format = new cNumber(0);
+			}
+
 			if (cElementType.error === format.type) {
 				return format;
 			}
@@ -211,6 +215,10 @@ function (window, undefined) {
 			for (let i = 0; i < arg0Dimensions.row; i++) {
 				for (let j = 0; j < arg0Dimensions.col; j++) {
 					let val = array.getValueByRowCol ? array.getValueByRowCol(i, j) : array.getElementRowCol(i, j);
+					if (!val) {
+						resStr += format === 1 ? "," : ", ";
+						continue;
+					}
 					if (cElementType.string === val.type && format === 1) {
 						val = '"' + val.getValue() + '"';
 					} else {
