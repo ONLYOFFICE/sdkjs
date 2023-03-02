@@ -267,14 +267,14 @@ CNumberingLvl.prototype.IsEqualPreview = function(oLvl, oPr)
 	{
 		const nCurNumberPosition = this.GetNumberPosition() - oPr.isMultiLvlPreviewPreset.paragraphInd.numberPosition;
 		const nCompareNumberPosition = oLvl.GetNumberPosition() - oPr.isMultiLvlPreviewPreset.jsonInd.numberPosition;
-		if (!AscFormat.fApproxEqual(nCurNumberPosition - nCompareNumberPosition, 0, 0.00001))
+		if (!AscFormat.fApproxEqual(nCurNumberPosition - nCompareNumberPosition, 0, 0.1))
 		{
 			return false;
 		}
 
 		const nCurIndentSize = this.GetIndentSize() - oPr.isMultiLvlPreviewPreset.paragraphInd.indentSize;
 		const nCompareIndentSize = oLvl.GetIndentSize() - oPr.isMultiLvlPreviewPreset.jsonInd.indentSize;
-		if (!AscFormat.fApproxEqual(nCurIndentSize - nCompareIndentSize, 0, 0.00001))
+		if (!AscFormat.fApproxEqual(nCurIndentSize - nCompareIndentSize, 0, 0.1))
 		{
 			return false;
 		}
