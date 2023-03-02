@@ -5697,7 +5697,22 @@ CChartsDrawer.prototype =
 			}
 		}
 		return pt;
-	}
+	},
+
+	calculateLine: function (x, y, x1, y1) {
+		var pathId = this.cChartSpace.AllocPath();
+		var path = this.cChartSpace.GetPath(pathId);
+
+		var pathH = this.calcProp.pathH;
+		var pathW = this.calcProp.pathW;
+
+
+		path.moveTo(x * pathW, y * pathH);
+		path.lnTo(x1 * pathW, y1 * pathH);
+
+
+		return pathId;
+	},
 };
 
 
@@ -12249,7 +12264,7 @@ drawRadarChart.prototype = {
 			this.paths.series[indexSer] = [];
 		}
 
-		this.paths.series[indexSer][indexPt] = this._calculateLine(x1, y1, x2, y2);
+		this.paths.series[indexSer][indexPt] =  this.cChartDrawer.calculateLine(x1, y1, x2, y2);
 	},
 
 	_getAlpha: function (numPoint) {
@@ -12393,19 +12408,6 @@ drawRadarChart.prototype = {
 		return {x: centerX, y: centerY};
 	},
 
-	_drawLines: function () {
-		//this.cShapeDrawer.Graphics.SaveGrState();
-		//this.cShapeDrawer.Graphics.AddClipRect(this.chartProp.chartGutter._left / this.chartProp.pxToMM, this.chartProp.chartGutter._top / this.chartProp.pxToMM, this.chartProp.trueWidth / this.chartProp.pxToMM, this.chartProp.trueHeight / this.chartProp.pxToMM);
-		if (this.radarStyle === AscFormat.RADAR_STYLE_FILLED) {
-			for (var i = 0; i < this.fillPaths.length; i++) {
-				this.cChartDrawer.drawPath(this.fillPaths[i].path, this.fillPaths[i].pen, this.fillPaths[i].brush);
-			}
-		} else {
-			this.cChartDrawer.drawPaths(this.paths, this.chart.series, true);
-			this.cChartDrawer.drawPathsPoints(this.paths, this.chart.series);
-		}
-	},
-
 	_getRadius: function (val, valueMinMax) {
 		var yPoints = this.valAx.yPoints;
 		val = parseFloat(val);
@@ -12451,19 +12453,17 @@ drawRadarChart.prototype = {
 		return (val / sumValues) * maxRadius;
 	},
 
-	_calculateLine: function (x, y, x1, y1) {
-
-		var pathId = this.cChartSpace.AllocPath();
-		var path = this.cChartSpace.GetPath(pathId);
-
-		var pathH = this.chartProp.pathH;
-		var pathW = this.chartProp.pathW;
-
-		path.moveTo(x * pathW, y * pathH);
-		path.lnTo(x1 * pathW, y1 * pathH);
-
-
-		return pathId;
+	_drawLines: function () {
+		//this.cShapeDrawer.Graphics.SaveGrState();
+		//this.cShapeDrawer.Graphics.AddClipRect(this.chartProp.chartGutter._left / this.chartProp.pxToMM, this.chartProp.chartGutter._top / this.chartProp.pxToMM, this.chartProp.trueWidth / this.chartProp.pxToMM, this.chartProp.trueHeight / this.chartProp.pxToMM);
+		if (this.radarStyle === AscFormat.RADAR_STYLE_FILLED) {
+			for (var i = 0; i < this.fillPaths.length; i++) {
+				this.cChartDrawer.drawPath(this.fillPaths[i].path, this.fillPaths[i].pen, this.fillPaths[i].brush);
+			}
+		} else {
+			this.cChartDrawer.drawPaths(this.paths, this.chart.series, true);
+			this.cChartDrawer.drawPathsPoints(this.paths, this.chart.series);
+		}
 	}
 };
 
