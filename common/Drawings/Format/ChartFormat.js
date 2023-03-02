@@ -12225,12 +12225,12 @@
         this.setParentToChild(pr);
     };
     CRadarSeries.prototype.setMarker = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_RadarSeries_SetCat, this.marker, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_RadarSeries_SetMarker, this.marker, pr));
         this.marker = pr;
         this.setParentToChild(pr);
     };
     CRadarSeries.prototype.setVal = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_RadarSeries_SetCat, this.val, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_RadarSeries_SetVal, this.val, pr));
         this.val = pr;
         this.onChangeDataRefs();
         this.setParentToChild(pr);
