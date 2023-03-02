@@ -12147,12 +12147,12 @@ drawRadarChart.prototype = {
 		var xCenter = this.valAx.posX;
 		var yCenter = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
 
-		var valueMinMax, summValues, maxRadius;
+		var valueMinMax, sumValues, maxRadius;
 		if (yPoints && yPoints.length > 1) {
 
 			maxRadius = yPoints[0].pos - yPoints[yPoints.length - 1].pos;
 			valueMinMax = this._getMinMaxValue();
-			summValues = Math.abs(yPoints[0].val) + Math.abs(yPoints[yPoints.length - 1].val);
+			sumValues = Math.abs(yPoints[0].val) + Math.abs(yPoints[yPoints.length - 1].val);
 		}
 
 		let dispBlanksAs = this.cChartSpace.chart.dispBlanksAs;
@@ -12214,23 +12214,19 @@ drawRadarChart.prototype = {
 					//рассчитываем значения
 					val = this._getYVal(pt.val, valueMinMax);
 					nextVal = this._getYVal(nextPt.val, valueMinMax);
-
 					if (this.valAx.scaling.logBase && (val < 0)) {
 						break;
 					}
 
-					y = (val / summValues) * maxRadius;
-					y1 = (nextVal / summValues) * maxRadius;
-
+					y = (val / sumValues) * maxRadius;
+					y1 = (nextVal / sumValues) * maxRadius;
 					x = xCenter;
 					x1 = xCenter;
-
 					radius = y;
 					radius1 = y1;
 
 					let alpha1 = this._getAlpha(pt.idx);
 					let alpha2 = this._getAlpha(nextPt.idx);
-
 					y = yCenter - radius * Math.cos(alpha1);
 					y1 = yCenter - radius1 * Math.cos(alpha2);
 
@@ -12242,44 +12238,47 @@ drawRadarChart.prototype = {
 						points = { x: x, y: y, x1: x1, y1: y1 };
 						calcPath(dataSeries, n, points);
 					} else {
-						if (!this.paths.series) {
-							this.paths.series = [];
-						}
-						if (!this.paths.series[i]) {
-							this.paths.series[i] = [];
-						}
-
-						this.paths.series[i][n] = this._calculateLine(x, y, x1, y1);
-
+						this._addLineToPaths(x, y, x1, y1, i, n);
 						if (n === 0) {
 							xFirst = x;
 							yFirst = y;
 						}
-
-
 						if (n === dataSeries.length - 2) {
-							this.paths.series[i][n + 1] = this._calculateLine(x1, y1, xFirst, yFirst);
+							this._addLineToPaths(x1, y1, xFirst, yFirst, i, n + 1);
 						}
 
-						if (!this.paths.points) {
-							this.paths.points = [];
+						if (n === 0) {
+							this._addPointToPaths(x, y, pt, i, n);
 						}
-						if (!this.paths.points[i]) {
-							this.paths.points[i] = [];
-						}
-
-						if (dataSeries[n].compiledMarker) {
-							if (n === 0) {
-								this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, dataSeries[n].compiledMarker.size, dataSeries[n].compiledMarker.symbol);
-								this.paths.points[i][n + 1] = this.cChartDrawer.calculatePoint(x1, y1, dataSeries[n + 1].compiledMarker.size, dataSeries[n + 1].compiledMarker.symbol);
-							} else {
-								this.paths.points[i][n + 1] = this.cChartDrawer.calculatePoint(x1, y1, dataSeries[n + 1].compiledMarker.size, dataSeries[n + 1].compiledMarker.symbol);
-							}
-						}
+						this._addPointToPaths(x1, y1, nextPt, i, n + 1);
 					}
 				}
 			}
 		}
+	},
+
+	_addPointToPaths: function (x, y, pt, indexSer, indexPt) {
+		if (!this.paths.points) {
+			this.paths.points = [];
+		}
+		if (!this.paths.points[indexSer]) {
+			this.paths.points[indexSer] = [];
+		}
+
+		if (pt.compiledMarker) {
+			this.paths.points[indexSer][indexPt] = this.cChartDrawer.calculatePoint(x, y, pt.compiledMarker.size, pt.compiledMarker.symbol);
+		}
+	},
+
+	_addLineToPaths: function (x1, y1, x2, y2, indexSer, indexPt) {
+		if (!this.paths.series) {
+			this.paths.series = [];
+		}
+		if (!this.paths.series[indexSer]) {
+			this.paths.series[indexSer] = [];
+		}
+
+		this.paths.series[indexSer][indexPt] = this._calculateLine(x1, y1, x2, y2);
 	},
 
 	_getAlpha: function (numPoint) {
