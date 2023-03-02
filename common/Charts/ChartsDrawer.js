@@ -12135,34 +12135,34 @@ drawRadarChart.prototype = {
 	},
 
 	_calculateLines: function (fillPath) {
-		var numCache = this.cChartDrawer.getNumCache(this.chart.series[0].val).pts;
+		let numCache = this.cChartDrawer.getNumCache(this.chart.series[0].val).pts;
 		if (!numCache) {
 			return;
 		}
 
-		//соответствует подписям оси значений(OY)
-		var yPoints = this.valAx.yPoints;
-		var trueWidth = this.chartProp.trueWidth;
+		let dispBlanksAs = this.cChartSpace.chart.dispBlanksAs;
+		let yPoints = this.valAx.yPoints;
 
-		var xCenter = this.valAx.posX;
-		var yCenter = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
+		let xCenter = this.valAx.posX;
+		let yCenter = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
 
-		var valueMinMax, sumValues, maxRadius;
+		let valueMinMax;
 		if (yPoints && yPoints.length > 1) {
-
-			maxRadius = yPoints[0].pos - yPoints[yPoints.length - 1].pos;
 			valueMinMax = this._getMinMaxValue();
-			sumValues = Math.abs(yPoints[0].val) + Math.abs(yPoints[yPoints.length - 1].val);
 		}
 
-		let dispBlanksAs = this.cChartSpace.chart.dispBlanksAs;
 
-		var y, y1, x, x1, val, nextVal, seria, dataSeries;
-		var radius, radius1, xFirst, yFirst, calcPath, points;
-		for (var i = 0; i < this.chart.series.length; i++) {
+		//TODO
+		/*if (this.valAx.scaling.logBase && (val < 0)) {
+			break;
+		}*/
 
-			seria = this.chart.series[i];
-			var oNumCache = this.cChartDrawer.getNumCache(seria.val);
+		let y, y1, x, x1, val, nextVal, curSeries, dataSeries;
+		let radius, radius1, xFirst, yFirst, calcPath, points;
+		for (let i = 0; i < this.chart.series.length; i++) {
+
+			curSeries = this.chart.series[i];
+			let oNumCache = this.cChartDrawer.getNumCache(curSeries.val);
 			if (!oNumCache) {
 				continue;
 			}
@@ -12171,87 +12171,58 @@ drawRadarChart.prototype = {
 				continue;
 			}
 
-			if (dataSeries.length === 1) {
-				n = 0;
-				//рассчитываем значения
-				let pt = oNumCache.getPtByIndex(n);
-				val = this._getYVal(pt.val);
+			let n = 0;
 
-				//точки находятся внутри диапазона
-				y = val * maxRadius;
-				x = xCenter;
+			if (fillPath) {
+				calcPath = this._calculateFillPath();
+			}
+			let pt, nextPt, alpha1, alpha2;
+			let isOnePoint = oNumCache.ptCount === 1;
+			for (n = 0; n < (isOnePoint ? oNumCache.ptCount : oNumCache.ptCount); n++) {
 
-				radius = y;
-
-				let alpha = this._getAlpha(n);
-				y = yCenter - radius * Math.cos(alpha);
-				x = x + radius * Math.sin(alpha);
-
-				if (!this.paths.points) {
-					this.paths.points = [];
+				pt = oNumCache.getPtByIndex(n);
+				if (!pt) {
+					continue;
 				}
-				if (!this.paths.points[i]) {
-					this.paths.points[i] = [];
-				}
-				if (dataSeries[n].compiledMarker) {
-					this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, dataSeries[n].compiledMarker.size, dataSeries[n].compiledMarker.symbol);
-				}
-			} else {
-				if (fillPath) {
-					calcPath = this._calculateFillPath();
-				}
-				for (var n = 0; n < oNumCache.ptCount - 1; n++) {
+				radius = this._getRadius(pt.val, valueMinMax);
+				alpha1 = this._getAlpha(pt.idx);
 
-					let pt = oNumCache.getPtByIndex(n);
-					if (!pt) {
-						continue;
-					}
-					let nextPt = this.cChartDrawer.getNextCachePoint(oNumCache, n, dispBlanksAs);
+				if (!isOnePoint) {
+					nextPt = this.cChartDrawer.getNextCachePoint(oNumCache, n, dispBlanksAs);
 					if (!nextPt) {
 						continue;
 					}
+					radius1 =  this._getRadius(nextPt.val, valueMinMax);
+					alpha2 = this._getAlpha(nextPt.idx);
+				}
 
-					//рассчитываем значения
-					val = this._getYVal(pt.val, valueMinMax);
-					nextVal = this._getYVal(nextPt.val, valueMinMax);
-					if (this.valAx.scaling.logBase && (val < 0)) {
-						break;
-					}
+				y = yCenter - radius * Math.cos(alpha1);
+				y1 = !isOnePoint ? yCenter - radius1 * Math.cos(alpha2) : null;
 
-					y = (val / sumValues) * maxRadius;
-					y1 = (nextVal / sumValues) * maxRadius;
-					x = xCenter;
-					x1 = xCenter;
-					radius = y;
-					radius1 = y1;
+				x = xCenter + radius * Math.sin(alpha1);
+				x1 = !isOnePoint ? xCenter + radius1 * Math.sin(alpha2) : null;
 
-					let alpha1 = this._getAlpha(pt.idx);
-					let alpha2 = this._getAlpha(nextPt.idx);
-					y = yCenter - radius * Math.cos(alpha1);
-					y1 = yCenter - radius1 * Math.cos(alpha2);
-
-					x = x + radius * Math.sin(alpha1);
-					x1 = x1 + radius1 * Math.sin(alpha2);
-
+				if (isOnePoint) {
+					this._addPointToPaths(x, y, pt, i, n);
+				} else if (fillPath) {
 					//AscFormat.RADAR_STYLE_MARKER AscFormat.RADAR_STYLE_FILLED  AscFormat.RADAR_STYLE_STANDARD
-					if (fillPath) {
-						points = { x: x, y: y, x1: x1, y1: y1 };
-						calcPath(dataSeries, n, points);
-					} else {
-						this._addLineToPaths(x, y, x1, y1, i, n);
-						if (n === 0) {
-							xFirst = x;
-							yFirst = y;
-						}
-						if (n === dataSeries.length - 2) {
-							this._addLineToPaths(x1, y1, xFirst, yFirst, i, n + 1);
-						}
-
-						if (n === 0) {
-							this._addPointToPaths(x, y, pt, i, n);
-						}
-						this._addPointToPaths(x1, y1, nextPt, i, n + 1);
+					points = { x: x, y: y, x1: x1, y1: y1 };
+					calcPath(dataSeries, n, points);
+				} else {
+					this._addLineToPaths(x, y, x1, y1, i, n);
+					if (n === 0) {
+						xFirst = x;
+						yFirst = y;
 					}
+					if (n === oNumCache.ptCount - 2) {
+						//return to first
+						this._addLineToPaths(x1, y1, xFirst, yFirst, i, n + 1);
+					}
+
+					if (n === 0) {
+						this._addPointToPaths(x, y, pt, i, n);
+					}
+					this._addPointToPaths(x1, y1, nextPt, i, n + 1);
 				}
 			}
 		}
@@ -12435,7 +12406,7 @@ drawRadarChart.prototype = {
 		}
 	},
 
-	_getYVal: function (val, valueMinMax) {
+	_getRadius: function (val, valueMinMax) {
 		var yPoints = this.valAx.yPoints;
 		val = parseFloat(val);
 		let tempVal = val;
@@ -12473,7 +12444,11 @@ drawRadarChart.prototype = {
 				}
 			}
 		}
-		return val;
+
+		let maxRadius = yPoints[0].pos - yPoints[yPoints.length - 1].pos;
+		let sumValues = Math.abs(yPoints[0].val) + Math.abs(yPoints[yPoints.length - 1].val);
+
+		return (val / sumValues) * maxRadius;
 	},
 
 	_calculateLine: function (x, y, x1, y1) {
