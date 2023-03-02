@@ -967,7 +967,7 @@ CChartsDrawer.prototype =
 			}
 		}
 		var is3dChart = this._isSwitchCurrent3DChart(chartSpace);
-		if(!is3dChart && null !== pieChart) {
+		if(!is3dChart && (null !== pieChart || null !== radarChart)) {
 			//вычисляем истинную(первоначальную) ширину и высоту диаграммы
 			left = this._getStandartMargin(left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
 			bottom = this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
@@ -1000,7 +1000,7 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		if(null === pieChart || is3dChart) {
+		if((null === pieChart && null === radarChart) || is3dChart) {
 			left += this._getStandartMargin(left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
 			bottom += this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
 			top += this._getStandartMargin(top, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
