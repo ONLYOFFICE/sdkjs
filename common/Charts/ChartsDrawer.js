@@ -12184,7 +12184,6 @@ drawRadarChart.prototype = {
 			valueMinMax = this._getMinMaxValue();
 		}
 
-
 		//TODO
 		/*if (this.valAx.scaling.logBase && (val < 0)) {
 			break;
@@ -12204,14 +12203,13 @@ drawRadarChart.prototype = {
 				continue;
 			}
 
-			let n = 0;
-
 			if (fillPath) {
 				calcPath = this._calculateFillPath();
 			}
+
 			let pt, nextPt, alpha1, alpha2;
 			let isOnePoint = oNumCache.ptCount === 1;
-			for (n = 0; n < (isOnePoint ? oNumCache.ptCount : oNumCache.ptCount); n++) {
+			for (let n = 0; n < (isOnePoint ? oNumCache.ptCount : oNumCache.ptCount); n++) {
 				//first point
 				pt = oNumCache.getPtByIndex(n);
 				if (!pt) {
