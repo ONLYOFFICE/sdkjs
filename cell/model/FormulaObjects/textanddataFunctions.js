@@ -184,11 +184,17 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.isXLFN = true;
 	cARRAYTOTEXT.prototype.argumentsMin = 1;
 	cARRAYTOTEXT.prototype.argumentsMax = 2;
-	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1};
+	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1, 1: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
-		function multiMode (array, format) {
+		function arrayToTextGeneral (array, format) {
 			let resStr = "", arg0Dimensions;
+
+			if (cElementType.error === format.type) {
+				return format;
+			}
+
+			format = format.tocNumber().getValue();
 
 			if (format !== 0 && format !== 1) {
 				return new cError(cErrorType.wrong_value_type);
@@ -224,14 +230,13 @@ function (window, undefined) {
 
 		function rangeModeFunc (arg0, arg1) {
 			let resArr = new cArray(),
-				arg0Dimensions = arg0.getDimensions(),
 				arg1Dimensions = arg1.getDimensions();
 
 			for (let i = 0; i < arg1Dimensions.row; i++) {
 				resArr.addRow();
 				for (let j = 0; j < arg1Dimensions.col; j++) {
 					let format = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
-					resArr.addElement(multiMode(arg0, format));
+					resArr.addElement(arrayToTextGeneral(arg0, format));
 				}
 			}
 
@@ -259,28 +264,17 @@ function (window, undefined) {
 
 		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
 			// arg1 is not array/cellsRange
-			arg1 = arg1.tocNumber().getValue();
 			rangeMode = false;
 		} else {
 			// arg1 is array/cellsRange and need to call array helper
 			rangeMode = true;
 		}
 
-
-		// ??? maybe delete this?
-		if (cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
-			if (rangeMode) {
-				// ? value && array/range
-				return rangeModeFunc(arg0, arg1);
-			}
-			return multiMode(arg0, arg1);
-		} else {
-			if (rangeMode) {
-				// ? array/range && array/range
-				return rangeModeFunc(arg0, arg1);
-			}
-			return multiMode(arg0, arg1);
+		if (rangeMode) {
+			// ? array/range && array/range
+			return rangeModeFunc(arg0, arg1);
 		}
+		return arrayToTextGeneral(arg0, arg1);
 	};
 
 
