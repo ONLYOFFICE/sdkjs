@@ -2767,6 +2767,10 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         //    но у которых вертикальное объединение не заканчивается на данной странице.
         if ( true === bNextPage )
         {
+			// TODO: Здесь происходит расчет параметра FirstPage для строки, на которой произошел разрыв страницы
+			//       Непонятная ситуация, если строка разывается и на следующей странице, то параметр высчитывается
+			//       зачем-то заново с учетом текущей, хотя он имеет смысл только для первой страницы. Надо разобраться
+			
             var bContentOnFirstPage   = false;
             var bNoContentOnFirstPage = false;
             for ( var CurCell = 0; CurCell < CellsCount; CurCell++ )
@@ -2790,7 +2794,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 }
             }
 			
-			if (CurRow > FirstRow && this.RowsInfo[CurRow - 1].VMerged)
+			if ((CurRow > FirstRow || CurPage > 0) && this.RowsInfo[CurRow - 1].VMerged)
 			{
 				bContentOnFirstPage   = true;
 				bNoContentOnFirstPage = false;
@@ -2962,7 +2966,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 }
             }
 	
-			if (CurRow > FirstRow && this.RowsInfo[CurRow - 1].VMerged)
+			if ((CurRow > FirstRow || CurPage > 0) && this.RowsInfo[CurRow - 1].VMerged)
 				bContentOnFirstPage = true;
 
             this.RowsInfo[CurRow].FirstPage = bContentOnFirstPage;
