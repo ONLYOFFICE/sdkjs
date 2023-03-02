@@ -244,13 +244,32 @@ CNum.prototype.GetJSONNumbering = function(bIsSingleLevel, nLvl)
 	{
 		let bIsBulleted = false;
 		let bIsNumbered = false;
-
+		let bIsHeading = true;
+		let oApi = Asc.editor || editor;
+		let oStyles;
+		if (oApi.isDocumentEditor)
+		{
+			const oLogicDocument = oApi.private_GetLogicDocument();
+			oStyles = oLogicDocument.GetStyles();
+		}
 		for (let iLvl = 0; iLvl < 9; ++iLvl)
 		{
 			let numLvl = this.GetLvl(iLvl);
 			bIsBulleted = bIsBulleted || numLvl.IsBulleted();
 			bIsNumbered = bIsNumbered || numLvl.IsNumbered();
 			oResult["Lvl"][iLvl] = numLvl.ToJson();
+			if (bIsHeading && oStyles)
+			{
+				const sHeadingId = oStyles.GetDefaultHeading(iLvl);
+				if (numLvl.GetPStyle() !== sHeadingId)
+				{
+					bIsHeading = false;
+				}
+			}
+		}
+		if (bIsHeading)
+		{
+			oResult["Headings"] = true;
 		}
 
 		if (bIsBulleted && bIsNumbered)
