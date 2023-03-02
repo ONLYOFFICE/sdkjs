@@ -12190,7 +12190,7 @@ drawRadarChart.prototype = {
 		}*/
 
 		let y, y1, x, x1, val, nextVal, curSeries, dataSeries;
-		let radius, radius1, xFirst, yFirst, calcPath, points;
+		let radius1, radius2, xFirst, yFirst, calcPath, points;
 		for (let i = 0; i < this.chart.series.length; i++) {
 
 			curSeries = this.chart.series[i];
@@ -12212,49 +12212,58 @@ drawRadarChart.prototype = {
 			for (let n = 0; n < (isOnePoint ? oNumCache.ptCount : oNumCache.ptCount); n++) {
 				//first point
 				pt = oNumCache.getPtByIndex(n);
-				if (!pt) {
-					continue;
+				x = y = null;
+				if (pt) {
+					radius1 = this._getRadius(pt.val, valueMinMax);
+					alpha1 = this._getAlpha(pt.idx);
+
+					y = yCenter - radius1 * Math.cos(alpha1);
+					x = xCenter + radius1 * Math.sin(alpha1);
+
+					if (n === 0) {
+						xFirst = x;
+						yFirst = y;
+					}
 				}
-				radius = this._getRadius(pt.val, valueMinMax);
-				alpha1 = this._getAlpha(pt.idx);
 
 				//second point
 				if (!isOnePoint) {
 					nextPt = this.cChartDrawer.getNextCachePoint(oNumCache, n, dispBlanksAs);
-					if (!nextPt) {
-						continue;
+					if (nextPt) {
+						radius2 = this._getRadius(nextPt.val, valueMinMax);
+						alpha2 = this._getAlpha(nextPt.idx);
 					}
-					radius1 =  this._getRadius(nextPt.val, valueMinMax);
-					alpha2 = this._getAlpha(nextPt.idx);
 				}
 
-				y = yCenter - radius * Math.cos(alpha1);
-				x = xCenter + radius * Math.sin(alpha1);
-
-				y1 = !isOnePoint ? yCenter - radius1 * Math.cos(alpha2) : null;
-				x1 = !isOnePoint ? xCenter + radius1 * Math.sin(alpha2) : null;
+				x1 = y1 = null;
+				if (nextPt) {
+					y1 = !isOnePoint ? yCenter - radius2 * Math.cos(alpha2) : null;
+					x1 = !isOnePoint ? xCenter + radius2 * Math.sin(alpha2) : null;
+				}
 
 				if (isOnePoint) {
 					this._addPointToPaths(x, y, pt, i, n);
 				} else if (fillPath) {
 					//AscFormat.RADAR_STYLE_MARKER AscFormat.RADAR_STYLE_FILLED  AscFormat.RADAR_STYLE_STANDARD
-					points = { x: x, y: y, x1: x1, y1: y1 };
+					points = {x: x, y: y, x1: x1, y1: y1};
 					calcPath(dataSeries, n, points);
 				} else {
-					this._addLineToPaths(x, y, x1, y1, i, n);
-					if (n === 0) {
-						xFirst = x;
-						yFirst = y;
+					//1. draw main line
+					if (x1 !== null && x !== null) {
+						this._addLineToPaths(x, y, x1, y1, i, n);
 					}
-					if (n === oNumCache.ptCount - 2) {
-						//return to first
+					//2. draw last line(return by first point)
+					if (n === oNumCache.ptCount - 2 && xFirst != null && x1 !== null) {
 						this._addLineToPaths(x1, y1, xFirst, yFirst, i, n + 1);
 					}
-
-					if (n === 0) {
+					//3. draw first point marker
+					if (n === 0 && x !== null) {
 						this._addPointToPaths(x, y, pt, i, n);
 					}
-					this._addPointToPaths(x1, y1, nextPt, i, n + 1);
+					//4. draw next point marker
+					if (x1 !== null) {
+						this._addPointToPaths(x1, y1, nextPt, i, n + 1);
+					}
 				}
 			}
 		}
@@ -12281,14 +12290,14 @@ drawRadarChart.prototype = {
 			this.paths.series[indexSer] = [];
 		}
 
-		this.paths.series[indexSer][indexPt] =  this.cChartDrawer.calculateLine(x1, y1, x2, y2);
+		this.paths.series[indexSer][indexPt] = this.cChartDrawer.calculateLine(x1, y1, x2, y2);
 	},
 
 	_getAlpha: function (numPoint) {
 		let res = null;
 		if (this.catAx && this.catAx.alphaPoints) {
-			let oPt =this.catAx.alphaPoints[numPoint];
-			if(oPt) {
+			let oPt = this.catAx.alphaPoints[numPoint];
+			if (oPt) {
 				return oPt.pos;
 			}
 		}
@@ -12316,7 +12325,7 @@ drawRadarChart.prototype = {
 			if (dataSeries.length - 2 === n) {
 				pen = dataSeries[n].pen;
 				brush = dataSeries[n].brush;
-				t.fillPaths.push({ path: pathId, pen: pen, brush: brush });
+				t.fillPaths.push({path: pathId, pen: pen, brush: brush});
 			}
 			return pathId;
 		};
@@ -12340,12 +12349,12 @@ drawRadarChart.prototype = {
 				resMax = temp > resMax ? temp : resMax;
 			}
 		}
-		return { min: resMin, max: resMax };
+		return {min: resMin, max: resMax};
 	},
 
 	_calculateDLbl: function (chartSpace, ser, val) {
 		var numCache = this.cChartDrawer.getNumCache(this.chart.series[ser].val);
-		if(!numCache) {
+		if (!numCache) {
 			return;
 		}
 
@@ -12361,7 +12370,7 @@ drawRadarChart.prototype = {
 				oCommand = oPath.getCommandByIndex(0);
 			}
 		} else if (this.paths.points) {
-			if(this.paths.points[ser] && this.paths.points[ser][val]) {
+			if (this.paths.points[ser] && this.paths.points[ser][val]) {
 				oPath = this.cChartSpace.GetPath(this.paths.points[ser][val].path);
 				oCommand = oPath.getCommandByIndex(0);
 			}
