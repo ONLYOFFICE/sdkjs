@@ -12249,8 +12249,10 @@ drawRadarChart.prototype = {
 					this._addPointToPaths(x, y, pt, i, n);
 				} else if (fillPath) {
 					//AscFormat.RADAR_STYLE_MARKER AscFormat.RADAR_STYLE_FILLED  AscFormat.RADAR_STYLE_STANDARD
-					points = {x: x, y: y, x1: x1, y1: y1};
-					calcPath(dataSeries, n, points);
+					if (x1 !== null && x !== null && y !== null && y1 !== null) {
+						points = {x: x, y: y, x1: x1, y1: y1};
+						calcPath(dataSeries, n, points);
+					}
 				} else {
 					//1. draw main line
 					if (x1 !== null && x !== null) {
