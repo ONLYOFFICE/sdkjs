@@ -12251,7 +12251,7 @@ drawRadarChart.prototype = {
 					//AscFormat.RADAR_STYLE_MARKER AscFormat.RADAR_STYLE_FILLED  AscFormat.RADAR_STYLE_STANDARD
 					if (x1 !== null && x !== null && y !== null && y1 !== null) {
 						points = {x: x, y: y, x1: x1, y1: y1};
-						calcPath(dataSeries, n, points);
+						calcPath(pt, n, points, oNumCache);
 					}
 				} else {
 					//1. draw main line
@@ -12316,7 +12316,7 @@ drawRadarChart.prototype = {
 		var pathH = this.chartProp.pathH;
 		var pathW = this.chartProp.pathW;
 		var t = this;
-		return function (dataSeries, n, points) {
+		return function (pt, n, points, oNumCache) {
 			var pen, brush;
 			var y = points.y, y1 = points.y1, x = points.x, x1 = points.x1;
 
@@ -12328,9 +12328,9 @@ drawRadarChart.prototype = {
 				path.lnTo(x1 * pathW, y1 * pathH);
 			}
 
-			if (dataSeries.length - 2 === n) {
-				pen = dataSeries[n].pen;
-				brush = dataSeries[n].brush;
+			if (oNumCache.ptCount - 2 === n && pt) {
+				pen = pt.pen;
+				brush = pt.brush;
 				t.fillPaths.push({path: pathId, pen: pen, brush: brush});
 			}
 			return pathId;
