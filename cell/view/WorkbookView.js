@@ -3456,7 +3456,7 @@
 					  ws = t.getWorksheet(indexWorksheetTmp);
 					  indexWorksheet = indexWorksheetTmp;
 				  }
-				  ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages.length);
+				  ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages);
 			  }
 		  }
 	  });
@@ -3572,7 +3572,7 @@
 			ws.drawForPrint(printPreviewContext, null);
 		} else {
 			ws = this.getWorksheet(page.indexWorksheet);
-			ws.drawForPrint(printPreviewContext, page, index, printPreviewState.getPagesLength());
+			ws.drawForPrint(printPreviewContext, page, index, printPreviewState.pages && printPreviewState.pages.arrPages);
 		}
 	};
 

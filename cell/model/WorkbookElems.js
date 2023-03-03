@@ -12611,6 +12611,9 @@ QueryTableField.prototype.clone = function() {
 	asc_CPageSetup.prototype.asc_setFirstPageNumber = function (newVal) {
 		let oldVal = this.firstPageNumber;
 		let oldValUse = this.useFirstPageNumber;
+		if (newVal) {
+			newVal = parseInt(newVal);
+		}
 		this.firstPageNumber = newVal;
 		this.useFirstPageNumber = true;
 		if (this.ws && History.Is_On() && (oldVal !== this.firstPageNumber || oldValUse !== this.useFirstPageNumber)) {
@@ -13951,6 +13954,16 @@ QueryTableField.prototype.clone = function() {
 		this.sheetsProps[ws.index].row = maxRow;
 
 		return res;
+	};
+	CPrintPreviewState.prototype.getActivePageSetup = function () {
+		if (!this.isStart()) {
+			return;
+		}
+		let activeSheet = this.activeSheet;
+		let advancedOptions = this.advancedOptions;
+		if (advancedOptions && advancedOptions.pageOptionsMap) {
+			return advancedOptions.pageOptionsMap[activeSheet] && advancedOptions.pageOptionsMap[activeSheet].pageSetup;
+		}
 	};
 
 

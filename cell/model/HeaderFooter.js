@@ -54,7 +54,15 @@
 	HeaderFooterField.prototype.getText = function (ws, indexPrintPage, countPrintPages) {
 		let res = "";
 		let api = window["Asc"]["editor"];
-		let pageSetup = ws.model && ws.model.PagePrintOptions && ws.model.PagePrintOptions.pageSetup;
+		let printPreviewState = ws.workbook && ws.workbook.printPreviewState;
+		let pageSetup;
+		if (printPreviewState && printPreviewState.isStart()) {
+			pageSetup = printPreviewState.getActivePageSetup();
+		}
+		if (!pageSetup) {
+			pageSetup = ws.model && ws.model.PagePrintOptions && ws.model.PagePrintOptions.pageSetup;
+		}
+
 		switch(this.field) {
 			case asc.c_oAscHeaderFooterField.pageNumber: {
 				let firstPageNumber = (pageSetup && pageSetup.useFirstPageNumber && pageSetup.firstPageNumber) ? pageSetup.firstPageNumber : 1;

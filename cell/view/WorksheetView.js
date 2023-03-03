@@ -2635,11 +2635,28 @@
     result.height = this._getRowTop(oRange.r2) + this.getRowHeight(oRange.r2) - result.top;
 
     return result;
-  }
+  };
 
-	WorksheetView.prototype.drawForPrint = function (drawingCtx, printPagesData, indexPrintPage, countPrintPages) {
-
+	WorksheetView.prototype.drawForPrint = function (drawingCtx, printPagesData, indexPrintPage, pages) {
 		var t = this;
+		var countPrintPages = pages && pages.length;
+
+		var recalcIndexPrintPage = function (_indexPrintPage) {
+			//real header/footer index starts with new sheet
+			let newIndex = null;
+			if (pages && pages[indexPrintPage]) {
+				newIndex = 0;
+				let activeSheetIndex = pages[_indexPrintPage].indexWorksheet;
+				for (let i = _indexPrintPage - 1; i >= 0; i--) {
+					if (pages[i].indexWorksheet === activeSheetIndex) {
+						newIndex++;
+					}
+				}
+			}
+			return newIndex !== null ? newIndex : _indexPrintPage;
+		};
+		indexPrintPage = recalcIndexPrintPage(indexPrintPage);
+
 		this.stringRender.fontNeedUpdate = true;
 		if (null === printPagesData) {
 			// Напечатаем пустую страницу
