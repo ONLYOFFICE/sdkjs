@@ -187,7 +187,9 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1, 1: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
-		function arrayToTextGeneral (array, format) {
+		function arrayToTextGeneral (isRange, args) {
+			let array = args[0],
+				format = args[1];
 			let resStr = "", arg0Dimensions;
 
 			if (!format) {
@@ -236,24 +238,9 @@ function (window, undefined) {
 			return format === 1 ? new cString("{" + resStr.slice(0, -1) + "}") : new cString(resStr.slice(0, -2));
 		}
 
-		function rangeModeFunc (arg0, arg1) {
-			let resArr = new cArray(),
-				arg1Dimensions = arg1.getDimensions();
-
-			for (let i = 0; i < arg1Dimensions.row; i++) {
-				resArr.addRow();
-				for (let j = 0; j < arg1Dimensions.col; j++) {
-					let format = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
-					resArr.addElement(arrayToTextGeneral(arg0, format));
-				}
-			}
-
-			return resArr;
-		}
-
 		let arg0 = arg[0],
-			arg1 = arg[1] ? arg[1] : new cNumber(0),
-			rangeMode;	// arg1 is range/array
+			arg1 = arg[1] ? arg[1] : new cNumber(0),	
+			arrayOfArgs = [];
 
 		if (cElementType.error === arg0.type) {
 			return arg0;
@@ -270,19 +257,19 @@ function (window, undefined) {
 			}
 		}
 
+		arrayOfArgs.push(arg0, arg1);
+
 		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
 			// arg1 is not array/cellsRange
-			rangeMode = false;
+			return arrayToTextGeneral(false, arrayOfArgs);
 		} else {
 			// arg1 is array/cellsRange and need to call array helper
-			rangeMode = true;
-		}
+			let map = new Map();
+			map.set({isResultingArray: false}, arrayOfArgs[0]);
+			map.set({isResultingArray: true}, arrayOfArgs[1]);
 
-		if (rangeMode) {
-			// ? array/range && array/range
-			return rangeModeFunc(arg0, arg1);
+			return AscCommonExcel.getArrayHelper(map, arrayToTextGeneral);
 		}
-		return arrayToTextGeneral(arg0, arg1);
 	};
 
 

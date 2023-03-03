@@ -5663,7 +5663,7 @@
 			arg1 = arg[1] ? arg[1] : new cNumber(1),
 			arg2 = arg[2] ? arg[2] : new cNumber(1),
 			arg3 = arg[3] ? arg[3] : new cNumber(1),
-			res;
+			res, arrayOfArgs = [];
 
 		if (arg0.type === cElementType.empty) {
 			arg0 = new cNumber(1);
@@ -5678,14 +5678,25 @@
 			arg3 = new cNumber(1);
 		}
 
-		// if range/array type, call arrayHelper
-		res = AscCommonExcel.getArrayHelper([arg0, arg1, arg2, arg3], sequenceRangeArrayGeneral);
+		arrayOfArgs.push(arg0, arg1, arg2, arg3);
+
+		// if range/array type, write array to map and call arrayHelper
+		let mapOfArgs = new Map();
+		arrayOfArgs.map(function (item) {
+			if (item.type !== cElementType.array && item.type !== cElementType.cellsRange && item.type !== cElementType.cellsRange3D) {
+				mapOfArgs.set({isResultingArray: false}, item);
+			} else {
+				mapOfArgs.set({isResultingArray: true}, item);
+			}
+		});
+
+		res = AscCommonExcel.getArrayHelper(mapOfArgs, sequenceRangeArrayGeneral);
 
 		if (res) {
 			return res;
 		}
 
-		return res ? res : sequenceRangeArrayGeneral(false, [arg0, arg1, arg2, arg3]);
+		return res ? res : sequenceRangeArrayGeneral(false, arrayOfArgs);
 	};
 
 

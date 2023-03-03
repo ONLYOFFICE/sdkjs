@@ -8362,10 +8362,10 @@ function parserFormula( formula, parent, _ws ) {
 		let isContainsArray = false,
 			maxRows = 1,
 			maxColumns = 1;
-		
-		for (let i = 0; i < args.length; i++) {
-			if (cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) {
-				let argDimensions = args[i].getDimensions();
+
+		for (let arg of args) {
+			if (arg[0].isResultingArray) {
+				let argDimensions = arg[1].getDimensions();
 				maxRows = argDimensions.row > maxRows ? argDimensions.row : maxRows;
 				maxColumns = argDimensions.col > maxColumns ? argDimensions.col : maxColumns;
 				isContainsArray = true;
@@ -8383,10 +8383,10 @@ function parserFormula( formula, parent, _ws ) {
 			for (let j = 0; j < maxColumns; j++) {
 				let values = [];
 
-				for (let k = 0; k < args.length; k++) {
-					let value = args[k];
+				for (let arg of args) {
+					let value = arg[1];
 
-					if (cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) {
+					if ((cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) && arg[0].isResultingArray) {
 						let valueDimensions = value.getDimensions();
 						if (value.isOneElement()) {
 							// single row with single element
@@ -8400,7 +8400,7 @@ function parserFormula( formula, parent, _ws ) {
 						} else {
 							value = _getValueInRange(value, i, j);
 						}
-					} 
+					}
 
 					values.push(value);
 				}
