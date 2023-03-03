@@ -4622,7 +4622,10 @@ function(window, undefined) {
 					}
 				}
 				if(oCurAxis.isRadarAxis()) {
-					fDistanceSign = 1;
+					fDistanceSign = -1;
+					if(nOrientation === AscFormat.ORIENTATION_MAX_MIN) {
+						fDistanceSign = 1;
+					}
 				}
 				oCurAxis.posX = fAxisPos;
 				oCurAxis.yPoints = [];

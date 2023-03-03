@@ -12190,6 +12190,14 @@
 		}
 		return Asc.c_oAscChartTypeSettings.radar;
 	};
+	CRadarChart.prototype.setDLbls = function(oPr) {
+		if(oPr) {
+			if(oPr.dLblPos !== null) {
+				oPr.setDLblPos(null);
+			}
+		}
+		CChartBase.prototype.setDLbls.call(this, oPr);
+	};
 
     function CRadarSeries() {
         CLineSeries.call(this);
@@ -12224,6 +12232,11 @@
         this.setParentToChild(pr);
     };
     CRadarSeries.prototype.setDLbls = function(pr) {
+	    if(pr) {
+		    if(pr.dLblPos !== null) {
+			    pr.setDLblPos(null);
+		    }
+	    }
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_RadarSeries_SetDLbls, this.dLbls, pr));
         this.dLbls = pr;
         this.setParentToChild(pr);
@@ -12244,7 +12257,6 @@
         this.onChangeDataRefs();
         this.setParentToChild(pr);
     };
-
     var ORIENTATION_MAX_MIN = 0;
     var ORIENTATION_MIN_MAX = 1;
 
