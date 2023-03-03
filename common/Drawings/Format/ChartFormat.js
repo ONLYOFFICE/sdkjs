@@ -12075,11 +12075,11 @@
     };
 
     function CRadarChart() {
-        CChartBase.call(this);
+        CLineChart.call(this);
         this.radarStyle = null;
     }
 
-    InitClass(CRadarChart, CChartBase, AscDFH.historyitem_type_RadarChart);
+    InitClass(CRadarChart, CLineChart, AscDFH.historyitem_type_RadarChart);
     CRadarChart.prototype.getEmptySeries = function() {
         return new CRadarSeries();
     };
@@ -12135,11 +12135,11 @@
         History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_RadarChart_SetRadarStyle, this.radarStyle, pr));
         this.radarStyle = pr;
     };
-    CRadarChart.prototype.isMarkerChart = function() {
-        return this.radarStyle === AscFormat.RADAR_STYLE_MARKER;
-    };
+	CRadarChart.prototype.isFilled = function() {
+		return AscFormat.RADAR_STYLE_FILLED === this.radarStyle;
+	};
     CRadarChart.prototype.convertToLineChart = function() {
-        var bMarkerNull = AscFormat.RADAR_STYLE_FILLED == this.radarStyle;
+        var bMarkerNull = this.isFilled();
         var oLine = new AscFormat.CLineChart();
         oLine.setGrouping(AscFormat.GROUPING_STANDARD);
         if (null != this.varyColors)
@@ -12181,9 +12181,18 @@
         oLine.setSmooth(false);
         return oLine;
     };
+	CRadarChart.prototype.getChartType = function() {
+		if(this.isFilled()) {
+			return Asc.c_oAscChartTypeSettings.radarFilled;
+		}
+		if(this.isMarkerChart()) {
+			return Asc.c_oAscChartTypeSettings.radarMarker;
+		}
+		return Asc.c_oAscChartTypeSettings.radar;
+	};
 
     function CRadarSeries() {
-        CSeriesBase.call(this);
+        CLineSeries.call(this);
         this.cat = null;
         this.dLbls = null;
         this.dPt = [];
@@ -12192,7 +12201,7 @@
 
     }
 
-    InitClass(CRadarSeries, CSeriesBase, AscDFH.historyitem_type_RadarSeries);
+    InitClass(CRadarSeries, CLineSeries, AscDFH.historyitem_type_RadarSeries);
     CRadarSeries.prototype.getChildren = function() {
         var aRet = CSeriesBase.prototype.getChildren(this);
         aRet.push(this.dLbls);

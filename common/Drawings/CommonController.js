@@ -4582,6 +4582,12 @@
 							return AscFormat.CreateSurfaceChart(chartSeries, bUseCache, options, true, false);
 						case c_oAscChartTypeSettings.contourWireframe:
 							return AscFormat.CreateSurfaceChart(chartSeries, bUseCache, options, true, true);
+						case c_oAscChartTypeSettings.radar:
+							return AscFormat.CreateRadarChart(chartSeries, bUseCache, options, false, false);
+						case c_oAscChartTypeSettings.radarMarker:
+							return AscFormat.CreateRadarChart(chartSeries, bUseCache, options, true, false);
+						case c_oAscChartTypeSettings.radarFilled:
+							return AscFormat.CreateRadarChart(chartSeries, bUseCache, options, false, true);
 						case c_oAscChartTypeSettings.comboAreaBar:
 						case c_oAscChartTypeSettings.comboBarLine:
 						case c_oAscChartTypeSettings.comboBarLineSecondary:
