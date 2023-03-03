@@ -240,7 +240,7 @@ function (window, undefined) {
 
 		let arg0 = arg[0],
 			arg1 = arg[1] ? arg[1] : new cNumber(0),	
-			arrayOfArgs = [];
+			exceptions = new Map();
 
 		if (cElementType.error === arg0.type) {
 			return arg0;
@@ -257,18 +257,16 @@ function (window, undefined) {
 			}
 		}
 
-		arrayOfArgs.push(arg0, arg1);
+		if (cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			// skip checking this argument in helper function
+			exceptions.set(0, true);
+		}
 
 		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
 			// arg1 is not array/cellsRange
-			return arrayToTextGeneral(false, arrayOfArgs);
+			return arrayToTextGeneral(false, [arg0, arg1]);
 		} else {
-			// arg1 is array/cellsRange and need to call array helper
-			let map = new Map();
-			map.set({isResultingArray: false}, arrayOfArgs[0]);
-			map.set({isResultingArray: true}, arrayOfArgs[1]);
-
-			return AscCommonExcel.getArrayHelper(map, arrayToTextGeneral);
+			return AscCommonExcel.getArrayHelper([arg0, arg1], arrayToTextGeneral, exceptions);
 		}
 	};
 

@@ -8357,15 +8357,20 @@ function parserFormula( formula, parent, _ws ) {
 		return bRes;
 	}
 
-	function getArrayHelper(args, func) {
+	function getArrayHelper(args, func, exceptions) {
 		// check for arrays and find max length
 		let isContainsArray = false,
 			maxRows = 1,
 			maxColumns = 1;
 
-		for (let arg of args) {
-			if (arg[0].isResultingArray) {
-				let argDimensions = arg[1].getDimensions();
+		if (!exceptions) {
+			// spike
+			exceptions = new Map();
+		}
+	
+		for (let i = 0; i < args.length; i++) {
+			if ((cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) && (!exceptions.get(i))) {
+				let argDimensions = args[i].getDimensions();
 				maxRows = argDimensions.row > maxRows ? argDimensions.row : maxRows;
 				maxColumns = argDimensions.col > maxColumns ? argDimensions.col : maxColumns;
 				isContainsArray = true;
@@ -8383,10 +8388,10 @@ function parserFormula( formula, parent, _ws ) {
 			for (let j = 0; j < maxColumns; j++) {
 				let values = [];
 
-				for (let arg of args) {
-					let value = arg[1];
+				for (let k = 0; k < args.length; k++) {
+					let value = args[k];
 
-					if ((cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) && arg[0].isResultingArray) {
+					if ((cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) && (!exceptions.get(k))) {
 						let valueDimensions = value.getDimensions();
 						if (value.isOneElement()) {
 							// single row with single element
@@ -8404,6 +8409,7 @@ function parserFormula( formula, parent, _ws ) {
 
 					values.push(value);
 				}
+
 				resultArr.addElement(func(true, values));
 			}
 		}
