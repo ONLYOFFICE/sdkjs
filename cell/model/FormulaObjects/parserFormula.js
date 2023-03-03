@@ -8363,13 +8363,8 @@ function parserFormula( formula, parent, _ws ) {
 			maxRows = 1,
 			maxColumns = 1;
 
-		if (!exceptions) {
-			// spike
-			exceptions = new Map();
-		}
-	
 		for (let i = 0; i < args.length; i++) {
-			if ((cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) && (!exceptions.get(i))) {
+			if ((cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) && (!exceptions || (exceptions && !exceptions.get(i)))) {
 				let argDimensions = args[i].getDimensions();
 				maxRows = argDimensions.row > maxRows ? argDimensions.row : maxRows;
 				maxColumns = argDimensions.col > maxColumns ? argDimensions.col : maxColumns;
@@ -8391,7 +8386,7 @@ function parserFormula( formula, parent, _ws ) {
 				for (let k = 0; k < args.length; k++) {
 					let value = args[k];
 
-					if ((cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) && (!exceptions.get(k))) {
+					if ((cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) && (!exceptions || (exceptions && !exceptions.get(k)))) {
 						let valueDimensions = value.getDimensions();
 						if (value.isOneElement()) {
 							// single row with single element

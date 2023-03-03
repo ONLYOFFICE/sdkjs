@@ -5663,7 +5663,8 @@
 			arg1 = arg[1] ? arg[1] : new cNumber(1),
 			arg2 = arg[2] ? arg[2] : new cNumber(1),
 			arg3 = arg[3] ? arg[3] : new cNumber(1),
-			res, exceptions = new Map();
+			res;
+			// exceptions = new Map();
 
 		if (arg0.type === cElementType.empty) {
 			arg0 = new cNumber(1);
@@ -5679,7 +5680,7 @@
 		}
 
 		// if range/array type, write array to map and call arrayHelper
-		res = AscCommonExcel.getArrayHelper([arg0, arg1, arg2, arg3], sequenceRangeArrayGeneral, exceptions);
+		res = AscCommonExcel.getArrayHelper([arg0, arg1, arg2, arg3], sequenceRangeArrayGeneral);
 
 		if (res) {
 			return res;
