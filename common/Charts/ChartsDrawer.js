@@ -1279,20 +1279,24 @@ CChartsDrawer.prototype =
 	},
 
 	_getVerticalAxes: function(chartSpace) {
-		var res = null;
+		var res = [];
+		var priorityAxis = [];
 
-		var axId = chartSpace.chart.plotArea.axId;
-		for(var i = 0; i < axId.length; i++) {
-			var axis = chartSpace.chart.plotArea.axId[i];
-			if(axis.axPos === window['AscFormat'].AX_POS_R || axis.axPos === window['AscFormat'].AX_POS_L) {
-				if(!res) {
-					res = [];
+		let charts = chartSpace.chart.plotArea.charts;
+		for (let i = 0; i < charts.length; i++) {
+			for (let j = 0; j < charts[i].axId.length; j++) {
+				var axis = charts[i].axId[j];
+				if(axis.axPos === window['AscFormat'].AX_POS_R || axis.axPos === window['AscFormat'].AX_POS_L) {
+					if (charts[i].getObjectType() === AscDFH.historyitem_type_RadarChart) {
+						priorityAxis.push(axis);
+					} else {
+						res.push(axis);
+					}
 				}
-				res.push(axis);
 			}
 		}
 
-		return res;
+		return res.length || priorityAxis.length ? priorityAxis.concat(res) : null;
 	},
 
 
