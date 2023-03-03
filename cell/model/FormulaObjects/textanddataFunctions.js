@@ -223,6 +223,13 @@ function (window, undefined) {
 					}
 					if (cElementType.string === val.type && format === 1) {
 						val = '"' + val.getValue() + '"';
+					} else if ((cElementType.cell === val.type || cElementType.cell3D === val.type) && format === 1) {
+						let tempVal = val.getValue();
+						if (cElementType.string === tempVal.type) {
+							val = '"' + tempVal.getValue() + '"';
+						} else {
+							val = tempVal.getValue().toString();
+						}
 					} else {
 						val = val.getValue().toString();
 					}

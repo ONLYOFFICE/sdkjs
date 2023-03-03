@@ -23077,18 +23077,18 @@ $(function () {
 		oParser = new parserFormula('ARRAYTOTEXT(C110,B10:C11)', "A2", ws);
 		assert.ok(oParser.parse(), 'ARRAYTOTEXT(C110,B10:C11)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "12", 'Result of ARRAYTOTEXT(12,B10:C11)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "12", 'Result of ARRAYTOTEXT(12,B10:C11)[0,1]');
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "12", 'Result of ARRAYTOTEXT(12,B10:C11)[1,0]');				
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{12}', 'Result of ARRAYTOTEXT(12,B10:C11)[1,1]');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "12", 'Result of ARRAYTOTEXT(C110,B10:C11)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "12", 'Result of ARRAYTOTEXT(C110,B10:C11)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "12", 'Result of ARRAYTOTEXT(C110,B10:C11)[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{12}', 'Result of ARRAYTOTEXT(C110,B10:C11)[1,1]');
 
 		oParser = new parserFormula('ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})', "A2", ws);
 		assert.ok(oParser.parse(), 'ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "{12}", 'Result of ARRAYTOTEXT(12,{1,0;FALSE,TRUE})[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "12", 'Result of ARRAYTOTEXT(12,{1,0;FALSE,TRUE})[0,1]');
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "12", 'Result of ARRAYTOTEXT(12,{1,0;FALSE,TRUE})[1,0]');				
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{12}', 'Result of ARRAYTOTEXT(12,{1,0;FALSE,TRUE})[1,1]');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "{12}", 'Result of ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "12", 'Result of ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "12", 'Result of ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{12}', 'Result of ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})[1,1]');
 
 		oParser = new parserFormula('ARRAYTOTEXT(B10:C11,B10:C11)', "A2", ws);
 		assert.ok(oParser.parse(), 'ARRAYTOTEXT(B10:C11,B10:C11)');
@@ -23260,6 +23260,34 @@ $(function () {
 		oParser = new parserFormula('ARRAYTOTEXT("str", 1)', "A2", ws);
 		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", 1)');
 		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT("str", 1)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10)');
+		assert.strictEqual(oParser.calculate().getValue(), "str", 'Result of ARRAYTOTEXT(E10)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10, "0")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10, "0")');
+		assert.strictEqual(oParser.calculate().getValue(), 'str', 'Result of ARRAYTOTEXT(E10, "0")');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10, "1")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10, "1")');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT(E10, "1")');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10, "1s")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10, "1s")');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Result of ARRAYTOTEXT(E10, "1s")');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10,FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10,FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), "str", 'Result of ARRAYTOTEXT(E10,FALSE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10, TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10, TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT(E10, TRUE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10, 1)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10, 1)');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT(E10, 1)');
 
 		oParser = new parserFormula('ARRAYTOTEXT("str", 12)', "A2", ws);
 		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", 12)');
