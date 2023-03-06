@@ -8421,8 +8421,14 @@
             } else if (c_oSerUserProtectedRange.Text === type) {
                 oUserProtectedRange.warningText = this.stream.GetString2LE(length);
             } else if (c_oSerUserProtectedRange.UserId === type) {
+            	if (!oUserProtectedRange.usersMap) {
+					oUserProtectedRange.usersMap = {};
+				}
                 oUserProtectedRange.usersMap[this.stream.GetString2LE(length)] = 1;
             } else if (c_oSerUserProtectedRange.UsersGroup === type) {
+				if (!oUserProtectedRange.userGroupsMap) {
+					oUserProtectedRange.userGroupsMap = {};
+				}
                 oUserProtectedRange.userGroupsMap[this.stream.GetString2LE(length)] = 1;
             } else {
                 res = c_oSerConstants.ReadUnknown;
