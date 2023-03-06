@@ -326,8 +326,7 @@
         CellWatches: 44,
         CellWatch: 45,
         CellWatchR: 46,
-        UserProtectedRanges: 47,
-        UserProtectedRange: 48,
+        UserProtectedRanges: 47
     };
     /** @enum */
     var c_oSerWorksheetPropTypes =
@@ -1108,18 +1107,6 @@
         SecurityDescriptor: 6
 	};
 
-    var c_oSerUserProtectedRangeTypes = {
-        SqRef: 0,
-        Name: 1,
-        Users: 2,
-        User: 3,
-        UserId: 4,
-        UserGroups: 5,
-        UserGroup: 6,
-        UserGroupId: 7,
-        WarningText: 8
-    };
-
     var c_oSerWorkbookProtection = {
 		WorkbookAlgorithmName: 0,
 		WorkbookSpinCount: 1,
@@ -1139,6 +1126,14 @@
         ItemId: 1,
         Uri: 2,
         Content: 3
+    };
+    var c_oSerUserProtectedRange = {
+        UserProtectedRange: 0,
+        Sqref: 1,
+        Name: 2,
+        Text: 3,
+        UserId: 4,
+        UsersGroup: 5
     };
 
 	/** @enum */
@@ -1484,7 +1479,7 @@
         queryTable: 0,
         worksheet: 1,
         xml: 2
-    }
+    };
 
     var ST_PageOrder = {
         downThenOver: 0,
@@ -3915,6 +3910,7 @@
             if (ws.aCellWatches && ws.aCellWatches.length > 0) {
                 this.bs.WriteItem(c_oSerWorksheetsTypes.CellWatches, function(){oThis.WriteCellWatches(ws.aCellWatches);});
             }
+
             if (ws.userProtectedRanges && ws.userProtectedRanges.length > 0) {
                 this.bs.WriteItem(c_oSerWorksheetsTypes.UserProtectedRanges, function(){oThis.WriteUserProtectedRanges(ws.userProtectedRanges);});
             }
@@ -5620,69 +5616,52 @@
                 this.bs.WriteItem(c_oSer_LegacyDrawingHF.DrawingShape, function(){pptx_content_writer.WriteDrawing(oThis.memory, drawing.graphicObject, null, null, null);});
             }
         };
+
         this.WriteUserProtectedRanges = function (aUserProtectedRanges) {
             var oThis = this;
             for (var i = 0, length = aUserProtectedRanges.length; i < length; ++i) {
-                this.bs.WriteItem(c_oSerWorksheetsTypes.UserProtectedRange, function () {
+                this.bs.WriteItem(c_oSerUserProtectedRange.UserProtectedRange, function () {
                     oThis.WriteUserProtectedRange(aUserProtectedRanges[i]);
                 });
             }
         };
         this.WriteUserProtectedRange = function (oUserProtectedRange) {
+
             var oThis = this;
-            if (null != oUserProtectedRange.name) {
-                this.memory.WriteByte(c_oSerUserProtectedRangeTypes.Name);
-                this.memory.WriteByte(c_oSerPropLenType.Variable);
-                this.memory.WriteString2(oUserProtectedRange.name);
-            }
 
-            if (null != oUserProtectedRange.ref) {
-                this.memory.WriteByte(c_oSerUserProtectedRangeTypes.SqRef);
-                this.memory.WriteByte(c_oSerPropLenType.Variable);
-                var sqRef = getSqRefString(oUserProtectedRange.ref);
-                this.memory.WriteString2(sqRef);
+            if (oUserProtectedRange.name) {
+                this.bs.WriteItem(c_oSerUserProtectedRange.Name, function () {
+                    oThis.memory.WriteString3(oUserProtectedRange.name);
+                });
             }
-
-            if (null != this.usersMap) {
-                let users = this.asc_getUsers();
-                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.Users, function () {
-                    oThis.WriteUserProtectedRangeUsers(users);
+            if (oUserProtectedRange.ref) {
+                this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
+                    var sqRef = getSqRefString([oUserProtectedRange.ref]);
+                    oThis.memory.WriteString3(sqRef);
+                });
+            }
+            if (oUserProtectedRange.warningText) {
+                this.bs.WriteItem(c_oSerUserProtectedRange.Text, function () {
+                    oThis.memory.WriteString3(oUserProtectedRange.warningText);
                 });
             }
 
-            if (null != this.userGroupsMap) {
-                let users = this.asc_getUserGroups();
-                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.UserGroups, function () {
-                    oThis.WriteUserProtectedRangeUserGroups(users);
-                });
+            let i;
+            if (null != oUserProtectedRange.usersMap) {
+                let users = oUserProtectedRange.asc_getUsers();
+                for (i = 0; i < users.length; i++) {
+                    this.bs.WriteItem(c_oSerUserProtectedRange.UserId, function () {
+                        oThis.memory.WriteString3(users[i]);
+                    });
+                }
             }
-
-            if (null != this.warningText) {
-                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.WarningText, function () {
-                    oThis.memory.WriteString2(oThis.warningText);//WriteString2 ?
-                });
-            }
-        };
-
-        this.WriteUserProtectedRangeUsers = function (users) {
-            var oThis = this;
-            for (var i = 0, length = users.length; i < length; ++i) {
-                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.User, function () {
-                    oThis.memory.WriteByte(c_oSerUserProtectedRangeTypes.UserId);
-                    oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                    oThis.memory.WriteString2(users[i]);
-                });
-            }
-        };
-
-        this.WriteUserProtectedRangeUserGroups = function (userGroups) {
-            var oThis = this;
-            for (var i = 0, length = userGroups.length; i < length; ++i) {
-                this.bs.WriteItem(c_oSerUserProtectedRangeTypes.UserGroup, function () {
-                    oThis.memory.WriteByte(c_oSerUserProtectedRangeTypes.UserGroupId);
-                    oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                    oThis.memory.WriteString2(userGroups[i]);
-                });
+            if (null != oUserProtectedRange.userGroupsMap) {
+                let users = oUserProtectedRange.asc_getUserGroups();
+                for (i = 0; i < users.length; i++) {
+                    this.memory.WriteByte(c_oSerUserProtectedRange.UsersGroup);
+                    this.memory.WriteByte(c_oSerPropLenType.Variable);
+                    this.memory.WriteString2(users[i]);
+                }
             }
         };
     }

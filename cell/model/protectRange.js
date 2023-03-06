@@ -39,6 +39,8 @@
 		this.name = null;
 		this.usersMap  = null;
 
+		this.userGroupsMap = null;
+
 		//for warning
 		this.warningText = null;
 
@@ -63,6 +65,7 @@
 		res.ref = this.ref ? this.ref.clone() : null;
 		res.name = this.name;
 		res.usersMap = this.usersMap;
+		res.userGroupsMap = this.userGroupsMap;
 
 		res.warningText = this.warningText;
 
@@ -207,6 +210,20 @@
 		}
 		return res;
 	};
+	CUserProtectedRange.prototype.asc_getUserGroups = function () {
+		let res = null;
+		if (this.userGroupsMap) {
+			for (let i in this.userGroupsMap) {
+				if (this.userGroupsMap.hasOwnProperty(i)) {
+					if (!res) {
+						res = [];
+					}
+					res.push(i);
+				}
+			}
+		}
+		return res;
+	};
 	CUserProtectedRange.prototype.asc_setRef = function (val) {
 		if (val) {
 			if (val[0] === "=") {
@@ -262,6 +279,7 @@
 	prot["asc_getRef"] = prot.asc_getRef;
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getUsers"] = prot.asc_getUsers;
+	prot["asc_getUserGroups"] = prot.asc_getUserGroups;
 
 	prot["asc_setRef"] = prot.asc_setRef;
 	prot["asc_setName"] = prot.asc_setName;
