@@ -112,6 +112,28 @@
 			w.WriteBool(false);
 		}
 
+		if (null != this.userGroupsMap) {
+			let count = 0, i;
+			for (i in this.userGroupsMap) {
+				if (this.userGroupsMap.hasOwnProperty(i)) {
+					count++;
+				}
+			}
+			if (count) {
+				w.WriteBool(true);
+				w.WriteLong(count);
+				for (i in this.userGroupsMap) {
+					if (this.userGroupsMap.hasOwnProperty(i)) {
+						w.WriteString2(i);
+					}
+				}
+			} else {
+				w.WriteBool(false);
+			}
+		} else {
+			w.WriteBool(false);
+		}
+
 		if (null != this.warningText) {
 			w.WriteBool(true);
 			w.WriteString2(this.warningText);
@@ -140,12 +162,22 @@
 		}
 
 		if (r.GetBool()) {
-			var length = r.GetULong();
-			for (var i = 0; i < length; ++i) {
+			let length = r.GetULong();
+			for (let i = 0; i < length; ++i) {
 				if (!this.usersMap) {
 					this.usersMap = {};
 				}
 				this.usersMap[r.GetString2()] = 1;
+			}
+		}
+
+		if (r.GetBool()) {
+			let length = r.GetULong();
+			for (let i = 0; i < length; ++i) {
+				if (!this.userGroupsMap) {
+					this.userGroupsMap = {};
+				}
+				this.userGroupsMap[r.GetString2()] = 1;
 			}
 		}
 
