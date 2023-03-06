@@ -8147,6 +8147,10 @@
                 res = this.bcr.Read1(length, function(t, l) {
                     return oThis.ReadCellWatches(t, l, oWorksheet.aCellWatches);
                 });
+            } else if (c_oSerWorksheetsTypes.UserProtectedRanges === type) {
+                res = this.bcr.Read1(length, function(t, l) {
+                    return oThis.ReadUserProtectedRanges(t, l, oWorksheet.userProtectedRanges);
+                });
             } else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
@@ -8380,6 +8384,46 @@
                 if (range) {
                     oCellWatch.r = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
                 }
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadUserProtectedRanges = function (type, length, aUserProtectedRanges) {
+            var res = c_oSerConstants.ReadOk;
+            var oThis = this;
+            var oUserProtectedRange = null;
+
+            if (c_oSerUserProtectedRange.UserProtectedRange === type) {
+                oUserProtectedRange = Asc.CUserProtectedRange ? new Asc.CUserProtectedRange : null;
+                if (oUserProtectedRange) {
+                    res = this.bcr.Read2(length, function (t, l) {
+                        return oThis.ReadUserProtectedRange(t, l, oUserProtectedRange);
+                    });
+                    aUserProtectedRanges.push(oUserProtectedRange);
+                } else {
+                    res = c_oSerConstants.ReadUnknown;
+                }
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadUserProtectedRange = function (type, length, oUserProtectedRange) {
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSerUserProtectedRange.Name === type) {
+                oUserProtectedRange.name = this.stream.GetString2LE(length);
+            } else if (c_oSerUserProtectedRange.Sqref === type) {
+                var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2LE(length));
+                if (range) {
+                    oUserProtectedRange.ref = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
+                }
+            } else if (c_oSerUserProtectedRange.Text === type) {
+                oUserProtectedRange.warningText = this.stream.GetString2LE(length);
+            } else if (c_oSerUserProtectedRange.UserId === type) {
+                oUserProtectedRange.usersMap[this.stream.GetString2LE(length)] = 1;
+            } else if (c_oSerUserProtectedRange.UsersGroup === type) {
+                oUserProtectedRange.userGroupsMap[this.stream.GetString2LE(length)] = 1;
             } else {
                 res = c_oSerConstants.ReadUnknown;
             }
