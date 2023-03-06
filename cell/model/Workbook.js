@@ -5164,6 +5164,9 @@
 		this.aCellWatches.forEach(function(elem){
 			elem.initPostOpen(t);
 		});
+		this.userProtectedRanges.forEach(function(elem){
+			elem.initPostOpen(t);
+		});
 	};
 	Worksheet.prototype.initPostOpenZip = function (pivotCaches, oNumFmts) {
 		this.pivotTables.forEach(function(pivotTable){

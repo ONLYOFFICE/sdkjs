@@ -299,6 +299,9 @@
 	CUserProtectedRange.prototype.asc_getId = function () {
 		return this.Id;
 	};
+	CUserProtectedRange.prototype.initPostOpen = function (ws) {
+		this._ws = ws;
+	};
 
 
 	//----------------------------------------------------------export----------------------------------------------------

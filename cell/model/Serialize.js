@@ -8363,7 +8363,7 @@
             var oCellWatch = null;
 
             if (c_oSerWorksheetsTypes.CellWatch === type) {
-                oCellWatch = AscCommonExcel.CCellWatch ? new AscCommonExcel.CCellWatch : null;
+                oCellWatch = AscCommonExcel.CCellWatch ? new AscCommonExcel.CCellWatch() : null;
                 if (oCellWatch) {
                     res = this.bcr.Read2(length, function (t, l) {
                         return oThis.ReadCellWatch(t, l, oCellWatch);
@@ -8395,7 +8395,7 @@
             var oUserProtectedRange = null;
 
             if (c_oSerUserProtectedRange.UserProtectedRange === type) {
-                oUserProtectedRange = Asc.CUserProtectedRange ? new Asc.CUserProtectedRange : null;
+                oUserProtectedRange = Asc.CUserProtectedRange ? new Asc.CUserProtectedRange() : null;
                 if (oUserProtectedRange) {
                     res = this.bcr.Read2(length, function (t, l) {
                         return oThis.ReadUserProtectedRange(t, l, oUserProtectedRange);
