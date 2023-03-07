@@ -4709,14 +4709,7 @@
 	};
 
 	WorksheetView.prototype._drawPageBreakPreviewLines = function (drawingCtx, range) {
-		//функция для отрисовки на layout разметки страницы(специальный режим предварительного просмотра страниц)
-		//для того, чтобы отрисовка происходила при смене различных опций - добавить вызовы обновления селекта аналогично функции _drawPrintArea
-		//текст всегда рисуем на основной канве, поскольку сетка в ms рисуется поверх
-
-		var t = this;
-		var printPagesObj = this._getPagesModeData();
-		var printPages = printPagesObj.printPages;
-		var printRanges = printPagesObj.printRanges;
+		let printPages = this.pagesModeData;
 
 		if (range === undefined) {
 			range = this.visibleRange;
@@ -4725,8 +4718,6 @@
 
 		//закрашиваем то, что не входит в область печати
 		var drawRange = function (visibleRange, offsetX, offsetY, args) {
-
-
 			var range = args[0];
 			var selectionLineType = args[1];
 			var strokeColor = args[2];
@@ -4751,10 +4742,33 @@
 			var firstCol = oIntersection.c1 === visibleRange.c1 && !isAllRange;
 			var firstRow = oIntersection.r1 === visibleRange.r1 && !isAllRange;
 
-			let isNotDrawLeft = !isAllRange && oIntersection.c1 === allPagesRange.c1;
-			let isNotDrawRight = !isAllRange && oIntersection.c2 === allPagesRange.c2;
-			let isNotDrawTop = !isAllRange && oIntersection.r1 === allPagesRange.r1;
-			let isNotDrawBottom = !isAllRange && oIntersection.r2 === allPagesRange.r2;
+			var drawLeftSide = oIntersection.c1 === range.c1;
+			var drawRightSide = oIntersection.c2 === range.c2;
+			var drawTopSide = oIntersection.r1 === range.r1;
+			var drawBottomSide = oIntersection.r2 === range.r2;
+
+			if(args[4]) {
+				if(args[4] === 1) {
+					drawLeftSide = false;
+					drawRightSide = false;
+				} else if(args[4] === 2){
+					drawTopSide = false;
+					drawBottomSide = false;
+				}
+			}
+
+			if (!isAllRange && oIntersection.c1 === allPagesRange.c1) {
+				drawLeftSide = false;
+			}
+			if (!isAllRange && oIntersection.c2 === allPagesRange.c2) {
+				drawRightSide = false;
+			}
+			if (!isAllRange && oIntersection.r1 === allPagesRange.r1) {
+				drawTopSide = false;
+			}
+			if (!isAllRange && oIntersection.r2 === allPagesRange.r2) {
+				drawBottomSide = false;
+			}
 
 			var x1 = this._getColLeft(oIntersection.c1) - offsetX;
 			var x2 = this._getColLeft(oIntersection.c2 + 1) - offsetX;
@@ -4776,27 +4790,27 @@
 			ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
 
 			ctx.beginPath();
-			if (!isNotDrawTop && !firstRow) {
+			if (drawTopSide && !firstRow) {
 				fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
 			}
-			if (!isNotDrawBottom) {
+			if (drawBottomSide) {
 				fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1, x2]);
 			}
-			if (!isNotDrawLeft && !firstCol) {
+			if (drawLeftSide && !firstCol) {
 				fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
 			}
-			if (!isNotDrawRight) {
+			if (drawRightSide) {
 				fVerLine.apply(ctx, [x2 + !isDashLine * 1, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
 			}
 			ctx.closePath().stroke();
 		};
 
-		var startRange = printPages[0].page.pageRange;
-		var endRange = printPages[printPages.length - 1].page.pageRange;
-		var allPagesRange = new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2);
-
+		var startRange, endRange, allPagesRange;
 		//рисуем страницы
 		if(printPages && printPages.length) {
+			startRange = printPages[0].page.pageRange;
+			endRange = printPages[printPages.length - 1].page.pageRange;
+			allPagesRange = new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2);
 
 			//орисовываем границы страниц
 			for (var i = 0, l = printPages.length; i < l; ++i) {
