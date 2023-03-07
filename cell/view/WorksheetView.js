@@ -4708,7 +4708,106 @@
 		return null;
 	};
 
-	WorksheetView.prototype._drawPageBreakPreviewLines = function (drawingCtx, range, leftFieldInPx, topFieldInPx) {
+	WorksheetView.prototype._drawPageBreakPreviewLines = function (drawingCtx, range) {
+		//функция для отрисовки на layout разметки страницы(специальный режим предварительного просмотра страниц)
+		//для того, чтобы отрисовка происходила при смене различных опций - добавить вызовы обновления селекта аналогично функции _drawPrintArea
+		//текст всегда рисуем на основной канве, поскольку сетка в ms рисуется поверх
+
+		var t = this;
+		var printPagesObj = this._getPagesModeData();
+		var printPages = printPagesObj.printPages;
+		var printRanges = printPagesObj.printRanges;
+
+		if (range === undefined) {
+			range = this.visibleRange;
+		}
+		var ctx = drawingCtx || this.drawingCtx;
+
+		//закрашиваем то, что не входит в область печати
+		var drawRange = function (visibleRange, offsetX, offsetY, args) {
+
+
+			var range = args[0];
+			var selectionLineType = args[1];
+			var strokeColor = args[2];
+			var isAllRange = args[3];
+			var oIntersection = range.intersectionSimple(visibleRange);
+
+			if (!oIntersection) {
+				return true;
+			}
+
+			var fHorLine, fVerLine;
+			var isDashLine = AscCommonExcel.selectionLineType.Dash & selectionLineType;
+
+			if (isDashLine) {
+				fHorLine = ctx.dashLineCleverHor;
+				fVerLine = ctx.dashLineCleverVer;
+			} else {
+				fHorLine = ctx.lineHorPrevPx;
+				fVerLine = ctx.lineVerPrevPx;
+			}
+
+			var firstCol = oIntersection.c1 === visibleRange.c1 && !isAllRange;
+			var firstRow = oIntersection.r1 === visibleRange.r1 && !isAllRange;
+
+			let isNotDrawLeft = !isAllRange && oIntersection.c1 === allPagesRange.c1;
+			let isNotDrawRight = !isAllRange && oIntersection.c2 === allPagesRange.c2;
+			let isNotDrawTop = !isAllRange && oIntersection.r1 === allPagesRange.r1;
+			let isNotDrawBottom = !isAllRange && oIntersection.r2 === allPagesRange.r2;
+
+			var x1 = this._getColLeft(oIntersection.c1) - offsetX;
+			var x2 = this._getColLeft(oIntersection.c2 + 1) - offsetX;
+			var y1 = this._getRowTop(oIntersection.r1) - offsetY;
+			var y2 = this._getRowTop(oIntersection.r2 + 1) - offsetY;
+
+
+			//меняю толщину линии для селекта(только в случае сплошной линии) и масштаба 200%
+			var isRetina = AscBrowser.retinaPixelRatio === 2;
+			var widthLine = isDashLine ? 2 : 3;
+			if (isRetina) {
+				widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
+			}
+			//TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
+			var _diff = 0;
+			if (AscBrowser.isSafari) {
+				_diff = 1;
+			}
+			ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
+
+			ctx.beginPath();
+			if (!isNotDrawTop && !firstRow) {
+				fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+			}
+			if (!isNotDrawBottom) {
+				fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1, x2]);
+			}
+			if (!isNotDrawLeft && !firstCol) {
+				fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+			}
+			if (!isNotDrawRight) {
+				fVerLine.apply(ctx, [x2 + !isDashLine * 1, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
+			}
+			ctx.closePath().stroke();
+		};
+
+		var startRange = printPages[0].page.pageRange;
+		var endRange = printPages[printPages.length - 1].page.pageRange;
+		var allPagesRange = new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2);
+
+		//рисуем страницы
+		if(printPages && printPages.length) {
+
+			//орисовываем границы страниц
+			for (var i = 0, l = printPages.length; i < l; ++i) {
+				this._drawElements(drawRange, printPages[i].page.pageRange, AscCommonExcel.selectionLineType.Dash, this.settings.activeCellBorderColor);
+			}
+
+			this._drawElements(drawRange, allPagesRange, AscCommonExcel.selectionLineType.Select, this.settings.activeCellBorderColor, true);
+		}
+	};
+
+	WorksheetView.prototype._drawPageBreakPreviewLines2 = function (drawingCtx, range, leftFieldInPx, topFieldInPx) {
 		if(!pageBreakPreviewMode) {
 			return;
 		}
