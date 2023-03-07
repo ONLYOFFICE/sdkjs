@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -489,8 +489,10 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 
 	if (oContentControl.IsForm())
 	{
-		this.FormPr = oContentControl.GetFormPr().Copy();
-		this.FormPr.SetFixed(oContentControl.IsFixedForm());
+		let mainForm = oContentControl.IsMainForm() ? oContentControl : oContentControl.GetMainForm();
+		
+		this.FormPr = mainForm.GetFormPr().Copy();
+		this.FormPr.SetFixed(mainForm.IsFixedForm());
 	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)
@@ -590,10 +592,37 @@ CContentControlPr.prototype.SetFormPrToContentControl = function(contentControl)
 	if (!this.FormPr)
 		return;
 	
-	let newKey = this.FormPr.GetKey();
+	let formPr = this.FormPr;
+	
+	let newRole = formPr.GetRole();
+	if (contentControl.IsForm() && !contentControl.IsMainForm())
+	{
+		// Ключ у подформы должен сохраняться
+		let oldKey    = contentControl.GetFormKey();
+		let newFormPr = formPr.Copy();
+		newFormPr.SetKey(oldKey);
+		contentControl.SetFormPr(newFormPr);
+
+		contentControl = contentControl.GetMainForm();
+		if (!contentControl)
+			return;
+
+		formPr = contentControl.GetFormPr().Copy();
+		formPr.SetRole(newRole);
+	}
+
+	if (contentControl.IsComplexForm())
+	{
+		let subForms = contentControl.GetAllSubForms();
+		for (let index = 0, count = subForms.length; index < count; ++index)
+		{
+			subForms[index].SetFormRole(newRole);
+		}
+	}
+	
+	let newKey = formPr.GetKey();
 	let oldKey = contentControl.GetFormKey();
 	
-	let newRole     = this.FormPr.GetRole();
 	let fieldMaster = contentControl.GetFieldMaster();
 	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
 	let oldRole     = userMaster ? userMaster.getRole() : null;
@@ -615,7 +644,7 @@ CContentControlPr.prototype.SetFormPrToContentControl = function(contentControl)
 		this.OnSetRoleToForm(newRole, contentControl);
 	}
 	
-	contentControl.SetFormPr(this.FormPr);
+	contentControl.SetFormPr(formPr);
 };
 CContentControlPr.prototype.OnSetKeyToForm = function(newKey, form)
 {
@@ -637,8 +666,12 @@ CContentControlPr.prototype.OnSetRoleToForm = function(newRole, form)
 		return;
 	
 	let formManager = logicDocument.GetFormsManager();
-	let allForms = formManager.GetAllFormsByKey(form.GetFormKey(), form.GetSpecificType());
 	
+	let formKey = form.GetFormKey();
+	if (!formKey || "" === formKey)
+		return;
+	
+	let allForms = formManager.GetAllFormsByKey(formKey, form.GetSpecificType());
 	for (let index = 0, formCount = allForms.length; index < formCount; ++index)
 	{
 		let curForm = allForms[index];

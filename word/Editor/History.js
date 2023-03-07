@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1552,6 +1552,58 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 
 		this.UndoRedoInProgress = false;
 		return changes;
+	};
+	/**
+	 * Конвертируем все действия внутри заданной точки из составных в простые
+	 */
+	CHistory.prototype.ConvertPointItemsToSimpleChanges = function(pointIndex)
+	{
+		let point = this.Points[pointIndex];
+		if (!point)
+			return;
+		
+		let writer  = this.BinaryWriter;
+		let items   = point.Items.slice();
+		point.Items = [];
+		for (let index = 0, count = items.length; index < count; ++index)
+		{
+			let change = items[index].Data;
+			if (change.IsContentChange())
+			{
+				let needRecalc    = items[index].NeedRecalc;
+				let object        = change.GetClass();
+				let simpleChanges = change.ConvertToSimpleChanges();
+				
+				if (simpleChanges.length <= 1)
+				{
+					point.Items.push(items[index]);
+				}
+				else
+				{
+					for (let simpleIndex = 0, simpleChangesCount = simpleChanges.length; simpleIndex < simpleChangesCount; ++simpleIndex)
+					{
+						let simpleChange = simpleChanges[simpleIndex];
+						
+						let dataPos = writer.GetCurPosition();
+						writer.WriteString2(object.GetId());
+						writer.WriteLong(simpleChange.Type);
+						simpleChange.WriteToBinary(writer);
+						let dataLen = writer.GetCurPosition() - dataPos;
+						
+						point.Items.push({
+							Class      : object,
+							Data       : simpleChange,
+							Binary     : {Pos : dataPos, Len : dataLen},
+							NeedRecalc : needRecalc
+						});
+					}
+				}
+			}
+			else
+			{
+				point.Items.push(items[index]);
+			}
+		}
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

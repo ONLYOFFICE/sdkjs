@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -404,6 +404,7 @@
 
 			if ( !(this instanceof PivotFilterObj) ) {return new PivotFilterObj();}
 
+			this.fld = null;//pivotField index
 			this.dataFields = null;//pivot.asc_getDataFields. for sorting and value filters
 			this.dataFieldIndexSorting = 0;//selected index in dataFields
 			this.dataFieldIndexFilter = 0;//selected index in dataFields
@@ -415,6 +416,7 @@
 		}
 		PivotFilterObj.prototype = {
 			constructor: PivotFilterObj,
+			asc_setPivotField : function(val) { this.fld = val;},
 			asc_setDataFields : function(val) { this.dataFields = val || null;},
 			asc_setDataFieldIndexSorting : function(val) { this.dataFieldIndexSorting = val;},
 			asc_setDataFieldIndexFilter : function(val) { this.dataFieldIndexFilter = val;},
@@ -422,6 +424,7 @@
 			asc_setIsMultipleItemSelectionAllowed : function(val) { this.isMultipleItemSelectionAllowed = val;},
 			asc_setIsTop10Sum : function(val) { this.isTop10Sum = val;},
 
+			asc_getPivotField : function(val) { return this.fld;},
 			asc_getDataFields : function(val) { return this.dataFields;},
 			asc_getDataFieldIndexSorting : function(val) { return this.dataFieldIndexSorting;},
 			asc_getDataFieldIndexFilter : function(val) { return this.dataFieldIndexFilter;},
@@ -487,6 +490,8 @@
 			//при добавлении строки итогов не нужно чтобы на ней распространялось, допустим, УФ
 			//добавляю флаг, чтобы не протаскивать через несколько функций
 			this.isAddTotalRow = null;
+
+			this.redoColumnName = null;
 
 			return this;
 		}
@@ -1272,6 +1277,10 @@
 			// Redo
 			Redo: function (type, data) {
 				History.TurnOff();
+
+				//translate on redo - we use action language
+				this.redoColumnName = data.redoColumnName;
+
 				switch (type) {
 					case AscCH.historyitem_AutoFilter_Add:
 						this.addAutoFilter(data.styleName, data.activeCells, data.addFormatTableOptionsObj, null, data);
@@ -3256,6 +3265,7 @@
 					oHistoryObject.viewId = ws.getActiveNamedSheetViewId();
 					oHistoryObject._type = type;
 				}
+				oHistoryObject.redoColumnName = AscCommon.translateManager.getValue("Column");
 
 				return oHistoryObject;
 			},
@@ -4980,20 +4990,20 @@
 			},
 
 			_generateColumnNameWithoutTitle: function (ref) {
-				var tableColumns = [], newTableColumn;
-				var range = this.worksheet.getRange3(ref.r1, ref.c1, ref.r1, ref.c2);
-				var defaultName = 'Column';
-				var uniqueColumns = {}, val, valTemplate, valLower, index = 1, isDuplicate = false, emptyCells = false;
-				var valuesAndMap = range._getValuesAndMap(true);
-				var values = valuesAndMap.values;
-				var length = values.length;
+				let tableColumns = [], newTableColumn;
+				let range = this.worksheet.getRange3(ref.r1, ref.c1, ref.r1, ref.c2);
+				let defaultName = this._getColumnName();
+				let uniqueColumns = {}, val, valTemplate, valLower, index = 1, isDuplicate = false, emptyCells = false;
+				let valuesAndMap = range._getValuesAndMap(true);
+				let values = valuesAndMap.values;
+				let length = values.length;
 				if (0 === length) {
 					// Выделили всю строку без значений
 					length = ref.c2 - ref.c1 + 1;
 					emptyCells = true;
 				}
-				var map = valuesAndMap.map;
-				for (var i = 0; i < length; ++i) {
+				let map = valuesAndMap.map;
+				for (let i = 0; i < length; ++i) {
 					if (emptyCells || '' === (valTemplate = val = values[i].v)) {
 						valTemplate = defaultName;
 						val = valTemplate + index;
@@ -5017,7 +5027,7 @@
 							newTableColumn = new AscCommonExcel.TableColumn();
 							if (val.length >= AscCommon.c_oAscMaxTableColumnTextLength) {
 								val = val.substring(0, AscCommon.c_oAscMaxTableColumnTextLength - 1);
-								var cell = this.worksheet.getRange3(ref.r1, ref.c1 + i, ref.r1, ref.c1 + i);
+								let cell = this.worksheet.getRange3(ref.r1, ref.c1 + i, ref.r1, ref.c1 + i);
 								cell.setValue(val);
 							}
 							newTableColumn.Name = val;
@@ -5031,7 +5041,8 @@
 			},
 
 			_generateColumnName: function (tableColumns, indexInsertColumn) {
-				var index = 1;
+				let index = 1;
+				let columnName = this._getColumnName();
 				var isSequence = false;
 				if (indexInsertColumn != undefined) {
 					if (indexInsertColumn < 0) {
@@ -5040,10 +5051,10 @@
 					var nameStart;
 					var nameEnd;
 					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].Name) {
-						nameStart = tableColumns[indexInsertColumn].Name.split("Column");
+						nameStart = tableColumns[indexInsertColumn].Name.split(columnName);
 					}
 					if (tableColumns[indexInsertColumn + 1] && tableColumns[indexInsertColumn + 1].Name) {
-						nameEnd = tableColumns[indexInsertColumn + 1].Name.split("Column");
+						nameEnd = tableColumns[indexInsertColumn + 1].Name.split(columnName);
 					}
 					if (nameStart && nameStart[1] && nameEnd && nameEnd[1] && !isNaN(parseInt(nameStart[1])) && !isNaN(parseInt(nameEnd[1])) && ((parseInt(nameStart[1]) + 1) == parseInt(nameEnd[1]))) {
 						isSequence = true;
@@ -5054,17 +5065,17 @@
 				if (indexInsertColumn == undefined || !isSequence) {
 					for (i = 0; i < tableColumns.length; i++) {
 						if (tableColumns[i].Name) {
-							name = tableColumns[i].Name.split("Column");
+							name = tableColumns[i].Name.split(columnName);
 						}
-						if (name && name[1] && !isNaN(parseFloat(name[1])) && index == parseFloat(name[1])) {
+						if (name && name[1] && !isNaN(parseFloat(name[1])) && index === parseFloat(name[1])) {
 							index++;
 							i = -1;
 						}
 					}
-					return "Column" + index;
+					return columnName + index;
 				} else {
 					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].Name) {
-						name = tableColumns[indexInsertColumn].Name.split("Column");
+						name = tableColumns[indexInsertColumn].Name.split(columnName);
 					}
 					if (name && name[1] && !isNaN(parseFloat(name[1]))) {
 						index = parseFloat(name[1]) + 1;
@@ -5072,15 +5083,23 @@
 
 					for (i = 0; i < tableColumns.length; i++) {
 						if (tableColumns[i].Name) {
-							name = tableColumns[i].Name.split("Column");
+							name = tableColumns[i].Name.split(columnName);
 						}
 						if (name && name[1] && !isNaN(parseFloat(name[1])) && index == parseFloat(name[1])) {
 							index = parseInt((index - 1) + "2");
 							i = -1;
 						}
 					}
-					return "Column" + index;
+					return columnName + index;
 				}
+			},
+
+			_getColumnName: function () {
+				//on redo use language on action moment
+				if (this.redoColumnName && this.worksheet && this.worksheet.workbook && this.worksheet.workbook.bRedoChanges) {
+					return this.redoColumnName;
+				}
+				return AscCommon.translateManager ? AscCommon.translateManager.getValue("Column") : "Column";
 			},
 
 			_generateNextColumnName: function (tableColumns, val) {
@@ -5889,18 +5908,18 @@
 
 			_generateColumnName2: function (tableColumns) {
 				// ToDo почему 2 функции generateColumnName?
-				var columnName = "Column";
-				//var indexColumn = name[1]; name - не определено!
-				var indexColumn = undefined;
-				var nextIndex;
+				let columnName = this._getColumnName();
+				//let indexColumn = name[1]; name - не определено!
+				let indexColumn = undefined;
+				let nextIndex;
 
 				//ищем среди tableColumns, возможно такое имя уже имеется
-				var tableColumnsNameMap = null;
-				var checkNextName = function () {
-					var nextName = columnName + nextIndex;
+				let tableColumnsNameMap = null;
+				let checkNextName = function () {
+					let nextName = columnName + nextIndex;
 					if (!tableColumnsNameMap) {
 						tableColumnsNameMap = {};
-						for (var i = 0; i < tableColumns.length; i++) {
+						for (let i = 0; i < tableColumns.length; i++) {
 							if (tableColumns[i]) {
 								tableColumnsNameMap[tableColumns[i].Name] = 1;
 							}
@@ -5913,7 +5932,7 @@
 				};
 
 				//если сменилась первая цифра
-				var checkChangeIndex = function () {
+				let checkChangeIndex = function () {
 					if ((nextIndex + 1).toString().substr(0, 1) !== (indexColumn).toString().substr(0, 1)) {
 						return true;
 					} else {
@@ -5925,9 +5944,9 @@
 				{
 					indexColumn = parseFloat(indexColumn);
 					nextIndex = indexColumn + 1;
-					var string = "";
+					let string = "";
 
-					var firstInput = true;
+					let firstInput = true;
 					while (checkNextName() === false) {
 						if (firstInput === true) {
 							string += "1";
@@ -5955,16 +5974,16 @@
 			},
 
 			_getFilterInfoByAddTableProps: function (ar, addFormatTableOptionsObj, bTable) {
-				var tempRange = new Asc.Range(ar.c1, ar.r1, ar.c2, ar.r2);
-				var addNameColumn, filterRange, bIsManualOptions = false;
-				var ws = this.worksheet;
+				let tempRange = new Asc.Range(ar.c1, ar.r1, ar.c2, ar.r2);
+				let addNameColumn, filterRange, bIsManualOptions = false;
+				let ws = this.worksheet;
 
-				var _isOneCell = function (_range) {
-					var res = null;
+				let _isOneCell = function (_range) {
+					let res = null;
 					if (_range.isOneCell()) {
 						res = true;
 					} else if (!bTable) {
-						var merged = ws.getMergedByCell(_range.r1, _range.c1);
+						let merged = ws.getMergedByCell(_range.r1, _range.c1);
 						if (merged && merged.isEqual(_range)) {
 							res = true;
 						}
@@ -5989,7 +6008,7 @@
 				}
 
 				//expand range
-				var tablePartsContainsRange = this._isTablePartsContainsRange(tempRange);
+				let tablePartsContainsRange = this._isTablePartsContainsRange(tempRange);
 				if (tablePartsContainsRange) {
 					filterRange = tablePartsContainsRange.Ref.clone();
 				} else if (_isOneCell(tempRange) && !bIsManualOptions) {
@@ -6000,7 +6019,7 @@
 						//меняем range в зависимости от последних ячеек со значениями
 						//ms ещё смотрит на аналогичные значения для начала диапазона
 						//TODO если будут такие переменные со значениями начала диапазона - сделать аналогично MS
-						var definedRange = new Asc.Range(0, 0, this.worksheet.nColsCount - 1, this.worksheet.nRowsCount - 1);
+						let definedRange = new Asc.Range(0, 0, this.worksheet.nColsCount - 1, this.worksheet.nRowsCount - 1);
 						filterRange = tempRange.intersection(definedRange);
 						if (!filterRange) {
 							filterRange = tempRange;
@@ -6010,7 +6029,7 @@
 					}
 				}
 
-				var rangeWithoutDiff = filterRange.clone();
+				let rangeWithoutDiff = filterRange.clone();
 				if (addNameColumn) {
 					filterRange.r2 = filterRange.r2 + 1;
 				}
@@ -6358,12 +6377,14 @@
 
 		window["Asc"]["PivotFilterObj"]		    = window["Asc"].PivotFilterObj = PivotFilterObj;
 		prot									= PivotFilterObj.prototype;
+		prot["asc_setPivotField"]						= prot.asc_setPivotField;
 		prot["asc_setDataFields"]						= prot.asc_setDataFields;
 		prot["asc_setDataFieldIndexSorting"]			= prot.asc_setDataFieldIndexSorting;
 		prot["asc_setDataFieldIndexFilter"]				= prot.asc_setDataFieldIndexFilter;
 		prot["asc_setIsPageFilter"]						= prot.asc_setIsPageFilter;
 		prot["asc_setIsMultipleItemSelectionAllowed"]	= prot.asc_setIsMultipleItemSelectionAllowed;
 		prot["asc_setIsTop10Sum"]						= prot.asc_setIsTop10Sum;
+		prot["asc_getPivotField"]						= prot.asc_getPivotField;
 		prot["asc_getDataFields"]						= prot.asc_getDataFields;
 		prot["asc_getDataFieldIndexSorting"]			= prot.asc_getDataFieldIndexSorting;
 		prot["asc_getDataFieldIndexFilter"]				= prot.asc_getDataFieldIndexFilter;

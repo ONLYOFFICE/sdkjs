@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -253,6 +253,9 @@ prot.getUrl = function(strPath){
 };
 prot.getLocal = function(url){
 	return this.getImageLocal(url);
+};
+prot.isThemeUrl = function(sUrl){
+	return 0 === sUrl.indexOf('theme');
 };
 
 AscCommon.sendImgUrls = function(api, images, callback)
@@ -647,53 +650,16 @@ window["DesktopAfterOpen"] = function(_api)
 		window["asc_LocalRequestSign"](guid, width, height, true);
 	});
 
-	_api.sendEvent('asc_onSpellCheckInit', [
-        "1026",
-        "1027",
-        "1029",
-        "1030",
-        "1031",
-        "1032",
-        "1033",
-        "1036",
-        "1038",
-        "1040",
-        "1042",
-        "1043",
-        "1044",
-        "1045",
-        "1046",
-        "1048",
-        "1049",
-        "1050",
-        "1051",
-        "1053",
-        "1055",
-        "1057",
-        "1058",
-        "1060",
-        "1062",
-        "1063",
-        "1066",
-        "1068",
-        "1069",
-        "1087",
-        "1104",
-        "1110",
-        "1134",
-        "2051",
-        "2055",
-        "2057",
-        "2068",
-        "2070",
-        "3079",
-        "3081",
-        "3082",
-        "4105",
-        "7177",
-        "9242",
-        "10266"
-	]);
+	let langs = AscCommon.spellcheckGetLanguages();
+	let langs_array = [];
+	for (let item in langs)
+	{
+		if (!langs.hasOwnProperty(item))
+			continue;
+		langs_array.push(item);
+	}
+
+	_api.sendEvent('asc_onSpellCheckInit', langs_array);
 };
 
 function getBinaryArray(_data, _len)

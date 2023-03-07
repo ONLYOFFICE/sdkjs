@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -313,7 +313,10 @@ CDocumentControllerBase.prototype.AddImages = function(aImages){};
  * @param bSelect
  * @param arrImagesForAddToHistory
  */
-CDocumentControllerBase.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect, arrImagesForAddToHistory){};
+CDocumentControllerBase.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect, arrImagesForAddToHistory)
+{
+	return null;
+};
 /**
  * Добавляем графический объект TextArt.
  * @param nStyle
@@ -583,7 +586,7 @@ CDocumentControllerBase.prototype.UpdateCursorType = function(X, Y, PageAbs, Mou
  * @param TextPr
  * @param ParaPr
  */
-CDocumentControllerBase.prototype.PasteFormatting = function(TextPr, ParaPr){};
+CDocumentControllerBase.prototype.PasteFormatting = function(oData){};
 /**
  * Проверяем используется ли в данный момент селект.
  * @returns {boolean}
@@ -820,3 +823,12 @@ CDocumentControllerBase.prototype.FindNextFillingForm = function(isNext, isCurre
  * @param oTrackManager {AscWord.CTrackRevisionsManager}
  */
 CDocumentControllerBase.prototype.CollectSelectedReviewChanges = function(oTrackManager) {};
+
+/**
+ * returns data for format copying
+ * @return {?CDocumentFormatPainterData}
+ * */
+CDocumentControllerBase.prototype.GetFormatPainterData = function()
+{
+	return null;
+};

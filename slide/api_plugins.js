@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -44,16 +44,21 @@
     var Api = window["asc_docs_api"];
 
     /**
+	 * @typedef {Object} CommentData
+	 * The comment data.
+	 * @property {string} UserName - The comment author.
+	 * @property {string} Text - The comment text.
+	 * @property {string} Time - The time when the comment was posted (in milliseconds).
+	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
+	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
+	 */
+
+	/**
 	 * Adds a comment to the presentation.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @alias AddComment
-	 * @param {object}  oCommentData - An object which contains the comment data
-	 * @param {string}  oCommentData.UserName - the comment author
-	 * @param {string}  oCommentData.Text - the comment text
-	 * @param {string}  oCommentData.Time - the comment time
-	 * @param {boolean}  oCommentData.Solved - is the comment resolved
-	 * @param {undefined | array} oCommentData.Replies - an array of replies, they are in the same format as oCommentData
+	 * @param {CommentData}  oCommentData - An object which contains the comment data.
 	 * @return {string | null} - The comment ID in the string format or null if the comment cannot be added.
 	 * @since 7.3.0
 	 */
@@ -79,7 +84,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @alias ChangeComment
 	 * @param {string} sId - The comment ID.
-	 * @param {object} oCommentData - An object which contains the new comment data: "comment" - the comment text, "author" - the comment author.
+	 * @param {CommentData} oCommentData - An object which contains the new comment data.
 	 * @return {boolean}
 	 * @since 7.3.0
 	 */
@@ -104,7 +109,6 @@
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @alias RemoveComments
-	 * @return {undefined}
 	 * @since 7.3.0
 	 */
 	Api.prototype["pluginMethod_RemoveComments"] = function(arrIds)

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -98,6 +98,10 @@ CDrawingsController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 {
 	return this.DrawingObjects.addNewParagraph(bRecalculate, bForceAdd);
 };
+CDrawingsController.prototype.GetFormatPainterData = function()
+{
+	return this.DrawingObjects.getFormatPainterData();
+};
 CDrawingsController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {
 	return this.DrawingObjects.addInlineImage(nW, nH, oImage, oChart, bFlow);
@@ -112,7 +116,7 @@ CDrawingsController.prototype.AddSignatureLine = function(oSignatureDrawing)
 };
 CDrawingsController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
-	this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+	return this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CDrawingsController.prototype.AddTextArt = function(nStyle)
 {
@@ -424,9 +428,9 @@ CDrawingsController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEv
 	// TODO: Надо вызывать не у LogicDocument, а у DocumentContent заданного
 	this.LogicDocument.controller_UpdateCursorType(X, Y, PageAbs, MouseEvent);
 };
-CDrawingsController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CDrawingsController.prototype.PasteFormatting = function(oData)
 {
-	this.DrawingObjects.paragraphFormatPaste(TextPr, ParaPr, false);
+	this.DrawingObjects.pasteFormatting(oData);
 };
 CDrawingsController.prototype.IsSelectionUse = function()
 {

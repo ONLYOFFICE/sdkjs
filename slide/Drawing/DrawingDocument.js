@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -876,18 +876,14 @@ function CDrawingDocument()
 
 	this.SetCursorType     = function(sType, Data)
 	{
-		var elem = this.m_oWordControl.m_oMainContent.HtmlElement;
+		let elem = this.m_oWordControl.m_oMainContent.HtmlElement;
 		if (this.m_oWordControl.DemonstrationManager.Mode)
 			elem = this.m_oWordControl.DemonstrationManager.Canvas;
 
-		if ("" == this.m_sLockedCursorType)
+		let oApi = this.m_oWordControl.m_oApi;
+		if ("" === this.m_sLockedCursorType)
 		{
-			if (this.m_oWordControl.m_oApi.isPaintFormat && (("default" == sType) || ("text" == sType)))
-				this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterWord);
-			else if (this.m_oWordControl.m_oApi.isMarkerFormat)
-				this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");
-			else
-                elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+			elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
 		}
 		else
             elem.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
@@ -1089,6 +1085,7 @@ function CDrawingDocument()
 		var renderer = this.m_oDocRenderer;
 		renderer.Memory.Seek(0);
 		renderer.VectorMemoryForPrint.ClearNoAttack();
+		renderer.DocInfo(this.m_oWordControl.m_oApi.asc_getCoreProps());
 
 		for (var i = start; i <= end; i++)
 		{
@@ -2112,19 +2109,31 @@ function CDrawingDocument()
 			return;
 
 		overlay.Show();
-		var nIndex, nCount;
-		var oPath;
-		var dKoefX, dKoefY;
-		var PathLng = this.MathTrack.GetPolygonsCount();
+		let nIndex, nCount;
+		let oPath;
+		let dKoefX, dKoefY;
+		let PathLng = this.MathTrack.GetPolygonsCount();
 
-		var xDst = this.SlideCurrectRect.left;
-		var yDst = this.SlideCurrectRect.top;
-		var wDst = this.SlideCurrectRect.right - this.SlideCurrectRect.left;
-		var hDst = this.SlideCurrectRect.bottom - this.SlideCurrectRect.top;
+		let xDst, yDst, wDst, hDst;
+		let bIsMain = !this.m_oLogicDocument.IsFocusOnNotes();
+		if(bIsMain)
+		{
+			xDst = this.SlideCurrectRect.left;
+			yDst = this.SlideCurrectRect.top;
+			wDst = this.SlideCurrectRect.right - this.SlideCurrectRect.left;
+			hDst = this.SlideCurrectRect.bottom - this.SlideCurrectRect.top;
 
-		dKoefX = wDst / this.m_oLogicDocument.GetWidthMM();
-		dKoefY = hDst / this.m_oLogicDocument.GetHeightMM();
-		var oTextMatrix = this.TextMatrix;
+			dKoefX = wDst / this.m_oLogicDocument.GetWidthMM();
+			dKoefY = hDst / this.m_oLogicDocument.GetHeightMM();
+		}
+		else
+		{
+			xDst = this.m_oWordControl.m_oNotesApi.OffsetX;
+			yDst = - this.m_oWordControl.m_oNotesApi.Scroll;
+			dKoefX = g_dKoef_mm_to_pix;
+			dKoefY = g_dKoef_mm_to_pix;
+		}
+		let oTextMatrix = this.TextMatrix;
 		for (nIndex = 0; nIndex < PathLng; nIndex++)
 		{
 			oPath = this.MathTrack.GetPolygon(nIndex);
@@ -2428,7 +2437,15 @@ function CDrawingDocument()
 
 	this.Update_MathTrack = function (IsActive, IsContentActive, oMath)
 	{
-		var PixelError = this.GetMMPerDot(1) * 3;
+		let PixelError;
+		if(this.m_oLogicDocument.IsFocusOnNotes())
+		{
+			PixelError = 3 / g_dKoef_mm_to_pix;
+		}
+		else
+		{
+			 PixelError = this.GetMMPerDot(3);
+		}
 		this.MathTrack.Update(IsActive, IsContentActive, oMath, PixelError);
 	};
 
@@ -3437,347 +3454,6 @@ function CDrawingDocument()
 		this.InlineTextTrackPage = -1;
 		this.InlineTextInNotes = false;
 	};
-
-/*	this.SetDrawImagePreviewBulletForMenu = function(id, type, props, isNoCheckFonts) TODO: For history, delete after 7.2 release
-	{
-		var text = AscCommon.translateManager.getValue("None");
-		if (!props)
-		{
-			props = [];
-			var olvl = new Asc.CAscNumberingLvl(0);
-			var level = new CNumberingLvl();
-			var arr = [];
-			for (var i = 0; i < text.length; i++)
-			{
-				var otext = new CNumberingLvlTextString(text[i]);
-				arr.push(otext);
-			}
-			level.SetLvlText(arr);
-			level.FillToAscNumberingLvl(olvl);
-			props.push(olvl);
-			if (type === 0)
-			{
-				for (var i = 1; i < 9; i++)
-				{
-					var lvl 		= new CNumberingLvl(),
-						oLvl		= new Asc.CAscNumberingLvl(i),
-						oLvlTextPr	= new CTextPr(),
-						sLvlText	= "";
-					oLvlTextPr.Color = new AscCommonWord.CDocumentColor(0, 0, 0, false);
-					switch (i)
-					{
-						case 1:
-						{
-							sLvlText = String.fromCharCode(0x00B7);
-							oLvlTextPr.RFonts.SetAll("Symbol");
-							break;
-						}
-						case 2:
-						{
-							sLvlText = "o";
-							oLvlTextPr.RFonts.SetAll("Courier New");
-							break;
-						}
-						case 3:
-						{
-							sLvlText = String.fromCharCode(0x00A7);
-							oLvlTextPr.RFonts.SetAll("Wingdings");
-							break;
-						}
-						case 4:
-						{
-							sLvlText = String.fromCharCode(0x0076);
-							oLvlTextPr.RFonts.SetAll("Wingdings");
-							break;
-						}
-						case 5:
-						{
-							sLvlText = String.fromCharCode(0x00D8);
-							oLvlTextPr.RFonts.SetAll("Wingdings");
-							break;
-						}
-						case 6:
-						{
-							sLvlText = String.fromCharCode(0x00FC);
-							oLvlTextPr.RFonts.SetAll("Wingdings");
-							break;
-						}
-						case 7:
-						{
-							sLvlText = String.fromCharCode(0x00A8);
-							oLvlTextPr.RFonts.SetAll("Symbol");
-							break;
-						}
-						case 8:
-						{
-							sLvlText = String.fromCharCode(0x2013);
-							oLvlTextPr.RFonts.SetAll("Arial");
-							break;
-						}
-					}
-					lvl.SetByType(c_oAscNumberingLevel.Bullet, 0, sLvlText, oLvlTextPr);
-					lvl.FillToAscNumberingLvl(oLvl);
-					props.push(oLvl);
-				}
-			}
-			else
-			{
-				var arrTypes = 
-				[
-					c_oAscNumberingLevel.UpperLetterDot_Left,
-					c_oAscNumberingLevel.LowerLetterBracket_Left,
-					c_oAscNumberingLevel.LowerLetterDot_Left,
-					c_oAscNumberingLevel.DecimalDot_Right,
-					c_oAscNumberingLevel.DecimalBracket_Right,
-					c_oAscNumberingLevel.UpperRomanDot_Right,
-					c_oAscNumberingLevel.LowerRomanDot_Right
-				];
-
-				for (var i = 0; i < arrTypes.length; i++)
-				{
-					var lvl = new CNumberingLvl();
-					var oLvl = new Asc.CAscNumberingLvl(0)
-					lvl.SetByType(arrTypes[i], 0);
-					lvl.FillToAscNumberingLvl(oLvl);
-					oLvl.Align = 1;
-					if(oLvl.TextPr)
-					{
-						oLvl.TextPr.Color = new AscCommonWord.CDocumentColor(0, 0, 0, false);
-					}
-					props.push(oLvl);
-				}
-			}
-		}
-		
-		if (!isNoCheckFonts)
-		{
-			// check need load fonts
-			var fontsDict = {};
-			for (var i = 0, count = props.length; i < count; i++)
-			{
-				var curLvl = props[i];				
-				var text = "";
-				for (var j = 0; j < curLvl.Text.length; j++)
-				{
-					switch (curLvl.Text[j].Type)
-					{
-						case Asc.c_oAscNumberingLvlTextType.Text:
-							text += curLvl.Text[j].Value;
-							break;
-						case Asc.c_oAscNumberingLvlTextType.Num:
-							text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.get_OLang());
-							break;
-						default:
-							break;
-					}
-				}
-				AscFonts.FontPickerByCharacter.checkTextLight(text);
-
-				if (curLvl.TextPr && curLvl.TextPr.RFonts)
-				{
-					if (curLvl.TextPr.RFonts.Ascii) fontsDict[curLvl.TextPr.RFonts.Ascii.Name] = true;
-					if (curLvl.TextPr.RFonts.EastAsia) fontsDict[curLvl.TextPr.RFonts.EastAsia.Name] = true;
-					if (curLvl.TextPr.RFonts.HAnsi) fontsDict[curLvl.TextPr.RFonts.HAnsi.Name] = true;
-					if (curLvl.TextPr.RFonts.CS) fontsDict[curLvl.TextPr.RFonts.CS.Name] = true;
-				}
-			}
-
-			var fonts = [];
-			for (var familyName in fontsDict)
-			{
-				fonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null));
-			}
-			AscFonts.FontPickerByCharacter.extendFonts(fonts);
-
-			if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
-			{
-				return this.SetDrawImagePreviewBulletForMenu(id, type, props, true);
-			}
-
-			var loader = new AscCommon.CGlobalFontLoader();
-			loader.put_Api(this.m_oWordControl.m_oApi);
-			loader.LoadDocumentFonts2(fonts, Asc.c_oAscAsyncActionType.Information, function(){
-				this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBulletForMenu(id, type, props, true);
-			});
-			return;
-		}
-		var elNone = document.getElementById(id[0]);
-		History.TurnOff();
-		if (elNone)
-		{
-			var width_px = elNone.clientWidth;
-			var height_px = elNone.clientHeight;
-
-			var canvas = elNone.firstChild;
-			if (!canvas)
-			{
-				canvas = document.createElement('canvas');
-				canvas.style.cssText = "padding:0;margin:0;user-select:none;";
-				canvas.style.width = width_px + "px";
-				canvas.style.height = height_px + "px";
-				if (width_px > 0 && height_px > 0)
-					elNone.appendChild(canvas);
-			}
-
-			canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
-			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
-
-			var ctx = canvas.getContext("2d");
-			ctx.fillStyle = "#FFFFFF";
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
-			ctx.beginPath();
-			var line_distance = (height_px == 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 1 : 2));
-
-			var oNewShape = new AscFormat.CShape();
-			oNewShape.createTextBody();
-			var par = oNewShape.txBody.content.GetAllParagraphs()[0];
-			par.MoveCursorToStartPos();
-
-			par.Pr = new CParaPr();
-			var lvl = props[0];
-			var textPr = lvl.TextPr.Copy();
-			textPr.FontSize = ((2 * line_distance * 72 / 96) >> 0) / 2;
-
-			var parRun = new ParaRun(par);
-			parRun.Set_Pr(textPr);
-			parRun.AddText(text);
-			par.AddToContent(0, parRun);
-
-			par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-			par.Recalculate_Page(0);
-
-			var bounds = par.Get_PageBounds(0);
-
-			var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-			var parH = (bounds.Bottom - bounds.Top);
-			var x = (width_px - (parW >> 0)) >> 1;
-			var y = (height_px >> 1) + (parH >> 0);
-
-			this.privateGetParagraphByString(lvl, 0, 0, x, y, line_distance, ctx, width_px, height_px);
-		}
-
-		for (var i = 1; i < id.length; i++)
-		{
-			var parent =  document.getElementById(id[i]);
-
-			if (!parent)
-				continue;
-
-			var width_px = parent.clientWidth;
-			var height_px = parent.clientHeight;
-
-			var canvas = parent.firstChild;
-			if (!canvas)
-			{
-				canvas = document.createElement('canvas');
-				canvas.style.cssText = "padding:0;margin:0;user-select:none;";
-				canvas.style.width = width_px + "px";
-				canvas.style.height = height_px + "px";
-				if (width_px > 0 && height_px > 0)
-					parent.appendChild(canvas);
-			}
-
-			canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
-			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
-
-			var ctx = canvas.getContext("2d");
-			ctx.fillStyle = "#FFFFFF";
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
-			ctx.beginPath();
-			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-			
-			if (!type)
-			{
-				var line_distance = 32, x = 0, y = 0;
-
-				var text = "";
-				for (var k = 0; k < props[i].Text.length; k++)
-				{
-					switch (props[i].Text[k].Type)
-					{
-						case Asc.c_oAscNumberingLvlTextType.Text:
-							text += props[i].Text[k].Value;
-							break;
-						case Asc.c_oAscNumberingLvlTextType.Num:
-							var correctNum = 1;
-							if (levelNum === props[i].Text[k].Value)
-								correctNum = counterCurrent;
-							text += AscCommon.IntToNumberFormat(correctNum, props[i].Format, props[i].get_OLang());
-							break;
-						default:
-							break;
-					}
-				}
-
-				var textPr = props[i].TextPr.Copy();
-				textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
-
-				if (1 === text.length)
-				{
-					g_oTextMeasurer.SetTextPr(textPr);
-					g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
-					var oInfo = g_oTextMeasurer.Measure2Code(text.charCodeAt(0));
-
-					x = (width_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
-					y = (width_px >> 1) + Math.round((oInfo.Height / 2 + (oInfo.Ascent - oInfo.Height + oInfo.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
-				}
-				else
-				{
-					var oNewShape = new AscFormat.CShape();
-					oNewShape.createTextBody();
-					var par = oNewShape.txBody.content.GetAllParagraphs()[0];
-					par.MoveCursorToStartPos();
-					par.MoveCursorToStartPos();
-
-					par.Pr = new CParaPr();
-					var textPr = props[i].TextPr.Copy();
-					textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
-
-					var parRun = new ParaRun(par);
-					parRun.Set_Pr(textPr);
-					parRun.AddText(text);
-					par.AddToContent(0, parRun);
-
-					par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-					par.Recalculate_Page(0);
-
-					var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-					var x = (width_px >> 1) - Math.round(parW / 2);
-					// в office 19 на такой же высоте
-					var y = par.Lines[0].Y * AscCommon.g_dKoef_mm_to_pix;
-				}
-
-				// для размеров окна 38 на 38
-				this.privateGetParagraphByString(props[i], 0, 0, x, y, line_distance, ctx, width_px, height_px);
-			}
-			else
-			{
-				var offsetBase = 4;
-				var line_w = 2;
-				// считаем расстояние между линиями
-				var line_distance = (((height_px - (offsetBase << 2)) - line_w * 3) / 3) >> 0;
-				// убираем погрешность в offset
-				var offset = (height_px - (line_w * 3 + line_distance * 3)) >> 1;
-
-				ctx.lineWidth = 2 * Math.round(rPR);
-				ctx.strokeStyle = "#CBCBCB";
-				var y = offset + 11;
-				var text_base_offset_x = offset + ((2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
-
-				for (var j = 0; j < 3; j++)
-				{
-					ctx.moveTo(Math.round(text_base_offset_x * rPR), Math.round(y * rPR)); ctx.lineTo(Math.round((width_px - offsetBase) * rPR), Math.round(y * rPR));
-					ctx.stroke();
-					ctx.beginPath();
-					var textYx =  text_base_offset_x - ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0),
-						textYy = y + (line_w * 2.5);
-					this.privateGetParagraphByString(props[i], 0, 1 + ((type == 1) ? j : 0), textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
-					y += (line_w + line_distance);
-				}
-			}
-		}
-		History.TurnOn();
-	};*/
 
 	this.OnAnimPaneChanged = function(nSlideNum, oRect)
 	{
@@ -5750,7 +5426,8 @@ function CThumbnailsManager()
 			return null;
 		}
 		let nX, nY;
-		if(editor.WordControl.m_oThumbnailsContainer.HtmlElement.style.display === "none")
+		let oThContainer = editor.WordControl.m_oThumbnailsContainer;
+		if(oThContainer.HtmlElement.style.display === "none")
 		{
 			nX = 0;
 		}
@@ -5759,6 +5436,7 @@ function CThumbnailsManager()
 			nX = oRect.X + oRect.W - AscCommon.specialPasteElemWidth;
 		}
 		nY = oRect.Y + oRect.H;
+		nY = Math.max(Math.min(oThContainer.GetCSS_height() - 25, nY), 0);
 		return {X: nX, Y: nY};
 	};
 }

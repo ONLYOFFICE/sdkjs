@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -39,6 +39,7 @@
 	NON_LETTER_SYMBOLS[0x00AE] = 1;
 
 	const CHECKED_LIMIT = 2000;
+	
 
 	/**
 	 * Класс для проверки орфографии внутри параграфа
@@ -207,10 +208,11 @@
 	{
 		if (!oElement.IsPunctuation())
 			return false;
-
+		
 		// Исключения, полученнные опытным путем
 		let nUnicode = oElement.GetCodePoint();
-		return (!(0x2019 === nUnicode && lcid_frFR === this.CurLcid));
+		return (!(0x2019 === nUnicode && lcid_frFR === this.CurLcid)
+			&& !(0x2018 === nUnicode && (lcid_uzLatnUZ === this.CurLcid || lcid_uzCyrlUZ === this.CurLcid)));
 	};
 	CParagraphSpellCheckerCollector.prototype.IsWordLetter = function(oElement)
 	{

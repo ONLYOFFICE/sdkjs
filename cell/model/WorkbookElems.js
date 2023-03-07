@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -9019,6 +9019,10 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 		this.Ref = ref;
+
+		if (this.SortState) {
+			this.SortState.changeRef(col, row, bIsFirst);
+		}
 	};
 	AutoFilter.prototype.changeRefOnRange = function (range) {
 		if (!range) {
@@ -12605,6 +12609,22 @@ QueryTableField.prototype.clone = function() {
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
 	};
+	asc_CPageSetup.prototype.asc_getFirstPageNumber = function () {
+		return this.useFirstPageNumber ? this.firstPageNumber : null;
+	};
+	asc_CPageSetup.prototype.asc_setFirstPageNumber = function (newVal) {
+		let oldVal = this.firstPageNumber;
+		let oldValUse = this.useFirstPageNumber;
+		if (newVal) {
+			newVal = parseInt(newVal);
+		}
+		this.firstPageNumber = newVal;
+		this.useFirstPageNumber = true;
+		if (this.ws && History.Is_On() && (oldVal !== this.firstPageNumber || oldValUse !== this.useFirstPageNumber)) {
+			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_FirstPageNumber, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}
+	};
 
 	asc_CPageSetup.prototype.asc_getFitToWidth = function () {
 		if(!this.ws) {
@@ -12679,6 +12699,10 @@ QueryTableField.prototype.clone = function() {
 		prop = obj.asc_getFitToHeight();
 		if(prop !== this.asc_getFitToHeight()) {
 			this.asc_setFitToHeight(prop);
+		}
+		prop = obj.asc_getFirstPageNumber();
+		if(prop !== this.asc_getFirstPageNumber()) {
+			this.asc_setFirstPageNumber(prop);
 		}
 	};
 
@@ -13935,6 +13959,16 @@ QueryTableField.prototype.clone = function() {
 
 		return res;
 	};
+	CPrintPreviewState.prototype.getActivePageSetup = function () {
+		if (!this.isStart()) {
+			return;
+		}
+		let activeSheet = this.activeSheet;
+		let advancedOptions = this.advancedOptions;
+		if (advancedOptions && advancedOptions.pageOptionsMap) {
+			return advancedOptions.pageOptionsMap[activeSheet] && advancedOptions.pageOptionsMap[activeSheet].pageSetup;
+		}
+	};
 
 
 	function CT_Connection() {
@@ -14042,11 +14076,11 @@ QueryTableField.prototype.clone = function() {
 
 	OleSizeSelectionRange.prototype.getFirstFromLocalHistory = function () {
 		return this.localHistory[0].clone();
-	}
+	};
 
 	OleSizeSelectionRange.prototype.getLastFromLocalHistory = function () {
 		return this.localHistory[this.localHistory.length - 1].clone();
-	}
+	};
 
 	OleSizeSelectionRange.prototype.resetHistory = function () {
 		this.localHistory = [];
@@ -14066,7 +14100,7 @@ QueryTableField.prototype.clone = function() {
 		this.ranges = [oRange.clone()];
 		this.activeCellId = 0;
 		this.activeCell = new AscCommon.CellBase(oRange.r1, oRange.c1);
-	}
+	};
 
 	OleSizeSelectionRange.prototype.clean = function () {
 		this.ranges = [new Asc.Range(0, 0, 10, 10)];
@@ -14243,10 +14277,13 @@ QueryTableField.prototype.clone = function() {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
 			if (this.worksheets && this.worksheets[sheetName]) {
+				let wsTo = this.worksheets[sheetName];
 				//меняем лист
 				AscFormat.ExecuteNoHistory(function(){
 					AscCommonExcel.executeInR1C1Mode(false, function () {
-						t.worksheets[sheetName].copyFrom(arr[i], t.worksheets[sheetName].sName);
+						var oAllRange = wsTo.getRange3(0, 0, wsTo.getRowsCount(), wsTo.getColsCount());
+						oAllRange.cleanAll();
+						wsTo.copyFrom(arr[i], wsTo.sName);
 					});
 				});
 				//this.worksheets[sheetName] = arr[i];
@@ -14264,7 +14301,7 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 
-		var oReferenceData = oPortalData && oPortalData.referenceData;
+		var oReferenceData = oPortalData && oPortalData["referenceData"];
 		//data from portal, need update reference data
 		if (oReferenceData && (!this.referenceData || (this.referenceData["instanceId"] !== oReferenceData["instanceId"] || this.referenceData["fileKey"] !== oReferenceData["fileKey"]))) {
 			this.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
@@ -14384,7 +14421,7 @@ QueryTableField.prototype.clone = function() {
 			var sheetDataSet = this.SheetDataSet[sheetDataSetIndex];
 			var ws = this.worksheets[sheetName];
 			if (!this.worksheets[sheetName]) {
-				var wb = new AscCommonExcel.Workbook();
+				var wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
 				ws = new AscCommonExcel.Worksheet(wb);
 				ws.sName = sheetName;
 
@@ -14510,12 +14547,13 @@ QueryTableField.prototype.clone = function() {
 		return this.data;
 	};
 	asc_CExternalReference.prototype.asc_getSource = function () {
-		if (this.externalReference && this.externalReference.Id) {
-			var lastIndex = this.externalReference.Id.lastIndexOf('/');
+		let id = this.externalReference && this.externalReference.Id;
+		if (id) {
+			let lastIndex =0 === id.indexOf("file:///") ? id.lastIndexOf('\\') : id.lastIndexOf('/');
 			if (lastIndex === -1) {
-				lastIndex = this.externalReference.Id.lastIndexOf('/\/');
+				lastIndex = id.lastIndexOf('/\/');
 			}
-			return lastIndex === -1 ? this.externalReference.Id : this.externalReference.Id.substr(lastIndex + 1);
+			return lastIndex === -1 ? id : id.substr(lastIndex + 1);
 		}
 		return null;
 	};
@@ -14602,7 +14640,7 @@ QueryTableField.prototype.clone = function() {
 			var addedRowMap = [];
 			for (var i = 0; i < ranges.length; i++) {
 				var range = sheet.getRange3(ranges[i].r1, ranges[i].c1, ranges[i].r2, ranges[i].c2);
-				range._foreachNoEmpty(function (cell) {
+				range._foreach(function (cell) {
 					if (!addedRowMap[cell.nRow]) {
 						var row = new ExternalRow();
 						row.R = cell.nRow + 1;
@@ -14639,8 +14677,12 @@ QueryTableField.prototype.clone = function() {
 						continue;
 					}
 					var range = sheet.getRange2(externalCell.Ref);
-					range._foreachNoEmpty(function (cell) {
-						isChanged = externalCell.initFromCell(cell, true);
+					range._foreach(function (cell) {
+
+						let changedCell = externalCell.initFromCell(cell, true);
+						if (!isChanged) {
+							isChanged = changedCell;
+						}
 
 						var api_sheet = Asc['editor'];
 						var wb = api_sheet.wbModel;
@@ -14785,7 +14827,7 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 	ExternalCell.prototype.clone = function () {
-		var newObj = new ExternalRow();
+		var newObj = new ExternalCell();
 
 		newObj.Ref = this.Ref;
 		newObj.CellType = this.CellType;
@@ -15236,6 +15278,8 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_setFitToHeight"] = prot.asc_setFitToHeight;
 	prot["asc_getScale"] = prot.asc_getScale;
 	prot["asc_setScale"] = prot.asc_setScale;
+	prot["asc_getFirstPageNumber"] = prot.asc_getFirstPageNumber;
+	prot["asc_setFirstPageNumber"] = prot.asc_setFirstPageNumber;
 
 	window["Asc"]["asc_CPageOptions"] = window["Asc"].asc_CPageOptions = asc_CPageOptions;
 	prot = asc_CPageOptions.prototype;

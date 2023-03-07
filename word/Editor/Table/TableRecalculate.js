@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1973,39 +1973,8 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         // Рисуем ли заголовок на данной странице
         HeaderPage.Draw = true;
 
-        // Скопируем целиком строки
-        HeaderPage.Rows = [];
-
-        // Временно отключаем регистрацию новых классов
-        AscCommon.g_oTableId.m_bTurnOff = true;
-        AscCommon.History.TurnOff();
-
 		this.LogicDocument.RecalcTableHeader = true;
-
-		var aContentDrawings = [];
-        for ( var Index = 0; Index < this.HeaderInfo.Count; Index++ )
-        {
-            HeaderPage.Rows[Index] = this.Content[Index].Copy(this);
-            HeaderPage.Rows[Index].Index = Index;
-            for(var CellIndex = 0; CellIndex < HeaderPage.Rows[Index].Content.length; ++CellIndex)
-            {
-                HeaderPage.Rows[Index].Content[CellIndex].Content.GetAllDrawingObjects(aContentDrawings);
-            }
-        }
-        for(var DrawingIndex = 0; DrawingIndex < aContentDrawings.length; ++DrawingIndex)
-        {
-            if(aContentDrawings[DrawingIndex] && aContentDrawings[DrawingIndex].GraphicObj)
-            {
-                aContentDrawings[DrawingIndex].GraphicObj.recalculate();
-                if(aContentDrawings[DrawingIndex].GraphicObj.recalculateText)
-                {
-                    aContentDrawings[DrawingIndex].GraphicObj.recalculateText();
-                }
-            }
-        }
-
-        AscCommon.g_oTableId.m_bTurnOff = false;
-        AscCommon.History.TurnOn();
+		this.private_RecalculatePrepareHeaderPageRows(HeaderPage);
 
         var bHeaderNextPage = false;
         for ( var CurRow = 0; CurRow < this.HeaderInfo.Count; CurRow++  )
@@ -3329,6 +3298,34 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         return recalcresult_NextPage;
     else
         return recalcresult_NextElement;
+};
+CTable.prototype.private_RecalculatePrepareHeaderPageRows = function(headerPage)
+{
+	headerPage.Rows = [];
+	let self = this;
+	AscCommon.ExecuteNoHistory(function()
+	{
+		let drawingObjects = [];
+		
+		for (var index = 0; index < self.HeaderInfo.Count; ++index)
+		{
+			headerPage.Rows[index] = self.Content[index].Copy(self);
+			headerPage.Rows[index].SetIndex(index);
+			headerPage.Rows[index].GetAllDrawingObjects(drawingObjects);
+		}
+		
+		for (let index = 0, count = drawingObjects.length; index < count; ++index)
+		{
+			let drawing = drawingObjects[index];
+			if (!drawing || !drawing.GraphicObj)
+				continue;
+			
+			drawing.GraphicObj.recalculate();
+			
+			if (drawing.GraphicObj.recalculateText)
+				drawing.GraphicObj.recalculateText();
+		}
+	}, this.LogicDocument);
 };
 CTable.prototype.private_RecalculatePositionY = function(CurPage)
 {

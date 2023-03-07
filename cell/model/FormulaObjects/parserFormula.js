@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -78,6 +78,23 @@ function (window, undefined) {
 		return newArray
 	}
 
+	function generate3DLink(externalPath, sheet, range) {
+		let filePrefix = "file:///";
+		if (externalPath && 0 === externalPath.indexOf(filePrefix)) {
+			//"file:///C:\root\from1.xlsx"
+			sheet = sheet.split(":");
+			var wsFrom = sheet[0], wsTo = sheet[1] === undefined ? wsFrom : sheet[1];
+			wsFrom = wsFrom.replace(/'/g, "''");
+			wsTo = wsTo.replace(/'/g, "''");
+			return "'" + externalPath + (wsFrom !== wsTo ? wsFrom + ":" + wsTo : wsFrom) + "'!" + range;
+		} else {
+			if (!externalPath) {
+				externalPath = "";
+			}
+			return parserHelp.get3DRef(externalPath + sheet, range);
+		}
+	}
+	
 	function ParsedThing(value, type, subtype, pos, length) {
 		this.value = value;
 		this.type = type;
@@ -1031,14 +1048,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 	cArea.prototype.getValueByRowCol = function (i, j) {
-		var res, r;
+		let res, r;
 		r = this.getRange();
 		r.worksheet._getCellNoEmpty(r.bbox.r1 + i, r.bbox.c1 + j, function(cell) {
 			if(cell) {
 				res = checkTypeCell(cell);
 			}
 		});
-
 		return res;
 	};
 	cArea.prototype.getRange = function () {
@@ -1250,7 +1266,31 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea.prototype.getFirstElement = function () {
 		return this.getValueByRowCol(0, 0);
-	}
+	};
+	cArea.prototype._getCol = function (colIndex) {
+		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+			return null;
+		}
+
+		let col = [];
+		for (let i = 0; i < this.getDimensions().row; i++) {
+			col[i] = [];
+			col[i].push(this.getValueByRowCol(i, colIndex));
+		}
+		return col;
+	};
+	cArea.prototype._getRow = function (rowIndex) {
+		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+			return null;
+		}
+
+		let row = [[]];
+		for (let j = 0; j < this.getDimensions().col; j++) {
+			row[0].push(this.getValueByRowCol(rowIndex, j));
+		}
+		return row;
+	};
+
 
 	/**
 	 * @constructor
@@ -1382,7 +1422,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return (null == _val[0]) ? new cEmpty() : _val[0];
 	};
 	cArea3D.prototype.getValueByRowCol = function (i, j) {
-		var r = this.getRanges(), res;
+		let r = this.getRanges(), res;
 
 		if (r[0]) {
 			r[0].worksheet._getCellNoEmpty(r[0].bbox.r1 + i, r[0].bbox.c1 + j, function (cell) {
@@ -1406,14 +1446,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = AscCommonExcel.g_ProcessShared && this.bbox ? this.bbox.getName() : this.value;
-		return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
+		var exPath = this.getExternalLinkStr(this.externalLink);
+		return parserHelp.get3DRef(wsFrom !== wsTo ? (exPath + wsFrom + ':' + wsTo) : (exPath + wsFrom), name);
 	};
 	cArea3D.prototype.toLocaleString = function () {
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = this.bbox ? this.bbox.getName() : this.value;
 		var exPath = this.getExternalLinkStr(this.externalLink, true);
-		return  parserHelp.get3DRef(wsFrom !== wsTo ? exPath + wsFrom + ':' + wsTo : exPath + wsFrom, name);
+		return generate3DLink(exPath, wsFrom !== wsTo ? (wsFrom + ':' + wsTo) : wsFrom, name);
 	};
 	cArea3D.prototype.tocNumber = function () {
 		return this.getValue()[0].tocNumber();
@@ -1426,13 +1467,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea3D.prototype.tocArea = function () {
 		var wsR = this.wsRange();
-		if (wsR.length == 1) {
+		if (wsR.length === 1) {
 			return new cArea(this.value, wsR[0]);
 		}
 		return false;
 	};
 	cArea3D.prototype.getWS = function () {
 		return this.wsFrom;
+	};
+	cArea3D.prototype.getWsId = function () {
+		return this.wsFrom && this.wsFrom.Id;
 	};
 	cArea3D.prototype.cross = function (arg, ws) {
 		if (!this.isSingleSheet()) {
@@ -1617,7 +1661,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea3D.prototype.getFirstElement = function () {
 		return this.getValueByRowCol(0, 0);
-	}
+	};
+	cArea3D.prototype._getCol = function (colIndex) {
+		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+			return null;
+		}
+
+		let col = [];
+		for (let i = 0; i < this.getDimensions().row; i++) {
+			col[i] = [];
+			col[i].push(this.getValueByRowCol(i, colIndex));
+		}
+		return col;
+	};
+	cArea3D.prototype._getRow = function (rowIndex) {
+		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+			return null;
+		}
+
+		let row = [[]];
+		for (let j = 0; j < this.getDimensions().col; j++) {
+			row[0].push(this.getValueByRowCol(rowIndex, j));
+		}
+		return row;
+	};
 
 	/**
 	 * @constructor
@@ -1814,15 +1881,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cRef3D.prototype.toString = function () {
+		var exPath = this.getExternalLinkStr(this.externalLink);
 		if (AscCommonExcel.g_ProcessShared) {
-			return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
+			return parserHelp.get3DRef(exPath + this.ws.getName(), this.range.getName());
 		} else {
-			return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(this.ws.getName(), this.value);
+			return parserHelp.get3DRef(exPath + this.ws.getName(), this.value);
 		}
 	};
 	cRef3D.prototype.toLocaleString = function () {
 		var exPath = this.getExternalLinkStr(this.externalLink, true);
-		return parserHelp.get3DRef(exPath + this.ws.getName(), this.range.getName());
+		return generate3DLink(exPath, this.ws.getName(), this.range.getName());
 	};
 	cRef3D.prototype.getWS = function () {
 		return this.ws;
@@ -2503,10 +2571,24 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return this.array[rowIndex];
 	};
+	cArray.prototype._getRow = function (rowIndex) {
+		if (rowIndex < 0 || rowIndex > this.array.length - 1) {
+			return null;
+		}
+		return [this.array[rowIndex]];
+	};
 	cArray.prototype.getCol = function (colIndex) {
 		var col = [];
 		for (var i = 0; i < this.rowCount; i++) {
 			col.push(this.array[i][colIndex]);
+		}
+		return col;
+	};
+	cArray.prototype._getCol = function (colIndex) {
+		let col = [];
+		for (let i = 0; i < this.rowCount; i++) {
+			col[i] = [];
+			col[i].push(this.array[i][colIndex]);
 		}
 		return col;
 	};
@@ -2774,7 +2856,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		res.fillFromArray(newArray);
 		return res;
 	};
-
 	cArray.prototype.getFirstElement = function () {
 		return this.getElementRowCol(0,0);	
 	}
@@ -7917,6 +7998,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		} else if (cElementType.array === val.type) {
 			if (ref && opt_ws) {
+				// TODO check behaviour when row === 1
 				row = 1 === val.array.length ? 0 : opt_row - ref.r1;
 				col = 1 === val.array[0].length ? 0 : opt_col - ref.c1;
 				if (val.array[row] && val.array[row][col]) {
@@ -8273,6 +8355,71 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 		return bRes;
+	}
+
+	function getArrayHelper(args, func, exceptions) {
+		// check for arrays and find max length
+		let isContainsArray = false,
+			maxRows = 1,
+			maxColumns = 1;
+
+		for (let i = 0; i < args.length; i++) {
+			if ((cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) && (!exceptions || (exceptions && !exceptions.get(i)))) {
+				let argDimensions = args[i].getDimensions();
+				maxRows = argDimensions.row > maxRows ? argDimensions.row : maxRows;
+				maxColumns = argDimensions.col > maxColumns ? argDimensions.col : maxColumns;
+				isContainsArray = true;
+			}
+		}
+
+		if (!isContainsArray) {
+			return false;
+		}
+
+		let resultArr = new cArray();
+
+		for (let i = 0; i < maxRows; i++) {
+			resultArr.addRow();
+			for (let j = 0; j < maxColumns; j++) {
+				let values = [];
+
+				for (let k = 0; k < args.length; k++) {
+					let value = args[k];
+
+					if ((cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) && (!exceptions || (exceptions && !exceptions.get(k)))) {
+						let valueDimensions = value.getDimensions();
+						if (value.isOneElement()) {
+							// single row with single element
+							value = value.getFirstElement();
+						} else if (valueDimensions.col !== 1 && valueDimensions.row  === 1) {
+							// single row with many elements
+							value = _getValueInRange(value, 0, j);
+						} else if (valueDimensions.col === 1 && valueDimensions.row !== 1) {
+							// many rows with single element
+							value = _getValueInRange(value, i, 0);
+						} else {
+							value = _getValueInRange(value, i, j);
+						}
+					}
+
+					values.push(value);
+				}
+
+				resultArr.addElement(func(true, values));
+			}
+		}
+
+		return resultArr;
+	}
+
+	// if went beyond the cellsRange
+	const _getValueInRange = function (array, _row, _col) {
+		let sizes = array.getDimensions();
+		if (_row > sizes.row - 1 || _col > sizes.col - 1) {
+			return new cError(cErrorType.not_available);
+		}
+		let res = array.getValueByRowCol ? array.getValueByRowCol(_row, _col) : array.getElementRowCol(_row, _col);
+		return res;
 	}
 
 	/*
@@ -8653,5 +8800,6 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertRefToRowCol = convertRefToRowCol;
 	window['AscCommonExcel'].convertAreaToArray = convertAreaToArray;
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
+	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
 
 })(window);

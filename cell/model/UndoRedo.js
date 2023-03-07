@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -457,136 +457,92 @@ function (window, undefined) {
 			switch (nType) {
 				case this.ValueMultiTextElem:
 					return new AscCommonExcel.CMultiTextElem();
-					break;
 				case this.CellValue:
 					return new AscCommonExcel.CCellValue();
-					break;
 				case this.CellValueData:
 					return new UndoRedoData_CellValueData();
-					break;
 				case this.CellData:
 					return new UndoRedoData_CellData();
-					break;
 				case this.CellSimpleData:
 					return new UndoRedoData_CellSimpleData();
-					break;
 				case this.FromTo:
 					return new UndoRedoData_FromTo();
-					break;
 				case this.FromToRowCol:
 					return new UndoRedoData_FromToRowCol();
-					break;
 				case this.FromToHyperlink:
 					return new UndoRedoData_FromToHyperlink();
-					break;
 				case this.IndexSimpleProp:
 					return new UndoRedoData_IndexSimpleProp();
-					break;
 				case this.ColProp:
 					return new UndoRedoData_ColProp();
-					break;
 				case this.RowProp:
 					return new UndoRedoData_RowProp();
-					break;
 				case this.BBox:
 					return new UndoRedoData_BBox();
-					break;
 				case this.Hyperlink:
 					return new AscCommonExcel.Hyperlink();
-					break;
 				case this.SortData:
 					return new UndoRedoData_SortData();
-					break;
 				case this.StyleFont:
 					return new AscCommonExcel.Font();
-					break;
 				case this.StyleFill:
 					return new AscCommonExcel.Fill();
-					break;
 				case this.StylePatternFill:
 					return new AscCommonExcel.PatternFill();
-					break;
 				case this.StyleGradientFill:
 					return new AscCommonExcel.GradientFill();
-					break;
 				case this.StyleGradientFillStop:
 					return new AscCommonExcel.GradientStop();
-					break;
 				case this.StyleNum:
 					return new AscCommonExcel.Num();
-					break;
 				case this.StyleBorder:
 					return new AscCommonExcel.Border();
-					break;
 				case this.StyleBorderProp:
 					return new AscCommonExcel.BorderProp();
-					break;
 				case this.StyleXfs:
 					return new AscCommonExcel.CellXfs();
-					break;
 				case this.StyleAlign:
 					return new AscCommonExcel.Align();
-					break;
 				case this.CommentData:
 					return new Asc.asc_CCommentData();
-					break;
 				case this.CommentCoords:
 					return new AscCommonExcel.asc_CCommentCoords();
-					break;
 				case this.ChartSeriesData:
 					return new AscFormat.asc_CChartSeria();
-					break;
 				case this.SheetAdd:
 					return new UndoRedoData_SheetAdd();
-					break;
 				case this.SheetRemove:
 					return new UndoRedoData_SheetRemove();
-					break;
 				case this.ClrScheme:
 					return new UndoRedoData_ClrScheme();
-					break;
 				case this.AutoFilter:
 					return new UndoRedoData_AutoFilter();
-					break;
 				case this.AutoFiltersOptions:
 					return new Asc.AutoFiltersOptions();
-					break;
 				case this.AutoFilterObj:
 					return new Asc.AutoFilterObj();
-					break;
 				case this.AdvancedTableInfoSettings:
 					return new Asc.AdvancedTableInfoSettings();
-					break;
 				case this.CustomFilters:
 					return new Asc.CustomFilters();
-					break;
 				case this.CustomFilter:
 					return new Asc.CustomFilter();
-					break;
 				case this.ColorFilter:
 					return new Asc.ColorFilter();
-					break;
 				case this.DynamicFilter:
 					return new Asc.DynamicFilter();
-					break;
 				case this.Top10:
 					return new Asc.Top10();
-					break;
 				case this.AutoFiltersOptionsElements:
 					return new AscCommonExcel.AutoFiltersOptionsElements();
-					break;
 				case this.AddFormatTableOptions:
 					return new AscCommonExcel.AddFormatTableOptions();
-					break;
 				case this.SingleProperty:
 					return new UndoRedoData_SingleProperty();
-					break;
 				case this.RgbColor:
 					return new AscCommonExcel.RgbColor();
-					break;
 				case this.ThemeColor:
 					return new AscCommonExcel.ThemeColor();
-					break;
 				case this.DefinedName:
 					return new UndoRedoData_DefinedNames();
 				case this.PivotTable:
@@ -1716,6 +1672,8 @@ function (window, undefined) {
 		this.formula = null;
 		this.totalFunction = null;
 		this.viewId = null;
+
+		this.redoColumnName = null;
 	}
 
 	UndoRedoData_AutoFilter.prototype.Properties = {
@@ -1742,7 +1700,8 @@ function (window, undefined) {
 		nRow: 20,
 		formula: 21,
 		totalFunction: 22,
-		viewId: 23
+		viewId: 23,
+		redoColumnName: 24
 	};
 	UndoRedoData_AutoFilter.prototype.getType = function () {
 		return UndoRedoDataTypes.AutoFilter;
@@ -1812,6 +1771,8 @@ function (window, undefined) {
 				return this.totalFunction;
 			case this.Properties.viewId:
 				return this.viewId;
+			case this.Properties.redoColumnName:
+				return this.redoColumnName;
 		}
 
 		return null;
@@ -1835,7 +1796,6 @@ function (window, undefined) {
 				break;
 			case this.Properties.addFormatTableOptionsObj:
 				return this.addFormatTableOptionsObj = value;
-				break;
 			case this.Properties.moveFrom:
 				this.moveFrom = value;
 				break;
@@ -1919,6 +1879,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.viewId:
 				this.viewId = value;
+				break;
+			case this.Properties.redoColumnName:
+				this.redoColumnName = value;
 				break;
 		}
 		return null;
@@ -3792,6 +3755,9 @@ function (window, undefined) {
 			case AscCH.historyitem_Layout_Scale:
 				pageSetup.asc_setScale(value);
 				break;
+			case AscCH.historyitem_Layout_FirstPageNumber:
+				pageSetup.asc_setFirstPageNumber(value);
+				break;
 		}
 
 		this.wb.oApi._onUpdateLayoutMenu(nSheetId);
@@ -3985,6 +3951,9 @@ function (window, undefined) {
 				break;
 			case AscCH.historyitem_PivotTable_SetAltTextSummary:
 				pivotTable.setDescription(value);
+				break;
+			case AscCH.historyitem_PivotTable_HideValuesRow:
+				pivotTable.setHideValuesRow(value);
 				break;
 			case AscCH.historyitem_PivotTable_AddPageField:
 				if (bUndo) {
@@ -4515,6 +4484,9 @@ function (window, undefined) {
 					};
 
 					cfRule.ranges = toAscRanges(value);
+					if (oModel) {
+						oModel.cleanConditionalFormattingRangeIterator();
+					}
 					break;
 				}
 				case AscCH.historyitem_CFRule_SetRuleElements: {

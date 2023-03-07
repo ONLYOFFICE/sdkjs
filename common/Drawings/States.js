@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -403,13 +403,14 @@ NullState.prototype =
     {
         this.drawingObjects.checkRedrawOnChangeCursorPosition(oStartContent, oStartPara);
     },
-    onMouseDown: function(e, x, y, pageIndex, bTextFlag)
+    onMouseDown: function(e, x, y, pageIndex)
     {
         let start_target_doc_content, end_target_doc_content, selected_comment_index = -1;
         let oStartPara = null;
         let bHandleMode = this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE;
         let sHitGuideId = this.drawingObjects.hitInGuide(x, y);
         let oAnimPlayer = this.drawingObjects.getAnimationPlayer && this.drawingObjects.getAnimationPlayer();
+		let oAPI = this.drawingObjects.getEditorApi();
         if(bHandleMode)
         {
             start_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
@@ -422,6 +423,29 @@ NullState.prototype =
                 }
             }
             this.startTargetTextObject = AscFormat.getTargetTextObject(this.drawingObjects);
+        }
+		else
+		{
+			if(oAPI.editorId === AscCommon.c_oEditorId.Presentation)
+			{
+				if(oAPI.isFormatPainterOn())
+				{
+					let oPainterData = oAPI.getFormatPainterData();
+					let sType = "default";
+					if(oPainterData)
+					{
+						if(oPainterData.isDrawingData())
+						{
+							sType = AscCommon.kCurFormatPainterDrawing;
+						}
+						else
+						{
+							sType = AscCommon.kCurFormatPainterWord;
+						}
+					}
+					return {cursorType: sType, objectId: "1"};
+				}
+			}
         }
         var ret;
         ret = this.drawingObjects.handleSlideComments(e, x, y, pageIndex);
@@ -2003,17 +2027,21 @@ TextAddState.prototype =
         {
             if(oApi.editorId === AscCommon.c_oEditorId.Presentation)
             {
-                if(AscCommon.c_oAscFormatPainterState.kOff !== oApi.isPaintFormat)
+	            let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                if(oApi.isFormatPainterOn())
                 {
                     this.drawingObjects.paragraphFormatPaste2();
-                    if (AscCommon.c_oAscFormatPainterState.kOn === oApi.isPaintFormat)
+                    if (oApi.isFormatPainterOn())
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
+						if(oPresentation)
+						{
+							oPresentation.OnMouseMove(e, x, y, pageIndex)
+						}
                     }
                 }
                 else if(oApi.isMarkerFormat)
                 {
-                    var oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
                     if(oPresentation)
                     {
                         if(oPresentation.HighlightColor)
@@ -2028,6 +2056,10 @@ TextAddState.prototype =
                         oApi.sync_MarkerFormatCallback(true);
                     }
                 }
+            }
+			else if(oApi.editorId === AscCommon.c_oEditorId.Spreadsheet)
+			{
+				this.drawingObjects.checkFormatPainterOnMouseEvent();
             }
         }
     }

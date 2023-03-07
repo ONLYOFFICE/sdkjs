@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1763,7 +1763,7 @@ function getThemeFontType(name) {
 	return 0;
 }
 
-function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, bOForm, isCompatible, opt_memory, docParts)
+function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible, opt_memory, docParts)
 {
     this.memory = opt_memory || new AscCommon.CMemory();
     this.Document = doc;
@@ -1779,7 +1779,7 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, bOForm, isCompati
 		nNumIdIndex: null,
 		oUsedStyleMap: null
 	};
-	this.saveParams = new DocSaveParams(bMailMergeDocx, bMailMergeHtml, bOForm, isCompatible, docParts);
+	this.saveParams = new DocSaveParams(bMailMergeDocx, bMailMergeHtml, isCompatible, docParts);
 	this.WriteToMemory = function(addHeader)
 	{
 		pptx_content_writer._Start();
@@ -1869,7 +1869,7 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, bOForm, isCompati
 		this.WriteTable(c_oSerTableTypes.Settings, new BinarySettingsTableWriter(this.memory, this.Document, this.saveParams));
 
 		let oform = this.Document.GetOFormDocument();
-		if (this.saveParams.bOForm && oform) {
+		if (oform) {
 			let jsZlib = new AscCommon.ZLib();
 			jsZlib.create();
 			oform.toZip(jsZlib, this.saveParams.fieldMastersPartMap);
@@ -1955,7 +1955,7 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, bOForm, isCompati
 						doc.Styles = glossaryDocument.GetStyles();
 						doc.Footnotes = glossaryDocument.GetFootnotes();
 						doc.Endnotes = glossaryDocument.GetEndnotes();
-						var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(doc, undefined, undefined, undefined, t.saveParams.isCompatible, t.memory, docParts);
+						var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(doc, undefined, undefined, t.saveParams.isCompatible, t.memory, docParts);
 						oBinaryFileWriter.WriteToMemory(false);
 					}});
 			}, this, []);
@@ -6590,15 +6590,6 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (complexFormPr) {
 			this.bs.WriteItem(c_oSerSdt.ComplexFormPr, function (){oThis.WriteSdtComplexFormPr(complexFormPr)});
 		}
-		if (this.saveParams.bOForm) {
-			let fieldMaster = oSdt.GetFieldMaster && oSdt.GetFieldMaster();
-			if (fieldMaster) {
-				let sTarget = this.saveParams.fieldMastersPartMap[fieldMaster.Id];
-				if (sTarget) {
-					oThis.bs.WriteItem(c_oSerSdt.OformMaster, function (){oThis.memory.WriteString3(sTarget);});
-				}
-			}
-		}
 	};
 	this.WriteSdtCheckBox = function (val)
 	{
@@ -6726,6 +6717,13 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		}
 		if (val.Shd) {
 			oThis.bs.WriteItem(c_oSerSdt.FormPrShd, function(){oThis.bs.WriteShd(val.Shd)});
+		}
+		let fieldMaster = val.GetFieldMaster && val.GetFieldMaster();
+		if (fieldMaster) {
+			let sTarget = this.saveParams.fieldMastersPartMap[fieldMaster.Id];
+			if (sTarget) {
+				oThis.bs.WriteItem(c_oSerSdt.OformMaster, function (){oThis.memory.WriteString3(sTarget);});
+			}
 		}
 	};
 	this.WriteSdtTextFormPr = function (val)
@@ -6946,7 +6944,7 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		this.bs.WriteItem(c_oSer_SettingsType.MathPr, function(){oThis.WriteMathPr();});
 		this.bs.WriteItem(c_oSer_SettingsType.TrackRevisions, function(){
 			let trackRevisionsFlag = oThis.Document.GetGlobalTrackRevisions();
-			if (!trackRevisionsFlag && oThis.Document.GetLocalTrackRevisions()) {
+			if (!trackRevisionsFlag) {
 				//if applied trackedChanges protection, ms write w:trackRevisions default(default -> true)
 				let documentProtection = oThis.Document.Settings && oThis.Document.Settings.DocumentProtection;
 				if (documentProtection && documentProtection.edit === Asc.c_oAscEDocProtect.TrackedChanges) {
@@ -7876,8 +7874,8 @@ function BinaryFileReader(doc, openParams)
 			var stLen = this.stream.GetULongLE();
 			let data = this.stream.GetBufferUint8(stLen);
 			let jsZlib = new AscCommon.ZLib();
-			if (jsZlib.open(new Uint8Array(data))) {
-				let oform = this.Document.GetOFormDocument();
+			let oform = this.Document.GetOFormDocument();
+			if (oform && jsZlib.open(new Uint8Array(data))) {
 				oform.fromZip(jsZlib, this.oReadResult.sdtPrWithFieldPath);
 			}
 		}
@@ -8435,14 +8433,10 @@ function BinaryFileReader(doc, openParams)
 
 		var docProtection = this.Document.Settings && this.Document.Settings.DocumentProtection;
 		if (docProtection) {
-			//this.Document.applyProtection()
 			var restrictionType = docProtection.getRestrictionType();
 			var enforcement = docProtection.getEnforcement();
-			if (/*docProtection.isOnlyView() && false !== docProtection.getEnforcement()*/restrictionType !== null) {
+			if (enforcement !== false && restrictionType !== null) {
 				api && api.asc_addRestriction(restrictionType);
-			} else if (false !== enforcement && enforcement != null && restrictionType !== null) {
-				//TODO ?
-				api && api.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 			}
 		}
 		
@@ -11466,6 +11460,8 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			if (run.GetElementsCount() > Asc.c_dMaxParaRunContentLength && !(paragraphContent instanceof CInlineLevelSdt && paragraphContent.IsForm())) {
 				this.oReadResult.runsToSplit.push(run);
 			}
+			
+			this.AppendQuoteToCurrentComments(run.GetText());
         }
 		else if (c_oSerParType.CommentStart === type)
         {
@@ -11523,6 +11519,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = this.bcr.Read1(length, function(t, l){
                 return oThis.boMathr.ReadMathOMathPara(t,l,paragraphContent, props);
 			});
+			
+			if (props.Math)
+				this.AppendQuoteToCurrentComments(props.Math.GetText());
 		}
 		else if ( c_oSerParType.OMath == type )
 		{	
@@ -11531,7 +11530,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = this.bcr.Read1(length, function(t, l){
                 return oThis.boMathr.ReadMathArg(t,l,oMath.Root, paragraphContent);
 			});
-            oMath.Root.Correct_Content(true);
+			oMath.Root.Correct_Content(true);
+			
+			this.AppendQuoteToCurrentComments(oMath.GetText());
 		}
 		else if ( c_oSerParType.MRun == type )
 		{
@@ -11638,7 +11639,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		    res = c_oSerConstants.ReadUnknown;
         return res;
     };
-	
+	this.AppendQuoteToCurrentComments = function(text) {
+		if (!text || this.nCurCommentsCount <= 0)
+			return;
+		
+		for (let commentId in this.oCurComments)
+			this.oCurComments[commentId] += text;
+	};
 	this.ReadFldChar = function (type, length, run) {
 		var res = c_oSerConstants.ReadOk;
 		if (c_oSer_FldSimpleType.CharType === type) {
@@ -11895,12 +11902,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
         if (c_oSerRunType.run === type || c_oSerRunType.delText === type)
         {
             var text = this.stream.GetString2LE(length);
-			if(this.nCurCommentsCount > 0)
-			{
-				for(var i in this.oCurComments)
-					this.oCurComments[i] += text;
-			}
-
 			this.ReadText(text, run, false);
         }
         else if (c_oSerRunType.tab === type)
@@ -13037,7 +13038,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if (c_oSerSdt.FormPr === type && oSdt.SetFormPr) {
 			var formPr = new AscWord.CSdtFormPr();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadSdtFormPr(t, l, formPr);
+				return oThis.ReadSdtFormPr(t, l, formPr, oSdt);
 			});
 			oSdt.SetFormPr(formPr);
 		} else if (c_oSerSdt.TextFormPr === type && oSdt.SetTextFormPr) {
@@ -13052,14 +13053,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				return oThis.ReadSdtComplexFormPr(t, l, complexFormPr);
 			});
 			oSdt.SetComplexFormPr(complexFormPr);
-		} else if (c_oSerSdt.OformMaster === type) {
-			var sTarget = this.stream.GetString2LE(length);
-			//todo
-			if (-1 !== sTarget.indexOf("oform")) {
-				sTarget = sTarget.substring(sTarget.indexOf("oform") + "oform".length);
-			}
-			sTarget = sTarget.replace(/\\/g, "/");
-			this.oReadResult.sdtPrWithFieldPath.push({sdt: oSdt, target: sTarget});
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -13160,7 +13153,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		}
 		return res;
 	};
-	this.ReadSdtFormPr = function(type, length, val) {
+	this.ReadSdtFormPr = function(type, length, val, oSdt) {
 		var oThis = this;
 		var res = c_oSerConstants.ReadOk;
 		if (c_oSerSdt.FormPrKey === type) {
@@ -13179,6 +13172,14 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if (c_oSerSdt.FormPrShd === type) {
 			val.Shd = new CDocumentShd();
 			ReadDocumentShd(length, this.bcr, val.Shd);
+		} else if (c_oSerSdt.OformMaster === type) {
+			var sTarget = this.stream.GetString2LE(length);
+			//todo
+			if (-1 !== sTarget.indexOf("oform")) {
+				sTarget = sTarget.substring(sTarget.indexOf("oform") + "oform".length);
+			}
+			sTarget = sTarget.replace(/\\/g, "/");
+			this.oReadResult.sdtPrWithFieldPath.push({sdt: oSdt, target: sTarget});
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -15283,6 +15284,9 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
                 return oThis.ReadMathArg(t,l,oMath.Root, paragraphContent);
             });
             oMath.Root.Correct_Content(true);
+			
+			if (props)
+				props.Math = oMath;
         }
 		else if (c_oSer_OMathContentType.OMathParaPr === type)
 		{
@@ -17193,10 +17197,9 @@ CFontsCharMap.prototype =
             this.CurrentFontInfo.CharArray[_find] = true;
     }
 }
-function DocSaveParams(bMailMergeDocx, bMailMergeHtml, bOForm, isCompatible, docParts) {
+function DocSaveParams(bMailMergeDocx, bMailMergeHtml, isCompatible, docParts) {
 	this.bMailMergeDocx = bMailMergeDocx;
 	this.bMailMergeHtml = bMailMergeHtml;
-	this.bOForm = bOForm;
 	this.trackRevisionId = 0;
 	this.footnotes = {};
 	this.footnotesIndex = 0;

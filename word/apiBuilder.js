@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -193,6 +193,22 @@
 			|| sFontName === 'Inconsolata'
 			|| sFontName === 'Roboto Mono'
 			|| sFontName === 'Source Code Pro';
+	}
+
+	function private_CheckDrawingOnAdd(oApiDrawing) {
+		if(window.g_asc_plugins)
+		{
+			let oDrawing = oApiDrawing.Drawing;
+			if(oDrawing)
+			{
+				if(oDrawing.GraphicObj &&
+					oDrawing.GraphicObj.getObjectType() === AscDFH.historyitem_type_OleObject)
+				{
+					let oData = oDrawing.GraphicObj.getDataObject();
+					window.g_asc_plugins.onPluginEvent("onInsertOleObjects", [oData]);
+				}
+			}
+		}
 	}
 
 	/**
@@ -2702,8 +2718,8 @@
 	/**
 	 * Converts the ApiRange object into the JSON object.
 	 * @memberof ApiRange
-	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
-	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
 	 */
@@ -2755,12 +2771,12 @@
 	};
 
 	/**
-	 * Adds a comment to the document.
+	 * Adds a comment to the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text. (Required).
-	 * @param {string} sAutor - The author's name (Optional).
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @param {string} sText - The comment text (required).
+	 * @param {string} sAutor - The author's name (optional).
+	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiRange.prototype.AddComment = function(sText, sAutor)
 	{
@@ -2795,8 +2811,8 @@
      * Returns a Range object that represents the document part contained in the specified range.
      * @typeofeditors ["CDE"]
      * @param {Number} [Start=0] - Start character index in the current range.
-     * @param {Number} [End=-1] - End character index in the current range. (if <= 0 then range to end).
-     * @returns {ApiRange} 
+     * @param {Number} [End=-1] - End character index in the current range (if <= 0, then the range is taken to the end).
+     * @returns {ApiRange}
      * */
 	ApiRange.prototype.GetRange = function(nStart, nEnd)
 	{
@@ -3022,7 +3038,7 @@
 	ApiRun.prototype.constructor = ApiRun;
 
 	/**
-	 * Class representing the comment.
+	 * Class representing a comment.
 	 * @constructor
 	 */
 	function ApiComment(oComment)
@@ -3031,7 +3047,7 @@
 	};
 
 	/**
-	 * Class representing the comment reply.
+	 * Class representing a comment reply.
 	 * @constructor
 	 */
 	function ApiCommentReply(oParentComm, oCommentReply)
@@ -3064,6 +3080,7 @@
 	/**
 	 * Class representing a document form base.
 	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {string} key - Form key.
 	 * @property {string} tip - Form tip text.
 	 * @property {boolean} required - Specifies if the form is required or not.
@@ -3075,13 +3092,14 @@
 	}
 
 	/**
-	 * Class representing a document text form.
+	 * Class representing a document text field.
 	 * @constructor
-	 * @property {boolean} comb - Specifies if the text form should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
-	 * @property {number} maxCharacters - The maximum number of characters in the text form.
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @property {boolean} comb - Specifies if the text field should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
+	 * @property {number} maxCharacters - The maximum number of characters in the text field.
 	 * @property {number} cellWidth - The cell width for each character measured in millimeters. If this parameter is not specified or equal to 0 or less, then the width will be set automatically.
-	 * @property {boolean} multiLine - Specifies if the current fixed size text form is multiline or not.
-	 * @property {boolean} autoFit - Specifies if the text form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * @property {boolean} multiLine - Specifies if the current fixed size text field is multiline or not.
+	 * @property {boolean} autoFit - Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiTextForm(oSdt)
@@ -3093,8 +3111,9 @@
 	ApiTextForm.prototype.constructor = ApiTextForm;
 
 	/**
-	 * Class representing a document combo box form.
+	 * Class representing a document combo box / dropdown list.
 	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {boolean} editable - Specifies if the combo box text can be edited.
 	 * @property {boolean} autoFit - Specifies if the combo box form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @property {Array.<string | Array.<string>>} items - The combo box items.
@@ -3112,8 +3131,9 @@
 	ApiComboBoxForm.prototype.constructor = ApiComboBoxForm;
 
 	/**
-	 * Class representing a document checkbox form.
+	 * Class representing a document checkbox / radio button.
 	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {boolean} radio - Specifies if the current checkbox is a radio button. In this case, the key parameter is considered as an identifier for the group of radio buttons.
 	 * @extends {ApiFormBase}
 	 */
@@ -3128,6 +3148,7 @@
 	/**
 	 * Class representing a document picture form.
 	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {ScaleFlag} scaleFlag - The condition to scale an image in the picture form: "always", "never", "tooBig" or "tooSmall".
 	 * @property {boolean} lockAspectRatio - Specifies if the aspect ratio of the picture form is locked or not.
 	 * @property {boolean} respectBorders - Specifies if the form border width is respected or not when scaling the image.
@@ -3150,9 +3171,10 @@
 	ApiPictureForm.prototype.constructor = ApiPictureForm;
 
 	/**
-	 * Class representing a complex form.
+	 * Class representing a complex field.
 	 * @param oSdt
 	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiFormBase}
 	 */
 	function ApiComplexForm(oSdt)
@@ -3349,7 +3371,7 @@
 	/**
 	 * Converts the ApiHyperlink object into the JSON object.
 	 * @memberof ApiHyperlink
-	 * @param bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
 	 */
@@ -3673,8 +3695,8 @@
 
 	/**
 	 * A border type which will be added to the document element.
-     * * **"none"** - no border will be added to the created element or the selected element side.
-     * * **"single"** - a single border will be added to the created element or the selected element side.
+     * * <b>"none"</b> - no border will be added to the created element or the selected element side.
+     * * <b>"single"</b> - a single border will be added to the created element or the selected element side.
 	 * @typedef {("none" | "single")} BorderType
 	 */
 
@@ -3700,36 +3722,36 @@
 
 	/**
 	 * Header and footer types which can be applied to the document sections.
-     * * **"default"** - a header or footer which can be applied to any default page.
-     * * **"title"** - a header or footer which is applied to the title page.
-     * * **"even"** - a header or footer which can be applied to even pages to distinguish them from the odd ones (which will be considered default).
+     * * <b>"default"</b> - a header or footer which can be applied to any default page.
+     * * <b>"title"</b> - a header or footer which is applied to the title page.
+     * * <b>"even"</b> - a header or footer which can be applied to even pages to distinguish them from the odd ones (which will be considered default).
 	 * @typedef {("default" | "title" | "even")} HdrFtrType
 	 */
 
 	/**
 	 * The possible values for the units of the width property are defined by a specific table or table cell width property.
-     * * **"auto"** - sets the table or table cell width to auto width.
-     * * **"twips"** - sets the table or table cell width to be measured in twentieths of a point.
-     * * **"nul"** - sets the table or table cell width to be of a zero value.
-     * * **"percent"** - sets the table or table cell width to be measured in percent to the parent container.
+     * * <b>"auto"</b> - sets the table or table cell width to auto width.
+     * * <b>"twips"</b> - sets the table or table cell width to be measured in twentieths of a point.
+     * * <b>"nul"</b> - sets the table or table cell width to be of a zero value.
+     * * <b>"percent"</b> - sets the table or table cell width to be measured in percent to the parent container.
 	 * @typedef {("auto" | "twips" | "nul" | "percent")} TableWidth
 	 */
 
 	/**
 	 * This simple type specifies possible values for the table sections to which the current conditional formatting properties will be applied when this selected table style is used.
-	 * * **"topLeftCell"** - specifies that the table formatting is applied to the top left cell.
-	 * * **"topRightCell"** - specifies that the table formatting is applied to the top right cell.
-	 * * **"bottomLeftCell"** - specifies that the table formatting is applied to the bottom left cell.
-	 * * **"bottomRightCell"** - specifies that the table formatting is applied to the bottom right cell.
-	 * * **"firstRow"** - specifies that the table formatting is applied to the first row.
-	 * * **"lastRow"** - specifies that the table formatting is applied to the last row.
-	 * * **"firstColumn"** - specifies that the table formatting is applied to the first column. Any subsequent row which is in *table header* ({@link ApiTableRowPr#SetTableHeader}) will also use this conditional format.
-	 * * **"lastColumn"** - specifies that the table formatting is applied to the last column.
-	 * * **"bandedColumn"** - specifies that the table formatting is applied to odd numbered groupings of rows.
-	 * * **"bandedColumnEven"** - specifies that the table formatting is applied to even numbered groupings of rows.
-	 * * **"bandedRow"** - specifies that the table formatting is applied to odd numbered groupings of columns.
-	 * * **"bandedRowEven"** - specifies that the table formatting is applied to even numbered groupings of columns.
-	 * * **"wholeTable"** - specifies that the conditional formatting is applied to the whole table.
+	 * * <b>"topLeftCell"</b> - specifies that the table formatting is applied to the top left cell.
+	 * * <b>"topRightCell"</b> - specifies that the table formatting is applied to the top right cell.
+	 * * <b>"bottomLeftCell"</b> - specifies that the table formatting is applied to the bottom left cell.
+	 * * <b>"bottomRightCell"</b> - specifies that the table formatting is applied to the bottom right cell.
+	 * * <b>"firstRow"</b> - specifies that the table formatting is applied to the first row.
+	 * * <b>"lastRow"</b> - specifies that the table formatting is applied to the last row.
+	 * * <b>"firstColumn"</b> - specifies that the table formatting is applied to the first column. Any subsequent row which is in *table header* ({@link ApiTableRowPr#SetTableHeader}) will also use this conditional format.
+	 * * <b>"lastColumn"</b> - specifies that the table formatting is applied to the last column.
+	 * * <b>"bandedColumn"</b> - specifies that the table formatting is applied to odd numbered groupings of rows.
+	 * * <b>"bandedColumnEven"</b> - specifies that the table formatting is applied to even numbered groupings of rows.
+	 * * <b>"bandedRow"</b> - specifies that the table formatting is applied to odd numbered groupings of columns.
+	 * * <b>"bandedRowEven"</b> - specifies that the table formatting is applied to even numbered groupings of columns.
+	 * * <b>"wholeTable"</b> - specifies that the conditional formatting is applied to the whole table.
 	 * @typedef {("topLeftCell" | "topRightCell" | "bottomLeftCell" | "bottomRightCell" | "firstRow" | "lastRow" |
 	 *     "firstColumn" | "lastColumn" | "bandedColumn" | "bandedColumnEven" | "bandedRow" | "bandedRowEven" |
 	 *     "wholeTable")} TableStyleOverrideType
@@ -3808,17 +3830,17 @@
 
 	/**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * * **"none"** - not display the selected tick labels.
-     * * **"nextTo"** - sets the position of the selected tick labels next to the main label.
-     * * **"low"** - sets the position of the selected tick labels in the part of the chart with lower values.
-     * * **"high"** - sets the position of the selected tick labels in the part of the chart with higher values.
+     * * <b>"none"</b> - not display the selected tick labels.
+     * * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
+     * * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
+     * * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * **/
 
 	/**
      * The type of a fill which uses an image as a background.
-     * * **"tile"** - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
-     * * **"stretch"** - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
+     * * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
+     * * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
 	 * @typedef {"tile" | "stretch"} BlipFillType
 	 * */
 
@@ -3883,63 +3905,63 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Available values of the "numbered" reference type.
-	 * * **"pageNum"** - the page number of the numbered item.
-     * * **"paraNum"** - the paragraph number of the numbered item.
-	 * * **"noCtxParaNum"** - an abbreviated paragraph number (the specific item of the numbered list only, e.g., instead of "4.1.1" you refer to "1" only).
-     * * **"fullCtxParaNum"** - a full paragraph number, e.g., "4.1.1".
-	 * * **"text"** - the text value of the paragraph, e.g., if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only.
-     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
+	 * Available values of the "numbered" reference type:
+	 * * <b>"pageNum"</b> - the numbered item page number;
+     * * <b>"paraNum"</b> - the numbered item paragraph number;
+	 * * <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
+     * * <b>"fullCtxParaNum"</b> - the full paragraph number, e.g. "4.1.1";
+	 * * <b>"text"</b> - the paragraph text value, e.g. if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only;
+     * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "text" | "aboveBelow"} numberedRefTo
 	 */
 
 	/**
-	 * Available values of the "heading" reference type.
-	 * * **"text"** - the entire text of the heading.
-	 * * **"pageNum"** - the page number of the heading.
-     * * **"headingNum"** - the sequence number of the heading.
-	 * * **"noCtxHeadingNum"** - an abbreviated heading number. Make sure the cursor point is in the section you are referencing to, e.g., you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only.
-     * * **"fullCtxHeadingNum"** - a full heading number even if the cursor point is in the same section.
-     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
+	 * Available values of the "heading" reference type:
+	 * * <b>"text"</b> - the entire heading text;
+	 * * <b>"pageNum"</b> - the heading page number;
+     * * <b>"headingNum"</b> - the heading sequence number;
+	 * * <b>"noCtxHeadingNum"</b> - the abbreviated heading number. Make sure the cursor pointer is in the section you are referencing to, e.g. you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only;
+     * * <b>"fullCtxHeadingNum"</b> - the full heading number even if the cursor pointer is in the same section;
+     * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"text" | "pageNum" | "headingNum" | "noCtxHeadingNum" | "fullCtxHeadingNum" | "aboveBelow"} headingRefTo
 	 */
 
 	/**
-	 * Available values of the "bookmark" reference type.
-	 * * **"text"** - the entire text of the bookmark.
-	 * * **"pageNum"** - the page number of the bookmark.
-     * * **"paraNum"** - the paragraph number of the bookmark.
-	 * * **"noCtxParaNum"** - an abbreviated paragraph number (the specific item only, e.g., instead of "4.1.1" you refer to "1" only).
-     * * **"fullCtxParaNum"** - a full paragraph number, e.g., "4.1.1".
-     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
+	 * Available values of the "bookmark" reference type:
+	 * * <b>"text"</b> - the entire bookmark text;
+	 * * <b>"pageNum"</b> - the bookmark page number;
+     * * <b>"paraNum"</b> - the bookmark paragraph number;
+	 * * <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
+     * * <b>"fullCtxParaNum</b> - the full paragraph number, e.g. "4.1.1";
+     * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"text" | "pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "aboveBelow"} bookmarkRefTo
 	 */
 
 	/**
-	 * Available values of the "footnote" reference type.
-	 * * **"footnoteNum"** - the footnote number.
-	 * * **"pageNum"** - the page number of the footnote.
-     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
-	 * * **"formFootnoteNum"** - the number of the footnote formatted as a footnote. The numbering of the actual footnotes is not affected.
+	 * Available values of the "footnote" reference type:
+	 * * <b>"footnoteNum"</b> - the footnote number;
+	 * * <b>"pageNum"</b> - the page number of the footnote;
+     * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the position of the item;
+	 * * <b>"formFootnoteNum"</b> - the form number formatted as a footnote. The numbering of the actual footnotes is not affected.
 	 * @typedef {"footnoteNum" | "pageNum" | "aboveBelow" | "formFootnoteNum"} footnoteRefTo
 	 */
 
 	/**
-	 * Available values of the "endnote" reference type.
-	 * * **"endnoteNum"** - the endnote number.
-	 * * **"pageNum"** - the page number of the endnote.
-     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
-	 * * **"formEndnoteNum"** - the number of the endnote formatted as an endnote. The numbering of the actual endnotes is not affected.
+	 * Available values of the "endnote" reference type:
+	 * * <b>"endnoteNum"</b> - the endnote number;
+	 * * <b>"pageNum"</b> - the endnote page number;
+     * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position;
+	 * * <b>"formEndnoteNum"</b> - the form number formatted as an endnote. The numbering of the actual endnotes is not affected.
 	 * @typedef {"endnoteNum" | "pageNum" | "aboveBelow" | "formEndnoteNum"} endnoteRefTo
 	 */
 
 	/**
-	 * Available values of the "equation"/"figure"/"table" reference type.
-	 * * **"entireCaption"** - the full text of the caption.
-	 * * **"labelNumber"** - the label and object number only, e.g., "Table 1.1".
-     * * **"captionText"** - the text of the caption only.
-	 * * **"pageNum"** - the page number containing the referenced object.
-	 * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
+	 * Available values of the "equation"/"figure"/"table" reference type:
+	 * * <b>"entireCaption"</b>- the entire caption text;
+	 * * <b>"labelNumber"</b> - the label and object number only, e.g. "Table 1.1";
+     * * <b>"captionText"</b> - the caption text only;
+	 * * <b>"pageNum"</b> - the page number containing the referenced object;
+	 * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"entireCaption" | "labelNumber" | "captionText" | "pageNum" | "aboveBelow"} captionRefTo
 	 */
 
@@ -3965,21 +3987,21 @@
 
 	/**
      * Possible values for the caption numbering format.
-     * * **"ALPHABETIC"** - upper letter.
-     * * **"alphabetic"** - lower letter.
-     * * **"Roman"**      - upper Roman.
-     * * **"roman"**      - lower Roman.
-	 * * **"Arabic"**     - arabic.
+     * * <b>"ALPHABETIC"</b> - upper letter.
+     * * <b>"alphabetic"</b> - lower letter.
+     * * <b>"Roman"</b> - upper Roman.
+     * * <b>"roman"</b> - lower Roman.
+	 * * <b>"Arabic"</b> - arabic.
 	 * @typedef {("ALPHABETIC" | "alphabetic" | "Roman" | "roman" | "Arabic")} CaptionNumberingFormat
 	 * **/
 
 	/**
      * Possible values for the caption separator.
-     * * **"hyphen"**   - "-".
-     * * **"period"**   - ".".
-     * * **"colon"**    - ":".
-     * * **"longDash"** - "—".
-	 * * **"dash"**     - "-".
+     * * <b>"hyphen"</b> - the "-" punctuation mark.
+     * * <b>"period"</b> - the "." punctuation mark.
+     * * <b>"colon"</b> - the ":" punctuation mark.
+     * * <b>"longDash"</b> - the "—" punctuation mark.
+	 * * <b>"dash"</b> - the "-" punctuation mark.
 	 * @typedef {("hyphen" | "period" | "colon" | "longDash" | "dash")} CaptionSep
 	 * **/
 
@@ -3991,56 +4013,56 @@
 	/**
 	 * Table of contents properties.
 	 * @typedef {Object} TocPr
-	 * @property {boolean} [ShowPageNums=true] - whether to show page numbers.
-	 * @property {boolean} [RightAlgn=true] - whether to right align page numbers.
-	 * @property {TocLeader} [LeaderType="dot"] - leader type.
-	 * @property {boolean} [FormatAsLinks=true] - whether format table of contents as links..
-	 * @property {TocBuildFromPr} [BuildFrom={OutlineLvls=9}] - build table of contents from (outline levels or specified styles).
-	 * @property {TocStyle} [TocStyle="standard"] - table of contents style type.
+	 * @property {boolean} [ShowPageNums=true] - Specifies whether to show page numbers in the table of contents.
+	 * @property {boolean} [RightAlgn=true] - Specifies whether to right-align page numbers in the table of contents.
+	 * @property {TocLeader} [LeaderType="dot"] - The leader type in the table of contents.
+	 * @property {boolean} [FormatAsLinks=true] - Specifies whether to format the table of contents as links.
+	 * @property {TocBuildFromPr} [BuildFrom={OutlineLvls=9}] - Specifies whether to generate the table of contents from the outline levels or the specified styles.
+	 * @property {TocStyle} [TocStyle="standard"] - The table of contents style type.
 	 */
 
 	/**
 	 * Table of figures properties.
 	 * @typedef {Object} TofPr
-	 * @property {boolean} [ShowPageNums=true] - whether to show page numbers.
-	 * @property {boolean} [RightAlgn=true] - whether to right align page numbers.
-	 * @property {TocLeader} [LeaderType="dot"] - leader type.
-	 * @property {boolean} [FormatAsLinks=true] - whether format table of contents as links.
-	 * @property {CaptionLabel | string} [BuildFrom="Figure"] - build table of figures by specified caption label or used paragraph style name (ex. "Heading 1").
-	 * @property {boolean} [LabelNumber=true] - whether to include label and number.
-	 * @property {TofStyle} [TofStyle="distinctive"] - table of figures style type.
+	 * @property {boolean} [ShowPageNums=true] - Specifies whether to show page numbers in the table of figures.
+	 * @property {boolean} [RightAlgn=true] - Specifies whether to right-align page numbers in the table of figures.
+	 * @property {TocLeader} [LeaderType="dot"] - The leader type in the table of figures.
+	 * @property {boolean} [FormatAsLinks=true] - Specifies whether to format the table of figures as links.
+	 * @property {CaptionLabel | string} [BuildFrom="Figure"] - Specifies whether to generate the table of figures based on the specified caption label or the paragraph style name used (for example, "Heading 1").
+	 * @property {boolean} [LabelNumber=true] - Specifies whether to include the label and number in the table of figures.
+	 * @property {TofStyle} [TofStyle="distinctive"] - The table of figures style type.
 	 */
 
 	/**
-	 * Table of contents build from propertie.
+	 * Table of contents properties which specify whether to generate the table of contents from the outline levels or the specified styles.
 	 * @typedef {Object} TocBuildFromPr
-	 * @property {number} [OutlineLvls=9] - maximum levels in table of figures
-	 * @property {TocStyleLvl[]} StylesLvls - levels for styles (ex. [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]).
-	 * Note: if StylesLvls.length > 0 then OutlineLvls propertie will be ignore.
+	 * @property {number} [OutlineLvls=9] - Maximum number of levels in the table of contents.
+	 * @property {TocStyleLvl[]} StylesLvls - Style levels (for example, [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]).
+	 * <note>If StylesLvls.length > 0, then the OutlineLvls property will be ignored.</note>
 	 */
 
 	/**
-	 * Table of contents style lvl.
+	 * Table of contents style levels.
 	 * @typedef {Object} TocStyleLvl
-	 * @property {string} Name - name of style. (ex. "Heading 1")
-	 * @property {number} Lvl - level which will be apply for style in TOC
+	 * @property {string} Name - Style name (for example, "Heading 1").
+	 * @property {number} Lvl - Level which will be applied to the specified style in the table of contents.
 	 */
 
 	/**
-	 * **"dot"**       - "......."
-	 * **"dash"**      - "-------"
-	 * **"underline"** - "_______"
-     * Possible values for the table of contents leader.
+	 * Possible values for the table of contents leader:
+	 * * <b>"dot"</b> - "......."
+	 * * <b>"dash"</b> - "-------"
+	 * * <b>"underline"</b> - "_______"
      * @typedef {("dot" | "dash" | "underline" | "none")} TocLeader
 	 * **/
 
 	/**
-     * Possible values for the style of table of contents.
+     * Possible values for the table of contents style.
      * @typedef {("simple" | "online" | "standard" | "modern" | "classic")} TocStyle
 	 * **/
 
 	/**
-     * Possible values for the style of table of contents.
+     * Possible values for the table of figures style.
      * @typedef {("simple" | "online" | "classic" | "distinctive" | "centered" | "formal")} TofStyle
 	 * **/
 
@@ -4700,16 +4722,15 @@
 		var oDocument = this.GetDocument();
 		var oParsedObj  = JSON.parse(sMessage);
 		var oResult = null;
+		if (oParsedObj["styles"])
+			oReader.StylesFromJSON(oParsedObj["styles"]);
+
 		switch (oParsedObj["type"])
 		{
 			case "document":
 				if (oParsedObj["numbering"])
 				{
 					oReader.parsedNumbering = oParsedObj["numbering"];
-				}
-				if (oParsedObj["styles"])
-				{
-					oReader.StylesFromJSON(oParsedObj["styles"]);
 				}
 				if (oParsedObj["textPr"])
 				{
@@ -4932,13 +4953,13 @@
 		return "unsupported";
 	};
 	/**
-	 * Adds a comment to the specifed element or array of Runs.
+	 * Adds a comment to the specifed document element or array of Runs.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiRun[] | DocumentElement} oElement - The element where a comment will be added. May be applyed to any element which has an AddComment method.
-	 * @param {string} sText - The comment text.
-	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if comment was not add.
+	 * @param {ApiRun[] | DocumentElement} oElement - The element where the comment will be added. It may be applied to any element which has the *AddComment* method.
+	 * @param {string} sText - The comment text (required).
+	 * @param {string} sAutor - The author's name (optional).
+	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	Api.prototype.AddComment = function(oElement, sText, sAutor)
 	{
@@ -5168,8 +5189,8 @@
 	 * Converts the ApiDocumentContent object into the JSON object.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
-	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiDocumentContent.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
@@ -5303,6 +5324,36 @@
 		}
 		
 		return arrApiOleObjects;
+	};
+	/**
+	 * Returns an array of all paragraphs from the current document content
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiParagraph[]}
+	 */
+	ApiDocumentContent.prototype.GetAllParagraphs = function()
+	{
+		let result = [];
+		this.Document.GetAllParagraphs().forEach(function(paragraph)
+		{
+			result.push(new ApiParagraph(paragraph));
+		});
+		return result;
+	};
+	/**
+	 * Returns an array of all tables from the current document content
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiParagraph[]}
+	 */
+	ApiDocumentContent.prototype.GetAllTables = function()
+	{
+		let result = [];
+		this.Document.GetAllTables().forEach(function(table)
+		{
+			result.push(new ApiTable(table));
+		});
+		return result;
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -5932,9 +5983,9 @@
 	 * Adds a comment to the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text. Required.
-	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @param {string} sText - The comment text (required).
+	 * @param {string} sAutor - The author's name (optional).
+	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiDocument.prototype.AddComment = function(sText, sAutor)
 	{
@@ -6272,12 +6323,12 @@
 	 * Converts the ApiDocument object into the JSON object.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteDefaultTextPr - Specifies if the default text properties will be written to the JSON object or not.
-	 * @param bWriteDefaultParaPr - Specifies if the default paragraph properties will be written to the JSON object or not.
-	 * @param bWriteTheme         - Specifies if the document theme will be written to the JSON object or not.
-	 * @param bWriteSectionPr     - Specifies if the document section properties will be written to the JSON object or not.
-	 * @param bWriteNumberings    - Specifies if the document numberings will be written to the JSON object or not.
-	 * @param bWriteStyles        - Specifies if the document styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteDefaultTextPr - Specifies if the default text properties will be written to the JSON object or not.
+	 * @param {boolean} bWriteDefaultParaPr - Specifies if the default paragraph properties will be written to the JSON object or not.
+	 * @param {boolean} bWriteTheme - Specifies if the document theme will be written to the JSON object or not.
+	 * @param {boolean} bWriteSectionPr - Specifies if the document section properties will be written to the JSON object or not.
+	 * @param {boolean} bWriteNumberings - Specifies if the document numberings will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the document styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiDocument.prototype.ToJSON = function(bWriteDefaultTextPr, bWriteDefaultParaPr, bWriteTheme, bWriteSectionPr, bWriteNumberings, bWriteStyles)
@@ -6346,7 +6397,7 @@
 	};
 
 	/**
-	 * Returns all comments of document.
+	 * Returns all comments from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiComment[]}
@@ -6364,10 +6415,10 @@
 	};
 
 	/**
-	 * Returns a comment by id.
+	 * Returns a comment from the current document by its ID.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sId
+	 * @param {string} sId - The comment ID.
 	 * @returns {ApiComment?}
 	 */
 	ApiDocument.prototype.GetCommentById = function(sId) 
@@ -6448,7 +6499,7 @@
 	 * Returns all caption paragraphs of the specified type from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {CaptionLabel | string} sCaption - The caption label ("Equation", "Figure", "Table" or another caption label).
+	 * @param {CaptionLabel | string} sCaption - The caption label ("Equation", "Figure", "Table", or another caption label).
 	 * @returns {ApiParagraph[]}
 	 */
 	ApiDocument.prototype.GetAllCaptionParagraphs = function(sCaption) 
@@ -6636,7 +6687,7 @@
 	};
 
 	/**
-	 * Sets the highlight to the content controls in the document.
+	 * Sets the highlight to the content controls from the current document.
 	 * @memberof ApiDocument
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
@@ -6656,11 +6707,11 @@
 	};
 
 	/**
-	 * Adds a table of content.
-	 * Note: replaces existing table of contents.
+	 * Adds a table of content to the current document.
+	 * <note>Please note that the new table of contents replaces the existing table of contents.</note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {TocPr} [oTocPr={}] - table of contents properties.
+	 * @param {TocPr} [oTocPr={}] - Table of contents properties.
 	 */
 	ApiDocument.prototype.AddTableOfContents = function(oTocPr)
 	{
@@ -6750,12 +6801,12 @@
 	};
 
 	/**
-	 * Adds a table of figures.
+	 * Adds a table of figures to the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {TofPr} [oTofPr={}] - table of figures properties.
-	 * Note: oTofPr will be fill by default properties if undefined.
-	 * @param {boolean} [bReplace=true] - replaces current selected table of figures instead of adding.
+	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
+	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
+	 * @param {boolean} [bReplace=true] - Specifies whether to replace the selected table of figures instead of adding a new one.
 	 * @returns {boolean}
 	 */
 	ApiDocument.prototype.AddTableOfFigures = function(oTofPr, bReplace)
@@ -6866,7 +6917,12 @@
 	};
 
 	/**
-	 * Gets the statistic of document.
+	 * Returns the document statistics represented as an object with the following parameters:
+	 * * <b>PageCount</b> - number of pages;
+	 * * <b>WordsCount</b> - number of words;
+	 * * <b>ParagraphCount</b> - number of paragraphs;
+	 * * <b>SymbolsCount</b> - number of symbols;
+	 * * <b>SymbolsWSCount</b> - number of symbols with spaces.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
@@ -6904,6 +6960,19 @@
             "SymbolsCount"   : oLogicDocument.Statistics.SymbolsWOSpaces,
             "SymbolsWSCount" : oLogicDocument.Statistics.SymbolsWhSpaces
         }
+	};
+	/**
+	 * Returns the number of pages in a document
+	 * <note>This method can be slow for large documents, because it runs the document calculation
+	 * process before the full recalculation.</note>
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @return {number}
+	 */
+	ApiDocument.prototype.GetPageCount = function()
+	{
+		this.ForceRecalculate();
+		return this.Document.GetPagesCount();
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -7249,7 +7318,7 @@
 		oRun.Add_ToContent(0, oDrawing.Drawing);
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		oDrawing.Drawing.Set_Parent(oRun);
-
+		private_CheckDrawingOnAdd(oDrawing);
 		return new ApiRun(oRun);
 	};
 
@@ -7273,13 +7342,13 @@
 		return oSdt;
 	};
 	/**
-	 * Adds a comment to the paragraph.
-	 * Note: must be in the document.
+	 * Adds a comment to the current paragraph.
+	 * <note>Please note that this paragraph must be in the document.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text. Required.
-	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @param {string} sText - The comment text (required).
+	 * @param {string} sAutor - The author's name (optional).
+	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiParagraph.prototype.AddComment = function(sText, sAutor)
 	{
@@ -8171,7 +8240,7 @@
 
 	/**
 	 * Adds a numbered cross-reference to the current paragraph.
-	 * The paragraph must be in the document.
+	 * <note>Please note that this paragraph must be in the document.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {numberedRefTo} sRefType - The text or numeric value of a numbered reference you want to insert.
@@ -8236,7 +8305,7 @@
 
 	/**
 	 * Adds a heading cross-reference to the current paragraph.
-	 * The paragraph must be in the document.
+	 * <note>Please note that this paragraph must be in the document.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {headingRefTo} sRefType - The text or numeric value of a heading reference you want to insert.
@@ -8292,7 +8361,7 @@
 
 	/**
 	 * Adds a bookmark cross-reference to the current paragraph.
-	 * The paragraph must be in the document.
+	 * <note>Please note that this paragraph must be in the document.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {bookmarkRefTo} sRefType - The text or numeric value of a bookmark reference you want to insert.
@@ -8358,7 +8427,7 @@
 
 	/**
 	 * Adds a footnote cross-reference to the current paragraph.
-	 * The paragraph must be in the document.
+	 * <note>Please note that this paragraph must be in the document.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {footnoteRefTo} sRefType - The text or numeric value of a footnote reference you want to insert.
@@ -8414,7 +8483,7 @@
 
 	/**
 	 * Adds an endnote cross-reference to the current paragraph.
-	 * The paragraph must be in the document.
+	 * <note>Please note that this paragraph must be in the document.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {endnoteRefTo} sRefType - The text or numeric value of an endnote reference you want to insert.
@@ -8470,10 +8539,10 @@
 
 	/**
 	 * Adds a caption cross-reference to the current paragraph.
-	 * The paragraph must be in the document.
+	 * <note>Please note that this paragraph must be in the document.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {CaptionLabel | string} sCaption - The caption label ("Equation", "Figure", "Table" or another caption label).
+	 * @param {CaptionLabel | string} sCaption - The caption label ("Equation", "Figure", "Table", or another caption label).
 	 * @param {captionRefTo} sRefType - The text or numeric value of a caption reference you want to insert.
 	 * @param {ApiParagraph} oParaTo - The caption paragraph to be referred to (must be in the document).
 	 * @param {boolean} [bLink=true] - Specifies if the reference will be inserted as a hyperlink.
@@ -8517,7 +8586,7 @@
 		oParaTo.GetAllSeqFieldsByType(sCaption, aTempCompFlds);
 		if (aTempCompFlds.length === 0)
 			return false;
-		if (nRefTo === 7 && oParaTo.asc_canAddRefToCaptionText(typeRec.displayValue) === false)
+		if (nRefTo === 7 && oParaTo.CanAddRefAfterSEQ(sCaption) === false)
 		{
 			console.log("The request reference is empty.");
 			return false;
@@ -8537,8 +8606,8 @@
 	 * Converts the ApiParagraph object into the JSON object.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
-	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiParagraph.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
@@ -8592,20 +8661,19 @@
 	};
 
 	/**
-     * Adds caption paragraph after (or before) current paragraph.
-	 * Note: 
-	 * 1. Current paragraph must be in document (not in footer/header).
-	 * 2. If current paragraph placed in shape, then adds caption like a shape after (or before) parent shape.
+     * Adds a caption paragraph after (or before) the current paragraph.
+	 * <note>Please note that the current paragraph must be in the document (not in the footer/header).
+	 * And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.</note>
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
-     * @param {string} sAdditional - the additional text.
-	 * @param {CaptionLabel | String} [sLabel="Table"] - caption label.
-	 * @param {boolean} [bExludeLabel=false] - wheter exclude label from caption.
-	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - the possible caption numbering format.
-	 * @param {boolean} [bBefore=false] - whether insert caption before current paragraph (after/before shape, if placed in shape).
-	 * @param {Number} [nHeadingLvl=undefined] - heading level (use if need to include chapter number).
-	 * Note: if need "Heading 1" then nHeadingLvl === 0 and etc.
-	 * @param {CaptionSep} [sCaptionSep="hyphen"] - separator (use if need to include chapter number).
+     * @param {string} sAdditional - The additional text.
+	 * @param {CaptionLabel | String} [sLabel="Table"] - The caption label.
+	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
+	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
+	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current paragraph (true) or after (false) (after/before the shape if it is placed in the shape).
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
+	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
      * @returns {boolean}
      */
 	ApiParagraph.prototype.AddCaption = function(sAdditional, sLabel, bExludeLabel, sNumberingFormat, bBefore, nHeadingLvl, sCaptionSep)
@@ -8680,12 +8748,56 @@
 		}
 		else oCapPr.HeadingLvl = 0;
 
-		this.Paragraph.Document_SetThisElementCurrent();
+		this.Paragraph.SetThisElementCurrent();
 
 		oDoc.AddCaption(oCapPr);
 		return true;
 	};
 
+	/**
+     * Gets the section of paragraph.
+     * @memberof ApiParagraph
+     * @typeofeditors ["CDE"]
+     * @returns {ApiSection}
+     */
+	ApiParagraph.prototype.GetSection = function()
+	{
+		let oSectPr = this.private_GetImpl().Get_SectPr();
+		if (!oSectPr)
+			return null;
+
+		return new ApiSection(oSectPr);
+	};
+	/**
+     * Sets the specified section to paragraph.
+     * @memberof ApiParagraph
+     * @typeofeditors ["CDE"]
+     * @param {ApiSection} oSection - the section which will setted to the paragraph.
+     * @returns {boolean}
+     */
+	ApiParagraph.prototype.SetSection = function(oSection)
+	{
+		if (typeof(oSection) != "object" || !(oSection instanceof ApiSection))
+			return false;
+
+		if (!this.Paragraph.CanAddSectionPr())
+			return new Error('Paragraph must be in a document.');
+
+		let oDoc = private_GetLogicDocument();
+		if (!oDoc)
+			return false;
+
+		let oSectPr = oSection.Section;
+		let nContentPos = this.Paragraph.GetIndex();
+		let oCurSectPr = oDoc.SectionsInfo.Get_SectPr(nContentPos).SectPr;
+
+		oCurSectPr.Set_Type(oSectPr.Type);
+		oCurSectPr.Set_PageNum_Start(-1);
+		oCurSectPr.Clear_AllHdrFtr();
+
+		this.private_GetImpl().Set_SectionPr(oSectPr);
+		return true;
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiRun
@@ -8811,7 +8923,7 @@
 
 		this.Run.Add_ToContent(this.Run.Content.length, oDrawing.Drawing);
 		oDrawing.Drawing.Set_Parent(this.Run);
-
+		private_CheckDrawingOnAdd(oDrawing);
 		return true;
 	};
 	/**
@@ -9344,7 +9456,7 @@
 	 * Converts the ApiRun object into the JSON object.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiRun.prototype.ToJSON = function(bWriteStyles)
@@ -9357,13 +9469,13 @@
 	};
 
 	/**
-	 * Adds a comment to the run.
-	 * Note: must be in the document.
+	 * Adds a comment to the current run.
+	 * <note>Please note that this run must be in the document.</note>
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text. Required.
-	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @param {string} sText - The comment text (required).
+	 * @param {string} sAutor - The author's name (optional).
+	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiRun.prototype.AddComment = function(sText, sAutor)
 	{
@@ -9708,8 +9820,8 @@
 	 * Converts the ApiSection object into the JSON object.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
-	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiSection.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
@@ -10571,8 +10683,8 @@
 	 * Converts the ApiTable object into the JSON object.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
-	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiTable.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
@@ -10626,13 +10738,13 @@
 	};
 
 	/**
-	 * Adds a comment to the all table content.
-	 * Note: must be in the document.
+	 * Adds a comment to all contents of the current table.
+	 * <note>Please note that this table must be in the document.</note>
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text. Required.
-	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @param {string} sText - The comment text (required).
+	 * @param {string} sAutor - The author's name (optional).
+	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiTable.prototype.AddComment = function(sText, sAutor)
 	{
@@ -10665,6 +10777,100 @@
 			return null;
 
 		return new ApiComment(oComment)
+	};
+
+	/**
+     * Adds a caption table after (or before) the current table.
+	 * <note>Please note that the current table must be in the document (not in the footer/header).
+	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+     * @memberof ApiTable
+     * @typeofeditors ["CDE"]
+     * @param {string} sAdditional - The additional text.
+	 * @param {CaptionLabel | String} [sLabel="Table"] - The caption label.
+	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
+	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
+	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current table (true) or after (false) (after/before the shape if it is placed in the shape).
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
+	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
+     * @returns {boolean}
+     */
+	ApiTable.prototype.AddCaption = function(sAdditional, sLabel, bExludeLabel, sNumberingFormat, bBefore, nHeadingLvl, sCaptionSep)
+	{
+		var oTableParent = this.Table.GetParent();
+		if (this.Table.IsUseInDocument() === false || !oTableParent || oTableParent.Is_TopDocument(true) !== private_GetLogicDocument())
+			return false;
+		if (typeof(sAdditional) !== "string" || sAdditional.trim() === "")
+			sAdditional = "";
+		if (typeof(bExludeLabel) !== "boolean")
+			bExludeLabel = false;
+		if (typeof(bBefore) !== "boolean")
+			bBefore = false;
+		if (typeof(sLabel) !== "string" || sLabel.trim() === "")
+			sLabel = "Table";
+		
+		let oCapPr = new Asc.CAscCaptionProperties();
+		let oDoc = private_GetLogicDocument();
+
+		let nNumFormat;
+		switch (sNumberingFormat)
+		{
+			case "ALPHABETIC":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperLetter;
+				break;
+			case "alphabetic":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerLetter;
+				break;
+			case "Roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperRoman;
+				break;
+			case "roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerRoman;
+				break;
+			default:
+				nNumFormat = Asc.c_oAscNumberingFormat.Decimal;
+				break;
+		}
+		switch (sCaptionSep)
+		{
+			case "hyphen":
+				sCaptionSep = "-";
+				break;
+			case "period":
+				sCaptionSep = ".";
+				break;
+			case "colon":
+				sCaptionSep = ":";
+				break;
+			case "longDash":
+				sCaptionSep = "—";
+				break;
+			case "dash":
+				sCaptionSep = "-";
+				break;
+			default:
+				sCaptionSep = "-";
+				break;
+		}
+
+		oCapPr.Label = sLabel;
+		oCapPr.Before = bBefore;
+		oCapPr.ExcludeLabel = bExludeLabel;
+		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Separator = sCaptionSep;
+		oCapPr.Additional = sAdditional;
+
+		if (nHeadingLvl >= 0 && nHeadingLvl <= 8)
+		{
+			oCapPr.HeadingLvl = nHeadingLvl;
+			oCapPr.IncludeChapterNumber = true;
+		}
+		else oCapPr.HeadingLvl = 0;
+
+		this.Table.Document_SetThisElementCurrent();
+
+		oDoc.AddCaption(oCapPr);
+		return true;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -11525,13 +11731,13 @@
 	 * Converts the ApiStyle object into the JSON object.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiStyle.prototype.ToJSON = function(bWriteNumberings)
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
-		var oJSON = oWriter.SerStyle(this.Style);
+		var oJSON = oWriter.SerWordStyle(this.Style);
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		return JSON.stringify(oJSON);
@@ -11867,7 +12073,7 @@
 	 * Converts the ApiTextPr object into the JSON object.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiTextPr.prototype.ToJSON = function(bWriteStyles)
@@ -12508,7 +12714,7 @@
 	 * Converts the ApiParaPr object into the JSON object.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiParaPr.prototype.ToJSON = function(bWriteStyles)
@@ -14027,8 +14233,8 @@
 	 * Converts the ApiDrawing object into the JSON object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
-	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiDrawing.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
@@ -15441,7 +15647,7 @@
 	 * Adds a string label to the current inline text content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLabel - The label which will be added to the current inline text content control. Can be a positive or negative integer from **-2147483647** to **2147483647**.
+	 * @param {string} sLabel - The label which will be added to the current inline text content control. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
 	 */
 	ApiInlineLvlSdt.prototype.SetLabel = function(sLabel)
 	{
@@ -15558,7 +15764,7 @@
 	 * Adds an element to the inline text content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {ParagraphContent} oElement - The document element which will be added at the position specified. Returns **false** if the type of *oElement* is not supported by an inline text content control.
+	 * @param {ParagraphContent} oElement - The document element which will be added at the position specified. Returns <b>false</b> if the type of *oElement* is not supported by an inline text content control.
 	 * @param {number} [nPos] - The position of the element where it will be added to the current inline text content control. If this value is not specified, then the element will be added to the end of the current inline text content control.
 	 * @returns {boolean} - returns false if oElement unsupported.
 	 */
@@ -15806,7 +16012,7 @@
 	 * Converts the ApiInlineLvlSdt object into the JSON object.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @return {JSON}
 	 */
 	ApiInlineLvlSdt.prototype.ToJSON = function(bWriteStyles)
@@ -15861,13 +16067,13 @@
 	};
 
 	/**
-	 * Adds a comment to the content control.
-	 * Note: must be in the document.
+	 * Adds a comment to the current inline content control.
+	 * <note>Please note that this inline content control must be in the document.</note>
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text. Required.
-	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @param {string} sText - The comment text (required).
+	 * @param {string} sAutor - The author's name (optional).
+	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiInlineLvlSdt.prototype.AddComment = function(sText, sAutor)
 	{
@@ -15987,7 +16193,7 @@
 	 * Sets the label attribute to the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLabel - The label which will be added to the current container. Can be a positive or negative integer from **-2147483647** to **2147483647**.
+	 * @param {string} sLabel - The label which will be added to the current container. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
 	 */
 	ApiBlockLvlSdt.prototype.SetLabel = function(sLabel)
 	{
@@ -16451,13 +16657,13 @@
 	};
 
 	/**
-	 * Adds a comment to the content control.
-	 * Note: must be in the document.
+	 * Adds a comment to the current block content control.
+	 * <note>Please note that the current block content control must be in the document.</note>
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text. Required.
-	 * @param {string} sAutor - The author's name. Optional.
-	 * @returns {ApiComment?} - returns null if the comment was not add.
+	 * @param {string} sText - The comment text (required).
+	 * @param {string} sAutor - The author's name (optional).
+	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiBlockLvlSdt.prototype.AddComment = function(sText, sAutor)
 	{
@@ -16492,7 +16698,7 @@
 	};
 
 	/**
-	 * Sets the background color to the current sdt.
+	 * Sets the background color to the current block content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
@@ -16537,6 +16743,100 @@
 		return true;
 	};
 
+	/**
+     * Adds a caption content control after (or before) the current content control.
+	 * <note>Please note that the current content control must be in the document (not in the footer/header).
+	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+     * @memberof ApiBlockLvlSdt
+     * @typeofeditors ["CDE"]
+     * @param {string} sAdditional - The additional text.
+	 * @param {CaptionLabel | String} [sLabel="Table"] - The caption label.
+	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
+	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
+	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current content control (true) or after (false) (after/before the shape if it is placed in the shape).
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
+	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
+     * @returns {boolean}
+     */
+	ApiBlockLvlSdt.prototype.AddCaption = function(sAdditional, sLabel, bExludeLabel, sNumberingFormat, bBefore, nHeadingLvl, sCaptionSep)
+	{
+		var oSdtParent = this.Sdt.GetParent();
+		if (this.Sdt.IsUseInDocument() === false || !oSdtParent || oSdtParent.Is_TopDocument(true) !== private_GetLogicDocument())
+			return false;
+		if (typeof(sAdditional) !== "string" || sAdditional.trim() === "")
+			sAdditional = "";
+		if (typeof(bExludeLabel) !== "boolean")
+			bExludeLabel = false;
+		if (typeof(bBefore) !== "boolean")
+			bBefore = false;
+		if (typeof(sLabel) !== "string" || sLabel.trim() === "")
+			sLabel = "Table";
+		
+		let oCapPr = new Asc.CAscCaptionProperties();
+		let oDoc = private_GetLogicDocument();
+
+		let nNumFormat;
+		switch (sNumberingFormat)
+		{
+			case "ALPHABETIC":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperLetter;
+				break;
+			case "alphabetic":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerLetter;
+				break;
+			case "Roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperRoman;
+				break;
+			case "roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerRoman;
+				break;
+			default:
+				nNumFormat = Asc.c_oAscNumberingFormat.Decimal;
+				break;
+		}
+		switch (sCaptionSep)
+		{
+			case "hyphen":
+				sCaptionSep = "-";
+				break;
+			case "period":
+				sCaptionSep = ".";
+				break;
+			case "colon":
+				sCaptionSep = ":";
+				break;
+			case "longDash":
+				sCaptionSep = "—";
+				break;
+			case "dash":
+				sCaptionSep = "-";
+				break;
+			default:
+				sCaptionSep = "-";
+				break;
+		}
+
+		oCapPr.Label = sLabel;
+		oCapPr.Before = bBefore;
+		oCapPr.ExcludeLabel = bExludeLabel;
+		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Separator = sCaptionSep;
+		oCapPr.Additional = sAdditional;
+
+		if (nHeadingLvl >= 0 && nHeadingLvl <= 8)
+		{
+			oCapPr.HeadingLvl = nHeadingLvl;
+			oCapPr.IncludeChapterNumber = true;
+		}
+		else oCapPr.HeadingLvl = 0;
+
+		this.Sdt.SetThisElementCurrent();
+
+		oDoc.AddCaption(oCapPr);
+		return true;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFormBase
@@ -16546,7 +16846,7 @@
 	/**
 	 * Returns a type of the ApiFormBase class.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {"form"}
 	 */
 	ApiFormBase.prototype.GetClassType = function()
@@ -16556,7 +16856,7 @@
 	/**
 	 * Returns a type of the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {FormType}
 	 */
 	ApiFormBase.prototype.GetFormType = function()
@@ -16577,7 +16877,7 @@
 	/**
 	 * Returns the current form key.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
 	 */
 	ApiFormBase.prototype.GetFormKey = function()
@@ -16595,7 +16895,7 @@
 	/**
 	 * Sets a key to the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {string} sKey - Form key.
 	 * @returns {boolean}
 	 */
@@ -16622,7 +16922,7 @@
 	/**
 	 * Returns the tip text of the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
 	 */
 	ApiFormBase.prototype.GetTipText = function()
@@ -16637,7 +16937,7 @@
 	/**
 	 * Sets the tip text to the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {string} sText - Tip text.
 	 * @returns {boolean}
 	 */
@@ -16655,7 +16955,7 @@
 	/**
 	 * Checks if the current form is required.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.IsRequired = function()
@@ -16665,7 +16965,7 @@
 	/**
 	 * Specifies if the current form should be required.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {boolean} bRequired - Defines if the current form is required (true) or not (false).
 	 * @returns {boolean}
 	 */
@@ -16685,7 +16985,7 @@
 	/**
 	 * Checks if the current form is fixed size.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.IsFixed = function()
@@ -16697,7 +16997,7 @@
 	 * @memberof ApiFormBase
 	 * @param {twips} nWidth - The wrapper shape width measured in twentieths of a point (1/1440 of an inch).
 	 * @param {twips} nHeight - The wrapper shape height measured in twentieths of a point (1/1440 of an inch).
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.ToFixed = function(nWidth, nHeight)
@@ -16712,7 +17012,7 @@
 	 * Converts the current form to an inline form.
 	 * *Picture form can't be converted to an inline form, it's always a fixed size object.*
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.ToInline = function()
@@ -16730,7 +17030,7 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that border color will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.SetBorderColor = function(r, g, b, bNone)
@@ -16759,7 +17059,7 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.SetBackgroundColor = function(r, g, b, bNone)
@@ -16801,7 +17101,7 @@
 	 * Returns the text from the current form.
 	 * *This method is used only for text and combo box forms.*
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
 	 */
 	ApiFormBase.prototype.GetText = function()
@@ -16811,7 +17111,7 @@
 	/**
 	 * Clears the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 */
 	ApiFormBase.prototype.Clear = function()
 	{
@@ -16821,7 +17121,7 @@
 	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
 	 * The null value will be returned for the inline forms.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {?ApiShape} - returns the shape in which the form is placed.
 	 */
 	ApiFormBase.prototype.GetWrapperShape = function()
@@ -16838,7 +17138,7 @@
 	 * *Can't be set to checkbox or radio button.*
 	 * @memberof ApiFormBase
 	 * @param {string} sText - The text that will be set to the current form.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.SetPlaceholderText = function(sText)
@@ -16855,7 +17155,7 @@
 	 * Sets the text properties to the current form.
 	 * *This method is used only for text and combo box forms.*
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
 	 * @return {boolean}  
 	 */
@@ -16873,7 +17173,7 @@
 	 * Returns the text properties from the current form.
 	 * *This method is used only for text and combo box forms.*
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
 	 */
 	ApiFormBase.prototype.GetTextPr = function()
@@ -16883,7 +17183,7 @@
 	/**
 	 * Copies the current form (copies with the shape if it exists).
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {?ApiForm}
 	 */
 	ApiFormBase.prototype.Copy = function()
@@ -16927,9 +17227,9 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Checks if the text form content is autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * Checks if the text field content is autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @memberof ApiTextForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.IsAutoFit = function()
@@ -16937,10 +17237,10 @@
 		return this.Sdt.IsAutoFitContent();
 	};
 	/**
-	 * Specifies if the text form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bAutoFit - Defines if the text form content is autofit (true) or not (false).
-	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bAutoFit - Defines if the text field content is autofit (true) or not (false).
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.SetAutoFit = function(bAutoFit)
@@ -16957,9 +17257,9 @@
 		return true;
 	};
 	/**
-	 * Checks if the current text form is multiline.
+	 * Checks if the current text field is multiline.
 	 * @memberof ApiTextForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.IsMultiline = function()
@@ -16967,11 +17267,11 @@
 		return this.Sdt.IsMultiLineForm();
 	};
 	/**
-	 * Specifies if the current text form should be miltiline.
+	 * Specifies if the current text field should be miltiline.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bMultiline - Defines if the current text form is multiline (true) or not (false).
-	 * @typeofeditors ["CDE"]
-	 * @returns {boolean} - return false, if the text form is not fixed size.
+	 * @param {boolean} bMultiline - Defines if the current text field is multiline (true) or not (false).
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {boolean} - return false, if the text field is not fixed size.
 	 */
 	ApiTextForm.prototype.SetMultiline = function(bMultiline)
 	{
@@ -16989,9 +17289,9 @@
 		return true;
 	};
 	/**
-	 * Returns a limit of the text form characters.
+	 * Returns a limit of the text field characters.
 	 * @memberof ApiTextForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {number} - if this method returns -1 -> the form has no limit for characters
 	 */
 	ApiTextForm.prototype.GetCharactersLimit = function()
@@ -17003,12 +17303,12 @@
 		return oPr.GetMaxCharacters();
 	};
 	/**
-	 * Sets a limit to the text form characters.
+	 * Sets a limit to the text field characters.
 	 * @memberof ApiTextForm
-	 * @param {number} nChars - The maximum number of characters in the text form. If this parameter is equal to -1, no limit will be set.
+	 * @param {number} nChars - The maximum number of characters in the text field. If this parameter is equal to -1, no limit will be set.
 	 * A limit is required to be set if a comb of characters is applied.
 	 * Maximum value for this parameter is 1000000.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.SetCharactersLimit = function(nChars)
@@ -17033,9 +17333,9 @@
 		return true;
 	};
 	/**
-	 * Checks if the text form is a comb of characters with the same cell width.
+	 * Checks if the text field is a comb of characters with the same cell width.
 	 * @memberof ApiTextForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.IsComb = function()
@@ -17044,11 +17344,11 @@
 		return oPr ? oPr.IsComb() : false;
 	};
 	/**
-	 * Specifies if the text form should be a comb of characters with the same cell width.
+	 * Specifies if the text field should be a comb of characters with the same cell width.
 	 * The maximum number of characters must be set to a positive value.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bComb - Defines if the text form is a comb of characters (true) or not (false).
-	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bComb - Defines if the text field is a comb of characters (true) or not (false).
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.SetComb = function(bComb)
@@ -17077,7 +17377,7 @@
 	 * @memberof ApiTextForm
 	 * @param {mm} [nCellWidth=0] - The cell width measured in millimeters.
 	 * If this parameter is not specified or equal to 0 or less, then the width will be set automatically. Must be >= 1 and <= 558.8.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.SetCellWidth = function(nCellWidth)
@@ -17096,10 +17396,10 @@
 		return true;
 	};
 	/**
-	 * Sets the text to the current text form.
+	 * Sets the text to the current text field.
 	 * @memberof ApiTextForm
-	 * @param {string} sText - The text that will be set to the current text form.
-	 * @typeofeditors ["CDE"]
+	 * @param {string} sText - The text that will be set to the current text field.
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.SetText = function(sText)
@@ -17121,7 +17421,7 @@
 	/**
 	 * Returns the current scaling condition of the picture form.
 	 * @memberof ApiPictureForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {ScaleFlag}
 	 */
 	ApiPictureForm.prototype.GetScaleFlag = function()
@@ -17150,7 +17450,7 @@
 	 * Sets the scaling condition to the current picture form.
 	 * @memberof ApiPictureForm
 	 * @param {ScaleFlag} sScaleFlag - Picture scaling condition: "always", "never", "tooBig" or "tooSmall".
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetScaleFlag = function(sScaleFlag)
@@ -17184,7 +17484,7 @@
 	 * Locks the aspect ratio of the current picture form.
 	 * @memberof ApiPictureForm
 	 * @param {boolean} [isLock=true] - Specifies if the aspect ratio of the current picture form will be locked (true) or not (false).
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetLockAspectRatio = function(isLock)
@@ -17198,7 +17498,7 @@
 	/**
 	 * Checks if the aspect ratio of the current picture form is locked or not.
 	 * @memberof ApiPictureForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.IsLockAspectRatio = function()
@@ -17213,7 +17513,7 @@
 	 * @memberof ApiPictureForm
 	 * @param {percentage} nShiftX - Horizontal position measured in percent.
 	 * @param {percentage} nShiftY - Vertical position measured in percent.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetPicturePosition = function(nShiftX, nShiftY)
@@ -17228,7 +17528,7 @@
 	/**
 	 * Returns the picture position inside the current form.
 	 * @memberof ApiPictureForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {Array.<percentage>} Array of two numbers [shiftX, shiftY]
 	 */
 	ApiPictureForm.prototype.GetPicturePosition = function()
@@ -17240,7 +17540,7 @@
 	 * Respects the form border width when scaling the image.
 	 * @memberof ApiPictureForm
 	 * @param {boolean} [isRespect=true] - Specifies if the form border width will be respected (true) or not (false).
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetRespectBorders = function(isRespect)
@@ -17254,7 +17554,7 @@
 	/**
 	 * Checks if the form border width is respected or not.
 	 * @memberof ApiPictureForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.IsRespectBorders = function()
@@ -17264,7 +17564,7 @@
 	/**
 	 * Returns an image in the base64 format from the current picture form.
 	 * @memberof ApiPictureForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {base64img}
 	 */
 	ApiPictureForm.prototype.GetImage = function()
@@ -17288,7 +17588,7 @@
 	 * Sets an image to the current picture form.
 	 * @memberof ApiPictureForm
 	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetImage = function(sImageSrc)
@@ -17325,7 +17625,7 @@
 	/**
 	 * Returns the list values from the current combo box.
 	 * @memberof ApiComboBoxForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string[]}
 	 */
 	ApiComboBoxForm.prototype.GetListValues = function()
@@ -17345,7 +17645,7 @@
 	 * Sets the list values to the current combo box.
 	 * @memberof ApiComboBoxForm
 	 * @param {string[]} aListString - The combo box list values.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiComboBoxForm.prototype.SetListValues = function(aListString)
@@ -17377,7 +17677,7 @@
 	 * Selects the specified value from the combo box list values. 
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sValue - The combo box list value that will be selected.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiComboBoxForm.prototype.SelectListValue = function(sValue)
@@ -17400,7 +17700,7 @@
 	 * *Available only for editable combo box forms.*
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sText - The combo box text.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiComboBoxForm.prototype.SetText = function(sText)
@@ -17421,9 +17721,9 @@
 		return true;
 	};
 	/**
-	 * Checks if the combo box text can be edited.
+	 * Checks if the combo box text can be edited. If it is not editable, then this form is a dropdown list.
 	 * @memberof ApiComboBoxForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiComboBoxForm.prototype.IsEditable = function()
@@ -17441,7 +17741,7 @@
 	 * Checks the current checkbox.
 	 * @memberof ApiCheckBoxForm
 	 * @param {boolean} isChecked - Specifies if the current checkbox will be checked (true) or not (false).
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiCheckBoxForm.prototype.SetChecked = function(isChecked)
@@ -17455,7 +17755,7 @@
 	/**
 	 * Returns the state of the current checkbox (checked or not).
 	 * @memberof ApiCheckBoxForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiCheckBoxForm.prototype.IsChecked = function()
@@ -17465,7 +17765,7 @@
 	/**
 	 * Checks if the current checkbox is a radio button. 
 	 * @memberof ApiCheckBoxForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiCheckBoxForm.prototype.IsRadioButton = function()
@@ -17475,7 +17775,7 @@
 	/**
 	 * Returns the radio group key if the current checkbox is a radio button.
 	 * @memberof ApiCheckBoxForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
 	 */
 	ApiCheckBoxForm.prototype.GetRadioGroup = function()
@@ -17484,10 +17784,10 @@
 		return (sRadioGroup ? sRadioGroup : "");
 	};
 	/**
-	 * Sets the radio group key to the current checkbox.
+	 * Sets the radio group key to the current radio button.
 	 * @memberof ApiCheckBoxForm
 	 * @param {string} sKey - Radio group key.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 */
 	ApiCheckBoxForm.prototype.SetRadioGroup = function(sKey)
 	{
@@ -17505,8 +17805,8 @@
 	 * Converts the ApiBlockLvlSdt object into the JSON object.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
-	 * @param bWriteStyles     - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @return {JSON}
 	 */
 	ApiBlockLvlSdt.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
@@ -18028,7 +18328,7 @@
 	};
 
 	/**
-	 * Gets the comment text.
+	 * Returns the comment text.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -18041,8 +18341,8 @@
 	 * Sets the comment text.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText
-	 * @returns {ApiComment} - this.
+	 * @param {string} sText - The comment text.
+	 * @returns {ApiComment} - this
 	 */
 	ApiComment.prototype.SetText = function (sText) {
 		this.Comment.GetData().Set_Text(sText);
@@ -18051,7 +18351,7 @@
 	};
 
 	/**
-	 * Gets the autor name.
+	 * Returns the comment author's name.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -18061,11 +18361,11 @@
 	};
 
 	/**
-	 * Sets the autor name.
+	 * Sets the comment author's name.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sAutorName
-	 * @returns {ApiComment} - this.
+	 * @param {string} sAutorName - The comment author's name.
+	 * @returns {ApiComment} - this
 	 */
 	ApiComment.prototype.SetAutorName = function (sAutorName) {
 		this.Comment.GetData().Set_Name(sAutorName);
@@ -18074,7 +18374,7 @@
 	};
 
 	/**
-	 * Gets the user id.
+	 * Returns the user ID of the comment author.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -18084,11 +18384,11 @@
 	};
 
 	/**
-	 * Sets the user id.
+	 * Sets the user ID to the comment author.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sUserId
-	 * @returns {ApiComment} - this.
+	 * @param {string} sUserId - The user ID of the comment author.
+	 * @returns {ApiComment} - this
 	 */
 	ApiComment.prototype.SetUserId = function (sUserId) {
 		this.Comment.GetData().m_sUserId = sUserId;
@@ -18097,7 +18397,7 @@
 	};
 	
 	/**
-	 * Gets the comment solved info.
+	 * Checks if a comment is solved or not.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -18107,11 +18407,11 @@
 	};
 
 	/**
-	 * Sets the comment solved.
+	 * Marks a comment as solved.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @param {boolean} bSolved
-	 * @returns {ApiComment} - this.
+	 * @param {boolean} bSolved - Specifies if a comment is solved or not.
+	 * @returns {ApiComment} - this
 	 */
 	ApiComment.prototype.SetSolved = function (bSolved) {
 		this.Comment.GetData().SetSolved(bSolved);
@@ -18120,7 +18420,7 @@
 	};
 
 	/**
-	 * Gets the timestamp of comment creation in UTC format.
+	 * Returns the timestamp of the comment creation in UTC format.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {Number}
@@ -18133,11 +18433,11 @@
 	};
 
 	/**
-	 * Sets the timestamp of comment creation in UTC format.
+	 * Sets the timestamp of the comment creation in UTC format.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @param {Number | String} nTimeStamp
-	 * @returns {ApiComment} - this.
+	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in UTC format.
+	 * @returns {ApiComment} - this
 	 */
 	ApiComment.prototype.SetTimeUTC = function (timeStamp) {
 		let nTime = parseInt(timeStamp);
@@ -18151,7 +18451,7 @@
 	};
 
 	/**
-	 * Gets the timestamp of comment creation.
+	 * Returns the timestamp of the comment creation in the current time zone format.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {Number}
@@ -18161,11 +18461,11 @@
 	};
 
 	/**
-	 * Sets the timestamp of comment creation in current time zone format.
+	 * Sets the timestamp of the comment creation in the current time zone format.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @param {Number | String} nTimeStamp
-	 * @returns {ApiComment} - this.
+	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in the current time zone format.
+	 * @returns {ApiComment} - this
 	 */
 	ApiComment.prototype.SetTime = function (timeStamp) {
 		let nTime = parseInt(timeStamp);
@@ -18179,7 +18479,7 @@
 	};
 
 	/**
-	 * Gets the quote text of comment.
+	 * Returns the quote text of the current comment.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {Number?}
@@ -18189,7 +18489,7 @@
 	};
 
 	/**
-	 * Gets count of the comment replies.
+	 * Returns a number of the comment replies.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {Number?}
@@ -18199,10 +18499,10 @@
 	};
 
 	/**
-	 * Gets the specified reply of comment.
+	 * Returns the specified comment reply.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} [nIndex = 0]
+	 * @param {Number} [nIndex = 0] - The comment reply index.
 	 * @returns {ApiCommentReply?}
 	 */
 	ApiComment.prototype.GetReply = function (nIndex) {
@@ -18217,14 +18517,14 @@
 	};
 
 	/**
-	 * Adds the reply to comment.
+	 * Adds a reply to a comment.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @param {String} sText - reply text. Required.
-	 * @param {String} sAutorName - Optional.
-	 * @param {String} sUserId - Optional.
-	 * @param {Number} [nPos=this.GetRepliesCount()]
-	 * @returns {ApiComment?} - this.
+	 * @param {String} sText - The comment reply text (required).
+	 * @param {String} sAutorName - The name of the comment reply author (optional).
+	 * @param {String} sUserId - The user ID of the comment reply author (optional).
+	 * @param {Number} [nPos=this.GetRepliesCount()] - The comment reply position.
+	 * @returns {ApiComment?} - this
 	 */
 	ApiComment.prototype.AddReply = function (sText, sAutorName, sUserId, nPos) {
 		if (typeof(sText) !== "string" || sText === "")
@@ -18247,13 +18547,13 @@
 	};
 
 	/**
-	 * Removes the specified replies.
+	 * Removes the specified comment replies.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} [nPos = 0]
-	 * @param {Number} [nCount = 1]
-	 * @param {boolean} [bRemoveAll = false] - indicates whether to remove all
-	 * @returns {ApiComment?} - this.
+	 * @param {Number} [nPos = 0] - The position of the first comment reply to remove.
+	 * @param {Number} [nCount = 1] - A number of comment replies to remove.
+	 * @param {boolean} [bRemoveAll = false] - Specifies whether to remove all comment replies or not.
+	 * @returns {ApiComment?} - this
 	 */
 	ApiComment.prototype.RemoveReplies = function (nPos, nCount, bRemoveAll) {
 		if (typeof(nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
@@ -18272,7 +18572,7 @@
 	};
 
 	/**
-	 * Deletes the comment.
+	 * Deletes the current comment from the document.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -18299,7 +18599,7 @@
 	};
 
 	/**
-	 * Gets the comment reply text.
+	 * Returns the comment reply text.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -18312,8 +18612,8 @@
 	 * Sets the comment reply text.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText
-	 * @returns {ApiCommentReply} - this.
+	 * @param {string} sText - The comment reply text.
+	 * @returns {ApiCommentReply} - this
 	 */
 	ApiCommentReply.prototype.SetText = function (sText) {
 		this.Data.Set_Text(sText);
@@ -18322,7 +18622,7 @@
 	};
 	
 	/**
-	 * Gets the autor name.
+	 * Returns the comment reply author's name.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -18332,11 +18632,11 @@
 	};
 
 	/**
-	 * Sets the autor name.
+	 * Sets the comment reply author's name.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sAutorName
-	 * @returns {ApiCommentReply} - this.
+	 * @param {string} sAutorName - The comment reply author's name.
+	 * @returns {ApiCommentReply} - this
 	 */
 	ApiCommentReply.prototype.SetAutorName = function (sAutorName) {
 		this.Data.Set_Name(sAutorName);
@@ -18345,7 +18645,7 @@
 	};
 
 	/**
-	 * Gets the user id.
+	 * Returns the user ID of the comment reply author.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -18355,11 +18655,11 @@
 	};
 
 	/**
-	 * Sets the user id.
+	 * Sets the user ID to the comment reply author.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sUserId
-	 * @returns {ApiCommentReply} - this.
+	 * @param {string} sUserId - The user ID of the comment reply author.
+	 * @returns {ApiCommentReply} - this
 	 */
 	ApiCommentReply.prototype.SetUserId = function (sUserId) {
 		this.Data.m_sUserId = sUserId;
@@ -18428,6 +18728,8 @@
 	ApiDocumentContent.prototype["GetAllImages"]         = ApiDocumentContent.prototype.GetAllImages;
 	ApiDocumentContent.prototype["GetAllCharts"]         = ApiDocumentContent.prototype.GetAllCharts;
 	ApiDocumentContent.prototype["GetAllOleObjects"]     = ApiDocumentContent.prototype.GetAllOleObjects;
+	ApiDocumentContent.prototype["GetAllParagraphs"]     = ApiDocumentContent.prototype.GetAllParagraphs;
+	ApiDocumentContent.prototype["GetAllTables"]         = ApiDocumentContent.prototype.GetAllTables;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
@@ -18509,6 +18811,7 @@
 	ApiDocument.prototype["GetAllComments"]              = ApiDocument.prototype.GetAllComments;
 	ApiDocument.prototype["GetCommentById"]              = ApiDocument.prototype.GetCommentById;
 	ApiDocument.prototype["GetStatistics"]               = ApiDocument.prototype.GetStatistics;
+	ApiDocument.prototype["GetPageCount"]                = ApiDocument.prototype.GetPageCount;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
 	ApiDocument.prototype["ReplaceCurrentImage"]         = ApiDocument.prototype.ReplaceCurrentImage;
@@ -18597,6 +18900,8 @@
 	ApiParagraph.prototype["GetPosInParent"]         = ApiParagraph.prototype.GetPosInParent;
 	ApiParagraph.prototype["ReplaceByElement"]       = ApiParagraph.prototype.ReplaceByElement;
 	ApiParagraph.prototype["AddCaption"]             = ApiParagraph.prototype.AddCaption;
+	ApiParagraph.prototype["SetSection"]             = ApiParagraph.prototype.SetSection;
+	ApiParagraph.prototype["GetSection"]             = ApiParagraph.prototype.GetSection;
 
 	ApiParagraph.prototype["ToJSON"]                 = ApiParagraph.prototype.ToJSON;
 
@@ -18714,6 +19019,7 @@
 	ApiTable.prototype["GetPosInParent"]    	     = ApiTable.prototype.GetPosInParent;
 	ApiTable.prototype["ReplaceByElement"]    		 = ApiTable.prototype.ReplaceByElement;
 	ApiTable.prototype["AddComment"]  		  		 = ApiTable.prototype.AddComment;
+	ApiTable.prototype["AddCaption"]  		  		 = ApiTable.prototype.AddCaption;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetCellsCount"]           = ApiTableRow.prototype.GetCellsCount;
@@ -19080,6 +19386,8 @@
 	ApiBlockLvlSdt.prototype["GetPosInParent"]          = ApiBlockLvlSdt.prototype.GetPosInParent;
 	ApiBlockLvlSdt.prototype["ReplaceByElement"]        = ApiBlockLvlSdt.prototype.ReplaceByElement;
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
+	ApiBlockLvlSdt.prototype["SetBackgroundColor"]      = ApiBlockLvlSdt.prototype.SetBackgroundColor;
+	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
 
 	ApiFormBase.prototype["GetClassType"]        = ApiFormBase.prototype.GetClassType;
 	ApiFormBase.prototype["GetFormType"]         = ApiFormBase.prototype.GetFormType;

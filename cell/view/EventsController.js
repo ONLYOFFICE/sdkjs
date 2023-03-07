@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -775,6 +775,7 @@
 		/** @param event {KeyboardEvent} */
 		asc_CEventsController.prototype._onWindowKeyDown = function (event) {
 			var t = this, dc = 0, dr = 0, canEdit = this.canEdit(), action = false, enterOptions;
+			var macOs = AscCommon.AscBrowser.isMacOs;
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
 			var macCmdKey = AscCommon.AscBrowser.isMacOs && event.metaKey;
 			var shiftKey = event.shiftKey;
@@ -974,9 +975,10 @@
 					if (t.getCellEditMode()) {
 						return true;
 					}
-					var isSelectColumns = !AscBrowser.isMacOs && ctrlKey || AscBrowser.isMacOs && event.altKey;
+					var isSelectColumns = ctrlKey;
+					var isSelectAllMacOs = isSelectColumns && shiftKey && macOs;
 					// Обработать как обычный текст
-					if (!isSelectColumns && !shiftKey) {
+					if ((!isSelectColumns && !shiftKey) || isSelectAllMacOs) {
 						//теперь пробел обрабатывается на WindowKeyDown
 						//вторыы аргументом передаю true, чтобы два раза пробел не добавлялся и сработало событие CellEditor.prototype._onWindowKeyDown
 						//задача функции EnterText в данном случае - либо добавить данные в графику, либо открыть редактор ячейки, чтобы потом
@@ -1215,14 +1217,12 @@
 					}
 					stop();
 					return result;
-
 				case 61:  // Firefox, Opera (+/=)
 				case 187: // +/=
 					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
 						return true;
 					}
-
-					if (event.altKey) {
+					if (event.altKey && (!macOs || (macOs && event.ctrlKey))) {
 						this.handlers.trigger('addFunction',
 							AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale['SUM'] :
 								'SUM', Asc.c_oAscPopUpSelectorType.Func, true);
@@ -1674,7 +1674,7 @@
 						if (0 === button) {
 							if (t.targetInfo.isDataValidation) {
 								this.handlers.trigger('onDataValidation');
-							} else if (t.targetInfo.idPivot && Asc.CT_pivotTableDefinition.prototype.asc_filterByCell) {
+							} else if (t.targetInfo.idPivot) {
 								this.handlers.trigger("pivotFiltersClick", t.targetInfo.idPivot);
 							} else if (t.targetInfo.idPivotCollapse) {
 								this.handlers.trigger("pivotCollapseClick", t.targetInfo.idPivotCollapse);

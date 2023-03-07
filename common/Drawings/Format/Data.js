@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -789,20 +789,6 @@ Because of this, the display is sometimes not correct.
     const Coordinate_universalMeasure_pi = 5;
 
     const Constr_font_scale = 360;
-
-    if (!String.prototype.includes) {
-      String.prototype.includes = function(search, start) {
-        if (typeof start !== 'number') {
-          start = 0;
-        }
-
-        if (start + search.length > this.length) {
-          return false;
-        } else {
-          return this.indexOf(search, start) !== -1;
-        }
-      };
-    }
 
     changesFactory[AscDFH.historyitem_DiagramDataDataModel] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_DiagramDataDataModel] = function (oClass, value) {
@@ -1659,7 +1645,7 @@ Because of this, the display is sometimes not correct.
     }
 
     Point.prototype.getShape = function () {
-      if (this.parent && this.parent.parent instanceof CShape) {
+      if (this.parent && this.parent.parent instanceof AscFormat.CShape) {
         return this.parent.parent;
       }
     }
@@ -1718,6 +1704,11 @@ Because of this, the display is sometimes not correct.
     Point.prototype.setPhldrT = function(pr) {
       var prSet = this.getPrSet();
       prSet && prSet.setPhldrT(pr);
+    }
+
+    Point.prototype.getPhldrT = function() {
+      var prSet = this.getPrSet();
+      return prSet && prSet.getPhldrT();
     }
 
     Point.prototype.getCxnId = function () {
@@ -5723,7 +5714,7 @@ Because of this, the display is sometimes not correct.
             break;
           case Constr_type_primFontSz:
           case Constr_type_secFontSz:
-            //return shape.setFontSizeInSmartArt;
+            //return shape.setFontSizeForAllContent;
             break;
           case Constr_type_pyraAcctRatio:
             break;
@@ -10071,6 +10062,7 @@ Because of this, the display is sometimes not correct.
       CBaseFormatObject.call(this);
       this.shapePoint = null;
       this.contentPoint = [];
+      this.maxFontSize = null;
     }
     InitClass(ShapeSmartArtInfo, CBaseFormatObject, AscDFH.historyitem_type_ShapeSmartArtInfo);
 
@@ -10093,6 +10085,9 @@ Because of this, the display is sometimes not correct.
         oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint, nIdx, [this.contentPoint[nIdx]], false));
         nIdx === this.contentPoint.length - 1 ? this.contentPoint.pop() : this.contentPoint.splice(nIdx, 1);
       }
+    }
+    ShapeSmartArtInfo.prototype.setMaxFontSize = function (oPr) {
+      this.maxFontSize = oPr;
     }
 
     changesFactory[AscDFH.historyitem_SmartArtColorsDef] = CChangeObject;
@@ -10121,6 +10116,7 @@ Because of this, the display is sometimes not correct.
       oClass.styleDef = value;
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtParent] = function (oClass, value) {
+		oClass.oldParent = oClass.parent;
       oClass.parent = value;
     };
 
@@ -10136,6 +10132,7 @@ Because of this, the display is sometimes not correct.
       this.bNeedUpdatePosition = true;
 
       this.calcGeometry = null;
+      this.bFirstRecalculate = true;
     }
 
     InitClass(SmartArt, CGroupShape, AscDFH.historyitem_type_SmartArt);
@@ -10196,19 +10193,22 @@ Because of this, the display is sometimes not correct.
     }
 
     SmartArt.prototype.recalculate = function () {
-    var oldParaMarks = editor && editor.ShowParaMarks;
-      if (oldParaMarks) {
-        editor.ShowParaMarks = false;
-      }
-      CGroupShape.prototype.recalculate.call(this);
-      if (this.group && this.bNeedUpdatePosition) {
-        this.bNeedUpdatePosition = false;
-        var group = this.getMainGroup();
-        group.updateCoordinatesAfterInternalResize();
-      }
-      if (oldParaMarks) {
-        editor.ShowParaMarks = oldParaMarks;
-      }
+      if(this.bDeleted)
+        return;
+      AscFormat.ExecuteNoHistory(function () {
+        var oldParaMarks = editor && editor.ShowParaMarks;
+        if (oldParaMarks) {
+          editor.ShowParaMarks = false;
+        }
+        CGroupShape.prototype.recalculate.call(this);
+        if (this.bFirstRecalculate) {
+          this.bFirstRecalculate = false;
+          this.fitFontSize();
+        }
+        if (oldParaMarks) {
+          editor.ShowParaMarks = oldParaMarks;
+        }
+      }, this, []);
     }
 
     SmartArt.prototype.decorateParaDrawing = function (drawingObjects) {
@@ -10250,7 +10250,7 @@ Because of this, the display is sometimes not correct.
         this.drawing.setXfrmByParent();
 
         if (!bLoadOnlyDrawing) {
-          this.checkNodePointsAfterRead();
+          this.checkNodePointsAfterRead(true);
         }
       }
       return this;
@@ -10277,8 +10277,9 @@ Because of this, the display is sometimes not correct.
 
     SmartArt.prototype.fitFontSize = function () {
       this.spTree[0] && this.spTree[0].spTree.forEach(function (oShape) {
-        oShape.recalculateContent2()
-        oShape.findFitFontSizeForSmartArt();
+        oShape.recalculateContentWitCompiledPr();
+        oShape.setTruthFontSizeInSmartArt();
+        oShape.recalculateContentWitCompiledPr();
       });
     };
 
@@ -11895,12 +11896,19 @@ Because of this, the display is sometimes not correct.
         oDrawing.spPr.xfrm.setOffY(0);
       }
     };
-    SmartArt.prototype.checkNodePointsAfterRead = function() {
+    SmartArt.prototype.checkNodePointsAfterRead = function(bReplaceAll) {
       let tree = this.createHierarchy();
       tree.traverseBF(function (node) {
         let nodePoint = node.data && (node.data.nodePoint || node.data.asstPoint);
         if (nodePoint) {
-          nodePoint.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
+          if (bReplaceAll) {
+            nodePoint.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
+          } else {
+            const oPlaceholderText = nodePoint.getPhldrT();
+            if (typeof oPlaceholderText !== 'string') {
+              nodePoint.setPhldrT('');
+            }
+          }
         }
       });
     };

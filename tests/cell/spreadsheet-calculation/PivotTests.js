@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -4141,6 +4141,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 	function setPivotLayout(pivot, layout) {
 		var props = new Asc.CT_pivotTableDefinition();
+		props.ascHideValuesRow = true;
 		switch (layout) {
 			case "compact":
 				props.asc_setCompact(true);
@@ -4329,12 +4330,14 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(assert, pivot, standards["subtotal_" + layout + "_none"], "none", function(){
 				props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDefaultSubtotal(false);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["subtotal_" + layout + "_bottom"], "bottom", function(){
 				props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDefaultSubtotal(true);
 				props.asc_setSubtotalTop(false);
 				pivot.asc_set(api, props);
@@ -4342,6 +4345,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["subtotal_" + layout + "_top"], "top", function(){
 				props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDefaultSubtotal(true);
 				props.asc_setSubtotalTop(true);
 				pivot.asc_set(api, props);
@@ -4361,6 +4365,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.asc_addDataField(api, 5);
 			pivot.asc_addDataField(api, 6);
 			var props = new Asc.CT_pivotTableDefinition();
+			props.ascHideValuesRow = true;
 			props.asc_setInsertBlankRow(true);
 			pivot.asc_set(api, props);
 
@@ -4402,6 +4407,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["filter_downThenOver3_2wrap"], "downThenOver3_2wrap", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setPageWrap(2);
 				pivot.asc_set(api, props);
 			});
@@ -4415,6 +4421,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["filter_overThenDown7_2wrap"], "overThenDown7_2wrap", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setPageOverThenDown(true);
 				pivot.asc_set(api, props);
 			});
@@ -4537,36 +4544,42 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values2"], "values2", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef2);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values3"], "values3", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef3);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values4"], "values4", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef4);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values5"], "values5", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef5);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values6"], "values6", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef6);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values7"], "values7", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef7);
 				pivot.asc_set(api, props);
 			});
@@ -4578,6 +4591,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 	function testHeaderRename() {
 		QUnit.test("Test: header rename", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRefHeader, ws, reportRange);
+			var props = new Asc.CT_pivotTableDefinition();
+			props.ascHideValuesRow = true;
+			pivot.asc_set(api, props);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.checkPivotFieldItems(0);
 			pivot.checkPivotFieldItems(1);
@@ -4622,6 +4638,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 	function testPivotManipulationField() {
 		QUnit.test.skip("Test: Field Manipulation", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			var props = new Asc.CT_pivotTableDefinition();
+			props.ascHideValuesRow = true;
+			pivot.asc_set(api, props);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.checkPivotFieldItems(0);
 			pivot.checkPivotFieldItems(1);
@@ -4703,6 +4722,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 	function testPivotManipulationValues() {
 		QUnit.test("Test: manipulation values", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			var props = new Asc.CT_pivotTableDefinition();
+			props.ascHideValuesRow = true;
+			pivot.asc_set(api, props);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
 			pivot.asc_addRowField(api, 1);
@@ -4823,18 +4845,21 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(assert, pivot, standards["refreshFieldSettings"], "refreshFieldSettings", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefFieldSettings);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["refreshRecords"], "refreshRecords", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefRecords);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["refreshStructure"], "refreshStructure", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefStructure);
 				pivot.asc_set(api, props);
 			});
@@ -4859,6 +4884,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["compact_0row_1col_1data"], "table columns", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefTableColumn);
 				pivot.asc_set(api, props);
 				pivot.asc_removeField(api, 1);
@@ -4870,6 +4896,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["compact_1row_1col_1data"], "def name", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefDefName);
 				pivot.asc_set(api, props);
 				pivot.asc_removeField(api, 2);
@@ -4882,6 +4909,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["compact_1row_1col_1data"], "def name local", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefDefNameLocal);
 				pivot.asc_set(api, props);
 				pivot.asc_removeField(api, 0);
@@ -5210,6 +5238,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			let dataRef = wsData.getName() + "!" + testDataRange.getName();
 
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			var props = new Asc.CT_pivotTableDefinition();
+			props.ascHideValuesRow = true;
+			pivot.asc_set(api, props);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.pivotTableDefinitionX14 = new Asc.CT_pivotTableDefinitionX14();
 			pivot.checkPivotFieldItems(0);
@@ -5219,6 +5250,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(assert, pivot, standards_compact_0row_0col_0data, "misc", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setName("new<&>pivot name");
 				props.asc_setTitle("Title");
 				props.asc_setDescription("Description");
@@ -5231,6 +5263,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				pivot.asc_addColField(api, 2);
 				pivot.asc_addDataField(api, 5);
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setCompact(false);
 				props.asc_setOutline(true);
 				props.asc_setRowGrandTotals(false);

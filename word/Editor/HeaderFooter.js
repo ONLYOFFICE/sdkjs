@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -739,6 +739,11 @@ CHeaderFooter.prototype =
 		this.Content.AddNewParagraph();
 	},
 
+	GetFormatPainterData : function()
+	{
+		return this.Content.AddNewParagraph();
+	},
+
 	AddInlineImage : function(W, H, Img, Chart, bFlow)
     {
         this.Content.AddInlineImage(W,H,Img, Chart, bFlow);
@@ -754,7 +759,7 @@ CHeaderFooter.prototype =
 
 	AddOleObject : function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
     {
-        this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+        return this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
     },
 
 	AddTextArt : function(nStyle)
@@ -782,9 +787,9 @@ CHeaderFooter.prototype =
 		this.Content.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
 	},
 
-	PasteFormatting : function(TextPr, ParaPr, ApplyPara)
+	PasteFormatting : function(oData)
 	{
-		this.Content.PasteFormatting(TextPr, ParaPr, ApplyPara);
+		this.Content.PasteFormatting(oData);
 	},
 
     Remove : function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
@@ -2031,6 +2036,11 @@ CHeaderFooterController.prototype =
 			return this.CurHdrFtr.AddNewParagraph();
 	},
 
+	GetFormatPainterData : function()
+	{
+		return this.CurHdrFtr.AddNewParagraph();
+	},
+
 	AddInlineImage : function(W, H, Img, Chart, bFlow)
     {
         if ( null != this.CurHdrFtr )
@@ -2088,10 +2098,10 @@ CHeaderFooterController.prototype =
 			return this.CurHdrFtr.ClearParagraphFormatting();
 	},
 
-	PasteFormatting : function(TextPr, ParaPr, ApplyPara)
+	PasteFormatting : function(oData)
 	{
 		if (null != this.CurHdrFtr)
-			return this.CurHdrFtr.PasteFormatting(TextPr, ParaPr, ApplyPara);
+			return this.CurHdrFtr.PasteFormatting(oData);
 	},
 
     Remove : function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)

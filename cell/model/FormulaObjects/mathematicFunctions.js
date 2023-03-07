@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -83,7 +83,7 @@
 		cFLOOR_MATH, cGCD, cINT, cISO_CEILING, cLCM, cLN, cLOG, cLOG10, cMDETERM, cMINVERSE, cMMULT, cMOD, cMROUND,
 		cMULTINOMIAL, cMUNIT, cODD, cPI, cPOWER, cPRODUCT, cQUOTIENT, cRADIANS, cRAND, cRANDARRAY, cRANDBETWEEN, cROMAN, cROUND, cROUNDDOWN,
 		cROUNDUP, cSEC, cSECH, cSERIESSUM, cSIGN, cSIN, cSINH, cSQRT, cSQRTPI, cSUBTOTAL, cSUM, cSUMIF, cSUMIFS,
-		cSUMPRODUCT, cSUMSQ, cSUMX2MY2, cSUMX2PY2, cSUMXMY2, cTAN, cTANH, cTRUNC);
+		cSUMPRODUCT, cSUMSQ, cSUMX2MY2, cSUMX2PY2, cSUMXMY2, cTAN, cTANH, cTRUNC, cSEQUENCE);
 
 	var cSubTotalFunctionType = {
 		includes: {
@@ -5554,6 +5554,141 @@
 
 		return truncHelper(arg0.getValue(), arg1.getValue());
 	};
+
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cSEQUENCE() {
+	}
+
+	cSEQUENCE.prototype = Object.create(cBaseFunction.prototype);
+	cSEQUENCE.prototype.constructor = cSEQUENCE;
+	cSEQUENCE.prototype.name = 'SEQUENCE';
+	cSEQUENCE.prototype.argumentsMin = 1;
+	cSEQUENCE.prototype.argumentsMax = 4;
+	cSEQUENCE.prototype.inheritFormat = true;
+	cSEQUENCE.prototype.isXLFN = true;
+	cSEQUENCE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cSEQUENCE.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number];
+	cSEQUENCE.prototype.Calculate = function (arg) {
+		// TODO after implementing array autoexpanding, reconsider the behavior of the function when receiving cellsRange as arguments
+		function sequenceArray (row, column, start, step) {
+			let res = new cArray(),
+				startNum = start,
+				stepNum = step;
+
+			for (let i = 0; i < row; i++) {
+				res.addRow();
+				for(let j = 0; j < column; j++) {
+					res.addElement(new cNumber(startNum));
+					startNum += stepNum;
+				}
+			}
+			
+			return res;
+		}
+
+		function sequenceRangeArrayGeneral (isRange, args) {
+			const EXPECTED_MAX_ARRAY = 10223960;
+			let rowVal = args[0],
+				columnVal = args[1],
+				startVal = args[2],
+				stepVal = args[3];
+	
+			// ------------------------- arg0 empty val check -------------------------//
+			if (!rowVal) {
+				rowVal = new cNumber(0);
+			}
+			if (cElementType.cell === rowVal.type || cElementType.cell3D === rowVal.type) {
+				rowVal = rowVal.getValue();
+			}
+
+			// ------------------------- arg1 empty type check -------------------------//
+			if (!columnVal) {
+				columnVal = new cNumber(0);
+			}
+			if (cElementType.cell === columnVal.type || cElementType.cell3D === columnVal.type) {
+				columnVal = columnVal.getValue();
+			}
+			
+			// ------------------------- arg2 empty type check -------------------------//
+			if (!startVal) {
+				startVal = new cNumber(0);
+			}
+			if (cElementType.cell === startVal.type || cElementType.cell3D === startVal.type) {
+				startVal = startVal.getValue();
+			}
+
+			// ------------------------- arg3 empty type check -------------------------//
+			if (!stepVal) {
+				stepVal = new cNumber(0);
+			}
+			if (cElementType.cell === stepVal.type || cElementType.cell3D === stepVal.type) {
+				stepVal = stepVal.getValue();
+			}
+
+			rowVal = rowVal.tocNumber();
+			columnVal = columnVal.tocNumber();
+			startVal = startVal.tocNumber();
+			stepVal = stepVal.tocNumber();
+
+			if (cElementType.error === rowVal.type) {
+				return rowVal;
+			}
+			if (cElementType.error === columnVal.type) {
+				return columnVal;
+			}
+			if (cElementType.error === startVal.type) {
+				return startVal;
+			}
+			if (cElementType.error === stepVal.type) {
+				return stepVal;
+			}
+
+			rowVal = Math.floor(rowVal.getValue());
+			columnVal = Math.floor(columnVal.getValue());
+			startVal = Math.floor(startVal.getValue());
+			stepVal = Math.floor(stepVal.getValue());
+
+			if (rowVal < 1 || columnVal < 1 || (rowVal * columnVal) > EXPECTED_MAX_ARRAY) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			return isRange ? new cNumber(startVal) : sequenceArray(rowVal, columnVal, startVal, stepVal);
+		}
+
+		let arg0 = arg[0],
+			arg1 = arg[1] ? arg[1] : new cNumber(1),
+			arg2 = arg[2] ? arg[2] : new cNumber(1),
+			arg3 = arg[3] ? arg[3] : new cNumber(1),
+			res;
+			// exceptions = new Map();
+
+		if (arg0.type === cElementType.empty) {
+			arg0 = new cNumber(1);
+		}
+		if (arg1.type === cElementType.empty) {
+			arg1 = new cNumber(1);
+		}
+		if (arg2.type === cElementType.empty) {
+			arg2 = new cNumber(1);
+		}
+		if (arg3.type === cElementType.empty) {
+			arg3 = new cNumber(1);
+		}
+
+		// if range/array type, write array to map and call arrayHelper
+		res = AscCommonExcel.getArrayHelper([arg0, arg1, arg2, arg3], sequenceRangeArrayGeneral);
+
+		if (res) {
+			return res;
+		}
+
+		return res ? res : sequenceRangeArrayGeneral(false, [arg0, arg1, arg2, arg3]);
+	};
+
 
 	var g_oSUMIFSCache = new SUMIFSCache();
 

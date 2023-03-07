@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -6019,6 +6019,10 @@ CTable.prototype.AddNewParagraph = function()
 {
 	this.CurCell.Content.AddNewParagraph();
 };
+CTable.prototype.GetFormatPainterData = function()
+{
+	return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
+};
 CTable.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
 {
 	this.Selection.Use  = true;
@@ -6041,7 +6045,7 @@ CTable.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data,
 {
 	this.Selection.Use  = true;
 	this.Selection.Type = table_Selection_Text;
-	this.CurCell.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+	return this.CurCell.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CTable.prototype.AddTextArt = function(nStyle)
 {
@@ -6119,7 +6123,7 @@ CTable.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextP
 		this.CurCell.Content.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
 	}
 };
-CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CTable.prototype.PasteFormatting = function(oData)
 {
 	if (this.IsCellSelection())
 	{
@@ -6132,13 +6136,13 @@ CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 
 			var Cell_Content = Cell.Content;
 			Cell_Content.SetApplyToAll(true);
-			Cell.Content.PasteFormatting(TextPr, ParaPr, true);
+			Cell.Content.PasteFormatting(oData);
 			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
 	{
-		this.CurCell.Content.PasteFormatting(TextPr, ParaPr, false);
+		this.CurCell.Content.PasteFormatting(oData);
 	}
 };
 CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
@@ -8334,9 +8338,19 @@ CTable.prototype.Recalc_CompiledPr2 = function()
  */
 CTable.prototype.Get_CompiledPr = function(bCopy)
 {
+	let forceCompile = false;
+	if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+	{
+		let logicDocument = this.GetLogicDocument();
+		if (logicDocument
+			&& logicDocument.IsDocumentEditor()
+			&& logicDocument.CompileStyleOnLoad)
+			forceCompile = true;
+	}
+	
 	if (true === this.CompiledPr.NeedRecalc)
 	{
-		if ((true === AscCommon.g_oIdCounter.m_bLoad && true === AscCommon.g_oIdCounter.m_bRead) || !this.Parent)
+		if ((!forceCompile && (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)) || !this.Parent)
 		{
 			this.CompiledPr.Pr         = {
 				TextPr : g_oDocumentDefaultTextPr,
@@ -8365,7 +8379,7 @@ CTable.prototype.Get_CompiledPr = function(bCopy)
 		else
 		{
 			this.CompiledPr.Pr         = this.Internal_Compile_Pr();
-			this.CompiledPr.NeedRecalc = false;
+			this.CompiledPr.NeedRecalc = forceCompile;
 		}
 	}
 
@@ -10215,10 +10229,12 @@ CTable.prototype.RemoveTableColumn = function()
 	}
 
 	// Возвращаем курсор
-	this.DrawingDocument.TargetStart();
-	this.DrawingDocument.TargetShow();
-
-	this.DrawingDocument.SelectEnabled(false);
+	if(!this.bPresentation)
+	{
+		this.DrawingDocument.TargetStart();
+		this.DrawingDocument.TargetShow();
+		this.DrawingDocument.SelectEnabled(false);
+	}
 
 	// При удалении последней строки, надо сообщить об этом родительскому классу
 	if (this.Content.length <= 0)
@@ -14663,6 +14679,7 @@ CTable.prototype.private_RemoveRow = function(nIndex)
 
 	this.private_CheckCurCell();
 	this.private_UpdateTableGrid();
+	this.OnContentChange();
 };
 CTable.prototype.private_AddRow = function(Index, CellsCount, bReIndexing, _NewRow)
 {
@@ -14709,6 +14726,7 @@ CTable.prototype.private_AddRow = function(Index, CellsCount, bReIndexing, _NewR
 
 	this.private_CheckCurCell();
 	this.private_UpdateTableGrid();
+	this.OnContentChange();
 
 	return NewRow;
 };
@@ -16390,8 +16408,14 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 
 		isAllSelected = true;
 	}
-
-	if ((bAll || (isCellSelection && !this.ApplyToAll)) && (undefined === nType || c_oAscRevisionsChangeType.TablePr === nType || c_oAscRevisionsChangeType.RowsAdd === nType || c_oAscRevisionsChangeType.RowsRem === nType))
+	
+	if ((bAll || (isCellSelection && !this.ApplyToAll))
+		&& (undefined === nType
+			|| c_oAscRevisionsChangeType.TablePr === nType
+			|| c_oAscRevisionsChangeType.RowsAdd === nType
+			|| c_oAscRevisionsChangeType.RowsRem === nType
+			|| c_oAscRevisionsChangeType.TableRowPr === nType
+		))
 	{
 		if (isAllSelected && (undefined === nType || c_oAscRevisionsChangeType.TablePr === nType) && this.HavePrChange())
 		{
@@ -16408,8 +16432,12 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 
 		for (var nSelectedRowIndex = 0, nSelectedRowsCount = arrSelectedRows.length; nSelectedRowIndex < nSelectedRowsCount; ++nSelectedRowIndex)
 		{
-			var nCurRow        = arrSelectedRows[nSelectedRowIndex];
-			var oRow           = this.GetRow(nCurRow);
+			var nCurRow = arrSelectedRows[nSelectedRowIndex];
+			var oRow    = this.GetRow(nCurRow);
+			
+			if (oRow.HavePrChange() && (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType))
+				oRow.AcceptPrChange();
+			
 			var nRowReviewType = oRow.GetReviewType();
 			if (reviewtype_Add === nRowReviewType && (undefined === nType || c_oAscRevisionsChangeType.RowsAdd === nType))
 			{
@@ -16495,7 +16523,12 @@ CTable.prototype.RejectRevisionChanges = function(nType, bAll)
 		isCellSelection = true;
 	}
 
-	if ((bAll || (this.IsCellSelection() && !this.ApplyToAll)) && (undefined === nType || c_oAscRevisionsChangeType.TablePr === nType || c_oAscRevisionsChangeType.RowsAdd === nType || c_oAscRevisionsChangeType.RowsRem === nType))
+	if ((bAll || (this.IsCellSelection() && !this.ApplyToAll))
+		&& (undefined === nType
+			|| c_oAscRevisionsChangeType.TablePr === nType
+			|| c_oAscRevisionsChangeType.RowsAdd === nType
+			|| c_oAscRevisionsChangeType.RowsRem === nType
+			|| c_oAscRevisionsChangeType.TableRowPr === nType))
 	{
 		if (isAllSelected && (undefined === nType || c_oAscRevisionsChangeType.TablePr === nType) && this.HavePrChange())
 		{
@@ -16512,8 +16545,12 @@ CTable.prototype.RejectRevisionChanges = function(nType, bAll)
 
 		for (var nSelectedRowIndex = 0, nSelectedRowsCount = arrSelectedRows.length; nSelectedRowIndex < nSelectedRowsCount; ++nSelectedRowIndex)
 		{
-			var nCurRow        = arrSelectedRows[nSelectedRowIndex];
-			var oRow           = this.GetRow(nCurRow);
+			var nCurRow = arrSelectedRows[nSelectedRowIndex];
+			var oRow    = this.GetRow(nCurRow);
+			
+			if (oRow.HavePrChange() && (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType))
+				oRow.RejectPrChange();
+			
 			var nRowReviewType = oRow.GetReviewType();
 			if (reviewtype_Add === nRowReviewType && (undefined === nType || c_oAscRevisionsChangeType.RowsAdd === nType))
 			{
@@ -18595,9 +18632,11 @@ CTable.prototype.DistributeRows = function()
 
 		for (var nCurPage in this.RowsInfo[nCurRow].TopDy)
 			nRowSummaryH -= this.RowsInfo[nCurRow].TopDy[nCurPage];
-
-		var oRow      = this.GetRow(nCurRow);
-		nRowSummaryH -= oRow.GetTopMargin() + oRow.GetBottomMargin();
+		if(!this.bPresentation)
+		{
+			var oRow      = this.GetRow(nCurRow);
+			nRowSummaryH -= oRow.GetTopMargin() + oRow.GetBottomMargin();
+		}
 
 		nSumH += nRowSummaryH;
 	}
@@ -18861,54 +18900,78 @@ CTable.prototype.GetPrReviewColor = function()
 };
 CTable.prototype.CheckRevisionsChanges = function(oRevisionsManager)
 {
+	// TODO: Пока у нас нет отдельного типа для изменений настроек у строки
+	//       поэтому мы их передаем как у всей таблицы
+	
 	var nRowsCount = this.GetRowsCount();
 	if (nRowsCount <= 0)
 		return;
-
-	var sTableId = this.GetId();
-	if (true === this.HavePrChange())
+	
+	let tableId       = this.GetId();
+	let table         = this;
+	let tablePrChange = false;
+	function private_FlushTablePrChange(reviewInfo, startRow, endRow)
 	{
-		var oChange = new CRevisionsChange();
-		oChange.put_Paragraph(this);
-		oChange.put_StartPos(0);
-		oChange.put_EndPos(nRowsCount - 1);
-		oChange.put_Type(c_oAscRevisionsChangeType.TablePr);
-		oChange.put_UserId(this.Pr.ReviewInfo.GetUserId());
-		oChange.put_UserName(this.Pr.ReviewInfo.GetUserName());
-		oChange.put_DateTime(this.Pr.ReviewInfo.GetDateTime());
-		oRevisionsManager.AddChange(sTableId, oChange);
+		let change = new CRevisionsChange();
+		change.put_Paragraph(table);
+		change.put_StartPos(startRow);
+		change.put_EndPos(endRow);
+		change.put_Type(c_oAscRevisionsChangeType.TablePr);
+		change.put_UserId(reviewInfo.GetUserId());
+		change.put_UserName(reviewInfo.GetUserName());
+		change.put_DateTime(reviewInfo.GetDateTime());
+		oRevisionsManager.AddChange(tableId, change);
+		tablePrChange = true;
 	}
+	
+	if (this.HavePrChange())
+		private_FlushTablePrChange(this.Pr.ReviewInfo, 0, nRowsCount - 1);
 
-	var oTable = this;
 	function private_FlushTableChange(nType, nStartRow, nEndRow)
 	{
 		if (reviewtype_Common === nType)
 			return;
 
-		var oRow           = oTable.GetRow(nStartRow);
+		var oRow           = table.GetRow(nStartRow);
 		var oRowReviewInfo = oRow.GetReviewInfo();
 
 		var oChange = new CRevisionsChange();
-		oChange.put_Paragraph(oTable);
+		oChange.put_Paragraph(table);
 		oChange.put_StartPos(nStartRow);
 		oChange.put_EndPos(nEndRow);
 		oChange.put_Type(nType === reviewtype_Add ? c_oAscRevisionsChangeType.RowsAdd : c_oAscRevisionsChangeType.RowsRem);
 		oChange.put_UserId(oRowReviewInfo.GetUserId());
 		oChange.put_UserName(oRowReviewInfo.GetUserName());
 		oChange.put_DateTime(oRowReviewInfo.GetDateTime());
-		oRevisionsManager.AddChange(sTableId, oChange);
+		oRevisionsManager.AddChange(tableId, oChange);
+	}
+	
+	function private_FlushTableRowPrChange(reviewInfo, startRow, endRow)
+	{
+		let change = new CRevisionsChange();
+		change.put_Paragraph(table);
+		change.put_StartPos(startRow);
+		change.put_EndPos(endRow);
+		change.put_Type(c_oAscRevisionsChangeType.TableRowPr);
+		change.put_UserId(reviewInfo.GetUserId());
+		change.put_UserName(reviewInfo.GetUserName());
+		change.put_DateTime(reviewInfo.GetDateTime());
+		oRevisionsManager.AddChange(tableId, change);
 	}
 
 	var nType     = reviewtype_Common;
 	var nStartRow = 0;
 	var nEndRow   = 0;
 	var sUserId   = "";
-
+	
 	for (var nCurRow = 0; nCurRow < nRowsCount; ++nCurRow)
 	{
 		var oRow           = this.GetRow(nCurRow);
 		var nRowReviewType = oRow.GetReviewType();
 		var oRowReviewInfo = oRow.GetReviewInfo();
+		
+		if (!tablePrChange && oRow.HavePrChange() && oRow.Pr.ReviewInfo)
+			private_FlushTableRowPrChange(oRow.Pr.ReviewInfo, oRow.GetIndex(), oRow.GetIndex());
 
 		if (reviewtype_Common === nType)
 		{

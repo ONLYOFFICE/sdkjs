@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -42,6 +42,7 @@ function (window, undefined) {
 // Import
 var cToDeg = AscFormat.cToDeg;
 var ORIENTATION_MIN_MAX = AscFormat.ORIENTATION_MIN_MAX;
+var ORIENTATION_MAX_MIN = AscFormat.ORIENTATION_MAX_MIN;
 var Point3D = AscFormat.Point3D;
 
 var c_oAscTickMark = Asc.c_oAscTickMark;
@@ -1808,7 +1809,7 @@ CChartsDrawer.prototype =
 		}
 
 		//максимальное и минимальное значение(по документации excel)
-		var trueMinMax = this._getTrueMinMax(yMin, yMax, isStackedType, isScatter);
+		var trueMinMax = this._getTrueMinMax((manualMin !== null && manualMin > yMin) ? manualMin : yMin, (manualMax !== null && manualMax < yMax) ? manualMax : yMax, isStackedType, isScatter);
 
 		//TODO временная проверка для некорректных минимальных и максимальных значений
 		if (manualMax && manualMin && manualMax < manualMin) {
@@ -6199,6 +6200,8 @@ drawBarChart.prototype = {
 		var height = point.compiledDlb.extY;
 
 		var centerX, centerY;
+		//TODO check revert valAx orientation for other charts labels
+		var maxMinAxis = this.valAx && this.valAx.scaling && this.valAx.scaling.orientation === ORIENTATION_MAX_MIN;
 
 		switch (point.compiledDlb.dLblPos) {
 			case c_oAscChartDataLabelsPos.bestFit: {
@@ -6216,7 +6219,7 @@ drawBarChart.prototype = {
 			case c_oAscChartDataLabelsPos.inBase: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y;
-				if (point.val > 0) {
+				if ((point.val > 0 && !maxMinAxis) || (point.val < 0 && maxMinAxis)) {
 					centerY = y - height;
 				}
 				break;
@@ -6224,7 +6227,7 @@ drawBarChart.prototype = {
 			case c_oAscChartDataLabelsPos.inEnd: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y - h;
-				if (point.val < 0) {
+				if ((point.val < 0 && !maxMinAxis) || (point.val > 0 && maxMinAxis)) {
 					centerY = centerY - height;
 				}
 				break;
@@ -6232,7 +6235,7 @@ drawBarChart.prototype = {
 			case c_oAscChartDataLabelsPos.outEnd: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y - h - height;
-				if (point.val < 0) {
+				if ((point.val < 0 && !maxMinAxis) || (point.val > 0 && maxMinAxis)) {
 					centerY = centerY + height;
 				}
 				break;

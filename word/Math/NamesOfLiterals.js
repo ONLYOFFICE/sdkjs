@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -162,10 +162,11 @@
 			"↼", "↔", "≤", "⬄", "⬌", "≪", "⇋", "↦", "⊨",
 			"∓", "≠", "↗", "¬", "≠", "∌", "∉", "∉", "ν",
 			"↖", "ο", "⊙", "⊖", "⊕", "⊗", "⊥", "±",
-			"≺", "≼", "∶", "⋰", "→", "⇁", "⇀", "↘",
+			"≺", "≼", "∶", "⋰", "→", "⇁", "⇀", "↘", "∝",
 			"∼", "≃", "⬍", "⊑", "⊒", "⋆", "⊂", "⊆", "≻", "≽",
 			"⊃", "⊇", "×", "⊤", "→", "‼", "∷", "≔", "∩", "∪",
-			"∆", "∞", "⁢",
+			"∆", "∞", "⁢", "/", ">", "<", "_", "^", ".", ",",
+			"?", ":", ";", "`", "~", "@", "!", "#", "$", "%", "&"
 		];
 		this.toSymbols = {
 			"\\angle": "∠",
@@ -187,7 +188,26 @@
 		];
 		this.fromSymbols  = {};
 		this.toSymbols = {
-			"\\aoint": "∳",
+			"\\sum" : "∑",
+			"\\prod": "∏",
+			"\\amalg" : "∐",
+			"\\coprod" : "∐",
+			"\\bigwedge" : "⋀",
+			"\\bigvee" : "⋁",
+			"\\bigcup" : "⋃",
+			"\\bigcap" : "⋂",
+			"\\bigsqcup" : "⨆",
+			"\\biguplus" : "⨄",
+			"\\bigoplus" :  "⨁",
+			"\\bigotimes" : "⨂",
+			"\\int" : "∫",
+			"\\iint" : "∬",
+			"\\iiint" : "∭",
+			"\\iiiint" : "⨌",
+			"\\oint" : "∮",
+			"\\oiint" :  "∯",
+			"\\oiiint" : "∰",
+			"\\coint" :  "∲",
 		};
 		this.Init();
 	}
@@ -362,7 +382,7 @@
 		specialIndexBracketLiteral: [39, "specialScriptBracketLiteral"],
 		specialIndexOperatorLiteral: [40, "specialScriptBracketLiteral"],
 
-		textLiteral: 				[41, "textLiteral"],
+		textPlainLiteral: 				[41, "textPlainLiteral"],
 		nthrtLiteral: 				[42, "nthrtLiteral"],
 		fourthrtLiteral: 			[43, "fourthrtLiteral"],
 		cubertLiteral: 				[44, "cubertLiteral"],
@@ -387,6 +407,24 @@
 		belowAboveLiteral:			[57, "BelowAboveLiteral"],
 
 	};
+
+	const SpecialAutoCorrection = {
+		"!!" : "‼",
+		"...": "…",
+		"::" : "∷",
+		":=" : "≔",
+		"~=" : "≅",
+		"+-" : "±",
+		"-+" : "∓",
+		"<<" : "≪",
+		"<=" : "≤",
+		"->" : "→",
+		">=" : "≥",
+		">>" : "≫",
+
+		"/<" : "≮",
+		"/=" : "≠"
+	}
 
 	const wordAutoCorrection = [
 		//Char
@@ -473,6 +511,9 @@
 		["⋉", oNamesOfLiterals.operatorLiteral[0]],
 		["⋊", oNamesOfLiterals.operatorLiteral[0]],
 		["▷", oNamesOfLiterals.operatorLiteral[0]],
+		["<", oNamesOfLiterals.operatorLiteral[0]],
+		[">", oNamesOfLiterals.operatorLiteral[0]],
+		["!", oNamesOfLiterals.operatorLiteral[0]],
 
 		["(", oNamesOfLiterals.opOpenBracket[0]],
 		[")", oNamesOfLiterals.opCloseBracket[0]],
@@ -482,7 +523,6 @@
 		["^", true],
 		["_", true],
 
-		// ["!", oNamesOfLiterals.charLiteral[0]],
 		// ["!!", "‼", oNamesOfLiterals.charLiteral[0]],
 		// ["...", "…"],
 		// ["::", "∷"],
@@ -575,7 +615,7 @@
 		["\\array", oNamesOfLiterals.matrixLiteral[0]],
 		["\\above", true],
 		["\\below", true],
-
+		["\\mid", true],
 		["┴", true],
 
 		["̿", MathLiterals.accent.id], //todo
@@ -808,7 +848,7 @@
 		["≼", oNamesOfLiterals.operatorLiteral[0]],
 		["′", MathLiterals.accent.id],
 		["∏", oNamesOfLiterals.opNaryLiteral[0]], //oNamesOfLiterals.functionLiteral[0]
-		["∝"],
+		["∝", oNamesOfLiterals.operatorLiteral[0]],
 		["ψ"],
 		["∜", oNamesOfLiterals.sqrtLiteral[0]],
 		["〉", oNamesOfLiterals.opCloseBracket[0]],
@@ -907,11 +947,34 @@
 		["\\sfrac", true],
 		["\\text", true],
 
+		["\\sum", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\prod", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\amalg", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\coprod", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\bigwedge", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\bigvee", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\bigcup", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\bigcap", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\bigsqcup", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\biguplus", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\bigoplus", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\bigotimes", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\int", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\iint", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\iiint", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\iiiint", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\oint", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\oiint", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\oiiint", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\coint", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\aouint", oNamesOfLiterals.opNaryLiteral[0]],
+		["\\substack", true],
+
 		["\\hat", MathLiterals.accent.id],
 		["\\dot", MathLiterals.accent.id],
 
-		// ["\""],
-		// ["\'"],
+		["\"",  oNamesOfLiterals.charLiteral[0]],
+		["\'",  oNamesOfLiterals.charLiteral[0]],
 
 		["\\quad", oNamesOfLiterals.spaceLiteral[0]], // 1 em (nominally, the height of the font)
 		// ["\\qquad", [8193, 8193], oNamesOfLiterals.spaceLiteral[0]], // 2em
@@ -998,13 +1061,36 @@
 		"\\box",
 		"\\fbox",
 		"\\rect",
+
+		"\\sum",
+		"\\prod",
+		"\\amalg",
+		"\\coprod",
+		"\\bigwedge",
+		"\\bigvee",
+		"\\bigcup",
+		"\\bigcap",
+		"\\bigsqcup",
+		"\\biguplus",
+		"\\bigodot",
+		"\\bigoplus",
+		"\\bigotimes",
+		"\\int",
+		"\\iint",
+		"\\iiint",
+		"\\iiiint",
+		"\\oint",
+		"\\oiint",
+		"\\oiiint",
+		"\\coint",
+		"\\aouint",
 	];
 
 	const functionNames = [
 		"tan", "tanh", "sup", "sinh", "sin", "sec", "ker", "hom",
 		"arg", "arctan", "arcsin", "arcsec", "arccsc", "arccot", "arccos",
 		"inf", "gcd", "exp", "dim", "det", "deg", "csc", "coth", "cot",
-		"cosh", "cos", "Pr", "lg", "ln", "log", "sgn",
+		"cosh", "cos", "Pr", "lg", "ln", "log", "sgn", "sech"
 	];
 	const limitFunctions = [
 		"lim", "min", "max",
@@ -1208,6 +1294,9 @@
 			"|": 124,
 			"〖": -1,
 			"〗": -1,
+			"⟨" : 10216,
+			"⟩": 10217,
+
 		}
 		if (code) {
 			let strBracket = oBrackets[code];
@@ -1301,6 +1390,8 @@
 	// Convert tokens to math objects
 	function ConvertTokens(oTokens, oContext)
 	{
+		Paragraph = oContext.Paragraph;
+
 		if (typeof oTokens === "object")
 		{
 			if (oTokens.type === "LaTeXEquation" || oTokens.type === "UnicodeEquation")
@@ -1338,6 +1429,8 @@
 			oContext.Add_Text(oTokens);
 		}
 	}
+
+	let Paragraph = null;
 	// Find token in all types for convert
 	function SelectObject (oTokens, oContext)
 	{
@@ -1370,9 +1463,9 @@
 				case oNamesOfLiterals.specialIndexOperatorLiteral[num]:
 				case oNamesOfLiterals.opDecimal[num]:
 				case oNamesOfLiterals.charLiteral[num]:
+				case oNamesOfLiterals.spaceLiteral[num]:
 				case oNamesOfLiterals.operatorLiteral[num]:
 				case oNamesOfLiterals.mathOperatorLiteral[num]:
-				case oNamesOfLiterals.textLiteral[num]:
 				case oNamesOfLiterals.numberLiteral[num]:
 					if (oTokens.decimal) {
 						ConvertTokens(
@@ -1389,8 +1482,17 @@
 						oContext.Add_Text(oTokens.value);
 					}
 					break;
+				case oNamesOfLiterals.textPlainLiteral[num]:
+					oContext.Add_Text(oTokens.value, Paragraph, STY_PLAIN);
+					break
 				case oNamesOfLiterals.opNaryLiteral[num]:
-					let oNary = oContext.Add_NAry({chr: oTokens.value.charCodeAt(0)}, null, null, null);
+					let lPr = {
+						chr: oTokens.value.charCodeAt(0),
+						subHide: true,
+						supHide: true,
+					}
+
+					let oNary = oContext.Add_NAry(lPr, null, null, null);
 					if (oTokens.third) {
 						UnicodeArgument(
 							oTokens.third,
@@ -1488,7 +1590,7 @@
 							null,
 							null
 						);
-						SubSup.getBase().Add_Text(oTokens.value.value)
+						SubSup.getBase().Add_Text(oTokens.value.value, Paragraph, STY_PLAIN)
 
 						if (oTokens.up) {
 							UnicodeArgument(
@@ -1526,7 +1628,7 @@
 							.getFName()
 							.Content[0]
 							.getFName()
-							.Add_Text(oTokens.value.value);
+							.Add_Text(oTokens.value.value, Paragraph, STY_PLAIN);
 
 						let oLimitIterator = oFuncWithLimit
 							.getFName()
@@ -1550,8 +1652,8 @@
 
 						let Pr = {
 							chr: oTokens.value.value.charCodeAt(0),
-							supHide: oTokens.down !== undefined,
-							subHide: oTokens.up !== undefined,
+							subHide: oTokens.down === undefined,
+							supHide: oTokens.up === undefined,
 						}
 
 						let oNary = oContext.Add_NAry(Pr, null, null, null);
@@ -1591,10 +1693,11 @@
 							null,
 							null
 						);
-						ConvertTokens(
+						UnicodeArgument(
 							oTokens.value,
+							oNamesOfLiterals.bracketBlockLiteral[num],
 							SubSup.getBase(),
-						);
+						)
 						UnicodeArgument(
 							oTokens.up,
 							oNamesOfLiterals.bracketBlockLiteral[num],
@@ -1617,7 +1720,7 @@
 					FuncName.Add_Element(Limit);
 
 					var LimitName = Limit.getFName();
-					LimitName.Add_Text(oTokens.value);
+					LimitName.Add_Text(oTokens.value, Paragraph, STY_PLAIN);
 
 					if (oTokens.up || oTokens.down) {
 						UnicodeArgument(
@@ -1627,10 +1730,10 @@
 						)
 					}
 
-					if (oTokens.third) {
-						UnicodeArgument(
+					if (oTokens.third)
+					{
+						ConvertTokens(
 							oTokens.third,
-							oNamesOfLiterals.bracketBlockLiteral[num],
 							MathFunc.getArgument(),
 						)
 					}
@@ -1680,10 +1783,19 @@
 
 					break;
 				case oNamesOfLiterals.bracketBlockLiteral[num]:
+
+					let arr = [null]
+					if (oTokens.counter > 1 && oTokens.value.length < oTokens.counter)
+					{
+						for (let i = 0; i < oTokens.counter - 1; i++)
+						{
+							arr.push(null);
+						}
+					}
 					let oBracket = oContext.Add_DelimiterEx(
 						new CTextPr(),
-						oTokens.value.length ? oTokens.value.length : 1,
-						[null],
+						oTokens.value.length ? oTokens.value.length : oTokens.counter || 1,
+						arr,
 						GetBracketCode(oTokens.left),
 						GetBracketCode(oTokens.right),
 					);
@@ -1722,14 +1834,12 @@
 					break;
 				case oNamesOfLiterals.functionLiteral[num]:
 					let oFunc = oContext.Add_Function({}, null, null);
-					oFunc.getFName().Add_Text(oTokens.value);
+					oFunc.getFName().Add_Text(oTokens.value, Paragraph, STY_PLAIN);
 					UnicodeArgument(
 						oTokens.third,
 						oNamesOfLiterals.bracketBlockLiteral[num],
 						oFunc.getArgument()
 					)
-					break;
-				case oNamesOfLiterals.spaceLiteral[num]:
 					break;
 				case oNamesOfLiterals.mathFontLiteral[num]:
 					ConvertTokens(
@@ -1781,7 +1891,7 @@
 					}
 					break;
 				case oNamesOfLiterals.boxLiteral[num]:
-					let oBox = oContext.Add_Box({}, null);
+					let oBox = oContext.Add_Box({ctrPrp: new CTextPr(), opEmu : 1}, null);
 					UnicodeArgument(
 						oTokens.value,
 						oNamesOfLiterals.bracketBlockLiteral[num],
@@ -1814,10 +1924,14 @@
 					);
 					break;
 				case oNamesOfLiterals.belowAboveLiteral[num]:
-					let LIMIT_TYPE = (oTokens.isBelow === true) ? LIMIT_LOW : LIMIT_UP;
+					let LIMIT_TYPE = (oTokens.isBelow === false) ? VJUST_BOT : VJUST_TOP;
 					if (oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1)
 					{
-						var Group = new CGroupCharacter({ctrPrp : new CTextPr(), chr: oTokens.base.value.charCodeAt(0), pos: LIMIT_TYPE, vertJc : 0 });
+						let Pr = (LIMIT_TYPE == VJUST_TOP)
+							? {ctrPrp : new CTextPr(), pos :LIMIT_TYPE, chr : oTokens.base.value.charCodeAt(0)}
+							: {ctrPrp : new CTextPr(), vertJc : LIMIT_TYPE, chr : oTokens.base.value.charCodeAt(0)};
+
+						var Group = new CGroupCharacter(Pr);
 						oContext.Add_Element(Group);
 
 						UnicodeArgument(
@@ -2032,11 +2146,6 @@
 	}
 
 	const AutoCorrection = {
-		"!!": "‼",
-		"...": "…",
-		"::": "∷",
-		":=": "≔",
-		
 		"\\above": "┴",
 		"\\acute": "́",
 		"\\aleph": "ℵ",
@@ -2548,24 +2657,251 @@
 		"\\zwnj": "‌",
 		"\\zwsp": "​",
 
-		"~=": "≅",
-		"+-": "±",
-		"-+": "∓",
-		"<<": "≪",
-		"<=": "≤",
-		"->": "→",
-		">=": "≥",
-		'>>': "≫",
-	}
+		'/\\approx' : "≉",
+		'/\\asymp'	: '≭',
+		'/\\cong'	: '≇',
+		'/\\equiv'	: '≢',
+		'/\\exists'	: '∄',
+		'/\\ge'		: '≱',
+		'/\\gtrless': '≹',
+		'/\\in'		: '∉',
+		'/\\le'		: '≰',
+		'/\\lessgtr': '≸',
+		'/\\ni'		: '∌',
+		'/\\prec'	: '⊀',
+		'/\\preceq' : '⋠',
+		'/\\sim'	: '≁',
+		'/\\simeq'	: '≄',
+		'/\\sqsubseteq' : '⋢',
+		'/\\sqsuperseteq': '⋣',
+		'/\\sqsupseteq' : '⋣',
+		'/\\subset': '⊄',
+		'/\\subseteq': '⊈',
+		'/\\succ': '⊁',
+		'/\\succeq': '⋡',
+		'/\\supset': '⊅',
+		'/\\superset': '⊅',
+		'/\\superseteq': '⊉',
+		'/\\supseteq': '⊉',
+	};
 
-	function CorrectWordOnCursor(oCMathContent, IsLaTeX)
+	const SymbolsToLaTeX = {
+		"ϵ" : "\\epsilon",
+		"∃" : "\\exists",
+		"∀" : "\\forall",
+		"≠" : "\\neq",
+		"≤" : "\\le",
+		"≥" : "\\geq",
+		"≮" : "\\nless",
+		"≰" : "\\nleq",
+		"≯" : "\\ngt",
+		"≱" : "\\ngeq",
+		"≡" : "\\equiv",
+		"∼" : "\\sim",
+		"≃" : "\\simeq",
+		"≈" : "\\approx",
+		"≅" : "\\cong",
+		"≢" : "\\nequiv",
+		"≄" : "\\nsimeq",
+		"≉" : "\\napprox",
+		"≇" : "\\ncong",
+		"≪" : "\\ll",
+		"≫" : "\\gg",
+		"∈" : "\\in",
+		"∋" : "\\ni",
+		"∉" : "\\notin",
+		"⊂" : "\\subset",
+		"⊃" : "\\supset",
+		"⊆" : "\\subseteq",
+		"⊇" : "\\supseteq",
+		"≺" : "\\prcue",
+		"≻" : "\\succ",
+		"≼" : "\\preccurlyeq",
+		"≽" : "\\succcurlyeq",
+		"⊏" : "\\sqsubset",
+		"⊐" : "\\sqsupset",
+		"⊑" : "\\sqsubseteq",
+		"⊒" : "\\sqsupseteq",
+		"∥" : "\\parallel",
+		"⊥" : "\\bot",
+		"⊢" : "\\vdash",
+		"⊣" : "\\dashv",
+		"⋈" : "\\bowtie",
+		"≍" : "\\asymp",
+		"∔" : "\\dotplus",
+		"∸" : "\\dotminus",
+		"∖" : "\\setminus",
+		"⋒" : "\\Cap",
+		"⋓" : "\\Cup",
+		"⊟" : "\\boxminus",
+		"⊠" : "\\boxtimes",
+		"⊡" : "\\boxdot",
+		"⊞" : "\\boxplus",
+		"⋇" : "\\divideontimes",
+		"⋉" : "\\ltimes",
+		"⋊" : "\\rtimes",
+		"⋋" : "\\leftthreetimes",
+		"⋌" : "\\rightthreetimes",
+		"⋏" : "\\curlywedge",
+		"⋎" : "\\curlyvee",
+		"⊝" : "\\odash",
+		"⊺" : "\\intercal",
+		"⊕" : "\\oplus",
+		"⊖" : "\\ominus",
+		"⊗" : "\\otimes",
+		"⊘" : "\\oslash",
+		"⊙" : "\\odot",
+		"⊛" : "\\oast",
+		"⊚" : "\\ocirc",
+		"†" : "\\dag",
+		"‡" : "\\ddag",
+		"⋆" : "\\star",
+		"⋄" : "\\diamond",
+		"≀" : "\\wr",
+		"△" : "\\triangle",
+		"⋀" : "\\bigwedge",
+		"⋁" : "\\bigvee",
+		"⨀" : "\\bigodot",
+		"⨂" : "\\bigotimes",
+		"⨁" : "\\bigoplus",
+		"⨅" : "\\bigsqcap",
+		"⨆" : "\\bigsqcup",
+		"⨄" : "\\biguplus",
+		"⨃" : "\\bigudot",
+		"∴" : "\\therefore",
+		"∵" : "\\because",
+		"⋘" : "\\lll",
+		"⋙" : "\\ggg",
+		"≦" : "\\leqq",
+		"≧" : "\\geqq",
+		"≲" : "\\lesssim",
+		"≳" : "\\gtrsim",
+		"⋖" : "\\lessdot",
+		"⋗" : "\\gtrdot",
+		"≶" : "\\lessgtr",
+		"⋚" : "\\lesseqgtr",
+		"≷" : "\\gtrless",
+		"⋛" : "\\gtreqless",
+		"≑" : "\\Doteq",
+		"≒" : "\\fallingdotseq",
+		"≓" : "\\risingdotseq",
+		"∽" : "\\backsim",
+		"≊" : "\\approxeq",
+		"⋍" : "\\backsimeq",
+		"⋞" : "\\curlyeqprec",
+		"⋟" : "\\curlyeqsucc",
+		"≾" : "\\precsim",
+		"≿" : "\\succsim",
+		"⋜" : "\\eqless",
+		"⋝" : "\\eqgtr",
+		"⊲" : "\\vartriangleleft",
+		"⊳" : "\\vartriangleright",
+		"⊴" : "\\trianglelefteq",
+		"⊵" : "\\trianglerighteq",
+		"⊨" : "\\models",
+		"⋐" : "\\Subset",
+		"⋑" : "\\Supset",
+		"⊩" : "\\Vdash",
+		"⊪" : "\\Vvdash",
+		"≖" : "\\eqcirc",
+		"≗" : "\\circeq",
+		"≜" : "\\Deltaeq",
+		"≏" : "\\bumpeq",
+		"≎" : "\\Bumpeq",
+		"∝" : "\\propto",
+		"≬" : "\\between",
+		"⋔" : "\\pitchfork",
+		"≐" : "\\doteq",
+
+		"ⅆ"        :"\\dd"			,
+		"ⅅ" 		:"\\Dd"			,
+		"ⅇ" 		:"\\ee"			,
+		"ℓ" 		:"\\ell"		,
+		"ℏ" 		:"\\hbar"		,
+		"ⅈ" 		:"\\ii"			,
+		"ℑ" 		:"\\Im"			,
+		"ı" 		:"\\imath"		,
+		"Jay" 		:"\\j"			,
+		"ⅉ" 		:"\\jj"			,
+		"ȷ" 		:"\\jmath"		,
+		"∂" 		:"\\partial"	,
+		"R" 		:"\\Re"			,
+		"℘" 		:"\\wp"			,
+		"ℵ" 		:"\\aleph"		,
+		"ℶ" 		:"\\bet"		,
+		"ℷ" 		:"\\gimel"		,
+		"ℸ" 		:"\\dalet"		,
+
+		"Α" 		:"\\Alpha"		,
+		"α" 		:"\\alpha"		,
+		"Β" 		:"\\Beta"		,
+		"β" 		:"\\beta"		,
+		"γ" 		:"\\gamma"		,
+		"Γ" 		:"\\Gamma"		,
+		"Δ" 		:"\\Delta"		,
+		"δ" 		:"\\delta"		,
+		"Ε" 		:"\\Epsilon"	,
+		"ε" 		:"\\varepsilon"	,
+		"ζ" 		:"\\zeta"		,
+		"Ζ" 		:"\\Zeta"		,
+		"η" 		:"\\eta"		,
+		"Η" 		:"\\Eta"		,
+		"θ" 		:"\\theta"		,
+		"Θ" 		:"\\Theta"		,
+		"ϑ" 		:"\\vartheta"	,
+		"ι" 		:"\\iota"		,
+		"Ι" 		:"\\Iota"		,
+		"κ" 		:"\\kappa"		,
+		"Κ" 		:"\\Kappa"		,
+		"λ" 		:"\\lambda"		,
+		"Λ" 		:"\\Lambda"		,
+		"μ" 		:"\\mu"			,
+		"Μ" 		:"\\Mu"			,
+		"ν" 		:"\\nu"			,
+		"Ν" 		:"\\Nu"			,
+		"ξ" 		:"\\xi"			,
+		"Ξ" 		:"\\Xi"			,
+		"Ο" 		:"\\O"			,
+		"ο" 		:"\\o"			,
+		"π" 		:"\\pi"			,
+		"Π" 		:"\\Pi"			,
+		"ϖ" 		:"\\varpi"		,
+		"ρ" 		:"\\rho"		,
+		"Ρ" 		:"\\Rho"		,
+		"ϱ" 		:"\\varrho"		,
+		"σ" 		:"\\sigma"		,
+		"Σ" 		:"\\Sigma"		,
+		"ς" 		:"\\varsigma"	,
+		"τ" 		:"\\tau"		,
+		"Τ" 		:"\\Tau"		,
+		"υ" 		:"\\upsilon"	,
+		"Υ" 		:"\\Upsilon"	,
+		"ϕ" 		:"\\phi"		,
+		"Φ" 		:"\\Phi"		,
+		"φ" 		:"\\varphi"		,
+		"χ" 		:"\\chi"		,
+		"Χ" 		:"\\Chi"		,
+		"ψ" 		:"\\psi"		,
+		"Ψ" 		:"\\Psi"		,
+		"ω" 		:"\\omega"		,
+		"Ω" 		:"\\Omega"		,
+
+	};
+	function CorrectWordOnCursor(oCMathContent, IsLaTeX, pos)
 	{
+		if (pos < 1 || pos === undefined)
+			pos = 1;
+
 		let isConvert = false;
 		let oContent = oCMathContent.Content[oCMathContent.CurPos];
+
+		if (oCMathContent.GetLastTextElement() === " " || oCMathContent.IsLastElement(AscMath.MathLiterals.operators))
+			pos--;
+
 		let str = "";
 		let intStart = 0;
 
-		for (let nCount = oContent.Content.length - 1; nCount >= 0; nCount--)
+		for (let nCount = oContent.Content.length - 1 - pos; nCount >= 0; nCount--)
 		{
 			let oElement = oContent.Content[nCount];
 			let intCode = oElement.value;
@@ -2575,33 +2911,63 @@
 			if (nCount === oContent.Content.length - 1 && intCode === 32)
 				continue;
 			
-			let isContinue = ((intCode >= 97 && intCode <= 122) || (intCode >= 65 && intCode <= 90) || intCode === 92); // a-zA-z && 0-9
+			let isContinue = ((intCode >= 97 && intCode <= 122) || (intCode >= 65 && intCode <= 90) || intCode === 92 || intCode === 47); // a-zA-z && 0-9
 
 			if (!isContinue)
 				return false;
 
 			str = oElement.GetTextOfElement() + str;
 
-			if (intCode === 92) {
-				isConvert = true;
+			if (intCode === 92 || intCode === 47)
+			{
+				if (nCount >= 1 && oContent.Content[nCount - 1].value === 47)
+				{
+					continue;
+				}
 				break;
 			}
 		}
 
-		if (oContent.State.ContentPos - 1 > intStart)
+		if (oContent.Content.length - 1 > intStart)
 		{
 			let strCorrection = ConvertWord(str, IsLaTeX);
+
 			if (strCorrection)
 			{
-				oContent.RemoveFromContent(intStart, oContent.State.ContentPos - 1 - intStart + 1, true);
+				oContent.RemoveFromContent(intStart, oContent.Content.length - intStart - pos, true);
 				oContent.AddText(strCorrection, intStart);
 				isConvert = true;
-				
-				oCMathContent.Correct_Content(true);
-				oContent.State.ContentPos = intStart + 1;
 			}
 		}
+		oContent.MoveCursorToEndPos();
 		return isConvert;
+	}
+	function CorrectSpecialWordOnCursor(oCMathContent, IsLaTeX)
+	{
+		let isConvert = false;
+		let oContent = oCMathContent.Content[oCMathContent.CurPos];
+
+		if (oContent.Type === 49)
+		{
+			for (let nCount = oContent.Content.length - 1; nCount >= 1; nCount--)
+			{
+				let strNext = oContent.Content[nCount].GetTextOfElement();
+				let strPrev = oContent.Content[nCount - 1].GetTextOfElement();
+				if (strPrev !== "\\" && strPrev !== "\\" && CorrectSpecial(oContent, nCount, strPrev, strNext)) {
+					nCount--;
+					isConvert = true
+				}
+			}
+
+			oContent.MoveCursorToEndPos();
+			return isConvert;
+		}
+		else
+		{
+			for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++) {
+				isConvert = CorrectAllSpecialWords(oCMathContent.Content[nCount], isLaTeX) || isConvert;
+			}
+		}
 	}
 	function ConvertWord(str, IsLaTeX)
 	{
@@ -2672,6 +3038,60 @@
 	
 		return isConvert;
 	}
+	function CorrectAllSpecialWords(oCMathContent, isLaTeX)
+	{
+		let isConvert = false;
+
+		if (oCMathContent.Type === 49)
+		{
+			for (let nCount = oCMathContent.Content.length - 1; nCount >= 1; nCount--)
+			{
+				let str = oCMathContent.Content[nCount].GetTextOfElement();
+				let strPrev = oCMathContent.Content[nCount - 1].GetTextOfElement();
+				if (CorrectSpecial(oCMathContent, nCount, strPrev, str))
+					nCount--;
+			}
+		}
+		else
+		{
+			for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++) {
+				isConvert = CorrectAllSpecialWords(oCMathContent.Content[nCount], isLaTeX) || isConvert;
+			}
+		}
+
+		return isConvert;
+	}
+	function CorrectSpecial(oCMathContent, nCount, strPrev, strNext)
+	{
+		for (let i = 0; i < g_DefaultAutoCorrectMathSymbolsList.length; i++)
+		{
+			let current = g_DefaultAutoCorrectMathSymbolsList[i];
+			if (current[0] === strPrev + strNext)
+			{
+				let data = current[1],
+					str = "";
+
+				if (Array.isArray(data))
+				{
+					for (let count = 0; i < data.length; i++)
+					{
+						data[count] = String.fromCharCode(data[count]);
+					}
+					str = data.join("");
+				}
+				else {
+					str = String.fromCharCode(data);
+				}
+
+				if (str)
+				{
+					oCMathContent.RemoveFromContent(nCount - 1, 2, true);
+					oCMathContent.AddText(str, nCount- 1);
+					return true;
+				}
+			}
+		}
+	}
 	function IsStartAutoCorrection(nInputType, intCode)
 	{
 		if (nInputType === 0) // Unicode
@@ -2714,73 +3134,13 @@
 			)
 		}
 	}
-	function GetConvertContent(nInputType, strConversionData)
+	function GetConvertContent(nInputType, strConversionData, oContext)
 	{
-		const oTempObject = new CMathContent();
-
+		oContext.CurPos++;
 		nInputType === Asc.c_oAscMathInputType.Unicode
-			? AscMath.CUnicodeConverter(strConversionData, oTempObject)
-			: AscMath.ConvertLaTeXToTokensList(strConversionData, oTempObject);
-
-		oTempObject.Correct_Content(true);
-		return oTempObject;
+			? AscMath.CUnicodeConverter(strConversionData, oContext)
+			: AscMath.ConvertLaTeXToTokensList(strConversionData, oContext);
 	}
-
-	// const LaTeXWordList = {
-	// 	"\\backslash" : "\\",
-	// 	"\\begin{array}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{cases}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{matrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{pmatrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{bmatrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{Bmatrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{vmatrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{Vmatrix}": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\begin{equation}" : true,
-	// 	"\\begin{" : true,
-	// 	"pmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"bmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\bmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"Bmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"vmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"Vmatrix": oNamesOfLiterals.matrixLiteral[0],
-	// 	"\\bmod": " mod ",
-	// 	"\\binom": true,
-	// 	"\\boxed": true,
-	// 	"\\cr": "\\\\",
-	// 	"\\cfrac": true,
-	// 	"\\dfrac{": true,
-	// 	"\\end{" : oNamesOfLiterals.opCloseBracket[0],
-	// 	"\\start": oNamesOfLiterals.opOpenBracket[0],
-	//
-	// 	"\\end{equation}":"endOfMatrix",
-	// 	"\\end{array}":"endOfMatrix",
-	// 	"\\end{cases}":"endOfMatrix",
-	// 	"\\end{matrix}":"endOfMatrix",
-	// 	"\\end{pmatrix}":"endOfMatrix",
-	// 	"\\end{bmatrix}":"endOfMatrix",
-	// 	"\\end{Bmatrix}":"endOfMatrix",
-	// 	"\\end{vmatrix}":"endOfMatrix",
-	// 	"\\end{Vmatrix}":"endOfMatrix",
-	//
-	// 	"frac": true,
-	//
-	// }
-	//
-	// const specialScriptNumberLiteral = [
-	// 	"⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸",
-	// 	"⁹", "ⁱ", "ⁿ", "⁺", "⁻", "⁼", "⁽", "⁾",
-	// ];
-	// const specialIndexNumberLiteral = [
-	// 	"₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈",
-	// 	"₉", "₊", "₋", "₌", "₍", "₎",
-	// ]
-	//AutoCerrection 
-	// ["!", undefined, oNamesOfLiterals.charLiteral[0]],
-	// ["!!", "‼", oNamesOfLiterals.charLiteral[0]],
-	// ["...", "…"],
-	// ["::", "∷"],
-	// [":=", "≔"],
 
 	//--------------------------------------------------------export----------------------------------------------------
 	window["AscMath"] = window["AscMath"] || {};
@@ -2796,8 +3156,10 @@
 	window["AscMath"].AutoCorrection = AutoCorrection;
 	window["AscMath"].CorrectWordOnCursor = CorrectWordOnCursor;
 	window["AscMath"].CorrectAllWords = CorrectAllWords;
+	window["AscMath"].CorrectAllSpecialWords = CorrectAllSpecialWords;
+	window["AscMath"].CorrectSpecialWordOnCursor = CorrectSpecialWordOnCursor;
 	window["AscMath"].IsStartAutoCorrection = IsStartAutoCorrection;
 	window["AscMath"].GetConvertContent = GetConvertContent;
 	window["AscMath"].MathLiterals = MathLiterals;
-
+	window["AscMath"].SymbolsToLaTeX = SymbolsToLaTeX;
 })(window);

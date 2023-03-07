@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -217,10 +217,10 @@
 
 	/**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * * **"none"** - does not display the selected tick labels.
-     * * **"nextTo"** - sets the position of the selected tick labels next to the main label.
-     * * **"low"** - sets the position of the selected tick labels in the part of the chart with lower values.
-     * * **"high"** - sets the position of the selected tick labels in the part of the chart with higher values.
+     * * <b>"none"</b> - does not display the selected tick labels.
+     * * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
+     * * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
+     * * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * **/
 	
@@ -1481,7 +1481,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range where the hyperlink will be added to.
 	 * @param {string} sAddress - The link address.
-	 * @param {string} subAddress - The subaddress of the hyperlink.
+	 * @param {string} subAddress - The link subaddress to insert internal sheet hyperlinks.
 	 * @param {string} sScreenTip - The screen tip text.
 	 * @param {string} sTextToDisplay - The link text that will be displayed on the sheet.
 	 * */
@@ -2205,24 +2205,26 @@
 		if (!this.range)
 			return false;
 
-		// ToDo update range in setValue
-		var worksheet = this.range.worksheet;
+		let worksheet = this.range.worksheet;
 
 		if (Array.isArray(data)) {
-			var checkDepth = function(x) { return Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;};
-			var maxDepth = checkDepth(data);
+			let checkDepth = function(x) { return Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;};
+			let maxDepth = checkDepth(data);
 			if (maxDepth <= 2) {
 				if (this.range.isOneCell()) {
 					data = maxDepth == 1 ? data[0] : data[0][0];
 				} else {
-					var bbox = this.range.bbox;
-					var nCol = Math.min( (bbox.c2 - bbox.c1 + 1), data.length);
-					var nRow = bbox.r2 - bbox.r1 + 1;
-					for (var i = 0; i < nCol; i++) {
-						var cRow = (nRow > data[i].length) ? data[i].length : nRow;
-						for (var k = 0; k < cRow; k++) {
-							var cell = this.range.worksheet.getRange3( (bbox.r1 + k), (bbox.c1 + i), (bbox.r1 + k), (bbox.c1 + i) );
-							var value = checkFormat( ( (maxDepth == 1) ? data[i] : data[i][k] ) );
+					let bbox = this.range.bbox;
+					let nRow = bbox.r2 - bbox.r1 + 1;
+					let nCol = bbox.c2 - bbox.c1 + 1;
+					for (let indC = 0; indC < nCol; indC++) {
+						for (let indR = 0; indR < nRow; indR++) {
+							let value = (maxDepth == 1 ? data[indC] : data[indR]? data[indR][indC]: null);
+							if (value === undefined || value === null)
+								value = AscCommon.cErrorLocal.na;
+
+							let cell = this.range.worksheet.getRange3( (bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC) );
+							value = checkFormat(value.toString());
 							cell.setValue(value.toString());
 							if (value.type === AscCommonExcel.cElementType.number)
 								cell.setNumFormat(AscCommon.getShortDateFormat());
@@ -2234,7 +2236,7 @@
 				}
 			}
 		}
-		data = checkFormat(data);
+		data = checkFormat(data || 0);
 		this.range.setValue(data.toString());
 		if (data.type === AscCommonExcel.cElementType.number)
 			this.SetNumberFormat(AscCommon.getShortDateFormat());
@@ -5666,6 +5668,10 @@
 	ApiWorksheet.prototype["GetBottomMargin"] = ApiWorksheet.prototype.GetBottomMargin;		
 	ApiWorksheet.prototype["SetPageOrientation"] = ApiWorksheet.prototype.SetPageOrientation;
 	ApiWorksheet.prototype["GetPageOrientation"] = ApiWorksheet.prototype.GetPageOrientation;
+	ApiWorksheet.prototype["GetPrintHeadings"] = ApiWorksheet.prototype.GetPrintHeadings;
+	ApiWorksheet.prototype["SetPrintHeadings"] = ApiWorksheet.prototype.SetPrintHeadings;
+	ApiWorksheet.prototype["GetPrintGridlines"] = ApiWorksheet.prototype.GetPrintGridlines;
+	ApiWorksheet.prototype["SetPrintGridlines"] = ApiWorksheet.prototype.SetPrintGridlines;
 	ApiWorksheet.prototype["GetDefNames"] = ApiWorksheet.prototype.GetDefNames;
 	ApiWorksheet.prototype["GetDefName"] = ApiWorksheet.prototype.GetDefName;
 	ApiWorksheet.prototype["AddDefName"] = ApiWorksheet.prototype.AddDefName;

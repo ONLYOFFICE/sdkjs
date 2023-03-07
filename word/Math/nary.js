@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -824,36 +824,38 @@ CNary.prototype.GetTextOfElement = function(isLaTeX)
 	var strSubContent = this.getSubMathContent().GetMultipleContentForGetText(isLaTeX, undefined, true);
 	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 
-	if (true === isLaTeX)
+    if (true === isLaTeX)
     {
-		switch (strStartCode.codePointAt())
+        switch (strStartCode.codePointAt())
         {
-			case 8747:	strStartCode = '\\int';			break;
-			case 8748:	strStartCode = '\\iint';		break;
-			case 8749:	strStartCode = '\\iiint';		break;
-			case 8750:	
-			case 8755:	strStartCode = '\\oint';		break;
-			case 8751:	strStartCode = '\\oiint';		break;
-			case 8752:	strStartCode = '\\oiiint';		break;
-			case 8721:	strStartCode = '\\sum';			break;
-			case 8719:	strStartCode = '\\prod';		break;
-			case 8720:	strStartCode = '\\coprod';		break;
-			case 8899:	strStartCode = '\\bigcup';		break;
-			case 8898:	strStartCode = '\\bigcap';		break;
-			case 8897:	strStartCode = '\\bigvee';		break;
-			case 8896:	strStartCode = '\\bigwedge';	break;
-			case 10753:	strStartCode = '\\bigoplus';	break;
-			case 10754:	strStartCode = '\\bigotimes';	break;
-			case 10756:	strStartCode = '\\biguplus';	break;
-			case 10764:	strStartCode = '\\iiiint';		break;
-			case 10758: strStartCode = '\\bigsqcup';	break;
-			case 10752: strStartCode = '\\bigodot';		break;
-			default: break;
-		}
-
-        strBase = "{" + strBase + "}";
-	}
-    else
+            case 8747:	strStartCode = '\\int';			break;
+            case 8748:	strStartCode = '\\iint';		break;
+            case 8749:	strStartCode = '\\iiint';		break;
+            case 8750:
+            case 8755:	strStartCode = '\\oint';		break;
+            case 8751:	strStartCode = '\\oiint';		break;
+            case 8752:	strStartCode = '\\oiiint';		break;
+            case 8721:	strStartCode = '\\sum';			break;
+            case 8719:	strStartCode = '\\prod';		break;
+            case 8720:	strStartCode = '\\coprod';		break;
+            case 8899:	strStartCode = '\\bigcup';		break;
+            case 8898:	strStartCode = '\\bigcap';		break;
+            case 8897:	strStartCode = '\\bigvee';		break;
+            case 8896:	strStartCode = '\\bigwedge';	break;
+            case 10753:	strStartCode = '\\bigoplus';	break;
+            case 10754:	strStartCode = '\\bigotimes';	break;
+            case 10756:	strStartCode = '\\biguplus';	break;
+            case 10764:	strStartCode = '\\iiiint';		break;
+            case 10758: strStartCode = '\\bigsqcup';	break;
+            case 10752: strStartCode = '\\bigodot';		break;
+            default: break;
+        }
+        if (strSupContent.length === 0 && strSubContent.length === 0)
+        {
+            strStartCode += " ";
+        }
+    }
+    else if (false === isLaTeX && strBase.length > 0)
     {
         strBase = '▒' + strBase;
 	}

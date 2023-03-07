@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -606,6 +606,19 @@ Paragraph.prototype.GetAllTables = function(oProps, arrTables)
 	}
 
 	return arrTables;
+};
+Paragraph.prototype.GetAllParaMaths = function(arrParaMaths)
+{
+	if (!arrParaMaths)
+		arrParaMaths = [];
+
+	for (var nCurPos = 0, nLen = this.Content.length; nCurPos < nLen; ++nCurPos)
+	{
+		if (para_Math === this.Content[nCurPos].Type)
+			arrParaMaths.push(this.Content[nCurPos]);
+	}
+
+	return arrParaMaths;
 };
 
 Paragraph.prototype.GetAllSeqFieldsByType = function(sType, aFields)
@@ -1282,6 +1295,9 @@ Paragraph.prototype.OnContentChange = function()
 	this.SpellChecker.ClearCollector();
 	this.RecalcInfo.NeedSpellCheck();
 	this.RecalcInfo.NeedShapeText();
+	
+	if (this.Parent && this.Parent.OnContentChange)
+		this.Parent.OnContentChange();
 };
 Paragraph.prototype.Clear_ContentChanges = function()
 {
@@ -4223,11 +4239,31 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 			// TODO: В режиме рецензии элементы не удаляются, а позиция меняется прямо в ранах
 			//       Возможно стоит пересмотреть подход в выставлении позиции в данной функции, чтобы
 			//       не делать таких заглушек
-			if (!this.LogicDocument || !this.LogicDocument.IsTrackRevisions())
+			let logicDocument = this.GetLogicDocument();
+			if (!logicDocument || !logicDocument.IsTrackRevisions())
 			{
 				// TODO: Как только избавимся от para_End переделать здесь
 				// Последние 2 элемента не удаляем (один для para_End, второй для всего остального)
-				if (ContentPos < this.Content.length - 2 && true === this.Content[ContentPos].Is_Empty())
+				
+				if (logicDocument
+					&& logicDocument.IsDocumentEditor()
+					&& this.Content[ContentPos].IsMath()
+					&& this.Content[ContentPos].IsEmpty())
+				{
+					this.RemoveFromContent(ContentPos, 1);
+					
+					this.CurPos.ContentPos = ContentPos;
+					this.Content[ContentPos].MoveCursorToStartPos();
+					this.Correct_ContentPos2();
+					
+					let contentControl = this.AddContentControl(c_oAscSdtLevelType.Inline);
+					if (contentControl)
+					{
+						contentControl.ApplyContentControlEquationPr();
+						contentControl.SelectContentControl();
+					}
+				}
+				else if (ContentPos < this.Content.length - 2 && this.Content[ContentPos].IsEmpty())
 				{
 					this.Internal_Content_Remove(ContentPos);
 
@@ -4652,21 +4688,28 @@ Paragraph.prototype.Add = function(Item)
 				var NewElement = this.Content[CurPos].Split(ContentPos, 1);
 
 				if (null !== NewElement)
-					this.Internal_Content_Add(CurPos + 1, NewElement);
+					this.AddToContent(CurPos + 1, NewElement);
 
-				var MathElement = Item;
-				if (!(Item instanceof ParaMath))
+				let paraMath = null;
+				if (Item instanceof ParaMath)
 				{
-					MathElement = new ParaMath();
-					MathElement.Root.Load_FromMenu(Item.Menu, this, null, Item.GetText());
-					MathElement.Root.Correct_Content(true);
+					paraMath = Item;
+				}
+				else if (Item instanceof AscCommonWord.MathMenu)
+				{
+					let textPr = Item.GetTextPr();
+					paraMath = new ParaMath();
+					paraMath.Root.Load_FromMenu(Item.Menu, this, textPr.Copy(), Item.GetText());
+					paraMath.Root.Correct_Content(true);
+					paraMath.ApplyTextPr(textPr.Copy(), undefined, true);
 				}
 
-				this.Internal_Content_Add(CurPos + 1, MathElement);
-
-				// Перемещаем кусор в конец формулы
-				this.CurPos.ContentPos = CurPos + 1;
-				this.Content[this.CurPos.ContentPos].MoveCursorToEndPos(false);
+				if (paraMath)
+				{
+					this.AddToContent(CurPos + 1, paraMath);
+					this.CurPos.ContentPos = CurPos + 1;
+					this.Content[this.CurPos.ContentPos].MoveCursorToEndPos(false);
+				}
 			}
 			else
 			{
@@ -5898,7 +5941,7 @@ Paragraph.prototype.MoveCursorLeft = function(AddToSelect, Word)
 
 			var oResultPos = SelectPos;
 
-			if ((oPlaceHolderObject && oPlaceHolderObject instanceof CInlineLevelSdt) || oPresentationField)
+			if ((oPlaceHolderObject && ((oPlaceHolderObject instanceof CInlineLevelSdt) || (oPlaceHolderObject instanceof ParaMath))) || oPresentationField)
 			{
 				var oSearchPos = new CParagraphSearchPos();
 				this.GetCursorLeftPos(oSearchPos, SelectPos);
@@ -6018,8 +6061,8 @@ Paragraph.prototype.MoveCursorRight = function(AddToSelect, Word)
 				this.RemoveSelection();
 
 				var oResultPos = SelectPos;
-
-				if ((oPlaceHolderObject && oPlaceHolderObject instanceof CInlineLevelSdt) || oPresentationField)
+				
+				if ((oPlaceHolderObject && ((oPlaceHolderObject instanceof CInlineLevelSdt) || (oPlaceHolderObject instanceof ParaMath))) || oPresentationField)
 				{
 					var oSearchPos = new CParagraphSearchPos();
 					this.GetCursorRightPos(oSearchPos, SelectPos);
@@ -8222,6 +8265,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 		this.GetSelectedElementsInfo(oInfo);
 		var oField = oInfo.GetField();
 		var oSdt   = oInfo.GetInlineLevelSdt();
+		let oMath  = oInfo.GetMath();
 
 		let oForm = null;
 		if (oSdt && oSdt.IsForm() && this.GetLogicDocument() && this.GetLogicDocument().IsDocumentEditor() && this.GetLogicDocument().IsFillingFormMode())
@@ -8240,6 +8284,10 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 		else if (oSdt && oSdt.IsCheckBox())
 		{
 			this.RemoveSelection();
+		}
+		else if (oMath && oMath.IsMathContentPlaceholder())
+		{
+			oMath.SelectAllInCurrentMathContent();
 		}
 		else
 		{
@@ -8731,7 +8779,8 @@ Paragraph.prototype.SelectAll = function(Direction)
 
 	this.Selection.StartManually = false;
 	this.Selection.EndManually   = false;
-
+	
+	this.Set_ParaContentPos(EndPos, true, -1, -1);
 	this.Set_SelectionContentPos(StartPos, EndPos);
 };
 Paragraph.prototype.Select_Math = function(ParaMath)
@@ -9463,6 +9512,27 @@ Paragraph.prototype.IsInText = function(X, Y, CurPage)
 		return this;
 
 	return null;
+};
+/**
+ * Is paragraph inside SmartArt
+ * @param bReturnShape {boolean}
+ * @returns {boolean|null|AscFormat.CShape}
+ */
+Paragraph.prototype.IsInsideSmartArtShape = function (bReturnShape)
+{
+	const oShape = this.Parent && this.Parent.Is_DrawingShape(true);
+	if (oShape)
+	{
+		if (oShape.isObjectInSmartArt && oShape.isObjectInSmartArt())
+		{
+			if (bReturnShape)
+			{
+				return oShape;
+			}
+			return !!oShape;
+		}
+	}
+	return bReturnShape ? null : false;
 };
 Paragraph.prototype.IsUseInDocument = function(Id)
 {
@@ -10502,6 +10572,12 @@ Paragraph.prototype.private_CompileParaPr = function(isForce)
 {
 	if (!this.CompiledPr.NeedRecalc)
 		return;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument
+		&& logicDocument.IsDocumentEditor()
+		&& logicDocument.CompileStyleOnLoad)
+		isForce = true;
 
 	if (this.Parent && (isForce || (true !== AscCommon.g_oIdCounter.m_bLoad && true !== AscCommon.g_oIdCounter.m_bRead)))
 	{
@@ -10683,6 +10759,10 @@ Paragraph.prototype.Recalc_CompileParaPr = function()
 {
 	this.CompiledPr.NeedRecalc = true;
 };
+Paragraph.prototype.IsParaPrCompiled = function()
+{
+	return !this.CompiledPr.NeedRecalc;
+};
 Paragraph.prototype.Internal_CalculateAutoSpacing = function(Value, UseAuto, Para)
 {
 	var Result = Value;
@@ -10755,13 +10835,17 @@ Paragraph.prototype.GetCompiledParaPr = function(copy)
 {
 	return this.Get_CompiledPr2(copy).ParaPr;
 };
-Paragraph.prototype.PasteFormatting = function(TextPr, oParaPr, ApplyPara)
+Paragraph.prototype.PasteFormatting = function(oData)
 {
+	if(!oData)
+		return;
+	let oTextPr = oData.TextPr;
+	let oParaPr = oData.ParaPr;
 	// Применяем текстовые настройки всегда
-	if (TextPr)
+	if (oTextPr)
 	{
 		var oParaTextPr = new ParaTextPr();
-		oParaTextPr.Value.Set_FromObject(TextPr, true);
+		oParaTextPr.Value.Set_FromObject(oTextPr, true);
 		this.Add(oParaTextPr);
 	}
 
@@ -14521,12 +14605,10 @@ Paragraph.prototype.GetTextAroundSearchResult = function(nId)
 
 	this.LoadSelectionState(oState);
 
-	let sResult;
+	let result = ["", "", ""];
 	if (sTargetText.length >= nMaxLen)
 	{
-		sResult = "\<b\>";
-		sResult += sTargetText.substr(0, nMaxLen - 1);
-		sResult += "\</b\>...";
+		result[1] = sTargetText.substr(0, nMaxLen - 1) + "...";
 	}
 	else
 	{
@@ -14557,24 +14639,25 @@ Paragraph.prototype.GetTextAroundSearchResult = function(nId)
 		{
 			nBeforeCount = Math.min(arrBefore.length, nExtraCount - arrAfter.length);
 		}
-
-		sResult = "";
+		
+		result[0] = "";
 		for (let nPos = nBeforeCount - 1;  nPos >= 0; --nPos)
 		{
 			let oItem = arrBefore[nPos];
-			sResult += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
+			result[0] += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
 		}
 
-		sResult += "\<b\>" + sTargetText + "\</b\>";
-
+		result[1] = sTargetText;
+		
+		result[2] = "";
 		for (let nPos = 0; nPos < nAfterCount; ++nPos)
 		{
 			let oItem = arrAfter[nPos];
-			sResult += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
+			result[2] += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
 		}
 	}
 
-	return sResult;
+	return result;
 };
 //----------------------------------------------------------------------------------------------------------------------
 Paragraph.prototype.Get_SectionPr = function()
@@ -17125,9 +17208,12 @@ Paragraph.prototype.GetPlaceHolderObject = function(oContentPos)
 	var oInfo = new CSelectedElementsInfo();
 	this.GetSelectedElementsInfo(oInfo, oContentPos, 0);
 
-	var oSdt = oInfo.GetInlineLevelSdt();
+	let oSdt  = oInfo.GetInlineLevelSdt();
+	let oMath = oInfo.GetMath();
 	if (oSdt && oSdt.IsPlaceHolder())
 		return oSdt;
+	else if (oMath && oMath.IsMathContentPlaceholder())
+		return oMath;
 
 	return null;
 };

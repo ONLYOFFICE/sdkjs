@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -657,11 +657,12 @@ function Get_WordDocumentDefaultMathSettings()
     return editor.WordControl.m_oLogicDocument.Settings.MathSettings;
 }
 
-function MathMenu(type)
+function MathMenu(type, textPr)
 {
-	this.Type = para_Math;
-	this.Menu = type == undefined ? c_oAscMathType.Default_Text : type;
-	this.Text = null;
+	this.Type   = para_Math;
+	this.Menu   = type == undefined ? c_oAscMathType.Default_Text : type;
+	this.Text   = null;
+	this.TextPr = textPr ? textPr : new CTextPr();
 }
 MathMenu.prototype.Get_Type = function()
 {
@@ -678,6 +679,10 @@ MathMenu.prototype.SetText = function(sText)
 MathMenu.prototype.GetText = function()
 {
 	return this.Text;
+};
+MathMenu.prototype.GetTextPr = function()
+{
+	return this.TextPr;
 };
 
 function CMathLineState()
@@ -896,7 +901,7 @@ CMathPageInfo.prototype.Update_CurrentPage = function(Page, ParaLine)
 };
 CMathPageInfo.prototype.Update_CurrentWrap = function(DispDef, bInline)
 {
-    if(this.WPages[this.CurPage].NeedUpdateWrap == true)
+	if (this.WPages[this.CurPage].NeedUpdateWrap)
     {
         var WrapState;
 
@@ -1078,7 +1083,10 @@ ParaMath.prototype.Get_Id = function()
 {
     return this.Id;
 };
-
+ParaMath.prototype.IsMath = function()
+{
+	return true;
+};
 ParaMath.prototype.Copy = function(Selected, oPr)
 {
     var NewMath = new ParaMath();
@@ -1277,17 +1285,32 @@ ParaMath.prototype.Add = function(Item)
 		if (false !== isLocalTrack)
 			LogicDocument.SetLocalTrackRevisions(isLocalTrack);
     }
-
-    if ((para_Text === Type || para_Space === Type) && null !== NewElement)
-    {
-        this.bFastRecalculate = oContent.bOneLine == false; // многострочный контент => можно осуществлять быстрый пересчет
-
-        // Пробуем произвести автозамену
-        oContent.Process_AutoCorrect(NewElement);
-    }
+	
+	if ((para_Text === Type || para_Space === Type) && null !== NewElement)
+		this.ProcessAutoCorrect(oContent, NewElement);
 
     // Корректируем данный контент
     oContent.Correct_Content(true);
+};
+ParaMath.prototype.ProcessAutoCorrect = function(content, triggerElement)
+{
+	if (!content)
+	{
+		let selectContent = this.GetSelectContent();
+		if (!selectContent)
+			return;
+		
+		content = selectContent.Content;
+	}
+	
+	if (!triggerElement)
+	{
+		triggerElement = new CMathText();
+		triggerElement.add(32);
+	}
+	
+	this.bFastRecalculate = content.bOneLine == false; // многострочный контент => можно осуществлять быстрый пересчет
+	content.Process_AutoCorrect(triggerElement);
 };
 /**
  * Добавляем элемент в конец корневого контента
@@ -1415,12 +1438,12 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
         // Если данный элемент - ран, удаляем внутри рана, если нет, тогда удаляем целиком элемент
         if (para_Math_Run === oElement.Type)
         {
-            if (true === oElement.IsPlaceholder() && oElement.Parent.bRoot == true)
+            if ((true === oElement.IsPlaceholder() && !bOnAddText) && oElement.Parent.bRoot == true)
             {
                 this.Root.Remove_FromContent(0, 1);
                 return true;
             }
-            else if ((true === oElement.IsPlaceholder()) || (false === oElement.Remove(Direction) && true !== this.bSelectionUse))
+            else if ((true === oElement.IsPlaceholder() && !bOnAddText) || (false === oElement.Remove(Direction) && true !== this.bSelectionUse))
             {
                 if ((Direction > 0 && oContent.Content.length - 1 === nStartPos) || (Direction < 0 && 0 === nStartPos))
                 {
@@ -3282,6 +3305,19 @@ ParaMath.prototype.Selection_IsPlaceholder = function()
 
     return bPlaceholder;
 };
+ParaMath.prototype.IsMathContentPlaceholder = function()
+{
+	return this.Selection_IsPlaceholder();
+};
+ParaMath.prototype.SelectAllInCurrentMathContent = function()
+{
+	let content = this.GetSelectContent().Content;
+	if (content)
+	{
+		content.SelectThisElement(1);
+		content.SelectAll(1);
+	}
+};
 
 ParaMath.prototype.Selection_CheckParaEnd = function()
 {
@@ -3486,7 +3522,6 @@ ParaMath.prototype.Make_AutoCorrect = function()
 
 /**
  * Получаем рект формулы
- * @constructor
  */
 ParaMath.prototype.Get_Bounds = function()
 {
@@ -3669,13 +3704,11 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 ParaMath.prototype.ConvertFromLaTeX = function()
 {
 	var strLaTeX = this.GetText(true);
-	this.Root.Remove_Content(0, this.Root.Content.length);
-    this.Root.Add_Text(strLaTeX);
-    this.Root.CorrectAllMathWords(true);
-    strLaTeX = this.GetText(true);
     this.Root.Remove_Content(0, this.Root.Content.length);
     this.Root.Correct_Content(true);
     AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);
+    this.Root.CorrectAllMathWords(true);
+    this.Root.ConvertAllSpecialWords(true);
 	this.Root.Correct_Content(true);
 };
 ParaMath.prototype.ConvertToLaTeX = function()
@@ -3683,10 +3716,12 @@ ParaMath.prototype.ConvertToLaTeX = function()
 	var strLatex = this.GetText(true);
 	this.Root.Remove_Content(0,this.Root.Content.length);
 	this.Root.Add_Text(strLatex, this.Paragraph);
+    this.Root.CurPos = this.Root.Content.length - 1;
 };
 ParaMath.prototype.ConvertFromUnicodeMath = function()
 {
     this.Root.CorrectAllMathWords(false);
+    this.Root.ConvertAllSpecialWords(false);
 	var strUnicode = this.GetText();
 	this.Root.Remove_Content(0,this.Root.Content.length);
     this.Root.Correct_Content(true);
@@ -3696,6 +3731,10 @@ ParaMath.prototype.ConvertFromUnicodeMath = function()
 ParaMath.prototype.ConvertToUnicodeMath = function()
 {
 	var strUnicode = this.GetText();
+    if (strUnicode[strUnicode.length - 1] === " ")
+    {
+        strUnicode = strUnicode.slice(0, -1)
+    }
 	this.Root.Remove_Content(0,this.Root.Content.length);
 	this.Root.Add_Text(strUnicode, this.Paragraph);
 };
@@ -3718,7 +3757,6 @@ ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 	{
 		if (Asc.c_oAscMathInputType.Unicode === nInputType)
 		{
-
 			this.ConvertFromUnicodeMath();
 		}
 		else if (Asc.c_oAscMathInputType.LaTeX === nInputType)
@@ -3727,11 +3765,12 @@ ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 		}
 	}
 };
-ParaMath.prototype.SplitSelectedContent = function() {
+ParaMath.prototype.SplitSelectedContent = function()
+{
     var oSelection = this.GetSelectContent();
     var oContent = oSelection.Content;
     oContent.SplitSelectedContent();
-}
+};
 ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
 {
     this.SplitSelectedContent();
@@ -3745,23 +3784,11 @@ ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
         isToLinear
     );
 };
-ParaMath.prototype.SplitSelectedContent = function() {
+ParaMath.prototype.SplitSelectedContent = function()
+{
     var oSelection = this.GetSelectContent();
     var oContent = oSelection.Content;
     oContent.SplitSelectedContent();
-}
-ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
-{
-    this.SplitSelectedContent();
-
-    var oSelection = this.GetSelectContent();
-
-    oSelection.Content.ConvertContentView(
-        oSelection.Start,
-        oSelection.End,
-        nInputType,
-        isToLinear
-    );
 };
 ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
 {

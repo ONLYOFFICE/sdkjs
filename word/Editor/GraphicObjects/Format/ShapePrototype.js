@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -654,8 +654,6 @@ CShape.prototype.GetAllTables = function(oProps, arrTables)
 	var oContent = this.getDocContent();
 	return oContent ? oContent.GetAllTables(oProps, arrTables) : [];
 };
-
-
 CShape.prototype.getArrayWrapIntervals = function(x0,y0, x1, y1, Y0Sp, Y1Sp, LeftField, RightField, arr_intervals, bMathWrap)
 {
     return this.parent.getArrayWrapIntervals(x0,y0, x1, y1, Y0Sp, Y1Sp, LeftField, RightField, arr_intervals, bMathWrap);
@@ -1108,13 +1106,13 @@ CShape.prototype.checkPosTransformText = function()
         }
     }
 };
-CShape.prototype.getNearestPos = function(x, y, pageIndex)
+CShape.prototype.getNearestPos = function(x, y, pageIndex, drawing)
 {
     if(isRealObject(this.textBoxContent) && this.invertTransformText)
     {
         var t_x = this.invertTransformText.TransformPointX(x, y);
         var t_y = this.invertTransformText.TransformPointY(x, y);
-        var nearest_pos = this.textBoxContent.Get_NearestPos(0, t_x, t_y, false);
+        var nearest_pos = this.textBoxContent.Get_NearestPos(0, t_x, t_y, false, drawing);
         return nearest_pos;
     }
     return null;

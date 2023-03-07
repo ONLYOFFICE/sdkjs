@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -385,10 +385,7 @@
 		// 		return false;
 		// }
 
-		if(oChange.CheckCorrect && !oChange.CheckCorrect())
-		{
-			return false;
-		}
+
 		return true;
 	};
 	CCollaborativeHistory.prototype.CreateLocalHistoryPointByReverseChanges = function(reverseChanges)
@@ -406,6 +403,7 @@
 		this.CorrectReveredChanges(reverseChanges);
 
 		localHistory.Update_PointInfoItem(pointIndex, pointIndex, pointIndex, 0, null);
+		localHistory.ConvertPointItemsToSimpleChanges(pointIndex);
 
 		return localHistory.Points[pointIndex];
 	};
@@ -430,6 +428,7 @@
 		var bAddSlides          = false;
 		var mapAddedSlides      = {};
 		var mapCommentsToDelete = {};
+		const mapSmartArtShapes = {};
 
 		for (let nIndex = 0, nCount = arrReverseChanges.length; nIndex < nCount; ++nIndex)
 		{
@@ -446,9 +445,15 @@
 			}
 			else if (oClass.IsParagraphContentElement && true === oClass.IsParagraphContentElement() && true === oChange.IsContentChange() && oClass.GetParagraph())
 			{
-				mapParagraphs[oClass.GetParagraph().Get_Id()] = oClass.GetParagraph();
+				const oParagraph = oClass.GetParagraph();
+				mapParagraphs[oParagraph.Get_Id()] = oParagraph;
 				if (oClass instanceof AscCommonWord.ParaRun)
 					mapRuns[oClass.Get_Id()] = oClass;
+				const oSmartArtShape = oParagraph.IsInsideSmartArtShape(true);
+				if (oSmartArtShape)
+				{
+					mapSmartArtShapes[oSmartArtShape.Get_Id()] = oSmartArtShape;
+				}
 			}
 			else if (oClass && oClass.parent && oClass.parent instanceof AscCommonWord.ParaDrawing)
 			{
@@ -461,6 +466,11 @@
 			else if (oClass instanceof AscCommonWord.ParaRun)
 			{
 				mapRuns[oClass.Get_Id()] = oClass;
+				const oSmartArtShape = oClass.IsInsideSmartArtShape(true);
+				if (oSmartArtShape)
+				{
+					mapSmartArtShapes[oSmartArtShape.Get_Id()] = oSmartArtShape;
+				}
 			}
 			else if (oClass instanceof AscCommonWord.CTable)
 			{
@@ -571,9 +581,17 @@
 				{
 					oShape.parent.removeFromSpTreeById(oShape.Get_Id());
 				}
-				else if (AscCommonWord.ParaDrawing && (oShape.parent instanceof AscCommonWord.ParaDrawing))
+				else if (AscCommonWord.ParaDrawing)
 				{
-					mapDrawings[oShape.parent.Get_Id()] = oShape.parent;
+					if(oShape.parent instanceof AscCommonWord.ParaDrawing)
+					{
+						mapDrawings[oShape.parent.Get_Id()] = oShape.parent;
+					}
+					if(oShape.oldParent && oShape.oldParent instanceof AscCommonWord.ParaDrawing)
+					{
+						mapDrawings[oShape.oldParent.Get_Id()] = oShape.oldParent;
+						oShape.oldParent = undefined;
+					}
 				}
 			}
 			else
@@ -593,6 +611,11 @@
 				if (!oDrawing.CheckCorrect())
 				{
 					var oParentParagraph = oDrawing.Get_ParentParagraph();
+					let oParentRun = oDrawing.Get_Run();
+					if(oParentRun)
+					{
+						mapRuns[oParentRun.Id] = oParentRun;
+					}
 					oDrawing.PreDelete();
 					oDrawing.Remove_FromDocument(false);
 					if (oParentParagraph)
@@ -624,7 +647,11 @@
 				}
 			}
 		}
-
+		for (let sId in mapSmartArtShapes)
+		{
+			const oSmartArtShape = mapSmartArtShapes[sId];
+			oSmartArtShape.correctSmartArtUndo();
+		}
 		for (var sId in mapTables)
 		{
 			var oTable = mapTables[sId];

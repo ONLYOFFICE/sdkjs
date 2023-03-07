@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -277,7 +277,20 @@ CGraphicObjects.prototype =
                     this.drawingDocument.SetCursorType("default");
                     return true;
                 }
-                this.drawingDocument.SetCursorType(ret.cursorType);
+				let sCursorType = ret.cursorType;
+				let oAPI = this.getEditorApi();
+				if(oAPI.isFormatPainterOn())
+				{
+					if(sCursorType !== "text")
+					{
+						let oData = oAPI.getFormatPainterData();
+						if(oData.isDrawingData())
+						{
+							sCursorType = AscCommon.kCurFormatPainterDrawing;
+						}
+					}
+				}
+                this.drawingDocument.SetCursorType(sCursorType);
             }
             return true;
         }
@@ -1582,6 +1595,7 @@ CGraphicObjects.prototype =
     resetConnectors: DrawingObjectsController.prototype.resetConnectors,
     checkDlblsPosition: DrawingObjectsController.prototype.checkDlblsPosition,
     resetChartElementsSelection: DrawingObjectsController.prototype.resetChartElementsSelection,
+    checkCurrentTextObjectExtends: DrawingObjectsController.prototype.checkCurrentTextObjectExtends,
 
 
     handleChartDoubleClick: function(drawing, chart, e, x, y, pageIndex)
@@ -1736,17 +1750,18 @@ CGraphicObjects.prototype =
 
     addOleObject: function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
     {
-        var content = this.getTargetDocContent();
+        let content = this.getTargetDocContent();
+		let oDrawing = null;
         if(content)
         {
             if(!content.bPresentation){
-                content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+	            oDrawing = content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
             }
             else{
                 if(this.selectedObjects.length > 0)
                 {
                     this.resetSelection2();
-                    this.document.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+	                oDrawing = this.document.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
                 }
             }
         }
@@ -1756,17 +1771,18 @@ CGraphicObjects.prototype =
             {
                 this.resetInternalSelection();
                 this.document.Remove(1, true);
-                this.document.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+	            oDrawing = this.document.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
             }
             else
             {
                 if(this.selectedObjects.length > 0)
                 {
                     this.resetSelection2();
-                    this.document.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+	                oDrawing = this.document.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
                 }
             }
         }
+		return oDrawing;
     },
 
 	addInlineTable : function(nCols, nRows, nMode)
@@ -2440,11 +2456,11 @@ CGraphicObjects.prototype =
         }
     },
 
-    paragraphFormatPaste: function( CopyTextPr, CopyParaPr, Bool )
-    {
-        var content = this.getTargetDocContent();
-        content && content.PasteFormatting(CopyTextPr, CopyParaPr, Bool );
-    },
+	resetTracking: DrawingObjectsController.prototype.resetTracking,
+	getFormatPainterData: DrawingObjectsController.prototype.getFormatPainterData,
+	pasteFormatting: DrawingObjectsController.prototype.pasteFormatting,
+	checkFormatPainterOnMouseEvent: DrawingObjectsController.prototype.checkFormatPainterOnMouseEvent,
+	pasteFormattingWithPoint: DrawingObjectsController.prototype.pasteFormattingWithPoint,
 
     getHdrFtrObjectsByPageIndex: function(pageIndex)
     {
@@ -2475,7 +2491,7 @@ CGraphicObjects.prototype =
                 {
                     if(object.getNearestPos)
                     {
-                        return object.getNearestPos(x, y, pageIndex);
+                        return object.getNearestPos(x, y, pageIndex, drawing);
                     }
                 }
                 else
@@ -2485,14 +2501,14 @@ CGraphicObjects.prototype =
                         var oShape = object.parent.isShapeChild(true);
                         if(oShape)
                         {
-                            return oShape.getNearestPos(x, y, pageIndex);
+                            return oShape.getNearestPos(x, y, pageIndex, drawing);
                         }
                     }
                     else if(object.getObjectType() === AscDFH.historyitem_type_Shape)
                     {
                         if(object.hitInTextRect(x, y))
                         {
-                            return object.getNearestPos(x, y, pageIndex);
+                            return object.getNearestPos(x, y, pageIndex, drawing);
                         }
                     }
                 }
