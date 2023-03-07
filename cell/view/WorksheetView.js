@@ -2592,11 +2592,12 @@
 					range = new asc_Range(range.c1, range.r1, maxCell.col, maxCell.row);
 				}
 
-				if(arrRanges) {
-					arrRanges.push(range);
-				}
-
+				let _startPages = arrPages.length;
 				this._calcPagesPrint(range, pageOptions, indexWorksheet, arrPages, tempPrintScale, adjustPrint);
+
+				if(arrRanges) {
+					arrRanges.push({range: range, start: _startPages, end: arrPages.length});
+				}
 			}
 		} else {
 			var _maxRowCol = this.getMaxRowColWithData(doNotRecalc);
@@ -2625,7 +2626,7 @@
 
     WorksheetView.prototype.printForOleObject = function (oRange) {
       return this.workbook.printForOleObject(this, oRange);
-    }
+    };
 
   WorksheetView.prototype.getRangePosition = function (oRange) {
     var result = {};
@@ -3969,7 +3970,7 @@
 		//и отрисовка происходит в два этапа - сначала текст - до линий сетки, потом линии печати - после линий сетки
 		//поэтому рассчет делаю 1 раз
 		if (pageBreakPreviewMode && !this.pagesModeData) {
-			this.pagesModeData = this._getPagesModeData(range).printPages;
+			this.pagesModeData = this._getPagesModeData(range);
 		}
 
 		// Возможно сетку не нужно рисовать (при печати свои проверки)
@@ -4709,27 +4710,27 @@
 	};
 
 	WorksheetView.prototype._drawPageBreakPreviewLines = function (drawingCtx, range) {
-		let printPages = this.pagesModeData;
+		let oPrintPages = this.pagesModeData;
 
 		if (range === undefined) {
 			range = this.visibleRange;
 		}
-		var ctx = drawingCtx || this.drawingCtx;
+		let ctx = drawingCtx || this.drawingCtx;
 
 		//закрашиваем то, что не входит в область печати
-		var drawRange = function (visibleRange, offsetX, offsetY, args) {
-			var range = args[0];
-			var selectionLineType = args[1];
-			var strokeColor = args[2];
-			var isAllRange = args[3];
-			var oIntersection = range.intersectionSimple(visibleRange);
+		let drawRange = function (visibleRange, offsetX, offsetY, args) {
+			let range = args[0];
+			let selectionLineType = args[1];
+			let strokeColor = args[2];
+			let isAllRange = args[3];
+			let oIntersection = range.intersectionSimple(visibleRange);
 
 			if (!oIntersection) {
 				return true;
 			}
 
-			var fHorLine, fVerLine;
-			var isDashLine = AscCommonExcel.selectionLineType.Dash & selectionLineType;
+			let fHorLine, fVerLine;
+			let isDashLine = AscCommonExcel.selectionLineType.Dash & selectionLineType;
 
 			if (isDashLine) {
 				fHorLine = ctx.dashLineCleverHor;
@@ -4739,13 +4740,13 @@
 				fVerLine = ctx.lineVerPrevPx;
 			}
 
-			var firstCol = oIntersection.c1 === visibleRange.c1 && !isAllRange;
-			var firstRow = oIntersection.r1 === visibleRange.r1 && !isAllRange;
+			let firstCol = oIntersection.c1 === visibleRange.c1 && !isAllRange;
+			let firstRow = oIntersection.r1 === visibleRange.r1 && !isAllRange;
 
-			var drawLeftSide = oIntersection.c1 === range.c1;
-			var drawRightSide = oIntersection.c2 === range.c2;
-			var drawTopSide = oIntersection.r1 === range.r1;
-			var drawBottomSide = oIntersection.r2 === range.r2;
+			let drawLeftSide = oIntersection.c1 === range.c1;
+			let drawRightSide = oIntersection.c2 === range.c2;
+			let drawTopSide = oIntersection.r1 === range.r1;
+			let drawBottomSide = oIntersection.r2 === range.r2;
 
 			if(args[4]) {
 				if(args[4] === 1) {
@@ -4770,20 +4771,20 @@
 				drawBottomSide = false;
 			}
 
-			var x1 = this._getColLeft(oIntersection.c1) - offsetX;
-			var x2 = this._getColLeft(oIntersection.c2 + 1) - offsetX;
-			var y1 = this._getRowTop(oIntersection.r1) - offsetY;
-			var y2 = this._getRowTop(oIntersection.r2 + 1) - offsetY;
+			let x1 = this._getColLeft(oIntersection.c1) - offsetX;
+			let x2 = this._getColLeft(oIntersection.c2 + 1) - offsetX;
+			let y1 = this._getRowTop(oIntersection.r1) - offsetY;
+			let y2 = this._getRowTop(oIntersection.r2 + 1) - offsetY;
 
 
 			//меняю толщину линии для селекта(только в случае сплошной линии) и масштаба 200%
-			var isRetina = AscBrowser.retinaPixelRatio === 2;
-			var widthLine = isDashLine ? 2 : 3;
+			let isRetina = AscBrowser.retinaPixelRatio === 2;
+			let widthLine = isDashLine ? 2 : 3;
 			if (isRetina) {
 				widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
 			}
 			//TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
-			var _diff = 0;
+			let _diff = 0;
 			if (AscBrowser.isSafari) {
 				_diff = 1;
 			}
@@ -4803,21 +4804,31 @@
 				fVerLine.apply(ctx, [x2 + !isDashLine * 1, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
 			}
 			ctx.closePath().stroke();
+			return true;
 		};
 
-		var startRange, endRange, allPagesRange;
+		let startRange, endRange, allPagesRange;
 		//рисуем страницы
+		let printPages = oPrintPages.printPages;
 		if(printPages && printPages.length) {
-			startRange = printPages[0].page.pageRange;
-			endRange = printPages[printPages.length - 1].page.pageRange;
-			allPagesRange = new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2);
-
-			//орисовываем границы страниц
-			for (var i = 0, l = printPages.length; i < l; ++i) {
-				this._drawElements(drawRange, printPages[i].page.pageRange, AscCommonExcel.selectionLineType.Dash, this.settings.activeCellBorderColor);
+			let color = new CColor(0, 0, 208);
+			let printRanges = oPrintPages.printRanges;
+			if (!printRanges) {
+				startRange = printPages[0].page.pageRange;
+				endRange = printPages[printPages.length - 1].page.pageRange;
+				printRanges = [{range: new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2), start: 0, end: printPages.length}];
 			}
 
-			this._drawElements(drawRange, allPagesRange, AscCommonExcel.selectionLineType.Select, this.settings.activeCellBorderColor, true);
+			for (let i = 0; i < printRanges.length; i++) {
+				let oPrintRange = printRanges[i];
+				allPagesRange = oPrintRange.range;
+				for (let j = oPrintRange.start; j < oPrintRange.end; j++) {
+					if (printPages[j] && printPages[j].page) {
+						this._drawElements(drawRange, printPages[j].page.pageRange, AscCommonExcel.selectionLineType.Dash, color);
+					}
+				}
+				this._drawElements(drawRange, allPagesRange, AscCommonExcel.selectionLineType.Select, color, true);
+			}
 		}
 	};
 
@@ -4950,10 +4961,10 @@
 			return;
 		}
 
-		if (!this.pagesModeData) {
+		if (!this.pagesModeData || !this.pagesModeData.printPages) {
 			return;
 		}
-		let printPages = this.pagesModeData;
+		let printPages = this.pagesModeData.printPages;
 
 		if (range === undefined) {
 			range = this.visibleRange;
@@ -5085,20 +5096,20 @@
 
 		for (var i = 0; i < printPages.length; ++i) {
 
-			if(printPages[i].pageRange.intersection(range)) {
+			//if(printPages[i].pageRange.intersection(range)) {
 				res.push({index: i, page: printPages[i]});
-			}
+			//}
 		}
 
-		var visiblePrintRanges = [];
+		/*var visiblePrintRanges = [];
 		for (var i = 0; i < printRanges.length; ++i) {
 
 			if(printRanges[i].intersection(range)) {
 				visiblePrintRanges.push(printRanges[i]);
 			}
-		}
+		}*/
 
-		return {printPages: res, printRanges: visiblePrintRanges};
+		return {printPages: res, printRanges: printRanges && printRanges.length ? printRanges : null};
 	};
 
     /** Удаляет вертикальные границы ячейки, если текст выходит за границы и соседние ячейки пусты */
@@ -24497,10 +24508,11 @@
 
 	WorksheetView.prototype.pagesModeDataContains = function (col, row) {
 		let res = null;
-		if (pageBreakPreviewMode && this.pagesModeData) {
+		if (pageBreakPreviewMode && this.pagesModeData && this.pagesModeData.printPages) {
 			res = false;
-			for (let i = 0; i < this.pagesModeData.length; i++) {
-				if (this.pagesModeData[i].page && this.pagesModeData[i].page.pageRange && this.pagesModeData[i].page.pageRange.contains(col, row)) {
+			let printPages = this.pagesModeData.printPages;
+			for (let i = 0; i < printPages.length; i++) {
+				if (printPages[i].page && printPages[i].page.pageRange && printPages[i].page.pageRange.contains(col, row)) {
 					res = true;
 					break;
 				}
