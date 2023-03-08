@@ -1088,7 +1088,11 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
 
         case 63: // ASC_MENU_EVENT_TYPE_SEARCH_REPLACETEXT
         {
-            var _ret = this.asc_replaceText(_params[0], _params[1], _params[2], _params[3]);
+            var searchSettings = new AscCommon.CSearchSettings();
+            searchSettings.put_Text(_params[0]);
+            searchSettings.put_MatchCase(_params[3]);
+
+            var _ret = this.asc_replaceText(searchSettings, _params[1], _params[2]);
             var _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
             _stream["WriteBool"](_ret);
