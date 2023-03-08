@@ -3349,7 +3349,7 @@
         if (this.overlayCtx) {
             this._drawSelection();
         }
-		this._cleanPagesModeData();
+		//this._cleanPagesModeData();
 
         return this;
     };
@@ -8175,7 +8175,7 @@
         this._drawFrozenPaneLines();
         this._fixSelectionOfMergedCells();
         this._drawSelection();
-		this._cleanPagesModeData();
+		//this._cleanPagesModeData();
 
         if (reinitScrollY || (0 > delta && initRowsCount && this._initRowsCount())) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
@@ -8334,7 +8334,7 @@
         this._drawFrozenPaneLines();
         this._fixSelectionOfMergedCells();
         this._drawSelection();
-        this._cleanPagesModeData();
+        //this._cleanPagesModeData();
 
 		if (reinitScrollX || (0 > delta && initColsCount && this._initColsCount())) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
@@ -15500,6 +15500,7 @@
 
 			t.handlers.trigger("selectionChanged");
 			t.handlers.trigger("selectionMathInfoChanged", t.getSelectionMathInfo());
+			t._cleanPagesModeData();
 		};
 
 		var checkDeleteCellsFilteringMode = function () {
@@ -17434,6 +17435,7 @@
 			this.arrRecalcRangesWithHeight.push(range);
 			this.arrRecalcRangesCanChangeColWidth.push(this.canChangeColWidth);
 		}
+		this._cleanPagesModeData();
 	};
 
     WorksheetView.prototype._reinitializeScroll = function () {
