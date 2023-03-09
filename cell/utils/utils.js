@@ -2874,6 +2874,7 @@
 			this.showZeros = null;
 
 			this.topLeftCell = null;
+			this.view = null;
 
 			return this;
 		}

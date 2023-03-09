@@ -1503,11 +1503,17 @@
         queryTable: 0,
         worksheet: 1,
         xml: 2
-    }
+    };
 
     var ST_PageOrder = {
         downThenOver: 0,
         overThenDown: 1
+    };
+
+    var ESheetViewType = {
+        normal: 0,
+        pageBreakPreview: 1,
+        pageLayout: 2
     };
 
     var g_nNumsMaxId = 160;
@@ -4358,6 +4364,8 @@
                 this.bs.WriteItem(c_oSer_SheetView.ShowZeros, function(){oThis.memory.WriteBool(oSheetView.showZeros);});
             if (null !== oSheetView.topLeftCell && !oThis.isCopyPaste)
                 this.bs.WriteItem(c_oSer_SheetView.TopLeftCell, function(){oThis.memory.WriteString3(oSheetView.topLeftCell.getName());});
+            if (null !== oSheetView.view && !oThis.isCopyPaste)
+                this.bs.WriteItem(c_oSer_SheetView.View, function(){oThis.memory.WriteLong(oSheetView.view);});
         };
         this.WriteSheetViewPane = function (oPane) {
             var oThis = this;
@@ -9433,7 +9441,7 @@
                     oSheetView.topLeftCell = new Asc.Range(_topLeftCell.c1, _topLeftCell.r1, _topLeftCell.c1, _topLeftCell.r1);
                 }
 			} else if (c_oSer_SheetView.View === type) {
-				this.stream.GetUChar();
+                oSheetView.view = this.stream.GetUChar();
 			} else if (c_oSer_SheetView.WindowProtection === type) {
 				this.stream.GetBool();
 			} else if (c_oSer_SheetView.WorkbookViewId === type) {
@@ -12583,6 +12591,9 @@
 
     window['AscCommonExcel'].decodeXmlPath = decodeXmlPath;
     window['AscCommonExcel'].encodeXmlPath = encodeXmlPath;
+
+    window['AscCommonExcel'].ESheetViewType = ESheetViewType;
+
 
 
 })(window);

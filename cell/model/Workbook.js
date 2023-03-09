@@ -5716,6 +5716,9 @@
 			result = Math.max(result, pane.topLeftFrozenCell.getRow0());
 		return result;
 	};
+	Worksheet.prototype.getSheetViewType=function(){
+		return this.sheetViews && this.sheetViews.length && this.sheetViews[0].view;
+	};
 	Worksheet.prototype.removeRows=function(start, stop, bExcludeHiddenRows){
 		var removeRowsArr = bExcludeHiddenRows ? this._getNoHiddenRowsArr(start, stop) : [{start: start, stop: stop}];
 		for(var i = removeRowsArr.length - 1; i >= 0; i--) {
