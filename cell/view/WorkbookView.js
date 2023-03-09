@@ -1058,12 +1058,12 @@
 		// в противном случае в интерфейс отправляю только то, что изменилось по индексу
 		self.changedCellWatchesSheets = true;
 	});
-  this.model.handlers.add("onChangePageSetupProps", function(wsId) {
-	  var ws = self.getWorksheetById(wsId);
-	  if (ws) {
-		  ws._cleanPagesModeData();
-	  }
-  });
+	this.model.handlers.add("onChangePageSetupProps", function(wsId) {
+		var ws = self.getWorksheetById(wsId);
+		if (ws) {
+			ws.onChangePageSetupProps();
+		}
+	});
 	this.Api.asc_registerCallback("EndTransactionCheckSize", function() {
 		self.Api.checkChangesSize();
 	});

@@ -12697,7 +12697,6 @@ QueryTableField.prototype.clone = function() {
 		if (this.ws && History.Is_On() && oldVal !== this.scale) {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Scale, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
-			this.handlers.trigger("changeRefTablePart", this);
 		}
 		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};

@@ -4710,6 +4710,9 @@
 	};
 
 	WorksheetView.prototype._drawPageBreakPreviewLines = function (drawingCtx, range) {
+		if(!pageBreakPreviewMode) {
+			return;
+		}
 		let oPrintPages = this.pagesModeData;
 
 		if (range === undefined) {
@@ -4919,21 +4922,25 @@
 	};
 
 	WorksheetView.prototype._drawPrintArea = function () {
-		var printOptions = this.model.PagePrintOptions;
+		let printOptions = this.model.PagePrintOptions;
 
-		var printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
-		var printPages = [];
-		if(printArea) {
-			this.calcPagesPrint(printOptions, null, null, printPages, null, null, true);
-		} else {
-			var range = new asc_Range(0, 0, this.visibleRange.c2, this.visibleRange.r2);
-			this._calcPagesPrint(range, printOptions, null, printPages, null, null, true);
+		let printPages = this.pagesModeData && this.pagesModeData.printPages;
+		if (!printPages) {
+			let printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
+			printPages = [];
+			if(printArea) {
+				this.calcPagesPrint(printOptions, null, null, printPages, null, null, true);
+			} else {
+				let range = new asc_Range(0, 0, this.visibleRange.c2, this.visibleRange.r2);
+				this._calcPagesPrint(range, printOptions, null, printPages, null, null, true);
+			}
 		}
+		
 
-		var pageSetupModel = printOptions.asc_getPageSetup();
-		var fitToWidth = pageSetupModel.asc_getFitToWidth();
-		var fitToHeight = pageSetupModel.asc_getFitToHeight();
-		var drawProp;
+		let pageSetupModel = printOptions.asc_getPageSetup();
+		let fitToWidth = pageSetupModel.asc_getFitToWidth();
+		let fitToHeight = pageSetupModel.asc_getFitToHeight();
+		let drawProp;
 		if(fitToWidth >= 1 && fitToHeight >= 1) {
 			return;
 		} else if(fitToWidth >= 1) {
@@ -4942,7 +4949,7 @@
 			drawProp = 2;
 		}
 
-		for (var i = 0, l = printPages.length; i < l; ++i) {
+		for (let i = 0, l = printPages.length; i < l; ++i) {
 			this._drawElements(this._drawSelectionElement, printPages[i].pageRange, AscCommonExcel.selectionLineType.Dash, new CColor(0, 0, 0), undefined, drawProp);
 		}
 	};
@@ -6113,7 +6120,7 @@
 		    }
 	    }
 
-		if(this.viewPrintLines) {
+		if(this.viewPrintLines && !pageBreakPreviewMode) {
 			this._drawPrintArea();
 		}
 
@@ -24522,12 +24529,12 @@
 		}
 		return res;
 	};
-
-
-
-
-
-	
+	WorksheetView.prototype.onChangePageSetupProps = function () {
+		this._cleanPagesModeData();
+		if (this.workbook && this.workbook.model && this.workbook.model.getActiveWs() === this.model) {
+			this.draw();
+		}
+	};
 
 	//------------------------------------------------------------export---------------------------------------------------
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
