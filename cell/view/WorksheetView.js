@@ -2637,7 +2637,7 @@
     result.height = this._getRowTop(oRange.r2) + this.getRowHeight(oRange.r2) - result.top;
 
     return result;
-  }
+  };
 
 	WorksheetView.prototype.drawForPrint = function (drawingCtx, printPagesData, indexPrintPage, countPrintPages) {
 
@@ -5017,6 +5017,8 @@
 				t.stringRender.setString([str]);
 				textMetrics = t.stringRender._measureChars();
 
+
+
 				if (textMetrics.width === needWidth && textMetrics.height === needHeight) {
 					break;
 				} else if (textMetrics.width > needWidth || textMetrics.height > needHeight) {
@@ -5083,6 +5085,95 @@
 						this.stringRender.render(undefined, tX1, tY1, 100, this.settings.activeCellBorderColor);
 						ctx.RemoveClipRect();
 					}
+				}
+			}
+		}
+
+
+
+
+
+
+
+
+
+
+
+		if(false && pageBreakPreview) {
+			var startRange = printPages[0] ? printPages[0].page.pageRange : null;
+			var endRange = printPages[0] ? printPages[printPages.length - 1].page.pageRange : null;
+			var unionRange = startRange ? new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2) : null;
+			var intersection = unionRange ? range.intersection(unionRange) : null;
+
+			if(printPages[0] && intersection) {
+				x1 = this._getColLeft(range.c1) - offsetX;
+				y1 = this._getRowTop(range.r1) - offsetY;
+				x2 = this._getColLeft(range.c2 + 1) - offsetX;
+				y2 = this._getRowTop(range.r2 + 1) - offsetY;
+
+
+				var pageRange;
+				var tX1, tX2, tY1, tY2, pageIntersection, index;
+				for (var i = 0; i < printPages.length; ++i) {
+					pageRange = printPages[i].page.pageRange;
+					index = printPages[i].index;
+					pageIntersection = pageRange.intersection(range);
+					if(!pageIntersection) {
+						if(pageRange.r1 > range.r2 && pageRange.c1 > range.c2) {
+							break;
+						} else {
+							continue;
+						}
+					}
+
+					var widthPage = this._getColLeft(pageRange.c2 + 1) - this._getColLeft(pageRange.c1);
+					var heightPage = this._getRowTop(pageRange.r2 + 1) - this._getRowTop(pageRange.r1);
+					var centerX = this._getColLeft(pageRange.c1) + (widthPage) / 2 - offsetX;
+					var centerY = this._getRowTop(pageRange.r1) + (heightPage) / 2 - offsetY;
+
+					//TODO подобрать такой размер шрифта, чтобы у текста была нужная нам ширина(1/3 от ширины страницы)
+					var font = new AscCommonExcel.Font();
+					font.fn = "Arial";
+					font.fs = getOptimalFontSize(widthPage, heightPage);
+					font.c = new CColor(150, 150, 150);
+					var str = new AscCommonExcel.Fragment();
+					str.setFragmentText(basePageString + (index + 1));
+					str.format = font;
+
+					let printScale = 0.5
+					if (printScale !== 1 && t.stringRender.drawingCtx) {
+						//let transformMatrix = t.stringRender.drawingCtx.Transform.CreateDublicate();
+
+						/*t.stringRender.drawingCtx.setTransform(printScale, t.stringRender.drawingCtx._mbt.shy, t.stringRender.drawingCtx._mbt.shx, printScale, 0, 0);
+						t.stringRender.drawingCtx.setTextTransform(printScale, t.stringRender.drawingCtx._mbt.shy, t.stringRender.drawingCtx._mbt.shx, printScale, 0, 0);
+						t.stringRender.drawingCtx._calcMFT();*/
+
+					}
+
+
+					this.stringRender.setString([str]);
+
+					var textMetrics = this.stringRender._measureChars();
+
+					var kf = 3.04;
+					var needWidth = widthPage / kf;
+					var needHeight = heightPage / kf;
+					this.stringRender.drawingCtx.changeZoom(needWidth/textMetrics.width);
+					var textMetrics = this.stringRender._measureChars();
+
+					tX1 = centerX - textMetrics.width / 2;
+					tX2 = centerX + textMetrics.width / 2;
+					tY1 = centerY - textMetrics.height / 2;
+					tY2 = centerY + textMetrics.height / 2;
+
+					if(!(tX1 > x2 || tX2 < x1 || tY1 > y2 || tY2 < y1)) {
+						ctx.AddClipRect(x1, y1, x2-x1, y2-y1);
+						this.stringRender.render(undefined, tX1, tY1, 100, this.settings.activeCellBorderColor);
+						ctx.RemoveClipRect();
+					}
+					this.stringRender.drawingCtx.changeZoom(1);
+					//t.stringRender.resetTransform(t.stringRender.drawingCtx)
+					//t.stringRender.drawingCtx._calcMFT();
 				}
 			}
 		}

@@ -452,7 +452,7 @@
 		type = type || 'image/png';
 		var canvas = this.getCanvas();
 		return canvas.toDataURL(type);
-	}
+	};
 
 	/**
 	 * Returns width of drawing context in current units
