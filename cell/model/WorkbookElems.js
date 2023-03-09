@@ -12457,7 +12457,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Left, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageMargins.prototype.asc_setRight = function (newVal) {
 		var oldVal = this.right;
@@ -12466,7 +12467,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Right, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageMargins.prototype.asc_setTop = function (newVal) {
 		var oldVal = this.top;
@@ -12475,7 +12477,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Top, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageMargins.prototype.asc_setBottom = function (newVal) {
 		var oldVal = this.bottom;
@@ -12484,7 +12487,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Bottom, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 
 	asc_CPageMargins.prototype.asc_setHeader = function (newVal) {
@@ -12592,7 +12596,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Orientation, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageSetup.prototype.asc_setWidth = function (newVal) {
 		var oldVal = this.width;
@@ -12601,7 +12606,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Width, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageSetup.prototype.asc_setHeight = function (newVal) {
 		var oldVal = this.height;
@@ -12610,7 +12616,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Height, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 
 	asc_CPageSetup.prototype.asc_getFitToWidth = function () {
@@ -12644,7 +12651,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_FitToWidth, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageSetup.prototype.asc_setFitToHeight = function (newVal) {
 		//TODO заглушка! потому что из меню проставляется булево значение, а должно быть число
@@ -12660,7 +12668,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_FitToHeight, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageSetup.prototype.asc_setOptions = function (obj) {
 
@@ -12698,7 +12707,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Scale, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 
 	asc_CPageSetup.prototype.getPreviewHeaderFooter = function () {
@@ -12929,11 +12939,13 @@ QueryTableField.prototype.clone = function() {
 	};
 	asc_CPageOptions.prototype.asc_setPrintTitlesWidth = function (newVal) {
 		this.printTitlesWidth = newVal;
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageOptions.prototype.asc_setPrintTitlesHeight = function (newVal) {
 		this.printTitlesHeight = newVal;
-		this.ws && this.ws.workbook && this.ws.workbook.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageOptions.prototype.asc_getPrintTitlesWidth = function () {
 		return this.printTitlesWidth;
