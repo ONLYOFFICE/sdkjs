@@ -4812,7 +4812,7 @@
 
 		let startRange, endRange, allPagesRange;
 		//рисуем страницы
-		let printPages = oPrintPages.printPages;
+		let printPages = oPrintPages && oPrintPages.printPages;
 		if(printPages && printPages.length) {
 			let color = new CColor(0, 0, 208);
 			let printRanges = oPrintPages.printRanges;
