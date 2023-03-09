@@ -24531,8 +24531,11 @@
 	};
 	WorksheetView.prototype.onChangePageSetupProps = function () {
 		this._cleanPagesModeData();
-		if (this.workbook && this.workbook.model && this.workbook.model.getActiveWs() === this.model) {
-			this.draw();
+		if (pageBreakPreviewMode) {
+			this.model && this.model.PagePrintOptions && this.model.PagePrintOptions.initPrintTitles();
+			if (this.workbook && this.workbook.model && this.workbook.model.getActiveWs() === this.model) {
+				this.draw();
+			}
 		}
 	};
 

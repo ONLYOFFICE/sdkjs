@@ -821,8 +821,9 @@
 		removeDefName: function(sheetId, name) {
 			this._removeDefName(sheetId, name, AscCH.historyitem_Workbook_DefinedNamesChange);
 			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
-				this.wb.handlers.trigger("updateCellWatches");
+				this.wb.handlers.trigger("updateCellWatches", sheetId);
 			}
+			this.wb.handlers.trigger("onChangePageSetupProps");
 		},
 		editDefinesNames: function(oldUndoName, newUndoName) {
 			var res = null;
@@ -860,6 +861,7 @@
 			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
 				this.wb.handlers.trigger("updateCellWatches");
 			}
+			this.wb.handlers.trigger("onChangePageSetupProps", newUndoName.sheetId);
 			return res;
 		},
 		checkDefName: function (name, sheetIndex) {
