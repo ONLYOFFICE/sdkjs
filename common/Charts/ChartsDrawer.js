@@ -12256,6 +12256,10 @@ drawRadarChart.prototype = {
 						points = {x: x, y: y, x1: x1, y1: y1};
 						calcPath(pt, n, points, oNumCache);
 					}
+					if (n === oNumCache.ptCount - 2 && xFirst != null && x1 !== null) {
+						points = {x: x1, y: y1, x1: xFirst, y1: yFirst};
+						calcPath(pt, n + 1, points, oNumCache);
+					}
 				} else {
 					//1. draw main line
 					if (x1 !== null && x !== null) {
@@ -12442,7 +12446,6 @@ drawRadarChart.prototype = {
 
 				break;
 			}
-
 		}
 
 		if (centerX < 0) {
