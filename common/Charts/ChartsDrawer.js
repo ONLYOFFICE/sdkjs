@@ -12148,6 +12148,8 @@ function drawRadarChart(chart, chartsDrawer) {
 	this.valAx = null;
 	this.catAx = null;
 
+	this._minMaxValue = null;
+
 	this.paths = {};
 	this.fillPaths = [];
 }
@@ -12186,6 +12188,7 @@ drawRadarChart.prototype = {
 		let valueMinMax;
 		if (yPoints && yPoints.length > 1) {
 			valueMinMax = this._getMinMaxValue();
+			this._minMaxValue = valueMinMax;
 		}
 
 		//TODO
@@ -12193,7 +12196,7 @@ drawRadarChart.prototype = {
 			break;
 		}*/
 
-		let y, y1, x, x1, val, nextVal, curSeries, dataSeries;
+		let y, y1, x, x1, curSeries, dataSeries;
 		let radius1, radius2, xFirst, yFirst, calcPath, points;
 		for (let i = 0; i < this.chart.series.length; i++) {
 
@@ -12364,7 +12367,7 @@ drawRadarChart.prototype = {
 			return;
 		}
 
-		var point = numCache.pts[val];
+		var point = this.cChartDrawer.getIdxPoint(this.chart.series[ser], val);
 
 		var oCommand, oPath;
 		if (this.paths.series) {
@@ -12421,6 +12424,25 @@ drawRadarChart.prototype = {
 				centerY = centerY - height / 2 - constMargin;
 				break;
 			}
+			case c_oAscChartDataLabelsPos.outEnd: {
+
+				let yPoints = this.valAx.yPoints;
+				if (yPoints && yPoints.length > 1) {
+					let xCenter = this.valAx.posX;
+					let yCenter = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
+
+					let radius1 = this._getRadius(point.val, this._minMaxValue);
+					let alpha1 = this._getAlpha(point.idx);
+
+					//TODO check margin
+					let _margin = 9;
+					centerY = yCenter - (radius1 + _margin) * Math.cos(alpha1) - height / 2;
+					centerX = xCenter + (radius1 + _margin) * Math.sin(alpha1) - width / 2;
+				}
+
+				break;
+			}
+
 		}
 
 		if (centerX < 0) {
