@@ -1299,12 +1299,12 @@ CChartsDrawer.prototype =
 		return res.length || priorityAxis.length ? priorityAxis.concat(res) : null;
 	},
 
-	isRadarChart: function() {
+	isRadarChart: function(axis) {
 		let charts = this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea && this.cChartSpace.chart.plotArea.charts;
 		if (charts) {
 			for (let i = 0; i < charts.length; i++) {
 				for (let j = 0; j < charts[i].axId.length; j++) {
-					if (charts[i].getObjectType() === AscDFH.historyitem_type_RadarChart) {
+					if (charts[i].getObjectType() === AscDFH.historyitem_type_RadarChart && axis === charts[i].axId[j]) {
 						return true;
 					}
 				}
@@ -1915,7 +1915,7 @@ CChartsDrawer.prototype =
 		};
 
 		//максимальное и минимальное значение(по документации excel)
-		let isRadarChart = axis.parent.chart.getObjectType() === AscDFH.historyitem_type_RadarChart;
+		let isRadarChart = this.isRadarChart(axis);
 		let axisMin, axisMax, step;
 		let minMaxCalc = calcAxisMinMax(isStackedType);
 		if (isRadarChart) {
@@ -1937,7 +1937,7 @@ CChartsDrawer.prototype =
 			if (false && isRadarChart) {
 				arrayValues = this._getRadarAxisValues(axisMin, axisMax, step);
 			} else {
-				arrayValues = this._getArrayDataValues(step, axisMin, axisMax, manualMin, manualMax);
+				arrayValues = this._getArrayDataValues(step, axisMin, axisMax, manualMin, manualMax, isRadarChart);
 			}
 		}
 
@@ -2048,12 +2048,11 @@ CChartsDrawer.prototype =
 		return step;
 	},
 
-	_getArrayDataValues: function (step, axisMin, axisMax, manualMin, manualMax) {
+	_getArrayDataValues: function (step, axisMin, axisMax, manualMin, manualMax, isRadarChart) {
 		var arrayValues;
 		//минимальное значение оси
 		//TODO use axisMin
 		var minUnit = 0;
-		var isRadarChart = this.calcProp.type === c_oChartTypes.Radar;
 
 		if (manualMin != null) {
 			minUnit = manualMin;
@@ -14753,7 +14752,7 @@ axisChart.prototype = {
 	_calculateGridLines: function () {
 
 		var paths;
-		if (this.axis.parent.chart.getObjectType() === AscDFH.historyitem_type_RadarChart) {
+		if (this.cChartDrawer.isRadarChart(this.axis)) {
 			paths = this.cChartDrawer._getRadarGridLines(this.axis);
 		} else {
 			if (this.axis.axPos === window['AscFormat'].AX_POS_L || this.axis.axPos === window['AscFormat'].AX_POS_R) {
