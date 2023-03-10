@@ -1299,6 +1299,19 @@ CChartsDrawer.prototype =
 		return res.length || priorityAxis.length ? priorityAxis.concat(res) : null;
 	},
 
+	isRadarChart: function() {
+		let charts = this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea && this.cChartSpace.chart.plotArea.charts;
+		if (charts) {
+			for (let i = 0; i < charts.length; i++) {
+				for (let j = 0; j < charts[i].axId.length; j++) {
+					if (charts[i].getObjectType() === AscDFH.historyitem_type_RadarChart) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	},
 
 	//****calculate properties****
 	_calculateProperties: function (chartSpace) {
@@ -12438,10 +12451,9 @@ drawRadarChart.prototype = {
 					let radius1 = this._getRadius(point.val, this._minMaxValue);
 					let alpha1 = this._getAlpha(point.idx);
 
-					//TODO check margin
-					let _margin = 9;
-					centerY = yCenter - (radius1 + _margin) * Math.cos(alpha1) - height / 2;
-					centerX = xCenter + (radius1 + _margin) * Math.sin(alpha1) - width / 2;
+					//TODO margin differ from ms
+					centerY = yCenter - (radius1 + constMargin) * Math.cos(alpha1) - height / 2;
+					centerX = xCenter + (radius1 + constMargin) * Math.sin(alpha1) - width / 2;
 				}
 
 				break;
