@@ -5502,7 +5502,7 @@
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
 			var ws = this.wb.getActiveWS();
-			var selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange;
+			var selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
 
 			var activeCell = selectionRange.activeCell;
 			if (this.props && this.props.lastSearchElem) {

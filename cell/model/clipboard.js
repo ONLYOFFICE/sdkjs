@@ -412,6 +412,9 @@
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll) {
 			var t = this;
 			var wb = window["Asc"]["editor"].wb;
+			if (wb.selectionDialogMode) {
+				return;
+			}
 			var cellEditor = wb.cellEditor;
 			t.pasteProcessor.clean();
 
