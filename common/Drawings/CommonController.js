@@ -7764,7 +7764,34 @@ DrawingObjectsController.prototype =
     endTrackNewShape: function()
     {
         this.curState.bStart = this.curState.bStart !== false;
-        var bRet = AscFormat.StartAddNewShape.prototype.onMouseUp.call(this.curState, {ClickCount: 1, X: 0, Y:0}, 0, 0, 0);
+		let aTracks = this.arrTrackObjects;
+		let bNewShape = false;
+		let bRet = false;
+		if(aTracks.length > 0)
+		{
+			let nT;
+			for(nT = 0; nT < aTracks.length; ++nT)
+			{
+				let oTrack = aTracks[nT];
+				if(!oTrack.getShape)
+				{
+					break;
+				}
+			}
+			if(nT === aTracks.length)
+			{
+				bNewShape = true;
+			}
+			if(bNewShape)
+			{
+				bRet = AscFormat.StartAddNewShape.prototype.onMouseUp.call(this.curState, {ClickCount: 1, X: 0, Y:0}, 0, 0, 0);
+			}
+			else
+			{
+				this.curState.onMouseUp({ClickCount: 1, X: 0, Y:0}, 0, 0, 0);
+				bRet = true;
+			}
+		}
         if(bRet === false && this.document)
         {
             var oElement = this.document.Content[this.document.CurPos.ContentPos];
