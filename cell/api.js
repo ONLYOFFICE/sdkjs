@@ -5748,6 +5748,10 @@ var editor;
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
     var ws = this.wb.getWorksheet();
+
+
+	  return this.asc_SetSheetViewType(window['Asc']['c_oAscESheetViewType'].pageBreakPreview);
+
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {
@@ -8336,6 +8340,19 @@ var editor;
 		return false;
 	};
 
+	spreadsheet_api.prototype.asc_SetSheetViewType = function(val) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		var ws = this.wb.getWorksheet();
+		//val -> window['Asc']['c_oAscESheetViewType']
+		return ws.setSheetViewType(val);
+	};
+
 
 
   /*
@@ -8872,14 +8889,9 @@ var editor;
 
   prot["onWorksheetChange"] = prot.onWorksheetChange;  
 
-
   prot["asc_addCellWatches"]               = prot.asc_addCellWatches;
   prot["asc_deleteCellWatches"]            = prot.asc_deleteCellWatches;
   prot["asc_getCellWatches"]               = prot.asc_getCellWatches;
-
-
-
-
 
   prot["asc_getExternalReferences"] = prot.asc_getExternalReferences;
   prot["asc_updateExternalReferences"] = prot.asc_updateExternalReferences;
@@ -8891,7 +8903,6 @@ var editor;
   prot["asc_ImportXmlStart"] = prot.asc_ImportXmlStart;
   prot["asc_ImportXmlEnd"]   = prot.asc_ImportXmlEnd;
 
-
-
+  prot["asc_SetSheetViewType"]   = prot.asc_SetSheetViewType;
 
 })(window);

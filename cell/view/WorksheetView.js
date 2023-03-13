@@ -24633,6 +24633,13 @@
 		return this.model && this.model.getSheetViewType() === AscCommonExcel.ESheetViewType.pageBreakPreview;
 	};
 
+	WorksheetView.prototype.setSheetViewType = function (val) {
+		if (this.model && this.model.setSheetViewType(val)) {
+			this._cleanPagesModeData();
+			this.draw();
+		}
+	};
+
 	//------------------------------------------------------------export---------------------------------------------------
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window["AscCommonExcel"].CellFlags = CellFlags;

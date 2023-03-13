@@ -11592,6 +11592,24 @@
 		return c_oAscError.ID.No;
 	};
 
+	Worksheet.prototype.setSheetViewType = function(val, addToHistory) {
+		var sheetView = this.sheetViews[0];
+
+		if (!sheetView) {
+			return;
+		}
+
+		var oldValue = sheetView.view;
+		if (oldValue !== val) {
+			sheetView.view = val;
+			if (addToHistory) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetSheetViewType,
+					this.getId(), null, new UndoRedoData_FromTo(oldValue, val));
+			}
+			return true;
+		}
+	};
+
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;
