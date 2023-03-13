@@ -447,6 +447,10 @@
         this.startCellMoveResizeRange2 = null;
         this.moveRangeDrawingObjectTo = null;
 
+
+		this.startCellResizeRange = null;
+		this.startCellResizeRange2 = null;
+
         // Координаты ячейки начала перемещения диапазона
         this.startCellMoveRange = null;
         // Дипазон перемещения
@@ -4814,13 +4818,7 @@
 		let printPages = oPrintPages && oPrintPages.printPages;
 		if(printPages && printPages.length) {
 			let color = new CColor(0, 0, 208);
-			let printRanges = oPrintPages.printRanges;
-			if (!printRanges) {
-				startRange = printPages[0].page.pageRange;
-				endRange = printPages[printPages.length - 1].page.pageRange;
-				printRanges = [{range: new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2), start: 0, end: printPages.length}];
-			}
-
+			let printRanges = this._getPrintPagesModeRanges(oPrintPages);
 			for (let i = 0; i < printRanges.length; i++) {
 				let oPrintRange = printRanges[i];
 				allPagesRange = oPrintRange.range;
@@ -8717,8 +8715,35 @@
         } : null;
     };
 
+	WorksheetView.prototype._hitCursorPagesRange = function (vr, x, y, offsetX, offsetY) {
+		let oPrintPages = this.isPageBreakPreview() && this.pagesModeData;
+		let res = null;
+		let _range = null;
+		if (oPrintPages) {
+			let printRanges = this._getPrintPagesModeRanges(oPrintPages);
+			if (printRanges) {
+				for (let i = 0; i < printRanges.length; i++) {
+					res = this._hitInRange(printRanges[i].range,
+						AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.ActiveCell |
+						AscCommonExcel.selectionLineType.Promote, vr, x, y, offsetX, offsetY);
+					if (res) {
+						_range = printRanges[i].range;
+						break;
+					}
+				}
+			}
+		}
+		return res ? {
+			cursor: "ew-resize",
+			target: c_oTargetType.ResizeRange,
+			col: -1,
+			row: -1,
+			range: _range
+		} : null;
+	};
+
 		WorksheetView.prototype._hitCursorSelectionVisibleArea = function (vr, x, y, offsetX, offsetY) {
-			var range = this.getOleSize() && this.getOleSize().getLast()
+			var range = this.getOleSize() && this.getOleSize().getLast();
 			if (!range) return null;
 
 			var res = this._hitInRange(range, AscCommonExcel.selectionLineType.Resize, vr, x, y, offsetX, offsetY);
@@ -8729,7 +8754,7 @@
 				row: res.row,
 				isOleRange: true
 			} : null;
-		}
+		};
 
     WorksheetView.prototype._hitCursorFormulaOrChart = function (vr, x, y, offsetX, offsetY) {
         if (!this.oOtherRanges) {
@@ -9126,6 +9151,15 @@
 		if (dialogOtherRanges && canEdit && !isSelGraphicObject && this.model.getSelection().isSingleRange()) {
 			this._drawElements(function (_vr, _offsetX, _offsetY) {
 				return (null === (res = this._hitCursorSelectionRange(_vr, x, y, _offsetX, _offsetY)));
+			});
+			if (res) {
+				return res;
+			}
+		}
+
+		if (dialogOtherRanges && canEdit && !isSelGraphicObject) {
+			this._drawElements(function (_vr, _offsetX, _offsetY) {
+				return (null === (res = this._hitCursorPagesRange(_vr, x, y, _offsetX, _offsetY)));
 			});
 			if (res) {
 				return res;
@@ -12032,36 +12066,36 @@
 		return this._endMoveResizeRangeHandle(x, y, targetInfo, oleSize).delta;
 	};
 
-		WorksheetView.prototype.changeSelectionMoveResizeRangeHandle = function (x, y, targetInfo, editor) {
-        // Возвращаемый результат
-        if (!targetInfo) {
-            return null;
-        }
+	WorksheetView.prototype.changeSelectionMoveResizeRangeHandle = function (x, y, targetInfo, editor) {
+		// Возвращаемый результат
+		if (!targetInfo) {
+			return null;
+		}
 
-        if (this.getFormulaEditMode()) {
-            editor.cleanSelectRange();
-        }
+		if (this.getFormulaEditMode()) {
+			editor.cleanSelectRange();
+		}
 
-				var index = targetInfo.indexFormulaRange;
-				var initialRange = this.oOtherRanges.ranges[index];
+		var index = targetInfo.indexFormulaRange;
+		var initialRange = this.oOtherRanges.ranges[index];
 
-			if (null === this.startCellMoveResizeRange) {
-				return this._startMoveResizeRangeHandle(x, y, targetInfo, initialRange);
-			}
-            // очищаем выделение
-            this.overlayCtx.clear();
+		if (null === this.startCellMoveResizeRange) {
+			return this._startMoveResizeRangeHandle(x, y, targetInfo, initialRange);
+		}
+		// очищаем выделение
+		this.overlayCtx.clear();
 
-			if (!this.getFormulaEditMode()) {
-				return this.changeChartSelectionMoveResizeRangeHandle(x, y, targetInfo);
-			}
+		if (!this.getFormulaEditMode()) {
+			return this.changeChartSelectionMoveResizeRangeHandle(x, y, targetInfo);
+		}
 
-			var res = this._endMoveResizeRangeHandle(x, y, targetInfo, initialRange);
+		var res = this._endMoveResizeRangeHandle(x, y, targetInfo, initialRange);
 
-			if (res.range) {
-				editor.changeCellRange(res.range, true);
-				return res.delta;
-			}
-    };
+		if (res.range) {
+			editor.changeCellRange(res.range, true);
+			return res.delta;
+		}
+	};
 
     WorksheetView.prototype._cleanSelectionMoveRange = function () {
         // Перерисовываем и сбрасываем параметры
@@ -12070,6 +12104,17 @@
         this.startCellMoveRange = null;
         this._drawSelection();
     };
+
+	WorksheetView.prototype.changeSelectionResizeVisibleAreaHandle = function (x, y, targetInfo) {
+		if (!targetInfo) {
+			return;
+		}
+		var oleSize = targetInfo.range;
+		if (null === this.startCellMoveResizeRange) {
+			return this._startMoveResizeRangeHandle(x, y, targetInfo, oleSize);
+		}
+		return this._endMoveResizeRangeHandle(x, y, targetInfo, oleSize).delta;
+	};
 
     /* Функция для применения перемещения диапазона */
     WorksheetView.prototype.applyMoveRangeHandle = function (ctrlKey) {
@@ -24619,6 +24664,22 @@
 		}
 		return res;
 	};
+
+	WorksheetView.prototype._getPrintPagesModeRanges = function (oPrintPages) {
+		let printRanges = null;
+		oPrintPages = oPrintPages || (this.isPageBreakPreview() && this.pagesModeData && this.pagesModeData.printPages);
+		if (oPrintPages) {
+			printRanges = this.pagesModeData.printRanges;
+			if (!printRanges) {
+				let printPages = this.pagesModeData.printPages
+				let startRange = printPages[0].page.pageRange;
+				let endRange = printPages[printPages.length - 1].page.pageRange;
+				printRanges = [{range: new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2), start: 0, end: printPages.length}];
+			}
+		}
+		return printRanges;
+	};
+
 	WorksheetView.prototype.onChangePageSetupProps = function () {
 		this._cleanPagesModeData();
 		if (this.isPageBreakPreview()) {

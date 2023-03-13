@@ -444,6 +444,10 @@
 				  self._onMoveResizeRangeHandle.apply(self, arguments);
 			  }, "moveResizeRangeHandleDone": function () {
 				  self._onMoveResizeRangeHandleDone.apply(self, arguments);
+			  }, "resizeRangeHandle": function () {
+				  self._onResizeRangeHandle.apply(self, arguments);
+			  }, "resizeRangeHandleDone": function () {
+				  self._onResizeRangeHandleDone.apply(self, arguments);
 			  }, "editCell": function () {
 				  self._onEditCell.apply(self, arguments);
 			  }, "onPointerDownPlaceholder": function () {
@@ -1696,13 +1700,22 @@
 
   WorkbookView.prototype._onMoveResizeRangeHandle = function(x, y, target, callback) {
     var ws = this.getWorksheet();
-		var d;
+	var d;
 
-		if (this.Api.isEditVisibleAreaOleEditor && target.isOleRange) {
-			d = ws.changeSelectionMoveResizeVisibleAreaHandle(x, y, target);
-		} else {
-			d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
-		}
+	if (this.Api.isEditVisibleAreaOleEditor && target.isOleRange) {
+		d = ws.changeSelectionMoveResizeVisibleAreaHandle(x, y, target);
+	} else {
+		d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
+	}
+
+	asc_applyFunction(callback, d);
+  };
+
+  WorkbookView.prototype._onResizeRangeHandle = function(x, y, target, callback) {
+    var ws = this.getWorksheet();
+    var d;
+
+    d = ws.changeSelectionResizeVisibleAreaHandle(x, y, target);
 
     asc_applyFunction(callback, d);
   };
@@ -1714,6 +1727,11 @@
   WorkbookView.prototype._onMoveResizeRangeHandleDone = function() {
     var ws = this.getWorksheet();
     ws.applyMoveResizeRangeHandle();
+  };
+
+  WorkbookView.prototype._onResizeRangeHandleDone = function() {
+    var ws = this.getWorksheet();
+    ws.applyResizeRangeHandle();
   };
 
   // Frozen anchor
