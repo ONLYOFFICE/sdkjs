@@ -12360,37 +12360,13 @@
             oCopy.setMarker(this.marker.createDuplicate());
         }
     };
-    CRadarSeries.prototype.setCat = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_RadarSeries_SetCat, this.cat, pr));
-        this.cat = pr;
-        this.onChangeDataRefs();
-        this.setParentToChild(pr);
-    };
     CRadarSeries.prototype.setDLbls = function(pr) {
 	    if(pr) {
 		    if(pr.dLblPos !== null) {
 			    pr.setDLblPos(null);
 		    }
 	    }
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_RadarSeries_SetDLbls, this.dLbls, pr));
-        this.dLbls = pr;
-        this.setParentToChild(pr);
-    };
-    CRadarSeries.prototype.addDPt = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_RadarSeries_SetDPt, this.dPt.length, [pr], true));
-        this.dPt.push(pr);
-        this.setParentToChild(pr);
-    };
-    CRadarSeries.prototype.setMarker = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_RadarSeries_SetMarker, this.marker, pr));
-        this.marker = pr;
-        this.setParentToChild(pr);
-    };
-    CRadarSeries.prototype.setVal = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_RadarSeries_SetVal, this.val, pr));
-        this.val = pr;
-        this.onChangeDataRefs();
-        this.setParentToChild(pr);
+	    CLineSeries.prototype.setDLbls.call(this, pr);
     };
 	CRadarSeries.prototype.changeChartType = function(nType) {
 		let oSpPr = this.spPr;
