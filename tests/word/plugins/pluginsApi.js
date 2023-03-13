@@ -154,17 +154,17 @@ $(function () {
 		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentWord(), "laborum", "Move cursor left and check current word");
 		
 		AscTest.MoveCursorToParagraph(p, true);
-		assert.strictEqual(logicDocument.GetCurrentSentence(),
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(),
 			"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
 			"Check current sentence at the start of the paragraph");
 		
 		AscTest.MoveCursorToParagraph(p, false);
-		assert.strictEqual(logicDocument.GetCurrentSentence(),
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(),
 			"",
 			"Check current sentence at the end of the paragraph");
 		
 		AscTest.MoveCursorLeft(false, false, 5);
-		assert.strictEqual(logicDocument.GetCurrentSentence(),
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(),
 			"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
 			"Move cursor left(5) and check current sentence");
 	});

@@ -1164,7 +1164,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias GetCurrentWord
-	 * @since 7.3.3
+	 * @since 7.3.4
 	 * @example
 	 * window.Asc.plugin.executeMethod("GetCurrentWord");
 	 */
@@ -1175,6 +1175,23 @@
 			return "";
 		
 		return logicDocument.GetCurrentWord();
+	};
+	/**
+	 * Get the current sentence
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias GetCurrentWord
+	 * @since 7.3.4
+	 * @example
+	 * window.Asc.plugin.executeMethod("GetCurrentWord");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_GetCurrentSentence"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return "";
+		
+		return logicDocument.GetCurrentSentence();
 	};
 
 	function private_ReadContentControlCommonPr(commonPr)
