@@ -11603,8 +11603,13 @@
 		if (oldValue !== val) {
 			sheetView.view = val;
 			if (addToHistory) {
+				History.Create_NewPoint();
+				History.StartTransaction();
+
 				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetSheetViewType,
 					this.getId(), null, new UndoRedoData_FromTo(oldValue, val));
+
+				History.EndTransaction();
 			}
 			return true;
 		}

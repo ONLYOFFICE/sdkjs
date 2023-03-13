@@ -24634,7 +24634,7 @@
 	};
 
 	WorksheetView.prototype.setSheetViewType = function (val) {
-		if (this.model && this.model.setSheetViewType(val)) {
+		if (this.model && this.model.setSheetViewType(val, true)) {
 			this._cleanPagesModeData();
 			this.draw();
 		}

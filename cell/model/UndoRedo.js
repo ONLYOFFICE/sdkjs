@@ -3310,7 +3310,10 @@ function (window, undefined) {
 			/*if (this.wb.bCollaborativeChanges) {
 				ws.setTopLeftCell(Data.to ? new Asc.Range(Data.to.c1, Data.to.r1, Data.to.c2, Data.to.r2) : null);
 			}*/
-			ws.setSheetViewType(bUndo ? Data.from : Data.to);
+			//except - apply changes in other user
+			if (window["NATIVE_EDITOR_ENJINE"] || !wb.oApi.isDocumentLoadComplete || !wb.bCollaborativeChanges) {
+				ws.setSheetViewType(bUndo ? Data.from : Data.to);
+			}
 		}
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {
