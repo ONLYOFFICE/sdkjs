@@ -12785,12 +12785,12 @@ ParaRun.prototype.UpdateBookmarks = function(oManager)
 			this.Content[nIndex].UpdateBookmarks(oManager);
 	}
 };
-ParaRun.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos)
+ParaRun.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
 	let nStartPos = oStartPos && oStartPos.GetDepth() >= nDepth ? oStartPos.Get(nDepth) : 0;
 	let nEndPos   = oEndPos && oEndPos.GetDepth() >= nDepth ? oEndPos.Get(nDepth) : this.Content.length;
 
-	return fCheck(this, nStartPos, nEndPos, oCurrentPos);
+	return fCheck(this, nStartPos, nEndPos, oCurrentPos, isForward);
 };
 ParaRun.prototype.ProcessComplexFields = function(oComplexFields)
 {

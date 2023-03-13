@@ -17551,25 +17551,46 @@ Paragraph.prototype.RemoveElement = function(oElement)
  * @param {AscWord.CParagraphContentPos} oStartPos
  * @param {AscWord.CParagraphContentPos} oEndPos
  * @param {boolean} [isCurrentPos=false]
+ * @param {boolean} [isForward=true]
  * @returns {boolean}
  */
-Paragraph.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, isCurrentPos)
+Paragraph.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, isCurrentPos, isForward)
 {
+	if (undefined === isForward || null === isForward)
+		isForward = true;
+	
 	let nStartPos = oStartPos ? oStartPos.Get(0) : 0;
 	let nEndPos   = oEndPos ? oEndPos.Get(0) : this.Content.length - 1;
 
 	let oCurrentPos = isCurrentPos ? new AscWord.CParagraphContentPos() : null;
-
-	for (var nPos = nStartPos; nPos <= nEndPos; ++nPos)
+	
+	let self = this;
+	function RunContent(pos)
 	{
-		let _s = oStartPos && nPos === nStartPos ? oStartPos : null;
-		let _e = oEndPos && nPos === nEndPos ? oEndPos : null;
-
+		let _s = oStartPos && pos === nStartPos ? oStartPos : null;
+		let _e = oEndPos && pos === nEndPos ? oEndPos : null;
+		
 		if (oCurrentPos)
-			oCurrentPos.Update(nPos, 0);
+			oCurrentPos.Update(pos, 0);
+		
+		return !!(self.Content[pos].CheckRunContent(fCheck, _s, _e, 1, oCurrentPos, isForward));
+	}
 
-		if (this.Content[nPos].CheckRunContent(fCheck, _s, _e, 1, oCurrentPos))
-			return true;
+	if (isForward)
+	{
+		for (let pos = nStartPos; pos <= nEndPos; ++pos)
+		{
+			if (RunContent(pos))
+				return true;
+		}
+	}
+	else
+	{
+		for (let pos = nEndPos; pos >= nStartPos; --pos)
+		{
+			if (RunContent(pos))
+				return true;
+		}
 	}
 
 	return false;
