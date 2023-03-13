@@ -146,19 +146,33 @@
 		else
 			logicDocument.OnKeyPress(global_mouseEvent);
 	}
-	function MoveCursorLeft(isShift, isCtrl)
+	function MoveCursorLeft(isShift, isCtrl, count)
 	{
 		if (!logicDocument)
 			return;
-
-		logicDocument.MoveCursorLeft(!!isShift, !!isCtrl);
+		
+		if (!count)
+			count = 1;
+		
+		while (count)
+		{
+			logicDocument.MoveCursorLeft(!!isShift, !!isCtrl);
+			--count;
+		}
 	}
-	function MoveCursorRight(isShift, isCtrl)
+	function MoveCursorRight(isShift, isCtrl, count)
 	{
 		if (!logicDocument)
 			return;
 
-		logicDocument.MoveCursorRight(!!isShift, !!isCtrl, false);
+		if (!count)
+			count = 1;
+
+		while (count)
+		{
+			logicDocument.MoveCursorRight(!!isShift, !!isCtrl, false);
+			--count;
+		}
 	}
 	function ClickMouseButton(x, y, page, isRight, count)
 	{
