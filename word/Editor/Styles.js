@@ -7640,6 +7640,14 @@ CStyle.prototype.IsTableStyle = function()
 {
 	return (this.Type === styletype_Table);
 };
+/**
+ * Задана ли в стиле нумерация
+ * @returns {boolean}
+ */
+CStyle.prototype.HaveNumbering = function()
+{
+	return (!!this.ParaPr.NumPr);
+};
 
 CStyle.prototype.wholeToTablePr = function() {
 

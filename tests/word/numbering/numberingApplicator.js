@@ -64,6 +64,17 @@ $(function ()
 			assert.deepEqual(numPr, style.ParaPr.NumPr, "Check numbering in heading style for heading " + (iLvl + 1));
 		}
 		
+		function CheckNoNumbering(iLvl)
+		{
+			let p = logicDocument.GetElement(iLvl);
+			assert.strictEqual(p.HaveNumbering(), false, "Check numbering in heading " + (iLvl + 1) + " after its removal");
+			let headingStyleId = styleManager.GetDefaultHeading(iLvl);
+			let pStyleId = p.GetParagraphStyle();
+			assert.strictEqual(headingStyleId, pStyleId, "Check style remaining style in paragraph " + (iLvl + 1));
+			let style = styleManager.Get(pStyleId);
+			assert.strictEqual(style.HaveNumbering(), true, "Check numbering in heading" + (iLvl + 1) + " style");
+		}
+		
 		AscTest.ClearDocument();
 		
 		for (let iHead = 0; iHead < 9; ++iHead)
@@ -92,6 +103,27 @@ $(function ()
 		CheckHeading(7, "a.");
 		CheckHeading(8, "i.");
 		
+		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(2, 7));
+		AscTest.Recalculate();
+		
+		CheckHeading(0, "1.");
+		CheckHeading(1, "1.1.");
+		CheckHeading(2, "1.1.1.");
+		CheckHeading(3, "1.1.1.1.");
+		CheckHeading(4, "1.1.1.1.1.");
+		CheckHeading(5, "1.1.1.1.1.1.");
+		CheckHeading(6, "1.1.1.1.1.1.1.");
+		CheckHeading(7, "1.1.1.1.1.1.1.1.");
+		CheckHeading(8, "1.1.1.1.1.1.1.1.1.");
+		
+		// Cancel numbering (heading still have numbering in it's style)
+		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(2, -1));
+		AscTest.Recalculate();
+		
+		for (let iLvl = 0; iLvl < 9; ++iLvl)
+			CheckNoNumbering(iLvl);
+		
+		// Re-apply numbering to list with canceled numbering
 		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(2, 7));
 		AscTest.Recalculate();
 		
