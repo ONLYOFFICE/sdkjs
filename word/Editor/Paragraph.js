@@ -17450,6 +17450,119 @@ Paragraph.prototype.private_GetCurrentWordParaPos = function()
 	};
 };
 /**
+ * Получаем текущее слово (или часть текущего слова)
+ * @param nDirection {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
+ * @returns {string}
+ */
+Paragraph.prototype.GetCurrentSentence = function(nDirection)
+{
+	if (this.IsSelectionUse())
+		return "";
+	
+	var oInfo = this.private_GetCurrentSentenceParaPos();
+	if (!oInfo)
+		return "";
+	
+	let state = this.SaveSelectionState();
+	
+	let startPos, endPos;
+	if (!nDirection)
+	{
+		startPos = oInfo.Start;
+		endPos   = oInfo.End;
+	}
+	else if (nDirection < 0)
+	{
+		startPos = oInfo.Start;
+		endPos   = this.Get_ParaContentPos(false, false);
+	}
+	else
+	{
+		startPos = this.Get_ParaContentPos(false, false);
+		endPos   = oInfo.End;
+	}
+	
+	this.Selection.Use = true;
+	this.Set_SelectionContentPos(startPos, endPos);
+	
+	let text = this.GetSelectedText(true, {Numbering : false});
+	
+	this.LoadSelectionState(state);
+	
+	return text;
+};
+Paragraph.prototype.private_GetCurrentSentenceParaPos = function()
+{
+	// TODO: Сделать обработку ComplexFields
+	
+	let lItem = this.GetPrevRunElement();
+	let rItem = this.GetNextRunElement();
+	
+	if (!lItem && !rItem)
+		return null;
+	
+	let startPos = null;
+	let endPos   = null;
+	
+	let contentPos = this.Get_ParaContentPos(false, false);
+	
+	let searchPos = new CParagraphSearchPos();
+	searchPos.InitComplexFields(this.GetComplexFieldsByPos(contentPos, true));
+	this.CheckRunContent(function(run, startPosInRun, endPosInRun, paraPos)
+	{
+		for (let pos = endPosInRun - 1; pos >= startPosInRun; --pos)
+		{
+			if (run.Content[pos].IsSentenceEndMark())
+			{
+				paraPos.Update(pos + 1, paraPos.GetDepth() + 1);
+				startPos = paraPos.Copy();
+				return true;
+			}
+		}
+	}, null, contentPos, true, false);
+	
+	if (!startPos)
+		startPos = this.GetStartPos();
+	
+	// Пропускаем все идущие вначале нетекстовые элементы
+	this.CheckRunContent(function(run, startPosInRun, endPosInRun, paraPos)
+	{
+		for (let pos = startPosInRun; pos < endPosInRun; ++pos)
+		{
+			if (run.Content[pos].IsText())
+			{
+				paraPos.Update(pos, paraPos.GetDepth() + 1);
+				startPos = paraPos.Copy();
+				return true;
+			}
+		}
+	}, startPos, contentPos, true, true);
+	
+	this.CheckRunContent(function(run, startPosInRun, endPosInRun, paraPos)
+	{
+		for (let pos = startPosInRun; pos < endPosInRun; ++pos)
+		{
+			if (run.Content[pos].IsSentenceEndMark())
+			{
+				paraPos.Update(pos + 1, paraPos.GetDepth() + 1);
+				endPos = paraPos.Copy();
+				return true;
+			}
+		}
+	}, contentPos, null, true, true);
+	
+	if (!endPos)
+		endPos = this.GetEndPos();
+	
+	if (!startPos || !endPos || startPos.IsEqual(endPos))
+		return null;
+	
+	return {
+		Start : startPos,
+		End   : endPos
+	};
+};
+/**
  * Добавляем метки переноса текста во время рецензирования
  * @param {boolean} isFrom
  * @param {boolean} isStart

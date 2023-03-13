@@ -173,6 +173,14 @@
 		return false;
 	};
 	/**
+	 * Проверяем является ли элемент символом конца предложения
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsSentenceEndMark = function()
+	{
+		return (this.IsDot() ||this.IsQuestionMark() || this.IsExclamationMark());
+	};
+	/**
 	 * Является ли данный элемент символом дефиса
 	 * @returns {boolean}
 	 */

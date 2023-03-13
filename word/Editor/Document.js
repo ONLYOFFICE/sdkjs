@@ -11495,6 +11495,14 @@ CDocument.prototype.ReplaceCurrentWord = function(nDirection, sReplace)
 
 	return bResult;
 };
+CDocument.prototype.GetCurrentSentence = function()
+{
+	let paragraph = this.GetCurrentParagraph();
+	if (!paragraph)
+		return "";
+	
+	return paragraph.GetCurrentSentence();
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с таблицами
 //----------------------------------------------------------------------------------------------------------------------

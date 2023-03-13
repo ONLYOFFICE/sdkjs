@@ -12790,7 +12790,7 @@ ParaRun.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth,
 	let nStartPos = oStartPos && oStartPos.GetDepth() >= nDepth ? oStartPos.Get(nDepth) : 0;
 	let nEndPos   = oEndPos && oEndPos.GetDepth() >= nDepth ? oEndPos.Get(nDepth) : this.Content.length;
 
-	return fCheck(this, nStartPos, nEndPos, oCurrentPos, isForward);
+	return fCheck(this, nStartPos, nEndPos, oCurrentPos);
 };
 ParaRun.prototype.ProcessComplexFields = function(oComplexFields)
 {
