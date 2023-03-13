@@ -570,30 +570,3 @@ CChartSpace.prototype.Refresh_RecalcData2 = function(pageIndex, object)
         }
     }
 };
-function CreateUnifillSolidFillSchemeColor(colorId, tintOrShade)
-{
-    var unifill = new AscFormat.CUniFill();
-    unifill.setFill(new AscFormat.CSolidFill());
-    unifill.fill.setColor(new AscFormat.CUniColor());
-    unifill.fill.color.setColor(new AscFormat.CSchemeColor());
-    unifill.fill.color.color.setId(colorId);
-    return AscFormat.CreateUniFillSolidFillWidthTintOrShade(unifill, tintOrShade);
-}
-
-function CreateNoFillLine()
-{
-    var ret = new AscFormat.CLn();
-    ret.setFill(AscFormat.CreateNoFillUniFill());
-    return ret;
-}
-
-function CreateNoFillUniFill()
-{
-    var ret = new AscFormat.CUniFill();
-    ret.setFill(new AscFormat.CNoFill());
-    return ret;
-}
-
-window['AscFormat'].CreateUnifillSolidFillSchemeColor = CreateUnifillSolidFillSchemeColor;
-window['AscFormat'].CreateNoFillLine = CreateNoFillLine;
-window['AscFormat'].CreateNoFillUniFill = CreateNoFillUniFill;

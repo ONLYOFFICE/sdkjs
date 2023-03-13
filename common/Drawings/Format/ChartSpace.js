@@ -3099,81 +3099,6 @@ function(window, undefined) {
 		}
 		this.spPr.setFill(this.spPr.Fill ? this.spPr.Fill.createDuplicate() : this.spPr.Fill);
 	};
-	CChartSpace.prototype.getTypeSubType = function () {
-		var type = null, subtype = null;
-		if (this.chart && this.chart.plotArea && this.chart.plotArea.charts[0]) {
-			switch (this.chart.plotArea.charts[0].getObjectType()) {
-				case AscDFH.historyitem_type_LineChart: {
-					type = c_oAscChartType.line;
-					break;
-				}
-				case AscDFH.historyitem_type_AreaChart: {
-					type = c_oAscChartType.area;
-					break;
-				}
-				case AscDFH.historyitem_type_DoughnutChart: {
-					type = c_oAscChartType.doughnut;
-					break;
-				}
-				case AscDFH.historyitem_type_PieChart: {
-					type = c_oAscChartType.pie;
-					break;
-				}
-				case AscDFH.historyitem_type_ScatterChart: {
-					type = c_oAscChartType.scatter;
-					break;
-				}
-				case AscDFH.historyitem_type_StockChart: {
-					type = c_oAscChartType.stock;
-					break;
-				}
-				case AscDFH.historyitem_type_BarChart: {
-					if (this.chart.plotArea.charts[0].barDir === AscFormat.BAR_DIR_BAR)
-						type = c_oAscChartType.hbar;
-					else
-						type = c_oAscChartType.bar;
-					break;
-				}
-			}
-
-			if (AscFormat.isRealNumber(this.chart.plotArea.charts[0].grouping)) {
-				if (!this.chart.plotArea.charts[0].getObjectType() === AscDFH.historyitem_type_BarChart) {
-					switch (this.chart.plotArea.charts[0].grouping) {
-						case AscFormat.GROUPING_STANDARD: {
-							subtype = c_oAscChartSubType.normal;
-							break;
-						}
-						case AscFormat.GROUPING_STACKED: {
-							subtype = c_oAscChartSubType.stacked;
-							break;
-						}
-						case AscFormat.GROUPING_PERCENT_STACKED: {
-							subtype = c_oAscChartSubType.stackedPer;
-							break;
-						}
-					}
-				} else {
-					switch (this.chart.plotArea.charts[0].grouping) {
-						case AscFormat.BAR_GROUPING_CLUSTERED:
-						case AscFormat.BAR_GROUPING_STANDARD: {
-							subtype = c_oAscChartSubType.normal;
-							break;
-						}
-						case AscFormat.BAR_GROUPING_STACKED: {
-							subtype = c_oAscChartSubType.stacked;
-							break;
-						}
-						case AscFormat.BAR_GROUPING_PERCENT_STACKED: {
-							subtype = c_oAscChartSubType.stackedPer;
-							break;
-						}
-					}
-				}
-			}
-
-		}
-		return {type: type, subtype: subtype};
-	};
 	CChartSpace.prototype.remove = function () {
 		if (this.selection.title) {
 			if (this.selection.title.parent) {
@@ -9614,7 +9539,7 @@ function(window, undefined) {
 			series.setOrder(i);
 			series.setMarker(new AscFormat.CMarker());
 			if (bMarker) {
-				series.marker.setSymbol(AscFormat.MARKER_SYMBOL_TYPE[i % 9]);
+				series.marker.setSymbol(GetTypeMarkerByIndex(i));
 			} else {
 				series.marker.setSymbol(AscFormat.SYMBOL_NONE);
 			}
@@ -10396,7 +10321,7 @@ function(window, undefined) {
 			series.setOrder(i);
 			series.setMarker(new AscFormat.CMarker());
 			if (bMarker) {
-				series.marker.setSymbol(AscFormat.MARKER_SYMBOL_TYPE[i % 9]);
+				series.marker.setSymbol(GetTypeMarkerByIndex(i));
 			} else {
 				series.marker.setSymbol(AscFormat.SYMBOL_NONE);
 			}
@@ -10901,4 +10826,5 @@ function(window, undefined) {
 	window['AscFormat'].CreateTypedBarChart = CreateTypedBarChart;
 	window['AscFormat'].CreateTypedLineChart = CreateTypedLineChart;
 	window['AscFormat'].CreateSurfaceAxes = CreateSurfaceAxes;
+	window['AscFormat'].GetTypeMarkerByIndex = GetTypeMarkerByIndex;
 })(window);
