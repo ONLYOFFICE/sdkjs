@@ -129,6 +129,8 @@
     var kCurSEResize = "se-resize";
     var kCurNEResize = "ne-resize";
     var kCurAutoFilter = "pointer";
+    var kCurEWResize = "ew-resize";
+	var kCurNSResize = "ns-resize";
 
 
     var kCurFormatPainterExcel = "se-formatpainter";
@@ -8701,22 +8703,22 @@
 				if (hEps <= y - y1 && y - y2 <= hEps) {
 					if (range.c1 === oFormulaRangeIn.c1 && Math.abs(x - x1) <= wEps) {
 						//left side
-						cursor = "ew-resize";
+						cursor = kCurEWResize;
 						col = range.c1;
 					} else if (range.c2 === oFormulaRangeIn.c2 && Math.abs(x - x2) <= wEps) {
 						//right side
-						cursor = "ew-resize";
+						cursor = kCurEWResize;
 						col = range.c2;
 					}
 				}
 				if (!cursor && wEps <= x - x1 && x - x2 <= wEps) {
 					if (range.r1 === oFormulaRangeIn.r1 && Math.abs(y - y1) <= hEps) {
 						//top side
-						cursor = "ns-resize";
+						cursor = kCurNSResize;
 						row = range.r1;
 					} else if (range.r2 === oFormulaRangeIn.r2 && Math.abs(y - y2) <= hEps) {
 						//bottom side
-						cursor = "ns-resize";
+						cursor = kCurNSResize;
 						row = range.r2;
 					}
 				}
@@ -8754,8 +8756,7 @@
 			if (printRanges) {
 				for (let i = 0; i < printRanges.length; i++) {
 					res = this._hitInRange(printRanges[i].range,
-						AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.ActiveCell |
-						AscCommonExcel.selectionLineType.Promote, vr, x, y, offsetX, offsetY, true);
+						AscCommonExcel.selectionLineType.Resize, vr, x, y, offsetX, offsetY, true);
 					if (res) {
 						_range = printRanges[i].range;
 						break;
@@ -8766,8 +8767,8 @@
 		return res ? {
 			cursor: res.cursor,
 			target: c_oTargetType.ResizeRange,
-			col: -1,
-			row: -1,
+			col: res.col,
+			row: res.row,
 			range: _range
 		} : null;
 	};
@@ -12144,16 +12145,63 @@
 
 
 		this.overlayCtx.clear();
-		if (targetInfo.cursor === "ew-resize" || targetInfo.cursor === "ns-resize") {
+
+		if (targetInfo.cursor === kCurEWResize) {
+			if (this.startCellResizeRange.c1 === targetInfo.col) {
+				//left border
+				ar.c1 = Math.min(colByX, this.startCellResizeRange.c2);
+			} else if (this.startCellResizeRange.c2 === targetInfo.col) {
+				//right border
+				ar.c2 = Math.max(colByX, this.startCellResizeRange.c1);
+			}
+		} else if (targetInfo.cursor === kCurNSResize) {
+			if (this.startCellResizeRange.r1 === targetInfo.row) {
+				//top border
+				ar.r1 = Math.min(rowByY, this.startCellResizeRange.r2);
+			} else if (this.startCellResizeRange.r2 === targetInfo.row) {
+				//bottom border
+				ar.r2 = Math.max(rowByY, this.startCellResizeRange.r1);
+			}
+		} else if (targetInfo.cursor === kCurSEResize) {
+			//left up / right down
+			if (this.startCellResizeRange.r1 === targetInfo.row) {
+				//right down
+				ar.c2 = Math.max(colByX, this.startCellResizeRange.c1);
+				ar.r2 = Math.max(rowByY, this.startCellResizeRange.r1);
+			} else if (this.startCellResizeRange.r2 === targetInfo.row) {
+				//left up
+				ar.r1 = Math.min(rowByY, this.startCellResizeRange.r2);
+				ar.c1 = Math.min(colByX, this.startCellResizeRange.c2);
+			}
+		} else if (targetInfo.cursor === kCurNEResize) {
+			//right up / left down
+			if (this.startCellResizeRange.r1 === targetInfo.row) {
+				//left down
+				ar.r2 = Math.max(rowByY, this.startCellResizeRange.r1);
+				ar.c1 = Math.min(colByX, this.startCellResizeRange.c2);
+
+			} else if (this.startCellResizeRange.r2 === targetInfo.row) {
+				//right up
+				ar.r1 = Math.min(rowByY, this.startCellResizeRange.r2);
+				ar.c2 = Math.max(colByX, this.startCellResizeRange.c1);
+			}
+
+
+		} else if (true || targetInfo.cursor === kCurEWResize || targetInfo.cursor === kCurNSResize) {
+
+			if (targetInfo) {
+
+			}
+
 			if (colByX < this.startCellResizeRange2.c1) {
-				//ar.c2 = this.startCellResizeRange2.c1;
-				//ar.c1 = colByX;
-			} else if (colByX > this.startCellResizeRange2.c2) {
-				//ar.c1 = this.startCellResizeRange2.c1;
+				ar.c2 = this.startCellMoveResizeRange2.c1;
+				ar.c1 = colByX;
+			} else if (colByX > this.startCellResizeRange2.c1) {
+				ar.c1 = this.startCellResizeRange2.c1;
 				ar.c2 = colByX;
 			} else {
-				//ar.c1 = this.startCellResizeRange2.c1;
-				//ar.c2 = this.startCellResizeRange2.c1
+				ar.c1 = this.startCellResizeRange2.c1;
+				ar.c2 = this.startCellResizeRange2.c1
 			}
 
 			/*if (rowByY < this.startCellResizeRange2.r1) {
