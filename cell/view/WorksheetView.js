@@ -451,7 +451,6 @@
 
 
 		this.startCellResizeRange = null;
-		this.startCellResizeRange2 = null;
 
         // Координаты ячейки начала перемещения диапазона
         this.startCellMoveRange = null;
@@ -510,7 +509,6 @@
 		this.pagesModeData = null;
 		this.printPagesSelectionRange = null;
 		this.startCellResizeRange = null;
-		this.startCellResizeRange2 = null;
 
         this._init();
 
@@ -12116,8 +12114,6 @@
 
 		if ((targetInfo.cursor === kCurNEResize || targetInfo.cursor === kCurSEResize)) {
 			this.startCellResizeRange = ar.clone(true);
-			this.startCellResizeRange2 =
-				new asc_Range(targetInfo.col, targetInfo.row, targetInfo.col, targetInfo.row, true);
 		} else {
 			this.startCellResizeRange = ar.clone(true);
 			if (colByX < ar.c1) {
@@ -12130,7 +12126,6 @@
 			} else if (rowByY > ar.r2) {
 				rowByY = ar.r2;
 			}
-			this.startCellResizeRange2 = new asc_Range(colByX, rowByY, colByX, rowByY);
 		}
 		return null;
 	};
@@ -20931,7 +20926,7 @@
 									break;
 								}
 							}
-							newRanges.push(isFind ? isFind : areaRefsArr[i])
+							newRanges.push(isFind ? isFind : areaRefsArr[i].bbox);
 						}
 						if (isChanged) {
 							oldScope = oldDefName ? oldDefName.asc_getScope() : t.model.index;
