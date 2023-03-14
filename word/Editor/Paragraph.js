@@ -17494,6 +17494,7 @@ Paragraph.prototype.GetCurrentSentence = function(nDirection)
 Paragraph.prototype.private_GetCurrentSentenceParaPos = function()
 {
 	// TODO: Сделать обработку ComplexFields
+	// TODO: Разобраться с рецензированным текстом, как правильно его учитывать
 	
 	let lItem = this.GetPrevRunElement();
 	let rItem = this.GetNextRunElement();
@@ -17524,20 +17525,6 @@ Paragraph.prototype.private_GetCurrentSentenceParaPos = function()
 	if (!startPos)
 		startPos = this.GetStartPos();
 	
-	// Пропускаем все идущие вначале нетекстовые элементы
-	this.CheckRunContent(function(run, startPosInRun, endPosInRun, paraPos)
-	{
-		for (let pos = startPosInRun; pos < endPosInRun; ++pos)
-		{
-			if (run.Content[pos].IsText())
-			{
-				paraPos.Update(pos, paraPos.GetDepth() + 1);
-				startPos = paraPos.Copy();
-				return true;
-			}
-		}
-	}, startPos, contentPos, true, true);
-	
 	this.CheckRunContent(function(run, startPosInRun, endPosInRun, paraPos)
 	{
 		for (let pos = startPosInRun; pos < endPosInRun; ++pos)
@@ -17553,6 +17540,20 @@ Paragraph.prototype.private_GetCurrentSentenceParaPos = function()
 	
 	if (!endPos)
 		endPos = this.GetEndPos();
+	
+	// Пропускаем все идущие вначале нетекстовые элементы
+	this.CheckRunContent(function(run, startPosInRun, endPosInRun, paraPos)
+	{
+		for (let pos = startPosInRun; pos < endPosInRun; ++pos)
+		{
+			if (run.Content[pos].IsText())
+			{
+				paraPos.Update(pos, paraPos.GetDepth() + 1);
+				startPos = paraPos.Copy();
+				return true;
+			}
+		}
+	}, startPos, endPos, true, true);
 	
 	if (!startPos || !endPos || startPos.IsEqual(endPos))
 		return null;
