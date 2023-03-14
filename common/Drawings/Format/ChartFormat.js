@@ -8036,6 +8036,7 @@
         ret.putLabel(this.getLabelSetting());
         ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this));
         ret.putAuto(this.auto !== false);
+	    ret.putIsRadarAxis(this.isRadarAxis());
         return ret;
     };
     CCatAx.prototype.setMenuProps = function(props) {
@@ -8539,6 +8540,7 @@
         ret.putGridlines(this.getGridlinesSetting());
         ret.putLabel(this.getLabelSetting());
         ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this));
+	    ret.putIsRadarAxis(this.isRadarAxis());
         return ret;
     };
     CValAx.prototype.setMenuProps = function(props) {

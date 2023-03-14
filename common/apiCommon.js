@@ -487,6 +487,7 @@
 		this.label = null;
 		this.gridlines = null;
 		this.numFmt = null;
+		this.isRadar = false;
 	}
 	asc_ValAxisSettings.prototype.isEqual = function(oPr){
 		if(!oPr){
@@ -874,6 +875,12 @@
 
 		_stream["WriteByte"](255);
 	};
+	asc_ValAxisSettings.prototype.isRadarAxis = function() {
+		return this.isRadar;
+	};
+	asc_ValAxisSettings.prototype.putIsRadarAxis = function(v) {
+		this.isRadar = v;
+	};
 
 	/** @constructor */
 	function asc_CatAxisSettings() {
@@ -896,6 +903,7 @@
 		this.gridlines = null;
 		this.numFmt = null;
 		this.auto = false;
+		this.isRadar = false;
 	}
 	asc_CatAxisSettings.prototype.isEqual = function(oPr){
 		if(!oPr){
@@ -1254,6 +1262,12 @@
 		}
 
 		_stream["WriteByte"](255);
+	};
+	asc_CatAxisSettings.prototype.isRadarAxis = function() {
+		return this.isRadar;
+	};
+	asc_CatAxisSettings.prototype.putIsRadarAxis = function(v) {
+		this.isRadar = v;
 	};
 
 	/** @constructor */
@@ -6025,6 +6039,7 @@
 	prot["getGridlines"] = prot.getGridlines;
 	prot["putNumFmt"] = prot.putNumFmt;
 	prot["getNumFmt"] = prot.getNumFmt;
+	prot["isRadarAxis"] = prot.isRadarAxis;
 
 	window["AscCommon"].asc_CatAxisSettings = asc_CatAxisSettings;
 	prot = asc_CatAxisSettings.prototype;
@@ -6067,6 +6082,7 @@
 	prot["getNumFmt"] = prot.getNumFmt;
 	prot["getAuto"] = prot.getAuto;
 	prot["putAuto"] = prot.putAuto;
+	prot["isRadarAxis"] = prot.isRadarAxis;
 
 	window["Asc"]["asc_ChartSettings"] = window["Asc"].asc_ChartSettings = asc_ChartSettings;
 	prot = asc_ChartSettings.prototype;
