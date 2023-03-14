@@ -426,7 +426,8 @@ var c_oAscPopUpSelectorType = {
   var c_oAscChangePrintAreaType = {
       set: 0,
       clear: 1,
-      add: 2
+      add: 2,
+      change: 3
   };
 
   //поля header/footer
