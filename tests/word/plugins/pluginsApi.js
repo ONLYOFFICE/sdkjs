@@ -173,7 +173,21 @@ $(function () {
 		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(),
 			"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
 			"Move to the start of the second sentence and check it");
-	});
+		
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+		AscTest.EnterText("Test text");
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 2);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentWord(), "Test", "Add new paragraph and check current word");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "Test text", "Check current sentence");
+		
+		logicDocument.AddFieldWithInstruction("PAGE");
+		AscTest.Recalculate();
+		AscTest.MoveCursorToParagraph(p, true);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentWord(), "Te", "Add hidden complex field in the middle of word 'Test' and check current word");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "Te1st text", "Check current sentence");
+	})
 	
 	
 });

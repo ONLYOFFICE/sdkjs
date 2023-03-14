@@ -11495,13 +11495,18 @@ CDocument.prototype.ReplaceCurrentWord = function(nDirection, sReplace)
 
 	return bResult;
 };
-CDocument.prototype.GetCurrentSentence = function()
+/**
+ * Получаем текущее слово (или часть текущего слова)
+ * @param nDirection -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
+ * @returns {string}
+ */
+CDocument.prototype.GetCurrentSentence = function(nDirection)
 {
 	let paragraph = this.GetCurrentParagraph();
 	if (!paragraph)
 		return "";
 	
-	return paragraph.GetCurrentSentence();
+	return paragraph.GetCurrentSentence(nDirection);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с таблицами

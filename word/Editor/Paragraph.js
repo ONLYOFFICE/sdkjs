@@ -17493,15 +17493,7 @@ Paragraph.prototype.GetCurrentSentence = function(nDirection)
 };
 Paragraph.prototype.private_GetCurrentSentenceParaPos = function()
 {
-	// TODO: Сделать обработку ComplexFields
 	// TODO: Разобраться с рецензированным текстом, как правильно его учитывать
-	
-	let lItem = this.GetPrevRunElement();
-	let rItem = this.GetNextRunElement();
-	
-	if (!lItem && !rItem)
-		return null;
-	
 	let startPos = null;
 	let endPos   = null;
 	
