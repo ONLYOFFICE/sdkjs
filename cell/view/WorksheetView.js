@@ -12392,7 +12392,7 @@
 	};
 
 
-	WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo) {
+    WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo) {
 		//opt_wsTo - for test reasons only
         var t = this;
 		var wsTo = opt_wsTo ? opt_wsTo : this;
