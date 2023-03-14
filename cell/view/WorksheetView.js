@@ -12209,15 +12209,15 @@
 		return {range: ar, delta: d};
 	};
 	
-	WorksheetView.prototype.changeSelectionMoveResizeRangeHandle = function (x, y, targetInfo, editor) {
+		WorksheetView.prototype.changeSelectionMoveResizeRangeHandle = function (x, y, targetInfo, editor) {
 		// Возвращаемый результат
-		if (!targetInfo) {
-			return null;
-		}
+        if (!targetInfo) {
+            return null;
+        }
 
-		if (this.getFormulaEditMode()) {
-			editor.cleanSelectRange();
-		}
+        if (this.getFormulaEditMode()) {
+            editor.cleanSelectRange();
+        }
 
 		var index = targetInfo.indexFormulaRange;
 		var initialRange = this.oOtherRanges.ranges[index];
