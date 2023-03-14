@@ -506,6 +506,9 @@
 		this.defaultColWidthPxForPrint = null;
 
 		this.pagesModeData = null;
+		this.printPagesSelectionRange = null;
+		this.startCellResizeRange = null;
+		this.startCellResizeRange2 = null;
 
         this._init();
 
@@ -6208,6 +6211,10 @@
 		    }
 	    }
 
+		if(this.isPageBreakPreview() && this.printPagesSelectionRange) {
+			this._drawPrintPagesSelectionRange();
+		}
+
 		if(this.viewPrintLines && !this.isPageBreakPreview()) {
 			this._drawPrintArea();
 		}
@@ -8656,7 +8663,7 @@
         var wEps = AscCommon.global_mouseEvent.KoefPixToMM, hEps = AscCommon.global_mouseEvent.KoefPixToMM;
         return Math.abs(x2 - x1) <= wEps + 2 && Math.abs(y2 - y1) <= hEps + 2;
     };
-    WorksheetView.prototype._hitInRange = function (range, rangeType, vr, x, y, offsetX, offsetY) {
+    WorksheetView.prototype._hitInRange = function (range, rangeType, vr, x, y, offsetX, offsetY, test) {
         var wEps = 2 * AscCommon.global_mouseEvent.KoefPixToMM, hEps = 2 * AscCommon.global_mouseEvent.KoefPixToMM;
         var cursor, x1, x2, y1, y2, isResize;
         var col = -1, row = -1;
@@ -8690,7 +8697,30 @@
                 cursor = kCurSEResize;
                 col = range.c1;
                 row = range.r1;
-            } else if ((((range.c1 === oFormulaRangeIn.c1 && Math.abs(x - x1) <= wEps) ||
+            } else if (test) {
+				if (hEps <= y - y1 && y - y2 <= hEps) {
+					if (range.c1 === oFormulaRangeIn.c1 && Math.abs(x - x1) <= wEps) {
+						//left side
+						cursor = "ew-resize";
+						col = range.c1;
+					} else if (range.c2 === oFormulaRangeIn.c2 && Math.abs(x - x2) <= wEps) {
+						//right side
+						cursor = "ew-resize";
+						col = range.c2;
+					}
+				}
+				if (!cursor && wEps <= x - x1 && x - x2 <= wEps) {
+					if (range.r1 === oFormulaRangeIn.r1 && Math.abs(y - y1) <= hEps) {
+						//top side
+						cursor = "ns-resize";
+						row = range.r1;
+					} else if (range.r2 === oFormulaRangeIn.r2 && Math.abs(y - y2) <= hEps) {
+						//bottom side
+						cursor = "ns-resize";
+						row = range.r2;
+					}
+				}
+			} else if ((((range.c1 === oFormulaRangeIn.c1 && Math.abs(x - x1) <= wEps) ||
               (range.c2 === oFormulaRangeIn.c2 && Math.abs(x - x2) <= wEps)) && hEps <= y - y1 && y - y2 <= hEps) ||
               (((range.r1 === oFormulaRangeIn.r1 && Math.abs(y - y1) <= hEps) ||
               (range.r2 === oFormulaRangeIn.r2 && Math.abs(y - y2) <= hEps)) && wEps <= x - x1 && x - x2 <= wEps)) {
@@ -8725,7 +8755,7 @@
 				for (let i = 0; i < printRanges.length; i++) {
 					res = this._hitInRange(printRanges[i].range,
 						AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.ActiveCell |
-						AscCommonExcel.selectionLineType.Promote, vr, x, y, offsetX, offsetY);
+						AscCommonExcel.selectionLineType.Promote, vr, x, y, offsetX, offsetY, true);
 					if (res) {
 						_range = printRanges[i].range;
 						break;
@@ -8734,7 +8764,7 @@
 			}
 		}
 		return res ? {
-			cursor: "ew-resize",
+			cursor: res.cursor,
 			target: c_oTargetType.ResizeRange,
 			col: -1,
 			row: -1,
@@ -10561,6 +10591,16 @@
 			AscCommonExcel.c_oAscVisibleAreaOleEditorBorderColor);
 	};
 
+	WorksheetView.prototype._drawPrintPagesSelectionRange = function () {
+		var selectionLineType = AscCommonExcel.selectionLineType.DashThick;
+		if (this.workbook.Api.isEditVisibleAreaOleEditor) {
+			selectionLineType |= AscCommonExcel.selectionLineType.Resize;
+		}
+		var range = this.printPagesSelectionRange;
+		this._drawElements(this._drawSelectionElement, range, selectionLineType,
+			AscCommonExcel.c_oAscVisibleAreaOleEditorBorderColor);
+	};
+
 	WorksheetView.prototype.changeVisibleAreaStartPoint = function (x, y, isCtrl, isRelative) {
 		this.cleanSelection();
 		this._endSelectionShape();
@@ -12066,6 +12106,118 @@
 		return this._endMoveResizeRangeHandle(x, y, targetInfo, oleSize).delta;
 	};
 
+	WorksheetView.prototype._startResizeRangeHandle = function (x, y, targetInfo, range) {
+		var ar = range.clone();
+
+		// Колонка по X и строка по Y
+		var colByX = this._findColUnderCursor(x, /*canReturnNull*/false, false).col;
+		var rowByY = this._findRowUnderCursor(y, /*canReturnNull*/false, false).row;
+
+		if ((targetInfo.cursor === kCurNEResize || targetInfo.cursor === kCurSEResize)) {
+			this.startCellResizeRange = ar.clone(true);
+			this.startCellResizeRange2 =
+				new asc_Range(targetInfo.col, targetInfo.row, targetInfo.col, targetInfo.row, true);
+		} else {
+			this.startCellResizeRange = ar.clone(true);
+			if (colByX < ar.c1) {
+				colByX = ar.c1;
+			} else if (colByX > ar.c2) {
+				colByX = ar.c2;
+			}
+			if (rowByY < ar.r1) {
+				rowByY = ar.r1;
+			} else if (rowByY > ar.r2) {
+				rowByY = ar.r2;
+			}
+			this.startCellResizeRange2 = new asc_Range(colByX, rowByY, colByX, rowByY);
+		}
+		return null;
+	};
+
+	WorksheetView.prototype._endResizeRangeHandle = function (x, y, targetInfo, range) {
+		var	d = new AscCommon.CellBase(0, 0);
+		var colByX = this._findColUnderCursor(x, /*canReturnNull*/false, false).col;
+		var rowByY = this._findRowUnderCursor(y, /*canReturnNull*/false, false).row;
+		var type = this.startCellResizeRange.getType();
+
+		var ar = range.clone();
+
+
+		this.overlayCtx.clear();
+		if (targetInfo.cursor === "ew-resize" || targetInfo.cursor === "ns-resize") {
+			if (colByX < this.startCellResizeRange2.c1) {
+				//ar.c2 = this.startCellResizeRange2.c1;
+				//ar.c1 = colByX;
+			} else if (colByX > this.startCellResizeRange2.c2) {
+				//ar.c1 = this.startCellResizeRange2.c1;
+				ar.c2 = colByX;
+			} else {
+				//ar.c1 = this.startCellResizeRange2.c1;
+				//ar.c2 = this.startCellResizeRange2.c1
+			}
+
+			/*if (rowByY < this.startCellResizeRange2.r1) {
+				ar.r2 = this.startCellResizeRange2.r2;
+				ar.r1 = rowByY;
+			} else if (rowByY > this.startCellResizeRange2.r1) {
+				ar.r1 = this.startCellResizeRange2.r1;
+				ar.r2 = rowByY;
+			} else {
+				ar.r1 = this.startCellResizeRange2.r1;
+				ar.r2 = this.startCellResizeRange2.r1;
+			}*/
+
+		} else {
+			/*this.startCellResizeRange.normalize();
+			type = this.startCellResizeRange.getType();
+			var colDelta = type !== c_oAscSelectionType.RangeRow && type !== c_oAscSelectionType.RangeMax ?
+				colByX - this.startCellResizeRange2.c1 : 0;
+			var rowDelta = type !== c_oAscSelectionType.RangeCol && type !== c_oAscSelectionType.RangeMax ?
+				rowByY - this.startCellResizeRange2.r1 : 0;
+
+			ar.c1 = this.startCellResizeRange.c1 + colDelta;
+			if (0 > ar.c1) {
+				colDelta -= ar.c1;
+				ar.c1 = 0;
+			}
+			ar.c2 = this.startCellResizeRange.c2 + colDelta;
+
+			ar.r1 = this.startCellResizeRange.r1 + rowDelta;
+			if (0 > ar.r1) {
+				rowDelta -= ar.r1;
+				ar.r1 = 0;
+			}
+			ar.r2 = this.startCellResizeRange.r2 + rowDelta;*/
+
+		}
+
+		if (y <= this.cellsTop + 2) {
+			d.row = -1;
+		} else if (y >= this.drawingCtx.getHeight() - 2) {
+			d.row = 1;
+		}
+
+		if (x <= this.cellsLeft + 2) {
+			d.col = -1;
+		} else if (x >= this.drawingCtx.getWidth() - 2) {
+			d.col = 1;
+		}
+
+		type = this.startCellResizeRange.getType();
+		if (type === c_oAscSelectionType.RangeRow) {
+			d.col = 0;
+		} else if (type === c_oAscSelectionType.RangeCol) {
+			d.row = 0;
+		} else if (type === c_oAscSelectionType.RangeMax) {
+			d.col = 0;
+			d.row = 0;
+		}
+		ar = range.assign2(ar.clone(true));
+		this._drawSelection();
+
+		return {range: ar, delta: d};
+	};
+	
 	WorksheetView.prototype.changeSelectionMoveResizeRangeHandle = function (x, y, targetInfo, editor) {
 		// Возвращаемый результат
 		if (!targetInfo) {
@@ -12110,10 +12262,11 @@
 			return;
 		}
 		var oleSize = targetInfo.range;
-		if (null === this.startCellMoveResizeRange) {
-			return this._startMoveResizeRangeHandle(x, y, targetInfo, oleSize);
+		this.printPagesSelectionRange = oleSize;
+		if (null === this.startCellResizeRange) {
+			return this._startResizeRangeHandle(x, y, targetInfo, oleSize);
 		}
-		return this._endMoveResizeRangeHandle(x, y, targetInfo, oleSize).delta;
+		return this._endResizeRangeHandle(x, y, targetInfo, oleSize).delta;
 	};
 
     /* Функция для применения перемещения диапазона */
@@ -12227,7 +12380,18 @@
         this.moveRangeDrawingObjectTo = null;
     };
 
-    WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo) {
+	WorksheetView.prototype.applyResizeRangeHandle = function () {
+		if (!this.getFormulaEditMode() && !this.startCellResizeRange.isEqual(this.moveRangeDrawingObjectTo)) {
+			//this.applyResizeRange(this.oOtherRanges);
+		}
+
+		this.startCellMoveResizeRange = null;
+		this.startCellMoveResizeRange2 = null;
+		this.moveRangeDrawingObjectTo = null;
+	};
+
+
+	WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo) {
 		//opt_wsTo - for test reasons only
         var t = this;
 		var wsTo = opt_wsTo ? opt_wsTo : this;
