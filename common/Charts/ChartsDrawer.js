@@ -14460,17 +14460,18 @@ axisChart.prototype = {
 	},
 
 	_calculateValTickMark: function () {
-		var orientation = this.axis ? this.axis.scaling.orientation : ORIENTATION_MIN_MAX;
-		var tickmarksProps = this._getTickmarksProps();
-		var widthLine = tickmarksProps.widthLine, widthMinorLine = tickmarksProps.widthMinorLine;
-		var crossMajorStep = tickmarksProps.crossMajorStep, crossMinorStep = tickmarksProps.crossMinorStep;
+		let orientation = this.axis ? this.axis.scaling.orientation : ORIENTATION_MIN_MAX;
+		let tickmarksProps = this._getTickmarksProps();
+		let widthLine = tickmarksProps.widthLine;
+		let widthMinorLine = tickmarksProps.widthMinorLine / this.chartProp.pxToMM;
+		let crossMajorStep = tickmarksProps.crossMajorStep, crossMinorStep = tickmarksProps.crossMinorStep;
 
-		var minorLinesCount = 5;
-		var points, minorStep, posY, posX;
-		var axPos = this.axis.axPos;
+		let minorLinesCount = 5;
+		let points, minorStep, posY, posX;
+		let axPos = this.axis.axPos;
 
-		var pathId = this.cChartSpace.AllocPath();
-		var path = this.cChartSpace.GetPath(pathId);
+		let pathId = this.cChartSpace.AllocPath();
+		let path = this.cChartSpace.GetPath(pathId);
 
 		if (this.axis && this.axis.isRadarValues()) {
 			points = this.axis.yPoints;
@@ -14478,60 +14479,48 @@ axisChart.prototype = {
 				return;
 			}
 
-			var axis = this.axis;
-			var xCenter = axis.posX;
+			let axis = this.axis;
+			let xCenter = axis.posX;
+			let yCenter = orientation ? points[0].pos : points[points.length - 1].pos;
 
-			posX = this.axis.posX;
+			let getLineXY = function (_posY, _angle, _width) {
+				let _radius = Math.abs(yCenter - _posY);
 
-			var yCenter, trueHeight;
-			if (points.length > 0) {
-				yCenter = orientation ? points[0].pos : points[points.length - 1].pos;
-			} else {
-				trueHeight = this.chartProp.trueHeight;
-				yCenter = (this.chartProp.chartGutter._top + trueHeight / 2) / this.chartProp.pxToMM;
-			}
+				//first point on ray from center
+				x1 = xCenter + _radius * Math.sin(_angle);
+				y1 = orientation ? (yCenter + _radius * Math.cos(_angle)) : (yCenter - _radius * Math.cos(_angle));
 
-			var ptCount = this.cChartDrawer.getNumCache(this.chartProp.series[0].val).ptCount;
-			var tempAngle = 2 * Math.PI / ptCount;
-
-
-			let getLineXY = function (_radius, _angle, _width) {
-				x1 = xCenter + _radius * Math.sin(_angle)
-				y1 = orientation ? (yCenter + _radius * Math.cos(_angle)) : (yCenter - _radius * Math.cos(_angle))
-
-				let x2xc = Math.sqrt(Math.pow(x1 - xCenter, 2) + Math.pow(y1 - yCenter, 2));
-
-				let alpha2 = x2xc === 0 ? 0 : Math.atan(_width / x2xc);
-
-				x2 = xCenter + (_radius) * Math.sin(n * tempAngle - alpha2)
-				y2 = orientation ? (yCenter + (_radius) * Math.cos(n * tempAngle - alpha2)) : (yCenter - (_radius) * Math.cos(n * tempAngle - alpha2))
+				//find angle end of tickmark
+				//second point(ray from center + width tickmarks angle)
+				let _angle2 = _angle - Math.atan(_width / _radius);
+				x2 = xCenter + (_radius) * Math.sin(_angle2);
+				y2 = orientation ? (yCenter + (_radius) * Math.cos(_angle2)) : (yCenter - (_radius) * Math.cos(_angle2));
 			};
 
-			var stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
+			let stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
 			minorStep = stepY / minorLinesCount;
 
+			let ptCount = this.cChartDrawer.getNumCache(this.chartProp.series[0].val).ptCount;
+			let tempAngle = 2 * Math.PI / ptCount;
 			let x1, y1, x2, y2;
-			for (var n = 0; n < ptCount; n++) {
-				for (var i = 0; i < points.length; i++) {
-					//основные линии
-					posY = points[i].pos;
-
+			for (let nDataPt = 0; nDataPt < ptCount; nDataPt++) {
+				for (let nAxisPt = 0; nAxisPt < points.length; nAxisPt++) {
 					if (!this.paths.tickMarks) {
 						this.paths.tickMarks = pathId;
 					}
 
-					let radius1 = Math.abs(yCenter - posY);
-					getLineXY(radius1, n * tempAngle, widthMinorLine / this.chartProp.pxToMM);
+					//main lines
+					let angle = nDataPt * tempAngle;
 
+					posY = points[nAxisPt].pos;
+					getLineXY(posY, angle, widthMinorLine);
 					this._calculateLine(x1, y1, x2, y2, path);
 
-					//промежуточные линии
-					if (!((!orientation && i === 0) || (orientation && i === points.length - 1))) {
-						for (var j = 0; j < minorLinesCount; j++) {
-							posMinorY = posY - j * minorStep;
-							radius1 = Math.abs(yCenter - posMinorY);
-							getLineXY(radius1, n * tempAngle, widthMinorLine / this.chartProp.pxToMM);
-
+					//minor lines
+					if (!((!orientation && nAxisPt === 0) || (orientation && nAxisPt === points.length - 1))) {
+						for (let nMinor = 0; nMinor < minorLinesCount; nMinor++) {
+							let posMinorY = posY - nMinor * minorStep;
+							getLineXY(posMinorY, angle, widthMinorLine);
 							this._calculateLine(x1, y1, x2, y2, path);
 						}
 					}
@@ -14544,12 +14533,12 @@ axisChart.prototype = {
 				return;
 			}
 
-			var stepX = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
+			let stepX = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
 			minorStep = stepX / minorLinesCount;
 			posY = this.axis.posY;
 
-			var posMinorX;
-			for (var i = 0; i < points.length; i++) {
+			let posMinorX;
+			for (let i = 0; i < points.length; i++) {
 				posX = points[i].pos;
 				if (!this.paths.tickMarks) {
 					this.paths.tickMarks = pathId;
@@ -14558,10 +14547,10 @@ axisChart.prototype = {
 
 				//промежуточные линии
 				if (widthMinorLine !== 0 && !((orientation === ORIENTATION_MIN_MAX && i === points.length - 1) || (orientation !== ORIENTATION_MIN_MAX && i === 0))) {
-					for (var n = 0; n < minorLinesCount; n++) {
+					for (let n = 0; n < minorLinesCount; n++) {
 						posMinorX = posX + n * minorStep;
 
-						this._calculateLine(posMinorX, posY - crossMinorStep / this.chartProp.pxToMM, posMinorX, posY + widthMinorLine / this.chartProp.pxToMM, path);
+						this._calculateLine(posMinorX, posY - crossMinorStep / this.chartProp.pxToMM, posMinorX, posY + widthMinorLine, path);
 					}
 				}
 			}
@@ -14571,12 +14560,12 @@ axisChart.prototype = {
 				return;
 			}
 
-			var stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
+			let stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
 			minorStep = stepY / minorLinesCount;
 			posX = this.axis.posX;
 
-			var posMinorY;
-			for (var i = 0; i < points.length; i++) {
+			let posMinorY;
+			for (let i = 0; i < points.length; i++) {
 				//основные линии
 				posY = points[i].pos;
 
@@ -14587,10 +14576,10 @@ axisChart.prototype = {
 
 				//промежуточные линии
 				if (widthMinorLine !== 0 && !((orientation === ORIENTATION_MIN_MAX && i === points.length - 1) || (orientation !== ORIENTATION_MIN_MAX && i === 0))) {
-					for (var n = 0; n < minorLinesCount; n++) {
+					for (let n = 0; n < minorLinesCount; n++) {
 						posMinorY = posY - n * minorStep;
 
-						this._calculateLine(posX - crossMinorStep / this.chartProp.pxToMM, posMinorY, posX + widthMinorLine / this.chartProp.pxToMM, posMinorY, path);
+						this._calculateLine(posX - crossMinorStep / this.chartProp.pxToMM, posMinorY, posX + widthMinorLine, posMinorY, path);
 					}
 				}
 			}
