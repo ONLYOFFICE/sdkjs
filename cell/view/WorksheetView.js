@@ -504,7 +504,7 @@
 		this.defaultColWidthPxForPrint = null;
 
 		this.pagesModeData = null;
-		this.printPagesSelectionRange = null;
+		this.printPagesModeSelectionRange = null;
 
         this._init();
 
@@ -6207,8 +6207,8 @@
 		    }
 	    }
 
-		if(this.isPageBreakPreview() && this.printPagesSelectionRange) {
-			this._drawPrintPagesSelectionRange();
+		if(this.isPageBreakPreview() && this.printPagesModeSelectionRange) {
+			this._drawPrintPagesModeSelectionRange();
 		}
 
 		if(this.viewPrintLines && !this.isPageBreakPreview()) {
@@ -8741,7 +8741,7 @@
         } : null;
     };
 
-	WorksheetView.prototype._hitCursorPagesRange = function (vr, x, y, offsetX, offsetY) {
+	WorksheetView.prototype._hitCursorPrintPagesModeRange = function (vr, x, y, offsetX, offsetY) {
 		let oPrintPages = this.isPageBreakPreview() && this.pagesModeData;
 		let res = null;
 		let _range = null;
@@ -9185,7 +9185,7 @@
 
 		if (dialogOtherRanges && canEdit && !isSelGraphicObject) {
 			this._drawElements(function (_vr, _offsetX, _offsetY) {
-				return (null === (res = this._hitCursorPagesRange(_vr, x, y, _offsetX, _offsetY)));
+				return (null === (res = this._hitCursorPrintPagesModeRange(_vr, x, y, _offsetX, _offsetY)));
 			});
 			if (res) {
 				return res;
@@ -10587,9 +10587,9 @@
 			AscCommonExcel.c_oAscVisibleAreaOleEditorBorderColor);
 	};
 
-	WorksheetView.prototype._drawPrintPagesSelectionRange = function () {
+	WorksheetView.prototype._drawPrintPagesModeSelectionRange = function () {
 		var selectionLineType = null;
-		var range = this.printPagesSelectionRange;
+		var range = this.printPagesModeSelectionRange;
 
 		//TODO need 3px line
 
@@ -12107,7 +12107,7 @@
 			return;
 		}
 		var _range = targetInfo.range;
-		this.printPagesSelectionRange = _range;
+		this.printPagesModeSelectionRange = _range;
 		if (null === this.startCellMoveResizeRange) {
 			return this._startResizePrintPagesModeRangeHandle(x, y, targetInfo, _range);
 		}
@@ -12369,9 +12369,9 @@
         this.moveRangeDrawingObjectTo = null;
     };
 
-	WorksheetView.prototype.applyResizeRangeHandle = function () {
+	WorksheetView.prototype.applyResizePrintPagesModeRangeHandle = function () {
 		let fromRange = this.startCellMoveResizeRange;
-		let toRange = this.printPagesSelectionRange;
+		let toRange = this.printPagesModeSelectionRange;
 		if (!this.getFormulaEditMode() && !fromRange.isEqual(toRange)) {
 			var printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
 			if(printArea && printArea.sheetId === this.model.getId()) {
@@ -12381,7 +12381,7 @@
 			}
 		}
 
-		this.printPagesSelectionRange = null;
+		this.printPagesModeSelectionRange = null;
 		this.updateSelection();
 
 		this.startCellMoveResizeRange = null;

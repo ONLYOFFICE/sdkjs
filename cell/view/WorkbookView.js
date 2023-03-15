@@ -1715,7 +1715,7 @@
 
   WorkbookView.prototype._onMoveResizeRangeHandleDone = function(isPrintPagesMode) {
     var ws = this.getWorksheet();
-    isPrintPagesMode ? ws.applyResizeRangeHandle() : ws.applyMoveResizeRangeHandle();
+    isPrintPagesMode ? ws.applyResizePrintPagesModeRangeHandle() : ws.applyMoveResizeRangeHandle();
   };
 
   // Frozen anchor
