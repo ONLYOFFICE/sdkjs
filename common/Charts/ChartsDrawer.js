@@ -4336,9 +4336,11 @@ CChartsDrawer.prototype =
 			crossDiff = points[1] ? Math.abs((points[1].pos - points[0].pos) / 2) : Math.abs(points[0].pos - posAxis);
 		}
 
+		let isRadarValues = axis.isRadarValues();
+
 		//TODO пересмотреть отрисовку сетки для Radar, не использовать numCache!
 		var numCache, tempAngle, trueHeight, trueWidth, xDiff, xCenter, yCenter;
-		if(this.calcProp.type === c_oChartTypes.Radar) {
+		if(isRadarValues) {
 			numCache = this.getNumCache(this.calcProp.series[0].val);
 			if(numCache) {
 				tempAngle = 2 * Math.PI / numCache.length;
@@ -4393,7 +4395,7 @@ CChartsDrawer.prototype =
 		var path = t.cChartSpace.GetPath(pathId);
 		var i;
 		for (i = 0; i < points.length; i++) {
-			if(this.calcProp.type === c_oChartTypes.Radar) {
+			if(isRadarValues) {
 				if(numCache) {
 					calculateRadarGridLines();
 				}
@@ -4430,7 +4432,7 @@ CChartsDrawer.prototype =
 		var pathIdMinor = t.cChartSpace.AllocPath();
 		var pathMinor = t.cChartSpace.GetPath(pathIdMinor);
 		for (i = 0; i < points.length; i++) {
-			if(this.calcProp.type !== c_oChartTypes.Radar) {
+			if(!isRadarValues) {
 				if(isCatAxis && points[i].val < 0) {
 					continue;
 				}
@@ -14752,7 +14754,7 @@ axisChart.prototype = {
 	_calculateGridLines: function () {
 
 		var paths;
-		if (this.cChartDrawer.isRadarChart(this.axis)) {
+		if (this.axis.isRadarValues()) {
 			paths = this.cChartDrawer._getRadarGridLines(this.axis);
 		} else {
 			if (this.axis.axPos === window['AscFormat'].AX_POS_L || this.axis.axPos === window['AscFormat'].AX_POS_R) {
