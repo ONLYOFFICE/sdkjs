@@ -8659,7 +8659,7 @@
         var wEps = AscCommon.global_mouseEvent.KoefPixToMM, hEps = AscCommon.global_mouseEvent.KoefPixToMM;
         return Math.abs(x2 - x1) <= wEps + 2 && Math.abs(y2 - y1) <= hEps + 2;
     };
-    WorksheetView.prototype._hitInRange = function (range, rangeType, vr, x, y, offsetX, offsetY, opt_pages_range) {
+    WorksheetView.prototype._hitInRange = function (range, rangeType, vr, x, y, offsetX, offsetY, opt_print_pages_range) {
         var wEps = 2 * AscCommon.global_mouseEvent.KoefPixToMM, hEps = 2 * AscCommon.global_mouseEvent.KoefPixToMM;
         var cursor, x1, x2, y1, y2, isResize;
         var col = -1, row = -1;
@@ -8693,7 +8693,7 @@
                 cursor = kCurSEResize;
                 col = range.c1;
                 row = range.r1;
-            } else if (opt_pages_range) {
+            } else if (opt_print_pages_range) {
 				if (hEps <= y - y1 && y - y2 <= hEps) {
 					if (range.c1 === oFormulaRangeIn.c1 && Math.abs(x - x1) <= wEps) {
 						//left side
@@ -8764,7 +8764,7 @@
 			col: res.col,
 			row: res.row,
 			range: _range,
-			isPrintPages: true
+			isPrintPagesMode: true
 		} : null;
 	};
 
@@ -12102,20 +12102,20 @@
 		return this._endMoveResizeRangeHandle(x, y, targetInfo, oleSize).delta;
 	};
 
-	WorksheetView.prototype.changeSelectionResizeVisibleAreaHandle = function (x, y, targetInfo) {
+	WorksheetView.prototype.changePrintPagesModeAreaHandle = function (x, y, targetInfo) {
 		if (!targetInfo || !targetInfo.range) {
 			return;
 		}
 		var _range = targetInfo.range;
 		this.printPagesSelectionRange = _range;
 		if (null === this.startCellMoveResizeRange) {
-			return this._startResizeRangeHandle(x, y, targetInfo, _range);
+			return this._startResizePrintPagesModeRangeHandle(x, y, targetInfo, _range);
 		}
-		return this._endResizeRangeHandle(x, y, targetInfo, _range).delta;
+		return this._endResizePrintPagesModeRangeHandle(x, y, targetInfo, _range).delta;
 	};
 
 
-	WorksheetView.prototype._startResizeRangeHandle = function (x, y, targetInfo, range) {
+	WorksheetView.prototype._startResizePrintPagesModeRangeHandle = function (x, y, targetInfo, range) {
 		var ar = range.clone();
 
 		// Колонка по X и строка по Y
@@ -12140,7 +12140,7 @@
 		return null;
 	};
 
-	WorksheetView.prototype._endResizeRangeHandle = function (x, y, targetInfo, range) {
+	WorksheetView.prototype._endResizePrintPagesModeRangeHandle = function (x, y, targetInfo, range) {
 		var	d = new AscCommon.CellBase(0, 0);
 		var colByX = this._findColUnderCursor(x, /*canReturnNull*/false, false).col;
 		var rowByY = this._findRowUnderCursor(y, /*canReturnNull*/false, false).row;
@@ -12224,10 +12224,6 @@
         if (!targetInfo) {
             return null;
         }
-		
-		if (targetInfo.isPrintPages) {
-			return this.changeSelectionResizeVisibleAreaHandle(x, y, targetInfo, editor);
-		}
 
         if (this.getFormulaEditMode()) {
             editor.cleanSelectRange();

@@ -444,8 +444,6 @@
 				  self._onMoveResizeRangeHandle.apply(self, arguments);
 			  }, "moveResizeRangeHandleDone": function () {
 				  self._onMoveResizeRangeHandleDone.apply(self, arguments);
-			  }, "resizeRangeHandleDone": function () {
-				  self._onResizeRangeHandleDone.apply(self, arguments);
 			  }, "editCell": function () {
 				  self._onEditCell.apply(self, arguments);
 			  }, "onPointerDownPlaceholder": function () {
@@ -1702,7 +1700,9 @@
 
 		if (this.Api.isEditVisibleAreaOleEditor && target.isOleRange) {
 			d = ws.changeSelectionMoveResizeVisibleAreaHandle(x, y, target);
-		} else {
+		} else if (target.isPrintPagesMode) {
+			d = ws.changePrintPagesModeAreaHandle(x, y, target);
+	    } else {
 			d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
 		}
 
@@ -1713,14 +1713,9 @@
 		return this.model.getOleSize();
 	};
 
-  WorkbookView.prototype._onMoveResizeRangeHandleDone = function() {
+  WorkbookView.prototype._onMoveResizeRangeHandleDone = function(isPrintPagesMode) {
     var ws = this.getWorksheet();
-    ws.applyMoveResizeRangeHandle();
-  };
-
-  WorkbookView.prototype._onResizeRangeHandleDone = function() {
-    var ws = this.getWorksheet();
-    ws.applyResizeRangeHandle();
+    isPrintPagesMode ? ws.applyResizeRangeHandle() : ws.applyMoveResizeRangeHandle();
   };
 
   // Frozen anchor

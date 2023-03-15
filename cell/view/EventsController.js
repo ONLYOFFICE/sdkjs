@@ -760,14 +760,9 @@
 			this.handlers.trigger("moveRangeHandleDone", ctrlKey);
 		};
 
-		asc_CEventsController.prototype._moveResizeRangeHandleDone = function () {
+		asc_CEventsController.prototype._moveResizeRangeHandleDone = function (isPrintPagesMode) {
 			// Закончили перемещение диапазона, пересчитаем
-			this.handlers.trigger("moveResizeRangeHandleDone");
-		};
-
-		asc_CEventsController.prototype._resizeRangeHandleDone = function () {
-			// Закончили перемещение диапазона, пересчитаем
-			this.handlers.trigger("resizeRangeHandleDone");
+			this.handlers.trigger("moveResizeRangeHandleDone", isPrintPagesMode);
 		};
 
 		/** @param event {jQuery.Event} */
@@ -1496,11 +1491,7 @@
 
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
-				if (this.targetInfo && this.targetInfo.isPrintPages) {
-					this.handlers.trigger("resizeRangeHandleDone");
-				} else {
-					this.handlers.trigger("moveResizeRangeHandleDone");
-				}
+				this._moveResizeRangeHandleDone(this.targetInfo && this.targetInfo.isPrintPagesMode);
 			}
 			// Режим установки закреплённых областей
 			if (this.frozenAnchorMode) {
@@ -1833,11 +1824,7 @@
 
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
-				if (this.targetInfo && this.targetInfo.isPrintPages) {
-					this._resizeRangeHandleDone();
-				} else {
-					this._moveResizeRangeHandleDone();
-				}
+				this._moveResizeRangeHandleDone(this.targetInfo && this.targetInfo.isPrintPagesMode);
 				return true;
 			}
 			// Режим установки закреплённых областей
