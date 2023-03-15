@@ -1700,8 +1700,8 @@
 
 		if (this.Api.isEditVisibleAreaOleEditor && target.isOleRange) {
 			d = ws.changeSelectionMoveResizeVisibleAreaHandle(x, y, target);
-		} else if (target.isPrintPagesMode) {
-			d = ws.changePrintPagesModeAreaHandle(x, y, target);
+		} else if (target.isPageBreakPreview) {
+			d = ws.changePageBreakPreviewAreaHandle(x, y, target);
 	    } else {
 			d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
 		}
@@ -1713,9 +1713,9 @@
 		return this.model.getOleSize();
 	};
 
-  WorkbookView.prototype._onMoveResizeRangeHandleDone = function(isPrintPagesMode) {
+  WorkbookView.prototype._onMoveResizeRangeHandleDone = function(isPageBreakPreview) {
     var ws = this.getWorksheet();
-    isPrintPagesMode ? ws.applyResizePrintPagesModeRangeHandle() : ws.applyMoveResizeRangeHandle();
+    isPageBreakPreview ? ws.applyResizePageBreakPreviewRangeHandle() : ws.applyMoveResizeRangeHandle();
   };
 
   // Frozen anchor

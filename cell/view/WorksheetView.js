@@ -504,7 +504,7 @@
 		this.defaultColWidthPxForPrint = null;
 
 		this.pagesModeData = null;
-		this.printPagesModeSelectionRange = null;
+		this.pageBreakPreviewSelectionRange = null;
 
         this._init();
 
@@ -4817,7 +4817,7 @@
 		let printPages = oPrintPages && oPrintPages.printPages;
 		if(printPages && printPages.length) {
 			let color = new CColor(0, 0, 208);
-			let printRanges = this._getPrintPagesModeRanges(oPrintPages);
+			let printRanges = this._getPageBreakPreviewRanges(oPrintPages);
 			for (let i = 0; i < printRanges.length; i++) {
 				let oPrintRange = printRanges[i];
 				allPagesRange = oPrintRange.range;
@@ -6207,8 +6207,8 @@
 		    }
 	    }
 
-		if(this.isPageBreakPreview() && this.printPagesModeSelectionRange) {
-			this._drawPrintPagesModeSelectionRange();
+		if(this.isPageBreakPreview() && this.pageBreakPreviewSelectionRange) {
+			this._drawPageBreakPreviewSelectionRange();
 		}
 
 		if(this.viewPrintLines && !this.isPageBreakPreview()) {
@@ -8741,12 +8741,12 @@
         } : null;
     };
 
-	WorksheetView.prototype._hitCursorPrintPagesModeRange = function (vr, x, y, offsetX, offsetY) {
+	WorksheetView.prototype._hitCursorPageBreakPreviewRange = function (vr, x, y, offsetX, offsetY) {
 		let oPrintPages = this.isPageBreakPreview() && this.pagesModeData;
 		let res = null;
 		let _range = null;
 		if (oPrintPages) {
-			let printRanges = this._getPrintPagesModeRanges(oPrintPages);
+			let printRanges = this._getPageBreakPreviewRanges(oPrintPages);
 			if (printRanges) {
 				for (let i = 0; i < printRanges.length; i++) {
 					res = this._hitInRange(printRanges[i].range,
@@ -8764,7 +8764,7 @@
 			col: res.col,
 			row: res.row,
 			range: _range,
-			isPrintPagesMode: true
+			isPageBreakPreview: true
 		} : null;
 	};
 
@@ -9185,7 +9185,7 @@
 
 		if (dialogOtherRanges && canEdit && !isSelGraphicObject) {
 			this._drawElements(function (_vr, _offsetX, _offsetY) {
-				return (null === (res = this._hitCursorPrintPagesModeRange(_vr, x, y, _offsetX, _offsetY)));
+				return (null === (res = this._hitCursorPageBreakPreviewRange(_vr, x, y, _offsetX, _offsetY)));
 			});
 			if (res) {
 				return res;
@@ -10587,9 +10587,9 @@
 			AscCommonExcel.c_oAscVisibleAreaOleEditorBorderColor);
 	};
 
-	WorksheetView.prototype._drawPrintPagesModeSelectionRange = function () {
+	WorksheetView.prototype._drawPageBreakPreviewSelectionRange = function () {
 		var selectionLineType = null;
-		var range = this.printPagesModeSelectionRange;
+		var range = this.pageBreakPreviewSelectionRange;
 
 		//TODO need 3px line
 
@@ -12102,20 +12102,20 @@
 		return this._endMoveResizeRangeHandle(x, y, targetInfo, oleSize).delta;
 	};
 
-	WorksheetView.prototype.changePrintPagesModeAreaHandle = function (x, y, targetInfo) {
+	WorksheetView.prototype.changePageBreakPreviewAreaHandle = function (x, y, targetInfo) {
 		if (!targetInfo || !targetInfo.range) {
 			return;
 		}
 		var _range = targetInfo.range;
-		this.printPagesModeSelectionRange = _range;
+		this.pageBreakPreviewSelectionRange = _range;
 		if (null === this.startCellMoveResizeRange) {
-			return this._startResizePrintPagesModeRangeHandle(x, y, targetInfo, _range);
+			return this._startResizePageBreakPreviewRangeHandle(x, y, targetInfo, _range);
 		}
-		return this._endResizePrintPagesModeRangeHandle(x, y, targetInfo, _range).delta;
+		return this._endResizePageBreakPreviewRangeHandle(x, y, targetInfo, _range).delta;
 	};
 
 
-	WorksheetView.prototype._startResizePrintPagesModeRangeHandle = function (x, y, targetInfo, range) {
+	WorksheetView.prototype._startResizePageBreakPreviewRangeHandle = function (x, y, targetInfo, range) {
 		var ar = range.clone();
 
 		// Колонка по X и строка по Y
@@ -12140,7 +12140,7 @@
 		return null;
 	};
 
-	WorksheetView.prototype._endResizePrintPagesModeRangeHandle = function (x, y, targetInfo, range) {
+	WorksheetView.prototype._endResizePageBreakPreviewRangeHandle = function (x, y, targetInfo, range) {
 		var	d = new AscCommon.CellBase(0, 0);
 		var colByX = this._findColUnderCursor(x, /*canReturnNull*/false, false).col;
 		var rowByY = this._findRowUnderCursor(y, /*canReturnNull*/false, false).row;
@@ -12369,9 +12369,9 @@
         this.moveRangeDrawingObjectTo = null;
     };
 
-	WorksheetView.prototype.applyResizePrintPagesModeRangeHandle = function () {
+	WorksheetView.prototype.applyResizePageBreakPreviewRangeHandle = function () {
 		let fromRange = this.startCellMoveResizeRange;
-		let toRange = this.printPagesModeSelectionRange;
+		let toRange = this.pageBreakPreviewSelectionRange;
 		if (!this.getFormulaEditMode() && !fromRange.isEqual(toRange)) {
 			var printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
 			if(printArea && printArea.sheetId === this.model.getId()) {
@@ -12381,7 +12381,7 @@
 			}
 		}
 
-		this.printPagesModeSelectionRange = null;
+		this.pageBreakPreviewSelectionRange = null;
 		this.updateSelection();
 
 		this.startCellMoveResizeRange = null;
@@ -24858,13 +24858,13 @@
 		return res;
 	};
 
-	WorksheetView.prototype._getPrintPagesModeRanges = function (oPrintPages) {
+	WorksheetView.prototype._getPageBreakPreviewRanges = function (oPrintPages) {
 		let printRanges = null;
 		oPrintPages = oPrintPages || (this.isPageBreakPreview() && this.pagesModeData && this.pagesModeData.printPages);
 		if (oPrintPages) {
 			printRanges = this.pagesModeData.printRanges;
 			if (!printRanges) {
-				let printPages = this.pagesModeData.printPages
+				let printPages = this.pagesModeData.printPages;
 				let startRange = printPages[0].page.pageRange;
 				let endRange = printPages[printPages.length - 1].page.pageRange;
 				printRanges = [{range: new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2), start: 0, end: printPages.length}];
