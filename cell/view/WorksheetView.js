@@ -449,9 +449,6 @@
         this.startCellMoveResizeRange2 = null;
         this.moveRangeDrawingObjectTo = null;
 
-
-		this.startCellResizeRange = null;
-
         // Координаты ячейки начала перемещения диапазона
         this.startCellMoveRange = null;
         // Дипазон перемещения
@@ -8772,7 +8769,7 @@
 	};
 
 		WorksheetView.prototype._hitCursorSelectionVisibleArea = function (vr, x, y, offsetX, offsetY) {
-			var range = this.getOleSize() && this.getOleSize().getLast();
+			var range = this.getOleSize() && this.getOleSize().getLast()
 			if (!range) return null;
 
 			var res = this._hitInRange(range, AscCommonExcel.selectionLineType.Resize, vr, x, y, offsetX, offsetY);
@@ -8783,7 +8780,7 @@
 				row: res.row,
 				isOleRange: true
 			} : null;
-		};
+		}
 
     WorksheetView.prototype._hitCursorFormulaOrChart = function (vr, x, y, offsetX, offsetY) {
         if (!this.oOtherRanges) {
@@ -12210,7 +12207,7 @@
 	};
 	
 		WorksheetView.prototype.changeSelectionMoveResizeRangeHandle = function (x, y, targetInfo, editor) {
-		// Возвращаемый результат
+        // Возвращаемый результат
         if (!targetInfo) {
             return null;
         }
@@ -12219,26 +12216,26 @@
             editor.cleanSelectRange();
         }
 
-		var index = targetInfo.indexFormulaRange;
-		var initialRange = this.oOtherRanges.ranges[index];
+				var index = targetInfo.indexFormulaRange;
+				var initialRange = this.oOtherRanges.ranges[index];
 
-		if (null === this.startCellMoveResizeRange) {
-			return this._startMoveResizeRangeHandle(x, y, targetInfo, initialRange);
-		}
-		// очищаем выделение
-		this.overlayCtx.clear();
+			if (null === this.startCellMoveResizeRange) {
+				return this._startMoveResizeRangeHandle(x, y, targetInfo, initialRange);
+			}
+            // очищаем выделение
+            this.overlayCtx.clear();
 
-		if (!this.getFormulaEditMode()) {
-			return this.changeChartSelectionMoveResizeRangeHandle(x, y, targetInfo);
-		}
+			if (!this.getFormulaEditMode()) {
+				return this.changeChartSelectionMoveResizeRangeHandle(x, y, targetInfo);
+			}
 
-		var res = this._endMoveResizeRangeHandle(x, y, targetInfo, initialRange);
+			var res = this._endMoveResizeRangeHandle(x, y, targetInfo, initialRange);
 
-		if (res.range) {
-			editor.changeCellRange(res.range, true);
-			return res.delta;
-		}
-	};
+			if (res.range) {
+				editor.changeCellRange(res.range, true);
+				return res.delta;
+			}
+    };
 
     WorksheetView.prototype._cleanSelectionMoveRange = function () {
         // Перерисовываем и сбрасываем параметры
@@ -12383,8 +12380,6 @@
 			}
 		}
 
-		//this.startCellMoveResizeRange = null;
-		//this.startCellMoveResizeRange2 = null;
 		this.printPagesSelectionRange = null;
 		this.updateSelection();
 

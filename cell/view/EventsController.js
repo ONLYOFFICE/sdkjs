@@ -1605,7 +1605,6 @@
 				this._onMouseMove(event);
 			}
 
-			//****SKIPMOVERESIZE****
 			if (this.view.Api.isEditVisibleAreaOleEditor) {
 				if (button === 0 && this.view.isInnerOfWorksheet(coord.x, coord.y)) {
 					if (this.targetInfo && this.targetInfo.target === c_oTargetType.MoveResizeRange) {
@@ -1771,7 +1770,6 @@
 					}
 				}
 			} else {
-				//****SKIPMOVERESIZE****
 				if (this.getFormulaEditMode()) {
 					if (this.targetInfo && this.targetInfo.target === c_oTargetType.MoveResizeRange) {
 						this.isMoveResizeRange = true;
