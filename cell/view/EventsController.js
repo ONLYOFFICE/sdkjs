@@ -760,9 +760,9 @@
 			this.handlers.trigger("moveRangeHandleDone", ctrlKey);
 		};
 
-		asc_CEventsController.prototype._moveResizeRangeHandleDone = function () {
+		asc_CEventsController.prototype._moveResizeRangeHandleDone = function (isPageBreakPreview) {
 			// Закончили перемещение диапазона, пересчитаем
-			this.handlers.trigger("moveResizeRangeHandleDone");
+			this.handlers.trigger("moveResizeRangeHandleDone", isPageBreakPreview);
 		};
 
 		/** @param event {jQuery.Event} */
@@ -1491,7 +1491,7 @@
 
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
-				this.handlers.trigger("moveResizeRangeHandleDone");
+				this._moveResizeRangeHandleDone(this.targetInfo && this.targetInfo.isPageBreakPreview);
 			}
 			// Режим установки закреплённых областей
 			if (this.frozenAnchorMode) {
@@ -1824,7 +1824,7 @@
 
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
-				this._moveResizeRangeHandleDone();
+				this._moveResizeRangeHandleDone(this.targetInfo && this.targetInfo.isPageBreakPreview);
 				return true;
 			}
 			// Режим установки закреплённых областей

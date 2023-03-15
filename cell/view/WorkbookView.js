@@ -1700,7 +1700,9 @@
 
 		if (this.Api.isEditVisibleAreaOleEditor && target.isOleRange) {
 			d = ws.changeSelectionMoveResizeVisibleAreaHandle(x, y, target);
-		} else {
+		} else if (target.isPageBreakPreview) {
+			d = ws.changePageBreakPreviewAreaHandle(x, y, target);
+	    } else {
 			d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
 		}
 
@@ -1711,9 +1713,9 @@
 		return this.model.getOleSize();
 	};
 
-  WorkbookView.prototype._onMoveResizeRangeHandleDone = function() {
+  WorkbookView.prototype._onMoveResizeRangeHandleDone = function(isPageBreakPreview) {
     var ws = this.getWorksheet();
-    ws.applyMoveResizeRangeHandle();
+    isPageBreakPreview ? ws.applyResizePageBreakPreviewRangeHandle() : ws.applyMoveResizeRangeHandle();
   };
 
   // Frozen anchor
