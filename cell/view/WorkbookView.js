@@ -444,8 +444,6 @@
 				  self._onMoveResizeRangeHandle.apply(self, arguments);
 			  }, "moveResizeRangeHandleDone": function () {
 				  self._onMoveResizeRangeHandleDone.apply(self, arguments);
-			  }, "resizeRangeHandle": function () {
-				  self._onResizeRangeHandle.apply(self, arguments);
 			  }, "resizeRangeHandleDone": function () {
 				  self._onResizeRangeHandleDone.apply(self, arguments);
 			  }, "editCell": function () {
@@ -1707,15 +1705,6 @@
 		} else {
 			d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
 		}
-
-	asc_applyFunction(callback, d);
-  };
-
-  WorkbookView.prototype._onResizeRangeHandle = function(x, y, target, callback) {
-    var ws = this.getWorksheet();
-    var d;
-
-    d = ws.changeSelectionResizeVisibleAreaHandle(x, y, target);
 
     asc_applyFunction(callback, d);
   };

@@ -309,8 +309,7 @@ var c_oTargetType = {
   GroupRow: 16,
   GroupCol: 17,
   TableSelectionChange: 18,
-  Placeholder: 19,
-  ResizeRange: 20
+  Placeholder: 19
 };
 
 var c_oAscAutoFilterTypes = {

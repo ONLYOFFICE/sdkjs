@@ -8761,10 +8761,11 @@
 		}
 		return res ? {
 			cursor: res.cursor,
-			target: c_oTargetType.ResizeRange,
+			target: c_oTargetType.MoveResizeRange,
 			col: res.col,
 			row: res.row,
-			range: _range
+			range: _range,
+			isPrintPages: true
 		} : null;
 	};
 
@@ -12095,12 +12096,28 @@
 		if (!targetInfo) {
 			return;
 		}
+		if (targetInfo.isPrintPages) {
+			return this.changeSelectionResizeVisibleAreaHandle(x, y, targetInfo);
+		} 
 		var oleSize = this.getOleSize().getLast();
 		if (null === this.startCellMoveResizeRange) {
 			return this._startMoveResizeRangeHandle(x, y, targetInfo, oleSize);
 		}
 		return this._endMoveResizeRangeHandle(x, y, targetInfo, oleSize).delta;
 	};
+
+	WorksheetView.prototype.changeSelectionResizeVisibleAreaHandle = function (x, y, targetInfo) {
+		if (!targetInfo || !targetInfo.range) {
+			return;
+		}
+		var _range = targetInfo.range;
+		this.printPagesSelectionRange = _range;
+		if (null === this.startCellResizeRange) {
+			return this._startResizeRangeHandle(x, y, targetInfo, _range);
+		}
+		return this._endResizeRangeHandle(x, y, targetInfo, _range).delta;
+	};
+
 
 	WorksheetView.prototype._startResizeRangeHandle = function (x, y, targetInfo, range) {
 		var ar = range.clone();
@@ -12211,6 +12228,10 @@
         if (!targetInfo) {
             return null;
         }
+		
+		if (targetInfo.isPrintPages) {
+			return this.changeSelectionResizeVisibleAreaHandle(x, y, targetInfo, editor);
+		}
 
         if (this.getFormulaEditMode()) {
             editor.cleanSelectRange();
@@ -12244,18 +12265,6 @@
         this.startCellMoveRange = null;
         this._drawSelection();
     };
-
-	WorksheetView.prototype.changeSelectionResizeVisibleAreaHandle = function (x, y, targetInfo) {
-		if (!targetInfo || !targetInfo.range) {
-			return;
-		}
-		var _range = targetInfo.range;
-		this.printPagesSelectionRange = _range;
-		if (null === this.startCellResizeRange) {
-			return this._startResizeRangeHandle(x, y, targetInfo, _range);
-		}
-		return this._endResizeRangeHandle(x, y, targetInfo, _range).delta;
-	};
 
     /* Функция для применения перемещения диапазона */
     WorksheetView.prototype.applyMoveRangeHandle = function (ctrlKey) {

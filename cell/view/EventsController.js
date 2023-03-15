@@ -75,7 +75,6 @@
 			this.scrollTimerId = undefined;
 			this.moveRangeTimerId = undefined;
 			this.moveResizeRangeTimerId = undefined;
-			this.resizeRangeTimerId = undefined;
 			this.fillHandleModeTimerId = undefined;
 			this.enableKeyEvents = true;
 			this.isSelectMode = false;
@@ -91,7 +90,6 @@
 			this.isFillHandleMode = false;
 			this.isMoveRangeMode = false;
 			this.isMoveResizeRange = false;
-			this.isResizeRange = false;
 			// Режим установки закреплённых областей
 			this.frozenAnchorMode = false;
 			
@@ -320,8 +318,7 @@
 			if(this.targetInfo && (this.targetInfo.target === c_oTargetType.MoveResizeRange ||
 				this.targetInfo.target === c_oTargetType.MoveRange ||
 				this.targetInfo.target === c_oTargetType.FilterObject ||
-				this.targetInfo.target === c_oTargetType.TableSelectionChange ||
-				this.targetInfo.target === c_oTargetType.ResizeRange))
+				this.targetInfo.target === c_oTargetType.TableSelectionChange))
 				return true;
 
 			if (t.getCellEditMode()) {if (!t.handlers.trigger("stopCellEditing")) {return true;}}
@@ -617,28 +614,6 @@
 			}, 0);
 		};
 
-		/** @param event {MouseEvent} */
-		asc_CEventsController.prototype._resizeRangeHandle2 = function (event) {
-			var t = this;
-
-			var fn = function () {
-				t._resizeRangeHandle2(event);
-			};
-
-			var callback = function () {
-				if (t.isResizeRange && !t.hasCursor) {
-					t.resizeRangeTimerId  = window.setTimeout(fn, t.settings.scrollTimeout);
-				}
-			};
-
-			window.clearTimeout(t.resizeRangeTimerId);
-			t.resizeRangeTimerId = window.setTimeout(function () {
-				if (t.isResizeRange && !t.hasCursor) {
-					t._resizeRangeHandle(event, t.targetInfo, callback);
-				}
-			}, 0);
-		};
-
 		/**
 		 * Окончание выделения
 		 * @param event {MouseEvent}
@@ -766,18 +741,6 @@
 				});
 		};
 
-		asc_CEventsController.prototype._resizeRangeHandle = function (event, target, callback) {
-			var t = this;
-			// Обновляемся в режиме перемещения диапазона
-			var coord = this._getCoordinates(event);
-			this.handlers.trigger("resizeRangeHandle", coord.x, coord.y, target,
-				function (d) {
-					if (!d) return;
-					t.scroll(d);
-					asc_applyFunction(callback);
-				});
-		};
-
 		asc_CEventsController.prototype._groupRowClick = function (event, target) {
 			// Обновляемся в режиме перемещения диапазона
 			var coord = this._getCoordinates(event);
@@ -852,7 +815,7 @@
 			this.showCellEditorCursor();
 
 			while (t.getCellEditMode() && !t.hasFocus || !t.enableKeyEvents && event.emulated !== true || t.isSelectMode ||
-			t.isFillHandleMode || t.isMoveRangeMode || t.isMoveResizeRange || t.isResizeRange) {
+			t.isFillHandleMode || t.isMoveRangeMode || t.isMoveResizeRange) {
 				// Почему-то очень хочется обрабатывать лишние условия в нашем коде, вместо обработки наверху...
 				if (!t.enableKeyEvents && ctrlKey && (80 === event.which/* || 83 === event.which*/)) {
 					// Только если отключены эвенты и нажаты Ctrl+S или Ctrl+P мы их обработаем
@@ -1533,14 +1496,12 @@
 
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
-				this.handlers.trigger("moveResizeRangeHandleDone");
+				if (this.targetInfo && this.targetInfo.isPrintPages) {
+					this.handlers.trigger("resizeRangeHandleDone");
+				} else {
+					this.handlers.trigger("moveResizeRangeHandleDone");
+				}
 			}
-
-			if (this.isResizeRange) {
-				this.isResizeRange = false;
-				this.handlers.trigger("resizeRangeHandleDone");
-			}
-
 			// Режим установки закреплённых областей
 			if (this.frozenAnchorMode) {
 				this._moveFrozenAnchorHandleDone(event, this.frozenAnchorMode);
@@ -1741,10 +1702,6 @@
 						this.isMoveResizeRange = true;
 						t._moveResizeRangeHandle(event, t.targetInfo);
 						return;
-					} else if (t.targetInfo.target === c_oTargetType.ResizeRange && this.canEdit()) {
-						this.isResizeRange = true;
-						t._resizeRangeHandle(event, t.targetInfo);
-						return;
 					} else if ((t.targetInfo.target === c_oTargetType.FrozenAnchorV ||
 						t.targetInfo.target === c_oTargetType.FrozenAnchorH) && this.canEdit()) {
 						// Режим установки закреплённых областей
@@ -1876,12 +1833,11 @@
 
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
-				this._moveResizeRangeHandleDone();
-				return true;
-			}
-			if (this.isResizeRange) {
-				this.isResizeRange = false;
-				this._resizeRangeHandleDone();
+				if (this.targetInfo && this.targetInfo.isPrintPages) {
+					this._resizeRangeHandleDone();
+				} else {
+					this._moveResizeRangeHandleDone();
+				}
 				return true;
 			}
 			// Режим установки закреплённых областей
@@ -1945,11 +1901,6 @@
 				t._moveResizeRangeHandle(event, t.targetInfo);
 				return true;
 			}
-
-			if (t.isResizeRange) {
-				t._resizeRangeHandle(event, t.targetInfo);
-				return true;
-			}
 			
 			// Режим установки закреплённых областей
 			if (t.frozenAnchorMode) {
@@ -1973,7 +1924,7 @@
 			var t = this;
 			var coord = t._getCoordinates(event);
 			this.hasCursor = false;
-			if (!this.isSelectMode && !this.isResizeMode && !this.isMoveResizeRange && !this.isResizeRange) {
+			if (!this.isSelectMode && !this.isResizeMode && !this.isMoveResizeRange) {
 				this.targetInfo = undefined;
 				this.handlers.trigger("updateWorksheet", coord.x, coord.y);
 			}
@@ -1982,9 +1933,6 @@
 			}
 			if (this.isMoveResizeRange) {
 				t.moveResizeRangeTimerId = window.setTimeout(function(){t._moveResizeRangeHandle2(event)},0);
-			}
-			if (this.isResizeRange) {
-				t.resizeRangeTimerId = window.setTimeout(function(){t._resizeRangeHandle2(event)},0);
 			}
 			if (this.isFillHandleMode) {
 				t.fillHandleModeTimerId = window.setTimeout(function(){t._changeFillHandle2(event)},0);
@@ -2004,7 +1952,7 @@
 
 				return false;
 			}
-			if (this.isFillHandleMode || this.isMoveRangeMode || this.isMoveResizeRange || this.isChangeVisibleAreaMode || this.isResizeRange) {
+			if (this.isFillHandleMode || this.isMoveRangeMode || this.isMoveResizeRange || this.isChangeVisibleAreaMode) {
 				return true;
 			}
 
