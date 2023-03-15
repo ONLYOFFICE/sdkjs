@@ -130,7 +130,7 @@
     var kCurNEResize = "ne-resize";
     var kCurAutoFilter = "pointer";
     var kCurEWResize = "ew-resize";
-	var kCurNSResize = "ns-resize";
+    var kCurNSResize = "ns-resize";
 
 
     var kCurFormatPainterExcel = "se-formatpainter";
