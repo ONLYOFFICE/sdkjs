@@ -7232,11 +7232,8 @@
 								break;
 							}
 							case AscDFH.historyitem_type_ChartSpace: {
-								var type_subtype = drawing.getTypeSubType();
 								new_chart_props =
 									{
-										type: type_subtype.type,
-										subtype: type_subtype.subtype,
 										styleId: drawing.style,
 										w: drawing.extX,
 										h: drawing.extY,
