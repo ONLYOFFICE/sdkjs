@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -58,7 +58,7 @@ function (window, undefined) {
 	var argType = Asc.c_oAscFormulaArgumentType;
 
 	cFormulaFunctionGroup['TextAndData'] = cFormulaFunctionGroup['TextAndData'] || [];
-	cFormulaFunctionGroup['TextAndData'].push(cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
+	cFormulaFunctionGroup['TextAndData'].push(cARRAYTOTEXT, cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
 		cEXACT, cFIND, cFINDB, cFIXED, cJIS, cLEFT, cLEFTB, cLEN, cLENB, cLOWER, cMID, cMIDB, cNUMBERVALUE, cPHONETIC,
 		cPROPER, cREPLACE, cREPLACEB, cREPT, cRIGHT, cRIGHTB, cSEARCH, cSEARCHB, cSUBSTITUTE, cT, cTEXT, cTEXTJOIN,
 		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE, cTEXTBEFORE, cTEXTAFTER, cTEXTSPLIT);
@@ -170,6 +170,113 @@ function (window, undefined) {
 			return new cString(isAfter ? text.substring(foundIndex + (((repeatZero > 1 || match_end_active) && match_end && isReverseSearch ) ? 0 : modifiedDelimiter.length), text.length) : text.substring(0, foundIndex));
 		}
 	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cARRAYTOTEXT() {
+	}
+
+	cARRAYTOTEXT.prototype = Object.create(cBaseFunction.prototype);
+	cARRAYTOTEXT.prototype.constructor = cARRAYTOTEXT;
+	cARRAYTOTEXT.prototype.name = 'ARRAYTOTEXT';
+	cARRAYTOTEXT.prototype.isXLFN = true;
+	cARRAYTOTEXT.prototype.argumentsMin = 1;
+	cARRAYTOTEXT.prototype.argumentsMax = 2;
+	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1, 1: 1};
+	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
+	cARRAYTOTEXT.prototype.Calculate = function (arg) {
+		function arrayToTextGeneral (isRange, args) {
+			let array = args[0],
+				format = args[1];
+			let resStr = "", arg0Dimensions;
+
+			if (!format) {
+				format = new cNumber(0);
+			}
+
+			if (cElementType.error === format.type) {
+				return format;
+			}
+
+			format = format.tocNumber().getValue();
+
+			if (format !== 0 && format !== 1) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			// single val check
+			if (cElementType.array !== array.type && cElementType.cellsRange !== array.type && cElementType.cellsRange3D !== array.type) {
+				let tempArr = new cArray();
+				tempArr.addElement(array);
+				array = tempArr;
+			}
+
+			arg0Dimensions = array.getDimensions();
+
+			for (let i = 0; i < arg0Dimensions.row; i++) {
+				for (let j = 0; j < arg0Dimensions.col; j++) {
+					let val = array.getValueByRowCol ? array.getValueByRowCol(i, j) : array.getElementRowCol(i, j);
+					if (!val) {
+						resStr += format === 1 ? "," : ", ";
+						continue;
+					}
+					if (cElementType.string === val.type && format === 1) {
+						val = '"' + val.getValue() + '"';
+					} else if ((cElementType.cell === val.type || cElementType.cell3D === val.type) && format === 1) {
+						let tempVal = val.getValue();
+						if (cElementType.string === tempVal.type) {
+							val = '"' + tempVal.getValue() + '"';
+						} else {
+							val = tempVal.getValue().toString();
+						}
+					} else {
+						val = val.getValue().toString();
+					}
+
+					if (arg0Dimensions.col - 1 === j && format === 1) {
+						resStr += val + ";";
+						continue;
+					} 
+					resStr += format === 1 ? val + "," : val + ", ";
+				}
+			}
+
+			return format === 1 ? new cString("{" + resStr.slice(0, -1) + "}") : new cString(resStr.slice(0, -2));
+		}
+
+		let arg0 = arg[0],
+			arg1 = arg[1] ? arg[1] : new cNumber(0),	
+			exceptions = new Map();
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		if (cElementType.empty === arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			if (cElementType.empty === arg0.getValue().type) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		if (cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			// skip checking this argument in helper function
+			exceptions.set(0, true);
+		}
+
+		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
+			// arg1 is not array/cellsRange
+			return arrayToTextGeneral(false, [arg0, arg1]);
+		} else {
+			return AscCommonExcel.getArrayHelper([arg0, arg1], arrayToTextGeneral, exceptions);
+		}
+	};
+
 
 	/**
 	 * @constructor

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1584,5 +1584,38 @@
 
         return langName;
     };
+
+	/**
+	 * @typedef {Object} ContextMenuItem
+	 * The context menu item
+	 * @property {string} id - The item id.
+	 * @property {localeTranslate} text - The item text.
+	 * @property {boolean} [disabled] - Is disabled item.
+	 * @property {ContextMenuItem[]} items - An array containing the items for current item.
+	 */
+
+	/**
+	 * Add item to context menu
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias AddContextMenuItem
+	 * @param {ContextMenuItem[]} items - Array of items
+	 */
+	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
+	{
+		this.onPluginAddContextMenuItem(items);
+	};
+
+	/**
+	 * Update items in context menu
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias UpdateContextMenuItem
+	 * @param {ContextMenuItem[]} items - Array of items
+	 */
+	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
+	{
+		this.onPluginUpdateContextMenuItem(items);
+	};
 
 })(window);

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -239,10 +239,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return editor.WordControl.m_oLogicDocument.DrawingDocument;
     };
     Slide.prototype.Reassign_ImageUrls = function(images_rename){
-        for(var i = 0; i < this.cSld.spTree.length; ++i){
-            this.cSld.spTree[i].Reassign_ImageUrls(images_rename);
-        }
-
+	    this.cSld.forEachSp(function(oSp) {
+		    oSp.Reassign_ImageUrls(images_rename);
+	    });
         if(this.cSld.Bg &&
             this.cSld.Bg.bgPr &&
             this.cSld.Bg.bgPr.Fill &&
@@ -274,13 +273,12 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         {
             copy.changeBackground(this.cSld.Bg.createFullCopy());
         }
-        for(i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            var _copy = this.cSld.spTree[i].copy(oPr);
-            oIdMap[this.cSld.spTree[i].Id] = _copy.Id;
-            copy.shapeAdd(copy.cSld.spTree.length, _copy);
-            copy.cSld.spTree[copy.cSld.spTree.length - 1].setParent2(copy);
-        }
+
+	    this.cSld.forEachSp(function(oSp) {
+		    let oSpCopy = oSp.copy(oPr);
+		    oIdMap[oSp.Id] = oSpCopy.Id;
+		    copy.shapeAdd(copy.cSld.spTree.length, oSpCopy);
+	    });
 
         if(this.clrMap)
         {
@@ -569,10 +567,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     Slide.prototype.recalcText = function()
     {
         this.recalcInfo.recalculateSpTree = true;
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            this.cSld.spTree[i].recalcText && this.cSld.spTree[i].recalcText();
-        }
+		this.cSld.forEachSp(function(oSp) {
+			oSp.recalcText();
+		});
     };
     Slide.prototype.addComment = function(comment)
     {
@@ -1007,11 +1004,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
     Slide.prototype.getAllFonts = function(fonts)
     {
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            if(typeof  this.cSld.spTree[i].getAllFonts === "function")
-                this.cSld.spTree[i].getAllFonts(fonts);
-        }
+	    this.cSld.forEachSp(function(oSp) {
+		    oSp.getAllFonts(fonts);
+	    });
     };
 
     Slide.prototype.getParentObjects = function()
@@ -1061,52 +1056,31 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         }
     };
 
-    Slide.prototype.Get_AllImageUrls = function(images)
-    {
-        if(this.cSld.Bg && this.cSld.Bg.bgPr && this.cSld.Bg.bgPr.Fill && this.cSld.Bg.bgPr.Fill.fill instanceof  AscFormat.CBlipFill && typeof this.cSld.Bg.bgPr.Fill.fill.RasterImageId === "string" )
-        {
-            images[AscCommon.getFullImageSrc2(this.cSld.Bg.bgPr.Fill.fill.RasterImageId)] = true;
+    Slide.prototype.getAllRasterImages = function(images) {
+		let oBgPr = this.cSld.Bg && this.cSld.Bg.bgPr;
+        if(oBgPr) {
+	        oBgPr.checkBlipFillRasterImage(images);
         }
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            if(typeof this.cSld.spTree[i].getAllImages === "function")
-            {
-                this.cSld.spTree[i].getAllImages(images);
-            }
-        }
-    };
-
-    Slide.prototype.getAllRasterImages = function(images){
-        if(this.cSld.Bg && this.cSld.Bg.bgPr && this.cSld.Bg.bgPr.Fill && this.cSld.Bg.bgPr.Fill.fill instanceof  AscFormat.CBlipFill && typeof this.cSld.Bg.bgPr.Fill.fill.RasterImageId === "string" )
-        {
-            images.push(AscCommon.getFullImageSrc2(this.cSld.Bg.bgPr.Fill.fill.RasterImageId));
-        }
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            if(typeof this.cSld.spTree[i].getAllRasterImages === "function")
-            {
-                this.cSld.spTree[i].getAllRasterImages(images);
-            }
-        }
+		this.cSld.forEachSp(function(oSp) {
+			oSp.getAllRasterImages(images);
+		});
     };
 
     Slide.prototype.changeSize = function(width, height)
     {
         var kw = width/this.Width, kh = height/this.Height;
         this.setSlideSize(width, height);
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            this.cSld.spTree[i].changeSize(kw, kh);
-        }
+	    this.cSld.forEachSp(function(oSp) {
+		    oSp.changeSize(kw, kh);
+	    });
     };
 
     Slide.prototype.checkSlideSize = function()
     {
         this.recalcInfo.recalculateSpTree = true;
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            this.cSld.spTree[i].handleUpdateExtents();
-        }
+	    this.cSld.forEachSp(function(oSp) {
+		    oSp.handleUpdateExtents();
+	    });
     };
 
     Slide.prototype.checkSlideTheme = function()
@@ -1115,21 +1089,19 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         this.bChangeLayout = undefined;
         this.recalcInfo.recalculateSpTree = true;
         this.recalcInfo.recalculateBackground = true;
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            this.cSld.spTree[i].handleUpdateTheme();
-        }
+		this.cSld.forEachSp(function(oSp) {
+			oSp.handleUpdateTheme();
+		});
     };
 
     Slide.prototype.checkSlideColorScheme = function()
     {
         this.recalcInfo.recalculateSpTree = true;
         this.recalcInfo.recalculateBackground = true;
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            this.cSld.spTree[i].handleUpdateFill();
-            this.cSld.spTree[i].handleUpdateLn();
-        }
+	    this.cSld.forEachSp(function(oSp) {
+		    oSp.handleUpdateFill();
+		    oSp.handleUpdateLn();
+	    });
     };
     Slide.prototype.Get_ColorMap = function()
     {

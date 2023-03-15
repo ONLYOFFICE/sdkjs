@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -2281,7 +2281,10 @@
 	};
 	Workbook.prototype.setActiveById=function(sheetId){
 		var ws = this.getWorksheetById(sheetId);
-		return this.setActive(ws.getIndex());
+		if (ws) {
+			this.setActive(ws.getIndex());
+		}
+		return false;
 	};
 	Workbook.prototype.getSheetIdByIndex = function(index) {
 		var ws = this.getWorksheet(index);
@@ -4398,6 +4401,33 @@
 		return null;
 	};
 
+	Workbook.prototype.unlockUserProtectedRanges = function(){
+		this.forEach(function (ws) {
+			ws.unlockUserProtectedRanges();
+		});
+	};
+
+	Workbook.prototype.isUserProtectedRangesIntersection = function(range, userId){
+		let res = false;
+		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
+			if (this.aWorksheets[i].isUserProtectedRangesIntersection(range, userId)) {
+				return true;
+			}
+		}
+		return res;
+	};
+
+	Workbook.prototype.checkUserProtectedRangeName = function (name) {
+		var res = c_oAscDefinedNameReason.OK;
+		//TODO пересмотреть проверку на rx_defName
+		if (!AscCommon.rx_defName.test(name.toLowerCase()) || name.length > g_nDefNameMaxLength) {
+			return c_oAscDefinedNameReason.WrongName;
+		}
+
+		return res;
+	};
+
+
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
 	var tempHelpUnit = new Uint8Array(tempHelp);
@@ -4740,6 +4770,8 @@
 		this.sheetProtection = null;
 		this.aProtectedRanges = [];
 		this.aCellWatches = [];
+		
+		this.userProtectedRanges = [];
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -5146,6 +5178,9 @@
 			elem.initPostOpen(tableIds, t);
 		});
 		this.aCellWatches.forEach(function(elem){
+			elem.initPostOpen(t);
+		});
+		this.userProtectedRanges.forEach(function(elem){
 			elem.initPostOpen(t);
 		});
 	};
@@ -5834,6 +5869,7 @@
 		var redrawTablesArr = this.autoFilters.insertRows("delCell", oActualRange, c_oAscDeleteOptions.DeleteRows);
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oActualRange, offset);
+			this.updateUserProtectedRangesOffset(oActualRange, offset);
 		}
 		if (false == this.workbook.bUndoChanges && (false == this.workbook.bRedoChanges || this.workbook.bCollaborativeChanges)) {
 			History.LocalChange = true;
@@ -5934,6 +5970,7 @@
 		var redrawTablesArr = this.autoFilters.insertRows("insCell", oActualRange, c_oAscInsertOptions.InsertColumns);
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oActualRange, offset);
+			this.updateUserProtectedRangesOffset(oActualRange, offset);
 		}
 		if (false == this.workbook.bUndoChanges && (false == this.workbook.bRedoChanges || this.workbook.bCollaborativeChanges)) {
 			History.LocalChange = true;
@@ -6014,6 +6051,7 @@
 		var redrawTablesArr = this.autoFilters.insertColumn(oActualRange, nDif);
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oActualRange, offset);
+			this.updateUserProtectedRangesOffset(oActualRange, offset);
 		}
 		if (false == this.workbook.bUndoChanges && (false == this.workbook.bRedoChanges || this.workbook.bCollaborativeChanges)) {
 			History.LocalChange = true;
@@ -6091,6 +6129,7 @@
 		var redrawTablesArr = this.autoFilters.insertColumn(oActualRange, count);
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oActualRange, offset);
+			this.updateUserProtectedRangesOffset(oActualRange, offset);
 		}
 		if (false == this.workbook.bUndoChanges && (false == this.workbook.bRedoChanges || this.workbook.bCollaborativeChanges)) {
 			History.LocalChange = true;
@@ -7378,6 +7417,7 @@
 		this.moveConditionalFormatting(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 		this.moveSparklineGroup(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 		this.moveProtectedRange(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
+		this._moveUserProtectedRange(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 
 
 		if(true == this.workbook.bUndoChanges || true == this.workbook.bRedoChanges) {
@@ -7413,6 +7453,7 @@
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
+			this.updateUserProtectedRangesOffset(oBBox, offset);
 		}
 
 		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell){
@@ -7458,6 +7499,7 @@
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
+			this.updateUserProtectedRangesOffset(oBBox, offset);
 		}
 
 		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell){
@@ -7499,6 +7541,7 @@
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
+			this.updateUserProtectedRangesOffset(oBBox, offset);
 		}
 
 		this._updateFormulasParents(oActualRange.r1, oActualRange.c1, oActualRange.r2, oActualRange.c2, oBBox, offset, renameRes.shiftedShared);
@@ -7559,6 +7602,7 @@
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
+			this.updateUserProtectedRangesOffset(oBBox, offset);
 		}
 
 		this._updateFormulasParents(oActualRange.r1, oActualRange.c1, oActualRange.r2, oActualRange.c2, oBBox, offset, renameRes.shiftedShared);
@@ -9239,7 +9283,7 @@
 			options.isWholeWord = true;
 		}
 
-		var selectionRange = options.selectionRange || this.selectionRange;
+		var selectionRange = options.selectionRange || this.selectionRange || this.copySelection;
 		var lastRange = selectionRange.getLast();
 		var activeCell = selectionRange.activeCell;
 		var merge = this.getMergedByCell(activeCell.row, activeCell.col);
@@ -11345,6 +11389,12 @@
 		if (!wsTo) {
 			wsTo = this;
 		}
+
+		if (wsTo.isUserProtectedRangesIntersection(oBBoxTo) || (wsFrom && wsFrom.isUserProtectedRangesIntersection(oBBoxFrom))) {
+			wsTo.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+			return;
+		}
+
 		if (wsTo.getSheetProtection()) {
 			return;
 		}
@@ -11591,6 +11641,193 @@
 		}
 		return c_oAscError.ID.No;
 	};
+
+	//*****user range protect*****
+	Worksheet.prototype.editUserProtectedRanges = function(oldObj, newObj, addToHistory) {
+
+		var res = null;
+
+
+		/*if (!AscCommon.rx_defName.test(getDefNameIndex(newUndoName.name)) || newUndoName.name.length > g_nDefNameMaxLength) {
+			return res;
+		}*/
+
+
+		if (oldObj || newObj) {
+			let cloneNewOnj = newObj && newObj.clone();
+			if (cloneNewOnj) {
+				cloneNewOnj.Id = newObj.Id;
+				cloneNewOnj._ws = this;
+			}
+			if (oldObj) {
+				let modelUserRange = this.getUserProtectedRangeById(oldObj.Id);
+				if (modelUserRange) {
+					//TODO clone
+					if (cloneNewOnj) {
+						this.userProtectedRanges[modelUserRange.index] = cloneNewOnj;
+					} else {
+						this.userProtectedRanges.splice(modelUserRange.index, 1);
+					}
+				}
+			} else if (cloneNewOnj) {
+				this.userProtectedRanges.push(cloneNewOnj);
+			}
+
+			if (addToHistory) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeUserProtectedRange, this.getId(), null,
+					new UndoRedoData_FromTo(oldObj, newObj));
+			}
+		}
+
+		return res;
+	};
+
+	Worksheet.prototype.deleteUserProtectedRanges = function (range) {
+		for (var i = this.userProtectedRanges.length - 1; i >= 0; --i) {
+			var userProtectedRange = this.userProtectedRanges[i];
+			if (range.containsRange(userProtectedRange.ref)) {
+				this.editUserProtectedRanges(userProtectedRange, null, true);
+			}
+		}
+		return true;
+	};
+
+	Worksheet.prototype.getUserProtectedRangeById = function(id) {
+		var res = null;
+		if(!this.userProtectedRanges)
+			return res;
+
+		for(var i = 0; i < this.userProtectedRanges.length; i++)
+		{
+			if(this.userProtectedRanges[i].Id === id)
+			{
+				res = {obj: this.userProtectedRanges[i], index: i};
+				break;
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.unlockUserProtectedRanges = function(){
+		if (this.userProtectedRanges) {
+			for (let i = 0; i < this.userProtectedRanges.length; i++) {
+				this.userProtectedRanges[i].isLock = null;
+			}
+		}
+	};
+
+	Worksheet.prototype.isIntersectionOtherUserProtectedRanges = function(range){
+		let res = false;
+		if (this.userProtectedRanges) {
+			let oApi = Asc.editor;
+			let sUserId = oApi.DocInfo && oApi.DocInfo.get_UserId();
+			if (sUserId) {
+				for (let i = 0; i < this.userProtectedRanges.length; i++) {
+					let curUserProtectedRange = this.userProtectedRanges[i];
+					if (curUserProtectedRange.intersection(range) && !curUserProtectedRange.isUserCanEdit(sUserId)) {
+						res = true;
+						break;
+					}
+				}
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.isUserProtectedRangesIntersection = function(range, userId, notCheckUser){
+		//range - array of ranges or range
+		let res = false;
+		if (!this.userProtectedRanges || !this.userProtectedRanges.length) {
+			return res;
+		}
+
+		if (!userId) {
+			let oApi = Asc.editor;
+			userId = oApi.DocInfo && oApi.DocInfo.get_UserId();
+		}
+		if (this.userProtectedRanges && userId) {
+			for (let i = 0; i < this.userProtectedRanges.length; i++) {
+				let curUserProtectedRange = this.userProtectedRanges[i];
+				if (range && range.length) {
+					for (let j = 0; j < range.length; j++) {
+						if (curUserProtectedRange.intersection(range[j])&& (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId))) {
+							return true;
+						}
+					}
+				} else if ((!range || curUserProtectedRange.intersection(range))&& (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId))) {
+					res = true;
+					break;
+				}
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.updateUserProtectedRangesOffset = function (range, offset) {
+		if (offset.row < 0 || offset.col < 0) {
+			this.deleteUserProtectedRanges(range);
+		}
+
+		this.shiftUserProtectedRanges(range, offset);
+	};
+	Worksheet.prototype.moveUserProtectedRangesOffset = function (range, offset) {
+		var userProtectedRange;
+		for (var i = 0; i < this.userProtectedRanges.length; ++i) {
+			userProtectedRange = this.userProtectedRanges[i];
+			if (userProtectedRange.isInRange(range)) {
+				userProtectedRange.setOffset(offset, true);
+			}
+		}
+	};
+
+	Worksheet.prototype._moveUserProtectedRange = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo) {
+		if (!wsTo) {
+			wsTo = this;
+		}
+		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
+			if (copyRange) {
+				wsTo.deleteUserProtectedRanges(oBBoxTo);
+				this.copyUserProtectedRanges(oBBoxFrom, offset, wsTo);
+			} else {
+				if (this === wsTo) {
+					this.moveUserProtectedRangesOffset(oBBoxFrom, offset);
+				} else {
+					this.copyUserProtectedRanges(oBBoxFrom, offset, wsTo);
+					this.deleteUserProtectedRanges(oBBoxFrom);
+				}
+			}
+		}
+	};
+
+	Worksheet.prototype.copyUserProtectedRanges = function (range, offset, wsTo) {
+		var t = this;
+		var userProtectedRange;
+		for (var i = this.userProtectedRanges.length - 1; i >= 0; --i) {
+			userProtectedRange = this.userProtectedRanges[i];
+			if (userProtectedRange.isInRange(range)) {
+				var newUserProtectedRange = userProtectedRange.clone(wsTo);
+				newUserProtectedRange.setOffset(offset, false);
+				wsTo.editUserProtectedRanges(null, newUserProtectedRange, true);
+			}
+		}
+	};
+
+	Worksheet.prototype.shiftUserProtectedRanges = function (range, offset, wsTo) {
+		var t = this;
+		var userProtectedRange;
+		for (var i = this.userProtectedRanges.length - 1; i >= 0; --i) {
+			userProtectedRange = this.userProtectedRanges[i];
+
+			if (range.isIntersectForShift(userProtectedRange.ref, offset)) {
+				let newRef = userProtectedRange.ref.clone();
+				newRef.forShift(range, offset);
+				if (!userProtectedRange.ref.isEqual(newRef)) {
+					userProtectedRange.setLocation(newRef, true);
+				}
+			}
+		}
+	};
+
 
 	Worksheet.prototype.setSheetViewType = function(val, addToHistory) {
 		var sheetView = this.sheetViews[0];
@@ -13349,7 +13586,8 @@
 							} else {
 								//like in CellXfs.prototype.merge
 								var isTableColor = oCurtext.format.isNormalXfColor();
-								oCurFormat = xfs._mergeProperty(g_StyleCache.addFont, oCurtext.format, xfs.font, true, isTableColor);
+								let mergedFont = xfs._mergeProperty(g_StyleCache.addFont, oCurtext.format, xfs.font, true, isTableColor);
+								oCurFormat.assign(mergedFont);
 							}
 						} else {
 							oCurFormat.assign(cellfont);

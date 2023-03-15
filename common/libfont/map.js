@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -149,9 +149,15 @@
 		};
 
 		this.ChangeGlyphsMap = {
-			"Symbol" : { Name : "OpenSymbol", IsSymbolSrc : true, MapSrc : [0xB7, 0xA8], MapDst : [0xE12C, 0xE442] },
-			"Wingdings" : { Name : "OpenSymbol", IsSymbolSrc : true, MapSrc : [0x76, 0x77, 0xD8, 0xA7, 0xFC, 0x71, 0x6C, 0x6F, 0x6E, 0xA1],
-				MapDst : [0xE441, 0xE442, 0xE25F, 0xE46F, 0xE330, 0x2751, 0xE12C, 0xE43A, 0xE439, 0xE469] }
+			"Symbol" : [
+				{ Name : "OpenSymbol", IsSymbolSrc : true, MapSrc : [0xB7, 0xA8], MapDst : [0xE12C, 0xE442]},
+				{ Name : "-", IsSymbolSrc : true, IsSymbolDst : true }
+				//{ Name : "Standard Symbols PS", IsSymbolSrc : true, MapSrc : [0xF0B7, 0xF0A8], MapDst : [0xB7, 0xA8]}
+			],
+			"Wingdings" : [
+				{ Name : "OpenSymbol", IsSymbolSrc : true, MapSrc : [0x76, 0x77, 0xD8, 0xA7, 0xFC, 0x71, 0x6C, 0x6F, 0x6E, 0xA1],
+					MapDst : [0xE441, 0xE442, 0xE25F, 0xE46F, 0xE330, 0x2751, 0xE12C, 0xE43A, 0xE439, 0xE469] }
+			]
 		};
 
 		this.MainUnicodeRanges = {
@@ -2836,23 +2842,33 @@
 
 		this.CheckReplaceGlyphsMap = function(name, objDst)
 		{
-			var _replaceInfo = this.g_fontDictionary.ChangeGlyphsMap[name];
-			if (!_replaceInfo)
+			var _replaceInfoArray = this.g_fontDictionary.ChangeGlyphsMap[name];
+			if (!_replaceInfoArray)
 				return null;
-			if (_replaceInfo.Name != objDst.Name)
-				return null;
-			return _replaceInfo;
+
+			for (let i = 0, len = _replaceInfoArray.length; i < len; i++)
+			{
+				if (_replaceInfoArray[i].Name === objDst.Name || _replaceInfoArray[i].Name === "-")
+					return _replaceInfoArray[i];
+			}
+
+			return null;
 		};
 
 		this.GetReplaceGlyph = function(src, objDst)
 		{
+			// если исходный шрифт символьный (и все глифы там 0xF000+) - то вычетаем, так как
+			// если подобранный шрифт символьный - прибавится на CacheGlyph. а если нет - то надо вычитать.
+			if (objDst.IsSymbolDst)
+				return (0xF000 < src) ? (src - 0xF000) : src;
+
 			// TODO: must be faster!!!
 			var _arr = objDst.MapSrc;
 			var _arrLen = _arr.length;
 
 			for (var i = 0; i < _arrLen; i++)
 			{
-				if (_arr[i] == src)
+				if (_arr[i] === src)
 					return objDst.MapDst[i];
 
 				if (objDst.IsSymbolSrc && (src == (0xF000 + _arr[i])))

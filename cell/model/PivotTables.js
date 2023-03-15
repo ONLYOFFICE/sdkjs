@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -3789,7 +3789,7 @@ CT_pivotTableDefinition.prototype.getPivotTableButtons = function (range, button
 /**
  * Returns the index in CT_DataFields.dataField array
  */
-CT_pivotTableDefinition.prototype.getDataFieldIndexByCell = function (row, col) {
+CT_pivotTableDefinition.prototype.getDataFieldIndexByCell = function (row, col, layout) {
 	let pivotRange = this.getRange();
 	let location = this.location;
 	let dataFields = this.asc_getDataFields();
@@ -3799,16 +3799,28 @@ CT_pivotTableDefinition.prototype.getDataFieldIndexByCell = function (row, col) 
 	let baseRow = pivotRange.r1 + location.firstDataRow;
 	let curRow = row - baseRow;
 	let curCol = col - baseCol;
-	let result = null;
-	if (curRow >= 0 && curCol >= 0 && dataFields) {
-		let rowItem = rowItems[curRow];
-		let colItem = colItems[curCol];
-		let dataIndex = Math.max(rowItem.i, colItem.i);
-		if (dataIndex < dataFields.length && rowItem.t !== Asc.c_oAscItemType.Blank && colItem.t !== Asc.c_oAscItemType.Blank) {
-			result = dataIndex;
+	if (dataFields) {
+		if (curRow >= 0 && curCol >= 0) {
+			let rowItem = rowItems[curRow];
+			let colItem = colItems[curCol];
+			let dataIndex = Math.max(rowItem.i, colItem.i);
+			if (dataIndex < dataFields.length && rowItem.t !== Asc.c_oAscItemType.Blank && colItem.t !== Asc.c_oAscItemType.Blank) {
+				return dataIndex;
+			}
+		} else if (layout) {
+			let cellLayout = layout.getHeaderCellLayoutExceptValue();
+			if (cellLayout && cellLayout.t === Asc.c_oAscItemType.Grand) {
+				return cellLayout.i;
+			} else if (layout.rows && layout.type === Asc.PivotLayoutType.rowField && layout.rows[layout.rows.length - 1].fld === AscCommonExcel.st_VALUES) {
+				return layout.rows[layout.rows.length - 1].i;
+			} else if (layout.cols && layout.type === Asc.PivotLayoutType.colField && layout.cols[layout.cols.length - 1].fld === AscCommonExcel.st_VALUES) {
+				return layout.cols[layout.cols.length - 1].i;
+			} else if (dataFields.length === 1 && layout.type === Asc.PivotLayoutType.headerData) {
+				return 0;
+			}
 		}
 	}
-	return result;
+	return null;
 };
 
 /**
@@ -3819,7 +3831,7 @@ CT_pivotTableDefinition.prototype.getDataFieldIndexByCell = function (row, col) 
  */
 CT_pivotTableDefinition.prototype.getDataFieldFldByCell = function (row, col) {
 	let dataFields = this.asc_getDataFields();
-	let dataIndex = this.getDataFieldIndexByCell(row, col)
+	let dataIndex = this.getDataFieldIndexByCell(row, col);
 	if (dataIndex !== null) {
 		return dataFields[dataIndex].fld;
 	}
@@ -4331,10 +4343,12 @@ CT_pivotTableDefinition.prototype.getRowColIndexes = function(fields, withoutVal
 	return indexes;
 };
 CT_pivotTableDefinition.prototype.getCacheFieldName = function(index) {
-	return this.asc_getCacheFields()[index].name || "";
+	let cacheFields = this.asc_getCacheFields();
+	return (cacheFields && cacheFields[index] && cacheFields[index].name) || "";
 };
 CT_pivotTableDefinition.prototype.getPivotFieldName = function(index) {
-	return this.asc_getPivotFields()[index].name || this.getCacheFieldName(index);
+	let pivotFields = this.asc_getPivotFields();
+	return (pivotFields && pivotFields[index] && pivotFields[index].name) || this.getCacheFieldName(index);
 };
 CT_pivotTableDefinition.prototype.getDataFieldName = function(index) {
 	var dataField = this.asc_getDataFields()[index];
@@ -5852,7 +5866,7 @@ CT_pivotTableDefinition.prototype._canSortByCell = function(row, col) {
 		var t = this;
 		var layout = t.getLayoutByCell(row, col);
 		if (layout) {
-			return layout.getSortFilterInfo(this);
+			return layout.getSortFilterInfo(this, row, col);
 		}
 	}
 	return null;
@@ -5918,7 +5932,7 @@ CT_pivotTableDefinition.prototype.asc_filterByCell = function(api, autoFilterObj
 	if (null === fld) {
 		var layout = t.getLayoutByCell(row, col);
 		if (layout) {
-			var info = layout.getSortFilterInfo(this);
+			var info = layout.getSortFilterInfo(this, row, col);
 			fld = info.fld;
 		}
 	}
@@ -6090,7 +6104,7 @@ CT_pivotTableDefinition.prototype.asc_removeFilterByCell = function(api, row, co
 	var t = this;
 	var layout = t.getLayoutByCell(row, col);
 	if (layout) {
-		var info = layout.getSortFilterInfo(this);
+		var info = layout.getSortFilterInfo(this, row, col);
 		if (null !== info.fld) {
 			this.removeFiltersWithLock(api, [info.fld], false);
 		}
@@ -6190,8 +6204,8 @@ CT_pivotTableDefinition.prototype.getLayoutByCell = function(row, col) {
 	var res = this.getLayoutByCellPage(row, col) || this.getLayoutByCellHeader(row, col)
 	|| this.getLayoutByCellHeaderRowColLables(row, col) || this.getLayoutByCellRowHeaderLabels(row, col, rowFieldsOffset)
 	|| this.getLayoutByCellHeaderRowColLables(row, col, rowFieldsOffset) || this.getLayoutByCellData(row, col, rowFieldsOffset);
-	if (res !== null) {
-		res.dataFieldIndex = this.getDataFieldIndexByCell(row, col);
+	if (res) {
+		res.dataFieldIndex = this.getDataFieldIndexByCell(row, col, res);
 	}
 	return res;
 };
@@ -6201,32 +6215,45 @@ CT_pivotTableDefinition.prototype.getContextMenuInfo = function(selection) {
 	let col = selection.activeCell.col;
 	res.layout = this.getLayoutByCell(row, col);
 	res.layoutGroup = this.getLayoutsForGroup(selection, res.layout);
-
-	if (Asc.PivotLayoutType.cell === res.layout.type && selection.isSingleRange() && selection.getLast().isOneCell()) {
-		let cellLayout = res.layout.getHeaderCellLayoutRowExceptValue();
-		if (null !== cellLayout && null !== cellLayout.fld) {
-			let autoFilterObject = new Asc.AutoFiltersOptions();
-			// autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
-			autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
-			this.fillAutoFiltersOptions(autoFilterObject, cellLayout.fld);
-			res.filterRow = autoFilterObject;
+	if (res.layout && res.layout.dataFieldIndex !== null && Asc.PivotLayoutType.cell === res.layout.type && selection.isSingleRange() && selection.getLast().isOneCell()) {
+		let info = res.layout.getSortFilterInfo(this, row, col);
+		if (info.sortDataIndex >= 0) {
+			let cellLayout = res.layout.getHeaderCellLayoutRowExceptValue();
+			if (null !== cellLayout && null !== cellLayout.fld) {
+				let autoFilterObject = new Asc.AutoFiltersOptions();
+				// autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
+				autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
+				this.fillAutoFiltersOptions(autoFilterObject, cellLayout.fld);
+				autoFilterObject.pivotObj.asc_setDataFieldIndexSorting(info.sortDataIndex + 1);
+				res.filterRow = autoFilterObject;
+			}
+			cellLayout = res.layout.getHeaderCellLayoutColExceptValue();
+			if (null !== cellLayout && null !== cellLayout.fld ) {
+				let autoFilterObject = new Asc.AutoFiltersOptions();
+				// autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
+				autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
+				this.fillAutoFiltersOptions(autoFilterObject, cellLayout.fld);
+				autoFilterObject.pivotObj.asc_setDataFieldIndexSorting(info.sortDataIndex + 1);
+				res.filterCol = autoFilterObject;
+			}
 		}
-		cellLayout = res.layout.getHeaderCellLayoutColExceptValue();
-		if (null !== cellLayout && null !== cellLayout.fld ) {
-			let autoFilterObject = new Asc.AutoFiltersOptions();
-			// autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
-			autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
-			this.fillAutoFiltersOptions(autoFilterObject, cellLayout.fld);
-			res.filterCol = autoFilterObject;
-		}
-	} else if (Asc.PivotLayoutType.rowField === res.layout.type || Asc.PivotLayoutType.colField === res.layout.type) {
-		let info = res.layout.getSortFilterInfo(this);
+	} else if (res.layout && (Asc.PivotLayoutType.rowField === res.layout.type || Asc.PivotLayoutType.colField === res.layout.type)) {
+		let info = res.layout.getSortFilterInfo(this, row, col);
 		if (null !== info.fld) {
 			let autoFilterObject = new Asc.AutoFiltersOptions();
 			// autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
 			autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
 			this.fillAutoFiltersOptions(autoFilterObject, info.fld);
-			res.filter = autoFilterObject;
+			if (info.sortDataIndex >= 0) {
+				autoFilterObject.pivotObj.asc_setDataFieldIndexSorting(info.sortDataIndex + 1);
+				if (Asc.PivotLayoutType.rowField === res.layout.type) {
+					res.filterRow = autoFilterObject;
+				} else {
+					res.filterCol = autoFilterObject;
+				}
+			} else {
+				res.filter = autoFilterObject;
+			}
 		}
 	}
 	return res;
@@ -6427,9 +6454,7 @@ CT_pivotTableDefinition.prototype.getLayoutByCellData = function(row, col, rowFi
 		type = PivotLayoutType.colField;
 		cols = cols.slice(0, rowOffset);
 		if (cols.length > 0) {
-			if (cols[cols.length - 1].t === Asc.c_oAscItemType.Grand) {
-				fld = this.getDataFieldFldByCell(row, col);
-			} else {
+			if (cols[cols.length - 1].t !== Asc.c_oAscItemType.Grand) {
 				fld = cols[cols.length - 1].fld;
 			}
 		}
@@ -15885,7 +15910,7 @@ PivotContextMenu.prototype.asc_getRowGrandTotals = function() {
 	if (!this.layout || this.layout.type !== Asc.PivotLayoutType.rowField) {
 		return false;
 	}
-	let cellLayout = this.layout.getHeaderCellLayoutExceptValue();
+	let cellLayout = this.layout.getHeaderCellLayout();
 	if (cellLayout && cellLayout.t === Asc.c_oAscItemType.Grand) {
 		return true;
 	}
@@ -15895,7 +15920,7 @@ PivotContextMenu.prototype.asc_getColGrandTotals = function() {
 	if (!this.layout || this.layout.type !== Asc.PivotLayoutType.colField) {
 		return false;
 	}
-	let cellLayout = this.layout.getHeaderCellLayoutExceptValue();
+	let cellLayout = this.layout.getHeaderCellLayout();
 	if (cellLayout && cellLayout.t === Asc.c_oAscItemType.Grand) {
 		return true;
 	}
@@ -15964,17 +15989,29 @@ PivotLayout.prototype.createLayout = function(type, opt_fld, opt_rows, opt_cols,
 	res.dataFieldIndex = opt_dataFieldIndex;
 	return res;
 };
-PivotLayout.prototype.getSortFilterInfo = function(pivotTable) {
+PivotLayout.prototype.getSortFilterInfo = function(pivotTable, row, col) {
 	var fld = this.fld;
 	let sortDataIndex = -1;
-	if (PivotLayoutType.cell === this.type || PivotLayoutType.rowField === this.type || PivotLayoutType.colField === this.type) {
-		fld = null;
+	if (PivotLayoutType.cell === this.type) {
 		let cellLayout = this.getHeaderCellLayoutExceptValue();
 		if (cellLayout) {
 			fld = cellLayout.fld;
+		} else {
+			fld = null;
 		}
-		if(PivotLayoutType.cell === this.type) {
-			sortDataIndex = pivotTable.dataFields.find(this.fld);
+		let dataIndex = pivotTable.getDataFieldIndexByCell(row, col, this);
+		if (dataIndex !== null) {
+			sortDataIndex = dataIndex;
+		}
+	} else if (PivotLayoutType.rowField === this.type || PivotLayoutType.colField === this.type) {
+		if (AscCommonExcel.st_VALUES === fld) {
+			fld = null;
+			let dataFields = pivotTable.asc_getDataFields();
+			let dataIndex = pivotTable.getDataFieldIndexByCell(row, col, this);
+			if (dataFields && dataIndex !== null) {
+				fld = dataFields[dataIndex].fld;
+				sortDataIndex = dataIndex;
+			}
 		}
 	} else if (PivotLayoutType.headerCompactRow === this.type && pivotTable.rowFields) {
 		fld = pivotTable.rowFields.getFirstIndexExceptValue();
@@ -15984,6 +16021,21 @@ PivotLayout.prototype.getSortFilterInfo = function(pivotTable) {
 		fld = null;
 	}
 	return {fld: fld, sortDataIndex: sortDataIndex};
+};
+PivotLayout.prototype.getHeaderCellLayoutRow = function() {
+	if (this.rows && this.rows.length > 0) {
+		return this.rows[this.rows.length - 1];
+	}
+	return null;
+};
+PivotLayout.prototype.getHeaderCellLayoutCol = function() {
+	if (this.cols && this.cols.length > 0) {
+		return this.cols[this.cols.length - 1];
+	}
+	return null;
+};
+PivotLayout.prototype.getHeaderCellLayout = function () {
+	return this.getHeaderCellLayoutRow() || this.getHeaderCellLayoutCol() || null;
 };
 PivotLayout.prototype.getHeaderCellLayoutRowExceptValue = function() {
 	if (this.rows) {
@@ -16010,7 +16062,7 @@ PivotLayout.prototype.getHeaderCellLayoutExceptValue = function () {
 };
 PivotLayout.prototype.getGroupCellLayout = function() {
 	if (PivotLayoutType.rowField === this.type || PivotLayoutType.colField === this.type) {
-		return this.getHeaderCellLayoutExceptValue();
+		return this.getHeaderCellLayout();
 	}
 	return null;
 };

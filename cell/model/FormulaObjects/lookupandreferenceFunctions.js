@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -67,7 +67,7 @@ function (window, undefined) {
 	var _func = AscCommonExcel._func;
 
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
-	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFORMULATEXT,
+	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFILTER, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE, cTAKE,
 		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS, cXMATCH);
 
@@ -720,6 +720,133 @@ function (window, undefined) {
 		}
 
 		return new cError(cErrorType.wrong_value_type);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cFILTER() {
+	}
+
+	//***array-formula***
+	cFILTER.prototype = Object.create(cBaseFunction.prototype);
+	cFILTER.prototype.constructor = cFILTER;
+	cFILTER.prototype.name = 'FILTER';
+	cFILTER.prototype.argumentsMin = 2;
+	cFILTER.prototype.argumentsMax = 3;
+	cFILTER.prototype.isXLFN = true;
+	cFILTER.prototype.arrayIndexes = {0: 1, 1: 1};
+	cFILTER.prototype.argumentsType = [argType.reference, argType.reference, argType.any];
+	cFILTER.prototype.Calculate = function (arg) {
+		function rangeModeLoop (rows, columns, isColumnMode) {
+			let resArr = new cArray();
+
+			for (let i = 0; i < rows; i++) {
+				for (let j = 0; j < columns; j++) {
+					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
+
+					val = val.tocBool();
+					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
+					if (cElementType.error === val.type) {
+						return val;
+					}
+
+					if (val) {
+						isColumnMode ? resArr.pushCol(arg0._getCol(j), 0) : resArr.pushRow(arg0._getRow(i), 0);
+					}
+				}
+			}
+			
+			return resArr;
+		}
+ 
+		let resultArr = new cArray(),
+			arg0 = arg[0],
+			arg1 = arg[1],
+			arg2 = arg[2] ? arg[2] : new cEmpty(),
+			baseMode = false,		// val && range || val && val || range && val
+			rangeMode = false;		// range && range
+
+		if (cElementType.empty === arg0.type || cElementType.empty === arg1.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		// 4 options: 1) range && range; 2) range && value; 3) value && range; 4) value && value
+		if ((cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) && (cElementType.array === arg1.type || cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type)) {
+			// 1) range && range
+			rangeMode = true;
+		} else if ((cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) && (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type)) {
+			// 2) range && value
+			// Return array arg0 if arg1 === true and if array arg0 is one-dimensional
+			let arg0Dimensons = arg0.getDimensions();
+			if ((arg0Dimensons.row > 1 && arg0Dimensons.col > 1)) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				baseMode = true;
+			}
+		} else if ((cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) && (cElementType.array === arg1.type || cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type)) {
+			// 3) value && range
+			baseMode = true;
+			arg1 = arg1.isOneElement() ? arg1.getFirstElement() : new cError(cErrorType.wrong_value_type);
+		} else {
+			// 4) value && value
+			baseMode = true;
+		}
+		
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		if (rangeMode) {
+			const initialArrayDimensions = arg0.getDimensions(),
+				initRows = initialArrayDimensions.row,
+				initColumns = initialArrayDimensions.col,
+				lookingArrayDimensions = arg1.getDimensions();
+
+			// check for matching array sizes
+			if (lookingArrayDimensions.row === 1 && lookingArrayDimensions.col === initColumns) {
+				resultArr = rangeModeLoop(lookingArrayDimensions.row, lookingArrayDimensions.col, true);
+			} else if (lookingArrayDimensions.row === initRows && lookingArrayDimensions.col === 1) {
+				resultArr = rangeModeLoop(lookingArrayDimensions.row, lookingArrayDimensions.col, false);
+			} else {
+				// the size of the desired array does not match the initial
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			if (resultArr.type === cElementType.error) {
+				return resultArr;
+			} else {
+				resultArr = (resultArr.countElement > 0 || resultArr.rowCount > 0) ? resultArr : ((cElementType.empty !== arg2.type) ? arg2 : new cError(cErrorType.wrong_value_type));
+			}
+		} else if (baseMode) {
+			arg1 = arg1.tocBool();
+			arg1 = arg1.toBool ? arg1.toBool() : new cError(cErrorType.wrong_value_type);
+
+			if (cElementType.error === arg1.type) {
+				resultArr = arg1;
+			} else if (arg1) {
+				if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+					arg0 = arg0.getValue();
+				}
+				resultArr = arg0;
+			} else {
+				// should be #CALC!
+				resultArr = (cElementType.empty !== arg2.type) ? arg2 : new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		return resultArr;
 	};
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -4769,6 +4769,13 @@
 			return getGrayscaleValue(this);
 		};
 
+		function checkUniFillRasterImageId(oUnifill) {
+			if (oUnifill) {
+				return oUnifill.checkRasterImageId();
+			}
+			return null;
+		}
+
 		function CUniFill() {
 			CBaseNoIdObject.call(this);
 			this.fill = null;
@@ -4978,7 +4985,6 @@
 			const RGBAColor = this.getRGBAColor();
 			return getGrayscaleValue(RGBAColor);
 		};
-
 		CUniFill.prototype.getRGBAColor = function () {
 			if (this.fill) {
 				if (this.fill.type === c_oAscFill.FILL_TYPE_SOLID) {
@@ -5179,6 +5185,11 @@
 				}
 			}
 		};
+		CUniFill.prototype.checkRasterImageId = function() {
+			if (this.fill && typeof this.fill.RasterImageId === "string" && this.fill.RasterImageId.length > 0)
+				return this.fill.RasterImageId;
+			return null;
+		}
 
 		function CBuBlip() {
 			CBaseNoIdObject.call(this);
@@ -7465,9 +7476,7 @@
 			return false;
 		};
 		CSpPr.prototype.checkUniFillRasterImageId = function (unifill) {
-			if (unifill && unifill.fill && typeof unifill.fill.RasterImageId === "string" && unifill.fill.RasterImageId.length > 0)
-				return unifill.fill.RasterImageId;
-			return null;
+			return checkUniFillRasterImageId(unifill);
 		};
 		CSpPr.prototype.checkBlipFillRasterImage = function (images) {
 			var fill_image_id = this.checkUniFillRasterImageId(this.Fill);
@@ -8704,6 +8713,13 @@
 			}
 			this.shadeToTitle = r.GetBool();
 		};
+		CBgPr.prototype.checkBlipFillRasterImage = function (images) {
+			let fill_image_id = checkUniFillRasterImageId(this.Fill);
+			if (fill_image_id !== null)
+				images.push(fill_image_id);
+		};
+
+
 
 		function CBg() {
 			CBaseNoIdObject.call(this);
@@ -8800,6 +8816,11 @@
 				}
 			}
 			return null;
+		};
+		CSld.prototype.forEachSp = function(fCallback) {
+			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+				fCallback(this.spTree[nSp]);
+			}
 		};
 
 		function CSpTree(oSlideObject) {
@@ -13965,6 +13986,9 @@
 			if (true === _canChangeArrows)
 				ret.canChangeArrows = true;
 
+			if (isRealNumber(ln.Fill.transparent)) {
+				ret.transparent = ln.Fill.transparent;
+			}
 			return ret;
 		}
 
@@ -13993,6 +14017,11 @@
 					ret.Fill.fill = new CSolidFill();
 					ret.Fill.fill.color = CorrectUniColor(_color, ret.Fill.fill.color, flag);
 				}
+			}
+
+			var _alpha = asc_stroke.transparent;
+			if (null != _alpha) {
+				ret.Fill.transparent = _alpha;
 			}
 
 			var _join = asc_stroke.LineJoin;

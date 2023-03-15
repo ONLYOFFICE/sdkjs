@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1266,7 +1266,31 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea.prototype.getFirstElement = function () {
 		return this.getValueByRowCol(0, 0);
-	}
+	};
+	cArea.prototype._getCol = function (colIndex) {
+		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+			return null;
+		}
+
+		let col = [];
+		for (let i = 0; i < this.getDimensions().row; i++) {
+			col[i] = [];
+			col[i].push(this.getValueByRowCol(i, colIndex));
+		}
+		return col;
+	};
+	cArea.prototype._getRow = function (rowIndex) {
+		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+			return null;
+		}
+
+		let row = [[]];
+		for (let j = 0; j < this.getDimensions().col; j++) {
+			row[0].push(this.getValueByRowCol(rowIndex, j));
+		}
+		return row;
+	};
+
 
 	/**
 	 * @constructor
@@ -1637,7 +1661,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea3D.prototype.getFirstElement = function () {
 		return this.getValueByRowCol(0, 0);
-	}
+	};
+	cArea3D.prototype._getCol = function (colIndex) {
+		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+			return null;
+		}
+
+		let col = [];
+		for (let i = 0; i < this.getDimensions().row; i++) {
+			col[i] = [];
+			col[i].push(this.getValueByRowCol(i, colIndex));
+		}
+		return col;
+	};
+	cArea3D.prototype._getRow = function (rowIndex) {
+		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+			return null;
+		}
+
+		let row = [[]];
+		for (let j = 0; j < this.getDimensions().col; j++) {
+			row[0].push(this.getValueByRowCol(rowIndex, j));
+		}
+		return row;
+	};
 
 	/**
 	 * @constructor
@@ -2524,10 +2571,24 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return this.array[rowIndex];
 	};
+	cArray.prototype._getRow = function (rowIndex) {
+		if (rowIndex < 0 || rowIndex > this.array.length - 1) {
+			return null;
+		}
+		return [this.array[rowIndex]];
+	};
 	cArray.prototype.getCol = function (colIndex) {
 		var col = [];
 		for (var i = 0; i < this.rowCount; i++) {
 			col.push(this.array[i][colIndex]);
+		}
+		return col;
+	};
+	cArray.prototype._getCol = function (colIndex) {
+		let col = [];
+		for (let i = 0; i < this.rowCount; i++) {
+			col[i] = [];
+			col[i].push(this.array[i][colIndex]);
 		}
 		return col;
 	};
@@ -2795,7 +2856,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		res.fillFromArray(newArray);
 		return res;
 	};
-
 	cArray.prototype.getFirstElement = function () {
 		return this.getElementRowCol(0,0);	
 	}
@@ -8297,6 +8357,71 @@ function parserFormula( formula, parent, _ws ) {
 		return bRes;
 	}
 
+	function getArrayHelper(args, func, exceptions) {
+		// check for arrays and find max length
+		let isContainsArray = false,
+			maxRows = 1,
+			maxColumns = 1;
+
+		for (let i = 0; i < args.length; i++) {
+			if ((cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) && (!exceptions || (exceptions && !exceptions.get(i)))) {
+				let argDimensions = args[i].getDimensions();
+				maxRows = argDimensions.row > maxRows ? argDimensions.row : maxRows;
+				maxColumns = argDimensions.col > maxColumns ? argDimensions.col : maxColumns;
+				isContainsArray = true;
+			}
+		}
+
+		if (!isContainsArray) {
+			return false;
+		}
+
+		let resultArr = new cArray();
+
+		for (let i = 0; i < maxRows; i++) {
+			resultArr.addRow();
+			for (let j = 0; j < maxColumns; j++) {
+				let values = [];
+
+				for (let k = 0; k < args.length; k++) {
+					let value = args[k];
+
+					if ((cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) && (!exceptions || (exceptions && !exceptions.get(k)))) {
+						let valueDimensions = value.getDimensions();
+						if (value.isOneElement()) {
+							// single row with single element
+							value = value.getFirstElement();
+						} else if (valueDimensions.col !== 1 && valueDimensions.row  === 1) {
+							// single row with many elements
+							value = _getValueInRange(value, 0, j);
+						} else if (valueDimensions.col === 1 && valueDimensions.row !== 1) {
+							// many rows with single element
+							value = _getValueInRange(value, i, 0);
+						} else {
+							value = _getValueInRange(value, i, j);
+						}
+					}
+
+					values.push(value);
+				}
+
+				resultArr.addElement(func(true, values));
+			}
+		}
+
+		return resultArr;
+	}
+
+	// if went beyond the cellsRange
+	const _getValueInRange = function (array, _row, _col) {
+		let sizes = array.getDimensions();
+		if (_row > sizes.row - 1 || _col > sizes.col - 1) {
+			return new cError(cErrorType.not_available);
+		}
+		let res = array.getValueByRowCol ? array.getValueByRowCol(_row, _col) : array.getElementRowCol(_row, _col);
+		return res;
+	}
+
 	/*
 	 * Code below has been taken from OpenOffice Source.
 	 */
@@ -8675,5 +8800,6 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertRefToRowCol = convertRefToRowCol;
 	window['AscCommonExcel'].convertAreaToArray = convertAreaToArray;
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
+	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
 
 })(window);

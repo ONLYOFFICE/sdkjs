@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -600,15 +600,20 @@
       if (this.input && this.input.addEventListener) {
 				var eventInfo = new AscCommon.CEventListenerInfo(this.input, "focus", function () {
 					if (this.Api.isEditVisibleAreaOleEditor) {
-						this.input.blur();
+						this._blurCellEditor();
 						return;
 					}
 					this.input.isFocused = true;
 					if (!this.canEdit()) {
 						return;
 					}
-					if (this.isProtectActiveCell()) {
+					if (this.isUserProtectActiveCell()) {
 						this.input.blur();
+						this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+						return;
+					}
+					if (this.isProtectActiveCell()) {
+						this._blurCellEditor();
 						this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 						return;
 					}
@@ -825,6 +830,8 @@
 				  return self.canEdit();
 			  }, "isProtectActiveCell": function () {
 				  return self.isProtectActiveCell();
+			  }, "isUserProtectActiveCell": function () {
+				  return self.isProtectActiveCell();
 			  }, "getFormulaRanges": function () {
 			      return self.isActive() ? self.getWorksheet().oOtherRanges : null;
 			  }, "isActive": function () {
@@ -841,7 +848,9 @@
 				  self.handlers.trigger("asc_onFormulaInfo", fName, pos);
 			  }, "onSelectionEnd" : function () {
 				  self.handlers.trigger("asc_onSelectionEnd");
-        }
+			  }, "doEditorFocus" : function () {
+				  self._setEditorFocus();
+			  }
 		  }, this.defaults.worksheetView.cells.padding);
 
 	  this.wsViewHandlers = new AscCommonExcel.asc_CHandlersList(/*handlers*/{
@@ -1933,7 +1942,7 @@
     var activeWsModel = this.model.getActiveWs();
     if (activeWsModel.inPivotTable(activeCellRange)) {
 		if (t.input.isFocused) {
-			t.input.blur();
+			t._blurCellEditor();
 		}
 		this.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
 		return;
@@ -1983,11 +1992,26 @@
 	var needBlurFunc;
 	if (t.input && t.input.isFocused) {
 		needBlurFunc = function () {
-			t.input && t.input.blur();
+			t._blurCellEditor();
 			needBlur = true;
 		}
 	}
-    ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit, null, needBlurFunc);
+	let checkRange = new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1);
+	if (ws.model.isIntersectionOtherUserProtectedRanges(checkRange)) {
+	  //error
+	  needBlurFunc && needBlurFunc();
+	  this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+	  return;
+	}
+    ws.checkProtectRangeOnEdit([checkRange], doEdit, null, needBlurFunc);
+  };
+
+  WorkbookView.prototype._blurCellEditor = function () {
+	 this._setEditorFocus();
+  };
+
+  WorkbookView.prototype._setEditorFocus = function () {
+	 this.element && this.element.focus();
   };
 
   /**
@@ -2058,6 +2082,11 @@
 		  };
 		  var selection = ws._getSelection();
 		  var ranges = selection && selection.ranges;
+		  if (ws.model.isIntersectionOtherUserProtectedRanges(ranges)) {
+			  //error
+			  this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+			  return;
+		  }
 		  if (!ws.objectRender.selectedGraphicObjectsExists()) {
 			  ws.checkProtectRangeOnEdit(ranges, doDelete);
 		  } else {
@@ -2427,6 +2456,14 @@
 			return false;
 		}
 		return ws.isProtectActiveCell();
+	};
+
+	WorkbookView.prototype.isUserProtectActiveCell = function() {
+		var ws = this.getWorksheet();
+		if (!ws) {
+			return false;
+		}
+		return ws.isUserProtectActiveCell();
 	};
 
     WorkbookView.prototype.getDialogSheetName = function () {
@@ -3099,7 +3136,7 @@
 
   WorkbookView.prototype.setOleSize = function (oPr) {
     this.model.setOleSize(oPr);
-  }
+  };
   WorkbookView.prototype.setSelectionDialogMode = function (selectionDialogType, selectRange) {
       var newSelectionDialogMode = c_oAscSelectionDialogType.None !== selectionDialogType;
 
@@ -3464,7 +3501,7 @@
 					  ws = t.getWorksheet(indexWorksheetTmp);
 					  indexWorksheet = indexWorksheetTmp;
 				  }
-				  ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages.length);
+				  ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages);
 			  }
 		  }
 	  });
@@ -3533,7 +3570,7 @@
     page.pageWidth = sizes.width;
     page.scale = 1;
     return page;
-  }
+  };
   
   WorkbookView.prototype.printForOleObject = function (ws, oRange) {
     var sizes = ws.getRangePosition(oRange);
@@ -3544,7 +3581,7 @@
 		previewOleObjectContext.isNotDrawBackground = !this.Api.isFromSheetEditor;
     ws.drawForPrint(previewOleObjectContext, page, 0, 1);
     return previewOleObjectContext;
-  }
+  };
 
 	WorkbookView.prototype.printSheetPrintPreview = function(index) {
 		var printPreviewState = this.printPreviewState;
@@ -3580,7 +3617,7 @@
 			ws.drawForPrint(printPreviewContext, null);
 		} else {
 			ws = this.getWorksheet(page.indexWorksheet);
-			ws.drawForPrint(printPreviewContext, page, index, printPreviewState.getPagesLength());
+			ws.drawForPrint(printPreviewContext, page, index, printPreviewState.pages && printPreviewState.pages.arrPages);
 		}
 	};
 
@@ -3668,7 +3705,7 @@
   };
   WorkbookView.prototype.scrollAndResizeToRange = function (r1, c1, r2, c2) {
     this.getWorksheet().scrollAndResizeToRange(r1, c1, r2, c2);
-  }
+  };
   WorkbookView.prototype.onShowDrawingObjects = function() {
       var oWSView = this.getWorksheet();
       var oDrawingsRender;
@@ -5322,6 +5359,172 @@
 		this.doUpdateExternalReference(arr);
 	};
 
+	//*****user range protect*****
+	WorkbookView.prototype.changeUserProtectedRanges = function(oldObj, newObj) {
+		//ToDo проверка defName.ref на знак "=" в начале ссылки. знака нет тогда это либо число либо строка, так делает Excel.
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+
+		var t = this;
+
+		if ((oldObj && !oldObj._ws) || (newObj && !newObj._ws)) {
+			return;
+		}
+
+		if (newObj._ws.isIntersectionOtherUserProtectedRanges(newObj.ref)) {
+			//error
+			this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+			return;
+		}
+
+		var doEdit = function() {
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			if (oldObj && newObj) {
+				//change obj
+				if (oldObj._ws === newObj._ws && oldObj._ws && newObj._ws) {
+					//change
+					newObj._ws.editUserProtectedRanges(oldObj, newObj, true);
+				} else {
+					//remove
+					oldObj._ws.editUserProtectedRanges(oldObj, null, true);
+					//add
+					newObj._ws.editUserProtectedRanges(null, newObj, true);
+				}
+			} else if (oldObj && oldObj._ws) {
+				//remove
+				oldObj._ws.editUserProtectedRanges(oldObj, null, true);
+			} else if (newObj && newObj._ws) {
+				//add
+				newObj._ws.editUserProtectedRanges(null, newObj, true);
+			}
+
+			History.EndTransaction();
+
+			//t.handlers.trigger("asc_onEditDefName", oldName, newName);
+
+			//условие исключает второй вызов asc_onRefreshDefNameList(первый в unlockDefName)
+			if (!(t.collaborativeEditing.getCollaborativeEditing() && t.collaborativeEditing.getFast())) {
+				t.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+			}
+		};
+		
+
+		var callbackLockObj = function(res) {
+			if (res) {
+				let arrLocks = [];
+				if (wsFrom) {
+					arrLocks.push({id: lockId, ws: wsFrom});
+				} else if (wsTo) {
+					arrLocks.push({id: lockId, ws: wsTo});
+				}
+				t._isLockedUserProtectedRange(doEdit, arrLocks);
+			}
+		};
+
+		//когда меняем диапазон с одного листа на другой, два раза нужно лочить, вначале на одном листе, потом на другом
+		let wsFrom = oldObj ? oldObj._ws : null;
+		let wsTo = newObj ? newObj._ws : null;
+
+		let wsViewFrom;
+		let wsViewTo;
+		for (let i = 0; i < this.wsViews.length; i++) {
+			if (this.wsViews[i]) {
+				if (this.wsViews[i].model === wsFrom) {
+					wsViewFrom = this.wsViews[i];
+				}
+				if (this.wsViews[i].model === wsTo) {
+					wsViewTo = this.wsViews[i];
+				}
+			}
+		}
+
+		let lockId = oldObj ? oldObj.Id : newObj.Id;
+		let lockRangeFrom = oldObj ? oldObj.ref : null;
+		let lockRangeTo = newObj ? newObj.ref : null;
+
+		function callback (res) {
+			if (res) {
+				if (wsViewFrom && wsViewTo) {
+					wsViewTo._isLockedCells(lockRangeTo, null, callbackLockObj);
+				} else if (wsTo) {
+					callbackLockObj(true);
+				}
+			}
+		}
+
+		if (wsViewFrom) {
+			wsViewFrom._isLockedCells(lockRangeFrom, null, callback);
+		} else if (wsViewTo) {
+			wsViewTo._isLockedCells(lockRangeTo, null, callback);
+		} else {
+			callback(true);
+		}
+	};
+
+	WorkbookView.prototype.deleteUserProtectedRanges = function(arr) {
+		//ToDo проверка defName.ref на знак "=" в начале ссылки. знака нет тогда это либо число либо строка, так делает Excel.
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+
+		var t = this;
+
+		var doEdit = function(res) {
+			if (res) {
+
+				History.Create_NewPoint();
+				History.StartTransaction();
+
+				for (let i = 0; i < arr.length; i++) {
+					arr[i]._ws.editUserProtectedRanges(arr[i], null, true);
+				}
+
+				History.EndTransaction();
+
+				//t.handlers.trigger("asc_onEditDefName", oldName, newName);
+
+				//условие исключает второй вызов asc_onRefreshDefNameList(первый в unlockDefName)
+				if (!(t.collaborativeEditing.getCollaborativeEditing() && t.collaborativeEditing.getFast())) {
+					t.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+				}
+
+			} else {
+				t.handlers.trigger("asc_onError", c_oAscError.ID.LockCreateDefName, c_oAscError.Level.NoCritical);
+			}
+		};
+
+		let aLockInfo = [];
+		for (let i = 0; i < arr.length; i++) {
+			aLockInfo.push({id: arr[i].Id, ws: arr[i]._ws});
+		}
+
+		//lock only ranges by id
+		this._isLockedUserProtectedRange(doEdit, aLockInfo);
+		
+	};
+
+	WorkbookView.prototype.unlockUserProtectedRanges = function() {
+		this.model.unlockUserProtectedRanges();
+		this.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+		//this.handlers.trigger("asc_onLockDefNameManager", Asc.c_oAscDefinedNameReason.OK);
+	};
+
+	WorkbookView.prototype._isLockedUserProtectedRange = function (callback, aIds) {
+		let aLockInfo = [];
+		let lockInfo;
+		for (let i = 0; i < aIds.length; i++) {
+			lockInfo = this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Object,
+				AscCommonExcel.c_oAscLockTypeElemSubType.UserProtectedRange, aIds[i].ws.getId(), aIds[i].id);
+			aLockInfo.push(lockInfo);
+		}
+
+		this.collaborativeEditing.lock(aLockInfo, callback);
+	};
+
+
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {
 		this.wb = wb;
@@ -5575,7 +5778,7 @@
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
 			var ws = this.wb.getActiveWS();
-			var selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange;
+			var selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
 
 			var activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;
 			if (this.props && this.props.lastSearchElem) {

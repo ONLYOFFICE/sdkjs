@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1034,8 +1034,7 @@
 		{
 			if (e && true === AscCommon.CollaborativeEditing.Is_Fast())
 			{
-				var CursorInfo = JSON.parse(e);
-				AscCommon.CollaborativeEditing.Add_ForeignCursorToUpdate(CursorInfo.UserId, CursorInfo.CursorInfo, CursorInfo.UserShortId);
+				AscCommon.CollaborativeEditing.UpdateForeignCursorByAdditionalInfo(JSON.parse(e));
 			}
 		};
 	};
@@ -2293,9 +2292,9 @@ background-repeat: no-repeat;\
 		else
 		{
 			AscCommon.CollaborativeEditing.Send_Changes(this.IsUserSave, {
-				UserId      : this.CoAuthoringApi.getUserConnectionId(),
-				UserShortId : this.DocInfo.get_UserId(),
-				CursorInfo  : CursorInfo
+				"UserId"      : this.CoAuthoringApi.getUserConnectionId(),
+				"UserShortId" : this.DocInfo.get_UserId(),
+				"CursorInfo"  : CursorInfo
 			}, undefined, true);
 		}
 	};
@@ -4428,6 +4427,21 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.putImageToSelection = function(sImageSrc, nWidth, nHeight)
 	{
 		return this.WordControl.m_oLogicDocument.putImageToSelection(sImageSrc, nWidth, nHeight);
+	};
+
+	asc_docs_api.prototype.getPluginContextMenuInfo = function ()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return new AscCommon.CPluginCtxMenuInfo();
+		}
+		let oCurrentController = oLogicDocument.GetCurrentController();
+		if(!oCurrentController)
+		{
+			return new AscCommon.CPluginCtxMenuInfo();
+		}
+		return oCurrentController.getPluginSelectionInfo();
 	};
 	asc_docs_api.prototype.StartAddShape = function(prst, is_apply)
 	{

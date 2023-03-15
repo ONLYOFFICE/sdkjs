@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1758,12 +1758,12 @@ Paragraph.prototype.GetNumberingTextPr = function()
 {
 	var oNumPr = this.GetNumPr();
 	if (!oNumPr)
-		return new CTextPr();
+		return AscWord.DEFAULT_TEXT_PR;
 
 	var oNumbering = this.Parent.GetNumbering();
 	var oNum       = oNumbering.GetNum(oNumPr.NumId);
 	if (!oNum)
-		return new CTextPr();
+		return AscWord.DEFAULT_TEXT_PR;
 
 	var oLvl = oNum.GetLvl(oNumPr.Lvl);
 
@@ -2939,7 +2939,7 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 							&& "0" !== oPrevNumPr.NumId))
 						{
 							var oPrevNumLvl = oNumbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
-							oPrevNumTextPr.Merge(oTextPrTemp);
+							oPrevNumTextPr.Merge(this.TextPr.Value.Copy());
 							oPrevNumTextPr.Merge(oPrevNumLvl.GetTextPr());
 						}
 

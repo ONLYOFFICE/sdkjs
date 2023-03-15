@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1444,7 +1444,7 @@
 					for (let i = 0; i < oTokens.length; i++) {
 						ConvertTokens(
 							oTokens[i],
-							oContext,
+							oContext
 						);
 					}
 					break;
@@ -1470,12 +1470,12 @@
 					if (oTokens.decimal) {
 						ConvertTokens(
 							oTokens.left,
-							oContext,
+							oContext
 						);
 						oContext.Add_Text(oTokens.decimal)
 						ConvertTokens(
 							oTokens.right,
-							oContext,
+							oContext
 						);
 					}
 					else {
@@ -1497,7 +1497,7 @@
 						UnicodeArgument(
 							oTokens.third,
 							oNamesOfLiterals.bracketBlockLiteral[num],
-							oNary.getBase(),
+							oNary.getBase()
 						)
 					}
 					break;
@@ -1659,7 +1659,7 @@
 						let oNary = oContext.Add_NAry(Pr, null, null, null);
 						ConvertTokens(
 							oTokens.third,
-							oNary.getBase(),
+							oNary.getBase()
 						);
 						UnicodeArgument(
 							oTokens.up,
@@ -1696,7 +1696,7 @@
 						UnicodeArgument(
 							oTokens.value,
 							oNamesOfLiterals.bracketBlockLiteral[num],
-							SubSup.getBase(),
+							SubSup.getBase()
 						)
 						UnicodeArgument(
 							oTokens.up,
@@ -1734,7 +1734,7 @@
 					{
 						ConvertTokens(
 							oTokens.third,
-							MathFunc.getArgument(),
+							MathFunc.getArgument()
 						)
 					}
 
@@ -1797,7 +1797,7 @@
 						oTokens.value.length ? oTokens.value.length : oTokens.counter || 1,
 						arr,
 						GetBracketCode(oTokens.left),
-						GetBracketCode(oTokens.right),
+						GetBracketCode(oTokens.right)
 					);
 					if (oTokens.value.length) {
 						for (let intCount = 0; intCount < oTokens.value.length; intCount++) {
@@ -1844,7 +1844,7 @@
 				case oNamesOfLiterals.mathFontLiteral[num]:
 					ConvertTokens(
 						oTokens.value,
-						oContext,
+						oContext
 					);
 					break;
 				case oNamesOfLiterals.matrixLiteral[num]:
@@ -1871,7 +1871,7 @@
 							let oContent = oMatrix.getContentElement(intRow, intCol);
 							ConvertTokens(
 								oTokens.value[intRow][intCol],
-								oContent,
+								oContent
 							);
 						}
 					}
@@ -1886,7 +1886,7 @@
 						let oMathContent = oEqArray.getElementMathContent(i);
 						ConvertTokens(
 							oTokens.value[i],
-							oMathContent,
+							oMathContent
 						);
 					}
 					break;
@@ -1895,7 +1895,7 @@
 					UnicodeArgument(
 						oTokens.value,
 						oNamesOfLiterals.bracketBlockLiteral[num],
-						oBox.getBase(),
+						oBox.getBase()
 					)
 					break;
 				case oNamesOfLiterals.borderBoxLiteral[num]:
@@ -1903,7 +1903,7 @@
 					UnicodeArgument(
 						oTokens.value,
 						oNamesOfLiterals.bracketBlockLiteral[num],
-						BorderBox.getBase(),
+						BorderBox.getBase()
 					)
 					break;
 				case oNamesOfLiterals.rectLiteral[num]:
@@ -1911,7 +1911,7 @@
 					UnicodeArgument(
 						oTokens.value,
 						oNamesOfLiterals.bracketBlockLiteral[num],
-						oBorderBox.getBase(),
+						oBorderBox.getBase()
 					)
 					break;
 				case oNamesOfLiterals.overBarLiteral[num]:
@@ -1920,12 +1920,12 @@
 					UnicodeArgument(
 						oTokens.value,
 						oNamesOfLiterals.bracketBlockLiteral[num],
-						oBar.getBase(),
+						oBar.getBase()
 					);
 					break;
 				case oNamesOfLiterals.belowAboveLiteral[num]:
 					let LIMIT_TYPE = (oTokens.isBelow === false) ? VJUST_BOT : VJUST_TOP;
-					if (oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1)
+					if (oTokens.base && oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1)
 					{
 						let Pr = (LIMIT_TYPE == VJUST_TOP)
 							? {ctrPrp : new CTextPr(), pos :LIMIT_TYPE, chr : oTokens.base.value.charCodeAt(0)}
@@ -1937,7 +1937,7 @@
 						UnicodeArgument(
 							oTokens.value,
 							oNamesOfLiterals.bracketBlockLiteral[num],
-							Group.getBase(),
+							Group.getBase()
 						);
 					}
 					else
@@ -1946,12 +1946,12 @@
 						UnicodeArgument(
 							oTokens.base,
 							oNamesOfLiterals.bracketBlockLiteral[num],
-							oLimit.getFName(),
+							oLimit.getFName()
 						);
 						UnicodeArgument(
 							oTokens.value,
 							oNamesOfLiterals.bracketBlockLiteral[num],
-							oLimit.getIterator(),
+							oLimit.getIterator()
 						);
 					}
 
@@ -1966,14 +1966,14 @@
 		{
 			ConvertTokens(
 				oInput.value,
-				oContext,
+				oContext
 			)
 		}
 		else if (oInput)
 		{
 			ConvertTokens(
 				oInput,
-				oContext,
+				oContext
 			)
 		}
 	}
