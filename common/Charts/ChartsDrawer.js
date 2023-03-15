@@ -14471,7 +14471,74 @@ axisChart.prototype = {
 
 		var pathId = this.cChartSpace.AllocPath();
 		var path = this.cChartSpace.GetPath(pathId);
-		if (axPos === window['AscFormat'].AX_POS_T || axPos === window['AscFormat'].AX_POS_B) {
+
+		if (this.axis && this.axis.isRadarValues()) {
+			points = this.axis.yPoints;
+			if(!points || !widthMinorLine) {
+				return;
+			}
+
+			var axis = this.axis;
+			var xCenter = axis.posX;
+
+			posX = this.axis.posX;
+
+			var yCenter, trueHeight;
+			if (points.length > 0) {
+				yCenter = orientation ? points[0].pos : points[points.length - 1].pos;
+			} else {
+				trueHeight = this.chartProp.trueHeight;
+				yCenter = (this.chartProp.chartGutter._top + trueHeight / 2) / this.chartProp.pxToMM;
+			}
+
+			var ptCount = this.cChartDrawer.getNumCache(this.chartProp.series[0].val).ptCount;
+			var tempAngle = 2 * Math.PI / ptCount;
+
+
+			let getLineXY = function (_radius, _angle, _width) {
+				x1 = xCenter + _radius * Math.sin(_angle)
+				y1 = orientation ? (yCenter + _radius * Math.cos(_angle)) : (yCenter - _radius * Math.cos(_angle))
+
+				let x2xc = Math.sqrt(Math.pow(x1 - xCenter, 2) + Math.pow(y1 - yCenter, 2));
+
+				let alpha2 = x2xc === 0 ? 0 : Math.atan(_width / x2xc);
+
+				x2 = xCenter + (_radius) * Math.sin(n * tempAngle - alpha2)
+				y2 = orientation ? (yCenter + (_radius) * Math.cos(n * tempAngle - alpha2)) : (yCenter - (_radius) * Math.cos(n * tempAngle - alpha2))
+			};
+
+			var stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
+			minorStep = stepY / minorLinesCount;
+
+			let x1, y1, x2, y2;
+			for (var n = 0; n < ptCount; n++) {
+				for (var i = 0; i < points.length; i++) {
+					//основные линии
+					posY = points[i].pos;
+
+					if (!this.paths.tickMarks) {
+						this.paths.tickMarks = pathId;
+					}
+
+					let radius1 = Math.abs(yCenter - posY);
+					getLineXY(radius1, n * tempAngle, widthMinorLine / this.chartProp.pxToMM);
+
+					this._calculateLine(x1, y1, x2, y2, path);
+
+					//промежуточные линии
+					if (!((!orientation && i === 0) || (orientation && i === points.length - 1))) {
+						for (var j = 0; j < minorLinesCount; j++) {
+							posMinorY = posY - j * minorStep;
+							radius1 = Math.abs(yCenter - posMinorY);
+							getLineXY(radius1, n * tempAngle, widthMinorLine / this.chartProp.pxToMM);
+
+							this._calculateLine(x1, y1, x2, y2, path);
+						}
+					}
+				}
+			}
+
+		} else if (axPos === window['AscFormat'].AX_POS_T || axPos === window['AscFormat'].AX_POS_B) {
 			points = this.axis.xPoints;
 			if(!points) {
 				return;
