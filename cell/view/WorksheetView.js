@@ -4839,6 +4839,9 @@
 			if (AscBrowser.isSafari) {
 				_diff = 1;
 			}
+
+			let diff2 = !isDashLine ? 1 : 0;
+
 			ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
 
 			ctx.beginPath();
@@ -4846,13 +4849,13 @@
 				fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
 			}
 			if (drawBottomSide) {
-				fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1, x2]);
+				fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - diff2, x2]);
 			}
 			if (drawLeftSide && !firstCol) {
 				fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
 			}
 			if (drawRightSide) {
-				fVerLine.apply(ctx, [x2 + !isDashLine * 1, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
+				fVerLine.apply(ctx, [x2 + !isDashLine * 1 - diff2, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
 			}
 			ctx.closePath().stroke();
 			return true;
@@ -4874,6 +4877,96 @@
 				}
 				this._drawElements(drawRange, allPagesRange, AscCommonExcel.selectionLineType.Select, color, true);
 			}
+		}
+	};
+
+	WorksheetView.prototype._drawPageBreakPreviewLinesOverlay = function () {
+		//функция для отрисовки на layout разметки страницы(специальный режим предварительного просмотра страниц)
+		//для того, чтобы отрисовка происходила при смене различных опций - добавить вызовы обновления селекта аналогично функции _drawPrintArea
+		//текст всегда рисуем на основной канве, поскольку сетка в ms рисуется поверх
+return
+		if(!pageBreakPreviewModeOverlay) {
+			return;
+		}
+
+		var t = this;
+		var printPagesObj = this._getVisiblePrintPages();
+		var printPages = printPagesObj.printPages;
+		var printRanges = printPagesObj.printRanges;
+
+		//закрашиваем то, что не входит в область печати
+		var drawCurArea = function (visibleRange, offsetX, offsetY, args) {
+			var range = args[0];
+			var ctx = t.overlayCtx;
+			var oIntersection = range.intersectionSimple(visibleRange);
+
+			if (!oIntersection) {
+				return true;
+			}
+
+			var x1 = t._getColLeft(oIntersection.c1) - offsetX;
+			var x2 = t._getColLeft(oIntersection.c2 + 1) - offsetX;
+			var y1 = t._getRowTop(oIntersection.r1) - offsetY;
+			var y2 = t._getRowTop(oIntersection.r2 + 1) - offsetY;
+
+			var fillColor = t.settings.cells.defaultState.border.Copy();
+			ctx.setFillStyle(fillColor).fillRect(x1, y1, x2 - x1, y2 - y1);
+		};
+
+		//рисуем страницы
+		if(printPages && printPages.length) {
+
+			//закрашиваем общую область за исключением области печати
+			if(printRanges && printRanges.length) {
+				//необходимо закрасить всю визуальную область за исключением printRanges
+				//TODO долгие операции! возможно стоит изначально в данном режиме рисовать только ту часть таблицы, которая пойдёт на печать
+
+				var rangesBackground;
+				for(var i = 0; i < printRanges.length; i++) {
+					if(i === 0) {
+						rangesBackground = printRanges[i].difference(this.visibleRange);
+						continue;
+					}
+
+					var curRanges = [];
+					for(var j = 0; j < rangesBackground.length; j++) {
+						Array.prototype.push.apply(curRanges, printRanges[i].difference(rangesBackground[j]));
+					}
+					rangesBackground = curRanges;
+				}
+
+				if(rangesBackground) {
+					for(var i = 0; i < rangesBackground.length; i++) {
+						this._drawElements(drawCurArea, rangesBackground[i]);
+					}
+				}
+			} else {
+				var startRange = printPages[0].page.pageRange;
+				var endRange = printPages[printPages.length - 1].page.pageRange;
+				var allPagesRange = new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2);
+				var difference = allPagesRange.difference(this.visibleRange);
+				if(difference && difference.length) {
+					for(var i = 0; i < difference.length; i++) {
+						this._drawElements(drawCurArea, difference[i]);
+					}
+				}
+			}
+
+			//орисовываем границы страниц
+			for (var i = 0, l = printPages.length; i < l; ++i) {
+				this._drawElements(this._drawSelectionElement, printPages[i].page.pageRange, AscCommonExcel.selectionLineType.Dash, this.settings.activeCellBorderColor);
+			}
+
+			//рисуем границы либо общей области, либо если определен printArea - рисуем границы каждой области(может быть мультиселект)
+			if(printRanges && printRanges.length) {
+				for(var i = 0, l = printRanges.length; i < l; ++i) {
+					this._drawElements(this._drawSelectionElement, printRanges[i], AscCommonExcel.selectionLineType.Select, this.settings.activeCellBorderColor);
+				}
+			} else {
+				this._drawElements(this._drawSelectionElement, allPagesRange, AscCommonExcel.selectionLineType.Select, this.settings.activeCellBorderColor);
+			}
+		} else {
+			this._drawElements(drawCurArea, this.visibleRange);
 		}
 	};
 
@@ -5036,6 +5129,7 @@
 			}
 		}
 
+		//TODO translate
 		var basePageString = "Page ";
 
 		var getOptimalFontSize = function(width, height) {
