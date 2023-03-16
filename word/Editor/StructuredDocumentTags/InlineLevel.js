@@ -3490,6 +3490,9 @@ CInlineLevelSdt.prototype.CheckSpelling = function(oCollector, nDepth)
 };
 CInlineLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 {
+	let logicDocument = this.GetLogicDocument();
+	logicDocument.RemoveSelection();
+	
 	let oShape;
 	if (this.IsForm()
 		&& this.Paragraph

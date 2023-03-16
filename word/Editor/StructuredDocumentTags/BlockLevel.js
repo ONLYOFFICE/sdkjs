@@ -2630,6 +2630,9 @@ CBlockLevelSdt.prototype.CollectSelectedReviewChanges = function(oTrackManager)
 };
 CBlockLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 {
+	let logicDocument = this.GetLogicDocument();
+	logicDocument.RemoveSelection();
+	
 	if (isBefore)
 	{
 		let prevElement = this.GetPrevDocumentElement();

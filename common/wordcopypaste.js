@@ -2094,11 +2094,20 @@ function CopyPasteCorrectString(str)
     return res;
 }
 
-function GetContentFromHtml(api, html, callback)
-{
+function GetContentFromHtml(api, html, callback) {
+	if (!html) {
+		callback && callback(null);
+		return;
+	}
+
 	var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback);
 	oPasteProcessor.doNotInsertInDoc = true;
-	oPasteProcessor.Start(html);
+	if (typeof html === "string") {
+		var wrapper = document.createElement('div');
+		wrapper.innerHTML = html;
+		html = wrapper && wrapper.firstChild;
+	}
+	html && oPasteProcessor.Start(html);
 }
 
 function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPasteProps, callback)

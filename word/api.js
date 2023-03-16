@@ -8836,7 +8836,9 @@ background-repeat: no-repeat;\
 			oAdditionalData["c"] = 'savefromorigin';
 			if (this.currentPassword) {
 				oAdditionalData["password"] = this.currentPassword;
-				oAdditionalData["savepassword"] = this.currentPassword;
+				if (DownloadType.Print !== downloadType) {
+					oAdditionalData["savepassword"] = this.currentPassword;
+				}
 			}
 		}
 

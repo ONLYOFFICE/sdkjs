@@ -161,10 +161,12 @@ var editor;
     // потом реализовать проверку на то, что нужно ли посылать
 
     var arr_colors = new Array(10);
+	var array_colors_types = [6, 15, 7, 16, 0, 1, 2, 3, 4, 5];
     var _count = arr_colors.length;
     for (var i = 0; i < _count; ++i) {
       var color = AscCommonExcel.g_oColorManager.getThemeColor(i);
-      arr_colors[i] = new CColor(color.getR(), color.getG(), color.getB());
+      arr_colors[i] = new Asc.asc_CColor(color.getR(), color.getG(), color.getB());
+      arr_colors[i].setColorSchemeId(array_colors_types[i])
     }
 
     // теперь проверим
@@ -194,31 +196,35 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_SendControlColors = function() {
-    var standart_colors = null;
+    let standart_colors = null;
     if (!this.IsSendStandartColors) {
-      var standartColors = AscCommon.g_oStandartColors;
-      var _c_s = standartColors.length;
+      let standartColors = AscCommon.g_oStandartColors;
+      let _c_s = standartColors.length;
       standart_colors = new Array(_c_s);
 
-      for (var i = 0; i < _c_s; ++i) {
-        standart_colors[i] = new CColor(standartColors[i].R, standartColors[i].G, standartColors[i].B);
+      for (let i = 0; i < _c_s; ++i) {
+        standart_colors[i] = new Asc.asc_CColor(standartColors[i].R, standartColors[i].G, standartColors[i].B);
       }
 
       this.IsSendStandartColors = true;
     }
 
-    var _count = this.GuiControlColorsMap.length;
+    let _count = this.GuiControlColorsMap.length;
 
-    var _ret_array = new Array(_count * 6);
-    var _cur_index = 0;
+    let _ret_array = new Array(_count * 6);
+    let _cur_index = 0;
 
-    for (var i = 0; i < _count; ++i) {
-      var basecolor = AscCommonExcel.g_oColorManager.getThemeColor(i);
-      var aTints = AscCommonExcel.g_oThemeColorsDefaultModsSpreadsheet[AscCommon.GetDefaultColorModsIndex(basecolor.getR(), basecolor.getG(), basecolor.getB())];
-      for (var j = 0, length = aTints.length; j < length; ++j) {
-        var tint = aTints[j];
-        var color = AscCommonExcel.g_oColorManager.getThemeColor(i, tint);
-        _ret_array[_cur_index] = new CColor(color.getR(), color.getG(), color.getB());
+    var array_colors_types = [6, 15, 7, 16, 0, 1, 2, 3, 4, 5];
+    for (let i = 0; i < _count; ++i) {
+      let basecolor = AscCommonExcel.g_oColorManager.getThemeColor(i);
+      let aTints = AscCommonExcel.g_oThemeColorsDefaultModsSpreadsheet[AscCommon.GetDefaultColorModsIndex(basecolor.getR(), basecolor.getG(), basecolor.getB())];
+      for (let j = 0, length = aTints.length; j < length; ++j) {
+	    let tint = aTints[j];
+	    let color = AscCommonExcel.g_oColorManager.getThemeColor(i, tint);
+	    let oColor = new Asc.asc_CColor(color.getR(), color.getG(), color.getB());
+		oColor.setColorSchemeId(array_colors_types[i]);
+		oColor.put_effectValue(tint);
+        _ret_array[_cur_index] = oColor;
         _cur_index++;
       }
     }

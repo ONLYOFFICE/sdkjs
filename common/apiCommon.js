@@ -2207,6 +2207,66 @@
 		}
 	};
 
+
+	const STANDART_COLORS_MAP = {};
+	STANDART_COLORS_MAP["Black"] = 0x000000;
+	STANDART_COLORS_MAP["White"] = 0xFFFFFF;
+	STANDART_COLORS_MAP["Red"] = 0xFF0000;
+	STANDART_COLORS_MAP["Green"] = 0x00FF00;
+	STANDART_COLORS_MAP["Blue"] = 0x0000FF;
+	STANDART_COLORS_MAP["Yellow"] = 0xFFFF00;
+	STANDART_COLORS_MAP["Purple"] = 0xFF00FF;
+	STANDART_COLORS_MAP["Aqua"] = 0x00FFFF;
+	STANDART_COLORS_MAP["Dark Red"] = 0x800000;
+	STANDART_COLORS_MAP["Dark Green"] = 0x008000;
+	STANDART_COLORS_MAP["Dark Blue"] = 0x000080;
+	STANDART_COLORS_MAP["Dark Yellow"] = 0x808000;
+	STANDART_COLORS_MAP["Dark Purple"] = 0x800080;
+	STANDART_COLORS_MAP["Dark Teal"] = 0x008080;
+	STANDART_COLORS_MAP["Light Gray"] = 0xC0C0C0;
+	STANDART_COLORS_MAP["Gray"] = 0x808080;
+	STANDART_COLORS_MAP["Light Blue"] = 0x9999FF;
+	STANDART_COLORS_MAP["Pink"] = 0x993366;
+	STANDART_COLORS_MAP["Light Yellow"] = 0xFFFFCC;
+	STANDART_COLORS_MAP["Sky Blue"] = 0xCCFFFF;
+	STANDART_COLORS_MAP["Dark Purple"] = 0x660066;
+	STANDART_COLORS_MAP["Rose"] = 0xFF8080;
+	STANDART_COLORS_MAP["Blue"] = 0x0066CC;
+	STANDART_COLORS_MAP["Light Blue"] = 0xCCCCFF;
+	STANDART_COLORS_MAP["Dark Blue"] = 0x000080;
+	STANDART_COLORS_MAP["Purple"] = 0xFF00FF;
+	STANDART_COLORS_MAP["Yellow"] = 0xFFFF00;
+	STANDART_COLORS_MAP["Aqua"] = 0x00FFFF;
+	STANDART_COLORS_MAP["Dark Purple"] = 0x800080;
+	STANDART_COLORS_MAP["Dark Red"] = 0x800000;
+	STANDART_COLORS_MAP["Dark Teal"] = 0x008080;
+	STANDART_COLORS_MAP["Blue"] = 0x0000FF;
+	STANDART_COLORS_MAP["Turquosie"] = 0x00CCFF;
+	STANDART_COLORS_MAP["Sky Blue"] = 0xCCFFFF;
+	STANDART_COLORS_MAP["Light Green"] = 0xCCFFCC;
+	STANDART_COLORS_MAP["Light Yellow"] = 0xFFFF99;
+	STANDART_COLORS_MAP["Light Blue"] = 0x99CCFF;
+	STANDART_COLORS_MAP["Pink"] = 0xFF99CC;
+	STANDART_COLORS_MAP["Lavender"] = 0xCC99FF;
+	STANDART_COLORS_MAP["Light Orange"] = 0xFFCC99;
+	STANDART_COLORS_MAP["Blue"] = 0x3366FF;
+	STANDART_COLORS_MAP["Teal"] = 0x33CCCC;
+	STANDART_COLORS_MAP["Green"] = 0x99CC00;
+	STANDART_COLORS_MAP["Gold"] = 0xFFCC00;
+	STANDART_COLORS_MAP["Orange"] = 0xFF9900;
+	STANDART_COLORS_MAP["Orange"] = 0xFF6600;
+	STANDART_COLORS_MAP["Indigo"] = 0x666699;
+	STANDART_COLORS_MAP["Gray"] = 0x969696;
+	STANDART_COLORS_MAP["Dark Blue"] = 0x003366;
+	STANDART_COLORS_MAP["Green"] = 0x339966;
+	STANDART_COLORS_MAP["Dark Green"] = 0x003300;
+	STANDART_COLORS_MAP["Dark Yellow"] = 0x333300;
+	STANDART_COLORS_MAP["Brown"] = 0x993300;
+	STANDART_COLORS_MAP["Pink"] = 0x993366;
+	STANDART_COLORS_MAP["Indigo"] = 0x333399;
+	STANDART_COLORS_MAP["Dark Gray"] = 0x333333;
+
+
 	/**
 	 * Класс CColor для работы с цветами
 	 * -----------------------------------------------------------------------------
@@ -2264,6 +2324,28 @@
 
 		getVal: function () {
 			return (((this.r << 16) & 0xFF0000) + ((this.g << 8)&0xFF00)+this.b);
+		},
+
+		getColorName: function() {
+			let nMinDist = 1000;
+			let sMinColor = "White";
+			for(let sColor in STANDART_COLORS_MAP) {
+				if(STANDART_COLORS_MAP.hasOwnProperty(sColor)) {
+					let nColor = STANDART_COLORS_MAP[sColor];
+					let nR = (nColor >> 16) & 0xFF;
+					let nG = (nColor >> 8) & 0xFF;
+					let nB = nColor & 0xFF;
+					let nDist = Math.abs(nR - this.r) + Math.abs(nG - this.g) + Math.abs(nB - this.b);
+					if(nDist === 0) {
+						return sColor;
+					}
+					if(nDist < nMinDist) {
+						nMinDist = nDist;
+						sMinColor = sColor;
+					}
+				}
+			}
+			return sMinColor;
 		}
 	};
 
@@ -2280,7 +2362,7 @@
 
 		this.Mods = [];
 		this.ColorSchemeId = -1;
-
+		this.EffectValue  = 0;
 		if (1 === arguments.length) {
 			this.r = arguments[0].r;
 			this.g = arguments[0].g;
@@ -2297,51 +2379,157 @@
 		}
 	}
 
-	asc_CColor.prototype = {
-		constructor: asc_CColor, asc_getR: function () {
-			return this.r
-		}, asc_putR: function (v) {
-			this.r = v;
-			this.hex = undefined;
-		}, asc_getG: function () {
-			return this.g;
-		}, asc_putG: function (v) {
-			this.g = v;
-			this.hex = undefined;
-		}, asc_getB: function () {
-			return this.b;
-		}, asc_putB: function (v) {
-			this.b = v;
-			this.hex = undefined;
-		}, asc_getA: function () {
-			return this.a;
-		}, asc_putA: function (v) {
-			this.a = v;
-			this.hex = undefined;
-		}, asc_getType: function () {
-			return this.type;
-		}, asc_putType: function (v) {
-			this.type = v;
-		}, asc_getValue: function () {
-			return this.value;
-		}, asc_putValue: function (v) {
-			this.value = v;
-		}, asc_getHex: function () {
-			if (!this.hex) {
-				var a = this.a.toString(16);
-				var r = this.r.toString(16);
-				var g = this.g.toString(16);
-				var b = this.b.toString(16);
-				this.hex = ( a.length == 1 ? "0" + a : a) + ( r.length == 1 ? "0" + r : r) + ( g.length == 1 ? "0" + g : g) +
-					( b.length == 1 ? "0" + b : b);
+	asc_CColor.prototype.constructor = asc_CColor;
+	asc_CColor.prototype.asc_getR = function () {
+		return this.r
+	};
+	asc_CColor.prototype.asc_putR = function (v) {
+		this.r = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getG = function () {
+		return this.g;
+	};
+	asc_CColor.prototype.asc_putG = function (v) {
+		this.g = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getB = function () {
+		return this.b;
+	};
+	asc_CColor.prototype.asc_putB = function (v) {
+		this.b = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getA = function () {
+		return this.a;
+	};
+	asc_CColor.prototype.asc_putA = function (v) {
+		this.a = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CColor.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CColor.prototype.asc_getValue = function () {
+		return this.value;
+	};
+	asc_CColor.prototype.asc_putValue = function (v) {
+		this.value = v;
+	};
+	asc_CColor.prototype.asc_getHex = function () {
+		if (!this.hex) {
+			var a = this.a.toString(16);
+			var r = this.r.toString(16);
+			var g = this.g.toString(16);
+			var b = this.b.toString(16);
+			this.hex = ( a.length == 1 ? "0" + a : a) + ( r.length == 1 ? "0" + r : r) + ( g.length == 1 ? "0" + g : g) +
+				( b.length == 1 ? "0" + b : b);
+		}
+		return this.hex;
+	};
+	asc_CColor.prototype.asc_getColor = function () {
+		return new CColor(this.r, this.g, this.b);
+	};
+	asc_CColor.prototype.asc_putAuto = function (v) {
+		this.Auto = v;
+	};
+	asc_CColor.prototype.asc_getAuto = function () {
+		return this.Auto;
+	};
+	asc_CColor.prototype.asc_getName = function() {
+		const nColorVal = this.getVal();
+		for(let sName in STANDART_COLORS_MAP) {
+			if(STANDART_COLORS_MAP.hasOwnProperty(sName)) {
+				if(STANDART_COLORS_MAP[sName] === nColorVal) {
+					return sName;
+				}
 			}
-			return this.hex;
-		}, asc_getColor: function () {
-			return new CColor(this.r, this.g, this.b);
-		}, asc_putAuto: function (v) {
-			this.Auto = v;
-		}, asc_getAuto: function () {
-			return this.Auto;
+		}
+		let dMinDistance = 1000000;
+		let sMinName = "Black";
+		for(let sName in STANDART_COLORS_MAP) {
+			if(STANDART_COLORS_MAP.hasOwnProperty(sName)) {
+				let nCurColor = STANDART_COLORS_MAP[sName];
+				let dDist = AscFormat.CColorModifiers.prototype.GetColorDiff(nColorVal, nCurColor);
+				if(dDist < dMinDistance) {
+					dMinDistance = dDist;
+					sMinName = sName;
+				}
+			}
+		}
+		return sMinName;
+	};
+	asc_CColor.prototype.getVal = function () {
+		return (((this.r << 16) & 0xFF0000) + ((this.g << 8)&0xFF00)+this.b);
+	};
+	asc_CColor.prototype.asc_putEffectValue = function (v) {
+		let dVal = Math.abs(v);
+		dVal = ((dVal * 100 + 0.5) >> 0) / 100;
+		if(v < 0) {
+			dVal = -dVal;
+		}
+		this.EffectValue = dVal;
+	};
+	asc_CColor.prototype.asc_getEffectValue = function () {
+		return this.EffectValue;
+	};
+	asc_CColor.prototype.print = function() {
+		console.log("Color");
+		console.log("r: " + this.r);
+		console.log("g: " + this.g);
+		console.log("b: " + this.b);
+		console.log("effect val: " + this.asc_getEffectValue());
+		console.log("name: " + this.asc_getName());
+		console.log("name in scheme: " + this.asc_getNameInColorScheme());
+		console.log("---------------");
+	};
+	asc_CColor.prototype.asc_getNameInColorScheme = function () {
+		if(this.ColorSchemeId === -1) {
+			return null;
+		}
+		switch (this.ColorSchemeId) {
+			// bg1,tx1,bg2,tx2,accent1 - accent6
+			case 6: {
+				return "background 1";
+			}
+			case 15: {
+				return "text 1";
+			}
+			case 7: {
+				return "background 2";
+			}
+			case 16: {
+				return "text 2";
+			}
+			case 0: {
+				return "accent 1";
+			}
+			case 1: {
+				return "accent 2";
+			}
+			case 2: {
+				return "accent 3";
+			}
+			case 3: {
+				return "accent 4";
+			}
+			case 4: {
+				return "accent 5";
+			}
+			case 5: {
+				return "accent 6";
+			}
+		}
+		return null;
+	};
+	asc_CColor.prototype.setColorSchemeId = function (v) {
+		this.ColorSchemeId = v;
+		if(!AscFormat.isRealNumber(this.ColorSchemeId)) {
+			this.ColorSchemeId = -1;
 		}
 	};
 
@@ -6175,23 +6363,27 @@
 
 	window["Asc"]["asc_CColor"] = window["Asc"].asc_CColor = asc_CColor;
 	prot = asc_CColor.prototype;
-	prot["get_r"] = prot["asc_getR"] = prot.asc_getR;
-	prot["put_r"] = prot["asc_putR"] = prot.asc_putR;
-	prot["get_g"] = prot["asc_getG"] = prot.asc_getG;
-	prot["put_g"] = prot["asc_putG"] = prot.asc_putG;
-	prot["get_b"] = prot["asc_getB"] = prot.asc_getB;
-	prot["put_b"] = prot["asc_putB"] = prot.asc_putB;
-	prot["get_a"] = prot["asc_getA"] = prot.asc_getA;
-	prot["put_a"] = prot["asc_putA"] = prot.asc_putA;
-	prot["get_auto"] = prot["asc_getAuto"] = prot.asc_getAuto;
-	prot["put_auto"] = prot["asc_putAuto"] = prot.asc_putAuto;
-	prot["get_type"] = prot["asc_getType"] = prot.asc_getType;
-	prot["put_type"] = prot["asc_putType"] = prot.asc_putType;
-	prot["get_value"] = prot["asc_getValue"] = prot.asc_getValue;
-	prot["put_value"] = prot["asc_putValue"] = prot.asc_putValue;
-	prot["get_hex"] = prot["asc_getHex"] = prot.asc_getHex;
-	prot["get_color"] = prot["asc_getColor"] = prot.asc_getColor;
-	prot["get_hex"] = prot["asc_getHex"] = prot.asc_getHex;
+	prot["get_r"] = prot["asc_getR"] = prot.get_r = prot.asc_getR;
+	prot["put_r"] = prot["asc_putR"] = prot.put_r = prot.asc_putR;
+	prot["get_g"] = prot["asc_getG"] = prot.get_g = prot.asc_getG;
+	prot["put_g"] = prot["asc_putG"] = prot.put_g = prot.asc_putG;
+	prot["get_b"] = prot["asc_getB"] = prot.get_b = prot.asc_getB;
+	prot["put_b"] = prot["asc_putB"] = prot.put_b = prot.asc_putB;
+	prot["get_a"] = prot["asc_getA"] = prot.get_a = prot.asc_getA;
+	prot["put_a"] = prot["asc_putA"] = prot.put_a = prot.asc_putA;
+	prot["get_auto"] = prot["asc_getAuto"] = prot.get_auto = prot.asc_getAuto;
+	prot["put_auto"] = prot["asc_putAuto"] = prot.put_auto = prot.asc_putAuto;
+	prot["get_type"] = prot["asc_getType"] = prot.get_type = prot.asc_getType;
+	prot["put_type"] = prot["asc_putType"] = prot.put_type = prot.asc_putType;
+	prot["get_value"] = prot["asc_getValue"] = prot.get_value = prot.asc_getValue;
+	prot["put_value"] = prot["asc_putValue"] = prot.put_value = prot.asc_putValue;
+	prot["get_hex"] = prot["asc_getHex"] = prot.get_hex = prot.asc_getHex;
+	prot["get_color"] = prot["asc_getColor"] = prot.get_color = prot.asc_getColor;
+	prot["get_name"] = prot["asc_getName"] = prot.get_name = prot.asc_getName;
+	prot["get_effectValue"] = prot["asc_getEffectValue"] = prot.get_effectValue = prot.asc_getEffectValue;
+	prot["put_effectValue"] = prot["asc_putEffectValue"] = prot.put_effectValue = prot.asc_putEffectValue;
+	prot["get_nameInColorScheme"] = prot["asc_getNameInColorScheme"] = prot.get_nameInColorScheme = prot.asc_getNameInColorScheme;
+
 
 	window["Asc"]["asc_CTextBorder"] = window["Asc"].asc_CTextBorder = asc_CTextBorder;
 	prot = asc_CTextBorder.prototype;

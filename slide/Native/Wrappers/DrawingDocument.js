@@ -792,7 +792,8 @@ CDrawingDocument.prototype.CheckGuiControlColors = function(bIsAttack)
         color.Calculate(_theme, _slide, _layout, _master, rgba);
 
         var _rgba     = color.RGBA;
-        arr_colors[i] = new AscCommon.CColor(_rgba.R, _rgba.G, _rgba.B);
+	    arr_colors[i] = new Asc.asc_CColor(_rgba.R, _rgba.G, _rgba.B);
+	    arr_colors[i].setColorSchemeId(color.color.id);
     }
 
     // теперь проверим
@@ -830,44 +831,48 @@ CDrawingDocument.prototype.CheckGuiControlColors = function(bIsAttack)
 
 CDrawingDocument.prototype.SendControlColors = function(bIsAttack)
 {
-    var standart_colors = null;
+	let standart_colors = null;
     if (!this.IsSendStandartColors || (bIsAttack === true))
     {
-        var standartColors = AscCommon.g_oStandartColors;
-        var _c_s           = standartColors.length;
+        let standartColors = AscCommon.g_oStandartColors;
+        let _c_s           = standartColors.length;
         standart_colors    = new Array(_c_s);
 
-        for (var i = 0; i < _c_s; ++i)
+        for (let i = 0; i < _c_s; ++i)
         {
-            standart_colors[i] = new AscCommon.CColor(standartColors[i].R, standartColors[i].G, standartColors[i].B);
+            standart_colors[i] = new Asc.asc_CColor(standartColors[i].R, standartColors[i].G, standartColors[i].B);
         }
 
         this.IsSendStandartColors = true;
     }
 
-    var _count = this.GuiControlColorsMap.length;
+	let _count = this.GuiControlColorsMap.length;
 
-    var _ret_array = new Array(_count * 6);
-    var _cur_index = 0;
+    let _ret_array = new Array(_count * 6);
+    let _cur_index = 0;
 
-    for (var i = 0; i < _count; ++i)
+	let array_colors_types = [6, 15, 7, 16, 0, 1, 2, 3, 4, 5];
+    for (let i = 0; i < _count; ++i)
     {
-        var _color_src = this.GuiControlColorsMap[i];
+	    let _color_src = this.GuiControlColorsMap[i];
 
-        _ret_array[_cur_index] = new AscCommon.CColor(_color_src.r, _color_src.g, _color_src.b);
+        _ret_array[_cur_index] = Asc.asc_CColor(_color_src.r, _color_src.g, _color_src.b);
         _cur_index++;
 
         // теперь с модификаторами
-        var _count_mods = 5;
-        for (var j = 0; j < _count_mods; ++j)
+	    let _count_mods = 5;
+        for (let j = 0; j < _count_mods; ++j)
         {
-            var dst_mods  = new AscFormat.CColorModifiers();
+	        let dst_mods  = new AscFormat.CColorModifiers();
             dst_mods.Mods = AscCommon.GetDefaultMods(_color_src.r, _color_src.g, _color_src.b, j + 1, 0);
 
-            var _rgba = {R : _color_src.r, G : _color_src.g, B : _color_src.b, A : 255};
+            let _rgba = {R : _color_src.r, G : _color_src.g, B : _color_src.b, A : 255};
             dst_mods.Apply(_rgba);
 
-            _ret_array[_cur_index] = new AscCommon.CColor(_rgba.R, _rgba.G, _rgba.B);
+	        let oColor = new Asc.asc_CColor(_rgba.R, _rgba.G, _rgba.B);
+	        oColor.put_effectValue(dst_mods.getEffectValue());
+	        oColor.setColorSchemeId(array_colors_types[i]);
+	        _ret_array[_cur_index] = oColor;
             _cur_index++;
         }
     }
