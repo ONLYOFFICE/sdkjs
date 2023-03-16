@@ -8489,6 +8489,22 @@ var editor;
 		return ws.setSheetViewType(val);
 	};
 
+	spreadsheet_api.prototype.asc_GetSheetViewType = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return null;
+		}
+		var ws = this.wb.getWorksheet();
+		if (ws && ws.model && ws.model.sheetViews) {
+			var sheetView = this.sheetViews[0];
+			if (!sheetView) {
+				return null;
+			}
+			return sheetView.view;
+		}
+		return null;
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -9043,6 +9059,8 @@ var editor;
   prot["asc_getUserProtectedRanges"]      = prot.asc_getUserProtectedRanges;
   prot["asc_checkUserProtectedRangeName"] = prot.asc_checkUserProtectedRangeName;
   prot["asc_SetSheetViewType"]   = prot.asc_SetSheetViewType;
+  prot["asc_GetSheetViewType"]   = prot.asc_GetSheetViewType;
+
 
 
 
