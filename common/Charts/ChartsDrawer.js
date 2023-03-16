@@ -14165,11 +14165,7 @@ axisChart.prototype = {
 			radius = Math.abs(yPoints[yPoints.length - 1].pos - yPoints[0].pos);
 			for (var n = 0; n < ptCount; n++) {
 				x = xCenter + radius * Math.sin(n * tempAngle);
-				if (orientation) {
-					y = yCenter + radius * Math.cos(n * tempAngle);
-				} else {
-					y = yCenter - radius * Math.cos(n * tempAngle);
-				}
+				y = yCenter - radius * Math.cos(n * tempAngle);
 
 				if (!this.paths.axisLine) {
 					this.paths.axisLine = [];
@@ -14488,13 +14484,10 @@ axisChart.prototype = {
 
 				//first point on ray from center
 				x1 = xCenter + _radius * Math.sin(_angle);
-				y1 = orientation ? (yCenter + _radius * Math.cos(_angle)) : (yCenter - _radius * Math.cos(_angle));
+				y1 = yCenter - _radius * Math.cos(_angle);
 
-				//find angle end of tickmark
-				//second point(ray from center + width tickmarks angle)
-				let _angle2 = _angle - Math.atan(_width / _radius);
-				x2 = xCenter + (_radius) * Math.sin(_angle2);
-				y2 = orientation ? (yCenter + (_radius) * Math.cos(_angle2)) : (yCenter - (_radius) * Math.cos(_angle2));
+				x2 = x1 + _width * Math.sin(Math.PI / 2 - _angle);
+				y2 = y1 + _width * Math.cos(Math.PI / 2 - _angle);
 			};
 
 			let stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
