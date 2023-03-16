@@ -1801,7 +1801,7 @@ function (window, undefined) {
 	cSORT.prototype.argumentsMin = 1;
 	cSORT.prototype.argumentsMax = 4;
 	cSORT.prototype.arrayIndexes = {0: 1};
-	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.bool];
+	cSORT.prototype.argumentsType = [argType.reference, argType.any, argType.any, argType.any];
 	cSORT.prototype.Calculate = function (arg) {
 		function sortWithIndices(arr) {
 			const indexedArray = arr.map((item, index) => ({ item, index }));
@@ -1890,10 +1890,10 @@ function (window, undefined) {
 			arg3 = new cBool(false);
 		}
 
-		let array, sort_index, sort_order, by_col, numRows, numCols;
+		let array, sort_index, sort_order, by_col, maxRows, maxCols;
 			
 		// check args type:
-		// arg0 check
+		// arg0(initial array) check
 		if (cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			let elem;
 			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
@@ -1907,22 +1907,36 @@ function (window, undefined) {
 			array = arg0;
 		}
 
-		numRows = array.getDimensions().row;
-		numCols = array.getDimensions().col;
+		maxRows = array.getDimensions().row;
+		maxCols = array.getDimensions().col;
 
-		// arg1 check
+		// arg1(sort_index) check
 		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
 			sort_index = arg1.tocNumber();
+		} else {
+			let arg1Dimensions = arg1.getDimensions();
+			if (arg1Dimensions.row > maxRows || arg1Dimensions.col > maxCols) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				sort_index = arg1.getFirstElement().tocNumber();
+			}
 		}
 
-		// arg2 check
+		// arg2(sort_order) check
 		if (cElementType.array !== arg2.type && cElementType.cellsRange !== arg2.type && cElementType.cellsRange3D !== arg2.type) {
 			sort_order = arg2.tocNumber();
+		} else if (arg2.isOneElement()){
+			sort_order = arg2.getFirstElement();
+		} else {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
-		// arg3 check
+		// arg3(by_col) check
 		if (cElementType.array !== arg3.type && cElementType.cellsRange !== arg3.type && cElementType.cellsRange3D !== arg3.type) {
 			by_col = arg3.tocBool();
+		} else {
+			// TODO do array handling in argument
+			by_col = arg3.getFirstElement();
 		}
 
 		if (cElementType.error === sort_index.type) {
@@ -1945,15 +1959,15 @@ function (window, undefined) {
 			by_col = by_col.toBool();
 		}
 
-		if (sort_index <= 0 || sort_index > numRows || sort_index > numCols || (sort_order !== -1 && sort_order !== 1)) {
+		if (sort_index <= 0 || sort_index > maxRows || sort_index > maxCols || (sort_order !== -1 && sort_order !== 1)) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
 		if (!by_col) {
-			return colMode(array, numRows, numCols);
+			return colMode(array, maxRows, maxCols);
 		}
 
-		return rowMode(array, numRows, numCols);
+		return rowMode(array, maxRows, maxCols);
 
 	};
 

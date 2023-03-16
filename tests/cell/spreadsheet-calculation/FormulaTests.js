@@ -23414,6 +23414,12 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 2, 'Result of SORT({2,3,4;6,6,6;9,2,1},,1,TRUE)[2,1]');
 		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), 1, 'Result of SORT({2,3,4;6,6,6;9,2,1},,1,TRUE)[2,2]');
 
+		// oParser = new parserFormula('SORT({2,4;6,6;9,1},{2,3},1,TRUE)', 'A2', ws);
+		// assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},{2,3},1,TRUE)');
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, 'Result of SORT({2,4;6,6;9,1},{3,3},1,TRUE)[0,0]');
+		
+
 	});
 
 	QUnit.test("Test: \"reference argument test\"", function (assert) {
