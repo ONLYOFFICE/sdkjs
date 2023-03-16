@@ -68,7 +68,7 @@ function (window, undefined) {
 
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
 	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFILTER, cFORMULATEXT,
-		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE, cTAKE,
+		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cSORT, cRTD, cTRANSPOSE, cTAKE,
 		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS, cXMATCH);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
@@ -1787,6 +1787,175 @@ function (window, undefined) {
 	cRTD.prototype.constructor = cRTD;
 	cRTD.prototype.name = 'RTD';
 	cRTD.prototype.argumentsType = [argType.text, argType.text, [argType.text]];
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cSORT() {
+	}
+
+	cSORT.prototype = Object.create(cBaseFunction.prototype);
+	cSORT.prototype.constructor = cSORT;
+	cSORT.prototype.name = 'SORT';
+	cSORT.prototype.argumentsMin = 1;
+	cSORT.prototype.argumentsMax = 4;
+	cSORT.prototype.arrayIndexes = {0: 1};
+	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.bool];
+	cSORT.prototype.Calculate = function (arg) {
+		function sortWithIndices(arr) {
+			const indexedArray = arr.map((item, index) => ({ item, index }));
+			if (sort_order === 1) {
+				// sort by ascending
+				indexedArray.sort((a, b) => a.item.value - b.item.value);
+			} else if (sort_order === -1) {
+				// sort by descending
+				indexedArray.sort((a, b) => b.item.value - a.item.value);
+			}
+			
+			return indexedArray.map(({ index }) => index);
+		}
+
+		function rowMode (array, rows, columns) {
+			let	resultArr = new cArray(),
+				tempArr = [],
+				tempArrIndicies = [];
+
+			// console.log(array._getRow(sort_index - 1));
+			for (let i = 0; i < columns; i++) {
+				tempArr.push(array.getValueByRowCol ? array.getValueByRowCol(sort_index - 1, i) : array.getElementRowCol(sort_index - 1, i));
+			}
+
+			tempArrIndicies = sortWithIndices(tempArr);
+
+			for (let i = 0; i < tempArrIndicies.length; i++) {
+				let col = array._getCol(tempArrIndicies[i]);
+				resultArr.pushCol(col, 0);
+			}
+
+			return resultArr;
+		}
+
+		function colMode (array, rows, columns) {
+			let	resultArr = new cArray(),
+				tempArr = [],
+				tempArrIndicies = [];
+			
+			// console.log(array._getRow(sort_index - 1));
+			for (let i = 0; i < rows; i++) {
+				tempArr.push(array.getValueByRowCol ? array.getValueByRowCol(i, sort_index - 1) : array.getElementRowCol(i, sort_index - 1));
+			}
+
+			tempArrIndicies = sortWithIndices(tempArr);
+
+			for (let i = 0; i < tempArrIndicies.length; i++) {
+				let row = array._getRow(tempArrIndicies[i]);				
+				resultArr.addRow();
+				for (let j = 0; j < columns; j++) {
+					resultArr.addElement(row[0][j]);
+					// resultArr.addElement(array.getValueByRowCol ? array.getValueByRowCol(tempArrIndicies[i], j) : array.getElementRowCol(tempArrIndicies[i], j));
+				}
+			}
+
+			return resultArr;
+		}
+
+		let arg0 = arg[0],								// array
+			arg1 = arg[1] ? arg[1] : new cNumber(1),	// sort_index
+			arg2 = arg[2] ? arg[2] : new cNumber(1),	// sort_order
+			arg3 = arg[3] ? arg[3] : new cBool(false);	// by_col ?
+
+		// check args err
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+		if (cElementType.error === arg2.type) {
+			return arg2;
+		}
+		if (cElementType.error === arg3.type) {
+			return arg3;
+		}
+
+		// check args empty
+		if (cElementType.empty === arg1.type) {
+			arg1 = new cNumber(1);
+		}
+		if (cElementType.empty === arg2.type) {
+			arg2 = new cNumber(1);
+		}
+		if (cElementType.empty === arg3.type) {
+			arg3 = new cBool(false);
+		}
+
+		let array, sort_index, sort_order, by_col, numRows, numCols;
+			
+		// check args type:
+		// arg0 check
+		if (cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
+			let elem;
+			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+				elem = arg0.getValue();
+			} else {
+				elem = arg0;
+			}
+			array = new cArray();
+			array.addElement(elem);
+		} else {
+			array = arg0;
+		}
+
+		numRows = array.getDimensions().row;
+		numCols = array.getDimensions().col;
+
+		// arg1 check
+		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
+			sort_index = arg1.tocNumber();
+		}
+
+		// arg2 check
+		if (cElementType.array !== arg2.type && cElementType.cellsRange !== arg2.type && cElementType.cellsRange3D !== arg2.type) {
+			sort_order = arg2.tocNumber();
+		}
+
+		// arg3 check
+		if (cElementType.array !== arg3.type && cElementType.cellsRange !== arg3.type && cElementType.cellsRange3D !== arg3.type) {
+			by_col = arg3.tocBool();
+		}
+
+		if (cElementType.error === sort_index.type) {
+			return sort_index;
+		} else {
+			sort_index = sort_index.getValue();
+		}
+
+		if (cElementType.error === sort_order.type) {
+			return sort_order;
+		} else {
+			sort_order = sort_order.getValue();
+		}
+
+		if (cElementType.error === by_col.type) {
+			return by_col;
+		} else if (cElementType.bool !== by_col.type) {
+			return new cError(cErrorType.wrong_value_type);
+		} else {
+			by_col = by_col.toBool();
+		}
+
+		if (sort_index <= 0 || sort_index > numRows || sort_index > numCols || (sort_order !== -1 && sort_order !== 1)) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (!by_col) {
+			return colMode(array, numRows, numCols);
+		}
+
+		return rowMode(array, numRows, numCols);
+
+	};
 
 	/**
 	 * @constructor
