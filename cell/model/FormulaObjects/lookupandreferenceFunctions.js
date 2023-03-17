@@ -1836,45 +1836,17 @@ function (window, undefined) {
 			return indexedArray.map(function ({ index }) { return index });
 		}
 
-		function rowMode (array, rows, columns) {
-			let	resultArr = new cArray(),
-				tempArr = [],
-				tempArrIndicies = [];
+		function sortArray (array, isByCol) {
+			let resultArr = new cArray(),
+				tempArrIndicies = [],
+				targetElem = isByCol ? array._getRow(sort_index - 1).flat() : array._getCol(sort_index - 1).flat();
 
-			// console.log(array._getRow(sort_index - 1));
-			for (let i = 0; i < columns; i++) {
-				tempArr.push(array.getValueByRowCol ? array.getValueByRowCol(sort_index - 1, i) : array.getElementRowCol(sort_index - 1, i));
-			}
-
-			tempArrIndicies = sortWithIndices(tempArr);
+			// sorting an array with indices
+			tempArrIndicies = sortWithIndices(targetElem);
 
 			for (let i = 0; i < tempArrIndicies.length; i++) {
-				let col = array._getCol(tempArrIndicies[i]);
-				resultArr.pushCol(col, 0);
-			}
-
-			return resultArr;
-		}
-
-		function colMode (array, rows, columns) {
-			let	resultArr = new cArray(),
-				tempArr = [],
-				tempArrIndicies = [];
-			
-			// console.log(array._getRow(sort_index - 1));
-			for (let i = 0; i < rows; i++) {
-				tempArr.push(array.getValueByRowCol ? array.getValueByRowCol(i, sort_index - 1) : array.getElementRowCol(i, sort_index - 1));
-			}
-
-			tempArrIndicies = sortWithIndices(tempArr);
-
-			for (let i = 0; i < tempArrIndicies.length; i++) {
-				let row = array._getRow(tempArrIndicies[i]);				
-				resultArr.addRow();
-				for (let j = 0; j < columns; j++) {
-					resultArr.addElement(row[0][j]);
-					// resultArr.addElement(array.getValueByRowCol ? array.getValueByRowCol(tempArrIndicies[i], j) : array.getElementRowCol(tempArrIndicies[i], j));
-				}
+				let target = isByCol ? array._getCol(tempArrIndicies[i]) : array._getRow(tempArrIndicies[i]);
+				isByCol ? resultArr.pushCol(target, 0) : resultArr.pushRow(target, 0);
 			}
 
 			return resultArr;
@@ -1987,13 +1959,13 @@ function (window, undefined) {
 			if (sort_index > maxCols) {
 				return new cError(cErrorType.wrong_value_type);
 			}
-			return colMode(array, maxRows, maxCols);
 		} else {
 			if (sort_index > maxRows) {
 				return new cError(cErrorType.wrong_value_type);
 			}
-			return rowMode(array, maxRows, maxCols);
 		}
+
+		return sortArray(array, by_col);
 	};
 
 	/**
