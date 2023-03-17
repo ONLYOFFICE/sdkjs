@@ -1838,7 +1838,6 @@
 
 	function CUnicodeConverter(str, oContext, isGetOnlyTokens)
 	{
-		debugger
 		if (undefined === str || null === str)
 			return;
 
