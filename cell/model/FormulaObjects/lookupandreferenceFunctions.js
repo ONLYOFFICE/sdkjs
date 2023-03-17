@@ -1800,20 +1800,40 @@ function (window, undefined) {
 	cSORT.prototype.name = 'SORT';
 	cSORT.prototype.argumentsMin = 1;
 	cSORT.prototype.argumentsMax = 4;
-	cSORT.prototype.arrayIndexes = {0: 1};
-	cSORT.prototype.argumentsType = [argType.reference, argType.any, argType.any, argType.any];
+	cSORT.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
+	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
 	cSORT.prototype.Calculate = function (arg) {
 		function sortWithIndices(arr) {
-			const indexedArray = arr.map((item, index) => ({ item, index }));
+			const indexedArray = arr.map(function (item, index) { return { item, index } });
 			if (sort_order === 1) {
 				// sort by ascending
-				indexedArray.sort((a, b) => a.item.value - b.item.value);
+				indexedArray.sort(function (a,b) {
+					const valueA = a.item.value;
+					const valueB = b.item.value; 
+					if (valueA < valueB) {
+						return -1;
+					} else if (valueA > valueB) {
+						return 1;
+					} else {
+						return 0;
+					}
+				})
 			} else if (sort_order === -1) {
 				// sort by descending
-				indexedArray.sort((a, b) => b.item.value - a.item.value);
+				indexedArray.sort(function (a,b) {
+					const valueA = a.item.value;
+					const valueB = b.item.value; 
+					if (valueA > valueB) {
+						return -1;
+					} else if (valueA < valueB) {
+						return 1;
+					} else {
+						return 0;
+					}
+				})
 			}
 			
-			return indexedArray.map(({ index }) => index);
+			return indexedArray.map(function ({ index }) { return index });
 		}
 
 		function rowMode (array, rows, columns) {
@@ -1942,13 +1962,13 @@ function (window, undefined) {
 		if (cElementType.error === sort_index.type) {
 			return sort_index;
 		} else {
-			sort_index = sort_index.getValue();
+			sort_index = Math.floor(sort_index.getValue());
 		}
 
 		if (cElementType.error === sort_order.type) {
 			return sort_order;
 		} else {
-			sort_order = sort_order.getValue();
+			sort_order = Math.floor(sort_order.getValue());
 		}
 
 		if (cElementType.error === by_col.type) {
@@ -1959,16 +1979,21 @@ function (window, undefined) {
 			by_col = by_col.toBool();
 		}
 
-		if (sort_index <= 0 || sort_index > maxRows || sort_index > maxCols || (sort_order !== -1 && sort_order !== 1)) {
+		if (sort_index <= 0 || (sort_order !== -1 && sort_order !== 1)) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
 		if (!by_col) {
+			if (sort_index > maxCols) {
+				return new cError(cErrorType.wrong_value_type);
+			}
 			return colMode(array, maxRows, maxCols);
+		} else {
+			if (sort_index > maxRows) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			return rowMode(array, maxRows, maxCols);
 		}
-
-		return rowMode(array, maxRows, maxCols);
-
 	};
 
 	/**
