@@ -4769,7 +4769,7 @@
 		if(printPages && printPages.length) {
 			let color = new CColor(0, 0, 208);
 			let printRanges = this._getPageBreakPreviewRanges(oPrintPages);
-			let lineType = AscCommonExcel.selectionLineType.ResizeRange
+			let lineType = AscCommonExcel.selectionLineType.ResizeRange;
 			let dashLineType = AscCommonExcel.selectionLineType.Dash | lineType;
 			for (let i = 0; i < printRanges.length; i++) {
 				let oPrintRange = printRanges[i];
@@ -4857,9 +4857,7 @@
 			}
 		}
 
-		//TODO translate
-		var basePageString = "Page ";
-
+		var basePageString = AscCommon.translateManager.getValue("Page") + " ";
 		var getOptimalFontSize = function(width, height) {
 			var kf = 3.04;
 			var needWidth = width / kf;
@@ -4951,8 +4949,6 @@
 		}
 	};
 
-
-	//TODO temp function
 	WorksheetView.prototype._getPagesModeData = function (range) {
 		var printOptions = this.model.PagePrintOptions;
 		var printPages = [];
