@@ -297,7 +297,7 @@
 	CUserProtectedRangeUserInfo.prototype.Write_ToBinary2 = function(w) {
 		if (null != this.id) {
 			w.WriteBool(true);
-			w.WriteLong(this.id);
+			w.WriteString2(this.id);
 		} else {
 			w.WriteBool(false);
 		}
@@ -311,7 +311,7 @@
 
 	CUserProtectedRangeUserInfo.prototype.Read_FromBinary2 = function(r) {
 		if (r.GetBool()) {
-			this.id = r.GetLong();
+			this.id = r.GetString2();
 		}
 		if (r.GetBool()) {
 			this.name = r.GetString2();
