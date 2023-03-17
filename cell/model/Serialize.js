@@ -5687,8 +5687,8 @@
             }
 
             let i;
-            if (null != oUserProtectedRange.usersMap) {
-                let users = oUserProtectedRange.asc_getUsers();
+            let users = oUserProtectedRange.asc_getUsers();
+            if (null != users) {
                 for (i = 0; i < users.length; i++) {
                     this.bs.WriteItem(c_oSerUserProtectedRange.UserId, function () {
                         oThis.memory.WriteString3(users[i]);
@@ -8470,10 +8470,10 @@
             } else if (c_oSerUserProtectedRange.Text === type) {
                 oUserProtectedRange.warningText = this.stream.GetString2LE(length);
             } else if (c_oSerUserProtectedRange.UserId === type) {
-            	if (!oUserProtectedRange.usersMap) {
-					oUserProtectedRange.usersMap = {};
+            	if (!oUserProtectedRange.users) {
+					oUserProtectedRange.users = [];
 				}
-                oUserProtectedRange.usersMap[this.stream.GetString2LE(length)] = 1;
+                oUserProtectedRange.users.push();
             } else if (c_oSerUserProtectedRange.UsersGroup === type) {
 				if (!oUserProtectedRange.userGroupsMap) {
 					oUserProtectedRange.userGroupsMap = {};

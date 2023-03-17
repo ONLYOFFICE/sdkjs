@@ -450,6 +450,7 @@ function (window, undefined) {
 
 		this.UserProtectedRange = 165;
 		this.UserProtectedRangeChange = 166;
+		this.UserProtectedRangeUserInfo = 167;
 
 		this.externalReference = 170;
 
@@ -612,6 +613,8 @@ function (window, undefined) {
 					return new Asc.CUserProtectedRange();
 				case this.UserProtectedRangeChange:
 					return new AscCommonExcel.UndoRedoData_UserProtectedRange();
+				case this.UserProtectedRangeUserInfo:
+					return new Asc.CUserProtectedRangeUserInfo();
 			}
 			return null;
 		};
