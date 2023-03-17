@@ -294,7 +294,7 @@
 		this.name = null;
 	}
 
-	CUserProtectedRange.prototype.Write_ToBinary2 = function(w) {
+	CUserProtectedRangeUserInfo.prototype.Write_ToBinary2 = function(w) {
 		if (null != this.id) {
 			w.WriteBool(true);
 			w.WriteLong(this.id);
