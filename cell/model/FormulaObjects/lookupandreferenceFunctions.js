@@ -1800,38 +1800,25 @@ function (window, undefined) {
 	cSORT.prototype.name = 'SORT';
 	cSORT.prototype.argumentsMin = 1;
 	cSORT.prototype.argumentsMax = 4;
+	cSORT.prototype.isXLFN = true;
 	cSORT.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
-	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
+	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.bool];
 	cSORT.prototype.Calculate = function (arg) {
 		function sortWithIndices(arr) {
 			const indexedArray = arr.map(function (item, index) { return { item, index } });
-			if (sort_order === 1) {
-				// sort by ascending
-				indexedArray.sort(function (a,b) {
-					const valueA = a.item.value;
-					const valueB = b.item.value; 
-					if (valueA < valueB) {
-						return -1;
-					} else if (valueA > valueB) {
-						return 1;
-					} else {
-						return 0;
-					}
-				})
-			} else if (sort_order === -1) {
-				// sort by descending
-				indexedArray.sort(function (a,b) {
-					const valueA = a.item.value;
-					const valueB = b.item.value; 
-					if (valueA > valueB) {
-						return -1;
-					} else if (valueA < valueB) {
-						return 1;
-					} else {
-						return 0;
-					}
-				})
-			}
+
+			indexedArray.sort(function (a,b) {
+				const valueA = a.item.value;
+				const valueB = b.item.value; 
+
+				if (valueA < valueB) {
+					return sort_order === 1 ? -1 : 1;
+				} else if (valueA > valueB) {
+					return sort_order === 1 ? 1 : -1;
+				} else {
+					return 0;
+				}
+			});
 			
 			return indexedArray.map(function ({ index }) { return index });
 		}
@@ -1850,6 +1837,44 @@ function (window, undefined) {
 			}
 
 			return resultArr;
+		}
+
+		function arrayHelper (byColArray, by_col) {
+			let dimensions = byColArray.getDimensions(),
+				fElem = sortArray(array, by_col).getFirstElement(),
+				resArr = new cArray();
+			
+			for (let i = 0; i < dimensions.row; i++) {
+				resArr.addRow();
+				for (let j = 0; j < dimensions.col; j++) {
+					if (i === 0 && j === 0) {
+						resArr.addElement(fElem);
+						continue;
+					}
+					let el = new cError(cErrorType.wrong_value_type);
+					resArr.addElement(el);
+				}
+			}
+			return resArr;
+		}
+
+		function isValidArray (array, maxRowCol) {
+			let dimensions = array.getDimensions();
+			for (let i = 0; i < dimensions.row; i++) {
+				for (let j = 0; j < dimensions.col; j++) {
+					let elem = array.getValueByRowCol ? array.getValueByRowCol(i, j) : array.getElementRowCol(i, j);
+					if (!elem) {
+						return false;
+					}
+					elem = elem.tocNumber();
+					if (elem.type === cElementType.error) {
+						return false;
+					} else if (Math.floor(elem.getValue()) > maxRowCol || Math.floor(elem.getValue()) <= 0) {
+						return false;
+					}
+				}
+			}
+			return true;
 		}
 
 		let arg0 = arg[0],								// array
@@ -1882,7 +1907,7 @@ function (window, undefined) {
 			arg3 = new cBool(false);
 		}
 
-		let array, sort_index, sort_order, by_col, maxRows, maxCols;
+		let array, sort_index, sort_order, by_col, isArg1Array = false, isArg3Array = false, maxRows, maxCols;
 			
 		// check args type:
 		// arg0(initial array) check
@@ -1906,6 +1931,7 @@ function (window, undefined) {
 		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
 			sort_index = arg1.tocNumber();
 		} else {
+			isArg1Array = true;
 			let arg1Dimensions = arg1.getDimensions();
 			if (arg1Dimensions.row > maxRows || arg1Dimensions.col > maxCols) {
 				return new cError(cErrorType.wrong_value_type);
@@ -1927,8 +1953,11 @@ function (window, undefined) {
 		if (cElementType.array !== arg3.type && cElementType.cellsRange !== arg3.type && cElementType.cellsRange3D !== arg3.type) {
 			by_col = arg3.tocBool();
 		} else {
-			// TODO do array handling in argument
 			by_col = arg3.getFirstElement();
+			if (!by_col) {
+				by_col = new cBool(false);
+			}	
+			isArg3Array = true;
 		}
 
 		if (cElementType.error === sort_index.type) {
@@ -1956,13 +1985,18 @@ function (window, undefined) {
 		}
 
 		if (!by_col) {
-			if (sort_index > maxCols) {
+			if ((sort_index > maxCols) || (isArg1Array && !isValidArray(arg1, maxCols))) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 		} else {
-			if (sort_index > maxRows) {
+			if ((sort_index > maxRows) || (isArg1Array && !isValidArray(arg1, maxRows))) {
 				return new cError(cErrorType.wrong_value_type);
 			}
+		}
+
+		if (isArg3Array) {
+			// TODO it is not completely clear how the function works when receiving an array as the last argument
+			return arrayHelper(arg3, by_col);
 		}
 
 		return sortArray(array, by_col);

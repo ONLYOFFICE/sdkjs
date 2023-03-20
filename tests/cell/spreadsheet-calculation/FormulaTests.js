@@ -23306,6 +23306,7 @@ $(function () {
 		ws.getRange2("B21").setValue();
 		ws.getRange2("C20").setValue("");
 		ws.getRange2("C21").setValue("1");
+		ws.getRange2("C22").cleanAll();
 
 		ws.getRange2("C30").setValue("12");
 		ws.getRange2("C30").setNumFormat("@");
@@ -23332,6 +23333,11 @@ $(function () {
 		ws.getRange2("I10").setValue("-23");
 		ws.getRange2("I11").setValue("-1");
 		ws.getRange2("I12").setValue("-3");
+
+		oParser = new parserFormula('SORT(H10:I12,C21:C22)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(H10:I12,C21:C22)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORT(H10:I12,C21:C22)');
 
 		oParser = new parserFormula('SORT(H10:I12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT(H10:I12)');
@@ -23407,7 +23413,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'SORT(H10:I12,3,-1,FALSE)');
 		array = oParser.calculate();
 		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORT(H10:I12,3,-1,FALSE)');
-
 
 		oParser = new parserFormula('SORT(H10:I12,3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT(H10:I12,3)');
@@ -23562,6 +23567,59 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 6, 'Result of SORT({2,4;6,6;9,1},{3,3},1,TRUE)[1,1]');
 		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 9, 'Result of SORT({2,4;6,6;9,1},{3,3},1,TRUE)[2,0]');
 		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 1, 'Result of SORT({2,4;6,6;9,1},{3,3},1,TRUE)[2,1]');
+
+		oParser = new parserFormula('SORT({2,4;6,6;9,1},{2,3},1,FALSE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},{2,3},1,FALSE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORT({2,4;6,6;9,1},{3,3},1,FALSE)');
+
+		oParser = new parserFormula('SORT({2,4;6,6;9,1},1,1,{TRUE,FALSE})', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},1,1,{TRUE,FALSE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, 'Result of SORT({2,4;6,6;9,1},1,1,{TRUE,FALSE})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SORT({2,4;6,6;9,1},1,1,{TRUE,FALSE})[0,1]');
+
+		oParser = new parserFormula('SORT({2,4;6,6;9,1},1,-1,{TRUE,FALSE})', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},1,-1,{TRUE,FALSE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of SORT({2,4;6,6;9,1},1,-1,{TRUE,FALSE})[0,0]');			
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SORT({2,4;6,6;9,1},1,-1,{TRUE,FALSE})[0,1]');
+
+		oParser = new parserFormula('SORT({2,4;6,6;9,1},2,1,{TRUE,FALSE})', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},2,1,{TRUE,FALSE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, 'Result of SORT({2,4;6,6;9,1},2,1,{TRUE,FALSE})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SORT({2,4;6,6;9,1},2,1,{TRUE,FALSE})[0,1]');		// 0?
+
+		oParser = new parserFormula('SORT({2,4;6,6;9,1},2,-1,{TRUE,FALSE})', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},2,-1,{TRUE,FALSE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, 'Result of SORT({2,4;6,6;9,1},2,-1,{TRUE,FALSE})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SORT({2,4;6,6;9,1},2,-1,{TRUE,FALSE})[0,1]');		// 0?
+
+		oParser = new parserFormula('SORT({2,4;6,6;9,1},1,1,{FALSE,TRUE})', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},1,1,{FALSE,TRUE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, 'Result of SORT({2,4;6,6;9,1},1,1,{FALSE,TRUE})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SORT({2,4;6,6;9,1},1,1,{FALSE,TRUE})[0,1]');
+
+		oParser = new parserFormula('SORT({2,4;6,6;9,1},1,-1,{FALSE,TRUE})', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},1,-1,{FALSE,TRUE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of SORT({2,4;6,6;9,1},1,-1,{FALSE,TRUE})[0,0]');			
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SORT({2,4;6,6;9,1},1,-1,{FALSE,TRUE})[0,1]');
+
+		oParser = new parserFormula('SORT({2,4;6,6;9,1},2,1,{FALSE,TRUE})', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},2,1,{FALSE,TRUE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of SORT({2,4;6,6;9,1},2,1,{FALSE,TRUE})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SORT({2,4;6,6;9,1},2,1,{FALSE,TRUE})[0,1]');		// 0?
+
+		oParser = new parserFormula('SORT({2,4;6,6;9,1},2,-1,{FALSE,TRUE})', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},2,-1,{FALSE,TRUE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 6, 'Result of SORT({2,4;6,6;9,1},2,-1,{FALSE,TRUE})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SORT({2,4;6,6;9,1},2,-1,{FALSE,TRUE})[0,1]');		// 0?
 
 		oParser = new parserFormula('SORT(25,1.9,1.9,FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT(25,1.9,1.9,FALSE)');
