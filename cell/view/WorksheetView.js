@@ -4224,7 +4224,7 @@
 			}
 
 			//without merged -> merged after, because part of merged can
-			if (this.isPageBreakPreview() && !mc && this.pagesModeDataContains(col, row) === false) {
+			if (this.isPageBreakPreview(true) && !mc && this.pagesModeDataContains(col, row) === false) {
 				findFillColor = this.settings.cells.defaultState.border;
 			}
 
@@ -4246,7 +4246,7 @@
                 AscCommonExcel.drawFillCell(ctx, graphics, fill, new AscCommon.asc_CRect(x - offsetX, y - offsetY, w, h));
 			}
 
-			if (this.isPageBreakPreview() && mc) {
+			if (this.isPageBreakPreview(true) && mc) {
 				for (let r = mc.r1; r <= mc.r2; r++) {
 					for (let n = mc.c1; n <= mc.c2; n++) {
 						if (this.pagesModeDataContains(n, r) === false) {
@@ -4758,7 +4758,7 @@
 	};
 
 	WorksheetView.prototype._drawPageBreakPreviewLines = function () {
-		if(!this.isPageBreakPreview()) {
+		if(!this.isPageBreakPreview(true)) {
 			return;
 		}
 
@@ -4825,9 +4825,9 @@
 		}
 	};
 
-	WorksheetView.prototype._drawPageBreakPreviewText = function (drawingCtx, range, leftFieldInPx, topFieldInPx, width, height) {
+	WorksheetView.prototype._drawPageBreakPreviewText = function (drawingCtx, range, leftFieldInPx, topFieldInPx) {
 
-		if(!this.isPageBreakPreview()) {
+		if(!this.isPageBreakPreview(true)) {
 			return;
 		}
 
@@ -5988,11 +5988,11 @@
 		    }
 	    }
 
-	    if (this.isPageBreakPreview()) {
+	    if (this.isPageBreakPreview(true)) {
 			this._drawPageBreakPreviewLines();
 		}
 
-		if(this.isPageBreakPreview() && this.pageBreakPreviewSelectionRange) {
+		if(this.isPageBreakPreview(true) && this.pageBreakPreviewSelectionRange) {
 			this._drawPageBreakPreviewSelectionRange();
 		}
 
@@ -6333,7 +6333,7 @@
 
 		//TODO пересмотреть! возможно стоит очищать частями в зависимости от print_area
 		//print lines view
-		if(this.viewPrintLines || this.copyCutRange || (this.isPageBreakPreview() && this.pagesModeData)) {
+		if(this.viewPrintLines || this.copyCutRange || (this.isPageBreakPreview(true) && this.pagesModeData)) {
 			this.overlayCtx.clear();
 		}
 
@@ -8527,7 +8527,7 @@
     };
 
 	WorksheetView.prototype._hitCursorPageBreakPreviewRange = function (vr, x, y, offsetX, offsetY) {
-		let oPrintPages = this.isPageBreakPreview() && this.pagesModeData;
+		let oPrintPages = this.isPageBreakPreview(true) && this.pagesModeData;
 		let res = null;
 		let _range = null;
 		if (oPrintPages) {
@@ -8553,19 +8553,19 @@
 		} : null;
 	};
 
-		WorksheetView.prototype._hitCursorSelectionVisibleArea = function (vr, x, y, offsetX, offsetY) {
-			var range = this.getOleSize() && this.getOleSize().getLast()
-			if (!range) return null;
+	WorksheetView.prototype._hitCursorSelectionVisibleArea = function (vr, x, y, offsetX, offsetY) {
+		var range = this.getOleSize() && this.getOleSize().getLast();
+		if (!range) return null;
 
-			var res = this._hitInRange(range, AscCommonExcel.selectionLineType.Resize, vr, x, y, offsetX, offsetY);
-			return res ? {
-				cursor: res.cursor,
-				target: c_oTargetType.MoveResizeRange,
-				col: res.col,
-				row: res.row,
-				isOleRange: true
-			} : null;
-		}
+		var res = this._hitInRange(range, AscCommonExcel.selectionLineType.Resize, vr, x, y, offsetX, offsetY);
+		return res ? {
+			cursor: res.cursor,
+			target: c_oTargetType.MoveResizeRange,
+			col: res.col,
+			row: res.row,
+			isOleRange: true
+		} : null;
+	};
 
     WorksheetView.prototype._hitCursorFormulaOrChart = function (vr, x, y, offsetX, offsetY) {
         if (!this.oOtherRanges) {
@@ -24765,7 +24765,7 @@
 
 	WorksheetView.prototype.pagesModeDataContains = function (col, row) {
 		let res = null;
-		if (this.isPageBreakPreview() && this.pagesModeData && this.pagesModeData.printPages) {
+		if (this.isPageBreakPreview(true) && this.pagesModeData && this.pagesModeData.printPages) {
 			res = false;
 			let printPages = this.pagesModeData.printPages;
 			for (let i = 0; i < printPages.length; i++) {
@@ -24780,7 +24780,7 @@
 
 	WorksheetView.prototype._getPageBreakPreviewRanges = function (oPrintPages) {
 		let printRanges = null;
-		oPrintPages = oPrintPages || (this.isPageBreakPreview() && this.pagesModeData && this.pagesModeData.printPages);
+		oPrintPages = oPrintPages || (this.isPageBreakPreview(true) && this.pagesModeData && this.pagesModeData.printPages);
 		if (oPrintPages) {
 			printRanges = this.pagesModeData.printRanges;
 			if (!printRanges) {
@@ -24795,7 +24795,7 @@
 
 	WorksheetView.prototype.onChangePageSetupProps = function () {
 		this._cleanPagesModeData();
-		if (this.isPageBreakPreview()) {
+		if (this.isPageBreakPreview(true)) {
 			this.model && this.model.PagePrintOptions && this.model.PagePrintOptions.initPrintTitles();
 			if (this.workbook && this.workbook.model && this.workbook.model.getActiveWs() === this.model) {
 				this.draw();
@@ -24803,7 +24803,11 @@
 		}
 	};
 
-	WorksheetView.prototype.isPageBreakPreview = function () {
+	WorksheetView.prototype.isPageBreakPreview = function (checkPrintPreviewMode) {
+		var isPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
+		if (checkPrintPreviewMode && isPrintPreview) {
+			return false;
+		}
 		return this.model && this.model.getSheetViewType() === AscCommonExcel.ESheetViewType.pageBreakPreview;
 	};
 
