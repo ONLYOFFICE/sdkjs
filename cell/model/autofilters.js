@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -262,6 +262,27 @@
 				for (var i = 0; i < this.values.length; ++i) {
 					this.values[i].visible = !!visible[this.values[i].val];
 				}
+			},
+
+			getFilterRef: function(ws, activeCell) {
+				let res = null;
+				if (activeCell) {
+					if (ws.AutoFilter && ws.AutoFilter.Ref.contains(activeCell.col, activeCell.row)) {
+						res = ws.AutoFilter.Ref;
+					} else {
+						let table = ws.autoFilter._getTableIntersectionWithActiveCell(activeCell);
+						if (table) {
+							res = table.Ref;
+						}
+					}
+
+				} else if (!this.displayName) {
+					res = ws.AutoFilter && ws.AutoFilter.Ref;
+				} else {
+					let table = ws.getTableByName(this.displayName);
+					res = table && table.Ref;
+				}
+				return res;
 			}
 		};
 		
@@ -383,6 +404,7 @@
 
 			if ( !(this instanceof PivotFilterObj) ) {return new PivotFilterObj();}
 
+			this.fld = null;//pivotField index
 			this.dataFields = null;//pivot.asc_getDataFields. for sorting and value filters
 			this.dataFieldIndexSorting = 0;//selected index in dataFields
 			this.dataFieldIndexFilter = 0;//selected index in dataFields
@@ -394,6 +416,7 @@
 		}
 		PivotFilterObj.prototype = {
 			constructor: PivotFilterObj,
+			asc_setPivotField : function(val) { this.fld = val;},
 			asc_setDataFields : function(val) { this.dataFields = val || null;},
 			asc_setDataFieldIndexSorting : function(val) { this.dataFieldIndexSorting = val;},
 			asc_setDataFieldIndexFilter : function(val) { this.dataFieldIndexFilter = val;},
@@ -401,6 +424,7 @@
 			asc_setIsMultipleItemSelectionAllowed : function(val) { this.isMultipleItemSelectionAllowed = val;},
 			asc_setIsTop10Sum : function(val) { this.isTop10Sum = val;},
 
+			asc_getPivotField : function(val) { return this.fld;},
 			asc_getDataFields : function(val) { return this.dataFields;},
 			asc_getDataFieldIndexSorting : function(val) { return this.dataFieldIndexSorting;},
 			asc_getDataFieldIndexFilter : function(val) { return this.dataFieldIndexFilter;},
@@ -6353,12 +6377,14 @@
 
 		window["Asc"]["PivotFilterObj"]		    = window["Asc"].PivotFilterObj = PivotFilterObj;
 		prot									= PivotFilterObj.prototype;
+		prot["asc_setPivotField"]						= prot.asc_setPivotField;
 		prot["asc_setDataFields"]						= prot.asc_setDataFields;
 		prot["asc_setDataFieldIndexSorting"]			= prot.asc_setDataFieldIndexSorting;
 		prot["asc_setDataFieldIndexFilter"]				= prot.asc_setDataFieldIndexFilter;
 		prot["asc_setIsPageFilter"]						= prot.asc_setIsPageFilter;
 		prot["asc_setIsMultipleItemSelectionAllowed"]	= prot.asc_setIsMultipleItemSelectionAllowed;
 		prot["asc_setIsTop10Sum"]						= prot.asc_setIsTop10Sum;
+		prot["asc_getPivotField"]						= prot.asc_getPivotField;
 		prot["asc_getDataFields"]						= prot.asc_getDataFields;
 		prot["asc_getDataFieldIndexSorting"]			= prot.asc_getDataFieldIndexSorting;
 		prot["asc_getDataFieldIndexFilter"]				= prot.asc_getDataFieldIndexFilter;

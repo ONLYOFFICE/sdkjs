@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -133,7 +133,7 @@
 			nFlags |= 32;
 		}
 		
-		if (undefined !== this.Field)
+		if (AscCommon.IsSupportOFormFeature() && this.Field)
 		{
 			oWriter.WriteString2(this.Field.GetId());
 			nFlags |= 64;
@@ -172,7 +172,7 @@
 			this.Shd.ReadFromBinary(oReader);
 		}
 		
-		if (nFlags & 64)
+		if (AscCommon.IsSupportOFormFeature() && (nFlags & 64))
 		{
 			let fieldId = oReader.GetString2();
 			this.Field = AscCommon.g_oTableId.GetById(fieldId);
@@ -297,10 +297,16 @@
 	};
 	CSdtFormPr.prototype.SetFieldMaster = function(fieldMaster)
 	{
+		if (!AscCommon.IsSupportOFormFeature())
+			return;
+
 		this.Field = null !== fieldMaster ? fieldMaster : undefined;
 	};
 	CSdtFormPr.prototype.GetFieldMaster = function()
 	{
+		if (!AscCommon.IsSupportOFormFeature())
+			return null;
+
 		return this.Field ? this.Field : null;
 	};
 	CSdtFormPr.prototype.GetAscRole = function()
@@ -321,10 +327,16 @@
 	};
 	CSdtFormPr.prototype.GetRole = function()
 	{
+		if (!AscCommon.IsSupportOFormFeature())
+			return undefined;
+		
 		return this.RoleName;
 	};
 	CSdtFormPr.prototype.SetRole = function(roleName)
 	{
+		if (!AscCommon.IsSupportOFormFeature())
+			return;
+		
 		this.RoleName = null !== roleName ? roleName : undefined;
 	};
 	//--------------------------------------------------------export----------------------------------------------------

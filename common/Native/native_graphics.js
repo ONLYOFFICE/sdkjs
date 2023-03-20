@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -155,6 +155,8 @@ CNativeGraphics.prototype =
     },
     _m : function(x, y)
     {
+        x = isNaN(x) ? 0 : x;
+        y = isNaN(y) ? 0 : y;
         this.Native["_m"](x, y);
         
         if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
@@ -162,6 +164,8 @@ CNativeGraphics.prototype =
     },
     _l : function(x, y)
     {
+        x = isNaN(x) ? 0 : x;
+        y = isNaN(y) ? 0 : y;
         this.Native["_l"](x, y);
         
         if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
@@ -169,6 +173,12 @@ CNativeGraphics.prototype =
     },
     _c : function(x1, y1, x2, y2, x3, y3)
     {
+        x1 = isNaN(x1) ? 0 : x1;
+        y1 = isNaN(y1) ? 0 : y1;
+        x2 = isNaN(x2) ? 0 : x2;
+        y2 = isNaN(y2) ? 0 : y2;
+        x3 = isNaN(x3) ? 0 : x3;
+        y3 = isNaN(y3) ? 0 : y3;
         this.Native["_c"](x1, y1, x2, y2, x3, y3);
         
         if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
@@ -180,6 +190,10 @@ CNativeGraphics.prototype =
     },
     _c2 : function(x1, y1, x2, y2)
     {
+        x1 = isNaN(x1) ? 0 : x1;
+        y1 = isNaN(y1) ? 0 : y1;
+        x2 = isNaN(x2) ? 0 : x2;
+        y2 = isNaN(y2) ? 0 : y2;
         this.Native["_c2"](x1, y1, x2, y2);
         
         if (false === this.GetIntegerGrid() && this.ArrayPoints != null)

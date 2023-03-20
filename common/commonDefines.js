@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -724,7 +724,9 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			DeleteRowContainsLockedCell: 1033,
 			CannotUseCommandProtectedSheet: 1034,
 
-			FillAllRowsWarning: 1040
+			FillAllRowsWarning: 1040,
+
+			ProtectedRangeByOtherUser: 1050
 		}
 	};
 
@@ -3885,6 +3887,15 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		ConfirmAddCellWatches: 5
 	};
 
+
+	const c_oPluginContextMenuTypes = {
+		None: "None",
+		Target: "Target",
+		Selection: "Selection",
+		Image: "Image",
+		Shape: "Shape",
+		OleObject: "OleObject"
+	};
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -4125,6 +4136,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['DeleteRowContainsLockedCell']      = prot.DeleteRowContainsLockedCell;
 	prot['FillAllRowsWarning']               = prot.FillAllRowsWarning;
 	prot['CannotUseCommandProtectedSheet']   = prot.CannotUseCommandProtectedSheet;
+	prot['ProtectedRangeByOtherUser']        = prot.ProtectedRangeByOtherUser;
+
 
 
 
@@ -5448,5 +5461,15 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
 
 	window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
+
+
+
+	prot = window['Asc']['c_oPluginContextMenuTypes'] = window['Asc'].c_oPluginContextMenuTypes = c_oPluginContextMenuTypes;
+	prot['None'] = prot.None;
+	prot['Target'] = prot.Target;
+	prot['Selection'] = prot.Selection;
+	prot['Image'] = prot.Image;
+	prot['Shape'] = prot.Shape;
+	prot['OleObject'] = prot.OleObject;
 
 })(window);

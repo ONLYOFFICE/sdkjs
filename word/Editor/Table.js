@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -9372,7 +9372,7 @@ CTable.prototype.MergeTableCells = function(isClearMerge)
 	}
 
 	// Удаляем лишние строки
-	this.Internal_Check_TableRows(true !== isClearMerge ? true : false);
+	this.CorrectTableRows(true !== isClearMerge ? true : false);
 	for (var PageNum = 0; PageNum < this.Pages.length - 1; PageNum++)
 	{
 		if (Pos_tl.Row <= this.Pages[PageNum + 1].FirstRow)
@@ -10092,7 +10092,8 @@ CTable.prototype.Row_Remove2 = function()
 	let arrSelection = this.GetSelectionArray(false);
 	for (let nIndex = 0, nCount = arrSelection.length; nIndex < nCount; ++nIndex)
 	{
-		arrRowsToDelete[arrSelection[nIndex].Row]++;
+		let iRow = arrSelection[nIndex].Row;
+		arrRowsToDelete[iRow]++;
 	}
 
 	this.RemoveSelection();
@@ -10102,10 +10103,12 @@ CTable.prototype.Row_Remove2 = function()
 		if (arrRowsToDelete[nCurRow])
 			this.private_RemoveRow(nCurRow);
 	}
-
+	
+	this.CorrectTableRows(false);
+	
 	if (!this.GetRowsCount())
 		return false;
-
+	
 	// Проверяем текущую ячейку
 	if (this.CurCell.Row.Index >= this.Content.length)
 		this.CurCell = this.GetRow(this.GetRowsCount() - 1).GetCell(0);
@@ -11022,7 +11025,7 @@ CTable.prototype.EraseTable = function(X1, Y1, X2, Y2, CurPageStart)
 		}
 
 		// Удаляем лишние строки
-		this.Internal_Check_TableRows(true !== isClearMerge ? true : false);
+		this.CorrectTableRows(true !== isClearMerge ? true : false);
 		for (var PageNum = 0; PageNum < this.Pages.length - 1; PageNum++)
 		{
 			if (Pos_tl.Row <= this.Pages[PageNum + 1].FirstRow)
@@ -14521,8 +14524,14 @@ CTable.prototype.Internal_GetVertMergeCountUp = function(StartRow, StartGridCol,
  * таблицы.
  * @returns {boolean} произошли ли изменения в таблице
  */
-CTable.prototype.Internal_Check_TableRows = function(bSaveHeight)
+CTable.prototype.CorrectTableRows = function(bSaveHeight)
 {
+	// HACK: При загрузке мы запрещаем компилировать стили, но нам все-таки это здесь нужно
+	var bLoad = AscCommon.g_oIdCounter.m_bLoad;
+	var bRead = AscCommon.g_oIdCounter.m_bRead;
+	AscCommon.g_oIdCounter.m_bLoad = false;
+	AscCommon.g_oIdCounter.m_bRead = false;
+	
 	// Пробегаемся по всем строкам, если в какой-то строке у всех ячеек стоит
 	// вертикальное объединение, тогда такую строку удаляем, а у предыдущей
 	// строки выставляем минимальную высоту - сумму высот этих двух строк.
@@ -14603,6 +14612,11 @@ CTable.prototype.Internal_Check_TableRows = function(bSaveHeight)
 		if (undefined === OldHeight || Asc.linerule_Auto == OldHeight.HRule || ( MinHeight > OldHeight.Value ))
 			this.Content[RowIndex].Set_Height(MinHeight, linerule_AtLeast);
 	}
+	
+	// HACK: Восстанавливаем флаги и выставляем, что стиль всей таблицы нужно пересчитать
+	AscCommon.g_oIdCounter.m_bLoad = bLoad;
+	AscCommon.g_oIdCounter.m_bRead = bRead;
+	this.Recalc_CompiledPr2();
 
 	if (Rows_to_Delete.length <= 0)
 		return false;
@@ -15700,6 +15714,15 @@ CTable.prototype.private_UpdateSelectedCellsArray = function(bForceSelectByLines
 		for (var nCurRow = nStartRow; nCurRow <= nEndRow; ++nCurRow)
 		{
 			var oRow = this.GetRow(nCurRow);
+			
+			// Если строка, с которой мы начинаем селект целиком смержена по вертикали, то добавляем первую ячейку мержа
+			// чтобы у нас не получился пустой массив селекта
+			if (nCurRow === nStartRow && this.private_IsVMergedRow(nCurRow))
+			{
+				let cell = this.GetStartMergedCell(0, nCurRow);
+				arrSelectionData.push({Row : cell.GetRow().GetIndex(), Cell : cell.GetIndex()});
+			}
+			
 			for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
 			{
 				var oCell = oRow.GetCell(nCurCell);
@@ -17040,13 +17063,14 @@ CTable.prototype.private_StartTrackTable = function(CurPage)
 };
 CTable.prototype.CorrectBadTable = function()
 {
-    // TODO: Пока оставим эту заглушку на случай загрузки плохих таблиц. В будущем надо будет
-    //       сделать нормальный обсчет для случая, когда у нас есть "пустые" строки (составленные
-    //       из вертикально объединенных ячеек).
-    this.Internal_Check_TableRows(false);
+	// TODO: Пока оставим эту заглушку на случай загрузки плохих таблиц. В будущем надо будет
+	//       сделать нормальный обсчет для случая, когда у нас есть "пустые" строки (составленные
+	//       из вертикально объединенных ячеек).
+	
+	this.CorrectVMerge();
+	this.CorrectTableRows(false);
 	this.CorrectBadGrid();
 	this.CorrectHMerge();
-	this.CorrectVMerge();
 };
 /**
  * Специальная функция, которая обрабатывает устаревший параметр HMerge и заменяет его на GridSpan во время открытия файла
@@ -19800,6 +19824,7 @@ function CTableRowsInfo()
 	this.X0           = 0;
 	this.X1           = 0;
 	this.MaxBotBorder = 0;
+	this.VMerged      = false;
 }
 CTableRowsInfo.prototype.Init = function()
 {

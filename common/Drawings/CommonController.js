@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -9064,6 +9064,40 @@
 						}
 					}
 					return null;
+				},
+				getPluginSelectionInfo: function() {
+					let oTargetContent = this.getTargetDocContent();
+					if(oTargetContent)
+					{
+						if (!oTargetContent.IsSelectionUse())
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Target);
+						}
+						return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Selection);
+					}
+
+					let oFirstSelected = this.getSelectedArray()[0];
+					if(!oFirstSelected)
+					{
+						return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.None);
+					}
+					let nType = oFirstSelected.getObjectType();
+					switch(nType)
+					{
+						case AscDFH.historyitem_type_OleObject:
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.OleObject, oFirstSelected.m_sApplicationId);
+						}
+						case AscDFH.historyitem_type_ImageShape:
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Image);
+						}
+						default:
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Shape);
+						}
+					}
+					return new AscCommon.CPluginCtxMenuInfo();
 				},
 				getHorGuidesPos: function () {
 					return [];

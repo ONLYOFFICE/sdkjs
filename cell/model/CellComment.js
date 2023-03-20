@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -572,7 +572,7 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 			nCol = mergedRange ? mergedRange.c2 : commentCell.nCol;
 			nRow = mergedRange ? mergedRange.r1 : commentCell.nRow;
 
-			if (metrics = this.worksheet.getCellMetrics(nCol, nRow)) {
+			if (metrics = this.worksheet.getCellMetrics(nCol, nRow, true)) {
 				if (0 === metrics.width || 0 === metrics.height) {
 					continue;
 				}
@@ -768,7 +768,7 @@ CCellCommentator.prototype.cleanLastSelection = function() {
 	var metrics;
 	if (this.lastSelectedId) {
 		var lastComment = this.findComment(this.lastSelectedId);
-		if (lastComment && (metrics = this.worksheet.getCellMetrics(lastComment.nCol, lastComment.nRow))) {
+		if (lastComment && (metrics = this.worksheet.getCellMetrics(lastComment.nCol, lastComment.nRow, true))) {
 			var extraOffset = 1;
 			this.overlayCtx.clearRect(metrics.left, metrics.top, metrics.width - extraOffset, metrics.height - extraOffset);
 		}
@@ -870,7 +870,7 @@ CCellCommentator.prototype.cleanLastSelection = function() {
 		if (this.lastSelectedId) {
 			var comment = this.findComment(this.lastSelectedId);
 			if (comment && !this._checkHidden(comment) &&
-				(metrics = this.worksheet.getCellMetrics(comment.asc_getCol(), comment.asc_getRow()))) {
+				(metrics = this.worksheet.getCellMetrics(comment.asc_getCol(), comment.asc_getRow(), true))) {
 				this.overlayCtx.clearRect(metrics.left, metrics.top, metrics.width, metrics.height);
 			}
 		}
@@ -924,7 +924,7 @@ CCellCommentator.prototype.selectComment = function(id) {
 
 		this.worksheet._scrollToRange(new Asc.Range(col, row, col, row));
 
-		metrics = this.worksheet.getCellMetrics(col, row);
+		metrics = this.worksheet.getCellMetrics(col, row, true);
 		if (metrics) {
 			var extraOffset = 1;
 			this.overlayCtx.ctx.globalAlpha = 0.2;

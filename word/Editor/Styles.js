@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -18186,6 +18186,13 @@ g_oDocumentDefaultTablePr.InitDefault();
 g_oDocumentDefaultTableCellPr.InitDefault();
 g_oDocumentDefaultTableRowPr.InitDefault();
 g_oDocumentDefaultTableStylePr.InitDefault();
+
+window["AscWord"].DEFAULT_TEXT_PR        = g_oDocumentDefaultTextPr;
+window["AscWord"].DEFAULT_PARA_PR        = g_oDocumentDefaultParaPr;
+window["AscWord"].DEFAULT_TABLE_PR       = g_oDocumentDefaultTablePr;
+window["AscWord"].DEFAULT_TABLE_CELL_PR  = g_oDocumentDefaultTableCellPr;
+window["AscWord"].DEFAULT_TABLE_ROW_PR   = g_oDocumentDefaultTableRowPr;
+window["AscWord"].DEFAULT_TABLE_STYLE_PR = g_oDocumentDefaultTableStylePr;
 
 var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, true);
 var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, true);

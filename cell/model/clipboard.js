@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -412,6 +412,9 @@
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll) {
 			var t = this;
 			var wb = window["Asc"]["editor"].wb;
+			if (wb.selectionDialogMode) {
+				return;
+			}
 			var cellEditor = wb.cellEditor;
 			t.pasteProcessor.clean();
 
@@ -1868,6 +1871,12 @@
 							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 							ws.handlers.trigger("cleanCutData", true);
 							return true;
+						}
+
+						if (ws.model.isUserProtectedRangesIntersection(toRange)) {
+							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+							ws.handlers.trigger("cleanCutData", true);
+							return;
 						}
 
 						var wsTo = ws.model.Id !== wsFrom.model.Id ? ws : null;
@@ -4274,7 +4283,9 @@
 							break;
 						}
 						case para_NewLine: {
-							if(AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
+							//on feature: read ms style comments and use only sameCell flag
+							if(AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel ||
+								(paraRunContent[pR].Flags && paraRunContent[pR].Flags.sameCell)) {
 								text += newLine;
 							} else {
 								pushData();
@@ -4746,8 +4757,12 @@
 				for (var i = 0, length = elem.Content.length; i < length; i++) {
 					if (elem.Content[i] && elem.Content[i].Content) {
 						for (var j = 0; j < elem.Content[i].Content.length; j++) {
-							if (elem.Content[i].Content[j] && para_NewLine === elem.Content[i].Content[j].GetType()  && AscCommon.g_clipboardBase.pastedFrom !== AscCommon.c_oClipboardPastedFrom.Excel) {
-								oNewElem.height++;
+							let innerElem = elem.Content[i].Content[j];
+							if (innerElem && para_NewLine === innerElem.GetType()) {
+								//on feature: read ms style comments and use only sameCell flag 
+								if (AscCommon.g_clipboardBase.pastedFrom !== AscCommon.c_oClipboardPastedFrom.Excel && !(innerElem.Flags && innerElem.Flags.sameCell === true)) {
+									oNewElem.height++;
+								}
 							}
 						}
 					}

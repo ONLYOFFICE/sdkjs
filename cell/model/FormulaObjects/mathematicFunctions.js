@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -180,88 +180,6 @@
 		return sumX(arg0, arg1, false);
 	};
 
-	function getArrayHelper(args, func) {
-		// check for arrays and find max length
-		let isContainsArray = false,
-			maxRows = 1,
-			maxColumns = 1;
-		
-		for (let i = 0; i < args.length; i++) {
-			if (cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) {
-				let argDimensions = args[i].getDimensions();
-				maxRows = argDimensions.row > maxRows ? argDimensions.row : maxRows;
-				maxColumns = argDimensions.col > maxColumns ? argDimensions.col : maxColumns;
-				isContainsArray = true;
-			}
-		}
-
-		if (!isContainsArray) {
-			return false;
-		}
-
-		let resultArr = new cArray();
-
-		for (let i = 0; i < maxRows; i++) {
-			resultArr.addRow();
-			for (let j = 0; j < maxColumns; j++) {
-				let values = [];
-
-				for (let k = 0; k < args.length; k++) {
-					let value = args[k];
-					if (cElementType.array === value.type) {
-						if (value.isOneElement()) {
-							// single row with single element {12}
-							values.push(value.getFirstElement());
-						} else if (value.getCountElementInRow() !== 1 && value.rowCount === 1) {
-							// single row with many elements {1,2,3}
-							value = value.array[0] ? value.array[0][j] : new cError(cErrorType.not_available);
-							values.push(value ? value : new cError(cErrorType.not_available));
-							// values.push(value.array[0] ? value.array[0][j] : new cError(cErrorType.not_available));
-						} else if (value.getCountElementInRow() === 1 && value.rowCount !== 1) {
-							// many rows with single element {1;2;3;4}
-							value = value.array[i] ? value.array[i][0] : new cError(cErrorType.not_available);
-							values.push(value ? value : new cError(cErrorType.not_available));
-							// values.push(value.array[i] ? value.array[i][0] : new cError(cErrorType.not_available));
-						} else {
-							value = value.array[i] ? value.array[i][j] : new cError(cErrorType.not_available);
-							values.push(value ? value : new cError(cErrorType.not_available));
-							// values.push(value.array[i] ? value.array[i][j] : new cError(cErrorType.not_available));
-						}
-					} else if (cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type) {
-						let valueDimensions = value.getDimensions();
-						if (value.isOneElement()) {
-							// single row with single element С17:C17
-							values.push(value.getFirstElement());
-						} else if (valueDimensions.col !== 1 && valueDimensions.row  === 1) {
-							// single row with many elements С17:E17
-							// values.push(value.getValueByRowCol(0, j));
-							values.push(_getValueByRowCol(value, 0, j));
-						} else if (valueDimensions.col === 1 && valueDimensions.row !== 1) {
-							// many rows with single element C17:C20
-							// values.push(value.getValueByRowCol(i, 0));
-							values.push(_getValueByRowCol(value, i, 0));
-						} else {
-							// values.push(value.getValueByRowCol(i, j));
-							values.push(_getValueByRowCol(value, i, j));
-						}
-					} else {
-						values.push(args[k]);
-					}
-				}
-				resultArr.addElement(func(true, values));
-			}
-		}
-		return resultArr;
-	}
-
-	const _getValueByRowCol = function (array, _row, _col) {
-		let sizes = array.getDimensions();
-		if (_row > sizes.row - 1 || _col > sizes.col - 1) {
-			return new cError(cErrorType.not_available);
-		}
-		let res = array.getValueByRowCol(_row, _col);
-		return res;
-	}
 
 	/**
 	 * @constructor
@@ -5746,6 +5664,7 @@
 			arg2 = arg[2] ? arg[2] : new cNumber(1),
 			arg3 = arg[3] ? arg[3] : new cNumber(1),
 			res;
+			// exceptions = new Map();
 
 		if (arg0.type === cElementType.empty) {
 			arg0 = new cNumber(1);
@@ -5760,8 +5679,8 @@
 			arg3 = new cNumber(1);
 		}
 
-		// if range/array type, call arrayHelper
-		res = getArrayHelper([arg0, arg1, arg2, arg3], sequenceRangeArrayGeneral);
+		// if range/array type, write array to map and call arrayHelper
+		res = AscCommonExcel.getArrayHelper([arg0, arg1, arg2, arg3], sequenceRangeArrayGeneral);
 
 		if (res) {
 			return res;

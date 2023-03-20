@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1075,16 +1075,7 @@
 			NOTES_MASTER: 4
 		};
 
-		var TYPE_TRACK_SHAPE = 0;
-		var TYPE_TRACK_GROUP = TYPE_TRACK_SHAPE;
-		var TYPE_TRACK_GROUP_PASSIVE = 1;
-		var TYPE_TRACK_TEXT = 2;
-		var TYPE_TRACK_EMPTY_PH = 3;
-		var TYPE_TRACK_CHART = 4;
 
-		var SLIDE_KIND = 0;
-		var LAYOUT_KIND = 1;
-		var MASTER_KIND = 2;
 
 		var map_hightlight = {};
 		map_hightlight["black"] = 0x000000;
@@ -1435,6 +1426,83 @@
 			HLS.S = S;
 			HLS.L = L;
 		};
+		CColorModifiers.prototype.RGB2LAB = function (R, G, B) {
+			let r, g, b, X, Y, Z, fx, fy, fz, xr, yr, zr;
+			let Ls, as, bs;
+			let eps = 216.0 / 24389.0;
+			let k = 24389.0 / 27.0;
+
+			let Xr = 0.964221;  // reference white D50
+			let Yr = 1.0;
+			let Zr = 0.825211;
+
+			// RGB to XYZ
+			r = R / 255; //R 0..1
+			g = G / 255; //G 0..1
+			b = B / 255; //B 0..1
+
+			// assuming sRGB (D65)
+			if (r <= 0.04045)
+				r = r / 12;
+			else
+				r = Math.pow((r + 0.055) / 1.055, 2.4);
+
+			if (g <= 0.04045)
+				g = g / 12;
+			else
+				g = Math.pow((g + 0.055) / 1.055, 2.4);
+
+			if (b <= 0.04045)
+				b = b / 12;
+			else
+				b = Math.pow((b + 0.055) / 1.055, 2.4);
+
+
+			X = 0.436052025 * r + 0.385081593 * g + 0.143087414 * b;
+			Y = 0.222491598 * r + 0.71688606 * g + 0.060621486 * b;
+			Z = 0.013929122 * r + 0.097097002 * g + 0.71418547 * b;
+
+			// XYZ to Lab
+			xr = X / Xr;
+			yr = Y / Yr;
+			zr = Z / Zr;
+
+			if (xr > eps)
+				fx = Math.pow(xr, 1 / 3.);
+			else
+				fx = ((k * xr + 16.) / 116.);
+
+			if (yr > eps)
+				fy = Math.pow(yr, 1 / 3.);
+			else
+				fy = ((k * yr + 16.) / 116.);
+
+			if (zr > eps)
+				fz = Math.pow(zr, 1 / 3.);
+			else
+				fz = ((k * zr + 16.) / 116);
+
+			Ls = (116 * fy) - 16;
+			as = 500 * (fx - fy);
+			bs = 200 * (fy - fz);
+
+			let lab = [];
+			lab[0] = (2.55 * Ls + .5) >> 0;
+			lab[1] = (as + .5) >> 0;
+			lab[2] = (bs + .5) >> 0;
+			return lab;
+		};
+		CColorModifiers.prototype.GetColorDiff = function (nC1, nC2) {
+			let nC1R = (nC1 >> 16) & 0xFF;
+			let nC1G = (nC1 >> 8) & 0xFF;
+			let nC1B = nC1 & 0xFF;
+			let nC2R = (nC2 >> 16) & 0xFF;
+			let nC2G = (nC2 >> 8) & 0xFF;
+			let nC2B = nC2 & 0xFF;
+			let lab1 = CColorModifiers.prototype.RGB2LAB(nC1R, nC1G, nC1B);
+			let lab2 = CColorModifiers.prototype.RGB2LAB(nC2R, nC2G, nC2B);
+			return Math.abs(lab2[0] - lab1[0]) + Math.abs(lab2[1] - lab1[1]) + Math.abs(lab2[2] - lab1[2]);
+		};
 		CColorModifiers.prototype.HSL2RGB = function (HSL, RGB) {
 			if (HSL.S == 0) {
 				RGB.R = HSL.L;
@@ -1657,6 +1725,35 @@
 				return;
 			}
 			this.Mods = oOther.Mods.concat(this.Mods);
+		};
+		CColorModifiers.prototype.getShadeOrTint = function() {
+			const M = this.Mods;
+			if(M.length === 1 && M[0].name === "lumMod" && M[0].val > 0) {//shade
+				return -M[0].val;
+			}
+			if(M.length === 2 && M[0].name === "lumMod" && M[0].val > 0 && M[1].name === "lumOff" && M[1].val > 0) {
+				return M[0].val;
+			}
+			return null;
+		};
+		CColorModifiers.prototype.canGetShadeOrTint = function() {
+			return this.getShadeOrTint() !== null;
+		};
+		CColorModifiers.prototype.getEffectValue = function () {
+			if(this.Mods.length === 1) {
+				let oMod = this.Mods[0];
+				if(oMod.name === "wordTint") {
+					return oMod.val / 255;
+				}
+				if(oMod.name === "wordShade") {
+					return -oMod.val / 255;
+				}
+			}
+			let nVal = this.getShadeOrTint();
+			if(nVal !== null) {
+				return nVal / 100000;
+			}
+			return 0;
 		};
 
 
@@ -2419,10 +2516,7 @@
 			}
 		};
 		CUniColor.prototype.canConvertPPTXModsToWord = function () {
-			return this.Mods
-				&& ((this.Mods.Mods.length === 1 && this.Mods.Mods[0].name === "lumMod" && this.Mods.Mods[0].val > 0)
-					|| (this.Mods.Mods.length === 2 && this.Mods.Mods[0].name === "lumMod" && this.Mods.Mods[0].val > 0
-						&& this.Mods.Mods[1].name === "lumOff" && this.Mods.Mods[1].val > 0));
+			return this.Mods && this.Mods.canGetShadeOrTint();
 		};
 		CUniColor.prototype.convertToWordMods = function () {
 			if (this.canConvertPPTXModsToWord()) {
@@ -4769,6 +4863,13 @@
 			return getGrayscaleValue(this);
 		};
 
+		function checkUniFillRasterImageId(oUnifill) {
+			if (oUnifill) {
+				return oUnifill.checkRasterImageId();
+			}
+			return null;
+		}
+
 		function CUniFill() {
 			CBaseNoIdObject.call(this);
 			this.fill = null;
@@ -4978,7 +5079,6 @@
 			const RGBAColor = this.getRGBAColor();
 			return getGrayscaleValue(RGBAColor);
 		};
-
 		CUniFill.prototype.getRGBAColor = function () {
 			if (this.fill) {
 				if (this.fill.type === c_oAscFill.FILL_TYPE_SOLID) {
@@ -5179,6 +5279,11 @@
 				}
 			}
 		};
+		CUniFill.prototype.checkRasterImageId = function() {
+			if (this.fill && typeof this.fill.RasterImageId === "string" && this.fill.RasterImageId.length > 0)
+				return this.fill.RasterImageId;
+			return null;
+		}
 
 		function CBuBlip() {
 			CBaseNoIdObject.call(this);
@@ -7465,9 +7570,7 @@
 			return false;
 		};
 		CSpPr.prototype.checkUniFillRasterImageId = function (unifill) {
-			if (unifill && unifill.fill && typeof unifill.fill.RasterImageId === "string" && unifill.fill.RasterImageId.length > 0)
-				return unifill.fill.RasterImageId;
-			return null;
+			return checkUniFillRasterImageId(unifill);
 		};
 		CSpPr.prototype.checkBlipFillRasterImage = function (images) {
 			var fill_image_id = this.checkUniFillRasterImageId(this.Fill);
@@ -8704,6 +8807,13 @@
 			}
 			this.shadeToTitle = r.GetBool();
 		};
+		CBgPr.prototype.checkBlipFillRasterImage = function (images) {
+			let fill_image_id = checkUniFillRasterImageId(this.Fill);
+			if (fill_image_id !== null)
+				images.push(fill_image_id);
+		};
+
+
 
 		function CBg() {
 			CBaseNoIdObject.call(this);
@@ -8800,6 +8910,11 @@
 				}
 			}
 			return null;
+		};
+		CSld.prototype.forEachSp = function(fCallback) {
+			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+				fCallback(this.spTree[nSp]);
+			}
 		};
 
 		function CSpTree(oSlideObject) {
@@ -13965,6 +14080,9 @@
 			if (true === _canChangeArrows)
 				ret.canChangeArrows = true;
 
+			if (isRealNumber(ln.Fill.transparent)) {
+				ret.transparent = ln.Fill.transparent;
+			}
 			return ret;
 		}
 
@@ -13993,6 +14111,11 @@
 					ret.Fill.fill = new CSolidFill();
 					ret.Fill.fill.color = CorrectUniColor(_color, ret.Fill.fill.color, flag);
 				}
+			}
+
+			var _alpha = asc_stroke.transparent;
+			if (null != _alpha) {
+				ret.Fill.transparent = _alpha;
 			}
 
 			var _join = asc_stroke.LineJoin;

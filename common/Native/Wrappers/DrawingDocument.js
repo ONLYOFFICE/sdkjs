@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -2202,7 +2202,8 @@ CDrawingDocument.prototype =
             color.Calculate(_theme, _clrMap, rgba);
 
             var _rgba = color.RGBA;
-            arr_colors[i] = new CColor(_rgba.R, _rgba.G, _rgba.B);
+            arr_colors[i] = new Asc.asc_CColor(_rgba.R, _rgba.G, _rgba.B);
+	        arr_colors[i].setColorSchemeId(color.color.id);
         }
 
         // теперь проверим
@@ -2247,7 +2248,7 @@ CDrawingDocument.prototype =
             standart_colors = new Array(_c_s);
 
             for (var i = 0; i < _c_s; ++i) {
-                standart_colors[i] = new CColor(standartColors[i].R, standartColors[i].G, standartColors[i].B);
+                standart_colors[i] = new Asc.asc_CColor(standartColors[i].R, standartColors[i].G, standartColors[i].B);
             }
 
             this.IsSendStandartColors = true;
@@ -2258,22 +2259,27 @@ CDrawingDocument.prototype =
         var _ret_array = new Array(_count * 6);
         var _cur_index = 0;
 
+	    var array_colors_types = [6, 15, 7, 16, 0, 1, 2, 3, 4, 5];
         for (var i = 0; i < _count; ++i) {
             var _color_src = this.GuiControlColorsMap[i];
 
-            _ret_array[_cur_index] = new CColor(_color_src.r, _color_src.g, _color_src.b);
+            _ret_array[_cur_index] = new Asc.asc_CColor(_color_src.r, _color_src.g, _color_src.b);
             _cur_index++;
 
             // теперь с модификаторами
             var _count_mods = 5;
             for (var j = 0; j < _count_mods; ++j) {
-                var dst_mods = new AscFormat.CColorModifiers();
+                let dst_mods = new AscFormat.CColorModifiers();
                 dst_mods.Mods = AscCommon.GetDefaultMods(_color_src.r, _color_src.g, _color_src.b, j + 1, 1);
 
-                var _rgba = { R: _color_src.r, G: _color_src.g, B: _color_src.b, A: 255 };
+                let _rgba = { R: _color_src.r, G: _color_src.g, B: _color_src.b, A: 255 };
                 dst_mods.Apply(_rgba);
 
-                _ret_array[_cur_index] = new CColor(_rgba.R, _rgba.G, _rgba.B);
+				let oColor = new Asc.asc_CColor(_rgba.R, _rgba.G, _rgba.B);
+	            oColor.put_effectValue(dst_mods.getEffectValue());
+	            oColor.setColorSchemeId(array_colors_types[i]);
+
+	            _ret_array[_cur_index] = oColor;
                 _cur_index++;
             }
         }

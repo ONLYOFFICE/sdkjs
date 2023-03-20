@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1373,7 +1373,7 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
                         else
                             RightMW = -Max_r;//X1 -= Max_r;
 
-                        if ( border_Single === BorderInfo_Right[0].Value && CurBorderInfo.Size <= BorderInfo_Right[0].Size )
+                        if ( BorderInfo_Right.length > 0 && border_Single === BorderInfo_Right[0].Value && CurBorderInfo.Size <= BorderInfo_Right[0].Size )
                             RightMW = -BorderInfo_Right[0].Size / 2;
                     }
 
@@ -1434,13 +1434,13 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
                             }
                         }
 
-                        if( BorderInfo_Left.length > 0 && border_Single === BorderInfo_Left[0].Value && BorderInfo_Left[0].Size / 2 > Max_l )
+                        if ( BorderInfo_Left.length > 0 && border_Single === BorderInfo_Left[0].Value && BorderInfo_Left[0].Size / 2 > Max_l )
                             Max_l = BorderInfo_Left[0].Size / 2;
 
                         //X0 -= Max_l;
                         LeftMW = -Max_l;
 
-                        if ( border_Single === BorderInfo_Left[0].Value && CurBorderInfo.Size <= BorderInfo_Left[0].Size )
+                        if ( BorderInfo_Left.length > 0 && border_Single === BorderInfo_Left[0].Value && CurBorderInfo.Size <= BorderInfo_Left[0].Size )
                             LeftMW = BorderInfo_Left[0].Size / 2;
 
                         LastBorderTop.L = Max_l;

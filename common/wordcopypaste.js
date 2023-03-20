@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -91,13 +91,15 @@ function GetObjectsForImageDownload(aBuilderImages, bSameDoc)
     var oMapImages = {}, aBuilderImagesByUrl = [], aUrls =[];
     for(var i = 0; i < aBuilderImages.length; ++i)
     {
-        if(!g_oDocumentUrls.getImageLocal(aBuilderImages[i].Url))
+		let oBuilderImg = aBuilderImages[i];
+		let sUrl = oBuilderImg.Url;
+        if(!g_oDocumentUrls.getImageLocal(sUrl) && !g_oDocumentUrls.isThemeUrl(sUrl))
         {
-            if(!Array.isArray(oMapImages[aBuilderImages[i].Url]))
+            if(!Array.isArray(oMapImages[sUrl]))
             {
-                oMapImages[aBuilderImages[i].Url] = [];
+                oMapImages[sUrl] = [];
             }
-            oMapImages[aBuilderImages[i].Url].push(aBuilderImages[i]);
+            oMapImages[sUrl].push(oBuilderImg);
         }
     }
     for(var key in oMapImages)
@@ -2092,6 +2094,27 @@ function CopyPasteCorrectString(str)
     return res;
 }
 
+function GetContentFromHtml(api, html, callback) {
+	if (!html) {
+		callback && callback(null);
+		return;
+	}
+
+	//need document -> write, because some props not compile if use innerHTML(sub/sup tags give only "baseline")
+	//TODO use iframe from clipboard_base
+	AscCommon.g_clipboardBase.CommonIframe_PasteStart(html, null, function (oHtmlElem) {
+		if (oHtmlElem) {
+			var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, function (selectedContent) {
+				if (selectedContent) {
+					callback(selectedContent);
+				}
+			});
+			oPasteProcessor.doNotInsertInDoc = true;
+			oHtmlElem && oPasteProcessor.Start(oHtmlElem);
+		}
+	});
+}
+
 function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPasteProps, callback)
 {
     var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback);
@@ -2295,7 +2318,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
         "tab-stops": 1, "list-style-type": 1, "mso-special-character": 1, "mso-column-break-before": 1, "mso-break-type": 1, "mso-padding-alt": 1, "mso-border-insidev": 1,
         "mso-border-insideh": 1, "mso-row-margin-left": 1, "mso-row-margin-right": 1, "mso-cellspacing": 1, "mso-border-alt": 1,
         "mso-border-left-alt": 1, "mso-border-top-alt": 1, "mso-border-right-alt": 1, "mso-border-bottom-alt": 1, "mso-border-between": 1, "mso-list": 1,
-		"mso-comment-reference": 1, "mso-comment-date": 1, "mso-comment-continuation": 1};
+		"mso-comment-reference": 1, "mso-comment-date": 1, "mso-comment-continuation": 1, "mso-data-placement": 1};
     this.oBorderCache = {};
 
 	this.msoListMap = [];
@@ -2310,18 +2333,20 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 	this.msoComments = [];
 
 	this.startMsoAnnotation = undefined;
-	this.needAddCommentStart;
-	this.needAddCommentEnd;
+	this.needAddCommentStart = null;
+	this.needAddCommentEnd = null;
 
-	this.aMsoHeadStylesStr;
+	this.aMsoHeadStylesStr = null;
 	this.oMsoHeadStylesListMap = [];
 	this.oMsoStylesParser = null;
 
-	this.pasteTextIntoList;
+	this.pasteTextIntoList = null;
 
-	this.rtfImages;
+	this.rtfImages = null;
 
-	this.aNeedRecalcImgSize;
+	this.aNeedRecalcImgSize = null;
+
+	this.doNotInsertInDoc = null;
 }
 PasteProcessor.prototype =
 {
@@ -2686,6 +2711,11 @@ PasteProcessor.prototype =
 			//TODO проверку на excel пеерсмотреть!!!!
 			oSelectedContent.EndCollect(this.oLogicDocument);
 			oSelectedContent.SetCopyComments(false);
+
+			if (this.doNotInsertInDoc) {
+				this.pasteCallback && this.pasteCallback(oSelectedContent);
+				return;
+			}
 
 			if(!this.pasteInExcel && !oSelectedContent.CanInsert(NearPos))
 			{
@@ -3761,7 +3791,7 @@ PasteProcessor.prototype =
                     var aContent = oThis._convertExcelBinary(aContentExcel, aContentExcel ? aContentExcel.pDrawings : null);
                     revertLocale();
                     oThis.aContent = aContent.content;
-	                addThemeImagesToMap(oImageMap, oObjectsForDownload, aContentExcel.arrImages);
+	                addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, aContentExcel.arrImages);
                     oThis.api.pre_Paste(aContent.fonts, oImageMap, fPrepasteCallback);
                 }, true);
             } else {
@@ -3911,7 +3941,7 @@ PasteProcessor.prototype =
 					var oImageMap = {};
 					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 
-					addThemeImagesToMap(oImageMap, oObjectsForDownload, arrImages);
+					addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arrImages);
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 				}, true);
 			} else {
@@ -4248,7 +4278,7 @@ PasteProcessor.prototype =
 						AscFormat.checkBlipFillRasterImages(presentationSelectedContent.Drawings[i].Drawing);
 					}
 				}
-				addThemeImagesToMap(oImageMap, oObjectsForDownload, aContent.aPastedImages);
+				addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, aContent.aPastedImages);
 				oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 			}, true);
 		} else {
@@ -4500,7 +4530,7 @@ PasteProcessor.prototype =
 				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
 					let oImageMap = {};
 					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-					addThemeImagesToMap(oImageMap, oObjectsForDownload, arr_Images);
+					addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arr_Images);
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 				}, true);
 			} else {
@@ -7485,12 +7515,20 @@ PasteProcessor.prototype =
 				if (null == underline || null == Strikeout) {
 					var text_decoration = this._getStyle(node, tempComputedStyle, "text-decoration");
 					if (text_decoration) {
-						if (-1 !== text_decoration.indexOf("underline"))
-							underline = true;
-						else if (-1 !== text_decoration.indexOf("none") && node.parentElement && node.parentElement.nodeName.toLowerCase() === "a")
-							underline = false;
+						if (null == underline) {
+							if (-1 !== text_decoration.indexOf("underline")) {
+								underline = true;
+							} else if (-1 !== text_decoration.indexOf("none") && node.parentElement && node.parentElement.nodeName.toLowerCase() === "a") {
+								underline = false;
+							} else if (node.style["text-decoration"] === "none") {
+								//for next situation: if element style has text-decoration = "none"
+								//computed style gives same settings for all elements(-1!=text_decoration.indexOf("none"))
+								//we ignore computed style "none" -> use parent underline style
+								underline = false;
+							}
+						}
 
-						if (-1 !== text_decoration.indexOf("line-through"))
+						if (null == Strikeout && -1 !== text_decoration.indexOf("line-through"))
 							Strikeout = true;
 					}
 				}
@@ -8722,6 +8760,7 @@ PasteProcessor.prototype =
 			oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
 			oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
 			oPasteProcessor.msoListMap = this.msoListMap;
+			oPasteProcessor.pasteInExcel = this.pasteInExcel;
 			oPasteProcessor._Execute(node, pPr, true, true, false);
 			oPasteProcessor._PrepareContent();
 			oPasteProcessor._AddNextPrevToContent(levelSdt.Content);
@@ -9149,6 +9188,7 @@ PasteProcessor.prototype =
 			oPasteProcessor.msoListMap = this.msoListMap;
 			oPasteProcessor.dMaxWidth = this._CalcMaxWidthByCell(cell);
 			oPasteProcessor.oMsoStylesParser = this.oMsoStylesParser;
+			oPasteProcessor.pasteInExcel = this.pasteInExcel;
 			if (true === bUseScaleKoef) {
 				oPasteProcessor.bUseScaleKoef = bUseScaleKoef;
 				oPasteProcessor.dScaleKoef = dScaleKoef;
@@ -9272,17 +9312,62 @@ PasteProcessor.prototype =
 				value = value.replace(/(\r|\t|\n)/g, ' ');
 			}
 
+
+			var checkPreviousNotSpaceText = function (_node) {
+				if (!_node || oThis._IsBlockElem(_node.nodeName.toLowerCase())) {
+					return false;
+				}
+
+				let _previousSibling = _node.previousSibling;
+				while (_previousSibling) {
+					if (oThis._IsBlockElem(_previousSibling.nodeName.toLowerCase())) {
+						return false;
+					}
+					let siblingText = _previousSibling.textContent;
+					if (siblingText && siblingText.length) {
+						return siblingText.charCodeAt(siblingText.length - 1) !== 32;
+					}
+					_previousSibling = _previousSibling.previousSibling;
+				}
+				return _node.parentNode && checkPreviousNotSpaceText(_node.parentNode);
+			};
+
+			var _removeSpaces = function (_text, saveBefore) {
+				let resText = "";
+				for (let i = 0; i < _text.length; i++) {
+					let curCode = _text.charCodeAt(i);
+					let nextCode = _text.charCodeAt(i + 1);
+					if (curCode === 32 && nextCode !== 32) {
+						if (saveBefore || (!saveBefore && resText !== "")) {
+							resText += _text[i];
+						}
+					} else if (curCode !== 32) {
+						resText += _text[i];
+					}
+				}
+				return resText;
+			};
+
 			//потому что(например иногда chrome при вставке разбивает строки с помощью \n)
 			if (!whiteSpacing) {
 				value = value.replace(/^(\r|\t|\n)+|(\r|\t|\n)+$/g, '');
 				value = value.replace(/(\r|\t|\n)/g, ' ');
 
-				//TODO проверить в каких случаях пробелы учитываются, в каких игнорируются
-				//текстовый элемент с одними пробелами игнорируется, за исключением неразрывных пробелов
-				if (value.charCodeAt(0) !== 160) {
-					var checkSpaces = value.replace(/(\s)/g, '');
-					if (checkSpaces === "") {
-						value = "";
+				//spaces before text - depends on text before. if text end on space -> spaces not save
+				//else - convert into 1 space
+				//space after text - convert into 1 space
+				//all &nbsp; - must save
+
+				//TODO must use in all cases. while in hotfix commit only special case
+				//in develop: use this code for all cases
+				var checkSpaces = value.replace(/(\s)/g, '');
+				if (checkSpaces === "") {
+					if (!checkPreviousNotSpaceText(node)) {
+						//remove all spaces, exception non-breaking spaces + space after
+						value = _removeSpaces(value);
+					} else {
+						//replace duplicated spaces before + after, exception non-breaking spaces
+						value = _removeSpaces(value, true);
 					}
 				}
 			}
@@ -9692,7 +9777,13 @@ PasteProcessor.prototype =
 					} else {
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph);
 						oThis._Commit_Br(0, node, pPr);
-						oThis._AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
+						let breakLine = new AscWord.CRunBreak(AscWord.break_Line);
+						if (breakLine.Flags && oThis.pasteInExcel) {
+							//save mso flag for unite cell text with line breaks
+							//use only in excel
+							breakLine.Flags.sameCell = pPr["mso-data-placement"] === "same-cell";
+						}
+						oThis._AddToParagraph(breakLine);
 					} /*else {
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph, false);
 						oThis.nBrCount++;
@@ -10696,25 +10787,27 @@ function CreateImageFromBinary(bin, nW, nH)
 
 function Check_LoadingDataBeforePrepaste(_api, _fonts, _images, _callback)
 {
-    var aPrepeareFonts = [];
+    let aPrepeareFonts = [];
     for (var font_family in _fonts)
     {
         aPrepeareFonts.push(new CFont(font_family, 0, "", 0));
     }
     AscFonts.FontPickerByCharacter.extendFonts(aPrepeareFonts);
 
-    var aImagesToDownload = [];
-    for (var image in _images)
+    let aImagesToDownload = [];
+	let aAllImages = [];
+    for (let image in _images)
     {
         var src = _images[image];
         if (undefined !== window["Native"] && undefined !== window["Native"]["GetImageUrl"])
         {
             _images[image] = window["Native"]["GetImageUrl"](_images[image]);
         }
-        else if (!g_oDocumentUrls.getImageUrl(src) && !g_oDocumentUrls.getImageLocal(src))
+        else if (!g_oDocumentUrls.getImageUrl(src) && !g_oDocumentUrls.getImageLocal(src) && !g_oDocumentUrls.isThemeUrl(src))
         {
 			aImagesToDownload.push(src);
         }
+	    aAllImages.push({Url: _images[image]});
     }
     if (aImagesToDownload.length > 0)
     {
@@ -10735,6 +10828,7 @@ function Check_LoadingDataBeforePrepaste(_api, _fonts, _images, _callback)
                     image_map[i] = sFrom;
                 }
             }
+	        addThemeImagesToMap(image_map, aImagesToDownload, aAllImages);
             _api.pre_Paste(aPrepeareFonts, image_map, _callback);
         }, true);
     }
@@ -11333,18 +11427,14 @@ function checkOnlyOneImage(node)
 	return res;
 }
 
-function addThemeImagesToMap(oImageMap, oObjectsForDownload, aImages) {
-	if(!oObjectsForDownload) {
-		return;
-	}
-	let aDnldUrls = oObjectsForDownload.aUrls;
-	if(!Array.isArray(aDnldUrls)) {
+function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
+	if(!Array.isArray(aDwnldUrls)) {
 		return;
 	}
 	if(!Array.isArray(aImages)) {
 		return;
 	}
-	if(aDnldUrls.length === aImages.length) {
+	if(aDwnldUrls.length === aImages.length) {
 		return;
 	}
 	let oAddMap = {};
@@ -11356,13 +11446,13 @@ function addThemeImagesToMap(oImageMap, oObjectsForDownload, aImages) {
 		}
 		let sUrl = oImgObject.Url;
 		let nDnldImg;
-		for(nDnldImg = 0; nDnldImg < aDnldUrls.length; ++nDnldImg) {
-			let sDnldUrl = aDnldUrls[nDnldImg];
+		for(nDnldImg = 0; nDnldImg < aDwnldUrls.length; ++nDnldImg) {
+			let sDnldUrl = aDwnldUrls[nDnldImg];
 			if(sUrl === sDnldUrl) {
 				break;
 			}
 		}
-		if(nDnldImg === aDnldUrls.length) {
+		if(nDnldImg === aDwnldUrls.length) {
 			oAddMap[nAddIdx++] = sUrl;
 		}
 	}
@@ -11390,6 +11480,8 @@ function addThemeImagesToMap(oImageMap, oObjectsForDownload, aImages) {
   window["AscCommon"].Editor_Paste_Exec = Editor_Paste_Exec;
   window["AscCommon"].sendImgUrls = sendImgUrls;
   window["AscCommon"].PasteProcessor = PasteProcessor;
+  window["AscCommon"].GetContentFromHtml = GetContentFromHtml;
+
 
   window["AscCommon"].addTextIntoRun = addTextIntoRun;
   window["AscCommon"].searchBinaryClass = searchBinaryClass;

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -385,6 +385,10 @@
 				}
 			}
 			return res;
+		},
+
+		isThemeUrl: function(sUrl) {
+			return sUrl && (0 === sUrl.indexOf('theme'));
 		}
 	};
 	var g_oDocumentUrls = new DocumentUrls();
@@ -13825,7 +13829,7 @@
 			return "";
 		}
 		//https://gist.github.com/oryanmoshe/6b3ecd895c8a5eb9ae4ec4554f687737#file-window-performance-memory-1-js
-		return JSON.stringify(Object.getOwnPropertyNames(window.performance.memory.__proto__).reduce((acc,key) => {
+		return JSON.stringify(Object.getOwnPropertyNames(window.performance.memory.__proto__).reduce(function(acc,key) {
 				if (key !== 'constructor')
 					acc[key] = window.performance.memory[key];
 				return acc;
@@ -13935,6 +13939,16 @@
 		return pages;
 	}
 
+
+	function CPluginCtxMenuInfo(sType, sOlePluginGuid) {
+		if(!sType) {
+			this["type"] = Asc.c_oPluginContextMenuTypes.None;
+		}
+		else {
+			this["type"] = sType;
+			this["guid"] = sOlePluginGuid;
+		}
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -14151,6 +14165,7 @@
 	}
 	window["AscCommon"].CFormatPainter = CFormatPainter;
 	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
+	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
 
 })(window);
 

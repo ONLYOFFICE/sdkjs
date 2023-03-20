@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -448,6 +448,9 @@ function (window, undefined) {
 		this.ProtectedRangeData = 160;
 		this.ProtectedRangeDataInner = 161;
 
+		this.UserProtectedRange = 165;
+		this.UserProtectedRangeChange = 166;
+
 		this.externalReference = 170;
 
 		this.Create = function (nType) {
@@ -605,6 +608,10 @@ function (window, undefined) {
 					return new Asc.CProtectedRange();
 				case this.externalReference:
 					return new AscCommonExcel.ExternalReference();
+				case this.UserProtectedRange:
+					return new Asc.CUserProtectedRange();
+				case this.UserProtectedRangeChange:
+					return new AscCommonExcel.UndoRedoData_UserProtectedRange();
 			}
 			return null;
 		};
@@ -2251,6 +2258,46 @@ function (window, undefined) {
 		sheetView: 0, to: 2
 	};
 
+	function UndoRedoData_UserProtectedRange(id, from, to) {
+		this.id = id;
+		this.from = from;
+		this.to = to;
+	}
+
+	UndoRedoData_UserProtectedRange.prototype.Properties = {
+		id: 0, from: 1, to: 2
+	};
+	UndoRedoData_UserProtectedRange.prototype.getType = function () {
+		return UndoRedoDataTypes.UserProtectedRangeChange;
+	};
+	UndoRedoData_UserProtectedRange.prototype.getProperties = function () {
+		return this.Properties;
+	};
+	UndoRedoData_UserProtectedRange.prototype.getProperty = function (nType) {
+		switch (nType) {
+			case this.Properties.id:
+				return this.id;
+			case this.Properties.from:
+				return this.from;
+			case this.Properties.to:
+				return this.to;
+		}
+		return null;
+	};
+	UndoRedoData_UserProtectedRange.prototype.setProperty = function (nType, value) {
+		switch (nType) {
+			case this.Properties.id:
+				this.id = value;
+				break;
+			case this.Properties.from:
+				this.from = value;
+				break;
+			case this.Properties.to:
+				this.to = value;
+				break;
+		}
+	};
+
 	//для применения изменений
 	var UndoRedoClassTypes = new function () {
 		this.aTypes = [];
@@ -3305,6 +3352,16 @@ function (window, undefined) {
 				}
 				wb.handlers.trigger("changeCellWatches");
 			}
+		} else if (AscCH.historyitem_Worksheet_ChangeUserProtectedRange === Type) {
+			//TODO lock ?
+			//var _r1 = updateData.r1 > 0 ? collaborativeEditing.getLockOtherRow2(nSheetId, updateData.r1 - 1) : null;
+			//var _c1 = updateData.c1 > 0 ? collaborativeEditing.getLockOtherColumn2(nSheetId, updateData.c1 - 1) : null;
+
+			if (bUndo) {
+				ws.editUserProtectedRanges(Data.to, Data.from);
+			} else {
+				ws.editUserProtectedRanges(Data.from, Data.to);
+			}
 		}
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {
@@ -3697,6 +3754,9 @@ function (window, undefined) {
 				break;
 			case AscCH.historyitem_Layout_Scale:
 				pageSetup.asc_setScale(value);
+				break;
+			case AscCH.historyitem_Layout_FirstPageNumber:
+				pageSetup.asc_setFirstPageNumber(value);
 				break;
 		}
 
@@ -4424,6 +4484,9 @@ function (window, undefined) {
 					};
 
 					cfRule.ranges = toAscRanges(value);
+					if (oModel) {
+						oModel.cleanConditionalFormattingRangeIterator();
+					}
 					break;
 				}
 				case AscCH.historyitem_CFRule_SetRuleElements: {
@@ -4765,6 +4828,70 @@ function (window, undefined) {
 
 	};
 
+	function UndoRedoUserProtectedRange(wb) {
+		this.wb = wb;
+		this.nType = UndoRedoClassTypes.Add(function () {
+			return AscCommonExcel.g_oUndoRedoUserProtectedRange;
+		});
+	}
+
+	UndoRedoUserProtectedRange.prototype.getClassType = function () {
+		return this.nType;
+	};
+	UndoRedoUserProtectedRange.prototype.Undo = function (Type, Data, nSheetId) {
+		this.UndoRedo(Type, Data, nSheetId, true);
+	};
+	UndoRedoUserProtectedRange.prototype.Redo = function (Type, Data, nSheetId) {
+		this.UndoRedo(Type, Data, nSheetId, false);
+	};
+	UndoRedoUserProtectedRange.prototype.UndoRedo = function (Type, Data, nSheetId, bUndo) {
+		var wb = this.wb;
+		var ws = this.wb.getWorksheetById(nSheetId);
+		if (!ws) {
+			return;
+		}
+		var userProtectedRange = ws.getUserProtectedRangeById(Data.id);
+		if (!userProtectedRange) {
+			return;
+		}
+
+		var value = bUndo ? Data.from : Data.to;
+		switch (Type) {
+			case AscCH.historyitem_UserProtectedRange_Ref:
+				var from = null, to = null, temp;
+				var collaborativeEditing = this.wb.oApi.collaborativeEditing;
+				if (null != Data.from && null != Data.from.r1 && null != Data.from.c1 && null != Data.from.r2 &&
+					null != Data.from.c2) {
+					from = new Asc.Range(Data.from.c1, Data.from.r1, Data.from.c2, Data.from.r2);
+					if (wb.bCollaborativeChanges) {
+						from.r1 = collaborativeEditing.getLockOtherRow2(nSheetId, from.r1);
+						from.c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, from.c1);
+						from.r2 = collaborativeEditing.getLockOtherRow2(nSheetId, from.r2);
+						from.c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, from.c2);
+					}
+				}
+				to = null;
+				if (null != Data.to && null != Data.to.r1 && null != Data.to.c1 && null != Data.to.r2 &&
+					null != Data.to.c2) {
+					to = new Asc.Range(Data.to.c1, Data.to.r1, Data.to.c2, Data.to.r2);
+					if (wb.bCollaborativeChanges) {
+						to.r1 = collaborativeEditing.getLockOtherRow2(nSheetId, to.r1);
+						to.c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, to.c1);
+						to.r2 = collaborativeEditing.getLockOtherRow2(nSheetId, to.r2);
+						to.c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, to.c2);
+					}
+				}
+				if (bUndo) {
+					temp = from;
+					from = to;
+					to = temp;
+				}
+
+				userProtectedRange.obj.setLocation(to);
+				break;
+		}
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].UndoRedoItemSerializable = UndoRedoItemSerializable;
@@ -4798,6 +4925,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].UndoRedoData_DataValidation = UndoRedoData_DataValidation;
 	window['AscCommonExcel'].UndoRedoData_CF = UndoRedoData_CF;
 	window['AscCommonExcel'].UndoRedoData_ProtectedRange = UndoRedoData_ProtectedRange;
+	window['AscCommonExcel'].UndoRedoData_UserProtectedRange = UndoRedoData_UserProtectedRange;
 	window['AscCommonExcel'].UndoRedoWorkbook = UndoRedoWorkbook;
 	window['AscCommonExcel'].UndoRedoCell = UndoRedoCell;
 	window['AscCommonExcel'].UndoRedoWoorksheet = UndoRedoWoorksheet;
@@ -4819,6 +4947,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].UndoRedoProtectedRange = UndoRedoProtectedRange;
 	window['AscCommonExcel'].UndoRedoProtectedSheet = UndoRedoProtectedSheet;
 	window['AscCommonExcel'].UndoRedoProtectedWorkbook = UndoRedoProtectedWorkbook;
+	window['AscCommonExcel'].UndoRedoUserProtectedRange = UndoRedoUserProtectedRange;
 
 	window['AscCommonExcel'].g_oUndoRedoWorkbook = null;
 	window['AscCommonExcel'].g_oUndoRedoCell = null;
