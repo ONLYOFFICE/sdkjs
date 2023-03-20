@@ -4317,16 +4317,16 @@
 					var nAx;
 					if (aAx.length === aAxSettings.length) {
 						for (nAx = 0; nAx < aAx.length; ++nAx) {
-							aAx[nAx].setMenuProps(aAxSettings[nAx]);
 							oChartSpace.checkElementChartStyle(aAx[nAx]);
+							aAx[nAx].setMenuProps(aAxSettings[nAx]);
 						}
 					}
 					aAx = oOrderedAxes.getVerticalAxes();
 					aAxSettings = oProps.getVertAxesProps();
 					if (aAx.length === aAxSettings.length) {
 						for (nAx = 0; nAx < aAx.length; ++nAx) {
-							aAx[nAx].setMenuProps(aAxSettings[nAx]);
 							oChartSpace.checkElementChartStyle(aAx[nAx]);
+							aAx[nAx].setMenuProps(aAxSettings[nAx]);
 						}
 					}
 
