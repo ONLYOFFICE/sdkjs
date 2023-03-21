@@ -7476,6 +7476,22 @@ $(function () {
 
 	QUnit.test("Test: \"WORKDAY.INTL\"", function (assert) {
 
+		ws.getRange2("D10").setValue("44980");
+		ws.getRange2("D11").setValue("44981");
+		ws.getRange2("D12").setValue("1");
+
+		oParser = new parserFormula("WORKDAY.INTL(DATE(2023,2,22),1,1,D10:D11)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 44984);
+
+		oParser = new parserFormula("WORKDAY.INTL(DATE(2023,2,22),D12,1,D10:D11)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 44984);
+
+		oParser = new parserFormula("WORKDAY.INTL(DATE(2023,2,22),2,1,D10:D11)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 44985);
+
 		oParser = new parserFormula("WORKDAY.INTL(DATE(2012,1,1),30,0)", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
