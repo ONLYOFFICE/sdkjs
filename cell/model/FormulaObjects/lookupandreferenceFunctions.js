@@ -1805,7 +1805,13 @@ function (window, undefined) {
 	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.bool];
 	cSORT.prototype.Calculate = function (arg) {
 		function sortWithIndices(arr) {
-			const indexedArray = arr.map(function (item, index) { return { item, index } });
+			const isRowMode = arr.length === 1 ? true : false;
+			const indexedArray = isRowMode
+				? arr[0].map(function (item, index) { return { item, index } })
+				: arr.map(function (item, index) {
+					item = item[0];
+					return { item, index };
+				});
 
 			indexedArray.sort(function (a,b) {
 				const valueA = a.item.value;
@@ -1820,19 +1826,19 @@ function (window, undefined) {
 				}
 			});
 			
-			return indexedArray.map(function ({ index }) { return index });
+			return indexedArray;
 		}
 
 		function sortArray (array, isByCol) {
 			let resultArr = new cArray(),
 				tempArrIndicies = [],
-				targetElem = isByCol ? array._getRow(sort_index - 1).flat() : array._getCol(sort_index - 1).flat();
+				targetElem = isByCol ? array._getRow(sort_index - 1) : array._getCol(sort_index - 1);
 
 			// sorting an array with indices
 			tempArrIndicies = sortWithIndices(targetElem);
 
 			for (let i = 0; i < tempArrIndicies.length; i++) {
-				let target = isByCol ? array._getCol(tempArrIndicies[i]) : array._getRow(tempArrIndicies[i]);
+				let target = isByCol ? array._getCol(tempArrIndicies[i].index) : array._getRow(tempArrIndicies[i].index);
 				isByCol ? resultArr.pushCol(target, 0) : resultArr.pushRow(target, 0);
 			}
 
