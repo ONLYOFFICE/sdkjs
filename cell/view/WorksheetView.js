@@ -529,14 +529,13 @@
 		this.handlers.trigger("initialized");
 	};
 
+	WorksheetView.prototype.getOleSize = function () {
+		return this.workbook && this.workbook.model.getOleSize();
+	};
 
-  WorksheetView.prototype.getOleSize = function () {
-    return this.workbook && this.workbook.model.getOleSize();
-  };
-
-  WorksheetView.prototype.setOleSize = function (oPr) {
-    return this.workbook && this.workbook.model.setOleSize(oPr);
-  };
+	WorksheetView.prototype.setOleSize = function (oPr) {
+		return this.workbook && this.workbook.model.setOleSize(oPr);
+	};
 
 	WorksheetView.prototype._initWorksheetDefaultWidth = function () {
 		// Теперь рассчитываем число px
@@ -578,34 +577,36 @@
 		this.model.initColumns();
 	};
 
-  WorksheetView.prototype.createImageFromMaxRange = function () {
-    var range = this.getOleSize().getLast();
-    var drawingContext = this.printForOleObject(range);
-    return drawingContext.canvas.toDataURL();
-  }
+	WorksheetView.prototype.createImageFromMaxRange = function () {
+		var range = this.getOleSize().getLast();
+		var drawingContext = this.printForOleObject(range);
+		return drawingContext.canvas.toDataURL();
+	};
 
-  WorksheetView.prototype.createImageForChart = function(idx) {
-    var charts = this.getCharts();
-    if (idx) {
-      charts = charts.filter(function (drawing) {
-        return drawing.graphicObject.Id === idx;
-      });
-    }
-    var oChart = charts[0];
-    var image = oChart.getBase64Img();
-    return image;
-  }
+	WorksheetView.prototype.createImageForChart = function (idx) {
+		var charts = this.getCharts();
+		if (idx) {
+			charts = charts.filter(function (drawing) {
+				return drawing.graphicObject.Id === idx;
+			});
+		}
+		var oChart = charts[0];
+		var image = oChart.getBase64Img();
+		return image;
+	};
 
-  WorksheetView.prototype.getCharts = function () {
-    var charts = [];
-    function appendChart(obj) {
-      if (obj.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
-        charts.push(obj);
-      }
-    }
-    this.model.handleDrawings(appendChart);
-    return charts;
-  }
+	WorksheetView.prototype.getCharts = function () {
+		var charts = [];
+
+		function appendChart(obj) {
+			if (obj.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
+				charts.push(obj);
+			}
+		}
+
+		this.model.handleDrawings(appendChart);
+		return charts;
+	};
 
 	WorksheetView.prototype._initWorksheetDefaultWidthForPrint = function () {
 		var defaultPpi = 96;
@@ -2648,16 +2649,16 @@
       return this.workbook.printForOleObject(this, oRange);
     };
 
-  WorksheetView.prototype.getRangePosition = function (oRange) {
-    var result = {};
+	WorksheetView.prototype.getRangePosition = function (oRange) {
+		var result = {};
 
-    result.left = this._getColLeft(oRange.c1);
-    result.top = this._getRowTop(oRange.r1);
-    result.width = this._getColLeft(oRange.c2) + this.getColumnWidth(oRange.c2) - result.left;
-    result.height = this._getRowTop(oRange.r2) + this.getRowHeight(oRange.r2) - result.top;
+		result.left = this._getColLeft(oRange.c1);
+		result.top = this._getRowTop(oRange.r1);
+		result.width = this._getColLeft(oRange.c2) + this.getColumnWidth(oRange.c2) - result.left;
+		result.height = this._getRowTop(oRange.r2) + this.getRowHeight(oRange.r2) - result.top;
 
-    return result;
-  };
+		return result;
+	};
 
 	WorksheetView.prototype.drawForPrint = function (drawingCtx, printPagesData, indexPrintPage, pages) {
 		var t = this;
@@ -2804,7 +2805,8 @@
 				//oDocRenderer.transform(oDocRenderer.m_oFullTransform.sx, oDocRenderer.m_oFullTransform.shy, oDocRenderer.m_oFullTransform.shx, oDocRenderer.m_oFullTransform.sy, 100,200)
 
 				var bGraphics = !!(oDocRenderer instanceof AscCommon.CGraphics);
-				if(bGraphics) {
+				var clipL, clipT, clipR, clipB;
+				if (bGraphics) {
 					if (oDocRenderer.m_oCoordTransform) {
 						oDocRenderer.m_oCoordTransform.tx = (t.getCellLeft(0) - offsetX);
 						oDocRenderer.m_oCoordTransform.ty =  (t.getCellTop(0) - offsetY);
@@ -2817,10 +2819,10 @@
 					clipTopShape = (t.getCellTop(range.r1) - offsetY) >> 0;
 					var clipRightShape = (t.getCellLeft(range.c2 + 1) + 0.5 - offsetX) >> 0;
 					var clipBottomShape = (t.getCellTop(range.r2 + 1) + 0.5 - offsetY) >> 0;
-					var clipL = oInvertBaseTransform.TransformPointX(clipLeftShape, clipTopShape);
-					var clipT = oInvertBaseTransform.TransformPointY(clipLeftShape, clipTopShape);
-					var clipR = oInvertBaseTransform.TransformPointX(clipRightShape, clipBottomShape);
-					var clipB = oInvertBaseTransform.TransformPointY(clipRightShape, clipBottomShape);
+					clipL = oInvertBaseTransform.TransformPointX(clipLeftShape, clipTopShape);
+					clipT = oInvertBaseTransform.TransformPointY(clipLeftShape, clipTopShape);
+					clipR = oInvertBaseTransform.TransformPointX(clipRightShape, clipBottomShape);
+					clipB = oInvertBaseTransform.TransformPointY(clipRightShape, clipBottomShape);
 					oDocRenderer.SaveGrState();
 					oDocRenderer.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
 					t.objectRender.print(drawingPrintOptions);
@@ -2832,10 +2834,10 @@
 					}
 				}
 				else {
-					var clipL = clipLeftShape >> 0;
-					var clipT = clipTopShape >> 0;
-					var clipR = (clipLeftShape + clipWidthShape + 0.5) >> 0;
-					var clipB = (clipTopShape + clipHeightShape + 0.5) >> 0;
+					clipL = clipLeftShape >> 0;
+					clipT = clipTopShape >> 0;
+					clipR = (clipLeftShape + clipWidthShape + 0.5) >> 0;
+					clipB = (clipTopShape + clipHeightShape + 0.5) >> 0;
 					drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
 					if (oDocRenderer.SetBaseTransform) {
 						oDocRenderer.SetBaseTransform(oBaseTransform);
@@ -6354,24 +6356,24 @@
             });
         }
 
-			if (this.workbook.Api.isShowVisibleAreaOleEditor || this.workbook.Api.isEditVisibleAreaOleEditor) {
+		if (this.workbook.Api.isShowVisibleAreaOleEditor || this.workbook.Api.isEditVisibleAreaOleEditor) {
 
-				var oleRange = this.getOleSize().getLast();
-				arnIntersection = oleRange.intersectionSimple(range);
-				// Координаты для видимой области оле-объекта
-				if (arnIntersection) {
-					_x1 = t._getColLeft(oleRange.c1) - offsetX - 3;
-					_x2 = oleRange.c2 > t.nColsCount ? width : t._getColLeft(oleRange.c2 + 1) - offsetX + 1 + 2;
-					_y1 = t._getRowTop(oleRange.r1) - offsetY - 3;
-					_y2 = oleRange.r2 > t.nRowsCount ? height : t._getRowTop(oleRange.r2 + 1) - offsetY + 1 + 2;
+			var oleRange = this.getOleSize().getLast();
+			arnIntersection = oleRange.intersectionSimple(range);
+			// Координаты для видимой области оле-объекта
+			if (arnIntersection) {
+				_x1 = t._getColLeft(oleRange.c1) - offsetX - 3;
+				_x2 = oleRange.c2 > t.nColsCount ? width : t._getColLeft(oleRange.c2 + 1) - offsetX + 1 + 2;
+				_y1 = t._getRowTop(oleRange.r1) - offsetY - 3;
+				_y2 = oleRange.r2 > t.nRowsCount ? height : t._getRowTop(oleRange.r2 + 1) - offsetY + 1 + 2;
 
-					// Выбираем наибольший range для очистки
-					x1 = Math.min(x1, _x1);
-					x2 = Math.max(x2, _x2);
-					y1 = Math.min(y1, _y1);
-					y2 = Math.max(y2, _y2);
-				}
+				// Выбираем наибольший range для очистки
+				x1 = Math.min(x1, _x1);
+				x2 = Math.max(x2, _x2);
+				y1 = Math.min(y1, _y1);
+				y2 = Math.max(y2, _y2);
 			}
+		}
 
         if (null !== this.activeMoveRange) {
 			arnIntersection = this.activeMoveRange.intersectionSimple(range);

@@ -5784,10 +5784,6 @@ var editor;
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
   	var ws = this.wb.getWorksheet();
-
-
-	  return this.asc_SetSheetViewType(window['Asc']['c_oAscESheetViewType'].pageBreakPreview);
-
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {
