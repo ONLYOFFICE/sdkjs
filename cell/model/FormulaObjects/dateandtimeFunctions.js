@@ -2186,39 +2186,27 @@
 		}
 
 		let calcDate = function () {
-			let dif = arg1.getValue(), count = 1, dif1 = dif > 0 ? 1 : dif < 0 ? -1 : 0, val, date = val0;
-			if (Math.abs(dif) === count) {
+			let dif = arg1.getValue(), count = 0, dif1 = dif > 0 ? 1 : dif < 0 ? -1 : 0, val, date = val0, isEndOfCycle = false;
+			while (Math.abs(dif) > count) {
 				date = new cDate(val0.getTime() + dif1 * c_msPerDay);
-				for (let i = 0; i < 7; i++) {
-					if (weekends[date.getUTCDay()] || _includeInHolidays(date, holidays)) {
-						dif >= 0 ? dif1++ : dif1--;
-						date = new cDate(val0.getTime() + dif1 * c_msPerDay);
-					} else {
-						break;
-					}
+				if (!_includeInHolidays(date, holidays) && !weekends[date.getUTCDay()]) {
+					count++;
 				}
-			} else {
-				while (Math.abs(dif) > count) {
+				//если последняя итерация
+				if (!(Math.abs(dif) > count)) {
+					//проверяем не оказалось ли следом выходных. если оказались - прибавляем
 					date = new cDate(val0.getTime() + dif1 * c_msPerDay);
-					if (!_includeInHolidays(date, holidays) && !weekends[date.getUTCDay()]) {
-						count++;
-					}
-					dif >= 0 ? dif1++ : dif1--;
-	
-					//если последняя итерация
-					if (!(Math.abs(dif) > count)) {
-						//проверяем не оказалось ли следом выходных. если оказались - прибавляем
-						date = new cDate(val0.getTime() + dif1 * c_msPerDay);
-						for (let i = 0; i < 7; i++) {
-							if (weekends[date.getUTCDay()]) {
-								dif >= 0 ? dif1++ : dif1--;
-								date = new cDate(val0.getTime() + (dif1) * c_msPerDay);
-							} else {
-								break;
-							}
+					for (let i = 0; i < 7; i++) {
+						if (weekends[date.getUTCDay()]) {
+							dif >= 0 ? dif1++ : dif1--;
+							date = new cDate(val0.getTime() + (dif1) * c_msPerDay);
+						} else {
+							isEndOfCycle = true;
+							break;
 						}
 					}
 				}
+				!isEndOfCycle ? (dif >= 0 ? dif1++ : dif1--) : null;
 			}
 			date = new cDate(val0.getTime() + dif1 * c_msPerDay);
 			val = date.getExcelDate();
