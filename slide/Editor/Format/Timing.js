@@ -409,7 +409,7 @@
                         }
                     }
                     if (bCanAdvance) {
-                        oPlayer.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_NEXT, null));
+                        oPlayer.addExternalEvent(new CExternalEvent(oPlayer.eventsProcessor, COND_EVNT_ON_NEXT, null));
                         return fTrigger();
                     }
                     return false;
@@ -2906,6 +2906,12 @@
             }
         }
     };
+	CTiming.prototype.resetNodesState = function() {
+		const oRoot = this.getTimingRootNode();
+		if (oRoot) {
+			oRoot.resetState();
+		}
+	};
 
     changesFactory[AscDFH.historyitem_CommonTimingListAdd] = CChangeContent;
     changesFactory[AscDFH.historyitem_CommonTimingListRemove] = CChangeContent;
@@ -11344,11 +11350,8 @@
         }
     };
     CAnimationPlayer.prototype.resetNodesState = function () {
-        for (var nTiming = 0; nTiming < this.timings.length; ++nTiming) {
-            var oRoot = this.timings[nTiming].getTimingRootNode();
-            if (oRoot) {
-                oRoot.resetState();
-            }
+        for (let nTiming = 0; nTiming < this.timings.length; ++nTiming) {
+            this.timings[nTiming].resetNodesState();
         }
     };
     CAnimationPlayer.prototype.scheduleNodesStart = function () {
