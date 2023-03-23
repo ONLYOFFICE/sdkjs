@@ -39,7 +39,7 @@
 		this.name = null;
 		this.users  = null;
 
-		this.userGroupsMap = null;
+		this.usersGroups = null;
 
 		//for warning
 		this.warningText = null;
@@ -65,7 +65,7 @@
 		res.ref = this.ref ? this.ref.clone() : null;
 		res.name = this.name;
 		res.users = this.users;
-		res.userGroupsMap = this.userGroupsMap;
+		res.usersGroups = this.usersGroups;
 
 		res.warningText = this.warningText;
 
@@ -105,20 +105,13 @@
 			w.WriteBool(false);
 		}
 
-		if (null != this.userGroupsMap) {
-			let count = 0, i;
-			for (i in this.userGroupsMap) {
-				if (this.userGroupsMap.hasOwnProperty(i)) {
-					count++;
-				}
-			}
+		if (null != this.usersGroups) {
+			let count = this.usersGroups.length;
 			if (count) {
 				w.WriteBool(true);
 				w.WriteLong(count);
-				for (i in this.userGroupsMap) {
-					if (this.userGroupsMap.hasOwnProperty(i)) {
-						w.WriteString2(i);
-					}
+				for (let i = 0; i < count; i++) {
+					this.usersGroups[i].Write_ToBinary2(w);
 				}
 			} else {
 				w.WriteBool(false);
@@ -169,10 +162,12 @@
 		if (r.GetBool()) {
 			let length = r.GetULong();
 			for (let i = 0; i < length; ++i) {
-				if (!this.userGroupsMap) {
-					this.userGroupsMap = {};
+				if (!this.usersGroups) {
+					this.usersGroups = [];
 				}
-				this.userGroupsMap[r.GetString2()] = 1;
+				let newUserInfo = new CUserProtectedRangeUserInfo();
+				newUserInfo.Read_FromBinary2(r);
+				this.usersGroups.push(newUserInfo);
 			}
 		}
 
@@ -234,18 +229,7 @@
 		return this.users;
 	};
 	CUserProtectedRange.prototype.asc_getUserGroups = function () {
-		let res = null;
-		if (this.userGroupsMap) {
-			for (let i in this.userGroupsMap) {
-				if (this.userGroupsMap.hasOwnProperty(i)) {
-					if (!res) {
-						res = [];
-					}
-					res.push(i);
-				}
-			}
-		}
-		return res;
+		return this.usersGroups;
 	};
 	CUserProtectedRange.prototype.asc_setRef = function (val) {
 		if (val) {
