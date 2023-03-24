@@ -5563,7 +5563,8 @@
 				"abstractNum": {
 				},
 				"num": {
-				}
+				},
+				"type": "numbering"
 			}
 		}
 
@@ -10498,7 +10499,7 @@
 	ReaderFromJSON.prototype.AbstractNumFromJSON = function(oParsedAbstrNum)
 	{
 		var oDocument = private_GetLogicDocument();
-		var oAbstractNum = new CAbstractNum();
+		var oAbstractNum = new AscCommonWord.CAbstractNum();
 		var oTempLvl;
 
 		for (var nLvl = 0; nLvl < oParsedAbstrNum["lvl"].length; nLvl++)
