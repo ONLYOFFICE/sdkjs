@@ -5691,7 +5691,7 @@
 				this.memory.WriteString2(oUserProtectedRange.name);*/
 
 				this.bs.WriteItem(c_oSerUserProtectedRange.Name, function () {
-                    oThis.memory.WriteString2(oUserProtectedRange.name);
+                    oThis.memory.WriteString3(oUserProtectedRange.name);
                 });
             }
             if (oUserProtectedRange.ref) {
@@ -5702,7 +5702,7 @@
 				this.memory.WriteString2(sqRef);*/
 
             	this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
-                    oThis.memory.WriteString2(sqRef);
+                    oThis.memory.WriteString3(sqRef);
                 });
             }
             if (oUserProtectedRange.warningText) {
@@ -5711,7 +5711,7 @@
 				this.memory.WriteString2(oUserProtectedRange.warningText);*/
 
                 this.bs.WriteItem(c_oSerUserProtectedRange.Text, function () {
-                    oThis.memory.WriteString2(oUserProtectedRange.warningText);
+                    oThis.memory.WriteString3(oUserProtectedRange.warningText);
                 });
             }
 
@@ -5719,16 +5719,18 @@
             let users = oUserProtectedRange.asc_getUsers();
             if (null != users) {
                 for (i = 0; i < users.length; i++) {
-                    this.bs.WriteItem(c_oSerUserProtectedRange.UserId, function () {
+                    this.bs.WriteItem(c_oSerUserProtectedRange.User, function () {
                         oThis.WriteUserProtectedRangeDesc(users[i]);
                     });
                 }
             }
 			let userGroups = oUserProtectedRange.asc_getUserGroups();
             if (null != userGroups) {
-                for (i = 0; i < userGroups.length; i++) {
-					oThis.WriteUserProtectedRangeDesc(userGroups[i])
-                }
+				for (i = 0; i < userGroups.length; i++) {
+					this.bs.WriteItem(c_oSerUserProtectedRange.UsersGroup, function () {
+						oThis.WriteUserProtectedRangeDesc(userGroups[i]);
+					});
+				}
             }
         };
     }
