@@ -180,7 +180,7 @@
 		}
 	};
 	CUserProtectedRange.prototype.intersection = function(range) {
-		return this.ref.intersection(range);
+		return this.ref && this.ref.intersection(range);
 	};
 	CUserProtectedRange.prototype.isUserCanEdit = function(userId) {
 		if (this.users) {

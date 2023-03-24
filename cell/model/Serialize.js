@@ -8475,7 +8475,7 @@
             if (c_oSerUserProtectedRange.UserProtectedRange === type) {
                 oUserProtectedRange = Asc.CUserProtectedRange ? new Asc.CUserProtectedRange() : null;
                 if (oUserProtectedRange) {
-                    res = this.bcr.Read2(length, function (t, l) {
+                    res = this.bcr.Read1(length, function (t, l) {
                         return oThis.ReadUserProtectedRange(t, l, oUserProtectedRange);
                     });
                     aUserProtectedRanges.push(oUserProtectedRange);
@@ -8504,14 +8504,14 @@
             var res = c_oSerConstants.ReadOk;
             var oThis = this;
             if (c_oSerUserProtectedRange.Name === type) {
-                oUserProtectedRange.name = this.stream.GetString2LE(length);
+                oUserProtectedRange.name = this.stream.GetString2(length);
             } else if (c_oSerUserProtectedRange.Sqref === type) {
-                var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2LE(length));
+                var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2(length));
                 if (range) {
                     oUserProtectedRange.ref = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
                 }
             } else if (c_oSerUserProtectedRange.Text === type) {
-                oUserProtectedRange.warningText = this.stream.GetString2LE(length);
+                oUserProtectedRange.warningText = this.stream.GetString2(length);
             } else if (c_oSerUserProtectedRange.User === type)
 			{
 
