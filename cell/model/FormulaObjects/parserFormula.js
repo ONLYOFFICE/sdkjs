@@ -8568,6 +8568,9 @@ function parserFormula( formula, parent, _ws ) {
 						case cElementType.cellsRange3D:
 							_3DRefTmp = parserHelp.is3DRef.call(parserHelp, formula2, refPos.start);
 							if (_3DRefTmp[0]) {
+								if ((_3DRefTmp[3] || refPos.oper.externalLink) && _3DRefTmp[3] !== refPos.oper.externalLink) {
+									return false;
+								}
 								if (cElementType.cell3D === refPos.oper.type) {
 									if (_3DRefTmp[1] !== refPos.oper.getWS().getName()) {
 										return false;
