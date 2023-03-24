@@ -5673,12 +5673,12 @@
 			if (desc.id) {
 				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Id);
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
-				this.memory.WriteString2(desc.id);// WriteString3
+				this.memory.WriteString2(desc.id);
 			}
 			if (desc.name) {
 				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Name);
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
-				this.memory.WriteString2(desc.name);// WriteString3
+				this.memory.WriteString2(desc.name);
 			}
 		};
         this.WriteUserProtectedRange = function (oUserProtectedRange) {
@@ -5686,30 +5686,17 @@
             var oThis = this;
 
             if (oUserProtectedRange.name) {
-				/*this.memory.WriteByte(c_oSerUserProtectedRange.Name);
-				this.memory.WriteByte(c_oSerPropLenType.Variable);
-				this.memory.WriteString2(oUserProtectedRange.name);*/
-
 				this.bs.WriteItem(c_oSerUserProtectedRange.Name, function () {
                     oThis.memory.WriteString3(oUserProtectedRange.name);
                 });
             }
             if (oUserProtectedRange.ref) {
-
 				var sqRef = getSqRefString([oUserProtectedRange.ref]);
-				/*this.memory.WriteByte(c_oSerUserProtectedRange.Sqref);
-				this.memory.WriteByte(c_oSerPropLenType.Variable);
-				this.memory.WriteString2(sqRef);*/
-
             	this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
                     oThis.memory.WriteString3(sqRef);
                 });
             }
             if (oUserProtectedRange.warningText) {
-				/*this.memory.WriteByte(c_oSerUserProtectedRange.Text);
-				this.memory.WriteByte(c_oSerPropLenType.Variable);
-				this.memory.WriteString2(oUserProtectedRange.warningText);*/
-
                 this.bs.WriteItem(c_oSerUserProtectedRange.Text, function () {
                     oThis.memory.WriteString3(oUserProtectedRange.warningText);
                 });
