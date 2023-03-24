@@ -1585,6 +1585,18 @@
         return langName;
     };
 
+	function correctItemsWithData(items)
+	{
+		for (let i = 0, itemsLen = items.length; i < itemsLen; i++)
+		{
+			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
+				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
+
+			if (items[i]["items"])
+				correctItemsWithData(items[i]["items"]);
+		}
+	}
+
 	/**
 	 * @typedef {Object} ContextMenuItem
 	 * The context menu item
@@ -1603,6 +1615,7 @@
 	 */
 	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
 	{
+		if (items["items"]) correctItemsWithData(items["items"]);
 		this.onPluginAddContextMenuItem(items);
 	};
 
@@ -1615,7 +1628,8 @@
 	 */
 	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
 	{
-		this.onPluginUpdateContextMenuItem(items);
+		if (items["items"]) correctItemsWithData(items["items"]);
+		this.onPluginUpdateContextMenuItem([items]);
 	};
 
 	/**
@@ -1629,6 +1643,7 @@
 	 */
 	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
 	{
+		variation["guid"] = window.g_asc_plugins.guidAsyncMethod;
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
 	};
 

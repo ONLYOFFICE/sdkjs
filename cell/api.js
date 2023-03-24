@@ -8485,20 +8485,17 @@ var editor;
 		return ws.setSheetViewType(val);
 	};
 
-	spreadsheet_api.prototype.asc_GetSheetViewType = function() {
-		let wb = this.wb;
-		if (!wb) {
-			return null;
-		}
-		var ws = this.wb.getWorksheet();
-		if (ws && ws.model && ws.model.sheetViews) {
-			var sheetView = this.sheetViews[0];
-			if (!sheetView) {
-				return null;
+	spreadsheet_api.prototype.asc_GetSheetViewType = function(index) {
+		let sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+		let ws = this.wbModel.getWorksheet(sheetIndex);
+		let res = null;
+		if (ws && ws.sheetViews) {
+			var sheetView = ws.sheetViews[0];
+			if (sheetView) {
+				res = sheetView.view;
 			}
-			return sheetView.view;
 		}
-		return null;
+		return res == null ? AscCommonExcel.ESheetViewType.normal : res;
 	};
 
   /*

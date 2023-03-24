@@ -2223,62 +2223,54 @@
 
 
 	const STANDART_COLORS_MAP = {};
-	STANDART_COLORS_MAP["Black"] = 0x000000;
-	STANDART_COLORS_MAP["White"] = 0xFFFFFF;
-	STANDART_COLORS_MAP["Red"] = 0xFF0000;
-	STANDART_COLORS_MAP["Green"] = 0x00FF00;
-	STANDART_COLORS_MAP["Blue"] = 0x0000FF;
-	STANDART_COLORS_MAP["Yellow"] = 0xFFFF00;
-	STANDART_COLORS_MAP["Purple"] = 0xFF00FF;
-	STANDART_COLORS_MAP["Aqua"] = 0x00FFFF;
-	STANDART_COLORS_MAP["Dark Red"] = 0x800000;
-	STANDART_COLORS_MAP["Dark Green"] = 0x008000;
-	STANDART_COLORS_MAP["Dark Blue"] = 0x000080;
-	STANDART_COLORS_MAP["Dark Yellow"] = 0x808000;
-	STANDART_COLORS_MAP["Dark Purple"] = 0x800080;
-	STANDART_COLORS_MAP["Dark Teal"] = 0x008080;
-	STANDART_COLORS_MAP["Light Gray"] = 0xC0C0C0;
-	STANDART_COLORS_MAP["Gray"] = 0x808080;
-	STANDART_COLORS_MAP["Light Blue"] = 0x9999FF;
-	STANDART_COLORS_MAP["Pink"] = 0x993366;
-	STANDART_COLORS_MAP["Light Yellow"] = 0xFFFFCC;
-	STANDART_COLORS_MAP["Sky Blue"] = 0xCCFFFF;
-	STANDART_COLORS_MAP["Dark Purple"] = 0x660066;
-	STANDART_COLORS_MAP["Rose"] = 0xFF8080;
-	STANDART_COLORS_MAP["Blue"] = 0x0066CC;
-	STANDART_COLORS_MAP["Light Blue"] = 0xCCCCFF;
-	STANDART_COLORS_MAP["Dark Blue"] = 0x000080;
-	STANDART_COLORS_MAP["Purple"] = 0xFF00FF;
-	STANDART_COLORS_MAP["Yellow"] = 0xFFFF00;
-	STANDART_COLORS_MAP["Aqua"] = 0x00FFFF;
-	STANDART_COLORS_MAP["Dark Purple"] = 0x800080;
-	STANDART_COLORS_MAP["Dark Red"] = 0x800000;
-	STANDART_COLORS_MAP["Dark Teal"] = 0x008080;
-	STANDART_COLORS_MAP["Blue"] = 0x0000FF;
-	STANDART_COLORS_MAP["Turquosie"] = 0x00CCFF;
-	STANDART_COLORS_MAP["Sky Blue"] = 0xCCFFFF;
-	STANDART_COLORS_MAP["Light Green"] = 0xCCFFCC;
-	STANDART_COLORS_MAP["Light Yellow"] = 0xFFFF99;
-	STANDART_COLORS_MAP["Light Blue"] = 0x99CCFF;
-	STANDART_COLORS_MAP["Pink"] = 0xFF99CC;
-	STANDART_COLORS_MAP["Lavender"] = 0xCC99FF;
-	STANDART_COLORS_MAP["Light Orange"] = 0xFFCC99;
-	STANDART_COLORS_MAP["Blue"] = 0x3366FF;
-	STANDART_COLORS_MAP["Teal"] = 0x33CCCC;
-	STANDART_COLORS_MAP["Green"] = 0x99CC00;
-	STANDART_COLORS_MAP["Gold"] = 0xFFCC00;
-	STANDART_COLORS_MAP["Orange"] = 0xFF9900;
-	STANDART_COLORS_MAP["Orange"] = 0xFF6600;
-	STANDART_COLORS_MAP["Indigo"] = 0x666699;
-	STANDART_COLORS_MAP["Gray"] = 0x969696;
-	STANDART_COLORS_MAP["Dark Blue"] = 0x003366;
-	STANDART_COLORS_MAP["Green"] = 0x339966;
-	STANDART_COLORS_MAP["Dark Green"] = 0x003300;
-	STANDART_COLORS_MAP["Dark Yellow"] = 0x333300;
-	STANDART_COLORS_MAP["Brown"] = 0x993300;
-	STANDART_COLORS_MAP["Pink"] = 0x993366;
-	STANDART_COLORS_MAP["Indigo"] = 0x333399;
-	STANDART_COLORS_MAP["Dark Gray"] = 0x333333;
+	STANDART_COLORS_MAP[0x000000] = "Black";
+	STANDART_COLORS_MAP[0xFFFFFF] = "White";
+	STANDART_COLORS_MAP[0xFF0000] = "Red";
+	STANDART_COLORS_MAP[0x00FF00] = "Green";
+	STANDART_COLORS_MAP[0x0000FF] = "Blue";
+	STANDART_COLORS_MAP[0xFFFF00] = "Yellow";
+	STANDART_COLORS_MAP[0xFF00FF] = "Purple";
+	STANDART_COLORS_MAP[0x00FFFF] = "Aqua";
+	STANDART_COLORS_MAP[0x800000] = "Dark Red";
+	STANDART_COLORS_MAP[0x008000] = "Dark Green";
+	STANDART_COLORS_MAP[0x000080] = "Dark Blue";
+	STANDART_COLORS_MAP[0x808000] = "Dark Yellow";
+	STANDART_COLORS_MAP[0x800080] = "Dark Purple";
+	STANDART_COLORS_MAP[0x008080] = "Dark Teal";
+	STANDART_COLORS_MAP[0xC0C0C0] = "Light Gray";
+	STANDART_COLORS_MAP[0x808080] = "Gray";
+	STANDART_COLORS_MAP[0x9999FF] = "Light Blue";
+	STANDART_COLORS_MAP[0x993366] = "Pink";
+	STANDART_COLORS_MAP[0xFFFFCC] = "Light Yellow";
+	STANDART_COLORS_MAP[0xCCFFFF] = "Sky Blue";
+	STANDART_COLORS_MAP[0x660066] = "Dark Purple";
+	STANDART_COLORS_MAP[0xFF8080] = "Rose";
+	STANDART_COLORS_MAP[0x0066CC] = "Blue";
+	STANDART_COLORS_MAP[0xCCCCFF] = "Light Blue";
+	STANDART_COLORS_MAP[0x00CCFF] = "Turquosie";
+	STANDART_COLORS_MAP[0xCCFFCC] = "Light Green";
+	STANDART_COLORS_MAP[0xFFFF99] = "Light Yellow";
+	STANDART_COLORS_MAP[0x99CCFF] = "Light Blue";
+	STANDART_COLORS_MAP[0xFF99CC] = "Pink";
+	STANDART_COLORS_MAP[0xCC99FF] = "Lavender";
+	STANDART_COLORS_MAP[0xFFCC99] = "Light Orange";
+	STANDART_COLORS_MAP[0x3366FF] = "Blue";
+	STANDART_COLORS_MAP[0x33CCCC] = "Teal";
+	STANDART_COLORS_MAP[0x99CC00] = "Green";
+	STANDART_COLORS_MAP[0xFFCC00] = "Gold";
+	STANDART_COLORS_MAP[0xFF9900] = "Orange";
+	STANDART_COLORS_MAP[0xFF6600] = "Orange";
+	STANDART_COLORS_MAP[0x666699] = "Indigo";
+	STANDART_COLORS_MAP[0x969696] = "Gray";
+	STANDART_COLORS_MAP[0x003366] = "Dark Blue";
+	STANDART_COLORS_MAP[0x339966] = "Green";
+	STANDART_COLORS_MAP[0x003300] = "Dark Green";
+	STANDART_COLORS_MAP[0x333300] = "Dark Yellow";
+	STANDART_COLORS_MAP[0x993300] = "Brown";
+	STANDART_COLORS_MAP[0x333399] = "Indigo";
+	STANDART_COLORS_MAP[0x333333] = "Dark Gray";
+
+	const REVERSE_COLORS_MAP = {};
 
 
 	/**
@@ -2341,25 +2333,7 @@
 		},
 
 		getColorName: function() {
-			let nMinDist = 1000;
-			let sMinColor = "White";
-			for(let sColor in STANDART_COLORS_MAP) {
-				if(STANDART_COLORS_MAP.hasOwnProperty(sColor)) {
-					let nColor = STANDART_COLORS_MAP[sColor];
-					let nR = (nColor >> 16) & 0xFF;
-					let nG = (nColor >> 8) & 0xFF;
-					let nB = nColor & 0xFF;
-					let nDist = Math.abs(nR - this.r) + Math.abs(nG - this.g) + Math.abs(nB - this.b);
-					if(nDist === 0) {
-						return sColor;
-					}
-					if(nDist < nMinDist) {
-						nMinDist = nDist;
-						sMinColor = sColor;
-					}
-				}
-			}
-			return sMinColor;
+			return (new asc_CColor(this.r, this.g, this.b)).asc_getName();
 		}
 	};
 
@@ -2456,22 +2430,21 @@
 	};
 	asc_CColor.prototype.asc_getName = function() {
 		const nColorVal = this.getVal();
-		for(let sName in STANDART_COLORS_MAP) {
-			if(STANDART_COLORS_MAP.hasOwnProperty(sName)) {
-				if(STANDART_COLORS_MAP[sName] === nColorVal) {
-					return sName;
+		for(let nCurColor in STANDART_COLORS_MAP) {
+			if(STANDART_COLORS_MAP.hasOwnProperty(nCurColor)) {
+				if(nCurColor === nColorVal) {
+					return STANDART_COLORS_MAP[nCurColor];
 				}
 			}
 		}
 		let dMinDistance = 1000000;
 		let sMinName = "Black";
-		for(let sName in STANDART_COLORS_MAP) {
-			if(STANDART_COLORS_MAP.hasOwnProperty(sName)) {
-				let nCurColor = STANDART_COLORS_MAP[sName];
+		for(let nCurColor in STANDART_COLORS_MAP) {
+			if(STANDART_COLORS_MAP.hasOwnProperty(nCurColor)) {
 				let dDist = AscFormat.CColorModifiers.prototype.GetColorDiff(nColorVal, nCurColor);
 				if(dDist < dMinDistance) {
 					dMinDistance = dDist;
-					sMinName = sName;
+					sMinName = STANDART_COLORS_MAP[nCurColor];
 				}
 			}
 		}

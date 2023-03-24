@@ -9557,6 +9557,10 @@
                 }
 			} else if (c_oSer_SheetView.View === type) {
                 oSheetView.view = this.stream.GetUChar();
+                //TODO while don't support other view type
+                if (oSheetView.view > 1) {
+                    oSheetView.view = Asc.c_oAscESheetViewType.normal;
+                }
 			} else if (c_oSer_SheetView.WindowProtection === type) {
 				this.stream.GetBool();
 			} else if (c_oSer_SheetView.WorkbookViewId === type) {

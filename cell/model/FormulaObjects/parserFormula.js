@@ -8391,7 +8391,7 @@ function parserFormula( formula, parent, _ws ) {
 						if (value.isOneElement()) {
 							// single row with single element
 							value = value.getFirstElement();
-						} else if (valueDimensions.col !== 1 && valueDimensions.row  === 1) {
+						} else if (valueDimensions.col !== 1 && valueDimensions.row === 1) {
 							// single row with many elements
 							value = _getValueInRange(value, 0, j);
 						} else if (valueDimensions.col === 1 && valueDimensions.row !== 1) {

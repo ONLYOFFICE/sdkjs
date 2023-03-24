@@ -2805,6 +2805,7 @@ function CDrawingDocument()
 			let _color_src = this.GuiControlColorsMap[i];
 
 			_ret_array[_cur_index] = new Asc.asc_CColor(_color_src.r, _color_src.g, _color_src.b);
+			_ret_array[_cur_index].setColorSchemeId(array_colors_types[i]);
 			_cur_index++;
 
 			// теперь с модификаторами

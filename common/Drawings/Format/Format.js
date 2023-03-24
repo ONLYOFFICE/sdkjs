@@ -1729,10 +1729,10 @@
 		CColorModifiers.prototype.getShadeOrTint = function() {
 			const M = this.Mods;
 			if(M.length === 1 && M[0].name === "lumMod" && M[0].val > 0) {//shade
-				return -M[0].val;
+				return -(100000 - M[0].val);
 			}
 			if(M.length === 2 && M[0].name === "lumMod" && M[0].val > 0 && M[1].name === "lumOff" && M[1].val > 0) {
-				return M[0].val;
+				return (100000 - M[0].val);
 			}
 			return null;
 		};
@@ -1743,10 +1743,10 @@
 			if(this.Mods.length === 1) {
 				let oMod = this.Mods[0];
 				if(oMod.name === "wordTint") {
-					return oMod.val / 255;
+					return (255 - oMod.val) / 255;
 				}
 				if(oMod.name === "wordShade") {
-					return -oMod.val / 255;
+					return -(255 - oMod.val) / 255;
 				}
 			}
 			let nVal = this.getShadeOrTint();

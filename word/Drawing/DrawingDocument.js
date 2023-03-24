@@ -5246,6 +5246,7 @@ function CDrawingDocument()
 			for (let i = 0; i < _c_s; ++i)
 			{
 				standart_colors[i] = new Asc.asc_CColor(standartColors[i].R, standartColors[i].G, standartColors[i].B);
+
 			}
 
 			this.IsSendStandartColors = true;
@@ -5261,6 +5262,7 @@ function CDrawingDocument()
 			var _color_src = this.GuiControlColorsMap[i];
 
 			_ret_array[_cur_index] = new Asc.asc_CColor(_color_src.r, _color_src.g, _color_src.b);
+			_ret_array[_cur_index].setColorSchemeId(array_colors_types[i]);
 			_cur_index++;
 
 			// теперь с модификаторами
@@ -5276,7 +5278,6 @@ function CDrawingDocument()
 				let oColor = new Asc.asc_CColor(_rgba.R, _rgba.G, _rgba.B);
 				oColor.put_effectValue(dst_mods.getEffectValue());
 				oColor.setColorSchemeId(array_colors_types[i]);
-
 				_ret_array[_cur_index] = oColor;
 				_cur_index++;
 			}

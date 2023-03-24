@@ -674,12 +674,12 @@
 				{
 					var _buttonId = parseInt(pluginData.button);
 					if (isNaN(_buttonId))
-						_buttonId =pluginData.button;
+						_buttonId = pluginData.button;
 
-					if (!window.Asc.plugin.button && -1 == _buttonId)
+					if (!window.Asc.plugin.button && -1 === _buttonId && undefined === pluginData.buttonWindowId)
 						window.Asc.plugin.executeCommand("close", "");
 					else
-						window.Asc.plugin.button(_buttonId);
+						window.Asc.plugin.button(_buttonId, pluginData.buttonWindowId);
 					break;
 				}
 				case "enableMouseEvent":

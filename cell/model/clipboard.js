@@ -403,7 +403,7 @@
 						ws.workbook.cutIdSheet = ws.model.Id;
 						ws.copyCutRange = [ws.model.selectionRange.getLast()];
 					}
-				} else {
+				} else if (!ws.objectRender.selectedGraphicObjectsExists()) {
 					ws.copyCutRange = ws.model.selectionRange.ranges;
 				}
 			}

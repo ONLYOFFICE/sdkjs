@@ -3111,6 +3111,38 @@ var g_oFontProperties = {
 		return res;
 	}
 
+	function FromXml_ST_SheetViewType(val) {
+		var res = null;
+		switch (val) {
+			case "normal":
+				res = window["Asc"].c_oAscESheetViewType.normal;
+				break;
+			case "pageBreakPreview":
+				res = window["Asc"].c_oAscESheetViewType.pageBreakPreview;
+				break;
+			case "pageLayout":
+				res = window["Asc"].c_oAscESheetViewType.pageLayout;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_SheetViewType(val) {
+		var res = null;
+		switch (val) {
+			case window["Asc"].c_oAscESheetViewType.normal:
+				res = "normal";
+				break;
+			case window["Asc"].c_oAscESheetViewType.pageBreakPreview:
+				res = "pageBreakPreview";
+				break;
+			case window["Asc"].c_oAscESheetViewType.pageLayout:
+				res = "pageLayout";
+				break;
+		}
+		return res;
+	}
+
 	function GradientFill() {
 		//Attributes
 		this.type = Asc.c_oAscFillGradType.GRAD_LINEAR;
@@ -14331,6 +14363,12 @@ QueryTableField.prototype.clone = function() {
 			this.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
 			isChanged = true;
 		}
+		//path also can changed
+		var path = oPortalData && oPortalData["path"];
+		if (path && this.Id !== path) {
+			this.setId(path);
+			isChanged = true;
+		}
 
 		if (isChanged && History.Is_On()) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
@@ -14557,6 +14595,15 @@ QueryTableField.prototype.clone = function() {
 		this.referenceData["instanceId"] = portalName;
 		this.referenceData["fileKey"] = fileId;
 	};
+
+	ExternalReference.prototype.setId = function (id) {
+		if (!id) {
+			return;
+		}
+
+		this.Id = id;
+	};
+
 
 	function asc_CExternalReference() {
 		this.type = null;
@@ -15478,6 +15525,8 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].ToXml_ST_DataBarAxisPosition = ToXml_ST_DataBarAxisPosition;
 	window["AscCommonExcel"].FromXml_ST_CellValueType = FromXml_ST_CellValueType;
 	window["AscCommonExcel"].ToXml_ST_CellValueType = ToXml_ST_CellValueType;
+	window["AscCommonExcel"].FromXml_ST_SheetViewType = FromXml_ST_SheetViewType;
+	window["AscCommonExcel"].ToXml_ST_SheetViewType = ToXml_ST_SheetViewType;
 
 	window["AscCommonExcel"].CCellWatch = CCellWatch;
 	prot = CCellWatch.prototype;
