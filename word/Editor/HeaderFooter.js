@@ -739,11 +739,6 @@ CHeaderFooter.prototype =
 		this.Content.AddNewParagraph();
 	},
 
-	GetFormatPainterData : function()
-	{
-		return this.Content.AddNewParagraph();
-	},
-
 	AddInlineImage : function(W, H, Img, Chart, bFlow)
     {
         this.Content.AddInlineImage(W,H,Img, Chart, bFlow);
@@ -2034,11 +2029,6 @@ CHeaderFooterController.prototype =
 	{
 		if (null != this.CurHdrFtr)
 			return this.CurHdrFtr.AddNewParagraph();
-	},
-
-	GetFormatPainterData : function()
-	{
-		return this.CurHdrFtr.AddNewParagraph();
 	},
 
 	AddInlineImage : function(W, H, Img, Chart, bFlow)

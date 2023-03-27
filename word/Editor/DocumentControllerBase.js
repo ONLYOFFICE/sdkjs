@@ -823,12 +823,3 @@ CDocumentControllerBase.prototype.FindNextFillingForm = function(isNext, isCurre
  * @param oTrackManager {AscWord.CTrackRevisionsManager}
  */
 CDocumentControllerBase.prototype.CollectSelectedReviewChanges = function(oTrackManager) {};
-
-/**
- * returns data for format copying
- * @return {?CDocumentFormatPainterData}
- * */
-CDocumentControllerBase.prototype.GetFormatPainterData = function()
-{
-	return null;
-};

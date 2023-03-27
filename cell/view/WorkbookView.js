@@ -68,7 +68,7 @@
   var g_clipboardExcel = AscCommonExcel.g_clipboardExcel;
 
   function CCellFormatPasteData(oWSView) {
-	  AscCommon.CFormatPainterDataBase.call();
+	  AscCommon.CFormattingPasteDataBase.call();
 	  this.ws = oWSView.model;
 	  this.range = this.ws.selectionRange.clone();
 
@@ -79,7 +79,7 @@
 		  }
 	  }
   }
-  AscFormat.InitClassWithoutType(CCellFormatPasteData, AscCommon.CFormatPainterDataBase);
+  AscFormat.InitClassWithoutType(CCellFormatPasteData, AscCommon.CFormattingPasteDataBase);
 	CCellFormatPasteData.prototype.isDrawingData = function() {
 		return !!this.docData;
 	};

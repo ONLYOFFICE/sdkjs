@@ -7842,7 +7842,7 @@ CPresentation.prototype.Refresh_ContentChanges = function () {
 };
 
 
-CPresentation.prototype.GetFormatPainterData = function () {
+CPresentation.prototype.GetFormattingPasteData = function () {
 	let oController = this.GetCurrentController();
 	if (!oController)
 		return null;

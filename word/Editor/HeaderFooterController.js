@@ -71,10 +71,6 @@ CHdrFtrController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd)
 {
 	return this.HdrFtr.AddNewParagraph(bRecalculate, bForceAdd);
 };
-CHdrFtrController.prototype.GetFormatPainterData = function()
-{
-	return this.HdrFtr.GetFormatPainterData();
-};
 CHdrFtrController.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
 	this.HdrFtr.AddSignatureLine(oSignatureDrawing);

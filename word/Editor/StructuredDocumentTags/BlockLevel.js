@@ -467,10 +467,6 @@ CBlockLevelSdt.prototype.AddNewParagraph = function()
 	this.private_ReplacePlaceHolderWithContent();
 	return this.Content.AddNewParagraph();
 };
-CBlockLevelSdt.prototype.GetFormatPainterData = function()
-{
-	return this.Content.GetFormatPainterData();
-};
 CBlockLevelSdt.prototype.Get_SelectionState2 = function()
 {
 	var oState  = new CDocumentSelectionState();

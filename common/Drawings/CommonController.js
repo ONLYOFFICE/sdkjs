@@ -7659,35 +7659,26 @@
 
 				getFormatPainterData: function () {
 					let oTargetDocContent = this.getTargetDocContent();
-					if (oTargetDocContent) {
-						let oTextPr = oTargetDocContent.GetDirectTextPr();
-						let oParaPr = oTargetDocContent.GetDirectParaPr();
-						return new CDocumentFormatPainterData(oTextPr, oParaPr, null);
-					}
+					if (oTargetDocContent)
+						return oTargetDocContent.GetFormattingPasteData();
+
 					let aSelectedObjects = this.getSelectedArray();
 					if (aSelectedObjects.length === 1) {
 						let oDrawing = aSelectedObjects[0];
-						if (oDrawing.isShape() || oDrawing.isImage()) {
-							return new CDocumentFormatPainterData(null, null, oDrawing);
-						}
+						if (oDrawing.isShape() || oDrawing.isImage())
+							return new AscCommon.CDrawingFormattingPasteData(oDrawing);
+
 						if (oDrawing.isTable()) {
 							let oTable = oDrawing.graphicObject;
-							let oCell = oTable.CurCell;
-							if (oCell) {
-								let oContent = oCell.Content;
-								let oTextPr = oContent.GetDirectTextPr();
-								let oParaPr = oContent.GetDirectParaPr();
-								return new CDocumentFormatPainterData(oTextPr, oParaPr, null);
-							}
+							let oCell = oTable.GetCurCell();
+							if (oCell)
+								return oCell.GetContent().GetFormattingPasteData();
 						} else if (oDrawing.isChart()) {
 							let oChartTitle = oDrawing.getChartTitle();
 							if (oChartTitle) {
 								let oContent = oChartTitle.getDocContent();
-								if (oContent) {
-									let oTextPr = oContent.GetDirectTextPr();
-									let oParaPr = oContent.GetDirectParaPr();
-									return new CDocumentFormatPainterData(oTextPr, oParaPr, null);
-								}
+								if (oContent)
+									return oContent.GetFormattingPasteData();
 							}
 						}
 					}

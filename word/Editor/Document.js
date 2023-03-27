@@ -1784,23 +1784,6 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 	return this.FixedFormShape;
 };
 
-function CDocumentFormatPainterData(oTextPr, oParaPr, oDrawing)
-{
-	AscCommon.CFormatPainterDataBase.call();
-	this.TextPr = oTextPr;
-	this.ParaPr = oParaPr;
-	this.Drawing = oDrawing;
-}
-AscFormat.InitClassWithoutType(CDocumentFormatPainterData, AscCommon.CFormatPainterDataBase);
-CDocumentFormatPainterData.prototype.isDrawingData = function()
-{
-	return !!this.Drawing;
-};
-CDocumentFormatPainterData.prototype.getDocData = function()
-{
-	return this;
-};
-
 /**
  * Основной класс для работы с документом в Word.
  * @param DrawingDocument
@@ -11217,10 +11200,6 @@ CDocument.prototype.SetSectionStartPage = function(nStartPage)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
 };
-CDocument.prototype.GetFormatPainterData = function()
-{
-	return this.Controller.GetFormatPainterData();
-};
 CDocument.prototype.Document_Format_Copy = function()
 {
 	this.Api.checkFormatPainterData();
@@ -18593,10 +18572,6 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 		}
 	}
 };
-CDocument.prototype.controller_GetFormatPainterData = function()
-{
-	return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
-};
 CDocument.prototype.controller_AddInlineImage = function(W, H, Img, Chart, bFlow)
 {
 	if (true == this.Selection.Use)
@@ -21719,7 +21694,6 @@ CDocument.prototype.controller_CollectSelectedReviewChanges = function(oTrackMan
 		this.Content[nPos].CollectSelectedReviewChanges(oTrackManager);
 	}
 };
-CDocument.prototype.controller_GetFormatPainterData
 //----------------------------------------------------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------------------------------------------------

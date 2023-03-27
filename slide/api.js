@@ -6834,7 +6834,7 @@ background-repeat: no-repeat;\
 		{
 			return null;
 		}
-		return oPresentation.GetFormatPainterData();
+		return oPresentation.GetFormattingPasteData();
 	};
 	asc_docs_api.prototype.SetPaintFormat = function(value)
 	{

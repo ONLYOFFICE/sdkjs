@@ -13065,17 +13065,43 @@
 		this.data = null;
 	};
 
-	function CFormatPainterDataBase() {
+	function CFormattingPasteDataBase() {
 
 	}
-	CFormatPainterDataBase.prototype.isDrawingData = function()
+	CFormattingPasteDataBase.prototype.isDrawingData = function()
 	{
 		return false;
 	};
-	CFormatPainterDataBase.prototype.getDocData = function()
+	CFormattingPasteDataBase.prototype.getDocData = function()
 	{
 		return null;
 	};
+	function CTextFormattingPasteData(textPr, paraPr)
+	{
+		CFormattingPasteDataBase.call();
+		this.TextPr = textPr;
+		this.ParaPr = paraPr;
+	}
+	CTextFormattingPasteData.prototype = Object.create(CFormattingPasteDataBase.prototype);
+	CTextFormattingPasteData.prototype.getDocData = function()
+	{
+		return this;
+	};
+	function CDrawingFormattingPasteData(drawing)
+	{
+		CFormattingPasteDataBase.call();
+		this.Drawing = drawing;
+	}
+	CDrawingFormattingPasteData.prototype = Object.create(CFormattingPasteDataBase.prototype);
+	CDrawingFormattingPasteData.prototype.isDrawingData = function()
+	{
+		return true;
+	};
+	CDrawingFormattingPasteData.prototype.getDocData = function()
+	{
+		return this;
+	};
+	
 	if (!Object.values) {
 		Object.values = function (obj) {
 			return Object.keys(obj).map(function (e) {
@@ -13083,7 +13109,7 @@
 			});
 		}
 	}
-
+	
 	function parseText(text, options, bTrimSpaces) {
 		var delimiterChar;
 		if (options.asc_getDelimiterChar()) {
@@ -14164,7 +14190,9 @@
 		return word;
 	}
 	window["AscCommon"].CFormatPainter = CFormatPainter;
-	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
+	window["AscCommon"].CFormattingPasteDataBase = CFormattingPasteDataBase;
+	window["AscCommon"].CTextFormattingPasteData = CTextFormattingPasteData;
+	window["AscCommon"].CDrawingFormattingPasteData = CDrawingFormattingPasteData;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
 
 })(window);

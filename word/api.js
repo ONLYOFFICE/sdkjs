@@ -8481,7 +8481,7 @@ background-repeat: no-repeat;\
 		{
 			return null;
 		}
-		return oLogicDocument.GetFormatPainterData();
+		return oLogicDocument.GetFormattingPasteData();
 	};
 
 	asc_docs_api.prototype.SetPaintFormat = function(_value)
