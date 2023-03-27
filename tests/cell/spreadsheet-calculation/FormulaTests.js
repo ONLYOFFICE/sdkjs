@@ -23664,6 +23664,92 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"SORTBY\"", function (assert) {
+		let array;
+
+		ws.getRange2("B20").setValue("");
+		ws.getRange2("B21").setValue();
+		ws.getRange2("C20").setValue("");
+		ws.getRange2("C21").setValue("1");
+		ws.getRange2("C22").cleanAll();
+
+		ws.getRange2("C30").setValue("12");
+		ws.getRange2("C30").setNumFormat("@");
+
+		ws.getRange2("D10").setValue("19");
+		ws.getRange2("D11").setValue("#N/A");
+		ws.getRange2("D12").setValue("0");
+		ws.getRange2("E10").setValue("str");
+		ws.getRange2("E11").setValue("TRUE");
+		ws.getRange2("E12").setValue("1");
+
+		ws.getRange2("F10").setValue("string1");
+		ws.getRange2("F11").setValue("string2");
+		ws.getRange2("F12").setValue("1string");
+		ws.getRange2("F13").setValue("2string");
+		ws.getRange2("G10").setValue("Strung1");
+		ws.getRange2("G11").setValue("sTrung2");
+		ws.getRange2("G12").setValue("strunG33");
+		ws.getRange2("G13").setValue("1String");
+
+		ws.getRange2("H10").setValue("25");
+		ws.getRange2("H11").setValue("3");
+		ws.getRange2("H12").setValue("27");
+		ws.getRange2("I10").setValue("-23");
+		ws.getRange2("I11").setValue("-1");
+		ws.getRange2("I12").setValue("-3");
+
+		oParser = new parserFormula('SORTBY(H10:I12,H10:H12)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(H10:I12,H10:H12)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, 'Result of SORTBY(H10:I12,H10:H12)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), -1, 'Result of SORTBY(H10:I12,H10:H12)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 25, 'Result of SORTBY(H10:I12,H10:H12)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), -23, 'Result of SORTBY(H10:I12,H10:H12)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 27, 'Result of SORTBY(H10:I12,H10:H12)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), -3, 'Result of SORTBY(H10:I12,H10:H12)[2,1]');
+
+		oParser = new parserFormula('SORTBY(H10:I12,H10:I10)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(H10:I12,H10:I10)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), -23, 'Result of SORTBY(H10:I12,H10:I10)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 25, 'Result of SORTBY(H10:I12,H10:I10)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), -1, 'Result of SORTBY(H10:I12,H10:I10)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 3, 'Result of SORTBY(H10:I12,H10:I10)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), -3, 'Result of SORTBY(H10:I12,H10:I10)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 27, 'Result of SORTBY(H10:I12,H10:I10)[2,1]');
+
+		oParser = new parserFormula('SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 3, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},1)[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), 4, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},1)[0,3]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},1)[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 6, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},1)[1,2]');
+		assert.strictEqual(array.getElementRowCol(1, 3).getValue(), 8, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},1)[1,3]');
+
+		oParser = new parserFormula('SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},-1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},-1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},-1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},-1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 2, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},-1)[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), 1, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},-1)[0,3]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 8, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},-1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 6, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},-1)[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 4, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},-1)[1,2]');
+		assert.strictEqual(array.getElementRowCol(1, 3).getValue(), 2, 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2,3,4},-1)[1,3]');
+
+		oParser = new parserFormula('SORTBY({1,2,3,4;2,4,6,8},{1,2;3,4},-1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY({1,2,3,4;2,4,6,8},{1,2;3,4},-1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORTBY({1,2,3,4;2,4,6,8},{1,2;3,4},-1)');
+
+	});
+
 	QUnit.test("Test: \"reference argument test\"", function (assert) {
 		ws.getRange2("A1").setValue("1");
 		ws.getRange2("A2").setValue("2");

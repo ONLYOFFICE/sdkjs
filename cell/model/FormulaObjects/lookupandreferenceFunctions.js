@@ -68,7 +68,7 @@ function (window, undefined) {
 
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
 	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFILTER, cFORMULATEXT,
-		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cSORT, cRTD, cTRANSPOSE, cTAKE,
+		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cSORT, cSORTBY, cRTD, cTRANSPOSE, cTAKE,
 		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS, cXMATCH);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
@@ -2006,6 +2006,152 @@ function (window, undefined) {
 		}
 
 		return sortArray(array, by_col);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cSORTBY() {
+	}
+
+	cSORTBY.prototype = Object.create(cBaseFunction.prototype);
+	cSORTBY.prototype.constructor = cSORTBY;
+	cSORTBY.prototype.name = 'SORTBY';
+	cSORTBY.prototype.argumentsMin = 2;
+	cSORTBY.prototype.argumentsMax = 3;
+	cSORTBY.prototype.isXLFN = true;
+	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
+	cSORTBY.prototype.argumentsType = [argType.reference, argType.reference, argType.number];
+	cSORTBY.prototype.Calculate = function (arg) {
+		function sortWithIndices(arr, isByCol) {
+			const indexedArray = isByCol
+				? arr[0].map(function (item, index) { return { item, index } })
+				: arr.map(function (item, index) {
+					item = item[0];
+					return { item, index };
+				});
+
+			indexedArray.sort(function (a, b) {
+				const itemA = a.item;
+				const itemB = b.item;
+
+				if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
+					return (itemA.value.localeCompare(itemB.value)) * sort_order;
+				} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
+					return (itemA.value - itemB.value) * sort_order;
+				} else if (cElementType.string === itemA.type) {
+					return 1 * sort_order;
+				} else if (cElementType.string === itemB.type) {
+					return -1 * sort_order;
+				} else {
+					return 0;
+				}
+			});
+			
+			return indexedArray;
+		}
+
+		function sortArray (array, by_array1, isByCol) {
+			let resultArr = new cArray(),
+				tempArrIndicies = [],
+				byRowColArr = isByCol ? by_array1._getRow(0) : by_array1._getCol(0);
+
+			// sorting an array with indices
+			tempArrIndicies = sortWithIndices(byRowColArr, isByCol);
+
+			for (let i = 0; i < tempArrIndicies.length; i++) {
+				let target = isByCol ? array._getCol(tempArrIndicies[i].index) : array._getRow(tempArrIndicies[i].index);
+				isByCol ? resultArr.pushCol(target, 0) : resultArr.pushRow(target, 0);
+			}
+
+			return resultArr;
+		}
+
+		let arg0 = arg[0], 	// array
+			arg1 = arg[1],	// by_array1
+			arg2 = arg[2] ? arg[2] : new cNumber(1);  // sort_order
+
+		// check args err
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+		if (cElementType.error === arg2.type) {
+			return arg2;
+		}
+
+		// check args empty
+		if (cElementType.empty === arg2.type) {
+			arg2 = new cNumber(1);
+		}
+
+		let array, by_array1, sort_order, maxRows, maxCols, arrayDimensions, by_arrayDimensions, by_arrayRows, by_arrayCols, isByCol;
+
+		// check arg0(array)
+		if (cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
+			let elem;
+			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+				elem = arg0.getValue();
+			} else {
+				elem = arg0;
+			}
+			array = new cArray();
+			array.addElement(elem);
+		} else {
+			array = arg0;
+		}
+
+		arrayDimensions = array.getDimensions();
+		maxRows = arrayDimensions.row;
+		maxCols = arrayDimensions.col;
+
+		// check arg1(by_array1)
+		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
+			let elem;
+			if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+				elem = arg1.getValue();
+			} else {
+				elem = arg1;
+			}
+			by_array1 = new cArray();
+			by_array1.addElement(elem);
+		} else {
+			by_array1 = arg1;
+		}
+		
+		by_arrayDimensions = by_array1.getDimensions();
+		by_arrayRows = by_arrayDimensions.row;
+		by_arrayCols = by_arrayDimensions.col;
+
+		if ((by_arrayRows === 1 && by_arrayCols !== maxCols) || (by_arrayCols === 1 && by_arrayRows !== maxRows) || (by_arrayCols > 1 && by_arrayRows > 1)) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (by_arrayRows === 1 && by_arrayCols === maxCols) {
+			isByCol = true;
+		} else if (by_arrayCols === 1 && by_arrayRows === maxRows) {
+			isByCol = false;
+		}
+
+		// check arg2(sort_order)
+		if (cElementType.array !== arg2.type && cElementType.cellsRange !== arg2.type && cElementType.cellsRange3D !== arg2.type) {
+			sort_order = arg2.tocNumber();
+		} else {
+			sort_order = arg2.getFirstElement();
+		}
+
+		if (cElementType.error === sort_order.type) {
+			return sort_order;
+		} else {
+			sort_order = Math.floor(sort_order.getValue());
+		}
+
+		if (sort_order !== -1 && sort_order !== 1) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		return sortArray(array, by_array1, isByCol);
 	};
 
 	/**
