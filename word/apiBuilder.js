@@ -5694,7 +5694,7 @@
 	 * Returns a report about every change which was made to the document in the review mode.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns ReviewReport
+	 * @returns {ReviewReport}
 	 */
 	ApiDocument.prototype.GetReviewReport = function()
 	{
