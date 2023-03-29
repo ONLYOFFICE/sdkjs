@@ -447,7 +447,7 @@ function (window, undefined) {
 			let reverse = _argInside < 0;
 			_argInside = Math.abs(_argInside);
 			_argInside = parseInt(_argInside);
-			if (_argInside < 1 || (_argInside > arg0Dimensions.col && byCol) || (_argInside > arg0Dimensions.row && !byCol)) {
+			if (_argInside < 1 || (_argInside > dimension.col && byCol) || (_argInside > dimension.row && !byCol)) {
 				error = new cError(cErrorType.wrong_value_type);
 				return false;
 			}
@@ -457,15 +457,15 @@ function (window, undefined) {
 			}
 
 			if (byCol) {
-				res.pushCol(matrix, reverse ? arg0Dimensions.col - (_argInside - 1) - 1 : _argInside - 1);
+				res.pushCol(matrix, reverse ? dimension.col - (_argInside - 1) - 1 : _argInside - 1);
 			} else {
-				res.pushRow(matrix, reverse ? arg0Dimensions.row - (_argInside - 1) - 1 : _argInside - 1);
+				res.pushRow(matrix, reverse ? dimension.row - (_argInside - 1) - 1 : _argInside - 1);
 			}
 
 			return true;
 		};
 
-		let arg0Dimensions = arg1.getDimensions();
+		let dimension = arg1.getDimensions();
 		let res;
 		let error;
 		for (let i = 1; i < arg.length; i++) {
