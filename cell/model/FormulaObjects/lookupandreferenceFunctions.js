@@ -1800,7 +1800,7 @@ function (window, undefined) {
 	cSORT.prototype.name = 'SORT';
 	cSORT.prototype.argumentsMin = 1;
 	cSORT.prototype.argumentsMax = 4;
-	cSORT.prototype.isXLFN = true;
+	cSORT.prototype.isXLFN = false;
 	cSORT.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
 	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.bool];
 	cSORT.prototype.Calculate = function (arg) {
@@ -1812,20 +1812,24 @@ function (window, undefined) {
 					item = item[0];
 					return { item, index };
 				});
+			
+			indexedArray.sort(function (a, b) {
+				const itemA = a.item;
+				const itemB = b.item;
 
-			indexedArray.sort(function (a,b) {
-				const valueA = a.item.value;
-				const valueB = b.item.value; 
-
-				if (valueA < valueB) {
-					return sort_order === 1 ? -1 : 1;
-				} else if (valueA > valueB) {
-					return sort_order === 1 ? 1 : -1;
+				if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
+					return (itemA.value.localeCompare(itemB.value)) * sort_order;
+				} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
+					return (itemA.value - itemB.value) * sort_order;
+				} else if (cElementType.string === itemA.type) {
+					return 1 * sort_order;
+				} else if (cElementType.string === itemB.type) {
+					return -1 * sort_order;
 				} else {
 					return 0;
 				}
 			});
-			
+
 			return indexedArray;
 		}
 
@@ -2178,8 +2182,9 @@ function (window, undefined) {
 		// check arg2(sort_order)
 		if (cElementType.array !== arg2.type && cElementType.cellsRange !== arg2.type && cElementType.cellsRange3D !== arg2.type) {
 			sort_order = arg2.tocNumber();
+		} else if (arg2.isOneElement()) {
+			sort_order = arg2.getFirstElement();
 		} else {
-			// sort_order = arg2.getFirstElement();
 			sort_order = arg2;
 			isArg2Array = true;
 		}
