@@ -270,7 +270,7 @@
 					if (ws.AutoFilter && ws.AutoFilter.Ref.contains(activeCell.col, activeCell.row)) {
 						res = ws.AutoFilter.Ref;
 					} else {
-						let table = ws.autoFilter._getTableIntersectionWithActiveCell(activeCell);
+						let table = ws.autoFilters._getTableIntersectionWithActiveCell(activeCell);
 						if (table) {
 							res = table.Ref;
 						}
