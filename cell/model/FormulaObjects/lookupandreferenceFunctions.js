@@ -447,7 +447,7 @@ function (window, undefined) {
 			let reverse = _argInside < 0;
 			_argInside = Math.abs(_argInside);
 			_argInside = parseInt(_argInside);
-			if (_argInside < 1 || (_argInside > dimension.col && byCol) || (_argInside > dimension.row && !byCol)) {
+			if (_argInside < 1 || (_argInside > arg0Dimensions.col && byCol) || (_argInside > arg0Dimensions.row && !byCol)) {
 				error = new cError(cErrorType.wrong_value_type);
 				return false;
 			}
@@ -457,15 +457,15 @@ function (window, undefined) {
 			}
 
 			if (byCol) {
-				res.pushCol(matrix, reverse ? dimension.col - (_argInside - 1) - 1 : _argInside - 1);
+				res.pushCol(matrix, reverse ? arg0Dimensions.col - (_argInside - 1) - 1 : _argInside - 1);
 			} else {
-				res.pushRow(matrix, reverse ? dimension.row - (_argInside - 1) - 1 : _argInside - 1);
+				res.pushRow(matrix, reverse ? arg0Dimensions.row - (_argInside - 1) - 1 : _argInside - 1);
 			}
 
 			return true;
 		};
 
-		let dimension = arg1.getDimensions();
+		let arg0Dimensions = arg1.getDimensions();
 		let res;
 		let error;
 		for (let i = 1; i < arg.length; i++) {
@@ -632,49 +632,50 @@ function (window, undefined) {
 	cEXPAND.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
 	cEXPAND.prototype.Calculate = function (arg) {
 		const MAX_ARRAY_SIZE = 1048576;
-		let array;
-		let arg0 = arg[0];
-		let arg3 = arg[3] ? arg[3] : new cError(cErrorType.not_available);
+		let array,
+			arg0 = arg[0],
+			arg3 = arg[3] ? arg[3] : new cError(cErrorType.not_available);
 
-		function expandedArray(arr) {
+		function expandedArrayNew (arr, arg0Dimensions, maxRows, maxCols) {
+			// maxRows/cols - dimensions for resulting array
+			// arg0Dimensions.row/col - dimensions of existing array
 			let res = new cArray();
 
-			for(let i = 0; i < rows; i++) {
-				if(!arr[i]) {
-					arr[i] = [];
-				}
-				for(let j = 0; j < columns; j++) {
-					if(!arr[i][j]) {
-						arr[i][j] = pad_with;
+			for (let i = 0; i < maxRows; i++) {
+				res.addRow();
+				for (let j = 0; j < maxCols; j++) {
+					if (i >= arg0Dimensions.row || j >= arg0Dimensions.col) {
+						res.addElement(pad_with);
+						continue
 					}
+					let elem = arr.getElementRowCol ? arr.getElementRowCol(i,j) : arr.getValueByRowCol(i,j);
+					elem ? res.addElement(elem) : res.addElement(new cEmpty());
 				}
 			}
-			res.fillFromArray(arr);
 			return res;
 		}
 
 		// --------------------- arg0(array) type check ----------------------//
-		if (cElementType.cellsRange === arg0.type || cElementType.array === arg0.type) {
-			array = arg0.getMatrix();
-		} else if(cElementType.cellsRange3D === arg0.type) {
-			array = arg0.getMatrix()[0];
-		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-			return arg0.getValue();
-		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
-			cElementType.bool === arg0.type || cElementType.error === arg0.type) {
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type) {
+			array = arg0;
+		} else if (cElementType.error === arg0.type) {
 			return arg0;
-		} else {
-			return new cError(cErrorType.not_available);
-		}
-		if(arg0.length === 0){
+		} else if (cElementType.empty === arg0.type) {
 			return new cError(cErrorType.wrong_value_type);
+		} else {
+			array = new cArray();
+			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+				array.addElement(arg0.getValue());
+			}
+			array.addElement(arg0);
 		}
 
 		// --------------------- arg1(row) type check ----------------------//
-		let rows = arg[1];
-		let dimension = arg0.getDimensions();
-		if(cElementType.empty === rows.type) {
-			rows = new cNumber(dimension.row);
+		let rows = arg[1],
+			arg0Dimensions = array.getDimensions();
+
+		if (cElementType.empty === rows.type) {
+			rows = new cNumber(arg0Dimensions.row);
 		} else if(cElementType.array === rows.type) {
 			rows = rows.getElementRowCol(0, 0);
 		} else if(cElementType.cellsRange === rows.type || cElementType.cellsRange3D === rows.type) {
@@ -683,15 +684,15 @@ function (window, undefined) {
 		};
 		rows = rows.tocNumber();
 		
-		if(cElementType.error === rows.type) {
+		if (cElementType.error === rows.type) {
 			return rows;
 		}
 		rows = rows.toNumber();
 
 		// --------------------- arg2(column) type check ----------------------//
-		let columns = arg[2];
+		let columns = arg[2] ? arg[2] : new cEmpty();
 		if(cElementType.empty === columns.type) {
-			columns = new cNumber(dimension.row);
+			columns = new cNumber(arg0Dimensions.col);
 		} else if(cElementType.array === columns.type) {
 			columns = columns.getElementRowCol(0, 0);
 		} else if(cElementType.cellsRange === columns.type || cElementType.cellsRange3D === columns.type) {
@@ -703,20 +704,21 @@ function (window, undefined) {
 		if(cElementType.error === columns.type) {
 			return columns;
 		}
-
 		columns = columns.toNumber();
 
 		// --------------------- arg3(pad_with) type check ----------------------//
 		let pad_with = arg3;
-		if(cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type || cElementType.array === arg3.type) {
+		if (cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type || cElementType.array === arg3.type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
 		// check length and max array size
-		if((rows * columns) > MAX_ARRAY_SIZE) {
+		if (((rows * columns) > MAX_ARRAY_SIZE)) {
 			return new cError(cErrorType.not_numeric);
-		} else if(rows >= array.length && columns >= array[0].length) {
-			return expandedArray(array);
+		} else if (rows < arg0Dimensions.row || columns < arg0Dimensions.col) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if(rows >= arg0Dimensions.row && columns >= arg0Dimensions.col) {
+			return expandedArrayNew (array, arg0Dimensions, rows, columns);
 		}
 
 		return new cError(cErrorType.wrong_value_type);
@@ -3790,8 +3792,8 @@ function (window, undefined) {
 		if (arg1.type === cElementType.empty) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		var dimension = arg1.getDimensions();
-		if (dimension.col > 1 && dimension.row > 1) {
+		var arg0Dimensions = arg1.getDimensions();
+		if (arg0Dimensions.col > 1 && arg0Dimensions.row > 1) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
