@@ -541,6 +541,12 @@ var c_oserct_dlblsSPPR = 14;
 var c_oserct_dlblsTXPR = 15;
 var c_oserct_dlblsEXTLST = 16;
 
+var c_oserct_xForSave = 25;
+var c_oserct_showDataLabelsRange = 26;
+var c_oserct_showLeaderLines = 27;
+var c_oserct_leaderLines = 28;
+var c_oserct_dlblFieldTable = 29;
+
 var c_oserct_dlblIDX = 0;
 var c_oserct_dlblITEMS = 1;
 var c_oserct_dlblDLBLPOS = 2;
@@ -1016,6 +1022,212 @@ var c_oserct_chartcolorsMETH = 1;
 var c_oserct_chartcolorsVARIATION = 2;
 var c_oserct_chartcolorsCOLOR = 3;
 var c_oserct_chartcolorsEFFECT = 4;
+
+
+var c_oserct_chartExSpaceCHARTDATA = 0;
+var c_oserct_chartExSpaceCHART = 1;
+var c_oserct_chartExSpaceSPPR = 2;
+var c_oserct_chartExSpaceTXPR = 3;
+var c_oserct_chartExSpaceCLRMAPOVR = 4;
+var c_oserct_chartExSpaceXLSX = c_oserct_chartspaceXLSX;/* = 16*/
+var c_oserct_chartExSpaceSTYLES = c_oserct_chartspaceSTYLES;/* = 17*/
+var c_oserct_chartExSpaceCOLORS = c_oserct_chartspaceCOLORS;/* = 18*/
+
+var c_oserct_chartExDATA = 0;
+var c_oserct_chartExEXTERNALDATA = 1;
+
+var c_oserct_chartExExternalAUTOUPDATE = 0;
+
+var c_oserct_chartExChartPLOTAREA = 0;
+var c_oserct_chartExChartTITLE = 1;
+var c_oserct_chartExChartLEGEND = 2;
+
+var c_oserct_chartExChartAREAREGION = 0;
+var c_oserct_chartExChartAXIS = 1;
+var c_oserct_chartExChartSPPR = 2;
+
+var c_oserct_chartExAreaPLOTSURFACE = 0;
+var c_oserct_chartExAreaSERIES = 1;
+
+var c_oserct_chartExAxisID = 0;
+
+var c_oserct_chartExPlotSurfaceSPPR = 0;
+var c_oserct_chartExAxisHIDDEN = 1;
+var c_oserct_chartExAxisCATSCALING = 2;
+var c_oserct_chartExAxisVALSCALING = 3;
+var c_oserct_chartExAxisTITLE = 4;
+var c_oserct_chartExAxisUNIT = 5;
+var c_oserct_chartExAxisNUMFMT = 6;
+var c_oserct_chartExAxisMAJORTICK = 7;
+var c_oserct_chartExAxisMINORTICK = 8;
+var c_oserct_chartExAxisMAJORGRID = 9;
+var c_oserct_chartExAxisMINORGRID = 10;
+var c_oserct_chartExAxisTICKLABELS = 11;
+var c_oserct_chartExAxisTXPR = 12;
+var c_oserct_chartExAxisSPPR = 13;
+
+var c_oserct_chartExSeriesDATAPT = 0;
+var c_oserct_chartExSeriesDATALABELS = 1;
+var c_oserct_chartExSeriesLAYOUTPROPS = 2;
+var c_oserct_chartExSeriesTEXT = 3;
+var c_oserct_chartExSeriesAXIS = 4;
+var c_oserct_chartExSeriesDATAID = 5;
+var c_oserct_chartExSeriesSPPR = 6;
+var c_oserct_chartExSeriesLAYOUTID = 7;
+var c_oserct_chartExSeriesHIDDEN = 8;
+var c_oserct_chartExSeriesOWNERIDX = 9;
+var c_oserct_chartExSeriesFORMATIDX = 10;
+var c_oserct_chartExSeriesUNIQUEID = 11;
+
+var c_oserct_chartExDataPointIDX = 0;
+var c_oserct_chartExDataPointSPPR = 1;
+
+var c_oserct_chartExDataLabelsPOS = 0;
+var c_oserct_chartExDataLabelsNUMFMT = 1;
+var c_oserct_chartExDataLabelsTXPR = 2;
+var c_oserct_chartExDataLabelsSPPR = 3;
+var c_oserct_chartExDataLabelsVISABILITIES = 4;
+var c_oserct_chartExDataLabelsSEPARATOR = 5;
+var c_oserct_chartExDataLabelsDATALABEL = 6;
+var c_oserct_chartExDataLabelsDATALABELHIDDEN = 7;
+
+var c_oserct_chartExNumberFormatFORMATCODE = 0;
+var c_oserct_chartExNumberFormatSOURCELINKED = 1;
+
+var c_oserct_chartExDataLabelIDX = 0;
+var c_oserct_chartExDataLabelPOS = 1;
+var c_oserct_chartExDataLabelNUMFMT = 2;
+var c_oserct_chartExDataLabelTXPR = 3;
+var c_oserct_chartExDataLabelSPPR = 4;
+var c_oserct_chartExDataLabelVISABILITIES = 5;
+var c_oserct_chartExDataLabelSEPARATOR = 6;
+
+var c_oserct_chartExDataLabelHiddenIDX = 0;
+
+var c_oserct_chartExSeriesLayoutPARENT = 0;
+var c_oserct_chartExSeriesLayoutREGION = 1;
+var c_oserct_chartExSeriesLayoutVISABILITIES = 2;
+var c_oserct_chartExSeriesLayoutAGGREGATION = 3;
+var c_oserct_chartExSeriesLayoutBINNING = 4;
+var c_oserct_chartExSeriesLayoutSTATISTIC = 5;
+var c_oserct_chartExSeriesLayoutSUBTOTALS = 6;
+
+var c_oserct_chartExDataLabelVisibilitiesSERIES = 0;
+var c_oserct_chartExDataLabelVisibilitiesCATEGORY = 1;
+var c_oserct_chartExDataLabelVisibilitiesVALUE = 2;
+
+var c_oserct_chartExBinningBINSIZE = 0;
+var c_oserct_chartExBinningBINCOUNT = 1;
+var c_oserct_chartExBinningINTERVAL = 2;
+var c_oserct_chartExBinningUNDERVAL = 3;
+var c_oserct_chartExBinningUNDERAUTO = 4;
+var c_oserct_chartExBinningOVERVAL = 5;
+var c_oserct_chartExBinningOVERAUTO = 6;
+
+var c_oserct_chartExTitleTX = 0;
+var c_oserct_chartExTitleTXPR = 1;
+var c_oserct_chartExTitleSPPR = 2;
+var c_oserct_chartExTitlePOS = 3;
+var c_oserct_chartExTitleALIGN = 4;
+var c_oserct_chartExTitleOVERLAY = 5;
+
+var c_oserct_chartExLegendTXPR = 0;
+var c_oserct_chartExLegendSPPR = 1;
+var c_oserct_chartExLegendPOS = 2;
+var c_oserct_chartExLegendALIGN = 3;
+var c_oserct_chartExLegendOVERLAY = 4;
+
+var c_oserct_chartExTextRICH = 0;
+var c_oserct_chartExTextDATA = 1;
+
+var c_oserct_chartExTextDataFORMULA = 0;
+var c_oserct_chartExTextDataVALUE = 1;
+
+var c_oserct_chartExDataID = 0;
+var c_oserct_chartExDataSTRDIMENSION = 1;
+var c_oserct_chartExDataNUMDIMENSION = 2;
+
+var c_oserct_chartExSubtotalsIDX = 0;
+
+var c_oserct_chartExSeriesVisibilitiesCONNECTOR = 0;
+var c_oserct_chartExSeriesVisibilitiesMEANLINE = 1;
+var c_oserct_chartExSeriesVisibilitiesMEANMARKER = 2;
+var c_oserct_chartExSeriesVisibilitiesNONOUTLIERS = 3;
+var c_oserct_chartExSeriesVisibilitiesOUTLIERS = 4;
+
+var c_oserct_chartExCatScalingGAPAUTO = 0;
+var c_oserct_chartExCatScalingGAPVAL = 1;
+
+var c_oserct_chartExValScalingMAXAUTO = 0;
+var c_oserct_chartExValScalingMAXVAL = 1;
+var c_oserct_chartExValScalingMINAUTO = 2;
+var c_oserct_chartExValScalingMINVAL = 3;
+var c_oserct_chartExValScalingMAJUNITAUTO = 4;
+var c_oserct_chartExValScalingMAJUNITVAL = 5;
+var c_oserct_chartExValScalingMINUNITAUTO = 6;
+var c_oserct_chartExValScalingMINUNITVAL = 7;
+
+var c_oserct_chartExAxisUnitTYPE = 0;
+var c_oserct_chartExAxisUnitLABEL = 1;
+
+var c_oserct_chartExAxisUnitsLabelTEXT = 0;
+var c_oserct_chartExAxisUnitsLabelSPPR = 1;
+var c_oserct_chartExAxisUnitsLabelTXPR = 2;
+
+var c_oserct_chartExTickMarksTYPE = 0;
+
+var c_oserct_chartExGridlinesSPPR = 0;
+
+var c_oserct_chartExStatisticsMETHOD = 0;
+
+var c_oserct_chartExDataDimensionTYPE = 0;
+var c_oserct_chartExDataDimensionFORMULA = 1;
+var c_oserct_chartExDataDimensionNF = 2;
+var c_oserct_chartExDataDimensionSTRINGLEVEL = 3;
+var c_oserct_chartExDataDimensionNUMERICLEVEL = 4;
+
+var c_oserct_chartExFormulaCONTENT = 0;
+var c_oserct_chartExFormulaDIRECTION = 1;
+
+var c_oserct_chartExDataLevelNAME = 0;
+var c_oserct_chartExDataLevelCOUNT = 1;
+var c_oserct_chartExDataLevelPT = 2;
+var c_oserct_chartExDataLevelFORMATCODE = 3;
+
+var c_oserct_chartExDataValueIDX = 0;
+var c_oserct_chartExDataValueCONTENT = 1;
+
+// extens ... 0x80
+var c_oserct_dataLabel = 0x81;
+var c_oserct_chartFiltering = 0x82;
+
+var c_oserct_dataLabelsRange = 0x90;
+var c_oserct_filteredLineSeries = 0x91;
+var c_oserct_filteredScatterSeries = 0x92;
+var c_oserct_filteredRadarSeries = 0x93;
+var c_oserct_filteredBarSeries = 0x94;
+var c_oserct_filteredAreaSeries = 0x95;
+var c_oserct_filteredBubbleSeries = 0x96;
+var c_oserct_filteredSurfaceSeries = 0x97;
+var c_oserct_filteredPieSeries = 0x98;
+var c_oserct_fullRef = 0x99;
+var c_oserct_levelRef = 0x9A;
+var c_oserct_formulaRef = 0x9B;
+var c_oserct_categoryFilterExceptions = 0x9C;
+var c_oserct_categoryFilterException = 0x9D;
+var c_oserct_filteredSeriesTitle = 0x9E;
+var c_oserct_filteredCategoryTitle = 0x9EF;
+
+var c_oserct_dataLabelsRangeFormula = 0x100;
+var c_oserct_dataLabelsRangeCache = 0x101;
+
+var c_oserct_filterSqref = 0x110;
+var c_oserct_filterSpPr = 0x111;
+var c_oserct_filterExplosion = 0x112;
+var c_oserct_filterInvertIfNegative = 0x113;
+var c_oserct_filterBubble3D = 0x114;
+var c_oserct_filterMarker = 0x115;
+var c_oserct_filterLbl = 0x116;
 
 var SIZE_REPRESENTS_AREA = 0;
 var SIZE_REPRESENTS_W = 1;
@@ -2776,6 +2988,11 @@ BinaryChartWriter.prototype.WriteCT_BubbleSer = function (oVal) {
             oThis.WriteCT_Boolean(oVal.bubble3D);
         });
     }
+    if (null != oVal.datalabelsRange) {
+        this.bs.WriteItem(c_oserct_chartFiltering, function () {
+            oThis.WriteChartFiltering(oVal);
+        });
+    }
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_bubbleserEXTLST, function () {
@@ -3113,6 +3330,14 @@ BinaryChartWriter.prototype.WriteCT_DLbl = function (oVal) {
             oThis.WriteTxPr(oVal.txPr);
         });
     }
+
+	if(null != oVal.showDlblsRange) {
+		this.bs.WriteItem(c_oserct_dataLabel, function () {
+			oThis.bs.WriteItem(c_oserct_showDataLabelsRange, function () {
+				oThis.WriteCT_Boolean(oVal.showDlblsRange);
+			});
+		});
+	}
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_dlblEXTLST, function () {
@@ -3673,6 +3898,12 @@ BinaryChartWriter.prototype.WriteCT_SurfaceSer = function (oVal) {
             oThis.WriteCT_NumDataSource(oVal.val);
         });
     }
+	if
+	(null != oVal.datalabelsRange) {
+		this.bs.WriteItem(c_oserct_chartFiltering, function () {
+			oThis.WriteChartFiltering(oVal);
+		});
+	}
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_surfaceserEXTLST, function () {
@@ -3903,6 +4134,11 @@ BinaryChartWriter.prototype.WriteCT_PieSer = function (oVal) {
             oThis.WriteCT_NumDataSource(oVal.val);
         });
     }
+	if (null != oVal.datalabelsRange) {
+		this.bs.WriteItem(c_oserct_chartFiltering, function () {
+			oThis.WriteChartFiltering(oVal);
+		});
+	}
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_pieserEXTLST, function () {
@@ -4014,6 +4250,33 @@ BinaryChartWriter.prototype.WriteCT_BarGrouping = function (oVal) {
         }
     }
 };
+BinaryChartWriter.prototype.WriteChartFiltering = function(oSer) {
+	if(!oSer) {
+		return;
+	}
+	if(oSer.datalabelsRange) {
+		let oThis = this;
+		this.bs.WriteItem(c_oserct_dataLabelsRange, function () {
+			oThis.WriteCT_datalabelsRange(oSer.datalabelsRange);
+		});
+	}
+};
+BinaryChartWriter.prototype.WriteCT_datalabelsRange = function(oVal) {
+	if(!oVal) {
+		return;
+	}
+	let oThis = this;
+	if (null != oVal.f) {
+		this.bs.WriteItem(0, function () {
+			oThis.memory.WriteString3(oVal.f);
+		});
+	}
+	if (null != oVal.strCache) {
+		this.bs.WriteItem(1, function () {
+			oThis.WriteCT_StrData(oVal.strCache);
+		});
+	}
+};
 BinaryChartWriter.prototype.WriteCT_BarSer = function (oVal) {
     var oThis = this;
     if (null != oVal.idx) {
@@ -4087,6 +4350,11 @@ BinaryChartWriter.prototype.WriteCT_BarSer = function (oVal) {
             oThis.WriteCT_Shape(oVal.shape);
         });
     }
+	if (null != oVal.datalabelsRange) {
+		this.bs.WriteItem(c_oserct_chartFiltering, function () {
+			oThis.WriteChartFiltering(oVal);
+		});
+	}
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_barserEXTLST, function () {
@@ -4373,6 +4641,11 @@ BinaryChartWriter.prototype.WriteCT_ScatterSer = function (oVal) {
             oThis.WriteCT_Boolean(oVal.smooth);
         });
     }
+	if (null != oVal.datalabelsRange) {
+		this.bs.WriteItem(c_oserct_chartFiltering, function () {
+			oThis.WriteChartFiltering(oVal);
+		});
+	}
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_scatterserEXTLST, function () {
@@ -4495,6 +4768,11 @@ BinaryChartWriter.prototype.WriteCT_RadarSer = function (oVal) {
             oThis.WriteCT_NumDataSource(oVal.val);
         });
     }
+	if (null != oVal.datalabelsRange) {
+		this.bs.WriteItem(c_oserct_chartFiltering, function () {
+			oThis.WriteChartFiltering(oVal);
+		});
+	}
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_radarserEXTLST, function () {
@@ -4679,6 +4957,12 @@ BinaryChartWriter.prototype.WriteCT_LineSer = function (oVal) {
             oThis.WriteCT_Boolean(oVal.smooth);
         });
     }
+
+	if (null != oVal.datalabelsRange) {
+		this.bs.WriteItem(c_oserct_chartFiltering, function () {
+			oThis.WriteChartFiltering(oVal);
+		});
+	}
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_lineserEXTLST, function () {
@@ -4975,6 +5259,12 @@ BinaryChartWriter.prototype.WriteCT_AreaSer = function (oVal) {
             oThis.WriteCT_NumDataSource(oVal.val);
         });
     }
+
+	if (null != oVal.datalabelsRange) {
+		this.bs.WriteItem(c_oserct_chartFiltering, function () {
+			oThis.WriteChartFiltering(oVal);
+		});
+	}
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_areaserEXTLST, function () {
@@ -8091,6 +8381,11 @@ BinaryChartReader.prototype.ReadCT_BubbleSer = function (type, length, val) {
         });
         // val.m_extLst = oNewVal;
     }
+	else if(c_oserct_chartFiltering === type) {
+	    res = this.bcr.Read1(length, function (t, l) {
+		    return oThis.ReadCT_ChartFiltering(t, l, val);
+	    });
+    }
     else
         res = c_oSerConstants.ReadUnknown;
     return res;
@@ -8588,9 +8883,31 @@ BinaryChartReader.prototype.ReadCT_DLbl = function (type, length, val) {
         });
         // val.m_extLst = oNewVal;
     }
+    else if (c_oserct_dataLabel === type) {
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_DLblExt(t, l, val);
+        });
+        // val.m_extLst = oNewVal;
+    }
     else
         res = c_oSerConstants.ReadUnknown;
     return res;
+};
+BinaryChartReader.prototype.ReadCT_DLblExt = function(type, length, val) {
+
+	let res = c_oSerConstants.ReadOk;
+	let oThis = this;
+	if (c_oserct_showDataLabelsRange === type) {
+		let oNewVal = { m_val: null };
+		res = this.bcr.Read1(length, function (t, l) {
+			return oThis.ReadCT_Boolean(t, l, oNewVal);
+		});
+		if (null != oNewVal.m_val)
+			val.setShowDlblsRange(oNewVal.m_val);
+	}
+	else
+		res = c_oSerConstants.ReadUnknown;
+	return res;
 };
 BinaryChartReader.prototype.ReadCT_DLblPos = function (type, length, val) {
     var res = c_oSerConstants.ReadOk;
@@ -9294,6 +9611,11 @@ BinaryChartReader.prototype.ReadCT_SurfaceSer = function (type, length, val) {
         });
         // val.m_extLst = oNewVal;
     }
+    else if(c_oserct_chartFiltering === type) {
+	    res = this.bcr.Read1(length, function (t, l) {
+		    return oThis.ReadCT_ChartFiltering(t, l, val);
+	    });
+    }
     else
         res = c_oSerConstants.ReadUnknown;
     return res;
@@ -9580,6 +9902,11 @@ BinaryChartReader.prototype.ReadCT_PieSer = function (type, length, val) {
         });
         // val.m_extLst = oNewVal;
     }
+    else if(c_oserct_chartFiltering === type) {
+	    res = this.bcr.Read1(length, function (t, l) {
+		    return oThis.ReadCT_ChartFiltering(t, l, val);
+	    });
+    }
     else
         res = c_oSerConstants.ReadUnknown;
     return res;
@@ -9813,9 +10140,45 @@ BinaryChartReader.prototype.ReadCT_BarSer = function (type, length, val) {
         });
         // val.m_extLst = oNewVal;
     }
+    else if(c_oserct_chartFiltering === type) {
+	    res = this.bcr.Read1(length, function (t, l) {
+		    return oThis.ReadCT_ChartFiltering(t, l, val);
+	    });
+    }
     else
         res = c_oSerConstants.ReadUnknown;
     return res;
+};
+BinaryChartReader.prototype.ReadCT_ChartFiltering = function(type, length, val) {
+	let res = c_oSerConstants.ReadOk;
+	let oThis = this;
+	if (c_oserct_dataLabelsRange === type) {
+		var oNewVal = new AscFormat.CStrRef();
+		res = this.bcr.Read1(length, function (t, l) {
+			return oThis.ReadCT_dataLabelsRange(t, l, oNewVal);
+		});
+		val.setDataLabelsRange(oNewVal);
+	}
+	else
+		res = c_oSerConstants.ReadUnknown;
+	return res;
+};
+BinaryChartReader.prototype.ReadCT_dataLabelsRange = function(type, length, val) {
+	let res = c_oSerConstants.ReadOk;
+	let oThis = this;
+	if (0 === type) {
+		val.setF(this.stream.GetString2LE(length));
+	}
+	else if(1 === type) {
+		var oNewVal = new AscFormat.CStrCache();
+		res = this.bcr.Read1(length, function (t, l) {
+			return oThis.ReadCT_StrData(t, l, oNewVal);
+		});
+		val.setStrCache(oNewVal);
+	}
+	else
+		res = c_oSerConstants.ReadUnknown;
+	return res;
 };
 BinaryChartReader.prototype.ReadCT_Shape = function (type, length, val) {
     var res = c_oSerConstants.ReadOk;
@@ -10194,6 +10557,11 @@ BinaryChartReader.prototype.ReadCT_ScatterSer = function (type, length, val) {
         });
         // val.m_extLst = oNewVal;
     }
+    else if(c_oserct_chartFiltering === type) {
+	    res = this.bcr.Read1(length, function (t, l) {
+		    return oThis.ReadCT_ChartFiltering(t, l, val);
+	    });
+    }
     else
         res = c_oSerConstants.ReadUnknown;
     return res;
@@ -10344,6 +10712,11 @@ BinaryChartReader.prototype.ReadCT_RadarSer = function (type, length, val) {
             return oThis.ReadCT_extLst(t, l, oNewVal);
         });
         // val.m_extLst = oNewVal;
+    }
+    else if(c_oserct_chartFiltering === type) {
+	    res = this.bcr.Read1(length, function (t, l) {
+		    return oThis.ReadCT_ChartFiltering(t, l, val);
+	    });
     }
     else
         res = c_oSerConstants.ReadUnknown;
@@ -10580,6 +10953,11 @@ BinaryChartReader.prototype.ReadCT_LineSer = function (type, length, val) {
             return oThis.ReadCT_extLst(t, l, oNewVal);
         });
         // val.m_extLst = oNewVal;
+    }
+    else if(c_oserct_chartFiltering === type) {
+	    res = this.bcr.Read1(length, function (t, l) {
+		    return oThis.ReadCT_ChartFiltering(t, l, val);
+	    });
     }
     else
         res = c_oSerConstants.ReadUnknown;
@@ -10989,6 +11367,11 @@ BinaryChartReader.prototype.ReadCT_AreaSer = function (type, length, val) {
             return oThis.ReadCT_extLst(t, l, oNewVal);
         });
         // val.m_extLst = oNewVal;
+    }
+    else if(c_oserct_chartFiltering === type) {
+	    res = this.bcr.Read1(length, function (t, l) {
+		    return oThis.ReadCT_ChartFiltering(t, l, val);
+	    });
     }
     else
         res = c_oSerConstants.ReadUnknown;

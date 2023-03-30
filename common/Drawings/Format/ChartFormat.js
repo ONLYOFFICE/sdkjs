@@ -77,6 +77,9 @@
     drawingsChangesMap[AscDFH.historyitem_DLbl_SetShowVal] = function(oClass, value) {
         oClass.showVal = value;
     };
+    drawingsChangesMap[AscDFH.historyitem_DLbl_SetShowDLblsRange] = function(oClass, value) {
+        oClass.showDlblsRange = value;
+    };
     drawingsChangesMap[AscDFH.historyitem_DLbl_SetSpPr] = function(oClass, value) {
         oClass.spPr = value;
     };
@@ -1350,6 +1353,9 @@
         oClass.spPr = value;
         oClass.Refresh_RecalcData({Type: AscDFH.historyitem_CommonSeries_SetSpPr});
     };
+    drawingsChangesMap[AscDFH.historyitem_CommonChart_DataLabelsRange] = function(oClass, value) {
+        oClass.dataLablesRange = value;
+    };
 
     drawingsChangesMap[AscDFH.historyitem_ChartStyleAxisTitle] = function(oClass, value) {
         oClass.axisTitle = value;
@@ -1494,6 +1500,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetShowPercent] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetShowSerName] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetShowVal] = window['AscDFH'].CChangesDrawingsBool;
+    AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetShowDLblsRange] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_BarChart_Set3D] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_BarChart_SetVaryColors] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_CommonChart_SetVaryColors] = window['AscDFH'].CChangesDrawingsBool;
@@ -1913,6 +1920,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_CommonSeries_SetOrder] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_CommonSeries_SetTx] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_CommonSeries_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_CommonChart_DataLabelsRange] = window['AscDFH'].CChangesDrawingsObject;
 
     AscDFH.changesFactory[AscDFH.historyitem_PivotSource_SetFmtId] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_PivotSource_SetName] = window['AscDFH'].CChangesDrawingsString;
@@ -2351,6 +2359,7 @@
         this.showPercent = null;
         this.showSerName = null;
         this.showVal = null;
+		this.showDlblsRange = null;
         this.spPr = null;
         this.tx = null;
         this.txPr = null;
@@ -2413,6 +2422,7 @@
         oCopy.setShowPercent(this.showPercent);
         oCopy.setShowSerName(this.showSerName);
         oCopy.setShowVal(this.showVal);
+        oCopy.setShowDlblsRange(this.showDlblsRange);
         if(this.spPr) {
             oCopy.setSpPr(this.spPr.createDuplicate());
         }
@@ -3269,6 +3279,25 @@
         }
     };
     CDLbl.prototype.recalculateTxBody = function() {
+		if(this.showDlblsRange) {
+			let sText;
+			if(this.series && this.pt) {
+				let oLblsRange = this.series.datalabelsRange;
+				if(oLblsRange) {
+					let oCache = oLblsRange.strCache;
+					if(oCache) {
+						let oPt = oCache.getPtByIndex(this.pt.idx);
+						sText = oPt && oPt.val;
+					}
+
+				}
+			}
+			if(sText) {
+				this.txBody = AscFormat.CreateTextBodyFromString(sText, this.getDrawingDocument(), this);
+				return;
+			}
+
+		}
         if(this.tx && this.tx.rich) {
             this.txBody = this.tx.rich;
             this.txBody.parent = this;
@@ -3333,6 +3362,8 @@
 
         if(dLbl.showVal != null)
             this.setShowVal(dLbl.showVal);
+        if(dLbl.showDlblsRange != null)
+            this.setShowDlblsRange(dLbl.showDlblsRange);
 
         if(dLbl.spPr != null) {
             if(this.spPr == null) {
@@ -3499,6 +3530,10 @@
         History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DLbl_SetShowVal, this.showVal, pr));
         this.showVal = pr;
     };
+    CDLbl.prototype.setShowDlblsRange = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DLbl_SetShowDLblsRange, this.showDlblsRange, pr));
+        this.showDlblsRange = pr;
+    };
     CDLbl.prototype.setSpPr = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DLbl_SetSpPr, this.spPr, pr));
         this.spPr = pr;
@@ -3572,6 +3607,7 @@
         this.order = null;
         this.tx = null;
         this.spPr = null;
+		this.datalabelsRange = null;
     }
 
     InitClass(CSeriesBase, CBaseChartObject, AscDFH.historyitem_type_Unknown);
@@ -3643,6 +3679,11 @@
     CSeriesBase.prototype.setSpPr = function(val) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonSeries_SetSpPr, this.spPr, val));
         this.spPr = val;
+        this.setParentToChild(val);
+    };
+    CSeriesBase.prototype.setDataLabelsRange = function(val) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChart_DataLabelsRange, this.spPr, val));
+        this.datalabelsRange = val;
         this.setParentToChild(val);
     };
     CSeriesBase.prototype.getChildren = function() {
@@ -13606,7 +13647,7 @@
         }
     };
     CTitle.prototype.checkDocContent = function() {
-        if(this.tx && this.tx.rich && this.tx.rich.content) {
+        if(this.tx && this.tx.rich && this.tx.rich.content && !this.showDlblsRange) {
             return;
         }
         else if(this.txBody && this.txBody.content) {
@@ -13632,6 +13673,9 @@
             if(AscFormat.isRealNumber(StartPage)) {
                 this.txBody.content.Set_StartPage(StartPage);
             }
+			if(this.showDlblsRange && this.setShowDlblsRange) {
+				this.setShowDlblsRange(false);
+			}
             //if(editor && editor.isDocumentEditor)
             //{
             //    this.recalculateContent();
