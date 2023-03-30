@@ -1800,7 +1800,7 @@ function (window, undefined) {
 	cSORT.prototype.name = 'SORT';
 	cSORT.prototype.argumentsMin = 1;
 	cSORT.prototype.argumentsMax = 4;
-	cSORT.prototype.isXLFN = false;
+	cSORT.prototype.isXLFN = true;
 	cSORT.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
 	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.bool];
 	cSORT.prototype.Calculate = function (arg) {
