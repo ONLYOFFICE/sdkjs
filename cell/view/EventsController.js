@@ -827,9 +827,8 @@
 
 			switch (event.which) {
 				case 116:
-					//todo ctrl+alt
 					if (canEdit && !t.getCellEditMode() && !selectionDialogMode &&
-						event.altKey && t.handlers.trigger("refreshConnections", !!ctrlKey)) {
+						event.altKey && t.handlers.trigger("refreshConnections", !!event.ctrlKey)) {
 						return result;
 					}
 					t._setSkipKeyPress(false);
