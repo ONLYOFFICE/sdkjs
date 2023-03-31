@@ -9408,7 +9408,7 @@ CDocument.prototype.OnKeyDown = function(e)
 					oForm = null;
 
 				if (oForm)
-					this.TurnComboBoxFormValue(oForm, true);
+					this.TurnComboBoxFormValue(oForm, false);
 			}
 			else
 			{
