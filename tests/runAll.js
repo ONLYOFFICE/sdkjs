@@ -50,6 +50,9 @@ const allTests = [
 	'word/plugins/pluginsApi.html',
 	'word/merge-documents/mergeDocuments.html',
 
+	'cell/shortcuts/shortcuts.html',
+	'slide/shortcuts/shortcuts.html',
+	'word/shortcuts/shortcuts.html',
 
 	'oform/xml/oformXml.html'
 ];

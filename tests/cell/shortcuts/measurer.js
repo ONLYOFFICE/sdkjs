@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
+ * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -34,8 +34,6 @@
 
 (function(window)
 {
-	window.AscFonts = window.AscFonts || {};
-	onLoadFontsModule = function () {};
 
 	const CharWidth   = 0.5;
 	const FontSize    = 10;
@@ -43,7 +41,6 @@
 	const FontAscent  = 15;
 	const FontDescent = 5;
 
-	// TODO: Сейчас fontSize=10, потому что по умолчанию такой в редакторе, нужно, чтобы здесь он выставлялся
 
 	const GraphemeNormal       = 20;
 	const GraphemeLigature_ffi = 25;
@@ -53,6 +50,14 @@
 	const GraphemeCombining_xyz = 40;
 	const GraphemeCombining_xy  = 45;
 
+	const Letter = {
+		f : 102,
+		i : 105,
+
+		x : 120,
+		y : 121,
+		z : 122
+	};
 
 	let HB_String                            = [];
 	AscFonts.HB_StartString                  = function()
@@ -67,6 +72,9 @@
 	{
 		HB_String.push(u);
 	};
+	AscFonts.onLoadModule = function () {
+
+	}
 	AscFonts.CTextShaper.prototype.FlushWord = function()
 	{
 		AscFonts.HB_EndString();
@@ -74,38 +82,38 @@
 		for (let nIndex = 0, nCount = HB_String.length; nIndex < nCount; ++nIndex)
 		{
 			if (nCount - nIndex >= 3
-				&& AscTest.Letter.f === HB_String[nIndex]
-				&& AscTest.Letter.f === HB_String[nIndex + 1]
-				&& AscTest.Letter.i === HB_String[nIndex + 2])
+				&& Letter.f === HB_String[nIndex]
+				&& Letter.f === HB_String[nIndex + 1]
+				&& Letter.i === HB_String[nIndex + 2])
 			{
 				this.FlushGrapheme(GraphemeLigature_ffi, CharWidth * 3, 3, true);
 				nIndex += 2;
 			}
 			else if (nCount - nIndex >= 2
-				&& AscTest.Letter.f === HB_String[nIndex]
-				&& AscTest.Letter.f === HB_String[nIndex + 1])
+				&& Letter.f === HB_String[nIndex]
+				&& Letter.f === HB_String[nIndex + 1])
 			{
 				this.FlushGrapheme(GraphemeLigature_ff, CharWidth * 2, 2, true);
 				nIndex += 1;
 			}
 			else if (nCount - nIndex >= 2
-				&& AscTest.Letter.f === HB_String[nIndex]
-				&& AscTest.Letter.i === HB_String[nIndex + 1])
+				&& Letter.f === HB_String[nIndex]
+				&& Letter.i === HB_String[nIndex + 1])
 			{
 				this.FlushGrapheme(GraphemeLigature_fi, CharWidth * 2, 2, true);
 				nIndex += 1;
 			}
 			else if (nCount - nIndex >= 3
-				&& AscTest.Letter.x === HB_String[nIndex]
-				&& AscTest.Letter.y === HB_String[nIndex + 1]
-				&& AscTest.Letter.z === HB_String[nIndex + 2])
+				&& Letter.x === HB_String[nIndex]
+				&& Letter.y === HB_String[nIndex + 1]
+				&& Letter.z === HB_String[nIndex + 2])
 			{
 				this.FlushGrapheme(GraphemeCombining_xyz, CharWidth * 3, 3, false);
 				nIndex += 2;
 			}
 			else if (nCount - nIndex >= 2
-				&& AscTest.Letter.x === HB_String[nIndex]
-				&& AscTest.Letter.y === HB_String[nIndex + 1])
+				&& Letter.x === HB_String[nIndex]
+				&& Letter.y === HB_String[nIndex + 1])
 			{
 				this.FlushGrapheme(GraphemeCombining_xy, CharWidth * 2, 2, false);
 				nIndex += 1;
@@ -118,7 +126,6 @@
 
 		AscFonts.HB_StartString();
 	};
-	const g_oTextMeasurer = window.g_oTextMeasurer || AscCommon.g_oTextMeasurer;
 	g_oTextMeasurer.SetFontInternal = function()
 	{
 	};
@@ -155,15 +162,6 @@
 	{
 		return {Width : CharWidth * FontSize};
 	};
-	AscCommon.g_fontApplication = AscCommon.g_fontApplication || window.g_fontApplication || {};
-	AscCommon.g_fontApplication.LoadFont = function () {
 
-	};
-	//--------------------------------------------------------export----------------------------------------------------
-	AscTest.CharWidth   = CharWidth;
-	AscTest.FontSize    = FontSize;
-	AscTest.FontHeight  = FontHeight;
-	AscTest.FontAscent  = FontAscent;
-	AscTest.FontDescent = FontDescent;
 
 })(window);
