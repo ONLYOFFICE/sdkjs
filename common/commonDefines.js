@@ -633,11 +633,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Accounting : 3,
 		Currency   : 4,
 		Date       : 5,
-		Time       : 6,
-		Percent    : 7,
-		Fraction   : 8,
-		Text       : 9,
-		Custom     : 10
+		LongDate   : 6,
+		Time       : 7,
+		Percent    : 8,
+		Fraction   : 9,
+		Text       : 10,
+		Custom     : 11
 	};
 
 	var c_oAscDrawingLayerType = {
