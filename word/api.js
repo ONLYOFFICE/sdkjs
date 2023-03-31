@@ -1430,8 +1430,8 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.ApplyHeading2, 50, false, false, true],
 			[c_oAscDocumentShortcutType.ApplyHeading3, 51, false, false, true],
 			[c_oAscDocumentShortcutType.InsertFootnoteNow, 70, true, false, true],
-			[c_oAscDocumentShortcutType.InsertEquation, 187, false, false, true],
-			[c_oAscDocumentShortcutType.SoftHyphen, 189, false, false, true]
+			[c_oAscDocumentShortcutType.InsertEquation, 187, false, false, true]
+			//[c_oAscDocumentShortcutType.SoftHyphen, 189, false, false, true] TODO: unlock after implementation
 		]);
 	}
 
@@ -1441,8 +1441,8 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.ApplyHeading1, 49, true, false, true],
 			[c_oAscDocumentShortcutType.ApplyHeading2, 50, true, false, true],
 			[c_oAscDocumentShortcutType.ApplyHeading3, 51, true, false, true],
-			[c_oAscDocumentShortcutType.InsertEquation, 187, true, false, true],
-			[c_oAscDocumentShortcutType.SoftHyphen, 189, true, false, true]
+			[c_oAscDocumentShortcutType.InsertEquation, 187, true, false, true]
+			//[c_oAscDocumentShortcutType.SoftHyphen, 189, true, false, true] TODO: unlock after implementation
 		]);
 	}
 

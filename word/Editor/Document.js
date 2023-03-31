@@ -8898,6 +8898,7 @@ CDocument.prototype.OnKeyDown = function(e)
 		case c_oAscDocumentShortcutType.SoftHyphen:
 		{
 			// TODO: Реализовать
+			// TODO: unlock shortcut initialization after implementation and add a check for the correct operation of the shortcut to the tests
 			bRetValue = keydownresult_PreventAll;
 			break;
 		}
