@@ -5608,7 +5608,7 @@
 						if (content) {
 							if (ctrlKey) // Ctrl + End - переход в конец документа
 							{
-								content.MoveCursorToEndPos();
+								content.MoveCursorToEndPos(e.shiftKey);
 								drawingObjectsController.updateSelectionState();
 								drawingObjectsController.updateOverlay();
 								this.drawingObjects.sendGraphicObjectProps();
@@ -5628,7 +5628,7 @@
 						if (content) {
 							if (ctrlKey) // Ctrl + End - переход в конец документа
 							{
-								content.MoveCursorToStartPos();
+								content.MoveCursorToStartPos(e.shiftKey);
 								drawingObjectsController.updateSelectionState();
 								drawingObjectsController.updateOverlay();
 								this.drawingObjects.sendGraphicObjectProps();
