@@ -1523,7 +1523,30 @@ background-repeat: no-repeat;\
 			[Asc.c_oAscPresentationShortcutType.Save, 83, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 93, false, false, false],
 			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 121, false, true, false],
-			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 57351, false, false, false]
+			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 57351, false, false, false],
+			[Asc.c_oAscPresentationShortcutType.ShowParaMarks, 56, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.Bold, 66, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.CopyFormat, 67, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.CenterAlign, 69, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.EuroSign, 69, true, false, true],
+			[Asc.c_oAscPresentationShortcutType.Group, 71, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.UnGroup, 71, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.Italic, 73, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.JustifyAlign, 74, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.AddHyperlink, 75, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.BulletList, 76, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.LeftAlign, 76, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.RightAlign, 82, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.Underline, 85, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.Strikethrough, 53, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.PasteFormat, 83, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.Superscript, 187, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.Superscript, 188, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.Subscript, 187, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.Subscript, 190, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.EnDash, 189, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.DecreaseFont, 219, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.IncreaseFont, 221, true, false, false]
 		];
 		this.initShortcuts(aShortcuts, false)
 	};

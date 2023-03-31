@@ -6519,11 +6519,6 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			bRetValue = keydownresult_PreventAll;
 			break;
 		}
-		case Asc.c_oAscPresentationShortcutType.Cut:
-		case Asc.c_oAscPresentationShortcutType.Copy:
-		case Asc.c_oAscPresentationShortcutType.Paste: {
-			break;
-		}
 		case Asc.c_oAscPresentationShortcutType.Duplicate: {
 			if (this.CanEdit()) {
 				if (oController) {
@@ -6566,6 +6561,203 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			}
 
 			bUpdateSelection = false;
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.ShowParaMarks: {
+			editor.ShowParaMarks = !editor.ShowParaMarks;
+			if (this.Slides[this.CurPage]) {
+				this.DrawingDocument.OnRecalculatePage(this.CurPage, this.Slides[this.CurPage]);
+				if (this.Slides[this.CurPage].notes) {
+					this.DrawingDocument.Notes_OnRecalculate(this.CurPage, this.Slides[this.CurPage].NotesWidth, this.Slides[this.CurPage].getNotesHeight());
+				}
+			}
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.Bold: {
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr && this.CanEdit()) {
+				if (this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
+					this.AddToParagraph(new ParaTextPr({Bold: TextPr.Bold === true ? false : true}));
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.CopyFormat: {
+			this.Document_Format_Copy();
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.CenterAlign: {
+			var ParaPr = this.GetCalculatedParaPr();
+			if (null != ParaPr && ParaPr.Jc !== AscCommon.align_Center) {
+				this.Create_NewHistoryPoint(AscDFH.historydescription_Document_SetParagraphAlignHotKey);
+				this.SetParagraphAlign(AscCommon.align_Center);
+				this.Document_UpdateInterfaceState();
+			}
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.EuroSign: {
+			if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+				History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
+				this.AddToParagraph(new AscWord.CRunText("€".charCodeAt(0)));
+			}
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.Group: {
+			if (this.CanEdit()) {
+				this.groupShapes();
+			}
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.UnGroup: {
+			if (this.CanEdit()) {
+				this.unGroupShapes();
+			}
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.Italic: {
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr) {
+				if (this.CanEdit() && this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
+					this.AddToParagraph(new ParaTextPr({Italic: TextPr.Italic === true ? false : true}));
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.JustifyAlign: {
+			var ParaPr = this.GetCalculatedParaPr();
+			if (null != ParaPr && this.CanEdit() && ParaPr.Jc !== align_Justify) {
+				this.SetParagraphAlign(align_Justify);
+			}
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.AddHyperlink: {
+			if (this.CanEdit() && true === this.CanAddHyperlink(false))
+				editor.sync_DialogAddHyperlink();
+
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.BulletList: {
+			if (this.CanEdit()) {
+				var oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 1});
+				this.SetParagraphNumbering(oBullet);
+			}
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.LeftAlign: {
+			var ParaPr = this.GetCalculatedParaPr();
+			if (null != ParaPr) {
+				if (this.CanEdit() && ParaPr.Jc !== align_Left) {
+					this.SetParagraphAlign(align_Left);
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.RightAlign: {
+			var ParaPr = this.GetCalculatedParaPr();
+			if (null != ParaPr) {
+				if (this.CanEdit() && ParaPr.Jc !== AscCommon.align_Right) {
+					this.SetParagraphAlign(AscCommon.align_Right);
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.Underline: {
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr) {
+				if (this.CanEdit() && this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
+					this.AddToParagraph(new ParaTextPr({Underline: TextPr.Underline === true ? false : true}));
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.Strikethrough: {
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr) {
+				if (this.CanEdit() && this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
+					this.AddToParagraph(new ParaTextPr({Strikeout: TextPr.Strikeout !== true}));
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.PasteFormat: {
+			if (this.CanEdit()) {
+				this.Document_Format_Paste();
+			}
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.Superscript: {
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr) {
+				if (this.CanEdit() && this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
+					this.AddToParagraph(new ParaTextPr({VertAlign: TextPr.VertAlign === AscCommon.vertalign_SuperScript ? vertalign_Baseline : AscCommon.vertalign_SuperScript}));
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.Subscript: {
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr) {
+				if (this.CanEdit() && this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
+					this.AddToParagraph(new ParaTextPr({VertAlign: TextPr.VertAlign === AscCommon.vertalign_SubScript ? vertalign_Baseline : AscCommon.vertalign_SubScript}));
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.EnDash: {
+			if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+				if (this.CanEdit()) {
+					this.DrawingDocument.TargetStart();
+					this.DrawingDocument.TargetShow();
+
+					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
+
+					var Item = new AscWord.CRunText(0x2013);
+					Item.SpaceAfter = false;
+
+					this.AddToParagraph(Item);
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.DecreaseFont: {
+			if (this.CanEdit()) {
+				editor.FontSizeOut();
+				this.Document_UpdateInterfaceState();
+			}
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
+		case Asc.c_oAscPresentationShortcutType.IncreaseFont: {
+			if (this.CanEdit()) {
+				editor.FontSizeIn();
+				this.Document_UpdateInterfaceState();
+			}
 			bRetValue = keydownresult_PreventAll;
 			break;
 		}
@@ -6973,104 +7165,6 @@ CPresentation.prototype.OnKeyDown = function (e) {
 				}
 				bRetValue = keydownresult_PreventAll;
 			}
-		} else if (e.KeyCode === 56 && e.CtrlKey && e.ShiftKey) // Ctrl + Shift + 8 - showParaMarks
-		{
-			this.Api.ShowParaMarks = !this.Api.ShowParaMarks;
-			if (this.Slides[this.CurPage]) {
-				this.DrawingDocument.OnRecalculatePage(this.CurPage, this.Slides[this.CurPage]);
-				if (this.Slides[this.CurPage].notes) {
-					this.DrawingDocument.Notes_OnRecalculate(this.CurPage, this.Slides[this.CurPage].NotesWidth, this.Slides[this.CurPage].getNotesHeight());
-				}
-			}
-			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 66 && e.CtrlKey) // Ctrl + B - делаем текст жирным
-		{
-			var TextPr = this.GetCalculatedTextPr();
-			if (null != TextPr && this.CanEdit()) {
-				if (this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
-					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-					this.AddToParagraph(new ParaTextPr({Bold: TextPr.Bold === true ? false : true}));
-				}
-				bRetValue = keydownresult_PreventAll;
-			}
-		} else if (e.KeyCode === 67 && e.CtrlKey) // Ctrl + C + ...
-		{
-			if (e.ShiftKey) // Ctrl + Shift + C - копирование форматирования текста
-			{
-				this.Document_Format_Copy();
-				bRetValue = keydownresult_PreventAll;
-			}
-		} else if (e.KeyCode === 69 && e.CtrlKey) {
-			if (this.CanEdit()) {
-				if (true !== e.AltKey) // Ctrl + E - переключение прилегания параграфа между center и left
-				{
-					var ParaPr = this.GetCalculatedParaPr();
-					if (null != ParaPr && ParaPr.Jc !== AscCommon.align_Center) {
-						this.Create_NewHistoryPoint(AscDFH.historydescription_Document_SetParagraphAlignHotKey);
-						this.SetParagraphAlign(AscCommon.align_Center);
-						this.Document_UpdateInterfaceState();
-					}
-				} else // Ctrl + Alt + E - добавляем знак евро €
-				{
-					if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
-						History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-						this.AddToParagraph(new AscWord.CRunText("€".charCodeAt(0)));
-					}
-				}
-			}
-			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 71 && e.CtrlKey) // Ctrl + G - группируем объекты
-		{
-			if (this.CanEdit()) {
-				if (e.ShiftKey) {
-					this.unGroupShapes();
-				} else {
-					this.groupShapes();
-				}
-			}
-			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 73 && e.CtrlKey) // Ctrl + I - делаем текст наклонным
-		{
-			var TextPr = this.GetCalculatedTextPr();
-			if (null != TextPr) {
-				if (this.CanEdit() && this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
-					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-					this.AddToParagraph(new ParaTextPr({Italic: TextPr.Italic === true ? false : true}));
-				}
-				bRetValue = keydownresult_PreventAll;
-			}
-		} else if (e.KeyCode === 74 && e.CtrlKey) // Ctrl + J переключение прилегания параграфа между justify и left
-		{
-			var ParaPr = this.GetCalculatedParaPr();
-			if (null != ParaPr && this.CanEdit() && ParaPr.Jc !== align_Justify) {
-				this.SetParagraphAlign(align_Justify);
-			}
-			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 75 && e.CtrlKey) // Ctrl + K - добавление гиперссылки
-		{
-			if (this.CanEdit() && true === this.CanAddHyperlink(false))
-				this.Api.sync_DialogAddHyperlink();
-
-			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 76 && e.CtrlKey) // Ctrl + L + ...
-		{
-			if (e.ShiftKey) // Ctrl + Shift + L - добавляем список к данному параграфу
-			{
-				if (this.CanEdit()) {
-					var oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 1});
-					this.SetParagraphNumbering(oBullet);
-				}
-				bRetValue = keydownresult_PreventAll;
-			} else // Ctrl + L - переключение прилегания параграфа между left и justify
-			{
-				var ParaPr = this.GetCalculatedParaPr();
-				if (null != ParaPr) {
-					if (this.CanEdit() && ParaPr.Jc !== align_Left) {
-						this.SetParagraphAlign(align_Left);
-					}
-					bRetValue = keydownresult_PreventAll;
-				}
-			}
 		} else if (e.KeyCode === 77 && e.CtrlKey) // Ctrl + M + ...
 		{
 			if (this.CanEdit()) {
@@ -7094,44 +7188,6 @@ CPresentation.prototype.OnKeyDown = function (e) {
 				}
 			}
 			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 82 && e.CtrlKey) // Ctrl + R - переключение прилегания параграфа между right и left
-		{
-			var ParaPr = this.GetCalculatedParaPr();
-			if (null != ParaPr) {
-				if (this.CanEdit() && ParaPr.Jc !== AscCommon.align_Right) {
-					this.SetParagraphAlign(AscCommon.align_Right);
-				}
-				bRetValue = keydownresult_PreventAll;
-			}
-		} else if (e.KeyCode === 85 && e.CtrlKey) // Ctrl + U - делаем текст подчеркнутым
-		{
-			var TextPr = this.GetCalculatedTextPr();
-			if (null != TextPr) {
-				if (this.CanEdit() && this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
-					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-					this.AddToParagraph(new ParaTextPr({Underline: TextPr.Underline === true ? false : true}));
-				}
-				bRetValue = keydownresult_PreventAll;
-			}
-		} else if (e.KeyCode === 53 && e.CtrlKey) // Ctrl + 5 - делаем текст зачеркнутым
-		{
-			var TextPr = this.GetCalculatedTextPr();
-			if (null != TextPr) {
-				if (this.CanEdit() && this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
-					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-					this.AddToParagraph(new ParaTextPr({Strikeout: TextPr.Strikeout === true ? false : true}));
-				}
-				bRetValue = keydownresult_PreventAll;
-			}
-		} else if (e.KeyCode === 86 && e.CtrlKey) // Ctrl + V - paste
-		{
-			if (e.ShiftKey) // Ctrl + Shift + V - вставляем по образцу
-			{
-				if (this.CanEdit()) {
-					this.Document_Format_Paste();
-				}
-				bRetValue = keydownresult_PreventAll;
-			}
 		} else if (e.KeyCode === 144) // Num Lock
 		{
 			// Ничего не делаем
@@ -7139,69 +7195,6 @@ CPresentation.prototype.OnKeyDown = function (e) {
 		} else if (e.KeyCode === 145) // Scroll Lock
 		{
 			// Ничего не делаем
-			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 187 && e.CtrlKey) // Ctrl + Shift + +, Ctrl + = - superscript/subscript
-		{
-			var TextPr = this.GetCalculatedTextPr();
-			if (null != TextPr) {
-				if (this.CanEdit() && this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
-					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-					if (e.ShiftKey)
-						this.AddToParagraph(new ParaTextPr({VertAlign: TextPr.VertAlign === AscCommon.vertalign_SuperScript ? vertalign_Baseline : AscCommon.vertalign_SuperScript}));
-					else
-						this.AddToParagraph(new ParaTextPr({VertAlign: TextPr.VertAlign === AscCommon.vertalign_SubScript ? vertalign_Baseline : AscCommon.vertalign_SubScript}));
-				}
-				bRetValue = keydownresult_PreventAll;
-			}
-		} else if (e.KeyCode === 188 && e.CtrlKey) // Ctrl + ,
-		{
-			var TextPr = this.GetCalculatedTextPr();
-			if (null != TextPr) {
-				if (this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
-					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-					this.AddToParagraph(new ParaTextPr({VertAlign: TextPr.VertAlign === AscCommon.vertalign_SuperScript ? vertalign_Baseline : AscCommon.vertalign_SuperScript}));
-				}
-				bRetValue = keydownresult_PreventAll;
-			}
-		} else if (e.KeyCode === 189) // Клавиша Num-
-		{
-			if ((e.CtrlKey && e.ShiftKey) && (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)) {
-				if (this.CanEdit()) {
-					this.DrawingDocument.TargetStart();
-					this.DrawingDocument.TargetShow();
-
-					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-
-					var Item = new AscWord.CRunText(0x2013);
-					Item.SpaceAfter = false;
-
-					this.AddToParagraph(Item);
-				}
-				bRetValue = keydownresult_PreventAll;
-			}
-		} else if (e.KeyCode === 190 && e.CtrlKey) // Ctrl + .
-		{
-			var TextPr = this.GetCalculatedTextPr();
-			if (null != TextPr) {
-				if (this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
-					History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-					this.AddToParagraph(new ParaTextPr({VertAlign: TextPr.VertAlign === AscCommon.vertalign_SubScript ? vertalign_Baseline : AscCommon.vertalign_SubScript}));
-				}
-				bRetValue = keydownresult_PreventAll;
-			}
-		} else if (e.KeyCode === 219 && e.CtrlKey) // Ctrl + [
-		{
-			if (this.CanEdit()) {
-				this.Api.FontSizeOut();
-				this.Document_UpdateInterfaceState();
-			}
-			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 221 && e.CtrlKey) // Ctrl + ]
-		{
-			if (this.CanEdit()) {
-				this.Api.FontSizeIn();
-				this.Document_UpdateInterfaceState();
-			}
 			bRetValue = keydownresult_PreventAll;
 		}
 	}
