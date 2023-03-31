@@ -229,6 +229,59 @@ function (window, undefined) {
 		return index;	
 	}
 
+	// these functions are made and used specifically for SORT & SORTBY functions
+	function sortWithIndices (arr, sortOrder, isByCol) {
+		const indexedArray = isByCol
+			? arr[0].map(function (item, index) { return { item, index } })
+			: arr.map(function (item, index) {
+				item = item[0];
+				return { item, index };
+			});
+
+		indexedArray.sort(function (a, b) {
+			const itemA = a.item;
+			const itemB = b.item;
+
+			if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
+				return (itemA.value.localeCompare(itemB.value)) * sortOrder;
+			} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
+				return (itemA.value - itemB.value) * sortOrder;
+			} else if (cElementType.string === itemA.type) {
+				return 1 * sortOrder;
+			} else if (cElementType.string === itemB.type) {
+				return -1 * sortOrder;
+			} else {
+				return 0;
+			}
+		});
+		
+		return indexedArray;
+	}
+
+	// these functions are made and used specifically for SORT & SORTBY functions
+	function sortArray (array, by_array1, sortOrder, isByCol, sortIndex) {
+		let resultArr = new cArray(),
+			tempArrIndicies = [],
+			// byRowColArr = isByCol ? by_array1._getRow(0) : by_array1._getCol(0);
+			byRowColArr, targetElem;
+
+		if (by_array1) {
+			byRowColArr = isByCol ? by_array1._getRow(0) : by_array1._getCol(0);
+		} else {
+			targetElem = isByCol ? array._getRow(sortIndex - 1) : array._getCol(sortIndex - 1);
+		}
+
+		// sorting an array with indices
+		tempArrIndicies = sortWithIndices(byRowColArr ? byRowColArr : targetElem, sortOrder, isByCol);
+
+		for (let i = 0; i < tempArrIndicies.length; i++) {
+			let target = isByCol ? array._getCol(tempArrIndicies[i].index) : array._getRow(tempArrIndicies[i].index);
+			isByCol ? resultArr.pushCol(target, 0) : resultArr.pushRow(target, 0);
+		}
+
+		return resultArr;
+	}
+
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
@@ -1804,54 +1857,9 @@ function (window, undefined) {
 	cSORT.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
 	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.bool];
 	cSORT.prototype.Calculate = function (arg) {
-		function sortWithIndices(arr) {
-			const isRowMode = arr.length === 1 ? true : false;
-			const indexedArray = isRowMode
-				? arr[0].map(function (item, index) { return { item, index } })
-				: arr.map(function (item, index) {
-					item = item[0];
-					return { item, index };
-				});
-			
-			indexedArray.sort(function (a, b) {
-				const itemA = a.item;
-				const itemB = b.item;
-
-				if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
-					return (itemA.value.localeCompare(itemB.value)) * sort_order;
-				} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
-					return (itemA.value - itemB.value) * sort_order;
-				} else if (cElementType.string === itemA.type) {
-					return 1 * sort_order;
-				} else if (cElementType.string === itemB.type) {
-					return -1 * sort_order;
-				} else {
-					return 0;
-				}
-			});
-
-			return indexedArray;
-		}
-
-		function sortArray (array, isByCol) {
-			let resultArr = new cArray(),
-				tempArrIndicies = [],
-				targetElem = isByCol ? array._getRow(sort_index - 1) : array._getCol(sort_index - 1);
-
-			// sorting an array with indices
-			tempArrIndicies = sortWithIndices(targetElem);
-
-			for (let i = 0; i < tempArrIndicies.length; i++) {
-				let target = isByCol ? array._getCol(tempArrIndicies[i].index) : array._getRow(tempArrIndicies[i].index);
-				isByCol ? resultArr.pushCol(target, 0) : resultArr.pushRow(target, 0);
-			}
-
-			return resultArr;
-		}
-
 		function arrayHelper (byColArray, by_col) {
 			let dimensions = byColArray.getDimensions(),
-				fElem = sortArray(array, by_col).getFirstElement(),
+				fElem = sortArray(array, null, sort_order, by_col, sort_index).getFirstElement(),
 				resArr = new cArray();
 			
 			for (let i = 0; i < dimensions.row; i++) {
@@ -2025,7 +2033,7 @@ function (window, undefined) {
 			return arrayHelper(arg3, by_col);
 		}
 
-		return sortArray(array, by_col);
+		return sortArray(array, null, sort_order, by_col, sort_index);
 	};
 
 	/**
@@ -2044,50 +2052,6 @@ function (window, undefined) {
 	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cSORTBY.prototype.argumentsType = [argType.reference, argType.reference, argType.number];
 	cSORTBY.prototype.Calculate = function (arg) {
-		function sortWithIndices (arr, sortOrder, isByCol) {
-			const indexedArray = isByCol
-				? arr[0].map(function (item, index) { return { item, index } })
-				: arr.map(function (item, index) {
-					item = item[0];
-					return { item, index };
-				});
-
-			indexedArray.sort(function (a, b) {
-				const itemA = a.item;
-				const itemB = b.item;
-
-				if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
-					return (itemA.value.localeCompare(itemB.value)) * sortOrder;
-				} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
-					return (itemA.value - itemB.value) * sortOrder;
-				} else if (cElementType.string === itemA.type) {
-					return 1 * sortOrder;
-				} else if (cElementType.string === itemB.type) {
-					return -1 * sortOrder;
-				} else {
-					return 0;
-				}
-			});
-			
-			return indexedArray;
-		}
-
-		function sortArray (array, by_array1, sortOrder, isByCol) {
-			let resultArr = new cArray(),
-				tempArrIndicies = [],
-				byRowColArr = isByCol ? by_array1._getRow(0) : by_array1._getCol(0);
-
-			// sorting an array with indices
-			tempArrIndicies = sortWithIndices(byRowColArr, sortOrder, isByCol);
-
-			for (let i = 0; i < tempArrIndicies.length; i++) {
-				let target = isByCol ? array._getCol(tempArrIndicies[i].index) : array._getRow(tempArrIndicies[i].index);
-				isByCol ? resultArr.pushCol(target, 0) : resultArr.pushRow(target, 0);
-			}
-
-			return resultArr;
-		}
-
 		function arrayHelper (arr, byArr, sortOrder) {
 			let resArr = new cArray(),
 				resDimensoins = sortOrder.getDimensions(), sortOrderFirst, sortOrderRegular, isByCol;
