@@ -8097,13 +8097,20 @@
 					return oShape;
 				},
 
-				GetSelectedText: function (bCleartText, oPr) {
-					var content = this.getTargetDocContent();
-					if (content) {
-						return content.GetSelectedText(bCleartText, oPr);
+				GetSelectedText: function (bClearText, oPr) {
+					oPr = oPr || {};
+					if (bClearText === undefined)
+						bClearText = false;
+					const oObject = getTargetTextObject(this);
+					if (oObject && oObject.GetSelectedText) {
+						return oObject.GetSelectedText(bClearText, oPr);
 					} else {
-						return "";
+						const oContent = this.getTargetDocContent();
+						if (oContent) {
+							return oContent.GetSelectedText(bClearText, oPr);
+						}
 					}
+					return "";
 				},
 
 				putPrLineSpacing: function (type, value) {

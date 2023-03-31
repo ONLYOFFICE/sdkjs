@@ -7871,6 +7871,12 @@ CPresentation.prototype.Document_Format_Paste = function () {
 
 // Возвращаем выделенный текст, если в выделении не более 1 параграфа, и там нет картинок, нумерации страниц и т.д.
 CPresentation.prototype.GetSelectedText = function (bClearText, oPr) {
+	if (undefined === oPr)
+		oPr = {};
+
+	if (undefined === bClearText)
+		bClearText = false;
+
 	var oController = this.GetCurrentController();
 	if (oController) {
 		return oController.GetSelectedText(bClearText, oPr);
