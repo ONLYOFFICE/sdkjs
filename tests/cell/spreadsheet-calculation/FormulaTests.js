@@ -23356,6 +23356,65 @@ $(function () {
 		ws.getRange2("I11").setValue("-1");
 		ws.getRange2("I12").setValue("-3");
 
+		ws.getRange2("J10").setValue("#N/A");
+		ws.getRange2("J11").setValue("#NUM!");
+		ws.getRange2("J12").setValue("#DIV/0!");
+
+		oParser = new parserFormula('SORT(H10,,E11)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(H10,,E11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 25, 'Result of SORT(H10,,E11)');
+
+		oParser = new parserFormula('SORT(H10,H12,E11)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(H10,H12,E11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORT(H10,H12,E11)');
+
+		oParser = new parserFormula('SORT(J10,H12,E11)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(J10,H12,E11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue().getValue(), "#N/A", 'Result of SORT(J10,H12,E11)');
+
+		oParser = new parserFormula('SORT(J10,J11,E11)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(J10,J11,E11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue().getValue(), "#N/A", 'Result of SORT(J10,J11,E11)');
+
+		oParser = new parserFormula('SORT(J10,J11,J12)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(J10,J11,J12)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue().getValue(), "#N/A", 'Result of SORT(J10,J11,J12)');
+
+		oParser = new parserFormula('SORT(25,,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(25,,TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 25, 'Result of SORT(25,,TRUE)');
+
+		oParser = new parserFormula('SORT(25,27,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(25,27,TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORT(25,27,TRUE)');
+
+		oParser = new parserFormula('SORT(#N/A,27,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(#N/A,27,TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#N/A", 'Result of SORT(#N/A,27,TRUE)');
+
+		oParser = new parserFormula('SORT(25,#NUM!,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(25,#NUM!,TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#NUM!", 'Result of SORT(25,#NUM!,TRUE)');
+
+		oParser = new parserFormula('SORT(25,24,#DIV/0!)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(25,24,#DIV/0!)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#DIV/0!", 'Result of SORT(25,27,#DIV/0!)');
+
+		oParser = new parserFormula('SORT(#N/A,#NUM!,#DIV/0!)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(#N/A,#NUM!,#DIV/0!)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#N/A", 'Result of SORT(#N/A,#NUM!,#DIV/0!)');
+
 		oParser = new parserFormula('SORT(F100:F104,1,1,FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT(F100:F104,1,1,FALSE)');
 		array = oParser.calculate();
@@ -23695,7 +23754,7 @@ $(function () {
 		ws.getRange2("B21").setValue();
 		ws.getRange2("C20").setValue("");
 		ws.getRange2("C21").setValue("1");
-		ws.getRange2("C21").cleanAll();
+		ws.getRange2("B20:C21").cleanAll();
 
 		ws.getRange2("C30").setValue("12");
 		ws.getRange2("C30").setNumFormat("@");
@@ -23719,6 +23778,65 @@ $(function () {
 		ws.getRange2("I10").setValue("-23");
 		ws.getRange2("I11").setValue("-1");
 		ws.getRange2("I12").setValue("-3");
+
+		ws.getRange2("J10").setValue("#N/A");
+		ws.getRange2("J11").setValue("#NUM!");
+		ws.getRange2("J12").setValue("#DIV/0!");
+
+		oParser = new parserFormula('SORTBY(H10,,E11)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(H10,,E11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 25, 'Result of SORTBY(H10,,E11)');
+
+		oParser = new parserFormula('SORTBY(H10,H12,E11)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(H10,H12,E11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 25, 'Result of SORTBY(H10,H12,E11)');
+
+		oParser = new parserFormula('SORTBY(J10,H12,E11)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(J10,H12,E11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue().getValue(), "#N/A", 'Result of SORTBY(J10,H12,E11)');
+
+		oParser = new parserFormula('SORTBY(J10,J11,E11)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(J10,J11,E11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue().getValue(), "#N/A", 'Result of SORTBY(J10,J11,E11)');
+
+		oParser = new parserFormula('SORTBY(J10,J11,J12)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(J10,J11,J12)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue().getValue(), "#N/A", 'Result of SORTBY(J10,J11,J12)');
+
+		oParser = new parserFormula('SORTBY(25,,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(25,,TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 25, 'Result of SORTBY(25,,TRUE)');
+
+		oParser = new parserFormula('SORTBY(25,27,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(25,27,TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 25, 'Result of SORTBY(25,27,TRUE)');
+
+		oParser = new parserFormula('SORTBY(#N/A,27,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(#N/A,27,TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#N/A", 'Result of SORTBY(#N/A,27,TRUE)');
+
+		oParser = new parserFormula('SORTBY(25,#NUM!,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(25,#NUM!,TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#NUM!", 'Result of SORTBY(25,#NUM!,TRUE)');
+
+		oParser = new parserFormula('SORTBY(25,24,#DIV/0!)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(25,24,#DIV/0!)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#DIV/0!", 'Result of SORTBY(25,27,#DIV/0!)');
+
+		oParser = new parserFormula('SORTBY(#N/A,#NUM!,#DIV/0!)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(#N/A,#NUM!,#DIV/0!)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#N/A", 'Result of SORTBY(#N/A,#NUM!,#DIV/0!)');
 
 		oParser = new parserFormula('SORTBY(,B21:B21)', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORTBY(,B21:B21)');

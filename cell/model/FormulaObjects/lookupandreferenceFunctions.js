@@ -1895,15 +1895,31 @@ function (window, undefined) {
 		// check args err
 		if (cElementType.error === arg0.type) {
 			return arg0;
+		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			if (cElementType.error === arg0.getValue().type) {
+				return arg0;
+			}
 		}
 		if (cElementType.error === arg1.type) {
 			return arg1;
+		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			if (cElementType.error === arg1.getValue().type) {
+				return arg1;
+			}
 		}
 		if (cElementType.error === arg2.type) {
 			return arg2;
+		} else if (cElementType.cell === arg2.type || cElementType.cell3D === arg2.type) {
+			if (cElementType.error === arg2.getValue().type) {
+				return arg2;
+			}
 		}
 		if (cElementType.error === arg3.type) {
 			return arg3;
+		} else if (cElementType.cell === arg3.type || cElementType.cell3D === arg3.type) {
+			if (cElementType.error === arg3.getValue().type) {
+				return arg3;
+			}
 		}
 
 		// check args empty
@@ -2128,12 +2144,24 @@ function (window, undefined) {
 		// check args err
 		if (cElementType.error === arg0.type) {
 			return arg0;
+		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			if (cElementType.error === arg0.getValue().type) {
+				return arg0;
+			}
 		}
 		if (cElementType.error === arg1.type) {
 			return arg1;
+		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			if (cElementType.error === arg1.getValue().type) {
+				return arg1;
+			}
 		}
 		if (cElementType.error === arg2.type) {
 			return arg2;
+		} else if (cElementType.cell === arg2.type || cElementType.cell3D === arg2.type) {
+			if (cElementType.error === arg2.getValue().type) {
+				return arg2;
+			}
 		}
 
 		// check arg empty
