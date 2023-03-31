@@ -225,6 +225,7 @@
 
 
 		this.formatPainter = new AscCommon.CFormatPainter(this);
+		this.eyedropper = new AscCommon.CEyedropper(this);
 		this._correctEmbeddedWork();
 
 		return this;
@@ -4410,7 +4411,7 @@
 		return null;
 	};
 
-	baseEditorsApi.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight)
+	baseEditorsApi.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight, replaceMode)
 	{
 	};
 
@@ -4471,6 +4472,46 @@
 			this.sendEvent('asc_onStopFormatPainter');
 		}
 	};
+	baseEditorsApi.prototype.getEyedropperImgData = function()
+	{
+		return null;
+	};
+	baseEditorsApi.prototype.clearEyedropperImgData = function()
+	{
+		this.eyedropper.clearImageData();
+	};
+	baseEditorsApi.prototype.asc_startEyedropper = function(fEndCallback)
+	{
+		this.eyedropper.start(fEndCallback);
+	};
+	baseEditorsApi.prototype.finishEyedropper = function()
+	{
+		this.eyedropper.finish();
+	};
+	baseEditorsApi.prototype.asc_finishEyedropper = function()
+	{
+		this.finishEyedropper();
+	};
+	baseEditorsApi.prototype.cancelEyedropper = function()
+	{
+		this.eyedropper.cancel();
+	};
+	baseEditorsApi.prototype.asc_cancelEyedropper = function()
+	{
+		this.cancelEyedropper();
+	};
+	baseEditorsApi.prototype.isEyedropperStarted = function()
+	{
+		return this.eyedropper.isStarted();
+	};
+	baseEditorsApi.prototype.getEyedropperColor = function()
+	{
+		return this.eyedropper.getColor();
+	};
+	baseEditorsApi.prototype.checkEyedropperColor = function(nX, nY)
+	{
+		this.eyedropper.checkColor(nX, nY);
+	};
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -4526,5 +4567,8 @@
 	prot['asc_GetPossibleNumberingLanguage'] = prot.asc_GetPossibleNumberingLanguage;
 
 	prot['asc_isCrypto'] = prot.asc_isCrypto;
+	prot['asc_startEyedropper'] = prot.asc_startEyedropper;
+	prot['asc_finishEyedropper'] = prot.asc_finishEyedropper;
+	prot['asc_cancelEyedropper'] = prot.asc_cancelEyedropper;
 
 })(window);

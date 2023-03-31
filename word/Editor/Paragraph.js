@@ -2268,6 +2268,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 		}
 	}
 	PDSH.SetCollectFixedForms(false);
+	PDSH.ComplexFields.ResetPage(this, CurPage);
 	PDSH.Reset(this, pGraphics, DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
 
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
@@ -13215,6 +13216,10 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 
 	if (!oContentPos)
 		oContentPos = this.Get_ParaContentPos(false, false);
+	
+	let complexFields = this.GetComplexFieldsByPos(oContentPos);
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].StartCharsUpdate();
 
 	var TextPr = this.Get_TextPr(oContentPos);
 
@@ -13302,7 +13307,10 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 
 	oNewParagraph.DeleteCommentOnRemove = true;
 	this.DeleteCommentOnRemove          = true;
-
+	
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].FinishCharsUpdate();
+	
 	return oNewParagraph;
 };
 /**
@@ -13314,6 +13322,10 @@ Paragraph.prototype.Concat = function(Para, isUseConcatedStyle)
 {
 	this.DeleteCommentOnRemove = false;
 	Para.DeleteCommentOnRemove = false;
+	
+	let complexFields = this.GetComplexFieldsByPos(this.GetEndPos());
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].StartCharsUpdate();
 
 	// Если в параграфе Para были точки NearPos, за которыми нужно следить перенесем их в этот параграф
 	var NearPosCount = Para.NearPosArray.length;
@@ -13347,6 +13359,9 @@ Paragraph.prototype.Concat = function(Para, isUseConcatedStyle)
 
 	this.DeleteCommentOnRemove = true;
 	Para.DeleteCommentOnRemove = true;
+	
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].FinishCharsUpdate();
 
 	if (true === isUseConcatedStyle)
 		Para.CopyPr(this);
@@ -13363,6 +13378,10 @@ Paragraph.prototype.ConcatBefore = function(oPara, nSelection)
 {
 	this.DeleteCommentOnRemove = false;
 	oPara.DeleteCommentOnRemove = false;
+	
+	let complexFields = this.GetComplexFieldsByPos(this.GetStartPos());
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].StartCharsUpdate();
 
 	// Убираем метку конца параграфа у добавляемого параграфа
 	oPara.RemoveParaEnd();
@@ -13433,6 +13452,9 @@ Paragraph.prototype.ConcatBefore = function(oPara, nSelection)
 			this.CurPos.ContentPos  = nEndPos;
 		}
 	}
+	
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].FinishCharsUpdate();
 };
 /**
  * Копируем настройки параграфа и последние текстовые настройки в новый параграф
@@ -14098,7 +14120,7 @@ Paragraph.prototype.CanAddComment = function()
 	var oNext = this.GetNextRunElement();
 	var oPrev = this.GetPrevRunElement();
 
-	return ((oNext && para_Text === oNext.Type) || (oPrev && para_Text === oPrev.Type));
+	return !!((oNext && para_Text === oNext.Type) || (oPrev && para_Text === oPrev.Type));
 };
 Paragraph.prototype.RemoveCommentMarks = function(Id)
 {
@@ -17210,6 +17232,7 @@ Paragraph.prototype.GetPlaceHolderObject = function(oContentPos)
 
 	let oSdt  = oInfo.GetInlineLevelSdt();
 	let oMath = oInfo.GetMath();
+	
 	if (oSdt && oSdt.IsPlaceHolder())
 		return oSdt;
 	else if (oMath && oMath.IsMathContentPlaceholder())
@@ -17354,7 +17377,7 @@ Paragraph.prototype.GetCurrentWord = function(nDirection)
  * Заменяем текущее слово (или часть текущего слова) на заданную строку
  * @param nDirection {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
  * @param sReplace {string}
- * @returns {string}
+ * @returns {boolean}
  */
 Paragraph.prototype.ReplaceCurrentWord = function(nDirection, sReplace)
 {

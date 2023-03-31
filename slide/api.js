@@ -4424,9 +4424,9 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.getImageDataFromSelection();
 	};
-	asc_docs_api.prototype.putImageToSelection = function(sImageSrc, nWidth, nHeight)
+	asc_docs_api.prototype.putImageToSelection = function(sImageSrc, nWidth, nHeight, replaceMode)
 	{
-		return this.WordControl.m_oLogicDocument.putImageToSelection(sImageSrc, nWidth, nHeight);
+		return this.WordControl.m_oLogicDocument.putImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
 	};
 
 	asc_docs_api.prototype.getPluginContextMenuInfo = function ()
@@ -6372,6 +6372,7 @@ background-repeat: no-repeat;\
 				}
 			}
 		}
+
 		this.sendEvent("asc_onMouseMove", Data);
 	};
 
@@ -6807,21 +6808,6 @@ background-repeat: no-repeat;\
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(c_oAscTypeSelectElement.Slide, obj);
 	};
 
-	asc_docs_api.prototype.ExitHeader_Footer = function(pageNumber)
-	{
-		if (this.WordControl.m_oDrawingDocument.IsFreezePage(pageNumber))
-			return;
-
-		var oldClickCount            = global_mouseEvent.ClickCount;
-		global_mouseEvent.ClickCount = 2;
-		this.WordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, 0, AscCommon.Page_Height / 2, pageNumber);
-		this.WordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, 0, AscCommon.Page_Height / 2, pageNumber);
-
-		this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-
-		global_mouseEvent.ClickCount = oldClickCount;
-	};
-
 	asc_docs_api.prototype.GetCurrentPixOffsetY = function()
 	{
 		return this.WordControl.m_dScrollY;
@@ -6834,7 +6820,7 @@ background-repeat: no-repeat;\
 		{
 			return null;
 		}
-		return oPresentation.GetFormatPainterData();
+		return oPresentation.GetFormattingPasteData();
 	};
 	asc_docs_api.prototype.SetPaintFormat = function(value)
 	{
@@ -7178,11 +7164,12 @@ background-repeat: no-repeat;\
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.stopWorked();
 
-		var is_reporter = (reporterStartObject && !this.isReporterMode);
-		if (is_reporter)
+		this.cancelEyedropper();
+		const bIsreporter = (reporterStartObject && !this.isReporterMode);
+		if (bIsreporter)
 			this.DemonstrationReporterStart(reporterStartObject);
 
-		if (is_reporter && (this.reporterWindow || window["AscDesktopEditor"]))
+		if (bIsreporter && (this.reporterWindow || window["AscDesktopEditor"]))
 			this.WordControl.DemonstrationManager.StartWaitReporter(div_id, slidestart_num, true);
 		else
 			this.WordControl.DemonstrationManager.Start(div_id, slidestart_num, true);
@@ -8699,7 +8686,22 @@ background-repeat: no-repeat;\
 			delete this.printPreview;
 		}
 	};
-
+	asc_docs_api.prototype.getEyedropperImgData = function()
+	{
+		const oViewerCanvas = document.getElementById("id_viewer");
+		const oOverlayCanvas = document.getElementById("id_viewer_overlay");
+		if(!oViewerCanvas || !oOverlayCanvas)
+		{
+			return null;
+		}
+		let oCanvas = document.createElement("canvas");
+		oCanvas.width = oViewerCanvas.width;
+		oCanvas.height = oViewerCanvas.height;
+		const oCtx = oCanvas.getContext("2d");
+		oCtx.drawImage(oViewerCanvas, 0, 0);
+		oCtx.drawImage(oOverlayCanvas, 0, 0);
+		return oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
+	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
@@ -9089,7 +9091,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_getSpellCheckSettings']           = asc_docs_api.prototype.asc_getSpellCheckSettings;
 	asc_docs_api.prototype['sync_shapePropCallback']              = asc_docs_api.prototype.sync_shapePropCallback;
 	asc_docs_api.prototype['sync_slidePropCallback']              = asc_docs_api.prototype.sync_slidePropCallback;
-	asc_docs_api.prototype['ExitHeader_Footer']                   = asc_docs_api.prototype.ExitHeader_Footer;
 	asc_docs_api.prototype['GetCurrentPixOffsetY']                = asc_docs_api.prototype.GetCurrentPixOffsetY;
 	asc_docs_api.prototype['SetPaintFormat']                      = asc_docs_api.prototype.SetPaintFormat;
 	asc_docs_api.prototype['sync_PaintFormatCallback']            = asc_docs_api.prototype.sync_PaintFormatCallback;

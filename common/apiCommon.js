@@ -2428,6 +2428,83 @@
 	asc_CColor.prototype.asc_getAuto = function () {
 		return this.Auto;
 	};
+	asc_CColor.prototype.getColorDiff = function (nC1, nC2) {
+		let nC1R = (nC1 >> 16) & 0xFF;
+		let nC1G = (nC1 >> 8) & 0xFF;
+		let nC1B = nC1 & 0xFF;
+		let nC2R = (nC2 >> 16) & 0xFF;
+		let nC2G = (nC2 >> 8) & 0xFF;
+		let nC2B = nC2 & 0xFF;
+		let lab1 = this.RGB2LAB(nC1R, nC1G, nC1B);
+		let lab2 = this.RGB2LAB(nC2R, nC2G, nC2B);
+		return Math.abs(lab2[0] - lab1[0]) + Math.abs(lab2[1] - lab1[1]) + Math.abs(lab2[2] - lab1[2]);
+	};
+	asc_CColor.prototype.RGB2LAB = function (R, G, B) {
+		let r, g, b, X, Y, Z, fx, fy, fz, xr, yr, zr;
+		let Ls, as, bs;
+		let eps = 216.0 / 24389.0;
+		let k = 24389.0 / 27.0;
+
+		let Xr = 0.964221;  // reference white D50
+		let Yr = 1.0;
+		let Zr = 0.825211;
+
+		// RGB to XYZ
+		r = R / 255; //R 0..1
+		g = G / 255; //G 0..1
+		b = B / 255; //B 0..1
+
+		// assuming sRGB (D65)
+		if (r <= 0.04045)
+			r = r / 12;
+		else
+			r = Math.pow((r + 0.055) / 1.055, 2.4);
+
+		if (g <= 0.04045)
+			g = g / 12;
+		else
+			g = Math.pow((g + 0.055) / 1.055, 2.4);
+
+		if (b <= 0.04045)
+			b = b / 12;
+		else
+			b = Math.pow((b + 0.055) / 1.055, 2.4);
+
+
+		X = 0.436052025 * r + 0.385081593 * g + 0.143087414 * b;
+		Y = 0.222491598 * r + 0.71688606 * g + 0.060621486 * b;
+		Z = 0.013929122 * r + 0.097097002 * g + 0.71418547 * b;
+
+		// XYZ to Lab
+		xr = X / Xr;
+		yr = Y / Yr;
+		zr = Z / Zr;
+
+		if (xr > eps)
+			fx = Math.pow(xr, 1 / 3.);
+		else
+			fx = ((k * xr + 16.) / 116.);
+
+		if (yr > eps)
+			fy = Math.pow(yr, 1 / 3.);
+		else
+			fy = ((k * yr + 16.) / 116.);
+
+		if (zr > eps)
+			fz = Math.pow(zr, 1 / 3.);
+		else
+			fz = ((k * zr + 16.) / 116);
+
+		Ls = (116 * fy) - 16;
+		as = 500 * (fx - fy);
+		bs = 200 * (fy - fz);
+
+		let lab = [];
+		lab[0] = (2.55 * Ls + .5) >> 0;
+		lab[1] = (as + .5) >> 0;
+		lab[2] = (bs + .5) >> 0;
+		return lab;
+	};
 	asc_CColor.prototype.asc_getName = function() {
 		const nColorVal = this.getVal();
 		for(let nCurColor in STANDART_COLORS_MAP) {
@@ -2441,7 +2518,7 @@
 		let sMinName = "Black";
 		for(let nCurColor in STANDART_COLORS_MAP) {
 			if(STANDART_COLORS_MAP.hasOwnProperty(nCurColor)) {
-				let dDist = AscFormat.CColorModifiers.prototype.GetColorDiff(nColorVal, nCurColor);
+				let dDist = this.getColorDiff(nColorVal, nCurColor);
 				if(dDist < dMinDistance) {
 					dMinDistance = dDist;
 					sMinName = STANDART_COLORS_MAP[nCurColor];
@@ -4662,7 +4739,7 @@
 			this.Type  = ( undefined != obj.Type ) ? obj.Type : c_oAscMouseMoveDataTypes.Common;
 			this.X_abs = ( undefined != obj.X_abs ) ? obj.X_abs : 0;
 			this.Y_abs = ( undefined != obj.Y_abs ) ? obj.Y_abs : 0;
-
+			this.EyedropperColor = ( undefined != obj.EyedropperColor ) ? obj.EyedropperColor : undefined;
 			switch (this.Type)
 			{
 				case c_oAscMouseMoveDataTypes.Hyperlink :
@@ -4697,6 +4774,7 @@
 			this.Type  = c_oAscMouseMoveDataTypes.Common;
 			this.X_abs = 0;
 			this.Y_abs = 0;
+			this.EyedropperColor = undefined;
 		}
 	}
 
@@ -4736,6 +4814,10 @@
 	CMouseMoveData.prototype.get_ReviewChange = function()
 	{
 		return this.ReviewChange;
+	};
+	CMouseMoveData.prototype.get_EyedropperColor = function()
+	{
+		return this.EyedropperColor;
 	};
 
 
@@ -6926,6 +7008,7 @@
 	prot["get_FootnoteNumber"] = prot.get_FootnoteNumber;
 	prot["get_FormHelpText"] = prot.get_FormHelpText;
 	prot["get_ReviewChange"] = prot.get_ReviewChange;
+	prot["get_EyedropperColor"] = prot.get_EyedropperColor;
 
 	window["Asc"]["asc_CUserInfo"] = window["Asc"].asc_CUserInfo = asc_CUserInfo;
 	prot = asc_CUserInfo.prototype;

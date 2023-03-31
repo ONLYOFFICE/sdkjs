@@ -1811,7 +1811,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		LockedObject : 2,
 		Footnote     : 3,
 		Form         : 4,
-		Review       : 5
+		Review       : 5,
+		Eyedropper   : 6
 	};
 
 	// selection type
@@ -4212,6 +4213,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Footnote']     = prot.Footnote;
 	prot['Form']         = prot.Form;
 	prot['Review']       = prot.Review;
+	prot['Eyedropper']   = prot.Eyedropper;
 
 	window['Asc']['c_oAscMaxTooltipLength'] = window['Asc'].c_oAscMaxTooltipLength = c_oAscMaxTooltipLength;
 	window['Asc']['c_oAscMaxCellOrCommentLength'] = window['Asc'].c_oAscMaxCellOrCommentLength = c_oAscMaxCellOrCommentLength;

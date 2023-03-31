@@ -1824,7 +1824,13 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 
 				if (StartPos !== this.Content.length - 1 && true === this.Content[StartPos].Is_Empty() && true !== bOnAddText)
 				{
-					this.Remove_FromContent(StartPos, 1, true);
+					this.RemoveFromContent(StartPos, 1, true);
+					this.State.ContentPos = StartPos;
+					this.Content[StartPos].MoveCursorToStartPos();
+				}
+				else
+				{
+					this.State.ContentPos = StartPos;
 				}
 			}
 		}

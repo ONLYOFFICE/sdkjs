@@ -2360,3 +2360,10 @@ CDocumentContentBase.prototype.OnContentChange = function()
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
 };
+CDocumentContentBase.prototype.GetFormattingPasteData = function()
+{
+	if (docpostype_DrawingObjects === this.GetDocPosType())
+		return this.DrawingObjects.getFormatPainterData();
+	else
+		return new AscCommon.CTextFormattingPasteData(this.GetDirectTextPr(), this.GetDirectParaPr());
+};

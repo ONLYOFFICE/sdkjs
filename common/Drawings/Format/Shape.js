@@ -2720,6 +2720,13 @@
 			return this.fLocksText !== false;
 		};
 
+		CShape.prototype.canEditText = function () {
+			let form = this.isForm && this.isForm() ? this.getInnerForm() : null;
+			if (form && !form.CanPlaceCursorInside())
+				return false;
+			
+			return this.superclass.prototype.canEditText.call(this);
+		};
 		CShape.prototype.canEditTextInSmartArt = function () {
 			if (this.isObjectInSmartArt()) {
 				var pointContent = this.getSmartArtPointContent();

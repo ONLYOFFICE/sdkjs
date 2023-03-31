@@ -230,7 +230,11 @@
 			oLogicDocument.SetLocalTrackRevisions(false);
 		}
 
-		if (oRun.IsMathRun())
+		if (this.private_IsBlockLevelSdtPlaceholder())
+		{
+			this.private_InsertToBlockLevelSdtWithPlaceholder();
+		}
+		else if (oRun.IsMathRun())
 		{
 			this.private_InsertToMathRun();
 		}
@@ -1165,6 +1169,31 @@
 	CSelectedContent.prototype.private_CreateParagraph = function()
 	{
 		return new AscWord.CParagraph(this.private_GetDrawingDocument(), undefined, this.IsPresentationContent);
+	};
+	CSelectedContent.prototype.private_IsBlockLevelSdtPlaceholder = function()
+	{
+		let paragraph = this.Run.GetParagraph();
+		if (!paragraph)
+			return false;
+		
+		let paraIndex  = paragraph.GetIndex();
+		let docContent = paragraph.GetParent();
+		
+		if (!docContent
+			|| paragraph !== docContent.GetElement(paraIndex)
+			|| !docContent.IsBlockLevelSdtContent())
+			return false;
+		
+		let blockSdt = docContent.GetParent();
+		if (blockSdt.IsPlaceHolder())
+			return true;
+	};
+	CSelectedContent.prototype.private_InsertToBlockLevelSdtWithPlaceholder = function()
+	{
+		let blockSdt = this.Run.GetParagraph().GetParent().GetParent();
+		blockSdt.ReplacePlaceHolderWithContent();
+		let docContent = blockSdt.GetContent();
+		this.ReplaceContent(docContent, true);
 	};
 
 	/**

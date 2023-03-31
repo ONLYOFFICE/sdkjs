@@ -821,9 +821,9 @@
 		removeDefName: function(sheetId, name) {
 			this._removeDefName(sheetId, name, AscCH.historyitem_Workbook_DefinedNamesChange);
 			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
-				this.wb.handlers.trigger("updateCellWatches", sheetId);
+				this.wb.handlers && this.wb.handlers.trigger("updateCellWatches", sheetId);
 			}
-			this.wb.handlers.trigger("onChangePageSetupProps");
+			this.wb.handlers && this.wb.handlers.trigger("onChangePageSetupProps");
 		},
 		editDefinesNames: function(oldUndoName, newUndoName) {
 			var res = null;
@@ -859,9 +859,9 @@
 				new UndoRedoData_FromTo(oldUndoName, newUndoName));
 
 			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
-				this.wb.handlers.trigger("updateCellWatches");
+				this.wb.handlers && this.wb.handlers.trigger("updateCellWatches");
 			}
-			this.wb.handlers.trigger("onChangePageSetupProps", newUndoName.sheetId);
+			this.wb.handlers && this.wb.handlers.trigger("onChangePageSetupProps", newUndoName.sheetId);
 			return res;
 		},
 		checkDefName: function (name, sheetIndex) {
@@ -1328,7 +1328,7 @@
 			var tmpCellCache = this.cleanCellCache;
 			this.cleanCellCache = {};
 			for (var i in tmpCellCache) {
-				this.wb.handlers.trigger("cleanCellCache", i, [tmpCellCache[i]], true);
+				this.wb.handlers && this.wb.handlers.trigger("cleanCellCache", i, [tmpCellCache[i]], true);
 			}
 			AscCommonExcel.g_oVLOOKUPCache.clean();
 			AscCommonExcel.g_oHLOOKUPCache.clean();
@@ -2120,7 +2120,7 @@
 					wsActive.deleteSlicersByTableCol(tableName, deleted);
 				}
 			}, 'onFilterInfo' : function () {
-				self.handlers.trigger("asc_onFilterInfo");
+				self.handlers && self.handlers.trigger("asc_onFilterInfo");
 			}
 		} );
 		for(var i = 0, length = tableCustomFunc.length; i < length; ++i) {
@@ -2495,7 +2495,7 @@
 			this.dependencyFormulas.unlockRecal();
 
 			if (!this.bUndoChanges && !this.bRedoChanges) {
-				this.handlers.trigger("updateCellWatches", true);
+				this.handlers && this.handlers.trigger("updateCellWatches", true);
 			}
 		}
 	};
@@ -2565,8 +2565,8 @@
 			this._updateWorksheetIndexes(wsActive);
 			this.dependencyFormulas.removeSheet(prepared);
 			this.dependencyFormulas.unlockRecal();
-			this.handlers.trigger("asc_onSheetDeleted", nIndex);
-			this.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRemove, nIndex);
+			this.handlers && this.handlers.trigger("asc_onSheetDeleted", nIndex);
+			this.handlers && this.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRemove, nIndex);
 			return wsActive.getIndex();
 		}
 		return -1;
@@ -3434,7 +3434,7 @@
 				}
 
 				if (result2 && !searchEngine) {
-					this.handlers.trigger('undoRedoHideSheet', i);
+					this.handlers && this.handlers.trigger('undoRedoHideSheet', i);
 					key = result2.col + "-" + result2.row;
 				}
 			}
@@ -4314,7 +4314,7 @@
 			History.EndTransaction();
 
 			if (isChanged) {
-				this.handlers.trigger("asc_onUpdateExternalReferenceList");
+				this.handlers && this.handlers.trigger("asc_onUpdateExternalReferenceList");
 			}
 		}
 	};
@@ -4347,7 +4347,7 @@
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 					null, null, new UndoRedoData_FromTo(null, arr[i]));
 			}
-			this.handlers.trigger("asc_onUpdateExternalReferenceList");
+			this.handlers && this.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
 	};
 
@@ -4388,7 +4388,7 @@
 				eR.removeSheetById(sheetId);
 				this.changeExternalReference(index, eR);
 			}
-			this.handlers.trigger("asc_onUpdateExternalReferenceList");
+			this.handlers && this.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
 	};
 
@@ -5640,7 +5640,7 @@
 
 			this.workbook.dependencyFormulas.calcTree();
 			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
-				this.workbook.handlers.trigger("updateCellWatches");
+				this.workbook.handlers && this.workbook.handlers.trigger("updateCellWatches");
 			}
 			if (this.workbook.handlers) {
 				this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRename, this.index, name);
@@ -5662,11 +5662,11 @@
 
 		this.sheetPr.TabColor = color;
 		if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges)
-			this.workbook.handlers.trigger("asc_onUpdateTabColor", this.getIndex());
+			this.workbook.handlers && this.workbook.handlers.trigger("asc_onUpdateTabColor", this.getIndex());
 	};
 	Worksheet.prototype.rebuildTabColor = function() {
 		if (this.sheetPr && this.sheetPr.TabColor) {
-			this.workbook.handlers.trigger("asc_onUpdateTabColor", this.getIndex());
+			this.workbook.handlers && this.workbook.handlers.trigger("asc_onUpdateTabColor", this.getIndex());
 		}
 	};
 	Worksheet.prototype.getHidden=function(){
@@ -5684,8 +5684,9 @@
 			if (null != oVisibleWs) {
 				var nNewIndex = oVisibleWs.getIndex();
 				wb.setActive(nNewIndex);
-				if (!wb.bUndoChanges && !wb.bRedoChanges)
-					wb.handlers.trigger("undoRedoHideSheet", nNewIndex);
+				if (!wb.bUndoChanges && !wb.bRedoChanges) {
+					wb.handlers && wb.handlers.trigger("undoRedoHideSheet", nNewIndex);
+				}
 			}
 			History.Create_NewPoint();
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Hide, this.getId(), null, new UndoRedoData_FromTo(bOldHidden, hidden));
@@ -5709,9 +5710,9 @@
 				this.getId(), null, new UndoRedoData_FromTo(view.showGridLines, value));
 			view.showGridLines = value;
 
-			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetDisplayGridlines);
+			this.workbook.handlers && this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetDisplayGridlines);
 			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
-				this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
+				this.workbook.handlers && this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
 			}
 		}
 	};
@@ -5723,9 +5724,9 @@
 				this.getId(), null, new UndoRedoData_FromTo(view.showRowColHeaders, value));
 			view.showRowColHeaders = value;
 
-			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetDisplayHeadings);
+			this.workbook.handlers && this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetDisplayHeadings);
 			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
-				this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
+				this.workbook.handlers && this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
 			}
 		}
 	};
@@ -5738,9 +5739,9 @@
 			view.showZeros = value;
 
 			//TODO
-			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetDisplayHeadings);
+			this.workbook.handlers && this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetDisplayHeadings);
 			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
-				this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
+				this.workbook.handlers && this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
 			}
 		}
 	};
@@ -9257,7 +9258,7 @@
 	// ----- Search -----
 	Worksheet.prototype.clearFindResults = function () {
 		this.lastFindOptions = null;
-		this.workbook.handlers.trigger("clearFindResults", this.index);
+		this.workbook.handlers && this.workbook.handlers.trigger("clearFindResults", this.index);
 	};
 	Worksheet.prototype._findAllCells = function (options, searchEngine) {
 		//***searchEngine
@@ -9364,7 +9365,7 @@
 
 		if (!options.isReplaceAll && this.workbook.oApi.selectSearchingResults && (oldResults || result.isNotEmpty() || (searchEngine && (searchEngine._lastNotEmpty || searchEngine.isNotEmpty()))) &&
 			this === this.workbook.getActiveWs()) {
-			this.workbook.handlers.trigger("drawWS");
+			this.workbook.handlers && this.workbook.handlers.trigger("drawWS");
 			if (searchEngine) {
 				searchEngine._lastNotEmpty = null;
 			}
@@ -11391,7 +11392,7 @@
 		}
 
 		if (wsTo.isUserProtectedRangesIntersection(oBBoxTo) || (wsFrom && wsFrom.isUserProtectedRangesIntersection(oBBoxFrom))) {
-			wsTo.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+			wsTo.workbook.handlers && wsTo.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;
 		}
 
@@ -11580,7 +11581,7 @@
 				null, new AscCommonExcel.UndoRedoData_FromTo(null, new AscCommonExcel.UndoRedoData_BBox(ref)));
 		}
 
-		this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
+		this.workbook.handlers && this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
 	};
 
 	Worksheet.prototype.deleteCellWatch = function (ref, addToHistory) {
@@ -11592,7 +11593,7 @@
 						this.getId(), null,
 						new AscCommonExcel.UndoRedoData_FromTo(new AscCommonExcel.UndoRedoData_BBox(ref), null));
 				}
-				this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
+				this.workbook.handlers && this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
 				break;
 			}
 		}
@@ -11607,7 +11608,7 @@
 			}
 		}
 		this.aCellWatches = [];
-		this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
+		this.workbook.handlers && this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
 	};
 
 	Worksheet.prototype.deleteCellWatchesByRange = function (range, addToHistory) {
@@ -11849,7 +11850,7 @@
 				History.EndTransaction();
 			}
 
-			this.workbook.handlers.trigger("asc_updateSheetViewType", this.index);
+			this.workbook.handlers && this.workbook.handlers.trigger("asc_updateSheetViewType", this.index);
 			return true;
 		}
 	};
@@ -12358,10 +12359,10 @@
 								if (isPaste) {
 									if (!_pasteHelper._formulaError) {
 										_pasteHelper._formulaError = true;
-								wb.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+										wb.handlers && wb.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
 									}
 								} else {
-									wb.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+									wb.handlers && wb.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
 								}
 								if (callback) {
 									callback(false);
@@ -17703,8 +17704,9 @@
 				}
 			}
 		}
-		if (bChangeRowColProp)
-			wb.handlers.trigger("changeWorksheetUpdate", wsTo.getId());
+		if (bChangeRowColProp) {
+			wb.handlers && wb.handlers.trigger("changeWorksheetUpdate", wsTo.getId());
+		}
 		if(nLastCol != from.c2 || nLastRow != from.r2)
 		{
 			var offset = new AscCommon.CellBase(nLastRow - from.r2, nLastCol - from.c2);

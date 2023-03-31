@@ -1176,6 +1176,10 @@
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
 	};
 
+	/**
+	 * The current selection type ("none", "text", "drawing", or "slide").
+	 * @typedef {("fill" | "fit" | "original" | "stretch")} ReplaceImageMode
+	 */
 
     /**
      * An object containing the information about the base64 encoded *png* image.
@@ -1183,6 +1187,7 @@
      * @property {string} src The image source in the base64 format.
      * @property {number} width The image width in pixels.
      * @property {number} height The image height in pixels.
+     * @property  {?ReplaceImageMode} replaceMode If presents, defines how to adjust image object in case of replacing selected image
      */
 
 	/**
@@ -1208,9 +1213,22 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
-        this._beforeEvalCommand();
-		this.putImageToSelection(oImageData["src"], oImageData["width"], oImageData["height"]);
-        this._afterEvalCommand();
+		let sMethodGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
+		let sImgSrc = oImageData["src"];
+		this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
+		{
+			let nWidth = oImageData["width"];
+			let nHeight = oImageData["height"];
+			const isN = AscFormat.isRealNumber;
+			if(!isN(nWidth) || !isN(nHeight))
+			{
+				nWidth = oImage.Image.width;
+				nHeight = oImage.Image.height;
+			}
+			this.putImageToSelection(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), nWidth, nHeight, oImageData["replaceMode"]);
+			window.g_asc_plugins.onPluginMethodReturn(sMethodGuid);
+
+		});
 	};
 
 	function getLocalStorageItem(key)

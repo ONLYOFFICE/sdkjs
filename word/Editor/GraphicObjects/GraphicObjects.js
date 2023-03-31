@@ -4557,7 +4557,7 @@ CGraphicObjects.prototype.getAnimationPlayer = function()
 };
 
 CGraphicObjects.prototype.getImageDataFromSelection = DrawingObjectsController.prototype.getImageDataFromSelection;
-CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHeight)
+CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHeight, replaceMode)
 {
     let aSelectedObjects = this.getSelectedArray();
     if(aSelectedObjects.length > 0 && aSelectedObjects[0].isImage())
@@ -4567,7 +4567,7 @@ CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHei
             let dWidth = nWidth * AscCommon.g_dKoef_pix_to_mm;
             let dHeight = nHeight * AscCommon.g_dKoef_pix_to_mm;
             let oSp = aSelectedObjects[0];
-            oSp.replacePictureData(sImageUrl, dWidth, dHeight);
+            oSp.replacePictureData(sImageUrl, dWidth, dHeight, true, replaceMode);
             if(oSp.group)
             {
                 oController.selection.groupSelection.resetInternalSelection();

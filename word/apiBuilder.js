@@ -4874,7 +4874,12 @@
 				oResult = new ApiSection(oReader.SectPrFromJSON(oParsedObj));
 				break;
 			case "numbering":
-				oResult = new ApiNumbering(oReader.NumberingFromJSON(oParsedObj));
+				oReader.parsedNumbering = oParsedObj;
+				let sNumId		= Object.keys(oParsedObj["num"])[0];
+				let sAddedNumId	= oReader.NumberingFromJSON(sNumId);
+				let oNum		= oDocument.Document.GetNumbering().GetNum(sAddedNumId);
+
+				oResult = new ApiNumbering(oNum);
 				break;
 			case "textPr":
 				oResult = oParsedObj["bFromDocument"] ? new ApiTextPr(null, oReader.TextPrFromJSON(oParsedObj)) : new ApiTextPr(null, oReader.TextPrDrawingFromJSON(oParsedObj));
@@ -5584,7 +5589,7 @@
 		if (this.Document.IsSelectionUse())
 		{
 			this.Document.Start_SilentMode();
-			this.Document.Remove(1, false, false, isInline);
+			this.Document.Remove(1, false, false, true);
 			this.Document.End_SilentMode();
 			this.Document.RemoveSelection(true);
 		}
@@ -5673,12 +5678,38 @@
 
 		return oResult;
 	};
-
+	
+	/**
+	 * Review record type
+	 * @typedef {("TextAdd" | "TextRem" | "ParaAdd" | "ParaRem" | "TextPr" | "ParaPr" | "Unknown")} ReviewReportRecordType
+	 */
+	
+	/**
+	 * Record of one review change
+	 * @typedef {Object} ReviewReportRecord
+	 * @property {ReviewReportRecordType} Type - change type
+	 * @property {string} [Value=undefined] - value is set for types "TextAdd" and "TextRem" only
+	 * @property {number} Date - date-time when this change was made
+	 */
+	
+	/**
+	 * Report on all review changes
+	 * This is a dictionary where the keys are usernames
+	 * @typedef {Object.<string, Array.<ReviewReportRecord>>} ReviewReport
+	 * @example
+	 * 	{
+	 * 	  "John Smith" : [{Type: 'TextRem', Value: 'Hello, Mark!', Date: 1679941734161},
+	 * 	                {Type: 'TextAdd', Value: 'Dear Mr. Pottato.', Date: 1679941736189}],
+	 * 	  "Mark Pottato" : [{Type: 'ParaRem', Date: 1679941755942},
+	 * 	                  {Type: 'TextPr', Date: 1679941757832}]
+	 * 	}
+	 */
+	
 	/**
 	 * Returns a report about every change which was made to the document in the review mode.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {object}
+	 * @returns {ReviewReport}
 	 */
 	ApiDocument.prototype.GetReviewReport = function()
 	{
@@ -12104,7 +12135,7 @@
 		let oJSON = bFromDocument ? oWriter.SerTextPr(this.TextPr) : oWriter.SerTextPrDrawing(this.TextPr);
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
-		return JSON.stringify();
+		return JSON.stringify(oJSON);
 	};
 
 
@@ -12778,7 +12809,9 @@
 	ApiNumbering.prototype.ToJSON = function()
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
-		return JSON.stringify(oWriter.SerNumbering(this.Num));
+		oWriter.SerNumbering(this.Num);
+
+		return JSON.stringify(oWriter.jsonWordNumberings);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------

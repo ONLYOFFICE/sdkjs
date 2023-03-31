@@ -58,8 +58,9 @@ function CInlineLevelSdt()
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
 
-	this.SkipSpecialLock = false;
-	this.Current         = false;
+	this.SkipSpecialLock  = false;
+	this.SkipFillFormLock = false;
+	this.Current          = false;
 }
 
 CInlineLevelSdt.prototype = Object.create(CParagraphContentWithParagraphLikeContent.prototype);
@@ -1145,7 +1146,7 @@ CInlineLevelSdt.prototype.SelectContentControl = function()
 		return;
 	}
 
-	if (this.IsForm() && this.IsPlaceHolder() && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
+	if (this.IsForm() && this.IsPlaceHolder() && this.GetLogicDocument() && this.GetLogicDocument().IsCheckFormPlaceholder())
 	{
 		this.RemoveSelection();
 		this.MoveCursorToStartPos();
@@ -1347,6 +1348,11 @@ CInlineLevelSdt.prototype.CheckSelectionForDropCap = function(isUsePos, oEndPos,
  */
 CInlineLevelSdt.prototype.IsPlaceHolder = function()
 {
+	// В режиме редактирования мы не даем редактировать внутреннюю часть формы, поэтому пусть она ведет себя, как заполнитель
+	let logicDocument = this.GetLogicDocument();
+	if (this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+		return true;
+	
 	return this.Pr.ShowingPlcHdr;
 };
 CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMathRun)
@@ -1486,7 +1492,7 @@ CInlineLevelSdt.prototype.Set_SelectionContentPos = function(StartContentPos, En
 {
 	if (this.IsPlaceHolder())
 	{
-		if (this.IsForm() && StartContentPos && EndContentPos && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
+		if (this.IsForm() && StartContentPos && EndContentPos && this.GetLogicDocument() && this.GetLogicDocument().IsCheckFormPlaceholder())
 		{
 			this.Get_StartPos(StartContentPos, Depth);
 			this.Get_StartPos(EndContentPos, Depth);
@@ -1508,7 +1514,7 @@ CInlineLevelSdt.prototype.Set_SelectionContentPos = function(StartContentPos, En
 };
 CInlineLevelSdt.prototype.Set_ParaContentPos = function(ContentPos, Depth)
 {
-	if (this.IsPlaceHolder() && this.IsForm() && ContentPos && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
+	if (this.IsPlaceHolder() && this.IsForm() && ContentPos && this.GetLogicDocument() && this.GetLogicDocument().IsCheckFormPlaceholder())
 	{
 		this.Get_StartPos(ContentPos, Depth);
 		CParagraphContentWithParagraphLikeContent.prototype.Set_ParaContentPos.call(this, ContentPos, Depth);
@@ -1717,7 +1723,7 @@ CInlineLevelSdt.prototype.GetContentControlPr = function()
  */
 CInlineLevelSdt.prototype.CanBeDeleted = function()
 {
-	if (this.IsFixedForm())
+	if (this.IsFixedForm() && this.IsMainForm())
 		return false;
 
 	return (undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.ContentLocked === this.Pr.Lock);
@@ -1728,6 +1734,10 @@ CInlineLevelSdt.prototype.CanBeDeleted = function()
  */
 CInlineLevelSdt.prototype.CanBeEdited = function()
 {
+	let logicDocument = this.GetLogicDocument();
+	if (!this.SkipFillFormLock && this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+		return false;
+	
 	if (!this.SkipSpecialLock && (this.IsCheckBox() || this.IsPicture() || this.IsDropDownList()))
 		return false;
 
@@ -1923,6 +1933,14 @@ CInlineLevelSdt.prototype.SkipSpecialContentControlLock = function(isSkip)
 CInlineLevelSdt.prototype.IsSkipSpecialContentControlLock = function()
 {
 	return this.SkipSpecialLock;
+};
+/**
+ * Выключаем проверку невозможности редактирования формы в обычном режиме редактирования
+ * @param isSkip
+ */
+CInlineLevelSdt.prototype.SkipFillingFormModeCheck = function(isSkip)
+{
+	this.SkipFillFormLock = isSkip;
 };
 CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 {
@@ -2477,7 +2495,7 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 			&& oLogicDocument
 			&& oLogicDocument.IsCheckContentControlsLock()
 			&& ((this.IsPlaceHolder() && oLogicDocument.IsFillingFormMode())
-				|| (!this.CanBeEdited() && (oLogicDocument.IsFillingFormMode() || this.IsFixedForm()))))
+				|| (!this.CanBeEdited() && (oLogicDocument.IsFillingFormMode() || (this.IsFixedForm() && this.IsMainForm())))))
 		{
 			return AscCommon.CollaborativeEditing.Add_CheckLock(true);
 		}

@@ -4052,7 +4052,7 @@ var editor;
 			if (options.scanOnOnlySheet === Asc.c_oAscSearchBy.Workbook && wb.model.isUserProtectedRangesIntersection()) {
 				this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 				return;
-			} else if (options.scanOnOnlySheet === Asc.c_oAscSearchBy.Sheet && ws.isUserProtectedRangesIntersection()) {
+			} else if (options.scanOnOnlySheet === Asc.c_oAscSearchBy.Sheet && ws.model.isUserProtectedRangesIntersection()) {
 				this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 				return;
 			}
@@ -5150,9 +5150,9 @@ var editor;
       var ws = this.wb.getWorksheet();
       return ws.objectRender.controller.getImageDataFromSelection();
   };
-  spreadsheet_api.prototype.putImageToSelection = function(sImageSrc, nWidth, nHeight) {
+  spreadsheet_api.prototype.putImageToSelection = function(sImageSrc, nWidth, nHeight, replaceMode) {
       var ws = this.wb.getWorksheet();
-      return ws.objectRender.controller.putImageToSelection(sImageSrc, nWidth, nHeight);
+      return ws.objectRender.controller.putImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
   };
 
 
@@ -8382,6 +8382,25 @@ var editor;
 		return false;
 	};
 
+	spreadsheet_api.prototype.getEyedropperImgData = function() {
+		const oWSViewerCanvas = document.getElementById("ws-canvas");
+		const oWSOverlayCanvas = document.getElementById("ws-canvas-overlay");
+		const oGrViewerCanvas = document.getElementById("ws-canvas-graphic");
+		const oGrOverlayCanvas = document.getElementById("ws-canvas-graphic-overlay");
+		if(!oWSViewerCanvas || !oWSOverlayCanvas
+			|| !oGrViewerCanvas || !oGrOverlayCanvas) {
+			return null;
+		}
+		let oCanvas = document.createElement("canvas");
+		oCanvas.width = oWSViewerCanvas.width;
+		oCanvas.height = oWSViewerCanvas.height;
+		const oCtx = oCanvas.getContext("2d");
+		oCtx.drawImage(oWSViewerCanvas, 0, 0);
+		oCtx.drawImage(oWSOverlayCanvas, 0, 0);
+		oCtx.drawImage(oGrViewerCanvas, 0, 0);
+		oCtx.drawImage(oGrOverlayCanvas, 0, 0);
+		return oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
+	};
 	spreadsheet_api.prototype.asc_addUserProtectedRange = function (obj) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return false;

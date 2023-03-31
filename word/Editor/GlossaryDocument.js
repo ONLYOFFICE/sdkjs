@@ -327,7 +327,38 @@ CGlossaryDocument.prototype.Refresh_RecalcData = function(Data)
 {
 
 };
-
+CGlossaryDocument.prototype.GetDefaultPlaceholderTextDocPartId = function()
+{
+	return c_oAscDefaultPlaceholderName.Text;
+};
+CGlossaryDocument.prototype.GetDefaultPlaceholderListDocPartId = function()
+{
+	return c_oAscDefaultPlaceholderName.List;
+};
+CGlossaryDocument.prototype.GetDefaultPlaceholderDateTimeDocPartId = function()
+{
+	return c_oAscDefaultPlaceholderName.DateTime;
+};
+CGlossaryDocument.prototype.GetDefaultPlaceholderEquationDocPartId = function()
+{
+	return c_oAscDefaultPlaceholderName.Equation;
+};
+CGlossaryDocument.prototype.GetDefaultPlaceholderTextFormDocPartId = function()
+{
+	return c_oAscDefaultPlaceholderName.TextForm;
+};
+CGlossaryDocument.prototype.GetDefaultPlaceholderTextOformDocPartId = function()
+{
+	return c_oAscDefaultPlaceholderName.TextOform;
+};
+CGlossaryDocument.prototype.GetDefaultPlaceholderListOformDocPartId = function()
+{
+	return c_oAscDefaultPlaceholderName.ListOform;
+};
+CGlossaryDocument.prototype.GetDefaultPlaceholderDateOformDocPartId = function()
+{
+	return c_oAscDefaultPlaceholderName.DateOform;
+};
 
 /**
  * Класс, представляющий дополнительное содержимое документа (например, для плейсхолдеров документа)

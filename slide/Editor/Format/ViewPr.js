@@ -560,9 +560,13 @@
     };
     CCSldViewPr.prototype.drawGuides = function (oGraphics) {
         let aGds = this.guideLst;
+	    oGraphics.SaveGrState();
+	    oGraphics.SetIntegerGrid(true);
+	    oGraphics.transform3(new AscCommon.CMatrix());
         for(let nGd = 0; nGd < aGds.length; ++nGd) {
             aGds[nGd].draw(oGraphics);
         }
+	    oGraphics.RestoreGrState();
     };
     CCSldViewPr.prototype.insertGuide = function(bHorizontal) {
         let oLastGuide = null;

@@ -1784,23 +1784,6 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 	return this.FixedFormShape;
 };
 
-function CDocumentFormatPainterData(oTextPr, oParaPr, oDrawing)
-{
-	AscCommon.CFormatPainterDataBase.call();
-	this.TextPr = oTextPr;
-	this.ParaPr = oParaPr;
-	this.Drawing = oDrawing;
-}
-AscFormat.InitClassWithoutType(CDocumentFormatPainterData, AscCommon.CFormatPainterDataBase);
-CDocumentFormatPainterData.prototype.isDrawingData = function()
-{
-	return !!this.Drawing;
-};
-CDocumentFormatPainterData.prototype.getDocData = function()
-{
-	return this;
-};
-
 /**
  * Основной класс для работы с документом в Word.
  * @param DrawingDocument
@@ -2187,6 +2170,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.OFormDocument           = AscCommon.IsSupportOFormFeature() && false !== isMainLogicDocument ? new AscOForm.OForm(this) : null;
 	this.FormsManager            = new AscWord.CFormsManager(this);
 	this.CurrentForm             = null;
+	this.CurrentFormFixed        = false;
 	this.HighlightRequiredFields = false;  // Выделяем ли обязательные поля
 	this.RequiredFieldsBorder    = new CDocumentBorder();
 	this.RequiredFieldsBorder.SetSimpleColor(255, 0, 0);
@@ -6028,9 +6012,9 @@ CDocument.prototype.GetImageDataFromSelection = function()
     return this.DrawingObjects.getImageDataFromSelection();
 
 };
-CDocument.prototype.PutImageToSelection = function(sImageSrc, nWidth, nHeight)
+CDocument.prototype.PutImageToSelection = function(sImageSrc, nWidth, nHeight, replaceMode)
 {
-    return this.DrawingObjects.putImageToSelection(sImageSrc, nWidth, nHeight);
+    return this.DrawingObjects.putImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
 
 };
 /**
@@ -6385,9 +6369,10 @@ CDocument.prototype.Remove = function(nDirection, isRemoveWholeElement, bRemoveO
 	if (isCheckInlineLevelSdt)
 	{
 		// Эта проверка важна для работы с fixed-form, чтобы CC не удалялся при простом backspace/remove/cut
-		var oSelectInfo = this.GetSelectedElementsInfo();
-		if (oSelectInfo.GetInlineLevelSdt())
-			this.CheckInlineSdtOnDelete = oSelectInfo.GetInlineLevelSdt();
+		let selectedInfo = this.GetSelectedElementsInfo();
+		let inlineSdt    = selectedInfo.GetInlineLevelSdt();
+		if (inlineSdt && inlineSdt.IsForm() && inlineSdt.IsMainForm())
+			this.CheckInlineSdtOnDelete = inlineSdt;
 	}
 
 	this.Controller.Remove(nDirection, isRemoveWholeElement, bRemoveOnlySelection, bOnTextAdd, isWord);
@@ -9201,7 +9186,11 @@ CDocument.prototype.OnKeyDown = function(e)
 			{
 				this.EndHdrFtrEditing(true);
 			}
-
+			else if (this.Api.isEyedropperStarted())
+			{
+				this.Api.cancelEyedropper();
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
 			if (window['AscCommon'].g_specialPasteHelper.showSpecialPasteButton)
 			{
 				window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
@@ -11217,10 +11206,6 @@ CDocument.prototype.SetSectionStartPage = function(nStartPage)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
 };
-CDocument.prototype.GetFormatPainterData = function()
-{
-	return this.Controller.GetFormatPainterData();
-};
 CDocument.prototype.Document_Format_Copy = function()
 {
 	this.Api.checkFormatPainterData();
@@ -11491,7 +11476,7 @@ CDocument.prototype.GetCurrentWord = function(nDirection)
  * Заменяем текущее слово (или часть текущего слова) на заданную строку
  * @param nDirection {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
  * @param sReplace {string}
- * @returns {string}
+ * @returns {boolean}
  */
 CDocument.prototype.ReplaceCurrentWord = function(nDirection, sReplace)
 {
@@ -11918,7 +11903,7 @@ CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
 
 	if (!format.Check(sText))
 	{
-		this.Api.sendEvent("asc_onError", c_oAscError.ID.TextFormWrongFormat, c_oAscError.Level.NoCritical, oTextFormPr);
+		this.Api.sendEvent("asc_onError", Asc.c_oAscError.ID.TextFormWrongFormat, Asc.c_oAscError.Level.NoCritical, oTextFormPr);
 
 		if (this.CollaborativeEditing.Is_SingleUser() || !this.CollaborativeEditing.Is_Fast())
 		{
@@ -16131,17 +16116,18 @@ CDocument.prototype.SetDocumentPrintMode = function()
 };
 CDocument.prototype.private_SetCurrentSpecialForm = function(oForm)
 {
-	if (this.CurrentForm === oForm)
+	if (this.CurrentForm === oForm && ((!oForm && !this.CurrentFormFixed) || (oForm && this.CurrentFormFixed === oForm.IsFixedForm())))
 		return false;
 
 	if (this.CurrentForm)
 		this.CurrentForm.SetCurrent(false);
 
 	this.CurrentForm = oForm;
+	this.CurrentFormFixed = oForm ? oForm.IsFixedForm() : false;
 
 	if (this.CurrentForm)
 		this.CurrentForm.SetCurrent(true);
-
+	
 	return true;
 };
 /**
@@ -18592,10 +18578,6 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 			Item.AddNewParagraph();
 		}
 	}
-};
-CDocument.prototype.controller_GetFormatPainterData = function()
-{
-	return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
 };
 CDocument.prototype.controller_AddInlineImage = function(W, H, Img, Chart, bFlow)
 {
@@ -21719,7 +21701,6 @@ CDocument.prototype.controller_CollectSelectedReviewChanges = function(oTrackMan
 		this.Content[nPos].CollectSelectedReviewChanges(oTrackManager);
 	}
 };
-CDocument.prototype.controller_GetFormatPainterData
 //----------------------------------------------------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------------------------------------------------
@@ -25457,16 +25438,24 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 		this.StartAction(AscDFH.historydescription_Document_ConvertFormFixedType);
 
 		if (isToFixed)
-			oForm.ConvertFormToFixed();
+		{
+			let drawing = oForm.ConvertFormToFixed();
+			
+			this.RemoveSelection();
+			if (drawing)
+				drawing.SelectAsDrawing();
+		}
 		else
+		{
 			oForm.ConvertFormToInline();
-
-		this.RemoveSelection();
-		oForm.MoveCursorToContentControl(false);
-
+			this.RemoveSelection();
+			oForm.SelectContentControl();
+		}
+		
 		this.Recalculate();
 		this.UpdateInterface();
 		this.UpdateSelection();
+		this.UpdateTracks();
 		this.FinalizeAction();
 
 		return true;
@@ -26950,6 +26939,13 @@ CDocument.prototype.ConvertAllMathView = function(isToLinear)
 	this.UpdateInterface();
 	this.UpdateTracks();
 	this.FinalizeAction();
+};
+CDocument.prototype.IsCheckFormPlaceholder = function()
+{
+	if (!this.IsFillingFormMode())
+		return false;
+	
+	return this.CheckFormPlaceHolder;
 };
 
 function CDocumentSelectionState()

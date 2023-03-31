@@ -4685,6 +4685,8 @@ function CThumbnailsManager()
 		if (null == canvas)
 			return;
 
+		this.m_oWordControl.m_oApi.clearEyedropperImgData();
+
 		var context = canvas.getContext("2d");
 		var _width  = canvas.width;
 		var _height = canvas.height;

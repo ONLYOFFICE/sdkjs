@@ -68,7 +68,7 @@
   var g_clipboardExcel = AscCommonExcel.g_clipboardExcel;
 
   function CCellFormatPasteData(oWSView) {
-	  AscCommon.CFormatPainterDataBase.call();
+	  AscCommon.CFormattingPasteDataBase.call();
 	  this.ws = oWSView.model;
 	  this.range = this.ws.selectionRange.clone();
 
@@ -79,7 +79,7 @@
 		  }
 	  }
   }
-  AscFormat.InitClassWithoutType(CCellFormatPasteData, AscCommon.CFormatPainterDataBase);
+  AscFormat.InitClassWithoutType(CCellFormatPasteData, AscCommon.CFormattingPasteDataBase);
 	CCellFormatPasteData.prototype.isDrawingData = function() {
 		return !!this.docData;
 	};
@@ -1599,6 +1599,14 @@
             }
 		}
 
+		if(this.Api.isEyedropperStarted()) {
+			arrMouseMoveObjects.push(new asc_CMM({
+				type: c_oAscMouseMoveType.Eyedropper,
+				x: AscCommon.AscBrowser.convertToRetinaValue(x),
+				y: AscCommon.AscBrowser.convertToRetinaValue(y),
+				color: ct.color
+			}));
+		}
       /* Проверяем, может мы на никаком объекте (такая схема оказалась приемлимой
        * для отдела разработки приложений)
        */
@@ -2255,6 +2263,9 @@
       return this;
     }
 
+	if(this.Api.isEyedropperStarted()) {
+		this.Api.cancelEyedropper();
+	}
     var selectionRange = null;
     // Только если есть активный
     if (-1 !== this.wsActive) {

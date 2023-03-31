@@ -467,10 +467,6 @@ CBlockLevelSdt.prototype.AddNewParagraph = function()
 	this.private_ReplacePlaceHolderWithContent();
 	return this.Content.AddNewParagraph();
 };
-CBlockLevelSdt.prototype.GetFormatPainterData = function()
-{
-	return this.Content.GetFormatPainterData();
-};
 CBlockLevelSdt.prototype.Get_SelectionState2 = function()
 {
 	var oState  = new CDocumentSelectionState();
@@ -545,11 +541,15 @@ CBlockLevelSdt.prototype.Remove = function(nCount, isRemoveWholeElement, bRemove
 {
 	if (this.IsPlaceHolder())
 	{
-		if (!bOnAddText)
-			return false;
-
-		this.private_ReplacePlaceHolderWithContent();
-		return true;
+		let logicDocument = this.GetLogicDocument();
+		
+		if (!this.CanBeDeleted() && !bOnAddText)
+			return true;
+		
+		if (bOnAddText || !(logicDocument && logicDocument.IsDocumentEditor() && logicDocument.IsFillingFormMode()))
+			this.private_ReplacePlaceHolderWithContent();
+		
+		return !!bOnAddText;
 	}
 
 	var bResult = this.Content.Remove(nCount, isRemoveWholeElement, bRemoveOnlySelection, bOnAddText, isWord);

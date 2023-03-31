@@ -424,10 +424,6 @@ CDocumentContentElementBase.prototype.AddNewParagraph = function()
 {
 
 };
-CDocumentContentElementBase.prototype.GetFormatPainterData = function()
-{
-	return null;
-};
 CDocumentContentElementBase.prototype.Get_SelectionState2 = function()
 {
 	return null;

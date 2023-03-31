@@ -2208,6 +2208,79 @@
 		}
 		return this.cropObject;
 	};
+	CGraphicObjectBase.prototype.check_bounds = function (oShapeDrawer) {
+	};
+	CGraphicObjectBase.prototype.cropFit = function() {
+		var oBlipFill = this.getBlipFill();
+		if (oBlipFill) {
+			var oImgP = new Asc.asc_CImgProperty();
+			oImgP.ImageUrl = oBlipFill.RasterImageId;
+			var oSize = oImgP.asc_getOriginSize(Asc.editor || editor);
+			var oShapeDrawer = new AscCommon.CShapeDrawer();
+			oShapeDrawer.bIsCheckBounds = true;
+			oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
+			this.check_bounds(oShapeDrawer);
+			var bounds_w = oShapeDrawer.max_x - oShapeDrawer.min_x;
+			var bounds_h = oShapeDrawer.max_y - oShapeDrawer.min_y;
+			var dScale = bounds_w / oSize.Width;
+			var dTestHeight = oSize.Height * dScale;
+			var srcRect = new AscFormat.CSrcRect();
+			if (dTestHeight <= bounds_h) {
+				srcRect.l = 0;
+				srcRect.r = 100;
+				srcRect.t = -100 * (bounds_h - dTestHeight) / 2.0 / dTestHeight;
+				srcRect.b = 100 - srcRect.t;
+			} else {
+				srcRect.t = 0;
+				srcRect.b = 100;
+				dScale = bounds_h / oSize.Height;
+				var dTestWidth = oSize.Width * dScale;
+				srcRect.l = -100 * (bounds_w - dTestWidth) / 2.0 / dTestWidth;
+				srcRect.r = 100 - srcRect.l;
+			}
+			this.setSrcRect(srcRect);
+			var oParent = this.parent;
+			if (oParent && oParent.Check_WrapPolygon) {
+				oParent.Check_WrapPolygon()
+		}
+		}
+	};
+	CGraphicObjectBase.prototype.cropFill = function() {
+		var oImgP = new Asc.asc_CImgProperty();
+		let oBlipFill = this.getBlipFill();
+		if(!oBlipFill) {
+			return;
+		}
+		oImgP.ImageUrl = this.getBlipFill().RasterImageId;
+		var oSize = oImgP.asc_getOriginSize(Asc.editor || editor);
+		var oShapeDrawer = new AscCommon.CShapeDrawer();
+		oShapeDrawer.bIsCheckBounds = true;
+		oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
+		this.check_bounds(oShapeDrawer);
+		var bounds_w = oShapeDrawer.max_x - oShapeDrawer.min_x;
+		var bounds_h = oShapeDrawer.max_y - oShapeDrawer.min_y;
+		var dScale = bounds_w / oSize.Width;
+		var dTestHeight = oSize.Height * dScale;
+		var srcRect = new AscFormat.CSrcRect();
+		if (dTestHeight >= bounds_h) {
+			srcRect.l = 0;
+			srcRect.r = 100;
+			srcRect.t = -100 * (bounds_h - dTestHeight) / 2.0 / dTestHeight;
+			srcRect.b = 100 - srcRect.t;
+		} else {
+			srcRect.t = 0;
+			srcRect.b = 100;
+			dScale = bounds_h / oSize.Height;
+			var dTestWidth = oSize.Width * dScale;
+			srcRect.l = -100 * (bounds_w - dTestWidth) / 2.0 / dTestWidth;
+			srcRect.r = 100 - srcRect.l;
+		}
+		this.setSrcRect(srcRect);
+		var oParent = this.parent;
+		if (oParent && oParent.Check_WrapPolygon) {
+			oParent.Check_WrapPolygon();
+		}
+	};
 	CGraphicObjectBase.prototype.createCropObject = function () {
 		return AscFormat.ExecuteNoHistory(function () {
 			var oBlipFill = this.getBlipFill();
@@ -2729,9 +2802,15 @@
 			return null;
 		}
 		var oCanvas = document.createElement('canvas');
+		if(!oCanvas) {
+			return null;
+		}
 		oCanvas.width = nWidth;
 		oCanvas.height = nHeight;
 		var oCtx = oCanvas.getContext('2d');
+		if(!oCtx) {
+			return null;
+		}
 		var oGraphics = new AscCommon.CGraphics();
 		oGraphics.init(oCtx, nWidth, nHeight, nWidth / scale, nHeight / scale);
 		oGraphics.m_oFontManager = AscCommon.g_fontManager;
@@ -3018,6 +3097,21 @@
 	CGraphicObjectBase.prototype.getXfrmExtY = function () {
 		if (this.spPr && this.spPr.xfrm)
 			return this.spPr.xfrm.extY;
+		return null;
+	};
+	CGraphicObjectBase.prototype.getXfrmRot = function () {
+		if (this.spPr && this.spPr.xfrm)
+			return this.spPr.xfrm.rot;
+		return null;
+	};
+	CGraphicObjectBase.prototype.getXfrmFlipH = function () {
+		if (this.spPr && this.spPr.xfrm)
+			return this.spPr.xfrm.flipH;
+		return null;
+	};
+	CGraphicObjectBase.prototype.getXfrmFlipV = function () {
+		if (this.spPr && this.spPr.xfrm)
+			return this.spPr.xfrm.flipV;
 		return null;
 	};
 	CGraphicObjectBase.prototype.checkEmptySpPrAndXfrm = function (_xfrm) {

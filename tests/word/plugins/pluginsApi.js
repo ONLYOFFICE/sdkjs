@@ -187,6 +187,31 @@ $(function () {
 		AscTest.MoveCursorToParagraph(p, true);
 		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentWord(), "Te", "Add hidden complex field in the middle of word 'Test' and check current word");
 		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "Te1st text", "Check current sentence");
+		
+		
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+		AscTest.EnterText("Test text");
+
+		AscTest.MoveCursorToParagraph(p, true);
+		PluginsApi.pluginMethod_ReplaceCurrentWord("First");
+		assert.strictEqual(AscTest.GetParagraphText(p), "First text", "Replace current word at the start of the paragraph");
+		
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 2);
+		PluginsApi.pluginMethod_ReplaceCurrentWord("Second");
+		assert.strictEqual(AscTest.GetParagraphText(p), "Second text", "Replace current word at the second position of the paragraph");
+		
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 3);
+		PluginsApi.pluginMethod_ReplaceCurrentWord("123", "afterCursor");
+		assert.strictEqual(AscTest.GetParagraphText(p), "Sec123 text", "Replace the part of the word after cursor");
+		
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 3);
+		PluginsApi.pluginMethod_ReplaceCurrentWord("654", "beforeCursor");
+		assert.strictEqual(AscTest.GetParagraphText(p), "654123 text", "Replace the part of the word before cursor");
+		
 	})
 	
 	

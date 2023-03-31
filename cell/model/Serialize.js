@@ -723,7 +723,7 @@
         QueryTableDeletedField: 0,
         Name: 1
     };
-	
+
     /** @enum */
     var c_oSer_Dxf =
     {
@@ -1155,7 +1155,7 @@
 		LockRevision: 11
 	};
     var c_oSerCustoms = {
-        Custom: 0, 
+        Custom: 0,
         ItemId: 1,
         Uri: 2,
         Content: 3
@@ -1165,9 +1165,13 @@
         Sqref: 1,
         Name: 2,
         Text: 3,
-        UserId: 4,
+        User: 4,
         UsersGroup: 5
     };
+	var c_oSerUserProtectedRangeDesc = {
+		Id: 0,
+		Name: 1
+	};
 
 	/** @enum */
     var EBorderStyle =
@@ -1677,7 +1681,7 @@
 		this.align = null;
 		this.PivotButton = null;
 		this.XfId = null;
-		
+
 		this.applyProtection = null;
 		this.locked = null;
 		this.hidden = null;
@@ -3756,7 +3760,7 @@
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(workbookProtection.workbookSaltValue);
 			}
-		
+
 		};
     }
 	function BinaryWorksheetsTableWriter(memory, wb, isCopyPaste, bsw, saveThreadedComments, initSaveManager)
@@ -5673,18 +5677,30 @@
                 });
             }
         };
+		this.WriteUserProtectedRangeDesc = function (desc) {
+			if (desc.id) {
+				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Id);
+				this.memory.WriteByte(c_oSerPropLenType.Variable);
+				this.memory.WriteString2(desc.id);
+			}
+			if (desc.name) {
+				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Name);
+				this.memory.WriteByte(c_oSerPropLenType.Variable);
+				this.memory.WriteString2(desc.name);
+			}
+		};
         this.WriteUserProtectedRange = function (oUserProtectedRange) {
 
             var oThis = this;
 
             if (oUserProtectedRange.name) {
-                this.bs.WriteItem(c_oSerUserProtectedRange.Name, function () {
+				this.bs.WriteItem(c_oSerUserProtectedRange.Name, function () {
                     oThis.memory.WriteString3(oUserProtectedRange.name);
                 });
             }
             if (oUserProtectedRange.ref) {
-                this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
-                    var sqRef = getSqRefString([oUserProtectedRange.ref]);
+				var sqRef = getSqRefString([oUserProtectedRange.ref]);
+            	this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
                     oThis.memory.WriteString3(sqRef);
                 });
             }
@@ -5695,21 +5711,21 @@
             }
 
             let i;
-            if (null != oUserProtectedRange.usersMap) {
-                let users = oUserProtectedRange.asc_getUsers();
+            let users = oUserProtectedRange.asc_getUsers();
+            if (null != users) {
                 for (i = 0; i < users.length; i++) {
-                    this.bs.WriteItem(c_oSerUserProtectedRange.UserId, function () {
-                        oThis.memory.WriteString3(users[i]);
+                    this.bs.WriteItem(c_oSerUserProtectedRange.User, function () {
+                        oThis.WriteUserProtectedRangeDesc(users[i]);
                     });
                 }
             }
-            if (null != oUserProtectedRange.userGroupsMap) {
-                let users = oUserProtectedRange.asc_getUserGroups();
-                for (i = 0; i < users.length; i++) {
-                    this.memory.WriteByte(c_oSerUserProtectedRange.UsersGroup);
-                    this.memory.WriteByte(c_oSerPropLenType.Variable);
-                    this.memory.WriteString2(users[i]);
-                }
+			let userGroups = oUserProtectedRange.asc_getUserGroups();
+            if (null != userGroups) {
+				for (i = 0; i < userGroups.length; i++) {
+					this.bs.WriteItem(c_oSerUserProtectedRange.UsersGroup, function () {
+						oThis.WriteUserProtectedRangeDesc(userGroups[i]);
+					});
+				}
             }
         };
     }
@@ -8001,7 +8017,7 @@
                    this.wb.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
                 }
 
-				
+
                 this.curWorksheet = oNewWorksheet;
                 res = this.bcr.Read1(length, function(t,l){
                     return oThis.ReadWorksheet(t,l, oNewWorksheet);
@@ -8454,7 +8470,7 @@
             if (c_oSerUserProtectedRange.UserProtectedRange === type) {
                 oUserProtectedRange = Asc.CUserProtectedRange ? new Asc.CUserProtectedRange() : null;
                 if (oUserProtectedRange) {
-                    res = this.bcr.Read2(length, function (t, l) {
+                    res = this.bcr.Read1(length, function (t, l) {
                         return oThis.ReadUserProtectedRange(t, l, oUserProtectedRange);
                     });
                     aUserProtectedRanges.push(oUserProtectedRange);
@@ -8466,28 +8482,62 @@
             }
             return res;
         };
+		this.ReadUserProtectedRangeDesc = function (type, length, oUser) {
+			var res = c_oSerConstants.ReadOk;
+
+			if (c_oSerUserProtectedRangeDesc.Name === type) {
+				oUser.name = this.stream.GetString2LE(length);
+			} else if (c_oSerUserProtectedRangeDesc.Id === type) {
+				oUser.id = this.stream.GetString2LE(length);
+			} else {
+				res = c_oSerConstants.ReadUnknown;
+			}
+
+			return res;
+		};
         this.ReadUserProtectedRange = function (type, length, oUserProtectedRange) {
             var res = c_oSerConstants.ReadOk;
+            var oThis = this;
             if (c_oSerUserProtectedRange.Name === type) {
-                oUserProtectedRange.name = this.stream.GetString2LE(length);
+                oUserProtectedRange.name = this.stream.GetString2(length);
             } else if (c_oSerUserProtectedRange.Sqref === type) {
-                var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2LE(length));
+                var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2(length));
                 if (range) {
                     oUserProtectedRange.ref = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
                 }
             } else if (c_oSerUserProtectedRange.Text === type) {
-                oUserProtectedRange.warningText = this.stream.GetString2LE(length);
-            } else if (c_oSerUserProtectedRange.UserId === type) {
-            	if (!oUserProtectedRange.usersMap) {
-					oUserProtectedRange.usersMap = {};
+                oUserProtectedRange.warningText = this.stream.GetString2(length);
+            } else if (c_oSerUserProtectedRange.User === type)
+			{
+
+				let oUser = Asc.CUserProtectedRangeUserInfo ? new Asc.CUserProtectedRangeUserInfo() : null;
+				if (oUser) {
+					res = this.bcr.Read2(length, function (t, l) {
+						return oThis.ReadUserProtectedRangeDesc(t, l, oUser);
+					});
+					if (!oUserProtectedRange.users) {
+						oUserProtectedRange.users = [];
+					}
+					oUserProtectedRange.users.push(oUser);
+				} else {
+					res = c_oSerConstants.ReadUnknown;
 				}
-                oUserProtectedRange.usersMap[this.stream.GetString2LE(length)] = 1;
-            } else if (c_oSerUserProtectedRange.UsersGroup === type) {
-				if (!oUserProtectedRange.userGroupsMap) {
-					oUserProtectedRange.userGroupsMap = {};
+			}
+			else if (c_oSerUserProtectedRange.UsersGroup === type)
+			{
+				let oUser = Asc.CUserProtectedRangeUserInfo ? new Asc.CUserProtectedRangeUserInfo() : null;
+				if (oUser) {
+					res = this.bcr.Read2(length, function (t, l) {
+						return oThis.ReadUserProtectedRangeDesc(t, l, oUser);
+					});
+					if (!oUserProtectedRange.usersGroups) {
+						oUserProtectedRange.usersGroups = [];
+					}
+					oUserProtectedRange.usersGroups.push(oUser);
+				} else {
+					res = c_oSerConstants.ReadUnknown;
 				}
-                oUserProtectedRange.userGroupsMap[this.stream.GetString2LE(length)] = 1;
-            } else {
+			} else {
                 res = c_oSerConstants.ReadUnknown;
             }
             return res;

@@ -1460,13 +1460,6 @@ CEndnotesController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 
 	return this.CurEndnote.AddNewParagraph(bRecalculate, bForceAdd);
 };
-CEndnotesController.prototype.GetFormatPainterData = function()
-{
-	if (!this.CurEndnote)
-		return null;
-
-	return this.CurEndnote.GetFormatPainterData();
-};
 CEndnotesController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {
 	if (false === this.private_CheckEndnotesSelectionBeforeAction())

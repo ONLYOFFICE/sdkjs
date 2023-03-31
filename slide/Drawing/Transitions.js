@@ -3122,6 +3122,7 @@ function CDemonstrationManager(htmlpage)
             if(oThis.SlideNum === oThis.SlidesCount && oThis.isLoop())
             {
                 oThis.SlideNum = oThis.GetFirstVisibleSlide();
+	            oThis.StopAllAnimations();
             }
             oThis.HtmlPage.m_oApi.sync_DemonstrationSlideChanged(oThis.SlideNum);
             oThis.StartSlide(true, false);
@@ -3366,6 +3367,7 @@ function CDemonstrationManager(htmlpage)
         if (this.isLoop() && (this.SlideNum >= this.SlidesCount)) {
             this.StopAllAnimations();
             this.SlideNum = this.GetFirstVisibleSlide();
+	        this.StopAllAnimations();
         }
 
         if (this.SlideNum > this.SlidesCount)
