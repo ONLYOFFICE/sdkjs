@@ -353,6 +353,7 @@ DrawingObjectsController.prototype.createGroup = function()
         group.addToRecalculate();
         this.startRecalculate();
     }
+		return group;
 };
 DrawingObjectsController.prototype.handleChartDoubleClick = function()
 {

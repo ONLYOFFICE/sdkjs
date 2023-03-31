@@ -2926,6 +2926,7 @@ CGraphicObjects.prototype =
 		{
 			this.document.SetLocalTrackRevisions(bTrackRevisions);
 		}
+		return para_drawing;
     },
 
     unGroupSelectedObjects: function()

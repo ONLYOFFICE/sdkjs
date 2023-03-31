@@ -5570,6 +5570,7 @@ CPresentation.prototype.Add_FlowTable = function (Cols, Rows, Placeholder, sStyl
 	graphic_frame.graphicObject.MoveCursorToStartPos();
 	this.Recalculate();
 	this.Document_UpdateInterfaceState();
+	return graphic_frame;
 };
 
 
