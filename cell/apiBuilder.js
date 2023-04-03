@@ -832,6 +832,21 @@
 	});
 
 	/**
+	 * Returns full name of current workbook.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	Api.prototype.GetFullName = function () {
+		return this.DocInfo.Title;
+	};
+	Object.defineProperty(Api.prototype, "FullName", {
+		get: function () {
+			return this.GetFullName();
+		}
+	});
+
+	/**
 	 * Returns the state of sheet visibility.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -5638,6 +5653,7 @@
 
 	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
+	Api.prototype["GetFullName"] = Api.prototype.GetFullName;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
