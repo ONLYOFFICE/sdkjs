@@ -18359,6 +18359,21 @@
 		return new ApiDrawing(oDrawing);
 	};
 
+	/**
+	 * Returns full name of current opened file.
+	 * @memberof Api
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @returns {string}
+	 */
+	Api.prototype.GetFullName = function () {
+		return this.DocInfo.Title;
+	};
+	Object.defineProperty(Api.prototype, "FullName", {
+		get: function () {
+			return this.GetFullName();
+		}
+	});
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiComment
@@ -18754,6 +18769,7 @@
 	Api.prototype["CreateTextPr"]		             = Api.prototype.CreateTextPr;
 	Api.prototype["CreateWordArt"]		             = Api.prototype.CreateWordArt;
 	Api.prototype["CreateOleObject"]		         = Api.prototype.CreateOleObject;
+	Api.prototype["GetFullName"]		             = Api.prototype.GetFullName;
 
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["FromJSON"]		                 = Api.prototype.FromJSON;
