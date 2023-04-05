@@ -5331,7 +5331,7 @@
 		return arrApiOleObjects;
 	};
 	/**
-	 * Returns an array of all paragraphs from the current document content
+	 * Returns an array of all paragraphs from the current document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiParagraph[]}
@@ -5346,7 +5346,7 @@
 		return result;
 	};
 	/**
-	 * Returns an array of all tables from the current document content
+	 * Returns an array of all tables from the current document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiParagraph[]}
@@ -5680,21 +5680,21 @@
 	};
 	
 	/**
-	 * Review record type
+	 * Review record type.
 	 * @typedef {("TextAdd" | "TextRem" | "ParaAdd" | "ParaRem" | "TextPr" | "ParaPr" | "Unknown")} ReviewReportRecordType
 	 */
 	
 	/**
-	 * Record of one review change
+	 * Record of one review change.
 	 * @typedef {Object} ReviewReportRecord
-	 * @property {ReviewReportRecordType} Type - change type
-	 * @property {string} [Value=undefined] - value is set for types "TextAdd" and "TextRem" only
-	 * @property {number} Date - date-time when this change was made
+	 * @property {ReviewReportRecordType} Type - Review record type.
+	 * @property {string} [Value=undefined] - Review change value that is set for the "TextAdd" and "TextRem" types only.
+	 * @property {number} Date - The time when this change was made.
 	 */
 	
 	/**
-	 * Report on all review changes
-	 * This is a dictionary where the keys are usernames
+	 * Report on all review changes.
+	 * This is a dictionary where the keys are usernames.
 	 * @typedef {Object.<string, Array.<ReviewReportRecord>>} ReviewReport
 	 * @example
 	 * 	{
@@ -7008,8 +7008,8 @@
         }
 	};
 	/**
-	 * Returns the number of pages in a document
-	 * <note>This method can be slow for large documents, because it runs the document calculation
+	 * Returns a number of pages in the current document.
+	 * <note>This method can be slow for large documents because it runs the document calculation
 	 * process before the full recalculation.</note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -8801,7 +8801,7 @@
 	};
 
 	/**
-     * Gets the section of paragraph.
+     * Returns the paragraph section.
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
      * @returns {ApiSection}
@@ -8815,10 +8815,10 @@
 		return new ApiSection(oSectPr);
 	};
 	/**
-     * Sets the specified section to paragraph.
+     * Sets the specified section to the current paragraph.
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
-     * @param {ApiSection} oSection - the section which will setted to the paragraph.
+     * @param {ApiSection} oSection - The section which will be set to the paragraph.
      * @returns {boolean}
      */
 	ApiParagraph.prototype.SetSection = function(oSection)
@@ -10826,7 +10826,7 @@
 	};
 
 	/**
-     * Adds a caption table after (or before) the current table.
+     * Adds a caption paragraph after (or before) the current table.
 	 * <note>Please note that the current table must be in the document (not in the footer/header).
 	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.</note>
      * @memberof ApiTable
@@ -16792,7 +16792,7 @@
 	};
 
 	/**
-     * Adds a caption content control after (or before) the current content control.
+     * Adds a caption paragraph after (or before) the current content control.
 	 * <note>Please note that the current content control must be in the document (not in the footer/header).
 	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.</note>
      * @memberof ApiBlockLvlSdt
@@ -18360,7 +18360,7 @@
 	};
 
 	/**
-	 * Returns full name of current opened file.
+	 * Returns the full name of the currently opened file.
 	 * @memberof Api
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @returns {string}
