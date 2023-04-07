@@ -1264,6 +1264,21 @@
 				"guid" : ""
 			};
 		}
+		
+		const isDesktop = window.AscDesktopEditor !== undefined;
+		if (isDesktop)
+		{
+			// Отдаём весь конфиг, внутри вычислим путь к deploy
+			// TODO: отслеживать возможные ошибки при +/- плагинов: из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
+			// UPD: done. Ничего не изменять в менеджере плагинов, если guid пуст
+
+            let result = window["AscDesktopEditor"]["PluginInstall"](JSON.stringify(config));
+			
+			return {
+				"type" : loadFuncName,
+				"guid" : result ? config["guid"] : ""
+			};
+		}
 
 		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
 		if (!currentInstalledPlugins)
@@ -1380,6 +1395,21 @@
 			}
 		*/
 
+		const isDesktop = window.AscDesktopEditor !== undefined;
+
+		// В случае Desktop нужно проверить какие плагины нельзя удалять. В UpdateInstallPlugins работаем с двумя типами папок.
+		// Пока проверка тут, но грамотнее будет сделать и использовать доп.свойство isSystemInstall класса CPlugin
+		// т.к. не будем лишний раз парсить папки, то при +/- плагинов.
+		let protectedPlugins = [];
+		if (isDesktop) {
+			var _pluginsTmp = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
+
+			var len = _pluginsTmp[0]["pluginsData"].length;
+			for (var i = 0; i < len; i++) {
+				protectedPlugins.push(_pluginsTmp[0]["pluginsData"][i]["guid"]);
+			}
+		}
+
 		let baseUrl = window.location.href;
 		let posQ = baseUrl.indexOf("?");
 		if (-1 !== posQ)
@@ -1394,8 +1424,8 @@
 				continue;
 			returnArray.push({
 				"baseUrl" : baseUrl,
-				"guid" : pluginsArray[i].guid,
-				"canRemoved" : true,
+				"guid": pluginsArray[i].guid,
+				"canRemoved": protectedPlugins.indexOf(pluginsArray[i].guid) == -1,
 				"obj" : pluginsArray[i].serialize(),
 				"removed" : false
 			});
@@ -1434,6 +1464,25 @@
      */
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
 	{
+		const isDesktop = window.AscDesktopEditor !== undefined;
+
+		if (isDesktop)
+		{
+			// Вызываем только этот ++код, никаких дополнительных действий типа:
+			// window.g_asc_plugins.unregister(guid), window["UpdateInstallPlugins"](), this.sendEvent("asc_onPluginsReset"), window.g_asc_plugins.updateInterface()
+			// не требуется, т.к. ++код вызывает UpdateInstallPlugins, в нём идёт перестроение списка плагинов и обновление интерфейса.
+			// Просто отдаём менеджеру плагинов ответ.
+			// TODO: отслеживать возможные ошибки при +/- плагинов: из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
+			// UPD: done. Ничего не изменять в менеджере плагинов, если guid пуст
+
+			let result = window["AscDesktopEditor"]["PluginUninstall"](guid);
+						
+			return {
+				type : "Removed",
+				guid : result ? guid : ""
+			};
+		}
+		
 		let removedPlugin = window.g_asc_plugins.unregister(guid);
 
 		if (removedPlugin)
