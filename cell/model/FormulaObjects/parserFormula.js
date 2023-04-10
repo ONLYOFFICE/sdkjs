@@ -6377,8 +6377,9 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 				var _argPos = argPosArrMap[currentFuncLevel];
-				if (_argPos && _argPos[_argPos.length - 1] && undefined === _argPos[_argPos.length - 1].end) {
-					_argPos[_argPos.length - 1].end = ph.pCurrPos;
+				var lastArgPos = _argPos && _argPos[_argPos.length - 1];
+				if (lastArgPos && undefined === lastArgPos.end) {
+					lastArgPos.end = lastArgPos.start > ph.pCurrPos ? lastArgPos.start : ph.pCurrPos;
 				}
 
 				if (!parseResult.allFunctionsPos) {
@@ -6872,8 +6873,9 @@ function parserFormula( formula, parent, _ws ) {
 					parseResult.activeArgumentPos = argFuncMap[currentFuncLevel].count;
 				}
 				var _argPos = argPosArrMap[currentFuncLevel];
-				if (_argPos && _argPos[_argPos.length - 1] && undefined === _argPos[_argPos.length - 1].end) {
-					_argPos[_argPos.length - 1].end = ph.pCurrPos;
+				var lastArgPos = _argPos && _argPos[_argPos.length - 1];
+				if (lastArgPos && undefined === lastArgPos.end) {
+					lastArgPos.end = lastArgPos.start > ph.pCurrPos ? lastArgPos.start : ph.pCurrPos;
 				}
 				if (levelFuncMap[currentFuncLevel]) {
 					if (!parseResult.allFunctionsPos) {
