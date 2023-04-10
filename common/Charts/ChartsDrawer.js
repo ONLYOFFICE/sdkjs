@@ -5734,7 +5734,7 @@ CChartsDrawer.prototype =
 
 	calculateLine: function (x, y, x1, y1, path, isContinuePath) {
 		let pathId;
-    	if (!path) {
+		if (!path) {
 			pathId = this.cChartSpace.AllocPath();
 			path = this.cChartSpace.GetPath(pathId);
 		}
