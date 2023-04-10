@@ -14087,8 +14087,10 @@ axisChart.prototype = {
 		if(isDrawGrid) {
 			this._drawGridLines();
 		} else {
-			this._drawAxis();
-			this._drawTickMark();
+			if (!this.axis.isRadarCategories()) {
+				this._drawAxis();
+				this._drawTickMark();
+			}
 		}
 	},
 
