@@ -12305,9 +12305,9 @@ drawRadarChart.prototype = {
 			this.paths.points[indexSer] = [];
 		}
 
-		if (pt.compiledMarker) {
-			this.paths.points[indexSer][indexPt] = this.cChartDrawer.calculatePoint(x, y, pt.compiledMarker.size, pt.compiledMarker.symbol);
-		}
+		let size = pt && pt.compiledMarker && pt.compiledMarker.size;
+		let symbol = pt && pt.compiledMarker && pt.compiledMarker.symbol;
+		this.paths.points[indexSer][indexPt] = this.cChartDrawer.calculatePoint(x, y, size, symbol);
 	},
 
 	_addLineToTemporary: function (x1, y1, x2, y2, indexSer, indexPt) {
@@ -12371,7 +12371,7 @@ drawRadarChart.prototype = {
 		if (oNumCache) {
 			let pt1 = oNumCache.getPtByIndex(pt1Index);
 			let pt2 = oNumCache.getPtByIndex(pt2index);
-			if (pt1.pen.IsIdentical(pt2.pen)) {
+			if (pt1 && pt2 && pt1.pen && pt2.pen && pt1.pen.IsIdentical(pt2.pen)) {
 				return true;
 			}
 		}
@@ -12457,15 +12457,7 @@ drawRadarChart.prototype = {
 		var point = this.cChartDrawer.getIdxPoint(this.chart.series[ser], val);
 
 		var oCommand, oPath;
-		if (this.paths.series) {
-			if (val === numCache.pts.length - 1) {
-				oPath = this.cChartSpace.GetPath(this.paths.series[ser][val - 1]);
-				oCommand = oPath.getCommandByIndex(1);
-			} else {
-				oPath = this.cChartSpace.GetPath(this.paths.series[ser][val]);
-				oCommand = oPath.getCommandByIndex(0);
-			}
-		} else if (this.paths.points) {
+		if (this.paths.points) {
 			if (this.paths.points[ser] && this.paths.points[ser][val]) {
 				oPath = this.cChartSpace.GetPath(this.paths.points[ser][val].path);
 				oCommand = oPath.getCommandByIndex(0);
