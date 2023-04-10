@@ -7814,6 +7814,10 @@ PasteProcessor.prototype =
 			res = this.oLogicDocument.GetNumbering().CreateNum();
 			for (var i = 1; i < aNumbering.length; i++) {
 				var curNumbering = aNumbering[i];
+				if (!curNumbering) {
+					continue;
+				}
+
 				var sType = curNumbering["mso-level-number-format"];
 
 				var nType = Asc.c_oAscNumberingFormat.None;
