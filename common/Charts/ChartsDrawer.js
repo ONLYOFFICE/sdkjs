@@ -12230,7 +12230,7 @@ drawRadarChart.prototype = {
 
 			let pt, nextPt, alpha1, alpha2;
 			let isOnePoint = oNumCache.ptCount === 1;
-			for (let n = 0; n < (isOnePoint ? oNumCache.ptCount : oNumCache.ptCount); n++) {
+			for (let n = 0; n < oNumCache.ptCount; n++) {
 				//first point
 				pt = oNumCache.getPtByIndex(n);
 				x = y = null;
@@ -12275,21 +12275,22 @@ drawRadarChart.prototype = {
 						calcPath(pt, n + 1, points, oNumCache);
 					}
 				} else {
-					//1. draw main line
-					if (x1 !== null && x !== null) {
-						this._addLineToTemporary(x, y, x1, y1, i, n);
-					}
-					//2. draw last line(return by first point)
-					if (n === oNumCache.ptCount - 2 && xFirst != null && x1 !== null) {
-						this._addLineToTemporary(x1, y1, xFirst, yFirst, i, n + 1);
-					}
-					//3. draw first point marker
+					//1. draw first point marker
 					if (n === 0 && x !== null) {
 						this._addPointToPaths(x, y, pt, i, n);
 					}
-					//4. draw next point marker
+					//2. draw next point marker
 					if (x1 !== null) {
 						this._addPointToPaths(x1, y1, nextPt, i, n + 1);
+					}
+					//3. draw main line
+					if (x1 !== null && x !== null) {
+						this._addLineToTemporary(x, y, x1, y1, i, n);
+					}
+					//4. draw last line(return by first point)
+					if (n === oNumCache.ptCount - 2 && xFirst != null && x1 !== null) {
+						this._addLineToTemporary(x1, y1, xFirst, yFirst, i, n + 1);
+						n++;
 					}
 				}
 			}
