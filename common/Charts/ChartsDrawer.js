@@ -12540,49 +12540,10 @@ drawRadarChart.prototype = {
 		return {x: centerX, y: centerY};
 	},
 
-	_getRadius: function (val, valueMinMax) {
+	_getRadius: function (val) {
 		var yPoints = this.valAx.yPoints;
-		val = parseFloat(val);
-		let tempVal = val;
-
 		var orientation = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX;
-		var minValue;
-		if (orientation) {
-			minValue = yPoints[0].val < valueMinMax.min ? yPoints[0].val : valueMinMax.min;
-
-			val += Math.abs(minValue);
-			if (tempVal === minValue) {
-				val = 0;
-			}
-
-			if (yPoints[0].val > tempVal) {
-				if (tempVal < 0) {
-					val = tempVal - yPoints[0].val;
-				} else {
-					val = -(tempVal) - (yPoints[0].val + tempVal);
-				}
-			}
-		} else {
-			minValue = yPoints[yPoints.length - 1].val > valueMinMax.max ? yPoints[yPoints.length - 1].val : valueMinMax.max;
-			val -= Math.abs(minValue);
-
-			if (tempVal === minValue) {
-				val = 0;
-			}
-
-			if (yPoints[yPoints.length - 1].val < tempVal) {
-				if (tempVal > 0) {
-					val += tempVal - yPoints[yPoints.length - 1].val;
-				} else {
-					val = tempVal - (yPoints[yPoints.length - 1].val - tempVal);
-				}
-			}
-		}
-
-		let maxRadius = yPoints[0].pos - yPoints[yPoints.length - 1].pos;
-		let sumValues = Math.abs(yPoints[0].val) + Math.abs(yPoints[yPoints.length - 1].val);
-
-		return (val / sumValues) * maxRadius;
+		return (orientation ? yPoints[0].pos : yPoints[yPoints.length - 1].pos) - this.cChartDrawer.getYPosition(val, this.valAx);
 	},
 
 	_drawLines: function () {
