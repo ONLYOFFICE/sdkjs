@@ -15646,6 +15646,7 @@ $(function () {
 
 	QUnit.test("Test: \"MATCH\"", function (assert) {
 
+
 		ws.getRange2("A551").setValue("28");
 		ws.getRange2("A552").setValue("29");
 		ws.getRange2("A553").setValue("31");
@@ -15748,9 +15749,342 @@ $(function () {
 		assert.ok( oParser.parse() );
 		assert.strictEqual( oParser.calculate().getValue(), 6 );*/
 
+		ws.getRange2("B101").setValue();
+		ws.getRange2("B102").setValue();
+		ws.getRange2("B103").setValue();
+		ws.getRange2("B101:B103").cleanAll();
+
+		oParser = new parserFormula("MATCH(,)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("MATCH(,,-2)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("MATCH(,,-1)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("MATCH(,,0)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("MATCH(,,1)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("MATCH(B101,B102)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		
+		oParser = new parserFormula("MATCH(B101,B102,-1)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("MATCH(B101,B102,0)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("MATCH(B101,B102,1)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("MATCH(#DIV/0!,#NUM!)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
 	});
 
 	QUnit.test("Test: \"XMATCH\"", function (assert) {
+		let array;
+
+		ws.getRange2("B101").setValue();
+		ws.getRange2("B102").setValue();
+		ws.getRange2("B103").setValue();
+		ws.getRange2("B101:B103").cleanAll();
+
+		oParser = new parserFormula("XMATCH(B101,B102,2,-2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,2,-2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of XMATCH(B101,B102,2,-2)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,2,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,2,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,2,-1)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,2,0)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,2,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of XMATCH(B101,B102,2,0)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,2,1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,2,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,2,1)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,2,2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,2,2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of XMATCH(B101,B102,2,2)");
+
+		
+		oParser = new parserFormula("XMATCH(B101,B102,1,-2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,1,-2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,1,-2)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,1,-1)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,1,0)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,1,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of XMATCH(B101,B102,1,0)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,1,1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,1,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,1,1)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,1,2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,1,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,1,2)");
+
+
+		oParser = new parserFormula("XMATCH(B101,B102,0,-2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,0,-2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,0,-2)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,0,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,0,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,0,-1)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,0,0)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,0,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of XMATCH(B101,B102,0,0)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,0,1)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,0,2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,0,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,0,2)");
+
+
+		oParser = new parserFormula("XMATCH(B101,B102,-1,-2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,-1,-2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,-1,-2)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,-1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,-1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,-1,-1)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,-1,0)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,-1,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of XMATCH(B101,B102,-1,0)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,-1,1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,-1,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,-1,1)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,-1,2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,-1,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,-1,2)");
+
+
+		oParser = new parserFormula("XMATCH(3,{3,2,21,1,1,2,3},0,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(3,{3,2,21,1,1,2,3},0,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 7, "Result of XMATCH(3,{3,2,21,1,1,2,3},0,-1)");
+
+		oParser = new parserFormula("XMATCH(3,{3,2,21,1,1,2,3},0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(3,{3,2,21,1,1,2,3},0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(3,{3,2,21,1,1,2,3},0,1)");
+
+		oParser = new parserFormula("XMATCH(1,{3,2,21,1,21,2,3},0,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{3,2,21,1,21,2,3},0,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(1,{3,2,21,1,21,2,3},0,-1)");
+
+		oParser = new parserFormula("XMATCH(1,{3,2,21,1,21,2,3},0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{3,2,21,1,21,2,3},0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(1,{3,2,21,1,21,2,3},0,1)");
+
+		oParser = new parserFormula("XMATCH(1,{1,1,1,1},0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{1,1,1,1},0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(1,{1,1,1,1},0,1)");
+
+		oParser = new parserFormula("XMATCH(1,{1,1,1,1},0,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{1,1,1,1},0,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(1,{1,1,1,1},0,-1)");
+
+		oParser = new parserFormula("XMATCH(1,{1},0,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{1},0,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(1,{1},0,-1)");
+
+		oParser = new parserFormula("XMATCH(1,{2},-1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{2},-1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(1,{2},-1,-1)");
+
+		oParser = new parserFormula("XMATCH(1,{2},1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{2},1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(1,{2},1,-1)");
+
+		oParser = new parserFormula("XMATCH(1,{2,2,2,2,2,2},-1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{2,2,2,2,2,2},-1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(1,{2,2,2,2,2,2},-1,-1)");
+
+		oParser = new parserFormula("XMATCH(1,{2,2,2,2,2,2},1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{2,2,2,2,2,2},1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 6, "Result of XMATCH(1,{2,2,2,2,2,2},1,-1)");
+
+		oParser = new parserFormula("XMATCH(1,{3,3,3,3,2,3},1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{3,3,3,3,2,3},1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 5, "Result of XMATCH(1,{3,3,3,3,2,3},1,-1)");
+
+		oParser = new parserFormula("XMATCH(1,{3,3,3,3,2,3},1,1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{3,3,3,3,2,3},1,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 5, "Result of XMATCH(1,{3,3,3,3,2,3},1,1)");
+
+		oParser = new parserFormula("XMATCH(1,{2,2,2,2,2,2},1,1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{2,2,2,2,2,2},1,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(1,{2,2,2,2,2,2},1,1)");
+
+		oParser = new parserFormula("XMATCH(1,{2,2,2,1,2,2},2,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(1,{2,2,2,1,2,2},2,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(1,{2,2,2,1,2,2},2,-1)");
+
+		oParser = new parserFormula('XMATCH(1,{3,3,"str",3,"22s",3},1,-1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(1,{3,3,"str",3,"22s",3},1,-1)');
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Result of XMATCH(1,{3,3,"str",3,"22s",3},1,-1)');
+
+		oParser = new parserFormula('XMATCH(1,{3,3,"str",3,"22s",3},1,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(1,{3,3,"str",3,"22s",3},1,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of XMATCH(1,{3,3,"str",3,"22s",3},1,1)');
+
+		oParser = new parserFormula('XMATCH(1,{3,3,"str",3,"22s",3},-1,-1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(1,{3,3,"str",3,"22s",3},-1,-1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of XMATCH(1,{3,3,"str",3,"22s",3},-1,-1)');
+
+		oParser = new parserFormula('XMATCH("apple",{"banana","grape","lemon","watermelon"},1,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH("apple",{"banana","grape","lemon","watermelon"},1,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of XMATCH("apple",{"banana","grape","lemon","watermelon"},1,1)');
+
+		oParser = new parserFormula('XMATCH("apple",{"banana","grape","lemon","watermelon","app"},-1,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH("apple",{"banana","grape","lemon","watermelon","app"},-1,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 5, 'Result of XMATCH("apple",{"banana","grape","lemon","watermelon","app"},-1,1)');
+
+		oParser = new parserFormula('XMATCH("apple",{"banana","grape","apple1","apple2","apple1","app","apple2","aple3"},1,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH("apple",{"banana","grape","apple1","apple2","apple1","app","apple2","aple3"},1,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of XMATCH("apple",{"banana","grape","apple1","apple2","apple1","app","apple2","aple3"},1,1)');
+
+		oParser = new parserFormula('XMATCH("apple",{"banana","grape","apple1","apple2","apple1","app","apple2","aple3"},1,-1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH("apple",{"banana","grape","apple1","apple2","apple1","app","apple2","aple3"},1,-1)');
+		assert.strictEqual(oParser.calculate().getValue(), 5, 'Result of XMATCH("apple",{"banana","grape","apple1","apple2","apple1","app","apple2","aple3"},1,-1)');
+
+		oParser = new parserFormula('XMATCH(TRUE,{1,3,-1,2,"str","TRUE","FALSE","app"},-1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(TRUE,{1,3,-1,2,"str","TRUE","FALSE","app"},-1)');
+
+		oParser = new parserFormula('XMATCH(FALSE,{1,3,-1,2,"str","TRUE","FALSE","app"},-1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(FALSE,{1,3,-1,2,"str","TRUE","FALSE","app"},-1)');
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Result of XMATCH(FALSE,{1,3,-1,2,"str","TRUE","FALSE","app"},-1)');
+
+		oParser = new parserFormula('XMATCH(FALSE,{"ZZZ",3,-1,2,"str","TRUE","FALSE","app"},-1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(FALSE,{"ZZZ",3,-1,2,"str","TRUE","FALSE","app"},-1)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of XMATCH(FALSE,{"ZZZ",3,-1,2,"str","TRUE","FALSE","app"},-1)');
+
+		oParser = new parserFormula('XMATCH(FALSE,{"ZZZ",3,-1,2,"str","TRUE","FALSE","app","ZZZ"},-1,-1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(FALSE,{"ZZZ",3,-1,2,"str","TRUE","FALSE","app","ZZZ"},-1,-1)');
+		assert.strictEqual(oParser.calculate().getValue(), 9, 'Result of XMATCH(FALSE,{"ZZZ",3,-1,2,"str","TRUE","FALSE","app","ZZZ"},-1,-1)');
+
+		oParser = new parserFormula('XMATCH(FALSE,{"ZZZ",3,-1,2,"str","TRUE","FALSE","app"},1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(FALSE,{"ZZZ",3,-1,2,"str","TRUE","FALSE","app"},1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of XMATCH(FALSE,{"ZZZ",3,-1,2,"str","TRUE","FALSE","app"},1)');
+
+		oParser = new parserFormula('XMATCH(1,{2,2,2,1,2,2,2},0,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(1,{2,2,2,1,2,2,2},0,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of XMATCH(1,{2,2,2,1,2,2,2},0,2)');
+
+		oParser = new parserFormula('XMATCH(1,{2,2,2,1,2,2},0,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(1,{2,2,2,1,2,2},0,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of XMATCH(1,{2,2,2,1,2,2},0,2)');
+
+		oParser = new parserFormula('XMATCH(1,{2,2,2,1,2,2},1,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(1,{2,2,2,1,2,2},1,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of XMATCH(1,{2,2,2,1,2,2},1,2)');		// 1
+
+		oParser = new parserFormula('XMATCH(1,{2,2,2,1,2,2},-1,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(1,{2,2,2,1,2,2},-1,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of XMATCH(1,{2,2,2,1,2,2},-1,2)');	// #N/A
+
+		oParser = new parserFormula('XMATCH(1,{2,2,2,1,2,2},0,-2)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(1,{2,2,2,1,2,2},0,-2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of XMATCH(1,{2,2,2,1,2,2},0,-2)');
+
+		oParser = new parserFormula('XMATCH(1,{2,2,2,1,2,2},1,-2)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(1,{2,2,2,1,2,2},1,-2)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of XMATCH(1,{2,2,2,1,2,2},1,-2)');	// 6
+
+		oParser = new parserFormula('XMATCH(1,{2,2,2,1,2,2},-1,-2)', "A2", ws);
+		assert.ok(oParser.parse(), 'XMATCH(1,{2,2,2,1,2,2},-1,-2)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of XMATCH(1,{2,2,2,1,2,2},-1,-2)');	// #N/A
+
+
+		oParser = new parserFormula("XMATCH(,,-2)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("XMATCH(,,-1)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("XMATCH(,,0)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("XMATCH(,,1)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("XMATCH(,,2)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("XMATCH(,,3)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("XMATCH(B101,B102)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,-2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,-2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of XMATCH(B101,B102,-2)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,-1)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,0)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,0)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,0)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,1)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,1)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,2)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,2)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,B102,2)");
+
+		oParser = new parserFormula("XMATCH(B101,B102,3)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(B101,B102,3)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of XMATCH(B101,B102,3)");
+
+		oParser = new parserFormula("XMATCH(#DIV/0!,#NUM!)", "A2", ws);
+		assert.ok(oParser.parse(), "XMATCH(#DIV/0!,#NUM!)");
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "Result of XMATCH(#DIV/0!,#NUM!)");
+
+
 		// ---------------------- arrays of numbers ---------------------- //
 		ws.getRange2("B50").setValue("9");
 		ws.getRange2("B51").setValue("12");
@@ -15822,7 +16156,7 @@ $(function () {
 
 		oParser = new parserFormula("XMATCH(10,B50:B59,2,-2)", "A2", ws);
 		assert.ok(oParser.parse(), "Call: XMATCH(10,B50:B59,2,-2)");
-		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of XMATCH(10,B50:B59,2,-2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of XMATCH(10,B50:B59,2,-2)");
 
 		// sort by asc
 		ws.getRange2("C50").setValue("1");
@@ -15906,18 +16240,122 @@ $(function () {
 		assert.ok(oParser.parse(), "Call: XMATCH(E60,E50:E59, 1, 1)");
 		assert.strictEqual(oParser.calculate().getValue(), 8, "Result of XMATCH(E60,E50:E59, 1, 1)");
 
-		// TODO ms выдает другой результат при подобных сравнениях строк
-		oParser = new parserFormula("XMATCH(E60,E50:E59, -1, 1)", "A2", ws);
-		assert.ok(oParser.parse(), "Call: XMATCH(E60,E50:E59, -1, 1)");
-		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(E60,E50:E59, -1, 1)");
+		// TODO ms и js выдают разные результаты при подобных сравнениях строк. К примеру "_d" считается меньше чем "1d23dd" тогда как у нас в редакторе по-другому(как в js)
+		oParser = new parserFormula("XMATCH(E60,E50:E59,-1,1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(E60,E50:E59,-1,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(E60,E50:E59,-1,1)");		// 10
 
-		oParser = new parserFormula("XMATCH(E60,E50:E59, 1, -1)", "A2", ws);
-		assert.ok(oParser.parse(), "Call: XMATCH(E60,E50:E59, 1, -1)");
-		assert.strictEqual(oParser.calculate().getValue(), 8, "Result of XMATCH(E60,E50:E59, 1, -1)");
+		oParser = new parserFormula("XMATCH(E60,E50:E59,1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(E60,E50:E59,1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 8, "Result of XMATCH(E60,E50:E59,1,-1)");
 
-		oParser = new parserFormula("XMATCH(E60,E50:E59, -1, -1)", "A2", ws);
-		assert.ok(oParser.parse(), "Call: XMATCH(E60,E50:E59, -1, -1)");
-		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(E60,E50:E59, -1, -1)");
+		oParser = new parserFormula("XMATCH(E60,E50:E59,-1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(E60,E50:E59,-1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(E60,E50:E59,-1,-1)");		// 10
+
+		oParser = new parserFormula("XMATCH(E60,E50:E59,1,1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(E60,E50:E59,1,1)");
+		assert.strictEqual(oParser.calculate().getValue(), 8, "Result of XMATCH(E60,E50:E59,1,1)");
+
+		oParser = new parserFormula("XMATCH(B101,E50:E59,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E50:E59,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of XMATCH(B101,E50:E59,-1)");			// 2
+
+		oParser = new parserFormula("XMATCH(B101,E50:E59,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E50:E59,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of XMATCH(B101,E50:E59,-1)")
+
+		oParser = new parserFormula("XMATCH(B101,E50:E59,0)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E50:E59,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(B101,E50:E59,0)");
+
+		oParser = new parserFormula("XMATCH(B101,E50:E59,1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E50:E59,1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(B101,E50:E59,1)");
+
+		// numbers, strings, booleans and errors
+		ws.getRange2("E101").setValue("TRUE");
+		ws.getRange2("E102").setValue("z");
+		ws.getRange2("E103").setValue("a");
+		ws.getRange2("E104").setValue("#VALUE!");
+		ws.getRange2("E105").setValue("2");
+		ws.getRange2("E106").setValue("FALSE");
+		ws.getRange2("E107").setValue("#NUM!");
+
+		oParser = new parserFormula("XMATCH(B101,E101:E107,1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E101:E107,1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(B101,E101:E107,1)");
+
+		oParser = new parserFormula("XMATCH(B101,E101:E107,0)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E101:E107,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(B101,E101:E107,0)");
+
+		oParser = new parserFormula("XMATCH(B101,E101:E107,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E101:E107,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(B101,E101:E107,-1)");
+
+		oParser = new parserFormula("XMATCH(B101,E101:E107,-1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E101:E107,-1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of XMATCH(B101,E101:E107,-1,-1)");
+
+		// numbers, strings, booleans
+		ws.getRange2("E111").setValue("TRUE");
+		ws.getRange2("E112").setValue("z");
+		ws.getRange2("E113").setValue("a");
+		ws.getRange2("E114").setValue("99");
+		ws.getRange2("E115").setValue("2");
+		ws.getRange2("E116").setValue("FALSE");
+		ws.getRange2("E117").setValue("TRUE");
+
+		oParser = new parserFormula("XMATCH(B101,E111:E111,1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E111:E117,1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(B101,E111:E117,1)");
+
+		oParser = new parserFormula("XMATCH(B101,E111:E117,0)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E111:E117,0)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(B101,E111:E117,0)");
+
+		oParser = new parserFormula("XMATCH(B101,E111:E117,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E111:E117,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,E111:E117,-1)");
+
+		oParser = new parserFormula("XMATCH(B101,E111:E117,-1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E111:E117,-1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 7, "Result of XMATCH(B101,E111:E117,-1,-1)");
+
+		// numbers, strings
+		ws.getRange2("E121").setValue("x");
+		ws.getRange2("E122").setValue("z");
+		ws.getRange2("E123").setValue("a");
+		ws.getRange2("E124").setValue("99");
+		ws.getRange2("E125").setValue("2");
+		ws.getRange2("E126").setValue("-98908");
+		ws.getRange2("E127").setValue("z");
+
+		oParser = new parserFormula("XMATCH(B101,E121:E127,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E121:E127,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of XMATCH(B101,E121:E127,-1)");
+
+		oParser = new parserFormula("XMATCH(B101,E121:E127,-1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E121:E127,-1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 7, "Result of XMATCH(B101,E121:E127,-1,-1)");
+
+		// numbers
+		ws.getRange2("E131").setValue("99");
+		ws.getRange2("E132").setValue("12");
+		ws.getRange2("E133").setValue("-123");
+		ws.getRange2("E134").setValue("13");
+		ws.getRange2("E135").setValue("99");
+		ws.getRange2("E136").setValue("-98908");
+		ws.getRange2("E137").setValue("0");
+
+		oParser = new parserFormula("XMATCH(B101,E131:E137,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E131:E137,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(B101,E131:E137,-1)");
+
+		oParser = new parserFormula("XMATCH(B101,E131:E137,-1,-1)", "A2", ws);
+		assert.ok(oParser.parse(), "Call: XMATCH(B101,E131:E137,-1,-1)");
+		assert.strictEqual(oParser.calculate().getValue(), 5, "Result of XMATCH(B101,E131:E137,-1,-1)");
 
 		// sort by asc
 		ws.getRange2("F50").setValue("a");
@@ -16098,7 +16536,7 @@ $(function () {
 
 		oParser = new parserFormula("XMATCH(I59,\"a\",0)", "A2", ws);
 		assert.ok(oParser.parse(), "Call: XMATCH(I59,\"a\",0)");
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XMATCH(I59,\"a\",0)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of XMATCH(I59,\"a\",0)");
 
 		// TODO ms возвращает массив c длиной искомого значения
 		oParser = new parserFormula("XMATCH(I50:I55,I50:I59,0)", "A2", ws);
