@@ -3020,8 +3020,7 @@ function (window, undefined) {
 					arr[i] = arg1[i][0];
 				}
 			}
-			return isXMatch ? this._xMatchCalculateArray(arr, arg0, a2Value, a3Value) : this._calculate(arr, arg0, a2Value);
-			// return this._calculate(arr, arg0, a2Value, a3Value, isXMatch);
+			return isXMatch ? this._xMatchCalculate(arr, arg0, a2Value, a3Value, true) : this._calculate(arr, arg0, a2Value);
 		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
 			cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			// add range.isonecell
@@ -3067,7 +3066,7 @@ function (window, undefined) {
 		let sInputKey = arg3Value ? (valueForSearching + g_cCharDelimiter + arg2Value + g_cCharDelimiter + arg3Value) : (valueForSearching + g_cCharDelimiter + arg2Value);
 		res = cacheElem.results[sInputKey];
 		if(!res && isXMatch) {
-			cacheElem.results[sInputKey] = res = this._xMatchCalculate(cacheElem.elements, arg0, arg2, arg3);
+			cacheElem.results[sInputKey] = res = this._xMatchCalculate(cacheElem.elements, arg0, arg2, arg3, false);
 		} else if (!res) {
 			cacheElem.results[sInputKey] = res = this._calculate(cacheElem.elements, arg0, arg2);
 		}
@@ -3127,7 +3126,7 @@ function (window, undefined) {
 		}
 		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);
 	};
-	MatchCache.prototype._xMatchCalculate = function (arr, a0, a2, a3) {
+	MatchCache.prototype._xMatchCalculate = function (arr, a0, a2, a3, isArray) {
 		let a0Type,
 			a0Value,
 			a2Value = a2,
@@ -3152,8 +3151,18 @@ function (window, undefined) {
 		}
 
 		let item, index = -1, curIndex, moreEqualArr, lessEqualArr;
-		
+
 		if (a3Value === 1 || a3Value === -1) {
+			if (isArray) {
+				// make array universal
+				tempArr = tempArr.map((item, index) => {
+					return {
+						v: item,
+						i: index,
+					}
+				});
+			}
+
 			if (a3Value === -1) {
 				tempArr.reverse();
 			}
@@ -3179,24 +3188,71 @@ function (window, undefined) {
 
 			// approximate search
 			if (a2Value === 1 && index === -1) {
+				// looking for the smallest value of those that are greater than the looking
 				moreEqualArr = tempArr.filter(function(item) {
-					if (item.v.type === a0Type) {
-						return item.v.getValue() >= a0Value;
+					if (a0Type === cElementType.number) {
+						if (item.v.type === a0Type) {
+							return item.v.getValue() >= a0Value;
+						} else if (item.v.type === cElementType.string) {
+							return item.v;
+						}
+					} else if (a0Type === cElementType.string) {
+						if (item.v.type === a0Type) {
+							return item.v.getValue() >= a0Value;
+						} else if (item.v.type === cElementType.bool) {
+							return item.v;
+						}
 					} else if (a0Type === cElementType.bool) {
-						return item.v;
-					}
-				}).sort(function(a, b) {
-					if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
-						return a.v.getValue().localeCompare(b.v.getValue());
-					} else if (cElementType.number === a.v.type && cElementType.number === b.v.type) {
-						return a.v.getValue() - b.v.getValue();
-					} else {
-						return cElementType.string === a.v.type ? -1 : 1;
+						if (item.v.type === a0Type) {
+							return item.v.getValue() >= a0Value;
+						} else if (item.v.type === cElementType.error || item.v.type === cElementType.empty) {
+							return item.v;
+						} 
 					}
 				});
-				
+
+				moreEqualArr.sort(function(a, b) {
+					if (cElementType.number === a0Type) {
+						if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
+							return a.v.getValue().localeCompare(b.v.getValue());
+						} else if (cElementType.number === a.v.type && cElementType.number === b.v.type) {
+							return a.v.getValue() - b.v.getValue();
+						} else if (cElementType.error === a.v.type || cElementType.error === b.v.type) {
+							return 0;
+						} else {
+							return cElementType.string === b.v.type ? -1 : 1;
+						}
+					} else if (cElementType.string === a0Type) {
+						if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
+							return a.v.getValue().localeCompare(b.v.getValue());
+						} else if (cElementType.string === a.v.type || cElementType.string === b.v.type) {
+							return 1;
+						} else if (cElementType.bool === a.v.type && cElementType.bool === b.v.type) {
+							if (a.v.getValue() !== b.v.getValue()) {
+								return a.v.getValue() > b.v.getValue() ? 1 : -1;
+							}
+							return 0;
+						}
+					} else if (cElementType.bool === a0Type) {
+						// cElementType.bool == 2, cElementType.empty == 4, cElementType.error == 3
+						if (a.v.type > b.v.type) {
+							return 1;
+						}
+						if (a.v.type < b.v.type) {
+							return -1;
+						}
+						if (a.v.type === cElementType.bool) {
+							return 0;
+						} else if (a.v.type === cElementType.error) {
+							return 0;
+						} else if (a.v.type === cElementType.empty) {
+							return a.i - b.i;
+						}
+					}
+				});
 				index = moreEqualArr.length > 0 ? moreEqualArr[0].i : index;
 			} else if (a2Value === -1 && index === -1) {
+				// looking for the largest value of those that are smaller than the looking
 				if (cElementType.empty === a0Type) {
 					// special search mode for empty cell where error > bool > string > number
 					const priorityArr = tempArr.map(function(item) {
@@ -3239,31 +3295,69 @@ function (window, undefined) {
 					index = priorityArr.length > 0 ? priorityArr[0].i : index;
 				} else {
 					lessEqualArr = tempArr.filter(function(item) {
-						if (item.v.type === a0Type) {
-							return item.v.getValue() <= a0Value;
+						if (a0Type === cElementType.number) {
+							if (item.v.type === a0Type) {
+								return item.v.getValue() <= a0Value;
+							}
+						} else if (a0Type === cElementType.string) {
+							if (item.v.type === a0Type) {
+								return item.v.getValue() <= a0Value;
+							} else if (item.v.type === cElementType.number) {
+								return item.v;
+							}
 						} else if (a0Type === cElementType.bool) {
-							return item.v;
+							if (item.v.type === a0Type) {
+								return item.v <= a0Value;
+							} else if (item.v.type === cElementType.string) {
+								return item.v;
+							} 
 						}
-					}).sort(function(a, b) {
-						if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
-							return a.v.getValue().localeCompare(b.v.getValue());
-						} else if (cElementType.number === a.v.type && cElementType.number === b.v.type) {
+					});
+					
+					lessEqualArr.sort(function(a, b) {
+						if (cElementType.number === a0Type) {
 							return b.v.getValue() - a.v.getValue();
-						} else {
-							return cElementType.string === a.v.type ? -1 : 1;
+						} else if (cElementType.string === a0Type) {
+							if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
+								return a.v.getValue().localeCompare(b.v.getValue());
+							} else if (cElementType.string === a.v.type || cElementType.string === b.v.type) {
+								return 1;
+							} else if (cElementType.number === a.v.type && cElementType.number === b.v.type) {
+								return a.v.getValue() > b.v.getValue() ? -1 : 1;
+							} else {
+								return 0;
+							}
+						} else if (cElementType.bool === a0Type) {
+							if (cElementType.bool === a.v.type && cElementType.bool === b.v.type) {
+								return -1;
+							} else if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
+								if (a.v.getValue() === b.v.getValue()) {
+									if (a3Value === 1) {
+										return a.i - b.i;	
+									} else if(a3Value === -1) {
+										return b.i - a.i;
+									}
+								}
+								return a.v.getValue() > b.v.getValue() ? -1 : 1;
+							} else if (cElementType.bool === a.v.type) {
+								return -1;
+							} else {
+								return 0;
+							}
 						}
 					});
 					
 					index = lessEqualArr.length > 0 ? lessEqualArr[0].i : index;
 				}
 			}
-		} else if(2 === a3Value) {
+
+		} else if (a3Value === 2) {
 			if (2 === a2Value) {
 				// wildcard match(err)
 				return new cError(cErrorType.wrong_value_type);
 			}
 			index = XBinarySearch(a0Value, tempArr, a2Value, false);
-		} else if(-2 === a3Value) {
+		} else if (a3Value === -2) {
 			if (2 === a2Value) {
 				// wildcard match(err)
 				return new cError(cErrorType.wrong_value_type);
@@ -3271,118 +3365,6 @@ function (window, undefined) {
 			index = XBinarySearch(a0Value, tempArr, a2Value, true);
 		}
 
-		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);
-	};
-	MatchCache.prototype._xMatchCalculateArray = function (arr, a0, a2, a3) {
-		let a0Type,
-			a0Value,
-			a2Value = a2,
-			a3Value = a3,
-			tempArr = arr.slice();
-
-		if (a0.type === cElementType.cell || a0.type === cElementType.cell3D) {
-			a0Type = a0.getValue().type;
-			a0Value = a0.getValue().getValue();
-		} else {
-			a0Type = a0.type;
-			a0Value = a0.getValue();
-		}
-
-		if (a3Value === -1) {
-			tempArr.reverse();
-		}
-
-		if (!(cElementType.number === a0Type || cElementType.string === a0Type || cElementType.bool === a0Type ||
-			cElementType.error === a0Type || cElementType.empty === a0Type)) {
-			if(cElementType.empty === a0Value.type) {
-				a0Value = a0Value.tocNumber();
-			}
-			a0Type = a0Value.type;
-			a0Value = a0Value.getValue();
-		}
-
-		if (cElementType.bool === a0Type && a2Value === 1) {
-			return new cError(cErrorType.not_available);
-		}
-
-		let item, index = -1, curIndex, lessEqualArr, moreEqualArr;
-
-		if (a2Value === 1) {
-			moreEqualArr = tempArr.filter(function(item) {
-				if (item.type === a0Type) {
-					return item.getValue() >= a0Value;
-				} else if (a0Type === cElementType.bool) {
-					return item;
-				}
-			}).sort(function(a, b) {
-				if (cElementType.string === a.type && cElementType.string === b.type) {
-					return a.getValue().localeCompare(b.getValue());
-				} else if (cElementType.number === a.type && cElementType.number === b.type) {
-					return a.getValue() - b.getValue();
-				} else {
-					return cElementType.string === a.type ? -1 : 1;
-				}
-			});
-
-			index = moreEqualArr.length > 0 ? tempArr.findIndex(function(item) {return item.getValue() === moreEqualArr[0].getValue()}) : index;
-		} else if (a2Value === -1) {
-			lessEqualArr = tempArr.filter(function(item) {
-				if (item.type === a0Type) {
-					return item.getValue() <= a0Value;
-				} else if (a0Type === cElementType.bool) {
-					return item;
-				}
-			}).sort(function(a, b) {
-				if (cElementType.string === a.type && cElementType.string === b.type) {
-					return b.getValue().localeCompare(a.getValue());
-				} else if (cElementType.number === a.type && cElementType.number === b.type) {
-					return b.getValue() - a.getValue();
-				} else {
-					return cElementType.string === a.type ? -1 : 1;
-				}
-			});
-			
-			index = lessEqualArr.length > 0 ? tempArr.findIndex(function(item) {return item.getValue() === lessEqualArr[0].getValue()}) : index;
-		}
-
-		if (index !== -1) {
-			index = a3Value === -1 ? (tempArr.length - 1) - index : index;
-			return new cNumber(index + 1);
-		} else {
-			for (let i = 0; i < tempArr.length; ++i) {
-				item = tempArr[i].v ? tempArr[i].v : tempArr[i];
-				curIndex = tempArr[i].i ? tempArr[i].i : i;
-				if (item.type === a0Type) {
-					if (cElementType.string === a0Type) {
-						if (AscCommonExcel.searchRegExp2(item.toString(), a0Value)) {
-							index = curIndex;
-							break;
-						}
-					} else {
-						if (item.getValue() === a0Value) {
-							index = curIndex;
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		if(2 === a3Value) {
-			if (2 === a2Value) {
-				// wildcard match(err)
-				return new cError(cErrorType.wrong_value_type);
-			}
-			index = XBinarySearch(a0Value, tempArr, a2Value, false);
-		} else if(-2 === a3Value) {
-			if (2 === a2Value) {
-				// wildcard match(err)
-				return new cError(cErrorType.wrong_value_type);
-			}
-			index = XBinarySearch(a0Value, tempArr, a2Value, true);
-		}
-
-		index = a3Value === -1 && (index !== -1) ? (tempArr.length - 1) - index : index;
 		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);
 	}
 
