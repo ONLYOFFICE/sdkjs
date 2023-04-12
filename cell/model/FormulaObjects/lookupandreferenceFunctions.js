@@ -3079,23 +3079,17 @@ function (window, undefined) {
 
 		if (!(cElementType.number === a0Type || cElementType.string === a0Type || cElementType.bool === a0Type ||
 			cElementType.error === a0Type || cElementType.empty === a0Type)) {
-			a0Type = a0Value.type;
 			if(cElementType.empty === a0Value.type) {
 				a0Value = a0Value.tocNumber();
-				a0Type = a0Value.type;
 			}
+			a0Type = a0Value.type;
 			a0Value = a0Value.getValue();
-		}
-
-		if (cElementType.bool === a0Type && a2Value === 1) {
-			return new cError(cErrorType.not_available);
 		}
 
 		let item, index = -1, curIndex;
 		for (let i = 0; i < arr.length; ++i) {
 			item = undefined !== arr[i].v ? arr[i].v : arr[i];
 			curIndex = undefined !== arr[i].i ? arr[i].i : i;
-
 			if (item.type === a0Type) {
 				if (0 === a2Value) {
 					if (cElementType.string === a0Type) {
@@ -3104,24 +3098,24 @@ function (window, undefined) {
 							break;
 						}
 					} else {
-						if (item.getValue() == a0Value) {
+						if (item == a0Value) {
 							index = curIndex;
 							break;
 						}
 					}
 				} else if (1 === a2Value) {
-					if (item.getValue() <= a0Value) {
+					if (item <= a0Value) {
 						index = curIndex;
 					} else {
 						break;
 					}
 				} else if (-1 === a2Value) {
-					if (item.getValue() >= a0Value) {
+					if (item >= a0Value) {
 						index = curIndex;
 					} else {
 						break;
 					}
-				} 
+				}
 			}
 		}
 		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);

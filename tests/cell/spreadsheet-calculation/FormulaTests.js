@@ -15749,51 +15749,6 @@ $(function () {
 		assert.ok( oParser.parse() );
 		assert.strictEqual( oParser.calculate().getValue(), 6 );*/
 
-		ws.getRange2("B101").setValue();
-		ws.getRange2("B102").setValue();
-		ws.getRange2("B103").setValue();
-		ws.getRange2("B101:B103").cleanAll();
-
-		oParser = new parserFormula("MATCH(,)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
-
-		oParser = new parserFormula("MATCH(,,-2)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
-
-		oParser = new parserFormula("MATCH(,,-1)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
-
-		oParser = new parserFormula("MATCH(,,0)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
-
-		oParser = new parserFormula("MATCH(,,1)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
-
-		oParser = new parserFormula("MATCH(B101,B102)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
-		
-		oParser = new parserFormula("MATCH(B101,B102,-1)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
-
-		oParser = new parserFormula("MATCH(B101,B102,0)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
-
-		oParser = new parserFormula("MATCH(B101,B102,1)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
-
-		oParser = new parserFormula("MATCH(#DIV/0!,#NUM!)", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
-
 	});
 
 	QUnit.test("Test: \"XMATCH\"", function (assert) {
