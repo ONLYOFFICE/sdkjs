@@ -494,7 +494,8 @@ var cExcelMaxExponent = 308;
 var cExcelMinExponent = -308;
 var c_Date1904Const = 24107; //разница в днях между 01.01.1970 и 01.01.1904 годами
 var c_Date1900Const = 25568; //разница в днях между 01.01.1970 и 01.01.1900 годами
-var rx_sFuncPref = /_xlfn\.(_xlws\.)?/i;
+var rx_sFuncPref = /_xlfn\./i;
+var rx_sFuncPrefXlWS = /_xlws\./i;// /_xlfn\.(_xlws\.)?/i;
 var rx_sDefNamePref = /_xlnm\./i;
 var cNumFormatFirstCell = -1;
 var cNumFormatNone = -2;
@@ -3052,7 +3053,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.toString = function (/*locale*/) {
 		/*var name = this.toString();
 		var localeName = locale ? locale[name] : name;*/
-		return this.name.replace(rx_sFuncPref, "_xlfn.");
+		return this.name.replace(rx_sFuncPref, "_xlfn.").replace(rx_sFuncPrefXlWS, "_xlws.");
 	};
 	cBaseFunction.prototype.toLocaleString = function (/*locale*/) {
 		var name = this.toString();
@@ -6789,7 +6790,7 @@ function parserFormula( formula, parent, _ws ) {
 					elemArr.push(new cMultOperator());
 				}
 
-				var found_operator = null, operandStr = ph.operand_str.replace(rx_sFuncPref, "").toUpperCase();
+				var found_operator = null, operandStr = ph.operand_str.replace(rx_sFuncPref, "").replace(rx_sFuncPrefXlWS, "").toUpperCase();
 				if (operandStr in cFormulaList) {
 					found_operator = cFormulaList[operandStr].prototype;
 				} else if (operandStr in cAllFormulaFunction) {
