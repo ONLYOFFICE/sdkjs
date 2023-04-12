@@ -2925,13 +2925,6 @@ function (window, undefined) {
 			arg2 = arg[2] ? arg[2] : new cNumber(0);
 			arg3 = arg[3] ? arg[3] : new cNumber(1);
 		} else {
-			if (cElementType.empty === arg1.type) {
-				return new cError(cErrorType.not_available);
-			} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
-				if (cElementType.empty === arg1.getValue().type) {
-					return new cError(cErrorType.not_available);
-				}
-			}
 			// default values for Match
 			arg2 = arg[2] ? arg[2] : new cNumber(1);
 			arg3 = new cNumber(1);
