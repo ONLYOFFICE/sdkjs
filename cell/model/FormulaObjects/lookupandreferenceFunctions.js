@@ -738,6 +738,7 @@ function (window, undefined) {
 	cFILTER.prototype.argumentsMin = 2;
 	cFILTER.prototype.argumentsMax = 3;
 	cFILTER.prototype.isXLFN = true;
+	cFILTER.prototype.isXLWS = true;
 	cFILTER.prototype.arrayIndexes = {0: 1, 1: 1};
 	cFILTER.prototype.argumentsType = [argType.reference, argType.reference, argType.any];
 	cFILTER.prototype.Calculate = function (arg) {
@@ -1803,6 +1804,7 @@ function (window, undefined) {
 	cSORT.prototype.argumentsMin = 1;
 	cSORT.prototype.argumentsMax = 4;
 	cSORT.prototype.isXLFN = true;
+	cSORT.prototype.isXLWS = true;
 	cSORT.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
 	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.bool];
 	cSORT.prototype.Calculate = function (arg) {

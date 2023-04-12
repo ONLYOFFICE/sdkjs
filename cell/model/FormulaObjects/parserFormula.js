@@ -494,7 +494,7 @@ var cExcelMaxExponent = 308;
 var cExcelMinExponent = -308;
 var c_Date1904Const = 24107; //разница в днях между 01.01.1970 и 01.01.1904 годами
 var c_Date1900Const = 25568; //разница в днях между 01.01.1970 и 01.01.1900 годами
-var rx_sFuncPref = /_xlfn\./i;
+var rx_sFuncPref = /_xlfn\.(_xlws\.)?/i;
 var rx_sDefNamePref = /_xlnm\./i;
 var cNumFormatFirstCell = -1;
 var cNumFormatNone = -2;
@@ -3028,8 +3028,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				str += ",";
 			}
 		}
-		if (this.isXLFN) {
-			return new cString("_xlfn." + this.name + "(" + str + ")");
+		if (this.isXLFN || this.isXLWS) {
+			return new cString((this.isXLFN ? "_xlfn." : "") + (this.isXLWS ? "_xlws." : "") + this.name + "(" + str + ")");
 		}
 		return new cString(this.toString() + "(" + str + ")");
 	};
@@ -3613,6 +3613,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	function cUnknownFunction(name) {
 		this.name = name;
 		this.isXLFN = null;
+		this.isXLWS = null;
 	}
 	cUnknownFunction.prototype = Object.create(cBaseFunction.prototype);
 	cUnknownFunction.prototype.constructor = cUnknownFunction;
@@ -5998,7 +5999,11 @@ function parserFormula( formula, parent, _ws ) {
 								elem = cAllFormulaFunction[val].prototype;
 							} else {
 								elem = new cUnknownFunction(val);
-								elem.isXLFN = (0 === val.indexOf("_xlfn."));
+								let xlfnFrefix = "_xlfn.";
+								let xlwsFrefix = "_xlws.";
+								//_xlws only together with _xlfn
+								elem.isXLFN = (val.indexOf(xlfnFrefix) === 0);
+								elem.isXLWS = elem.isXLFN && xlfnFrefix.length === val.indexOf(xlwsFrefix);
 							}
 							if("SUMPRODUCT" === val){
 								startSumproduct = true;
@@ -6791,7 +6796,11 @@ function parserFormula( formula, parent, _ws ) {
 					found_operator = cAllFormulaFunction[operandStr].prototype;
 				} else {
 					found_operator = new cUnknownFunction(operandStr);
-					found_operator.isXLFN = (ph.operand_str.indexOf("_xlfn.") === 0);
+					let xlfnFrefix = "_xlfn.";
+					let xlwsFrefix = "_xlws.";
+					//_xlws only together with _xlfn
+					found_operator.isXLFN = (ph.operand_str.indexOf(xlfnFrefix) === 0);
+					found_operator.isXLWS = found_operator.isXLFN && xlfnFrefix.length === ph.operand_str.indexOf(xlwsFrefix);
 				}
 
 				if (found_operator !== null) {
