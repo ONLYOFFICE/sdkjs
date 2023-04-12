@@ -5518,6 +5518,7 @@ PasteProcessor.prototype =
 					
 					var copyObj = drawing.getWordTable();
 					if(copyObj) {
+						copyObj.Set_Inline && copyObj.Set_Inline(true);
 						copyObj.Set_Parent(this.oDocument);
 						aContent[aContent.length] = copyObj;
 						drawing.getAllFonts(font_map);
