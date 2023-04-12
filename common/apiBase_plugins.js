@@ -1401,6 +1401,7 @@
 		// Пока проверка тут, но грамотнее будет сделать и использовать доп.свойство isSystemInstall класса CPlugin
 		// т.к. не будем лишний раз парсить папки, то при +/- плагинов.
 		let protectedPlugins = [];
+
 		if (isDesktop) {
 			var _pluginsTmp = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
 
@@ -1424,12 +1425,15 @@
 				continue;
 			returnArray.push({
 				"baseUrl" : baseUrl,
-				"guid": pluginsArray[i].guid,
-				"canRemoved": protectedPlugins.indexOf(pluginsArray[i].guid) == -1,
+				"guid" : pluginsArray[i].guid,
+				"canRemoved" : protectedPlugins.indexOf(pluginsArray[i].guid) == -1,
 				"obj" : pluginsArray[i].serialize(),
 				"removed" : false
 			});
 		}
+
+		if (isDesktop)
+			return returnArray;
 
 		// нужно послать и удаленные. так как удаленный может не быть в сторе. тогда его никак не установить обратно
 		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
@@ -1462,7 +1466,7 @@
      * @returns {object} - An object with the result information.
      * @since 7.2.0
      */
-	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
+	Api.prototype["pluginMethod_RemovePlugin"] = function(guid, backup)
 	{
 		const isDesktop = window.AscDesktopEditor !== undefined;
 
@@ -1475,11 +1479,12 @@
 			// TODO: отслеживать возможные ошибки при +/- плагинов: из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
 			// UPD: done. Ничего не изменять в менеджере плагинов, если guid пуст
 
-			let result = window["AscDesktopEditor"]["PluginUninstall"](guid);
+			let result = window["AscDesktopEditor"]["PluginUninstall"](guid, backup);
 						
 			return {
 				type : "Removed",
-				guid : result ? guid : ""
+				guid : result ? guid : "",
+				backup : backup
 			};
 		}
 		
