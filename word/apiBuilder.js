@@ -5023,6 +5023,7 @@
 			CommentData.Set_QuoteText(sQuotedText);
 
 			var oComment = new AscCommon.CComment(oDocument.Comments, CommentData);
+			oComment.CreateNewCommentsGuid();
 			oDocument.Comments.Add(oComment);
 			oDocument.RemoveSelection();
 
@@ -6465,16 +6466,16 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sId - The comment ID.
-	 * @returns {ApiComment?}
+	 * @returns {?ApiComment}
 	 */
 	ApiDocument.prototype.GetCommentById = function(sId) 
 	{
-		let oCommManager = this.Document.GetCommentsManager();
-		let oComment = oCommManager.Get_ById(sId);
-		if (oComment)
-			return new ApiComment(oComment);
+		let manager = this.Document.GetCommentsManager();
+		let comment = manager.GetCommentIdByGuid(sId);
+		if (!comment)
+			comment = manager.GetById(sId);
 
-		return null;
+		return comment ? new ApiComment(comment) : null;
 	};
 
 	/**
@@ -7415,6 +7416,7 @@
 		CommentData.SetUserName(sAuthor);
 
 		var oComment = new AscCommon.CComment(oDocument.Comments, CommentData);
+		oComment.CreateNewCommentsGuid();
 		oDocument.Comments.Add(oComment);
 		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.AddComment(oComment, true, true);
@@ -18386,10 +18388,26 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {"comment"}
 	 */
-	ApiComment.prototype.GetClassType = function () {
+	ApiComment.prototype.GetClassType = function ()
+	{
 		return "comment";
 	};
-
+	
+	/**
+	 * Returns the id of the current comment. If the comment doesn't have an id, null is returned.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CDE"]
+	 * @returns {?string}
+	 */
+	ApiComment.prototype.GetCommentId = function ()
+	{
+		let durableId = this.Comment.GetDurableId();
+		if (-1 === durableId || null === durableId)
+			return null;
+		
+		return ("" + durableId);
+	};
+	
 	/**
 	 * Returns the comment text.
 	 * @memberof ApiComment
@@ -18640,15 +18658,14 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiComment.prototype.Delete = function () {
-		let oLogicDocument = editor.private_GetLogicDocument();
-		if (!oLogicDocument)
+	ApiComment.prototype.Delete = function ()
+	{
+		let logicDocument = private_GetLogicDocument();
+		if (!logicDocument)
 			return false;
-
-		let oCommManager = oLogicDocument.GetCommentsManager();
-		oCommManager.Remove_ById(this.Comment.GetId());
-
-		return true;
+		
+		let oCommManager = logicDocument.GetCommentsManager();
+		return oCommManager.Remove_ById(this.Comment.GetId());
 	};
 
 	/**
@@ -18795,7 +18812,7 @@
 	ApiDocumentContent.prototype["GetAllParagraphs"]     = ApiDocumentContent.prototype.GetAllParagraphs;
 	ApiDocumentContent.prototype["GetAllTables"]         = ApiDocumentContent.prototype.GetAllTables;
 
-	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType
+	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
 	ApiRange.prototype["AddText"]                    = ApiRange.prototype.AddText;
 	ApiRange.prototype["AddBookmark"]                = ApiRange.prototype.AddBookmark;
