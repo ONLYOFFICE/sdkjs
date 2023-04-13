@@ -12572,11 +12572,12 @@
 			let newText = "", lastSym;
 			let isChange;
 			if(null != this.multiText) {
+				let aNewMultiText = [];
 				for (let i = 0, length = this.multiText.length; i < length; ++i) {
 					let elem = this.multiText[i];
 					newText = "";
 					for (let j = 0, length2 = elem.text.length; j < length2; ++j) {
-						let sym = elem.text[i];
+						let sym = elem.text[j];
 						let toSym = getNewSymbol(sym, lastSym);
 						newText += toSym;
 						if (toSym !== sym) {
@@ -12584,6 +12585,14 @@
 						}
 						lastSym = sym;
 					}
+					let newMultiText = elem.clone();
+					elem.text = newText;
+					aNewMultiText.push(this.multiText);
+				}
+				if (isChange) {
+					var backupObj = this.getValueData();
+					var DataNew = aNewMultiText;
+					History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeArrayValueFormat, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, backupObj.value.multiText, DataNew));
 				}
 			} else if (null != this.text) {
 				for (let i = 0, length = this.text.length; i < length; ++i) {
