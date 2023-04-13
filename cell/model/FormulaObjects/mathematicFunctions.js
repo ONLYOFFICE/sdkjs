@@ -5649,8 +5649,8 @@
 
 			rowVal = Math.floor(rowVal.getValue());
 			columnVal = Math.floor(columnVal.getValue());
-			startVal = Math.floor(startVal.getValue());
-			stepVal = Math.floor(stepVal.getValue());
+			startVal = startVal.getValue();
+			stepVal = stepVal.getValue();
 
 			if (rowVal < 1 || columnVal < 1 || (rowVal * columnVal) > EXPECTED_MAX_ARRAY) {
 				return new cError(cErrorType.wrong_value_type);
