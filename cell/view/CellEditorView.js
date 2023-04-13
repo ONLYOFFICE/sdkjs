@@ -554,28 +554,30 @@
 				let lastSym = null;
 				for (i = first.index; i <= last.index; ++i) {
 					let newText = opt.fragments[i].text;
+
 					let startText = "", endText = "";
+					let _start = 0;
+					let _end = newText.length;
 					if (i === first.index && begin > first.begin) {
-						startText = newText.substring(0, begin);
+						startText = opt.fragments[i].text.substring(0, begin - first.begin);
+						_start = begin - first.begin;
 					}
-					if (i === last.index && end < first.end) {
-						endText = newText.substring(end, first.end);
+					if (i === last.index && end < last.end) {
+						endText = opt.fragments[i].text.substring(end - last.begin, last.end - last.begin);
+						_end = end - last.begin;
 					}
-					newText = newText.substring(begin, end);
+
+					newText = newText.substring(_start, _end);
 
 					let oNewText = AscCommonExcel.changeTextCase(newText, lastSym, val);
 					lastSym = oNewText.prevSymbol;
 					if (oNewText.isChange) {
-						opt.fragments[i].setFragmentText(startText + oNewText.text + endText, true);
+						opt.fragments[i].setFragmentText(startText + oNewText.text + endText);
 					}
 				}
 
-
-
-
-
 				// merge fragments with equal formats
-				t._mergeFragments();
+				//t._mergeFragments();
 				t._update();
 
 				// Обновляем выделение
@@ -583,8 +585,8 @@
 				t._drawSelection();
 
 				// save info to undo/redo
-				t.undoList.push({fn: t._removeChars, args: [begin, end - begin]});
-				t.redoList = [];
+				//t.undoList.push({fn: t._removeChars, args: [begin, end - begin]});
+				//t.redoList = [];
 			}
 
 		}
