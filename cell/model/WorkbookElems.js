@@ -7257,6 +7257,10 @@ CMultiTextElem.prototype =
 			case this.Properties.text: this.text = value;break;
 			case this.Properties.format: this.format = value;break;
 		}
+	},
+	setText: function(val)
+	{
+		this.text = val;
 	}
 };
 

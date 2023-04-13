@@ -12582,39 +12582,34 @@
 		return type;
 	};
 	Cell.prototype.changeTextCase=function(type){
+		if (this.isEmpty() || this.isFormula()) {
+			return;
+		}
 
-		if (!this.isEmpty() && !this.isFormula()) {
-			let newText = "", lastSym;
-			let isChange;
-			if(null != this.multiText) {
-				let aNewMultiText = [];
-				for (let i = 0, length = this.multiText.length; i < length; ++i) {
-					let elem = this.multiText[i];
-					let oNewText = changeTextCase(elem.text, lastSym, type);
-					lastSym = oNewText.prevSymbol;
-					if (oNewText.isChange) {
-						isChange = true;
-					}
-					newText = oNewText.text;
-
-					let newMultiText = elem.clone();
-					elem.text = newText;
-					//newMultiText.text = oNewText.text;
-					aNewMultiText.push(newMultiText);
-				}
-				if (isChange) {
-					//this.multiText = aNewMultiText;
-					var backupObj = this.getValueData();
-					var DataNew = aNewMultiText;
-					History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeArrayValueFormat, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, backupObj.value.multiText, DataNew));
-				}
-			} else if (null != this.text) {
-				let oNewText = changeTextCase(this.text, null, type);
+		let lastSym, isChange;
+		if(null != this.multiText) {
+			let dataOld = this._cloneMultiText();
+			for (let i = 0, length = this.multiText.length; i < length; ++i) {
+				let elem = this.multiText[i];
+				let oNewText = changeTextCase(elem.text, lastSym, type);
+				lastSym = oNewText.prevSymbol;
 				if (oNewText.isChange) {
-					this.setValue(oNewText.text);
+					isChange = true;
+					//set new text by multi text element
+					elem.setText(oNewText.text);
 				}
 			}
-
+			if (isChange) {
+				let dataNew = this._cloneMultiText();
+				History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeArrayValueFormat,
+					this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow),
+					new UndoRedoData_CellSimpleData(this.nRow, this.nCol, dataOld, dataNew));
+			}
+		} else if (null != this.text) {
+			let oNewText = changeTextCase(this.text, null, type);
+			if (oNewText.isChange) {
+				this.setValue(oNewText.text);
+			}
 		}
 	};
 	Cell.prototype.getType=function(){
