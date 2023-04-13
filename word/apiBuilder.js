@@ -18628,8 +18628,7 @@
 		if (!logicDocument)
 			return false;
 		
-		let oCommManager = logicDocument.GetCommentsManager();
-		return oCommManager.Remove_ById(this.Comment.GetId());
+		return logicDocument.RemoveComment(this.Comment.GetId(), true);
 	};
 
 	/**
