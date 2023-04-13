@@ -12523,94 +12523,84 @@
 	};
 	Cell.prototype.changeTextCase=function(type){
 
+		let getNewSymbol = function (_sym, prevSymbol) {
+			let res = _sym;
 
+			let newLine = false;
+			let newWord = false;
+			if (prevSymbol === "\n" || !prevSymbol) {
+				newLine = true;
+			}
+			if (prevSymbol === " " || !prevSymbol) {
+				newWord = true;
+			}
 
-
-
-
-
-
-
-
-
-
+			switch (type) {
+				case Asc.c_oAscChangeTextCaseType.SentenceCase: {
+					if (newLine) {
+						res = _sym.toUpperCase();
+					}
+					break;
+				}
+				case Asc.c_oAscChangeTextCaseType.LowerCase: {
+					res = _sym.toLowerCase();
+					break;
+				}
+				case Asc.c_oAscChangeTextCaseType.UpperCase: {
+					res = _sym.toUpperCase();
+					break;
+				}
+				case Asc.c_oAscChangeTextCaseType.CapitalizeWords: {
+					if (newWord) {
+						res = _sym.toUpperCase();
+					}
+					break;
+				}
+				case Asc.c_oAscChangeTextCaseType.ToggleCase: {
+					if (_sym.toUpperCase() === _sym) {
+						res = _sym.toLowerCase();
+					} else {
+						res = _sym.toUpperCase();
+					}
+					break;
+				}
+			}
+			return res;
+		};
 
 		if (!this.isEmpty() && !this.isFormula()) {
+			let newText = "", lastSym;
+			let isChange;
 			if(null != this.multiText) {
-
-				var bChange = false;
-				for (var i = 0, length = this.multiText.length; i < length; ++i) {
-					var elem = this.multiText[i];
-					if (null != elem.format && true == fCheck(elem.format)) {
-						bChange = true;
-						break;
+				for (let i = 0, length = this.multiText.length; i < length; ++i) {
+					let elem = this.multiText[i];
+					newText = "";
+					for (let j = 0, length2 = elem.text.length; j < length2; ++j) {
+						let sym = elem.text[i];
+						let toSym = getNewSymbol(sym, lastSym);
+						newText += toSym;
+						if (toSym !== sym) {
+							isChange = true;
+						}
+						lastSym = sym;
 					}
 				}
-			} else {
-				let newText = "";
-				let newWord = true, newLine = true;
-				let isChange;
-				for (var i = 0, length = this.text.length; i < length; ++i) {
+			} else if (null != this.text) {
+				for (let i = 0, length = this.text.length; i < length; ++i) {
 					let sym = this.text[i];
-					let toSym = sym;
-					switch (type) {
-						case Asc.c_oAscChangeTextCaseType.SentenceCase: {
-							if (newLine) {
-								toSym = sym.toUpperCase();
-							}
-							break;
-						}
-						case Asc.c_oAscChangeTextCaseType.LowerCase: {
-							toSym = sym.toLowerCase();
-							break;
-						}
-						case Asc.c_oAscChangeTextCaseType.UpperCase: {
-							toSym = sym.toUpperCase();
-							break;
-						}
-						case Asc.c_oAscChangeTextCaseType.CapitalizeWords: {
-							if (newWord) {
-								toSym = sym.toUpperCase();
-							}
-							break;
-						}
-						case Asc.c_oAscChangeTextCaseType.ToggleCase: {
-							if (sym.toUpperCase() === sym) {
-								toSym = sym.toLowerCase();
-							} else {
-								toSym = sym.toUpperCase();
-							}
-							break;
-						}
-					}
-
+					let toSym = getNewSymbol(sym, lastSym);
 					newText += toSym;
 					if (toSym !== sym) {
 						isChange = true;
 					}
-
-					newLine = false;
-					newWord = false;
-					if (sym === "\n") {
-						newLine = true;
-					}
-					if (sym === " ") {
-						newWord = true;
-					}
+					lastSym = sym;
 				}
 				if (isChange) {
-					//var backupObj = this.getValueData();
 					this.setValue(newText);
-					//var DataNew = this.getValueData();
-					//History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeValue, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow,this.nCol, backupObj, DataNew));
 				}
 			}
 
 		}
-		/*var oRes = this.ws.workbook.oStyleManager.setBold(this, val);
-		this._setFontProp(function(format){return val != format.getBold();}, function(format){format.setBold(val);});
-		if(History.Is_On() && oRes.oldVal != oRes.newVal)
-			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_Bold, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));*/
 	};
 	Cell.prototype.getType=function(){
 		this._checkDirty();
