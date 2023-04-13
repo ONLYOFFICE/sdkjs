@@ -2893,7 +2893,7 @@
 					tempCharsCount = 1; // теперь считаем кол-во символов от стартового в Range. Конец Range будет через nCharsNewRange символов.
 				}
 				
-				if (isEndDocPosFinded == false && nCharsNewRange == tempCharsCount)
+				if (isStartDocPosFinded == true && isEndDocPosFinded == false && nCharsNewRange == tempCharsCount)
 				{
 					let DocPosInRun =
 					{
