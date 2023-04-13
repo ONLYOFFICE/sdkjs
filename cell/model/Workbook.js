@@ -12521,6 +12521,97 @@
 		}
 		return type;
 	};
+	Cell.prototype.changeTextCase=function(type){
+
+
+
+
+
+
+
+
+
+
+
+
+
+		if (!this.isEmpty() && !this.isFormula()) {
+			if(null != this.multiText) {
+
+				var bChange = false;
+				for (var i = 0, length = this.multiText.length; i < length; ++i) {
+					var elem = this.multiText[i];
+					if (null != elem.format && true == fCheck(elem.format)) {
+						bChange = true;
+						break;
+					}
+				}
+			} else {
+				let newText = "";
+				let newWord = true, newLine = true;
+				let isChange;
+				for (var i = 0, length = this.text.length; i < length; ++i) {
+					let sym = this.text[i];
+					let toSym = sym;
+					switch (type) {
+						case Asc.c_oAscChangeTextCaseType.SentenceCase: {
+							if (newLine) {
+								toSym = sym.toUpperCase();
+							}
+							break;
+						}
+						case Asc.c_oAscChangeTextCaseType.LowerCase: {
+							toSym = sym.toLowerCase();
+							break;
+						}
+						case Asc.c_oAscChangeTextCaseType.UpperCase: {
+							toSym = sym.toUpperCase();
+							break;
+						}
+						case Asc.c_oAscChangeTextCaseType.CapitalizeWords: {
+							if (newWord) {
+								toSym = sym.toUpperCase();
+							}
+							break;
+						}
+						case Asc.c_oAscChangeTextCaseType.ToggleCase: {
+							if (sym.toUpperCase() === sym) {
+								toSym = sym.toLowerCase();
+							} else {
+								toSym = sym.toUpperCase();
+							}
+							break;
+						}
+					}
+
+					newText += toSym;
+					if (toSym !== sym) {
+						isChange = true;
+					}
+
+					newLine = false;
+					newWord = false;
+					if (sym === "\n") {
+						newLine = true;
+					}
+					if (sym === " ") {
+						newWord = true;
+					}
+				}
+				if (isChange) {
+					//var backupObj = this.getValueData();
+					this.setValue(newText);
+					//var DataNew = this.getValueData();
+					//History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeValue, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow,this.nCol, backupObj, DataNew));
+				}
+			}
+
+		}
+		/*var oRes = this.ws.workbook.oStyleManager.setBold(this, val);
+		this._setFontProp(function(format){return val != format.getBold();}, function(format){format.setBold(val);});
+		if(History.Is_On() && oRes.oldVal != oRes.newVal)
+			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_Bold, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));*/
+	};
 	Cell.prototype.getType=function(){
 		this._checkDirty();
 		return this.type;
@@ -15485,6 +15576,15 @@
 						  function(cell){
 							  cell.setType(type);
 						  });
+	};
+	Range.prototype.changeTextCase=function(type){
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		this._setPropertyNoEmpty(null, null,function(cell){
+			cell.changeTextCase(type);
+		});
+		History.EndTransaction();
 	};
 	Range.prototype.getType=function(){
 		var type;

@@ -12764,6 +12764,9 @@
                             bIsUpdate = false;
                             break;
                         }
+					case "changeTextCase":
+						range.changeTextCase(val);
+						break;
 
                     default:
                         bIsUpdate = false;

@@ -5960,6 +5960,22 @@ var editor;
     this.wb.restoreFocus();
   };
 
+  spreadsheet_api.prototype.asc_ChangeTextCase = function(nType) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    if (this.wb) {
+      var ws = this.wb && this.wb.getWorksheet();
+      if (ws && ws.objectRender && ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.nType) {
+      	ws.objectRender.controller.ChangeTextCase(nType);
+      } else {
+      	this.wb.setFontAttributes("changeTextCase", nType);
+      	this.wb.restoreFocus();
+      }
+	}
+  };
+
   spreadsheet_api.prototype.asc_increaseCellDigitNumbers = function() {
     this.wb.getWorksheet().setSelectionInfo("changeDigNum", +1);
     this.wb.restoreFocus();
@@ -9080,6 +9096,9 @@ var editor;
   prot["asc_checkUserProtectedRangeName"] = prot.asc_checkUserProtectedRangeName;
   prot["asc_SetSheetViewType"]   = prot.asc_SetSheetViewType;
   prot["asc_GetSheetViewType"]   = prot.asc_GetSheetViewType;
+
+  prot["asc_ChangeTextCase"]   = prot.asc_ChangeTextCase;
+
 
 
 
