@@ -220,6 +220,66 @@
 		}
 	}
 
+	function changeTextCase(text, prevSymbol, type) {
+		let getNewSymbol = function (_sym, prevSymbol) {
+			let res = _sym;
+
+			let newLine = false;
+			let newWord = false;
+			if (prevSymbol === "\n" || !prevSymbol) {
+				newLine = true;
+			}
+			if (prevSymbol === " " || !prevSymbol) {
+				newWord = true;
+			}
+
+			switch (type) {
+				case Asc.c_oAscChangeTextCaseType.SentenceCase: {
+					if (newLine) {
+						res = _sym.toUpperCase();
+					}
+					break;
+				}
+				case Asc.c_oAscChangeTextCaseType.LowerCase: {
+					res = _sym.toLowerCase();
+					break;
+				}
+				case Asc.c_oAscChangeTextCaseType.UpperCase: {
+					res = _sym.toUpperCase();
+					break;
+				}
+				case Asc.c_oAscChangeTextCaseType.CapitalizeWords: {
+					if (newWord) {
+						res = _sym.toUpperCase();
+					}
+					break;
+				}
+				case Asc.c_oAscChangeTextCaseType.ToggleCase: {
+					if (_sym.toUpperCase() === _sym) {
+						res = _sym.toLowerCase();
+					} else {
+						res = _sym.toUpperCase();
+					}
+					break;
+				}
+			}
+			return res;
+		};
+
+		let newText = "", isChange = false;
+		for (let i = 0, length = text.length; i < length; ++i) {
+			let sym = text[i];
+			let toSym = getNewSymbol(sym, prevSymbol);
+			newText += toSym;
+			if (toSym !== sym) {
+				isChange = true;
+			}
+			prevSymbol = sym;
+		}
+
+		return {text: newText, isChange: isChange, prevSymbol: prevSymbol};
+	}
+
 	function DefName(wb, name, ref, sheetId, hidden, type, isXLNM) {
 		this.wb = wb;
 		this.name = name;
@@ -12523,51 +12583,6 @@
 	};
 	Cell.prototype.changeTextCase=function(type){
 
-		let getNewSymbol = function (_sym, prevSymbol) {
-			let res = _sym;
-
-			let newLine = false;
-			let newWord = false;
-			if (prevSymbol === "\n" || !prevSymbol) {
-				newLine = true;
-			}
-			if (prevSymbol === " " || !prevSymbol) {
-				newWord = true;
-			}
-
-			switch (type) {
-				case Asc.c_oAscChangeTextCaseType.SentenceCase: {
-					if (newLine) {
-						res = _sym.toUpperCase();
-					}
-					break;
-				}
-				case Asc.c_oAscChangeTextCaseType.LowerCase: {
-					res = _sym.toLowerCase();
-					break;
-				}
-				case Asc.c_oAscChangeTextCaseType.UpperCase: {
-					res = _sym.toUpperCase();
-					break;
-				}
-				case Asc.c_oAscChangeTextCaseType.CapitalizeWords: {
-					if (newWord) {
-						res = _sym.toUpperCase();
-					}
-					break;
-				}
-				case Asc.c_oAscChangeTextCaseType.ToggleCase: {
-					if (_sym.toUpperCase() === _sym) {
-						res = _sym.toLowerCase();
-					} else {
-						res = _sym.toUpperCase();
-					}
-					break;
-				}
-			}
-			return res;
-		};
-
 		if (!this.isEmpty() && !this.isFormula()) {
 			let newText = "", lastSym;
 			let isChange;
@@ -12575,37 +12590,28 @@
 				let aNewMultiText = [];
 				for (let i = 0, length = this.multiText.length; i < length; ++i) {
 					let elem = this.multiText[i];
-					newText = "";
-					for (let j = 0, length2 = elem.text.length; j < length2; ++j) {
-						let sym = elem.text[j];
-						let toSym = getNewSymbol(sym, lastSym);
-						newText += toSym;
-						if (toSym !== sym) {
-							isChange = true;
-						}
-						lastSym = sym;
+					let oNewText = changeTextCase(elem.text, lastSym, type);
+					lastSym = oNewText.prevSymbol;
+					if (oNewText.isChange) {
+						isChange = true;
 					}
+					newText = oNewText.text;
+
 					let newMultiText = elem.clone();
 					elem.text = newText;
-					aNewMultiText.push(this.multiText);
+					//newMultiText.text = oNewText.text;
+					aNewMultiText.push(newMultiText);
 				}
 				if (isChange) {
+					//this.multiText = aNewMultiText;
 					var backupObj = this.getValueData();
 					var DataNew = aNewMultiText;
 					History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeArrayValueFormat, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, backupObj.value.multiText, DataNew));
 				}
 			} else if (null != this.text) {
-				for (let i = 0, length = this.text.length; i < length; ++i) {
-					let sym = this.text[i];
-					let toSym = getNewSymbol(sym, lastSym);
-					newText += toSym;
-					if (toSym !== sym) {
-						isChange = true;
-					}
-					lastSym = sym;
-				}
-				if (isChange) {
-					this.setValue(newText);
+				let oNewText = changeTextCase(this.text, null, type);
+				if (oNewText.isChange) {
+					this.setValue(oNewText.text);
 				}
 			}
 
@@ -18839,5 +18845,6 @@
 	window['AscCommonExcel'].tryTranslateToPrintArea = tryTranslateToPrintArea;
 	window['AscCommonExcel']._isSameSizeMerged = _isSameSizeMerged;
 	window['AscCommonExcel'].g_nDefNameMaxLength = g_nDefNameMaxLength;
+	window['AscCommonExcel'].changeTextCase = changeTextCase;
 
 })(window);

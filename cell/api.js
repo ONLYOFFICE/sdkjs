@@ -5973,7 +5973,7 @@ var editor;
       if (ws && ws.objectRender && ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.nType) {
       	ws.objectRender.controller.ChangeTextCase(nType);
       } else {
-      	this.wb.setFontAttributes("changeTextCase", nType);
+      	this.wb.changeTextCase(nType);
       	this.wb.restoreFocus();
       }
 	}

@@ -528,6 +528,68 @@
 		}
 	};
 
+	CellEditor.prototype.setTextStyle2 = function (val) {
+		if (this.isFormula()) {
+			return;
+		}
+		var t = this, opt = t.options, begin, end, i, first, last;
+
+		if (t.selectionBegin !== t.selectionEnd) {
+			begin = Math.min(t.selectionBegin, t.selectionEnd);
+			end = Math.max(t.selectionBegin, t.selectionEnd);
+
+			// save info to undo/redo
+			/*if (end - begin < 2) {
+				t.undoList.push({fn: t._addChars, args: [t.textRender.getChars(begin, 1), begin]});
+			} else {
+				t.undoList.push({fn: t._addFragments, args: [t._getFragments(begin, end - begin), begin]});
+			}*/
+
+
+			first = t._findFragment(begin);
+			last = t._findFragment(end - 1);
+			t.undoList.push({fn: t._addFragments, args: [t._getFragments(first.begin, last.end - first.begin), first.begin]});
+
+			if (first && last) {
+				let lastSym = null;
+				for (i = first.index; i <= last.index; ++i) {
+					let newText = opt.fragments[i].text;
+					let startText = "", endText = "";
+					if (i === first.index && begin > first.begin) {
+						startText = newText.substring(0, begin);
+					}
+					if (i === last.index && end < first.end) {
+						endText = newText.substring(end, first.end);
+					}
+					newText = newText.substring(begin, end);
+
+					let oNewText = AscCommonExcel.changeTextCase(newText, lastSym, val);
+					lastSym = oNewText.prevSymbol;
+					if (oNewText.isChange) {
+						opt.fragments[i].setFragmentText(startText + oNewText.text + endText, true);
+					}
+				}
+
+
+
+
+
+				// merge fragments with equal formats
+				t._mergeFragments();
+				t._update();
+
+				// Обновляем выделение
+				t._cleanSelection();
+				t._drawSelection();
+
+				// save info to undo/redo
+				t.undoList.push({fn: t._removeChars, args: [begin, end - begin]});
+				t.redoList = [];
+			}
+
+		}
+	};
+
 	CellEditor.prototype.empty = function ( options ) {
 		// Чистка для редактирования только All
 		if ( Asc.c_oAscCleanOptions.All !== options ) {

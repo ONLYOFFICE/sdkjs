@@ -3111,6 +3111,14 @@
     }
   };
 
+  WorkbookView.prototype.changeTextCase = function(val) {
+    if (!this.getCellEditMode()) {
+      this.getWorksheet().setSelectionInfo("changeTextCase", val);
+    } else {
+      this.cellEditor.setTextStyle2(val);
+    }
+  };
+
   WorkbookView.prototype.changeFontSize = function(prop, val) {
     if (!this.getCellEditMode()) {
       this.getWorksheet().setSelectionInfo(prop, val);
