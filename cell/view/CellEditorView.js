@@ -528,7 +528,7 @@
 		}
 	};
 
-	CellEditor.prototype.setTextStyle2 = function (val) {
+	CellEditor.prototype.changeTextCase = function (val) {
 		if (this.isFormula()) {
 			return;
 		}

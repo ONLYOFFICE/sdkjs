@@ -3115,7 +3115,7 @@
     if (!this.getCellEditMode()) {
       this.getWorksheet().setSelectionInfo("changeTextCase", val);
     } else {
-      this.cellEditor.setTextStyle2(val);
+      this.cellEditor.changeTextCase(val);
     }
   };
 
