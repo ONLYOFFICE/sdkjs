@@ -2776,7 +2776,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
 	 * @param {string} sAuthor - The author's name (optional).
-	 * @returns {ApiComment?} - Returns null if the comment was not added.
+	 * @returns {?ApiComment} - Returns null if the comment was not added.
 	 */
 	ApiRange.prototype.AddComment = function(sText, sAuthor)
 	{
@@ -2795,16 +2795,10 @@
 		var documentState = oDocument.SaveDocumentState();
 		this.Select();
 
-		var oComment = oDocument.AddComment(CommentData, false);
+		let comment = AddCommentToDocument(oDocument, CommentData);
 		oDocument.LoadDocumentState(documentState);
 		oDocument.UpdateSelection();
-
-		if (null !== oComment)
-			editor.sync_AddComment(oComment.Get_Id(), CommentData);
-		else
-			return null;
-
-		return new ApiComment(oComment);
+		return comment;
 	};
 
 	/**
@@ -5023,7 +5017,7 @@
 			CommentData.Set_QuoteText(sQuotedText);
 
 			var oComment = new AscCommon.CComment(oDocument.Comments, CommentData);
-			oComment.CreateNewCommentsGuid();
+			oComment.GenerateDurableId();
 			oDocument.Comments.Add(oComment);
 			oDocument.RemoveSelection();
 
@@ -6046,14 +6040,7 @@
 		CommentData.SetText(sText);
 		CommentData.SetUserName(sAuthor);
 
-		var oComment = this.Document.AddComment(CommentData, true);
-
-		if (null !== oComment)
-			editor.sync_AddComment(oComment.Get_Id(), CommentData);
-		else
-			return null;
-
-		return new ApiComment(oComment);
+		return AddGlobalCommentToDocument(this.Document, CommentData);
 	};
 	/**
 	 * Returns a bookmark range.
@@ -6471,7 +6458,7 @@
 	ApiDocument.prototype.GetCommentById = function(sId) 
 	{
 		let manager = this.Document.GetCommentsManager();
-		let comment = manager.GetCommentIdByGuid(sId);
+		let comment = manager.GetByDurableId(sId);
 		if (!comment)
 			comment = manager.GetById(sId);
 
@@ -7416,7 +7403,7 @@
 		CommentData.SetUserName(sAuthor);
 
 		var oComment = new AscCommon.CComment(oDocument.Comments, CommentData);
-		oComment.CreateNewCommentsGuid();
+		oComment.GenerateDurableId();
 		oDocument.Comments.Add(oComment);
 		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.AddComment(oComment, true, true);
@@ -9545,16 +9532,10 @@
 		var oDocumentState = oDocument.SaveDocumentState();
 		this.Run.SelectThisElement();
 
-		var oComment = oDocument.AddComment(CommentData, false);
+		let comment = AddCommentToDocument(oDocument, CommentData);
 		oDocument.LoadDocumentState(oDocumentState);
 		oDocument.UpdateSelection();
-
-		if (null != oComment)
-			editor.sync_AddComment(oComment.Get_Id(), CommentData);
-		else
-			return null;
-
-		return new ApiComment(oComment)
+		return comment;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -10815,16 +10796,10 @@
 		this.Table.SelectAll();
 		this.Table.Document_SetThisElementCurrent(true);
 
-		var oComment = oDocument.AddComment(CommentData, false);
+		let comment = AddCommentToDocument(oDocument, CommentData);
 		oDocument.LoadDocumentState(oDocumentState);
 		oDocument.UpdateSelection();
-
-		if (null != oComment)
-			editor.sync_AddComment(oComment.Get_Id(), CommentData);
-		else
-			return null;
-
-		return new ApiComment(oComment)
+		return new ApiComment(comment)
 	};
 
 	/**
@@ -16145,16 +16120,10 @@
 		var oDocumentState = oDocument.SaveDocumentState();
 		this.Sdt.SelectContentControl();
 
-		var oComment = oDocument.AddComment(CommentData, false);
+		let comment = AddCommentToDocument(oDocument, CommentData);
 		oDocument.LoadDocumentState(oDocumentState);
 		oDocument.UpdateSelection();
-
-		if (null != oComment)
-			editor.sync_AddComment(oComment.Get_Id(), CommentData);
-		else
-			return null;
-
-		return new ApiComment(oComment)
+		return new ApiComment(comment)
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -16713,7 +16682,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
 	 * @param {string} sAuthor - The author's name (optional).
-	 * @returns {ApiComment?} - Returns null if the comment was not added.
+	 * @returns {?ApiComment} - Returns null if the comment was not added.
 	 */
 	ApiBlockLvlSdt.prototype.AddComment = function(sText, sAuthor)
 	{
@@ -16735,16 +16704,11 @@
 		var oDocumentState = oDocument.SaveDocumentState();
 		this.Sdt.SelectContentControl();
 
-		var oComment = oDocument.AddComment(CommentData, false);
+		let comment = AddCommentToDocument(oDocument, CommentData);
 		oDocument.LoadDocumentState(oDocumentState);
 		oDocument.UpdateSelection();
-
-		if (null != oComment)
-			editor.sync_AddComment(oComment.Get_Id(), CommentData);
-		else
-			return null;
-
-		return new ApiComment(oComment)
+		
+		return comment;
 	};
 
 	/**
@@ -19663,6 +19627,20 @@
 			return (new ApiInlineLvlSdt(oControl));
 
 		return null;
+	}
+	function AddGlobalCommentToDocument(logicDocument, commentData)
+	{
+		return AddCommentToDocument(logicDocument, commentData, true);
+	}
+	function AddCommentToDocument(logicDocument, commentData, forceGlobal)
+	{
+		let comment = logicDocument.AddComment(commentData, !!forceGlobal);
+		if (!comment)
+			return null;
+
+		comment.GenerateDurableId();
+		logicDocument.GetApi().sync_AddComment(comment.GetId(), comment.GetData());
+		return new ApiComment(comment);
 	}
 
 	function private_GetDrawingDocument()
