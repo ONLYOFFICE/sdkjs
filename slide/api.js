@@ -1539,7 +1539,7 @@ background-repeat: no-repeat;\
 			[Asc.c_oAscPresentationShortcutType.RightAlign, 82, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.Underline, 85, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.Strikethrough, 53, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.PasteFormat, 83, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.PasteFormat, 86, true, true, false],
 			[Asc.c_oAscPresentationShortcutType.Superscript, 187, true, true, false],
 			[Asc.c_oAscPresentationShortcutType.Superscript, 188, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.Subscript, 187, true, false, false],
