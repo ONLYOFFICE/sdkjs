@@ -1245,12 +1245,13 @@
 				charsCount += nRangePos;
 		}
 
-		if (Start > End)
+		if (typeof(Start) == "number" && typeof(End) == "number" && Start > End)
 		{
 			var temp	= Start;
 			Start		= End;
 			End			= temp;
 		}
+		
 		if (Start === undefined)
 			this.Start = 0;
 		else if (typeof(Start) === "number")
