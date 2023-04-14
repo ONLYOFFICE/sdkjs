@@ -626,6 +626,7 @@ function (window, undefined) {
 	cEXPAND.prototype = Object.create(cBaseFunction.prototype);
 	cEXPAND.prototype.constructor = cEXPAND;
 	cEXPAND.prototype.name = 'EXPAND';
+	cEXPAND.prototype.isXLFN = true;
 	cEXPAND.prototype.argumentsMin = 2;
 	cEXPAND.prototype.argumentsMax = 4;
 	cEXPAND.prototype.arrayIndexes = {0: 1, 3: 1};
