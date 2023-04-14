@@ -43,9 +43,9 @@
 	 * -----------------------------------------------------------------------------
 	 */
 	var asc = window["Asc"];
-	
+
 	var AscBrowser = AscCommon.AscBrowser;
-	
+
 	var cElementType = AscCommonExcel.cElementType;
 	var c_oAscCellEditorSelectState = AscCommonExcel.c_oAscCellEditorSelectState;
 	var c_oAscCellEditorState = asc.c_oAscCellEditorState;
@@ -538,20 +538,12 @@
 			begin = Math.min(t.selectionBegin, t.selectionEnd);
 			end = Math.max(t.selectionBegin, t.selectionEnd);
 
-			// save info to undo/redo
-			/*if (end - begin < 2) {
-				t.undoList.push({fn: t._addChars, args: [t.textRender.getChars(begin, 1), begin]});
-			} else {
-				t.undoList.push({fn: t._addFragments, args: [t._getFragments(begin, end - begin), begin]});
-			}*/
-
-
 			first = t._findFragment(begin);
 			last = t._findFragment(end - 1);
-			t.undoList.push({fn: t._addFragments, args: [t._getFragments(first.begin, last.end - first.begin), first.begin]});
 
 			if (first && last) {
 				let lastSym = null;
+				let fragmentsMap = null;
 				for (i = first.index; i <= last.index; ++i) {
 					let newText = opt.fragments[i].text;
 
@@ -572,23 +564,40 @@
 					let oNewText = AscCommonExcel.changeTextCase(newText, lastSym, val);
 					lastSym = oNewText.prevSymbol;
 					if (oNewText.isChange) {
-						opt.fragments[i].setFragmentText(startText + oNewText.text + endText);
+						if (!fragmentsMap) {
+							fragmentsMap = {};
+						}
+						fragmentsMap[i] = opt.fragments[i].clone();
+						fragmentsMap[i].setFragmentText(startText + oNewText.text + endText);
 					}
 				}
 
-				// merge fragments with equal formats
-				//t._mergeFragments();
-				t._update();
+				this._changeFragments(fragmentsMap);
+			}
+		}
+	};
 
-				// Обновляем выделение
-				t._cleanSelection();
-				t._drawSelection();
-
-				// save info to undo/redo
-				//t.undoList.push({fn: t._removeChars, args: [begin, end - begin]});
-				//t.redoList = [];
+	CellEditor.prototype._changeFragments = function (fragmentsMap) {
+		let opt = this.options;
+		if (fragmentsMap) {
+			let _undoFragments = {};
+			for (let i in fragmentsMap) {
+				if(fragmentsMap.hasOwnProperty(i)) {
+					_undoFragments[i] = opt.fragments[i].clone();
+					opt.fragments[i] = fragmentsMap[i];
+				}
 			}
 
+			if (!this.undoMode) {
+				// save info to undo/redo
+				this.undoList.push({fn: this._changeFragments, args: [_undoFragments]});
+				//this.redoList = [];
+			}
+
+			this._update();
+			// Обновляем выделение
+			this._cleanSelection();
+			this._drawSelection();
 		}
 	};
 
@@ -643,7 +652,7 @@
 			}
 			res = true;
 		}
-		
+
 		return res;
 	};
 
@@ -1455,7 +1464,7 @@
 	CellEditor.prototype._showCanvas = function () {
 		this.canvasOuterStyle.display = 'block';
 	};
-	
+
 	CellEditor.prototype._hideCanvas = function () {
 		this.canvasOuterStyle.display = 'none';
 	};
@@ -2229,7 +2238,7 @@
 
 	CellEditor.prototype._mergeFragments = function (fragments) {
 		var i;
-		
+
 		if (!fragments) {
 			fragments = this.options.fragments;
 		}
@@ -2344,6 +2353,18 @@
 			pos = action.args[1];
 			len = AscCommonExcel.getFragmentsLength(action.args[0]);
 			list2.push( {fn: t._removeChars, args: [pos, len], isRange: action.isRange} );
+		}
+		else if ( action.fn === t._changeFragments ) {
+			let _fragments = action.args[0];
+			let _redoFragments = {};
+			for (let i in _fragments) {
+				if (_fragments.hasOwnProperty(i)) {
+					if (this.options.fragments[i]) {
+						_redoFragments[i] = this.options.fragments[i].clone();
+					}
+				}
+			}
+			list2.push( {fn: t._changeFragments, args: [_redoFragments]} );
 		}
 		else {
 			return;
