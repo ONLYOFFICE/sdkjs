@@ -11976,6 +11976,20 @@ $(function () {
 		ws.getRange2("B101").setValue();
 		ws.getRange2("B102").setValue();
 
+		oParser = new parserFormula('EXPAND(B101,2,3)', "A1", ws);
+		assert.ok(oParser.parse(), "EXPAND(B101,2,3)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of EXPAND(B101,2,3)");
+
+		oParser = new parserFormula('EXPAND(A1,2,3)', "A1", ws);
+		assert.ok(oParser.parse(), "EXPAND(A1,2,3)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of EXPAND(A1,2,3).[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#N/A", "Result of EXPAND(A1,2,3).[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", "Result of EXPAND(A1,2,3).[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#N/A", "Result of EXPAND(A1,2,3).[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Result of EXPAND(A1,2,3).[1,1]");
+
 		oParser = new parserFormula('EXPAND(B101:B102,)', "A1", ws);
 		assert.ok(oParser.parse(), "EXPAND(B101:B102,)");
 		array = oParser.calculate();
