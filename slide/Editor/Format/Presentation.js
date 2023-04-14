@@ -8073,35 +8073,7 @@ CPresentation.prototype.ChangeTextCase = function (nCaseType) {
 	if (!oController) {
 		return;
 	}
-	var oPresentation = this;
-	oController.checkSelectedObjectsAndCallback(function () {
-		var oTargetDocContent = oController.getTargetDocContent(undefined, true);
-		var bTextSelection = AscCommon.isRealObject(oTargetDocContent);
-		var oState = oPresentation.Save_DocumentStateBeforeLoadChanges();
-		var fCallback = function () {
-			var oParagraph;
-			if (bTextSelection) {
-				if (!this.IsSelectionUse()) {
-					oParagraph = this.GetCurrentParagraph();
-					if (oParagraph) {
-						oParagraph.SelectCurrentWord();
-					}
-				}
-			} else {
-				this.SelectAll();
-			}
-			if (this.IsSelectionUse() && !this.IsSelectionEmpty()) {
-				var aParagraphs = [];
-				this.GetCurrentParagraph(false, aParagraphs, {});
-
-				let oChangeEngine = new AscCommonWord.CChangeTextCaseEngine(nCaseType);
-				oChangeEngine.ProcessParagraphs(aParagraphs);
-			}
-		};
-		oController.applyDocContentFunction(fCallback, [], fCallback);
-		oPresentation.Load_DocumentStateAfterLoadChanges(oState);
-		oPresentation.Recalculate();
-	}, [], false, AscDFH.historydescription_Presentation_ParaApply);
+	oController.changeTextCase(nCaseType);
 	this.Document_UpdateInterfaceState();
 };
 

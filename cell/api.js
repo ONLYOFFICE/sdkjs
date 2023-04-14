@@ -5967,8 +5967,8 @@ var editor;
 
     if (this.wb) {
       var ws = this.wb && this.wb.getWorksheet();
-      if (ws && ws.objectRender && ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.nType) {
-      	ws.objectRender.controller.ChangeTextCase(nType);
+      if (ws && ws.objectRender && ws.objectRender.selectedGraphicObjectsExists()) {
+      	ws.objectRender.controller.changeTextCase(nType);
       } else {
       	this.wb.changeTextCase(nType);
       	this.wb.restoreFocus();

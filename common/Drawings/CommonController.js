@@ -9197,6 +9197,38 @@
 						this.changeCurrentState(new AscFormat.NullState(this));
 						this.updateOverlay();
 					}
+				},
+
+				changeTextCase: function (nCaseType) {
+					this.checkSelectedObjectsAndCallback(function () {
+						const oTargetDocContent = this.getTargetDocContent(undefined, true);
+						const bTextSelection = AscCommon.isRealObject(oTargetDocContent);
+						const oStateBeforeLoadChanges = {};
+						this.Save_DocumentStateBeforeLoadChanges(oStateBeforeLoadChanges);
+						let fCallback = function () {
+							var oParagraph;
+							if (bTextSelection) {
+								if (!this.IsSelectionUse()) {
+									oParagraph = this.GetCurrentParagraph();
+									if (oParagraph) {
+										oParagraph.SelectCurrentWord();
+									}
+								}
+							} else {
+								this.SelectAll();
+							}
+							if (this.IsSelectionUse() && !this.IsSelectionEmpty()) {
+								var aParagraphs = [];
+								this.GetCurrentParagraph(false, aParagraphs, {});
+
+								let oChangeEngine = new AscCommonWord.CChangeTextCaseEngine(nCaseType);
+								oChangeEngine.ProcessParagraphs(aParagraphs);
+							}
+						};
+						this.applyDocContentFunction(fCallback, [], fCallback);
+						this.loadDocumentStateAfterLoadChanges(oStateBeforeLoadChanges);
+						this.startRecalculate();
+					}, [], false, 0);
 				}
 			};
 
