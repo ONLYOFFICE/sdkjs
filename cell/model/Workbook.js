@@ -226,7 +226,7 @@
 
 			let newLine = false;
 			let newWord = false;
-			if (prevSymbol === "\n" || !prevSymbol) {
+			if (prevSymbol === "\n" || prevSymbol === "." || !prevSymbol) {
 				newLine = true;
 			}
 			if (prevSymbol === " " || !prevSymbol) {
@@ -237,6 +237,8 @@
 				case Asc.c_oAscChangeTextCaseType.SentenceCase: {
 					if (newLine) {
 						res = _sym.toUpperCase();
+					} else {
+						res = _sym.toLowerCase();
 					}
 					break;
 				}
@@ -251,6 +253,8 @@
 				case Asc.c_oAscChangeTextCaseType.CapitalizeWords: {
 					if (newWord) {
 						res = _sym.toUpperCase();
+					} else {
+						res = _sym.toLowerCase();
 					}
 					break;
 				}
@@ -278,6 +282,206 @@
 		}
 
 		return {text: newText, isChange: isChange, prevSymbol: prevSymbol};
+	}
+
+	function changeTextCase3(text, type) {
+		let newText;
+		if (type === Asc.c_oAscChangeTextCaseType.LowerCase) {
+			newText = text.toLowerCase();
+		} else if (type === Asc.c_oAscChangeTextCaseType.UpperCase) {
+			newText = text.toUpperCase();
+		} else if (type === Asc.c_oAscChangeTextCaseType.ToggleCase) {
+			newText = "";
+			for (let i = 0, length = text.length; i < length; ++i) {
+				let sym = text[i];
+				if (sym.toUpperCase() === sym) {
+					newText += sym.toLowerCase();
+				} else {
+					newText += sym.toUpperCase();
+				}
+			}
+		} else {
+			//break on words and fix mistakes
+			let newWord, newSentence;
+			for (let i = 0, length = text.length; i < length; ++i) {
+				let sChar = text[i];
+				let nCharCode = sChar.charCodeAt();
+				if (/*oItem.IsText()*/true)
+				{
+					if (nCharCode === 0x002E)
+					{
+						this.FlushWord();
+						this.SetStartSentence(true);
+					}
+					else
+					{
+						if (undefined !== AscCommon.g_aPunctuation[nCharCode])
+						{
+							if (!IsToSpace(nCharCode))
+								this.AddLetter(oRun, nPos, isInSelection);
+							else
+								this.FlushWord();
+						}
+						else
+						{
+							this.FlushWord();
+
+							if (33 === nCharCode || 63 === nCharCode || 46 === nCharCode)
+								this.SetStartSentence(true);
+							else
+								this.SetStartSentence(false);
+						}
+					}
+				}
+				else
+				{
+					this.FlushWord();
+
+					if (/*!oItem.IsTab() &&*/ !AscCommon.IsSpace(nCharCode))
+						this.SetStartSentence(false);
+				}
+			}
+		}
+
+	}
+
+	function changeTextCaseUseTextCaseEngine(fragments, type) {
+		let isChange = false;
+		let newText = "";
+
+		let getChangedTextSimpleCase = function (_text) {
+			let _newText = "";
+			switch (type) {
+				case Asc.c_oAscChangeTextCaseType.LowerCase: {
+					_newText = _text.toLowerCase();
+					break;
+				}
+				case Asc.c_oAscChangeTextCaseType.UpperCase: {
+					_newText = _text.toUpperCase();
+					break;
+				}
+				case Asc.c_oAscChangeTextCaseType.ToggleCase: {
+					for (let i = 0, length = _text.length; i < length; ++i) {
+						if (_text[i].toUpperCase() === _text[i]) {
+							_newText += _text[i].toLowerCase();
+						} else {
+							_newText += _text[i].toUpperCase();
+						}
+					}
+
+					break;
+				}
+			}
+			return _newText;
+		};
+
+		if (type === Asc.c_oAscChangeTextCaseType.LowerCase || type === Asc.c_oAscChangeTextCaseType.UpperCase || type === Asc.c_oAscChangeTextCaseType.ToggleCase) {
+			for (let m = 0; m < fragments.length; m++) {
+				let newFragmentText = getChangedTextSimpleCase(fragments[m].text);
+				if (newFragmentText !== fragments[m].text) {
+					isChange = true;
+					newText = newFragmentText;
+					fragments[m].setText && fragments[m].setText(newFragmentText);
+				}
+			}
+		} else {
+
+			let getParagraphs = function (_fragments) {
+				let res = [];
+
+				AscFormat.ExecuteNoHistory(function()
+				{
+					let oCurPar = null;
+					let oCurRun = null;
+
+					for (let m = 0; m < _fragments.length; m++) {
+						let curMultiText = _fragments[m].text;
+						for (let k = 0, length = curMultiText.length; k < length; k++) {
+							if (oCurPar === null) {
+								oCurPar = new Paragraph(/*worksheet.getDrawingDocument(), documentContent*/);
+								oCurRun = new ParaRun(oCurPar);
+							}
+
+							let nUnicode = null;
+							let nCharCode = curMultiText.charCodeAt(k);
+
+							if (curMultiText[k] === "\n") {
+								oCurPar.Internal_Content_Add(0, oCurRun, false);
+								oCurPar.SelectAll();
+								res.push(oCurPar);
+								oCurPar = null;
+								oCurRun = null;
+								continue;
+							}
+
+							if (AscCommon.isLeadingSurrogateChar(nCharCode)) {
+								if (k + 1 < length) {
+									k++;
+									let nTrailingChar = curMultiText.charCodeAt(k);
+									nUnicode = AscCommon.decodeSurrogateChar(nCharCode, nTrailingChar);
+								}
+							} else {
+								nUnicode = nCharCode;
+							}
+
+							if (null != nUnicode) {
+								let Item;
+								if (0x20 !== nUnicode && 0xA0 !== nUnicode && 0x2009 !== nUnicode) {
+									Item = new AscWord.CRunText(nUnicode);
+								} else {
+									Item = new AscWord.CRunSpace();
+								}
+
+								//add text
+								oCurRun.Add_ToContent(-1, Item, false);
+							}
+						}
+					}
+					if (oCurPar) {
+						oCurPar.Internal_Content_Add(0, oCurRun, false);
+						oCurPar.SelectAll();
+						res.push(oCurPar);
+					}
+
+				}, this, []);
+
+				return res;
+			};
+
+			let aParagraphs = getParagraphs(fragments);
+			if (aParagraphs && aParagraphs.length) {
+				let oChangeEngine = new AscCommonWord.CChangeTextCaseEngine(type);
+				oChangeEngine.ProcessParagraphs(aParagraphs);
+
+				for (let i = 0; i < aParagraphs.length; i++) {
+					newText += aParagraphs[i].GetText({ParaEndToSpace: false});
+					if (i !== aParagraphs.length - 1) {
+						newText += "\n";
+					}
+				}
+
+				if (newText) {
+					let counter = 0;
+					for (let m = 0; m < fragments.length; m++) {
+						let curMultiText = fragments[m].text;
+						let isChangeFragment = false;
+						let newFragmentText = "";
+						for (let k = 0, length = curMultiText.length; k < length; k++) {
+							if (curMultiText[k] !== newText[counter]) {
+								isChange = true;
+								isChangeFragment = true;
+							}
+							newFragmentText += newText[counter];
+							counter++;
+						}
+						if (isChangeFragment && fragments[m].setText) {
+							fragments[m].setText(newFragmentText);
+						}
+					}
+				}
+			}
+		}
+		return isChange ? newText : null;
 	}
 
 	function DefName(wb, name, ref, sheetId, hidden, type, isXLNM) {
@@ -12581,7 +12785,7 @@
 		}
 		return type;
 	};
-	Cell.prototype.changeTextCase=function(type){
+	Cell.prototype.changeTextCase2=function(type){
 		if (this.isEmpty() || this.isFormula()) {
 			return;
 		}
@@ -12609,6 +12813,28 @@
 			let oNewText = changeTextCase(this.text, null, type);
 			if (oNewText.isChange) {
 				this.setValue(oNewText.text);
+			}
+		}
+	};
+	Cell.prototype.changeTextCase=function(type){
+		if (this.isEmpty() || this.isFormula()) {
+			return;
+		}
+
+		if(null != this.multiText) {
+			let dataOld = this._cloneMultiText();
+			let changedText = changeTextCaseUseTextCaseEngine(this.multiText, type);
+
+			if (changedText) {
+				let dataNew = this._cloneMultiText();
+				History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeArrayValueFormat,
+					this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow),
+					new UndoRedoData_CellSimpleData(this.nRow, this.nCol, dataOld, dataNew));
+			}
+		} else if (null != this.text) {
+			let changedText = changeTextCaseUseTextCaseEngine([{text: this.text}], type);
+			if (changedText) {
+				this.setValue(changedText);
 			}
 		}
 	};
