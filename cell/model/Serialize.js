@@ -12761,7 +12761,7 @@
     window['AscCommonExcel'].decodeXmlPath = decodeXmlPath;
     window['AscCommonExcel'].encodeXmlPath = encodeXmlPath;
 
-    window['Asc']['c_oAscESheetViewType'] = window['AscCommonExcel'].ESheetViewType = ESheetViewType;
+    window['Asc']['c_oAscESheetViewType'] = window['Asc'].c_oAscESheetViewType = window['AscCommonExcel'].ESheetViewType = ESheetViewType;
     prot = ESheetViewType;
     prot['normal'] = prot.normal;
     prot['pageBreakPreview'] = prot.pageBreakPreview;

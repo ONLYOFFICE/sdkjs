@@ -1683,7 +1683,7 @@ ChangeAdjInGroupState.prototype =
     onMouseUp: MoveInGroupState.prototype.onMouseUp
 };
 
-function TextAddState(drawingObjects, majorObject)
+function TextAddState(drawingObjects, majorObject, startX, startY, button)
 {
     this.drawingObjects =drawingObjects;
     this.majorObject = majorObject;

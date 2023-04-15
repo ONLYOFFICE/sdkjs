@@ -13228,10 +13228,13 @@
 	CInkDrawer.prototype.endSilentMode = function() {
 		this.silentMode = false;
 	};
+	CInkDrawer.prototype.isSilentMode = function() {
+		return this.silentMode;
+	};
 	CInkDrawer.prototype.turnOff = function() {
-		this.pen = null;
-		this.setState(INK_DRAWER_STATE_OFF);
 		if(!this.silentMode) {
+			this.pen = null;
+			this.setState(INK_DRAWER_STATE_OFF);
 			this.api.sendEvent("asc_onInkDrawerStop");
 		}
 	};
@@ -13248,7 +13251,7 @@
 		return this.pen;
 	};
 	CInkDrawer.prototype.getState = function() {
-		return {state: this.state, pen: this.pen};
+		return {state: this.state, pen: this.pen, silentMode: this.silentMode};
 	};
 	CInkDrawer.prototype.restoreState = function(oState) {
 		if(!oState) {
@@ -13256,6 +13259,7 @@
 		}
 		this.state = oState.state;
 		this.pen = oState.pen;
+		this.silentMode = oState.silentMode;
 	};
 
 	//------------------------------------------------------------fill polyfill--------------------------------------------

@@ -336,7 +336,7 @@
 		this.buildNumber = null;
 		this.liveViewerSupport = null;
 
-		this.betaVersion = '@@Beta';
+		this.betaVersion = AscCommon.g_cIsBeta;
 
 		return this;
 	}

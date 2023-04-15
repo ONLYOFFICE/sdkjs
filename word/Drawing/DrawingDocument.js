@@ -2055,6 +2055,7 @@ function CDrawingDocument()
 	this.isFirstRecalculate = false; // был ли хоть раз вызван OnEndRecalculate
 	this.isFirstFullRecalculate = false; // был ли хоть раз вызван OnEndRecalculate c параметром isFull == true
     this.isScrollToTargetAttack = false;
+	this.isDisableScrollToTarget = false;
 
     this.printedDocument = null; // selection print
 
@@ -3367,12 +3368,16 @@ function CDrawingDocument()
 
 		if (this.UpdateTargetFromPaint === false && this.m_lCurrentPage != -1)
 		{
+			this.isDisableScrollToTarget = this.m_oWordControl.m_oApi.isLockScrollToTarget;
 			this.UpdateTargetCheck = true;
 			return;
 		}
 
 		var bNeedScrollToTarget = true;
 		if (!this.isScrollToTargetAttack && this.m_dTargetX == x && this.m_dTargetY == y && this.m_lTargetPage == pageIndex)
+			bNeedScrollToTarget = false;
+
+		if (this.m_oWordControl.m_oApi.isLockScrollToTarget || this.isDisableScrollToTarget)
 			bNeedScrollToTarget = false;
 
 		this.isScrollToTargetAttack = false;
@@ -3445,6 +3450,8 @@ function CDrawingDocument()
 			nValueScrollHor = 0;
 			nValueScrollVer = 0;
 		}
+
+		this.isDisableScrollToTarget = false;
 
 		if (0 != nValueScrollHor || 0 != nValueScrollVer)
 		{

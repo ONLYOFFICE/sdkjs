@@ -1864,7 +1864,7 @@
 							e.CtrlKey = oldCtrlKey;
 						}
 
-						this.changeCurrentState(new AscFormat.TextAddState(this, object, x, y));
+						this.changeCurrentState(new AscFormat.TextAddState(this, object, x, y, e.Button));
 						return true;
 					} else {
 						var ret = {objectId: object.Get_Id(), cursorType: "text"};
@@ -8959,12 +8959,12 @@
 					}
 					return null;
 				},
-				getImageDataFromSelection: function () {
+				getImageDataFromSelection: function (bForceAsDraw, sImageFormat) {
 					let aSelectedObjects = this.getSelectedArray();
 					if (aSelectedObjects.length < 1) {
 						return null;
 					}
-					let sSrc = aSelectedObjects[0].getBase64Img();
+					let sSrc = aSelectedObjects[0].getBase64Img(bForceAsDraw, sImageFormat);
 					let nWidth = aSelectedObjects[0].cachedPixW || 50;
 					let nHeight = aSelectedObjects[0].cachedPixH || 50;
 					return {
@@ -9121,10 +9121,10 @@
 					}
 					return null;
 				},
-				getImageDataForSaving: function () {
+				getImageDataForSaving: function (bForceAsDraw, sImageFormat) {
 					let aSelectedObjects = this.getSelectedArray();
 					if (aSelectedObjects.length === 1) {
-						return this.getImageDataFromSelection();
+						return this.getImageDataFromSelection(bForceAsDraw, sImageFormat);
 					} else {
 						let oImageData = this.getSelectionImageData();
 						if (oImageData) {
@@ -9180,16 +9180,26 @@
 				hitInGuide: function (x, y) {
 					return null;
 				},
-
-				onInkDrawerChangeState: function() {
+				checkInkState: function () {
 					const oAPI = this.getEditorApi();
 					if(oAPI.isInkDrawerOn()) {
 						if(oAPI.isDrawInkMode()) {
-							this.changeCurrentState(new AscFormat.CInkDrawState(this));
+							if(!(this.curState instanceof  AscFormat.CInkDrawState)) {
+								this.changeCurrentState(new AscFormat.CInkDrawState(this));
+
+							}
 						}
 						else {
-							this.changeCurrentState(new AscFormat.CInkEraseState(this));
+							if(!(this.curState instanceof  AscFormat.CInkEraseState)) {
+								this.changeCurrentState(new AscFormat.CInkEraseState(this));
+							}
 						}
+					}
+				},
+				onInkDrawerChangeState: function() {
+					const oAPI = this.getEditorApi();
+					if(oAPI.isInkDrawerOn()) {
+						this.checkInkState();
 					}
 					else {
 						this.clearTrackObjects();
@@ -10696,6 +10706,13 @@
 		CDrawingControllerStateBase.prototype.changeControllerState = function(oState) {
 			this.controller.changeCurrentState(oState);
 		};
+		CDrawingControllerStateBase.prototype.emulateMouseUp = function(e, x, y, pageIndex) {
+			const nOldType = e.Type;
+			e.Type   = AscCommon.g_mouse_event_type_up;
+			const nResult = this.onMouseUp(e, x, y, pageIndex);
+			e.Type = nOldType;
+			return nResult;
+		};
 
 		function CInkEraseState(drawingObjects) {
 			CDrawingControllerStateBase.call(this, drawingObjects);
@@ -10722,7 +10739,12 @@
 							if(oDrawing.hit(x, y)) {
 								this.controller.resetSelection();
 								this.controller.selectObject(oDrawing, pageIndex);
-								this.controller.remove();
+								if(this.controller.document) {
+									this.controller.checkSelectedObjectsAndCallback(this.controller.remove, [], true, 0, []);
+								}
+								else {
+									this.controller.remove();
+								}
 							}
 						}
 					}
@@ -10964,4 +10986,5 @@
 
 		window['AscCommon'] = window['AscCommon'] || {};
 		window["AscCommon"].CDrawTask = CDrawTask;
+		window["AscCommon"].CDrawingControllerStateBase = CDrawingControllerStateBase;
 	})(window);

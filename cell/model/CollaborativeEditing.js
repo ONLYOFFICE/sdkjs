@@ -925,12 +925,16 @@
 			if(oApi) {
 				oApi.incrementCounterLongAction();
 			}
+			const oInkDrawerState = oApi.inkDrawer.getState();
 			var callbackEx = function(result, sync) {
 				if(oApi) {
 					oApi.decrementCounterLongAction();
 				}
-				if ( callback )
+				if ( callback ) {
+					oApi.inkDrawer.restoreState(oInkDrawerState);
 					callback(result, sync);
+					oApi.inkDrawer.restoreState(oInkDrawerState);
+				}
 			};
 			var bRet = true;
 			if (!aObjectId.length) {

@@ -3200,22 +3200,28 @@ ParaDrawing.prototype.Document_Is_SelectionLocked = function(CheckType)
 
 ParaDrawing.prototype.CheckDeletingLock = function()
 {
-	if (this.LogicDocument
-		&& this.LogicDocument.IsDocumentEditor()
-		&& (!this.LogicDocument.CanEdit() || this.LogicDocument.IsFillingFormMode()))
+	let logicDocument = this.LogicDocument;
+	let form          = this.GetInnerForm();
+	
+	if (logicDocument && logicDocument.IsDocumentEditor())
 	{
-		// В формах мы не удаляем ничего, а чистим форму, если нужно
-		var oInnerForm = null;
-		if (this.IsForm() && (oInnerForm = this.GetInnerForm()) && !oInnerForm.IsPlaceHolder())
+		// Если в форму зайти нельзя, то и не проверяем можно ли удалять её внутреннюю часть
+		if (form && this.IsForm() && !form.CanPlaceCursorInside())
 			return;
-
-		return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		
+		if (!this.LogicDocument.CanEdit() || this.LogicDocument.IsFillingFormMode())
+		{
+			// В формах мы не удаляем ничего, а чистим форму, если нужно
+			if (this.IsForm() && form && !form.IsPlaceHolder())
+				return;
+			
+			return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		}
 	}
-
-	var oForm = this.GetInnerForm();
-	if (oForm)
-		oForm.SkipSpecialContentControlLock(true);
-
+	
+	if (form)
+		form.SkipSpecialContentControlLock(true);
+	
 	var arrDocContents = this.GetAllDocContents();
 	for (var nIndex = 0, nCount = arrDocContents.length; nIndex < nCount; ++nIndex)
 	{
@@ -3223,9 +3229,9 @@ ParaDrawing.prototype.CheckDeletingLock = function()
 		arrDocContents[nIndex].Document_Is_SelectionLocked(AscCommon.changestype_Remove);
 		arrDocContents[nIndex].SetApplyToAll(false);
 	}
-
-	if (oForm)
-		oForm.SkipSpecialContentControlLock(false);
+	
+	if (form)
+		form.SkipSpecialContentControlLock(false);
 };
 ParaDrawing.prototype.GetAllFields = function(isUseSelection, arrFields)
 {

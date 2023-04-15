@@ -4637,6 +4637,7 @@ CGraphicObjects.prototype.hitInGuide = function(x, y) {
     return null;
 };
 CGraphicObjects.prototype.onInkDrawerChangeState = DrawingObjectsController.prototype.onInkDrawerChangeState;
+CGraphicObjects.prototype.checkInkState = DrawingObjectsController.prototype.checkInkState;
 
 function ComparisonByZIndexSimpleParent(obj1, obj2)
 {
