@@ -1265,7 +1265,7 @@
 			};
 		}
 		
-		const isDesktop = window.AscDesktopEditor !== undefined;
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
 		if (isDesktop)
 		{
 			// Отдаём весь конфиг, внутри вычислим путь к deploy
@@ -1395,7 +1395,7 @@
 			}
 		*/
 
-		const isDesktop = window.AscDesktopEditor !== undefined;
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
 
 		// В случае Desktop нужно проверить какие плагины нельзя удалять. В UpdateInstallPlugins работаем с двумя типами папок.
 		// Пока проверка тут, но грамотнее будет сделать и использовать доп.свойство isSystemInstall класса CPlugin
@@ -1468,7 +1468,7 @@
      */
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid, backup)
 	{
-		const isDesktop = window.AscDesktopEditor !== undefined;
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
 
 		if (isDesktop)
 		{
