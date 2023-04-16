@@ -538,6 +538,8 @@
 			begin = Math.min(t.selectionBegin, t.selectionEnd);
 			end = Math.max(t.selectionBegin, t.selectionEnd);
 
+			let oNewText = AscCommonExcel.changeTextCaseUseTextCaseEngine(opt.fragments, val, begin, end);
+
 			first = t._findFragment(begin);
 			last = t._findFragment(end - 1);
 

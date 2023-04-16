@@ -345,12 +345,32 @@
 
 	}
 
-	function changeTextCaseUseTextCaseEngine(fragments, type) {
+	function changeTextCaseUseTextCaseEngine(fragments, type, opt_start, opt_end) {
 		let isChange = false;
 		let newText = "";
 
-		let getChangedTextSimpleCase = function (_text) {
+		let getChangedTextSimpleCase = function (_text, _text_pos) {
 			let _newText = "";
+			let _textBefore = "";
+			let _textAfter = "";
+			if (opt_start || opt_end) {
+				if (_text_pos + _text.length < opt_start  || _text_pos > opt_end) {
+					return _text;
+				}
+				let _start = null, _end = null;
+				if (_text_pos < opt_start) {
+					_textBefore = _text.substring(0, _text_pos - opt_start);
+					_start = _text_pos - opt_start;
+				}
+				if (_text_pos + _text.length > opt_end) {
+					_textAfter = _text.substring(opt_end - _text_pos, _text.length);
+					_end = opt_end - _text_pos;
+				}
+				if (_start || _end) {
+					_text = _text.substring(_start ? _start : 0, _end ? _end : _text.length);
+				}
+
+			}
 			switch (type) {
 				case Asc.c_oAscChangeTextCaseType.LowerCase: {
 					_newText = _text.toLowerCase();
@@ -372,17 +392,19 @@
 					break;
 				}
 			}
-			return _newText;
+			return _textBefore + _newText + _textAfter;
 		};
 
-		if (type === Asc.c_oAscChangeTextCaseType.LowerCase || type === Asc.c_oAscChangeTextCaseType.UpperCase || type === Asc.c_oAscChangeTextCaseType.ToggleCase) {
+		if (type === Asc.c_oAscChangeTextCaseType.LowerCase /*|| type === Asc.c_oAscChangeTextCaseType.UpperCase*/ || type === Asc.c_oAscChangeTextCaseType.ToggleCase) {
+			let curTextLength = 0;
 			for (let m = 0; m < fragments.length; m++) {
-				let newFragmentText = getChangedTextSimpleCase(fragments[m].text);
+				let newFragmentText = getChangedTextSimpleCase(fragments[m].text, curTextLength);
 				if (newFragmentText !== fragments[m].text) {
 					isChange = true;
-					newText = newFragmentText;
 					fragments[m].setText && fragments[m].setText(newFragmentText);
 				}
+				newText += newFragmentText;
+				curTextLength += fragments[m].text.length;
 			}
 		} else {
 
@@ -394,6 +416,7 @@
 					let oCurPar = null;
 					let oCurRun = null;
 
+					let curTextLength = 0;
 					for (let m = 0; m < _fragments.length; m++) {
 						let curMultiText = _fragments[m].text;
 						for (let k = 0, length = curMultiText.length; k < length; k++) {
@@ -407,7 +430,26 @@
 
 							if (curMultiText[k] === "\n") {
 								oCurPar.Internal_Content_Add(0, oCurRun, false);
-								oCurPar.SelectAll();
+
+								if (opt_start || opt_end) {
+									let startRun = curTextLength;
+									let endRun = curTextLength + oCurRun.Content.length - 1;
+									if (opt_start <= startRun && endRun <= opt_end) {
+										//select all
+										oCurRun.State.Selection.StartPos = 0;
+										oCurRun.State.Selection.EndPos = oCurRun.Content.length - 1;
+										oCurRun.State.Selection.Use = true;
+									} else if (endRun > opt_start && startRun < opt_end) {
+										oCurRun.State.Selection.StartPos = opt_start > startRun ? (opt_start - startRun) : 0;
+										oCurRun.State.Selection.EndPos = (endRun > opt_end) ? (opt_end - curTextLength) : oCurRun.Content.length - 1;
+										oCurRun.State.Selection.Use = true;
+									}
+								} else {
+									oCurPar.SelectAll();
+								}
+
+								curTextLength += oCurRun.Content.length;
+
 								res.push(oCurPar);
 								oCurPar = null;
 								oCurRun = null;
@@ -439,7 +481,25 @@
 					}
 					if (oCurPar) {
 						oCurPar.Internal_Content_Add(0, oCurRun, false);
-						oCurPar.SelectAll();
+
+						if (opt_start || opt_end) {
+							let startRun = curTextLength;
+							let endRun = curTextLength + oCurRun.Content.length;
+							if (opt_start <= startRun && endRun <= opt_end) {
+								//select all
+								oCurRun.State.Selection.StartPos = 0;
+								oCurRun.State.Selection.EndPos = oCurRun.Content.length;
+								oCurRun.State.Selection.Use = true;
+							} else if (endRun > opt_start && startRun < opt_end) {
+								oCurRun.State.Selection.StartPos = opt_start > startRun ? (opt_start - startRun) : 0;
+								oCurRun.State.Selection.EndPos = (endRun > opt_end) ? (opt_end - curTextLength) : oCurRun.Content.length;
+								oCurRun.State.Selection.Use = true;
+							}
+						} else {
+							oCurPar.SelectAll();
+						}
+
+
 						res.push(oCurPar);
 					}
 
@@ -19067,5 +19127,6 @@
 	window['AscCommonExcel']._isSameSizeMerged = _isSameSizeMerged;
 	window['AscCommonExcel'].g_nDefNameMaxLength = g_nDefNameMaxLength;
 	window['AscCommonExcel'].changeTextCase = changeTextCase;
+	window['AscCommonExcel'].changeTextCaseUseTextCaseEngine = changeTextCaseUseTextCaseEngine;
 
 })(window);
