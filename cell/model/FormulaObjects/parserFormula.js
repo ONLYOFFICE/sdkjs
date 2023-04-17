@@ -70,6 +70,8 @@ function (window, undefined) {
 
 	var TOK_SUBTYPE_UNION = 15;
 
+	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1};
+
 	function getArrayCopy(arr) {
 		var newArray = [];
 		for (var i = 0; i < arr.length; i++) {
@@ -5800,7 +5802,7 @@ function parserFormula( formula, parent, _ws ) {
 		var needAssemble = false;
 		var cFormulaList;
 
-		var startSumproduct = false, counterSumproduct = 0;
+		var startArrayFunc = false, counterArrayFunc = 0;
 
 		if (this.isParsed) {
 			return this.isParsed;
@@ -6006,11 +6008,11 @@ function parserFormula( formula, parent, _ws ) {
 								elem.isXLFN = (val.indexOf(xlfnFrefix) === 0);
 								elem.isXLWS = elem.isXLFN && xlfnFrefix.length === val.indexOf(xlwsFrefix);
 							}
-							if("SUMPRODUCT" === val){
-								startSumproduct = true;
+							if(arrayFunctionsMap[val]){
+								startArrayFunc = true;
 
-								counterSumproduct++;
-								if(1 === counterSumproduct){
+								counterArrayFunc++;
+								if(1 === counterArrayFunc){
 									this.outStack.push(cSpecialOperandStart.prototype);
 								}
 							}
@@ -6050,10 +6052,10 @@ function parserFormula( formula, parent, _ws ) {
 									//this.outStack.push(arg_count);
 									this.outStack.splice(this.outStack.length - 1, 0, arg_count);
 
-									if(startSumproduct && "SUMPRODUCT" === tmp.name){
-										counterSumproduct--;
-										if(counterSumproduct < 1){
-											startSumproduct = false;
+									if(startArrayFunc && arrayFunctionsMap[tmp.name]){
+										counterArrayFunc--;
+										if(counterArrayFunc < 1){
+											startArrayFunc = false;
 											this.outStack.push(cSpecialOperandEnd.prototype);
 										}
 									}
@@ -6266,9 +6268,9 @@ function parserFormula( formula, parent, _ws ) {
 			leftParentArgumentsCurrentArr[elemArr.length - 1] = 1;
 			parseResult.argPos = 1;
 
-			if (startSumproduct) {
-				counterSumproduct++;
-				if (1 === counterSumproduct) {
+			if (startArrayFunc) {
+				counterArrayFunc++;
+				if (1 === counterArrayFunc) {
 					t.outStack.push(cSpecialOperandStart.prototype);
 				}
 			}
@@ -6364,10 +6366,10 @@ function parserFormula( formula, parent, _ws ) {
 			parseResult.operand_expected = false;
 			wasLeftParentheses = false;
 
-			if (startSumproduct) {
-				counterSumproduct--;
-				if (counterSumproduct < 1) {
-					startSumproduct = false;
+			if (startArrayFunc) {
+				counterArrayFunc--;
+				if (counterArrayFunc < 1) {
+					startArrayFunc = false;
 					t.outStack.push(cSpecialOperandEnd.prototype);
 				}
 			}
@@ -6814,8 +6816,8 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					elemArr.push(found_operator);
 					parseResult.addElem(found_operator);
-					if ("SUMPRODUCT" === found_operator.name) {
-						startSumproduct = true;
+					if (arrayFunctionsMap[found_operator.name]) {
+						startArrayFunc = true;
 					}
 
 					if (needCalcArgPos) {
