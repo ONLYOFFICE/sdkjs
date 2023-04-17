@@ -407,8 +407,10 @@
 						}
 						if (isChangeFragment) {
 							if (fragments[m].setText) {
+								//cell value
 								fragments[m].setText(newFragmentText);
 							} else if (fragments[m].setFragmentText) {
+								//cell editor
 								if (!fragmentsMap) {
 									fragmentsMap = {};
 								}
@@ -15715,11 +15717,9 @@
 		History.Create_NewPoint();
 		History.StartTransaction();
 
-		console.time("start")
 		this._setPropertyNoEmpty(null, null,function(cell){
 			cell.changeTextCase(type);
 		});
-		console.timeEnd("start")
 		History.EndTransaction();
 	};
 	Range.prototype.getType=function(){
