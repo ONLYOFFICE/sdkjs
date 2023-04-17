@@ -538,43 +538,9 @@
 			begin = Math.min(t.selectionBegin, t.selectionEnd);
 			end = Math.max(t.selectionBegin, t.selectionEnd);
 
-			let oNewText = AscCommonExcel.changeTextCaseUseTextCaseEngine(opt.fragments, val, begin, end);
-
-			first = t._findFragment(begin);
-			last = t._findFragment(end - 1);
-
-			if (first && last) {
-				let lastSym = null;
-				let fragmentsMap = null;
-				for (i = first.index; i <= last.index; ++i) {
-					let newText = opt.fragments[i].text;
-
-					let startText = "", endText = "";
-					let _start = 0;
-					let _end = newText.length;
-					if (i === first.index && begin > first.begin) {
-						startText = opt.fragments[i].text.substring(0, begin - first.begin);
-						_start = begin - first.begin;
-					}
-					if (i === last.index && end < last.end) {
-						endText = opt.fragments[i].text.substring(end - last.begin, last.end - last.begin);
-						_end = end - last.begin;
-					}
-
-					newText = newText.substring(_start, _end);
-
-					let oNewText = AscCommonExcel.changeTextCase(newText, lastSym, val);
-					lastSym = oNewText.prevSymbol;
-					if (oNewText.isChange) {
-						if (!fragmentsMap) {
-							fragmentsMap = {};
-						}
-						fragmentsMap[i] = opt.fragments[i].clone();
-						fragmentsMap[i].setFragmentText(startText + oNewText.text + endText);
-					}
-				}
-
-				this._changeFragments(fragmentsMap);
+			let oNewText = AscCommonExcel.changeTextCase(opt.fragments, val, begin, end);
+			if (oNewText && oNewText.fragmentsMap) {
+				this._changeFragments(oNewText.fragmentsMap);
 			}
 		}
 	};
@@ -593,7 +559,6 @@
 			if (!this.undoMode) {
 				// save info to undo/redo
 				this.undoList.push({fn: this._changeFragments, args: [_undoFragments]});
-				//this.redoList = [];
 			}
 
 			this._update();

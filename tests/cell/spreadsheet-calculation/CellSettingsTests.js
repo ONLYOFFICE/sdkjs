@@ -152,7 +152,7 @@ $(function () {
 		checkUndoRedo(trueResult, result, "ToggleCase");
 
 		//CapitalizeWords
-		/*api.asc_ChangeTextCase(Asc.c_oAscChangeTextCaseType.CapitalizeWords);
+		api.asc_ChangeTextCase(Asc.c_oAscChangeTextCaseType.CapitalizeWords);
 		result = "Test TEST Test  Test\n" +
 			"Test Test   Teeest Test\n" +
 			"TEST Test Test";
@@ -161,9 +161,71 @@ $(function () {
 		//SentenceCase
 		api.asc_ChangeTextCase(Asc.c_oAscChangeTextCaseType.SentenceCase);
 		result = "Test TEST test  Test\n" +
-			"test test   Teeest test\n" +
+			"Test test   Teeest test\n" +
 			"TEST test Test";
-		checkUndoRedo(trueResult, result, "SentenceCase");*/
+		checkUndoRedo(trueResult, result, "SentenceCase");
+
+		aMultiText = generateMultiText([{t: 'te'}, {t: 'st TE'}, {t: 'ST tEst  T'}, {t: 'est\ntE'}, {t: 'st. test   TeE'}, {t: 'Est. te'}, {t: 'ST\nTEST te'},
+			{t: 'st Test teEEst\ntes'}, {t: 't.test\ntest,test'}, {t: ';test,tEst\\tes'}, {t: 't\nteSt T'}, {t: 'est Test TESt TES'}, {t: 'T tesT'}]);
+
+
+		cellValue = new AscCommonExcel.CCellValue({multiText: aMultiText});
+		ws.getRange2("A1").setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, cellValue));
+
+		trueResult = "test TEST tEst  Test\ntEst. test   TeEEst. teST\nTEST test Test teEEst\ntest.test\ntest,test;test,tEst\\test\nteSt Test Test TESt TEST tesT";
+
+		assert.strictEqual(ws.getRange2("A1").getValue(), trueResult);
+
+		//LowerCase
+		api.asc_ChangeTextCase(Asc.c_oAscChangeTextCaseType.LowerCase);
+		result = "test test test  test\n" +
+			"test. test   teeest. test\n" +
+			"test test test teeest\n" +
+			"test.test\n" +
+			"test,test;test,test\\test\n" +
+			"test test test test test test";
+		checkUndoRedo(trueResult, result, "LowerCase2");
+
+		//UpperCase
+		api.asc_ChangeTextCase(Asc.c_oAscChangeTextCaseType.UpperCase);
+		result = "TEST TEST TEST  TEST\n" +
+			"TEST. TEST   TEEEST. TEST\n" +
+			"TEST TEST TEST TEEEST\n" +
+			"TEST.TEST\n" +
+			"TEST,TEST;TEST,TEST\\TEST\n" +
+			"TEST TEST TEST TEST TEST TEST";
+		checkUndoRedo(trueResult, result, "UpperCase2");
+
+		//ToggleCase
+		api.asc_ChangeTextCase(Asc.c_oAscChangeTextCaseType.ToggleCase);
+		result = "TEST test TeST  tEST\n" +
+			"TeST. TEST   tEeeST. TEst\n" +
+			"test TEST tEST TEeeST\n" +
+			"TEST.TEST\n" +
+			"TEST,TEST;TEST,TeST\\TEST\n" +
+			"TEsT tEST tEST tesT test TESt";
+		checkUndoRedo(trueResult, result, "ToggleCase2");
+
+		//CapitalizeWords
+		api.asc_ChangeTextCase(Asc.c_oAscChangeTextCaseType.CapitalizeWords);
+		result = "Test TEST Test  Test\n" +
+			"Test. Test   Teeest. Test\n" +
+			"TEST Test Test Teeest\n" +
+			"Test.Test\n" +
+			"Test,Test;Test,Test\\Test\n" +
+			"Test Test Test Test TEST Test";
+		checkUndoRedo(trueResult, result, "CapitalizeWords2");
+
+		//SentenceCase
+		api.asc_ChangeTextCase(Asc.c_oAscChangeTextCaseType.SentenceCase);
+		result = "Test TEST test  Test\n" +
+			"Test. Test   teeest. Test\n" +
+			"TEST test Test teeest\n" +
+			"Test.Test\n" + //.T -> .t
+			"Test,test;test,test\\test\n" +
+			"Test Test Test test TEST test";
+		checkUndoRedo(trueResult, result, "SentenceCase2");
+
 	});
 
 	QUnit.module("CopyPaste");

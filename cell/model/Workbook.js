@@ -220,147 +220,23 @@
 		}
 	}
 
-	function changeTextCase(text, prevSymbol, type) {
-		let getNewSymbol = function (_sym, prevSymbol) {
-			let res = _sym;
-
-			let newLine = false;
-			let newWord = false;
-			if (prevSymbol === "\n" || prevSymbol === "." || !prevSymbol) {
-				newLine = true;
-			}
-			if (prevSymbol === " " || !prevSymbol) {
-				newWord = true;
-			}
-
-			switch (type) {
-				case Asc.c_oAscChangeTextCaseType.SentenceCase: {
-					if (newLine) {
-						res = _sym.toUpperCase();
-					} else {
-						res = _sym.toLowerCase();
-					}
-					break;
-				}
-				case Asc.c_oAscChangeTextCaseType.LowerCase: {
-					res = _sym.toLowerCase();
-					break;
-				}
-				case Asc.c_oAscChangeTextCaseType.UpperCase: {
-					res = _sym.toUpperCase();
-					break;
-				}
-				case Asc.c_oAscChangeTextCaseType.CapitalizeWords: {
-					if (newWord) {
-						res = _sym.toUpperCase();
-					} else {
-						res = _sym.toLowerCase();
-					}
-					break;
-				}
-				case Asc.c_oAscChangeTextCaseType.ToggleCase: {
-					if (_sym.toUpperCase() === _sym) {
-						res = _sym.toLowerCase();
-					} else {
-						res = _sym.toUpperCase();
-					}
-					break;
-				}
-			}
-			return res;
-		};
-
-		let newText = "", isChange = false;
-		for (let i = 0, length = text.length; i < length; ++i) {
-			let sym = text[i];
-			let toSym = getNewSymbol(sym, prevSymbol);
-			newText += toSym;
-			if (toSym !== sym) {
-				isChange = true;
-			}
-			prevSymbol = sym;
-		}
-
-		return {text: newText, isChange: isChange, prevSymbol: prevSymbol};
-	}
-
-	function changeTextCase3(text, type) {
-		let newText;
-		if (type === Asc.c_oAscChangeTextCaseType.LowerCase) {
-			newText = text.toLowerCase();
-		} else if (type === Asc.c_oAscChangeTextCaseType.UpperCase) {
-			newText = text.toUpperCase();
-		} else if (type === Asc.c_oAscChangeTextCaseType.ToggleCase) {
-			newText = "";
-			for (let i = 0, length = text.length; i < length; ++i) {
-				let sym = text[i];
-				if (sym.toUpperCase() === sym) {
-					newText += sym.toLowerCase();
-				} else {
-					newText += sym.toUpperCase();
-				}
-			}
-		} else {
-			//break on words and fix mistakes
-			let newWord, newSentence;
-			for (let i = 0, length = text.length; i < length; ++i) {
-				let sChar = text[i];
-				let nCharCode = sChar.charCodeAt();
-				if (/*oItem.IsText()*/true)
-				{
-					if (nCharCode === 0x002E)
-					{
-						this.FlushWord();
-						this.SetStartSentence(true);
-					}
-					else
-					{
-						if (undefined !== AscCommon.g_aPunctuation[nCharCode])
-						{
-							if (!IsToSpace(nCharCode))
-								this.AddLetter(oRun, nPos, isInSelection);
-							else
-								this.FlushWord();
-						}
-						else
-						{
-							this.FlushWord();
-
-							if (33 === nCharCode || 63 === nCharCode || 46 === nCharCode)
-								this.SetStartSentence(true);
-							else
-								this.SetStartSentence(false);
-						}
-					}
-				}
-				else
-				{
-					this.FlushWord();
-
-					if (/*!oItem.IsTab() &&*/ !AscCommon.IsSpace(nCharCode))
-						this.SetStartSentence(false);
-				}
-			}
-		}
-
-	}
-
-	function changeTextCaseUseTextCaseEngine(fragments, type, opt_start, opt_end) {
+	function changeTextCase(fragments, type, opt_start, opt_end) {
 		let isChange = false;
-		let newText = "";
+		let newText = "", fragmentsMap;
+		let c_oType = Asc.c_oAscChangeTextCaseType;
 
 		let getChangedTextSimpleCase = function (_text, _text_pos) {
 			let _newText = "";
 			let _textBefore = "";
 			let _textAfter = "";
 			if (opt_start || opt_end) {
-				if (_text_pos + _text.length < opt_start  || _text_pos > opt_end) {
+				if (_text_pos + _text.length < opt_start || _text_pos > opt_end) {
 					return _text;
 				}
 				let _start = null, _end = null;
 				if (_text_pos < opt_start) {
-					_textBefore = _text.substring(0, _text_pos - opt_start);
-					_start = _text_pos - opt_start;
+					_textBefore = _text.substring(0, opt_start - _text_pos);
+					_start = opt_start - _text_pos;
 				}
 				if (_text_pos + _text.length > opt_end) {
 					_textAfter = _text.substring(opt_end - _text_pos, _text.length);
@@ -372,15 +248,15 @@
 
 			}
 			switch (type) {
-				case Asc.c_oAscChangeTextCaseType.LowerCase: {
+				case c_oType.LowerCase: {
 					_newText = _text.toLowerCase();
 					break;
 				}
-				case Asc.c_oAscChangeTextCaseType.UpperCase: {
+				case c_oType.UpperCase: {
 					_newText = _text.toUpperCase();
 					break;
 				}
-				case Asc.c_oAscChangeTextCaseType.ToggleCase: {
+				case c_oType.ToggleCase: {
 					for (let i = 0, length = _text.length; i < length; ++i) {
 						if (_text[i].toUpperCase() === _text[i]) {
 							_newText += _text[i].toLowerCase();
@@ -395,13 +271,21 @@
 			return _textBefore + _newText + _textAfter;
 		};
 
-		if (type === Asc.c_oAscChangeTextCaseType.LowerCase /*|| type === Asc.c_oAscChangeTextCaseType.UpperCase*/ || type === Asc.c_oAscChangeTextCaseType.ToggleCase) {
+		if (type === c_oType.LowerCase || type === c_oType.UpperCase || type === c_oType.ToggleCase) {
 			let curTextLength = 0;
 			for (let m = 0; m < fragments.length; m++) {
 				let newFragmentText = getChangedTextSimpleCase(fragments[m].text, curTextLength);
 				if (newFragmentText !== fragments[m].text) {
 					isChange = true;
-					fragments[m].setText && fragments[m].setText(newFragmentText);
+					if (fragments[m].setText) {
+						fragments[m].setText(newFragmentText);
+					} else if (fragments[m].setFragmentText) {
+						if (!fragmentsMap) {
+							fragmentsMap = {};
+						}
+						fragmentsMap[m] = fragments[m].clone();
+						fragmentsMap[m].setFragmentText(newFragmentText);
+					}
 				}
 				newText += newFragmentText;
 				curTextLength += fragments[m].text.length;
@@ -411,51 +295,59 @@
 			let getParagraphs = function (_fragments) {
 				let res = [];
 
-				AscFormat.ExecuteNoHistory(function()
-				{
+				AscFormat.ExecuteNoHistory(function () {
 					let oCurPar = null;
 					let oCurRun = null;
+
+					let _setSelection = function (_run, pos) {
+						let startRun = pos;
+						let run_length = _run.Content.length;
+						let endRun = pos + run_length;
+						if (opt_start <= startRun && endRun <= opt_end) {
+							//select all
+							oCurRun.State.Selection.StartPos = 0;
+							oCurRun.State.Selection.EndPos = run_length;
+							oCurRun.State.Selection.Use = true;
+						} else if (endRun > opt_start && startRun < opt_end) {
+							oCurRun.State.Selection.StartPos = opt_start > startRun ? (opt_start - startRun) : 0;
+							oCurRun.State.Selection.EndPos = (endRun > opt_end) ? (opt_end - curTextLength) : run_length;
+							oCurRun.State.Selection.Use = true;
+						}
+					};
+
+					let pushParagraph = function () {
+						oCurPar.Internal_Content_Add(0, oCurRun, false);
+
+						if (opt_start || opt_end) {
+							_setSelection(oCurRun, curTextLength);
+						} else {
+							oCurPar.SelectAll();
+						}
+
+						curTextLength += oCurRun.Content.length;
+
+						res.push(oCurPar);
+						oCurPar = null;
+						oCurRun = null;
+					};
 
 					let curTextLength = 0;
 					for (let m = 0; m < _fragments.length; m++) {
 						let curMultiText = _fragments[m].text;
 						for (let k = 0, length = curMultiText.length; k < length; k++) {
 							if (oCurPar === null) {
-								oCurPar = new Paragraph(/*worksheet.getDrawingDocument(), documentContent*/);
+								oCurPar = new Paragraph();
 								oCurRun = new ParaRun(oCurPar);
 							}
 
-							let nUnicode = null;
 							let nCharCode = curMultiText.charCodeAt(k);
-
 							if (curMultiText[k] === "\n") {
-								oCurPar.Internal_Content_Add(0, oCurRun, false);
-
-								if (opt_start || opt_end) {
-									let startRun = curTextLength;
-									let endRun = curTextLength + oCurRun.Content.length - 1;
-									if (opt_start <= startRun && endRun <= opt_end) {
-										//select all
-										oCurRun.State.Selection.StartPos = 0;
-										oCurRun.State.Selection.EndPos = oCurRun.Content.length - 1;
-										oCurRun.State.Selection.Use = true;
-									} else if (endRun > opt_start && startRun < opt_end) {
-										oCurRun.State.Selection.StartPos = opt_start > startRun ? (opt_start - startRun) : 0;
-										oCurRun.State.Selection.EndPos = (endRun > opt_end) ? (opt_end - curTextLength) : oCurRun.Content.length - 1;
-										oCurRun.State.Selection.Use = true;
-									}
-								} else {
-									oCurPar.SelectAll();
-								}
-
-								curTextLength += oCurRun.Content.length;
-
-								res.push(oCurPar);
-								oCurPar = null;
-								oCurRun = null;
+								pushParagraph();
+								curTextLength++;
 								continue;
 							}
 
+							let nUnicode = null;
 							if (AscCommon.isLeadingSurrogateChar(nCharCode)) {
 								if (k + 1 < length) {
 									k++;
@@ -473,34 +365,13 @@
 								} else {
 									Item = new AscWord.CRunSpace();
 								}
-
 								//add text
 								oCurRun.Add_ToContent(-1, Item, false);
 							}
 						}
 					}
 					if (oCurPar) {
-						oCurPar.Internal_Content_Add(0, oCurRun, false);
-
-						if (opt_start || opt_end) {
-							let startRun = curTextLength;
-							let endRun = curTextLength + oCurRun.Content.length;
-							if (opt_start <= startRun && endRun <= opt_end) {
-								//select all
-								oCurRun.State.Selection.StartPos = 0;
-								oCurRun.State.Selection.EndPos = oCurRun.Content.length;
-								oCurRun.State.Selection.Use = true;
-							} else if (endRun > opt_start && startRun < opt_end) {
-								oCurRun.State.Selection.StartPos = opt_start > startRun ? (opt_start - startRun) : 0;
-								oCurRun.State.Selection.EndPos = (endRun > opt_end) ? (opt_end - curTextLength) : oCurRun.Content.length;
-								oCurRun.State.Selection.Use = true;
-							}
-						} else {
-							oCurPar.SelectAll();
-						}
-
-
-						res.push(oCurPar);
+						pushParagraph();
 					}
 
 				}, this, []);
@@ -534,14 +405,22 @@
 							newFragmentText += newText[counter];
 							counter++;
 						}
-						if (isChangeFragment && fragments[m].setText) {
-							fragments[m].setText(newFragmentText);
+						if (isChangeFragment) {
+							if (fragments[m].setText) {
+								fragments[m].setText(newFragmentText);
+							} else if (fragments[m].setFragmentText) {
+								if (!fragmentsMap) {
+									fragmentsMap = {};
+								}
+								fragmentsMap[m] = fragments[m].clone();
+								fragmentsMap[m].setFragmentText(newFragmentText);
+							}
 						}
 					}
 				}
 			}
 		}
-		return isChange ? newText : null;
+		return isChange ? {text: newText, fragmentsMap: fragmentsMap} : null;
 	}
 
 	function DefName(wb, name, ref, sheetId, hidden, type, isXLNM) {
@@ -12845,37 +12724,6 @@
 		}
 		return type;
 	};
-	Cell.prototype.changeTextCase2=function(type){
-		if (this.isEmpty() || this.isFormula()) {
-			return;
-		}
-
-		let lastSym, isChange;
-		if(null != this.multiText) {
-			let dataOld = this._cloneMultiText();
-			for (let i = 0, length = this.multiText.length; i < length; ++i) {
-				let elem = this.multiText[i];
-				let oNewText = changeTextCase(elem.text, lastSym, type);
-				lastSym = oNewText.prevSymbol;
-				if (oNewText.isChange) {
-					isChange = true;
-					//set new text by multi text element
-					elem.setText(oNewText.text);
-				}
-			}
-			if (isChange) {
-				let dataNew = this._cloneMultiText();
-				History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeArrayValueFormat,
-					this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow),
-					new UndoRedoData_CellSimpleData(this.nRow, this.nCol, dataOld, dataNew));
-			}
-		} else if (null != this.text) {
-			let oNewText = changeTextCase(this.text, null, type);
-			if (oNewText.isChange) {
-				this.setValue(oNewText.text);
-			}
-		}
-	};
 	Cell.prototype.changeTextCase=function(type){
 		if (this.isEmpty() || this.isFormula()) {
 			return;
@@ -12883,7 +12731,7 @@
 
 		if(null != this.multiText) {
 			let dataOld = this._cloneMultiText();
-			let changedText = changeTextCaseUseTextCaseEngine(this.multiText, type);
+			let changedText = changeTextCase(this.multiText, type);
 
 			if (changedText) {
 				let dataNew = this._cloneMultiText();
@@ -12892,9 +12740,9 @@
 					new UndoRedoData_CellSimpleData(this.nRow, this.nCol, dataOld, dataNew));
 			}
 		} else if (null != this.text) {
-			let changedText = changeTextCaseUseTextCaseEngine([{text: this.text}], type);
-			if (changedText) {
-				this.setValue(changedText);
+			let changedText = changeTextCase([{text: this.text}], type);
+			if (changedText && changedText.text) {
+				this.setValue(changedText.text);
 			}
 		}
 	};
@@ -15867,9 +15715,11 @@
 		History.Create_NewPoint();
 		History.StartTransaction();
 
+		console.time("start")
 		this._setPropertyNoEmpty(null, null,function(cell){
 			cell.changeTextCase(type);
 		});
+		console.timeEnd("start")
 		History.EndTransaction();
 	};
 	Range.prototype.getType=function(){
@@ -19127,6 +18977,5 @@
 	window['AscCommonExcel']._isSameSizeMerged = _isSameSizeMerged;
 	window['AscCommonExcel'].g_nDefNameMaxLength = g_nDefNameMaxLength;
 	window['AscCommonExcel'].changeTextCase = changeTextCase;
-	window['AscCommonExcel'].changeTextCaseUseTextCaseEngine = changeTextCaseUseTextCaseEngine;
 
 })(window);
