@@ -1308,6 +1308,13 @@
 		if (this.disableCheckInstalledPlugins)
 			return;
 
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
+		if (isDesktop) {
+			// В случае Desktop не работаем с localStorage и extensions, этот метод может быть вызван из интерфейса
+			// если по какой-то причине (неактуальный cache) у пользователя есть asc_plugins_installed, asc_plugins_removed, то их нужно игнорировать/удалить
+			return;
+		}
+
 		let arrayPlugins = [];
 
 		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
