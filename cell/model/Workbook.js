@@ -221,11 +221,19 @@
 	}
 
 	function changeTextCase(fragments, type, opt_start, opt_end) {
+		if (!fragments) {
+			return;
+		}
+
 		let isChange = false;
 		let newText = "", fragmentsMap;
 		let c_oType = Asc.c_oAscChangeTextCaseType;
 
 		let getChangedTextSimpleCase = function (_text, _text_pos) {
+			if (!_text) {
+				return _text;
+			}
+
 			let _newText = "";
 			let _textBefore = "";
 			let _textAfter = "";
@@ -300,22 +308,29 @@
 					let oCurRun = null;
 
 					let _setSelection = function (_run, pos) {
+						if (!_run || !_run.Content) {
+							return;
+						}
 						let startRun = pos;
 						let run_length = _run.Content.length;
 						let endRun = pos + run_length;
 						if (opt_start <= startRun && endRun <= opt_end) {
 							//select all
-							oCurRun.State.Selection.StartPos = 0;
-							oCurRun.State.Selection.EndPos = run_length;
-							oCurRun.State.Selection.Use = true;
+							_run.State.Selection.StartPos = 0;
+							_run.State.Selection.EndPos = run_length;
+							_run.State.Selection.Use = true;
 						} else if (endRun > opt_start && startRun < opt_end) {
-							oCurRun.State.Selection.StartPos = opt_start > startRun ? (opt_start - startRun) : 0;
-							oCurRun.State.Selection.EndPos = (endRun > opt_end) ? (opt_end - curTextLength) : run_length;
-							oCurRun.State.Selection.Use = true;
+							_run.State.Selection.StartPos = opt_start > startRun ? (opt_start - startRun) : 0;
+							_run.State.Selection.EndPos = (endRun > opt_end) ? (opt_end - curTextLength) : run_length;
+							_run.State.Selection.Use = true;
 						}
 					};
 
 					let pushParagraph = function () {
+						if (!oCurPar || !oCurRun) {
+							return;
+						}
+
 						oCurPar.Internal_Content_Add(0, oCurRun, false);
 
 						if (opt_start || opt_end) {

@@ -532,11 +532,11 @@
 		if (this.isFormula()) {
 			return;
 		}
-		var t = this, opt = t.options, begin, end, i, first, last;
+		var t = this, opt = t.options;
 
 		if (t.selectionBegin !== t.selectionEnd) {
-			begin = Math.min(t.selectionBegin, t.selectionEnd);
-			end = Math.max(t.selectionBegin, t.selectionEnd);
+			let begin = Math.min(t.selectionBegin, t.selectionEnd);
+			let end = Math.max(t.selectionBegin, t.selectionEnd);
 
 			let oNewText = AscCommonExcel.changeTextCase(opt.fragments, val, begin, end);
 			if (oNewText && oNewText.fragmentsMap) {
