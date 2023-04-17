@@ -1483,9 +1483,9 @@
 			let result = window["AscDesktopEditor"]["PluginUninstall"](guid, backup);
 						
 			return {
-				type : "Removed",
-				guid : result ? guid : "",
-				backup : backup
+				"type" : "Removed",
+				"guid" : result ? guid : "",
+				"backup" : backup
 			};
 		}
 		
