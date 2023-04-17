@@ -854,6 +854,10 @@ function (window, undefined) {
 			}
 		}
 
+		if (cElementType.cellsRange === resultArr.type || cElementType.cellsRange3D === resultArr.type) {
+			resultArr = resultArr.getFullArray();
+		}
+
 		return resultArr;
 	};
 
