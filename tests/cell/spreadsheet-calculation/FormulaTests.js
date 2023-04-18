@@ -3167,6 +3167,8 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"ROUNDUP\"", function (assert) {
+		let array;
+
 		oParser = new parserFormula("ROUNDUP(2.1123,4)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(4) - 0, 2.1123);
@@ -3292,6 +3294,38 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
 
+		oParser = new parserFormula("ROUNDUP(267.047619,-2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue() - 0, 300);
+
+		oParser = new parserFormula("ROUNDUP(-267.047619,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue() - 0, -267.05);
+
+		oParser = new parserFormula("ROUNDUP(-267.047619,-2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue() - 0, -300);
+
+		oParser = new parserFormula("ROUNDUP(-267.047619,-3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue() - 0, -1000);
+
+		oParser = new parserFormula("ROUNDUP(26709,-1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue() - 0, 26710);
+
+		oParser = new parserFormula("ROUNDUP(26709,-2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue() - 0, 26800);
+
+		oParser = new parserFormula("ROUNDUP(26709,-3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue() - 0, 27000);
+
+		oParser = new parserFormula("ROUNDUP(26709,-4)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed() - 0, 30000);		// 30000
+
 		// cEmpty
 		ws.getRange2("B101").setValue();
 		
@@ -3397,6 +3431,45 @@ $(function () {
 		oParser = new parserFormula('ROUNDUP(FALSE, FALSE)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue() - 0, 0);
+
+		// cArray
+		oParser = new parserFormula("ROUNDUP({22.123,2.2},{1;2;3;0})", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F110").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 22.2);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2.2);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 22.13);
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2.21);
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 22.123);
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 2.2);
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 23);
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), 3);
+
+		// cellsRange
+		ws.getRange2("E101").setValue("22.123");
+		ws.getRange2("F101").setValue("3");
+		ws.getRange2("G101").setValue();
+		ws.getRange2("E102").setValue("1");
+		ws.getRange2("F102").setValue("2");
+		ws.getRange2("G102").setValue("3");
+		ws.getRange2("E103").setValue("1.23");
+		ws.getRange2("F103").setValue("1.32");
+		ws.getRange2("G103").setValue("3.33");
+
+		oParser = new parserFormula("ROUNDUP(E101:G103,E102:G102)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F110").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 22.2);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3);
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 0);
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1);
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2);
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 3);
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 1.3);
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 1.32);
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), 3.33);
 
 	});
 

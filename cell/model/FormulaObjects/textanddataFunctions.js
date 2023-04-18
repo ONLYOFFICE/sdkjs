@@ -187,7 +187,7 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1, 1: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
-		function arrayToTextGeneral (isRange, args) {
+		function arrayToTextGeneral (args, isRange) {
 			let array = args[0],
 				format = args[1];
 			let resStr = "", arg0Dimensions;
@@ -271,7 +271,7 @@ function (window, undefined) {
 
 		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
 			// arg1 is not array/cellsRange
-			return arrayToTextGeneral(false, [arg0, arg1]);
+			return arrayToTextGeneral([arg0, arg1], false);
 		} else {
 			return AscCommonExcel.getArrayHelper([arg0, arg1], arrayToTextGeneral, exceptions);
 		}

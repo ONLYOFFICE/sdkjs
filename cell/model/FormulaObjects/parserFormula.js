@@ -8417,7 +8417,7 @@ function parserFormula( formula, parent, _ws ) {
 					values.push(value);
 				}
 
-				resultArr.addElement(func(true, values));
+				resultArr.addElement(func(values, true));
 			}
 		}
 

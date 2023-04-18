@@ -4266,7 +4266,7 @@
 		}
 
 		let arg0 = arg[0], arg1 = arg[1];
-		
+
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.cross(arguments[1]);
 		}
@@ -5601,7 +5601,7 @@
 			return res;
 		}
 
-		function sequenceRangeArrayGeneral (isRange, args) {
+		function sequenceRangeArrayGeneral (args, isRange) {
 			const EXPECTED_MAX_ARRAY = 10223960;
 			let rowVal = args[0],
 				columnVal = args[1],
@@ -5697,7 +5697,7 @@
 			return res;
 		}
 
-		return res ? res : sequenceRangeArrayGeneral(false, [arg0, arg1, arg2, arg3]);
+		return res ? res : sequenceRangeArrayGeneral([arg0, arg1, arg2, arg3], false);
 	};
 
 
