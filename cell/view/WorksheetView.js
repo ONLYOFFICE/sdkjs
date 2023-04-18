@@ -628,6 +628,11 @@
 		this.maxDigitWidthForPrint = this.model.workbook.maxDigitWidth;
 		this.defaultColWidthPxForPrint = asc_ceil(defaultColWidthPx / 8) * 8;
 
+		var defaultColWidth = this.model.getDefaultWidth();
+		if (null !== defaultColWidth) {
+			this.defaultColWidthPxForPrint = this.model.modelColWidthToColWidth(defaultColWidth);
+		}
+
 		var tm = this._roundTextMetrics(this.stringRender.measureString("A"));
 		var headersHeightByFont = tm.height;
 		this.defaultRowHeightForPrintPt = Math.min(Asc.c_oAscMaxRowHeight, this.model.getDefaultHeight() || AscCommonExcel.convertPxToPt(headersHeightByFont));
@@ -913,7 +918,12 @@
 		} else {
 			height = (!this.model.isDefaultHeightHidden()) * this.defaultRowHeightForPrintPt;
 		}
-		return Asc.round((height / (72 / 96)) * this.getZoom());
+
+		let realretinaPixelRatio = AscBrowser.retinaPixelRatio;
+		AscBrowser.retinaPixelRatio = 1;
+		height = AscCommonExcel.convertPtToPx(height);
+		AscBrowser.retinaPixelRatio = realretinaPixelRatio;
+		return height * this.getZoom();
 	};
 
 
@@ -2111,8 +2121,6 @@
             pageWidth = pageSetup.asc_getWidth();
             pageHeight = pageSetup.asc_getHeight();
             pageOrientation = pageSetup.asc_getOrientation();
-            //bFitToWidth = pageSetup.asc_getFitToWidth();
-            //bFitToHeight = pageSetup.asc_getFitToHeight();
         }
 
 		if(printScale) {
@@ -3186,9 +3194,10 @@
 			pageBottomField = Math.max(pageMargins.asc_getBottom(), c_oAscPrintDefaultSettings.MinPageBottomField);
 		}
 
-
+		var _retinaPixelRatio = 1;
 		var vector_koef = AscCommonExcel.vector_koef / this.getZoom();
 		if (AscCommon.AscBrowser.isCustomScaling()) {
+			_retinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
 			vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
 		}
 
@@ -3251,7 +3260,8 @@
 			if(width) {
 				var widthAllCols = pageHeadings ? t.cellsLeft * width : 0;
 				for(var i = start; i <= end; i++) {
-					widthAllCols += t._getColumnWidth(i);
+					//widthAllCols += t._getColumnWidth(i);
+					widthAllCols += t._getWidthForPrint(i) * _retinaPixelRatio;
 				}
 				res = ((pageWidthWithFieldsHeadings * width) / widthAllCols) * 100;
 			}
@@ -3262,7 +3272,8 @@
 			if(height) {
 				var heightAllRows = pageHeadings ? t.cellsTop * height : 0;
 				for(var i = start; i <= end; i++) {
-					heightAllRows += t._getRowHeight(i);
+					//heightAllRows += t._getRowHeight(i);
+					heightAllRows += t._getHeightForPrint(i) * _retinaPixelRatio;
 				}
 				res = ((pageHeightWithFieldsHeadings * height) / heightAllRows) * 100;
 			}
