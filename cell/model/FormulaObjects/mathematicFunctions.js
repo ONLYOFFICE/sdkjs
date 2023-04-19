@@ -1145,7 +1145,6 @@
 							resVal = new cNumber(resVal);
 						}
 						this.array[r][c] = resVal;
-						// this.array[r][c] = new cNumber(Math.binomCoeff(a.getValue(), b.getValue()));
 					} else {
 						this.array[r][c] = new cError(cErrorType.wrong_value_type);
 					}

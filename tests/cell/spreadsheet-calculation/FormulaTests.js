@@ -9193,8 +9193,126 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
 
-		// COMBIN({2424;929292},{2424,2,2425})
-		// COMBIN(20,{1,2,3})
+		// cString
+		oParser = new parserFormula('COMBIN("22",2)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 231);
+
+		oParser = new parserFormula('COMBIN("22s",2)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula('COMBIN("22","2")', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 231);
+
+		oParser = new parserFormula('COMBIN("22","2s")', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula('COMBIN("22s",#NUM!)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// cBool
+		oParser = new parserFormula('COMBIN(22,FALSE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
+		oParser = new parserFormula('COMBIN(22,TRUE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 22);
+
+		oParser = new parserFormula('COMBIN(TRUE,FALSE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
+		oParser = new parserFormula('COMBIN(TRUE,TRUE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
+		oParser = new parserFormula('COMBIN(FALSE,TRUE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula('COMBIN(TRUE,1)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
+		oParser = new parserFormula('COMBIN(TRUE,2)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		// cArray 
+		oParser = new parserFormula("COMBIN(20,{1,2,3})", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 20);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 190);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,2).getValue(), 1140);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), "");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,1).getValue(), "");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,2).getValue(), "");
+
+		oParser = new parserFormula("COMBIN({12;9},{5,2,13})", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 792);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 66);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,2).getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 126);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,1).getValue(), 36);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,2).getValue(), "#NUM!");
+
+		oParser = new parserFormula("COMBIN({12,9;10,19},10)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 66);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,2).getValue(), "");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,1).getValue(), 92378);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,2).getValue(), "");
+
+		// cellsRange
+		ws.getRange2("R10").setValue("1");
+		ws.getRange2("R11").setValue("2");
+		ws.getRange2("R12").setValue("3");
+		ws.getRange2("S10").setValue("20");
+		ws.getRange2("S11").setValue("10");
+		ws.getRange2("S12").setValue("5");
+
+		oParser = new parserFormula("COMBIN(R10:S12,R10:R12)", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 20);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,2).getValue(), "");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,1).getValue(), 45);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,2).getValue(), "");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,1).getValue(), 10);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,2).getValue(), "");
+
+		oParser = new parserFormula("COMBIN(11,R10:R12)", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 11);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 55);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,1).getValue(), "");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 165);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,1).getValue(), "");
+
+		oParser = new parserFormula("COMBIN(R10:S12,2)", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 190);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,1).getValue(), 45);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 3);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,1).getValue(), 10);
+
 	});
 
 	QUnit.test("Test: \"FACTDOUBLE\"", function (assert) {
