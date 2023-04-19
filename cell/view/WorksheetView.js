@@ -2119,8 +2119,8 @@
             pageWidth = pageSetup.asc_getWidth();
             pageHeight = pageSetup.asc_getHeight();
             pageOrientation = pageSetup.asc_getOrientation();
-			bFitToWidth = pageSetup.asc_getFitToWidth();
-			bFitToHeight = pageSetup.asc_getFitToHeight();
+            bFitToWidth = pageSetup.asc_getFitToWidth();
+            bFitToHeight = pageSetup.asc_getFitToHeight();
         }
 
 		if(printScale) {
