@@ -4215,30 +4215,6 @@
 	cROUNDUP.prototype.inheritFormat = true;
 	cROUNDUP.prototype.argumentsType = [argType.number, argType.number];
 	cROUNDUP.prototype.Calculate = function (arg) {
-		function roundupHelperOld(number, num_digits) {
-			num_digits = Math.sign(num_digits) * Math.floor(Math.abs(num_digits));
-			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
-				if (Math.abs(number) >= 1e-100 || num_digits <= 98303) { // The values are obtained experimentally
-					return new cNumber(number);
-				}
-				return new cNumber(0);
-			} else if (num_digits < AscCommonExcel.cExcelMinExponent) {
-				if (Math.abs(number) >= 1e100) { // The values are obtained experimentally
-					return new cNumber(number);
-				}
-				return new cNumber(0);
-			}
-
-			var significance = Math.pow(10, -( num_digits | num_digits ));
-
-			if (Number.POSITIVE_INFINITY == Math.abs(number / significance)) {
-				return new cNumber(number);
-			}
-			var x = number * Math.pow(10, num_digits);
-			x = (x | x) + ((x ^ 0) === x ? 0 : x > 0 ? 1 : x < 0 ? -1 : 0) * 1;
-			return new cNumber(x * significance);
-		}
-
 		function roundupHelper (number, num_digits) {
 			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
 				if (Math.abs(number) >= 1e-100 || num_digits <= 98303) {
