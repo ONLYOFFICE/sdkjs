@@ -1112,63 +1112,83 @@
 	cCOMBIN.prototype.argumentsMax = 2;
 	cCOMBIN.prototype.argumentsType = [argType.number, argType.number];
 	cCOMBIN.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0], arg1 = arg[1];
+
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.cross(arguments[1]);
 		}
-		arg0 = arg0.tocNumber();
-
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			arg1 = arg1.cross(arguments[1]);
 		}
+		
+		arg0 = arg0.tocNumber();
 		arg1 = arg1.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (cElementType.error === arg1.type) {
 			return arg1;
 		}
 
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
+		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
 			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
-					var a = elem, b = arg1.getElementRowCol(r, c);
-					if (a instanceof cNumber && b instanceof cNumber) {
-						this.array[r][c] = new cNumber(Math.binomCoeff(a.getValue(), b.getValue()));
+					let a = elem, b = arg1.getElementRowCol(r, c);
+					if (a.type === cElementType.number && b.type === cElementType.number) {
+						let resVal = Math.binomCoeff(a.getValue(), b.getValue());
+						if (isNaN(resVal)) {
+							resVal = arg0.getValue() !== arg1.getValue() ? new cError(cErrorType.not_numeric) : new cNumber(1);
+						} else {
+							resVal = new cNumber(resVal);
+						}
+						this.array[r][c] = resVal;
+						// this.array[r][c] = new cNumber(Math.binomCoeff(a.getValue(), b.getValue()));
 					} else {
 						this.array[r][c] = new cError(cErrorType.wrong_value_type);
 					}
 				});
 				return arg0;
 			}
-		} else if (arg0 instanceof cArray) {
+		} else if (cElementType.array === arg0.type) {
 			arg0.foreach(function (elem, r, c) {
-				var a = elem, b = arg1;
-				if (a instanceof cNumber && b instanceof cNumber) {
-
-					if (a.getValue() <= 0 || b.getValue() <= 0) {
+				let a = elem, b = arg1;
+				if (a.type === cElementType.number && b.type === cElementType.number) {
+					if (a.getValue() < 0 || b.getValue() < 0) {
 						this.array[r][c] = new cError(cErrorType.not_numeric);
 					}
 
-					this.array[r][c] = new cNumber(Math.binomCoeff(a.getValue(), b.getValue()));
+					let resVal = Math.binomCoeff(a.getValue(), b.getValue());
+					if (isNaN(resVal)) {
+						resVal = arg0.getValue() !== arg1.getValue() ? new cError(cErrorType.not_numeric) : new cNumber(1);
+					} else {
+						resVal = new cNumber(resVal);
+					}
+
+					this.array[r][c] = resVal;
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			});
 			return arg0;
-		} else if (arg1 instanceof cArray) {
+		} else if (cElementType.array === arg1.type) {
 			arg1.foreach(function (elem, r, c) {
-				var a = arg0, b = elem;
-				if (a instanceof cNumber && b instanceof cNumber) {
-
-					if (a.getValue() <= 0 || b.getValue() <= 0 || a.getValue() < b.getValue()) {
+				let a = arg0, b = elem;
+				if (a.type === cElementType.number && b.type === cElementType.number) {
+					if (a.getValue() < 0 || b.getValue() < 0 || a.getValue() < b.getValue()) {
 						this.array[r][c] = new cError(cErrorType.not_numeric);
 					}
 
-					this.array[r][c] = new cNumber(Math.binomCoeff(a.getValue(), b.getValue()));
+					let resVal = Math.binomCoeff(a.getValue(), b.getValue());
+					if (isNaN(resVal)) {
+						resVal = arg0.getValue() !== arg1.getValue() ? new cError(cErrorType.not_numeric) : new cNumber(1);
+					} else {
+						resVal = new cNumber(resVal);
+					}
+
+					this.array[r][c] = resVal;
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
@@ -1176,11 +1196,17 @@
 			return arg1;
 		}
 
-		if (arg0.getValue() <= 0 || arg1.getValue() <= 0 || arg0.getValue() < arg1.getValue()) {
+		if (arg0.getValue() < 0 || arg1.getValue() < 0 || arg0.getValue() < arg1.getValue()) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		return new cNumber(Math.binomCoeff(arg0.getValue(), arg1.getValue()));
+		let res = Math.binomCoeff(arg0.getValue(), arg1.getValue());
+
+		if (isNaN(res)) {
+			return arg0.getValue() !== arg1.getValue() ? new cError(cErrorType.not_numeric) : new cNumber(1);
+		}
+
+		return new cNumber(res);
 	};
 
 	/**
