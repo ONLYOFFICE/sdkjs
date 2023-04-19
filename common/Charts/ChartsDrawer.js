@@ -2479,7 +2479,7 @@ CChartsDrawer.prototype =
 
 			dataSeries = paths.series[i];
 
-			if (!dataSeries) {
+			if (!dataSeries || !paths.points[i]) {
 				continue;
 			}
 
@@ -4683,7 +4683,10 @@ CChartsDrawer.prototype =
 				yCenter = (this.calcProp.chartGutter._top + trueHeight / 2) / this.calcProp.pxToMM;
 			}
 
-			var ptCount = this.getNumCache(this.calcProp.series[0].val).ptCount;
+			var ptCount = this.getPtCount(this.calcProp.series);
+			if (!ptCount) {
+				return null;
+			}
 			var tempAngle = 2 * Math.PI / ptCount;
 
 			var radius, x, y, firstX, firstY;
@@ -12188,11 +12191,6 @@ drawRadarChart.prototype = {
 	},
 
 	_calculateLines: function (fillPath) {
-		let numCache = this.cChartDrawer.getNumCache(this.chart.series[0].val).pts;
-		if (!numCache) {
-			return;
-		}
-
 		let dispBlanksAs = this.cChartSpace.chart.dispBlanksAs;
 		let yPoints = this.valAx.yPoints;
 
@@ -14186,7 +14184,10 @@ axisChart.prototype = {
 				yCenter = (this.chartProp.chartGutter._top + trueHeight / 2) / this.chartProp.pxToMM;
 			}
 
-			var ptCount = this.cChartDrawer.getNumCache(this.chartProp.series[0].val).ptCount;
+			var ptCount = this.cChartDrawer.getPtCount(this.chartProp.series);
+			if (!ptCount) {
+				return;
+			}
 			var tempAngle = 2 * Math.PI / ptCount;
 
 			var radius, x, y;
