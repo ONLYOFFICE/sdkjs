@@ -10072,15 +10072,15 @@
 				}
 
 				if (type === Asc.c_oAscFormulaArgumentType.number) {
+					//in most cases in ms array/range -> {1,2,..} if NUMBER type
 					if (res.type === AscCommonExcel.cElementType.array) {
-						res = res.getElementRowCol(0, 0);
-						res = res.tocNumber();
-						if (res) {
-							resultStr = '"' + res.toLocaleString() + '"';
-						}
-					} else if (res.type === AscCommonExcel.cElementType.cellsRange) {
 						resultStr = res.toLocaleString();
-					} else if (res.type !== AscCommonExcel.cElementType.cellsRange3D) {
+					} else if (res.type === AscCommonExcel.cElementType.cellsRange || res.type === AscCommonExcel.cElementType.cellsRange3D) {
+						res = res.getFullArray(new AscCommonExcel.cNumber(0), maxArrayRowCount, maxArrayColCount);
+						if (res) {
+							resultStr = res.toLocaleString();
+						}
+					} else {
 						res = res.tocNumber();
 						if (res) {
 							resultStr = res.toLocaleString();
