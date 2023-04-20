@@ -506,6 +506,8 @@
 		this.pagesModeData = null;
 		this.pageBreakPreviewSelectionRange = null;
 
+		this.traceDependentsCellManager = new AscCommonExcel.TraceDependentsCellManager(this);
+
         this._init();
 
         return this;
@@ -24840,6 +24842,13 @@
 
 	WorksheetView.prototype.setColsCount = function (val) {
 		this.nColsCount = val;
+	};
+
+	//cell trace dependents/precedents
+	WorksheetView.prototype.tracePrecedents = function () {
+		if (this.traceDependentsCellManager) {
+			this.traceDependentsCellManager.calculatePrecedents();
+		}
 	};
 
 

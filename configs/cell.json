@@ -148,6 +148,7 @@
 			"cell/model/FormulaObjects/lookupandreferenceFunctions.js",
 			"cell/model/FormulaObjects/informationFunctions.js",
 			"cell/model/FormulaObjects/logicalFunctions.js",
+      "cell/model/FormulaObjects/traceDependents.js",
 			"cell/model/CellComment.js",
 			"cell/model/WorkbookElems.js",
 			"cell/model/Workbook.js",
