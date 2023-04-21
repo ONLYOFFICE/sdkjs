@@ -126,10 +126,8 @@ function (window, undefined) {
 	TraceDependentsCellManager.prototype.calculatePrecedents = function (row, col) {
 
 	};
-	TraceDependentsCellManager.prototype.draw = function (visibleRange, offsetX, offsetY, args) {
-		if (this.dependents) {
-
-		}
+	TraceDependentsCellManager.prototype.isHaveData = function () {
+		return this.isHaveDependents() || this.isHavePrecedents();
 	};
 	TraceDependentsCellManager.prototype.isHaveDependents = function () {
 		return !!this.dependents;
@@ -137,6 +135,22 @@ function (window, undefined) {
 	TraceDependentsCellManager.prototype.isHavePrecedents = function () {
 		return !!this.precedents;
 	};
+	TraceDependentsCellManager.prototype.forEachDependents = function (callback) {
+		for (var i in this.dependents) {
+			callback(i, this.dependents[i]);
+		}
+	};
+	TraceDependentsCellManager.prototype.clear = function (type) {
+		if (Asc.c_oAscRemoveArrowsType.all === type || Asc.c_oAscRemoveArrowsType.precedent === type) {
+			this.precedents = null;
+		}
+		if (Asc.c_oAscRemoveArrowsType.all === type || Asc.c_oAscRemoveArrowsType.dependent === type) {
+			this.dependents = null;
+		}
+	};
+
+
+
 
 
 

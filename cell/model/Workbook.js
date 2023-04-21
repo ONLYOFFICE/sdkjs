@@ -345,9 +345,10 @@
 
 	var g_FCI = {row: null, col: null};
 
-	function getFromCellIndex(cellIndex) {
+	function getFromCellIndex(cellIndex, returnDuplicate) {
 		g_FCI.row = Math.floor(cellIndex / AscCommon.gc_nMaxCol);
 		g_FCI.col = cellIndex % AscCommon.gc_nMaxCol;
+		return returnDuplicate ? {row: g_FCI.row, col: g_FCI.col} : null;
 	}
 
 	function getVertexIndex(bbox) {
@@ -18721,6 +18722,7 @@
 	window['AscCommonExcel'].oFormulaLocaleInfo = oFormulaLocaleInfo;
 	window['AscCommonExcel'].getDefNameIndex = getDefNameIndex;
 	window['AscCommonExcel'].getCellIndex = getCellIndex;
+	window['AscCommonExcel'].getFromCellIndex = getFromCellIndex;
 	window['AscCommonExcel'].angleFormatToInterface2 = angleFormatToInterface2;
 	window['AscCommonExcel'].angleInterfaceToFormat = angleInterfaceToFormat;
 	window['AscCommonExcel'].Workbook = Workbook;

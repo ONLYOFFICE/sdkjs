@@ -5804,7 +5804,10 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
-    var ws = this.wb.getWorksheet();
+    this.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+    return;
+
+  	var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
       ws.objectRender.controller.setCellItalic(isItalic);
     } else {
@@ -8562,6 +8565,7 @@ var editor;
 			return;
 		}
 		var ws = wb.getWorksheet();
+		//c_oAscRemoveArrowsType
 		return ws.removeTraceArrows(type);
 	};
 
