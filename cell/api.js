@@ -5791,7 +5791,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-  	this.asc_TracePrecedents();
+  	this.asc_TraceDependents();
   	return;
 
   	var ws = this.wb.getWorksheet();

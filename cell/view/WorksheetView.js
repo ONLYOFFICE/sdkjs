@@ -4832,6 +4832,192 @@
 		}
 	};
 
+	WorksheetView.prototype.drawTraceDependents = function () {
+		let traceManager = this.traceDependentsCellManager;
+		if(traceManager && (traceManager.isHaveDependents() || traceManager.isHavePrecedents())) {
+			this._drawElements(this.drawTraceArrows);
+		}
+	};
+
+	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY) {
+		let traceManager = this.traceDependentsCellManager;
+
+		var range = args[0];
+		var selectionLineType = args[1];
+		var strokeColor = args[2];
+		var isAllRange = args[3];
+		var isAllowRetina = args[5] ? 1 : 0;
+		var colorN = this.settings.activeCellBorderColor2;
+		var ctx = this.overlayCtx;
+		var oIntersection = range.intersectionSimple(visibleRange);
+
+		if (!oIntersection) {
+			return true;
+		}
+
+		var fHorLine, fVerLine;
+		var canFill = AscCommonExcel.selectionLineType.Selection & selectionLineType;
+		var isDashLine = AscCommonExcel.selectionLineType.Dash & selectionLineType;
+		var dashThickLine = AscCommonExcel.selectionLineType.DashThick & selectionLineType;
+
+		if (isDashLine || dashThickLine) {
+			fHorLine = ctx.dashLineCleverHor;
+			fVerLine = ctx.dashLineCleverVer;
+		} else {
+			fHorLine = ctx.lineHorPrevPx;
+			fVerLine = ctx.lineVerPrevPx;
+		}
+
+		var firstCol = oIntersection.c1 === visibleRange.c1 && !isAllRange;
+		var firstRow = oIntersection.r1 === visibleRange.r1 && !isAllRange;
+
+		var drawLeftSide = oIntersection.c1 === range.c1;
+		var drawRightSide = oIntersection.c2 === range.c2;
+		var drawTopSide = oIntersection.r1 === range.r1;
+		var drawBottomSide = oIntersection.r2 === range.r2;
+
+		if(args[4]) {
+			if(args[4] === 1) {
+				drawLeftSide = false;
+				drawRightSide = false;
+			} else if(args[4] === 2){
+				drawTopSide = false;
+				drawBottomSide = false;
+			}
+		}
+
+		var x1 = this._getColLeft(oIntersection.c1) - offsetX;
+		var x2 = this._getColLeft(oIntersection.c2 + 1) - offsetX;
+		var y1 = this._getRowTop(oIntersection.r1) - offsetY;
+		var y2 = this._getRowTop(oIntersection.r2 + 1) - offsetY;
+
+		if (canFill) {
+			var fillColor = strokeColor.Copy();
+			fillColor.a = 0.15;
+			ctx.setFillStyle(fillColor).fillRect(x1, y1, x2 - x1, y2 - y1);
+		}
+
+
+		var isPagePreview = AscCommonExcel.selectionLineType.ResizeRange & selectionLineType;
+		//меняю толщину линии для селекта(только в случае сплошной линии) и масштаба 200%
+		var isRetina = (!isDashLine || isAllowRetina) && AscBrowser.retinaPixelRatio === 2;
+		var widthLine = isDashLine ? 1 : 2;
+
+		if (isRetina) {
+			widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
+		}
+		var thinLineDiff = 0;
+		if (isPagePreview) {
+			widthLine = widthLine + 1;
+			thinLineDiff = isDashLine ? 0 : 1;
+		}
+
+		//TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
+		var _diff = 0;
+		if (AscBrowser.isSafari) {
+			_diff = 1;
+		}
+		ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
+
+		ctx.beginPath();
+		if (drawTopSide && !firstRow) {
+			fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+		}
+		if (drawBottomSide) {
+			fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2]);
+		}
+		if (drawLeftSide && !firstCol) {
+			fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+		}
+		if (drawRightSide) {
+			fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
+		}
+		ctx.closePath().stroke();
+
+		// draw active cell in selection
+		var isActive = AscCommonExcel.selectionLineType.ActiveCell & selectionLineType;
+		if (isActive) {
+			var cell = this.model.getSelection().activeCell;
+			var fs = this.model.getMergedByCell(cell.row, cell.col);
+			fs = oIntersection.intersectionSimple(fs || new asc_Range(cell.col, cell.row, cell.col, cell.row));
+			if (fs) {
+				var top = this._getRowTop(fs.r1);
+				var left = this._getColLeft(fs.c1);
+				var _x1 = left - offsetX + 1;
+				var _y1 = top - offsetY + 1;
+				var _w = this._getColLeft(fs.c2 + 1) - left - 2 - isRetina * 1;
+				var _h = this._getRowTop(fs.r2 + 1) - top - 2  - isRetina * 1;
+				if (0 < _w && 0 < _h) {
+					ctx.clearRect(_x1, _y1, _w, _h);
+				}
+			}
+		}
+
+		if (canFill) {/*Отрисовка светлой полосы при выборе ячеек для формулы*/
+			ctx.setLineWidth(1);
+			ctx.setStrokeStyle(colorN);
+			ctx.beginPath();
+			if (drawTopSide) {
+				fHorLine.apply(ctx, [x1 + isRetina * 1, y1 + 1 + isRetina * !firstRow * 1, x2 - 1 - isRetina * 1]);
+			}
+			if (drawBottomSide) {
+				fHorLine.apply(ctx, [x1 + isRetina * 1, y2 - 1 - isRetina * 1, x2 - 1 - isRetina * 1]);
+			}
+			if (drawLeftSide) {
+				fVerLine.apply(ctx, [x1 + 1 + isRetina * !firstCol * 1, y1 + isRetina * 1, y2 - 2 - isRetina * !firstCol * 1]);
+			}
+			if (drawRightSide) {
+				fVerLine.apply(ctx, [x2 - 1 - isRetina * 1, y1 + isRetina * 1, y2 - 2 - isRetina * 1]);
+			}
+			ctx.closePath().stroke();
+		}
+
+		// Отрисовка квадратов для move/resize
+		var isResize = AscCommonExcel.selectionLineType.Resize & selectionLineType;
+		var isPromote = AscCommonExcel.selectionLineType.Promote & selectionLineType;
+		if (isResize || isPromote) {
+			//isResize - пока не увеличиваю квадрат при выборе диапазона в формуле, поскольку нужно менять логику очистки селекта в режиме формул
+			var retinaKf = isRetina && !isResize ? 2 : 1;
+			var size = 5 * retinaKf;
+			var sizeBorder = size + 2 * retinaKf;
+			var diff = Math.floor(size/2) + 1;
+			var diffBorder = Math.floor(sizeBorder/2) + 1 * retinaKf;
+
+			ctx.setFillStyle(colorN);
+			if (drawRightSide && drawBottomSide) {
+				ctx.fillRect(x2 - diffBorder, y2 - diffBorder, sizeBorder, sizeBorder);
+			}
+			ctx.setFillStyle(strokeColor);
+			if (drawRightSide && drawBottomSide) {
+				ctx.fillRect(x2 - diff, y2 - diff, size, size);
+			}
+
+			if (isResize) {
+				ctx.setFillStyle(colorN);
+				if (drawLeftSide && drawTopSide) {
+					ctx.fillRect(x1 - diffBorder, y1 - diffBorder, sizeBorder, sizeBorder);
+				}
+				if (drawRightSide && drawTopSide) {
+					ctx.fillRect(x2 - diffBorder, y1 - diffBorder, sizeBorder, sizeBorder);
+				}
+				if (drawLeftSide && drawBottomSide) {
+					ctx.fillRect(x1 - diffBorder, y2 - diffBorder, sizeBorder, sizeBorder);
+				}
+				ctx.setFillStyle(strokeColor);
+				if (drawLeftSide && drawTopSide) {
+					ctx.fillRect(x1 - diff, y1 - diff, size, size);
+				}
+				if (drawRightSide && drawTopSide) {
+					ctx.fillRect(x2 - diff, y1 - diff, size, size);
+				}
+				if (drawLeftSide && drawBottomSide) {
+					ctx.fillRect(x1 - diff, y2 - diff, size, size);
+				}
+			}
+		}
+		return true;
+	};
+
 	WorksheetView.prototype._drawPageBreakPreviewText = function (drawingCtx, range, leftFieldInPx, topFieldInPx) {
 
 		if(!this.isPageBreakPreview(true)) {
@@ -6045,6 +6231,8 @@
                 this._drawElements(this.drawOverlayButtons);
             }
         }
+
+		this.drawTraceDependents();
 
         // restore canvas' original clipping range
         ctx.restore();
@@ -24848,6 +25036,12 @@
 	WorksheetView.prototype.tracePrecedents = function () {
 		if (this.traceDependentsCellManager) {
 			this.traceDependentsCellManager.calculatePrecedents();
+		}
+	};
+
+	WorksheetView.prototype.traceDependents = function () {
+		if (this.traceDependentsCellManager) {
+			this.traceDependentsCellManager.calculateDependents();
 		}
 	};
 
