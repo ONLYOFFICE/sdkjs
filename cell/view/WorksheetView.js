@@ -506,7 +506,7 @@
 		this.pagesModeData = null;
 		this.pageBreakPreviewSelectionRange = null;
 
-		this.traceDependentsCellManager = new AscCommonExcel.TraceDependentsCellManager(this);
+		this.traceDependentsManager = new AscCommonExcel.TraceDependentsManager(this);
 
         this._init();
 
@@ -4833,14 +4833,14 @@
 	};
 
 	WorksheetView.prototype.drawTraceDependents = function () {
-		let traceManager = this.traceDependentsCellManager;
+		let traceManager = this.traceDependentsManager;
 		if(traceManager && (traceManager.isHaveDependents() || traceManager.isHavePrecedents())) {
 			this._drawElements(this.drawTraceArrows);
 		}
 	};
 
 	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY) {
-		let traceManager = this.traceDependentsCellManager;
+		let traceManager = this.traceDependentsManager;
 
 		let ctx = this.overlayCtx;
 
@@ -4851,29 +4851,48 @@
 			widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
 		}
 
-		var strokeColor = new CColor(0, 0, 208);
-		ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
+		ctx.setLineWidth(widthLine)
+
+		let lineColor = new CColor(0, 0, 208);
+		let externalLineColor = new CColor(0, 0, 0);
 
 		let t = this;
-		let doDrawArrow = function (_from, _to) {
+		let doDrawArrow = function (_from, _to, external) {
 			ctx.beginPath();
-			var x1 = t._getColLeft(_from.col) - offsetX + t._getColumnWidth(_from.col) / 2;
-			var x2 = t._getColLeft(_to.col) - offsetX + t._getColumnWidth(_to.col) / 2;
-			var y1 = t._getRowTop(_from.row) - offsetY + t._getRowHeight(_from.row) / 2;
-			var y2 = t._getRowTop(_to.row) - offsetY + t._getRowHeight(_to.row) / 2;
+			ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
+
+			let x1 = t._getColLeft(_from.col) - offsetX + t._getColumnWidth(_from.col) / 2;
+			let y1 = t._getRowTop(_from.row) - offsetY + t._getRowHeight(_from.row) / 2;
+
+			let x2, y2;
+			if (external) {
+				//TODO max
+				x2 = t._getColLeft(_from.col === 0 ? _from.col + 1 :_from.col - 1) - offsetX;
+				y2 = t._getRowTop(_from.row === 0 ? _from.row + 1 :_from.row - 1) - offsetY;
+			} else {
+				x2 = t._getColLeft(_to.col) - offsetX + t._getColumnWidth(_to.col) / 2;
+				y2 = t._getRowTop(_to.row) - offsetY + t._getRowHeight(_to.row) / 2;
+			}
 
 			ctx.moveTo(x1, y1);
 			ctx.lineTo(x2, y2);
 			ctx.closePath().stroke();
 		};
 
+		let otherSheetMap = {};
 		traceManager.forEachDependents(function (from, to) {
 			if (from && to) {
 				for (let i in to) {
 					let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
-					let cellTo = AscCommonExcel.getFromCellIndex(i, true);
-					if (visibleRange.contains2(cellFrom) || visibleRange.contains2(cellTo)) {
-						doDrawArrow(cellFrom, cellTo);
+					if (-1 !== i.indexOf(";")) {
+						if (visibleRange.contains2(cellFrom) && !otherSheetMap[from]) {
+							doDrawArrow(cellFrom, null, true);
+						}
+					} else {
+						let cellTo = AscCommonExcel.getFromCellIndex(i, true);
+						if (visibleRange.contains2(cellFrom) || visibleRange.contains2(cellTo)) {
+							doDrawArrow(cellFrom, cellTo);
+						}
 					}
 				}
 			}
@@ -6390,7 +6409,7 @@
 
 		//TODO пересмотреть! возможно стоит очищать частями в зависимости от print_area
 		//print lines view
-		let isTraceDependents = this.traceDependentsCellManager.isHaveDependents() || this.traceDependentsCellManager.isHaveDependents();
+		let isTraceDependents = this.traceDependentsManager.isHaveData();
 		if(this.viewPrintLines || this.copyCutRange || (this.isPageBreakPreview(true) && this.pagesModeData) || isTraceDependents) {
 			this.overlayCtx.clear();
 		}
@@ -24897,23 +24916,23 @@
 
 	//cell trace dependents/precedents
 	WorksheetView.prototype.tracePrecedents = function () {
-		if (this.traceDependentsCellManager) {
-			this.traceDependentsCellManager.calculatePrecedents();
+		if (this.traceDependentsManager) {
+			this.traceDependentsManager.calculatePrecedents();
 			this.updateSelection();
 		}
 	};
 
 	WorksheetView.prototype.traceDependents = function () {
-		if (this.traceDependentsCellManager) {
-			this.traceDependentsCellManager.calculateDependents();
+		if (this.traceDependentsManager) {
+			this.traceDependentsManager.calculateDependents();
 			this.updateSelection();
 		}
 	};
 
 	WorksheetView.prototype.removeTraceArrows = function (type) {
-		if (this.traceDependentsCellManager && this.traceDependentsCellManager.isHaveData()) {
+		if (this.traceDependentsManager && this.traceDependentsManager.isHaveData()) {
 			this.cleanSelection();
-			this.traceDependentsCellManager.clear(type);
+			this.traceDependentsManager.clear(type);
 			this.updateSelection();
 		}
 	};
