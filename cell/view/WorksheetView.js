@@ -4851,7 +4851,7 @@
 			widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
 		}
 
-		ctx.setLineWidth(widthLine)
+		ctx.setLineWidth(widthLine);
 
 		let lineColor = new CColor(0, 0, 208);
 		let externalLineColor = new CColor(0, 0, 0);

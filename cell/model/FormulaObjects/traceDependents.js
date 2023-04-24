@@ -77,17 +77,41 @@ function (window, undefined) {
 			this.dependents = {};
 		}
 
+		let t = this;
+		let cellAddress = AscCommonExcel.getFromCellIndex(cellIndex, true);
+		let findListeners = function () {
+			if (curListener && curListener.areaMap) {
+				for (let j  in curListener.areaMap) {
+					if (curListener.areaMap[j] && curListener.areaMap[j].bbox.contains(cellAddress.col, cellAddress.row)) {
+						return curListener.areaMap[j];
+					}
+				}
+			}
+			return curListener.cellMap[cellIndex];
+		};
 
-		let cellListeners = curListener.cellMap[cellIndex];
+		let getParentIndex = function (_parent) {
+			let _parentCellIndex = AscCommonExcel.getCellIndex(_parent.nRow, _parent.nCol);
+			//parent -> cell/defname
+			if (/*parent instanceof AscCommonExcel.DefName*/_parent.parsedRef) {
+				let firstRange = _parent.parsedRef.getFirstRange();
+				_parentCellIndex = AscCommonExcel.getCellIndex(firstRange.bbox.r1, firstRange.bbox.c1);
+				if (firstRange.worksheet !== t.ws.model) {
+					_parentCellIndex += ";" + firstRange.worksheet.index;
+				}
+			} else if (_parent.ws !== t.ws.model) {
+				_parentCellIndex += ";" + _parent.ws.index;
+			}
+			return _parentCellIndex;
+		};
+
+		let cellListeners = findListeners();
 		if (cellListeners && cellListeners.listeners) {
 			if (!this.dependents[cellIndex]) {
 				this.dependents[cellIndex] = {};
 				for (let i in cellListeners.listeners) {
 					let parent = cellListeners.listeners[i].parent;
-					let parentCellIndex = AscCommonExcel.getCellIndex(parent.nRow, parent.nCol);
-					if (parent.ws !== this.ws.model) {
-						parentCellIndex += ";" + parent.ws.index;
-					}
+					let parentCellIndex = getParentIndex(parent);
 					this.dependents[cellIndex][parentCellIndex] = 1;
 				}
 			} else {
@@ -96,10 +120,7 @@ function (window, undefined) {
 				let isUpdated = false;
 				for (let i in cellListeners.listeners) {
 					let parent = cellListeners.listeners[i].parent;
-					let parentCellIndex = AscCommonExcel.getCellIndex(parent.nRow, parent.nCol);
-					if (parent.ws !== this.ws.model) {
-						parentCellIndex += ";" + parent.ws.index;
-					}
+					let parentCellIndex = getParentIndex(parent);
 					if (!this.dependents[cellIndex][parentCellIndex]) {
 						this.dependents[cellIndex][parentCellIndex] = 1;
 						isUpdated = true;
