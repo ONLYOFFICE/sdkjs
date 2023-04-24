@@ -1063,7 +1063,7 @@
      * @typeofeditors ["CDE", "CPE", "CSE"]
      * @alias GetSelectedText
      * @param {object} prop - The resulting string display properties.
-     * @param {boolean} prop.NewLine - Defines if the resulting string will include line boundaries or not.
+     * @param {boolean} prop.NewLine - Defines if the resulting string will include line boundaries or not. (will replace to '\r')
      * @param {boolean} prop.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
      * @param {boolean} prop.Numbering - Defines if the resulting string will include numbering or not.
      * @param {boolean} prop.Math - Defines if the resulting string will include mathematical expressions or not.
@@ -1071,7 +1071,8 @@
      * @param {string} prop.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
      * @param {string} prop.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
      * @param {string} prop.TabSymbol - Defines how the tab will be specified in the resulting string.
-     * @return {string} - Selected text.
+     * @param {string} prop.NewLineSep - Defines how the line separator will be specified in the resulting string. (has priority over NewLine prop)
+	 * @return {string} - Selected text.
      * @since 7.1.0
      * @example
      * window.Asc.plugin.executeMethod("GetSelectedText", [{NewLine:true, NewLineParagraph:true, Numbering:true}])
@@ -1090,6 +1091,7 @@
                 TableCellSeparator: prop["TableCellSeparator"],
                 TableRowSeparator: prop["TableRowSeparator"],
                 ParaSeparator: prop["ParaSeparator"],
+                NewLineSep: prop["NewLineSep"],
                 TabSymbol: prop["TabSymbol"]
             }
         }

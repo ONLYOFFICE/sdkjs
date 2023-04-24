@@ -15984,10 +15984,10 @@ Paragraph.prototype.GetText = function(oPr)
 
 	oText.SetBreakOnNonText(false);
 	oText.SetParaEndToSpace(oPr && undefined !== oPr.ParaEndToSpace ? oPr.ParaEndToSpace: true);
-	oText.SetParaNewLine(oPr && undefined !== oPr.NewLine ? oPr.NewLine: true);
 	oText.SetParaNumbering(oPr && undefined !== oPr.Numbering ? oPr.Numbering: true);
 	oText.SetParaMath(oPr && undefined !== oPr.Math ? oPr.Math: true);
 	oText.SetParaTabSymbol(oPr && undefined !== oPr.TabSymbol ? oPr.TabSymbol: " ");
+	oText.SetParaNewLineSeparator(oPr && undefined !== oPr.NewLineSeparator ? oPr.NewLineSeparator: "\r");
 
 	if (true === oText.Numbering)
 	{
@@ -19800,12 +19800,12 @@ function CParagraphGetText()
 {
     this.Text = "";
 
-    this.BreakOnNonText = true;
-    this.ParaEndToSpace = false;
-	this.NewLine		= false;
-	this.Numbering		= false;
-	this.Math			= false;
-	this.TabSymbol		= undefined;
+    this.BreakOnNonText 	= true;
+    this.ParaEndToSpace 	= false;
+	this.Numbering			= false;
+	this.Math				= false;
+	this.TabSymbol			= undefined;
+	this.NewLineSep			= undefined;
 }
 CParagraphGetText.prototype.AddText = function(sText)
 {
@@ -19820,9 +19820,9 @@ CParagraphGetText.prototype.SetParaEndToSpace = function(bValue)
 {
 	this.ParaEndToSpace = bValue;
 };
-CParagraphGetText.prototype.SetParaNewLine = function(bValue)
+CParagraphGetText.prototype.SetParaNewLineSeparator = function(sValue)
 {
-	this.NewLine = bValue;
+	this.NewLineSep = sValue;
 };
 CParagraphGetText.prototype.SetParaNumbering = function(bValue)
 {
