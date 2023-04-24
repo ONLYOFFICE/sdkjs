@@ -78,12 +78,16 @@ function (window, undefined) {
 		}
 
 		let t = this;
+		let wb = this.ws.model.workbook;
+		let dependencyFormulas = wb.dependencyFormulas;
 		let cellAddress = AscCommonExcel.getFromCellIndex(cellIndex, true);
 		let findCellListeners = function () {
 			if (curListener && curListener.areaMap) {
 				for (let j  in curListener.areaMap) {
-					if (curListener.areaMap[j] && curListener.areaMap[j].bbox.contains(cellAddress.col, cellAddress.row)) {
-						return curListener.areaMap[j];
+					if (curListener.areaMap.hasOwnProperty(j)) {
+						if (curListener.areaMap[j] && curListener.areaMap[j].bbox.contains(cellAddress.col, cellAddress.row)) {
+							return curListener.areaMap[j];
+						}
 					}
 				}
 			}
@@ -93,12 +97,7 @@ function (window, undefined) {
 		let getParentIndex = function (_parent) {
 			let _parentCellIndex = AscCommonExcel.getCellIndex(_parent.nRow, _parent.nCol);
 			//parent -> cell/defname
-			if (/*parent instanceof AscCommonExcel.DefName*/_parent.parsedRef) {
-				let firstRange = _parent.parsedRef.getFirstRange();
-				/*_parentCellIndex = AscCommonExcel.getCellIndex(firstRange.bbox.r1, firstRange.bbox.c1);
-				if (firstRange.worksheet !== t.ws.model) {
-					_parentCellIndex += ";" + firstRange.worksheet.index;
-				}*/
+			if (_parent.parsedRef/*parent instanceof AscCommonExcel.DefName*/) {
 				_parentCellIndex = null;
 			} else if (_parent.ws !== t.ws.model) {
 				_parentCellIndex += ";" + _parent.ws.index;
@@ -110,35 +109,39 @@ function (window, undefined) {
 			if (!_cellListeners) {
 				return;
 			}
-			let test = 1;
 			let _listeners = {};
 			for (let j in _cellListeners.listeners) {
-				if (_cellListeners.listeners[j].parent.parsedRef) {
-					//def name
-					let _name = _cellListeners.listeners[j].parent.name;
-					let defNameWs = t.ws.model.workbook.dependencyFormulas.getDefNameByName(_name, t.ws.model.Id,true);
-					if (defNameWs) {
-						if (defNameWs.parsedRef.getFirstRange().bbox.r1 === cellAddress.row && defNameWs.parsedRef.getFirstRange().bbox.c1 === cellAddress.col) {
-							let defNameListeners = t.ws.model.workbook.dependencyFormulas.defNameListeners[_name];
-							if (defNameListeners) {
-								for (let n in defNameListeners.listeners) {
-									_listeners[n] = defNameListeners.listeners[n];
-								}
-							}
-						}
-					} else {
-						let defNameWb = t.ws.model.workbook.dependencyFormulas.getDefNameByName(_name);
-						if (defNameWb) {
-							let defNameListeners = t.ws.model.workbook.dependencyFormulas.defNameListeners[_name];
-							if (defNameListeners) {
-								for (let n in defNameListeners.listeners) {
-									_listeners[n] = defNameListeners.listeners[n];
-								}
+				let pushListeners = function (_defNameListeners) {
+					if (_defNameListeners) {
+						for (let n in _defNameListeners.listeners) {
+							if (_defNameListeners.listeners.hasOwnProperty(n)) {
+								_listeners[n] = _defNameListeners.listeners[n];
 							}
 						}
 					}
-				} else {
-					_listeners[j] = _cellListeners.listeners[j];
+				};
+
+				if (cellListeners.listeners.hasOwnProperty(j)) {
+					if (_cellListeners.listeners[j].parent.parsedRef) {
+						//def name
+						let _name = _cellListeners.listeners[j].parent.name;
+						let defNameWs = dependencyFormulas.getDefNameByName(_name, t.ws.model.Id,true);
+						if (defNameWs) {
+							let _range = defNameWs && defNameWs.parsedRef && defNameWs.parsedRef.getFirstRange();
+							if (_range.bbox.r1 === cellAddress.row && _range.bbox.c1 === cellAddress.col) {
+								let defNameListeners = dependencyFormulas.defNameListeners[_name];
+								pushListeners(defNameListeners);
+							}
+						} else {
+							let defNameWb = dependencyFormulas.getDefNameByName(_name);
+							if (defNameWb) {
+								let defNameListeners = dependencyFormulas.defNameListeners[_name];
+								pushListeners(defNameListeners);
+							}
+						}
+					} else {
+						_listeners[j] = _cellListeners.listeners[j];
+					}
 				}
 			}
 			return _listeners;
@@ -150,31 +153,37 @@ function (window, undefined) {
 			if (!this.dependents[cellIndex]) {
 				this.dependents[cellIndex] = {};
 				for (let i in listenersMap) {
-					let parent = listenersMap[i].parent;
-					let parentCellIndex = getParentIndex(parent);
-					if (parentCellIndex === null) {
-						continue;
+					if (listenersMap.hasOwnProperty(i)) {
+						let parent = listenersMap[i].parent;
+						let parentCellIndex = getParentIndex(parent);
+						if (parentCellIndex === null) {
+							continue;
+						}
+						this.dependents[cellIndex][parentCellIndex] = 1;
 					}
-					this.dependents[cellIndex][parentCellIndex] = 1;
 				}
 			} else {
 				//if change formulas and add new sheetListeners
 				//check current tree
 				let isUpdated = false;
 				for (let i in listenersMap) {
-					let parent = listenersMap[i].parent;
-					let parentCellIndex = getParentIndex(parent);
-					if (parentCellIndex === null) {
-						continue;
-					}
-					if (!this.dependents[cellIndex][parentCellIndex]) {
-						this.dependents[cellIndex][parentCellIndex] = 1;
-						isUpdated = true;
+					if (listenersMap.hasOwnProperty(i)) {
+						let parent = listenersMap[i].parent;
+						let parentCellIndex = getParentIndex(parent);
+						if (parentCellIndex === null) {
+							continue;
+						}
+						if (!this.dependents[cellIndex][parentCellIndex]) {
+							this.dependents[cellIndex][parentCellIndex] = 1;
+							isUpdated = true;
+						}
 					}
 				}
 				if (!isUpdated) {
 					for (let i in this.dependents[cellIndex]) {
-						this._calculateDependents(i, curListener);
+						if (this.dependents[cellIndex].hasOwnProperty(i)) {
+							this._calculateDependents(i, curListener);
+						}
 					}
 				}
 			}
