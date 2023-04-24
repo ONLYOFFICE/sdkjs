@@ -19805,7 +19805,7 @@ function CParagraphGetText()
 	this.Numbering			= false;
 	this.Math				= false;
 	this.TabSymbol			= undefined;
-	this.NewLineSep			= undefined;
+	this.NewLineSeparator	= undefined;
 }
 CParagraphGetText.prototype.AddText = function(sText)
 {
@@ -19822,7 +19822,7 @@ CParagraphGetText.prototype.SetParaEndToSpace = function(bValue)
 };
 CParagraphGetText.prototype.SetParaNewLineSeparator = function(sValue)
 {
-	this.NewLineSep = sValue;
+	this.NewLineSeparator = sValue;
 };
 CParagraphGetText.prototype.SetParaNumbering = function(bValue)
 {

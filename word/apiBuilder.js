@@ -1569,10 +1569,10 @@
 	 * Returns a text from the specified range.
 	 * @memberof ApiRange
 	 * @param {object} oPr - The resulting string display properties.
-     * @param {string} [oPr.NewLineSep='\r'] - Defines how the line separator will be specified in the resulting string.
      * @param {boolean} [oPr.NewLineParagraph=false] - Defines if the resulting string will include paragraph line boundaries or not.
      * @param {boolean} [oPr.Numbering=false] - Defines if the resulting string will include numbering or not.
      * @param {boolean} [oPr.Math=false] - Defines if the resulting string will include mathematical expressions or not.
+	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string.
      * @param {string} [oPr.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string.
      * @param {string} [oPr.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string.
      * @param {string} [oPr.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string.
@@ -1587,7 +1587,7 @@
 		}
 		
 		let oProp = {
-			NewLineSep:			(oPr.hasOwnProperty("NewLineSep")) ? oPr["NewLineSep"] : "\r",
+			NewLineSeparator:	(oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
 			NewLineParagraph:	(oPr.hasOwnProperty("NewLineParagraph")) ? oPr["NewLineParagraph"] : true,
 			Numbering:			(oPr.hasOwnProperty("Numbering")) ? oPr["Numbering"] : true,
 			Math:				(oPr.hasOwnProperty("Math")) ? oPr["Math"] : true,
@@ -8070,9 +8070,9 @@
 	 * Returns the paragraph text.
 	 * @memberof ApiParagraph
 	 * @param {object} oPr - The resulting string display properties.
-     * @param {string} [oPr.NewLineSep='\r'] - Defines how the line separator will be specified in the resulting string.
      * @param {boolean} [oPr.Numbering=false] - Defines if the resulting string will include numbering or not.
      * @param {boolean} [oPr.Math=false] - Defines if the resulting string will include mathematical expressions or not.
+	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string.
 	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string. (Does not apply to numbering)
 	 * @typeofeditors ["CDE"]
 	 * @return {string}  
@@ -8084,7 +8084,7 @@
 		}
 
 		let oProp =	{
-			NewLineSep:			(oPr.hasOwnProperty("NewLineSep")) ? oPr["NewLineSep"] : "\r",
+			NewLineSeparator:	(oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
 			Numbering:			(oPr.hasOwnProperty("Numbering")) ? oPr["Numbering"] : true,
 			Math:				(oPr.hasOwnProperty("Math")) ? oPr["Math"] : true,
 			TabSymbol:			oPr["TabSymbol"],
@@ -9584,7 +9584,7 @@
 	 * Returns a text from text run.
 	 * @memberof ApiRun
 	 * @param {object} oPr - The resulting string display properties.
-     * @param {string} [oPr.NewLineSep='\r'] - Defines how the line separator will be specified in the resulting string.
+     * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string.
 	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string.
 	 * @typeofeditors ["CDE"]
 	 * @returns {String}
@@ -9597,9 +9597,9 @@
 
 		let oProp = {
 			Text: "",
-			NewLineSep:		(oPr.hasOwnProperty("NewLineSep")) ? oPr["NewLineSep"] : "\r",
-			TabSymbol:		oPr["TabSymbol"],
-			ParaSeparator:	oPr["ParaSeparator"]
+			NewLineSeparator:	(oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
+			TabSymbol:			oPr["TabSymbol"],
+			ParaSeparator:		oPr["ParaSeparator"]
 		}
 
 		return this.Run.GetText(oProp);

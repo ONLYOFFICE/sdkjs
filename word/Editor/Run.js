@@ -501,7 +501,7 @@ ParaRun.prototype.Get_Text = function(Text)
 			}
 			case para_NewLine:
 			{
-				Text.Text += undefined != Text.NewLineSep ? Text.NewLineSep : " ";
+				Text.Text += undefined != Text.NewLineSeparator ? Text.NewLineSeparator : " ";
 				break;
 			}
 			case para_Tab:
@@ -3276,8 +3276,8 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
             }
 			case para_NewLine:
 			{
-				if (oPr && undefined != oPr.NewLineSep) {
-					Str += oPr.NewLineSep;
+				if (oPr && undefined != oPr.NewLineSeparator) {
+					Str += oPr.NewLineSeparator;
 				}
 				else if (oPr && true === oPr.NewLine)
 					Str += '\r';

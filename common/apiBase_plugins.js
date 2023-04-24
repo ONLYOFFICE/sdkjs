@@ -1071,7 +1071,7 @@
      * @param {string} prop.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
      * @param {string} prop.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
      * @param {string} prop.TabSymbol - Defines how the tab will be specified in the resulting string.
-     * @param {string} prop.NewLineSep - Defines how the line separator will be specified in the resulting string. (has priority over NewLine prop)
+     * @param {string} prop.NewLineSeparator - Defines how the line separator will be specified in the resulting string. (has priority over NewLine prop)
 	 * @return {string} - Selected text.
      * @since 7.1.0
      * @example
@@ -1091,7 +1091,7 @@
                 TableCellSeparator: prop["TableCellSeparator"],
                 TableRowSeparator: prop["TableRowSeparator"],
                 ParaSeparator: prop["ParaSeparator"],
-                NewLineSep: prop["NewLineSep"],
+                NewLineSeparator: prop["NewLineSeparator"],
                 TabSymbol: prop["TabSymbol"]
             }
         }
