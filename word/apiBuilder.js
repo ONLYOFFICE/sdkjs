@@ -1576,7 +1576,7 @@
      * @param {string} oPr.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
      * @param {string} oPr.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
      * @param {string} oPr.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
-     * @param {string} oPr.TabSymbol - Defines how the tab will be specified in the resulting string.
+     * @param {string} oPr.TabSymbol - Defines how the tab will be specified in the resulting string. (Does not apply to numbering)
 	 * @typeofeditors ["CDE"]
 	 * @returns {String} - returns "" if range is empty.
 	 */
@@ -8069,7 +8069,7 @@
      * @param {boolean} oPr.NewLine - Defines if the resulting string will include line boundaries or not.
      * @param {boolean} oPr.Numbering - Defines if the resulting string will include numbering or not.
      * @param {boolean} oPr.Math - Defines if the resulting string will include mathematical expressions or not.
-     * @param {string} oPr.TabSymbol - Defines how the tab will be specified in the resulting string.
+     * @param {string} oPr.TabSymbol - Defines how the tab will be specified in the resulting string. (Does not apply to numbering)
 	 * @typeofeditors ["CDE"]
 	 * @return {string}  
 	 */
