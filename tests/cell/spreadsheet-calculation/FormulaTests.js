@@ -11828,6 +11828,36 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
+		// bug 58497
+		ws.getRange2("A101").setValue("str1");
+		ws.getRange2("A102").setValue("str2");
+		ws.getRange2("A103").setValue("");
+		ws.getRange2("A104").setValue("");
+
+		oParser = new parserFormula('COUNTIFS(A101:A104,A101:A104)', "E1", ws);
+		assert.ok(oParser.parse(), "COUNTIFS(A101:A104,A101:A104)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of COUNTIFS(A101:A104,A101:A104)");		// 1
+
+		oParser = new parserFormula('COUNTIFS(A101:A104,A101:A104&"")', "E1", ws);
+		assert.ok(oParser.parse(), 'COUNTIFS(A101:A104,A101:A104&"")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of COUNTIFS(A101:A104,A101:A104&"")');	// 1
+
+		oParser = new parserFormula('COUNTIFS(A101:A104,A101:A104)', "E1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok(oParser.parse(), "COUNTIFS(A101:A104,A101:A104)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, "Result of COUNTIFS(A101:A104,A101:A104)[0,0]");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1, "Result of COUNTIFS(A101:A104,A101:A104)[1,0]");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 2, "Result of COUNTIFS(A101:A104,A101:A104)[2,0]");		// 0
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 2, "Result of COUNTIFS(A101:A104,A101:A104)[3,0]");		// 0
+
+		oParser = new parserFormula('COUNTIFS(A101:A104,A101:A104&"")', "E1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok(oParser.parse(), 'COUNTIFS(A101:A104,A101:A104&"")');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Result of COUNTIFS(A101:A104,A101:A104&"")[0,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1, 'Result of COUNTIFS(A101:A104,A101:A104&"")[1,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 2, 'Result of COUNTIFS(A101:A104,A101:A104&"")[2,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 2, 'Result of COUNTIFS(A101:A104,A101:A104&"")[3,0]');
+		
 	});
 
 	QUnit.test("Test: \"COUNTIF\"", function (assert) {

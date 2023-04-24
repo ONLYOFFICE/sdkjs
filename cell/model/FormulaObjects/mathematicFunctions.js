@@ -5188,21 +5188,20 @@
 	cSUMPRODUCT.prototype.argumentsType = [[argType.array]];
 	cSUMPRODUCT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cSUMPRODUCT.prototype.Calculate = function (arg) {
-		var arg0 = new cNumber(0), resArr = [], col = 0, row = 0, res = 1, _res = [], i;
+		let arg0 = new cNumber(0), resArr = [], col = 0, row = 0, res = 1, _res = [], i;
 
 		for (i = 0; i < arg.length; i++) {
-
-			if (arg[i] instanceof cArea || arg[i] instanceof cArray) {
+			if (cElementType.cellsRange === arg[i].type || cElementType.array === arg[i].type) {
 				resArr[i] = arg[i].getMatrix();
-			} else if (arg[i] instanceof cArea3D) {
+			} else if (cElementType.cellsRange3D === arg[i].type) {
 				if (arg[i].isSingleSheet()) {
 					resArr[i] = arg[i].getMatrix()[0];
 				} else {
 					return new cError(cErrorType.bad_reference);
 				}
-			} else if (arg[i] instanceof cRef || arg[i] instanceof cRef3D) {
-				var val = arg[i].getValue();
-				if(val instanceof cEmpty) {
+			} else if (cElementType.cell === arg[i].type || cElementType.cell3D === arg[i].type) {
+				let val = arg[i].getValue();
+				if(cElementType.empty === val.type) {
 					return new cError(cErrorType.wrong_value_type);
 				} else {
 					resArr[i] = [[val]];
@@ -5218,25 +5217,25 @@
 				return new cError(cErrorType.not_numeric);
 			}
 
-			if (arg[i] instanceof cError) {
+			if (cElementType.error === arg[i].type) {
 				return arg[i];
 			}
 		}
 
-		for (var iRow = 0; iRow < row; iRow++) {
-			for (var iCol = 0; iCol < col; iCol++) {
+		for (let iRow = 0; iRow < row; iRow++) {
+			for (let iCol = 0; iCol < col; iCol++) {
 				res = 1;
-				for (var iRes = 0; iRes < resArr.length; iRes++) {
+				for (let iRes = 0; iRes < resArr.length; iRes++) {
 					arg0 = resArr[iRes][iRow][iCol];
-					if (arg0 instanceof cError) {
+					if (cElementType.error === arg0.type) {
 						return arg0;
-					} else if (arg0 instanceof cString) {
-						if (arg0.tocNumber() instanceof cError) {
+					} else if (cElementType.string === arg0.type) {
+						if (cElementType.error === arg0.tocNumber().type) {
 							res *= 0;
 						} else {
 							res *= arg0.tocNumber().getValue();
 						}
-					} else if(arg0 instanceof cBool) {
+					} else if(cElementType.bool === arg0.type) {
 						res *= 0;
 					} else {
 						res *= arg0.tocNumber().getValue();
