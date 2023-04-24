@@ -17092,7 +17092,7 @@
 				this.BoldCS = oParsedJson["bCs"];
 			if (oParsedJson["caps"] != null)
 				this.Caps = oParsedJson["caps"];
-			if (oParsedJson["color"] != null)
+			if (oParsedJson["color"] != null && typeof(oParsedJson["color"]["r"]) == "number" && typeof(oParsedJson["color"]["g"]) == "number" && typeof(oParsedJson["color"]["b"]) == "number")
 				this.Color = new AscCommonWord.CDocumentColor(oParsedJson["color"]["r"], oParsedJson["color"]["g"], oParsedJson["color"]["b"], oParsedJson["color"]["auto"]);
 			if (oParsedJson["cs"] != null)
 				this.CS = oParsedJson["cs"];
