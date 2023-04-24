@@ -1568,11 +1568,31 @@
 	/**
 	 * Returns a text from the specified range.
 	 * @memberof ApiRange
+	 * @param {object} oPr - The resulting string display properties.
+     * @param {boolean} oPr.NewLine - Defines if the resulting string will include line boundaries or not.
+     * @param {boolean} oPr.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
+     * @param {boolean} oPr.Numbering - Defines if the resulting string will include numbering or not.
+     * @param {boolean} oPr.Math - Defines if the resulting string will include mathematical expressions or not.
+     * @param {string} oPr.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
+     * @param {string} oPr.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
+     * @param {string} oPr.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
+     * @param {string} oPr.TabSymbol - Defines how the tab will be specified in the resulting string.
 	 * @typeofeditors ["CDE"]
 	 * @returns {String} - returns "" if range is empty.
-	 */	
-	ApiRange.prototype.GetText = function()
+	 */
+	ApiRange.prototype.GetText = function(oPr)
 	{
+		let oProp = {
+			NewLine:			(oPr.hasOwnProperty("NewLine")) ? oPr["NewLine"] : true,
+			NewLineParagraph:	(oPr.hasOwnProperty("NewLineParagraph")) ? oPr["NewLineParagraph"] : true,
+			Numbering:			(oPr.hasOwnProperty("Numbering")) ? oPr["Numbering"] : true,
+			Math:				(oPr.hasOwnProperty("Math")) ? oPr["Math"] : true,
+			TableCellSeparator:	oPr["TableCellSeparator"],
+			TableRowSeparator:	oPr["TableRowSeparator"],
+			ParaSeparator:		oPr["ParaSeparator"],
+			TabSymbol:			oPr["TabSymbol"]
+		}
+
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
@@ -1587,7 +1607,7 @@
 		}
 		private_TrackRangesPositions();
 
-		var Text = this.Controller.GetSelectedText(false); 
+		var Text = this.Controller.GetSelectedText(false, oProp); 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
@@ -8045,12 +8065,25 @@
 	/**
 	 * Returns the paragraph text.
 	 * @memberof ApiParagraph
+	 * @param {object} oPr - The resulting string display properties.
+     * @param {boolean} oPr.NewLine - Defines if the resulting string will include line boundaries or not.
+     * @param {boolean} oPr.Numbering - Defines if the resulting string will include numbering or not.
+     * @param {boolean} oPr.Math - Defines if the resulting string will include mathematical expressions or not.
+     * @param {string} oPr.TabSymbol - Defines how the tab will be specified in the resulting string.
 	 * @typeofeditors ["CDE"]
 	 * @return {string}  
 	 */
-	ApiParagraph.prototype.GetText = function()
+	ApiParagraph.prototype.GetText = function(oPr)
 	{
-		return this.Paragraph.GetText({ParaEndToSpace: false});
+		let oProp =	{
+			NewLine:			(oPr.hasOwnProperty("NewLine")) ? oPr["NewLine"] : true,
+			Numbering:			(oPr.hasOwnProperty("Numbering")) ? oPr["Numbering"] : true,
+			Math:				(oPr.hasOwnProperty("Math")) ? oPr["Math"] : true,
+			TabSymbol:			oPr["TabSymbol"],
+			ParaEndToSpace:		false
+		}
+
+		return this.Paragraph.GetText(oProp);
 	};
 	/**
 	 * Returns the paragraph text properties.
@@ -9537,6 +9570,26 @@
 		oDocument.LoadDocumentState(oDocumentState);
 		oDocument.UpdateSelection();
 		return comment;
+	};
+
+	/**
+	 * Returns a text from text run.
+	 * @memberof ApiRun
+	 * @param {object} oPr - The resulting string display properties.
+     * @param {boolean} oPr.NewLine - Defines if the resulting string will include line boundaries or not.
+     * @param {string} oPr.TabSymbol - Defines how the tab will be specified in the resulting string.
+	 * @typeofeditors ["CDE"]
+	 * @returns {String}
+	 */	
+	ApiRun.prototype.GetText = function(oPr)
+	{
+		let oProp = {
+			Text: "",
+			NewLine:	(oPr.hasOwnProperty("NewLine")) ? oPr["NewLine"] : true,
+			TabSymbol:	oPr["TabSymbol"],
+		}
+
+		return this.Run.GetText(oProp);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -18991,6 +19044,7 @@
 	ApiRun.prototype["WrapInMailMergeField"]         = ApiRun.prototype.WrapInMailMergeField;
 	ApiRun.prototype["ToJSON"]                       = ApiRun.prototype.ToJSON;
 	ApiRun.prototype["AddComment"]                   = ApiRun.prototype.AddComment;
+	ApiRun.prototype["GetText"]                      = ApiRun.prototype.GetText;
 
 
 	ApiHyperlink.prototype["GetClassType"]           = ApiHyperlink.prototype.GetClassType;

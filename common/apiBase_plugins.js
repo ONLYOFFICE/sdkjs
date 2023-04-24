@@ -1062,15 +1062,15 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CPE", "CSE"]
      * @alias GetSelectedText
-     * @param {object} numbering - The resulting string display properties.
-     * @param {boolean} numbering.NewLine - Defines if the resulting string will include line boundaries or not.
-     * @param {boolean} numbering.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
-     * @param {boolean} numbering.Numbering - Defines if the resulting string will include numbering or not.
-     * @param {boolean} numbering.Math - Defines if the resulting string will include mathematical expressions or not.
-     * @param {string} numbering.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
-     * @param {string} numbering.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
-     * @param {string} numbering.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
-     * @param {string} numbering.TabSymbol - Defines how the tab will be specified in the resulting string.
+     * @param {object} prop - The resulting string display properties.
+     * @param {boolean} prop.NewLine - Defines if the resulting string will include line boundaries or not.
+     * @param {boolean} prop.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
+     * @param {boolean} prop.Numbering - Defines if the resulting string will include numbering or not.
+     * @param {boolean} prop.Math - Defines if the resulting string will include mathematical expressions or not.
+     * @param {string} prop.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
+     * @param {string} prop.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
+     * @param {string} prop.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
+     * @param {string} prop.TabSymbol - Defines how the tab will be specified in the resulting string.
      * @return {string} - Selected text.
      * @since 7.1.0
      * @example

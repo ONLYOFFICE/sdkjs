@@ -15984,6 +15984,10 @@ Paragraph.prototype.GetText = function(oPr)
 
 	oText.SetBreakOnNonText(false);
 	oText.SetParaEndToSpace(oPr && undefined !== oPr.ParaEndToSpace ? oPr.ParaEndToSpace: true);
+	oText.SetParaNewLine(oPr && undefined !== oPr.NewLine ? oPr.NewLine: true);
+	oText.SetParaNumbering(oPr && undefined !== oPr.Numbering ? oPr.Numbering: true);
+	oText.SetParaMath(oPr && undefined !== oPr.Math ? oPr.Math: true);
+	oText.SetParaTabSymbol(oPr && undefined !== oPr.TabSymbol ? oPr.TabSymbol: " ");
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
@@ -19783,6 +19787,10 @@ function CParagraphGetText()
 
     this.BreakOnNonText = true;
     this.ParaEndToSpace = false;
+	this.NewLine		= false;
+	this.Numbering		= false;
+	this.Math			= false;
+	this.TabSymbol		= undefined;
 }
 CParagraphGetText.prototype.AddText = function(sText)
 {
@@ -19796,6 +19804,22 @@ CParagraphGetText.prototype.SetBreakOnNonText = function(bValue)
 CParagraphGetText.prototype.SetParaEndToSpace = function(bValue)
 {
 	this.ParaEndToSpace = bValue;
+};
+CParagraphGetText.prototype.SetParaNewLine = function(bValue)
+{
+	this.NewLine = bValue;
+};
+CParagraphGetText.prototype.SetParaNumbering = function(bValue)
+{
+	this.Numbering = bValue;
+};
+CParagraphGetText.prototype.SetParaMath = function(bValue)
+{
+	this.Math = bValue;
+};
+CParagraphGetText.prototype.SetParaTabSymbol = function(sValue)
+{
+	this.TabSymbol = sValue;
 };
 
 function CParagraphNearPos()

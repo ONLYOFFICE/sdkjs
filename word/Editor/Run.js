@@ -499,9 +499,17 @@ ParaRun.prototype.Get_Text = function(Text)
 				Text.Text += String.fromCharCode(Item.Value);
 				break;
 			}
-			case para_Space:
 			case para_NewLine:
+			{
+				Text.Text += true === Text.NewLine ? "\r" : " ";
+				break;
+			}
 			case para_Tab:
+			{
+				Text.Text += undefined != Text.TabSymbol ? Text.TabSymbol : " ";
+				break;
+			}
+			case para_Space:
 			{
 				Text.Text += " ";
 				break;
