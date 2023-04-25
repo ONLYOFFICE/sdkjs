@@ -49,6 +49,61 @@
 	{
 		return new CNumInfo(json);
 	};
+	CNumInfo.FromNum = function(num, iLvl, styles)
+	{
+		let numInfo = new CNumInfo();
+		if (undefined === iLvl || null === iLvl)
+		{
+			let isBulleted = false;
+			let isNumbered = false;
+			let isHeading  = true;
+
+			for (let iLvl = 0; iLvl < 9; ++iLvl)
+			{
+				let numLvl = num.GetLvl(iLvl);
+				isBulleted = isBulleted || numLvl.IsBulleted();
+				isNumbered = isNumbered || numLvl.IsNumbered();
+				
+				numInfo.Lvl[iLvl] = numLvl;
+				if (isHeading && styles)
+				{
+					if (numLvl.GetPStyle() !== styles.GetDefaultHeading(iLvl))
+						isHeading = false;
+				}
+			}
+			
+			if (isHeading)
+				numInfo.Headings = true;
+			
+			if (isBulleted && isNumbered)
+				numInfo.Type = Asc.c_oAscJSONNumberingType.Hybrid;
+			else if (isNumbered)
+				numInfo.Type = Asc.c_oAscJSONNumberingType.Number;
+			else if (isBulleted)
+				numInfo.Type = Asc.c_oAscJSONNumberingType.Bullet;
+		}
+		else
+		{
+			let numLvl = num.GetLvl(iLvl);
+			if (numLvl.GetRelatedLvlList().length <= 1)
+			{
+				numLvl = numLvl.Copy();
+				numLvl.ResetNumberedText(0);
+				numInfo.Type   = numLvl.IsBulleted() ? Asc.c_oAscJSONNumberingType.Bullet : Asc.c_oAscJSONNumberingType.Number;
+				numInfo.Lvl[0] = numLvl;
+			}
+		}
+		
+		return numInfo;
+	};
+	CNumInfo.prototype.IsNumbered = function()
+	{
+		return this.Type === Asc.c_oAscJSONNumberingType.Number;
+	};
+	CNumInfo.prototype.IsBulleted = function()
+	{
+		return this.Type === Asc.c_oAscJSONNumberingType.Bullet;
+	};
 	CNumInfo.prototype.IsHeadings = function()
 	{
 		return this.Headings;
@@ -64,11 +119,17 @@
 	CNumInfo.prototype.ToJson = function()
 	{
 		let json = {
-			"Type" : this.Type
+			"Type" : this.Type,
+			"Lvl"  : []
 		};
 		
-		if (this.HaveLvl())
-			json["Lvl"] = this.Lvl;
+		if (this.Lvl.length)
+		{
+			for (let iLvl = 0; iLvl < this.Lvl.length; ++iLvl)
+			{
+				json["Lvl"][iLvl] = this.Lvl[iLvl].ToJson(null, {isSingleLvlPresetJSON: true});
+			}
+		}
 		
 		if (this.IsHeadings())
 			json["Headings"] = true;

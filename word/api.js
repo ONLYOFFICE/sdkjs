@@ -4159,11 +4159,11 @@ background-repeat: no-repeat;\
 				if (!num)
 					oRes = null;
 				else if (!_numInfo.HaveLvl())
-					oRes = num.GetJSONNumbering(true, 0);
+					oRes = AscWord.CNumInfo.FromNum(num, 0).ToJson();
 				else
-					oRes = num.GetJSONNumbering();
-
-				return oRes;
+					oRes = AscWord.CNumInfo.FromNum(num, null, logicDocument.GetStyles()).ToJson();
+				
+				console.log(oRes);
 			}
 			return oRes;
 		});
@@ -4179,8 +4179,8 @@ background-repeat: no-repeat;\
 		if (!logicDocument)
 			return [];
 		
-		let collection = new AscWord.UINumberingCollection(this);
-		collection.Init(logicDocument);
+		let collection = new AscWord.UINumberingCollection(logicDocument);
+		collection.Init();
 		let result = collection.GetCollections();
 		
 		console.timeEnd("num");
@@ -4200,15 +4200,19 @@ background-repeat: no-repeat;\
 		return !!(oLogicDocument && oLogicDocument.IsCurrentNumberingPreset(oJSON, bIsSingleNumbering));
 	};
 
-	asc_docs_api.prototype.asc_GetCurrentNumberingJson = function(bIsSingleLevel)
+	asc_docs_api.prototype.asc_GetCurrentNumberingJson = function(singleLevel)
 	{
-		let oLogicDocument = this.private_GetLogicDocument();
-		let oNumPr = oLogicDocument.GetSelectedNum();
-		if (!oNumPr)
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return null;
+		
+		let numPr     = logicDocument.GetSelectedNum();
+		let numbering = logicDocument.GetNumbering();
+		let num       = numPr && numPr.IsValid() ? numbering.GetNum(numPr.NumId) : null;
+		if (!num)
 			return null;
 
-		let oNumManager = oLogicDocument.GetNumbering();
-		return oNumManager.GetJSONNumbering(oNumPr, bIsSingleLevel);
+		return AscWord.CNumInfo.FromNum(num, singleLevel ? 0 : null, logicDocument.GetStyles()).ToJson();
 	};
 	asc_docs_api.prototype.asc_ContinueNumbering = function()
 	{

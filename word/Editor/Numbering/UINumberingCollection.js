@@ -36,10 +36,13 @@
 {
 	/**
 	 * Document numbering collection for UI
+	 * @param logicDocument {AscWord.CDocument}
 	 * @constructor
 	 */
-	function UINumberingCollection()
+	function UINumberingCollection(logicDocument)
 	{
+		this.LogicDocument     = logicDocument;
+		this.Numbering         = logicDocument.GetNumbering();
 		this.singleBullet      = {};
 		this.singleNumbering   = {};
 		this.multiLevel        = {};
@@ -49,15 +52,14 @@
 	/**
 	 * @param logicDocument {AscWord.CDocument}
 	 */
-	UINumberingCollection.prototype.Init = function(logicDocument)
+	UINumberingCollection.prototype.Init = function()
 	{
-		let allParagraphs = logicDocument.GetAllParagraphs();
-		let numbering     = logicDocument.GetNumbering();
+		let allParagraphs = this.LogicDocument.GetAllParagraphs();
 		for (let paraIndex = 0, paraCount = allParagraphs.length; paraIndex < paraCount; ++paraIndex)
 		{
 			let numPr = allParagraphs[paraIndex].GetNumPr();
 			if (numPr && numPr.IsValid())
-				this.AddNum(numPr, numbering);
+				this.AddNum(numPr);
 		}
 	};
 	UINumberingCollection.prototype.GetCollections = function()
@@ -68,14 +70,14 @@
 			"multiLevel"      : Object.keys(this.multiLevel)
 		};
 	};
-	UINumberingCollection.prototype.AddNum = function(oNumPr, numbering)
+	UINumberingCollection.prototype.AddNum = function(oNumPr)
 	{
 		const sNumId = oNumPr.NumId;
 		const nLvl   = oNumPr.Lvl;
 		
 		if (!this.checkNumMap[sNumId])
 		{
-			const oNum = numbering.GetNum(sNumId);
+			const oNum = this.Numbering.GetNum(sNumId);
 			if (oNum)
 			{
 				this.CheckMultiLvl(oNum);
@@ -86,7 +88,7 @@
 		
 		if (!this.checkSingleLvlMap[sNumId][nLvl])
 		{
-			const oNum = numbering.GetNum(sNumId);
+			const oNum = this.Numbering.GetNum(sNumId);
 			if (oNum)
 			{
 				this.CheckSingleLvl(oNum, nLvl);
@@ -101,21 +103,18 @@
 			}
 		}
 	};
-	UINumberingCollection.prototype.CheckSingleLvl = function (oNum, nLvl)
+	UINumberingCollection.prototype.CheckSingleLvl = function(num, iLvl)
 	{
-		const oJSON = oNum.GetJSONNumbering(true, nLvl);
-		if (oJSON["Type"] === Asc.c_oAscJSONNumberingType.Number)
-		{
-			this.AddToSingleNumbered(JSON.stringify(oJSON));
-		}
-		else if (oJSON["Type"] === Asc.c_oAscJSONNumberingType.Bullet)
-		{
-			this.AddToSingleBullet(JSON.stringify(oJSON));
-		}
+		let numInfo = AscWord.CNumInfo.FromNum(num, iLvl, this.LogicDocument.GetStyles());
+		if (numInfo.IsNumbered())
+			this.AddToSingleNumbered(JSON.stringify(numInfo.ToJson()));
+		else if (numInfo.IsBulleted())
+			this.AddToSingleBullet(JSON.stringify(numInfo.ToJson()));
 	};
-	UINumberingCollection.prototype.CheckMultiLvl = function (oNum)
+	UINumberingCollection.prototype.CheckMultiLvl = function(num)
 	{
-		this.AddToMultiLvl(JSON.stringify(oNum.GetJSONNumbering()));
+		let numInfo = AscWord.CNumInfo.FromNum(num, null, this.LogicDocument.GetStyles());
+		this.AddToMultiLvl(JSON.stringify(numInfo.ToJson()));
 	};
 	UINumberingCollection.prototype.AddToMultiLvl = function (sJSON)
 	{
