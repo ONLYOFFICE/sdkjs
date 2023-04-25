@@ -12338,7 +12338,7 @@ drawRadarChart.prototype = {
 					this.paths.series[ser] = [];
 				}
 				if (this._tempLines[ser]) {
-					for (let point = 0; point < this._tempLines[ser].length; point++) {
+					for (let point = 0, length = this._tempLines[ser].length; point < length; point++) {
 						let curTempSer = this._tempLines[ser];
 						let containerForDrawSer = this.paths.series[ser];
 						if (curTempSer && curTempSer[point]) {
@@ -12350,7 +12350,12 @@ drawRadarChart.prototype = {
 							} else {
 								if (this._comparePointsSettings(ser, point - 1, point, point)) {
 									//use previous path
-									this.cChartDrawer.calculateLine(curTempSer[point].x1, curTempSer[point].y1, curTempSer[point].x2, curTempSer[point].y2, path, true);
+									if (point === length - 1 && path && curTempSer[0] &&
+										curTempSer[point].x2 === curTempSer[0].x1 && curTempSer[point].y2 === curTempSer[0].y1) {
+										path.close();
+									} else {
+										this.cChartDrawer.calculateLine(curTempSer[point].x1, curTempSer[point].y1, curTempSer[point].x2, curTempSer[point].y2, path, true);
+									}
 								} else {
 									generateNewPath();
 									this.cChartDrawer.calculateLine(curTempSer[point].x1, curTempSer[point].y1, curTempSer[point].x2, curTempSer[point].y2, path);
