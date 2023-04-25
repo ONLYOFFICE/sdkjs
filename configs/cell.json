@@ -247,6 +247,7 @@
 			"word/Editor/Numbering/NumChanges.js",
 			"word/Editor/Numbering/PresentationNumbering.js",
 			"word/Editor/Numbering/Numbering.js",
+			"word/Editor/Numbering/UINumberingCollection.js",
 			"word/Editor/HeaderFooter.js",
 			"word/Editor/Layout/Base.js",
 			"word/Editor/Layout/PrintView.js",

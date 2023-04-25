@@ -151,6 +151,7 @@
 			"word/Editor/Numbering/NumChanges.js",
 			"word/Editor/Numbering/PresentationNumbering.js",
 			"word/Editor/Numbering/Numbering.js",
+			"word/Editor/Numbering/UINumberingCollection.js",
 			"word/Drawing/GraphicsEvents.js",
 			"word/Drawing/Rulers.js",
 			"word/Drawing/printpreview.js",

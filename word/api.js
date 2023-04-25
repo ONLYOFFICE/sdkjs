@@ -4183,12 +4183,17 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_GetAllJSONNums = function ()
 	{
-		const oLogicDocument = this.private_GetLogicDocument();
-		if (oLogicDocument)
-		{
-			return oLogicDocument.GetAllJSONNums();
-		}
-		return [];
+		console.time("num");
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return [];
+		
+		let collection = new AscWord.UINumberingCollection(this);
+		collection.Init(logicDocument);
+		let result = collection.GetCollections();
+		
+		console.timeEnd("num");
+		return result;
 	};
 
 	asc_docs_api.prototype.asc_CompareNumberingPresets = function(oJSON1, oJSON2)

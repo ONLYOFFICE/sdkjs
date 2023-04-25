@@ -14659,21 +14659,6 @@ CDocument.prototype.IsCurrentNumberingPreset = function (oJSON, bIsSingleNumberi
 	}
 	return false;
 };
-CDocument.prototype.GetAllJSONNums = function ()
-{
-	const arrParagraphs = this.GetAllParagraphs();
-	const oNumberingCollector = new Asc.CAscWordNumberingCollector(this);
-	for (let nParagraphIndex = 0; nParagraphIndex < arrParagraphs.length; nParagraphIndex += 1)
-	{
-		const oParagraph = arrParagraphs[nParagraphIndex];
-		const oNumPr = oParagraph.GetNumPr();
-		if (oNumPr && oNumPr.NumId && (typeof oNumPr.Lvl === 'number'))
-		{
-			oNumberingCollector.AddNum(oNumPr);
-		}
-	}
-	return oNumberingCollector.GetInterfaceDocumentPresets();
-};
 CDocument.prototype.GetAllParagraphs = function(Props, ParaArray)
 {
 	if (Props && true === Props.OnlyMainDocument && true === Props.All && null !== this.AllParagraphsList)
