@@ -159,7 +159,8 @@ function (window, undefined) {
 						if (parentCellIndex === null) {
 							continue;
 						}
-						this.dependents[cellIndex][parentCellIndex] = 1;
+						this._setDependents(cellIndex, parentCellIndex);
+						this._setPrecedents(parentCellIndex, cellIndex);
 					}
 				}
 			} else {
@@ -173,8 +174,9 @@ function (window, undefined) {
 						if (parentCellIndex === null) {
 							continue;
 						}
-						if (!this.dependents[cellIndex][parentCellIndex]) {
-							this.dependents[cellIndex][parentCellIndex] = 1;
+						if (!this._getDependents(cellIndex, parentCellIndex)) {
+							this._setDependents(cellIndex, parentCellIndex);
+							this._setPrecedents(parentCellIndex, cellIndex);
 							isUpdated = true;
 						}
 					}
@@ -189,27 +191,54 @@ function (window, undefined) {
 			}
 		}
 	};
-	TraceDependentsManager.prototype._updateDependents = function (cellIndex, curListener) {
-		if (this.dependents[cellIndex]) {
-			let cellListeners = curListener.cellMap[cellIndex];
-			if (cellListeners && cellListeners.listeners) {
-				if (this.dependents[cellIndex]) {
-					this.dependents[cellIndex] = {};
-					for (let i in cellListeners.listeners) {
-						let parentCellIndex = AscCommonExcel.getCellIndex(cellListeners.listeners[i].parent.nRow, cellListeners.listeners[i].parent.nCol);
-						this.dependents[cellIndex][parentCellIndex] = 1;
-					}
-				}
-			}
-		} else {
-			for (let i in this.dependents[cellIndex]) {
-				this._calculateDependents(i, curListener);
-			}
+	TraceDependentsManager.prototype._getDependents = function (from, to) {
+		return this.dependents[from] && this.dependents[from][to];
+	};
+	TraceDependentsManager.prototype._setDependents = function (from, to) {
+		if (!this.dependents) {
+			this.dependents = {};
 		}
-
+		if (!this.dependents[from]) {
+			this.dependents[from] = {};
+		}
+		this.dependents[from][to] = 1;
 	};
 	TraceDependentsManager.prototype.calculatePrecedents = function (row, col) {
+		//depend from row/col cell
+		let ws = this.ws && this.ws.model;
+		if (!ws) {
+			return;
+		}
+		if (row == null || col == null) {
+			let selection = ws.getSelection();
+			let activeCell = selection.activeCell;
+			row = activeCell.row;
+			col = activeCell.col;
+		}
 
+		let formulaParsed;
+		ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
+			formulaParsed = cell.formulaParsed;
+		});
+
+		if (formulaParsed) {
+			this._calculatePrecedents(formulaParsed);
+		}
+	};
+	TraceDependentsManager.prototype._calculatePrecedents = function (formulaParsed) {
+		
+	};
+	TraceDependentsManager.prototype._getPrecedents = function (from, to) {
+		return this.precedents[from] && this.precedents[from][to];
+	};
+	TraceDependentsManager.prototype._setPrecedents = function (from, to) {
+		if (!this.precedents) {
+			this.precedents = {};
+		}
+		if (!this.precedents[from]) {
+			this.precedents[from] = {};
+		}
+		this.precedents[from][to] = 1;
 	};
 	TraceDependentsManager.prototype.isHaveData = function () {
 		return this.isHaveDependents() || this.isHavePrecedents();
