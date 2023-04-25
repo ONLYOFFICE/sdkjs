@@ -13567,12 +13567,13 @@
 				if (specialPasteChangeColWidth) {
 					t.changeWorksheet("update");
 				} else {
-					if (arn.length) {
-						for (var i = 0; i < arn.length; i++) {
-							t._updateRange(arn[i]);
+					let updateRanges = pasteToRange ? pasteToRange : selectData[0];
+					if (updateRanges.length) {
+						for (var i = 0; i < updateRanges.length; i++) {
+							t._updateRange(updateRanges[i]);
 						}
 					} else {
-						t._updateRange(arn);
+						t._updateRange(updateRanges);
 					}
 				}
 			}
@@ -13664,7 +13665,6 @@
 			pastedInfo.push(selectData);
 		};
 
-		var fonts = pasteContent.props && pasteContent.props.fontsNew ? pasteContent.props.fontsNew : val.fontsNew;
 		callback();
 	};
 
