@@ -4116,18 +4116,25 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.put_ListTypeCustom = function(numInfo)
 	{
-		let _numInfo = numInfo;
-		if (typeof _numInfo === "string" || _numInfo instanceof String)
+		let _numInfo = null;
+		if (typeof numInfo === "string" || numInfo instanceof String)
 		{
 			try
 			{
-				_numInfo = JSON.parse(numInfo);
+				_numInfo = AscWord.CNumInfo.FromJson(JSON.parse(numInfo));
 			}
 			catch (e)
 			{
 				return;
 			}
 		}
+		else
+		{
+			_numInfo = AscWord.CNumInfo.FromJson(numInfo);
+		}
+		
+		if (!_numInfo)
+			return;
 
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
@@ -4146,33 +4153,17 @@ background-repeat: no-repeat;\
 			if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
 			{
 				logicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphNumbering);
-				logicDocument.SetParagraphNumbering(_numInfo);
+				let num = logicDocument.SetParagraphNumbering(_numInfo);
 				logicDocument.FinalizeAction();
-
-				if (!_numInfo["Lvl"] || _numInfo["Lvl"].length === 0)
-				{
-					const oParaPr = logicDocument.GetCalculatedParaPr();
-					const oNumPr = oParaPr.NumPr;
-					if (oNumPr)
-					{
-						const oNumbering = logicDocument.GetNumbering();
-						oRes = oNumbering.GetJSONNumbering(oNumPr, true);
-					}
-				}
-				else if (_numInfo["Headings"])
-				{
-					const oParaPr = logicDocument.GetCalculatedParaPr();
-					const oNumPr = oParaPr.NumPr;
-					if (oNumPr)
-					{
-						const oNumbering = logicDocument.GetNumbering();
-						oRes = oNumbering.GetJSONNumbering(oNumPr);
-					}
-				}
+				
+				if (!num)
+					oRes = null;
+				else if (!_numInfo.HaveLvl())
+					oRes = num.GetJSONNumbering(true, 0);
 				else
-				{
-					oRes = _numInfo;
-				}
+					oRes = num.GetJSONNumbering();
+
+				return oRes;
 			}
 			return oRes;
 		});

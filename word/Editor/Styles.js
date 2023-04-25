@@ -17146,7 +17146,7 @@ CParaPr.prototype.Compare = function(ParaPr)
 	// NumPr
 	if (undefined != this.NumPr && undefined != ParaPr.NumPr && this.NumPr.NumId === ParaPr.NumPr.NumId)
 	{
-		Result_ParaPr.NumPr       = new CParaPr();
+		Result_ParaPr.NumPr       = new CNumPr();
 		Result_ParaPr.NumPr.NumId = ParaPr.NumPr.NumId;
 		Result_ParaPr.NumPr.Lvl   = Math.max(this.NumPr.Lvl, ParaPr.NumPr.Lvl);
 	}

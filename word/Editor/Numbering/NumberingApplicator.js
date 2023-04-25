@@ -48,7 +48,7 @@
 
 		this.NumPr      = null;
 		this.Paragraphs = [];
-		this.NumInfo    = new CNumInfo();
+		this.NumInfo    = new AscWord.CNumInfo();
 
 		this.LastBulleted = null;
 		this.LastNumbered = null;
@@ -63,7 +63,7 @@
 		if (!this.Document || !numInfo)
 			return false;
 
-		this.NumInfo    = new CNumInfo(numInfo);
+		this.NumInfo    = numInfo;
 		this.NumPr      = this.GetCurrentNumPr();
 		this.Paragraphs = this.GetParagraphs();
 

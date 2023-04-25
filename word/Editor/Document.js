@@ -6715,6 +6715,15 @@ CDocument.prototype.SetParagraphNumbering = function(numInfo)
 		this.UpdateSelection();
 		this.UpdateInterface();
 		this.UpdateStylePanel();
+		
+		let paraPr = this.GetCalculatedParaPr();
+		let numPr  = paraPr.NumPr;
+		let num    = numPr && numPr.IsValid() ? this.Numbering.GetNum(numPr.NumId) : null;
+		return num;
+	}
+	else
+	{
+		return null;
 	}
 };
 CDocument.prototype.SetParagraphOutlineLvl = function(nLvl)
