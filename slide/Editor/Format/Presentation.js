@@ -7682,6 +7682,7 @@ CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {
 	var oDrawingObjects = oCurSlide.graphicObjects;
 	if (oDrawingObjects.checkTrackDrawings()) {
 		this.Api.sync_EndAddShape();
+		this.Api.stopInkDrawer();
 		oDrawingObjects.endTrackNewShape();
 		this.UpdateCursorType(0, 0, new AscCommon.CMouseEventHandler());
 	}
