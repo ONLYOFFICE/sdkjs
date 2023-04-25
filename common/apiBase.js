@@ -4535,6 +4535,9 @@
 		this.inkDrawer.startErase();
 	};
 	baseEditorsApi.prototype.asc_StopInkDrawer = function() {
+		this.stopInkDrawer();
+	};
+	baseEditorsApi.prototype.stopInkDrawer = function() {
 		this.inkDrawer.turnOff();
 	};
 	baseEditorsApi.prototype.onInkDrawerChangeState = function() {

@@ -6623,7 +6623,7 @@
 					}
 					const oApi = this.getEditorApi();
 					if(oApi.isInkDrawerOn()) {
-						oApi.asc_StopInkDrawer();
+						oApi.stopInkDrawer();
 					}
 				},
 
@@ -9180,6 +9180,10 @@
 				hitInGuide: function (x, y) {
 					return null;
 				},
+				resetDrawStateBeforeAction: function() {
+					const oAPI = this.getEditorApi();
+					oAPI.stopInkDrawer();
+				},
 				checkInkState: function () {
 					const oAPI = this.getEditorApi();
 					if(oAPI.isInkDrawerOn()) {
@@ -9206,6 +9210,9 @@
 					else {
 						this.clearTrackObjects();
 						this.clearPreTrackObjects();
+						if(this.loadStartDocState) {
+							this.loadStartDocState();
+						}
 						this.changeCurrentState(new AscFormat.NullState(this));
 						this.updateOverlay();
 					}
@@ -10747,12 +10754,18 @@
 			e.Type = nOldType;
 			return nResult;
 		};
+		CDrawingControllerStateBase.prototype.saveDocumentSelectionState = function() {
+			if(this.controller && this.controller.saveDocumentState) {
+				this.controller.saveDocumentState();
+			}
+		};
 
 		function CInkEraseState(drawingObjects) {
 			CDrawingControllerStateBase.call(this, drawingObjects);
 			const API = Asc.editor || editor;
 			this.inkDrawer = API.inkDrawer;
 			this.startState = API.inkDrawer.getState();
+			this.saveDocumentSelectionState();
 		}
 		CInkEraseState.prototype = Object.create(CDrawingControllerStateBase.prototype);
 		CInkEraseState.prototype.superclass = CDrawingControllerStateBase;
@@ -10761,12 +10774,11 @@
 			return this.onMouseMove(e, x, y, pageIndex);
 		};
 		CInkEraseState.prototype.onMouseMove = function (e, x, y, pageIndex) {
-
-
 			if(this.controller.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
 				if(e.IsLocked) {
 					this.inkDrawer.startSilentMode();
 					const aDrawings = this.controller.getDrawingObjects(pageIndex);
+					let bDocStartAction = false;
 					for(let nIdx = aDrawings.length - 1; nIdx > -1; --nIdx) {
 						let oDrawing = aDrawings[nIdx];
 						if(oDrawing.isShape() && !oDrawing.getPresetGeom())  {
@@ -10774,15 +10786,23 @@
 								this.controller.resetSelection();
 								this.controller.selectObject(oDrawing, pageIndex);
 								if(this.controller.document) {
-									this.controller.checkSelectedObjectsAndCallback(this.controller.remove, [], true, 0, []);
+									bDocStartAction = true;
+									const oThis = this;
+									this.controller.checkSelectedObjectsAndCallback(
+										function() {
+											oThis.controller.remove();
+											oThis.controller.checkInkState();
+										}, [], true, 0, []);
 								}
 								else {
 									this.controller.remove();
 								}
+								break;
 							}
 						}
 					}
-					this.changeControllerState(this);
+					this.saveDocumentSelectionState();
+					this.controller.checkInkState();
 					this.inkDrawer.restoreState(this.startState);
 
 					this.inkDrawer.endSilentMode();
@@ -10806,7 +10826,9 @@
 			this.drawingState = this.getPolylineState();
 			const API = Asc.editor || editor;
 			this.inkDrawer = API.inkDrawer;
+
 			this.checkStartState();
+			this.saveDocumentSelectionState();
 		}
 		CInkDrawState.prototype = Object.create(CDrawingControllerStateBase.prototype);
 		CInkDrawState.prototype.superclass = CDrawingControllerStateBase;
@@ -10845,6 +10867,7 @@
 			if(oControllerState === this) {
 				return;
 			}
+			this.saveDocumentSelectionState();
 			this.controller.resetSelection();
 			this.changeControllerState(this);
 			let oDrawingState = oControllerState;

@@ -7025,7 +7025,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 				this.Api.sync_MarkerFormatCallback(false);
 				this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
 			} else if (this.Api.isInkDrawerOn()) {
-				this.Api.asc_StopInkDrawer();
+				this.Api.stopInkDrawer();
 			}
 			bRetValue = keydownresult_PreventAll;
 		} else if (e.KeyCode === 32) // Space

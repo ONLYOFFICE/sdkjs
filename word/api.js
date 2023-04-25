@@ -13306,7 +13306,7 @@ background-repeat: no-repeat;\
 		}
 		else if(this.isInkDrawerOn())
 		{
-			this.asc_StopInkDrawer();
+			this.stopInkDrawer();
 		}
 		
 		if (!oLogicDocument.IsFillingFormMode() && oLogicDocument.FocusCC && oLogicDocument.FocusCC.IsForm())

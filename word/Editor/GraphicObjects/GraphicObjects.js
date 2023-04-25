@@ -2113,8 +2113,37 @@ CGraphicObjects.prototype =
 
     getMajorParaDrawing: function()
     {
-        return this.selectedObjects.length >  0  ? this.selectedObjects[0].parent : null;
+		if(this.selectedObjects.length > 0)
+		{
+			return this.selectedObjects[0].parent;
+		}
+		return null;
     },
+
+	resetDrawStateBeforeAction: function()
+	{
+		if(!this.document)
+			return;
+		if(!this.checkTrackDrawings())
+			return;
+		if(!this.document.IsDrawingSelected())
+			return
+
+		this.loadStartDocState();
+		const oAPI = this.getEditorApi();
+		oAPI.stopInkDrawer();
+	},
+
+	loadStartDocState: function() {
+		if(this.startDocState)
+		{
+			if(this.document)
+			{
+				this.document.LoadDocumentState(this.startDocState);
+			}
+			this.startDocState = null;
+		}
+	},
 
     documentUpdateRulersState: function()
     {
@@ -2147,8 +2176,6 @@ CGraphicObjects.prototype =
             editor.UpdateTextPr(TextPr);
         }
     },
-
-
 
     updateParentParagraphParaPr : function()
     {
@@ -4500,7 +4527,6 @@ CGraphicObjects.prototype =
 
     startAddShape: function(preset)
     {
-        /*todo*/
         switch(preset)
         {
             case "spline":
@@ -4524,8 +4550,16 @@ CGraphicObjects.prototype =
                 break;
             }
         }
+		this.saveDocumentState();
     },
     endTrackNewShape: DrawingObjectsController.prototype.endTrackNewShape
+};
+CGraphicObjects.prototype.saveDocumentState = function() {
+	this.startDocState = null;
+	if(!this.document) {
+		return;
+	}
+	this.startDocState = this.document.SaveDocumentState(false);
 };
 CGraphicObjects.prototype.Document_Is_SelectionLocked = function(CheckType)
 {
@@ -4637,7 +4671,41 @@ CGraphicObjects.prototype.hitInGuide = function(x, y) {
     return null;
 };
 CGraphicObjects.prototype.onInkDrawerChangeState = DrawingObjectsController.prototype.onInkDrawerChangeState;
-CGraphicObjects.prototype.checkInkState = DrawingObjectsController.prototype.checkInkState;
+CGraphicObjects.prototype.setDrawingDocPosType = function() {
+	const oDoc = this.document;
+	if(oDoc) {
+		if (AscCommonWord.docpostype_HdrFtr !== oDoc.CurPos.Type) {
+			oDoc.SetDocPosType(AscCommonWord.docpostype_DrawingObjects);
+			oDoc.Selection.Use   = true;
+			oDoc.Selection.Start = true;
+		}
+		else {
+			oDoc.Selection.Use   = true;
+			oDoc.Selection.Start = true;
+
+			const CurHdrFtr             = oDoc.HdrFtr.CurHdrFtr;
+			const DocContent            = CurHdrFtr.Content;
+
+			DocContent.SetDocPosType(AscCommonWord.docpostype_DrawingObjects);
+			DocContent.Selection.Use   = true;
+			DocContent.Selection.Start = true;
+		}
+	}
+};
+CGraphicObjects.prototype.checkInkState = function() {
+	DrawingObjectsController.prototype.checkInkState.call(this);
+	const oAPI = this.getEditorApi();
+	if(oAPI.isInkDrawerOn()) {
+		this.setDrawingDocPosType();
+	}
+};
+
+CGraphicObjects.prototype.saveStartDocState = function() {
+	if(this.document) {
+
+	}
+};
+
 
 function ComparisonByZIndexSimpleParent(obj1, obj2)
 {

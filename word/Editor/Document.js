@@ -9182,7 +9182,7 @@ CDocument.prototype.OnKeyDown = function(e)
 			}
 			else if (this.Api.isInkDrawerOn())
 			{
-				this.Api.asc_StopInkDrawer();
+				this.Api.stopInkDrawer();
 			}
 			else if (this.IsFormFieldEditing())
 			{
@@ -21847,6 +21847,7 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 	else if ((oForm = oInfo.GetField()) instanceof ParaField)
 		oForm.SelectThisElement();
 
+	this.DrawingObjects.resetDrawStateBeforeAction();
 	var oRes = null;
 	if (docpostype_DrawingObjects === this.GetDocPosType())
 	{
@@ -22034,6 +22035,7 @@ CDocument.prototype.AddContentControl = function(nContentControlType)
 {
 	if (this.IsDrawingSelected() && !this.DrawingObjects.getTargetDocContent())
 	{
+		this.DrawingObjects.resetDrawStateBeforeAction();
 		var oDrawing = this.DrawingObjects.getMajorParaDrawing();
 		if (oDrawing)
 			oDrawing.SelectAsText();
@@ -26568,6 +26570,7 @@ CDocument.prototype.GetSearchElementId = function(bNext)
 
 	this.SearchEngine.SetDirection(bNext);
 
+	this.DrawingObjects.resetDrawStateBeforeAction();
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
 		var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
