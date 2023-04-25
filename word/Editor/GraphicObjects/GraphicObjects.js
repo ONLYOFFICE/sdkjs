@@ -1818,8 +1818,18 @@ CGraphicObjects.prototype =
             content.AddImages(aImages);
         }
         else{
-            this.resetSelection2();
-            this.document.AddImages(aImages);
+			if(this.selectedObjects.length === 0)
+			{
+				if(this.resetDrawStateBeforeAction())
+				{
+					this.document.AddImages(aImages);
+				}
+			}
+			else
+			{
+				this.resetSelection2();
+				this.document.AddImages(aImages);
+			}
         }
     },
 
@@ -2129,9 +2139,11 @@ CGraphicObjects.prototype =
 		if(!this.document.IsDrawingSelected())
 			return
 
+		let bResult = !!this.startDocState;
 		this.loadStartDocState();
 		const oAPI = this.getEditorApi();
 		oAPI.stopInkDrawer();
+		return bResult;
 	},
 
 	loadStartDocState: function() {
