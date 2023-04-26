@@ -6656,7 +6656,21 @@ CPresentation.prototype.OnKeyDown = function (e) {
 		}
 		case Asc.c_oAscPresentationShortcutType.BulletList: {
 			if (this.CanEdit()) {
-				var oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 1});
+				const oCalcParaPr = this.GetCalculatedParaPr();
+				let oListType;
+				if (oCalcParaPr && oCalcParaPr.Bullet)
+				{
+					oListType = AscFormat.fGetListTypeFromBullet(oCalcParaPr.Bullet)
+				}
+				let oBullet;
+				if (oListType && oListType.Type === 0 && oListType.SubType === 1)
+				{
+					oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: -1, SubType: -1});
+				}
+				else
+				{
+					oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 1});
+				}
 				this.SetParagraphNumbering(oBullet);
 			}
 			bRetValue = keydownresult_PreventAll;
