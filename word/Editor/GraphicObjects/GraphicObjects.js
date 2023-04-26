@@ -1555,7 +1555,12 @@ CGraphicObjects.prototype =
 
 	getDrawingObjects: function(pageIndex)
 	{
-		return this.getAllDrawingsOnPage(pageIndex, false);
+		let bHdrFtr = false;
+		if(this.document && this.document.GetDocPosType() === AscCommonWord.docpostype_HdrFtr)
+		{
+			bHdrFtr = true;
+		}
+		return this.getAllDrawingsOnPage(pageIndex, bHdrFtr);
 	},
 
     getAllFloatObjectsOnPage: function(pageIndex, docContent)
@@ -4705,6 +4710,12 @@ CGraphicObjects.prototype.setDrawingDocPosType = function() {
 	}
 };
 CGraphicObjects.prototype.checkInkState = function() {
+	if(!this.document) {
+		return;
+	}
+	// if(AscCommonWord.docpostype_HdrFtr === this.document.CurPos.Type) {
+	// 	return;
+	// }
 	DrawingObjectsController.prototype.checkInkState.call(this);
 	const oAPI = this.getEditorApi();
 	if(oAPI.isInkDrawerOn()) {

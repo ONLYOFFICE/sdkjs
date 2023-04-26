@@ -13205,8 +13205,12 @@
 		this.silentMode = false;
 	}
 	CInkDrawer.prototype.setState = function(nState) {
-		this.state = nState;
-		this.api.onInkDrawerChangeState();
+		const bChange = this.state !== nState;
+		if(bChange) {
+			this.state = nState;
+			this.api.onInkDrawerChangeState();
+		}
+		return bChange;
 	};
 	CInkDrawer.prototype.startDraw = function(oAscPen) {
 		this.pen = AscFormat.CorrectUniStroke(oAscPen);

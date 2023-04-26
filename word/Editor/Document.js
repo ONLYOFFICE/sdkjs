@@ -10734,15 +10734,34 @@ CDocument.prototype.Select_DrawingObject = function(Id)
 	if (!drawingObject || !drawingObject.IsUseInDocument())
 		return;
 
+	const oDocContent = drawingObject.GetDocumentContent();
+	if(!oDocContent)
+		return;
+
 	this.RemoveSelection();
 
 	// Прячем курсор
 	this.DrawingDocument.TargetEnd();
 	this.DrawingDocument.SetCurrentPage(this.CurPage);
 
-	this.Selection.Start = false;
-	this.Selection.Use   = true;
-	this.SetDocPosType(docpostype_DrawingObjects);
+	const oHdrFtr = oDocContent.IsHdrFtr(true);
+	if (!oHdrFtr)
+	{
+		this.Selection.Start = false;
+		this.Selection.Use   = true;
+		this.SetDocPosType(docpostype_DrawingObjects);
+	}
+	else
+	{
+		this.SetDocPosType(docpostype_HdrFtr);
+		this.Selection.Start = false;
+		this.Selection.Use   = true;
+		const oDocContent = oHdrFtr.Content;
+		oDocContent.SetDocPosType(docpostype_DrawingObjects);
+		oDocContent.Selection.Use   = true;
+		oDocContent.Selection.Start = true;
+	}
+
 	this.DrawingObjects.selectById(Id, this.CurPage);
 
 	this.Document_UpdateInterfaceState();
