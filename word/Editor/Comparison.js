@@ -797,7 +797,7 @@
 		//debug method
 	CTextElement.prototype.getText = function ()
 	{
-		return {text:this.elements.map((e) => String.fromCharCode(e.Value)).join(''), isReviewWord: this.isReviewWord, reviewElements:this.reviewElementTypes};
+		return {text:this.elements.map(function (e) {return String.fromCharCode(e.Value)}).join(''), isReviewWord: this.isReviewWord, reviewElements:this.reviewElementTypes};
 	};
 
     CTextElement.prototype.isParaEnd = function ()
