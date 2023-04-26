@@ -6858,7 +6858,9 @@
                 str = c.getValue2();
                 if (0 < str.length) {
                     strCopy = str[0];
-                    if (!(tm = AscCommonExcel.g_oCacheMeasureEmpty.get(strCopy.format))) {
+                    //this.isZooming - in default case(with text) every time recalculate text size -> update row height
+					//this.isZooming -> fix for start editor with system zoom
+                    if (!(tm = AscCommonExcel.g_oCacheMeasureEmpty.get(strCopy.format)) || this.isZooming) {
                         // Без текста не будет толка
                         strCopy = strCopy.clone();
                         strCopy.setFragmentText('A');
