@@ -193,15 +193,6 @@
 		return oAbstractNum;
 	};
 	/**
-	 * Remove oNum references
-	 * @param oNum {CNum}
-	 */
-	CNumbering.prototype.Remove = function (oNum)
-	{
-		delete this.Num[oNum.GetId()];
-		delete this.AbstractNum[oNum.AbstractNumId];
-	}
-	/**
 	 * Создаем новую нумерацию
 	 * @returns {CNum}
 	 */
@@ -334,7 +325,6 @@
 	{
 		return 0 === Object.keys(this.Num).length;
 	};
-
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumbering        = CNumbering;
 	window["AscWord"].DEFAULT_NUMBERING = new CNumbering();
