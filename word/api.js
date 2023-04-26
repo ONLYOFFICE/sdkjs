@@ -8585,6 +8585,9 @@ background-repeat: no-repeat;\
             this.sync_TableEraseModeCallback(false);
         }
 
+		this.stopInkDrawer();
+		this.cancelEyedropper();
+
 		this.isStartAddShape = true;
 		this.addShapePreset  = sPreset;
 		if (is_apply)

@@ -4913,6 +4913,8 @@ var editor;
       this.asc_endAddShape();
       return false;
     }
+	this.stopInkDrawer();
+	this.cancelEyedropper();
     this.isStartAddShape = this.controller.isShapeAction = true;
     ws.objectRender.controller.startTrackNewShape(sPreset);
   };

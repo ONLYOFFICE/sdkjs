@@ -4468,6 +4468,8 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.StartAddShape = function(prst, is_apply)
 	{
+		this.stopInkDrawer();
+		this.cancelEyedropper();
 		this.WordControl.m_oLogicDocument.StartAddShape(prst, is_apply);
 
 		if (is_apply)
