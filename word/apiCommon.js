@@ -1703,35 +1703,13 @@
 	{
 		return AscWord.CNumInfo.FromNum(this, singleLevel ? 0 : null);
 	};
-	CAscNumbering.prototype.put_FromJSON = function (oJSON)
+	CAscNumbering.prototype.put_FromJSON = function(value)
 	{
-		const oNumManager = AscWord.DEFAULT_NUMBERING;
-		if (typeof oJSON === 'string')
-		{
-			oJSON = JSON.parse(oJSON);
-		}
-		const oNum = oNumManager.CreateNum();
-		const arrLvl = oJSON["Lvl"];
-		if (!arrLvl || arrLvl.length < 9)
-		{
-			if (oJSON["Type"] === Asc.c_oAscJSONNumberingType.Bullet)
-			{
-				oNum.CreateDefault(Asc.c_oAscMultiLevelNumbering.Bullet);
-			}
-			else
-			{
-				oNum.CreateDefault(Asc.c_oAscMultiLevelNumbering.Numbered);
-			}
-		}
-		if (arrLvl)
-		{
-			for (let i = 0; i < arrLvl.length; i += 1)
-			{
-				oNum.SetLvl(AscCommonWord.CNumberingLvl.FromJson(arrLvl[i]), i);
-			}
-		}
-		oNum.FillToAscNum(this);
-		oNumManager.Remove(oNum);
+		let numInfo = AscWord.CNumInfo.Parse(value);
+		if (!numInfo)
+			return;
+		
+		numInfo.FillNum(this);
 	};
 	window['Asc']['CAscNumbering'] = window['Asc'].CAscNumbering = CAscNumbering;
 	CAscNumbering.prototype['get_InternalId']    = CAscNumbering.prototype.get_InternalId;

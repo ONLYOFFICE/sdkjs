@@ -4114,26 +4114,10 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};
-	asc_docs_api.prototype.put_ListTypeCustom = function(numInfo)
+	asc_docs_api.prototype.put_ListTypeCustom = function(value)
 	{
-		let _numInfo = null;
-		if (typeof numInfo === "string" || numInfo instanceof String)
-		{
-			try
-			{
-				_numInfo = AscWord.CNumInfo.FromJson(JSON.parse(numInfo));
-			}
-			catch (e)
-			{
-				return;
-			}
-		}
-		else
-		{
-			_numInfo = AscWord.CNumInfo.FromJson(numInfo);
-		}
-		
-		if (!_numInfo)
+		let numInfo = AscWord.CNumInfo.Parse(value);
+		if (!numInfo)
 			return;
 
 		let logicDocument = this.private_GetLogicDocument();
@@ -4142,7 +4126,7 @@ background-repeat: no-repeat;\
 
 		return new Promise(function(resolve)
 		{
-			let symbols = AscWord.GetNumberingSymbols(_numInfo);
+			let symbols = AscWord.GetNumberingSymbols(numInfo);
 			if (symbols && symbols.length)
 				AscFonts.FontPickerByCharacter.checkText(symbols, this, resolve);
 			else
@@ -4153,12 +4137,12 @@ background-repeat: no-repeat;\
 			if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
 			{
 				logicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphNumbering);
-				let num = logicDocument.SetParagraphNumbering(_numInfo);
+				let num = logicDocument.SetParagraphNumbering(numInfo);
 				logicDocument.FinalizeAction();
 				
 				if (!num)
 					oRes = null;
-				else if (!_numInfo.HaveLvl())
+				else if (!numInfo.HaveLvl())
 					oRes = AscWord.CNumInfo.FromNum(num, 0).ToJson();
 				else
 					oRes = AscWord.CNumInfo.FromNum(num, null, logicDocument.GetStyles()).ToJson();

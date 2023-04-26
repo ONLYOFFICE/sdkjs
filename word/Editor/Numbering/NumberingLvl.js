@@ -268,6 +268,17 @@ CNumberingLvl.prototype.IsEqualPreview = function(oLvl, oPr)
 }
 /**
  * Выставляем значения по умолчанию для заданного уровня
+ * @param iLvl {number} 0..8
+ * @param type {c_oAscMultiLevelNumbering}
+ */
+CNumberingLvl.CreateDefault = function(iLvl, type)
+{
+	let numLvl = new CNumberingLvl();
+	numLvl.InitDefault(iLvl, type);
+	return numLvl;
+};
+/**
+ * Выставляем значения по умолчанию для заданного уровня
  * @param nLvl {number} 0..8
  * @param nType {c_oAscMultiLevelNumbering}
  */

@@ -45,6 +45,30 @@
 		this.Lvl      = numInfo && numInfo["Lvl"] && numInfo["Lvl"].length ? numInfo["Lvl"] : [];
 		this.Headings = numInfo && numInfo["Headings"] ? numInfo["Headings"] : false;
 	}
+	CNumInfo.Parse = function(value)
+	{
+		if (value instanceof CNumInfo)
+			return value;
+		
+		let numInfo = null;
+		if (typeof value === "string" || value instanceof String)
+		{
+			try
+			{
+				numInfo = CNumInfo.FromJson(JSON.parse(value));
+			}
+			catch (e)
+			{
+				return null;
+			}
+		}
+		else if (value instanceof Object)
+		{
+			numInfo = CNumInfo.FromJson(value);
+		}
+		
+		return numInfo;
+	};
 	CNumInfo.FromJson = function(json)
 	{
 		return new CNumInfo(json);
@@ -64,7 +88,7 @@
 				isBulleted = isBulleted || numLvl.IsBulleted();
 				isNumbered = isNumbered || numLvl.IsNumbered();
 				
-				numInfo.Lvl[iLvl] = numLvl;
+				numInfo.Lvl[iLvl] = numLvl.ToJson(null, {isSingleLvlPresetJSON: true});
 				if (isHeading && styles)
 				{
 					if (numLvl.GetPStyle() !== styles.GetDefaultHeading(iLvl))
@@ -90,7 +114,7 @@
 				numLvl = numLvl.Copy();
 				numLvl.ResetNumberedText(0);
 				numInfo.Type   = numLvl.IsBulleted() ? Asc.c_oAscJSONNumberingType.Bullet : Asc.c_oAscJSONNumberingType.Number;
-				numInfo.Lvl[0] = numLvl;
+				numInfo.Lvl[0] = numLvl.ToJson(null, {isSingleLvlPresetJSON: true});
 			}
 		}
 		
@@ -145,22 +169,32 @@
 	{
 		let json = {
 			"Type" : this.Type,
-			"Lvl"  : []
+			"Lvl"  : this.Lvl.slice()
 		};
-		
-		if (this.Lvl.length)
-		{
-			for (let iLvl = 0; iLvl < this.Lvl.length; ++iLvl)
-			{
-				json["Lvl"][iLvl] = this.Lvl[iLvl].ToJson(null, {isSingleLvlPresetJSON: true});
-			}
-		}
 		
 		if (this.IsHeadings())
 			json["Headings"] = true;
 		
 		return json;
 	};
+	CNumInfo.prototype.FillNum = function(num)
+	{
+		if (!num || !(num instanceof Asc.CAscNumbering))
+			return;
+		
+		for (let iLvl = 0; iLvl < 9; ++iLvl)
+		{
+			let numInfoLvl = this.Lvl[iLvl];
+			let numLvl;
+			if (numInfoLvl)
+				numLvl = AscWord.CNumberingLvl.FromJson(numInfoLvl);
+			else
+				numLvl = AscWord.CNumberingLvl.CreateDefault(iLvl, this.IsBulleted() ? Asc.c_oAscMultiLevelNumbering.Bullet : Asc.c_oAscMultiLevelNumbering.Numbered);
+			
+			numLvl.FillToAscNumberingLvl(num.get_Lvl(iLvl));
+		}
+	};
+	
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumInfo = CNumInfo;
 	
