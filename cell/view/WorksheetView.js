@@ -16929,7 +16929,7 @@
 
 		if (aReplaceCells[options.indexInArray] && this.model.isUserProtectedRangesIntersection(aReplaceCells[options.indexInArray])) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
-			return;
+			return callback ? callback(options) : null;
 		}
 
 		return !needLockCell ? onReplaceCallback(true) :
