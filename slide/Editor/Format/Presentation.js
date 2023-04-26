@@ -7176,10 +7176,20 @@ CPresentation.prototype.OnKeyDown = function (e) {
 		{
 			if (this.CanEdit()) {
 				if (oController && oController.getTargetDocContent()) {
-					if (e.ShiftKey) // Ctrl + Shift + M - уменьшаем левый отступ
-						this.Api.DecreaseIndent();
-					else // Ctrl + M - увеличиваем левый отступ
-						this.Api.IncreaseIndent();
+					if (e.ShiftKey)
+					{// Ctrl + Shift + M - уменьшаем левый отступ
+						if (this.Can_IncreaseParagraphLevel(false))
+						{
+							this.Api.DecreaseIndent();
+						}
+					}
+					else
+					{ // Ctrl + M - увеличиваем левый отступ
+						if (this.Can_IncreaseParagraphLevel(true))
+						{
+							this.Api.IncreaseIndent();
+						}
+					}
 				} else {
 					if (this.Api.WordControl.Thumbnails) {
 						var _selected_thumbnails = this.GetSelectedSlides();
