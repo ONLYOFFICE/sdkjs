@@ -9931,9 +9931,20 @@ PasteProcessor.prototype =
 							var oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument);
 							//TODO отключаю историю, затем делаю копию. иначе проблемы при сборке. пересмотреть!
 							History.TurnOff();
-							oThis._parseMathContent(child, oPar);
+							let bAddNewParagraph = oThis._parseMathContent(child, oPar);
 							History.TurnOn();
-							oThis.aContent.push(oPar.Copy())
+
+							if (bAddNewParagraph !== false || !oThis.oCurPar) {
+								oThis.aContent.push(oPar.Copy());
+							} else {
+								for (let i = 0; i < oPar.Content.length; i++) {
+									if (oPar.Content[i] && oPar.Content[i].Get_Type && oPar.Content[i].Get_Type() === para_Math) {
+										let oAddedParaMath = oPar.Content[i].Copy();
+										oAddedParaMath.SetParagraph && oAddedParaMath.SetParagraph(oThis.oCurPar);
+										oThis._CommitElemToParagraph(oAddedParaMath);
+									}
+								}
+							}
 						}
 					}
 					return;
@@ -10405,10 +10416,14 @@ PasteProcessor.prototype =
 
 	_parseMathContent: function (node, oPar) {
 		//получаем строку, которая содержит необходимые данные для получения уравнения
+		let bAddNewParagraph = true;
 		let str = node.nodeValue;
 		str = str.replace('[if gte msEquation 12]>', '');
 		str = str.replace('<![endif]', '');
 		str = str.replace(/lang=\w*-\w*/g, '');
+		if (0 === str.indexOf("<m:oMath>")) {
+			bAddNewParagraph = false;
+		}
 
 		let xmlParserContext = typeof AscCommon.XmlParserContext !== "undefined" ? new AscCommon.XmlParserContext() : null;
 
@@ -10420,14 +10435,21 @@ PasteProcessor.prototype =
 				return;
 			}
 
-			let elem = typeof AscCommon.CT_OMathPara !== "undefined" ? new AscCommon.CT_OMathPara() : null;
+			let elem;
+			if (bAddNewParagraph) {
+				elem = typeof AscCommon.CT_OMathPara !== "undefined" ? new AscCommon.CT_OMathPara() : null;
+			} else {
+				elem = new ParaMath();
+				oPar.AddToContentToEnd(elem);
+			}
+
 			if (elem && elem.fromXml) {
 				elem.fromXml(reader, oPar);
-				return elem.OMath
+				return bAddNewParagraph;
 			}
 		}
 
-		return null;
+		return bAddNewParagraph;
 	},
 
 	_commitCommentEnd: function () {
