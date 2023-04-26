@@ -145,6 +145,28 @@
 		
 		return CNumInfo.FromLvl(lvl, iLvl, styles);
 	};
+	CNumInfo.prototype.IsEqual = function(numInfo)
+	{
+		if (!numInfo
+			|| this.Type !== numInfo.Type
+			|| this.Headings !== numInfo.Headings
+			|| this.Lvl.length !== numInfo.Lvl.length)
+			return false;
+		
+		for (let iLvl = 0; iLvl < 9; ++iLvl)
+		{
+			if (!this.Lvl[iLvl] || !numInfo.Lvl[iLvl])
+				return false;
+			
+			let numLvl1 = AscWord.CNumberingLvl.FromJson(this.Lvl[iLvl]);
+			let numLvl2 = AscWord.CNumberingLvl.FromJson(numInfo.Lvl[iLvl]);
+			
+			if (!numLvl1.IsEqual(numLvl2))
+				return false;
+		}
+		
+		return true;
+	};
 	CNumInfo.prototype.IsNumbered = function()
 	{
 		return this.Type === Asc.c_oAscJSONNumberingType.Number;

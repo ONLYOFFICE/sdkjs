@@ -1247,6 +1247,22 @@ CNumberingLvl.prototype.IsSimilar = function(oLvl)
 
 	return true;
 };
+CNumberingLvl.prototype.IsEqual = function(numLvl)
+{
+	// Формат и текст проверяются в IsSimilar
+	if (!this.IsSimilar(numLvl))
+		return false;
+	
+	return (this.Jc === numLvl.Jc
+		&& this.PStyle === numLvl.PStyle
+		&& this.Start === numLvl.Start
+		&& this.Restart === numLvl.Restart
+		&& this.Suff === numLvl.Suff
+		&& this.TextPr.IsEqual(numLvl.TextPr)
+		&& this.ParaPr.IsEqual(numLvl.ParaPr)
+		&& this.Legacy === numLvl.Legacy
+		&& this.IsLgl === numLvl.IsLgl);
+};
 /**
  * Заполняем специальный класс для работы с интерфейсом
  * @param oAscLvl {CAscNumberingLvl}

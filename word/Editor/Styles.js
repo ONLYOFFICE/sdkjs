@@ -17529,6 +17529,10 @@ CParaPr.prototype.Is_Equal = function(ParaPr, oPr)
 		|| this.OutlineLvl !== ParaPr.OutlineLvl
 		|| this.SuppressLineNumbers !== ParaPr.SuppressLineNumbers);
 };
+CParaPr.prototype.IsEqual = function(paraPr)
+{
+	return this.Is_Equal(paraPr);
+};
 /**
  * Сравниваем данные настройки с заданными, если настройка совпала ставим undefined, если нет, то берем из текущей
  * @param oParaPr {CParaPr}

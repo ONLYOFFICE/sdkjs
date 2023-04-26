@@ -4146,8 +4146,6 @@ background-repeat: no-repeat;\
 					oRes = AscWord.CNumInfo.FromNum(num, 0).ToJson();
 				else
 					oRes = AscWord.CNumInfo.FromNum(num, null, logicDocument.GetStyles()).ToJson();
-				
-				console.log(oRes);
 			}
 			return oRes;
 		});
@@ -4158,25 +4156,22 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_GetAllJSONNums = function ()
 	{
-		console.time("num");
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return [];
 		
 		let collection = new AscWord.UINumberingCollection(logicDocument);
 		collection.Init();
-		let result = collection.GetCollections();
-		
-		console.timeEnd("num");
-		return result;
+		return collection.GetCollections();
 	};
-
-	asc_docs_api.prototype.asc_CompareNumberingPresets = function(oJSON1, oJSON2)
+	asc_docs_api.prototype.asc_CompareNumberingPresets = function(value1, value2)
 	{
-		const sJSON1 = typeof oJSON1 === 'string' ? oJSON1 : JSON.stringify(oJSON1);
-		const sJSON2 = typeof oJSON2 === 'string' ? oJSON2 : JSON.stringify(oJSON2);
-
-		return sJSON1 === sJSON2;
+		let numInfo1 = AscWord.CNumInfo.Parse(value1);
+		let numInfo2 = AscWord.CNumInfo.Parse(value2);
+		if (!numInfo1 || !numInfo2)
+			return false;
+		
+		return numInfo1.IsEqual(numInfo2);
 	};
 	asc_docs_api.prototype.asc_IsCurrentNumberingPreset = function (oJSON, bIsSingleNumbering)
 	{
