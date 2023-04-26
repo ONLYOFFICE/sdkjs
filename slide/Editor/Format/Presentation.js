@@ -5441,7 +5441,10 @@ CPresentation.prototype.addChart = function (binary, isFromInterface, Placeholde
 	if (!oSlide) {
 		return;
 	}
+
+	this.Api.inkDrawer.startSilentMode();
 	History.Create_NewPoint(AscDFH.historydescription_Presentation_AddChart);
+	this.Api.inkDrawer.endSilentMode();
 	this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
 	_this.FocusOnNotes = false;
 	var Image = oSlide.graphicObjects.getChartSpace2(binary, null);
@@ -5555,6 +5558,7 @@ CPresentation.prototype.Add_FlowTable = function (Cols, Rows, Placeholder, sStyl
 			return;
 		}
 	}
+	this.Api.inkDrawer.startSilentMode();
 	History.Create_NewPoint(AscDFH.historydescription_Presentation_AddFlowTable);
 	var graphic_frame = this.Create_TableGraphicFrame(Cols, Rows, this.Slides[this.CurPage], sStyleId || this.DefaultTableStyleId, Width, Height, X, Y);
 	var oSlide = this.Slides[this.CurPage];
@@ -5570,6 +5574,7 @@ CPresentation.prototype.Add_FlowTable = function (Cols, Rows, Placeholder, sStyl
 	graphic_frame.graphicObject.MoveCursorToStartPos();
 	this.Recalculate();
 	this.Document_UpdateInterfaceState();
+	this.Api.inkDrawer.endSilentMode();
 	return graphic_frame;
 };
 
@@ -10049,10 +10054,12 @@ CPresentation.prototype.RemoveBeforePaste = function () {
 };
 
 CPresentation.prototype.addNextSlide = function (layoutIndex) {
+	this.Api.inkDrawer.startSilentMode();
 	History.Create_NewPoint(AscDFH.historydescription_Presentation_AddNextSlide);
 	this.addNextSlideAction(layoutIndex);
 	this.Recalculate();
 	this.DrawingDocument.m_oWordControl.GoToPage(this.CurPage + 1);
+	this.Api.inkDrawer.endSilentMode();
 	this.Document_UpdateInterfaceState();
 };
 CPresentation.prototype.addNextSlideAction = function (layoutIndex) {

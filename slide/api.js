@@ -7024,8 +7024,11 @@ background-repeat: no-repeat;\
 		if (!this.isViewMode && this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Theme) === false)
 		{
 			AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+
+			this.inkDrawer.startSilentMode();
 			this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Presentation_ChangeTheme);
-            this.bSelectedSlidesTheme = (bSelectedSlides === true);
+			this.inkDrawer.endSilentMode();
+			this.bSelectedSlidesTheme = (bSelectedSlides === true);
 			this.ThemeLoader.StartLoadTheme(indexTheme);
 		}
 	};
