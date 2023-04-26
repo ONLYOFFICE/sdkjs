@@ -13643,9 +13643,7 @@ CTextPr.prototype.Merge = function(TextPr)
 	if (undefined != TextPr.Position)
 		this.Position = TextPr.Position;
 
-	//add check for: TextPr -> CAccent, CMathAccentPr.ctrPrp -> CAccent
-	if (undefined != TextPr.RFonts)
-		this.RFonts.Merge(TextPr.RFonts);
+	this.RFonts.Merge(TextPr.RFonts);
 
 	if (undefined != TextPr.BoldCS)
 		this.BoldCS = TextPr.BoldCS;
