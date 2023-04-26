@@ -16927,6 +16927,11 @@
 			}, 1);
 		};
 
+		if (aReplaceCells[options.indexInArray] && this.model.isUserProtectedRangesIntersection(aReplaceCells[options.indexInArray])) {
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+			return;
+		}
+
 		return !needLockCell ? onReplaceCallback(true) :
 			this._isLockedCells(aReplaceCells[options.indexInArray], /*subType*/null, onReplaceCallback);
 	};
