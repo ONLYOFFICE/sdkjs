@@ -2654,6 +2654,11 @@ PolyLineAddState2.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
+	    if(!e.IsLocked)
+	    {
+		    //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+		    return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
+	    }
         var tr_x, tr_y;
         if(pageIndex === this.drawingObjects.startTrackPos.pageIndex)
         {
