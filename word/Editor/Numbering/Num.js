@@ -216,73 +216,6 @@ CNum.prototype.SetLvlByFormat = function(nLvl, nType, sFormatText, nAlign)
 	}
 };
 /**
- * Get JSON object to store in localStorage
- * @param bIsSingleLevel {boolean}
- * @param [nLvl=0] {number}
- * @returns {{Type: string, Lvl: *[]}}
- */
-CNum.prototype.GetJSONNumbering = function(bIsSingleLevel, nLvl)
-{
-	nLvl = nLvl || 0;
-	let oResult = {
-		"Type" : "unknown",
-		"Lvl"  : []
-	};
-
-	if (bIsSingleLevel)
-	{
-		let oNumLvl = this.GetLvl(nLvl);
-		if (oNumLvl.IsOneLvlNum())
-		{
-			oNumLvl = oNumLvl.Copy();
-			oNumLvl.ResetNumberedText(0);
-			oResult["Type"] = oNumLvl.IsBulleted() ? Asc.c_oAscJSONNumberingType.Bullet : Asc.c_oAscJSONNumberingType.Number;
-			oResult["Lvl"][0] = oNumLvl.ToJson(undefined, {isSingleLvlPresetJSON: true});
-		}
-	}
-	else
-	{
-		let bIsBulleted = false;
-		let bIsNumbered = false;
-		let bIsHeading = true;
-		let oApi = Asc.editor || editor;
-		let oStyles;
-		if (oApi.isDocumentEditor)
-		{
-			const oLogicDocument = oApi.private_GetLogicDocument();
-			oStyles = oLogicDocument.GetStyles();
-		}
-		for (let iLvl = 0; iLvl < 9; ++iLvl)
-		{
-			let numLvl = this.GetLvl(iLvl);
-			bIsBulleted = bIsBulleted || numLvl.IsBulleted();
-			bIsNumbered = bIsNumbered || numLvl.IsNumbered();
-			oResult["Lvl"][iLvl] = numLvl.ToJson();
-			if (bIsHeading && oStyles)
-			{
-				const sHeadingId = oStyles.GetDefaultHeading(iLvl);
-				if (numLvl.GetPStyle() !== sHeadingId)
-				{
-					bIsHeading = false;
-				}
-			}
-		}
-		if (bIsHeading)
-		{
-			oResult["Headings"] = true;
-		}
-
-		if (bIsBulleted && bIsNumbered)
-			oResult["Type"] = Asc.c_oAscJSONNumberingType.Hybrid;
-		else if (bIsNumbered)
-			oResult["Type"] = Asc.c_oAscJSONNumberingType.Number;
-		else if (bIsBulleted)
-			oResult["Type"] = Asc.c_oAscJSONNumberingType.Bullet;
-	}
-
-	return oResult;
-}
-/**
  * Выставляем является ли данный уровень сквозным или каждый раз перестартовывать нумерацию
  * @param nLvl {number} 0..8
  * @param isRestart {boolean}
@@ -1163,3 +1096,7 @@ CLvlOverride.prototype.ReadFromBinary = function(oReader)
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CNum = CNum;
+
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CNum = CNum;
+

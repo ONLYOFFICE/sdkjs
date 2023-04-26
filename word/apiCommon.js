@@ -1699,14 +1699,9 @@
 
 		return this.Lvl[nLvl];
 	};
-	CAscNumbering.prototype.get_JSONNumbering = function (bIsSingleLevel)
+	CAscNumbering.prototype.get_JSONNumbering = function(singleLevel)
 	{
-		const oNumManager = AscWord.DEFAULT_NUMBERING;
-		const oNum = oNumManager.CreateNum();
-		oNum.FillFromAscNum(this);
-		const oJSON = oNum.GetJSONNumbering(bIsSingleLevel, 0);
-		oNumManager.Remove(oNum);
-		return oJSON;
+		return AscWord.CNumInfo.FromNum(this, singleLevel ? 0 : null);
 	};
 	CAscNumbering.prototype.put_FromJSON = function (oJSON)
 	{

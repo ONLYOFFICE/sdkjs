@@ -49,9 +49,6 @@
 		this.checkNumMap       = {};
 		this.checkSingleLvlMap = {};
 	}
-	/**
-	 * @param logicDocument {AscWord.CDocument}
-	 */
 	UINumberingCollection.prototype.Init = function()
 	{
 		let allParagraphs = this.LogicDocument.GetAllParagraphs();

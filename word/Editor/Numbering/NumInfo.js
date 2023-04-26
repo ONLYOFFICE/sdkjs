@@ -49,7 +49,7 @@
 	{
 		return new CNumInfo(json);
 	};
-	CNumInfo.FromNum = function(num, iLvl, styles)
+	CNumInfo.FromLvl = function(lvl, iLvl, styles)
 	{
 		let numInfo = new CNumInfo();
 		if (undefined === iLvl || null === iLvl)
@@ -57,10 +57,10 @@
 			let isBulleted = false;
 			let isNumbered = false;
 			let isHeading  = true;
-
+			
 			for (let iLvl = 0; iLvl < 9; ++iLvl)
 			{
-				let numLvl = num.GetLvl(iLvl);
+				let numLvl = lvl[iLvl];
 				isBulleted = isBulleted || numLvl.IsBulleted();
 				isNumbered = isNumbered || numLvl.IsNumbered();
 				
@@ -84,7 +84,7 @@
 		}
 		else
 		{
-			let numLvl = num.GetLvl(iLvl);
+			let numLvl = lvl[iLvl];
 			if (numLvl.GetRelatedLvlList().length <= 1)
 			{
 				numLvl = numLvl.Copy();
@@ -95,6 +95,31 @@
 		}
 		
 		return numInfo;
+	};
+	CNumInfo.FromNum = function(num, iLvl, styles)
+	{
+		let lvl = null;
+		if (num instanceof AscWord.CNum)
+		{
+			lvl = [];
+			for (let index = 0; index < 9; ++index)
+				lvl.push(num.GetLvl(index));
+		}
+		else if (num instanceof Asc.CAscNumbering)
+		{
+			lvl = [];
+			for (let index = 0; index < 9; ++index)
+			{
+				let numLvl = new CNumberingLvl();
+				numLvl.FillFromAscNumberingLvl(num.get_Lvl(index));
+				lvl.push(numLvl);
+			}
+		}
+		
+		if (!lvl)
+			return null;
+		
+		return CNumInfo.FromLvl(lvl, iLvl, styles);
 	};
 	CNumInfo.prototype.IsNumbered = function()
 	{

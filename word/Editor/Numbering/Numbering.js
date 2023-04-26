@@ -334,20 +334,6 @@
 	{
 		return 0 === Object.keys(this.Num).length;
 	};
-	/**
-	 * Getting JSON from numPr
-	 * @param oNumPr {CNumPr}
-	 * @param [bIsSingleLevel] {boolean}
-	 * @returns {Object}
-	 */
-	CNumbering.prototype.GetJSONNumbering = function (oNumPr, bIsSingleLevel)
-	{
-		let oNum = this.GetNum(oNumPr.NumId);
-		if (!oNum)
-			return null;
-
-		return oNum.GetJSONNumbering(bIsSingleLevel, oNumPr.Lvl);
-	}
 
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumbering        = CNumbering;
