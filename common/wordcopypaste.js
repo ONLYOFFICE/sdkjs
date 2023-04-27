@@ -9831,12 +9831,42 @@ PasteProcessor.prototype =
 			return null;
 		};
 
+		let pushMathContent = function (_child) {
+			if (-1 !== _child.nodeValue.indexOf("[if gte msEquation 12]") && !oThis.pasteInExcel && oThis.apiEditor["asc_isSupportFeature"]("ooxml")) {
+				let oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument, null, bPresentation);
+
+				History.TurnOff();
+				let bAddNewParagraph = oThis._parseMathContent(_child, oPar);
+				History.TurnOn();
+
+				if (bAddNewParagraph !== false || !oThis.oCurPar) {
+					let addedPar = oPar.Copy();
+					if (bPresentation) {
+						addedPar.Set_Parent(shape.txBody.content);
+					}
+					oThis.aContent.push(addedPar);
+				} else {
+					for (let i = 0; i < oPar.Content.length; i++) {
+						if (oPar.Content[i] && oPar.Content[i].Get_Type && oPar.Content[i].Get_Type() === para_Math) {
+							let oAddedParaMath = oPar.Content[i].Copy();
+							oAddedParaMath.SetParagraph && oAddedParaMath.SetParagraph(oThis.oCurPar);
+							oThis._CommitElemToParagraph(oAddedParaMath);
+						}
+					}
+				}
+			}
+		};
+
 		var parseChildNodes = function () {
 			var sChildNodeName, bIsBlockChild, value, href, title;
 			if (bPresentation) {
 				sChildNodeName = child.nodeName.toLowerCase();
+
 				if (!(Node.ELEMENT_NODE === nodeType || Node.TEXT_NODE === nodeType) || sChildNodeName === "style" ||
-					sChildNodeName === "#comment" || sChildNodeName === "script") {
+					sChildNodeName === "#comment" || sChildNodeName === "script" /*|| sChildNodeName === "o:p"*/) {
+					if (sChildNodeName === "#comment") {
+						pushMathContent(child);
+					}
 					return;
 				}
 				//попускам элеметы состоящие только из \t,\n,\r
@@ -9926,25 +9956,8 @@ PasteProcessor.prototype =
 							oThis.startMsoAnnotation = true;
 						} else if (oThis.startMsoAnnotation && child.nodeValue === "[endif]") {
 							oThis.startMsoAnnotation = false;
-						} else if (-1 !== child.nodeValue.indexOf("[if gte msEquation 12]") && !oThis.pasteInExcel && oThis.apiEditor["asc_isSupportFeature"]("ooxml")) {
-							//TODO пока только в документы разрешаю вставку математики математику
-							var oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument);
-							//TODO отключаю историю, затем делаю копию. иначе проблемы при сборке. пересмотреть!
-							History.TurnOff();
-							let bAddNewParagraph = oThis._parseMathContent(child, oPar);
-							History.TurnOn();
-
-							if (bAddNewParagraph !== false || !oThis.oCurPar) {
-								oThis.aContent.push(oPar.Copy());
-							} else {
-								for (let i = 0; i < oPar.Content.length; i++) {
-									if (oPar.Content[i] && oPar.Content[i].Get_Type && oPar.Content[i].Get_Type() === para_Math) {
-										let oAddedParaMath = oPar.Content[i].Copy();
-										oAddedParaMath.SetParagraph && oAddedParaMath.SetParagraph(oThis.oCurPar);
-										oThis._CommitElemToParagraph(oAddedParaMath);
-									}
-								}
-							}
+						} else {
+							pushMathContent(child);
 						}
 					}
 					return;
