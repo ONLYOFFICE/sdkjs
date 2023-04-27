@@ -14663,7 +14663,7 @@ CTextPr.prototype.isEqual = function(TextPrOld, TextPrNew)
 	}
 	return true;
 };
-CTextPr.prototype.Is_Equal = function(TextPr, oPr)
+CTextPr.prototype.Is_Equal = function(TextPr)
 {
 	if (!TextPr)
 		return false;
@@ -17504,12 +17504,10 @@ CParaPr.prototype.isEqual = function(ParaPrUOld,ParaPrNew)
 	}
 	return true;
 };
-CParaPr.prototype.Is_Equal = function(ParaPr, oPr)
+CParaPr.prototype.Is_Equal = function(ParaPr)
 {
-	const bIsEqualPreviewPreset = !!(oPr && (oPr.isSingleLvlPreviewPreset || oPr.isMultiLvlPreviewPreset));
-
 	return !(this.ContextualSpacing !== ParaPr.ContextualSpacing
-		|| true !== (IsEqualStyleObjects(this.Ind, ParaPr.Ind) || bIsEqualPreviewPreset)
+		|| true !== IsEqualStyleObjects(this.Ind, ParaPr.Ind)
 		|| this.Jc !== ParaPr.Jc
 		|| this.KeepLines !== ParaPr.KeepLines
 		|| this.KeepNext !== ParaPr.KeepNext
@@ -17522,7 +17520,7 @@ CParaPr.prototype.Is_Equal = function(ParaPr, oPr)
 		|| true !== IsEqualStyleObjects(this.Brd.Right, ParaPr.Brd.Right)
 		|| true !== IsEqualStyleObjects(this.Brd.Top, ParaPr.Brd.Top)
 		|| this.WidowControl !== ParaPr.WidowControl
-		|| true !== (IsEqualStyleObjects(this.Tabs, ParaPr.Tabs) || bIsEqualPreviewPreset)
+		|| true !== IsEqualStyleObjects(this.Tabs, ParaPr.Tabs)
 		|| true !== IsEqualStyleObjects(this.NumPr, ParaPr.NumPr)
 		|| this.PStyle !== ParaPr.PStyle
 		|| true !== IsEqualStyleObjects(this.FramePr, ParaPr.FramePr)

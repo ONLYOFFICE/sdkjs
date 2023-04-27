@@ -219,53 +219,6 @@ CNumberingLvl.prototype.IsLegalStyle = function()
 {
 	return this.IsLgl;
 };
-
-CNumberingLvl.prototype.IsEqualPreview = function(oLvl, oPr)
-{
-	if (this.Format !== oLvl.Format)
-		return false;
-
-	if (this.LvlText.length !== oLvl.LvlText.length)
-		return false;
-
-	for (let nLvlTextIndex = 0; nLvlTextIndex < this.LvlText.length; nLvlTextIndex += 1)
-	{
-		const oCurrentTextElement = this.LvlText[nLvlTextIndex];
-		const oCompareTextElement = oLvl.LvlText[nLvlTextIndex];
-
-		if (!oCurrentTextElement.IsEqual(oCompareTextElement, oPr))
-			return false;
-	}
-
-	if (this.Jc !== oLvl.Jc)
-		return false;
-
-	if (this.Suff !== oLvl.Suff)
-		return false;
-	if (oPr.isMultiLvlPreviewPreset)
-	{
-		const nCurNumberPosition = this.GetNumberPosition() - oPr.isMultiLvlPreviewPreset.paragraphInd.numberPosition;
-		const nCompareNumberPosition = oLvl.GetNumberPosition() - oPr.isMultiLvlPreviewPreset.jsonInd.numberPosition;
-		if (!AscFormat.fApproxEqual(nCurNumberPosition - nCompareNumberPosition, 0, 0.1))
-		{
-			return false;
-		}
-
-		const nCurIndentSize = this.GetIndentSize() - oPr.isMultiLvlPreviewPreset.paragraphInd.indentSize;
-		const nCompareIndentSize = oLvl.GetIndentSize() - oPr.isMultiLvlPreviewPreset.jsonInd.indentSize;
-		if (!AscFormat.fApproxEqual(nCurIndentSize - nCompareIndentSize, 0, 0.1))
-		{
-			return false;
-		}
-	}
-	if (!this.TextPr.Is_Equal(oLvl.TextPr, oPr))
-		return false;
-
-	if (!this.ParaPr.Is_Equal(oLvl.ParaPr, oPr))
-		return false;
-
-	return true;
-}
 /**
  * Выставляем значения по умолчанию для заданного уровня
  * @param iLvl {number} 0..8

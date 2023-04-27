@@ -167,6 +167,38 @@
 		
 		return true;
 	};
+	CNumInfo.prototype.CompareWithNum = function(num, iLvl)
+	{
+		if (!num)
+			return false;
+		
+		if (null !== iLvl && undefined !== iLvl && -1 !== iLvl)
+		{
+			if (!this.Lvl.length || !this.Lvl[0])
+				return false;
+			
+			let numLvl = AscWord.CNumberingLvl.FromJson(this.Lvl[0]);
+			numLvl.ResetNumberedText(iLvl);
+			return numLvl.IsSimilar(num.GetLvl(iLvl));
+		}
+		else
+		{
+			if (this.Lvl.length < 9)
+				return false;
+			
+			for (let iLvl = 0; iLvl < 9; ++iLvl)
+			{
+				if (!this.Lvl[iLvl])
+					return false;
+				
+				let numLvl = AscWord.CNumberingLvl.FromJson(this.Lvl[iLvl]);
+				if (!numLvl.IsEqual(num.GetLvl(iLvl)))
+					return false;
+			}
+			
+			return true;
+		}
+	};
 	CNumInfo.prototype.IsNumbered = function()
 	{
 		return this.Type === Asc.c_oAscJSONNumberingType.Number;
@@ -178,6 +210,10 @@
 	CNumInfo.prototype.IsHeadings = function()
 	{
 		return this.Headings;
+	};
+	CNumInfo.prototype.IsRemove = function()
+	{
+		return this.Type === Asc.c_oAscJSONNumberingType.Remove;
 	};
 	CNumInfo.prototype.HaveLvl = function()
 	{

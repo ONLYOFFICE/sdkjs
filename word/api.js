@@ -4173,12 +4173,23 @@ background-repeat: no-repeat;\
 		
 		return numInfo1.IsEqual(numInfo2);
 	};
-	asc_docs_api.prototype.asc_IsCurrentNumberingPreset = function (oJSON, bIsSingleNumbering)
+	asc_docs_api.prototype.asc_IsCurrentNumberingPreset = function(value, singleLevel)
 	{
-		const oLogicDocument = this.private_GetLogicDocument();
-		return !!(oLogicDocument && oLogicDocument.IsCurrentNumberingPreset(oJSON, bIsSingleNumbering));
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		let numInfo = AscWord.CNumInfo.Parse(value);
+		if (!numInfo)
+			return false;
+		
+		let numPr = logicDocument.GetSelectedNum(true);
+		if (!numPr || !numPr.IsValid())
+			return numInfo.IsRemove();
+		
+		let num = logicDocument.GetNumbering().GetNum(numPr.NumId);
+		return numInfo.CompareWithNum(num, singleLevel ? numPr.Lvl : undefined);
 	};
-
 	asc_docs_api.prototype.asc_GetCurrentNumberingJson = function(singleLevel)
 	{
 		let logicDocument = this.private_GetLogicDocument();
