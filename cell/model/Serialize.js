@@ -8503,7 +8503,7 @@
             } else if (c_oSerUserProtectedRange.Sqref === type) {
                 var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2(length));
                 if (range) {
-                    oUserProtectedRange.ref = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
+                    oUserProtectedRange.ref = range.clone();
                 }
             } else if (c_oSerUserProtectedRange.Text === type) {
                 oUserProtectedRange.warningText = this.stream.GetString2(length);
