@@ -15001,15 +15001,23 @@
 		});
 		History.EndTransaction();
 	};
-	Range.prototype.setValue2=function(array){
+	Range.prototype.setValue2=function(array, pushOnlyFirstMergedCell){
 		History.Create_NewPoint();
 		History.StartTransaction();
 		//[{"text":"qwe","format":{"b":true, "i":false, "u":Asc.EUnderline.underlineNone, "s":false, "fn":"Arial", "fs": 12, "c": 0xff00ff, "va": "subscript"  }},{}...]
 		/*
 		 Устанавливаем значение в Range ячеек. В отличае от setValue, сюда мы попадаем только в случае ввода значения отличного от формулы. Таким образом, если в ячейке была формула, то для нее в графе очищается список ячеек от которых зависела. После чего выставляем флаг о необходимости пересчета.
 		 */
+		let t = this;
 		this._foreach(function(cell){
-			cell.setValue2(array);
+			if (pushOnlyFirstMergedCell) {
+				let merged = t.worksheet.getMergedByCell(cell.nRow, cell.nCol);
+				if (!merged || (merged && merged.r1 === cell.nRow && merged.c1 === cell.nCol)) {
+					cell.setValue2(array);
+				}
+			} else {
+				cell.setValue2(array);
+			}
 			// if(cell.isEmpty())
 			// cell.Remove();
 		});

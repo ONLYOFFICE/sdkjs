@@ -17258,7 +17258,7 @@
 		} else {
 			//***array-formula***
 			changeRangesIfArrayFormula();
-			c.setValue2(val);
+			c.setValue2(val, true);
 
 			// Вызываем функцию пересчета для заголовков форматированной таблицы
 			this.model.checkChangeTablesContent(bbox);
