@@ -1798,7 +1798,7 @@ function CHorRuler()
         }
         if (true === word_control.m_oApi.isInkDrawerOn())
         {
-			word_control.m_oApi.asc_StopInkDrawer();
+			word_control.m_oApi.stopInkDrawer();
         }
 
         AscCommon.check_MouseDownEvent(e, true);
@@ -3522,7 +3522,7 @@ function CVerRuler()
 		}
 		if (true === word_control.m_oApi.isInkDrawerOn())
 		{
-			word_control.m_oApi.asc_StopInkDrawer();
+			word_control.m_oApi.stopInkDrawer();
 		}
 
         AscCommon.check_MouseDownEvent(e, true);

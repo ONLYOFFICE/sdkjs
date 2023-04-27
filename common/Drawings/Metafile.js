@@ -2487,6 +2487,8 @@
 			// 2 - ComboBox/DropDownList
 			// 3 - CheckBox/RadioButton
 			// 4 - Picture
+			// 5 - Signature
+			// 6 - DateTime
 
 			if (oForm.IsTextForm())
 			{
@@ -2502,7 +2504,7 @@
 					this.Memory.WriteLong(oTextFormPr.MaxCharacters);
 				}
 
-				let sValue = oForm.GetSelectedText(true);
+				let sValue = oForm.GetSelectedText(true, false, {NewLine : true});
 				if (sValue)
 				{
 					nFlag |= (1 << 22);
@@ -2681,6 +2683,32 @@
 						nFlag |= (1 << 22);
 						this.Memory.WriteString(src);
 					}
+				}
+			}
+			else if (oForm.IsDatePicker())
+			{
+				this.Memory.WriteLong(6);
+				let dateTimePr = oForm.GetDatePickerPr();
+				
+				let value = oForm.GetSelectedText(true, false, {NewLine : true});
+				if (value)
+				{
+					nFlag |= (1 << 22);
+					this.Memory.WriteString(value);
+				}
+				
+				let placeholderText = oForm.GetPlaceholderText();
+				if (placeholderText)
+				{
+					nFlag |= (1 << 25);
+					this.Memory.WriteString(placeholderText);
+				}
+
+				let dateFormat = dateTimePr.GetDateFormat();
+				if (dateFormat)
+				{
+					nFlag |= (1 << 26);
+					this.Memory.WriteString(dateFormat);
 				}
 			}
 			else

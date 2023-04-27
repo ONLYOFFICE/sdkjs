@@ -2419,13 +2419,6 @@ function CEditorPage(api)
 			}
 		}
 
-		oWordControl.StartUpdateOverlay();
-
-		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseMove_Drawing(pos);
-		if (is_drawing === true)
-			return;
-
-
 		if(oThis.m_oApi.isEyedropperStarted())
 		{
 			let oMainPos = oWordControl.m_oMainParent.AbsolutePosition;
@@ -2444,11 +2437,16 @@ function CEditorPage(api)
 			MMData.Type = Asc.c_oAscMouseMoveDataTypes.Eyedropper;
 			oWordControl.m_oDrawingDocument.SetCursorType("eyedropper", MMData);
 			oThis.m_oApi.sync_MouseMoveEndCallback();
+			return;
 		}
-		else
-		{
-			oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
-		}
+
+		oWordControl.StartUpdateOverlay();
+		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseMove_Drawing(pos);
+		if (is_drawing === true)
+			return;
+
+		oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
+
 		oWordControl.EndUpdateOverlay();
 	};
 	this.onMouseMove2 = function()

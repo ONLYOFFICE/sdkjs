@@ -45,7 +45,7 @@
     AscCommon.randomBytes = function(count)
     {
         var array = new Uint8Array(count);
-        if (window.crypto || window.crypto.getRandomValues)
+        if (window.crypto && window.crypto.getRandomValues)
             window.crypto.getRandomValues(array);
         else
         {

@@ -1764,12 +1764,6 @@ function CEditorPage(api)
 			return;
 		}
 
-		oWordControl.StartUpdateOverlay();
-		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseMove_Drawing(pos, e === undefined ? true : false);
-		if (is_drawing === true)
-			return;
-
-		oWordControl.m_oDrawingDocument.TableOutlineDr.bIsNoTable = true;
 		if(oThis.m_oApi.isEyedropperStarted())
 		{
 			let oParentPos = oWordControl.m_oMainView.AbsolutePosition;
@@ -1787,11 +1781,15 @@ function CEditorPage(api)
 			MMData.Type = Asc.c_oAscMouseMoveDataTypes.Eyedropper;
 			oWordControl.m_oDrawingDocument.SetCursorType("eyedropper", MMData);
 			oThis.m_oApi.sync_MouseMoveEndCallback();
+			return;
 		}
-		else
-		{
-			oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
-		}
+		oWordControl.StartUpdateOverlay();
+		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseMove_Drawing(pos, e === undefined ? true : false);
+		if (is_drawing === true)
+			return;
+
+		oWordControl.m_oDrawingDocument.TableOutlineDr.bIsNoTable = true;
+		oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
 
 		if (oWordControl.m_oDrawingDocument.TableOutlineDr.bIsNoTable === false)
 		{

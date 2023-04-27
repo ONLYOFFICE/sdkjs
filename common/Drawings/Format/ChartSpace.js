@@ -5474,24 +5474,25 @@ function(window, undefined) {
 							union_marker.marker = AscFormat.CreateMarkerGeometryByType(AscFormat.SYMBOL_SQUARE);
 							union_marker.marker.pen = ser.compiledSeriesPen;
 							union_marker.marker.brush = ser.compiledSeriesBrush;
-							break;
 						}
-						if(ser.compiledSeriesMarker) {
-							var pts = ser.getNumPts();
-							union_marker.marker = AscFormat.CreateMarkerGeometryByType(ser.compiledSeriesMarker.symbol);
-							if(pts[0] && pts[0].compiledMarker) {
-								union_marker.marker.brush = pts[0].compiledMarker.brush;
-								union_marker.marker.pen = pts[0].compiledMarker.pen;
+						else {
+							if(ser.compiledSeriesMarker) {
+								var pts = ser.getNumPts();
+								union_marker.marker = AscFormat.CreateMarkerGeometryByType(ser.compiledSeriesMarker.symbol);
+								if(pts[0] && pts[0].compiledMarker) {
+									union_marker.marker.brush = pts[0].compiledMarker.brush;
+									union_marker.marker.pen = pts[0].compiledMarker.pen;
 
+								}
+							}
+							if(ser.compiledSeriesPen && !b_scatter_no_line) {
+								union_marker.lineMarker = AscFormat.CreateMarkerGeometryByType(AscFormat.SYMBOL_DASH);
+								union_marker.lineMarker.pen = ser.compiledSeriesPen.createDuplicate(); //Копируем, так как потом возможно придется изменять толщину линии;
+							}
+							if(!b_scatter_no_line && !AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(this)) {
+								b_line_series = true;
 							}
 						}
-
-						if(ser.compiledSeriesPen && !b_scatter_no_line) {
-							union_marker.lineMarker = AscFormat.CreateMarkerGeometryByType(AscFormat.SYMBOL_DASH);
-							union_marker.lineMarker.pen = ser.compiledSeriesPen.createDuplicate(); //Копируем, так как потом возможно придется изменять толщину линии;
-						}
-						if(!b_scatter_no_line && !AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(this))
-							b_line_series = true;
 					}
 					if(union_marker.marker) {
 						union_marker.marker.pen && union_marker.marker.pen.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA, this.clrMapOvr);

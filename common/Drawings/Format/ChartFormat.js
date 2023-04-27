@@ -2278,7 +2278,7 @@
                     let aParagraphs = oTxBody.content.Content;
                     for(let nPara = 0; nPara < aParagraphs.length; ++nPara) {
                         let oParagraph = aParagraphs[nPara];
-                        oParagraph.Clear_TextFormatting();
+                        oParagraph.Clear_TextFormatting(true);
                         if(oParagraph.Pr && oParagraph.Pr.DefaultRunPr) {
                             let oCopyPr = oParagraph.Pr.Copy();
                             oCopyPr.DefaultRunPr = undefined;
@@ -5556,6 +5556,7 @@
 		}
 		oRadarChart.mergeWithoutSeries(oOldChart);
 		oRadarChart.setRadarStyle(nRadarStyle);
+        oRadarChart.setVaryColors(false);
 		var nSeries, oSeries;
 		for(nSeries = 0; nSeries < aSeries.length; ++nSeries) {
 			oSeries = new AscFormat.CRadarSeries();
@@ -5582,7 +5583,7 @@
 			}
 		}
 		const aSeries = this.getAllSeries();
-		const aAxes = this.createRegularAxes(this.getAxisNumFormatByType(nType, aSeries), false);
+		const aAxes = this.createRadarAxes(this.getAxisNumFormatByType(nType, aSeries), false);
 		const oRadarChart = this.createRadarChart(nType, aSeries, aAxes, this.charts[0]);
 		oRadarChart.addAxes(aAxes);
 		this.addChartWithAxes(oRadarChart);
@@ -5988,8 +5989,27 @@
         return [oCatAx, oValAx];
     };
 	CPlotArea.prototype.createRadarAxes = function(sNewNumFormat, bSecondary) {
+
+        const oCurAxes = this.getAxisByTypes();
 		const aAxes = this.createRegularAxes(sNewNumFormat, false);
-		return aAxes;
+        const oValAx = aAxes[1];
+        if(oValAx) {
+            if(oValAx.crossBetween !== AscFormat.CROSS_BETWEEN_BETWEEN) {
+                oValAx.setCrossBetween(AscFormat.CROSS_BETWEEN_BETWEEN);
+            }
+            if(bSecondary) {
+                const oOldValAx = oCurAxes.valAx[0];
+                if(oOldValAx) {
+                    const aCharts = this.getChartsForAxis(oOldValAx);
+                    const oChart = aCharts[0];
+                    if(oChart && oChart.getObjectType() === AscDFH.historyitem_type_RadarChart) {
+                        oValAx.setMajorGridlines(null);
+                        oValAx.setMinorGridlines(null);
+                    }
+                }
+            }
+        }
+        return aAxes;
 	};
     CPlotArea.prototype.createRegularAxes = function(sNewNumFormat, bSecondary, bArea) {
         var aRegAxes = this.createCatValAxes(sNewNumFormat);
@@ -7739,6 +7759,8 @@
         }
     };
     CAxisBase.prototype.setGridlinesSetting = function(gridinesSettings) {
+        let bSetMajor = false;
+        let bSetMinor = false;
         switch(gridinesSettings) {
             case Asc.c_oAscGridLinesSettings.none:
             {
@@ -7754,6 +7776,7 @@
             {
                 if(!this.majorGridlines) {
                     this.setMajorGridlines(new AscFormat.CSpPr());
+                    bSetMajor = true;
                 }
                 if(this.minorGridlines) {
                     this.setMinorGridlines(null);
@@ -7764,6 +7787,7 @@
             {
                 if(!this.minorGridlines) {
                     this.setMinorGridlines(new AscFormat.CSpPr());
+                    bSetMinor = true;
                 }
                 if(this.majorGridlines) {
                     this.setMajorGridlines(null);
@@ -7774,11 +7798,21 @@
             {
                 if(!this.minorGridlines) {
                     this.setMinorGridlines(new AscFormat.CSpPr());
+                    bSetMinor = true;
                 }
                 if(!this.majorGridlines) {
                     this.setMajorGridlines(new AscFormat.CSpPr());
+                    bSetMajor = true;
                 }
                 break;
+            }
+        }
+        if(bSetMajor || bSetMinor) {
+            const oChartSpace = this.getChartSpace();
+            if(oChartSpace) {
+                let oSpPr = this.spPr;
+                oChartSpace.checkElementChartStyle(this);
+                this.setSpPr(oSpPr);
             }
         }
     };
@@ -8656,7 +8690,7 @@
                     bChanged = true;
                 }
             }
-            else if(!props.logBase && scaling.logBase !== null) {
+            else if(!props.logScale && scaling.logBase !== null) {
                 scaling.setLogBase(null);
                 bChanged = true;
             }

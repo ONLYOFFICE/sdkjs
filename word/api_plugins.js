@@ -1183,22 +1183,7 @@
 		if (!logicDocument)
 			return "";
 		
-		let direction = 0;
-		switch (AscBuilder.GetStringParameter(type, "entirely"))
-		{
-			case "beforeCursor":
-				direction = -1;
-				break;
-			case "afterCursor":
-				direction = 1;
-				break;
-			case "entirely":
-			default:
-				direction = 0;
-				break;
-		}
-		
-		return logicDocument.GetCurrentWord(direction);
+		return logicDocument.GetCurrentWord(private_GetTextDirection(type));
 	};
 	/**
 	 * Get the current word
@@ -1219,39 +1204,47 @@
 		if (!logicDocument || null === _replaceString)
 			return;
 		
-		let direction = 0;
-		switch (AscBuilder.GetStringParameter(type, "entirely"))
-		{
-			case "beforeCursor":
-				direction = -1;
-				break;
-			case "afterCursor":
-				direction = 1;
-				break;
-			case "entirely":
-			default:
-				direction = 0;
-				break;
-		}
-		
-		logicDocument.ReplaceCurrentWord(direction, _replaceString);
+		logicDocument.ReplaceCurrentWord(private_GetTextDirection(type), _replaceString);
 	};
 	/**
 	 * Get the current sentence
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias GetCurrentSentence
+	 * @param {TextPartType} [type="entirely"]
 	 * @since 7.4.0
 	 * @example
 	 * window.Asc.plugin.executeMethod("GetCurrentSentence");
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_GetCurrentSentence"] = function()
+	window["asc_docs_api"].prototype["pluginMethod_GetCurrentSentence"] = function(type)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return "";
 		
-		return logicDocument.GetCurrentSentence();
+		return logicDocument.GetCurrentSentence(private_GetTextDirection(type));
+	};
+	/**
+	 * Get the current sentence
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias ReplaceCurrentSentence
+	 * @param {string} replaceString
+	 * @param {TextPartType} [type="entirely"]
+	 * @since 7.4.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("ReplaceCurrentSentence");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentSentence"] = function(replaceString, type)
+	{
+		let _replaceString = "" === replaceString ? "" : AscBuilder.GetStringParameter(replaceString, null);
+		
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || null === _replaceString)
+			return;
+
+		
+		return logicDocument.ReplaceCurrentSentence(private_GetTextDirection(type), _replaceString);
 	};
 
 	function private_ReadContentControlCommonPr(commonPr)
@@ -1278,5 +1271,23 @@
 
 		return resultPr;
 	}
-
+	function private_GetTextDirection(type)
+	{
+		let direction = 0;
+		switch (AscBuilder.GetStringParameter(type, "entirely"))
+		{
+			case "beforeCursor":
+				direction = -1;
+				break;
+			case "afterCursor":
+				direction = 1;
+				break;
+			case "entirely":
+			default:
+				direction = 0;
+				break;
+		}
+		return direction;
+	}
+	
 })(window);

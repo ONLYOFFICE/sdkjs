@@ -575,7 +575,7 @@ window.startPluginApi = function() {
      * @param {boolean} isCalc - Defines whether the document will be recalculated or not.
 	 * The *true* value is used to recalculate the document after executing the function in the *func* parameter.
 	 * The *false* value will not recalculate the document (use it only when your edits surely will not require document recalculation).
-	 * @param {Function} callback - The result that the method returns.
+	 * @param {Function} callback - The result that the method returns (only js standart types available (any objects will be replaced by undefined)).
 	 */
 	Plugin.callCommand = function(func, isClose, isCalc, callback)
     {

@@ -6017,6 +6017,9 @@
 			if (this.isPlaceholder()) {
 				return false;
 			}
+			if(this.isForm()) {
+				return false;
+			}
 			if (this.signatureLine) {
 				return false;
 			}

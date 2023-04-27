@@ -425,6 +425,18 @@ var lcid_iuLatn = 0x7c5d; // Inuktitut, Latin
 var lcid_tzmLatn = 0x7c5f; // Central Atlas Tamazight, Latin
 var lcid_haLatn = 0x7c68; // Hausa, Latin
 
+//Defines are only allowed in the global scope.
+//https://github.com/google/closure-compiler/wiki/Annotating-JavaScript-for-the-Closure-Compiler#define-type-description
+window['AscCommon'] = window.AscCommon = window['AscCommon'] || {};
+/** @define {string} */
+window.AscCommon.g_cCompanyName  = "onlyoffice";
+/** @define {string} */
+window.AscCommon.g_cProductVersion  = "0.0.0";
+/** @define {string} */
+window.AscCommon.g_cBuildNumber = "0";
+/** @define {string} */
+window.AscCommon.g_cIsBeta = "false";
+
 (/**
  * @param {Window} window
  * @param {undefined} undefined

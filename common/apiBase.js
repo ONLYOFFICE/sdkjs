@@ -182,7 +182,8 @@
 
 		this.pluginsManager = null;
 
-		this.isLockTargetUpdate = false;
+		this.isLockTargetUpdate   = false;
+		this.isLockScrollToTarget = false;
 
 		this.lastWorkTime = 0;
 
@@ -586,6 +587,10 @@
 	{
 		this.isLockTargetUpdate = isLock;
 	};
+	baseEditorsApi.prototype.asc_LockScrollToTarget          = function(isLock)
+	{
+		this.isLockScrollToTarget = isLock;
+	};
 	// Просмотр PDF
 	baseEditorsApi.prototype.isPdfViewer                     = function()
 	{
@@ -852,12 +857,16 @@
 		}
 	};
 
-	baseEditorsApi.prototype.asc_SaveDrawingAsPicture = function()
+	baseEditorsApi.prototype.asc_SaveDrawingAsPicture = function(sFormat)
 	{
 		let oController = this.getGraphicController();
 		if(oController)
 		{
-			let oImageData = oController.getImageDataForSaving();
+			let sImageFormat = "image/png";
+			if(sFormat === "jpg" || sFormat === "jpeg") {
+				sImageFormat = "image/jpeg";
+			}
+			let oImageData = oController.getImageDataForSaving(true, sImageFormat);
 			if(oImageData)
 			{
 				let a = document.createElement("a");
@@ -3824,6 +3833,9 @@
     	if (!this.asc_canPaste())
     		return;
 
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
+			return;
+
     	this._beforeEvalCommand();
 		this.macros.runAuto();
 		this._afterEvalCommand(undefined);
@@ -3838,6 +3850,9 @@
 
     	if (!this.asc_canPaste())
     		return;
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
+			return;
 
     	this._beforeEvalCommand();
 		this.macros.run(sGuid);
@@ -4213,7 +4228,7 @@
 	//---------------------------------------------------------version----------------------------------------------------
 	baseEditorsApi.prototype["GetVersion"] = baseEditorsApi.prototype.GetVersion = function()
 	{
-		this.versionSdk = "@@Version";
+		this.versionSdk = AscCommon.g_cProductVersion;
 		return (this.versionSdk === "0.0.0" || this.versionSdk.substr(2) === "Version") ? "develop" : this.versionSdk;
 	};
 	//----------------------------------------------------------addons----------------------------------------------------
@@ -4520,6 +4535,9 @@
 		this.inkDrawer.startErase();
 	};
 	baseEditorsApi.prototype.asc_StopInkDrawer = function() {
+		this.stopInkDrawer();
+	};
+	baseEditorsApi.prototype.stopInkDrawer = function() {
 		this.inkDrawer.turnOff();
 	};
 	baseEditorsApi.prototype.onInkDrawerChangeState = function() {

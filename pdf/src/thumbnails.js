@@ -951,11 +951,11 @@
 
         for (var blockNum = 0, blocksCount = this.blocks.length; blockNum < blocksCount; blockNum++)
         {
-            block = this.blocks[blockNum];
+            var block = this.blocks[blockNum];
 
             for (var pageNum = 0, pagesCount = block.pages.length; pageNum < pagesCount; pageNum++)
             {
-                drPage = block.pages[pageNum];
+                var drPage = block.pages[pageNum];
                 if (drPage.page.image)
                 {
                     drPage.page.image = null;
@@ -972,4 +972,5 @@
     prot["setZoom"] = prot.setZoom;
     prot["resize"] = prot.resize;
     prot["setEnabled"] = prot.setEnabled;
+    prot["registerEvent"] = prot.registerEvent;
 })();

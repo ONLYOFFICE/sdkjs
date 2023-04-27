@@ -158,13 +158,13 @@ $(function () {
 		logicDocument.AddToContent(0, p);
 		logicDocument.MoveCursorToEndPos();
 		
-		AscTest.SetFillingFormMode();
-
 		let textForm = logicDocument.AddContentControlTextForm();
 		AddFormPr(textForm);
 
 		let textFormPr = textForm.GetTextFormPr();
 		textFormPr.SetDigitFormat();
+		
+		AscTest.SetFillingFormMode();
 
 		textForm.SetThisElementCurrent();
 		textForm.MoveCursorToStartPos();

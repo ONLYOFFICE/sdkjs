@@ -5518,6 +5518,7 @@ PasteProcessor.prototype =
 					
 					var copyObj = drawing.getWordTable();
 					if(copyObj) {
+						copyObj.Set_Inline && copyObj.Set_Inline(true);
 						copyObj.Set_Parent(this.oDocument);
 						aContent[aContent.length] = copyObj;
 						drawing.getAllFonts(font_map);
@@ -5731,36 +5732,39 @@ PasteProcessor.prototype =
 				var align = range.getAlign();
 				var textAngle = align ? align.getAngle() : null;
 				if (textAngle === 90) {
-					oCurCell.Pr.TextDirection = c_oAscCellTextDirection.BTLR;
+					oCurCell.Set_TextDirection(c_oAscCellTextDirection.BTLR);
 				} else if (textAngle === -90) {
-					oCurCell.Pr.TextDirection = c_oAscCellTextDirection.TBRL;
+					oCurCell.Set_TextDirection(c_oAscCellTextDirection.TBRL);
 				}
 
 				var vAlign = align ? align.getAlignVertical() : null;
 				switch (vAlign) {
 					case Asc.c_oAscVAlign.Bottom:
-						oCurCell.Pr.VAlign = vertalignjc_Bottom;
+						oCurCell.Set_VAlign(vertalignjc_Bottom);
 						break;
 					case Asc.c_oAscVAlign.Center:
 					case Asc.c_oAscVAlign.Dist:
 					case Asc.c_oAscVAlign.Just:
-						oCurCell.Pr.VAlign = vertalignjc_Center;
+						oCurCell.Set_VAlign(vertalignjc_Center);
 						break;
 					case Asc.c_oAscVAlign.Top:
-						oCurCell.Pr.VAlign = vertalignjc_Top;
+						oCurCell.Set_VAlign(vertalignjc_Top);
 						break;
 				}
 
 
-				var oCurPar = oCurCell.Content.Content[0];
+				var oCurPar = oCurCell.GetContent().GetElement(0);
+				if (!oCurPar || !oCurPar.IsParagraph())
+					continue;
+				
 				if (align) {
 					var type = range.getType();
 					if (null != align.hor) {
-						oCurPar.Pr.Jc = align.hor;
+						oCurPar.SetParagraphAlign(align.hor);
 					} else if (AscCommon.CellValueType.Number === type) {
 						//для пустого текста, даже если тип соответсвующий, не проставляю выравнивание
 						if (!range.isEmptyTextString()) {
-							oCurPar.Pr.Jc = AscCommon.align_Right;
+							oCurPar.SetParagraphAlign(AscCommon.align_Right);
 						}
 					}
 				}
@@ -5769,8 +5773,7 @@ PasteProcessor.prototype =
 				var oCurHyperlink = null;
 				if (hyperLink) {
 					oCurHyperlink = new ParaHyperlink();
-					oCurHyperlink.SetParagraph(this.oCurPar);
-					oCurHyperlink.Set_Value(hyperLink.Hyperlink);
+					oCurHyperlink.SetValue(hyperLink.Hyperlink);
 					if (hyperLink.Tooltip) {
 						oCurHyperlink.SetToolTip(hyperLink.Tooltip);
 					}
@@ -5778,14 +5781,14 @@ PasteProcessor.prototype =
 
 				var value2 = range.getValue2();
 				for (var n = 0; n < value2.length; n++) {
-					var oCurRun = new ParaRun(oCurPar);
+					const oCurRun = new AscWord.CRun(oCurPar);
 					var format = value2[n].format;
 
 					//***text property***
-					oCurRun.Pr.Bold = format.getBold();
+					oCurRun.SetBold(format.getBold());
 					var fc = format.getColor();
 					if (fc) {
-						oCurRun.Pr.Color = new CDocumentColor(fc.getR(), fc.getG(), fc.getB());
+						oCurRun.SetColor(new CDocumentColor(fc.getR(), fc.getG(), fc.getB()));
 					}
 
 					//font
@@ -5794,50 +5797,37 @@ PasteProcessor.prototype =
 					oCurRun.Pr.FontFamily = font_family;
 					var oFontItem = this.oFonts[font_family];
 					if (null != oFontItem && null != oFontItem.Name) {
-						oCurRun.Pr.RFonts.Ascii = {Name: oFontItem.Name, Index: oFontItem.Index};
-						oCurRun.Pr.RFonts.HAnsi = {Name: oFontItem.Name, Index: oFontItem.Index};
-						oCurRun.Pr.RFonts.CS = {Name: oFontItem.Name, Index: oFontItem.Index};
-						oCurRun.Pr.RFonts.EastAsia = {Name: oFontItem.Name, Index: oFontItem.Index};
+						oCurRun.SetRFontsAscii({Name: oFontItem.Name, Index: oFontItem.Index});
+						oCurRun.SetRFontsHAnsi({Name: oFontItem.Name, Index: oFontItem.Index});
+						oCurRun.SetRFontsCS({Name: oFontItem.Name, Index: oFontItem.Index});
+						oCurRun.SetRFontsEastAsia({Name: oFontItem.Name, Index: oFontItem.Index});
 					}
 
-					oCurRun.Pr.FontSize = format.getSize();
-					oCurRun.Pr.Italic = format.getItalic();
-					oCurRun.Pr.Strikeout = format.getStrikeout();
-					oCurRun.Pr.Underline = format.getUnderline() !== 2;
-					oCurRun.Pr.VertAlign = format.va;
+					oCurRun.SetFontSize(format.getSize());
+					oCurRun.SetItalic(format.getItalic());
+					oCurRun.SetStrikeout(format.getStrikeout());
+					oCurRun.SetUnderline(format.getUnderline() !== 2);
+					oCurRun.SetVertAlign(format.va);
 
 					//text
 					if (true === format.skip || true === format.repeat) {
 						oCurRun.AddToContent(-1, new AscWord.CRunSpace(), false);
 					} else {
-						var value = value2[n].text;
-						for (var oIterator = value.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
-							var nUnicode = oIterator.value();
-
-							var Item;
-							if (0x0A === nUnicode || 0x0D === nUnicode) {
-								Item = new AscWord.CRunBreak(AscWord.break_Line);
-							} else if (0x20 !== nUnicode && 0xA0 !== nUnicode && 0x2009 !== nUnicode) {
-								Item = new AscWord.CRunText(nUnicode);
-							} else {
-								Item = new AscWord.CRunSpace();
-							}
-
-							//add text
-							oCurRun.AddToContent(-1, Item, false);
-						}
+						AscWord.TextToRunElements(value2[n].text, function(runElement) {
+							oCurRun.AddToContent(-1, runElement, false);
+						});
 					}
 
 					//add run
 					if (oCurHyperlink) {
-						oCurHyperlink.Add_ToContent(n, oCurRun, false);
+						oCurHyperlink.AddToContent(n, oCurRun, false);
 					} else {
-						oCurPar.Internal_Content_Add(n, oCurRun, false);
+						oCurPar.AddToContent(n, oCurRun, false);
 					}
 				}
 
 				if (oCurHyperlink) {
-					oCurPar.Internal_Content_Add(n, oCurHyperlink, false);
+					oCurPar.AddToContent(n, oCurHyperlink, false);
 				}
 
 				j = j + gridSpan - 1;
@@ -7814,6 +7804,10 @@ PasteProcessor.prototype =
 			res = this.oLogicDocument.GetNumbering().CreateNum();
 			for (var i = 1; i < aNumbering.length; i++) {
 				var curNumbering = aNumbering[i];
+				if (!curNumbering) {
+					continue;
+				}
+
 				var sType = curNumbering["mso-level-number-format"];
 
 				var nType = Asc.c_oAscNumberingFormat.None;
@@ -8383,7 +8377,7 @@ PasteProcessor.prototype =
 		var nAllSum = 0;
 		var oRowSpans = {};
 		var columnSize;
-		if (!bPresentation && ((!window["Asc"] || (window["Asc"] && window["Asc"]["editor"] === undefined))) && this.oLogicDocument) {
+		if (!bPresentation && ((!window["Asc"] || !(Asc["editor"] && Asc["editor"].wb))) && this.oLogicDocument) {
 			columnSize = this.oLogicDocument.GetColumnSize();
 		}
 		var fParseSpans = function () {
@@ -9837,12 +9831,45 @@ PasteProcessor.prototype =
 			return null;
 		};
 
+		let pushMathContent = function (_child) {
+			if (-1 !== _child.nodeValue.indexOf("[if gte msEquation 12]") && !oThis.pasteInExcel && oThis.apiEditor["asc_isSupportFeature"]("ooxml")) {
+				let oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument, bPresentation ? oShapeContent : null, bPresentation);
+
+				History.TurnOff();
+				let bAddNewParagraph = oThis._parseMathContent(_child, oPar);
+				History.TurnOn();
+
+				if (bAddNewParagraph !== false || !oThis.oCurPar || bPresentation) {
+					let addedPar = oPar.Copy();
+					if (bPresentation) {
+						oShapeContent.Internal_Content_Add(oShapeContent.Content.length, addedPar);
+						addedPar.CorrectContent();
+						addedPar.CheckParaEnd();
+					} else {
+						oThis.aContent.push(addedPar);
+					}
+				} else {
+					for (let i = 0; i < oPar.Content.length; i++) {
+						if (oPar.Content[i] && oPar.Content[i].Get_Type && oPar.Content[i].Get_Type() === para_Math) {
+							let oAddedParaMath = oPar.Content[i].Copy();
+							oAddedParaMath.SetParagraph && oAddedParaMath.SetParagraph(oThis.oCurPar);
+							oThis._CommitElemToParagraph(oAddedParaMath);
+						}
+					}
+				}
+			}
+		};
+
 		var parseChildNodes = function () {
 			var sChildNodeName, bIsBlockChild, value, href, title;
 			if (bPresentation) {
 				sChildNodeName = child.nodeName.toLowerCase();
+
 				if (!(Node.ELEMENT_NODE === nodeType || Node.TEXT_NODE === nodeType) || sChildNodeName === "style" ||
-					sChildNodeName === "#comment" || sChildNodeName === "script") {
+					sChildNodeName === "#comment" || sChildNodeName === "script" /*|| sChildNodeName === "o:p"*/) {
+					if (sChildNodeName === "#comment") {
+						pushMathContent(child);
+					}
 					return;
 				}
 				//попускам элеметы состоящие только из \t,\n,\r
@@ -9932,14 +9959,8 @@ PasteProcessor.prototype =
 							oThis.startMsoAnnotation = true;
 						} else if (oThis.startMsoAnnotation && child.nodeValue === "[endif]") {
 							oThis.startMsoAnnotation = false;
-						} else if (-1 !== child.nodeValue.indexOf("[if gte msEquation 12]") && !oThis.pasteInExcel && oThis.apiEditor["asc_isSupportFeature"]("ooxml")) {
-							//TODO пока только в документы разрешаю вставку математики математику
-							var oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument);
-							//TODO отключаю историю, затем делаю копию. иначе проблемы при сборке. пересмотреть!
-							History.TurnOff();
-							oThis._parseMathContent(child, oPar);
-							History.TurnOn();
-							oThis.aContent.push(oPar.Copy())
+						} else {
+							pushMathContent(child);
 						}
 					}
 					return;
@@ -10411,10 +10432,14 @@ PasteProcessor.prototype =
 
 	_parseMathContent: function (node, oPar) {
 		//получаем строку, которая содержит необходимые данные для получения уравнения
+		let bAddNewParagraph = true;
 		let str = node.nodeValue;
 		str = str.replace('[if gte msEquation 12]>', '');
 		str = str.replace('<![endif]', '');
 		str = str.replace(/lang=\w*-\w*/g, '');
+		if (0 === str.indexOf("<m:oMath>")) {
+			bAddNewParagraph = false;
+		}
 
 		let xmlParserContext = typeof AscCommon.XmlParserContext !== "undefined" ? new AscCommon.XmlParserContext() : null;
 
@@ -10426,14 +10451,21 @@ PasteProcessor.prototype =
 				return;
 			}
 
-			let elem = typeof AscCommon.CT_OMathPara !== "undefined" ? new AscCommon.CT_OMathPara() : null;
+			let elem;
+			if (bAddNewParagraph) {
+				elem = typeof AscCommon.CT_OMathPara !== "undefined" ? new AscCommon.CT_OMathPara() : null;
+			} else {
+				elem = new ParaMath();
+				oPar.AddToContentToEnd(elem);
+			}
+
 			if (elem && elem.fromXml) {
 				elem.fromXml(reader, oPar);
-				return elem.OMath
+				return bAddNewParagraph;
 			}
 		}
 
-		return null;
+		return bAddNewParagraph;
 	},
 
 	_commitCommentEnd: function () {

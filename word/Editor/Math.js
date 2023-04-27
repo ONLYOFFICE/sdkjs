@@ -1125,6 +1125,8 @@ ParaMath.prototype.Get_Text = function(Text)
 {
 	if (true === Text.BreakOnNonText)
 		Text.Text = null;
+    else if (true === Text.Math)
+        Text.Text += this.GetText();
 };
 
 ParaMath.prototype.Is_Empty = function(oPr)

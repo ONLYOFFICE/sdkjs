@@ -5,17 +5,15 @@ sys.path.append('../../../build_tools/scripts')
 import base
 import os
 
-compilation_level = "WHITESPACE_ONLY"
+#compilation_level = "WHITESPACE_ONLY"
 #compilation_level = "SIMPLE_OPTIMIZATIONS"
+compilation_level = "ADVANCED"
 
-if base.is_dir("./deploy"):
-  base.delete_dir("./deploy")
-base.create_dir("./deploy")
-
-base.writeFile("./deploy/begin.js", "window[\"AscCommon\"] = window[\"AscCommon\"] || {};\n\n")
+base.writeFile("./begin.js", "window[\"AscCommon\"] = window[\"AscCommon\"] || {};\n\n")
 
 scripts_code = [
-  "./deploy/begin.js",
+  "./begin.js",
+  "./../../common/errorCodes.js",
   "./../../common/device_scale.js",
   "./../../common/browser.js",
   "./../../common/stringserialize.js",
@@ -35,23 +33,41 @@ scripts_code = [
   "./api.js"
 ]
 
-base.copy_file("./../src/engine/drawingfile.js", "./deploy/drawingfile.js")
-base.copy_file("./../src/engine/drawingfile.wasm", "./deploy/drawingfile.wasm")
-base.copy_file("./../src/engine/drawingfile_ie.js", "./deploy/drawingfile_ie.js")
-base.copy_file("./../src/engine/cmap.bin", "./deploy/cmap.bin")
+externals = [
+    "./../../common/externs/global.js",
+    "./../../common/externs/jquery-3.2.js",
+    "./../../common/externs/xregexp-3.0.0.js",
+    "./../../common/externs/sockjs.js",
+    "./../../common/externs/socket.io.js",
+    "./../../common/externs/word.js",
+    "./../../common/externs/cell.js",
+    "./../../common/externs/slide.js"
+]
 
 build_params = []
 build_params.append("-jar")
 build_params.append("../../build/node_modules/google-closure-compiler-java/compiler.jar")
 build_params.append("--compilation_level")
 build_params.append(compilation_level)
+build_params.append("--jscomp_off=checkVars")
+build_params.append("--warning_level=QUIET")
 build_params.append("--js_output_file")
-build_params.append("./deploy/viewer.js")
+build_params.append("./../src/engine/viewer.js")
 
 for item in scripts_code:
   build_params.append("--js")
   build_params.append(item)
 
+for item in externals:
+  build_params.append("--externs=" + item)
+
 base.cmd("java", build_params)
 
-base.delete_file("./deploy/begin.js")
+base.delete_file("./begin.js")
+
+licence_text = base.readFile("./api.js")
+licence_text_end = licence_text.find("(function(){")
+licence_text = licence_text[:licence_text_end]
+
+generate_file = base.readFile("./../src/engine/viewer.js")
+base.writeFile("./../src/engine/viewer.js", licence_text + generate_file)

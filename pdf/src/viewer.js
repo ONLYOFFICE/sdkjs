@@ -522,7 +522,7 @@
 			scrollH.style.width = this.width + "px";
 			scrollH.style.height = this.scrollWidth + "px";
 
-			settings = this.CreateScrollSettings();
+			var settings = this.CreateScrollSettings();
 			settings.isHorizontalScroll = true;
 			settings.isVerticalScroll = false;
 			settings.contentW = this.documentWidth;
@@ -846,7 +846,7 @@
 			else
 			{
 				if (this.file)
-					this.file.close();
+					this.close();
 
 				this.file = window["AscViewer"].createFile(data);
 
@@ -859,7 +859,7 @@
 
 			if (!this.file)
 			{
-				this.Api.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
+				this.Api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.Critical);
 				return;
 			}
 
@@ -878,6 +878,29 @@
 
 			this.pagesInfo.setCount(this.file.pages.length);
 			this.checkLoadCMap();
+		};
+
+		this.close = function()
+		{
+			this.file.close();
+
+			this.structure = null;
+			this.currentPage = -1;
+
+			this.startVisiblePage = -1;
+			this.endVisiblePage = -1;
+			this.pagesInfo = new CDocumentPagesInfo();
+			this.drawingPages = [];
+
+			this.statistics = {
+				paragraph : 0,
+				words : 0,
+				symbols : 0,
+				spaces : 0,
+				process : false
+			};
+
+			this._paint();
 		};
 
 		this.getFileNativeBinary = function()
@@ -1618,18 +1641,18 @@
 			var positionMaxY = oThis.y + oThis.height;
 
 			var scrollYVal = 0;
-			if (global_mouseEvent.Y < positionMinY)
+			if (AscCommon.global_mouseEvent.Y < positionMinY)
 			{
 				var delta = 30;
-				if (20 > (positionMinY - global_mouseEvent.Y))
+				if (20 > (positionMinY - AscCommon.global_mouseEvent.Y))
 					delta = 10;
 
 				scrollYVal = -delta;
 			}
-			else if (global_mouseEvent.Y > positionMaxY)
+			else if (AscCommon.global_mouseEvent.Y > positionMaxY)
 			{
 				var delta = 30;
-				if (20 > (global_mouseEvent.Y - positionMaxY))
+				if (20 > (AscCommon.global_mouseEvent.Y - positionMaxY))
 					delta = 10;
 
 				scrollYVal = delta;
@@ -1641,18 +1664,18 @@
 				var positionMinX = oThis.x;
 				var positionMaxX = oThis.x + oThis.width;
 
-				if (global_mouseEvent.X < positionMinX)
+				if (AscCommon.global_mouseEvent.X < positionMinX)
 				{
 					var delta = 30;
-					if (20 > (positionMinX - global_mouseEvent.X))
+					if (20 > (positionMinX - AscCommon.global_mouseEvent.X))
 						delta = 10;
 
 					scrollXVal = -delta;
 				}
-				else if (global_mouseEvent.X > positionMaxX)
+				else if (AscCommon.global_mouseEvent.X > positionMaxX)
 				{
 					var delta = 30;
-					if (20 > (global_mouseEvent.X - positionMaxX))
+					if (20 > (AscCommon.global_mouseEvent.X - positionMaxX))
 						delta = 10;
 
 					scrollXVal = delta;

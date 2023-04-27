@@ -1062,16 +1062,17 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CPE", "CSE"]
      * @alias GetSelectedText
-     * @param {object} numbering - The resulting string display properties.
-     * @param {boolean} numbering.NewLine - Defines if the resulting string will include line boundaries or not.
-     * @param {boolean} numbering.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
-     * @param {boolean} numbering.Numbering - Defines if the resulting string will include numbering or not.
-     * @param {boolean} numbering.Math - Defines if the resulting string will include mathematical expressions or not.
-     * @param {string} numbering.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
-     * @param {string} numbering.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
-     * @param {string} numbering.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
-     * @param {string} numbering.TabSymbol - Defines how the tab will be specified in the resulting string.
-     * @return {string} - Selected text.
+     * @param {object} prop - The resulting string display properties.
+     * @param {boolean} prop.NewLine - Defines if the resulting string will include line boundaries or not. (will replace to '\r')
+     * @param {boolean} prop.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
+     * @param {boolean} prop.Numbering - Defines if the resulting string will include numbering or not.
+     * @param {boolean} prop.Math - Defines if the resulting string will include mathematical expressions or not.
+     * @param {string} prop.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
+     * @param {string} prop.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
+     * @param {string} prop.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
+     * @param {string} prop.TabSymbol - Defines how the tab will be specified in the resulting string.
+     * @param {string} prop.NewLineSeparator - Defines how the line separator will be specified in the resulting string. (has priority over NewLine prop)
+	 * @return {string} - Selected text.
      * @since 7.1.0
      * @example
      * window.Asc.plugin.executeMethod("GetSelectedText", [{NewLine:true, NewLineParagraph:true, Numbering:true}])
@@ -1090,6 +1091,7 @@
                 TableCellSeparator: prop["TableCellSeparator"],
                 TableRowSeparator: prop["TableRowSeparator"],
                 ParaSeparator: prop["ParaSeparator"],
+                NewLineSeparator: prop["NewLineSeparator"],
                 TabSymbol: prop["TabSymbol"]
             }
         }
@@ -1264,6 +1266,21 @@
 				"guid" : ""
 			};
 		}
+		
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
+		if (isDesktop)
+		{
+			// Отдаём весь конфиг, внутри вычислим путь к deploy
+			// TODO: отслеживать возможные ошибки при +/- плагинов: из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
+			// UPD: done. Ничего не изменять в менеджере плагинов, если guid пуст
+
+            let result = window["AscDesktopEditor"]["PluginInstall"](JSON.stringify(config));
+			
+			return {
+				"type" : loadFuncName,
+				"guid" : result ? config["guid"] : ""
+			};
+		}
 
 		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
 		if (!currentInstalledPlugins)
@@ -1380,6 +1397,22 @@
 			}
 		*/
 
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
+
+		// В случае Desktop нужно проверить какие плагины нельзя удалять. В UpdateInstallPlugins работаем с двумя типами папок.
+		// Пока проверка тут, но грамотнее будет сделать и использовать доп.свойство isSystemInstall класса CPlugin
+		// т.к. не будем лишний раз парсить папки, только при +/- плагинов.
+		let protectedPlugins = [];
+
+		if (isDesktop) {
+			var _pluginsTmp = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
+
+			var len = _pluginsTmp[0]["pluginsData"].length;
+			for (var i = 0; i < len; i++) {
+				protectedPlugins.push(_pluginsTmp[0]["pluginsData"][i]["guid"]);
+			}
+		}
+
 		let baseUrl = window.location.href;
 		let posQ = baseUrl.indexOf("?");
 		if (-1 !== posQ)
@@ -1395,11 +1428,14 @@
 			returnArray.push({
 				"baseUrl" : baseUrl,
 				"guid" : pluginsArray[i].guid,
-				"canRemoved" : true,
+				"canRemoved" : protectedPlugins.indexOf(pluginsArray[i].guid) == -1,
 				"obj" : pluginsArray[i].serialize(),
 				"removed" : false
 			});
 		}
+
+		if (isDesktop)
+			return returnArray;
 
 		// нужно послать и удаленные. так как удаленный может не быть в сторе. тогда его никак не установить обратно
 		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
@@ -1432,8 +1468,29 @@
      * @returns {object} - An object with the result information.
      * @since 7.2.0
      */
-	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
+	Api.prototype["pluginMethod_RemovePlugin"] = function(guid, backup)
 	{
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
+
+		if (isDesktop)
+		{
+			// Вызываем только этот ++код, никаких дополнительных действий типа:
+			// window.g_asc_plugins.unregister(guid), window["UpdateInstallPlugins"](), this.sendEvent("asc_onPluginsReset"), window.g_asc_plugins.updateInterface()
+			// не требуется, т.к. ++код вызывает UpdateInstallPlugins, в нём идёт перестроение списка плагинов и обновление интерфейса.
+			// Просто отдаём менеджеру плагинов ответ.
+			// TODO: отслеживать возможные ошибки при +/- плагинов:
+			// из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
+			// ничего не изменять в менеджере плагинов, если guid пуст
+
+			let result = window["AscDesktopEditor"]["PluginUninstall"](guid, backup);
+						
+			return {
+				"type" : "Removed",
+				"guid" : result ? guid : "",
+				"backup" : backup
+			};
+		}
+		
 		let removedPlugin = window.g_asc_plugins.unregister(guid);
 
 		if (removedPlugin)
@@ -1489,6 +1546,36 @@
 	Api.prototype["pluginMethod_UpdatePlugin"] = function(config)
 	{
 		return installPlugin(config, "Updated");
+	};
+
+	/**
+	 * Installs a plugin by the URL to the plugin config.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} configUrl - The plugin config.json url for installing.
+	 * @alias InstallDeveloperPlugin
+	 * @returns {boolean} - Is plugin installed
+	 * @since 7.2.0
+	 */
+	Api.prototype["installDeveloperPlugin"] = function(configUrl)
+	{
+		try
+		{
+			var xhrObj = new XMLHttpRequest();
+			if ( xhrObj )
+			{
+				xhrObj.open('GET', configUrl, false);
+				xhrObj.send('');
+
+				var configJson = JSON.parse(xhrObj.responseText);
+				configJson["baseUrl"] = configUrl.substr(0, configUrl.lastIndexOf("/") + 1);
+
+				installPlugin(configJson, "Installed");
+				return true;
+			}
+		}
+		catch (e) {}
+		return false;
 	};
 
 	/**

@@ -1224,7 +1224,7 @@
 			var props = this.buttonInfo;
 			if(props && props.options)
 			{
-				if((window["Asc"] && window["Asc"]["editor"]) || props.cellCoord)
+				if((Asc["editor"] && Asc["editor"].wb) || props.cellCoord)
 				{
 					this.showSpecialPasteButton = true;
 					this.Api.asc_ShowSpecialPasteButton(props);

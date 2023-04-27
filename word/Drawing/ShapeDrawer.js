@@ -1778,7 +1778,7 @@ CShapeDrawer.prototype =
     }
 };
 
-function ShapeToImageConverter(shape, pageIndex)
+function ShapeToImageConverter(shape, pageIndex, sImageFormat)
 {
     AscCommon.IsShapeToImageConverter = true;
     var _bounds_cheker = new AscFormat.CSlideBoundsChecker();
@@ -1856,7 +1856,8 @@ function ShapeToImageConverter(shape, pageIndex)
     var _ret = { ImageNative : _canvas, ImageUrl : "" };
     try
     {
-        _ret.ImageUrl = _canvas.toDataURL("image/png");
+        const sFormat = sImageFormat || "image/png";
+        _ret.ImageUrl = _canvas.toDataURL(sFormat);
     }
     catch (err)
     {

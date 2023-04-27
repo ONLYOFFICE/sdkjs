@@ -804,11 +804,11 @@
 				{
 					if (window.Asc.plugin.onCallCommandCallback)
 					{
-						window.Asc.plugin.onCallCommandCallback();
+						window.Asc.plugin.onCallCommandCallback(pluginData.commandReturnData);
 						window.Asc.plugin.onCallCommandCallback = null;
 					}
 					else if (window.Asc.plugin.onCommandCallback)
-						window.Asc.plugin.onCommandCallback();
+						window.Asc.plugin.onCommandCallback(pluginData.commandReturnData);
 					break;
 				}
 				case "onExternalPluginMessage":

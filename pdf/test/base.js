@@ -78,10 +78,7 @@ window.onload = function()
 	var g_positionSplitterW = 5;
 	window.onresize = function()
 	{
-		var zoomValue = AscCommon.checkDeviceScale();
-		AscCommon.AscBrowser.retinaPixelRatio = zoomValue.applicationPixelRatio;
-		AscCommon.AscBrowser.zoom = zoomValue.zoom;
-		AscCommon.correctApplicationScale(zoomValue);
+		AscViewer.checkApplicationScale();
 	
 		document.getElementById("leftPanel").style.width = g_positionSplitter + "px";
 		document.getElementById("buttonBookmarks").style.left = "10px";
@@ -164,12 +161,11 @@ window.onload = function()
 	};
 
 	var options = {};
-	options.enginePath = "./../src/engine/";
+	//options.enginePath = "./../src/engine/"; // FOR NO-MINIMIZED TEST (index.html)
 	//options.theme = { type : "dark" };
 	//options.fontsPath = "https://url_to_fonts/";
-	window.Viewer = window.AscViewer.createViewer("mainPanel", options);
-	window.Thumbnails = window.AscViewer.createThumbnails("panelThimbnailsNatural");
-	window.Viewer.setThumbnailsControl(window.Thumbnails);
+	window.Viewer = new window.AscViewer.CViewer("mainPanel", options);
+	window.Thumbnails = window.Viewer.createThumbnails("panelThimbnailsNatural");
 	
 	var trackbar = document.querySelectorAll('.trackbar')[0];
 	trackbar.onChangedValue = function(val) {

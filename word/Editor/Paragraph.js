@@ -940,7 +940,7 @@ Paragraph.prototype.private_UpdateSelectionPosOnRemove = function(nPosition, nCo
  * Добавляем элемент в содержимое параграфа. (Здесь передвигаются все позиции
  * CurPos.ContentPos, Selection.StartPos, Selection.EndPos)
  */
-Paragraph.prototype.Internal_Content_Add = function(Pos, Item, bCorrectPos)
+Paragraph.prototype.Internal_Content_Add = function(Pos, Item)
 {
 	History.Add(new CChangesParagraphAddItem(this, Pos, [Item]));
 	this.Content.splice(Pos, 0, Item);
@@ -11113,7 +11113,7 @@ Paragraph.prototype.Clear_Formatting = function()
 	// Надо пересчитать конечный стиль
 	this.CompiledPr.NeedRecalc = true;
 };
-Paragraph.prototype.Clear_TextFormatting = function()
+Paragraph.prototype.Clear_TextFormatting = function(bHighlight)
 {
 	var sDefHyperlink = null;
 	if (this.bFromDocument && this.LogicDocument)
@@ -11124,7 +11124,7 @@ Paragraph.prototype.Clear_TextFormatting = function()
 	for (var Index = 0; Index < this.Content.length; Index++)
 	{
 		var Item = this.Content[Index];
-		Item.Clear_TextFormatting(sDefHyperlink);
+		Item.Clear_TextFormatting(sDefHyperlink, bHighlight);
 	}
 
 	this.TextPr.Clear_Style();
@@ -15984,6 +15984,25 @@ Paragraph.prototype.GetText = function(oPr)
 
 	oText.SetBreakOnNonText(false);
 	oText.SetParaEndToSpace(oPr && undefined !== oPr.ParaEndToSpace ? oPr.ParaEndToSpace: true);
+	oText.SetParaNumbering(oPr && undefined !== oPr.Numbering ? oPr.Numbering: true);
+	oText.SetParaMath(oPr && undefined !== oPr.Math ? oPr.Math: true);
+	oText.SetParaTabSymbol(oPr && undefined !== oPr.TabSymbol ? oPr.TabSymbol: " ");
+	oText.SetParaNewLineSeparator(oPr && undefined !== oPr.NewLineSeparator ? oPr.NewLineSeparator: "\r");
+
+	if (true === oText.Numbering)
+	{
+		var oNumPr = this.GetNumPr();
+		if (oNumPr && oNumPr.IsValid())
+		{
+			oText.Text += this.GetNumberingText(false);
+
+			var nSuff = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetSuff();
+			if (Asc.c_oAscNumberingSuff.Tab === nSuff)
+				oText.Text += "	";
+			else if (Asc.c_oAscNumberingSuff.Space === nSuff)
+				oText.Text += " ";
+		}
+	}
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
@@ -17233,7 +17252,7 @@ Paragraph.prototype.GetPlaceHolderObject = function(oContentPos)
 	let oSdt  = oInfo.GetInlineLevelSdt();
 	let oMath = oInfo.GetMath();
 	
-	if (oSdt && oSdt.IsPlaceHolder())
+	if (oSdt && (oSdt.IsPlaceHolder() || !oSdt.CanPlaceCursorInside()))
 		return oSdt;
 	else if (oMath && oMath.IsMathContentPlaceholder())
 		return oMath;
@@ -17405,27 +17424,32 @@ Paragraph.prototype.ReplaceCurrentWord = function(nDirection, sReplace)
 		oEndPos   = oInfo.End;
 	}
 
-	var _oStartPos = oStartPos.Copy();
-	var nInRunPos = oStartPos.Get(_oStartPos.GetDepth());
-	_oStartPos.DecreaseDepth(1);
-	var oRun = this.GetClassByPos(_oStartPos);
-	if (!oRun || !(oRun instanceof ParaRun))
+	return this.private_ReplaceSubstring(sReplace, oStartPos, oEndPos);
+};
+Paragraph.prototype.private_ReplaceSubstring = function(replaceString, startPos, endPos)
+{
+	var _startPos = startPos.Copy();
+	var inRunPos = startPos.Get(_startPos.GetDepth());
+	_startPos.DecreaseDepth(1);
+	
+	let run = this.GetClassByPos(_startPos);
+	if (!run || !(run instanceof AscWord.CRun))
 		return false;
-
+	
 	this.TurnOffCorrectContent();
 	this.Selection.Use = true;
-	this.Set_SelectionContentPos(oStartPos, oEndPos);
-	this.Remove(1, false, false, false, false);
+	this.Set_SelectionContentPos(startPos, endPos);
+	this.Remove(1, false, false, true, false);
 	this.RemoveSelection();
 	this.TurnOnCorrectContent();
-
-	if (this.GetClassByPos(_oStartPos) !== oRun
-		|| oRun.GetElementsCount() < nInRunPos)
+	
+	if (this.GetClassByPos(_startPos) !== run
+		|| run.GetElementsCount() < inRunPos)
 		return false;
-
-	oRun.AddText(sReplace, nInRunPos);
-	oRun.SetThisElementCurrentInParagraph();
-
+	
+	run.AddText(replaceString, inRunPos);
+	run.SetThisElementCurrentInParagraph();
+	
 	return true;
 };
 Paragraph.prototype.private_GetCurrentWordParaPos = function()
@@ -17515,11 +17539,15 @@ Paragraph.prototype.GetCurrentSentence = function(nDirection)
 	{
 		startPos = oInfo.Start;
 		endPos   = this.Get_ParaContentPos(false, false);
+		if (endPos.Compare(startPos) < 0)
+			endPos = startPos.Copy();
 	}
 	else
 	{
 		startPos = this.Get_ParaContentPos(false, false);
 		endPos   = oInfo.End;
+		if (startPos.Compare(oInfo.Start) < 0)
+			startPos = oInfo.Start;
 	}
 	
 	this.Selection.Use = true;
@@ -17594,6 +17622,44 @@ Paragraph.prototype.private_GetCurrentSentenceParaPos = function()
 		Start : startPos,
 		End   : endPos
 	};
+};
+/**
+ * Заменяем текущее предложение (или часть текущего предложения) на заданную строку
+ * @param direction {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
+ * @param replaceString {string}
+ * @returns {boolean}
+ */
+Paragraph.prototype.ReplaceCurrentSentence = function(direction, replaceString)
+{
+	if (this.IsSelectionUse())
+		return false;
+	
+	let posInfo = this.private_GetCurrentSentenceParaPos();
+	if (!posInfo)
+		return false;
+	
+	let startPos, endPos;
+	if (!direction)
+	{
+		startPos = posInfo.Start;
+		endPos   = posInfo.End;
+	}
+	else if (direction < 0)
+	{
+		startPos = posInfo.Start;
+		endPos   = this.Get_ParaContentPos(false, false);
+		if (endPos.Compare(startPos) < 0)
+			endPos = startPos.Copy();
+	}
+	else
+	{
+		startPos = this.Get_ParaContentPos(false, false);
+		endPos   = posInfo.End;
+		if (startPos.Compare(posInfo.Start) < 0)
+			startPos = posInfo.Start;
+	}
+	
+	return this.private_ReplaceSubstring(replaceString, startPos, endPos);
 };
 /**
  * Добавляем метки переноса текста во время рецензирования
@@ -19734,8 +19800,12 @@ function CParagraphGetText()
 {
     this.Text = "";
 
-    this.BreakOnNonText = true;
-    this.ParaEndToSpace = false;
+    this.BreakOnNonText 	= true;
+    this.ParaEndToSpace 	= false;
+	this.Numbering			= false;
+	this.Math				= false;
+	this.TabSymbol			= undefined;
+	this.NewLineSeparator	= undefined;
 }
 CParagraphGetText.prototype.AddText = function(sText)
 {
@@ -19749,6 +19819,22 @@ CParagraphGetText.prototype.SetBreakOnNonText = function(bValue)
 CParagraphGetText.prototype.SetParaEndToSpace = function(bValue)
 {
 	this.ParaEndToSpace = bValue;
+};
+CParagraphGetText.prototype.SetParaNewLineSeparator = function(sValue)
+{
+	this.NewLineSeparator = sValue;
+};
+CParagraphGetText.prototype.SetParaNumbering = function(bValue)
+{
+	this.Numbering = bValue;
+};
+CParagraphGetText.prototype.SetParaMath = function(bValue)
+{
+	this.Math = bValue;
+};
+CParagraphGetText.prototype.SetParaTabSymbol = function(sValue)
+{
+	this.TabSymbol = sValue;
 };
 
 function CParagraphNearPos()

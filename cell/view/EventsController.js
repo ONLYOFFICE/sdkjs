@@ -1594,29 +1594,29 @@
 				}
 			}
 
-			if (asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || graphicsInfo) {
-				// При выборе диапазона не нужно выделять автофигуру
-				if (this.getSelectionDialogMode()) {
+			// do not work with drawings in selection dialog mode
+			if (!this.getSelectionDialogMode()) {
+				if (asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || graphicsInfo) {
+
+
+					if (this.getCellEditMode() && !this.handlers.trigger("stopCellEditing")) {
+						return;
+					}
+
+					t.isShapeAction = true;
+					t.isUpOnCanvas = false;
+
+
+					t.clickCounter.mouseDownEvent(coord.x, coord.y, button);
+					event.ClickCount = t.clickCounter.clickCount;
+					if (0 === event.ClickCount % 2) {
+						t.isDblClickInMouseDown = true;
+					}
+
+					t.handlers.trigger("graphicObjectMouseDown", event, coord.x, coord.y);
+					t.handlers.trigger("updateSelectionShape", /*isSelectOnShape*/true);
 					return;
 				}
-
-				if (this.getCellEditMode() && !this.handlers.trigger("stopCellEditing")) {
-					return;
-				}
-
-				t.isShapeAction = true;
-				t.isUpOnCanvas = false;
-
-
-				t.clickCounter.mouseDownEvent(coord.x, coord.y, button);
-				event.ClickCount = t.clickCounter.clickCount;
-				if (0 === event.ClickCount % 2) {
-					t.isDblClickInMouseDown = true;
-				}
-
-				t.handlers.trigger("graphicObjectMouseDown", event, coord.x, coord.y);
-				t.handlers.trigger("updateSelectionShape", /*isSelectOnShape*/true);
-				return;
 			}
 
 

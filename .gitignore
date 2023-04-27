@@ -1,6 +1,7 @@
 .idea/
 build/node_modules
 build/$weak$.js
+build/maps
 common/AllFonts.js
 common/Images/fonts_thumbnail*
 common/Images/themes_thumbnail*
@@ -10,12 +11,6 @@ slide/themes/themes.js
 .DS_Store
 /deploy
 /develop
-cell/sdk-all.props.js.map
-cell/sdk-all.vars.js.map
-slide/sdk-all.props.js.map
-slide/sdk-all.vars.js.map
-word/sdk-all.props.js.map
-word/sdk-all.vars.js.map
 node_modules
 package-lock.json
 */node_modules

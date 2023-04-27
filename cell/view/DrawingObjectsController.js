@@ -293,6 +293,7 @@ DrawingObjectsController.prototype.onMouseDown = function(e, x, y)
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_down;
 	e.IsLocked = e.isLocked;
+    this.checkInkState();
     var ret = this.curState.onMouseDown(e, x, y, 0);
     if(e.ClickCount < 2)
     {
@@ -483,6 +484,7 @@ DrawingObjectsController.prototype.addChartDrawingObject = function(options)
 DrawingObjectsController.prototype.isPointInDrawingObjects = function(x, y, e)
 {
     this.handleEventMode = AscFormat.HANDLE_EVENT_MODE_CURSOR;
+    this.checkInkState();
     var ret = this.curState.onMouseDown(e || {}, x, y, 0);
     this.handleEventMode = AscFormat.HANDLE_EVENT_MODE_HANDLE;
     return ret;

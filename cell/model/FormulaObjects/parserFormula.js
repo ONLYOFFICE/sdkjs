@@ -70,6 +70,8 @@ function (window, undefined) {
 
 	var TOK_SUBTYPE_UNION = 15;
 
+	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1};
+
 	function getArrayCopy(arr) {
 		var newArray = [];
 		for (var i = 0; i < arr.length; i++) {
@@ -495,6 +497,7 @@ var cExcelMinExponent = -308;
 var c_Date1904Const = 24107; //разница в днях между 01.01.1970 и 01.01.1904 годами
 var c_Date1900Const = 25568; //разница в днях между 01.01.1970 и 01.01.1900 годами
 var rx_sFuncPref = /_xlfn\./i;
+var rx_sFuncPrefXlWS = /_xlws\./i;// /_xlfn\.(_xlws\.)?/i;
 var rx_sDefNamePref = /_xlnm\./i;
 var cNumFormatFirstCell = -1;
 var cNumFormatNone = -2;
@@ -3028,8 +3031,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				str += ",";
 			}
 		}
-		if (this.isXLFN) {
-			return new cString("_xlfn." + this.name + "(" + str + ")");
+		if (this.isXLFN || this.isXLWS) {
+			return new cString((this.isXLFN ? "_xlfn." : "") + (this.isXLWS ? "_xlws." : "") + this.name + "(" + str + ")");
 		}
 		return new cString(this.toString() + "(" + str + ")");
 	};
@@ -3052,7 +3055,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.toString = function (/*locale*/) {
 		/*var name = this.toString();
 		var localeName = locale ? locale[name] : name;*/
-		return this.name.replace(rx_sFuncPref, "_xlfn.");
+		return this.name.replace(rx_sFuncPref, "_xlfn.").replace(rx_sFuncPrefXlWS, "_xlws.");
 	};
 	cBaseFunction.prototype.toLocaleString = function (/*locale*/) {
 		var name = this.toString();
@@ -3613,6 +3616,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	function cUnknownFunction(name) {
 		this.name = name;
 		this.isXLFN = null;
+		this.isXLWS = null;
 	}
 	cUnknownFunction.prototype = Object.create(cBaseFunction.prototype);
 	cUnknownFunction.prototype.constructor = cUnknownFunction;
@@ -5798,7 +5802,7 @@ function parserFormula( formula, parent, _ws ) {
 		var needAssemble = false;
 		var cFormulaList;
 
-		var startSumproduct = false, counterSumproduct = 0;
+		var startArrayFunc = false, counterArrayFunc = 0;
 
 		if (this.isParsed) {
 			return this.isParsed;
@@ -5998,13 +6002,17 @@ function parserFormula( formula, parent, _ws ) {
 								elem = cAllFormulaFunction[val].prototype;
 							} else {
 								elem = new cUnknownFunction(val);
-								elem.isXLFN = (0 === val.indexOf("_xlfn."));
+								let xlfnFrefix = "_xlfn.";
+								let xlwsFrefix = "_xlws.";
+								//_xlws only together with _xlfn
+								elem.isXLFN = (val.indexOf(xlfnFrefix) === 0);
+								elem.isXLWS = elem.isXLFN && xlfnFrefix.length === val.indexOf(xlwsFrefix);
 							}
-							if("SUMPRODUCT" === val){
-								startSumproduct = true;
+							if(arrayFunctionsMap[val]){
+								startArrayFunc = true;
 
-								counterSumproduct++;
-								if(1 === counterSumproduct){
+								counterArrayFunc++;
+								if(1 === counterArrayFunc){
 									this.outStack.push(cSpecialOperandStart.prototype);
 								}
 							}
@@ -6044,10 +6052,10 @@ function parserFormula( formula, parent, _ws ) {
 									//this.outStack.push(arg_count);
 									this.outStack.splice(this.outStack.length - 1, 0, arg_count);
 
-									if(startSumproduct && "SUMPRODUCT" === tmp.name){
-										counterSumproduct--;
-										if(counterSumproduct < 1){
-											startSumproduct = false;
+									if(startArrayFunc && arrayFunctionsMap[tmp.name]){
+										counterArrayFunc--;
+										if(counterArrayFunc < 1){
+											startArrayFunc = false;
 											this.outStack.push(cSpecialOperandEnd.prototype);
 										}
 									}
@@ -6260,9 +6268,9 @@ function parserFormula( formula, parent, _ws ) {
 			leftParentArgumentsCurrentArr[elemArr.length - 1] = 1;
 			parseResult.argPos = 1;
 
-			if (startSumproduct) {
-				counterSumproduct++;
-				if (1 === counterSumproduct) {
+			if (startArrayFunc) {
+				counterArrayFunc++;
+				if (1 === counterArrayFunc) {
 					t.outStack.push(cSpecialOperandStart.prototype);
 				}
 			}
@@ -6358,10 +6366,10 @@ function parserFormula( formula, parent, _ws ) {
 			parseResult.operand_expected = false;
 			wasLeftParentheses = false;
 
-			if (startSumproduct) {
-				counterSumproduct--;
-				if (counterSumproduct < 1) {
-					startSumproduct = false;
+			if (startArrayFunc) {
+				counterArrayFunc--;
+				if (counterArrayFunc < 1) {
+					startArrayFunc = false;
 					t.outStack.push(cSpecialOperandEnd.prototype);
 				}
 			}
@@ -6377,8 +6385,9 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 				var _argPos = argPosArrMap[currentFuncLevel];
-				if (_argPos && _argPos[_argPos.length - 1] && undefined === _argPos[_argPos.length - 1].end) {
-					_argPos[_argPos.length - 1].end = ph.pCurrPos;
+				var lastArgPos = _argPos && _argPos[_argPos.length - 1];
+				if (lastArgPos && undefined === lastArgPos.end) {
+					lastArgPos.end = lastArgPos.start > ph.pCurrPos ? lastArgPos.start : ph.pCurrPos;
 				}
 
 				if (!parseResult.allFunctionsPos) {
@@ -6783,14 +6792,18 @@ function parserFormula( formula, parent, _ws ) {
 					elemArr.push(new cMultOperator());
 				}
 
-				var found_operator = null, operandStr = ph.operand_str.replace(rx_sFuncPref, "").toUpperCase();
+				var found_operator = null, operandStr = ph.operand_str.replace(rx_sFuncPref, "").replace(rx_sFuncPrefXlWS, "").toUpperCase();
 				if (operandStr in cFormulaList) {
 					found_operator = cFormulaList[operandStr].prototype;
 				} else if (operandStr in cAllFormulaFunction) {
 					found_operator = cAllFormulaFunction[operandStr].prototype;
 				} else {
 					found_operator = new cUnknownFunction(operandStr);
-					found_operator.isXLFN = (ph.operand_str.indexOf("_xlfn.") === 0);
+					let xlfnFrefix = "_xlfn.";
+					let xlwsFrefix = "_xlws.";
+					//_xlws only together with _xlfn
+					found_operator.isXLFN = (ph.operand_str.indexOf(xlfnFrefix) === 0);
+					found_operator.isXLWS = found_operator.isXLFN && xlfnFrefix.length === ph.operand_str.indexOf(xlwsFrefix);
 				}
 
 				if (found_operator !== null) {
@@ -6803,8 +6816,8 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					elemArr.push(found_operator);
 					parseResult.addElem(found_operator);
-					if ("SUMPRODUCT" === found_operator.name) {
-						startSumproduct = true;
+					if (arrayFunctionsMap[found_operator.name]) {
+						startArrayFunc = true;
 					}
 
 					if (needCalcArgPos) {
@@ -6872,8 +6885,9 @@ function parserFormula( formula, parent, _ws ) {
 					parseResult.activeArgumentPos = argFuncMap[currentFuncLevel].count;
 				}
 				var _argPos = argPosArrMap[currentFuncLevel];
-				if (_argPos && _argPos[_argPos.length - 1] && undefined === _argPos[_argPos.length - 1].end) {
-					_argPos[_argPos.length - 1].end = ph.pCurrPos;
+				var lastArgPos = _argPos && _argPos[_argPos.length - 1];
+				if (lastArgPos && undefined === lastArgPos.end) {
+					lastArgPos.end = lastArgPos.start > ph.pCurrPos ? lastArgPos.start : ph.pCurrPos;
 				}
 				if (levelFuncMap[currentFuncLevel]) {
 					if (!parseResult.allFunctionsPos) {

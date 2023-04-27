@@ -999,7 +999,7 @@ CHistory.prototype.Create_NewPoint = function()
 			oAPI.cancelEyedropper();
 		}
 		if (oAPI.isInkDrawerOn()) {
-			oAPI.asc_StopInkDrawer();
+			oAPI.stopInkDrawer();
 		}
 	}
 	//this.workbook.handlers.trigger("cleanCutData");

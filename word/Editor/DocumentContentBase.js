@@ -1399,6 +1399,7 @@ CDocumentContentBase.prototype.AddToContent = function(nPos, oItem, isCorrectCon
 /**
  * Добавляем элемент в конец
  * @param oItem
+ * @param isCorrectContent {boolean}
  */
 CDocumentContentBase.prototype.PushToContent = function(oItem, isCorrectContent)
 {

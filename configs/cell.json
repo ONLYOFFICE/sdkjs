@@ -116,7 +116,6 @@
 
 			"common/Drawings/Externals.js",
 			"common/GlobalLoaders.js",
-			"common/CollaborativeEditingBase.js",
 			"common/Controls.js",
 			"common/Overlay.js",
 			"common/Drawings/HatchPattern.js",
@@ -359,7 +358,6 @@
 		"mobile": [
 			"common/libfont/engine/fonts_native.js",
 			"common/Charts/ChartStyles.js",
-			"common/Native/Wrappers/TextMeasurerWrapper.js",
 			"common/Native/Wrappers/DrawingStream.js",
 			"common/Native/Wrappers/ShapeDrawer.js",
 			"cell/native/Overlay.js",

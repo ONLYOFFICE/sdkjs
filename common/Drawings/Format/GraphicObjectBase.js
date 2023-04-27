@@ -1128,6 +1128,8 @@
 			this.shdwSp.draw(graphics);
 		}
 	};
+	CGraphicObjectBase.prototype.drawAdjustments = function (drawingDocument) {
+	};
 	CGraphicObjectBase.prototype.getAllRasterImages = function (mapUrl) {
 	};
 	CGraphicObjectBase.prototype.getImageFromBulletsMap = function (oImages) {
@@ -3148,8 +3150,8 @@
 	CGraphicObjectBase.prototype.getPictureBase64Data = function () {
 		return null;
 	};
-	CGraphicObjectBase.prototype.getBase64Img = function () {
-		if (typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
+	CGraphicObjectBase.prototype.getBase64Img = function (bForceAsDraw, sImageFormat) {
+		if (!sImageFormat && typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
 			return this.cachedImage;
 		}
 		if (this.parent) {
@@ -3164,13 +3166,16 @@
 				return "";
 			}
 		}
-		let oPictureData = this.getPictureBase64Data();
+		let oPictureData;
+		if(!bForceAsDraw) {
+			oPictureData = this.getPictureBase64Data();
+		}
 		if (!AscFormat.isRealNumber(this.x) || !AscFormat.isRealNumber(this.y) ||
 			!AscFormat.isRealNumber(this.extX) || !AscFormat.isRealNumber(this.extY)
 			|| (AscFormat.fApproxEqual(this.extX, 0) && AscFormat.fApproxEqual(this.extY, 0)))
 			return "";
 
-		let oImageData = AscCommon.ShapeToImageConverter(this, this.pageIndex);
+		let oImageData = AscCommon.ShapeToImageConverter(this, this.pageIndex, sImageFormat);
 		if (oImageData) {
 			if (oImageData.ImageNative) {
 				try {

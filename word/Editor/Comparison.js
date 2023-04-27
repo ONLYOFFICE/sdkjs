@@ -62,6 +62,11 @@
     {
         return this.element;
     };
+		// debug method
+	CNode.prototype.getText = function()
+	{
+		return this.element.getText();
+	};
 
     CNode.prototype.cleanEndOfInsert = function (aContentToInsert, idxOfChange, comparison) {
         const oChange = this.changes[idxOfChange];
@@ -516,6 +521,10 @@
             {
                 if(bCheckNeighbors && oElement1.isSpaceText() && oElement2.isSpaceText())
                 {
+									if (!oElement1.compareReviewElements(oElement2))
+									{
+										return false;
+									}
                     const aNeighbors1 = this.getNeighbors();
                     const aNeighbors2 = oNode.getNeighbors();
                     if(!aNeighbors1[0] && !aNeighbors2[0] || !aNeighbors1[1] && !aNeighbors2[1])
@@ -540,7 +549,7 @@
                 }
                 else
                 {
-                    return oElement1.equals(oElement2);
+                    return oElement1.equals(oElement2, bCheckNeighbors);
                 }
             }
             if (oElement1 instanceof AscCommon.CParaRevisionMove)
@@ -655,7 +664,10 @@
         this.firstRun = null;
         this.lastRun = null;
     }
-
+	CTextElement.prototype.compareReviewElements = function (oAnotherElement)
+	{
+		return true;
+	}
     CTextElement.prototype.getPosOfStart = function () {
         const startElement = this.elements[0];
         return this.firstRun.GetElementPosition(startElement);
@@ -674,7 +686,7 @@
         return this.elements[idx];
     }
 
-    CTextElement.prototype.equals = function (other)
+    CTextElement.prototype.equals = function (other, bNeedCheckReview)
     {
         if(this.elements.length !== other.elements.length)
         {
@@ -781,6 +793,12 @@
         }
         return false;
     };
+
+		//debug method
+	CTextElement.prototype.getText = function ()
+	{
+		return {text:this.elements.map(function (e) {return String.fromCharCode(e.Value)}).join(''), isReviewWord: this.isReviewWord, reviewElements:this.reviewElementTypes};
+	};
 
     CTextElement.prototype.isParaEnd = function ()
     {
@@ -2356,7 +2374,7 @@
                     oLastText.setFirstRun(oRun);
                     oLastText.setLastRun(oRun);
                     // мы будем сравнивать ревью paraEnd отдельно, поскольку это единственный общий элемент в параграфе, до которого мы можем вставить любой различающийся контент
-                    oLastText.addToElements(oRun.Content[j], {reviewType: reviewtype_Common});
+                    oLastText.addToElements(oRun.Content[j], {reviewType: reviewtype_Common, moveReviewType: Asc.c_oAscRevisionsMove.NoMove});
                     new NodeConstructor(oLastText, oRet);
                     oLastText.updateHash(oHashWords);
                     oLastText = new TextElementConstructor();

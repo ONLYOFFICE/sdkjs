@@ -659,6 +659,7 @@
 			window.editor = this;
 			window.editor;
 			window['editor'] = window.editor;
+			Asc['editor'] = Asc.editor = this;
 
 			if (window["NATIVE_EDITOR_ENJINE"])
 				editor = window.editor;
@@ -1526,7 +1527,7 @@ background-repeat: no-repeat;\
 			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 57351, false, false, false],
 			[Asc.c_oAscPresentationShortcutType.ShowParaMarks, 56, true, true, false],
 			[Asc.c_oAscPresentationShortcutType.Bold, 66, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.CopyFormat, 67, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.CopyFormat, 67, true, false, true],
 			[Asc.c_oAscPresentationShortcutType.CenterAlign, 69, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.EuroSign, 69, true, false, true],
 			[Asc.c_oAscPresentationShortcutType.Group, 71, true, false, false],
@@ -1539,7 +1540,7 @@ background-repeat: no-repeat;\
 			[Asc.c_oAscPresentationShortcutType.RightAlign, 82, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.Underline, 85, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.Strikethrough, 53, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.PasteFormat, 83, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.PasteFormat, 86, true, false, true],
 			[Asc.c_oAscPresentationShortcutType.Superscript, 187, true, true, false],
 			[Asc.c_oAscPresentationShortcutType.Superscript, 188, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.Subscript, 187, true, false, false],
@@ -4468,6 +4469,8 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.StartAddShape = function(prst, is_apply)
 	{
+		this.stopInkDrawer();
+		this.cancelEyedropper();
 		this.WordControl.m_oLogicDocument.StartAddShape(prst, is_apply);
 
 		if (is_apply)
@@ -7024,8 +7027,11 @@ background-repeat: no-repeat;\
 		if (!this.isViewMode && this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Theme) === false)
 		{
 			AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+
+			this.inkDrawer.startSilentMode();
 			this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Presentation_ChangeTheme);
-            this.bSelectedSlidesTheme = (bSelectedSlides === true);
+			this.inkDrawer.endSilentMode();
+			this.bSelectedSlidesTheme = (bSelectedSlides === true);
 			this.ThemeLoader.StartLoadTheme(indexTheme);
 		}
 	};

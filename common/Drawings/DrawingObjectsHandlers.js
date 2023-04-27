@@ -656,7 +656,7 @@ function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageInde
                                     cur_grouped_object.selectTitle(title, pageIndex);
                                     cur_grouped_object.selection.textSelection = title;
                                     title.selectionSetStart(e, x, y, pageIndex);
-                                    drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, title, x, y));
+                                    drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, title, x, y, e.Button));
                                     if(e.ClickCount <= 1)
                                     {
                                         drawingObjectsController.updateSelectionState();
@@ -1477,7 +1477,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                                             drawing.selection.dataLbl = j;
                                             drawing.selection.textSelection = oDLbl;
                                             oDLbl.selectionSetStart(e, x, y, pageIndex);
-                                            drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, oDLbl, x, y));
+                                            drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, oDLbl, x, y, e.Button));
                                             if(e.ClickCount <= 1)
                                             {
                                                 drawingObjectsController.updateSelectionState();
@@ -1604,7 +1604,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                         drawing.selection.textSelection = title;
                     }
                     title.selectionSetStart(e, x, y, pageIndex);
-                    drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, title, x, y));
+                    drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, title, x, y, e.Button));
                     if(e.ClickCount <= 1)
                     {
                         drawingObjectsController.updateSelectionState();
@@ -2070,7 +2070,7 @@ function handleFloatTable(drawing, drawingObjectsController, e, x, y, group, pag
                     drawingObjectsController.selectObject(group, pageIndex);
                     drawingObjectsController.selection.groupSelection = group;
                 }
-                drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, drawing, x, y));
+                drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, drawing, x, y, e.Button));
                 return true;
             }
             else

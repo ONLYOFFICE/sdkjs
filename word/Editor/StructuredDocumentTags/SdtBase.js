@@ -1023,5 +1023,8 @@ CSdtBase.prototype.CheckOFormUserMaster = function()
 CSdtBase.prototype.CanPlaceCursorInside = function()
 {
 	let logicDocument = this.GetLogicDocument();
-	return (!this.IsPicture() && (!this.IsForm() || this.IsComplexForm() || !logicDocument || logicDocument.IsFillingOFormMode()))
+	return (!this.IsPicture() && (!this.IsForm() || this.IsComplexForm() || !logicDocument || !logicDocument.IsDocumentEditor() || logicDocument.IsFillingFormMode()))
+};
+CSdtBase.prototype.SkipFillingFormModeCheck = function(isSkip)
+{
 };
