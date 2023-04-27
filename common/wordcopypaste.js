@@ -9833,18 +9833,21 @@ PasteProcessor.prototype =
 
 		let pushMathContent = function (_child) {
 			if (-1 !== _child.nodeValue.indexOf("[if gte msEquation 12]") && !oThis.pasteInExcel && oThis.apiEditor["asc_isSupportFeature"]("ooxml")) {
-				let oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument, null, bPresentation);
+				let oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument, bPresentation ? oShapeContent : null, bPresentation);
 
 				History.TurnOff();
 				let bAddNewParagraph = oThis._parseMathContent(_child, oPar);
 				History.TurnOn();
 
-				if (bAddNewParagraph !== false || !oThis.oCurPar) {
+				if (bAddNewParagraph !== false || !oThis.oCurPar || bPresentation) {
 					let addedPar = oPar.Copy();
 					if (bPresentation) {
-						addedPar.Set_Parent(shape.txBody.content);
+						oShapeContent.Internal_Content_Add(oShapeContent.Content.length, addedPar);
+						addedPar.CorrectContent();
+						addedPar.CheckParaEnd();
+					} else {
+						oThis.aContent.push(addedPar);
 					}
-					oThis.aContent.push(addedPar);
 				} else {
 					for (let i = 0; i < oPar.Content.length; i++) {
 						if (oPar.Content[i] && oPar.Content[i].Get_Type && oPar.Content[i].Get_Type() === para_Math) {
