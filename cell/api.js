@@ -2307,7 +2307,7 @@ var editor;
 					wb.init(initOpenManager.oReadResult.tableCustomFunc, initOpenManager.oReadResult.tableIds, initOpenManager.oReadResult.sheetIds, false, true);
 				} else {
 					readSheetDataExternal(true);
-					if (window["Asc"] && window["Asc"]["editor"] !== undefined) {
+					if (Asc["editor"] && Asc["editor"].wb) {
 						wb.init(initOpenManager.oReadResult.tableCustomFunc, initOpenManager.oReadResult.tableIds, initOpenManager.oReadResult.sheetIds, true);
 					}
 				}

@@ -8377,7 +8377,7 @@ PasteProcessor.prototype =
 		var nAllSum = 0;
 		var oRowSpans = {};
 		var columnSize;
-		if (!bPresentation && ((!window["Asc"] || (window["Asc"] && window["Asc"]["editor"] === undefined))) && this.oLogicDocument) {
+		if (!bPresentation && ((!window["Asc"] || !(Asc["editor"] && Asc["editor"].wb))) && this.oLogicDocument) {
 			columnSize = this.oLogicDocument.GetColumnSize();
 		}
 		var fParseSpans = function () {

@@ -10582,7 +10582,7 @@
                 wb.init(this.InitOpenManager.oReadResult.tableCustomFunc, this.InitOpenManager.oReadResult.tableIds, this.InitOpenManager.oReadResult.sheetIds, false, true);
             } else {
 				bwtr.ReadSheetDataExternal(true);
-				if(window["Asc"] && window["Asc"]["editor"] !== undefined) {
+				if(Asc["editor"] && Asc["editor"].wb) {
 					wb.init(this.InitOpenManager.oReadResult.tableCustomFunc, this.InitOpenManager.oReadResult.tableIds, this.InitOpenManager.oReadResult.sheetIds, true);
 				}
             }
