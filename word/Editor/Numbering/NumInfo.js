@@ -153,19 +153,27 @@
 			|| this.Lvl.length !== numInfo.Lvl.length)
 			return false;
 		
-		for (let iLvl = 0; iLvl < 9; ++iLvl)
+		if (1 === this.Lvl.length)
 		{
-			if (!this.Lvl[iLvl] || !numInfo.Lvl[iLvl])
-				return false;
-			
-			let numLvl1 = AscWord.CNumberingLvl.FromJson(this.Lvl[iLvl]);
-			let numLvl2 = AscWord.CNumberingLvl.FromJson(numInfo.Lvl[iLvl]);
-			
-			if (!numLvl1.IsEqual(numLvl2))
-				return false;
+			let numLvl1 = AscWord.CNumberingLvl.FromJson(this.Lvl[0]);
+			let numLvl2 = AscWord.CNumberingLvl.FromJson(numInfo.Lvl[0]);
+			return numLvl1.IsSimilar(numLvl2);
 		}
-		
-		return true;
+		else
+		{
+			for (let iLvl = 0; iLvl < 9; ++iLvl)
+			{
+				if (!this.Lvl[iLvl] || !numInfo.Lvl[iLvl])
+					return false;
+				
+				let numLvl1 = AscWord.CNumberingLvl.FromJson(this.Lvl[iLvl]);
+				let numLvl2 = AscWord.CNumberingLvl.FromJson(numInfo.Lvl[iLvl]);
+				
+				if (!numLvl1.IsEqual(numLvl2))
+					return false;
+			}
+			return true;
+		}
 	};
 	CNumInfo.prototype.CompareWithNum = function(num, iLvl)
 	{
