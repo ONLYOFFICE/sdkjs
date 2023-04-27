@@ -157,6 +157,8 @@
 		{
 			let numLvl1 = AscWord.CNumberingLvl.FromJson(this.Lvl[0]);
 			let numLvl2 = AscWord.CNumberingLvl.FromJson(numInfo.Lvl[0]);
+			numLvl1.ResetNumberedText(0);
+			numLvl2.ResetNumberedText(0);
 			return numLvl1.IsSimilar(numLvl2);
 		}
 		else
