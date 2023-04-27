@@ -1576,7 +1576,7 @@
      * @param {string} [oPr.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string.
      * @param {string} [oPr.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string.
      * @param {string} [oPr.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string.
-	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string. (Does not apply to numbering)
+	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering)
 	 * @typeofeditors ["CDE"]
 	 * @returns {String} - returns "" if range is empty.
 	 */
@@ -8073,9 +8073,9 @@
      * @param {boolean} [oPr.Numbering=false] - Defines if the resulting string will include numbering or not.
      * @param {boolean} [oPr.Math=false] - Defines if the resulting string will include mathematical expressions or not.
 	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string.
-	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string. (Does not apply to numbering)
+	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering).
 	 * @typeofeditors ["CDE"]
-	 * @return {string}  
+	 * @return {string}
 	 */
 	ApiParagraph.prototype.GetText = function(oPr)
 	{
@@ -9581,13 +9581,13 @@
 	};
 
 	/**
-	 * Returns a text from text run.
+	 * Returns a text from the text run.
 	 * @memberof ApiRun
 	 * @param {object} oPr - The resulting string display properties.
      * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string.
 	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string.
 	 * @typeofeditors ["CDE"]
-	 * @returns {String}
+	 * @returns {string}
 	 */	
 	ApiRun.prototype.GetText = function(oPr)
 	{
@@ -18428,7 +18428,7 @@
 	};
 	
 	/**
-	 * Returns the id of the current comment. If the comment doesn't have an id, null is returned.
+	 * Returns the current comment ID. If the comment doesn't have an ID, null is returned.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {?string}
