@@ -1051,15 +1051,6 @@
 			}, this, []);
 		}
 	};
-	CGraphicObjectBase.prototype.check_bounds = function (checker) {
-		checker._s();
-		checker._m(0, 0);
-		checker._l(this.extX, 0);
-		checker._l(this.extX, this.extY);
-		checker._l(0, this.extY);
-		checker._z();
-		checker._e();
-	};
 	CGraphicObjectBase.prototype.handleObject = function (fCallback) {
 		fCallback(this);
 	};
