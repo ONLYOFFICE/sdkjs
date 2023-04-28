@@ -9793,7 +9793,7 @@
 		}
 
 		let t = this;
-		let test = new CDocumentSearch()
+		let test = new asyncSelectionMathInfo()
 		test._callback = function (oSelectionMathInfo, sum) {
 			if (1 < oSelectionMathInfo.count && 0 < oSelectionMathInfo.countNumbers) {
 				// Мы должны отдавать в формате активной ячейки
@@ -24905,7 +24905,7 @@
 
 		this.TextArround = [];
 	};
-	CDocumentSearch.prototype.ContinueGetTextAround = function()
+	asyncSelectionMathInfo.prototype.ContinueGetTextAround = function()
 	{
 		let arrResult = [];
 		let t = this;
