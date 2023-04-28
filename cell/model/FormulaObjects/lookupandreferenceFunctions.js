@@ -2047,10 +2047,9 @@ function (window, undefined) {
 	cSORTBY.prototype.constructor = cSORTBY;
 	cSORTBY.prototype.name = 'SORTBY';
 	cSORTBY.prototype.argumentsMin = 2;
-	cSORTBY.prototype.argumentsMax = 3;
 	cSORTBY.prototype.isXLFN = true;
 	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
-	cSORTBY.prototype.argumentsType = [argType.reference, argType.reference, argType.number];
+	cSORTBY.prototype.argumentsType = [argType.array, argType.array, argType.number, [argType.array, argType.number]];
 	cSORTBY.prototype.Calculate = function (arg) {
 		function arrayHelper (arr, byArr, sortOrder) {
 			let resArr = new cArray(),
@@ -2202,6 +2201,9 @@ function (window, undefined) {
 		}
 
 		return sortArray(array, by_array1, sort_order, isByCol);
+	};
+	cSORTBY.prototype.checkArguments = function (countArguments) {
+		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
 	};
 
 	/**
