@@ -1063,7 +1063,7 @@
      * @typeofeditors ["CDE", "CPE", "CSE"]
      * @alias GetSelectedText
      * @param {object} prop - The resulting string display properties.
-     * @param {boolean} prop.NewLine - Defines if the resulting string will include line boundaries or not. (will replace to '\r')
+     * @param {boolean} prop.NewLine - Defines if the resulting string will include line boundaries or not (they will be replaced with '\r').
      * @param {boolean} prop.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
      * @param {boolean} prop.Numbering - Defines if the resulting string will include numbering or not.
      * @param {boolean} prop.Math - Defines if the resulting string will include mathematical expressions or not.
@@ -1071,7 +1071,7 @@
      * @param {string} prop.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
      * @param {string} prop.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
      * @param {string} prop.TabSymbol - Defines how the tab will be specified in the resulting string.
-     * @param {string} prop.NewLineSeparator - Defines how the line separator will be specified in the resulting string. (has priority over NewLine prop)
+     * @param {string} prop.NewLineSeparator - Defines how the line separator will be specified in the resulting string (this property has the priority over *NewLine*).
 	 * @return {string} - Selected text.
      * @since 7.1.0
      * @example
@@ -1179,7 +1179,7 @@
 	};
 
 	/**
-	 * The current selection type ("none", "text", "drawing", or "slide").
+	 * Specifies how to adjust the image object in case of replacing the selected image.
 	 * @typedef {("fill" | "fit" | "original" | "stretch")} ReplaceImageMode
 	 */
 
@@ -1189,7 +1189,7 @@
      * @property {string} src The image source in the base64 format.
      * @property {number} width The image width in pixels.
      * @property {number} height The image height in pixels.
-     * @property  {?ReplaceImageMode} replaceMode If presents, defines how to adjust image object in case of replacing selected image
+     * @property {?ReplaceImageMode} replaceMode Specifies how to adjust the image object in case of replacing the selected image.
      */
 
 	/**
@@ -1464,6 +1464,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @param {string} [guid] - The plugin identifier. It must be of the *asc.{UUID}* type.
+	 * @param {string} [backup] - The plugin backup. This parameter is used when working with the desktop editors.
      * @alias RemovePlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
@@ -1552,10 +1553,10 @@
 	 * Installs a plugin by the URL to the plugin config.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} configUrl - The plugin config.json url for installing.
+	 * @param {string} configUrl - The URL to the plugin *config.json* for installing.
 	 * @alias InstallDeveloperPlugin
-	 * @returns {boolean} - Is plugin installed
-	 * @since 7.2.0
+	 * @returns {boolean} - Returns true if the plugin is installed.
+	 * @since 7.4.0
 	 */
 	Api.prototype["installDeveloperPlugin"] = function(configUrl)
 	{
@@ -1670,11 +1671,12 @@
 	};
 
     /**
-     * Gets the document language.
+     * Returns the document language.
      * @memberof Api
      * @typeofeditors ["CDE", "CPE"]
      * @alias GetDocumentLang
-     * @returns {string} 
+     * @returns {string} - Document language.
+	 * @since 7.4.0
      */
     Api.prototype["pluginMethod_GetDocumentLang"] = function()
     {
@@ -1704,19 +1706,20 @@
 
 	/**
 	 * @typedef {Object} ContextMenuItem
-	 * The context menu item
-	 * @property {string} id - The item id.
+	 * The context menu item.
+	 * @property {string} id - The item ID.
 	 * @property {localeTranslate} text - The item text.
-	 * @property {boolean} [disabled] - Is disabled item.
-	 * @property {ContextMenuItem[]} items - An array containing the items for current item.
+	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {ContextMenuItem[]} items - An array containing the context menu items for the current item.
 	 */
 
 	/**
-	 * Add item to context menu
+	 * Adds an item to the context menu.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddContextMenuItem
-	 * @param {ContextMenuItem[]} items - Array of items
+	 * @param {ContextMenuItem[]} items - An array containing the context menu items for the current item.
+	 * @since 7.4.0
 	 */
 	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
 	{
@@ -1725,11 +1728,12 @@
 	};
 
 	/**
-	 * Update items in context menu
+	 * Updates an item in the context menu with the specified items.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias UpdateContextMenuItem
-	 * @param {ContextMenuItem[]} items - Array of items
+	 * @param {ContextMenuItem[]} items - An array containing the context menu items for the current item.
+	 * @since 7.4.0
 	 */
 	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
 	{
@@ -1738,13 +1742,13 @@
 	};
 
 	/**
-	 * Shows modal window.
+	 * Shows the plugin modal window.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} frameId - The frame ID.
 	 * @param {variation} variation - The plugin variation.
 	 * @alias ShowWindow 
-	 * @since 7.3.4
+	 * @since 7.4.0
 	 */
 	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
 	{
@@ -1753,12 +1757,12 @@
 	};
 
 	/**
-	 * Close modal window.
+	 * Closes the plugin modal window.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} frameId - The frame ID.
 	 * @alias CloseWindow
-	 * @since 7.3.4
+	 * @since 7.4.0
 	 */
 	Api.prototype["pluginMethod_CloseWindow"] = function(frameId)
 	{
@@ -1766,14 +1770,14 @@
 	};
 
 	/**
-	 * Send message to window.
+	 * Sends a message to the plugin modal window.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} windowID - The frame ID.
 	 * @param {string} name - The event name.
 	 * @param {object} data - The even data.
 	 * @alias SendToWindow
-	 * @since 7.3.4
+	 * @since 7.4.0
 	 */
 	Api.prototype["pluginMethod_SendToWindow"] = function(windowID, name, data)
 	{
@@ -1781,15 +1785,15 @@
 	};
 
 	/**
-	 * Resize modal window.
+	 * Resizes the plugin modal window.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} [frameId] - The frame ID.
 	 * @param {number} [size] - The frame size.
-	 * @param {number} [minSize] - The frame min size.
-	 * @param {number} [maxSize] - The frame max size.
+	 * @param {number} [minSize] - The frame minimum size.
+	 * @param {number} [maxSize] - The frame maximum size.
 	 * @alias ResizeWindow
-	 * @since 7.3.4
+	 * @since 7.4.0
 	 */
 	Api.prototype["pluginMethod_ResizeWindow"] = function(frameId, size, minSize, maxSize)
 	{
@@ -1800,14 +1804,14 @@
 	};
 
 	/**
-	 * Mouse up modal window.
+	 * Send an event to the plugin when the mouse button is released inside the plugin iframe.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} [frameId] - The frame ID.
-	 * @param {number} [x] - coordinate.
-	 * @param {number} [y] - coordinate.
+	 * @param {number} [x] - The X coordinate.
+	 * @param {number} [y] - The Y coordinate.
 	 * @alias MouseUpWindow
-	 * @since 7.3.4
+	 * @since 7.4.0
 	 */
 	Api.prototype["pluginMethod_MouseUpWindow"] = function(frameId, x, y)
 	{
@@ -1815,14 +1819,14 @@
 	};
 
 	/**
-	 * Mouse move modal window.
+	 * Send an event to the plugin when the mouse button is moved inside the plugin iframe.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} [frameId] - The frame ID.
- 	 * @param {number} [x] - coordinate.
-	 * @param {number} [y] - coordinate.
+ 	 * @param {number} [x] - The X coordinate.
+	 * @param {number} [y] - The Y coordinate.
 	 * @alias MouseMoveWindow
-	 * @since 7.3.4
+	 * @since 7.4.0
 	 */
 	Api.prototype["pluginMethod_MouseMoveWindow"] = function(frameId, x, y)
 	{
