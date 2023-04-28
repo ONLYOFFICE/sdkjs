@@ -9786,63 +9786,70 @@
 		return bResult;
 	};
 
-    WorksheetView.prototype.getSelectionMathInfo = function () {
+    WorksheetView.prototype.getSelectionMathInfo = function (callback) {
        //TODO при выделении большого количетсва данных функция работает долго
-        var oSelectionMathInfo = new asc_CSelectionMathInfo();
-        var sum = 0;
-        var oExistCells = {};
-
 		if (window["NATIVE_EDITOR_ENJINE"] || this.getSelectionDialogMode()) {
 		    return oSelectionMathInfo;
 		}
 
-        var t = this;
-        this.model.selectionRange.ranges.forEach(function (item) {
-            var cellValue;
-            var range = t.model.getRange3(item.r1, item.c1, item.r2, item.c2);
-            range._setPropertyNoEmpty(null, null, function (cell, r) {
-                var idCell = cell.nCol + '-' + cell.nRow;
-                if (!oExistCells[idCell] && !cell.isNullTextString() && 0 < t._getRowHeight(r)) {
-                    oExistCells[idCell] = true;
-                    ++oSelectionMathInfo.count;
-                    if (CellValueType.Number === cell.getType()) {
+		let t = this;
+		let test = new CDocumentSearch()
+		test._callback = function (oSelectionMathInfo, sum) {
+			if (1 < oSelectionMathInfo.count && 0 < oSelectionMathInfo.countNumbers) {
+				// Мы должны отдавать в формате активной ячейки
+				var activeCell = t.model.selectionRange.activeCell;
+				var numFormat = t.model.getRange3(activeCell.row, activeCell.col,
+					activeCell.row, activeCell.col).getNumFormat();
+				if (Asc.c_oAscNumFormatType.Time === numFormat.getType()) {
+					// Для времени нужно отдавать в формате [h]:mm:ss (http://bugzilla.onlyoffice.com/show_bug.cgi?id=26271)
+					numFormat = AscCommon.oNumFormatCache.get('[h]:mm:ss');
+				}
+
+				oSelectionMathInfo.sum =
+					numFormat.formatToMathInfo(sum, CellValueType.Number, t.settings.mathMaxDigCount);
+				oSelectionMathInfo.average =
+					numFormat.formatToMathInfo(sum / oSelectionMathInfo.countNumbers, CellValueType.Number,
+						t.settings.mathMaxDigCount);
+
+				oSelectionMathInfo.min =
+					numFormat.formatToMathInfo(oSelectionMathInfo.min, CellValueType.Number, t.settings.mathMaxDigCount);
+				oSelectionMathInfo.max =
+					numFormat.formatToMathInfo(oSelectionMathInfo.max, CellValueType.Number, t.settings.mathMaxDigCount);
+			}
+
+			callback && callback(oSelectionMathInfo);
+		};
+		test.ranges = this.model.selectionRange.ranges;
+		test.ws = this;
+		test.StartTextAround();
+
+
+
+
+		/*t.model.selectionRange.ranges.forEach(function (item) {
+			var cellValue;
+			var range = t.model.getRange3(item.r1, item.c1, item.r2, item.c2);
+			range._setPropertyNoEmpty(null, null, function (cell, r) {
+				var idCell = cell.nCol + '-' + cell.nRow;
+				if (!oExistCells[idCell] && !cell.isNullTextString() && 0 < t._getRowHeight(r)) {
+					oExistCells[idCell] = true;
+					++oSelectionMathInfo.count;
+					if (CellValueType.Number === cell.getType()) {
 						cellValue = cell.getNumberValue();
-                        if (0 === oSelectionMathInfo.countNumbers) {
-                            oSelectionMathInfo.min = oSelectionMathInfo.max = cellValue;
-                        } else {
-                            oSelectionMathInfo.min = Math.min(oSelectionMathInfo.min, cellValue);
-                            oSelectionMathInfo.max = Math.max(oSelectionMathInfo.max, cellValue);
-                        }
-                        ++oSelectionMathInfo.countNumbers;
-                        sum += cellValue;
-                    }
-                }
-            });
-        });
+						if (0 === oSelectionMathInfo.countNumbers) {
+							oSelectionMathInfo.min = oSelectionMathInfo.max = cellValue;
+						} else {
+							oSelectionMathInfo.min = Math.min(oSelectionMathInfo.min, cellValue);
+							oSelectionMathInfo.max = Math.max(oSelectionMathInfo.max, cellValue);
+						}
+						++oSelectionMathInfo.countNumbers;
+						sum += cellValue;
+					}
+				}
+			});
+		});*/
 
-        // Показываем только данные для 2-х или более ячеек (http://bugzilla.onlyoffice.com/show_bug.cgi?id=24115)
-        if (1 < oSelectionMathInfo.count && 0 < oSelectionMathInfo.countNumbers) {
-            // Мы должны отдавать в формате активной ячейки
-			var activeCell = this.model.selectionRange.activeCell;
-            var numFormat = this.model.getRange3(activeCell.row, activeCell.col,
-				activeCell.row, activeCell.col).getNumFormat();
-            if (Asc.c_oAscNumFormatType.Time === numFormat.getType()) {
-                // Для времени нужно отдавать в формате [h]:mm:ss (http://bugzilla.onlyoffice.com/show_bug.cgi?id=26271)
-                numFormat = AscCommon.oNumFormatCache.get('[h]:mm:ss');
-            }
-
-            oSelectionMathInfo.sum =
-              numFormat.formatToMathInfo(sum, CellValueType.Number, this.settings.mathMaxDigCount);
-            oSelectionMathInfo.average =
-              numFormat.formatToMathInfo(sum / oSelectionMathInfo.countNumbers, CellValueType.Number,
-                this.settings.mathMaxDigCount);
-
-            oSelectionMathInfo.min =
-              numFormat.formatToMathInfo(oSelectionMathInfo.min, CellValueType.Number, this.settings.mathMaxDigCount);
-            oSelectionMathInfo.max =
-              numFormat.formatToMathInfo(oSelectionMathInfo.max, CellValueType.Number, this.settings.mathMaxDigCount);
-        }
-        return oSelectionMathInfo;
+		// Показываем только данные для 2-х или более ячеек (http://bugzilla.onlyoffice.com/show_bug.cgi?id=24115)
     };
 
     WorksheetView.prototype.getSelectionName = function (bRangeText) {
@@ -24841,6 +24848,189 @@
 	WorksheetView.prototype.setColsCount = function (val) {
 		this.nColsCount = val;
 	};
+
+
+
+
+
+
+	function asyncSelectionMathInfo()
+	{
+		this.TextAroundId     = -1;
+		this.TextAroundTimer  = null;
+		this.TextAroundUpdate = true;
+
+		this.oExistCells = {};
+
+		this.oSelectionMathInfo = new asc_CSelectionMathInfo();
+		this.sum = 0;
+	}
+
+	asyncSelectionMathInfo.prototype.Clear = function()
+	{
+		this.Reset();
+
+		this.Id         = 0;
+		this.Count      = 0;
+		this.Elements   = {};
+
+		this.CurId      = -1;
+
+		this.TextAroundUpdate = true;
+		this.StopTextAround();
+		this.SendClearAllTextAround();
+
+		this.oExistCells = {};
+
+		this.oSelectionMathInfo = new asc_CSelectionMathInfo();
+	};
+
+	asyncSelectionMathInfo.prototype.StartTextAround = function()
+	{
+		if (!this.TextAroundUpdate)
+			return this.SendAllTextAround();
+
+		this.TextAroundUpdate = false;
+		this.StopTextAround();
+
+		this.TextAroundId = 0;
+
+		//this.LogicDocument.GetApi().sync_startTextAroundSearch();
+
+		let oThis = this;
+		this.TextAroundTimer = setTimeout(function()
+		{
+			oThis.ContinueGetTextAround()
+		}, 20);
+
+		this.TextArround = [];
+	};
+	CDocumentSearch.prototype.ContinueGetTextAround = function()
+	{
+		let arrResult = [];
+		let t = this;
+
+
+
+		let nStartTime = performance.now();
+		for (let i = 0; i < this.ranges.length; i++) {
+			var cellValue;
+			let item = this.ranges[i];
+			var range = this.ws.model.getRange3(item.r1, item.c1, item.r2, item.c2);
+			let needBreak = false;
+			let _col, _row;
+			range._setPropertyNoEmpty(null, null, function (cell, r) {
+				var idCell = cell.nCol + '-' + cell.nRow;
+				if (!t.oExistCells[idCell] && !cell.isNullTextString() && 0 < t.ws._getRowHeight(r)) {
+					t.oExistCells[idCell] = true;
+					++t.oSelectionMathInfo.count;
+					if (CellValueType.Number === cell.getType()) {
+						cellValue = cell.getNumberValue();
+						if (0 === t.oSelectionMathInfo.countNumbers) {
+							t.oSelectionMathInfo.min = t.oSelectionMathInfo.max = cellValue;
+						} else {
+							t.oSelectionMathInfo.min = Math.min(t.oSelectionMathInfo.min, cellValue);
+							t.oSelectionMathInfo.max = Math.max(t.oSelectionMathInfo.max, cellValue);
+						}
+						++t.oSelectionMathInfo.countNumbers;
+						t.sum += cellValue;
+					}
+				}
+
+				_col = cell.nCol;
+				_row = cell.nRow;
+
+				if (performance.now() - nStartTime > 20) {
+					needBreak = true;
+					return true;
+				}
+			});
+			if (needBreak) {
+				if (this.ranges[i].c2 === _col && this.ranges[i].r2 === _row) {
+					this.ranges.splice(0, i);
+				} else {
+					let breakRange = this.ranges[i];
+					this.ranges = this.ranges.splice(0, i);
+					//break before _col/_row and after and push into this.ranges
+					let afterRanges = breakRange.sliceAfter(_col, _row);
+					if (afterRanges) {
+						this.ranges = this.ranges.concat(afterRanges)
+					}
+				}
+				break;
+			} else if (i === this.ranges.length - 1) {
+				this.ranges = [];
+			}
+		}
+
+
+
+		if (arrResult.length)
+			this.TextAroundEmpty = false;
+
+
+		let oThis = this;
+		if (this.ranges.length)
+		{
+			this.TextAroundTimer = setTimeout(function()
+			{
+				oThis.ContinueGetTextAround();
+			}, 20);
+		}
+		else
+		{
+			this.TextAroundId    = -1;
+			this.TextAroundTimer = null;
+			this._callback(t.oSelectionMathInfo, t.sum);
+			console.log("asd")
+		}
+	};
+	asyncSelectionMathInfo.prototype.StopTextAround = function()
+	{
+		if (this.TextAroundTimer)
+		{
+			clearTimeout(this.TextAroundTimer);
+			//this.LogicDocument.GetApi().sync_endTextAroundSearch();
+		}
+
+		this.TextAroundTimer = null;
+		this.TextAroundId    = -1;
+	};
+	asyncSelectionMathInfo.prototype.SendAllTextAround = function()
+	{
+		if (this.TextAroundTimer)
+			return;
+
+		let arrResult = [];
+		for (let nId = 0; nId < this.Id; ++nId)
+		{
+			if (!this.Elements[nId] || undefined === this.TextArround[nId])
+				continue;
+
+			arrResult.push([nId, this.TextArround[nId]]);
+		}
+
+		/*let oApi = this.LogicDocument.GetApi();
+		oApi.sync_startTextAroundSearch();
+		oApi.sync_getTextAroundSearchPack(arrResult);
+		oApi.sync_endTextAroundSearch();*/
+	};
+	asyncSelectionMathInfo.prototype.SendClearAllTextAround = function()
+	{
+		/*if (this.TextAroundEmpty)
+			return;
+
+		let oApi = this.LogicDocument.GetApi();
+		if (!oApi)
+			return;
+
+		oApi.sync_startTextAroundSearch();
+		oApi.sync_endTextAroundSearch();
+
+		this.TextAroundEmpty = true;*/
+	};
+
+
 
 
 	//------------------------------------------------------------export---------------------------------------------------
