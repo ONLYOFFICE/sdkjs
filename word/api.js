@@ -4160,7 +4160,7 @@ background-repeat: no-repeat;\
 		if (!logicDocument)
 			return [];
 		
-		let collection = new AscWord.UINumberingCollection(logicDocument);
+		let collection = new AscWord.CDocumentNumberingCollection(logicDocument);
 		collection.Init();
 		return collection.GetCollections();
 	};
