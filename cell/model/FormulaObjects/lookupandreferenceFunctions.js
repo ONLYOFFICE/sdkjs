@@ -2051,6 +2051,7 @@ function (window, undefined) {
 	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cSORTBY.prototype.argumentsType = [argType.array, argType.array, argType.number, [argType.array, argType.number]];
 	cSORTBY.prototype.Calculate = function (arg) {
+		// TODO add multiple argument handling
 		function arrayHelper (arr, byArr, sortOrder) {
 			let resArr = new cArray(),
 				resDimensoins = sortOrder.getDimensions(), sortOrderFirst, sortOrderRegular, isByCol;
@@ -2060,7 +2061,14 @@ function (window, undefined) {
 				for (let j = 0; j < resDimensoins.col; j++) {
 					let elem;
 					if (!sortOrderFirst) {
-						sortOrderFirst = sortOrder.getElementRowCol ? sortOrder.getElementRowCol(i, j).tocNumber() : sortOrder.getValueByRowCol(i, j).tocNumber();
+						sortOrderFirst = sortOrder.getElementRowCol ? sortOrder.getElementRowCol(i, j) : sortOrder.getValueByRowCol(i, j);
+
+						if (!sortOrderFirst) {
+							sortOrderFirst = new cNumber(0);
+						} else {
+							sortOrderFirst = sortOrderFirst.tocNumber();
+						}
+
 						if (sortOrderFirst.type === cElementType.error) {
 							elem = sortOrderFirst;
 							sortOrderFirst = undefined;
@@ -2081,7 +2089,14 @@ function (window, undefined) {
 							}
 						}
 					} else {
-						sortOrderRegular = sortOrder.getElementRowCol ? sortOrder.getElementRowCol(i, j).tocNumber() : sortOrder.getValueByRowCol(i, j).tocNumber();
+						sortOrderRegular = sortOrder.getElementRowCol ? sortOrder.getElementRowCol(i, j) : sortOrder.getValueByRowCol(i, j);
+
+						if (!sortOrderRegular) {
+							sortOrderRegular = new cNumber(0);
+						} else {
+							sortOrderRegular = sortOrderRegular.tocNumber();
+						}
+
 						if (sortOrderRegular.type === cElementType.error) {
 							elem = sortOrderRegular;
 						} else {
@@ -2203,7 +2218,7 @@ function (window, undefined) {
 		return sortArray(array, by_array1, sort_order, isByCol);
 	};
 	cSORTBY.prototype.checkArguments = function (countArguments) {
-		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
+		return countArguments === 2 ? true : 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
 	};
 
 	/**
