@@ -39,7 +39,7 @@
 	 * @param logicDocument {AscWord.CDocument}
 	 * @constructor
 	 */
-	function CDocumentNumberingCollection(logicDocument)
+	function CNumberingCollection(logicDocument)
 	{
 		this.LogicDocument     = logicDocument;
 		this.Numbering         = logicDocument.GetNumbering();
@@ -54,7 +54,7 @@
 		this.ParagraphToNum = {};
 		this.NeedRecollect  = true;
 	}
-	CDocumentNumberingCollection.prototype.Init = function()
+	CNumberingCollection.prototype.Init = function()
 	{
 		let allParagraphs = this.LogicDocument.GetAllParagraphs();
 		for (let paraIndex = 0, paraCount = allParagraphs.length; paraIndex < paraCount; ++paraIndex)
@@ -64,7 +64,7 @@
 				this.AddNum(numPr);
 		}
 	};
-	CDocumentNumberingCollection.prototype.GetCollections = function()
+	CNumberingCollection.prototype.GetCollections = function()
 	{
 		return {
 			"singleBullet"    : Object.keys(this.singleBullet),
@@ -72,7 +72,7 @@
 			"multiLevel"      : Object.keys(this.multiLevel)
 		};
 	};
-	CDocumentNumberingCollection.prototype.CheckParagraph = function(paragraph)
+	CNumberingCollection.prototype.CheckParagraph = function(paragraph)
 	{
 		if (!paragraph)
 			return;
@@ -80,7 +80,7 @@
 		this.CheckParagraphs[paragraph.GetId()] = paragraph;
 		this.NeedRecollect = true;
 	};
-	CDocumentNumberingCollection.prototype.GetAllParagraphsByNum = function(numId, iLvl)
+	CNumberingCollection.prototype.GetAllParagraphsByNum = function(numId, iLvl)
 	{
 		this.Recollect();
 		
@@ -113,7 +113,7 @@
 		return result;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	CDocumentNumberingCollection.prototype.Recollect = function()
+	CNumberingCollection.prototype.Recollect = function()
 	{
 		if (!this.NeedRecollect)
 			return;
@@ -148,7 +148,7 @@
 		
 		this.ClearEmptyNumToParagraph(numToCheck);
 	};
-	CDocumentNumberingCollection.prototype.ClearEmptyNumToParagraph = function(numToCheck)
+	CNumberingCollection.prototype.ClearEmptyNumToParagraph = function(numToCheck)
 	{
 		for (let numId in numToCheck)
 		{
@@ -175,7 +175,7 @@
 				delete this.NumToParagraph[numId];
 		}
 	};
-	CDocumentNumberingCollection.prototype.AddNum = function(oNumPr)
+	CNumberingCollection.prototype.AddNum = function(oNumPr)
 	{
 		const sNumId = oNumPr.NumId;
 		const nLvl   = oNumPr.Lvl;
@@ -208,7 +208,7 @@
 			}
 		}
 	};
-	CDocumentNumberingCollection.prototype.CheckSingleLvl = function(num, iLvl)
+	CNumberingCollection.prototype.CheckSingleLvl = function(num, iLvl)
 	{
 		let numInfo = AscWord.CNumInfo.FromNum(num, iLvl, this.LogicDocument.GetStyles());
 		if (numInfo.IsNumbered())
@@ -216,26 +216,26 @@
 		else if (numInfo.IsBulleted())
 			this.AddToSingleBullet(JSON.stringify(numInfo.ToJson()));
 	};
-	CDocumentNumberingCollection.prototype.CheckMultiLvl = function(num)
+	CNumberingCollection.prototype.CheckMultiLvl = function(num)
 	{
 		let numInfo = AscWord.CNumInfo.FromNum(num, null, this.LogicDocument.GetStyles());
 		this.AddToMultiLvl(JSON.stringify(numInfo.ToJson()));
 	};
-	CDocumentNumberingCollection.prototype.AddToMultiLvl = function (sJSON)
+	CNumberingCollection.prototype.AddToMultiLvl = function (sJSON)
 	{
 		this.multiLevel[sJSON] = true;
 	};
-	CDocumentNumberingCollection.prototype.AddToSingleBullet = function (sJSON)
+	CNumberingCollection.prototype.AddToSingleBullet = function (sJSON)
 	{
 		this.singleBullet[sJSON] = true;
 	};
-	CDocumentNumberingCollection.prototype.AddToSingleNumbered = function (sJSON)
+	CNumberingCollection.prototype.AddToSingleNumbered = function (sJSON)
 	{
 		this.singleNumbering[sJSON] = true;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
-	window['AscWord'].CDocumentNumberingCollection = CDocumentNumberingCollection;
+	window['AscWord'].CNumberingCollection = CNumberingCollection;
 	
 })(window);
 
