@@ -9793,7 +9793,7 @@
 		}
 
 		let t = this;
-		let test = new asyncSelectionMathInfo()
+		let test = new asyncSelectionMathInfo();
 		test._callback = function (oSelectionMathInfo, sum) {
 			if (1 < oSelectionMathInfo.count && 0 < oSelectionMathInfo.countNumbers) {
 				// Мы должны отдавать в формате активной ячейки
@@ -24851,13 +24851,10 @@
 
 
 
-
-
-
 	function asyncSelectionMathInfo()
 	{
-		this.TextAroundId     = -1;
-		this.TextAroundTimer  = null;
+		this.timer  = null;
+
 		this.TextAroundUpdate = true;
 
 		this.oExistCells = {};
@@ -24870,18 +24867,7 @@
 	{
 		this.Reset();
 
-		this.Id         = 0;
-		this.Count      = 0;
-		this.Elements   = {};
-
-		this.CurId      = -1;
-
-		this.TextAroundUpdate = true;
-		this.StopTextAround();
-		this.SendClearAllTextAround();
-
 		this.oExistCells = {};
-
 		this.oSelectionMathInfo = new asc_CSelectionMathInfo();
 	};
 
@@ -24893,24 +24879,15 @@
 		this.TextAroundUpdate = false;
 		this.StopTextAround();
 
-		this.TextAroundId = 0;
-
-		//this.LogicDocument.GetApi().sync_startTextAroundSearch();
-
 		let oThis = this;
-		this.TextAroundTimer = setTimeout(function()
+		this.timer = setTimeout(function()
 		{
 			oThis.ContinueGetTextAround()
 		}, 20);
-
-		this.TextArround = [];
 	};
 	asyncSelectionMathInfo.prototype.ContinueGetTextAround = function()
 	{
-		let arrResult = [];
 		let t = this;
-
-
 
 		let nStartTime = performance.now();
 		for (let i = 0; i < this.ranges.length; i++) {
@@ -24963,73 +24940,35 @@
 			}
 		}
 
-
-
-		if (arrResult.length)
-			this.TextAroundEmpty = false;
-
-
 		let oThis = this;
 		if (this.ranges.length)
 		{
-			this.TextAroundTimer = setTimeout(function()
+			this.timer = setTimeout(function()
 			{
 				oThis.ContinueGetTextAround();
 			}, 20);
 		}
 		else
 		{
-			this.TextAroundId    = -1;
-			this.TextAroundTimer = null;
+			this.timer = null;
 			this._callback(t.oSelectionMathInfo, t.sum);
 			console.log("asd")
 		}
 	};
 	asyncSelectionMathInfo.prototype.StopTextAround = function()
 	{
-		if (this.TextAroundTimer)
+		if (this.timer)
 		{
-			clearTimeout(this.TextAroundTimer);
-			//this.LogicDocument.GetApi().sync_endTextAroundSearch();
+			clearTimeout(this.timer);
 		}
 
-		this.TextAroundTimer = null;
-		this.TextAroundId    = -1;
+		this.timer = null;
 	};
 	asyncSelectionMathInfo.prototype.SendAllTextAround = function()
 	{
-		if (this.TextAroundTimer)
+		if (this.timer)
 			return;
-
-		let arrResult = [];
-		for (let nId = 0; nId < this.Id; ++nId)
-		{
-			if (!this.Elements[nId] || undefined === this.TextArround[nId])
-				continue;
-
-			arrResult.push([nId, this.TextArround[nId]]);
-		}
-
-		/*let oApi = this.LogicDocument.GetApi();
-		oApi.sync_startTextAroundSearch();
-		oApi.sync_getTextAroundSearchPack(arrResult);
-		oApi.sync_endTextAroundSearch();*/
 	};
-	asyncSelectionMathInfo.prototype.SendClearAllTextAround = function()
-	{
-		/*if (this.TextAroundEmpty)
-			return;
-
-		let oApi = this.LogicDocument.GetApi();
-		if (!oApi)
-			return;
-
-		oApi.sync_startTextAroundSearch();
-		oApi.sync_endTextAroundSearch();
-
-		this.TextAroundEmpty = true;*/
-	};
-
 
 
 
