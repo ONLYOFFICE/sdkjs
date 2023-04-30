@@ -80,24 +80,35 @@
 		this.CheckParagraphs[paragraph.GetId()] = paragraph;
 		this.NeedRecollect = true;
 	};
-	CDocumentNumberingCollection.prototype.GetAllParagraphsByNum = function(numId, numLvl)
+	CDocumentNumberingCollection.prototype.GetAllParagraphsByNum = function(numId, iLvl)
 	{
 		this.Recollect();
 		
-		if (undefined === numLvl || null === numLvl)
-			numLvl = -1;
+		if (undefined === iLvl || null === iLvl)
+			iLvl = -1;
 		
 		if (!this.NumToParagraph[numId])
 			return [];
 		
 		let result = [];
-		if (-1 === iLVl)
+		if (-1 === iLvl)
 		{
-			
+			for (iLvl = 0; iLvl < 9; ++iLvl)
+			{
+				if (!this.NumToParagraph[numId][iLvl])
+					continue;
+				
+				for (let paraId in this.NumToParagraph[numId][iLvl])
+					result.push_back(this.NumToParagraph[numId][iLvl][paraId]);
+			}
 		}
 		else
 		{
-		
+			if (this.NumToParagraph[numId][iLvl])
+			{
+				for (let paraId in this.NumToParagraph[numId][iLvl])
+					result.push_back(this.NumToParagraph[numId][iLvl][paraId]);
+			}
 		}
 		return result;
 	};
@@ -107,8 +118,9 @@
 		if (!this.NeedRecollect)
 			return;
 		
-		this.NeedRecollect = true;
+		this.NeedRecollect = false;
 		
+		let numToCheck = {};
 		for (let paraId in this.CheckParagraph)
 		{
 			let paragraph = this.CheckParagraph[paraId];
@@ -117,6 +129,8 @@
 				let oldNumPr = this.ParagraphToNum[paraId];
 				delete this.ParagraphToNum[paraId];
 				delete this.NumToParagraph[oldNumPr.NumId][oldNumPr][paraId];
+				
+				numToCheck[numId] = true;
 			}
 			
 			let numPr = paragraph.GetNumPr();
@@ -132,14 +146,15 @@
 			}
 		}
 		
-		// TODO: Оптимизировать, проверять на очистку надо не все, а только те, которые мы удаляли,
-		//       чтобы не пробегаться по всему огромному списку, если надо проверить/удалить всего один
-		this.ClearEmptyNumToParagraph();
+		this.ClearEmptyNumToParagraph(numToCheck);
 	};
-	CDocumentNumberingCollection.prototype.ClearEmptyNumToParagraph = function()
+	CDocumentNumberingCollection.prototype.ClearEmptyNumToParagraph = function(numToCheck)
 	{
-		for (let numId in this.NumToParagraph)
+		for (let numId in numToCheck)
 		{
+			if (!this.NumToParagraph[numId])
+				continue;
+			
 			let empty = true;
 			for (let iLvl = 0; iLvl < 9; ++iLvl)
 			{
