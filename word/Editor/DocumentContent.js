@@ -8455,6 +8455,7 @@ CDocumentContent.prototype.UpdateBulletPresets = function (oNumPr, bForce)
 };
 CDocumentContent.prototype.private_RecalculateNumbering = function(Elements)
 {
+	this.UpdateNumberingCollection(Elements);
     if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead || true === this.bPresentation)
         return;
 

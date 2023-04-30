@@ -2368,3 +2368,27 @@ CDocumentContentBase.prototype.GetFormattingPasteData = function()
 	else
 		return new AscCommon.CTextFormattingPasteData(this.GetDirectTextPr(), this.GetDirectParaPr());
 };
+CDocumentContentBase.prototype.UpdateNumberingCollection = function(elements)
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument)
+		return;
+	
+	let numberingCollection = logicDocument.GetNumberingCollection();
+	for (let iElement = 0, nElements = elements.length; iElement < nElements; ++iElement)
+	{
+		if (elements[iElement].IsParagraph())
+		{
+			numberingCollection.CheckParagraph(elements[iElement]);
+		}
+		else
+		{
+			let paragraphs = elements[iElement].GetAllParagraphs();
+			for (let iPara = 0, nParas = paragraphs.length; iPara < nParas; ++iPara)
+			{
+				numberingCollection.CheckParagraph(paragraphs[iPara]);
+			}
+		}
+	}
+};
+

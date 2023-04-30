@@ -120,33 +120,44 @@
 		
 		this.NeedRecollect = false;
 		
+		console.time("Numbering.Recollect");
+		
 		let numToCheck = {};
-		for (let paraId in this.CheckParagraph)
+		for (let paraId in this.CheckParagraphs)
 		{
-			let paragraph = this.CheckParagraph[paraId];
+			let paragraph = this.CheckParagraphs[paraId];
+			delete this.CheckParagraphs[paraId];
+			
 			if (this.ParagraphToNum[paraId])
 			{
 				let oldNumPr = this.ParagraphToNum[paraId];
 				delete this.ParagraphToNum[paraId];
-				delete this.NumToParagraph[oldNumPr.NumId][oldNumPr][paraId];
+				delete this.NumToParagraph[oldNumPr.NumId][oldNumPr.Lvl][paraId];
 				
-				numToCheck[numId] = true;
+				numToCheck[oldNumPr.NumId] = true;
 			}
 			
+			if (!paragraph.IsUseInDocument())
+				continue;
+
 			let numPr = paragraph.GetNumPr();
 			if (numPr && numPr.IsValid())
 			{
 				this.ParagraphToNum[paraId] = numPr.Copy();
 				if (!this.NumToParagraph[numPr.NumId])
+				{
 					this.NumToParagraph[numPr.NumId] = new Array(9);
-				if (!this.NumToParagraph[numPr.NumId][numPr.Lvl])
-					this.NumToParagraph[numPr.NumId][numPr.Lvl] = {};
+					for (let iLvl = 0; iLvl < 9; ++iLvl)
+						this.NumToParagraph[numPr.NumId][iLvl] = {};
+				}
 				
 				this.NumToParagraph[numPr.NumId][numPr.Lvl][paraId] = paragraph;
 			}
 		}
 		
 		this.ClearEmptyNumToParagraph(numToCheck);
+		
+		console.timeEnd("Numbering.Recollect");
 	};
 	CNumberingCollection.prototype.ClearEmptyNumToParagraph = function(numToCheck)
 	{

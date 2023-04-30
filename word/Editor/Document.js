@@ -1947,6 +1947,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     this.Numbering           = new AscWord.CNumbering();
 	this.NumberingApplicator = new AscWord.CNumberingApplicator(this);
+	this.NumberingCollection = new AscWord.CNumberingCollection(this);
 
     this.Styles    = new CStyles();
     this.Styles.Set_LogicDocument(this);
@@ -10560,6 +10561,13 @@ CDocument.prototype.GetNumberingManager = function()
 	return this.GetNumbering();
 };
 /**
+ * @returns {AscWord.NumberingCollection}
+ */
+CDocument.prototype.GetNumberingCollection = function()
+{
+	return this.NumberingCollection;
+};
+/**
  * Получаем стиль по выделенному фрагменту
  */
 CDocument.prototype.GetStyleFromFormatting = function()
@@ -15862,6 +15870,8 @@ CDocument.prototype.GetTopDocumentContent = function(isOneLevel)
 };
 CDocument.prototype.private_RecalculateNumbering = function(Elements)
 {
+	this.UpdateNumberingCollection(Elements);
+	
 	if (true === AscCommon.g_oIdCounter.m_bLoad)
 		return;
 
