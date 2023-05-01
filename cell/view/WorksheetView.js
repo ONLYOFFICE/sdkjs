@@ -179,6 +179,10 @@
 	var pivotCollapseButtonClose = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgOSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB4PSIwLjUiIHk9IjAuNSIgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0id2hpdGUiIHN0cm9rZT0iI0NBQ0FDQSIvPgo8cGF0aCBkPSJNNSA0VjJINFY0SDJWNUg0VjdINVY1SDdWNEg1WiIgZmlsbD0iIzc4Nzg3OCIvPgo8L3N2Zz4K";
 	var pivotCollapseButtonOpen = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgOSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB4PSIwLjUiIHk9IjAuNSIgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0id2hpdGUiIHN0cm9rZT0iI0NBQ0FDQSIvPgo8cmVjdCB4PSIyIiB5PSI0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxIiBmaWxsPSIjNzg3ODc4Ii8+Cjwvc3ZnPgo=";
 
+	var asyncOperationsTypes = {
+		mathInfo: 0
+	};
+
 	function getPivotButtonsForLoad() {
 		return [pivotCollapseButtonClose, pivotCollapseButtonOpen];
 	}
@@ -505,6 +509,8 @@
 
 		this.pagesModeData = null;
 		this.pageBreakPreviewSelectionRange = null;
+
+		this.asyncOperations = null;
 
         this._init();
 
@@ -9793,8 +9799,21 @@
 		}
 
 		let t = this;
-		let test = new asyncSelectionMathInfo();
-		test._callback = function (oSelectionMathInfo, sum) {
+		let oAsyncSelectionMathInfo = t.asyncOperations && t.asyncOperations[asyncOperationsTypes["mathInfo"]];
+		if (oAsyncSelectionMathInfo) {
+			oAsyncSelectionMathInfo.stop();
+			oAsyncSelectionMathInfo.clear();
+		} else {
+			if (!t.asyncOperations) {
+				t.asyncOperations = {};
+			}
+			oAsyncSelectionMathInfo = new cAsyncAction();
+			t.asyncOperations[asyncOperationsTypes["mathInfo"]] = oAsyncSelectionMathInfo;
+		}
+
+		oAsyncSelectionMathInfo._callback = function (_props) {
+			let oSelectionMathInfo = _props;
+			let sum = _props;
 			if (1 < oSelectionMathInfo.count && 0 < oSelectionMathInfo.countNumbers) {
 				// Мы должны отдавать в формате активной ячейки
 				var activeCell = t.model.selectionRange.activeCell;
@@ -9819,37 +9838,13 @@
 
 			callback && callback(oSelectionMathInfo);
 		};
-		test.ranges = this.model.selectionRange.ranges;
-		test.ws = this;
-		test.StartTextAround();
 
-
-
-
-		/*t.model.selectionRange.ranges.forEach(function (item) {
-			var cellValue;
-			var range = t.model.getRange3(item.r1, item.c1, item.r2, item.c2);
-			range._setPropertyNoEmpty(null, null, function (cell, r) {
-				var idCell = cell.nCol + '-' + cell.nRow;
-				if (!oExistCells[idCell] && !cell.isNullTextString() && 0 < t._getRowHeight(r)) {
-					oExistCells[idCell] = true;
-					++oSelectionMathInfo.count;
-					if (CellValueType.Number === cell.getType()) {
-						cellValue = cell.getNumberValue();
-						if (0 === oSelectionMathInfo.countNumbers) {
-							oSelectionMathInfo.min = oSelectionMathInfo.max = cellValue;
-						} else {
-							oSelectionMathInfo.min = Math.min(oSelectionMathInfo.min, cellValue);
-							oSelectionMathInfo.max = Math.max(oSelectionMathInfo.max, cellValue);
-						}
-						++oSelectionMathInfo.countNumbers;
-						sum += cellValue;
-					}
-				}
-			});
-		});*/
-
-		// Показываем только данные для 2-х или более ячеек (http://bugzilla.onlyoffice.com/show_bug.cgi?id=24115)
+		oAsyncSelectionMathInfo.props.oExistCells = {};
+		oAsyncSelectionMathInfo.props.oSelectionMathInfo = new asc_CSelectionMathInfo();
+		oAsyncSelectionMathInfo.props.sum = 0;
+		oAsyncSelectionMathInfo.props.ranges = this.model.selectionRange.ranges;
+		oAsyncSelectionMathInfo.props.ws = this;
+		oAsyncSelectionMathInfo.start();
     };
 
     WorksheetView.prototype.getSelectionName = function (bRangeText) {
@@ -24851,66 +24846,55 @@
 
 
 
-	function asyncSelectionMathInfo()
+	function cAsyncAction()
 	{
 		this.timer  = null;
-
-		this.TextAroundUpdate = true;
-
-		this.oExistCells = {};
-
-		this.oSelectionMathInfo = new asc_CSelectionMathInfo();
-		this.sum = 0;
+		this.props = null;
+		this._callback = null;
 	}
 
-	asyncSelectionMathInfo.prototype.Clear = function()
+	cAsyncAction.prototype.clear = function()
 	{
-		this.Reset();
-
-		this.oExistCells = {};
-		this.oSelectionMathInfo = new asc_CSelectionMathInfo();
+		this.props = null;
 	};
 
-	asyncSelectionMathInfo.prototype.StartTextAround = function()
+	cAsyncAction.prototype.StartTextAround = function()
 	{
-		if (!this.TextAroundUpdate)
-			return this.SendAllTextAround();
-
-		this.TextAroundUpdate = false;
-		this.StopTextAround();
+		this.stop();
+		this.clear();
 
 		let oThis = this;
 		this.timer = setTimeout(function()
 		{
-			oThis.ContinueGetTextAround()
+			oThis.continueAction()
 		}, 20);
 	};
-	asyncSelectionMathInfo.prototype.ContinueGetTextAround = function()
+	cAsyncAction.prototype.continueAction = function()
 	{
 		let t = this;
 
 		let nStartTime = performance.now();
-		for (let i = 0; i < this.ranges.length; i++) {
+		for (let i = 0; i < this.props.ranges.length; i++) {
 			var cellValue;
-			let item = this.ranges[i];
-			var range = this.ws.model.getRange3(item.r1, item.c1, item.r2, item.c2);
+			let item = this.props.ranges[i];
+			var range = this.props.ws.model.getRange3(item.r1, item.c1, item.r2, item.c2);
 			let needBreak = false;
 			let _col, _row;
 			range._setPropertyNoEmpty(null, null, function (cell, r) {
 				var idCell = cell.nCol + '-' + cell.nRow;
-				if (!t.oExistCells[idCell] && !cell.isNullTextString() && 0 < t.ws._getRowHeight(r)) {
-					t.oExistCells[idCell] = true;
-					++t.oSelectionMathInfo.count;
+				if (!t.props.oExistCells[idCell] && !cell.isNullTextString() && 0 < t.ws._getRowHeight(r)) {
+					t.props.oExistCells[idCell] = true;
+					++t.props.oSelectionMathInfo.count;
 					if (CellValueType.Number === cell.getType()) {
 						cellValue = cell.getNumberValue();
-						if (0 === t.oSelectionMathInfo.countNumbers) {
-							t.oSelectionMathInfo.min = t.oSelectionMathInfo.max = cellValue;
+						if (0 === t.props.oSelectionMathInfo.countNumbers) {
+							t.props.oSelectionMathInfo.min = t.oSelectionMathInfo.max = cellValue;
 						} else {
-							t.oSelectionMathInfo.min = Math.min(t.oSelectionMathInfo.min, cellValue);
-							t.oSelectionMathInfo.max = Math.max(t.oSelectionMathInfo.max, cellValue);
+							t.props.oSelectionMathInfo.min = Math.min(t.oSelectionMathInfo.min, cellValue);
+							t.props.oSelectionMathInfo.max = Math.max(t.oSelectionMathInfo.max, cellValue);
 						}
-						++t.oSelectionMathInfo.countNumbers;
-						t.sum += cellValue;
+						++t.props.oSelectionMathInfo.countNumbers;
+						t.props.sum += cellValue;
 					}
 				}
 
@@ -24945,17 +24929,17 @@
 		{
 			this.timer = setTimeout(function()
 			{
-				oThis.ContinueGetTextAround();
+				oThis.continueAction();
 			}, 20);
 		}
 		else
 		{
 			this.timer = null;
-			this._callback(t.oSelectionMathInfo, t.sum);
+			this._callback(this.props);
 			console.log("asd")
 		}
 	};
-	asyncSelectionMathInfo.prototype.StopTextAround = function()
+	cAsyncAction.prototype.stop = function()
 	{
 		if (this.timer)
 		{
@@ -24963,11 +24947,6 @@
 		}
 
 		this.timer = null;
-	};
-	asyncSelectionMathInfo.prototype.SendAllTextAround = function()
-	{
-		if (this.timer)
-			return;
 	};
 
 
