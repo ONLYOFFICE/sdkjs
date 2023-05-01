@@ -1611,6 +1611,11 @@ CDocumentContentBase.prototype.GetAllParagraphs = function(oProps, arrParagraphs
  */
 CDocumentContentBase.prototype.GetAllParagraphsByNumbering = function(oNumPr)
 {
+	let logicDocument = this.GetLogicDocument();
+	let numberingCollection = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetNumberingCollection() : null;
+	if (numberingCollection)
+		return numberingCollection.GetAllParagraphsByNumbering(oNumPr);
+	
 	return this.GetAllParagraphs({Numbering : true, NumPr : oNumPr});
 };
 /**
@@ -2371,7 +2376,7 @@ CDocumentContentBase.prototype.GetFormattingPasteData = function()
 CDocumentContentBase.prototype.UpdateNumberingCollection = function(elements)
 {
 	let logicDocument = this.GetLogicDocument();
-	if (!logicDocument)
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
 		return;
 	
 	let numberingCollection = logicDocument.GetNumberingCollection();

@@ -80,17 +80,40 @@
 		this.CheckParagraphs[paragraph.GetId()] = paragraph;
 		this.NeedRecollect = true;
 	};
-	CNumberingCollection.prototype.GetAllParagraphsByNum = function(numId, iLvl)
+	CNumberingCollection.prototype.GetAllParagraphsByNumbering = function(value)
 	{
 		this.Recollect();
+		
+		let result = [];
+		if (!value)
+		{
+			return [];
+		}
+		else if (undefined !== value.NumId)
+		{
+			let numPr = value;
+			this.GetAllParagraphsByNumPr(result, numPr.NumId, numPr.Lvl);
+		}
+		else if (Array.isArray(value))
+		{
+			for (let index = 0, count = value.length; index < count; ++index)
+			{
+				let numPr = value[index];
+				this.GetAllParagraphsByNumPr(result, numPr.NumId, numPr.Lvl);
+			}
+		}
+		
+		return result;
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	CNumberingCollection.prototype.GetAllParagraphsByNumPr = function(result, numId, iLvl)
+	{
+		if (!this.NumToParagraph[numId])
+			return;
 		
 		if (undefined === iLvl || null === iLvl)
 			iLvl = -1;
 		
-		if (!this.NumToParagraph[numId])
-			return [];
-		
-		let result = [];
 		if (-1 === iLvl)
 		{
 			for (iLvl = 0; iLvl < 9; ++iLvl)
@@ -99,7 +122,7 @@
 					continue;
 				
 				for (let paraId in this.NumToParagraph[numId][iLvl])
-					result.push_back(this.NumToParagraph[numId][iLvl][paraId]);
+					result.push(this.NumToParagraph[numId][iLvl][paraId]);
 			}
 		}
 		else
@@ -107,12 +130,10 @@
 			if (this.NumToParagraph[numId][iLvl])
 			{
 				for (let paraId in this.NumToParagraph[numId][iLvl])
-					result.push_back(this.NumToParagraph[numId][iLvl][paraId]);
+					result.push(this.NumToParagraph[numId][iLvl][paraId]);
 			}
 		}
-		return result;
 	};
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CNumberingCollection.prototype.Recollect = function()
 	{
 		if (!this.NeedRecollect)
