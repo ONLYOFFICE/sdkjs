@@ -414,7 +414,9 @@ CNum.prototype.RecalculateRelatedParagraphs = function(nLvl)
 				logicDocument.Add_ChangedStyle(style.GetId());
 		}
 	}
-
+	
+	logicDocument.GetNumberingCollection().CheckNum(this.Id, nLvl);
+	
 	var arrParagraphs = logicDocument.GetAllParagraphsByNumbering({NumId : this.Id, Lvl : nLvl});
 	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 	{
@@ -770,8 +772,6 @@ CNum.prototype.Process_EndLoad = function(oData)
 {
 	if (undefined !== oData.Lvl)
 		this.RecalculateRelatedParagraphs(oData.Lvl);
-
-	History.Add_UpdateListPresets(undefined, true);
 };
 /**
  * Проверяем есть ли у нас LvlOverride с перезаписанным уровнем

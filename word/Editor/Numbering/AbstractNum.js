@@ -146,7 +146,9 @@ CAbstractNum.prototype.RecalculateRelatedParagraphs = function(nLvl)
 				logicDocument.Add_ChangedStyle(style.GetId());
 		}
 	}
-
+	
+	logicDocument.GetNumberingCollection().CheckNum(this.Id, nLvl);
+	
 	var arrParagraphs = logicDocument.GetAllParagraphsByNumbering({NumId : this.Id, Lvl : nLvl});
 	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 	{
@@ -457,7 +459,6 @@ CAbstractNum.prototype.Process_EndLoad = function(Data)
 	{
 		// Пересчитываем стили у все параграфов с данной нумерацией
 		this.Recalc_CompiledPr(iLvl);
-		History.Add_UpdateListPresets(undefined, true);
 	}
 };
 CAbstractNum.prototype.Recalc_CompiledPr = function(nLvl)

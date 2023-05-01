@@ -48,9 +48,8 @@ function CHistory(Document)
     this.CanNotAddChanges     = false; // флаг для отслеживания ошибок добавления изменений без точки:Create_NewPoint->Add->Save_Changes->Add
 	this.CollectChanges       = false;
 	this.UndoRedoInProgress   = false; //
-
-	this.RecalculateData =
-	{
+	
+	this.RecalculateData = {
 		Inline       : {
 			Pos     : -1,
 			PageNum : 0
@@ -58,18 +57,17 @@ function CHistory(Document)
 		Flow         : [],
 		HdrFtr       : [],
 		Drawings     : {
-			All        : false,
-			Map        : {},
-			ThemeInfo  : null,
-            SlideMinIdx: null
+			All         : false,
+			Map         : {},
+			ThemeInfo   : null,
+			SlideMinIdx : null
 		},
-		Tables            : [],
-		NumPr             : [],
-		NotesEnd          : false,
-		NotesEndPage      : 0,
-		LineNumbers       : false,
-		UpdateListPresets : false,
-		Update            : true
+		Tables       : [],
+		NumPr        : [],
+		NotesEnd     : false,
+		NotesEndPage : 0,
+		LineNumbers  : false,
+		Update       : true
 	};
 
 	this.TurnOffHistory  = 0;
@@ -646,15 +644,6 @@ CHistory.prototype =
         }
     },
 
-	Add_UpdateListPresets : function(NumPr, bForce)
-	{
-		if(this.Document && this.Document.IsDocumentEditor())
-		{
-			if (bForce || (undefined !== NumPr && null !== NumPr && undefined !== NumPr.NumId))
-				this.RecalculateData.UpdateListPresets = true;
-		}
-	},
-
     Add_RecalcTableGrid : function(TableId)
     {
         this.RecalculateData.Tables[TableId] = true;
@@ -701,11 +690,6 @@ CHistory.prototype =
         }
         this.RecalculateData.NumPr = [];
         this.RecalculateData.Update = true;
-	    if (this.RecalculateData.UpdateListPresets)
-	    {
-		    editor.sync_UpdateListPatterns();
-		    this.RecalculateData.UpdateListPresets = false;
-	    }
     },
 
 	CheckUnionLastPoints : function()
@@ -1287,8 +1271,8 @@ CHistory.prototype.RemoveLastPoint = function()
 CHistory.prototype.private_ClearRecalcData = function()
 {
 	// NumPr здесь не обнуляем
-	const NumPr              = this.RecalculateData.NumPr;
-	const UpdateListPresets  = this.RecalculateData.UpdateListPresets;
+	let numPr = this.RecalculateData.NumPr;
+	
 	this.RecalculateData = {
 		Inline   : {
 			Pos     : -1,
@@ -1297,18 +1281,17 @@ CHistory.prototype.private_ClearRecalcData = function()
 		Flow     : [],
 		HdrFtr   : [],
 		Drawings : {
-			All        : false,
-			Map        : {},
-			ThemeInfo  : null,
-            SlideMinIdx: null
+			All         : false,
+			Map         : {},
+			ThemeInfo   : null,
+			SlideMinIdx : null
 		},
-
+		
 		Tables            : [],
-		NumPr             : NumPr,
+		NumPr             : numPr,
 		NotesEnd          : false,
 		NotesEndPage      : 0,
 		Update            : true,
-		UpdateListPresets : UpdateListPresets,
 		ChangedStyles     : {},
 		ChangedNums       : {},
 		LineNumbers       : false,

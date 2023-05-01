@@ -7310,22 +7310,10 @@ CDocumentContent.prototype.Refresh_ContentChanges = function()
 };
 CDocumentContent.prototype.Internal_Content_RemoveAll = function()
 {
-	const Count = this.Content.length;
-	let bUpdateBulletPresets = false;
-	for (var Index = 0; Index < Count; Index++)
+	for (let index = 0, count = this.Content.length; index < count; ++index)
 	{
-		const oElement = this.Content[Index];
-		oElement.PreDelete();
-		if (oElement.Get_Type() === type_Paragraph)
-		{
-			const oNumPr = oElement.GetNumPr();
-			if (!bUpdateBulletPresets)
-			{
-				bUpdateBulletPresets = !!(oNumPr && oNumPr.NumId);
-			}
-		}
+		this.Content[index].PreDelete();
 	}
-	this.UpdateBulletPresets(undefined, bUpdateBulletPresets);
 
 	History.Add(new CChangesDocumentRemoveItem(this, 0, this.Content.slice(0, this.Content.length)));
 	this.Content = [];
@@ -8445,43 +8433,6 @@ CDocumentContent.prototype.GetTopDocumentContent = function(isOneLevel)
         return TopDocument;
 
     return this;
-};
-CDocumentContent.prototype.UpdateBulletPresets = function (oNumPr, bForce)
-{
-	if (this.LogicDocument)
-	{
-		this.LogicDocument.UpdateBulletPresets(oNumPr, bForce);
-	}
-};
-CDocumentContent.prototype.private_RecalculateNumbering = function(Elements)
-{
-	this.UpdateNumberingCollection(Elements);
-    if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead || true === this.bPresentation)
-        return;
-
-    for (var Index = 0, Count = Elements.length; Index < Count; ++Index)
-    {
-        var Element = Elements[Index];
-        if (type_Paragraph === Element.Get_Type())
-        {
-					const oNumPr = Element.GetNumPr();
-	        History.Add_RecalcNumPr(oNumPr);
-	        this.UpdateBulletPresets(oNumPr);
-        }
-        else if (Element.GetAllParagraphs)
-        {
-            var ParaArray = [];
-            Element.GetAllParagraphs({All : true}, ParaArray);
-
-            for (var ParaIndex = 0, ParasCount = ParaArray.length; ParaIndex < ParasCount; ++ParaIndex)
-            {
-                var Para = ParaArray[ParaIndex];
-	            const oNumPr = Para.GetNumPr();
-	            History.Add_RecalcNumPr(oNumPr);
-	            this.UpdateBulletPresets(oNumPr);
-            }
-        }
-    }
 };
 CDocumentContent.prototype.Set_ParaPropsForVerticalTextInCell = function(isVerticalText)
 {

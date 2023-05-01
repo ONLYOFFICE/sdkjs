@@ -4353,7 +4353,6 @@ background-repeat: no-repeat;\
 			oLogicDocument.Recalculate();
 			oLogicDocument.UpdateInterface();
 			oLogicDocument.UpdateSelection();
-			oLogicDocument.UpdateBulletPresets(undefined, true);
 			oLogicDocument.FinalizeAction();
 		}
 	};

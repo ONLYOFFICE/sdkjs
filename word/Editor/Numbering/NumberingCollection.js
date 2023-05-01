@@ -41,18 +41,21 @@
 	 */
 	function CNumberingCollection(logicDocument)
 	{
-		this.LogicDocument     = logicDocument;
-		this.Numbering         = logicDocument.GetNumbering();
+		this.LogicDocument = logicDocument;
+		this.Numbering     = logicDocument.GetNumbering();
+		
+		this.CheckParagraphs = {};
+		this.NumToParagraph  = {};
+		this.ParagraphToNum  = {};
+		
+		this.NeedRecollect = true;
+		this.NeedUpdateUI  = true;
+		
 		this.singleBullet      = {};
 		this.singleNumbering   = {};
 		this.multiLevel        = {};
 		this.checkNumMap       = {};
 		this.checkSingleLvlMap = {};
-		
-		this.CheckParagraphs = {};
-		this.NumToParagraph = {};
-		this.ParagraphToNum = {};
-		this.NeedRecollect  = true;
 	}
 	CNumberingCollection.prototype.Init = function()
 	{
@@ -79,6 +82,11 @@
 		
 		this.CheckParagraphs[paragraph.GetId()] = paragraph;
 		this.NeedRecollect = true;
+		this.NeedUpdateUI  = true;
+	};
+	CNumberingCollection.prototype.CheckNum = function(numId, iLvl)
+	{
+		this.NeedUpdateUI = true;
 	};
 	CNumberingCollection.prototype.GetAllParagraphsByNumbering = function(value)
 	{
@@ -104,6 +112,16 @@
 		}
 		
 		return result;
+	};
+	CNumberingCollection.prototype.UpdatePanel = function()
+	{
+		if (!this.NeedUpdateUI)
+			return;
+		
+		this.NeedUpdateUI = false;
+		
+		this.Init();
+		this.LogicDocument.GetApi().sendEvent('asc_updateListPatterns', this.GetCollections());
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CNumberingCollection.prototype.GetAllParagraphsByNumPr = function(result, numId, iLvl)

@@ -12427,6 +12427,7 @@ Paragraph.prototype.PreDelete = function()
 	this.RemoveSelection();
 
 	this.UpdateDocumentOutline();
+	this.private_RefreshNumbering();
 
 	if (undefined !== this.Get_SectionPr() && this.LogicDocument)
 	{

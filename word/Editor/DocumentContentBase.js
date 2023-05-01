@@ -2396,4 +2396,32 @@ CDocumentContentBase.prototype.UpdateNumberingCollection = function(elements)
 		}
 	}
 };
+CDocumentContentBase.prototype.private_RecalculateNumbering = function(elements)
+{
+	this.UpdateNumberingCollection(elements);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+	
+	if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+		return;
+	
+	let history = logicDocument.GetHistory();
+	for (let iElement = 0, nElements = elements.length; iElement < nElements; ++iElement)
+	{
+		if (elements[iElement].IsParagraph())
+		{
+			history.Add_RecalcNumPr(elements[iElement].GetNumPr());
+		}
+		else if (Element.GetAllParagraphs)
+		{
+			let paragraphs = elements[iElement].GetAllParagraphs({All : true});
+			for (let iPara = 0, nParas = paragraphs.length; iPara < nParas; ++iPara)
+			{
+				history.Add_RecalcNumPr(paragraphs[iPara].GetNumPr());
+			}
+		}
+	}
+};
 

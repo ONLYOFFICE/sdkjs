@@ -1944,11 +1944,11 @@ function CDocument(DrawingDocument, isMainLogicDocument)
     this.TurnOffRecalcCurPos    = false;
 
     this.CheckEmptyElementsOnSelection = true; // При выделении проверять или нет пустой параграф в конце/начале выделения.
-
-    this.Numbering           = new AscWord.CNumbering();
-	this.NumberingApplicator = new AscWord.CNumberingApplicator(this);
-	this.NumberingCollection = new AscWord.CNumberingCollection(this);
-
+	
+	this.Numbering           = new AscWord.CNumbering();               // Форматный класс для хранения всех нумераций согласно формату
+	this.NumberingApplicator = new AscWord.CNumberingApplicator(this); // Класс для применения нумерации к текущему выделение
+	this.NumberingCollection = new AscWord.CNumberingCollection(this); // Класс, хранящий нумерации, используемые в документе
+	
     this.Styles    = new CStyles();
     this.Styles.Set_LogicDocument(this);
 
@@ -11762,6 +11762,7 @@ CDocument.prototype.private_UpdateInterface = function(isSaveCurrentReviewChange
 	this.Document_UpdateCanAddHyperlinkState();
 	this.Document_UpdateSectionPr();
 	this.UpdateStylePanel();
+	this.UpdateNumberingPanel();
 };
 CDocument.prototype.private_UpdateRulers = function()
 {
@@ -14592,9 +14593,9 @@ CDocument.prototype.UnlockPanelStyles = function(isUpdate)
 	if (true === isUpdate)
 		this.UpdateStylePanel();
 };
-CDocument.prototype.UpdateBulletPresets = function (oNumPr, bForce)
+CDocument.prototype.UpdateNumberingPanel = function()
 {
-	this.History.Add_UpdateListPresets(oNumPr, bForce);
+	this.NumberingCollection.UpdatePanel();
 };
 CDocument.prototype.GetAllParagraphs = function(Props, ParaArray)
 {
@@ -15867,37 +15868,6 @@ CDocument.prototype.Set_ColumnsProps = function(ColumnsProps)
 CDocument.prototype.GetTopDocumentContent = function(isOneLevel)
 {
 	return this;
-};
-CDocument.prototype.private_RecalculateNumbering = function(Elements)
-{
-	this.UpdateNumberingCollection(Elements);
-	
-	if (true === AscCommon.g_oIdCounter.m_bLoad)
-		return;
-
-	for (var Index = 0, Count = Elements.length; Index < Count; ++Index)
-	{
-		const Element = Elements[Index];
-		if (type_Paragraph === Element.Get_Type())
-		{
-			const oNumPr = Element.GetNumPr();
-			this.History.Add_RecalcNumPr(oNumPr);
-			this.UpdateBulletPresets(oNumPr);
-		}
-		else if (Element.GetAllParagraphs)
-		{
-			const ParaArray = [];
-			Element.GetAllParagraphs({All : true}, ParaArray);
-
-			for (var ParaIndex = 0, ParasCount = ParaArray.length; ParaIndex < ParasCount; ++ParaIndex)
-			{
-				const Para = ParaArray[ParaIndex];
-				const oNumPr = Para.GetNumPr();
-				this.History.Add_RecalcNumPr(oNumPr);
-				this.UpdateBulletPresets(oNumPr);
-			}
-		}
-	}
 };
 CDocument.prototype.Set_SectionProps = function(Props)
 {
