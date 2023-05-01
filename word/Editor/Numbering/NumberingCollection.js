@@ -51,30 +51,10 @@
 		this.NeedRecollect = true;
 		this.NeedUpdateUI  = true;
 		
-		this.singleBullet      = {};
-		this.singleNumbering   = {};
-		this.multiLevel        = {};
-		this.checkNumMap       = {};
-		this.checkSingleLvlMap = {};
+		this.BulletedCollection = {};
+		this.NumberedCollection = {};
+		this.MultiLvlCollection = {};
 	}
-	CNumberingCollection.prototype.Init = function()
-	{
-		let allParagraphs = this.LogicDocument.GetAllParagraphs();
-		for (let paraIndex = 0, paraCount = allParagraphs.length; paraIndex < paraCount; ++paraIndex)
-		{
-			let numPr = allParagraphs[paraIndex].GetNumPr();
-			if (numPr && numPr.IsValid())
-				this.AddNum(numPr);
-		}
-	};
-	CNumberingCollection.prototype.GetCollections = function()
-	{
-		return {
-			"singleBullet"    : Object.keys(this.singleBullet),
-			"singleNumbering" : Object.keys(this.singleNumbering),
-			"multiLevel"      : Object.keys(this.multiLevel)
-		};
-	};
 	CNumberingCollection.prototype.CheckParagraph = function(paragraph)
 	{
 		if (!paragraph)
@@ -120,7 +100,7 @@
 		
 		this.NeedUpdateUI = false;
 		
-		this.Init();
+		this.InitCollections();
 		this.LogicDocument.GetApi().sendEvent('asc_updateListPatterns', this.GetCollections());
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -159,8 +139,6 @@
 		
 		this.NeedRecollect = false;
 		
-		console.time("Numbering.Recollect");
-		
 		let numToCheck = {};
 		for (let paraId in this.CheckParagraphs)
 		{
@@ -195,8 +173,6 @@
 		}
 		
 		this.ClearEmptyNumToParagraph(numToCheck);
-		
-		console.timeEnd("Numbering.Recollect");
 	};
 	CNumberingCollection.prototype.ClearEmptyNumToParagraph = function(numToCheck)
 	{
@@ -211,11 +187,7 @@
 				if (!this.NumToParagraph[numId][iLvl])
 					continue;
 				
-				for (let paraId in this.NumToParagraph[numId][iLvl])
-				{
-					empty = false;
-					break;
-				}
+				empty = AscCommon.isEmptyObject(this.NumToParagraph[numId][iLvl]);
 				
 				if (!empty)
 					break;
@@ -225,63 +197,60 @@
 				delete this.NumToParagraph[numId];
 		}
 	};
-	CNumberingCollection.prototype.AddNum = function(oNumPr)
+	CNumberingCollection.prototype.InitCollections = function()
 	{
-		const sNumId = oNumPr.NumId;
-		const nLvl   = oNumPr.Lvl;
+		this.Recollect();
 		
-		if (!this.checkNumMap[sNumId])
-		{
-			const oNum = this.Numbering.GetNum(sNumId);
-			if (oNum)
-			{
-				this.CheckMultiLvl(oNum);
-			}
-			this.checkNumMap[sNumId]       = true;
-			this.checkSingleLvlMap[sNumId] = {};
-		}
+		this.BulletedCollection = {};
+		this.NumberedCollection = {};
+		this.MultiLvlCollection = {};
 		
-		if (!this.checkSingleLvlMap[sNumId][nLvl])
+		for (let numId in this.NumToParagraph)
 		{
-			const oNum = this.Numbering.GetNum(sNumId);
-			if (oNum)
+			for (let iLvl = 0; iLvl < 9; ++iLvl)
 			{
-				this.CheckSingleLvl(oNum, nLvl);
-				this.checkSingleLvlMap[sNumId][nLvl] = true;
-			}
-			else
-			{
-				for (let i = 0; i < 9; i += 1)
-				{
-					this.checkSingleLvlMap[sNumId][i] = true;
-				}
+				if (!this.NumToParagraph[numId][iLvl])
+					continue;
+				
+				if (!AscCommon.isEmptyObject(this.NumToParagraph[numId][iLvl]))
+					this.AddNumToCollections(numId, iLvl);
 			}
 		}
 	};
-	CNumberingCollection.prototype.CheckSingleLvl = function(num, iLvl)
+	CNumberingCollection.prototype.GetCollections = function()
+	{
+		return {
+			"singleBullet"    : Object.keys(this.BulletedCollection),
+			"singleNumbering" : Object.keys(this.NumberedCollection),
+			"multiLevel"      : Object.keys(this.MultiLvlCollection)
+		};
+	};
+	CNumberingCollection.prototype.AddNumToCollections = function(numId, iLvl)
+	{
+		let num = this.Numbering.GetNum(numId);
+		if (!num)
+			return;
+
+		this.AddToMultiLvlCollection(num);
+		this.AddToSingleLvlCollection(num, iLvl);
+	};
+	CNumberingCollection.prototype.AddToSingleLvlCollection = function(num, iLvl)
 	{
 		let numInfo = AscWord.CNumInfo.FromNum(num, iLvl, this.LogicDocument.GetStyles());
+		let json    = JSON.stringify(numInfo.ToJson());
+		
 		if (numInfo.IsNumbered())
-			this.AddToSingleNumbered(JSON.stringify(numInfo.ToJson()));
-		else if (numInfo.IsBulleted())
-			this.AddToSingleBullet(JSON.stringify(numInfo.ToJson()));
+			this.NumberedCollection[json] = true;
+		
+		if (numInfo.IsBulleted())
+			this.BulletedCollection[json] = true;
 	};
-	CNumberingCollection.prototype.CheckMultiLvl = function(num)
+	CNumberingCollection.prototype.AddToMultiLvlCollection = function(num)
 	{
 		let numInfo = AscWord.CNumInfo.FromNum(num, null, this.LogicDocument.GetStyles());
-		this.AddToMultiLvl(JSON.stringify(numInfo.ToJson()));
-	};
-	CNumberingCollection.prototype.AddToMultiLvl = function (sJSON)
-	{
-		this.multiLevel[sJSON] = true;
-	};
-	CNumberingCollection.prototype.AddToSingleBullet = function (sJSON)
-	{
-		this.singleBullet[sJSON] = true;
-	};
-	CNumberingCollection.prototype.AddToSingleNumbered = function (sJSON)
-	{
-		this.singleNumbering[sJSON] = true;
+		let json    = JSON.stringify(numInfo.ToJson());
+		
+		this.MultiLvlCollection[json] = true;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

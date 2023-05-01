@@ -4150,20 +4150,6 @@ background-repeat: no-repeat;\
 			return oRes;
 		});
 	};
-	asc_docs_api.prototype.sync_UpdateListPatterns = function ()
-	{
-		editor.sendEvent('asc_updateListPatterns', this.asc_GetAllJSONNums());
-	};
-	asc_docs_api.prototype.asc_GetAllJSONNums = function ()
-	{
-		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument)
-			return [];
-		
-		let collection = logicDocument.GetNumberingCollection();
-		collection.Init();
-		return collection.GetCollections();
-	};
 	asc_docs_api.prototype.asc_CompareNumberingPresets = function(value1, value2)
 	{
 		let numInfo1 = AscWord.CNumInfo.Parse(value1);
@@ -8003,7 +7989,6 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 		//this.WordControl.m_oLogicDocument.Document_UpdateRulersState();
 		this.WordControl.m_oLogicDocument.Document_UpdateSelectionState();
-		this.sync_UpdateListPatterns();
 		this.LoadedObject = null;
 
 		this.WordControl.InitControl();
@@ -13760,8 +13745,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_GetCurrentNumberingJson']               = asc_docs_api.prototype.asc_GetCurrentNumberingJson;
 	asc_docs_api.prototype['asc_IsCurrentNumberingPreset']              = asc_docs_api.prototype.asc_IsCurrentNumberingPreset;
 	asc_docs_api.prototype['asc_CompareNumberingPresets']               = asc_docs_api.prototype.asc_CompareNumberingPresets;
-	asc_docs_api.prototype['sync_UpdateListPatterns']                   = asc_docs_api.prototype.sync_UpdateListPatterns;
-	asc_docs_api.prototype['asc_GetAllJSONNums']                        = asc_docs_api.prototype.asc_GetAllJSONNums;
 	asc_docs_api.prototype['asc_ContinueNumbering']                     = asc_docs_api.prototype.asc_ContinueNumbering;
 	asc_docs_api.prototype['asc_RestartNumbering']                      = asc_docs_api.prototype.asc_RestartNumbering;
 	asc_docs_api.prototype['asc_GetCurrentNumberingId']                 = asc_docs_api.prototype.asc_GetCurrentNumberingId;

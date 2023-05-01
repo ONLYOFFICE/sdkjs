@@ -10552,6 +10552,9 @@ CDocument.prototype.Get_Numbering = function()
 {
 	return this.Numbering;
 };
+/**
+ * @returns {AscWord.CNumbering}
+ */
 CDocument.prototype.GetNumbering = function()
 {
 	return this.Numbering;
