@@ -1815,7 +1815,7 @@ function (window, undefined) {
 	cSORT.prototype.isXLFN = true;
 	cSORT.prototype.isXLWS = true;
 	cSORT.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
-	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.bool];
+	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.logical];
 	cSORT.prototype.Calculate = function (arg) {
 		function sortWithIndices(arr) {
 			const isRowMode = arr.length === 1 ? true : false;
