@@ -1476,7 +1476,7 @@
 		SelectionRange.prototype.getSize = function () {
 			let res = 0;
 			this.ranges.forEach(function (item) {
-				res += (item.r2 - item.r1) * (item.c2 - item.c1);
+				res += (item.r2 - item.r1 + 1) * (item.c2 - item.c1 + 1);
 			});
 			return res;
 		};
