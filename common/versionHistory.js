@@ -45,9 +45,9 @@
     this.newChangeId = -1;
     this.colors = null;
     this.changes = null;
-	this.token = null;
-	this.isRequested = null;
-	this.serverVersion = null;
+    this.token = null;
+    this.isRequested = null;
+    this.serverVersion = null;
     this.userId = null;
     this.userName = null;
     this.userColor = null;
