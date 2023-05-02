@@ -9792,10 +9792,11 @@
 		return bResult;
 	};
 
-    WorksheetView.prototype.getSelectionMathInfo = function (callback) {
-       //TODO при выделении большого количетсва данных функция работает долго
+	WorksheetView.prototype.getSelectionMathInfo = function (callback) {
+		//TODO при выделении большого количетсва данных функция работает долго
+		var oSelectionMathInfo = new asc_CSelectionMathInfo();
 		if (window["NATIVE_EDITOR_ENJINE"] || this.getSelectionDialogMode()) {
-		    return oSelectionMathInfo;
+			return oSelectionMathInfo;
 		}
 
 		let t = this;
@@ -9803,18 +9804,73 @@
 		if (oAsyncSelectionMathInfo) {
 			oAsyncSelectionMathInfo.stop();
 			oAsyncSelectionMathInfo.clear();
-		} else {
-			if (!t.asyncOperations) {
-				t.asyncOperations = {};
-			}
-			oAsyncSelectionMathInfo = new cAsyncAction();
-			t.asyncOperations[asyncOperationsTypes["mathInfo"]] = oAsyncSelectionMathInfo;
+			oAsyncSelectionMathInfo = null;
 		}
 
-		oAsyncSelectionMathInfo._callback = function (_props) {
-			let oSelectionMathInfo = _props;
-			let sum = _props;
-			if (1 < oSelectionMathInfo.count && 0 < oSelectionMathInfo.countNumbers) {
+		let action = function (stopFunc, props) {
+			let _ranges = props && props.ranges ? props.ranges : t.model.selectionRange.ranges;
+			let _oExistCells = props && props.oExistCells ? props.oExistCells : {};
+			let _oSelectionMathInfo = props.oSelectionMathInfo;
+
+			for (let i = 0; i < _ranges.length; i++) {
+				var cellValue;
+				let item = _ranges[i];
+				var range = t.model.getRange3(item.r1, item.c1, item.r2, item.c2);
+				let needBreak = false;
+				let _col, _row;
+				range._setPropertyNoEmpty(null, null, function (cell, r) {
+					var idCell = cell.nCol + '-' + cell.nRow;
+					if (!_oExistCells[idCell] && !cell.isNullTextString() && 0 < t._getRowHeight(r)) {
+						_oExistCells[idCell] = true;
+						++_oSelectionMathInfo.count;
+						if (CellValueType.Number === cell.getType()) {
+							cellValue = cell.getNumberValue();
+							if (0 === _oSelectionMathInfo.countNumbers) {
+								_oSelectionMathInfo.min = _oSelectionMathInfo.max = cellValue;
+							} else {
+								_oSelectionMathInfo.min = Math.min(_oSelectionMathInfo.min, cellValue);
+								_oSelectionMathInfo.max = Math.max(_oSelectionMathInfo.max, cellValue);
+							}
+							++_oSelectionMathInfo.countNumbers;
+							props.sum += cellValue;
+						}
+					}
+
+					_col = cell.nCol;
+					_row = cell.nRow;
+
+					if (stopFunc && stopFunc()) {
+						needBreak = true;
+						return true;
+					}
+				});
+
+				if (props.ranges) {
+					if (needBreak) {
+						if (_ranges[i].c2 === _col && _ranges[i].r2 === _row) {
+							_ranges.splice(0, i);
+						} else {
+							let breakRange = _ranges[i];
+							props.ranges = props.ranges.splice(0, i);
+							//break before _col/_row and after and push into this.ranges
+							let afterRanges = breakRange.sliceAfter(_col, _row);
+							if (afterRanges) {
+								props.ranges = props.ranges.concat(afterRanges)
+							}
+						}
+						break;
+					} else if (i === props.ranges.length - 1) {
+						props.ranges = [];
+						break;
+					}
+				}
+			}
+		};
+
+		let afterAction = function (_props) {
+			let _oSelectionMathInfo = _props.oSelectionMathInfo;
+			let sum = _props.sum;
+			if (1 < _oSelectionMathInfo.count && 0 < _oSelectionMathInfo.countNumbers) {
 				// Мы должны отдавать в формате активной ячейки
 				var activeCell = t.model.selectionRange.activeCell;
 				var numFormat = t.model.getRange3(activeCell.row, activeCell.col,
@@ -9824,28 +9880,51 @@
 					numFormat = AscCommon.oNumFormatCache.get('[h]:mm:ss');
 				}
 
-				oSelectionMathInfo.sum =
+				_oSelectionMathInfo.sum =
 					numFormat.formatToMathInfo(sum, CellValueType.Number, t.settings.mathMaxDigCount);
-				oSelectionMathInfo.average =
-					numFormat.formatToMathInfo(sum / oSelectionMathInfo.countNumbers, CellValueType.Number,
+				_oSelectionMathInfo.average =
+					numFormat.formatToMathInfo(sum / _oSelectionMathInfo.countNumbers, CellValueType.Number,
 						t.settings.mathMaxDigCount);
 
-				oSelectionMathInfo.min =
-					numFormat.formatToMathInfo(oSelectionMathInfo.min, CellValueType.Number, t.settings.mathMaxDigCount);
-				oSelectionMathInfo.max =
-					numFormat.formatToMathInfo(oSelectionMathInfo.max, CellValueType.Number, t.settings.mathMaxDigCount);
+				_oSelectionMathInfo.min =
+					numFormat.formatToMathInfo(_oSelectionMathInfo.min, CellValueType.Number, t.settings.mathMaxDigCount);
+				_oSelectionMathInfo.max =
+					numFormat.formatToMathInfo(_oSelectionMathInfo.max, CellValueType.Number, t.settings.mathMaxDigCount);
 			}
 
-			callback && callback(oSelectionMathInfo);
+			callback && callback(_oSelectionMathInfo);
 		};
 
-		oAsyncSelectionMathInfo.props.oExistCells = {};
-		oAsyncSelectionMathInfo.props.oSelectionMathInfo = new asc_CSelectionMathInfo();
-		oAsyncSelectionMathInfo.props.sum = 0;
-		oAsyncSelectionMathInfo.props.ranges = this.model.selectionRange.ranges;
-		oAsyncSelectionMathInfo.props.ws = this;
-		oAsyncSelectionMathInfo.start();
-    };
+		let nLargeArea = 10000000;
+		let selectionSize = this.model.selectionRange.getSize();
+		if (selectionSize > nLargeArea) {
+			if (!t.asyncOperations) {
+				t.asyncOperations = {};
+			}
+			oAsyncSelectionMathInfo = new cAsyncAction();
+			t.asyncOperations[asyncOperationsTypes["mathInfo"]] = oAsyncSelectionMathInfo;
+
+			oAsyncSelectionMathInfo.action = action;
+			oAsyncSelectionMathInfo.callback = afterAction;
+
+			oAsyncSelectionMathInfo.checkContinue = function () {
+				return oAsyncSelectionMathInfo.props.ranges.length > 0;
+			};
+
+			oAsyncSelectionMathInfo.props = {};
+			oAsyncSelectionMathInfo.props.oExistCells = {};
+			oAsyncSelectionMathInfo.props.oSelectionMathInfo = oSelectionMathInfo;
+			oAsyncSelectionMathInfo.props.sum = 0;
+			oAsyncSelectionMathInfo.props.ranges = this.model.selectionRange.ranges;
+			oAsyncSelectionMathInfo.props.ws = this;
+			oAsyncSelectionMathInfo.start();
+
+		} else {
+			let simpleProps = {oSelectionMathInfo: oSelectionMathInfo, sum: 0};
+			action(null, simpleProps);
+			afterAction(simpleProps);
+		}
+	};
 
     WorksheetView.prototype.getSelectionName = function (bRangeText) {
         if (this.isSelectOnShape) {
@@ -24845,107 +24924,54 @@
 	};
 
 
+	function cAsyncAction() {
+		this.timer = null;
 
-	function cAsyncAction()
-	{
-		this.timer  = null;
-		this.props = null;
-		this._callback = null;
+		this.props = null;//options for current action
+		this.callback = null;//after action call function
+		this.action = null;//action function
+		this.checkContinue = null;//passed to the action function and return end of action true/false
+
+		this.interval = 20;
 	}
 
-	cAsyncAction.prototype.clear = function()
-	{
+	cAsyncAction.prototype.clear = function () {
 		this.props = null;
 	};
 
-	cAsyncAction.prototype.StartTextAround = function()
-	{
+	cAsyncAction.prototype.start = function () {
 		this.stop();
-		this.clear();
 
 		let oThis = this;
-		this.timer = setTimeout(function()
-		{
-			oThis.continueAction()
-		}, 20);
+		this.timer = setTimeout(function () {
+			oThis.continueAction();
+		}, this.interval);
 	};
-	cAsyncAction.prototype.continueAction = function()
-	{
-		let t = this;
+	cAsyncAction.prototype.continueAction = function () {
+		let oThis = this;
 
 		let nStartTime = performance.now();
-		for (let i = 0; i < this.props.ranges.length; i++) {
-			var cellValue;
-			let item = this.props.ranges[i];
-			var range = this.props.ws.model.getRange3(item.r1, item.c1, item.r2, item.c2);
-			let needBreak = false;
-			let _col, _row;
-			range._setPropertyNoEmpty(null, null, function (cell, r) {
-				var idCell = cell.nCol + '-' + cell.nRow;
-				if (!t.props.oExistCells[idCell] && !cell.isNullTextString() && 0 < t.ws._getRowHeight(r)) {
-					t.props.oExistCells[idCell] = true;
-					++t.props.oSelectionMathInfo.count;
-					if (CellValueType.Number === cell.getType()) {
-						cellValue = cell.getNumberValue();
-						if (0 === t.props.oSelectionMathInfo.countNumbers) {
-							t.props.oSelectionMathInfo.min = t.oSelectionMathInfo.max = cellValue;
-						} else {
-							t.props.oSelectionMathInfo.min = Math.min(t.oSelectionMathInfo.min, cellValue);
-							t.props.oSelectionMathInfo.max = Math.max(t.oSelectionMathInfo.max, cellValue);
-						}
-						++t.props.oSelectionMathInfo.countNumbers;
-						t.props.sum += cellValue;
-					}
-				}
-
-				_col = cell.nCol;
-				_row = cell.nRow;
-
-				if (performance.now() - nStartTime > 20) {
-					needBreak = true;
-					return true;
-				}
-			});
-			if (needBreak) {
-				if (this.ranges[i].c2 === _col && this.ranges[i].r2 === _row) {
-					this.ranges.splice(0, i);
-				} else {
-					let breakRange = this.ranges[i];
-					this.ranges = this.ranges.splice(0, i);
-					//break before _col/_row and after and push into this.ranges
-					let afterRanges = breakRange.sliceAfter(_col, _row);
-					if (afterRanges) {
-						this.ranges = this.ranges.concat(afterRanges)
-					}
-				}
-				break;
-			} else if (i === this.ranges.length - 1) {
-				this.ranges = [];
+		this.action && this.action(function () {
+			if (performance.now() - nStartTime > 20) {
+				return true;
 			}
-		}
+			return false;
+		}, this.props);
 
-		let oThis = this;
-		if (this.ranges.length)
-		{
-			this.timer = setTimeout(function()
-			{
+		if (this.checkContinue && this.checkContinue()) {
+			this.timer = setTimeout(function () {
 				oThis.continueAction();
-			}, 20);
-		}
-		else
-		{
+			}, this.interval);
+		} else {
 			this.timer = null;
-			this._callback(this.props);
+			this.callback && this.callback(this.props);
 			console.log("asd")
 		}
 	};
-	cAsyncAction.prototype.stop = function()
-	{
-		if (this.timer)
-		{
+	cAsyncAction.prototype.stop = function () {
+		if (this.timer) {
 			clearTimeout(this.timer);
 		}
-
 		this.timer = null;
 	};
 
