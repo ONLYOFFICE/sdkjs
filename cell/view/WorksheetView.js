@@ -9897,7 +9897,7 @@
 			callback && callback(_oSelectionMathInfo);
 		};
 
-		let nLargeArea = 10000000;
+		let nLargeArea = 1000000;
 		let selectionSize = this.model.selectionRange.getSize();
 		if (selectionSize > nLargeArea) {
 			if (!t.asyncOperations) {
@@ -9917,8 +9917,11 @@
 			oAsyncSelectionMathInfo.props.oExistCells = {};
 			oAsyncSelectionMathInfo.props.oSelectionMathInfo = oSelectionMathInfo;
 			oAsyncSelectionMathInfo.props.sum = 0;
-			oAsyncSelectionMathInfo.props.ranges = this.model.selectionRange.ranges;
-			oAsyncSelectionMathInfo.props.ws = this;
+			let cloneRanges = [];
+			this.model.selectionRange.ranges.forEach(function (item) {
+				cloneRanges.push(item.clone());
+			});
+			oAsyncSelectionMathInfo.props.ranges = cloneRanges;
 			oAsyncSelectionMathInfo.start();
 
 		} else {
@@ -24965,7 +24968,7 @@
 
 		let nStartTime = performance.now();
 		this.action && this.action(function () {
-			if (performance.now() - nStartTime > this.interval) {
+			if (performance.now() - nStartTime > oThis.interval) {
 				return true;
 			}
 			return false;
