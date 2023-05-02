@@ -138,4 +138,8 @@
   prot["asc_setToken"] = prot.asc_setToken;
   prot["asc_setIsRequested"] = prot.asc_setIsRequested;
   prot["asc_setServerVersion"] = prot.asc_setServerVersion;
+  prot["asc_SetUserId"] = prot.asc_SetUserId;
+  prot["asc_SetUserName"] = prot.asc_SetUserName;
+  prot["asc_SetUserColor"] = prot.asc_SetUserColor;
+  prot["asc_SetDateOfRevision"] = prot.asc_SetDateOfRevision;
 })(window);
