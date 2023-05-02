@@ -2146,7 +2146,10 @@ function OfflineEditor () {
                     this.handlers.trigger("selectionNameChanged", this.getSelectionName(/*bRangeText*/true));
                     if (!isSelectMode) {
                         this.handlers.trigger("selectionChanged");
-                        this.handlers.trigger("selectionMathInfoChanged", this.getSelectionMathInfo());
+						let t = this;
+						this.getSelectionMathInfo(function (info) {
+							t.handlers.trigger("selectionMathInfoChanged", info);
+						});
                     }
                 }
             } else {
