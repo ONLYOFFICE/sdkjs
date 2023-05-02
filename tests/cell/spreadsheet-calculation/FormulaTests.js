@@ -15655,6 +15655,48 @@ $(function () {
 		oParser = new parserFormula('XLOOKUP(4,{1,2,6},{2,2,3})', "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(_getValue(oParser.calculate()), "#N/A");
+
+		ws.getRange2("A203").setValue("Mark");
+		ws.getRange2("A204").setValue("Ned");
+		ws.getRange2("A205").setValue("Hans");
+		ws.getRange2("A206").setValue("Martha");
+		ws.getRange2("A207").setValue("Greg");
+		ws.getRange2("A208").setValue("Scott");
+		ws.getRange2("A209").setValue("Jenna");
+		ws.getRange2("A210").setValue("Donna");
+
+		ws.getRange2("B202").setValue("Math");
+		ws.getRange2("B203").setValue("87");
+		ws.getRange2("B204").setValue("67");
+		ws.getRange2("B205").setValue("16");
+		ws.getRange2("B206").setValue("68");
+		ws.getRange2("B207").setValue("21");
+		ws.getRange2("B208").setValue("72");
+		ws.getRange2("B209").setValue("19");
+		ws.getRange2("B210").setValue("14");
+
+		ws.getRange2("C202").setValue("Physics");
+		ws.getRange2("C203").setValue("91");
+		ws.getRange2("C204").setValue("71");
+		ws.getRange2("C205").setValue("32");
+		ws.getRange2("C206").setValue("82");
+		ws.getRange2("C207").setValue("94");
+		ws.getRange2("C208").setValue("38");
+		ws.getRange2("C209").setValue("40");
+		ws.getRange2("C210").setValue("69");
+
+		oParser = new parserFormula('XLOOKUP(19,B203:B210,A203:A210)', "A2", ws);
+		assert.ok(oParser.parse(), 'XLOOKUP(19,B203:B210,A203:A210)');
+		assert.strictEqual(_getValue(oParser.calculate()), "Jenna", 'Result of XLOOKUP(19,B203:B210,A203:A210)');
+
+		oParser = new parserFormula('XLOOKUP(19,XLOOKUP(B202,B202:C202,B203:C210),A203:A210)', "A2", ws);
+		assert.ok(oParser.parse(), 'XLOOKUP(19,XLOOKUP(B202,B202:C202,B202:C210),A203:A210)');
+		assert.strictEqual(_getValue(oParser.calculate()), "Jenna", 'Result of XLOOKUP(19,XLOOKUP(B202,B202:C202,B202:C210),A203:A210)');
+
+		oParser = new parserFormula('XLOOKUP(19,{87;67;16;68;21;72;19;14},A203:A210)', "A2", ws);
+		assert.ok(oParser.parse(), 'XLOOKUP(19,{87;67;16;68;21;72;19;14},A203:A210)');
+		assert.strictEqual(_getValue(oParser.calculate()), "Jenna", 'Result of XLOOKUP(19,{87;67;16;68;21;72;19;14},A203:A210)');
+
 	});
 
 
