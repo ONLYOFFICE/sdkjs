@@ -9814,6 +9814,10 @@
 			let _oExistCells = props && props.oExistCells ? props.oExistCells : {};
 			let _oSelectionMathInfo = props.oSelectionMathInfo;
 
+			if (!_oSelectionMathInfo || !_ranges) {
+				return;
+			}
+
 			for (let i = 0; i < _ranges.length; i++) {
 				var cellValue;
 				let item = _ranges[i];
@@ -9850,10 +9854,10 @@
 				if (props.ranges) {
 					if (needBreak) {
 						if (_ranges[i].c2 === _col && _ranges[i].r2 === _row) {
-							_ranges.splice(0, i);
+							props.ranges = props.ranges.splice(i + 1);
 						} else {
 							let breakRange = _ranges[i];
-							props.ranges = props.ranges.splice(0, i);
+							props.ranges = props.ranges.splice(i + 1);
 							//break before _col/_row and after and push into this.ranges
 							let afterRanges = breakRange.sliceAfter(_col, _row);
 							if (afterRanges) {
@@ -9871,6 +9875,10 @@
 
 		let afterAction = function (_props) {
 			let _oSelectionMathInfo = _props.oSelectionMathInfo;
+			if (!_oSelectionMathInfo) {
+				callback && callback(oSelectionMathInfo);
+				return;
+			}
 			let sum = _props.sum;
 			if (1 < _oSelectionMathInfo.count && 0 < _oSelectionMathInfo.countNumbers) {
 				// Мы должны отдавать в формате активной ячейки
@@ -9893,16 +9901,19 @@
 				_oSelectionMathInfo.max =
 					numFormat.formatToMathInfo(_oSelectionMathInfo.max, CellValueType.Number, t.settings.mathMaxDigCount);
 			}
-
 			callback && callback(_oSelectionMathInfo);
 		};
 
-		let nLargeArea = 1000000;
+		let nLargeArea = 3000000;
 		let selectionSize = this.model.selectionRange.getSize();
 		if (selectionSize > nLargeArea) {
 			if (!t.asyncOperations) {
 				t.asyncOperations = {};
 			}
+
+			//clean previous info
+			t.handlers.trigger("selectionMathInfoChanged", oSelectionMathInfo);
+
 			oAsyncSelectionMathInfo = new cAsyncAction();
 			t.asyncOperations[asyncOperationsTypes["mathInfo"]] = oAsyncSelectionMathInfo;
 
