@@ -11322,6 +11322,14 @@ DynamicFilter.prototype.init = function(range) {
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.nextQuarter: {
+			//<dynamicFilter type="nextQuarter" val="45108" maxVal="45200"/>
+
+			let today = new cDate();
+			let quarter = Math.floor((today.getUTCMonth() / 3));
+
+			let startDate = new cDate(today.getUTCFullYear(), quarter * 3 + 3, 1);
+			val = startDate.getExcelDate(true);
+			maxVal = new cDate(startDate.getUTCFullYear(), startDate.getUTCMonth() + 3 + 1, 1).getExcelDate(true);
 
 			break;
 		}
@@ -11366,34 +11374,87 @@ DynamicFilter.prototype.init = function(range) {
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.thisMonth: {
+			//<dynamicFilter type="thisMonth" val="45047" maxVal="45078"/>
+			let today = new cDate();
+			let todayMonth = today.getUTCMonth();
+			let todayYear = today.getUTCFullYear();
 
+			//first day of previous month
+			val = new cDate(todayYear, todayMonth, 1).getExcelDate(true);
+
+			//first day of current month(excel write in file)
+			maxVal = new cDate(todayYear, todayMonth + 1, 1).getExcelDate(true);
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.thisQuarter: {
+			//<dynamicFilter type="thisQuarter" val="45017" maxVal="45108"/>
+
+			let today = new cDate();
+			let quarter = Math.floor((today.getUTCMonth() / 3));
+
+			let startDate = new cDate(today.getUTCFullYear(), quarter * 3, 1);
+			val = startDate.getExcelDate(true);
+			maxVal = new cDate(startDate.getUTCFullYear(), startDate.getUTCMonth() + 3 + 1, 1).getExcelDate(true);
 
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.thisWeek: {
+			//<dynamicFilter type="nextWeek" val="45053" maxVal="45060"/>
+			let today = new cDate();
+			let startLastWeek = new cDate(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + (7 - today.getUTCDay()));
+			//+1 -> ms excel
+			let endLastWeek = new cDate(startLastWeek.getUTCFullYear(), startLastWeek.getUTCMonth(), startLastWeek.getUTCDate() + 7 + 1);
 
+			val = startLastWeek.getExcelDate(true);
+			maxVal = endLastWeek.getExcelDate(true);
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.thisYear: {
+			//<dynamicFilter type="thisYear" val="44927" maxVal="45292"/>
+			let today = new cDate();
+			val = new cDate(today.getUTCFullYear(), 0, 1).getExcelDate(true);
+			//+1 -> ms excel
+			maxVal = new cDate(today.getUTCFullYear(), 11, 31 + 1).getExcelDate(true);
 
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.today: {
+			//<dynamicFilter type="today" val="45049" maxVal="45050"/>
+			let today = new cDate();
+			val = today.getExcelDate(true);
+			today.addDays(1);
+			maxVal = today.getExcelDate(true);
 
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.tomorrow: {
+			//<dynamicFilter type="tomorrow" val="45050" maxVal="45051"/>
+			let today = new cDate();
+			today.addDays(1);
+			val = today.getExcelDate(true);
+			today.addDays(1);
+			maxVal = today.getExcelDate(true);
 
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.yearToDate: {
+			//<dynamicFilter type="yearToDate" val="44927" maxVal="45050"/>
+
+			let today = new cDate();
+
+			val = new cDate(today.getUTCFullYear(), 0, 1).getExcelDate(true);
+
+			today.addDays(1);
+			maxVal = today.getExcelDate(true);
 
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.yesterday: {
+			//<dynamicFilter type="yesterday" val="45048" maxVal="45049"/>
+			let today = new cDate();
+			maxVal = today.getExcelDate(true);
+			today.addDays(-1);
+			val = today.getExcelDate(true);
 
 			break;
 		}
