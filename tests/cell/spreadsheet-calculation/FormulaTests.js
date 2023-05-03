@@ -15800,6 +15800,57 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 5);
 
+		// bug 62332
+		ws.getRange2("B200").setValue("P/N");
+		ws.getRange2("B201").setValue("V-PS-TE-AW");
+		ws.getRange2("B202").setValue("VA-ARM-PLL-D-A");
+		ws.getRange2("B203").setValue("VA-ARM-PLL-U-A");
+		ws.getRange2("B204").setValue("VA-ARM-U-P-SSS-C");
+		ws.getRange2("B205").setValue("#N/A");
+		ws.getRange2("B206").setValue("");
+
+		ws.getRange2("C300").setValue("P/N");
+		ws.getRange2("C301").setValue("V-PS-TE-AW");
+		ws.getRange2("C302").setValue("VA-ARM-PLL-D-A");
+		ws.getRange2("C303").setValue("VA-ARM-PLL-U-A");
+		ws.getRange2("C304").setValue("VA-ARM-U-P-SSS-C");
+		ws.getRange2("C305").setValue("#N/A");
+		ws.getRange2("C306").setValue("");
+
+		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D200", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");		// 1
+
+		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D201", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");		// 2
+
+		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D202", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");		// 3
+
+		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D202", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("A100").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 3);
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 4);
+		assert.strictEqual(oParser.calculate().getElementRowCol(4,0).getValue(), 5);
+		assert.strictEqual(oParser.calculate().getElementRowCol(5,0).getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getElementRowCol(6,0).getValue(), 7);
+
+		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D202", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D200").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 3);
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 4);
+		assert.strictEqual(oParser.calculate().getElementRowCol(4,0).getValue(), 5);
+		assert.strictEqual(oParser.calculate().getElementRowCol(5,0).getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getElementRowCol(6,0).getValue(), 7);
+
 		//TODO excel по-другому работает
 		/*oParser = new parserFormula( "MATCH(123,F106:F117,1)", "A2", ws );
 		assert.ok( oParser.parse() );
