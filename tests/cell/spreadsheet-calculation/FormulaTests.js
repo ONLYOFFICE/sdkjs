@@ -15821,19 +15821,19 @@ $(function () {
 		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 1);		// 1
+		assert.strictEqual(oParser.calculate().getValue(), 1);
 
 		bbox = ws.getRange2("D201").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);		// 2
+		assert.strictEqual(oParser.calculate().getValue(), 2);
 
 		bbox = ws.getRange2("D202").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 3);		// 3
+		assert.strictEqual(oParser.calculate().getValue(), 3);
 
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D202", ws);
 		oParser.setArrayFormulaRef(ws.getRange2("A100").bbox);
