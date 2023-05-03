@@ -11169,9 +11169,9 @@ DynamicFilter.prototype.getProperties = function() {
 };
 DynamicFilter.prototype.getProperty = function(nType) {
 	switch (nType) {
-		case this.Properties.Type: return this.Type; break;
-		case this.Properties.Val: return this.Val; break;
-		case this.Properties.MaxVal: return this.MaxVal; break;
+		case this.Properties.Type: return this.Type;
+		case this.Properties.Val: return this.Val;
+		case this.Properties.MaxVal: return this.MaxVal;
 	}
 	return null;
 };
@@ -11191,33 +11191,176 @@ DynamicFilter.prototype.clone = function() {
 };
 
 DynamicFilter.prototype.init = function(range) {
-	var res = null;
+	let val = null, maxVal;
 
-	switch(this.Type)
-	{
+	switch (this.Type) {
 		case Asc.c_oAscDynamicAutoFilter.aboveAverage:
-		case Asc.c_oAscDynamicAutoFilter.belowAverage:
-		{
-			var summ = 0;
-			var counter = 0;
+		case Asc.c_oAscDynamicAutoFilter.belowAverage: {
+			let sum = 0;
+			let counter = 0;
 
-			range._foreachNoEmpty(function(cell){
-				var val = parseFloat(cell.getValueWithoutFormat());
+			range._foreachNoEmpty(function (cell) {
+				let cellVal = parseFloat(cell.getValueWithoutFormat());
 
-				if(!isNaN(val))
-				{
-					summ += parseFloat(val);
+				if (!isNaN(cellVal)) {
+					sum += parseFloat(cellVal);
 					counter++;
 				}
 
 			});
-			res = summ / counter;
+			val = sum / counter;
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.lastMonth: {
+			//<dynamicFilter type="lastMonth" val="45017" maxVal="45047"/>
+			let today = new cDate();
+			let todayMonth = today.getUTCMonth();
+			let todayYear = today.getUTCFullYear();
+
+			//first day of previous month
+			val = new cDate(todayYear, todayMonth - 1, 1).getExcelDate(true);
+
+			//first day of current month(excel write in file)
+			maxVal = new cDate(todayYear, todayMonth, 1).getExcelDate(true);
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.lastQuarter: {
+			//today -> 45049
+			//<dynamicFilter type="lastQuarter" val="44927" maxVal="45017"/>
+
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.lastWeek: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.lastYear: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m1: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m10: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m11: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m12: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m2: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m3: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m4: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m5: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m6: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m7: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m8: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m9: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.nextMonth: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.nextQuarter: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.nextWeek: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.nextYear: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.nullType: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q1: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q2: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q3: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q4: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.thisMonth: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.thisQuarter: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.thisWeek: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.thisYear: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.today: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.tomorrow: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.yearToDate: {
+
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.yesterday: {
 
 			break;
 		}
 	}
 
-	this.Val = res;
+	this.Val = val;
+	this.MaxVal = maxVal;
 };
 
 DynamicFilter.prototype.isHideValue = function(val) {
