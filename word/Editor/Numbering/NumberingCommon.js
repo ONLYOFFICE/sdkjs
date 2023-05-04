@@ -323,17 +323,7 @@ function Numbering_Number_To_Roman(Num, bLowerCase)
 			}
 		}
 
-		let numObject = {};
-
-		try
-		{
-			numObject = JSON.parse(value);
-		}
-		catch (e)
-		{
-		}
-
-		return numObject;
+		return AscWord.CNumInfo.Parse(value);
 	}
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].GetNumberingSymbols                 = GetNumberingSymbols;
