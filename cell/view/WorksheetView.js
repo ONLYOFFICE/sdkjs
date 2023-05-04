@@ -2200,10 +2200,11 @@
 
 		var startPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
 
+		let _retinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
 		if (pageHeadings) {
 			// Рисуем заголовки, нужно чуть сдвинуться
-			leftFieldInPx += startPrintPreview ? (this.cellsLeft * scale) / AscCommon.AscBrowser.retinaPixelRatio : this.cellsLeft;
-			topFieldInPx += startPrintPreview ? (this.cellsTop * scale) / AscCommon.AscBrowser.retinaPixelRatio : this.cellsTop;
+			leftFieldInPx += startPrintPreview ? (this.cellsLeft * scale) / _retinaPixelRatio : this.cellsLeft / _retinaPixelRatio;
+			topFieldInPx += startPrintPreview ? (this.cellsTop * scale) / _retinaPixelRatio : this.cellsTop / _retinaPixelRatio;
 		}
 
 		//TODO при сравнении резальтатов рассчета страниц в зависимости от scale - LO выдаёт похожие результаты, MS - другие. Необходимо пересмотреть!
@@ -3258,11 +3259,14 @@
 		var leftFieldInPx = pageLeftField / vector_koef + 1;
 		var topFieldInPx = pageTopField / vector_koef + 1;
 
+		let _cellsLeft = this.cellsLeft;
+		let _cellsTop = this.cellsTop;
+
 		//TODO ms считает именно так - каждый раз прибаляются размеры заголовков к полям. необходимо перепроверить!
 		//if (pageHeadings) {
 		// Рисуем заголовки, нужно чуть сдвинуться
-		leftFieldInPx += this.cellsLeft;
-		topFieldInPx += this.cellsTop;
+		leftFieldInPx += _cellsLeft;
+		topFieldInPx += _cellsTop;
 		//}
 
 		//TODO при сравнении резальтатов рассчета страниц в зависимости от scale - LO выдаёт похожие результаты, MS - другие. Необходимо пересмотреть!
@@ -3273,7 +3277,7 @@
 		var doCalcScaleWidth = function(start, end) {
 			var res;
 			if(width) {
-				var widthAllCols = pageHeadings ? t.cellsLeft * width : 0;
+				var widthAllCols = pageHeadings ? _cellsLeft * width : 0;
 				for(var i = start; i <= end; i++) {
 					//widthAllCols += t._getColumnWidth(i);
 					widthAllCols += t._getWidthForPrint(i) * _retinaPixelRatio;
@@ -3285,7 +3289,7 @@
 		var doCalcScaleHeight = function(start, end) {
 			var res;
 			if(height) {
-				var heightAllRows = pageHeadings ? t.cellsTop * height : 0;
+				var heightAllRows = pageHeadings ? _cellsTop * height : 0;
 				for(var i = start; i <= end; i++) {
 					//heightAllRows += t._getRowHeight(i);
 					heightAllRows += t._getHeightForPrint(i) * _retinaPixelRatio;
