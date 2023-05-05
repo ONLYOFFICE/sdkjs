@@ -12467,11 +12467,16 @@ CTable.prototype.DeleteTablePart = function(X_Front, X_After, Y_Over, Y_Under, b
 	// Если выделяем целиком колонку - удаляем её
 	else if (Y_Over && Y_Under && bCanMerge)
 	{
-		if (this.Selection.Data[0].Row === 0 && this.Selection.Data[this.Selection.Data.length - 1].Row === this.GetRowsCount() - 1)
+		let nLastRow = this.Selection.Data[this.Selection.Data.length - 1].Row;
+		let nLastCell = this.Selection.Data[this.Selection.Data.length - 1].Cell;
+		let nVMergeCount = this.GetVMergeCount(nLastCell, nLastRow);
+
+		if (this.Selection.Data[0].Row === 0 && nLastRow + nVMergeCount === this.GetRowsCount())
 		{
 			this.Selection.Use = true;
 			this.Selection.Type = 0;
 			this.RemoveTableColumn();
+			this.Selection.Use = false;
 			return true;
 		}
 		return false;
