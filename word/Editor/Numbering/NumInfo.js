@@ -88,7 +88,7 @@
 				isBulleted = isBulleted || numLvl.IsBulleted();
 				isNumbered = isNumbered || numLvl.IsNumbered();
 				
-				numInfo.Lvl[iLvl] = numLvl.ToJson(null, {isSingleLvlPresetJSON: true});
+				numInfo.Lvl[iLvl] = numLvl.ToJson(null);
 				if (isHeading && styles)
 				{
 					if (numLvl.GetPStyle() !== styles.GetDefaultHeading(iLvl))

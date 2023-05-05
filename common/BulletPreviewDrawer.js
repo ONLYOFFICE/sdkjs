@@ -107,12 +107,12 @@
 	CBulletPreviewDrawerBase.prototype.getFirstLineIndent = function (oLvl, nCustomNumberPosition, nCustomIndentSize, nCustomStopTab)
 	{
 		const nSuff = oLvl.GetSuff();
-		const nNumberPosition = AscFormat.isRealNumber(nCustomNumberPosition) ? nCustomNumberPosition : oLvl.GetNumberPosition();
+		const nNumberPosition = (AscFormat.isRealNumber(nCustomNumberPosition) ? nCustomNumberPosition : oLvl.GetNumberPosition()) || 0;
 		let nXPositionOfLine;
 		if (nSuff === Asc.c_oAscNumberingSuff.Tab)
 		{
 			const nStopTab = AscFormat.isRealNumber(nCustomStopTab) || nCustomStopTab === null ? nCustomStopTab : oLvl.GetStopTab();
-			const nIndentSize = AscFormat.isRealNumber(nCustomIndentSize) ? nCustomIndentSize : oLvl.GetIndentSize();
+			const nIndentSize = (AscFormat.isRealNumber(nCustomIndentSize) ? nCustomIndentSize : oLvl.GetIndentSize()) || 0;
 			if (AscFormat.isRealNumber(nStopTab))
 			{
 				nXPositionOfLine = Math.max(nStopTab, nNumberPosition);
