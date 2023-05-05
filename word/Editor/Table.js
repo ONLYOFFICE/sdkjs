@@ -12472,6 +12472,7 @@ CTable.prototype.DeleteTablePart = function(X_Front, X_After, Y_Over, Y_Under, b
 			this.Selection.Use = true;
 			this.Selection.Type = 0;
 			this.RemoveTableColumn();
+			this.Selection.Use = false;
 			return true;
 		}
 		return false;
