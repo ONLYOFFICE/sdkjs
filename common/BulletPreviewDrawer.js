@@ -61,6 +61,8 @@
 		this.m_oBackgroundColor = new AscCommonWord.CDocumentColor(255, 255, 255);
 
 		this.m_nAmountOfLvls = 9;
+
+		this.m_bIsMobile = AscCommon.AscBrowser.isMobile;
 	}
 
 	CBulletPreviewDrawerBase.prototype.cleanTextPr = function (oTextPr)
@@ -133,7 +135,7 @@
 
 	CBulletPreviewDrawerBase.prototype.getFontSizeByLineHeight = function (nLineHeight)
 	{
-		return ((2 * nLineHeight * 72 / 96) >> 0) / 2;
+		return ((2 * nLineHeight * AscCommonExcel.sizePxinPt) >> 0) / 2;
 	};
 
 	CBulletPreviewDrawerBase.prototype.getLvlTextWidth = function (sText, oTextPr)
@@ -452,8 +454,16 @@
 		this.m_arrNumberingLvl = arrLvlInfo.map(function (oDrawingInfo) {return oDrawingInfo.arrLvls});
 		this.m_arrNumberingInfo = arrLvlInfo;
 		this.m_nSingleBulletFontSizeCoefficient = 0.6;
-		this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
-		this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.1375;
+		if (this.m_bIsMobile)
+		{
+			this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
+			this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.225;
+		}
+		else
+		{
+			this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
+			this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.1375;
+		}
 
 		this.m_nMultiLvlIndentCoefficient = 1 / AscCommon.AscBrowser.retinaPixelRatio;
 	}
