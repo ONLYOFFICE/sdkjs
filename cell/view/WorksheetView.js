@@ -13523,6 +13523,10 @@
 		var pasteContent = val.data;
 		var pastedInfo = [];
 		var callback = function () {
+
+			let maxRow = Math.min(Math.max(t.model.getRowsCount(), t.visibleRange.r2) + 1, gc_nMaxRow);
+			let maxCol = Math.min(Math.max(t.model.getColsCount(), t.visibleRange.c2) + 1, gc_nMaxCol);
+
 			for (var j = 0; j < pasteToRange.length; j++) {
 				_doPaste(pasteToRange[j]);
 				if (!selectData && !fromBinaryExcel) {
@@ -13569,14 +13573,25 @@
 				if (specialPasteChangeColWidth) {
 					t.changeWorksheet("update");
 				} else {
+
 					let updateRanges = pasteToRange ? pasteToRange : selectData[0];
+					if (updateRanges.length) {
+						for (var i = 0; i < updateRanges.length; i++) {
+							t._cleanCache(updateRanges[i]);
+						}
+					} else {
+						t._cleanCache(updateRanges);
+					}
+
+					t._updateRange(Asc.Range(0, 0, maxCol, maxRow));
+					/*let updateRanges = pasteToRange ? pasteToRange : selectData[0];
 					if (updateRanges.length) {
 						for (var i = 0; i < updateRanges.length; i++) {
 							t._updateRange(updateRanges[i]);
 						}
 					} else {
 						t._updateRange(updateRanges);
-					}
+					}*/
 				}
 			}
 			revertSelection();
