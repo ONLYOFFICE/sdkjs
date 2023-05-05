@@ -11193,14 +11193,14 @@ DynamicFilter.prototype.clone = function() {
 DynamicFilter.prototype.init = function(range) {
 	let val = null, maxVal;
 
-	if (range) {
+	/*if (range) {
 		for (let i in Asc.c_oAscDynamicAutoFilter) {
 			if (i !== "aboveAverage" && i !== "belowAverage") {
 				this.Type = Asc.c_oAscDynamicAutoFilter[i];
 				this.init();
 			}
 		}
-	}
+	}*/
 
 	//by test:
 	//today -> 45049
@@ -11382,9 +11382,9 @@ DynamicFilter.prototype.init = function(range) {
 		}
 	}
 
-	if (val != undefined && referenceValues[this.Type] && (val !== referenceValues[this.Type][0] || maxVal !== referenceValues[this.Type][1])) {
+	/*if (val != undefined && referenceValues[this.Type] && (val !== referenceValues[this.Type][0] || maxVal !== referenceValues[this.Type][1])) {
 		console.log(this.Type);
-	}
+	}*/
 
 
 	this.Val = val;
@@ -11394,8 +11394,7 @@ DynamicFilter.prototype.init = function(range) {
 DynamicFilter.prototype.isHideValue = function(val) {
 	var res = false;
 
-	switch(this.Type)
-	{
+	switch (this.Type) {
 		case Asc.c_oAscDynamicAutoFilter.aboveAverage:
 		{
 			res = val > this.Val ? false : true;
@@ -11404,6 +11403,79 @@ DynamicFilter.prototype.isHideValue = function(val) {
 		case Asc.c_oAscDynamicAutoFilter.belowAverage:
 		{
 			res = val < this.Val ? false : true;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.lastMonth:
+		case Asc.c_oAscDynamicAutoFilter.lastQuarter:
+		case Asc.c_oAscDynamicAutoFilter.lastWeek:
+		case Asc.c_oAscDynamicAutoFilter.lastYear:
+		case Asc.c_oAscDynamicAutoFilter.nextMonth:
+		case Asc.c_oAscDynamicAutoFilter.nextQuarter:
+		case Asc.c_oAscDynamicAutoFilter.nextWeek:
+		case Asc.c_oAscDynamicAutoFilter.nextYear:
+		case Asc.c_oAscDynamicAutoFilter.thisMonth:
+		case Asc.c_oAscDynamicAutoFilter.thisQuarter:
+		case Asc.c_oAscDynamicAutoFilter.thisWeek:
+		case Asc.c_oAscDynamicAutoFilter.today:
+		case Asc.c_oAscDynamicAutoFilter.tomorrow:
+		case Asc.c_oAscDynamicAutoFilter.yearToDate:
+		case Asc.c_oAscDynamicAutoFilter.yesterday:
+		case Asc.c_oAscDynamicAutoFilter.thisYear: {
+			res = !(val >= this.Val && val <= this.MaxVal);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.nullType: {
+			break;
+		}
+
+		case Asc.c_oAscDynamicAutoFilter.m1: {
+			//<dynamicFilter type="m1"/>
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m10: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m11: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m12: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m2: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m3: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m4: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m5: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m6: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m7: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m8: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m9: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q1: {
+			//<dynamicFilter type="Q2"/>
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q2: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q3: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q4: {
 			break;
 		}
 	}
@@ -11415,7 +11487,8 @@ DynamicFilter.prototype.asc_getType = function () { return this.Type; };
 DynamicFilter.prototype.asc_getVal = function () { return this.Val; };
 DynamicFilter.prototype.asc_getMaxVal = function () { return this.MaxVal; };
 
-DynamicFilter.prototype.asc_setType = function (val) { this.Type = val; };
+DynamicFilter.prototype.asc_setType = function (val) {
+	this.Type = val; };
 DynamicFilter.prototype.asc_setVal = function (val) { this.Val = val; };
 DynamicFilter.prototype.asc_setMaxVal = function (val) { this.MaxVal = val; };
 DynamicFilter.prototype.readAttributes = function(attr, uq) {
