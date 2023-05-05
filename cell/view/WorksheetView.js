@@ -14374,6 +14374,10 @@
 			//merge
 			checkMerge(range, curMerge, toRow, toCol, rowDiff, colDiff, pastedRangeProps);
 
+			/*if (!isOneMerge) {
+				pastedRangeProps._cellStyle = newVal.getStyle();
+			}*/
+
 			//set style
 			if (!isOneMerge) {
 				pastedRangeProps.cellStyle = newVal.getStyleName();
@@ -14718,7 +14722,6 @@
 
 		//set formula - for paste from binary
 		var calculateValueAndBinaryFormula = function (newVal, firstRange, range) {
-
 			//operation special paste
 			var needOperation = specialPasteProps && specialPasteProps.operation;
 			if (needOperation === window['Asc'].c_oSpecialPasteOperation.none) {
@@ -14935,7 +14938,9 @@
 					oldBorders = oldBorders.clone();
 				}
 			}
-			range.setCellStyle(rangeStyle.cellStyle);
+			if (range.getStyleName() !== rangeStyle.cellStyle) {
+				range.setCellStyle(rangeStyle.cellStyle);
+			}
 			if (oldBorders) {
 				range.setBorder(null);
 				range.setBorder(oldBorders);
@@ -14953,7 +14958,9 @@
 
 		//numFormat
 		if (rangeStyle.numFormat && specialPasteProps.numFormat) {
-			range.setNumFormat(rangeStyle.numFormat);
+			if (range.getNumFormatStr() !== rangeStyle.numFormat) {
+				range.setNumFormat(rangeStyle.numFormat);
+			}
 		}
 		//font
 		if (rangeStyle.font && specialPasteProps.font) {
@@ -14962,7 +14969,9 @@
 			if (specialPasteProps.format && !specialPasteProps.formatTable && rangeStyle.tableDxf && rangeStyle.tableDxf.font) {
 				font = rangeStyle.tableDxf.font.merge(rangeStyle.font);
 			}
-			range.setFont(font);
+			if (!font.isEqual(range.getFont())) {
+				range.setFont(font);
+			}
 		}
 
 		var propPaste = specialPasteProps.property;
@@ -15001,13 +15010,18 @@
 			}
 		}
 
+		let align = range.getAlign();
 		//alignVertical
 		if (undefined !== rangeStyle.alignVertical && specialPasteProps.alignVertical) {
-			range.setAlignVertical(rangeStyle.alignVertical);
+			if (!align || align.getAlignVertical() !== rangeStyle.alignVertical) {
+				range.setAlignVertical(rangeStyle.alignVertical);
+			}
 		}
 		//alignHorizontal
 		if (undefined !== rangeStyle.alignHorizontal && specialPasteProps.alignHorizontal) {
-			range.setAlignHorizontal(rangeStyle.alignHorizontal);
+			if (!align || align.getAlignHorizontal() !== rangeStyle.alignHorizontal) {
+				range.setAlignHorizontal(rangeStyle.alignHorizontal);
+			}
 		}
 		//fontSize
 		if (rangeStyle.fontSize && specialPasteProps.fontSize) {
@@ -15019,7 +15033,9 @@
 		}
 		//bordersFull
 		if (rangeStyle.bordersFull && specialPasteProps.borders) {
-			range.setBorder(rangeStyle.bordersFull);
+			if (!rangeStyle.bordersFull.isEqual(range.getBorderFull())) {
+				range.setBorder(rangeStyle.bordersFull);
+			}
 		}
 		//wrap
 		if (rangeStyle.wrap && specialPasteProps.wrap) {
@@ -15034,7 +15050,9 @@
 		}
 		//angle
 		if (undefined !== rangeStyle.angle && specialPasteProps.angle) {
-			range.setAngle(rangeStyle.angle);
+			if (range.getAngle() !== rangeStyle.angle) {
+				range.setAngle(rangeStyle.angle);
+			}
 		}
 
 		if (rangeStyle.shrinkToFit && specialPasteProps.fontSize) {
@@ -15056,7 +15074,9 @@
 
 		//locked
 		if (rangeStyle.locked !== undefined && specialPasteProps.format) {
-			range.setLocked(rangeStyle.locked);
+			if (range.getLocked() !== rangeStyle.locked) {
+				range.setLocked(rangeStyle.locked);
+			}
 		}
 
 		//hidden
@@ -15081,6 +15101,11 @@
 			rangeStyle.hyperlinkObj.Ref = range;
 			range.setHyperlink(rangeStyle.hyperlinkObj, true);
 		}
+
+		//todo try to change up all styles on one cellstyle
+		/*if (rangeStyle._cellStyle) {
+			range.setCellStyle(rangeStyle._cellStyle);
+		}*/
 	};
 
 	WorksheetView.prototype._pasteCellLink = function (range, fromRow, fromCol, arrFormula, sheetName, pasteLink) {
