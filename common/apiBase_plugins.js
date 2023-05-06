@@ -1411,6 +1411,13 @@
 			for (var i = 0; i < len; i++) {
 				protectedPlugins.push(_pluginsTmp[0]["pluginsData"][i]["guid"]);
 			}
+			
+			// Также смотрим плагины из папки пользователя, возможно там есть обновленные системные
+			len = _pluginsTmp[1]["pluginsData"].length;
+			for (var i = 0; i < len; i++) {
+				if (_pluginsTmp[1]["pluginsData"][i]["canRemoved"] === false)
+					protectedPlugins.push(_pluginsTmp[1]["pluginsData"][i]["guid"]);
+			}
 		}
 
 		let baseUrl = window.location.href;
