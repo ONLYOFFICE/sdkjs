@@ -597,11 +597,14 @@
 				}
 			}
 
-			if (oSumInformation.Ascent + oSumInformation.rasterOffsetY < oInfo.Ascent + oInfo.rasterOffsetY)
+			if (oSumInformation.Ascent < oInfo.Ascent)
+			{
+				oSumInformation.Ascent = oInfo.Ascent;
+			}
+			if (oSumInformation.Ascent - oSumInformation.Height > oInfo.Ascent - oInfo.Height)
 			{
 				oSumInformation.rasterOffsetY = oInfo.rasterOffsetY;
-				oSumInformation.Ascent = oInfo.Ascent;
-				oSumInformation.Height = oInfo.Height;
+				oSumInformation.Height = oSumInformation.Ascent - (oInfo.Ascent - oInfo.Height);
 			}
 		}
 		oSumInformation.Width -= nRemoveRightOffset;
