@@ -11608,7 +11608,41 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
 
-		testArrayFormula2(assert, "COUNTIF", 2, 2)
+		oParser = new parserFormula('COUNTIF({1,2,3},">1")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);		// ms - doesn't work, gs - 2, lo - 2
+
+		oParser = new parserFormula('COUNTIF({1;2;3},">1")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);		// ms - doesn't work, gs - 2, lo - 2
+
+		oParser = new parserFormula('COUNTIF({1,2,3;4,5,6},">1")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5);		// ms - doesn't work, gs - 5, lo - 5
+
+		// bug 62491
+		ws.getRange2("A100").setValue("Math");
+		ws.getRange2("A101").setValue("87");
+		ws.getRange2("A102").setValue("99");
+		ws.getRange2("A103").setValue("21");
+		ws.getRange2("A104").setValue("72");
+		ws.getRange2("A105").setValue("68");
+		ws.getRange2("B100").setValue("Physics");
+		ws.getRange2("B101").setValue("91");
+		ws.getRange2("B102").setValue("78");
+		ws.getRange2("B103").setValue("12");
+		ws.getRange2("B104").setValue("23");
+		ws.getRange2("B105").setValue("55");
+
+		oParser = new parserFormula('COUNTIF(XLOOKUP(A100,A100:B100,A101:B105),">80")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIF(XLOOKUP(B100,A100:B100,A101:B105),">80")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
+		// testArrayFormula2(assert, "COUNTIF", 2, 2)
 	});
 
 	QUnit.test("Test: \"COUNTBLANK\"", function (assert) {
