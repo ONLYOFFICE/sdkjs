@@ -453,14 +453,15 @@
 		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
 		this.m_arrNumberingLvl = arrLvlInfo.map(function (oDrawingInfo) {return oDrawingInfo.arrLvls});
 		this.m_arrNumberingInfo = arrLvlInfo;
-		this.m_nSingleBulletFontSizeCoefficient = 0.6;
 		if (this.m_bIsMobile)
 		{
-			this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
-			this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.225;
+			this.m_nSingleBulletNoneFontSizeCoefficient = 0.21;
+			this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.21;
+			this.m_nSingleBulletFontSizeCoefficient = 6 / 17;
 		}
 		else
 		{
+			this.m_nSingleBulletFontSizeCoefficient = 0.6;
 			this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
 			this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.1375;
 		}
