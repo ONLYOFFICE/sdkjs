@@ -11391,18 +11391,16 @@ DynamicFilter.prototype.init = function(range) {
 	this.MaxVal = maxVal;
 };
 
-DynamicFilter.prototype.isHideValue = function(val) {
-	var res = false;
-
+DynamicFilter.prototype.isHideValue = function (val) {
+	let res = false;
+	let minMonth, maxMonth;
 	switch (this.Type) {
-		case Asc.c_oAscDynamicAutoFilter.aboveAverage:
-		{
-			res = val > this.Val ? false : true;
+		case Asc.c_oAscDynamicAutoFilter.aboveAverage: {
+			res = !(val > this.Val);
 			break;
 		}
-		case Asc.c_oAscDynamicAutoFilter.belowAverage:
-		{
-			res = val < this.Val ? false : true;
+		case Asc.c_oAscDynamicAutoFilter.belowAverage: {
+			res = !(val < this.Val);
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.lastMonth:
@@ -11430,54 +11428,97 @@ DynamicFilter.prototype.isHideValue = function(val) {
 
 		case Asc.c_oAscDynamicAutoFilter.m1: {
 			//<dynamicFilter type="m1"/>
+			//Shows the dates that are in January, regardless of year
+			minMonth = maxMonth = 0;
+
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m10: {
+			//Shows the dates that are in October, regardless of year
+			minMonth = maxMonth = 9;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m11: {
+			//Shows the dates that are in November, regardless of year
+			minMonth = maxMonth = 10;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m12: {
+			//Shows the dates that are in December, regardless of year
+			minMonth = maxMonth = 11;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m2: {
+			//Shows the dates that are in Februray, regardless of year
+			minMonth = maxMonth = 1;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m3: {
+			//Shows the dates that are in March, regardless of year
+			minMonth = maxMonth = 2;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m4: {
+			//Shows the dates that are in April, regardless of year
+			minMonth = maxMonth = 3;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m5: {
+			//Shows the dates that are in May, regardless of year
+			minMonth = maxMonth = 4;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m6: {
+			//Shows the dates that are in June, regardless of year
+			minMonth = maxMonth = 5;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m7: {
+			//Shows the dates that are in July, regardless of year
+			minMonth = maxMonth = 6;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m8: {
+			//Shows the dates that are in August, regardless of year
+			minMonth = maxMonth = 7;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.m9: {
+			//Shows the dates that are in September, regardless of year
+			minMonth = maxMonth = 8;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.q1: {
 			//<dynamicFilter type="Q2"/>
+			//Shows the dates that are in the 1st quarter, regardless of year
+			minMonth = 0;
+			maxMonth = 2;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.q2: {
+			//Shows the dates that are in the 2st quarter, regardless of year
+			minMonth = 3;
+			maxMonth = 5;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.q3: {
+			//Shows the dates that are in the 3st quarter, regardless of year
+			minMonth = 6;
+			maxMonth = 8;
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.q4: {
+			//Shows the dates that are in the 4st quarter, regardless of year
+			minMonth = 9;
+			maxMonth = 11;
 			break;
 		}
+	}
+
+	if (minMonth !== undefined) {
+		let today = new cDate();
+		let todayMonth = today.getUTCMonth();
+		res = todayMonth >= minMonth && todayMonth <= maxMonth;
 	}
 
 	return res;
