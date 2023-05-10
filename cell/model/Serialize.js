@@ -270,7 +270,8 @@
         WorkbookProtection: 21,
         OleSize: 22,
         ExternalFileId: 23,
-        ExternalPortalName: 24
+        ExternalPortalName: 24,
+		FileSharing: 25
     };
     /** @enum */
     var c_oSerWorkbookPrTypes =
@@ -1153,6 +1154,15 @@
 		RevisionsSaltValue: 9,
 		RevisionsSpinCount: 10,
 		LockRevision: 11
+	};
+	var c_oSerFileSharing = {
+		AlgorithmName: 0,
+		SpinCount: 1,
+		HashValue: 2,
+		SaltValue: 3,
+		UserName: 4,
+		ReadOnly: 5,
+		Password: 6
 	};
     var c_oSerCustoms = {
         Custom: 0,
@@ -3357,6 +3367,10 @@
 			if (this.wb.workbookProtection) {
 				this.bs.WriteItem(c_oSerWorkbookTypes.WorkbookProtection, function(){oThis.WriteWorkbookProtection(oThis.wb.workbookProtection);});
             }
+			//FileSharing
+			if (this.wb.fileSharing) {
+				this.bs.WriteItem(c_oSerWorkbookTypes.FileSharing, function(){oThis.WriteFileSharing(oThis.wb.fileSharing);});
+			}
 			if (this.wb.oleSize) {
 				var sRange = this.wb.oleSize.getName();
 				this.bs.WriteItem(c_oSerWorkbookTypes.OleSize, function () {oThis.memory.WriteString3(sRange)});
@@ -3761,6 +3775,45 @@
 				this.memory.WriteString2(workbookProtection.workbookSaltValue);
 			}
 
+		};
+		this.WriteFileSharing = function(fileSharing)
+		{
+			if (null != fileSharing.algorithmName) {
+				this.memory.WriteByte(c_oSerFileSharing.AlgorithmName);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteByte(fileSharing.algorithmName);
+			}
+			if (null != fileSharing.spinCount) {
+				this.memory.WriteByte(c_oSerFileSharing.SpinCount);
+				this.memory.WriteByte(c_oSerPropLenType.Long);
+				this.memory.WriteLong(fileSharing.spinCount);
+			}
+			if (null != fileSharing.hashValue) {
+				this.memory.WriteByte(c_oSerFileSharing.HashValue);
+				this.memory.WriteByte(c_oSerPropLenType.Variable);
+				this.memory.WriteString2(fileSharing.hashValue);
+			}
+			if (null != fileSharing.saltValue) {
+				this.memory.WriteByte(c_oSerFileSharing.SaltValue);
+				this.memory.WriteByte(c_oSerPropLenType.Variable);
+				this.memory.WriteString2(fileSharing.saltValue);
+			}
+
+			if (null != fileSharing.password) {
+				this.memory.WriteByte(c_oSerFileSharing.Password);
+				this.memory.WriteByte(c_oSerPropLenType.Variable);
+				this.memory.WriteString2(fileSharing.password);
+			}
+			if (null != fileSharing.userName) {
+				this.memory.WriteByte(c_oSerFileSharing.UserName);
+				this.memory.WriteByte(c_oSerPropLenType.Variable);
+				this.memory.WriteString2(fileSharing.userName);
+			}
+			if (null != fileSharing.readOnly) {
+				this.memory.WriteByte(c_oSerFileSharing.ReadOnly);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteBool(fileSharing.readOnly);
+			}
 		};
     }
 	function BinaryWorksheetsTableWriter(memory, wb, isCopyPaste, bsw, saveThreadedComments, initSaveManager)
@@ -7567,6 +7620,18 @@
                     res = c_oSerConstants.ReadUnknown;
                 }
 			}
+			else if (c_oSerWorkbookTypes.FileSharing == type)
+			{
+				var fileSharing = Asc.CFileSharing ? new Asc.CFileSharing(this.oWorkbook) : null;
+				if (fileSharing) {
+					this.oWorkbook.fileSharing = fileSharing;
+					res = this.bcr.Read2Spreadsheet(length, function (t, l) {
+						return oThis.ReadFileSharing(t, l, oThis.oWorkbook.fileSharing);
+					});
+				} else {
+					res = c_oSerConstants.ReadUnknown;
+				}
+			}
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -7914,6 +7979,28 @@
 				workbookProtection.workbookSaltValue = this.stream.GetString2LE(length);
 			} else if (c_oSerWorkbookProtection.Password == type) {
 				workbookProtection.workbookPassword = this.stream.GetString2LE(length);
+			} else {
+				res = c_oSerConstants.ReadUnknown;
+			}
+			return res;
+		};
+		this.ReadFileSharing = function (type, length, fileSharing) {
+			var res = c_oSerConstants.ReadOk;
+
+			if (c_oSerFileSharing.AlgorithmName === type) {
+				fileSharing.algorithmName = this.stream.GetUChar();
+			} else if (c_oSerWorkbookProtection.SpinCount === type) {
+				fileSharing.spinCount = this.stream.GetLong();
+			} else if (c_oSerFileSharing.WorkbookHashValue === type) {
+				workbookProtection.hashValue = this.stream.GetString2LE(length);
+			} else if (c_oSerFileSharing.SaltValue === type) {
+				workbookProtection.saltValue = this.stream.GetString2LE(length);
+			} else if (c_oSerFileSharing.Password === type) {
+				workbookProtection.password = this.stream.GetString2LE(length);
+			}  else if (c_oSerFileSharing.UserName === type) {
+				workbookProtection.userName = this.stream.GetString2LE(length);
+			} else if (c_oSerFileSharing.ReadOnly === type) {
+				workbookProtection.readOnly = this.stream.GetBool();
 			} else {
 				res = c_oSerConstants.ReadUnknown;
 			}
