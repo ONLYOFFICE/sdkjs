@@ -25082,6 +25082,70 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SORTBY(TRUE,FALSE,{1,2,1,-1})[0,1]');
 		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 0, 'Result of SORTBY(TRUE,FALSE,{1,2,1,-1})[0,2]');
 		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), 0, 'Result of SORTBY(TRUE,FALSE,{1,2,1,-1})[0,3]');
+
+		// =SORTBY(C4:D11,C4:D4,{1,1,1,1},C6:D6,1,C7:D7,1) 			// 52 0 0 0
+		// =SORTBY(C4:D11,C4:D4,{1,1,1,1},C6:D6,1,C7:D7,{1,1,1}) 	// 52 0 0 #N/A
+		// =SORTBY(C4:D11,C4:D4,{1,1,1,1},C6:D6,D24:E25,C7:D7,{-1,1,-2})	// 1row: #VALUE #VALUE #N/A #N/A  2row: #VALUE 52 #N/A #N/A
+
+		ws.getRange2("C101").setValue("1");
+		ws.getRange2("C102").setValue("2");
+		ws.getRange2("C103").setValue("2");
+		ws.getRange2("C104").setValue("2");
+		ws.getRange2("C105").setValue("4");
+		ws.getRange2("C106").setValue("5");
+		ws.getRange2("D101").setValue("8");
+		ws.getRange2("D102").setValue("3");
+		ws.getRange2("D103").setValue("4");
+		ws.getRange2("D104").setValue("4");
+		ws.getRange2("D105").setValue("7");
+		ws.getRange2("D106").setValue("4");
+		ws.getRange2("E101").setValue("0");
+		ws.getRange2("E102").setValue("1");
+		ws.getRange2("E103").setValue("2");
+		ws.getRange2("E104").setValue("3");
+		ws.getRange2("E105").setValue("2");
+		ws.getRange2("E106").setValue("3");
+
+		// two conditions(col) 
+		oParser = new parserFormula('SORTBY(C101:E106,C101:C106,1,D101:D106,-1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(C101:E106,C101:C106,1,D101:D106,-1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 2, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[2,0]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 2, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[3,0]');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 4, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[4,0]');
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 5, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[5,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 8, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 4, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), 3, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[3,1]');
+		assert.strictEqual(array.getElementRowCol(4, 1).getValue(), 7, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[4,1]');
+		assert.strictEqual(array.getElementRowCol(5, 1).getValue(), 4, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1)[5,1]');
+
+		// three conditions(col)
+		oParser = new parserFormula('SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 2, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[2,0]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 2, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[3,0]');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 4, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[4,0]');
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 5, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[5,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 8, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 4, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), 3, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[3,1]');
+		assert.strictEqual(array.getElementRowCol(4, 1).getValue(), 7, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[4,1]');
+		assert.strictEqual(array.getElementRowCol(5, 1).getValue(), 4, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[5,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 0, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[0,2]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 1, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[1,2]');
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), 3, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[2,2]');
+		assert.strictEqual(array.getElementRowCol(3, 2).getValue(), 2, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[3,2]');
+		assert.strictEqual(array.getElementRowCol(4, 2).getValue(), 0, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[4,2]');
+		assert.strictEqual(array.getElementRowCol(5, 2).getValue(), 0, 'Result of SORTBY(C101:E106,C101:C106,1,D101:D106,-1,E101:E106,1)[5,2]');
+
 	});
 
 	QUnit.test("Test: \"reference argument test\"", function (assert) {
