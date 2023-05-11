@@ -2706,6 +2706,14 @@
 					return false;
 				}
 				break;
+			case 86: // ctrl + shift + v, cmd + shift + v for desktop
+				if (ctrlKey && event.shiftKey && window["AscDesktopEditor"])
+				{
+					event.stopPropagation();
+					event.preventDefault();
+					Asc.editor.PasteWithoutFormattingDesktop();
+				}
+				break;
 			case 89:  // ctrl + y
 			case 90:  // ctrl + z
 				if (ctrlKey) {

@@ -1365,7 +1365,16 @@ background-repeat: no-repeat;\
 
 		return text_data.data;
 	};
-
+	asc_docs_api.prototype._InitDesktopShortcuts = function ()
+	{
+		if (window["AscDesktopEditor"])
+		{
+			// ActionType, Key, Ctrl, Shift, Alt
+			this.initShortcuts([
+				[c_oAscDocumentShortcutType.DesktopPasteTextWithoutFormat, 86, true, true, false]
+			]);
+		}
+	};
 	asc_docs_api.prototype._InitCommonShortcuts = function () 
 	{
 		// ActionType, Key, Ctrl, Shift, Alt
@@ -1439,7 +1448,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.initDefaultShortcuts = function()
 	{
-
+		this._InitDesktopShortcuts();
 		this._InitCommonShortcuts();
 		if (AscCommon.AscBrowser.isMacOs) 
 		{

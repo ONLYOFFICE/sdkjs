@@ -6735,6 +6735,15 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			bRetValue = keydownresult_PreventAll;
 			break;
 		}
+		case Asc.c_oAscPresentationShortcutType.DesktopPasteTextWithoutFormat:
+		{
+			if (this.CanEdit())
+			{
+				Asc.editor.PasteWithoutFormattingDesktop();
+			}
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
 		case Asc.c_oAscPresentationShortcutType.Superscript: {
 			var TextPr = this.GetCalculatedTextPr();
 			if (null != TextPr) {

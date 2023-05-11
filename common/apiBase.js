@@ -3051,6 +3051,13 @@
 	{
 		return false;
 	};
+	baseEditorsApi.prototype.PasteWithoutFormattingDesktop       = function()
+	{
+		AscCommon.g_clipboardBase.executePasteWithoutFormatting(function ()
+		{
+			window["asc_desktop_copypaste"](this, "Paste");
+		}.bind(this));
+	};
 	baseEditorsApi.prototype.asc_Recalculate       = function()
 	{
 	};

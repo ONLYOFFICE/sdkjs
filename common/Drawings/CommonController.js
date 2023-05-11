@@ -5866,7 +5866,11 @@
 						}
 					} else if (e.keyCode == 86 && canEdit && true === ctrlKey) // Ctrl + V - paste
 					{
-
+						if (window["AscDesktopEditor"] && e.shiftKey)
+						{
+							Asc.editor.PasteWithoutFormattingDesktop();
+							bRetValue = true;
+						}
 					} else if (e.keyCode == 88 && canEdit && true === ctrlKey) // Ctrl + X - cut
 					{
 						//не возвращаем true чтобы не было preventDefault

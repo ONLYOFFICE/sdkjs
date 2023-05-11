@@ -111,6 +111,8 @@
 		this.clearBufferTimerId = -1;
 
 		this.needClearBuffer = false;
+
+		this.pasteWithoutFormatting = false;
 	}
 
 	CClipboardBase.prototype =
@@ -118,6 +120,15 @@
 		_console_log : function(_obj)
 		{
 			//console.log(_obj);
+		},
+
+		executePasteWithoutFormatting: function (fCallback)
+		{
+			const nOldPasteWithoutFormatting = this.pasteWithoutFormatting;
+			this.pasteWithoutFormatting = true;
+			const res = fCallback();
+			this.pasteWithoutFormatting = nOldPasteWithoutFormatting;
+			return res;
 		},
 
 		checkCopy : function(formats)
@@ -248,6 +259,15 @@
 				//window['AscCommon'].g_clipboardBase.rtf = this.ClosureParams.getData("text/rtf");
 
 				var _text_format = this.ClosureParams.getData("text/plain");
+				if (this.pasteWithoutFormatting)
+				{
+					if (_text_format && _text_format != "")
+					{
+						this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Text, _text_format);
+					}
+					g_clipboardBase.Paste_End();
+					return false;
+				}
 				var _internal = this.ClosureParams.getData("text/x-custom");
 				if (_internal && _internal != "" && _internal.indexOf("asc_internalData2;") == 0)
 				{

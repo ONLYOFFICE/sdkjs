@@ -1508,48 +1508,63 @@ background-repeat: no-repeat;\
 			this.WordControl.OnResize(true);
 	};
 
-	asc_docs_api.prototype.initDefaultShortcuts = function()
+	asc_docs_api.prototype._InitCommonShortcuts = function ()
 	{
 		// [[ActionType, KeyCode, Ctrl, Shift, Alt]]
 		var aShortcuts =
-		[
-			[Asc.c_oAscPresentationShortcutType.EditSelectAll, 65, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.EditUndo, 90, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.EditRedo, 89, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Cut, 88, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Copy, 67, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Paste, 86, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Duplicate, 68, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Print, 80, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Save, 83, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 93, false, false, false],
-			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 121, false, true, false],
-			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 57351, false, false, false],
-			[Asc.c_oAscPresentationShortcutType.ShowParaMarks, 56, true, true, false],
-			[Asc.c_oAscPresentationShortcutType.Bold, 66, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.CopyFormat, 67, true, false, true],
-			[Asc.c_oAscPresentationShortcutType.CenterAlign, 69, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.EuroSign, 69, true, false, true],
-			[Asc.c_oAscPresentationShortcutType.Group, 71, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.UnGroup, 71, true, true, false],
-			[Asc.c_oAscPresentationShortcutType.Italic, 73, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.JustifyAlign, 74, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.AddHyperlink, 75, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.BulletList, 76, true, true, false],
-			[Asc.c_oAscPresentationShortcutType.LeftAlign, 76, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.RightAlign, 82, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Underline, 85, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Strikethrough, 53, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.PasteFormat, 86, true, false, true],
-			[Asc.c_oAscPresentationShortcutType.Superscript, 187, true, true, false],
-			[Asc.c_oAscPresentationShortcutType.Superscript, 188, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Subscript, 187, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Subscript, 190, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.EnDash, 189, true, true, false],
-			[Asc.c_oAscPresentationShortcutType.DecreaseFont, 219, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.IncreaseFont, 221, true, false, false]
-		];
+			[
+				[Asc.c_oAscPresentationShortcutType.EditSelectAll, 65, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.EditUndo, 90, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.EditRedo, 89, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.Cut, 88, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.Copy, 67, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.Paste, 86, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.Duplicate, 68, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.Print, 80, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.Save, 83, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 93, false, false, false],
+				[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 121, false, true, false],
+				[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 57351, false, false, false],
+				[Asc.c_oAscPresentationShortcutType.ShowParaMarks, 56, true, true, false],
+				[Asc.c_oAscPresentationShortcutType.Bold, 66, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.CopyFormat, 67, true, false, true],
+				[Asc.c_oAscPresentationShortcutType.CenterAlign, 69, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.EuroSign, 69, true, false, true],
+				[Asc.c_oAscPresentationShortcutType.Group, 71, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.UnGroup, 71, true, true, false],
+				[Asc.c_oAscPresentationShortcutType.Italic, 73, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.JustifyAlign, 74, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.AddHyperlink, 75, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.BulletList, 76, true, true, false],
+				[Asc.c_oAscPresentationShortcutType.LeftAlign, 76, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.RightAlign, 82, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.Underline, 85, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.Strikethrough, 53, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.PasteFormat, 86, true, false, true],
+				[Asc.c_oAscPresentationShortcutType.Superscript, 187, true, true, false],
+				[Asc.c_oAscPresentationShortcutType.Superscript, 188, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.Subscript, 187, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.Subscript, 190, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.EnDash, 189, true, true, false],
+				[Asc.c_oAscPresentationShortcutType.DecreaseFont, 219, true, false, false],
+				[Asc.c_oAscPresentationShortcutType.IncreaseFont, 221, true, false, false]
+			];
 		this.initShortcuts(aShortcuts, false)
+	};
+	asc_docs_api.prototype._InitDesktopShortcuts = function ()
+	{
+		if (window["AscDesktopEditor"])
+		{
+			// ActionType, Key, Ctrl, Shift, Alt
+			this.initShortcuts([
+				[Asc.c_oAscPresentationShortcutType.DesktopPasteTextWithoutFormat, 86, true, true, false]
+			]);
+		}
+	};
+	asc_docs_api.prototype.initDefaultShortcuts = function()
+	{
+		this._InitCommonShortcuts();
+		this._InitDesktopShortcuts();
 	};
 
 	asc_docs_api.prototype.InitEditor = function()

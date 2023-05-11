@@ -1217,6 +1217,20 @@
 					}
 					stop();
 					return result;
+				case 86: // ctrl + shift + v, cmd + shift + v for desktop
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
+						return true;
+					}
+					if (window["AscDesktopEditor"] && ctrlKey && shiftKey)
+					{
+						Asc.editor.PasteWithoutFormattingDesktop();
+						stop();
+					}
+					else
+					{
+						t._setSkipKeyPress(false);
+					}
+					return result;
 				case 61:  // Firefox, Opera (+/=)
 				case 187: // +/=
 					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
