@@ -2793,7 +2793,7 @@
             if (c_oAscPopUpSelectorType.None === type) {
 				ws.executeWithFirstActiveCellInMerge(function () {
 					ws.setSelectionInfo("value", name, /*onlyActive*/true);
-				})
+				});
                 return;
             } else if (c_oAscPopUpSelectorType.TotalRowFunc === type) {
                 ws.setSelectionInfo("totalRowFunc", name, /*onlyActive*/true);
@@ -2840,7 +2840,15 @@
             enterOptions.newText = name;
             enterOptions.cursorPos = cursorPos;
 
-            this._onEditCell(enterOptions, callback);
+            if (enterOptions.newText) {
+                AscFonts.FontPickerByCharacter.checkText(enterOptions.newText, this, function () {
+                    t.Api._loadFonts([], function () {
+                        t._onEditCell(enterOptions, callback);
+                    });
+                });
+            } else {
+                this._onEditCell(enterOptions, callback);
+            }
         }
     };
 
