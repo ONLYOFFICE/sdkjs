@@ -944,6 +944,7 @@
             CopyReviewPr: false,
             Comparison: this
         };
+	    this.firstCheckNumId = null;
         this.nInsertChangesType = reviewtype_Add;
         this.nRemoveChangesType = reviewtype_Remove;
         this.oComparisonMoveMarkManager = new CMoveMarkComparisonManager();
@@ -1551,19 +1552,23 @@
         AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, true);
         return null;
     };
-    CDocumentComparison.prototype.getNewParaPrWithDiff = function(oElementPr, oPartnerPr)
-    {
-        const oOldParaPr = oElementPr.Copy(undefined, undefined);
-        const oNewParaPr = oPartnerPr.Copy(undefined, this.copyPr);
-        if(oOldParaPr.Is_Equal(oNewParaPr))
-        {
-            return null;
-        }
-        oNewParaPr.PrChange = oOldParaPr;
-        oNewParaPr.ReviewInfo = new CReviewInfo();
-        this.setReviewInfo(oNewParaPr.ReviewInfo);
-        return oNewParaPr;
-    };
+	CDocumentComparison.prototype.getNewParaPrWithDiff = function (oElementPr, oPartnerPr)
+	{
+		const oOldParaPr = oElementPr.Copy(undefined, undefined);
+
+		this.firstCheckNumId = oOldParaPr.NumPr && oOldParaPr.NumPr.NumId;
+		const oNewParaPr = oPartnerPr.Copy(undefined, this.copyPr);
+		this.firstCheckNumId = null;
+
+		if (oOldParaPr.Is_Equal(oNewParaPr))
+		{
+			return null;
+		}
+		oNewParaPr.PrChange = oOldParaPr;
+		oNewParaPr.ReviewInfo = new CReviewInfo();
+		this.setReviewInfo(oNewParaPr.ReviewInfo);
+		return oNewParaPr;
+	};
     CDocumentComparison.prototype.isElementForAdd = function (oElement)
     {
         return !(oElement.IsParaEndRun && oElement.IsParaEndRun());
@@ -1815,44 +1820,30 @@
             this.applyChangesToDocContent(oNode.children[i]);
         }
     };
-    CDocumentComparison.prototype.getCopyNumId = function(sNumId)
-    {
-        let NewId;
-        if(this.matchedNums[sNumId])
-        {
-            NewId = this.matchedNums[sNumId];
-        }
-        else
-        {
-            if(this.revisedDocument.CopyNumberingMap[sNumId])
-            {
-                NewId = this.revisedDocument.CopyNumberingMap[sNumId];
-                const oCopyNum = AscCommon.g_oTableId.Get_ById(NewId);
-                const oOrigNumbering = this.originalDocument.Numbering.Num;
-                if(oCopyNum && oOrigNumbering)
-                {
-                    for(let keyOrig in oOrigNumbering)
-                    {
-                        if(oOrigNumbering.hasOwnProperty(keyOrig))
-                        {
-                            if(!this.checkedNums[keyOrig])
-                            {
-                                const oOrigNum = AscCommon.g_oTableId.Get_ById(keyOrig);
-                                if(oOrigNum && oOrigNum.IsSimilar(oCopyNum))
-                                {
-                                    this.matchedNums[sNumId] = keyOrig;
-                                    this.checkedNums[keyOrig] = true;
-                                    NewId = keyOrig;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return NewId;
-    };
+	CDocumentComparison.prototype.getCopyNumId = function (sNumId)
+	{
+		if (this.matchedNums[sNumId])
+		{
+			return this.matchedNums[sNumId];
+		}
+		const sCopyNumId = this.revisedDocument.CopyNumberingMap[sNumId];
+		if (typeof this.firstCheckNumId === 'string' && sCopyNumId)
+		{
+			const oCopyNum = AscCommon.g_oTableId.Get_ById(sCopyNumId);
+			const oOrigNumbering = this.originalDocument.Numbering.Num;
+			if (oCopyNum && oOrigNumbering)
+			{
+				const oOrigNum = AscCommon.g_oTableId.Get_ById(this.firstCheckNumId);
+				if (oOrigNum && oOrigNum.IsSimilar(oCopyNum))
+				{
+					this.matchedNums[sNumId] = this.firstCheckNumId;
+					this.checkedNums[this.firstCheckNumId] = true;
+					return this.firstCheckNumId;
+				}
+			}
+		}
+		return sCopyNumId;
+	};
     CDocumentComparison.prototype.copyStyleById = function(sId)
     {
         return this.copyStyle(this.revisedDocument.Styles.Get(sId));
