@@ -5966,6 +5966,21 @@
 			}
 		}
 	};
+	Worksheet.prototype.setShowFormulas = function (value) {
+		var view = this.sheetViews[0];
+		if (value !== view.showFormulas) {
+			History.Create_NewPoint();
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetShowFormulas,
+				this.getId(), null, new UndoRedoData_FromTo(view.showFormulas, value));
+			view.showFormulas = value;
+
+			//TODO
+			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetDisplayHeadings);
+			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
+				this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
+			}
+		}
+	};
 	Worksheet.prototype.getRowsCount=function(){
 		var result = this.nRowsCount;
 		var pane = this.sheetViews.length && this.sheetViews[0].pane;

@@ -6904,7 +6904,7 @@
           c_oAscCanChangeColWidth.none !== this.canChangeColWidth) {
             colWidth = this._getColumnWidthInner(col);
             // Измеряем целую часть числа
-            sstr = c.getValue2(gc_nMaxDigCountView, function () {
+            sstr = c.getValueForEdit2(gc_nMaxDigCountView, function () {
                 return true;
             });
             if ("General" === numFormatStr && c_oAscCanChangeColWidth.all !== this.canChangeColWidth) {
@@ -6928,7 +6928,7 @@
             // подбираем ширину
             if (!isCustomWidth && !fl.shrinkToFit && !(mergeType & c_oAscMergeType.cols) && !fl.wrapText &&
               c_oAscCanChangeColWidth.all === this.canChangeColWidth) {
-                sstr = c.getValue2(gc_nMaxDigCountView, function () {
+                sstr = c.getValueForEdit2(gc_nMaxDigCountView, function () {
                     return true;
                 });
                 stm = this._roundTextMetrics(this.stringRender.measureString(sstr, fl, colWidth));
@@ -6953,9 +6953,9 @@
 
         // ToDo dDigitsCount нужно рассчитывать исходя не из дефалтового шрифта и размера, а исходя из текущего шрифта и размера ячейки
         if (angle === 0 && !fl.shrinkToFit) {
-            str = c.getValue2(dDigitsCount, makeFnIsGoodNumFormat(fl, colWidth, true));
+            str = c.getValueForEdit2(dDigitsCount, makeFnIsGoodNumFormat(fl, colWidth, true));
         } else {
-            str = c.getValue2();
+            str = c.getValueForEdit2();
         }
         var alignH = align.getAlignHorizontal();
         var ha = c.getAlignHorizontalByValue(alignH);

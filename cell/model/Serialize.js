@@ -4437,6 +4437,8 @@
 				this.bs.WriteItem(c_oSer_SheetView.Selection, function(){oThis.WriteSheetViewSelection(ws.selectionRange);});
             if (null !== oSheetView.showZeros && !oThis.isCopyPaste)
                 this.bs.WriteItem(c_oSer_SheetView.ShowZeros, function(){oThis.memory.WriteBool(oSheetView.showZeros);});
+            if (null !== oSheetView.showFormulas && !oThis.isCopyPaste)
+                this.bs.WriteItem(c_oSer_SheetView.ShowFormulas, function(){oThis.memory.WriteBool(oSheetView.showFormulas);});
             if (null !== oSheetView.topLeftCell && !oThis.isCopyPaste)
                 this.bs.WriteItem(c_oSer_SheetView.TopLeftCell, function(){oThis.memory.WriteString3(oSheetView.topLeftCell.getName());});
             if (null !== oSheetView.view && !oThis.isCopyPaste)
@@ -9686,6 +9688,8 @@
 				this.stream.GetBool();
 			} else if (c_oSer_SheetView.ShowZeros === type) {
                 oSheetView.showZeros = this.stream.GetBool();
+			} else if (c_oSer_SheetView.ShowFormulas === type) {
+                oSheetView.showFormulas = this.stream.GetBool();
 			} else if (c_oSer_SheetView.TabSelected === type) {
 				this.stream.GetBool();
 			} else if (c_oSer_SheetView.TopLeftCell === type) {
