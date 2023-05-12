@@ -3317,6 +3317,8 @@ function (window, undefined) {
 			}
 		} else if (AscCH.historyitem_Worksheet_SetShowZeros === Type) {
 			ws.setShowZeros(bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Worksheet_SetShowFormulas === Type) {
+			ws.setShowFormulas(bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Worksheet_SetTopLeftCell === Type) {
 			//накатываем только при открытии
 			if (!bUndo && this.wb.bCollaborativeChanges) {
