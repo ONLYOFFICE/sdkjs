@@ -285,8 +285,6 @@ function (window, undefined) {
 	}
 
 	function sortByArrayWrapper (array, args, isByCol) {
-		// sortedItems = sortBy(items, [rowCol1,rowCol2,...,rowColN], [sortOrder1,sortOrder2,...,sortOrderN]);
-
 		let colsRowArr = [], sortOrderArr = [], colsRowIndexesArr = [], rowCol;
 
 		for (let i = 1; i < args.length; i += 2) {
@@ -308,13 +306,9 @@ function (window, undefined) {
 				sortOrderArr.push(sortOrder);
 				colsRowArr.push(isByCol ? by_array._getRow(0) : by_array._getCol(0));
 			}
-			// if (colsRowArr.indexOf(rowCol) === -1) {
-			// 	sortOrderArr.push(sortOrder);
-			// 	colsRowIndexesArr.push(rowCol);
-			// }
 		}
 
-		let tempArrIndicies = sortByArray(array, colsRowArr, colsRowIndexesArr, sortOrderArr, isByCol);
+		let tempArrIndicies = sortByArray(colsRowArr, sortOrderArr, isByCol);
 
 		let resultArr = new cArray();
 		for (let i = 0; i < tempArrIndicies.length; i++) {
@@ -325,7 +319,7 @@ function (window, undefined) {
 		return resultArr;
 	}
 
-	function sortByArray (array, colsRowsArr, colsRowIndexesArr, sortOrderArr, isByCol) {
+	function sortByArray (colsRowsArr, sortOrderArr, isByCol) {
 		let by_array1 = colsRowsArr[0],
 			tempArrIndicies = [];
 
@@ -335,10 +329,6 @@ function (window, undefined) {
 			let res = 0;
 
 			const compareFunc = function (_a, _b, _sortOrder) {
-				// if res === 0, go deeper into the array and sort next cols/rows
-				// it's normal, after all the index is saved
-				// let _aValue = _a.item ? _a.item.value : _a.value,
-				// 	_bValue = _b.item ? _b.item.value : _b.value;
 				let itemA = _a.item ? _a.item : _a,
 					itemB = _b.item ? _b.item : _b;
 
@@ -349,19 +339,17 @@ function (window, undefined) {
 				} else if (cElementType.string === itemA.type) {
 					// check itemB.type and make decision
 					if (cElementType.number === itemB.type) {
-						res = 1 * _sortOrder; // ?
+						res = 1 * _sortOrder;
 					} else if (cElementType.bool === itemB.type || cElementType.error === itemB.type) {
 						res = -1 * _sortOrder;
 					}
-					// res = _sortOrder;
 				} else if (cElementType.string === itemB.type) {
 					// check itemA.type and make decision
 					if (cElementType.number === itemA.type) {
-						res = -1 * _sortOrder; // ?
+						res = -1 * _sortOrder;
 					} else if (cElementType.bool === itemA.type || cElementType.error === itemA.type) {
 						res = -1 * _sortOrder;
 					}
-					// res = _sortOrder;
 				} else if (cElementType.bool === itemA.type) {
 					if (cElementType.error === itemB.type) {
 						res = -1 * _sortOrder;
@@ -379,16 +367,8 @@ function (window, undefined) {
 				} else if (cElementType.error === itemA.type) {
 					res = 1 * _sortOrder;
 				} else {
-					res =  0;
+					res = 0;
 				}
-			
-				// if (_aValue === _bValue) {
-				// 	res = 0;
-				// } else if (_aValue > _bValue) {
-				// 	res = 1 * _sortOrder;
-				// } else {
-				// 	res = -1 * _sortOrder;
-				// }
 			}
 
 			compareFunc(a, b, sortOrderArr[0]);
@@ -402,8 +382,6 @@ function (window, undefined) {
 
 					if (res !== 0) {
 						break;
-					} else if(i === colsRowsArr.length - 1 && tempA && tempB) {
-						// res = opt_by_row ? tempA.col - tempB.col : tempA.row - tempB.row; 	// ?
 					}
 				}
 			}
@@ -2210,70 +2188,6 @@ function (window, undefined) {
 	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 5: 1, 7: 1, 9: 1, 11: 1};
 	cSORTBY.prototype.argumentsType = [argType.array, argType.array, argType.number, [argType.array, argType.number]];
 	cSORTBY.prototype.Calculate = function (arg) {
-		// TODO add multiple argument handling
-		function arrayHelper (arr, args, isByCol) {
-			let resArr = new cArray(),
-				resDimensoins = sortOrder.getDimensions(), sortOrderFirst, sortOrderRegular;
-
-			for (let i = 0; i < resDimensoins.row; i++) {
-				resArr.addRow();
-				for (let j = 0; j < resDimensoins.col; j++) {
-					let elem;
-					if (!sortOrderFirst) {
-						sortOrderFirst = sortOrder.getElementRowCol ? sortOrder.getElementRowCol(i, j) : sortOrder.getValueByRowCol(i, j);
-
-						if (!sortOrderFirst) {
-							sortOrderFirst = new cNumber(0);
-						} else {
-							sortOrderFirst = sortOrderFirst.tocNumber();
-						}
-
-						if (sortOrderFirst.type === cElementType.error) {
-							elem = sortOrderFirst;
-							sortOrderFirst = undefined;
-						} else {
-							sortOrderFirst = Math.floor(sortOrderFirst.toNumber());
-							if (arr.isOneElement() && by_arrayRows === 1 && (sortOrderFirst === -1 || sortOrderFirst === 1)) {
-								elem = arr.getFirstElement();
-							} else if ((by_arrayRows === 1 && by_arrayCols !== maxCols) || (by_arrayCols === 1 && by_arrayRows !== maxRows) || (by_arrayCols > 1 && by_arrayRows > 1) || (sortOrderFirst !== -1 && sortOrderFirst !== 1)) {
-								elem = new cError(cErrorType.wrong_value_type);
-								sortOrderFirst = undefined;
-							} else if (by_arrayRows === 1 && by_arrayCols === maxCols) {
-								isByCol = true;
-							} else if (by_arrayCols === 1 && by_arrayRows === maxRows) {
-								isByCol = false;
-							}
-							if (!elem) {
-								elem = sortArray(arr, byArr, sortOrderFirst, isByCol).getFirstElement();
-							}
-						}
-					} else {
-						sortOrderRegular = sortOrder.getElementRowCol ? sortOrder.getElementRowCol(i, j) : sortOrder.getValueByRowCol(i, j);
-
-						if (!sortOrderRegular) {
-							sortOrderRegular = new cNumber(0);
-						} else {
-							sortOrderRegular = sortOrderRegular.tocNumber();
-						}
-
-						if (sortOrderRegular.type === cElementType.error) {
-							elem = sortOrderRegular;
-						} else {
-							sortOrderRegular = Math.floor(sortOrderRegular.toNumber());
-							if (!(sortOrderRegular === -1 || sortOrderRegular === 1)) {
-								elem = new cError(cErrorType.wrong_value_type);
-							} else {
-								elem = new cNumber(0);
-							}
-						}
-					}
-					resArr.addElement(elem);
-				}
-			}
-
-			return resArr;
-		}
-
 		let args = arg.slice();
 		let array, by_array, sort_order, maxRows, maxCols, arrayDimensions, by_arrayRows, by_arrayCols, isByCol, isSortOrderArray;
 
@@ -2352,7 +2266,6 @@ function (window, undefined) {
 						sort_order = args[i].tocNumber();
 					}
 				} else if (args[i].isOneElement()) {
-					// ?? check null | undefined
 					sort_order = args[i].getFirstElement();
 				} else {
 					sort_order = args[i];
@@ -2376,9 +2289,7 @@ function (window, undefined) {
 		}
 
 		if (isSortOrderArray) {
-			// TODO call array helper and return array equal to the length of arg2
-			// return arrayHelper(array, args, isByCol);
-			return new cNumber(25);
+			return new cError(cErrorType.wrong_value_type);
 		} else {
 			// dimensions check
 			for (let i = 1; i < args.length; i += 2) {
