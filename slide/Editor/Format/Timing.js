@@ -188,7 +188,6 @@
     };
     CBaseAnimObject.prototype.getEffectById = function (sId, oMltEffect) {
         if (!oMltEffect) {
-            var oNewMltEffect = new CMultiple();
             return this.getEffectById(sId, oMltEffect);
         }
         this.traverse(function (oChild) {

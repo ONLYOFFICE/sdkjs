@@ -548,13 +548,13 @@
 			case AscCommon.c_oEditorId.Word:
 				if (true === word_control.m_bIsRuler)
 				{
-					xCoord += (5 * g_dKoef_mm_to_pix) >> 0;
-					yCoord += (7 * g_dKoef_mm_to_pix) >> 0;
+					xCoord += (5 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+					yCoord += (7 * AscCommon.g_dKoef_mm_to_pix) >> 0;
 				}
 				break;
 			case AscCommon.c_oEditorId.Presentation:
-				xCoord += ((word_control.m_oMainParent.AbsolutePosition.L + word_control.m_oMainView.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
-				yCoord += ((word_control.m_oMainParent.AbsolutePosition.T + word_control.m_oMainView.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
+				xCoord += ((word_control.m_oMainParent.AbsolutePosition.L + word_control.m_oMainView.AbsolutePosition.L) * AscCommon.g_dKoef_mm_to_pix) >> 0;
+				yCoord += ((word_control.m_oMainParent.AbsolutePosition.T + word_control.m_oMainView.AbsolutePosition.T) * AscCommon.g_dKoef_mm_to_pix) >> 0;
 				yCoord += this.buttonSize;
 				break;
 			default:
