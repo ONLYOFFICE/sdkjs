@@ -131,8 +131,10 @@
 	window['AscCommon'].calculateProtectHash = function(args, callback) {
 		if (window["NATIVE_EDITOR_ENJINE"])
 		{
-			if (!AscCommon.hashEngine)
+			if (!AscCommon.hashEngine) {
+				/** @suppress {checkVars} */
 				AscCommon.hashEngine = CreateNativeHash();
+			}
 
 			let retArray = [];
 			for (var i = 0, len = args.length; i < len; i++)

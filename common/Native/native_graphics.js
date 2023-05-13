@@ -33,6 +33,7 @@
 "use strict";
 function CNativeGraphics()
 {
+    /** @suppress {checkVars} */
     this.Native = CreateNativeGraphics();
 
     this.isNativeGraphics = true;

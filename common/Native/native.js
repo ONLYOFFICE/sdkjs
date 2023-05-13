@@ -345,6 +345,7 @@ var performance = window.performance = (function(){
 (function(window, undefined){
 	function ZLib()
 	{
+		/** @suppress {checkVars} */
 		this.engine = CreateNativeZip();
 		this.files = {};
 	}
