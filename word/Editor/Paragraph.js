@@ -1260,7 +1260,7 @@ Paragraph.prototype.ClearContent = function()
 					oComment.SetRangeEnd(null);
 			}
 
-			arrCommentsToDelete.push(CommentId);
+			arrCommentsToDelete.push(sCommentId);
 		}
 
 		if (oItem.PreDelete)

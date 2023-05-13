@@ -11889,7 +11889,7 @@ background-repeat: no-repeat;\
 		if (!logicDocument)
 			return;
 
-		let exceptionManager = oLogicDocument.GetAutoCorrectSettings().GetFirstLetterExceptionManager();
+		let exceptionManager = logicDocument.GetAutoCorrectSettings().GetFirstLetterExceptionManager();
 		return exceptionManager.SetExceptions(exceptions, lang);
 	};
 	asc_docs_api.prototype.asc_GetFirstLetterAutoCorrectExceptions = function(lang)
@@ -11898,7 +11898,7 @@ background-repeat: no-repeat;\
 		if (!logicDocument)
 			return [];
 
-		let exceptionManager = oLogicDocument.GetAutoCorrectSettings().GetFirstLetterExceptionManager();
+		let exceptionManager = logicDocument.GetAutoCorrectSettings().GetFirstLetterExceptionManager();
 		return exceptionManager.GetExceptions(lang);
 	};
 	asc_docs_api.prototype.asc_GetAutoCorrectSettings = function()

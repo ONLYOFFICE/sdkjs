@@ -903,7 +903,7 @@ CDocumentPage.prototype.CheckFrameClipStart = function(nIndex, oGraphics)
 
 		if (oFrame.StartIndex + oFrame.FlowCount - 1 === nIndex)
 		{
-			pGraphics.RestoreGrState();
+			oGraphics.RestoreGrState();
 			return
 		}
 	}

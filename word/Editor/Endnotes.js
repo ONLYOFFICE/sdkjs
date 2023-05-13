@@ -975,7 +975,7 @@ CEndnotesController.prototype.GetAllTables = function(oProps, arrTables)
 	for (var sId in this.Endnote)
 	{
 		var oEndnote = this.Endnote[sId];
-		oEndnote.GetAllTables(oProps, ParaArray);
+		oEndnote.GetAllTables(oProps, arrTables);
 	}
 
 	return arrTables;

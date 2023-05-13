@@ -17702,6 +17702,7 @@ window['AscCommonExcel'].NEW_PIVOT_COL = NEW_PIVOT_COL;
 window['AscCommonExcel'].ToName_ST_ItemType = ToName_ST_ItemType;
 window['AscCommonExcel'].ToName_ST_DataConsolidateFunction = ToName_ST_DataConsolidateFunction;
 window['AscCommonExcel'].cmpPivotItems = cmpPivotItems;
+window['AscCommonExcel'].DataRowTraversal = DataRowTraversal;
 
 window['Asc']['CT_PivotCacheDefinition'] = window['Asc'].CT_PivotCacheDefinition = CT_PivotCacheDefinition;
 window['Asc']['CT_pivotTableDefinitionX14'] = window['Asc'].CT_pivotTableDefinitionX14 = CT_pivotTableDefinitionX14;

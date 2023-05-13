@@ -2965,7 +2965,7 @@
 		else
 		{
 			for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++) {
-				isConvert = CorrectAllSpecialWords(oCMathContent.Content[nCount], isLaTeX) || isConvert;
+				isConvert = CorrectAllSpecialWords(oCMathContent.Content[nCount], IsLaTeX) || isConvert;
 			}
 		}
 	}

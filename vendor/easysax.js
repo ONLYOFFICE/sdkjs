@@ -220,7 +220,7 @@ function EasySAXParser(config) {
         };
 
         if (!ns || typeof root !== 'string') {
-            throw error('required args ns(string, object)');
+            throw Error('required args ns(string, object)');
         };
 
         isNamespace = !!(useNS = ns || null);

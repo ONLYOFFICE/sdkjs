@@ -573,13 +573,6 @@ g_oColorManager = new ColorManager();
 		}
 		this.text = val;
 	};
-	Fragment.prototype.getTextFromCodes = function () {
-		//если выставляем текстовое поле, контент меняется, нужно занулять charCodes
-		if (!isInit) {
-			this.charCodes = null;
-		}
-		this.text = val;
-	};
 	Fragment.prototype.convertPositionToText = function (codePos) {
 		var diff = 0;
 		for (var i = 0; i < codePos; i++) {
@@ -5021,7 +5014,7 @@ var g_oFontProperties = {
 		}
 		this.getFont().setVerticalAlign(val ? AscCommon.vertalign_SubScript : AscCommon.vertalign_Baseline);
 	};
-	CellXfs.prototype.asc_setFontSuperscript = function () {
+	CellXfs.prototype.asc_setFontSuperscript = function (val) {
 		if (!this.font) {
 			this.font = new AscCommonExcel.Font();
 		}

@@ -12142,6 +12142,8 @@ window['AscCommonSlide'].CPresentation = CPresentation;
 window['AscCommonSlide'].CPrSection = CPrSection;
 window['AscCommonSlide'].CSlideSize = CSlideSize;
 window['AscCommonSlide'].IdList = IdList;
+window['AscCommonSlide'].CONFORMANCE_STRICT = CONFORMANCE_STRICT;
+window['AscCommonSlide'].CONFORMANCE_TRANSITIONAL = CONFORMANCE_TRANSITIONAL;
 
 
 window['AscFormat'] = window['AscFormat'] || {};

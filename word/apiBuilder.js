@@ -17005,7 +17005,7 @@
 		if (this.GetFormType() === "radioButtonForm")
 		{
 			sKey = sKey === "" ? "Group 1" : sKey;
-			Sdt.GetCheckBoxPr().SetGroupKey(sKey);
+			this.Sdt.GetCheckBoxPr().SetGroupKey(sKey);
 		}
 		else
 		{

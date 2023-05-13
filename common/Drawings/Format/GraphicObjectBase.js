@@ -788,7 +788,7 @@
 				if (!sMacro) {
 					return null;
 				}
-				for (nSp = 1; nSp < this.spTree.length; ++nSp) {
+				for (let nSp = 1; nSp < this.spTree.length; ++nSp) {
 					if (sMacro !== this.spTree[nSp].getMacroOwnOrGroup()) {
 						return null;
 					}

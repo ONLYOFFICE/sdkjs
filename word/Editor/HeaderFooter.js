@@ -1633,8 +1633,8 @@ CHeaderFooterController.prototype =
 	
 	Set_CurHdrFtr_ById : function(Id)
 	{
-		let hdrFtr = AscCommon.g_oTableId.GetById(Id);
-		if (!hdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(hdrFtr))
+		let HdrFtr = AscCommon.g_oTableId.GetById(Id);
+		if (!HdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
 			return false;
 		
 		this.CurHdrFtr = HdrFtr;

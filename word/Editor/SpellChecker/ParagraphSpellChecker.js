@@ -525,7 +525,7 @@
 		{
 			if (EASTEGGS[nIndex] === this.Elements[sId].Word)
 			{
-				this.Elements[sId].Variants = EASTEGGS_VARIANTS[Index];
+				this.Elements[sId].Variants = EASTEGGS_VARIANTS[nIndex];
 				return;
 			}
 		}

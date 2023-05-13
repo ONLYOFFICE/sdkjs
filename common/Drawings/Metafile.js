@@ -2693,7 +2693,7 @@
 
 						if (isCloudPrinting)
 						{
-							_src = getCloudPrintingUrl(src)
+							_src = getCloudPrintingUrl(_src)
 						}
 						else
 						{

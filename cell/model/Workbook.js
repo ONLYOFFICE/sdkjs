@@ -8617,7 +8617,7 @@
 			cells = this.getRange4(pivotRange.r1, pivotRange.c1 + location.firstDataCol);
 			if (pivotTable.compact) {
 				let caption;
-				if (1 === colFields.length && st_VALUES === colFields[0].asc_getIndex()) {
+				if (1 === colFields.length && AscCommonExcel.st_VALUES === colFields[0].asc_getIndex()) {
 					caption = pivotTable.dataCaption || AscCommon.translateManager.getValue(AscCommonExcel.DATA_CAPTION)
 				} else {
 					caption = pivotTable.colHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.COL_HEADER_CAPTION);
@@ -8846,7 +8846,7 @@
 		var location = pivotTable.location;
 		var r1 = pivotRange.r1 + location.firstDataRow;
 		var c1 = pivotRange.c1 + location.firstDataCol;
-		let traversal = new DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
+		let traversal = new AscCommonExcel.DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
 		traversal.initRow(dataRow);
 		
 		var fieldIndex;
