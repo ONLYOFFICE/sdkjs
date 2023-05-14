@@ -2143,16 +2143,21 @@
 				// excel
 				this.Memory.WriteByte(CommandType.ctDrawImageFromFile);
 
-				var imgLocal = AscCommon.g_oDocumentUrls.getLocal(img);
-				if (imgLocal && isLocalUse && (true !== isUseOriginUrl))
+				let _img = img;
+				if (isCloudPrinting)
 				{
-					this.Memory.WriteString2(imgLocal);
+					_img = getCloudPrintingUrl(_img);
 				}
 				else
 				{
-					this.Memory.WriteString2(img);
+					var imgLocal = AscCommon.g_oDocumentUrls.getLocal(img);
+					if (imgLocal && (true !== isUseOriginUrl))
+					{
+						_img = imgLocal;
+					}
 				}
 
+				this.Memory.WriteString2(_img);
 				this.Memory.WriteDouble(x);
 				this.Memory.WriteDouble(y);
 				this.Memory.WriteDouble(w);

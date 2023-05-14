@@ -1431,7 +1431,7 @@ CHeaderFooter.prototype.FindWatermark = function()
             }
             else
             {
-                if(oCandidate.getDrawingArrayType() < oDrawing.getDrawingArrayType() || ComparisonByZIndexSimple(oDrawing, oCandidate))
+                if(oCandidate.getDrawingArrayType() < oDrawing.getDrawingArrayType() || (typeof ComparisonByZIndexSimple !== undefined && ComparisonByZIndexSimple(oDrawing, oCandidate)))
                 {
                     oCandidate = oDrawing;
                 }

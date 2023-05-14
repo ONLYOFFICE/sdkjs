@@ -3053,8 +3053,8 @@
 		}
 	};
 	CGraphicObjectBase.prototype.IsUseInDocument = function () {
-		if (CShape.prototype.IsUseInDocument) {
-			return CShape.prototype.IsUseInDocument.call(this);
+		if (AscFormat.CShape.prototype.IsUseInDocument) {
+			return AscFormat.CShape.prototype.IsUseInDocument.call(this);
 		}
 		return true;
 	};

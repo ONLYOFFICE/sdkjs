@@ -13266,24 +13266,6 @@ CT_FieldGroup.prototype.getFieldGroupType = function () {
 	}
 	return c_oAscGroupType.Text;
 };
-CT_FieldGroup.prototype.group = function(fld, baseCacheField, rangePr, groupMap) {
-	var res;
-	this.base = fld;
-	this.rangePr = rangePr;
-	if (this.rangePr && sharedItem) {
-		var fieldGroupType = this.rangePr.getFieldGroupType();
-		if (c_oAscGroupType.Number === fieldGroupType && c_oAscPivotRecType.Number === sharedItem.type) {
-			res = this.rangePr.getGroupIndex(sharedItem.val, this.groupItems.getCount() - 1);
-		} else if(c_oAscGroupType.Date === fieldGroupType && c_oAscPivotRecType.DateTime === sharedItem.type) {
-			var date = Asc.cDate.prototype.getDateFromExcelWithTime2(sharedItem.val)
-			res = this.rangePr.getGroupIndex(date, this.groupItems.getCount() - 1);
-		}
-	} else if (groupMap) {
-		var reorderArray = this.groupDiscrete(groupMap);
-		this.discretePr = new CT_DiscretePr();
-		this.discretePr.group(reorderArray);
-	}
-};
 CT_FieldGroup.prototype.groupRangePr = function (fld, rangePr, containsInteger, containsBlank) {
 	this.base = fld;
 	this.rangePr = rangePr;

@@ -2321,7 +2321,7 @@ function CBinaryFileWriter()
         oThis._WriteLimit2(1, oEffect.type);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
-        oThis.StartRecord(type);
+        oThis.StartRecord(0);
         var len__ = oEffect.effectList.length;
         oThis._WriteInt2(0, len__);
 
