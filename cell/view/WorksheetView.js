@@ -618,7 +618,7 @@
 		var defaultPpi = 96;
 		var truePPIX = this.drawingCtx.ppiX;
 		var truePPIY = this.drawingCtx.ppiY;
-		var retinaPixelRatio = AscBrowser.retinaPixelRatio;
+		var retinaPixelRatio = this.getRetinaPixelRatio();
 		var needReplacePpi = truePPIX !== defaultPpi || truePPIY !== defaultPpi;
 		
 		if (needReplacePpi) {
@@ -830,7 +830,7 @@
 		var l = this.cols.length;
 		return this.cellsLeft + ((i < l) ? this.cols[i].left : (((0 === l) ? 0 :
 			this.cols[l - 1].left + this.cols[l - 1].width) + (!this.model.isDefaultWidthHidden()) *
-			Asc.round(this.defaultColWidthPx * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio) * (i - l)));
+			Asc.round(this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio()) * (i - l)));
 	};
     WorksheetView.prototype.getCellLeft = function (column, units) {
 		var u = units >= 0 && units <= 3 ? units : 0;
@@ -905,7 +905,7 @@
 	};
 	WorksheetView.prototype._getColumnWidth = function (i) {
 		return (i < this.cols.length) ? this.cols[i].width :
-			(!this.model.isDefaultWidthHidden()) * Asc.round(this.defaultColWidthPx * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio);
+			(!this.model.isDefaultWidthHidden()) * Asc.round(this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio());
 	};
 	WorksheetView.prototype._getWidthForPrint = function (i) {
 		if (i >= this.cols.length && !this.model.isDefaultWidthHidden() && this.defaultColWidthPxForPrint) {
@@ -925,7 +925,7 @@
 			height = (!this.model.isDefaultHeightHidden()) * this.defaultRowHeightForPrintPt;
 		}
 
-		let realretinaPixelRatio = AscBrowser.retinaPixelRatio;
+		let realretinaPixelRatio = this.getRetinaPixelRatio();
 		AscBrowser.retinaPixelRatio = 1;
 		height = AscCommonExcel.convertPtToPx(height);
 		AscBrowser.retinaPixelRatio = realretinaPixelRatio;
@@ -1142,7 +1142,7 @@
 		if (w === this._getColumnWidth(col)) {
 			return;
 		}
-		w = Asc.round(w / ((this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio)));
+		w = Asc.round(w / ((this.getZoom() * this.getRetinaPixelRatio())));
 		var cc = Math.min(this.model.colWidthToCharCount(w), Asc.c_oAscMaxColumnWidth);
 
 		var onChangeWidthCallback = function (isSuccess) {
@@ -1865,7 +1865,7 @@
 		}
 
 		this.cols[i] = new CacheColumn(w);
-		this.cols[i].width = this.workbook.printPreviewState.isStart() ? w * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio : Asc.round(w * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio);
+		this.cols[i].width = this.workbook.printPreviewState.isStart() ? w * this.getZoom() * this.getRetinaPixelRatio() : Asc.round(w * this.getZoom() * this.getRetinaPixelRatio());
 		if (!w) {
 			this.cols[i]._widthForPrint = 0;
 		} else {
@@ -1884,7 +1884,7 @@
 		} else {
 			w = null === column.widthPx ? this.defaultColWidthPx : column.widthPx;
 		}
-		w = this.workbook.printPreviewState.isStart() ? w * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio : Asc.round(w * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio)
+		w = this.workbook.printPreviewState.isStart() ? w * this.getZoom() * this.getRetinaPixelRatio() : Asc.round(w * this.getZoom() * this.getRetinaPixelRatio())
 		return w;
 	};
 
@@ -1930,7 +1930,7 @@
             // Ширина колонки заголовков считается  - max число знаков в строке - перевести в символы - перевести в пикселы
             var numDigit = Math.max(AscCommonExcel.calcDecades(this.visibleRange.r2 + 1), 3);
             var nCharCount = this.model.charCountToModelColWidth(numDigit);
-            this.headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio);
+            this.headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * this.getZoom() * this.getRetinaPixelRatio());
         }
         //todo приравниваю headersLeft и groupWidth. Необходимо пересмотреть!
         this.headersLeft = this.ignoreGroupSize ? 0 : this.groupWidth;
@@ -2208,7 +2208,7 @@
 
 		var startPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
 
-		let _retinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+		let _retinaPixelRatio = this.getRetinaPixelRatio();
 		if (pageHeadings) {
 			// Рисуем заголовки, нужно чуть сдвинуться
 			leftFieldInPx += startPrintPreview ? (this.cellsLeft * scale) / _retinaPixelRatio : this.cellsLeft / _retinaPixelRatio;
@@ -2347,7 +2347,7 @@
 
 			for (rowIndex = currentRowIndex; rowIndex <= range.r2; ++rowIndex) {
 				var currentRowHeight = _getRowHeight(rowIndex) * scale;
-				var currentRowHeightReal = (t._getRowHeight(rowIndex)/AscCommon.AscBrowser.retinaPixelRatio) *scale;
+				var currentRowHeightReal = (t._getRowHeight(rowIndex)/this.getRetinaPixelRatio()) *scale;
 				if (currentHeight + currentRowHeight + curTitleHeight > pageHeightWithFieldsHeadings && rowIndex !== currentRowIndex) {
 					// Закончили рисовать страницу
 					curTitleHeight = addedTitleHeight;
@@ -2369,7 +2369,7 @@
 
 					for (colIndex = currentColIndex; colIndex <= range.c2; ++colIndex) {
 						var currentColWidth = _getColumnWidth(colIndex) * scale;
-						var currentRowWidthReal = (t._getColumnWidth(colIndex)/AscCommon.AscBrowser.retinaPixelRatio) *scale;
+						var currentRowWidthReal = (t._getColumnWidth(colIndex)/this.getRetinaPixelRatio()) *scale;
 						if (bIsAddOffset) {
 							newPagePrint.startOffset = ++nCountOffset;
 							newPagePrint.startOffsetPx = (pageWidthWithFieldsHeadings * newPagePrint.startOffset);
@@ -2788,7 +2788,7 @@
 				if (printPagesData.pageGridLines) {
 					var vector_koef = AscCommonExcel.vector_koef / t.getZoom();
 					if (AscCommon.AscBrowser.isCustomScaling()) {
-						vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
+						vector_koef /= this.getRetinaPixelRatio();
 					}
 					t._drawGrid(drawingCtx, range, offsetX, offsetY, printPagesData.pageWidth / vector_koef,
 					printPagesData.pageHeight / vector_koef, printPagesData.scale, titleHeight, titleWidth);
@@ -3221,8 +3221,8 @@
 		var _retinaPixelRatio = 1;
 		var vector_koef = AscCommonExcel.vector_koef / this.getZoom();
 		if (AscCommon.AscBrowser.isCustomScaling()) {
-			_retinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
-			vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
+			_retinaPixelRatio = this.getRetinaPixelRatio();
+			vector_koef /= this.getRetinaPixelRatio();
 		}
 
 		if (null == pageGridLines) {
@@ -3866,7 +3866,7 @@
 
 		var vector_koef = AscCommonExcel.vector_koef / this.getZoom();
 		if (AscCommon.AscBrowser.isCustomScaling()) {
-			vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
+			vector_koef /= this.getRetinaPixelRatio();
 		}
 
 		var _printScale = printPagesData ? printPagesData.scale : this.getPrintScale();
@@ -5821,7 +5821,7 @@
 
         var isPagePreview = AscCommonExcel.selectionLineType.ResizeRange & selectionLineType;
 		//меняю толщину линии для селекта(только в случае сплошной линии) и масштаба 200%
-		var isRetina = (!isDashLine || isAllowRetina) && AscBrowser.retinaPixelRatio === 2;
+		var isRetina = (!isDashLine || isAllowRetina) && this.getRetinaPixelRatio() === 2;
 		var widthLine = isDashLine ? 1 : 2;
 
 		if (isRetina) {
@@ -6593,7 +6593,7 @@
 
         var x1 = this._getColLeft(col) - offsetX - gridlineSize;
         var h = ctx.getHeight();
-        var width = Asc.round((x - x1) / (this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio));
+        var width = Asc.round((x - x1) / (this.getZoom() * this.getRetinaPixelRatio()));
         if ( 0 > width ) {
             width = 0;
         }
@@ -6783,7 +6783,7 @@
 		var oldColWidth = this.getColumnWidthInSymbols(col);
         var pad = this.settings.cells.padding * 2 + 1;
 		//поскольку width - приходит с учётом зума, то и pad нужно домоножить на зум + далее результат делим на зум, соответсвенно если pad не будет домножен на зум, то в результате будет неточность
-		var zoomScale = this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio;
+		var zoomScale = this.getZoom() * this.getRetinaPixelRatio();
         var cc = Math.min(this.model.colWidthToCharCount((width + pad * zoomScale) / (zoomScale)), Asc.c_oAscMaxColumnWidth);
 
         if (cc > oldColWidth) {
@@ -6810,7 +6810,7 @@
 					//попробовать перейти на все расчёты как при 100%(потом * zoom)
 					// но в данном случае есть проблемы с измерением текста
 					//получаем ширину колонки как при 100% и длину строки как при 100%, чтобы не было разницы
-					var _scale = self.getZoom()*AscCommon.AscBrowser.retinaPixelRatio;
+					var _scale = self.getZoom()*self.getRetinaPixelRatio();
 					var _innerDiff = self.settings.cells.padding * 2 + gridlineSize;
 					widthWithoutZoom = Math.ceil((width + _innerDiff - _innerDiff*_scale)/_scale);
 					var realPpiX = self.stringRender.drawingCtx.ppiX;
@@ -7907,7 +7907,7 @@
 		if (gc_nMaxCol !== this.nColsCount && !this.model.isDefaultWidthHidden()) {
 			var missingWidth = this._getMissingWidth();
 			if (0 < missingWidth) {
-				var colWidth = Asc.round(this.defaultColWidthPx * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio);
+				var colWidth = Asc.round(this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio());
 				this.setColsCount(Math.min(this.nColsCount + Asc.ceil(missingWidth / colWidth), gc_nMaxCol));
 				this._calcVisibleColumns();
 				if (!skipScrollReinit) {
@@ -8303,9 +8303,9 @@
 			if (sum < x) {
 				result.col = this.nColsCount;
 				if (!this.model.isDefaultWidthHidden()) {
-					result.col += ((x - sum) / (this.defaultColWidthPx * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio)) | 0;
+					result.col += ((x - sum) / (this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio())) | 0;
 					result.col = Math.min(result.col, gc_nMaxCol0);
-                    sum +=  (result.col - this.nColsCount) * (this.defaultColWidthPx * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio);
+                    sum +=  (result.col - this.nColsCount) * (this.defaultColWidthPx * this.getZoom() * this.getRetinaPixelRatio());
 				}
 			} else {
 				sum = this.cellsLeft;
@@ -8644,7 +8644,7 @@
 	WorksheetView.prototype._hitCursorTableRightCorner = function (vr, x, y, offsetX, offsetY) {
 		var i, l, res, range;
 		var tables = this.model.TableParts;
-		var retinaKoef = AscBrowser.retinaPixelRatio;
+		var retinaKoef = this.getRetinaPixelRatio();
 
 		var row, col, baseLw, lnW, baseLnSize, lnSize, kF, x1, x2, y1, y2, rangeIn;
 		var zoom = this.getZoom();
@@ -16634,7 +16634,7 @@
                 // вычисление новой ширины столбца, чтобы высота текста была меньше maxRowHeightPx
                 c = this._getCell(col, row);
                 str = c.getValue2();
-                maxW = ct.metrics.width + this.maxDigitWidth * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio;
+                maxW = ct.metrics.width + this.maxDigitWidth * this.getZoom() * this.getRetinaPixelRatio();
                 while (1) {
                     tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
                     if (tm.height <= this.maxRowHeightPx) {
@@ -16646,7 +16646,7 @@
                         break;
                     }
                     lastHeight = tm.height;
-                    maxW += this.maxDigitWidth * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio;
+                    maxW += this.maxDigitWidth * this.getZoom() * this.getRetinaPixelRatio();
                 }
 				calcWidth = Math.abs(tm.width * angleCos) + Math.abs(ct.metrics.height * angleSin);
             } else {
@@ -16660,7 +16660,7 @@
             }
 			width = Math.max(width, calcWidth);
         }
-        width = width / (this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio);
+        width = width / (this.getZoom() * this.getRetinaPixelRatio());
         this.canChangeColWidth = c_oAscCanChangeColWidth.none;
 
         var pad, cc, cw;
@@ -19065,9 +19065,9 @@
 			}
 
 			if (isMobileRetina) {
-				ctx.setLineWidth(AscBrowser.retinaPixelRatio * 2);
+				ctx.setLineWidth(t.getRetinaPixelRatio() * 2);
 			} else {
-				ctx.setLineWidth(AscBrowser.retinaPixelRatio);
+				ctx.setLineWidth(t.getRetinaPixelRatio());
 			}
 
 			ctx.setStrokeStyle(m_oColor);
@@ -19082,7 +19082,7 @@
 
 			ctx.moveTo(x, y);
 			ctx.lineTo(x, y - heightCleanLine);
-			ctx.setLineWidth(2 * AscBrowser.retinaPixelRatio * (isMobileRetina ? 2 : 1));
+			ctx.setLineWidth(2 * t.getRetinaPixelRatio() * (isMobileRetina ? 2 : 1));
 			ctx.setStrokeStyle(m_oColor);
 			ctx.stroke();
 
@@ -19095,9 +19095,9 @@
 			ctx.beginPath();
 
 			if (isMobileRetina) {
-				ctx.setLineWidth(AscBrowser.retinaPixelRatio * 2);
+				ctx.setLineWidth(t.getRetinaPixelRatio() * 2);
 			} else {
-				ctx.setLineWidth(AscBrowser.retinaPixelRatio);
+				ctx.setLineWidth(t.getRetinaPixelRatio());
 			}
 
 			x = x + 1;
@@ -19179,7 +19179,7 @@
 			isMobileRetina = true;
 		}
 
-        scaleIndex *= AscBrowser.retinaPixelRatio;
+        scaleIndex *= this.getRetinaPixelRatio();
 
 		_drawButton(x1 + diffX, y1 + diffY);
 	};
@@ -19297,7 +19297,7 @@
 	WorksheetView.prototype._drawRightDownTableCorner = function (table, updatedRange, offsetX, offsetY) {
 		var t = this;
 		var ctx = t.drawingCtx;
-		var retinaKoef = AscBrowser.retinaPixelRatio;
+		var retinaKoef = this.getRetinaPixelRatio();
 
 		var row = table.Ref.r2;
 		var col = table.Ref.c2;
@@ -22215,7 +22215,7 @@
 		//if(!headersWidth) {
 			var numDigit = Math.max(AscCommonExcel.calcDecades(this.visibleRange.r2 + 1), 3);
 			var nCharCount = this.model.charCountToModelColWidth(numDigit);
-			var headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * zoom * AscCommon.AscBrowser.retinaPixelRatio);
+			var headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * zoom * this.getRetinaPixelRatio());
 		//}
 		//var headersHeight = this.headersHeight;
 		//if(!headersHeight) {
@@ -25039,6 +25039,10 @@
 
 	WorksheetView.prototype.setColsCount = function (val) {
 		this.nColsCount = val;
+	};
+
+	WorksheetView.prototype.getRetinaPixelRatio = function () {
+		return AscBrowser.retinaPixelRatio;
 	};
 
 
