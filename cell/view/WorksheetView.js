@@ -540,7 +540,7 @@
 	WorksheetView.prototype._initWorksheetDefaultWidth = function () {
 		// Теперь рассчитываем число px
 		this.defaultColWidthChars = this.model.charCountToModelColWidth(this.model.getBaseColWidth());
-		this.defaultColWidthPx = this.model.modelColWidthToColWidth(this.defaultColWidthChars);
+		this.defaultColWidthPx = this.model.modelColWidthToColWidth(this.defaultColWidthChars) * 2;
 		// Делаем кратным 8 (http://support.microsoft.com/kb/214123)
 		this.defaultColWidthPx = asc_ceil(this.defaultColWidthPx / 8) * 8;
 		this.defaultColWidthChars = this.model.colWidthToCharCount(this.defaultColWidthPx);
