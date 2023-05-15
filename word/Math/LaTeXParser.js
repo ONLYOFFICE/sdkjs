@@ -1185,7 +1185,6 @@
 		if (undefined === str || null === str)
 			return;
 
-		debugger
 		const oConverter = new CLaTeXParser(true);
 		const oTokens = oConverter.Parse(str);
 
