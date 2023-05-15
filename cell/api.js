@@ -323,6 +323,7 @@ var editor;
         this.wbModel.rebuildColors();
         if (this.isDocumentLoadComplete) {
           AscCommon.checkCultureInfoFontPicker();
+          this.wb && this.wb.cleanCache();
           this._loadFonts([], function () {
             this._onUpdateAfterApplyChanges();
           });
@@ -6437,7 +6438,7 @@ var editor;
 		AscCommon.build_local_rx(oLocalizedData ? oLocalizedData["LocalFormulaOperands"] : null);
 		if (this.wb) {
 			this.wb.initFormulasList();
-			this.wb._onWSSelectionChanged()
+			this.wb._onWSSelectionChanged();
 		}
 		if (this.wbModel) {
 			this.wbModel.rebuildColors();

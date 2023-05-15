@@ -5553,6 +5553,12 @@
 		this.collaborativeEditing.lock(aLockInfo, callback);
 	};
 
+	WorkbookView.prototype.cleanCache = function() {
+		for(var i in this.wsViews) {
+			let ws = this.wsViews[i];
+			ws && ws._cleanCache(new Asc.Range(0, 0, ws.cols.length - 1, ws.rows.length - 1));
+		}
+	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {
