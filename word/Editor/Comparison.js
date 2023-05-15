@@ -1827,14 +1827,14 @@
 			return this.matchedNums[sNumId];
 		}
 		const sCopyNumId = this.revisedDocument.CopyNumberingMap[sNumId];
-		if (typeof this.firstCheckNumId === 'string' && sCopyNumId)
+		if (typeof this.firstCheckNumId === 'string' && !this.checkedNums[this.firstCheckNumId] && sCopyNumId)
 		{
 			const oCopyNum = AscCommon.g_oTableId.Get_ById(sCopyNumId);
 			const oOrigNumbering = this.originalDocument.Numbering.Num;
 			if (oCopyNum && oOrigNumbering)
 			{
 				const oOrigNum = AscCommon.g_oTableId.Get_ById(this.firstCheckNumId);
-				if (oOrigNum && oOrigNum.IsSimilar(oCopyNum))
+				if (oOrigNum && oOrigNum.IsEqual(oCopyNum))
 				{
 					this.matchedNums[sNumId] = this.firstCheckNumId;
 					this.checkedNums[this.firstCheckNumId] = true;
