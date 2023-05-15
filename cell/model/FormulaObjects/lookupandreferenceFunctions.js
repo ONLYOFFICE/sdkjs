@@ -2185,11 +2185,106 @@ function (window, undefined) {
 	cSORTBY.prototype.argumentsMin = 2;
 	cSORTBY.prototype.isXLFN = true;
 	// TODO infinite arrayIndexes for even/odd arguments
-	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 5: 1, 7: 1, 9: 1, 11: 1};
+	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1, 10: 1, 11: 1};
 	cSORTBY.prototype.argumentsType = [argType.array, argType.array, argType.number, [argType.array, argType.number]];
 	cSORTBY.prototype.Calculate = function (arg) {
+		function arrayHelper (arr, args) {
+			// Helper logic:
+			// We are looking for the maximum size of the array, which will later become the result
+			// Create the resulting array after 2 cycles (i < row, j < col)
+			// When creating each element, iterate through all elements with the same row col value and return the value according to the condition
+			// If the "correct" element has already been written at least once (true/false flag), then in this case we return 0 or #VALUE! ?
+			let resArr = new cArray(), resCol = 1, resRow = 1,
+				sort_order1, by_array1, sortOrderArr = [], isByCol, isFirstElemReceived;
+
+			// get max row & col
+			for (let i = 1; i < args.length; i += 2) {
+				let by_array = args[i],
+					sortOrder = args[i+1];
+
+				by_array1 = i === 1 ? by_array : by_array1;
+
+				if (sortOrder.type === cElementType.array || sortOrder.type === cElementType.cellsRange || sortOrder.type === cElementType.cellsRange3D) {
+					// if single element in array, fill array with it element?
+					let resDimensoins = sortOrder.getDimensions();
+					if (resRow < resDimensoins.row) {
+						resRow = resDimensoins.row;
+					}
+					if (resCol < resDimensoins.col) {
+						resCol = resDimensoins.col;
+					}
+				} else {
+					// create array with single element
+					let tempArr = new cArray();
+					tempArr.addElement(sortOrder);
+					sortOrder = tempArr;
+				}
+				
+				sortOrderArr.push(sortOrder);
+			}
+
+			// fill resArr, go through sortOrderArr
+			for (let i = 0; i < resRow; i++) {
+				resArr.addRow();
+				for (let j = 0; j < resCol; j++) {
+					let elem;
+
+					for (let k = 0; k < sortOrderArr.length; k++) {
+						elem = sortOrderArr[k].getElementRowCol ? sortOrderArr[k].getElementRowCol(i, j) : sortOrderArr[k].getValueByRowCol(i, j);
+
+						// check element
+						if (!elem) {
+							elem = new cError(cErrorType.not_available);
+						} else if (elem.type === cElementType.error) {
+							// if any error break the cycle
+							break;
+						}
+
+						if (elem.type !== cElementType.number) {
+							elem = elem.tocNumber();
+						}
+						
+						if (elem.type === cElementType.number) {
+							// matching number check
+							let value = Math.floor(elem.getValue());
+							if (value !== -1 && value !== 1) {
+								elem = new cError(cErrorType.wrong_value_type);
+							} else {
+								elem = new cNumber(value);
+							}
+						}
+
+						sort_order1 = k === 0 ? elem : sort_order1;
+					}
+
+					// if elem is "truthy", do sort and get first element from sorted array
+					if (elem.type !== cElementType.error) {
+						if (isFirstElemReceived) {
+							elem = new cNumber(0);
+							resArr.addElement(elem);
+						} 
+						// TODO need more research
+						// else if (isFirstElemReceived && args.length > 3) {
+						// 	elem = new cError(cErrorType.wrong_value_type);
+						// 	resArr.addElement(elem);
+						// }
+						else {
+							let firstElem;
+							firstElem = sortArray(arr, by_array1, sort_order1.getValue(), isByCol).getFirstElement();
+							resArr.addElement(firstElem);
+							isFirstElemReceived = true;
+						}
+					} else {
+						resArr.addElement(elem);
+					}
+				}
+			}
+
+			return resArr;
+		}
+
 		let args = arg.slice();
-		let array, by_array, sort_order, maxRows, maxCols, arrayDimensions, by_arrayRows, by_arrayCols, isByCol, isSortOrderArray;
+		let array, by_array, sort_order, maxRows, maxCols, arrayDimensions, isByCol, isSortOrderArray;
 
 		// check arg0
 		if (cElementType.error === args[0].type) {
@@ -2289,11 +2384,24 @@ function (window, undefined) {
 		}
 
 		if (isSortOrderArray) {
-			return new cError(cErrorType.wrong_value_type);
+			return arrayHelper(array, args);
 		} else {
 			// dimensions check
 			for (let i = 1; i < args.length; i += 2) {
 				let byArrDimensions = args[i].getDimensions();
+
+				// TODO if the main array have single row, return the main array
+				if (maxRows === 1 || maxCols === 1) {
+					// single row/col with elements
+					if (maxRows === 1 && byArrDimensions.row === 1) {
+						// area to array
+						if (cElementType.cellsRange === array.type || cElementType.cellsRange3D === array.type) {
+							let arr = array.getFullArray();
+							return arr;
+						}
+						return array;
+					} 
+				}
 
 				// isByCol or not determined by the first byarray arg
 				if ((byArrDimensions.row === 1 && byArrDimensions.col !== maxCols) || 
