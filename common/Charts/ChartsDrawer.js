@@ -12290,7 +12290,7 @@ drawRadarChart.prototype = {
 					}
 					if (isLastPoint(n + 1, oNumCache) && xFirst != null && x1 !== null) {
 						points = {x: x1, y: y1, x1: xFirst, y1: yFirst};
-						calcPath(pt, n + 1, points, oNumCache);
+						calcPath(pt || nextPt, n + 1, points, oNumCache, true);
 						break;
 					}
 				} else {
@@ -12307,7 +12307,7 @@ drawRadarChart.prototype = {
 						this._addLineToTemporary(x, y, x1, y1, i, n);
 					}
 					//4. draw last line(return by first point)
-					if ((pt && isLastPoint(n + 1, oNumCache)) && xFirst != null && x1 !== null) {
+					if ((isLastPoint(n + 1, oNumCache)) && xFirst != null && x1 !== null) {
 						this._addLineToTemporary(x1, y1, xFirst, yFirst, i, n + 1);
 						break;
 					}
@@ -12444,7 +12444,7 @@ drawRadarChart.prototype = {
 		var pathH = this.chartProp.pathH;
 		var pathW = this.chartProp.pathW;
 		var t = this;
-		return function (pt, n, points, oNumCache) {
+		return function (pt, n, points, oNumCache, endOfPath) {
 			var pen, brush;
 			var y = points.y, y1 = points.y1, x = points.x, x1 = points.x1;
 
@@ -12456,7 +12456,7 @@ drawRadarChart.prototype = {
 				path.lnTo(x1 * pathW, y1 * pathH);
 			}
 
-			if (oNumCache.ptCount - 2 === n && pt) {
+			if ((oNumCache.ptCount - 2 === n || endOfPath) && pt) {
 				pen = pt.pen;
 				brush = pt.brush;
 				t.fillPaths.push({path: pathId, pen: pen, brush: brush});
