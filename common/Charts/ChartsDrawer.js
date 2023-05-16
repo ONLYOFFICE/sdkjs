@@ -12394,15 +12394,6 @@ drawRadarChart.prototype = {
 		}
 	},
 
-	_compareLinesPoints: function (line1, line2) {
-		if (line1 && line2) {
-			if (line1.x1 === line2.x1 && line1.x2 === line2.x2 && line1.y1 === line2.y1 && line1.y2 === line2.y2) {
-				return true;
-			}
-		}
-		return false;
-	},
-
 	_comparePointsSettings: function (serIndex, pt1Index, pt2index, useNullPoints) {
 		let ser = this.chart.series[serIndex];
 		let oNumCache = ser && this.cChartDrawer.getNumCache(ser.val);
