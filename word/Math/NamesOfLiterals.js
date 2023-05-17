@@ -54,7 +54,7 @@
 			let name = names[i];
 			let data = this.toSymbols[name];
 			this.private_FromToSymbols(data, name);
-		};
+		}
 
 		return true;
 	};
@@ -1086,7 +1086,7 @@
 		"\\aouint",
 	];
 
-	const functionNames = [
+	let functionNames = [
 		"tan", "tanh", "sup", "sinh", "sin", "sec", "ker", "hom",
 		"arg", "arctan", "arcsin", "arcsec", "arccsc", "arccot", "arccos",
 		"inf", "gcd", "exp", "dim", "det", "deg", "csc", "coth", "cot",
@@ -2103,7 +2103,7 @@
 		return code;
 	}
 
-	const AutoCorrection = {
+	let AutoCorrection = {
 		"\\above": "┴",
 		"\\acute": "́",
 		"\\aleph": "ℵ",
@@ -2643,6 +2643,24 @@
 		'/\\supseteq': '⊉',
 	};
 
+	function UpdateAutoCorrection()
+	{
+		let arrG_AutoCorrectionList = window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols;
+		AutoCorrection = {};
+		for (let i = 0; i < arrG_AutoCorrectionList.length; i++)
+		{
+			let arrCurrentElement = arrG_AutoCorrectionList[i];
+			let data = AscCommon.convertUnicodeToUTF16(Array.isArray(arrCurrentElement[1]) ? arrCurrentElement[1] : [arrCurrentElement[1]]);
+			let name = arrCurrentElement[0];
+			AutoCorrection[name] = data;
+		}
+	}
+
+	function UpdateFuncCorrection()
+	{
+		functionNames = window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs;
+	}
+
 	const SymbolsToLaTeX = {
 		"ϵ" : "\\epsilon",
 		"∃" : "\\exists",
@@ -2845,13 +2863,86 @@
 		"Ω" 		:"\\Omega"		,
 
 	};
+
+	function ParaRunIterator(ParaRun)
+	{
+		this.Content = ParaRun.Content;
+		this.Cursor = ParaRun.Content.length - 1;
+	}
+	ParaRunIterator.prototype.GetNext = function()
+	{
+		if (!this.IsHasContent())
+			return false;
+
+		const oContent = this.Content[this.Cursor];
+		this.Cursor--;
+
+		return String.fromCharCode(oContent.value);
+	};
+	ParaRunIterator.prototype.IsHasContent = function()
+	{
+		return this.Cursor >= 0;
+	};
+	function CMathContentIterator(oCMathContent)
+	{
+		this._paraRun = null;
+		this._index = 0;
+		this._content = oCMathContent.Content;
+
+		this.counter = 0;
+	}
+	CMathContentIterator.prototype.Count = function ()
+	{
+		this.counter++;
+	};
+	CMathContentIterator.prototype.Next = function()
+	{
+		if (!this.IsHasContent())
+			return false;
+
+		if (this._paraRun)
+		{
+			if (this._paraRun.IsHasContent())
+			{
+				this.Count();
+				return this._paraRun.GetNext();
+			}
+			else
+			{
+				this._paraRun = null;
+				this._index++;
+				return this.Next();
+			}
+		}
+		else
+		{
+			let intCurrentIndex = this._content.length - 1 - this._index;
+			let oCurrentContent = this._content[intCurrentIndex];
+
+			if (oCurrentContent.Type !== 49)
+			{
+				this._index++;
+				this.Count();
+				return oCurrentContent;
+			}
+			else
+			{
+				this._paraRun = new ParaRunIterator(oCurrentContent)
+				return this.Next();
+			}
+		}
+	};
+	CMathContentIterator.prototype.IsHasContent = function ()
+	{
+		return this._content && this._index < this._content.length;
+	};
 	function CorrectWordOnCursor(oCMathContent, IsLaTeX, pos)
 	{
 		if (pos < 1 || pos === undefined)
 			pos = 1;
 
 		let isConvert = false;
-		let oContent = oCMathContent.Content[oCMathContent.CurPos];
+		let oContent = new CMathContentIterator(oCMathContent);
 
 		if (oCMathContent.GetLastTextElement() === " " || oCMathContent.IsLastElement(AscMath.MathLiterals.operators))
 			pos--;
@@ -2859,47 +2950,69 @@
 		let str = "";
 		let intStart = 0;
 
-		for (let nCount = oContent.Content.length - 1 - pos; nCount >= 0; nCount--)
+		while (oContent.IsHasContent())
 		{
-			let oElement = oContent.Content[nCount];
-			let intCode = oElement.value;
-			intStart = nCount;
+			let oElement = oContent.Next() + "";
+			let intCode = oElement.charCodeAt(0);
+			intStart++;
 			
 			// первый обработанный элемент, то что было введено после слова
-			if (nCount === oContent.Content.length - 1 && intCode === 32)
+			if (oContent.counter === 1 && intCode === 32)
 				continue;
 			
-			let isContinue = ((intCode >= 97 && intCode <= 122) || (intCode >= 65 && intCode <= 90) || intCode === 92 || intCode === 47); // a-zA-z && 0-9
+			let isContinue = ((intCode >= 97 && intCode <= 122) || (intCode >= 65 && intCode <= 90) || (intCode >= 48 && intCode <= 57) || intCode === 92 || intCode === 47); // a-zA-z && 0-9
 
 			if (!isContinue)
 				return false;
 
-			str = oElement.GetTextOfElement() + str;
+			str = oElement + str;
 
 			if (intCode === 92 || intCode === 47)
 			{
-				if (nCount >= 1 && oContent.Content[nCount - 1].value === 47)
-				{
-					continue;
-				}
+				// if (oContent.counter >= 1 && oContent.Content[oContent.index - 1].value === 47)
+				// {
+				// 	continue;
+				// }
 				break;
 			}
 		}
 
-		if (oContent.Content.length - 1 > intStart)
+		let strCorrection = ConvertWord(str, IsLaTeX);
+		if (strCorrection)
 		{
-			let strCorrection = ConvertWord(str, IsLaTeX);
-
-			if (strCorrection)
-			{
-				oContent.RemoveFromContent(intStart, oContent.Content.length - intStart - pos, true);
-				oContent.AddText(strCorrection, intStart);
-				isConvert = true;
-			}
+			let oRun = RemoveCountFormMathContent(oCMathContent, intStart);
+			let nPos = oRun.Content.length;
+			oRun.AddText(strCorrection, nPos);
+			isConvert = true;
 		}
-		oContent.MoveCursorToEndPos();
+
+		oCMathContent.MoveCursorToEndPos();
 		return isConvert;
 	}
+	function RemoveCountFormMathContent (oContent, nCount)
+	{
+		for (let i = oContent.Content.length - 1; i >= 0; i--)
+		{
+			let oCurrentContent = oContent.Content[i];
+			for (let j = oCurrentContent.Content.length - 1; j >= 0; j--)
+			{
+				if (nCount === 0)
+					return  oCurrentContent;
+				oCurrentContent.RemoveFromContent(j, 1, true);
+				nCount--;
+			}
+
+			if (nCount === 0)
+			{
+				return oCurrentContent;
+			}
+			else if (oCurrentContent.Content.length === 0)
+			{
+				oContent.RemoveFromContent(i, 1, true);
+			}
+		}
+	}
+
 	function CorrectSpecialWordOnCursor(oCMathContent, IsLaTeX)
 	{
 		let isConvert = false;
@@ -2933,14 +3046,11 @@
 		{
 			return AutoCorrection[str];
 		}
-	};
+	}
 
 	function IsNotConvertedLaTeXWords(str)
 	{
-		if (arrDoNotConvertWordsForLaTeX.includes(str))
-			return true;
-
-		return false;
+		return arrDoNotConvertWordsForLaTeX.includes(str);
 	}
 
 	function CorrectAllWords (oCMathContent, isLaTeX)
@@ -3102,21 +3212,23 @@
 
 	//--------------------------------------------------------export----------------------------------------------------
 	window["AscMath"] = window["AscMath"] || {};
-	window["AscMath"].oNamesOfLiterals = oNamesOfLiterals;
-	window["AscMath"].ConvertTokens = ConvertTokens;
-	window["AscMath"].Tokenizer = Tokenizer;
-	window["AscMath"].UnicodeSpecialScript = UnicodeSpecialScript;
-	window["AscMath"].LimitFunctions = limitFunctions;
-	window["AscMath"].functionNames = functionNames;
-	window["AscMath"].GetTypeFont = GetTypeFont;
-	window["AscMath"].GetMathFontChar = GetMathFontChar;
-	window["AscMath"].AutoCorrection = AutoCorrection;
-	window["AscMath"].CorrectWordOnCursor = CorrectWordOnCursor;
-	window["AscMath"].CorrectAllWords = CorrectAllWords;
-	window["AscMath"].CorrectAllSpecialWords = CorrectAllSpecialWords;
-	window["AscMath"].CorrectSpecialWordOnCursor = CorrectSpecialWordOnCursor;
-	window["AscMath"].IsStartAutoCorrection = IsStartAutoCorrection;
-	window["AscMath"].GetConvertContent = GetConvertContent;
-	window["AscMath"].MathLiterals = MathLiterals;
-	window["AscMath"].SymbolsToLaTeX = SymbolsToLaTeX;
+	window["AscMath"].oNamesOfLiterals 				= oNamesOfLiterals;
+	window["AscMath"].ConvertTokens 				= ConvertTokens;
+	window["AscMath"].Tokenizer 					= Tokenizer;
+	window["AscMath"].UnicodeSpecialScript 			= UnicodeSpecialScript;
+	window["AscMath"].LimitFunctions 				= limitFunctions;
+	window["AscMath"].functionNames 				= functionNames;
+	window["AscMath"].GetTypeFont 					= GetTypeFont;
+	window["AscMath"].GetMathFontChar 				= GetMathFontChar;
+	window["AscMath"].AutoCorrection 				= AutoCorrection;
+	window["AscMath"].CorrectWordOnCursor 			= CorrectWordOnCursor;
+	window["AscMath"].CorrectAllWords 				= CorrectAllWords;
+	window["AscMath"].CorrectAllSpecialWords 		= CorrectAllSpecialWords;
+	window["AscMath"].CorrectSpecialWordOnCursor 	= CorrectSpecialWordOnCursor;
+	window["AscMath"].IsStartAutoCorrection 		= IsStartAutoCorrection;
+	window["AscMath"].GetConvertContent 			= GetConvertContent;
+	window["AscMath"].MathLiterals 					= MathLiterals;
+	window["AscMath"].SymbolsToLaTeX 				= SymbolsToLaTeX;
+	window["AscMath"].UpdateAutoCorrection 			= UpdateAutoCorrection;
+	window["AscMath"].UpdateFuncCorrection 			= UpdateFuncCorrection;
 })(window);
