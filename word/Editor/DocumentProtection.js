@@ -244,3 +244,7 @@ prot["asc_setEditType"] = prot.asc_setEditType;
 prot["asc_setPassword"] = prot.asc_setPassword;
 
 window['AscCommonWord'].ECryptAlgType = ECryptAlgType;
+window['AscCommonWord'].ECryptAlgoritmName = ECryptAlgoritmName;
+window['AscCommonWord'].ECryptAlgClass = ECryptAlgClass;
+window['AscCommonWord'].ECryptAlgType = ECryptAlgType;
+window['AscCommonWord'].ECryptProv = ECryptProv;

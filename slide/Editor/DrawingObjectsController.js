@@ -228,6 +228,7 @@ DrawingObjectsController.prototype.getDrawingDocument = function()
 
 DrawingObjectsController.prototype.onMouseDown = function(e, x, y)
 {
+    this.checkInkState();
     var ret = this.curState.onMouseDown(e, x, y, 0);
     if(e.ClickCount < 2)
     {

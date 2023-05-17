@@ -340,6 +340,25 @@ c_oAscDateTimeFormat[lcid_csCZ]     = [
 	"hh:mm",
 	"hh:mm:ss"
 ];
+c_oAscDateTimeFormat[lcid_daDK]     = [
+	"dd-mm-yyyy",
+	"dd. mmmm yyyy",
+	"yy-mm-dd",
+	"yyyy.mm.dd",
+	"yyyy-mm-dd",
+	"mmmm yyyy",
+	"d.m.yy",
+	"d/m yyy",
+	"dd.mm.yyyy",
+	"d.m.yyyy",
+	"dd/mm yyyy",
+	"dd-mm-yyyy hh:mm",
+	"dd-mm-yyyy hh:mm:ss",
+	"H:mm",
+	"H:mm:ss",
+	"hh:mm",
+	"hh:mm:ss"
+];
 c_oAscDateTimeFormat[lcid_deAT]     = c_oAscDateTimeFormat[lcid_deDE] = [
 	"dd.mm.yyyyy",
 	"Dddd, d. Mmmm yyyy",

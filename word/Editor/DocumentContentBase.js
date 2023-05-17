@@ -1399,6 +1399,7 @@ CDocumentContentBase.prototype.AddToContent = function(nPos, oItem, isCorrectCon
 /**
  * Добавляем элемент в конец
  * @param oItem
+ * @param isCorrectContent {boolean}
  */
 CDocumentContentBase.prototype.PushToContent = function(oItem, isCorrectContent)
 {
@@ -1610,6 +1611,11 @@ CDocumentContentBase.prototype.GetAllParagraphs = function(oProps, arrParagraphs
  */
 CDocumentContentBase.prototype.GetAllParagraphsByNumbering = function(oNumPr)
 {
+	let logicDocument = this.GetLogicDocument();
+	let numberingCollection = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetNumberingCollection() : null;
+	if (numberingCollection)
+		return numberingCollection.GetAllParagraphsByNumbering(oNumPr);
+	
 	return this.GetAllParagraphs({Numbering : true, NumPr : oNumPr});
 };
 /**
@@ -2367,3 +2373,55 @@ CDocumentContentBase.prototype.GetFormattingPasteData = function()
 	else
 		return new AscCommon.CTextFormattingPasteData(this.GetDirectTextPr(), this.GetDirectParaPr());
 };
+CDocumentContentBase.prototype.UpdateNumberingCollection = function(elements)
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+	
+	let numberingCollection = logicDocument.GetNumberingCollection();
+	for (let iElement = 0, nElements = elements.length; iElement < nElements; ++iElement)
+	{
+		if (elements[iElement].IsParagraph())
+		{
+			numberingCollection.CheckParagraph(elements[iElement]);
+		}
+		else
+		{
+			let paragraphs = elements[iElement].GetAllParagraphs();
+			for (let iPara = 0, nParas = paragraphs.length; iPara < nParas; ++iPara)
+			{
+				numberingCollection.CheckParagraph(paragraphs[iPara]);
+			}
+		}
+	}
+};
+CDocumentContentBase.prototype.private_RecalculateNumbering = function(elements)
+{
+	this.UpdateNumberingCollection(elements);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+	
+	if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+		return;
+	
+	let history = logicDocument.GetHistory();
+	for (let iElement = 0, nElements = elements.length; iElement < nElements; ++iElement)
+	{
+		if (elements[iElement].IsParagraph())
+		{
+			history.Add_RecalcNumPr(elements[iElement].GetNumPr());
+		}
+		else if (elements[iElement].GetAllParagraphs)
+		{
+			let paragraphs = elements[iElement].GetAllParagraphs({All : true});
+			for (let iPara = 0, nParas = paragraphs.length; iPara < nParas; ++iPara)
+			{
+				history.Add_RecalcNumPr(paragraphs[iPara].GetNumPr());
+			}
+		}
+	}
+};
+

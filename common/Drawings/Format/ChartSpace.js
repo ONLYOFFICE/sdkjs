@@ -3999,7 +3999,7 @@ function(window, undefined) {
 				for (var i = 0; i < aAxes.length; ++i) {
 					var oAxis = aAxes[i];
 					if (oAxis && oAxis.title) {
-						var pos = this.chartObj.recalculatePositionText(oAxis);
+						var pos = this.chartObj.recalculatePositionText(oAxis.title);
 
 						if (oAxis.title.layout) {
 							layout = oAxis.title.layout;
@@ -4431,7 +4431,8 @@ function(window, undefined) {
 				bKoeff = oCrossAxis.scale[1] - oCrossAxis.scale[0];
 			}
 			fAxisPos = oCrossGrid.fStart;
-			if(oCurAxis.isRadarValues()) {
+			const bRadarValues = oCurAxis.isRadarValues();
+			if(bRadarValues) {
 				fAxisPos = oRect.x + oRect.w / 2;
 			}
 			else {
@@ -4453,23 +4454,28 @@ function(window, undefined) {
 
 			if(nLabelsPos !== c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE) {
 				oLabelsBox = new CLabelsBox(oCurAxis.grid.aStrings, oCurAxis, this);
-				switch(nLabelsPos) {
-					case c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO:
-					{
-						fPos = fAxisPos;
-						break;
+				if(!bRadarValues) {
+					switch(nLabelsPos) {
+						case c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO:
+						{
+							fPos = fAxisPos;
+							break;
+						}
+						case c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH:
+						{
+							fPos = oCrossGrid.fStart + oCrossGrid.nCount * oCrossGrid.fStride;
+							fDistanceSign = -fDistanceSign;
+							break;
+						}
+						case c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW:
+						{
+							fPos = oCrossGrid.fStart;
+							break;
+						}
 					}
-					case c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH:
-					{
-						fPos = oCrossGrid.fStart + oCrossGrid.nCount * oCrossGrid.fStride;
-						fDistanceSign = -fDistanceSign;
-						break;
-					}
-					case c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW:
-					{
-						fPos = oCrossGrid.fStart;
-						break;
-					}
+				}
+				else {
+					fPos = fAxisPos;
 				}
 			}
 
@@ -5474,24 +5480,25 @@ function(window, undefined) {
 							union_marker.marker = AscFormat.CreateMarkerGeometryByType(AscFormat.SYMBOL_SQUARE);
 							union_marker.marker.pen = ser.compiledSeriesPen;
 							union_marker.marker.brush = ser.compiledSeriesBrush;
-							break;
 						}
-						if(ser.compiledSeriesMarker) {
-							var pts = ser.getNumPts();
-							union_marker.marker = AscFormat.CreateMarkerGeometryByType(ser.compiledSeriesMarker.symbol);
-							if(pts[0] && pts[0].compiledMarker) {
-								union_marker.marker.brush = pts[0].compiledMarker.brush;
-								union_marker.marker.pen = pts[0].compiledMarker.pen;
+						else {
+							if(ser.compiledSeriesMarker) {
+								var pts = ser.getNumPts();
+								union_marker.marker = AscFormat.CreateMarkerGeometryByType(ser.compiledSeriesMarker.symbol);
+								if(pts[0] && pts[0].compiledMarker) {
+									union_marker.marker.brush = pts[0].compiledMarker.brush;
+									union_marker.marker.pen = pts[0].compiledMarker.pen;
 
+								}
+							}
+							if(ser.compiledSeriesPen && !b_scatter_no_line) {
+								union_marker.lineMarker = AscFormat.CreateMarkerGeometryByType(AscFormat.SYMBOL_DASH);
+								union_marker.lineMarker.pen = ser.compiledSeriesPen.createDuplicate(); //Копируем, так как потом возможно придется изменять толщину линии;
+							}
+							if(!b_scatter_no_line && !AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(this)) {
+								b_line_series = true;
 							}
 						}
-
-						if(ser.compiledSeriesPen && !b_scatter_no_line) {
-							union_marker.lineMarker = AscFormat.CreateMarkerGeometryByType(AscFormat.SYMBOL_DASH);
-							union_marker.lineMarker.pen = ser.compiledSeriesPen.createDuplicate(); //Копируем, так как потом возможно придется изменять толщину линии;
-						}
-						if(!b_scatter_no_line && !AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(this))
-							b_line_series = true;
 					}
 					if(union_marker.marker) {
 						union_marker.marker.pen && union_marker.marker.pen.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA, this.clrMapOvr);
@@ -10392,6 +10399,7 @@ function(window, undefined) {
 		cat_ax.setLblAlgn(AscFormat.LBL_ALG_CTR);
 		cat_ax.setLblOffset(100);
 		cat_ax.setNoMultiLvlLbl(false);
+		cat_ax.setTickLblPos(c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
 		var scaling = cat_ax.scaling;
 		scaling.setOrientation(AscFormat.ORIENTATION_MIN_MAX);
 		val_ax.setScaling(new AscFormat.CScaling());

@@ -44,6 +44,8 @@ var isRealObject = AscCommon.isRealObject;
 var MOVE_DELTA = 1/100000;
 var SNAP_DISTANCE = 1.27;
 
+
+
 function StartAddNewShape(drawingObjects, preset)
 {
     this.drawingObjects = drawingObjects;
@@ -167,7 +169,7 @@ StartAddNewShape.prototype =
                     this.drawingObjects.clearTrackObjects();
                     this.drawingObjects.clearPreTrackObjects();
                     this.drawingObjects.updateOverlay();
-                    if(Asc["editor"])
+                    if(Asc["editor"] && Asc["editor"].wb)
                     {
                         if(!e.fromWindow || this.bStart)
                         {
@@ -250,7 +252,7 @@ StartAddNewShape.prototype =
                                 oEffect.cTn.setPresetSubtype(0);
                             }
                             oPresentation.FinalizeAction();
-                            if(Asc["editor"])
+                            if(Asc["editor"] && Asc["editor"].wb)
                             {
                                 if(!e.fromWindow || this.bStart)
                                 {
@@ -329,7 +331,7 @@ StartAddNewShape.prototype =
 						oThis.drawingObjects.drawingObjects.sendGraphicObjectProps();
 					}
                 }
-
+	            oThis.drawingObjects.updateOverlay();
             };
             if(Asc.editor && Asc.editor.checkObjectsLock)
             {
@@ -342,8 +344,7 @@ StartAddNewShape.prototype =
         }
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.clearPreTrackObjects();
-        this.drawingObjects.updateOverlay();
-        if(Asc["editor"])
+        if(Asc["editor"] && Asc["editor"].wb)
         {
             if(!e.fromWindow || this.bStart)
             {
@@ -653,7 +654,8 @@ NullState.prototype =
     };
     SlicerState.prototype.onMouseMove = function (e, x, y, pageIndex) {
         if(!e.IsLocked) {
-            return this.onMouseUp(e, x, y, pageIndex);
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         this.slicer.onMouseMove(e, x, y, pageIndex);
     };
@@ -763,7 +765,8 @@ TrackSelectionRect.prototype =
     };
     TrackGuideState.prototype.onMouseMove = function (e, x, y, pageIndex) {
         if(!e.IsLocked) {
-            return this.onMouseUp(e, x, y, pageIndex);
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         let bHor = this.guide.isHorizontal();
         if(!this.tracked) {
@@ -864,8 +867,8 @@ ChangeAdjState.prototype =
     {
         if(!e.IsLocked)
         {
-            this.onMouseUp(e, x, y, pageIndex);
-            return;
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         var t = AscFormat.CheckCoordsNeedPage(x, y, pageIndex, this.majorObject.selectStartPage, this.drawingObjects.getDrawingDocument());
         for(var i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i){
@@ -932,8 +935,8 @@ PreRotateState.prototype =
     {
         if(!e.IsLocked)
         {
-            this.onMouseUp(e, x, y, pageIndex);
-            return;
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         this.drawingObjects.swapTrackObjects();
         this.drawingObjects.changeCurrentState(new RotateState(this.drawingObjects, this.majorObject));
@@ -967,8 +970,8 @@ RotateState.prototype =
     {
         if(!e.IsLocked)
         {
-            this.onMouseUp(e, x, y, pageIndex);
-            return;
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         var coords = AscFormat.CheckCoordsNeedPage(x, y, pageIndex, this.majorObject.selectStartPage, this.drawingObjects.getDrawingDocument());
         this.drawingObjects.handleRotateTrack(e, coords.x, coords.y);
@@ -1299,8 +1302,8 @@ PreResizeState.prototype =
     {
         if(!e.IsLocked)
         {
-            this.onMouseUp(e, x, y, pageIndex);
-            return;
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         this.drawingObjects.swapTrackObjects();
         this.drawingObjects.changeCurrentState(new ResizeState(this.drawingObjects, this.majorObject, this.handleNum, this.cardDirection));
@@ -1336,8 +1339,8 @@ ResizeState.prototype =
     {
         if(!e.IsLocked)
         {
-            this.onMouseUp(e, x, y, pageIndex);
-            return;
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         var start_arr = this.drawingObjects.getDrawingArray();
         var coords = AscFormat.CheckCoordsNeedPage(x, y, pageIndex, this.majorObject.selectStartPage, this.drawingObjects.getDrawingDocument());
@@ -1391,7 +1394,8 @@ PreMoveState.prototype =
             return {objectId: this.majorObject.Get_Id(), cursorType: "move", bMarker: true};
         }
         else{
-            this.onMouseUp(e, x, y, pageIndex);
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
     },
 
@@ -1400,8 +1404,8 @@ PreMoveState.prototype =
 
         if(!e.IsLocked)
         {
-            this.onMouseUp(e, x, y, pageIndex);
-            return;
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         if(Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA || pageIndex !== this.majorObject.selectStartPage)
         {
@@ -1465,8 +1469,7 @@ MoveState.prototype =
     {
         if(!e.IsLocked)
         {
-            this.onMouseUp(e, x, y, pageIndex);
-            return;
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         let aTracks = this.drawingObjects.arrTrackObjects;
         let nTracksCount = aTracks.length;
@@ -1692,8 +1695,8 @@ PreMoveInGroupState.prototype =
     {
         if(!e.IsLocked)
         {
-            this.onMouseUp(e, x, y, pageIndex);
-            return;
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         if(Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA || pageIndex !== this.majorObject.selectStartPage)
         {
@@ -1791,8 +1794,8 @@ PreRotateInGroupState.prototype =
     {
         if(!e.IsLocked)
         {
-            this.onMouseUp(e, x, y, pageIndex);
-            return;
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         this.drawingObjects.swapTrackObjects();
         this.drawingObjects.changeCurrentState(new RotateInGroupState(this.drawingObjects, this.group, this.majorObject))
@@ -1921,12 +1924,13 @@ ChangeAdjInGroupState.prototype =
     onMouseUp: MoveInGroupState.prototype.onMouseUp
 };
 
-function TextAddState(drawingObjects, majorObject, startX, startY)
+function TextAddState(drawingObjects, majorObject, startX, startY, button)
 {
     this.drawingObjects = drawingObjects;
     this.majorObject = majorObject;
     this.startX = startX;
     this.startY = startY;
+    this.button = button;
     this.bIsSelectionEmpty = this.isSelectionEmpty();
 }
 
@@ -1978,8 +1982,12 @@ TextAddState.prototype =
     {
         if(!e.IsLocked)
         {
-            this.onMouseUp(e, x, y, pageIndex);
-            return;
+            if(this.button === AscCommon.g_mouse_button_right)
+            {
+                return this.endState(e, x, y, pageIndex);
+            }
+            //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+            return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
         if(AscFormat.isRealNumber(this.startX) && AscFormat.isRealNumber(this.startY))
         {
@@ -2012,6 +2020,11 @@ TextAddState.prototype =
         {
             e.CtrlKey = oldCtrl;
         }
+        return this.endState(e, x, y, pageIndex);
+    },
+
+    endState: function(e, x, y, pageIndex)
+    {
         this.drawingObjects.updateSelectionState();
         this.drawingObjects.drawingObjects.sendGraphicObjectProps();
         this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
@@ -2034,17 +2047,17 @@ TextAddState.prototype =
         {
             if(oApi.editorId === AscCommon.c_oEditorId.Presentation)
             {
-	            let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
                 if(oApi.isFormatPainterOn())
                 {
                     this.drawingObjects.paragraphFormatPaste2();
                     if (oApi.isFormatPainterOn())
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
-						if(oPresentation)
-						{
-							oPresentation.OnMouseMove(e, x, y, pageIndex)
-						}
+                        if(oPresentation)
+                        {
+                            oPresentation.OnMouseMove(e, x, y, pageIndex)
+                        }
                     }
                 }
                 else if(oApi.isMarkerFormat)
@@ -2064,9 +2077,9 @@ TextAddState.prototype =
                     }
                 }
             }
-			else if(oApi.editorId === AscCommon.c_oEditorId.Spreadsheet)
-			{
-				this.drawingObjects.checkFormatPainterOnMouseEvent();
+            else if(oApi.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            {
+                this.drawingObjects.checkFormatPainterOnMouseEvent();
             }
         }
     }
@@ -2105,7 +2118,7 @@ SplineBezierState.prototype =
 
     onMouseUp: function(e, X, Y, pageIndex)
     {
-        if(Asc["editor"])
+        if(Asc["editor"] && Asc["editor"].wb)
         {
             Asc["editor"].asc_endAddShape();
         }
@@ -2607,7 +2620,7 @@ PolyLineAddState.prototype =
     onMouseUp: function()
     {
 
-        if(Asc["editor"])
+        if(Asc["editor"] && Asc["editor"].wb)
         {
             Asc["editor"].asc_endAddShape();
         }
@@ -2640,6 +2653,11 @@ PolyLineAddState2.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
+	    if(!e.IsLocked)
+	    {
+		    //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+		    return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
+	    }
         var tr_x, tr_y;
         if(pageIndex === this.drawingObjects.startTrackPos.pageIndex)
         {
@@ -2670,7 +2688,7 @@ PolyLineAddState2.prototype =
             this.drawingObjects.updateOverlay();
             this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
 
-            if(Asc["editor"])
+            if(Asc["editor"] && Asc["editor"].wb)
             {
                 Asc["editor"].asc_endAddShape();
             }
@@ -2739,7 +2757,7 @@ AddPolyLine2State2.prototype =
             return {objectId: "1", bMarker: true, cursorType: "crosshair"};
         if(e.ClickCount > 1)
         {
-            if(Asc["editor"])
+            if(Asc["editor"] && Asc["editor"].wb)
             {
                 Asc["editor"].asc_endAddShape();
             }

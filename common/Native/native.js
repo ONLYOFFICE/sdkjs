@@ -295,19 +295,31 @@ function NativeOpenFileData(data, version, xlsx_file_path, options)
     if (options && options["printOptions"] && options["printOptions"]["retina"])
         AscBrowser.isRetina = true;
 
-	if (window.NATIVE_DOCUMENT_TYPE == "presentation" || window.NATIVE_DOCUMENT_TYPE == "document")
+	var configApi = {};
+	if (options && undefined !== options["translate"])
+		configApi["translate"] = options["translate"];
+
+	if (window.NATIVE_DOCUMENT_TYPE === "presentation" || window.NATIVE_DOCUMENT_TYPE === "document")
 	{
-        Api = new window["Asc"]["asc_docs_api"]({});
+        Api = new window["Asc"]["asc_docs_api"](configApi);
 		if (options && options["documentLayout"] && undefined !== options["documentLayout"]["openedAt"])
 			Api.setOpenedAt(options["documentLayout"]["openedAt"]);
-        Api.asc_nativeOpenFile(data, version);
 	}
 	else
 	{
-        Api = new window["Asc"]["spreadsheet_api"]({});
-        if (options && undefined !== options["locale"])
-            Api.asc_setLocale(options["locale"]);
-        Api.asc_nativeOpenFile(data, version, undefined, xlsx_file_path);
+        Api = new window["Asc"]["spreadsheet_api"](configApi);
+	}
+
+	if (options && undefined !== options["locale"])
+		Api.asc_setLocale(options["locale"]);
+
+	if (window.NATIVE_DOCUMENT_TYPE === "presentation" || window.NATIVE_DOCUMENT_TYPE === "document")
+	{
+		Api.asc_nativeOpenFile(data, version);
+	}
+	else
+	{
+		Api.asc_nativeOpenFile(data, version, undefined, xlsx_file_path);
 	}
 }
 
@@ -333,6 +345,7 @@ var performance = window.performance = (function(){
 (function(window, undefined){
 	function ZLib()
 	{
+		/** @suppress {checkVars} */
 		this.engine = CreateNativeZip();
 		this.files = {};
 	}

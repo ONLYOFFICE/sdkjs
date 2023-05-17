@@ -1431,7 +1431,7 @@ CHeaderFooter.prototype.FindWatermark = function()
             }
             else
             {
-                if(oCandidate.getDrawingArrayType() < oDrawing.getDrawingArrayType() || ComparisonByZIndexSimple(oDrawing, oCandidate))
+                if(oCandidate.getDrawingArrayType() < oDrawing.getDrawingArrayType() || (typeof ComparisonByZIndexSimple !== undefined && ComparisonByZIndexSimple(oDrawing, oCandidate)))
                 {
                     oCandidate = oDrawing;
                 }
@@ -1630,18 +1630,18 @@ CHeaderFooterController.prototype =
         else
             return null;
     },
-
-    Set_CurHdrFtr_ById : function(Id)
-    {
-        var HdrFtr = AscCommon.g_oTableId.Get_ById( Id );
-        if ( -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr( HdrFtr ) )
-            return false;
-        
-        this.CurHdrFtr = HdrFtr;
-        HdrFtr.Content.MoveCursorToStartPos();
-              
-        return true;
-    },
+	
+	Set_CurHdrFtr_ById : function(Id)
+	{
+		let HdrFtr = AscCommon.g_oTableId.GetById(Id);
+		if (!HdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
+			return false;
+		
+		this.CurHdrFtr = HdrFtr;
+		HdrFtr.Content.MoveCursorToStartPos();
+		
+		return true;
+	},
 //-----------------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------------   
@@ -1981,11 +1981,8 @@ CHeaderFooterController.prototype =
 
 	IsUseInDocument : function(Id)
 	{
-		var HdrFtr = AscCommon.g_oTableId.Get_ById(Id);
-		if (-1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
-			return false;
-
-		return true;
+		let hdrFtr = AscCommon.g_oTableId.GetById(Id);
+		return !(!hdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(hdrFtr));
 	},
 
     Check_Page : function(HdrFtr, PageIndex)

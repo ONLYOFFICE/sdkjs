@@ -258,7 +258,7 @@
 		}
 	};
 	CUserProtectedRange.prototype.asc_setName = function (val) {
-		this.name = val;
+		this.name = val.trim && val.trim();
 	};
 	CUserProtectedRange.prototype.asc_setUsers = function (val) {
 		this.users = val;

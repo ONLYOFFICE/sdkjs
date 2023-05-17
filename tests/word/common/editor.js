@@ -87,7 +87,7 @@
 	editor.asc_GetRevisionsChangesStack = function(){return []};
 	editor.private_GetLogicDocument = function(){return this.WordControl.m_oLogicDocument;};
 	editor.asc_getKeyboardLanguage = function(){return -1;};
-	
+	editor.GenerateStyles = function(){};
 	
 
 	//--------------------------------------------------------export----------------------------------------------------

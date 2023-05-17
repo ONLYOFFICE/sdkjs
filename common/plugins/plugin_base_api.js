@@ -85,10 +85,10 @@ window.startPluginApi = function() {
 	/**
      * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
      * A value that defines if it is possible to delete and/or edit the content control or not:
-	 * * <b>0</b> - only deleting
-	 * * <b>1</b> - disable deleting or editing
-	 * * <b>2</b> - only editing
-	 * * <b>3</b> - full access
+	 * * <b>0</b> - only deleting,
+	 * * <b>1</b> - disable deleting or editing,
+	 * * <b>2</b> - only editing,
+	 * * <b>3</b> - full access.
      */
 
 	/**
@@ -332,17 +332,19 @@ window.startPluginApi = function() {
 	 * @event Plugin#onContextMenuShow
 	 * @memberof Plugin
 	 * @alias onContextMenuShow
-	 * @description The function called when context menu will be shown
-	 * @param {Object} options - Defines the options for current selection.
+	 * @description The function called when the context menu has been shown.
+	 * @param {Object} options - Defines the options for the current selection.
+	 * @since 7.4.0
 	 */
 
 	/**
-	 * Event: onContextMenuShow
+	 * Event: onContextMenuClick
 	 * @event Plugin#onContextMenuClick
 	 * @memberof Plugin
 	 * @alias onContextMenuClick
-	 * @description The function called when context menu item was clicked
-	 * @param {string} id - Item id.
+	 * @description The function called when the context menu item has been clicked.
+	 * @param {string} id - Item ID.
+	 * @since 7.4.0
 	 */
 
 	/**
@@ -575,7 +577,7 @@ window.startPluginApi = function() {
      * @param {boolean} isCalc - Defines whether the document will be recalculated or not.
 	 * The *true* value is used to recalculate the document after executing the function in the *func* parameter.
 	 * The *false* value will not recalculate the document (use it only when your edits surely will not require document recalculation).
-	 * @param {Function} callback - The result that the method returns.
+	 * @param {Function} callback - The result that the method returns. Only the js standart types are available (any objects will be replaced with *undefined*).
 	 */
 	Plugin.callCommand = function(func, isClose, isCalc, callback)
     {
@@ -741,8 +743,11 @@ window.startPluginApi = function() {
 	 * sendToPlugin
 	 * @memberof Plugin
 	 * @alias sendToPlugin
-	 * @description Send message from window to plugin
-	 * @return {InputHelper} Input helper object
+	 * @description Sends a message from the modal window to the plugin.
+	 * @param {string} name - The event name.
+	 * @param {object} data - The event data.
+	 * @return {boolean} Returns true if the operation is successful.
+	 * @since 7.4.0
 	 */
 	Plugin.sendToPlugin = function(name, data)
 	{

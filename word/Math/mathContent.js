@@ -5658,14 +5658,23 @@ CMathContent.prototype.ConvertContentView = function(intStart, intEnd, nInputTyp
 };
 CMathContent.prototype.SplitContentByContentPos = function()
 {
-    var oCurrentObj = this.Content[this.CurPos];
-    var CursorPos = oCurrentObj.State.ContentPos;
-    var arrContent = [];
+    let oCurrentObj = this.Content[this.CurPos];
+    let nCursorPos = oCurrentObj.State.ContentPos;
+    let arrContent = [];
 
-    if (CursorPos < oCurrentObj.Content.length)
+    if (nCursorPos < oCurrentObj.Content.length)
     {
-        var oNewRun = oCurrentObj.Split_Run(CursorPos);
-        arrContent.push(oNewRun);
+        if (oCurrentObj.Split_Run)
+        {
+            let oNewRun = oCurrentObj.Split_Run(nCursorPos);
+            arrContent.push(oNewRun);
+        }
+        else
+        {
+            // контент в котором мы находимся не является ParaRun
+            // значит делить не нужно т.к мы в обертке - выходим и отменяем автокоррекцию
+            return false;
+        }
     }
 
     for (let i = this.CurPos + 1; i < this.Content.length; i++)
@@ -5693,6 +5702,9 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
 
     // split content by cursor position
     const arrNextContent = this.SplitContentByContentPos();
+
+    if (arrNextContent === false)
+        return;
 
     this.CorrectSpecialWordOnCursor(nInputType);
 

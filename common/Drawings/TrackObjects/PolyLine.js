@@ -169,6 +169,10 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
                 bClosed = true;
             }
         }
+	    if(this.bInk)
+	    {
+		    bClosed = false;
+	    }
         var nMaxPtIdx = bClosed ? (nLastIndex - 1) : nLastIndex;
         for( i = 1; i <= nMaxPtIdx; ++i)
         {
@@ -223,6 +227,7 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
 	    if(this.bInk)
 	    {
 		    shape.spPr.setLn(this.pen);
+		    shape.spPr.setFill(AscFormat.CreateNoFillUniFill());
 	    }
         var geometry = new AscFormat.Geometry();
 

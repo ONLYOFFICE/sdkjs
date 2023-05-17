@@ -11,12 +11,13 @@
     <script src="./vendor/tree.js"></script>
     <link rel="stylesheet" type="text/css" href="./vendor/trackbar.css">
     <script src="./vendor/trackbar.js"></script>
+
+    <script src="./../../common/AllFonts.js"></script>
     
     <script src="./../../common/device_scale.js"></script>
     <script src="./../../common/browser.js"></script>
     <script src="./../../common/stringserialize.js"></script>
     <script src="./../../common/skin.js"></script>
-    <script src="./../../common/AllFonts.js"></script>
     <script src="./../../common/libfont/loader.js"></script>
     <script src="./../../common/libfont/map.js"></script>
     <script src="./../../common/libfont/character.js"></script>
@@ -33,6 +34,7 @@
     <script src="./../src/thumbnails.js"></script>
     <script src="./../src/viewer.js"></script>
     <script src="./../src/file.js"></script>
+    <script src="./../build/api.js"></script>
 </head>
 <body class="block_elem" style="width:100%;height:100%;margin:0;padding:0;overflow:hidden;user-select:none;">
     <div id="leftPanel" class="block_elem" style="position:absolute;left:0px;top:0px;width:200px;height:100%;background-color:#F1F1F1;">
@@ -55,6 +57,33 @@
         </div>
         <div id="splitter" class="block_elem" style="cursor:w-resize;position:absolute;left:0px;top:0px;width:10px;height:100%;background-color:#F1F1F1;border-left:1px solid #C8C8C8;border-right:1px solid #C8C8C8;box-sizing:border-box;"></div>
     </div>
-    <div id="mainPanel" class="block_elem" style="top:0px;height:100%;overflow:hidden;"></div>    
+    <div id="mainPanelHeader" class="block_elem" style="background-color:#F1F1F1;top:0px;height:50px;overflow:hidden;">
+        <div id="headerPanel" class="block_elem" style="overflow:hidden;">
+            <label for="zoomMode">Zoom mode:</label>
+            <select id="zoomMode" name="zoomMode">
+                <option value="zmWidth">Fit to width</option>
+                <option value="zmPage">Fit to page</option>
+                <option disabled>—————————</option>
+                <option value="custom50">50%</option>
+                <option value="custom75">75%</option>
+                <option value="custom100">100%</option>
+                <option value="custom110">110%</option>
+                <option value="custom125">125%</option>
+                <option value="custom150">150%</option>
+                <option value="custom175">175%</option>
+                <option value="custom200">200%</option>
+            </select>
+            <button id="buttonZoomIn" type="button">Zoom In</button>
+            <button id="buttonZoomOut" type="button">Zoom Out</button>
+            <label for="selectMode">Select mode:</label>
+            <select id="selectMode" name="selectMode">
+                <option value="smHand" selected>Hand</option>
+                <option value="smText">Select</option>
+            </select>
+            <button id="buttonRotateLeft" type="button">Rotate Left</button>
+            <button id="buttonRotateRight" type="button">Rotate Right</button>
+        </div>
+    </div>
+    <div id="mainPanel" class="block_elem" style="top:50px;bottom:100%;overflow:hidden;"></div>
 </body>
 </html>

@@ -1366,7 +1366,10 @@
     var isSelectOnShape = ws.getSelectionShape();
     if (!this._isEqualRange(ws.model.selectionRange, isSelectOnShape)) {
       this._onWSSelectionChanged();
-      this._onSelectionMathInfoChanged(ws.getSelectionMathInfo());
+      let t = this;
+      ws.getSelectionMathInfo(function (info) {
+		t._onSelectionMathInfoChanged(info);
+      });
       this.controller.lastTab = null;
     }
 
@@ -1829,8 +1832,13 @@
   };
 
   WorkbookView.prototype._onStopFormatPainter = function (bLockDraw) {
-    if (this.Api.getFormatPainterState()) {
-      this.formatPainter(c_oAscFormatPainterState.kOff, bLockDraw);
+    if (this.Api.getFormatPainterState() !== c_oAscFormatPainterState.kOff) {
+      this.Api.changeFormatPainterState(c_oAscFormatPainterState.kOff, bLockDraw);
+        //update cursor
+        const oTargetInfo = this.controller.targetInfo;
+        if (oTargetInfo) {
+           this._onUpdateWorksheet(oTargetInfo.coordX, oTargetInfo.coordY, false);
+        }
     }
   };
 
@@ -2333,7 +2341,11 @@
     if (!window["NATIVE_EDITOR_ENJINE"] || window["IS_NATIVE_EDITOR"]) {
       this._onSelectionNameChanged(ws.getSelectionName(/*bRangeText*/false));
       this._onWSSelectionChanged();
-      this._onSelectionMathInfoChanged(ws.getSelectionMathInfo());
+      let t = this;
+      ws.getSelectionMathInfo(function (info) {
+      	t._onSelectionMathInfoChanged(info);
+      });
+
     }
     this._onScrollReinitialize(AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal);
     // Zoom теперь на каждом листе одинаковый, не отправляем смену
@@ -2788,7 +2800,7 @@
             if (c_oAscPopUpSelectorType.None === type) {
 				ws.executeWithFirstActiveCellInMerge(function () {
 					ws.setSelectionInfo("value", name, /*onlyActive*/true);
-				})
+				});
                 return;
             } else if (c_oAscPopUpSelectorType.TotalRowFunc === type) {
                 ws.setSelectionInfo("totalRowFunc", name, /*onlyActive*/true);
@@ -2835,7 +2847,15 @@
             enterOptions.newText = name;
             enterOptions.cursorPos = cursorPos;
 
-            this._onEditCell(enterOptions, callback);
+            if (enterOptions.newText) {
+                AscFonts.FontPickerByCharacter.checkText(enterOptions.newText, this, function () {
+                    t.Api._loadFonts([], function () {
+                        t._onEditCell(enterOptions, callback);
+                    });
+                });
+            } else {
+                this._onEditCell(enterOptions, callback);
+            }
         }
     };
 
@@ -3108,6 +3128,14 @@
       this.getWorksheet().setSelectionInfo(prop, val);
     } else {
       this.cellEditor.setTextStyle(prop, val);
+    }
+  };
+
+  WorkbookView.prototype.changeTextCase = function(val) {
+    if (!this.getCellEditMode()) {
+      this.getWorksheet().setSelectionInfo("changeTextCase", val);
+    } else {
+      this.cellEditor.changeTextCase(val);
     }
   };
 
@@ -5532,6 +5560,12 @@
 		this.collaborativeEditing.lock(aLockInfo, callback);
 	};
 
+	WorkbookView.prototype.cleanCache = function() {
+		for(var i in this.wsViews) {
+			let ws = this.wsViews[i];
+			ws && ws._cleanCache(new Asc.Range(0, 0, ws.cols.length - 1, ws.rows.length - 1));
+		}
+	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {

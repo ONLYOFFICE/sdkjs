@@ -16373,7 +16373,7 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		}
 		else if ( c_oSer_SettingsType.DocumentProtection === type )
 		{
-			var oDocProtect = new CDocProtect();
+			var oDocProtect = new AscCommonWord.CDocProtect();
 			res = this.bcr.Read1(length, function(t, l){
 				return oThis.ReadDocProtect(t,l,oDocProtect);
 			});
@@ -16381,7 +16381,7 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		}
 		else if ( c_oSer_SettingsType.WriteProtection === type )
 		{
-			var oWriteProtect = new CDocProtect();
+			var oWriteProtect = new AscCommonWord.CDocProtect();
 			res = this.bcr.Read1(length, function(t, l){
 				return oThis.ReadWriteProtect(t,l,oWriteProtect);
 			});

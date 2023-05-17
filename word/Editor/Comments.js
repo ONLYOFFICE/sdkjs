@@ -661,6 +661,15 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	{
 		this.Data && this.Data.CreateNewCommentsGuid();
 	};
+	CComment.prototype.GenerateDurableId = function()
+	{
+		if (!this.Data)
+			return -1;
+		
+		let data = this.Data.Copy();
+		data.CreateNewCommentsGuid();
+		this.SetData(data);
+	};
 	/**
 	 * Является ли текущий пользователем автором комментария
 	 * @returns {boolean}
@@ -998,6 +1007,17 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 		if (this.m_arrCommentsById[sId])
 			return this.m_arrCommentsById[sId];
 
+		return null;
+	};
+	CComments.prototype.GetByDurableId = function(durableId)
+	{
+		let _durableId = "" + durableId;
+		for (let commentId in this.m_arrCommentsById)
+		{
+			if ("" + this.m_arrCommentsById[commentId].GetDurableId() === _durableId)
+				return this.m_arrCommentsById[commentId];
+		}
+		
 		return null;
 	};
 	CComments.prototype.UpdateCommentPosition = function(oComment, oChangedComments)

@@ -1328,9 +1328,16 @@ Because of this, the display is sometimes not correct.
 
     changesFactory[AscDFH.historyitem_BgFormatFill] = CChangeObjectNoId;
     changesFactory[AscDFH.historyitem_BgFormatEffect] = CChangeObjectNoId;
-    drawingsChangesMap[AscDFH.historyitem_BgFormatFill] = function (oClass, value) {
+    drawingsChangesMap[AscDFH.historyitem_BgFormatFill] = function (oClass, value, bFromLoad) {
       oClass.fill = value;
       oClass.handleUpdateFill();
+	    if (bFromLoad) {
+		    if (typeof AscCommon.CollaborativeEditing !== "undefined") {
+			    if (oClass.fill && oClass.fill.fill && oClass.fill.fill.type ===  Asc.c_oAscFill.FILL_TYPE_BLIP && typeof oClass.fill.fill.RasterImageId === "string" && oClass.fill.fill.RasterImageId.length > 0) {
+				    AscCommon.CollaborativeEditing.Add_NewImage(oClass.fill.fill.RasterImageId);
+			    }
+		    }
+	    }
     };
     drawingsChangesMap[AscDFH.historyitem_BgFormatEffect] = function (oClass, value) {
       oClass.effect = value;
@@ -11669,6 +11676,16 @@ Because of this, the display is sometimes not correct.
         editor.ShowParaMarks = oldParaMarks;
       }
     };
+		SmartArt.prototype.check_bounds = function (oChecker)
+		{
+			oChecker._s();
+			oChecker._m(0, 0);
+			oChecker._l(this.extX, 0);
+			oChecker._l(this.extX, this.extY);
+			oChecker._l(0, this.extY);
+			oChecker._z();
+			oChecker._e();
+		}
     SmartArt.prototype.getBg = function() {
       var oDataModel = this.getDataModel() && this.getDataModel().getDataModel();
       if(!oDataModel) {

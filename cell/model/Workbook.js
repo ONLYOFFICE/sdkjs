@@ -220,6 +220,226 @@
 		}
 	}
 
+	function changeTextCase(fragments, type, opt_start, opt_end) {
+		if (!fragments) {
+			return;
+		}
+
+		let isChange = false;
+		let newText = "", fragmentsMap;
+		let c_oType = Asc.c_oAscChangeTextCaseType;
+
+		let getChangedTextSimpleCase = function (_text, _text_pos) {
+			if (!_text) {
+				return _text;
+			}
+
+			let _newText = "";
+			let _textBefore = "";
+			let _textAfter = "";
+			if (opt_start || opt_end) {
+				if (_text_pos + _text.length < opt_start || _text_pos > opt_end) {
+					return _text;
+				}
+				let _start = null, _end = null;
+				if (_text_pos < opt_start) {
+					_textBefore = _text.substring(0, opt_start - _text_pos);
+					_start = opt_start - _text_pos;
+				}
+				if (_text_pos + _text.length > opt_end) {
+					_textAfter = _text.substring(opt_end - _text_pos, _text.length);
+					_end = opt_end - _text_pos;
+				}
+				if (_start || _end) {
+					_text = _text.substring(_start ? _start : 0, _end ? _end : _text.length);
+				}
+
+			}
+			switch (type) {
+				case c_oType.LowerCase: {
+					_newText = _text.toLowerCase();
+					break;
+				}
+				case c_oType.UpperCase: {
+					_newText = _text.toUpperCase();
+					break;
+				}
+				case c_oType.ToggleCase: {
+					for (let i = 0, length = _text.length; i < length; ++i) {
+						if (_text[i].toUpperCase() === _text[i]) {
+							_newText += _text[i].toLowerCase();
+						} else {
+							_newText += _text[i].toUpperCase();
+						}
+					}
+
+					break;
+				}
+			}
+			return _textBefore + _newText + _textAfter;
+		};
+
+		if (type === c_oType.LowerCase || type === c_oType.UpperCase || type === c_oType.ToggleCase) {
+			let curTextLength = 0;
+			for (let m = 0; m < fragments.length; m++) {
+				let newFragmentText = getChangedTextSimpleCase(fragments[m].text, curTextLength);
+				if (newFragmentText !== fragments[m].text) {
+					isChange = true;
+					if (fragments[m].setText) {
+						fragments[m].setText(newFragmentText);
+					} else if (fragments[m].setFragmentText) {
+						if (!fragmentsMap) {
+							fragmentsMap = {};
+						}
+						fragmentsMap[m] = fragments[m].clone();
+						fragmentsMap[m].setFragmentText(newFragmentText);
+					}
+				}
+				newText += newFragmentText;
+				curTextLength += fragments[m].text.length;
+			}
+		} else {
+
+			let getParagraphs = function (_fragments) {
+				let res = [];
+
+				AscFormat.ExecuteNoHistory(function () {
+					let oCurPar = null;
+					let oCurRun = null;
+
+					let _setSelection = function (_run, pos) {
+						if (!_run || !_run.Content) {
+							return;
+						}
+						let startRun = pos;
+						let run_length = _run.Content.length;
+						let endRun = pos + run_length;
+						if (opt_start <= startRun && endRun <= opt_end) {
+							//select all
+							_run.State.Selection.StartPos = 0;
+							_run.State.Selection.EndPos = run_length;
+							_run.State.Selection.Use = true;
+						} else if (endRun > opt_start && startRun < opt_end) {
+							_run.State.Selection.StartPos = opt_start > startRun ? (opt_start - startRun) : 0;
+							_run.State.Selection.EndPos = (endRun > opt_end) ? (opt_end - curTextLength) : run_length;
+							_run.State.Selection.Use = true;
+						}
+					};
+
+					let pushParagraph = function () {
+						if (!oCurPar || !oCurRun) {
+							return;
+						}
+
+						oCurPar.Internal_Content_Add(0, oCurRun, false);
+
+						if (opt_start || opt_end) {
+							_setSelection(oCurRun, curTextLength);
+						} else {
+							oCurPar.SelectAll();
+						}
+
+						curTextLength += oCurRun.Content.length;
+
+						res.push(oCurPar);
+						oCurPar = null;
+						oCurRun = null;
+					};
+
+					let curTextLength = 0;
+					for (let m = 0; m < _fragments.length; m++) {
+						let curMultiText = _fragments[m].text;
+						for (let k = 0, length = curMultiText.length; k < length; k++) {
+							if (oCurPar === null) {
+								oCurPar = new Paragraph();
+								oCurRun = new ParaRun(oCurPar);
+							}
+
+							let nCharCode = curMultiText.charCodeAt(k);
+							if (curMultiText[k] === "\n") {
+								pushParagraph();
+								curTextLength++;
+								continue;
+							}
+
+							let nUnicode = null;
+							if (AscCommon.isLeadingSurrogateChar(nCharCode)) {
+								if (k + 1 < length) {
+									k++;
+									let nTrailingChar = curMultiText.charCodeAt(k);
+									nUnicode = AscCommon.decodeSurrogateChar(nCharCode, nTrailingChar);
+								}
+							} else {
+								nUnicode = nCharCode;
+							}
+
+							if (null != nUnicode) {
+								let Item;
+								if (0x20 !== nUnicode && 0xA0 !== nUnicode && 0x2009 !== nUnicode) {
+									Item = new AscWord.CRunText(nUnicode);
+								} else {
+									Item = new AscWord.CRunSpace();
+								}
+								//add text
+								oCurRun.Add_ToContent(-1, Item, false);
+							}
+						}
+					}
+					if (oCurPar) {
+						pushParagraph();
+					}
+
+				}, this, []);
+
+				return res;
+			};
+
+			let aParagraphs = getParagraphs(fragments);
+			if (aParagraphs && aParagraphs.length) {
+				let oChangeEngine = new AscCommonWord.CChangeTextCaseEngine(type);
+				oChangeEngine.ProcessParagraphs(aParagraphs);
+
+				for (let i = 0; i < aParagraphs.length; i++) {
+					newText += aParagraphs[i].GetText({ParaEndToSpace: false});
+					if (i !== aParagraphs.length - 1) {
+						newText += "\n";
+					}
+				}
+
+				if (newText) {
+					let counter = 0;
+					for (let m = 0; m < fragments.length; m++) {
+						let curMultiText = fragments[m].text;
+						let isChangeFragment = false;
+						let newFragmentText = "";
+						for (let k = 0, length = curMultiText.length; k < length; k++) {
+							if (curMultiText[k] !== newText[counter]) {
+								isChange = true;
+								isChangeFragment = true;
+							}
+							newFragmentText += newText[counter];
+							counter++;
+						}
+						if (isChangeFragment) {
+							if (fragments[m].setText) {
+								//cell value
+								fragments[m].setText(newFragmentText);
+							} else if (fragments[m].setFragmentText) {
+								//cell editor
+								if (!fragmentsMap) {
+									fragmentsMap = {};
+								}
+								fragmentsMap[m] = fragments[m].clone();
+								fragmentsMap[m].setFragmentText(newFragmentText);
+							}
+						}
+					}
+				}
+			}
+		}
+		return isChange ? {text: newText, fragmentsMap: fragmentsMap} : null;
+	}
+
 	function DefName(wb, name, ref, sheetId, hidden, type, isXLNM) {
 		this.wb = wb;
 		this.name = name;
@@ -823,7 +1043,7 @@
 			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
 				this.wb.handlers && this.wb.handlers.trigger("updateCellWatches", sheetId);
 			}
-			this.wb.handlers && this.wb.handlers.trigger("onChangePageSetupProps");
+			this.wb.handlers && this.wb.handlers.trigger("onChangePageSetupProps", sheetId);
 		},
 		editDefinesNames: function(oldUndoName, newUndoName) {
 			var res = null;
@@ -2095,6 +2315,7 @@
 		this.addingWorksheet = null;
 
 		this.workbookProtection = null;
+		this.fileSharing = null;
 
 		this.customXmls = null;//[]
 	}
@@ -4420,7 +4641,7 @@
 	Workbook.prototype.checkUserProtectedRangeName = function (name) {
 		var res = c_oAscDefinedNameReason.OK;
 		//TODO пересмотреть проверку на rx_defName
-		if (!AscCommon.rx_defName.test(name.toLowerCase()) || name.length > g_nDefNameMaxLength) {
+		if (!AscCommon.rx_protectedRangeName.test(name.toLowerCase()) || name.length > g_nDefNameMaxLength) {
 			return c_oAscDefinedNameReason.WrongName;
 		}
 
@@ -8396,7 +8617,7 @@
 			cells = this.getRange4(pivotRange.r1, pivotRange.c1 + location.firstDataCol);
 			if (pivotTable.compact) {
 				let caption;
-				if (1 === colFields.length && st_VALUES === colFields[0].asc_getIndex()) {
+				if (1 === colFields.length && AscCommonExcel.st_VALUES === colFields[0].asc_getIndex()) {
 					caption = pivotTable.dataCaption || AscCommon.translateManager.getValue(AscCommonExcel.DATA_CAPTION)
 				} else {
 					caption = pivotTable.colHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.COL_HEADER_CAPTION);
@@ -8625,7 +8846,7 @@
 		var location = pivotTable.location;
 		var r1 = pivotRange.r1 + location.firstDataRow;
 		var c1 = pivotRange.c1 + location.firstDataCol;
-		let traversal = new DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
+		let traversal = new AscCommonExcel.DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
 		traversal.initRow(dataRow);
 		
 		var fieldIndex;
@@ -9852,15 +10073,15 @@
 				}
 
 				if (type === Asc.c_oAscFormulaArgumentType.number) {
+					//in most cases in ms array/range -> {1,2,..} if NUMBER type
 					if (res.type === AscCommonExcel.cElementType.array) {
-						res = res.getElementRowCol(0, 0);
-						res = res.tocNumber();
-						if (res) {
-							resultStr = '"' + res.toLocaleString() + '"';
-						}
-					} else if (res.type === AscCommonExcel.cElementType.cellsRange) {
 						resultStr = res.toLocaleString();
-					} else if (res.type !== AscCommonExcel.cElementType.cellsRange3D) {
+					} else if (res.type === AscCommonExcel.cElementType.cellsRange || res.type === AscCommonExcel.cElementType.cellsRange3D) {
+						res = res.getFullArray(new AscCommonExcel.cNumber(0), maxArrayRowCount, maxArrayColCount);
+						if (res) {
+							resultStr = res.toLocaleString();
+						}
+					} else {
 						res = res.tocNumber();
 						if (res) {
 							resultStr = res.toLocaleString();
@@ -12521,6 +12742,28 @@
 		}
 		return type;
 	};
+	Cell.prototype.changeTextCase=function(type){
+		if (this.isEmpty() || this.isFormula()) {
+			return;
+		}
+
+		if(null != this.multiText) {
+			let dataOld = this._cloneMultiText();
+			let changedText = changeTextCase(this.multiText, type);
+
+			if (changedText) {
+				let dataNew = this._cloneMultiText();
+				History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeArrayValueFormat,
+					this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow),
+					new UndoRedoData_CellSimpleData(this.nRow, this.nCol, dataOld, dataNew));
+			}
+		} else if (null != this.text) {
+			let changedText = changeTextCase([{text: this.text}], type);
+			if (changedText && changedText.text) {
+				this.setValue(changedText.text);
+			}
+		}
+	};
 	Cell.prototype.getType=function(){
 		this._checkDirty();
 		return this.type;
@@ -14759,15 +15002,23 @@
 		});
 		History.EndTransaction();
 	};
-	Range.prototype.setValue2=function(array){
+	Range.prototype.setValue2=function(array, pushOnlyFirstMergedCell){
 		History.Create_NewPoint();
 		History.StartTransaction();
 		//[{"text":"qwe","format":{"b":true, "i":false, "u":Asc.EUnderline.underlineNone, "s":false, "fn":"Arial", "fs": 12, "c": 0xff00ff, "va": "subscript"  }},{}...]
 		/*
 		 Устанавливаем значение в Range ячеек. В отличае от setValue, сюда мы попадаем только в случае ввода значения отличного от формулы. Таким образом, если в ячейке была формула, то для нее в графе очищается список ячеек от которых зависела. После чего выставляем флаг о необходимости пересчета.
 		 */
+		let t = this;
 		this._foreach(function(cell){
-			cell.setValue2(array);
+			if (pushOnlyFirstMergedCell) {
+				let merged = t.worksheet.getMergedByCell(cell.nRow, cell.nCol);
+				if (!merged || (merged && merged.r1 === cell.nRow && merged.c1 === cell.nCol)) {
+					cell.setValue2(array);
+				}
+			} else {
+				cell.setValue2(array);
+			}
 			// if(cell.isEmpty())
 			// cell.Remove();
 		});
@@ -15485,6 +15736,15 @@
 						  function(cell){
 							  cell.setType(type);
 						  });
+	};
+	Range.prototype.changeTextCase=function(type){
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		this._setPropertyNoEmpty(null, null,function(cell){
+			cell.changeTextCase(type);
+		});
+		History.EndTransaction();
 	};
 	Range.prototype.getType=function(){
 		var type;
@@ -18740,5 +19000,7 @@
 	window['AscCommonExcel'].tryTranslateToPrintArea = tryTranslateToPrintArea;
 	window['AscCommonExcel']._isSameSizeMerged = _isSameSizeMerged;
 	window['AscCommonExcel'].g_nDefNameMaxLength = g_nDefNameMaxLength;
+	window['AscCommonExcel'].changeTextCase = changeTextCase;
+	window['AscCommonExcel'].g_sNewSheetNamePattern = g_sNewSheetNamePattern;
 
 })(window);

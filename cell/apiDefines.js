@@ -861,6 +861,7 @@ var c_oAscPopUpSelectorType = {
   prot['reference'] = prot.reference;
   prot['any'] = prot.any;
   prot['logical'] = prot.logical;
+  prot['array'] = prot.array;
 
   window['Asc']['c_oAscSelectionForCFType'] = window['Asc'].c_oAscSelectionForCFType = c_oAscSelectionForCFType;
   prot = c_oAscSelectionForCFType;

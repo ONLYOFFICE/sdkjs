@@ -33,6 +33,7 @@
 "use strict";
 function CNativeGraphics()
 {
+    /** @suppress {checkVars} */
     this.Native = CreateNativeGraphics();
 
     this.isNativeGraphics = true;
@@ -754,5 +755,9 @@ CNativeGraphics.prototype =
     Destroy : function()
     {
         this.Native["Destroy"]();
-    }
+    },
+	IsPdfRenderer : function()
+	{
+		return this.RENDERER_PDF_FLAG;
+	}
 };

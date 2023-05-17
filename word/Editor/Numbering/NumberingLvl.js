@@ -221,6 +221,17 @@ CNumberingLvl.prototype.IsLegalStyle = function()
 };
 /**
  * Выставляем значения по умолчанию для заданного уровня
+ * @param iLvl {number} 0..8
+ * @param type {c_oAscMultiLevelNumbering}
+ */
+CNumberingLvl.CreateDefault = function(iLvl, type)
+{
+	let numLvl = new CNumberingLvl();
+	numLvl.InitDefault(iLvl, type);
+	return numLvl;
+};
+/**
+ * Выставляем значения по умолчанию для заданного уровня
  * @param nLvl {number} 0..8
  * @param nType {c_oAscMultiLevelNumbering}
  */
@@ -1189,6 +1200,22 @@ CNumberingLvl.prototype.IsSimilar = function(oLvl)
 
 	return true;
 };
+CNumberingLvl.prototype.IsEqual = function(numLvl)
+{
+	// Формат и текст проверяются в IsSimilar
+	if (!this.IsSimilar(numLvl))
+		return false;
+	
+	return (this.Jc === numLvl.Jc
+		&& this.PStyle === numLvl.PStyle
+		&& this.Start === numLvl.Start
+		&& this.Restart === numLvl.Restart
+		&& this.Suff === numLvl.Suff
+		&& this.TextPr.IsEqual(numLvl.TextPr)
+		&& this.ParaPr.IsEqual(numLvl.ParaPr)
+		&& this.Legacy === numLvl.Legacy
+		&& this.IsLgl === numLvl.IsLgl);
+};
 /**
  * Заполняем специальный класс для работы с интерфейсом
  * @param oAscLvl {CAscNumberingLvl}
@@ -1528,7 +1555,7 @@ CNumberingLvl.prototype.private_ReadLvlTextFromBinary = function(oReader)
  */
 CNumberingLvl.prototype.IsBulleted = function()
 {
-	return this.GetFormat() === Asc.c_oAscNumberingFormat.Bullet;
+	return AscWord.IsBulletedNumbering(this.GetFormat());
 };
 /**
  * Проверяем является ли данный уровень нумерованным
@@ -1536,8 +1563,7 @@ CNumberingLvl.prototype.IsBulleted = function()
  */
 CNumberingLvl.prototype.IsNumbered = function()
 {
-	var nFormat = this.GetFormat();
-	return (nFormat !== Asc.c_oAscNumberingFormat.Bullet && nFormat !== Asc.c_oAscNumberingFormat.None);
+	return AscWord.IsNumberedNumbering(this.GetFormat());
 };
 /**
  * Получаем список связанных уровней с данным
@@ -1999,6 +2025,16 @@ CNumberingLvlTextString.prototype.Copy = function()
 {
 	return new CNumberingLvlTextString(this.Value);
 };
+CNumberingLvlTextString.prototype.IsEqual = function (oAnotherElement)
+{
+	if (this.Type !== oAnotherElement.Type)
+		return false;
+
+	if (this.Value !==  oAnotherElement.Value)
+		return false;
+
+	return true;
+};
 CNumberingLvlTextString.prototype.WriteToBinary = function(Writer)
 {
 	// Long   : numbering_lvltext_Text
@@ -2039,6 +2075,17 @@ CNumberingLvlTextNum.prototype.GetValue = function()
 CNumberingLvlTextNum.prototype.Copy = function()
 {
 	return new CNumberingLvlTextNum(this.Value);
+};
+CNumberingLvlTextNum.prototype.IsEqual = function (oAnotherElement, oPr)
+{
+	const bIsSingleLvlPreviewPresetEquals = oPr && oPr.isSingleLvlPreviewPreset;
+	if (this.Type !== oAnotherElement.Type)
+		return false;
+
+	if (!bIsSingleLvlPreviewPresetEquals && this.Value !==  oAnotherElement.Value)
+		return false;
+
+	return true;
 };
 CNumberingLvlTextNum.prototype.WriteToBinary = function(Writer)
 {

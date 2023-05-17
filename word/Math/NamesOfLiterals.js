@@ -1321,48 +1321,6 @@
 		}
 	}
 
-	//https://www.cs.bgu.ac.il/~khitron/Equation%20Editor.pdf
-	function GetUnicodeAutoCorrectionToken(str, context)
-	{
-		if (str[0] !== "\\") {
-			return;
-		}
-
-		const isLiteral = (str[0] === "\\" && str[1] === "\\");
-		const strLocal = isLiteral
-			? str.slice(2)
-			: str.slice(1);
-
-		const SegmentForSearch = isLiteral ? AutoCorrect[str[2]] : AutoCorrect[str[1]];
-		if (SegmentForSearch) {
-			for (let i = 0; i < SegmentForSearch.length; i++) {
-				let token = SegmentForSearch[i];
-				let result = ProcessString(strLocal, token[0]);
-				if (undefined === result) {
-					continue
-				}
-
-				let strData = typeof token[1] === "string"
-					? token[1]
-					: String.fromCharCode(token[1]);
-
-				context._cursor += isLiteral ? result + 2 : result;
-				if (isLiteral) {
-					return {
-						class: oNamesOfLiterals.operatorLiteral[0],
-						data: strData,
-					}
-				}
-				str = isLiteral
-					? str.slice(result + 2)
-					: str.slice(result + 1);
-
-				str.splice(0, 0, strData)
-				return str
-			}
-		}
-	}
-
 	function ProcessString(str, char)
 	{
 		let intLenOfRule = 0;
@@ -2965,7 +2923,7 @@
 		else
 		{
 			for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++) {
-				isConvert = CorrectAllSpecialWords(oCMathContent.Content[nCount], isLaTeX) || isConvert;
+				isConvert = CorrectAllSpecialWords(oCMathContent.Content[nCount], IsLaTeX) || isConvert;
 			}
 		}
 	}
@@ -3145,7 +3103,6 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window["AscMath"] = window["AscMath"] || {};
 	window["AscMath"].oNamesOfLiterals = oNamesOfLiterals;
-	window["AscMath"].GetUnicodeAutoCorrectionToken = GetUnicodeAutoCorrectionToken;
 	window["AscMath"].ConvertTokens = ConvertTokens;
 	window["AscMath"].Tokenizer = Tokenizer;
 	window["AscMath"].UnicodeSpecialScript = UnicodeSpecialScript;

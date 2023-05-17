@@ -1577,7 +1577,7 @@
 			AscCommon.global_mouseEvent.LockMouse();
 
 			if(t.view.Api.isEyedropperStarted()) {
-				return ;
+				return;
 			}
 			if (t.handlers.trigger("isGlobalLockEditCell")) {
 				return;
@@ -1594,29 +1594,29 @@
 				}
 			}
 
-			if (asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || graphicsInfo) {
-				// При выборе диапазона не нужно выделять автофигуру
-				if (this.getSelectionDialogMode()) {
+			// do not work with drawings in selection dialog mode
+			if (!this.getSelectionDialogMode()) {
+				if (asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || graphicsInfo) {
+
+
+					if (this.getCellEditMode() && !this.handlers.trigger("stopCellEditing")) {
+						return;
+					}
+
+					t.isShapeAction = true;
+					t.isUpOnCanvas = false;
+
+
+					t.clickCounter.mouseDownEvent(coord.x, coord.y, button);
+					event.ClickCount = t.clickCounter.clickCount;
+					if (0 === event.ClickCount % 2) {
+						t.isDblClickInMouseDown = true;
+					}
+
+					t.handlers.trigger("graphicObjectMouseDown", event, coord.x, coord.y);
+					t.handlers.trigger("updateSelectionShape", /*isSelectOnShape*/true);
 					return;
 				}
-
-				if (this.getCellEditMode() && !this.handlers.trigger("stopCellEditing")) {
-					return;
-				}
-
-				t.isShapeAction = true;
-				t.isUpOnCanvas = false;
-
-
-				t.clickCounter.mouseDownEvent(coord.x, coord.y, button);
-				event.ClickCount = t.clickCounter.clickCount;
-				if (0 === event.ClickCount % 2) {
-					t.isDblClickInMouseDown = true;
-				}
-
-				t.handlers.trigger("graphicObjectMouseDown", event, coord.x, coord.y);
-				t.handlers.trigger("updateSelectionShape", /*isSelectOnShape*/true);
-				return;
 			}
 
 
@@ -1908,7 +1908,7 @@
 				return true;
 			}
 
-			if (t.isShapeAction || graphicsInfo) {
+			if (t.isShapeAction || graphicsInfo || asc["editor"].isInkDrawerOn()) {
 				event.isLocked = t.isMousePressed;
 				t.handlers.trigger("graphicObjectMouseMove", event, coord.x, coord.y);
 				t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
@@ -1936,6 +1936,9 @@
 			}
 			if (this.isFillHandleMode) {
 				t.fillHandleModeTimerId = window.setTimeout(function(){t._changeFillHandle2(event)},0);
+			}
+			if(t.view.Api.isEyedropperStarted()) {
+				this.view.Api.sendEvent("asc_onHideEyedropper");
 			}
 			return true;
 		};

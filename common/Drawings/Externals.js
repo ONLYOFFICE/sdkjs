@@ -34,933 +34,317 @@
 
 (function(window, document){
 
-// Import
-var FontStyle = AscFonts.FontStyle;
+    // Import
+    var FontStyle = AscFonts.FontStyle;
 
-var g_map_font_index = {};
-var g_fonts_streams = [];
+    // глобальные мапы для быстрого поиска
+    var g_map_font_index = {};
+    var g_fonts_streams = [];
 
-function ZBase32Encoder()
-{
-    this.EncodingTable = "ybndrfg8ejkmcpqxot1uwisza345h769";
-    this.DecodingTable = ("undefined" == typeof Uint8Array) ? new Array(128) : new Uint8Array(128);
+    var bIsLocalFontsUse = false;
 
-    var ii =  0;
-    for (ii = 0; ii < 128; ii++)
-        this.DecodingTable[ii] = 255;
-
-    var _len_32 = this.EncodingTable.length;
-    for (ii = 0; ii < _len_32; ii++)
+    function _is_support_cors()
     {
-        this.DecodingTable[this.EncodingTable.charCodeAt(ii)] = ii;
+        if (window["NATIVE_EDITOR_ENJINE"] === true)
+            return false;
+
+        var xhrSupported = new XMLHttpRequest();
+        return !!xhrSupported && ("withCredentials" in xhrSupported);
+    }
+    var bIsSupportOriginalFormatFonts = _is_support_cors();
+
+    function postLoadScript(scriptName)
+    {
+        window.postMessage({type: "FROM_PAGE_LOAD_SCRIPT", text: scriptName}, "*");
     }
 
-    this.GetUTF16_fromUnicodeChar = function(code)
-    {
-        if (code < 0x10000)
-            return String.fromCharCode(code);
-        else
+    /*window.addEventListener("message", function(event) {
+        // We only accept messages from ourselves
+        if (event.source != window)
+            return;
+
+        if (event.data.type && (event.data.type == "FROM_SCRIPT_LOAD_SCRIPT"))
         {
-            code -= 0x10000;
-            return String.fromCharCode(0xD800 | ((code >> 10) & 0x03FF)) + String.fromCharCode(0xDC00 | (code & 0x03FF));
-        }
-    };
+            var _mess = event.data.text;
+            var _files = window.g_font_files;
 
-    this.GetUTF16_fromUTF8 = function(pBuffer)
-    {
-        var _res = "";
-
-        var lIndex = 0;
-        var lCount = pBuffer.length;
-        var val = 0;
-        while (lIndex < lCount)
-        {
-            var byteMain = pBuffer[lIndex];
-            if (0x00 == (byteMain & 0x80))
+            // потом сделать мап, при первом обращении
+            for (var i = 0; i < _files.length; i++)
             {
-                // 1 byte
-                _res += this.GetUTF16_fromUnicodeChar(byteMain);
-                ++lIndex;
-            }
-            else if (0x00 == (byteMain & 0x20))
-            {
-                // 2 byte
-                val = (((byteMain & 0x1F) << 6) |
-                            (pBuffer[lIndex + 1] & 0x3F));
-                _res += this.GetUTF16_fromUnicodeChar(val);
-                lIndex += 2;
-            }
-            else if (0x00 == (byteMain & 0x10))
-            {
-                // 3 byte
-                val = (((byteMain & 0x0F) << 12) |
-                            ((pBuffer[lIndex + 1] & 0x3F) << 6) |
-                            (pBuffer[lIndex + 2] & 0x3F));
-
-                _res += this.GetUTF16_fromUnicodeChar(val);
-                lIndex += 3;
-            }
-            else if (0x00 == (byteMain & 0x08))
-            {
-                // 4 byte
-                val = (((byteMain & 0x07) << 18) |
-                            ((pBuffer[lIndex + 1] & 0x3F) << 12) |
-                            ((pBuffer[lIndex + 2] & 0x3F) << 6) |
-                            (pBuffer[lIndex + 3] & 0x3F));
-
-                _res += this.GetUTF16_fromUnicodeChar(val);
-                lIndex += 4;
-            }
-            else if (0x00 == (byteMain & 0x04))
-            {
-                // 5 byte
-                val = (((byteMain & 0x03) << 24) |
-                            ((pBuffer[lIndex + 1] & 0x3F) << 18) |
-                            ((pBuffer[lIndex + 2] & 0x3F) << 12) |
-                            ((pBuffer[lIndex + 3] & 0x3F) << 6) |
-                            (pBuffer[lIndex + 4] & 0x3F));
-
-                _res += this.GetUTF16_fromUnicodeChar(val);
-                lIndex += 5;
-            }
-            else
-            {
-                // 6 byte
-                val = (((byteMain & 0x01) << 30) |
-                            ((pBuffer[lIndex + 1] & 0x3F) << 24) |
-                            ((pBuffer[lIndex + 2] & 0x3F) << 18) |
-                            ((pBuffer[lIndex + 3] & 0x3F) << 12) |
-                            ((pBuffer[lIndex + 4] & 0x3F) << 6) |
-                            (pBuffer[lIndex + 5] & 0x3F));
-
-                _res += this.GetUTF16_fromUnicodeChar(val);
-                lIndex += 5;
-            }
-        }
-
-        return _res;
-    };
-
-    this.GetUTF8_fromUTF16 = function(sData)
-    {
-        var pCur = 0;
-        var pEnd = sData.length;
-
-        var result = [];
-        while (pCur < pEnd)
-        {
-            var code = sData.charCodeAt(pCur++);
-            if (code >= 0xD800 && code <= 0xDFFF && pCur < pEnd)
-            {
-                code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & sData.charCodeAt(pCur++)));
-            }
-
-            if (code < 0x80)
-            {
-                result.push(code);
-            }
-            else if (code < 0x0800)
-            {
-                result.push(0xC0 | (code >> 6));
-                result.push(0x80 | (code & 0x3F));
-            }
-            else if (code < 0x10000)
-            {
-                result.push(0xE0 | (code >> 12));
-                result.push(0x80 | ((code >> 6) & 0x3F));
-                result.push(0x80 | (code & 0x3F));
-            }
-            else if (code < 0x1FFFFF)
-            {
-                result.push(0xF0 | (code >> 18));
-                result.push(0x80 | ((code >> 12) & 0x3F));
-                result.push(0x80 | ((code >> 6) & 0x3F));
-                result.push(0x80 | (code & 0x3F));
-            }
-            else if (code < 0x3FFFFFF)
-            {
-                result.push(0xF8 | (code >> 24));
-                result.push(0x80 | ((code >> 18) & 0x3F));
-                result.push(0x80 | ((code >> 12) & 0x3F));
-                result.push(0x80 | ((code >> 6) & 0x3F));
-                result.push(0x80 | (code & 0x3F));
-            }
-            else if (code < 0x7FFFFFFF)
-            {
-                result.push(0xFC | (code >> 30));
-                result.push(0x80 | ((code >> 24) & 0x3F));
-                result.push(0x80 | ((code >> 18) & 0x3F));
-                result.push(0x80 | ((code >> 12) & 0x3F));
-                result.push(0x80 | ((code >> 6) & 0x3F));
-                result.push(0x80 | (code & 0x3F));
-            }
-        }
-
-        return result;
-    };
-
-    this.Encode = function(sData)
-    {
-        var data = this.GetUTF8_fromUTF16(sData);
-
-        var encodedResult = "";
-        var len = data.length;
-        for (var i = 0; i < len; i += 5)
-        {
-            var byteCount = Math.min(5, len - i);
-
-            var buffer = 0;
-            for (var j = 0; j < byteCount; ++j)
-            {
-                buffer *= 256;
-                buffer += data[i + j];
-            }
-
-            var bitCount = byteCount * 8;
-            while (bitCount > 0)
-            {
-                var index = 0;
-                if (bitCount >= 5)
+                if (_files[i].Id == _mess)
                 {
-                    var _del = Math.pow(2, bitCount - 5);
-                    //var _del = 1 << (bitCount - 5);
-                    index = (buffer / _del) & 0x1f;
-                }
-                else
-                {
-                    index = (buffer & (0x1f >> (5 - bitCount)));
-                    index <<= (5 - bitCount);
+                    var bIsUseOrigF = false;
+                    if (_files[i].CanUseOriginalFormat && // false if load embedded fonts
+                        bIsSupportOriginalFormatFonts) // false if work on ie9
+                        bIsUseOrigF = true;
+
+                    if (!bIsUseOrigF)
+                    {
+                        _files[i]._callback_font_load();
+                    }
+                    else
+                    {
+                        bIsLocalFontsUse = false;
+                        _files[i].LoadFontAsync(event.data.src, null);
+                        bIsLocalFontsUse = true;
+                    }
+
+                    break;
                 }
 
-                encodedResult += this.EncodingTable.charAt(index);
-                bitCount -= 5;
             }
         }
-
-        return encodedResult;
-    };
-
-    this.Decode = function(data)
-    {
-        var result = [];
-
-        var _len = data.length;
-        var obj = { data: data, index : new Array(8) };
-
-        var cur = 0;
-        while (cur < _len)
+        else if (event.data.type && (event.data.type == "FROM_SCRIPT_IS_EXIST"))
         {
-            cur = this.CreateIndexByOctetAndMovePosition(obj, cur);
-
-            var shortByteCount = 0;
-            var buffer = 0;
-            for (var j = 0; j < 8 && obj.index[j] != -1; ++j)
-            {
-                buffer *= 32;
-                buffer += (this.DecodingTable[obj.index[j]] & 0x1f);
-                shortByteCount++;
-            }
-
-            var bitCount = shortByteCount * 5;
-            while (bitCount >= 8)
-            {
-                //var _del = 1 << (bitCount - 8);
-                var _del = Math.pow(2, bitCount - 8);
-                var _res = (buffer / _del) & 0xff;
-                result.push(_res);
-                bitCount -= 8;
-            }
+            bIsLocalFontsUse = true;
         }
+    }, false);*/
 
-        this.GetUTF16_fromUTF8(result);
-    };
-
-    this.CreateIndexByOctetAndMovePosition = function(obj, currentPosition)
+    function CFontFileLoader(id)
     {
-        var j = 0;
-        while (j < 8)
+        this.LoadingCounter = 0;
+        this.Id         = id;
+        this.Status     = -1;  // -1 - notloaded, 0 - loaded, 1 - error, 2 - loading
+        this.stream_index = -1;
+        this.callback = null;
+        this.IsNeedAddJSToFontPath = true;
+
+        this.CanUseOriginalFormat = true;
+
+        var oThis = this;
+
+        this.CheckLoaded = function()
         {
-            if (currentPosition >= obj.data.length)
-            {
-                obj.index[j++] = -1;
-                continue;
-            }
+            return (0 == this.Status || 1 == this.Status);
+        };
 
-            if (this.IgnoredSymbol(obj.data.charCodeAt(currentPosition)))
-            {
-                currentPosition++;
-                continue;
-            }
-
-            obj.index[j] = obj.data[currentPosition];
-            j++;
-            currentPosition++;
-        }
-
-        return currentPosition;
-    };
-
-    this.IgnoredSymbol = function(checkedSymbol)
-    {
-        return (checkedSymbol >= 128 || this.DecodingTable[checkedSymbol] == 255);
-    };
-}
-
-var bIsLocalFontsUse = false;
-
-function _is_support_cors()
-{
-    if (window["NATIVE_EDITOR_ENJINE"] === true)
-        return false;
-        
-    var xhrSupported = new XMLHttpRequest();
-    return !!xhrSupported && ("withCredentials" in xhrSupported);
-}
-var bIsSupportOriginalFormatFonts = _is_support_cors();
-
-function postLoadScript(scriptName)
-{
-    window.postMessage({type: "FROM_PAGE_LOAD_SCRIPT", text: scriptName}, "*");
-}
-
-/*window.addEventListener("message", function(event) {
-    // We only accept messages from ourselves
-    if (event.source != window)
-        return;
-
-    if (event.data.type && (event.data.type == "FROM_SCRIPT_LOAD_SCRIPT"))
-    {
-        var _mess = event.data.text;
-        var _files = window.g_font_files;
-
-        // потом сделать мап, при первом обращении
-        for (var i = 0; i < _files.length; i++)
+        this._callback_font_load = function()
         {
-            if (_files[i].Id == _mess)
+            if (!window[oThis.Id])
             {
-                var bIsUseOrigF = false;
-                if (_files[i].CanUseOriginalFormat && // false if load embedded fonts
-                    bIsSupportOriginalFormatFonts) // false if work on ie9
-                    bIsUseOrigF = true;
-
-                if (!bIsUseOrigF)
+                oThis.LoadingCounter++;
+                if (oThis.LoadingCounter < oThis.GetMaxLoadingCount())
                 {
-                    _files[i]._callback_font_load();
-                }
-                else
-                {
-                    bIsLocalFontsUse = false;
-                    _files[i].LoadFontAsync(event.data.src, null);
-                    bIsLocalFontsUse = true;
+                    //console.log("font loaded: one more attemption");
+                    oThis.Status = -1;
+                    return;
                 }
 
-                break;
-            }
-
-        }
-    }
-    else if (event.data.type && (event.data.type == "FROM_SCRIPT_IS_EXIST"))
-    {
-        bIsLocalFontsUse = true;
-    }
-}, false);*/
-
-function CFontFileLoader(id)
-{
-    this.LoadingCounter = 0;
-    this.Id         = id;
-    this.Status     = -1;  // -1 - notloaded, 0 - loaded, 1 - error, 2 - loading
-    this.stream_index = -1;
-    this.callback = null;
-    this.IsNeedAddJSToFontPath = true;
-
-    this.CanUseOriginalFormat = true;
-
-    var oThis = this;
-
-    this.CheckLoaded = function()
-    {
-        return (0 == this.Status || 1 == this.Status);
-    };
-
-    this._callback_font_load = function()
-    {
-        if (!window[oThis.Id])
-        {
-            oThis.LoadingCounter++;
-            if (oThis.LoadingCounter < oThis.GetMaxLoadingCount())
-            {
-                //console.log("font loaded: one more attemption");
-                oThis.Status = -1;
+                oThis.Status = 2; // aka loading...
+                var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
+                _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.CoAuthoringDisconnect, Asc.c_oAscError.Level.Critical);
                 return;
             }
 
-            oThis.Status = 2; // aka loading...
-            var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
-            _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.CoAuthoringDisconnect, Asc.c_oAscError.Level.Critical);
+            var __font_data_idx = g_fonts_streams.length;
+            g_fonts_streams[__font_data_idx] = AscFonts.CreateFontData4(window[oThis.Id]);
+            oThis.SetStreamIndex(__font_data_idx);
+
+            oThis.Status = 0;
+
+            // удаляем строку
+            delete window[oThis.Id];
+
+            if (null != oThis.callback)
+                oThis.callback();
+        };
+
+        this.LoadFontAsync2 = function(basePath, _callback)
+        {
+            this.callback = _callback;
+            if (-1 != this.Status)
+                return true;
+
+            if (bIsLocalFontsUse)
+            {
+                postLoadScript(this.Id);
+                return;
+            }
+            this.Status = 2;
+
+            var xhr = new XMLHttpRequest();
+
+            xhr.open('GET', basePath + this.Id, true); // TODO:
+
+            if (typeof ArrayBuffer !== 'undefined' && !window.opera)
+                xhr.responseType = 'arraybuffer';
+
+            if (xhr.overrideMimeType)
+                xhr.overrideMimeType('text/plain; charset=x-user-defined');
+            else
+                xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
+
+            xhr.onload = function()
+            {
+                if (this.status != 200)
+                {
+                    return this.onerror();
+                }
+
+                oThis.Status = 0;
+
+                if (typeof ArrayBuffer !== 'undefined' && !window.opera && this.response)
+                {
+                    var __font_data_idx = g_fonts_streams.length;
+                    var _uintData = new Uint8Array(this.response);
+                    g_fonts_streams[__font_data_idx] = new AscFonts.FontStream(_uintData, _uintData.length);
+                    oThis.SetStreamIndex(__font_data_idx);
+                }
+                else if (AscCommon.AscBrowser.isIE)
+                {
+                    var _response = new VBArray(this["responseBody"]).toArray();
+
+                    var srcLen = _response.length;
+                    var stream = new AscFonts.FontStream(AscFonts.allocate(srcLen), srcLen);
+
+                    var dstPx = stream.data;
+                    var index = 0;
+
+                    while (index < srcLen)
+                    {
+                        dstPx[index] = _response[index];
+                        index++;
+                    }
+
+                    var __font_data_idx = g_fonts_streams.length;
+                    g_fonts_streams[__font_data_idx] = stream;
+                    oThis.SetStreamIndex(__font_data_idx);
+                }
+                else
+                {
+                    var __font_data_idx = g_fonts_streams.length;
+                    g_fonts_streams[__font_data_idx] = AscFonts.CreateFontData3(this.responseText);
+                    oThis.SetStreamIndex(__font_data_idx);
+                }
+
+                // decode
+                var guidOdttf = [0xA0, 0x66, 0xD6, 0x20, 0x14, 0x96, 0x47, 0xfa, 0x95, 0x69, 0xB8, 0x50, 0xB0, 0x41, 0x49, 0x48];
+                var _stream = g_fonts_streams[g_fonts_streams.length - 1];
+                var _data = _stream.data;
+
+                var _count_decode = Math.min(32, _stream.size);
+                for (var i = 0; i < _count_decode; ++i)
+                    _data[i] ^= guidOdttf[i % 16];
+
+                if (null != oThis.callback)
+                    oThis.callback();
+            };
+            xhr.onerror = function()
+            {
+                oThis.LoadingCounter++;
+                if (oThis.LoadingCounter < oThis.GetMaxLoadingCount())
+                {
+                    //console.log("font loaded: one more attemption");
+                    oThis.Status = -1;
+                    return;
+                }
+
+                oThis.Status = 2; // aka loading...
+                var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
+                _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingFontError, Asc.c_oAscError.Level.Critical);
+                return;
+            };
+
+            xhr.send(null);
+        };
+
+        this.LoadFontNative = function()
+        {
+            var __font_data_idx = g_fonts_streams.length;
+            var _data = window["native"]["GetFontBinary"](this.Id);
+            g_fonts_streams[__font_data_idx] = new AscFonts.FontStream(_data, _data.length);
+            this.SetStreamIndex(__font_data_idx);
+            this.Status = 0;
+        };
+    }
+
+    CFontFileLoader.prototype.GetMaxLoadingCount = function()
+    {
+        return 3;
+    };
+
+    CFontFileLoader.prototype.SetStreamIndex = function(index)
+    {
+        this.stream_index = index;
+    };
+    CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback, isEmbed)
+    {
+        var oThis = this;
+        if (window["AscDesktopEditor"] !== undefined && this.CanUseOriginalFormat)
+        {
+            if (-1 != this.Status)
+                return true;
+
+            this.callback = _callback;
+            this.Status = 2;
+            window["AscDesktopEditor"]["LoadFontBase64"](this.Id);
+            this._callback_font_load();
             return;
         }
 
-        var __font_data_idx = g_fonts_streams.length;
-        g_fonts_streams[__font_data_idx] = AscFonts.CreateFontData4(window[oThis.Id]);
-        oThis.SetStreamIndex(__font_data_idx);
+        if (this.CanUseOriginalFormat && // false if load embedded fonts
+            bIsSupportOriginalFormatFonts) // false if work on ie9
+        {
+            this.LoadFontAsync2(basePath, _callback);
+            return;
+        }
 
-        oThis.Status = 0;
-
-        // удаляем строку
-        delete window[oThis.Id];
-
-        if (null != oThis.callback)
-            oThis.callback();
-    };
-
-    this.LoadFontAsync2 = function(basePath, _callback)
-    {
         this.callback = _callback;
         if (-1 != this.Status)
             return true;
 
+        this.Status = 2;
         if (bIsLocalFontsUse)
         {
             postLoadScript(this.Id);
             return;
         }
-        this.Status = 2;
 
-        var xhr = new XMLHttpRequest();
+        var scriptElem = document.createElement('script');
 
-        xhr.open('GET', basePath + this.Id, true); // TODO:
-
-        if (typeof ArrayBuffer !== 'undefined' && !window.opera)
-            xhr.responseType = 'arraybuffer';
-
-        if (xhr.overrideMimeType)
-            xhr.overrideMimeType('text/plain; charset=x-user-defined');
-        else
-            xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
-
-        xhr.onload = function()
+        if (scriptElem.readyState && false)
         {
-            if (this.status != 200)
-            {
-                return this.onerror();
-            }
-
-            oThis.Status = 0;
-
-            if (typeof ArrayBuffer !== 'undefined' && !window.opera && this.response)
-            {
-                var __font_data_idx = g_fonts_streams.length;
-                var _uintData = new Uint8Array(this.response);
-                g_fonts_streams[__font_data_idx] = new AscFonts.FontStream(_uintData, _uintData.length);
-                oThis.SetStreamIndex(__font_data_idx);
-            }
-            else if (AscCommon.AscBrowser.isIE)
-            {
-                var _response = new VBArray(this["responseBody"]).toArray();
-
-                var srcLen = _response.length;
-                var stream = new AscFonts.FontStream(AscFonts.allocate(srcLen), srcLen);
-
-                var dstPx = stream.data;
-                var index = 0;
-
-                while (index < srcLen)
+            scriptElem.onreadystatechange = function () {
+                if (this.readyState == 'complete' || this.readyState == 'loaded')
                 {
-                    dstPx[index] = _response[index];
-                    index++;
+                    scriptElem.onreadystatechange = null;
+                    setTimeout(oThis._callback_font_load, 0);
                 }
-
-                var __font_data_idx = g_fonts_streams.length;
-                g_fonts_streams[__font_data_idx] = stream;
-                oThis.SetStreamIndex(__font_data_idx);
             }
-            else
-            {
-                var __font_data_idx = g_fonts_streams.length;
-                g_fonts_streams[__font_data_idx] = AscFonts.CreateFontData3(this.responseText);
-                oThis.SetStreamIndex(__font_data_idx);
-            }
+        }
+        scriptElem.onload = scriptElem.onerror = oThis._callback_font_load;
 
-            // decode
-            var guidOdttf = [0xA0, 0x66, 0xD6, 0x20, 0x14, 0x96, 0x47, 0xfa, 0x95, 0x69, 0xB8, 0x50, 0xB0, 0x41, 0x49, 0x48];
-            var _stream = g_fonts_streams[g_fonts_streams.length - 1];
-            var _data = _stream.data;
-
-            var _count_decode = Math.min(32, _stream.size);
-            for (var i = 0; i < _count_decode; ++i)
-                _data[i] ^= guidOdttf[i % 16];
-
-            if (null != oThis.callback)
-                oThis.callback();
-        };
-        xhr.onerror = function()
-        {
-            oThis.LoadingCounter++;
-            if (oThis.LoadingCounter < oThis.GetMaxLoadingCount())
-            {
-                //console.log("font loaded: one more attemption");
-                oThis.Status = -1;
-                return;
-            }
-
-            oThis.Status = 2; // aka loading...
-            var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
-            _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingFontError, Asc.c_oAscError.Level.Critical);
-            return;
-        };
-
-        xhr.send(null);
+        var src = basePath + this.Id + ".js";
+        if(isEmbed)
+            src = AscCommon.g_oDocumentUrls.getUrl(src);
+        scriptElem.setAttribute('src', src);
+        scriptElem.setAttribute('type','text/javascript');
+        document.getElementsByTagName('head')[0].appendChild(scriptElem);
+        return false;
     };
-    
-    this.LoadFontNative = function()
+
+    CFontFileLoader.prototype["LoadFontAsync"] = CFontFileLoader.prototype.LoadFontAsync;
+    CFontFileLoader.prototype["GetID"] = function() { return this.Id; };
+    CFontFileLoader.prototype["GetStatus"] = function() { return this.Status; };
+    CFontFileLoader.prototype["GetStreamIndex"] = function() { return this.stream_index; };
+
+
+    var FONT_TYPE_ADDITIONAL = 0;
+    var FONT_TYPE_STANDART = 1;
+    var FONT_TYPE_EMBEDDED = 2;
+    var FONT_TYPE_ADDITIONAL_CUT = 3;
+
+    var fontstyle_mask_regular = 1;
+    var fontstyle_mask_italic = 2;
+    var fontstyle_mask_bold = 4;
+    var fontstyle_mask_bolditalic = 8;
+
+    function GenerateMapId(api, name, style, size)
     {
-        var __font_data_idx = g_fonts_streams.length;
-        var _data = window["native"]["GetFontBinary"](this.Id);
-        g_fonts_streams[__font_data_idx] = new AscFonts.FontStream(_data, _data.length);
-        this.SetStreamIndex(__font_data_idx);
-        this.Status = 0;
-    };
-}
+        var fontInfo = api.FontLoader.fontInfos[api.FontLoader.map_font_index[name]];
+        var index = -1;
 
-CFontFileLoader.prototype.GetMaxLoadingCount = function()
-{
-    return 3;
-};
-
-CFontFileLoader.prototype.SetStreamIndex = function(index)
-{
-	this.stream_index = index;
-};
-CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback, isEmbed)
-{
-	var oThis = this;
-	if (window["AscDesktopEditor"] !== undefined && this.CanUseOriginalFormat)
-	{
-		if (-1 != this.Status)
-			return true;
-
-		this.callback = _callback;
-		this.Status = 2;
-		window["AscDesktopEditor"]["LoadFontBase64"](this.Id);
-		this._callback_font_load();
-		return;
-	}
-
-	if (this.CanUseOriginalFormat && // false if load embedded fonts
-		bIsSupportOriginalFormatFonts) // false if work on ie9
-	{
-		this.LoadFontAsync2(basePath, _callback);
-		return;
-	}
-
-	this.callback = _callback;
-	if (-1 != this.Status)
-		return true;
-
-	this.Status = 2;
-	if (bIsLocalFontsUse)
-	{
-		postLoadScript(this.Id);
-		return;
-	}
-
-	var scriptElem = document.createElement('script');
-
-	if (scriptElem.readyState && false)
-	{
-		scriptElem.onreadystatechange = function () {
-			if (this.readyState == 'complete' || this.readyState == 'loaded')
-			{
-				scriptElem.onreadystatechange = null;
-				setTimeout(oThis._callback_font_load, 0);
-			}
-		}
-	}
-	scriptElem.onload = scriptElem.onerror = oThis._callback_font_load;
-
-	var src = basePath + this.Id + ".js";
-	if(isEmbed)
-		src = AscCommon.g_oDocumentUrls.getUrl(src);
-	scriptElem.setAttribute('src', src);
-	scriptElem.setAttribute('type','text/javascript');
-	document.getElementsByTagName('head')[0].appendChild(scriptElem);
-	return false;
-};
-
-CFontFileLoader.prototype["LoadFontAsync"] = CFontFileLoader.prototype.LoadFontAsync;
-CFontFileLoader.prototype["GetID"] = function() { return this.Id; };
-CFontFileLoader.prototype["GetStatus"] = function() { return this.Status; };
-CFontFileLoader.prototype["GetStreamIndex"] = function() { return this.stream_index; };
-
-
-var FONT_TYPE_ADDITIONAL = 0;
-var FONT_TYPE_STANDART = 1;
-var FONT_TYPE_EMBEDDED = 2;
-var FONT_TYPE_ADDITIONAL_CUT = 3;
-
-var fontstyle_mask_regular = 1;
-var fontstyle_mask_italic = 2;
-var fontstyle_mask_bold = 4;
-var fontstyle_mask_bolditalic = 8;
-
-function GenerateMapId(api, name, style, size)
-{
-    var fontInfo = api.FontLoader.fontInfos[api.FontLoader.map_font_index[name]];
-    var index = -1;
-
-	// подбираем шрифт по стилю
-    var bNeedBold   = false;
-    var bNeedItalic = false;
-
-    var index       = -1;
-    var faceIndex   = 0;
-
-    var bSrcItalic  = false;
-    var bSrcBold    = false;
-
-    switch (style)
-    {
-        case FontStyle.FontStyleBoldItalic:
-        {
-            bSrcItalic  = true;
-            bSrcBold    = true;
-
-            bNeedBold   = true;
-            bNeedItalic = true;
-            if (-1 != fontInfo.indexBI)
-            {
-                index = fontInfo.indexBI;
-                faceIndex = fontInfo.faceIndexBI;
-                bNeedBold   = false;
-                bNeedItalic = false;
-            }
-            else if (-1 != fontInfo.indexB)
-            {
-                index = fontInfo.indexB;
-                faceIndex = fontInfo.faceIndexB;
-                bNeedBold = false;
-            }
-            else if (-1 != fontInfo.indexI)
-            {
-                index = fontInfo.indexI;
-                faceIndex = fontInfo.faceIndexI;
-                bNeedItalic = false;
-            }
-            else
-            {
-                index = fontInfo.indexR;
-                faceIndex = fontInfo.faceIndexR;
-            }
-            break;
-        }
-        case FontStyle.FontStyleBold:
-        {
-            bSrcBold    = true;
-
-            bNeedBold   = true;
-            bNeedItalic = false;
-            if (-1 != fontInfo.indexB)
-            {
-                index = fontInfo.indexB;
-                faceIndex = fontInfo.faceIndexB;
-                bNeedBold = false;
-            }
-            else if (-1 != fontInfo.indexR)
-            {
-                index = fontInfo.indexR;
-                faceIndex = fontInfo.faceIndexR;
-            }
-            else if (-1 != fontInfo.indexBI)
-            {
-                index = fontInfo.indexBI;
-                faceIndex = fontInfo.faceIndexBI;
-                bNeedBold = false;
-            }
-            else
-            {
-                index = fontInfo.indexI;
-                faceIndex = fontInfo.faceIndexI;
-            }
-            break;
-        }
-        case FontStyle.FontStyleItalic:
-        {
-            bSrcItalic  = true;
-
-            bNeedBold   = false;
-            bNeedItalic = true;
-            if (-1 != fontInfo.indexI)
-            {
-                index = fontInfo.indexI;
-                faceIndex = fontInfo.faceIndexI;
-                bNeedItalic = false;
-            }
-            else if (-1 != fontInfo.indexR)
-            {
-                index = fontInfo.indexR;
-                faceIndex = fontInfo.faceIndexR;
-            }
-            else if (-1 != fontInfo.indexBI)
-            {
-                index = fontInfo.indexBI;
-                faceIndex = fontInfo.faceIndexBI;
-                bNeedItalic = false;
-            }
-            else
-            {
-                index = fontInfo.indexB;
-                faceIndex = fontInfo.faceIndexB;
-            }
-            break;
-        }
-        case FontStyle.FontStyleRegular:
-        {
-            bNeedBold   = false;
-            bNeedItalic = false;
-            if (-1 != fontInfo.indexR)
-            {
-                index = fontInfo.indexR;
-                faceIndex = fontInfo.faceIndexR;
-            }
-            else if (-1 != fontInfo.indexI)
-            {
-                index = fontInfo.indexI;
-                faceIndex = fontInfo.faceIndexI;
-            }
-            else if (-1 != fontInfo.indexB)
-            {
-                index = fontInfo.indexB;
-                faceIndex = fontInfo.faceIndexB;
-            }
-            else
-            {
-                index = fontInfo.indexBI;
-                faceIndex = fontInfo.faceIndexBI;
-            }
-        }
-    }
-
-    var _ext = "";
-    if (bNeedBold)
-        _ext += "nbold";
-    if (bNeedItalic)
-        _ext += "nitalic";
-
-    // index != -1 (!!!)
-    var fontfile = api.FontLoader.fontFiles[index];
-    return fontfile.Id + faceIndex + size + _ext;
-}
-
-function CFontInfo(sName, thumbnail, type, indexR, faceIndexR, indexI, faceIndexI, indexB, faceIndexB, indexBI, faceIndexBI)
-{
-    this.Name = sName;
-    this.Thumbnail = thumbnail;
-    this.Type = type;
-    this.NeedStyles = 0;
-
-    this.indexR     = indexR;
-    this.faceIndexR = faceIndexR;
-    this.needR      = false;
-
-    this.indexI     = indexI;
-    this.faceIndexI = faceIndexI;
-    this.needI      = false;
-
-    this.indexB     = indexB;
-    this.faceIndexB = faceIndexB;
-    this.needB      = false;
-
-    this.indexBI    = indexBI;
-    this.faceIndexBI= faceIndexBI;
-    this.needBI     = false;
-}
-
-CFontInfo.prototype =
-{
-    CheckFontLoadStyles : function(global_loader)
-    {
-        if ((this.NeedStyles & 0x0F) == 0x0F)
-        {
-            this.needR = true;
-            this.needI = true;
-            this.needB = true;
-            this.needBI = true;
-        }
-        else
-        {
-            if ((this.NeedStyles & 1) != 0)
-            {
-				// нужен стиль regular
-                if (false === this.needR)
-                {
-                    this.needR = true;
-                    if (-1 == this.indexR)
-                    {
-                        if (-1 != this.indexI)
-                        {
-                            this.needI = true;
-                        }
-                        else if (-1 != this.indexB)
-                        {
-                            this.needB = true;
-                        }
-                        else
-                        {
-                            this.needBI = true;
-                        }
-                    }
-                }
-            }
-            if ((this.NeedStyles & 2) != 0)
-            {
-				// нужен стиль italic
-                if (false === this.needI)
-                {
-                    this.needI = true;
-                    if (-1 == this.indexI)
-                    {
-                        if (-1 != this.indexR)
-                        {
-                            this.needR = true;
-                        }
-                        else if (-1 != this.indexBI)
-                        {
-                            this.needBI = true;
-                        }
-                        else
-                        {
-                            this.needB = true;
-                        }
-                    }
-                }
-            }
-            if ((this.NeedStyles & 4) != 0)
-            {
-                // нужен стиль bold
-                if (false === this.needB)
-                {
-                    this.needB = true;
-                    if (-1 == this.indexB)
-                    {
-                        if (-1 != this.indexR)
-                        {
-                            this.needR = true;
-                        }
-                        else if (-1 != this.indexBI)
-                        {
-                            this.needBI = true;
-                        }
-                        else
-                        {
-                            this.needI = true;
-                        }
-                    }
-                }
-            }
-            if ((this.NeedStyles & 8) != 0)
-            {
-                // нужен стиль bold
-                if (false === this.needBI)
-                {
-                    this.needBI = true;
-                    if (-1 == this.indexBI)
-                    {
-                        if (-1 != this.indexB)
-                        {
-                            this.needB = true;
-                        }
-                        else if (-1 != this.indexI)
-                        {
-                            this.needI = true;
-                        }
-                        else
-                        {
-                            this.needR = true;
-                        }
-                    }
-                }
-            }
-        }
-
-		var isEmbed = (FONT_TYPE_EMBEDDED == this.Type);
-        var fonts = isEmbed ? global_loader.embeddedFontFiles : global_loader.fontFiles;
-        var basePath = isEmbed ? global_loader.embeddedFilesPath : global_loader.fontFilesPath;
-        var isNeed = false;
-        if ((this.needR === true) && (-1 != this.indexR) && (fonts[this.indexR].CheckLoaded() === false))
-        {
-            fonts[this.indexR].LoadFontAsync(basePath, null, isEmbed);
-            isNeed = true;
-        }
-        if ((this.needI === true) && (-1 != this.indexI) && (fonts[this.indexI].CheckLoaded() === false))
-        {
-            fonts[this.indexI].LoadFontAsync(basePath, null, isEmbed);
-            isNeed = true;
-        }
-        if ((this.needB === true) && (-1 != this.indexB) && (fonts[this.indexB].CheckLoaded() === false))
-        {
-            fonts[this.indexB].LoadFontAsync(basePath, null, isEmbed);
-            isNeed = true;
-        }
-        if ((this.needBI === true) && (-1 != this.indexBI) && (fonts[this.indexBI].CheckLoaded() === false))
-        {
-            fonts[this.indexBI].LoadFontAsync(basePath, null, isEmbed);
-            isNeed = true;
-        }
-
-        return isNeed;
-    },
-
-    CheckFontLoadStylesNoLoad : function(global_loader)
-    {
-        var fonts = (FONT_TYPE_EMBEDDED == this.Type) ? global_loader.embeddedFontFiles : global_loader.fontFiles;
-        var _isNeed = false;
-        if ((-1 != this.indexR) && (fonts[this.indexR].CheckLoaded() === false))
-        {
-            _isNeed = true;
-        }
-        if ((-1 != this.indexI) && (fonts[this.indexI].CheckLoaded() === false))
-        {
-            _isNeed = true;
-        }
-        if ((-1 != this.indexB) && (fonts[this.indexB].CheckLoaded() === false))
-        {
-            _isNeed = true;
-        }
-        if ((-1 != this.indexBI) && (fonts[this.indexBI].CheckLoaded() === false))
-        {
-            _isNeed = true;
-        }
-
-        return _isNeed;
-    },
-
-    LoadFontsFromServer : function(global_loader)
-    {
-        var fonts = global_loader.fontFiles;
-        var basePath = global_loader.fontFilesPath;
-        if ((-1 != this.indexR) && (fonts[this.indexR].CheckLoaded() === false))
-        {
-            fonts[this.indexR].LoadFontAsync(basePath, null);
-        }
-        if ((-1 != this.indexI) && (fonts[this.indexI].CheckLoaded() === false))
-        {
-            fonts[this.indexI].LoadFontAsync(basePath, null);
-        }
-        if ((-1 != this.indexB) && (fonts[this.indexB].CheckLoaded() === false))
-        {
-            fonts[this.indexB].LoadFontAsync(basePath, null);
-        }
-        if ((-1 != this.indexBI) && (fonts[this.indexBI].CheckLoaded() === false))
-        {
-            fonts[this.indexBI].LoadFontAsync(basePath, null);
-        }
-    },
-
-    LoadFont : function(font_loader, fontManager, fEmSize, lStyle, dHorDpi, dVerDpi, transform, isNoSetupToManager)
-    {
         // подбираем шрифт по стилю
-        var sReturnName = this.Name;
         var bNeedBold   = false;
         var bNeedItalic = false;
 
@@ -970,7 +354,7 @@ CFontInfo.prototype =
         var bSrcItalic  = false;
         var bSrcBold    = false;
 
-        switch (lStyle)
+        switch (style)
         {
             case FontStyle.FontStyleBoldItalic:
             {
@@ -979,29 +363,29 @@ CFontInfo.prototype =
 
                 bNeedBold   = true;
                 bNeedItalic = true;
-                if (-1 != this.indexBI)
+                if (-1 != fontInfo.indexBI)
                 {
-                    index = this.indexBI;
-                    faceIndex = this.faceIndexBI;
+                    index = fontInfo.indexBI;
+                    faceIndex = fontInfo.faceIndexBI;
                     bNeedBold   = false;
                     bNeedItalic = false;
                 }
-                else if (-1 != this.indexB)
+                else if (-1 != fontInfo.indexB)
                 {
-                    index = this.indexB;
-                    faceIndex = this.faceIndexB;
+                    index = fontInfo.indexB;
+                    faceIndex = fontInfo.faceIndexB;
                     bNeedBold = false;
                 }
-                else if (-1 != this.indexI)
+                else if (-1 != fontInfo.indexI)
                 {
-                    index = this.indexI;
-                    faceIndex = this.faceIndexI;
+                    index = fontInfo.indexI;
+                    faceIndex = fontInfo.faceIndexI;
                     bNeedItalic = false;
                 }
                 else
                 {
-                    index = this.indexR;
-                    faceIndex = this.faceIndexR;
+                    index = fontInfo.indexR;
+                    faceIndex = fontInfo.faceIndexR;
                 }
                 break;
             }
@@ -1011,27 +395,27 @@ CFontInfo.prototype =
 
                 bNeedBold   = true;
                 bNeedItalic = false;
-                if (-1 != this.indexB)
+                if (-1 != fontInfo.indexB)
                 {
-                    index = this.indexB;
-                    faceIndex = this.faceIndexB;
+                    index = fontInfo.indexB;
+                    faceIndex = fontInfo.faceIndexB;
                     bNeedBold = false;
                 }
-                else if (-1 != this.indexR)
+                else if (-1 != fontInfo.indexR)
                 {
-                    index = this.indexR;
-                    faceIndex = this.faceIndexR;
+                    index = fontInfo.indexR;
+                    faceIndex = fontInfo.faceIndexR;
                 }
-                else if (-1 != this.indexBI)
+                else if (-1 != fontInfo.indexBI)
                 {
-                    index = this.indexBI;
-                    faceIndex = this.faceIndexBI;
+                    index = fontInfo.indexBI;
+                    faceIndex = fontInfo.faceIndexBI;
                     bNeedBold = false;
                 }
                 else
                 {
-                    index = this.indexI;
-                    faceIndex = this.faceIndexI;
+                    index = fontInfo.indexI;
+                    faceIndex = fontInfo.faceIndexI;
                 }
                 break;
             }
@@ -1041,27 +425,27 @@ CFontInfo.prototype =
 
                 bNeedBold   = false;
                 bNeedItalic = true;
-                if (-1 != this.indexI)
+                if (-1 != fontInfo.indexI)
                 {
-                    index = this.indexI;
-                    faceIndex = this.faceIndexI;
+                    index = fontInfo.indexI;
+                    faceIndex = fontInfo.faceIndexI;
                     bNeedItalic = false;
                 }
-                else if (-1 != this.indexR)
+                else if (-1 != fontInfo.indexR)
                 {
-                    index = this.indexR;
-                    faceIndex = this.faceIndexR;
+                    index = fontInfo.indexR;
+                    faceIndex = fontInfo.faceIndexR;
                 }
-                else if (-1 != this.indexBI)
+                else if (-1 != fontInfo.indexBI)
                 {
-                    index = this.indexBI;
-                    faceIndex = this.faceIndexBI;
+                    index = fontInfo.indexBI;
+                    faceIndex = fontInfo.faceIndexBI;
                     bNeedItalic = false;
                 }
                 else
                 {
-                    index = this.indexB;
-                    faceIndex = this.faceIndexB;
+                    index = fontInfo.indexB;
+                    faceIndex = fontInfo.faceIndexB;
                 }
                 break;
             }
@@ -1069,343 +453,693 @@ CFontInfo.prototype =
             {
                 bNeedBold   = false;
                 bNeedItalic = false;
-                if (-1 != this.indexR)
+                if (-1 != fontInfo.indexR)
                 {
-                    index = this.indexR;
-                    faceIndex = this.faceIndexR;
+                    index = fontInfo.indexR;
+                    faceIndex = fontInfo.faceIndexR;
                 }
-                else if (-1 != this.indexI)
+                else if (-1 != fontInfo.indexI)
                 {
-                    index = this.indexI;
-                    faceIndex = this.faceIndexI;
+                    index = fontInfo.indexI;
+                    faceIndex = fontInfo.faceIndexI;
                 }
-                else if (-1 != this.indexB)
+                else if (-1 != fontInfo.indexB)
                 {
-                    index = this.indexB;
-                    faceIndex = this.faceIndexB;
+                    index = fontInfo.indexB;
+                    faceIndex = fontInfo.faceIndexB;
                 }
                 else
                 {
-                    index = this.indexBI;
-                    faceIndex = this.faceIndexBI;
+                    index = fontInfo.indexBI;
+                    faceIndex = fontInfo.faceIndexBI;
                 }
             }
         }
 
+        var _ext = "";
+        if (bNeedBold)
+            _ext += "nbold";
+        if (bNeedItalic)
+            _ext += "nitalic";
+
         // index != -1 (!!!)
-        var fontfile = null;
-        if (this.Type == FONT_TYPE_EMBEDDED)
-            fontfile = font_loader.embeddedFontFiles[index];
-        else
-            fontfile = font_loader.fontFiles[index];
+        var fontfile = api.FontLoader.fontFiles[index];
+        return fontfile.Id + faceIndex + size + _ext;
+    }
 
-        if (window["NATIVE_EDITOR_ENJINE"] && fontfile.Status != 0)
+    function CFontInfo(sName, thumbnail, type, indexR, faceIndexR, indexI, faceIndexI, indexB, faceIndexB, indexBI, faceIndexBI)
+    {
+        this.Name = sName;
+        this.Thumbnail = thumbnail;
+        this.Type = type;
+        this.NeedStyles = 0;
+
+        this.indexR     = indexR;
+        this.faceIndexR = faceIndexR;
+        this.needR      = false;
+
+        this.indexI     = indexI;
+        this.faceIndexI = faceIndexI;
+        this.needI      = false;
+
+        this.indexB     = indexB;
+        this.faceIndexB = faceIndexB;
+        this.needB      = false;
+
+        this.indexBI    = indexBI;
+        this.faceIndexBI= faceIndexBI;
+        this.needBI     = false;
+    }
+
+    CFontInfo.prototype =
+    {
+        CheckFontLoadStyles : function(global_loader)
         {
-			fontfile.LoadFontNative();
-        }        
-
-        var pFontFile = fontManager.LoadFont(fontfile, faceIndex, fEmSize, bSrcBold, bSrcItalic, bNeedBold, bNeedItalic, isNoSetupToManager);
-
-        if (!pFontFile && -1 === fontfile.stream_index && true === AscFonts.IsLoadFontOnCheckSymbols && true != AscFonts.IsLoadFontOnCheckSymbolsWait)
-        {
-            // в форматах pdf/xps - не прогоняем символы через чеккер при открытии,
-            // так как там должны быть символы в встроенном шрифте. Но вдруг?
-            // тогда при отрисовке СРАЗУ грузим шрифт - и при загрузке перерисовываемся
-            // сюда попали только если символ попал в чеккер
-			AscFonts.IsLoadFontOnCheckSymbols = false;
-			AscFonts.IsLoadFontOnCheckSymbolsWait = true;
-			AscFonts.FontPickerByCharacter.loadFonts(window.editor, function ()
-			{
-				AscFonts.IsLoadFontOnCheckSymbolsWait = false;
-				this.WordControl && this.WordControl.private_RefreshAll();
-			});
-        }
-
-        if (pFontFile && (true !== isNoSetupToManager))
-        {
-            var newEmSize = fontManager.UpdateSize(fEmSize, dVerDpi, dVerDpi);
-            pFontFile.SetSizeAndDpi(newEmSize, dHorDpi, dVerDpi);
-
-            if (undefined !== transform)
+            if ((this.NeedStyles & 0x0F) == 0x0F)
             {
-                fontManager.SetTextMatrix2(transform.sx,transform.shy,transform.shx,transform.sy,transform.tx,transform.ty);
+                this.needR = true;
+                this.needI = true;
+                this.needB = true;
+                this.needBI = true;
             }
             else
             {
-                fontManager.SetTextMatrix(1, 0, 0, 1, 0, 0);
-            }
-        }
-
-        return pFontFile;
-    },
-
-    GetFontID : function(font_loader, lStyle)
-    {
-        // подбираем шрифт по стилю
-        var sReturnName = this.Name;
-        var bNeedBold   = false;
-        var bNeedItalic = false;
-
-        var index       = -1;
-        var faceIndex   = 0;
-
-        var bSrcItalic  = false;
-        var bSrcBold    = false;
-
-        switch (lStyle)
-        {
-            case FontStyle.FontStyleBoldItalic:
-            {
-                bSrcItalic  = true;
-                bSrcBold    = true;
-
-                bNeedBold   = true;
-                bNeedItalic = true;
-                if (-1 != this.indexBI)
+                if ((this.NeedStyles & 1) != 0)
                 {
-                    index = this.indexBI;
-                    faceIndex = this.faceIndexBI;
+                    // нужен стиль regular
+                    if (false === this.needR)
+                    {
+                        this.needR = true;
+                        if (-1 == this.indexR)
+                        {
+                            if (-1 != this.indexI)
+                            {
+                                this.needI = true;
+                            }
+                            else if (-1 != this.indexB)
+                            {
+                                this.needB = true;
+                            }
+                            else
+                            {
+                                this.needBI = true;
+                            }
+                        }
+                    }
+                }
+                if ((this.NeedStyles & 2) != 0)
+                {
+                    // нужен стиль italic
+                    if (false === this.needI)
+                    {
+                        this.needI = true;
+                        if (-1 == this.indexI)
+                        {
+                            if (-1 != this.indexR)
+                            {
+                                this.needR = true;
+                            }
+                            else if (-1 != this.indexBI)
+                            {
+                                this.needBI = true;
+                            }
+                            else
+                            {
+                                this.needB = true;
+                            }
+                        }
+                    }
+                }
+                if ((this.NeedStyles & 4) != 0)
+                {
+                    // нужен стиль bold
+                    if (false === this.needB)
+                    {
+                        this.needB = true;
+                        if (-1 == this.indexB)
+                        {
+                            if (-1 != this.indexR)
+                            {
+                                this.needR = true;
+                            }
+                            else if (-1 != this.indexBI)
+                            {
+                                this.needBI = true;
+                            }
+                            else
+                            {
+                                this.needI = true;
+                            }
+                        }
+                    }
+                }
+                if ((this.NeedStyles & 8) != 0)
+                {
+                    // нужен стиль bold
+                    if (false === this.needBI)
+                    {
+                        this.needBI = true;
+                        if (-1 == this.indexBI)
+                        {
+                            if (-1 != this.indexB)
+                            {
+                                this.needB = true;
+                            }
+                            else if (-1 != this.indexI)
+                            {
+                                this.needI = true;
+                            }
+                            else
+                            {
+                                this.needR = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            var isEmbed = (FONT_TYPE_EMBEDDED == this.Type);
+            var fonts = isEmbed ? global_loader.embeddedFontFiles : global_loader.fontFiles;
+            var basePath = isEmbed ? global_loader.embeddedFilesPath : global_loader.fontFilesPath;
+            var isNeed = false;
+            if ((this.needR === true) && (-1 != this.indexR) && (fonts[this.indexR].CheckLoaded() === false))
+            {
+                fonts[this.indexR].LoadFontAsync(basePath, null, isEmbed);
+                isNeed = true;
+            }
+            if ((this.needI === true) && (-1 != this.indexI) && (fonts[this.indexI].CheckLoaded() === false))
+            {
+                fonts[this.indexI].LoadFontAsync(basePath, null, isEmbed);
+                isNeed = true;
+            }
+            if ((this.needB === true) && (-1 != this.indexB) && (fonts[this.indexB].CheckLoaded() === false))
+            {
+                fonts[this.indexB].LoadFontAsync(basePath, null, isEmbed);
+                isNeed = true;
+            }
+            if ((this.needBI === true) && (-1 != this.indexBI) && (fonts[this.indexBI].CheckLoaded() === false))
+            {
+                fonts[this.indexBI].LoadFontAsync(basePath, null, isEmbed);
+                isNeed = true;
+            }
+
+            return isNeed;
+        },
+
+        CheckFontLoadStylesNoLoad : function(global_loader)
+        {
+            var fonts = (FONT_TYPE_EMBEDDED == this.Type) ? global_loader.embeddedFontFiles : global_loader.fontFiles;
+            var _isNeed = false;
+            if ((-1 != this.indexR) && (fonts[this.indexR].CheckLoaded() === false))
+            {
+                _isNeed = true;
+            }
+            if ((-1 != this.indexI) && (fonts[this.indexI].CheckLoaded() === false))
+            {
+                _isNeed = true;
+            }
+            if ((-1 != this.indexB) && (fonts[this.indexB].CheckLoaded() === false))
+            {
+                _isNeed = true;
+            }
+            if ((-1 != this.indexBI) && (fonts[this.indexBI].CheckLoaded() === false))
+            {
+                _isNeed = true;
+            }
+
+            return _isNeed;
+        },
+
+        LoadFontsFromServer : function(global_loader)
+        {
+            var fonts = global_loader.fontFiles;
+            var basePath = global_loader.fontFilesPath;
+            if ((-1 != this.indexR) && (fonts[this.indexR].CheckLoaded() === false))
+            {
+                fonts[this.indexR].LoadFontAsync(basePath, null);
+            }
+            if ((-1 != this.indexI) && (fonts[this.indexI].CheckLoaded() === false))
+            {
+                fonts[this.indexI].LoadFontAsync(basePath, null);
+            }
+            if ((-1 != this.indexB) && (fonts[this.indexB].CheckLoaded() === false))
+            {
+                fonts[this.indexB].LoadFontAsync(basePath, null);
+            }
+            if ((-1 != this.indexBI) && (fonts[this.indexBI].CheckLoaded() === false))
+            {
+                fonts[this.indexBI].LoadFontAsync(basePath, null);
+            }
+        },
+
+        LoadFont : function(font_loader, fontManager, fEmSize, lStyle, dHorDpi, dVerDpi, transform, isNoSetupToManager)
+        {
+            // подбираем шрифт по стилю
+            var sReturnName = this.Name;
+            var bNeedBold   = false;
+            var bNeedItalic = false;
+
+            var index       = -1;
+            var faceIndex   = 0;
+
+            var bSrcItalic  = false;
+            var bSrcBold    = false;
+
+            switch (lStyle)
+            {
+                case FontStyle.FontStyleBoldItalic:
+                {
+                    bSrcItalic  = true;
+                    bSrcBold    = true;
+
+                    bNeedBold   = true;
+                    bNeedItalic = true;
+                    if (-1 != this.indexBI)
+                    {
+                        index = this.indexBI;
+                        faceIndex = this.faceIndexBI;
+                        bNeedBold   = false;
+                        bNeedItalic = false;
+                    }
+                    else if (-1 != this.indexB)
+                    {
+                        index = this.indexB;
+                        faceIndex = this.faceIndexB;
+                        bNeedBold = false;
+                    }
+                    else if (-1 != this.indexI)
+                    {
+                        index = this.indexI;
+                        faceIndex = this.faceIndexI;
+                        bNeedItalic = false;
+                    }
+                    else
+                    {
+                        index = this.indexR;
+                        faceIndex = this.faceIndexR;
+                    }
+                    break;
+                }
+                case FontStyle.FontStyleBold:
+                {
+                    bSrcBold    = true;
+
+                    bNeedBold   = true;
+                    bNeedItalic = false;
+                    if (-1 != this.indexB)
+                    {
+                        index = this.indexB;
+                        faceIndex = this.faceIndexB;
+                        bNeedBold = false;
+                    }
+                    else if (-1 != this.indexR)
+                    {
+                        index = this.indexR;
+                        faceIndex = this.faceIndexR;
+                    }
+                    else if (-1 != this.indexBI)
+                    {
+                        index = this.indexBI;
+                        faceIndex = this.faceIndexBI;
+                        bNeedBold = false;
+                    }
+                    else
+                    {
+                        index = this.indexI;
+                        faceIndex = this.faceIndexI;
+                    }
+                    break;
+                }
+                case FontStyle.FontStyleItalic:
+                {
+                    bSrcItalic  = true;
+
+                    bNeedBold   = false;
+                    bNeedItalic = true;
+                    if (-1 != this.indexI)
+                    {
+                        index = this.indexI;
+                        faceIndex = this.faceIndexI;
+                        bNeedItalic = false;
+                    }
+                    else if (-1 != this.indexR)
+                    {
+                        index = this.indexR;
+                        faceIndex = this.faceIndexR;
+                    }
+                    else if (-1 != this.indexBI)
+                    {
+                        index = this.indexBI;
+                        faceIndex = this.faceIndexBI;
+                        bNeedItalic = false;
+                    }
+                    else
+                    {
+                        index = this.indexB;
+                        faceIndex = this.faceIndexB;
+                    }
+                    break;
+                }
+                case FontStyle.FontStyleRegular:
+                {
                     bNeedBold   = false;
                     bNeedItalic = false;
+                    if (-1 != this.indexR)
+                    {
+                        index = this.indexR;
+                        faceIndex = this.faceIndexR;
+                    }
+                    else if (-1 != this.indexI)
+                    {
+                        index = this.indexI;
+                        faceIndex = this.faceIndexI;
+                    }
+                    else if (-1 != this.indexB)
+                    {
+                        index = this.indexB;
+                        faceIndex = this.faceIndexB;
+                    }
+                    else
+                    {
+                        index = this.indexBI;
+                        faceIndex = this.faceIndexBI;
+                    }
                 }
-                else if (-1 != this.indexB)
-                {
-                    index = this.indexB;
-                    faceIndex = this.faceIndexB;
-                    bNeedBold = false;
-                }
-                else if (-1 != this.indexI)
-                {
-                    index = this.indexI;
-                    faceIndex = this.faceIndexI;
-                    bNeedItalic = false;
-                }
-                else
-                {
-                    index = this.indexR;
-                    faceIndex = this.faceIndexR;
-                }
-                break;
             }
-            case FontStyle.FontStyleBold:
+
+            // index != -1 (!!!)
+            var fontfile = null;
+            if (this.Type == FONT_TYPE_EMBEDDED)
+                fontfile = font_loader.embeddedFontFiles[index];
+            else
+                fontfile = font_loader.fontFiles[index];
+
+            if (window["NATIVE_EDITOR_ENJINE"] && fontfile.Status != 0)
             {
-                bSrcBold    = true;
-
-                bNeedBold   = true;
-                bNeedItalic = false;
-                if (-1 != this.indexB)
-                {
-                    index = this.indexB;
-                    faceIndex = this.faceIndexB;
-                    bNeedBold = false;
-                }
-                else if (-1 != this.indexR)
-                {
-                    index = this.indexR;
-                    faceIndex = this.faceIndexR;
-                }
-                else if (-1 != this.indexBI)
-                {
-                    index = this.indexBI;
-                    faceIndex = this.faceIndexBI;
-                    bNeedBold = false;
-                }
-                else
-                {
-                    index = this.indexI;
-                    faceIndex = this.faceIndexI;
-                }
-                break;
+                fontfile.LoadFontNative();
             }
-            case FontStyle.FontStyleItalic:
+
+            var pFontFile = fontManager.LoadFont(fontfile, faceIndex, fEmSize, bSrcBold, bSrcItalic, bNeedBold, bNeedItalic, isNoSetupToManager);
+
+            if (!pFontFile && -1 === fontfile.stream_index && true === AscFonts.IsLoadFontOnCheckSymbols && true != AscFonts.IsLoadFontOnCheckSymbolsWait)
             {
-                bSrcItalic  = true;
-
-                bNeedBold   = false;
-                bNeedItalic = true;
-                if (-1 != this.indexI)
+                // в форматах pdf/xps - не прогоняем символы через чеккер при открытии,
+                // так как там должны быть символы в встроенном шрифте. Но вдруг?
+                // тогда при отрисовке СРАЗУ грузим шрифт - и при загрузке перерисовываемся
+                // сюда попали только если символ попал в чеккер
+                AscFonts.IsLoadFontOnCheckSymbols = false;
+                AscFonts.IsLoadFontOnCheckSymbolsWait = true;
+                AscFonts.FontPickerByCharacter.loadFonts(window.editor, function ()
                 {
-                    index = this.indexI;
-                    faceIndex = this.faceIndexI;
-                    bNeedItalic = false;
-                }
-                else if (-1 != this.indexR)
-                {
-                    index = this.indexR;
-                    faceIndex = this.faceIndexR;
-                }
-                else if (-1 != this.indexBI)
-                {
-                    index = this.indexBI;
-                    faceIndex = this.faceIndexBI;
-                    bNeedItalic = false;
-                }
-                else
-                {
-                    index = this.indexB;
-                    faceIndex = this.faceIndexB;
-                }
-                break;
+                    AscFonts.IsLoadFontOnCheckSymbolsWait = false;
+                    this.WordControl && this.WordControl.private_RefreshAll();
+                });
             }
-            case FontStyle.FontStyleRegular:
+
+            if (pFontFile && (true !== isNoSetupToManager))
             {
-                bNeedBold   = false;
-                bNeedItalic = false;
-                if (-1 != this.indexR)
+                var newEmSize = fontManager.UpdateSize(fEmSize, dVerDpi, dVerDpi);
+                pFontFile.SetSizeAndDpi(newEmSize, dHorDpi, dVerDpi);
+
+                if (undefined !== transform)
                 {
-                    index = this.indexR;
-                    faceIndex = this.faceIndexR;
-                }
-                else if (-1 != this.indexI)
-                {
-                    index = this.indexI;
-                    faceIndex = this.faceIndexI;
-                }
-                else if (-1 != this.indexB)
-                {
-                    index = this.indexB;
-                    faceIndex = this.faceIndexB;
+                    fontManager.SetTextMatrix2(transform.sx,transform.shy,transform.shx,transform.sy,transform.tx,transform.ty);
                 }
                 else
                 {
-                    index = this.indexBI;
-                    faceIndex = this.faceIndexBI;
+                    fontManager.SetTextMatrix(1, 0, 0, 1, 0, 0);
                 }
             }
-        }
 
-        // index != -1 (!!!)
-        var fontfile = (this.Type == FONT_TYPE_EMBEDDED) ? font_loader.embeddedFontFiles[index] : font_loader.fontFiles[index];
-        return { id: fontfile.Id, faceIndex : faceIndex, file : fontfile };
-    },
+            return pFontFile;
+        },
 
-    GetBaseStyle : function(lStyle)
-    {
-        switch (lStyle)
+        GetFontID : function(font_loader, lStyle)
         {
-            case FontStyle.FontStyleBoldItalic:
+            // подбираем шрифт по стилю
+            var sReturnName = this.Name;
+            var bNeedBold   = false;
+            var bNeedItalic = false;
+
+            var index       = -1;
+            var faceIndex   = 0;
+
+            var bSrcItalic  = false;
+            var bSrcBold    = false;
+
+            switch (lStyle)
             {
-                if (-1 != this.indexBI)
+                case FontStyle.FontStyleBoldItalic:
                 {
-                    return FontStyle.FontStyleBoldItalic;
+                    bSrcItalic  = true;
+                    bSrcBold    = true;
+
+                    bNeedBold   = true;
+                    bNeedItalic = true;
+                    if (-1 != this.indexBI)
+                    {
+                        index = this.indexBI;
+                        faceIndex = this.faceIndexBI;
+                        bNeedBold   = false;
+                        bNeedItalic = false;
+                    }
+                    else if (-1 != this.indexB)
+                    {
+                        index = this.indexB;
+                        faceIndex = this.faceIndexB;
+                        bNeedBold = false;
+                    }
+                    else if (-1 != this.indexI)
+                    {
+                        index = this.indexI;
+                        faceIndex = this.faceIndexI;
+                        bNeedItalic = false;
+                    }
+                    else
+                    {
+                        index = this.indexR;
+                        faceIndex = this.faceIndexR;
+                    }
+                    break;
                 }
-                else if (-1 != this.indexB)
+                case FontStyle.FontStyleBold:
                 {
-                    return FontStyle.FontStyleBold;
+                    bSrcBold    = true;
+
+                    bNeedBold   = true;
+                    bNeedItalic = false;
+                    if (-1 != this.indexB)
+                    {
+                        index = this.indexB;
+                        faceIndex = this.faceIndexB;
+                        bNeedBold = false;
+                    }
+                    else if (-1 != this.indexR)
+                    {
+                        index = this.indexR;
+                        faceIndex = this.faceIndexR;
+                    }
+                    else if (-1 != this.indexBI)
+                    {
+                        index = this.indexBI;
+                        faceIndex = this.faceIndexBI;
+                        bNeedBold = false;
+                    }
+                    else
+                    {
+                        index = this.indexI;
+                        faceIndex = this.faceIndexI;
+                    }
+                    break;
                 }
-                else if (-1 != this.indexI)
+                case FontStyle.FontStyleItalic:
                 {
-                    return FontStyle.FontStyleItalic;
+                    bSrcItalic  = true;
+
+                    bNeedBold   = false;
+                    bNeedItalic = true;
+                    if (-1 != this.indexI)
+                    {
+                        index = this.indexI;
+                        faceIndex = this.faceIndexI;
+                        bNeedItalic = false;
+                    }
+                    else if (-1 != this.indexR)
+                    {
+                        index = this.indexR;
+                        faceIndex = this.faceIndexR;
+                    }
+                    else if (-1 != this.indexBI)
+                    {
+                        index = this.indexBI;
+                        faceIndex = this.faceIndexBI;
+                        bNeedItalic = false;
+                    }
+                    else
+                    {
+                        index = this.indexB;
+                        faceIndex = this.faceIndexB;
+                    }
+                    break;
                 }
-                else
+                case FontStyle.FontStyleRegular:
                 {
-                    return FontStyle.FontStyleRegular;
+                    bNeedBold   = false;
+                    bNeedItalic = false;
+                    if (-1 != this.indexR)
+                    {
+                        index = this.indexR;
+                        faceIndex = this.faceIndexR;
+                    }
+                    else if (-1 != this.indexI)
+                    {
+                        index = this.indexI;
+                        faceIndex = this.faceIndexI;
+                    }
+                    else if (-1 != this.indexB)
+                    {
+                        index = this.indexB;
+                        faceIndex = this.faceIndexB;
+                    }
+                    else
+                    {
+                        index = this.indexBI;
+                        faceIndex = this.faceIndexBI;
+                    }
                 }
-                break;
             }
-            case FontStyle.FontStyleBold:
+
+            // index != -1 (!!!)
+            var fontfile = (this.Type == FONT_TYPE_EMBEDDED) ? font_loader.embeddedFontFiles[index] : font_loader.fontFiles[index];
+            return { id: fontfile.Id, faceIndex : faceIndex, file : fontfile };
+        },
+
+        GetBaseStyle : function(lStyle)
+        {
+            switch (lStyle)
             {
-                if (-1 != this.indexB)
+                case FontStyle.FontStyleBoldItalic:
                 {
-                    return FontStyle.FontStyleBold;
+                    if (-1 != this.indexBI)
+                    {
+                        return FontStyle.FontStyleBoldItalic;
+                    }
+                    else if (-1 != this.indexB)
+                    {
+                        return FontStyle.FontStyleBold;
+                    }
+                    else if (-1 != this.indexI)
+                    {
+                        return FontStyle.FontStyleItalic;
+                    }
+                    else
+                    {
+                        return FontStyle.FontStyleRegular;
+                    }
+                    break;
                 }
-                else if (-1 != this.indexR)
+                case FontStyle.FontStyleBold:
                 {
-                    return FontStyle.FontStyleRegular;
+                    if (-1 != this.indexB)
+                    {
+                        return FontStyle.FontStyleBold;
+                    }
+                    else if (-1 != this.indexR)
+                    {
+                        return FontStyle.FontStyleRegular;
+                    }
+                    else if (-1 != this.indexBI)
+                    {
+                        return FontStyle.FontStyleBoldItalic;
+                    }
+                    else
+                    {
+                        return FontStyle.FontStyleItalic;
+                    }
+                    break;
                 }
-                else if (-1 != this.indexBI)
+                case FontStyle.FontStyleItalic:
                 {
-                    return FontStyle.FontStyleBoldItalic;
+                    if (-1 != this.indexI)
+                    {
+                        return FontStyle.FontStyleItalic;
+                    }
+                    else if (-1 != this.indexR)
+                    {
+                        return FontStyle.FontStyleRegular;
+                    }
+                    else if (-1 != this.indexBI)
+                    {
+                        return FontStyle.FontStyleBoldItalic;
+                    }
+                    else
+                    {
+                        return FontStyle.FontStyleBold;
+                    }
+                    break;
                 }
-                else
+                case FontStyle.FontStyleRegular:
                 {
-                    return FontStyle.FontStyleItalic;
+                    if (-1 != this.indexR)
+                    {
+                        return FontStyle.FontStyleRegular;
+                    }
+                    else if (-1 != this.indexI)
+                    {
+                        return FontStyle.FontStyleItalic;
+                    }
+                    else if (-1 != this.indexB)
+                    {
+                        return FontStyle.FontStyleBold;
+                    }
+                    else
+                    {
+                        return FontStyle.FontStyleBoldItalic;
+                    }
                 }
-                break;
             }
-            case FontStyle.FontStyleItalic:
-            {
-                if (-1 != this.indexI)
-                {
-                    return FontStyle.FontStyleItalic;
-                }
-                else if (-1 != this.indexR)
-                {
-                    return FontStyle.FontStyleRegular;
-                }
-                else if (-1 != this.indexBI)
-                {
-                    return FontStyle.FontStyleBoldItalic;
-                }
-                else
-                {
-                    return FontStyle.FontStyleBold;
-                }
-                break;
-            }
-            case FontStyle.FontStyleRegular:
-            {
-                if (-1 != this.indexR)
-                {
-                    return FontStyle.FontStyleRegular;
-                }
-                else if (-1 != this.indexI)
-                {
-                    return FontStyle.FontStyleItalic;
-                }
-                else if (-1 != this.indexB)
-                {
-                    return FontStyle.FontStyleBold;
-                }
-                else
-                {
-                    return FontStyle.FontStyleBoldItalic;
-                }
-            }
+            return FontStyle.FontStyleRegular;
         }
-        return FontStyle.FontStyleRegular;
+    };
+
+    // здесь если type == FONT_TYPE_EMBEDDED, то thumbnail - это base64 картинка,
+    // иначе - это позиция (y) в общем табнейле всех шрифтов (ADDITIONAL и STANDART)
+    function CFont(name, id, type, thumbnail, style)
+    {
+        this.name = name;
+        this.id = id;
+        this.type = type;
+        this.thumbnail = thumbnail;
+        if(null != style)
+            this.NeedStyles = style;
+        else
+            this.NeedStyles = fontstyle_mask_regular | fontstyle_mask_italic | fontstyle_mask_bold | fontstyle_mask_bolditalic;
     }
-};
+    CFont.prototype.asc_getFontId = function() { return this.id; };
+    CFont.prototype.asc_getFontName = function()
+    {
+        var _name = AscFonts.g_fontApplication ? AscFonts.g_fontApplication.NameToInterface[this.name] : null;
+        return _name ? _name : this.name;
+    };
+    CFont.prototype.asc_getFontThumbnail = function() { return this.thumbnail; };
+    CFont.prototype.asc_getFontType = function() { return this.type; };
 
-// здесь если type == FONT_TYPE_EMBEDDED, то thumbnail - это base64 картинка,
-// иначе - это позиция (y) в общем табнейле всех шрифтов (ADDITIONAL и STANDART)
-function CFont(name, id, type, thumbnail, style)
-{
-    this.name = name;
-    this.id = id;
-    this.type = type;
-    this.thumbnail = thumbnail;
-    if(null != style)
-        this.NeedStyles = style;
-    else
-        this.NeedStyles = fontstyle_mask_regular | fontstyle_mask_italic | fontstyle_mask_bold | fontstyle_mask_bolditalic;
-}
-CFont.prototype.asc_getFontId = function() { return this.id; };
-CFont.prototype.asc_getFontName = function()
-{
-    var _name = AscFonts.g_fontApplication ? AscFonts.g_fontApplication.NameToInterface[this.name] : null;
-    return _name ? _name : this.name;
-};
-CFont.prototype.asc_getFontThumbnail = function() { return this.thumbnail; };
-CFont.prototype.asc_getFontType = function() { return this.type; };
+    var ImageLoadStatus =
+    {
+        Loading : 0,
+        Complete : 1
+    };
 
-var ImageLoadStatus =
-{
-    Loading : 0,
-    Complete : 1
-};
-
-function CImage(src)
-{
-    this.src    = src;
-    this.Image  = null;
-    this.Status = ImageLoadStatus.Complete;
-}
+    function CImage(src)
+    {
+        this.src    = src;
+        this.Image  = null;
+        this.Status = ImageLoadStatus.Complete;
+    }
 
 	var g_font_files, g_font_infos;
-	(function(){
-		// ALL_FONTS_PART -------------------------------------------------------------
-
+	function checkAllFonts()
+    {
         var i, l;
         var files = window["__fonts_files"];
 		if (!files && window["native"] && window["native"]["GenerateAllFonts"])
@@ -1464,13 +1198,13 @@ function CImage(src)
 		// удаляем временные переменные
 		delete window["__fonts_files"];
 		delete window["__fonts_infos"];
-	})();
+
+        window['AscFonts'].g_font_files = g_font_files;
+        window['AscFonts'].g_font_infos = g_font_infos;
+	}
 
     //------------------------------------------------------export------------------------------------------------------
-    var prot;
     window['AscFonts'] = window['AscFonts'] || {};
-    window['AscFonts'].g_font_files = g_font_files;
-    window['AscFonts'].g_font_infos = g_font_infos;
     window['AscFonts'].g_map_font_index = g_map_font_index;
     window['AscFonts'].g_fonts_streams = g_fonts_streams;
 
@@ -1483,13 +1217,19 @@ function CImage(src)
     window['AscFonts'].GenerateMapId = GenerateMapId;
     window['AscFonts'].CFontInfo = CFontInfo;
     window['AscFonts'].CFont = CFont;
-    prot = CFont.prototype;
+
+    var prot = CFont.prototype;
     prot['asc_getFontId'] = prot.asc_getFontId;
     prot['asc_getFontName'] = prot.asc_getFontName;
     prot['asc_getFontThumbnail'] = prot.asc_getFontThumbnail;
     prot['asc_getFontType'] = prot.asc_getFontType;
     window['AscFonts'].ImageLoadStatus = ImageLoadStatus;
+
     window['AscFonts'].CImage = CImage;
+
+    window['AscFonts'].checkAllFonts = checkAllFonts;
+
+    checkAllFonts();
 
 })(window, window.document);
 

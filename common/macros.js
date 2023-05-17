@@ -101,8 +101,7 @@ function (window, undefined)
 				if (true !== obj["macrosArray"][i]["autostart"])
 					continue;
 
-				var script = "(function(Api, window, alert, document, XMLHttpRequest){\n" + "\"use strict\"" + ";\n" + obj["macrosArray"][i]["value"] + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
-				eval(script);
+				AscCommon.safePluginEval(obj["macrosArray"][i]["value"]);
 			}
 		}
 		catch (err)
@@ -121,8 +120,7 @@ function (window, undefined)
 			{
 				if (sGuid === obj["macrosArray"][i]["guid"])
 				{
-					var script = "(function(Api, window, alert, document, XMLHttpRequest){\n" + "\"use strict\"" + ";\n" + obj["macrosArray"][i]["value"] + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
-					eval(script);
+					AscCommon.safePluginEval(obj["macrosArray"][i]["value"]);
 					break;
 				}
 			}
@@ -433,9 +431,33 @@ function (window, undefined)
 				}
 			});
 		};
-	};
+	}
 
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].CDocumentMacros = CDocumentMacros;
 	window['AscCommon'].VbaProject = VbaProject;
+
+	// TODO: Use this code with closurecompiler markers
+	/*
+	window['AscCommon'].safePluginEval = function(value) {
+
+		var closure = function(Api, window, alert, document, XMLHttpRequest) {
+
+			eval("\"use strict\";\r\n" + value);
+
+		};
+
+		closure.call({}, window.g_asc_plugins.api, {}, function(){}, {}, customXMLHttpRequest);
+
+	};
+	*/
+
+	var _safe_eval_closure = new Function("Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
+	window['AscCommon'].safePluginEval = function(value) {
+
+		return _safe_eval_closure.call({}, window.g_asc_plugins.api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, value);
+
+	};
+
+
 })(window);

@@ -925,7 +925,7 @@
                 oCPres.attrAutoCompressPictures = oParsedObj["autoCompressPictures"];
                 oCPres.attrBookmarkIdSeed = oParsedObj["bookmarkIdSeed"];
                 oCPres.attrCompatMode = oParsedObj["compatMode"];
-                oCPres.attrConformance = oParsedObj["conformance"] === "strict" ? c_oAscConformanceType.Strict : c_oAscConformanceType.Transitional;
+                oCPres.attrConformance = oParsedObj["conformance"] === "strict" ? Asc.c_oAscConformanceType.Strict : Asc.c_oAscConformanceType.Transitional;
                 oCPres.attrEmbedTrueTypeFonts = oParsedObj["embedTrueTypeFonts"];
                 oCPres.attrFirstSlideNum = oParsedObj["firstSlideNum"];
                 oCPres.attrRemovePersonalInfoOnSave = oParsedObj["removePersonalInfoOnSave"];

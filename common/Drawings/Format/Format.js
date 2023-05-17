@@ -1065,7 +1065,8 @@
 			TEXT: 2,
 			EMPTY_PH: 3,
 			CHART_TEXT: 4,
-			CROP: 5
+			CROP: 5,
+			FORM: 6
 		};
 		var TYPE_KIND = {
 			SLIDE: 0,
@@ -2649,11 +2650,16 @@
 		};
 		CUniColor.prototype.getCSSColor = function (transparent) {
 			if (transparent != null) {
-				var _css = "rgba(" + this.RGBA.R + "," + this.RGBA.G + "," + this.RGBA.B + ",1)";
-				return _css;
+				return this.getCSSWithTransparent(1);
 			}
-			var _css = "rgba(" + this.RGBA.R + "," + this.RGBA.G + "," + this.RGBA.B + "," + (this.RGBA.A / 255) + ")";
-			return _css;
+			return this.getCSSWithTransparent(this.RGBA.A / 255);
+		};
+		CUniColor.prototype.getCSSValue = function (r, g, b, a) {
+			return "rgba(" + r + "," + g + "," + b + ","+ a +")";
+		};
+		CUniColor.prototype.getCSSWithTransparent = function(dTransparent) {
+			const oC = this.RGBA;
+			return this.getCSSValue(oC.R, oC.G, oC.B, dTransparent);
 		};
 		CUniColor.prototype.isCorrect = function () {
 			if (this.color !== null && this.color !== undefined) {
@@ -2680,6 +2686,89 @@
 		};
 		CUniColor.prototype.isUnicolor = function (sName) {
 			return !!CUniColor.prototype.UNICOLOR_MAP[sName];
+		};
+		CUniColor.prototype.read = function (_params, _cursor) {
+			let _continue = true;
+			while (_continue) {
+				let _attr = _params[_cursor.pos++];
+				switch (_attr) {
+					case 0: {
+						this.color = new AscFormat.CPrstColor();
+						this.color.type = _params[_cursor.pos++];
+						this.color.id = _params[_cursor.pos++];
+						this.color.RGBA = {
+							R: _params[_cursor.pos++],
+							G: _params[_cursor.pos++],
+							B: _params[_cursor.pos++],
+							A: _params[_cursor.pos++],
+							needRecalc: _params[_cursor.pos++]
+						};
+						break;
+					}
+					case 1: {
+						var _count = _params[_cursor.pos++];
+						for (var i = 0; i < _count; i++) {
+							var _mod = new AscFormat.CColorMod();
+							_mod.name = _params[_cursor.pos++];
+							_mod.val = _params[_cursor.pos++];
+							this.Mods.push(_mod);
+						}
+						break;
+					}
+					case 2: {
+						this.RGBA = {
+							R: _params[_cursor.pos++],
+							G: _params[_cursor.pos++],
+							B: _params[_cursor.pos++],
+							A: _params[_cursor.pos++]
+						}
+						break;
+					}
+					case 255:
+					default: {
+						_continue = false;
+						break;
+					}
+				}
+			}
+		};
+		CUniColor.prototype.write = function (_type, _stream) {
+			_stream["WriteByte"](_type);
+
+			if (this.color !== undefined && this.color !== null)
+			{
+				_stream["WriteByte"](0);
+				_stream["WriteLong"](this.color.type);
+				_stream["WriteStringA"](this.color.id);
+				_stream["WriteByte"](this.color.RGBA.R);
+				_stream["WriteByte"](this.color.RGBA.G);
+				_stream["WriteByte"](this.color.RGBA.B);
+				_stream["WriteByte"](this.color.RGBA.A);
+				_stream["WriteBool"](this.color.RGBA.needRecalc);
+			}
+			if (this.Mods !== undefined && this.Mods !== null)
+			{
+				_stream["WriteByte"](1);
+
+				var _len = this.Mods.length;
+				_stream["WriteLong"](_len);
+
+				for (var i = 0; i < _len; i++)
+				{
+					_stream["WriteStringA"](this.Mods[i].name);
+					_stream["WriteLong"](this.Mods[i].val);
+				}
+			}
+			if (this.RGBA !== undefined && this.RGBA !== null)
+			{
+				_stream["WriteByte"](2);
+				_stream["WriteByte"](this.RGBA.R);
+				_stream["WriteByte"](this.RGBA.G);
+				_stream["WriteByte"](this.RGBA.B);
+				_stream["WriteByte"](this.RGBA.A);
+			}
+
+			_stream["WriteByte"](255);
 		};
 
 		function CreateUniColorRGB(r, g, b) {
@@ -3865,6 +3954,11 @@
 		};
 		COuterShdw.prototype.createDuplicate = function () {
 			var oCopy = new COuterShdw();
+			this.fillObject(oCopy);
+			return oCopy;
+		};
+
+		COuterShdw.prototype.fillObject = function (oCopy) {
 			oCopy.color = this.color.createDuplicate();
 			oCopy.algn = this.algn;
 			oCopy.blurRad = this.blurRad;
@@ -3875,7 +3969,6 @@
 			oCopy.rotWithShape = this.rotWithShape;
 			oCopy.sx = this.sx;
 			oCopy.sy = this.sy;
-			return oCopy;
 		};
 		COuterShdw.prototype.IsIdentical = function (other) {
 			if (!other) {
@@ -3897,6 +3990,11 @@
 			}
 			return true;
 		};
+		COuterShdw.prototype.getAscShdw = function() {
+			const oCopy = new asc_CShadowProperty();
+			this.fillObject(oCopy);
+			return oCopy;
+		};
 
 		function asc_CShadowProperty() {
 			COuterShdw.call(this);
@@ -3915,8 +4013,91 @@
 			this.rotWithShape = false;
 		}
 
-		asc_CShadowProperty.prototype = Object.create(COuterShdw.prototype);
-		asc_CShadowProperty.prototype.constructor = asc_CShadowProperty;
+		InitClass(asc_CShadowProperty, COuterShdw, 0);
+		asc_CShadowProperty.prototype.write = function (_type, _stream) {
+			_stream["WriteByte"](_type);
+
+			if (this.color) {
+				this.color.write(0, _stream);
+			}
+
+			if (this.algn !== undefined && this.algn !== null) {
+				_stream["WriteByte"](1);
+				_stream["WriteLong"](this.algn);
+			}
+			if (this.blurRad !== undefined && this.blurRad !== null) {
+				_stream["WriteByte"](2);
+				_stream["WriteLong"](this.blurRad);
+			}
+			if (this.dir !== undefined && this.dir !== null) {
+				_stream["WriteByte"](3);
+				_stream["WriteLong"](this.dir);
+			}
+			if (this.dist !== undefined && this.dist !== null) {
+				_stream["WriteByte"](4);
+				_stream["WriteLong"](this.dist);
+			}
+			if (this.rotWithShape !== undefined && this.rotWithShape !== null) {
+				_stream["WriteByte"](5);
+				_stream["WriteBool"](this.dist);
+			}
+			_stream["WriteByte"](6);
+			_stream["WriteBool"](true);
+
+			_stream["WriteByte"](255);
+		};
+		asc_CShadowProperty.prototype.read = function (_params, _cursor) {
+			let _continue = true;
+			while (_continue) {
+				let _attr = _params[_cursor.pos++];
+
+				switch (_attr) {
+					case 0: {
+						this.color = new AscFormat.CUniColor();
+						this.color.read(_params, _cursor);
+						break;
+					}
+					case 1: {
+						this.algn = _params[_cursor.pos++];
+						break;
+					}
+					case 2: {
+						this.blurRad = _params[_cursor.pos++];
+						break;
+					}
+					case 3: {
+						this.dir = _params[_cursor.pos++];
+						break;
+					}
+					case 4: {
+						this.dist = _params[_cursor.pos++];
+						break;
+					}
+					case 5: {
+						this.rotWithShape = _params[_cursor.pos++];
+						break;
+					}
+					case 6: {
+						if (!_params[_cursor.pos++]) {
+							return null;
+						}
+						break;
+					}
+					case 255:
+					default: {
+						_continue = false;
+						break;
+					}
+				}
+			}
+			return this;
+		};
+
+		asc_CShadowProperty.prototype.createDuplicate = function () {
+			var oCopy = new asc_CShadowProperty();
+			this.fillObject(oCopy);
+			return oCopy;
+		};
 
 
 		window['Asc'] = window['Asc'] || {};
@@ -11983,7 +12164,7 @@
 
 		InitClass(CApp, CBaseNoIdObject, 0);
 		CApp.prototype.getAppName = function() {
-			return "@@AppName/@@Version";
+			return AscCommon.g_cCompanyName + "/" + AscCommon.g_cProductVersion;
 		};
 		CApp.prototype.setRequiredDefaults = function() {
 			this.Application = this.getAppName();

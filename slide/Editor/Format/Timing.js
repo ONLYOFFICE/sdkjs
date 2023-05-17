@@ -188,7 +188,6 @@
     };
     CBaseAnimObject.prototype.getEffectById = function (sId, oMltEffect) {
         if (!oMltEffect) {
-            var oNewMltEffect = new CMultiple();
             return this.getEffectById(sId, oMltEffect);
         }
         this.traverse(function (oChild) {
@@ -6410,7 +6409,7 @@
         if (this.tm === null) {
             return 1.0;
         }
-        if (this.tm.indexOf("%") === this.tm.length - 1) {
+        if (this.tm.endsWith("%")) {
             return this.parsePercentage(this.tm);
         }
         var nTm = parseInt(this.tm);

@@ -124,7 +124,7 @@
 	 * @property {ApiComment | null} Comments - Returns the ApiComment collection that represents all the comments from the specified worksheet.
 	 * @property {'xlDownward' | 'xlHorizontal' | 'xlUpward' | 'xlVertical'} Orientation - Sets an angle to the current cell range.
 	 * @property {ApiAreas} Areas - Returns a collection of the areas.
-	 * @property {ApiCharacters} Characters - Returns a Characters object that represents a range of characters within the object text. Use the Characters object to format characters within a text string.
+	 * @property {ApiCharacters} Characters - Returns the ApiCharacters object that represents a range of characters within the object text. Use the ApiCharacters object to format characters within a text string.
 	 */
 	function ApiRange(range, areas) {
 		this.range = range;
@@ -303,11 +303,11 @@
 	/**
 	 * Class representing characters in an object that contains text.
 	 * @constructor
-	 * @property {number} Count - Returns a value that represents the number of objects in the collection.
-	 * @property {ApiRange} Parent - Returns the parent object for the specified object.
-	 * @property {Array} Caption - Returns or sets a String value that represents the text of this range of characters.
-	 * @property {Array} Text - Returns or sets the text for the specified object.
-	 * @property {ApiRange} Font - Returns a Font object that represents the font of the specified object.
+	 * @property {number} Count - The number of characters in the collection.
+	 * @property {ApiRange} Parent - The parent object of the specified characters.
+	 * @property {string} Caption - The text of the specified range of characters.
+	 * @property {string} Text - The string value representing the text of the specified range of characters.
+	 * @property {ApiFont} Font - The font of the specified characters.
 	 */
 	function ApiCharacters(options, parent) {
 		this._options = options;
@@ -315,18 +315,18 @@
 	}
 
 	/**
-	 * Class contains the font attributes (font name, font size, color, and so on) for an object.
+	 * Class that contains the font attributes (font name, font size, color, and so on).
 	 * @constructor
-	 * @property {ApiCharacters} Parent - Returns the parent object for the specified object.
-	 * @property {boolean || null} Bold - Returns or sets the bold property to the text characters.
-	 * @property {boolean || null} Italic - Returns or sets the italic property to the text characters.
-	 * @property {number || null} Size - Returns or sets size property to the text characters.
-	 * @property {boolean || null} Strikethrough - Returns or sets the strikethrough property to the text characters.
-	 * @property {string || null} Underline - Returns or sets the type of underline applied to the font.
-	 * @property {boolean || null} Subscript - Returns or sets the subscript property to the text characters.
-	 * @property {boolean || null} Superscript - Returns or sets the superscript property to the text characters.
-	 * @property {string || null} Name - Returns or sets the font name property to the text characters.
-	 * @property {ApiColor || null} Color - Returns or sets the font color property to the text characters.
+	 * @property {ApiCharacters} Parent - The parent object of the specified font object.
+	 * @property {boolean | null} Bold - The font bold property.
+	 * @property {boolean | null} Italic - The font italic property.
+	 * @property {number | null} Size - The font size property.
+	 * @property {boolean | null} Strikethrough - The font strikethrough property.
+	 * @property {string | null} Underline - The font type of underline.
+	 * @property {boolean | null} Subscript - The font subscript property.
+	 * @property {boolean | null} Superscript - The font superscript property.
+	 * @property {string | null} Name - The font name.
+	 * @property {ApiColor | null} Color - The font color property.
 	 */
 	function ApiFont(object) {
 		this._object = object;
@@ -916,7 +916,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} row - The row number or the cell number (if only row is defined).
 	 * @param {number} col - The column number.
-	 * @returns {ApiRange || Error}
+	 * @returns {ApiRange | Error}
 	 */
 	ApiWorksheet.prototype.GetCells = function (row, col) {
 		let result;
@@ -1788,11 +1788,11 @@
 	};
 
 	/**
-	 * Moves the sheet to another location in the workbook.
+	 * Moves the current sheet to another location in the workbook.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiWorksheet} before - The sheet before which the moved sheet will be placed. You cannot specify Before if you specify After.
-	 * @param {ApiWorksheet} after - The sheet after which the moved sheet will be placed. You cannot specify After if you specify Before.
+	 * @param {ApiWorksheet} before - The sheet before which the current sheet will be placed. You cannot specify "before" if you specify "after".
+	 * @param {ApiWorksheet} after - The sheet after which the current sheet will be placed. You cannot specify "after" if you specify "before".
 	*/
 	ApiWorksheet.prototype.Move = function(before, after) {
 		let bb = before instanceof ApiWorksheet;
@@ -3236,19 +3236,39 @@
 			return new Error ("Invalid range");
 		}
 	};
-	
+
 	/**
-	 * Finds specific information in a range.
+	 * Search data type (formulas or values).
+	 * @typedef {("xlFormulas" | "xlValues")} XlFindLookIn
+	 */
+
+	/**
+	 * Specifies whether the whole search text or any part of the search text is matched.
+	 * @typedef {("xlWhole" | "xlPart")} XlLookAt
+	 */
+
+	/**
+	 * Range search order - by rows or by columns.
+	 * @typedef {("xlByRows" | "xlByColumns")} XlSearchOrder
+	 */
+
+	/**
+	 * Range search direction - next match or previous match.
+	 * @typedef {("xlNext" | "xlPrevious")} XlSearchDirection
+	 */
+
+	/**
+	 * Finds specific information in the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {String | undefined} What - The data to search for.
-	 * @param {ApiRange} After - The cell after which you want the search to begin. If you don't specify this argument, the search starts after the cell in the upper-left corner of the range.
-	 * @param {String} LookIn - Can be one of the following XlFindLookIn constants: xlFormulas, xlValues.
-	 * @param {String} LookAt - Can be one of the following XlLookAt constants: xlWhole or xlPart.
-	 * @param {String} SearchOrder - Can be one of the following XlSearchOrder constants: xlByRows or xlByColumns.
-	 * @param {String} SearchDirection - Can be one of the following XlSearchDirection constants: xlNext or xlPrevious.
-	 * @param {Boolean} MatchCase - True to make the search case-sensitive. The default value is False.
-	 * @returns {ApiRange | null} - returns null if range does not contains such text.
+	 * @param {string | undefined} What - The data to search for.
+	 * @param {ApiRange} After - The cell after which you want the search to begin. If this argument is not specified, the search starts after the cell in the upper-left corner of the range.
+	 * @param {XlFindLookIn} LookIn - Search data type (formulas or values).
+	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
+	 * @param {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
+	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
+	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
+	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
 	 * 
 	 */
 	ApiRange.prototype.Find = function(What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase) {
@@ -3285,11 +3305,11 @@
 	};
 
 	/**
-	 * Continues a search that was begun with the Find method. Finds the next cell that matches those same conditions and returns a Range object that represents that cell. This does not affect the selection or the active cell..
+	 * Continues a search that was begun with the {@link ApiRange#Find} method. Finds the next cell that matches those same conditions and returns the ApiRange object that represents that cell. This does not affect the selection or the active cell.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} After - The cell after which you want the search to begin. If you don't specify this argument, the search starts from the last founded cell.
-	 * @returns {ApiRange} - returns null if range does not contains such text.
+	 * @param {ApiRange} After - The cell after which the search will start. If this argument is not specified, the search starts from the last cell found.
+	 * @returns {ApiRange} - Returns null if the range does not contain such text.
 	 * 
 	*/
 	ApiRange.prototype.FindNext = function(After) {
@@ -3324,11 +3344,11 @@
 	};
 
 	/**
-	 * Continues a search that was begun with the Find method. Finds the next cell that matches those same conditions and returns a Range object that represents that cell. This does not affect the selection or the active cell..
+	 * Continues a search that was begun with the {@link ApiRange#Find} method. Finds the previous cell that matches those same conditions and returns the ApiRange object that represents that cell. This does not affect the selection or the active cell.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} Before - The cell before which you want the search to begin. If you don't specify this argument, the search starts from the last founded cell.
-	 * @returns {ApiRange} - returns null if range does not contains such text.
+	 * @param {ApiRange} Before - The cell before which the search will start. If this argument is not specified, the search starts from the last cell found.
+	 * @returns {ApiRange} - Returns null if the range does not contain such text.
 	 * 
 	*/
 	ApiRange.prototype.FindPrevious = function(Before) {
@@ -3366,13 +3386,13 @@
 	 * Replaces specific information to another one in a range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {String | undefined} What - The data to search for.
-	 * @param {String} Replacement - The replacement string.
-	 * @param {String} LookAt - Can be one of the following XlLookAt constants: xlWhole or xlPart.
-	 * @param {String} SearchOrder - Can be one of the following XlSearchOrder constants: xlByRows or xlByColumns.
-	 * @param {String} SearchDirection - Can be one of the following XlSearchDirection constants: xlNext or xlPrevious.
-	 * @param {Boolean} MatchCase - True to make the search case-sensitive. The default value is False.
-	 * @param {Boolean} ReplaceAll - True to replace all. The default value is True.
+	 * @param {string | undefined} What - The data to search for.
+	 * @param {string} Replacement - The replacement string.
+	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
+	 * @param {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
+	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
+	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
+	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
 	 * 
 	 */
 	ApiRange.prototype.Replace = function(What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll) {
@@ -3406,12 +3426,12 @@
 				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
 			}
 		} else {
-			return new Error('Invalid type of parametr "What" or "Replacement.')
+			return new Error('Invalid type of parametr "What" or "Replacement".')
 		}
 	};
 
 	/**
-	 * Returns a Characters object that represents a range of characters within the object text. Use the Characters object to format characters within a text string.
+	 * Returns the ApiCharacters object that represents a range of characters within the object text. Use the ApiCharacters object to format characters within a text string.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Start - The first character to be returned. If this argument is either 1 or omitted, this property returns a range of characters starting with the first character.
@@ -4603,7 +4623,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Returns a value that represents the number of objects in the collection.
+	 * Returns a value that represents a number of objects in the collection.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
@@ -4620,7 +4640,7 @@
 	});
 
 	/**
-	 * Returns the parent object for the specified object.
+	 * Returns the parent object of the specified characters.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
@@ -4637,7 +4657,7 @@
 	});
 
 	/**
-	 * Deletes the object.
+	 * Deletes the ApiCharacters object.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @since 7.4.0
@@ -4673,10 +4693,10 @@
 	};
 
 	/**
-	 * Returns the parent object for the specified object.
+	 * Inserts a string replacing the specified characters.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
-	 * @param {String} String - A string value that represents the text of this range of characters.
+	 * @param {string} String - The string to insert.
 	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.Insert = function (String) {
@@ -4736,10 +4756,10 @@
 	};
 
 	/**
-	 * Sets a String value that represents the text of this range of characters.
+	 * Sets a string value that represents the text of the specified range of characters.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
-	 * @param {String} Caption - A string value that represents the text of this range of characters.
+	 * @param {string} Caption - A string value that represents the text of the specified range of characters.
 	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.SetCaption = function (Caption) {
@@ -4747,10 +4767,10 @@
 	};
 
 	/**
-	 * Returns a String value that represents the text of this range of characters.
+	 * Returns a string value that represents the text of the specified range of characters.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
-	 * @param {String} Caption - A string value that represents the text of this range of characters.
+	 * @returns {string} - A string value that represents the text of the specified range of characters.
 	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.GetCaption = function () {
@@ -4771,10 +4791,10 @@
 	});
 
 	/**
-	 * Sets the text for the specified object.
+	 * Sets the text for the specified characters.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
-	 * @param {String} Text - The text of this range of characters.
+	 * @param {string} Text - The text to be set.
 	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.SetText = function (Text) {
@@ -4782,10 +4802,10 @@
 	};
 
 	/**
-	 * Returns the text for the specified object.
+	 * Returns the text of the specified range of characters.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
-	 * @returns {String}
+	 * @returns {string} - The text of the specified range of characters.
 	 * @since 7.4.0
 	 */
 	ApiCharacters.prototype.GetText = function () {
@@ -4802,7 +4822,7 @@
 	});
 
 	/**
-	 * Returns a Font object that represents the font of the specified object.
+	 * Returns the ApiFont object that represents the font of the specified characters.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFont}
@@ -4826,10 +4846,10 @@
 
 
 	/**
-	 * Returns the parent object for the specified object.
+	 * Returns the parent ApiCharacters object of the specified font.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCharacters}
+	 * @returns {ApiCharacters} - The parent ApiCharacters object.
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetParent = function () {
@@ -4843,10 +4863,10 @@
 	});
 
 	/**
-	 * Returns the bold property to the text characters.
+	 * Returns the bold property of the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @returns {boolean || null}
+	 * @returns {boolean | null}
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetBold = function () {
@@ -4875,7 +4895,7 @@
 	};
 
 	/**
-	 * Sets the bold property to the text characters.
+	 * Sets the bold property to the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isBold - Specifies that the text characters are displayed bold.
@@ -4923,10 +4943,10 @@
 	});
 
 	/**
-	 * Returns the italic property to the text characters.
+	 * Returns the italic property of the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @returns {boolean || null}
+	 * @returns {boolean | null}
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetItalic = function () {
@@ -4955,7 +4975,7 @@
 	};
 
 	/**
-	 * Sets the italic property to the text characters.
+	 * Sets the italic property to the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isItalic - Specifies that the text characters are displayed italic.
@@ -5003,10 +5023,10 @@
 	});
 
 	/**
-	 * Returns the font size property to the text characters.
+	 * Returns the font size property of the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @returns {number || null}
+	 * @returns {number | null}
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetSize = function () {
@@ -5035,7 +5055,7 @@
 	};
 
 	/**
-	 * Sets the font size property to the text characters.
+	 * Sets the font size property to the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Size - Font size.
@@ -5083,10 +5103,10 @@
 	});
 
 	/**
-	 * Returns the strikethrough property to the text characters.
+	 * Returns the strikethrough property of the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @returns {boolean || null}
+	 * @returns {boolean | null}
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetStrikethrough = function () {
@@ -5115,7 +5135,7 @@
 	};
 
 	/**
-	 * Sets the strikethrough property to the text characters.
+	 * Sets the strikethrough property to the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isStrikethrough - Specifies that the text characters are displayed strikethrough.
@@ -5163,10 +5183,15 @@
 	});
 
 	/**
-	 * Returns the type of underline applied to the font.
+	 * Underline type.
+	 * @typedef {("xlUnderlineStyleDouble" | "xlUnderlineStyleDoubleAccounting" | "xlUnderlineStyleNone" | "xlUnderlineStyleSingle" | "xlUnderlineStyleSingleAccounting")} XlUnderlineStyle
+	 */
+
+	/**
+	 * Returns the type of underline applied to the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @returns {string || null}
+	 * @returns {XlUnderlineStyle | null}
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetUnderline = function () {
@@ -5221,10 +5246,10 @@
 	};
 
 	/**
-	 * Sets the type of underline applied to the font.
+	 * Sets an underline of the type specified in the request to the current font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @param {string} Underline - type of underline.
+	 * @param {XlUnderlineStyle} Underline - Underline type.
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetUnderline = function (Underline) {
@@ -5294,10 +5319,10 @@
 	});
 
 	/**
-	 * Returns the subscript property to the text characters.
+	 * Returns the subscript property of the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @returns {boolean || null}
+	 * @returns {boolean | null}
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetSubscript = function () {
@@ -5326,7 +5351,7 @@
 	};
 
 	/**
-	 * Sets the subscript property to the text characters.
+	 * Sets the subscript property to the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSubscript - Specifies that the text characters are displayed subscript.
@@ -5334,7 +5359,7 @@
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
 		if (typeof isSubscript !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isSubscript".'));
+			console.error(new Error('Invalid type of parameter "isSubscript".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5374,10 +5399,10 @@
 	});
 
 	/**
-	 * Returns the superscript property to the text characters.
+	 * Returns the superscript property of the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @returns {boolean || null}
+	 * @returns {boolean | null}
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetSuperscript = function () {
@@ -5406,7 +5431,7 @@
 	};
 
 	/**
-	 * Sets the superscript property to the text characters.
+	 * Sets the superscript property to the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSuperscript - Specifies that the text characters are displayed superscript.
@@ -5454,10 +5479,10 @@
 	});
 
 	/**
-	 * Returns the font name property to the text characters.
+	 * Returns the font name property of the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @returns {String || null}
+	 * @returns {string | null}
 	 * @since 7.4.0
 	 */
 	 ApiFont.prototype.GetName = function () {
@@ -5486,10 +5511,10 @@
 	};
 
 	/**
-	 * Sets the font name property to the text characters.
+	 * Sets the font name property to the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @param {String} FontName - Specifies a font name for characters.
+	 * @param {string} FontName - Font name.
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
@@ -5535,10 +5560,10 @@
 	});
 
 	/**
-	 * Returns the font color property to the text characters.
+	 * Returns the font color property of the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiColor || null}
+	 * @returns {ApiColor | null}
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.GetColor = function () {
@@ -5567,10 +5592,10 @@
 	};
 
 	/**
-	 * Sets the font color property to the text characters.
+	 * Sets the font color property to the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor} Color - Specifies a font color for characters.
+	 * @param {ApiColor} Color - Font color.
 	 * @since 7.4.0
 	 */
 	ApiFont.prototype.SetColor = function (Color) {

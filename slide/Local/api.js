@@ -160,7 +160,9 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 	var jsonOptions = {
 		"documentLayout" : {
 			"openedAt" : editor.openedAt
-		}
+		},
+		"locale" : editor.asc_getLocale(),
+		"translate" : AscCommon.translateManager.mapTranslate
 	};
 
 	if (options && options.advancedOptions)

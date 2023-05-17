@@ -202,6 +202,18 @@
 		return false;
 	}
 
+	function asc_menu_ReadPaddings(_params, _cursor){
+		const _paddings = new Asc.asc_CPaddings();
+		_paddings.read(_params, _cursor);
+		return _paddings;
+	}
+
+	function asc_menu_ReadColor(_params, _cursor) {
+		const _color = new Asc.asc_CColor();
+		_color.read(_params, _cursor);
+		return _color;
+	}
+
 	var c_oLicenseResult = {
 		Error         : 1,
 		Expired       : 2,
@@ -336,7 +348,7 @@
 		this.buildNumber = null;
 		this.liveViewerSupport = null;
 
-		this.betaVersion = '@@Beta';
+		this.betaVersion = AscCommon.g_cIsBeta;
 
 		return this;
 	}
@@ -2065,7 +2077,9 @@
 
 	};
 	asc_ChartSettings.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
+		if(_type !== undefined && _type !== null) {
+			_stream["WriteByte"](_type);
+		}
 
 		if (this.style !== undefined && this.style !== null)
 		{
@@ -2595,6 +2609,119 @@
 		if(!AscFormat.isRealNumber(this.ColorSchemeId)) {
 			this.ColorSchemeId = -1;
 		}
+	};
+	asc_CColor.prototype.read = function (_params, _cursor) {
+		let _continue = true;
+		while (_continue) {
+			let _attr = _params[_cursor.pos++];
+			switch (_attr) {
+				case 0: {
+					this.type = _params[_cursor.pos++];
+					break;
+				}
+				case 1: {
+					this.r = _params[_cursor.pos++];
+					break;
+				}
+				case 2: {
+					this.g = _params[_cursor.pos++];
+					break;
+				}
+				case 3: {
+					this.b = _params[_cursor.pos++];
+					break;
+				}
+				case 4: {
+					this.a = _params[_cursor.pos++];
+					break;
+				}
+				case 5: {
+					this.Auto = _params[_cursor.pos++];
+					break;
+				}
+				case 6: {
+					this.value = _params[_cursor.pos++];
+					break;
+				}
+				case 7: {
+					this.ColorSchemeId = _params[_cursor.pos++];
+					break;
+				}
+				case 8: {
+					let _count = _params[_cursor.pos++];
+					for (let i = 0; i < _count; i++) {
+						let _mod = new AscFormat.CColorMod();
+						_mod.name = _params[_cursor.pos++];
+						_mod.val = _params[_cursor.pos++];
+						this.Mods.push(_mod);
+					}
+					break;
+				}
+				case 255:
+				default: {
+					_continue = false;
+					break;
+				}
+			}
+		}
+	};
+	asc_CColor.prototype.write = function (_type, _stream) {
+		_stream["WriteByte"](_type);
+		if (this.type !== undefined && this.type !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.type);
+		}
+		if (this.r !== undefined && this.r !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteByte"](this.r);
+		}
+		if (this.g !== undefined && this.g !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteByte"](this.g);
+		}
+		if (this.b !== undefined && this.b !== null)
+		{
+			_stream["WriteByte"](3);
+			_stream["WriteByte"](this.b);
+		}
+		if (this.a !== undefined && this.a !== null)
+		{
+			_stream["WriteByte"](4);
+			_stream["WriteByte"](this.a);
+		}
+		if (this.Auto !== undefined && this.Auto !== null)
+		{
+			_stream["WriteByte"](5);
+			_stream["WriteBool"](this.Auto);
+		}
+		if (this.value !== undefined && this.value !== null)
+		{
+			_stream["WriteByte"](6);
+			_stream["WriteLong"](this.value);
+		}
+		if (this.ColorSchemeId !== undefined && this.ColorSchemeId !== null)
+		{
+			_stream["WriteByte"](7);
+			_stream["WriteLong"](this.ColorSchemeId);
+		}
+		if (this.Mods !== undefined && this.Mods !== null)
+		{
+			_stream["WriteByte"](8);
+
+			var _len = this.Mods.length;
+			_stream["WriteLong"](_len);
+
+			for (var i = 0; i < _len; i++)
+			{
+				_stream["WriteString1"](this.Mods[i].name);
+				_stream["WriteLong"](this.Mods[i].val);
+			}
+		}
+
+		_stream["WriteByte"](255);
 	};
 
 	/** @constructor */
@@ -3530,23 +3657,90 @@
 		}
 	}
 
-	asc_CPaddings.prototype = {
-		asc_getLeft: function () {
+	asc_CPaddings.prototype.asc_getLeft = function () {
 			return this.Left;
-		}, asc_putLeft: function (v) {
+		};
+	asc_CPaddings.prototype.asc_putLeft = function (v) {
 			this.Left = v;
-		}, asc_getTop: function () {
+		};
+	asc_CPaddings.prototype.asc_getTop = function () {
 			return this.Top;
-		}, asc_putTop: function (v) {
+		};
+	asc_CPaddings.prototype.asc_putTop = function (v) {
 			this.Top = v;
-		}, asc_getBottom: function () {
+		};
+	asc_CPaddings.prototype.asc_getBottom = function () {
 			return this.Bottom;
-		}, asc_putBottom: function (v) {
+		};
+	asc_CPaddings.prototype.asc_putBottom = function (v) {
 			this.Bottom = v;
-		}, asc_getRight: function () {
+		};
+	asc_CPaddings.prototype.asc_getRight = function () {
 			return this.Right;
-		}, asc_putRight: function (v) {
+		};
+	asc_CPaddings.prototype.asc_putRight = function (v) {
 			this.Right = v;
+		};
+	asc_CPaddings.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+
+		if (this.Left !== undefined && this.Left !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteDouble2"](this.Left);
+		}
+		if (this.Top !== undefined && this.Top !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteDouble2"](this.Top);
+		}
+		if (this.Right !== undefined && this.Right !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteDouble2"](this.Right);
+		}
+		if (this.Bottom !== undefined && this.Bottom !== null)
+		{
+			_stream["WriteByte"](3);
+			_stream["WriteDouble2"](this.Bottom);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CPaddings.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.Left = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					this.Top = _params[_cursor.pos++];
+					break;
+				}
+				case 2:
+				{
+					this.Right = _params[_cursor.pos++];
+					break;
+				}
+				case 3:
+				{
+					this.Bottom = _params[_cursor.pos++];
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
 		}
 	};
 
@@ -3594,232 +3788,333 @@
 		this.protectionPrint = null;
 		this.isMotionPath = false;
 	}
-
-	asc_CShapeProperty.prototype = {
-		constructor: asc_CShapeProperty,
-		asc_getType: function () {
+	asc_CShapeProperty.prototype.constructor = asc_CShapeProperty;
+	asc_CShapeProperty.prototype.asc_getType = function () {
 			return this.type;
-		}, asc_putType: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putType = function (v) {
 			this.type = v;
-		}, asc_getFill: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getFill = function () {
 			return this.fill;
-		}, asc_putFill: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putFill = function (v) {
 			this.fill = v;
-		}, asc_getStroke: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getStroke = function () {
 			return this.stroke;
-		}, asc_putStroke: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putStroke = function (v) {
 			this.stroke = v;
-		}, asc_getPaddings: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getPaddings = function () {
 			return this.paddings;
-		}, asc_putPaddings: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putPaddings = function (v) {
 			this.paddings = v;
-		}, asc_getCanFill: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getCanFill = function () {
 			return this.canFill;
-		}, asc_putCanFill: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putCanFill = function (v) {
 			this.canFill = v;
-		}, asc_getCanChangeArrows: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getCanChangeArrows = function () {
 			return this.canChangeArrows;
-		}, asc_setCanChangeArrows: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setCanChangeArrows = function (v) {
 			this.canChangeArrows = v;
-		},
-		asc_getFromChart: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getFromChart = function () {
 			return this.bFromChart;
-		},
-		asc_setFromChart: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setFromChart = function (v) {
 			this.bFromChart = v;
-		},
-		asc_getFromSmartArt: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getFromSmartArt = function () {
 			return this.bFromSmartArt;
-		},
-		asc_setFromSmartArt: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setFromSmartArt = function (v) {
 			this.bFromSmartArt = v;
-		},
-		asc_getFromSmartArtInternal: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getFromSmartArtInternal = function () {
 			return this.bFromSmartArtInternal;
-		},
-		asc_setFromSmartArtInternal: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setFromSmartArtInternal = function (v) {
 			this.bFromSmartArtInternal = v;
-		},
-		asc_getFromGroup: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getFromGroup = function () {
 			return this.bFromGroup;
-		},
-		asc_setFromGroup: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setFromGroup = function (v) {
 			this.bFromGroup = v;
-		},
-		asc_getLocked: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getLocked = function () {
 			return this.Locked;
-		}, asc_setLocked: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setLocked = function (v) {
 			this.Locked = v;
-		},
-
-		asc_getWidth: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getWidth = function () {
 			return this.w;
-		}, asc_putWidth: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putWidth = function (v) {
 			this.w = v;
-		}, asc_getHeight: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getHeight = function () {
 			return this.h;
-		}, asc_putHeight: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putHeight = function (v) {
 			this.h = v;
-		}, asc_getVerticalTextAlign: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getVerticalTextAlign = function () {
 			return this.verticalTextAlign;
-		}, asc_putVerticalTextAlign: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putVerticalTextAlign = function (v) {
 			this.verticalTextAlign = v;
-		}, asc_getVert: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getVert = function () {
 			return this.vert;
-		}, asc_putVert: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putVert = function (v) {
 			this.vert = v;
-		}, asc_getTextArtProperties: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getTextArtProperties = function () {
 			return this.textArtProperties;
-		}, asc_putTextArtProperties: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putTextArtProperties = function (v) {
 			this.textArtProperties = v;
-		}, asc_getLockAspect: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getLockAspect = function () {
 			return this.lockAspect
-		}, asc_putLockAspect: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putLockAspect = function (v) {
 			this.lockAspect = v;
-		}, asc_getTitle: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getTitle = function () {
 			return this.title;
-		}, asc_putTitle: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putTitle = function (v) {
 			this.title = v;
-		}, asc_getDescription: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getDescription = function () {
 			return this.description;
-		}, asc_putDescription: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putDescription = function (v) {
 			this.description = v;
-		},
-
-		asc_getColumnNumber: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getColumnNumber = function(){
 			return this.columnNumber;
-		},
-
-		asc_putColumnNumber: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putColumnNumber = function(v){
 			this.columnNumber = v;
-		},
-
-		asc_getColumnSpace: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getColumnSpace = function(){
 			return this.columnSpace;
-		},
-		asc_getTextFitType: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getTextFitType = function(){
 			return this.textFitType;
-		},
-
-		asc_getVertOverflowType: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getVertOverflowType = function(){
 			return this.vertOverflowType;
-		},
-
-		asc_putColumnSpace: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putColumnSpace = function(v){
 			this.columnSpace = v;
-		},
-
-		asc_putTextFitType: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putTextFitType = function(v){
 			this.textFitType = v;
-		},
-		asc_putVertOverflowType: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putVertOverflowType = function(v){
 			this.vertOverflowType = v;
-		},
-
-		asc_getSignatureId: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getSignatureId = function(){
 			return this.signatureId;
-		},
-
-		asc_putSignatureId: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putSignatureId = function(v){
 			this.signatureId = v;
-		},
-
-		asc_getFromImage: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getFromImage = function(){
 			return this.bFromImage;
-		},
-
-		asc_putFromImage: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putFromImage = function(v){
 			this.bFromImage = v;
-		},
-
-		asc_getRot: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getRot = function(){
 			return this.rot;
-		},
-
-		asc_putRot: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putRot = function(v){
 			this.rot = v;
-		},
-
-		asc_getRotAdd: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getRotAdd = function(){
 			return this.rotAdd;
-		},
-
-		asc_putRotAdd: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putRotAdd = function(v){
 			this.rotAdd = v;
-		},
-
-		asc_getFlipH: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getFlipH = function(){
 			return this.flipH;
-		},
-
-		asc_putFlipH: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putFlipH = function(v){
 			this.flipH = v;
-		},
-
-		asc_getFlipV: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getFlipV = function(){
 			return this.flipV;
-		},
-
-		asc_putFlipV: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putFlipV = function(v){
 			this.flipV = v;
-		},
-		asc_getFlipHInvert: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getFlipHInvert = function(){
 			return this.flipHInvert;
-		},
-
-		asc_putFlipHInvert: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putFlipHInvert = function(v){
 			this.flipHInvert = v;
-		},
-
-		asc_getFlipVInvert: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getFlipVInvert = function(){
 			return this.flipVInvert;
-		},
-
-		asc_putFlipVInvert: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putFlipVInvert = function(v){
 			this.flipVInvert = v;
-		},
-		asc_getShadow: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getShadow = function(){
 			return this.shadow;
-		},
-
-		asc_putShadow: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putShadow = function(v){
 			this.shadow = v;
-		},
-		asc_getAnchor: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getAnchor = function(){
 			return this.anchor;
-		},
-
-		asc_putAnchor: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putAnchor = function(v){
 			this.anchor = v;
-		},
-		asc_getProtectionLockText: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getProtectionLockText = function(){
 			return this.protectionLockText;
-		},
-		asc_putProtectionLockText: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putProtectionLockText = function(v){
 			this.protectionLockText = v;
-		},
-		asc_getProtectionLocked: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getProtectionLocked = function(){
 			return this.protectionLocked;
-		},
-
-		asc_putProtectionLocked: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putProtectionLocked = function(v){
 			this.protectionLocked = v;
-		},
-		asc_getProtectionPrint: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getProtectionPrint = function(){
 			return this.protectionPrint;
-		},
-		asc_putProtectionPrint: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putProtectionPrint = function(v){
 			this.protectionPrint = v;
-		},
-		asc_getPosition: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getPosition = function () {
 			return this.Position;
-		}, // Аргумент объект класса CPosition
-		asc_putPosition: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putPosition = function (v) {
 			this.Position = v;
-		},
-		asc_getIsMotionPath: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getIsMotionPath = function () {
 			return this.isMotionPath;
+		};
+	asc_CShapeProperty.prototype.write = function (_type, _stream) {
+
+		if(_type !== undefined && _type !== null) {
+			_stream["WriteByte"](_type);
 		}
+
+		if (this.type !== undefined && this.type !== null) {
+			_stream["WriteByte"](0);
+			_stream["WriteString2"](this.type);
+		}
+
+		if(this.fill) {
+			this.fill.write(1, _stream);
+		}
+		if(this.stroke) {
+			this.stroke.write(2, _stream);
+		}
+		if(this.paddings) {
+			this.paddings.write(3, _stream);
+		}
+
+		if (this.canFill !== undefined && this.canFill !== null) {
+			_stream["WriteByte"](4);
+			_stream["WriteBool"](this.canFill);
+		}
+		if (this.bFromChart !== undefined && this.bFromChart !== null) {
+			_stream["WriteByte"](5);
+			_stream["WriteBool"](this.bFromChart);
+		}
+		//6 - InsertPageNum
+		if (this.bFromGroup !== undefined && this.bFromGroup !== null) {
+			_stream["WriteByte"](7);
+			_stream["WriteBool"](this.bFromGroup);
+		}
+		if (this.shadow) {
+			this.shadow.write(8, _stream);
+		}
+
+		if(this.verticalTextAlign !== null && this.verticalTextAlign !== undefined) {
+			_stream["WriteByte"](9);
+			_stream["WriteLong"](this.verticalTextAlign);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CShapeProperty.prototype.read = function (_params, _cursor) {
+		let _continue = true;
+		while (_continue) {
+			let _attr = _params[_cursor.pos++];
+			switch (_attr) {
+				case 0: {
+					this.type = _params[_cursor.pos++];
+					break;
+				}
+				case 1: {
+					this.fill = new Asc.asc_CShapeFill();
+					this.fill.read(_params, _cursor);
+					break;
+				}
+				case 2: {
+					this.stroke = new Asc.asc_CStroke();
+					this.stroke.read(_params, _cursor);
+					break;
+				}
+				case 3: {
+					this.paddings = asc_menu_ReadPaddings(_params, _cursor);
+					break;
+				}
+				case 4: {
+					this.canFill = _params[_cursor.pos++];
+					break;
+				}
+				case 5: {
+					this.bFromChart = _params[_cursor.pos++];
+					break;
+				}
+				case 6: {
+					this.InsertPageNum = _params[_cursor.pos++];
+					break;
+				}
+				case 7: {
+					this.bFromGroup = _params[_cursor.pos++];
+					break;
+				}
+				case 8: {
+					const oShadow = new Asc.asc_CShadowProperty();
+					this.shadow = oShadow.read(_params, _cursor);
+					break;
+				}
+				case 9: {
+					this.verticalTextAlign = _params[_cursor.pos++];
+					break;
+				}
+				case 255:
+				default: {
+					_continue = false;
+					break;
+				}
+			}
+		}
+
 	};
 
 	/** @constructor */
@@ -4448,28 +4743,112 @@
 		this.fill = null;
 		this.transparent = null;
 	}
+	asc_CShapeFill.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CShapeFill.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CShapeFill.prototype.asc_getFill = function () {
+		return this.fill;
+	};
+	asc_CShapeFill.prototype.asc_putFill = function (v) {
+		this.fill = v;
+	};
+	asc_CShapeFill.prototype.asc_getTransparent = function () {
+		return this.transparent;
+	};
+	asc_CShapeFill.prototype.asc_putTransparent = function (v) {
+		this.transparent = v;
+	};
+	asc_CShapeFill.prototype.asc_CheckForseSet = function () {
+		if (null != this.transparent) {
+			return true;
+		}
+		if (null != this.fill && this.fill.Positions != null) {
+			return true;
+		}
+		return false;
+	};
+	asc_CShapeFill.prototype.write = function(_type, _stream) {
 
-	asc_CShapeFill.prototype = {
-		asc_getType: function () {
-			return this.type;
-		}, asc_putType: function (v) {
-			this.type = v;
-		}, asc_getFill: function () {
-			return this.fill;
-		}, asc_putFill: function (v) {
-			this.fill = v;
-		}, asc_getTransparent: function () {
-			return this.transparent;
-		}, asc_putTransparent: function (v) {
-			this.transparent = v;
-		}, asc_CheckForseSet: function () {
-			if (null != this.transparent) {
-				return true;
+		_stream["WriteByte"](_type);
+
+		if (this.type !== undefined && this.type !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.type);
+		}
+
+		if(this.fill) {
+			this.fill.write(1, _stream);
+		}
+
+		if (this.transparent !== undefined && this.transparent !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteLong"](this.transparent);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CShapeFill.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.type = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					switch (this.type)
+					{
+						case Asc.c_oAscFill.FILL_TYPE_SOLID:
+						{
+							this.fill = new Asc.asc_CFillSolid();
+							this.fill.read(_params, _cursor);
+							break;
+						}
+						case Asc.c_oAscFill.FILL_TYPE_PATT:
+						{
+							this.fill = new Asc.asc_CFillHatch();
+							this.fill.read(_params, _cursor);
+							break;
+						}
+						case Asc.c_oAscFill.FILL_TYPE_GRAD:
+						{
+							this.fill = new Asc.asc_CFillGrad();
+							this.fill.read(_params, _cursor);
+							break;
+						}
+						case Asc.c_oAscFill.FILL_TYPE_BLIP:
+						{
+							this.fill = new Asc.asc_CFillBlip();
+							this.fill.read(_params, _cursor);
+							break;
+						}
+						default:
+							break;
+					}
+					break;
+				}
+				case 2:
+				{
+					this.transparent = _params[_cursor.pos++];
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
 			}
-			if (null != this.fill && this.fill.Positions != null) {
-				return true;
-			}
-			return false;
 		}
 	};
 
@@ -4481,20 +4860,77 @@
 		this.texture_id = null;
 	}
 
-	asc_CFillBlip.prototype = {
-		asc_getType: function () {
+		asc_CFillBlip.prototype.asc_getType = function () {
 			return this.type
-		}, asc_putType: function (v) {
+		};
+	asc_CFillBlip.prototype.asc_putType = function (v) {
 			this.type = v;
-		}, asc_getUrl: function () {
+		};
+	asc_CFillBlip.prototype.asc_getUrl = function () {
 			return this.url;
-		}, asc_putUrl: function (v, sToken) {
+		};
+	asc_CFillBlip.prototype.asc_putUrl = function (v, sToken) {
 			this.url = v;
 			this.token = sToken;
-		}, asc_getTextureId: function () {
+		};
+	asc_CFillBlip.prototype.asc_getTextureId = function () {
 			return this.texture_id;
-		}, asc_putTextureId: function (v) {
+		};
+	asc_CFillBlip.prototype.asc_putTextureId = function (v) {
 			this.texture_id = v;
+		};
+	asc_CFillBlip.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+
+		if (this.type !== undefined && this.type !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.type);
+		}
+
+		if (this.url !== undefined && this.url !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteString2"](this.url);
+		}
+
+		if (this.texture_id !== undefined && this.texture_id !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteLong"](this.texture_id);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CFillBlip.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.type = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					this.url = _params[_cursor.pos++];
+					break;
+				}
+				case 2:
+				{
+					this.texture_id = _params[_cursor.pos++];
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
 		}
 	};
 
@@ -4505,22 +4941,74 @@
 		this.bgClr = undefined;
 	}
 
-	asc_CFillHatch.prototype = {
-		asc_getPatternType: function () {
-			return this.PatternType;
-		}, asc_putPatternType: function (v) {
-			this.PatternType = v;
-		}, asc_getColorFg: function () {
-			return this.fgClr;
-		}, asc_putColorFg: function (v) {
-			this.fgClr = v;
-		}, asc_getColorBg: function () {
-			return this.bgClr;
-		}, asc_putColorBg: function (v) {
-			this.bgClr = v;
-		}
+	asc_CFillHatch.prototype.asc_getPatternType = function () {
+		return this.PatternType;
 	};
+	asc_CFillHatch.prototype.asc_putPatternType = function (v) {
+		this.PatternType = v;
+	};
+	asc_CFillHatch.prototype.asc_getColorFg = function () {
+		return this.fgClr;
+	};
+	asc_CFillHatch.prototype.asc_putColorFg = function (v) {
+		this.fgClr = v;
+	};
+	asc_CFillHatch.prototype.asc_getColorBg = function () {
+		return this.bgClr;
+	};
+	asc_CFillHatch.prototype.asc_putColorBg = function (v) {
+		this.bgClr = v;
+	};
+	asc_CFillHatch.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
 
+		if (this.PatternType !== undefined && this.PatternType !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.PatternType);
+		}
+
+		if(this.bgClr) {
+			this.bgClr.write(1, _stream);
+		}
+		if(this.fgClr) {
+			this.fgClr.write(2, _stream);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CFillHatch.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.PatternType = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					this.bgClr = asc_menu_ReadColor(_params, _cursor);
+					break;
+				}
+				case 2:
+				{
+					this.fgClr = asc_menu_ReadColor(_params, _cursor);
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
+		}
+
+	};
 	/** @constructor */
 	function asc_CFillGrad() {
 		this.Colors = undefined;
@@ -4533,31 +5021,169 @@
 		this.PathType = 0;
 	}
 
-	asc_CFillGrad.prototype = {
-		asc_getColors: function () {
+	asc_CFillGrad.prototype.asc_getColors = function () {
 			return this.Colors;
-		}, asc_putColors: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putColors = function (v) {
 			this.Colors = v;
-		}, asc_getPositions: function () {
+		};
+	asc_CFillGrad.prototype.asc_getPositions = function () {
 			return this.Positions;
-		}, asc_putPositions: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putPositions = function (v) {
 			this.Positions = v;
-		}, asc_getGradType: function () {
+		};
+	asc_CFillGrad.prototype.asc_getGradType = function () {
 			return this.GradType;
-		}, asc_putGradType: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putGradType = function (v) {
 			this.GradType = v;
-		}, asc_getLinearAngle: function () {
+		};
+	asc_CFillGrad.prototype.asc_getLinearAngle = function () {
 			return this.LinearAngle;
-		}, asc_putLinearAngle: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putLinearAngle = function (v) {
 			this.LinearAngle = v;
-		}, asc_getLinearScale: function () {
+		};
+	asc_CFillGrad.prototype.asc_getLinearScale = function () {
 			return this.LinearScale;
-		}, asc_putLinearScale: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putLinearScale = function (v) {
 			this.LinearScale = v;
-		}, asc_getPathType: function () {
+		};
+	asc_CFillGrad.prototype.asc_getPathType = function () {
 			return this.PathType;
-		}, asc_putPathType: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putPathType = function (v) {
 			this.PathType = v;
+		};
+	asc_CFillGrad.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+
+		if (this.GradType !== undefined && this.GradType !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.GradType);
+		}
+
+		if (this.LinearAngle !== undefined && this.LinearAngle !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteDouble2"](this.LinearAngle);
+		}
+
+		if (this.LinearScale !== undefined && this.LinearScale !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteBool"](this.LinearScale);
+		}
+
+		if (this.PathType !== undefined && this.PathType !== null)
+		{
+			_stream["WriteByte"](3);
+			_stream["WriteLong"](this.PathType);
+		}
+
+		if (this.Colors !== null && this.Colors !== undefined && this.Positions !== null && this.Positions !== undefined)
+		{
+			if (this.Colors.length == this.Positions.length)
+			{
+				var _count = this.Colors.length;
+				_stream["WriteByte"](4);
+				_stream["WriteLong"](_count);
+
+				for (var i = 0; i < _count; i++)
+				{
+					this.Colors[i].write(0, _stream);
+					if (this.Positions[i] !== undefined && this.Positions[i] !== null)
+					{
+						_stream["WriteByte"](1);
+						_stream["WriteLong"](this.Positions[i]);
+					}
+
+					_stream["WriteByte"](255);
+				}
+			}
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CFillGrad.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.GradType = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					this.LinearAngle = _params[_cursor.pos++];
+					break;
+				}
+				case 2:
+				{
+					this.LinearScale = _params[_cursor.pos++];
+					break;
+				}
+				case 3:
+				{
+					this.PathType = _params[_cursor.pos++];
+					break;
+				}
+				case 4:
+				{
+					var _count = _params[_cursor.pos++];
+
+					if (_count > 0)
+					{
+						this.Colors = [];
+						this.Positions = [];
+					}
+					for (var i = 0; i < _count; i++)
+					{
+						this.Colors[i] = null;
+						this.Positions[i] = null;
+
+						var _continue2 = true;
+						while (_continue2)
+						{
+							var _attr2 = _params[_cursor.pos++];
+							switch (_attr2)
+							{
+								case 0:
+								{
+									this.Colors[i] = asc_menu_ReadColor(_params, _cursor);
+									break;
+								}
+								case 1:
+								{
+									this.Positions[i] = _params[_cursor.pos++];
+									break;
+								}
+								case 255:
+								default:
+								{
+									_continue2 = false;
+									break;
+								}
+							}
+						}
+					}
+					_cursor.pos++;
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
 		}
 	};
 
@@ -4566,11 +5192,36 @@
 		this.color = new asc_CColor();
 	}
 
-	asc_CFillSolid.prototype = {
-		asc_getColor: function () {
+	asc_CFillSolid.prototype.asc_getColor = function () {
 			return this.color
-		}, asc_putColor: function (v) {
+		};
+	asc_CFillSolid.prototype.asc_putColor = function (v) {
 			this.color = v;
+		};
+	asc_CFillSolid.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+		if(this.color) {
+			this.color.write(0, _stream);
+		}
+		_stream["WriteByte"](255);
+	};
+
+	asc_CFillSolid.prototype.read = function (_params, _cursor) {
+		let _continue = true;
+		while (_continue) {
+			let _attr = _params[_cursor.pos++];
+			switch (_attr) {
+				case 0: {
+					this.color = new Asc.asc_CColor();
+					this.color.read(_params, _cursor);
+					break;
+				}
+				case 255:
+				default: {
+					_continue = false;
+					break;
+				}
+			}
 		}
 	};
 
@@ -4594,63 +5245,199 @@
 		this.transparent = null;
 	}
 
-	asc_CStroke.prototype = {
-		asc_getType: function () {
-			return this.type;
-		}, asc_putType: function (v) {
-			this.type = v;
-		}, asc_getWidth: function () {
-			return this.width;
-		}, asc_putWidth: function (v) {
-			this.width = v;
-		}, asc_getColor: function () {
-			return this.color;
-		}, asc_putColor: function (v) {
-			this.color = v;
-		},
+	asc_CStroke.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CStroke.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CStroke.prototype.asc_getWidth = function () {
+		return this.width;
+	};
+	asc_CStroke.prototype.asc_putWidth = function (v) {
+		this.width = v;
+	};
+	asc_CStroke.prototype.asc_getColor = function () {
+		return this.color;
+	};
+	asc_CStroke.prototype.asc_putColor = function (v) {
+		this.color = v;
+	};
+	asc_CStroke.prototype.asc_getLinejoin = function () {
+		return this.LineJoin;
+	};
+	asc_CStroke.prototype.asc_putLinejoin = function (v) {
+		this.LineJoin = v;
+	};
+	asc_CStroke.prototype.asc_getLinecap = function () {
+		return this.LineCap;
+	};
+	asc_CStroke.prototype.asc_putLinecap = function (v) {
+		this.LineCap = v;
+	};
+	asc_CStroke.prototype.asc_getLinebeginstyle = function () {
+		return this.LineBeginStyle;
+	};
+	asc_CStroke.prototype.asc_putLinebeginstyle = function (v) {
+		this.LineBeginStyle = v;
+	};
+	asc_CStroke.prototype.asc_getLinebeginsize = function () {
+		return this.LineBeginSize;
+	};
+	asc_CStroke.prototype.asc_putLinebeginsize = function (v) {
+		this.LineBeginSize = v;
+	};
+	asc_CStroke.prototype.asc_getLineendstyle = function () {
+		return this.LineEndStyle;
+	};
+	asc_CStroke.prototype.asc_putLineendstyle = function (v) {
+		this.LineEndStyle = v;
+	};
+	asc_CStroke.prototype.asc_getLineendsize = function () {
+		return this.LineEndSize;
+	};
+	asc_CStroke.prototype.asc_putLineendsize = function (v) {
+		this.LineEndSize = v;
+	};
+	asc_CStroke.prototype.asc_getCanChangeArrows = function () {
+		return this.canChangeArrows;
+	};
+	asc_CStroke.prototype.asc_getTransparent = function () {
+		return this.transparent;
+	};
+	asc_CStroke.prototype.asc_putTransparent = function (v) {
+		this.transparent = v;
+	};
+	asc_CStroke.prototype.asc_putPrstDash = function (v) {
+		this.prstDash = v;
+	};
+	asc_CStroke.prototype.asc_getPrstDash = function () {
+		return this.prstDash;
+	};
+	asc_CStroke.prototype.write = function (_type, _stream) {
+		_stream["WriteByte"](_type);
 
-		asc_getLinejoin: function () {
-			return this.LineJoin;
-		}, asc_putLinejoin: function (v) {
-			this.LineJoin = v;
-		}, asc_getLinecap: function () {
-			return this.LineCap;
-		}, asc_putLinecap: function (v) {
-			this.LineCap = v;
-		},
-
-		asc_getLinebeginstyle: function () {
-			return this.LineBeginStyle;
-		}, asc_putLinebeginstyle: function (v) {
-			this.LineBeginStyle = v;
-		}, asc_getLinebeginsize: function () {
-			return this.LineBeginSize;
-		}, asc_putLinebeginsize: function (v) {
-			this.LineBeginSize = v;
-		}, asc_getLineendstyle: function () {
-			return this.LineEndStyle;
-		}, asc_putLineendstyle: function (v) {
-			this.LineEndStyle = v;
-		}, asc_getLineendsize: function () {
-			return this.LineEndSize;
-		}, asc_putLineendsize: function (v) {
-			this.LineEndSize = v;
-		},
-
-		asc_getCanChangeArrows: function () {
-			return this.canChangeArrows;
-		},
-		asc_getTransparent: function () {
-			return this.transparent;
-		},
-		asc_putTransparent: function (v) {
-			this.transparent = v;
-		},
-		asc_putPrstDash: function (v) {
-			this.prstDash = v;
-		}, asc_getPrstDash: function () {
-			return this.prstDash;
+		if (this.type !== undefined && this.type !== null) {
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.type);
 		}
+		if (this.width !== undefined && this.width !== null) {
+			_stream["WriteByte"](1);
+			_stream["WriteDouble2"](this.width);
+		}
+
+		if (this.color) {
+			this.color.write(2, _stream);
+		}
+
+		if (this.LineJoin !== undefined && this.LineJoin !== null) {
+			_stream["WriteByte"](3);
+			_stream["WriteByte"](this.LineJoin);
+		}
+		if (this.LineCap !== undefined && this.LineCap !== null) {
+			_stream["WriteByte"](4);
+			_stream["WriteByte"](this.LineCap);
+		}
+		if (this.LineBeginStyle !== undefined && this.LineBeginStyle !== null) {
+			_stream["WriteByte"](5);
+			_stream["WriteByte"](this.LineBeginStyle);
+		}
+		if (this.LineBeginSize !== undefined && this.LineBeginSize !== null) {
+			_stream["WriteByte"](6);
+			_stream["WriteByte"](this.LineBeginSize);
+		}
+		if (this.LineEndStyle !== undefined && this.LineEndStyle !== null) {
+			_stream["WriteByte"](7);
+			_stream["WriteByte"](this.LineEndStyle);
+		}
+		if (this.LineEndSize !== undefined && this.LineEndSize !== null) {
+			_stream["WriteByte"](8);
+			_stream["WriteByte"](this.LineEndSize);
+		}
+
+		if (this.canChangeArrows !== undefined && this.canChangeArrows !== null) {
+			_stream["WriteByte"](9);
+			_stream["WriteBool"](this.canChangeArrows);
+		}
+		if (this.prstDash !== undefined && this.prstDash !== null) {
+			_stream["WriteByte"](10);
+			_stream["WriteLong"](this.prstDash);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CStroke.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.type = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					this.width = _params[_cursor.pos++];
+					break;
+				}
+				case 2:
+				{
+					this.color = new Asc.asc_CColor();
+					this.color.read(_params, _cursor);
+					break;
+				}
+				case 3:
+				{
+					this.LineJoin = _params[_cursor.pos++];
+					break;
+				}
+				case 4:
+				{
+					this.LineCap = _params[_cursor.pos++];
+					break;
+				}
+				case 5:
+				{
+					this.LineBeginStyle = _params[_cursor.pos++];
+					break;
+				}
+				case 6:
+				{
+					this.LineBeginSize = _params[_cursor.pos++];
+					break;
+				}
+				case 7:
+				{
+					this.LineEndStyle = _params[_cursor.pos++];
+					break;
+				}
+				case 8:
+				{
+					this.LineEndSize = _params[_cursor.pos++];
+					break;
+				}
+				case 9:
+				{
+					this.canChangeArrows = _params[_cursor.pos++];
+					break;
+				}
+				case 10:
+				{
+					this.prstDash = _params[_cursor.pos++];
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
+		}
+
 	};
 
 	// цвет. может быть трех типов:
@@ -7110,6 +7897,8 @@
     window["AscCommon"].isFileBuild = isFileBuild;
     window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
     window["AscCommon"].isValidJs = isValidJs;
+    window["AscCommon"].asc_menu_ReadPaddings = asc_menu_ReadPaddings;
+    window["AscCommon"].asc_menu_ReadColor = asc_menu_ReadColor;
 
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;
 	window["Asc"]["CPlugin"] = window["Asc"].CPlugin = CPlugin;
