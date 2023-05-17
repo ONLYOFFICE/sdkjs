@@ -231,12 +231,10 @@
 		if (oGlobalLogicDocument.TurnOffRecalc && bRecalculate)
 		{
 			oGlobalLogicDocument.End_SilentMode(true);
-			recalculate();
 			oGlobalLogicDocument.private_UpdateCursorXY(true, true);
+			recalculate();
 		}
-		recalculate();
 
-		//oGlobalLogicDocument.MoveCursorToEndPos();
 		const oFirstParagraph = oGlobalLogicDocument.Content[0];
 		return {oLogicDocument: oGlobalLogicDocument, oParagraph: oFirstParagraph};
 	}

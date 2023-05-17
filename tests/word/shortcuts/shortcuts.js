@@ -44,8 +44,8 @@
 		oGlobalLogicDocument,
 		addParagraphToDocumentWithText,
 		remove,
-		recalculate,
 		clean,
+		recalculate,
 		onKeyDown,
 		moveToParagraph,
 		createNativeEvent,
@@ -73,7 +73,6 @@
 		directParaPr,
 		directTextPr,
 		addBreakPage,
-		startRecalculate,
 		createMath,
 		resetLogicDocument,
 		addText,
@@ -389,13 +388,11 @@
 		{
 			editor.getShortcut = function () {return c_oAscDocumentShortcutType.UpdateFields};
 			const {oLogicDocument} = getLogicDocumentWithParagraphs(['Hello', 'Hello', 'Hello'], true);
-			AscTest.Recalculate();
 			for (let i = 0; i < logicContent().length; i += 1)
 			{
 				oLogicDocument.Set_CurrentElement(i, true);
 				oLogicDocument.SetParagraphStyle("Heading 1");
 			}
-			AscTest.Recalculate();
 			oLogicDocument.MoveCursorToStartPos();
 			const props = new Asc.CTableOfContentsPr();
 			props.put_OutlineRange(1, 9);
@@ -412,7 +409,6 @@
 			oLogicDocument.SetParagraphStyle("Heading 1");
 
 			logicContent()[0].SetThisElementCurrent();
-			AscTest.Recalculate();
 			onKeyDown(createNativeEvent());
 			oAssert.strictEqual(logicContent()[0].Content.Content.length, 5, 'Check update fields shortcut');
 		});
@@ -538,8 +534,8 @@
 			oAssert.strictEqual(editor.getShortcut(createEvent(56, true, true, false, false, false, false)), c_oAscDocumentShortcutType.ShowAll, 'Check getting c_oAscDocumentShortcutType.ShowAll action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(65, true, false, false, false, false, false)), c_oAscDocumentShortcutType.EditSelectAll, 'Check getting c_oAscDocumentShortcutType.EditSelectAll action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(66, true, false, false, false, false, false)), c_oAscDocumentShortcutType.Bold, 'Check getting c_oAscDocumentShortcutType.Bold action');
-			oAssert.strictEqual(editor.getShortcut(createEvent(67, true, true, false, false, false, false)), c_oAscDocumentShortcutType.CopyFormat, 'Check getting c_oAscDocumentShortcutType.CopyFormat action');
-			oAssert.strictEqual(editor.getShortcut(createEvent(67, true, false, true, false, false, false)), c_oAscDocumentShortcutType.CopyrightSign, 'Check getting c_oAscDocumentShortcutType.CopyrightSign action');
+			oAssert.strictEqual(editor.getShortcut(createEvent(67, true, false, true, false, false, false)), c_oAscDocumentShortcutType.CopyFormat, 'Check getting c_oAscDocumentShortcutType.CopyFormat action');
+			oAssert.strictEqual(editor.getShortcut(createEvent(71, true, false, true, false, false, false)), c_oAscDocumentShortcutType.CopyrightSign, 'Check getting c_oAscDocumentShortcutType.CopyrightSign action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(68, true, false, true, false, false, false)), c_oAscDocumentShortcutType.InsertEndnoteNow, 'Check getting c_oAscDocumentShortcutType.InsertEndnoteNow action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(69, true, false, false, false, false, false)), c_oAscDocumentShortcutType.CenterPara, 'Check getting c_oAscDocumentShortcutType.CenterPara action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(69, true, false, true, false, false, false)), c_oAscDocumentShortcutType.EuroSign, 'Check getting c_oAscDocumentShortcutType.EuroSign action');
@@ -557,7 +553,7 @@
 			oAssert.strictEqual(editor.getShortcut(createEvent(83, true, false, false, false, false, false)), c_oAscDocumentShortcutType.Save, 'Check getting c_oAscDocumentShortcutType.Save action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(84, true, false, true, false, false, false)), c_oAscDocumentShortcutType.TrademarkSign, 'Check getting c_oAscDocumentShortcutType.TrademarkSign action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(85, true, false, false, false, false, false)), c_oAscDocumentShortcutType.Underline, 'Check getting c_oAscDocumentShortcutType.Underline action');
-			oAssert.strictEqual(editor.getShortcut(createEvent(86, true, true, false, false, false, false)), c_oAscDocumentShortcutType.PasteFormat, 'Check getting c_oAscDocumentShortcutType.PasteFormat action');
+			oAssert.strictEqual(editor.getShortcut(createEvent(86, true, false, true, false, false, false)), c_oAscDocumentShortcutType.PasteFormat, 'Check getting c_oAscDocumentShortcutType.PasteFormat action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(89, true, false, false, false, false, false)), c_oAscDocumentShortcutType.EditRedo, 'Check getting c_oAscDocumentShortcutType.EditRedo action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(90, true, false, false, false, false, false)), c_oAscDocumentShortcutType.EditUndo, 'Check getting c_oAscDocumentShortcutType.EditUndo action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(109, true, false, false, false, false, false)), c_oAscDocumentShortcutType.EnDash, 'Check getting c_oAscDocumentShortcutType.EnDash action');
@@ -606,7 +602,7 @@
 		{
 			startTest((oEvent) =>
 			{
-				const {oParagraph} = getLogicDocumentWithParagraphs(['Hello World'], true);
+				const {oParagraph} = getLogicDocumentWithParagraphs(['Hello World']);
 				moveToParagraph(oParagraph);
 				onKeyDown(oEvent);
 				selectAll();
@@ -618,7 +614,7 @@
 		{
 			startTest((oEvent) =>
 			{
-				const {oParagraph} = getLogicDocumentWithParagraphs(['Hello World'], true);
+				const {oParagraph} = getLogicDocumentWithParagraphs(['Hello World']);
 				moveToParagraph(oParagraph);
 				onKeyDown(oEvent);
 				selectAll();
@@ -643,10 +639,11 @@
 		{
 			startTest((oEvent) =>
 			{
-				const {oParagraph} = getLogicDocumentWithParagraphs([''], true);
+				const {oParagraph} = getLogicDocumentWithParagraphs(['']);
+				moveToParagraph(oParagraph);
 				const oInlineLvlSdt = createComboBox();
 				onKeyDown(oEvent);
-				oAssert.strictEqual(oParagraph.GetRunByElement(oInlineLvlSdt), null, 'Test remove form');
+				oAssert.strictEqual(oParagraph.GetPosByElement(oInlineLvlSdt), null, 'Test remove form');
 			}, oTestTypes.removeForm);
 		});
 
@@ -755,7 +752,6 @@
 			startTest((oEvent) =>
 			{
 				getLogicDocumentWithParagraphs([''], true);
-				recalculate();
 				const oFirstParaDrawing = createShape();
 				const oSecondParaDrawing = createShape();
 				selectParaDrawing(oFirstParaDrawing);
@@ -770,7 +766,6 @@
 			startTest((oEvent) =>
 			{
 				getLogicDocumentWithParagraphs([''], true);
-				recalculate();
 				const oFirstParaDrawing = createShape();
 				const oSecondParaDrawing = createShape();
 				const oThirdParaDrawing = createShape();
@@ -871,7 +866,6 @@
 		{
 			startTest((oEvent) =>
 			{
-				startRecalculate();
 				const oParaDrawing = createShape();
 				selectParaDrawing(oParaDrawing);
 				onKeyDown(oEvent);
@@ -883,7 +877,6 @@
 		{
 			startTest((oEvent) =>
 			{
-				startRecalculate();
 				const oParaDrawing = createShape();
 				oParaDrawing.GraphicObj.setWordShape(false);
 				selectParaDrawing(oParaDrawing);
@@ -946,7 +939,6 @@
 		{
 			startTest((oEvent) =>
 			{
-				startRecalculate();
 				const oParaDrawing = createChart();
 				const oChart = oParaDrawing.GraphicObj;
 				const oTitles = oChart.getAllTitles();
@@ -1080,7 +1072,8 @@
 			startTest((oEvent) =>
 			{
 				getLogicDocumentWithParagraphs([''], true);
-				createCheckBox();
+				const oCheckBox = createCheckBox();
+				oCheckBox.MoveCursorToContentControl(true);
 				setFillingFormsMode(true);
 				onKeyDown(oEvent);
 				const oSelectedInfo = oGlobalLogicDocument.GetSelectedElementsInfo();
@@ -1289,7 +1282,6 @@
 			{
 				const {oParagraph} = getLogicDocumentWithParagraphs(["Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World"], true);
 				moveToParagraph(oParagraph, true);
-				recalculate();
 				onKeyDown(oEvent);
 				oAssert.strictEqual(contentPosition(), 107, "Test move to end of document");
 			}, oTestTypes.moveToEndDocument);
@@ -1371,7 +1363,6 @@
 				const {oParagraph} = getLogicDocumentWithParagraphs(["Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World"], true);
 				moveToParagraph(oParagraph);
 
-				recalculate();
 				onKeyDown(oEvent);
 				oAssert.strictEqual(contentPosition(), 0, "Test move to home of document");
 			}, oTestTypes.moveToStartDocument);
@@ -1579,7 +1570,6 @@
 			{
 				const {oParagraph} = getLogicDocumentWithParagraphs(["Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World"], true);
 				moveToParagraph(oParagraph, true);
-				recalculate();
 				onKeyDown(oEvent);
 				oAssert.deepEqual(contentPosition(), 18, "Test move to down line");
 			}, oTestTypes.moveDown);
@@ -1616,7 +1606,7 @@
 		{
 			startTest((oEvent) =>
 			{
-				const {oParagraph} = getLogicDocumentWithParagraphs(["Hello World"], true);
+				const {oParagraph} = getLogicDocumentWithParagraphs(["Hello World"]);
 				moveToParagraph(oParagraph, true);
 				onKeyDown(oEvent);
 				selectAll();
@@ -1628,7 +1618,7 @@
 		{
 			startTest((oEvent) =>
 			{
-				const {oParagraph} = getLogicDocumentWithParagraphs(["Hello World"], true);
+				const {oParagraph} = getLogicDocumentWithParagraphs(["Hello World"]);
 				moveToParagraph(oParagraph, true);
 				onKeyDown(oEvent);
 				selectAll();

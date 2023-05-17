@@ -487,7 +487,7 @@
 			oEvent = createEvent(66, true, false, false, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Bold, 'Check getting bold shortcut action');
 
-			oEvent = createEvent(67, true, true, false, false, false);
+			oEvent = createEvent(67, true, false, true, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.CopyFormat, 'Check getting copy format shortcut action');
 
 			oEvent = createEvent(69, true, false, false, false, false);
@@ -526,7 +526,7 @@
 			oEvent = createEvent(53, true, false, false, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Strikethrough, 'Check getting strikethrough shortcut action');
 
-			oEvent = createEvent(83, true, true, false, false, false);
+			oEvent = createEvent(86, true, false, true, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.PasteFormat, 'Check getting paste format shortcut action');
 
 			oEvent = createEvent(187, true, true, false, false, false);
