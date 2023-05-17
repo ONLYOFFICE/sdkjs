@@ -6326,6 +6326,22 @@ CStyle.prototype =
     }
 };
 /**
+ * Устанавливаем стиль, от которого данный наследуется
+ * @param styleId
+ */
+CStyle.prototype.SetBasedOn = function(styleId)
+{
+	return this.Set_BasedOn(styleId);
+};
+/**
+ * Получаем родительский стиль в иерархии наследования
+ * @returns {null | string}
+ */
+CStyle.prototype.GetBasedOn = function()
+{
+	return this.BasedOn;
+};
+/**
  * Устаналиваем форматный идентификатор стиля
  * @param styleId
  * @constructor
