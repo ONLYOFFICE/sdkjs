@@ -4970,13 +4970,20 @@
 				this.stringRender.setString([str]);
 
 				var textMetrics = this.stringRender._measureChars();
-				tX1 = centerX - textMetrics.width / 2;
-				tX2 = centerX + textMetrics.width / 2;
-				tY1 = centerY - textMetrics.height / 2;
-				tY2 = centerY + textMetrics.height / 2;
+				let textWidth = textMetrics.width;
+				let textHeight = textMetrics.height;
+				tX1 = centerX - textWidth / 2;
+				tX2 = centerX + textWidth / 2;
+				tY1 = centerY - textHeight / 2;
+				tY2 = centerY + textHeight / 2;
 
-				if(!(tX1 > x2 || tX2 < x1 || tY1 > y2 || tY2 < y1)) {
-					ctx.AddClipRect(x1, y1, x2-x1, y2-y1);
+				let _zoom = this.getZoom();
+				let _x1 = Math.max(tX1, x1);
+				let _x2 = Math.min(tX1 + textWidth * _zoom, x2);
+				let _y1 = Math.max(tY1, y1);
+				let _y2 = Math.min(tY1 + textHeight * _zoom, y2);
+				if (_x1 < _x2 && _y1 < _y2) {
+					ctx.AddClipRect(x1, y1, x2 - x1, y2 - y1);
 					this.stringRender.render(undefined, tX1, tY1, 100, this.settings.activeCellBorderColor);
 					ctx.RemoveClipRect();
 				}
