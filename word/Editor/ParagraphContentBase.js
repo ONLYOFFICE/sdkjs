@@ -1616,19 +1616,6 @@ CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent = function(Pos
 
     if (false !== UpdatePosition)
     {
-		if (this.State.ContentPos >= Pos)
-			this.State.ContentPos++;
-
-		if (this.State.Selection.StartPos >= Pos)
-			this.State.Selection.StartPos++;
-
-		if (this.State.Selection.EndPos >= Pos)
-			this.State.Selection.EndPos++;
-
-		this.State.Selection.StartPos = Math.max(0, Math.min(this.Content.length - 1, this.State.Selection.StartPos));
-		this.State.Selection.EndPos   = Math.max(0, Math.min(this.Content.length - 1, this.State.Selection.EndPos));
-		this.State.ContentPos         = Math.max(0, Math.min(this.Content.length - 1, this.State.ContentPos));
-
 		// Также передвинем всем метки переносов страниц и строк
         var LinesCount = this.protected_GetLinesCount();
         for (var CurLine = 0; CurLine < LinesCount; CurLine++)
@@ -1714,40 +1701,6 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent = functio
 
     if (false !== UpdatePosition)
     {
-		if (this.State.ContentPos > Pos + Count)
-			this.State.ContentPos -= Count;
-		else if (this.State.ContentPos > Pos)
-			this.State.ContentPos = Pos;
-
-		if (this.State.Selection.StartPos <= this.State.Selection.EndPos)
-		{
-			if (this.State.Selection.StartPos > Pos + Count)
-				this.State.Selection.StartPos -= Count;
-			else if (this.State.Selection.StartPos > Pos)
-				this.State.Selection.StartPos = Pos;
-
-			if (this.State.Selection.EndPos >= Pos + Count)
-				this.State.Selection.EndPos -= Count;
-			else if (this.State.Selection.EndPos >= Pos)
-				this.State.Selection.EndPos = Math.max(0, Pos - 1);
-		}
-		else
-		{
-			if (this.State.Selection.StartPos >= Pos + Count)
-				this.State.Selection.StartPos -= Count;
-			else if (this.State.Selection.StartPos >= Pos)
-				this.State.Selection.StartPos = Math.max(0, Pos - 1);
-
-			if (this.State.Selection.EndPos > Pos + Count)
-				this.State.Selection.EndPos -= Count;
-			else if (this.State.Selection.EndPos > Pos)
-				this.State.Selection.EndPos = Pos;
-		}
-
-		this.Selection.StartPos = Math.max(0, Math.min(this.Content.length - 1, this.Selection.StartPos));
-		this.Selection.EndPos   = Math.max(0, Math.min(this.Content.length - 1, this.Selection.EndPos));
-		this.State.ContentPos   = Math.max(0, Math.min(this.Content.length - 1, this.State.ContentPos));
-
         // Также передвинем всем метки переносов страниц и строк
         var LinesCount = this.protected_GetLinesCount();
         for (var CurLine = 0; CurLine < LinesCount; CurLine++)
