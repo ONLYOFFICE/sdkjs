@@ -1043,7 +1043,7 @@
 			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
 				this.wb.handlers && this.wb.handlers.trigger("updateCellWatches", sheetId);
 			}
-			this.wb.handlers && this.wb.handlers.trigger("onChangePageSetupProps");
+			this.wb.handlers && this.wb.handlers.trigger("onChangePageSetupProps", sheetId);
 		},
 		editDefinesNames: function(oldUndoName, newUndoName) {
 			var res = null;
