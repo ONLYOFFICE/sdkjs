@@ -5727,8 +5727,13 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
         }
         else
         {
-            if (this.CorrectWordOnCursor(nInputType === 1, 2))
+            if (this.CorrectWordOnCursor(nInputType === 1, true))
+            {
+                if (arrNextContent)
+                    this.ConcatToContent(this.Content.length, arrNextContent);
+
                 return;
+            }
         }
     }
 

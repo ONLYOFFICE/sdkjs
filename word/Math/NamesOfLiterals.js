@@ -2864,32 +2864,16 @@
 
 	};
 
-	function ParaRunIterator(ParaRun)
-	{
-		this.Content = ParaRun.Content;
-		this.Cursor = ParaRun.Content.length - 1;
-	}
-	ParaRunIterator.prototype.GetNext = function()
-	{
-		if (!this.IsHasContent())
-			return false;
-
-		const oContent = this.Content[this.Cursor];
-		this.Cursor--;
-
-		return String.fromCharCode(oContent.value);
-	};
-	ParaRunIterator.prototype.IsHasContent = function()
-	{
-		return this.Cursor >= 0;
-	};
 	function CMathContentIterator(oCMathContent)
 	{
-		this._paraRun = null;
-		this._index = 0;
-		this._content = oCMathContent.Content;
-
-		this.counter = 0;
+		if (oCMathContent instanceof CMathContent)
+		{
+			this._content 	= oCMathContent.Content;
+			this._paraRun 	= null;
+			this._nParaRun	= 0;
+			this._index 	= oCMathContent.Content.length - 1; // индекс текущего элемента
+			this.counter 	= 0; 								// количество отданных элементов
+		}
 	}
 	CMathContentIterator.prototype.Count = function ()
 	{
@@ -2900,115 +2884,133 @@
 		if (!this.IsHasContent())
 			return false;
 
-		if (this._paraRun)
+		if (this._nParaRun >= 0 && this._paraRun)
 		{
-			if (this._paraRun.IsHasContent())
-			{
-				this.Count();
-				return this._paraRun.GetNext();
-			}
-			else
-			{
-				this._paraRun = null;
-				this._index++;
-				return this.Next();
-			}
+			return this.GetValue();
 		}
 		else
 		{
-			let intCurrentIndex = this._content.length - 1 - this._index;
-			let oCurrentContent = this._content[intCurrentIndex];
+			let oCurrentContent = this._content[this._index];
 
-			if (oCurrentContent.Type !== 49)
+			if (!oCurrentContent instanceof ParaRun)
 			{
-				this._index++;
-				this.Count();
-				return oCurrentContent;
+				// прерываем обработку здесь точно не слово для автокоррекции
+				return false;
 			}
 			else
 			{
-				this._paraRun = new ParaRunIterator(oCurrentContent)
-				return this.Next();
+				this._index--;
+				this._paraRun 	= oCurrentContent;
+				this._nParaRun 	= oCurrentContent.GetElementsCount() - 1;
+				return this.GetValue();
 			}
 		}
 	};
 	CMathContentIterator.prototype.IsHasContent = function ()
 	{
-		return this._content && this._index < this._content.length;
+		return this._index >= 0 || this._nParaRun >= 0;
 	};
-	function CorrectWordOnCursor(oCMathContent, IsLaTeX, pos)
+	CMathContentIterator.prototype.GetValue = function()
 	{
-		if (pos < 1 || pos === undefined)
-			pos = 1;
+		if (this._nParaRun >= 0)
+		{
+			this.Count();
+			this._nParaRun--;
+			let oMathText = this._paraRun.GetElement(this._nParaRun + 1);
 
-		let isConvert = false;
-		let oContent = new CMathContentIterator(oCMathContent);
+			// если не текст просто прерываем обработку, здесь точно не слово для автокоррекции
+			if (!(oMathText instanceof CMathText))
+				return false;
 
-		if (oCMathContent.GetLastTextElement() === " " || oCMathContent.IsLastElement(AscMath.MathLiterals.operators))
-			pos--;
+			return oMathText.GetCodePoint();
+		}
+		return false;
+	}
+	function CorrectWordOnCursor(oCMathContent, IsLaTeX, isSkipFirstLetter)
+	{
+		let isConvert 		= false;
+		let isSkipFirst 	= isSkipFirstLetter === true;
+		let isLastOperator 			= oCMathContent.IsLastElement(AscMath.MathLiterals.operators);
+		let oContent= new CMathContentIterator(oCMathContent);
+		let oLastOperator;
+
+		if (oCMathContent.GetLastTextElement() === " " || isLastOperator)
+			isSkipFirst = true;
 
 		let str = "";
-		let intStart = 0;
 
 		while (oContent.IsHasContent())
 		{
-			let oElement = oContent.Next() + "";
-			let intCode = oElement.charCodeAt(0);
-			intStart++;
-			
-			// первый обработанный элемент, то что было введено после слова
-			if (oContent.counter === 1 && intCode === 32)
+			let nElement = oContent.Next();
+
+			if (nElement === false)
+				break;
+
+			let strElement = String.fromCharCode(nElement);
+
+			if (oContent.counter === 1 && isSkipFirst)
+			{
+				if (isLastOperator)
+				{
+					oLastOperator = strElement;
+				}
 				continue;
+			}
 			
-			let isContinue = ((intCode >= 97 && intCode <= 122) || (intCode >= 65 && intCode <= 90) || (intCode >= 48 && intCode <= 57) || intCode === 92 || intCode === 47); // a-zA-z && 0-9
+			let isContinue =
+				(nElement >= 97 && nElement <= 122)
+				|| (nElement >= 65 && nElement <= 90)
+				|| (nElement >= 48 && nElement <= 57)
+				|| nElement === 92
+				|| nElement === 47; // a-zA-z && 0-9
 
 			if (!isContinue)
 				return false;
 
-			str = oElement + str;
+			str = strElement + str;
 
-			if (intCode === 92 || intCode === 47)
-			{
-				// if (oContent.counter >= 1 && oContent.Content[oContent.index - 1].value === 47)
-				// {
-				// 	continue;
-				// }
+			if (nElement === 92 || nElement === 47)
 				break;
-			}
 		}
 
 		let strCorrection = ConvertWord(str, IsLaTeX);
 		if (strCorrection)
 		{
-			let oRun = RemoveCountFormMathContent(oCMathContent, intStart);
-			let nPos = oRun.Content.length;
-			oRun.AddText(strCorrection, nPos);
+			let oRun = RemoveCountFormMathContent(oCMathContent,isLastOperator ? oContent.counter - 1 : oContent.counter, isLastOperator);
+			let nPos = isLastOperator ? oRun.Content.length - 1 : oRun.Content.length;
+
+			for (let i = 0; i < strCorrection.length; i++)
+			{
+				let nCharValue = strCorrection[i].charCodeAt(0);
+				let oMathText = new CMathText();
+				oMathText.add(nCharValue);
+				oRun.AddToContent(nPos++, oMathText);
+			}
 			isConvert = true;
 		}
 
 		oCMathContent.MoveCursorToEndPos();
 		return isConvert;
 	}
-	function RemoveCountFormMathContent (oContent, nCount)
+	function RemoveCountFormMathContent (oContent, nCount, isSkipFirst)
 	{
 		for (let i = oContent.Content.length - 1; i >= 0; i--)
 		{
+			let isSkippedFirst = false;
 			let oCurrentContent = oContent.Content[i];
 			for (let j = oCurrentContent.Content.length - 1; j >= 0; j--)
 			{
-				if (nCount === 0)
-					return  oCurrentContent;
+				if (isSkipFirst === true)
+				{
+					isSkipFirst = false;
+					isSkippedFirst = true;
+					continue;
+				}
 				oCurrentContent.RemoveFromContent(j, 1, true);
 				nCount--;
-			}
 
-			if (nCount === 0)
-			{
-				return oCurrentContent;
-			}
-			else if (oCurrentContent.Content.length === 0)
-			{
-				oContent.RemoveFromContent(i, 1, true);
+				if (nCount === 0)
+					return oCurrentContent;
 			}
 		}
 	}
