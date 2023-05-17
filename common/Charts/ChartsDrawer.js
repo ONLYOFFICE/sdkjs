@@ -2391,7 +2391,7 @@ CChartsDrawer.prototype =
         return {w: w , h: h , startX: this.calcProp.chartGutter._left / this.calcProp.pxToMM, startY: this.calcProp.chartGutter._top / this.calcProp.pxToMM};
 	},
 
-	drawPaths: function (paths, series, useNextPoint, bIsYVal, byIdx) {
+	drawPaths: function (paths, series, useNextPoint, bIsYVal, byIdx, ignoreFill) {
 
 		var seria, brush, pen, numCache, point;
 		var seriesPaths = paths.series;
@@ -2452,7 +2452,7 @@ CChartsDrawer.prototype =
 					}
 				}
 				if (seriesPaths[i][j]) {
-					this.drawPath(seriesPaths[i][j], pen, brush);
+					this.drawPath(seriesPaths[i][j], pen, ignoreFill ? null : brush);
 				}
 			}
 		}
@@ -12582,7 +12582,7 @@ drawRadarChart.prototype = {
 				this.cChartDrawer.drawPath(this.fillPaths[i].path, this.fillPaths[i].pen, this.fillPaths[i].brush);
 			}
 		} else {
-			this.cChartDrawer.drawPaths(this.paths, this.chart.series, true);
+			this.cChartDrawer.drawPaths(this.paths, this.chart.series, true, null, null, true);
 			this.cChartDrawer.drawPathsPoints(this.paths, this.chart.series);
 		}
 	}
