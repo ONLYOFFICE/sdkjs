@@ -1412,7 +1412,7 @@ Paragraph.prototype.Check_Range_OnlyMath = function(CurRange, CurLine)
  */
 Paragraph.prototype.CheckMathPara = function(nMathPos)
 {
-	if (!this.Content[nMathPos] || para_Math !== this.Content[nMathPos].Type)
+	if (!this.Content[nMathPos] || (para_Math !== this.Content[nMathPos].Type && para_InlineLevelSdt !== this.Content[nMathPos].Type))
 		return false;
 
 	return this.CheckNotInlineObject(nMathPos);

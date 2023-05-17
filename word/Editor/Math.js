@@ -2621,8 +2621,19 @@ ParaMath.prototype.ConvertToInlineMode = function()
 	if (this.IsInlineMode())
 		return true;
 
-	let oParent      = this.GetParent();
-	let nPosInParent = this.GetPosInParent(oParent);
+    let oParent      = this.GetParent();
+    let oInlineLevel, nPosInParent;
+    if (oParent instanceof CInlineLevelSdt)
+    {
+        oInlineLevel = oParent;
+        oParent = oParent.GetParent();
+        nPosInParent = oInlineLevel.GetPosInParent(oParent);
+    }
+    else
+    {
+        nPosInParent = this.GetPosInParent(oParent);
+    }
+
 	if (!oParent || -1 === nPosInParent)
 		return false;
 
@@ -2671,7 +2682,18 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 		return true;
 
 	let oParent      = this.GetParent();
-	let nPosInParent = this.GetPosInParent(oParent);
+    let oInlineLevel, nPosInParent;
+    if (oParent instanceof CInlineLevelSdt)
+    {
+        oInlineLevel = oParent;
+        oParent = oParent.GetParent();
+        nPosInParent = oInlineLevel.GetPosInParent(oParent);
+    }
+    else
+    {
+        nPosInParent = this.GetPosInParent(oParent);
+    }
+
 	if (!oParent || -1 === nPosInParent)
 		return false;
 
