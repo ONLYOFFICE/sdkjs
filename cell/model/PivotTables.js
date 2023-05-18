@@ -16961,8 +16961,8 @@ DataRowTraversal.prototype.getPercentOfParentCol = function (dataIndex, rowItem,
 	} else {
 		return new AscCommonExcel.CCellValue();
 	}
-	parentTotal = this.colParent.total[dataIndex];
-	_oCellValue = parentTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+	parentTotal = this.colParent && this.colParent.total[dataIndex];
+	_oCellValue = parentTotal && parentTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 	if (_oCellValue) {
 		if (oCellValue.type === AscCommon.CellValueType.Error && _oCellValue.type !== AscCommon.CellValueType.Error) {
 			oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.wrong_value_type);
@@ -16998,8 +16998,8 @@ DataRowTraversal.prototype.getPercentOfParentRow = function (dataIndex, rowItem,
 	} else {
 		return new AscCommonExcel.CCellValue();
 	}
-	parentTotal = this.rowParent.total[dataIndex];
-	_oCellValue = parentTotal.getCellValue(dataField.subtotal, this.rowParentType, rowItem.t, colItem.t);
+	parentTotal = this.rowParent && this.rowParent.total[dataIndex];
+	_oCellValue = parentTotal && parentTotal.getCellValue(dataField.subtotal, this.rowParentType, rowItem.t, colItem.t);
 	if (_oCellValue) {
 		if (oCellValue.type === AscCommon.CellValueType.Error && _oCellValue.type !== AscCommon.CellValueType.Error) {
 			oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.wrong_value_type);
