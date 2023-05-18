@@ -6896,7 +6896,7 @@
                         tm = this._roundTextMetrics(this.stringRender.measureString([strCopy], fl));
                         AscCommonExcel.g_oCacheMeasureEmpty.add(strCopy.format, tm);
                     }
-					cache = this._fetchCellCache(col, row);
+					let cache = this._fetchCellCache(col, row);
 					cache.metrics = tm;
                     this._updateRowHeight(cache, row);
                 }
