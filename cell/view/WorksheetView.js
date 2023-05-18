@@ -6089,6 +6089,13 @@
             }
         }
 
+        //TODO COLOR!!!
+        let searchSpecificRange = this.handlers.trigger('selectSearchingResults') && this.workbook.SearchEngine && this.workbook.SearchEngine.getSpecificRange();
+		if (searchSpecificRange) {
+			this._drawElements(this._drawSelectionElement, searchSpecificRange,
+				AscCommonExcel.selectionLineType.DashThick, new CColor(12, 15, 17));
+		}
+
         // restore canvas' original clipping range
         ctx.restore();
 
@@ -6383,7 +6390,8 @@
 
 		//TODO пересмотреть! возможно стоит очищать частями в зависимости от print_area
 		//print lines view
-		if(this.viewPrintLines || this.copyCutRange || (this.isPageBreakPreview(true) && this.pagesModeData)) {
+		let searchSpecificRange = this.handlers.trigger('selectSearchingResults') && this.workbook.SearchEngine && this.workbook.SearchEngine.isSpecificRange();
+		if(this.viewPrintLines || this.copyCutRange || (this.isPageBreakPreview(true) && this.pagesModeData) || searchSpecificRange) {
 			this.overlayCtx.clear();
 		}
 

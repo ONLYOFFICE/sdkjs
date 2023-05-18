@@ -6180,6 +6180,14 @@
 		return this.Count > 0;
 	};
 
+	CDocumentSearchExcel.prototype.getSpecificRange = function () {
+		return this.props && this.props.specificRange && AscCommonExcel.g_oRangeCache.getAscRange(this.props.specificRange);
+	};
+
+	CDocumentSearchExcel.prototype.isSpecificRange = function () {
+		return this.props && this.props.specificRange;
+	};
+
 	//------------------------------------------------------------export---------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window["AscCommonExcel"].WorkbookView = WorkbookView;
