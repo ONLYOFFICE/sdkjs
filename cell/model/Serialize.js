@@ -9675,7 +9675,7 @@
 			} else if (c_oSer_SheetView.RightToLeft === type) {
 				this.stream.GetBool();
 			} else if (c_oSer_SheetView.ShowFormulas === type) {
-				this.stream.GetBool();
+				oSheetView.showFormulas = this.stream.GetBool();
 			} else if (c_oSer_SheetView.ShowGridLines === type) {
 				oSheetView.showGridLines = this.stream.GetBool();
 			} else if (c_oSer_SheetView.ShowOutlineSymbols === type) {
@@ -9688,8 +9688,6 @@
 				this.stream.GetBool();
 			} else if (c_oSer_SheetView.ShowZeros === type) {
                 oSheetView.showZeros = this.stream.GetBool();
-			} else if (c_oSer_SheetView.ShowFormulas === type) {
-                oSheetView.showFormulas = this.stream.GetBool();
 			} else if (c_oSer_SheetView.TabSelected === type) {
 				this.stream.GetBool();
 			} else if (c_oSer_SheetView.TopLeftCell === type) {
