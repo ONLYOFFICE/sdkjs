@@ -3022,11 +3022,13 @@
 
 		if (oContent.IsHasContent())
 		{
-			let strSecondLetter = String.fromCharCode(oContent.Next());
-			let strFirstLetter = String.fromCharCode(oContent.Next());
-
-			if (strSecondLetter && strFirstLetter)
+			let nSecond = oContent.Next();
+			let nFirst = oContent.Next();
+			if (nSecond && nFirst)
 			{
+				let strSecondLetter = String.fromCharCode(nSecond);
+				let strFirstLetter = String.fromCharCode(nFirst);
+
 				if (strFirstLetter !== "\\" && strSecondLetter !== "\\" && CorrectSpecial(oContent._paraRun, 1, strFirstLetter, strSecondLetter))
 				{
 					oContent._paraRun.MoveCursorToEndPos();
