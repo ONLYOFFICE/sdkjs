@@ -3018,27 +3018,20 @@
 	function CorrectSpecialWordOnCursor(oCMathContent, IsLaTeX)
 	{
 		let isConvert = false;
-		let oContent = oCMathContent.Content[oCMathContent.CurPos];
+		let oContent= new CMathContentIterator(oCMathContent);
 
-		if (oContent.Type === 49)
+		if (oContent.IsHasContent())
 		{
-			for (let nCount = oContent.Content.length - 1; nCount >= 1; nCount--)
+			let strSecondLetter = String.fromCharCode(oContent.Next());
+			let strFirstLetter = String.fromCharCode(oContent.Next());
+
+			if (strSecondLetter && strFirstLetter)
 			{
-				let strNext = oContent.Content[nCount].GetTextOfElement();
-				let strPrev = oContent.Content[nCount - 1].GetTextOfElement();
-				if (strPrev !== "\\" && strPrev !== "\\" && CorrectSpecial(oContent, nCount, strPrev, strNext)) {
-					nCount--;
-					isConvert = true
+				if (strFirstLetter !== "\\" && strSecondLetter !== "\\" && CorrectSpecial(oContent._paraRun, 1, strFirstLetter, strSecondLetter))
+				{
+					oContent._paraRun.MoveCursorToEndPos();
+					return isConvert;
 				}
-			}
-
-			oContent.MoveCursorToEndPos();
-			return isConvert;
-		}
-		else
-		{
-			for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++) {
-				isConvert = CorrectAllSpecialWords(oCMathContent.Content[nCount], IsLaTeX) || isConvert;
 			}
 		}
 	}
