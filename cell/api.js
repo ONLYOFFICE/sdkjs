@@ -654,14 +654,14 @@ var editor;
 
 			var reader = new FileReader();
 			reader.onload = function () {
-				wrapper_callback(reader.result);
+				wrapper_callback(new Uint8Array(reader.result));
 			};
 
 			reader.onerror = function () {
 				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
 			};
-			//readAsText - works as an opening csv, readAsArrayBuffer - differs from opening
-			reader.readAsText(files[0]);
+			//readAsArrayBuffer - differs from opening. opening - skip 3 first bytes
+			reader.readAsArrayBuffer(files[0]);
 		});
 	};
 
