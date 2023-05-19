@@ -12249,7 +12249,27 @@ background-repeat: no-repeat;\
 		return oLogicDocument.GetDrawingDocument();
 	}
 	asc_docs_api.prototype.getLogicDocument = asc_docs_api.prototype.private_GetLogicDocument;
-
+	asc_docs_api.prototype._createSmartArt = function (oSmartArt, oPlaceholder)
+	{
+		const oLogicDocument = this.getLogicDocument();
+		const oController = this.getGraphicController();
+		if (true === oLogicDocument.Selection.Use)
+		{
+			oLogicDocument.Remove(1, true);
+		}
+		oSmartArt.fitToPageSize();
+		oSmartArt.fitFontSize();
+		oSmartArt.recalculateBounds();
+		const oParaDrawing = oSmartArt.decorateParaDrawing(oController);
+		oSmartArt.setXfrmByParent();
+		if (oController)
+		{
+			oController.resetSelection2();
+			oLogicDocument.AddToParagraph(oParaDrawing);
+			oLogicDocument.Select_DrawingObject(oParaDrawing.Get_Id());
+			oLogicDocument.Recalculate();
+		}
+	};
 	asc_docs_api.prototype.asc_CompareDocumentFile_local = function (oOptions) {
 		var t = this;
 		window["AscDesktopEditor"]["OpenFilenameDialog"]("word", false, function(_file){

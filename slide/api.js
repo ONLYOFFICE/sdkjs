@@ -4326,6 +4326,62 @@ background-repeat: no-repeat;\
 		return this.WordControl.m_oDrawingDocument;
 	};
 	asc_docs_api.prototype.getLogicDocument = asc_docs_api.prototype.private_GetLogicDocument;
+	asc_docs_api.prototype._createSmartArt = function (oSmartArt, oPlaceholder)
+	{
+		const oLogicDocument = this.getLogicDocument();
+		const oController = this.getGraphicController();
+		const oDrawingObjects = this.getDrawingObjects();
+		if (!oDrawingObjects || !oController || !oLogicDocument)
+		{
+			return;
+		}
+		oSmartArt.setDrawingObjects(oDrawingObjects);
+		oSmartArt.setParent(oDrawingObjects);
+		oSmartArt.setRecalculateInfo();
+		let oPh;
+		let bLocked = false;
+		if (oPlaceholder)
+		{
+			oPh = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
+			if (oPh)
+			{
+				if (oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, [oPh]))
+				{
+					bLocked = true;
+				}
+				else
+				{
+					const nWidth = oPh.extX;
+					const nHeight = oPh.extY;
+					oSmartArt.fitForSizes(nHeight, nWidth);
+					const nX = oPh.x + oPh.extX / 2 - oSmartArt.spPr.xfrm.extX / 2;
+					const nY = oPh.y + oPh.extY / 2 - oSmartArt.spPr.xfrm.extY / 2;
+					oSmartArt.spPr.xfrm.setOffX(nX);
+					oSmartArt.spPr.xfrm.setOffY(nY);
+				}
+			}
+			else
+			{
+				return;
+			}
+		}
+		var oSlide = oLogicDocument.GetCurrentSlide();
+		if (oPh && !bLocked)
+		{
+			oSlide.replaceSp(oPh, oSmartArt);
+		}
+		else
+		{
+			oSlide.addToSpTreeToPos(oSlide.cSld.spTree.length, oSmartArt);
+		}
+		oSmartArt.checkDrawingBaseCoords();
+		oSmartArt.fitFontSize();
+		oController.checkChartTextSelection();
+		oController.resetSelection();
+		oSmartArt.select(oController, 0);
+		oController.startRecalculate();
+		oDrawingObjects.sendGraphicObjectProps();
+	};
 	asc_docs_api.prototype.sync_AlignCellCallback           = function(align)
 	{
 		this.sendEvent("asc_onAlignCell", align);

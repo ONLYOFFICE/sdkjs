@@ -1194,63 +1194,16 @@
 	baseEditorsApi.prototype.getDrawingObjects = function () {};
 	baseEditorsApi.prototype.getDrawingDocument = function () {};
 	baseEditorsApi.prototype.getLogicDocument = function () {};
-	baseEditorsApi.prototype.asc_createSmartArt = function (nSmartArtType) {
+	baseEditorsApi.prototype._createSmartArt = function () {};
+	baseEditorsApi.prototype.asc_createSmartArt = function (nSmartArtType, oPlaceholderObject) {
 		if (!AscCommon.g_oBinarySmartArts) {
 			return;
 		}
 		AscCommon.History.Create_NewPoint(AscDFH.historydescription_Document_AddSmartArt);
-		const bFromWord = this.isDocumentEditor;
 		const oSmartArt = new AscFormat.SmartArt();
 		oSmartArt.fillByPreset(nSmartArtType);
-		const oLogicDocument = this.getLogicDocument();
 		const oController = this.getGraphicController();
-		const oDrawingObjects = this.getDrawingObjects();
-		if (!bFromWord) {
-					if (oDrawingObjects) {
-						oSmartArt.setDrawingObjects(oDrawingObjects);
-					}
-					if (oDrawingObjects.cSld) {
-						oSmartArt.setParent(oDrawingObjects);
-						oSmartArt.setRecalculateInfo();
-					}
-
-					if (oDrawingObjects.getWorksheetModel) {
-						const oWSView = oDrawingObjects.getWorksheetModel();
-						oSmartArt.setWorksheet(oWSView);
-					}
-					oSmartArt.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
-					oSmartArt.checkDrawingBaseCoords();
-					oSmartArt.fitFontSize();
-					if (oController) {
-						oController.checkChartTextSelection();
-						oController.resetSelection();
-						oSmartArt.select(oController, 0);
-						if (oDrawingObjects.getWorksheet) {
-							const oWS = oDrawingObjects.getWorksheet();
-							if (oWS) {
-								oWS.setSelectionShape(true);
-							}
-						}
-					}
-					oController.startRecalculate();
-					oDrawingObjects.sendGraphicObjectProps();
-		} else {
-			if (true === oLogicDocument.Selection.Use) {
-				oLogicDocument.Remove(1, true);
-			}
-			oSmartArt.fitToPageSize();
-			oSmartArt.fitFontSize();
-			oSmartArt.recalculateBounds();
-
-			const oParaDrawing = oSmartArt.decorateParaDrawing(oController);
-			oSmartArt.setXfrmByParent();
-			if (oController) {
-				oController.resetSelection2();
-				oLogicDocument.AddToParagraph(oParaDrawing);
-				oLogicDocument.Select_DrawingObject(oParaDrawing.Get_Id());
-				oLogicDocument.Recalculate();
-			}
-		}
+		this._createSmartArt(oSmartArt, oPlaceholderObject);
 		oController.clearTrackObjects();
 		oController.clearPreTrackObjects();
 		oController.updateOverlay();

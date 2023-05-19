@@ -4380,6 +4380,29 @@ var editor;
     return false;
   };
 
+	spreadsheet_api.prototype._createSmartArt = function (oSmartArt, oPlaceholder)
+	{
+		const oController = this.getGraphicController();
+		const oDrawingObjects = this.getDrawingObjects();
+		if (!oDrawingObjects || !oController)
+		{
+			return;
+		}
+		oSmartArt.setDrawingObjects(oDrawingObjects);
+		const oWS = oDrawingObjects.getWorksheet();
+		const oWSModel = oWS.model;
+		oSmartArt.setWorksheet(oWSModel);
+		oSmartArt.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+		oSmartArt.checkDrawingBaseCoords();
+		oSmartArt.fitFontSize();
+		oController.checkChartTextSelection();
+		oController.resetSelection();
+		oSmartArt.select(oController, 0);
+		oWS.setSelectionShape(true);
+		oController.startRecalculate();
+		oDrawingObjects.sendGraphicObjectProps();
+	};
+
   spreadsheet_api.prototype.asc_getChartObject = function(bNoLock) {		// Return new or existing chart. For image return null
 
     if(bNoLock !== true){

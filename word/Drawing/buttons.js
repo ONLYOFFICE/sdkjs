@@ -292,7 +292,8 @@
 		Chart : 2,
 		Table : 3,
 		Video : 4,
-		Audio : 5
+		Audio : 5,
+		SmartArt: 6
 	};
 
 	var exportObj = AscCommon.PlaceholderButtonType;
@@ -303,6 +304,7 @@
 	exportObj["Table"] = exportObj.Table;
 	exportObj["Video"] = exportObj.Video;
 	exportObj["Audio"] = exportObj.Audio;
+	exportObj["SmartArt"] = exportObj.SmartArt;
 
 	AscCommon.PlaceholderButtonState = {
 		None : 0,
@@ -679,11 +681,13 @@
 		this.icons.register(AscCommon.PlaceholderButtonType.Chart, "chart", true);
 		this.icons.register(AscCommon.PlaceholderButtonType.Audio, "audio");
 		this.icons.register(AscCommon.PlaceholderButtonType.Video, "video");
+		this.icons.register(AscCommon.PlaceholderButtonType.SmartArt, "smartart", true);
 
 		// типы, которые поддерживают состояние Active
 		this.mapActive = [];
 		this.mapActive[AscCommon.PlaceholderButtonType.Table] = true;
 		this.mapActive[AscCommon.PlaceholderButtonType.Chart] = true;
+		this.mapActive[AscCommon.PlaceholderButtonType.SmartArt] = true;
 	}
 
 	Placeholders.prototype.registerCallback = function(type, callback)
