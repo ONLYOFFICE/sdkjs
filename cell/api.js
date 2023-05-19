@@ -619,10 +619,12 @@ var editor;
 		var t = this;
 
 		function wrapper_callback(data) {
+			var bom = AscCommon.getEncodingByBOM(data);
 			var cp = {
-				'codepage': AscCommon.c_oAscCodePageUtf8, "delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
+				'codepage': AscCommon.c_oAscCodePageNone !== bom.encoding ? bom.encoding : AscCommon.c_oAscCodePageUtf8,
+				"delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
 				'encodings': AscCommon.getEncodingParams(),
-				'data': data
+				'data': data.subarray(bom.size)
 			};
 			callback(new AscCommon.asc_CAdvancedOptions(cp));
 		}
@@ -660,7 +662,7 @@ var editor;
 			reader.onerror = function () {
 				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
 			};
-			//readAsArrayBuffer - differs from opening. opening - skip 3 first bytes
+
 			reader.readAsArrayBuffer(files[0]);
 		});
 	};
