@@ -401,7 +401,7 @@
 
 	  if (!window["NATIVE_EDITOR_ENJINE"]) {
 		  // initialize events controller
-		  this.controller.init(this, this.element, /*this.canvasOverlay*/ this.canvasGraphicOverlay, /*handlers*/{
+		  this.controller && this.controller.init(this, this.element, /*this.canvasOverlay*/ this.canvasGraphicOverlay, /*handlers*/{
 			  "resize": function () {
 				  self.resize.apply(self, arguments);
 			  }, "gotFocus": function (hasFocus) {

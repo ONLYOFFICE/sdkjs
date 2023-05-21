@@ -3355,10 +3355,11 @@
 				maxCol = Math.max(maxCol, maxCell.col);
 				maxRow = Math.max(maxRow, maxCell.row);
 
-				maxCell = this.objectRender.getMaxColRow();
-				maxCol = Math.max(maxCol, maxCell.col);
-				maxRow = Math.max(maxRow, maxCell.row);
-
+				maxCell = this.objectRender && this.objectRender.getMaxColRow();
+				if (maxCell) {
+					maxCol = Math.max(maxCol, maxCell.col);
+					maxRow = Math.max(maxRow, maxCell.row);
+				}
 				//TODO print area
 				wScale = doCalcScaleWidth(0, maxCol);
 				hScale = doCalcScaleHeight(0, maxRow);
@@ -24802,9 +24803,11 @@
 		maxRow = Math.max(maxRow, maxCell.row);
 
 		// Получаем максимальную колонку/строку для изображений/чатов
-		maxCell = this.objectRender.getMaxColRow();
-		maxCol = Math.max(maxCol, maxCell.col);
-		maxRow = Math.max(maxRow, maxCell.row);
+		maxCell = this.objectRender && this.objectRender.getMaxColRow();
+		if (maxCell) {
+			maxCol = Math.max(maxCol, maxCell.col);
+			maxRow = Math.max(maxRow, maxCell.row);
+		}
 
 		return {row: maxRow, col: maxCol};
 	};

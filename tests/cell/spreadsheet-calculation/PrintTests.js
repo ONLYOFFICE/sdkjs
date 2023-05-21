@@ -44,6 +44,12 @@ $(function() {
 	Asc.spreadsheet_api.prototype.onEndLoadFile = function(fonts, callback) {
 		openDocument();
 	};
+	Asc.spreadsheet_api.prototype._onEndLoadSdk = function () {
+		AscCommon.baseEditorsApi.prototype._onEndLoadSdk.call(this);
+	};
+	Asc.spreadsheet_api.prototype.initGlobalObjects = function(wbModel) {
+		AscCommonExcel.g_DefNameWorksheet = new AscCommonExcel.Worksheet(wbModel, -1);
+	};
 	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function() {
 	};
 	/*AscCommonExcel.WorkbookView.prototype._init = function() {
@@ -73,19 +79,24 @@ $(function() {
 	AscCommonExcel.WorksheetView.prototype.getZoom = function() {
 		return 1;
 	};
+	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
+		AscFonts.g_fontApplication.Init();
 
-	/*AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
+		this.FontLoader  = AscCommon.g_font_loader;
+		this.ImageLoader = AscCommon.g_image_loader;
+		this.FontLoader.put_Api(this);
+		this.ImageLoader.put_Api(this);
+		this.FontLoader.SetStandartFonts();
+		setTimeout(startTests, 10000)
+	};
 
-	};*/
+	AscCommon.CHistory.prototype.Create_NewPoint = function() {
+	};
 
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
 	});
-	api.FontLoader = {
-		LoadDocumentFonts: function() {
-			setTimeout(startTests, 0)
-		}
-	};
+
 	api.HtmlElement = document.createElement("div");
 	var curElem = document.getElementById("editor_sdk");
 	curElem.appendChild(api.HtmlElement);
