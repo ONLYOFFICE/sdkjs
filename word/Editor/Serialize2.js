@@ -8139,36 +8139,18 @@ function BinaryFileReader(doc, openParams)
 				stDefault.Caption = sNewStyleId;
 			oDocStyle.Add(oNewStyle);
 		}
-		var oStyleTypes = {par: 1, table: 2, lvl: 3, run: 4, styleLink: 5, numStyleLink: 6};
-		var fParseStyle = function(aStyles, oDocumentStyles, nStyleType)
+		var fParseStyle = function(aStyles, oDocumentStyles)
 		{
-			for(var i = 0, length = aStyles.length; i < length; ++i)
-			{
+			for (var i = 0, length = aStyles.length; i < length; ++i) {
 				var elem = aStyles[i];
 				var sStyleId = oIdMap[elem.style];
-				if(null != sStyleId && null != oDocumentStyles[sStyleId])
-				{
-					if(oStyleTypes.run == nStyleType)
-						elem.pPr.RStyle = sStyleId;
-					else if(oStyleTypes.par == nStyleType)
-						elem.pPr.PStyle = sStyleId;
-					else if(oStyleTypes.table == nStyleType)
-						elem.pPr.TableStyle = sStyleId;
-					else if(oStyleTypes.styleLink == nStyleType)
-						elem.pPr.StyleLink = sStyleId;
-					else if(oStyleTypes.numStyleLink == nStyleType)
-						elem.pPr.NumStyleLink = sStyleId;
-					else
-						elem.pPr.PStyle = sStyleId;
+				if (null != sStyleId && null != oDocumentStyles[sStyleId]) {
+					elem.setStyle(sStyleId);
 				}
 			}
 		}
-		fParseStyle(this.oReadResult.runStyles, styles, oStyleTypes.run);
-		fParseStyle(this.oReadResult.paraStyles, styles, oStyleTypes.par);
-		fParseStyle(this.oReadResult.tableStyles, styles, oStyleTypes.table);
-		fParseStyle(this.oReadResult.lvlStyles, styles, oStyleTypes.lvl);
-		fParseStyle(this.oReadResult.styleLinks, styles, oStyleTypes.styleLink);
-		fParseStyle(this.oReadResult.numStyleLinks, styles, oStyleTypes.numStyleLink);
+		fParseStyle(this.oReadResult.styleLinks, styles);
+
 		if (null == stDefault.Character) {
 			if (!characterNameId) {
 				var oNewStyle = new CStyle("Default Paragraph Font", null, null, styletype_Character );
@@ -8473,9 +8455,8 @@ function BinaryFileReader(doc, openParams)
         }
 
         //обрабатываем стили
-		var oStyleTypes = {par: 1, table: 2, lvl: 3, run: 4, styleLink: 5, numStyleLink: 6};
 		var addNewStyles = false;
-		var fParseStyle = function (aStyles, oDocumentStyles, oReadResult, nStyleType) {
+		var fParseStyle = function (aStyles, oDocumentStyles, oReadResult) {
 			if (aStyles == null) {
 				return;
 			}
@@ -8517,26 +8498,10 @@ function BinaryFileReader(doc, openParams)
 			};
 
 			var putStyle = function (_elem, _styleId, putDefaultStyle) {
-				if (!_elem.pPr) {
+				if (!_elem)
 					return;
-				}
-				if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
-					_elem.pPr.PStyle = _styleId;
-				} else if (nStyleType === oStyleTypes.table) {
-					_elem.pPr.Set_TableStyle2(_styleId);
-				} else if (nStyleType === oStyleTypes.run) {
-					if (_elem.run) {
-						_elem.run.Set_RStyle(_styleId);
-					} else {
-						_elem.pPr.RStyle = _styleId;
-					}
-				} else if (nStyleType === oStyleTypes.styleLink) {
-					_elem.pPr.StyleLink = _styleId;
-				} else if (nStyleType === oStyleTypes.numStyleLink) {
-					_elem.pPr.SetNumStyleLink(_styleId);
-				} else if (putDefaultStyle) {
-					_elem.pPr.PStyle = j;
-				}
+
+				_elem.setStyle(_styleId);
 			};
 
 			var tryAddStyle = function (_stylePaste, _elem, _basedOnElems) {
@@ -8614,10 +8579,8 @@ function BinaryFileReader(doc, openParams)
 				if (null != stylePaste && null != stylePaste.style && oDocumentStyles) {
 					//1. ищем родительсие стили стили
 					var basedOnElems = [];
-					if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
-						if (elem.pPr) {
-							putBasedOn(elem, basedOnElems);
-						}
+					if (elem.isParagraphStyle() || elem.isNumLvlStyle()) {
+						putBasedOn(elem, basedOnElems);
 					}
 
 					//2. передаём основной стиль и родительские
@@ -8646,25 +8609,17 @@ function BinaryFileReader(doc, openParams)
 					}
 				}
 			}
-
+			
 			//подменяем у всех элементов basedOn
-			if (nStyleType === oStyleTypes.par || nStyleType === oStyleTypes.lvl) {
-				for (i = 0, length = allAddedStylesIds.length; i < length; ++i) {
-					var addedStyle = oDocumentStyles.Style[allAddedStylesIds[i]];
-					if (addedStyle && addedStyle.BasedOn != null && mapStylesIds[addedStyle.BasedOn]) {
-						addedStyle.Set_BasedOn(mapStylesIds[addedStyle.BasedOn]);
-					}
+			for (i = 0, length = allAddedStylesIds.length; i < length; ++i) {
+				var addedStyle = oDocumentStyles.Style[allAddedStylesIds[i]];
+				if (addedStyle && addedStyle.BasedOn != null && mapStylesIds[addedStyle.BasedOn]) {
+					addedStyle.Set_BasedOn(mapStylesIds[addedStyle.BasedOn]);
 				}
 			}
-
 		};
-
-		fParseStyle(this.oReadResult.runStyles, this.Document.Styles, this.oReadResult, oStyleTypes.run);
-        fParseStyle(this.oReadResult.paraStyles, this.Document.Styles, this.oReadResult, oStyleTypes.par);
-        fParseStyle(this.oReadResult.tableStyles, this.Document.Styles, this.oReadResult, oStyleTypes.table);
-        fParseStyle(this.oReadResult.lvlStyles, this.Document.Styles, this.oReadResult, oStyleTypes.lvl);
-        fParseStyle(this.oReadResult.styleLinks, this.Document.Styles, this.oReadResult, oStyleTypes.styleLink);
-		fParseStyle(this.oReadResult.numStyleLinks, this.Document.Styles, this.oReadResult, oStyleTypes.numStyleLink);
+		
+		fParseStyle(this.oReadResult.styleLinks, this.Document.Styles, this.oReadResult);
 
         var aContent = this.oReadResult.DocumentContent;
         for (var i = 0, length = this.oReadResult.aPostOpenStyleNumCallbacks.length; i < length; ++i)
@@ -8960,9 +8915,9 @@ function BinaryStyleTableReader(doc, oReadResult, stream)
         {
 			var oNewParaPr = new CParaPr();
             res = this.bpPrr.Read(length, oNewParaPr, null);
-			style.ParaPr = oNewParaPr;
+			style.SetParaPr(oNewParaPr);
 			this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-				style.Set_ParaPr(oNewParaPr);
+				style.SetParaPr(oNewParaPr);
 			});
         }
 		else if(c_oSer_sts.Style_TablePr == type)
@@ -9122,6 +9077,114 @@ function BinaryStyleTableReader(doc, oReadResult, stream)
         return res;
 	};
 };
+//----------------------------------------------------------------------------------------------------------------------
+// Классы для обновления ссылок на стили
+//----------------------------------------------------------------------------------------------------------------------
+function BinaryStyleUpdaterBase(element, style)
+{
+	this.element = element;
+	this.style   = style;
+}
+BinaryStyleUpdaterBase.prototype.setStyle = function(styleId) {
+};
+BinaryStyleUpdaterBase.prototype.isParagraphStyle = function() {
+	return false;
+};
+BinaryStyleUpdaterBase.prototype.isNumLvlStyle = function() {
+	return false;
+};
+function InheritBinaryStyleUpdater(inheritedClass, setFunction)
+{
+	inheritedClass.prototype             = Object.create(BinaryStyleUpdaterBase.prototype);
+	inheritedClass.prototype.constructor = inheritedClass;
+	inheritedClass.prototype.setStyle    = setFunction;
+}
+function BinaryRunStyleUpdater()
+{
+	BinaryStyleUpdaterBase.apply(this, arguments);
+}
+InheritBinaryStyleUpdater(BinaryRunStyleUpdater,
+	function(styleId)
+	{
+		if (!this.element)
+			return;
+
+		this.element.SetRStyle(styleId);
+	}
+);
+function BinaryParagraphStyleUpdater()
+{
+	BinaryStyleUpdaterBase.apply(this, arguments);
+}
+InheritBinaryStyleUpdater(BinaryParagraphStyleUpdater,
+	function(styleId)
+	{
+		if (!this.element)
+			return;
+
+		this.element.SetPStyle(styleId);
+	}
+);
+BinaryParagraphStyleUpdater.prototype.isParagraphStyle = function() {
+	return true;
+};
+function BinaryTableStyleUpdater()
+{
+	BinaryStyleUpdaterBase.apply(this, arguments);
+}
+InheritBinaryStyleUpdater(BinaryTableStyleUpdater,
+	function(styleId)
+	{
+		if (!this.element)
+			return;
+
+		this.element.SetTableStyle(styleId);
+	}
+);
+function BinaryAbstractNumStyleLinkUpdater()
+{
+	BinaryStyleUpdaterBase.apply(this, arguments);
+}
+InheritBinaryStyleUpdater(BinaryAbstractNumStyleLinkUpdater,
+	function(styleId)
+	{
+		if (!this.element)
+			return;
+
+		this.element.SetStyleLink(styleId);
+	}
+);
+function BinaryAbstractNumNumStyleLinkUpdater()
+{
+	BinaryStyleUpdaterBase.apply(this, arguments);
+}
+InheritBinaryStyleUpdater(BinaryAbstractNumNumStyleLinkUpdater,
+	function(styleId)
+	{
+		if (!this.element)
+			return;
+
+		this.element.SetNumStyleLink(styleId);
+	}
+);
+function BinaryNumLvlStyleUpdater()
+{
+	BinaryStyleUpdaterBase.apply(this, arguments);
+}
+InheritBinaryStyleUpdater(BinaryNumLvlStyleUpdater,
+	function(styleId)
+	{
+		if (!this.element)
+			return;
+		
+		this.element.SetPStyle(styleId);
+	}
+);
+BinaryNumLvlStyleUpdater.prototype.isNumLvlStyle = function() {
+	return true;
+};
+//----------------------------------------------------------------------------------------------------------------------
+
 function Binary_pPrReader(doc, oReadResult, stream)
 {
     this.Document = doc;
@@ -9189,7 +9252,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
                 break;
             case c_oSerProp_pPrType.ParaStyle:
                 var ParaStyle = this.stream.GetString2LE(length);
-				this.oReadResult.paraStyles.push({pPr: pPr, style: ParaStyle});
+				this.oReadResult.styleLinks.push(new BinaryParagraphStyleUpdater(this.paragraph, ParaStyle));
                 break;
             case c_oSerProp_pPrType.numPr:
                 var numPr = new CNumPr();
@@ -9215,9 +9278,10 @@ function Binary_pPrReader(doc, oReadResult, stream)
                     var EndRun = this.paragraph.GetParaEndRun();
                     var rPr = new CTextPr();
                     res = this.brPrr.Read(length, rPr, EndRun);
-					this.paragraph.TextPr.Value = rPr;
+					
+					this.paragraph.TextPr.SetPr(rPr);
 					this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-						oThis.paragraph.TextPr.Apply_TextPr(rPr);
+						oThis.paragraph.TextPr.SetPr(rPr);
 					});
 				}
 				else
@@ -10055,7 +10119,7 @@ function Binary_rPrReader(doc, oReadResult, stream)
                 break;
 			case c_oSerProp_rPrType.RStyle:
 				var RunStyle = this.stream.GetString2LE(length);
-				this.oReadResult.runStyles.push({pPr: rPr, style: RunStyle, run: run});
+				this.oReadResult.styleLinks.push(new BinaryRunStyleUpdater(run, RunStyle));
                 break;
 			case c_oSerProp_rPrType.Spacing:
 				rPr.Spacing = this.bcr.ReadDouble();
@@ -10366,7 +10430,7 @@ Binary_tblPrReader.prototype =
 				table.Set_TableLook(new AscCommon.CTableLook(bFC, bFR, bLC, bLR, !bBH, !bBV));
 			}
 			else if( c_oSerProp_tblPrType.Style === type )
-				this.oReadResult.tableStyles.push({pPr: table, style: this.stream.GetString2LE(length)});
+				this.oReadResult.styleLinks.push(new BinaryTableStyleUpdater(table, this.stream.GetString2LE(length)));
 			else
 				res = c_oSerConstants.ReadUnknown;
 		}
@@ -10915,10 +10979,10 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
             });
         }
 		else if ( c_oSerNumTypes.NumStyleLink === type ) {
-			this.oReadResult.numStyleLinks.push({pPr: oNewNum, style: this.stream.GetString2LE(length)});
+			this.oReadResult.styleLinks.push(new BinaryAbstractNumNumStyleLinkUpdater(oNewNum, this.stream.GetString2LE(length)));
 		}
 		else if ( c_oSerNumTypes.StyleLink === type ) {
-			this.oReadResult.styleLinks.push({pPr: oNewNum, style: this.stream.GetString2LE(length)});
+			this.oReadResult.styleLinks.push(new BinaryAbstractNumStyleLinkUpdater(oNewNum, this.stream.GetString2LE(length)));
 		}
         else if ( c_oSerNumTypes.AbstractNum_Id === type )
         {
@@ -10946,7 +11010,7 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
 				res = this.bcr.Read2(length, function(t, l){
 					return oThis.ReadLevel(t, l, oNewLvl, tmp);
 				});
-				oNewNum.Lvl[tmp.nLevelNum] = oNewLvl;
+				oNewNum.SetLvl(tmp.nLevelNum, oNewLvl);
 				this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
 					oNewNum.SetLvl(tmp.nLevelNum, oNewLvl);
 				});
@@ -11012,7 +11076,7 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
         }
 		else if ( c_oSerNumTypes.lvl_PStyle === type )
         {
-			this.oReadResult.lvlStyles.push({pPr: oNewLvl, style: this.stream.GetString2LE(length)});
+			this.oReadResult.styleLinks.push(new BinaryNumLvlStyleUpdater(oNewLvl, this.stream.GetString2LE(length)));
         }
         else if ( c_oSerNumTypes.lvl_ParaPr === type )
         {
@@ -11433,9 +11497,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
         {
 			var paraPr = new CParaPr();
             res = this.bpPrr.Read(length, paraPr, paragraph);
-			paragraph.Pr = paraPr;
+			paragraph.SetPr(paraPr);
 			this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-				paragraph.Set_Pr(paraPr);
+				paragraph.SetPr(paraPr);
 			});
         }
         else if ( c_oSerParType.Content === type )
@@ -12741,9 +12805,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.btblPrr.Read_tblPr(t,l, oNewTablePr, table);
             });
-			table.Pr = oNewTablePr;
+			table.SetPr(oNewTablePr);
 			this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-				table.Set_Pr(oNewTablePr);
+				table.SetPr(oNewTablePr);
 			});
         }
         else if( c_oSerDocTableType.tblGrid === type )
@@ -17257,12 +17321,7 @@ function DocReadResult(doc) {
 	this.numToNumClass = {};
 	this.paraNumPrs = [];
 	this.styles = [];
-	this.runStyles = [];
-	this.paraStyles = [];
-	this.tableStyles = [];
-	this.lvlStyles = [];
 	this.styleLinks = [];
-	this.numStyleLinks = [];
 	this.DefpPr = null;
 	this.DefrPr = null;
 	this.DocumentContent = [];

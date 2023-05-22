@@ -220,6 +220,13 @@ Paragraph.prototype.Set_Pr = function(oNewPr)
 	return this.SetDirectParaPr(oNewPr);
 };
 /**
+ * @param paraPr {AscWord.CParaPr}
+ */
+Paragraph.prototype.SetPr = function(paraPr)
+{
+	return this.SetDirectParaPr(paraPr);
+};
+/**
  * Устанавливаем прямые настройки параграфа целиком
  * @param oParaPr {CParaPr}
  */
@@ -10948,15 +10955,8 @@ Paragraph.prototype.Style_Add = function(Id, bDoNotDeleteProps)
 	this.Recalc_RunsCompiledPr();
 
 	// Если стиль является стилем по умолчанию для параграфа, тогда не надо его записывать.
-	if (Id != oDefParaId && undefined !== Id)
-	{
-		this.private_AddPrChange();
-		History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, Id));
-		this.Pr.PStyle = Id;
-		this.private_UpdateTrackRevisionOnChangeParaPr(true);
-		this.UpdateDocumentOutline();
-		this.private_RefreshNumbering();
-	}
+	if (Id !== oDefParaId && undefined !== Id)
+		this.SetPStyle(Id);
 
 	if (true === bDoNotDeleteProps)
 		return;
@@ -10995,12 +10995,20 @@ Paragraph.prototype.Style_Add = function(Id, bDoNotDeleteProps)
 /**
  * Добавление стиля в параграф при открытии и копировании
  */
-Paragraph.prototype.Style_Add_Open = function(Id)
+Paragraph.prototype.SetPStyle = function(styleId)
 {
-	this.Pr.PStyle = Id;
-
-	// Надо пересчитать конечный стиль
-	this.CompiledPr.NeedRecalc = true;
+	if (this.Pr.PStyle === styleId)
+		return;
+	
+	this.private_AddPrChange();
+	
+	History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, styleId));
+	this.Pr.PStyle = styleId;
+	
+	this.RecalcCompiledPr();
+	this.private_UpdateTrackRevisionOnChangeParaPr(true);
+	this.private_RefreshNumbering();
+	this.UpdateDocumentOutline();
 };
 Paragraph.prototype.Style_Remove = function()
 {

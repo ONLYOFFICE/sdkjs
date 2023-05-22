@@ -8551,6 +8551,10 @@ CTable.prototype.SetPr = function(oTablePr)
 {
 	this.Set_Pr(oTablePr);
 };
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Заменять вызовы Set_TableStyle функции на SetTableStyle и доп обработку, если нужно
+// Set_TableStyle2 нужно убрать вообще
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 CTable.prototype.Set_TableStyle = function(StyleId, bNoClearFormatting)
 {
 	// Здесь мы не проверяем изменился ли стиль, потому что при выставлении стиля нужно сбрасывать
@@ -8568,13 +8572,16 @@ CTable.prototype.Set_TableStyle = function(StyleId, bNoClearFormatting)
 };
 CTable.prototype.Set_TableStyle2 = function(StyleId)
 {
-	if (this.TableStyle != StyleId)
-	{
-		History.Add(new CChangesTableTableStyle(this, this.TableStyle, StyleId));
-		this.TableStyle = StyleId;
-
-		this.Recalc_CompiledPr2();
-	}
+	this.SetTableStyle(StyleId);
+};
+CTable.prototype.SetTableStyle = function(styleId)
+{
+	if (this.TableStyle === styleId)
+		return;
+	
+	History.Add(new CChangesTableTableStyle(this, this.TableStyle, styleId));
+	this.TableStyle = styleId;
+	this.Recalc_CompiledPr2();
 };
 CTable.prototype.Get_TableStyle = function()
 {
