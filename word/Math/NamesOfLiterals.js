@@ -3017,7 +3017,6 @@
 
 	function CorrectSpecialWordOnCursor(oCMathContent, IsLaTeX)
 	{
-		let isConvert = false;
 		let oContent= new CMathContentIterator(oCMathContent);
 
 		if (oContent.IsHasContent())
@@ -3029,10 +3028,10 @@
 				let strSecondLetter = String.fromCharCode(nSecond);
 				let strFirstLetter = String.fromCharCode(nFirst);
 
-				if (strFirstLetter !== "\\" && strSecondLetter !== "\\" && CorrectSpecial(oContent._paraRun, 1, strFirstLetter, strSecondLetter))
+				if (strFirstLetter !== "\\" && strSecondLetter !== "\\" && CorrectSpecial(oCMathContent, strFirstLetter, strSecondLetter))
 				{
 					oContent._paraRun.MoveCursorToEndPos();
-					return isConvert;
+					return true;
 				}
 			}
 		}
@@ -3113,7 +3112,7 @@
 			{
 				let str = oCMathContent.Content[nCount].GetTextOfElement();
 				let strPrev = oCMathContent.Content[nCount - 1].GetTextOfElement();
-				if (CorrectSpecial(oCMathContent, nCount, strPrev, str))
+				if (CorrectSpecial(oCMathContent, strPrev, str))
 					nCount--;
 			}
 		}
@@ -3126,12 +3125,13 @@
 
 		return isConvert;
 	}
-	function CorrectSpecial(oCMathContent, nCount, strPrev, strNext)
+	function CorrectSpecial(oCMathContent, strPrev, strNext)
 	{
 		for (let i = 0; i < g_DefaultAutoCorrectMathSymbolsList.length; i++)
 		{
 			let current = g_DefaultAutoCorrectMathSymbolsList[i];
-			if (current[0] === strPrev + strNext)
+			let strToken = strPrev + strNext;
+			if (current[0] === strToken)
 			{
 				let data = current[1],
 					str = "";
@@ -3150,8 +3150,23 @@
 
 				if (str)
 				{
-					oCMathContent.RemoveFromContent(nCount - 1, 2, true);
-					oCMathContent.AddText(str, nCount- 1);
+					let nCounter = 0;
+					for (let i = oCMathContent.Content.length - 1; i >= 0 && nCounter !== strToken.length; i--)
+					{
+						let oCurrentElement = oCMathContent.Content[i];
+						let oCurrentElementCounter = oCurrentElement.Content.length;
+
+						if (oCurrentElementCounter > strToken.length)
+						{
+							oCurrentElement.RemoveFromContent(oCurrentElementCounter - strToken.length, strToken.length);
+						}
+						else
+						{
+							nCounter += oCurrentElementCounter;
+							oCMathContent.RemoveFromContent(i, 1);
+						}
+					}
+					oCMathContent.Add_TextOnPos(oCMathContent.Content.length, str);
 					return true;
 				}
 			}

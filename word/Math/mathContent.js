@@ -5706,7 +5706,13 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
     if (arrNextContent === false)
         return;
 
-    this.CorrectSpecialWordOnCursor(nInputType);
+    if (this.CorrectSpecialWordOnCursor(nInputType))
+    {
+        if (arrNextContent)
+            this.ConcatToContent(this.Content.length, arrNextContent);
+
+        return;
+    }
 
     // convert content of bracket block, near cursor for Unicode (1/2) -> ( CFraction )
     if (nInputType === 0)
