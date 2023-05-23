@@ -587,7 +587,7 @@ CEditorPage.prototype.onChangeTB = function()
 {
 };
 
-CEditorPage.prototype.setNodesEnable = function()
+CEditorPage.prototype.setNotesEnable = function()
 {};
 
 CEditorPage.prototype.CheckTextBoxInputPos = function()

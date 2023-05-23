@@ -87,13 +87,10 @@ function CEditorPage(api)
     {
     };
 
-    this.initEvents2 = function()
+    this.initEvents = function()
     {
     };
 
-    this.initEvents2MobileAdvances = function()
-    {
-    };
     this.onButtonRulersClick = function()
     {
     };
