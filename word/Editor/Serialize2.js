@@ -8820,7 +8820,7 @@ function BinaryStyleTableReader(doc, oReadResult, stream)
         else if(c_oSer_st.DefpPr == type)
         {
             var ParaPr = new CParaPr();
-            res = this.bpPrr.Read(length, ParaPr);
+            res = this.bpPrr.Read(length, ParaPr, null);
 			this.oReadResult.DefpPr = ParaPr;
         }
         else if(c_oSer_st.DefrPr == type)
@@ -8900,7 +8900,7 @@ function BinaryStyleTableReader(doc, oReadResult, stream)
         else if(c_oSer_sts.Style_ParaPr == type)
         {
 			var oNewParaPr = new CParaPr();
-            res = this.bpPrr.Read(length, oNewParaPr, null);
+            res = this.bpPrr.Read(length, oNewParaPr, null, style);
 			style.SetParaPr(oNewParaPr);
 			this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
 				style.SetParaPr(oNewParaPr);
@@ -9178,12 +9178,14 @@ function Binary_pPrReader(doc, oReadResult, stream)
     this.stream = stream;
     this.pPr;
     this.paragraph;
+	this.style;
     this.bcr = new Binary_CommonReader(this.stream);
     this.brPrr = new Binary_rPrReader(this.Document, this.oReadResult, this.stream);
-    this.Read = function(stLen, pPr, par)
+    this.Read = function(stLen, pPr, par, style)
     {
         this.pPr = pPr;
         this.paragraph = par;
+		this.style = style;
         var oThis = this;
         return this.bcr.Read2(stLen, function(type, length){
                 return oThis.ReadContent(type, length);
@@ -9247,8 +9249,9 @@ function Binary_pPrReader(doc, oReadResult, stream)
                 res = this.bcr.Read2(length, function(t, l){
                     return oThis.ReadNumPr(t, l, numPr);
                 });
-                if ((null != numPr.NumId || null != numPr.Lvl) && this.paragraph)
-					this.oReadResult.paraNumPrs.push({paragraph : this.paragraph, numPr : numPr});
+                if ((null != numPr.NumId || null != numPr.Lvl) && (this.paragraph || this.style)) {
+					this.oReadResult.paraNumPrs.push({elem : this.paragraph || this.style, numPr : numPr});
+				}
                 break;
             case c_oSerProp_pPrType.pBdr:
                 res = this.bcr.Read1(length, function(t, l){
@@ -17468,13 +17471,13 @@ DocReadResult.prototype = {
 	},
 	updateNumPrLinks: function() {
 		for(let i = 0, count = this.paraNumPrs.length; i < count; ++i) {
-			let numPr     = this.paraNumPrs[i].numPr;
-			let paragraph = this.paraNumPrs[i].paragraph;
-			if (!paragraph || !numPr || null === numPr.NumId || undefined === numPr.NumId)
+			let numPr = this.paraNumPrs[i].numPr;
+			let elem  = this.paraNumPrs[i].elem;
+			if (!elem || !numPr || null === numPr.NumId || undefined === numPr.NumId)
 				continue;
 			
 			let num = this.numToNumClass[numPr.NumId];
-			paragraph.SetNumPr(num && 0 !== numPr.NumId ? num.GetId() : "0", numPr.Lvl);
+			elem.SetNumPr(num && 0 !== numPr.NumId ? num.GetId() : "0", numPr.Lvl);
 		}
 	}
 };
