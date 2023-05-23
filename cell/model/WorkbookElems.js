@@ -11227,7 +11227,7 @@ DynamicFilter.prototype.init = function(range) {
 
 
 	let _calcDateInterval = function (_diff) {
-		let today = new cDate();
+		let today = new cDate().getCurrentDate();
 		let start, end;
 
 		if (isSimpleWeek) {
@@ -11302,14 +11302,14 @@ DynamicFilter.prototype.init = function(range) {
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.today: {
-			let today = new cDate();
+			let today = new cDate().getCurrentDate();
 			val = today.getExcelDate(true);
 			today.addDays(1);
 			maxVal = today.getExcelDate(true);
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.tomorrow: {
-			let today = new cDate();
+			let today = new cDate().getCurrentDate();
 			today.addDays(1);
 			val = today.getExcelDate(true);
 			today.addDays(1);
@@ -11317,14 +11317,14 @@ DynamicFilter.prototype.init = function(range) {
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.yearToDate: {
-			let today = new cDate();
+			let today = new cDate().getCurrentDate();
 			val = new cDate(today.getUTCFullYear(), 0, 1).getExcelDate(true);
 			today.addDays(1);
 			maxVal = today.getExcelDate(true);
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.yesterday: {
-			let today = new cDate();
+			let today = new cDate().getCurrentDate();
 			maxVal = today.getExcelDate(true);
 			today.addDays(-1);
 			val = today.getExcelDate(true);
@@ -11516,7 +11516,7 @@ DynamicFilter.prototype.isHideValue = function (val) {
 	}
 
 	if (minMonth !== undefined) {
-		let today = new cDate();
+		let today = new cDate().getCurrentDate();
 		let todayMonth = today.getUTCMonth();
 		res = todayMonth >= minMonth && todayMonth <= maxMonth;
 	}
