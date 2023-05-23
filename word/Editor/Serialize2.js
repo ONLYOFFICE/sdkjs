@@ -8388,8 +8388,6 @@ function BinaryFileReader(doc, openParams)
 		if (this.oReadResult.DocumentContent.length > 0) {
 			this.Document.ReplaceContent(this.oReadResult.DocumentContent);
 		}
-		// for(var i = 0, length = this.oReadResult.aPostOpenStyleNumCallbacks.length; i < length; ++i)
-			// this.oReadResult.aPostOpenStyleNumCallbacks[i].call();
 		if(null !== this.oReadResult.defaultTabStop && this.oReadResult.defaultTabStop > 0) {
 			AscCommonWord.Default_Tab_Stop = this.oReadResult.defaultTabStop;
 		}
@@ -8608,8 +8606,6 @@ function BinaryFileReader(doc, openParams)
 		fParseStyle(this.oReadResult.styleLinks, this.Document.Styles, this.oReadResult);
 
         var aContent = this.oReadResult.DocumentContent;
-        for (var i = 0, length = this.oReadResult.aPostOpenStyleNumCallbacks.length; i < length; ++i)
-            this.oReadResult.aPostOpenStyleNumCallbacks[i].call();
         var bInBlock;
         if (oReadResult.bLastRun)
             bInBlock = false;
@@ -8902,9 +8898,6 @@ function BinaryStyleTableReader(doc, oReadResult, stream)
 			var oNewParaPr = new CParaPr();
             res = this.bpPrr.Read(length, oNewParaPr, null, style);
 			style.SetParaPr(oNewParaPr);
-			this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-				style.SetParaPr(oNewParaPr);
-			});
         }
 		else if(c_oSer_sts.Style_TablePr == type)
         {
@@ -8983,42 +8976,21 @@ function BinaryStyleTableReader(doc, oReadResult, stream)
 			{
 				switch(oRes.nType)
 				{
-					case ETblStyleOverrideType.tblstyleoverridetypeBand1Horz: style.TableBand1Horz = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeBand1Vert: style.TableBand1Vert = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeBand2Horz: style.TableBand2Horz = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeBand2Vert: style.TableBand2Vert = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeFirstCol: style.TableFirstCol = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeFirstRow: style.TableFirstRow = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeLastCol: style.TableLastCol = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeLastRow: style.TableLastRow = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeNeCell: style.TableTRCell = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeNwCell: style.TableTLCell = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeSeCell: style.TableBRCell = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeSwCell: style.TableBLCell = oNewTableStylePr;break;
-					case ETblStyleOverrideType.tblstyleoverridetypeWholeTable: style.TableWholeTable = oNewTableStylePr;break;
+					case ETblStyleOverrideType.tblstyleoverridetypeBand1Horz: style.Set_TableBand1Horz(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeBand1Vert: style.Set_TableBand1Vert(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeBand2Horz: style.Set_TableBand2Horz(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeBand2Vert: style.Set_TableBand2Vert(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeFirstCol: style.Set_TableFirstCol(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeFirstRow: style.Set_TableFirstRow(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeLastCol: style.Set_TableLastCol(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeLastRow: style.Set_TableLastRow(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeNeCell: style.Set_TableTRCell(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeNwCell: style.Set_TableTLCell(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeSeCell: style.Set_TableBRCell(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeSwCell: style.Set_TableBLCell(oNewTableStylePr);break;
+					case ETblStyleOverrideType.tblstyleoverridetypeWholeTable: style.Set_TableWholeTable(oNewTableStylePr);break;
 				}
 			}
-			this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-				if(null != oRes.nType)
-				{
-					switch(oRes.nType)
-					{
-						case ETblStyleOverrideType.tblstyleoverridetypeBand1Horz: style.Set_TableBand1Horz(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeBand1Vert: style.Set_TableBand1Vert(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeBand2Horz: style.Set_TableBand2Horz(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeBand2Vert: style.Set_TableBand2Vert(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeFirstCol: style.Set_TableFirstCol(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeFirstRow: style.Set_TableFirstRow(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeLastCol: style.Set_TableLastCol(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeLastRow: style.Set_TableLastRow(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeNeCell: style.Set_TableTRCell(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeNwCell: style.Set_TableTLCell(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeSeCell: style.Set_TableBRCell(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeSwCell: style.Set_TableBLCell(oNewTableStylePr);break;
-						case ETblStyleOverrideType.tblstyleoverridetypeWholeTable: style.Set_TableWholeTable(oNewTableStylePr);break;
-					}
-				}
-			});
 			if(c_oSerConstants.ReadOk != res)
 				return res;
 		}
@@ -9266,9 +9238,6 @@ function Binary_pPrReader(doc, oReadResult, stream)
                     res = this.brPrr.Read(length, rPr, EndRun);
 					
 					this.paragraph.TextPr.SetPr(rPr);
-					this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-						oThis.paragraph.TextPr.SetPr(rPr);
-					});
 				}
 				else
 					res = c_oSerConstants.ReadUnknown;
@@ -10997,9 +10966,6 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
 					return oThis.ReadLevel(t, l, oNewLvl, tmp);
 				});
 				oNewNum.SetLvl(tmp.nLevelNum, oNewLvl);
-				this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-					oNewNum.SetLvl(tmp.nLevelNum, oNewLvl);
-				});
 			}
 			else
 				res = c_oSerConstants.ReadUnknown;
@@ -11484,9 +11450,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			var paraPr = new CParaPr();
             res = this.bpPrr.Read(length, paraPr, paragraph);
 			paragraph.SetPr(paraPr);
-			this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-				paragraph.SetPr(paraPr);
-			});
         }
         else if ( c_oSerParType.Content === type )
         {
@@ -12792,9 +12755,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
                 return oThis.btblPrr.Read_tblPr(t,l, oNewTablePr, table);
             });
 			table.SetPr(oNewTablePr);
-			this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-				table.SetPr(oNewTablePr);
-			});
         }
         else if( c_oSerDocTableType.tblGrid === type )
         {
@@ -17312,7 +17272,6 @@ function DocReadResult(doc) {
 	this.DefrPr = null;
 	this.DocumentContent = [];
 	this.bLastRun = null;
-	this.aPostOpenStyleNumCallbacks = [];
 	this.headers = [];
 	this.footers = [];
 	this.hasRevisions = false;
