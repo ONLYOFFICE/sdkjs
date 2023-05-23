@@ -47,8 +47,6 @@ var History                = AscCommon.History;
 var g_dKoef_pix_to_mm      = AscCommon.g_dKoef_pix_to_mm;
 var g_dKoef_mm_to_pix      = AscCommon.g_dKoef_mm_to_pix;
 
-var g_bIsMobile = AscCommon.AscBrowser.isMobile;
-
 var Page_Width  = 297;
 var Page_Height = 210;
 
@@ -280,7 +278,6 @@ function CEditorPage(api)
 
 	// -----------------------------------------------------------------------
 
-	this.m_nTimerScrollInterval   = 40;
 	this.m_nCurrentTimeClearCache = 0;
 
 	this.StartVerticalScroll     = false;
@@ -307,6 +304,8 @@ function CEditorPage(api)
 	this.reporterTimerAdd = 0;
 	this.reporterTimerLastStart = -1;
 	this.reporterPointer = false;
+
+	this.paintMessageLoop = new AscCommon.PaintMessageLoop(40);
 
 	this.m_oApi = api;
 	var oThis   = this;
@@ -4222,8 +4221,7 @@ function CEditorPage(api)
 
 	this.StartMainTimer = function()
 	{
-		if (-1 == this.m_nPaintTimerId)
-			this.onTimerScroll();
+		this.paintMessageLoop.Start(this.onTimerScroll.bind(this));
 	};
 
 	this.onTimerScroll = function(isThUpdateSync)
@@ -4231,10 +4229,7 @@ function CEditorPage(api)
 		var oWordControl                = oThis;
 
 		if (oWordControl.m_oApi.isLongAction())
-        {
-            oWordControl.m_nPaintTimerId = setTimeout(oWordControl.onTimerScroll, oWordControl.m_nTimerScrollInterval);
-            return;
-        }
+        	return;
 
 		var isRepaint = oWordControl.m_bIsScroll;
 		if (oWordControl.m_bIsScroll)
@@ -4282,8 +4277,6 @@ function CEditorPage(api)
 		{
 			oThis.DemonstrationManager.CheckHideCursor();
 		}
-		oWordControl.m_nPaintTimerId = setTimeout(oWordControl.onTimerScroll, oWordControl.m_nTimerScrollInterval);
-		//window.requestAnimationFrame(oWordControl.onTimerScroll);
 	};
 
 	this.onTimerScroll_sync = function(isThUpdateSync)

@@ -32,8 +32,6 @@
 
 "use strict";
 
-var g_bIsMobile = AscCommon.AscBrowser.isMobile;
-
 var Page_Width     = 297;
 var Page_Height    = 210;
 

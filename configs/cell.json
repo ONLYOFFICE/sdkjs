@@ -365,6 +365,7 @@
 			"common/Native/Wrappers/ShapeDrawer.js",
 			"cell/native/Overlay.js",
 			"cell/native/Graphics.js",
+			"word/Drawing/cachemanager.js",
 			"cell/native/DrawingDocument.js",
 			"cell/native/native.js"
 		],
