@@ -88,6 +88,8 @@ $(function() {
 		wb.handlers.add("getSelectionState", function() {
 			return null;
 		});
+		wsView = api.wb.getWorksheet();
+
 		startTests();
 	};
 
@@ -128,16 +130,15 @@ $(function() {
 	}
 
 	function updateView () {
-		let wsView = api.wb.getWorksheet();
 		wsView._cleanCache(new Asc.Range(0, 0, wsView.cols.length - 1, wsView.rows.length - 1));
 		wsView.changeWorksheet("update", {reinitRanges: true});
 	}
 
-	let wb, ws;
+	let wb, ws, wsView;
 	function testPrintFileSettings() {
 		QUnit.test("Test: open print settings ", function(assert ) {
 			let printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
-			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length");
+			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 1");
 			let page = printPagesData.arrPages[0];
 			let referenceObj = {
 				indexWorksheet: 0,
@@ -206,11 +207,149 @@ $(function() {
 			};
 
 			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
-			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length");
+			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 2");
 			page = printPagesData.arrPages[0];
 
-			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings 1:");
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes width cols: ");
 
+			wsView._setPrintScale(100);
+			wsView._changeFitToPage(0, 0);
+			updateView();
+
+			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 4, "Compare pages length 3");
+			page = printPagesData.arrPages[0];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:707,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:1000,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:1,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 6,
+					r1: 0,
+					r2: 45,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page1: ");
+
+			page = printPagesData.arrPages[1];
+
+			referenceObj = {
+				indexWorksheet: 0,
+				leftFieldInPx: 38.79527559055118,
+				pageClipRectHeight: 707,
+				pageClipRectLeft: 37.79527559055118,
+				pageClipRectTop: 37.79527559055118,
+				pageClipRectWidth: 775,
+				pageGridLines: false,
+				pageHeadings: false,
+				pageHeight: 210,
+				pageWidth: 297,
+				scale: 1,
+				startOffset: 0,
+				startOffsetPx: 0,
+				titleColRange: null,
+				titleHeight: 0,
+				titleRowRange: null,
+				titleWidth: 0,
+				topFieldInPx: 38.79527559055118,
+				pageRange: {
+					c1: 7,
+					c2: 18,
+					r1: 0,
+					r2: 45,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page2: ");
+
+			page = printPagesData.arrPages[2];
+
+			referenceObj = {
+				indexWorksheet: 0,
+				leftFieldInPx: 38.79527559055118,
+				pageClipRectHeight: 240,
+				pageClipRectLeft: 37.79527559055118,
+				pageClipRectTop: 37.79527559055118,
+				pageClipRectWidth: 1000,
+				pageGridLines: false,
+				pageHeadings: false,
+				pageHeight: 210,
+				pageWidth: 297,
+				scale: 1,
+				startOffset: 0,
+				startOffsetPx: 0,
+				titleColRange: null,
+				titleHeight: 0,
+				titleRowRange: null,
+				titleWidth: 0,
+				topFieldInPx: 38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 6,
+					r1: 46,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page3: ");
+
+
+			page = printPagesData.arrPages[3];
+
+			referenceObj = {
+				indexWorksheet: 0,
+				leftFieldInPx: 38.79527559055118,
+				pageClipRectHeight: 240,
+				pageClipRectLeft: 37.79527559055118,
+				pageClipRectTop: 37.79527559055118,
+				pageClipRectWidth: 775,
+				pageGridLines: false,
+				pageHeadings: false,
+				pageHeight: 210,
+				pageWidth: 297,
+				scale: 1,
+				startOffset: 0,
+				startOffsetPx: 0,
+				titleColRange: null,
+				titleHeight: 0,
+				titleRowRange: null,
+				titleWidth: 0,
+				topFieldInPx: 38.79527559055118,
+				pageRange: {
+					c1: 7,
+					c2: 18,
+					r1: 46,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page4: ");
 		});
 	}
 
