@@ -7909,15 +7909,8 @@ function BinaryFileReader(doc, openParams)
 		let api = this.Document.DrawingDocument && this.Document.DrawingDocument.m_oWordControl && this.Document.DrawingDocument.m_oWordControl.m_oApi;
 		this.Document.UpdateDefaultsDependingOnCompatibility();
 		//списки
-		for(var i = 0, length = this.oReadResult.paraNumPrs.length; i < length; ++i)
-		{
-			var numPr = this.oReadResult.paraNumPrs[i];
-			var oNumClass = this.oReadResult.numToNumClass[numPr.NumId];
-			if(null != oNumClass && 0 !== numPr.NumId)
-				numPr.NumId = oNumClass.Get_Id();
-			else
-				numPr.NumId = "0";
-		}
+		this.oReadResult.updateNumPrLinks();
+		
 		var oDocStyle = this.Document.Styles;
 		var styles = this.Document.Styles.Style;
         var stDefault = this.Document.Styles.Default;
@@ -8445,14 +8438,7 @@ function BinaryFileReader(doc, openParams)
         var oReadResult = this.oReadResult;
 
         //обрабатываем списки
-        for (var i = 0, length = oReadResult.paraNumPrs.length; i < length; ++i) {
-            var numPr = oReadResult.paraNumPrs[i];
-            var oNumClass = oReadResult.numToNumClass[numPr.NumId];
-            if (null != oNumClass)
-                numPr.NumId = oNumClass.Get_Id();
-            else
-                numPr.NumId = "0";
-        }
+		oReadResult.updateNumPrLinks();
 
         //обрабатываем стили
 		var addNewStyles = false;
@@ -9252,7 +9238,8 @@ function Binary_pPrReader(doc, oReadResult, stream)
                 break;
             case c_oSerProp_pPrType.ParaStyle:
                 var ParaStyle = this.stream.GetString2LE(length);
-				this.oReadResult.styleLinks.push(new BinaryParagraphStyleUpdater(this.paragraph, ParaStyle));
+				if (this.paragraph)
+					this.oReadResult.styleLinks.push(new BinaryParagraphStyleUpdater(this.paragraph, ParaStyle));
                 break;
             case c_oSerProp_pPrType.numPr:
                 var numPr = new CNumPr();
@@ -9260,12 +9247,8 @@ function Binary_pPrReader(doc, oReadResult, stream)
                 res = this.bcr.Read2(length, function(t, l){
                     return oThis.ReadNumPr(t, l, numPr);
                 });
-                if(null != numPr.NumId || null != numPr.Lvl)
-                {
-					if(null != numPr.NumId)
-						this.oReadResult.paraNumPrs.push(numPr);
-					pPr.NumPr = numPr;
-                }
+                if ((null != numPr.NumId || null != numPr.Lvl) && this.paragraph)
+					this.oReadResult.paraNumPrs.push({paragraph : this.paragraph, numPr : numPr});
                 break;
             case c_oSerProp_pPrType.pBdr:
                 res = this.bcr.Read1(length, function(t, l){
@@ -17481,6 +17464,17 @@ DocReadResult.prototype = {
 			} else {
 				elem.SetReviewTypeWithInfo(type, reviewInfo, false);
 			}
+		}
+	},
+	updateNumPrLinks: function() {
+		for(let i = 0, count = this.paraNumPrs.length; i < count; ++i) {
+			let numPr     = this.paraNumPrs[i].numPr;
+			let paragraph = this.paraNumPrs[i].paragraph;
+			if (!paragraph || !numPr || null === numPr.NumId || undefined === numPr.NumId)
+				continue;
+			
+			let num = this.numToNumClass[numPr.NumId];
+			paragraph.SetNumPr(num && 0 !== numPr.NumId ? num.GetId() : "0", numPr.Lvl);
 		}
 	}
 };
