@@ -912,7 +912,7 @@ function CEditorPage(api)
 		xScreen1 >>= 1;
 		yScreen1 >>= 1;
 
-		var posDoc = oWordControl.m_oDrawingDocument.ConvertCoordsFromCursor2(xScreen1, yScreen1, true, undefined, old_zoom);
+		var posDoc = oWordControl.m_oDrawingDocument.ConvertCoordsFromCursor2(xScreen1, yScreen1, old_zoom, true);
 
 		oWordControl.CheckZoom();
 		oWordControl.CalculateDocumentSize();

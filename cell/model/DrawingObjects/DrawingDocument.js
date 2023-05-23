@@ -167,7 +167,6 @@ function CDrawingDocument()
 
     this.m_bIsSelection = false;
     this.m_bIsSearching = false;
-    this.m_lCountRect = 0;
 
     this.MathTrack = new AscCommon.CMathTrack();
 
@@ -338,7 +337,7 @@ function CDrawingDocument()
 
     };
 
-    this.ConvertCoordsFromCursor2 = function(x, y, bIsRul, bIsNoNormalize, _zoomVal)
+    this.ConvertCoordsFromCursor2 = function(x, y, zoomVal, isRuler)
     {
         return { X : 0, Y : 0, Page: -1, DrawPage: -1 };
     };
