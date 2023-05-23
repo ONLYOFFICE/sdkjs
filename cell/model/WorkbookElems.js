@@ -11419,7 +11419,7 @@ DynamicFilter.prototype.isHideValue = function (val) {
 		case Asc.c_oAscDynamicAutoFilter.yearToDate:
 		case Asc.c_oAscDynamicAutoFilter.yesterday:
 		case Asc.c_oAscDynamicAutoFilter.thisYear: {
-			res = !(val >= this.Val && val <= this.MaxVal);
+			res = !(val >= this.Val && val < this.MaxVal);
 			break;
 		}
 		case Asc.c_oAscDynamicAutoFilter.nullType: {
@@ -11516,9 +11516,9 @@ DynamicFilter.prototype.isHideValue = function (val) {
 	}
 
 	if (minMonth !== undefined) {
-		let today = new cDate().getCurrentDate();
-		let todayMonth = today.getUTCMonth();
-		res = todayMonth >= minMonth && todayMonth <= maxMonth;
+		let valToDate = new cDate().getDateFromExcel(val);
+		let valMonth = valToDate.getUTCMonth();
+		res = !(valMonth >= minMonth && valMonth <= maxMonth);
 	}
 
 	return res;
