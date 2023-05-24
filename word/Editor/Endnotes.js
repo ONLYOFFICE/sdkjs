@@ -975,7 +975,7 @@ CEndnotesController.prototype.GetAllTables = function(oProps, arrTables)
 	for (var sId in this.Endnote)
 	{
 		var oEndnote = this.Endnote[sId];
-		oEndnote.GetAllTables(oProps, ParaArray);
+		oEndnote.GetAllTables(oProps, arrTables);
 	}
 
 	return arrTables;
@@ -1459,13 +1459,6 @@ CEndnotesController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 		return false;
 
 	return this.CurEndnote.AddNewParagraph(bRecalculate, bForceAdd);
-};
-CEndnotesController.prototype.GetFormatPainterData = function()
-{
-	if (!this.CurEndnote)
-		return null;
-
-	return this.CurEndnote.GetFormatPainterData();
 };
 CEndnotesController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {

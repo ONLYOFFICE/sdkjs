@@ -131,7 +131,8 @@ var c_oAscMouseMoveType = {
   ResizeRow: 5,
   Filter: 6,
   Tooltip: 7,
-  ForeignSelect: 8
+  ForeignSelect: 8,
+  Eyedropper: 9
 };
 
 var c_oAscMouseMoveLockedObjectType = {
@@ -680,6 +681,7 @@ var c_oAscPopUpSelectorType = {
   prot['Filter'] = prot.Filter;
   prot['Tooltip'] = prot.Tooltip;
   prot['ForeignSelect'] = prot.ForeignSelect;
+  prot['Eyedropper'] = prot.Eyedropper;
   window['Asc']['c_oAscMouseMoveLockedObjectType'] = window['Asc'].c_oAscMouseMoveLockedObjectType = c_oAscMouseMoveLockedObjectType;
   prot = c_oAscMouseMoveLockedObjectType;
   prot['None'] = prot.None;
@@ -891,6 +893,7 @@ var c_oAscPopUpSelectorType = {
   prot['reference'] = prot.reference;
   prot['any'] = prot.any;
   prot['logical'] = prot.logical;
+  prot['array'] = prot.array;
 
   window['Asc']['c_oAscSelectionForCFType'] = window['Asc'].c_oAscSelectionForCFType = c_oAscSelectionForCFType;
   prot = c_oAscSelectionForCFType;

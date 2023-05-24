@@ -58,238 +58,19 @@ var FontStyle =
 // declarate unused methods and objects
 window["ftm"] = FT_Memory;
 
-// UNICOLOR
-function asc_menu_ReadUniColor(_params, _cursor) {
-    var _color = new AscFormat.CUniColor();
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _color.color = new AscFormat.CPrstColor();
-                _color.color.type = _params[_cursor.pos++];
-                _color.color.id = _params[_cursor.pos++];
-                _color.color.RGBA = {
-                    R: _params[_cursor.pos++],
-                    G: _params[_cursor.pos++],
-                    B: _params[_cursor.pos++],
-                    A: _params[_cursor.pos++],
-                    needRecalc: _params[_cursor.pos++]
-                };
-                break;
-            }
-            case 1:
-            {
-                var _count = _params[_cursor.pos++];
-                for (var i = 0; i < _count; i++)
-                {
-                    var _mod = new AscFormat.CColorMod();
-                    _mod.name = _params[_cursor.pos++];
-                    _mod.val = _params[_cursor.pos++];
-                    _color.Mods.push(_mod);
-                }
-                break;
-            }
-            case 2:
-            {
-                _color.RGBA = {
-                    R: _params[_cursor.pos++],
-                    G: _params[_cursor.pos++],
-                    B: _params[_cursor.pos++],
-                    A: _params[_cursor.pos++]
-                }
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    return _color;
-}
 
-function asc_menu_WriteUniColor(_type, _color, _stream) {
-    if (!_color)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    if (_color.color !== undefined && _color.color !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_color.color.type);
-        _stream["WriteStringA"](_color.color.id);
-        _stream["WriteByte"](_color.color.RGBA.R);
-        _stream["WriteByte"](_color.color.RGBA.G);
-        _stream["WriteByte"](_color.color.RGBA.B);
-        _stream["WriteByte"](_color.color.RGBA.A);
-        _stream["WriteBool"](_color.color.RGBA.needRecalc);
-    }
-    if (_color.Mods !== undefined && _color.Mods !== null)
-    {
-        _stream["WriteByte"](1);
-
-        var _len = _color.Mods.length;
-        _stream["WriteLong"](_len);
-
-        for (var i = 0; i < _len; i++)
-        {
-            _stream["WriteStringA"](_color.Mods[i].name);
-            _stream["WriteLong"](_color.Mods[i].val);
-        }
-    }
-    if (_color.RGBA !== undefined && _color.RGBA !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteByte"](_color.RGBA.R);
-        _stream["WriteByte"](_color.RGBA.G);
-        _stream["WriteByte"](_color.RGBA.B);
-        _stream["WriteByte"](_color.RGBA.A);
-    }
-
-    _stream["WriteByte"](255);
-}
 
 // ASCCOLOR
-function asc_menu_ReadColor(_params, _cursor)
-{
-    var _color = new Asc.asc_CColor();
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _color.type = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _color.r = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _color.g = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _color.b = _params[_cursor.pos++];
-                break;
-            }
-            case 4:
-            {
-                _color.a = _params[_cursor.pos++];
-                break;
-            }
-            case 5:
-            {
-                _color.Auto = _params[_cursor.pos++];
-                break;
-            }
-            case 6:
-            {
-                _color.value = _params[_cursor.pos++];
-                break;
-            }
-            case 7:
-            {
-                _color.ColorSchemeId = _params[_cursor.pos++];
-                break;
-            }
-            case 8:
-            {
-                var _count = _params[_cursor.pos++];
-                for (var i = 0; i < _count; i++)
-                {
-                    var _mod = new AscFormat.CColorMod();
-                    _mod.name = _params[_cursor.pos++];
-                    _mod.val = _params[_cursor.pos++];
-                    _color.Mods.push(_mod);
-                }
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    return _color;
-}
 function asc_menu_WriteColor(_type, _color, _stream)
 {
     if (!_color)
         return;
 
-    _stream["WriteByte"](_type);
-
-    if (_color.type !== undefined && _color.type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_color.type);
-    }
-    if (_color.r !== undefined && _color.r !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteByte"](_color.r);
-    }
-    if (_color.g !== undefined && _color.g !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteByte"](_color.g);
-    }
-    if (_color.b !== undefined && _color.b !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteByte"](_color.b);
-    }
-    if (_color.a !== undefined && _color.a !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteByte"](_color.a);
-    }
-    if (_color.Auto !== undefined && _color.Auto !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteBool"](_color.Auto);
-    }
-    if (_color.value !== undefined && _color.value !== null)
-    {
-        _stream["WriteByte"](6);
-        _stream["WriteLong"](_color.value);
-    }
-    if (_color.ColorSchemeId !== undefined && _color.ColorSchemeId !== null)
-    {
-        _stream["WriteByte"](7);
-        _stream["WriteLong"](_color.ColorSchemeId);
-    }
-    if (_color.Mods !== undefined && _color.Mods !== null)
-    {
-        _stream["WriteByte"](8);
-
-        var _len = _color.Mods.length;
-        _stream["WriteLong"](_len);
-
-        for (var i = 0; i < _len; i++)
-        {
-            _stream["WriteString1"](_color.Mods[i].name);
-            _stream["WriteLong"](_color.Mods[i].val);
-        }
-    }
-
-    _stream["WriteByte"](255);
+    // TODO:
+    if (_color.write)
+        _color.write(_type, _stream);
+    else
+        Asc.asc_CColor.prototype.write.call(_color, _type, _stream);
 }
 
 function asc_WriteColorSchemes(schemas, s) {
@@ -348,556 +129,6 @@ function asc_menu_WriteChartPr(_type, _chartPr, _stream){
         return;
     _chartPr.write(_type, _stream);
 }
-
-function asc_menu_ReadAscFill_solid(_params, _cursor)
-{
-    var _fill = new Asc.asc_CFillSolid();
-
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fill.color = asc_menu_ReadColor(_params, _cursor);
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
-    return _fill;
-};
-function asc_menu_WriteAscFill_solid(_type, _fill, _stream)
-{
-    if (!_fill)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    asc_menu_WriteColor(0, _fill.color, _stream);
-
-    _stream["WriteByte"](255);
-};
-function asc_menu_ReadAscFill_patt(_params, _cursor)
-{
-    var _fill = new Asc.asc_CFillHatch();
-
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fill.PatternType = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _fill.bgClr = asc_menu_ReadColor(_params, _cursor);
-                break;
-            }
-            case 2:
-            {
-                _fill.fgClr = asc_menu_ReadColor(_params, _cursor);
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
-    return _fill;
-};
-function asc_menu_WriteAscFill_patt(_type, _fill, _stream)
-{
-    if (!_fill)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    if (_fill.PatternType !== undefined && _fill.PatternType !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_fill.PatternType);
-    }
-
-    asc_menu_WriteColor(1, _fill.bgClr, _stream);
-    asc_menu_WriteColor(2, _fill.fgClr, _stream);
-
-    _stream["WriteByte"](255);
-};
-function asc_menu_ReadAscFill_grad(_params, _cursor)
-{
-    var _fill = new Asc.asc_CFillGrad();
-
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fill.GradType = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _fill.LinearAngle = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _fill.LinearScale = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _fill.PathType = _params[_cursor.pos++];
-                break;
-            }
-            case 4:
-            {
-                var _count = _params[_cursor.pos++];
-
-                if (_count > 0)
-                {
-                    _fill.Colors = [];
-                    _fill.Positions = [];
-                }
-                for (var i = 0; i < _count; i++)
-                {
-                    _fill.Colors[i] = null;
-                    _fill.Positions[i] = null;
-
-                    var _continue2 = true;
-                    while (_continue2)
-                    {
-                        var _attr2 = _params[_cursor.pos++];
-                        switch (_attr2)
-                        {
-                            case 0:
-                            {
-                                _fill.Colors[i] = asc_menu_ReadColor(_params, _cursor);
-                                break;
-                            }
-                            case 1:
-                            {
-                                _fill.Positions[i] = _params[_cursor.pos++];
-                                break;
-                            }
-                            case 255:
-                            default:
-                            {
-                                _continue2 = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-                _cursor.pos++;
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
-    return _fill;
-};
-function asc_menu_WriteAscFill_grad(_type, _fill, _stream)
-{
-    if (!_fill)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    if (_fill.GradType !== undefined && _fill.GradType !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_fill.GradType);
-    }
-
-    if (_fill.LinearAngle !== undefined && _fill.LinearAngle !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteDouble2"](_fill.LinearAngle);
-    }
-
-    if (_fill.LinearScale !== undefined && _fill.LinearScale !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteBool"](_fill.LinearScale);
-    }
-
-    if (_fill.PathType !== undefined && _fill.PathType !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteLong"](_fill.PathType);
-    }
-
-    if (_fill.Colors !== null && _fill.Colors !== undefined && _fill.Positions !== null && _fill.Positions !== undefined)
-    {
-        if (_fill.Colors.length == _fill.Positions.length)
-        {
-            var _count = _fill.Colors.length;
-            _stream["WriteByte"](4);
-            _stream["WriteLong"](_count);
-
-            for (var i = 0; i < _count; i++)
-            {
-                asc_menu_WriteColor(0, _fill.Colors[i], _stream);
-
-                if (_fill.Positions[i] !== undefined && _fill.Positions[i] !== null)
-                {
-                    _stream["WriteByte"](1);
-                    _stream["WriteLong"](_fill.Positions[i]);
-                }
-
-                _stream["WriteByte"](255);
-            }
-        }
-    }
-
-    _stream["WriteByte"](255);
-};
-function asc_menu_ReadAscFill_blip(_params, _cursor)
-{
-    var _fill = new Asc.asc_CFillBlip();
-
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fill.type = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _fill.url = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _fill.texture_id = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
-    return _fill;
-};
-function asc_menu_WriteAscFill_blip(_type, _fill, _stream)
-{
-    if (!_fill)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    if (_fill.type !== undefined && _fill.type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_fill.type);
-    }
-
-    if (_fill.url !== undefined && _fill.url !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteString2"](_fill.url);
-    }
-
-    if (_fill.texture_id !== undefined && _fill.texture_id !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteLong"](_fill.texture_id);
-    }
-
-    _stream["WriteByte"](255);
-};
-
-function asc_menu_ReadAscFill(_params, _cursor)
-{
-    var _fill = new Asc.asc_CShapeFill();
-
-    //_fill.type = c_oAscFill.FILL_TYPE_NOFILL;
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fill.type = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                switch (_fill.type)
-                {
-                    case Asc.c_oAscFill.FILL_TYPE_SOLID:
-                    {
-                        _fill.fill = asc_menu_ReadAscFill_solid(_params, _cursor);
-                        break;
-                    }
-                    case Asc.c_oAscFill.FILL_TYPE_PATT:
-                    {
-                        _fill.fill = asc_menu_ReadAscFill_patt(_params, _cursor);
-                        break;
-                    }
-                    case Asc.c_oAscFill.FILL_TYPE_GRAD:
-                    {
-                        _fill.fill = asc_menu_ReadAscFill_grad(_params, _cursor);
-                        break;
-                    }
-                    case Asc.c_oAscFill.FILL_TYPE_BLIP:
-                    {
-                        _fill.fill = asc_menu_ReadAscFill_blip(_params, _cursor);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case 2:
-            {
-                _fill.transparent = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
-    return _fill;
-
-};
-function asc_menu_WriteAscFill(_type, _fill, _stream)
-{
-    if (!_fill)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    if (_fill.type !== undefined && _fill.type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_fill.type);
-    }
-
-    if (_fill.fill !== undefined && _fill.fill !== null)
-    {
-        switch (_fill.type)
-        {
-            case Asc.c_oAscFill.FILL_TYPE_SOLID:
-            {
-                _fill.fill = asc_menu_WriteAscFill_solid(1, _fill.fill, _stream);
-                break;
-            }
-            case Asc.c_oAscFill.FILL_TYPE_PATT:
-            {
-                _fill.fill = asc_menu_WriteAscFill_patt(1, _fill.fill, _stream);
-                break;
-            }
-            case Asc.c_oAscFill.FILL_TYPE_GRAD:
-            {
-                _fill.fill = asc_menu_WriteAscFill_grad(1, _fill.fill, _stream);
-                break;
-            }
-            case Asc.c_oAscFill.FILL_TYPE_BLIP:
-            {
-                _fill.fill = asc_menu_WriteAscFill_blip(1, _fill.fill, _stream);
-                break;
-            }
-            default:
-                break;
-        }
-    }
-
-    if (_fill.transparent !== undefined && _fill.transparent !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteLong"](_fill.transparent);
-    }
-
-    _stream["WriteByte"](255);
-};
-
-function asc_menu_ReadAscStroke(_params, _cursor)
-{
-    var _stroke = new Asc.asc_CStroke();
-
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _stroke.type = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _stroke.width = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _stroke.color = asc_menu_ReadColor(_params, _cursor);
-                break;
-            }
-            case 3:
-            {
-                _stroke.LineJoin = _params[_cursor.pos++];
-                break;
-            }
-            case 4:
-            {
-                _stroke.LineCap = _params[_cursor.pos++];
-                break;
-            }
-            case 5:
-            {
-                _stroke.LineBeginStyle = _params[_cursor.pos++];
-                break;
-            }
-            case 6:
-            {
-                _stroke.LineBeginSize = _params[_cursor.pos++];
-                break;
-            }
-            case 7:
-            {
-                _stroke.LineEndStyle = _params[_cursor.pos++];
-                break;
-            }
-            case 8:
-            {
-                _stroke.LineEndSize = _params[_cursor.pos++];
-                break;
-            }
-            case 9:
-            {
-                _stroke.canChangeArrows = _params[_cursor.pos++];
-                break;
-            }
-            case 10:
-            {
-                _stroke.prstDash = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
-    return _stroke;
-};
-
-function asc_menu_WriteAscStroke(_type, _stroke, _stream)
-{
-    if (!_stroke)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    if (_stroke.type !== undefined && _stroke.type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_stroke.type);
-    }
-    if (_stroke.width !== undefined && _stroke.width !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteDouble2"](_stroke.width);
-    }
-
-    asc_menu_WriteColor(2, _stroke.color, _stream);
-
-    if (_stroke.LineJoin !== undefined && _stroke.LineJoin !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteByte"](_stroke.LineJoin);
-    }
-    if (_stroke.LineCap !== undefined && _stroke.LineCap !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteByte"](_stroke.LineCap);
-    }
-    if (_stroke.LineBeginStyle !== undefined && _stroke.LineBeginStyle !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteByte"](_stroke.LineBeginStyle);
-    }
-    if (_stroke.LineBeginSize !== undefined && _stroke.LineBeginSize !== null)
-    {
-        _stream["WriteByte"](6);
-        _stream["WriteByte"](_stroke.LineBeginSize);
-    }
-    if (_stroke.LineEndStyle !== undefined && _stroke.LineEndStyle !== null)
-    {
-        _stream["WriteByte"](7);
-        _stream["WriteByte"](_stroke.LineEndStyle);
-    }
-    if (_stroke.LineEndSize !== undefined && _stroke.LineEndSize !== null)
-    {
-        _stream["WriteByte"](8);
-        _stream["WriteByte"](_stroke.LineEndSize);
-    }
-
-    if (_stroke.canChangeArrows !== undefined && _stroke.canChangeArrows !== null)
-    {
-        _stream["WriteByte"](9);
-        _stream["WriteBool"](_stroke.canChangeArrows);
-    }
-    if (_stroke.prstDash !== undefined && _stroke.prstDash !== null)
-    {
-        _stream["WriteByte"](10);
-        _stream["WriteLong"](_stroke.prstDash);
-    }
-
-    _stream["WriteByte"](255);
-};
-
 function asc_menu_ReadParaInd(_params, _cursor)
 {
     var _ind = new CParaInd();
@@ -931,7 +162,7 @@ function asc_menu_ReadParaInd(_params, _cursor)
         }
     }
     return _ind;
-};
+}
 
 function asc_menu_WriteParaInd(_type, _ind, _stream)
 {
@@ -957,7 +188,7 @@ function asc_menu_WriteParaInd(_type, _ind, _stream)
     }
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_ReadParaSpacing(_params, _cursor)
 {
@@ -1007,7 +238,7 @@ function asc_menu_ReadParaSpacing(_params, _cursor)
         }
     }
     return _spacing;
-};
+}
 
 function asc_menu_WriteParaSpacing(_type, _spacing, _stream)
 {
@@ -1048,7 +279,7 @@ function asc_menu_WriteParaSpacing(_type, _spacing, _stream)
     }
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_ReadParaBorder(_params, _cursor)
 {
@@ -1061,7 +292,7 @@ function asc_menu_ReadParaBorder(_params, _cursor)
         {
             case 0:
             {
-                _border.Color = asc_menu_ReadColor(_params, _cursor);
+                _border.Color = AscCommon.asc_menu_ReadColor(_params, _cursor);
                 break;
             }
             case 1:
@@ -1088,7 +319,7 @@ function asc_menu_ReadParaBorder(_params, _cursor)
         }
     }
     return _border;
-};
+}
 
 function asc_menu_WriteParaBorder(_type, _border, _stream)
 {
@@ -1116,7 +347,7 @@ function asc_menu_WriteParaBorder(_type, _border, _stream)
     }
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_ReadParaBorders(_params, _cursor)
 {
@@ -1161,7 +392,7 @@ function asc_menu_ReadParaBorders(_params, _cursor)
         }
     }
     return _border;
-};
+}
 
 function asc_menu_WriteParaBorders(_type, _borders, _stream)
 {
@@ -1177,7 +408,7 @@ function asc_menu_WriteParaBorders(_type, _borders, _stream)
     asc_menu_WriteParaBorder(4, _borders.Between, _stream);
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_ReadParaShd(_params, _cursor)
 {
@@ -1195,7 +426,7 @@ function asc_menu_ReadParaShd(_params, _cursor)
             }
             case 1:
             {
-                _shd.Color = asc_menu_ReadColor(_params, _cursor);
+                _shd.Color = AscCommon.asc_menu_ReadColor(_params, _cursor);
                 break;
             }
             case 255:
@@ -1232,7 +463,7 @@ function asc_menu_ReadParaShd(_params, _cursor)
         }
     }
     return _shd;
-};
+}
 
 function asc_menu_WriteParaShd(_type, _shd, _stream)
 {
@@ -1250,7 +481,7 @@ function asc_menu_WriteParaShd(_type, _shd, _stream)
     asc_menu_WriteColor(1, _shd.Color, _stream);
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_ReadCellMargins(_params, _cursor)
 {
@@ -1295,7 +526,7 @@ function asc_menu_ReadCellMargins(_params, _cursor)
         }
     }
     return _paddings;
-};
+}
 
 function asc_menu_WriteCellMargins(_type, _margins, _stream)
 {
@@ -1331,7 +562,7 @@ function asc_menu_WriteCellMargins(_type, _margins, _stream)
     }
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_ReadCellBorders(_params, _cursor)
 {
@@ -1381,7 +612,7 @@ function asc_menu_ReadCellBorders(_params, _cursor)
         }
     }
     return _borders;
-};
+}
 
 function asc_menu_WriteCellBorders(_type, _borders, _stream)
 {
@@ -1398,7 +629,7 @@ function asc_menu_WriteCellBorders(_type, _borders, _stream)
     asc_menu_WriteParaBorder(5, _borders.InsideV, _stream);
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_ReadCellBackground(_params, _cursor)
 {
@@ -1411,7 +642,7 @@ function asc_menu_ReadCellBackground(_params, _cursor)
         {
             case 0:
             {
-                _background.Color = asc_menu_ReadColor(_params, _cursor);
+                _background.Color = AscCommon.asc_menu_ReadColor(_params, _cursor);
                 break;
             }
             case 1:
@@ -1428,7 +659,7 @@ function asc_menu_ReadCellBackground(_params, _cursor)
         }
     }
     return _background;
-};
+}
 
 function asc_menu_WriteCellBackground(_type, _background, _stream)
 {
@@ -1446,7 +677,7 @@ function asc_menu_WriteCellBackground(_type, _background, _stream)
     }
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_ReadPosition(_params, _cursor) {
     var _position = new Asc.CPosition();
@@ -1773,75 +1004,6 @@ function asc_menu_WriteParagraphPr(_paraPr, _stream)
     _stream["WriteByte"](255);
 }
 
-function asc_menu_ReadPaddings(_params, _cursor) {
-    var _paddings = new Asc.asc_CPaddings();
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _paddings.Left = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _paddings.Top = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _paddings.Right = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _paddings.Bottom = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    return _paddings;
-};
-
-function asc_menu_WritePaddings(_type, _paddings, _stream) {
-    if (!_paddings)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    if (_paddings.Left !== undefined && _paddings.Left !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteDouble2"](_paddings.Left);
-    }
-    if (_paddings.Top !== undefined && _paddings.Top !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteDouble2"](_paddings.Top);
-    }
-    if (_paddings.Right !== undefined && _paddings.Right !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteDouble2"](_paddings.Right);
-    }
-    if (_paddings.Bottom !== undefined && _paddings.Bottom !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteDouble2"](_paddings.Bottom);
-    }
-
-    _stream["WriteByte"](255);
-};
-
 function asc_menu_WriteImagePosition(_type, _position, _stream){
     if (!_position)
         return;
@@ -1870,7 +1032,7 @@ function asc_menu_WriteImagePosition(_type, _position, _stream){
     }
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_ReadTableAnchorPosition(_params, _cursor)
 {
@@ -2035,7 +1197,9 @@ function asc_menu_WriteTablePr(_tablePr, _stream)
         _stream["WriteDouble2"](_tablePr.TableSpacing);
     }
 
-    asc_menu_WritePaddings(4, _tablePr.TableDefaultMargins, _stream);
+    if(_tablePr.TableDefaultMargins) {
+        _tablePr.TableDefaultMargins.write(4, _stream);
+    }
     asc_menu_WriteCellMargins(5, _tablePr.CellMargins, _stream);
 
     if (_tablePr.TableAlignment !== undefined && _tablePr.TableAlignment !== null)
@@ -2054,7 +1218,9 @@ function asc_menu_WriteTablePr(_tablePr, _stream)
         _stream["WriteLong"](_tablePr.TableWrappingStyle);
     }
 
-    asc_menu_WritePaddings(9, _tablePr.TablePaddings, _stream);
+    if(_tablePr.TablePaddings) {
+        _tablePr.TablePaddings.write(9, _stream);
+    }
 
     asc_menu_WriteCellBorders(10, _tablePr.TableBorders, _stream);
     asc_menu_WriteCellBorders(11, _tablePr.CellBorders, _stream);
@@ -2108,214 +1274,21 @@ function asc_menu_WriteTablePr(_tablePr, _stream)
     }
 
     _stream["WriteByte"](255);
-};
-
-function asc_menu_ReadAscShadow(_params, _cursor) {
-    var _shadow = new Asc.asc_CShadowProperty();
-
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-
-        switch (_attr)
-        {
-            case 0:
-            {
-                _shadow.color = asc_menu_ReadUniColor(_params, _cursor);
-                break;
-            }
-            case 1:
-            {
-                _shadow.algn = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _shadow.blurRad = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _shadow.dir = _params[_cursor.pos++];
-                break;
-            }
-            case 4:
-            {
-                _shadow.dist = _params[_cursor.pos++];
-                break;
-            }
-            case 5:
-            {
-                _shadow.rotWithShape = _params[_cursor.pos++];
-                break;
-            }
-            case 6:
-            {
-                if (!_params[_cursor.pos++]) {
-                    return null;
-                }
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
-    return _shadow;
-}
-
-function asc_menu_WriteAscShadow(_type, _shadow, _stream) {
-    if (!_shadow)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    asc_menu_WriteUniColor(0, _shadow.color, _stream);
-
-    if (_shadow.algn !== undefined && _shadow.algn !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteLong"](_shadow.algn);
-    }
-    if (_shadow.blurRad !== undefined && _shadow.blurRad !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteLong"](_shadow.blurRad);
-    }
-    if (_shadow.dir !== undefined && _shadow.dir !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteLong"](_shadow.dir);
-    }
-    if (_shadow.dist !== undefined && _shadow.dist !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteLong"](_shadow.dist);
-    }
-    if (_shadow.rotWithShape !== undefined && _shadow.rotWithShape !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteBool"](_shadow.dist);
-    }
-    _stream["WriteByte"](6);
-    _stream["WriteBool"](true);
-
-    _stream["WriteByte"](255);
 }
 
 function asc_menu_ReadShapePr(_params, _cursor)
 {
-    var _settings = new Asc.asc_CShapeProperty();
-
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _settings.type = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _settings.fill = asc_menu_ReadAscFill(_params, _cursor);
-                break;
-            }
-            case 2:
-            {
-                _settings.stroke = asc_menu_ReadAscStroke(_params, _cursor);
-                break;
-            }
-            case 3:
-            {
-                _settings.paddings = asc_menu_ReadPaddings(_params, _cursor);
-                break;
-            }
-            case 4:
-            {
-                _settings.canFill = _params[_cursor.pos++];
-                break;
-            }
-            case 5:
-            {
-                _settings.bFromChart = _params[_cursor.pos++];
-                break;
-            }
-            case 6:
-            {
-                _settings.InsertPageNum = _params[_cursor.pos++];
-                break;
-            }
-            case 7:
-            {
-                _settings.bFromGroup = _params[_cursor.pos++];
-                break;
-            }
-            case 8:
-            {
-                _settings.shadow = asc_menu_ReadAscShadow(_params, _cursor);
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
+    const _settings = new Asc.asc_CShapeProperty();
+    _settings.read(_params, _cursor);
     return _settings;
-};
+}
 
-function asc_menu_WriteShapePr(_type, _shapePr, _stream) {
+function asc_menu_WriteShapePr(_type, _shapePr, _stream)
+{
     if (!_shapePr)
         return;
-
-    if (_type !== undefined) {
-        _stream["WriteByte"](_type);
-    }
-
-    if (_shapePr.type !== undefined && _shapePr.type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteString2"](_shapePr.type);
-    }
-
-    asc_menu_WriteAscFill(1, _shapePr.fill, _stream);
-    asc_menu_WriteAscStroke(2, _shapePr.stroke, _stream);
-    asc_menu_WritePaddings(3, _shapePr.paddings, _stream);
-
-    if (_shapePr.canFill !== undefined && _shapePr.canFill !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteBool"](_shapePr.canFill);
-    }
-    if (_shapePr.bFromChart !== undefined && _shapePr.bFromChart !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteBool"](_shapePr.bFromChart);
-    }
-    //6 - InsertPageNum
-    if (_shapePr.bFromGroup !== undefined && _shapePr.bFromGroup !== null)
-    {
-        _stream["WriteByte"](7);
-        _stream["WriteBool"](_shapePr.bFromGroup);
-    }
-    if (_shapePr.shadow !== undefined && _shapePr.shadow !== null)
-    {
-        asc_menu_WriteAscShadow(8, _shapePr.shadow, _stream);
-    }
-
-    _stream["WriteByte"](255);
-};
+    _shapePr.write(_type, _stream);
+}
 
 function asc_menu_WriteImagePr(_imagePr, _stream){
     if (_imagePr.CanBeFlow !== undefined && _imagePr.CanBeFlow !== null)
@@ -2339,7 +1312,9 @@ function asc_menu_WriteImagePr(_imagePr, _stream){
         _stream["WriteLong"](_imagePr.WrappingStyle);
     }
 
-    asc_menu_WritePaddings(4, _imagePr.Paddings, _stream);
+    if(_imagePr.Paddings) {
+        _imagePr.Paddings.write(4, _stream);
+    }
     asc_menu_WritePosition(5, _imagePr.Position, _stream);
 
     if (_imagePr.AllowOverlap !== undefined && _imagePr.AllowOverlap !== null)
@@ -2412,10 +1387,12 @@ function asc_menu_WriteImagePr(_imagePr, _stream){
     }
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_WriteSlidePr(_slidePr, _stream){
-    asc_menu_WriteAscFill(0, _slidePr.Background, _stream);
+    if(_slidePr.Background) {
+        _slidePr.Background.write(0, _stream);
+    }
     asc_menu_WriteTransition(1, _slidePr.Transition, _stream);
     if(AscFormat.isRealNumber(_slidePr.LayoutIndex)){
         _stream["WriteByte"](2);
@@ -2463,7 +1440,8 @@ function asc_menu_ReadSlidePr(_params, _cursor){
         {
             case 0:
             {
-                _settings.Background = asc_menu_ReadAscFill(_params, _cursor);
+                _settings.Background = new Asc.asc_CShapeFill();
+                _settings.Background.read(_params, _cursor);
                 break;
             }
             case 1:
@@ -2611,7 +1589,7 @@ function asc_menu_ReadTransition(_params, _cursor)
     }
 
     return _settings;
-};
+}
 
 function asc_menu_ReadParaListType(_params, _cursor)
 {
@@ -2678,7 +1656,7 @@ function asc_menu_ReadHyperPr(_params, _cursor)
     }
 
     return _settings;
-};
+}
 
 function asc_menu_WriteHyperPr(_hyperPr, _stream)
 {
@@ -2701,7 +1679,7 @@ function asc_menu_WriteHyperPr(_hyperPr, _stream)
     }
 
     _stream["WriteByte"](255);
-};
+}
 
 function asc_menu_WriteMath(oMath, s){
     s["WriteLong"](oMath.Type);

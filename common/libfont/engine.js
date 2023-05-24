@@ -422,6 +422,7 @@ function onLoadFontsModule(window, undefined)
 	AscFonts.MEASURE_FONTSIZE        = FONTSIZE;
 	AscFonts.GRAPHEME_STRING_MAX_LEN = STRING_MAX_LEN;
 	AscFonts.GRAPHEME_COEF           = COEF;
+	AscFonts.HB_STRING_MAX_LEN       = STRING_MAX_LEN;
 
 	function CCodePointsCalculator(codePointsBuffer, clusterBuffer)
 	{

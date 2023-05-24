@@ -1796,6 +1796,10 @@ function CHorRuler()
 			word_control.m_oApi.sync_EndAddShape();
 			word_control.m_oApi.sync_StartAddShapeCallback(false);
         }
+        if (true === word_control.m_oApi.isInkDrawerOn())
+        {
+			word_control.m_oApi.stopInkDrawer();
+        }
 
         AscCommon.check_MouseDownEvent(e, true);
         global_mouseEvent.LockMouse();
@@ -3515,6 +3519,10 @@ function CVerRuler()
 		{
 			word_control.m_oApi.sync_EndAddShape();
 			word_control.m_oApi.sync_StartAddShapeCallback(false);
+		}
+		if (true === word_control.m_oApi.isInkDrawerOn())
+		{
+			word_control.m_oApi.stopInkDrawer();
 		}
 
         AscCommon.check_MouseDownEvent(e, true);

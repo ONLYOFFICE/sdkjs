@@ -478,4 +478,6 @@ function CreateControl(name)
     window['AscCommon'].g_anchor_bottom = g_anchor_bottom;
     window['AscCommon'].CreateControlContainer = CreateControlContainer;
     window['AscCommon'].CreateControl = CreateControl;
+	window['AscCommon'].CControlContainer = CControlContainer;
+	window['AscCommon'].CControl = CControl;
 })(window);

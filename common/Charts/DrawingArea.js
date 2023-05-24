@@ -840,7 +840,7 @@ DrawingArea.prototype.drawSelection = function(drawingDocument) {
     oWS._drawCollaborativeElements(autoShapeTrack);
 
 	var controller = oWS.objectRender.controller;
-    if ( controller.selectedObjects.length || this.api.isStartAddShape) {
+    if ( controller.selectedObjects.length || this.api.isStartAddShape || this.api.isInkDrawerOn()) {
 		oWS.cleanSelection();
 		oWS._drawSelection();
 	}

@@ -1535,6 +1535,22 @@ function CEditorPage(api)
 			oWordControl.onMouseMove2();
 	};
 
+
+	this.checkFinishEyedropper = function()
+	{
+		if(oThis.m_oApi.isEyedropperStarted())
+		{
+			oThis.m_oApi.finishEyedropper();
+			const oPos = oThis.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
+			if (oPos.Page !== -1)
+			{
+				oThis.m_oLogicDocument.OnMouseMove(global_mouseEvent, oPos.X, oPos.Y, oPos.Page);
+			}
+			return true;
+		}
+		return false;
+	};
+
 	this.onMouseDown = function(e, isTouch)
 	{
 		oThis.m_oApi.checkInterfaceElementBlur();
@@ -1648,7 +1664,10 @@ function CEditorPage(api)
 				}
 
 				oWordControl.m_oDrawingDocument.NeedScrollToTargetFlag = true;
-				oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
+				if(!oThis.m_oApi.isEyedropperStarted())
+				{
+					oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
+				}
 				oWordControl.m_oDrawingDocument.NeedScrollToTargetFlag = false;
 
 				oWordControl.MouseDownDocumentCounter++;
@@ -1745,6 +1764,25 @@ function CEditorPage(api)
 			return;
 		}
 
+		if(oThis.m_oApi.isEyedropperStarted())
+		{
+			let oParentPos = oWordControl.m_oMainView.AbsolutePosition;
+			let nX  = global_mouseEvent.X - oWordControl.X - oParentPos.L * AscCommon.g_dKoef_mm_to_pix;
+			let nY  = global_mouseEvent.Y - oWordControl.Y - oParentPos.T * AscCommon.g_dKoef_mm_to_pix;
+			nX = AscCommon.AscBrowser.convertToRetinaValue(nX, true);
+			nY = AscCommon.AscBrowser.convertToRetinaValue(nY, true);
+			oThis.m_oApi.checkEyedropperColor(nX, nY);
+			oThis.m_oApi.sync_MouseMoveStartCallback();
+			let MMData = new AscCommon.CMouseMoveData();
+			let Coords = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, null);
+			MMData.X_abs = Coords.X;
+			MMData.Y_abs = Coords.Y;
+			MMData.EyedropperColor = oThis.m_oApi.getEyedropperColor();
+			MMData.Type = Asc.c_oAscMouseMoveDataTypes.Eyedropper;
+			oWordControl.m_oDrawingDocument.SetCursorType("eyedropper", MMData);
+			oThis.m_oApi.sync_MouseMoveEndCallback();
+			return;
+		}
 		oWordControl.StartUpdateOverlay();
 		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseMove_Drawing(pos, e === undefined ? true : false);
 		if (is_drawing === true)
@@ -1907,7 +1945,10 @@ function CEditorPage(api)
 			//oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		}
 		oWordControl.m_oDrawingDocument.NeedScrollToTargetFlag = true;
-		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		if(!oThis.checkFinishEyedropper())
+		{
+			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 		oWordControl.m_oDrawingDocument.NeedScrollToTargetFlag = false;
 
 		oWordControl.MouseDownDocumentCounter--;
@@ -2053,8 +2094,10 @@ function CEditorPage(api)
 			// пошлем сначала моусдаун
 			//oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		}
-		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
-
+		if(!oThis.checkFinishEyedropper())
+		{
+			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 		oWordControl.MouseDownDocumentCounter--;
 		if (oWordControl.MouseDownDocumentCounter < 0)
 			oWordControl.MouseDownDocumentCounter = 0;
@@ -3600,6 +3643,10 @@ function CEditorPage(api)
 			this.m_oDrawingDocument.UpdateTargetNoAttack();
 			this.m_bIsUpdateTargetNoAttack = false;
 		}
+		if(this.m_oApi.isEyedropperStarted())
+		{
+			this.m_oApi.clearEyedropperImgData();
+		}
 	};
 
     this.CheckRetinaElement = function(htmlElem)
@@ -4131,7 +4178,13 @@ function CEditorPage(api)
 
 	this.setOffsetTop = function(offset, offsetScrollTop)
 	{
-		if (offset !== undefined && offset !== this.offsetTop)
+		if (this.m_oDrawingDocument.m_oDocumentRenderer &&
+			offset !== undefined &&
+			offset !== this.m_oDrawingDocument.m_oDocumentRenderer.offsetTop)
+		{
+			this.m_oDrawingDocument.m_oDocumentRenderer.setOffsetTop(offset);
+		}
+		else if (offset !== undefined && offset !== this.offsetTop)
 		{
 			this.offsetTop = offset;
 

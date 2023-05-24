@@ -169,8 +169,12 @@ StartAddNewShape.prototype =
                 drawing.Set_XYForAdd(shape.x, shape.y, nearest_pos, this.pageIndex);
                 drawing.AddToDocument(nearest_pos);
                 drawing.CheckWH();
-                this.drawingObjects.resetSelection();
-                shape.select(this.drawingObjects, this.pageIndex);
+				let oAPI = this.drawingObjects.getEditorApi();
+	            if(!oAPI.isDrawInkMode())
+	            {
+		            this.drawingObjects.resetSelection();
+		            shape.select(this.drawingObjects, this.pageIndex);
+	            }
                 this.drawingObjects.document.Recalculate();
 				oLogicDocument.FinalizeAction();
                 if(this.preset && (this.preset.indexOf("textRect") === 0))
@@ -1489,7 +1493,20 @@ MoveInGroupState.prototype =
             else
             {
                 this.group.parent.CheckWH();
-                this.group.parent.Set_XY(this.group.posX + posX, this.group.posY + posY, parent_paragraph, this.getStartPageNumber(), false);
+				let nPageNum;
+	            if(this.group && this.group.parent)
+				{
+		            nPageNum = this.group.parent.pageIndex;
+	            }
+				else if(AscFormat.isRealNumber(this.startPageIndex))
+				{
+		            nPageNum = this.startPageIndex;
+	            }
+				else
+	            {
+					nPageNum = 0;
+	            }
+                this.group.parent.Set_XY(this.group.posX + posX, this.group.posY + posY, parent_paragraph, nPageNum, false);
             }
             this.drawingObjects.document.Recalculate();
 			this.drawingObjects.document.FinalizeAction();
@@ -1499,14 +1516,6 @@ MoveInGroupState.prototype =
         this.drawingObjects.updateOverlay();
     }
 };
-	MoveInGroupState.prototype.getStartPageNumber = function()
-	{
-		if(this.group && this.group.parent)
-			return this.group.parent.pageIndex;
-		
-		return this.startPageIndex;
-	};
-
 
 function PreRotateInGroupState(drawingObjects, group, majorObject)
 {
@@ -1618,13 +1627,6 @@ ResizeInGroupState.prototype =
     onMouseMove: ResizeState.prototype.onMouseMove,
     onMouseUp: MoveInGroupState.prototype.onMouseUp
 };
-	ResizeInGroupState.prototype.getStartPageNumber = function()
-	{
-		if (this.group && this.group.parent)
-			return this.group.parent.pageIndex;
-		
-		return 0;
-	};
 
 function PreChangeAdjInGroupState(drawingObjects, group)
 {
@@ -1681,7 +1683,7 @@ ChangeAdjInGroupState.prototype =
     onMouseUp: MoveInGroupState.prototype.onMouseUp
 };
 
-function TextAddState(drawingObjects, majorObject)
+function TextAddState(drawingObjects, majorObject, startX, startY, button)
 {
     this.drawingObjects =drawingObjects;
     this.majorObject = majorObject;
@@ -2456,6 +2458,11 @@ PolyLineAddState2.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
+	    if(!e.IsLocked)
+	    {
+		    //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+		    return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
+	    }
         var tr_x, tr_y;
         if(pageIndex === this.drawingObjects.startTrackPos.pageIndex)
         {

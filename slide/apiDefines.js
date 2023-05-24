@@ -472,7 +472,28 @@ var c_oAscPresentationShortcutType = {
 	Duplicate       : 7,
 	Print           : 8,
 	Save            : 9,
-	ShowContextMenu : 10
+	ShowContextMenu : 10,
+	ShowParaMarks   : 11,
+	Bold            : 12,
+	CopyFormat      : 13,
+	CenterAlign     : 14,
+	EuroSign        : 15,
+	Group           : 16,
+	Italic          : 17,
+	JustifyAlign    : 18,
+	AddHyperlink    : 19,
+	BulletList      : 20,
+	LeftAlign       : 21,
+	RightAlign      : 22,
+	Underline       : 23,
+	Strikethrough   : 24,
+	Superscript     : 25,
+	Subscript       : 26,
+	EnDash          : 27,
+	DecreaseFont    : 28,
+	IncreaseFont    : 29,
+	PasteFormat     : 30,
+	UnGroup         : 31
 };
 
 var TABLE_STYLE_WIDTH_PIX  = 72;
@@ -551,6 +572,13 @@ prot['Duplicate']       = c_oAscPresentationShortcutType.Duplicate;
 prot['Print']           = c_oAscPresentationShortcutType.Print;
 prot['Save']            = c_oAscPresentationShortcutType.Save;
 prot['ShowContextMenu'] = c_oAscPresentationShortcutType.ShowContextMenu;
+
+prot = window['Asc']['c_oAscPresetShadowVal'] = window['Asc'].c_oAscPresetShadowVal = c_oAscPresetShadowVal;
+
+prot = window['Asc']['c_oAscBlendModeType'] = window['Asc'].c_oAscBlendModeType = c_oAscBlendModeType;
+
+prot = window['Asc']['c_oAscConformanceType'] = window['Asc'].c_oAscConformanceType = c_oAscConformanceType;
+
 
 window['AscCommon']                = window['AscCommon'] || {};
 window['AscCommon'].c_oSerFormat   = c_oSerFormat;

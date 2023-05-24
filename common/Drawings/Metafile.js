@@ -1667,6 +1667,37 @@
 		};
 	}
 
+	function isCloudPrintingUrl()
+	{
+		if (window["AscDesktopEditor"])
+		{
+			if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
+				return false;
+
+			if (window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
+			{
+				if (!window["AscDesktopEditor"]["IsLocalFile"]() && window["AscDesktopEditor"]["IsFilePrinting"]())
+					return true;
+			}
+		}
+		return false;
+	}
+
+	function getCloudPrintingUrl(url)
+	{
+		var urlLocal = AscCommon.g_oDocumentUrls.getImageLocal(url);
+		if (urlLocal && urlLocal.endsWith(".svg"))
+		{
+			let localWithoutExt = urlLocal.slice(0, urlLocal.length - 3);
+			let urlRes = AscCommon.g_oDocumentUrls.getImageUrl(localWithoutExt + "wmf");
+			if (urlRes)
+				return urlRes;
+			urlRes = AscCommon.g_oDocumentUrls.getImageUrl(localWithoutExt + "emf");
+			if (urlRes)
+				return urlRes;
+		}
+		return url;
+	}
 
 	function CMetafile(width, height)
 	{
@@ -1818,17 +1849,9 @@
 
 		put_brushTexture : function(src, mode)
 		{
-			var isLocalUse = true;
-			if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
-				isLocalUse = ((!window["AscDesktopEditor"]["IsLocalFile"]()) && window["AscDesktopEditor"]["IsFilePrinting"]()) ? false : true;
+			var isCloudPrinting = isCloudPrintingUrl();
 
-            if (window["AscDesktopEditor"] && !isLocalUse)
-            {
-                if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
-                    isLocalUse = true;
-            }
-
-			if (this.BrushType != MetaBrushType.Texture)
+			if (this.BrushType !== MetaBrushType.Texture)
 			{
 				this.Memory.WriteByte(CommandType.ctBrushType);
 				this.Memory.WriteLong(3008);
@@ -1842,11 +1865,15 @@
 			this.Memory.WriteByte(CommandType.ctBrushTexturePath);
 
 			var _src = src;
-
-			var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
-			if (srcLocal && isLocalUse)
+			if (isCloudPrinting)
 			{
-				_src = srcLocal;
+				_src = getCloudPrintingUrl(src)
+			}
+			else
+			{
+				var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
+				if (srcLocal)
+					_src = srcLocal;
 			}
 
 			this.Memory.WriteString2(_src);
@@ -2109,31 +2136,28 @@
 		// images
 		drawImage : function(img, x, y, w, h, isUseOriginUrl)
 		{
-			var isLocalUse = true;
-			if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
-				isLocalUse = ((!window["AscDesktopEditor"]["IsLocalFile"]()) && window["AscDesktopEditor"]["IsFilePrinting"]()) ? false : true;
-
-			if (window["AscDesktopEditor"] && !isLocalUse)
-			{
-				if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
-					isLocalUse = true;
-			}
+			var isCloudPrinting = isCloudPrintingUrl();
 
 			if (!window.editor)
 			{
 				// excel
 				this.Memory.WriteByte(CommandType.ctDrawImageFromFile);
 
-				var imgLocal = AscCommon.g_oDocumentUrls.getLocal(img);
-				if (imgLocal && isLocalUse && (true !== isUseOriginUrl))
+				let _img = img;
+				if (isCloudPrinting)
 				{
-					this.Memory.WriteString2(imgLocal);
+					_img = getCloudPrintingUrl(_img);
 				}
 				else
 				{
-					this.Memory.WriteString2(img);
+					var imgLocal = AscCommon.g_oDocumentUrls.getLocal(img);
+					if (imgLocal && (true !== isUseOriginUrl))
+					{
+						_img = imgLocal;
+					}
 				}
 
+				this.Memory.WriteString2(_img);
 				this.Memory.WriteDouble(x);
 				this.Memory.WriteDouble(y);
 				this.Memory.WriteDouble(w);
@@ -2155,10 +2179,15 @@
 				_src = img;
 			}
 
-			var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
-			if (srcLocal && isLocalUse)
+			if (isCloudPrinting)
 			{
-				_src = srcLocal;
+				_src = getCloudPrintingUrl(_src)
+			}
+			else
+			{
+				var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
+				if (srcLocal)
+					_src = srcLocal;
 			}
 
 			this.Memory.WriteByte(CommandType.ctDrawImageFromFile);
@@ -2487,6 +2516,8 @@
 			// 2 - ComboBox/DropDownList
 			// 3 - CheckBox/RadioButton
 			// 4 - Picture
+			// 5 - Signature
+			// 6 - DateTime
 
 			if (oForm.IsTextForm())
 			{
@@ -2502,7 +2533,7 @@
 					this.Memory.WriteLong(oTextFormPr.MaxCharacters);
 				}
 
-				let sValue = oForm.GetSelectedText(true);
+				let sValue = oForm.GetSelectedText(true, false, {NewLine : true});
 				if (sValue)
 				{
 					nFlag |= (1 << 22);
@@ -2662,25 +2693,49 @@
 					var arrDrawings = oForm.GetAllDrawingObjects();
 					if (arrDrawings.length > 0 && arrDrawings[0].IsPicture() && arrDrawings[0].GraphicObj.blipFill)
 					{
-						var isLocalUse = true;
-						if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
-							isLocalUse = ((!window["AscDesktopEditor"]["IsLocalFile"]()) && window["AscDesktopEditor"]["IsFilePrinting"]()) ? false : true;
+						var _src = AscCommon.getFullImageSrc2(arrDrawings[0].GraphicObj.blipFill.RasterImageId);
+						var isCloudPrinting = isCloudPrintingUrl();
 
-						if (window["AscDesktopEditor"] && !isLocalUse)
+						if (isCloudPrinting)
 						{
-							if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
-								isLocalUse = true;
+							_src = getCloudPrintingUrl(_src)
+						}
+						else
+						{
+							var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
+							if (srcLocal)
+								_src = srcLocal;
 						}
 
-						var src = AscCommon.getFullImageSrc2(arrDrawings[0].GraphicObj.blipFill.RasterImageId);
-
-						var srcLocal = AscCommon.g_oDocumentUrls.getLocal(src);
-						if (srcLocal && isLocalUse)
-							src = srcLocal;
-
 						nFlag |= (1 << 22);
-						this.Memory.WriteString(src);
+						this.Memory.WriteString(_src);
 					}
+				}
+			}
+			else if (oForm.IsDatePicker())
+			{
+				this.Memory.WriteLong(6);
+				let dateTimePr = oForm.GetDatePickerPr();
+				
+				let value = oForm.GetSelectedText(true, false, {NewLine : true});
+				if (value)
+				{
+					nFlag |= (1 << 22);
+					this.Memory.WriteString(value);
+				}
+				
+				let placeholderText = oForm.GetPlaceholderText();
+				if (placeholderText)
+				{
+					nFlag |= (1 << 25);
+					this.Memory.WriteString(placeholderText);
+				}
+
+				let dateFormat = dateTimePr.GetDateFormat();
+				if (dateFormat)
+				{
+					nFlag |= (1 << 26);
+					this.Memory.WriteString(dateFormat);
 				}
 			}
 			else
@@ -3534,6 +3589,11 @@
 				this.Memory.WriteLong(nFlag);
 				this.Memory.Seek(nEndPos);
 			}
+		},
+		
+		IsPdfRenderer : function()
+		{
+			return this.RENDERER_PDF_FLAG;
 		}
 	};
 

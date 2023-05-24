@@ -44,12 +44,16 @@ const allTests = [
 	'word/forms/forms.html',
 	'word/forms/complexForm.html',
 	'word/numbering/numberingApplicator.html',
+	'word/numbering/numberingCalculation.html',
 	'word/api/api.html',
 	'word/api/textInput.html',
 	'word/styles/paraPr.html',
 	'word/plugins/pluginsApi.html',
 	'word/merge-documents/mergeDocuments.html',
 
+	'cell/shortcuts/shortcuts.html',
+	'slide/shortcuts/shortcuts.html',
+	'word/shortcuts/shortcuts.html',
 
 	'oform/xml/oformXml.html'
 ];

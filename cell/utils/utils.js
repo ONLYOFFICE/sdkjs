@@ -1083,6 +1083,23 @@
 
 			return new Range(col0, row0,  col0 + (this.r2 - this.r1), row0 + (this.c2 - this.c1));
 		};
+		Range.prototype.sliceAfter = function(col, row) {
+			let res = null;
+			if (col !== this.c2) {
+				if (!res) {
+					res = [];
+				}
+				res.push(new Range(col + 1, row, this.c2, row));
+			}
+			if (row !== this.r2) {
+				if (!res) {
+					res = [];
+				}
+				res.push(new Range(this.c1, row + 1, this.c2, this.r2));
+			}
+			return res;
+		};
+
 
 		/**
 		 *
@@ -1454,6 +1471,13 @@
 					break;
 				}
 			}
+			return res;
+		};
+		SelectionRange.prototype.getSize = function () {
+			let res = 0;
+			this.ranges.forEach(function (item) {
+				res += (item.r2 - item.r1 + 1) * (item.c2 - item.c1 + 1);
+			});
 			return res;
 		};
 

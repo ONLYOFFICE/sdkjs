@@ -5112,13 +5112,13 @@ function (window, undefined) {
 	cCOUNTIF.prototype.arrayIndexes = {0: 1};
 	cCOUNTIF.prototype.argumentsType = [argType.reference, argType.any];
 	cCOUNTIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], _count = 0, matchingInfo;
+		let arg0 = arg[0], arg1 = arg[1], _count = 0, matchingInfo;
 
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
+			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type && cElementType.array !== arg0.type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
@@ -5131,7 +5131,7 @@ function (window, undefined) {
 		}
 
 
-		var checkEmptyValue = function(res, tempVal, tempMatchingInfo) {
+		let checkEmptyValue = function(res, tempVal, tempMatchingInfo) {
 			//TODO нужно протестировать на различных вариантах
 			//когда в ячейке пустое значение - сравниваем его только с пустым значением
 			//при matchingInfo отличным от пустого значения в данном случае возвращаем false
@@ -5144,22 +5144,22 @@ function (window, undefined) {
 			}*/
 
 			tempVal = undefined !== tempVal.value ? tempVal.value : tempVal;
-			var matchingValue = tempMatchingInfo.val && tempMatchingInfo.val.value.toString ? tempMatchingInfo.val.value.toString() : null;
+			let matchingValue = tempMatchingInfo.val && tempMatchingInfo.val.value.toString ? tempMatchingInfo.val.value.toString() : null;
 			if(tempVal === "" && matchingValue && "" !== matchingValue.replace(/\*|\?/g, '')) {
 				return false;
 			}
 			return res;
 		};
 
-		var val;
+		let val;
 		matchingInfo = AscCommonExcel.matchingValue(arg1);
-		if (cElementType.cellsRange === arg0.type) {
+		if (cElementType.cellsRange === arg0.type || cElementType.array === arg0.type) {
 			arg0.foreach2(function (_val) {
 				_count += checkEmptyValue(matching(_val, matchingInfo, true), _val, matchingInfo);
 			})
 		} else if (cElementType.cellsRange3D === arg0.type) {
 			val = arg0.getValue();
-			for (var i = 0; i < val.length; i++) {
+			for (let i = 0; i < val.length; i++) {
 				_count += checkEmptyValue(matching(val[i], matchingInfo, true), val[i], matchingInfo);
 			}
 		} else {
@@ -5189,8 +5189,8 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.Calculate = function (arg) {
-		var i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
-		for (var k = 0; k < arg.length; k += 2) {
+		let i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
+		for (let k = 0; k < arg.length; k += 2) {
 			arg0 = arg[k];
 			arg1 = arg[k + 1];
 			if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
@@ -5212,7 +5212,11 @@ function (window, undefined) {
 
 			argNextDimension = arg0.getDimensions();
 			matchingInfo = AscCommonExcel.matchingValue(arg1);
-			arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
+			if (arg1.value === "") {
+				arg1Matrix = arg0.getMatrix();
+			} else {
+				arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
+			}
 			if (cElementType.cellsRange3D === arg0.type) {
 				arg1Matrix = arg1Matrix[0];
 			}

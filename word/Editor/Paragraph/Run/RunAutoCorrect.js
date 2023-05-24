@@ -816,7 +816,7 @@
 				return false;
 
 			// Проверяем исключения
-			if (1 === oRunElements.Elements.length && oDocument.IsDocumentEditor())
+			if (1 === oRunElements.Elements.length)
 			{
 				let autoCorrectSettings = oDocument.GetAutoCorrectSettings();
 

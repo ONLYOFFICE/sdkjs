@@ -137,4 +137,76 @@ $(function ()
 		CheckHeading(7, "1.1.1.1.1.1.1.1.");
 		CheckHeading(8, "1.1.1.1.1.1.1.1.1.");
 	});
+	
+	QUnit.test("Applying numbering by selecting vs. placing cursor", function (assert)
+	{
+		function CheckParagraph(paraIndex, text)
+		{
+			let p = logicDocument.GetElement(paraIndex);
+			assert.strictEqual(p.GetNumberingText(false), text, "Check numbering text for paragraph " + paraIndex);
+		}
+		
+		function GenerateDocument()
+		{
+			AscTest.ClearDocument();
+			
+			for (let i = 0; i < 2; ++i)
+			{
+				for (let iHead = 0; iHead < 4; ++iHead)
+				{
+					let p = AscTest.CreateParagraph();
+					logicDocument.PushToContent(p);
+					let styleId = styleManager.GetDefaultHeading(iHead);
+					p.SetParagraphStyle(styleManager.Get(styleId).GetName());
+					let run = new AscWord.CRun();
+					p.AddToContent(0, run);
+					run.AddText("Heading " + iHead);
+				}
+			}
+			assert.strictEqual(logicDocument.GetElementsCount(), 8, "Check number of paragraphs");
+		}
+		
+		GenerateDocument();
+		logicDocument.SelectAll();
+		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(2, 4));
+		AscTest.Recalculate();
+		
+		CheckParagraph(0, "Article I.");
+		CheckParagraph(1, "Section I.01");
+		CheckParagraph(2, "(a)");
+		CheckParagraph(3, "(i)");
+		CheckParagraph(4, "Article II.");
+		CheckParagraph(5, "Section II.01");
+		CheckParagraph(6, "(a)");
+		CheckParagraph(7, "(i)");
+		
+		
+		// Check applying numbering when cursor is placed in one of paragraphs
+		logicDocument.RemoveSelection();
+		let p = logicDocument.GetElement(1);
+		AscTest.MoveCursorToParagraph(p, true);
+		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(2, 7));
+		AscTest.Recalculate();
+		
+		CheckParagraph(0, "1.");
+		CheckParagraph(1, "1.1.");
+		CheckParagraph(2, "1.1.1.");
+		CheckParagraph(3, "1.1.1.1.");
+		CheckParagraph(4, "2.");
+		CheckParagraph(5, "2.1.");
+		CheckParagraph(6, "2.1.1.");
+		CheckParagraph(7, "2.1.1.1.");
+		
+		AscTest.SelectDocumentRange(0, 3);
+		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(2, 6));
+		
+		CheckParagraph(0, "I.");
+		CheckParagraph(1, "A.");
+		CheckParagraph(2, "1.");
+		CheckParagraph(3, "a)");
+		CheckParagraph(4, "1.");
+		CheckParagraph(5, "1.1.");
+		CheckParagraph(6, "1.1.1.");
+		CheckParagraph(7, "1.1.1.1.");
+	});
 });

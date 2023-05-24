@@ -2149,64 +2149,64 @@
 	cWORKDAY_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cWORKDAY_INTL.prototype.Calculate = function (arg) {
 		//TODO проблема с формулами следующего типа - WORKDAY.INTL(8,60,"0000000")
-		var t = this;
-		var tempArgs = arg[2] ? [arg[0], arg[1], arg[2]] : [arg[0], arg[1]];
-		var oArguments = this._prepareArguments(tempArgs, arguments[1]);
-		var argClone = oArguments.args;
+		let t = this;
+		let tempArgs = arg[2] ? [arg[0], arg[1], arg[2]] : [arg[0], arg[1]];
+		let oArguments = this._prepareArguments(tempArgs, arguments[1]);
+		let argClone = oArguments.args;
 
 		argClone[0] = argClone[0].tocNumber();
 		argClone[1] = argClone[1].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var arg0 = argClone[0], arg1 = argClone[1], arg2 = argClone[2], arg3 = arg[3];
+		let arg0 = argClone[0], arg1 = argClone[1], arg2 = argClone[2], arg3 = arg[3];
 
-		var val0 = arg0.getValue();
+		let val0 = arg0.getValue();
 		if (val0 < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
 		val0 = getCorrectDate(val0);
 
-		//Weekend
+		// Weekend
 		if (arg2 && "1111111" === arg2.getValue()) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		var weekends = getWeekends(arg2);
+		let weekends = getWeekends(arg2);
 		if (weekends instanceof cError) {
 			return weekends;
 		}
 
-		//Holidays
-		var holidays = getHolidays(arg3);
+		// Holidays
+		let holidays = getHolidays(arg3);
 		if (holidays instanceof cError) {
 			return holidays;
 		}
 
-		var calcDate = function () {
-			var dif = arg1.getValue(), count = 1, dif1 = dif > 0 ? 1 : dif < 0 ? -1 : 0, val, date = val0;
+		let calcDate = function () {
+			let dif = arg1.getValue(), count = 0, dif1 = dif > 0 ? 1 : dif < 0 ? -1 : 0, val, date = val0, isEndOfCycle = false;
 			while (Math.abs(dif) > count) {
 				date = new cDate(val0.getTime() + dif1 * c_msPerDay);
 				if (!_includeInHolidays(date, holidays) && !weekends[date.getUTCDay()]) {
 					count++;
 				}
-				dif >= 0 ? dif1++ : dif1--;
-
 				//если последняя итерация
 				if (!(Math.abs(dif) > count)) {
 					//проверяем не оказалось ли следом выходных. если оказались - прибавляем
 					date = new cDate(val0.getTime() + dif1 * c_msPerDay);
-					for (var i = 0; i < 7; i++) {
+					for (let i = 0; i < 7; i++) {
 						if (weekends[date.getUTCDay()]) {
 							dif >= 0 ? dif1++ : dif1--;
 							date = new cDate(val0.getTime() + (dif1) * c_msPerDay);
 						} else {
+							isEndOfCycle = true;
 							break;
 						}
 					}
 				}
+				!isEndOfCycle ? (dif >= 0 ? dif1++ : dif1--) : null;
 			}
 			date = new cDate(val0.getTime() + dif1 * c_msPerDay);
 			val = date.getExcelDate();

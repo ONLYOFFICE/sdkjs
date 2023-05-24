@@ -136,14 +136,17 @@ $(function () {
 		logicDocument.MoveCursorToStartPos();
 
 		AddFormPr(logicDocument.AddContentControlCheckBox());
+		logicDocument.MoveCursorToEndPos()
 		forms = formsManager.GetAllForms();
 		assert.strictEqual(forms.length, 1, "Check forms count after adding checkbox form");
 
 		AddFormPr(logicDocument.AddContentControlComboBox());
 		forms = formsManager.GetAllForms();
+		logicDocument.MoveCursorToEndPos()
 		assert.strictEqual(forms.length, 2, "Check forms count after adding combobox form");
 
 		logicDocument.AddContentControlComboBox();
+		logicDocument.MoveCursorToEndPos()
 		forms = formsManager.GetAllForms();
 		assert.strictEqual(forms.length, 2, "Check forms count after adding combobox content control");
 	});
@@ -154,12 +157,14 @@ $(function () {
 		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
 		logicDocument.AddToContent(0, p);
 		logicDocument.MoveCursorToEndPos();
-
+		
 		let textForm = logicDocument.AddContentControlTextForm();
 		AddFormPr(textForm);
 
 		let textFormPr = textForm.GetTextFormPr();
 		textFormPr.SetDigitFormat();
+		
+		AscTest.SetFillingFormMode();
 
 		textForm.SetThisElementCurrent();
 		textForm.MoveCursorToStartPos();
@@ -254,11 +259,13 @@ $(function () {
 
 		textForm.SetThisElementCurrent();
 		assert.strictEqual(textForm2.GetInnerText(), "112-ABB", "Check inner text in the text form 2. It must be '112-ABB'");
-
+		
+		AscTest.SetEditingMode();
 	});
 
 	QUnit.test("Check filling out the required forms", function (assert)
 	{
+		AscTest.SetEditingMode();
 		AscTest.ClearDocument();
 		let p1 = new AscWord.CParagraph(AscTest.DrawingDocument);
 		let p2 = new AscWord.CParagraph(AscTest.DrawingDocument);
@@ -271,8 +278,9 @@ $(function () {
 
 		p1.SetThisElementCurrent();
 		p1.MoveCursorToStartPos();
-
 		AddFormPr(logicDocument.AddContentControlCheckBox());
+
+		p1.MoveCursorToEndPos();
 		AddFormPr(logicDocument.AddContentControlComboBox());
 
 		logicDocument.AddContentControlComboBox();
@@ -295,6 +303,8 @@ $(function () {
 		AddFormPr(textForm2);
 
 		assert.strictEqual(formsManager.GetAllForms().length, 5, "Check forms count");
+		
+		AscTest.SetFillingFormMode();
 
 		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "No format and required forms. Check is form filled");
 
@@ -306,7 +316,8 @@ $(function () {
 
 		textForm.GetFormPr().SetRequired(true);
 		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), false, "Set text form required and check");
-
+		
+		
 		textForm.SetThisElementCurrent();
 		textForm.MoveCursorToEndPos();
 

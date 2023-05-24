@@ -573,13 +573,6 @@ g_oColorManager = new ColorManager();
 		}
 		this.text = val;
 	};
-	Fragment.prototype.getTextFromCodes = function () {
-		//если выставляем текстовое поле, контент меняется, нужно занулять charCodes
-		if (!isInit) {
-			this.charCodes = null;
-		}
-		this.text = val;
-	};
 	Fragment.prototype.convertPositionToText = function (codePos) {
 		var diff = 0;
 		for (var i = 0; i < codePos; i++) {
@@ -3111,6 +3104,38 @@ var g_oFontProperties = {
 		return res;
 	}
 
+	function FromXml_ST_SheetViewType(val) {
+		var res = null;
+		switch (val) {
+			case "normal":
+				res = window["Asc"].c_oAscESheetViewType.normal;
+				break;
+			case "pageBreakPreview":
+				res = window["Asc"].c_oAscESheetViewType.pageBreakPreview;
+				break;
+			case "pageLayout":
+				res = window["Asc"].c_oAscESheetViewType.pageLayout;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_SheetViewType(val) {
+		var res = null;
+		switch (val) {
+			case window["Asc"].c_oAscESheetViewType.normal:
+				res = "normal";
+				break;
+			case window["Asc"].c_oAscESheetViewType.pageBreakPreview:
+				res = "pageBreakPreview";
+				break;
+			case window["Asc"].c_oAscESheetViewType.pageLayout:
+				res = "pageLayout";
+				break;
+		}
+		return res;
+	}
+
 	function GradientFill() {
 		//Attributes
 		this.type = Asc.c_oAscFillGradType.GRAD_LINEAR;
@@ -4989,7 +5014,7 @@ var g_oFontProperties = {
 		}
 		this.getFont().setVerticalAlign(val ? AscCommon.vertalign_SubScript : AscCommon.vertalign_Baseline);
 	};
-	CellXfs.prototype.asc_setFontSuperscript = function () {
+	CellXfs.prototype.asc_setFontSuperscript = function (val) {
 		if (!this.font) {
 			this.font = new AscCommonExcel.Font();
 		}
@@ -5912,16 +5937,16 @@ StyleManager.prototype =
 				var rowIndex = (row - bbox.r1 - hidden) % (stripe.size + stripe.offset);
 				if (rowIndex < stripe.size) {
 					if (xf.border) {
-						if (bbox.c1 !== col && xf.border.l) {
+						if (bbox.c1 !== col && (xf.border.l || xf.border.iv)) {
 							borderIndex += 1;
 						}
-						if (0 != rowIndex && xf.border.t) {
+						if (0 != rowIndex && (xf.border.t || xf.border.ih)) {
 							borderIndex += 2;
 						}
-						if (bbox.c2 !== col && xf.border.r) {
+						if (bbox.c2 !== col && (xf.border.r || xf.border.iv)) {
 							borderIndex += 4;
 						}
-						if (stripe.size - 1 != rowIndex && xf.border.b) {
+						if (stripe.size - 1 != rowIndex && (xf.border.b || xf.border.ih)) {
 							borderIndex += 8;
 						}
 					}
@@ -5933,16 +5958,16 @@ StyleManager.prototype =
 				var colIndex = (col - bbox.c1 - hidden) % (stripe.size + stripe.offset);
 				if (colIndex < stripe.size) {
 					if (xf.border) {
-						if (0 != colIndex && xf.border.l) {
+						if (0 != colIndex && (xf.border.l || xf.border.iv)) {
 							borderIndex += 1;
 						}
-						if (bbox.r1 !== row && xf.border.t) {
+						if (bbox.r1 !== row && (xf.border.t || xf.border.ih)) {
 							borderIndex += 2;
 						}
-						if (stripe.size - 1 != colIndex && xf.border.r) {
+						if (stripe.size - 1 != colIndex && (xf.border.r || xf.border.iv)) {
 							borderIndex += 4;
 						}
-						if (bbox.r2 !== row && xf.border.b) {
+						if (bbox.r2 !== row && (xf.border.b || xf.border.ih)) {
 							borderIndex += 8;
 						}
 					}
@@ -5951,16 +5976,16 @@ StyleManager.prototype =
 				}
 			}
 		} else if (xf.border) {
-			if (bbox.c1 !== col && xf.border.l) {
+			if (bbox.c1 !== col && (xf.border.l || xf.border.iv)) {
 				borderIndex += 1;
 			}
-			if (bbox.r1 !== row && xf.border.t) {
+			if (bbox.r1 !== row && (xf.border.t || xf.border.ih)) {
 				borderIndex += 2;
 			}
-			if (bbox.c2 !== col && xf.border.r) {
+			if (bbox.c2 !== col && (xf.border.r || xf.border.iv)) {
 				borderIndex += 4;
 			}
-			if (bbox.r2 !== row && xf.border.b) {
+			if (bbox.r2 !== row && (xf.border.b || xf.border.ih)) {
 				borderIndex += 8;
 			}
 		}
@@ -7225,6 +7250,10 @@ CMultiTextElem.prototype =
 			case this.Properties.text: this.text = value;break;
 			case this.Properties.format: this.format = value;break;
 		}
+	},
+	setText: function(val)
+	{
+		this.text = val;
 	}
 };
 
@@ -14452,7 +14481,7 @@ QueryTableField.prototype.clone = function() {
 		var i;
 		var length = r.GetLong();
 		for (i = 0; i < length; ++i) {
-			var definedName = new DefinedName();
+			var definedName = new ExternalDefinedName();
 			definedName.Read_FromBinary2(r);
 			if(!this.DefinedNames) {
 				this.DefinedNames = [];
@@ -14619,6 +14648,12 @@ QueryTableField.prototype.clone = function() {
 		//data from portal, need update reference data
 		if (oReferenceData && (!this.referenceData || (this.referenceData["instanceId"] !== oReferenceData["instanceId"] || this.referenceData["fileKey"] !== oReferenceData["fileKey"]))) {
 			this.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
+			isChanged = true;
+		}
+		//path also can changed
+		var path = oPortalData && oPortalData["path"];
+		if (path && this.Id !== path) {
+			this.setId(path);
 			isChanged = true;
 		}
 
@@ -14847,6 +14882,15 @@ QueryTableField.prototype.clone = function() {
 		this.referenceData["instanceId"] = portalName;
 		this.referenceData["fileKey"] = fileId;
 	};
+
+	ExternalReference.prototype.setId = function (id) {
+		if (!id) {
+			return;
+		}
+
+		this.Id = id;
+	};
+
 
 	function asc_CExternalReference() {
 		this.type = null;
@@ -15195,7 +15239,56 @@ QueryTableField.prototype.clone = function() {
 		return res;
 	};
 
+	function ExternalDefinedName() {
+		this.Name = null;
+		this.RefersTo = null;
+		this.SheetId = null;
+	}
 
+	ExternalDefinedName.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.Name = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.RefersTo = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.SheetId = r.GetString2();
+		}
+	};
+	ExternalDefinedName.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.Ref) {
+			w.WriteBool(true);
+			w.WriteString2(this.Name);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.CellType) {
+			w.WriteBool(true);
+			w.WriteString2(this.RefersTo);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.CellValue) {
+			w.WriteBool(true);
+			w.WriteString2(this.SheetId);
+		} else {
+			w.WriteBool(false);
+		}
+	};
+	ExternalDefinedName.prototype.clone = function () {
+		var newObj = new ExternalDefinedName();
+
+		newObj.Name = this.Name;
+		newObj.RefersTo = this.RefersTo;
+		newObj.SheetId = this.SheetId;
+
+		return newObj;
+	};
+
+	//CellWatch
 	function CCellWatch(ws) {
 		this.r = null;
 
@@ -15702,6 +15795,7 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].ExternalSheetDataSet = ExternalSheetDataSet;
 	window["AscCommonExcel"].ExternalRow = ExternalRow;
 	window["AscCommonExcel"].ExternalCell = ExternalCell;
+	window["AscCommonExcel"].ExternalDefinedName = ExternalDefinedName;
 
 	window['AscCommonExcel'].ToXml_ST_DataValidationOperator = ToXml_ST_DataValidationOperator;
 	window['AscCommonExcel'].FromXml_ST_DataValidationOperator = FromXml_ST_DataValidationOperator;
@@ -15769,6 +15863,8 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].ToXml_ST_DataBarAxisPosition = ToXml_ST_DataBarAxisPosition;
 	window["AscCommonExcel"].FromXml_ST_CellValueType = FromXml_ST_CellValueType;
 	window["AscCommonExcel"].ToXml_ST_CellValueType = ToXml_ST_CellValueType;
+	window["AscCommonExcel"].FromXml_ST_SheetViewType = FromXml_ST_SheetViewType;
+	window["AscCommonExcel"].ToXml_ST_SheetViewType = ToXml_ST_SheetViewType;
 
 	window["AscCommonExcel"].CCellWatch = CCellWatch;
 	prot = CCellWatch.prototype;

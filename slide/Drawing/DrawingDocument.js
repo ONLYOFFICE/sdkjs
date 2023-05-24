@@ -3346,7 +3346,8 @@ function CDrawingDocument()
         var oWordControl = this.m_oWordControl;
 		var bIsReturn = false;
 
-        if (this.placeholders.onPointerDown(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM())) {
+		if (!this.isButtonsDisabled() && this.placeholders.onPointerDown(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
+		{
 			bIsReturn = true;
 			this.m_oWordControl.onMouseUpMainSimple();
 		}
@@ -3378,12 +3379,18 @@ function CDrawingDocument()
 
             bIsReturn = true;
 		}
-		else if (this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
+		else
 		{
-            oWordControl.OnUpdateOverlay();
-            oWordControl.EndUpdateOverlay();
-            bIsReturn = true;
-        }
+			if(!AscCommon.global_mouseEvent.IsLocked)
+			{
+				if (!this.isButtonsDisabled() && this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
+				{
+					oWordControl.OnUpdateOverlay();
+					oWordControl.EndUpdateOverlay();
+					bIsReturn = true;
+				}
+			}
+		}
 
         if (bIsReturn)
         {
@@ -3391,6 +3398,11 @@ function CDrawingDocument()
             oWordControl.EndUpdateOverlay();
         }
         return bIsReturn;
+	};
+
+	this.isButtonsDisabled = function()
+	{
+		return Asc.editor.isEyedropperStarted() || Asc.editor.isDrawInkMode();
 	};
 
 	this.checkMouseUp_Drawing = function (pos)
@@ -3407,7 +3419,7 @@ function CDrawingDocument()
 
             bIsReturn = true;
 		}
-        else if (this.placeholders.onPointerUp(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
+        else if (!this.isButtonsDisabled() && this.placeholders.onPointerUp(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
             bIsReturn = true;
 
         if (bIsReturn)
@@ -4685,6 +4697,8 @@ function CThumbnailsManager()
 		if (null == canvas)
 			return;
 
+		this.m_oWordControl.m_oApi.clearEyedropperImgData();
+
 		var context = canvas.getContext("2d");
 		var _width  = canvas.width;
 		var _height = canvas.height;
@@ -5323,7 +5337,7 @@ function CThumbnailsManager()
 					}
 					else
 					{
-						if (oDrawingDocument.SlideCurrent > 0)
+						if (oDrawingDocument.SlideCurrent !== (slidesCount - 1))
 						{
 							this.CorrectShiftSelect(false, true);
 						}

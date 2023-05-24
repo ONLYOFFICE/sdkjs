@@ -37,9 +37,9 @@
 	function CUserProtectedRange(ws) {
 		this.ref = null;
 		this.name = null;
-		this.usersMap  = null;
+		this.users  = null;
 
-		this.userGroupsMap = null;
+		this.usersGroups = null;
 
 		//for warning
 		this.warningText = null;
@@ -64,8 +64,8 @@
 
 		res.ref = this.ref ? this.ref.clone() : null;
 		res.name = this.name;
-		res.usersMap = this.usersMap;
-		res.userGroupsMap = this.userGroupsMap;
+		res.users = this.users;
+		res.usersGroups = this.usersGroups;
 
 		res.warningText = this.warningText;
 
@@ -90,20 +90,13 @@
 			w.WriteBool(false);
 		}
 
-		if (null != this.usersMap) {
-			let count = 0, i;
-			for (i in this.usersMap) {
-				if (this.usersMap.hasOwnProperty(i)) {
-					count++;
-				}
-			}
+		if (null != this.users) {
+			let count = this.users.length;
 			if (count) {
 				w.WriteBool(true);
 				w.WriteLong(count);
-				for (i in this.usersMap) {
-					if (this.usersMap.hasOwnProperty(i)) {
-						w.WriteString2(i);
-					}
+				for (let i = 0; i < count; i++) {
+					this.users[i].Write_ToBinary2(w);
 				}
 			} else {
 				w.WriteBool(false);
@@ -112,20 +105,13 @@
 			w.WriteBool(false);
 		}
 
-		if (null != this.userGroupsMap) {
-			let count = 0, i;
-			for (i in this.userGroupsMap) {
-				if (this.userGroupsMap.hasOwnProperty(i)) {
-					count++;
-				}
-			}
+		if (null != this.usersGroups) {
+			let count = this.usersGroups.length;
 			if (count) {
 				w.WriteBool(true);
 				w.WriteLong(count);
-				for (i in this.userGroupsMap) {
-					if (this.userGroupsMap.hasOwnProperty(i)) {
-						w.WriteString2(i);
-					}
+				for (let i = 0; i < count; i++) {
+					this.usersGroups[i].Write_ToBinary2(w);
 				}
 			} else {
 				w.WriteBool(false);
@@ -164,20 +150,24 @@
 		if (r.GetBool()) {
 			let length = r.GetULong();
 			for (let i = 0; i < length; ++i) {
-				if (!this.usersMap) {
-					this.usersMap = {};
+				if (!this.users) {
+					this.users = [];
 				}
-				this.usersMap[r.GetString2()] = 1;
+				let newUserInfo = new CUserProtectedRangeUserInfo();
+				newUserInfo.Read_FromBinary2(r);
+				this.users.push(newUserInfo);
 			}
 		}
 
 		if (r.GetBool()) {
 			let length = r.GetULong();
 			for (let i = 0; i < length; ++i) {
-				if (!this.userGroupsMap) {
-					this.userGroupsMap = {};
+				if (!this.usersGroups) {
+					this.usersGroups = [];
 				}
-				this.userGroupsMap[r.GetString2()] = 1;
+				let newUserInfo = new CUserProtectedRangeUserInfo();
+				newUserInfo.Read_FromBinary2(r);
+				this.usersGroups.push(newUserInfo);
 			}
 		}
 
@@ -190,10 +180,17 @@
 		}
 	};
 	CUserProtectedRange.prototype.intersection = function(range) {
-		return this.ref.intersection(range);
+		return this.ref && this.ref.intersection(range);
 	};
 	CUserProtectedRange.prototype.isUserCanEdit = function(userId) {
-		return this.usersMap && this.usersMap[userId];
+		if (this.users) {
+			for (let i = 0; i < this.users.length; i++) {
+				if (this.users[i].id === userId) {
+					return true;
+				}
+			}
+		}
+		return false;
 	};
 	CUserProtectedRange.prototype.isInRange = function(bbox) {
 		return bbox.containsRange(this.ref);
@@ -229,32 +226,10 @@
 		return this.name;
 	};
 	CUserProtectedRange.prototype.asc_getUsers = function () {
-		let res = null;
-		if (this.usersMap) {
-			for (let i in this.usersMap) {
-				if (this.usersMap.hasOwnProperty(i)) {
-					if (!res) {
-						res = [];
-					}
-					res.push(i);
-				}
-			}
-		}
-		return res;
+		return this.users;
 	};
 	CUserProtectedRange.prototype.asc_getUserGroups = function () {
-		let res = null;
-		if (this.userGroupsMap) {
-			for (let i in this.userGroupsMap) {
-				if (this.userGroupsMap.hasOwnProperty(i)) {
-					if (!res) {
-						res = [];
-					}
-					res.push(i);
-				}
-			}
-		}
-		return res;
+		return this.usersGroups;
 	};
 	CUserProtectedRange.prototype.asc_setRef = function (val) {
 		if (val) {
@@ -283,15 +258,10 @@
 		}
 	};
 	CUserProtectedRange.prototype.asc_setName = function (val) {
-		this.name = val;
+		this.name = val.trim && val.trim();
 	};
 	CUserProtectedRange.prototype.asc_setUsers = function (val) {
-		this.usersMap = {};
-		if (val) {
-			for (let i = 0; i < val.length; i++) {
-				this.usersMap[val[i]] = 1;
-			}
-		}
+		this.users = val;
 	};
 	CUserProtectedRange.prototype.asc_getIsLock = function () {
 		return this.isLock;
@@ -301,6 +271,62 @@
 	};
 	CUserProtectedRange.prototype.initPostOpen = function (ws) {
 		this._ws = ws;
+	};
+
+	function CUserProtectedRangeUserInfo() {
+		this.id = null;
+		this.name = null;
+	}
+
+	CUserProtectedRangeUserInfo.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.id) {
+			w.WriteBool(true);
+			w.WriteString2(this.id);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.name) {
+			w.WriteBool(true);
+			w.WriteString2(this.name);
+		} else {
+			w.WriteBool(false);
+		}
+	};
+
+	CUserProtectedRangeUserInfo.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.id = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.name = r.GetString2();
+		}
+	};
+
+	CUserProtectedRangeUserInfo.prototype.getType = function () {
+		return AscCommonExcel.UndoRedoDataTypes.UserProtectedRange;
+	};
+
+	CUserProtectedRangeUserInfo.prototype.clone = function(ws) {
+		var res = new CUserProtectedRangeUserInfo(ws);
+
+		res.id = this.id;
+		res.name = this.name;
+
+		return res;
+	};
+
+	CUserProtectedRangeUserInfo.prototype.asc_getId = function () {
+		return this.id;
+	};
+	CUserProtectedRangeUserInfo.prototype.asc_getName = function () {
+		return this.name;
+	};
+
+	CUserProtectedRangeUserInfo.prototype.asc_setId = function (val) {
+		this.id = val;
+	};
+	CUserProtectedRangeUserInfo.prototype.asc_setName = function (val) {
+		this.name = val;
 	};
 
 
@@ -323,5 +349,13 @@
 	prot["asc_getId"] = prot.asc_getId;
 
 	prot["asc_getIsLock"] = prot.asc_getIsLock;
+
+
+	window["Asc"]["CUserProtectedRangeUserInfo"] = window["Asc"].CUserProtectedRangeUserInfo = CUserProtectedRangeUserInfo;
+	prot = CUserProtectedRangeUserInfo.prototype;
+	prot["asc_getId"] = prot.asc_getId;
+	prot["asc_getName"] = prot.asc_getName;
+	prot["asc_setId"] = prot.asc_setId;
+	prot["asc_setName"] = prot.asc_setName;
 
 })(window);

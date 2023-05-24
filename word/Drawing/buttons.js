@@ -292,7 +292,8 @@
 		Chart : 2,
 		Table : 3,
 		Video : 4,
-		Audio : 5
+		Audio : 5,
+		SmartArt: 6
 	};
 
 	var exportObj = AscCommon.PlaceholderButtonType;
@@ -303,6 +304,7 @@
 	exportObj["Table"] = exportObj.Table;
 	exportObj["Video"] = exportObj.Video;
 	exportObj["Audio"] = exportObj.Audio;
+	exportObj["SmartArt"] = exportObj.SmartArt;
 
 	AscCommon.PlaceholderButtonState = {
 		None : 0,
@@ -548,13 +550,13 @@
 			case AscCommon.c_oEditorId.Word:
 				if (true === word_control.m_bIsRuler)
 				{
-					xCoord += (5 * g_dKoef_mm_to_pix) >> 0;
-					yCoord += (7 * g_dKoef_mm_to_pix) >> 0;
+					xCoord += (5 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+					yCoord += (7 * AscCommon.g_dKoef_mm_to_pix) >> 0;
 				}
 				break;
 			case AscCommon.c_oEditorId.Presentation:
-				xCoord += ((word_control.m_oMainParent.AbsolutePosition.L + word_control.m_oMainView.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
-				yCoord += ((word_control.m_oMainParent.AbsolutePosition.T + word_control.m_oMainView.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
+				xCoord += ((word_control.m_oMainParent.AbsolutePosition.L + word_control.m_oMainView.AbsolutePosition.L) * AscCommon.g_dKoef_mm_to_pix) >> 0;
+				yCoord += ((word_control.m_oMainParent.AbsolutePosition.T + word_control.m_oMainView.AbsolutePosition.T) * AscCommon.g_dKoef_mm_to_pix) >> 0;
 				yCoord += this.buttonSize;
 				break;
 			default:
@@ -679,11 +681,13 @@
 		this.icons.register(AscCommon.PlaceholderButtonType.Chart, "chart", true);
 		this.icons.register(AscCommon.PlaceholderButtonType.Audio, "audio");
 		this.icons.register(AscCommon.PlaceholderButtonType.Video, "video");
+		this.icons.register(AscCommon.PlaceholderButtonType.SmartArt, "smartart", true);
 
 		// типы, которые поддерживают состояние Active
 		this.mapActive = [];
 		this.mapActive[AscCommon.PlaceholderButtonType.Table] = true;
 		this.mapActive[AscCommon.PlaceholderButtonType.Chart] = true;
+		this.mapActive[AscCommon.PlaceholderButtonType.SmartArt] = true;
 	}
 
 	Placeholders.prototype.registerCallback = function(type, callback)
@@ -2283,7 +2287,7 @@
 				}
 
 				if (state == this.ContentControlObjects[i].state
-					|| (!obj && AscCommon.ContentControlTrack.In === state && AscCommon.ContentControlTrack.Main === this.ContentControlObjects[i].state))
+					|| ((!obj || !obj.IsForm() || obj.IsMainForm()) && AscCommon.ContentControlTrack.In === state && AscCommon.ContentControlTrack.Main === this.ContentControlObjects[i].state))
 				{
 					if (-2 != this.ContentControlObjects[i].ActiveButtonIndex)
 						isActiveRemove = true;

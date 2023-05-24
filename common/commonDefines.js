@@ -425,6 +425,18 @@ var lcid_iuLatn = 0x7c5d; // Inuktitut, Latin
 var lcid_tzmLatn = 0x7c5f; // Central Atlas Tamazight, Latin
 var lcid_haLatn = 0x7c68; // Hausa, Latin
 
+//Defines are only allowed in the global scope.
+//https://github.com/google/closure-compiler/wiki/Annotating-JavaScript-for-the-Closure-Compiler#define-type-description
+window['AscCommon'] = window.AscCommon = window['AscCommon'] || {};
+/** @define {string} */
+window.AscCommon.g_cCompanyName  = "onlyoffice";
+/** @define {string} */
+window.AscCommon.g_cProductVersion  = "0.0.0";
+/** @define {string} */
+window.AscCommon.g_cBuildNumber = "0";
+/** @define {string} */
+window.AscCommon.g_cIsBeta = "false";
+
 (/**
  * @param {Window} window
  * @param {undefined} undefined
@@ -633,11 +645,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Accounting : 3,
 		Currency   : 4,
 		Date       : 5,
-		Time       : 6,
-		Percent    : 7,
-		Fraction   : 8,
-		Text       : 9,
-		Custom     : 10
+		LongDate   : 6,
+		Time       : 7,
+		Percent    : 8,
+		Fraction   : 9,
+		Text       : 10,
+		Custom     : 11
 	};
 
 	var c_oAscDrawingLayerType = {
@@ -1811,7 +1824,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		LockedObject : 2,
 		Footnote     : 3,
 		Form         : 4,
-		Review       : 5
+		Review       : 5,
+		Eyedropper   : 6
 	};
 
 	// selection type
@@ -2962,9 +2976,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		UpperLetter                  : 60,
 		UpperRoman                   : 61,
 		VietnameseCounting           : 62,
-
-		BulletFlag                   : 0x1000,
-		NumberedFlag                 : 0x2000,
 
 		Ea1JpnKor                    : 0x3000,
 		CircleNumWdBlack             : 0x3001,
@@ -4212,6 +4223,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Footnote']     = prot.Footnote;
 	prot['Form']         = prot.Form;
 	prot['Review']       = prot.Review;
+	prot['Eyedropper']   = prot.Eyedropper;
 
 	window['Asc']['c_oAscMaxTooltipLength'] = window['Asc'].c_oAscMaxTooltipLength = c_oAscMaxTooltipLength;
 	window['Asc']['c_oAscMaxCellOrCommentLength'] = window['Asc'].c_oAscMaxCellOrCommentLength = c_oAscMaxCellOrCommentLength;

@@ -187,6 +187,75 @@ $(function () {
 		AscTest.MoveCursorToParagraph(p, true);
 		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentWord(), "Te", "Add hidden complex field in the middle of word 'Test' and check current word");
 		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "Te1st text", "Check current sentence");
+		
+		
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+		AscTest.EnterText("Test text");
+
+		AscTest.MoveCursorToParagraph(p, true);
+		PluginsApi.pluginMethod_ReplaceCurrentWord("First");
+		assert.strictEqual(AscTest.GetParagraphText(p), "First text", "Replace current word at the start of the paragraph");
+		
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 2);
+		PluginsApi.pluginMethod_ReplaceCurrentWord("Second");
+		assert.strictEqual(AscTest.GetParagraphText(p), "Second text", "Replace current word at the second position of the paragraph");
+		
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 3);
+		PluginsApi.pluginMethod_ReplaceCurrentWord("123", "afterCursor");
+		assert.strictEqual(AscTest.GetParagraphText(p), "Sec123 text", "Replace the part of the word after cursor");
+		
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 3);
+		PluginsApi.pluginMethod_ReplaceCurrentWord("654", "beforeCursor");
+		assert.strictEqual(AscTest.GetParagraphText(p), "654123 text", "Replace the part of the word before cursor");
+		
+		
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+		AscTest.EnterText("The quick brown fox jumps over the lazy dog. The five boxing wizards jump quickly. Eat more of those fresh french loafs and drink a tea!");
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 16);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("entirely"), "The quick brown fox jumps over the lazy dog.", "Check current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("afterCursor"), "fox jumps over the lazy dog.", "Check the right part of the current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("beforeCursor"), "The quick brown ", "Check the left part of the current sentence");
+		
+		AscTest.MoveCursorRight(false, false, 28);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("entirely"), "The five boxing wizards jump quickly.", "Check current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("afterCursor"), "The five boxing wizards jump quickly.", "Check the right part of the current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("beforeCursor"), "", "Check the left part of the current sentence");
+		
+		AscTest.MoveCursorToParagraph(p, false);
+		AscTest.MoveCursorLeft(false, false, 1);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("entirely"), "Eat more of those fresh french loafs and drink a tea!", "Check current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("afterCursor"), "!", "Check the right part of the current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("beforeCursor"), "Eat more of those fresh french loafs and drink a tea", "Check the left part of the current sentence");
+		
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 16);
+		PluginsApi.pluginMethod_ReplaceCurrentSentence("The slow yellow rabbit jumps over the fluffy cat!", "entirely");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "The five boxing wizards jump quickly.", "Replace first sentence and check next sentence.");
+		AscTest.MoveCursorLeft(false, false, 5);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "The slow yellow rabbit jumps over the fluffy cat!", "Check replaced sentence.");
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 58);
+		PluginsApi.pluginMethod_ReplaceCurrentSentence("The eight", "beforeCursor");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "The eight boxing wizards jump quickly.", "Replace left part of the sentence.");
+		PluginsApi.pluginMethod_ReplaceCurrentSentence(" relaxing wizards jump slowly.", "afterCursor");
+		AscTest.MoveCursorLeft(false, false, 5);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "The eight relaxing wizards jump slowly.", "Replace right part of the sentence.");
+		
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+		AscTest.EnterText("The quick brown fox jumps over the lazy dog. The five boxing wizards jump quickly. Eat more of those fresh french loafs and drink a tea!");
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 64);
+		PluginsApi.pluginMethod_ReplaceCurrentSentence("The five boxing wizards jump quickly.", "entirely");
+		assert.strictEqual(AscTest.GetParagraphText(p), "The quick brown fox jumps over the lazy dog. The five boxing wizards jump quickly. Eat more of those fresh french loafs and drink a tea!", "Replace sentence on itself and check all text");
+		
+		
 	})
 	
 	

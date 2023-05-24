@@ -4342,6 +4342,13 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 				}
 			}
 		}
+
+	    if(oApi.isInkDrawerOn()) {
+		    if(objectInfo) {
+			    let oData = oApi.getFormatPainterData();
+			    objectInfo.cursor = "default";
+		    }
+	    }
         return objectInfo;
     };
 

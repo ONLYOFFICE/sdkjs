@@ -450,6 +450,7 @@ function (window, undefined) {
 
 		this.UserProtectedRange = 165;
 		this.UserProtectedRangeChange = 166;
+		this.UserProtectedRangeUserInfo = 167;
 
 		this.externalReference = 170;
 
@@ -612,6 +613,8 @@ function (window, undefined) {
 					return new Asc.CUserProtectedRange();
 				case this.UserProtectedRangeChange:
 					return new AscCommonExcel.UndoRedoData_UserProtectedRange();
+				case this.UserProtectedRangeUserInfo:
+					return new Asc.CUserProtectedRangeUserInfo();
 			}
 			return null;
 		};
@@ -4124,7 +4127,8 @@ function (window, undefined) {
 			Type === AscCH.historyitem_PivotTable_DataFieldSetSubtotal   ||
 			Type === AscCH.historyitem_PivotTable_DataFieldSetShowDataAs ||
 			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseField  ||
-			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseItem ) {
+			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseItem   ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetNumFormat) {
 			fields = pivotTable.asc_getDataFields();
 		} else {
 			fields = pivotTable.asc_getPivotFields();
@@ -4184,7 +4188,10 @@ function (window, undefined) {
 				break;
 			case AscCH.historyitem_PivotTable_DataFieldSetBaseItem:
 				field.asc_setBaseItem(value, pivotTable, index);
-				break; 
+				break;
+			case AscCH.historyitem_PivotTable_DataFieldSetNumFormat:
+				field.setNumFormat(value, pivotTable, index);
+				break;
 		}
 	};
 

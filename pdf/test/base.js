@@ -76,12 +76,10 @@ window.onload = function()
 
 	var g_positionSplitter = 200;
 	var g_positionSplitterW = 5;
+	var g_mainHeaderHeight = 50;
 	window.onresize = function()
 	{
-		var zoomValue = AscCommon.checkDeviceScale();
-		AscCommon.AscBrowser.retinaPixelRatio = zoomValue.applicationPixelRatio;
-		AscCommon.AscBrowser.zoom = zoomValue.zoom;
-		AscCommon.correctApplicationScale(zoomValue);
+		AscViewer.checkApplicationScale();
 	
 		document.getElementById("leftPanel").style.width = g_positionSplitter + "px";
 		document.getElementById("buttonBookmarks").style.left = "10px";
@@ -92,7 +90,13 @@ window.onload = function()
 		document.getElementById("panelThumbnails").style.width = g_positionSplitter + "px";
 		document.getElementById("mainPanel").style.left = g_positionSplitter + g_positionSplitterW + "px";
 		document.getElementById("mainPanel").style.width = window.innerWidth - g_positionSplitter - g_positionSplitterW + "px";
-		document.getElementById("mainPanel").style.height = window.innerHeight + "px";
+		document.getElementById("mainPanel").style.height = (window.innerHeight - g_mainHeaderHeight) + "px";
+		document.getElementById("mainPanelHeader").style.left = g_positionSplitter + g_positionSplitterW + "px";
+		document.getElementById("mainPanelHeader").style.width = window.innerWidth - g_positionSplitter - g_positionSplitterW + "px";
+
+		var footerPanelStyle = document.getElementById("headerPanel");
+		footerPanelStyle.style.left = ((window.innerWidth - g_positionSplitter - g_positionSplitterW - footerPanelStyle.offsetWidth) >> 1) + "px";
+		footerPanelStyle.style.top = ((g_mainHeaderHeight - footerPanelStyle.offsetHeight) >> 1) + "px";
 
 		var trackBarH = 50;
 		var tabsBarH = 50;
@@ -163,104 +167,12 @@ window.onload = function()
 		document.body.onmouseup = function(e) {};
 	};
 
-	///
-	function setCanvasSize(element, width, height, is_correction)
-	{
-		if (element.width === width && element.height === height)
-			return;
-
-		if (true !== is_correction)
-		{
-			element.width = width;
-			element.height = height;
-			return;
-		}
-
-		var data = element.getContext("2d").getImageData(0, 0, element.width, element.height);
-		element.width = width;
-		element.height = height;
-		element.getContext("2d").putImageData(data, 0, 0);
-	};
-
-	AscCommon.calculateCanvasSize = function(element, is_correction, is_wait_correction)
-	{
-		if (true !== is_correction && undefined !== element.correctionTimeout)
-		{
-			clearTimeout(element.correctionTimeout);
-			element.correctionTimeout = undefined;
-		}
-
-		var scale = AscCommon.AscBrowser.retinaPixelRatio;
-		if (Math.abs(scale - (scale >> 0)) < 0.001)
-		{
-			setCanvasSize(element,
-				scale * parseInt(element.style.width),
-				scale * parseInt(element.style.height),
-				is_correction);
-			return;
-		}
-
-		var rect = element.getBoundingClientRect();
-		var isCorrectRect = (rect.width === 0 && rect.height === 0) ? false : true;
-		if (is_wait_correction || !isCorrectRect)
-		{
-			var isNoVisibleElement = false;
-			if (element.style.display === "none")
-				isNoVisibleElement = true;
-			else if (element.parentNode && element.parentNode.style.display === "none")
-				isNoVisibleElement = true;
-
-			if (!isNoVisibleElement)
-			{
-				element.correctionTimeout = setTimeout(function (){
-					calculateCanvasSize(element, true);
-				}, 100);
-			}
-
-			if (!isCorrectRect)
-			{
-				var style_width = parseInt(element.style.width);
-				var style_height = parseInt(element.style.height);
-
-				rect = {
-					x: 0, left: 0,
-					y: 0, top: 0,
-					width: style_width, right: style_width,
-					height: style_height, bottom: style_height
-				};
-			}
-		}
-
-		setCanvasSize(element,
-			Math.round(scale * rect.right) - Math.round(scale * rect.left),
-			new_height = Math.round(scale * rect.bottom) - Math.round(scale * rect.top),
-			is_correction);
-	};
-	///
-
-	var api = {
-		isMobileVersion : false,
-
-		getPageBackgroundColor : function() {
-	    	// TODO: get color from theme
-			if (this.isDarkMode)
-				return [0x3A, 0x3A, 0x3A];
-			return [0xFF, 0xFF, 0xFF];
-	    },
-
-	    WordControl : {
-	    	NoneRepaintPages : false
-	    },
-
-	    sendEvent : function() {
-
-	    }
-	};
-
-	AscFonts.g_fontApplication.Init();
-	window.Viewer = new AscCommon.CViewer("mainPanel", api);
-	window.Thumbnails = new AscCommon.ThumbnailsControl("panelThimbnailsNatural");
-	window.Viewer.setThumbnailsControl(window.Thumbnails);
+	var options = {};
+	//options.enginePath = "./../src/engine/"; // FOR NO-MINIMIZED TEST (index.html)
+	//options.theme = { type : "dark" };
+	//options.fontsPath = "https://url_to_fonts/";
+	window.Viewer = new window.AscViewer.CViewer("mainPanel", options);
+	window.Thumbnails = window.Viewer.createThumbnails("panelThimbnailsNatural");
 	
 	var trackbar = document.querySelectorAll('.trackbar')[0];
 	trackbar.onChangedValue = function(val) {
@@ -273,5 +185,97 @@ window.onload = function()
 
 	window.Thumbnails.registerEvent("onZoomChanged", function(value){
 		trackbar.setPosition(value);
+	});
+
+	document.getElementById("zoomMode").addEventListener("change", function(e) {
+		var selectElement = e.target;
+		var value = selectElement.value;
+		switch (value)
+		{
+			case "zmWidth":
+			{
+				window.Viewer.setZoomMode(AscCommon.ViewerZoomMode.Width);
+				break;
+			}
+			case "zmPage":
+			{
+				window.Viewer.setZoomMode(AscCommon.ViewerZoomMode.Page);
+				break;
+			}
+			default:
+			{
+				if (0 === value.indexOf("custom"))
+					window.Viewer.setZoom(parseInt(value.substr(6)));
+				break;
+			}
+		}
+	});
+
+	document.getElementById("selectMode").addEventListener("change", function(e) {
+		var selectElement = e.target;
+		var value = selectElement.value;
+		switch (value)
+		{
+			case "smText":
+			{
+				window.Viewer.setTargetType("text");
+				break;
+			}
+			case "smHand":
+			default:
+			{
+				window.Viewer.setTargetType("hand");
+				break;
+			}
+		}
+	});
+
+	var zoom_values = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 320, 340, 360, 380, 400, 425, 450, 475, 500];
+	document.getElementById("buttonZoomIn").addEventListener("click", function(e) {
+		var count = zoom_values.length;
+
+		var curZoom = (window.Viewer.getZoom() >> 0);
+		var newZoom = zoom_values[count - 1];
+		for (var i = 0; i < count; i++)
+		{
+			if (curZoom < zoom_values[i])
+			{
+				newZoom = zoom_values[i];
+				break;
+			}
+		}
+
+		if (newZoom <= zoom_values[0] || newZoom >= zoom_values[count - 1])
+			return;
+
+		window.Viewer.setZoom(newZoom);
+	});
+
+	document.getElementById("buttonZoomOut").addEventListener("click", function(e) {
+		var count = zoom_values.length;
+
+		var curZoom = (window.Viewer.getZoom() >> 0);
+		var newZoom = zoom_values[count - 1];
+		for (var i = (count - 1); i >= 0; i--)
+		{
+			if (curZoom > zoom_values[i])
+			{
+				newZoom = zoom_values[i];
+				break;
+			}
+		}
+
+		if (newZoom <= zoom_values[0] || newZoom >= zoom_values[count - 1])
+			return;
+
+		window.Viewer.setZoom(newZoom);
+	});
+
+	document.getElementById("buttonRotateLeft").addEventListener("click", function(e) {
+		window.Viewer.rotatePage(undefined, -90, true);
+	});
+
+	document.getElementById("buttonRotateRight").addEventListener("click", function(e) {
+		window.Viewer.rotatePage(undefined, 90, true);
 	});
 }

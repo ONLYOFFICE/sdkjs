@@ -188,7 +188,6 @@
     };
     CBaseAnimObject.prototype.getEffectById = function (sId, oMltEffect) {
         if (!oMltEffect) {
-            var oNewMltEffect = new CMultiple();
             return this.getEffectById(sId, oMltEffect);
         }
         this.traverse(function (oChild) {
@@ -6410,7 +6409,7 @@
         if (this.tm === null) {
             return 1.0;
         }
-        if (this.tm.indexOf("%") === this.tm.length - 1) {
+        if (this.tm.endsWith("%")) {
             return this.parsePercentage(this.tm);
         }
         var nTm = parseInt(this.tm);
@@ -10046,6 +10045,12 @@
             oGraphics.FreeFont && oGraphics.FreeFont();
         }
     };
+	CBaseAnimTexture.prototype.beforeRelease = function() {
+		if(this.canvas) {
+			this.canvas.width = 0;
+			this.canvas.height = 0;
+		}
+	};
 
     function CAnimTexture(oCache, oCanvas, fScale, nX, nY) {
         CBaseAnimTexture.call(this, oCanvas, fScale, nX, nY);
@@ -11099,15 +11104,21 @@
             return undefined;
         }
         var oBaseTexture = oDrawing.getAnimTexture(fScale);
+		if(!oBaseTexture) {
+			return undefined;
+		}
         return new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
     };
     CTexturesCache.prototype.removeTexture = function (sId) {
         if (this.map[sId]) {
+			this.map[sId].beforeRelease();
             delete this.map[sId];
         }
     };
     CTexturesCache.prototype.clear = function () {
-        this.map = {};
+        for(let sId in this.map) {
+			this.removeTexture(sId);
+        }
     };
 
     function CAnimationDrawer(player) {
@@ -11200,7 +11211,9 @@
         if (!this.isDrawingHidden(sDrawingId) || (oAttributes && oAttributes["style.visibility"] === "visible")) {
             if (!oSandwich) {
                 var oTexture = this.texturesCache.checkTexture(sDrawingId, fScale);
-                oTexture.draw(oGraphics);
+				if(oTexture) {
+					oTexture.draw(oGraphics);
+				}
             } else {
                 oSandwich.drawObject(oGraphics, oDrawing, this.texturesCache, oAttributes);
             }
@@ -11917,6 +11930,9 @@
         var fScale = oGraphics.m_oCoordTransform.sx;
         var sId = oDrawing.Get_Id();
         var oTexture = oTextureCache.checkTexture(sId, fScale);
+		if(!oTexture) {
+			return;
+		}
         if (oFillColor || sFillType || bFillOn !== undefined || oStrokeColor || bStrokeOn !== undefined) {
             var oOldBrush = oDrawing.brush;
             var oOldPen = oDrawing.pen;
@@ -13808,8 +13824,13 @@
         }
         this.bDrawTexture = true;
         var oBaseTexture = this.getAnimTexture(dGraphicsScale);
-        this.cachedCanvas = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
-        this.bDrawTexture = false;
+		if(oBaseTexture) {
+			this.cachedCanvas = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
+		}
+		else {
+			this.cachedCanvas = null;
+		}
+		this.bDrawTexture = false;
         return this.cachedCanvas;
     };
     CSeqList.prototype.clearCachedTexture = function () {
@@ -14348,8 +14369,10 @@
             this.cachedParaPr = oContent.Content[0].CompiledPr;
         }
         var oBaseTexture = oLabel.getAnimTexture(scale);
-        this.labels[nTime] = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
-        return this.labels[nTime];
+		if(oBaseTexture) {
+			this.labels[nTime] = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
+		}
+		return this.labels[nTime];
     };
     CTimeline.prototype.getTimeString = function (nTime) {
         if (nTime < 60) {

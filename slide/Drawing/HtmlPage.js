@@ -2358,7 +2358,11 @@ function CEditorPage(api)
 
 			oWordControl.StartUpdateOverlay();
 			oWordControl.m_oDrawingDocument.m_lCurrentPage = pos.Page;
-			oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
+
+			if(!oThis.m_oApi.isEyedropperStarted())
+			{
+				oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
+			}
 			oWordControl.EndUpdateOverlay();
 		}
 		else
@@ -2415,13 +2419,34 @@ function CEditorPage(api)
 			}
 		}
 
-		oWordControl.StartUpdateOverlay();
+		if(oThis.m_oApi.isEyedropperStarted())
+		{
+			let oMainPos = oWordControl.m_oMainParent.AbsolutePosition;
+			let oParentPos = oWordControl.m_oMainView.AbsolutePosition;
+			let nX  = global_mouseEvent.X - oWordControl.X - (oMainPos.L + oParentPos.L) * AscCommon.g_dKoef_mm_to_pix;
+			let nY  = global_mouseEvent.Y - oWordControl.Y - (oMainPos.T + oParentPos.T) * AscCommon.g_dKoef_mm_to_pix;
+			nX = AscCommon.AscBrowser.convertToRetinaValue(nX, true);
+			nY = AscCommon.AscBrowser.convertToRetinaValue(nY, true);
+			oThis.m_oApi.checkEyedropperColor(nX, nY);
+			oThis.m_oApi.sync_MouseMoveStartCallback();
+			let MMData = new AscCommon.CMouseMoveData();
+			let Coords = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, null, true);
+			MMData.X_abs = Coords.X;
+			MMData.Y_abs = Coords.Y;
+			MMData.EyedropperColor = oThis.m_oApi.getEyedropperColor();
+			MMData.Type = Asc.c_oAscMouseMoveDataTypes.Eyedropper;
+			oWordControl.m_oDrawingDocument.SetCursorType("eyedropper", MMData);
+			oThis.m_oApi.sync_MouseMoveEndCallback();
+			return;
+		}
 
+		oWordControl.StartUpdateOverlay();
 		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseMove_Drawing(pos);
 		if (is_drawing === true)
 			return;
 
 		oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
+
 		oWordControl.EndUpdateOverlay();
 	};
 	this.onMouseMove2 = function()
@@ -2445,6 +2470,20 @@ function CEditorPage(api)
 
 		oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		oWordControl.EndUpdateOverlay();
+	};
+	this.checkFinishEyedropper = function()
+	{
+		if(oThis.m_oApi.isEyedropperStarted())
+		{
+			oThis.m_oApi.finishEyedropper();
+			const oPos = oThis.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
+			if (oPos.Page !== -1)
+			{
+				oThis.m_oLogicDocument.OnMouseMove(global_mouseEvent, oPos.X, oPos.Y, oPos.Page);
+			}
+			return true;
+		}
+		return false;
 	};
 	this.onMouseUp    = function(e, bIsWindow)
 	{
@@ -2515,7 +2554,10 @@ function CEditorPage(api)
 		if (is_drawing === true)
 			return;
 
-		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		if(!oThis.checkFinishEyedropper())
+		{
+			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 
 		oWordControl.m_bIsMouseUpSend = false;
 		//        oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
@@ -2604,8 +2646,10 @@ function CEditorPage(api)
 		oWordControl.StartUpdateOverlay();
 
 		oWordControl.m_bIsMouseUpSend = true;
-
-		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		if(!oThis.checkFinishEyedropper())
+		{
+			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 		oWordControl.m_bIsMouseUpSend = false;
 		oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 		oWordControl.m_oLogicDocument.Document_UpdateRulersState();
@@ -3896,6 +3940,8 @@ function CEditorPage(api)
 		if (null == canvas)
 			return;
 
+
+
 		var context = canvas.getContext("2d");
 		var _width  = canvas.width;
 		var _height = canvas.height;
@@ -3931,6 +3977,10 @@ function CEditorPage(api)
 		{
 			this.m_oDrawingDocument.UpdateTargetNoAttack();
 			this.m_bIsUpdateTargetNoAttack = false;
+		}
+		if(this.m_oApi.isEyedropperStarted())
+		{
+			this.m_oApi.clearEyedropperImgData();
 		}
 	};
 
@@ -4482,6 +4532,10 @@ function CEditorPage(api)
 		{
 			// сборка файлов
 			return;
+		}
+		if(this.m_oApi.isEyedropperStarted() && drDoc.SlideCurrent !== lPageNum)
+		{
+			this.m_oApi.cancelEyedropper();
 		}
 
 		var _old_empty = this.m_oDrawingDocument.IsEmptyPresentation;

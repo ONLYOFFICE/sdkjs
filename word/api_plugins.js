@@ -96,11 +96,19 @@
 	
 	/**
 	 * @typedef {('none' | 'comments' | 'forms' | 'readOnly')} DocumentEditingRestrictions
-	 * A value that specifies editing restriction of the document:
-	 * * <b>none</b> - no editing restrictions
-	 * * <b>comments</b> - allow editing of comments
-	 * * <b>forms</b> - allow editing of form fields
-	 * * <b>readOnly</b> - allow no editing
+	 * The document editing restrictions:
+	 * * <b>none</b> - no editing restrictions,
+	 * * <b>comments</b> - allows editing comments,
+	 * * <b>forms</b> - allows editing form fields,
+	 * * <b>readOnly</b> - does not allow editing.
+	 */
+	
+	/**
+	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} TextPartType
+	 * Specifies if the whole text or only its part will be returned or replaced:
+	 * * <b>entirely</b> - replaces the whole text with the specified one,
+	 * * <b>beforeCursor</b> - replaces only the part of the text before the cursor,
+	 * * <b>afterCursor</b> - replaces only the part of the text after the cursor.
 	 */
 
     var Api = window["asc_docs_api"];
@@ -761,9 +769,9 @@
 	/**
 	 * @typedef {Object} AddinFieldData
 	 * The addin field data.
-	 * @property {string} FieldId - An identifier of the field
-	 * @property {string} Value - The value of the field.
-	 * @property {string} Content - The text content of the field.
+	 * @property {string} FieldId - Field identifier.
+	 * @property {string} Value - Field value.
+	 * @property {string} Content - Field text content.
 	 */
 
 	/**
@@ -1044,10 +1052,11 @@
 			this.asc_GetNextRevisionsChange();
 	};
 	/**
-	 * Get all addin fields from the current document
+	 * Returns all addin fields from the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias GetAllAddinFields
+	 * @returns {AddinFieldData[]} - An array of the AddinFieldData objects containing the data about the addin fields.
 	 * @since 7.3.3
 	 * @example
 	 * window.Asc.plugin.executeMethod("GetAllAddinFields");
@@ -1070,11 +1079,11 @@
 		return result;
 	};
 	/**
-	 * Update addin fields with the specified data
+	 * Updates the addin fields with the specified data.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias UpdateAddinFields
-	 * @param {AddinFieldData[]} arrData - An array of addin field data
+	 * @param {AddinFieldData[]} arrData - An array of addin field data.
 	 * @since 7.3.3
 	 * @example
 	 * window.Asc.plugin.executeMethod("UpdateAddinFields");
@@ -1094,11 +1103,11 @@
 		logicDocument.UpdateAddinFieldsByData(arrAddinData);
 	};
 	/**
-	 * Create new addin field
+	 * Creates a new addin field with the data specified in the request.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias AddAddinField
-	 * @param {AddinFieldData} data - addin field data
+	 * @param {AddinFieldData} data - Addin field data.
 	 * @since 7.3.3
 	 * @example
 	 * window.Asc.plugin.executeMethod("AddAddinField");
@@ -1112,11 +1121,11 @@
 		logicDocument.AddAddinField(AscWord.CAddinFieldData.FromJson(data));
 	};
 	/**
-	 * Remove field wrapper, leave only the content of the field
+	 * Removes a field wrapper, leaving only the field content.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias RemoveFieldWrapper
-	 * @param {string} [fieldId=undefined] - remove wrapper for specified field, if not specified then remove from current field
+	 * @param {string} [fieldId=undefined] - Field ID. If it is not specified, then the wrapper of the current field is removed.
 	 * @since 7.3.3
 	 * @example
 	 * window.Asc.plugin.executeMethod("RemoveFieldWrapper");
@@ -1130,11 +1139,11 @@
 		logicDocument.RemoveComplexFieldWrapper(fieldId);
 	};
 	/**
-	 * Set document editing restrictions
+	 * Sets the document editing restrictions.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias SetEditingRestrictions
-	 * @param {DocumentEditingRestrictions} restrictions
+	 * @param {DocumentEditingRestrictions} restrictions - The document editing restrictions.
 	 * @since 7.3.3
 	 * @example
 	 * window.Asc.plugin.executeMethod("SetEditingRestrictions");
@@ -1160,38 +1169,85 @@
 		this.asc_setRestriction(_restrictions);
 	};
 	/**
-	 * Get the current word
+	 * Returns the current word.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias GetCurrentWord
-	 * @since 7.3.4
+	 * @param {TextPartType} [type="entirely"] - Specifies if the whole word or only its part will be returned.
+	 * @returns {string} - A word or its part.
+	 * @since 7.4.0
 	 * @example
 	 * window.Asc.plugin.executeMethod("GetCurrentWord");
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_GetCurrentWord"] = function()
+	window["asc_docs_api"].prototype["pluginMethod_GetCurrentWord"] = function(type)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return "";
 		
-		return logicDocument.GetCurrentWord();
+		return logicDocument.GetCurrentWord(private_GetTextDirection(type));
 	};
 	/**
-	 * Get the current sentence
+	 * Replaces the current word with the specified string.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @alias GetCurrentWord
-	 * @since 7.3.4
+	 * @alias ReplaceCurrentWord
+	 * @param {string} replaceString - Replacement string.
+	 * @param {TextPartType} [type="entirely"] - Specifies if the whole word or only its part will be replaced.
+	 * @since 7.4.0
 	 * @example
-	 * window.Asc.plugin.executeMethod("GetCurrentWord");
+	 * window.Asc.plugin.executeMethod("ReplaceCurrentWord");
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_GetCurrentSentence"] = function()
+	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentWord"] = function(replaceString, type)
+	{
+		let _replaceString = "" === replaceString ? "" : AscBuilder.GetStringParameter(replaceString, null);
+
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || null === _replaceString)
+			return;
+		
+		logicDocument.ReplaceCurrentWord(private_GetTextDirection(type), _replaceString);
+	};
+	/**
+	 * Returns the current sentence.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias GetCurrentSentence
+	 * @param {TextPartType} [type="entirely"] - Specifies if the whole sentence or only its part will be returned.
+	 * @returns {string} - A sentence or its part.
+	 * @since 7.4.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("GetCurrentSentence");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_GetCurrentSentence"] = function(type)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return "";
 		
-		return logicDocument.GetCurrentSentence();
+		return logicDocument.GetCurrentSentence(private_GetTextDirection(type));
+	};
+	/**
+	 * Replaces the current sentence with the specified string.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias ReplaceCurrentSentence
+	 * @param {string} replaceString - Replacement string.
+	 * @param {TextPartType} [type="entirely"] - Specifies if the whole sentence or only its part will be replaced.
+	 * @since 7.4.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("ReplaceCurrentSentence");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentSentence"] = function(replaceString, type)
+	{
+		let _replaceString = "" === replaceString ? "" : AscBuilder.GetStringParameter(replaceString, null);
+		
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || null === _replaceString)
+			return;
+
+		
+		return logicDocument.ReplaceCurrentSentence(private_GetTextDirection(type), _replaceString);
 	};
 
 	function private_ReadContentControlCommonPr(commonPr)
@@ -1218,5 +1274,23 @@
 
 		return resultPr;
 	}
-
+	function private_GetTextDirection(type)
+	{
+		let direction = 0;
+		switch (AscBuilder.GetStringParameter(type, "entirely"))
+		{
+			case "beforeCursor":
+				direction = -1;
+				break;
+			case "afterCursor":
+				direction = 1;
+				break;
+			case "entirely":
+			default:
+				direction = 0;
+				break;
+		}
+		return direction;
+	}
+	
 })(window);

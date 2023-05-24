@@ -403,7 +403,7 @@
 						ws.workbook.cutIdSheet = ws.model.Id;
 						ws.copyCutRange = [ws.model.selectionRange.getLast()];
 					}
-				} else {
+				} else if (!ws.objectRender.selectedGraphicObjectsExists()) {
 					ws.copyCutRange = ws.model.selectionRange.ranges;
 				}
 			}
@@ -412,7 +412,8 @@
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll) {
 			var t = this;
 			var wb = window["Asc"]["editor"].wb;
-			if (wb.selectionDialogMode) {
+			//if open range dialog - return
+			if (ws.getSelectionDialogMode() && (!wb.getCellEditMode() || wb.isWizardMode)) {
 				return;
 			}
 			var cellEditor = wb.cellEditor;

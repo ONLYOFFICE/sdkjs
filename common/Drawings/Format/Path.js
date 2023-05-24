@@ -1108,6 +1108,19 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
         }
         return sSVG;
     };
+	Path.prototype.isInk = function() {
+		const nCmdCount = this.ArrPathCommandInfo.length;
+		for(let nCmd = 0; nCmd < nCmdCount; ++nCmd) {
+			let oCmd = this.ArrPathCommandInfo[nCmd];
+			if(oCmd.id === close) {
+				return false;
+			}
+			if(oCmd.id === arcTo) {
+				return false;
+			}
+		}
+		return true;
+	};
     function CPathCmd() {
         AscFormat.CBaseNoIdObject.call(this);
         this.pts = [];
@@ -1163,6 +1176,10 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
         isEmpty: function() {
             return this.bEmpty;
         },
+
+	    isInk: function() {
+			return false;
+	    },
 
         checkArray: function(nSize){
             this.bEmpty = false;

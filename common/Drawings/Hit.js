@@ -35,7 +35,7 @@
 (function(window, undefined){
     // Import
     var global_mouseEvent = AscCommon.global_mouseEvent;
-    var DIST = 1.5;
+    var DIST_HIT_IN_LINE = 1.5;
 function HitInLine(context, px, py, x0, y0, x1, y1)
 {
    /* var l = Math.min(x0, x1);
@@ -48,7 +48,7 @@ function HitInLine(context, px, py, x0, y0, x1, y1)
     tx=x1-x0;
     ty=y1-y0;
 
-    d=DIST/Math.sqrt(tx*tx+ty*ty);
+    d=AscFormat.DIST_HIT_IN_LINE/Math.sqrt(tx*tx+ty*ty);
 
     if(typeof global_mouseEvent !== "undefined" && AscCommon.isRealObject(global_mouseEvent) && AscFormat.isRealNumber(global_mouseEvent.KoefPixToMM))
     {
@@ -80,15 +80,15 @@ function HitInBezier4(context, px, py, x0, y0, x1, y1, x2, y2, x3, y3)
     var r = Math.max(x0, x1, x2, x3);
     var b = Math.max(y0, y1, y2, y3);
     var d = 0;
-    if(px < l - DIST || px > r + DIST || py < t - DIST || py > b + DIST)
+    if(px < l - AscFormat.DIST_HIT_IN_LINE || px > r + AscFormat.DIST_HIT_IN_LINE || py < t - AscFormat.DIST_HIT_IN_LINE || py > b + AscFormat.DIST_HIT_IN_LINE)
         return false;
     var tx, ty, dx, dy;
     tx=x3-x0;
     ty=y3-y0;
     if(AscFormat.fApproxEqual(l, r) || AscFormat.fApproxEqual(t, b)) {
-        d=DIST/Math.sqrt(tx*tx+ty*ty);
+        d=AscFormat.DIST_HIT_IN_LINE/Math.sqrt(tx*tx+ty*ty);
     }
-    d=DIST/Math.sqrt(tx*tx+ty*ty);
+    d=AscFormat.DIST_HIT_IN_LINE/Math.sqrt(tx*tx+ty*ty);
 
     if(typeof global_mouseEvent !== "undefined" && AscCommon.isRealObject(global_mouseEvent) && AscFormat.isRealNumber(global_mouseEvent.KoefPixToMM))
     {
@@ -125,7 +125,7 @@ function HitInBezier3(context, px, py, x0, y0, x1, y1, x2, y2)
     tx=x2-x0;
     ty=y2-y0;
 
-    d=DIST/Math.sqrt(tx*tx+ty*ty);
+    d=AscFormat.DIST_HIT_IN_LINE/Math.sqrt(tx*tx+ty*ty);
 
     if(typeof global_mouseEvent !== "undefined" && AscCommon.isRealObject(global_mouseEvent) && AscFormat.isRealNumber(global_mouseEvent.KoefPixToMM))
     {
@@ -155,4 +155,5 @@ function HitInBezier3(context, px, py, x0, y0, x1, y1, x2, y2)
     window['AscFormat'].HitInLine = HitInLine;
     window['AscFormat'].HitInBezier4 = HitInBezier4;
     window['AscFormat'].HitInBezier3 = HitInBezier3;
+    window['AscFormat'].DIST_HIT_IN_LINE = DIST_HIT_IN_LINE;
 })(window);

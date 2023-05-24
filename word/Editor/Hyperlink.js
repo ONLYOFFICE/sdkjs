@@ -171,14 +171,14 @@ ParaHyperlink.prototype.Clear_TextPr = function()
     }
 };
 
-ParaHyperlink.prototype.Clear_TextFormatting = function( DefHyper )
+ParaHyperlink.prototype.Clear_TextFormatting = function( DefHyper, bHighlight )
 {
     var Count = this.Content.length;
 
     for (var Pos = 0; Pos < Count; Pos++)
     {
         var Item = this.Content[Pos];
-        Item.Clear_TextFormatting(DefHyper);
+        Item.Clear_TextFormatting(DefHyper, bHighlight);
 
         if (para_Run === Item.Type && null !== DefHyper && undefined !== DefHyper)
             Item.Set_RStyle(DefHyper);
