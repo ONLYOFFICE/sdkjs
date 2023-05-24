@@ -1188,12 +1188,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (!emptyReplaceOn) {
 			emptyReplaceOn = new cEmpty();
 		}
-		let elem;
 		for (let i = bbox.r1; i <= Math.min(bbox.r2, maxRowCount != null ? bbox.r1 + maxRowCount : bbox.r2); i++) {
 			if ( !arr.array[i - bbox.r1] ) {
 				arr.addRow();
 			}
 			for (let j = bbox.c1; j <= Math.min(bbox.c2, maxColCount != null ? bbox.c1 + maxColCount : bbox.c2); j++) {
+				let elem;
 				if (elemsNoEmpty && elemsNoEmpty[i - bbox.r1] && elemsNoEmpty[i - bbox.r1][j - bbox.c1]) {
 					elem = elemsNoEmpty[i - bbox.r1][j - bbox.c1];
 				}
