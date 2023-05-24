@@ -428,11 +428,23 @@ CChangesStyleParaPr.prototype.constructor = CChangesStyleParaPr;
 CChangesStyleParaPr.prototype.Type = AscDFH.historyitem_Style_ParaPr;
 CChangesStyleParaPr.prototype.private_CreateObject = function()
 {
-	return new CParaPr();
+	return new AscWord.CParaPr();
 };
-CChangesStyleParaPr.prototype.private_SetValue = function(Value)
+CChangesStyleParaPr.prototype.private_SetValue = function(paraPr)
 {
-	this.Class.ParaPr = Value;
+	let style = this.Class;
+	
+	let oldNumPr = style.ParaPr.NumPr;
+	let newNumPr = paraPr.NumPr;
+	
+	style.ParaPr = paraPr;
+	
+	if ((!oldNumPr && newNumPr)
+		|| (oldNumPr && !newNumPr)
+		|| (oldNumPr && newNumPr && !oldNumPr.IsEqual(newNumPr)))
+	{
+		style.UpdateNumberingCollection();
+	}
 };
 /**
  * @constructor
