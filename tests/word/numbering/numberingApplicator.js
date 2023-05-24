@@ -197,6 +197,7 @@ $(function ()
 		CheckParagraph(6, "2.1.1.");
 		CheckParagraph(7, "2.1.1.1.");
 		
+		// Применяем нумерацию с Heading по селекту (должно примениться ко всем параграфам, даже не выделенным)
 		AscTest.SelectDocumentRange(0, 3);
 		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(2, 6));
 		
@@ -204,9 +205,22 @@ $(function ()
 		CheckParagraph(1, "A.");
 		CheckParagraph(2, "1.");
 		CheckParagraph(3, "a)");
-		CheckParagraph(4, "1.");
-		CheckParagraph(5, "1.1.");
-		CheckParagraph(6, "1.1.1.");
-		CheckParagraph(7, "1.1.1.1.");
+		CheckParagraph(4, "II.");
+		CheckParagraph(5, "A.");
+		CheckParagraph(6, "1.");
+		CheckParagraph(7, "a)");
+		
+		// Применяем нумерацию буз Heading по селекту (должно примениться только к выделенным параграфам)
+		AscTest.SelectDocumentRange(0, 3);
+		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(2, 2));
+		
+		CheckParagraph(0, "1.");
+		CheckParagraph(1, "1.1.");
+		CheckParagraph(2, "1.1.1.");
+		CheckParagraph(3, "1.1.1.1.");
+		CheckParagraph(4, "I.");
+		CheckParagraph(5, "A.");
+		CheckParagraph(6, "1.");
+		CheckParagraph(7, "a)");
 	});
 });
