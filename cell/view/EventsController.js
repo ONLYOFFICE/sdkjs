@@ -1556,7 +1556,6 @@
 				// Update state for device without cursor
 				this._onMouseMove(event);
 			}
-
 			if (this.view.Api.isEditVisibleAreaOleEditor) {
 				if (button === 0 && this.view.isInnerOfWorksheet(coord.x, coord.y)) {
 					if (this.targetInfo && this.targetInfo.target === c_oTargetType.MoveResizeRange) {
@@ -1757,9 +1756,20 @@
 					this.isFillHandleMode = true;
 					this._changeFillHandle(event, null, t.targetInfo.tableIndex);
 				} else {
-					this.isSelectMode = true;
-					this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
-						ctrlKey);
+					const wb = window["Asc"]["editor"].wb;
+					let ws = wb.getWorksheet();
+					let selection = ws._getSelection().getLast();
+
+					if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnHeaderMove) {
+						// В режиме перемещения диапазона
+						//this.targetInfo.cursor = "grabbing";
+						this.isMoveRangeMode = true;
+						t._moveRangeHandle(event);
+					} else {
+						this.isSelectMode = true;
+						this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
+							ctrlKey);
+					}
 				}
 			}
 		};
