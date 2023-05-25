@@ -422,7 +422,6 @@
 			if (num)
 			{
 				this.MergePrToLvl(num.GetLvl(commonNumPr.Lvl), numLvl);
-
 				numLvl.ResetNumberedText(commonNumPr.Lvl);
 				num.SetLvl(numLvl, commonNumPr.Lvl);
 				this.SetLastSingleLevel(commonNumPr.NumId, commonNumPr.Lvl);
@@ -724,6 +723,8 @@
 		let paraPr = oldLvl.GetParaPr().Copy();
 		paraPr.Merge(newLvl.GetParaPr());
 		newLvl.SetParaPr(paraPr);
+		
+		newLvl.SetPStyle(oldLvl.GetPStyle());
 	};
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumberingApplicator = CNumberingApplicator;
