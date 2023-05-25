@@ -6923,7 +6923,14 @@ var editor;
       }
       if (cellLayout !== null) {
         if (cellLayout.fld === null) {
-          cellLayout.fld = pivotTable.dataFields.dataField && pivotTable.dataFields.dataField[cellLayout.i].fld;
+          let rowFields = pivotTable.asc_getRowFields();
+          let colFields = pivotTable.asc_getColumnFields();
+          let rowFieldsFirstIndex = rowFields && rowFields[0].asc_getIndex();
+          let firstIndex = rowFieldsFirstIndex;
+          if (rowFieldsFirstIndex === null) {
+            firstIndex = colFields && colFields[0].asc_getIndex();
+          }
+          cellLayout.fld = firstIndex;
         }
         res = new Asc.CT_DataField();
         res.baseField = cellLayout.fld;
