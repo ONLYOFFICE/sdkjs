@@ -6922,6 +6922,9 @@ var editor;
         }
       }
       if (cellLayout !== null) {
+        if (cellLayout.fld === null) {
+          cellLayout.fld = pivotTable.dataFields.dataField && pivotTable.dataFields.dataField[cellLayout.i].fld;
+        }
         res = new Asc.CT_DataField();
         res.baseField = cellLayout.fld;
         res.baseItem = cellLayout.v;

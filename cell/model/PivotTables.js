@@ -16829,7 +16829,7 @@ DataRowTraversal.prototype.checkBaseField = function (dataField) {
 		dataField.showDataAs === Asc.c_oAscShowDataAs.PercentDiff ||
 		dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
 		dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending) {
-			if (this.pivotFields[dataField.baseField].axis === null) {
+			if (!this.pivotFields[dataField.baseField] || this.pivotFields[dataField.baseField].axis === null) {
 				return true;
 			}
 		}
