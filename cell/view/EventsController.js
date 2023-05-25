@@ -1756,10 +1756,6 @@
 					this.isFillHandleMode = true;
 					this._changeFillHandle(event, null, t.targetInfo.tableIndex);
 				} else {
-					const wb = window["Asc"]["editor"].wb;
-					let ws = wb.getWorksheet();
-					let selection = ws._getSelection().getLast();
-
 					if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnHeaderMove) {
 						// В режиме перемещения диапазона
 						//this.targetInfo.cursor = "grabbing";
@@ -1856,6 +1852,11 @@
 				this.isRowGroup = false;
 				return;
 			}
+
+			if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnHeader) {
+				this._onMouseMove(event);
+			}
+
 
 			// Мы можем dblClick и не отработать, если вышли из области и отпустили кнопку мыши, нужно отработать
 			this.showCellEditorCursor();

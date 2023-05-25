@@ -5811,6 +5811,11 @@
 			} else if(args[4] === 2){
 				drawTopSide = false;
 				drawBottomSide = false;
+			} else if (args[4] === 3) {
+				drawLeftSide = false;
+				drawRightSide = false;
+				drawTopSide = false;
+				drawBottomSide = false;
 			}
 		}
 
@@ -5841,26 +5846,29 @@
 		}
 
 		//TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
-		var _diff = 0;
-		if (AscBrowser.isSafari) {
-			_diff = 1;
-		}
-		ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
+		var notStroke = AscCommonExcel.selectionLineType.NotStroke & selectionLineType;
+		if (!notStroke) {
+			var _diff = 0;
+			if (AscBrowser.isSafari) {
+				_diff = 1;
+			}
+			ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
 
-        ctx.beginPath();
-        if (drawTopSide && !firstRow) {
-            fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
-        }
-        if (drawBottomSide) {
-            fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2]);
-        }
-        if (drawLeftSide && !firstCol) {
-            fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
-        }
-        if (drawRightSide) {
-            fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
-        }
-        ctx.closePath().stroke();
+			ctx.beginPath();
+			if (drawTopSide && !firstRow) {
+				fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+			}
+			if (drawBottomSide) {
+				fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2]);
+			}
+			if (drawLeftSide && !firstCol) {
+				fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+			}
+			if (drawRightSide) {
+				fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
+			}
+			ctx.closePath().stroke();
+		}
 
 		// draw active cell in selection
 		var isActive = AscCommonExcel.selectionLineType.ActiveCell & selectionLineType;
@@ -6081,8 +6089,14 @@
                     this._drawFormatPainterRange();
                 }
                 if (null !== this.activeMoveRange) {
-                    this._drawElements(this._drawSelectionElement, this.activeMoveRange,
-                      AscCommonExcel.selectionLineType.None, new CColor(0, 0, 0));
+                	let isFullColumn = this.activeMoveRange.getType() === Asc.c_oAscSelectionType.RangeCol;
+                	if (isFullColumn) {
+						this._drawElements(this._drawSelectionElement, this.activeMoveRange, AscCommonExcel.selectionLineType.Selection,
+							this.settings.activeCellBorderColor, null, 3);
+					} else {
+						this._drawElements(this._drawSelectionElement, this.activeMoveRange,
+							AscCommonExcel.selectionLineType.None, new CColor(0, 0, 0));
+					}
                 }
 
                 this._drawElements(this.drawOverlayButtons);
@@ -6140,8 +6154,12 @@
             } else if (i === selection.activeCellId) {
                 selectionLineType |= AscCommonExcel.selectionLineType.ActiveCell;
             }
-            this._drawElements(this._drawSelectionElement, range, selectionLineType,
-              this.settings.activeCellBorderColor);
+            if (null !== this.activeMoveRange && this.activeMoveRange.getType() === Asc.c_oAscSelectionType.RangeCol && i === l - 1) {
+				this._drawElements(this._drawSelectionElement, range, AscCommonExcel.selectionLineType.DashThick, this.settings.activeCellBorderColor);
+			} else {
+				this._drawElements(this._drawSelectionElement, range, selectionLineType,
+					this.settings.activeCellBorderColor);
+			}
         }
 		this.handlers.trigger("drawMobileSelection", this.workbook.mainOverlay, this.settings.activeCellBorderColor);
     };
@@ -8979,16 +8997,18 @@
 			let _target = c_oTargetType.ColumnHeader;
 			if (!f) {
 				let selection = this._getSelection();
-				for (let i = 0 ; i < selection.ranges.length; i++) {
-					let curSelection = selection.ranges[i];
-					if (curSelection.getType() === Asc.c_oAscSelectionType.RangeCol && curSelection.c1 <= c.col && curSelection.c2 >= c.col) {
-						_target = c_oTargetType.ColumnHeaderMove;
+				if (selection && selection.ranges) {
+					for (let i = 0 ; i < selection.ranges.length; i++) {
+						let curSelection = selection.ranges[i];
+						if (curSelection.getType() === Asc.c_oAscSelectionType.RangeCol && curSelection.c1 <= c.col && curSelection.c2 >= c.col) {
+							_target = c_oTargetType.ColumnHeaderMove;
+						}
 					}
 				}
 			}
 
 			return {
-				cursor: f ? kCurColResize : kCurColSelect,
+				cursor: f ? kCurColResize : _target === c_oTargetType.ColumnHeaderMove ? "grab" : kCurColSelect,
 				target: f ? c_oTargetType.ColumnResize : _target,
 				col: c.col + (isNotFirst && f && x < c.left + 3 ? -1 : 0),
 				row: -1,
