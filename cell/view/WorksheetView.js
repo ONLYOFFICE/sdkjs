@@ -6859,6 +6859,9 @@
         var va = align.getAlignVertical();
         var angle = align.getAngle();
         var indent = align.getIndent();
+		if (indent < 0) {
+			indent = 0;
+		}
 		if (align.hor === AscCommon.align_Distributed) {
 			fl.wrapText = true;
 			fl.textAlign = AscCommon.align_Center;
@@ -15079,7 +15082,7 @@
 		}
 
 		//indent
-		if (rangeStyle.indent && specialPasteProps.format) {
+		if (rangeStyle.indent && specialPasteProps.format && rangeStyle.indent > 0) {
 			range.setIndent(rangeStyle.indent);
 		}
 

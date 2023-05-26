@@ -4042,6 +4042,9 @@
 				var firstLine = paraPr && paraPr.ParaPr && paraPr.ParaPr.Ind && paraPr.ParaPr.Ind.FirstLine;
 				if (firstLine) {
 					oNewItem.indent = parseInt(firstLine / AscCommon.koef_mm_to_indent);
+					if (oNewItem.indent < 0) {
+						oNewItem.indent = null;
+					}
 				}
 
 				//горизонтальное выравнивание
