@@ -245,22 +245,12 @@
 
 	CBulletPreviewDrawerBase.prototype.getParagraphWithText = function (sText, oTextPr)
 	{
-		const oLogicDocument = this.m_oLogicDocument;
-
 		const oShape = new AscFormat.CShape();
 		oShape.createTextBody();
 		const oParagraph = oShape.txBody.content.GetAllParagraphs()[0];
 		oParagraph.MoveCursorToStartPos();
 
-		const oStyles = oLogicDocument && oLogicDocument.Get_Styles();
-		if (oStyles && oStyles.Default && oStyles.Default.ParaPr)
-		{
-			oParagraph.Pr = oStyles.Default.ParaPr.Copy();
-		}
-		else
-		{
-			oParagraph.Pr = new AscCommonWord.CParaPr();
-		}
+		oParagraph.Pr = new AscCommonWord.CParaPr();
 		const oParaRun = new AscCommonWord.ParaRun(oParagraph);
 		oParaRun.Set_Pr(oTextPr);
 		oParaRun.AddText(sText);
@@ -523,17 +513,7 @@
 		const oParagraph = oNewShape.txBody.content.GetAllParagraphs()[0];
 		oParagraph.MoveCursorToStartPos();
 
-		const oLogicDocument = this.m_oLogicDocument;
-
-		const oStyles = oLogicDocument && oLogicDocument.Get_Styles();
-		if (oStyles && oStyles.Default && oStyles.Default.ParaPr)
-		{
-			oParagraph.Pr = oStyles.Default.ParaPr.Copy();
-		}
-		else
-		{
-			oParagraph.Pr = new AscCommonWord.CParaPr();
-		}
+		oParagraph.Pr = new AscCommonWord.CParaPr();
 
 		const oParaRun = new AscCommonWord.ParaRun(oParagraph);
 		const oTextPr = oLvl.GetTextPr().Copy();
