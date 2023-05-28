@@ -16640,14 +16640,24 @@ DataRowTraversal.prototype.setRanks = function(rowItem, colItem, rowFieldSubtota
 		}
 		if (elemCache.length > 0) {
 			elemCache.sort(rankAscendingSort);
-			isDescending ? elemCache.reverse() : false;
-			let rank = isDescending ? 'rankDescending' : 'rankAscending';
-			elemCache[0].obj[rank][dataIndex] = 1;
-			for (let i = 1; i < elemCache.length; i += 1) {
-				if (elemCache[i - 1].oCellValue.number === elemCache[i].oCellValue.number) {
-					elemCache[i].obj[rank][dataIndex] = elemCache[i - 1].obj[rank][dataIndex];
-				} else {
-					elemCache[i].obj[rank][dataIndex] = elemCache[i - 1].obj[rank][dataIndex] + 1;
+			if (isDescending) {
+				elemCache.reverse()
+				elemCache[0].obj.rankDescending[dataIndex] = 1;
+				for (let i = 1; i < elemCache.length; i += 1) {
+					if (elemCache[i - 1].oCellValue.number === elemCache[i].oCellValue.number) {
+						elemCache[i].obj.rankDescending[dataIndex] = elemCache[i - 1].obj.rankDescending[dataIndex];
+					} else {
+						elemCache[i].obj.rankDescending[dataIndex] = elemCache[i - 1].obj.rankDescending[dataIndex] + 1;
+					}
+				}
+			} else {
+				elemCache[0].obj.rankAscending[dataIndex] = 1;
+				for (let i = 1; i < elemCache.length; i += 1) {
+					if (elemCache[i - 1].oCellValue.number === elemCache[i].oCellValue.number) {
+						elemCache[i].obj.rankAscending[dataIndex] = elemCache[i - 1].obj.rankAscending[dataIndex];
+					} else {
+						elemCache[i].obj.rankAscending[dataIndex] = elemCache[i - 1].obj.rankAscending[dataIndex] + 1;
+					}
 				}
 			}
 		}
@@ -16675,14 +16685,24 @@ DataRowTraversal.prototype.setRanks = function(rowItem, colItem, rowFieldSubtota
 		}
 		if (elemCache.length > 0) {
 			elemCache.sort(rankAscendingSort);
-			isDescending ? elemCache.reverse() : false;
-			let rank = isDescending ? 'rankDescending' : 'rankAscending';
-			elemCache[0].obj[rank][dataIndex] = 1;
-			for (let i = 1; i < elemCache.length; i += 1) {
-				if (elemCache[i - 1].oCellValue.number === elemCache[i].oCellValue.number) {
-					elemCache[i].obj[rank][dataIndex] = elemCache[i - 1].obj[rank][dataIndex];
-				} else {
-					elemCache[i].obj[rank][dataIndex] = elemCache[i - 1].obj[rank][dataIndex] + 1;
+			if (isDescending) {
+				elemCache.reverse()
+				elemCache[0].obj.rankDescending[dataIndex] = 1;
+				for (let i = 1; i < elemCache.length; i += 1) {
+					if (elemCache[i - 1].oCellValue.number === elemCache[i].oCellValue.number) {
+						elemCache[i].obj.rankDescending[dataIndex] = elemCache[i - 1].obj.rankDescending[dataIndex];
+					} else {
+						elemCache[i].obj.rankDescending[dataIndex] = elemCache[i - 1].obj.rankDescending[dataIndex] + 1;
+					}
+				}
+			} else {
+				elemCache[0].obj.rankAscending[dataIndex] = 1;
+				for (let i = 1; i < elemCache.length; i += 1) {
+					if (elemCache[i - 1].oCellValue.number === elemCache[i].oCellValue.number) {
+						elemCache[i].obj.rankAscending[dataIndex] = elemCache[i - 1].obj.rankAscending[dataIndex];
+					} else {
+						elemCache[i].obj.rankAscending[dataIndex] = elemCache[i - 1].obj.rankAscending[dataIndex] + 1;
+					}
 				}
 			}
 		}
