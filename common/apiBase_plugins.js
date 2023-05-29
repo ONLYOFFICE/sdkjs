@@ -422,8 +422,9 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EndAction
-     * @param {number} type - A value which defines an action type which can take <b>0</b> if this is the *Information* action or <b>1</b> if this is the *BlockInteraction* action.
+     * @param {number} type - A value which defines an action type which can take <b>"Block"</b> if this is the *BlockInteraction* action or <b>"Information</b> if this is the *Information* action.
      * @param {string} description - A string value that specifies the description text for the operation end action.
+	 * @param {string} status - The error status code. If no error occurs, then an empty string is passed.
      */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
     {
@@ -479,7 +480,6 @@
      * @param {string} obj.type - The type of encrypting operation:
      * * <b>generatePassword</b> - generates a password for the document,
      * * <b>getPasswordByFile</b> - sends the password when opening the document,
-     * * <b>setPasswordByFile</b> - sets a password to the document,
      * * <b>encryptData</b> - encrypts changes when co-editing,
      * * <b>decryptData</b> - decrypts changes when co-editing.
      * @param {string} obj.password - A string value specifying the password to access the document.
@@ -1596,8 +1596,8 @@
     * Shows or hides buttons in the header.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [id] - The button ID.
-     * @param {boolean} [bShow] - The flag specifies whether the button is shown (**true**) or hidden (**false**).
+     * @param {string} id - The button ID.
+     * @param {boolean} bShow - The flag specifies whether the button is shown (**true**) or hidden (**false**).
      * @alias ShowButton 
      * @since 7.2.0
      */

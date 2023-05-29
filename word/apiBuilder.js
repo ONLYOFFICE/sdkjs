@@ -7034,7 +7034,7 @@
 		return this.Document.GetPagesCount();
 	};
 	/**
-	 * Returns all styles of current document.
+	 * Returns all styles of the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiStyle[]}
