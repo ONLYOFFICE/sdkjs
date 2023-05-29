@@ -2366,6 +2366,27 @@ CDocumentContentBase.prototype.OnContentChange = function()
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
 };
+
+CDocumentContentBase.prototype.GetCalculatedTextPr = function()
+{
+	var oTextPr = new CTextPr();
+	oTextPr.InitDefault();
+	return oTextPr;
+};
+CDocumentContentBase.prototype.GetCalculatedParaPr = function()
+{
+	var oParaPr = new CParaPr();
+	oParaPr.InitDefault();
+	return oParaPr;
+};
+CDocumentContentBase.prototype.GetDirectParaPr = function()
+{
+	return new CParaPr();
+};
+CDocumentContentBase.prototype.GetDirectTextPr = function()
+{
+	return new CTextPr();
+};
 CDocumentContentBase.prototype.GetFormattingPasteData = function(bCalcPr)
 {
 	if (docpostype_DrawingObjects === this.GetDocPosType())
