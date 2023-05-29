@@ -6089,10 +6089,21 @@
                     this._drawFormatPainterRange();
                 }
                 if (null !== this.activeMoveRange) {
-                	let isFullColumn = this.activeMoveRange.getType() === Asc.c_oAscSelectionType.RangeCol;
-                	if (isFullColumn) {
-						this._drawElements(this._drawSelectionElement, this.activeMoveRange, AscCommonExcel.selectionLineType.Selection,
-							this.settings.activeCellBorderColor, null, 3);
+					let fullColumnProps = this.startCellMoveRange.colRowMoveProps;
+					if (fullColumnProps) {
+						let shift = fullColumnProps.shiftKey;
+						if (shift) {
+							let insertToCol = fullColumnProps.colByX;
+							var selectionRange = (this.dragAndDropRange || this.model.selectionRange.getLast());
+							if (insertToCol >= selectionRange.c1 && insertToCol <= selectionRange.c2) {
+								insertToCol = Math.max(0, selectionRange.c1 - 1);
+							}
+							this._drawElements(this._drawLineBetweenRowCol, insertToCol + 1, null, this.settings.activeCellBorderColor);
+							console.log("colByX: " + fullColumnProps.colByX + " insertToCol: " + insertToCol);
+						} else {
+							this._drawElements(this._drawSelectionElement, this.activeMoveRange, AscCommonExcel.selectionLineType.Selection,
+								this.settings.activeCellBorderColor, null, 3);
+						}
 					} else {
 						this._drawElements(this._drawSelectionElement, this.activeMoveRange,
 							AscCommonExcel.selectionLineType.None, new CColor(0, 0, 0));
@@ -6154,7 +6165,8 @@
             } else if (i === selection.activeCellId) {
                 selectionLineType |= AscCommonExcel.selectionLineType.ActiveCell;
             }
-            if (null !== this.activeMoveRange && this.activeMoveRange.getType() === Asc.c_oAscSelectionType.RangeCol && i === l - 1) {
+            let target = this.workbook.controller && this.workbook.controller.targetInfo && this.workbook.controller.targetInfo.target
+            if (null !== this.activeMoveRange && this.activeMoveRange.getType() === Asc.c_oAscSelectionType.RangeCol && i === l - 1 /*&& c_oTargetType.ColumnHeaderMove === target*/) {
 				this._drawElements(this._drawSelectionElement, range, AscCommonExcel.selectionLineType.DashThick, this.settings.activeCellBorderColor);
 			} else {
 				this._drawElements(this._drawSelectionElement, range, selectionLineType,
@@ -6252,6 +6264,43 @@
               strokeColor, null, null, true);
         }
     };
+
+	WorksheetView.prototype._drawLineBetweenRowCol = function (visibleRange, offsetX, offsetY, args) {
+		var col = args[0];
+		var row = args[1];
+		var strokeColor = args[2];
+		var ctx = this.overlayCtx;
+
+		var fHorLine, fVerLine;
+
+		fHorLine = ctx.lineHorPrevPx;
+		fVerLine = ctx.lineVerPrevPx;
+
+		var widthLine = 2;
+
+		if (AscBrowser.retinaPixelRatio === 2) {
+			widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
+		}
+
+		if (col != null) {
+			if (!visibleRange.containsCol(col)) {
+				return;
+			}
+			var x1 = this._getColLeft(col) - offsetX;
+			var y1 = this._getRowTop(visibleRange.r1) - offsetY;
+			var y2 = this._getRowTop(visibleRange.r2 + 1) - offsetY;
+
+			ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
+			fVerLine.apply(ctx, [x1, y1, y2]);
+			ctx.closePath().stroke();
+
+		} else {
+
+		}
+
+
+		return true;
+	};
 
     WorksheetView.prototype.cleanSelection = function (range, isFrozen) {
 		var api = window["Asc"]["editor"];
@@ -11634,7 +11683,7 @@
     /* Функция для работы перемещения диапазона (selection). (x, y) - координаты точки мыши на области
      *  ToDo нужно переделать, чтобы moveRange появлялся только после сдвига от текущей ячейки
      */
-    WorksheetView.prototype.changeSelectionMoveRangeHandle = function (x, y) {
+    WorksheetView.prototype.changeSelectionMoveRangeHandle = function (x, y, shiftKey, colRowMove) {
         // Возвращаемый результат
         var ret = null;
 
@@ -11674,6 +11723,9 @@
             }
             this.startCellMoveRange = new asc_Range(colByX, rowByY, colByX, rowByY);
             this.startCellMoveRange.isChanged = false;	// Флаг, сдвигались ли мы от первоначального диапазона
+			//added new options for move all colls/rows
+			this.startCellMoveRange.colRowMoveProps = {shiftKey: shiftKey};
+
             return ret;
         }
 
@@ -11745,6 +11797,11 @@
             d.col = 0;
             d.row = 0;
         }
+
+        if (this.startCellMoveRange.colRowMoveProps && shiftKey) {
+			this.startCellMoveRange.colRowMoveProps.colByX = colByX;
+			this.startCellMoveRange.colRowMoveProps.rowByY = rowByY;
+		}
 
         return d;
     };

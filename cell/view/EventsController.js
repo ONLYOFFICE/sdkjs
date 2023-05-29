@@ -691,7 +691,7 @@
 		 * @param event {MouseEvent}
 		 * @param callback {Function}
 		 */
-		asc_CEventsController.prototype._moveRangeHandle = function (event, callback) {
+		asc_CEventsController.prototype._moveRangeHandle = function (event, callback, colRowMove) {
 			var t = this;
 			// Обновляемся в режиме перемещения диапазона
 			var coord = this._getCoordinates(event);
@@ -700,7 +700,7 @@
 					if (!d) return;
 					t.scroll(d);
 					asc_applyFunction(callback);
-				});
+				}, event.shiftKey, colRowMove);
 		};
 
 		/**
@@ -1650,7 +1650,7 @@
 
 			if (!t.getCellEditMode() && !t.getSelectionDialogMode()) {
 				this.gotFocus(true);
-				if (event.shiftKey) {
+				if (event.shiftKey && !(t.targetInfo.target === c_oTargetType.ColumnHeaderMove && this.canEdit())) {
 					t.isSelectMode = true;
 					t._changeSelection(event);
 					return;
@@ -1760,7 +1760,7 @@
 						// В режиме перемещения диапазона
 						//this.targetInfo.cursor = "grabbing";
 						this.isMoveRangeMode = true;
-						t._moveRangeHandle(event);
+						t._moveRangeHandle(event, null, true);
 					} else {
 						this.isSelectMode = true;
 						this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
