@@ -9645,7 +9645,16 @@ CStyles.prototype.Create_StyleFromInterface = function(oAscStyle, bCheckLink)
 
 		oStyle.Set_TextPr(NewStyleTextPr);
 		oStyle.Set_ParaPr(NewStyleParaPr, true);
+		
+		let numPr = oStyle.GetParaPr().NumPr;
+		oStyle.GetRelatedParagraphs().forEach(function(paragraph)
+		{
+			if (numPr && numPr.IsEqual(paragraph.GetNumPr()))
+				paragraph.SetNumPr(null);
 
+			paragraph.RecalcCompiledPr();
+		});
+		
 		return oStyle;
 	}
 	else
