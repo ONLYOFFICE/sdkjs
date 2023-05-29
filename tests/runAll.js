@@ -48,6 +48,7 @@ const allTests = [
 	'word/api/api.html',
 	'word/api/textInput.html',
 	'word/styles/paraPr.html',
+	'word/styles/styleApplicator.html',
 	'word/plugins/pluginsApi.html',
 	'word/merge-documents/mergeDocuments.html',
 
