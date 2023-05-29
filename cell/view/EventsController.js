@@ -691,7 +691,7 @@
 		 * @param event {MouseEvent}
 		 * @param callback {Function}
 		 */
-		asc_CEventsController.prototype._moveRangeHandle = function (event, callback, colRowMove) {
+		asc_CEventsController.prototype._moveRangeHandle = function (event, callback, colRowMoveProps) {
 			var t = this;
 			// Обновляемся в режиме перемещения диапазона
 			var coord = this._getCoordinates(event);
@@ -700,7 +700,7 @@
 					if (!d) return;
 					t.scroll(d);
 					asc_applyFunction(callback);
-				}, event.shiftKey, colRowMove);
+				}, colRowMoveProps);
 		};
 
 		/**
@@ -1760,7 +1760,7 @@
 						// В режиме перемещения диапазона
 						//this.targetInfo.cursor = "grabbing";
 						this.isMoveRangeMode = true;
-						t._moveRangeHandle(event, null, true);
+						t._moveRangeHandle(event, null, {ctrlKey: ctrlKey, shiftKey: event.shiftKey});
 					} else {
 						this.isSelectMode = true;
 						this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,

@@ -6165,28 +6165,9 @@
                 selectionLineType |= AscCommonExcel.selectionLineType.ActiveCell;
             }
 
-
-			/*let fullColumnProps = this.startCellMoveRange.colRowMoveProps;
-			if (fullColumnProps) {
-				let shift = fullColumnProps.shiftKey;
-				if (shift) {
-					let insertToCol = fullColumnProps.colByX;
-					var selectionRange = (this.dragAndDropRange || this.model.selectionRange.getLast());
-					if (insertToCol >= selectionRange.c1 && insertToCol <= selectionRange.c2) {
-						insertToCol = Math.max(0, selectionRange.c1 - 1);
-					}
-					this._drawElements(this._drawLineBetweenRowCol, insertToCol + 1, null, this.settings.activeCellBorderColor);
-				} else {
-					this._drawElements(this._drawSelectionElement, this.activeMoveRange, AscCommonExcel.selectionLineType.Selection,
-						this.settings.activeCellBorderColor, null, 3);
-				}
-			}*/
-
-
-
 			let fullColumnProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
-            if (null !== this.activeMoveRange && fullColumnProps && i === l - 1 /*&& c_oTargetType.ColumnHeaderMove === target*/) {
-				this._drawElements(this._drawSelectionElement, range, AscCommonExcel.selectionLineType.DashThick, this.settings.activeCellBorderColor);
+            if (null !== this.activeMoveRange && fullColumnProps && i === l - 1) {
+				this._drawElements(this._drawSelectionElement, range, !fullColumnProps.ctrlKey ? AscCommonExcel.selectionLineType.DashThick : AscCommonExcel.selectionLineType.ActiveCell, this.settings.activeCellBorderColor);
 			} else {
 				this._drawElements(this._drawSelectionElement, range, selectionLineType,
 					this.settings.activeCellBorderColor);
@@ -11708,7 +11689,7 @@
     /* Функция для работы перемещения диапазона (selection). (x, y) - координаты точки мыши на области
      *  ToDo нужно переделать, чтобы moveRange появлялся только после сдвига от текущей ячейки
      */
-    WorksheetView.prototype.changeSelectionMoveRangeHandle = function (x, y, shiftKey, colRowMove) {
+    WorksheetView.prototype.changeSelectionMoveRangeHandle = function (x, y, colRowMoveProps) {
         // Возвращаемый результат
         var ret = null;
 
@@ -11749,8 +11730,8 @@
             this.startCellMoveRange = new asc_Range(colByX, rowByY, colByX, rowByY);
             this.startCellMoveRange.isChanged = false;	// Флаг, сдвигались ли мы от первоначального диапазона
 			//added new options for move all colls/rows
-			if (colRowMove) {
-				this.startCellMoveRange.colRowMoveProps = {shiftKey: shiftKey};
+			if (colRowMoveProps) {
+				this.startCellMoveRange.colRowMoveProps = colRowMoveProps;
 			}
 
             return ret;
@@ -11825,7 +11806,7 @@
             d.row = 0;
         }
 
-        if (this.startCellMoveRange.colRowMoveProps && shiftKey) {
+        if (this.startCellMoveRange.colRowMoveProps && this.startCellMoveRange.colRowMoveProps.shiftKey) {
 			this.startCellMoveRange.colRowMoveProps.colByX = colByX;
 			this.startCellMoveRange.colRowMoveProps.rowByY = rowByY;
 		}
