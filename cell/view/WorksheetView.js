@@ -12338,34 +12338,47 @@
 			return;
 		}
 
-		//***array-formula***
-		//теперь не передаю 3 параметром в функцию checkMoveFormulaArray ctrlKey, поскольку undo/redo для
-		//клонирования части формулы работает некорректно
-		//при undo созданную формулу обходимо не переносить, а удалять
-		//TODO пересомтреть!
-		if (!this.checkMoveFormulaArray(arnFrom, arnTo)) {
-			this._cleanSelectionMoveRange();
-			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
-			return;
-		}
+		let t = this;
+		let doMove = function (success) {
+			if (!success) {
+				return;
+			}
 
-        var resmove = this.model._prepareMoveRange(arnFrom, arnTo);
-        if (resmove === -2) {
-            this.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotMoveRange, c_oAscError.Level.NoCritical);
-            this._cleanSelectionMoveRange();
-        } else if (resmove === -1) {
-            var t = this;
-            this.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange,
-              function (can) {
-                  if (can) {
-                      t.moveRangeHandle(arnFrom, arnTo, ctrlKey);
-                  } else {
-                      t._cleanSelectionMoveRange();
-                  }
-              });
-        } else {
-            this.moveRangeHandle(arnFrom, arnTo, ctrlKey);
-        }
+			//***array-formula***
+			//теперь не передаю 3 параметром в функцию checkMoveFormulaArray ctrlKey, поскольку undo/redo для
+			//клонирования части формулы работает некорректно
+			//при undo созданную формулу обходимо не переносить, а удалять
+			//TODO пересомтреть!
+			if (!t.checkMoveFormulaArray(arnFrom, arnTo)) {
+				t._cleanSelectionMoveRange();
+				t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+				return;
+			}
+
+			var resmove = t.model._prepareMoveRange(arnFrom, arnTo);
+			if (resmove === -2) {
+				t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotMoveRange, c_oAscError.Level.NoCritical);
+				t._cleanSelectionMoveRange();
+			} else if (resmove === -1) {
+				t.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange,
+					function (can) {
+						if (can) {
+							t.moveRangeHandle(arnFrom, arnTo, ctrlKey);
+						} else {
+							t._cleanSelectionMoveRange();
+						}
+					});
+			} else {
+				t.moveRangeHandle(arnFrom, arnTo, ctrlKey);
+			}
+		};
+
+		//shift cols/rows and move
+		if (this.startCellMoveRange.colRowMoveProps && this.startCellMoveRange.colRowMoveProps.shiftKey) {
+			this.changeWorksheet("insCell", c_oAscInsertOptions.InsertCellsAndShiftRight, doMove);
+		} else {
+			doMove(true);
+		}
     };
 
 	WorksheetView.prototype.applyCutRange = function (arnFrom, arnTo, opt_wsTo) {
@@ -15825,7 +15838,7 @@
 		this._isLockedAll(onChangeSheetViewSettings);
 	};
 
-	WorksheetView.prototype.changeWorksheet = function (prop, val) {
+	WorksheetView.prototype.changeWorksheet = function (prop, val, callback) {
 		// Проверка глобального лока
 		if (this.collaborativeEditing.getGlobalLock() || (!window["Asc"]["editor"].canEdit() && !this.workbook.Api.VersionHistory)) {
 			return;
@@ -15849,6 +15862,7 @@
 
 		var onChangeWorksheetCallback = function (isSuccess) {
 			if (false === isSuccess) {
+				callback && callback(false);
 				return;
 			}
 
@@ -15924,6 +15938,7 @@
 				t.handlers.trigger("selectionMathInfoChanged", info);
 			});
 			t._cleanPagesModeData();
+			callback && callback(true);
 		};
 
 		var checkDeleteCellsFilteringMode = function () {
