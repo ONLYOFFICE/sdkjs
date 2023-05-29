@@ -1484,6 +1484,7 @@
     var ws = this.getWorksheet(), ct = undefined;
     var arrMouseMoveObjects = [];					// Теперь это массив из объектов, над которыми курсор
 	var t = this;
+	console.log("as")
     //ToDo: включить определение target, если находимся в режиме редактирования ячейки.
     if (x === undefined && y === undefined) {
     	ws.cleanHighlightedHeaders();
@@ -1623,6 +1624,10 @@
       if (ct.target === c_oTargetType.MoveRange && ctrlKey && ct.cursor === "move") {
         ct.cursor = "copy";
       }
+
+      if (ws.startCellMoveRange && ws.startCellMoveRange.colRowMoveProps) {
+		  ct.cursor = "grabbing";
+	  }
 
       this._onUpdateCursor(ct.cursor);
       if (ct.target === c_oTargetType.ColumnHeader || ct.target === c_oTargetType.RowHeader) {

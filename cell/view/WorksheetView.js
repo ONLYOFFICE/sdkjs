@@ -9062,8 +9062,12 @@
 				}
 			}
 
+			let _cursor = f ? kCurColResize : kCurColSelect;
+			if (_target === c_oTargetType.ColumnHeaderMove) {
+				_cursor = t.startCellMoveRange && t.startCellMoveRange.colRowMoveProps ? "grabbing" : "grab";
+			}
 			return {
-				cursor: f ? kCurColResize : _target === c_oTargetType.ColumnHeaderMove ? "grab" : kCurColSelect,
+				cursor: _cursor,
 				target: f ? c_oTargetType.ColumnResize : _target,
 				col: c.col + (isNotFirst && f && x < c.left + 3 ? -1 : 0),
 				row: -1,

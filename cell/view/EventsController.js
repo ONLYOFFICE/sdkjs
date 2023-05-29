@@ -1761,6 +1761,8 @@
 						//this.targetInfo.cursor = "grabbing";
 						this.isMoveRangeMode = true;
 						t._moveRangeHandle(event, null, {ctrlKey: ctrlKey, shiftKey: event.shiftKey});
+						t.handlers.trigger("updateWorksheet", coord.x, coord.y);
+						//t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
 					} else {
 						this.isSelectMode = true;
 						this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
