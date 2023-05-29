@@ -6099,7 +6099,6 @@
 								insertToCol = Math.max(0, selectionRange.c1 - 1);
 							}
 							this._drawElements(this._drawLineBetweenRowCol, insertToCol + 1, null, this.settings.activeCellBorderColor);
-							console.log("colByX: " + fullColumnProps.colByX + " insertToCol: " + insertToCol);
 						} else {
 							this._drawElements(this._drawSelectionElement, this.activeMoveRange, AscCommonExcel.selectionLineType.Selection,
 								this.settings.activeCellBorderColor, null, 3);
@@ -6165,8 +6164,28 @@
             } else if (i === selection.activeCellId) {
                 selectionLineType |= AscCommonExcel.selectionLineType.ActiveCell;
             }
-            let target = this.workbook.controller && this.workbook.controller.targetInfo && this.workbook.controller.targetInfo.target
-            if (null !== this.activeMoveRange && this.activeMoveRange.getType() === Asc.c_oAscSelectionType.RangeCol && i === l - 1 /*&& c_oTargetType.ColumnHeaderMove === target*/) {
+
+
+			/*let fullColumnProps = this.startCellMoveRange.colRowMoveProps;
+			if (fullColumnProps) {
+				let shift = fullColumnProps.shiftKey;
+				if (shift) {
+					let insertToCol = fullColumnProps.colByX;
+					var selectionRange = (this.dragAndDropRange || this.model.selectionRange.getLast());
+					if (insertToCol >= selectionRange.c1 && insertToCol <= selectionRange.c2) {
+						insertToCol = Math.max(0, selectionRange.c1 - 1);
+					}
+					this._drawElements(this._drawLineBetweenRowCol, insertToCol + 1, null, this.settings.activeCellBorderColor);
+				} else {
+					this._drawElements(this._drawSelectionElement, this.activeMoveRange, AscCommonExcel.selectionLineType.Selection,
+						this.settings.activeCellBorderColor, null, 3);
+				}
+			}*/
+
+
+
+			let fullColumnProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
+            if (null !== this.activeMoveRange && fullColumnProps && i === l - 1 /*&& c_oTargetType.ColumnHeaderMove === target*/) {
 				this._drawElements(this._drawSelectionElement, range, AscCommonExcel.selectionLineType.DashThick, this.settings.activeCellBorderColor);
 			} else {
 				this._drawElements(this._drawSelectionElement, range, selectionLineType,
@@ -6491,7 +6510,13 @@
 		}
 
         if (null !== this.activeMoveRange) {
-			arnIntersection = this.activeMoveRange.intersectionSimple(range);
+        	let activeMoveRange = this.activeMoveRange;
+			let colRowMoveProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
+        	if (colRowMoveProps && colRowMoveProps.shiftKey) {
+				activeMoveRange = new Asc.Range(colRowMoveProps.colByX, activeMoveRange.r1, colRowMoveProps.colByX + 1, activeMoveRange.r2);
+			}
+
+			arnIntersection = activeMoveRange.intersectionSimple(range);
 			if (arnIntersection) {
 				// Координаты для перемещения диапазона
 				_x1 = this._getColLeft(arnIntersection.c1) - offsetX - 2;
@@ -11724,7 +11749,9 @@
             this.startCellMoveRange = new asc_Range(colByX, rowByY, colByX, rowByY);
             this.startCellMoveRange.isChanged = false;	// Флаг, сдвигались ли мы от первоначального диапазона
 			//added new options for move all colls/rows
-			this.startCellMoveRange.colRowMoveProps = {shiftKey: shiftKey};
+			if (colRowMove) {
+				this.startCellMoveRange.colRowMoveProps = {shiftKey: shiftKey};
+			}
 
             return ret;
         }
