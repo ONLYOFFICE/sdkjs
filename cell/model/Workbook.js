@@ -1043,7 +1043,7 @@
 			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
 				this.wb.handlers && this.wb.handlers.trigger("updateCellWatches", sheetId);
 			}
-			this.wb.handlers && this.wb.handlers.trigger("onChangePageSetupProps");
+			this.wb.handlers && this.wb.handlers.trigger("onChangePageSetupProps", sheetId);
 		},
 		editDefinesNames: function(oldUndoName, newUndoName) {
 			var res = null;
@@ -2315,6 +2315,7 @@
 		this.addingWorksheet = null;
 
 		this.workbookProtection = null;
+		this.fileSharing = null;
 
 		this.customXmls = null;//[]
 	}
@@ -8616,7 +8617,7 @@
 			cells = this.getRange4(pivotRange.r1, pivotRange.c1 + location.firstDataCol);
 			if (pivotTable.compact) {
 				let caption;
-				if (1 === colFields.length && st_VALUES === colFields[0].asc_getIndex()) {
+				if (1 === colFields.length && AscCommonExcel.st_VALUES === colFields[0].asc_getIndex()) {
 					caption = pivotTable.dataCaption || AscCommon.translateManager.getValue(AscCommonExcel.DATA_CAPTION)
 				} else {
 					caption = pivotTable.colHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.COL_HEADER_CAPTION);
@@ -8845,7 +8846,7 @@
 		var location = pivotTable.location;
 		var r1 = pivotRange.r1 + location.firstDataRow;
 		var c1 = pivotRange.c1 + location.firstDataCol;
-		let traversal = new DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
+		let traversal = new AscCommonExcel.DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
 		traversal.initRow(dataRow);
 		
 		var fieldIndex;
@@ -15645,6 +15646,9 @@
 						  });
 	};
 	Range.prototype.setIndent = function (val) {
+		if (val < 0) {
+			return;
+		}
 		History.Create_NewPoint();
 		this.createCellOnRowColCross();
 		var fSetProperty = this._setProperty;

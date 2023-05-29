@@ -573,13 +573,6 @@ g_oColorManager = new ColorManager();
 		}
 		this.text = val;
 	};
-	Fragment.prototype.getTextFromCodes = function () {
-		//если выставляем текстовое поле, контент меняется, нужно занулять charCodes
-		if (!isInit) {
-			this.charCodes = null;
-		}
-		this.text = val;
-	};
 	Fragment.prototype.convertPositionToText = function (codePos) {
 		var diff = 0;
 		for (var i = 0; i < codePos; i++) {
@@ -5021,7 +5014,7 @@ var g_oFontProperties = {
 		}
 		this.getFont().setVerticalAlign(val ? AscCommon.vertalign_SubScript : AscCommon.vertalign_Baseline);
 	};
-	CellXfs.prototype.asc_setFontSuperscript = function () {
+	CellXfs.prototype.asc_setFontSuperscript = function (val) {
 		if (!this.font) {
 			this.font = new AscCommonExcel.Font();
 		}
@@ -14198,7 +14191,7 @@ QueryTableField.prototype.clone = function() {
 		var i;
 		var length = r.GetLong();
 		for (i = 0; i < length; ++i) {
-			var definedName = new DefinedName();
+			var definedName = new ExternalDefinedName();
 			definedName.Read_FromBinary2(r);
 			if(!this.DefinedNames) {
 				this.DefinedNames = [];
@@ -14956,7 +14949,56 @@ QueryTableField.prototype.clone = function() {
 		return res;
 	};
 
+	function ExternalDefinedName() {
+		this.Name = null;
+		this.RefersTo = null;
+		this.SheetId = null;
+	}
 
+	ExternalDefinedName.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.Name = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.RefersTo = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.SheetId = r.GetString2();
+		}
+	};
+	ExternalDefinedName.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.Ref) {
+			w.WriteBool(true);
+			w.WriteString2(this.Name);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.CellType) {
+			w.WriteBool(true);
+			w.WriteString2(this.RefersTo);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.CellValue) {
+			w.WriteBool(true);
+			w.WriteString2(this.SheetId);
+		} else {
+			w.WriteBool(false);
+		}
+	};
+	ExternalDefinedName.prototype.clone = function () {
+		var newObj = new ExternalDefinedName();
+
+		newObj.Name = this.Name;
+		newObj.RefersTo = this.RefersTo;
+		newObj.SheetId = this.SheetId;
+
+		return newObj;
+	};
+
+	//CellWatch
 	function CCellWatch(ws) {
 		this.r = null;
 
@@ -15462,6 +15504,7 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].ExternalSheetDataSet = ExternalSheetDataSet;
 	window["AscCommonExcel"].ExternalRow = ExternalRow;
 	window["AscCommonExcel"].ExternalCell = ExternalCell;
+	window["AscCommonExcel"].ExternalDefinedName = ExternalDefinedName;
 
 	window['AscCommonExcel'].ToXml_ST_DataValidationOperator = ToXml_ST_DataValidationOperator;
 	window['AscCommonExcel'].FromXml_ST_DataValidationOperator = FromXml_ST_DataValidationOperator;

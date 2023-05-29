@@ -2523,7 +2523,7 @@
 		return this.IconId;
 	};
 	CConditionalFormatIconSet.prototype.asc_getIndex = function () {
-		this.IconId = val;
+		return this.IconId;
 	};
 	CConditionalFormatIconSet.prototype.asc_setIconSet = function (val) {
 		this.IconSet = val;

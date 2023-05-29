@@ -857,7 +857,7 @@
 
 	// Private
 
-	CellEditor.prototype._setOptions = function ( options ) {
+	CellEditor.prototype._setOptions = function (options) {
 		var opt = this.options = options;
 		var ctx = this.drawingCtx;
 		var u = ctx.getUnits();
@@ -866,17 +866,17 @@
 		this._updateTextAlign();
 		this.textFlags.shrinkToFit = false;
 
-		this._cleanFragments( opt.fragments );
-		this.textRender.setString( opt.fragments, this.textFlags );
+		this._cleanFragments(opt.fragments);
+		this.textRender.setString(opt.fragments, this.textFlags);
 		this.newTextFormat = null;
 
-		if ( opt.zoom > 0 ) {
-			this.overlayCtx.setFont( this.drawingCtx.getFont() );
-			this.changeZoom( opt.zoom );
+		if (opt.zoom > 0) {
+			this.overlayCtx.setFont(this.drawingCtx.getFont());
+			this.changeZoom(opt.zoom);
 		}
 
-		this.kx = asc_getcvt( u, 0/*px*/, ctx.getPPIX() );
-		this.ky = asc_getcvt( u, 0/*px*/, ctx.getPPIY() );
+		this.kx = asc_getcvt(u, 0/*px*/, ctx.getPPIX());
+		this.ky = asc_getcvt(u, 0/*px*/, ctx.getPPIY());
 
 		this.sides = opt.getSides();
 
@@ -1850,7 +1850,8 @@
 	};
 
 	CellEditor.prototype._getContentWidth = function () {
-		return this.right - this.left - 2 * this.defaults.padding + 1/*px*/;
+		//remove 1 px offset. without cell editor no 1 px offset
+		return this.right - this.left - 2 * this.defaults.padding /*+ 1*//*px*/;
 	};
 
 	CellEditor.prototype._getContentHeight = function () {

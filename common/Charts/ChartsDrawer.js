@@ -2391,7 +2391,7 @@ CChartsDrawer.prototype =
         return {w: w , h: h , startX: this.calcProp.chartGutter._left / this.calcProp.pxToMM, startY: this.calcProp.chartGutter._top / this.calcProp.pxToMM};
 	},
 
-	drawPaths: function (paths, series, useNextPoint, bIsYVal, byIdx) {
+	drawPaths: function (paths, series, useNextPoint, bIsYVal, byIdx, ignoreFill) {
 
 		var seria, brush, pen, numCache, point;
 		var seriesPaths = paths.series;
@@ -2452,7 +2452,7 @@ CChartsDrawer.prototype =
 					}
 				}
 				if (seriesPaths[i][j]) {
-					this.drawPath(seriesPaths[i][j], pen, brush);
+					this.drawPath(seriesPaths[i][j], pen, ignoreFill ? null : brush);
 				}
 			}
 		}
@@ -12192,6 +12192,9 @@ drawRadarChart.prototype = {
 
 	_calculateLines: function (fillPath) {
 		let dispBlanksAs = this.cChartSpace.chart.dispBlanksAs;
+		if (this.radarStyle === AscFormat.RADAR_STYLE_FILLED && dispBlanksAs === AscFormat.DISP_BLANKS_AS_GAP) {
+			dispBlanksAs = AscFormat.DISP_BLANKS_AS_ZERO;
+		}
 		let yPoints = this.valAx.yPoints;
 
 		let xCenter = this.valAx.posX;
@@ -12207,6 +12210,20 @@ drawRadarChart.prototype = {
 		/*if (this.valAx.scaling.logBase && (val < 0)) {
 			break;
 		}*/
+
+		let isLastPoint = function (_number, _oNumCache) {
+			if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_GAP) {
+				return _number === _oNumCache.ptCount - 1;
+			} else {
+				for (let k = _number + 1; k < _oNumCache.ptCount; k++) {
+					let _pt = _oNumCache.getPtByIndex(k);
+					if (_pt) {
+						return false;
+					}
+				}
+				return true;
+			}
+		};
 
 		let y, y1, x, x1, curSeries, dataSeries;
 		let radius1, radius2, xFirst, yFirst, calcPath, points;
@@ -12232,6 +12249,9 @@ drawRadarChart.prototype = {
 				//first point
 				pt = oNumCache.getPtByIndex(n);
 				x = y = null;
+				if (!pt && dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO) {
+					pt = {val: 0, idx: n};
+				}
 				if (pt) {
 					radius1 = this._getRadius(pt.val, valueMinMax);
 					alpha1 = this._getAlpha(pt.idx);
@@ -12268,9 +12288,10 @@ drawRadarChart.prototype = {
 						points = {x: x, y: y, x1: x1, y1: y1};
 						calcPath(pt, n, points, oNumCache);
 					}
-					if (n === oNumCache.ptCount - 2 && xFirst != null && x1 !== null) {
+					if (isLastPoint(n + 1, oNumCache) && xFirst != null && x1 !== null) {
 						points = {x: x1, y: y1, x1: xFirst, y1: yFirst};
-						calcPath(pt, n + 1, points, oNumCache);
+						calcPath(pt || nextPt, n + 1, points, oNumCache, true);
+						break;
 					}
 				} else {
 					//1. draw first point marker
@@ -12286,9 +12307,9 @@ drawRadarChart.prototype = {
 						this._addLineToTemporary(x, y, x1, y1, i, n);
 					}
 					//4. draw last line(return by first point)
-					if (n === oNumCache.ptCount - 2 && xFirst != null && x1 !== null) {
+					if ((isLastPoint(n + 1, oNumCache)) && xFirst != null && x1 !== null) {
 						this._addLineToTemporary(x1, y1, xFirst, yFirst, i, n + 1);
-						n++;
+						break;
 					}
 				}
 			}
@@ -12329,6 +12350,7 @@ drawRadarChart.prototype = {
 			path = t.cChartSpace.GetPath(pathId);
 		};
 
+		let dispBlanksAs = this.cChartSpace.chart.dispBlanksAs;
 		if (this._tempLines) {
 			if (!this.paths.series) {
 				this.paths.series = [];
@@ -12337,6 +12359,7 @@ drawRadarChart.prototype = {
 				if (!this.paths.series[ser]) {
 					this.paths.series[ser] = [];
 				}
+				let uninterruptedLine = true;
 				if (this._tempLines[ser]) {
 					for (let point = 0, length = this._tempLines[ser].length; point < length; point++) {
 						let curTempSer = this._tempLines[ser];
@@ -12348,9 +12371,9 @@ drawRadarChart.prototype = {
 								this.cChartDrawer.calculateLine(curTempSer[point].x1, curTempSer[point].y1, curTempSer[point].x2, curTempSer[point].y2, path);
 								containerForDrawSer[point] = pathId;
 							} else {
-								if (this._comparePointsSettings(ser, point - 1, point, point)) {
+								if (this._comparePointsSettings(ser, point - 1, point, dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO)) {
 									//use previous path
-									if (point === length - 1 && path && curTempSer[0] &&
+									if (uninterruptedLine && point === length - 1 && path && curTempSer[0] &&
 										curTempSer[point].x2 === curTempSer[0].x1 && curTempSer[point].y2 === curTempSer[0].y1) {
 										path.close();
 									} else {
@@ -12362,6 +12385,8 @@ drawRadarChart.prototype = {
 									containerForDrawSer[point] = pathId;
 								}
 							}
+						} else {
+							uninterruptedLine = false;
 						}
 					}
 				}
@@ -12369,13 +12394,13 @@ drawRadarChart.prototype = {
 		}
 	},
 
-	_comparePointsSettings: function (serIndex, pt1Index, pt2index) {
+	_comparePointsSettings: function (serIndex, pt1Index, pt2index, useNullPoints) {
 		let ser = this.chart.series[serIndex];
 		let oNumCache = ser && this.cChartDrawer.getNumCache(ser.val);
 		if (oNumCache) {
 			let pt1 = oNumCache.getPtByIndex(pt1Index);
 			let pt2 = oNumCache.getPtByIndex(pt2index);
-			if (pt1 && pt2 && pt1.pen && pt2.pen && pt1.pen.IsIdentical(pt2.pen)) {
+			if ((useNullPoints && (!pt1 || !pt2)) || (pt1 && pt2 && pt1.pen && pt2.pen && pt1.pen.IsIdentical(pt2.pen))) {
 				return true;
 			}
 		}
@@ -12410,7 +12435,7 @@ drawRadarChart.prototype = {
 		var pathH = this.chartProp.pathH;
 		var pathW = this.chartProp.pathW;
 		var t = this;
-		return function (pt, n, points, oNumCache) {
+		return function (pt, n, points, oNumCache, endOfPath) {
 			var pen, brush;
 			var y = points.y, y1 = points.y1, x = points.x, x1 = points.x1;
 
@@ -12422,7 +12447,7 @@ drawRadarChart.prototype = {
 				path.lnTo(x1 * pathW, y1 * pathH);
 			}
 
-			if (oNumCache.ptCount - 2 === n && pt) {
+			if ((oNumCache.ptCount - 2 === n || endOfPath) && pt) {
 				pen = pt.pen;
 				brush = pt.brush;
 				t.fillPaths.push({path: pathId, pen: pen, brush: brush});
@@ -12557,7 +12582,7 @@ drawRadarChart.prototype = {
 				this.cChartDrawer.drawPath(this.fillPaths[i].path, this.fillPaths[i].pen, this.fillPaths[i].brush);
 			}
 		} else {
-			this.cChartDrawer.drawPaths(this.paths, this.chart.series, true);
+			this.cChartDrawer.drawPaths(this.paths, this.chart.series, true, null, null, true);
 			this.cChartDrawer.drawPathsPoints(this.paths, this.chart.series);
 		}
 	}

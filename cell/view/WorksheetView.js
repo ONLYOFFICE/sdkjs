@@ -2200,10 +2200,11 @@
 
 		var startPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
 
+		let _retinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
 		if (pageHeadings) {
 			// Рисуем заголовки, нужно чуть сдвинуться
-			leftFieldInPx += startPrintPreview ? (this.cellsLeft * scale) / AscCommon.AscBrowser.retinaPixelRatio : this.cellsLeft;
-			topFieldInPx += startPrintPreview ? (this.cellsTop * scale) / AscCommon.AscBrowser.retinaPixelRatio : this.cellsTop;
+			leftFieldInPx += startPrintPreview ? (this.cellsLeft * scale) / _retinaPixelRatio : this.cellsLeft / _retinaPixelRatio;
+			topFieldInPx += startPrintPreview ? (this.cellsTop * scale) / _retinaPixelRatio : this.cellsTop / _retinaPixelRatio;
 		}
 
 		//TODO при сравнении резальтатов рассчета страниц в зависимости от scale - LO выдаёт похожие результаты, MS - другие. Необходимо пересмотреть!
@@ -3258,11 +3259,14 @@
 		var leftFieldInPx = pageLeftField / vector_koef + 1;
 		var topFieldInPx = pageTopField / vector_koef + 1;
 
+		let _cellsLeft = this.cellsLeft;
+		let _cellsTop = this.cellsTop;
+
 		//TODO ms считает именно так - каждый раз прибаляются размеры заголовков к полям. необходимо перепроверить!
 		//if (pageHeadings) {
 		// Рисуем заголовки, нужно чуть сдвинуться
-		leftFieldInPx += this.cellsLeft;
-		topFieldInPx += this.cellsTop;
+		leftFieldInPx += _cellsLeft;
+		topFieldInPx += _cellsTop;
 		//}
 
 		//TODO при сравнении резальтатов рассчета страниц в зависимости от scale - LO выдаёт похожие результаты, MS - другие. Необходимо пересмотреть!
@@ -3273,7 +3277,7 @@
 		var doCalcScaleWidth = function(start, end) {
 			var res;
 			if(width) {
-				var widthAllCols = pageHeadings ? t.cellsLeft * width : 0;
+				var widthAllCols = pageHeadings ? _cellsLeft * width : 0;
 				for(var i = start; i <= end; i++) {
 					//widthAllCols += t._getColumnWidth(i);
 					widthAllCols += t._getWidthForPrint(i) * _retinaPixelRatio;
@@ -3285,7 +3289,7 @@
 		var doCalcScaleHeight = function(start, end) {
 			var res;
 			if(height) {
-				var heightAllRows = pageHeadings ? t.cellsTop * height : 0;
+				var heightAllRows = pageHeadings ? _cellsTop * height : 0;
 				for(var i = start; i <= end; i++) {
 					//heightAllRows += t._getRowHeight(i);
 					heightAllRows += t._getHeightForPrint(i) * _retinaPixelRatio;
@@ -4966,13 +4970,20 @@
 				this.stringRender.setString([str]);
 
 				var textMetrics = this.stringRender._measureChars();
-				tX1 = centerX - textMetrics.width / 2;
-				tX2 = centerX + textMetrics.width / 2;
-				tY1 = centerY - textMetrics.height / 2;
-				tY2 = centerY + textMetrics.height / 2;
+				let textWidth = textMetrics.width;
+				let textHeight = textMetrics.height;
+				tX1 = centerX - textWidth / 2;
+				tX2 = centerX + textWidth / 2;
+				tY1 = centerY - textHeight / 2;
+				tY2 = centerY + textHeight / 2;
 
-				if(!(tX1 > x2 || tX2 < x1 || tY1 > y2 || tY2 < y1)) {
-					ctx.AddClipRect(x1, y1, x2-x1, y2-y1);
+				let _zoom = this.getZoom();
+				let _x1 = Math.max(tX1, x1);
+				let _x2 = Math.min(tX1 + textWidth * _zoom, x2);
+				let _y1 = Math.max(tY1, y1);
+				let _y2 = Math.min(tY1 + textHeight * _zoom, y2);
+				if (_x1 < _x2 && _y1 < _y2) {
+					ctx.AddClipRect(x1, y1, x2 - x1, y2 - y1);
 					this.stringRender.render(undefined, tX1, tY1, 100, this.settings.activeCellBorderColor);
 					ctx.RemoveClipRect();
 				}
@@ -6848,6 +6859,9 @@
         var va = align.getAlignVertical();
         var angle = align.getAngle();
         var indent = align.getIndent();
+		if (indent < 0) {
+			indent = 0;
+		}
 		if (align.hor === AscCommon.align_Distributed) {
 			fl.wrapText = true;
 			fl.textAlign = AscCommon.align_Center;
@@ -13506,24 +13520,28 @@
 	};
 
 	WorksheetView.prototype._loadDataBeforePaste = function (isLargeRange, val, bIsUpdate, canChangeColWidth, pasteToRange) {
-		var t = this;
-		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
-		var specialPasteProps = specialPasteHelper.specialPasteProps;
-		var selectData;
-		var specialPasteChangeColWidth = specialPasteProps && specialPasteProps.width;
+		let t = this;
+		let specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
+		let specialPasteProps = specialPasteHelper.specialPasteProps;
+		let selectData;
+		let specialPasteChangeColWidth = specialPasteProps && specialPasteProps.width;
 
-		var revertSelection = function () {
+		let revertSelection = function () {
 			if (val && val.originalSelectBeforePaste) {
 				t.model.selectionRange.ranges = val.originalSelectBeforePaste.ranges;
 			}
 		};
 
-		var fromBinaryExcel = val.fromBinary;
+		let fromBinaryExcel = val.fromBinary;
 
-		var pasteContent = val.data;
-		var pastedInfo = [];
-		var callback = function () {
-			for (var j = 0; j < pasteToRange.length; j++) {
+		let pasteContent = val.data;
+		let pastedInfo = [];
+		let callback = function () {
+
+			let maxRow = Math.min(Math.max(t.model.getRowsCount(), t.visibleRange.r2) + 1, gc_nMaxRow);
+			let maxCol = Math.min(Math.max(t.model.getColsCount(), t.visibleRange.c2) + 1, gc_nMaxCol);
+
+			for (let j = 0; j < pasteToRange.length; j++) {
 				_doPaste(pasteToRange[j]);
 				if (!selectData && !fromBinaryExcel) {
 					History.EndTransaction();
@@ -13533,9 +13551,9 @@
 				}
 			}
 
-			var _selection;
+			let _selection;
 			if (fromBinaryExcel) {
-				for (var n = 0; n < pastedInfo.length; n++) {
+				for (let n = 0; n < pastedInfo.length; n++) {
 					if (pastedInfo && pastedInfo[n] && pastedInfo[n].selectData && pastedInfo[n].selectData[0]) {
 						_selection = t.model.selectionRange.ranges[n];
 						_selection.c2 = pastedInfo[n].selectData[0].c2;
@@ -13560,7 +13578,7 @@
 				return;
 			}
 
-			var arn = selectData[0];
+			let arn = selectData[0];
 			if (bIsUpdate) {
 				if (isLargeRange) {
 					t.handlers.trigger("slowOperation", false);
@@ -13569,14 +13587,34 @@
 				if (specialPasteChangeColWidth) {
 					t.changeWorksheet("update");
 				} else {
+					//clean cache for all paste range
 					let updateRanges = pasteToRange ? pasteToRange : selectData[0];
+					let pastedRangeMaxCol, pastedRangeMaxRow;
 					if (updateRanges.length) {
-						for (var i = 0; i < updateRanges.length; i++) {
-							t._updateRange(updateRanges[i]);
+						for (let i = 0; i < updateRanges.length; i++) {
+							if (!pastedRangeMaxCol || updateRanges[i].c2 > pastedRangeMaxCol) {
+								pastedRangeMaxCol = updateRanges[i].c2;
+							}
+							if (!pastedRangeMaxRow || updateRanges[i].r2 > pastedRangeMaxRow) {
+								pastedRangeMaxRow = updateRanges[i].r2;
+							}
+
+							t._cleanCache(updateRanges[i]);
 						}
 					} else {
-						t._updateRange(updateRanges);
+						pastedRangeMaxCol = updateRanges.c2;
+						pastedRangeMaxRow = updateRanges.r2;
+						t._cleanCache(updateRanges);
 					}
+
+					if (pastedRangeMaxCol < maxCol && pastedRangeMaxCol > t.visibleRange.c2) {
+						maxCol = pastedRangeMaxCol;
+					}
+					if (pastedRangeMaxRow < maxRow && pastedRangeMaxRow > t.visibleRange.r2) {
+						maxRow = pastedRangeMaxRow;
+					}
+					//update only max defined previous data
+					t._updateRange(Asc.Range(0, 0, maxCol, maxRow));
 				}
 			}
 			revertSelection();
@@ -13588,7 +13626,7 @@
 				val.needDraw = true;
 			}
 
-			var oSelection = History.GetSelection();
+			let oSelection = History.GetSelection();
 			if (null != oSelection) {
 				oSelection = oSelection.clone();
 				//TODO selectData!
@@ -13601,31 +13639,31 @@
 			}
 		};
 
-		var _doPaste = function (_pasteToRange) {
+		let _doPaste = function (_pasteToRange) {
 			//paste from excel binary
 			if (fromBinaryExcel) {
 				AscCommonExcel.executeInR1C1Mode(false, function () {
 					selectData = t._pasteData(isLargeRange, fromBinaryExcel, pasteContent, bIsUpdate, _pasteToRange, null, val);
 				});
 			} else {
-				var imagesFromWord = pasteContent.props.addImagesFromWord;
+				let imagesFromWord = pasteContent.props.addImagesFromWord;
 				if (imagesFromWord && imagesFromWord.length !== 0 && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor) && specialPasteProps.images) {
-					var oObjectsForDownload = AscCommon.GetObjectsForImageDownload(pasteContent.props._aPastedImages);
-					var oImageMap;
+					let oObjectsForDownload = AscCommon.GetObjectsForImageDownload(pasteContent.props._aPastedImages);
+					let oImageMap;
 
 					//if already load images on server
 					if (AscCommonExcel.g_clipboardExcel.pasteProcessor.alreadyLoadImagesOnServer === true) {
 						oImageMap = {};
-						for (var i = 0, length = oObjectsForDownload.aBuilderImagesByUrl.length; i < length; ++i) {
-							var url = oObjectsForDownload.aUrls[i];
+						for (let i = 0, length = oObjectsForDownload.aBuilderImagesByUrl.length; i < length; ++i) {
+							let url = oObjectsForDownload.aUrls[i];
 
 							//get name from array already load on server urls
-							var name = AscCommonExcel.g_clipboardExcel.pasteProcessor.oImages[url];
-							var aImageElem = oObjectsForDownload.aBuilderImagesByUrl[i];
+							let name = AscCommonExcel.g_clipboardExcel.pasteProcessor.oImages[url];
+							let aImageElem = oObjectsForDownload.aBuilderImagesByUrl[i];
 							if (name) {
 								if (Array.isArray(aImageElem)) {
-									for (var j = 0; j < aImageElem.length; ++j) {
-										var imageElem = aImageElem[j];
+									for (let j = 0; j < aImageElem.length; ++j) {
+										let imageElem = aImageElem[j];
 										if (null != imageElem) {
 											imageElem.SetUrl(name);
 										}
@@ -13657,7 +13695,7 @@
 				}
 
 				if (selectData && selectData.adjustFormatArr && selectData.adjustFormatArr.length) {
-					for (i = 0; i < selectData.adjustFormatArr.length; i++) {
+					for (let i = 0; i < selectData.adjustFormatArr.length; i++) {
 						selectData.adjustFormatArr[i]._foreach(function (cell) {
 							cell._adjustCellFormat();
 						});
@@ -14350,6 +14388,10 @@
 			//merge
 			checkMerge(range, curMerge, toRow, toCol, rowDiff, colDiff, pastedRangeProps);
 
+			/*if (!isOneMerge) {
+				pastedRangeProps._cellStyle = newVal.getStyle();
+			}*/
+
 			//set style
 			if (!isOneMerge) {
 				pastedRangeProps.cellStyle = newVal.getStyleName();
@@ -14694,7 +14736,6 @@
 
 		//set formula - for paste from binary
 		var calculateValueAndBinaryFormula = function (newVal, firstRange, range) {
-
 			//operation special paste
 			var needOperation = specialPasteProps && specialPasteProps.operation;
 			if (needOperation === window['Asc'].c_oSpecialPasteOperation.none) {
@@ -14911,7 +14952,9 @@
 					oldBorders = oldBorders.clone();
 				}
 			}
-			range.setCellStyle(rangeStyle.cellStyle);
+			if (range.getStyleName() !== rangeStyle.cellStyle) {
+				range.setCellStyle(rangeStyle.cellStyle);
+			}
 			if (oldBorders) {
 				range.setBorder(null);
 				range.setBorder(oldBorders);
@@ -14929,7 +14972,9 @@
 
 		//numFormat
 		if (rangeStyle.numFormat && specialPasteProps.numFormat) {
-			range.setNumFormat(rangeStyle.numFormat);
+			if (range.getNumFormatStr() !== rangeStyle.numFormat) {
+				range.setNumFormat(rangeStyle.numFormat);
+			}
 		}
 		//font
 		if (rangeStyle.font && specialPasteProps.font) {
@@ -14938,7 +14983,9 @@
 			if (specialPasteProps.format && !specialPasteProps.formatTable && rangeStyle.tableDxf && rangeStyle.tableDxf.font) {
 				font = rangeStyle.tableDxf.font.merge(rangeStyle.font);
 			}
-			range.setFont(font);
+			if (!font.isEqual(range.getFont())) {
+				range.setFont(font);
+			}
 		}
 
 		var propPaste = specialPasteProps.property;
@@ -14977,13 +15024,18 @@
 			}
 		}
 
+		let align = range.getAlign();
 		//alignVertical
 		if (undefined !== rangeStyle.alignVertical && specialPasteProps.alignVertical) {
-			range.setAlignVertical(rangeStyle.alignVertical);
+			if (!align || align.getAlignVertical() !== rangeStyle.alignVertical) {
+				range.setAlignVertical(rangeStyle.alignVertical);
+			}
 		}
 		//alignHorizontal
 		if (undefined !== rangeStyle.alignHorizontal && specialPasteProps.alignHorizontal) {
-			range.setAlignHorizontal(rangeStyle.alignHorizontal);
+			if (!align || align.getAlignHorizontal() !== rangeStyle.alignHorizontal) {
+				range.setAlignHorizontal(rangeStyle.alignHorizontal);
+			}
 		}
 		//fontSize
 		if (rangeStyle.fontSize && specialPasteProps.fontSize) {
@@ -14995,7 +15047,9 @@
 		}
 		//bordersFull
 		if (rangeStyle.bordersFull && specialPasteProps.borders) {
-			range.setBorder(rangeStyle.bordersFull);
+			if (!rangeStyle.bordersFull.isEqual(range.getBorderFull())) {
+				range.setBorder(rangeStyle.bordersFull);
+			}
 		}
 		//wrap
 		if (rangeStyle.wrap && specialPasteProps.wrap) {
@@ -15010,7 +15064,9 @@
 		}
 		//angle
 		if (undefined !== rangeStyle.angle && specialPasteProps.angle) {
-			range.setAngle(rangeStyle.angle);
+			if (range.getAngle() !== rangeStyle.angle) {
+				range.setAngle(rangeStyle.angle);
+			}
 		}
 
 		if (rangeStyle.shrinkToFit && specialPasteProps.fontSize) {
@@ -15026,13 +15082,15 @@
 		}
 
 		//indent
-		if (rangeStyle.indent && specialPasteProps.format) {
+		if (rangeStyle.indent && specialPasteProps.format && rangeStyle.indent > 0) {
 			range.setIndent(rangeStyle.indent);
 		}
 
 		//locked
 		if (rangeStyle.locked !== undefined && specialPasteProps.format) {
-			range.setLocked(rangeStyle.locked);
+			if (range.getLocked() !== rangeStyle.locked) {
+				range.setLocked(rangeStyle.locked);
+			}
 		}
 
 		//hidden
@@ -15057,6 +15115,11 @@
 			rangeStyle.hyperlinkObj.Ref = range;
 			range.setHyperlink(rangeStyle.hyperlinkObj, true);
 		}
+
+		//todo try to change up all styles on one cellstyle
+		/*if (rangeStyle._cellStyle) {
+			range.setCellStyle(rangeStyle._cellStyle);
+		}*/
 	};
 
 	WorksheetView.prototype._pasteCellLink = function (range, fromRow, fromCol, arrFormula, sheetName, pasteLink) {
@@ -18110,7 +18173,7 @@
 		var t = this;
 		var ar = this.model.selectionRange.getLast().clone();
 
-		let filter = tableName ? ws.getTableByName(tableName) : this.model.AutoFilter;
+		let filter = tableName ? this.model.getTableByName(tableName) : this.model.AutoFilter;
 		if (filter && filter.Ref && this.model.isUserProtectedRangesIntersection(filter.Ref)) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return;

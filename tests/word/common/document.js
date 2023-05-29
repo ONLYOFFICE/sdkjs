@@ -289,6 +289,22 @@
 		
 		paragraph.SetNumPr(numPr.NumId, iLvl)
 	}
+	function SelectDocumentRange(startPos, endPos)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.RemoveSelection();
+		logicDocument.Selection.Use = true;
+		logicDocument.Selection.StartPos = startPos;
+		logicDocument.Selection.EndPos   = endPos;
+
+		let direction = startPos < endPos ? 1 : -1;
+		for (let pos = startPos; pos <= endPos; ++pos)
+		{
+			logicDocument.Content[pos].SelectAll(direction);
+		}
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument      = CreateLogicDocument;
 	AscTest.CreateParagraph          = CreateParagraph;
@@ -313,6 +329,7 @@
 	AscTest.MoveCursorToParagraph    = MoveCursorToParagraph;
 	AscTest.AddNumbering             = AddNumbering;
 	AscTest.SetParagraphNumberingLvl = SetParagraphNumberingLvl;
+	AscTest.SelectDocumentRange      = SelectDocumentRange;
 
 })(window);
 

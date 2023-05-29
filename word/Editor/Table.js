@@ -2795,17 +2795,20 @@ CTable.prototype.Internal_UpdateFlowPosition = function(X, Y)
 };
 CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 {
-	var oLogicDocument = editor.WordControl.m_oLogicDocument;
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
 
 	this.Document_SetThisElementCurrent(false);
 	this.MoveCursorToStartPos();
 
+	let isCancelMove = false;
 	var oTargetTable = this;
 	if (true != this.Is_Inline())
 	{
-		if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Table_Properties, null, true))
+		if (false === logicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Table_Properties, null, true))
 		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_MoveFlowTable);
+			logicDocument.StartAction(AscDFH.historydescription_Document_MoveFlowTable);
 
 			// Переносим привязку (если получается, что заносим таблицу саму в себя, тогда привязку не меняем)
 			var NewDocContent = NearestPos.Paragraph.Parent;
@@ -2934,21 +2937,21 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 				oTargetTable.Set_PositionV(c_oAscVAnchor.Page, false, Y);
 				oTargetTable.PositionV_Old = undefined;
 			}
-
-			oLogicDocument.FinalizeAction();
+			
+			logicDocument.FinalizeAction();
 		}
 	}
 	else
 	{
 		// Проверяем, можно ли двигать данную таблицу
-		if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Table_Properties, {
+		if (false === logicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Table_Properties, {
 				Type    : AscCommon.changestype_2_InlineObjectMove,
 				PageNum : PageNum,
 				X       : X,
 				Y       : Y
 			}, true))
 		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_MoveInlineTable);
+			logicDocument.StartAction(AscDFH.historydescription_Document_MoveInlineTable);
 
 			var NewDocContent = NearestPos.Paragraph.Parent;
 			var OldDocContent = this.Parent;
@@ -2980,8 +2983,8 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 					NewIndex++;
 				}
 
-				var oTargetTable = AscCommon.CollaborativeEditing.Is_SingleUser() ? this : this.Copy(NewDocContent);
-				if (NewDocContent != OldDocContent)
+				oTargetTable = AscCommon.CollaborativeEditing.Is_SingleUser() ? this : this.Copy(NewDocContent);
+				if (NewDocContent !== OldDocContent)
 				{
 					// Сначала добавляем таблицу в новый класс
 					NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
@@ -3004,19 +3007,31 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 						NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
 					}
 				}
-
-				editor.WordControl.m_oLogicDocument.Recalculate();
+				
+				if (!oTargetTable.IsUseInDocument())
+				{
+					isCancelMove = true;
+					logicDocument.CancelAction();
+					oTargetTable = this;
+				}
+				
+				logicDocument.Recalculate();
 			}
 
 			oTargetTable.StartTrackTable();
-			oLogicDocument.FinalizeAction();
-
+			logicDocument.FinalizeAction();
 		}
 	}
-	editor.WordControl.m_oLogicDocument.RemoveSelection();
+	
+	logicDocument.RemoveSelection();
+
+	if (isCancelMove)
+		oTargetTable.SelectAll();
+	else
+		oTargetTable.MoveCursorToStartPos();
+	
 	oTargetTable.Document_SetThisElementCurrent(true);
-	oTargetTable.MoveCursorToStartPos();
-	editor.WordControl.m_oLogicDocument.Document_UpdateSelectionState();
+	logicDocument.UpdateSelection();
 };
 CTable.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, ColumnsCount)
 {
@@ -5055,6 +5070,7 @@ CTable.prototype.Selection_SetStart = function(X, Y, CurPage, MouseEvent)
 };
 CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 {
+	let LogicDocument = this.GetLogicDocument();
 	var TablePr = this.Get_CompiledPr(false).TablePr;
 	if (CurPage < 0 || CurPage >= this.Pages.length)
 		CurPage = 0;
@@ -5062,7 +5078,6 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 	var Page = this.Pages[CurPage];
 	if (this.Selection.Type2 === table_Selection_Border)
 	{
-		var LogicDocument = this.LogicDocument;
 		if (!LogicDocument || true !== LogicDocument.CanEdit() || this.Selection.Data2.PageNum != CurPage)
 			return;
 
@@ -5606,7 +5621,10 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 	this.Selection.CurRow            = Pos.Row;
 
 	// При селекте внутри ячейки мы селектим содержимое ячейки
-	if (table_Selection_Common === this.Selection.Type2 && this.Parent.IsSelectedSingleElement() && this.Selection.StartPos.Pos.Row === this.Selection.EndPos.Pos.Row && this.Selection.StartPos.Pos.Cell === this.Selection.EndPos.Pos.Cell)
+	if (table_Selection_Common === this.Selection.Type2
+		&& (this.Parent.IsSelectedSingleElement() || (LogicDocument && LogicDocument.IsDocumentEditor() && LogicDocument.IsNumberingSelection()))
+		&& this.Selection.StartPos.Pos.Row === this.Selection.EndPos.Pos.Row
+		&& this.Selection.StartPos.Pos.Cell === this.Selection.EndPos.Pos.Cell)
 	{
 		this.private_SetSelectionData(null);
 
@@ -8258,25 +8276,34 @@ CTable.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSelectedPar
 	}
 	else
 	{
-		var arrSelectionArray = this.GetSelectionArray();
-		if (arrSelectionArray.length > 0)
+		let selectionArray = this.GetSelectionArray();
+		if (selectionArray.length <= 0)
+			return null;
+		
+		let pos = 0;
+		if (true !== bIgnoreSelection && oPr)
 		{
-			var nCurCell = arrSelectionArray[0].Cell;
-			var nCurRow  = arrSelectionArray[0].Row;
+			if (oPr.FirstInSelection)
+				pos = 0;
+			else if (oPr.LastInSelection)
+				pos = selectionArray.length - 1;
+		}
+		
+		var nCurCell = selectionArray[pos].Cell;
+		var nCurRow  = selectionArray[pos].Row;
 
-			var oCellContent = this.GetRow(nCurRow).GetCell(nCurCell).GetContent();
+		var oCellContent = this.GetRow(nCurRow).GetCell(nCurCell).GetContent();
 
-			if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)
-			{
-				oCellContent.SetApplyToAll(true);
-				var oRes = oCellContent.GetCurrentParagraph(bIgnoreSelection, null, oPr);
-				oCellContent.SetApplyToAll(false);
-				return oRes;
-			}
-			else
-			{
-				return oCellContent.GetCurrentParagraph(bIgnoreSelection, null, oPr);
-			}
+		if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)
+		{
+			oCellContent.SetApplyToAll(true);
+			var oRes = oCellContent.GetCurrentParagraph(bIgnoreSelection, null, oPr);
+			oCellContent.SetApplyToAll(false);
+			return oRes;
+		}
+		else
+		{
+			return oCellContent.GetCurrentParagraph(bIgnoreSelection, null, oPr);
 		}
 	}
 
@@ -8524,6 +8551,10 @@ CTable.prototype.SetPr = function(oTablePr)
 {
 	this.Set_Pr(oTablePr);
 };
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Заменять вызовы Set_TableStyle функции на SetTableStyle и доп обработку, если нужно
+// Set_TableStyle2 нужно убрать вообще
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 CTable.prototype.Set_TableStyle = function(StyleId, bNoClearFormatting)
 {
 	// Здесь мы не проверяем изменился ли стиль, потому что при выставлении стиля нужно сбрасывать
@@ -8541,13 +8572,16 @@ CTable.prototype.Set_TableStyle = function(StyleId, bNoClearFormatting)
 };
 CTable.prototype.Set_TableStyle2 = function(StyleId)
 {
-	if (this.TableStyle != StyleId)
-	{
-		History.Add(new CChangesTableTableStyle(this, this.TableStyle, StyleId));
-		this.TableStyle = StyleId;
-
-		this.Recalc_CompiledPr2();
-	}
+	this.SetTableStyle(StyleId);
+};
+CTable.prototype.SetTableStyle = function(styleId)
+{
+	if (this.TableStyle === styleId)
+		return;
+	
+	History.Add(new CChangesTableTableStyle(this, this.TableStyle, styleId));
+	this.TableStyle = styleId;
+	this.Recalc_CompiledPr2();
 };
 CTable.prototype.Get_TableStyle = function()
 {
@@ -12415,11 +12449,6 @@ CTable.prototype.DrawBorderByClick = function(X1, Y1, CurPageStart)
 		}
 		else if (isVSelect)
 		{
-			if (this.Selection.Data.length === 1)
-			{
-				var Cell = this.GetRow(this.Selection.Data[0].Row).Get_Cell(this.Selection.Data[0].Cell);
-				Cell.Set_Border(border, 3);
-			}
 			var Cell_1 = this.GetRow(this.Selection.Data[0].Row).Get_Cell(this.Selection.Data[0].Cell);
 			var Cell_2 = this.GetRow(this.Selection.Data[1].Row).Get_Cell(this.Selection.Data[1].Cell);
 
@@ -12452,11 +12481,16 @@ CTable.prototype.DeleteTablePart = function(X_Front, X_After, Y_Over, Y_Under, b
 	// Если выделяем целиком колонку - удаляем её
 	else if (Y_Over && Y_Under && bCanMerge)
 	{
-		if (this.Selection.Data[0].Row === 0 && this.Selection.Data[this.Selection.Data.length - 1].Row === this.GetRowsCount() - 1)
+		let nLastRow = this.Selection.Data[this.Selection.Data.length - 1].Row;
+		let nLastCell = this.Selection.Data[this.Selection.Data.length - 1].Cell;
+		let nVMergeCount = this.GetVMergeCount(nLastCell, nLastRow);
+
+		if (this.Selection.Data[0].Row === 0 && nLastRow + nVMergeCount === this.GetRowsCount())
 		{
 			this.Selection.Use = true;
 			this.Selection.Type = 0;
 			this.RemoveTableColumn();
+			this.Selection.Use = false;
 			return true;
 		}
 		return false;

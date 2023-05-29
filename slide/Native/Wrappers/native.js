@@ -327,7 +327,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                     {
                         var Unifill = new AscFormat.CUniFill();
                         Unifill.fill = new AscFormat.CSolidFill();
-                        var color = asc_menu_ReadColor(_params, _current);
+                        var color = AscCommon.asc_menu_ReadColor(_params, _current);
                         Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
                         _textPr.Unifill = Unifill;
                         break;
@@ -339,7 +339,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                     }
                     case 8:
                     {
-                        var color = asc_menu_ReadColor(_params, _current);
+                        var color = AscCommon.asc_menu_ReadColor(_params, _current);
                         _textPr.HighLight = { r: color.r, g: color.g, b: color.b };
                         break;
                     }
@@ -647,7 +647,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                     }
                     case 4:
                     {
-                        _imagePr.Paddings = asc_menu_ReadPaddings(_params, _current);
+                        _imagePr.Paddings = AscCommon.asc_menu_ReadPaddings(_params, _current);
                         break;
                     }
                     case 5:
@@ -795,7 +795,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                     }
                     case 4:
                     {
-                        _tablePr.TableDefaultMargins = asc_menu_ReadPaddings(_params, _current);
+                        _tablePr.TableDefaultMargins = AscCommon.asc_menu_ReadPaddings(_params, _current);
                         break;
                     }
                     case 5:
@@ -820,7 +820,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                     }
                     case 9:
                     {
-                        _tablePr.TablePaddings = asc_menu_ReadPaddings(_params, _current);
+                        _tablePr.TablePaddings = AscCommon.asc_menu_ReadPaddings(_params, _current);
                         break;
                     }
                     case 10:

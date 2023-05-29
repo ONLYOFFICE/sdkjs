@@ -331,7 +331,7 @@ StartAddNewShape.prototype =
 						oThis.drawingObjects.drawingObjects.sendGraphicObjectProps();
 					}
                 }
-
+	            oThis.drawingObjects.updateOverlay();
             };
             if(Asc.editor && Asc.editor.checkObjectsLock)
             {
@@ -344,7 +344,6 @@ StartAddNewShape.prototype =
         }
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.clearPreTrackObjects();
-        this.drawingObjects.updateOverlay();
         if(Asc["editor"] && Asc["editor"].wb)
         {
             if(!e.fromWindow || this.bStart)

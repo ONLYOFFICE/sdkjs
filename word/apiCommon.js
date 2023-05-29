@@ -1701,7 +1701,7 @@
 	};
 	CAscNumbering.prototype.get_JSONNumbering = function(singleLevel)
 	{
-		return AscWord.CNumInfo.FromNum(this, singleLevel ? 0 : null);
+		return AscWord.CNumInfo.FromNum(this, singleLevel ? 0 : null).ToJson();
 	};
 	CAscNumbering.prototype.put_FromJSON = function(value)
 	{

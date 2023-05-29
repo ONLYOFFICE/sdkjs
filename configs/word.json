@@ -281,6 +281,8 @@
 			"word/Drawing/ShapeDrawer.js",
 			"word/Drawing/buttons.js",
 
+			"word/Drawing/cachemanager.js",
+			"word/Drawing/stylespainter.js",
 			"word/Drawing/DrawingDocument.js",
 			"word/Drawing/GraphicsEvents.js",
 			"word/Drawing/Rulers.js",
@@ -358,6 +360,8 @@
 			"word/Drawing/mobileTouchManager.js",
 			"word/Drawing/HtmlPage.js",
 			"word/Drawing/ShapeDrawer.js",
+			"word/Drawing/cachemanager.js",
+			"word/Drawing/stylespainter.js",
 			"word/Drawing/DrawingDocument.js"
 		]
 	}

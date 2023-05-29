@@ -75,7 +75,7 @@
 		for (var nMaster = 0; nMaster < oPres.slideMasters.length; nMaster++)
 			aSldMasters.push(this.SerMasterSlide(oPres.slideMasters[nMaster], true));
 
-		var sConformanceType = oPres.pres.attrConformance === c_oAscConformanceType.Strict ? "strict" : "transitional";
+		var sConformanceType = oPres.pres.attrConformance === Asc.c_oAscConformanceType.Strict ? "strict" : "transitional";
 		return {
 			"slides":               aSlides,
 			"sldSz":                this.SerSlideSize(oPres.sldSz),

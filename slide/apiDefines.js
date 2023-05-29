@@ -573,6 +573,13 @@ prot['Print']           = c_oAscPresentationShortcutType.Print;
 prot['Save']            = c_oAscPresentationShortcutType.Save;
 prot['ShowContextMenu'] = c_oAscPresentationShortcutType.ShowContextMenu;
 
+prot = window['Asc']['c_oAscPresetShadowVal'] = window['Asc'].c_oAscPresetShadowVal = c_oAscPresetShadowVal;
+
+prot = window['Asc']['c_oAscBlendModeType'] = window['Asc'].c_oAscBlendModeType = c_oAscBlendModeType;
+
+prot = window['Asc']['c_oAscConformanceType'] = window['Asc'].c_oAscConformanceType = c_oAscConformanceType;
+
+
 window['AscCommon']                = window['AscCommon'] || {};
 window['AscCommon'].c_oSerFormat   = c_oSerFormat;
 window['AscCommon'].CurFileVersion = c_oSerFormat.Version;

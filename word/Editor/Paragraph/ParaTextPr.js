@@ -706,15 +706,15 @@ ParaTextPr.prototype.SetLigatures = function(nType)
 	oChange.Redo();
 };
 /**
- * Выставляем настройки (если какая-либо undefined, то такая настройка удаляется)
- * @param {CTextPr} oTextPr
+ * Жестко выставляем заданные настройки
+ * @param {CTextPr} textPr
  */
-ParaTextPr.prototype.SetPr = function(oTextPr)
+ParaTextPr.prototype.SetPr = function(textPr)
 {
-	if (!oTextPr)
-		oTextPr = new CTextPr();
+	if (!textPr)
+		textPr = new CTextPr();
 
-	this.Set_Value(oTextPr);
+	this.Set_Value(textPr);
 };
 ParaTextPr.prototype.IncreaseDecreaseFontSize = function(isIncrease)
 {

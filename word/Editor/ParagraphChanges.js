@@ -576,12 +576,16 @@ CChangesParagraphNumbering.prototype.private_CreateObject = function()
 {
 	return new CNumPr();
 };
-CChangesParagraphNumbering.prototype.private_SetValue = function(Value)
+CChangesParagraphNumbering.prototype.private_SetValue = function(newNumPr)
 {
 	var oParagraph = this.Class;
-	oParagraph.Pr.NumPr = Value;
-
-	oParagraph.private_RefreshNumbering(oParagraph.Pr.NumPr);
+	
+	let oldNumPr   = oParagraph.Pr.NumPr;
+	oParagraph.Pr.NumPr = newNumPr;
+	
+	oParagraph.private_RefreshNumbering(oldNumPr);
+	oParagraph.private_RefreshNumbering(newNumPr);
+	
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
 };
@@ -1163,6 +1167,7 @@ CChangesParagraphPStyle.prototype.private_SetValue = function(Value)
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
 	oParagraph.Recalc_RunsCompiledPr();
 	oParagraph.UpdateDocumentOutline();
+	oParagraph.private_RefreshNumbering();
 	private_ParagraphChangesOnSetValue(this.Class);
 };
 CChangesParagraphPStyle.prototype.Merge = private_ParagraphChangesOnMergePr;

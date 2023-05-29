@@ -98,18 +98,31 @@
 	CLaTeXParser.prototype.GetASTTree = function ()
 	{
 		let arrExp = [];
-		while (this.oLookahead.data) {
-			if (this.IsElementLiteral()) {
+		while (this.oLookahead.data)
+		{
+			if (this.IsElementLiteral())
+			{
 				arrExp.push(this.GetExpressionLiteral())
 			}
-			else {
+			else
+			{
 				let strValue = this.oTokenizer.GetTextOfToken(this.oLookahead.index, true);
-				if (undefined === strValue) {
+				if (undefined === strValue)
+				{
 					strValue = this.EatToken(this.oLookahead.class).data
 				}
-				else {
+				else
+				{
 					this.EatToken(this.oLookahead.class);
 				}
+
+				if ("\\bmod" === strValue) // todo в новой версии конвертора добавить отдельный модуль для такого типа токенов
+				{
+					strValue = " mod "; // в обратную сторону (линейную) такие токены вряд ли получится конвертнуть,
+										// а ворде такого токена просто нет
+										// todo продумать как будет происходить преобразование в линейную форму
+				}
+
 				arrExp.push({
 					type: oLiteralNames.charLiteral[num],
 					value: strValue
@@ -1118,7 +1131,7 @@
 	};
 	CLaTeXParser.prototype.EatToken = function (tokenType)
 	{
-		if (tokenType) {
+		if (tokenType || this.oLookahead.class === tokenType) {
 			const oToken = this.oLookahead;
 			if (oToken === null) {
 				console.log('Unexpected end of input, expected: ' + tokenType);

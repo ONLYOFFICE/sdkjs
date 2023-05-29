@@ -32,11 +32,6 @@
 
 var _internalStorage = {};
 
-function asc_menu_ReadColor(_params, _cursor) {
-    const _color = new Asc.asc_CColor();
-    _color.read(_params, _cursor);
-    return _color;
-}
 function asc_menu_WriteColor(_type, _color, _stream) {
     if (!_color)
         return;
@@ -107,11 +102,6 @@ function asc_menu_WriteFontFamily(_type, _family, _stream) {
     _stream["WriteByte"](255);
 }
 
-function asc_menu_ReadPaddings(_params, _cursor){
-    const _paddings = new Asc.asc_CPaddings();
-    _paddings.read(_params, _cursor);
-    return _paddings;
-}
 function asc_menu_ReadPosition(_params, _cursor){
     var _position = new Asc.CPosition();
     var _continue = true;
@@ -739,7 +729,7 @@ function asc_ReadCBorder(s, p) {
             }
             case 1:
             {
-                color = asc_menu_ReadColor(s, p);
+                color = AscCommon.asc_menu_ReadColor(s, p);
                 break;
             }
             case 255:
@@ -1135,7 +1125,7 @@ function asc_ReadAutoFiltersOptions(s, p) {
             }
             case 4:
             {
-                filter.asc_setSortColor(asc_menu_ReadColor(s, p));
+                filter.asc_setSortColor(AscCommon.asc_menu_ReadColor(s, p));
                 break;
             }
             case 5:
@@ -4453,7 +4443,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
                         }
                         case 4:
                         {
-                            _imagePr.Paddings = asc_menu_ReadPaddings(params, _current);
+                            _imagePr.Paddings = AscCommon.asc_menu_ReadPaddings(params, _current);
                             break;
                         }
                         case 5:
@@ -4828,7 +4818,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
                     }
                     case 10:
                     {
-                        _api.asc_setCellTextColor(asc_menu_ReadColor(params, _current));
+                        _api.asc_setCellTextColor(AscCommon.asc_menu_ReadColor(params, _current));
                         break;
                     }
                     case 11:
@@ -4843,7 +4833,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
                     }
                     case 13:
                     {
-                        var fillColor = asc_menu_ReadColor(params, _current);
+                        var fillColor = AscCommon.asc_menu_ReadColor(params, _current);
                         if (0.0 === fillColor.a) {
                             _api.asc_setCellBackgroundColor(null);
                         } else {
@@ -5057,7 +5047,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
                     }
                     case 2: // color
                     {
-                        var tabColor = asc_menu_ReadColor(params, _current);
+                        var tabColor = AscCommon.asc_menu_ReadColor(params, _current);
                         _api.asc_setWorksheetTabColor(tabColor);
                         _s.asc_WriteAllWorksheets(true);
                         break;

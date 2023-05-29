@@ -6124,10 +6124,6 @@ background-repeat: no-repeat;\
 		this.WordControl.SlideDrawer.CheckRecalculateSlide();
 	};
 
-	asc_docs_api.prototype.initEvents2MobileAdvances = function()
-	{
-		this.WordControl.initEvents2MobileAdvances();
-	};
 	asc_docs_api.prototype.ViewScrollToX             = function(x)
 	{
 		this.WordControl.m_oScrollHorApi.scrollToX(x);
@@ -6708,7 +6704,7 @@ background-repeat: no-repeat;\
 		{
 			if (this.SelectedObjectsStack[_len - 1].Type == c_oAscTypeSelectElement.Animation)
 			{
-				this.SelectedObjectsStack[_len - 1].Value = obj;
+				this.SelectedObjectsStack[_len - 1].Value = pr;
 				return;
 			}
 		}
@@ -6920,7 +6916,7 @@ background-repeat: no-repeat;\
 			return;
 		}
 
-		this.WordControl.setNodesEnable((this.isMobileVersion && !this.isReporterMode) ? false : true);
+		this.WordControl.setNotesEnable((this.isMobileVersion && !this.isReporterMode) ? false : true);
 		if (isViewMode)
 		{
 			this.ShowParaMarks          = false;
@@ -7196,11 +7192,16 @@ background-repeat: no-repeat;\
 			window.g_asc_plugins.stopWorked();
 
 		this.cancelEyedropper();
-		const bIsreporter = (reporterStartObject && !this.isReporterMode);
-		if (bIsreporter)
+		if(slidestart_num !== this.WordControl.m_oLogicDocument.CurPage)
+		{
+			this.WordControl.GoToPage(slidestart_num);
+		}
+
+		const bIsReporter = (reporterStartObject && !this.isReporterMode);
+		if (bIsReporter)
 			this.DemonstrationReporterStart(reporterStartObject);
 
-		if (bIsreporter && (this.reporterWindow || window["AscDesktopEditor"]))
+		if (bIsReporter && (this.reporterWindow || window["AscDesktopEditor"]))
 			this.WordControl.DemonstrationManager.StartWaitReporter(div_id, slidestart_num, true);
 		else
 			this.WordControl.DemonstrationManager.Start(div_id, slidestart_num, true);
@@ -7715,7 +7716,6 @@ background-repeat: no-repeat;\
 	// Вставка диаграмм
 	asc_docs_api.prototype.asc_getChartObject = function(type)
 	{
-		this.isChartEditor = true;		// Для совместного редактирования
         if (!AscFormat.isRealNumber(type))
         {
             this.asc_onOpenChartFrame();
@@ -7951,6 +7951,13 @@ background-repeat: no-repeat;\
 	{
 		var t = this;
 		var fileType = options.fileType;
+
+		if (this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType))
+		{
+			this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, options.isPdfPrint), fileType);
+			return true;
+		}
+
 		if (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType)
 		{
 			var isSelection = false;
@@ -9059,7 +9066,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['get_PresentationWidth']               = asc_docs_api.prototype.get_PresentationWidth;
 	asc_docs_api.prototype['get_PresentationHeight']              = asc_docs_api.prototype.get_PresentationHeight;
 	asc_docs_api.prototype['pre_Paste']                           = asc_docs_api.prototype.pre_Paste;
-	asc_docs_api.prototype['initEvents2MobileAdvances']           = asc_docs_api.prototype.initEvents2MobileAdvances;
 	asc_docs_api.prototype['ViewScrollToX']                       = asc_docs_api.prototype.ViewScrollToX;
 	asc_docs_api.prototype['ViewScrollToY']                       = asc_docs_api.prototype.ViewScrollToY;
 	asc_docs_api.prototype['GetDocWidthPx']                       = asc_docs_api.prototype.GetDocWidthPx;
@@ -9265,6 +9271,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_getSignatures"] 					= asc_docs_api.prototype.asc_getSignatures;
 	asc_docs_api.prototype["asc_isSignaturesSupport"] 				= asc_docs_api.prototype.asc_isSignaturesSupport;
     asc_docs_api.prototype["asc_isProtectionSupport"] 				= asc_docs_api.prototype.asc_isProtectionSupport;
+	asc_docs_api.prototype["asc_isAnonymousSupport"] 				= asc_docs_api.prototype.asc_isAnonymousSupport;
 	asc_docs_api.prototype["asc_RemoveSignature"] 					= asc_docs_api.prototype.asc_RemoveSignature;
 	asc_docs_api.prototype["asc_RemoveAllSignatures"] 				= asc_docs_api.prototype.asc_RemoveAllSignatures;
 	asc_docs_api.prototype["asc_gotoSignature"] 					= asc_docs_api.prototype.asc_gotoSignature;

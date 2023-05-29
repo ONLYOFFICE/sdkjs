@@ -608,7 +608,7 @@
 						return;
 					}
 					if (this.isUserProtectActiveCell()) {
-						this.input.blur();
+						this._blurCellEditor();
 						this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 						return;
 					}
@@ -1621,6 +1621,11 @@
         ct.cursor = "copy";
       }
 
+	  const oDrawingDocument = Asc.editor.wbModel.DrawingDocument;
+	  if(oDrawingDocument.m_sLockedCursorType !== "") {
+		  ct.cursor = oDrawingDocument.m_sLockedCursorType;
+	  }
+
       this._onUpdateCursor(ct.cursor);
       if (ct.target === c_oTargetType.ColumnHeader || ct.target === c_oTargetType.RowHeader) {
         ws.drawHighlightedHeaders(ct.col, ct.row);
@@ -2020,7 +2025,10 @@
   };
 
   WorkbookView.prototype._blurCellEditor = function () {
-	 this._setEditorFocus();
+	if (this.Api.isMobileVersion && this.input && this.input.isFocused) {
+		this.input.blur();
+	}
+  	this._setEditorFocus();
   };
 
   WorkbookView.prototype._setEditorFocus = function () {
@@ -2793,7 +2801,7 @@
             if (c_oAscPopUpSelectorType.None === type) {
 				ws.executeWithFirstActiveCellInMerge(function () {
 					ws.setSelectionInfo("value", name, /*onlyActive*/true);
-				})
+				});
                 return;
             } else if (c_oAscPopUpSelectorType.TotalRowFunc === type) {
                 ws.setSelectionInfo("totalRowFunc", name, /*onlyActive*/true);
@@ -2840,7 +2848,15 @@
             enterOptions.newText = name;
             enterOptions.cursorPos = cursorPos;
 
-            this._onEditCell(enterOptions, callback);
+            if (enterOptions.newText) {
+                AscFonts.FontPickerByCharacter.checkText(enterOptions.newText, this, function () {
+                    t.Api._loadFonts([], function () {
+                        t._onEditCell(enterOptions, callback);
+                    });
+                });
+            } else {
+                this._onEditCell(enterOptions, callback);
+            }
         }
     };
 
@@ -5545,6 +5561,12 @@
 		this.collaborativeEditing.lock(aLockInfo, callback);
 	};
 
+	WorkbookView.prototype.cleanCache = function() {
+		for(var i in this.wsViews) {
+			let ws = this.wsViews[i];
+			ws && ws._cleanCache(new Asc.Range(0, 0, ws.cols.length - 1, ws.rows.length - 1));
+		}
+	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {

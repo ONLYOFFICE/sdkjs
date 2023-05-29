@@ -137,6 +137,10 @@
 		if (!this.NeedRecollect)
 			return;
 		
+		// С этими включенными флагами мы не можем до конца рассчитать нумерацию у параграфа
+		if (AscCommon.g_oIdCounter.m_bLoad || AscCommon.g_oIdCounter.m_bRead)
+			return;
+		
 		this.NeedRecollect = false;
 		
 		let numToCheck = {};
@@ -236,6 +240,10 @@
 	};
 	CNumberingCollection.prototype.AddToSingleLvlCollection = function(num, iLvl)
 	{
+		let numLvl = num.GetLvl(iLvl);
+		if (Asc.c_oAscNumberingFormat.None === numLvl.GetFormat())
+			return;
+		
 		let numInfo = AscWord.CNumInfo.FromNum(num, iLvl, this.LogicDocument.GetStyles());
 		let json    = JSON.stringify(numInfo.ToJson());
 		

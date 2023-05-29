@@ -204,11 +204,15 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 		"translate" : AscCommon.translateManager.mapTranslate
 	};
 
+	if (options && options.isPdfPrint)
+		jsonOptions["isPrint"] = true;
+
 	if (options && options.advancedOptions)
 	{
 		let nativeOptions = options.advancedOptions.asc_getNativeOptions();
 		if (nativeOptions)
 		{
+			jsonOptions["isPrint"] = true;
 			jsonOptions["nativeOptions"] = nativeOptions;
 			jsonOptions["nativeOptions"]["currentPage"] = editor.getCurrentPage() + 1;
  		}

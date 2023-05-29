@@ -153,6 +153,7 @@
 		this.isPreOpenLocks = true;
 		this.isApplyChangesOnOpenEnabled = true;
 		this.isProtectionSupport = true;
+		this.isAnonymousSupport = true;
 
 		this.canSave    = true;        // Флаг нужен чтобы не происходило сохранение пока не завершится предыдущее сохранение
 		this.IsUserSave = false;    // Флаг, контролирующий сохранение было сделано пользователем или нет (по умолчанию - нет)
@@ -1469,6 +1470,9 @@
 				if (undefined !== this.licenseResult['protectionSupport']) {
 					this.isProtectionSupport = this.licenseResult['protectionSupport'];
 				}
+				if (undefined !== this.licenseResult['isAnonymousSupport']) {
+					this.isAnonymousSupport = this.licenseResult['isAnonymousSupport'];
+				}
 			}
 			this.sendEvent('asc_onGetEditorPermissions', oResult);
 		}
@@ -1569,12 +1573,20 @@
 		};
 		this.CoAuthoringApi.onLicenseChanged          = function(res)
 		{
-			if (res['settings'] && res['settings']['maxChangesSize']) {
-				t.maxChangesSize = res['settings']['maxChangesSize'];
-			}
-			if (res['settings'] && res['settings']['binaryChanges']) {
-				t.binaryChanges = res['settings']['binaryChanges'];
-				t.CoAuthoringApi.setBinaryChanges(t.binaryChanges);
+			if (res['settings']) {
+				if (res['settings']['maxChangesSize']) {
+					t.maxChangesSize = res['settings']['maxChangesSize'];
+				}
+				if (res['settings']['binaryChanges']) {
+					t.binaryChanges = res['settings']['binaryChanges'];
+					t.CoAuthoringApi.setBinaryChanges(t.binaryChanges);
+				}
+				if (res['settings']['limits_image_size']) {
+					AscCommon.c_oAscImageUploadProp.MaxFileSize = res['settings']['limits_image_size']
+				}
+				if (res['settings']['limits_image_types_upload']) {
+					AscCommon.c_oAscImageUploadProp.SupportedFormats = res['settings']['limits_image_types_upload'].split(";")
+				}
 			}
 			let licenseType = res['licenseType'];
 			if (t.licenseResult) {
@@ -2077,6 +2089,11 @@
 		oAdditionalData["outputformat"] = options.fileType;
 		oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(options.fileType), Asc.c_nMaxDownloadTitleLen);
 		oAdditionalData["nobase64"] = isNoBase64;
+		let locale = this.asc_getLocale() || undefined;
+		if (typeof locale === "string") {
+			locale = Asc.g_oLcidNameToIdMap[locale];
+		}
+		oAdditionalData["lcid"] = locale;
 		if (DownloadType.Print === downloadType)
 		{
 			oAdditionalData["withoutPassword"] = true;
@@ -3271,6 +3288,10 @@
             return window["AscDesktopEditor"]["IsProtectionSupport"]();
         return !(this.DocInfo && this.DocInfo.get_OfflineApp()) && this.isProtectionSupport;
     };
+	baseEditorsApi.prototype.asc_isAnonymousSupport = function()
+	{
+		return this.isAnonymousSupport;
+	};
 
 	baseEditorsApi.prototype.asc_gotoSignature = function(guid)
 	{
@@ -3951,6 +3972,7 @@
 	baseEditorsApi.prototype.asc_resetToDefaultAutoCorrectMathSymbols = function()
 	{
 		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols = JSON.parse(JSON.stringify(window['AscCommonWord'].g_AutoCorrectMathsList.DefaultAutoCorrectMathSymbolsList));
+		AscMath.UpdateAutoCorrection();
 	};
 	/**
 	 * Reset to default version math autocorrect functions list
@@ -3958,6 +3980,7 @@
 	baseEditorsApi.prototype.asc_resetToDefaultAutoCorrectMathFunctions = function()
 	{
 		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs = JSON.parse(JSON.stringify(window['AscCommonWord'].g_AutoCorrectMathsList.DefaultAutoCorrectMathFuncs));
+		AscMath.UpdateFuncCorrection();
 	};
 	/**
 	 * Delete item from g_AutoCorrectMathSymbols
@@ -3971,6 +3994,7 @@
 			}
 		});
 		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols.splice(remInd, 1);
+		AscMath.UpdateAutoCorrection();
 	};
 	/**
 	 * Delete item from g_AutoCorrectMathFuncs
@@ -3984,6 +4008,7 @@
 			}
 		});
 		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs.splice(remInd, 1);
+		AscMath.UpdateFuncCorrection();
 	};
 	/**
 	 * Add or edit item from g_AutoCorrectMathSymbols
@@ -4005,6 +4030,8 @@
 		} else {
 			window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols.push([element, repVal]);
 		}
+
+		AscMath.UpdateAutoCorrection();
 	};
 	/**
 	 * Add item from g_AutoCorrectMathFuncs
@@ -4013,6 +4040,7 @@
 	baseEditorsApi.prototype.asc_AddFromAutoCorrectMathFunctions = function(newEl)
 	{
 		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs.push(newEl);
+		AscMath.UpdateFuncCorrection();
 	};
 	/**
 	 * Refresh g_AutoCorrectMathSymbols on start
@@ -4499,6 +4527,7 @@
 	baseEditorsApi.prototype.asc_startEyedropper = function(fEndCallback)
 	{
 		this.eyedropper.start(fEndCallback);
+		this.stopInkDrawer()
 	};
 	baseEditorsApi.prototype.finishEyedropper = function()
 	{
@@ -4530,9 +4559,21 @@
 	};
 	baseEditorsApi.prototype.asc_StartDrawInk = function(oAscPen) {
 		this.inkDrawer.startDraw(oAscPen);
+		if(this.formatPainter.isOn()) {
+			this.formatPainter.toggleState();
+		}
+		if(this.eyedropper.isStarted()) {
+			this.eyedropper.end();
+		}
 	};
 	baseEditorsApi.prototype.asc_StartInkEraser = function() {
 		this.inkDrawer.startErase();
+		if(this.formatPainter.isOn()) {
+			this.formatPainter.toggleState();
+		}
+		if(this.eyedropper.isStarted()) {
+			this.eyedropper.end();
+		}
 	};
 	baseEditorsApi.prototype.asc_StopInkDrawer = function() {
 		this.stopInkDrawer();
@@ -4554,6 +4595,62 @@
 	baseEditorsApi.prototype.getInkPen = function() {
 		return this.inkDrawer.getPen();
 	};
+	baseEditorsApi.prototype.getInkCursorType = function() {
+		return this.inkDrawer.getCursorType();
+	};
+
+	// methods for desktop:
+	baseEditorsApi.prototype.isCloudSaveAsLocalToDrawingFormat = function(actionType, fileType) {
+		if (!window["AscDesktopEditor"])
+			return false;
+		if (this.isLocalMode())
+			return false;
+		if (c_oAscAsyncAction.DownloadAs !== actionType)
+			return false;
+
+		switch (fileType)
+		{
+			case Asc.c_oAscFileType.PDF:
+			case Asc.c_oAscFileType.PDFA:
+			case Asc.c_oAscFileType.IMG:
+			case Asc.c_oAscFileType.JPG:
+			case Asc.c_oAscFileType.TIFF:
+			case Asc.c_oAscFileType.TGA:
+			case Asc.c_oAscFileType.GIF:
+			case Asc.c_oAscFileType.PNG:
+			case Asc.c_oAscFileType.EMF:
+			case Asc.c_oAscFileType.WMF:
+			case Asc.c_oAscFileType.BMP:
+			case Asc.c_oAscFileType.CR2:
+			case Asc.c_oAscFileType.PCX:
+			case Asc.c_oAscFileType.RAS:
+			case Asc.c_oAscFileType.PSD:
+			case Asc.c_oAscFileType.ICO:
+				window["AscDesktopEditor"]["emulateCloudPrinting"](true);
+				return true;
+			default:
+				break;
+		}
+		return false;
+	};
+
+	baseEditorsApi.prototype.localSaveToDrawingFormat = function(base64Data, fileType) {
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
+
+		let documentUrl = this.DocumentUrl;
+		if (this.editorId === c_oEditorId.Spreadsheet)
+			documentUrl = this.documentId + "/";
+		window["AscDesktopEditor"]["localSaveToDrawingFormat"](this.documentTitle, documentUrl || "", this.ThemeLoader ? this.ThemeLoader.ThemesUrl : "", base64Data, fileType);
+	};
+
+	baseEditorsApi.prototype["onLocalSaveToDrawingFormat"] = function(error) {
+		window["AscDesktopEditor"]["emulateCloudPrinting"](false);
+		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
+		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
+		if (0 !== error)
+			this.sendEvent("asc_onError", c_oAscError.ID.ConvertationSaveError, c_oAscError.Level.NoCritical);
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;

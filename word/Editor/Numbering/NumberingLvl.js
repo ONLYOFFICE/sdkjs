@@ -1555,8 +1555,7 @@ CNumberingLvl.prototype.private_ReadLvlTextFromBinary = function(oReader)
  */
 CNumberingLvl.prototype.IsBulleted = function()
 {
-	const nFormat = this.GetFormat();
-	return nFormat === Asc.c_oAscNumberingFormat.Bullet || nFormat === Asc.c_oAscNumberingFormat.None;
+	return AscWord.IsBulletedNumbering(this.GetFormat());
 };
 /**
  * Проверяем является ли данный уровень нумерованным
@@ -1564,8 +1563,7 @@ CNumberingLvl.prototype.IsBulleted = function()
  */
 CNumberingLvl.prototype.IsNumbered = function()
 {
-	var nFormat = this.GetFormat();
-	return (nFormat !== Asc.c_oAscNumberingFormat.Bullet && nFormat !== Asc.c_oAscNumberingFormat.None);
+	return AscWord.IsNumberedNumbering(this.GetFormat());
 };
 /**
  * Получаем список связанных уровней с данным

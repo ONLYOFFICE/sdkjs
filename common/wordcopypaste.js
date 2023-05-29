@@ -3333,7 +3333,7 @@ PasteProcessor.prototype =
 			y = pos.Y;
 		}
 		let screenPos;
-		let bThumbnals = (presentation.GetFocusObjType() === FOCUS_OBJECT_THUMBNAILS);
+		let bThumbnals = presentation.IsFocusOnThumbnails();
 		let sSlideId = null;
 
 		let aSelectedSlides = presentation.GetSelectedSlides();
@@ -4092,7 +4092,7 @@ PasteProcessor.prototype =
 				oThis.api.pre_Paste(aContent.fonts, aContent.images, fPrepasteCallback);
 			} else if (bIsOnlyFromBinary && window["NativeCorrectImageUrlOnPaste"]) {
 				var url;
-				for (i = 0, length = aContent.aPastedImages.length; i < length; ++i) {
+				for (var i = 0; i < aContent.aPastedImages.length; ++i) {
 					url = window["NativeCorrectImageUrlOnPaste"](aContent.aPastedImages[i].Url);
 					aContent.images[i] = url;
 
@@ -6976,8 +6976,10 @@ PasteProcessor.prototype =
 				if (null != background_color && (background_color = this._ParseColor(background_color))) {
 					break;
 				}
+
 				oTempNode = oTempNode.parentNode;
-				if (this.oRootNode === oTempNode || "body" === oTempNode.nodeName.toLowerCase() || true === this._IsBlockElem(oTempNode.nodeName.toLowerCase())) {
+				let _nodeName = oTempNode && oTempNode.nodeName && oTempNode.nodeName.toLowerCase();
+				if (!oTempNode || this.oRootNode === oTempNode || "body" === _nodeName || true === this._IsBlockElem(_nodeName)) {
 					break;
 				}
 			}
@@ -7537,8 +7539,10 @@ PasteProcessor.prototype =
 				if (vertical_align && background_color && Strikeout && underline)
 					break;
 				oTempNode = oTempNode.parentNode;
-				if (this.oRootNode === oTempNode || "body" === oTempNode.nodeName.toLowerCase() || true === this._IsBlockElem(oTempNode.nodeName.toLowerCase()))
+				let _nodeName = oTempNode && oTempNode.nodeName && oTempNode.nodeName.toLowerCase();
+				if (!oTempNode || this.oRootNode === oTempNode || "body" === _nodeName || true === this._IsBlockElem(_nodeName)) {
 					break;
+				}
 			}
 			if (PasteElementsId.g_bIsDocumentCopyPaste) {
 				if (background_color)
@@ -11424,10 +11428,10 @@ ParseHtmlStyle.prototype.applyStyles = function (textPr) {
 	var vertical_align = map.get("vertical-align");
 	switch (vertical_align) {
 		case "sub":
-			rPr.VertAlign = AscCommon.vertalign_SubScript;
+			textPr.VertAlign = AscCommon.vertalign_SubScript;
 			break;
 		case "super":
-			rPr.VertAlign = AscCommon.vertalign_SuperScript;
+			textPr.VertAlign = AscCommon.vertalign_SuperScript;
 			break;
 	}
 };

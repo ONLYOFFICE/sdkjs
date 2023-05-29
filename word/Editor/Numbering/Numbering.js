@@ -104,7 +104,7 @@
 		this.Num         = {};
 	};
 	/**
-	 * Добавляем к текущим абстрактным нумеациям новые
+	 * Добавляем к текущим абстрактным нумерациям новые
 	 * @param oAbstractNums
 	 */
 	CNumbering.prototype.AppendAbstractNums = function(oAbstractNums)
@@ -116,7 +116,7 @@
 		}
 	};
 	/**
-	 * Добавляем к текущим нумеациям новые
+	 * Добавляем к текущим нумерациям новые
 	 * @param oNums
 	 */
 	CNumbering.prototype.AppendNums = function(oNums)
@@ -251,20 +251,17 @@
 	};
 	/**
 	 * Проверяем по типам Numbered и Bullet
-	 * @param sNumId {string}
-	 * @param nLvl {number}
-	 * @param nType {Asc.c_oAscNumberingFormat}
+	 * @param numId {string}
+	 * @param iLvl {number}
+	 * @param format {Asc.c_oAscNumberingFormat}
 	 * @returns {boolean}
 	 */
-	CNumbering.prototype.CheckFormat = function(sNumId, nLvl, nType)
+	CNumbering.prototype.CheckFormat = function(numId, iLvl, format)
 	{
-		var nFormat = this.GetNumFormat(sNumId, nLvl);
-
-		if ((Asc.c_oAscNumberingFormat.BulletFlag & nFormat && Asc.c_oAscNumberingFormat.BulletFlag & nType)
-			|| (Asc.c_oAscNumberingFormat.NumberedFlag & nFormat && Asc.c_oAscNumberingFormat.NumberedFlag & nType))
-			return true;
-
-		return false;
+		let numFormat = this.GetNumFormat(numId, iLvl);
+		
+		return !!((AscWord.IsBulletedNumbering(format) && AscWord.IsBulletedNumbering(numFormat))
+				|| (AscWord.IsNumberedNumbering(format) && AscWord.IsNumberedNumbering(numFormat)));
 	};
 	CNumbering.prototype.Draw    = function(sNumId, nLvl, nX, nY, oContext, oNumInfo, oTextPr, oTheme)
 	{
@@ -324,6 +321,26 @@
 	CNumbering.prototype.IsEmpty = function()
 	{
 		return 0 === Object.keys(this.Num).length;
+	};
+	/**
+	 * Получаем список идентификаторов всех нумераций, который основаны на заданной абстрактной
+	 * @param abstractNum {AscWord.CAbstractNum}
+	 * @returns {AscWord.CNum[]}
+	 */
+	CNumbering.prototype.GetAllNumsByAbstractNum = function(abstractNum)
+	{
+		if (!abstractNum)
+			return [];
+		
+		let abstractNumId = abstractNum.GetId();
+		let result = [];
+		for (let numId in this.Num)
+		{
+			let num = this.Num[numId];
+			if (abstractNumId === num.GetAbstractNumId())
+				result.push(num);
+		}
+		return result;
 	};
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumbering        = CNumbering;

@@ -1114,7 +1114,11 @@
 
 		checkOrigin : function(guid, event)
 		{
-			if (event.origin === window.origin)
+			let windowOrigin = window.origin;
+			if (undefined === windowOrigin)
+				windowOrigin = window.location.origin;
+
+			if (event.origin === windowOrigin)
 				return true;
 
 			// allow chrome extensions

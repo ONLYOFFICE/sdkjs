@@ -393,44 +393,169 @@
 	};
 	var g_oDocumentUrls = new DocumentUrls();
 
+	function CHTMLCursorItemBase(_name, _hotspot, _default)
+	{
+		this.name = _name;
+		this.hotspot = _hotspot;
+		this.default = _default;
+	}
+	CHTMLCursorItemBase.prototype.baseUrl = "../../../../sdkjs/common/Images/cursors/";
+	CHTMLCursorItemBase.prototype.getValue = function() { return this.default; };
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorCur()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorCur.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorCur.prototype.getValue = function(globalCursors)
+	{
+		if (AscCommon.AscBrowser.isCustomScalingAbove2())
+			return "url(" + this.baseUrl + this.name + "_2x.cur), " + this.default;
+		return "url(" + this.baseUrl + this.name + ".cur), " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorSvgExternal()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorSvgExternal.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorSvgExternal.prototype.getValue = function(globalCursors)
+	{
+		return "url(" + this.baseUrl + this.name + ".svg) " + this.hotspot + ", " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorPng()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorPng.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorPng.prototype.getValue = function(globalCursors)
+	{
+		return "-webkit-image-set(url(" + this.baseUrl + this.name + ".png) 1x," + " url(" + this.baseUrl + this.name + "_2x.png) 2x) " + this.hotspot + ", " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorModern()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorModern.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorModern.prototype.getValue = function(globalCursors)
+	{
+		if (1 === AscCommon.AscBrowser.retinaPixelRatio)
+			return "url(" + this.baseUrl + this.name + ".png) " + this.hotspot + ", " + this.default;
+
+		if (globalCursors.mapSvg && globalCursors.mapSvg[this.name])
+		{
+			return "url(\"data:image/svg+xml;utf8," + globalCursors.mapSvg[this.name]+ "\") " + this.hotspot + ", " + this.default;
+		}
+
+		if (!AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isSafari)
+		{
+			return "url(" + this.baseUrl + this.name + ".svg) " + this.hotspot + ", " + "url(" + this.baseUrl + this.name + ".png) " + this.hotspot + ", " + this.default;
+		}
+
+		return "-webkit-image-set(url(" + this.baseUrl + this.name + ".png) 1x," + " url(" + this.baseUrl + this.name + "_2x.png) 2x) " + this.hotspot + ", " + this.default;
+	}
+
 	function CHTMLCursor()
 	{
-		this.map = {};
-		this.mapRetina = {};
+		this.cursors = {};
+		this.mapSvg = null;
 
 		this.value = function(param)
 		{
-			var ret = this.map[param];
-			if (AscCommon.AscBrowser.isCustomScalingAbove2() && this.mapRetina[param])
-				ret = this.mapRetina[param];
-			return ret ? ret : param;
+			if (this.cursors[param])
+				return this.cursors[param].getValue(this);
+			return param;
 		};
 
 		this.register = function(type, name, target, default_css_value)
 		{
 			if (AscBrowser.isIE || AscBrowser.isIeEdge)
 			{
-				this.map[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + ".cur), " + default_css_value);
-				this.mapRetina[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + "_2x.cur), " + default_css_value);
+				this.cursors[type] = new CHTMLCursorCur(name, target, default_css_value);
 			}
 			else if (window.opera)
 			{
-				this.map[type] = default_css_value;
+				this.cursors[type] = new CHTMLCursorItemBase(name, target, default_css_value);
 			}
 			else
 			{
-				if (!AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isSafari)
-				{
-					this.map[type] = "url('../../../../sdkjs/common/Images/cursors/" + name + ".svg') " + target +
-						", url('../../../../sdkjs/common/Images/cursors/" + name + ".png') " + target + ", " + default_css_value;
-				}
-				else
-				{
-					this.map[type] = "-webkit-image-set(url(../../../../sdkjs/common/Images/cursors/" + name + ".png) 1x," +
-						" url(../../../../sdkjs/common/Images/cursors/" + name + "_2x.png) 2x) " + target + ", " + default_css_value;
-				}
+				this.cursors[type] = new CHTMLCursorModern(name, target, default_css_value);
 			}
 		};
+
+		this.loadAllSvg = function()
+		{
+			try
+			{
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET", "../../../../sdkjs/common/Images/cursors/svg.json", true);
+				var t = this;
+				xhr.onload = function()
+				{
+					if (this.status === 200 || location.href.indexOf("file:") === 0)
+					{
+						try
+						{
+							t.mapSvg = JSON.parse(this.responseText);
+						}
+						catch (err) {}
+					}
+				};
+				xhr.send('');
+			}
+			catch (e) {}
+		};
+
+		this.getDrawCursor = function(ln)
+		{
+			if (!ln.Fill)
+				return "default";
+			let color = ln.Fill.fill.color.RGBA;
+			let w = (ln.w == null) ? 12700 : ln.w;
+			w = (w / 9525) >> 0;
+			if (w < 4) w = 4;
+			if (w & 0x01) w += 1;
+
+			if (ln && ln.Fill && ln.Fill.transparent !== null)
+				color.A = ln.Fill.transparent;
+
+			let isRect = (254 < color.A) ? false : true;
+			let h = w;
+
+			if (isRect)
+				w = 10;
+
+			let url = "<svg width='" + w + "' height='" + h + "' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'>";
+			if (!isRect)
+			{
+				url = url + "<circle cx='5' cy='5' r='5' stroke='none' fill='rgb(" +
+					color.R + "," + color.G + "," + color.B + ")'/></svg>";
+			}
+			else
+			{
+				url = url + "<rect x='0' y='0' width='10' height='10' stroke='none' fill='rgb(" +
+					color.R + "," + color.G + "," + color.B + ")'/></svg>";
+			}
+			//console.log(url);
+
+			return "url(\"data:image/svg+xml;utf8," + url + "\") " + (w >> 1) + " " + (h >> 1) + ", default";
+		}
+
+		this.loadAllSvg();
 	}
 
 	function OpenFileResult()
@@ -2047,9 +2172,12 @@
                             xhr.onreadystatechange = fOnReadyChnageState;
                             xhr.send(file);
                         }
-                    }
-                    else if(this.status === 403){
+                    } else if(this.status === 403) {
 						callback(Asc.c_oAscError.ID.VKeyEncrypt);
+					} else if(this.status === 413) {
+						callback(Asc.c_oAscError.ID.UplImageSize);
+					} else if(this.status === 415) {
+						callback(Asc.c_oAscError.ID.UplImageExt);
 					} else {
 						callback(Asc.c_oAscError.ID.UplImageUrl);
 					}
@@ -11982,12 +12110,22 @@
 	};
 	CEyedropper.prototype.setColor = function(r, g, b)
 	{
+		const fN = AscFormat.isRealNumber;
+		if(!fN(r) || !fN(g) || !fN(b)) {
+			this.r = null;
+			this.g = null;
+			this.b = null;
+		}
 		this.r = r;
 		this.g = g;
 		this.b = b;
 	};
 	CEyedropper.prototype.getColor = function()
 	{
+		const fN = AscFormat.isRealNumber;
+		if(!fN(this.r) || !fN(this.g) || !fN(this.b)) {
+			return null;
+		}
 		return new Asc.asc_CColor(this.r, this.g, this.b)
 	};
 	CEyedropper.prototype.clearColor = function()
@@ -12046,8 +12184,10 @@
 			this.cancel();
 			return;
 		}
-		const nXImg = Math.min(oImgData.width, nX);
-		const nYImg = Math.min(oImgData.height, nY);
+		const nXFixed = nX + 0.5 >> 0;
+		const nYFixed = nY + 0.5 >> 0;
+		const nXImg = Math.max(0, Math.min(oImgData.width, nXFixed));
+		const nYImg = Math.max(0, Math.min(oImgData.height, nYFixed));
 		const nArrayPos = (nYImg * oImgData.width + nXImg) * 4;
 		const aPixels = oImgData.data;
 		const nR = aPixels[nArrayPos];
@@ -12076,12 +12216,13 @@
 	};
 	CInkDrawer.prototype.startDraw = function(oAscPen) {
 		this.pen = AscFormat.CorrectUniStroke(oAscPen);
-		if(!this.pen) {
+		if(!this.pen || !this.pen.Fill || !this.pen.Fill) {
 			this.pen = new AscFormat.CLn();
 			this.pen.w = 180000;
 			this.pen.Fill = AscFormat.CreateSolidFillRGB(255, 255, 0);
 			this.pen.Fill.transparent = 127;
 		}
+		this.pen.Fill.check(AscFormat.GetDefaultTheme(), AscFormat.GetDefaultColorMap());
 		this.setState(INK_DRAWER_STATE_DRAW);
 	};
 	CInkDrawer.prototype.startErase = function() {
@@ -12098,11 +12239,15 @@
 		return this.silentMode;
 	};
 	CInkDrawer.prototype.turnOff = function() {
-		if(!this.silentMode) {
-			this.pen = null;
-			this.setState(INK_DRAWER_STATE_OFF);
-			this.api.sendEvent("asc_onInkDrawerStop");
+		if(!this.isOn()) {
+			return;
 		}
+		if(this.isSilentMode()) {
+			return;
+		}
+		this.pen = null;
+		this.setState(INK_DRAWER_STATE_OFF);
+		this.api.sendEvent("asc_onInkDrawerStop");
 	};
 	CInkDrawer.prototype.isOn = function() {
 		return this.state !== INK_DRAWER_STATE_OFF;
@@ -12126,6 +12271,17 @@
 		this.state = oState.state;
 		this.pen = oState.pen;
 		this.silentMode = oState.silentMode;
+	};
+	CInkDrawer.prototype.getCursorType = function() {
+		if(this.isOn()) {
+			if(this.isDraw()) {
+				return AscCommon.g_oHtmlCursor.getDrawCursor(this.getPen());
+			}
+			else if(this.isErase()) {
+				return "de-tableeraser";
+			}
+		}
+		return null;
 	};
 
 	//------------------------------------------------------------fill polyfill--------------------------------------------
@@ -13221,6 +13377,7 @@
 	window["AscCommon"].CEyedropper = CEyedropper;
 	window["AscCommon"].CInkDrawer = CInkDrawer;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
+	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
 
 })(window);
 

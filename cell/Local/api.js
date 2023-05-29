@@ -127,7 +127,7 @@ var c_oAscError = Asc.c_oAscError;
 			this._onUpdateDocumentCanSave();
 
 			if (undefined !== window["AscDesktopEditor"]) {
-				window["AscDesktopEditor"]["onDocumentModifiedChanged"](AscCommon.History ? AscCommon.History.Have_Changes(undefined, true) : bValue);
+				window["AscDesktopEditor"]["onDocumentModifiedChanged"](AscCommon.History ? AscCommon.History.Have_Changes(undefined, true) : bIsModified);
 			}
 		}
 	};

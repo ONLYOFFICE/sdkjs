@@ -2650,11 +2650,16 @@
 		};
 		CUniColor.prototype.getCSSColor = function (transparent) {
 			if (transparent != null) {
-				var _css = "rgba(" + this.RGBA.R + "," + this.RGBA.G + "," + this.RGBA.B + ",1)";
-				return _css;
+				return this.getCSSWithTransparent(1);
 			}
-			var _css = "rgba(" + this.RGBA.R + "," + this.RGBA.G + "," + this.RGBA.B + "," + (this.RGBA.A / 255) + ")";
-			return _css;
+			return this.getCSSWithTransparent(this.RGBA.A / 255);
+		};
+		CUniColor.prototype.getCSSValue = function (r, g, b, a) {
+			return "rgba(" + r + "," + g + "," + b + ","+ a +")";
+		};
+		CUniColor.prototype.getCSSWithTransparent = function(dTransparent) {
+			const oC = this.RGBA;
+			return this.getCSSValue(oC.R, oC.G, oC.B, dTransparent);
 		};
 		CUniColor.prototype.isCorrect = function () {
 			if (this.color !== null && this.color !== undefined) {
@@ -3949,6 +3954,11 @@
 		};
 		COuterShdw.prototype.createDuplicate = function () {
 			var oCopy = new COuterShdw();
+			this.fillObject(oCopy);
+			return oCopy;
+		};
+
+		COuterShdw.prototype.fillObject = function (oCopy) {
 			oCopy.color = this.color.createDuplicate();
 			oCopy.algn = this.algn;
 			oCopy.blurRad = this.blurRad;
@@ -3959,7 +3969,6 @@
 			oCopy.rotWithShape = this.rotWithShape;
 			oCopy.sx = this.sx;
 			oCopy.sy = this.sy;
-			return oCopy;
 		};
 		COuterShdw.prototype.IsIdentical = function (other) {
 			if (!other) {
@@ -3980,6 +3989,11 @@
 				return false;
 			}
 			return true;
+		};
+		COuterShdw.prototype.getAscShdw = function() {
+			const oCopy = new asc_CShadowProperty();
+			this.fillObject(oCopy);
+			return oCopy;
 		};
 
 		function asc_CShadowProperty() {
@@ -4076,7 +4090,13 @@
 					}
 				}
 			}
+			return this;
+		};
 
+		asc_CShadowProperty.prototype.createDuplicate = function () {
+			var oCopy = new asc_CShadowProperty();
+			this.fillObject(oCopy);
+			return oCopy;
 		};
 
 
@@ -6566,11 +6586,17 @@
 		};
 
 
-		var AUDIO_CD = 0;
-		var WAV_AUDIO_FILE = 1;
-		var AUDIO_FILE = 2;
-		var VIDEO_FILE = 3;
-		var QUICK_TIME_FILE = 4;
+		const AUDIO_CD = 0;
+		const WAV_AUDIO_FILE = 1;
+		const AUDIO_FILE = 2;
+		const VIDEO_FILE = 3;
+		const QUICK_TIME_FILE = 4;
+
+
+		const DRAW_TYPE_PEN = 0;
+		const DRAW_TYPE_PENCIL = 1;
+		const DRAW_TYPE_HIGHLITER = 2;
+
 
 
 		function UniMedia() {
@@ -15466,6 +15492,15 @@
 		window['AscFormat'].AUDIO_FILE = AUDIO_FILE;
 		window['AscFormat'].VIDEO_FILE = VIDEO_FILE;
 		window['AscFormat'].QUICK_TIME_FILE = QUICK_TIME_FILE;
+
+
+
+
+		window['AscFormat'].DRAW_TYPE_PEN = DRAW_TYPE_PEN;
+		window['AscFormat'].DRAW_TYPE_PENCIL = DRAW_TYPE_PENCIL;
+		window['AscFormat'].DRAW_TYPE_HIGHLITER = DRAW_TYPE_HIGHLITER;
+
+
 		window['AscFormat'].fCreateEffectByType = fCreateEffectByType;
 		window['AscFormat'].COuterShdw = COuterShdw;
 		window['AscFormat'].CGlow = CGlow;

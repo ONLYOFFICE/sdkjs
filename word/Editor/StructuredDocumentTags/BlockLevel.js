@@ -723,7 +723,7 @@ CBlockLevelSdt.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSel
 	if (oPr && true === oPr.ReplacePlaceHolder)
 		this.private_ReplacePlaceHolderWithContent();
 
-	return this.Content.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs);
+	return this.Content.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
 };
 CBlockLevelSdt.prototype.GetCurrentTablesStack = function(arrTables)
 {

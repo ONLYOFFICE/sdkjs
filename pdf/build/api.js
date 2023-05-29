@@ -268,6 +268,13 @@
 		};
 	};
 
+	CViewer.prototype["setZoomMode"] = function(value) { this.viewer && this.viewer.setZoomMode(value); };
+	CViewer.prototype["getZoom"] = function() { return this.viewer ? (this.viewer.zoom * 100) : 100; };
+	CViewer.prototype["setZoom"] = function(value) { this.viewer && this.viewer.setZoom(value / 100); };
+	CViewer.prototype["setTargetType"] = function(value) { this.viewer && this.viewer.setTargetType(value); };
+	CViewer.prototype["rotatePage"] = function(page, angle, ismultiply) { this.viewer && this.viewer.setRotatePage(page, angle, ismultiply); };
+	CViewer.prototype["close"] = function() { this.viewer && this.viewer.close(); };
+
 	window["AscViewer"] = window["AscViewer"] || {};
 	window["AscViewer"]["CViewer"] = CViewer;
 

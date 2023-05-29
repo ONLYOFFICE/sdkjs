@@ -7033,6 +7033,23 @@
 		this.ForceRecalculate();
 		return this.Document.GetPagesCount();
 	};
+	/**
+	 * Returns all styles of current document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiStyle[]}
+	 */
+	ApiDocument.prototype.GetAllStyles = function()
+	{
+		let aApiStyles = [];
+		var aStyles  = this.Document.Get_Styles().Style;
+		
+		aStyles.forEach(function(style) {
+			aApiStyles.push(new ApiStyle(style));
+		});
+
+		return aApiStyles;
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -7965,7 +7982,7 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 		{
-			if (arrAllDrawing[Index].GraphicObj instanceof CImageShape)
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CImageShape)
 				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
 		}
 
@@ -7984,7 +8001,7 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 		{
-			if (arrAllDrawing[Index].GraphicObj instanceof CChartSpace)
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CChartSpace)
 				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
 		}
 
@@ -8899,7 +8916,7 @@
 	 */
 	ApiRun.prototype.GetTextPr = function()
 	{
-		return new ApiTextPr(this, this.Run.Pr.Copy());
+		return new ApiTextPr(this, this.TextPr);
 	};
 	/**
 	 * Clears the content from the current run.
@@ -16988,7 +17005,7 @@
 		if (this.GetFormType() === "radioButtonForm")
 		{
 			sKey = sKey === "" ? "Group 1" : sKey;
-			Sdt.GetCheckBoxPr().SetGroupKey(sKey);
+			this.Sdt.GetCheckBoxPr().SetGroupKey(sKey);
 		}
 		else
 		{
@@ -18926,6 +18943,7 @@
 	ApiDocument.prototype["GetCommentById"]              = ApiDocument.prototype.GetCommentById;
 	ApiDocument.prototype["GetStatistics"]               = ApiDocument.prototype.GetStatistics;
 	ApiDocument.prototype["GetPageCount"]                = ApiDocument.prototype.GetPageCount;
+	ApiDocument.prototype["GetAllStyles"]                = ApiDocument.prototype.GetAllStyles;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
 	ApiDocument.prototype["ReplaceCurrentImage"]         = ApiDocument.prototype.ReplaceCurrentImage;

@@ -190,11 +190,12 @@
 		this.m_oBuffer = null;
 		this.CheckSize = function(w, h)
 		{
-			if (this.width < (w + 1) || this.height < (h + 1))
+			let extra = 10; // с запасом под device pixelratio
+			if (this.width < (w + extra) || this.height < (h + extra))
 			{
-				this.width = Math.max(this.width, w + 1);
+				this.width = Math.max(this.width, w + extra);
 				this.pitch = 4 * this.width;
-				this.height = Math.max(this.height, h + 1);
+				this.height = Math.max(this.height, h + extra);
 
 				this.m_oBuffer = null;
 				this.m_oBuffer = window['AscFonts'].g_memory.ctx.createImageData(this.width, this.height);

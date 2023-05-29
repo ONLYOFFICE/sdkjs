@@ -58,13 +58,14 @@
 	 */
 	function CTextShaper()
 	{
-		this.Buffer      = [];
-		this.BufferIndex = 0;
-		this.Script      = -1;
-		this.FontId      = -1;
-		this.FontSubst   = false;
-		this.FontSlot    = AscWord.fontslot_None;
-		this.FontSize    = 10;
+		this.Buffer         = [];
+		this.BufferIndex    = 0;
+		this.Script         = -1;
+		this.FontId         = -1;
+		this.FontSubst      = false;
+		this.FontSlot       = AscWord.fontslot_None;
+		this.FontSize       = 10;
+		this.ForceCheckFont = false;
 	}
 	CTextShaper.prototype.ClearBuffer = function()
 	{
@@ -111,9 +112,12 @@
 
 		AscFonts.HB_ShapeString(this, nFontId, oFontInfo.Style, this.FontId, this.GetLigaturesType(), nScript, nDirection, "en");
 
-		// Значит шрифт был подобран, вовзвращаем назад состояние отрисовщика
+		// Значит шрифт был подобран, возвращаем назад состояние отрисовщика
 		if (this.FontId.m_pFaceInfo.family_name !== oFontInfo.Name)
+		{
 			AscCommon.g_oTextMeasurer.SetFontInternal(oFontInfo.Name, AscFonts.MEASURE_FONTSIZE, oFontInfo.Style);
+			this.ForceCheckFont = true;
+		}
 
 		this.ClearBuffer();
 	};
@@ -193,11 +197,12 @@
 	};
 	CTextShaper.prototype.private_CheckFont = function(nFontSlot)
 	{
-		if (this.FontSlot !== nFontSlot)
-		{
-			let oFontInfo = this.GetFontInfo(nFontSlot);
-			AscCommon.g_oTextMeasurer.SetFontInternal(oFontInfo.Name, AscFonts.MEASURE_FONTSIZE, oFontInfo.Style);
-		}
+		if (this.FontSlot === nFontSlot && !this.ForceCheckFont)
+			return;
+		
+		let oFontInfo = this.GetFontInfo(nFontSlot);
+		AscCommon.g_oTextMeasurer.SetFontInternal(oFontInfo.Name, AscFonts.MEASURE_FONTSIZE, oFontInfo.Style);
+		this.ForceCheckFont = false;
 	};
 	CTextShaper.prototype.private_CheckBufferInFont = function(nFontId)
 	{

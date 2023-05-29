@@ -7711,6 +7711,10 @@ CPresentation.prototype.IsFocusOnNotes = function () {
 	return this.FocusOnNotes;
 };
 
+CPresentation.prototype.IsFocusOnThumbnails = function () {
+	return this.GetFocusObjType() === FOCUS_OBJECT_THUMBNAILS;
+};
+
 CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {
 	// Сбрасываем текущий элемент в поиске
 	this.CancelEyedropper();
@@ -12142,6 +12146,8 @@ window['AscCommonSlide'].CPresentation = CPresentation;
 window['AscCommonSlide'].CPrSection = CPrSection;
 window['AscCommonSlide'].CSlideSize = CSlideSize;
 window['AscCommonSlide'].IdList = IdList;
+window['AscCommonSlide'].CONFORMANCE_STRICT = CONFORMANCE_STRICT;
+window['AscCommonSlide'].CONFORMANCE_TRANSITIONAL = CONFORMANCE_TRANSITIONAL;
 
 
 window['AscFormat'] = window['AscFormat'] || {};

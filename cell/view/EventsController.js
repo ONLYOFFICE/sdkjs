@@ -1577,7 +1577,7 @@
 			AscCommon.global_mouseEvent.LockMouse();
 
 			if(t.view.Api.isEyedropperStarted()) {
-				return ;
+				return;
 			}
 			if (t.handlers.trigger("isGlobalLockEditCell")) {
 				return;

@@ -76,6 +76,7 @@ window.onload = function()
 
 	var g_positionSplitter = 200;
 	var g_positionSplitterW = 5;
+	var g_mainHeaderHeight = 50;
 	window.onresize = function()
 	{
 		AscViewer.checkApplicationScale();
@@ -89,7 +90,13 @@ window.onload = function()
 		document.getElementById("panelThumbnails").style.width = g_positionSplitter + "px";
 		document.getElementById("mainPanel").style.left = g_positionSplitter + g_positionSplitterW + "px";
 		document.getElementById("mainPanel").style.width = window.innerWidth - g_positionSplitter - g_positionSplitterW + "px";
-		document.getElementById("mainPanel").style.height = window.innerHeight + "px";
+		document.getElementById("mainPanel").style.height = (window.innerHeight - g_mainHeaderHeight) + "px";
+		document.getElementById("mainPanelHeader").style.left = g_positionSplitter + g_positionSplitterW + "px";
+		document.getElementById("mainPanelHeader").style.width = window.innerWidth - g_positionSplitter - g_positionSplitterW + "px";
+
+		var footerPanelStyle = document.getElementById("headerPanel");
+		footerPanelStyle.style.left = ((window.innerWidth - g_positionSplitter - g_positionSplitterW - footerPanelStyle.offsetWidth) >> 1) + "px";
+		footerPanelStyle.style.top = ((g_mainHeaderHeight - footerPanelStyle.offsetHeight) >> 1) + "px";
 
 		var trackBarH = 50;
 		var tabsBarH = 50;
@@ -178,5 +185,97 @@ window.onload = function()
 
 	window.Thumbnails.registerEvent("onZoomChanged", function(value){
 		trackbar.setPosition(value);
+	});
+
+	document.getElementById("zoomMode").addEventListener("change", function(e) {
+		var selectElement = e.target;
+		var value = selectElement.value;
+		switch (value)
+		{
+			case "zmWidth":
+			{
+				window.Viewer.setZoomMode(AscCommon.ViewerZoomMode.Width);
+				break;
+			}
+			case "zmPage":
+			{
+				window.Viewer.setZoomMode(AscCommon.ViewerZoomMode.Page);
+				break;
+			}
+			default:
+			{
+				if (0 === value.indexOf("custom"))
+					window.Viewer.setZoom(parseInt(value.substr(6)));
+				break;
+			}
+		}
+	});
+
+	document.getElementById("selectMode").addEventListener("change", function(e) {
+		var selectElement = e.target;
+		var value = selectElement.value;
+		switch (value)
+		{
+			case "smText":
+			{
+				window.Viewer.setTargetType("text");
+				break;
+			}
+			case "smHand":
+			default:
+			{
+				window.Viewer.setTargetType("hand");
+				break;
+			}
+		}
+	});
+
+	var zoom_values = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 320, 340, 360, 380, 400, 425, 450, 475, 500];
+	document.getElementById("buttonZoomIn").addEventListener("click", function(e) {
+		var count = zoom_values.length;
+
+		var curZoom = (window.Viewer.getZoom() >> 0);
+		var newZoom = zoom_values[count - 1];
+		for (var i = 0; i < count; i++)
+		{
+			if (curZoom < zoom_values[i])
+			{
+				newZoom = zoom_values[i];
+				break;
+			}
+		}
+
+		if (newZoom <= zoom_values[0] || newZoom >= zoom_values[count - 1])
+			return;
+
+		window.Viewer.setZoom(newZoom);
+	});
+
+	document.getElementById("buttonZoomOut").addEventListener("click", function(e) {
+		var count = zoom_values.length;
+
+		var curZoom = (window.Viewer.getZoom() >> 0);
+		var newZoom = zoom_values[count - 1];
+		for (var i = (count - 1); i >= 0; i--)
+		{
+			if (curZoom > zoom_values[i])
+			{
+				newZoom = zoom_values[i];
+				break;
+			}
+		}
+
+		if (newZoom <= zoom_values[0] || newZoom >= zoom_values[count - 1])
+			return;
+
+		window.Viewer.setZoom(newZoom);
+	});
+
+	document.getElementById("buttonRotateLeft").addEventListener("click", function(e) {
+		window.Viewer.rotatePage(undefined, -90, true);
+	});
+
+	document.getElementById("buttonRotateRight").addEventListener("click", function(e) {
+		window.Viewer.rotatePage(undefined, 90, true);
 	});
 }

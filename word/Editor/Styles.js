@@ -408,7 +408,7 @@ CStyle.prototype =
 		var Old = this.ParaPr;
 		var New = new CParaPr();
 		New.Set_FromObject(Value);
-
+		
 		if (isHandleNumbering && Value.NumPr instanceof CNumPr && Value.NumPr.IsValid())
 		{
 			var oLogicDocument = private_GetWordLogicDocument();
@@ -427,9 +427,12 @@ CStyle.prototype =
 			}
 		}
 
-		this.ParaPr = New;
-
-		History.Add(new CChangesStyleParaPr(this, Old, New));
+		if (Old.IsEqual(New))
+			return;
+		
+		let change = new CChangesStyleParaPr(this, Old, New);
+		AscCommon.History.Add(change);
+		change.Redo();
 	},
 
 	Set_TablePr : function(Value)
@@ -6326,6 +6329,30 @@ CStyle.prototype =
     }
 };
 /**
+ * Получаем ссылку на основной класс документа
+ * @returns {?AscWord.CDocument}
+ */
+CStyle.prototype.GetLogicDocument = function()
+{
+	return private_GetWordLogicDocument();
+};
+/**
+ * Устанавливаем стиль, от которого данный наследуется
+ * @param styleId
+ */
+CStyle.prototype.SetBasedOn = function(styleId)
+{
+	return this.Set_BasedOn(styleId);
+};
+/**
+ * Получаем родительский стиль в иерархии наследования
+ * @returns {null | string}
+ */
+CStyle.prototype.GetBasedOn = function()
+{
+	return this.BasedOn;
+};
+/**
  * Устаналиваем форматный идентификатор стиля
  * @param styleId
  * @constructor
@@ -6365,6 +6392,22 @@ CStyle.prototype.GetTextPr = function()
 CStyle.prototype.SetParaPr = function(oParaPr)
 {
 	this.Set_ParaPr(oParaPr);
+};
+/**
+ * Связываем данный стиль с заданной нумерацией
+ * @param {string} numId Для удаления используем null
+ * @param {number} iLvl
+ */
+CStyle.prototype.SetNumPr = function(numId, iLvl)
+{
+	let paraPr = this.GetParaPr().Copy();
+	
+	if (null !== numId)
+		paraPr.NumPr = new AscWord.CNumPr(numId, iLvl);
+	else
+		paraPr.NumPr = undefined;
+	
+	this.SetParaPr(paraPr);
 };
 /**
  * Получаем настройки параграфа
@@ -7693,6 +7736,48 @@ CStyle.prototype.wholeToTablePr = function() {
 		oTablePBorders.Right = oWholeCellBorders.Right;
 		delete oWholeCellBorders.Right;
 	}
+};
+/**
+ * Получаем список параграфов, использующих данный стиль, либо стиль, основанный на данном
+ * @returns {AscWord.CParagraph[]}
+ */
+CStyle.prototype.GetRelatedParagraphs = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument)
+		return [];
+	
+	let styleManager = logicDocument.GetStyles();
+	
+	let styleId = this.GetId();
+	let paragraphs;
+	if (styleId !== styleManager.GetDefaultParagraph())
+	{
+		let relatedStylesId = styleManager.private_GetAllBasedStylesId(styleId);
+		paragraphs = logicDocument.GetAllParagraphsByStyle(relatedStylesId);
+	}
+	else
+	{
+		paragraphs = logicDocument.GetAllParagraphs();
+	}
+	
+	return paragraphs;
+};
+/**
+ * Обновляем коллекцию нумераций для параграфов, связанных с данным стилем
+ */
+CStyle.prototype.UpdateNumberingCollection = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument)
+		return;
+
+	let numberingCollection = logicDocument.GetNumberingCollection();
+	this.GetRelatedParagraphs().forEach(function(paragraph)
+	{
+		paragraph.RecalcCompiledPr();
+		numberingCollection.CheckParagraph(paragraph);
+	});
 };
 
 function CStyles(bCreateDefault)
@@ -16082,10 +16167,10 @@ CParaSpacing.prototype.SetLineTwips = function (val) {
 	}
 };
 
-function CNumPr(sNumId, nLvl)
+function CNumPr(numId, iLvl)
 {
-    this.NumId = undefined !== sNumId ? sNumId : "-1";
-    this.Lvl   = undefined !== nLvl ? nLvl : 0;
+    this.NumId = numId;
+    this.Lvl   = undefined !== iLvl ? iLvl : 0;
 }
 
 CNumPr.prototype =
@@ -18184,6 +18269,7 @@ window["AscWord"].CStyle  = CStyle;
 window["AscWord"].CNumPr  = CNumPr;
 window["AscWord"].CBorder = CDocumentBorder;
 window["AscWord"].CShd    = CDocumentShd;
+window["AscWord"].CStyles = CStyles;
 
 
 // Создаем глобальные дефолтовые стили, чтобы быстро можно было отдать дефолтовые настройки

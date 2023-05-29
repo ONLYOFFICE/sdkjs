@@ -548,13 +548,13 @@
 			case AscCommon.c_oEditorId.Word:
 				if (true === word_control.m_bIsRuler)
 				{
-					xCoord += (5 * g_dKoef_mm_to_pix) >> 0;
-					yCoord += (7 * g_dKoef_mm_to_pix) >> 0;
+					xCoord += (5 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+					yCoord += (7 * AscCommon.g_dKoef_mm_to_pix) >> 0;
 				}
 				break;
 			case AscCommon.c_oEditorId.Presentation:
-				xCoord += ((word_control.m_oMainParent.AbsolutePosition.L + word_control.m_oMainView.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
-				yCoord += ((word_control.m_oMainParent.AbsolutePosition.T + word_control.m_oMainView.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
+				xCoord += ((word_control.m_oMainParent.AbsolutePosition.L + word_control.m_oMainView.AbsolutePosition.L) * AscCommon.g_dKoef_mm_to_pix) >> 0;
+				yCoord += ((word_control.m_oMainParent.AbsolutePosition.T + word_control.m_oMainView.AbsolutePosition.T) * AscCommon.g_dKoef_mm_to_pix) >> 0;
 				yCoord += this.buttonSize;
 				break;
 			default:
@@ -894,6 +894,14 @@
 		In    : 1,
 		Main  : 2
 	};
+
+	function getOutlineCC(isActive)
+	{
+		var _editor = Asc.editor || editor;
+		if (_editor && _editor.isDarkMode === true)
+			return isActive ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0.23)";
+		return isActive ? AscCommon.GlobalSkin.FormsContentControlsOutlineActive : AscCommon.GlobalSkin.FormsContentControlsOutlineHover;
+	}
 
 	// показ диалогов в мобильной версии должен быть только по клику
 	function _sendEventToApi(api, obj, x, y, isclick)
@@ -3772,9 +3780,9 @@
 				if (currentIteration === countIteration)
 				{
 					if (!this.isActive)
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineHover;
+						ctx.strokeStyle = getOutlineCC(false);
 					else
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineActive;
+						ctx.strokeStyle = getOutlineCC(true);
 
 					ctx.lineWidth = Math.round(rPR);
 					ctx.stroke();
@@ -4046,9 +4054,9 @@
 				if (currentIteration === countIteration)
 				{
 					if (!this.isActive)
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineHover;
+						ctx.strokeStyle = getOutlineCC(false);
 					else
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineActive;
+						ctx.strokeStyle = getOutlineCC(true);
 
 					ctx.lineWidth = 1;
 					ctx.stroke();

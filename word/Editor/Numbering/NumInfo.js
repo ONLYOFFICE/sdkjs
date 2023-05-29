@@ -88,7 +88,7 @@
 				isBulleted = isBulleted || numLvl.IsBulleted();
 				isNumbered = isNumbered || numLvl.IsNumbered();
 				
-				numInfo.Lvl[iLvl] = numLvl.ToJson(null, {isSingleLvlPresetJSON: true});
+				numInfo.Lvl[iLvl] = numLvl.ToJson(null);
 				if (isHeading && styles)
 				{
 					if (numLvl.GetPStyle() !== styles.GetDefaultHeading(iLvl))
@@ -225,6 +225,10 @@
 	{
 		return this.Type === Asc.c_oAscJSONNumberingType.Remove;
 	};
+	CNumInfo.prototype.IsNone = function()
+	{
+		return this.IsRemove();
+	};
 	CNumInfo.prototype.HaveLvl = function()
 	{
 		return (!!this.Lvl.length);
@@ -245,21 +249,42 @@
 		
 		return json;
 	};
+	CNumInfo.prototype.IsSingleLevel = function()
+	{
+		return (1 === this.Lvl.length);
+	};
 	CNumInfo.prototype.FillNum = function(num)
 	{
-		if (!num || !(num instanceof Asc.CAscNumbering))
+		if (!num)
 			return;
 		
-		for (let iLvl = 0; iLvl < 9; ++iLvl)
+		if (num instanceof Asc.CAscNumbering)
 		{
-			let numInfoLvl = this.Lvl[iLvl];
-			let numLvl;
-			if (numInfoLvl)
-				numLvl = AscWord.CNumberingLvl.FromJson(numInfoLvl);
-			else
-				numLvl = AscWord.CNumberingLvl.CreateDefault(iLvl, this.IsBulleted() ? Asc.c_oAscMultiLevelNumbering.Bullet : Asc.c_oAscMultiLevelNumbering.Numbered);
-			
-			numLvl.FillToAscNumberingLvl(num.get_Lvl(iLvl));
+			for (let iLvl = 0; iLvl < 9; ++iLvl)
+			{
+				let numInfoLvl = this.Lvl[iLvl];
+				let numLvl;
+				if (numInfoLvl)
+					numLvl = AscWord.CNumberingLvl.FromJson(numInfoLvl);
+				else
+					numLvl = AscWord.CNumberingLvl.CreateDefault(iLvl, this.IsBulleted() ? Asc.c_oAscMultiLevelNumbering.Bullet : Asc.c_oAscMultiLevelNumbering.Numbered);
+				
+				numLvl.FillToAscNumberingLvl(num.get_Lvl(iLvl));
+			}
+		}
+		else if (num instanceof AscWord.CNum)
+		{
+			for (let iLvl = 0; iLvl < 9; ++iLvl)
+			{
+				let numInfoLvl = this.Lvl[iLvl];
+				let numLvl;
+				if (numInfoLvl)
+					numLvl = AscWord.CNumberingLvl.FromJson(numInfoLvl);
+				else
+					numLvl = AscWord.CNumberingLvl.CreateDefault(iLvl, this.IsBulleted() ? Asc.c_oAscMultiLevelNumbering.Bullet : Asc.c_oAscMultiLevelNumbering.Numbered);
+				
+				num.SetLvl(numLvl, iLvl);
+			}
 		}
 	};
 	

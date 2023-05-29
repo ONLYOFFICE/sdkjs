@@ -202,6 +202,18 @@
 		return false;
 	}
 
+	function asc_menu_ReadPaddings(_params, _cursor){
+		const _paddings = new Asc.asc_CPaddings();
+		_paddings.read(_params, _cursor);
+		return _paddings;
+	}
+
+	function asc_menu_ReadColor(_params, _cursor) {
+		const _color = new Asc.asc_CColor();
+		_color.read(_params, _cursor);
+		return _color;
+	}
+
 	var c_oLicenseResult = {
 		Error         : 1,
 		Expired       : 2,
@@ -2065,7 +2077,9 @@
 
 	};
 	asc_ChartSettings.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
+		if(_type !== undefined && _type !== null) {
+			_stream["WriteByte"](_type);
+		}
 
 		if (this.style !== undefined && this.style !== null)
 		{
@@ -4001,7 +4015,10 @@
 			return this.isMotionPath;
 		};
 	asc_CShapeProperty.prototype.write = function (_type, _stream) {
-		_stream["WriteByte"](_type);
+
+		if(_type !== undefined && _type !== null) {
+			_stream["WriteByte"](_type);
+		}
 
 		if (this.type !== undefined && this.type !== null) {
 			_stream["WriteByte"](0);
@@ -4082,8 +4099,8 @@
 					break;
 				}
 				case 8: {
-					this.shadow = new Asc.asc_CShadowProperty();
-					this.shadow.read(_params, _cursor);
+					const oShadow = new Asc.asc_CShadowProperty();
+					this.shadow = oShadow.read(_params, _cursor);
 					break;
 				}
 				case 9: {
@@ -7880,6 +7897,8 @@
     window["AscCommon"].isFileBuild = isFileBuild;
     window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
     window["AscCommon"].isValidJs = isValidJs;
+    window["AscCommon"].asc_menu_ReadPaddings = asc_menu_ReadPaddings;
+    window["AscCommon"].asc_menu_ReadColor = asc_menu_ReadColor;
 
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;
 	window["Asc"]["CPlugin"] = window["Asc"].CPlugin = CPlugin;

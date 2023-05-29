@@ -323,6 +323,7 @@ var editor;
         this.wbModel.rebuildColors();
         if (this.isDocumentLoadComplete) {
           AscCommon.checkCultureInfoFontPicker();
+          this.wb && this.wb.cleanCache();
           this._loadFonts([], function () {
             this._onUpdateAfterApplyChanges();
           });
@@ -618,10 +619,12 @@ var editor;
 		var t = this;
 
 		function wrapper_callback(data) {
+			var bom = AscCommon.getEncodingByBOM(data);
 			var cp = {
-				'codepage': AscCommon.c_oAscCodePageUtf8, "delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
+				'codepage': AscCommon.c_oAscCodePageNone !== bom.encoding ? bom.encoding : AscCommon.c_oAscCodePageUtf8,
+				"delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
 				'encodings': AscCommon.getEncodingParams(),
-				'data': data
+				'data': data.subarray(bom.size)
 			};
 			callback(new AscCommon.asc_CAdvancedOptions(cp));
 		}
@@ -653,14 +656,14 @@ var editor;
 
 			var reader = new FileReader();
 			reader.onload = function () {
-				wrapper_callback(reader.result);
+				wrapper_callback(new Uint8Array(reader.result));
 			};
 
 			reader.onerror = function () {
 				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
 			};
-			//readAsText - works as an opening csv, readAsArrayBuffer - differs from opening
-			reader.readAsText(files[0]);
+
+			reader.readAsArrayBuffer(files[0]);
 		});
 	};
 
@@ -1428,6 +1431,17 @@ var editor;
 
   spreadsheet_api.prototype._downloadAs = function(actionType, options, oAdditionalData, dataContainer, downloadType) {
     var fileType = options.fileType;
+
+	if (this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType)) {
+	  var printPagesData, pdfPrinterMemory, t = this;
+      this.wb._executeWithoutZoom(function () {
+        printPagesData = t.wb.calcPagesPrint(options.advancedOptions);
+        pdfPrinterMemory = t.wb.printSheets(printPagesData, null, options.advancedOptions).DocumentRenderer.Memory;
+	  });
+      this.localSaveToDrawingFormat(pdfPrinterMemory.GetBase64Memory(), fileType);
+	  return true;
+	}
+
     if (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType) {
       var printPagesData, pdfPrinterMemory, t = this;
       this.wb._executeWithoutZoom(function () {
@@ -3358,6 +3372,7 @@ var editor;
 	};
 	spreadsheet_api.prototype._addWorksheetsWithoutLock = function (arrNames, where) {
 		var res = [];
+		this.inkDrawer.startSilentMode();
 		History.Create_NewPoint();
 		History.StartTransaction();
 		for (var i = arrNames.length - 1; i >= 0; --i) {
@@ -3369,6 +3384,7 @@ var editor;
 		History.EndTransaction();
 		// Посылаем callback об изменении списка листов
 		this.sheetsChanged();
+		this.inkDrawer.endSilentMode();
 		return res;
 	};
 
@@ -6422,10 +6438,18 @@ var editor;
 		AscCommon.build_local_rx(oLocalizedData ? oLocalizedData["LocalFormulaOperands"] : null);
 		if (this.wb) {
 			this.wb.initFormulasList();
-			this.wb._onWSSelectionChanged()
+			this.wb._onWSSelectionChanged();
 		}
 		if (this.wbModel) {
 			this.wbModel.rebuildColors();
+		}
+
+		//on change formula language need load fonts
+		const constError = oLocalizedData &&  oLocalizedData["LocalFormulaOperands"] && oLocalizedData["LocalFormulaOperands"]["CONST_ERROR"];
+		if (constError && constError["nil"]) {
+			if (AscFonts.FontPickerByCharacter.getFontsByString(constError["nil"])) {
+				this._loadFonts([], function() {});
+			}
 		}
 	};
 
@@ -6906,6 +6930,16 @@ var editor;
         }
       }
       if (cellLayout !== null) {
+        if (cellLayout.fld === null) {
+          let rowFields = pivotTable.asc_getRowFields();
+          let colFields = pivotTable.asc_getColumnFields();
+          let rowFieldsFirstIndex = rowFields && rowFields[0].asc_getIndex();
+          let firstIndex = rowFieldsFirstIndex;
+          if (rowFieldsFirstIndex === null) {
+            firstIndex = colFields && colFields[0].asc_getIndex();
+          }
+          cellLayout.fld = firstIndex;
+        }
         res = new Asc.CT_DataField();
         res.baseField = cellLayout.fld;
         res.baseItem = cellLayout.v;
@@ -9034,6 +9068,7 @@ var editor;
   prot["asc_getSignatures"] 		     = prot.asc_getSignatures;
   prot["asc_isSignaturesSupport"] 	     = prot.asc_isSignaturesSupport;
   prot["asc_isProtectionSupport"] 		 = prot.asc_isProtectionSupport;
+  prot["asc_isAnonymousSupport"] 		 = prot.asc_isAnonymousSupport;
   prot["asc_RemoveSignature"] 		= prot.asc_RemoveSignature;
   prot["asc_RemoveAllSignatures"] 	= prot.asc_RemoveAllSignatures;
   prot["asc_gotoSignature"] 	    = prot.asc_gotoSignature;

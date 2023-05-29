@@ -366,6 +366,7 @@
 				c.addToSpTree(c.spTree.length, this.spTree[i].convertToWord(document));
 				c.spTree[c.spTree.length - 1].setGroup(c);
 			}
+			c.removePlaceholder();
 			return c;
 		};
 

@@ -318,7 +318,7 @@
     };
     CTextBody.prototype.draw = function(graphics) {
         if((!this.content || this.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.parent.isEmptyPlaceholder() && !this.checkCurrentPlaceholder()) {
-            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2) {
+            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.RENDERER_PDF_FLAG) {
                 if(graphics.IsNoSupportTextDraw) {
                     let _w2 = this.content2.XLimit;
                     let _h2 = this.content2.GetSummaryHeight();

@@ -1310,6 +1310,13 @@
 		if (this.disableCheckInstalledPlugins)
 			return;
 
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
+		if (isDesktop) {
+			// В случае Desktop не работаем с localStorage и extensions, этот метод может быть вызван из интерфейса
+			// если по какой-то причине (неактуальный cache) у пользователя есть asc_plugins_installed, asc_plugins_removed, то их нужно игнорировать/удалить
+			return;
+		}
+
 		let arrayPlugins = [];
 
 		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
@@ -1411,6 +1418,13 @@
 			for (var i = 0; i < len; i++) {
 				protectedPlugins.push(_pluginsTmp[0]["pluginsData"][i]["guid"]);
 			}
+			
+			// Также смотрим плагины из папки пользователя, возможно там есть обновленные системные
+			len = _pluginsTmp[1]["pluginsData"].length;
+			for (var i = 0; i < len; i++) {
+				if (_pluginsTmp[1]["pluginsData"][i]["canRemoved"] === false)
+					protectedPlugins.push(_pluginsTmp[1]["pluginsData"][i]["guid"]);
+			}
 		}
 
 		let baseUrl = window.location.href;
@@ -1471,6 +1485,7 @@
      */
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid, backup)
 	{
+		let removedPlugin = window.g_asc_plugins.unregister(guid);
 		const isDesktop = window["AscDesktopEditor"] !== undefined;
 
 		if (isDesktop)
@@ -1492,8 +1507,6 @@
 			};
 		}
 		
-		let removedPlugin = window.g_asc_plugins.unregister(guid);
-
 		if (removedPlugin)
 		{
 			let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");

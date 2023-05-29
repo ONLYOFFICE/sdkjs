@@ -11891,6 +11891,7 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.convertToWord = function(document) {
       var oCopy = this.copy();
       oCopy.setBDeleted2(false);
+      oCopy.removePlaceholder();
       return oCopy;
     };
     SmartArt.prototype.convertToPPTX = function(drawingDocument, worksheet) {
