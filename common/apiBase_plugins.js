@@ -1788,10 +1788,10 @@
 	 * Resizes the plugin modal window.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
-	 * @param {number} [size] - The frame size.
-	 * @param {number} [minSize] - The frame minimum size.
-	 * @param {number} [maxSize] - The frame maximum size.
+	 * @param {string} frameId - The frame ID.
+	 * @param {number} size - The frame size.
+	 * @param {number} minSize - The frame minimum size.
+	 * @param {number} maxSize - The frame maximum size.
 	 * @alias ResizeWindow
 	 * @since 7.4.0
 	 */
@@ -1804,12 +1804,12 @@
 	};
 
 	/**
-	 * Send an event to the plugin when the mouse button is released inside the plugin iframe.
+	 * Sends an event to the plugin when the mouse button is released inside the plugin iframe.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
-	 * @param {number} [x] - The X coordinate.
-	 * @param {number} [y] - The Y coordinate.
+	 * @param {string} frameId - The frame ID.
+	 * @param {number} x - The X coordinate.
+	 * @param {number} y - The Y coordinate.
 	 * @alias MouseUpWindow
 	 * @since 7.4.0
 	 */
@@ -1819,12 +1819,12 @@
 	};
 
 	/**
-	 * Send an event to the plugin when the mouse button is moved inside the plugin iframe.
+	 * Sends an event to the plugin when the mouse button is moved inside the plugin iframe.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
- 	 * @param {number} [x] - The X coordinate.
-	 * @param {number} [y] - The Y coordinate.
+	 * @param {string} frameId - The frame ID.
+ 	 * @param {number} x - The X coordinate.
+	 * @param {number} y - The Y coordinate.
 	 * @alias MouseMoveWindow
 	 * @since 7.4.0
 	 */

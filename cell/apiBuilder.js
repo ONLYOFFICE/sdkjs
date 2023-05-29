@@ -2760,7 +2760,7 @@
 	});
 
 	/**
-	 * Returns value that represents the format code for the range.
+	 * Returns a value that represents the format code for the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null} This property returns null if all cells in the specified range don't have the same number format.
