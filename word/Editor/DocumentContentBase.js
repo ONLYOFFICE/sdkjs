@@ -2366,12 +2366,28 @@ CDocumentContentBase.prototype.OnContentChange = function()
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
 };
-CDocumentContentBase.prototype.GetFormattingPasteData = function()
+CDocumentContentBase.prototype.GetFormattingPasteData = function(bCalcPr)
 {
 	if (docpostype_DrawingObjects === this.GetDocPosType())
-		return this.DrawingObjects.getFormatPainterData();
+	{
+		return this.DrawingObjects.getFormatPainterData(bCalcPr);
+	}
 	else
-		return new AscCommon.CTextFormattingPasteData(this.GetDirectTextPr(), this.GetDirectParaPr());
+	{
+		let oTextPr;
+		let oParaPr;
+		if (bCalcPr)
+		{
+			oTextPr = this.GetCalculatedTextPr();
+			oParaPr = this.GetCalculatedParaPr();
+		}
+		else
+		{
+			oTextPr = this.GetDirectTextPr();
+			oParaPr = this.GetDirectParaPr();
+		}
+		return new AscCommon.CTextFormattingPasteData(oTextPr, oParaPr);
+	}
 };
 CDocumentContentBase.prototype.UpdateNumberingCollection = function(elements)
 {

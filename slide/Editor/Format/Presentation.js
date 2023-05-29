@@ -7903,7 +7903,7 @@ CPresentation.prototype.GetFormattingPasteData = function () {
 	let oController = this.GetCurrentController();
 	if (!oController)
 		return null;
-	return oController.getFormatPainterData();
+	return oController.getFormatPainterData(true);
 };
 CPresentation.prototype.Document_Format_Copy = function () {
 	this.Api.checkFormatPainterData();
