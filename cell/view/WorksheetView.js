@@ -12315,8 +12315,8 @@
 		this.model.workbook.handlers.trigger("cleanCutData", null, true);
 		this.model.workbook.handlers.trigger("cleanCopyData");
 
-        var arnFrom = this.model.selectionRange.getLast();
-        var arnTo = this.activeMoveRange.clone(true);
+        let arnFrom = this.model.selectionRange.getLast();
+		let arnTo = this.activeMoveRange.clone(true);
         if (arnFrom.isEqual(arnTo)) {
             this._cleanSelectionMoveRange();
             return;
@@ -12331,7 +12331,7 @@
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 			return;
 		}
-		var errorPivot = this.model.checkMovePivotTable(arnFrom, arnTo, ctrlKey);
+		let errorPivot = this.model.checkMovePivotTable(arnFrom, arnTo, ctrlKey);
 		if (c_oAscError.ID.No !== errorPivot) {
 			this._cleanSelectionMoveRange();
 			this.model.workbook.handlers.trigger("asc_onError", errorPivot, c_oAscError.Level.NoCritical);
@@ -12341,7 +12341,13 @@
 		let t = this;
 		let doMove = function (success) {
 			if (!success) {
+				shiftMove && History.EndTransaction();
 				return;
+			}
+
+			if (shiftMove) {
+				arnFrom = lastSelection;
+				arnTo = t.model.selectionRange.getLast().clone();
 			}
 
 			//***array-formula***
@@ -12352,10 +12358,11 @@
 			if (!t.checkMoveFormulaArray(arnFrom, arnTo)) {
 				t._cleanSelectionMoveRange();
 				t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+				shiftMove && History.EndTransaction();
 				return;
 			}
 
-			var resmove = t.model._prepareMoveRange(arnFrom, arnTo);
+			let resmove = t.model._prepareMoveRange(arnFrom, arnTo);
 			if (resmove === -2) {
 				t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotMoveRange, c_oAscError.Level.NoCritical);
 				t._cleanSelectionMoveRange();
@@ -12363,19 +12370,29 @@
 				t.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange,
 					function (can) {
 						if (can) {
-							t.moveRangeHandle(arnFrom, arnTo, ctrlKey);
+							t.moveRangeHandle(arnFrom, arnTo, ctrlKey, null, shiftMove && function () {History.EndTransaction();});
 						} else {
 							t._cleanSelectionMoveRange();
 						}
 					});
 			} else {
-				t.moveRangeHandle(arnFrom, arnTo, ctrlKey);
+				t.moveRangeHandle(arnFrom, arnTo, ctrlKey, null, shiftMove && function () {History.EndTransaction();});
 			}
 		};
 
 		//shift cols/rows and move
-		if (this.startCellMoveRange.colRowMoveProps && this.startCellMoveRange.colRowMoveProps.shiftKey) {
-			this.changeWorksheet("insCell", c_oAscInsertOptions.InsertCellsAndShiftRight, doMove);
+		let lastSelection;
+		let shiftMove = this.startCellMoveRange.colRowMoveProps && this.startCellMoveRange.colRowMoveProps.shiftKey;
+		if (shiftMove) {
+			lastSelection = t.model.selectionRange.getLast().clone();
+			let colStart = this.startCellMoveRange.colRowMoveProps.colByX + 1;
+			let colEnd = colStart + lastSelection.c2 - lastSelection.c1;
+			t.model.selectionRange.getLast().assign(colStart, lastSelection.r1, colEnd, lastSelection.r2);
+
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			this.changeWorksheet("insCell", c_oAscInsertOptions.InsertCellsAndShiftRight, doMove, true);
 		} else {
 			doMove(true);
 		}
@@ -12452,7 +12469,7 @@
 	};
 
 
-    WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo) {
+    WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo, callback) {
 		//opt_wsTo - for test reasons only
         var t = this;
 		var wsTo = opt_wsTo ? opt_wsTo : this;
@@ -12461,6 +12478,7 @@
             if (false === isSuccess) {
 				wsTo.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
                 wsTo._cleanSelectionMoveRange();
+				callback && callback(false);
                 return;
             }
 
@@ -12468,6 +12486,7 @@
                 if (false === isSuccess) {
 					wsTo.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
                     wsTo._cleanSelectionMoveRange();
+					callback && callback(false);
                     return;
                 }
 
@@ -12528,6 +12547,7 @@
 				}
 				t.workbook.Api.onWorksheetChange(arnFrom);
 				t.workbook.Api.onWorksheetChange(arnTo);
+				callback && callback(true);
             };
 
             if (t.model.autoFilters._searchFiltersInRange(arnFrom, true)) {
@@ -12544,6 +12564,7 @@
         if (this.model.isUserProtectedRangesIntersection([arnFrom, arnTo])) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			this._cleanSelectionMoveRange();
+			callback && callback(false);
 			return;
 		}
 
@@ -15838,7 +15859,7 @@
 		this._isLockedAll(onChangeSheetViewSettings);
 	};
 
-	WorksheetView.prototype.changeWorksheet = function (prop, val, callback) {
+	WorksheetView.prototype.changeWorksheet = function (prop, val, callback, lockDraw) {
 		// Проверка глобального лока
 		if (this.collaborativeEditing.getGlobalLock() || (!window["Asc"]["editor"].canEdit() && !this.workbook.Api.VersionHistory)) {
 			return;
@@ -15856,7 +15877,6 @@
 		var isUpdateCols = false, isUpdateRows = false;
 		var isCheckChangeAutoFilter;
 		var functionModelAction = null;
-		var lockDraw = false;	// Параметр, при котором не будет отрисовки (т.к. мы просто обновляем информацию на неактивном листе)
 		var lockRange, arrChangedRanges = [];
 		var isError;
 
