@@ -10861,11 +10861,11 @@ CustomFilters.prototype.toXml = function (writer, name, ns, childns) {
 
 	writer.WriteXmlNodeEnd(ns + name);
 };
-CustomFilters.prototype.changeForInterface = function () {
+CustomFilters.prototype.changeForInterface = function (filterTypes) {
 	var res = this.clone();
 	if(res.CustomFilters) {
 		for(var i = 0; i < res.CustomFilters.length; i++) {
-			res.CustomFilters[i].changeForInterface();
+			res.CustomFilters[i].changeForInterface(filterTypes);
 		}
 	}
 	return res;
@@ -11205,7 +11205,7 @@ CustomFilter.prototype.Read_FromBinary2 = function(reader) {
 		this.Val = reader.GetString2();
 	}
 };
-CustomFilter.prototype.changeForInterface = function() {
+CustomFilter.prototype.changeForInterface = function(filterTypes) {
 	if (!this.Val || this.Val.length <= 1) {
 		return;
 	}
@@ -11238,6 +11238,17 @@ CustomFilter.prototype.changeForInterface = function() {
 			}
 		}
 	}
+
+	//filterTypes
+	/*autoFilterObject.asc_setIsTextFilter(filterTypes.text);
+	autoFilterObject.asc_setIsDateFilter(filterTypes.date);
+	autoFilterObject.asc_setColorsFill(filterTypes.colors);
+	autoFilterObject.asc_setColorsFont(filterTypes.fontColors);*/
+	if (filterTypes && filterTypes.date && AscCommon.g_oFormatParser.isLocaleNumber(this.Val + "")) {
+		let api = Asc.editor || editor;
+		this.Val = api.asc_getLocaleExample("m/d/yyyy", this.Val);
+	}
+
 };
 
 var g_oDynamicFilter = {

@@ -504,7 +504,7 @@
 			asc_getType : function() { return this.type; },
 			asc_getFilter : function() { return this.filter; },
 
-			convertFromFilterColumn: function(filters, ignoreCustomFilter) {
+			convertFromFilterColumn: function(filters, ignoreCustomFilter, filterTypes) {
 				this.type = c_oAscAutoFilterTypes.None;
 				if(!filters){
 					return;
@@ -515,7 +515,7 @@
 				} else if (!ignoreCustomFilter && filters.CustomFiltersObj && filters.CustomFiltersObj.CustomFilters) {
 					this.type = c_oAscAutoFilterTypes.CustomFilters;
 					this.filter = filters.CustomFiltersObj;
-					this.filter = this.filter.changeForInterface();
+					this.filter = this.filter.changeForInterface(filterTypes);
 				} else if (filters.DynamicFilter) {
 					this.type = c_oAscAutoFilterTypes.DynamicFilter;
 					this.filter = filters.DynamicFilter.clone();
@@ -6400,9 +6400,12 @@
 				var cell = ws.getRange3(rangeButton.r1, rangeButton.c1, rangeButton.r2, rangeButton.c2);
 				var columnName = cell.getValue();
 
+				var columnRange = new Asc.Range(colId + autoFilter.Ref.c1, autoFilter.Ref.r1 + 1, colId + autoFilter.Ref.c1, (automaticRowCount && automaticRowCount > autoFilter.Ref.r2) ? automaticRowCount : autoFilter.Ref.r2);
+				var filterTypes = ws.getRowColColors(columnRange);
+
 				//get filter object
 				var filterObj = new Asc.AutoFilterObj();
-				filterObj.convertFromFilterColumn(filters, ignoreCustomFilter);
+				filterObj.convertFromFilterColumn(filters, ignoreCustomFilter, filterTypes);
 
 				//get sort
 				var sortVal = null;
@@ -6467,9 +6470,6 @@
 				autoFilterObject.asc_setColumnName(columnName);
 				autoFilterObject.asc_setSheetColumnName(AscCommon.g_oCellAddressUtils.colnumToColstr(rangeButton.c1 + 1));
 
-				var columnRange = new Asc.Range(colId + autoFilter.Ref.c1, autoFilter.Ref.r1 + 1, colId + autoFilter.Ref.c1, (automaticRowCount && automaticRowCount > autoFilter.Ref.r2) ? automaticRowCount : autoFilter.Ref.r2);
-
-				var filterTypes = ws.getRowColColors(columnRange);
 				autoFilterObject.asc_setIsTextFilter(filterTypes.text);
 				autoFilterObject.asc_setIsDateFilter(filterTypes.date);
 				autoFilterObject.asc_setColorsFill(filterTypes.colors);
