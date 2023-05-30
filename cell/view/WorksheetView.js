@@ -12438,20 +12438,24 @@
 		if (shiftMove) {
 			lastSelection = t.model.selectionRange.getLast().clone();
 
-			if (this.startCellMoveRange.colRowMoveProps.colByX != null) {
-				let colStart = this.startCellMoveRange.colRowMoveProps.colByX + 1;
+			let colByX = this.startCellMoveRange.colRowMoveProps.colByX;
+			let rowByY = this.startCellMoveRange.colRowMoveProps.rowByY;
+			if (colByX != null) {
+				let colStart = colByX + 1;
 				let colEnd = colStart + lastSelection.c2 - lastSelection.c1;
 				t.model.selectionRange.getLast().assign(colStart, lastSelection.r1, colEnd, lastSelection.r2);
-			} else if (this.startCellMoveRange.colRowMoveProps.rowByY != null) {
-				let rowStart = this.startCellMoveRange.colRowMoveProps.rowByY + 1;
+			} else if (rowByY != null) {
+				let rowStart = rowByY + 1;
 				let rowEnd = rowStart + lastSelection.r2 - lastSelection.r1;
 				t.model.selectionRange.getLast().assign(lastSelection.c1, rowStart, lastSelection.c2, rowEnd);
 			}
 
-			History.Create_NewPoint();
-			History.StartTransaction();
-
-			this.changeWorksheet("insCell", c_oAscInsertOptions.InsertCellsAndShiftRight, doMove, true);
+			if (colByX != null || rowByY != null) {
+				History.Create_NewPoint();
+				History.StartTransaction();
+				let insProp = colByX ? c_oAscInsertOptions.InsertCellsAndShiftRight : c_oAscInsertOptions.InsertCellsAndShiftDown;
+				this.changeWorksheet("insCell", insProp, doMove, true);
+			}
 		} else {
 			doMove(true);
 		}
