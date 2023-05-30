@@ -6089,16 +6089,21 @@
                     this._drawFormatPainterRange();
                 }
                 if (null !== this.activeMoveRange) {
-                    let fullColumnProps = this.startCellMoveRange.colRowMoveProps;
-                    if (fullColumnProps) {
-                        let shift = fullColumnProps.shiftKey;
+                    let fullColumnRowProps = this.startCellMoveRange.colRowMoveProps;
+                    if (fullColumnRowProps) {
+                        let shift = fullColumnRowProps.shiftKey;
                         if (shift) {
-                            let insertToCol = fullColumnProps.colByX;
+                            let insertToCol = fullColumnRowProps.colByX;
+                            let insertToRow = fullColumnRowProps.rowByY;
                             var selectionRange = (this.dragAndDropRange || this.model.selectionRange.getLast());
-                            if (insertToCol >= selectionRange.c1 && insertToCol <= selectionRange.c2) {
+
+                            if (insertToCol != null && insertToCol >= selectionRange.c1 && insertToCol <= selectionRange.c2) {
                                 insertToCol = Math.max(0, selectionRange.c1 - 1);
                             }
-                            this._drawElements(this._drawLineBetweenRowCol, insertToCol + 1, null, this.settings.activeCellBorderColor);
+                            if (insertToRow != null && insertToRow >= selectionRange.r1 && insertToRow <= selectionRange.r2) {
+                                insertToRow = Math.max(0, selectionRange.r1 - 1);
+                            }
+                            this._drawElements(this._drawLineBetweenRowCol, insertToCol != null ? insertToCol + 1 : null, insertToRow != null ? insertToRow + 1 : null, this.settings.activeCellBorderColor);
                         } else {
                             this._drawElements(this._drawSelectionElement, this.activeMoveRange, AscCommonExcel.selectionLineType.Selection,
                                 this.settings.activeCellBorderColor, null, 3);
@@ -6266,17 +6271,17 @@
     };
 
 	WorksheetView.prototype._drawLineBetweenRowCol = function (visibleRange, offsetX, offsetY, args) {
-		var col = args[0];
-		var row = args[1];
-		var strokeColor = args[2];
-		var ctx = this.overlayCtx;
+		let col = args[0];
+		let row = args[1];
+		let strokeColor = args[2];
+		let ctx = this.overlayCtx;
 
-		var fHorLine, fVerLine;
+		let fHorLine, fVerLine;
 
 		fHorLine = ctx.lineHorPrevPx;
 		fVerLine = ctx.lineVerPrevPx;
 
-		var widthLine = 2;
+		let widthLine = 2;
 
 		if (AscBrowser.retinaPixelRatio === 2) {
 			widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
@@ -6286,16 +6291,24 @@
 			if (!visibleRange.containsCol(col)) {
 				return;
 			}
-			var x1 = this._getColLeft(col) - offsetX;
-			var y1 = this._getRowTop(visibleRange.r1) - offsetY;
-			var y2 = this._getRowTop(visibleRange.r2 + 1) - offsetY;
+			let x1 = this._getColLeft(col) - offsetX;
+			let y1 = this._getRowTop(visibleRange.r1) - offsetY;
+			let y2 = this._getRowTop(visibleRange.r2 + 1) - offsetY;
 
 			ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
 			fVerLine.apply(ctx, [x1, y1, y2]);
 			ctx.closePath().stroke();
+		} else if (row != null) {
+			if (!visibleRange.containsRow(row)) {
+				return;
+			}
+			let y = this._getRowTop(row) - offsetY;
+			let x1 = this._getColLeft(visibleRange.c1) - offsetX;
+			let x2 = this._getColLeft(visibleRange.c2 + 1) - offsetX;
 
-		} else {
-
+			ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
+			fHorLine.apply(ctx, [x1, y, x2]);
+			ctx.closePath().stroke();
 		}
 
 
@@ -6494,7 +6507,11 @@
 			let activeMoveRange = this.activeMoveRange;
 			let colRowMoveProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
 			if (colRowMoveProps && colRowMoveProps.shiftKey) {
-				activeMoveRange = new Asc.Range(colRowMoveProps.colByX, activeMoveRange.r1, colRowMoveProps.colByX + 1, activeMoveRange.r2);
+				if (colRowMoveProps.colByX != null) {
+					activeMoveRange = new Asc.Range(colRowMoveProps.colByX, activeMoveRange.r1, colRowMoveProps.colByX + 1, activeMoveRange.r2);
+				} else if (colRowMoveProps.rowByY != null) {
+					activeMoveRange = new Asc.Range(activeMoveRange.c1, colRowMoveProps.rowByY, activeMoveRange.c2, colRowMoveProps.rowByY + 1);
+				}
 			}
 
 			arnIntersection = activeMoveRange.intersectionSimple(range);
@@ -9029,10 +9046,30 @@
 			isNotFirst = (r.row !== (-1 !== rFrozen ? 0 : this.visibleRange.r1));
 			f = (canEdit || viewMode) && (isNotFirst && y < r.top + epsChangeSize || y >= r.bottom - epsChangeSize) &&
 				readyMode && !this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatRows);
+
+
+			let _target = c_oTargetType.RowHeader;
+			if (!f) {
+				let selection = this._getSelection();
+				if (selection && selection.ranges) {
+					for (let i = 0 ; i < selection.ranges.length; i++) {
+						let curSelection = selection.ranges[i];
+						if (curSelection.getType() === Asc.c_oAscSelectionType.RangeRow && curSelection.r1 <= r.row && curSelection.r2 >= r.row) {
+							_target = c_oTargetType.ColumnRowHeaderMove;
+						}
+					}
+				}
+			}
+
+			let _cursor = f ? kCurRowResize : kCurRowSelect;
+			if (_target === c_oTargetType.ColumnRowHeaderMove) {
+				_cursor = t.startCellMoveRange && t.startCellMoveRange.colRowMoveProps ? "grabbing" : "grab";
+			}
+
 			// ToDo В Excel зависимость epsilon от размера ячейки (у нас фиксированный 3)
 			return {
-				cursor: f ? kCurRowResize : kCurRowSelect,
-				target: f ? c_oTargetType.RowResize : c_oTargetType.RowHeader,
+				cursor: _cursor,
+				target: f ? c_oTargetType.RowResize : _target,
 				col: -1,
 				row: r.row + (isNotFirst && f && y < r.top + 3 ? -1 : 0),
 				mouseY: f ? (((y < r.top + 3) ? r.top : r.bottom) - y - 1) : null
@@ -9056,14 +9093,14 @@
 					for (let i = 0 ; i < selection.ranges.length; i++) {
 						let curSelection = selection.ranges[i];
 						if (curSelection.getType() === Asc.c_oAscSelectionType.RangeCol && curSelection.c1 <= c.col && curSelection.c2 >= c.col) {
-							_target = c_oTargetType.ColumnHeaderMove;
+							_target = c_oTargetType.ColumnRowHeaderMove;
 						}
 					}
 				}
 			}
 
 			let _cursor = f ? kCurColResize : kCurColSelect;
-			if (_target === c_oTargetType.ColumnHeaderMove) {
+			if (_target === c_oTargetType.ColumnRowHeaderMove) {
 				_cursor = t.startCellMoveRange && t.startCellMoveRange.colRowMoveProps ? "grabbing" : "grab";
 			}
 			return {
@@ -11810,9 +11847,12 @@
             d.row = 0;
         }
 
-        if (this.startCellMoveRange.colRowMoveProps && this.startCellMoveRange.colRowMoveProps.shiftKey) {
-            this.startCellMoveRange.colRowMoveProps.colByX = colByX;
-            this.startCellMoveRange.colRowMoveProps.rowByY = rowByY;
+        if (this.startCellMoveRange.colRowMoveProps && this.startCellMoveRange.colRowMoveProps.shiftKey && this.activeMoveRange) {
+            if (this.activeMoveRange.getType() === Asc.c_oAscSelectionType.RangeCol) {
+                this.startCellMoveRange.colRowMoveProps.colByX = colByX;
+            } else if (this.activeMoveRange.getType() === Asc.c_oAscSelectionType.RangeRow) {
+                this.startCellMoveRange.colRowMoveProps.rowByY = rowByY;
+            }
         }
 
         return d;
@@ -12397,9 +12437,16 @@
 		let shiftMove = this.startCellMoveRange.colRowMoveProps && this.startCellMoveRange.colRowMoveProps.shiftKey;
 		if (shiftMove) {
 			lastSelection = t.model.selectionRange.getLast().clone();
-			let colStart = this.startCellMoveRange.colRowMoveProps.colByX + 1;
-			let colEnd = colStart + lastSelection.c2 - lastSelection.c1;
-			t.model.selectionRange.getLast().assign(colStart, lastSelection.r1, colEnd, lastSelection.r2);
+
+			if (this.startCellMoveRange.colRowMoveProps.colByX != null) {
+				let colStart = this.startCellMoveRange.colRowMoveProps.colByX + 1;
+				let colEnd = colStart + lastSelection.c2 - lastSelection.c1;
+				t.model.selectionRange.getLast().assign(colStart, lastSelection.r1, colEnd, lastSelection.r2);
+			} else if (this.startCellMoveRange.colRowMoveProps.rowByY != null) {
+				let rowStart = this.startCellMoveRange.colRowMoveProps.rowByY + 1;
+				let rowEnd = rowStart + lastSelection.r2 - lastSelection.r1;
+				t.model.selectionRange.getLast().assign(lastSelection.c1, rowStart, lastSelection.c2, rowEnd);
+			}
 
 			History.Create_NewPoint();
 			History.StartTransaction();

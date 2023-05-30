@@ -1651,7 +1651,7 @@
 
 			if (!t.getCellEditMode() && !t.getSelectionDialogMode()) {
 				this.gotFocus(true);
-				if (event.shiftKey && !(t.targetInfo.target === c_oTargetType.ColumnHeaderMove && this.canEdit())) {
+				if (event.shiftKey && !(t.targetInfo.target === c_oTargetType.ColumnRowHeaderMove && this.canEdit())) {
 					t.isSelectMode = true;
 					t._changeSelection(event);
 					return;
@@ -1757,7 +1757,7 @@
 					this.isFillHandleMode = true;
 					this._changeFillHandle(event, null, t.targetInfo.tableIndex);
 				} else {
-					if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnHeaderMove) {
+					if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnRowHeaderMove) {
 						this.isMoveRangeMode = true;
 						t._moveRangeHandle(event, null, {ctrlKey: ctrlKey, shiftKey: event.shiftKey});
 						t.handlers.trigger("updateWorksheet", coord.x, coord.y);

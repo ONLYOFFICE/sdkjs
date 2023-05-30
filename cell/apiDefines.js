@@ -312,7 +312,7 @@ var c_oTargetType = {
   GroupCol: 17,
   TableSelectionChange: 18,
   Placeholder: 19,
-  ColumnHeaderMove: 20
+  ColumnRowHeaderMove: 20
 };
 
 var c_oAscAutoFilterTypes = {
