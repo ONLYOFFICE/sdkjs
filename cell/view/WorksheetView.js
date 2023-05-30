@@ -5845,29 +5845,29 @@
 			thinLineDiff = isDashLine ? 0 : 1;
 		}
 
-		//TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
-		var notStroke = AscCommonExcel.selectionLineType.NotStroke & selectionLineType;
-		if (!notStroke) {
-			var _diff = 0;
-			if (AscBrowser.isSafari) {
-				_diff = 1;
-			}
-			ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
+        //TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
+        var notStroke = AscCommonExcel.selectionLineType.NotStroke & selectionLineType;
+        if (!notStroke) {
+            var _diff = 0;
+            if (AscBrowser.isSafari) {
+                _diff = 1;
+            }
+            ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
 
-			ctx.beginPath();
-			if (drawTopSide && !firstRow) {
-				fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
-			}
-			if (drawBottomSide) {
-				fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2]);
-			}
-			if (drawLeftSide && !firstCol) {
-				fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
-			}
-			if (drawRightSide) {
-				fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
-			}
-			ctx.closePath().stroke();
+            ctx.beginPath();
+            if (drawTopSide && !firstRow) {
+                fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+            }
+            if (drawBottomSide) {
+                fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2]);
+            }
+            if (drawLeftSide && !firstCol) {
+                fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+            }
+            if (drawRightSide) {
+                fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
+            }
+            ctx.closePath().stroke();
 		}
 
 		// draw active cell in selection
@@ -6089,24 +6089,24 @@
                     this._drawFormatPainterRange();
                 }
                 if (null !== this.activeMoveRange) {
-					let fullColumnProps = this.startCellMoveRange.colRowMoveProps;
-					if (fullColumnProps) {
-						let shift = fullColumnProps.shiftKey;
-						if (shift) {
-							let insertToCol = fullColumnProps.colByX;
-							var selectionRange = (this.dragAndDropRange || this.model.selectionRange.getLast());
-							if (insertToCol >= selectionRange.c1 && insertToCol <= selectionRange.c2) {
-								insertToCol = Math.max(0, selectionRange.c1 - 1);
-							}
-							this._drawElements(this._drawLineBetweenRowCol, insertToCol + 1, null, this.settings.activeCellBorderColor);
-						} else {
-							this._drawElements(this._drawSelectionElement, this.activeMoveRange, AscCommonExcel.selectionLineType.Selection,
-								this.settings.activeCellBorderColor, null, 3);
-						}
-					} else {
-						this._drawElements(this._drawSelectionElement, this.activeMoveRange,
-							AscCommonExcel.selectionLineType.None, new CColor(0, 0, 0));
-					}
+                    let fullColumnProps = this.startCellMoveRange.colRowMoveProps;
+                    if (fullColumnProps) {
+                        let shift = fullColumnProps.shiftKey;
+                        if (shift) {
+                            let insertToCol = fullColumnProps.colByX;
+                            var selectionRange = (this.dragAndDropRange || this.model.selectionRange.getLast());
+                            if (insertToCol >= selectionRange.c1 && insertToCol <= selectionRange.c2) {
+                                insertToCol = Math.max(0, selectionRange.c1 - 1);
+                            }
+                            this._drawElements(this._drawLineBetweenRowCol, insertToCol + 1, null, this.settings.activeCellBorderColor);
+                        } else {
+                            this._drawElements(this._drawSelectionElement, this.activeMoveRange, AscCommonExcel.selectionLineType.Selection,
+                                this.settings.activeCellBorderColor, null, 3);
+                        }
+                    } else {
+                        this._drawElements(this._drawSelectionElement, this.activeMoveRange,
+                            AscCommonExcel.selectionLineType.None, new CColor(0, 0, 0));
+                    }
                 }
 
                 this._drawElements(this.drawOverlayButtons);
@@ -6165,13 +6165,13 @@
                 selectionLineType |= AscCommonExcel.selectionLineType.ActiveCell;
             }
 
-			let fullColumnProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
+            let fullColumnProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
             if (null !== this.activeMoveRange && fullColumnProps && i === l - 1) {
-				this._drawElements(this._drawSelectionElement, range, !fullColumnProps.ctrlKey ? AscCommonExcel.selectionLineType.DashThick : AscCommonExcel.selectionLineType.ActiveCell, this.settings.activeCellBorderColor);
-			} else {
-				this._drawElements(this._drawSelectionElement, range, selectionLineType,
-					this.settings.activeCellBorderColor);
-			}
+                this._drawElements(this._drawSelectionElement, range, !fullColumnProps.ctrlKey ? AscCommonExcel.selectionLineType.DashThick : AscCommonExcel.selectionLineType.ActiveCell, this.settings.activeCellBorderColor);
+            } else {
+                this._drawElements(this._drawSelectionElement, range, selectionLineType,
+                    this.settings.activeCellBorderColor);
+            }
         }
 		this.handlers.trigger("drawMobileSelection", this.workbook.mainOverlay, this.settings.activeCellBorderColor);
     };
@@ -6490,10 +6490,10 @@
 			}
 		}
 
-        if (null !== this.activeMoveRange) {
-        	let activeMoveRange = this.activeMoveRange;
+		if (null !== this.activeMoveRange) {
+			let activeMoveRange = this.activeMoveRange;
 			let colRowMoveProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
-        	if (colRowMoveProps && colRowMoveProps.shiftKey) {
+			if (colRowMoveProps && colRowMoveProps.shiftKey) {
 				activeMoveRange = new Asc.Range(colRowMoveProps.colByX, activeMoveRange.r1, colRowMoveProps.colByX + 1, activeMoveRange.r2);
 			}
 
@@ -11811,9 +11811,9 @@
         }
 
         if (this.startCellMoveRange.colRowMoveProps && this.startCellMoveRange.colRowMoveProps.shiftKey) {
-			this.startCellMoveRange.colRowMoveProps.colByX = colByX;
-			this.startCellMoveRange.colRowMoveProps.rowByY = rowByY;
-		}
+            this.startCellMoveRange.colRowMoveProps.colByX = colByX;
+            this.startCellMoveRange.colRowMoveProps.rowByY = rowByY;
+        }
 
         return d;
     };
@@ -12328,7 +12328,7 @@
 		this.model.workbook.handlers.trigger("cleanCopyData");
 
         let arnFrom = this.model.selectionRange.getLast();
-		let arnTo = this.activeMoveRange.clone(true);
+        let arnTo = this.activeMoveRange.clone(true);
         if (arnFrom.isEqual(arnTo)) {
             this._cleanSelectionMoveRange();
             return;
@@ -12490,7 +12490,7 @@
             if (false === isSuccess) {
 				wsTo.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
                 wsTo._cleanSelectionMoveRange();
-				callback && callback(false);
+                callback && callback(false);
                 return;
             }
 
@@ -12498,7 +12498,7 @@
                 if (false === isSuccess) {
 					wsTo.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
                     wsTo._cleanSelectionMoveRange();
-					callback && callback(false);
+                    callback && callback(false);
                     return;
                 }
 

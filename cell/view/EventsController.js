@@ -1556,6 +1556,7 @@
 				// Update state for device without cursor
 				this._onMouseMove(event);
 			}
+
 			if (this.view.Api.isEditVisibleAreaOleEditor) {
 				if (button === 0 && this.view.isInnerOfWorksheet(coord.x, coord.y)) {
 					if (this.targetInfo && this.targetInfo.target === c_oTargetType.MoveResizeRange) {
@@ -1757,8 +1758,6 @@
 					this._changeFillHandle(event, null, t.targetInfo.tableIndex);
 				} else {
 					if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnHeaderMove) {
-						// В режиме перемещения диапазона
-						//this.targetInfo.cursor = "grabbing";
 						this.isMoveRangeMode = true;
 						t._moveRangeHandle(event, null, {ctrlKey: ctrlKey, shiftKey: event.shiftKey});
 						t.handlers.trigger("updateWorksheet", coord.x, coord.y);
@@ -1858,7 +1857,6 @@
 			if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnHeader) {
 				this._onMouseMove(event);
 			}
-
 
 			// Мы можем dblClick и не отработать, если вышли из области и отпустили кнопку мыши, нужно отработать
 			this.showCellEditorCursor();
