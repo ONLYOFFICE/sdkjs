@@ -10042,6 +10042,37 @@ function RangeDataManagerElem(bbox, data)
 	};
 	FilterColumn.prototype.createFilter = function (obj) {
 
+
+		//распознаем формат
+		/*var res = AscCommon.g_oFormatParser.parse(val);
+		if(null != res)
+		{
+			//Сравниваем с текущим форматом, если типы совпадают - меняем только значение ячейки
+			var nFormatType = oNumFormat.getType();
+			if(!((c_oAscNumFormatType.Percent == nFormatType && res.bPercent) ||
+				(c_oAscNumFormatType.Currency == nFormatType && res.bCurrency) ||
+				(c_oAscNumFormatType.Date == nFormatType && res.bDate) ||
+				(c_oAscNumFormatType.Time == nFormatType && res.bTime)) && res.format != oNumFormat.sFormat) {
+				this.setNumFormat(res.format);
+			}
+			this.setTypeInternal(CellValueType.Number);
+			this.setValueNumberInternal(res.value);
+		}
+		else
+		{
+			this.setTypeInternal(CellValueType.String);
+			//проверяем QuotePrefix
+			if(val.length > 0 && "'" == val[0])
+			{
+				this.setQuotePrefix(true);
+				val = val.substring(1);
+			}
+			this.setValueTextInternal(val);
+		}*/
+
+
+
+
 		var allFilterOpenElements = false;
 		var newFilter;
 
@@ -10052,6 +10083,7 @@ function RangeDataManagerElem(bbox, data)
 			}
 			case c_oAscAutoFilterTypes.CustomFilters: {
 				obj.filter.filter.check();
+				obj.filter.filter.correctFromInterface();
 				this.CustomFiltersObj = obj.filter.filter.clone();
 				break;
 			}
@@ -10769,6 +10801,13 @@ CustomFilters.prototype.check = function () {
 		}
 	}
 };
+CustomFilters.prototype.correctFromInterface = function () {
+	if(this.CustomFilters) {
+		for(var i = 0; i < this.CustomFilters.length; i++) {
+			this.CustomFilters[i].correctFromInterface();
+		}
+	}
+};
 
 CustomFilters.prototype._generateEmptyValueFilter = function() {
 	this.And = true;
@@ -11055,7 +11094,12 @@ CustomFilter.prototype.asc_getOperator = function () { return this.Operator; };
 CustomFilter.prototype.asc_getVal = function () { return this.Val; };
 
 CustomFilter.prototype.asc_setOperator = function (val) { this.Operator = val; };
-CustomFilter.prototype.asc_setVal = function (val) { this.Val = val; };
+CustomFilter.prototype.asc_setVal = function (val) {
+
+
+
+	this.Val = val;
+};
 
 CustomFilter.prototype.check = function () {
 	if(c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
@@ -11084,7 +11128,27 @@ CustomFilter.prototype.check = function () {
 		this.Val = "*" + this.Val + "*";
 	}
 };
-
+CustomFilter.prototype.correctFromInterface = function () {
+	if (this.isNumberCustomFilterType()) {
+		if (!AscCommon.g_oFormatParser.isLocaleNumber(this.Val)) {
+			//try parse format and save without format
+			let resParse = AscCommon.g_oFormatParser.parse(this.Val);
+			if (resParse) {
+				this.Val = resParse.value;
+			}
+		}
+	}
+};
+CustomFilter.prototype.isNumberCustomFilterType = function () {
+	if (this.Operator === c_oAscCustomAutoFilter.isGreaterThan ||
+		this.Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo ||
+		this.Operator === c_oAscCustomAutoFilter.isLessThan ||
+		this.Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo ||
+		this.Operator === c_oAscCustomAutoFilter.doesNotEqual) {
+		return true;
+	}
+	return false;
+};
 CustomFilter.prototype._generateEmptyValueFilter = function () {
 	this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
 	this.Val = " ";
