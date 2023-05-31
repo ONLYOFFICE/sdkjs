@@ -146,6 +146,33 @@ $(function () {
 		ws.removeCols(c1, c2);
 	};
 
+	const setFilterOptionsVisible = function (autoFiltersOptions, aVal) {
+		if (aVal && autoFiltersOptions) {
+			for (let i in aVal) {
+				for (let j = 0; j < autoFiltersOptions.values.length; j++) {
+					if (autoFiltersOptions.values[j].text === i) {
+						autoFiltersOptions.values[j].asc_setVisible(aVal[i]);
+						break;
+					}
+				}
+			}
+		}
+	};
+
+	const checkFilterRef = function (assert, r1, c1, r2, c2) {
+		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
+		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
+		assert.strictEqual(ws.AutoFilter.Ref.r2, 9, 'Check finish point row filter range');
+		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+	};
+
+	const checkHiddenRows = function (assert, data, oHiddenRows) {
+		for (let i = 0 ; i < data.length; i++) {
+			let mustHidden = oHiddenRows[i];
+			assert.strictEqual(ws.getRowHidden(i), !!oHiddenRows[i], 'Value' + data[i] + 'must' + oHiddenRows[i] ? "" : " not"  + 'be hidden');
+		}
+	};
+
 	QUnit.test("Test: \"simple tests\"", function (assert) {
 		let testData = [
 			["test1", "test2"],
@@ -164,10 +191,7 @@ $(function () {
 		ws.selectionRange.ranges = [getRange(0, 0, 0, 0)];
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, "check filter range");
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, "check filter range");
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 8, "check filter range");
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 1, "check filter range");
+		checkFilterRef(assert, 0, 0, 8, 1);
 
 		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
 		autoFiltersOptions.values[0].asc_setVisible(false);//hide "closed"
@@ -239,10 +263,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 3, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 3, 0);
 
 		// Imitate choosing filter "Today"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.today,0);
@@ -268,10 +289,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 3, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 3, 0);
 
 		// Imitate choosing filter "Yesterday"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.yesterday, 0);
@@ -297,10 +315,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 3, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 3, 0);
 
 		// Imitate choosing filter "Tomorrow"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.tomorrow, 0);
@@ -333,10 +348,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 9, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 9, 0);
 
 		// Imitate choosing filter "This week"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.thisWeek, 0);
@@ -375,10 +387,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 9, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 9, 0);
 
 		// Imitate choosing filter "Next week"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.nextWeek, 0);
@@ -417,10 +426,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 9, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 9, 0);
 
 		// Imitate choosing filter "Last week"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.lastWeek, 0);
@@ -454,10 +460,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "Last month"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.lastMonth, 0);
@@ -487,10 +490,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "This month"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.thisMonth, 0);
@@ -519,10 +519,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "Next month"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.nextMonth, 0);
@@ -551,10 +548,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "Next quarter"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.nextQuarter, 0);
@@ -583,10 +577,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "This quarter"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.thisQuarter, 0);
@@ -616,10 +607,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "Last quarter"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.lastQuarter, 0);
@@ -649,10 +637,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "В этом году"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.thisYear, 0);
@@ -681,10 +666,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "Next year"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.nextYear, 0);
@@ -713,10 +695,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "В прошлом году"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.lastYear, 0);
@@ -745,10 +724,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "Year to Date"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.yearToDate, 0);
@@ -789,10 +765,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 6, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 6, 0);
 
 		// Imitate choosing filter "January"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m1, 0);
@@ -823,10 +796,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "February"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m2, 0);
@@ -854,10 +824,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "March"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m3, 0);
@@ -885,10 +852,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "April"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m4, 0);
@@ -916,10 +880,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "May"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m5, 0);
@@ -947,10 +908,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "June"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m6, 0);
@@ -978,10 +936,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "July"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m7, 0);
@@ -1009,10 +964,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "August"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m8, 0);
@@ -1040,10 +992,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "September"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m9, 0);
@@ -1071,10 +1020,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "October"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m10, 0);
@@ -1102,10 +1048,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "November"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m11, 0);
@@ -1133,10 +1076,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "December"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.m12, 0);
@@ -1164,10 +1104,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "Quarter 1"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.q1, 0);
@@ -1195,10 +1132,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "Quarter 2"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.q2, 0);
@@ -1226,10 +1160,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "Quarter 3"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.q3, 0);
@@ -1257,10 +1188,7 @@ $(function () {
 		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
 
 		// Check data range
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 4, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		checkFilterRef(assert, 0, 0, 4, 0);
 
 		// Imitate choosing filter "Quarter 4"
 		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.q4, 0);
@@ -1273,6 +1201,49 @@ $(function () {
 
 		//Clearing data of sheet
 		clearData(0, 0, 0, 4)
+	});
+
+	QUnit.test('Test: "Date Filter: "', function (assert) {
+		const testData = [
+			['Dates'],
+			['20000'],
+			['test1'],
+			['50000'],
+			['2/11/1930'],
+			['test2'],
+			['2/4/2237'],
+			['6/2/1906'],
+			['8/20/1994'],
+			['6/16/1909']
+		];
+
+		// Imitate filling rows with data, selection data range and add filter
+		ws = getRangeWithData(ws, testData);
+		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
+
+		// Check data range
+		checkFilterRef(assert, 0, 0, 9, 0);
+
+		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
+		setFilterOptionsVisible(autoFiltersOptions, {"20000": false, "test1": false, "2/11/1930": false});
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+
+
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "4": 1});
+		assert.strictEqual(ws.getRowHidden(1), true, 'Value 20000 must be hidden');
+		assert.strictEqual(ws.getRowHidden(2), true, 'Value test1 must be hidden');
+		assert.strictEqual(ws.getRowHidden(3), false, 'Value 50000 must not be hidden');
+		assert.strictEqual(ws.getRowHidden(4), true, 'Value 2/11/1930 must be hidden');
+		assert.strictEqual(ws.getRowHidden(5), false, 'Value test2 must not be hidden');
+		assert.strictEqual(ws.getRowHidden(6), false, 'Value 2/4/2237 must not be hidden');
+		assert.strictEqual(ws.getRowHidden(7), false, 'Value 6/2/1906 must not be hidden');
+		assert.strictEqual(ws.getRowHidden(8), false, 'Value 8/20/1994 must not be hidden');
+		assert.strictEqual(ws.getRowHidden(9), false, 'Value 6/16/1909 must not be hidden');
+
+		//Clearing data of sheet
+		clearData(0, 0, 0, 9)
 	});
 
 	QUnit.module("CopyPaste");
