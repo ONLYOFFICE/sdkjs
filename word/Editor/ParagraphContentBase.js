@@ -1067,7 +1067,7 @@ CParagraphContentWithContentBase.prototype.private_UpdateShapeText = function()
 };
 CParagraphContentWithContentBase.prototype.IsUseInDocument = function()
 {
-	return (this.Paragraph
+	return !!(this.Paragraph
 		&& this.Paragraph.IsUseInDocument()
 		&& this.IsUseInParagraph());
 };

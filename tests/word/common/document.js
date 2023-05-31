@@ -65,6 +65,7 @@
 		space : 32,
 		backspace : 8,
 		minus : 45,
+		delete : 46,
 		enter : 13
 	};
 
@@ -72,7 +73,8 @@
 	{
 		return (Key.space === key
 			|| Key.backspace === key
-			|| Key.enter === key);
+			|| Key.enter === key
+			|| Key.delete === key);
 	}
 
 	function CreateLogicDocument()
