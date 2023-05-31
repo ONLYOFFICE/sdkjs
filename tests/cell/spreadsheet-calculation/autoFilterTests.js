@@ -160,16 +160,15 @@ $(function () {
 	};
 
 	const checkFilterRef = function (assert, r1, c1, r2, c2) {
-		assert.strictEqual(ws.AutoFilter.Ref.r1, 0, 'Check start point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c1, 0, 'Check start point column filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.r2, 9, 'Check finish point row filter range');
-		assert.strictEqual(ws.AutoFilter.Ref.c2, 0, 'Check finish point column filter range');
+		assert.strictEqual(ws.AutoFilter.Ref.r1, r1, 'Check start point row filter range');
+		assert.strictEqual(ws.AutoFilter.Ref.c1, c1, 'Check start point column filter range');
+		assert.strictEqual(ws.AutoFilter.Ref.r2, r2, 'Check finish point row filter range');
+		assert.strictEqual(ws.AutoFilter.Ref.c2, c2, 'Check finish point column filter range');
 	};
 
 	const checkHiddenRows = function (assert, data, oHiddenRows) {
 		for (let i = 0 ; i < data.length; i++) {
-			let mustHidden = oHiddenRows[i];
-			assert.strictEqual(ws.getRowHidden(i), !!oHiddenRows[i], 'Value' + data[i] + 'must' + oHiddenRows[i] ? "" : " not"  + 'be hidden');
+			assert.strictEqual(ws.getRowHidden(i), !!oHiddenRows[i], 'Value ' + data[i] + ' must ' + (oHiddenRows[i] ? " " : " not ")  + 'be hidden');
 		}
 	};
 
@@ -1203,7 +1202,7 @@ $(function () {
 		clearData(0, 0, 0, 4)
 	});
 
-	QUnit.test('Test: "Date Filter: "', function (assert) {
+	QUnit.test('Test: "Simple date filter apply"', function (assert) {
 		const testData = [
 			['Dates'],
 			['20000'],
@@ -1224,6 +1223,7 @@ $(function () {
 		// Check data range
 		checkFilterRef(assert, 0, 0, 9, 0);
 
+		//apply filter
 		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
 		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
 		setFilterOptionsVisible(autoFiltersOptions, {"20000": false, "test1": false, "2/11/1930": false});
@@ -1232,15 +1232,6 @@ $(function () {
 
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "4": 1});
-		assert.strictEqual(ws.getRowHidden(1), true, 'Value 20000 must be hidden');
-		assert.strictEqual(ws.getRowHidden(2), true, 'Value test1 must be hidden');
-		assert.strictEqual(ws.getRowHidden(3), false, 'Value 50000 must not be hidden');
-		assert.strictEqual(ws.getRowHidden(4), true, 'Value 2/11/1930 must be hidden');
-		assert.strictEqual(ws.getRowHidden(5), false, 'Value test2 must not be hidden');
-		assert.strictEqual(ws.getRowHidden(6), false, 'Value 2/4/2237 must not be hidden');
-		assert.strictEqual(ws.getRowHidden(7), false, 'Value 6/2/1906 must not be hidden');
-		assert.strictEqual(ws.getRowHidden(8), false, 'Value 8/20/1994 must not be hidden');
-		assert.strictEqual(ws.getRowHidden(9), false, 'Value 6/16/1909 must not be hidden');
 
 		//Clearing data of sheet
 		clearData(0, 0, 0, 9)
