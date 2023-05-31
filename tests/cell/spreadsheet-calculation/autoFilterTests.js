@@ -1286,6 +1286,7 @@ $(function () {
 		checkFilterRef(assert, 0, 0, 9, 0);
 
 		//apply filter
+		//Before
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isLessThan, val: "8/20/1994"}]);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "5": 1, "6": 1, "8": 1}, " Before: ");
@@ -1293,6 +1294,7 @@ $(function () {
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		//apply filter
+		//After
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThan, val: "6500"}]);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"2": 1, "5": 1, "7": 1, "9": 1}, " After: ");
@@ -1300,9 +1302,49 @@ $(function () {
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		//apply filter
-		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThan, val: "6500"}]);
+		//After or equal
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo, val: "6/16/1909"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"2": 1, "5": 1, "7": 1, "9": 1}, " After: ");
+		checkHiddenRows(assert, testData, {"2": 1, "5": 1, "7": 1}, " After or equal: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		//apply filter
+		//Before or equal
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo, val: "6/16/1909"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "8": 1}, " Before or equal: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		//apply filter
+		//Between
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo, val: "6/16/1909"},
+			{operator: Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo, val: "8/20/1994"}], true);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "5": 1, "6": 1, "7": 1}, " Between: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		//apply filter
+		//Between
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo, val: "6/16/1909"},
+			{operator: Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo, val: "8/20/1994"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"2": 1, "5": 1}, " Between: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		//equals
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.equals, val: "20000"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8":1, "9": 1}, " Before or equal: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotEqual, val: "20000"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1}, " Before or equal: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
