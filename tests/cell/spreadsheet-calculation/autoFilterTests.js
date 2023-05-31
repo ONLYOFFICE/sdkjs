@@ -1237,5 +1237,46 @@ $(function () {
 		clearData(0, 0, 0, 9)
 	});
 
+	QUnit.test('Test: "Custom date filter apply"', function (assert) {
+		const testData = [
+			['Dates'],
+			['20000'],
+			['test1'],
+			['50000'],
+			['2/11/1930'],
+			['test2'],
+			['2/4/2237'],
+			['6/2/1906'],
+			['8/20/1994'],
+			['6/16/1909']
+		];
+
+		// Imitate filling rows with data, selection data range and add filter
+		ws = getRangeWithData(ws, testData);
+		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
+
+		// Check data range
+		checkFilterRef(assert, 0, 0, 9, 0);
+
+		//apply filter
+		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
+		let customFilters = new Asc.CustomFilters();
+		let customFilter = new Asc.CustomFilter();
+		customFilter.Operator = Asc.c_oAscCustomAutoFilter.isLessThan;
+		customFilter.Val = "8/20/1994";
+
+		customFilters.CustomFilters = [customFilter];
+
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.CustomFilters);
+		autoFiltersOptions.filter.asc_setFilter(customFilters);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "5": 1, "6": 1, "8": 1});
+
+		//Clearing data of sheet
+		clearData(0, 0, 0, 9)
+	});
+
 	QUnit.module("CopyPaste");
 });
