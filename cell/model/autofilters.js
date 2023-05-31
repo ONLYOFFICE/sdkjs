@@ -4787,6 +4787,7 @@
 					maxFilterRow--;
 				}
 
+				let findDateTimeFormat;
 				var individualCount = 0, count = 0;
 				for (var i = ref.r1 + 1; i <= maxFilterRow; i++) {
 					//max strings
@@ -4812,6 +4813,7 @@
 
 					if (isDateTimeFormat) {
 						dataValue = AscCommon.NumFormat.prototype.parseDate(val);
+						findDateTimeFormat = true;
 					}
 
 					//check duplicate value
@@ -4917,6 +4919,20 @@
 						_hideValues = cleanArr(_hideValues);
 						_values = _values.concat(this._sortArrayMinMax(_hideValues, isAscending));
 					}
+				}
+
+				if (findDateTimeFormat) {
+					_values.sort(function (a, b) {
+						if (a.isDateFormat && !b.isDateFormat) {
+							return -1;
+						}
+						if (!a.isDateFormat && b.isDateFormat) {
+							return 1;
+						}
+						if (a.isDateFormat && b.isDateFormat) {
+							return parseFloat(a.val) > parseFloat(b.val) ? -1 : 1;
+						}
+					});
 				}
 
 				return {values: _values, automaticRowCount: automaticRowCount, ignoreCustomFilter: ignoreCustomFilter};
