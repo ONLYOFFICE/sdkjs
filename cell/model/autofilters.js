@@ -1091,7 +1091,7 @@
 						}
 
 						var checkValue = isDateTimeFormat ? val : text;
-						var visible = !autoFiltersObject.filter.filter.isHideValue(checkValue, isDateTimeFormat);
+						var visible = !autoFiltersObject.filter.filter.isHideValue(checkValue, isDateTimeFormat, null, cell);
 						individualMap[textLowerCase] = 1;
 
 						if(visible) {
@@ -4852,7 +4852,7 @@
 							//filter current button
 							var checkValue = isDateTimeFormat ? val : text;
 							visible = false;
-							if (!isCustomFilter && !currentFilterColumn.isHideValue(checkValue, isDateTimeFormat)) {
+							if (!isCustomFilter && !currentFilterColumn.isHideValue(checkValue, isDateTimeFormat, null, cell)) {
 								visible = true;
 							}
 							hideValue(false, i);
@@ -4872,7 +4872,7 @@
 							}
 
 							visible = false;
-							if (!currentFilterColumn.isHideValue(isDateTimeFormat ? val : text, isDateTimeFormat)) {
+							if (!currentFilterColumn.isHideValue(isDateTimeFormat ? val : text, isDateTimeFormat, null, cell)) {
 								visible = true;
 							}
 							textIndexMapHideValues[textLowerCase] = _hideValues.length;

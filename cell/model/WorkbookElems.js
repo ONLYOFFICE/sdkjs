@@ -9289,6 +9289,7 @@ function RangeDataManagerElem(bbox, data)
 						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Date;
 					}*/
 
+
 					var currentValue = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
 					var isSetHidden = newFilterColumn.isHideValue(currentValue, isDateTimeFormat, null, cell);
 
@@ -10022,7 +10023,7 @@ function RangeDataManagerElem(bbox, data)
 			this.Filters._initLowerCaseValues();
 			res = this.Filters.isHideValue(val.toLowerCase(), isDateTimeFormat);
 		} else if (this.CustomFiltersObj) {
-			res = this.CustomFiltersObj.isHideValue(val, isLabelFilter);
+			res = this.CustomFiltersObj.isHideValue(val, isLabelFilter, cell);
 		} else if (this.Top10) {
 			res = this.Top10.isHideValue(val, top10Length);
 		} else if (this.ColorFilter) {
@@ -10770,16 +10771,16 @@ CustomFilters.prototype.init = function(obj) {
 	this.And = !obj.isChecked;
 	this.CustomFilters = [];
 
-	if(obj.filter1 != undefined)
+	if(obj.filter1 != null)
 		this.CustomFilters[0] = new CustomFilter(obj.filter1, obj.valFilter1);
-	if(obj.filter2 != undefined)
+	if(obj.filter2 != null)
 		this.CustomFilters[1] = new CustomFilter(obj.filter2, obj.valFilter2);
 };
-CustomFilters.prototype.isHideValue = function(val, isLabelFilter){
+CustomFilters.prototype.isHideValue = function(val, isLabelFilter, cell){
 
 	var res = false;
-	var filterRes1 = this.CustomFilters[0] ? this.CustomFilters[0].isHideValue(val, isLabelFilter) : null;
-	var filterRes2 = this.CustomFilters[1] ? this.CustomFilters[1].isHideValue(val, isLabelFilter) : null;
+	var filterRes1 = this.CustomFilters[0] ? this.CustomFilters[0].isHideValue(val, isLabelFilter, cell) : null;
+	var filterRes2 = this.CustomFilters[1] ? this.CustomFilters[1].isHideValue(val, isLabelFilter, cell) : null;
 
 	if(!this.And && ((filterRes1 === null && filterRes2 === true || filterRes1 === true && filterRes2 === null || filterRes1 === true && filterRes2 === true)))
 		res = true;
@@ -10913,7 +10914,7 @@ CustomFilter.prototype.init = function(operator, val) {
 	this.Operator = operator;
 	this.Val = val;
 };
-CustomFilter.prototype.isHideValue = function (val, isLabelFilter) {
+CustomFilter.prototype.isHideValue = function (val, isLabelFilter, cell) {
 
 	var result = false;
 	var isDigitValue = !isNaN(val);
@@ -10952,6 +10953,10 @@ CustomFilter.prototype.isHideValue = function (val, isLabelFilter) {
 			}
 		} else {
 			filterVal = isNaN(this.Val) ? this.Val.toLowerCase() : this.Val;
+		}
+
+		if (cell && c_oAscCustomAutoFilter.equals === this.Operator) {
+			val = cell.getValueWithFormat();
 		}
 
 		var trimVal = "string" === typeof(val) ? window["Asc"].trim(val) : val;
@@ -11134,7 +11139,7 @@ CustomFilter.prototype.correctFromInterface = function () {
 			//try parse format and save without format
 			let resParse = AscCommon.g_oFormatParser.parse(this.Val);
 			if (resParse) {
-				this.Val = resParse.value;
+				this.Val = resParse.value + "";
 			}
 		}
 	}

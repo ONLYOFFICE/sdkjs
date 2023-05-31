@@ -1273,8 +1273,7 @@ $(function () {
 			['test2'],
 			['2/4/2237'],
 			['6/2/1906'],
-			['8/20/1994'],
-			['6/16/1909']
+			['8/20/1994'],			['6/16/1909']
 		];
 
 		// Imitate filling rows with data, selection data range and add filter
@@ -1338,19 +1337,47 @@ $(function () {
 		//equals
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.equals, val: "20000"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8":1, "9": 1}, " Before or equal: ");
+		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8":1, "9": 1}, " equals1: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
-		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotEqual, val: "20000"}]);
+		//equals === only value with format
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.equals, val: "8/20/1994"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1}, " Before or equal: ");
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "9": 1}, " equals2: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.equals, val: "34566"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " equals3: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		//doesNotEqual
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotEqual, val: "20000"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1}, " doesNotEqual1: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotEqual, val: "8/20/1994"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"8": 1}, " doesNotEqual2: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotEqual, val: "34566"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"8": 1}, " doesNotEqual2: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+
 
 		//Clearing data of sheet
 		clearData(0, 0, 0, 9)
 	});
 
-	QUnit.module("CopyPaste");
+	QUnit.module("Filters");
 });
