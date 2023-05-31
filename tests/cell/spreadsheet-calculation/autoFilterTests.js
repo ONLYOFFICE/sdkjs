@@ -140,6 +140,29 @@ $(function () {
 
 		return ws.autoFilters;
 	};
+
+	const createCustomFilter = function (colId, aProps, and) {
+		//apply filter
+		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: colId, id: null});
+		let customFilters = new Asc.CustomFilters();
+		customFilters.And = !!and;
+		if (aProps && aProps.length) {
+			for (let i = 0; i< aProps.length; i++) {
+				let customFilter = new Asc.CustomFilter();
+				customFilter.Operator = aProps[i].operator;
+				customFilter.Val = aProps[i].val;
+				if (!customFilters.CustomFilters) {
+					customFilters.CustomFilters = [];
+				}
+				customFilters.CustomFilters.push(customFilter);
+			}
+		}
+
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.CustomFilters);
+		autoFiltersOptions.filter.asc_setFilter(customFilters);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+	};
+
 	const clearData = function (c1, r1, c2, r2) {
 		ws.autoFilters.deleteAutoFilter(getRange(0,0,0,0));
 		ws.removeRows(r1, r2, false);
@@ -166,9 +189,12 @@ $(function () {
 		assert.strictEqual(ws.AutoFilter.Ref.c2, c2, 'Check finish point column filter range');
 	};
 
-	const checkHiddenRows = function (assert, data, oHiddenRows) {
+	const checkHiddenRows = function (assert, data, oHiddenRows, descPrefix) {
+		if (!descPrefix) {
+			descPrefix = "";
+		}
 		for (let i = 0 ; i < data.length; i++) {
-			assert.strictEqual(ws.getRowHidden(i), !!oHiddenRows[i], 'Value ' + data[i] + ' must ' + (oHiddenRows[i] ? " " : " not ")  + 'be hidden');
+			assert.strictEqual(ws.getRowHidden(i), !!oHiddenRows[i], descPrefix + 'Value ' + data[i] + ' must ' + (oHiddenRows[i] ? " " : " not ")  + 'be hidden');
 		}
 	};
 
@@ -1252,27 +1278,33 @@ $(function () {
 		];
 
 		// Imitate filling rows with data, selection data range and add filter
+		let range = getRange(0, 0, 0, 0);
 		ws = getRangeWithData(ws, testData);
-		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
+		ws.autoFilters.addAutoFilter(null, range);
 
 		// Check data range
 		checkFilterRef(assert, 0, 0, 9, 0);
 
 		//apply filter
-		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
-		let customFilters = new Asc.CustomFilters();
-		let customFilter = new Asc.CustomFilter();
-		customFilter.Operator = Asc.c_oAscCustomAutoFilter.isLessThan;
-		customFilter.Val = "8/20/1994";
-
-		customFilters.CustomFilters = [customFilter];
-
-		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.CustomFilters);
-		autoFiltersOptions.filter.asc_setFilter(customFilters);
-		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
-
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isLessThan, val: "8/20/1994"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "5": 1, "6": 1, "8": 1});
+		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "5": 1, "6": 1, "8": 1}, " Before: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		//apply filter
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThan, val: "6500"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"2": 1, "5": 1, "7": 1, "9": 1}, " After: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		//apply filter
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThan, val: "6500"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"2": 1, "5": 1, "7": 1, "9": 1}, " After: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		//Clearing data of sheet
 		clearData(0, 0, 0, 9)
