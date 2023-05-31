@@ -832,27 +832,47 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		if (!this.CanBeDeleted() && !bOnAddText)
 			return true;
 
-		if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+		if (!bOnAddText && !this.IsSelectionUse())
+		{
+			this.SelectAll(1);
+			this.SelectThisElement();
+			return true;
+		}
+		else if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+		{
 			this.private_ReplacePlaceHolderWithContent();
-
+		}
+		
 		return true;
 	}
 
-	let bResult = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
-
-	let oLogicDocument = this.GetLogicDocument();
-	if (this.Is_Empty()
-		&& oLogicDocument
+	let result = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!result
+		&& this.IsEmpty()
+		&& !this.IsPlaceHolder()
+		&& logicDocument
+		&& this.CanBeDeleted()
+		&& this !== logicDocument.CheckInlineSdtOnDelete
+		&& !bOnAddText
+		&& !logicDocument.IsFillingFormMode())
+	{
+		this.RemoveThisFromParent(true);
+		result = true;
+	}
+	else if (this.Is_Empty()
+		&& logicDocument
 		&& this.CanBeEdited()
 		&& ((!bOnAddText
-		&& true === oLogicDocument.IsFillingFormMode())
-		|| (this === oLogicDocument.CheckInlineSdtOnDelete)))
+		&& true === logicDocument.IsFillingFormMode())
+		|| (this === logicDocument.CheckInlineSdtOnDelete)))
 	{
 		this.private_ReplaceContentWithPlaceHolder();
-		bResult = true;
+		result = true;
 	}
 
-	return bResult;
+	return result;
 };
 CInlineLevelSdt.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {

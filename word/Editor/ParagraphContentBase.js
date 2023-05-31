@@ -283,6 +283,30 @@ CParagraphContentBase.prototype.GetPosInParent = function(_oParent)
 
 	return -1;
 };
+CParagraphContentBase.prototype.RemoveThisFromParent = function(updatePosition)
+{
+	let parent      = this.GetParent();
+	let posInParent = this.GetPosInParent(parent);
+	
+	if (parent && -1 !== posInParent)
+		parent.RemoveFromContent(posInParent, 1);
+	
+	if (updatePosition)
+	{
+		if (posInParent < parent.GetElementsCount() && parent.GetElement(posInParent).IsCursorPlaceable())
+		{
+			parent.GetElement(posInParent).MoveCursorToStartPos();
+			parent.GetElement(posInParent).SetThisElementCurrentInParagraph();
+		}
+		else if (posInParent > 0 && parent.GetElement(posInParent - 1).IsCursorPlaceable())
+		{
+			parent.GetElement(posInParent - 1).MoveCursorToStartPos();
+			parent.GetElement(posInParent - 1).SetThisElementCurrentInParagraph();
+		}
+	}
+	
+	parent.CorrectContent();
+};
 CParagraphContentBase.prototype.RemoveTabsForTOC = function(isTab)
 {
 	return isTab;
@@ -1807,7 +1831,10 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 				this.Content[EndPos].Remove(Direction, bOnAddText);
 				
 				let isTextDrag = this.Paragraph && this.Paragraph.LogicDocument ? this.Paragraph.LogicDocument.DragAndDropAction : false;
-				if (EndPos !== this.Content.length - 1 && true === this.Content[EndPos].Is_Empty() && (!bOnAddText || isTextDrag))
+				if (EndPos !== this.Content.length - 1
+					&& true === this.Content[EndPos].Is_Empty()
+					&& !(this.Content[StartPos] instanceof AscWord.CInlineLevelSdt)
+					&& (!bOnAddText || isTextDrag))
 				{
 					this.Remove_FromContent(EndPos, 1, true);
 				}
@@ -1872,6 +1899,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 		var ContentPos = this.State.ContentPos;
 
 		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End())
+			&& !this.IsEmpty()
 			&& (!this.CanPlaceCursorInside()
 				|| !(this instanceof CInlineLevelSdt)
 				|| (!this.IsComplexForm() && !this.IsTextForm() && !this.IsComboBox())))
@@ -1895,7 +1923,11 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 					this.Content[ContentPos].MoveCursorToEndPos(false);
 				else
 					this.Content[ContentPos].MoveCursorToStartPos();
-
+				
+				// Если после перемещения в следующий элемент появился селект, то мы останавливаем удаление,
+				// чтобы пользователь видел, что он удаляет
+				if (this.Content[ContentPos].IsSelectionUse())
+					return true;
 			}
 
 			if (ContentPos < 0 || ContentPos >= this.Content.length)
