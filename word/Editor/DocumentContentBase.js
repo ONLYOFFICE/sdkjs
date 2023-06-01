@@ -855,13 +855,13 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 			return true;
 
 		var nCurContentPos = this.CurPos.ContentPos;
-		if (type_Paragraph == this.Content[nCurContentPos].GetType())
+		if (this.Content[nCurContentPos].IsParagraph())
 		{
 			if (false === this.Content[nCurContentPos].Remove(Count, isRemoveWholeElement, false, false, isWord))
 			{
 				if (Count < 0)
 				{
-					if (nCurContentPos > 0 && type_Paragraph == this.Content[nCurContentPos - 1].GetType())
+					if (nCurContentPos > 0 && this.Content[nCurContentPos - 1].IsParagraph())
 					{
 						var CurrFramePr = this.Content[nCurContentPos].Get_FramePr();
 						var PrevFramePr = this.Content[nCurContentPos - 1].Get_FramePr();
@@ -924,9 +924,15 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 							}
 						}
 					}
-					else if (nCurContentPos > 0 && type_BlockLevelSdt === this.Content[nCurContentPos - 1].GetType())
+					else if (nCurContentPos > 0 && this.Content[nCurContentPos - 1].IsBlockLevelSdt())
 					{
-						nCurContentPos--;
+						if (this.Content[nCurContentPos].IsEmpty()
+							&& (nCurContentPos < this.Content.length - 1 || !(this instanceof AscWord.CDocument)))
+						{
+							this.RemoveFromContent(nCurContentPos);
+						}
+						
+						--nCurContentPos;
 						this.Content[nCurContentPos].MoveCursorToEndPos(false);
 					}
 					else if (0 === nCurContentPos)
@@ -936,7 +942,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 				}
 				else if (Count > 0)
 				{
-					if (nCurContentPos < this.Content.length - 1 && type_Paragraph == this.Content[nCurContentPos + 1].GetType())
+					if (nCurContentPos < this.Content.length - 1 && this.Content[nCurContentPos + 1].IsParagraph())
 					{
 						var CurrFramePr = this.Content[nCurContentPos].Get_FramePr();
 						var NextFramePr = this.Content[nCurContentPos + 1].Get_FramePr();
@@ -1014,9 +1020,13 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 							oFirstParagraph.LoadSelectionState(oState);
 						}
 					}
-					else if (nCurContentPos < this.Content.length - 1 && type_BlockLevelSdt === this.Content[nCurContentPos + 1].GetType())
+					else if (nCurContentPos < this.Content.length - 1 && this.Content[nCurContentPos + 1].IsBlockLevelSdt())
 					{
-						nCurContentPos++;
+						if (this.Content[nCurContentPos].IsEmpty())
+							this.RemoveFromContent(nCurContentPos);
+						else
+							++nCurContentPos;
+						
 						this.Content[nCurContentPos].MoveCursorToStartPos(false);
 					}
 					else if (true == this.Content[nCurContentPos].IsEmpty() && nCurContentPos == this.Content.length - 1 && nCurContentPos != 0 && type_Paragraph === this.Content[nCurContentPos - 1].GetType())
@@ -1048,7 +1058,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 				Item.CurPos.RealY = Item.CurPos.Y;
 			}
 		}
-		else if (type_BlockLevelSdt === this.Content[nCurContentPos].GetType())
+		else if (this.Content[nCurContentPos].IsBlockLevelSdt())
 		{
 			if (false === this.Content[nCurContentPos].Remove(Count, isRemoveWholeElement, false, false, isWord))
 			{
