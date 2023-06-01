@@ -285,8 +285,72 @@ $(function () {
 			compareData(assert, rangeCompare, [["row2col1", "row2col2", "row2col3", "row2col4", "row2col2", "row2col5"]], desc);
 		}, " move_col_1 ");
 
-	});
 
+		//***ROWS***
+		//***move without ctrl***
+		//***move without shift***
+		//move from 1 to 3 rows
+		wsView.activeMoveRange = getRange(0, 3, AscCommon.gc_nMaxCol, 3);
+		ws.selectionRange.ranges = [getRange(0, 1, AscCommon.gc_nMaxCol, 1)];
+		wsView.startCellMoveRange = getRange(0, 1, 0, 1);
+		wsView.startCellMoveRange.colRowMoveProps = {ctrlKey: false, shiftKey: false};
+		wsView.applyMoveRangeHandle();
+
+		rangeCompare = getRange(1, 0, 1, 8);
+		checkUndoRedo(function (desc) {
+			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row4col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
+		}, function (desc){
+			compareData(assert, rangeCompare, [["row1col2"], [""], ["row3col2"], ["row2col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
+		}, " move_row_1 ");
+
+		//***move with ctrl***
+		//***move without shift***
+		//move from 1 to 3 rows
+		wsView.activeMoveRange = getRange(0, 3, AscCommon.gc_nMaxCol, 3);
+		ws.selectionRange.ranges = [getRange(0, 1, AscCommon.gc_nMaxCol, 1)];
+		wsView.startCellMoveRange = getRange(0, 1, 0, 1);
+		wsView.startCellMoveRange.colRowMoveProps = {ctrlKey: true, shiftKey: false};
+		wsView.applyMoveRangeHandle(true);
+
+		checkUndoRedo(function (desc) {
+			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row4col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
+		}, function (desc){
+			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row2col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
+		}, " move_row_2 ");
+
+		//***move without ctrl***
+		//***move with shift***
+		//move from 1 to 3 rows
+		wsView.activeMoveRange = getRange(0, 3, AscCommon.gc_nMaxCol, 3);
+		ws.selectionRange.ranges = [getRange(0, 1, AscCommon.gc_nMaxCol, 1)];
+		wsView.startCellMoveRange = getRange(0, 1, 0, 1);
+		wsView.startCellMoveRange.colRowMoveProps = {ctrlKey: false, shiftKey: true, rowByY: 3};
+		wsView.applyMoveRangeHandle();
+
+		rangeCompare = getRange(1, 0, 1, 8);
+		checkUndoRedo(function (desc) {
+			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row4col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
+		}, function (desc){
+			compareData(assert, rangeCompare, [["row1col2"], [""], ["row3col2"], ["row4col2"], ["row2col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"]], desc);
+		}, " move_row_3 ");
+
+
+		//***move with ctrl***
+		//***move with shift***
+		//move from 1 to 3 rows
+		wsView.activeMoveRange = getRange(0, 3, AscCommon.gc_nMaxCol, 3);
+		ws.selectionRange.ranges = [getRange(0, 1, AscCommon.gc_nMaxCol, 1)];
+		wsView.startCellMoveRange = getRange(0, 1, 0, 1);
+		wsView.startCellMoveRange.colRowMoveProps = {ctrlKey: true, shiftKey: true, rowByY: 3};
+		wsView.applyMoveRangeHandle(true);
+
+		rangeCompare = getRange(1, 0, 1, 8);
+		checkUndoRedo(function (desc) {
+			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row4col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
+		}, function (desc){
+			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row4col2"], ["row2col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"]], desc);
+		}, " move_row_4 ");
+	});
 
 	QUnit.module("Sheet structure");
 });
