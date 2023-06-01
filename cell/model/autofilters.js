@@ -4814,6 +4814,8 @@
 					if (isDateTimeFormat) {
 						dataValue = AscCommon.NumFormat.prototype.parseDate(val);
 						findDateTimeFormat = true;
+						textLowerCase = dataValue.countDay + dataValue.d +  dataValue.dayWeek + dataValue.dayWeek + dataValue.hour +
+							dataValue.min + dataValue.month + dataValue.sec + dataValue.year;
 					}
 
 					//check duplicate value
