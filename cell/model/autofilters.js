@@ -149,6 +149,7 @@
 				res.minute = this.minute;
 				res.second = this.second;
 				res.dateTimeGrouping = this.dateTimeGrouping;
+				res.repeats = this.repeats;
 				
 				return res;
 			},
@@ -164,6 +165,7 @@
 			asc_getMinute: function () { return this.minute; },
 			asc_getSecond: function () { return this.second; },
 			asc_getDateTimeGrouping: function () { return this.dateTimeGrouping; },
+			asc_getRepeats: function () { return this.repeats; },
 			
 			asc_setVal: function (val) { this.val = val; },
 			asc_setVisible: function (val) { this.visible = val; },
