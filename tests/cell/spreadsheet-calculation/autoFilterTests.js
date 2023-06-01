@@ -1237,14 +1237,15 @@ $(function () {
 			['2/11/1930'],
 			['test2'],
 			['2/4/2237'],
-			['6/2/1906'],
+			['3/4/2237'],
 			['8/20/1994'],
 			['6/16/1909']
 		];
 
 		// Imitate filling rows with data, selection data range and add filter
 		ws = getRangeWithData(ws, testData);
-		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
+		let range = getRange(0, 0, 0, 0);
+		ws.autoFilters.addAutoFilter(null, range);
 
 		// Check data range
 		checkFilterRef(assert, 0, 0, 9, 0);
@@ -1254,10 +1255,17 @@ $(function () {
 		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
 		setFilterOptionsVisible(autoFiltersOptions, {"20000": false, "test1": false, "2/11/1930": false});
 		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
-
-
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "4": 1});
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
+		setFilterOptionsVisible(autoFiltersOptions, {"2/4/2237": false, "3/4/2237": false});
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"6": 1, "7": 1});
 
 		//Clearing data of sheet
 		clearData(0, 0, 0, 9)
