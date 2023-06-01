@@ -1273,7 +1273,8 @@ $(function () {
 			['test2'],
 			['2/4/2237'],
 			['6/2/1906'],
-			['8/20/1994'],			['6/16/1909']
+			['8/20/1994'],
+			['6/16/1909']
 		];
 
 		// Imitate filling rows with data, selection data range and add filter
@@ -1284,40 +1285,40 @@ $(function () {
 		// Check data range
 		checkFilterRef(assert, 0, 0, 9, 0);
 
-		//apply filter
-		//Before
+
+		//***Before***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isLessThan, val: "8/20/1994"}]);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "5": 1, "6": 1, "8": 1}, " Before: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
-		//apply filter
-		//After
+
+		//***After***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThan, val: "6500"}]);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"2": 1, "5": 1, "7": 1, "9": 1}, " After: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
-		//apply filter
-		//After or equal
+
+		//***After or equal***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo, val: "6/16/1909"}]);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"2": 1, "5": 1, "7": 1}, " After or equal: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
-		//apply filter
-		//Before or equal
+
+		//***Before or equal***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo, val: "6/16/1909"}]);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "8": 1}, " Before or equal: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
-		//apply filter
-		//Between
+
+		//***Between***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo, val: "6/16/1909"},
 			{operator: Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo, val: "8/20/1994"}], true);
 		//Checking work of filter
@@ -1325,8 +1326,7 @@ $(function () {
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
-		//apply filter
-		//Between
+
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo, val: "6/16/1909"},
 			{operator: Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo, val: "8/20/1994"}]);
 		//Checking work of filter
@@ -1334,7 +1334,8 @@ $(function () {
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
-		//equals
+
+		//***equals***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.equals, val: "20000"}]);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8":1, "9": 1}, " equals1: ");
@@ -1354,7 +1355,8 @@ $(function () {
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
-		//doesNotEqual
+
+		//***doesNotEqual***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotEqual, val: "20000"}]);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"1": 1}, " doesNotEqual1: ");
@@ -1369,11 +1371,109 @@ $(function () {
 
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotEqual, val: "34566"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"8": 1}, " doesNotEqual2: ");
+		checkHiddenRows(assert, testData, {"8": 1}, " doesNotEqual3: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 
+		//***begin with***
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.beginsWith, val: "200"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " begin with1: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.beginsWith, val: "8/20/1994"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " begin with2: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.beginsWith, val: "tes"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "3": 1, "4": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " begin with3: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+
+		//***end with***
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.endsWith, val: "000"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " end with1: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.endsWith, val: "20/1994"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " end with2: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.endsWith, val: "st2"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " end with2: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+
+		//***does not begin with***
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotBeginWith, val: "200"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {}, " does not begin with1: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotBeginWith, val: "8/20"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {}, " does not begin with2: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotBeginWith, val: "tes"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"2": 1, "5": 1}, " does not begin with3: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+
+		//contains
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.contains, val: "200"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " contains1: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.contains, val: "8/20"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " contains2: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.contains, val: "es"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "3": 1, "4": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " contains3: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+
+		//***does not contains***
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotContain, val: "200"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {}, " does not contains1: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotContain, val: "8/20"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {}, " does not contains2: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.doesNotContain, val: "tes"}]);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"2": 1, "5": 1}, " does not contains3: ");
+		//clean filter
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		//Clearing data of sheet
 		clearData(0, 0, 0, 9)
