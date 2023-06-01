@@ -8796,7 +8796,7 @@
 		}
 		const oPlaceholderCursor = this.objectRender.checkCursorPlaceholder(x, y);
 		if (oPlaceholderCursor) {
-			return {cursor: kCurDefault, target: c_oTargetType.Placeholder, col: -1, row: -1};
+			return {cursor: kCurDefault, target: c_oTargetType.Placeholder, col: -1, row: -1, placeholderType: oPlaceholderCursor.placeholderType};
 		}
 
 		if (this.workbook.Api.isEditVisibleAreaOleEditor) {

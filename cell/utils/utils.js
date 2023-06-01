@@ -2682,6 +2682,8 @@
 				this.tooltip = obj.tooltip;
 
 				this.color = obj.color;
+
+				this.placeholderType = obj.placeholderType;
 			}
 
 			return this;
@@ -2700,7 +2702,8 @@
 			asc_getSizePx: function () { return this.sizePx; },
 			asc_getFilter: function () { return this.filter; },
 			asc_getTooltip: function () { return this.tooltip; },
-			asc_getColor: function () { return this.color; }
+			asc_getColor: function () { return this.color; },
+			asc_getPlaceholderType: function () { return this.placeholderType; }
 		};
 
 		// Гиперссылка
@@ -3664,6 +3667,7 @@
 		prot["asc_getFilter"] = prot.asc_getFilter;
 		prot["asc_getTooltip"] = prot.asc_getTooltip;
 		prot["asc_getColor"] = prot.asc_getColor;
+		prot["asc_getPlaceholderType"] = prot.asc_getPlaceholderType;
 
 		window["Asc"]["asc_CHyperlink"] = window["Asc"].asc_CHyperlink = asc_CHyperlink;
 		prot = asc_CHyperlink.prototype;
