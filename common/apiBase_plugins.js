@@ -1477,8 +1477,8 @@
     * Removes a plugin with the specified GUID.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [guid] - The plugin identifier. It must be of the *asc.{UUID}* type.
-	 * @param {string} [backup] - The plugin backup. This parameter is used when working with the desktop editors.
+     * @param {string} guid - The plugin identifier. It must be of the *asc.{UUID}* type.
+	 * @param {string} backup - The plugin backup. This parameter is used when working with the desktop editors.
      * @alias RemovePlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
@@ -1788,7 +1788,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} windowID - The frame ID.
 	 * @param {string} name - The event name.
-	 * @param {object} data - The even data.
+	 * @param {object} data - The event data.
 	 * @alias SendToWindow
 	 * @since 7.4.0
 	 */

@@ -4624,7 +4624,7 @@
 
 	/**
 	 * Returns a value that represents a number of objects in the collection.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
 	 * @since 7.4.0
@@ -4641,7 +4641,7 @@
 
 	/**
 	 * Returns the parent object of the specified characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
 	 * @since 7.4.0
@@ -4658,7 +4658,7 @@
 
 	/**
 	 * Deletes the ApiCharacters object.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @since 7.4.0
 	 */
@@ -4694,7 +4694,7 @@
 
 	/**
 	 * Inserts a string replacing the specified characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @param {string} String - The string to insert.
 	 * @since 7.4.0
@@ -4757,7 +4757,7 @@
 
 	/**
 	 * Sets a string value that represents the text of the specified range of characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @param {string} Caption - A string value that represents the text of the specified range of characters.
 	 * @since 7.4.0
@@ -4768,7 +4768,7 @@
 
 	/**
 	 * Returns a string value that represents the text of the specified range of characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - A string value that represents the text of the specified range of characters.
 	 * @since 7.4.0
@@ -4792,7 +4792,7 @@
 
 	/**
 	 * Sets the text for the specified characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @param {string} Text - The text to be set.
 	 * @since 7.4.0
@@ -4803,7 +4803,7 @@
 
 	/**
 	 * Returns the text of the specified range of characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The text of the specified range of characters.
 	 * @since 7.4.0
@@ -4823,7 +4823,7 @@
 
 	/**
 	 * Returns the ApiFont object that represents the font of the specified characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFont}
 	 * @since 7.4.0
@@ -4847,7 +4847,7 @@
 
 	/**
 	 * Returns the parent ApiCharacters object of the specified font.
-	 * @memberof ApiAreas
+	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiCharacters} - The parent ApiCharacters object.
 	 * @since 7.4.0

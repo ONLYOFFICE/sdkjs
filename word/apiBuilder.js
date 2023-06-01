@@ -18415,7 +18415,7 @@
 	/**
 	 * Returns the full name of the currently opened file.
 	 * @memberof Api
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
 	 */
 	Api.prototype.GetFullName = function () {
