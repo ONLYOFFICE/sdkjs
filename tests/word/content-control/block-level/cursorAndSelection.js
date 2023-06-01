@@ -58,6 +58,9 @@ $(function ()
 	
 	QUnit.test("Test remove/delete after/before content control", function (assert)
 	{
+		AscTest.SetTrackRevisions(false);
+		AscTest.ClearDocument();
+
 		function CreateFilledContentControl(texts)
 		{
 			let cc = CreateContentControl();
@@ -72,8 +75,6 @@ $(function ()
 			
 			return cc;
 		}
-		
-		AscTest.ClearDocument();
 		logicDocument.AddToContent(0, AscTest.CreateParagraph());
 		
 		let cc1 = CreateFilledContentControl(["Text1", "Text2"]);
@@ -112,6 +113,36 @@ $(function ()
 		assert.strictEqual(lastPara.IsThisElementCurrent() && lastPara.IsCursorAtEnd(), true, "Check cursor position at the end of the first content control");
 		
 		logicDocument.AddToContent(1, p);
+		AscTest.MoveCursorToParagraph(p, false);
+		AscTest.PressKey(AscTest.Key.delete);
+		assert.ok(true, "Move to the end of the middle paragraph and click delete button");
+		assert.strictEqual(logicDocument.GetElementsCount(), 3, "Check number of elements in logic document");
+		assert.strictEqual(p.IsUseInDocument(), false, "Check if paragraph is present in the document");
+		assert.strictEqual(firstPara.IsThisElementCurrent() && firstPara.IsCursorAtBegin(), true, "Check cursor position at the start of the second content control");
+		
+		logicDocument.AddToContent(1, p);
+
+		AscTest.SetTrackRevisions(true);
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.PressKey(AscTest.Key.backspace);
+		
+		assert.strictEqual(logicDocument.IsTrackRevisions(), true, "Turn on track revisions");
+		assert.ok(true, "Move to the start of the middle paragraph and click backspace button");
+		assert.strictEqual(logicDocument.GetElementsCount(), 4, "Check number of elements in logic document");
+		assert.strictEqual(p.IsUseInDocument(), true, "Check if paragraph is present in the document");
+		assert.strictEqual(lastPara.IsThisElementCurrent() && lastPara.IsCursorAtEnd(), true, "Check cursor position at the end of the first content control");
+		assert.strictEqual(lastPara.GetReviewType(), reviewtype_Remove, "Check that the last paragraph in first cc has become deleted on review");
+		
+		AscTest.MoveCursorToParagraph(p, false);
+		AscTest.PressKey(AscTest.Key.delete);
+		assert.ok(true, "Move to the end of the middle paragraph and click delete button");
+		assert.strictEqual(logicDocument.GetElementsCount(), 4, "Check number of elements in logic document");
+		assert.strictEqual(p.IsUseInDocument(), true, "Check if paragraph is present in the document");
+		assert.strictEqual(firstPara.IsThisElementCurrent() && firstPara.IsCursorAtBegin(), true, "Check cursor position at the start of the second content control");
+		assert.strictEqual(p.GetReviewType(), reviewtype_Remove, "Check that middle paragraph has become deleted on review");
+		
+		p.SetReviewType(reviewtype_Add);
+		assert.strictEqual(p.GetReviewType(), reviewtype_Add, "Change review type of the middle paragraph to added on review");
 		AscTest.MoveCursorToParagraph(p, false);
 		AscTest.PressKey(AscTest.Key.delete);
 		assert.ok(true, "Move to the end of the middle paragraph and click delete button");

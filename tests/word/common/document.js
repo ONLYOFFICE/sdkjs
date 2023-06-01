@@ -133,6 +133,13 @@
 
 		editor.DocInfo = {Format : "docx"};
 	}
+	function SetTrackRevisions(turnOn)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.SetLocalTrackRevisions(turnOn);
+	}
 	function PressKey(keyCode, isCtrl, isShift, isAlt)
 	{
 		if (!logicDocument)
@@ -322,6 +329,7 @@
 	AscTest.RemoveTableBorders       = RemoveTableBorders;
 	AscTest.SetFillingFormMode       = SetFillingFormMode;
 	AscTest.SetEditingMode           = SetEditingMode;
+	AscTest.SetTrackRevisions        = SetTrackRevisions;
 	AscTest.PressKey                 = PressKey;
 	AscTest.MoveCursorLeft           = MoveCursorLeft;
 	AscTest.MoveCursorRight          = MoveCursorRight;
