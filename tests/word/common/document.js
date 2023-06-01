@@ -206,6 +206,13 @@
 
 		logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
 	}
+	function ClearParagraph(p)
+	{
+		if (!p)
+			return;
+		
+		p.RemoveFromContent(0, p.GetElementsCount());
+	}
 	function EnterText(text)
 	{
 		if (!logicDocument)
@@ -321,6 +328,7 @@
 	AscTest.Recalculate              = Recalculate;
 	AscTest.ClickMouseButton         = ClickMouseButton;
 	AscTest.ClearDocument            = ClearDocument;
+	AscTest.ClearParagraph           = ClearParagraph;
 	AscTest.EnterText                = EnterText;
 	AscTest.CorrectEnterText         = CorrectEnterText;
 	AscTest.BeginCompositeInput      = BeginCompositeInput;

@@ -58,7 +58,7 @@ $(function ()
 			return p;
 		}
 		
-		function TestDeletionEmpyContentControl(isFromStart)
+		function TestDeletionEmptyContentControl(isFromStart)
 		{
 			let key = isFromStart ? AscTest.Key.delete : AscTest.Key.backspace;
 			let msg = isFromStart ? "delete" : "backspace";
@@ -96,8 +96,8 @@ $(function ()
 		}
 		
 		// Тестируем удаление контрола, заполненного плейсхолдером, через тройное нажатие на backspace/delete
-		TestDeletionEmpyContentControl(true);
-		TestDeletionEmpyContentControl(false);
+		TestDeletionEmptyContentControl(true);
+		TestDeletionEmptyContentControl(false);
 	});
 
 });
