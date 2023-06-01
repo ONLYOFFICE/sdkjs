@@ -929,7 +929,19 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 						if (this.Content[nCurContentPos].IsEmpty()
 							&& (nCurContentPos < this.Content.length - 1 || !(this instanceof AscWord.CDocument)))
 						{
-							this.RemoveFromContent(nCurContentPos);
+							if (this.IsTrackRevisions())
+							{
+								let lastElementIndex = this.Content[nCurContentPos - 1].GetElementsCount() - 1;
+								let lastElement = lastElementIndex >= 0 ? this.Content[nCurContentPos - 1].GetElement(lastElementIndex) : null;
+								if (lastElement && lastElement.IsParagraph())
+								{
+									lastElement.SetReviewType(reviewtype_Remove);
+								}
+							}
+							else
+							{
+								this.RemoveFromContent(nCurContentPos);
+							}
 						}
 						
 						--nCurContentPos;
@@ -1023,9 +1035,35 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 					else if (nCurContentPos < this.Content.length - 1 && this.Content[nCurContentPos + 1].IsBlockLevelSdt())
 					{
 						if (this.Content[nCurContentPos].IsEmpty())
-							this.RemoveFromContent(nCurContentPos);
+						{
+							let reviewType = this.Content[nCurContentPos].GetReviewType();
+							let reviewInfo = this.Content[nCurContentPos].GetReviewInfo();
+							if (this.IsTrackRevisions()
+								&& (reviewtype_Add !== reviewType || !reviewInfo.IsCurrentUser()
+								&& (reviewtype_Remove !== reviewInfo || !reviewInfo.IsPrevAddedByCurrentUser())))
+							{
+								if (reviewtype_Add === reviewType)
+								{
+									let newReviewInfo = reviewInfo.Copy();
+									newReviewInfo.SavePrev(reviewtype_Add);
+									newReviewInfo.Update();
+									this.Content[nCurContentPos].SetReviewType(reviewtype_Remove, newReviewInfo);
+								}
+								else
+								{
+									this.Content[nCurContentPos].SetReviewType(reviewtype_Remove);
+								}
+								++nCurContentPos;
+							}
+							else
+							{
+								this.RemoveFromContent(nCurContentPos);
+							}
+						}
 						else
+						{
 							++nCurContentPos;
+						}
 						
 						this.Content[nCurContentPos].MoveCursorToStartPos(false);
 					}
@@ -1877,7 +1915,16 @@ CDocumentContentBase.prototype.RemoveParagraphForReview = function(nPosition)
 	}
 	else
 	{
-		this.ConcatParagraphs(nPosition, true);
+		if (nPosition < this.Content.length - 1
+			&& !this.Content[nPosition + 1].IsParagraph()
+			&& this.Content[nPosition].IsEmpty())
+		{
+			this.RemoveFromContent(nPosition, 1);
+		}
+		else
+		{
+			this.ConcatParagraphs(nPosition, true);
+		}
 	}
 };
 /**
