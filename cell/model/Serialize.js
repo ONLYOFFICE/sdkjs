@@ -12682,7 +12682,16 @@
     window["Asc"].ETotalsRowFunction = ETotalsRowFunction;
     window["Asc"].ESortBy = ESortBy;
     window["Asc"].ECustomFilter = ECustomFilter;
-    window["Asc"].EDateTimeGroup = EDateTimeGroup;
+
+    window['Asc']['EDateTimeGroup'] = window["Asc"].EDateTimeGroup = EDateTimeGroup;
+    prot = EDateTimeGroup;
+    prot['datetimegroupDay'] = prot.datetimegroupDay;
+    prot['datetimegroupHour'] = prot.datetimegroupHour;
+    prot['datetimegroupMinute'] = prot.datetimegroupMinute;
+    prot['datetimegroupMonth'] = prot.datetimegroupMonth;
+    prot['datetimegroupSecond'] = prot.datetimegroupSecond;
+    prot['datetimegroupYear'] = prot.datetimegroupYear;
+
     window["Asc"].ETableStyleType = ETableStyleType;
     window["Asc"].EFontScheme = EFontScheme;
 
