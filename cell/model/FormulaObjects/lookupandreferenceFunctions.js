@@ -242,17 +242,60 @@ function (window, undefined) {
 			const itemA = a.item;
 			const itemB = b.item;
 
+			let res = 0;
 			if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
-				return (itemA.value.localeCompare(itemB.value)) * sortOrder;
+				res = (itemA.value.localeCompare(itemB.value)) * sortOrder;
 			} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
-				return (itemA.value - itemB.value) * sortOrder;
+				res = (itemA.value - itemB.value) * sortOrder;
 			} else if (cElementType.string === itemA.type) {
-				return 1 * sortOrder;
+				// check itemB.type and make decision
+				if (cElementType.number === itemB.type) {
+					res = 1 * sortOrder;
+				} else if (cElementType.bool === itemB.type || cElementType.error === itemB.type || cElementType.empty === itemB.type) {
+					res = -1 * sortOrder;
+				}
 			} else if (cElementType.string === itemB.type) {
-				return -1 * sortOrder;
+				// check itemA.type and make decision
+				if (cElementType.number === itemA.type) {
+					res = -1 * sortOrder;
+				} else if (cElementType.bool === itemA.type || cElementType.error === itemA.type || cElementType.empty === itemA.type) {
+					res = 1 * sortOrder;
+				}
+			} else if (cElementType.bool === itemA.type) {
+				if (cElementType.error === itemB.type || cElementType.empty === itemB.type) {
+					res = -1 * sortOrder;
+				} else {
+					res = 1 *sortOrder;
+				}
+			} else if (cElementType.bool === itemB.type) {
+				if (cElementType.error === itemA.type || cElementType.empty === itemA.type) {
+					res = 1 * sortOrder;
+				} else {
+					res = -1 *sortOrder;
+				}
+			} else if (cElementType.error === itemA.type) {
+				if (cElementType.error === itemB.type) {
+					res = 1 * sortOrder;
+				} else if (cElementType.empty === itemB.type) {
+					res = -1 * sortOrder;
+				} else {
+					res = 1 * sortOrder;
+				}
+			} else if (cElementType.error === itemB.type) {
+				if (cElementType.error === itemA.type) {
+					res = -1 * sortOrder;
+				} else if (cElementType.empty === itemA.type) {
+					res = 1 * sortOrder;
+				} else {
+					res = -1 * sortOrder;
+				}
+			} else if (cElementType.empty === itemA.type || cElementType.empty === itemB.type) {
+				res = 1 * sortOrder;
 			} else {
-				return 0;
+				res = 0;
 			}
+
+			return res;
 		});
 		
 		return indexedArray;

@@ -24246,6 +24246,56 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, 'Result of SORT(AB101:AB102,1,-1)[1,0]');
 		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of SORT(AB101:AB102,1,-1)[1,1]');
 
+		ws.getRange2("A101").setValue("a");
+		ws.getRange2("A102").setValue("1");
+
+		oParser = new parserFormula('SORT(A101:A102,1,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(A101:A102,1,1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SORT(A101:A102,1,1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of SORT(A101:A102,1,1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "a", 'Result of SORT(A101:A102,1,1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of SORT(A101:A102,1,1)[1,1]');
+
+		ws.getRange2("B101").setValue("");
+		ws.getRange2("B102").setValue("");
+		ws.getRange2("B103").setValue("");
+		ws.getRange2("B104").setValue("");
+		ws.getRange2("B105").setValue("");
+		ws.getRange2("C101").setValue("str");
+		ws.getRange2("C102").setValue("99999");
+		ws.getRange2("C103").setValue("#NUM!");
+		ws.getRange2("C104").setValue("FALSE");
+		ws.getRange2("C105").setValue("");
+
+		oParser = new parserFormula('SORT(B101:C105,1,1,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(B101:C105,1,1,TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "str", 'Result of SORT(B101:C105,1,1,TRUE)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 99999, 'Result of SORT(B101:C105,1,1,TRUE)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#NUM!", 'Result of SORT(B101:C105,1,1,TRUE)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", 'Result of SORT(B101:C105,1,1,TRUE)[3,0]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[3,1]');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[4,0]');
+		assert.strictEqual(array.getElementRowCol(4, 1).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[4,1]');
+
+		oParser = new parserFormula('SORT(B101:C104,2,1,FALSE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(A101:A102,2,1,FALSE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 99999, 'Result of SORT(B101:C105,1,1,TRUE)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "str", 'Result of SORT(B101:C105,1,1,TRUE)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "FALSE", 'Result of SORT(B101:C105,1,1,TRUE)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[3,0]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "#NUM!", 'Result of SORT(B101:C105,1,1,TRUE)[3,1]');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[4,0]');
+		assert.strictEqual(array.getElementRowCol(4, 1).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[4,1]');
+
 	});
 
 	QUnit.test("Test: \"reference argument test\"", function (assert) {
