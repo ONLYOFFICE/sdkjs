@@ -217,6 +217,10 @@
 			this.sheetColumnName = null;
 			this.namedSheetView = null;
 
+			//option for interface
+			//show time tree
+			this.isTimeFormat = null;
+
 			return this;
 		}
 
@@ -339,6 +343,9 @@
 			asc_setSheetColumnName: function (val) {
 				this.sheetColumnName = val;
 			},
+			asc_setTimeFormat: function (val) {
+				this.isTimeFormat = val;
+			},
 
 
 			asc_getCellId: function () {
@@ -383,6 +390,9 @@
 			},
 			asc_getSheetColumnName: function () {
 				return this.sheetColumnName;
+			},
+			asc_getTimeFormat: function () {
+				return this.isTimeFormat;
 			},
 
 			setVisibleFromValues: function (visible) {
@@ -1067,40 +1077,40 @@
 			},
 
 			_tryConvertCustomFilter: function(autoFiltersObject, filterRange) {
-				var res = autoFiltersObject;
+				let res = autoFiltersObject;
 
 				if(autoFiltersObject.filter && Asc.c_oAscAutoFilterTypes.CustomFilters === autoFiltersObject.filter.type && autoFiltersObject.filter.filter) {
 					//посколько ms применяет в данном случае не кастомный фильтр
 					//кастомный применяется в случае, если открытые значения отсутсвуют
-					var allHideVal = true;
-					var individualMap = [];
-					var values = [];
+					let allHideVal = true;
+					let individualMap = [];
+					let values = [];
 					filterRange._foreach(function (cell) {
-						var text = window["Asc"].trim(cell.getValue());
-						var val = window["Asc"].trim(cell.getValueWithoutFormat());
-						var textLowerCase = text.toLowerCase();
+						let text = window["Asc"].trim(cell.getValue());
+						let val = window["Asc"].trim(cell.getValueWithoutFormat());
+						let textLowerCase = text.toLowerCase();
 
-						var isDateTimeFormat = cell.getNumFormat().isDateTimeFormat() && cell.getType() === window["AscCommon"].CellValueType.Number;
-						/*if (isDateTimeFormat) {
-							isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Date;
-						}*/
+						let cellFormat = cell.getNumFormat();
+						let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
+							cell.getType() === window["AscCommon"].CellValueType.Number &&
+							cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
 
-						var dataValue = isDateTimeFormat ? AscCommon.NumFormat.prototype.parseDate(val) : null;
+						let dataValue = isDateTimeFormat ? AscCommon.NumFormat.prototype.parseDate(val) : null;
 
 						//check duplicate value
 						if (individualMap.hasOwnProperty(textLowerCase)) {
 							return;
 						}
 
-						var checkValue = isDateTimeFormat ? val : text;
-						var visible = !autoFiltersObject.filter.filter.isHideValue(checkValue, isDateTimeFormat, null, cell);
+						let checkValue = isDateTimeFormat ? val : text;
+						let visible = !autoFiltersObject.filter.filter.isHideValue(checkValue, isDateTimeFormat, null, cell);
 						individualMap[textLowerCase] = 1;
 
 						if(visible) {
 							allHideVal = false;
 						}
 
-						var res = new AutoFiltersOptionsElements();
+						let res = new AutoFiltersOptionsElements();
 						res.asc_setVisible(visible);
 						res.asc_setVal(val);
 						res.asc_setText(text);
@@ -4708,21 +4718,24 @@
 			},
 
 			getOpenAndClosedValues: function (filter, colId, doOpenHide, sortObj) {
-				var isTablePart = !filter.isAutoFilter(), autoFilter = filter.getAutoFilter(), ref = filter.Ref;
-				var worksheet = this.worksheet, textIndexMap = {}, isDateTimeFormat, dataValue, values = [];
-				var _hideValues = [], textIndexMapHideValues = {};
+				let isTablePart = !filter.isAutoFilter(), autoFilter = filter.getAutoFilter(), ref = filter.Ref;
+				let worksheet = this.worksheet, textIndexMap = {}, isDateTimeFormat, dataValue, values = [];
+				let _hideValues = [], textIndexMapHideValues = {};
 
 				//FOR SLICER
 				//для срезов необходимо отображать все значения, в тч скрытые другими фильтрами в данной таблице
 				//флаг fullValues - для срезов
-				var hideItemsWithNoData = sortObj ? sortObj.hideItemsWithNoData : null;
-				var fullValues = sortObj ? sortObj.fullValues && !hideItemsWithNoData : null;
-				var isAscending = sortObj ? sortObj.sortOrder : true;
-				var indicateItemsWithNoData = sortObj ? sortObj.indicateItemsWithNoData : null;
-				var showItemsWithNoDataLast = sortObj ? sortObj.showItemsWithNoDataLast : null;
+				let hideItemsWithNoData = sortObj ? sortObj.hideItemsWithNoData : null;
+				let fullValues = sortObj ? sortObj.fullValues && !hideItemsWithNoData : null;
+				let isAscending = sortObj ? sortObj.sortOrder : true;
+				let indicateItemsWithNoData = sortObj ? sortObj.indicateItemsWithNoData : null;
+				let showItemsWithNoDataLast = sortObj ? sortObj.showItemsWithNoDataLast : null;
 
-				var addValueToMenuObj = function (val, text, visible, count, _arr, hiddenByOtherColumns) {
-					var res = new AutoFiltersOptionsElements();
+				//need/don't need show time
+				let isTimeFormat = false;
+
+				let addValueToMenuObj = function (val, text, visible, count, _arr, hiddenByOtherColumns) {
+					let res = new AutoFiltersOptionsElements();
 					res.asc_setVisible(visible);
 					res.asc_setVal(val);
 					res.asc_setText(text);
@@ -4731,7 +4744,9 @@
 						res.asc_setYear(dataValue.year);
 						res.asc_setMonth(dataValue.month);
 						res.asc_setDay(dataValue.d);
-
+						if (dataValue.hour !== 0 || dataValue.min !== 0 || dataValue.sec !== 0) {
+							isTimeFormat = true;
+						}
 						res.asc_setHour(dataValue.hour);
 						res.asc_setMinute(dataValue.min);
 						res.asc_setSecond(dataValue.sec);
@@ -4741,7 +4756,7 @@
 					_arr[count] = res;
 				};
 
-				var hideValue = function (val, num) {
+				let hideValue = function (val, num) {
 					if (doOpenHide) {
 						worksheet.setRowHidden(val, num, num);
 					}
@@ -4751,13 +4766,13 @@
 					worksheet.workbook.dependencyFormulas.lockRecal();
 				}
 
-				var maxFilterRow = ref.r2;
-				var automaticRowCount = null;
+				let maxFilterRow = ref.r2;
+				let automaticRowCount = null;
 				colId = this._getTrueColId(autoFilter, colId, true);
 
-				var currentFilterColumn = null;
-				var activeNamedSheetView = worksheet.getActiveNamedSheetViewId();
-				var nsvFilter;
+				let currentFilterColumn = null;
+				let activeNamedSheetView = worksheet.getActiveNamedSheetViewId();
+				let nsvFilter;
 				if (activeNamedSheetView !== null) {
 					nsvFilter = worksheet.getNvsFilterByTableName(isTablePart ? filter.DisplayName : null);
 					if (nsvFilter) {
@@ -4771,13 +4786,13 @@
 				}
 
 				//если скрыты только пустые значение, игнорируем пользовательский фильтр при отображении в меню
-				var ignoreCustomFilter = currentFilterColumn ? currentFilterColumn.isOnlyNotEqualEmpty() : null;
-				var isCustomFilter = currentFilterColumn && !ignoreCustomFilter && currentFilterColumn.isApplyCustomFilter();
+				let ignoreCustomFilter = currentFilterColumn ? currentFilterColumn.isOnlyNotEqualEmpty() : null;
+				let isCustomFilter = currentFilterColumn && !ignoreCustomFilter && currentFilterColumn.isApplyCustomFilter();
 
 				if (!isTablePart /*&& filter.isApplyAutoFilter() === false*/)//нужно подхватить нижние ячейки
 				{
 					//TODO стоит заменить на expandRange ?
-					var automaticRange = this.expandRange(filter.Ref, true, true);
+					let automaticRange = this.expandRange(filter.Ref, true, true);
 					automaticRowCount = automaticRange.r2;
 
 					if (automaticRowCount > maxFilterRow) {
@@ -4790,8 +4805,8 @@
 				}
 
 				let findDateTimeFormat;
-				var individualCount = 0, count = 0;
-				for (var i = ref.r1 + 1; i <= maxFilterRow; i++) {
+				let individualCount = 0, count = 0;
+				for (let i = ref.r1 + 1; i <= maxFilterRow; i++) {
 					//max strings
 					if (individualCount >= Asc.c_oAscMaxFilterListLength) {
 						break;
@@ -4803,15 +4818,15 @@
 					}
 
 					//value in current column
-					var cell = worksheet.getCell3(i, colId + ref.c1);
-					var text = window["Asc"].trim(cell.getValueWithFormat());
-					var val = window["Asc"].trim(cell.getValueWithoutFormat());
-					var textLowerCase = text.toLowerCase();
+					let cell = worksheet.getCell3(i, colId + ref.c1);
+					let text = window["Asc"].trim(cell.getValueWithFormat());
+					let val = window["Asc"].trim(cell.getValueWithoutFormat());
+					let textLowerCase = text.toLowerCase();
 
-					isDateTimeFormat = cell.getNumFormat().isDateTimeFormat() && cell.getType() === window["AscCommon"].CellValueType.Number;
-					/*if (isDateTimeFormat) {
-						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Date;
-					}*/
+					let cellFormat = cell.getNumFormat();
+					isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
+						cell.getType() === window["AscCommon"].CellValueType.Number &&
+						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
 
 					if (isDateTimeFormat) {
 						dataValue = AscCommon.NumFormat.prototype.parseDate(val);
@@ -4835,7 +4850,7 @@
 							continue;
 						}
 
-						var _hiddenByOtherFilter = autoFilter.hiddenByAnotherFilter(worksheet, colId, i, ref.c1, nsvFilter ? nsvFilter.columnsFilter : null);
+						let _hiddenByOtherFilter = autoFilter.hiddenByAnotherFilter(worksheet, colId, i, ref.c1, nsvFilter ? nsvFilter.columnsFilter : null);
 						if (_hiddenByOtherFilter) {
 							textIndexMapHideValues[textLowerCase] =  _hideValues.length;
 							addValueToMenuObj(val, text, _hiddenByOtherFilter, _hideValues.length, _hideValues, indicateItemsWithNoData);
@@ -4849,12 +4864,12 @@
 					}
 
 					//apply filter by current button
-					var visible;
+					let visible;
 					if (null !== currentFilterColumn) {
 						if (!autoFilter.hiddenByAnotherFilter(worksheet, colId, i, ref.c1, nsvFilter ? nsvFilter.columnsFilter : null))//filter another button
 						{
 							//filter current button
-							var checkValue = isDateTimeFormat ? val : text;
+							let checkValue = isDateTimeFormat ? val : text;
 							visible = false;
 							if (!isCustomFilter && !currentFilterColumn.isHideValue(checkValue, isDateTimeFormat, null, cell)) {
 								visible = true;
@@ -4901,9 +4916,9 @@
 					worksheet.workbook.dependencyFormulas.unlockRecal();
 				}
 
-				var cleanArr = function (_arr) {
-					var newArr = [];
-					for (i = 0; i < _arr.length; i++) {
+				let cleanArr = function (_arr) {
+					let newArr = [];
+					for (let i = 0; i < _arr.length; i++) {
 						if (_arr[i]) {
 							newArr.push(_arr[i]);
 						}
@@ -4912,7 +4927,7 @@
 				};
 
 				//sort
-				var _values;
+				let _values;
 				if (fullValues && !showItemsWithNoDataLast) {
 					_hideValues = cleanArr(_hideValues);
 					_values = values.concat(_hideValues);
@@ -4939,7 +4954,7 @@
 					});
 				}
 
-				return {values: _values, automaticRowCount: automaticRowCount, ignoreCustomFilter: ignoreCustomFilter};
+				return {values: _values, automaticRowCount: automaticRowCount, ignoreCustomFilter: ignoreCustomFilter, isTimeFormat: isTimeFormat};
 			},
 
 			updateSlicer: function(tableName) {
@@ -6402,6 +6417,7 @@
 				var automaticRowCount = openAndClosedValues.automaticRowCount;
 				//для случае когда скрыто только пустое значение не отображаем customfilter
 				var ignoreCustomFilter = openAndClosedValues.ignoreCustomFilter;
+				let isTimeFormat = openAndClosedValues.isTimeFormat;
 
 				var activeNamedSheetView = ws.getActiveNamedSheetViewId();
 				var nsvFilter;
@@ -6495,6 +6511,8 @@
 				autoFilterObject.asc_setColorsFill(filterTypes.colors);
 				autoFilterObject.asc_setColorsFont(filterTypes.fontColors);
 
+				autoFilterObject.asc_setTimeFormat(isTimeFormat);
+
 				return autoFilterObject;
 			}
 		};
@@ -6525,6 +6543,8 @@
 		prot["asc_setFilterObj"]				= prot.asc_setFilterObj;
 		prot["asc_setPivotObj"]					= prot.asc_setPivotObj;
 		prot["asc_getSheetColumnName"]			= prot.asc_getSheetColumnName;
+		prot["asc_getTimeFormat"]			    = prot.asc_getTimeFormat;
+
 		
 		window["Asc"]["AutoFilterObj"]		    = window["Asc"].AutoFilterObj = AutoFilterObj;
 		prot									= AutoFilterObj.prototype;

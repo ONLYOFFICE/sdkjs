@@ -9227,22 +9227,22 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	AutoFilter.prototype.hiddenByAnotherFilter = function (worksheet, cellId, row, col, opt_columnsFilter) {
-		var result = false;
+		let result = false;
 
-		var filterColumns = opt_columnsFilter ? opt_columnsFilter : this.FilterColumns;
+		let filterColumns = opt_columnsFilter ? opt_columnsFilter : this.FilterColumns;
 		if (filterColumns) {
-			for (var j = 0; j < filterColumns.length; j++) {
-				var filterColumn = opt_columnsFilter ? filterColumns[j].filter : filterColumns[j];
-				var colId = filterColumn.ColId;
+			for (let j = 0; j < filterColumns.length; j++) {
+				let filterColumn = opt_columnsFilter ? filterColumns[j].filter : filterColumns[j];
+				let colId = filterColumn.ColId;
 				if (colId !== cellId) {
-					var cell = worksheet.getCell3(row, colId + col);
-					var isDateTimeFormat = cell.getType() === window["AscCommon"].CellValueType.Number && cell.getNumFormat().isDateTimeFormat();
-					/*if (isDateTimeFormat) {
-						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Date;
-					}*/
+					let cell = worksheet.getCell3(row, colId + col);
+					let cellFormat = cell.getNumFormat();
+					let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
+						cell.getType() === window["AscCommon"].CellValueType.Number &&
+						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
 
-					var isNumberFilter = filterColumn.isApplyCustomFilter();
-					var val = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
+					let isNumberFilter = filterColumn.isApplyCustomFilter();
+					let val = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
 					if (filterColumn.isHideValue(val, isDateTimeFormat, null, cell)) {
 						result = true;
 						break;
@@ -9279,16 +9279,14 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				if (!isHidden) {
 					var cell = worksheet.getCell3(i, colId + this.Ref.c1);
-					var isDateTimeFormat = cell.getType() === window["AscCommon"].CellValueType.Number && cell.getNumFormat().isDateTimeFormat();
+					let cellFormat = cell.getNumFormat();
+					let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
+						cell.getType() === window["AscCommon"].CellValueType.Number &&
+						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
 					var isNumberFilter = false;
 					if (newFilterColumn.CustomFiltersObj || newFilterColumn.Top10 || newFilterColumn.DynamicFilter) {
 						isNumberFilter = true;
 					}
-
-					/*if (isDateTimeFormat) {
-						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Date;
-					}*/
-
 
 					var currentValue = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
 					var isSetHidden = newFilterColumn.isHideValue(currentValue, isDateTimeFormat, null, cell);
