@@ -2258,6 +2258,14 @@ CTable.prototype.GetContentBounds = function(CurPage)
 {
 	return this.Get_PageBounds(CurPage);
 };
+/**
+ * @param pageIndex
+ * @returns {?CTablePage}
+ */
+CTable.prototype.GetPage = function(pageIndex)
+{
+	return this.Pages[pageIndex];
+};
 CTable.prototype.Get_PagesCount = function()
 {
 	return this.Pages.length;

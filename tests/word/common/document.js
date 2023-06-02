@@ -321,6 +321,13 @@
 			logicDocument.Content[pos].SelectAll(direction);
 		}
 	}
+	function GetFinalSection()
+	{
+		if (!logicDocument)
+			return null;
+		
+		return logicDocument.SectPr;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument      = CreateLogicDocument;
 	AscTest.CreateParagraph          = CreateParagraph;
@@ -348,6 +355,7 @@
 	AscTest.AddNumbering             = AddNumbering;
 	AscTest.SetParagraphNumberingLvl = SetParagraphNumberingLvl;
 	AscTest.SelectDocumentRange      = SelectDocumentRange;
+	AscTest.GetFinalSection          = GetFinalSection;
 
 })(window);
 

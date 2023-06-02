@@ -3546,6 +3546,14 @@ CTablePage.prototype.Shift = function(Dx, Dy)
     this.YLimit += Dy;
     this.Bounds.Shift(Dx, Dy);
 };
+CTablePage.prototype.GetFirstRow = function()
+{
+	return this.FirstRow;
+};
+CTablePage.prototype.GetLastRow = function()
+{
+	return this.LastRow;
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Класс CTableRecalcInfo
 //----------------------------------------------------------------------------------------------------------------------

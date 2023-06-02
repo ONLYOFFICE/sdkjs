@@ -10972,7 +10972,12 @@ function CDocumentBorder()
 	this.Size    = 0.5 * g_dKoef_pt_to_mm; // Размер учитываем в зависимости от Value
 	this.Value   = border_None;
 }
-
+CDocumentBorder.FromObject = function()
+{
+	let border = new CDocumentBorder();
+	border.Set_FromObject(arguments);
+	return border;
+};
 CDocumentBorder.prototype =
 {
     Copy : function()
