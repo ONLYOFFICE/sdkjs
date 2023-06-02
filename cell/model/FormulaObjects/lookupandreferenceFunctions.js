@@ -1881,6 +1881,9 @@ function (window, undefined) {
 				resArr.addRow();
 				for (let j = 0; j < dimensions.col; j++) {
 					let elem = byColArray.getValueByRowCol ? byColArray.getValueByRowCol(i, j) : byColArray.getElementRowCol(i, j);
+					if (!elem) {
+						elem = new cEmpty();
+					}
 
 					if (cElementType.bool === elem.type || cElementType.number === elem.type || cElementType.empty === elem.type) {
 						byColVal = elem.tocBool();
@@ -1994,7 +1997,7 @@ function (window, undefined) {
 		// arg2(sort_order) check
 		if (cElementType.array !== arg2.type && cElementType.cellsRange !== arg2.type && cElementType.cellsRange3D !== arg2.type) {
 			sort_order = arg2.tocNumber();
-		} else if (arg2.isOneElement()){
+		} else if (arg2.isOneElement()) {
 			sort_order = arg2.getFirstElement();
 		} else {
 			return new cError(cErrorType.wrong_value_type);

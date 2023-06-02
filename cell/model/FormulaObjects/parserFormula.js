@@ -1277,8 +1277,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		let col = [];
 		for (let i = 0; i < this.getDimensions().row; i++) {
+			let elem = this.getValueByRowCol(i, colIndex);
+			if (!elem) {
+				elem = new cEmpty();
+			}
 			col[i] = [];
-			col[i].push(this.getValueByRowCol(i, colIndex));
+			col[i].push(elem);
 		}
 		return col;
 	};
@@ -1289,7 +1293,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		let row = [[]];
 		for (let j = 0; j < this.getDimensions().col; j++) {
-			row[0].push(this.getValueByRowCol(rowIndex, j));
+			let elem = this.getValueByRowCol(rowIndex, j);
+			if (!elem) {
+				elem = new cEmpty();
+			}
+			row[0].push(elem);
 		}
 		return row;
 	};
@@ -1672,8 +1680,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		let col = [];
 		for (let i = 0; i < this.getDimensions().row; i++) {
+			let elem = this.getValueByRowCol(i, colIndex);
+			if (!elem) {
+				elem = new cEmpty();
+			}
 			col[i] = [];
-			col[i].push(this.getValueByRowCol(i, colIndex));
+			col[i].push(elem);
 		}
 		return col;
 	};
@@ -1684,7 +1696,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		let row = [[]];
 		for (let j = 0; j < this.getDimensions().col; j++) {
-			row[0].push(this.getValueByRowCol(rowIndex, j));
+			let elem = this.getValueByRowCol(rowIndex, j);
+			if (!elem) {
+				elem = new cEmpty();
+			}
+			row[0].push(elem);
 		}
 		return row;
 	};
