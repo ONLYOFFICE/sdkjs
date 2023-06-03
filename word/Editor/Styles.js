@@ -10972,10 +10972,10 @@ function CDocumentBorder()
 	this.Size    = 0.5 * g_dKoef_pt_to_mm; // Размер учитываем в зависимости от Value
 	this.Value   = border_None;
 }
-CDocumentBorder.FromObject = function()
+CDocumentBorder.FromObject = function(obj)
 {
 	let border = new CDocumentBorder();
-	border.Set_FromObject(arguments);
+	border.Set_FromObject(obj);
 	return border;
 };
 CDocumentBorder.prototype =
@@ -11185,6 +11185,10 @@ CDocumentBorder.prototype.IsNone = function()
 CDocumentBorder.prototype.SetNone = function()
 {
 	this.Value = border_None;
+};
+CDocumentBorder.prototype.GetSize = function()
+{
+	return this.Size;
 };
 CDocumentBorder.prototype.setSizeIn8Point = function(val)
 {

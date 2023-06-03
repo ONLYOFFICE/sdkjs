@@ -4185,11 +4185,17 @@
 	/**
 	 * Конвертируем миллиметры в ближайшее целое значение твипсов
 	 * @param mm - значение в миллиметрах
+	 * @param [mode=0]
 	 * @returns {number}
 	 */
-	function MMToTwips(mm)
+	function MMToTwips(mm, mode)
 	{
-		return (((mm * 20 * 72 / 25.4) + 0.5) | 0);
+		if (!mode)
+			return Math.trunc((mm * 20 * 72 / 25.4) + 0.5);
+		else if (-1 === mode)
+			return Math.floor((mm * 20 * 72 / 25.4) + 0.5);
+		else
+			return Math.ceil((mm * 20 * 72 / 25.4) + 0.5);
 	}
 
 	/**
