@@ -59,6 +59,8 @@ const allTests = [
 	'oform/xml/oformXml.html'
 ];
 
+const maxTestsAtOnce = require('events').defaultMaxListeners;
+
 const {performance} = require('perf_hooks');
 
 const {
@@ -67,14 +69,22 @@ const {
   printFailedTests
 } = require("node-qunit-puppeteer");
 
-async function Run()
+(async function()
 {
 	let startTime = performance.now();
 	let count  = 0;
 	let failed = [];
+	let promiseTests = [];
+	
+	async function flushTests()
+	{
+		await Promise.all(promiseTests);
+		promiseTests = [];
+	}
+	
 	for (let nIndex = 0, nCount = allTests.length; nIndex < nCount; ++nIndex)
 	{
-		await runQunitPuppeteer({targetUrl : path.join(__dirname, allTests[nIndex])})
+		promiseTests.push(runQunitPuppeteer({targetUrl : path.join(__dirname, allTests[nIndex])})
 			.then(result =>
 			{
 				count++;
@@ -91,9 +101,14 @@ async function Run()
 				count++;
 				failed.push(allTests[nIndex]);
 				console.error(ex);
-			});
+			}));
+		
+		if (maxTestsAtOnce === promiseTests.length)
+			await flushTests();
 	}
-
+	
+	await flushTests();
+	
 	console.log("\nOverall Elapsed " + (Math.round(( ((performance.now() - startTime) / 1000) + Number.EPSILON) * 1000) / 1000) + "s");
 	console.log("\n"+ (count - failed.length) + "/" + count + " modules successfully passed the tests");
 
@@ -109,7 +124,7 @@ async function Run()
 	{
 		console.log("\nPASSED".green.bold);
 	}
-}
-
-Run();
+	
+	process.exit();
+})();
 
