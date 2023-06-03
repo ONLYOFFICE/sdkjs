@@ -538,7 +538,7 @@ CopyProcessor.prototype =
 
 
 				var _oSpan2 = new CopyElement("span");
-				//_oSpan2.addChild(new CopyElement(CopyPasteCorrectString("[" + index + "]"), true));
+				_oSpan2.addChild(new CopyElement(CopyPasteCorrectString("[" + index + "]"), true));
 				if (_oSpan2.oAttributes["style"]) {
 					_oSpan2.oAttributes["style"] += ";"
 				} else {
@@ -2037,8 +2037,8 @@ CopyProcessor.prototype =
 				var _link = new CopyElement("a");
 
 				_link.oAttributes["style"] = "mso-footnote-id:" + prefix + index;
-				_link.oAttributes["href"] = "_" + prefix + "ref" + index;
-				_link.oAttributes["name"] = "#_" + prefix + index;
+				_link.oAttributes["href"] = "#_" + prefix + "ref" + index;
+				_link.oAttributes["name"] = "_" + prefix + index;
 				_link.oAttributes["title"] = "";
 
 				var _span = new CopyElement("span");
