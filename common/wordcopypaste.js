@@ -2041,12 +2041,15 @@ CopyProcessor.prototype =
 				_link.oAttributes["name"] = "_" + prefix + index;
 				_link.oAttributes["title"] = "";
 
+				_link.addChild(new CopyElement(CopyPasteCorrectString("[" + index + "]"), true));
+
 				var _span = new CopyElement("span");
 				_span.oAttributes["class"] = "MsoFootnoteReference";
 
 				this.CopyDocument2(_span, null, aFootnotes[i].Content, true);
-				_link.addChild(_span);
+				//_link.addChild(_span);
 				_p.addChild(_link);
+				_p.addChild(_span);
 				_div.addChild(_p);
 				_mainDiv.addChild(_div);
 			}
