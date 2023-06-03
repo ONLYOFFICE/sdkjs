@@ -220,6 +220,11 @@ CopyElement.prototype.getOuterHtml = function(){
 		return sRes;
 	}
 };
+CopyElement.prototype.moveChildTo = function(container){
+	for (let i = 0; i < this.aChildren.length; i++) {
+		container.addChild(this.aChildren[i]);
+	}
+};
 function CopyProcessor(api, onlyBinaryCopy)
 {
 	this.api = api;
@@ -2046,9 +2051,14 @@ CopyProcessor.prototype =
 				var _span = new CopyElement("span");
 				_span.oAttributes["class"] = "MsoFootnoteReference";
 
-				this.CopyDocument2(_span, null, aFootnotes[i].Content, true);
-				//_link.addChild(_span);
+				let container = new CopyElement("div");
+				this.CopyDocument2(container, null, aFootnotes[i].Content, true);
 				_p.addChild(_link);
+
+				for (let i = 0; i < container.aChildren.length; i++) {
+					container.aChildren[i].moveChildTo(_span);
+				}
+
 				_p.addChild(_span);
 				_div.addChild(_p);
 				_mainDiv.addChild(_div);
