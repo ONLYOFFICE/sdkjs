@@ -459,12 +459,12 @@ CopyProcessor.prototype =
     },
     ParseItem : function(ParaItem, oTarget, nextParaItem, lengthContent)
     {
-        var oSpan;
+        let oSpan;
     	switch ( ParaItem.Type )
         {
             case para_Text:
 				//экранируем спецсимволы
-                var sValue = AscCommon.encodeSurrogateChar(ParaItem.Value);
+                let sValue = AscCommon.encodeSurrogateChar(ParaItem.Value);
                 if(sValue)
 					oTarget.addChild(new CopyElement(CopyPasteCorrectString(sValue), true));
                 break;
@@ -485,7 +485,7 @@ CopyProcessor.prototype =
 				oTarget.addChild(oSpan);
 				break;
             case para_NewLine:
-				var oBr = new CopyElement("br");
+				let oBr = new CopyElement("br");
                 if(ParaItem.IsPageBreak())
                 {
 					oBr.oAttributes["clear"] = "all";
@@ -501,11 +501,11 @@ CopyProcessor.prototype =
 				oTarget.addChild(oSpan);
                 break;
             case para_Drawing:
-                var oGraphicObj = ParaItem.GraphicObj;
-                var sSrc = oGraphicObj.getBase64Img();
+                let oGraphicObj = ParaItem.GraphicObj;
+                let sSrc = oGraphicObj.getBase64Img();
                 if(sSrc.length > 0)
                 {
-					var _h, _w;
+					let _h, _w;
 					if(oGraphicObj.cachedPixH)
 						_h = oGraphicObj.cachedPixH;
 					else
@@ -516,7 +516,7 @@ CopyProcessor.prototype =
 					else
 						_w = ParaItem.Extent.W * g_dKoef_mm_to_pix;
 
-					var oImg = new CopyElement("img");
+					let oImg = new CopyElement("img");
 					oImg.oAttributes["style"] = "max-width:100%;";
 					oImg.oAttributes["width"] = Math.round(_w);
 					oImg.oAttributes["height"] = Math.round(_h);
@@ -530,9 +530,9 @@ CopyProcessor.prototype =
 					oTarget.addChild(new CopyElement(CopyPasteCorrectString(ParaItem.String), true));
 				break;
 			case para_FootnoteReference:
-				var oLink = new CopyElement("a");
-				var index = this.aFootnoteReference.length + 1;
-				var prefix = "ftn";
+				let oLink = new CopyElement("a");
+				let index = this.aFootnoteReference.length + 1;
+				let prefix = "ftn";
 				oLink.oAttributes["style"] = "mso-footnote-id:" + prefix + index;
 				oLink.oAttributes["href"] = "#_" + prefix + index;
 				oLink.oAttributes["name"] = "_" + prefix + "ref" + index;
@@ -542,7 +542,7 @@ CopyProcessor.prototype =
 				oSpan.oAttributes["class"] = "MsoFootnoteReference";
 
 
-				var _oSpan2 = new CopyElement("span");
+				let _oSpan2 = new CopyElement("span");
 				_oSpan2.addChild(new CopyElement(CopyPasteCorrectString("[" + index + "]"), true));
 				if (_oSpan2.oAttributes["style"]) {
 					_oSpan2.oAttributes["style"] += ";"
@@ -2062,30 +2062,29 @@ CopyProcessor.prototype =
 				</div>
 			</div>*/
 
-			var _mainDiv = new CopyElement("div");
+			let _mainDiv = new CopyElement("div");
 			_mainDiv.oAttributes["style"] = "mso-element:footnote-list";
 
-			var _br = new CopyElement("br");
+			let _br = new CopyElement("br");
 			_br.oAttributes["clear"] = "all";
 			_mainDiv.addChild(_br);
 
-			var _hr = new CopyElement("hr");
+			let _hr = new CopyElement("hr");
 			_hr.oAttributes["align"] = "left";
 			_hr.oAttributes["size"] = "1";
 			_hr.oAttributes["width"] = "33%";
 			_mainDiv.addChild(_hr);
 
-
-			for (var i = 0; i < aFootnotes.length; i++) {
-				var prefix = "ftn";
-				var index = i + 1;
-				var _div = new CopyElement("div");
+			for (let i = 0; i < aFootnotes.length; i++) {
+				let prefix = "ftn";
+				let index = i + 1;
+				let _div = new CopyElement("div");
 				_div.oAttributes["style"] = "mso-element:footnote";
 				_div.oAttributes["id"] = prefix + index;
-
+				
 				//in first paragraph put link and paragraphs contents
 				for (let j = 0; j < aFootnotes[i].Content.length; j++) {
-					var _p = new CopyElement("p");
+					let _p = new CopyElement("p");
 					_p.oAttributes["class"] = "MsoFootnoteText";
 
 					let _link;
