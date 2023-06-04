@@ -2029,6 +2029,17 @@ CopyProcessor.prototype =
 			var _mainDiv = new CopyElement("div");
 			_mainDiv.oAttributes["style"] = "mso-element:footnote-list";
 
+			var _br = new CopyElement("br");
+			_br.oAttributes["clear"] = "all";
+			_mainDiv.addChild(_br);
+
+			var _hr = new CopyElement("hr");
+			_hr.oAttributes["align"] = "left";
+			_hr.oAttributes["size"] = "1";
+			_hr.oAttributes["width"] = "33%";
+			_mainDiv.addChild(_hr);
+
+
 			for (var i = 0; i < aFootnotes.length; i++) {
 				var prefix = "ftn";
 				var index = i + 1;
@@ -2052,14 +2063,14 @@ CopyProcessor.prototype =
 				_span.oAttributes["class"] = "MsoFootnoteReference";
 
 				let container = new CopyElement("div");
-				this.CopyDocument2(container, null, aFootnotes[i].Content, true);
 				_p.addChild(_link);
+				this.CopyDocument2(_p, null, aFootnotes[i].Content, true);
 
-				for (let i = 0; i < container.aChildren.length; i++) {
+				/*for (let i = 0; i < container.aChildren.length; i++) {
 					container.aChildren[i].moveChildTo(_span);
-				}
+				}*/
 
-				_p.addChild(_span);
+				//_p.addChild(_span);
 				_div.addChild(_p);
 				_mainDiv.addChild(_div);
 			}
