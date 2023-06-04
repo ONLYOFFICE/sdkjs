@@ -220,9 +220,9 @@ CopyElement.prototype.getOuterHtml = function(){
 		return sRes;
 	}
 };
-CopyElement.prototype.moveChildTo = function(container){
+CopyElement.prototype.moveChildTo = function (container) {
 	for (let i = 0; i < this.aChildren.length; i++) {
-		container.addChild(this.aChildren[i]);
+		container.addChild && container.addChild(this.aChildren[i]);
 	}
 };
 function CopyProcessor(api, onlyBinaryCopy)
@@ -2081,7 +2081,11 @@ CopyProcessor.prototype =
 				let _div = new CopyElement("div");
 				_div.oAttributes["style"] = "mso-element:footnote";
 				_div.oAttributes["id"] = prefix + index;
-				
+
+				if (!aFootnotes[i] || !aFootnotes[i].Content) {
+					continue;
+				}
+
 				//in first paragraph put link and paragraphs contents
 				for (let j = 0; j < aFootnotes[i].Content.length; j++) {
 					let _p = new CopyElement("p");
