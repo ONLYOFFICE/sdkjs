@@ -109,6 +109,7 @@
 			this.header.style = this._generateStyle();
 			this.header.groupDataBorder = this.getCColor(AscCommon.GlobalSkin.GroupDataBorder);
 			this.header.editorBorder = this.getCColor(AscCommon.GlobalSkin.EditorBorder);
+			this.header.cornerColor = this.getCColor(AscCommon.GlobalSkin.SelectAllTriangleIcon);
 		};
 		this._generateStyle = function () {
 			return [// Header colors
@@ -116,7 +117,7 @@
 					background: this.getCColor(AscCommon.GlobalSkin.Background),
 					border: this.getCColor(AscCommon.GlobalSkin.Border),
 					color: this.getCColor(AscCommon.GlobalSkin.Color),
-					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDark),
+					backgroundDark: this.getCColor(AscCommon.GlobalSkin.SheetViewCellBackground),
 					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDark),
 					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
 					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
@@ -124,7 +125,7 @@
 					background: this.getCColor(AscCommon.GlobalSkin.BackgroundActive),
 					border: this.getCColor(AscCommon.GlobalSkin.BorderActive),
 					color: this.getCColor(AscCommon.GlobalSkin.ColorActive),
-					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDarkActive),
+					backgroundDark: this.getCColor(AscCommon.GlobalSkin.SheetViewCellBackgroundPressed),
 					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkActive),
 					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
 					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
@@ -132,7 +133,7 @@
 					background: this.getCColor(AscCommon.GlobalSkin.BackgroundHighlighted),
 					border: this.getCColor(AscCommon.GlobalSkin.BorderHighlighted),
 					color: this.getCColor(AscCommon.GlobalSkin.ColorHighlighted),
-					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDarkHighlighted),
+					backgroundDark: this.getCColor(AscCommon.GlobalSkin.SheetViewCellBackgroundHover),
 					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkHighlighted),
 					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
 					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
@@ -140,7 +141,7 @@
 		};
 		this.header = {
 			style: this._generateStyle(),
-			cornerColor: new CColor(193, 193, 193),
+			cornerColor: this.getCColor(AscCommon.GlobalSkin.SelectAllTriangleIcon),
 			groupDataBorder: this.getCColor(AscCommon.GlobalSkin.GroupDataBorder),
 			editorBorder: this.getCColor(AscCommon.GlobalSkin.EditorBorder),
 			printBackground: new CColor(238, 238, 238),

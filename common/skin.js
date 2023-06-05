@@ -142,9 +142,9 @@ var EditorSkins = {
 		ColorHighlighted         : "#6a6a70",
 		ColorFiltering           : "#008636",
 
-		BackgroundDark           : "#444444",
-		BackgroundDarkActive     : "#111111",
-		BackgroundDarkHighlighted: "#666666",
+		SheetViewCellBackground        : "#73bf92",
+		SheetViewCellBackgroundPressed : "#aaffcc",
+		SheetViewCellBackgroundHover   : "#97e3b7",
 
 		ColorDark                : "#ffffff",
 		ColorDarkActive          : "#ffffff",
@@ -152,7 +152,9 @@ var EditorSkins = {
 		ColorDarkFiltering       : "#7AFFAF",
 
 		GroupDataBorder          : "#000000",
-		EditorBorder             : "#cbcbcb"
+		EditorBorder             : "#cbcbcb",
+
+		SelectAllTriangleIcon    : "#999999"
 	},
 	"theme-dark" : {
 		Name                      : "theme-dark",
@@ -258,9 +260,9 @@ var EditorSkins = {
 		ColorHighlighted         : "#d9d9d9",
 		ColorFiltering           : "#6BEC9F",
 
-		BackgroundDark           : "#55B27B",
-		BackgroundDarkActive     : "#7AFFAF",
-		BackgroundDarkHighlighted: "#6EE59F",
+		SheetViewCellBackground        : "#73bf93",
+		SheetViewCellBackgroundPressed : "#aaffcc",
+		SheetViewCellBackgroundHover   : "#97e3b8",
 
 		ColorDark                : "#333",
 		ColorDarkActive          : "#333",
@@ -268,7 +270,9 @@ var EditorSkins = {
 		ColorDarkFiltering       : "#ffffff",
 
 		GroupDataBorder          : "#ffffff",
-		EditorBorder             : "#2a2a2a"
+		EditorBorder             : "#2a2a2a",
+
+		SelectAllTriangleIcon    : "#888888"
 	}
 };
 
@@ -362,9 +366,9 @@ function updateGlobalSkinColors(theme)
 		ColorActive                     : "canvas-cell-title",
 		ColorHighlighted                : "canvas-cell-title",
 
-		BackgroundDark                  : "canvas-dark-cell-title",
-		BackgroundDarkActive            : "canvas-dark-cell-title-selected",
-		BackgroundDarkHighlighted       : "canvas-dark-cell-title-hover",
+		SheetViewCellBackground         : "canvas-sheet-view-cell-background",
+		SheetViewCellBackgroundPressed  : "canvas-sheet-view-cell-background-pressed",
+		SheetViewCellBackgroundHover    : "canvas-sheet-view-cell-background-hover",
 
 		ColorDark                       : "canvas-dark-cell-title-text",
 		ColorDarkActive                 : "canvas-dark-cell-title-text",
@@ -373,7 +377,9 @@ function updateGlobalSkinColors(theme)
 		ColorDarkFiltering              : "canvas-dark-cell-title-text-filtered",
 
 		GroupDataBorder                 : "canvas-high-contrast",
-		EditorBorder                    : "border-toolbar"
+		EditorBorder                    : "border-toolbar",
+
+		SelectAllTriangleIcon           : "canvas-select-all-icon"
 	};
 
 	// корректируем цвета для старого хрома:
