@@ -2186,13 +2186,17 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.isSlideShow = function() {
+		return !!(this.WordControl && this.WordControl.DemonstrationManager && this.WordControl.DemonstrationManager.Mode);
+	};
+
 	asc_docs_api.prototype.asc_PasteData = function(_format, data1, data2, text_data)
 	{
 	    if (!this.canEdit())
     	    return;
 
 		//slide show
-		if(this.WordControl && this.WordControl.DemonstrationManager && this.WordControl.DemonstrationManager.Mode) {
+		if(this.isSlideShow()) {
 			return;
 		}
 

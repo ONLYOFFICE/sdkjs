@@ -3935,6 +3935,9 @@ CPresentation.prototype.IsViewModeInEditor = function () {
 };
 
 CPresentation.prototype.CanEdit = function () {
+	if(this.IsSlideShow()) {
+		return false;
+	}
 	return this.Api.canEdit();
 };
 
@@ -7296,7 +7299,7 @@ CPresentation.prototype.EnterText = function (codePoints) {
 	if (!this.FocusOnNotes && oCurSlide.graphicObjects.selectedObjects.length === 0) {
 		let oTitle = oCurSlide.getMatchingShape(AscFormat.phType_title, null);
 		if (oTitle) {
-			let oDocContent = oTitle.getDocContent();
+			let oDocContent = oTitle.getDocContent && oTitle.getDocContent();
 			if (oDocContent.Is_Empty()) {
 				oDocContent.Set_CurrentElement(0, false);
 			} else {
@@ -7557,6 +7560,10 @@ CPresentation.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
 	return keydownresult_PreventNothing;
 };
 
+
+CPresentation.prototype.IsSlideShow = function() {
+	return this.Api.isSlideShow();
+};
 CPresentation.prototype.OnMouseMove = function (e, X, Y, PageIndex) {
 
 	e.ctrlKey = e.CtrlKey;
