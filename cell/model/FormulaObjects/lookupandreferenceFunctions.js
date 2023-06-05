@@ -324,6 +324,127 @@ function (window, undefined) {
 		return resultArr;
 	}
 
+	function sortByArrayWrapper (array, args, isByCol) {
+		let colsRowArr = [], sortOrderArr = [], colsRowIndexesArr = [], rowCol;
+
+		for (let i = 1; i < args.length; i += 2) {
+			let by_array = args[i],
+				sortOrder = args[i+1];
+
+			let dim = by_array.getDimensions();
+			// check column or row
+			if (dim.bbox) {
+				rowCol = isByCol ? dim.bbox.r1 : dim.bbox.c1;
+			} else {
+				// add array/range check for mainArray and by_array args
+				rowCol = isByCol ? dim.col : dim.row;
+			}
+
+			// if there is no such column/row yet, push into the array
+			if (colsRowIndexesArr.indexOf(rowCol) === -1) {
+				colsRowIndexesArr.push(rowCol);
+				sortOrderArr.push(sortOrder);
+				colsRowArr.push(isByCol ? by_array._getRow(0) : by_array._getCol(0));
+			}
+		}
+
+		let tempArrIndicies = sortByArray(colsRowArr, sortOrderArr, isByCol);
+
+		let resultArr = new cArray();
+		for (let i = 0; i < tempArrIndicies.length; i++) {
+			let target = isByCol ? array._getCol(tempArrIndicies[i].index) : array._getRow(tempArrIndicies[i].index);
+			isByCol ? resultArr.pushCol(target, 0) : resultArr.pushRow(target, 0);
+		}
+
+		return resultArr;
+	}
+
+	function sortByArray (colsRowsArr, sortOrderArr, isByCol) {
+		let by_array1 = colsRowsArr[0],
+			tempArrIndicies = [];
+
+		tempArrIndicies = indicesBy(by_array1, isByCol);
+
+		tempArrIndicies.sort(function (a, b) {
+			let res = 0;
+
+			const compareFunc = function (_a, _b, _sortOrder) {
+				let itemA = _a.item ? _a.item : _a,
+					itemB = _b.item ? _b.item : _b;
+
+				if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
+					res = (itemA.value.localeCompare(itemB.value)) * _sortOrder;
+				} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
+					res = (itemA.value - itemB.value) * _sortOrder;
+				} else if (cElementType.string === itemA.type) {
+					// check itemB.type and make decision
+					if (cElementType.number === itemB.type) {
+						res = 1 * _sortOrder;
+					} else if (cElementType.bool === itemB.type || cElementType.error === itemB.type) {
+						res = -1 * _sortOrder;
+					}
+				} else if (cElementType.string === itemB.type) {
+					// check itemA.type and make decision
+					if (cElementType.number === itemA.type) {
+						res = -1 * _sortOrder;
+					} else if (cElementType.bool === itemA.type || cElementType.error === itemA.type) {
+						res = -1 * _sortOrder;
+					}
+				} else if (cElementType.bool === itemA.type) {
+					if (cElementType.error === itemB.type) {
+						res = -1 * _sortOrder;
+					} else {
+						res = 1 *_sortOrder;
+					}
+				} else if (cElementType.bool === itemB.type) {
+					if (cElementType.error === itemA.type) {
+						res = 1 * _sortOrder;
+					} else {
+						res = -1 *_sortOrder;
+					}
+				} else if (cElementType.error === itemA.type) {
+					res = 1 * _sortOrder;
+				} else if (cElementType.error === itemA.type) {
+					res = 1 * _sortOrder;
+				} else {
+					res = 0;
+				}
+			}
+
+			compareFunc(a, b, sortOrderArr[0]);
+
+			if (res === 0) {
+				for (let i = 1; i < colsRowsArr.length; i++) {
+					let tempA = isByCol ? colsRowsArr[i][0][a.index] : colsRowsArr[i][a.index][0];
+					let tempB = isByCol ? colsRowsArr[i][0][b.index] : colsRowsArr[i][b.index][0];
+
+					compareFunc(tempA, tempB, sortOrderArr[i]);
+
+					if (res !== 0) {
+						break;
+					}
+				}
+			}
+
+			return res;
+		});
+
+		return tempArrIndicies;
+	}
+
+	function indicesBy (arr, isByCol) {
+		const indexedArray = isByCol
+			? arr[0].map(function (item, index) {
+				return { item, index };
+			})
+			: arr.map(function (item, index) {
+				item = item[0];
+				return { item, index };
+			});
+
+		return indexedArray;
+	}
+
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
