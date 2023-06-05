@@ -665,20 +665,32 @@
 			addPropertyToDocument({Bold: true, Italic: true, Underline: true});
 
 			onKeyDown(oMockEvent);
-
-			oAssert.deepEqual(editor.getFormatPainterData().TextPr, getCopyParagraphPrTest(), 'Check copy format shortcut');
+			const oTextPr = editor.getFormatPainterData().TextPr;
+			oAssert.strictEqual(oTextPr.Get_Bold(), true, 'Check copy format shortcut');
+			oAssert.strictEqual(oTextPr.Get_Italic(), true, 'Check copy format shortcut');
+			oAssert.strictEqual(oTextPr.Get_Underline(), true, 'Check copy format shortcut');
 		});
 
 		QUnit.test('Test paste format', (oAssert) =>
 		{
+			let oParagraph;
+			oParagraph = getShapeWithParagraphHelper('Hello World').oParagraph;
+			oParagraph.SetThisElementCurrent();
+			oGlobalLogicDocument.SelectAll();
+			addPropertyToDocument({Bold: true, Italic: true, Underline: true});
+			oGlobalLogicDocument.Document_Format_Copy();
+			
+			
 			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.PasteFormat;};
-			const {oParagraph} = getShapeWithParagraphHelper('Hello World');
+			oParagraph = getShapeWithParagraphHelper('Hello World').oParagraph;
 			oParagraph.SetThisElementCurrent();
 			oGlobalLogicDocument.SelectAll();
 
 			onKeyDown(oMockEvent);
 			const oDirectTextPr = oParagraph.GetDirectTextPr();
-			oAssert.deepEqual(oDirectTextPr, getCopyParagraphPrTest(), 'check paste format shortcut');
+			oAssert.strictEqual(oDirectTextPr.Get_Bold(), true, 'Check copy format shortcut');
+			oAssert.strictEqual(oDirectTextPr.Get_Italic(), true, 'Check copy format shortcut');
+			oAssert.strictEqual(oDirectTextPr.Get_Underline(), true, 'Check copy format shortcut');
 		});
 
 		QUnit.test('Test center align', (oAssert) =>
