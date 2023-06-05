@@ -3552,6 +3552,9 @@
         var dx = 4;
         var dy = 4;
 
+        var isPrint = this.usePrintScale;
+        var activeNamedSheetView = !isPrint && this.model.getActiveNamedSheetViewId() !== null;
+
         this._drawHeader(null, this.headersLeft, this.headersTop, this.headersWidth,
           this.headersHeight, kHeaderDefault, true, -1);
         this.drawingCtx.beginPath()
@@ -3559,7 +3562,7 @@
           .lineTo(x2 - dx, y2 - dy)
           .lineTo(x1 + dx, y2 - dy)
           .lineTo(x2 - dx, y1 + dy)
-          .setFillStyle(this.settings.header.cornerColor)
+          .setFillStyle(activeNamedSheetView ? this.settings.header.cornerColorSheetView : this.settings.header.cornerColor)
           .fill();
     };
 
@@ -3714,7 +3717,7 @@
         var st = this.settings.header.style[style];
 		var backgroundColor = isPrint ? this.settings.header.printBackground : (activeNamedSheetView ? st.backgroundDark : st.background);
 		var borderColor = isPrint ? this.settings.header.printBorder : st.border;
-		var color = isPrint ? this.settings.header.printColor : (isFiltering ? (activeNamedSheetView ? st.colorDarkFiltering : st.colorFiltering) : (activeNamedSheetView ? st.colorDark : st.color));
+		var color = isPrint ? this.settings.header.printColor : (isFiltering ? (activeNamedSheetView ? st.colorDarkFiltering : st.colorFiltering) : (activeNamedSheetView ? st.sheetViewCellTitleLabel : st.color));
         var x2 = x + w;
         var y2 = y + h;
         var x2WithoutBorder = x2 - gridlineSize;

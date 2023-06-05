@@ -109,7 +109,8 @@
 			this.header.style = this._generateStyle();
 			this.header.groupDataBorder = this.getCColor(AscCommon.GlobalSkin.GroupDataBorder);
 			this.header.editorBorder = this.getCColor(AscCommon.GlobalSkin.EditorBorder);
-			this.header.cornerColor = this.getCColor(AscCommon.GlobalSkin.SelectAllTriangleIcon);
+			this.header.cornerColor = this.getCColor(AscCommon.GlobalSkin.SelectAllIcon);
+			this.header.cornerColorSheetView = this.getCColor(AscCommon.GlobalSkin.SheetViewSelectAllIcon);
 		};
 		this._generateStyle = function () {
 			return [// Header colors
@@ -120,7 +121,8 @@
 					backgroundDark: this.getCColor(AscCommon.GlobalSkin.SheetViewCellBackground),
 					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDark),
 					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
-					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
+					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering),
+					sheetViewCellTitleLabel: this.getCColor(AscCommon.GlobalSkin.SheetViewCellTitleLabel)
 				}, { // kHeaderActive
 					background: this.getCColor(AscCommon.GlobalSkin.BackgroundActive),
 					border: this.getCColor(AscCommon.GlobalSkin.BorderActive),
@@ -128,7 +130,8 @@
 					backgroundDark: this.getCColor(AscCommon.GlobalSkin.SheetViewCellBackgroundPressed),
 					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkActive),
 					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
-					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
+					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering),
+					sheetViewCellTitleLabel: this.getCColor(AscCommon.GlobalSkin.SheetViewCellTitleLabel)
 				}, { // kHeaderHighlighted
 					background: this.getCColor(AscCommon.GlobalSkin.BackgroundHighlighted),
 					border: this.getCColor(AscCommon.GlobalSkin.BorderHighlighted),
@@ -136,12 +139,14 @@
 					backgroundDark: this.getCColor(AscCommon.GlobalSkin.SheetViewCellBackgroundHover),
 					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkHighlighted),
 					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
-					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
+					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering),
+					sheetViewCellTitleLabel: this.getCColor(AscCommon.GlobalSkin.SheetViewCellTitleLabel)
 				}];
 		};
 		this.header = {
 			style: this._generateStyle(),
-			cornerColor: this.getCColor(AscCommon.GlobalSkin.SelectAllTriangleIcon),
+			cornerColor: this.getCColor(AscCommon.GlobalSkin.SelectAllIcon),
+			cornerColorSheetView: this.getCColor(AscCommon.GlobalSkin.SheetViewSelectAllIcon),
 			groupDataBorder: this.getCColor(AscCommon.GlobalSkin.GroupDataBorder),
 			editorBorder: this.getCColor(AscCommon.GlobalSkin.EditorBorder),
 			printBackground: new CColor(238, 238, 238),

@@ -145,6 +145,7 @@ var EditorSkins = {
 		SheetViewCellBackground        : "#73bf92",
 		SheetViewCellBackgroundPressed : "#aaffcc",
 		SheetViewCellBackgroundHover   : "#97e3b7",
+		SheetViewCellTitleLabel        : "#121213",
 
 		ColorDark                : "#ffffff",
 		ColorDarkActive          : "#ffffff",
@@ -154,7 +155,8 @@ var EditorSkins = {
 		GroupDataBorder          : "#000000",
 		EditorBorder             : "#cbcbcb",
 
-		SelectAllTriangleIcon    : "#999999"
+		SelectAllIcon            : "#999999",
+		SheetViewSelectAllIcon   : "#3D664E"
 	},
 	"theme-dark" : {
 		Name                      : "theme-dark",
@@ -263,6 +265,7 @@ var EditorSkins = {
 		SheetViewCellBackground        : "#73bf93",
 		SheetViewCellBackgroundPressed : "#aaffcc",
 		SheetViewCellBackgroundHover   : "#97e3b8",
+		SheetViewCellTitleLabel        : "#121214",
 
 		ColorDark                : "#333",
 		ColorDarkActive          : "#333",
@@ -272,7 +275,8 @@ var EditorSkins = {
 		GroupDataBorder          : "#ffffff",
 		EditorBorder             : "#2a2a2a",
 
-		SelectAllTriangleIcon    : "#888888"
+		SelectAllIcon            : "#888888",
+		SheetViewSelectAllIcon   : "#3D664E"
 	}
 };
 
@@ -369,6 +373,7 @@ function updateGlobalSkinColors(theme)
 		SheetViewCellBackground         : "canvas-sheet-view-cell-background",
 		SheetViewCellBackgroundPressed  : "canvas-sheet-view-cell-background-pressed",
 		SheetViewCellBackgroundHover    : "canvas-sheet-view-cell-background-hover",
+		SheetViewCellTitleLabel         : "canvas-sheet-view-cell-title-label",
 
 		ColorDark                       : "canvas-dark-cell-title-text",
 		ColorDarkActive                 : "canvas-dark-cell-title-text",
@@ -379,7 +384,8 @@ function updateGlobalSkinColors(theme)
 		GroupDataBorder                 : "canvas-high-contrast",
 		EditorBorder                    : "border-toolbar",
 
-		SelectAllTriangleIcon           : "canvas-select-all-icon"
+		SelectAllIcon                   : "canvas-select-all-icon",
+		SheetViewSelectAllIcon          : "canvas-sheet-view-select-all-icon"
 	};
 
 	// корректируем цвета для старого хрома:
