@@ -8506,10 +8506,6 @@ PasteProcessor.prototype =
 						if (null == dWidth)
 							dWidth = tc.clientWidth * g_dKoef_pix_to_mm;
 
-						if (dWidth < 0.5) {
-							dWidth = 0;
-						}
-
 						var nColSpan = tc.getAttribute("colspan");
 						if (null != nColSpan)
 							nColSpan = nColSpan - 0;
