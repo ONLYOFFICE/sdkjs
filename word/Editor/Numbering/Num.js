@@ -936,6 +936,25 @@ CNum.prototype.IsSimilar = function(oNum)
 
 	return true;
 };
+/**
+ * Проверяем, одинаковы ли две заданные нумерации
+ * @param oNum {CNum}
+ * @returns {boolean}
+ */
+CNum.prototype.IsEqual = function(oNum)
+{
+	if (!oNum)
+		return false;
+
+	for (var nLvl = 0; nLvl < 9; ++nLvl)
+	{
+		var oLvl = this.GetLvl(nLvl);
+		if (!oLvl.IsEqual(oNum.GetLvl(nLvl)))
+			return false;
+	}
+
+	return true;
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Undo/Redo функции
 //----------------------------------------------------------------------------------------------------------------------

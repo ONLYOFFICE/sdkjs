@@ -349,6 +349,13 @@
 				}
 			}
 		};
+		CGroupShape.prototype.clearLang = function () {
+			for (var i = 0; i < this.spTree.length; ++i) {
+				if (typeof this.spTree[i].clearLang === "function") {
+					this.spTree[i].clearLang();
+				}
+			}
+		};
 
 		CGroupShape.prototype.convertToWord = function (document) {
 			this.setBDeleted(true);
@@ -366,6 +373,7 @@
 				c.addToSpTree(c.spTree.length, this.spTree[i].convertToWord(document));
 				c.spTree[c.spTree.length - 1].setGroup(c);
 			}
+			c.removePlaceholder();
 			return c;
 		};
 

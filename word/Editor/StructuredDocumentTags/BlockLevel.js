@@ -57,7 +57,7 @@ function CBlockLevelSdt(oLogicDocument, oParent)
 	this.Lock          = new AscCommon.CLock();
 
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-	g_oTableId.Add(this, this.Id);
+	AscCommon.g_oTableId.Add(this, this.Id);
 
 	this.SkipSpecialLock = false;
 	this.Current         = false;
@@ -1144,7 +1144,7 @@ CBlockLevelSdt.prototype.IsCell = function(isReturnCell)
 };
 CBlockLevelSdt.prototype.Is_DrawingShape = function(bRetShape)
 {
-	return this.Parent.Is_DrawingShape(bRetShape);
+	return this.Parent ? this.Parent.Is_DrawingShape(bRetShape) : (bRetShape ? null : false);
 };
 CBlockLevelSdt.prototype.Get_Numbering = function()
 {
@@ -1156,11 +1156,11 @@ CBlockLevelSdt.prototype.Get_Styles = function()
 };
 CBlockLevelSdt.prototype.Get_TableStyleForPara = function()
 {
-	return this.Parent.Get_TableStyleForPara();
+	return this.Parent ? this.Parent.Get_TableStyleForPara() : null;
 };
 CBlockLevelSdt.prototype.Get_ShapeStyleForPara = function()
 {
-	return this.Parent.Get_ShapeStyleForPara();
+	return this.Parent ? this.Parent.Get_ShapeStyleForPara() : null;
 };
 CBlockLevelSdt.prototype.Get_Theme = function()
 {
@@ -2665,3 +2665,4 @@ CBlockLevelSdt.prototype.OnContentChange = function()
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;
 window['AscCommonWord'].type_BlockLevelSdt = type_BlockLevelSdt;
+window["AscWord"].CBlockLevelSdt = CBlockLevelSdt;

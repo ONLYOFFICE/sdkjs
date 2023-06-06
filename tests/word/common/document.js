@@ -65,6 +65,7 @@
 		space : 32,
 		backspace : 8,
 		minus : 45,
+		delete : 46,
 		enter : 13
 	};
 
@@ -72,7 +73,8 @@
 	{
 		return (Key.space === key
 			|| Key.backspace === key
-			|| Key.enter === key);
+			|| Key.enter === key
+			|| Key.delete === key);
 	}
 
 	function CreateLogicDocument()
@@ -130,6 +132,13 @@
 		editor.restrictions = Asc.c_oAscRestrictionType.None;
 
 		editor.DocInfo = {Format : "docx"};
+	}
+	function SetTrackRevisions(turnOn)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.SetLocalTrackRevisions(turnOn);
 	}
 	function PressKey(keyCode, isCtrl, isShift, isAlt)
 	{
@@ -203,6 +212,13 @@
 			return;
 
 		logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
+	}
+	function ClearParagraph(p)
+	{
+		if (!p)
+			return;
+		
+		p.RemoveFromContent(0, p.GetElementsCount());
 	}
 	function EnterText(text)
 	{
@@ -305,6 +321,13 @@
 			logicDocument.Content[pos].SelectAll(direction);
 		}
 	}
+	function GetFinalSection()
+	{
+		if (!logicDocument)
+			return null;
+		
+		return logicDocument.SectPr;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument      = CreateLogicDocument;
 	AscTest.CreateParagraph          = CreateParagraph;
@@ -313,12 +336,14 @@
 	AscTest.RemoveTableBorders       = RemoveTableBorders;
 	AscTest.SetFillingFormMode       = SetFillingFormMode;
 	AscTest.SetEditingMode           = SetEditingMode;
+	AscTest.SetTrackRevisions        = SetTrackRevisions;
 	AscTest.PressKey                 = PressKey;
 	AscTest.MoveCursorLeft           = MoveCursorLeft;
 	AscTest.MoveCursorRight          = MoveCursorRight;
 	AscTest.Recalculate              = Recalculate;
 	AscTest.ClickMouseButton         = ClickMouseButton;
 	AscTest.ClearDocument            = ClearDocument;
+	AscTest.ClearParagraph           = ClearParagraph;
 	AscTest.EnterText                = EnterText;
 	AscTest.CorrectEnterText         = CorrectEnterText;
 	AscTest.BeginCompositeInput      = BeginCompositeInput;
@@ -330,6 +355,7 @@
 	AscTest.AddNumbering             = AddNumbering;
 	AscTest.SetParagraphNumberingLvl = SetParagraphNumberingLvl;
 	AscTest.SelectDocumentRange      = SelectDocumentRange;
+	AscTest.GetFinalSection          = GetFinalSection;
 
 })(window);
 

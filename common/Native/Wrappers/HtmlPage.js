@@ -30,8 +30,6 @@
  *
  */
 
-var g_bIsMobile =  AscCommon.AscBrowser.isMobile;
-
 var Page_Width     = 210;
 var Page_Height    = 297;
 
@@ -89,13 +87,10 @@ function CEditorPage(api)
     {
     };
 
-    this.initEvents2 = function()
+    this.initEvents = function()
     {
     };
 
-    this.initEvents2MobileAdvances = function()
-    {
-    };
     this.onButtonRulersClick = function()
     {
     };

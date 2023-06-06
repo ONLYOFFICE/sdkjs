@@ -2701,6 +2701,13 @@ CTableCell.prototype.CheckContentControlEditingLock = function()
         this.Row.Table.Parent.CheckContentControlEditingLock();
 };
 /**
+ * @returns {AscWord.CBorder}
+ */
+CTableCell.prototype.GetBottomBorder = function()
+{
+	return this.GetBorder(2);
+};
+/**
  * Запрашиваем пересчет сетки таблицы
  */
 CTableCell.prototype.private_UpdateTableGrid = function()

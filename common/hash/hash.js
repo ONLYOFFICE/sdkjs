@@ -210,8 +210,7 @@
 			return null;
 		}
 
-		let textEncoder = new TextEncoder();
-		let passwordBytes = textEncoder.encode(password);
+		let passwordBytes = AscCommon.Utf8.encode(password);
 
 		let maxPasswordLength = 15;
 		passwordBytes = passwordBytes.slice(0, maxPasswordLength);

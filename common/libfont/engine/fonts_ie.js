@@ -37,6 +37,8 @@ var AscFonts = window['AscFonts'];
 if (window["NATIVE_EDITOR_ENJINE"])
 	window.setImmediate = function(fn) { fn(); };
 
+var setImmediate = window.setImmediate;
+
 // correct fetch for desktop application
 
 var printErr = undefined;

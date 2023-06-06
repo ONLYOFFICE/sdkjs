@@ -3128,7 +3128,20 @@ function BinaryPPTYLoader()
                     }
 
                     if (this.ImageMapChecker != null)
-                        this.ImageMapChecker[sReadPath] = true;
+                    {
+                        let bAddToMap = true;
+                        if(oImageShape && oImageShape instanceof AscFormat.COleObject)
+                        {
+                            if(sReadPath.indexOf(".") === -1)
+                            {
+                                bAddToMap = false;
+                            }
+                        }
+                        if(bAddToMap)
+                        {
+                            this.ImageMapChecker[sReadPath] = true;
+                        }
+                    }
 
                     if (this.IsUseFullUrl)
                         this.RebuildImages.push(new CBuilderImages(uni_fill.fill, sReadPath, oImageShape, oSpPr, oLn, undefined, undefined, undefined, oParagraph, oBullet));
@@ -8508,9 +8521,12 @@ function BinaryPPTYLoader()
                 case 10:
                 {
                     var lang = s.GetString2();
-                    var nLcid = Asc.g_oLcidNameToIdMap[lang];
-                    if(nLcid)
-                        rPr.Lang.Val = nLcid;
+                    if(!this.IsThemeLoader)
+                    {
+                        var nLcid = Asc.g_oLcidNameToIdMap[lang];
+                        if(nLcid)
+                            rPr.Lang.Val = nLcid;
+                    }
                     break;
                 }
                 case 11:

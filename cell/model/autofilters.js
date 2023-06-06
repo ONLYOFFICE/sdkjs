@@ -6316,7 +6316,7 @@
 					ascColor.asc_putA(sortColor.getA());
 				}
 
-				setViewProps && setViewProps(autoFilter.Ref.c1 + colId, autoFilter.Ref.r1);
+				setViewProps && setViewProps(autoFilter.Ref.r1, autoFilter.Ref.c1 + colId);
 
 				//set menu object
 				var autoFilterObject = new Asc.AutoFiltersOptions();

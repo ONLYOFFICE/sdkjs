@@ -1221,7 +1221,11 @@
 
 			if (this.m_bNeedDoBold && this.m_bAntiAliasing && !isDisableNeedBold)
 			{
-				oSizes.oBitmap.nWidth++;
+				var extraPixels = AscCommon.AscBrowser.retinaPixelRatio >> 0;
+				if (extraPixels < 1)
+					extraPixels = 1;
+
+				oSizes.oBitmap.nWidth += extraPixels;
 
 				var _width_im = oSizes.oBitmap.nWidth;
 				var _height = oSizes.oBitmap.nHeight;
@@ -1230,24 +1234,22 @@
 				var pDstBuffer;
 
 				var _input = raster_memory.m_oBuffer.data;
-				for (nY = 0, pDstBuffer = 0; nY < _height; ++nY, pDstBuffer += (raster_memory.pitch))
-				{
-					for (nX = _width_im - 1; nX >= 0; --nX)
-					{
-						if (0 != nX) // иначе ничего не делаем
-						{
-							var _pos_x = pDstBuffer + nX * 4 + 3;
 
-							if (_width_im - 1 == nX)
-							{
-								// последний - просто копируем
-								_input[_pos_x] = _input[_pos_x - 4];
-							}
-							else
-							{
-								// сдвигаем все вправо
-								_input[_pos_x] = Math.min(255, _input[_pos_x - 4] + _input[_pos_x]);
-							}
+				while (extraPixels > 0)
+				{
+					--extraPixels;
+					for (nY = 0, pDstBuffer = 0; nY < _height; ++nY, pDstBuffer += (raster_memory.pitch))
+					{
+						var _pos_x = pDstBuffer + ((_width_im - extraPixels) << 2) - 1;
+
+						// последние - просто копируем
+						_input[_pos_x] = _input[_pos_x - 4];
+						_pos_x -= 4;
+
+						for (nX = _width_im - extraPixels - 2; nX > 0; --nX, _pos_x -= 4)
+						{
+							// сдвигаем все вправо
+							_input[_pos_x] = Math.min(255, _input[_pos_x - 4] + _input[_pos_x]);
 						}
 					}
 				}

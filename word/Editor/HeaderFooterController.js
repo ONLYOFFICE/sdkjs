@@ -402,7 +402,7 @@ CHdrFtrController.prototype.SetSelectionState = function(State, StateIndex)
 };
 CHdrFtrController.prototype.AddHyperlink = function(Props)
 {
-	this.HdrFtr.AddHyperlink(Props);
+	return this.HdrFtr.AddHyperlink(Props);
 };
 CHdrFtrController.prototype.ModifyHyperlink = function(Props)
 {

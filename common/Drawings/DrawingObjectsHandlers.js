@@ -1880,29 +1880,42 @@ function handleInlineHitNoText(drawing, drawingObjects, e, x, y, pageIndex, bInS
     {
         if(drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
         {
-            var bIsSelected = drawing.selected;
+            let bIsSelected = drawing.selected;
             drawingObjects.checkChartTextSelection();
             drawingObjects.resetSelection();
             drawing.select(drawingObjects, pageIndex);
-            drawingObjects.changeCurrentState(new AscFormat.PreMoveInlineObject(drawingObjects, drawing, bIsSelected, !bInSelect, pageIndex, x, y));
+            let bHandleDblClick = false;
             if(AscFormat.isLeftButtonDoubleClick(e) && !e.ShiftKey && !e.CtrlKey && ((drawingObjects.selection.groupSelection && drawingObjects.selection.groupSelection.selectedObjects.length === 1) || drawingObjects.selectedObjects.length === 1))
             {
                 if (drawing.getObjectType() === AscDFH.historyitem_type_ChartSpace && drawingObjects.handleChartDoubleClick)
+                {
+                    bHandleDblClick = true;
                     drawingObjects.handleChartDoubleClick(drawing.parent, drawing, e, x, y, pageIndex);
-                else if (drawing.getObjectType() === AscDFH.historyitem_type_OleObject && drawingObjects.handleOleObjectDoubleClick){
+                }
+                else if (drawing.getObjectType() === AscDFH.historyitem_type_OleObject && drawingObjects.handleOleObjectDoubleClick)
+                {
+                    bHandleDblClick = true;
                     drawingObjects.handleOleObjectDoubleClick(drawing.parent, drawing, e, x, y, pageIndex);
                 }
-                else if (drawing.signatureLine && drawingObjects.handleSignatureDblClick){
+                else if (drawing.signatureLine && drawingObjects.handleSignatureDblClick)
+                {
+                    bHandleDblClick = true;
                     drawingObjects.handleSignatureDblClick(drawing.signatureLine.id, drawing.extX, drawing.extY);
                 }
                 else if (2 === e.ClickCount && drawing.parent instanceof AscCommonWord.ParaDrawing && drawing.parent.IsMathEquation())
                 {
+                    bHandleDblClick = true;
                     drawingObjects.handleMathDrawingDoubleClick(drawing.parent, e, x, y, pageIndex);
                 }
                 else if(drawing.getObjectType() === AscDFH.historyitem_type_Shape)
                 {
+                    bHandleDblClick = true;
                     drawingObjects.handleDblClickEmptyShape(drawing);
                 }
+            }
+            if(!bHandleDblClick)
+            {
+                drawingObjects.changeCurrentState(new AscFormat.PreMoveInlineObject(drawingObjects, drawing, bIsSelected, !bInSelect, pageIndex, x, y));
             }
             drawingObjects.updateOverlay();
             return true;
@@ -1972,7 +1985,8 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     state.drawingObjects.clearPreTrackObjects();
     state.drawingObjects.changeCurrentState(new AscFormat.NullState(state.drawingObjects));
     var bHandle = false;
-    if(!state.shift && /*!state.ctrl &&*/ state.bInside && state.majorObjectIsSelected && e.Button !== AscCommon.g_mouse_button_right)
+    const bRightButton = (e.Button === AscCommon.g_mouse_button_right);
+    if(!state.shift && /*!state.ctrl &&*/ state.bInside && state.majorObjectIsSelected && !bRightButton)
     {
         switch (state.majorObject.getObjectType())
         {
@@ -2003,7 +2017,7 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     }
     if(!bHandle)
     {
-        if(!state.shift && !state.ctrl && state.bInside && state.majorObject.getObjectType() === AscDFH.historyitem_type_ImageShape)
+        if(!bRightButton && !state.shift && !state.ctrl && state.bInside && state.majorObject.getObjectType() === AscDFH.historyitem_type_ImageShape)
         {
             var sMediaName = state.majorObject.getMediaFileName();
             if(sMediaName)

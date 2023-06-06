@@ -6417,7 +6417,7 @@ ParaRun.prototype.Draw_HighLights = function(PDSH)
 
         var DrawColl = this.CollaborativeMarks.Check( Pos );
 
-        if ( true === bDrawShd )
+        if ( true === bDrawShd && !Item.IsParaEnd() )
             aShd.Add( Y0, Y1, X, X + ItemWidthVisible, 0, ShdColor.r, ShdColor.g, ShdColor.b, undefined, oShd );
 
 		if (PDSH.ComplexFields.IsComplexField()
@@ -10359,9 +10359,15 @@ ParaRun.prototype.IncreaseDecreaseFontSize = function(isIncrease)
 };
 ParaRun.prototype.ApplyFontFamily = function(sFontName)
 {
-	let nFontSlot = this.GetFontSlotInRange(0, this.Content.length);
-	if (nFontSlot & AscWord.fontslot_EastAsia)
-		this.SetRFontsEastAsia({Name : sFontName, Index : -1});
+	// let nFontSlot = this.GetFontSlotInRange(0, this.Content.length);
+	// if (nFontSlot & AscWord.fontslot_EastAsia)
+	// 	this.SetRFontsEastAsia({Name : sFontName, Index : -1});
+	
+	// https://bugzilla.onlyoffice.com/show_bug.cgi?id=60106
+	// Пока мы не можем разруливать как в MSWord, потому что у нас нет возможности получать текущую раскладку
+	// и нет события о смене раскладки
+	this.SetRFontsEastAsia({Name : sFontName, Index : -1});
+	//------------------------------------------------------------------------------------------------------------------
 
 	this.SetRFontsAscii({Name : sFontName, Index : -1});
 	this.SetRFontsHAnsi({Name : sFontName, Index : -1});
@@ -11804,7 +11810,7 @@ ParaRun.prototype.CheckRevisionsChanges = function(Checker, ContentPos, Depth)
     if (true !== Checker.Is_ParaEndRun() && true !== Checker.Is_CheckOnlyTextPr())
     {
         var ReviewType = this.GetReviewType();
-        if (ReviewType !== Checker.GetAddRemoveType() || (reviewtype_Common !== ReviewType && (this.ReviewInfo.GetUserId() !== Checker.Get_AddRemoveUserId() || this.GetReviewMoveType() !== Checker.GetAddRemoveMoveType())))
+		if (Checker.IsStopAddRemoveChange(ReviewType, this.GetReviewInfo()))
         {
             Checker.FlushAddRemoveChange();
             ContentPos.Update(0, Depth);
@@ -13835,6 +13841,13 @@ CReviewInfo.prototype.IsEqual = function(oAnotherReviewInfo, bIsMergingDocuments
 		return false;
 	}
 	return bEquals;
+};
+/**
+ * @returns {Asc.c_oAscRevisionsMove}
+ */
+CReviewInfo.prototype.GetMoveType = function()
+{
+	return this.MoveType;
 };
 
 /**

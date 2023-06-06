@@ -444,11 +444,11 @@ NullState.prototype =
 					{
 						if(oPainterData.isDrawingData())
 						{
-							sType = AscCommon.kCurFormatPainterDrawing;
+							sType = AscCommon.Cursors.ShapeCopy;
 						}
 						else
 						{
-							sType = AscCommon.kCurFormatPainterWord;
+							sType = AscCommon.Cursors.TextCopy;
 						}
 					}
 					return {cursorType: sType, objectId: "1"};

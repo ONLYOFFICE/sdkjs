@@ -209,6 +209,8 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		ws = api.wbModel.aWorksheets[0];
 		api.asc_insertWorksheet(["Data"]);
 		wsData = wb.getWorksheetByName(["Data"], 0);
+		api.asc_insertWorksheet(["Details"]);
+		wsDetails = wb.getWorksheetByName(["Details"], 0);
 
 		pivotStyle = "PivotStyleDark23";
 		tableName = "Table1";
@@ -459,7 +461,8 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		});
 		return res;
 	}
-	function checkReportValues(assert, pivot, values, standard, message) {
+	function checkReportValues(assert, pivot, standard, message) {
+		let values = getReportValues(pivot);
 		assert.deepEqual(values, standard, message);
 
 		var isEmptyPivot = !(pivot.asc_getRowFields() || pivot.asc_getColumnFields() || pivot.asc_getDataFields() || pivot.asc_getPageFields());
@@ -543,8 +546,11 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 	}
 
 	function checkHistoryOperation(assert, pivot, standards, message, action) {
+		let undoValues = getReportValues(pivot);
+		return checkHistoryOperation2(assert, pivot, standards, message, undoValues, action, checkReportValues);
+	}
+	function checkHistoryOperation2(assert, pivot, standards, message, undoStandard, action, check, checkUndo) {
 		var wb = pivot.GetWS().workbook;
-		var undoValues = getReportValues(pivot);
 		var xmlUndo = getXml(pivot, false);
 		var pivotStart = pivot.clone();
 		pivotStart.Id = pivot.Get_Id();
@@ -554,18 +560,18 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		action();
 		AscCommon.History.EndTransaction();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(assert, pivot, getReportValues(pivot), standards, message);
+		check(assert, pivot, standards, message);
 		var xmlDo = getXml(pivot, true);
 		var changes = wb.SerializeHistory();
 
 		AscCommon.History.Undo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(assert, pivot, getReportValues(pivot), undoValues, message + "_undo");
+		check(assert, pivot, undoStandard, message + "_undo");
 		assert.strictEqual(getXml(pivot, false), xmlUndo, message + "_undo_xml");
 
 		AscCommon.History.Redo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(assert, pivot, getReportValues(pivot), standards, message + "_redo");
+		check(assert, pivot, standards, message + "_redo");
 		assert.strictEqual(getXml(pivot, true), xmlDo, message + "_redo_xml");
 
 		AscCommon.History.Undo();
@@ -574,7 +580,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		ws.insertPivotTable(pivot, false, false);
 		wb.DeserializeHistory(changes);
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(assert, pivot, getReportValues(pivot), standards, message + "_changes");
+		check(assert, pivot, standards, message + "_changes");
 		assert.strictEqual(getXml(pivot, true), xmlDo, message + "_changes_xml");
 		return pivot;
 	}
@@ -4182,7 +4188,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 
 			AscCommon.History.Clear();
-			checkReportValues(assert, pivot, getReportValues(pivot), standards[prefix + "_0data"], "0data");
+			checkReportValues(assert, pivot, standards[prefix + "_0data"], "0data");
 
 			pivot = checkHistoryOperation(assert, pivot, standards[prefix + "_1data"], "1data", function(){
 				pivot.asc_addDataField(api, 5);
@@ -4287,7 +4293,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.asc_addDataField(api, 6);
 
 			AscCommon.History.Clear();
-			checkReportValues(assert, pivot, getReportValues(pivot), standards[layout + "_2row_2col_2data_col"], "col3");
+			checkReportValues(assert, pivot, standards[layout + "_2row_2col_2data_col"], "col3");
 
 			pivot = checkHistoryOperation(assert, pivot, standards[layout + "_2row_2col_2data_col2"], "col2", function(){
 				pivot.asc_moveColField(api, 2, 1);
@@ -5298,7 +5304,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["West","Boy","Fancy","38383","11","12.06","11.51"],
 				["West","Girl","Tee","38383","15","13.42","13.29"],
 				["West","Girl","Golf","38383","15","11.48","10.67"]
-				];
+			];
 			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
 			fillData(wsData, testData, testDataRange);
 			let dataRef = wsData.getName() + "!" + testDataRange.getName();
@@ -5899,7 +5905,146 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
 		});
 	}
+	function testPivotShowDetails() {
+		QUnit.test('Test: Show Details', function (assert) {
+			const testData =  [
+				["Region","Gender","Style","Ship date","Units","Price","Cost"],
+				["East","Boy","Tee","1","12","11.04","10.42"],
+				["East","Boy","Golf","1","12","13","12.6"],
+				["East","Boy","Fancy","2","12","11.96","11.74"],
+				["East","Girl","Tee","2","10","11.27","10.56"],
+				["East","Girl","Golf","1","10","12.12","11.95"],
+				["East","Girl","Fancy","2","10","13.74","13.33"],
+				["West","Boy","Tee","1","11","11.44","10.94"],
+				["West","Boy","Golf","2","11","12.63","11.73"],
+				["West","Boy","Fancy","1","11","12.06","11.51"],
+				["West","Girl","Tee","2","15","13.42","13.29"],
+				["West","Girl","Golf","1","15","11.48","10.67"]
+			];
+			const standardNoFilterEastGT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Boy', 'Fancy', '2', '12', '11.96', '11.74'],
+				['East', 'Girl', 'Tee', '2', '10', '11.27', '10.56'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
+			];
+			const standardNoFilterFancyGT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Fancy', '2', '12', '11.96', '11.74'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
+			];
+			const standardNoFilter10GT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
+			];
+			const standardNoFilterEastGirl = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Girl', 'Tee', '2', '10', '11.27', '10.56'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
+			];
+			const standardNoFilterFancyGirl = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
+			];
+			const standardNoFilter12Girl = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['', '', '', '', '', '', ''],
+			];
+			const standardFilterEastGT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+			];
+			const standardFilterGTGT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+				['West', 'Boy', 'Tee', '1', '11', '11.44', '10.94'],
+				['West', 'Boy', 'Fancy', '1', '11', '12.06', '11.51'],
+				['West', 'Girl', 'Golf', '1', '15', '11.48', '10.67'],
+			];
+			const standardGroupFilter = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+			];
+			function testPivotCellForDetails(assert, pivot, row, col, standard, message) {
+				let undoStandard = [];
+				for (let i = 0; i < standard.length; i += 1) {
+					undoStandard[i] = [];
+					undoStandard[i].length = standard[0].length;
+					undoStandard[i].fill("");
+				}
+				let res = checkHistoryOperation2(assert, pivot, standard, message, undoStandard, function () {
+					pivot.showDetails(wsDetails, row, col);
+				}, function (assert, pivot, standard, message) {
+					let cells = [];
+					for (let i = 0; i < standard.length; i += 1) {
+						cells[i] = [];
+						for (let j = 0; j < standard[0].length; j += 1) {
+							cells[i][j] = wsDetails.getCell3(i, j).getValue();
+						}
+					}
+					assert.deepEqual(cells, standard, message)
+				});
+				wsDetails.removeRows(0, wsDetails.getRowsCount());
+				return res;
+			}
+			function getNewFilter(fld, index) {
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+				pivot.fillAutoFiltersOptions(autoFilterObject, fld);
+				for (var i = 0; i < autoFilterObject.values.length; ++i) {
+					autoFilterObject.values[i].visible = i == index;
+				}
+				autoFilterObject.filter.type = Asc.c_oAscAutoFilterTypes.Filters;
+				return autoFilterObject;
+			};
+			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
+			fillData(wsData, testData, testDataRange);
+			let dataRef = wsData.getName() + "!" + testDataRange.getName();
+			let pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 2);
+			pivot.asc_addRowField(api, 4);
+			pivot.asc_addColField(api, 1);
+			pivot.asc_addDataField(api, 5);
 
+			AscCommon.History.Clear();
+			pivot = testPivotCellForDetails(assert, pivot, 4, 3, standardNoFilterEastGT, 'no-filter East | GT');
+			pivot = testPivotCellForDetails(assert, pivot, 5, 3, standardNoFilterFancyGT, 'no-filter East -> Fancy | GT');
+			pivot = testPivotCellForDetails(assert, pivot, 6, 3, standardNoFilter10GT, 'no-filter East -> Fancy -> 10 (Units) | GT');
+			pivot = testPivotCellForDetails(assert, pivot, 4, 2, standardNoFilterEastGirl, 'no-filter East | Girl');
+			pivot = testPivotCellForDetails(assert, pivot, 5, 2, standardNoFilterFancyGirl, 'no-filter East -> Fancy | Girl');
+			pivot = testPivotCellForDetails(assert, pivot, 5, 2, standardNoFilterFancyGirl, 'no-filter East -> Fancy | Girl');
+			pivot = testPivotCellForDetails(assert, pivot, 7, 2, standardNoFilter12Girl, 'no-filter East -> Fancy -> 12 (Units) | Girl');
+
+			pivot.asc_addPageField(api, 3);
+			pivot.filterByFieldIndex(api, getNewFilter(3, 0), 3, true);
+
+			AscCommon.History.Clear();
+			pivot = testPivotCellForDetails(assert, pivot, 4, 3, standardFilterEastGT, 'filter 1 (ship date) East | GT');
+			pivot = testPivotCellForDetails(assert, pivot, 17, 3, standardFilterGTGT, 'filter 1 (ship date) GTGT');
+
+			const group = new PivotLayoutGroup();
+			group.fld = 4;
+			group.groupMap = {
+				0: 1,
+				2: 1
+			};
+			const onRepeat = function () {
+				api._groupPivot(true, onRepeat);
+			}
+			pivot.groupPivot(api, group, false, onRepeat);
+			pivot = testPivotCellForDetails(assert, pivot, 6, 3, standardGroupFilter, 'filter 1 (ship date) Group 1 Units (10, 12)');
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
 	QUnit.module("Pivot");
 
 	function startTests() {
@@ -5962,5 +6107,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		testPivotMisc();
 
 		testPivotShowAs();
+
+		testPivotShowDetails();
 	}
 });

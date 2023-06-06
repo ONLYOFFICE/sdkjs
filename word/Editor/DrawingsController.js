@@ -580,7 +580,7 @@ CDrawingsController.prototype.SetSelectionState = function(State, StateIndex)
 };
 CDrawingsController.prototype.AddHyperlink = function(Props)
 {
-	this.DrawingObjects.hyperlinkAdd(Props);
+	return this.DrawingObjects.hyperlinkAdd(Props);
 };
 CDrawingsController.prototype.ModifyHyperlink = function(Props)
 {

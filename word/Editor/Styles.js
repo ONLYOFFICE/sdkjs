@@ -408,7 +408,7 @@ CStyle.prototype =
 		var Old = this.ParaPr;
 		var New = new CParaPr();
 		New.Set_FromObject(Value);
-
+		
 		if (isHandleNumbering && Value.NumPr instanceof CNumPr && Value.NumPr.IsValid())
 		{
 			var oLogicDocument = private_GetWordLogicDocument();
@@ -427,9 +427,12 @@ CStyle.prototype =
 			}
 		}
 
-		this.ParaPr = New;
-
-		History.Add(new CChangesStyleParaPr(this, Old, New));
+		if (Old.IsEqual(New))
+			return;
+		
+		let change = new CChangesStyleParaPr(this, Old, New);
+		AscCommon.History.Add(change);
+		change.Redo();
 	},
 
 	Set_TablePr : function(Value)
@@ -6326,6 +6329,14 @@ CStyle.prototype =
     }
 };
 /**
+ * Получаем ссылку на основной класс документа
+ * @returns {?AscWord.CDocument}
+ */
+CStyle.prototype.GetLogicDocument = function()
+{
+	return private_GetWordLogicDocument();
+};
+/**
  * Устанавливаем стиль, от которого данный наследуется
  * @param styleId
  */
@@ -6384,14 +6395,14 @@ CStyle.prototype.SetParaPr = function(oParaPr)
 };
 /**
  * Связываем данный стиль с заданной нумерацией
- * @param {string} [numId=null] если не задано, тогда, наоборот, удаляем нумерацию
+ * @param {string} numId Для удаления используем null
  * @param {number} iLvl
  */
 CStyle.prototype.SetNumPr = function(numId, iLvl)
 {
 	let paraPr = this.GetParaPr().Copy();
 	
-	if (undefined !== numId && null !== numId)
+	if (null !== numId)
 		paraPr.NumPr = new AscWord.CNumPr(numId, iLvl);
 	else
 		paraPr.NumPr = undefined;
@@ -7725,6 +7736,48 @@ CStyle.prototype.wholeToTablePr = function() {
 		oTablePBorders.Right = oWholeCellBorders.Right;
 		delete oWholeCellBorders.Right;
 	}
+};
+/**
+ * Получаем список параграфов, использующих данный стиль, либо стиль, основанный на данном
+ * @returns {AscWord.CParagraph[]}
+ */
+CStyle.prototype.GetRelatedParagraphs = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument)
+		return [];
+	
+	let styleManager = logicDocument.GetStyles();
+	
+	let styleId = this.GetId();
+	let paragraphs;
+	if (styleId !== styleManager.GetDefaultParagraph())
+	{
+		let relatedStylesId = styleManager.private_GetAllBasedStylesId(styleId);
+		paragraphs = logicDocument.GetAllParagraphsByStyle(relatedStylesId);
+	}
+	else
+	{
+		paragraphs = logicDocument.GetAllParagraphs();
+	}
+	
+	return paragraphs;
+};
+/**
+ * Обновляем коллекцию нумераций для параграфов, связанных с данным стилем
+ */
+CStyle.prototype.UpdateNumberingCollection = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument)
+		return;
+
+	let numberingCollection = logicDocument.GetNumberingCollection();
+	this.GetRelatedParagraphs().forEach(function(paragraph)
+	{
+		paragraph.RecalcCompiledPr();
+		numberingCollection.CheckParagraph(paragraph);
+	});
 };
 
 function CStyles(bCreateDefault)
@@ -9592,7 +9645,16 @@ CStyles.prototype.Create_StyleFromInterface = function(oAscStyle, bCheckLink)
 
 		oStyle.Set_TextPr(NewStyleTextPr);
 		oStyle.Set_ParaPr(NewStyleParaPr, true);
+		
+		let numPr = oStyle.GetParaPr().NumPr;
+		oStyle.GetRelatedParagraphs().forEach(function(paragraph)
+		{
+			if (numPr && numPr.IsEqual(paragraph.GetNumPr()))
+				paragraph.SetNumPr(null);
 
+			paragraph.RecalcCompiledPr();
+		});
+		
 		return oStyle;
 	}
 	else
@@ -10910,7 +10972,12 @@ function CDocumentBorder()
 	this.Size    = 0.5 * g_dKoef_pt_to_mm; // Размер учитываем в зависимости от Value
 	this.Value   = border_None;
 }
-
+CDocumentBorder.FromObject = function(obj)
+{
+	let border = new CDocumentBorder();
+	border.Set_FromObject(obj);
+	return border;
+};
 CDocumentBorder.prototype =
 {
     Copy : function()
@@ -11118,6 +11185,10 @@ CDocumentBorder.prototype.IsNone = function()
 CDocumentBorder.prototype.SetNone = function()
 {
 	this.Value = border_None;
+};
+CDocumentBorder.prototype.GetSize = function()
+{
+	return this.Size;
 };
 CDocumentBorder.prototype.setSizeIn8Point = function(val)
 {
@@ -16114,10 +16185,10 @@ CParaSpacing.prototype.SetLineTwips = function (val) {
 	}
 };
 
-function CNumPr(sNumId, nLvl)
+function CNumPr(numId, iLvl)
 {
-    this.NumId = undefined !== sNumId ? sNumId : "-1";
-    this.Lvl   = undefined !== nLvl ? nLvl : 0;
+    this.NumId = numId;
+    this.Lvl   = undefined !== iLvl ? iLvl : 0;
 }
 
 CNumPr.prototype =

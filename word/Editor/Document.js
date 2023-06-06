@@ -6052,37 +6052,38 @@ CDocument.prototype.AddInlineTable = function(nCols, nRows, nMode)
 };
 CDocument.prototype.GetTableForPreview = function()
 {
-    return AscFormat.ExecuteNoHistory(function() {
-        let nCols = 5, nRows = 5;
-        let _x_mar = 10;
-        let _y_mar = 10;
-        let _r_mar = 10;
-        let _b_mar = 10;
-        let _pageW = 297;
-        let _pageH = 210;
-
-        let W = (_pageW - _x_mar - _r_mar);
-        let H = (_pageH - _y_mar - _b_mar);
-
-
-        let arrGrid = [];
-        for (let nIndex = 0; nIndex < nCols; ++nIndex)
-            arrGrid[nIndex] = W / nCols;
-
+	return AscCommon.ExecuteNoHistory(function()
+	{
+		let nCols  = 5, nRows = 5;
+		let _x_mar = 10;
+		let _y_mar = 10;
+		let _r_mar = 10;
+		let _b_mar = 10;
+		let _pageW = 297;
+		let _pageH = 210;
+		
+		let W = (_pageW - _x_mar - _r_mar);
+		let H = (_pageH - _y_mar - _b_mar);
+		
+		let arrGrid = [];
+		for (let nIndex = 0; nIndex < nCols; ++nIndex)
+			arrGrid[nIndex] = W / nCols;
+		
 		let oDocumentContent = new CDocumentContent();
 		oDocumentContent.SetLogicDocument(this);
-
-        let oTable = new CTable(this.GetDrawingDocument(), oDocumentContent, true, nRows, nCols, arrGrid, false);
-        oTable.Reset(_x_mar, _y_mar, 1000, 1000, 0, 0, 1);
-        oTable.Set_Props({
-            TableDefaultMargins : {Top : 0, Bottom : 0},
-            TableLayout: c_oAscTableLayout.Fixed
-        });
-
-        for (let nCurRow = 0, nRowsCount = oTable.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
-            oTable.GetRow(nCurRow).SetHeight(H / nRows, Asc.linerule_AtLeast);
-        return oTable;
-    }, this, []);
+		
+		let oTable = new CTable(this.GetDrawingDocument(), oDocumentContent, true, nRows, nCols, arrGrid, false);
+		oTable.Reset(_x_mar, _y_mar, 1000, 1000, 0, 0, 1);
+		oTable.Set_Props({
+			TableDefaultMargins : {Top : 0, Bottom : 0},
+			TableLayout         : c_oAscTableLayout.Fixed
+		});
+		
+		for (let nCurRow = 0, nRowsCount = oTable.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+			oTable.GetRow(nCurRow).SetHeight(H / nRows, Asc.linerule_AtLeast);
+		
+		return oTable;
+	}, this, this, []);
 };
 CDocument.prototype.CheckTableForPreview = function(oTable)
 {};
@@ -6311,9 +6312,42 @@ CDocument.prototype.AddToParagraph = function(oParaItem, bRecalculate)
 		return;
 
 	if (this.IsNumberingSelection() && para_TextPr !== oParaItem.Type)
-		this.RemoveSelection();
-
+		this.RemoveSelectedNumberingOnTextAdd();
+	
 	this.Controller.AddToParagraph(oParaItem, bRecalculate);
+};
+CDocument.prototype.RemoveSelectedNumberingOnTextAdd = function()
+{
+	if (!this.IsNumberingSelection())
+		return;
+	
+	this.RemoveSelection();
+	
+	let paragraph = this.GetCurrentParagraph();
+	if (!paragraph)
+		return;
+	
+	let numPr = paragraph.GetNumPr();
+	if (!numPr)
+		return;
+	
+	let num = this.Numbering.GetNum(numPr.NumId);
+	if (!num)
+		return;
+	
+	let numLvl = num.GetLvl(numPr.Lvl);
+	let paraPr = numLvl.GetParaPr();
+	if (!paraPr
+		|| !paraPr.Ind
+		|| undefined === paraPr.Ind.FirstLine
+		|| undefined === paraPr.Ind.Left)
+		return;
+	
+	if (this.Styles.Get_Default_ParaList() === paragraph.GetParagraphStyle())
+		paragraph.SetParagraphStyleById(null);
+
+	paragraph.RemoveNumPr();
+	paragraph.SetParagraphIndent({FirstLine : 0, Left : paraPr.Ind.FirstLine + paraPr.Ind.Left});
 };
 /**
  * Очищаем форматирование внутри селекта
@@ -12644,7 +12678,13 @@ CDocument.prototype.AddHyperlink = function(HyperProps)
 		this.RemoveTextSelection();
 	}
 
-	this.Controller.AddHyperlink(HyperProps);
+	let hyperlink = this.Controller.AddHyperlink(HyperProps);
+	if (hyperlink)
+	{
+		this.RemoveSelection();
+		hyperlink.MoveCursorOutsideElement(false);
+	}
+	
 	this.Recalculate();
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
@@ -14834,7 +14874,7 @@ CDocument.prototype.Continue_FastCollaborativeEditing = function()
 	if (true !== this.CollaborativeEditing.Is_Fast() || true === this.CollaborativeEditing.Is_SingleUser())
 		return;
 
-	if (true === this.IsMovingTableBorder() || true === this.Api.isStartAddShape || this.Api.isInkDrawerOn() || this.DrawingObjects.checkTrackDrawings() || this.Api.isOpenedChartFrame)
+	if (true === this.IsMovingTableBorder() || true === this.Api.isStartAddShape || this.DrawingObjects.isTrackingDrawings() || this.Api.isOpenedChartFrame)
 		return;
 
 	var HaveChanges = this.History.Have_Changes(true);
@@ -21556,8 +21596,10 @@ CDocument.prototype.controller_AddHyperlink = function(Props)
 	if (false === this.Selection.Use || this.Selection.StartPos === this.Selection.EndPos)
 	{
 		var Pos = ( true == this.Selection.Use ? this.Selection.StartPos : this.CurPos.ContentPos );
-		this.Content[Pos].AddHyperlink(Props);
+		return this.Content[Pos].AddHyperlink(Props);
 	}
+	
+	return null;
 };
 CDocument.prototype.controller_ModifyHyperlink = function(Props)
 {

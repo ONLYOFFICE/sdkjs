@@ -2993,8 +2993,10 @@ CFootnotesController.prototype.AddHyperlink = function(Props)
 {
 	if (true !== this.IsSelectionUse() || true === this.private_IsOnFootnoteSelected())
 	{
-		this.CurFootnote.AddHyperlink(Props);
+		return this.CurFootnote.AddHyperlink(Props);
 	}
+	
+	return null;
 };
 CFootnotesController.prototype.ModifyHyperlink = function(Props)
 {

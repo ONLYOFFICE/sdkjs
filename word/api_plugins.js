@@ -106,9 +106,9 @@
 	/**
 	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} TextPartType
 	 * Specifies if the whole text or only its part will be returned or replaced:
-	 * * <b>entirely</b> - replaces the whole text with the specified one,
-	 * * <b>beforeCursor</b> - replaces only the part of the text before the cursor,
-	 * * <b>afterCursor</b> - replaces only the part of the text after the cursor.
+	 * * <b>entirely</b> - replaces/returns the whole text,
+	 * * <b>beforeCursor</b> - replaces/returns only the part of the text before the cursor,
+	 * * <b>afterCursor</b> - replaces/returns only the part of the text after the cursor.
 	 */
 
     var Api = window["asc_docs_api"];

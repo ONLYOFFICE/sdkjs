@@ -415,14 +415,13 @@
 		if (!numLvl)
 			return false;
 
-		let commonNumPr = this.NumPr ? this.NumPr : this.GetCommonNumPr();
+		let commonNumPr = this.NumPr ? this.NumPr : null;
 		if (commonNumPr && commonNumPr.NumId)
 		{
 			let num = this.Numbering.GetNum(commonNumPr.NumId);
 			if (num)
 			{
 				this.MergePrToLvl(num.GetLvl(commonNumPr.Lvl), numLvl);
-
 				numLvl.ResetNumberedText(commonNumPr.Lvl);
 				num.SetLvl(numLvl, commonNumPr.Lvl);
 				this.SetLastSingleLevel(commonNumPr.NumId, commonNumPr.Lvl);
@@ -434,7 +433,7 @@
 			let numId = num.GetId();
 			let ilvl  = !commonNumPr || !commonNumPr.Lvl ? 0 : commonNumPr.Lvl;
 			
-			this.MergePrToLvl(num.GetLvl(commonNumPr.Lvl), numLvl);
+			this.MergePrToLvl(num.GetLvl(ilvl), numLvl);
 
 			numLvl.ResetNumberedText(ilvl);
 			num.SetLvl(numLvl, ilvl);
@@ -685,7 +684,7 @@
 				let paragraph = this.Paragraphs[index];
 				let numPr     = paragraph.GetNumPr();
 				let iLvl      = numPr ? numPr.Lvl : 0;
-				paragraph.SetNumPr(undefined);
+				paragraph.SetNumPr(null);
 
 				let pStyle = paragraph.GetParagraphStyle();
 				if (!pStyle || -1 === styleManager.GetHeadingLevelById(pStyle))
@@ -724,6 +723,8 @@
 		let paraPr = oldLvl.GetParaPr().Copy();
 		paraPr.Merge(newLvl.GetParaPr());
 		newLvl.SetParaPr(paraPr);
+		
+		newLvl.SetPStyle(oldLvl.GetPStyle());
 	};
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumberingApplicator = CNumberingApplicator;

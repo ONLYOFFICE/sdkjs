@@ -7615,8 +7615,10 @@ CDocumentContent.prototype.AddHyperlink = function(HyperProps)
 		&& (false === this.Selection.Use || this.Selection.StartPos === this.Selection.EndPos))
 	{
 		var Pos = ( true == this.Selection.Use ? this.Selection.StartPos : this.CurPos.ContentPos );
-		this.Content[Pos].AddHyperlink(HyperProps);
+		return this.Content[Pos].AddHyperlink(HyperProps);
 	}
+	
+	return null;
 };
 CDocumentContent.prototype.ModifyHyperlink = function(HyperProps)
 {

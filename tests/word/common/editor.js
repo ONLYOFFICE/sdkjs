@@ -95,5 +95,6 @@
 	AscTest.Editor          = editor;
 
 	window.editor = editor;
+	Asc['editor'] = Asc.editor = editor;
 
 })(window);

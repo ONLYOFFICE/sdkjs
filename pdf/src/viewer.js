@@ -223,8 +223,8 @@
 
 		if (this.isXP)
 		{
-			AscCommon.g_oHtmlCursor.register("grab", "grab", "7 8", "pointer");
-			AscCommon.g_oHtmlCursor.register("grabbing", "grabbing", "6 6", "pointer");
+			AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.Grab, "7 8", "pointer");
+			AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.Grabbing, "6 6", "pointer");
 		}
 
 		var oThis = this;
@@ -1288,7 +1288,7 @@
 			else
 			{
 				if (oThis.MouseHandObject)
-					cursorType = "grabbing";
+					cursorType = AscCommon.Cursors.Grabbing;
 				else
 					cursorType = "default";
 			}
@@ -1314,7 +1314,7 @@
 					return;
 				}
 				// режим лапы. просто начинаем режим Active - зажимаем лапу
-				oThis.setCursorType("grabbing");
+				oThis.setCursorType(AscCommon.Cursors.Grabbing);
 				oThis.MouseHandObject.X = oThis.mouseDownCoords.X;
 				oThis.MouseHandObject.Y = oThis.mouseDownCoords.Y;
 				oThis.MouseHandObject.Active = true;
@@ -1385,11 +1385,11 @@
 					if (mouseUpLinkObject)
 						oThis.setCursorType("pointer");
 					else
-						oThis.setCursorType("grab");
+						oThis.setCursorType(AscCommon.Cursors.Grab);
 				}
 				else if (!oThis.isMouseMoveBetweenDownUp)
 				{
-					oThis.setCursorType("grab");
+					oThis.setCursorType(AscCommon.Cursors.Grab);
 
 					// делаем клик в логическом документе, чтобы сбросить селект, если он был
 					var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
@@ -1398,7 +1398,7 @@
 				}
 				else
 				{
-					oThis.setCursorType("grab");
+					oThis.setCursorType(AscCommon.Cursors.Grab);
 				}
 
 				oThis.isMouseMoveBetweenDownUp = false;
@@ -1460,7 +1460,7 @@
 				if (oThis.MouseHandObject.Active)
 				{
 					// двигаем рукой
-					oThis.setCursorType("grabbing");
+					oThis.setCursorType(AscCommon.Cursors.Grabbing);
 
 					var scrollX = AscCommon.global_mouseEvent.X - oThis.MouseHandObject.X;
 					var scrollY = AscCommon.global_mouseEvent.Y - oThis.MouseHandObject.Y;
@@ -1494,7 +1494,7 @@
 						else
 						{
 							// даже если не двигали еще и ждем eps, все равно курсор меняем на зажатый
-							oThis.setCursorType("grabbing");
+							oThis.setCursorType(AscCommon.Cursors.Grabbing);
 						}
 					}
 					else
@@ -1504,7 +1504,7 @@
 						if (mouseMoveLinkObject)
 							oThis.setCursorType("pointer");
 						else
-							oThis.setCursorType("grab");
+							oThis.setCursorType(AscCommon.Cursors.Grab);
 					}
 				}
 				return;

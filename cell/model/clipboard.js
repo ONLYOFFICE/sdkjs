@@ -4039,9 +4039,12 @@
 				paragraph.elem.CompiledPr.NeedRecalc = true;
 				var paraPr = paragraph.elem.Get_CompiledPr();
 
-				var firstLine = paraPr && paraPr.ParaPr && paraPr.ParaPr.Ind && paraPr.ParaPr.Ind.FirstLine;
+				var firstLine = paraPr && paraPr.ParaPr && paraPr.ParaPr.Ind && paraPr.ParaPr.Ind.Left;
 				if (firstLine) {
 					oNewItem.indent = parseInt(firstLine / AscCommon.koef_mm_to_indent);
+					if (oNewItem.indent < 0) {
+						oNewItem.indent = null;
+					}
 				}
 
 				//горизонтальное выравнивание

@@ -1063,17 +1063,20 @@
 			 sCandName.MakeLower(); sReqName.MakeLower();
 			 */
 
-			if ( 0 == sReqName.length )
+			if ( 0 === sReqName.length )
 				return 0;
 
-			if ( 0 == sMyName.length )
+			if ( 0 === sMyName.length )
 				return 10000;
 
 			if ( sReqName == sMyName )
 				return 0;
 
+			let cand1 = sReqName.replace(/[\s-,]/g, '').toLowerCase();
+			let cand2 = sMyName.replace(/[\s-,]/g, '').toLowerCase();
+
 			// check equals, inst
-			if (sReqName.replace(/[\s-,]/g, '').toLowerCase() == sMyName.replace(/[\s-,]/g, '').toLowerCase())
+			if (cand1 === cand2)
 				return 100;
 
 			if (-1 !== sReqName.indexOf(sMyName) || -1 !== sMyName.indexOf(sReqName))
@@ -1089,7 +1092,12 @@
 				return 999;
 			}
 
-			return this.CheckEqualFonts2(sReqName, sMyName);
+			if (-1 !== cand1.indexOf(cand2) || -1 !== cand2.indexOf(cand1))
+			{
+				return 2000 + 10 * Math.abs(cand1.length - cand2.length);
+			}
+
+			return 10000;
 		},
 
 		GetFaceNamePenalty : function(sReqName)

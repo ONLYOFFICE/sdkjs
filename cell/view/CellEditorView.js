@@ -690,7 +690,7 @@
 	};
 
 	CellEditor.prototype.updateWizardMode = function (mode) {
-		this._updateCursorStyle(mode ? AscCommonExcel.kCurCells : this.defaults.cursorShape);
+		this._updateCursorStyle(mode ? AscCommon.Cursors.CellCur : this.defaults.cursorShape);
 	};
 
 	CellEditor.prototype.move = function () {
