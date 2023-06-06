@@ -335,6 +335,14 @@ CInlineLevelSdt.prototype.GetSelectedElementsInfo = function(Info)
 	Info.SetInlineLevelSdt(this);
 	CParagraphContentWithParagraphLikeContent.prototype.GetSelectedElementsInfo.apply(this, arguments);
 };
+CInlineLevelSdt.prototype.IsSolid = function()
+{
+	// В обычном режиме редактирования мы не даем редактировать форму (кроме составных)
+	return !!(this.Paragraph
+		&& !this.Paragraph.LogicDocument.IsFillingFormMode()
+		&& this.IsForm()
+		&& !this.IsComplexForm());
+};
 CInlineLevelSdt.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
 	History.Add(new CChangesParaFieldAddItem(this, Pos, [Item]));
