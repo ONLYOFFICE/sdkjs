@@ -6483,14 +6483,29 @@ CPresentation.prototype.UpdateCursorType = function (X, Y, MouseEvent) {
 
 	const oApi = this.Api;
 	const isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+	const isMarkerFormat = oApi ? oApi.isMarkerFormat : false;
 
 	const oController = this.GetCurrentController();
 	if (oController) {
-		var graphicObjectInfo = oController.isPointInDrawingObjects(X, Y, MouseEvent);
+
+		let graphicObjectInfo;
+		if(isMarkerFormat) {
+			oController.noNeedUpdateCursorType = true;
+			graphicObjectInfo = oController.isPointInDrawingObjects(X, Y, MouseEvent);
+			oController.noNeedUpdateCursorType = false;
+		}
+		else {
+			graphicObjectInfo = oController.isPointInDrawingObjects(X, Y, MouseEvent);
+		}
 		if (graphicObjectInfo) {
 			if (!graphicObjectInfo.updated) {
 				if (isDrawHandles !== false) {
-					this.DrawingDocument.SetCursorType(graphicObjectInfo.cursorType);
+					if(isMarkerFormat && graphicObjectInfo.cursorType === "text") {
+						this.DrawingDocument.SetCursorType(AscCommon.Cursors.MarkerFormat);
+					}
+					else {
+						this.DrawingDocument.SetCursorType(graphicObjectInfo.cursorType);
+					}
 				} else {
 					this.DrawingDocument.SetCursorType("default");
 				}
