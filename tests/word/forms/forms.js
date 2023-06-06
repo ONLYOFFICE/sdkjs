@@ -177,6 +177,15 @@ $(function () {
 		AscTest.PressKey(AscTest.Key.delete);
 		assert.strictEqual(form.IsUseInDocument(), false, "Click delete button for the second time, form must be removed");
 		
+		form = AddFormPr(logicDocument.AddContentControlTextForm());
+		AscTest.AddTextToInlineSdt(form, "Inner Text");
+		assert.strictEqual(!form.IsPlaceHolder() && form.IsUseInDocument(), true, "Check if text form is filled with text and added to document");
+		assert.strictEqual(form.GetInnerText(), "Inner Text", "Check inner text");
+		AscTest.MoveCursorToParagraph(p, false);
+		AscTest.PressKey(AscTest.Key.backspace);
+		assert.strictEqual(form.IsUseInDocument() && form.IsThisElementCurrent(), true, "Move cursor to the right of the form and press backspace");
+		AscTest.PressKey(AscTest.Key.backspace);
+		assert.strictEqual(form.IsUseInDocument(), false, "Click backspace for the second time, form must be removed");
 	});
 
 	QUnit.test("Check format in text form", function (assert)
