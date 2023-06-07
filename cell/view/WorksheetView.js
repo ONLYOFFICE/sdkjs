@@ -4498,6 +4498,16 @@
 				var geometry = new AscFormat.CreateGeometry("rect");
 				geometry.Recalculate(imgSize, imgSize, true);
 
+                if (ctx instanceof AscCommonExcel.CPdfPrinter) {
+                    graphics.SaveGrState();
+                    var _baseTransform;
+                    if (!ctx.Transform) {
+                        _baseTransform = new AscCommon.CMatrix();
+                    } else {
+                        _baseTransform = ctx.Transform;
+                    }
+                    graphics.SetBaseTransform(_baseTransform);
+                }
 				var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
 
 				graphics.SaveGrState();
@@ -4511,6 +4521,10 @@
 				shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
 				shapeDrawer.draw(geometry);
 				graphics.RestoreGrState();
+                if (ctx instanceof AscCommonExcel.CPdfPrinter) {
+                    graphics.SetBaseTransform(null);
+                    graphics.RestoreGrState();
+                }
 
 			}, this, [img, rect, iconSize * dScale * this.getZoom()]
 		);
