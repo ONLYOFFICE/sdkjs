@@ -17603,8 +17603,48 @@
 		}
 		_promoteFromTo(oBBox, this.worksheet, oCanPromote.to, this.worksheet, true, oCanPromote, bCtrl, bVertical, nIndex);
 	};
+	function _updateDaysOfWeek (aDaysOfWeek, sValue) {
+		let sFirstSymbols = sValue.slice(0,2);
+
+		return aDaysOfWeek.map(function (sDayOfWeek) {
+			if (sFirstSymbols === sFirstSymbols.toUpperCase()) {
+					return sDayOfWeek.toUpperCase();
+			}
+			if (sFirstSymbols === sFirstSymbols.toLowerCase()) {
+					return sDayOfWeek.toLowerCase();
+			}
+			// For cases like MoNdAy or mOnDaY. If first symbol is lowercase then values in lowercase else values start with capitalized
+			if (sFirstSymbols[0] === sFirstSymbols[0].toUpperCase()) {
+					return sDayOfWeek[0].toUpperCase() + sDayOfWeek.slice(1);
+			}
+
+			return sDayOfWeek;
+		});
+	}
+	function _getIndexDayOfWeek(aDaysOfWeek, sValue) {
+		let sFirstSymbols = sValue.slice(0,2);
+		let sFormatedValue = '';
+		let sSlicedValue = sValue.slice(1);
+
+		if (sValue === sValue.toLowerCase() || sValue === sValue.toUpperCase()) {
+			return  aDaysOfWeek.indexOf(sValue)
+		}
+
+		// For cases like MoNdAy or mOnDaY. If first symbol is lowercase then sValue convert in lowercase else sValue convert to start with capitalized
+		if (sFirstSymbols[0] === sFirstSymbols[0].toLowerCase()) {
+			sFormatedValue = sValue.toLowerCase();
+			return aDaysOfWeek.indexOf(sFormatedValue)
+		}
+		if (sFirstSymbols === sFirstSymbols.toUpperCase()) {
+			sFormatedValue = sValue.toUpperCase();
+			return aDaysOfWeek.indexOf(sFormatedValue)
+		}
+		sFormatedValue = sSlicedValue === sSlicedValue.toLowerCase() ? sValue : sValue[0] + sSlicedValue.toLowerCase();
+		return aDaysOfWeek.indexOf(sFormatedValue)
+	}
 	function _promoteFromTo(from, wsFrom, to, wsTo, bIsPromote, oCanPromote, bCtrl, bVertical, nIndex) {
 		var wb = wsFrom.workbook;
+		const oDefaultCultureInfo = AscCommon.g_oDefaultCultureInfo;
 
 		wb.dependencyFormulas.lockRecal();
 		History.StartTransaction();
@@ -17737,6 +17777,13 @@
 			if(nIndex < 0)
 				bReverse = true;
 			var oPromoteHelper = new PromoteHelper(bVertical, bReverse, from);
+			let aInputDaysOfWeek = oDefaultCultureInfo.DayNames.map(function(dayOfWeek) {
+				return dayOfWeek.toLowerCase();
+			});
+			let aInputShortDaysOfWeek = oDefaultCultureInfo.AbbreviatedDayNames.map(function(dayOfWeek) {
+				return dayOfWeek.toLowerCase();
+			});
+			let aDaysOfWeek = [];
 			fromRange._foreachNoEmpty(function(oCell, nRow0, nCol0, nRowStart0, nColStart0){
 				if(null != oCell)
 				{
@@ -17745,6 +17792,7 @@
 					var sPrefix = null;
 					var padding = 0;
 					var bDate = false;
+					let bIsDayOfWeek = false;
 					if(bIsPromote)
 					{
 						if (!oCell.isFormula())
@@ -17778,6 +17826,20 @@
 											nVal = sNumber - 0;
 											padding = sNumber[0] === '0' ? sNumber.length : 0;
 										}
+										// Value of cell is it a day of week?
+										if (aInputDaysOfWeek.includes(sValue.toLowerCase())) {
+											// Update array of days of the week based on sValue
+											aDaysOfWeek = _updateDaysOfWeek(aInputDaysOfWeek, sValue);
+											// In nVal stores index of day in array
+											nVal = _getIndexDayOfWeek(aDaysOfWeek, sValue);
+											bIsDayOfWeek = true;
+											bDate = true;
+										} else if (aInputShortDaysOfWeek.includes(sValue.toLowerCase())) {
+											aDaysOfWeek = _updateDaysOfWeek(aInputShortDaysOfWeek, sValue);
+											nVal = _getIndexDayOfWeek(aDaysOfWeek, sValue);
+											bIsDayOfWeek = true;
+											bDate = true;
+										}
 									}
 								}
 								if(null != oCell.xfs && null != oCell.xfs.num && null != oCell.xfs.num.getFormat()){
@@ -17792,7 +17854,7 @@
 						else
 							bDelimiter = true;
 					}
-					oPromoteHelper.add(nRow0 - nRowStart0, nCol0 - nColStart0, nVal, bDelimiter, sPrefix, padding, bDate, oCell.duplicate());
+					oPromoteHelper.add(nRow0 - nRowStart0, nCol0 - nColStart0, nVal, bDelimiter, sPrefix, padding, bDate, oCell.duplicate(), bIsDayOfWeek);
 				}
 			});
 			var bCopy = false;
@@ -17875,13 +17937,17 @@
 									var oCellValue = new AscCommonExcel.CCellValue();
 									if (null != data.sPrefix) {
 										var sVal = data.sPrefix;
-										//toString enough, becouse nCurValue nave not decimal part
+										//toString enough, because nCurValue nave not decimal part
 										var sNumber = data.nCurValue.toString();
 										if (sNumber.length < data.padding) {
 											sNumber = '0'.repeat(data.padding - sNumber.length) + sNumber;
 										}
 										sVal += sNumber;
 										oCellValue.text = sVal;
+										oCellValue.type = CellValueType.String;
+									} else if (data.bIsDayOfWeek) {
+										let nIndexDay = data.nCurValue % 7;
+										oCellValue.text = aDaysOfWeek[nIndexDay];
 										oCellValue.type = CellValueType.String;
 									} else {
 										oCellValue.number = data.nCurValue;
@@ -18239,7 +18305,7 @@
 		}
 	}
 	PromoteHelper.prototype = {
-		add: function(nRow, nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional){
+		add: function(nRow, nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, bIsDayOfWeek){
 			if(this.bVerical)
 			{
 				//транспонируем для удобства
@@ -18255,7 +18321,7 @@
 				row = {};
 				this.oDataRow[nRow] = row;
 			}
-			row[nCol] = {nCol: nCol, nVal: nVal, bDelimiter: bDelimiter, sPrefix: sPrefix, padding: padding, bDate: bDate, oAdditional: oAdditional, oSequence: null, nCurValue: null};
+			row[nCol] = {nCol: nCol, nVal: nVal, bDelimiter: bDelimiter, sPrefix: sPrefix, padding: padding, bDate: bDate, bIsDayOfWeek: bIsDayOfWeek, oAdditional: oAdditional, oSequence: null, nCurValue: null};
 		},
 		isOnlyIntegerSequence: function(){
 			var bRes = true;
