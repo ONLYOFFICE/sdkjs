@@ -2131,7 +2131,8 @@
 			//todo convert from asc_CAdjustPrint
 			jsonparams["spreadsheetLayout"] = {"ignorePrintArea": true, "scale": 100};
 			jsonparams["locale"] = this.asc_getLocale();
-			jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
+			//todo move cmd from header to body and uncomment
+			// jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
 			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
 			oAdditionalData["jsonparams"] = JSON.stringify(jsonparams);
 		}
