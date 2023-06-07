@@ -952,6 +952,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 
 	var oHdrFtr     = this.IsHdrFtr(true);
 	var nHdrFtrPage = oHdrFtr ? oHdrFtr.GetContent().GetAbsolutePage(0) : null;
+	let isFullWidth = oLogicDocument.IsFillingFormMode();
 
 	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
 	{
@@ -961,8 +962,12 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 		var nPageAbs = this.GetAbsolutePage(nPageIndex);
 		if (null === nHdrFtrPage || nHdrFtrPage === nPageAbs)
 		{
-			var oBounds = this.Content.GetContentBounds(nPageIndex);
-			arrRects.push({X : oBounds.Left, Y : oBounds.Top, R : oBounds.Right, B : oBounds.Bottom, Page : nPageAbs});
+			let contentBounds = this.Content.GetContentBounds(nPageIndex);
+			let pageBounds    = this.Content.GetPageBounds(nPageIndex);
+			if (isFullWidth)
+				arrRects.push({X : pageBounds.Left, Y : contentBounds.Top, R : pageBounds.Right, B : contentBounds.Bottom, Page : nPageAbs});
+			else
+				arrRects.push({X : contentBounds.Left, Y : contentBounds.Top, R : contentBounds.Right, B : contentBounds.Bottom, Page : nPageAbs});
 		}
 	}
 
@@ -2604,6 +2609,8 @@ CBlockLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
 		_Y = oTransform.TransformPointY(X, Y);
 	}
 
+	let logicDocument = this.GetLogicDocument();
+	let isFullWidth   = !!(logicDocument && logicDocument.IsFillingFormMode());
 	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
 	{
 		if (this.IsEmptyPage(nPageIndex))
@@ -2611,9 +2618,11 @@ CBlockLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
 
 		if (this.GetAbsolutePage(nPageIndex) === nPageAbs)
 		{
-			var oBounds = this.Content.GetContentBounds(nPageIndex);
-
-			if (oBounds.Left <= _X && _X <= oBounds.Right && oBounds.Top <= _Y && _Y <= oBounds.Bottom)
+			let contentBounds = this.Content.GetContentBounds(nPageIndex);
+			let pageBounds    = this.Content.GetPageBounds(nPageIndex);
+			
+			if ((isFullWidth && pageBounds.Left <= _X && _X <= pageBounds.Right && contentBounds.Top <= _Y && _Y <= contentBounds.Bottom)
+				|| (!isFullWidth && contentBounds.Left <= _X && _X <= contentBounds.Right && contentBounds.Top <= _Y && _Y <= contentBounds.Bottom))
 				return true;
 		}
 	}

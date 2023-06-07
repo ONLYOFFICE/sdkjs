@@ -98,6 +98,18 @@
 	{
 		return new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols);
 	}
+	function CreateImage(w, h)
+	{
+		if (!logicDocument)
+			return null;
+		
+		let drawingObjects = logicDocument.GetDrawingObjects();
+		let drawing = new ParaDrawing(w, h, null, drawingObjects, logicDocument, null);
+		let image   = drawingObjects.createImage(AscCommon.g_sWordPlaceholderImage, 0, 0, w, h);
+		image.setParent(drawing);
+		drawing.Set_GraphicObject(image);
+		return drawing;
+	}
 	function GetParagraphText(paragraph)
 	{
 		return paragraph.GetText({ParaEndToSpace : false});
@@ -328,10 +340,18 @@
 		
 		return logicDocument.SectPr;
 	}
+	function SetCompatibilityMode(mode)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.Settings.CompatibilityMode = mode;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument      = CreateLogicDocument;
 	AscTest.CreateParagraph          = CreateParagraph;
 	AscTest.CreateTable              = CreateTable;
+	AscTest.CreateImage              = CreateImage;
 	AscTest.GetParagraphText         = GetParagraphText;
 	AscTest.RemoveTableBorders       = RemoveTableBorders;
 	AscTest.SetFillingFormMode       = SetFillingFormMode;
@@ -356,6 +376,7 @@
 	AscTest.SetParagraphNumberingLvl = SetParagraphNumberingLvl;
 	AscTest.SelectDocumentRange      = SelectDocumentRange;
 	AscTest.GetFinalSection          = GetFinalSection;
+	AscTest.SetCompatibilityMode     = SetCompatibilityMode;
 
 })(window);
 

@@ -1092,7 +1092,9 @@
 				return 999;
 			}
 
-			if (-1 !== cand1.indexOf(cand2) || -1 !== cand2.indexOf(cand1))
+			// TODO:
+			// MS не так подбирает. На стандартных шрифтах работает. на всех - нет
+			if (0 === cand1.indexOf(cand2))
 			{
 				return 2000 + 10 * Math.abs(cand1.length - cand2.length);
 			}

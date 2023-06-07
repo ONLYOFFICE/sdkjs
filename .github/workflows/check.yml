@@ -33,6 +33,7 @@ jobs:
           node-qunit-puppeteer tests/word/unit-tests/paragraphContentPos.html
           node-qunit-puppeteer tests/word/content-control/block-level/cursorAndSelection.html
           node-qunit-puppeteer tests/word/content-control/inline-level/cursorAndSelection.html
+          node-qunit-puppeteer tests/word/document-calculation/floating-position/drawing.html
           node-qunit-puppeteer tests/word/document-calculation/paragraph.html
           node-qunit-puppeteer tests/word/document-calculation/table/correctBadTable.html
           node-qunit-puppeteer tests/word/document-calculation/table/flowTablePosition.html

@@ -16530,17 +16530,17 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 
 	if (this.GetRowsCount() <= 0)
 		return;
-
+	
+	this.RemoveSelection();
 	if (arrSelectionArray.length <= 0)
 	{
-		this.RemoveSelection();
 		var nCurRow = nFirstRow < this.GetRowsCount() ? nFirstRow : this.GetRowsCount() - 1;
 		this.CurCell = this.GetRow(nCurRow).GetCell(0);
 		this.Document_SetThisElementCurrent(false);
 	}
 	else
 	{
-		if (isCellSelection)
+		if (isCellSelection && !bAll)
 			this.SelectRows(arrSelectionArray[0].Row, arrSelectionArray[arrSelectionArray.length - 1].Row);
 		else
 			this.CurCell = this.GetRow(arrSelectionArray[0].Row).GetCell(arrSelectionArray[0].Cell);
@@ -16643,17 +16643,17 @@ CTable.prototype.RejectRevisionChanges = function(nType, bAll)
 
 	if (this.GetRowsCount() <= 0)
 		return;
-
+	
+	this.RemoveSelection();
 	if (arrSelectionArray.length <= 0)
 	{
-		this.RemoveSelection();
 		var nCurRow = nFirstRow < this.GetRowsCount() ? nFirstRow : this.GetRowsCount() - 1;
 		this.CurCell = this.GetRow(nCurRow).GetCell(0);
 		this.Document_SetThisElementCurrent(false);
 	}
 	else
 	{
-		if (isCellSelection)
+		if (isCellSelection && !bAll)
 			this.SelectRows(arrSelectionArray[0].Row, arrSelectionArray[arrSelectionArray.length - 1].Row);
 		else
 			this.CurCell = this.GetRow(arrSelectionArray[0].Row).GetCell(arrSelectionArray[0].Cell);

@@ -2101,6 +2101,14 @@
 			}
 			oAdditionalData["outputformat"] = Asc.c_oAscFileType.IMG;
 			oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, "zip", Asc.c_nMaxDownloadTitleLen);
+
+			let jsonparams = {};
+			//todo convert from asc_CAdjustPrint
+			jsonparams["spreadsheetLayout"] = {"ignorePrintArea": true, "scale": 100};
+			jsonparams["locale"] = this.asc_getLocale();
+			jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
+			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
+			oAdditionalData["jsonparams"] = JSON.stringify(jsonparams);
 		}
 		if (options.textParams && undefined !== options.textParams.asc_getAssociation()) {
 			oAdditionalData["textParams"] = {"association": options.textParams.asc_getAssociation()};

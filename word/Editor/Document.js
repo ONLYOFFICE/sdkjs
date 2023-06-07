@@ -25440,6 +25440,14 @@ CDocument.prototype.OnChangeForm = function(oForm)
 	this.Action.Additional.FormChange[sKey] = oForm;
 };
 /**
+ * Удаляем все дополнительные обработки по изменению значения формы в конце действия
+ */
+CDocument.prototype.ClearActionOnChangeForm = function()
+{
+	if (this.Action.Additional.FormChange)
+		delete this.Action.Additional.FormChange;
+};
+/**
  * Сохраняем изменение, что радиогруппа должна иметь заданный статус Required
  * @param {string} sGroupKey
  * @param {boolean} isRequired

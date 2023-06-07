@@ -3110,7 +3110,7 @@
 	{
 		this.Sdt = oSdt;
 	}
-
+	
 	/**
 	 * Class representing a document text field.
 	 * @constructor
@@ -17514,6 +17514,7 @@
 			return false;
 
 		this.Sdt.SetInnerText(_sText);
+		this.OnChangeValue();
 		return true;
 	};
 
@@ -17715,6 +17716,7 @@
 		if (oImg)
 		{
 			oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
+			this.OnChangeValue();
 			return true;
 		}
 
@@ -17798,6 +17800,7 @@
 			return false;
 
 		this.Sdt.SelectListItem(sValue);
+		this.OnChangeValue();
 		return true;
 	};
 	/**
@@ -17822,7 +17825,8 @@
 		let oRun = this.Sdt.MakeSingleRunElement();
 		oRun.ClearContent();
 		oRun.AddText(sText);
-
+		
+		this.OnChangeValue();
 		return true;
 	};
 	/**
@@ -17855,6 +17859,7 @@
 			return false;
 
 		this.Sdt.ToggleCheckBox(isChecked);
+		this.OnChangeValue();
 		return true;
 	};
 	/**
@@ -20527,7 +20532,16 @@
 		this.Sdt.Apply_TextPr(oApiTextPr.TextPr);
 		oApiTextPr.TextPr = this.Sdt.Pr.TextPr;
 	};
-
+	ApiFormBase.prototype.OnChangeValue = function()
+	{
+		let logicDocument = private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		logicDocument.ClearActionOnChangeForm();
+		logicDocument.GetFormsManager().OnChange(this.Sdt);
+	};
+	
 	ApiComment.prototype.private_OnChange = function()
 	{
 		let oLogicDocument = private_GetLogicDocument();

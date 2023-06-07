@@ -39,6 +39,7 @@ const allTests = [
 	'word/unit-tests/paragraphContentPos.html',
 	'word/content-control/block-level/cursorAndSelection.html',
 	'word/content-control/inline-level/cursorAndSelection.html',
+	'word/document-calculation/floating-position/drawing.html',
 	'word/document-calculation/paragraph.html',
 	'word/document-calculation/table/correctBadTable.html',
 	'word/document-calculation/table/flowTablePosition.html',
