@@ -400,34 +400,42 @@ function(window, undefined) {
 		};
 
 	function CheckParagraphTextPr(oParagraph, oTextPr) {
-		var oParaPr = oParagraph.Pr.Copy();
-		var oParaPr2 = new CParaPr();
-		var oCopyTextPr = oTextPr.Copy();
-		if (oCopyTextPr.FontFamily) {
-			oCopyTextPr.RFonts.Set_FromObject(
+		let oParaPr = oParagraph.Pr.Copy();
+		let oParaPr2 = new CParaPr();
+		let oOldRFonts = oTextPr.RFonts;
+		let oFontFamily = oTextPr.FontFamily;
+		if (oFontFamily) {
+			let oRFonts = new CRFonts();
+			let sName = oFontFamily.Name;
+			oRFonts.Set_FromObject(
 				{
 					Ascii: {
-						Name: oCopyTextPr.FontFamily.Name,
+						Name: sName,
 						Index: -1
 					},
 					EastAsia: {
-						Name: oCopyTextPr.FontFamily.Name,
+						Name: sName,
 						Index: -1
 					},
 					HAnsi: {
-						Name: oCopyTextPr.FontFamily.Name,
+						Name: sName,
 						Index: -1
 					},
 					CS: {
-						Name: oCopyTextPr.FontFamily.Name,
+						Name: sName,
 						Index: -1
 					}
 				}
 			);
+			oTextPr.RFonts = oRFonts;
 		}
-		oParaPr2.DefaultRunPr = oCopyTextPr;
+		oParaPr2.DefaultRunPr = oTextPr;
 		oParaPr.Merge(oParaPr2);
+		if(oTextPr.HighlightColor === null && oParaPr.DefaultRunPr.HighlightColor) {
+			oParaPr.DefaultRunPr.HighlightColor = undefined;
+		}
 		oParagraph.Set_Pr(oParaPr);
+		oTextPr.RFonts = oOldRFonts;
 	}
 
 	function CheckObjectTextPr(oElement, oTextPr, oDrawingDocument) {
