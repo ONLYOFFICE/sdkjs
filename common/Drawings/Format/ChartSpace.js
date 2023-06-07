@@ -431,7 +431,9 @@ function(window, undefined) {
 		}
 		oParaPr2.DefaultRunPr = oTextPr;
 		oParaPr.Merge(oParaPr2);
-		if(oTextPr.HighlightColor === null && oParaPr.DefaultRunPr.HighlightColor) {
+		if(oTextPr.HighlightColor === null &&
+			oParaPr.DefaultRunPr &&
+			oParaPr.DefaultRunPr.HighlightColor) {
 			oParaPr.DefaultRunPr.HighlightColor = undefined;
 		}
 		oParagraph.Set_Pr(oParaPr);
