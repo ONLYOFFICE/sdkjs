@@ -5410,7 +5410,6 @@
 		}
 
 		var t = this;
-
 		if ((oldObj && !oldObj._ws) || (newObj && !newObj._ws)) {
 			return;
 		}
@@ -5421,7 +5420,10 @@
 			return;
 		}
 
-		var doEdit = function() {
+		var callback = function(success) {
+			if (!success) {
+				return;
+			}
 			History.Create_NewPoint();
 			History.StartTransaction();
 
@@ -5446,24 +5448,9 @@
 
 			History.EndTransaction();
 
-			//t.handlers.trigger("asc_onEditDefName", oldName, newName);
-
 			//условие исключает второй вызов asc_onRefreshDefNameList(первый в unlockDefName)
 			if (!(t.collaborativeEditing.getCollaborativeEditing() && t.collaborativeEditing.getFast())) {
 				t.handlers.trigger("asc_onRefreshUserProtectedRangesList");
-			}
-		};
-		
-
-		var callbackLockObj = function(res) {
-			if (res) {
-				let arrLocks = [];
-				if (wsFrom) {
-					arrLocks.push({id: lockId, ws: wsFrom});
-				} else if (wsTo) {
-					arrLocks.push({id: lockId, ws: wsTo});
-				}
-				t._isLockedUserProtectedRange(doEdit, arrLocks);
 			}
 		};
 
@@ -5471,40 +5458,35 @@
 		let wsFrom = oldObj ? oldObj._ws : null;
 		let wsTo = newObj ? newObj._ws : null;
 
-		let wsViewFrom;
-		let wsViewTo;
-		for (let i = 0; i < this.wsViews.length; i++) {
-			if (this.wsViews[i]) {
-				if (this.wsViews[i].model === wsFrom) {
-					wsViewFrom = this.wsViews[i];
-				}
-				if (this.wsViews[i].model === wsTo) {
-					wsViewTo = this.wsViews[i];
-				}
-			}
-		}
-
-		let lockId = oldObj ? oldObj.Id : newObj.Id;
 		let lockRangeFrom = oldObj ? oldObj.ref : null;
 		let lockRangeTo = newObj ? newObj.ref : null;
 
-		function callback (res) {
-			if (res) {
-				if (wsViewFrom && wsViewTo) {
-					wsViewTo._isLockedCells(lockRangeTo, null, callbackLockObj);
-				} else if (wsTo) {
-					callbackLockObj(true);
-				}
-			}
+		//object locks info
+		let aLocksInfo = [];
+		let aLockIds = [];
+		if (wsFrom && oldObj) {
+			aLockIds.push({id: oldObj.Id, ws: wsFrom});
+		}
+		if (wsTo && newObj) {
+			aLockIds.push({id: newObj.Id, ws: wsTo});
+		}
+		this._getLockedUserProtectedRange(aLockIds, aLocksInfo);
+
+		//cells locks info
+		if (wsFrom && lockRangeFrom) {
+			aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range,
+				null, wsFrom.getId(),
+				new AscCommonExcel.asc_CCollaborativeRange(lockRangeFrom.c1,
+					lockRangeFrom.r1, lockRangeFrom.c2, lockRangeFrom.r2)));
+		}
+		if (wsTo && lockRangeTo) {
+			aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range,
+				null, wsTo.getId(),
+				new AscCommonExcel.asc_CCollaborativeRange(lockRangeTo.c1,
+					lockRangeTo.r1, lockRangeTo.c2, lockRangeTo.r2)));
 		}
 
-		if (wsViewFrom) {
-			wsViewFrom._isLockedCells(lockRangeFrom, null, callback);
-		} else if (wsViewTo) {
-			wsViewTo._isLockedCells(lockRangeTo, null, callback);
-		} else {
-			callback(true);
-		}
+		this.collaborativeEditing.lock(aLocksInfo, callback);
 	};
 
 	WorkbookView.prototype.deleteUserProtectedRanges = function(arr) {
@@ -5557,14 +5539,20 @@
 
 	WorkbookView.prototype._isLockedUserProtectedRange = function (callback, aIds) {
 		let aLockInfo = [];
+		this._getLockedUserProtectedRange(aIds, aLockInfo);
+		this.collaborativeEditing.lock(aLockInfo, callback);
+	};
+
+	WorkbookView.prototype._getLockedUserProtectedRange = function (aIds, aLockInfo) {
+		if (!aIds && !aLockInfo) {
+			return;
+		}
 		let lockInfo;
 		for (let i = 0; i < aIds.length; i++) {
 			lockInfo = this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Object,
 				AscCommonExcel.c_oAscLockTypeElemSubType.UserProtectedRange, aIds[i].ws.getId(), aIds[i].id);
 			aLockInfo.push(lockInfo);
 		}
-
-		this.collaborativeEditing.lock(aLockInfo, callback);
 	};
 
 	WorkbookView.prototype.cleanCache = function() {
