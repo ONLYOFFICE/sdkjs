@@ -3079,6 +3079,7 @@ PasteProcessor.prototype =
 			}
 			case Asc.c_oSpecialPasteProps.keepTextOnly:
 			{
+				//TODO check it and remove/modify this code
 				var numbering =  paragraph.GetNumPr();
 				if(numbering)
 				{
@@ -3101,7 +3102,9 @@ PasteProcessor.prototype =
 									parentContent[nIndex].GetNumberingInfo(NumberingEngine);
 								}
 
-								tempParagraph.Numbering.Internal.NumInfo = NumberingEngine.NumInfo;
+								if (NumberingEngine.NumInfo.length && NumberingEngine.NumInfo[0] !== undefined) {
+									tempParagraph.Numbering.Internal.NumInfo = NumberingEngine.NumInfo;
+								}
 							}
 						}
 
