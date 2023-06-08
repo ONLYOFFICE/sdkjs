@@ -10407,7 +10407,7 @@ function RangeDataManagerElem(bbox, data)
 						this.Blank = true;
 					} else {
 						var dateGroupItem = new DateGroupItem();
-						var autoFilterDateElem = new AutoFilterDateElem(obj.values[i].val, obj.values[i].val, 1);
+						var autoFilterDateElem = new AutoFilterDateElem(obj.values[i].val, obj.values[i].val, obj.values[i].dateTimeGrouping);
 						dateGroupItem.convertRangeToDateGroupItem(autoFilterDateElem);
 						autoFilterDateElem.convertDateGroupItemToRange(dateGroupItem);
 
@@ -10606,6 +10606,7 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Year = year;
 			this.Month = month;
 			this.Day = day;
+			this.Hour = hour;
 			break;
 		}
 		case Asc.EDateTimeGroup.datetimegroupHour://hour
@@ -10614,6 +10615,7 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Month = month;
 			this.Day = day;
 			this.Hour = hour;
+			this.Minute = minute;
 			break;
 		}
 		case Asc.EDateTimeGroup.datetimegroupMinute://minute
@@ -10623,12 +10625,14 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Day = day;
 			this.Hour = hour;
 			this.Minute = minute;
+			this.Second = second;
 			break;
 		}
 		case Asc.EDateTimeGroup.datetimegroupMonth://month
 		{
 			this.Year = year;
 			this.Month = month;
+			this.Day = day;
 			break;
 		}
 		case Asc.EDateTimeGroup.datetimegroupSecond://second
