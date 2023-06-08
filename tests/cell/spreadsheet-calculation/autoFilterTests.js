@@ -169,12 +169,18 @@ $(function () {
 		ws.removeCols(c1, c2);
 	};
 
-	const setFilterOptionsVisible = function (autoFiltersOptions, aVal) {
+	const setFilterOptionsVisible = function (autoFiltersOptions, aVal, bDate) {
 		if (aVal && autoFiltersOptions) {
-			for (let i in aVal) {
+			for (let i = 0; i < aVal.length; i++) {
 				for (let j = 0; j < autoFiltersOptions.values.length; j++) {
-					if (autoFiltersOptions.values[j].text === i) {
-						autoFiltersOptions.values[j].asc_setVisible(aVal[i]);
+					let elem = autoFiltersOptions.values[j];
+					if (bDate && elem.year === aVal[i].year && elem.month === aVal[i].month && elem.day === aVal[i].day
+						&& elem.hour === aVal[i].hour && elem.minute === aVal[i].minute) {
+						elem.asc_setVisible(aVal[i].visible);
+						elem.asc_setDateTimeGrouping(aVal[i].dateTimeGrouping);
+						break;
+					} else if (elem.text === aVal[i].text) {
+						elem.asc_setVisible(aVal[i].visible);
 						break;
 					}
 				}
@@ -1253,7 +1259,7 @@ $(function () {
 		//apply filter
 		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
 		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
-		setFilterOptionsVisible(autoFiltersOptions, {"20000": false, "test1": false, "2/11/1930": false});
+		setFilterOptionsVisible(autoFiltersOptions, [{text: "20000", visible: false}, {text: "test1", visible: false}, {text: "2/11/1930", visible: false}]);
 		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "4": 1});
@@ -1261,11 +1267,48 @@ $(function () {
 
 		autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
 		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
-		setFilterOptionsVisible(autoFiltersOptions, {"2/4/2237": false, "3/4/2237": false});
+		setFilterOptionsVisible(autoFiltersOptions, [{text: "2/4/2237", visible: false}, {text: "3/4/2237", visible: false}]);
 		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
 
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"6": 1, "7": 1});
+
+		//Clearing data of sheet
+		clearData(0, 0, 0, 9)
+	});
+
+	QUnit.test('Test: "Date filter apply"', function (assert) {
+
+		const testData = [
+			['Dates'],
+			['9/26/1902 2:24'],
+			['9/26/1902 2:52'],
+			['9/26/1902 3:07'],
+			['6/22/1905 0:00'],
+			['3/18/1908 0:00'],
+			['12/13/1910 0:00'],
+			['6/22/1905 2:24'],
+			['6/22/1905 4:48'],
+			['6/22/1905 7:12']
+		];
+
+		// Imitate filling rows with data, selection data range and add filter
+		ws = getRangeWithData(ws, testData);
+		let range = getRange(0, 0, 0, 0);
+		ws.autoFilters.addAutoFilter(null, range);
+
+		// Check data range
+		checkFilterRef(assert, 0, 0, 9, 0);
+
+		//apply filter
+		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
+		//9/26/2002 2:24:00
+		setFilterOptionsVisible(autoFiltersOptions, [{year: 1902, month: 9 - 1, day: 26, hour: 2, minute: 24, visible: false, dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupHour}], true);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+		//Checking work of filter
+		//checkHiddenRows(assert, testData, {"1": 1});
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		//Clearing data of sheet
 		clearData(0, 0, 0, 9)
