@@ -10545,6 +10545,12 @@ CDocumentShd.fromObject = function(val)
 	shd.Set_FromObject(val);
 	return shd;
 };
+CDocumentShd.FromObject = function(val)
+{
+	let shd = new CDocumentShd();
+	shd.Set_FromObject(val);
+	return shd;
+};
 CDocumentShd.prototype.Copy = function()
 {
 	var Shd = new CDocumentShd();
