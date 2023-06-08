@@ -6706,9 +6706,29 @@ CDocument.prototype.GoToPage = function(nPageAbs)
 
 	this.RemoveSelection();
 	this.SetDocPosType(docpostype_Content);
-	this.Set_CurPage(nCurPage);
-	this.MoveCursorToXY(0, 0, false);
-	this.RecalculateCurPos();
+	
+	const step = 3;
+	let x = 0;
+	let y = 0;
+	let xLimit = this.Pages[nCurPage].XLimit;
+	let yLimit = this.Pages[nCurPage].YLimit;
+	
+	while (this.Get_CurPage() !== nCurPage)
+	{
+		this.Set_CurPage(nCurPage);
+		this.MoveCursorToXY(x, y, false);
+		this.RecalculateCurPos();
+		
+		x += step;
+		if (x > xLimit)
+		{
+			x = 0;
+			y += step;
+			
+			if (y > yLimit)
+				break;
+		}
+	}
 	this.UpdateSelection();
 
 	return nCurPage;
