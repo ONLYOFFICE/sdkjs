@@ -4750,6 +4750,7 @@
 						res.asc_setHour(dataValue.hour);
 						res.asc_setMinute(dataValue.min);
 						res.asc_setSecond(dataValue.sec);
+						res.asc_setDateTimeGrouping(Asc.EDateTimeGroup.datetimegroupYear);
 					}
 					res.hiddenByOtherColumns = hiddenByOtherColumns;
 
