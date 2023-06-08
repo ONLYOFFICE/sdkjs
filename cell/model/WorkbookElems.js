@@ -10594,8 +10594,8 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 	var month = startUtcDate.month + 1;
 	var day = startUtcDate.d;
 	var hour = startUtcDate.hour;
-	var minute = startUtcDate.minute;
-	var second = startUtcDate.second;
+	var minute = startUtcDate.min;
+	var second = startUtcDate.sec;
 
 	this.DateTimeGrouping = range.dateTimeGrouping;
 
@@ -10606,7 +10606,6 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Year = year;
 			this.Month = month;
 			this.Day = day;
-			this.Hour = hour;
 			break;
 		}
 		case Asc.EDateTimeGroup.datetimegroupHour://hour
@@ -10615,7 +10614,6 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Month = month;
 			this.Day = day;
 			this.Hour = hour;
-			this.Minute = minute;
 			break;
 		}
 		case Asc.EDateTimeGroup.datetimegroupMinute://minute
@@ -10625,14 +10623,12 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Day = day;
 			this.Hour = hour;
 			this.Minute = minute;
-			this.Second = second;
 			break;
 		}
 		case Asc.EDateTimeGroup.datetimegroupMonth://month
 		{
 			this.Year = year;
 			this.Month = month;
-			this.Day = day;
 			break;
 		}
 		case Asc.EDateTimeGroup.datetimegroupSecond://second
@@ -12431,7 +12427,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 		}
 		case Asc.EDateTimeGroup.datetimegroupMinute://minute
 		{
-			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 1)).getExcelDateWithTime();
+			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 0)).getExcelDateWithTime();
 			endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 59)).getExcelDateWithTime();
 			break;
 		}
