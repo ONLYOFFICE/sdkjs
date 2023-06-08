@@ -25522,11 +25522,10 @@ CDocument.prototype.ClearAllSpecialForms = function(isClearAllContentControls)
 		this.UpdateSelection();
 		this.FinalizeAction();
 	}
-
-
-	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
+	
+	for (let iCC = 0, nCC = arrContentControls.length; iCC < nCC; ++iCC)
 	{
-		oControl.SkipSpecialContentControlLock(false);
+		arrContentControls[iCC].SkipSpecialContentControlLock(false);
 	}
 };
 /**
