@@ -2455,12 +2455,23 @@
 			var nFlag = 0;
 
 			var oFormPr = oForm.GetFormPr();
-
-			var sFormKey = oFormPr.GetKey();
-			if (sFormKey)
+			
+			let formKey = null;
+			if (!oForm.IsMainForm())
+			{
+				let mainForm = oForm.GetMainForm();
+				let subIndex = oForm.GetSubFormIndex();
+				formKey = mainForm.GetFormKey() + "_" + subIndex;
+			}
+			else
+			{
+				formKey = oFormPr.GetKey();
+			}
+			
+			if (formKey)
 			{
 				nFlag |= 1;
-				this.Memory.WriteString(sFormKey);
+				this.Memory.WriteString(formKey);
 			}
 
 			var sHelpText = oFormPr.GetHelpText();

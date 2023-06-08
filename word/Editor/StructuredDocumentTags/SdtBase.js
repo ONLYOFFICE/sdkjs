@@ -730,6 +730,29 @@ CSdtBase.prototype.GetAllSubForms = function(arrForms)
 	return arrForms;
 };
 /**
+ * Получаем порядковый номер данного подполя в родительском сложном поле
+ * Если данный объект не является полем или подполем в сложном поле, то вернется -1
+ * @returns {number}
+ */
+CSdtBase.prototype.GetSubFormIndex = function()
+{
+	if (!this.IsForm())
+		return -1;
+	
+	let mainForm = this.GetMainForm();
+	if (this === mainForm)
+		return -1;
+	
+	let subForms = mainForm.GetAllSubForms();
+	for (let index = 0, count = subForms.length; index < count; ++index)
+	{
+		if (subForms[index] === this)
+			return index;
+	}
+	
+	return -1;
+};
+/**
  * Провяеряем является ли данная форма текущей, с учетом того, что она либо сама является составной формой, либо
  * лежит в составной
  * @returns {boolean}
