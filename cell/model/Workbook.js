@@ -17603,44 +17603,45 @@
 		}
 		_promoteFromTo(oBBox, this.worksheet, oCanPromote.to, this.worksheet, true, oCanPromote, bCtrl, bVertical, nIndex);
 	};
-	function _updateDaysOfWeek (aDaysOfWeek, sValue) {
+	function _updateATimePeriod (aTimePeriods, sValue) {
 		let sFirstSymbols = sValue.slice(0,2);
 
-		return aDaysOfWeek.map(function (sDayOfWeek) {
+		return aTimePeriods.map(function (sTimePeriod) {
 			if (sFirstSymbols === sFirstSymbols.toUpperCase()) {
-					return sDayOfWeek.toUpperCase();
+					return sTimePeriod.toUpperCase();
 			}
 			if (sFirstSymbols === sFirstSymbols.toLowerCase()) {
-					return sDayOfWeek.toLowerCase();
+				// Because source array already has elements in lowercase
+				return sTimePeriod
 			}
-			// For cases like MoNdAy or mOnDaY. If first symbol is lowercase then values in lowercase else values start with capitalized
+			// For cases like Monday, MoNdAy or mOnDaY. If first symbol is lowercase then values in lowercase else values start with capitalized
 			if (sFirstSymbols[0] === sFirstSymbols[0].toUpperCase()) {
-					return sDayOfWeek[0].toUpperCase() + sDayOfWeek.slice(1);
+					return sTimePeriod[0].toUpperCase() + sTimePeriod.slice(1);
 			}
 
-			return sDayOfWeek;
+			return sTimePeriod;
 		});
 	}
-	function _getIndexDayOfWeek(aDaysOfWeek, sValue) {
+	function _getIndexATimePeriods(aTimePeriods, sValue) {
 		let sFirstSymbols = sValue.slice(0,2);
 		let sFormatedValue = '';
 		let sSlicedValue = sValue.slice(1);
 
 		if (sValue === sValue.toLowerCase() || sValue === sValue.toUpperCase()) {
-			return  aDaysOfWeek.indexOf(sValue)
+			return  aTimePeriods.indexOf(sValue);
 		}
 
-		// For cases like MoNdAy or mOnDaY. If first symbol is lowercase then sValue convert in lowercase else sValue convert to start with capitalized
+		// For cases like Monday, MoNdAy, MOnDaY or mOnDaY. If first symbol is lowercase then sValue convert in lowercase else sValue convert to start with capitalized
 		if (sFirstSymbols[0] === sFirstSymbols[0].toLowerCase()) {
 			sFormatedValue = sValue.toLowerCase();
-			return aDaysOfWeek.indexOf(sFormatedValue)
+			return aTimePeriods.indexOf(sFormatedValue);
 		}
 		if (sFirstSymbols === sFirstSymbols.toUpperCase()) {
 			sFormatedValue = sValue.toUpperCase();
-			return aDaysOfWeek.indexOf(sFormatedValue)
+			return aTimePeriods.indexOf(sFormatedValue);
 		}
 		sFormatedValue = sSlicedValue === sSlicedValue.toLowerCase() ? sValue : sValue[0] + sSlicedValue.toLowerCase();
-		return aDaysOfWeek.indexOf(sFormatedValue)
+		return aTimePeriods.indexOf(sFormatedValue);
 	}
 	function _promoteFromTo(from, wsFrom, to, wsTo, bIsPromote, oCanPromote, bCtrl, bVertical, nIndex) {
 		var wb = wsFrom.workbook;
@@ -17783,7 +17784,6 @@
 			let aInputShortDaysOfWeek = oDefaultCultureInfo.AbbreviatedDayNames.map(function(dayOfWeek) {
 				return dayOfWeek.toLowerCase();
 			});
-			let aDaysOfWeek = [];
 			fromRange._foreachNoEmpty(function(oCell, nRow0, nCol0, nRowStart0, nColStart0){
 				if(null != oCell)
 				{
@@ -17792,7 +17792,8 @@
 					var sPrefix = null;
 					var padding = 0;
 					var bDate = false;
-					let bIsDayOfWeek = false;
+					let bIsTimePeriod = false;
+					let aTimePeriods = [];
 					if(bIsPromote)
 					{
 						if (!oCell.isFormula())
@@ -17829,15 +17830,15 @@
 										// Value of cell is it a day of week?
 										if (aInputDaysOfWeek.includes(sValue.toLowerCase())) {
 											// Update array of days of the week based on sValue
-											aDaysOfWeek = _updateDaysOfWeek(aInputDaysOfWeek, sValue);
+											aTimePeriods = _updateATimePeriod(aInputDaysOfWeek, sValue);
 											// In nVal stores index of day in array
-											nVal = _getIndexDayOfWeek(aDaysOfWeek, sValue);
-											bIsDayOfWeek = true;
+											nVal = _getIndexATimePeriods(aTimePeriods, sValue);
+											bIsTimePeriod = true;
 											bDate = true;
 										} else if (aInputShortDaysOfWeek.includes(sValue.toLowerCase())) {
-											aDaysOfWeek = _updateDaysOfWeek(aInputShortDaysOfWeek, sValue);
-											nVal = _getIndexDayOfWeek(aDaysOfWeek, sValue);
-											bIsDayOfWeek = true;
+											aTimePeriods = _updateATimePeriod(aInputShortDaysOfWeek, sValue);
+											nVal = _getIndexATimePeriods(aTimePeriods, sValue);
+											bIsTimePeriod = true;
 											bDate = true;
 										}
 									}
@@ -17854,7 +17855,7 @@
 						else
 							bDelimiter = true;
 					}
-					oPromoteHelper.add(nRow0 - nRowStart0, nCol0 - nColStart0, nVal, bDelimiter, sPrefix, padding, bDate, oCell.duplicate(), bIsDayOfWeek);
+					oPromoteHelper.add(nRow0 - nRowStart0, nCol0 - nColStart0, nVal, bDelimiter, sPrefix, padding, bDate, oCell.duplicate(), bIsTimePeriod, aTimePeriods);
 				}
 			});
 			var bCopy = false;
@@ -17929,6 +17930,11 @@
 						var oFromCell = data.oAdditional;
 						var nRow = bRowFirst ? i : j;
 						var nCol = bRowFirst ? j : i;
+						let aReverseTimePeriods = [];
+						if (bReverse) {
+							aReverseTimePeriods = data.aTimePeriods.slice();
+							aReverseTimePeriods.reverse();
+						}
 						wsTo._getCell(nRow, nCol, function(oCopyCell){
 							if(bIsPromote)
 							{
@@ -17945,9 +17951,13 @@
 										sVal += sNumber;
 										oCellValue.text = sVal;
 										oCellValue.type = CellValueType.String;
-									} else if (data.bIsDayOfWeek) {
+									} else if (data.bIsTimePeriod) {
 										let nIndexDay = data.nCurValue % 7;
-										oCellValue.text = aDaysOfWeek[nIndexDay];
+										if (nIndexDay < 0) {
+											oCellValue.text = aReverseTimePeriods[~nIndexDay];
+										} else {
+											oCellValue.text = data.aTimePeriods[nIndexDay];
+										}
 										oCellValue.type = CellValueType.String;
 									} else {
 										oCellValue.number = data.nCurValue;
@@ -18305,7 +18315,7 @@
 		}
 	}
 	PromoteHelper.prototype = {
-		add: function(nRow, nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, bIsDayOfWeek){
+		add: function(nRow, nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, bIsTimePeriod, aTimePeriods){
 			if(this.bVerical)
 			{
 				//транспонируем для удобства
@@ -18321,7 +18331,7 @@
 				row = {};
 				this.oDataRow[nRow] = row;
 			}
-			row[nCol] = {nCol: nCol, nVal: nVal, bDelimiter: bDelimiter, sPrefix: sPrefix, padding: padding, bDate: bDate, bIsDayOfWeek: bIsDayOfWeek, oAdditional: oAdditional, oSequence: null, nCurValue: null};
+			row[nCol] = {nCol: nCol, nVal: nVal, bDelimiter: bDelimiter, sPrefix: sPrefix, padding: padding, bDate: bDate, bIsTimePeriod: bIsTimePeriod, aTimePeriods: aTimePeriods, oAdditional: oAdditional, oSequence: null, nCurValue: null};
 		},
 		isOnlyIntegerSequence: function(){
 			var bRes = true;
@@ -18594,7 +18604,7 @@
 						if(null != data.nVal)
 						{
 							bAddToSequence = true;
-							if(null != oPrevData && (oPrevData.bDelimiter != data.bDelimiter || oPrevData.sPrefix != data.sPrefix || oPrevData.bDate != data.bDate))
+							if(null != oPrevData && (oPrevData.bDelimiter != data.bDelimiter || oPrevData.sPrefix != data.sPrefix || oPrevData.bDate != data.bDate || oPrevData.aTimePeriods.join() != data.aTimePeriods.join()))
 							{
 								this._addSequenceToRow(nRowIndex, aSortRowIndex, row, aCurSequence);
 								aCurSequence = [];
@@ -18632,7 +18642,7 @@
 					if(null != oRes.oSequence)
 					{
 						var sequence = oRes.oSequence;
-						if(oRes.bDate || null != oRes.sPrefix)
+						if((oRes.bDate && !oRes.bIsTimePeriod) || null != oRes.sPrefix)
 							oRes.nCurValue = Math.abs(sequence.a1 * sequence.nX + sequence.a0);
 						else
 							oRes.nCurValue = sequence.a1 * sequence.nX + sequence.a0;
