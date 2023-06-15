@@ -616,15 +616,15 @@ var editor;
 	};
 
 	spreadsheet_api.prototype._getTextFromFile = function (options, callback) {
-		var t = this;
+		let t = this;
 
 		function wrapper_callback(data) {
-			var bom = AscCommon.getEncodingByBOM(data);
-			var cp = {
+			let bom = AscCommon.getEncodingByBOM(data);
+			let cp = {
 				'codepage': AscCommon.c_oAscCodePageNone !== bom.encoding ? bom.encoding : AscCommon.c_oAscCodePageUtf8,
 				"delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
 				'encodings': AscCommon.getEncodingParams(),
-				'data': data.subarray(bom.size)
+				'data': AscCommon.c_oAscCodePageNone !== bom.encoding ? data.subarray(bom.size) : data
 			};
 			callback(new AscCommon.asc_CAdvancedOptions(cp));
 		}
@@ -632,7 +632,7 @@ var editor;
 		if (window["AscDesktopEditor"]) {
 			// TODO: add translations
 			window["AscDesktopEditor"]["OpenFilenameDialog"]("csv/txt", false, function (_file) {
-				var file = _file;
+				let file = _file;
 				if (Array.isArray(file))
 					file = file[0];
 				if (!file)
@@ -654,7 +654,7 @@ var editor;
 				return;
 			}
 
-			var reader = new FileReader();
+			let reader = new FileReader();
 			reader.onload = function () {
 				wrapper_callback(new Uint8Array(reader.result));
 			};
