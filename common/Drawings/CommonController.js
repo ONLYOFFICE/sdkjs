@@ -8953,19 +8953,20 @@
 				putImageToSelection: function (sImageUrl, nWidth, nHeight, replaceMode) {
 					let spTree;
 					let selectedObjects = this.getSelectedArray();
-					let oFirstSelectedObject = selectedObjects[0];
-					if(!oFirstSelectedObject) {
-						return;
-					}
-					if(!oFirstSelectedObject.group) {
-						spTree = this.getDrawingArray();
-					}
-					else {
-						spTree = oFirstSelectedObject.group.spTree;
-					}
+
 					const nPageIndex = 0;
 					let oController = this;
-					if (selectedObjects.length > 0 && !this.getTargetDocContent()) {
+					if (selectedObjects.length > 0) {
+						let oFirstSelectedObject = selectedObjects[0];
+						if(!oFirstSelectedObject) {
+							return;
+						}
+						if(!oFirstSelectedObject.group) {
+							spTree = this.getDrawingArray();
+						}
+						else {
+							spTree = oFirstSelectedObject.group.spTree;
+						}
 						this.checkSelectedObjectsAndCallback(function () {
 
 							let _w = nWidth * AscCommon.g_dKoef_pix_to_mm;
@@ -9028,6 +9029,7 @@
 					}
 					AscCommon.History.Create_NewPoint(0);
 					this.addImage(sImageUrl, nWidth, nHeight, null, null);
+					this.startRecalculate();
 				},
 				getSelectionImageData: function () {
 					let sImageUrl;
