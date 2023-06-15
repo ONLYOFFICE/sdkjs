@@ -4192,7 +4192,7 @@ function CEditorPage(api)
 		AscCommon.AscBrowser.checkZoom();
 
 		var isNewSize = this.checkBodySize();
-		if (!isNewSize && false === isAttack)
+		if (!isNewSize && this.retinaScaling === AscCommon.AscBrowser.retinaPixelRatio && false === isAttack)
 		{
 			this.DemonstrationManager.Resize();
 			return;

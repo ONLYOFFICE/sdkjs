@@ -3190,7 +3190,7 @@ function CEditorPage(api)
 		AscBrowser.checkZoom();
 
 		var isNewSize = this.checkBodySize();
-		if (!isNewSize && false === isAttack)
+		if (!isNewSize && this.retinaScaling === AscCommon.AscBrowser.retinaPixelRatio && false === isAttack)
 			return;
 
 		this.m_nZoomValueMin = -1;
