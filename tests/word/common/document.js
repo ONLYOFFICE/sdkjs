@@ -65,6 +65,7 @@
 		space : 32,
 		backspace : 8,
 		minus : 45,
+		delete : 46,
 		enter : 13
 	};
 
@@ -72,7 +73,8 @@
 	{
 		return (Key.space === key
 			|| Key.backspace === key
-			|| Key.enter === key);
+			|| Key.enter === key
+			|| Key.delete === key);
 	}
 
 	function CreateLogicDocument()
@@ -95,6 +97,18 @@
 	function CreateTable(rows, cols)
 	{
 		return new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols);
+	}
+	function CreateImage(w, h)
+	{
+		if (!logicDocument)
+			return null;
+		
+		let drawingObjects = logicDocument.GetDrawingObjects();
+		let drawing = new ParaDrawing(w, h, null, drawingObjects, logicDocument, null);
+		let image   = drawingObjects.createImage(AscCommon.g_sWordPlaceholderImage, 0, 0, w, h);
+		image.setParent(drawing);
+		drawing.Set_GraphicObject(image);
+		return drawing;
 	}
 	function GetParagraphText(paragraph)
 	{
@@ -130,6 +144,13 @@
 		editor.restrictions = Asc.c_oAscRestrictionType.None;
 
 		editor.DocInfo = {Format : "docx"};
+	}
+	function SetTrackRevisions(turnOn)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.SetLocalTrackRevisions(turnOn);
 	}
 	function PressKey(keyCode, isCtrl, isShift, isAlt)
 	{
@@ -203,6 +224,13 @@
 			return;
 
 		logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
+	}
+	function ClearParagraph(p)
+	{
+		if (!p)
+			return;
+		
+		p.RemoveFromContent(0, p.GetElementsCount());
 	}
 	function EnterText(text)
 	{
@@ -305,20 +333,37 @@
 			logicDocument.Content[pos].SelectAll(direction);
 		}
 	}
+	function GetFinalSection()
+	{
+		if (!logicDocument)
+			return null;
+		
+		return logicDocument.SectPr;
+	}
+	function SetCompatibilityMode(mode)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.Settings.CompatibilityMode = mode;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument      = CreateLogicDocument;
 	AscTest.CreateParagraph          = CreateParagraph;
 	AscTest.CreateTable              = CreateTable;
+	AscTest.CreateImage              = CreateImage;
 	AscTest.GetParagraphText         = GetParagraphText;
 	AscTest.RemoveTableBorders       = RemoveTableBorders;
 	AscTest.SetFillingFormMode       = SetFillingFormMode;
 	AscTest.SetEditingMode           = SetEditingMode;
+	AscTest.SetTrackRevisions        = SetTrackRevisions;
 	AscTest.PressKey                 = PressKey;
 	AscTest.MoveCursorLeft           = MoveCursorLeft;
 	AscTest.MoveCursorRight          = MoveCursorRight;
 	AscTest.Recalculate              = Recalculate;
 	AscTest.ClickMouseButton         = ClickMouseButton;
 	AscTest.ClearDocument            = ClearDocument;
+	AscTest.ClearParagraph           = ClearParagraph;
 	AscTest.EnterText                = EnterText;
 	AscTest.CorrectEnterText         = CorrectEnterText;
 	AscTest.BeginCompositeInput      = BeginCompositeInput;
@@ -330,6 +375,8 @@
 	AscTest.AddNumbering             = AddNumbering;
 	AscTest.SetParagraphNumberingLvl = SetParagraphNumberingLvl;
 	AscTest.SelectDocumentRange      = SelectDocumentRange;
+	AscTest.GetFinalSection          = GetFinalSection;
+	AscTest.SetCompatibilityMode     = SetCompatibilityMode;
 
 })(window);
 

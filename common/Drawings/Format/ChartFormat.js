@@ -4245,7 +4245,11 @@
         if(!this.parent) {
             return false;
         }
-        return this.parent.varyColors === true;
+        if(this.getObjectType() === AscDFH.historyitem_type_RadarSeries) {
+            return false;
+        }
+        const bVaryFlag = (this.parent.varyColors === true);
+        return bVaryFlag;
     };
     CSeriesBase.prototype.getDataStyleEntry = function(oChartStyle) {
         return oChartStyle.getDataEntry(this);

@@ -1279,12 +1279,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let col = [];
 		for (let i = 0; i < dimensions.row; i++) {
 			let valInRow = this.getValueByRowCol(i, colIndex);
-			col[i] = [];
-			if (!valInRow) {
-				col[i].push(new cEmpty());
-			} else {
-				col[i].push(valInRow);
+			let elem = this.getValueByRowCol(i, colIndex);
+			if (!elem) {
+				elem = new cEmpty();
 			}
+			col[i] = [];
+			col[i].push(elem);
 		}
 		return col;
 	};
@@ -1295,14 +1295,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 
 		let row = [[]];
-		for (let j = 0; j < dimensions.col; j++) {
-			let valInCol = this.getValueByRowCol(rowIndex, j);
-			if (!valInCol) {
-				row[0].push(new cEmpty());
-			} else {
-				row[0].push(valInCol);
+		for (let j = 0; j < this.getDimensions().col; j++) {
+			let elem = this.getValueByRowCol(rowIndex, j);
+			if (!elem) {
+				elem = new cEmpty();
 			}
-			
+			row[0].push(elem);
 		}
 		return row;
 	};
@@ -1687,12 +1685,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let col = [];
 		for (let i = 0; i < dimensions.row; i++) {
 			let valInRow = this.getValueByRowCol(i, colIndex);
-			col[i] = [];
-			if (!valInRow) {
-				col[i].push(new cEmpty());
-			} else {
-				col[i].push(valInRow);
+			let elem = this.getValueByRowCol(i, colIndex);
+			if (!elem) {
+				elem = new cEmpty();
 			}
+			col[i] = [];
+			col[i].push(elem);
 		}
 		return col;
 	};
@@ -1703,14 +1701,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 
 		let row = [[]];
-		for (let j = 0; j < dimensions.col; j++) {
-			let valInCol = this.getValueByRowCol(rowIndex, j);
-			if (!valInCol) {
-				row[0].push(new cEmpty());
-			} else {
-				row[0].push(valInCol);
+		for (let j = 0; j < this.getDimensions().col; j++) {
+			let elem = this.getValueByRowCol(rowIndex, j);
+			if (!elem) {
+				elem = new cEmpty();
 			}
-			
+			row[0].push(elem);
 		}
 		return row;
 	};

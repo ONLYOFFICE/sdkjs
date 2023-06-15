@@ -57,7 +57,7 @@ function CBlockLevelSdt(oLogicDocument, oParent)
 	this.Lock          = new AscCommon.CLock();
 
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-	g_oTableId.Add(this, this.Id);
+	AscCommon.g_oTableId.Add(this, this.Id);
 
 	this.SkipSpecialLock = false;
 	this.Current         = false;
@@ -952,6 +952,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 
 	var oHdrFtr     = this.IsHdrFtr(true);
 	var nHdrFtrPage = oHdrFtr ? oHdrFtr.GetContent().GetAbsolutePage(0) : null;
+	let isFullWidth = oLogicDocument.IsFillingFormMode();
 
 	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
 	{
@@ -961,8 +962,12 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 		var nPageAbs = this.GetAbsolutePage(nPageIndex);
 		if (null === nHdrFtrPage || nHdrFtrPage === nPageAbs)
 		{
-			var oBounds = this.Content.GetContentBounds(nPageIndex);
-			arrRects.push({X : oBounds.Left, Y : oBounds.Top, R : oBounds.Right, B : oBounds.Bottom, Page : nPageAbs});
+			let contentBounds = this.Content.GetContentBounds(nPageIndex);
+			let pageBounds    = this.Content.GetPageBounds(nPageIndex);
+			if (isFullWidth)
+				arrRects.push({X : pageBounds.Left, Y : contentBounds.Top, R : pageBounds.Right, B : contentBounds.Bottom, Page : nPageAbs});
+			else
+				arrRects.push({X : contentBounds.Left, Y : contentBounds.Top, R : contentBounds.Right, B : contentBounds.Bottom, Page : nPageAbs});
 		}
 	}
 
@@ -1144,7 +1149,7 @@ CBlockLevelSdt.prototype.IsCell = function(isReturnCell)
 };
 CBlockLevelSdt.prototype.Is_DrawingShape = function(bRetShape)
 {
-	return this.Parent.Is_DrawingShape(bRetShape);
+	return this.Parent ? this.Parent.Is_DrawingShape(bRetShape) : (bRetShape ? null : false);
 };
 CBlockLevelSdt.prototype.Get_Numbering = function()
 {
@@ -1156,11 +1161,11 @@ CBlockLevelSdt.prototype.Get_Styles = function()
 };
 CBlockLevelSdt.prototype.Get_TableStyleForPara = function()
 {
-	return this.Parent.Get_TableStyleForPara();
+	return this.Parent ? this.Parent.Get_TableStyleForPara() : null;
 };
 CBlockLevelSdt.prototype.Get_ShapeStyleForPara = function()
 {
-	return this.Parent.Get_ShapeStyleForPara();
+	return this.Parent ? this.Parent.Get_ShapeStyleForPara() : null;
 };
 CBlockLevelSdt.prototype.Get_Theme = function()
 {
@@ -2604,6 +2609,8 @@ CBlockLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
 		_Y = oTransform.TransformPointY(X, Y);
 	}
 
+	let logicDocument = this.GetLogicDocument();
+	let isFullWidth   = !!(logicDocument && logicDocument.IsFillingFormMode());
 	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
 	{
 		if (this.IsEmptyPage(nPageIndex))
@@ -2611,9 +2618,11 @@ CBlockLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
 
 		if (this.GetAbsolutePage(nPageIndex) === nPageAbs)
 		{
-			var oBounds = this.Content.GetContentBounds(nPageIndex);
-
-			if (oBounds.Left <= _X && _X <= oBounds.Right && oBounds.Top <= _Y && _Y <= oBounds.Bottom)
+			let contentBounds = this.Content.GetContentBounds(nPageIndex);
+			let pageBounds    = this.Content.GetPageBounds(nPageIndex);
+			
+			if ((isFullWidth && pageBounds.Left <= _X && _X <= pageBounds.Right && contentBounds.Top <= _Y && _Y <= contentBounds.Bottom)
+				|| (!isFullWidth && contentBounds.Left <= _X && _X <= contentBounds.Right && contentBounds.Top <= _Y && _Y <= contentBounds.Bottom))
 				return true;
 		}
 	}
@@ -2665,3 +2674,4 @@ CBlockLevelSdt.prototype.OnContentChange = function()
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;
 window['AscCommonWord'].type_BlockLevelSdt = type_BlockLevelSdt;
+window["AscWord"].CBlockLevelSdt = CBlockLevelSdt;

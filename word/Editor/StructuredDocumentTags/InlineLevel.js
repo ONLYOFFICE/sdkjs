@@ -335,6 +335,14 @@ CInlineLevelSdt.prototype.GetSelectedElementsInfo = function(Info)
 	Info.SetInlineLevelSdt(this);
 	CParagraphContentWithParagraphLikeContent.prototype.GetSelectedElementsInfo.apply(this, arguments);
 };
+CInlineLevelSdt.prototype.IsSolid = function()
+{
+	// В обычном режиме редактирования мы не даем редактировать форму (кроме составных)
+	return !!(this.Paragraph
+		&& !this.Paragraph.LogicDocument.IsFillingFormMode()
+		&& this.IsForm()
+		&& !this.IsComplexForm());
+};
 CInlineLevelSdt.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
 	History.Add(new CChangesParaFieldAddItem(this, Pos, [Item]));
@@ -832,27 +840,47 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		if (!this.CanBeDeleted() && !bOnAddText)
 			return true;
 
-		if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+		if (!bOnAddText && !this.IsSelectionUse())
+		{
+			this.SelectAll(1);
+			this.SelectThisElement();
+			return true;
+		}
+		else if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+		{
 			this.private_ReplacePlaceHolderWithContent();
-
+		}
+		
 		return true;
 	}
 
-	let bResult = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
-
-	let oLogicDocument = this.GetLogicDocument();
-	if (this.Is_Empty()
-		&& oLogicDocument
+	let result = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!result
+		&& this.IsEmpty()
+		&& !this.IsPlaceHolder()
+		&& logicDocument
+		&& this.CanBeDeleted()
+		&& this !== logicDocument.CheckInlineSdtOnDelete
+		&& !bOnAddText
+		&& !logicDocument.IsFillingFormMode())
+	{
+		this.RemoveThisFromParent(true);
+		result = true;
+	}
+	else if (this.Is_Empty()
+		&& logicDocument
 		&& this.CanBeEdited()
 		&& ((!bOnAddText
-		&& true === oLogicDocument.IsFillingFormMode())
-		|| (this === oLogicDocument.CheckInlineSdtOnDelete)))
+		&& true === logicDocument.IsFillingFormMode())
+		|| (this === logicDocument.CheckInlineSdtOnDelete)))
 	{
 		this.private_ReplaceContentWithPlaceHolder();
-		bResult = true;
+		result = true;
 	}
 
-	return bResult;
+	return result;
 };
 CInlineLevelSdt.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
@@ -1040,13 +1068,15 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 {
 	if (!this.Paragraph && this.Paragraph.LogicDocument)
 		return;
-
-	var oLogicDocument = this.Paragraph.LogicDocument;
-
-	if (this.IsContentControlEquation())
-		return;
 	
+	var oLogicDocument   = this.Paragraph.LogicDocument;
 	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
+	
+	if (this.IsContentControlEquation())
+	{
+		oDrawingDocument.OnDrawContentControl(null, nType);
+		return;
+	}
 
 	// Не рисуем трек для фиксед форм, т.к. он уже есть от рамки автофигуры
 	if (this.IsFixedForm() && this.IsCurrent() && oLogicDocument.IsDocumentEditor() && !oLogicDocument.IsFillingOFormMode())

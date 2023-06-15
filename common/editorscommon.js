@@ -393,45 +393,223 @@
 	};
 	var g_oDocumentUrls = new DocumentUrls();
 
+	function CHTMLCursorItemBase(_name, _hotspot, _default)
+	{
+		this.name = _name;
+		this.hotspot = _hotspot;
+		this.default = _default;
+	}
+	CHTMLCursorItemBase.prototype.baseUrl = "../../../../sdkjs/common/Images/cursors/";
+	CHTMLCursorItemBase.prototype.getValue = function() { return this.default; };
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorCur()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorCur.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorCur.prototype.getValue = function(globalCursors)
+	{
+		if (AscCommon.AscBrowser.isCustomScalingAbove2())
+			return "url(" + this.baseUrl + this.name + "_2x.cur), " + this.default;
+		return "url(" + this.baseUrl + this.name + ".cur), " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorSvgExternal()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorSvgExternal.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorSvgExternal.prototype.getValue = function(globalCursors)
+	{
+		return "url(" + this.baseUrl + this.name + ".svg) " + this.hotspot + ", " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorPng()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorPng.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorPng.prototype.getValue = function(globalCursors)
+	{
+		return "-webkit-image-set(url(" + this.baseUrl + this.name + ".png) 1x," + " url(" + this.baseUrl + this.name + "_2x.png) 2x) " + this.hotspot + ", " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorModern()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorModern.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorModern.prototype.getValue = function(globalCursors)
+	{
+		if (1.2 > AscCommon.AscBrowser.retinaPixelRatio)
+			return "url(" + this.baseUrl + this.name + ".png) " + this.hotspot + ", " + this.default;
+
+		if (globalCursors.mapSvg && globalCursors.mapSvg[this.name])
+		{
+			return "url(\"data:image/svg+xml;utf8," + globalCursors.mapSvg[this.name] + "\") " + this.hotspot + ", " + this.default;
+		}
+
+		if (!AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isSafari)
+		{
+			return "url(" + this.baseUrl + this.name + ".svg) " + this.hotspot + ", " + "url(" + this.baseUrl + this.name + ".png) " + this.hotspot + ", " + this.default;
+		}
+
+		return "-webkit-image-set(url(" + this.baseUrl + this.name + ".png) 1x," + " url(" + this.baseUrl + this.name + "_2x.png) 2x) " + this.hotspot + ", " + this.default;
+	}
+
+	var Cursors = {
+		MarkerFormat        : "marker-format",
+
+		SelectTableRow      : "select-table-row",
+		SelectTableColumn   : "select-table-column",
+		SelectTableCell     : "select-table-cell",
+		SelectTableContent  : "select-table-content",
+
+		TableEraser         : "table-eraser",
+		TablePen            : "table-pen",
+
+		Grab                : "grab",
+		Grabbing            : "grabbing",
+
+		MoveBorderHor       : "move-border-horizontally",
+		MoveBorderVer       : "move-border-vertically",
+
+		CellCur             : "plus",
+		CellFormatPainter   : "plus-copy",
+
+		TextCopy            : "text-copy",
+		ShapeCopy           : "shape-copy",
+		Eyedropper          : "eyedropper"
+	};
+
 	function CHTMLCursor()
 	{
-		this.map = {};
-		this.mapRetina = {};
+		this.cursors = {};
+		this.mapSvg = null;
 
 		this.value = function(param)
 		{
-			var ret = this.map[param];
-			if (AscCommon.AscBrowser.isCustomScalingAbove2() && this.mapRetina[param])
-				ret = this.mapRetina[param];
-			return ret ? ret : param;
+			if (this.cursors[param])
+				return this.cursors[param].getValue(this);
+			return param;
 		};
 
-		this.register = function(type, name, target, default_css_value)
+		this.register = function(type, target, default_css_value)
 		{
 			if (AscBrowser.isIE || AscBrowser.isIeEdge)
 			{
-				this.map[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + ".cur), " + default_css_value);
-				this.mapRetina[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + "_2x.cur), " + default_css_value);
+				this.cursors[type] = new CHTMLCursorCur(type, target, default_css_value);
 			}
 			else if (window.opera)
 			{
-				this.map[type] = default_css_value;
+				this.cursors[type] = new CHTMLCursorItemBase(type, target, default_css_value);
 			}
 			else
 			{
-				if (!AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isSafari)
-				{
-					this.map[type] = "url('../../../../sdkjs/common/Images/cursors/" + name + ".svg') " + target +
-						", url('../../../../sdkjs/common/Images/cursors/" + name + ".png') " + target + ", " + default_css_value;
-				}
-				else
-				{
-					this.map[type] = "-webkit-image-set(url(../../../../sdkjs/common/Images/cursors/" + name + ".png) 1x," +
-						" url(../../../../sdkjs/common/Images/cursors/" + name + "_2x.png) 2x) " + target + ", " + default_css_value;
-				}
+				this.cursors[type] = new CHTMLCursorModern(type, target, default_css_value);
 			}
 		};
+
+		this.loadAllSvg = function()
+		{
+			try
+			{
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET", "../../../../sdkjs/common/Images/cursors/svg.json", true);
+				var t = this;
+				xhr.onload = function()
+				{
+					if (this.status === 200 || location.href.indexOf("file:") === 0)
+					{
+						try
+						{
+							t.mapSvg = JSON.parse(this.responseText);
+						}
+						catch (err) {}
+					}
+				};
+				xhr.send('');
+			}
+			catch (e) {}
+		};
+
+		this.getDrawCursor = function(ln)
+		{
+			if (!ln.Fill)
+				return "default";
+			let color = ln.Fill.fill.color.RGBA;
+			let w = (ln.w == null) ? 12700 : ln.w;
+
+			var scale = 1;
+			switch (Asc.editor.editorId)
+			{
+				case AscCommon.c_oEditorId.Word:
+				case AscCommon.c_oEditorId.Presentation:
+				{
+					scale = Asc.editor.WordControl.m_nZoomValue / 100;
+					break;
+				}
+				case AscCommon.c_oEditorId.Spreadsheet:
+				{
+					scale = Asc.editor.asc_getZoom();
+					break;
+				}
+				default:
+					break;
+			}
+
+			w = (scale * w / 9525) >> 0;
+			if (w < 4) w = 4;
+			if (w & 0x01) w += 1;
+
+			if (ln && ln.Fill && ln.Fill.transparent !== null)
+				color.A = ln.Fill.transparent;
+
+			let isRect = (254 < color.A) ? false : true;
+			let h = w;
+
+			if (isRect)
+				w = 10;
+
+			let url = "<svg width='" + w + "' height='" + h + "' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'>";
+			if (!isRect)
+			{
+				url = url + "<circle cx='5' cy='5' r='5' stroke='none' fill='rgb(" +
+					color.R + "," + color.G + "," + color.B + ")'/></svg>";
+			}
+			else
+			{
+				url = url + "<rect x='0' y='0' width='10' height='10' stroke='none' fill='rgb(" +
+					color.R + "," + color.G + "," + color.B + ")'/></svg>";
+			}
+			//console.log(url);
+
+			return "url(\"data:image/svg+xml;utf8," + url + "\") " + (w >> 1) + " " + (h >> 1) + ", default";
+		}
+
+		this.loadAllSvg();
 	}
+
+	var g_oHtmlCursor = new CHTMLCursor();
+
+	AscCommon.g_oHtmlCursor = g_oHtmlCursor;
+	AscCommon.Cursors = Cursors;
+
+	g_oHtmlCursor.register(AscCommon.Cursors.TextCopy, "2 2", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.ShapeCopy, "1 1", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.Eyedropper, "1 17", "pointer");
 
 	function OpenFileResult()
 	{
@@ -1690,21 +1868,6 @@
 							if (!window.g_asc_plugins.api.licenseResult || !window.g_asc_plugins.api.licenseResult['advancedApi'])
 								return;
 
-							if (data["subType"] === "internalCommand")
-							{
-								// такие команды перечисляем здесь и считаем их функционалом
-								switch (data.data.type)
-								{
-									case "onbeforedrop":
-									case "ondrop":
-									{
-										window.g_asc_plugins.api["plugin_Method_OnDropEvent"](data.data);
-										return;
-									}
-									default:
-										break;
-								}
-							}
 							if (data["subType"] === "connector")
 							{
 								window.g_asc_plugins.externalConnectorMessage(data["data"]);
@@ -2047,9 +2210,12 @@
                             xhr.onreadystatechange = fOnReadyChnageState;
                             xhr.send(file);
                         }
-                    }
-                    else if(this.status === 403){
+                    } else if(this.status === 403) {
 						callback(Asc.c_oAscError.ID.VKeyEncrypt);
+					} else if(this.status === 413) {
+						callback(Asc.c_oAscError.ID.UplImageSize);
+					} else if(this.status === 415) {
+						callback(Asc.c_oAscError.ID.UplImageExt);
 					} else {
 						callback(Asc.c_oAscError.ID.UplImageUrl);
 					}
@@ -3534,14 +3700,6 @@
 
 	var parserHelp = new parserHelper();
 
-	var g_oHtmlCursor = new CHTMLCursor();
-	var kCurFormatPainterWord = 'de-formatpainter';
-	g_oHtmlCursor.register(kCurFormatPainterWord, "text_copy", "2 11", "pointer");
-	var kCurFormatPainterDrawing = 'drawing-formatpainter';
-	g_oHtmlCursor.register(kCurFormatPainterDrawing, "shape_copy", "0 3", "pointer");
-	var kCurEyedropper = 'eyedropper';
-	g_oHtmlCursor.register(kCurEyedropper, "eyedropper", "1 17", "pointer");
-
 	function asc_ajax(obj)
 	{
 		var url                                       = "", type                            = "GET",
@@ -4012,11 +4170,17 @@
 	/**
 	 * Конвертируем миллиметры в ближайшее целое значение твипсов
 	 * @param mm - значение в миллиметрах
+	 * @param [mode=0]
 	 * @returns {number}
 	 */
-	function MMToTwips(mm)
+	function MMToTwips(mm, mode)
 	{
-		return (((mm * 20 * 72 / 25.4) + 0.5) | 0);
+		if (!mode)
+			return Math.trunc((mm * 20 * 72 / 25.4) + 0.5);
+		else if (-1 === mode)
+			return Math.floor((mm * 20 * 72 / 25.4) + 0.5);
+		else
+			return Math.ceil((mm * 20 * 72 / 25.4) + 0.5);
 	}
 
 	/**
@@ -12023,7 +12187,10 @@
 	};
 	CEyedropper.prototype.clearImageData = function()
 	{
-		this.imgData = null;
+		if(this.imgData !== null)
+		{
+			this.imgData = null;
+		}
 	};
 	CEyedropper.prototype.finish = function()
 	{
@@ -12088,12 +12255,13 @@
 	};
 	CInkDrawer.prototype.startDraw = function(oAscPen) {
 		this.pen = AscFormat.CorrectUniStroke(oAscPen);
-		if(!this.pen) {
+		if(!this.pen || !this.pen.Fill || !this.pen.Fill) {
 			this.pen = new AscFormat.CLn();
 			this.pen.w = 180000;
 			this.pen.Fill = AscFormat.CreateSolidFillRGB(255, 255, 0);
 			this.pen.Fill.transparent = 127;
 		}
+		this.pen.Fill.check(AscFormat.GetDefaultTheme(), AscFormat.GetDefaultColorMap());
 		this.setState(INK_DRAWER_STATE_DRAW);
 	};
 	CInkDrawer.prototype.startErase = function() {
@@ -12142,6 +12310,17 @@
 		this.state = oState.state;
 		this.pen = oState.pen;
 		this.silentMode = oState.silentMode;
+	};
+	CInkDrawer.prototype.getCursorType = function() {
+		if(this.isOn()) {
+			if(this.isDraw()) {
+				return AscCommon.g_oHtmlCursor.getDrawCursor(this.getPen());
+			}
+			else if(this.isErase()) {
+				return "table-eraser";
+			}
+		}
+		return null;
 	};
 
 	//------------------------------------------------------------fill polyfill--------------------------------------------
@@ -13138,13 +13317,8 @@
 	window["AscCommon"].rx_r1c1DefError = rx_r1c1DefError;
 	window["AscCommon"].rx_allowedProtocols = rx_allowedProtocols;
 
-	window["AscCommon"].kCurFormatPainterWord = kCurFormatPainterWord;
-	window["AscCommon"].kCurFormatPainterDrawing = kCurFormatPainterDrawing;
-	window["AscCommon"].kCurEyedropper = kCurEyedropper;
 	window["AscCommon"].parserHelp = parserHelp;
 	window["AscCommon"].g_oIdCounter = g_oIdCounter;
-
-	window["AscCommon"].g_oHtmlCursor = g_oHtmlCursor;
 
 	window["AscCommon"].g_oBackoffDefaults = g_oBackoffDefaults;
 	window["AscCommon"].Backoff = Backoff;
@@ -13237,6 +13411,7 @@
 	window["AscCommon"].CEyedropper = CEyedropper;
 	window["AscCommon"].CInkDrawer = CInkDrawer;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
+	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
 
 })(window);
 

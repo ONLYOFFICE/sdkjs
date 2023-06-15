@@ -220,6 +220,13 @@ Paragraph.prototype.Set_Pr = function(oNewPr)
 	return this.SetDirectParaPr(oNewPr);
 };
 /**
+ * @param paraPr {AscWord.CParaPr}
+ */
+Paragraph.prototype.SetPr = function(paraPr)
+{
+	return this.SetDirectParaPr(paraPr);
+};
+/**
  * Устанавливаем прямые настройки параграфа целиком
  * @param oParaPr {CParaPr}
  */
@@ -1412,7 +1419,7 @@ Paragraph.prototype.Check_Range_OnlyMath = function(CurRange, CurLine)
  */
 Paragraph.prototype.CheckMathPara = function(nMathPos)
 {
-	if (!this.Content[nMathPos] || para_Math !== this.Content[nMathPos].Type)
+	if (!this.Content[nMathPos] || (para_Math !== this.Content[nMathPos].Type && para_InlineLevelSdt !== this.Content[nMathPos].Type))
 		return false;
 
 	return this.CheckNotInlineObject(nMathPos);
@@ -3992,7 +3999,12 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 
 				// TODO: Как только избавимся от para_End переделать здесь
 				// Последние 2 элемента не удаляем (один для para_End, второй для всего остального)
-				if (StartPos < this.Content.length - 2 && true === this.Content[StartPos].Is_Empty() && true !== this.Content[StartPos].Is_CheckingNearestPos() && (!bOnAddText || isRemoveOnDrag))
+				// Пустой контент контрол сам себя удаляет внутри функции Remove
+				if (StartPos < this.Content.length - 2
+					&& true === this.Content[StartPos].Is_Empty()
+					&& true !== this.Content[StartPos].Is_CheckingNearestPos()
+					&& !(this.Content[StartPos] instanceof AscWord.CInlineLevelSdt)
+					&& (!bOnAddText || isRemoveOnDrag))
 				{
 					if (this.Selection.StartPos === this.Selection.EndPos)
 						this.Selection.Use = false;
@@ -4159,8 +4171,9 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 		{
 			this.RemoveSelection();
 
-			if (nCount > -1 && true !== bOnAddText)
-				this.Correct_Content();
+			// TODO: Переделать корректировку содержимого
+			// if (nCount > -1 && true !== bOnAddText)
+			// 	this.Correct_Content();
 		}
 		else
 		{
@@ -4169,9 +4182,10 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 			this.Selection.Flag     = selectionflag_Common;
 			this.Selection.StartPos = this.CurPos.ContentPos;
 			this.Selection.EndPos   = this.CurPos.ContentPos;
-
-			if (nCount > -1 && true !== bOnAddText)
-				this.Correct_Content();
+			
+			// TODO: Переделать корректировку содержимого
+			// if (nCount > -1 && true !== bOnAddText)
+			// 	this.Correct_Content();
 
 			this.Document_SetThisElementCurrent(false);
 
@@ -4215,6 +4229,14 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 				this.Content[ContentPos].MoveCursorToEndPos(false);
 			else
 				this.Content[ContentPos].MoveCursorToStartPos();
+			
+			// Если после перемещения в следующий элемент появился селект, то мы останавливаем удаление,
+			// чтобы пользователь видел, что он удаляет
+			if (this.Content[ContentPos].IsSelectionUse())
+			{
+				Result = true;
+				break;
+			}
 		}
 
 		if (ContentPos < 0 || ContentPos >= this.Content.length)
@@ -9920,6 +9942,8 @@ Paragraph.prototype.IndDecNumberingLevel = function(isIncrease)
 	let pStyle = num.GetLvl(newLvl).GetPStyle();
 	if (pStyle)
 		this.Style_Add(pStyle);
+	
+	this.Set_Ind({Left : undefined, Right : this.Pr.Ind.Right, FirstLine : undefined}, true);
 };
 /**
  * Получаем настройку нумерации у данного параграфа, если она есть
@@ -10948,15 +10972,8 @@ Paragraph.prototype.Style_Add = function(Id, bDoNotDeleteProps)
 	this.Recalc_RunsCompiledPr();
 
 	// Если стиль является стилем по умолчанию для параграфа, тогда не надо его записывать.
-	if (Id != oDefParaId && undefined !== Id)
-	{
-		this.private_AddPrChange();
-		History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, Id));
-		this.Pr.PStyle = Id;
-		this.private_UpdateTrackRevisionOnChangeParaPr(true);
-		this.UpdateDocumentOutline();
-		this.private_RefreshNumbering();
-	}
+	if (Id !== oDefParaId && undefined !== Id)
+		this.SetPStyle(Id);
 
 	if (true === bDoNotDeleteProps)
 		return;
@@ -10995,12 +11012,20 @@ Paragraph.prototype.Style_Add = function(Id, bDoNotDeleteProps)
 /**
  * Добавление стиля в параграф при открытии и копировании
  */
-Paragraph.prototype.Style_Add_Open = function(Id)
+Paragraph.prototype.SetPStyle = function(styleId)
 {
-	this.Pr.PStyle = Id;
-
-	// Надо пересчитать конечный стиль
-	this.CompiledPr.NeedRecalc = true;
+	if (this.Pr.PStyle === styleId)
+		return;
+	
+	this.private_AddPrChange();
+	
+	History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, styleId));
+	this.Pr.PStyle = styleId;
+	
+	this.RecalcCompiledPr();
+	this.private_UpdateTrackRevisionOnChangeParaPr(true);
+	this.private_RefreshNumbering();
+	this.UpdateDocumentOutline();
 };
 Paragraph.prototype.Style_Remove = function()
 {
@@ -15165,6 +15190,30 @@ Paragraph.prototype.SetPrChange = function(PrChange, ReviewInfo)
 		}));
     this.Pr.SetPrChange(PrChange, ReviewInfo);
     this.private_UpdateTrackRevisions();
+};
+Paragraph.prototype.SetPStyleToPrChange = function(styleId)
+{
+	this.private_AddPrChange();
+	if (!this.HavePrChange())
+		return;
+	
+	let prChange   = this.Pr.PrChange.Copy();
+	let reviewInfo = this.Pr.ReviewInfo ? this.Pr.ReviewInfo.Copy() : undefined;
+	prChange.SetPStyle(styleId);
+	
+	this.SetPrChange(prChange, reviewInfo);
+};
+Paragraph.prototype.SetNumPrToPrChange = function(numId, iLvl)
+{
+	this.private_AddPrChange();
+	if (!this.HavePrChange())
+		return;
+	
+	let prChange   = this.Pr.PrChange.Copy();
+	let reviewInfo = this.Pr.ReviewInfo ? this.Pr.ReviewInfo.Copy() : undefined;
+	prChange.NumPr = new AscWord.CNumPr(numId, iLvl);
+	
+	this.SetPrChange(prChange, reviewInfo);
 };
 Paragraph.prototype.RemovePrChange = function()
 {
@@ -20471,18 +20520,6 @@ CParagraphRevisionsChangesChecker.prototype.AddReviewMoveMark = function(oMark, 
 	oChange.SetDateTime(oInfo.GetDateTime());
 	this.RevisionsManager.AddChange(this.ParaId, oChange);
 };
-CParagraphRevisionsChangesChecker.prototype.GetAddRemoveType = function()
-{
-    return this.AddRemove.ChangeType;
-};
-CParagraphRevisionsChangesChecker.prototype.GetAddRemoveMoveType = function()
-{
-	return this.AddRemove.MoveType;
-};
-CParagraphRevisionsChangesChecker.prototype.Get_AddRemoveUserId = function()
-{
-    return this.AddRemove.UserId;
-};
 CParagraphRevisionsChangesChecker.prototype.StartAddRemove = function(nChangeType, oContentPos, nMoveType)
 {
     this.AddRemove.ChangeType = nChangeType;
@@ -20606,6 +20643,14 @@ CParagraphRevisionsChangesChecker.prototype.Is_CheckOnlyTextPr = function()
 CParagraphRevisionsChangesChecker.prototype.Get_PrChangeUserId = function()
 {
     return this.TextPr.UserId;
+};
+CParagraphRevisionsChangesChecker.prototype.IsStopAddRemoveChange = function(reviewType, reviewInfo)
+{
+	return (reviewType !== this.AddRemove.ChangeType
+		|| (reviewtype_Common !== reviewType
+			&& (reviewInfo.GetUserId() !== this.AddRemove.UserId
+				|| (!reviewInfo.GetUserId() && reviewInfo.GetUserName() !== this.AddRemove.UserName)
+				|| reviewInfo.GetMoveType() !== this.AddRemove.MoveType)));
 };
 
 function CParagraphSelectionState()

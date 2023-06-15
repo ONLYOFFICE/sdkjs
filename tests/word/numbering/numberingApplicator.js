@@ -40,6 +40,81 @@ $(function ()
 	
 	QUnit.module("Test the application of numbering to the document");
 	
+	let styleCounter = 0;
+	function CreateStyle()
+	{
+		let style = new AscWord.CStyle("style" + (++styleCounter), null, null, styletype_Paragraph);
+		styleManager.Add(style);
+		return style;
+	}
+	
+	function CreateNum()
+	{
+		let numInfo = AscWord.GetNumberingObjectByDeprecatedTypes(2, 7);
+		let num = numberingManager.CreateNum();
+		numInfo.FillNum(num);
+		numberingManager.AddNum(num);
+		return num;
+	}
+	
+	QUnit.test("Apply numbering through style", function (assert)
+	{
+		function AddParagraph(style, text)
+		{
+			let p = AscTest.CreateParagraph();
+			logicDocument.PushToContent(p);
+			p.SetParagraphStyle(style.GetName());
+			
+			let run = new AscWord.CRun();
+			p.AddToContent(0, run);
+			run.AddText(text);
+			return p;
+		}
+		
+		function CheckParagraph(paraIndex, text)
+		{
+			let p = logicDocument.GetElement(paraIndex);
+			assert.strictEqual(p.GetNumberingText(false), text, "Check numbering text for paragraph " + paraIndex);
+		}
+		
+		let style = CreateStyle();
+		
+		AscTest.ClearDocument();
+		let p1 = AddParagraph(style, "First");
+		let p2 = AddParagraph(style, "Second");
+		let p3 = AddParagraph(style, "Third");
+		
+		//--------------------------------------------------------------------------------------------------------------
+		// Нет нумерации
+		//--------------------------------------------------------------------------------------------------------------
+		AscTest.Recalculate();
+		CheckParagraph(0, "");
+		CheckParagraph(1, "");
+		CheckParagraph(2, "");
+		
+		//--------------------------------------------------------------------------------------------------------------
+		// Нумерация указана в стиле, и в стиле сразу заданы правильные уровни
+		//--------------------------------------------------------------------------------------------------------------
+		let num = CreateNum();
+		num.GetLvl(0).SetPStyle(style.GetId());
+		style.SetNumPr(num.GetId(), 0);
+		AscTest.Recalculate();
+		
+		CheckParagraph(0, "1.");
+		CheckParagraph(1, "2.");
+		CheckParagraph(2, "3.");
+		//--------------------------------------------------------------------------------------------------------------
+		// Перемещаем курсор во второй параграф и меняем нумерацию на a) b) c)
+		//--------------------------------------------------------------------------------------------------------------
+		AscTest.MoveCursorToParagraph(p2, true);
+		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(1, 5));
+		AscTest.Recalculate();
+		
+		CheckParagraph(0, "a)");
+		CheckParagraph(1, "b)");
+		CheckParagraph(2, "c)");
+	});
+	
 	QUnit.test("Numbering for headings", function (assert)
 	{
 		function CheckHeading(iLvl, text)
@@ -197,6 +272,7 @@ $(function ()
 		CheckParagraph(6, "2.1.1.");
 		CheckParagraph(7, "2.1.1.1.");
 		
+		// Применяем нумерацию с Heading по селекту (должно примениться ко всем параграфам, даже не выделенным)
 		AscTest.SelectDocumentRange(0, 3);
 		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(2, 6));
 		
@@ -204,9 +280,22 @@ $(function ()
 		CheckParagraph(1, "A.");
 		CheckParagraph(2, "1.");
 		CheckParagraph(3, "a)");
-		CheckParagraph(4, "1.");
-		CheckParagraph(5, "1.1.");
-		CheckParagraph(6, "1.1.1.");
-		CheckParagraph(7, "1.1.1.1.");
+		CheckParagraph(4, "II.");
+		CheckParagraph(5, "A.");
+		CheckParagraph(6, "1.");
+		CheckParagraph(7, "a)");
+		
+		// Применяем нумерацию буз Heading по селекту (должно примениться только к выделенным параграфам)
+		AscTest.SelectDocumentRange(0, 3);
+		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(2, 2));
+		
+		CheckParagraph(0, "1.");
+		CheckParagraph(1, "1.1.");
+		CheckParagraph(2, "1.1.1.");
+		CheckParagraph(3, "1.1.1.1.");
+		CheckParagraph(4, "I.");
+		CheckParagraph(5, "A.");
+		CheckParagraph(6, "1.");
+		CheckParagraph(7, "a)");
 	});
 });

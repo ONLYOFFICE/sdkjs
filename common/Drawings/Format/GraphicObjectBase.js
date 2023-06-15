@@ -1061,6 +1061,8 @@
 	CGraphicObjectBase.prototype.handleObject = function (fCallback) {
 		fCallback(this);
 	};
+	CGraphicObjectBase.prototype.clearLang = function () {
+	};
 
 	CGraphicObjectBase.prototype.isObjectInSmartArt = function () {
 		if (this.group && this.group.isSmartArtObject()) {
@@ -1552,6 +1554,17 @@
 		_ret.bounds.fromOther(oBounds);
 		_ret.idx = oConnectorInfo.idx;
 		return _ret;
+	};
+	CGraphicObjectBase.prototype.convertToWord = function() {
+		return this;
+	};
+	CGraphicObjectBase.prototype.removePlaceholder = function () {
+		let oUniPr = this.getUniNvProps();
+		if (oUniPr) {
+			if(isRealObject(oUniPr.nvPr) && isRealObject(oUniPr.nvPr.ph)) {
+				oUniPr.nvPr.setPh(null);
+			}
+		}
 	};
 	CGraphicObjectBase.prototype.getGeom = function () {
 

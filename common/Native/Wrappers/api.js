@@ -6368,7 +6368,8 @@ window["Asc"]["asc_docs_api"].prototype["asc_nativeGetDocumentProtection"] = fun
     var props = (_api) ? _api.asc_getDocumentProtection() : null;
     if (props) {
         return {
-            "asc_getEditType": props.asc_getEditType()
+            "asc_getEditType": props.asc_getEditType(),
+            "asc_getIsPassword": props.asc_getIsPassword()
         }
     }
     return {};

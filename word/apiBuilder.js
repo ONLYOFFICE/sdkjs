@@ -3110,7 +3110,7 @@
 	{
 		this.Sdt = oSdt;
 	}
-
+	
 	/**
 	 * Class representing a document text field.
 	 * @constructor
@@ -5517,14 +5517,18 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiParagraph} oParagraph - The paragraph after which a new document section will be inserted.
 	 * Paragraph must be in a document.
-	 * @returns {ApiSection}
+	 * @returns {ApiSection | null}
 	 */
 	ApiDocument.prototype.CreateSection = function(oParagraph)
 	{
-		if (!(oParagraph instanceof ApiParagraph))
-			return new Error('Parameter is invalid.');
-		if (!oParagraph.Paragraph.CanAddSectionPr())
-			return new Error('Paragraph must be in a document.');
+		if (!(oParagraph instanceof ApiParagraph)) {
+			console.error(new Error('Parameter is invalid.'));
+			return null;
+		}
+		if (!oParagraph.Paragraph.CanAddSectionPr()) {
+			console.error(new Error('Paragraph must be in a document.'));
+			return null;
+		}
 
 		var oSectPr = new CSectionPr(this.Document);
 
@@ -7035,7 +7039,7 @@
 		return this.Document.GetPagesCount();
 	};
 	/**
-	 * Returns all styles of current document.
+	 * Returns all styles of the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiStyle[]}
@@ -8875,8 +8879,10 @@
 		if (typeof(oSection) != "object" || !(oSection instanceof ApiSection))
 			return false;
 
-		if (!this.Paragraph.CanAddSectionPr())
-			return new Error('Paragraph must be in a document.');
+		if (!this.Paragraph.CanAddSectionPr()) {
+			console.error(new Error('Paragraph must be in a document.'));
+			return false;
+		}
 
 		let oDoc = private_GetLogicDocument();
 		if (!oDoc)
@@ -17508,6 +17514,7 @@
 			return false;
 
 		this.Sdt.SetInnerText(_sText);
+		this.OnChangeValue();
 		return true;
 	};
 
@@ -17709,6 +17716,7 @@
 		if (oImg)
 		{
 			oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
+			this.OnChangeValue();
 			return true;
 		}
 
@@ -17792,6 +17800,7 @@
 			return false;
 
 		this.Sdt.SelectListItem(sValue);
+		this.OnChangeValue();
 		return true;
 	};
 	/**
@@ -17816,7 +17825,8 @@
 		let oRun = this.Sdt.MakeSingleRunElement();
 		oRun.ClearContent();
 		oRun.AddText(sText);
-
+		
+		this.OnChangeValue();
 		return true;
 	};
 	/**
@@ -17849,6 +17859,7 @@
 			return false;
 
 		this.Sdt.ToggleCheckBox(isChecked);
+		this.OnChangeValue();
 		return true;
 	};
 	/**
@@ -18416,7 +18427,7 @@
 	/**
 	 * Returns the full name of the currently opened file.
 	 * @memberof Api
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
 	 */
 	Api.prototype.GetFullName = function () {
@@ -20521,7 +20532,16 @@
 		this.Sdt.Apply_TextPr(oApiTextPr.TextPr);
 		oApiTextPr.TextPr = this.Sdt.Pr.TextPr;
 	};
-
+	ApiFormBase.prototype.OnChangeValue = function()
+	{
+		let logicDocument = private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		logicDocument.ClearActionOnChangeForm();
+		logicDocument.GetFormsManager().OnChange(this.Sdt);
+	};
+	
 	ApiComment.prototype.private_OnChange = function()
 	{
 		let oLogicDocument = private_GetLogicDocument();

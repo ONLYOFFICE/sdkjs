@@ -1881,9 +1881,12 @@
 	};
 	asc_ChartSettings.prototype.cancelEdit = function() {
 		this.bStartEdit = false;
+		const bLastPointEmpty = AscCommon.History.Is_LastPointEmpty();
 		AscCommon.History.EndTransaction();
-		AscCommon.History.Undo();
-		AscCommon.History.Clear_Redo();
+		if(!bLastPointEmpty) {
+			AscCommon.History.Undo();
+			AscCommon.History.Clear_Redo();
+		}
 		AscCommon.History._sendCanUndoRedo();
 		this.updateChart();
 		this.updateInterface();
@@ -2284,8 +2287,6 @@
 	STANDART_COLORS_MAP[0x333399] = "Indigo";
 	STANDART_COLORS_MAP[0x333333] = "Dark Gray";
 
-	const REVERSE_COLORS_MAP = {};
-
 
 	/**
 	 * Класс CColor для работы с цветами
@@ -2521,12 +2522,8 @@
 	};
 	asc_CColor.prototype.asc_getName = function() {
 		const nColorVal = this.getVal();
-		for(let nCurColor in STANDART_COLORS_MAP) {
-			if(STANDART_COLORS_MAP.hasOwnProperty(nCurColor)) {
-				if(nCurColor === nColorVal) {
-					return STANDART_COLORS_MAP[nCurColor];
-				}
-			}
+		if(STANDART_COLORS_MAP.hasOwnProperty(nColorVal)) {
+			return STANDART_COLORS_MAP[nColorVal];
 		}
 		let dMinDistance = 1000000;
 		let sMinName = "Black";
@@ -5527,6 +5524,7 @@
 			this.X_abs = ( undefined != obj.X_abs ) ? obj.X_abs : 0;
 			this.Y_abs = ( undefined != obj.Y_abs ) ? obj.Y_abs : 0;
 			this.EyedropperColor = ( undefined != obj.EyedropperColor ) ? obj.EyedropperColor : undefined;
+			this.PlaceholderType = obj.PlaceholderType;
 			switch (this.Type)
 			{
 				case c_oAscMouseMoveDataTypes.Hyperlink :
@@ -5605,6 +5603,10 @@
 	CMouseMoveData.prototype.get_EyedropperColor = function()
 	{
 		return this.EyedropperColor;
+	};
+	CMouseMoveData.prototype.get_PlaceholderType = function()
+	{
+		return this.PlaceholderType;
 	};
 
 
@@ -7796,6 +7798,7 @@
 	prot["get_FormHelpText"] = prot.get_FormHelpText;
 	prot["get_ReviewChange"] = prot.get_ReviewChange;
 	prot["get_EyedropperColor"] = prot.get_EyedropperColor;
+	prot["get_PlaceholderType"] = prot.get_PlaceholderType;
 
 	window["Asc"]["asc_CUserInfo"] = window["Asc"].asc_CUserInfo = asc_CUserInfo;
 	prot = asc_CUserInfo.prototype;

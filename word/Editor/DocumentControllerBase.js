@@ -715,7 +715,7 @@ CDocumentControllerBase.prototype.SetSelectionState = function(State, StateIndex
  * Добавляем гиперссылку.
  * @param Props
  */
-CDocumentControllerBase.prototype.AddHyperlink = function(Props){};
+CDocumentControllerBase.prototype.AddHyperlink = function(Props){return null;};
 /**
  * Изменяем гиперссылку.
  * @param Props

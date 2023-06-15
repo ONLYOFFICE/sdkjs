@@ -2682,6 +2682,8 @@
 				this.tooltip = obj.tooltip;
 
 				this.color = obj.color;
+
+				this.placeholderType = obj.placeholderType;
 			}
 
 			return this;
@@ -2700,7 +2702,8 @@
 			asc_getSizePx: function () { return this.sizePx; },
 			asc_getFilter: function () { return this.filter; },
 			asc_getTooltip: function () { return this.tooltip; },
-			asc_getColor: function () { return this.color; }
+			asc_getColor: function () { return this.color; },
+			asc_getPlaceholderType: function () { return this.placeholderType; }
 		};
 
 		// Гиперссылка
@@ -3578,7 +3581,6 @@
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 		window['AscCommonExcel'].g_ActiveCell = null; // Active Cell for calculate (in R1C1 mode for relative cell)
 		window['AscCommonExcel'].g_R1C1Mode = false; // No calculate in R1C1 mode
-		window['AscCommonExcel'].kCurCells = "se-cells";
 		window["AscCommonExcel"].recalcType = recalcType;
 		window["AscCommonExcel"].sizePxinPt = sizePxinPt;
 		window['AscCommonExcel'].c_sPerDay = c_sPerDay;
@@ -3667,6 +3669,7 @@
 		prot["asc_getFilter"] = prot.asc_getFilter;
 		prot["asc_getTooltip"] = prot.asc_getTooltip;
 		prot["asc_getColor"] = prot.asc_getColor;
+		prot["asc_getPlaceholderType"] = prot.asc_getPlaceholderType;
 
 		window["Asc"]["asc_CHyperlink"] = window["Asc"].asc_CHyperlink = asc_CHyperlink;
 		prot = asc_CHyperlink.prototype;

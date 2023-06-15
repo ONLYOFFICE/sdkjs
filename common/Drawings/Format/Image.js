@@ -279,6 +279,7 @@
 		CImageShape.prototype.convertToWord = function (document) {
 			this.setBDeleted(true);
 			var oCopy = this.copy(undefined);
+			oCopy.removePlaceholder();
 			oCopy.setBDeleted(false);
 			return oCopy;
 		};

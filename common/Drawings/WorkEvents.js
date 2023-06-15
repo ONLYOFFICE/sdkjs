@@ -741,6 +741,104 @@
 		return oEvent.defaultPrevented;
 	}
 
+	function PaintMessageLoop(interval)
+	{
+		this.interval = interval || 40;
+		this.id = null;
+
+		this.requestAnimationFrame = window.requestAnimationFrame ||
+			window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame ||
+			window.oRequestAnimationFrame ||
+			window.msRequestAnimationFrame || null;
+		this.cancelAnimationFrame = window.cancelRequestAnimationFrame ||
+			window.webkitCancelAnimationFrame ||
+			window.webkitCancelRequestAnimationFrame ||
+			window.mozCancelRequestAnimationFrame ||
+			window.oCancelRequestAnimationFrame ||
+			window.msCancelRequestAnimationFrame || null;
+
+		this.isUseRequestAnimationFrame = AscCommon.AscBrowser.isChrome;
+		if (this.isUseRequestAnimationFrame && !this.requestAnimationFrame)
+			this.isUseRequestAnimationFrame = false;
+
+		this.requestAnimationOldTime = -1;
+
+		this.engine = null;
+		this.step = null;
+	}
+
+	PaintMessageLoop.prototype.Start = function(engine)
+	{
+		this.engine = engine;
+		if (null !== this.id)
+			return;
+
+		if (this.isUseRequestAnimationFrame)
+		{
+			this.step = this._animation.bind(this);
+		}
+		else
+		{
+			this.step = this._timer.bind(this);
+		}
+
+		this.step();
+	};
+	PaintMessageLoop.prototype.Stop = function()
+	{
+		if (null === this.id)
+			return;
+
+		if (this.isUseRequestAnimationFrame)
+		{
+			this.cancelAnimationFrame(this.id);
+		}
+		else
+		{
+			this.clearTimeout(this.id);
+		}
+
+		this.id = null;
+	};
+
+	PaintMessageLoop.prototype._animation = function()
+	{
+		var now = Date.now();
+		if (-1 === this.requestAnimationOldTime || (now >= (this.requestAnimationOldTime + 40)) || (now < this.requestAnimationOldTime))
+		{
+			this.requestAnimationOldTime = now;
+			this.engine();
+		}
+		this.id = this.requestAnimationFrame.call(window, this.step);
+	};
+
+	PaintMessageLoop.prototype._timer = function()
+	{
+		this.engine();
+		this.id = setTimeout(this.step, this.interval);
+	};
+
+	function isSupportDoublePx()
+	{
+		var isSupport = true;
+
+		var oTestSpan       = document.createElement("span");
+		oTestSpan.setAttribute("style", "font-size:8pt");
+		document.body.appendChild(oTestSpan);
+		var defaultView   = oTestSpan.ownerDocument.defaultView;
+		var computedStyle = defaultView.getComputedStyle(oTestSpan, null);
+		if (null != computedStyle)
+		{
+			var fontSize = computedStyle.getPropertyValue("font-size");
+			if (-1 !== fontSize.indexOf("px") && parseFloat(fontSize) === parseInt(fontSize))
+				isSupport = false;
+		}
+		document.body.removeChild(oTestSpan);
+
+		return isSupport;
+	}
+
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                          = window['AscCommon'] || {};
 	window['AscCommon'].g_mouse_event_type_down  = g_mouse_event_type_down;
@@ -765,5 +863,8 @@
 	window['AscCommon'].button_eventHandlers     = button_eventHandlers;
 	window['AscCommon'].emulateKeyDown 			 = emulateKeyDown;
     window['AscCommon'].check_MouseClickOnUp 	 = check_MouseClickOnUp;
+
+	window['AscCommon'].PaintMessageLoop 	     = PaintMessageLoop;
+	window['AscCommon'].isSupportDoublePx 	     = isSupportDoublePx;
 
 })(window);

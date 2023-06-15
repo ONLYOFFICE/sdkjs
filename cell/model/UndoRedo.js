@@ -4174,6 +4174,9 @@ function (window, undefined) {
 				field.setSubtotals(value, pivotTable, index);
 				field.checkSubtotal();
 				break;
+			case AscCH.historyitem_PivotTable_PivotFieldSetNumFormat:
+				field.setNumFormat(value, pivotTable, index);
+				break;
 			case AscCH.historyitem_PivotTable_DataFieldSetName:
 				field.asc_setName(value, pivotTable, index);
 				break;

@@ -901,7 +901,16 @@
 		this.HtmlArea.setAttribute("spellcheck", false);
 
 		this.HtmlArea.setAttribute("autocapitalize", "none");
-		this.HtmlArea.setAttribute("autocomplete", "off");
+		if(AscCommon.AscBrowser.isChrome)
+		{
+			//Bug in Chrome. Autofill does not respect autocomplete="off"
+			//https://bugs.chromium.org/p/chromium/issues/detail?id=914451
+			this.HtmlArea.setAttribute("autocomplete", "extremely_off");
+		}
+		else
+		{
+			this.HtmlArea.setAttribute("autocomplete", "off");
+		}
 		this.HtmlArea.setAttribute("autocorrect", "off");
 
 		this.HtmlDiv.appendChild(this.HtmlArea);
