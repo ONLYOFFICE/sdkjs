@@ -2081,5 +2081,45 @@ $(function () {
 		clearData(0, 0, 0, 9)
 	});
 
+	QUnit.test('Test: "Combine filter apply"', function (assert) {
+		//TODO need check
+		const testData = [
+			['Dates'],
+			['text1'],
+			['text1'],
+			['5/20/2020 0:00:00'],
+			['6/20/2020 0:00:00'],
+			['6/21/2020 0:00:00'],
+			['6/22/2020 0:00:00'],
+			['6/22/2020 10:00:00'],
+			['6/22/2020 11:00:00'],
+			['6/23/2020 11:10:00'],
+			['6/24/2020 11:15:00'],
+			['6/24/2020 11:20:10'],
+			['6/24/2020 11:20:20'],
+			['555']
+		];
+
+		// Imitate filling rows with data, selection data range and add filter
+		ws = getRangeWithData(ws, testData);
+		let range = getRange(0, 0, 0, 0);
+		ws.autoFilters.addAutoFilter(null, range);
+
+		// Check data range
+		checkFilterRef(assert, 0, 0, 13, 0);
+
+		//apply filter
+		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
+		//may exclude
+		let aChangedVal = [{val:44006.472453703704,visible:true,isDateFormat:true,year:2020,month:5,day:24,hour:11,minute:20,second:20,dateTimeGrouping:4},{val:44006.472337962965,visible:true,isDateFormat:true,year:2020,month:5,day:24,hour:11,minute:20,second:10,dateTimeGrouping:4},{val:44006.46875,visible:true,isDateFormat:true,year:2020,month:5,day:24,hour:11,minute:15,second:0,dateTimeGrouping:4},{val:44005.46527777778,visible:true,isDateFormat:true,year:2020,month:5,day:23,hour:11,minute:10,second:0,dateTimeGrouping:4},{val:44004.458333333336,visible:true,isDateFormat:true,year:2020,month:5,day:22,hour:11,minute:0,second:0,dateTimeGrouping:4},{val:44004.416666666664,visible:true,isDateFormat:true,year:2020,month:5,day:22,hour:10,minute:0,second:0,dateTimeGrouping:4},{val:44004,visible:true,isDateFormat:true,year:2020,month:5,day:22,hour:0,minute:0,second:0,dateTimeGrouping:4},{val:44003,visible:true,isDateFormat:true,year:2020,month:5,day:21,hour:0,minute:0,second:0,dateTimeGrouping:4},{val:44002,visible:true,isDateFormat:true,year:2020,month:5,day:20,hour:0,minute:0,second:0,dateTimeGrouping:4},{val:43971,visible:false,isDateFormat:true,year:2020,month:4,day:20,hour:0,minute:0,second:0,dateTimeGrouping:4},{val:555,visible:true,isDateFormat:false},{val:"text1",visible:true,isDateFormat:false}]
+
+		setFilterOptionsVisible(autoFiltersOptions, aChangedVal, true);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+		//Checking work of filter
+		//checkHiddenRows(assert, testData, {"1": 1}, " combine filter apply 1");
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+	});
+
 	QUnit.module("Filters");
 });
