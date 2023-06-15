@@ -35,6 +35,8 @@
 (function(window)
 {
 	let logicDocument = null;
+	let styleManager  = null;
+	let styleCounter  = 0;
 
 	const Key = {
 		_0 : 48,
@@ -87,6 +89,8 @@
 		logicDocument.On_EndLoad();
 
 		AscTest.DrawingDocument.m_oLogicDocument = logicDocument;
+		
+		styleManager = logicDocument.GetStyleManager();
 
 		return logicDocument;
 	}
@@ -109,6 +113,26 @@
 		image.setParent(drawing);
 		drawing.Set_GraphicObject(image);
 		return drawing;
+	}
+	function CreateStyle(styleType, name)
+	{
+		if (!styleManager)
+			return null;
+		
+		if (!name)
+			name = "style" + (++styleCounter);
+		
+		let style = new AscWord.CStyle(name, null, null, styleType);
+		styleManager.Add(style);
+		return style;
+	}
+	function CreateParagraphStyle(name)
+	{
+		return CreateStyle(styletype_Paragraph, name);
+	}
+	function CreateRunStyle(name)
+	{
+		return CreateStyle(styletype_Character, name);
 	}
 	function GetParagraphText(paragraph)
 	{
@@ -352,6 +376,9 @@
 	AscTest.CreateParagraph          = CreateParagraph;
 	AscTest.CreateTable              = CreateTable;
 	AscTest.CreateImage              = CreateImage;
+	AscTest.CreateStyle              = CreateStyle;
+	AscTest.CreateParagraphStyle     = CreateParagraphStyle;
+	AscTest.CreateRunStyle           = CreateRunStyle;
 	AscTest.GetParagraphText         = GetParagraphText;
 	AscTest.RemoveTableBorders       = RemoveTableBorders;
 	AscTest.SetFillingFormMode       = SetFillingFormMode;

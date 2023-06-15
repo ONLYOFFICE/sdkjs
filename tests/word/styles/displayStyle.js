@@ -34,23 +34,12 @@
 $(function () {
 
 	let logicDocument = AscTest.CreateLogicDocument();
-	let stylesManager = logicDocument.GetStyles();
-
-	let strNameFirstParagraph	= "FirstParagraph";
-	let strNameSecondParagraph	= "SecondParagraph";
-	let strNameFirstParaRun = "FirstParaRun";
-	let strNameSecondParaRun = "SecondParaRun";
-
-	let oFirstParagraphStyle = new AscWord.CStyle(strNameFirstParagraph, null, null, styletype_Paragraph);
-	let oSecondParagraphStyle = new AscWord.CStyle(strNameSecondParagraph, null, null, styletype_Paragraph);
-
-	let oFirstParaRunStyle = new AscWord.CStyle(strNameFirstParaRun, null, null, styletype_Character);
-	let oSecondParaRunStyle = new AscWord.CStyle(strNameSecondParaRun, null, null, styletype_Character);
-
-	stylesManager.Add(oFirstParagraphStyle);
-	stylesManager.Add(oSecondParagraphStyle);
-	stylesManager.Add(oFirstParaRunStyle);
-	stylesManager.Add(oSecondParaRunStyle);
+	
+	let oFirstParagraphStyle  = AscTest.CreateParagraphStyle("ParaStyle1");
+	let oSecondParagraphStyle = AscTest.CreateParagraphStyle("ParaStyle2");
+	
+	let oFirstParaRunStyle = AscTest.CreateRunStyle("RunStyle1");
+	let oSecondParaRunStyle = AscTest.CreateRunStyle("RunStyle2");
 
 	function Paragraph(pos, style)
 	{
@@ -83,7 +72,7 @@ $(function () {
 		AscTest.ClearDocument();
 		let p = Paragraph(0, oFirstParagraphStyle.GetId());
 		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p.Add_ToContent(0, Run(p, strWord, oFirstParaRunStyle.GetId()));
+		p.AddToContent(0, Run(p, strWord, oFirstParaRunStyle.GetId()));
 		assert.ok(true, "Create run with oFirstParaRunStyle style");
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
