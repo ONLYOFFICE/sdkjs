@@ -41,23 +41,22 @@ $(function () {
 	let oFirstParaRunStyle = AscTest.CreateRunStyle("RunStyle1");
 	let oSecondParaRunStyle = AscTest.CreateRunStyle("RunStyle2");
 
-	function Paragraph(pos, style)
+	function AddParagraph(pos, style)
 	{
-		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
-
+		let p = AscTest.CreateParagraph();
+		
 		if (style)
-			p.SetParagraphStyleById(style);
-
+			p.SetParagraphStyleById(style.GetId());
+		
 		logicDocument.AddToContent(pos, p);
-
 		return p;
 	}
-	function Run(parent, text, style)
+	function CreateRun(text, style)
 	{
-		let r = new AscWord.CRun(parent);
+		let r = AscTest.CreateRun();
 
 		if (style)
-			r.SetRStyle(style);
+			r.SetRStyle(style.GetId());
 
 		r.AddText(text);
 		return r;
@@ -67,18 +66,15 @@ $(function () {
 
 	QUnit.test("Run with style in paragraph", function (assert)
 	{
-		let strWord = "Word!";
+		let word = "Word!";
 
 		AscTest.ClearDocument();
-		let p = Paragraph(0, oFirstParagraphStyle.GetId());
-		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p.AddToContent(0, Run(p, strWord, oFirstParaRunStyle.GetId()));
-		assert.ok(true, "Create run with oFirstParaRunStyle style");
+		let p = AddParagraph(0, oFirstParagraphStyle);
+		p.AddToContent(0, CreateRun(word, oFirstParaRunStyle));
 		p.MoveCursorToEndPos();
-		assert.ok(true, "Move cursor to end pos of paragraph");
 
-		AscTest.MoveCursorLeft(false, false, strWord.length - (strWord.length - 1));
-		assert.ok(true, "Move cursor to first letter of word");
+		AscTest.MoveCursorLeft(false, false, 1);
+		assert.ok(true, "Move cursor to the last letter of the word");
 		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParaRunStyle.Name, "Must show run style");
 	});
 
@@ -87,9 +83,9 @@ $(function () {
 		let word = "Word!";
 
 		AscTest.ClearDocument();
-		let p = Paragraph(0, oFirstParagraphStyle.GetId());
+		let p = AddParagraph(0, oFirstParagraphStyle);
 		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p.Add_ToContent(0, Run(p, word));
+		p.Add_ToContent(0, CreateRun(word));
 		assert.ok(true, "Create run without style");
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
@@ -97,7 +93,7 @@ $(function () {
 		AscTest.MoveCursorLeft(false, false, word.length - (word.length - 1));
 		assert.ok(true, "Move cursor to first letter of word");
 
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParagraphStyle.Name, "Paragraph style");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParagraphStyle.Name, "AddParagraph style");
 	});
 
 	QUnit.module("Select");
@@ -108,13 +104,13 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p1 = Paragraph(0, oFirstParagraphStyle.GetId());
+		let p1 = AddParagraph(0, oFirstParagraphStyle);
 		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p1.Add_ToContent(0, Run(p1, strFirstWord));
+		p1.Add_ToContent(0, CreateRun(strFirstWord));
 		assert.ok(true, "Create run without style");
-		let p2 = Paragraph(1, oSecondParagraphStyle.GetId());
+		let p2 = AddParagraph(1, oSecondParagraphStyle);
 		assert.ok(true, "Create paragraph with oSecondParagraphStyle style");
-		p2.Add_ToContent(0, Run(p2, strSecondWord));
+		p2.Add_ToContent(0, CreateRun(strSecondWord));
 		assert.ok(true, "Create run without style");
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
@@ -130,13 +126,13 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p1 = Paragraph(0, oFirstParagraphStyle.GetId());
+		let p1 = AddParagraph(0, oFirstParagraphStyle);
 		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p1.Add_ToContent(0, Run(p1, strFirstWord, oFirstParaRunStyle.GetId()));
+		p1.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
 		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		let p2 = Paragraph(1, oSecondParagraphStyle.GetId());
+		let p2 = AddParagraph(1, oSecondParagraphStyle);
 		assert.ok(true, "Create paragraph with oSecondParagraphStyle style");
-		p2.Add_ToContent(0, Run(p2, strSecondWord, oSecondParaRunStyle.GetId()));
+		p2.Add_ToContent(0, CreateRun(strSecondWord, oSecondParaRunStyle));
 		assert.ok(true, "Create run with oSecondParaRunStyle style");
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
@@ -152,13 +148,13 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p1 = Paragraph(0, oFirstParagraphStyle.GetId());
+		let p1 = AddParagraph(0, oFirstParagraphStyle);
 		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p1.Add_ToContent(0, Run(p1, strFirstWord));
+		p1.Add_ToContent(0, CreateRun(strFirstWord));
 		assert.ok(true, "Create run without style");
-		let p2 = Paragraph(1, oSecondParagraphStyle.GetId());
+		let p2 = AddParagraph(1, oSecondParagraphStyle);
 		assert.ok(true, "Create paragraph with oSecondParagraphStyle style");
-		p2.Add_ToContent(0, Run(p2, strSecondWord));
+		p2.Add_ToContent(0, CreateRun(strSecondWord));
 		assert.ok(true, "Create run without style");
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
@@ -188,11 +184,11 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p = Paragraph(0, oFirstParagraphStyle.GetId());
+		let p = AddParagraph(0, oFirstParagraphStyle);
 		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p.Add_ToContent(0, Run(p, strFirstWord, oFirstParaRunStyle.GetId()));
+		p.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
 		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		p.Add_ToContent(1, Run(p, strSecondWord, oFirstParaRunStyle.GetId()));
+		p.Add_ToContent(1, CreateRun(strSecondWord, oFirstParaRunStyle));
 		assert.ok(true, "Create run with oFirstParaRunStyle style");
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
@@ -215,11 +211,11 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p = Paragraph(0, oFirstParagraphStyle.GetId());
+		let p = AddParagraph(0, oFirstParagraphStyle);
 		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p.Add_ToContent(0, Run(p, strFirstWord, oFirstParaRunStyle.GetId()));
+		p.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
 		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		p.Add_ToContent(1, Run(p, strSecondWord, oFirstParaRunStyle.GetId()));
+		p.Add_ToContent(1, CreateRun(strSecondWord, oFirstParaRunStyle));
 		assert.ok(true, "Create another run with oFirstParaRunStyle style");
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
@@ -235,11 +231,11 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p = Paragraph(0, oFirstParagraphStyle.GetId());
+		let p = AddParagraph(0, oFirstParagraphStyle);
 		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p.Add_ToContent(0, Run(p, strFirstWord, oFirstParaRunStyle.GetId()));
+		p.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
 		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		p.Add_ToContent(1, Run(p, strSecondWord, oSecondParaRunStyle.GetId()));
+		p.Add_ToContent(1, CreateRun(strSecondWord, oSecondParaRunStyle));
 		assert.ok(true, "Create run with oSecondParaRunStyle style");
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
@@ -263,16 +259,16 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p1 = Paragraph(0, oFirstParagraphStyle.GetId());
+		let p1 = AddParagraph(0, oFirstParagraphStyle);
 		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p1.Add_ToContent(0, Run(p1, strFirstWord, oFirstParaRunStyle.GetId()));
+		p1.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
 		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		p1.Add_ToContent(1, Run(p1, strDel, oSecondParaRunStyle.GetId()));
+		p1.Add_ToContent(1, CreateRun(strDel, oSecondParaRunStyle));
 		assert.ok(true, "Create another run with oSecondParaRunStyle style");
 
-		let p2 = Paragraph(1, oSecondParagraphStyle.GetId());
+		let p2 = AddParagraph(1, oSecondParagraphStyle);
 		assert.ok(true, "Create paragraph with oSecondParagraphStyle style");
-		p2.Add_ToContent(0, Run(p2, strSecondWord, oSecondParaRunStyle.GetId()));
+		p2.Add_ToContent(0, CreateRun(strSecondWord, oSecondParaRunStyle));
 		assert.ok(true, "Create run with oSecondParaRunStyle style");
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
@@ -296,16 +292,16 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p1 = Paragraph(0, oFirstParagraphStyle.GetId());
+		let p1 = AddParagraph(0, oFirstParagraphStyle);
 		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p1.Add_ToContent(0, Run(p1, strFirstWord, oFirstParaRunStyle.GetId()));
+		p1.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
 		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		p1.Add_ToContent(1, Run(p1, strDel, oSecondParaRunStyle.GetId()));
+		p1.Add_ToContent(1, CreateRun(strDel, oSecondParaRunStyle));
 		assert.ok(true, "Create another run with oSecondParaRunStyle style with spaces and tabs");
 
-		let p2 = Paragraph(1, oSecondParagraphStyle.GetId());
+		let p2 = AddParagraph(1, oSecondParagraphStyle);
 		assert.ok(true, "Create paragraph with oSecondParagraphStyle style");
-		p2.Add_ToContent(0, Run(p2, strSecondWord, oFirstParaRunStyle.GetId()));
+		p2.Add_ToContent(0, CreateRun(strSecondWord, oFirstParaRunStyle));
 		assert.ok(true, "Create run with oFirstParaRunStyle style");
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");

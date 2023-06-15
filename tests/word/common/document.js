@@ -98,6 +98,10 @@
 	{
 		return new AscWord.CParagraph(AscTest.DrawingDocument);
 	}
+	function CreateRun()
+	{
+		return new AscWord.CRun();
+	}
 	function CreateTable(rows, cols)
 	{
 		return new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols);
@@ -374,6 +378,7 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument      = CreateLogicDocument;
 	AscTest.CreateParagraph          = CreateParagraph;
+	AscTest.CreateRun                = CreateRun;
 	AscTest.CreateTable              = CreateTable;
 	AscTest.CreateImage              = CreateImage;
 	AscTest.CreateStyle              = CreateStyle;
