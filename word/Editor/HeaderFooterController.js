@@ -71,10 +71,6 @@ CHdrFtrController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd)
 {
 	return this.HdrFtr.AddNewParagraph(bRecalculate, bForceAdd);
 };
-CHdrFtrController.prototype.GetFormatPainterData = function()
-{
-	return this.HdrFtr.GetFormatPainterData();
-};
 CHdrFtrController.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
 	this.HdrFtr.AddSignatureLine(oSignatureDrawing);
@@ -406,7 +402,7 @@ CHdrFtrController.prototype.SetSelectionState = function(State, StateIndex)
 };
 CHdrFtrController.prototype.AddHyperlink = function(Props)
 {
-	this.HdrFtr.AddHyperlink(Props);
+	return this.HdrFtr.AddHyperlink(Props);
 };
 CHdrFtrController.prototype.ModifyHyperlink = function(Props)
 {

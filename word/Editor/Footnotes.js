@@ -2993,8 +2993,10 @@ CFootnotesController.prototype.AddHyperlink = function(Props)
 {
 	if (true !== this.IsSelectionUse() || true === this.private_IsOnFootnoteSelected())
 	{
-		this.CurFootnote.AddHyperlink(Props);
+		return this.CurFootnote.AddHyperlink(Props);
 	}
+	
+	return null;
 };
 CFootnotesController.prototype.ModifyHyperlink = function(Props)
 {
@@ -3502,12 +3504,6 @@ CFootnotesController.prototype.CollectSelectedReviewChanges = function(oTrackMan
 	{
 		this.CurFootnote.CollectSelectedReviewChanges(oTrackManager);
 	}
-};
-CFootnotesController.prototype.GetFormatPainterData = function ()
-{
-	if(!this.CurFootnote)
-		return null;
-	return this.CurFootnote.GetFormatPainterData();
 };
 
 function CFootEndnotePageColumn()

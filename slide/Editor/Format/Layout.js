@@ -1065,3 +1065,5 @@ function CLayoutThumbnailDrawer()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 window['AscCommonSlide'].SlideLayout = SlideLayout;
+window['AscCommonSlide'].LAYOUT_TYPE_MAP = LAYOUT_TYPE_MAP;
+window['AscCommonSlide'].LAYOUT_TYPE_TO_STRING = LAYOUT_TYPE_TO_STRING;

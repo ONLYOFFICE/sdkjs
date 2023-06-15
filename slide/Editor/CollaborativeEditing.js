@@ -495,7 +495,7 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if ( true === editor.isChartEditor )
+            if ( true === editor.isOpenedChartFrame )
                 editor.sync_closeChartEditor();
 
             if ( true === editor.isOleEditor )

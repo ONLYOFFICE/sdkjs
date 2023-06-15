@@ -45,6 +45,9 @@ var AscCommonSlide;
 var AscBuilder;
 var AscWord;
 var AscMath;
+var AscJsonConverter;
+var AscCrypto;
+var AscOForm;
 
 function jq(){}
 function DE(){}

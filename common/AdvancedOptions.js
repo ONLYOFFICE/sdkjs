@@ -43,7 +43,7 @@
 			this.fileType = fileType;
 			this.isDownloadEvent = !!isDownloadEvent;
 			this.advancedOptions = null;
-			this.compatible = false;
+			this.compatible = true;
 
 			this.isNaturalDownload = false;
 			this.errorDirect = null;

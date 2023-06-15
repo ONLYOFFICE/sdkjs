@@ -46,6 +46,7 @@ var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 var g_dKoef_pix_to_mm = AscCommon.g_dKoef_pix_to_mm;
 var g_dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix;
 
+// columns ---
 function CColumnsMarkupColumn()
 {
 	this.W = 0;
@@ -123,6 +124,7 @@ CColumnsMarkup.prototype.CreateDuplicate = function ()
 	return _ret;
 };
 
+// table track ---
 function CTableOutlineDr()
 {
 	this.mover = null;
@@ -1008,89 +1010,7 @@ function CTableOutlineDr()
 	};
 }
 
-function CCacheImage()
-{
-	this.image = null;
-	this.image_locked = 0;
-	this.image_unusedCount = 0;
-}
-
-function CCacheManager()
-{
-	this.arrayImages = [];
-	this.arrayCount = 0;
-	this.countValidImage = 1;
-
-	this.CheckImagesForNeed = function ()
-	{
-		for (var i = 0; i < this.arrayCount; ++i)
-		{
-			if ((this.arrayImages[i].image_locked == 0) && (this.arrayImages[i].image_unusedCount >= this.countValidImage))
-			{
-				delete this.arrayImages[i].image;
-				this.arrayImages.splice(i, 1);
-				--i;
-				--this.arrayCount;
-			}
-		}
-	}
-
-	this.UnLock = function (_cache_image)
-	{
-		if (null == _cache_image)
-			return;
-
-		_cache_image.image_locked = 0;
-		_cache_image.image_unusedCount = 0;
-		// затем нужно сбросить ссылку в ноль (_cache_image = null) <- это обязательно !!!!!!!
-	}
-
-	this.Lock = function (_w, _h, _drDocument)
-	{
-		var backgroundColor = "#FFFFFF";
-		if (_drDocument)
-		{
-			var backColor = _drDocument.m_oWordControl.m_oApi.getPageBackgroundColor();
-            backgroundColor = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
-        }
-
-		for (var i = 0; i < this.arrayCount; ++i)
-		{
-			if (this.arrayImages[i].image_locked)
-				continue;
-			var _wI = this.arrayImages[i].image.width;
-			var _hI = this.arrayImages[i].image.height;
-			if ((_wI == _w) && (_hI == _h))
-			{
-				this.arrayImages[i].image_locked = 1;
-				this.arrayImages[i].image_unusedCount = 0;
-				this.arrayImages[i].image.ctx.globalAlpha = 1.0;
-				this.arrayImages[i].image.ctx.setTransform(1, 0, 0, 1, 0, 0);
-				this.arrayImages[i].image.ctx.fillStyle = backgroundColor;
-				this.arrayImages[i].image.ctx.fillRect(0, 0, _w, _h);
-				return this.arrayImages[i];
-			}
-			this.arrayImages[i].image_unusedCount++;
-		}
-		this.CheckImagesForNeed();
-		var index = this.arrayCount;
-		this.arrayCount++;
-
-		this.arrayImages[index] = new CCacheImage();
-		this.arrayImages[index].image = document.createElement('canvas');
-		this.arrayImages[index].image.width = _w;
-		this.arrayImages[index].image.height = _h;
-		this.arrayImages[index].image.ctx = this.arrayImages[index].image.getContext('2d');
-		this.arrayImages[index].image.ctx.globalAlpha = 1.0;
-		this.arrayImages[index].image.ctx.setTransform(1, 0, 0, 1, 0, 0);
-		this.arrayImages[index].image.ctx.fillStyle = backgroundColor;
-		this.arrayImages[index].image.ctx.fillRect(0, 0, _w, _h);
-		this.arrayImages[index].image_locked = 1;
-		this.arrayImages[index].image_unusedCount = 0;
-		return this.arrayImages[index];
-	}
-}
-
+// drawing pages ---
 function CDrawingPage()
 {
 	this.left = 0;
@@ -1142,495 +1062,159 @@ function CPage()
 	this.searchingArray = [];
 	this.selectionArray = [];
 	this.drawingPage = new CDrawingPage();
+}
 
-	this.Draw = function (context, xDst, yDst, wDst, hDst, api)
+CPage.prototype.Draw = function (context, xDst, yDst, wDst, hDst, api)
+{
+	var strokeColor = undefined;
+	if (!g_page_outline_inner)
+		strokeColor = GlobalSkin.PageOutline;
+
+	if (null != this.drawingPage.cachedImage)
 	{
-		var strokeColor = undefined;
-        if (!g_page_outline_inner)
-            strokeColor = GlobalSkin.PageOutline;
-
-		if (null != this.drawingPage.cachedImage)
-		{
-			// потом посмотреть на кусочную отрисовку
-			context.drawImage(this.drawingPage.cachedImage.image, xDst, yDst, wDst, hDst);
-		}
+		// потом посмотреть на кусочную отрисовку
+		context.drawImage(this.drawingPage.cachedImage.image, xDst, yDst, wDst, hDst);
+	}
+	else
+	{
+		if (!api.isDarkMode)
+			context.fillStyle = "#FFFFFF";
 		else
 		{
-			if (!api.isDarkMode)
-				context.fillStyle = "#FFFFFF";
-			else
-			{
-                var backColor = api.getPageBackgroundColor();
-                context.fillStyle = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
-			}
-
-			strokeColor = GlobalSkin.PageOutline;
-			context.fillRect(xDst, yDst, wDst, hDst);
+			var backColor = api.getPageBackgroundColor();
+			context.fillStyle = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
 		}
 
-		if (api && api.isDarkMode)
-		{
-			strokeColor = api.getPageStrokeColor();
-		}
-
-        if (strokeColor)
-        {
-            var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-            context.lineWidth = Math.round(rPR);
-            context.strokeStyle = strokeColor;
-            context.beginPath();
-            context.strokeRect(xDst - 0.5 * rPR, yDst - 0.5 * rPR, wDst + rPR, hDst + rPR);
-            context.beginPath();
-        }
-	};
-
-	this.DrawSelection = function (overlay, xDst, yDst, wDst, hDst, TextMatrix)
-	{
-		var dKoefX = wDst / this.width_mm;
-		var dKoefY = hDst / this.height_mm;
-
-		var selectionArray = this.selectionArray;
-
-		if (null == TextMatrix || global_MatrixTransformer.IsIdentity(TextMatrix))
-		{
-			for (var i = 0; i < selectionArray.length; i++)
-			{
-				var r = selectionArray[i];
-
-				var _x = ((xDst + dKoefX * r.x) >> 0) - 0.5;
-				var _y = ((yDst + dKoefY * r.y) >> 0) - 0.5;
-
-				var _w = (dKoefX * r.w + 1) >> 0;
-				var _h = (dKoefY * r.h + 1) >> 0;
-
-				if (_x < overlay.min_x)
-					overlay.min_x = _x;
-				if ((_x + _w) > overlay.max_x)
-					overlay.max_x = _x + _w;
-
-				if (_y < overlay.min_y)
-					overlay.min_y = _y;
-				if ((_y + _h) > overlay.max_y)
-					overlay.max_y = _y + _h;
-
-				overlay.m_oContext.rect(_x, _y, _w, _h);
-			}
-		}
-		else
-		{
-			for (var i = 0; i < selectionArray.length; i++)
-			{
-				var r = selectionArray[i];
-
-				var _x1 = TextMatrix.TransformPointX(r.x, r.y);
-				var _y1 = TextMatrix.TransformPointY(r.x, r.y);
-
-				var _x2 = TextMatrix.TransformPointX(r.x + r.w, r.y);
-				var _y2 = TextMatrix.TransformPointY(r.x + r.w, r.y);
-
-				var _x3 = TextMatrix.TransformPointX(r.x + r.w, r.y + r.h);
-				var _y3 = TextMatrix.TransformPointY(r.x + r.w, r.y + r.h);
-
-				var _x4 = TextMatrix.TransformPointX(r.x, r.y + r.h);
-				var _y4 = TextMatrix.TransformPointY(r.x, r.y + r.h);
-
-				var x1 = xDst + dKoefX * _x1;
-				var y1 = yDst + dKoefY * _y1;
-
-				var x2 = xDst + dKoefX * _x2;
-				var y2 = yDst + dKoefY * _y2;
-
-				var x3 = xDst + dKoefX * _x3;
-				var y3 = yDst + dKoefY * _y3;
-
-				var x4 = xDst + dKoefX * _x4;
-				var y4 = yDst + dKoefY * _y4;
-
-				overlay.CheckPoint(x1, y1);
-				overlay.CheckPoint(x2, y2);
-				overlay.CheckPoint(x3, y3);
-				overlay.CheckPoint(x4, y4);
-
-				var ctx = overlay.m_oContext;
-				ctx.moveTo(x1, y1);
-				ctx.lineTo(x2, y2);
-				ctx.lineTo(x3, y3);
-				ctx.lineTo(x4, y4);
-				ctx.closePath();
-			}
-		}
-	}
-	this.DrawSearch = function (overlay, xDst, yDst, wDst, hDst, drDoc)
-	{
-		var dKoefX = wDst / this.width_mm;
-		var dKoefY = hDst / this.height_mm;
-
-		// проверяем колонтитулы ------------
-		var ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_All);
-		if (!ret && this.pageIndex != 0)
-			ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_All_no_First);
-		if (!ret && this.pageIndex == 0)
-			ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_First);
-		if (!ret && (this.pageIndex & 1) == 1)
-			ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_Even);
-		if (!ret && (this.pageIndex & 1) == 0)
-			ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_Odd);
-		if (!ret && (this.pageIndex != 0))
-			ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_Odd_no_First);
-		// ----------------------------------
-
-		var ctx = overlay.m_oContext;
-		for (var i = 0; i < this.searchingArray.length; i++)
-		{
-			var place = this.searchingArray[i];
-
-			if (!place.Transform)
-			{
-				if (undefined === place.Ex)
-				{
-					var _x = ((xDst + dKoefX * place.X) >> 0) - 0.5;
-					var _y = ((yDst + dKoefY * place.Y) >> 0) - 0.5;
-
-					var _w = ((dKoefX * place.W) >> 0) + 1;
-					var _h = ((dKoefY * place.H) >> 0) + 1;
-
-					if (_x < overlay.min_x)
-						overlay.min_x = _x;
-					if ((_x + _w) > overlay.max_x)
-						overlay.max_x = _x + _w;
-
-					if (_y < overlay.min_y)
-						overlay.min_y = _y;
-					if ((_y + _h) > overlay.max_y)
-						overlay.max_y = _y + _h;
-
-					ctx.rect(_x, _y, _w, _h);
-				}
-				else
-				{
-					var _x1 = (xDst + dKoefX * place.X) >> 0;
-					var _y1 = (yDst + dKoefY * place.Y) >> 0;
-
-					var x2 = place.X + place.W * place.Ex;
-					var y2 = place.Y + place.W * place.Ey;
-					var _x2 = (xDst + dKoefX * x2) >> 0;
-					var _y2 = (yDst + dKoefY * y2) >> 0;
-
-					var x3 = x2 - place.H * place.Ey;
-					var y3 = y2 + place.H * place.Ex;
-					var _x3 = (xDst + dKoefX * x3) >> 0;
-					var _y3 = (yDst + dKoefY * y3) >> 0;
-
-					var x4 = place.X - place.H * place.Ey;
-					var y4 = place.Y + place.H * place.Ex;
-					var _x4 = (xDst + dKoefX * x4) >> 0;
-					var _y4 = (yDst + dKoefY * y4) >> 0;
-
-					overlay.CheckPoint(_x1, _y1);
-					overlay.CheckPoint(_x2, _y2);
-					overlay.CheckPoint(_x3, _y3);
-					overlay.CheckPoint(_x4, _y4);
-
-					ctx.moveTo(_x1, _y1);
-					ctx.lineTo(_x2, _y2);
-					ctx.lineTo(_x3, _y3);
-					ctx.lineTo(_x4, _y4);
-					ctx.lineTo(_x1, _y1);
-				}
-			}
-			else
-			{
-				var _tr = place.Transform;
-				if (undefined === place.Ex)
-				{
-					var _x1 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y);
-					var _y1 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y);
-
-					var _x2 = xDst + dKoefX * _tr.TransformPointX(place.X + place.W, place.Y);
-					var _y2 = yDst + dKoefY * _tr.TransformPointY(place.X + place.W, place.Y);
-
-					var _x3 = xDst + dKoefX * _tr.TransformPointX(place.X + place.W, place.Y + place.H);
-					var _y3 = yDst + dKoefY * _tr.TransformPointY(place.X + place.W, place.Y + place.H);
-
-					var _x4 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y + place.H);
-					var _y4 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y + place.H);
-
-					overlay.CheckPoint(_x1, _y1);
-					overlay.CheckPoint(_x2, _y2);
-					overlay.CheckPoint(_x3, _y3);
-					overlay.CheckPoint(_x4, _y4);
-
-					ctx.moveTo(_x1, _y1);
-					ctx.lineTo(_x2, _y2);
-					ctx.lineTo(_x3, _y3);
-					ctx.lineTo(_x4, _y4);
-					ctx.lineTo(_x1, _y1);
-				}
-				else
-				{
-					var x2 = place.X + place.W * place.Ex;
-					var y2 = place.Y + place.W * place.Ey;
-
-					var x3 = x2 - place.H * place.Ey;
-					var y3 = y2 + place.H * place.Ex;
-
-					var x4 = place.X - place.H * place.Ey;
-					var y4 = place.Y + place.H * place.Ex;
-
-					var _x1 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y);
-					var _y1 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y);
-
-					var _x2 = xDst + dKoefX * _tr.TransformPointX(x2, y2);
-					var _y2 = yDst + dKoefY * _tr.TransformPointY(x2, y2);
-
-					var _x3 = xDst + dKoefX * _tr.TransformPointX(x3, y3);
-					var _y3 = yDst + dKoefY * _tr.TransformPointY(x3, y3);
-
-					var _x4 = xDst + dKoefX * _tr.TransformPointX(x4, y4);
-					var _y4 = yDst + dKoefY * _tr.TransformPointY(x4, y4);
-
-					overlay.CheckPoint(_x1, _y1);
-					overlay.CheckPoint(_x2, _y2);
-					overlay.CheckPoint(_x3, _y3);
-					overlay.CheckPoint(_x4, _y4);
-
-					ctx.moveTo(_x1, _y1);
-					ctx.lineTo(_x2, _y2);
-					ctx.lineTo(_x3, _y3);
-					ctx.lineTo(_x4, _y4);
-					ctx.lineTo(_x1, _y1);
-				}
-			}
-		}
+		strokeColor = GlobalSkin.PageOutline;
+		context.fillRect(xDst, yDst, wDst, hDst);
 	}
 
-	this.DrawSearch2 = function (overlay, xDst, yDst, wDst, hDst, _searching)
+	if (api && api.isDarkMode)
 	{
-		var dKoefX = wDst / this.width_mm;
-		var dKoefY = hDst / this.height_mm;
+		strokeColor = api.getPageStrokeColor();
+	}
+
+	if (strokeColor)
+	{
 		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		context.lineWidth = Math.round(rPR);
+		context.strokeStyle = strokeColor;
+		context.beginPath();
+		context.strokeRect(xDst - 0.5 * rPR, yDst - 0.5 * rPR, wDst + rPR, hDst + rPR);
+		context.beginPath();
+	}
+};
 
-		var ctx = overlay.m_oContext;
-		for (var i = 0; i < _searching.length; i++)
+CPage.prototype.DrawSelection = function (overlay, xDst, yDst, wDst, hDst, TextMatrix)
+{
+	var dKoefX = wDst / this.width_mm;
+	var dKoefY = hDst / this.height_mm;
+
+	var selectionArray = this.selectionArray;
+
+	if (null == TextMatrix || global_MatrixTransformer.IsIdentity(TextMatrix))
+	{
+		for (var i = 0; i < selectionArray.length; i++)
 		{
-			var _find_count = _searching[i].length;
+			var r = selectionArray[i];
 
-			for (var j = 0; j < _find_count; j++)
-			{
-				var place = _searching[i][j];
+			var _x = ((xDst + dKoefX * r.x) >> 0) - 0.5;
+			var _y = ((yDst + dKoefY * r.y) >> 0) - 0.5;
 
-				if (!place.Transform)
-				{
-					if (undefined === place.Ex)
-					{
-						var _x = (rPR * (xDst + dKoefX * place.X)) >> 0;
-						var _y = (rPR * (yDst + dKoefY * place.Y)) >> 0;
+			var _w = (dKoefX * r.w + 1) >> 0;
+			var _h = (dKoefY * r.h + 1) >> 0;
 
-						var _w = (rPR * (dKoefX * place.W)) >> 0;
-						var _h = (rPR * (dKoefY * place.H)) >> 0;
+			if (_x < overlay.min_x)
+				overlay.min_x = _x;
+			if ((_x + _w) > overlay.max_x)
+				overlay.max_x = _x + _w;
 
-						if (_x < overlay.min_x)
-							overlay.min_x = _x;
-						if ((_x + _w) > overlay.max_x)
-							overlay.max_x = _x + _w;
+			if (_y < overlay.min_y)
+				overlay.min_y = _y;
+			if ((_y + _h) > overlay.max_y)
+				overlay.max_y = _y + _h;
 
-						if (_y < overlay.min_y)
-							overlay.min_y = _y;
-						if ((_y + _h) > overlay.max_y)
-							overlay.max_y = _y + _h;
-
-						ctx.rect(_x, _y, _w, _h);
-					}
-					else
-					{
-						var _x1 = (rPR * (xDst + dKoefX * place.X)) >> 0;
-						var _y1 = (rPR * (yDst + dKoefY * place.Y)) >> 0;
-
-						var x2 = place.X + place.W * place.Ex;
-						var y2 = place.Y + place.W * place.Ey;
-						var _x2 = (rPR * (xDst + dKoefX * x2)) >> 0;
-						var _y2 = (rPR * (yDst + dKoefY * y2)) >> 0;
-
-						var x3 = x2 - place.H * place.Ey;
-						var y3 = y2 + place.H * place.Ex;
-						var _x3 = (rPR * (xDst + dKoefX * x3)) >> 0;
-						var _y3 = (rPR * (yDst + dKoefY * y3)) >> 0;
-
-						var x4 = place.X - place.H * place.Ey;
-						var y4 = place.Y + place.H * place.Ex;
-						var _x4 = (rPR * (xDst + dKoefX * x4)) >> 0;
-						var _y4 = (rPR * (yDst + dKoefY * y4)) >> 0;
-
-						overlay.CheckPoint(_x1, _y1);
-						overlay.CheckPoint(_x2, _y2);
-						overlay.CheckPoint(_x3, _y3);
-						overlay.CheckPoint(_x4, _y4);
-
-						ctx.moveTo(_x1, _y1);
-						ctx.lineTo(_x2, _y2);
-						ctx.lineTo(_x3, _y3);
-						ctx.lineTo(_x4, _y4);
-						ctx.lineTo(_x1, _y1);
-					}
-				}
-			}
+			overlay.m_oContext.rect(_x, _y, _w, _h);
 		}
 	}
-
-	this.drawInHdrFtr = function (overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, arr)
+	else
 	{
-		var _c = arr.length;
-		if (0 == _c)
-			return false;
-
-		var ctx = overlay.m_oContext;
-		for (var i = 0; i < _c; i++)
+		for (var i = 0; i < selectionArray.length; i++)
 		{
-			var place = arr[i];
+			var r = selectionArray[i];
 
-			if (!place.Transform)
-			{
-				if (undefined === place.Ex)
-				{
-					var _x = ((xDst + dKoefX * place.X) >> 0) - 0.5;
-					var _y = ((yDst + dKoefY * place.Y) >> 0) - 0.5;
+			var _x1 = TextMatrix.TransformPointX(r.x, r.y);
+			var _y1 = TextMatrix.TransformPointY(r.x, r.y);
 
-					var _w = ((dKoefX * place.W) >> 0) + 1;
-					var _h = ((dKoefY * place.H) >> 0) + 1;
+			var _x2 = TextMatrix.TransformPointX(r.x + r.w, r.y);
+			var _y2 = TextMatrix.TransformPointY(r.x + r.w, r.y);
 
-					if (_x < overlay.min_x)
-						overlay.min_x = _x;
-					if ((_x + _w) > overlay.max_x)
-						overlay.max_x = _x + _w;
+			var _x3 = TextMatrix.TransformPointX(r.x + r.w, r.y + r.h);
+			var _y3 = TextMatrix.TransformPointY(r.x + r.w, r.y + r.h);
 
-					if (_y < overlay.min_y)
-						overlay.min_y = _y;
-					if ((_y + _h) > overlay.max_y)
-						overlay.max_y = _y + _h;
+			var _x4 = TextMatrix.TransformPointX(r.x, r.y + r.h);
+			var _y4 = TextMatrix.TransformPointY(r.x, r.y + r.h);
 
-					ctx.rect(_x, _y, _w, _h);
-				}
-				else
-				{
-					var _x1 = (xDst + dKoefX * place.X) >> 0;
-					var _y1 = (yDst + dKoefY * place.Y) >> 0;
+			var x1 = xDst + dKoefX * _x1;
+			var y1 = yDst + dKoefY * _y1;
 
-					var x2 = place.X + place.W * place.Ex;
-					var y2 = place.Y + place.W * place.Ey;
-					var _x2 = (xDst + dKoefX * x2) >> 0;
-					var _y2 = (yDst + dKoefY * y2) >> 0;
+			var x2 = xDst + dKoefX * _x2;
+			var y2 = yDst + dKoefY * _y2;
 
-					var x3 = x2 - place.H * place.Ey;
-					var y3 = y2 + place.H * place.Ex;
-					var _x3 = (xDst + dKoefX * x3) >> 0;
-					var _y3 = (yDst + dKoefY * y3) >> 0;
+			var x3 = xDst + dKoefX * _x3;
+			var y3 = yDst + dKoefY * _y3;
 
-					var x4 = place.X - place.H * place.Ey;
-					var y4 = place.Y + place.H * place.Ex;
-					var _x4 = (xDst + dKoefX * x4) >> 0;
-					var _y4 = (yDst + dKoefY * y4) >> 0;
+			var x4 = xDst + dKoefX * _x4;
+			var y4 = yDst + dKoefY * _y4;
 
-					overlay.CheckPoint(_x1, _y1);
-					overlay.CheckPoint(_x2, _y2);
-					overlay.CheckPoint(_x3, _y3);
-					overlay.CheckPoint(_x4, _y4);
+			overlay.CheckPoint(x1, y1);
+			overlay.CheckPoint(x2, y2);
+			overlay.CheckPoint(x3, y3);
+			overlay.CheckPoint(x4, y4);
 
-					ctx.moveTo(_x1, _y1);
-					ctx.lineTo(_x2, _y2);
-					ctx.lineTo(_x3, _y3);
-					ctx.lineTo(_x4, _y4);
-					ctx.lineTo(_x1, _y1);
-				}
-			}
-			else
-			{
-				var _tr = place.Transform;
-				if (undefined === place.Ex)
-				{
-					var _x1 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y);
-					var _y1 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y);
-
-					var _x2 = xDst + dKoefX * _tr.TransformPointX(place.X + place.W, place.Y);
-					var _y2 = yDst + dKoefY * _tr.TransformPointY(place.X + place.W, place.Y);
-
-					var _x3 = xDst + dKoefX * _tr.TransformPointX(place.X + place.W, place.Y + place.H);
-					var _y3 = yDst + dKoefY * _tr.TransformPointY(place.X + place.W, place.Y + place.H);
-
-					var _x4 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y + place.H);
-					var _y4 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y + place.H);
-
-					overlay.CheckPoint(_x1, _y1);
-					overlay.CheckPoint(_x2, _y2);
-					overlay.CheckPoint(_x3, _y3);
-					overlay.CheckPoint(_x4, _y4);
-
-					ctx.moveTo(_x1, _y1);
-					ctx.lineTo(_x2, _y2);
-					ctx.lineTo(_x3, _y3);
-					ctx.lineTo(_x4, _y4);
-					ctx.lineTo(_x1, _y1);
-				}
-				else
-				{
-					var x2 = place.X + place.W * place.Ex;
-					var y2 = place.Y + place.W * place.Ey;
-
-					var x3 = x2 - place.H * place.Ey;
-					var y3 = y2 + place.H * place.Ex;
-
-					var x4 = place.X - place.H * place.Ey;
-					var y4 = place.Y + place.H * place.Ex;
-
-					var _x1 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y);
-					var _y1 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y);
-
-					var _x2 = xDst + dKoefX * _tr.TransformPointX(x2, y2);
-					var _y2 = yDst + dKoefY * _tr.TransformPointY(x2, y2);
-
-					var _x3 = xDst + dKoefX * _tr.TransformPointX(x3, y3);
-					var _y3 = yDst + dKoefY * _tr.TransformPointY(x3, y3);
-
-					var _x4 = xDst + dKoefX * _tr.TransformPointX(x4, y4);
-					var _y4 = yDst + dKoefY * _tr.TransformPointY(x4, y4);
-
-					overlay.CheckPoint(_x1, _y1);
-					overlay.CheckPoint(_x2, _y2);
-					overlay.CheckPoint(_x3, _y3);
-					overlay.CheckPoint(_x4, _y4);
-
-					ctx.moveTo(_x1, _y1);
-					ctx.lineTo(_x2, _y2);
-					ctx.lineTo(_x3, _y3);
-					ctx.lineTo(_x4, _y4);
-					ctx.lineTo(_x1, _y1);
-				}
-			}
+			var ctx = overlay.m_oContext;
+			ctx.moveTo(x1, y1);
+			ctx.lineTo(x2, y2);
+			ctx.lineTo(x3, y3);
+			ctx.lineTo(x4, y4);
+			ctx.closePath();
 		}
-		return true;
 	}
+};
 
-	this.DrawSearchCur = function (overlay, xDst, yDst, wDst, hDst, places)
+CPage.prototype.DrawSearch = function (overlay, xDst, yDst, wDst, hDst, drDoc)
+{
+	var dKoefX = wDst / this.width_mm;
+	var dKoefY = hDst / this.height_mm;
+
+	// проверяем колонтитулы ------------
+	var ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_All);
+	if (!ret && this.pageIndex !== 0)
+		ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_All_no_First);
+	if (!ret && this.pageIndex === 0)
+		ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_First);
+	if (!ret && (this.pageIndex & 1) === 1)
+		ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_Even);
+	if (!ret && (this.pageIndex & 1) === 0)
+		ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_Odd);
+	if (!ret && (this.pageIndex !== 0))
+		ret = this.drawInHdrFtr(overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, drDoc._search_HdrFtr_Odd_no_First);
+	// ----------------------------------
+
+	var ctx = overlay.m_oContext;
+	for (var i = 0; i < this.searchingArray.length; i++)
 	{
-		var dKoefX = wDst / this.width_mm;
-		var dKoefY = hDst / this.height_mm;
-		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var place = this.searchingArray[i];
 
-		var len = places.length;
-
-		var ctx = overlay.m_oContext;
-
-		ctx.fillStyle = "rgba(51,102,204,255)";
-
-		for (var i = 0; i < len; i++)
+		if (!place.Transform)
 		{
-			var place = places[i];
 			if (undefined === place.Ex)
 			{
-				var _x = (rPR * (xDst + dKoefX * place.X)) >> 0;
-				var _y = (rPR * (yDst + dKoefY * place.Y)) >> 0;
+				var _x = ((xDst + dKoefX * place.X) >> 0) - 0.5;
+				var _y = ((yDst + dKoefY * place.Y) >> 0) - 0.5;
 
-				var _w = (rPR * (dKoefX * place.W)) >> 0;
-				var _h = (rPR * (dKoefY * place.H)) >> 0;
+				var _w = ((dKoefX * place.W) >> 0) + 1;
+				var _h = ((dKoefY * place.H) >> 0) + 1;
 
 				if (_x < overlay.min_x)
 					overlay.min_x = _x;
@@ -1646,23 +1230,23 @@ function CPage()
 			}
 			else
 			{
-				var _x1 = (rPR * (xDst + dKoefX * place.X)) >> 0;
-				var _y1 = (rPR * (yDst + dKoefY * place.Y)) >> 0;
+				var _x1 = (xDst + dKoefX * place.X) >> 0;
+				var _y1 = (yDst + dKoefY * place.Y) >> 0;
 
 				var x2 = place.X + place.W * place.Ex;
 				var y2 = place.Y + place.W * place.Ey;
-				var _x2 = (rPR * (xDst + dKoefX * x2)) >> 0;
-				var _y2 = (rPR * (yDst + dKoefY * y2)) >> 0;
+				var _x2 = (xDst + dKoefX * x2) >> 0;
+				var _y2 = (yDst + dKoefY * y2) >> 0;
 
 				var x3 = x2 - place.H * place.Ey;
 				var y3 = y2 + place.H * place.Ex;
-				var _x3 = (rPR * (xDst + dKoefX * x3)) >> 0;
-				var _y3 = (rPR * (yDst + dKoefY * y3)) >> 0;
+				var _x3 = (xDst + dKoefX * x3) >> 0;
+				var _y3 = (yDst + dKoefY * y3) >> 0;
 
 				var x4 = place.X - place.H * place.Ey;
 				var y4 = place.Y + place.H * place.Ex;
-				var _x4 = (rPR * (xDst + dKoefX * x4)) >> 0;
-				var _y4 = (rPR * (yDst + dKoefY * y4)) >> 0;
+				var _x4 = (xDst + dKoefX * x4) >> 0;
+				var _y4 = (yDst + dKoefY * y4) >> 0;
 
 				overlay.CheckPoint(_x1, _y1);
 				overlay.CheckPoint(_x2, _y2);
@@ -1676,62 +1260,165 @@ function CPage()
 				ctx.lineTo(_x1, _y1);
 			}
 		}
-
-		ctx.fill();
-		ctx.beginPath();
-	}
-
-	this.DrawTableOutline = function (overlay, xDst, yDst, wDst, hDst, table_outline_dr, lastBounds)
-	{
-		var transform = table_outline_dr.TableMatrix;
-		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-		xDst *= rPR;
-		yDst *= rPR;
-		wDst *= rPR;
-		hDst *= rPR;
-		if (null == transform || transform.IsIdentity2())
+		else
 		{
-			var dKoefX = wDst / this.width_mm;
-			var dKoefY = hDst / this.height_mm;
-
-			var _offX = (null == transform) ? 0 : transform.tx;
-			var _offY = (null == transform) ? 0 : transform.ty;
-
-			if (!lastBounds)
+			var _tr = place.Transform;
+			if (undefined === place.Ex)
 			{
-				var _x = 0;
-				var _y = 0;
-				switch (table_outline_dr.TrackTablePos)
-				{
-					case 1:
-					{
-						_x = (xDst + dKoefX * (table_outline_dr.TableOutline.X + table_outline_dr.TableOutline.W + _offX)) >> 0;
-						_y = ((yDst + dKoefY * (table_outline_dr.TableOutline.Y + _offY)) >> 0) - Math.round(13 * rPR);
-						break;
-					}
-					case 2:
-					{
-						_x = (xDst + dKoefX * (table_outline_dr.TableOutline.X + table_outline_dr.TableOutline.W + _offX)) >> 0;
-						_y = (yDst + dKoefY * (table_outline_dr.TableOutline.Y + table_outline_dr.TableOutline.H + _offY)) >> 0;
-						break;
-					}
-					case 3:
-					{
-						_x = ((xDst + dKoefX * (table_outline_dr.TableOutline.X + _offX)) >> 0) - Math.round(13 * rPR);
-						_y = (yDst + dKoefY * (table_outline_dr.TableOutline.Y + table_outline_dr.TableOutline.H + _offY)) >> 0;
-						break;
-					}
-					case 0:
-					default:
-					{
-						_x = ((xDst + dKoefX * (table_outline_dr.TableOutline.X + _offX)) >> 0) - Math.round(13 * rPR);
-						_y = ((yDst + dKoefY * (table_outline_dr.TableOutline.Y + _offY)) >> 0) - Math.round(13 * rPR);
-						break;
-					}
-				}
+				var _x1 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y);
+				var _y1 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y);
 
-				var _w = Math.round(13 * rPR);
-				var _h = Math.round(13 * rPR);
+				var _x2 = xDst + dKoefX * _tr.TransformPointX(place.X + place.W, place.Y);
+				var _y2 = yDst + dKoefY * _tr.TransformPointY(place.X + place.W, place.Y);
+
+				var _x3 = xDst + dKoefX * _tr.TransformPointX(place.X + place.W, place.Y + place.H);
+				var _y3 = yDst + dKoefY * _tr.TransformPointY(place.X + place.W, place.Y + place.H);
+
+				var _x4 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y + place.H);
+				var _y4 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y + place.H);
+
+				overlay.CheckPoint(_x1, _y1);
+				overlay.CheckPoint(_x2, _y2);
+				overlay.CheckPoint(_x3, _y3);
+				overlay.CheckPoint(_x4, _y4);
+
+				ctx.moveTo(_x1, _y1);
+				ctx.lineTo(_x2, _y2);
+				ctx.lineTo(_x3, _y3);
+				ctx.lineTo(_x4, _y4);
+				ctx.lineTo(_x1, _y1);
+			}
+			else
+			{
+				var x2 = place.X + place.W * place.Ex;
+				var y2 = place.Y + place.W * place.Ey;
+
+				var x3 = x2 - place.H * place.Ey;
+				var y3 = y2 + place.H * place.Ex;
+
+				var x4 = place.X - place.H * place.Ey;
+				var y4 = place.Y + place.H * place.Ex;
+
+				var _x1 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y);
+				var _y1 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y);
+
+				var _x2 = xDst + dKoefX * _tr.TransformPointX(x2, y2);
+				var _y2 = yDst + dKoefY * _tr.TransformPointY(x2, y2);
+
+				var _x3 = xDst + dKoefX * _tr.TransformPointX(x3, y3);
+				var _y3 = yDst + dKoefY * _tr.TransformPointY(x3, y3);
+
+				var _x4 = xDst + dKoefX * _tr.TransformPointX(x4, y4);
+				var _y4 = yDst + dKoefY * _tr.TransformPointY(x4, y4);
+
+				overlay.CheckPoint(_x1, _y1);
+				overlay.CheckPoint(_x2, _y2);
+				overlay.CheckPoint(_x3, _y3);
+				overlay.CheckPoint(_x4, _y4);
+
+				ctx.moveTo(_x1, _y1);
+				ctx.lineTo(_x2, _y2);
+				ctx.lineTo(_x3, _y3);
+				ctx.lineTo(_x4, _y4);
+				ctx.lineTo(_x1, _y1);
+			}
+		}
+	}
+};
+
+CPage.prototype.DrawSearch2 = function (overlay, xDst, yDst, wDst, hDst, _searching)
+{
+	var dKoefX = wDst / this.width_mm;
+	var dKoefY = hDst / this.height_mm;
+	var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+
+	var ctx = overlay.m_oContext;
+	for (var i = 0; i < _searching.length; i++)
+	{
+		var _find_count = _searching[i].length;
+
+		for (var j = 0; j < _find_count; j++)
+		{
+			var place = _searching[i][j];
+
+			if (!place.Transform)
+			{
+				if (undefined === place.Ex)
+				{
+					var _x = (rPR * (xDst + dKoefX * place.X)) >> 0;
+					var _y = (rPR * (yDst + dKoefY * place.Y)) >> 0;
+
+					var _w = (rPR * (dKoefX * place.W)) >> 0;
+					var _h = (rPR * (dKoefY * place.H)) >> 0;
+
+					if (_x < overlay.min_x)
+						overlay.min_x = _x;
+					if ((_x + _w) > overlay.max_x)
+						overlay.max_x = _x + _w;
+
+					if (_y < overlay.min_y)
+						overlay.min_y = _y;
+					if ((_y + _h) > overlay.max_y)
+						overlay.max_y = _y + _h;
+
+					ctx.rect(_x, _y, _w, _h);
+				}
+				else
+				{
+					var _x1 = (rPR * (xDst + dKoefX * place.X)) >> 0;
+					var _y1 = (rPR * (yDst + dKoefY * place.Y)) >> 0;
+
+					var x2 = place.X + place.W * place.Ex;
+					var y2 = place.Y + place.W * place.Ey;
+					var _x2 = (rPR * (xDst + dKoefX * x2)) >> 0;
+					var _y2 = (rPR * (yDst + dKoefY * y2)) >> 0;
+
+					var x3 = x2 - place.H * place.Ey;
+					var y3 = y2 + place.H * place.Ex;
+					var _x3 = (rPR * (xDst + dKoefX * x3)) >> 0;
+					var _y3 = (rPR * (yDst + dKoefY * y3)) >> 0;
+
+					var x4 = place.X - place.H * place.Ey;
+					var y4 = place.Y + place.H * place.Ex;
+					var _x4 = (rPR * (xDst + dKoefX * x4)) >> 0;
+					var _y4 = (rPR * (yDst + dKoefY * y4)) >> 0;
+
+					overlay.CheckPoint(_x1, _y1);
+					overlay.CheckPoint(_x2, _y2);
+					overlay.CheckPoint(_x3, _y3);
+					overlay.CheckPoint(_x4, _y4);
+
+					ctx.moveTo(_x1, _y1);
+					ctx.lineTo(_x2, _y2);
+					ctx.lineTo(_x3, _y3);
+					ctx.lineTo(_x4, _y4);
+					ctx.lineTo(_x1, _y1);
+				}
+			}
+		}
+	}
+};
+
+CPage.prototype.drawInHdrFtr = function (overlay, xDst, yDst, wDst, hDst, dKoefX, dKoefY, arr)
+{
+	var _c = arr.length;
+	if (0 == _c)
+		return false;
+
+	var ctx = overlay.m_oContext;
+	for (var i = 0; i < _c; i++)
+	{
+		var place = arr[i];
+
+		if (!place.Transform)
+		{
+			if (undefined === place.Ex)
+			{
+				var _x = ((xDst + dKoefX * place.X) >> 0) - 0.5;
+				var _y = ((yDst + dKoefY * place.Y) >> 0) - 0.5;
+
+				var _w = ((dKoefX * place.W) >> 0) + 1;
+				var _h = ((dKoefY * place.H) >> 0) + 1;
 
 				if (_x < overlay.min_x)
 					overlay.min_x = _x;
@@ -1743,134 +1430,368 @@ function CPage()
 				if ((_y + _h) > overlay.max_y)
 					overlay.max_y = _y + _h;
 
-				table_outline_dr.checkMover();
-				overlay.m_oContext.drawImage(table_outline_dr.mover, _x, _y);
+				ctx.rect(_x, _y, _w, _h);
 			}
 			else
 			{
-				var _xLast = (xDst + dKoefX * (lastBounds.X + lastBounds.W + _offX) + 0.5 * Math.round(rPR)) >> 0;
-				var _yLast = (yDst + dKoefY * (lastBounds.Y + lastBounds.H + _offY) + 0.5 * Math.round(rPR)) >> 0;
+				var _x1 = (xDst + dKoefX * place.X) >> 0;
+				var _y1 = (yDst + dKoefY * place.Y) >> 0;
 
-				var ctx = overlay.m_oContext;
-				ctx.strokeStyle = "rgb(140, 140, 140)";
-				ctx.lineWidth = Math.round(rPR);
-				ctx.beginPath();
+				var x2 = place.X + place.W * place.Ex;
+				var y2 = place.Y + place.W * place.Ey;
+				var _x2 = (xDst + dKoefX * x2) >> 0;
+				var _y2 = (yDst + dKoefY * y2) >> 0;
 
-				overlay.AddRect(_xLast - 0.5 * Math.round(rPR), _yLast - 0.5 * Math.round(rPR), Math.round(6 * rPR), Math.round(6 * rPR));
+				var x3 = x2 - place.H * place.Ey;
+				var y3 = y2 + place.H * place.Ex;
+				var _x3 = (xDst + dKoefX * x3) >> 0;
+				var _y3 = (yDst + dKoefY * y3) >> 0;
 
-				ctx.stroke();
-				ctx.beginPath();
+				var x4 = place.X - place.H * place.Ey;
+				var y4 = place.Y + place.H * place.Ex;
+				var _x4 = (xDst + dKoefX * x4) >> 0;
+				var _y4 = (yDst + dKoefY * y4) >> 0;
+
+				overlay.CheckPoint(_x1, _y1);
+				overlay.CheckPoint(_x2, _y2);
+				overlay.CheckPoint(_x3, _y3);
+				overlay.CheckPoint(_x4, _y4);
+
+				ctx.moveTo(_x1, _y1);
+				ctx.lineTo(_x2, _y2);
+				ctx.lineTo(_x3, _y3);
+				ctx.lineTo(_x4, _y4);
+				ctx.lineTo(_x1, _y1);
 			}
 		}
 		else
 		{
-			var ctx = overlay.m_oContext;
-
-			var _ft = new AscCommon.CMatrix();
-			_ft.sx = transform.sx;
-			_ft.shx = transform.shx;
-			_ft.shy = transform.shy;
-			_ft.sy = transform.sy;
-			_ft.tx = transform.tx;
-			_ft.ty = transform.ty;
-
-			var coords = new AscCommon.CMatrix();
-			coords.sx = wDst / this.width_mm;
-			coords.sy = hDst / this.height_mm;
-			coords.tx = xDst;
-			coords.ty = yDst;
-
-			global_MatrixTransformer.MultiplyAppend(_ft, coords);
-
-			if (!lastBounds)
+			var _tr = place.Transform;
+			if (undefined === place.Ex)
 			{
-				ctx.transform(_ft.sx, _ft.shy, _ft.shx, _ft.sy, _ft.tx, _ft.ty);
+				var _x1 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y);
+				var _y1 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y);
 
-				var _x = 0;
-				var _y = 0;
-				var _w = 13 / coords.sx;
-				var _h = 13 / coords.sy;
-				switch (table_outline_dr.TrackTablePos)
-				{
-					case 1:
-					{
-						_x = (table_outline_dr.TableOutline.X + table_outline_dr.TableOutline.W);
-						_y = (table_outline_dr.TableOutline.Y - _h);
-						break;
-					}
-					case 2:
-					{
-						_x = (table_outline_dr.TableOutline.X + table_outline_dr.TableOutline.W);
-						_y = (table_outline_dr.TableOutline.Y + table_outline_dr.TableOutline.H);
-						break;
-					}
-					case 3:
-					{
-						_x = (table_outline_dr.TableOutline.X - _w);
-						_y = (table_outline_dr.TableOutline.Y + table_outline_dr.TableOutline.H);
-						break;
-					}
-					case 0:
-					default:
-					{
-						_x = (table_outline_dr.TableOutline.X - _w);
-						_y = (table_outline_dr.TableOutline.Y - _h);
-						break;
-					}
-				}
+				var _x2 = xDst + dKoefX * _tr.TransformPointX(place.X + place.W, place.Y);
+				var _y2 = yDst + dKoefY * _tr.TransformPointY(place.X + place.W, place.Y);
 
-				overlay.CheckPoint(_ft.TransformPointX(_x, _y), _ft.TransformPointY(_x, _y));
-				overlay.CheckPoint(_ft.TransformPointX(_x + _w, _y), _ft.TransformPointY(_x + _w, _y));
-				overlay.CheckPoint(_ft.TransformPointX(_x + _w, _y + _h), _ft.TransformPointY(_x + _w, _y + _h));
-				overlay.CheckPoint(_ft.TransformPointX(_x, _y + _h), _ft.TransformPointY(_x, _y + _h));
+				var _x3 = xDst + dKoefX * _tr.TransformPointX(place.X + place.W, place.Y + place.H);
+				var _y3 = yDst + dKoefY * _tr.TransformPointY(place.X + place.W, place.Y + place.H);
 
-				table_outline_dr.checkMover();
-				overlay.m_oContext.drawImage(table_outline_dr.mover, _x, _y, _w, _h);
+				var _x4 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y + place.H);
+				var _y4 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y + place.H);
 
-				overlay.SetBaseTransform();
+				overlay.CheckPoint(_x1, _y1);
+				overlay.CheckPoint(_x2, _y2);
+				overlay.CheckPoint(_x3, _y3);
+				overlay.CheckPoint(_x4, _y4);
+
+				ctx.moveTo(_x1, _y1);
+				ctx.lineTo(_x2, _y2);
+				ctx.lineTo(_x3, _y3);
+				ctx.lineTo(_x4, _y4);
+				ctx.lineTo(_x1, _y1);
 			}
 			else
 			{
-				var _xLast = (lastBounds.X + lastBounds.W);
-				var _yLast = (lastBounds.Y + lastBounds.H);
+				var x2 = place.X + place.W * place.Ex;
+				var y2 = place.Y + place.W * place.Ey;
 
-				var ctx = overlay.m_oContext;
-				ctx.strokeStyle = "rgb(140, 140, 140)";
-				ctx.fillStyle = "#FFFFFF";
-				ctx.lineWidth = 1;
-				ctx.beginPath();
+				var x3 = x2 - place.H * place.Ey;
+				var y3 = y2 + place.H * place.Ex;
 
-				var _dist = 6 / _ft.GetScaleValue();
+				var x4 = place.X - place.H * place.Ey;
+				var y4 = place.Y + place.H * place.Ex;
 
-				var _arr = [
-					_ft.TransformPointX(_xLast, _yLast),
-					_ft.TransformPointY(_xLast, _yLast),
-					_ft.TransformPointX(_xLast + _dist, _yLast),
-					_ft.TransformPointY(_xLast + _dist, _yLast),
-					_ft.TransformPointX(_xLast + _dist, _yLast + _dist),
-					_ft.TransformPointY(_xLast + _dist, _yLast + _dist),
-					_ft.TransformPointX(_xLast, _yLast + _dist),
-					_ft.TransformPointY(_xLast, _yLast + _dist)
-				];
+				var _x1 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y);
+				var _y1 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y);
 
-				overlay.CheckPoint(_arr[0], _arr[1]);
-				overlay.CheckPoint(_arr[2], _arr[3]);
-				overlay.CheckPoint(_arr[4], _arr[5]);
-				overlay.CheckPoint(_arr[6], _arr[7]);
+				var _x2 = xDst + dKoefX * _tr.TransformPointX(x2, y2);
+				var _y2 = yDst + dKoefY * _tr.TransformPointY(x2, y2);
 
-				ctx.moveTo(_arr[0], _arr[1]);
-				ctx.lineTo(_arr[2], _arr[3]);
-				ctx.lineTo(_arr[4], _arr[5]);
-				ctx.lineTo(_arr[6], _arr[7]);
-				ctx.closePath();
+				var _x3 = xDst + dKoefX * _tr.TransformPointX(x3, y3);
+				var _y3 = yDst + dKoefY * _tr.TransformPointY(x3, y3);
 
-				ctx.fill();
-				ctx.stroke();
-				ctx.beginPath();
+				var _x4 = xDst + dKoefX * _tr.TransformPointX(x4, y4);
+				var _y4 = yDst + dKoefY * _tr.TransformPointY(x4, y4);
+
+				overlay.CheckPoint(_x1, _y1);
+				overlay.CheckPoint(_x2, _y2);
+				overlay.CheckPoint(_x3, _y3);
+				overlay.CheckPoint(_x4, _y4);
+
+				ctx.moveTo(_x1, _y1);
+				ctx.lineTo(_x2, _y2);
+				ctx.lineTo(_x3, _y3);
+				ctx.lineTo(_x4, _y4);
+				ctx.lineTo(_x1, _y1);
 			}
 		}
 	}
-}
+	return true;
+};
+
+CPage.prototype.DrawSearchCur = function (overlay, xDst, yDst, wDst, hDst, places)
+{
+	var dKoefX = wDst / this.width_mm;
+	var dKoefY = hDst / this.height_mm;
+	var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+
+	var len = places.length;
+
+	var ctx = overlay.m_oContext;
+
+	ctx.fillStyle = "rgba(51,102,204,255)";
+
+	for (var i = 0; i < len; i++)
+	{
+		var place = places[i];
+		if (undefined === place.Ex)
+		{
+			var _x = (rPR * (xDst + dKoefX * place.X)) >> 0;
+			var _y = (rPR * (yDst + dKoefY * place.Y)) >> 0;
+
+			var _w = (rPR * (dKoefX * place.W)) >> 0;
+			var _h = (rPR * (dKoefY * place.H)) >> 0;
+
+			if (_x < overlay.min_x)
+				overlay.min_x = _x;
+			if ((_x + _w) > overlay.max_x)
+				overlay.max_x = _x + _w;
+
+			if (_y < overlay.min_y)
+				overlay.min_y = _y;
+			if ((_y + _h) > overlay.max_y)
+				overlay.max_y = _y + _h;
+
+			ctx.rect(_x, _y, _w, _h);
+		}
+		else
+		{
+			var _x1 = (rPR * (xDst + dKoefX * place.X)) >> 0;
+			var _y1 = (rPR * (yDst + dKoefY * place.Y)) >> 0;
+
+			var x2 = place.X + place.W * place.Ex;
+			var y2 = place.Y + place.W * place.Ey;
+			var _x2 = (rPR * (xDst + dKoefX * x2)) >> 0;
+			var _y2 = (rPR * (yDst + dKoefY * y2)) >> 0;
+
+			var x3 = x2 - place.H * place.Ey;
+			var y3 = y2 + place.H * place.Ex;
+			var _x3 = (rPR * (xDst + dKoefX * x3)) >> 0;
+			var _y3 = (rPR * (yDst + dKoefY * y3)) >> 0;
+
+			var x4 = place.X - place.H * place.Ey;
+			var y4 = place.Y + place.H * place.Ex;
+			var _x4 = (rPR * (xDst + dKoefX * x4)) >> 0;
+			var _y4 = (rPR * (yDst + dKoefY * y4)) >> 0;
+
+			overlay.CheckPoint(_x1, _y1);
+			overlay.CheckPoint(_x2, _y2);
+			overlay.CheckPoint(_x3, _y3);
+			overlay.CheckPoint(_x4, _y4);
+
+			ctx.moveTo(_x1, _y1);
+			ctx.lineTo(_x2, _y2);
+			ctx.lineTo(_x3, _y3);
+			ctx.lineTo(_x4, _y4);
+			ctx.lineTo(_x1, _y1);
+		}
+	}
+
+	ctx.fill();
+	ctx.beginPath();
+};
+
+CPage.prototype.DrawTableOutline = function (overlay, xDst, yDst, wDst, hDst, table_outline_dr, lastBounds)
+{
+	var transform = table_outline_dr.TableMatrix;
+	var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+	xDst *= rPR;
+	yDst *= rPR;
+	wDst *= rPR;
+	hDst *= rPR;
+	if (null == transform || transform.IsIdentity2())
+	{
+		var dKoefX = wDst / this.width_mm;
+		var dKoefY = hDst / this.height_mm;
+
+		var _offX = (null == transform) ? 0 : transform.tx;
+		var _offY = (null == transform) ? 0 : transform.ty;
+
+		if (!lastBounds)
+		{
+			var _x = 0;
+			var _y = 0;
+			switch (table_outline_dr.TrackTablePos)
+			{
+				case 1:
+				{
+					_x = (xDst + dKoefX * (table_outline_dr.TableOutline.X + table_outline_dr.TableOutline.W + _offX)) >> 0;
+					_y = ((yDst + dKoefY * (table_outline_dr.TableOutline.Y + _offY)) >> 0) - Math.round(13 * rPR);
+					break;
+				}
+				case 2:
+				{
+					_x = (xDst + dKoefX * (table_outline_dr.TableOutline.X + table_outline_dr.TableOutline.W + _offX)) >> 0;
+					_y = (yDst + dKoefY * (table_outline_dr.TableOutline.Y + table_outline_dr.TableOutline.H + _offY)) >> 0;
+					break;
+				}
+				case 3:
+				{
+					_x = ((xDst + dKoefX * (table_outline_dr.TableOutline.X + _offX)) >> 0) - Math.round(13 * rPR);
+					_y = (yDst + dKoefY * (table_outline_dr.TableOutline.Y + table_outline_dr.TableOutline.H + _offY)) >> 0;
+					break;
+				}
+				case 0:
+				default:
+				{
+					_x = ((xDst + dKoefX * (table_outline_dr.TableOutline.X + _offX)) >> 0) - Math.round(13 * rPR);
+					_y = ((yDst + dKoefY * (table_outline_dr.TableOutline.Y + _offY)) >> 0) - Math.round(13 * rPR);
+					break;
+				}
+			}
+
+			var _w = Math.round(13 * rPR);
+			var _h = Math.round(13 * rPR);
+
+			if (_x < overlay.min_x)
+				overlay.min_x = _x;
+			if ((_x + _w) > overlay.max_x)
+				overlay.max_x = _x + _w;
+
+			if (_y < overlay.min_y)
+				overlay.min_y = _y;
+			if ((_y + _h) > overlay.max_y)
+				overlay.max_y = _y + _h;
+
+			table_outline_dr.checkMover();
+			overlay.m_oContext.drawImage(table_outline_dr.mover, _x, _y);
+		}
+		else
+		{
+			var _xLast = (xDst + dKoefX * (lastBounds.X + lastBounds.W + _offX) + 0.5 * Math.round(rPR)) >> 0;
+			var _yLast = (yDst + dKoefY * (lastBounds.Y + lastBounds.H + _offY) + 0.5 * Math.round(rPR)) >> 0;
+
+			var ctx = overlay.m_oContext;
+			ctx.strokeStyle = "rgb(140, 140, 140)";
+			ctx.lineWidth = Math.round(rPR);
+			ctx.beginPath();
+
+			overlay.AddRect(_xLast - 0.5 * Math.round(rPR), _yLast - 0.5 * Math.round(rPR), Math.round(6 * rPR), Math.round(6 * rPR));
+
+			ctx.stroke();
+			ctx.beginPath();
+		}
+	}
+	else
+	{
+		var ctx = overlay.m_oContext;
+
+		var _ft = new AscCommon.CMatrix();
+		_ft.sx = transform.sx;
+		_ft.shx = transform.shx;
+		_ft.shy = transform.shy;
+		_ft.sy = transform.sy;
+		_ft.tx = transform.tx;
+		_ft.ty = transform.ty;
+
+		var coords = new AscCommon.CMatrix();
+		coords.sx = wDst / this.width_mm;
+		coords.sy = hDst / this.height_mm;
+		coords.tx = xDst;
+		coords.ty = yDst;
+
+		global_MatrixTransformer.MultiplyAppend(_ft, coords);
+
+		if (!lastBounds)
+		{
+			ctx.transform(_ft.sx, _ft.shy, _ft.shx, _ft.sy, _ft.tx, _ft.ty);
+
+			var _x = 0;
+			var _y = 0;
+			var _w = 13 / coords.sx;
+			var _h = 13 / coords.sy;
+			switch (table_outline_dr.TrackTablePos)
+			{
+				case 1:
+				{
+					_x = (table_outline_dr.TableOutline.X + table_outline_dr.TableOutline.W);
+					_y = (table_outline_dr.TableOutline.Y - _h);
+					break;
+				}
+				case 2:
+				{
+					_x = (table_outline_dr.TableOutline.X + table_outline_dr.TableOutline.W);
+					_y = (table_outline_dr.TableOutline.Y + table_outline_dr.TableOutline.H);
+					break;
+				}
+				case 3:
+				{
+					_x = (table_outline_dr.TableOutline.X - _w);
+					_y = (table_outline_dr.TableOutline.Y + table_outline_dr.TableOutline.H);
+					break;
+				}
+				case 0:
+				default:
+				{
+					_x = (table_outline_dr.TableOutline.X - _w);
+					_y = (table_outline_dr.TableOutline.Y - _h);
+					break;
+				}
+			}
+
+			overlay.CheckPoint(_ft.TransformPointX(_x, _y), _ft.TransformPointY(_x, _y));
+			overlay.CheckPoint(_ft.TransformPointX(_x + _w, _y), _ft.TransformPointY(_x + _w, _y));
+			overlay.CheckPoint(_ft.TransformPointX(_x + _w, _y + _h), _ft.TransformPointY(_x + _w, _y + _h));
+			overlay.CheckPoint(_ft.TransformPointX(_x, _y + _h), _ft.TransformPointY(_x, _y + _h));
+
+			table_outline_dr.checkMover();
+			overlay.m_oContext.drawImage(table_outline_dr.mover, _x, _y, _w, _h);
+
+			overlay.SetBaseTransform();
+		}
+		else
+		{
+			var _xLast = (lastBounds.X + lastBounds.W);
+			var _yLast = (lastBounds.Y + lastBounds.H);
+
+			var ctx = overlay.m_oContext;
+			ctx.strokeStyle = "rgb(140, 140, 140)";
+			ctx.fillStyle = "#FFFFFF";
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+
+			var _dist = 6 / _ft.GetScaleValue();
+
+			var _arr = [
+				_ft.TransformPointX(_xLast, _yLast),
+				_ft.TransformPointY(_xLast, _yLast),
+				_ft.TransformPointX(_xLast + _dist, _yLast),
+				_ft.TransformPointY(_xLast + _dist, _yLast),
+				_ft.TransformPointX(_xLast + _dist, _yLast + _dist),
+				_ft.TransformPointY(_xLast + _dist, _yLast + _dist),
+				_ft.TransformPointX(_xLast, _yLast + _dist),
+				_ft.TransformPointY(_xLast, _yLast + _dist)
+			];
+
+			overlay.CheckPoint(_arr[0], _arr[1]);
+			overlay.CheckPoint(_arr[2], _arr[3]);
+			overlay.CheckPoint(_arr[4], _arr[5]);
+			overlay.CheckPoint(_arr[6], _arr[7]);
+
+			ctx.moveTo(_arr[0], _arr[1]);
+			ctx.lineTo(_arr[2], _arr[3]);
+			ctx.lineTo(_arr[4], _arr[5]);
+			ctx.lineTo(_arr[6], _arr[7]);
+			ctx.closePath();
+
+			ctx.fill();
+			ctx.stroke();
+			ctx.beginPath();
+		}
+	}
+};
 
 function CDrawingCollaborativeTarget(DrawingDocument)
 {
@@ -1905,82 +1826,67 @@ CDrawingCollaborativeTarget.prototype.CheckPosition = function(_x, _y, _size, _p
 	this.Update();
 };
 
+// common functions ---
+function TransformRectByMatrix(m, arr, offX, offY, koefX, koefY)
+{
+	var ret = [];
+	ret.push(offX + koefX * m.TransformPointX(arr[0], arr[1]));
+	ret.push(offY + koefY * m.TransformPointY(arr[0], arr[1]));
+
+	ret.push(offX + koefX * m.TransformPointX(arr[2], arr[1]));
+	ret.push(offY + koefY * m.TransformPointY(arr[2], arr[1]));
+
+	ret.push(offX + koefX * m.TransformPointX(arr[2], arr[3]));
+	ret.push(offY + koefY * m.TransformPointY(arr[2], arr[3]));
+
+	ret.push(offX + koefX * m.TransformPointX(arr[0], arr[3]));
+	ret.push(offY + koefY * m.TransformPointY(arr[0], arr[3]));
+	return ret;
+}
+
 function CDrawingDocument()
 {
 	this.IsLockObjectsEnable = false;
 
-	AscCommon.g_oHtmlCursor.register("de-markerformat", "marker_format", "14 8", "pointer");
-	AscCommon.g_oHtmlCursor.register("select-table-row", "select_row", "10 5", "default");
-	AscCommon.g_oHtmlCursor.register("select-table-column", "select_column", "5 10", "default");
-	AscCommon.g_oHtmlCursor.register("select-table-cell", "select_cell", "9 0", "default");
-    AscCommon.g_oHtmlCursor.register("de-tablepen", "pen", "1 16", "pointer");
-    AscCommon.g_oHtmlCursor.register("de-tableeraser", "eraser", "8 19", "pointer");
+	// cursors
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.MarkerFormat, "14 8", "pointer");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.SelectTableRow, "10 5", "default");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.SelectTableColumn, "5 10", "default");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.SelectTableCell, "9 0", "default");
+    AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.TablePen, "1 16", "pointer");
+    AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.TableEraser, "8 19", "pointer");
 
 	this.m_oWordControl = null;
 	this.m_oLogicDocument = null;
 	this.m_oDocumentRenderer = null;
 
+	// pages
 	this.m_arrPages = [];
 	this.m_lPagesCount = 0;
 
 	this.m_lDrawingFirst = -1;
 	this.m_lDrawingEnd = -1;
 	this.m_lCurrentPage = -1;
-
-	this.FrameRect = {
-		IsActive: false, Rect: {X: 0, Y: 0, R: 0, B: 0}, Frame: null,
-		Track: {X: 0, Y: 0, L: 0, T: 0, R: 0, B: 0, PageIndex: 0, Type: -1}, IsTracked: false, PageIndex: 0
-	};
-
-	this.MathTrack = new AscCommon.CMathTrack();
-
-	this.FieldTrack = {IsActive: false, Rects: []};
-
-	this.m_oCacheManager = new CCacheManager();
-
 	this.m_lCountCalculatePages = 0;
 
-	this.m_bIsDocumentCalculating = true;
-	this.m_arPrintingWaitEndRecalculate = null;
-	this.m_bUpdateAllPagesOnFirstRecalculate = false;
+	// pages cachemanager
+	this.m_oCacheManager = new CCacheManager();
 
-	this.m_lTimerTargetId = -1;
-	this.m_dTargetX = -1;
-	this.m_dTargetY = -1;
-	this.m_lTargetPage = -1;
-	this.m_dTargetSize = 1;
-
-	this.NeedScrollToTargetFlag = false;
-
+	// target & collaborative targets
 	this.TargetHtmlElement = null;
 	this.TargetHtmlElementBlock = false; // true - block, false - visibility
 	this.TargetHtmlElementLeft = 0;
 	this.TargetHtmlElementTop = 0;
 
-	this.CollaborativeTargets = [];
-	this.CollaborativeTargetsUpdateTasks = [];
+	this.m_dTargetX = -1;
+	this.m_dTargetY = -1;
+	this.m_lTargetPage = -1;
+	this.m_dTargetSize = 1;
 
-	this.m_bIsBreakRecalculate = false;
+	this.TargetCursorColor = {R: 0, G: 0, B: 0};
 
-	this.m_bIsSelection = false;
-	this.m_bIsSearching = false;
-	this.m_lCountRect = 0;
-
-	this.CurrentSearchNavi = null;
-	this.SearchTransform = null;
-
-	this.m_lTimerUpdateTargetID = -1;
-	this.m_tempX = 0;
-	this.m_tempY = 0;
-	this.m_tempPageIndex = 0;
-
-	var oThis = this;
-	this.m_sLockedCursorType = "";
-	this.TableOutlineDr = new CTableOutlineDr();
-
-	this.m_lCurrentRendererPage = -1;
-	this.m_oDocRenderer = null;
-	this.m_bOldShowMarks = false;
+	this.m_lTimerTargetId = -1;
+	this.NeedScrollToTargetFlag = false;
 
 	this.UpdateTargetFromPaint = false;
 	this.UpdateTargetCheck = false;
@@ -1989,15 +1895,53 @@ function CDrawingDocument()
 	this.TargetShowFlag = false;
 	this.TargetShowNeedFlag = false;
 
-	this.SelectionMatrix = null;
+	this.CollaborativeTargets = [];
+	this.CollaborativeTargetsUpdateTasks = [];
 
-	this.CanvasHit = document.createElement('canvas');
-	this.CanvasHit.width = 10;
-	this.CanvasHit.height = 10;
-	this.CanvasHitContext = this.CanvasHit.getContext('2d');
+	this.m_lTimerUpdateTargetID = -1;
+	this.m_tempX = 0;
+	this.m_tempY = 0;
+	this.m_tempPageIndex = 0;
 
-	this.TargetCursorColor = {R: 0, G: 0, B: 0};
+	this.m_sLockedCursorType = "";
 
+	// tracks
+	this.FrameRect = {
+		IsActive: false, Rect: {X: 0, Y: 0, R: 0, B: 0}, Frame: null,
+		Track: {X: 0, Y: 0, L: 0, T: 0, R: 0, B: 0, PageIndex: 0, Type: -1}, IsTracked: false, PageIndex: 0
+	};
+
+	this.MathTrack = new AscCommon.CMathTrack();
+
+	this.FieldTrack = {
+		IsActive: false,
+		Rects: []
+	};
+
+	this.TableOutlineDr = new CTableOutlineDr();
+
+	this.InlineTextTrackEnabled = false;
+	this.InlineTextTrack = null;
+	this.InlineTextTrackPage = -1;
+
+	this.AutoShapesTrack = null;
+	this.AutoShapesTrackLockPageNum = -1;
+
+	// search
+	this.m_bIsSearching = false;
+
+	this.CurrentSearchNavi = null;
+	this.SearchTransform = null;
+
+	// массивы ректов для поиска
+	this._search_HdrFtr_All = []; // Поиск в колонтитуле, который находится на всех страницах
+	this._search_HdrFtr_All_no_First = []; // Поиск в колонтитуле, который находится на всех страницах, кроме первой
+	this._search_HdrFtr_First = []; // Поиск в колонтитуле, который находится только на первой странице
+	this._search_HdrFtr_Even = []; // Поиск в колонтитуле, который находится только на нечетных страницах
+	this._search_HdrFtr_Odd = []; // Поиск в колонтитуле, который находится только на четных страницах, включая первую
+	this._search_HdrFtr_Odd_no_First = []; // Поиск в колонтитуле, который находится только на нечетных страницах, кроме первой
+
+	// interface caches
 	this.GuiControlColorsMap = null;
 	this.IsSendStandartColors = false;
 
@@ -2017,46 +1961,55 @@ function CDrawingDocument()
 
 	this.TableStylesLastLook = null;
 	this.TableStylesLastClrScheme = null;
-	this.LastParagraphMargins = null;
 
 	this.TableStylesCheckLook = null;
 	this.TableStylesCheckLookFlag = false;
 
-	this.InlineTextTrackEnabled = false;
-	this.InlineTextTrack = null;
-	this.InlineTextTrackPage = -1;
+	// selection
+	this.m_bIsSelection = false;
 
-	this.AutoShapesTrack = null;
-	this.AutoShapesTrackLockPageNum = -1;
-
-	this.Overlay = null;
+	this.SelectionMatrix = null;
 	this.IsTextMatrixUse = false;
 	this.IsTextSelectionOutline = false;
 
+	// hit
+	this.CanvasHit = document.createElement('canvas');
+	this.CanvasHit.width = 10;
+	this.CanvasHit.height = 10;
+	this.CanvasHitContext = this.CanvasHit.getContext('2d');
+
+	// overlay
+	this.Overlay = null;
 	this.OverlaySelection2 = {};
 
+	// viewer
+	this.m_lCurrentRendererPage = -1;
+	this.m_oDocRenderer = null;
+
+	// rulers
 	this.HorVerAnchors = [];
-
-	this.MathMenuLoad = false;
-
 	this.UpdateRulerStateFlag = false;
 	this.UpdateRulerStateParams = [];
+	this.LastParagraphMargins = null;
 
-	// массивы ректов для поиска
-	this._search_HdrFtr_All = []; // Поиск в колонтитуле, который находится на всех страницах
-	this._search_HdrFtr_All_no_First = []; // Поиск в колонтитуле, который находится на всех страницах, кроме первой
-	this._search_HdrFtr_First = []; // Поиск в колонтитуле, который находится только на первой странице
-	this._search_HdrFtr_Even = []; // Поиск в колонтитуле, который находится только на нечетных страницах
-	this._search_HdrFtr_Odd = []; // Поиск в колонтитуле, который находится только на четных страницах, включая первую
-	this._search_HdrFtr_Odd_no_First = []; // Поиск в колонтитуле, который находится только на нечетных страницах, кроме первой
+	// flags
+	this.m_bIsDocumentCalculating = true;
+	this.m_arPrintingWaitEndRecalculate = null;
+	this.m_bUpdateAllPagesOnFirstRecalculate = false;
+	this.m_bIsBreakRecalculate = false;
+
+	this.m_bOldShowMarks = false;
+	this.MathMenuLoad = false;
 
 	this.isFirstStartRecalculate = false; // был ли хоть раз вызван OnStartRecalculate
 	this.isDisableEditBeforeCalculateLA = false; // залочили все, пока не досчитаем до конца
 	this.isFirstRecalculate = false; // был ли хоть раз вызван OnEndRecalculate
 	this.isFirstFullRecalculate = false; // был ли хоть раз вызван OnEndRecalculate c параметром isFull == true
     this.isScrollToTargetAttack = false;
+	this.isDisableScrollToTarget = false;
 
-    this.printedDocument = null; // selection print
+	// object for print selection
+    this.printedDocument = null;
 
 	// content_controls
 	this.contentControls = new AscCommon.DrawingContentControls(this);
@@ -2064,6 +2017,81 @@ function CDrawingDocument()
 	// placeholders
 	this.placeholders = new AscCommon.DrawingPlaceholders(this);
 
+	var oThis = this;
+
+	// cursor type ---
+	this.SetCursorType = function(sType, Data)
+	{
+		let oAPI = this.m_oWordControl.m_oApi;
+		let oHTMLElement = this.m_oWordControl.m_oMainContent.HtmlElement;
+		if ("" === this.m_sLockedCursorType)
+		{
+			if ("text" === sType)
+			{
+				if (oAPI.isFormatPainterOn())
+				{
+					let oData = oAPI.getFormatPainterData();
+					if(!oData.isDrawingData())
+					{
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.TextCopy);
+					}
+					else
+					{
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.ShapeCopy);
+					}
+				}
+				else if (oAPI.isMarkerFormat)
+					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.MarkerFormat);
+				else if (oAPI.isDrawTablePen)
+					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.TablePen);
+				else if (oAPI.isDrawTableErase)
+					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.TableEraser);
+				else
+					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+			}
+			else
+			{
+				if (oAPI.isFormatPainterOn())
+				{
+					let oData = oAPI.getFormatPainterData();
+					if(oData.isDrawingData())
+					{
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.ShapeCopy);
+					}
+					else
+					{
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+					}
+				}
+				else
+				{
+					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+				}
+			}
+		}
+		else
+			oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
+
+		if ("undefined" === typeof(Data) || null === Data)
+			Data = new AscCommon.CMouseMoveData();
+
+		oAPI.sync_MouseMoveCallback(Data);
+	};
+	this.LockCursorType = function(sType)
+	{
+		this.m_sLockedCursorType = sType;
+		this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
+	};
+	this.LockCursorTypeCur = function()
+	{
+		this.m_sLockedCursorType = this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor;
+	};
+	this.UnlockCursorType = function()
+	{
+		this.m_sLockedCursorType = "";
+	};
+
+	// target
 	this.showTarget = function (isShow)
 	{
 		if (this.TargetHtmlElementBlock)
@@ -2074,1133 +2102,10 @@ function CDrawingDocument()
 	this.isShowTarget = function ()
 	{
 		if (this.TargetHtmlElementBlock)
-			return (this.TargetHtmlElement.style.display == "display") ? true : false;
+			return (this.TargetHtmlElement.style.display === "display") ? true : false;
 		else
-			return (this.TargetHtmlElement.style.visibility == "visible") ? true : false;
+			return (this.TargetHtmlElement.style.visibility === "visible") ? true : false;
 	};
-
-	this.Start_CollaborationEditing = function ()
-	{
-		this.IsLockObjectsEnable = true;
-		this.m_oWordControl.OnRePaintAttack();
-	};
-	this.SetCursorType = function (sType, Data)
-	{
-		let oAPI = this.m_oWordControl.m_oApi;
-		let oHTMLElement = this.m_oWordControl.m_oMainContent.HtmlElement;
-		if ("" === this.m_sLockedCursorType)
-		{
-            if ("text" === sType)
-            {
-                if (oAPI.isFormatPainterOn())
-                {
-					let oData = oAPI.getFormatPainterData();
-					if(!oData.isDrawingData())
-					{
-						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterWord);
-					}
-					else
-					{
-						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterDrawing);
-					}
-                }
-                else if (oAPI.isMarkerFormat)
-                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");
-                else if (oAPI.isDrawTablePen)
-                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tablepen");
-                else if (oAPI.isDrawTableErase)
-                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tableeraser");
-                else
-                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
-            }
-            else
-            {
-	            if (oAPI.isFormatPainterOn())
-	            {
-		            let oData = oAPI.getFormatPainterData();
-		            if(oData.isDrawingData())
-		            {
-			            oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterDrawing);
-		            }
-					else
-		            {
-			            oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
-		            }
-	            }
-				else
-	            {
-		            oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
-	            }
-            }
-		}
-		else
-			oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
-
-		if ("undefined" === typeof(Data) || null === Data)
-			Data = new AscCommon.CMouseMoveData();
-
-		editor.sync_MouseMoveCallback(Data);
-	};
-	this.LockCursorType = function (sType)
-	{
-		this.m_sLockedCursorType = sType;
-		this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
-	};
-	this.LockCursorTypeCur = function ()
-	{
-		this.m_sLockedCursorType = this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor;
-	};
-	this.UnlockCursorType = function ()
-	{
-		this.m_sLockedCursorType = "";
-	};
-
-	this.scrollToTargetOnRecalculate = function(pageCountOld, pageCountNew)
-    {
-        if (this.m_lTargetPage > pageCountOld && this.m_lTargetPage < pageCountNew)
-        {
-            this.isScrollToTargetAttack = true;
-            this.UpdateTarget(this.m_dTargetX, this.m_dTargetY, this.m_lTargetPage);
-        }
-    };
-
-	this.OnStartRecalculate = function (pageCount)
-	{
-		if (!this.m_oWordControl.MobileTouchManager)
-			this.TableOutlineDr.TableOutline = null;
-
-		if (this.m_oWordControl)
-			this.m_oWordControl.m_oApi.checkLastWork();
-
-		this.m_lCountCalculatePages = pageCount;
-		//console.log("start " + this.m_lCountCalculatePages);
-
-		if (this.m_oWordControl && this.m_oWordControl.MobileTouchManager)
-			this.m_oWordControl.MobileTouchManager.ClearContextMenu();
-
-		this.m_bIsDocumentCalculating = true;
-
-		if (!this.isFirstStartRecalculate)
-		{
-            var api = this.m_oWordControl.m_oApi;
-            var options = api.DocInfo ? api.DocInfo.asc_getOptions() : null;
-
-            if (options && options["disableEditBeforeCalculate"])
-            {
-            	this.isDisableEditBeforeCalculateLA = true;
-                api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
-            }
-
-            this.isFirstStartRecalculate = true;
-		}
-	};
-
-	this.OnRepaintPage = function (index)
-	{
-		if (this.m_oWordControl)
-			this.m_oWordControl.m_oApi.checkLastWork();
-
-		var page = this.m_arrPages[index];
-		if (!page)
-			return;
-
-		page.drawingPage.SetRepaint(this.m_oCacheManager);
-
-		// перерисовать, если только страница видна на экране
-		if (index >= this.m_lDrawingFirst && index <= this.m_lDrawingEnd)
-		{
-			this.m_oWordControl.OnScroll();
-		}
-	};
-
-	this.OnRecalculatePage = function (index, pageObject)
-	{
-		this.m_bIsDocumentCalculating = true;
-
-		editor.sendEvent("asc_onDocumentChanged");
-		if (true === this.m_bIsSearching)
-		{
-			this.SearchClear();
-			this.m_oWordControl.OnUpdateOverlay();
-		}
-
-		if (this.m_bIsBreakRecalculate)
-		{
-			this.m_bIsBreakRecalculate = false;
-			this.m_lCountCalculatePages = index;
-		}
-
-		this.m_lCountCalculatePages = index + 1;
-		//console.log("calc " + this.m_lCountCalculatePages);
-
-		/*
-		 if (index >= this.m_lPagesCount)
-		 {
-		 this.m_arrPages[index] = new CPage();
-		 }
-		 */
-		if (undefined === this.m_arrPages[index])
-			this.m_arrPages[index] = new CPage();
-
-		var page = this.m_arrPages[index];
-
-		page.width_mm = pageObject.Width;
-		page.height_mm = pageObject.Height;
-
-		page.margin_left = pageObject.Margins.Left;
-		page.margin_top = pageObject.Margins.Top;
-		page.margin_right = pageObject.Margins.Right;
-		page.margin_bottom = pageObject.Margins.Bottom;
-
-		page.index = index;
-
-		page.drawingPage.SetRepaint(this.m_oCacheManager);
-
-		// теперь если эта страница на экране - то нужно вызвать отрисовку
-		if (index >= this.m_lDrawingFirst && index <= this.m_lDrawingEnd)
-		{
-			this.m_oWordControl.OnScroll();
-		}
-
-		if (this.m_lCountCalculatePages > (this.m_lPagesCount + 50) || (0 == this.m_lPagesCount && 0 != this.m_lCountCalculatePages))
-		{
-			this.OnEndRecalculate(false);
-		}
-
-		if (this.m_bUpdateAllPagesOnFirstRecalculate)
-		{
-			this.m_bUpdateAllPagesOnFirstRecalculate = false;
-			this.m_nZoomType = 1;
-
-			if (true)
-			{
-				// имитируем isFull, чтобы пересчитался размер документа
-				if (this.m_lPagesCount > this.m_lCountCalculatePages)
-					this.m_arrPages.splice(this.m_lCountCalculatePages, this.m_lPagesCount - this.m_lCountCalculatePages);
-				this.m_lPagesCount = 0;
-
-				this.m_lDrawingFirst = -1;
-				this.m_lDrawingEnd = -1;
-			}
-
-			this.OnEndRecalculate(false);
-		}
-
-		if (this.m_oWordControl.m_oApi.printPreview && this.m_oWordControl.m_oApi.printPreview.page === index)
-			this.m_oWordControl.m_oApi.printPreview.update();
-	};
-
-	this.OnEndRecalculate = function (isFull, isBreak)
-	{
-		if (this.m_oWordControl)
-			this.m_oWordControl.m_oApi.checkLastWork();
-
-		if (undefined != isBreak)
-		{
-			this.m_lCountCalculatePages = this.m_lPagesCount;
-		}
-
-		for (var index = this.m_lCountCalculatePages; index < this.m_lPagesCount; index++)
-		{
-			var page = this.m_arrPages[index];
-			page.drawingPage.SetRepaint(this.m_oCacheManager);
-		}
-
-		this.m_bIsBreakRecalculate = (isFull === true) ? false : true;
-		var oldPagesCount = this.m_lPagesCount;
-		if (isFull)
-		{
-			if (this.m_lPagesCount > this.m_lCountCalculatePages)
-			{
-				this.m_arrPages.splice(this.m_lCountCalculatePages, this.m_lPagesCount - this.m_lCountCalculatePages);
-			}
-
-			this.m_lPagesCount = this.m_lCountCalculatePages;
-			this.m_oWordControl.CalculateDocumentSize();
-			/*
-			 if (true === this.m_bIsUpdateDocSize)
-			 {
-			 this.m_oWordControl.OnScroll();
-			 this.m_oWordControl.OnUpdateSelection();
-			 }
-			 */
-		}
-		else if ((this.m_lPagesCount + 50) < this.m_lCountCalculatePages)
-		{
-			this.m_lPagesCount = this.m_lCountCalculatePages;
-			this.m_oWordControl.CalculateDocumentSize();
-		}
-		else if (0 == this.m_lPagesCount && 0 != this.m_lCountCalculatePages)
-		{
-			this.m_lPagesCount = this.m_lCountCalculatePages;
-			this.m_oWordControl.CalculateDocumentSize();
-		}
-
-		//if (this.m_lCurrentPage >= this.m_lPagesCount)
-		//    this.m_lCurrentPage = this.m_lPagesCount - 1;
-		if (true === isBreak || isFull)
-		{
-			//this.m_oWordControl.m_oLogicDocument.RecalculateCurPos();
-			this.m_lCurrentPage = this.m_oWordControl.m_oLogicDocument.Get_CurPage();
-			this.m_oWordControl.m_oApi.sendEvent("asc_onEndCalculate");
-			this.m_bIsDocumentCalculating = false;
-
-			window.setTimeout(function() {
-                editor.WordControl.onMouseMove(undefined, undefined);
-            }, 1);
-		}
-
-		if (-1 != this.m_lCurrentPage)
-		{
-			this.m_oWordControl.m_oApi.sync_currentPageCallback(this.m_lCurrentPage);
-			this.m_oWordControl.m_oApi.sync_countPagesCallback(this.m_lPagesCount);
-
-			var bIsSendCurPage = true;
-			if (this.m_oWordControl.m_oLogicDocument && this.m_oWordControl.m_oLogicDocument.DrawingObjects)
-			{
-				var param = this.m_oWordControl.m_oLogicDocument.DrawingObjects.isNeedUpdateRulers();
-				if (true === param)
-				{
-					bIsSendCurPage = false;
-					this.m_oWordControl.SetCurrentPage(false);
-				}
-			}
-
-			if (bIsSendCurPage && this.FrameRect.IsActive)
-			{
-				bIsSendCurPage = false;
-				this.m_oWordControl.SetCurrentPage(false);
-			}
-
-			if (bIsSendCurPage)
-			{
-				this.m_oWordControl.SetCurrentPage(false);
-			}
-		}
-
-		if (!this.isFirstRecalculate)
-        {
-            this.scrollToTargetOnRecalculate(oldPagesCount, this.m_lPagesCount);
-        }
-
-		if (isFull)
-		{
-			this.m_oWordControl.OnScroll();
-
-			if (this.m_arPrintingWaitEndRecalculate)
-			{
-				var actionType = this.m_arPrintingWaitEndRecalculate[0];
-				this.m_oWordControl.m_oApi.downloadAs.apply(this.m_oWordControl.m_oApi, this.m_arPrintingWaitEndRecalculate);
-
-				this.m_oWordControl.ChangeReaderMode();
-				this.m_oWordControl.m_oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, actionType);
-			}
-		}
-
-        if (isFull || isBreak)
-        {
-        	if (isFull)
-			{
-				if (!this.isFirstFullRecalculate)
-				{
-                    var api = this.m_oWordControl.m_oApi;
-                    var options = api.DocInfo && api.DocInfo.asc_getOptions();
-
-					if (!this.isFirstRecalculate)
-					{
-						// полный пересчет закончился, и не был пересчет документа.
-						api.goTo();
-					}
-
-					if (options && options["disableEditBeforeCalculate"])
-					{
-                        api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
-                        this.isDisableEditBeforeCalculateLA = false;
-                    }
-				}
-
-				this.isFirstFullRecalculate = true;
-			}
-			else if (isBreak)
-			{
-                this.isFirstRecalculate = true;
-			}
-        }
-
-		//console.log("end " + this.m_lCountCalculatePages + "," + isFull + "," + isBreak);
-	};
-
-	this.ChangePageAttack = function (pageIndex)
-	{
-		if (pageIndex < this.m_lDrawingFirst || pageIndex > this.m_lDrawingEnd)
-			return;
-
-		this.StopRenderingPage(pageIndex);
-		this.m_oWordControl.OnScroll();
-	};
-
-	this.CheckPagesSizeMaximum = function(_w, _h)
-	{
-		var w = _w;
-		var h = _h;
-
-		// заглушка под мобильную версию (iPad не рисует большие картинки (наверное страховка по памяти))
-		if (g_bIsMobile)
-		{
-			var _mobile_max = 2500;
-			if (w > _mobile_max || h > _mobile_max)
-			{
-				if (w > h)
-				{
-					h = (h * _mobile_max / w) >> 0;
-					w = _mobile_max;
-				}
-				else
-				{
-					w = (w * _mobile_max / h) >> 0;
-					h = _mobile_max;
-				}
-			}
-		}
-
-		return [w, h];
-	};
-
-	this.CheckRecalculatePage = function (width, height, pageIndex)
-	{
-		var _drawingPage = this.m_arrPages[pageIndex].drawingPage;
-		var isUnlock = false;
-
-		if (_drawingPage.cachedImage != null && _drawingPage.cachedImage.image != null)
-		{
-			var _check = this.CheckPagesSizeMaximum(width, height);
-			if (_check[0] != _drawingPage.cachedImage.image.width || _check[1] != _drawingPage.cachedImage.image.height)
-				isUnlock = true;
-		}
-
-		if (_drawingPage.IsRecalculate)
-		{
-			if (this.IsFreezePage(pageIndex))
-			{
-				// убрал выкидывание страницы. лишнее это. пусть всегда рисуется старая, пока не перерисуем
-				//if ((Math.abs(_drawingPage.RecalculateTime - (new Date().getTime())) > 500 /*0.5 sec*/))
-				//	isUnlock = true;
-			}
-			else
-			{
-				isUnlock = true;
-			}
-		}
-
-		if (isUnlock)
-			_drawingPage.UnLock(this.m_oCacheManager);
-	};
-
-	this.StartRenderingPage = function (pageIndex)
-	{
-		if (true === this.IsFreezePage(pageIndex))
-		{
-			return;
-		}
-
-		var page = this.m_arrPages[pageIndex];
-
-		var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
-
-		var w = (page.width_mm * dKoef + 0.5) >> 0;
-		var h = (page.height_mm * dKoef + 0.5) >> 0;
-
-		w = AscCommon.AscBrowser.convertToRetinaValue(w, true);
-		h = AscCommon.AscBrowser.convertToRetinaValue(h, true);
-
-		var _check = this.CheckPagesSizeMaximum(w, h);
-		w = _check[0];
-		h = _check[1];
-
-		page.drawingPage.UnLock(this.m_oCacheManager);
-		page.drawingPage.cachedImage = this.m_oCacheManager.Lock(w, h, this);
-
-		//var StartTime = new Date().getTime();
-
-		// теперь берем графикс
-		var g = new AscCommon.CGraphics();
-		g.init(page.drawingPage.cachedImage.image.ctx, w, h, page.width_mm, page.height_mm);
-		g.m_oFontManager = AscCommon.g_fontManager;
-		g.endGlobalAlphaColor = this.m_oWordControl.m_oApi.getPageBackgroundColor();
-
-		g.transform(1, 0, 0, 1, 0, 0);
-
-		if (this.m_oWordControl.m_oApi.isDarkMode)
-            g.darkModeOverride3();
-
-		if (null == this.m_oDocumentRenderer)
-			this.m_oLogicDocument.DrawPage(pageIndex, g);
-		else
-			this.m_oDocumentRenderer.drawPage(pageIndex, g);
-
-		if (g_page_outline_inner)
-		{
-			var context = page.drawingPage.cachedImage.image.ctx;
-
-			context.strokeStyle = GlobalSkin.PageOutline;
-			context.lineWidth = 1;
-
-			context.beginPath();
-			context.moveTo(0.5, 0.5);
-			context.lineTo(w - 0.5, 0.5);
-			context.lineTo(w - 0.5, h - 0.5);
-			context.lineTo(0.5, h - 0.5);
-			context.closePath();
-			context.stroke();
-			context.beginPath();
-		}
-
-		if (this.m_oWordControl.m_oApi.watermarkDraw && this.m_oWordControl.m_oLogicDocument)
-			this.m_oWordControl.m_oApi.watermarkDraw.Draw(page.drawingPage.cachedImage.image.ctx, w, h);
-
-		//var EndTime = new Date().getTime();
-
-		//alert("" + ((EndTime - StartTime) / 1000));
-	};
-
-	this.IsFreezePage = function (pageIndex)
-	{
-		if (pageIndex >= 0 && (pageIndex < Math.min(this.m_lCountCalculatePages, this.m_lPagesCount)))
-		{
-			if (this.m_oLogicDocument)
-			{
-				if (pageIndex >= this.m_oLogicDocument.Pages.length)
-					return true;
-				else if (!this.m_oLogicDocument.CanDrawPage(pageIndex))
-					return true;
-			}
-			return false;
-		}
-		return true;
-	};
-
-	this.RenderDocument = function (Renderer)
-	{
-	    var _this = this.printedDocument ? this.printedDocument.DrawingDocument : this;
-	    for (var i = 0; i < _this.m_lPagesCount; i++)
-		{
-			var page = _this.m_arrPages[i];
-			Renderer.BeginPage(page.width_mm, page.height_mm);
-            _this.m_oLogicDocument.DrawPage(i, Renderer);
-			Renderer.EndPage();
-		}
-	};
-
-	this.ToRenderer = function (isPrint)
-	{
-		var Renderer = new AscCommon.CDocumentRenderer();
-		Renderer.isPrintMode = isPrint ? true : false;
-		Renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
-		Renderer.VectorMemoryForPrint = new AscCommon.CMemory();
-		var old_marks = this.m_oWordControl.m_oApi.ShowParaMarks;
-		this.m_oWordControl.m_oApi.ShowParaMarks = false;
-		this.RenderDocument(Renderer);
-		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
-		this.printedDocument = null;
-		var ret = Renderer.Memory.GetBase64Memory();
-		//console.log(ret);
-		return ret;
-	};
-
-	this.CheckPrint = function(params)
-	{
-		if (!this.m_oWordControl.m_oLogicDocument)
-			return false;
-
-		if (this.m_arPrintingWaitEndRecalculate)
-		{
-			this.m_oWordControl.m_oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
-			this.m_arPrintingWaitEndRecalculate = null;
-			return false;
-		}
-
-		if (!this.m_bIsDocumentCalculating && (0 === this.m_oWordControl.ReaderModeCurrent))
-			return false;
-
-		if (1 === this.m_oWordControl.ReaderModeCurrent)
-		{
-			params.PrintInReaderMode = true;
-			// добавляем еще один longAction, чтобы убрать не после готовности pdf, а после возврата в reader mode
-			this.m_oWordControl.m_oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
-
-			// делаем через таймаут, чтобы fullRecalculate произошел не синхронно (чтобы были выставлены m_arPrintingWaitEndRecalculate)
-			var wordControl = this.m_oWordControl;
-			setTimeout(function(){
-				wordControl.ChangeReaderMode();
-			}, 10);
-		}
-
-		this.m_arPrintingWaitEndRecalculate = params;
-		this.m_oWordControl.m_oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
-		return true;
-	};
-
-	this.ToRenderer2 = function (document)
-	{
-        var _this = this.printedDocument ? this.printedDocument.DrawingDocument : this;
-		var Renderer = new AscCommon.CDocumentRenderer();
-        Renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
-
-		var old_marks = this.m_oWordControl.m_oApi.ShowParaMarks;
-		this.m_oWordControl.m_oApi.ShowParaMarks = false;
-
-		var ret = "";
-		for (var i = 0; i < _this.m_lPagesCount; i++)
-		{
-			var page = _this.m_arrPages[i];
-			Renderer.BeginPage(page.width_mm, page.height_mm);
-            _this.m_oLogicDocument.DrawPage(i, Renderer);
-			Renderer.EndPage();
-
-			ret += Renderer.Memory.GetBase64Memory();
-			Renderer.Memory.Seek(0);
-		}
-
-		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
-        this.printedDocument = null;
-		//console.log(ret);
-		return ret;
-	};
-	this.ToRendererPart = function (noBase64, isPrint)
-	{
-        var _this = this.printedDocument ? this.printedDocument.DrawingDocument : this;
-
-		var watermark = this.m_oWordControl.m_oApi.watermarkDraw;
-
-		var pagescount = Math.min(_this.m_lPagesCount, _this.m_lCountCalculatePages);
-
-		if (-1 == this.m_lCurrentRendererPage)
-		{
-			if (watermark)
-				watermark.StartRenderer();
-
-			this.m_oDocRenderer = new AscCommon.CDocumentRenderer();
-            this.m_oDocRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
-			this.m_oDocRenderer.VectorMemoryForPrint = new AscCommon.CMemory();
-			this.m_oDocRenderer.isPrintMode = isPrint ? true : false;
-			this.m_lCurrentRendererPage = 0;
-			this.m_bOldShowMarks = this.m_oWordControl.m_oApi.ShowParaMarks;
-			this.m_oWordControl.m_oApi.ShowParaMarks = false;
-		}
-
-		var start = this.m_lCurrentRendererPage;
-		var end = pagescount - 1;
-
-		var renderer = this.m_oDocRenderer;
-		renderer.Memory.Seek(0);
-		renderer.VectorMemoryForPrint.ClearNoAttack();
-		renderer.DocInfo(this.m_oWordControl.m_oApi.asc_getCoreProps());
-
-		for (var i = start; i <= end; i++)
-		{
-			var page = _this.m_arrPages[i];
-			renderer.BeginPage(page.width_mm, page.height_mm);
-            _this.m_oLogicDocument.DrawPage(i, renderer);
-
-			if (watermark)
-				watermark.DrawOnRenderer(renderer, page.width_mm, page.height_mm);
-
-			renderer.EndPage();
-		}
-
-		this.m_lCurrentRendererPage = end + 1;
-
-		if (this.m_lCurrentRendererPage >= pagescount)
-		{
-			if (watermark)
-				watermark.EndRenderer();
-
-			this.m_lCurrentRendererPage = -1;
-			this.m_oDocRenderer = null;
-			this.m_oWordControl.m_oApi.ShowParaMarks = this.m_bOldShowMarks;
-            this.printedDocument = null;
-		}
-
-		if (noBase64) {
-			return renderer.Memory.GetData();
-		} else {
-			return renderer.Memory.GetBase64Memory();
-		}
-	};
-
-	this.StopRenderingPage = function (pageIndex)
-	{
-		if (null != this.m_oDocumentRenderer)
-			this.m_oDocumentRenderer.stopRenderingPage(pageIndex);
-
-		this.m_arrPages[pageIndex].drawingPage.UnLock(this.m_oCacheManager);
-	};
-
-	this.ClearCachePages = function ()
-	{
-		for (var i = 0; i < this.m_lPagesCount; i++)
-		{
-			var page = this.m_arrPages[i];
-			if (page)
-				page.drawingPage.SetRepaint(this.m_oCacheManager);
-		}
-	};
-
-	this.CloseFile = function ()
-	{
-		this.ClearCachePages();
-		this.m_arrPages.splice(0, this.m_arrPages.length);
-		this.m_lPagesCount = 0;
-
-		this.m_lDrawingFirst = -1;
-		this.m_lDrawingEnd = -1;
-		this.m_lCurrentPage = -1;
-	};
-
-	this.CheckRasterImageOnScreen = function (src)
-	{
-		if (null == this.m_oWordControl.m_oLogicDocument)
-			return;
-
-		if (this.m_lDrawingFirst == -1 || this.m_lDrawingEnd == -1)
-			return;
-
-		var bIsRaster = false;
-		var _checker = this.m_oWordControl.m_oLogicDocument.DrawingObjects;
-		for (var i = this.m_lDrawingFirst; i <= this.m_lDrawingEnd; i++)
-		{
-			var _imgs = _checker.getAllRasterImagesOnPage(i);
-
-			var _len = _imgs.length;
-			for (var j = 0; j < _len; j++)
-			{
-				if (AscCommon.getFullImageSrc2(_imgs[j]) == src)
-				{
-					this.StopRenderingPage(i);
-					bIsRaster = true;
-					break;
-				}
-			}
-		}
-
-		if (bIsRaster)
-			this.m_oWordControl.OnScroll();
-	};
-
-	this.FirePaint = function ()
-	{
-		this.m_oWordControl.OnScroll();
-	};
-
-	this.GetVisibleRegion = function()
-	{
-		let yOffset = 0;
-		if (this.m_oWordControl)
-			yOffset += this.m_oWordControl.Y;
-		if (true === this.m_oWordControl.m_bIsRuler)
-			yOffset += (7 * g_dKoef_mm_to_pix);
-
-		let height = 0;
-		if (this.m_oWordControl.m_oEditor)
-			height += AscCommon.AscBrowser.convertToRetinaValue(this.m_oWordControl.m_oEditor.HtmlElement.height);
-
-		let pos1 = this.ConvertCoordsFromCursor2(0, yOffset);
-		let pos2 = this.ConvertCoordsFromCursor2(0, yOffset + height);
-
-		return [{ Page : pos1.Page, Y : pos1.Y }, { Page : pos2.Page, Y : pos2.Y }];
-	};
-
-	this.ConvertCoordsFromCursor = function (x, y, bIsRul)
-	{
-		var _x = x;
-		var _y = y;
-
-		var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
-
-		if (undefined == bIsRul)
-		{
-			var _xOffset = this.m_oWordControl.X;
-			var _yOffset = this.m_oWordControl.Y;
-
-			/*
-			 if (true == this.m_oWordControl.m_bIsRuler)
-			 {
-			 _xOffset += (5 * g_dKoef_mm_to_pix);
-			 _yOffset += (7 * g_dKoef_mm_to_pix);
-			 }
-			 */
-
-			_x = x - _xOffset;
-			_y = y - _yOffset;
-		}
-
-		for (var i = this.m_lDrawingFirst; i <= this.m_lDrawingEnd; i++)
-		{
-			var rect = this.m_arrPages[i].drawingPage;
-
-			if ((rect.left <= _x) && (_x <= rect.right) && (rect.top <= _y) && (_y <= rect.bottom))
-			{
-				var x_mm = (_x - rect.left) * dKoef;
-				var y_mm = (_y - rect.top) * dKoef;
-
-				return {X: x_mm, Y: y_mm, Page: rect.pageIndex, DrawPage: i};
-			}
-		}
-
-		return {X: 0, Y: 0, Page: -1, DrawPage: -1};
-	};
-
-	this.ConvertCoordsFromCursorPage = function (x, y, page, bIsRul)
-	{
-		var _x = x;
-		var _y = y;
-
-		var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
-
-		if (undefined == bIsRul)
-		{
-			var _xOffset = this.m_oWordControl.X;
-			var _yOffset = this.m_oWordControl.Y;
-
-			/*
-			 if (true == this.m_oWordControl.m_bIsRuler)
-			 {
-			 _xOffset += (5 * g_dKoef_mm_to_pix);
-			 _yOffset += (7 * g_dKoef_mm_to_pix);
-			 }
-			 */
-
-			_x = x - _xOffset;
-			_y = y - _yOffset;
-		}
-
-		if (page < 0 || page >= this.m_lPagesCount)
-			return {X: 0, Y: 0, Page: -1, DrawPage: -1};
-
-		var rect = this.m_arrPages[page].drawingPage;
-		var x_mm = (_x - rect.left) * dKoef;
-		var y_mm = (_y - rect.top) * dKoef;
-
-		return {X: x_mm, Y: y_mm, Page: rect.pageIndex, DrawPage: page};
-	};
-
-	this.ConvertCoordsToAnotherPage = function (x, y, pageCoord, pageNeed)
-	{
-		if (pageCoord < 0 || pageCoord >= this.m_lPagesCount || pageNeed < 0 || pageNeed >= this.m_lPagesCount)
-			return {X: 0, Y: 0, Error: true};
-
-		var dKoef1 = this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100;
-		var dKoef2 = 100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue;
-
-		var page1 = this.m_arrPages[pageCoord].drawingPage;
-		var page2 = this.m_arrPages[pageNeed].drawingPage;
-
-		var xCursor = page1.left + x * dKoef1;
-		var yCursor = page1.top + y * dKoef1;
-
-		var _x = (xCursor - page2.left) * dKoef2;
-		var _y = (yCursor - page2.top) * dKoef2;
-
-		return {X: _x, Y: _y, Error: false};
-	};
-
-	this.ConvertCoordsFromCursor2 = function (x, y, bIsRul, bIsNoNormalize, _zoomVal)
-	{
-		var _x = x;
-		var _y = y;
-
-		var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
-		if (undefined !== _zoomVal)
-			dKoef = (100 * g_dKoef_pix_to_mm / _zoomVal);
-
-		if (undefined == bIsRul)
-		{
-			var _xOffset = this.m_oWordControl.X;
-			var _yOffset = this.m_oWordControl.Y;
-
-			if (true == this.m_oWordControl.m_bIsRuler)
-			{
-				_xOffset += (5 * g_dKoef_mm_to_pix);
-				_yOffset += (7 * g_dKoef_mm_to_pix);
-			}
-
-			_x = x - _xOffset;
-			_y = y - _yOffset;
-		}
-
-		if (-1 == this.m_lDrawingFirst || -1 == this.m_lDrawingEnd)
-			return {X: 0, Y: 0, Page: -1, DrawPage: -1};
-
-		for (var i = this.m_lDrawingFirst; i <= this.m_lDrawingEnd; i++)
-		{
-			var rect = this.m_arrPages[i].drawingPage;
-
-			if ((rect.left <= _x) && (_x <= rect.right) && (rect.top <= _y) && (_y <= rect.bottom))
-			{
-				var x_mm = (_x - rect.left) * dKoef;
-				var y_mm = (_y - rect.top) * dKoef;
-
-				if (x_mm > (this.m_arrPages[i].width_mm + 10))
-					x_mm = this.m_arrPages[i].width_mm + 10;
-				if (x_mm < -10)
-					x_mm = -10;
-
-				return {X: x_mm, Y: y_mm, Page: rect.pageIndex, DrawPage: i};
-			}
-		}
-
-		// в страницу не попали. вторая попытка - это попробовать найти страницу по вертикали
-		var _start = Math.max(this.m_lDrawingFirst - 1, 0);
-		var _end = Math.min(this.m_lDrawingEnd + 1, this.m_lPagesCount - 1);
-		for (var i = _start; i <= _end; i++)
-		{
-			var rect = this.m_arrPages[i].drawingPage;
-
-			var bIsCurrent = false;
-			if (i == this.m_lDrawingFirst && rect.top > _y)
-			{
-				bIsCurrent = true;
-			}
-			else if ((rect.top <= _y) && (_y <= rect.bottom))
-			{
-				bIsCurrent = true;
-			}
-			else if (i != this.m_lPagesCount - 1)
-			{
-				if (_y > rect.bottom && _y < this.m_arrPages[i + 1].drawingPage.top)
-					bIsCurrent = true;
-			}
-			else if (_y < rect.top)
-			{
-				// либо вышли раньше, либо это самая первая видимая страница
-				bIsCurrent = true;
-			}
-			else if (i == this.m_lDrawingEnd)
-			{
-				if (_y > rect.bottom)
-					bIsCurrent = true;
-			}
-
-			if (bIsCurrent)
-			{
-				var x_mm = (_x - rect.left) * dKoef;
-				var y_mm = (_y - rect.top) * dKoef;
-
-				if (true === bIsNoNormalize)
-				{
-					if (x_mm > (this.m_arrPages[i].width_mm + 10))
-						x_mm = this.m_arrPages[i].width_mm + 10;
-					if (x_mm < -10)
-						x_mm = -10;
-				}
-
-				return {X: x_mm, Y: y_mm, Page: rect.pageIndex, DrawPage: i};
-			}
-		}
-
-		return {X: 0, Y: 0, Page: -1, DrawPage: -1};
-	};
-
-	this.ConvetToPageCoords = function (x, y, pageIndex)
-	{
-		if (pageIndex < 0 || pageIndex >= this.m_lPagesCount)
-		{
-			return {X: 0, Y: 0, Page: pageIndex, Error: true};
-		}
-		var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
-		var rect = this.m_arrPages[pageIndex].drawingPage;
-
-		var _x = (x - rect.left) * dKoef;
-		var _y = (y - rect.top) * dKoef;
-
-		return {X: _x, Y: _y, Page: pageIndex, Error: false};
-	};
-
-	this.IsCursorInTableCur = function (x, y, page)
-	{
-		var _table = this.TableOutlineDr.TableOutline;
-		if (_table == null)
-			return false;
-
-		if (page != _table.PageNum)
-			return false;
-
-		var _dist = this.TableOutlineDr.mover_size * g_dKoef_pix_to_mm;
-		_dist *= (100 / this.m_oWordControl.m_nZoomValue);
-
-		var _x = _table.X;
-		var _y = _table.Y;
-		var _r = _x + _table.W;
-		var _b = _y + _table.H;
-
-		if ((x > (_x - _dist)) && (x < _r) && (y > (_y - _dist)) && (y < _b))
-		{
-			if ((x < _x) || (y < _y))
-			{
-				this.TableOutlineDr.Counter = 0;
-				this.TableOutlineDr.bIsNoTable = false;
-				return true;
-			}
-		}
-		return false;
-	};
-
-	this.ConvertCoordsToCursorWR = function (x, y, pageIndex, transform, id_ruler_no_use)
-	{
-		var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
-
-		var _x = 0;
-		var _y = 0;
-		if (true == this.m_oWordControl.m_bIsRuler && (id_ruler_no_use !== false))
-		{
-			_x = 5 * g_dKoef_mm_to_pix;
-			_y = 7 * g_dKoef_mm_to_pix;
-		}
-
-		// теперь крутить всякие циклы нет смысла
-		if (pageIndex < 0 || pageIndex >= this.m_lPagesCount)
-		{
-			return {X: 0, Y: 0, Error: true};
-		}
-
-		var __x = x;
-		var __y = y;
-		if (transform)
-		{
-			__x = transform.TransformPointX(x, y);
-			__y = transform.TransformPointY(x, y);
-		}
-
-		var x_pix = (this.m_arrPages[pageIndex].drawingPage.left + __x * dKoef + _x) >> 0;
-		var y_pix = (this.m_arrPages[pageIndex].drawingPage.top + __y * dKoef + _y) >> 0;
-
-		return {X: x_pix, Y: y_pix, Error: false};
-	};
-
-	this.ConvertCoordsToCursor = function (x, y, pageIndex, bIsRul)
-	{
-		var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
-
-		var _x = 0;
-		var _y = 0;
-		if (true == this.m_oWordControl.m_bIsRuler)
-		{
-			if (undefined == bIsRul)
-			{
-				//_x = 5 * g_dKoef_mm_to_pix;
-				//_y = 7 * g_dKoef_mm_to_pix;
-			}
-		}
-
-		// теперь крутить всякие циклы нет смысла
-		if (pageIndex < 0 || pageIndex >= this.m_lPagesCount)
-		{
-			return {X: 0, Y: 0, Error: true};
-		}
-
-		var x_pix = (this.m_arrPages[pageIndex].drawingPage.left + x * dKoef + _x) >> 0;
-		var y_pix = (this.m_arrPages[pageIndex].drawingPage.top + y * dKoef + _y) >> 0;
-
-		return {X: x_pix, Y: y_pix, Error: false};
-
-		// old version
-		for (var i = this.m_lDrawingFirst; i <= this.m_lDrawingEnd; i++)
-		{
-			var rect = this.m_arrPages[i].drawingPage;
-
-			if (this.m_arrPages[i].pageIndex == pageIndex)
-			{
-				var x_pix = (rect.left + x * dKoef + _x) >> 0;
-				var y_pix = (rect.top + y * dKoef + _y) >> 0;
-
-				return {X: x_pix, Y: y_pix, Error: false};
-			}
-		}
-
-		return {X: 0, Y: 0, Error: true};
-	};
-	this.ConvertCoordsToCursor2 = function (x, y, pageIndex, bIsRul)
-	{
-		var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
-
-		var _x = 0;
-		var _y = 0;
-		if (true == this.m_oWordControl.m_bIsRuler)
-		{
-			if (undefined == bIsRul)
-			{
-				//_x = 5 * g_dKoef_mm_to_pix;
-				//_y = 7 * g_dKoef_mm_to_pix;
-			}
-		}
-
-		// теперь крутить всякие циклы нет смысла
-		if (pageIndex < 0 || pageIndex >= this.m_lPagesCount)
-		{
-			return {X: 0, Y: 0, Error: true};
-		}
-
-		var x_pix = (this.m_arrPages[pageIndex].drawingPage.left + x * dKoef + _x - 0.5) >> 0;
-		var y_pix = (this.m_arrPages[pageIndex].drawingPage.top + y * dKoef + _y - 0.5) >> 0;
-
-		return {X: x_pix, Y: y_pix, Error: false};
-	};
-	this.ConvertCoordsToCursor3 = function (x, y, pageIndex, isGlobal)
-	{
-		// теперь крутить всякие циклы нет смысла
-		if (pageIndex < 0 || pageIndex >= this.m_lPagesCount)
-		{
-			return {X: 0, Y: 0, Error: true};
-		}
-
-		var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
-
-		var _x = 0;
-		var _y = 0;
-		if (isGlobal)
-		{
-			_x = this.m_oWordControl.X;
-			_y = this.m_oWordControl.Y;
-
-			if (true == this.m_oWordControl.m_bIsRuler)
-			{
-				_x += 5 * g_dKoef_mm_to_pix;
-				_y += 7 * g_dKoef_mm_to_pix;
-			}
-		}
-
-		var x_pix = (this.m_arrPages[pageIndex].drawingPage.left + x * dKoef + _x + 0.5) >> 0;
-		var y_pix = (this.m_arrPages[pageIndex].drawingPage.top + y * dKoef + _y + 0.5) >> 0;
-
-		return {X: x_pix, Y: y_pix, Error: false};
-	};
-
-	this.ConvertCoordsToCursor4 = function (x, y, pageIndex, isNoRound)
-	{
-		// теперь крутить всякие циклы нет смысла
-		if (pageIndex < 0 || pageIndex >= this.m_lPagesCount)
-		{
-			return {X: 0, Y: 0, Error: true};
-		}
-
-		var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
-
-		var x_pix = (this.m_arrPages[pageIndex].drawingPage.left + x * dKoef);
-		var y_pix = (this.m_arrPages[pageIndex].drawingPage.top + y * dKoef);
-
-		if (true !== isNoRound)
-		{
-			x_pix = (x_pix + 0.5) >> 0;
-			y_pix = (y_pix + 0.5) >> 0;
-		}
-
-		return {X: x_pix, Y: y_pix, Error: false};
-	};
-
-	this.InitViewer = function ()
-	{
-	};
-
 	this.TargetStart = function ()
 	{
 		if (this.m_lTimerTargetId != -1)
@@ -3237,17 +2142,23 @@ function CDrawingDocument()
 			return this.TargetCursorColor;
 		return AscCommon.darkModeCorrectColor(this.TargetCursorColor.R, this.TargetCursorColor.G, this.TargetCursorColor.B);
 	};
-	this.GetTargetStyle = function ()
-	{
-		var color = this.GetTargetColor();
-		return "rgb(" + color.R + "," + color.G + "," + color.B + ")";
-	};
-
 	this.SetTargetColor = function (r, g, b)
 	{
 		this.TargetCursorColor.R = r;
 		this.TargetCursorColor.G = g;
 		this.TargetCursorColor.B = b;
+	};
+
+	this.SetTargetSize = function (size)
+	{
+		this.m_dTargetSize = size;
+		//this.TargetHtmlElement.style.height = Number(this.m_dTargetSize * this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100) + "px";
+		//this.TargetHtmlElement.style.width = "2px";
+	};
+	this.GetTargetStyle = function ()
+	{
+		var color = this.GetTargetColor();
+		return "rgb(" + color.R + "," + color.G + "," + color.B + ")";
 	};
 
 	this.CheckTargetDraw = function (x, y)
@@ -3362,17 +2273,21 @@ function CDrawingDocument()
 
 		this.m_oWordControl.m_oLogicDocument.Set_TargetPos(x, y, pageIndex);
 
-        if(window["NATIVE_EDITOR_ENJINE"])
-        	return;
+		if(window["NATIVE_EDITOR_ENJINE"])
+			return;
 
 		if (this.UpdateTargetFromPaint === false && this.m_lCurrentPage != -1)
 		{
+			this.isDisableScrollToTarget = this.m_oWordControl.m_oApi.isLockScrollToTarget;
 			this.UpdateTargetCheck = true;
 			return;
 		}
 
 		var bNeedScrollToTarget = true;
 		if (!this.isScrollToTargetAttack && this.m_dTargetX == x && this.m_dTargetY == y && this.m_lTargetPage == pageIndex)
+			bNeedScrollToTarget = false;
+
+		if (this.m_oWordControl.m_oApi.isLockScrollToTarget || this.isDisableScrollToTarget)
 			bNeedScrollToTarget = false;
 
 		this.isScrollToTargetAttack = false;
@@ -3446,6 +2361,8 @@ function CDrawingDocument()
 			nValueScrollVer = 0;
 		}
 
+		this.isDisableScrollToTarget = false;
+
 		if (0 != nValueScrollHor || 0 != nValueScrollVer)
 		{
 			if (this.m_oWordControl.m_bIsMouseUpSend === true && AscCommon.global_keyboardEvent.ClickCount != 1)
@@ -3499,7 +2416,7 @@ function CDrawingDocument()
 		var oWordControl = oThis.m_oWordControl;
 
 		var bIsPageChanged = false;
-		if (oThis.m_lCurrentPage != pageIndex)
+		if (oThis.m_lCurrentPage !== pageIndex)
 		{
 			oThis.m_lCurrentPage = pageIndex;
 			oWordControl.SetCurrentPage2();
@@ -3573,13 +2490,7 @@ function CDrawingDocument()
 		oThis.TargetHtmlElement.style.top = oThis.TargetHtmlElementTop + "px";
 	};
 
-	this.SetTargetSize = function (size)
-	{
-		this.m_dTargetSize = size;
-		//this.TargetHtmlElement.style.height = Number(this.m_dTargetSize * this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100) + "px";
-		//this.TargetHtmlElement.style.width = "2px";
-	};
-	this.DrawTarget = function ()
+	this.DrawTarget = function()
 	{
 		if (oThis.NeedTarget)
 		{
@@ -3616,1567 +2527,8 @@ function CDrawingDocument()
 
 		this.TargetShowFlag = true;
 	};
-	this.StartTrackImage = function (obj, x, y, w, h, type, pagenum)
-	{
-	};
-	this.StartTrackTable = function (obj, transform)
-	{
-		if (this.m_oWordControl.MobileTouchManager)
-		{
-			if (!this.m_oWordControl.MobileTouchManager.TableStartTrack_Check)
-				return;
-		}
 
-		this.TableOutlineDr.TableOutline = obj;
-		this.TableOutlineDr.Counter = 0;
-		this.TableOutlineDr.bIsNoTable = false;
-		this.TableOutlineDr.CheckStartTrack(this.m_oWordControl, transform);
-
-		if (this.m_oWordControl.MobileTouchManager)
-			this.m_oWordControl.OnUpdateOverlay();
-	};
-	this.EndTrackTable = function (pointer, bIsAttack)
-	{
-		if (this.TableOutlineDr.TableOutline != null)
-		{
-			if (pointer == this.TableOutlineDr.TableOutline.Table || bIsAttack)
-			{
-				this.TableOutlineDr.TableOutline = null;
-				this.TableOutlineDr.Counter = 0;
-			}
-		}
-	};
-	this.CheckTrackTable = function ()
-	{
-		if (null == this.TableOutlineDr.TableOutline)
-			return;
-
-		if (this.TableOutlineDr.bIsNoTable && this.TableOutlineDr.bIsTracked === false)
-		{
-			this.TableOutlineDr.Counter++;
-			if (this.TableOutlineDr.Counter > 100)
-			{
-				this.TableOutlineDr.TableOutline = null;
-				this.m_oWordControl.OnUpdateOverlay();
-			}
-		}
-	};
-
-	this.DrawFrameTrack = function (overlay)
-	{
-		if (!this.FrameRect.IsActive)
-			return;
-
-		var _page = this.m_arrPages[this.FrameRect.PageIndex];
-		var drPage = _page.drawingPage;
-
-		var dKoefX = (drPage.right - drPage.left) / _page.width_mm;
-		var dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
-
-		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-		var _x = (drPage.left + dKoefX * this.FrameRect.Rect.X) * rPR;
-		var _y = (drPage.top + dKoefY * this.FrameRect.Rect.Y) * rPR;
-		var _r = (drPage.left + dKoefX * this.FrameRect.Rect.R) * rPR;
-		var _b = (drPage.top + dKoefY * this.FrameRect.Rect.B) * rPR;
-
-		var ctx = overlay.m_oContext;
-		ctx.strokeStyle = "#939393";
-		ctx.lineWidth = Math.round(rPR);
-
-		ctx.beginPath();
-		this.AutoShapesTrack.AddRectDashClever(ctx, _x >> 0, _y >> 0, _r >> 0, _b >> 0, 2, 2, true);
-		ctx.beginPath();
-
-		var _w = Math.round(4 * rPR);
-		var _wc = Math.round(5 * rPR);
-
-		var _x1 = (_x >> 0) + Math.round(rPR);
-		var _y1 = (_y >> 0) + Math.round(rPR);
-
-		var _x2 = (_r >> 0) - _w;
-		var _y2 = (_b >> 0) - _w;
-
-		var _xc = ((_x + _r - _wc) / 2) >> 0;
-		var _yc = ((_y + _b - _wc) / 2) >> 0;
-
-		ctx.rect(_x1, _y1, _w, _w);
-		ctx.rect(_xc, _y1, _wc, _w);
-		ctx.rect(_x2, _y1, _w, _w);
-		ctx.rect(_x1, _yc, _w, _wc);
-		ctx.rect(_x2, _yc, _w, _wc);
-		ctx.rect(_x1, _y2, _w, _w);
-		ctx.rect(_xc, _y2, _wc, _w);
-		ctx.rect(_x2, _y2, _w, _w);
-
-		ctx.fillStyle = "#777777";
-		ctx.fill();
-		ctx.beginPath();
-
-		overlay.CheckPoint(_x - _wc, _y - _wc);
-		overlay.CheckPoint(_r + _wc, _b + _wc);
-
-		// move
-		if (this.FrameRect.IsTracked)
-		{
-			_page = this.m_arrPages[this.FrameRect.Track.PageIndex];
-			drPage = _page.drawingPage;
-
-			dKoefX = (drPage.right - drPage.left) / _page.width_mm;
-			dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
-
-			var __x = (drPage.left + dKoefX * this.FrameRect.Track.L) * rPR >> 0;
-			var __y = (drPage.top + dKoefY * this.FrameRect.Track.T) * rPR >> 0;
-			var __r = (drPage.left + dKoefX * this.FrameRect.Track.R) * rPR >> 0;
-			var __b = (drPage.top + dKoefY * this.FrameRect.Track.B) * rPR >> 0;
-
-			if (__x < overlay.min_x)
-				overlay.min_x = __x;
-			if (__r > overlay.max_x)
-				overlay.max_x = __r;
-
-			if (__y < overlay.min_y)
-				overlay.min_y = __y;
-			if (__b > overlay.max_y)
-				overlay.max_y = __b;
-
-			ctx.strokeStyle = "#FFFFFF";
-
-			ctx.beginPath();
-			ctx.rect(__x + 0.5 * Math.round(rPR), __y + 0.5 * Math.round(rPR), __r - __x, __b - __y);
-			ctx.stroke();
-
-			ctx.strokeStyle = "#000000";
-			ctx.beginPath();
-			this.AutoShapesTrack.AddRectDashClever(ctx, __x, __y, __r, __b, 3, 3, true);
-			ctx.beginPath();
-		}
-	};
-
-	this.OnDrawContentControl = function(obj, state, geom)
-	{
-		if (window["NATIVE_EDITOR_ENJINE"] === true)
-			return;
-		return this.contentControls.OnDrawContentControl(obj, state, geom);
-	};
-
-	this.DrawMathTrack = function (overlay)
-	{
-		if (!this.MathTrack.IsActive())
-			return;
-
-		overlay.Show();
-		var nIndex, nCount;
-		var oPath;
-		var _page, drPage, dKoefX, dKoefY;
-		var PathLng = this.MathTrack.GetPolygonsCount();
-		var textMatrix = (null == this.TextMatrix || global_MatrixTransformer.IsIdentity(this.TextMatrix)) ? null : this.TextMatrix;
-
-		for (nIndex = 0; nIndex < PathLng; nIndex++)
-		{
-			oPath = this.MathTrack.GetPolygon(nIndex);
-			_page = this.m_arrPages[oPath.Page];
-			drPage = _page.drawingPage;
-
-			dKoefX = (drPage.right - drPage.left) / _page.width_mm;
-			dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
-			this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, drPage.left, drPage.top, textMatrix);
-			this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, drPage.left, drPage.top, textMatrix);
-		}
-		for (nIndex = 0, nCount = this.MathTrack.GetSelectPathsCount(); nIndex < nCount; nIndex++)
-		{
-			oPath = this.MathTrack.GetSelectPath(nIndex);
-			_page = this.m_arrPages[oPath.Page];
-			drPage = _page.drawingPage;
-			dKoefX = (drPage.right - drPage.left) / _page.width_mm;
-			dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
-			this.MathTrack.DrawSelectPolygon(overlay, oPath, dKoefX, dKoefY, drPage.left, drPage.top, textMatrix);
-		}
-	};
-
-	this.DrawFieldTrack = function (overlay)
-	{
-		if (!this.FieldTrack.IsActive)
-			return;
-
-		overlay.Show();
-
-		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-
-		for (var nIndex = 0, nCount = this.FieldTrack.Rects.length; nIndex < nCount; nIndex++)
-		{
-			var FieldRect = this.FieldTrack.Rects[nIndex];
-
-			var _page = this.m_arrPages[FieldRect.PageIndex];
-			var drPage = _page.drawingPage;
-
-			var dKoefX = (drPage.right - drPage.left) / _page.width_mm;
-			var dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
-
-			if (null == this.TextMatrix || global_MatrixTransformer.IsIdentity(this.TextMatrix))
-			{
-				var _x = (drPage.left + dKoefX * FieldRect.X0) * rPR;
-				var _y = (drPage.top + dKoefY * FieldRect.Y0) * rPR;
-				var _r = (drPage.left + dKoefX * FieldRect.X1) * rPR;
-				var _b = (drPage.top + dKoefY * FieldRect.Y1) * rPR;
-
-				if (_x < overlay.min_x)
-					overlay.min_x = _x;
-				if (_r > overlay.max_x)
-					overlay.max_x = _r;
-
-				if (_y < overlay.min_y)
-					overlay.min_y = _y;
-				if (_b > overlay.max_y)
-					overlay.max_y = _b;
-
-				var ctx = overlay.m_oContext;
-				ctx.fillStyle = "#375082";
-
-				ctx.beginPath();
-				this.AutoShapesTrack.AddRect(ctx, _x >> 0, _y >> 0, _r >> 0, _b >> 0);
-
-				ctx.globalAlpha = 0.2;
-				ctx.fill();
-				ctx.globalAlpha = 1;
-				ctx.beginPath();
-			}
-			else
-			{
-				var _arrSelect = TransformRectByMatrix(this.TextMatrix, [FieldRect.X0, FieldRect.Y0, FieldRect.X1, FieldRect.Y1], drPage.left, drPage.top, dKoefX, dKoefY);
-
-				for (var i = 0; i < 8; i++)
-					_arrSelect[i] *= rPR;
-
-				overlay.CheckPoint(_arrSelect[0], _arrSelect[1]);
-				overlay.CheckPoint(_arrSelect[2], _arrSelect[3]);
-				overlay.CheckPoint(_arrSelect[4], _arrSelect[5]);
-				overlay.CheckPoint(_arrSelect[6], _arrSelect[7]);
-
-				var ctx = overlay.m_oContext;
-				ctx.fillStyle = "#375082";
-
-				ctx.beginPath();
-
-				ctx.moveTo(_arrSelect[0], _arrSelect[1]);
-				ctx.lineTo(_arrSelect[2], _arrSelect[3]);
-				ctx.lineTo(_arrSelect[4], _arrSelect[5]);
-				ctx.lineTo(_arrSelect[6], _arrSelect[7]);
-				ctx.closePath();
-
-				ctx.globalAlpha = 0.2;
-				ctx.fill();
-				ctx.globalAlpha = 1;
-				ctx.beginPath();
-			}
-		}
-	};
-
-	this.DrawTableTrack = function (overlay)
-	{
-		if (null == this.TableOutlineDr.TableOutline)
-			return;
-
-		var _table = this.TableOutlineDr.TableOutline.Table;
-
-		if (!_table.Is_Inline() || this.TableOutlineDr.IsResizeTableTrack)
-		{
-			if (null == this.TableOutlineDr.CurPos)
-				return;
-
-			var _page = this.m_arrPages[this.TableOutlineDr.CurPos.Page];
-			var drPage = _page.drawingPage;
-
-			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-			var dKoefX = (drPage.right - drPage.left) / _page.width_mm;
-			var dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
-			var indent = 0.5 * Math.round(rPR);
-
-			if (!this.TableOutlineDr.TableMatrix || global_MatrixTransformer.IsIdentity(this.TableOutlineDr.TableMatrix))
-			{
-				var _x = ((drPage.left + dKoefX * this.TableOutlineDr.CurPos.X) * rPR >> 0) + indent;
-				var _y = ((drPage.top + dKoefY * this.TableOutlineDr.CurPos.Y) >> 0) * rPR + indent;
-
-				var _r = _x + ((dKoefX * this.TableOutlineDr.TableOutline.W) * rPR >> 0);
-				var _b = _y + ((dKoefY * this.TableOutlineDr.TableOutline.H) * rPR >> 0);
-
-				if (this.TableOutlineDr.IsResizeTableTrack)
-				{
-					var _lastBounds = this.TableOutlineDr.getLastPageBounds();
-					var _lastX = _lastBounds.X;
-					var _lastY = this.TableOutlineDr.getFullTopPosition(_lastBounds);
-					var _lastYStart = _lastBounds.Y;
-
-					_x = ((drPage.left + dKoefX * _lastX) * rPR >> 0) + indent;
-					_y = ((drPage.top + dKoefY * _lastY) * rPR >> 0) + indent;
-					var _yStart = ((drPage.top + dKoefY * _lastYStart) * rPR >> 0) + indent;
-
-					_r = _x + ((dKoefX * (_lastBounds.W + this.TableOutlineDr.AddResizeCurrentW)) * rPR >> 0);
-					_b = _yStart + ((dKoefY * (_lastBounds.H + this.TableOutlineDr.AddResizeCurrentH)) * rPR >> 0);
-				}
-				overlay.CheckPoint(_x, _y);
-				overlay.CheckPoint(_x, _b);
-				overlay.CheckPoint(_r, _y);
-				overlay.CheckPoint(_r, _b);
-
-				var ctx = overlay.m_oContext;
-				ctx.strokeStyle = "#FFFFFF";
-
-				ctx.beginPath();
-				ctx.rect(_x, _y, _r - _x, _b - _y);
-				ctx.lineWidth = Math.round(rPR);
-				ctx.stroke();
-
-				ctx.strokeStyle = "#000000";
-				ctx.beginPath();
-
-				// набиваем пунктир
-				var dot_size = 3 * Math.round(rPR);
-				for (var i = _x; i < _r; i += dot_size)
-				{
-					ctx.moveTo(i, _y);
-					i += dot_size;
-
-					if (i > _r)
-						i = _r;
-
-					ctx.lineTo(i, _y);
-				}
-				for (var i = _y; i < _b; i += dot_size)
-				{
-					ctx.moveTo(_r, i);
-					i += dot_size;
-
-					if (i > _b)
-						i = _b;
-
-					ctx.lineTo(_r, i);
-				}
-				for (var i = _r; i > _x; i -= dot_size)
-				{
-					ctx.moveTo(i, _b);
-					i -= dot_size;
-
-					if (i < _x)
-						i = _x;
-
-					ctx.lineTo(i, _b);
-				}
-				for (var i = _b; i > _y; i -= dot_size)
-				{
-					ctx.moveTo(_x, i);
-					i -= dot_size;
-
-					if (i < _y)
-						i = _y;
-
-					ctx.lineTo(_x, i);
-				}
-
-				ctx.stroke();
-				ctx.beginPath();
-			}
-			else
-			{
-				var _x = this.TableOutlineDr.CurPos.X + _table.GetTableOffsetCorrection();
-				var _y = this.TableOutlineDr.CurPos.Y;
-				var _r = _x + this.TableOutlineDr.TableOutline.W;
-				var _b = _y + this.TableOutlineDr.TableOutline.H;
-
-				if (this.TableOutlineDr.IsResizeTableTrack)
-				{
-					_x = this.TableOutlineDr.TableOutline.X;
-					_y = this.TableOutlineDr.TableOutline.Y;
-
-					_r = _x + (this.TableOutlineDr.TableOutline.W + this.TableOutlineDr.AddResizeCurrentW);
-					_b = _y + (this.TableOutlineDr.TableOutline.H + this.TableOutlineDr.AddResizeCurrentH);
-				}
-
-				var transform = this.TableOutlineDr.TableMatrix;
-
-				var x1 = transform.TransformPointX(_x, _y);
-				var y1 = transform.TransformPointY(_x, _y);
-
-				var x2 = transform.TransformPointX(_r, _y);
-				var y2 = transform.TransformPointY(_r, _y);
-
-				var x3 = transform.TransformPointX(_r, _b);
-				var y3 = transform.TransformPointY(_r, _b);
-
-				var x4 = transform.TransformPointX(_x, _b);
-				var y4 = transform.TransformPointY(_x, _b);
-
-				x1 = drPage.left + dKoefX * x1;
-				y1 = drPage.top + dKoefY * y1;
-
-				x2 = drPage.left + dKoefX * x2;
-				y2 = drPage.top + dKoefY * y2;
-
-				x3 = drPage.left + dKoefX * x3;
-				y3 = drPage.top + dKoefY * y3;
-
-				x4 = drPage.left + dKoefX * x4;
-				y4 = drPage.top + dKoefY * y4;
-
-				overlay.CheckPoint(x1, y1);
-				overlay.CheckPoint(x2, y2);
-				overlay.CheckPoint(x3, y3);
-				overlay.CheckPoint(x4, y4);
-
-				var ctx = overlay.m_oContext;
-				ctx.strokeStyle = "#FFFFFF";
-
-				ctx.beginPath();
-				ctx.moveTo(x1, y1);
-				ctx.lineTo(x2, y2);
-				ctx.lineTo(x3, y3);
-				ctx.lineTo(x4, y4);
-				ctx.closePath();
-				ctx.stroke();
-
-				ctx.strokeStyle = "#000000";
-				ctx.beginPath();
-				this.AutoShapesTrack.AddRectDash(ctx, x1, y1, x2, y2, x4, y4, x3, y3, 3, 3, true);
-				ctx.beginPath();
-			}
-		}
-		else
-		{
-			this.LockCursorType("default");
-
-			var _x = global_mouseEvent.X;
-			var _y = global_mouseEvent.Y;
-			var posMouse = this.ConvertCoordsFromCursor2(_x, _y);
-
-			this.TableOutlineDr.InlinePos = this.m_oWordControl.m_oLogicDocument.Get_NearestPos(posMouse.Page, posMouse.X, posMouse.Y);
-			this.TableOutlineDr.InlinePos.Page = posMouse.Page;
-			//var posView = this.ConvertCoordsToCursor(this.TableOutlineDr.InlinePos.X, this.TableOutlineDr.InlinePos.Y, posMouse.Page, true);
-
-			var _near = this.TableOutlineDr.InlinePos;
-			this.AutoShapesTrack.SetCurrentPage(_near.Page);
-			this.AutoShapesTrack.DrawInlineMoveCursor(_near.X, _near.Y, _near.Height, _near.transform);
-		}
-	};
-	this.SetCurrentPage = function (PageIndex)
-	{
-		if (PageIndex >= this.m_arrPages.length)
-			return;
-		if (this.m_lCurrentPage == PageIndex)
-			return;
-
-		this.m_lCurrentPage = PageIndex;
-		this.m_oWordControl.SetCurrentPage();
-	};
-
-	this.SelectEnabled = function (bIsEnabled)
-	{
-		this.m_bIsSelection = bIsEnabled;
-		if (false === this.m_bIsSelection)
-		{
-			this.SelectClear();
-			//this.m_oWordControl.CheckUnShowOverlay();
-			this.m_oWordControl.OnUpdateOverlay();
-			this.m_oWordControl.m_oOverlayApi.m_oContext.globalAlpha = 1.0;
-		}
-	};
-	this.SelectClear = function ()
-	{
-		if (this.m_oWordControl.MobileTouchManager)
-		{
-			this.m_oWordControl.MobileTouchManager.RectSelect1 = null;
-			this.m_oWordControl.MobileTouchManager.RectSelect2 = null;
-		}
-	};
-	this.SearchClear = function ()
-	{
-		for (var i = 0; i < this.m_lPagesCount; i++)
-		{
-			this.m_arrPages[i].searchingArray.splice(0, this.m_arrPages[i].searchingArray.length);
-		}
-
-		this._search_HdrFtr_All.splice(0, this._search_HdrFtr_All.length);
-		this._search_HdrFtr_All_no_First.splice(0, this._search_HdrFtr_All_no_First.length);
-		this._search_HdrFtr_First.splice(0, this._search_HdrFtr_First.length);
-		this._search_HdrFtr_Even.splice(0, this._search_HdrFtr_Even.length);
-		this._search_HdrFtr_Odd.splice(0, this._search_HdrFtr_Odd.length);
-		this._search_HdrFtr_Odd_no_First.splice(0, this._search_HdrFtr_Odd_no_First.length);
-
-		this.m_oWordControl.m_oOverlayApi.Clear();
-		this.m_bIsSearching = false;
-	};
-	this.AddPageSearch = function (findText, rects, type)
-	{
-		var _len = rects.length;
-		if (_len == 0)
-			return;
-
-		if (this.m_oWordControl.m_oOverlay.HtmlElement.style.display == "none")
-		{
-			this.m_oWordControl.ShowOverlay();
-			this.m_oWordControl.m_oOverlayApi.m_oContext.globalAlpha = 0.2;
-		}
-
-		var navigator = {Page: rects[0].PageNum, Place: rects, Type: type};
-
-		var _find = {text: findText, navigator: navigator};
-		this.m_oWordControl.m_oApi.sync_SearchFoundCallback(_find);
-
-		var is_update = false;
-
-		var _type = type & 0x00FF;
-		switch (_type)
-		{
-			case search_Common:
-			{
-				var _pages = this.m_arrPages;
-				for (var i = 0; i < _len; i++)
-				{
-					var r = rects[i];
-
-					if (this.SearchTransform)
-						r.Transform = this.SearchTransform;
-
-					_pages[r.PageNum].searchingArray[_pages[r.PageNum].searchingArray.length] = r;
-
-					if (r.PageNum >= this.m_lDrawingFirst && r.PageNum <= this.m_lDrawingEnd)
-						is_update = true;
-				}
-				break;
-			}
-			case search_HdrFtr_All:
-			{
-				for (var i = 0; i < _len; i++)
-				{
-					if (this.SearchTransform)
-						rects[i].Transform = this.SearchTransform;
-
-					this._search_HdrFtr_All[this._search_HdrFtr_All.length] = rects[i];
-				}
-				is_update = true;
-
-				break;
-			}
-			case search_HdrFtr_All_no_First:
-			{
-				for (var i = 0; i < _len; i++)
-				{
-					if (this.SearchTransform)
-						rects[i].Transform = this.SearchTransform;
-
-					this._search_HdrFtr_All_no_First[this._search_HdrFtr_All_no_First.length] = rects[i];
-				}
-				if (this.m_lDrawingEnd > 0)
-					is_update = true;
-
-				break;
-			}
-			case search_HdrFtr_First:
-			{
-				for (var i = 0; i < _len; i++)
-				{
-					if (this.SearchTransform)
-						rects[i].Transform = this.SearchTransform;
-
-					this._search_HdrFtr_First[this._search_HdrFtr_First.length] = rects[i];
-				}
-				if (this.m_lDrawingFirst == 0)
-					is_update = true;
-
-				break;
-			}
-			case search_HdrFtr_Even:
-			{
-				for (var i = 0; i < _len; i++)
-				{
-					if (this.SearchTransform)
-						rects[i].Transform = this.SearchTransform;
-
-					this._search_HdrFtr_Even[this._search_HdrFtr_Even.length] = rects[i];
-				}
-				var __c = this.m_lDrawingEnd - this.m_lDrawingFirst;
-
-				if (__c > 1)
-					is_update = true;
-				else if (__c == 1 && (this.m_lDrawingFirst & 1) == 1)
-					is_update = true;
-
-				break;
-			}
-			case search_HdrFtr_Odd:
-			{
-				for (var i = 0; i < _len; i++)
-				{
-					if (this.SearchTransform)
-						rects[i].Transform = this.SearchTransform;
-
-					this._search_HdrFtr_Odd[this._search_HdrFtr_Odd.length] = rects[i];
-				}
-				var __c = this.m_lDrawingEnd - this.m_lDrawingFirst;
-
-				if (__c > 1)
-					is_update = true;
-				else if (__c == 1 && (this.m_lDrawingFirst & 1) == 0)
-					is_update = true;
-
-				break;
-			}
-			case search_HdrFtr_Odd_no_First:
-			{
-				for (var i = 0; i < _len; i++)
-				{
-					if (this.SearchTransform)
-						rects[i].Transform = this.SearchTransform;
-
-					this._search_HdrFtr_Odd_no_First[this._search_HdrFtr_Odd_no_First.length] = rects[i];
-				}
-
-				if (this.m_lDrawingEnd > 1)
-				{
-					var __c = this.m_lDrawingEnd - this.m_lDrawingFirst;
-					if (__c > 1)
-						is_update = true;
-					else if (__c == 1 && (this.m_lDrawingFirst & 1) == 0)
-						is_update = true;
-				}
-
-				break;
-			}
-			default:
-				break;
-		}
-
-		if (is_update)
-			this.m_oWordControl.OnUpdateOverlay();
-
-	};
-
-	this.StartSearchTransform = function (transform)
-	{
-		this.SearchTransform = transform.CreateDublicate();
-	};
-
-	this.EndSearchTransform = function ()
-	{
-		this.SearchTransform = null;
-	};
-
-	this.StartSearch = function ()
-	{
-		this.SearchClear();
-		if (this.m_bIsSelection)
-			this.m_oWordControl.OnUpdateOverlay();
-		this.m_bIsSearching = true;
-	};
-	this.EndSearch = function (bIsChange)
-	{
-		if (bIsChange)
-		{
-			this.SearchClear();
-			this.m_bIsSearching = false;
-			this.m_oWordControl.OnUpdateOverlay();
-		}
-		else
-		{
-			this.m_bIsSearching = true;
-			this.m_oWordControl.OnUpdateOverlay();
-		}
-		this.m_oWordControl.m_oApi.sync_SearchEndCallback();
-	};
-
-	this.SetTextSelectionOutline = function (isSelectionOutline)
-	{
-		this.IsTextSelectionOutline = isSelectionOutline;
-	};
-
-	this.private_StartDrawSelection = function (overlay, isSelect2)
-	{
-		this.Overlay = overlay;
-		this.IsTextMatrixUse = ((null != this.TextMatrix) && !global_MatrixTransformer.IsIdentity(this.TextMatrix));
-
-		this.Overlay.m_oContext.fillStyle = "rgba(51,102,204,255)";
-		this.Overlay.m_oContext.beginPath();
-
-		if (this.m_oWordControl.MobileTouchManager && (true !== isSelect2))
-		{
-			this.m_oWordControl.MobileTouchManager.RectSelect1 = null;
-			this.m_oWordControl.MobileTouchManager.RectSelect2 = null;
-		}
-	};
-	this.private_EndDrawSelection = function ()
-	{
-		var ctx = this.Overlay.m_oContext;
-
-		ctx.globalAlpha = 0.2;
-		ctx.fill();
-
-		if (this.IsTextMatrixUse && this.IsTextSelectionOutline)
-		{
-			ctx.strokeStyle = "#9ADBFE";
-			ctx.lineWidth = Math.round(AscCommon.AscBrowser.retinaPixelRatio);
-			ctx.globalAlpha = 1.0;
-			ctx.stroke();
-		}
-
-		ctx.beginPath();
-		ctx.globalAlpha = 1.0;
-
-		this.IsTextMatrixUse = false;
-		this.Overlay = null;
-	};
-
-	this.AddPageSelection = function (pageIndex, x, y, w, h)
-	{
-		if (null == this.SelectionMatrix)
-			this.SelectionMatrix = this.TextMatrix;
-
-		this.IsTextMatrixUse = ((null != this.TextMatrix) && !global_MatrixTransformer.IsIdentity(this.TextMatrix));
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-		var page = this.m_arrPages[pageIndex];
-		var drawPage = page.drawingPage;
-
-		var dKoefX = (drawPage.right - drawPage.left) / page.width_mm;
-		var dKoefY = (drawPage.bottom - drawPage.top) / page.height_mm;
-
-		if (!this.IsTextMatrixUse)
-		{
-			var _x = ((drawPage.left + dKoefX * x) >> 0);
-			var _y = ((drawPage.top + dKoefY * y) >> 0);
-
-			var _r = ((drawPage.left + dKoefX * (x + w)) >> 0);
-			var _b = ((drawPage.top + dKoefY * (y + h)) >> 0);
-
-			var _w = _r - _x + 1;
-			var _h = _b - _y + 1;
-
-			this.Overlay.CheckRect(rPR * _x, rPR * _y, rPR * _w, rPR * _h);
-			this.Overlay.m_oContext.rect((rPR * _x) >> 0, (rPR *_y) >> 0, (_w * rPR) >> 0, (_h * rPR) >> 0);
-			// this.Overlay.
-		}
-		else
-		{
-			var _x1 = this.TextMatrix.TransformPointX(x, y);
-			var _y1 = this.TextMatrix.TransformPointY(x, y);
-
-			var _x2 = this.TextMatrix.TransformPointX(x + w, y);
-			var _y2 = this.TextMatrix.TransformPointY(x + w, y);
-
-			var _x3 = this.TextMatrix.TransformPointX(x + w, y + h);
-			var _y3 = this.TextMatrix.TransformPointY(x + w, y + h);
-
-			var _x4 = this.TextMatrix.TransformPointX(x, y + h);
-			var _y4 = this.TextMatrix.TransformPointY(x, y + h);
-
-			var x1 = (drawPage.left + dKoefX * _x1) * rPR;
-			var y1 = (drawPage.top + dKoefY * _y1) * rPR;
-
-			var x2 = (drawPage.left + dKoefX * _x2) * rPR;
-			var y2 = (drawPage.top + dKoefY * _y2) * rPR;
-
-			var x3 = (drawPage.left + dKoefX * _x3) * rPR;
-			var y3 = (drawPage.top + dKoefY * _y3) * rPR;
-
-			var x4 = (drawPage.left + dKoefX * _x4) * rPR;
-			var y4 = (drawPage.top + dKoefY * _y4) * rPR;
-
-			if (global_MatrixTransformer.IsIdentity2(this.TextMatrix))
-			{
-				var indent = 0.5 * Math.round(rPR);
-				x1 = (x1 >> 0) + indent;
-				y1 = (y1 >> 0) + indent;
-
-				x2 = (x2 >> 0) + indent;
-				y2 = (y2>> 0) + indent;
-
-				x3 = (x3 >> 0) + indent;
-				y3 = (y3 >> 0) + indent;
-
-				x4 = (x4 >> 0) + indent;
-				y4 = (y4 >> 0) + indent;
-			}
-
-			this.Overlay.CheckPoint(x1, y1);
-			this.Overlay.CheckPoint(x2, y2);
-			this.Overlay.CheckPoint(x3, y3);
-			this.Overlay.CheckPoint(x4, y4);
-
-			var ctx = this.Overlay.m_oContext;
-			ctx.moveTo(x1, y1);
-			ctx.lineTo(x2, y2);
-			ctx.lineTo(x3, y3);
-			ctx.lineTo(x4, y4);
-			ctx.closePath();
-		}
-	};
-
-    this.AddPageSelection2 = function (pageIndex, x, y, w, h)
-    {
-        if (!this.OverlaySelection2.Data)
-            this.OverlaySelection2.Data = [];
-
-        this.OverlaySelection2.Data.push([pageIndex, x, y, w, h]);
-    };
-
-    this.DrawPageSelection2 = function(overlay)
-	{
-		if (this.OverlaySelection2.Data)
-		{
-			this.private_StartDrawSelection(overlay, true);
-
-			var len = this.OverlaySelection2.Data.length;
-			var value;
-			for (var i = 0; i < len; i++)
-			{
-				value = this.OverlaySelection2.Data[i];
-				this.AddPageSelection(value[0], value[1], value[2], value[3], value[4]);
-			}
-
-            this.private_EndDrawSelection();
-		}
-        this.OverlaySelection2 = {};
-	};
-
-	this.CheckSelectMobile = function (overlay)
-	{
-		var _select = this.m_oWordControl.m_oLogicDocument.GetSelectionBounds();
-		if (!_select)
-			return;
-
-		var _rect1 = _select.Start;
-		var _rect2 = _select.End;
-
-		if (!_rect1 || !_rect2)
-			return;
-
-		var _matrix = this.TextMatrix;
-
-		var ctx = overlay.m_oContext;
-
-		var pos1, pos2, pos3, pos4;
-
-		if (!_matrix || global_MatrixTransformer.IsIdentity(_matrix))
-		{
-			pos1 = this.ConvertCoordsToCursorWR(_rect1.X, _rect1.Y, _rect1.Page, undefined, false);
-			pos2 = this.ConvertCoordsToCursorWR(_rect1.X, _rect1.Y + _rect1.H, _rect1.Page, undefined, false);
-
-			pos3 = this.ConvertCoordsToCursorWR(_rect2.X + _rect2.W, _rect2.Y, _rect2.Page, undefined, false);
-			pos4 = this.ConvertCoordsToCursorWR(_rect2.X + _rect2.W, _rect2.Y + _rect2.H, _rect2.Page, undefined, false);
-
-			ctx.strokeStyle = "#1B63BA";
-
-			ctx.moveTo(pos1.X >> 0, pos1.Y >> 0);
-			ctx.lineTo(pos2.X >> 0, pos2.Y >> 0);
-
-			ctx.moveTo(pos3.X >> 0, pos3.Y >> 0);
-			ctx.lineTo(pos4.X >> 0, pos4.Y >> 0);
-
-			ctx.lineWidth = 2;
-			ctx.stroke();
-
-			/*
-			 ctx.beginPath();
-
-			 ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-			 overlay.AddEllipse(pos1.X, pos1.Y - 5, 6.5);
-			 overlay.AddEllipse(pos4.X, pos4.Y + 5, 6.5);
-			 ctx.fill();
-
-			 ctx.beginPath();
-
-			 ctx.fillStyle = "#FFFFFF";
-			 overlay.AddEllipse(pos1.X, pos1.Y - 5, 6);
-			 overlay.AddEllipse(pos4.X, pos4.Y + 5, 6);
-			 ctx.fill();
-			 */
-
-			ctx.beginPath();
-
-			ctx.fillStyle = "#1B63BA";
-			overlay.AddEllipse(pos1.X, pos1.Y - 5, 5);
-			overlay.AddEllipse(pos4.X, pos4.Y + 5, 5);
-			ctx.fill();
-		}
-		else
-		{
-			var _xx11 = _matrix.TransformPointX(_rect1.X, _rect1.Y);
-			var _yy11 = _matrix.TransformPointY(_rect1.X, _rect1.Y);
-
-			var _xx12 = _matrix.TransformPointX(_rect1.X, _rect1.Y + _rect1.H);
-			var _yy12 = _matrix.TransformPointY(_rect1.X, _rect1.Y + _rect1.H);
-
-			var _xx21 = _matrix.TransformPointX(_rect2.X + _rect2.W, _rect2.Y);
-			var _yy21 = _matrix.TransformPointY(_rect2.X + _rect2.W, _rect2.Y);
-
-			var _xx22 = _matrix.TransformPointX(_rect2.X + _rect2.W, _rect2.Y + _rect2.H);
-			var _yy22 = _matrix.TransformPointY(_rect2.X + _rect2.W, _rect2.Y + _rect2.H);
-
-			pos1 = this.ConvertCoordsToCursorWR(_xx11, _yy11, _rect1.Page, undefined, false);
-			pos2 = this.ConvertCoordsToCursorWR(_xx12, _yy12, _rect1.Page, undefined, false);
-
-			pos3 = this.ConvertCoordsToCursorWR(_xx21, _yy21, _rect2.Page, undefined, false);
-			pos4 = this.ConvertCoordsToCursorWR(_xx22, _yy22, _rect2.Page, undefined, false);
-
-			ctx.strokeStyle = "#1B63BA";
-
-			ctx.moveTo(pos1.X, pos1.Y);
-			ctx.lineTo(pos2.X, pos2.Y);
-
-			ctx.moveTo(pos3.X, pos3.Y);
-			ctx.lineTo(pos4.X, pos4.Y);
-
-			ctx.lineWidth = 2;
-			ctx.stroke();
-
-			/*
-			 ctx.beginPath();
-
-			 ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-			 overlay.AddEllipse(pos1.X, pos1.Y - 5, 6.5);
-			 overlay.AddEllipse(pos4.X, pos4.Y + 5, 6.5);
-			 ctx.fill();
-
-			 ctx.beginPath();
-
-			 ctx.fillStyle = "#FFFFFF";
-			 overlay.AddEllipse(pos1.X, pos1.Y - 5, 6);
-			 overlay.AddEllipse(pos4.X, pos4.Y + 5, 6);
-			 ctx.fill();
-			 */
-
-			ctx.beginPath();
-
-			ctx.fillStyle = "#1B63BA";
-			overlay.AddEllipse(pos1.X, pos1.Y - 5, 5);
-			overlay.AddEllipse(pos4.X, pos4.Y + 5, 5);
-			ctx.fill();
-		}
-	};
-
-	this.SelectShow = function ()
-	{
-		this.m_oWordControl.OnUpdateOverlay();
-	};
-
-    this.OnUpdateOverlay = function ()
-    {
-        this.m_oWordControl.OnUpdateOverlay();
-    };
-
-	this.Set_RulerState_Start = function ()
-	{
-		this.UpdateRulerStateFlag = true;
-	};
-	this.Set_RulerState_End = function ()
-	{
-		if (this.UpdateRulerStateFlag)
-		{
-			this.UpdateRulerStateFlag = false;
-			if (this.UpdateRulerStateParams.length > 0)
-			{
-				switch (this.UpdateRulerStateParams[0])
-				{
-					case 0:
-					{
-						this.Set_RulerState_Table(this.UpdateRulerStateParams[1],
-							this.UpdateRulerStateParams[2]);
-						break;
-					}
-					case 1:
-					{
-						this.Set_RulerState_Paragraph(this.UpdateRulerStateParams[1],
-							this.UpdateRulerStateParams[2]);
-						break;
-					}
-					case 2:
-					{
-						this.Set_RulerState_HdrFtr(this.UpdateRulerStateParams[1],
-							this.UpdateRulerStateParams[2],
-							this.UpdateRulerStateParams[3]);
-						break;
-					}
-					case 3:
-					{
-						this.Set_RulerState_Columns(this.UpdateRulerStateParams[1]);
-						break;
-					}
-					default:
-						break;
-				}
-
-				this.UpdateRulerStateParams = [];
-			}
-		}
-	};
-
-	this.Set_RulerState_Table = function (markup, transform)
-	{
-		if (this.UpdateRulerStateFlag)
-		{
-			this.UpdateRulerStateParams.splice(0, this.UpdateRulerStateParams.length);
-			this.UpdateRulerStateParams.push(0);
-			this.UpdateRulerStateParams.push(markup);
-			this.UpdateRulerStateParams.push(transform);
-			return;
-		}
-
-		this.FrameRect.IsActive = false;
-
-		var hor_ruler = this.m_oWordControl.m_oHorRuler;
-		var ver_ruler = this.m_oWordControl.m_oVerRuler;
-
-		hor_ruler.CurrentObjectType = RULER_OBJECT_TYPE_TABLE;
-		hor_ruler.m_oTableMarkup = markup.CreateDublicate();
-
-		ver_ruler.CurrentObjectType = RULER_OBJECT_TYPE_TABLE;
-		ver_ruler.m_oTableMarkup = markup.CreateDublicate();
-
-		this.TableOutlineDr.TableMatrix = null;
-		this.TableOutlineDr.CurrentPageIndex = this.m_lCurrentPage;
-		if (transform)
-		{
-			hor_ruler.m_oTableMarkup.TransformX = transform.tx;
-			hor_ruler.m_oTableMarkup.TransformY = transform.ty;
-
-			ver_ruler.m_oTableMarkup.TransformX = transform.tx;
-			ver_ruler.m_oTableMarkup.TransformY = transform.ty;
-
-			hor_ruler.m_oTableMarkup.CorrectFrom();
-			ver_ruler.m_oTableMarkup.CorrectFrom();
-
-			this.TableOutlineDr.TableMatrix = transform.CreateDublicate();
-		}
-
-		hor_ruler.CalculateMargins();
-
-		if (0 <= this.m_lCurrentPage && this.m_lCurrentPage < this.m_lPagesCount)
-		{
-			hor_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
-			ver_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
-		}
-
-		this.m_oWordControl.UpdateHorRuler();
-		this.m_oWordControl.UpdateVerRuler();
-
-		if (this.m_oWordControl.MobileTouchManager)
-		{
-			this.m_oWordControl.MobileTouchManager.TableStartTrack_Check = true;
-			markup.Table.StartTrackTable();
-			this.m_oWordControl.MobileTouchManager.TableStartTrack_Check = false;
-		}
-	};
-
-	this.Set_RulerState_Paragraph = function (margins, isCanTrackMargins)
-	{
-		if (this.UpdateRulerStateFlag)
-		{
-			this.UpdateRulerStateParams.splice(0, this.UpdateRulerStateParams.length);
-			this.UpdateRulerStateParams.push(1);
-			this.UpdateRulerStateParams.push(margins);
-			this.UpdateRulerStateParams.push(isCanTrackMargins);
-			return;
-		}
-
-		if (margins && margins.Frame !== undefined)
-		{
-			var bIsUpdate = false;
-
-			if (!this.FrameRect.IsActive)
-				bIsUpdate = true;
-
-			if (!bIsUpdate)
-			{
-				if (this.FrameRect.Rect.X != margins.L ||
-					this.FrameRect.Rect.Y != margins.T ||
-					this.FrameRect.Rect.R != margins.R ||
-					this.FrameRect.Rect.B != margins.B ||
-					this.FrameRect.PageIndex != margins.PageIndex)
-				{
-					bIsUpdate = true;
-				}
-			}
-
-			this.FrameRect.IsActive = true;
-			this.FrameRect.Rect.X = margins.L;
-			this.FrameRect.Rect.Y = margins.T;
-			this.FrameRect.Rect.R = margins.R;
-			this.FrameRect.Rect.B = margins.B;
-			this.FrameRect.PageIndex = margins.PageIndex;
-			this.FrameRect.Frame = margins.Frame;
-
-			if (bIsUpdate)
-			{
-				if (this.m_oWordControl.m_oOverlay.HtmlElement.style.display != "block")
-					this.m_oWordControl.ShowOverlay();
-
-				this.m_oWordControl.OnUpdateOverlay();
-			}
-		}
-		else
-		{
-			if (this.FrameRect.IsActive)
-			{
-				if (this.m_oWordControl.m_oOverlay.HtmlElement.style.display != "block")
-					this.m_oWordControl.ShowOverlay();
-
-				this.FrameRect.IsActive = false;
-				this.m_oWordControl.OnUpdateOverlay();
-			}
-			else
-				this.FrameRect.IsActive = false;
-		}
-
-		var hor_ruler = this.m_oWordControl.m_oHorRuler;
-		var ver_ruler = this.m_oWordControl.m_oVerRuler;
-
-		if (hor_ruler.CurrentObjectType == RULER_OBJECT_TYPE_PARAGRAPH && ver_ruler.CurrentObjectType == RULER_OBJECT_TYPE_PARAGRAPH)
-		{
-			if ((margins && !hor_ruler.IsCanMoveMargins) || (!margins && hor_ruler.IsCanMoveMargins))
-			{
-				var bIsNeedUpdate = false;
-				if (margins && this.LastParagraphMargins)
-				{
-					if (margins.L != this.LastParagraphMargins.L ||
-						margins.T != this.LastParagraphMargins.T ||
-						margins.R != this.LastParagraphMargins.R ||
-						margins.B != this.LastParagraphMargins.B)
-					{
-						bIsNeedUpdate = true;
-					}
-				}
-
-				if (!bIsNeedUpdate)
-					return;
-			}
-		}
-
-		hor_ruler.CurrentObjectType = RULER_OBJECT_TYPE_PARAGRAPH;
-		hor_ruler.m_oTableMarkup = null;
-		hor_ruler.m_oColumnMarkup = null;
-
-		ver_ruler.CurrentObjectType = RULER_OBJECT_TYPE_PARAGRAPH;
-		ver_ruler.m_oTableMarkup = null;
-
-		// вообще надо посмотреть... может и был параграф до этого.
-		// тогда вэкграунд перерисовывать не нужно. Только надо знать, на той же странице это было или нет
-		if (-1 != this.m_lCurrentPage && this.m_arrPages[this.m_lCurrentPage])
-		{
-			if (margins)
-			{
-				var cachedPage = {};
-				cachedPage.width_mm = this.m_arrPages[this.m_lCurrentPage].width_mm;
-				cachedPage.height_mm = this.m_arrPages[this.m_lCurrentPage].height_mm;
-
-				cachedPage.margin_left = margins.L;
-				cachedPage.margin_top = margins.T;
-				cachedPage.margin_right = margins.R;
-				cachedPage.margin_bottom = margins.B;
-
-				hor_ruler.CreateBackground(cachedPage);
-				ver_ruler.CreateBackground(cachedPage);
-
-				// disable margins
-				if (true !== isCanTrackMargins)
-				{
-					hor_ruler.IsCanMoveMargins = false;
-					ver_ruler.IsCanMoveMargins = false;
-				}
-				else
-				{
-					hor_ruler.IsCanMoveMargins = true;
-					ver_ruler.IsCanMoveMargins = true;
-				}
-
-				this.LastParagraphMargins = {};
-				this.LastParagraphMargins.L = margins.L;
-				this.LastParagraphMargins.T = margins.T;
-				this.LastParagraphMargins.R = margins.R;
-				this.LastParagraphMargins.B = margins.B;
-			}
-			else
-			{
-				hor_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
-				ver_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
-
-				// enable margins
-				hor_ruler.IsCanMoveMargins = true;
-				ver_ruler.IsCanMoveMargins = true;
-
-				this.LastParagraphMargins = null;
-			}
-		}
-
-		this.m_oWordControl.UpdateHorRuler();
-		this.m_oWordControl.UpdateVerRuler();
-	};
-
-	this.Set_RulerState_Columns = function (markup)
-	{
-		if (this.UpdateRulerStateFlag)
-		{
-			this.UpdateRulerStateParams.splice(0, this.UpdateRulerStateParams.length);
-			this.UpdateRulerStateParams.push(3);
-			this.UpdateRulerStateParams.push(markup);
-			return;
-		}
-
-		this.FrameRect.IsActive = false;
-
-		var hor_ruler = this.m_oWordControl.m_oHorRuler;
-		var ver_ruler = this.m_oWordControl.m_oVerRuler;
-
-		hor_ruler.CurrentObjectType = RULER_OBJECT_TYPE_COLUMNS;
-		hor_ruler.m_oTableMarkup = null;
-		hor_ruler.m_oColumnMarkup = markup.CreateDuplicate();
-
-		ver_ruler.CurrentObjectType = RULER_OBJECT_TYPE_PARAGRAPH;
-		ver_ruler.m_oTableMarkup = null;
-
-		this.TableOutlineDr.TableMatrix = null;
-		this.TableOutlineDr.CurrentPageIndex = this.m_lCurrentPage;
-
-		hor_ruler.CalculateMargins();
-
-		if (0 <= this.m_lCurrentPage && this.m_lCurrentPage < this.m_lPagesCount)
-		{
-			hor_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
-			ver_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
-		}
-
-		this.m_oWordControl.UpdateHorRuler();
-		this.m_oWordControl.UpdateVerRuler();
-	};
-
-	this.Set_RulerState_HdrFtr = function (bHeader, Y0, Y1)
-	{
-		if (this.UpdateRulerStateFlag)
-		{
-			this.UpdateRulerStateParams.splice(0, this.UpdateRulerStateParams.length);
-			this.UpdateRulerStateParams.push(2);
-			this.UpdateRulerStateParams.push(bHeader);
-			this.UpdateRulerStateParams.push(Y0);
-			this.UpdateRulerStateParams.push(Y1);
-			return;
-		}
-
-		this.FrameRect.IsActive = false;
-
-		var hor_ruler = this.m_oWordControl.m_oHorRuler;
-		var ver_ruler = this.m_oWordControl.m_oVerRuler;
-
-		hor_ruler.CurrentObjectType = RULER_OBJECT_TYPE_PARAGRAPH;
-		hor_ruler.m_oTableMarkup = null;
-		hor_ruler.m_oColumnMarkup = null;
-
-		ver_ruler.CurrentObjectType = (true === bHeader) ? RULER_OBJECT_TYPE_HEADER : RULER_OBJECT_TYPE_FOOTER;
-		ver_ruler.header_top = Y0;
-		ver_ruler.header_bottom = Y1;
-		ver_ruler.m_oTableMarkup = null;
-
-		// вообще надо посмотреть... может и бал параграф до этого.
-		// тогда вэкграунд перерисовывать не нужно. Только надо знать, на той же странице это было или нет
-		if (-1 != this.m_lCurrentPage)
-		{
-			hor_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
-			ver_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
-		}
-
-		this.m_oWordControl.UpdateHorRuler();
-		this.m_oWordControl.UpdateVerRuler();
-	};
-
-	this.Update_MathTrack = function (IsActive, IsContentActive, oMath)
-	{
-		var PixelError = this.GetMMPerDot(1) * 3;
-		this.MathTrack.Update(IsActive, IsContentActive, oMath, PixelError);
-	};
-
-	this.Update_FieldTrack = function (IsActive, aRects)
-	{
-		this.FieldTrack.IsActive = IsActive;
-
-		if (true === IsActive)
-			this.FieldTrack.Rects = aRects;
-		else
-			this.FieldTrack.Rects = [];
-	};
-
-	this.Update_ParaTab = function (Default_Tab, ParaTabs)
-	{
-		var hor_ruler = this.m_oWordControl.m_oHorRuler;
-
-		var __tabs = ParaTabs.Tabs;
-		if (undefined === __tabs)
-			__tabs = ParaTabs;
-
-		var _len = __tabs.length;
-		if ((Default_Tab == hor_ruler.m_dDefaultTab) && (hor_ruler.m_arrTabs.length == _len) && (_len == 0))
-		{
-			// потом можно и проверить сами табы
-			return;
-		}
-
-		hor_ruler.m_dDefaultTab = Default_Tab;
-		hor_ruler.m_arrTabs = [];
-		var _ar = hor_ruler.m_arrTabs;
-
-		for (var i = 0; i < _len; i++)
-		{
-			if (__tabs[i].Value == tab_Left || __tabs[i].Value == tab_Center || __tabs[i].Value == tab_Right)
-				_ar[i] = new CTab(__tabs[i].Pos, __tabs[i].Value, __tabs[i].Leader);
-			else
-			{
-				// не должно такого быть. но приходит
-				_ar[i] = new CTab(__tabs[i].Pos, tab_Left, __tabs[i].Leader);
-			}
-		}
-
-		hor_ruler.CorrectTabs();
-		this.m_oWordControl.UpdateHorRuler();
-	};
-
-	this.CorrectRulerPosition = function (pos)
-	{
-		if (AscCommon.global_keyboardEvent.AltKey)
-			return pos;
-
-		return ((pos / 2.5 + 0.5) >> 0) * 2.5;
-	};
-
-	this.UpdateTableRuler = function (isCols, index, position)
-	{
-		var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_oWordControl.m_nZoomValue / 100;
-		if (false === isCols)
-		{
-			var markup = this.m_oWordControl.m_oVerRuler.m_oTableMarkup;
-			if (markup == null)
-				return;
-
-			position += markup.TransformY;
-			if (0 == index)
-			{
-				var delta = position - markup.Rows[0].Y;
-				markup.Rows[0].Y = position;
-				markup.Rows[0].H -= delta;
-			}
-			else
-			{
-				var delta = (markup.Rows[index - 1].Y + markup.Rows[index - 1].H) - position;
-
-				markup.Rows[index - 1].H -= delta;
-
-				if (index != markup.Rows.length)
-				{
-					markup.Rows[index].Y -= delta;
-					markup.Rows[index].H += delta;
-				}
-			}
-
-			if ("none" == this.m_oWordControl.m_oOverlay.HtmlElement.style.display)
-				this.m_oWordControl.ShowOverlay();
-
-			this.m_oWordControl.UpdateVerRulerBack();
-			this.m_oWordControl.m_oOverlayApi.HorLine(this.m_arrPages[this.m_lCurrentPage].drawingPage.top + position * dKoef_mm_to_pix);
-		}
-		else
-		{
-			var markup = this.m_oWordControl.m_oHorRuler.m_oTableMarkup;
-			if (markup == null)
-				return;
-
-			position += markup.TransformX;
-
-			if (0 == index)
-			{
-				var _add = markup.X - position;
-				markup.X = position;
-				if (markup.Cols.length > 0)
-					markup.Cols[0] += _add;
-			}
-			else
-			{
-				var _start = markup.X;
-				for (var i = 0; i < (index - 1); i++)
-				{
-					_start += markup.Cols[i];
-				}
-
-				var _old = markup.Cols[index - 1];
-				markup.Cols[index - 1] = position - _start;
-
-				if (index != markup.Cols.length)
-				{
-					markup.Cols[index] += (_old - markup.Cols[index - 1]);
-				}
-			}
-
-			if ("none" == this.m_oWordControl.m_oOverlay.HtmlElement.style.display)
-				this.m_oWordControl.ShowOverlay();
-
-			this.m_oWordControl.UpdateHorRulerBack();
-			this.m_oWordControl.m_oOverlayApi.VertLine(this.m_arrPages[this.m_lCurrentPage].drawingPage.left + position * dKoef_mm_to_pix);
-		}
-	};
-	this.GetDotsPerMM = function (value)
-	{
-		return value * this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100;
-	};
-
-	this.GetMMPerDot = function (value)
-	{
-		return value / this.GetDotsPerMM(1);
-	};
-	this.GetVisibleMMHeight = function ()
-	{
-		var pixHeigth = this.m_oWordControl.m_oEditor.HtmlElement.height;
-		pixHeigth /= AscCommon.AscBrowser.retinaPixelRatio;
-		var pixBetweenPages = 20 * (this.m_lDrawingEnd - this.m_lDrawingFirst);
-
-		return (pixHeigth - pixBetweenPages) * g_dKoef_pix_to_mm * 100 / this.m_oWordControl.m_nZoomValue;
-	};
-
-	// вот оооочень важная функция. она выкидывает из кэша неиспользуемые шрифты
-	this.CheckFontCache = function ()
-	{
-		var map_used = this.m_oWordControl.m_oLogicDocument.Document_CreateFontMap();
-
-		var _measure_map = g_oTextMeasurer.m_oManager.m_oFontsCache.Fonts;
-		var _drawing_map = AscCommon.g_fontManager.m_oFontsCache.Fonts;
-
-		var map_keys = {};
-		var api = this.m_oWordControl.m_oApi;
-		for (var i in map_used)
-		{
-			var key = AscFonts.GenerateMapId(api, g_fontApplication.GetFontInfoName(map_used[i].Name), map_used[i].Style, map_used[i].Size);
-			map_keys[key] = true;
-		}
-
-		// а теперь просто пробегаем по кэшам и удаляем ненужное
-		for (var i in _measure_map)
-		{
-			if (map_keys[i] == undefined)
-			{
-				//_measure_map[i] = undefined;
-				delete _measure_map[i];
-			}
-		}
-		for (var i in _drawing_map)
-		{
-			if (map_keys[i] == undefined)
-			{
-				//_drawing_map[i] = undefined;
-				if (null != _drawing_map[i])
-					_drawing_map[i].Destroy();
-				delete _drawing_map[i];
-			}
-		}
-	};
-
-	// при загрузке документа - нужно понять какие шрифты используются
-	this.CheckFontNeeds = function ()
-	{
-		var map_keys = this.m_oWordControl.m_oLogicDocument.Document_Get_AllFontNames();
-		var dstfonts = [];
-		for (var i in map_keys)
-		{
-			dstfonts[dstfonts.length] = new AscFonts.CFont(i, 0, "", 0, null);
-		}
-		AscFonts.FontPickerByCharacter.getFontsByString(AscCommon.translateManager.getValue("Heading" + " 123"));
-        AscFonts.FontPickerByCharacter.extendFonts(dstfonts);
-		this.m_oWordControl.m_oLogicDocument.Fonts = dstfonts;
-		return;
-
-		/*
-		 var map_used = this.m_oWordControl.m_oLogicDocument.Document_CreateFontMap();
-
-		 var map_keys = {};
-		 for (var i in map_used)
-		 {
-		 var search = map_used[i];
-		 var found = map_keys[search.Name];
-
-		 var _need_style = 0;
-		 switch (search.Style)
-		 {
-		 case FontStyle.FontStyleRegular:
-		 {
-		 _need_style = fontstyle_mask_regular;
-		 break;
-		 }
-		 case FontStyle.FontStyleBold:
-		 {
-		 _need_style = fontstyle_mask_bold;
-		 break;
-		 }
-		 case FontStyle.FontStyleItalic:
-		 {
-		 _need_style = fontstyle_mask_italic;
-		 break;
-		 }
-		 case FontStyle.FontStyleBoldItalic:
-		 {
-		 _need_style = fontstyle_mask_bolditalic;
-		 break;
-		 }
-		 default:
-		 {
-		 _need_style = fontstyle_mask_regular | fontstyle_mask_italic | fontstyle_mask_bold | fontstyle_mask_bolditalic;
-		 break;
-		 }
-		 }
-
-		 if (undefined === found)
-		 {
-		 map_keys[search.Name] = _need_style;
-		 }
-		 else
-		 {
-		 map_keys[search.Name] |= _need_style;
-		 }
-		 }
-
-		 // теперь просто пробегаем и заполняем все объектами
-		 var dstfonts = [];
-		 for (var i in map_keys)
-		 {
-		 dstfonts[dstfonts.length] = new CFont(i, 0, "", 0, map_keys[i]);
-		 }
-		 this.m_oWordControl.m_oLogicDocument.Fonts = dstfonts;
-		 */
-	};
-
-	// фукнции для старта работы
-	this.OpenDocument = function ()
-	{
-		//SetHintsProps(false, false);
-		this.m_oDocumentRenderer.InitDocument(this);
-
-		this.m_oWordControl.CalculateDocumentSize();
-		this.m_oWordControl.OnScroll();
-	};
-
-	// вот здесь весь трекинг
-	this.DrawTrack = function (type, matrix, left, top, width, height, isLine, canRotate, isNoMove, isDrawHandles)
-	{
-		this.AutoShapesTrack.DrawTrack(type, matrix, left, top, width, height, isLine, canRotate, isNoMove, isDrawHandles);
-	};
-
-	this.DrawTrackSelectShapes = function (x, y, w, h)
-	{
-		this.AutoShapesTrack.DrawTrackSelectShapes(x, y, w, h);
-	};
-
-	this.DrawAdjustment = function (matrix, x, y, bTextWarp)
-	{
-		this.AutoShapesTrack.DrawAdjustment(matrix, x, y, bTextWarp);
-	};
-
-	this.LockTrackPageNum = function (nPageNum)
-	{
-		this.AutoShapesTrackLockPageNum = nPageNum;
-	};
-	this.UnlockTrackPageNum = function ()
-	{
-		this.AutoShapesTrackLockPageNum = -1;
-	};
-
+	// interface ui elements
 	this.CheckGuiControlColors = function ()
 	{
 		// потом реализовать проверку на то, что нужно ли посылать
@@ -6018,7 +3370,7 @@ function CDrawingDocument()
 				oStyle.ParaPr.Spacing.Before = 0;
 				oStyle.ParaPr.Spacing.After = 0;
 				oStyle.ParaPr.ContextualSpacing = true;
-				
+
 				oStyle.ParaPr.Ind.Left = 15 * (nCurrentLevel - 1) * g_dKoef_pt_to_mm;
 
 				oStyle.TextPr.FontFamily = {Name: "Arial", Index: -1};
@@ -6319,86 +3671,86 @@ function CDrawingDocument()
 
 	this.SetDrawImagePreviewMargins = function(id, props)
 	{
-        var parent =  document.getElementById(id);
-        if (!parent)
-            return;
+		var parent =  document.getElementById(id);
+		if (!parent)
+			return;
 
-        var width_px = parent.clientWidth;
-        var height_px = parent.clientHeight;
+		var width_px = parent.clientWidth;
+		var height_px = parent.clientHeight;
 
-        var canvas = parent.firstChild;
-        if (!canvas)
+		var canvas = parent.firstChild;
+		if (!canvas)
 		{
-            canvas = document.createElement('canvas');
-            canvas.style.cssText = "pointer-events: none;padding:0;margin:0;user-select:none;";
-            canvas.style.width = width_px + "px";
-            canvas.style.height = height_px + "px";
+			canvas = document.createElement('canvas');
+			canvas.style.cssText = "pointer-events: none;padding:0;margin:0;user-select:none;";
+			canvas.style.width = width_px + "px";
+			canvas.style.height = height_px + "px";
 			if (width_px > 0 && height_px > 0)
-            	parent.appendChild(canvas);
+				parent.appendChild(canvas);
 		}
 
 		AscCommon.calculateCanvasSize(canvas, undefined, true);
-        canvas.width = canvas.width;
+		canvas.width = canvas.width;
 
-        var ctx = canvas.getContext("2d");
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var ctx = canvas.getContext("2d");
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 
-        var offset = 10;
-        var page_width_mm = props.W;
-        var page_height_mm = props.H;
+		var offset = 10;
+		var page_width_mm = props.W;
+		var page_height_mm = props.H;
 
 		var isMirror = props.MirrorMargins;
-        var pageRects = [];
+		var pageRects = [];
 
-        var w_px = width_px - (offset << 1);
-        var h_px = height_px - (offset << 1);
+		var w_px = width_px - (offset << 1);
+		var h_px = height_px - (offset << 1);
 
-        var aspectParent = w_px / h_px;
-        var aspectPage = page_width_mm / page_height_mm;
-        if (!isMirror)
-        {
-            if (aspectPage > aspectParent)
-            {
-            	pageRects.push({X : offset, Y : 0, W : w_px, H : 0});
-            	pageRects[0].H = (pageRects[0].W / aspectPage) >> 0;
-            	pageRects[0].Y = offset + ((h_px - pageRects[0].H) >> 1);
-            }
-            else
+		var aspectParent = w_px / h_px;
+		var aspectPage = page_width_mm / page_height_mm;
+		if (!isMirror)
+		{
+			if (aspectPage > aspectParent)
 			{
-                pageRects.push({X : 0, Y : offset, W : 0, H : h_px});
-                pageRects[0].W = (pageRects[0].H * aspectPage) >> 0;
-                pageRects[0].X = offset + ((w_px - pageRects[0].W) >> 1);
+				pageRects.push({X : offset, Y : 0, W : w_px, H : 0});
+				pageRects[0].H = (pageRects[0].W / aspectPage) >> 0;
+				pageRects[0].Y = offset + ((h_px - pageRects[0].H) >> 1);
+			}
+			else
+			{
+				pageRects.push({X : 0, Y : offset, W : 0, H : h_px});
+				pageRects[0].W = (pageRects[0].H * aspectPage) >> 0;
+				pageRects[0].X = offset + ((w_px - pageRects[0].W) >> 1);
 			}
 		}
 		else
 		{
 			var w_px_2 = (w_px - offset) >> 1;
-            aspectParent = w_px_2 / h_px;
+			aspectParent = w_px_2 / h_px;
 
-            if (aspectPage > aspectParent)
-            {
-                pageRects.push({X : offset, Y : 0, W : w_px_2, H : 0});
-                pageRects[0].H = (pageRects[0].W / aspectPage) >> 0;
-                pageRects[0].Y = offset + ((h_px - pageRects[0].H) >> 1);
+			if (aspectPage > aspectParent)
+			{
+				pageRects.push({X : offset, Y : 0, W : w_px_2, H : 0});
+				pageRects[0].H = (pageRects[0].W / aspectPage) >> 0;
+				pageRects[0].Y = offset + ((h_px - pageRects[0].H) >> 1);
 
-                pageRects.push({X : offset + ((w_px + offset) >> 1), Y : 0, W : w_px_2, H : 0});
-                pageRects[1].H = pageRects[0].H;
-                pageRects[1].Y = pageRects[0].Y;
-            }
-            else
-            {
-                pageRects.push({X : 0, Y : offset, W : 0, H : h_px});
-                pageRects[0].W = (pageRects[0].H * aspectPage) >> 0;
-                pageRects[0].X = offset + ((w_px_2 - pageRects[0].W) >> 1);
+				pageRects.push({X : offset + ((w_px + offset) >> 1), Y : 0, W : w_px_2, H : 0});
+				pageRects[1].H = pageRects[0].H;
+				pageRects[1].Y = pageRects[0].Y;
+			}
+			else
+			{
+				pageRects.push({X : 0, Y : offset, W : 0, H : h_px});
+				pageRects[0].W = (pageRects[0].H * aspectPage) >> 0;
+				pageRects[0].X = offset + ((w_px_2 - pageRects[0].W) >> 1);
 
-                pageRects.push({X : 0, Y : offset, W : 0, H : h_px});
-                pageRects[1].W = pageRects[0].W;
-                pageRects[1].X = offset + ((w_px + offset) >> 1) + ((w_px_2 - pageRects[0].W) >> 1);
-            }
+				pageRects.push({X : 0, Y : offset, W : 0, H : h_px});
+				pageRects[1].W = pageRects[0].W;
+				pageRects[1].X = offset + ((w_px + offset) >> 1) + ((w_px_2 - pageRects[0].W) >> 1);
+			}
 		}
 
 		var gutterSize = (props.Gutter * pageRects[0].W / page_width_mm) >> 0;
-        var gutterPos = 0; // left
+		var gutterPos = 0; // left
 		if (props.GutterRTL)
 			gutterPos = 1;
 		if (props.GutterAtTop)
@@ -6407,9 +3759,9 @@ function CDrawingDocument()
 			gutterPos = 1; // right
 
 		ctx.fillStyle = "#FFFFFF";
-        ctx.strokeStyle = "#000000";
-        var lineW = Math.round(rPR);
-        ctx.lineWidth = lineW;
+		ctx.strokeStyle = "#000000";
+		var lineW = Math.round(rPR);
+		ctx.lineWidth = lineW;
 		var indent = 0.5 * Math.round(rPR);
 
 		var __move = function(ctx, x, y, is_vert) {
@@ -6423,7 +3775,7 @@ function CDrawingDocument()
 			ctx.rect(((x * rPR) >> 0) + indent, ((y * rPR) >> 0) + indent, (w * rPR) >> 0, (h * rPR) >> 0);
 		};
 
-        for (var page = 0; page < pageRects.length; page++)
+		for (var page = 0; page < pageRects.length; page++)
 		{
 			// page
 			ctx.beginPath();
@@ -6438,65 +3790,65 @@ function CDrawingDocument()
 			// gutter
 			if (gutterSize > 0)
 			{
-                ctx.setLineDash([Math.round(2 * rPR), Math.round(2 * rPR)]);
-                var gutterEvenOdd = 0;
+				ctx.setLineDash([Math.round(2 * rPR), Math.round(2 * rPR)]);
+				var gutterEvenOdd = 0;
 				switch (gutterPos)
 				{
 					case 0:
 					{
-                        var x = pageRects[page].X;
+						var x = pageRects[page].X;
 						for (var i = 0; i < gutterSize; i += lineW)
 						{
 							ctx.moveTo(((x * rPR) >> 0) + i + indent, ((pageRects[page].Y + gutterEvenOdd) * rPR) >> 0);
 							ctx.lineTo(((x * rPR) >> 0) + i + indent, ((pageRects[page].Y + pageRects[page].H) * rPR) >> 0);
-                            ctx.stroke();
-                            ctx.beginPath();
-                            gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
-                        }
+							ctx.stroke();
+							ctx.beginPath();
+							gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
+						}
 						break;
 					}
 					case 1:
 					{
-                        var x = pageRects[page].X + pageRects[page].W;
-                        for (var i = 0; i < gutterSize; i += lineW)
-                        {
+						var x = pageRects[page].X + pageRects[page].W;
+						for (var i = 0; i < gutterSize; i += lineW)
+						{
 							ctx.moveTo(((x * rPR) >> 0) - i - indent, ((pageRects[page].Y + gutterEvenOdd) * rPR) >> 0);
 							ctx.lineTo(((x * rPR) >> 0) - i - indent, ((pageRects[page].Y + pageRects[page].H) * rPR) >> 0);
-                            ctx.stroke();
-                            ctx.beginPath();
-                            gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
-                        }
+							ctx.stroke();
+							ctx.beginPath();
+							gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
+						}
 						break;
 					}
 					case 2:
 					{
-                        var y = pageRects[page].Y;
-                        for (var i = 0; i < gutterSize; i += lineW)
-                        {
+						var y = pageRects[page].Y;
+						for (var i = 0; i < gutterSize; i += lineW)
+						{
 							ctx.moveTo(((pageRects[page].X + gutterEvenOdd) * rPR) >> 0, ((y * rPR) >> 0) + i + indent);
 							ctx.lineTo(((pageRects[page].X + pageRects[page].W) * rPR) >> 0, ((y * rPR) >> 0) + i + indent);
-                            ctx.stroke();
-                            ctx.beginPath();
-                            gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
-                        }
+							ctx.stroke();
+							ctx.beginPath();
+							gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
+						}
 						break;
 					}
 					default:
 						break;
 				}
-                ctx.setLineDash([]);
-            }
+				ctx.setLineDash([]);
+			}
 
-            // text lines
+			// text lines
 			var left = props.Left;
 			var top = props.Top;
 			var right = props.Right;
 			var bottom = props.Bottom;
 
 			if (left < 0) left = -left;
-            if (top < 0) top = -top;
-            if (right < 0) right = -right;
-            if (bottom < 0) bottom = -bottom;
+			if (top < 0) top = -top;
+			if (right < 0) right = -right;
+			if (bottom < 0) bottom = -bottom;
 
 			if (0 == page && isMirror)
 			{
@@ -6514,12 +3866,12 @@ function CDrawingDocument()
 				}
 				case 1:
 				{
-                    right += props.Gutter;
+					right += props.Gutter;
 					break;
 				}
 				case 2:
 				{
-                    top += props.Gutter;
+					top += props.Gutter;
 					break;
 				}
 				default:
@@ -6527,26 +3879,26 @@ function CDrawingDocument()
 			}
 
 			var l = pageRects[page].X + ((left * pageRects[page].W / page_width_mm) >> 0);
-            var t = pageRects[page].Y + ((top * pageRects[page].H / page_height_mm) >> 0);
-            var r = pageRects[page].X + (pageRects[page].W - ((right * pageRects[page].W / page_width_mm) >> 0));
-            var b = pageRects[page].Y + (pageRects[page].H - ((bottom * pageRects[page].H / page_height_mm) >> 0));
+			var t = pageRects[page].Y + ((top * pageRects[page].H / page_height_mm) >> 0);
+			var r = pageRects[page].X + (pageRects[page].W - ((right * pageRects[page].W / page_width_mm) >> 0));
+			var b = pageRects[page].Y + (pageRects[page].H - ((bottom * pageRects[page].H / page_height_mm) >> 0));
 
-            if (l >= r || t >= b)
-            	continue;
+			if (l >= r || t >= b)
+				continue;
 
-            var lf = l + (((r - l) / 8) >> 0);
-            var rf = l + (((r - l) / 3) >> 0);
+			var lf = l + (((r - l) / 8) >> 0);
+			var rf = l + (((r - l) / 3) >> 0);
 
 			l = (l * rPR) >> 0;
 			r = (r * rPR) >> 0;
 			b = (b * rPR) >> 0;
 			lf = (lf * rPR) >> 0;
 			rf = (rf * rPR) >> 0;
-            var cur = ((t * rPR) >> 0) + indent;
-            var cur_offset = 2 * lineW;
+			var cur = ((t * rPR) >> 0) + indent;
+			var cur_offset = 2 * lineW;
 			var cur_offset_end = 6 * lineW;
 
-            while (cur < b)
+			while (cur < b)
 			{
 				ctx.moveTo(lf, cur); ctx.lineTo(r, cur);
 
@@ -6555,22 +3907,22 @@ function CDrawingDocument()
 
 				ctx.moveTo(l, cur); ctx.lineTo(r, cur);
 
-                cur += cur_offset;
-                if (cur >= b) break;
+				cur += cur_offset;
+				if (cur >= b) break;
 
 				ctx.moveTo(l, cur); ctx.lineTo(r, cur);
 
-                cur += cur_offset;
-                if (cur >= b) break;
+				cur += cur_offset;
+				if (cur >= b) break;
 
 				ctx.moveTo(l, cur); ctx.lineTo(rf, cur);
 
-                cur += cur_offset_end;
+				cur += cur_offset_end;
 			}
 			ctx.stroke();
-            ctx.beginPath();
+			ctx.beginPath();
 
-            gutterPos = 0;
+			gutterPos = 0;
 		}
 	};
 
@@ -6602,11 +3954,11 @@ function CDrawingDocument()
 		if (!this.m_oWordControl.m_oApi.asc_checkNeedCallback("asc_onInitTableTemplates"))
 			return;
 
-        var logicDoc = this.m_oWordControl.m_oLogicDocument;
+		var logicDoc = this.m_oWordControl.m_oLogicDocument;
 
-        var newClrScheme = null;
-        if (logicDoc && logicDoc.theme && logicDoc.theme.themeElements)
-        	newClrScheme = logicDoc.theme.themeElements.clrScheme;
+		var newClrScheme = null;
+		if (logicDoc && logicDoc.theme && logicDoc.theme.themeElements)
+			newClrScheme = logicDoc.theme.themeElements.clrScheme;
 
 		let isChanged = false;
 
@@ -6650,11 +4002,967 @@ function CDrawingDocument()
 		return oTableLook;
 	};
 
-	this.IsMobileVersion = function ()
+	// recalculate
+	this.OnStartRecalculate = function (pageCount)
+	{
+		if (!this.m_oWordControl.MobileTouchManager)
+			this.TableOutlineDr.TableOutline = null;
+
+		if (this.m_oWordControl)
+			this.m_oWordControl.m_oApi.checkLastWork();
+
+		this.m_lCountCalculatePages = pageCount;
+		//console.log("start " + this.m_lCountCalculatePages);
+
+		if (this.m_oWordControl && this.m_oWordControl.MobileTouchManager)
+			this.m_oWordControl.MobileTouchManager.ClearContextMenu();
+
+		this.m_bIsDocumentCalculating = true;
+
+		if (!this.isFirstStartRecalculate)
+		{
+			var api = this.m_oWordControl.m_oApi;
+			var options = api.DocInfo ? api.DocInfo.asc_getOptions() : null;
+
+			if (options && options["disableEditBeforeCalculate"])
+			{
+				this.isDisableEditBeforeCalculateLA = true;
+				api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+			}
+
+			this.isFirstStartRecalculate = true;
+		}
+	};
+
+	this.OnRecalculatePage = function (index, pageObject)
+	{
+		this.m_bIsDocumentCalculating = true;
+
+		editor.sendEvent("asc_onDocumentChanged");
+		if (true === this.m_bIsSearching)
+		{
+			this.SearchClear();
+			this.m_oWordControl.OnUpdateOverlay();
+		}
+
+		if (this.m_bIsBreakRecalculate)
+		{
+			this.m_bIsBreakRecalculate = false;
+			this.m_lCountCalculatePages = index;
+		}
+
+		this.m_lCountCalculatePages = index + 1;
+		//console.log("calc " + this.m_lCountCalculatePages);
+
+		/*
+		 if (index >= this.m_lPagesCount)
+		 {
+		 this.m_arrPages[index] = new CPage();
+		 }
+		 */
+		if (undefined === this.m_arrPages[index])
+			this.m_arrPages[index] = new CPage();
+
+		var page = this.m_arrPages[index];
+
+		page.width_mm = pageObject.Width;
+		page.height_mm = pageObject.Height;
+
+		page.margin_left = pageObject.Margins.Left;
+		page.margin_top = pageObject.Margins.Top;
+		page.margin_right = pageObject.Margins.Right;
+		page.margin_bottom = pageObject.Margins.Bottom;
+
+		page.index = index;
+
+		page.drawingPage.SetRepaint(this.m_oCacheManager);
+
+		// теперь если эта страница на экране - то нужно вызвать отрисовку
+		if (index >= this.m_lDrawingFirst && index <= this.m_lDrawingEnd)
+		{
+			this.m_oWordControl.OnScroll();
+		}
+
+		if (this.m_lCountCalculatePages > (this.m_lPagesCount + 50) || (0 == this.m_lPagesCount && 0 != this.m_lCountCalculatePages))
+		{
+			this.OnEndRecalculate(false);
+		}
+
+		if (this.m_bUpdateAllPagesOnFirstRecalculate)
+		{
+			this.m_bUpdateAllPagesOnFirstRecalculate = false;
+			this.m_nZoomType = 1;
+
+			if (true)
+			{
+				// имитируем isFull, чтобы пересчитался размер документа
+				if (this.m_lPagesCount > this.m_lCountCalculatePages)
+					this.m_arrPages.splice(this.m_lCountCalculatePages, this.m_lPagesCount - this.m_lCountCalculatePages);
+				this.m_lPagesCount = 0;
+
+				this.m_lDrawingFirst = -1;
+				this.m_lDrawingEnd = -1;
+			}
+
+			this.OnEndRecalculate(false);
+		}
+
+		if (this.m_oWordControl.m_oApi.printPreview && this.m_oWordControl.m_oApi.printPreview.page === index)
+			this.m_oWordControl.m_oApi.printPreview.update();
+	};
+
+	this.OnEndRecalculate = function (isFull, isBreak)
+	{
+		if (this.m_oWordControl)
+			this.m_oWordControl.m_oApi.checkLastWork();
+
+		if (undefined != isBreak)
+		{
+			this.m_lCountCalculatePages = this.m_lPagesCount;
+		}
+
+		for (var index = this.m_lCountCalculatePages; index < this.m_lPagesCount; index++)
+		{
+			var page = this.m_arrPages[index];
+			page.drawingPage.SetRepaint(this.m_oCacheManager);
+		}
+
+		this.m_bIsBreakRecalculate = (isFull === true) ? false : true;
+		var oldPagesCount = this.m_lPagesCount;
+		if (isFull)
+		{
+			if (this.m_lPagesCount > this.m_lCountCalculatePages)
+			{
+				this.m_arrPages.splice(this.m_lCountCalculatePages, this.m_lPagesCount - this.m_lCountCalculatePages);
+			}
+
+			this.m_lPagesCount = this.m_lCountCalculatePages;
+			this.m_oWordControl.CalculateDocumentSize();
+		}
+		else if ((this.m_lPagesCount + 50) < this.m_lCountCalculatePages)
+		{
+			this.m_lPagesCount = this.m_lCountCalculatePages;
+			this.m_oWordControl.CalculateDocumentSize();
+		}
+		else if (0 == this.m_lPagesCount && 0 != this.m_lCountCalculatePages)
+		{
+			this.m_lPagesCount = this.m_lCountCalculatePages;
+			this.m_oWordControl.CalculateDocumentSize();
+		}
+
+		//if (this.m_lCurrentPage >= this.m_lPagesCount)
+		//    this.m_lCurrentPage = this.m_lPagesCount - 1;
+		if (true === isBreak || isFull)
+		{
+			//this.m_oWordControl.m_oLogicDocument.RecalculateCurPos();
+			this.m_lCurrentPage = this.m_oWordControl.m_oLogicDocument.Get_CurPage();
+			this.m_oWordControl.m_oApi.sendEvent("asc_onEndCalculate");
+			this.m_bIsDocumentCalculating = false;
+
+			window.setTimeout(function() {
+				editor.WordControl.onMouseMove(undefined, undefined);
+			}, 1);
+		}
+
+		if (-1 != this.m_lCurrentPage)
+		{
+			this.m_oWordControl.m_oApi.sync_currentPageCallback(this.m_lCurrentPage);
+			this.m_oWordControl.m_oApi.sync_countPagesCallback(this.m_lPagesCount);
+
+			var bIsSendCurPage = true;
+			if (this.m_oWordControl.m_oLogicDocument && this.m_oWordControl.m_oLogicDocument.DrawingObjects)
+			{
+				var param = this.m_oWordControl.m_oLogicDocument.DrawingObjects.isNeedUpdateRulers();
+				if (true === param)
+				{
+					bIsSendCurPage = false;
+					this.m_oWordControl.SetCurrentPage(false);
+				}
+			}
+
+			if (bIsSendCurPage && this.FrameRect.IsActive)
+			{
+				bIsSendCurPage = false;
+				this.m_oWordControl.SetCurrentPage(false);
+			}
+
+			if (bIsSendCurPage)
+			{
+				this.m_oWordControl.SetCurrentPage(false);
+			}
+		}
+
+		if (!this.isFirstRecalculate)
+		{
+			this.scrollToTargetOnRecalculate(oldPagesCount, this.m_lPagesCount);
+		}
+
+		if (isFull)
+		{
+			this.m_oWordControl.OnScroll();
+
+			if (this.m_arPrintingWaitEndRecalculate)
+			{
+				var actionType = this.m_arPrintingWaitEndRecalculate[0];
+				this.m_oWordControl.m_oApi.downloadAs.apply(this.m_oWordControl.m_oApi, this.m_arPrintingWaitEndRecalculate);
+
+				this.m_oWordControl.ChangeReaderMode();
+				this.m_oWordControl.m_oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, actionType);
+			}
+		}
+
+		if (isFull || isBreak)
+		{
+			if (isFull)
+			{
+				if (!this.isFirstFullRecalculate)
+				{
+					var api = this.m_oWordControl.m_oApi;
+					var options = api.DocInfo && api.DocInfo.asc_getOptions();
+
+					if (!this.isFirstRecalculate)
+					{
+						// полный пересчет закончился, и не был пересчет документа.
+						api.goTo();
+					}
+
+					if (options && options["disableEditBeforeCalculate"])
+					{
+						api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+						this.isDisableEditBeforeCalculateLA = false;
+					}
+				}
+
+				this.isFirstFullRecalculate = true;
+			}
+			else if (isBreak)
+			{
+				this.isFirstRecalculate = true;
+			}
+		}
+
+		//console.log("end " + this.m_lCountCalculatePages + "," + isFull + "," + isBreak);
+	};
+
+	// paint
+	this.Start_CollaborationEditing = function ()
+	{
+		this.IsLockObjectsEnable = true;
+		this.m_oWordControl.OnRePaintAttack();
+	};
+
+	this.OnRepaintPage = function (index)
+	{
+		if (this.m_oWordControl)
+			this.m_oWordControl.m_oApi.checkLastWork();
+
+		var page = this.m_arrPages[index];
+		if (!page)
+			return;
+
+		page.drawingPage.SetRepaint(this.m_oCacheManager);
+
+		// перерисовать, если только страница видна на экране
+		if (index >= this.m_lDrawingFirst && index <= this.m_lDrawingEnd)
+		{
+			this.m_oWordControl.OnScroll();
+		}
+	};
+
+	this.CheckPagesSizeMaximum = function(_w, _h)
+	{
+		var w = _w;
+		var h = _h;
+
+		// заглушка под мобильную версию (iPad не рисует большие картинки (наверное страховка по памяти))
+		if (AscCommon.AscBrowser.isMobile)
+		{
+			var _mobile_max = 2500;
+			if (w > _mobile_max || h > _mobile_max)
+			{
+				if (w > h)
+				{
+					h = (h * _mobile_max / w) >> 0;
+					w = _mobile_max;
+				}
+				else
+				{
+					w = (w * _mobile_max / h) >> 0;
+					h = _mobile_max;
+				}
+			}
+		}
+
+		return [w, h];
+	};
+
+	this.CheckRecalculatePage = function (width, height, pageIndex)
+	{
+		var _drawingPage = this.m_arrPages[pageIndex].drawingPage;
+		var isUnlock = false;
+
+		if (_drawingPage.cachedImage != null && _drawingPage.cachedImage.image != null)
+		{
+			var _check = this.CheckPagesSizeMaximum(width, height);
+			if (_check[0] != _drawingPage.cachedImage.image.width || _check[1] != _drawingPage.cachedImage.image.height)
+				isUnlock = true;
+		}
+
+		if (_drawingPage.IsRecalculate)
+		{
+			if (this.IsFreezePage(pageIndex))
+			{
+				// убрал выкидывание страницы. лишнее это. пусть всегда рисуется старая, пока не перерисуем
+				//if ((Math.abs(_drawingPage.RecalculateTime - (new Date().getTime())) > 500 /*0.5 sec*/))
+				//	isUnlock = true;
+			}
+			else
+			{
+				isUnlock = true;
+			}
+		}
+
+		if (isUnlock)
+			_drawingPage.UnLock(this.m_oCacheManager);
+	};
+
+	this.StartRenderingPage = function (pageIndex)
+	{
+		if (true === this.IsFreezePage(pageIndex))
+		{
+			return;
+		}
+
+		var page = this.m_arrPages[pageIndex];
+
+		var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
+
+		var w = (page.width_mm * dKoef + 0.5) >> 0;
+		var h = (page.height_mm * dKoef + 0.5) >> 0;
+
+		w = AscCommon.AscBrowser.convertToRetinaValue(w, true);
+		h = AscCommon.AscBrowser.convertToRetinaValue(h, true);
+
+		var _check = this.CheckPagesSizeMaximum(w, h);
+		w = _check[0];
+		h = _check[1];
+
+		page.drawingPage.UnLock(this.m_oCacheManager);
+		page.drawingPage.cachedImage = this.m_oCacheManager.Lock(w, h, this);
+
+		//var StartTime = new Date().getTime();
+
+		// теперь берем графикс
+		var g = new AscCommon.CGraphics();
+		g.init(page.drawingPage.cachedImage.image.ctx, w, h, page.width_mm, page.height_mm);
+		g.m_oFontManager = AscCommon.g_fontManager;
+		g.endGlobalAlphaColor = this.m_oWordControl.m_oApi.getPageBackgroundColor();
+
+		g.transform(1, 0, 0, 1, 0, 0);
+
+		if (this.m_oWordControl.m_oApi.isDarkMode)
+			g.darkModeOverride3();
+
+		if (null == this.m_oDocumentRenderer)
+			this.m_oLogicDocument.DrawPage(pageIndex, g);
+		else
+			this.m_oDocumentRenderer.drawPage(pageIndex, g);
+
+		if (g_page_outline_inner)
+		{
+			var context = page.drawingPage.cachedImage.image.ctx;
+
+			context.strokeStyle = GlobalSkin.PageOutline;
+			context.lineWidth = 1;
+
+			context.beginPath();
+			context.moveTo(0.5, 0.5);
+			context.lineTo(w - 0.5, 0.5);
+			context.lineTo(w - 0.5, h - 0.5);
+			context.lineTo(0.5, h - 0.5);
+			context.closePath();
+			context.stroke();
+			context.beginPath();
+		}
+
+		if (this.m_oWordControl.m_oApi.watermarkDraw && this.m_oWordControl.m_oLogicDocument)
+			this.m_oWordControl.m_oApi.watermarkDraw.Draw(page.drawingPage.cachedImage.image.ctx, w, h);
+
+		//var EndTime = new Date().getTime();
+
+		//alert("" + ((EndTime - StartTime) / 1000));
+	};
+
+	this.StopRenderingPage = function (pageIndex)
+	{
+		if (null != this.m_oDocumentRenderer)
+			this.m_oDocumentRenderer.stopRenderingPage(pageIndex);
+
+		this.m_arrPages[pageIndex].drawingPage.UnLock(this.m_oCacheManager);
+	};
+
+	// coordinates
+	this.ConvertCoordsFromCursor = function (x, y)
+	{
+		var _x = x - this.m_oWordControl.X;
+		var _y = y - this.m_oWordControl.Y;
+
+		var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
+
+		for (var i = this.m_lDrawingFirst; i <= this.m_lDrawingEnd; i++)
+		{
+			var rect = this.m_arrPages[i].drawingPage;
+
+			if ((rect.left <= _x) && (_x <= rect.right) && (rect.top <= _y) && (_y <= rect.bottom))
+			{
+				var x_mm = (_x - rect.left) * dKoef;
+				var y_mm = (_y - rect.top) * dKoef;
+
+				return {X: x_mm, Y: y_mm, Page: rect.pageIndex, DrawPage: i};
+			}
+		}
+
+		return {X: 0, Y: 0, Page: -1, DrawPage: -1};
+	};
+
+	this.ConvertCoordsFromCursorPage = function (x, y, page)
+	{
+		if (page < 0 || page >= this.m_lPagesCount)
+			return {X: 0, Y: 0, Page: -1, DrawPage: -1};
+
+		var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
+		var rect = this.m_arrPages[page].drawingPage;
+		var x_mm = (x - this.m_oWordControl.X - rect.left) * dKoef;
+		var y_mm = (y - this.m_oWordControl.Y - rect.top) * dKoef;
+
+		return {X: x_mm, Y: y_mm, Page: rect.pageIndex, DrawPage: page};
+	};
+
+	this.ConvertCoordsToAnotherPage = function (x, y, pageCoord, pageNeed)
+	{
+		if (pageCoord < 0 || pageCoord >= this.m_lPagesCount || pageNeed < 0 || pageNeed >= this.m_lPagesCount)
+			return {X: 0, Y: 0, Error: true};
+
+		var dKoef1 = this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100;
+		var dKoef2 = 100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue;
+
+		var page1 = this.m_arrPages[pageCoord].drawingPage;
+		var page2 = this.m_arrPages[pageNeed].drawingPage;
+
+		var xCursor = page1.left + x * dKoef1;
+		var yCursor = page1.top + y * dKoef1;
+
+		var _x = (xCursor - page2.left) * dKoef2;
+		var _y = (yCursor - page2.top) * dKoef2;
+
+		return {X: _x, Y: _y, Error: false};
+	};
+
+	this.ConvertCoordsFromCursor2 = function (x, y, zoomVal, isRulers)
+	{
+		var _x = x;
+		var _y = y;
+
+		var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
+		if (undefined !== zoomVal)
+			dKoef = (100 * g_dKoef_pix_to_mm / zoomVal);
+
+		if (true !== isRulers)
+		{
+			var _xOffset = this.m_oWordControl.X;
+			var _yOffset = this.m_oWordControl.Y;
+
+			if (true === this.m_oWordControl.m_bIsRuler)
+			{
+				_xOffset += (5 * g_dKoef_mm_to_pix);
+				_yOffset += (7 * g_dKoef_mm_to_pix);
+			}
+
+			_x = x - _xOffset;
+			_y = y - _yOffset;
+		}
+
+		if (-1 == this.m_lDrawingFirst || -1 == this.m_lDrawingEnd)
+			return {X: 0, Y: 0, Page: -1, DrawPage: -1};
+
+		for (var i = this.m_lDrawingFirst; i <= this.m_lDrawingEnd; i++)
+		{
+			var rect = this.m_arrPages[i].drawingPage;
+
+			if ((rect.left <= _x) && (_x <= rect.right) && (rect.top <= _y) && (_y <= rect.bottom))
+			{
+				var x_mm = (_x - rect.left) * dKoef;
+				var y_mm = (_y - rect.top) * dKoef;
+
+				if (x_mm > (this.m_arrPages[i].width_mm + 10))
+					x_mm = this.m_arrPages[i].width_mm + 10;
+				if (x_mm < -10)
+					x_mm = -10;
+
+				return {X: x_mm, Y: y_mm, Page: rect.pageIndex, DrawPage: i};
+			}
+		}
+
+		// в страницу не попали. вторая попытка - это попробовать найти страницу по вертикали
+		var _start = Math.max(this.m_lDrawingFirst - 1, 0);
+		var _end = Math.min(this.m_lDrawingEnd + 1, this.m_lPagesCount - 1);
+		for (var i = _start; i <= _end; i++)
+		{
+			var rect = this.m_arrPages[i].drawingPage;
+
+			var bIsCurrent = false;
+			if (i == this.m_lDrawingFirst && rect.top > _y)
+			{
+				bIsCurrent = true;
+			}
+			else if ((rect.top <= _y) && (_y <= rect.bottom))
+			{
+				bIsCurrent = true;
+			}
+			else if (i != this.m_lPagesCount - 1)
+			{
+				if (_y > rect.bottom && _y < this.m_arrPages[i + 1].drawingPage.top)
+					bIsCurrent = true;
+			}
+			else if (_y < rect.top)
+			{
+				// либо вышли раньше, либо это самая первая видимая страница
+				bIsCurrent = true;
+			}
+			else if (i == this.m_lDrawingEnd)
+			{
+				if (_y > rect.bottom)
+					bIsCurrent = true;
+			}
+
+			if (bIsCurrent)
+			{
+				var x_mm = (_x - rect.left) * dKoef;
+				var y_mm = (_y - rect.top) * dKoef;
+
+				return {X: x_mm, Y: y_mm, Page: rect.pageIndex, DrawPage: i};
+			}
+		}
+
+		return {X: 0, Y: 0, Page: -1, DrawPage: -1};
+	};
+
+	this.ConvetToPageCoords = function (x, y, pageIndex)
+	{
+		if (pageIndex < 0 || pageIndex >= this.m_lPagesCount)
+		{
+			return {X: 0, Y: 0, Page: pageIndex, Error: true};
+		}
+		var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
+		var rect = this.m_arrPages[pageIndex].drawingPage;
+
+		var _x = (x - rect.left) * dKoef;
+		var _y = (y - rect.top) * dKoef;
+
+		return {X: _x, Y: _y, Page: pageIndex, Error: false};
+	};
+
+	this.private_ConvertCoordsToCursor = function(x, y, pageIndex, is_round, offsetx, offsety, transform)
+	{
+		if (pageIndex < 0 || pageIndex >= this.m_lPagesCount)
+		{
+			return {X: 0, Y: 0, Error: true};
+		}
+
+		if (transform)
+		{
+			let _x = x, _y = y;
+			x = transform.TransformPointX(_x, _y);
+			y = transform.TransformPointY(_x, _y);
+		}
+
+		var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
+		var x_pix = this.m_arrPages[pageIndex].drawingPage.left + x * dKoef;
+		var y_pix = this.m_arrPages[pageIndex].drawingPage.top  + y * dKoef;
+
+		if (undefined !== offsetx) x_pix += offsetx;
+		if (undefined !== offsety) y_pix += offsety;
+
+		if (true === is_round)
+		{
+			x_pix = x_pix >> 0;
+			y_pix = y_pix >> 0;
+		}
+
+		return {X: x_pix, Y: y_pix, Error: false};
+	};
+
+	this.ConvertCoordsToCursor = function(x, y, pageIndex)
+	{
+		return this.private_ConvertCoordsToCursor(x, y, pageIndex, true);
+	};
+	this.ConvertCoordsToCursor2 = function(x, y, pageIndex)
+	{
+		return this.private_ConvertCoordsToCursor(x, y, pageIndex, true, -0.5, -0.5);
+	};
+	this.ConvertCoordsToCursor3 = function (x, y, pageIndex, isGlobal)
+	{
+		var _x = 0;
+		var _y = 0;
+		if (isGlobal)
+		{
+			_x = this.m_oWordControl.X;
+			_y = this.m_oWordControl.Y;
+
+			if (this.m_oWordControl.m_bIsRuler)
+			{
+				_x += 5 * g_dKoef_mm_to_pix;
+				_y += 7 * g_dKoef_mm_to_pix;
+			}
+		}
+		return this.private_ConvertCoordsToCursor(x, y, pageIndex, true, _x + 0.5, _y + 0.5);
+	};
+	this.ConvertCoordsToCursor4 = function (x, y, pageIndex, isNoRound)
+	{
+		if (true !== isNoRound)
+			return this.private_ConvertCoordsToCursor(x, y, pageIndex, true, 0.5, 0.5);
+		return this.private_ConvertCoordsToCursor(x, y, pageIndex, false);
+	};
+	this.ConvertCoordsToCursorWR = function (x, y, pageIndex, transform, id_ruler_no_use)
+	{
+		var _x = 0;
+		var _y = 0;
+		if (true == this.m_oWordControl.m_bIsRuler && (id_ruler_no_use !== false))
+		{
+			_x = 5 * g_dKoef_mm_to_pix;
+			_y = 7 * g_dKoef_mm_to_pix;
+		}
+
+		return this.private_ConvertCoordsToCursor(x, y, pageIndex, true, _x, _y, transform);
+	};
+
+	this.GetDotsPerMM = function (value)
+	{
+		return value * this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100;
+	};
+
+	this.GetMMPerDot = function (value)
+	{
+		return value / this.GetDotsPerMM(1);
+	};
+	this.GetVisibleMMHeight = function ()
+	{
+		var pixHeigth = this.m_oWordControl.m_oEditor.HtmlElement.height;
+		pixHeigth /= AscCommon.AscBrowser.retinaPixelRatio;
+		var pixBetweenPages = 20 * (this.m_lDrawingEnd - this.m_lDrawingFirst);
+
+		return (pixHeigth - pixBetweenPages) * g_dKoef_pix_to_mm * 100 / this.m_oWordControl.m_nZoomValue;
+	};
+	this.GetVisibleRegion = function()
+	{
+		let yOffset = 0;
+		if (this.m_oWordControl)
+			yOffset += this.m_oWordControl.Y;
+		if (true === this.m_oWordControl.m_bIsRuler)
+			yOffset += (7 * g_dKoef_mm_to_pix);
+
+		let height = 0;
+		if (this.m_oWordControl.m_oEditor)
+			height += AscCommon.AscBrowser.convertToRetinaValue(this.m_oWordControl.m_oEditor.HtmlElement.height);
+
+		let pos1 = this.ConvertCoordsFromCursor2(0, yOffset);
+		let pos2 = this.ConvertCoordsFromCursor2(0, yOffset + height);
+
+		return [{ Page : pos1.Page, Y : pos1.Y }, { Page : pos2.Page, Y : pos2.Y }];
+	};
+
+	// select
+	this.SelectEnabled = function (bIsEnabled)
+	{
+		this.m_bIsSelection = bIsEnabled;
+		if (false === this.m_bIsSelection)
+		{
+			this.SelectClear();
+			//this.m_oWordControl.CheckUnShowOverlay();
+			this.m_oWordControl.OnUpdateOverlay();
+			this.m_oWordControl.m_oOverlayApi.m_oContext.globalAlpha = 1.0;
+		}
+	};
+	this.SelectClear = function ()
 	{
 		if (this.m_oWordControl.MobileTouchManager)
-			return true;
-		return false;
+		{
+			this.m_oWordControl.MobileTouchManager.RectSelect1 = null;
+			this.m_oWordControl.MobileTouchManager.RectSelect2 = null;
+		}
+	};
+
+	this.SetTextSelectionOutline = function (isSelectionOutline)
+	{
+		this.IsTextSelectionOutline = isSelectionOutline;
+	};
+
+	this.private_StartDrawSelection = function (overlay, isSelect2)
+	{
+		this.Overlay = overlay;
+		this.IsTextMatrixUse = ((null != this.TextMatrix) && !global_MatrixTransformer.IsIdentity(this.TextMatrix));
+
+		this.Overlay.m_oContext.fillStyle = "rgba(51,102,204,255)";
+		this.Overlay.m_oContext.beginPath();
+
+		if (this.m_oWordControl.MobileTouchManager && (true !== isSelect2))
+		{
+			this.m_oWordControl.MobileTouchManager.RectSelect1 = null;
+			this.m_oWordControl.MobileTouchManager.RectSelect2 = null;
+		}
+	};
+	this.private_EndDrawSelection = function ()
+	{
+		var ctx = this.Overlay.m_oContext;
+
+		ctx.globalAlpha = 0.2;
+		ctx.fill();
+
+		if (this.IsTextMatrixUse && this.IsTextSelectionOutline)
+		{
+			ctx.strokeStyle = "#9ADBFE";
+			ctx.lineWidth = Math.round(AscCommon.AscBrowser.retinaPixelRatio);
+			ctx.globalAlpha = 1.0;
+			ctx.stroke();
+		}
+
+		ctx.beginPath();
+		ctx.globalAlpha = 1.0;
+
+		this.IsTextMatrixUse = false;
+		this.Overlay = null;
+	};
+
+	this.AddPageSelection = function (pageIndex, x, y, w, h)
+	{
+		if (null == this.SelectionMatrix)
+			this.SelectionMatrix = this.TextMatrix;
+
+		this.IsTextMatrixUse = ((null != this.TextMatrix) && !global_MatrixTransformer.IsIdentity(this.TextMatrix));
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var page = this.m_arrPages[pageIndex];
+		var drawPage = page.drawingPage;
+
+		var dKoefX = (drawPage.right - drawPage.left) / page.width_mm;
+		var dKoefY = (drawPage.bottom - drawPage.top) / page.height_mm;
+
+		if (!this.IsTextMatrixUse)
+		{
+			var _x = ((drawPage.left + dKoefX * x) >> 0);
+			var _y = ((drawPage.top + dKoefY * y) >> 0);
+
+			var _r = ((drawPage.left + dKoefX * (x + w)) >> 0);
+			var _b = ((drawPage.top + dKoefY * (y + h)) >> 0);
+
+			var _w = _r - _x + 1;
+			var _h = _b - _y + 1;
+
+			this.Overlay.CheckRect(rPR * _x, rPR * _y, rPR * _w, rPR * _h);
+			this.Overlay.m_oContext.rect((rPR * _x) >> 0, (rPR *_y) >> 0, (_w * rPR) >> 0, (_h * rPR) >> 0);
+			// this.Overlay.
+		}
+		else
+		{
+			var _x1 = this.TextMatrix.TransformPointX(x, y);
+			var _y1 = this.TextMatrix.TransformPointY(x, y);
+
+			var _x2 = this.TextMatrix.TransformPointX(x + w, y);
+			var _y2 = this.TextMatrix.TransformPointY(x + w, y);
+
+			var _x3 = this.TextMatrix.TransformPointX(x + w, y + h);
+			var _y3 = this.TextMatrix.TransformPointY(x + w, y + h);
+
+			var _x4 = this.TextMatrix.TransformPointX(x, y + h);
+			var _y4 = this.TextMatrix.TransformPointY(x, y + h);
+
+			var x1 = (drawPage.left + dKoefX * _x1) * rPR;
+			var y1 = (drawPage.top + dKoefY * _y1) * rPR;
+
+			var x2 = (drawPage.left + dKoefX * _x2) * rPR;
+			var y2 = (drawPage.top + dKoefY * _y2) * rPR;
+
+			var x3 = (drawPage.left + dKoefX * _x3) * rPR;
+			var y3 = (drawPage.top + dKoefY * _y3) * rPR;
+
+			var x4 = (drawPage.left + dKoefX * _x4) * rPR;
+			var y4 = (drawPage.top + dKoefY * _y4) * rPR;
+
+			if (global_MatrixTransformer.IsIdentity2(this.TextMatrix))
+			{
+				var indent = 0.5 * Math.round(rPR);
+				x1 = (x1 >> 0) + indent;
+				y1 = (y1 >> 0) + indent;
+
+				x2 = (x2 >> 0) + indent;
+				y2 = (y2>> 0) + indent;
+
+				x3 = (x3 >> 0) + indent;
+				y3 = (y3 >> 0) + indent;
+
+				x4 = (x4 >> 0) + indent;
+				y4 = (y4 >> 0) + indent;
+			}
+
+			this.Overlay.CheckPoint(x1, y1);
+			this.Overlay.CheckPoint(x2, y2);
+			this.Overlay.CheckPoint(x3, y3);
+			this.Overlay.CheckPoint(x4, y4);
+
+			var ctx = this.Overlay.m_oContext;
+			ctx.moveTo(x1, y1);
+			ctx.lineTo(x2, y2);
+			ctx.lineTo(x3, y3);
+			ctx.lineTo(x4, y4);
+			ctx.closePath();
+		}
+	};
+
+	this.AddPageSelection2 = function (pageIndex, x, y, w, h)
+	{
+		if (!this.OverlaySelection2.Data)
+			this.OverlaySelection2.Data = [];
+
+		this.OverlaySelection2.Data.push([pageIndex, x, y, w, h]);
+	};
+
+	this.DrawPageSelection2 = function(overlay)
+	{
+		if (this.OverlaySelection2.Data)
+		{
+			this.private_StartDrawSelection(overlay, true);
+
+			var len = this.OverlaySelection2.Data.length;
+			var value;
+			for (var i = 0; i < len; i++)
+			{
+				value = this.OverlaySelection2.Data[i];
+				this.AddPageSelection(value[0], value[1], value[2], value[3], value[4]);
+			}
+
+			this.private_EndDrawSelection();
+		}
+		this.OverlaySelection2 = {};
+	};
+
+	this.CheckSelectMobile = function (overlay)
+	{
+		var _select = this.m_oWordControl.m_oLogicDocument.GetSelectionBounds();
+		if (!_select)
+			return;
+
+		var _rect1 = _select.Start;
+		var _rect2 = _select.End;
+
+		if (!_rect1 || !_rect2)
+			return;
+
+		var _matrix = this.TextMatrix;
+
+		var ctx = overlay.m_oContext;
+
+		var pos1, pos2, pos3, pos4;
+
+		if (!_matrix || global_MatrixTransformer.IsIdentity(_matrix))
+		{
+			pos1 = this.ConvertCoordsToCursorWR(_rect1.X, _rect1.Y, _rect1.Page, undefined, false);
+			pos2 = this.ConvertCoordsToCursorWR(_rect1.X, _rect1.Y + _rect1.H, _rect1.Page, undefined, false);
+
+			pos3 = this.ConvertCoordsToCursorWR(_rect2.X + _rect2.W, _rect2.Y, _rect2.Page, undefined, false);
+			pos4 = this.ConvertCoordsToCursorWR(_rect2.X + _rect2.W, _rect2.Y + _rect2.H, _rect2.Page, undefined, false);
+
+			ctx.strokeStyle = "#1B63BA";
+
+			ctx.moveTo(pos1.X >> 0, pos1.Y >> 0);
+			ctx.lineTo(pos2.X >> 0, pos2.Y >> 0);
+
+			ctx.moveTo(pos3.X >> 0, pos3.Y >> 0);
+			ctx.lineTo(pos4.X >> 0, pos4.Y >> 0);
+
+			ctx.lineWidth = 2;
+			ctx.stroke();
+
+			/*
+			 ctx.beginPath();
+
+			 ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+			 overlay.AddEllipse(pos1.X, pos1.Y - 5, 6.5);
+			 overlay.AddEllipse(pos4.X, pos4.Y + 5, 6.5);
+			 ctx.fill();
+
+			 ctx.beginPath();
+
+			 ctx.fillStyle = "#FFFFFF";
+			 overlay.AddEllipse(pos1.X, pos1.Y - 5, 6);
+			 overlay.AddEllipse(pos4.X, pos4.Y + 5, 6);
+			 ctx.fill();
+			 */
+
+			ctx.beginPath();
+
+			ctx.fillStyle = "#1B63BA";
+			overlay.AddEllipse(pos1.X, pos1.Y - 5, 5);
+			overlay.AddEllipse(pos4.X, pos4.Y + 5, 5);
+			ctx.fill();
+		}
+		else
+		{
+			var _xx11 = _matrix.TransformPointX(_rect1.X, _rect1.Y);
+			var _yy11 = _matrix.TransformPointY(_rect1.X, _rect1.Y);
+
+			var _xx12 = _matrix.TransformPointX(_rect1.X, _rect1.Y + _rect1.H);
+			var _yy12 = _matrix.TransformPointY(_rect1.X, _rect1.Y + _rect1.H);
+
+			var _xx21 = _matrix.TransformPointX(_rect2.X + _rect2.W, _rect2.Y);
+			var _yy21 = _matrix.TransformPointY(_rect2.X + _rect2.W, _rect2.Y);
+
+			var _xx22 = _matrix.TransformPointX(_rect2.X + _rect2.W, _rect2.Y + _rect2.H);
+			var _yy22 = _matrix.TransformPointY(_rect2.X + _rect2.W, _rect2.Y + _rect2.H);
+
+			pos1 = this.ConvertCoordsToCursorWR(_xx11, _yy11, _rect1.Page, undefined, false);
+			pos2 = this.ConvertCoordsToCursorWR(_xx12, _yy12, _rect1.Page, undefined, false);
+
+			pos3 = this.ConvertCoordsToCursorWR(_xx21, _yy21, _rect2.Page, undefined, false);
+			pos4 = this.ConvertCoordsToCursorWR(_xx22, _yy22, _rect2.Page, undefined, false);
+
+			ctx.strokeStyle = "#1B63BA";
+
+			ctx.moveTo(pos1.X, pos1.Y);
+			ctx.lineTo(pos2.X, pos2.Y);
+
+			ctx.moveTo(pos3.X, pos3.Y);
+			ctx.lineTo(pos4.X, pos4.Y);
+
+			ctx.lineWidth = 2;
+			ctx.stroke();
+
+			/*
+			 ctx.beginPath();
+
+			 ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+			 overlay.AddEllipse(pos1.X, pos1.Y - 5, 6.5);
+			 overlay.AddEllipse(pos4.X, pos4.Y + 5, 6.5);
+			 ctx.fill();
+
+			 ctx.beginPath();
+
+			 ctx.fillStyle = "#FFFFFF";
+			 overlay.AddEllipse(pos1.X, pos1.Y - 5, 6);
+			 overlay.AddEllipse(pos4.X, pos4.Y + 5, 6);
+			 ctx.fill();
+			 */
+
+			ctx.beginPath();
+
+			ctx.fillStyle = "#1B63BA";
+			overlay.AddEllipse(pos1.X, pos1.Y - 5, 5);
+			overlay.AddEllipse(pos4.X, pos4.Y + 5, 5);
+			ctx.fill();
+		}
+	};
+
+	this.SelectShow = function ()
+	{
+		this.m_oWordControl.OnUpdateOverlay();
 	};
 
 	this.OnSelectEnd = function ()
@@ -6663,37 +4971,693 @@ function CDrawingDocument()
 			this.m_oWordControl.MobileTouchManager.CheckSelectRects();
 	};
 
-    this.DrawCustomTableMode = function(overlay, drawObj, logicObj, isPen)
+	// search
+	this.SearchClear = function ()
+	{
+		for (var i = 0; i < this.m_lPagesCount; i++)
+		{
+			this.m_arrPages[i].searchingArray.splice(0, this.m_arrPages[i].searchingArray.length);
+		}
+
+		this._search_HdrFtr_All.splice(0, this._search_HdrFtr_All.length);
+		this._search_HdrFtr_All_no_First.splice(0, this._search_HdrFtr_All_no_First.length);
+		this._search_HdrFtr_First.splice(0, this._search_HdrFtr_First.length);
+		this._search_HdrFtr_Even.splice(0, this._search_HdrFtr_Even.length);
+		this._search_HdrFtr_Odd.splice(0, this._search_HdrFtr_Odd.length);
+		this._search_HdrFtr_Odd_no_First.splice(0, this._search_HdrFtr_Odd_no_First.length);
+
+		this.m_oWordControl.m_oOverlayApi.Clear();
+		this.m_bIsSearching = false;
+	};
+	this.AddPageSearch = function (findText, rects, type)
+	{
+		var _len = rects.length;
+		if (_len == 0)
+			return;
+
+		if (this.m_oWordControl.m_oOverlay.HtmlElement.style.display == "none")
+		{
+			this.m_oWordControl.ShowOverlay();
+			this.m_oWordControl.m_oOverlayApi.m_oContext.globalAlpha = 0.2;
+		}
+
+		var navigator = {Page: rects[0].PageNum, Place: rects, Type: type};
+
+		var _find = {text: findText, navigator: navigator};
+		this.m_oWordControl.m_oApi.sync_SearchFoundCallback(_find);
+
+		var is_update = false;
+
+		var _type = type & 0x00FF;
+		switch (_type)
+		{
+			case search_Common:
+			{
+				var _pages = this.m_arrPages;
+				for (var i = 0; i < _len; i++)
+				{
+					var r = rects[i];
+
+					if (this.SearchTransform)
+						r.Transform = this.SearchTransform;
+
+					_pages[r.PageNum].searchingArray[_pages[r.PageNum].searchingArray.length] = r;
+
+					if (r.PageNum >= this.m_lDrawingFirst && r.PageNum <= this.m_lDrawingEnd)
+						is_update = true;
+				}
+				break;
+			}
+			case search_HdrFtr_All:
+			{
+				for (var i = 0; i < _len; i++)
+				{
+					if (this.SearchTransform)
+						rects[i].Transform = this.SearchTransform;
+
+					this._search_HdrFtr_All[this._search_HdrFtr_All.length] = rects[i];
+				}
+				is_update = true;
+
+				break;
+			}
+			case search_HdrFtr_All_no_First:
+			{
+				for (var i = 0; i < _len; i++)
+				{
+					if (this.SearchTransform)
+						rects[i].Transform = this.SearchTransform;
+
+					this._search_HdrFtr_All_no_First[this._search_HdrFtr_All_no_First.length] = rects[i];
+				}
+				if (this.m_lDrawingEnd > 0)
+					is_update = true;
+
+				break;
+			}
+			case search_HdrFtr_First:
+			{
+				for (var i = 0; i < _len; i++)
+				{
+					if (this.SearchTransform)
+						rects[i].Transform = this.SearchTransform;
+
+					this._search_HdrFtr_First[this._search_HdrFtr_First.length] = rects[i];
+				}
+				if (this.m_lDrawingFirst == 0)
+					is_update = true;
+
+				break;
+			}
+			case search_HdrFtr_Even:
+			{
+				for (var i = 0; i < _len; i++)
+				{
+					if (this.SearchTransform)
+						rects[i].Transform = this.SearchTransform;
+
+					this._search_HdrFtr_Even[this._search_HdrFtr_Even.length] = rects[i];
+				}
+				var __c = this.m_lDrawingEnd - this.m_lDrawingFirst;
+
+				if (__c > 1)
+					is_update = true;
+				else if (__c == 1 && (this.m_lDrawingFirst & 1) == 1)
+					is_update = true;
+
+				break;
+			}
+			case search_HdrFtr_Odd:
+			{
+				for (var i = 0; i < _len; i++)
+				{
+					if (this.SearchTransform)
+						rects[i].Transform = this.SearchTransform;
+
+					this._search_HdrFtr_Odd[this._search_HdrFtr_Odd.length] = rects[i];
+				}
+				var __c = this.m_lDrawingEnd - this.m_lDrawingFirst;
+
+				if (__c > 1)
+					is_update = true;
+				else if (__c == 1 && (this.m_lDrawingFirst & 1) == 0)
+					is_update = true;
+
+				break;
+			}
+			case search_HdrFtr_Odd_no_First:
+			{
+				for (var i = 0; i < _len; i++)
+				{
+					if (this.SearchTransform)
+						rects[i].Transform = this.SearchTransform;
+
+					this._search_HdrFtr_Odd_no_First[this._search_HdrFtr_Odd_no_First.length] = rects[i];
+				}
+
+				if (this.m_lDrawingEnd > 1)
+				{
+					var __c = this.m_lDrawingEnd - this.m_lDrawingFirst;
+					if (__c > 1)
+						is_update = true;
+					else if (__c == 1 && (this.m_lDrawingFirst & 1) == 0)
+						is_update = true;
+				}
+
+				break;
+			}
+			default:
+				break;
+		}
+
+		if (is_update)
+			this.m_oWordControl.OnUpdateOverlay();
+
+	};
+
+	this.StartSearchTransform = function (transform)
+	{
+		this.SearchTransform = transform.CreateDublicate();
+	};
+
+	this.EndSearchTransform = function ()
+	{
+		this.SearchTransform = null;
+	};
+
+	this.StartSearch = function ()
+	{
+		this.SearchClear();
+		if (this.m_bIsSelection)
+			this.m_oWordControl.OnUpdateOverlay();
+		this.m_bIsSearching = true;
+	};
+	this.EndSearch = function (bIsChange)
+	{
+		if (bIsChange)
+		{
+			this.SearchClear();
+			this.m_bIsSearching = false;
+			this.m_oWordControl.OnUpdateOverlay();
+		}
+		else
+		{
+			this.m_bIsSearching = true;
+			this.m_oWordControl.OnUpdateOverlay();
+		}
+		this.m_oWordControl.m_oApi.sync_SearchEndCallback();
+	};
+
+	// tracks
+	this.StartTrackImage = function (obj, x, y, w, h, type, pagenum)
+	{
+	};
+
+	this.StartTrackTable = function (obj, transform)
+	{
+		if (this.m_oWordControl.MobileTouchManager)
+		{
+			if (!this.m_oWordControl.MobileTouchManager.TableStartTrack_Check)
+				return;
+		}
+
+		this.TableOutlineDr.TableOutline = obj;
+		this.TableOutlineDr.Counter = 0;
+		this.TableOutlineDr.bIsNoTable = false;
+		this.TableOutlineDr.CheckStartTrack(this.m_oWordControl, transform);
+
+		if (this.m_oWordControl.MobileTouchManager)
+			this.m_oWordControl.OnUpdateOverlay();
+	};
+	this.EndTrackTable = function (pointer, bIsAttack)
+	{
+		if (this.TableOutlineDr.TableOutline != null)
+		{
+			if (pointer == this.TableOutlineDr.TableOutline.Table || bIsAttack)
+			{
+				this.TableOutlineDr.TableOutline = null;
+				this.TableOutlineDr.Counter = 0;
+			}
+		}
+	};
+	this.CheckTrackTable = function ()
+	{
+		if (null == this.TableOutlineDr.TableOutline)
+			return;
+
+		if (this.TableOutlineDr.bIsNoTable && this.TableOutlineDr.bIsTracked === false)
+		{
+			this.TableOutlineDr.Counter++;
+			if (this.TableOutlineDr.Counter > 100)
+			{
+				this.TableOutlineDr.TableOutline = null;
+				this.m_oWordControl.OnUpdateOverlay();
+			}
+		}
+	};
+
+	this.DrawFrameTrack = function (overlay)
+	{
+		if (!this.FrameRect.IsActive)
+			return;
+
+		var _page = this.m_arrPages[this.FrameRect.PageIndex];
+		var drPage = _page.drawingPage;
+
+		var dKoefX = (drPage.right - drPage.left) / _page.width_mm;
+		var dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
+
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var _x = (drPage.left + dKoefX * this.FrameRect.Rect.X) * rPR;
+		var _y = (drPage.top + dKoefY * this.FrameRect.Rect.Y) * rPR;
+		var _r = (drPage.left + dKoefX * this.FrameRect.Rect.R) * rPR;
+		var _b = (drPage.top + dKoefY * this.FrameRect.Rect.B) * rPR;
+
+		var ctx = overlay.m_oContext;
+		ctx.strokeStyle = "#939393";
+		ctx.lineWidth = Math.round(rPR);
+
+		ctx.beginPath();
+		this.AutoShapesTrack.AddRectDashClever(ctx, _x >> 0, _y >> 0, _r >> 0, _b >> 0, 2, 2, true);
+		ctx.beginPath();
+
+		var _w = Math.round(4 * rPR);
+		var _wc = Math.round(5 * rPR);
+
+		var _x1 = (_x >> 0) + Math.round(rPR);
+		var _y1 = (_y >> 0) + Math.round(rPR);
+
+		var _x2 = (_r >> 0) - _w;
+		var _y2 = (_b >> 0) - _w;
+
+		var _xc = ((_x + _r - _wc) / 2) >> 0;
+		var _yc = ((_y + _b - _wc) / 2) >> 0;
+
+		ctx.rect(_x1, _y1, _w, _w);
+		ctx.rect(_xc, _y1, _wc, _w);
+		ctx.rect(_x2, _y1, _w, _w);
+		ctx.rect(_x1, _yc, _w, _wc);
+		ctx.rect(_x2, _yc, _w, _wc);
+		ctx.rect(_x1, _y2, _w, _w);
+		ctx.rect(_xc, _y2, _wc, _w);
+		ctx.rect(_x2, _y2, _w, _w);
+
+		ctx.fillStyle = "#777777";
+		ctx.fill();
+		ctx.beginPath();
+
+		overlay.CheckPoint(_x - _wc, _y - _wc);
+		overlay.CheckPoint(_r + _wc, _b + _wc);
+
+		// move
+		if (this.FrameRect.IsTracked)
+		{
+			_page = this.m_arrPages[this.FrameRect.Track.PageIndex];
+			drPage = _page.drawingPage;
+
+			dKoefX = (drPage.right - drPage.left) / _page.width_mm;
+			dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
+
+			var __x = (drPage.left + dKoefX * this.FrameRect.Track.L) * rPR >> 0;
+			var __y = (drPage.top + dKoefY * this.FrameRect.Track.T) * rPR >> 0;
+			var __r = (drPage.left + dKoefX * this.FrameRect.Track.R) * rPR >> 0;
+			var __b = (drPage.top + dKoefY * this.FrameRect.Track.B) * rPR >> 0;
+
+			if (__x < overlay.min_x)
+				overlay.min_x = __x;
+			if (__r > overlay.max_x)
+				overlay.max_x = __r;
+
+			if (__y < overlay.min_y)
+				overlay.min_y = __y;
+			if (__b > overlay.max_y)
+				overlay.max_y = __b;
+
+			ctx.strokeStyle = "#FFFFFF";
+
+			ctx.beginPath();
+			ctx.rect(__x + 0.5 * Math.round(rPR), __y + 0.5 * Math.round(rPR), __r - __x, __b - __y);
+			ctx.stroke();
+
+			ctx.strokeStyle = "#000000";
+			ctx.beginPath();
+			this.AutoShapesTrack.AddRectDashClever(ctx, __x, __y, __r, __b, 3, 3, true);
+			ctx.beginPath();
+		}
+	};
+
+	this.OnDrawContentControl = function(obj, state, geom)
+	{
+		if (window["NATIVE_EDITOR_ENJINE"] === true)
+			return;
+		return this.contentControls.OnDrawContentControl(obj, state, geom);
+	};
+
+	this.DrawMathTrack = function (overlay)
+	{
+		if (!this.MathTrack.IsActive())
+			return;
+
+		overlay.Show();
+		var nIndex, nCount;
+		var oPath;
+		var _page, drPage, dKoefX, dKoefY;
+		var PathLng = this.MathTrack.GetPolygonsCount();
+		var textMatrix = (null == this.TextMatrix || global_MatrixTransformer.IsIdentity(this.TextMatrix)) ? null : this.TextMatrix;
+
+		for (nIndex = 0; nIndex < PathLng; nIndex++)
+		{
+			oPath = this.MathTrack.GetPolygon(nIndex);
+			_page = this.m_arrPages[oPath.Page];
+			drPage = _page.drawingPage;
+
+			dKoefX = (drPage.right - drPage.left) / _page.width_mm;
+			dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
+			this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, drPage.left, drPage.top, textMatrix);
+			this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, drPage.left, drPage.top, textMatrix);
+		}
+		for (nIndex = 0, nCount = this.MathTrack.GetSelectPathsCount(); nIndex < nCount; nIndex++)
+		{
+			oPath = this.MathTrack.GetSelectPath(nIndex);
+			_page = this.m_arrPages[oPath.Page];
+			drPage = _page.drawingPage;
+			dKoefX = (drPage.right - drPage.left) / _page.width_mm;
+			dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
+			this.MathTrack.DrawSelectPolygon(overlay, oPath, dKoefX, dKoefY, drPage.left, drPage.top, textMatrix);
+		}
+	};
+
+	this.DrawFieldTrack = function (overlay)
+	{
+		if (!this.FieldTrack.IsActive)
+			return;
+
+		overlay.Show();
+
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+
+		for (var nIndex = 0, nCount = this.FieldTrack.Rects.length; nIndex < nCount; nIndex++)
+		{
+			var FieldRect = this.FieldTrack.Rects[nIndex];
+
+			var _page = this.m_arrPages[FieldRect.PageIndex];
+			var drPage = _page.drawingPage;
+
+			var dKoefX = (drPage.right - drPage.left) / _page.width_mm;
+			var dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
+
+			if (null == this.TextMatrix || global_MatrixTransformer.IsIdentity(this.TextMatrix))
+			{
+				var _x = (drPage.left + dKoefX * FieldRect.X0) * rPR;
+				var _y = (drPage.top + dKoefY * FieldRect.Y0) * rPR;
+				var _r = (drPage.left + dKoefX * FieldRect.X1) * rPR;
+				var _b = (drPage.top + dKoefY * FieldRect.Y1) * rPR;
+
+				if (_x < overlay.min_x)
+					overlay.min_x = _x;
+				if (_r > overlay.max_x)
+					overlay.max_x = _r;
+
+				if (_y < overlay.min_y)
+					overlay.min_y = _y;
+				if (_b > overlay.max_y)
+					overlay.max_y = _b;
+
+				var ctx = overlay.m_oContext;
+				ctx.fillStyle = "#375082";
+
+				ctx.beginPath();
+				this.AutoShapesTrack.AddRect(ctx, _x >> 0, _y >> 0, _r >> 0, _b >> 0);
+
+				ctx.globalAlpha = 0.2;
+				ctx.fill();
+				ctx.globalAlpha = 1;
+				ctx.beginPath();
+			}
+			else
+			{
+				var _arrSelect = TransformRectByMatrix(this.TextMatrix, [FieldRect.X0, FieldRect.Y0, FieldRect.X1, FieldRect.Y1], drPage.left, drPage.top, dKoefX, dKoefY);
+
+				for (var i = 0; i < 8; i++)
+					_arrSelect[i] *= rPR;
+
+				overlay.CheckPoint(_arrSelect[0], _arrSelect[1]);
+				overlay.CheckPoint(_arrSelect[2], _arrSelect[3]);
+				overlay.CheckPoint(_arrSelect[4], _arrSelect[5]);
+				overlay.CheckPoint(_arrSelect[6], _arrSelect[7]);
+
+				var ctx = overlay.m_oContext;
+				ctx.fillStyle = "#375082";
+
+				ctx.beginPath();
+
+				ctx.moveTo(_arrSelect[0], _arrSelect[1]);
+				ctx.lineTo(_arrSelect[2], _arrSelect[3]);
+				ctx.lineTo(_arrSelect[4], _arrSelect[5]);
+				ctx.lineTo(_arrSelect[6], _arrSelect[7]);
+				ctx.closePath();
+
+				ctx.globalAlpha = 0.2;
+				ctx.fill();
+				ctx.globalAlpha = 1;
+				ctx.beginPath();
+			}
+		}
+	};
+
+	this.DrawTableTrack = function (overlay)
+	{
+		if (null == this.TableOutlineDr.TableOutline)
+			return;
+
+		var _table = this.TableOutlineDr.TableOutline.Table;
+
+		if (!_table.Is_Inline() || this.TableOutlineDr.IsResizeTableTrack)
+		{
+			if (null == this.TableOutlineDr.CurPos)
+				return;
+
+			var _page = this.m_arrPages[this.TableOutlineDr.CurPos.Page];
+			var drPage = _page.drawingPage;
+
+			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+			var dKoefX = (drPage.right - drPage.left) / _page.width_mm;
+			var dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
+			var indent = 0.5 * Math.round(rPR);
+
+			if (!this.TableOutlineDr.TableMatrix || global_MatrixTransformer.IsIdentity(this.TableOutlineDr.TableMatrix))
+			{
+				var _x = ((drPage.left + dKoefX * this.TableOutlineDr.CurPos.X) * rPR >> 0) + indent;
+				var _y = ((drPage.top + dKoefY * this.TableOutlineDr.CurPos.Y) >> 0) * rPR + indent;
+
+				var _r = _x + ((dKoefX * this.TableOutlineDr.TableOutline.W) * rPR >> 0);
+				var _b = _y + ((dKoefY * this.TableOutlineDr.TableOutline.H) * rPR >> 0);
+
+				if (this.TableOutlineDr.IsResizeTableTrack)
+				{
+					var _lastBounds = this.TableOutlineDr.getLastPageBounds();
+					var _lastX = _lastBounds.X;
+					var _lastY = this.TableOutlineDr.getFullTopPosition(_lastBounds);
+					var _lastYStart = _lastBounds.Y;
+
+					_x = ((drPage.left + dKoefX * _lastX) * rPR >> 0) + indent;
+					_y = ((drPage.top + dKoefY * _lastY) * rPR >> 0) + indent;
+					var _yStart = ((drPage.top + dKoefY * _lastYStart) * rPR >> 0) + indent;
+
+					_r = _x + ((dKoefX * (_lastBounds.W + this.TableOutlineDr.AddResizeCurrentW)) * rPR >> 0);
+					_b = _yStart + ((dKoefY * (_lastBounds.H + this.TableOutlineDr.AddResizeCurrentH)) * rPR >> 0);
+				}
+				overlay.CheckPoint(_x, _y);
+				overlay.CheckPoint(_x, _b);
+				overlay.CheckPoint(_r, _y);
+				overlay.CheckPoint(_r, _b);
+
+				var ctx = overlay.m_oContext;
+				ctx.strokeStyle = "#FFFFFF";
+
+				ctx.beginPath();
+				ctx.rect(_x, _y, _r - _x, _b - _y);
+				ctx.lineWidth = Math.round(rPR);
+				ctx.stroke();
+
+				ctx.strokeStyle = "#000000";
+				ctx.beginPath();
+
+				// набиваем пунктир
+				var dot_size = 3 * Math.round(rPR);
+				for (var i = _x; i < _r; i += dot_size)
+				{
+					ctx.moveTo(i, _y);
+					i += dot_size;
+
+					if (i > _r)
+						i = _r;
+
+					ctx.lineTo(i, _y);
+				}
+				for (var i = _y; i < _b; i += dot_size)
+				{
+					ctx.moveTo(_r, i);
+					i += dot_size;
+
+					if (i > _b)
+						i = _b;
+
+					ctx.lineTo(_r, i);
+				}
+				for (var i = _r; i > _x; i -= dot_size)
+				{
+					ctx.moveTo(i, _b);
+					i -= dot_size;
+
+					if (i < _x)
+						i = _x;
+
+					ctx.lineTo(i, _b);
+				}
+				for (var i = _b; i > _y; i -= dot_size)
+				{
+					ctx.moveTo(_x, i);
+					i -= dot_size;
+
+					if (i < _y)
+						i = _y;
+
+					ctx.lineTo(_x, i);
+				}
+
+				ctx.stroke();
+				ctx.beginPath();
+			}
+			else
+			{
+				var _x = this.TableOutlineDr.CurPos.X + _table.GetTableOffsetCorrection();
+				var _y = this.TableOutlineDr.CurPos.Y;
+				var _r = _x + this.TableOutlineDr.TableOutline.W;
+				var _b = _y + this.TableOutlineDr.TableOutline.H;
+
+				if (this.TableOutlineDr.IsResizeTableTrack)
+				{
+					_x = this.TableOutlineDr.TableOutline.X;
+					_y = this.TableOutlineDr.TableOutline.Y;
+
+					_r = _x + (this.TableOutlineDr.TableOutline.W + this.TableOutlineDr.AddResizeCurrentW);
+					_b = _y + (this.TableOutlineDr.TableOutline.H + this.TableOutlineDr.AddResizeCurrentH);
+				}
+
+				var transform = this.TableOutlineDr.TableMatrix;
+
+				var x1 = transform.TransformPointX(_x, _y);
+				var y1 = transform.TransformPointY(_x, _y);
+
+				var x2 = transform.TransformPointX(_r, _y);
+				var y2 = transform.TransformPointY(_r, _y);
+
+				var x3 = transform.TransformPointX(_r, _b);
+				var y3 = transform.TransformPointY(_r, _b);
+
+				var x4 = transform.TransformPointX(_x, _b);
+				var y4 = transform.TransformPointY(_x, _b);
+
+				x1 = drPage.left + dKoefX * x1;
+				y1 = drPage.top + dKoefY * y1;
+
+				x2 = drPage.left + dKoefX * x2;
+				y2 = drPage.top + dKoefY * y2;
+
+				x3 = drPage.left + dKoefX * x3;
+				y3 = drPage.top + dKoefY * y3;
+
+				x4 = drPage.left + dKoefX * x4;
+				y4 = drPage.top + dKoefY * y4;
+
+				overlay.CheckPoint(x1, y1);
+				overlay.CheckPoint(x2, y2);
+				overlay.CheckPoint(x3, y3);
+				overlay.CheckPoint(x4, y4);
+
+				var ctx = overlay.m_oContext;
+				ctx.strokeStyle = "#FFFFFF";
+
+				ctx.beginPath();
+				ctx.moveTo(x1, y1);
+				ctx.lineTo(x2, y2);
+				ctx.lineTo(x3, y3);
+				ctx.lineTo(x4, y4);
+				ctx.closePath();
+				ctx.stroke();
+
+				ctx.strokeStyle = "#000000";
+				ctx.beginPath();
+				this.AutoShapesTrack.AddRectDash(ctx, x1, y1, x2, y2, x4, y4, x3, y3, 3, 3, true);
+				ctx.beginPath();
+			}
+		}
+		else
+		{
+			this.LockCursorType("default");
+
+			var _x = global_mouseEvent.X;
+			var _y = global_mouseEvent.Y;
+			var posMouse = this.ConvertCoordsFromCursor2(_x, _y);
+
+			this.TableOutlineDr.InlinePos = this.m_oWordControl.m_oLogicDocument.Get_NearestPos(posMouse.Page, posMouse.X, posMouse.Y);
+			this.TableOutlineDr.InlinePos.Page = posMouse.Page;
+			//var posView = this.ConvertCoordsToCursor(this.TableOutlineDr.InlinePos.X, this.TableOutlineDr.InlinePos.Y, posMouse.Page, true);
+
+			var _near = this.TableOutlineDr.InlinePos;
+			this.AutoShapesTrack.SetCurrentPage(_near.Page);
+			this.AutoShapesTrack.DrawInlineMoveCursor(_near.X, _near.Y, _near.Height, _near.transform);
+		}
+	};
+
+	this.Update_MathTrack = function (IsActive, IsContentActive, oMath)
+	{
+		var PixelError = this.GetMMPerDot(1) * 3;
+		this.MathTrack.Update(IsActive, IsContentActive, oMath, PixelError);
+	};
+
+	this.Update_FieldTrack = function (IsActive, aRects)
+	{
+		this.FieldTrack.IsActive = IsActive;
+
+		if (true === IsActive)
+			this.FieldTrack.Rects = aRects;
+		else
+			this.FieldTrack.Rects = [];
+	};
+
+	this.DrawCustomTableMode = function(overlay, drawObj, logicObj, isPen)
 	{
 		var ctx = overlay.m_oContext;
 
 		var page = this.m_arrPages[logicObj.Page];
-        if (!page)
-            return false;
+		if (!page)
+			return false;
 
-        var drawingPage = page.drawingPage;
-        var koefX = (drawingPage.right - drawingPage.left) / page.width_mm;
-        var koefY = (drawingPage.bottom - drawingPage.top) / page.height_mm;
+		var drawingPage = page.drawingPage;
+		var koefX = (drawingPage.right - drawingPage.left) / page.width_mm;
+		var koefY = (drawingPage.bottom - drawingPage.top) / page.height_mm;
 
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 
-        var x1, y1, x2, y2;
+		var x1, y1, x2, y2;
 
-        if (!logicObj.Table)
+		if (!logicObj.Table)
 		{
-            ctx.strokeStyle = "rgba(0, 0, 0, 0.75)";
-            ctx.lineWidth = 1;
+			ctx.strokeStyle = "rgba(0, 0, 0, 0.75)";
+			ctx.lineWidth = 1;
 
-            x1 = (rPR * (drawingPage.left + koefX * logicObj.StartX)) >> 0;
-            y1 = (rPR * (drawingPage.top + koefY * logicObj.StartY)) >> 0;
-            x2 = (rPR * (drawingPage.left + koefX * logicObj.EndX)) >> 0;
-            y2 = (rPR * (drawingPage.top + koefY * logicObj.EndY)) >> 0;
+			x1 = (rPR * (drawingPage.left + koefX * logicObj.StartX)) >> 0;
+			y1 = (rPR * (drawingPage.top + koefY * logicObj.StartY)) >> 0;
+			x2 = (rPR * (drawingPage.left + koefX * logicObj.EndX)) >> 0;
+			y2 = (rPR * (drawingPage.top + koefY * logicObj.EndY)) >> 0;
 
-            overlay.CheckPoint(x1, y1);
-            overlay.CheckPoint(x2, y2);
+			overlay.CheckPoint(x1, y1);
+			overlay.CheckPoint(x2, y2);
 
-            this.AutoShapesTrack.AddRectDashClever(ctx, x1, y1, x2, y2, 2, 2, true);
-            ctx.beginPath();
+			this.AutoShapesTrack.AddRectDashClever(ctx, x1, y1, x2, y2, 2, 2, true);
+			ctx.beginPath();
 			return;
 		}
 
@@ -6702,442 +5666,66 @@ function CDrawingDocument()
 			for (var i = 0; i < drawObj.length; i++)
 			{
 				var elem = drawObj[i];
-                ctx.strokeStyle = (elem.Color === "Red") ? "#FF7B7B" : "#000000";
-                ctx.lineWidth = elem.Bold ? 2 : 1;
+				ctx.strokeStyle = (elem.Color === "Red") ? "#FF7B7B" : "#000000";
+				ctx.lineWidth = elem.Bold ? 2 : 1;
 
-                x1 = (rPR * (drawingPage.left + koefX * elem.X1)) >> 0;
-                y1 = (rPR * (drawingPage.top + koefY * elem.Y1)) >> 0;
-                x2 = (rPR * (drawingPage.left + koefX * elem.X2)) >> 0;
-                y2 = (rPR * (drawingPage.top + koefY * elem.Y2)) >> 0;
+				x1 = (rPR * (drawingPage.left + koefX * elem.X1)) >> 0;
+				y1 = (rPR * (drawingPage.top + koefY * elem.Y1)) >> 0;
+				x2 = (rPR * (drawingPage.left + koefX * elem.X2)) >> 0;
+				y2 = (rPR * (drawingPage.top + koefY * elem.Y2)) >> 0;
 
-                if (!elem.Bold) {
-                    x1 += 0.5;
-                    y1 += 0.5;
-                    x2 += 0.5;
-                    y2 += 0.5;
-                }
+				if (!elem.Bold) {
+					x1 += 0.5;
+					y1 += 0.5;
+					x2 += 0.5;
+					y2 += 0.5;
+				}
 
-                overlay.CheckPoint(x1, y1);
-                overlay.CheckPoint(x2, y2);
+				overlay.CheckPoint(x1, y1);
+				overlay.CheckPoint(x2, y2);
 
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.stroke();
-                ctx.beginPath();
-            }
+				ctx.moveTo(x1, y1);
+				ctx.lineTo(x2, y2);
+				ctx.stroke();
+				ctx.beginPath();
+			}
 		}
 		else
 		{
-            ctx.strokeStyle = "rgba(255, 123, 123, 0.75)";
-            ctx.lineWidth = 1;
+			ctx.strokeStyle = "rgba(255, 123, 123, 0.75)";
+			ctx.lineWidth = 1;
 
 			x1 = (rPR * (drawingPage.left + koefX * logicObj.StartX)) >> 0;
 			y1 = (rPR * (drawingPage.top + koefY * logicObj.StartY)) >> 0;
 			x2 = (rPR * (drawingPage.left + koefX * logicObj.EndX)) >> 0;
 			y2 = (rPR * (drawingPage.top + koefY * logicObj.EndY)) >> 0;
 
-            overlay.CheckPoint(x1, y1);
-            overlay.CheckPoint(x2, y2);
+			overlay.CheckPoint(x1, y1);
+			overlay.CheckPoint(x2, y2);
 
-            this.AutoShapesTrack.AddRectDashClever(ctx, x1, y1, x2, y2, 2, 2, true);
-            ctx.beginPath();
+			this.AutoShapesTrack.AddRectDashClever(ctx, x1, y1, x2, y2, 2, 2, true);
+			ctx.beginPath();
 
-            ctx.lineWidth = 2;
+			ctx.lineWidth = 2;
 
-            for (var i = 0; i < drawObj.length; i++)
-            {
-                x1 = (rPR * (drawingPage.left + koefX * drawObj[i].X1)) >> 0;
-                y1 = (rPR * (drawingPage.top  + koefY * drawObj[i].Y1)) >> 0;
-                x2 = (rPR * (drawingPage.left + koefX * drawObj[i].X2)) >> 0;
-                y2 = (rPR * (drawingPage.top  + koefY * drawObj[i].Y2)) >> 0;
-
-                overlay.CheckPoint(x1, y1);
-                overlay.CheckPoint(x2, y2);
-
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-            }
-
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.lineWidth = 1;
-		}
-	};
-
-	// mouse events
-	this.checkMouseDown_Drawing = function (pos)
-	{
-		var oWordControl = this.m_oWordControl;
-		var _ret = this.TableOutlineDr.checkMouseDown(pos, oWordControl);
-		if (_ret === true)
-		{
-			oWordControl.m_oLogicDocument.RemoveSelection(true);
-			this.TableOutlineDr.bIsTracked = true;
-			if (!this.TableOutlineDr.IsResizeTableTrack)
-				this.LockCursorType("move");
-			else
-				this.LockCursorType("default");
-
-			this.TableOutlineDr.TableOutline.Table.SelectAll();
-			this.TableOutlineDr.TableOutline.Table.Document_SetThisElementCurrent(true);
-
-			if (-1 == oWordControl.m_oTimerScrollSelect)
+			for (var i = 0; i < drawObj.length; i++)
 			{
-				oWordControl.m_oTimerScrollSelect = setInterval(oWordControl.SelectWheel, 20);
+				x1 = (rPR * (drawingPage.left + koefX * drawObj[i].X1)) >> 0;
+				y1 = (rPR * (drawingPage.top  + koefY * drawObj[i].Y1)) >> 0;
+				x2 = (rPR * (drawingPage.left + koefX * drawObj[i].X2)) >> 0;
+				y2 = (rPR * (drawingPage.top  + koefY * drawObj[i].Y2)) >> 0;
+
+				overlay.CheckPoint(x1, y1);
+				overlay.CheckPoint(x2, y2);
+
+				ctx.moveTo(x1, y1);
+				ctx.lineTo(x2, y2);
 			}
-			oWordControl.EndUpdateOverlay();
-			return true;
+
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.lineWidth = 1;
 		}
-
-		if (this.FrameRect.IsActive)
-		{
-			var eps = 10 * g_dKoef_pix_to_mm * 100 / oWordControl.m_nZoomValue;
-			var _check = this.checkCursorOnTrackRect(pos.X, pos.Y, eps, this.FrameRect.Rect);
-
-			if (-1 != _check)
-			{
-				this.FrameRect.IsTracked = true;
-				this.FrameRect.Track.X = pos.X;
-				this.FrameRect.Track.Y = pos.Y;
-				this.FrameRect.Track.Type = _check;
-
-				switch (_check)
-				{
-					case 0:
-					{
-						this.LockCursorType("nw-resize");
-						break;
-					}
-					case 1:
-					{
-						this.LockCursorType("n-resize");
-						break;
-					}
-					case 2:
-					{
-						this.LockCursorType("ne-resize");
-						break;
-					}
-					case 3:
-					{
-						this.LockCursorType("e-resize");
-						break;
-					}
-					case 4:
-					{
-						this.LockCursorType("se-resize");
-						break;
-					}
-					case 5:
-					{
-						this.LockCursorType("s-resize");
-						break;
-					}
-					case 6:
-					{
-						this.LockCursorType("sw-resize");
-						break;
-					}
-					case 7:
-					{
-						this.LockCursorType("w-resize");
-						break;
-					}
-					default:
-					{
-						this.LockCursorType("move");
-						break;
-					}
-				}
-
-				if (-1 == oWordControl.m_oTimerScrollSelect)
-				{
-					oWordControl.m_oTimerScrollSelect = setInterval(oWordControl.SelectWheel, 20);
-				}
-				oWordControl.EndUpdateOverlay();
-				return true;
-			}
-		}
-
-		if (this.contentControls.onPointerDown(pos))
-			return true;
-
-        var _page = this.m_arrPages[pos.Page];
-		if (this.placeholders.onPointerDown(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
-		{
-			this.m_oWordControl.onMouseUpMainSimple();
-			return true;
-		}
-
-		return false;
-	};
-
-	this.checkMouseMove_Drawing = function (pos, isWithoutCoords)
-	{
-		var oWordControl = this.m_oWordControl;
-
-		if (this.TableOutlineDr.bIsTracked)
-		{
-			this.TableOutlineDr.checkMouseMove(global_mouseEvent.X, global_mouseEvent.Y, oWordControl);
-			oWordControl.ShowOverlay();
-			oWordControl.OnUpdateOverlay();
-			oWordControl.EndUpdateOverlay();
-			return true;
-		}
-		if (this.TableOutlineDr.checkMouseMoveTrack)
-		{
-			if (this.TableOutlineDr.checkMouseMoveTrack(pos, oWordControl))
-			{
-				this.SetCursorType("default");
-				return true;
-			}
-		}
-		if (this.TableOutlineDr.checkMouseMove2)
-		{
-			if (this.TableOutlineDr.checkMouseMove2(global_mouseEvent.X, global_mouseEvent.Y, oWordControl))
-				return true;
-		}
-
-		if (this.InlineTextTrackEnabled)
-		{
-			this.contentControls.checkSmallChanges(pos);
-
-			this.InlineTextTrack = oWordControl.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y);
-			this.InlineTextTrackPage = pos.Page;
-
-			oWordControl.ShowOverlay();
-			oWordControl.OnUpdateOverlay();
-			oWordControl.EndUpdateOverlay();
-			return true;
-		}
-
-		if (this.FrameRect.IsActive)
-		{
-			if (!this.FrameRect.IsTracked && this.FrameRect.PageIndex == pos.Page)
-			{
-				var eps = 10 * g_dKoef_pix_to_mm * 100 / oWordControl.m_nZoomValue;
-				var _check = this.checkCursorOnTrackRect(pos.X, pos.Y, eps, this.FrameRect.Rect);
-
-				if (_check != -1)
-				{
-					switch (_check)
-					{
-						case 0:
-						{
-							this.SetCursorType("nw-resize");
-							break;
-						}
-						case 1:
-						{
-							this.SetCursorType("n-resize");
-							break;
-						}
-						case 2:
-						{
-							this.SetCursorType("ne-resize");
-							break;
-						}
-						case 3:
-						{
-							this.SetCursorType("e-resize");
-							break;
-						}
-						case 4:
-						{
-							this.SetCursorType("se-resize");
-							break;
-						}
-						case 5:
-						{
-							this.SetCursorType("s-resize");
-							break;
-						}
-						case 6:
-						{
-							this.SetCursorType("sw-resize");
-							break;
-						}
-						case 7:
-						{
-							this.SetCursorType("w-resize");
-							break;
-						}
-						default:
-						{
-							this.SetCursorType("move");
-							break;
-						}
-					}
-					// оверлей не нужно перерисовывать
-					oWordControl.EndUpdateOverlay();
-					return true;
-				}
-			}
-			else
-			{
-				this.checkTrackRect(pos);
-
-				oWordControl.ShowOverlay();
-				oWordControl.OnUpdateOverlay();
-				oWordControl.EndUpdateOverlay();
-				return true;
-			}
-		}
-
-		if (this.contentControls.onPointerMove(pos, isWithoutCoords))
-			return true;
-
-        var _page = this.m_arrPages[pos.Page];
-        if (this.placeholders.onPointerMove(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
-			return true;
-
-		return false;
-	};
-
-	this.checkMouseUp_Drawing = function (pos)
-	{
-		var oWordControl = this.m_oWordControl;
-
-		if (this.TableOutlineDr.bIsTracked)
-		{
-			this.TableOutlineDr.checkMouseUp(global_mouseEvent.X, global_mouseEvent.Y, oWordControl);
-			oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-			oWordControl.m_oLogicDocument.Document_UpdateRulersState();
-
-			if (-1 != oWordControl.m_oTimerScrollSelect)
-			{
-				clearInterval(oWordControl.m_oTimerScrollSelect);
-				oWordControl.m_oTimerScrollSelect = -1;
-			}
-			oWordControl.OnUpdateOverlay();
-
-			oWordControl.EndUpdateOverlay();
-			return true;
-		}
-
-		if (this.InlineTextTrackEnabled && !this.contentControls.isInlineTrack())
-		{
-			this.InlineTextTrack = oWordControl.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y);
-			this.InlineTextTrackPage = pos.Page;
-			this.EndTrackText();
-
-			oWordControl.ShowOverlay();
-			oWordControl.OnUpdateOverlay();
-			oWordControl.EndUpdateOverlay();
-			return true;
-		}
-
-		if (this.FrameRect.IsActive && this.FrameRect.IsTracked)
-		{
-			this.FrameRect.IsTracked = false;
-
-			this.checkTrackRect(pos);
-			var _track = this.FrameRect.Track;
-			this.FrameRect.Frame.Change_Frame(_track.L, _track.T, _track.R - _track.L, _track.B - _track.T, _track.PageIndex);
-
-			if (-1 != oWordControl.m_oTimerScrollSelect)
-			{
-				clearInterval(oWordControl.m_oTimerScrollSelect);
-				oWordControl.m_oTimerScrollSelect = -1;
-			}
-			oWordControl.OnUpdateOverlay();
-
-			oWordControl.EndUpdateOverlay();
-			return true;
-		}
-
-		if (this.contentControls.onPointerUp(pos))
-			return true;
-
-        var _page = this.m_arrPages[pos.Page];
-        if (this.placeholders.onPointerUp(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
-            return true;
-
-		return false;
-	};
-
-	this.checkCursorOnTrackRect = function (X, Y, eps, rect)
-	{
-		// 0-1-...-7 - точки по часовой стрелке, начиная с left-top,
-		// 8-..-11 - стороны по часовой стрелке, начиная с top
-
-		var __x_dist1 = Math.abs(X - rect.X);
-		var __x_dist2 = Math.abs(X - ((rect.X + rect.R) / 2));
-		var __x_dist3 = Math.abs(X - rect.R);
-
-		var __y_dist1 = Math.abs(Y - rect.Y);
-		var __y_dist2 = Math.abs(Y - ((rect.Y + rect.B) / 2));
-		var __y_dist3 = Math.abs(Y - rect.B);
-
-		if (__y_dist1 < eps)
-		{
-			if ((X < (rect.X - eps)) || (X > (rect.R + eps)))
-				return -1;
-
-			if (__x_dist1 <= __x_dist2 && __x_dist1 <= __x_dist3)
-				return (__x_dist1 < eps) ? 0 : 8;
-
-			if (__x_dist2 <= __x_dist1 && __x_dist2 <= __x_dist3)
-				return (__x_dist2 < eps) ? 1 : 8;
-
-			if (__x_dist3 <= __x_dist1 && __x_dist3 <= __x_dist2)
-				return (__x_dist3 < eps) ? 2 : 8;
-
-			return 8;
-		}
-
-		if (__y_dist3 < eps)
-		{
-			if ((X < (rect.X - eps)) || (X > (rect.R + eps)))
-				return -1;
-
-			if (__x_dist1 <= __x_dist2 && __x_dist1 <= __x_dist3)
-				return (__x_dist1 < eps) ? 6 : 10;
-
-			if (__x_dist2 <= __x_dist1 && __x_dist2 <= __x_dist3)
-				return (__x_dist2 < eps) ? 5 : 10;
-
-			if (__x_dist3 <= __x_dist1 && __x_dist3 <= __x_dist2)
-				return (__x_dist3 < eps) ? 4 : 10;
-
-			return 8;
-		}
-
-		if (__x_dist1 < eps)
-		{
-			if ((Y < (rect.Y - eps)) || (Y > (rect.B + eps)))
-				return -1;
-
-			if (__y_dist1 <= __y_dist2 && __y_dist1 <= __y_dist3)
-				return (__y_dist1 < eps) ? 0 : 11;
-
-			if (__y_dist2 <= __y_dist1 && __y_dist2 <= __y_dist3)
-				return (__y_dist2 < eps) ? 7 : 11;
-
-			if (__y_dist3 <= __y_dist1 && __y_dist3 <= __y_dist2)
-				return (__y_dist3 < eps) ? 6 : 11;
-
-			return 11;
-		}
-
-		if (__x_dist3 < eps)
-		{
-			if ((Y < (rect.Y - eps)) || (Y > (rect.B + eps)))
-				return -1;
-
-			if (__y_dist1 <= __y_dist2 && __y_dist1 <= __y_dist3)
-				return (__y_dist1 < eps) ? 2 : 9;
-
-			if (__y_dist2 <= __y_dist1 && __y_dist2 <= __y_dist3)
-				return (__y_dist2 < eps) ? 3 : 9;
-
-			if (__y_dist3 <= __y_dist1 && __y_dist3 <= __y_dist2)
-				return (__y_dist3 < eps) ? 4 : 9;
-
-			return 9;
-		}
-
-		return -1;
 	};
 
 	this.checkTrackRect = function (pos)
@@ -7266,6 +5854,35 @@ function CDrawingDocument()
 		}
 	};
 
+	this.IsCursorInTableCur = function (x, y, page)
+	{
+		var _table = this.TableOutlineDr.TableOutline;
+		if (_table == null)
+			return false;
+
+		if (page != _table.PageNum)
+			return false;
+
+		var _dist = this.TableOutlineDr.mover_size * g_dKoef_pix_to_mm;
+		_dist *= (100 / this.m_oWordControl.m_nZoomValue);
+
+		var _x = _table.X;
+		var _y = _table.Y;
+		var _r = _x + _table.W;
+		var _b = _y + _table.H;
+
+		if ((x > (_x - _dist)) && (x < _r) && (y > (_y - _dist)) && (y < _b))
+		{
+			if ((x < _x) || (y < _y))
+			{
+				this.TableOutlineDr.Counter = 0;
+				this.TableOutlineDr.bIsNoTable = false;
+				return true;
+			}
+		}
+		return false;
+	};
+
 	this.DrawVerAnchor = function (pageNum, xPos, bIsFromDrawings)
 	{
 		if (undefined === bIsFromDrawings)
@@ -7319,6 +5936,31 @@ function CDrawingDocument()
 		this.HorVerAnchors.splice(0, this.HorVerAnchors.length);
 	};
 
+	// main tracks
+	this.DrawTrack = function(type, matrix, left, top, width, height, isLine, canRotate, isNoMove, isDrawHandles)
+	{
+		this.AutoShapesTrack.DrawTrack(type, matrix, left, top, width, height, isLine, canRotate, isNoMove, isDrawHandles);
+	};
+
+	this.DrawTrackSelectShapes = function (x, y, w, h)
+	{
+		this.AutoShapesTrack.DrawTrackSelectShapes(x, y, w, h);
+	};
+
+	this.DrawAdjustment = function (matrix, x, y, bTextWarp)
+	{
+		this.AutoShapesTrack.DrawAdjustment(matrix, x, y, bTextWarp);
+	};
+
+	this.LockTrackPageNum = function (nPageNum)
+	{
+		this.AutoShapesTrackLockPageNum = nPageNum;
+	};
+	this.UnlockTrackPageNum = function ()
+	{
+		this.AutoShapesTrackLockPageNum = -1;
+	};
+
 	// track text (inline)
 	this.StartTrackText = function ()
 	{
@@ -7334,13 +5976,13 @@ function CDrawingDocument()
 			this.m_oWordControl.m_oLogicDocument.OnEndTextDrag(this.InlineTextTrack, AscCommon.global_keyboardEvent.CtrlKey);
 		else if (this.InlineTextTrack)
 		{
-            var Paragraph = this.InlineTextTrack.Paragraph;
-            Paragraph.Cursor_MoveToNearPos(this.InlineTextTrack);
-            Paragraph.Document_SetThisElementCurrent(false);
+			var Paragraph = this.InlineTextTrack.Paragraph;
+			Paragraph.Cursor_MoveToNearPos(this.InlineTextTrack);
+			Paragraph.Document_SetThisElementCurrent(false);
 
-            this.m_oWordControl.m_oLogicDocument.Document_UpdateSelectionState();
-            this.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-            this.m_oWordControl.m_oLogicDocument.Document_UpdateRulersState();
+			this.m_oWordControl.m_oLogicDocument.Document_UpdateSelectionState();
+			this.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+			this.m_oWordControl.m_oLogicDocument.Document_UpdateRulersState();
 		}
 
 		this.InlineTextTrack = null;
@@ -7359,6 +6001,1218 @@ function CDrawingDocument()
 		this.InlineTextTrackPage = -1;
 	};
 
+	// rulers
+	this.Set_RulerState_Start = function ()
+	{
+		this.UpdateRulerStateFlag = true;
+	};
+	this.Set_RulerState_End = function ()
+	{
+		if (this.UpdateRulerStateFlag)
+		{
+			this.UpdateRulerStateFlag = false;
+			if (this.UpdateRulerStateParams.length > 0)
+			{
+				switch (this.UpdateRulerStateParams[0])
+				{
+					case 0:
+					{
+						this.Set_RulerState_Table(this.UpdateRulerStateParams[1],
+							this.UpdateRulerStateParams[2]);
+						break;
+					}
+					case 1:
+					{
+						this.Set_RulerState_Paragraph(this.UpdateRulerStateParams[1],
+							this.UpdateRulerStateParams[2]);
+						break;
+					}
+					case 2:
+					{
+						this.Set_RulerState_HdrFtr(this.UpdateRulerStateParams[1],
+							this.UpdateRulerStateParams[2],
+							this.UpdateRulerStateParams[3]);
+						break;
+					}
+					case 3:
+					{
+						this.Set_RulerState_Columns(this.UpdateRulerStateParams[1]);
+						break;
+					}
+					default:
+						break;
+				}
+
+				this.UpdateRulerStateParams = [];
+			}
+		}
+	};
+
+	this.Set_RulerState_Table = function (markup, transform)
+	{
+		if (this.UpdateRulerStateFlag)
+		{
+			this.UpdateRulerStateParams.splice(0, this.UpdateRulerStateParams.length);
+			this.UpdateRulerStateParams.push(0);
+			this.UpdateRulerStateParams.push(markup);
+			this.UpdateRulerStateParams.push(transform);
+			return;
+		}
+
+		this.FrameRect.IsActive = false;
+
+		var hor_ruler = this.m_oWordControl.m_oHorRuler;
+		var ver_ruler = this.m_oWordControl.m_oVerRuler;
+
+		hor_ruler.CurrentObjectType = RULER_OBJECT_TYPE_TABLE;
+		hor_ruler.m_oTableMarkup = markup.CreateDublicate();
+
+		ver_ruler.CurrentObjectType = RULER_OBJECT_TYPE_TABLE;
+		ver_ruler.m_oTableMarkup = markup.CreateDublicate();
+
+		this.TableOutlineDr.TableMatrix = null;
+		this.TableOutlineDr.CurrentPageIndex = this.m_lCurrentPage;
+		if (transform)
+		{
+			hor_ruler.m_oTableMarkup.TransformX = transform.tx;
+			hor_ruler.m_oTableMarkup.TransformY = transform.ty;
+
+			ver_ruler.m_oTableMarkup.TransformX = transform.tx;
+			ver_ruler.m_oTableMarkup.TransformY = transform.ty;
+
+			hor_ruler.m_oTableMarkup.CorrectFrom();
+			ver_ruler.m_oTableMarkup.CorrectFrom();
+
+			this.TableOutlineDr.TableMatrix = transform.CreateDublicate();
+		}
+
+		hor_ruler.CalculateMargins();
+
+		if (0 <= this.m_lCurrentPage && this.m_lCurrentPage < this.m_lPagesCount)
+		{
+			hor_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
+			ver_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
+		}
+
+		this.m_oWordControl.UpdateHorRuler();
+		this.m_oWordControl.UpdateVerRuler();
+
+		if (this.m_oWordControl.MobileTouchManager)
+		{
+			this.m_oWordControl.MobileTouchManager.TableStartTrack_Check = true;
+			markup.Table.StartTrackTable();
+			this.m_oWordControl.MobileTouchManager.TableStartTrack_Check = false;
+		}
+	};
+
+	this.Set_RulerState_Paragraph = function (margins, isCanTrackMargins)
+	{
+		if (this.UpdateRulerStateFlag)
+		{
+			this.UpdateRulerStateParams.splice(0, this.UpdateRulerStateParams.length);
+			this.UpdateRulerStateParams.push(1);
+			this.UpdateRulerStateParams.push(margins);
+			this.UpdateRulerStateParams.push(isCanTrackMargins);
+			return;
+		}
+
+		if (margins && margins.Frame !== undefined)
+		{
+			var bIsUpdate = false;
+
+			if (!this.FrameRect.IsActive)
+				bIsUpdate = true;
+
+			if (!bIsUpdate)
+			{
+				if (this.FrameRect.Rect.X != margins.L ||
+					this.FrameRect.Rect.Y != margins.T ||
+					this.FrameRect.Rect.R != margins.R ||
+					this.FrameRect.Rect.B != margins.B ||
+					this.FrameRect.PageIndex != margins.PageIndex)
+				{
+					bIsUpdate = true;
+				}
+			}
+
+			this.FrameRect.IsActive = true;
+			this.FrameRect.Rect.X = margins.L;
+			this.FrameRect.Rect.Y = margins.T;
+			this.FrameRect.Rect.R = margins.R;
+			this.FrameRect.Rect.B = margins.B;
+			this.FrameRect.PageIndex = margins.PageIndex;
+			this.FrameRect.Frame = margins.Frame;
+
+			if (bIsUpdate)
+			{
+				if (this.m_oWordControl.m_oOverlay.HtmlElement.style.display != "block")
+					this.m_oWordControl.ShowOverlay();
+
+				this.m_oWordControl.OnUpdateOverlay();
+			}
+		}
+		else
+		{
+			if (this.FrameRect.IsActive)
+			{
+				if (this.m_oWordControl.m_oOverlay.HtmlElement.style.display != "block")
+					this.m_oWordControl.ShowOverlay();
+
+				this.FrameRect.IsActive = false;
+				this.m_oWordControl.OnUpdateOverlay();
+			}
+			else
+				this.FrameRect.IsActive = false;
+		}
+
+		var hor_ruler = this.m_oWordControl.m_oHorRuler;
+		var ver_ruler = this.m_oWordControl.m_oVerRuler;
+
+		if (hor_ruler.CurrentObjectType == RULER_OBJECT_TYPE_PARAGRAPH && ver_ruler.CurrentObjectType == RULER_OBJECT_TYPE_PARAGRAPH)
+		{
+			if ((margins && !hor_ruler.IsCanMoveMargins) || (!margins && hor_ruler.IsCanMoveMargins))
+			{
+				var bIsNeedUpdate = false;
+				if (margins && this.LastParagraphMargins)
+				{
+					if (margins.L != this.LastParagraphMargins.L ||
+						margins.T != this.LastParagraphMargins.T ||
+						margins.R != this.LastParagraphMargins.R ||
+						margins.B != this.LastParagraphMargins.B)
+					{
+						bIsNeedUpdate = true;
+					}
+				}
+
+				if (!bIsNeedUpdate)
+					return;
+			}
+		}
+
+		hor_ruler.CurrentObjectType = RULER_OBJECT_TYPE_PARAGRAPH;
+		hor_ruler.m_oTableMarkup = null;
+		hor_ruler.m_oColumnMarkup = null;
+
+		ver_ruler.CurrentObjectType = RULER_OBJECT_TYPE_PARAGRAPH;
+		ver_ruler.m_oTableMarkup = null;
+
+		// вообще надо посмотреть... может и был параграф до этого.
+		// тогда вэкграунд перерисовывать не нужно. Только надо знать, на той же странице это было или нет
+		if (-1 != this.m_lCurrentPage && this.m_arrPages[this.m_lCurrentPage])
+		{
+			if (margins)
+			{
+				var cachedPage = {};
+				cachedPage.width_mm = this.m_arrPages[this.m_lCurrentPage].width_mm;
+				cachedPage.height_mm = this.m_arrPages[this.m_lCurrentPage].height_mm;
+
+				cachedPage.margin_left = margins.L;
+				cachedPage.margin_top = margins.T;
+				cachedPage.margin_right = margins.R;
+				cachedPage.margin_bottom = margins.B;
+
+				hor_ruler.CreateBackground(cachedPage);
+				ver_ruler.CreateBackground(cachedPage);
+
+				// disable margins
+				if (true !== isCanTrackMargins)
+				{
+					hor_ruler.IsCanMoveMargins = false;
+					ver_ruler.IsCanMoveMargins = false;
+				}
+				else
+				{
+					hor_ruler.IsCanMoveMargins = true;
+					ver_ruler.IsCanMoveMargins = true;
+				}
+
+				this.LastParagraphMargins = {};
+				this.LastParagraphMargins.L = margins.L;
+				this.LastParagraphMargins.T = margins.T;
+				this.LastParagraphMargins.R = margins.R;
+				this.LastParagraphMargins.B = margins.B;
+			}
+			else
+			{
+				hor_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
+				ver_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
+
+				// enable margins
+				hor_ruler.IsCanMoveMargins = true;
+				ver_ruler.IsCanMoveMargins = true;
+
+				this.LastParagraphMargins = null;
+			}
+		}
+
+		this.m_oWordControl.UpdateHorRuler();
+		this.m_oWordControl.UpdateVerRuler();
+	};
+
+	this.Set_RulerState_Columns = function (markup)
+	{
+		if (this.UpdateRulerStateFlag)
+		{
+			this.UpdateRulerStateParams.splice(0, this.UpdateRulerStateParams.length);
+			this.UpdateRulerStateParams.push(3);
+			this.UpdateRulerStateParams.push(markup);
+			return;
+		}
+
+		this.FrameRect.IsActive = false;
+
+		var hor_ruler = this.m_oWordControl.m_oHorRuler;
+		var ver_ruler = this.m_oWordControl.m_oVerRuler;
+
+		hor_ruler.CurrentObjectType = RULER_OBJECT_TYPE_COLUMNS;
+		hor_ruler.m_oTableMarkup = null;
+		hor_ruler.m_oColumnMarkup = markup.CreateDuplicate();
+
+		ver_ruler.CurrentObjectType = RULER_OBJECT_TYPE_PARAGRAPH;
+		ver_ruler.m_oTableMarkup = null;
+
+		this.TableOutlineDr.TableMatrix = null;
+		this.TableOutlineDr.CurrentPageIndex = this.m_lCurrentPage;
+
+		hor_ruler.CalculateMargins();
+
+		if (0 <= this.m_lCurrentPage && this.m_lCurrentPage < this.m_lPagesCount)
+		{
+			hor_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
+			ver_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
+		}
+
+		this.m_oWordControl.UpdateHorRuler();
+		this.m_oWordControl.UpdateVerRuler();
+	};
+
+	this.Set_RulerState_HdrFtr = function (bHeader, Y0, Y1)
+	{
+		if (this.UpdateRulerStateFlag)
+		{
+			this.UpdateRulerStateParams.splice(0, this.UpdateRulerStateParams.length);
+			this.UpdateRulerStateParams.push(2);
+			this.UpdateRulerStateParams.push(bHeader);
+			this.UpdateRulerStateParams.push(Y0);
+			this.UpdateRulerStateParams.push(Y1);
+			return;
+		}
+
+		this.FrameRect.IsActive = false;
+
+		var hor_ruler = this.m_oWordControl.m_oHorRuler;
+		var ver_ruler = this.m_oWordControl.m_oVerRuler;
+
+		hor_ruler.CurrentObjectType = RULER_OBJECT_TYPE_PARAGRAPH;
+		hor_ruler.m_oTableMarkup = null;
+		hor_ruler.m_oColumnMarkup = null;
+
+		ver_ruler.CurrentObjectType = (true === bHeader) ? RULER_OBJECT_TYPE_HEADER : RULER_OBJECT_TYPE_FOOTER;
+		ver_ruler.header_top = Y0;
+		ver_ruler.header_bottom = Y1;
+		ver_ruler.m_oTableMarkup = null;
+
+		// вообще надо посмотреть... может и бал параграф до этого.
+		// тогда вэкграунд перерисовывать не нужно. Только надо знать, на той же странице это было или нет
+		if (-1 != this.m_lCurrentPage)
+		{
+			hor_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
+			ver_ruler.CreateBackground(this.m_arrPages[this.m_lCurrentPage]);
+		}
+
+		this.m_oWordControl.UpdateHorRuler();
+		this.m_oWordControl.UpdateVerRuler();
+	};
+
+	this.CorrectRulerPosition = function (pos)
+	{
+		if (AscCommon.global_keyboardEvent.AltKey)
+			return pos;
+
+		return ((pos / 2.5 + 0.5) >> 0) * 2.5;
+	};
+
+	this.UpdateTableRuler = function (isCols, index, position)
+	{
+		var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_oWordControl.m_nZoomValue / 100;
+		if (false === isCols)
+		{
+			var markup = this.m_oWordControl.m_oVerRuler.m_oTableMarkup;
+			if (markup == null)
+				return;
+
+			position += markup.TransformY;
+			if (0 == index)
+			{
+				var delta = position - markup.Rows[0].Y;
+				markup.Rows[0].Y = position;
+				markup.Rows[0].H -= delta;
+			}
+			else
+			{
+				var delta = (markup.Rows[index - 1].Y + markup.Rows[index - 1].H) - position;
+
+				markup.Rows[index - 1].H -= delta;
+
+				if (index != markup.Rows.length)
+				{
+					markup.Rows[index].Y -= delta;
+					markup.Rows[index].H += delta;
+				}
+			}
+
+			if ("none" == this.m_oWordControl.m_oOverlay.HtmlElement.style.display)
+				this.m_oWordControl.ShowOverlay();
+
+			this.m_oWordControl.UpdateVerRulerBack();
+			this.m_oWordControl.m_oOverlayApi.HorLine(this.m_arrPages[this.m_lCurrentPage].drawingPage.top + position * dKoef_mm_to_pix);
+		}
+		else
+		{
+			var markup = this.m_oWordControl.m_oHorRuler.m_oTableMarkup;
+			if (markup == null)
+				return;
+
+			position += markup.TransformX;
+
+			if (0 == index)
+			{
+				var _add = markup.X - position;
+				markup.X = position;
+				if (markup.Cols.length > 0)
+					markup.Cols[0] += _add;
+			}
+			else
+			{
+				var _start = markup.X;
+				for (var i = 0; i < (index - 1); i++)
+				{
+					_start += markup.Cols[i];
+				}
+
+				var _old = markup.Cols[index - 1];
+				markup.Cols[index - 1] = position - _start;
+
+				if (index != markup.Cols.length)
+				{
+					markup.Cols[index] += (_old - markup.Cols[index - 1]);
+				}
+			}
+
+			if ("none" == this.m_oWordControl.m_oOverlay.HtmlElement.style.display)
+				this.m_oWordControl.ShowOverlay();
+
+			this.m_oWordControl.UpdateHorRulerBack();
+			this.m_oWordControl.m_oOverlayApi.VertLine(this.m_arrPages[this.m_lCurrentPage].drawingPage.left + position * dKoef_mm_to_pix);
+		}
+	};
+
+	this.Update_ParaTab = function (Default_Tab, ParaTabs)
+	{
+		var hor_ruler = this.m_oWordControl.m_oHorRuler;
+
+		var __tabs = ParaTabs.Tabs;
+		if (undefined === __tabs)
+			__tabs = ParaTabs;
+
+		var _len = __tabs.length;
+		if ((Default_Tab == hor_ruler.m_dDefaultTab) && (hor_ruler.m_arrTabs.length == _len) && (_len == 0))
+		{
+			// потом можно и проверить сами табы
+			return;
+		}
+
+		hor_ruler.m_dDefaultTab = Default_Tab;
+		hor_ruler.m_arrTabs = [];
+		var _ar = hor_ruler.m_arrTabs;
+
+		for (var i = 0; i < _len; i++)
+		{
+			if (__tabs[i].Value == tab_Left || __tabs[i].Value == tab_Center || __tabs[i].Value == tab_Right)
+				_ar[i] = new CTab(__tabs[i].Pos, __tabs[i].Value, __tabs[i].Leader);
+			else
+			{
+				// не должно такого быть. но приходит
+				_ar[i] = new CTab(__tabs[i].Pos, tab_Left, __tabs[i].Leader);
+			}
+		}
+
+		hor_ruler.CorrectTabs();
+		this.m_oWordControl.UpdateHorRuler();
+	};
+
+	// overlay
+	this.OnUpdateOverlay = function ()
+	{
+		this.m_oWordControl.OnUpdateOverlay();
+	};
+
+	// metafile
+	this.RenderDocument = function (Renderer)
+	{
+		var _this = this.printedDocument ? this.printedDocument.DrawingDocument : this;
+		for (var i = 0; i < _this.m_lPagesCount; i++)
+		{
+			var page = _this.m_arrPages[i];
+			Renderer.BeginPage(page.width_mm, page.height_mm);
+			_this.m_oLogicDocument.DrawPage(i, Renderer);
+			Renderer.EndPage();
+		}
+	};
+
+	this.ToRenderer = function (isPrint)
+	{
+		var Renderer = new AscCommon.CDocumentRenderer();
+		Renderer.isPrintMode = isPrint ? true : false;
+		Renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
+		Renderer.VectorMemoryForPrint = new AscCommon.CMemory();
+		var old_marks = this.m_oWordControl.m_oApi.ShowParaMarks;
+		this.m_oWordControl.m_oApi.ShowParaMarks = false;
+		this.RenderDocument(Renderer);
+		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
+		this.printedDocument = null;
+		var ret = Renderer.Memory.GetBase64Memory();
+		//console.log(ret);
+		return ret;
+	};
+
+	this.CheckPrint = function(params)
+	{
+		if (!this.m_oWordControl.m_oLogicDocument)
+			return false;
+
+		if (this.m_arPrintingWaitEndRecalculate)
+		{
+			this.m_oWordControl.m_oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
+			this.m_arPrintingWaitEndRecalculate = null;
+			return false;
+		}
+
+		if (!this.m_bIsDocumentCalculating && (0 === this.m_oWordControl.ReaderModeCurrent))
+			return false;
+
+		if (1 === this.m_oWordControl.ReaderModeCurrent)
+		{
+			params.PrintInReaderMode = true;
+			// добавляем еще один longAction, чтобы убрать не после готовности pdf, а после возврата в reader mode
+			this.m_oWordControl.m_oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
+
+			// делаем через таймаут, чтобы fullRecalculate произошел не синхронно (чтобы были выставлены m_arPrintingWaitEndRecalculate)
+			var wordControl = this.m_oWordControl;
+			setTimeout(function(){
+				wordControl.ChangeReaderMode();
+			}, 10);
+		}
+
+		this.m_arPrintingWaitEndRecalculate = params;
+		this.m_oWordControl.m_oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
+		return true;
+	};
+
+	this.ToRenderer2 = function (document)
+	{
+		var _this = this.printedDocument ? this.printedDocument.DrawingDocument : this;
+		var Renderer = new AscCommon.CDocumentRenderer();
+		Renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
+
+		var old_marks = this.m_oWordControl.m_oApi.ShowParaMarks;
+		this.m_oWordControl.m_oApi.ShowParaMarks = false;
+
+		var ret = "";
+		for (var i = 0; i < _this.m_lPagesCount; i++)
+		{
+			var page = _this.m_arrPages[i];
+			Renderer.BeginPage(page.width_mm, page.height_mm);
+			_this.m_oLogicDocument.DrawPage(i, Renderer);
+			Renderer.EndPage();
+
+			ret += Renderer.Memory.GetBase64Memory();
+			Renderer.Memory.Seek(0);
+		}
+
+		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
+		this.printedDocument = null;
+		//console.log(ret);
+		return ret;
+	};
+	this.ToRendererPart = function (noBase64, isPrint)
+	{
+		var _this = this.printedDocument ? this.printedDocument.DrawingDocument : this;
+
+		var watermark = this.m_oWordControl.m_oApi.watermarkDraw;
+
+		var pagescount = Math.min(_this.m_lPagesCount, _this.m_lCountCalculatePages);
+
+		if (-1 == this.m_lCurrentRendererPage)
+		{
+			if (watermark)
+				watermark.StartRenderer();
+
+			this.m_oDocRenderer = new AscCommon.CDocumentRenderer();
+			this.m_oDocRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
+			this.m_oDocRenderer.VectorMemoryForPrint = new AscCommon.CMemory();
+			this.m_oDocRenderer.isPrintMode = isPrint ? true : false;
+			this.m_lCurrentRendererPage = 0;
+			this.m_bOldShowMarks = this.m_oWordControl.m_oApi.ShowParaMarks;
+			this.m_oWordControl.m_oApi.ShowParaMarks = false;
+		}
+
+		var start = this.m_lCurrentRendererPage;
+		var end = pagescount - 1;
+
+		var renderer = this.m_oDocRenderer;
+		renderer.Memory.Seek(0);
+		renderer.VectorMemoryForPrint.ClearNoAttack();
+		renderer.DocInfo(this.m_oWordControl.m_oApi.asc_getCoreProps());
+
+		for (var i = start; i <= end; i++)
+		{
+			var page = _this.m_arrPages[i];
+			renderer.BeginPage(page.width_mm, page.height_mm);
+			_this.m_oLogicDocument.DrawPage(i, renderer);
+
+			if (watermark)
+				watermark.DrawOnRenderer(renderer, page.width_mm, page.height_mm);
+
+			renderer.EndPage();
+		}
+
+		this.m_lCurrentRendererPage = end + 1;
+
+		if (this.m_lCurrentRendererPage >= pagescount)
+		{
+			if (watermark)
+				watermark.EndRenderer();
+
+			this.m_lCurrentRendererPage = -1;
+			this.m_oDocRenderer = null;
+			this.m_oWordControl.m_oApi.ShowParaMarks = this.m_bOldShowMarks;
+			this.printedDocument = null;
+		}
+
+		if (noBase64) {
+			return renderer.Memory.GetData();
+		} else {
+			return renderer.Memory.GetBase64Memory();
+		}
+	};
+
+	// draw
+	this.IsFreezePage = function (pageIndex)
+	{
+		if (pageIndex >= 0 && (pageIndex < Math.min(this.m_lCountCalculatePages, this.m_lPagesCount)))
+		{
+			if (this.m_oLogicDocument)
+			{
+				if (pageIndex >= this.m_oLogicDocument.Pages.length)
+					return true;
+				else if (!this.m_oLogicDocument.CanDrawPage(pageIndex))
+					return true;
+			}
+			return false;
+		}
+		return true;
+	};
+
+	this.ClearCachePages = function ()
+	{
+		for (var i = 0; i < this.m_lPagesCount; i++)
+		{
+			var page = this.m_arrPages[i];
+			if (page)
+				page.drawingPage.SetRepaint(this.m_oCacheManager);
+		}
+	};
+
+	this.CheckRasterImageOnScreen = function (src)
+	{
+		if (null == this.m_oWordControl.m_oLogicDocument)
+			return;
+
+		if (this.m_lDrawingFirst == -1 || this.m_lDrawingEnd == -1)
+			return;
+
+		var bIsRaster = false;
+		var _checker = this.m_oWordControl.m_oLogicDocument.DrawingObjects;
+		for (var i = this.m_lDrawingFirst; i <= this.m_lDrawingEnd; i++)
+		{
+			var _imgs = _checker.getAllRasterImagesOnPage(i);
+
+			var _len = _imgs.length;
+			for (var j = 0; j < _len; j++)
+			{
+				if (AscCommon.getFullImageSrc2(_imgs[j]) == src)
+				{
+					this.StopRenderingPage(i);
+					bIsRaster = true;
+					break;
+				}
+			}
+		}
+
+		if (bIsRaster)
+			this.m_oWordControl.OnScroll();
+	};
+
+	this.FirePaint = function ()
+	{
+		this.m_oWordControl.OnScroll();
+	};
+
+	this.scrollToTargetOnRecalculate = function(pageCountOld, pageCountNew)
+    {
+        if (this.m_lTargetPage > pageCountOld && this.m_lTargetPage < pageCountNew)
+        {
+            this.isScrollToTargetAttack = true;
+            this.UpdateTarget(this.m_dTargetX, this.m_dTargetY, this.m_lTargetPage);
+        }
+    };
+
+	this.ChangePageAttack = function (pageIndex)
+	{
+		if (pageIndex < this.m_lDrawingFirst || pageIndex > this.m_lDrawingEnd)
+			return;
+
+		this.StopRenderingPage(pageIndex);
+		this.m_oWordControl.OnScroll();
+	};
+
+	this.SetCurrentPage = function (PageIndex)
+	{
+		if (PageIndex >= this.m_arrPages.length)
+			return;
+		if (this.m_lCurrentPage == PageIndex)
+			return;
+
+		this.m_lCurrentPage = PageIndex;
+		this.m_oWordControl.SetCurrentPage();
+	};
+
+	// вот оооочень важная функция. она выкидывает из кэша неиспользуемые шрифты
+	this.CheckFontCache = function()
+	{
+		var map_used = this.m_oWordControl.m_oLogicDocument.Document_CreateFontMap();
+
+		var _measure_map = g_oTextMeasurer.m_oManager.m_oFontsCache.Fonts;
+		var _drawing_map = AscCommon.g_fontManager.m_oFontsCache.Fonts;
+
+		var map_keys = {};
+		var api = this.m_oWordControl.m_oApi;
+		for (var i in map_used)
+		{
+			var key = AscFonts.GenerateMapId(api, g_fontApplication.GetFontInfoName(map_used[i].Name), map_used[i].Style, map_used[i].Size);
+			map_keys[key] = true;
+		}
+
+		// а теперь просто пробегаем по кэшам и удаляем ненужное
+		for (var i in _measure_map)
+		{
+			if (map_keys[i] == undefined)
+			{
+				//_measure_map[i] = undefined;
+				delete _measure_map[i];
+			}
+		}
+		for (var i in _drawing_map)
+		{
+			if (map_keys[i] == undefined)
+			{
+				//_drawing_map[i] = undefined;
+				if (null != _drawing_map[i])
+					_drawing_map[i].Destroy();
+				delete _drawing_map[i];
+			}
+		}
+	};
+
+	// при загрузке документа - нужно понять какие шрифты используются
+	this.CheckFontNeeds = function()
+	{
+		var map_keys = this.m_oWordControl.m_oLogicDocument.Document_Get_AllFontNames();
+		var dstfonts = [];
+		for (var i in map_keys)
+		{
+			dstfonts[dstfonts.length] = new AscFonts.CFont(i, 0, "", 0, null);
+		}
+		AscFonts.FontPickerByCharacter.getFontsByString(AscCommon.translateManager.getValue("Heading" + " 123"));
+        AscFonts.FontPickerByCharacter.extendFonts(dstfonts);
+		this.m_oWordControl.m_oLogicDocument.Fonts = dstfonts;
+		return;
+
+		/*
+		 var map_used = this.m_oWordControl.m_oLogicDocument.Document_CreateFontMap();
+
+		 var map_keys = {};
+		 for (var i in map_used)
+		 {
+		 var search = map_used[i];
+		 var found = map_keys[search.Name];
+
+		 var _need_style = 0;
+		 switch (search.Style)
+		 {
+		 case FontStyle.FontStyleRegular:
+		 {
+		 _need_style = fontstyle_mask_regular;
+		 break;
+		 }
+		 case FontStyle.FontStyleBold:
+		 {
+		 _need_style = fontstyle_mask_bold;
+		 break;
+		 }
+		 case FontStyle.FontStyleItalic:
+		 {
+		 _need_style = fontstyle_mask_italic;
+		 break;
+		 }
+		 case FontStyle.FontStyleBoldItalic:
+		 {
+		 _need_style = fontstyle_mask_bolditalic;
+		 break;
+		 }
+		 default:
+		 {
+		 _need_style = fontstyle_mask_regular | fontstyle_mask_italic | fontstyle_mask_bold | fontstyle_mask_bolditalic;
+		 break;
+		 }
+		 }
+
+		 if (undefined === found)
+		 {
+		 map_keys[search.Name] = _need_style;
+		 }
+		 else
+		 {
+		 map_keys[search.Name] |= _need_style;
+		 }
+		 }
+
+		 // теперь просто пробегаем и заполняем все объектами
+		 var dstfonts = [];
+		 for (var i in map_keys)
+		 {
+		 dstfonts[dstfonts.length] = new CFont(i, 0, "", 0, map_keys[i]);
+		 }
+		 this.m_oWordControl.m_oLogicDocument.Fonts = dstfonts;
+		 */
+	};
+
+	// фукнции для работы
+	this.OpenDocument = function()
+	{
+		//SetHintsProps(false, false);
+		this.m_oDocumentRenderer.InitDocument(this);
+
+		this.m_oWordControl.CalculateDocumentSize();
+		this.m_oWordControl.OnScroll();
+	};
+
+	this.CloseFile = function ()
+	{
+		this.ClearCachePages();
+		this.m_arrPages.splice(0, this.m_arrPages.length);
+		this.m_lPagesCount = 0;
+
+		this.m_lDrawingFirst = -1;
+		this.m_lDrawingEnd = -1;
+		this.m_lCurrentPage = -1;
+	};
+
+	this.InitViewer = function ()
+	{
+	};
+
+	this.IsMobileVersion = function ()
+	{
+		if (this.m_oWordControl.MobileTouchManager)
+			return true;
+		return false;
+	};
+
+	this.isButtonsDisabled = function()
+	{
+		return Asc.editor.isEyedropperStarted() || Asc.editor.isDrawInkMode();
+	};
+
+
+	// mouse events
+	this.checkMouseDown_Drawing = function (pos)
+	{
+		var oWordControl = this.m_oWordControl;
+		var _ret = this.TableOutlineDr.checkMouseDown(pos, oWordControl);
+		if (_ret === true)
+		{
+			oWordControl.m_oLogicDocument.RemoveSelection(true);
+			this.TableOutlineDr.bIsTracked = true;
+			if (!this.TableOutlineDr.IsResizeTableTrack)
+				this.LockCursorType("move");
+			else
+				this.LockCursorType("default");
+
+			this.TableOutlineDr.TableOutline.Table.SelectAll();
+			this.TableOutlineDr.TableOutline.Table.Document_SetThisElementCurrent(true);
+
+			if (-1 == oWordControl.m_oTimerScrollSelect)
+			{
+				oWordControl.m_oTimerScrollSelect = setInterval(oWordControl.SelectWheel, 20);
+			}
+			oWordControl.EndUpdateOverlay();
+			return true;
+		}
+
+		if (this.FrameRect.IsActive)
+		{
+			var eps = 10 * g_dKoef_pix_to_mm * 100 / oWordControl.m_nZoomValue;
+			var _check = this.checkCursorOnTrackRect(pos.X, pos.Y, eps, this.FrameRect.Rect);
+
+			if (-1 != _check)
+			{
+				this.FrameRect.IsTracked = true;
+				this.FrameRect.Track.X = pos.X;
+				this.FrameRect.Track.Y = pos.Y;
+				this.FrameRect.Track.Type = _check;
+
+				switch (_check)
+				{
+					case 0:
+					{
+						this.LockCursorType("nw-resize");
+						break;
+					}
+					case 1:
+					{
+						this.LockCursorType("n-resize");
+						break;
+					}
+					case 2:
+					{
+						this.LockCursorType("ne-resize");
+						break;
+					}
+					case 3:
+					{
+						this.LockCursorType("e-resize");
+						break;
+					}
+					case 4:
+					{
+						this.LockCursorType("se-resize");
+						break;
+					}
+					case 5:
+					{
+						this.LockCursorType("s-resize");
+						break;
+					}
+					case 6:
+					{
+						this.LockCursorType("sw-resize");
+						break;
+					}
+					case 7:
+					{
+						this.LockCursorType("w-resize");
+						break;
+					}
+					default:
+					{
+						this.LockCursorType("move");
+						break;
+					}
+				}
+
+				if (-1 == oWordControl.m_oTimerScrollSelect)
+				{
+					oWordControl.m_oTimerScrollSelect = setInterval(oWordControl.SelectWheel, 20);
+				}
+				oWordControl.EndUpdateOverlay();
+				return true;
+			}
+		}
+
+		if (!this.isButtonsDisabled() && this.contentControls.onPointerDown(pos))
+			return true;
+
+        var _page = this.m_arrPages[pos.Page];
+		if (!this.isButtonsDisabled() && this.placeholders.onPointerDown(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
+		{
+			this.m_oWordControl.onMouseUpMainSimple();
+			return true;
+		}
+
+		return false;
+	};
+
+	this.checkMouseMove_Drawing = function (pos, isWithoutCoords)
+	{
+		var oWordControl = this.m_oWordControl;
+
+		if (this.TableOutlineDr.bIsTracked)
+		{
+			this.TableOutlineDr.checkMouseMove(global_mouseEvent.X, global_mouseEvent.Y, oWordControl);
+			oWordControl.ShowOverlay();
+			oWordControl.OnUpdateOverlay();
+			oWordControl.EndUpdateOverlay();
+			return true;
+		}
+		if (this.TableOutlineDr.checkMouseMoveTrack)
+		{
+			if (this.TableOutlineDr.checkMouseMoveTrack(pos, oWordControl))
+			{
+				this.SetCursorType("default");
+				return true;
+			}
+		}
+		if (this.TableOutlineDr.checkMouseMove2)
+		{
+			if (this.TableOutlineDr.checkMouseMove2(global_mouseEvent.X, global_mouseEvent.Y, oWordControl))
+				return true;
+		}
+
+		if (this.InlineTextTrackEnabled)
+		{
+			this.contentControls.checkSmallChanges(pos);
+
+			this.InlineTextTrack = oWordControl.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y);
+			this.InlineTextTrackPage = pos.Page;
+
+			oWordControl.ShowOverlay();
+			oWordControl.OnUpdateOverlay();
+			oWordControl.EndUpdateOverlay();
+			return true;
+		}
+
+		if (this.FrameRect.IsActive)
+		{
+			if (!this.FrameRect.IsTracked && this.FrameRect.PageIndex == pos.Page)
+			{
+				var eps = 10 * g_dKoef_pix_to_mm * 100 / oWordControl.m_nZoomValue;
+				var _check = this.checkCursorOnTrackRect(pos.X, pos.Y, eps, this.FrameRect.Rect);
+
+				if (_check != -1)
+				{
+					switch (_check)
+					{
+						case 0:
+						{
+							this.SetCursorType("nw-resize");
+							break;
+						}
+						case 1:
+						{
+							this.SetCursorType("n-resize");
+							break;
+						}
+						case 2:
+						{
+							this.SetCursorType("ne-resize");
+							break;
+						}
+						case 3:
+						{
+							this.SetCursorType("e-resize");
+							break;
+						}
+						case 4:
+						{
+							this.SetCursorType("se-resize");
+							break;
+						}
+						case 5:
+						{
+							this.SetCursorType("s-resize");
+							break;
+						}
+						case 6:
+						{
+							this.SetCursorType("sw-resize");
+							break;
+						}
+						case 7:
+						{
+							this.SetCursorType("w-resize");
+							break;
+						}
+						default:
+						{
+							this.SetCursorType("move");
+							break;
+						}
+					}
+					// оверлей не нужно перерисовывать
+					oWordControl.EndUpdateOverlay();
+					return true;
+				}
+			}
+			else
+			{
+				this.checkTrackRect(pos);
+
+				oWordControl.ShowOverlay();
+				oWordControl.OnUpdateOverlay();
+				oWordControl.EndUpdateOverlay();
+				return true;
+			}
+		}
+
+		if (!this.isButtonsDisabled() && this.contentControls.onPointerMove(pos, isWithoutCoords))
+			return true;
+
+        var _page = this.m_arrPages[pos.Page];
+        if (!this.isButtonsDisabled() && this.placeholders.onPointerMove(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
+			return true;
+
+		return false;
+	};
+
+	this.checkMouseUp_Drawing = function (pos)
+	{
+		var oWordControl = this.m_oWordControl;
+
+		if (this.TableOutlineDr.bIsTracked)
+		{
+			this.TableOutlineDr.checkMouseUp(global_mouseEvent.X, global_mouseEvent.Y, oWordControl);
+			oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+			oWordControl.m_oLogicDocument.Document_UpdateRulersState();
+
+			if (-1 != oWordControl.m_oTimerScrollSelect)
+			{
+				clearInterval(oWordControl.m_oTimerScrollSelect);
+				oWordControl.m_oTimerScrollSelect = -1;
+			}
+			oWordControl.OnUpdateOverlay();
+
+			oWordControl.EndUpdateOverlay();
+			return true;
+		}
+
+		if (this.InlineTextTrackEnabled && !this.contentControls.isInlineTrack())
+		{
+			this.InlineTextTrack = oWordControl.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y);
+			this.InlineTextTrackPage = pos.Page;
+			this.EndTrackText();
+
+			oWordControl.ShowOverlay();
+			oWordControl.OnUpdateOverlay();
+			oWordControl.EndUpdateOverlay();
+			return true;
+		}
+
+		if (this.FrameRect.IsActive && this.FrameRect.IsTracked)
+		{
+			this.FrameRect.IsTracked = false;
+
+			this.checkTrackRect(pos);
+			var _track = this.FrameRect.Track;
+			this.FrameRect.Frame.Change_Frame(_track.L, _track.T, _track.R - _track.L, _track.B - _track.T, _track.PageIndex);
+
+			if (-1 != oWordControl.m_oTimerScrollSelect)
+			{
+				clearInterval(oWordControl.m_oTimerScrollSelect);
+				oWordControl.m_oTimerScrollSelect = -1;
+			}
+			oWordControl.OnUpdateOverlay();
+
+			oWordControl.EndUpdateOverlay();
+			return true;
+		}
+
+		if (!this.isButtonsDisabled() && this.contentControls.onPointerUp(pos))
+			return true;
+
+        var _page = this.m_arrPages[pos.Page];
+        if (!this.isButtonsDisabled() && this.placeholders.onPointerUp(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
+            return true;
+
+		return false;
+	};
+
+	this.checkCursorOnTrackRect = function (X, Y, eps, rect)
+	{
+		// 0-1-...-7 - точки по часовой стрелке, начиная с left-top,
+		// 8-..-11 - стороны по часовой стрелке, начиная с top
+
+		var __x_dist1 = Math.abs(X - rect.X);
+		var __x_dist2 = Math.abs(X - ((rect.X + rect.R) / 2));
+		var __x_dist3 = Math.abs(X - rect.R);
+
+		var __y_dist1 = Math.abs(Y - rect.Y);
+		var __y_dist2 = Math.abs(Y - ((rect.Y + rect.B) / 2));
+		var __y_dist3 = Math.abs(Y - rect.B);
+
+		if (__y_dist1 < eps)
+		{
+			if ((X < (rect.X - eps)) || (X > (rect.R + eps)))
+				return -1;
+
+			if (__x_dist1 <= __x_dist2 && __x_dist1 <= __x_dist3)
+				return (__x_dist1 < eps) ? 0 : 8;
+
+			if (__x_dist2 <= __x_dist1 && __x_dist2 <= __x_dist3)
+				return (__x_dist2 < eps) ? 1 : 8;
+
+			if (__x_dist3 <= __x_dist1 && __x_dist3 <= __x_dist2)
+				return (__x_dist3 < eps) ? 2 : 8;
+
+			return 8;
+		}
+
+		if (__y_dist3 < eps)
+		{
+			if ((X < (rect.X - eps)) || (X > (rect.R + eps)))
+				return -1;
+
+			if (__x_dist1 <= __x_dist2 && __x_dist1 <= __x_dist3)
+				return (__x_dist1 < eps) ? 6 : 10;
+
+			if (__x_dist2 <= __x_dist1 && __x_dist2 <= __x_dist3)
+				return (__x_dist2 < eps) ? 5 : 10;
+
+			if (__x_dist3 <= __x_dist1 && __x_dist3 <= __x_dist2)
+				return (__x_dist3 < eps) ? 4 : 10;
+
+			return 8;
+		}
+
+		if (__x_dist1 < eps)
+		{
+			if ((Y < (rect.Y - eps)) || (Y > (rect.B + eps)))
+				return -1;
+
+			if (__y_dist1 <= __y_dist2 && __y_dist1 <= __y_dist3)
+				return (__y_dist1 < eps) ? 0 : 11;
+
+			if (__y_dist2 <= __y_dist1 && __y_dist2 <= __y_dist3)
+				return (__y_dist2 < eps) ? 7 : 11;
+
+			if (__y_dist3 <= __y_dist1 && __y_dist3 <= __y_dist2)
+				return (__y_dist3 < eps) ? 6 : 11;
+
+			return 11;
+		}
+
+		if (__x_dist3 < eps)
+		{
+			if ((Y < (rect.Y - eps)) || (Y > (rect.B + eps)))
+				return -1;
+
+			if (__y_dist1 <= __y_dist2 && __y_dist1 <= __y_dist3)
+				return (__y_dist1 < eps) ? 2 : 9;
+
+			if (__y_dist2 <= __y_dist1 && __y_dist2 <= __y_dist3)
+				return (__y_dist2 < eps) ? 3 : 9;
+
+			if (__y_dist3 <= __y_dist1 && __y_dist3 <= __y_dist2)
+				return (__y_dist3 < eps) ? 4 : 9;
+
+			return 9;
+		}
+
+		return -1;
+	};
+
+	// generate maths
 	this.SendMathToMenu = function ()
 	{
 		if (this.MathMenuLoad)
@@ -7569,477 +7423,9 @@ function CDrawingDocument()
         History.TurnOn();
     };
 }
-function CStylesPainter()
-{
-	this.defaultStyles = null;
-	this.docStyles = null;
-
-	this.mergedStyles = null;
-
-	this.STYLE_THUMBNAIL_WIDTH = GlobalSkin.STYLE_THUMBNAIL_WIDTH;
-	this.STYLE_THUMBNAIL_HEIGHT = GlobalSkin.STYLE_THUMBNAIL_HEIGHT;
-
-	this.CurrentTranslate = null;
-}
-CStylesPainter.prototype =
-{
-	CheckStylesNames : function(_api, ds)
-	{
-        var DocumentStyles = _api.WordControl.m_oLogicDocument.Get_Styles();
-        for (var i in ds)
-        {
-            var style = ds[i];
-            if (style.IsExpressStyle(DocumentStyles) && null === DocumentStyles.GetStyleIdByName(style.Name))
-            {
-            	AscFonts.FontPickerByCharacter.getFontsByString(style.Name);
-            }
-        }
-
-        AscFonts.FontPickerByCharacter.getFontsByString("Aa");
-
-        var styles = DocumentStyles.Style;
-
-        if (!styles)
-            return;
-
-        for (var i in styles)
-        {
-            var style = styles[i];
-            if (style.IsExpressStyle(DocumentStyles))
-            {
-                AscFonts.FontPickerByCharacter.getFontsByString(style.Name);
-                AscFonts.FontPickerByCharacter.getFontsByString(AscCommon.translateManager.getValue(style.Name));
-            }
-        }
-	},
-
-	GenerateStyles: function (_api, ds)
-	{
-		var _oldX = this.STYLE_THUMBNAIL_WIDTH;
-		var _oldY = this.STYLE_THUMBNAIL_HEIGHT;
-
-		this.STYLE_THUMBNAIL_WIDTH 	= AscCommon.AscBrowser.convertToRetinaValue(this.STYLE_THUMBNAIL_WIDTH, true);
-		this.STYLE_THUMBNAIL_HEIGHT = AscCommon.AscBrowser.convertToRetinaValue(this.STYLE_THUMBNAIL_HEIGHT, true);
-
-		this.CurrentTranslate = _api.CurrentTranslate;
-
-		this.GenerateDefaultStyles(_api, ds);
-		this.GenerateDocumentStyles(_api);
-
-		// стили сформированы. осталось просто сформировать единый список
-		var _count_default = this.defaultStyles.length;
-		var _count_doc = 0;
-		if (null != this.docStyles)
-			_count_doc = this.docStyles.length;
-
-		var aPriorityStyles = [];
-		var fAddToPriorityStyles = function (style)
-		{
-			var index = style.uiPriority;
-			if (null == index)
-				index = 0;
-			var aSubArray = aPriorityStyles[index];
-			if (null == aSubArray)
-			{
-				aSubArray = [];
-				aPriorityStyles[index] = aSubArray;
-			}
-			aSubArray.push(style);
-		};
-		var _map_document = {};
-
-		for (var i = 0; i < _count_doc; i++)
-		{
-			var style = this.docStyles[i];
-			_map_document[style.Name] = 1;
-			fAddToPriorityStyles(style);
-		}
-
-		for (var i = 0; i < _count_default; i++)
-		{
-			var style = this.defaultStyles[i];
-			if (null == _map_document[style.Name])
-				fAddToPriorityStyles(style);
-		}
-
-		this.mergedStyles = [];
-		for (var index in aPriorityStyles)
-		{
-			var aSubArray = aPriorityStyles[index];
-			aSubArray.sort(function (a, b)
-			{
-				if (a.Name < b.Name)
-					return -1;
-				else if (a.Name > b.Name)
-					return 1;
-				else
-					return 0;
-			});
-			for (var i = 0, length = aSubArray.length; i < length; ++i)
-			{
-				this.mergedStyles.push(aSubArray[i]);
-			}
-		}
-
-		this.STYLE_THUMBNAIL_WIDTH = _oldX;
-		this.STYLE_THUMBNAIL_HEIGHT = _oldY;
-
-		// export
-		this["STYLE_THUMBNAIL_WIDTH"] = this.STYLE_THUMBNAIL_WIDTH;
-		this["STYLE_THUMBNAIL_HEIGHT"] = this.STYLE_THUMBNAIL_HEIGHT;
-
-		// теперь просто отдаем евент наверх
-		_api.sync_InitEditorStyles(this);
-	},
-	GenerateDefaultStyles: function (_api, ds)
-	{
-		var styles = ds;
-
-		// добавили переводы => нельзя кэшировать
-		var _canvas = document.createElement('canvas');
-		_canvas.width = this.STYLE_THUMBNAIL_WIDTH;
-		_canvas.height = this.STYLE_THUMBNAIL_HEIGHT;
-		var ctx = _canvas.getContext('2d');
-
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(0, 0, _canvas.width, _canvas.height);
-
-		var graphics = new AscCommon.CGraphics();
-		graphics.init(ctx, _canvas.width, _canvas.height,
-			_canvas.width * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio,
-			_canvas.height * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio);
-
-		graphics.m_oFontManager = AscCommon.g_fontManager;
-
-		var DocumentStyles = _api.WordControl.m_oLogicDocument.Get_Styles();
-		this.defaultStyles = [];
-		for (var i in styles)
-		{
-			var style = styles[i];
-			if (style.IsExpressStyle(DocumentStyles) && null === DocumentStyles.GetStyleIdByName(style.Name))
-			{
-				this.drawStyle(_api, graphics, style, AscCommon.translateManager.getValue(style.Name));
-				this.defaultStyles.push(new AscCommon.CStyleImage(style.Name, AscCommon.c_oAscStyleImage.Default,
-					_canvas.toDataURL("image/png"), style.uiPriority));
-			}
-		}
-	},
-
-	GenerateDocumentStyles: function (_api)
-	{
-		if (!_api.WordControl.m_oLogicDocument)
-		{
-			return;
-		}
-
-		var __Styles = _api.WordControl.m_oLogicDocument.Get_Styles();
-		var styles = __Styles.Style;
-
-		if (!styles)
-		{
-			return;
-		}
-
-		var cur_index = 0;
-
-		var _canvas = document.createElement('canvas');
-		_canvas.width = this.STYLE_THUMBNAIL_WIDTH;
-		_canvas.height = this.STYLE_THUMBNAIL_HEIGHT;
-		var ctx = _canvas.getContext('2d');
-
-		if (window["flat_desine"] !== true)
-		{
-			ctx.fillStyle = "#FFFFFF";
-			ctx.fillRect(0, 0, _canvas.width, _canvas.height);
-		}
-
-		var graphics = new AscCommon.CGraphics();
-		graphics.init(ctx, _canvas.width, _canvas.height,
-			_canvas.width * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio,
-			_canvas.height * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio);
-		graphics.m_oFontManager = AscCommon.g_fontManager;
-
-		this.docStyles = [];
-		for (var i in styles)
-		{
-			var style = styles[i];
-			if (style.IsExpressStyle(__Styles))
-			{
-				// как только меняется сериалайзер - меняется и код здесь. Да, не очень удобно,
-				// зато быстро делается
-				var formalStyle = i.toLowerCase().replace(/\s/g, "");
-				var res = formalStyle.match(/^heading([1-9][0-9]*)$/);
-				var index = (res) ? res[1] - 1 : -1;
-
-				var _dr_style = __Styles.Get_Pr(i, styletype_Paragraph);
-				_dr_style.Name = style.Name;
-				_dr_style.Id = i;
-
-				this.drawStyle(_api, graphics, _dr_style,
-					__Styles.IsStyleDefaultByName(style.Name) ? AscCommon.translateManager.getValue(style.Name) : style.Name);
-				this.docStyles[cur_index] = new AscCommon.CStyleImage(style.Name, AscCommon.c_oAscStyleImage.Document,
-					_canvas.toDataURL("image/png"), style.uiPriority);
-
-				// алгоритм смены имени
-				if (style.Default)
-				{
-					switch (style.Default)
-					{
-						case 1:
-							break;
-						case 2:
-							this.docStyles[cur_index].Name = "No List";
-							break;
-						case 3:
-							this.docStyles[cur_index].Name = "Normal";
-							break;
-						case 4:
-							this.docStyles[cur_index].Name = "Normal Table";
-							break;
-					}
-				}
-				else if (index != -1)
-				{
-					this.docStyles[cur_index].Name = "Heading ".concat(index + 1);
-				}
-
-				cur_index++;
-			}
-		}
-	},
-	drawStyle: function (_api, graphics, style, styleName)
-	{
-		var ctx = graphics.m_oContext;
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(0, 0, this.STYLE_THUMBNAIL_WIDTH, this.STYLE_THUMBNAIL_HEIGHT);
-
-		var font = {
-			FontFamily: {Name: "Times New Roman", Index: -1},
-			Color: {r: 0, g: 0, b: 0},
-			Bold: false,
-			Italic: false,
-			FontSize: 10
-		};
-
-		var textPr = style.TextPr;
-		if (textPr.FontFamily != undefined)
-		{
-			font.FontFamily.Name = textPr.FontFamily.Name;
-			font.FontFamily.Index = textPr.FontFamily.Index;
-		}
-
-		if (textPr.Bold != undefined)
-			font.Bold = textPr.Bold;
-		if (textPr.Italic != undefined)
-			font.Italic = textPr.Italic;
-
-		if (textPr.FontSize != undefined)
-			font.FontSize = textPr.FontSize;
-
-		graphics.SetFont(font);
-
-		if (textPr.Color == undefined)
-			graphics.b_color1(0, 0, 0, 255);
-		else
-			graphics.b_color1(textPr.Color.r, textPr.Color.g, textPr.Color.b, 255);
-
-		var dKoefToMM = g_dKoef_pix_to_mm;
-		dKoefToMM /= AscCommon.AscBrowser.retinaPixelRatio;
-
-		if (window["flat_desine"] !== true)
-		{
-			var y = 0;
-			var b = dKoefToMM * this.STYLE_THUMBNAIL_HEIGHT;
-			var w = dKoefToMM * this.STYLE_THUMBNAIL_WIDTH;
-
-			graphics.transform(1, 0, 0, 1, 0, 0);
-			graphics.save();
-			graphics._s();
-			graphics._m(-0.5, y);
-			graphics._l(w, y);
-			graphics._l(w, b);
-			graphics._l(0, b);
-			graphics._z();
-			graphics.clip();
-
-			graphics.t(this.CurrentTranslate.StylesText, 0.5, (y + b) / 2);
-
-			ctx.setTransform(1, 0, 0, 1, 0, 0);
-			ctx.fillStyle = "#E8E8E8";
-
-			var _b = this.STYLE_THUMBNAIL_HEIGHT - 1.5;
-			var _x = 2;
-			var _w = this.STYLE_THUMBNAIL_WIDTH - 4;
-			var _h = (this.STYLE_THUMBNAIL_HEIGHT / 3) >> 0;
-			ctx.beginPath();
-			ctx.moveTo(_x, _b - _h);
-			ctx.lineTo(_x + _w, _b - _h);
-			ctx.lineTo(_x + _w, _b);
-			ctx.lineTo(_x, _b);
-			ctx.closePath();
-			ctx.fill();
-
-			ctx.lineWidth = 1;
-			ctx.strokeStyle = "#D8D8D8";
-			ctx.beginPath();
-			ctx.rect(0.5, 0.5, this.STYLE_THUMBNAIL_WIDTH - 1, this.STYLE_THUMBNAIL_HEIGHT - 1);
-
-			ctx.stroke();
-
-			graphics.restore();
-		}
-		else
-		{
-			g_oTableId.m_bTurnOff = true;
-			History.TurnOff();
-
-			var oldDefTabStop = AscCommonWord.Default_Tab_Stop;
-			AscCommonWord.Default_Tab_Stop = 1;
-			var isShowParaMarks = false;
-			if (_api)
-			{
-				isShowParaMarks = _api.get_ShowParaMarks();
-				_api.put_ShowParaMarks(false);
-			}
-
-			var hdr = new CHeaderFooter(editor.WordControl.m_oLogicDocument.HdrFtr, editor.WordControl.m_oLogicDocument, editor.WordControl.m_oDrawingDocument, AscCommon.hdrftr_Header);
-			var _dc = hdr.Content;//new CDocumentContent(editor.WordControl.m_oLogicDocument, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, false, true, false);
-
-			var par = new Paragraph(editor.WordControl.m_oDrawingDocument, _dc, false);
-			var run = new ParaRun(par, false);
-			run.AddText(styleName);
-
-			_dc.Internal_Content_Add(0, par, false);
-			par.Add_ToContent(0, run);
-			par.Style_Add(style.Id, false);
-			par.Set_Align(AscCommon.align_Left);
-			par.Set_Tabs(new CParaTabs());
-
-			if (!textPr.Color || (255 === textPr.Color.r && 255 === textPr.Color.g && 255 === textPr.Color.b))
-				run.Set_Color(new CDocumentColor(0, 0, 0, false));
-
-			var _brdL = style.ParaPr.Brd.Left;
-			if (undefined !== _brdL && null !== _brdL)
-			{
-				var brdL = new CDocumentBorder();
-				brdL.Set_FromObject(_brdL);
-				brdL.Space = 0;
-				par.Set_Border(brdL, AscDFH.historyitem_Paragraph_Borders_Left);
-			}
-
-			var _brdT = style.ParaPr.Brd.Top;
-			if (undefined !== _brdT && null !== _brdT)
-			{
-				var brd = new CDocumentBorder();
-				brd.Set_FromObject(_brdT);
-				brd.Space = 0;
-				par.Set_Border(brd, AscDFH.historyitem_Paragraph_Borders_Top);
-			}
-
-			var _brdB = style.ParaPr.Brd.Bottom;
-			if (undefined !== _brdB && null !== _brdB)
-			{
-				var brd = new CDocumentBorder();
-				brd.Set_FromObject(_brdB);
-				brd.Space = 0;
-				par.Set_Border(brd, AscDFH.historyitem_Paragraph_Borders_Bottom);
-			}
-
-			var _brdR = style.ParaPr.Brd.Right;
-			if (undefined !== _brdR && null !== _brdR)
-			{
-				var brd = new CDocumentBorder();
-				brd.Set_FromObject(_brdR);
-				brd.Space = 0;
-				par.Set_Border(brd, AscDFH.historyitem_Paragraph_Borders_Right);
-			}
-
-			var _ind = new CParaInd();
-			_ind.FirstLine = 0;
-			_ind.Left = 0;
-			_ind.Right = 0;
-			par.Set_Ind(_ind, false);
-
-			var _sp = new CParaSpacing();
-			_sp.Line = 1;
-			_sp.LineRule = Asc.linerule_Auto;
-			_sp.Before = 0;
-			_sp.BeforeAutoSpacing = false;
-			_sp.After = 0;
-			_sp.AfterAutoSpacing = false;
-			par.Set_Spacing(_sp, false);
-
-			_dc.Reset(0, 0, 10000, 10000);
-			_dc.Recalculate_Page(0, true);
-
-			_dc.Reset(0, 0, par.Lines[0].Ranges[0].W + 0.001, 10000);
-			_dc.Recalculate_Page(0, true);
-			//par.Reset(0, 0, 10000, 10000, 0);
-			//par.Recalculate_Page(0);
-
-			var y = 0;
-			var b = dKoefToMM * this.STYLE_THUMBNAIL_HEIGHT;
-			var w = dKoefToMM * this.STYLE_THUMBNAIL_WIDTH;
-			var off = 10 * dKoefToMM;
-			var off2 = 5 * dKoefToMM;
-			var off3 = 1 * dKoefToMM;
-
-			graphics.transform(1, 0, 0, 1, 0, 0);
-			graphics.save();
-			graphics._s();
-			graphics._m(off2, y + off3);
-			graphics._l(w - off, y + off3);
-			graphics._l(w - off, b - off3);
-			graphics._l(off2, b - off3);
-			graphics._z();
-			graphics.clip();
-
-			//graphics.t(style.Name, off + 0.5, y + 0.75 * (b - y));
-			var baseline = par.Lines[0].Y;
-			par.Shift(0, off + 0.5, y + 0.75 * (b - y) - baseline);
-			par.Draw(0, graphics);
-
-			graphics.restore();
-
-			if (_api)
-				_api.put_ShowParaMarks(isShowParaMarks);
-
-			AscCommonWord.Default_Tab_Stop = oldDefTabStop;
-
-			g_oTableId.m_bTurnOff = false;
-			History.TurnOn();
-		}
-	}
-};
-CStylesPainter.prototype.get_MergedStyles = function ()
-{
-	return this.mergedStyles;
-};
-
-
-
-function TransformRectByMatrix(m, arr, offX, offY, koefX, koefY)
-{
-	var ret = [];
-	ret.push(offX + koefX * m.TransformPointX(arr[0], arr[1]));
-	ret.push(offY + koefY * m.TransformPointY(arr[0], arr[1]));
-
-	ret.push(offX + koefX * m.TransformPointX(arr[2], arr[1]));
-	ret.push(offY + koefY * m.TransformPointY(arr[2], arr[1]));
-
-	ret.push(offX + koefX * m.TransformPointX(arr[2], arr[3]));
-	ret.push(offY + koefY * m.TransformPointY(arr[2], arr[3]));
-
-	ret.push(offX + koefX * m.TransformPointX(arr[0], arr[3]));
-	ret.push(offY + koefY * m.TransformPointY(arr[0], arr[3]));
-	return ret;
-}
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommon'].CPage = CPage;
 window['AscCommon'].CDrawingDocument = CDrawingDocument;
-
-window['AscCommonWord'].CStylesPainter = CStylesPainter;
-CStylesPainter.prototype['get_MergedStyles'] = CStylesPainter.prototype.get_MergedStyles;

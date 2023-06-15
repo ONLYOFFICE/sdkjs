@@ -926,6 +926,12 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         }
         return false;
     };
+    Geometry.prototype.isInk = function()
+    {
+        if(this.pathLst.length !== 1)
+            return false;
+        return this.pathLst[0].isInk();
+    };
 
     Geometry.prototype.createDuplicate = function()
     {

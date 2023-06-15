@@ -43,9 +43,9 @@
 	 * -----------------------------------------------------------------------------
 	 */
 	var asc = window["Asc"];
-	
+
 	var AscBrowser = AscCommon.AscBrowser;
-	
+
 	var cElementType = AscCommonExcel.cElementType;
 	var c_oAscCellEditorSelectState = AscCommonExcel.c_oAscCellEditorSelectState;
 	var c_oAscCellEditorState = asc.c_oAscCellEditorState;
@@ -528,6 +528,46 @@
 		}
 	};
 
+	CellEditor.prototype.changeTextCase = function (val) {
+		if (this.isFormula()) {
+			return;
+		}
+		var t = this, opt = t.options;
+
+		if (t.selectionBegin !== t.selectionEnd) {
+			let begin = Math.min(t.selectionBegin, t.selectionEnd);
+			let end = Math.max(t.selectionBegin, t.selectionEnd);
+
+			let oNewText = AscCommonExcel.changeTextCase(opt.fragments, val, begin, end);
+			if (oNewText && oNewText.fragmentsMap) {
+				this._changeFragments(oNewText.fragmentsMap);
+			}
+		}
+	};
+
+	CellEditor.prototype._changeFragments = function (fragmentsMap) {
+		let opt = this.options;
+		if (fragmentsMap) {
+			let _undoFragments = {};
+			for (let i in fragmentsMap) {
+				if(fragmentsMap.hasOwnProperty(i)) {
+					_undoFragments[i] = opt.fragments[i].clone();
+					opt.fragments[i] = fragmentsMap[i];
+				}
+			}
+
+			if (!this.undoMode) {
+				// save info to undo/redo
+				this.undoList.push({fn: this._changeFragments, args: [_undoFragments]});
+			}
+
+			this._update();
+			// Обновляем выделение
+			this._cleanSelection();
+			this._drawSelection();
+		}
+	};
+
 	CellEditor.prototype.empty = function ( options ) {
 		// Чистка для редактирования только All
 		if ( Asc.c_oAscCleanOptions.All !== options ) {
@@ -579,7 +619,7 @@
 			}
 			res = true;
 		}
-		
+
 		return res;
 	};
 
@@ -650,7 +690,7 @@
 	};
 
 	CellEditor.prototype.updateWizardMode = function (mode) {
-		this._updateCursorStyle(mode ? AscCommonExcel.kCurCells : this.defaults.cursorShape);
+		this._updateCursorStyle(mode ? AscCommon.Cursors.CellCur : this.defaults.cursorShape);
 	};
 
 	CellEditor.prototype.move = function () {
@@ -817,7 +857,7 @@
 
 	// Private
 
-	CellEditor.prototype._setOptions = function ( options ) {
+	CellEditor.prototype._setOptions = function (options) {
 		var opt = this.options = options;
 		var ctx = this.drawingCtx;
 		var u = ctx.getUnits();
@@ -826,17 +866,17 @@
 		this._updateTextAlign();
 		this.textFlags.shrinkToFit = false;
 
-		this._cleanFragments( opt.fragments );
-		this.textRender.setString( opt.fragments, this.textFlags );
+		this._cleanFragments(opt.fragments);
+		this.textRender.setString(opt.fragments, this.textFlags);
 		this.newTextFormat = null;
 
-		if ( opt.zoom > 0 ) {
-			this.overlayCtx.setFont( this.drawingCtx.getFont() );
-			this.changeZoom( opt.zoom );
+		if (opt.zoom > 0) {
+			this.overlayCtx.setFont(this.drawingCtx.getFont());
+			this.changeZoom(opt.zoom);
 		}
 
-		this.kx = asc_getcvt( u, 0/*px*/, ctx.getPPIX() );
-		this.ky = asc_getcvt( u, 0/*px*/, ctx.getPPIY() );
+		this.kx = asc_getcvt(u, 0/*px*/, ctx.getPPIX());
+		this.ky = asc_getcvt(u, 0/*px*/, ctx.getPPIY());
 
 		this.sides = opt.getSides();
 
@@ -1391,7 +1431,7 @@
 	CellEditor.prototype._showCanvas = function () {
 		this.canvasOuterStyle.display = 'block';
 	};
-	
+
 	CellEditor.prototype._hideCanvas = function () {
 		this.canvasOuterStyle.display = 'none';
 	};
@@ -1810,7 +1850,8 @@
 	};
 
 	CellEditor.prototype._getContentWidth = function () {
-		return this.right - this.left - 2 * this.defaults.padding + 1/*px*/;
+		//remove 1 px offset. without cell editor no 1 px offset
+		return this.right - this.left - 2 * this.defaults.padding /*+ 1*//*px*/;
 	};
 
 	CellEditor.prototype._getContentHeight = function () {
@@ -2165,7 +2206,7 @@
 
 	CellEditor.prototype._mergeFragments = function (fragments) {
 		var i;
-		
+
 		if (!fragments) {
 			fragments = this.options.fragments;
 		}
@@ -2280,6 +2321,18 @@
 			pos = action.args[1];
 			len = AscCommonExcel.getFragmentsLength(action.args[0]);
 			list2.push( {fn: t._removeChars, args: [pos, len], isRange: action.isRange} );
+		}
+		else if ( action.fn === t._changeFragments ) {
+			let _fragments = action.args[0];
+			let _redoFragments = {};
+			for (let i in _fragments) {
+				if (_fragments.hasOwnProperty(i)) {
+					if (this.options.fragments[i]) {
+						_redoFragments[i] = this.options.fragments[i].clone();
+					}
+				}
+			}
+			list2.push( {fn: t._changeFragments, args: [_redoFragments]} );
 		}
 		else {
 			return;

@@ -979,6 +979,8 @@
 								self.handlers.trigger("asc_updateEditorCursorPosition", pos, height);
 							}, "resizeEditorHeight": function () {
 								self.handlers.trigger("asc_resizeEditorHeight");
+							}, "isActive": function () {
+								return wb.isActive();
 							}
 						}, AscCommon.AscBrowser.convertToRetinaValue(2, true), true);
 

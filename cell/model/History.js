@@ -248,6 +248,8 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_DataFieldSetShowDataAs = 57;
 	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseField = 58;
 	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseItem = 59;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetNumFormat = 60;
+	window['AscCH'].historyitem_PivotTable_PivotFieldSetNumFormat = 61;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;
@@ -993,6 +995,15 @@ CHistory.prototype.Create_NewPoint = function()
 
 	window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 	this.workbook.handlers.trigger("toggleAutoCorrectOptions", null, true);
+	let oAPI = this.workbook && this.workbook.oApi;
+	if(oAPI) {
+		if(oAPI.isEyedropperStarted()) {
+			oAPI.cancelEyedropper();
+		}
+		if (oAPI.isInkDrawerOn()) {
+			oAPI.stopInkDrawer();
+		}
+	}
 	//this.workbook.handlers.trigger("cleanCutData");
 
 	return true;

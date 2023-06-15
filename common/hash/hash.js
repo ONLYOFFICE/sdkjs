@@ -126,8 +126,26 @@
 	var currentHashWorker = null;
 
 	window['AscCommon'] = window['AscCommon'] || {};
+	var AscCommon = window['AscCommon'];
 
 	window['AscCommon'].calculateProtectHash = function(args, callback) {
+		if (window["NATIVE_EDITOR_ENJINE"])
+		{
+			if (!AscCommon.hashEngine) {
+				/** @suppress {checkVars} */
+				AscCommon.hashEngine = CreateNativeHash();
+			}
+
+			let retArray = [];
+			for (var i = 0, len = args.length; i < len; i++)
+			{
+				retArray.push(AscCommon.Base64.encode(AscCommon.hashEngine["hash2"](args[i].password, args[i].salt, args[i].spinCount, args[i].alg)));
+			}
+
+			callback(retArray);
+			return;
+		}
+
 		var sendedData = [];
 		for (var i = 0, len = args.length; i < len; i++)
 		{
@@ -192,8 +210,7 @@
 			return null;
 		}
 
-		let textEncoder = new TextEncoder();
-		let passwordBytes = textEncoder.encode(password);
+		let passwordBytes = AscCommon.Utf8.encode(password);
 
 		let maxPasswordLength = 15;
 		passwordBytes = passwordBytes.slice(0, maxPasswordLength);

@@ -58,8 +58,9 @@ function CInlineLevelSdt()
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
 
-	this.SkipSpecialLock = false;
-	this.Current         = false;
+	this.SkipSpecialLock  = 0;
+	this.SkipFillFormLock = 0;
+	this.Current          = false;
 }
 
 CInlineLevelSdt.prototype = Object.create(CParagraphContentWithParagraphLikeContent.prototype);
@@ -334,6 +335,14 @@ CInlineLevelSdt.prototype.GetSelectedElementsInfo = function(Info)
 	Info.SetInlineLevelSdt(this);
 	CParagraphContentWithParagraphLikeContent.prototype.GetSelectedElementsInfo.apply(this, arguments);
 };
+CInlineLevelSdt.prototype.IsSolid = function()
+{
+	// В обычном режиме редактирования мы не даем редактировать форму (кроме составных)
+	return !!(this.Paragraph
+		&& !this.Paragraph.LogicDocument.IsFillingFormMode()
+		&& this.IsForm()
+		&& !this.IsComplexForm());
+};
 CInlineLevelSdt.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
 	History.Add(new CChangesParaFieldAddItem(this, Pos, [Item]));
@@ -475,7 +484,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 
 	// Для экспорта в PDF записываем поля. Поля, находящиеся в автофигурах, пока не пишем
 	var oTransform = this.Get_ParentTextTransform();
-	if (!oGraphics.isPrintMode && this.private_IsAddFormFieldToGraphics(oGraphics, oTransform))
+	if (this.private_IsAddFormFieldToGraphics(oGraphics, oTransform))
 	{
 		this.SkipDraw(PDSH);
 
@@ -497,6 +506,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 				break;
 			}
 		}
+		let controlBounds = oBounds;
 
 		if (this.IsFixedForm() && this.IsMainForm())
 		{
@@ -542,18 +552,22 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			var nBaseLine  = nTextAscent;
 
 			if ((this.IsTextForm() || this.IsDropDownList() || this.IsComboBox())
-				&& (!this.IsFixedForm() || !this.IsMultiLineForm()))
+				&& !this.IsMultiLineForm())
 			{
 				var oLimits = g_oTextMeasurer.GetLimitsY();
 
 				var nMidPoint = ((nBaseLine - oLimits.min) + (nBaseLine - oLimits.max)) / 2;
 
-				var nDiff = nH / 2 - nMidPoint;
+				let nControlH = controlBounds ? controlBounds.H : nH;
+				var nDiff = nControlH / 2 - nMidPoint;
 				if (Math.abs(nDiff) > 0.001)
 				{
 					Y  -= nDiff;
 					nBaseLine += nDiff;
 				}
+				
+				if (this.IsFixedForm() && oBounds.H > nControlH)
+					nBaseLine += (oBounds.H - nControlH) / 2;
 			}
 
 			oGraphics.AddFormField(X, Y, nW, nH, nBaseLine, this);
@@ -566,8 +580,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 };
 CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)
 {
-	if ((!PDSE.Graphics.isPrintMode && this.private_IsAddFormFieldToGraphics(PDSE.Graphics))
-		|| (this.IsSkipDraw(PDSE.Graphics)))
+	if (this.private_IsAddFormFieldToGraphics(PDSE.Graphics) || this.IsSkipDraw(PDSE.Graphics))
 		this.SkipDraw(PDSE);
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements.apply(this, arguments);
@@ -577,7 +590,7 @@ CInlineLevelSdt.prototype.Draw_Lines = function(PDSL)
 	// Не отключаем отрисовку линий для PlaceHolder, т.к. рамка рисуется через данную функцию
 	// отключение остальных отрисовок идет внутри ParaRun.Draw_Lines
 
-	if ((!PDSL.Graphics.isPrintMode && this.private_IsAddFormFieldToGraphics(PDSL.Graphics)))
+	if (this.private_IsAddFormFieldToGraphics(PDSL.Graphics))
 		this.SkipDraw(PDSL);
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
@@ -607,6 +620,9 @@ CInlineLevelSdt.prototype.GetRangeBounds = function(_CurLine, _CurRange)
 };
 CInlineLevelSdt.prototype.private_IsAddFormFieldToGraphics = function(oGraphics, oTransform)
 {
+	if (oGraphics.isPrintMode || !oGraphics.IsPdfRenderer || !oGraphics.IsPdfRenderer())
+		return false;
+	
 	var _oTransform = oTransform;
 	if (undefined === oTransform)
 		_oTransform = this.Get_ParentTextTransform();
@@ -665,7 +681,7 @@ CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, U
 			}
 		}
 	}
-	else if (this.IsForm() && this.IsPlaceHolder() && UseContentPos)
+	else if (this.IsForm() && (this.IsPlaceHolder() || !this.CanPlaceCursorInside()) && UseContentPos)
 	{
 		return false;
 	}
@@ -771,7 +787,7 @@ CInlineLevelSdt.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, 
 			}
 		}
 	}
-	else if (this.IsForm() && this.IsPlaceHolder() && UseContentPos)
+	else if (this.IsForm() && (this.IsPlaceHolder() || !this.CanPlaceCursorInside()) && UseContentPos)
 	{
 		return false;
 	}
@@ -829,27 +845,47 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		if (!this.CanBeDeleted() && !bOnAddText)
 			return true;
 
-		if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+		if (!bOnAddText && !this.IsSelectionUse())
+		{
+			this.SelectAll(1);
+			this.SelectThisElement();
+			return true;
+		}
+		else if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+		{
 			this.private_ReplacePlaceHolderWithContent();
-
+		}
+		
 		return true;
 	}
 
-	let bResult = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
-
-	let oLogicDocument = this.GetLogicDocument();
-	if (this.Is_Empty()
-		&& oLogicDocument
+	let result = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!result
+		&& this.IsEmpty()
+		&& !this.IsPlaceHolder()
+		&& logicDocument
+		&& this.CanBeDeleted()
+		&& this !== logicDocument.CheckInlineSdtOnDelete
+		&& !bOnAddText
+		&& !logicDocument.IsFillingFormMode())
+	{
+		this.RemoveThisFromParent(true);
+		result = true;
+	}
+	else if (this.Is_Empty()
+		&& logicDocument
 		&& this.CanBeEdited()
 		&& ((!bOnAddText
-		&& true === oLogicDocument.IsFillingFormMode())
-		|| (this === oLogicDocument.CheckInlineSdtOnDelete)))
+		&& true === logicDocument.IsFillingFormMode())
+		|| (this === logicDocument.CheckInlineSdtOnDelete)))
 	{
 		this.private_ReplaceContentWithPlaceHolder();
-		bResult = true;
+		result = true;
 	}
 
-	return bResult;
+	return result;
 };
 CInlineLevelSdt.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
@@ -1037,13 +1073,15 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 {
 	if (!this.Paragraph && this.Paragraph.LogicDocument)
 		return;
-
-	var oLogicDocument = this.Paragraph.LogicDocument;
-
-	if (this.IsContentControlEquation())
-		return;
 	
+	var oLogicDocument   = this.Paragraph.LogicDocument;
 	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
+	
+	if (this.IsContentControlEquation())
+	{
+		oDrawingDocument.OnDrawContentControl(null, nType);
+		return;
+	}
 
 	// Не рисуем трек для фиксед форм, т.к. он уже есть от рамки автофигуры
 	if (this.IsFixedForm() && this.IsCurrent() && oLogicDocument.IsDocumentEditor() && !oLogicDocument.IsFillingOFormMode())
@@ -1145,7 +1183,7 @@ CInlineLevelSdt.prototype.SelectContentControl = function()
 		return;
 	}
 
-	if (this.IsForm() && this.IsPlaceHolder() && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
+	if (this.IsForm() && this.IsPlaceHolder() && this.GetLogicDocument() && this.GetLogicDocument().IsCheckFormPlaceholder())
 	{
 		this.RemoveSelection();
 		this.MoveCursorToStartPos();
@@ -1349,6 +1387,13 @@ CInlineLevelSdt.prototype.IsPlaceHolder = function()
 {
 	return this.Pr.ShowingPlcHdr;
 };
+CInlineLevelSdt.prototype.CanPlaceCursorInside = function()
+{
+	if (this.IsSkipFillingFormModeCheck())
+		return false;
+	
+	return CSdtBase.prototype.CanPlaceCursorInside.apply(this, arguments);
+};
 CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMathRun)
 {
 	if (!this.IsPlaceHolder())
@@ -1398,7 +1443,6 @@ CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSel
 
 		return;
 	}
-
 
 	this.SetShowingPlcHdr(true);
 
@@ -1486,7 +1530,7 @@ CInlineLevelSdt.prototype.Set_SelectionContentPos = function(StartContentPos, En
 {
 	if (this.IsPlaceHolder())
 	{
-		if (this.IsForm() && StartContentPos && EndContentPos && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
+		if (this.IsForm() && StartContentPos && EndContentPos && this.GetLogicDocument() && this.GetLogicDocument().IsCheckFormPlaceholder())
 		{
 			this.Get_StartPos(StartContentPos, Depth);
 			this.Get_StartPos(EndContentPos, Depth);
@@ -1508,7 +1552,7 @@ CInlineLevelSdt.prototype.Set_SelectionContentPos = function(StartContentPos, En
 };
 CInlineLevelSdt.prototype.Set_ParaContentPos = function(ContentPos, Depth)
 {
-	if (this.IsPlaceHolder() && this.IsForm() && ContentPos && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
+	if (this.IsPlaceHolder() && this.IsForm() && ContentPos && this.GetLogicDocument() && this.GetLogicDocument().IsCheckFormPlaceholder())
 	{
 		this.Get_StartPos(ContentPos, Depth);
 		CParagraphContentWithParagraphLikeContent.prototype.Set_ParaContentPos.call(this, ContentPos, Depth);
@@ -1717,7 +1761,7 @@ CInlineLevelSdt.prototype.GetContentControlPr = function()
  */
 CInlineLevelSdt.prototype.CanBeDeleted = function()
 {
-	if (this.IsFixedForm())
+	if (this.IsFixedForm() && this.IsMainForm())
 		return false;
 
 	return (undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.ContentLocked === this.Pr.Lock);
@@ -1728,7 +1772,11 @@ CInlineLevelSdt.prototype.CanBeDeleted = function()
  */
 CInlineLevelSdt.prototype.CanBeEdited = function()
 {
-	if (!this.SkipSpecialLock && (this.IsCheckBox() || this.IsPicture() || this.IsDropDownList()))
+	let logicDocument = this.GetLogicDocument();
+	if (!this.IsSkipFillingFormModeCheck() && this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+		return false;
+	
+	if (!this.IsSkipSpecialContentControlLock() && (this.IsCheckBox() || this.IsPicture() || this.IsDropDownList()))
 		return false;
 
 	return (undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.SdtLocked === this.Pr.Lock);
@@ -1915,14 +1963,32 @@ CInlineLevelSdt.prototype.SetCheckBoxChecked = function(isChecked)
  */
 CInlineLevelSdt.prototype.SkipSpecialContentControlLock = function(isSkip)
 {
-	this.SkipSpecialLock = isSkip;
+	if (isSkip)
+		++this.SkipSpecialLock;
+	else if (this.SkipSpecialLock > 0)
+		--this.SkipSpecialLock;
 };
 /**
  * @retuns {boolean}
  */
 CInlineLevelSdt.prototype.IsSkipSpecialContentControlLock = function()
 {
-	return this.SkipSpecialLock;
+	return !!this.SkipSpecialLock;
+};
+/**
+ * Выключаем проверку невозможности редактирования формы в обычном режиме редактирования
+ * @param isSkip
+ */
+CInlineLevelSdt.prototype.SkipFillingFormModeCheck = function(isSkip)
+{
+	if (isSkip)
+		++this.SkipFillFormLock;
+	else if (this.SkipFillFormLock > 0)
+		--this.SkipFillFormLock;
+};
+CInlineLevelSdt.prototype.IsSkipFillingFormModeCheck = function()
+{
+	return !!this.SkipFillFormLock;
 };
 CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 {
@@ -2402,8 +2468,9 @@ CInlineLevelSdt.prototype.GetTextFormPr = function()
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для даты
  * @param oPr {AscWord.CSdtDatePickerPr}
+ * @param {boolean} [keepContent=false]
  */
-CInlineLevelSdt.prototype.ApplyTextFormPr = function(oPr)
+CInlineLevelSdt.prototype.ApplyTextFormPr = function(oPr, keepContent)
 {
 	this.SetTextFormPr(oPr);
 
@@ -2413,9 +2480,9 @@ CInlineLevelSdt.prototype.ApplyTextFormPr = function(oPr)
 	if (this.IsPlaceHolder())
 		this.private_FillPlaceholderContent();
 	else
-		this.private_UpdateTextFormContent();
+		this.private_UpdateTextFormContent(keepContent);
 };
-CInlineLevelSdt.prototype.private_UpdateTextFormContent = function()
+CInlineLevelSdt.prototype.private_UpdateTextFormContent = function(keepContent)
 {
 	if (!this.Pr.TextForm)
 		return;
@@ -2423,7 +2490,7 @@ CInlineLevelSdt.prototype.private_UpdateTextFormContent = function()
 	if (this.IsPlaceHolder())
 		this.ReplacePlaceHolderWithContent();
 
-	this.MakeSingleRunElement();
+	this.MakeSingleRunElement(!keepContent);
 };
 CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 {
@@ -2435,10 +2502,12 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 		&& this.IsPicture()))
 	{
 		this.SkipSpecialContentControlLock(true);
+		this.SkipFillingFormModeCheck(true);
 		if (!this.CanBeEdited())
 			AscCommon.CollaborativeEditing.Add_CheckLock(true);
 		this.SkipSpecialContentControlLock(false);
-
+		this.SkipFillingFormModeCheck(false);
+		
 		return;
 	}
 
@@ -2477,7 +2546,7 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 			&& oLogicDocument
 			&& oLogicDocument.IsCheckContentControlsLock()
 			&& ((this.IsPlaceHolder() && oLogicDocument.IsFillingFormMode())
-				|| (!this.CanBeEdited() && (oLogicDocument.IsFillingFormMode() || this.IsFixedForm()))))
+				|| (!this.CanBeEdited() && (oLogicDocument.IsFillingFormMode() || (this.IsFixedForm() && this.IsMainForm())))))
 		{
 			return AscCommon.CollaborativeEditing.Add_CheckLock(true);
 		}

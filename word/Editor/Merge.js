@@ -225,22 +225,45 @@
         }
     };
 
-    CMergeComparisonTextElement.prototype.equals = function (otherElement) {
-        const bEquals = CTextElement.prototype.equals.call(this, otherElement);
+	function compareReviewElements(reviewElement1, reviewElement2)
+	{
+		return (
+			reviewElement1.reviewType === reviewtype_Common && reviewElement1.reviewType === reviewElement2.reviewType &&
+			reviewElement1.moveReviewType === Asc.c_oAscRevisionsMove.NoMove && reviewElement1.moveReviewType === reviewElement2.moveReviewType ||
+			reviewElement1.moveReviewType === reviewElement2.moveReviewType &&
+			reviewElement1.reviewType === reviewElement2.reviewType &&
+			reviewElement1.reviewInfo && reviewElement2.reviewInfo && reviewElement1.reviewInfo.IsEqual(reviewElement2.reviewInfo, true)
+		);
+	}
+	CMergeComparisonTextElement.prototype.compareReviewElements = function (oAnotherElement)
+	{
+		if (this.reviewElementTypes.length === oAnotherElement.reviewElementTypes.length) {
+			for (let i = 0; i < this.reviewElementTypes.length; i += 1) {
+				const bNotEqualsReviewTypes = !compareReviewElements(this.reviewElementTypes[i], oAnotherElement.reviewElementTypes[i]);
+				if (bNotEqualsReviewTypes) {
+					return false;
+				}
+			}
+		}
+		else
+		{
+			return false;
+		}
+		return true;
+	};
+    CMergeComparisonTextElement.prototype.equals = function (oOtherElement, bNeedCheckTypes) {
+        const bEquals = CTextElement.prototype.equals.call(this, oOtherElement);
         if (!bEquals) {
             return false;
         }
-        if (this.reviewElementTypes.length === otherElement.reviewElementTypes.length) {
-            for (let i = 0; i < this.reviewElementTypes.length; i += 1) {
-                const bNotEqualsReviewTypes = this.reviewElementTypes[i].reviewType !== otherElement.reviewElementTypes[i].reviewType ||
-                  !!this.reviewElementTypes[i].prevAdded !== !!otherElement.reviewElementTypes[i].prevAdded ||
-                  this.reviewElementTypes[i].moveReviewType === Asc.c_oAscRevisionsMove.NoMove && otherElement.reviewElementTypes[i].moveReviewType !== Asc.c_oAscRevisionsMove.NoMove ||
-                  otherElement.reviewElementTypes[i].moveReviewType === Asc.c_oAscRevisionsMove.NoMove && this.reviewElementTypes[i].moveReviewType !== Asc.c_oAscRevisionsMove.NoMove;
-                if (bNotEqualsReviewTypes) {
-                    return false;
-                }
-            }
-        }
+				if (bNeedCheckTypes)
+				{
+					const bCheck = this.compareReviewElements(oOtherElement);
+					if (!bCheck)
+					{
+						return false;
+					}
+				}
 
         return true;
     }
@@ -303,7 +326,7 @@
         return true;
     };
 
-    CResolveConflictTextElement.prototype.equals = function (other)
+    CResolveConflictTextElement.prototype.equals = function (other, bNeedCheckReview)
     {
         const bResult = CTextElement.prototype.equals.call(this, other);
         if (bResult || this.elements.length === other.elements.length) {
@@ -1039,11 +1062,6 @@
         CDocumentComparison.prototype.applyParagraphComparison.call(this, oOrigRoot, oRevisedRoot);
         for (let i = oOrigRoot.children.length - 1; i >= 0; i -= 1) {
             this.checkParaEndReview(oOrigRoot.children[i]);
-        }
-        const oParentContent = oOrigRoot.element.Content;
-        const oLastElement = oParentContent[oParentContent.length - 1];
-        if (oLastElement && oLastElement.GetReviewType() !== reviewtype_Common) {
-            oLastElement.SetReviewTypeWithInfo(reviewtype_Common, new CReviewInfo());
         }
 
         delete this.copyPr.bSaveCustomReviewType;

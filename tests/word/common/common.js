@@ -58,6 +58,10 @@ var AscTest = AscTest || {};
 
 			return this.map[id];
 		},
+		GetById : function(id)
+		{
+			return this.Get_ById(id);
+		},
 		TurnOff : function(){},
 		TurnOn : function(){}
 	};

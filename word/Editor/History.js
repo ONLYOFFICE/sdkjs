@@ -48,9 +48,8 @@ function CHistory(Document)
     this.CanNotAddChanges     = false; // флаг для отслеживания ошибок добавления изменений без точки:Create_NewPoint->Add->Save_Changes->Add
 	this.CollectChanges       = false;
 	this.UndoRedoInProgress   = false; //
-
-	this.RecalculateData =
-	{
+	
+	this.RecalculateData = {
 		Inline       : {
 			Pos     : -1,
 			PageNum : 0
@@ -58,10 +57,10 @@ function CHistory(Document)
 		Flow         : [],
 		HdrFtr       : [],
 		Drawings     : {
-			All        : false,
-			Map        : {},
-			ThemeInfo  : null,
-            SlideMinIdx: null
+			All         : false,
+			Map         : {},
+			ThemeInfo   : null,
+			SlideMinIdx : null
 		},
 		Tables       : [],
 		NumPr        : [],
@@ -1109,14 +1108,23 @@ CHistory.prototype.ClearAdditional = function()
 			this.SetAdditionalFormFilling(form);
 	}
 
-	if (this.Api && true === this.Api.isMarkerFormat)
-		this.Api.sync_MarkerFormatCallback(false);
+	if(this.Api)
+	{
+		if (true === this.Api.isMarkerFormat)
+			this.Api.sync_MarkerFormatCallback(false);
 
-	if (this.Api && true === this.Api.isDrawTablePen)
-		this.Api.sync_TableDrawModeCallback(false);
+		if (true === this.Api.isDrawTablePen)
+			this.Api.sync_TableDrawModeCallback(false);
 
-	if (this.Api && true === this.Api.isDrawTableErase)
-		this.Api.sync_TableEraseModeCallback(false);
+		if (true === this.Api.isDrawTableErase)
+			this.Api.sync_TableEraseModeCallback(false);
+
+		if(this.Api.isEyedropperStarted())
+			this.Api.cancelEyedropper();
+
+		if(this.Api.isInkDrawerOn())
+			this.Api.stopInkDrawer();
+	}
 };
 CHistory.prototype.private_UpdateContentChangesOnUndo = function(Item)
 {
@@ -1263,7 +1271,8 @@ CHistory.prototype.RemoveLastPoint = function()
 CHistory.prototype.private_ClearRecalcData = function()
 {
 	// NumPr здесь не обнуляем
-	var NumPr            = this.RecalculateData.NumPr;
+	let numPr = this.RecalculateData.NumPr;
+	
 	this.RecalculateData = {
 		Inline   : {
 			Pos     : -1,
@@ -1272,21 +1281,21 @@ CHistory.prototype.private_ClearRecalcData = function()
 		Flow     : [],
 		HdrFtr   : [],
 		Drawings : {
-			All        : false,
-			Map        : {},
-			ThemeInfo  : null,
-            SlideMinIdx: null
+			All         : false,
+			Map         : {},
+			ThemeInfo   : null,
+			SlideMinIdx : null
 		},
-
-		Tables        : [],
-		NumPr         : NumPr,
-		NotesEnd      : false,
-		NotesEndPage  : 0,
-		Update        : true,
-		ChangedStyles : {},
-		ChangedNums   : {},
-		LineNumbers   : false,
-		AllParagraphs : null
+		
+		Tables            : [],
+		NumPr             : numPr,
+		NotesEnd          : false,
+		NotesEndPage      : 0,
+		Update            : true,
+		ChangedStyles     : {},
+		ChangedNums       : {},
+		LineNumbers       : false,
+		AllParagraphs     : null
 	};
 };
 /**

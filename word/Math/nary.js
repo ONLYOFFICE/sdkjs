@@ -824,7 +824,7 @@ CNary.prototype.GetTextOfElement = function(isLaTeX)
 	var strSubContent = this.getSubMathContent().GetMultipleContentForGetText(isLaTeX, undefined, true);
 	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 
-    if (true === isLaTeX)
+    if (isLaTeX)
     {
         switch (strStartCode.codePointAt())
         {
@@ -855,7 +855,7 @@ CNary.prototype.GetTextOfElement = function(isLaTeX)
             strStartCode += " ";
         }
     }
-    else if (false === isLaTeX && strBase.length > 0)
+    else if (!isLaTeX && strBase.length > 0)
     {
         strBase = '▒' + strBase;
 	}

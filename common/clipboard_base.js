@@ -247,8 +247,15 @@
 
 				//window['AscCommon'].g_clipboardBase.rtf = this.ClosureParams.getData("text/rtf");
 
+				var isDisableRawPaste = false;
+				if (true === AscCommon["isDisableRawPaste"])
+				{
+					isDisableRawPaste = true;
+					delete AscCommon["isDisableRawPaste"];
+				}
+
 				var _text_format = this.ClosureParams.getData("text/plain");
-				var _internal = this.ClosureParams.getData("text/x-custom");
+				var _internal = isDisableRawPaste ? "" : this.ClosureParams.getData("text/x-custom");
 				if (_internal && _internal != "" && _internal.indexOf("asc_internalData2;") == 0)
 				{
 					this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, _internal.substr("asc_internalData2;".length), null, _text_format);
@@ -256,7 +263,7 @@
 					return false;
 				}
 
-				var _html_format = this.ClosureParams.getData("text/html");
+				var _html_format = isDisableRawPaste ? "" : this.ClosureParams.getData("text/html");
 				if (_html_format && _html_format != "")
 				{
 					var nIndex = _html_format.indexOf("</html>");
@@ -275,7 +282,7 @@
 				}
 
 				var items = _clipboard.items;
-                if (null != items && 0 != items.length)
+                if (null != items && 0 != items.length && !isDisableRawPaste)
                 {
                     g_clipboardBase.PasteImagesBody = "";
                     g_clipboardBase.PasteImagesCount = items.length;
@@ -1224,7 +1231,7 @@
 			var props = this.buttonInfo;
 			if(props && props.options)
 			{
-				if((window["Asc"] && window["Asc"]["editor"]) || props.cellCoord)
+				if((Asc["editor"] && Asc["editor"].wb) || props.cellCoord)
 				{
 					this.showSpecialPasteButton = true;
 					this.Api.asc_ShowSpecialPasteButton(props);

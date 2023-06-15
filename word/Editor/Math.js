@@ -1125,6 +1125,8 @@ ParaMath.prototype.Get_Text = function(Text)
 {
 	if (true === Text.BreakOnNonText)
 		Text.Text = null;
+    else if (true === Text.Math)
+        Text.Text += this.GetText();
 };
 
 ParaMath.prototype.Is_Empty = function(oPr)
@@ -2618,9 +2620,20 @@ ParaMath.prototype.ConvertToInlineMode = function()
 
 	if (this.IsInlineMode())
 		return true;
-
-	let oParent      = this.GetParent();
-	let nPosInParent = this.GetPosInParent(oParent);
+	
+	let oParent = this.GetParent();
+	let oInlineLevel, nPosInParent;
+	if (oParent instanceof AscWord.CInlineLevelSdt && oParent.IsContentControlEquation())
+	{
+		oInlineLevel = oParent;
+		oParent      = oParent.GetParent();
+		nPosInParent = oInlineLevel.GetPosInParent(oParent);
+	}
+	else
+	{
+		nPosInParent = this.GetPosInParent(oParent);
+	}
+	
 	if (!oParent || -1 === nPosInParent)
 		return false;
 
@@ -2667,12 +2680,23 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 
 	if (!this.IsInlineMode())
 		return true;
-
-	let oParent      = this.GetParent();
-	let nPosInParent = this.GetPosInParent(oParent);
+	
+	let oParent = this.GetParent();
+	let oInlineLevel, nPosInParent;
+	if (oParent instanceof AscWord.CInlineLevelSdt && oParent.IsContentControlEquation())
+	{
+		oInlineLevel = oParent;
+		oParent      = oParent.GetParent();
+		nPosInParent = oInlineLevel.GetPosInParent(oParent);
+	}
+	else
+	{
+		nPosInParent = this.GetPosInParent(oParent);
+	}
+	
 	if (!oParent || -1 === nPosInParent)
 		return false;
-
+	
 	let oContentPos = this.GetStartPosInParagraph();
 
     let oRunElementsBefore = new CParagraphRunElements(oContentPos, 1, null, false);
@@ -2712,18 +2736,23 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 };
 ParaMath.prototype.IsInlineMode = function()
 {
-	// TODO: Сейчас у нас формула может быть только на верхнем уровне параграфа, когда это изменится тут
-	//       надо переделать проверку
-
-	let oParagraph = this.GetParagraph();
-	if (!oParagraph)
+	let paragraph = this.GetParagraph();
+	if (!paragraph)
 		return false;
-
-	let oParaPos = oParagraph.GetPosByElement(this);
-	if (!oParaPos)
+	
+	let paraPos = paragraph.GetPosByElement(this);
+	if (!paraPos)
 		return false;
-
-	return !oParagraph.CheckMathPara(oParaPos.Get(0));
+	
+	let startPos = this.GetStartPosInParagraph();
+	let endPos   = this.GetEndPosInParagraph();
+	
+	let prev = paragraph.GetPrevRunElement(startPos);
+	let next = paragraph.GetNextRunElement(endPos);
+	
+	return ((prev && !prev.IsBreak())
+		|| (!prev && paragraph.HaveNumbering())
+		|| (next && !next.IsBreak() && !next.IsParaEnd()));
 };
 ParaMath.prototype.NeedDispOperators = function(Line)
 {

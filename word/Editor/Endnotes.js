@@ -975,7 +975,7 @@ CEndnotesController.prototype.GetAllTables = function(oProps, arrTables)
 	for (var sId in this.Endnote)
 	{
 		var oEndnote = this.Endnote[sId];
-		oEndnote.GetAllTables(oProps, ParaArray);
+		oEndnote.GetAllTables(oProps, arrTables);
 	}
 
 	return arrTables;
@@ -1459,13 +1459,6 @@ CEndnotesController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 		return false;
 
 	return this.CurEndnote.AddNewParagraph(bRecalculate, bForceAdd);
-};
-CEndnotesController.prototype.GetFormatPainterData = function()
-{
-	if (!this.CurEndnote)
-		return null;
-
-	return this.CurEndnote.GetFormatPainterData();
 };
 CEndnotesController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {
@@ -2937,7 +2930,9 @@ CEndnotesController.prototype.SetSelectionState = function(State, StateIndex)
 CEndnotesController.prototype.AddHyperlink = function(oProps)
 {
 	if (true !== this.IsSelectionUse() || true === this.private_IsOneEndnoteSelected())
-		this.CurEndnote.AddHyperlink(oProps);
+		return this.CurEndnote.AddHyperlink(oProps);
+	
+	return null;
 };
 CEndnotesController.prototype.ModifyHyperlink = function(oProps)
 {

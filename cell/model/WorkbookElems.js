@@ -573,13 +573,6 @@ g_oColorManager = new ColorManager();
 		}
 		this.text = val;
 	};
-	Fragment.prototype.getTextFromCodes = function () {
-		//если выставляем текстовое поле, контент меняется, нужно занулять charCodes
-		if (!isInit) {
-			this.charCodes = null;
-		}
-		this.text = val;
-	};
 	Fragment.prototype.convertPositionToText = function (codePos) {
 		var diff = 0;
 		for (var i = 0; i < codePos; i++) {
@@ -3111,6 +3104,38 @@ var g_oFontProperties = {
 		return res;
 	}
 
+	function FromXml_ST_SheetViewType(val) {
+		var res = null;
+		switch (val) {
+			case "normal":
+				res = window["Asc"].c_oAscESheetViewType.normal;
+				break;
+			case "pageBreakPreview":
+				res = window["Asc"].c_oAscESheetViewType.pageBreakPreview;
+				break;
+			case "pageLayout":
+				res = window["Asc"].c_oAscESheetViewType.pageLayout;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_SheetViewType(val) {
+		var res = null;
+		switch (val) {
+			case window["Asc"].c_oAscESheetViewType.normal:
+				res = "normal";
+				break;
+			case window["Asc"].c_oAscESheetViewType.pageBreakPreview:
+				res = "pageBreakPreview";
+				break;
+			case window["Asc"].c_oAscESheetViewType.pageLayout:
+				res = "pageLayout";
+				break;
+		}
+		return res;
+	}
+
 	function GradientFill() {
 		//Attributes
 		this.type = Asc.c_oAscFillGradType.GRAD_LINEAR;
@@ -4989,7 +5014,7 @@ var g_oFontProperties = {
 		}
 		this.getFont().setVerticalAlign(val ? AscCommon.vertalign_SubScript : AscCommon.vertalign_Baseline);
 	};
-	CellXfs.prototype.asc_setFontSuperscript = function () {
+	CellXfs.prototype.asc_setFontSuperscript = function (val) {
 		if (!this.font) {
 			this.font = new AscCommonExcel.Font();
 		}
@@ -5912,16 +5937,16 @@ StyleManager.prototype =
 				var rowIndex = (row - bbox.r1 - hidden) % (stripe.size + stripe.offset);
 				if (rowIndex < stripe.size) {
 					if (xf.border) {
-						if (bbox.c1 !== col && xf.border.l) {
+						if (bbox.c1 !== col && (xf.border.l || xf.border.iv)) {
 							borderIndex += 1;
 						}
-						if (0 != rowIndex && xf.border.t) {
+						if (0 != rowIndex && (xf.border.t || xf.border.ih)) {
 							borderIndex += 2;
 						}
-						if (bbox.c2 !== col && xf.border.r) {
+						if (bbox.c2 !== col && (xf.border.r || xf.border.iv)) {
 							borderIndex += 4;
 						}
-						if (stripe.size - 1 != rowIndex && xf.border.b) {
+						if (stripe.size - 1 != rowIndex && (xf.border.b || xf.border.ih)) {
 							borderIndex += 8;
 						}
 					}
@@ -5933,16 +5958,16 @@ StyleManager.prototype =
 				var colIndex = (col - bbox.c1 - hidden) % (stripe.size + stripe.offset);
 				if (colIndex < stripe.size) {
 					if (xf.border) {
-						if (0 != colIndex && xf.border.l) {
+						if (0 != colIndex && (xf.border.l || xf.border.iv)) {
 							borderIndex += 1;
 						}
-						if (bbox.r1 !== row && xf.border.t) {
+						if (bbox.r1 !== row && (xf.border.t || xf.border.ih)) {
 							borderIndex += 2;
 						}
-						if (stripe.size - 1 != colIndex && xf.border.r) {
+						if (stripe.size - 1 != colIndex && (xf.border.r || xf.border.iv)) {
 							borderIndex += 4;
 						}
-						if (bbox.r2 !== row && xf.border.b) {
+						if (bbox.r2 !== row && (xf.border.b || xf.border.ih)) {
 							borderIndex += 8;
 						}
 					}
@@ -5951,16 +5976,16 @@ StyleManager.prototype =
 				}
 			}
 		} else if (xf.border) {
-			if (bbox.c1 !== col && xf.border.l) {
+			if (bbox.c1 !== col && (xf.border.l || xf.border.iv)) {
 				borderIndex += 1;
 			}
-			if (bbox.r1 !== row && xf.border.t) {
+			if (bbox.r1 !== row && (xf.border.t || xf.border.ih)) {
 				borderIndex += 2;
 			}
-			if (bbox.c2 !== col && xf.border.r) {
+			if (bbox.c2 !== col && (xf.border.r || xf.border.iv)) {
 				borderIndex += 4;
 			}
-			if (bbox.r2 !== row && xf.border.b) {
+			if (bbox.r2 !== row && (xf.border.b || xf.border.ih)) {
 				borderIndex += 8;
 			}
 		}
@@ -7225,6 +7250,10 @@ CMultiTextElem.prototype =
 			case this.Properties.text: this.text = value;break;
 			case this.Properties.format: this.format = value;break;
 		}
+	},
+	setText: function(val)
+	{
+		this.text = val;
 	}
 };
 
@@ -9198,22 +9227,22 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	AutoFilter.prototype.hiddenByAnotherFilter = function (worksheet, cellId, row, col, opt_columnsFilter) {
-		var result = false;
+		let result = false;
 
-		var filterColumns = opt_columnsFilter ? opt_columnsFilter : this.FilterColumns;
+		let filterColumns = opt_columnsFilter ? opt_columnsFilter : this.FilterColumns;
 		if (filterColumns) {
-			for (var j = 0; j < filterColumns.length; j++) {
-				var filterColumn = opt_columnsFilter ? filterColumns[j].filter : filterColumns[j];
-				var colId = filterColumn.ColId;
+			for (let j = 0; j < filterColumns.length; j++) {
+				let filterColumn = opt_columnsFilter ? filterColumns[j].filter : filterColumns[j];
+				let colId = filterColumn.ColId;
 				if (colId !== cellId) {
-					var cell = worksheet.getCell3(row, colId + col);
-					var isDateTimeFormat = cell.getType() === window["AscCommon"].CellValueType.Number && cell.getNumFormat().isDateTimeFormat();
-					/*if (isDateTimeFormat) {
-						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Date;
-					}*/
+					let cell = worksheet.getCell3(row, colId + col);
+					let cellFormat = cell.getNumFormat();
+					let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
+						cell.getType() === window["AscCommon"].CellValueType.Number &&
+						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
 
-					var isNumberFilter = filterColumn.isApplyCustomFilter();
-					var val = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
+					let isNumberFilter = filterColumn.isApplyCustomFilter();
+					let val = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
 					if (filterColumn.isHideValue(val, isDateTimeFormat, null, cell)) {
 						result = true;
 						break;
@@ -9250,15 +9279,14 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				if (!isHidden) {
 					var cell = worksheet.getCell3(i, colId + this.Ref.c1);
-					var isDateTimeFormat = cell.getType() === window["AscCommon"].CellValueType.Number && cell.getNumFormat().isDateTimeFormat();
+					let cellFormat = cell.getNumFormat();
+					let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
+						cell.getType() === window["AscCommon"].CellValueType.Number &&
+						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
 					var isNumberFilter = false;
 					if (newFilterColumn.CustomFiltersObj || newFilterColumn.Top10 || newFilterColumn.DynamicFilter) {
 						isNumberFilter = true;
 					}
-
-					/*if (isDateTimeFormat) {
-						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Date;
-					}*/
 
 					var currentValue = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
 					var isSetHidden = newFilterColumn.isHideValue(currentValue, isDateTimeFormat, null, cell);
@@ -9993,7 +10021,7 @@ function RangeDataManagerElem(bbox, data)
 			this.Filters._initLowerCaseValues();
 			res = this.Filters.isHideValue(val.toLowerCase(), isDateTimeFormat);
 		} else if (this.CustomFiltersObj) {
-			res = this.CustomFiltersObj.isHideValue(val, isLabelFilter);
+			res = this.CustomFiltersObj.isHideValue(val, isLabelFilter, cell);
 		} else if (this.Top10) {
 			res = this.Top10.isHideValue(val, top10Length);
 		} else if (this.ColorFilter) {
@@ -10013,6 +10041,37 @@ function RangeDataManagerElem(bbox, data)
 	};
 	FilterColumn.prototype.createFilter = function (obj) {
 
+
+		//распознаем формат
+		/*var res = AscCommon.g_oFormatParser.parse(val);
+		if(null != res)
+		{
+			//Сравниваем с текущим форматом, если типы совпадают - меняем только значение ячейки
+			var nFormatType = oNumFormat.getType();
+			if(!((c_oAscNumFormatType.Percent == nFormatType && res.bPercent) ||
+				(c_oAscNumFormatType.Currency == nFormatType && res.bCurrency) ||
+				(c_oAscNumFormatType.Date == nFormatType && res.bDate) ||
+				(c_oAscNumFormatType.Time == nFormatType && res.bTime)) && res.format != oNumFormat.sFormat) {
+				this.setNumFormat(res.format);
+			}
+			this.setTypeInternal(CellValueType.Number);
+			this.setValueNumberInternal(res.value);
+		}
+		else
+		{
+			this.setTypeInternal(CellValueType.String);
+			//проверяем QuotePrefix
+			if(val.length > 0 && "'" == val[0])
+			{
+				this.setQuotePrefix(true);
+				val = val.substring(1);
+			}
+			this.setValueTextInternal(val);
+		}*/
+
+
+
+
 		var allFilterOpenElements = false;
 		var newFilter;
 
@@ -10023,6 +10082,7 @@ function RangeDataManagerElem(bbox, data)
 			}
 			case c_oAscAutoFilterTypes.CustomFilters: {
 				obj.filter.filter.check();
+				obj.filter.filter.correctFromInterface();
 				this.CustomFiltersObj = obj.filter.filter.clone();
 				break;
 			}
@@ -10347,7 +10407,7 @@ function RangeDataManagerElem(bbox, data)
 						this.Blank = true;
 					} else {
 						var dateGroupItem = new DateGroupItem();
-						var autoFilterDateElem = new AutoFilterDateElem(obj.values[i].val, obj.values[i].val, 1);
+						var autoFilterDateElem = new AutoFilterDateElem(obj.values[i].val, obj.values[i].val, obj.values[i].dateTimeGrouping);
 						dateGroupItem.convertRangeToDateGroupItem(autoFilterDateElem);
 						autoFilterDateElem.convertDateGroupItemToRange(dateGroupItem);
 
@@ -10534,21 +10594,21 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 	var month = startUtcDate.month + 1;
 	var day = startUtcDate.d;
 	var hour = startUtcDate.hour;
-	var minute = startUtcDate.minute;
-	var second = startUtcDate.second;
+	var minute = startUtcDate.min;
+	var second = startUtcDate.sec;
 
 	this.DateTimeGrouping = range.dateTimeGrouping;
 
 	switch(this.DateTimeGrouping)
 	{
-		case 1://day
+		case Asc.EDateTimeGroup.datetimegroupDay://day
 		{
 			this.Year = year;
 			this.Month = month;
 			this.Day = day;
 			break;
 		}
-		case 2://hour
+		case Asc.EDateTimeGroup.datetimegroupHour://hour
 		{
 			this.Year = year;
 			this.Month = month;
@@ -10556,7 +10616,7 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Hour = hour;
 			break;
 		}
-		case 3://minute
+		case Asc.EDateTimeGroup.datetimegroupMinute://minute
 		{
 			this.Year = year;
 			this.Month = month;
@@ -10565,13 +10625,13 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Minute = minute;
 			break;
 		}
-		case 4://month
+		case Asc.EDateTimeGroup.datetimegroupMonth://month
 		{
 			this.Year = year;
 			this.Month = month;
 			break;
 		}
-		case 5://second
+		case Asc.EDateTimeGroup.datetimegroupSecond://second
 		{
 			this.Year = year;
 			this.Month = month;
@@ -10581,7 +10641,7 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Second = second;
 			break;
 		}
-		case 6://year
+		case Asc.EDateTimeGroup.datetimegroupYear://year
 		{
 			this.Year = year;
 			break;
@@ -10709,16 +10769,16 @@ CustomFilters.prototype.init = function(obj) {
 	this.And = !obj.isChecked;
 	this.CustomFilters = [];
 
-	if(obj.filter1 != undefined)
+	if(obj.filter1 != null)
 		this.CustomFilters[0] = new CustomFilter(obj.filter1, obj.valFilter1);
-	if(obj.filter2 != undefined)
+	if(obj.filter2 != null)
 		this.CustomFilters[1] = new CustomFilter(obj.filter2, obj.valFilter2);
 };
-CustomFilters.prototype.isHideValue = function(val, isLabelFilter){
+CustomFilters.prototype.isHideValue = function(val, isLabelFilter, cell){
 
 	var res = false;
-	var filterRes1 = this.CustomFilters[0] ? this.CustomFilters[0].isHideValue(val, isLabelFilter) : null;
-	var filterRes2 = this.CustomFilters[1] ? this.CustomFilters[1].isHideValue(val, isLabelFilter) : null;
+	var filterRes1 = this.CustomFilters[0] ? this.CustomFilters[0].isHideValue(val, isLabelFilter, cell) : null;
+	var filterRes2 = this.CustomFilters[1] ? this.CustomFilters[1].isHideValue(val, isLabelFilter, cell) : null;
 
 	if(!this.And && ((filterRes1 === null && filterRes2 === true || filterRes1 === true && filterRes2 === null || filterRes1 === true && filterRes2 === true)))
 		res = true;
@@ -10737,6 +10797,13 @@ CustomFilters.prototype.check = function () {
 	if(this.CustomFilters) {
 		for(var i = 0; i < this.CustomFilters.length; i++) {
 			this.CustomFilters[i].check();
+		}
+	}
+};
+CustomFilters.prototype.correctFromInterface = function () {
+	if(this.CustomFilters) {
+		for(var i = 0; i < this.CustomFilters.length; i++) {
+			this.CustomFilters[i].correctFromInterface();
 		}
 	}
 };
@@ -10793,11 +10860,11 @@ CustomFilters.prototype.toXml = function (writer, name, ns, childns) {
 
 	writer.WriteXmlNodeEnd(ns + name);
 };
-CustomFilters.prototype.changeForInterface = function () {
+CustomFilters.prototype.changeForInterface = function (filterTypes) {
 	var res = this.clone();
 	if(res.CustomFilters) {
 		for(var i = 0; i < res.CustomFilters.length; i++) {
-			res.CustomFilters[i].changeForInterface();
+			res.CustomFilters[i].changeForInterface(filterTypes);
 		}
 	}
 	return res;
@@ -10845,7 +10912,7 @@ CustomFilter.prototype.init = function(operator, val) {
 	this.Operator = operator;
 	this.Val = val;
 };
-CustomFilter.prototype.isHideValue = function (val, isLabelFilter) {
+CustomFilter.prototype.isHideValue = function (val, isLabelFilter, cell) {
 
 	var result = false;
 	var isDigitValue = !isNaN(val);
@@ -10884,6 +10951,10 @@ CustomFilter.prototype.isHideValue = function (val, isLabelFilter) {
 			}
 		} else {
 			filterVal = isNaN(this.Val) ? this.Val.toLowerCase() : this.Val;
+		}
+
+		if (cell && c_oAscCustomAutoFilter.equals === this.Operator) {
+			val = cell.getValueWithFormat();
 		}
 
 		var trimVal = "string" === typeof(val) ? window["Asc"].trim(val) : val;
@@ -11026,7 +11097,12 @@ CustomFilter.prototype.asc_getOperator = function () { return this.Operator; };
 CustomFilter.prototype.asc_getVal = function () { return this.Val; };
 
 CustomFilter.prototype.asc_setOperator = function (val) { this.Operator = val; };
-CustomFilter.prototype.asc_setVal = function (val) { this.Val = val; };
+CustomFilter.prototype.asc_setVal = function (val) {
+
+
+
+	this.Val = val;
+};
 
 CustomFilter.prototype.check = function () {
 	if(c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
@@ -11055,7 +11131,27 @@ CustomFilter.prototype.check = function () {
 		this.Val = "*" + this.Val + "*";
 	}
 };
-
+CustomFilter.prototype.correctFromInterface = function () {
+	if (this.isNumberCustomFilterType()) {
+		if (!AscCommon.g_oFormatParser.isLocaleNumber(this.Val)) {
+			//try parse format and save without format
+			let resParse = AscCommon.g_oFormatParser.parse(this.Val);
+			if (resParse) {
+				this.Val = resParse.value + "";
+			}
+		}
+	}
+};
+CustomFilter.prototype.isNumberCustomFilterType = function () {
+	if (this.Operator === c_oAscCustomAutoFilter.isGreaterThan ||
+		this.Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo ||
+		this.Operator === c_oAscCustomAutoFilter.isLessThan ||
+		this.Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo ||
+		this.Operator === c_oAscCustomAutoFilter.doesNotEqual) {
+		return true;
+	}
+	return false;
+};
 CustomFilter.prototype._generateEmptyValueFilter = function () {
 	this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
 	this.Val = " ";
@@ -11112,7 +11208,7 @@ CustomFilter.prototype.Read_FromBinary2 = function(reader) {
 		this.Val = reader.GetString2();
 	}
 };
-CustomFilter.prototype.changeForInterface = function() {
+CustomFilter.prototype.changeForInterface = function(filterTypes) {
 	if (!this.Val || this.Val.length <= 1) {
 		return;
 	}
@@ -11145,6 +11241,17 @@ CustomFilter.prototype.changeForInterface = function() {
 			}
 		}
 	}
+
+	//filterTypes
+	/*autoFilterObject.asc_setIsTextFilter(filterTypes.text);
+	autoFilterObject.asc_setIsDateFilter(filterTypes.date);
+	autoFilterObject.asc_setColorsFill(filterTypes.colors);
+	autoFilterObject.asc_setColorsFont(filterTypes.fontColors);*/
+	if (filterTypes && filterTypes.date && AscCommon.g_oFormatParser.isLocaleNumber(this.Val + "")) {
+		let api = Asc.editor || editor;
+		this.Val = api.asc_getLocaleExample("m/d/yyyy", this.Val);
+	}
+
 };
 
 var g_oDynamicFilter = {
@@ -12301,9 +12408,10 @@ AutoFilterDateElem.prototype.clone = function() {
 };
 AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupItem) {
 	var startDate, endDate, date;
+
 	switch(oDateGroupItem.DateTimeGrouping)
 	{
-		case 1://day
+		case Asc.EDateTimeGroup.datetimegroupDay://day
 		{
 			date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day));
 			startDate = date.getExcelDateWithTime();
@@ -12311,19 +12419,19 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 			endDate = date.getExcelDateWithTime();
 			break;
 		}
-		case 2://hour
+		case Asc.EDateTimeGroup.datetimegroupHour://hour
 		{
 			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, 1)).getExcelDateWithTime();
 			endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, 59)).getExcelDateWithTime();
 			break;
 		}
-		case 3://minute
+		case Asc.EDateTimeGroup.datetimegroupMinute://minute
 		{
-			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 1)).getExcelDateWithTime();
+			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 0)).getExcelDateWithTime();
 			endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 59)).getExcelDateWithTime();
 			break;
 		}
-		case 4://month
+		case Asc.EDateTimeGroup.datetimegroupMonth://month
 		{
 			date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, 1));
 			startDate = date.getExcelDateWithTime();
@@ -12331,13 +12439,13 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 			endDate = date.getExcelDateWithTime();
 			break;
 		}
-		case 5://second
+		case Asc.EDateTimeGroup.datetimegroupSecond://second
 		{
 			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Second)).getExcelDateWithTime();
 			endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Second )).getExcelDateWithTime();
 			break;
 		}
-		case 6://year
+		case Asc.EDateTimeGroup.datetimegroupYear://year
 		{
 			date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, 0));
 			startDate = date.getExcelDateWithTime();
@@ -14452,7 +14560,7 @@ QueryTableField.prototype.clone = function() {
 		var i;
 		var length = r.GetLong();
 		for (i = 0; i < length; ++i) {
-			var definedName = new DefinedName();
+			var definedName = new ExternalDefinedName();
 			definedName.Read_FromBinary2(r);
 			if(!this.DefinedNames) {
 				this.DefinedNames = [];
@@ -14619,6 +14727,12 @@ QueryTableField.prototype.clone = function() {
 		//data from portal, need update reference data
 		if (oReferenceData && (!this.referenceData || (this.referenceData["instanceId"] !== oReferenceData["instanceId"] || this.referenceData["fileKey"] !== oReferenceData["fileKey"]))) {
 			this.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
+			isChanged = true;
+		}
+		//path also can changed
+		var path = oPortalData && oPortalData["path"];
+		if (path && this.Id !== path) {
+			this.setId(path);
 			isChanged = true;
 		}
 
@@ -14847,6 +14961,32 @@ QueryTableField.prototype.clone = function() {
 		this.referenceData["instanceId"] = portalName;
 		this.referenceData["fileKey"] = fileId;
 	};
+
+	ExternalReference.prototype.setId = function (id) {
+		if (!id) {
+			return;
+		}
+
+		this.Id = id;
+	};
+
+	ExternalReference.prototype.initFromObj = function (obj) {
+		//directUrl:
+		//fileType:
+		//token:
+		//url
+		//path
+		//referenceData
+		if (obj["path"] !== this.Id) {
+			this.setId(obj["path"]);
+		}
+
+		if (obj["referenceData"] && (!this.referenceData || this.referenceData["instanceId"] !== obj["referenceData"]["instanceId"] ||
+			this.referenceData["instanceId"] !== obj["referenceData"]["fileKey"])) {
+			this.setReferenceData(obj["referenceData"]["fileKey"], obj["referenceData"]["instanceId"]);
+		}
+	};
+
 
 	function asc_CExternalReference() {
 		this.type = null;
@@ -15195,7 +15335,56 @@ QueryTableField.prototype.clone = function() {
 		return res;
 	};
 
+	function ExternalDefinedName() {
+		this.Name = null;
+		this.RefersTo = null;
+		this.SheetId = null;
+	}
 
+	ExternalDefinedName.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.Name = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.RefersTo = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.SheetId = r.GetString2();
+		}
+	};
+	ExternalDefinedName.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.Ref) {
+			w.WriteBool(true);
+			w.WriteString2(this.Name);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.CellType) {
+			w.WriteBool(true);
+			w.WriteString2(this.RefersTo);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.CellValue) {
+			w.WriteBool(true);
+			w.WriteString2(this.SheetId);
+		} else {
+			w.WriteBool(false);
+		}
+	};
+	ExternalDefinedName.prototype.clone = function () {
+		var newObj = new ExternalDefinedName();
+
+		newObj.Name = this.Name;
+		newObj.RefersTo = this.RefersTo;
+		newObj.SheetId = this.SheetId;
+
+		return newObj;
+	};
+
+	//CellWatch
 	function CCellWatch(ws) {
 		this.r = null;
 
@@ -15702,6 +15891,7 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].ExternalSheetDataSet = ExternalSheetDataSet;
 	window["AscCommonExcel"].ExternalRow = ExternalRow;
 	window["AscCommonExcel"].ExternalCell = ExternalCell;
+	window["AscCommonExcel"].ExternalDefinedName = ExternalDefinedName;
 
 	window['AscCommonExcel'].ToXml_ST_DataValidationOperator = ToXml_ST_DataValidationOperator;
 	window['AscCommonExcel'].FromXml_ST_DataValidationOperator = FromXml_ST_DataValidationOperator;
@@ -15769,6 +15959,8 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].ToXml_ST_DataBarAxisPosition = ToXml_ST_DataBarAxisPosition;
 	window["AscCommonExcel"].FromXml_ST_CellValueType = FromXml_ST_CellValueType;
 	window["AscCommonExcel"].ToXml_ST_CellValueType = ToXml_ST_CellValueType;
+	window["AscCommonExcel"].FromXml_ST_SheetViewType = FromXml_ST_SheetViewType;
+	window["AscCommonExcel"].ToXml_ST_SheetViewType = ToXml_ST_SheetViewType;
 
 	window["AscCommonExcel"].CCellWatch = CCellWatch;
 	prot = CCellWatch.prototype;

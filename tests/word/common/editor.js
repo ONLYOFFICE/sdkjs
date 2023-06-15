@@ -61,7 +61,8 @@
 		FirePaint : function(){},
 		GetMMPerDot : function(value){return value / this.GetDotsPerMM(1);},
 		GetDotsPerMM : function(value) {return 72;},
-		EndTrackTable : function() {}
+		EndTrackTable : function() {},
+		SetCurrentPage : function(pageNum) {}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
@@ -86,7 +87,7 @@
 	editor.asc_GetRevisionsChangesStack = function(){return []};
 	editor.private_GetLogicDocument = function(){return this.WordControl.m_oLogicDocument;};
 	editor.asc_getKeyboardLanguage = function(){return -1;};
-	
+	editor.GenerateStyles = function(){};
 	
 
 	//--------------------------------------------------------export----------------------------------------------------
@@ -94,5 +95,6 @@
 	AscTest.Editor          = editor;
 
 	window.editor = editor;
+	Asc['editor'] = Asc.editor = editor;
 
 })(window);

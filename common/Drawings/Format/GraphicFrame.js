@@ -113,6 +113,12 @@
 		}
 		return false;
 	};
+	CGraphicFrame.prototype.GetSelectedText = function(bClearText, oPr) {
+		if (this.graphicObject && this.graphicObject.GetSelectedText) {
+			return this.graphicObject.GetSelectedText(bClearText, oPr);
+		}
+		return "";
+	};
 	CGraphicFrame.prototype.IsTableFirstRowOnNewPage = function () {
 		return false;
 	};

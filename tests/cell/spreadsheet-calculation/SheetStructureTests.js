@@ -1353,7 +1353,7 @@ $(function () {
 		//Fill handle direction and area
 		const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
 		const nFillHandleArea = 3; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
-		// Fill r1 и r2 for autofill range and ranges
+		// Fill r1 ? r2 for autofill range and ranges
 		const r1To = 0;
 		const r2To = 3;
 		const r1 = 0;
@@ -1463,7 +1463,7 @@ $(function () {
 		//Fill handle direction and area
 		const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
 		const nFillHandleArea = 1; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
-		// Fill r1 и r2 for autofill range and ranges
+		// Fill r1 ? r2 for autofill range and ranges
 		const r1To = 3;
 		const r2To = 0;
 		const r1 = 3;
@@ -1574,7 +1574,7 @@ $(function () {
 		//Fill handle direction and area
 		const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
 		const nFillHandleArea = 3; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
-		// Fill r1 и r2 for autofill range and ranges
+		// Fill r1 ? r2 for autofill range and ranges
 		const r1To = 0;
 		const r2To = 4;
 		const r1 = 0;
@@ -1685,7 +1685,7 @@ $(function () {
 		//Fill handle direction and area
 		const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
 		const nFillHandleArea = 3; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
-		// Fill r1 и r2 for autofill range and ranges
+		// Fill r1 ? r2 for autofill range and ranges
 		const r1To = 0;
 		const r2To = 4;
 		const r1 = 0;
@@ -1796,7 +1796,7 @@ $(function () {
 		//Fill handle direction and area
 		const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
 		const nFillHandleArea = 3; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
-		// Fill r1 и r2 for autofill range and ranges
+		// Fill r1 ? r2 for autofill range and ranges
 		const r1To = 0;
 		const r2To = 4;
 		const r1 = 0;
@@ -1907,7 +1907,7 @@ $(function () {
 		//Fill handle direction and area
 		const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
 		const nFillHandleArea = 1; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
-		// Fill r1 и r2 for autofill range and ranges
+		// Fill r1 ? r2 for autofill range and ranges
 		const r1To = 4;
 		const r2To = 0;
 		const r1 = 3;
@@ -2018,7 +2018,7 @@ $(function () {
 		//Fill handle direction and area
 		const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
 		const nFillHandleArea = 1; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
-		// Fill r1 и r2 for autofill range and ranges
+		// Fill r1 ? r2 for autofill range and ranges
 		const r1To = 4;
 		const r2To = 0;
 		const r1 = 3;
@@ -2129,7 +2129,7 @@ $(function () {
 		//Fill handle direction and area
 		const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
 		const nFillHandleArea = 1; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
-		// Fill r1 и r2 for autofill range and ranges
+		// Fill r1 ? r2 for autofill range and ranges
 		const r1To = 4;
 		const r2To = 0;
 		const r1 = 3;

@@ -855,13 +855,13 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 			return true;
 
 		var nCurContentPos = this.CurPos.ContentPos;
-		if (type_Paragraph == this.Content[nCurContentPos].GetType())
+		if (this.Content[nCurContentPos].IsParagraph())
 		{
 			if (false === this.Content[nCurContentPos].Remove(Count, isRemoveWholeElement, false, false, isWord))
 			{
 				if (Count < 0)
 				{
-					if (nCurContentPos > 0 && type_Paragraph == this.Content[nCurContentPos - 1].GetType())
+					if (nCurContentPos > 0 && this.Content[nCurContentPos - 1].IsParagraph())
 					{
 						var CurrFramePr = this.Content[nCurContentPos].Get_FramePr();
 						var PrevFramePr = this.Content[nCurContentPos - 1].Get_FramePr();
@@ -924,9 +924,27 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 							}
 						}
 					}
-					else if (nCurContentPos > 0 && type_BlockLevelSdt === this.Content[nCurContentPos - 1].GetType())
+					else if (nCurContentPos > 0 && this.Content[nCurContentPos - 1].IsBlockLevelSdt())
 					{
-						nCurContentPos--;
+						if (this.Content[nCurContentPos].IsEmpty()
+							&& (nCurContentPos < this.Content.length - 1 || !(this instanceof AscWord.CDocument)))
+						{
+							if (this.IsTrackRevisions())
+							{
+								let lastElementIndex = this.Content[nCurContentPos - 1].GetElementsCount() - 1;
+								let lastElement = lastElementIndex >= 0 ? this.Content[nCurContentPos - 1].GetElement(lastElementIndex) : null;
+								if (lastElement && lastElement.IsParagraph())
+								{
+									lastElement.SetReviewType(reviewtype_Remove);
+								}
+							}
+							else
+							{
+								this.RemoveFromContent(nCurContentPos);
+							}
+						}
+						
+						--nCurContentPos;
 						this.Content[nCurContentPos].MoveCursorToEndPos(false);
 					}
 					else if (0 === nCurContentPos)
@@ -936,7 +954,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 				}
 				else if (Count > 0)
 				{
-					if (nCurContentPos < this.Content.length - 1 && type_Paragraph == this.Content[nCurContentPos + 1].GetType())
+					if (nCurContentPos < this.Content.length - 1 && this.Content[nCurContentPos + 1].IsParagraph())
 					{
 						var CurrFramePr = this.Content[nCurContentPos].Get_FramePr();
 						var NextFramePr = this.Content[nCurContentPos + 1].Get_FramePr();
@@ -1014,9 +1032,39 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 							oFirstParagraph.LoadSelectionState(oState);
 						}
 					}
-					else if (nCurContentPos < this.Content.length - 1 && type_BlockLevelSdt === this.Content[nCurContentPos + 1].GetType())
+					else if (nCurContentPos < this.Content.length - 1 && this.Content[nCurContentPos + 1].IsBlockLevelSdt())
 					{
-						nCurContentPos++;
+						if (this.Content[nCurContentPos].IsEmpty())
+						{
+							let reviewType = this.Content[nCurContentPos].GetReviewType();
+							let reviewInfo = this.Content[nCurContentPos].GetReviewInfo();
+							if (this.IsTrackRevisions()
+								&& (reviewtype_Add !== reviewType || !reviewInfo.IsCurrentUser()
+								&& (reviewtype_Remove !== reviewInfo || !reviewInfo.IsPrevAddedByCurrentUser())))
+							{
+								if (reviewtype_Add === reviewType)
+								{
+									let newReviewInfo = reviewInfo.Copy();
+									newReviewInfo.SavePrev(reviewtype_Add);
+									newReviewInfo.Update();
+									this.Content[nCurContentPos].SetReviewType(reviewtype_Remove, newReviewInfo);
+								}
+								else
+								{
+									this.Content[nCurContentPos].SetReviewType(reviewtype_Remove);
+								}
+								++nCurContentPos;
+							}
+							else
+							{
+								this.RemoveFromContent(nCurContentPos);
+							}
+						}
+						else
+						{
+							++nCurContentPos;
+						}
+						
 						this.Content[nCurContentPos].MoveCursorToStartPos(false);
 					}
 					else if (true == this.Content[nCurContentPos].IsEmpty() && nCurContentPos == this.Content.length - 1 && nCurContentPos != 0 && type_Paragraph === this.Content[nCurContentPos - 1].GetType())
@@ -1048,7 +1096,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 				Item.CurPos.RealY = Item.CurPos.Y;
 			}
 		}
-		else if (type_BlockLevelSdt === this.Content[nCurContentPos].GetType())
+		else if (this.Content[nCurContentPos].IsBlockLevelSdt())
 		{
 			if (false === this.Content[nCurContentPos].Remove(Count, isRemoveWholeElement, false, false, isWord))
 			{
@@ -1399,6 +1447,7 @@ CDocumentContentBase.prototype.AddToContent = function(nPos, oItem, isCorrectCon
 /**
  * Добавляем элемент в конец
  * @param oItem
+ * @param isCorrectContent {boolean}
  */
 CDocumentContentBase.prototype.PushToContent = function(oItem, isCorrectContent)
 {
@@ -1610,6 +1659,11 @@ CDocumentContentBase.prototype.GetAllParagraphs = function(oProps, arrParagraphs
  */
 CDocumentContentBase.prototype.GetAllParagraphsByNumbering = function(oNumPr)
 {
+	let logicDocument = this.GetLogicDocument();
+	let numberingCollection = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetNumberingCollection() : null;
+	if (numberingCollection)
+		return numberingCollection.GetAllParagraphsByNumbering(oNumPr);
+	
 	return this.GetAllParagraphs({Numbering : true, NumPr : oNumPr});
 };
 /**
@@ -1861,7 +1915,16 @@ CDocumentContentBase.prototype.RemoveParagraphForReview = function(nPosition)
 	}
 	else
 	{
-		this.ConcatParagraphs(nPosition, true);
+		if (nPosition < this.Content.length - 1
+			&& !this.Content[nPosition + 1].IsParagraph()
+			&& this.Content[nPosition].IsEmpty())
+		{
+			this.RemoveFromContent(nPosition, 1);
+		}
+		else
+		{
+			this.ConcatParagraphs(nPosition, true);
+		}
 	}
 };
 /**
@@ -2360,3 +2423,99 @@ CDocumentContentBase.prototype.OnContentChange = function()
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
 };
+
+CDocumentContentBase.prototype.GetCalculatedTextPr = function()
+{
+	var oTextPr = new CTextPr();
+	oTextPr.InitDefault();
+	return oTextPr;
+};
+CDocumentContentBase.prototype.GetCalculatedParaPr = function()
+{
+	var oParaPr = new CParaPr();
+	oParaPr.InitDefault();
+	return oParaPr;
+};
+CDocumentContentBase.prototype.GetDirectParaPr = function()
+{
+	return new CParaPr();
+};
+CDocumentContentBase.prototype.GetDirectTextPr = function()
+{
+	return new CTextPr();
+};
+CDocumentContentBase.prototype.GetFormattingPasteData = function(bCalcPr)
+{
+	if (docpostype_DrawingObjects === this.GetDocPosType())
+	{
+		return this.DrawingObjects.getFormatPainterData(bCalcPr);
+	}
+	else
+	{
+		let oTextPr;
+		let oParaPr;
+		if (bCalcPr)
+		{
+			oTextPr = this.GetCalculatedTextPr();
+			oParaPr = this.GetCalculatedParaPr();
+		}
+		else
+		{
+			oTextPr = this.GetDirectTextPr();
+			oParaPr = this.GetDirectParaPr();
+		}
+		return new AscCommon.CTextFormattingPasteData(oTextPr, oParaPr);
+	}
+};
+CDocumentContentBase.prototype.UpdateNumberingCollection = function(elements)
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+	
+	let numberingCollection = logicDocument.GetNumberingCollection();
+	for (let iElement = 0, nElements = elements.length; iElement < nElements; ++iElement)
+	{
+		if (elements[iElement].IsParagraph())
+		{
+			numberingCollection.CheckParagraph(elements[iElement]);
+		}
+		else
+		{
+			let paragraphs = elements[iElement].GetAllParagraphs();
+			for (let iPara = 0, nParas = paragraphs.length; iPara < nParas; ++iPara)
+			{
+				numberingCollection.CheckParagraph(paragraphs[iPara]);
+			}
+		}
+	}
+};
+CDocumentContentBase.prototype.private_RecalculateNumbering = function(elements)
+{
+	this.UpdateNumberingCollection(elements);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+	
+	if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+		return;
+	
+	let history = logicDocument.GetHistory();
+	for (let iElement = 0, nElements = elements.length; iElement < nElements; ++iElement)
+	{
+		if (elements[iElement].IsParagraph())
+		{
+			history.Add_RecalcNumPr(elements[iElement].GetNumPr());
+		}
+		else if (elements[iElement].GetAllParagraphs)
+		{
+			let paragraphs = elements[iElement].GetAllParagraphs({All : true});
+			for (let iPara = 0, nParas = paragraphs.length; iPara < nParas; ++iPara)
+			{
+				history.Add_RecalcNumPr(paragraphs[iPara].GetNumPr());
+			}
+		}
+	}
+};
+

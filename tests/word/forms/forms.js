@@ -51,9 +51,10 @@ $(function () {
 	p2.AddToContent(0, r2);
 	r2.AddText("Абракадабра");
 
-	function AddFormPr(oCC)
+	function AddFormPr(contentControl)
 	{
-		oCC.SetFormPr(new AscWord.CSdtFormPr());
+		contentControl.SetFormPr(new AscWord.CSdtFormPr());
+		return contentControl;
 	}
 
 	QUnit.module("Check forms");
@@ -136,16 +137,55 @@ $(function () {
 		logicDocument.MoveCursorToStartPos();
 
 		AddFormPr(logicDocument.AddContentControlCheckBox());
+		logicDocument.MoveCursorToEndPos()
 		forms = formsManager.GetAllForms();
 		assert.strictEqual(forms.length, 1, "Check forms count after adding checkbox form");
 
 		AddFormPr(logicDocument.AddContentControlComboBox());
 		forms = formsManager.GetAllForms();
+		logicDocument.MoveCursorToEndPos()
 		assert.strictEqual(forms.length, 2, "Check forms count after adding combobox form");
 
 		logicDocument.AddContentControlComboBox();
+		logicDocument.MoveCursorToEndPos()
 		forms = formsManager.GetAllForms();
 		assert.strictEqual(forms.length, 2, "Check forms count after adding combobox content control");
+	});
+	
+	QUnit.test("Check remove/delete in editing mode", function(assert)
+	{
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p);
+		logicDocument.MoveCursorToEndPos();
+		
+		AscTest.SetEditingMode();
+		
+		let form = AddFormPr(logicDocument.AddContentControlTextForm());
+		assert.strictEqual(form.IsPlaceHolder() && form.IsUseInDocument(), true, "Check if text form is filled with placeholder and added to document");
+		AscTest.MoveCursorToParagraph(p, false);
+		AscTest.PressKey(AscTest.Key.backspace);
+		assert.strictEqual(form.IsPlaceHolder() && form.IsUseInDocument() && form.IsThisElementCurrent(), true, "Move cursor to the right of the form and press backspace");
+		AscTest.PressKey(AscTest.Key.backspace);
+		assert.strictEqual(form.IsUseInDocument(), false, "Click backspace for the second time, form must be removed");
+		
+		form = AddFormPr(logicDocument.AddContentControlTextForm());
+		assert.strictEqual(form.IsPlaceHolder() && form.IsUseInDocument(), true, "Check if text form is filled with placeholder and added to document");
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.PressKey(AscTest.Key.delete);
+		assert.strictEqual(form.IsPlaceHolder() && form.IsUseInDocument() && form.IsThisElementCurrent(), true, "Move cursor to the left of the form and press delete button");
+		AscTest.PressKey(AscTest.Key.delete);
+		assert.strictEqual(form.IsUseInDocument(), false, "Click delete button for the second time, form must be removed");
+		
+		form = AddFormPr(logicDocument.AddContentControlTextForm());
+		AscTest.AddTextToInlineSdt(form, "Inner Text");
+		assert.strictEqual(!form.IsPlaceHolder() && form.IsUseInDocument(), true, "Check if text form is filled with text and added to document");
+		assert.strictEqual(form.GetInnerText(), "Inner Text", "Check inner text");
+		AscTest.MoveCursorToParagraph(p, false);
+		AscTest.PressKey(AscTest.Key.backspace);
+		assert.strictEqual(form.IsUseInDocument() && form.IsThisElementCurrent(), true, "Move cursor to the right of the form and press backspace");
+		AscTest.PressKey(AscTest.Key.backspace);
+		assert.strictEqual(form.IsUseInDocument(), false, "Click backspace for the second time, form must be removed");
 	});
 
 	QUnit.test("Check format in text form", function (assert)
@@ -154,12 +194,14 @@ $(function () {
 		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
 		logicDocument.AddToContent(0, p);
 		logicDocument.MoveCursorToEndPos();
-
+		
 		let textForm = logicDocument.AddContentControlTextForm();
 		AddFormPr(textForm);
 
 		let textFormPr = textForm.GetTextFormPr();
 		textFormPr.SetDigitFormat();
+		
+		AscTest.SetFillingFormMode();
 
 		textForm.SetThisElementCurrent();
 		textForm.MoveCursorToStartPos();
@@ -254,11 +296,13 @@ $(function () {
 
 		textForm.SetThisElementCurrent();
 		assert.strictEqual(textForm2.GetInnerText(), "112-ABB", "Check inner text in the text form 2. It must be '112-ABB'");
-
+		
+		AscTest.SetEditingMode();
 	});
 
 	QUnit.test("Check filling out the required forms", function (assert)
 	{
+		AscTest.SetEditingMode();
 		AscTest.ClearDocument();
 		let p1 = new AscWord.CParagraph(AscTest.DrawingDocument);
 		let p2 = new AscWord.CParagraph(AscTest.DrawingDocument);
@@ -271,8 +315,9 @@ $(function () {
 
 		p1.SetThisElementCurrent();
 		p1.MoveCursorToStartPos();
-
 		AddFormPr(logicDocument.AddContentControlCheckBox());
+
+		p1.MoveCursorToEndPos();
 		AddFormPr(logicDocument.AddContentControlComboBox());
 
 		logicDocument.AddContentControlComboBox();
@@ -295,6 +340,8 @@ $(function () {
 		AddFormPr(textForm2);
 
 		assert.strictEqual(formsManager.GetAllForms().length, 5, "Check forms count");
+		
+		AscTest.SetFillingFormMode();
 
 		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), true, "No format and required forms. Check is form filled");
 
@@ -306,7 +353,8 @@ $(function () {
 
 		textForm.GetFormPr().SetRequired(true);
 		assert.strictEqual(formsManager.IsAllRequiredFormsFilled(), false, "Set text form required and check");
-
+		
+		
 		textForm.SetThisElementCurrent();
 		textForm.MoveCursorToEndPos();
 

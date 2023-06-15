@@ -472,7 +472,28 @@ var c_oAscPresentationShortcutType = {
 	Duplicate       : 7,
 	Print           : 8,
 	Save            : 9,
-	ShowContextMenu : 10
+	ShowContextMenu : 10,
+	ShowParaMarks   : 11,
+	Bold            : 12,
+	CopyFormat      : 13,
+	CenterAlign     : 14,
+	EuroSign        : 15,
+	Group           : 16,
+	Italic          : 17,
+	JustifyAlign    : 18,
+	AddHyperlink    : 19,
+	BulletList      : 20,
+	LeftAlign       : 21,
+	RightAlign      : 22,
+	Underline       : 23,
+	Strikethrough   : 24,
+	Superscript     : 25,
+	Subscript       : 26,
+	EnDash          : 27,
+	DecreaseFont    : 28,
+	IncreaseFont    : 29,
+	PasteFormat     : 30,
+	UnGroup         : 31
 };
 
 var TABLE_STYLE_WIDTH_PIX  = 72;
@@ -541,16 +562,44 @@ prot['Zoom_Out']               = c_oAscSlideTransitionParams.Zoom_Out;
 prot['Zoom_AndRotate']         = c_oAscSlideTransitionParams.Zoom_AndRotate;
 
 prot = window['Asc']['c_oAscPresentationShortcutType'] = window['Asc'].c_oAscPresentationShortcutType = c_oAscPresentationShortcutType;
-prot['EditSelectAll']   = c_oAscPresentationShortcutType.EditSelectAll;
-prot['EditUndo']        = c_oAscPresentationShortcutType.EditUndo;
-prot['EditRedo']        = c_oAscPresentationShortcutType.EditRedo;
-prot['Cut']             = c_oAscPresentationShortcutType.Cut;
-prot['Copy']            = c_oAscPresentationShortcutType.Copy;
-prot['Paste']           = c_oAscPresentationShortcutType.Paste;
-prot['Duplicate']       = c_oAscPresentationShortcutType.Duplicate;
-prot['Print']           = c_oAscPresentationShortcutType.Print;
-prot['Save']            = c_oAscPresentationShortcutType.Save;
-prot['ShowContextMenu'] = c_oAscPresentationShortcutType.ShowContextMenu;
+prot['EditSelectAll']                 = c_oAscPresentationShortcutType.EditSelectAll;
+prot['EditUndo']                      = c_oAscPresentationShortcutType.EditUndo;
+prot['EditRedo']                      = c_oAscPresentationShortcutType.EditRedo;
+prot['Cut']                           = c_oAscPresentationShortcutType.Cut;
+prot['Copy']                          = c_oAscPresentationShortcutType.Copy;
+prot['Paste']                         = c_oAscPresentationShortcutType.Paste;
+prot['Duplicate']                     = c_oAscPresentationShortcutType.Duplicate;
+prot['Print']                         = c_oAscPresentationShortcutType.Print;
+prot['Save']                          = c_oAscPresentationShortcutType.Save;
+prot['ShowContextMenu']               = c_oAscPresentationShortcutType.ShowContextMenu;
+prot['ShowParaMarks']                 = c_oAscPresentationShortcutType.ShowParaMarks;
+prot['Bold']                          = c_oAscPresentationShortcutType.Bold;
+prot['CopyFormat']                    = c_oAscPresentationShortcutType.CopyFormat;
+prot['CenterAlign']                   = c_oAscPresentationShortcutType.CenterAlign;
+prot['EuroSign']                      = c_oAscPresentationShortcutType.EuroSign;
+prot['Group']                         = c_oAscPresentationShortcutType.Group;
+prot['Italic']                        = c_oAscPresentationShortcutType.Italic;
+prot['JustifyAlign']                  = c_oAscPresentationShortcutType.JustifyAlign;
+prot['AddHyperlink']                  = c_oAscPresentationShortcutType.AddHyperlink;
+prot['BulletList']                    = c_oAscPresentationShortcutType.BulletList;
+prot['LeftAlign']                     = c_oAscPresentationShortcutType.LeftAlign;
+prot['RightAlign']                    = c_oAscPresentationShortcutType.RightAlign;
+prot['Underline']                     = c_oAscPresentationShortcutType.Underline;
+prot['Strikethrough']                 = c_oAscPresentationShortcutType.Strikethrough;
+prot['Superscript']                   = c_oAscPresentationShortcutType.Superscript;
+prot['Subscript']                     = c_oAscPresentationShortcutType.Subscript;
+prot['EnDash']                        = c_oAscPresentationShortcutType.EnDash;
+prot['DecreaseFont']                  = c_oAscPresentationShortcutType.DecreaseFont;
+prot['IncreaseFont']                  = c_oAscPresentationShortcutType.IncreaseFont;
+prot['PasteFormat']                   = c_oAscPresentationShortcutType.PasteFormat;
+prot['UnGroup']                       = c_oAscPresentationShortcutType.UnGroup;
+
+prot = window['Asc']['c_oAscPresetShadowVal'] = window['Asc'].c_oAscPresetShadowVal = c_oAscPresetShadowVal;
+
+prot = window['Asc']['c_oAscBlendModeType'] = window['Asc'].c_oAscBlendModeType = c_oAscBlendModeType;
+
+prot = window['Asc']['c_oAscConformanceType'] = window['Asc'].c_oAscConformanceType = c_oAscConformanceType;
+
 
 window['AscCommon']                = window['AscCommon'] || {};
 window['AscCommon'].c_oSerFormat   = c_oSerFormat;

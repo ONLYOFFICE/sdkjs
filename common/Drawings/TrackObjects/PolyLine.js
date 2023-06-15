@@ -74,10 +74,18 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
         style.lnRef.Color.Calculate(theme, slide, layout, master);
         RGBA = style.lnRef.Color.RGBA;
 
+	    const API = Asc.editor || editor;
+	    const bInkDraw = API.isInkDrawerOn();
+		this.bInk = bInkDraw;
+		if(bInkDraw)
+		{
+			pen = API.getInkPen();
+		}
         if(pen.Fill)
         {
             pen.Fill.calculate(theme, slide, layout, master, RGBA);
         }
+
 
         this.pen = pen;
 
@@ -87,23 +95,40 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
     }, this, []);
 }
 
-    PolyLine.prototype.Draw = function(graphics)
-    {
-        graphics.SetIntegerGrid(false);
-        graphics.transform3(this.Matrix);
+	PolyLine.prototype.Draw = function(graphics)
+	{
 
-        var shape_drawer = new AscCommon.CShapeDrawer();
-        shape_drawer.fromShape(this, graphics);
-        shape_drawer.draw(this);
-    };
-    PolyLine.prototype.draw = function(g)
-    {
-        if(AscFormat.isRealNumber(this.pageIndex) && g.SetCurrentPage)
-        {
-            g.SetCurrentPage(this.pageIndex);
-        }
-        this.polylineForDrawer.Draw(g);
-    };
+		graphics.SetIntegerGrid(false);
+		graphics.transform3(this.Matrix);
+
+		const oShapeDrawer = new AscCommon.CShapeDrawer();
+		oShapeDrawer.fromShape(this, graphics);
+		oShapeDrawer.draw(this);
+	};
+	PolyLine.prototype.draw = function(oDrawer)
+	{
+		if(AscFormat.isRealNumber(this.pageIndex) && oDrawer.SetCurrentPage)
+		{
+			oDrawer.SetCurrentPage(this.pageIndex);
+		}
+		const oGraphics = oDrawer.Graphics || oDrawer;
+		const API = Asc.editor || editor;
+		const bInkDraw = API.isInkDrawerOn();
+		const dOldAlpha = oGraphics.globalAlpha;
+		if(bInkDraw)
+		{
+			if(AscFormat.isRealNumber(oGraphics.globalAlpha) && oGraphics.put_GlobalAlpha)
+			{
+				oGraphics.put_GlobalAlpha(false, 1);
+			}
+		}
+		this.polylineForDrawer.Draw(oDrawer);
+
+		if(AscFormat.isRealNumber(dOldAlpha) && oGraphics.put_GlobalAlpha)
+		{
+			oGraphics.put_GlobalAlpha(true, dOldAlpha);
+		}
+	};
 
     PolyLine.prototype.getBounds = function()
     {
@@ -144,6 +169,10 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
                 bClosed = true;
             }
         }
+	    if(this.bInk)
+	    {
+		    bClosed = false;
+	    }
         var nMaxPtIdx = bClosed ? (nLastIndex - 1) : nLastIndex;
         for( i = 1; i <= nMaxPtIdx; ++i)
         {
@@ -195,6 +224,11 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
         shape.spPr.xfrm.setExtX(xMax-xMin);
         shape.spPr.xfrm.setExtY(yMax - yMin);
         shape.setStyle(AscFormat.CreateDefaultShapeStyle());
+	    if(this.bInk)
+	    {
+		    shape.spPr.setLn(this.pen);
+		    shape.spPr.setFill(AscFormat.CreateNoFillUniFill());
+	    }
         var geometry = new AscFormat.Geometry();
 
 
@@ -358,7 +392,7 @@ function PolylineForDrawer(polyline)
         graphics.SetIntegerGrid(false);
         graphics.transform3(this.Matrix);
 
-        var shape_drawer = new AscCommon.CShapeDrawer();
+        const shape_drawer = new AscCommon.CShapeDrawer();
         shape_drawer.fromShape(this, graphics);
         shape_drawer.draw(this);
     };

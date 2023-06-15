@@ -726,83 +726,6 @@ function CTableOutlineDr()
     }
 }
 
-function CCacheImage()
-{
-    this.image              = null;
-    this.image_locked       = 0;
-    this.image_unusedCount  = 0;
-}
-
-function CCacheManager()
-{
-    this.arrayImages = [];
-    this.arrayCount = 0;
-    this.countValidImage = 1;
-
-    this.CheckImagesForNeed = function()
-    {
-        for (var i = 0; i < this.arrayCount; ++i)
-        {
-            if ((this.arrayImages[i].image_locked == 0) && (this.arrayImages[i].image_unusedCount >= this.countValidImage))
-            {
-                delete this.arrayImages[i].image;
-                this.arrayImages.splice(i, 1);
-                --i;
-                --this.arrayCount;
-            }
-        }
-    }
-
-    this.UnLock = function(_cache_image)
-    {
-        if (null == _cache_image)
-            return;
-
-        _cache_image.image_locked = 0;
-        _cache_image.image_unusedCount = 0;
-		// затем нужно сбросить ссылку в ноль (_cache_image = null) <- это обязательно !!!!!!!
-    }
-
-    this.Lock = function(_w, _h)
-    {
-        for (var i = 0; i < this.arrayCount; ++i)
-        {
-            if (this.arrayImages[i].image_locked)
-                continue;
-            var _wI = this.arrayImages[i].image.width;
-            var _hI = this.arrayImages[i].image.height;
-            if ((_wI == _w) && (_hI == _h))
-            {
-                this.arrayImages[i].image_locked = 1;
-                this.arrayImages[i].image_unusedCount = 0;
-
-                this.arrayImages[i].image.ctx.globalAlpha = 1.0;
-                this.arrayImages[i].image.ctx.setTransform(1, 0, 0, 1, 0, 0);
-                this.arrayImages[i].image.ctx.fillStyle = "#ffffff";
-                this.arrayImages[i].image.ctx.fillRect(0, 0, _w, _h);
-                return this.arrayImages[i];
-            }
-            this.arrayImages[i].image_unusedCount++;
-        }
-        this.CheckImagesForNeed();
-        var index = this.arrayCount;
-        this.arrayCount++;
-
-        this.arrayImages[index] = new CCacheImage();
-        this.arrayImages[index].image = document.createElement('canvas');
-        this.arrayImages[index].image.width = _w;
-        this.arrayImages[index].image.height = _h;
-        this.arrayImages[index].image.ctx = this.arrayImages[index].image.getContext('2d');
-        this.arrayImages[index].image.ctx.globalAlpha = 1.0;
-        this.arrayImages[index].image.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        this.arrayImages[index].image.ctx.fillStyle = "#ffffff";
-        this.arrayImages[index].image.ctx.fillRect(0, 0, _w, _h);
-        this.arrayImages[index].image_locked = 1;
-        this.arrayImages[index].image_unusedCount = 0;
-        return this.arrayImages[index];
-    }
-}
-
 function CDrawingPage()
 {
     this.left   = 0;
@@ -1199,132 +1122,6 @@ function CPage()
         return true;
     }
 
-    this.DrawSearchCur1 = function(overlay, xDst, yDst, wDst, hDst, place)
-    {
-        var dKoefX = wDst / this.width_mm;
-        var dKoefY = hDst / this.height_mm;
-
-        var ctx = overlay.m_oContext;
-
-        if (!place.Transform)
-        {
-            if (undefined === place.Ex)
-            {
-                var _x = parseInt(xDst + dKoefX * place.X) - 0.5;
-                var _y = parseInt(yDst + dKoefY * place.Y) - 0.5;
-
-                var _w = parseInt(dKoefX * place.W) + 1;
-                var _h = parseInt(dKoefY * place.H) + 1;
-
-                if (_x < overlay.min_x)
-                    overlay.min_x = _x;
-                if ((_x + _w) > overlay.max_x)
-                    overlay.max_x = _x + _w;
-
-                if (_y < overlay.min_y)
-                    overlay.min_y = _y;
-                if ((_y + _h) > overlay.max_y)
-                    overlay.max_y = _y + _h;
-
-                ctx.rect(_x,_y,_w,_h);
-            }
-            else
-            {
-                var _x1 = parseInt(xDst + dKoefX * place.X);
-                var _y1 = parseInt(yDst + dKoefY * place.Y);
-
-                var x2 = place.X + place.W * place.Ex;
-                var y2 = place.Y + place.W * place.Ey;
-                var _x2 = parseInt(xDst + dKoefX * x2);
-                var _y2 = parseInt(yDst + dKoefY * y2);
-
-                var x3 = x2 - place.H * place.Ey;
-                var y3 = y2 + place.H * place.Ex;
-                var _x3 = parseInt(xDst + dKoefX * x3);
-                var _y3 = parseInt(yDst + dKoefY * y3);
-
-                var x4 = place.X - place.H * place.Ey;
-                var y4 = place.Y + place.H * place.Ex;
-                var _x4 = parseInt(xDst + dKoefX * x4);
-                var _y4 = parseInt(yDst + dKoefY * y4);
-
-                overlay.CheckPoint(_x1, _y1);
-                overlay.CheckPoint(_x2, _y2);
-                overlay.CheckPoint(_x3, _y3);
-                overlay.CheckPoint(_x4, _y4);
-
-                ctx.moveTo(_x1, _y1);
-                ctx.lineTo(_x2, _y2);
-                ctx.lineTo(_x3, _y3);
-                ctx.lineTo(_x4, _y4);
-                ctx.lineTo(_x1, _y1);
-            }
-        }
-        else
-        {
-            var _tr = place.Transform;
-            if (undefined === place.Ex)
-            {
-                var _x1 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y);
-                var _y1 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y);
-
-                var _x2 = xDst + dKoefX * _tr.TransformPointX(place.X + place.W, place.Y);
-                var _y2 = yDst + dKoefY * _tr.TransformPointY(place.X + place.W, place.Y);
-
-                var _x3 = xDst + dKoefX * _tr.TransformPointX(place.X + place.W, place.Y + place.H);
-                var _y3 = yDst + dKoefY * _tr.TransformPointY(place.X + place.W, place.Y + place.H);
-
-                var _x4 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y + place.H);
-                var _y4 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y + place.H);
-
-                overlay.CheckPoint(_x1, _y1);
-                overlay.CheckPoint(_x2, _y2);
-                overlay.CheckPoint(_x3, _y3);
-                overlay.CheckPoint(_x4, _y4);
-
-                ctx.moveTo(_x1, _y1);
-                ctx.lineTo(_x2, _y2);
-                ctx.lineTo(_x3, _y3);
-                ctx.lineTo(_x4, _y4);
-                ctx.lineTo(_x1, _y1);
-            }
-            else
-            {
-                var x2 = place.X + place.W * place.Ex;
-                var y2 = place.Y + place.W * place.Ey;
-
-                var x3 = x2 - place.H * place.Ey;
-                var y3 = y2 + place.H * place.Ex;
-
-                var x4 = place.X - place.H * place.Ey;
-                var y4 = place.Y + place.H * place.Ex;
-
-                var _x1 = xDst + dKoefX * _tr.TransformPointX(place.X, place.Y);
-                var _y1 = yDst + dKoefY * _tr.TransformPointY(place.X, place.Y);
-
-                var _x2 = xDst + dKoefX * _tr.TransformPointX(x2, y2);
-                var _y2 = yDst + dKoefY * _tr.TransformPointY(x2, y2);
-
-                var _x3 = xDst + dKoefX * _tr.TransformPointX(x3, y3);
-                var _y3 = yDst + dKoefY * _tr.TransformPointY(x3, y3);
-
-                var _x4 = xDst + dKoefX * _tr.TransformPointX(x4, y4);
-                var _y4 = yDst + dKoefY * _tr.TransformPointY(x4, y4);
-
-                overlay.CheckPoint(_x1, _y1);
-                overlay.CheckPoint(_x2, _y2);
-                overlay.CheckPoint(_x3, _y3);
-                overlay.CheckPoint(_x4, _y4);
-
-                ctx.moveTo(_x1, _y1);
-                ctx.lineTo(_x2, _y2);
-                ctx.lineTo(_x3, _y3);
-                ctx.lineTo(_x4, _y4);
-                ctx.lineTo(_x1, _y1);
-            }
-        }
-    }
-
     this.DrawSearchCur = function(overlay, xDst, yDst, wDst, hDst, navi)
     {
         var dKoefX = wDst / this.width_mm;
@@ -1562,7 +1359,6 @@ function CDrawingDocument()
     
     this.m_bIsSelection = false;
     this.m_bIsSearching = false;
-    this.m_lCountRect = 0;
 
     this.CurrentSearchNavi = null;
     this.SearchTransform = null;
@@ -1966,27 +1762,10 @@ function CDrawingDocument()
 
     this.ConvertCoordsFromCursorPage = function(x, y, page, bIsRul)
     {
-        var _x = x;
-        var _y = y;
+        var _x = x - this.m_oWordControl.X;
+        var _y = y - this.m_oWordControl.Y;
 
         var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
-
-        if (undefined == bIsRul)
-        {
-            var _xOffset = this.m_oWordControl.X;
-            var _yOffset = this.m_oWordControl.Y;
-
-            /*
-            if (true == this.m_oWordControl.m_bIsRuler)
-            {
-                _xOffset += (5 * g_dKoef_mm_to_pix);
-                _yOffset += (7 * g_dKoef_mm_to_pix);
-            }
-            */
-
-            _x = x - _xOffset;
-            _y = y - _yOffset;
-        }
 
         if (page < 0 || page >= this.m_lPagesCount)
             return { X : 0, Y : 0, Page: -1, DrawPage: -1 };
@@ -2018,21 +1797,21 @@ function CDrawingDocument()
         return { X : _x, Y : _y, Error: false };
     };
 
-    this.ConvertCoordsFromCursor2 = function(x, y, bIsRul, bIsNoNormalize, _zoomVal)
+    this.ConvertCoordsFromCursor2 = function (x, y, zoomVal, isRulers)
     {
         var _x = x;
         var _y = y;
 
         var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
-        if (undefined !== _zoomVal)
-            dKoef = (100 * g_dKoef_pix_to_mm / _zoomVal);
+        if (undefined !== zoomVal)
+            dKoef = (100 * g_dKoef_pix_to_mm / zoomVal);
 
-        if (undefined == bIsRul)
+        if (true !== isRulers)
         {
             var _xOffset = this.m_oWordControl.X;
             var _yOffset = this.m_oWordControl.Y;
 
-            if (true == this.m_oWordControl.m_bIsRuler)
+            if (true === this.m_oWordControl.m_bIsRuler)
             {
                 _xOffset += (5 * g_dKoef_mm_to_pix);
                 _yOffset += (7 * g_dKoef_mm_to_pix);
@@ -2099,14 +1878,6 @@ function CDrawingDocument()
             {
                 var x_mm = (_x - rect.left) * dKoef;
                 var y_mm = (_y - rect.top) * dKoef;
-
-                if (true === bIsNoNormalize)
-                {
-                    if (x_mm > (this.m_arrPages[i].width_mm + 10))
-                        x_mm = this.m_arrPages[i].width_mm + 10;
-                    if (x_mm < -10)
-                        x_mm = -10;
-                }
 
                 return { X : x_mm, Y : y_mm, Page: rect.pageIndex, DrawPage: i };
             }

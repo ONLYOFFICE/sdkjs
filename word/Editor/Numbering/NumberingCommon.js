@@ -323,20 +323,30 @@ function Numbering_Number_To_Roman(Num, bLowerCase)
 			}
 		}
 
-		let numObject = {};
-
-		try
-		{
-			numObject = JSON.parse(value);
-		}
-		catch (e)
-		{
-		}
-
-		return numObject;
+		return AscWord.CNumInfo.Parse(value);
+	}
+	/**
+	 * Проверяем является ли данный тип списка маркированным
+	 * @param {Asc.c_oAscNumberingFormat} type
+	 * @returns {boolean}
+	 */
+	function IsBulletedNumbering(type)
+	{
+		return (Asc.c_oAscNumberingFormat.Bullet === type || Asc.c_oAscNumberingFormat.None === type);
+	}
+	/**
+	 * Проверяем является ли данный тип списка нумерованным
+	 * @param {Asc.c_oAscNumberingFormat} type
+	 * @returns {boolean}
+	 */
+	function IsNumberedNumbering(type)
+	{
+		return !IsBulletedNumbering(type);
 	}
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].GetNumberingSymbols                 = GetNumberingSymbols;
 	window["AscWord"].GetNumberingObjectByDeprecatedTypes = GetNumberingObjectByDeprecatedTypes;
+	window["AscWord"].IsBulletedNumbering                 = IsBulletedNumbering;
+	window["AscWord"].IsNumberedNumbering                 = IsNumberedNumbering;
 
 })(window);

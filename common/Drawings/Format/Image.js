@@ -279,6 +279,7 @@
 		CImageShape.prototype.convertToWord = function (document) {
 			this.setBDeleted(true);
 			var oCopy = this.copy(undefined);
+			oCopy.removePlaceholder();
 			oCopy.setBDeleted(false);
 			return oCopy;
 		};
@@ -710,13 +711,13 @@
 			}
 			//check crop
 			let oSrcRect = this.blipFill.srcRect;
-			if (oSrcRect) {
-				let fAE = AscFormat.fApproxEqual;
-				if (!fAE(oSrcRect.l, 0) || !fAE(oSrcRect.t, 0) ||
-					!fAE(oSrcRect.r, 100) || fAE(oSrcRect.b, 100)) {
-					return null;
-				}
-			}
+			// if (oSrcRect) {
+			// 	let fAE = AscFormat.fApproxEqual;
+			// 	if (!fAE(oSrcRect.l, 0) || !fAE(oSrcRect.t, 0) ||
+			// 				!fAE(oSrcRect.r, 100) || fAE(oSrcRect.b, 100)) {
+			// 		return null;
+			// 	}
+			// }
 			//check geometry
 			if (this.calcGeometry && this.calcGeometry.preset !== "rect") {
 				return null;
@@ -742,7 +743,7 @@
 			}
 			return null;
 		};
-		CImageShape.prototype.replacePictureData = function (sData, dW, dH, bWord) {
+		CImageShape.prototype.replacePictureData = function (sData, dW, dH, bWord, replaceMode) {
 			let sOldRasterImageId = this.blipFill && this.blipFill.RasterImageId;
 			this.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sData));
 			let oXfrm = this.spPr && this.spPr.xfrm;
@@ -762,6 +763,37 @@
 			}
 			let oImage = oImageLoader.map_image_index[AscCommon.getFullImageSrc2(sOldRasterImageId)];
 			if (!oImage || !oImage.Image || oImage.Status !== AscFonts.ImageLoadStatus.Complete) {
+				return;
+			}
+			if(replaceMode === "stretch") {
+				return;
+			}
+			else if(replaceMode === "fill") {
+				this.cropFill();
+				return;
+			}
+			else if(replaceMode === "fit") {
+				this.cropFit();
+				return;
+			}
+			else if(replaceMode === "original") {
+				var oImgP = new Asc.asc_CImgProperty();
+				oImgP.ImageUrl = this.blipFill.RasterImageId;
+				var oSize = oImgP.asc_getOriginSize(oApi);
+				if(oSize.IsCorrect) {
+					let dX = this.getXfrmOffX();
+					let dY = this.getXfrmOffY();
+					let dExtX = oSize.Width;
+					let dExtY = oSize.Height;
+					let nRot = this.getXfrmRot();
+					let bFlipH = this.getXfrmFlipH();
+					let bFlipV = this.getXfrmFlipV();
+					this.setTransformParams(dX, dY, dExtX, dExtY, nRot, bFlipH, bFlipV);
+					this.checkDrawingBaseCoords();
+					if (this.parent && this.parent.CheckWH) {
+						this.parent.CheckWH();
+					}
+				}
 				return;
 			}
 			let nPixWOld = Math.max(oImage.Image.width, 1);

@@ -275,26 +275,33 @@ CNum.prototype.LinkWithHeadings = function(styles)
 {
 	for (let iLvl = 0; iLvl <= 8; ++iLvl)
 	{
-		let styleId = styles.GetDefaultHeading(iLvl);
-		let style   = styles.Get(styleId);
-		if (style)
-		{
-			let paraPr = style.GetParaPr().Copy();
-			paraPr.NumPr = new CNumPr(this.GetId(), iLvl);
-			style.SetParaPr(paraPr);
-			this.LinkWithStyle(iLvl, styleId);
-		}
+		this.LinkWithStyle(iLvl, styles.GetDefaultHeading(iLvl), styles);
 	}
 };
 /**
  * Связываем заданный уровень с заданным стилем
  * @param {number} iLvl 0..8
  * @param {string} styleId
+ * @param {AscWord.CStyles} styleManager
  */
-CNum.prototype.LinkWithStyle = function(iLvl, styleId)
+CNum.prototype.LinkWithStyle = function(iLvl, styleId, styleManager)
 {
 	if ("number" !== typeof(iLvl) || iLvl < 0 || iLvl >= 9)
 		return;
+	
+	let numLvl = this.GetLvl(iLvl);
+	let pStyle = numLvl.GetPStyle();
+	if (pStyle && styleManager.Get(pStyle))
+	{
+		let oldStyle = styleManager.Get(pStyle);
+		oldStyle.SetNumPr(null);
+	}
+
+	let style = styleManager.Get(styleId);
+	if (!style)
+		return;
+
+	style.SetNumPr(this.GetId(), iLvl);
 
 	if (this.private_HaveLvlOverride(iLvl))
 	{
@@ -414,7 +421,9 @@ CNum.prototype.RecalculateRelatedParagraphs = function(nLvl)
 				logicDocument.Add_ChangedStyle(style.GetId());
 		}
 	}
-
+	
+	logicDocument.GetNumberingCollection().CheckNum(this.Id, nLvl);
+	
 	var arrParagraphs = logicDocument.GetAllParagraphsByNumbering({NumId : this.Id, Lvl : nLvl});
 	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 	{
@@ -927,6 +936,25 @@ CNum.prototype.IsSimilar = function(oNum)
 
 	return true;
 };
+/**
+ * Проверяем, одинаковы ли две заданные нумерации
+ * @param oNum {CNum}
+ * @returns {boolean}
+ */
+CNum.prototype.IsEqual = function(oNum)
+{
+	if (!oNum)
+		return false;
+
+	for (var nLvl = 0; nLvl < 9; ++nLvl)
+	{
+		var oLvl = this.GetLvl(nLvl);
+		if (!oLvl.IsEqual(oNum.GetLvl(nLvl)))
+			return false;
+	}
+
+	return true;
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Undo/Redo функции
 //----------------------------------------------------------------------------------------------------------------------
@@ -1094,3 +1122,7 @@ CLvlOverride.prototype.ReadFromBinary = function(oReader)
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CNum = CNum;
+
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CNum = CNum;
+

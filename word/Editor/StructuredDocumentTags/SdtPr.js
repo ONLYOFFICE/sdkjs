@@ -477,7 +477,11 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	else if (oContentControl.IsDropDownList())
 		this.DropDownPr = oContentControl.GetDropDownListPr().Copy();
 	else if (oContentControl.IsDatePicker())
+	{
 		this.DateTimePr = oContentControl.GetDatePickerPr().Copy();
+		if (oContentControl.GetInnerText() !== this.DateTimePr.ToString())
+			this.DateTimePr.SetNullFullDate(true);
+	}
 	else if (oContentControl.IsTextForm())
 		this.TextFormPr = oContentControl.GetTextFormPr().Copy();
 	else if (oContentControl.IsPictureForm())
@@ -493,6 +497,13 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 		
 		this.FormPr = mainForm.GetFormPr().Copy();
 		this.FormPr.SetFixed(mainForm.IsFixedForm());
+		
+		if (mainForm !== oContentControl)
+		{
+			let subFormPr = oContentControl.GetFormPr();
+			this.FormPr.SetAscBorder(subFormPr.GetAscBorder());
+			this.FormPr.SetShd(subFormPr.GetShd());
+		}
 	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)
@@ -549,7 +560,17 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.SetDropDownListPr(this.DropDownPr);
 
 	if (undefined !== this.DateTimePr)
-		oContentControl.ApplyDatePickerPr(this.DateTimePr);
+	{
+		let dateTimePr = this.DateTimePr;
+		if (dateTimePr.IsNullFullDate())
+		{
+			dateTimePr = dateTimePr.Copy();
+			dateTimePr.SetNullFullDate(false);
+			dateTimePr.SetFullDate(oContentControl.GetDatePickerPr().GetFullDate());
+		}
+		
+		oContentControl.ApplyDatePickerPr(dateTimePr);
+	}
 
 	if (undefined !== this.TextFormPr && oContentControl.IsInlineLevel())
 	{
@@ -566,7 +587,7 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		else if (!this.TextFormPr.Comb && isCombChanged && oContentControl.IsPlaceHolder())
 			oContentControl.ReplaceContentWithPlaceHolder(false, true);
 
-		if (oContentControl.IsFixedForm() && !isCombChanged)
+		if (oContentControl.IsFixedForm() && oContentControl.IsMainForm() && !isCombChanged)
 			oContentControl.UpdateFixedFormSizeByCombWidth();
 
 		if (!this.TextFormPr.MultiLine)

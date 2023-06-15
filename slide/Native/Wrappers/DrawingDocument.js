@@ -507,11 +507,6 @@ CDrawingDocument.prototype.ConvertCoordsToCursorWR = function(x, y, pageIndex, t
     return this.Native["DD_ConvertCoordsToCursor"](x, y, _page_index, m11, m21, m12, m22, tx, ty);
 };
 
-CDrawingDocument.prototype.ConvertCoordsToCursorWR_2 = function(x, y)
-{
-    return this.Native["DD_ConvertCoordsToCursor"]();
-};
-
 CDrawingDocument.prototype.ConvertCoordsToCursorWR_Comment = function(x, y)
 {
     return this.Native["DD_ConvertCoordsToCursorWR_Comment"]();
@@ -856,7 +851,7 @@ CDrawingDocument.prototype.SendControlColors = function(bIsAttack)
     {
 	    let _color_src = this.GuiControlColorsMap[i];
 
-        _ret_array[_cur_index] = Asc.asc_CColor(_color_src.r, _color_src.g, _color_src.b);
+        _ret_array[_cur_index] = new Asc.asc_CColor(_color_src.r, _color_src.g, _color_src.b);
 	    _ret_array[_cur_index].setColorSchemeId(array_colors_types[i]);
         _cur_index++;
 

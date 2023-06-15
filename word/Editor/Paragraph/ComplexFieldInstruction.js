@@ -702,7 +702,7 @@ CFieldInstructionREF.prototype.ToString = function()
 {
 	var sInstruction = " REF ";
 	sInstruction += this.BookmarkName;
-	for(var nSwitch = 0; i < this.GeneralSwitches.length; ++nSwitch)
+	for(var nSwitch = 0; nSwitch < this.GeneralSwitches.length; ++nSwitch)
 	{
 		sInstruction +=  " \\* " + this.GeneralSwitches[nSwitch];
 	}
@@ -1494,7 +1494,7 @@ CFieldInstructionNOTEREF.prototype.ToString = function()
 {
 	var sInstruction = " NOTEREF ";
 	sInstruction += this.BookmarkName;
-	for(var nSwitch = 0; i < this.GeneralSwitches.length; ++nSwitch)
+	for(var nSwitch = 0; nSwitch < this.GeneralSwitches.length; ++nSwitch)
 	{
 		sInstruction +=  " \\* " + this.GeneralSwitches[nSwitch];
 	}

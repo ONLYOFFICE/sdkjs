@@ -15,6 +15,7 @@
 			"vendor/string.js",
 			"vendor/array.js",
 			"common/editorscommon.js",
+            "common/BulletPreviewDrawer.js",
 			"common/HistoryCommon.js",
 			"common/TableId.js",
 			"common/TableIdChanges.js",
@@ -201,12 +202,14 @@
 			"word/Editor/Sections.js",
 			"word/Editor/SectionsChanges.js",
 			"word/Editor/Numbering/NumberingApplicator.js",
+			"word/Editor/Numbering/NumberingCollection.js",
 			"word/Editor/Numbering/NumberingCommon.js",
 			"word/Editor/Numbering/NumberingLvl.js",
 			"word/Editor/Numbering/AbstractNum.js",
 			"word/Editor/Numbering/AbstractNumChanges.js",
 			"word/Editor/Numbering/Num.js",
 			"word/Editor/Numbering/NumChanges.js",
+			"word/Editor/Numbering/NumInfo.js",
 			"word/Editor/Numbering/PresentationNumbering.js",
 			"word/Editor/Numbering/Numbering.js",
 			"word/Editor/HeaderFooter.js",
@@ -278,6 +281,8 @@
 			"word/Drawing/ShapeDrawer.js",
 			"word/Drawing/buttons.js",
 
+			"word/Drawing/cachemanager.js",
+			"word/Drawing/stylespainter.js",
 			"word/Drawing/DrawingDocument.js",
 			"word/Drawing/GraphicsEvents.js",
 			"word/Drawing/Rulers.js",
@@ -355,6 +360,8 @@
 			"word/Drawing/mobileTouchManager.js",
 			"word/Drawing/HtmlPage.js",
 			"word/Drawing/ShapeDrawer.js",
+			"word/Drawing/cachemanager.js",
+			"word/Drawing/stylespainter.js",
 			"word/Drawing/DrawingDocument.js"
 		]
 	}

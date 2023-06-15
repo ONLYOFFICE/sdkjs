@@ -292,7 +292,8 @@
 		Chart : 2,
 		Table : 3,
 		Video : 4,
-		Audio : 5
+		Audio : 5,
+		SmartArt: 6
 	};
 
 	var exportObj = AscCommon.PlaceholderButtonType;
@@ -303,6 +304,7 @@
 	exportObj["Table"] = exportObj.Table;
 	exportObj["Video"] = exportObj.Video;
 	exportObj["Audio"] = exportObj.Audio;
+	exportObj["SmartArt"] = exportObj.SmartArt;
 
 	AscCommon.PlaceholderButtonState = {
 		None : 0,
@@ -548,13 +550,13 @@
 			case AscCommon.c_oEditorId.Word:
 				if (true === word_control.m_bIsRuler)
 				{
-					xCoord += (5 * g_dKoef_mm_to_pix) >> 0;
-					yCoord += (7 * g_dKoef_mm_to_pix) >> 0;
+					xCoord += (5 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+					yCoord += (7 * AscCommon.g_dKoef_mm_to_pix) >> 0;
 				}
 				break;
 			case AscCommon.c_oEditorId.Presentation:
-				xCoord += ((word_control.m_oMainParent.AbsolutePosition.L + word_control.m_oMainView.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
-				yCoord += ((word_control.m_oMainParent.AbsolutePosition.T + word_control.m_oMainView.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
+				xCoord += ((word_control.m_oMainParent.AbsolutePosition.L + word_control.m_oMainView.AbsolutePosition.L) * AscCommon.g_dKoef_mm_to_pix) >> 0;
+				yCoord += ((word_control.m_oMainParent.AbsolutePosition.T + word_control.m_oMainView.AbsolutePosition.T) * AscCommon.g_dKoef_mm_to_pix) >> 0;
 				yCoord += this.buttonSize;
 				break;
 			default:
@@ -592,7 +594,12 @@
 		}
 
 		checker.isNeedUpdateOverlay |= isUpdate;
-		return (-1 != indexButton);
+		if (this.buttons[indexButton] !== undefined)
+		{
+			checker.placeholderType = this.buttons[indexButton];
+			checker.page = this.anchor.page;
+		}
+		return (-1 !== indexButton);
 	};
 
 	Placeholder.prototype.onPointerUp = function(x, y, pixelsRect, pageWidthMM, pageHeightMM)
@@ -679,11 +686,13 @@
 		this.icons.register(AscCommon.PlaceholderButtonType.Chart, "chart", true);
 		this.icons.register(AscCommon.PlaceholderButtonType.Audio, "audio");
 		this.icons.register(AscCommon.PlaceholderButtonType.Video, "video");
+		this.icons.register(AscCommon.PlaceholderButtonType.SmartArt, "smartart", true);
 
 		// типы, которые поддерживают состояние Active
 		this.mapActive = [];
 		this.mapActive[AscCommon.PlaceholderButtonType.Table] = true;
 		this.mapActive[AscCommon.PlaceholderButtonType.Chart] = true;
+		this.mapActive[AscCommon.PlaceholderButtonType.SmartArt] = true;
 	}
 
 	Placeholders.prototype.registerCallback = function(type, callback)
@@ -761,31 +770,50 @@
 		}
 	};
 
+	Placeholders.prototype.updateCursorType = function (nX, nY, nPlaceholder, nPage)
+	{
+		if (this.api.editorId !== AscCommon.c_oEditorId.Spreadsheet)
+		{
+			this.api.sync_MouseMoveStartCallback();
+			const oMouseMoveData         = new AscCommon.CMouseMoveData();
+			const oCoords         = this.api.getDrawingDocument().ConvertCoordsToCursorWR(nX, nY, nPage);
+			oMouseMoveData.X_abs       = oCoords.X;
+			oMouseMoveData.Y_abs       = oCoords.Y;
+			oMouseMoveData.Type      = Asc.c_oAscMouseMoveDataTypes.Placeholder;
+			oMouseMoveData.PlaceholderType = nPlaceholder;
+			this.document.SetCursorType("default", oMouseMoveData);
+			this.api.sync_MouseMoveEndCallback();
+		}
+	};
+
 	Placeholders.prototype.onPointerMove = function(pos, pixelsRect, pageWidthMM, pageHeightMM)
 	{
-		var checker = { isNeedUpdateOverlay : false };
-		var isButton = false;
-		for (var i = 0; i < this.objects.length; i++)
+		const oChecker = { isNeedUpdateOverlay : false, placeholderType: null, page: null };
+		for (let i = 0; i < this.objects.length; i++)
 		{
 			if (this.objects[i].anchor.page != pos.Page)
 				continue;
 
-			isButton |= this.objects[i].onPointerMove(pos.X, pos.Y, pixelsRect, pageWidthMM, pageHeightMM, checker);
+			this.objects[i].onPointerMove(pos.X, pos.Y, pixelsRect, pageWidthMM, pageHeightMM, oChecker);
 		}
+		const bIsButton = oChecker.placeholderType !== null;
 
-		if (isButton)
-			this.document.SetCursorType("default");
+		if (bIsButton)
+			this.updateCursorType(pos.X, pos.Y, oChecker.placeholderType, oChecker.page);
 
 		// обновить оверлей
-		if (checker.isNeedUpdateOverlay)
+		if (oChecker.isNeedUpdateOverlay)
 		{
 			this.onUpdateOverlay();
 
-			if (isButton)
+			if (bIsButton)
 				this.endUpdateOverlay();
 		}
-
-		return isButton;
+		if (bIsButton)
+		{
+			return {placeholderType: oChecker.placeholderType, cursor: "default"};
+		}
+		return null;
 	};
 
 	Placeholders.prototype.onPointerUp = function(pos, pixelsRect, pageWidthMM, pageHeightMM)
@@ -894,6 +922,14 @@
 		In    : 1,
 		Main  : 2
 	};
+
+	function getOutlineCC(isActive)
+	{
+		var _editor = Asc.editor || editor;
+		if (_editor && _editor.isDarkMode === true)
+			return isActive ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0.23)";
+		return isActive ? AscCommon.GlobalSkin.FormsContentControlsOutlineActive : AscCommon.GlobalSkin.FormsContentControlsOutlineHover;
+	}
 
 	// показ диалогов в мобильной версии должен быть только по клику
 	function _sendEventToApi(api, obj, x, y, isclick)
@@ -2283,7 +2319,7 @@
 				}
 
 				if (state == this.ContentControlObjects[i].state
-					|| (!obj && AscCommon.ContentControlTrack.In === state && AscCommon.ContentControlTrack.Main === this.ContentControlObjects[i].state))
+					|| ((!obj || !obj.IsForm() || obj.IsMainForm()) && AscCommon.ContentControlTrack.In === state && AscCommon.ContentControlTrack.Main === this.ContentControlObjects[i].state))
 				{
 					if (-2 != this.ContentControlObjects[i].ActiveButtonIndex)
 						isActiveRemove = true;
@@ -3772,9 +3808,9 @@
 				if (currentIteration === countIteration)
 				{
 					if (!this.isActive)
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineHover;
+						ctx.strokeStyle = getOutlineCC(false);
 					else
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineActive;
+						ctx.strokeStyle = getOutlineCC(true);
 
 					ctx.lineWidth = Math.round(rPR);
 					ctx.stroke();
@@ -4046,9 +4082,9 @@
 				if (currentIteration === countIteration)
 				{
 					if (!this.isActive)
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineHover;
+						ctx.strokeStyle = getOutlineCC(false);
 					else
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineActive;
+						ctx.strokeStyle = getOutlineCC(true);
 
 					ctx.lineWidth = 1;
 					ctx.stroke();

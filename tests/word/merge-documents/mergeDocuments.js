@@ -230,7 +230,19 @@ const arrTestObjectsInfo = [
             ]
         ]
     },
-
+	///////////////////////// -> 16 <- /////////////////////////////
+	{
+		originalDocument: [
+			[
+				createParagraphInfo('Хрусть, '), createParagraphInfo('Хрусть', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(', пок ')
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo('Хрусть, ', {reviewType: reviewtype_Remove, userName: 'Mark Pottato', dateTime: 1000000}), createParagraphInfo('Хрусть', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(', ок п')
+			]
+		]
+	},
 ];
 const arrAnswers = [
     /////////////////////////////////// -> 1 <- ////////////////////////////////////////////
@@ -238,7 +250,7 @@ const arrAnswers = [
         finalDocument: [
             [createParagraphInfo(undefined, {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})],
             [
-                createParagraphInfo('Привет', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000})
+                createParagraphInfo('Привет', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo(undefined, {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000})
             ]
         ]
     },
@@ -252,7 +264,7 @@ const arrAnswers = [
     {
         finalDocument: [
             [createParagraphInfo('Привет', {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo(undefined, {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})],
-            [createParagraphInfo('Приветище', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo(undefined)]
+            [createParagraphInfo('Приветище', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo(undefined, {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000})]
         ]
     },
     /////////////////////////////////// -> 4 <- ////////////////////////////////////////////
@@ -265,7 +277,7 @@ const arrAnswers = [
     {
         finalDocument: [
             [createParagraphInfo('Привет', {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo(undefined, {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})],
-            [createParagraphInfo('Приветище', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(undefined)]
+            [createParagraphInfo('Приветище', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(undefined, {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000})]
         ]
     },
     /////////////////////////////////// -> 6 <- ////////////////////////////////////////////
@@ -344,6 +356,14 @@ const arrAnswers = [
             ]
         ]
     },
+	/////////////////////////////////// -> 16 <- ////////////////////////////////////////////
+	{
+		finalDocument: [
+			[
+				createParagraphInfo('Хрусть, ', {reviewType: reviewtype_Remove, userName: 'Mark Pottato', dateTime: 1000000}), createParagraphInfo('Хрусть', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(', '), createParagraphInfo('ок п', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo('пок ', {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})
+			]
+		]
+	},
 ];
 
 const comments = [
@@ -362,6 +382,7 @@ const comments = [
     'Merging documents with differences in text with different reviews and requiring additional reviews',
     'Merging identical documents with different types of reviews in letters',
     'Merging two documents with changes in common text',
+		'Merging two documents with complicated check of review types and spaces'
 ];
 
 function merge(oMainDocument, oRevisedDocument, fCallback) {

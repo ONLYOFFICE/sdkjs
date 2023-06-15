@@ -283,6 +283,30 @@ CParagraphContentBase.prototype.GetPosInParent = function(_oParent)
 
 	return -1;
 };
+CParagraphContentBase.prototype.RemoveThisFromParent = function(updatePosition)
+{
+	let parent      = this.GetParent();
+	let posInParent = this.GetPosInParent(parent);
+	
+	if (parent && -1 !== posInParent)
+		parent.RemoveFromContent(posInParent, 1);
+	
+	if (updatePosition)
+	{
+		if (posInParent < parent.GetElementsCount() && parent.GetElement(posInParent).IsCursorPlaceable())
+		{
+			parent.GetElement(posInParent).MoveCursorToStartPos();
+			parent.GetElement(posInParent).SetThisElementCurrentInParagraph();
+		}
+		else if (posInParent > 0 && parent.GetElement(posInParent - 1).IsCursorPlaceable())
+		{
+			parent.GetElement(posInParent - 1).MoveCursorToStartPos();
+			parent.GetElement(posInParent - 1).SetThisElementCurrentInParagraph();
+		}
+	}
+	
+	parent.CorrectContent();
+};
 CParagraphContentBase.prototype.RemoveTabsForTOC = function(isTab)
 {
 	return isTab;
@@ -440,6 +464,14 @@ CParagraphContentBase.prototype.Cursor_Is_NeededCorrectPos = function()
 	return true;
 };
 CParagraphContentBase.prototype.Cursor_Is_End = function()
+{
+	return true;
+};
+/**
+ * TODO: Надо объединить эту функцию с  IsCursorPlaceable, поскольку они по смыслу одинаковые
+ * и сделать тут по умолчанию false
+ */
+CParagraphContentBase.prototype.CanPlaceCursorInside = function()
 {
 	return true;
 };
@@ -1059,7 +1091,7 @@ CParagraphContentWithContentBase.prototype.private_UpdateShapeText = function()
 };
 CParagraphContentWithContentBase.prototype.IsUseInDocument = function()
 {
-	return (this.Paragraph
+	return !!(this.Paragraph
 		&& this.Paragraph.IsUseInDocument()
 		&& this.IsUseInParagraph());
 };
@@ -1608,19 +1640,6 @@ CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent = function(Pos
 
     if (false !== UpdatePosition)
     {
-		if (this.State.ContentPos >= Pos)
-			this.State.ContentPos++;
-
-		if (this.State.Selection.StartPos >= Pos)
-			this.State.Selection.StartPos++;
-
-		if (this.State.Selection.EndPos >= Pos)
-			this.State.Selection.EndPos++;
-
-		this.State.Selection.StartPos = Math.max(0, Math.min(this.Content.length - 1, this.State.Selection.StartPos));
-		this.State.Selection.EndPos   = Math.max(0, Math.min(this.Content.length - 1, this.State.Selection.EndPos));
-		this.State.ContentPos         = Math.max(0, Math.min(this.Content.length - 1, this.State.ContentPos));
-
 		// Также передвинем всем метки переносов страниц и строк
         var LinesCount = this.protected_GetLinesCount();
         for (var CurLine = 0; CurLine < LinesCount; CurLine++)
@@ -1706,40 +1725,6 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent = functio
 
     if (false !== UpdatePosition)
     {
-		if (this.State.ContentPos > Pos + Count)
-			this.State.ContentPos -= Count;
-		else if (this.State.ContentPos > Pos)
-			this.State.ContentPos = Pos;
-
-		if (this.State.Selection.StartPos <= this.State.Selection.EndPos)
-		{
-			if (this.State.Selection.StartPos > Pos + Count)
-				this.State.Selection.StartPos -= Count;
-			else if (this.State.Selection.StartPos > Pos)
-				this.State.Selection.StartPos = Pos;
-
-			if (this.State.Selection.EndPos >= Pos + Count)
-				this.State.Selection.EndPos -= Count;
-			else if (this.State.Selection.EndPos >= Pos)
-				this.State.Selection.EndPos = Math.max(0, Pos - 1);
-		}
-		else
-		{
-			if (this.State.Selection.StartPos >= Pos + Count)
-				this.State.Selection.StartPos -= Count;
-			else if (this.State.Selection.StartPos >= Pos)
-				this.State.Selection.StartPos = Math.max(0, Pos - 1);
-
-			if (this.State.Selection.EndPos > Pos + Count)
-				this.State.Selection.EndPos -= Count;
-			else if (this.State.Selection.EndPos > Pos)
-				this.State.Selection.EndPos = Pos;
-		}
-
-		this.Selection.StartPos = Math.max(0, Math.min(this.Content.length - 1, this.Selection.StartPos));
-		this.Selection.EndPos   = Math.max(0, Math.min(this.Content.length - 1, this.Selection.EndPos));
-		this.State.ContentPos   = Math.max(0, Math.min(this.Content.length - 1, this.State.ContentPos));
-
         // Также передвинем всем метки переносов страниц и строк
         var LinesCount = this.protected_GetLinesCount();
         for (var CurLine = 0; CurLine < LinesCount; CurLine++)
@@ -1821,10 +1806,17 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 			else
 			{
 				this.Content[StartPos].Remove(Direction, bOnAddText);
-
-				if (StartPos !== this.Content.length - 1 && true === this.Content[StartPos].Is_Empty() && true !== bOnAddText)
+				
+				let isTextDrag = this.Paragraph && this.Paragraph.LogicDocument ? this.Paragraph.LogicDocument.DragAndDropAction : false;
+				if (StartPos !== this.Content.length - 1 && true === this.Content[StartPos].Is_Empty() && (!bOnAddText || isTextDrag))
 				{
-					this.Remove_FromContent(StartPos, 1, true);
+					this.RemoveFromContent(StartPos, 1, true);
+					this.State.ContentPos = StartPos;
+					this.Content[StartPos].MoveCursorToStartPos();
+				}
+				else
+				{
+					this.State.ContentPos = StartPos;
 				}
 			}
 		}
@@ -1837,8 +1829,12 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 			else
 			{
 				this.Content[EndPos].Remove(Direction, bOnAddText);
-
-				if (EndPos !== this.Content.length - 1 && true === this.Content[EndPos].Is_Empty() && true !== bOnAddText)
+				
+				let isTextDrag = this.Paragraph && this.Paragraph.LogicDocument ? this.Paragraph.LogicDocument.DragAndDropAction : false;
+				if (EndPos !== this.Content.length - 1
+					&& true === this.Content[EndPos].Is_Empty()
+					&& !(this.Content[StartPos] instanceof AscWord.CInlineLevelSdt)
+					&& (!bOnAddText || isTextDrag))
 				{
 					this.Remove_FromContent(EndPos, 1, true);
 				}
@@ -1902,7 +1898,11 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 	{
 		var ContentPos = this.State.ContentPos;
 
-		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End()) && (!(this instanceof CInlineLevelSdt) || !(this.IsTextForm() || this.IsComboBox() || this.IsComplexForm())))
+		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End())
+			&& !this.IsEmpty()
+			&& (!this.CanPlaceCursorInside()
+				|| !(this instanceof CInlineLevelSdt)
+				|| (!this.IsComplexForm() && !this.IsTextForm() && !this.IsComboBox())))
 		{
 			this.SelectAll();
 			this.SelectThisElement(1);
@@ -1923,7 +1923,11 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 					this.Content[ContentPos].MoveCursorToEndPos(false);
 				else
 					this.Content[ContentPos].MoveCursorToStartPos();
-
+				
+				// Если после перемещения в следующий элемент появился селект, то мы останавливаем удаление,
+				// чтобы пользователь видел, что он удаляет
+				if (this.Content[ContentPos].IsSelectionUse())
+					return true;
 			}
 
 			if (ContentPos < 0 || ContentPos >= this.Content.length)
@@ -2152,6 +2156,9 @@ CParagraphContentWithParagraphLikeContent.prototype.GetNextRunElements = functio
 
 	var nCurPos     = true === isUseContentPos ? oRunElements.ContentPos.Get(nDepth) : 0;
 	var nContentLen = this.Content.length;
+	
+	if (nCurPos >= nContentLen)
+		return;
 
 	oRunElements.UpdatePos(nCurPos, nDepth);
 	this.Content[nCurPos].GetNextRunElements(oRunElements, isUseContentPos, nDepth + 1);
@@ -2175,6 +2182,9 @@ CParagraphContentWithParagraphLikeContent.prototype.GetPrevRunElements = functio
 		return;
 
 	var nCurPos = true === isUseContentPos ? oRunElements.ContentPos.Get(nDepth) : this.Content.length - 1;
+	
+	if (nCurPos < 0)
+		return;
 
 	oRunElements.UpdatePos(nCurPos, nDepth);
 	this.Content[nCurPos].GetPrevRunElements(oRunElements, isUseContentPos, nDepth + 1);
@@ -3022,6 +3032,10 @@ CParagraphContentWithParagraphLikeContent.prototype.IsCursorPlaceable = function
 {
     return true;
 };
+CParagraphContentWithParagraphLikeContent.prototype.CanPlaceCursorInside = function()
+{
+	return true;
+};
 CParagraphContentWithParagraphLikeContent.prototype.IsCursorAtBegin = function()
 {
 	if (this.IsPlaceHolder())
@@ -3531,6 +3545,15 @@ CParagraphContentWithParagraphLikeContent.prototype.Set_SelectionContentPos = fu
 {
 	if (this.Content.length <= 0)
 		return;
+	
+	if (!this.CanPlaceCursorInside())
+	{
+		if (this.Paragraph && this.Paragraph.GetSelectDirection() > 0)
+			this.SelectAll(1);
+		else
+			this.SelectAll(-1);
+		return;
+	}
 
     var Selection = this.Selection;
 

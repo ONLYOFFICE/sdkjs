@@ -677,6 +677,9 @@
 	this.lastOwnSaveTime = -1;
     // Локальный индекс изменений
     this.changesIndex = 0;
+    //server changes index
+    //todo: replace changesIndex with syncChangesIndex. changesIndex has different value in single editing mode
+    this.syncChangesIndex = 0;
     // Дополнительная информация для Excel
     this.excelAdditionalInfo = null;
     // Unlock document
@@ -878,7 +881,7 @@
       }, this.errorTimeOut);
     }
     this._state = ConnectionState.AskSaveChanges;
-    this._send({"type": "isSaveLock"});
+    this._send({"type": "isSaveLock", "syncChangesIndex": this.syncChangesIndex});
   };
 
   DocsCoApi.prototype.unSaveLock = function() {
@@ -1124,8 +1127,8 @@
   DocsCoApi.prototype._onRefreshToken = function(jwt) {
     this.jwtOpen = undefined;
     if (this.socketio) {
-      if (this.socketio.auth) {
-        this.socketio.auth.token = this.jwtOpen;
+      if (this.socketio["auth"]) {
+        this.socketio["auth"]["token"] = this.jwtOpen;
       }
       if (this.socketio.io && this.socketio.io.setOpenToken) {
         this.socketio.io.setOpenToken(this.jwtOpen);
@@ -1134,8 +1137,8 @@
     if (jwt) {
       this.jwtSession = jwt;
       if (this.socketio) {
-        if (this.socketio.auth) {
-          this.socketio.auth.session = this.jwtSession;
+        if (this.socketio["auth"]) {
+          this.socketio["auth"]["session"] = this.jwtSession;
         }
         if (this.socketio.io && this.socketio.io.setSessionToken) {
           this.socketio.io.setSessionToken(this.jwtSession);
@@ -1275,7 +1278,7 @@
         this.onLocksReleasedEnd();
       }
     }
-    this._updateChanges(data["changes"], data["changesIndex"], false);
+    this._updateChanges(data["changes"], data["changesIndex"], data["syncChangesIndex"], false);
 
     if (this.onRecalcLocks) {
       this.onRecalcLocks(data["excelAdditionalInfo"]);
@@ -1357,15 +1360,22 @@
     if (-1 !== data['time']) {
       this.lastOwnSaveTime = data['time'];
     }
+
+    if (undefined !== data['syncChangesIndex'] && -1 !== data['syncChangesIndex']) {
+      this.syncChangesIndex = data['syncChangesIndex'];
+    }
 	
     if (this.onUnSaveLock) {
       this.onUnSaveLock();
     }
   };
 
-  DocsCoApi.prototype._updateChanges = function(allServerChanges, changesIndex, bFirstLoad) {
+  DocsCoApi.prototype._updateChanges = function(allServerChanges, changesIndex, syncChangesIndex, bFirstLoad) {
     if (this.onSaveChanges) {
       this.changesIndex = changesIndex;
+      if (undefined !== syncChangesIndex && -1 !== syncChangesIndex) {
+        this.syncChangesIndex = syncChangesIndex;
+      }
       if (allServerChanges) {
         for (var i = 0; i < allServerChanges.length; ++i) {
           var change = allServerChanges[i];
@@ -1403,6 +1413,10 @@
 
     if (-1 !== data['changesIndex']) {
       this.changesIndex = data['changesIndex'];
+    }
+
+    if (undefined !== data['syncChangesIndex'] && -1 !== data['syncChangesIndex']) {
+      this.syncChangesIndex = data['syncChangesIndex'];
     }
 
     this.saveChanges(this.arrayChanges, this.currentIndexEnd);
@@ -1673,7 +1687,7 @@
     for (i = 0; i < this._authChanges.length; ++i) {
       changes = this._authChanges[i];
       changesIndex += changes.length;
-      this._updateChanges(changes, changesIndex, true);
+      this._updateChanges(changes, changesIndex, changesIndex, true);
     }
     this._authChanges = [];
     for (i = 0; i < this._authOtherChanges.length; ++i) {
@@ -1686,7 +1700,7 @@
           changes = data["changes"].splice(data["changes"].length - indexDiff, indexDiff);
         }
         changesIndex += changes.length;
-        this._updateChanges(changes, changesIndex, true);
+        this._updateChanges(changes, changesIndex, changesIndex, true);
       }
     }
     this._authOtherChanges = [];

@@ -114,7 +114,6 @@ function CBinaryFileWriter()
         this.pos = 0;
     };
 
-    this.IsWordWriter = false;
     this.ImData = null;
     this.data = null;
     this.len = 0;
@@ -2321,7 +2320,7 @@ function CBinaryFileWriter()
         oThis._WriteLimit2(1, oEffect.type);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
-        oThis.StartRecord(type);
+        oThis.StartRecord(0);
         var len__ = oEffect.effectList.length;
         oThis._WriteInt2(0, len__);
 
@@ -4002,8 +4001,6 @@ function CBinaryFileWriter()
 
     this.WriteXfrm = function(xfrm)
     {
-        if (oThis.IsWordWriter === true)
-            return oThis.WriteXfrmRot(xfrm);
 
         oThis.WriteUChar(g_nodeAttributeStart);
         oThis._WriteInt4(0, xfrm.offX, c_dScalePPTXSizes);
@@ -5050,7 +5047,6 @@ function CBinaryFileWriter()
     {
         this.BinaryFileWriter = new AscCommon.CBinaryFileWriter();
         this.BinaryFileWriter.Init();
-        //this.BinaryFileWriter.IsWordWriter = true;
 
         this.TreeDrawingIndex = 0;
 

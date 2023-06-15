@@ -1044,6 +1044,7 @@
 			if (this.signatureLine) {
 				c.setSignature(this.signatureLine.copy());
 			}
+			c.removePlaceholder();
 			return c;
 		};
 
@@ -1351,13 +1352,21 @@
 					point.setT(pointsCopy[idx])
 				});
 			}
-		}
+		};
 
 		CShape.prototype.clearContent = function () {
 			var content = this.getDocContent();
 			if (content) {
 				content.SetApplyToAll(true);
 				content.Remove(-1);
+				content.AddToParagraph(new AscCommonWord.ParaTextPr({Lang: {Val: undefined}}), false);
+				content.SetApplyToAll(false);
+			}
+		};
+		CShape.prototype.clearLang = function () {
+			var content = this.getDocContent();
+			if (content) {
+				content.SetApplyToAll(true);
 				content.AddToParagraph(new AscCommonWord.ParaTextPr({Lang: {Val: undefined}}), false);
 				content.SetApplyToAll(false);
 			}
@@ -2720,6 +2729,13 @@
 			return this.fLocksText !== false;
 		};
 
+		CShape.prototype.canEditText = function () {
+			let form = this.isForm && this.isForm() ? this.getInnerForm() : null;
+			if (form && !form.CanPlaceCursorInside())
+				return false;
+			
+			return this.superclass.prototype.canEditText.call(this);
+		};
 		CShape.prototype.canEditTextInSmartArt = function () {
 			if (this.isObjectInSmartArt()) {
 				var pointContent = this.getSmartArtPointContent();
@@ -3225,14 +3241,13 @@
 						this.flipV = false;
 					} else if (this.spPr && this.spPr.xfrm && this.spPr.xfrm.isNotNull()) {
 						var xfrm = this.spPr.xfrm;
-						var bAlign = false;
+						let bDoNotUseOffset = false;
 						if (this.parent) {
-							if (this.parent.PositionH && this.parent.PositionH.Align
-								|| this.parent.PositionV && this.parent.PositionV.Align) {
-								bAlign = true;
+							if (this.parent.PositionH && this.parent.PositionV) {
+								bDoNotUseOffset = true;
 							}
 						}
-						if (bAlign) {
+						if (bDoNotUseOffset) {
 							this.x = 0;
 							this.y = 0;
 						} else {
@@ -4089,6 +4104,14 @@
 			return true;
 		};
 
+		CShape.prototype.isInk = function () {
+			const oGeometry = this.spPr && this.spPr.geometry;
+			if(!oGeometry) {
+				return false;
+			}
+			return oGeometry.isInk();
+		};
+
 		var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70000, 75000, 80000, 85000, 90000, 95000, 10000];
 
 
@@ -4349,7 +4372,7 @@
 				const content = this.getCurrentDocContentInSmartArt();
 				if (content) {
 					const nOldFontSize = this.getFirstFontSize();
-					const scalesForSmartArt = Array((MAX_FONT_SIZE - (nMinFontSize - 1)) > 0 ? MAX_FONT_SIZE - (nMinFontSize - 1) : 1).fill(0).map(function (e, ind) {
+					const scalesForSmartArt = Array(Math.max(1, Math.trunc(MAX_FONT_SIZE - (nMinFontSize - 1)))).fill(0).map(function (e, ind) {
 						return ind + nMinFontSize;
 					});
 					let a = 0;
@@ -5113,7 +5136,7 @@
 				shape_drawer.draw(geometry);
 			}
 
-			if (!graphics.isSmartArtPreviewDrawer && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter) {
+			if (!graphics.isSmartArtPreviewDrawer && !graphics.RENDERER_PDF_FLAG && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter) {
 				var drawingObjects = this.getDrawingObjectsController();
 				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && graphics.IsTrack === undefined && (!drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
 					var angle = _transform.GetRotation();
@@ -5244,7 +5267,7 @@
 					var oTheme = this.getParentObjects().theme;
 					var oColorMap = this.Get_ColorMap();
 					if (!this.bWordShape && (!this.txBody.content || this.txBody.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.txBody.content2 != null && !this.txBody.checkCurrentPlaceholder() && (this.isEmptyPlaceholder ? this.isEmptyPlaceholder() : false)) {
-						if (graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true) {
+						if (graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && !graphics.RENDERER_PDF_FLAG) {
 							if (editor && editor.ShowParaMarks) {
 								this.txWarpStructParamarks2.draw(graphics, this.transformTextWordArt2, oTheme, oColorMap);
 							} else {
@@ -5927,8 +5950,24 @@
 			}
 			var x_t = invert_transform.TransformPointX(x, y);
 			var y_t = invert_transform.TransformPointY(x, y);
-			if (isRealObject(this.spPr) && isRealObject(this.spPr.geometry))
-				return this.spPr.geometry.hitInPath(this.getCanvasContext(), x_t, y_t);
+			var oGeometry = this.spPr && this.spPr.geometry || this.calcGeometry;
+			if (oGeometry) {
+				const dOldDIst = AscFormat.DIST_HIT_IN_LINE;
+				if(this.pen) {
+					const nW = this.pen.w || 12700;
+					const dWidth = nW / 36000;
+					const oAPI = Asc.editor;
+					if(oAPI.isEraseInkMode() && !oGeometry.preset) {
+						AscFormat.DIST_HIT_IN_LINE = dWidth;
+					}
+					else {
+						AscFormat.DIST_HIT_IN_LINE = Math.max(dOldDIst, dWidth);
+					}
+				}
+				let bResult = oGeometry.hitInPath(this.getCanvasContext(), x_t, y_t);
+				AscFormat.DIST_HIT_IN_LINE = dOldDIst;
+				return bResult;
+			}
 			else
 				return this.hitInBoundingRect(x, y);
 			return false;
@@ -5998,6 +6037,9 @@
 
 		CShape.prototype.canGroup = function () {
 			if (this.isPlaceholder()) {
+				return false;
+			}
+			if(this.isForm()) {
 				return false;
 			}
 			if (this.signatureLine) {

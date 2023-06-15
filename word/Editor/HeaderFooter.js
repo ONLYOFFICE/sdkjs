@@ -739,11 +739,6 @@ CHeaderFooter.prototype =
 		this.Content.AddNewParagraph();
 	},
 
-	GetFormatPainterData : function()
-	{
-		return this.Content.AddNewParagraph();
-	},
-
 	AddInlineImage : function(W, H, Img, Chart, bFlow)
     {
         this.Content.AddInlineImage(W,H,Img, Chart, bFlow);
@@ -1035,16 +1030,20 @@ CHeaderFooter.prototype =
     {
         this.Set_Page( PageIndex );
 
-        if ( true === editor.isStartAddShape )
+        if (editor.isStartAddShape || editor.isInkDrawerOn())
         {
             this.Content.SetDocPosType(docpostype_DrawingObjects);
             this.Content.Selection.Use   = true;
             this.Content.Selection.Start = true;
 
-            if ( true != this.LogicDocument.DrawingObjects.isPolylineAddition() )
-                this.LogicDocument.DrawingObjects.startAddShape( editor.addShapePreset );
+			let oDrawingObjects = this.LogicDocument.DrawingObjects;
+			if(true === editor.isStartAddShape)
+			{
+				if(!oDrawingObjects.isPolylineAddition())
+					oDrawingObjects.startAddShape(editor.addShapePreset);
 
-            this.LogicDocument.DrawingObjects.OnMouseDown(MouseEvent, X, Y, PageIndex);
+			}
+	        oDrawingObjects.OnMouseDown(MouseEvent, X, Y, PageIndex);
         }
         else
 		{
@@ -1237,7 +1236,7 @@ CHeaderFooter.prototype =
 //-----------------------------------------------------------------------------------
 	AddHyperlink : function(HyperProps)
 	{
-		this.Content.AddHyperlink(HyperProps);
+		return this.Content.AddHyperlink(HyperProps);
 	},
 
 	ModifyHyperlink : function(HyperProps)
@@ -1432,7 +1431,7 @@ CHeaderFooter.prototype.FindWatermark = function()
             }
             else
             {
-                if(oCandidate.getDrawingArrayType() < oDrawing.getDrawingArrayType() || ComparisonByZIndexSimple(oDrawing, oCandidate))
+                if(oCandidate.getDrawingArrayType() < oDrawing.getDrawingArrayType() || (typeof ComparisonByZIndexSimple !== undefined && ComparisonByZIndexSimple(oDrawing, oCandidate)))
                 {
                     oCandidate = oDrawing;
                 }
@@ -1631,18 +1630,18 @@ CHeaderFooterController.prototype =
         else
             return null;
     },
-
-    Set_CurHdrFtr_ById : function(Id)
-    {
-        var HdrFtr = AscCommon.g_oTableId.Get_ById( Id );
-        if ( -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr( HdrFtr ) )
-            return false;
-        
-        this.CurHdrFtr = HdrFtr;
-        HdrFtr.Content.MoveCursorToStartPos();
-              
-        return true;
-    },
+	
+	Set_CurHdrFtr_ById : function(Id)
+	{
+		let HdrFtr = AscCommon.g_oTableId.GetById(Id);
+		if (!HdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
+			return false;
+		
+		this.CurHdrFtr = HdrFtr;
+		HdrFtr.Content.MoveCursorToStartPos();
+		
+		return true;
+	},
 //-----------------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------------   
@@ -1982,11 +1981,8 @@ CHeaderFooterController.prototype =
 
 	IsUseInDocument : function(Id)
 	{
-		var HdrFtr = AscCommon.g_oTableId.Get_ById(Id);
-		if (-1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
-			return false;
-
-		return true;
+		let hdrFtr = AscCommon.g_oTableId.GetById(Id);
+		return !(!hdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(hdrFtr));
 	},
 
     Check_Page : function(HdrFtr, PageIndex)
@@ -2034,11 +2030,6 @@ CHeaderFooterController.prototype =
 	{
 		if (null != this.CurHdrFtr)
 			return this.CurHdrFtr.AddNewParagraph();
-	},
-
-	GetFormatPainterData : function()
-	{
-		return this.CurHdrFtr.AddNewParagraph();
 	},
 
 	AddInlineImage : function(W, H, Img, Chart, bFlow)
@@ -2344,7 +2335,7 @@ CHeaderFooterController.prototype =
 
         var PageMetrics = this.LogicDocument.Get_PageContentStartPos( PageIndex );
         
-        if ( MouseEvent.ClickCount >= 2 && true != editor.isStartAddShape &&
+        if ( MouseEvent.ClickCount >= 2 && (!editor.isStartAddShape && !editor.isInkDrawerOn()) &&
             !( Y <= PageMetrics.Y      || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) ) &&
             !( Y >= PageMetrics.YLimit || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Footer ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) ) )
         {
@@ -2364,7 +2355,7 @@ CHeaderFooterController.prototype =
 
         // Проверяем попали ли мы в колонтитул, если он есть. Если мы попали в
         // область колонтитула, а его там нет, тогда добавим новый колонтитул.
-        if ( Y <= PageMetrics.Y || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) || true === editor.isStartAddShape )
+        if ( Y <= PageMetrics.Y || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) || (editor.isStartAddShape || editor.isInkDrawerOn()) )
         {
             if ( null === this.Pages[PageIndex].Header )
             {
@@ -2512,7 +2503,7 @@ CHeaderFooterController.prototype =
 
     Get_NearestPos : function(PageNum, X, Y, bAnchor, Drawing)
     {
-        var HdrFtr = (true === editor.isStartAddShape ? this.CurHdrFtr : this.Internal_GetContentByXY( X, Y, PageNum ));
+        var HdrFtr = (editor.isStartAddShape || editor.isInkDrawerOn() ? this.CurHdrFtr : this.Internal_GetContentByXY( X, Y, PageNum ));
         
         if ( null != HdrFtr )
             return HdrFtr.Get_NearestPos( X, Y, bAnchor, Drawing );
@@ -2681,7 +2672,9 @@ CHeaderFooterController.prototype =
 	AddHyperlink : function(HyperProps)
 	{
 		if (null != this.CurHdrFtr)
-			this.CurHdrFtr.AddHyperlink(HyperProps);
+			return this.CurHdrFtr.AddHyperlink(HyperProps);
+		
+		return null;
 	},
 
 	ModifyHyperlink : function(HyperProps)
@@ -2749,8 +2742,14 @@ CHeaderFooterController.prototype.GetStyleFromFormatting = function()
 };
 CHeaderFooterController.prototype.GetSimilarNumbering = function(oEngine)
 {
-	if (this.CurHdrFtr)
-		this.CurHdrFtr.Content.GetSimilarNumbering(oEngine)
+	if (!this.CurHdrFtr)
+		return null;
+	
+	let docContent = this.CurHdrFtr.GetContent();
+	if (docpostype_DrawingObjects === docContent.GetDocPosType() && this.LogicDocument)
+		return this.LogicDocument.DrawingsController.GetSimilarNumbering(oEngine);
+	else
+		return this.CurHdrFtr.Content.GetSimilarNumbering(oEngine)
 };
 CHeaderFooterController.prototype.GetPlaceHolderObject = function()
 {

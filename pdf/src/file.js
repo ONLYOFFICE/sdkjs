@@ -185,6 +185,7 @@
         {
             this.nativeFile["close"]();
             this.nativeFile = null;
+            this.pages = [];
         }
     };
     CFile.prototype.getFileBinary = function()
@@ -386,7 +387,7 @@ void main() {\n\
             gl.shaderSource(shader, source);
             gl.compileShader(shader);
             if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
-                throw new Error('FAIL: shader ' + id + ' compilation failed');
+                throw new Error('FAIL: shader compilation failed');
             return shader;
         }
 
