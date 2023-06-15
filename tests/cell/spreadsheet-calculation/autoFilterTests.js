@@ -66,10 +66,7 @@ $(function () {
 	};
 	cDate.prototype.getCurrentDate = function () {
 		return new cDate(2023, 4, 15, 0, 0, 0);
-	}
-	cDate.prototype.getCurrentDate = function () {
-		return new cDate(2023, 4, 15, 0, 0, 0);
-	}
+	};
 
 
 	var api = new Asc.spreadsheet_api({
