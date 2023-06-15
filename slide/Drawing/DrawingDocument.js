@@ -3723,6 +3723,9 @@ function CThumbnailsManager()
 		{
 			oThis.m_oWordControl.m_oApi.checkInterfaceElementBlur();
 			oThis.m_oWordControl.m_oApi.checkLastWork();
+
+			// после fullscreen возможно изменение X, Y после вызова Resize.
+			oThis.m_oWordControl.checkBodyOffset();
 		}
 
 		AscCommon.stopEvent(e);
@@ -5990,6 +5993,9 @@ function CNotesDrawer(page)
 	{
 		if (-1 == oThis.HtmlPage.m_oDrawingDocument.SlideCurrent)
 			return;
+
+		// после fullscreen возможно изменение X, Y после вызова Resize.
+		oThis.HtmlPage.checkBodyOffset();
 
 		AscCommon.check_MouseDownEvent(e, true);
 		global_mouseEvent.LockMouse();

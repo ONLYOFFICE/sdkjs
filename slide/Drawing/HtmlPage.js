@@ -298,16 +298,24 @@ function CEditorPage(api)
 	// controls
 	this.checkBodyOffset = function()
 	{
-		var off = jQuery("#" + this.Name).offset();
-
-		// почему-то иногда неправильно определяется "top" (возвращается ноль)
-		if (!this.m_oApi.isEmbedVersion && !this.m_oApi.isMobileVersion && off && (0 == off.top))
+		let element = this.m_oBody.HtmlElement;
+		if (!element)
+			element = document.getElementById(this.Name);
+		if (!element)
 			return;
 
-		if (off)
+		var pos = element.getBoundingClientRect();
+		if (pos)
 		{
-			this.X = off.left;
-			this.Y = off.top;
+			if (undefined !== pos.x)
+				this.X = pos.x;
+			else if (undefined !== pos.left)
+				this.X = pos.x;
+
+			if (undefined !== pos.y)
+				this.Y = pos.y;
+			else if (undefined !== pos.top)
+				this.Y = pos.top;
 		}
 	};
 
@@ -3285,6 +3293,9 @@ function CEditorPage(api)
 
 		if (oWordControl.m_oDrawingDocument.TransitionSlide.IsPlaying())
 			oWordControl.m_oDrawingDocument.TransitionSlide.End(true);
+
+		// после fullscreen возможно изменение X, Y после вызова Resize.
+		oWordControl.checkBodyOffset();
 
 		if (!oThis.m_bIsIE)
 		{

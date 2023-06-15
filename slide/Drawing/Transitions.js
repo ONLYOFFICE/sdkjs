@@ -3642,6 +3642,10 @@ function CDemonstrationManager(htmlpage)
         {
             var oApi = oThis.HtmlPage.m_oApi;
             oThis.HtmlPage.m_oApi.disableReporterEvents = true;
+
+            // после fullscreen возможно изменение X, Y после вызова Resize.
+            oThis.HtmlPage.checkBodyOffset();
+
             if(oThis.CheckMouseDown(documentMI.x, documentMI.y, documentMI.page))
             {
                 oThis.HtmlPage.m_oApi.disableReporterEvents = false;
