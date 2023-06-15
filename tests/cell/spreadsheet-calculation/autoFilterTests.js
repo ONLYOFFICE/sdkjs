@@ -62,7 +62,8 @@ $(function () {
 	};
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 	};
-	Asc.ReadDefTableStyles = function(){};
+	Asc.ReadDefTableStyles = function () {
+	};
 	cDate.prototype.getCurrentDate = function () {
 		return new cDate(2023, 4, 15, 0, 0, 0);
 	}
@@ -72,7 +73,8 @@ $(function () {
 		'id-view': 'editor_sdk'
 	});
 	api.FontLoader = {
-		LoadDocumentFonts: function() {}
+		LoadDocumentFonts: function () {
+		}
 	};
 	window["Asc"]["editor"] = api;
 	AscCommon.g_oTableId.init();
@@ -93,10 +95,10 @@ $(function () {
 	api.wb.cellCommentator = new AscCommonExcel.CCellCommentator({
 		model: api.wbModel.aWorksheets[0],
 		collaborativeEditing: null,
-		draw: function() {
+		draw: function () {
 		},
 		handlers: {
-			trigger: function() {
+			trigger: function () {
 				return false;
 			}
 		}
@@ -133,7 +135,7 @@ $(function () {
 
 		// Imitate choose filter option
 		dynamicFilter.asc_setType(filterType);
-		dynamicFilter.init(getRange(0,0,0,0));
+		dynamicFilter.init(getRange(0, 0, 0, 0));
 		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.DynamicFilter);
 		autoFiltersOptions.filter.asc_setFilter(dynamicFilter);
 		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
@@ -147,7 +149,7 @@ $(function () {
 		let customFilters = new Asc.CustomFilters();
 		customFilters.And = !!and;
 		if (aProps && aProps.length) {
-			for (let i = 0; i< aProps.length; i++) {
+			for (let i = 0; i < aProps.length; i++) {
 				let customFilter = new Asc.CustomFilter();
 				customFilter.Operator = aProps[i].operator;
 				customFilter.Val = aProps[i].val;
@@ -164,7 +166,7 @@ $(function () {
 	};
 
 	const clearData = function (c1, r1, c2, r2) {
-		ws.autoFilters.deleteAutoFilter(getRange(0,0,0,0));
+		ws.autoFilters.deleteAutoFilter(getRange(0, 0, 0, 0));
 		ws.removeRows(r1, r2, false);
 		ws.removeCols(c1, c2);
 	};
@@ -199,8 +201,8 @@ $(function () {
 		if (!descPrefix) {
 			descPrefix = "";
 		}
-		for (let i = 0 ; i < data.length; i++) {
-			assert.strictEqual(ws.getRowHidden(i), !!oHiddenRows[i], descPrefix + 'Value ' + data[i] + ' must ' + (oHiddenRows[i] ? " " : " not ")  + 'be hidden');
+		for (let i = 0; i < data.length; i++) {
+			assert.strictEqual(ws.getRowHidden(i), !!oHiddenRows[i], descPrefix + 'Value ' + data[i] + ' must ' + (oHiddenRows[i] ? " " : " not ") + 'be hidden');
 		}
 	};
 
@@ -279,7 +281,7 @@ $(function () {
 		assert.strictEqual(ws.getRowHidden(8), true, "check filter hidden values_3");
 
 		//Clearing data of sheet
-		clearData(0,0,1,8);
+		clearData(0, 0, 1, 8);
 	});
 	QUnit.test('Test: "Date Filter - Today"', function (assert) {
 		const testData = [
@@ -297,7 +299,7 @@ $(function () {
 		checkFilterRef(assert, 0, 0, 3, 0);
 
 		// Imitate choosing filter "Today"
-		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.today,0);
+		ws.autoFilters = createDynamicFilter(ws, Asc.c_oAscDynamicAutoFilter.today, 0);
 
 		// Checking work of filter
 		assert.strictEqual(ws.getRowHidden(1), true, 'Value 14.05.2023 yesterday must be hidden');
@@ -1259,7 +1261,10 @@ $(function () {
 		//apply filter
 		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
 		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
-		setFilterOptionsVisible(autoFiltersOptions, [{text: "20000", visible: false}, {text: "test1", visible: false}, {text: "2/11/1930", visible: false}]);
+		setFilterOptionsVisible(autoFiltersOptions, [{text: "20000", visible: false}, {
+			text: "test1",
+			visible: false
+		}, {text: "2/11/1930", visible: false}]);
 		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "4": 1});
@@ -1267,7 +1272,10 @@ $(function () {
 
 		autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
 		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
-		setFilterOptionsVisible(autoFiltersOptions, [{text: "2/4/2237", visible: false}, {text: "3/4/2237", visible: false}]);
+		setFilterOptionsVisible(autoFiltersOptions, [{text: "2/4/2237", visible: false}, {
+			text: "3/4/2237",
+			visible: false
+		}]);
 		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
 
 		//Checking work of filter
@@ -1304,10 +1312,37 @@ $(function () {
 		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
 		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
 		//9/26/2002 2:24:00
-		setFilterOptionsVisible(autoFiltersOptions, [{year: 1902, month: 9 - 1, day: 26, hour: 2, minute: 24, visible: false, dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupHour}], true);
+		let aChangedVal = [{
+			year: 1902,
+			month: 9 - 1,
+			day: 26,
+			hour: 2,
+			minute: 24,
+			visible: false,
+			dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupHour
+		}];
+		aChangedVal.push({
+			year: 1902,
+			month: 9 - 1,
+			day: 26,
+			hour: 2,
+			minute: 52,
+			visible: true,
+			dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupMinute
+		});
+		aChangedVal.push({
+			year: 1902,
+			month: 9 - 1,
+			day: 26,
+			hour: 3,
+			minute: 7,
+			visible: true,
+			dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupHour
+		});
+		setFilterOptionsVisible(autoFiltersOptions, aChangedVal, true);
 		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
 		//Checking work of filter
-		//checkHiddenRows(assert, testData, {"1": 1});
+		checkHiddenRows(assert, testData, {"1": 1}, " data filter apply ");
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		//Clearing data of sheet
@@ -1364,7 +1399,15 @@ $(function () {
 		//***Before or equal***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo, val: "6/16/1909"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "8": 1}, " Before or equal: ");
+		checkHiddenRows(assert, testData, {
+			"1": 1,
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"5": 1,
+			"6": 1,
+			"8": 1
+		}, " Before or equal: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
@@ -1389,20 +1432,48 @@ $(function () {
 		//***equals***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.equals, val: "20000"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8":1, "9": 1}, " equals1: ");
+		checkHiddenRows(assert, testData, {
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"5": 1,
+			"6": 1,
+			"7": 1,
+			"8": 1,
+			"9": 1
+		}, " equals1: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		//equals === only value with format
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.equals, val: "8/20/1994"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "9": 1}, " equals2: ");
+		checkHiddenRows(assert, testData, {
+			"1": 1,
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"5": 1,
+			"6": 1,
+			"7": 1,
+			"9": 1
+		}, " equals2: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.equals, val: "34566"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " equals3: ");
+		checkHiddenRows(assert, testData, {
+			"1": 1,
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"5": 1,
+			"6": 1,
+			"7": 1,
+			"8": 1,
+			"9": 1
+		}, " equals3: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
@@ -1430,13 +1501,33 @@ $(function () {
 		//***begin with***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.beginsWith, val: "200"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " begin with1: ");
+		checkHiddenRows(assert, testData, {
+			"1": 1,
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"5": 1,
+			"6": 1,
+			"7": 1,
+			"8": 1,
+			"9": 1
+		}, " begin with1: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.beginsWith, val: "8/20/1994"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " begin with2: ");
+		checkHiddenRows(assert, testData, {
+			"1": 1,
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"5": 1,
+			"6": 1,
+			"7": 1,
+			"8": 1,
+			"9": 1
+		}, " begin with2: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
@@ -1450,19 +1541,48 @@ $(function () {
 		//***end with***
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.endsWith, val: "000"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " end with1: ");
+		checkHiddenRows(assert, testData, {
+			"1": 1,
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"5": 1,
+			"6": 1,
+			"7": 1,
+			"8": 1,
+			"9": 1
+		}, " end with1: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.endsWith, val: "20/1994"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " end with2: ");
+		checkHiddenRows(assert, testData, {
+			"1": 1,
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"5": 1,
+			"6": 1,
+			"7": 1,
+			"8": 1,
+			"9": 1
+		}, " end with2: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.endsWith, val: "st2"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " end with2: ");
+		checkHiddenRows(assert, testData, {
+			"1": 1,
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"6": 1,
+			"7": 1,
+			"8": 1,
+			"9": 1
+		}, " end with2: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
@@ -1490,13 +1610,33 @@ $(function () {
 		//contains
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.contains, val: "200"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " contains1: ");
+		checkHiddenRows(assert, testData, {
+			"1": 1,
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"5": 1,
+			"6": 1,
+			"7": 1,
+			"8": 1,
+			"9": 1
+		}, " contains1: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
 		createCustomFilter(0, [{operator: Asc.c_oAscCustomAutoFilter.contains, val: "8/20"}]);
 		//Checking work of filter
-		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 1}, " contains2: ");
+		checkHiddenRows(assert, testData, {
+			"1": 1,
+			"2": 1,
+			"3": 1,
+			"4": 1,
+			"5": 1,
+			"6": 1,
+			"7": 1,
+			"8": 1,
+			"9": 1
+		}, " contains2: ");
 		//clean filter
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
 
