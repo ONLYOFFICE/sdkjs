@@ -1339,11 +1339,422 @@ $(function () {
 			visible: true,
 			dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupHour
 		});
+
 		setFilterOptionsVisible(autoFiltersOptions, aChangedVal, true);
 		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
 		//Checking work of filter
 		checkHiddenRows(assert, testData, {"1": 1}, " data filter apply ");
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+
+		aChangedVal = [{
+			val: 2000.3,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 7,
+			minute: 12,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000.2,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 4,
+			minute: 48,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000.1,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 2,
+			minute: 24,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 1000.13,
+			visible: true,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 3,
+			minute: 7,
+			second: 12,
+			dateTimeGrouping: 6
+		}, {
+			val: 1000.12,
+			visible: true,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 2,
+			minute: 52,
+			second: 48,
+			dateTimeGrouping: 6
+		}, {
+			val: 1000.1,
+			visible: true,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 2,
+			minute: 24,
+			second: 0,
+			dateTimeGrouping: 6
+		}];
+
+		setFilterOptionsVisible(autoFiltersOptions, aChangedVal, true);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"4": 1, "7": 1, "8": 1, "9": 1}, " data filter apply 2");
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		aChangedVal = [{
+			val: 4000,
+			visible: true,
+			isDateFormat: true,
+			year: 1910,
+			month: 11,
+			day: 13,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 3000,
+			visible: true,
+			isDateFormat: true,
+			year: 1908,
+			month: 2,
+			day: 18,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000.3,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 7,
+			minute: 12,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000.2,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 4,
+			minute: 48,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000.1,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 2,
+			minute: 24,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 1000.13,
+			visible: true,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 3,
+			minute: 7,
+			second: 12,
+			dateTimeGrouping: 2
+		}, {
+			val: 1000.12,
+			visible: false,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 2,
+			minute: 52,
+			second: 48,
+			dateTimeGrouping: 2
+		}, {
+			val: 1000.1,
+			visible: false,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 2,
+			minute: 24,
+			second: 0,
+			dateTimeGrouping: 2
+		}];
+
+		setFilterOptionsVisible(autoFiltersOptions, aChangedVal, true);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"1": 1, "2": 1, "4": 1, "7": 1, "8": 1 ,"9": 1}, " data filter apply 3");
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+
+		aChangedVal = [{
+			val: 4000,
+			visible: true,
+			isDateFormat: true,
+			year: 1910,
+			month: 11,
+			day: 13,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 3000,
+			visible: true,
+			isDateFormat: true,
+			year: 1908,
+			month: 2,
+			day: 18,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000.3,
+			visible: true,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 7,
+			minute: 12,
+			second: 0,
+			dateTimeGrouping: 2
+		}, {
+			val: 2000.2,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 4,
+			minute: 48,
+			second: 0,
+			dateTimeGrouping: 2
+		}, {
+			val: 2000.1,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 2,
+			minute: 24,
+			second: 0,
+			dateTimeGrouping: 2
+		}, {
+			val: 2000,
+			visible: false,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			dateTimeGrouping: 2
+		}, {
+			val: 1000.13,
+			visible: true,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 3,
+			minute: 7,
+			second: 12,
+			dateTimeGrouping: 6
+		}, {
+			val: 1000.12,
+			visible: true,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 2,
+			minute: 52,
+			second: 48,
+			dateTimeGrouping: 6
+		}, {
+			val: 1000.1,
+			visible: true,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 2,
+			minute: 24,
+			second: 0,
+			dateTimeGrouping: 6
+		}];
+
+		setFilterOptionsVisible(autoFiltersOptions, aChangedVal, true);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"4": 1, "7": 1, "8": 1}, " data filter apply 4");
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+
+		aChangedVal = [{
+			val: 4000,
+			visible: true,
+			isDateFormat: true,
+			year: 1910,
+			month: 11,
+			day: 13,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 3000,
+			visible: false,
+			isDateFormat: true,
+			year: 1908,
+			month: 2,
+			day: 18,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000.3,
+			visible: true,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 7,
+			minute: 12,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000.2,
+			visible: true,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 4,
+			minute: 48,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000.1,
+			visible: true,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 2,
+			minute: 24,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 2000,
+			visible: true,
+			isDateFormat: true,
+			year: 1905,
+			month: 5,
+			day: 22,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			dateTimeGrouping: 6
+		}, {
+			val: 1000.13,
+			visible: true,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 3,
+			minute: 7,
+			second: 12,
+			dateTimeGrouping: 6
+		}, {
+			val: 1000.12,
+			visible: true,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 2,
+			minute: 52,
+			second: 48,
+			dateTimeGrouping: 6
+		}, {
+			val: 1000.1,
+			visible: true,
+			isDateFormat: true,
+			year: 1902,
+			month: 8,
+			day: 26,
+			hour: 2,
+			minute: 24,
+			second: 0,
+			dateTimeGrouping: 6
+		}];
+
+		setFilterOptionsVisible(autoFiltersOptions, aChangedVal, true);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+		//Checking work of filter
+		checkHiddenRows(assert, testData, {"5": 1}, " data filter apply 4");
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
 
 		//Clearing data of sheet
 		clearData(0, 0, 0, 9)
