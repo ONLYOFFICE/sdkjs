@@ -51,6 +51,7 @@ const allTests = [
 	'word/numbering/numberingCalculation.html',
 	'word/api/api.html',
 	'word/api/textInput.html',
+	'word/styles/displayStyle.html',
 	'word/styles/paraPr.html',
 	'word/styles/styleApplicator.html',
 	'word/plugins/pluginsApi.html',
@@ -88,7 +89,7 @@ const {
 	
 	for (let nIndex = 0, nCount = allTests.length; nIndex < nCount; ++nIndex)
 	{
-		promiseTests.push(runQunitPuppeteer({targetUrl : path.join(__dirname, allTests[nIndex])})
+		promiseTests.push(runQunitPuppeteer({targetUrl : path.join(__dirname, allTests[nIndex]), timeout : 60000})
 			.then(result =>
 			{
 				count++;
