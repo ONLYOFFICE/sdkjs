@@ -35,12 +35,12 @@ $(function () {
 
 	let logicDocument = AscTest.CreateLogicDocument();
 	
-	let oFirstParagraphStyle  = AscTest.CreateParagraphStyle("ParaStyle1");
-	let oSecondParagraphStyle = AscTest.CreateParagraphStyle("ParaStyle2");
+	let paraStyle1 = AscTest.CreateParagraphStyle("ParaStyle1");
+	let paraStyle2 = AscTest.CreateParagraphStyle("ParaStyle2");
 	
-	let oFirstParaRunStyle = AscTest.CreateRunStyle("RunStyle1");
-	let oSecondParaRunStyle = AscTest.CreateRunStyle("RunStyle2");
-
+	let runStyle1 = AscTest.CreateRunStyle("RunStyle1");
+	let runStyle2 = AscTest.CreateRunStyle("RunStyle2");
+	
 	function AddParagraph(pos, style)
 	{
 		let p = AscTest.CreateParagraph();
@@ -69,13 +69,13 @@ $(function () {
 		let word = "Word!";
 
 		AscTest.ClearDocument();
-		let p = AddParagraph(0, oFirstParagraphStyle);
-		p.AddToContent(0, CreateRun(word, oFirstParaRunStyle));
+		let p = AddParagraph(0, paraStyle1);
+		p.AddToContent(0, CreateRun(word, runStyle1));
 		p.MoveCursorToEndPos();
 
 		AscTest.MoveCursorLeft(false, false, 1);
 		assert.ok(true, "Move cursor to the last letter of the word");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParaRunStyle.Name, "Must show run style");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show RunStyle1");
 	});
 
 	QUnit.test("Run without style in paragraph", function (assert)
@@ -83,8 +83,8 @@ $(function () {
 		let word = "Word!";
 
 		AscTest.ClearDocument();
-		let p = AddParagraph(0, oFirstParagraphStyle);
-		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
+		let p = AddParagraph(0, paraStyle1);
+		assert.ok(true, "Create paragraph with paraStyle1 style");
 		p.Add_ToContent(0, CreateRun(word));
 		assert.ok(true, "Create run without style");
 		p.MoveCursorToEndPos();
@@ -93,7 +93,7 @@ $(function () {
 		AscTest.MoveCursorLeft(false, false, word.length - (word.length - 1));
 		assert.ok(true, "Move cursor to first letter of word");
 
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParagraphStyle.Name, "AddParagraph style");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle1.Name, "AddParagraph style");
 	});
 
 	QUnit.module("Select");
@@ -104,12 +104,12 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p1 = AddParagraph(0, oFirstParagraphStyle);
-		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
+		let p1 = AddParagraph(0, paraStyle1);
+		assert.ok(true, "Create paragraph with paraStyle1 style");
 		p1.Add_ToContent(0, CreateRun(strFirstWord));
 		assert.ok(true, "Create run without style");
-		let p2 = AddParagraph(1, oSecondParagraphStyle);
-		assert.ok(true, "Create paragraph with oSecondParagraphStyle style");
+		let p2 = AddParagraph(1, paraStyle2);
+		assert.ok(true, "Create paragraph with paraStyle2 style");
 		p2.Add_ToContent(0, CreateRun(strSecondWord));
 		assert.ok(true, "Create run without style");
 		p2.MoveCursorToEndPos();
@@ -117,7 +117,7 @@ $(function () {
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord.length);
 		assert.ok(true, "Select two runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParagraphStyle.Name, "If different paragraphs are selected, the style of the first one is visible - oFirstParagraphStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle1.Name, "If different paragraphs are selected, the style of the first one is visible - paraStyle1");
 	});
 
 	QUnit.test("Select part of run with style", function (assert)
@@ -126,20 +126,20 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p1 = AddParagraph(0, oFirstParagraphStyle);
-		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p1.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
-		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		let p2 = AddParagraph(1, oSecondParagraphStyle);
-		assert.ok(true, "Create paragraph with oSecondParagraphStyle style");
-		p2.Add_ToContent(0, CreateRun(strSecondWord, oSecondParaRunStyle));
-		assert.ok(true, "Create run with oSecondParaRunStyle style");
+		let p1 = AddParagraph(0, paraStyle1);
+		assert.ok(true, "Create paragraph with paraStyle1 style");
+		p1.Add_ToContent(0, CreateRun(strFirstWord, runStyle1));
+		assert.ok(true, "Create run with runStyle1 style");
+		let p2 = AddParagraph(1, paraStyle2);
+		assert.ok(true, "Create paragraph with paraStyle2 style");
+		p2.Add_ToContent(0, CreateRun(strSecondWord, runStyle2));
+		assert.ok(true, "Create run with runStyle2 style");
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length  - 1);
 		assert.ok(true, "Select part of first run");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oSecondParaRunStyle.Name, "Must show style of run - oSecondParaRunStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle2.Name, "Must show style of run - runStyle2");
 	});
 
 	QUnit.test("Select part of paragraph with style", function (assert)
@@ -148,12 +148,12 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p1 = AddParagraph(0, oFirstParagraphStyle);
-		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
+		let p1 = AddParagraph(0, paraStyle1);
+		assert.ok(true, "Create paragraph with paraStyle1 style");
 		p1.Add_ToContent(0, CreateRun(strFirstWord));
 		assert.ok(true, "Create run without style");
-		let p2 = AddParagraph(1, oSecondParagraphStyle);
-		assert.ok(true, "Create paragraph with oSecondParagraphStyle style");
+		let p2 = AddParagraph(1, paraStyle2);
+		assert.ok(true, "Create paragraph with paraStyle2 style");
 		p2.Add_ToContent(0, CreateRun(strSecondWord));
 		assert.ok(true, "Create run without style");
 		p2.MoveCursorToEndPos();
@@ -161,21 +161,21 @@ $(function () {
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length  - 1);
 		assert.ok(true, "Select part of Paragraph");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oSecondParagraphStyle.Name, "Must show style of second selected paragraph - oSecondParagraphStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle2.Name, "Must show style of second selected paragraph - paraStyle2");
 
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length );
 		assert.ok(true, "Select all second paragraph");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oSecondParagraphStyle.Name, "Must show style of second selected paragraph - oSecondParagraphStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle2.Name, "Must show style of second selected paragraph - paraStyle2");
 
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord);
 		assert.ok(true, "Select first and second paragraph");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParagraphStyle.Name, "Must show style of first selected paragraph - oFirstParagraphStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle1.Name, "Must show style of first selected paragraph - paraStyle1");
 	});
 
 	QUnit.test("Runs with same style in one paragraph", function (assert)
@@ -184,25 +184,25 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p = AddParagraph(0, oFirstParagraphStyle);
-		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
-		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		p.Add_ToContent(1, CreateRun(strSecondWord, oFirstParaRunStyle));
-		assert.ok(true, "Create run with oFirstParaRunStyle style");
+		let p = AddParagraph(0, paraStyle1);
+		assert.ok(true, "Create paragraph with paraStyle1 style");
+		p.Add_ToContent(0, CreateRun(strFirstWord, runStyle1));
+		assert.ok(true, "Create run with runStyle1 style");
+		p.Add_ToContent(1, CreateRun(strSecondWord, runStyle1));
+		assert.ok(true, "Create run with runStyle1 style");
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length);
 		assert.ok(true, "Select second Run");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParaRunStyle.Name, "Must show style of run - oFirstParaRunStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show style of run - runStyle1");
 
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord.length);
 		assert.ok(true, "Select all runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParaRunStyle.Name, "Must show style of runs - oFirstParaRunStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show style of runs - runStyle1");
 	});
 
 	QUnit.test("Multiple runs with same style in one paragraph", function (assert)
@@ -211,18 +211,18 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p = AddParagraph(0, oFirstParagraphStyle);
-		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
-		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		p.Add_ToContent(1, CreateRun(strSecondWord, oFirstParaRunStyle));
-		assert.ok(true, "Create another run with oFirstParaRunStyle style");
+		let p = AddParagraph(0, paraStyle1);
+		assert.ok(true, "Create paragraph with paraStyle1 style");
+		p.Add_ToContent(0, CreateRun(strFirstWord, runStyle1));
+		assert.ok(true, "Create run with runStyle1 style");
+		p.Add_ToContent(1, CreateRun(strSecondWord, runStyle1));
+		assert.ok(true, "Create another run with runStyle1 style");
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord.length);
 		assert.ok(true, "Select all runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParaRunStyle.Name, "Must show style of runs oFirstParaRunStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show style of runs runStyle1");
 	});
 
 	QUnit.test("Multiple runs with different style in one paragraph", function (assert)
@@ -231,25 +231,25 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p = AddParagraph(0, oFirstParagraphStyle);
-		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
-		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		p.Add_ToContent(1, CreateRun(strSecondWord, oSecondParaRunStyle));
-		assert.ok(true, "Create run with oSecondParaRunStyle style");
+		let p = AddParagraph(0, paraStyle1);
+		assert.ok(true, "Create paragraph with paraStyle1 style");
+		p.Add_ToContent(0, CreateRun(strFirstWord, runStyle1));
+		assert.ok(true, "Create run with runStyle1 style");
+		p.Add_ToContent(1, CreateRun(strSecondWord, runStyle2));
+		assert.ok(true, "Create run with runStyle2 style");
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length);
 		assert.ok(true, "Select second run");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oSecondParaRunStyle.Name, "Must show style of last run - oSecondParaRunStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle2.Name, "Must show style of last run - runStyle2");
 
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord.length);
 		assert.ok(true, "Select second run");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParagraphStyle.Name, "Must show style of paragraph, so runs with different style - oFirstParagraphStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle1.Name, "Must show style of paragraph, so runs with different style - paraStyle1");
 	});
 
 	QUnit.test("Multiple runs with same style in two different style paragraphs", function (assert)
@@ -259,30 +259,30 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p1 = AddParagraph(0, oFirstParagraphStyle);
-		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p1.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
-		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		p1.Add_ToContent(1, CreateRun(strDel, oSecondParaRunStyle));
-		assert.ok(true, "Create another run with oSecondParaRunStyle style");
+		let p1 = AddParagraph(0, paraStyle1);
+		assert.ok(true, "Create paragraph with paraStyle1 style");
+		p1.Add_ToContent(0, CreateRun(strFirstWord, runStyle1));
+		assert.ok(true, "Create run with runStyle1 style");
+		p1.Add_ToContent(1, CreateRun(strDel, runStyle2));
+		assert.ok(true, "Create another run with runStyle2 style");
 
-		let p2 = AddParagraph(1, oSecondParagraphStyle);
-		assert.ok(true, "Create paragraph with oSecondParagraphStyle style");
-		p2.Add_ToContent(0, CreateRun(strSecondWord, oSecondParaRunStyle));
-		assert.ok(true, "Create run with oSecondParaRunStyle style");
+		let p2 = AddParagraph(1, paraStyle2);
+		assert.ok(true, "Create paragraph with paraStyle2 style");
+		p2.Add_ToContent(0, CreateRun(strSecondWord, runStyle2));
+		assert.ok(true, "Create run with runStyle2 style");
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strDel.length);
 		assert.ok(true, "Select two last runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oSecondParaRunStyle.Name, "Must show style of two last runs - oSecondParaRunStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle2.Name, "Must show style of two last runs - runStyle2");
 
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strDel.length + strFirstWord.length);
 		assert.ok(true, "Select all runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParagraphStyle.Name, "Must show style of first Paragraph, because style of runs in selection are different - oSecondParaRunStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle1.Name, "Must show style of first Paragraph, because style of runs in selection are different - runStyle2");
 	});
 
 	QUnit.test("Space anf tab in run", function (assert)
@@ -292,29 +292,29 @@ $(function () {
 		let strSecondWord = "Hello!";
 
 		AscTest.ClearDocument();
-		let p1 = AddParagraph(0, oFirstParagraphStyle);
-		assert.ok(true, "Create paragraph with oFirstParagraphStyle style");
-		p1.Add_ToContent(0, CreateRun(strFirstWord, oFirstParaRunStyle));
-		assert.ok(true, "Create run with oFirstParaRunStyle style");
-		p1.Add_ToContent(1, CreateRun(strDel, oSecondParaRunStyle));
-		assert.ok(true, "Create another run with oSecondParaRunStyle style with spaces and tabs");
+		let p1 = AddParagraph(0, paraStyle1);
+		assert.ok(true, "Create paragraph with paraStyle1 style");
+		p1.Add_ToContent(0, CreateRun(strFirstWord, runStyle1));
+		assert.ok(true, "Create run with runStyle1 style");
+		p1.Add_ToContent(1, CreateRun(strDel, runStyle2));
+		assert.ok(true, "Create another run with runStyle2 style with spaces and tabs");
 
-		let p2 = AddParagraph(1, oSecondParagraphStyle);
-		assert.ok(true, "Create paragraph with oSecondParagraphStyle style");
-		p2.Add_ToContent(0, CreateRun(strSecondWord, oFirstParaRunStyle));
-		assert.ok(true, "Create run with oFirstParaRunStyle style");
+		let p2 = AddParagraph(1, paraStyle2);
+		assert.ok(true, "Create paragraph with paraStyle2 style");
+		p2.Add_ToContent(0, CreateRun(strSecondWord, runStyle1));
+		assert.ok(true, "Create run with runStyle1 style");
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strDel.length);
 		assert.ok(true, "Select two last runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParaRunStyle.Name, "Must show style of last run, runs with spaces and other style dont affect - oFirstParaRunStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show style of last run, runs with spaces and other style dont affect - runStyle1");
 
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strDel.length + strFirstWord.length);
 		assert.ok(true, "Select all runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, oFirstParaRunStyle.Name, "Must show style of last run, runs with spaces and other style dont affect - oFirstParaRunStyle");
+		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show style of last run, runs with spaces and other style dont affect - runStyle1");
 	});
 });
