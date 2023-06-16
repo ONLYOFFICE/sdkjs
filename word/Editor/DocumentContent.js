@@ -310,26 +310,6 @@ CDocumentContent.prototype.Get_PageContentStartPos2 = function(StartPageIndex, S
 {
     return this.Get_PageContentStartPos(StartPageIndex + ElementPageIndex);
 };
-CDocumentContent.prototype.Get_Theme = function()
-{
-	if (this.Parent)
-		return this.Parent.Get_Theme();
-
-	if (this.LogicDocument)
-		return this.LogicDocument.GetTheme();
-
-	return AscFormat.GetDefaultTheme();
-};
-CDocumentContent.prototype.Get_ColorMap = function()
-{
-	if (this.Parent)
-		return this.Parent.Get_ColorMap();
-
-	if (this.LogicDocument)
-		return this.LogicDocument.GetColorMap();
-
-	return AscFormat.GetDefaultColorMap();
-};
 CDocumentContent.prototype.Get_PageLimits = function(nCurPage)
 {
 	if (this.Parent && this.Parent.IsCell())
@@ -2271,7 +2251,7 @@ CDocumentContent.prototype.Document_UpdateInterfaceState = function()
 		}
 		else
 		{
-			this.Interface_Update_ParaPr();
+			this.UpdateInterfaceParaPr();
 			this.UpdateInterfaceTextPr();
 
 			// Если у нас в выделении находится 1 параграф, или курсор находится в параграфе
@@ -6089,54 +6069,6 @@ CDocumentContent.prototype.GetDirectParaPr = function()
 //-----------------------------------------------------------------------------------
 // Функции для работы с интерфейсом
 //-----------------------------------------------------------------------------------
-
-// Обновляем данные в интерфейсе о свойствах параграфа
-CDocumentContent.prototype.Interface_Update_ParaPr    = function()
-{
-	var oParaPr = this.GetCalculatedParaPr();
-
-	var oApi = editor;
-	if (oParaPr && oApi)
-	{
-		oParaPr.CanAddDropCap = false;
-
-		if (this.LogicDocument)
-		{
-			var oSelectedInfo = this.LogicDocument.GetSelectedElementsInfo({CheckAllSelection : true});
-			var oMath         = oSelectedInfo.GetMath();
-			if (oMath)
-				oParaPr.CanAddImage = false;
-			else if (false !== oParaPr.CanAddImage)
-				oParaPr.CanAddImage = true;
-
-			if (oMath && !oMath.Is_Inline())
-				oParaPr.Jc = oMath.Get_Align();
-
-			oParaPr.CanDeleteBlockCC  = oSelectedInfo.CanDeleteBlockSdts();
-			oParaPr.CanEditBlockCC    = oSelectedInfo.CanEditBlockSdts();
-			oParaPr.CanDeleteInlineCC = oSelectedInfo.CanDeleteInlineSdts();
-			oParaPr.CanEditInlineCC   = oSelectedInfo.CanEditInlineSdts();
-		}
-
-		if (oParaPr.Tabs)
-		{
-			var DefaultTab = oParaPr.DefaultTab != null ? oParaPr.DefaultTab : AscCommonWord.Default_Tab_Stop;
-			oApi.Update_ParaTab(DefaultTab, oParaPr.Tabs);
-		}
-
-		// Если мы находимся внутри автофигуры, тогда нам надо проверить лок параграфа, в котором находится автофигура
-		if (this.LogicDocument && docpostype_DrawingObjects === this.LogicDocument.CurPos.Type && true !== oParaPr.Locked)
-		{
-			var ParaDrawing = this.LogicDocument.DrawingObjects.getMajorParaDrawing();
-			if (ParaDrawing)
-			{
-				oParaPr.Locked = ParaDrawing.Lock.Is_Locked();
-			}
-		}
-
-		oApi.UpdateParagraphProp(oParaPr);
-	}
-};
 CDocumentContent.prototype.Interface_Update_DrawingPr = function(Flag)
 {
     var ImagePr = {};

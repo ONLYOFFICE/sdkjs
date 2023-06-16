@@ -2368,7 +2368,7 @@ CDocument.prototype.LoadEmptyDocument              = function()
     this.DrawingDocument.TargetStart();
     this.Recalculate();
 
-    this.Interface_Update_ParaPr();
+    this.UpdateInterfaceParaPr();
     this.UpdateInterfaceTextPr();
 };
 CDocument.prototype.Set_CurrentElement = function(Index, bUpdateStates)
@@ -7213,66 +7213,28 @@ CDocument.prototype.RemoveHdrFtr = function(nPageAbs, isHeader)
 		this.FinalizeAction();
 	}
 };
-/**
- * Обновляем данные в интерфейсе о свойствах параграфа.
- */
-CDocument.prototype.Interface_Update_ParaPr = function()
+CDocument.prototype.CanAddDropCap = function()
 {
-	if (!this.Api)
-		return;
-
-	var ParaPr = this.GetCalculatedParaPr();
-
-	if (null != ParaPr)
-	{
-		// Проверим, можно ли добавить буквицу
-		ParaPr.CanAddDropCap = false;
-
-		if (docpostype_Content === this.GetDocPosType())
-		{
-			var Para = null;
-			if (false === this.Selection.Use && type_Paragraph === this.Content[this.CurPos.ContentPos].GetType())
-				Para = this.Content[this.CurPos.ContentPos];
-			else if (true === this.Selection.Use && this.Selection.StartPos <= this.Selection.EndPos && type_Paragraph === this.Content[this.Selection.StartPos].GetType())
-				Para = this.Content[this.Selection.StartPos];
-			else if (true === this.Selection.Use && this.Selection.StartPos > this.Selection.EndPos && type_Paragraph === this.Content[this.Selection.EndPos].GetType())
-				Para = this.Content[this.Selection.EndPos];
-
-			if (null != Para && undefined === Para.Get_FramePr())
-			{
-				var Prev = Para.Get_DocumentPrev();
-				if ((null === Prev || type_Paragraph != Prev.GetType() || undefined === Prev.Get_FramePr() || undefined === Prev.Get_FramePr().DropCap) && true === Para.CanAddDropCap())
-					ParaPr.CanAddDropCap = true;
-			}
-		}
-
-		var oSelectedInfo = this.GetSelectedElementsInfo({CheckAllSelection : true});
-		var oMath         = oSelectedInfo.GetMath();
-
-		if (oMath)
-			ParaPr.CanAddImage = false;
-		else
-			ParaPr.CanAddImage = true;
-
-		if (oMath && !oMath.Is_Inline())
-			ParaPr.Jc = oMath.Get_Align();
-
-		ParaPr.CanDeleteBlockCC  = oSelectedInfo.CanDeleteBlockSdts();
-		ParaPr.CanEditBlockCC    = oSelectedInfo.CanEditBlockSdts();
-		ParaPr.CanDeleteInlineCC = oSelectedInfo.CanDeleteInlineSdts();
-		ParaPr.CanEditInlineCC   = oSelectedInfo.CanEditInlineSdts();
-
-		if (undefined != ParaPr.Tabs)
-			this.Api.Update_ParaTab(AscCommonWord.Default_Tab_Stop, ParaPr.Tabs);
-
-		if (ParaPr.Shd && ParaPr.Shd.Unifill)
-		{
-			ParaPr.Shd.Unifill.check(this.theme, this.Get_ColorMap());
-		}
-
-
-		this.Api.UpdateParagraphProp(ParaPr);
-	}
+	if (docpostype_Content !== this.GetDocPosType())
+		return false;
+	
+	let paragraph = null;
+	if (!this.IsSelectionUse() && this.Content[this.CurPos.ContentPos].IsParagraph())
+		paragraph = this.Content[this.CurPos.ContentPos];
+	else if (this.IsSelectionUse() && this.Selection.StartPos <= this.Selection.EndPos && this.Content[this.Selection.StartPos].IsParagraph())
+		paragraph = this.Content[this.Selection.StartPos];
+	else if (this.IsSelectionUse() && this.Selection.StartPos > this.Selection.EndPos && this.Content[this.Selection.EndPos].IsParagraph())
+		paragraph = this.Content[this.Selection.EndPos];
+	
+	if (!paragraph || paragraph.GetFramePr())
+		return false;
+	
+	let prev = paragraph.Get_DocumentPrev();
+	return (paragraph.CanAddDropCap()
+		&& (!prev
+			|| !prev.IsParagraph()
+			|| !prev.GetFramePr()
+			|| !prev.GetFramePr().DropCap));
 };
 /**
  * Обновляем данные в интерфейсе о свойствах графики (картинки, автофигуры).
@@ -21350,7 +21312,7 @@ CDocument.prototype.controller_UpdateInterfaceState = function()
 	}
 	else
 	{
-		this.Interface_Update_ParaPr();
+		this.UpdateInterfaceParaPr();
 		this.UpdateInterfaceTextPr();
 
 		// Если у нас в выделении находится 1 параграф, или курсор находится в параграфе
