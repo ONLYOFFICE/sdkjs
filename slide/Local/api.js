@@ -142,6 +142,16 @@ Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isRes
 			window["DesktopOfflineAppDocumentStartSave"](isSaveAs, undefined, undefined, undefined, options);
 	}
 };
+Asc['asc_docs_api'].prototype["getAdditionalSaveParams"] = function()
+{
+	return {
+		"documentLayout" : {
+			"openedAt" : this.openedAt
+		},
+		"locale" : this.asc_getLocale(),
+		"translate" : AscCommon.translateManager.mapTranslate
+	};
+};
 window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isForce, docinfo, options)
 {
 	window.doadssIsSaveAs = isSaveAs;
@@ -157,13 +167,7 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 	if (isSaveAs === true)
 		_param += "saveas=true;";
 
-	var jsonOptions = {
-		"documentLayout" : {
-			"openedAt" : editor.openedAt
-		},
-		"locale" : editor.asc_getLocale(),
-		"translate" : AscCommon.translateManager.mapTranslate
-	};
+	var jsonOptions = editor["getAdditionalSaveParams"]();
 
 	if (options && options.advancedOptions)
 	{
