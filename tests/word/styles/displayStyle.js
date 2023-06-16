@@ -85,35 +85,19 @@ $(function () {
 
 	QUnit.module("Cursor");
 	
-	QUnit.test("Run with style in paragraph", function(assert)
+	QUnit.test("Run with/without style in paragraph", function(assert)
 	{
 		let word = "Word!";
 		
 		AscTest.ClearDocument();
 		let p = AddParagraph(0, paraStyle1);
-		p.AddToContent(0, CreateRun(word, runStyle1));
-		p.MoveCursorToEndPos();
-		
+		let run = CreateRun(word, runStyle1);
+		p.AddToContent(0, run);
+		AscTest.MoveCursorToParagraph(p, false);
 		AscTest.MoveCursorLeft(false, false, 1);
-		CheckStyle(assert, runStyle1, "Move cursor to the last letter of the word");
-	});
-
-	QUnit.test("Run without style in paragraph", function (assert)
-	{
-		let word = "Word!";
-
-		AscTest.ClearDocument();
-		let p = AddParagraph(0, paraStyle1);
-		assert.ok(true, "Create paragraph with paraStyle1 style");
-		p.Add_ToContent(0, CreateRun(word));
-		assert.ok(true, "Create run without style");
-		p.MoveCursorToEndPos();
-		assert.ok(true, "Move cursor to end pos of paragraph");
-
-		AscTest.MoveCursorLeft(false, false, word.length - (word.length - 1));
-		assert.ok(true, "Move cursor to first letter of word");
-		
-		CheckStyle(assert, paraStyle1, "AddParagraph style");
+		CheckStyle(assert, runStyle1, "Move cursor to the last letter of the run with a style");
+		run.SetRStyle(null);
+		CheckStyle(assert, paraStyle1, "Remove style from run");
 	});
 
 	QUnit.module("Select");

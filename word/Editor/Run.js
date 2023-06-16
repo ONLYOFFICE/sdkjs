@@ -9844,18 +9844,21 @@ ParaRun.prototype.Get_HighLight = function()
 };
 
 
-ParaRun.prototype.Set_RStyle = function(Value)
+ParaRun.prototype.Set_RStyle = function(styleId)
 {
-    if ( Value !== this.Pr.RStyle )
-    {
-        var OldValue = this.Pr.RStyle;
-        this.Pr.RStyle = Value;
-
-        History.Add(new CChangesRunRStyle(this, OldValue, Value, this.private_IsCollPrChangeMine()));
-
-        this.Recalc_CompiledPr(true);
-        this.private_UpdateTrackRevisionOnChangeTextPr(true);
-    }
+	if (!styleId)
+		styleId = undefined;
+	
+	if (styleId === this.Pr.RStyle)
+		return;
+	
+	let oldStyleId = this.Pr.RStyle;
+	this.Pr.RStyle = styleId;
+	
+	History.Add(new CChangesRunRStyle(this, oldStyleId, styleId, this.private_IsCollPrChangeMine()));
+	
+	this.Recalc_CompiledPr(true);
+	this.private_UpdateTrackRevisionOnChangeTextPr(true);
 };
 ParaRun.prototype.Get_RStyle = function()
 {
