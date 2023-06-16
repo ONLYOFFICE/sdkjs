@@ -77,10 +77,10 @@ $(function () {
 			displayStyleName = styleManager.Get(styleId).GetName();
 	}
 	
-	function CheckStyle(assert, expectedStyle)
+	function CheckStyle(assert, expectedStyle, message)
 	{
 		logicDocument.UpdateInterface();
-		assert.strictEqual(displayStyleName, expectedStyle.GetName(), "Must be shown " + expectedStyle.GetName());
+		assert.strictEqual(displayStyleName, expectedStyle.GetName(), message ? message : "");
 	}
 
 	QUnit.module("Cursor");
@@ -95,8 +95,7 @@ $(function () {
 		p.MoveCursorToEndPos();
 		
 		AscTest.MoveCursorLeft(false, false, 1);
-		assert.ok(true, "Move cursor to the last letter of the word");
-		CheckStyle(assert, runStyle1);
+		CheckStyle(assert, runStyle1, "Move cursor to the last letter of the word");
 	});
 
 	QUnit.test("Run without style in paragraph", function (assert)
@@ -113,8 +112,8 @@ $(function () {
 
 		AscTest.MoveCursorLeft(false, false, word.length - (word.length - 1));
 		assert.ok(true, "Move cursor to first letter of word");
-
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle1.Name, "AddParagraph style");
+		
+		CheckStyle(assert, paraStyle1, "AddParagraph style");
 	});
 
 	QUnit.module("Select");
@@ -138,7 +137,7 @@ $(function () {
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord.length);
 		assert.ok(true, "Select two runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle1.Name, "If different paragraphs are selected, the style of the first one is visible - paraStyle1");
+		CheckStyle(assert, paraStyle1, "If different paragraphs are selected, the style of the first one is visible - paraStyle1");
 	});
 
 	QUnit.test("Select part of run with style", function (assert)
@@ -160,7 +159,7 @@ $(function () {
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length  - 1);
 		assert.ok(true, "Select part of first run");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle2.Name, "Must show style of run - runStyle2");
+		CheckStyle(assert, runStyle2, "Must show style of run - runStyle2");
 	});
 
 	QUnit.test("Select part of paragraph with style", function (assert)
@@ -182,21 +181,21 @@ $(function () {
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length  - 1);
 		assert.ok(true, "Select part of Paragraph");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle2.Name, "Must show style of second selected paragraph - paraStyle2");
+		CheckStyle(assert, paraStyle2, "Must show style of second selected paragraph - paraStyle2");
 
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length );
 		assert.ok(true, "Select all second paragraph");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle2.Name, "Must show style of second selected paragraph - paraStyle2");
+		CheckStyle(assert, paraStyle2, "Must show style of second selected paragraph - paraStyle2");
 
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord);
 		assert.ok(true, "Select first and second paragraph");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle1.Name, "Must show style of first selected paragraph - paraStyle1");
+		CheckStyle(assert, paraStyle1, "Must show style of first selected paragraph - paraStyle1");
 	});
 
 	QUnit.test("Runs with same style in one paragraph", function (assert)
@@ -216,14 +215,14 @@ $(function () {
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length);
 		assert.ok(true, "Select second Run");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show style of run - runStyle1");
+		CheckStyle(assert, runStyle1, "Must show style of run - runStyle1");
 
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord.length);
 		assert.ok(true, "Select all runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show style of runs - runStyle1");
+		CheckStyle(assert, runStyle1, "Must show style of runs - runStyle1");
 	});
 
 	QUnit.test("Multiple runs with same style in one paragraph", function (assert)
@@ -243,7 +242,7 @@ $(function () {
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord.length);
 		assert.ok(true, "Select all runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show style of runs runStyle1");
+		CheckStyle(assert, runStyle1, "Must show style of runs runStyle1");
 	});
 
 	QUnit.test("Multiple runs with different style in one paragraph", function (assert)
@@ -263,14 +262,14 @@ $(function () {
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length);
 		assert.ok(true, "Select second run");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle2.Name, "Must show style of last run - runStyle2");
+		CheckStyle(assert, runStyle2, "Must show style of last run - runStyle2");
 
 		p.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord.length);
 		assert.ok(true, "Select second run");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle1.Name, "Must show style of paragraph, so runs with different style - paraStyle1");
+		CheckStyle(assert, paraStyle1, "Must show style of paragraph, so runs with different style - paraStyle1");
 	});
 
 	QUnit.test("Multiple runs with same style in two different style paragraphs", function (assert)
@@ -296,14 +295,14 @@ $(function () {
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strDel.length);
 		assert.ok(true, "Select two last runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle2.Name, "Must show style of two last runs - runStyle2");
+		CheckStyle(assert, runStyle2, "Must show style of two last runs - runStyle2");
 
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strDel.length + strFirstWord.length);
 		assert.ok(true, "Select all runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, paraStyle1.Name, "Must show style of first Paragraph, because style of runs in selection are different - runStyle2");
+		CheckStyle(assert, paraStyle1, "Must show style of first Paragraph, because style of runs in selection are different - runStyle2");
 	});
 
 	QUnit.test("Space anf tab in run", function (assert)
@@ -329,13 +328,13 @@ $(function () {
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strDel.length);
 		assert.ok(true, "Select two last runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show style of last run, runs with spaces and other style dont affect - runStyle1");
+		CheckStyle(assert, runStyle1, "Must show style of last run, runs with spaces and other style dont affect - runStyle1");
 
 		p2.MoveCursorToEndPos();
 		assert.ok(true, "Move cursor to end pos of paragraph");
 
 		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strDel.length + strFirstWord.length);
 		assert.ok(true, "Select all runs");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show style of last run, runs with spaces and other style dont affect - runStyle1");
+		CheckStyle(assert, runStyle1, "Must show style of last run, runs with spaces and other style dont affect - runStyle1");
 	});
 });
