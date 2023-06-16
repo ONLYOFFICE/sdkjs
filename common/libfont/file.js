@@ -1109,7 +1109,7 @@
 
 			var load_mode = this.GetCharLoadMode(nUnicodeForHintTest);
 
-			if (!isRaster || this.m_bNeedDoBold)
+			if (!isRaster || this.m_bNeedDoBold || this.m_bNeedDoItalic)
 				load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_NO_BITMAP;
 			else if (this.m_bStringGID)
 			{
