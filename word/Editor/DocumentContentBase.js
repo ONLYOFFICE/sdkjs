@@ -2445,6 +2445,7 @@ CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
 			paraPr.Locked = drawing.Lock.Is_Locked();
 	}
 	
+	paraPr.PStyle = AscWord.DisplayStyleCalculator.Calculate(this);
 	api.UpdateParagraphProp(paraPr);
 };
 CDocumentContentBase.prototype.CanAddDropCap = function()
