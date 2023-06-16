@@ -34,6 +34,7 @@
 $(function () {
 
 	let logicDocument = AscTest.CreateLogicDocument();
+	let styleManager  = logicDocument.GetStyleManager();
 	
 	let paraStyle1 = AscTest.CreateParagraphStyle("ParaStyle1");
 	let paraStyle2 = AscTest.CreateParagraphStyle("ParaStyle2");
@@ -61,21 +62,41 @@ $(function () {
 		r.AddText(text);
 		return r;
 	}
+	
+	let displayStyleName = "";
+	editor.isDocumentLoadComplete = true;
+	editor.UpdateParagraphProp = function(paraPr)
+	{
+		let styleId = paraPr.PStyle;
+		
+		if (-1 === styleId)
+			displayStyleName = "";
+		else if (!styleId || !styleManager.Get(styleId))
+			displayStyleName = styleManager.Get(styleManager.GetDefaultParagraph()).GetName();
+		else
+			displayStyleName = styleManager.Get(styleId).GetName();
+	}
+	
+	function CheckStyle(assert, expectedStyle)
+	{
+		logicDocument.UpdateInterface();
+		assert.strictEqual(displayStyleName, expectedStyle.GetName(), "Must be shown " + expectedStyle.GetName());
+	}
 
 	QUnit.module("Cursor");
-
-	QUnit.test("Run with style in paragraph", function (assert)
+	
+	QUnit.test("Run with style in paragraph", function(assert)
 	{
 		let word = "Word!";
-
+		
 		AscTest.ClearDocument();
 		let p = AddParagraph(0, paraStyle1);
 		p.AddToContent(0, CreateRun(word, runStyle1));
 		p.MoveCursorToEndPos();
-
+		
 		AscTest.MoveCursorLeft(false, false, 1);
 		assert.ok(true, "Move cursor to the last letter of the word");
-		assert.strictEqual(logicDocument.GetStyleFromFormatting().BasedOn, runStyle1.Name, "Must show RunStyle1");
+		CheckStyle(assert, runStyle1);
 	});
 
 	QUnit.test("Run without style in paragraph", function (assert)
