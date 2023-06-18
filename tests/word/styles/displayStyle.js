@@ -65,22 +65,15 @@ $(function () {
 	
 	let displayStyleName = "";
 	editor.isDocumentLoadComplete = true;
-	editor.UpdateParagraphProp = function(paraPr)
+	editor.sync_ParaStyleName = function(styleName)
 	{
-		let styleId = paraPr.PStyle;
-		
-		if (-1 === styleId)
-			displayStyleName = "";
-		else if (!styleId || !styleManager.Get(styleId))
-			displayStyleName = styleManager.Get(styleManager.GetDefaultParagraph()).GetName();
-		else
-			displayStyleName = styleManager.Get(styleId).GetName();
-	}
+		displayStyleName = styleName;
+	};
 	
 	function CheckStyle(assert, expectedStyle, message)
 	{
 		logicDocument.UpdateInterface();
-		assert.strictEqual(displayStyleName, expectedStyle.GetName(), message ? message : "");
+		assert.strictEqual(displayStyleName, expectedStyle ? expectedStyle.GetName() : "", message ? message : "");
 	}
 
 	QUnit.module("Cursor");
@@ -104,24 +97,17 @@ $(function () {
 
 	QUnit.test("Add two paragraphs with different styles", function (assert)
 	{
-		let strFirstWord = "Word!";
-		let strSecondWord = "Hello!";
-
 		AscTest.ClearDocument();
+		
 		let p1 = AddParagraph(0, paraStyle1);
-		assert.ok(true, "Create paragraph with paraStyle1 style");
-		p1.Add_ToContent(0, CreateRun(strFirstWord));
-		assert.ok(true, "Create run without style");
+		let run1 = CreateRun("Word!");
+		p1.AddToContent(0, run1);
 		let p2 = AddParagraph(1, paraStyle2);
-		assert.ok(true, "Create paragraph with paraStyle2 style");
-		p2.Add_ToContent(0, CreateRun(strSecondWord));
-		assert.ok(true, "Create run without style");
-		p2.MoveCursorToEndPos();
-		assert.ok(true, "Move cursor to end pos of paragraph");
-
-		AscTest.MoveCursorLeft(true, false, strSecondWord.length + strFirstWord.length);
-		assert.ok(true, "Select two runs");
-		CheckStyle(assert, paraStyle1, "If different paragraphs are selected, the style of the first one is visible - paraStyle1");
+		let run2 = CreateRun("Hello!");
+		p2.AddToContent(0, run2);
+		AscTest.SelectDocumentRange(0, 1);
+		
+		CheckStyle(assert, "", "If paragraphs with different styles are selected (and not there is no common run style), then no style is displayed");
 	});
 
 	QUnit.test("Select part of run with style", function (assert)

@@ -10964,7 +10964,7 @@ Paragraph.prototype.PasteFormatting = function(oData)
 };
 Paragraph.prototype.Style_Get = function()
 {
-	if (undefined != this.Pr.PStyle)
+	if (undefined !== this.Pr.PStyle)
 		return this.Pr.PStyle;
 
 	return undefined;

@@ -2445,7 +2445,8 @@ CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
 			paraPr.Locked = drawing.Lock.Is_Locked();
 	}
 	
-	paraPr.PStyle = AscWord.DisplayStyleCalculator.Calculate(this);
+	paraPr.StyleName = AscWord.DisplayStyleCalculator.CalculateName(this);
+	api.sync_ParaStyleName(paraPr.StyleName);
 	api.UpdateParagraphProp(paraPr);
 };
 CDocumentContentBase.prototype.CanAddDropCap = function()
@@ -2604,5 +2605,13 @@ CDocumentContentBase.prototype.GetTheme = function()
 CDocumentContentBase.prototype.GetColorMap = function()
 {
 	return this.Get_ColorMap();
+};
+CDocumentContentBase.prototype.GetSelectedParagraphs = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument)
+		return [];
+	
+	return logicDocument.GetSelectedParagraphs();
 };
 

@@ -43,7 +43,7 @@
 		this.PStyle = null;
 		this.RStyle = null;
 	}
-	CDisplayStyleCalculator.prototype.Calculate = function(docContent)
+	CDisplayStyleCalculator.prototype.CalculateName = function(docContent)
 	{
 		this.Reset();
 		
@@ -54,7 +54,19 @@
 		else
 			this.HandleNoSelection(docContent);
 		
-		return this.RStyle ? this.RStyle : this.PStyle;
+		let logicDocument = docContent.GetLogicDocument();
+		if (!logicDocument)
+			return "";
+		
+		let styleManager = logicDocument.GetStyleManager();
+		let styleId = this.RStyle ? this.RStyle : this.PStyle;
+		
+		if (!styleId)
+			return "";
+		else if (!styleManager.Get(styleId))
+			return styleManager.Get(styleManager.GetDefaultParagraph()).GetName();
+		else
+			return styleManager.Get(styleId).GetName();
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	CDisplayStyleCalculator.prototype.Reset = function()
@@ -73,6 +85,56 @@
 	};
 	CDisplayStyleCalculator.prototype.HandleRegularSelection = function(docContent)
 	{
+		let paragraphs = docContent.GetSelectedParagraphs();
+		if (!paragraphs.length)
+			return;
+		
+		let pStyle = paragraphs[0].GetParagraphStyle();
+		for (let iPara = 1, nPara = paragraphs.length; iPara < nPara; ++iPara)
+		{
+			if (pStyle !== paragraphs[iPara].GetParagraphStyle())
+			{
+				pStyle = null;
+				break;
+			}
+		}
+		
+		let rStyle       = null;
+		let overAllCount = 0;
+		let overAllMax   = 10000;  // Не учитываем более 10000 ранов
+		docContent.CheckSelectedRunContent(function(run, startPos, endPos)
+		{
+			if (undefined === rStyle || overAllCount >= overAllMax)
+				return true;
+			
+			let check = false;
+			for (let pos = startPos; pos < endPos; ++pos)
+			{
+				let item = run.GetElement(pos);
+				if (item.IsText() || item.IsSpace())
+				{
+					check = true;
+					++overAllCount;
+				}
+			}
+			
+			if (check)
+			{
+				if (null === rStyle)
+					rStyle = run.GetRStyle();
+				else if (rStyle !== run.GetRStyle())
+					rStyle = undefined;
+			}
+			
+			return (undefined === rStyle);
+		});
+		
+		let logicDocument = docContent.GetLogicDocument();
+		if (logicDocument && rStyle === logicDocument.GetStyleManager().Get_Default_Character())
+			rStyle = null;
+		
+		this.PStyle = pStyle;
+		this.RStyle = rStyle;
 	};
 	CDisplayStyleCalculator.prototype.HandleNoSelection = function(docContent)
 	{
