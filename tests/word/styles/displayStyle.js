@@ -42,6 +42,9 @@ $(function () {
 	let runStyle1 = AscTest.CreateRunStyle("RunStyle1");
 	let runStyle2 = AscTest.CreateRunStyle("RunStyle2");
 	
+	let defaultPStyle = styleManager.Get(styleManager.GetDefaultParagraph());
+	let defaultRStyle = styleManager.Get(styleManager.GetDefaultCharacter());
+	
 	function AddParagraph(pos, style)
 	{
 		let p = AscTest.CreateParagraph();
@@ -91,6 +94,8 @@ $(function () {
 		CheckStyle(assert, runStyle1, "Move cursor to the last letter of the run with a style");
 		run.SetRStyle(null);
 		CheckStyle(assert, paraStyle1, "Remove style from run");
+		p.SetPStyle(null);
+		CheckStyle(assert, defaultPStyle, "Remove style from paragraph");
 	});
 
 	QUnit.module("Select");

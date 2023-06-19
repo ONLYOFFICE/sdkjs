@@ -5474,7 +5474,7 @@
 		else if ("table" === sStyleType)
 			return new ApiStyle(oStyles.Get(oStyles.Get_Default_Table()));
 		else if ("run" === sStyleType)
-			return new ApiStyle(oStyles.Get(oStyles.Get_Default_Character()));
+			return new ApiStyle(oStyles.Get(oStyles.GetDefaultCharacter()));
 		else if ("numbering" === sStyleType)
 			return new ApiStyle(oStyles.Get(oStyles.Get_Default_Numbering()));
 

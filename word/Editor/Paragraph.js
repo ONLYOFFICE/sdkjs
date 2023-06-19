@@ -11028,6 +11028,9 @@ Paragraph.prototype.Style_Add = function(Id, bDoNotDeleteProps)
  */
 Paragraph.prototype.SetPStyle = function(styleId)
 {
+	if (!styleId)
+		styleId = undefined;
+	
 	if (this.Pr.PStyle === styleId)
 		return;
 	
