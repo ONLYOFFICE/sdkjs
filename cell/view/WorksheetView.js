@@ -6996,7 +6996,7 @@
         if (c.isEmptyTextString()) {
             if (!angle && c.isNotDefaultFont() && !(mergeType & c_oAscMergeType.rows)) {
                 // Пустая ячейка с измененной гарнитурой или размером, учитвается в высоте
-                str = getValue2Func.call(this.model);
+                str = getValue2Func.call(c);
                 if (0 < str.length) {
                     strCopy = str[0];
                     //this.isZooming - in default case(with text) every time recalculate text size -> update row height
