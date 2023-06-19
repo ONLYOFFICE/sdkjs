@@ -2790,7 +2790,7 @@
 				if (printPagesData.pageGridLines) {
 					var vector_koef = AscCommonExcel.vector_koef / t.getZoom();
 					if (AscCommon.AscBrowser.isCustomScaling()) {
-						vector_koef /= this.getRetinaPixelRatio();
+						vector_koef /= t.getRetinaPixelRatio();
 					}
 					t._drawGrid(drawingCtx, range, offsetX, offsetY, printPagesData.pageWidth / vector_koef,
 					printPagesData.pageHeight / vector_koef, printPagesData.scale, titleHeight, titleWidth);
