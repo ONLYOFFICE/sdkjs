@@ -42,10 +42,23 @@
 	{
 		this.PStyle = null;
 		this.RStyle = null;
+		
+		this.DefaultPStyle = "";
+		this.DefaultRStyle = "";
 	}
 	CDisplayStyleCalculator.prototype.CalculateName = function(docContent)
 	{
-		this.Reset();
+		this.PStyle = null;
+		this.RStyle = null;
+		
+		this.DefaultPStyle = null;
+		this.DefaultRStyle = null;
+		
+		let logicDocument = docContent.GetLogicDocument();
+		let styleManager  = logicDocument ? logicDocument.GetStyleManager() : null;
+		
+		this.DefaultPStyle = styleManager ? styleManager.GetDefaultParagraph() : "";
+		this.DefaultRStyle = styleManager ? styleManager.GetDefaultCharacter() : "";
 		
 		if (docContent.IsNumberingSelection())
 			this.HandleNumberingSelection(docContent);
@@ -54,26 +67,17 @@
 		else
 			this.HandleNoSelection(docContent);
 		
-		let logicDocument = docContent.GetLogicDocument();
-		if (!logicDocument)
-			return "";
+		if (this.RStyle === this.DefaultRStyle)
+			this.RStyle = null;
 		
-		let styleManager = logicDocument.GetStyleManager();
 		let styleId = this.RStyle ? this.RStyle : this.PStyle;
 		
-		if (!styleId)
+		if (!styleId || !styleManager || !styleManager.Get(styleId))
 			return "";
-		else if (!styleManager.Get(styleId))
-			return styleManager.Get(styleManager.GetDefaultParagraph()).GetName();
 		else
 			return styleManager.Get(styleId).GetName();
 	};
 	//------------------------------------------------------------------------------------------------------------------
-	CDisplayStyleCalculator.prototype.Reset = function()
-	{
-		this.PStyle = null;
-		this.RStyle = null;
-	};
 	CDisplayStyleCalculator.prototype.HandleNumberingSelection = function(docContent)
 	{
 		let paragraph = docContent.GetCurrentParagraph();
@@ -89,15 +93,17 @@
 		if (!paragraphs.length)
 			return;
 		
-		let pStyle = paragraphs[0].GetParagraphStyle();
+		let pStyle = this.GetPStyle(paragraphs[0]);
 		for (let iPara = 1, nPara = paragraphs.length; iPara < nPara; ++iPara)
 		{
-			if (pStyle !== paragraphs[iPara].GetParagraphStyle())
+			if (pStyle !== this.GetPStyle(paragraphs[iPara]))
 			{
 				pStyle = null;
 				break;
 			}
 		}
+		
+		let self = this;
 		
 		let rStyle       = null;
 		let overAllCount = 0;
@@ -121,17 +127,13 @@
 			if (check)
 			{
 				if (null === rStyle)
-					rStyle = run.GetRStyle();
-				else if (rStyle !== run.GetRStyle())
+					rStyle = self.GetRStyle(run);
+				else if (rStyle !== self.GetRStyle(run))
 					rStyle = undefined;
 			}
 			
 			return (undefined === rStyle);
 		});
-		
-		let logicDocument = docContent.GetLogicDocument();
-		if (logicDocument && rStyle === logicDocument.GetStyleManager().Get_Default_Character())
-			rStyle = null;
 		
 		this.PStyle = pStyle;
 		this.RStyle = rStyle;
@@ -150,8 +152,18 @@
 		if (!run || !(run instanceof AscWord.CRun))
 			return;
 		
-		this.RStyle = run.GetRStyle();
-		this.PStyle = paragraph.GetParagraphStyle();
+		this.RStyle = this.GetRStyle(run);
+		this.PStyle = this.GetPStyle(paragraph);
+	};
+	CDisplayStyleCalculator.prototype.GetPStyle = function(paragraph)
+	{
+		let pStyle = paragraph.GetParagraphStyle();
+		return pStyle ? pStyle : this.DefaultPStyle;
+	};
+	CDisplayStyleCalculator.prototype.GetRStyle = function(run)
+	{
+		let rStyle = run.GetRStyle();
+		return rStyle ? rStyle : this.DefaultRStyle;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
