@@ -2223,6 +2223,1362 @@ $(function () {
 
 		clearData(0, 0, 13, 4);
 	});
+	QUnit.test('Autofill - Horizontal sequence. Range 9 cells : Days of the weeks', function (assert) {
+		let testData = [
+			['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Monday'],
+			['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY', 'MONDAY'],
+			['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'monday'],
+			['SuNdaY', 'MoNdaY', 'TuEsdaY', 'WeDnEsDaY', 'ThUrSdAy', 'FrIdAy', 'SaTuRdAy', 'SuNdaY', 'MoNdaY'],
+			['SUnDAy', 'MOnDAy', 'TUEsDAy', 'WEDnEsDAy', 'THUrsDAy', 'FRIday', 'SATurday', 'SUnDAy', 'MOnDAy'],
+			['sUnDaY', 'mOnDaY', 'tUeSdAy', 'wEdNeSdAy', 'tHuRsDaY', 'fRiDaY', 'sAtUrDaY', 'sUnDaY', 'mOnDaY'],
+			['suNDay', 'moNDay', 'tuESday', 'weDNesday', 'thURsday', 'frIDay', 'saTUrday', 'suNDay', 'moNDay'],
+			['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon'],
+			['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN', 'MON'],
+			['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun', 'mon'],
+			['SuN', 'MoN', 'TuE', 'WeD', 'ThU', 'FrI', 'SaT', 'SuN', 'MoN'],
+			['SUn', 'MOn', 'TUe', 'WEd', 'THu', 'FRi', 'SAt', 'SUn', 'MOn'],
+			['sUn', 'mOn', 'tUe', 'wEd', 'tHu', 'fRi', 'sAt', 'sUn', 'mOn'],
+			['suN', 'moN', 'tuE', 'weD', 'thU', 'frI', 'saT', 'suN', 'moN']
+		];
+
+		//Asc sequence case
+		// Add expected Data after Autofill
+		let expectedDataCapitalized = ['Tuesday', 'Wednesday', 'Thursday'];
+		let expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		let expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		let expectedDataShortCapitalized = ['Tue', 'Wed', 'Thu'];
+		let expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		let expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+		//Fill handle direction and area
+		let nHandleDirection = 0; // 0 - Horizontal, 1 - Vertical,
+		let nFillHandleArea = 3; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		let c1To = 8;
+		let c2To = 11;
+		let c1 = 0;
+		let c2 = 8;
+
+		let range = ws.getRange4(0,0);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(c1, 0, c2, 0)];
+		wsView = getAutoFillRange(wsView, c1To, 0, c2To, 0, nHandleDirection, nFillHandleArea);
+		let autoFillRange = getRange(c1To + 1, 0, c2To, 0);
+		autofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Asc sequence  With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 1, c2, 1)];
+		wsView = getAutoFillRange(wsView, c1To, 1, c2To, 1, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 1, c2To, 1);
+		autofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Asc sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(c1, 2, c2, 2)];
+		wsView = getAutoFillRange(wsView, c1To, 2, c2To, 2, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 2, c2To, 2);
+		autofillData(assert, autoFillRange, [expectedDataLower], 'Case: Asc sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(c1, 3, c2, 3)];
+		wsView = getAutoFillRange(wsView, c1To, 3, c2To, 3, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 3, c2To, 3);
+		autofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Asc sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 4, c2, 4)];
+		wsView = getAutoFillRange(wsView, c1To, 4, c2To, 4, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 4, c2To, 4);
+		autofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Asc sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 5, c2, 5)];
+		wsView = getAutoFillRange(wsView, c1To, 5, c2To, 5, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 5, c2To, 5);
+		autofillData(assert, autoFillRange, [expectedDataLower], 'Case: Asc sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(c1, 6, c2, 6)];
+		wsView = getAutoFillRange(wsView, c1To, 6, c2To, 6, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 6, c2To, 6);
+		autofillData(assert, autoFillRange, [expectedDataLower], 'Case: Asc sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(c1, 7, c2, 7)];
+		wsView = getAutoFillRange(wsView, c1To, 7, c2To, 7, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 7, c2To, 7);
+		autofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Asc sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 8, c2,8)];
+		wsView = getAutoFillRange(wsView, c1To, 8, c2To, 8, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 8, c2To, 8);
+		autofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Asc sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(c1,9,c2,9)];
+		wsView = getAutoFillRange(wsView, c1To, 9, c2To, 9, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 9, c2To, 9);
+		autofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Asc sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(c1, 10, c2, 10)];
+		wsView = getAutoFillRange(wsView, c1To, 10, c2To, 10, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 10, c2To, 10);
+		autofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Asc sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(c1, 11, c2, 11)];
+		wsView = getAutoFillRange(wsView, c1To, 11, c2To, 11, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 11, c2To, 11);
+		autofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Asc sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(c1, 12, c2, 12)];
+		wsView = getAutoFillRange(wsView, c1To, 12, c2To, 12, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 12, c2To, 12);
+		autofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Asc sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(c1, 13, c2, 13)];
+		wsView = getAutoFillRange(wsView, c1To, 13, c2To, 13, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 13, c2To, 13);
+		autofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Asc sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, c2To, 13);
+		// Reverse case
+		expectedDataCapitalized = ['Saturday', 'Friday', 'Thursday'];
+		expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		expectedDataShortCapitalized = ['Sat', 'Fri', 'Thu'];
+		expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+		//Fill handle direction and area
+		nHandleDirection = 0; // 0 - Horizontal, 1 - Vertical,
+		nFillHandleArea = 1; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		c1To = 3;
+		c2To = 0;
+		c1 = 3;
+		c2 = 11;
+
+		range = ws.getRange4(0,3);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(c1, 0, c2, 0)];
+		wsView = getAutoFillRange(wsView, c1To, 0, c2To, 0, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 0, c2To, 0);
+		reverseAutofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Reverse sequence  With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 1, c2, 1)];
+		wsView = getAutoFillRange(wsView, c1To, 1, c2To, 1, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 1, c2To, 1);
+		reverseAutofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Reverse sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(c1, 2, c2, 2)];
+		wsView = getAutoFillRange(wsView, c1To, 2, c2To, 2, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 2, c2To, 2);
+		reverseAutofillData(assert, autoFillRange, [expectedDataLower], 'Case: Reverse sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(c1, 3, c2, 3)];
+		wsView = getAutoFillRange(wsView, c1To, 3, c2To, 3, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 3, c2To, 3);
+		reverseAutofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Reverse sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 4, c2, 4)];
+		wsView = getAutoFillRange(wsView, c1To, 4, c2To, 4, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 4, c2To, 4);
+		reverseAutofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Reverse sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 5, c2, 5)];
+		wsView = getAutoFillRange(wsView, c1To, 5, c2To, 5, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 5, c2To, 5);
+		reverseAutofillData(assert, autoFillRange, [expectedDataLower], 'Case: Reverse sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(c1, 6, c2, 6)];
+		wsView = getAutoFillRange(wsView, c1To, 6, c2To, 6, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 6, c2To, 6);
+		reverseAutofillData(assert, autoFillRange, [expectedDataLower], 'Case: Reverse sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(c1, 7, c2, 7)];
+		wsView = getAutoFillRange(wsView, c1To, 7, c2To, 7, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 7, c2To, 7);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Reverse sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 8, c2,8)];
+		wsView = getAutoFillRange(wsView, c1To, 8, c2To, 8, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 8, c2To, 8);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Reverse sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(c1,9,c2,9)];
+		wsView = getAutoFillRange(wsView, c1To, 9, c2To, 9, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 9, c2To, 9);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Reverse sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(c1, 10, c2, 10)];
+		wsView = getAutoFillRange(wsView, c1To, 10, c2To, 10, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 10, c2To, 10);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Reverse sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(c1, 11, c2, 11)];
+		wsView = getAutoFillRange(wsView, c1To, 11, c2To, 11, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 11, c2To, 11);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Reverse sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(c1, 12, c2, 12)];
+		wsView = getAutoFillRange(wsView, c1To, 12, c2To, 12, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 12, c2To, 12);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Reverse sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(c1, 13, c2, 13)];
+		wsView = getAutoFillRange(wsView, c1To, 13, c2To, 13, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 13, c2To, 13);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Reverse sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, c2, 13);
+	});
+	QUnit.test('Autofill - Horizontal Even sequence. Range 9 cells : Days of the weeks', function (assert) {
+		let testData = [
+			['Sunday', 'Tuesday', 'Thursday', 'Saturday', 'Monday', 'Wednesday', 'Friday', 'Sunday', 'Tuesday'],
+			['SUNDAY', 'TUESDAY', 'THURSDAY', 'SATURDAY', 'MONDAY', 'WEDNESDAY', 'FRIDAY', 'SUNDAY', 'TUESDAY'],
+			['sunday', 'tuesday', 'thursday', 'saturday', 'monday', 'wednesday', 'friday', 'sunday', 'tuesday'],
+			['SuNdaY', 'TuEsdaY', 'ThUrSdAy', 'SaTuRdAy', 'MoNdaY', 'WeDnEsDaY', 'FrIdAy', 'SuNdaY', 'TuEsdaY'],
+			['SUnDAy', 'TUEsDAy', 'THUrsDAy', 'SATurday', 'MOnDAy', 'WEDnEsDAy', 'FRiDAy', 'SUnDAy', 'TUEsDAy'],
+			['sUnDaY', 'tUeSdAy', 'tHuRsDaY', 'sAtUrDaY', 'mOnDaY', 'wEdnEsDaY', 'fRiDaY',  'sUnDaY', 'tUeSdAy'],
+			['suNDay', 'tuESday', 'thURsday', 'saTUrday', 'moNDay', 'weDNesday', 'frIDay', 'suNDay', 'tuESday'],
+			['Sun', 'Tue', 'Thu', 'Sat', 'Mon', 'Wed', 'Fri', 'Sun', 'Tue'],
+			['SUN', 'TUE', 'THU', 'SAT', 'MON', 'WED', 'FRI', 'SUN', 'TUE'],
+			['sun', 'tue', 'thu', 'sat', 'mon', 'wed', 'fri', 'sun', 'tue'],
+			['SuN', 'TuE', 'ThU', 'SaT', 'MoN', 'WeD', 'FrI', 'SuN', 'TuE'],
+			['SUn', 'TUe', 'THu', 'SAt', 'MOn', 'WEd', 'FRi', 'SUn', 'TUe'],
+			['sUn', 'tUe', 'tHu', 'sAt', 'mOn', 'wEd', 'fRi', 'sUn', 'tUe'],
+			['suN', 'tuE', 'thU', 'saT', 'moN', 'weD', 'frI', 'suN', 'tuE']
+		];
+
+		//Asc sequence case
+		// Add expected Data after Autofill
+		let expectedDataCapitalized = ['Thursday', 'Saturday', 'Monday'];
+		let expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		let expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		let expectedDataShortCapitalized = ['Thu', 'Sat', 'Mon'];
+		let expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		let expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+		//Fill handle direction and area
+		let nHandleDirection = 0; // 0 - Horizontal, 1 - Vertical,
+		let nFillHandleArea = 3; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		let c1To = 8;
+		let c2To = 11;
+		let c1 = 0;
+		let c2 = 8;
+
+		let range = ws.getRange4(0,0);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(c1, 0, c2, 0)];
+		wsView = getAutoFillRange(wsView, c1To, 0, c2To, 0, nHandleDirection, nFillHandleArea);
+		let autoFillRange = getRange(c1To + 1, 0, c2To, 0);
+		autofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Asc sequence  With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 1, c2, 1)];
+		wsView = getAutoFillRange(wsView, c1To, 1, c2To, 1, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 1, c2To, 1);
+		autofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Asc sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(c1, 2, c2, 2)];
+		wsView = getAutoFillRange(wsView, c1To, 2, c2To, 2, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 2, c2To, 2);
+		autofillData(assert, autoFillRange, [expectedDataLower], 'Case: Asc sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(c1, 3, c2, 3)];
+		wsView = getAutoFillRange(wsView, c1To, 3, c2To, 3, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 3, c2To, 3);
+		autofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Asc sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 4, c2, 4)];
+		wsView = getAutoFillRange(wsView, c1To, 4, c2To, 4, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 4, c2To, 4);
+		autofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Asc sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 5, c2, 5)];
+		wsView = getAutoFillRange(wsView, c1To, 5, c2To, 5, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 5, c2To, 5);
+		autofillData(assert, autoFillRange, [expectedDataLower], 'Case: Asc sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(c1, 6, c2, 6)];
+		wsView = getAutoFillRange(wsView, c1To, 6, c2To, 6, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 6, c2To, 6);
+		autofillData(assert, autoFillRange, [expectedDataLower], 'Case: Asc sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(c1, 7, c2, 7)];
+		wsView = getAutoFillRange(wsView, c1To, 7, c2To, 7, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 7, c2To, 7);
+		autofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Asc sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 8, c2,8)];
+		wsView = getAutoFillRange(wsView, c1To, 8, c2To, 8, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 8, c2To, 8);
+		autofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Asc sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(c1,9,c2,9)];
+		wsView = getAutoFillRange(wsView, c1To, 9, c2To, 9, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 9, c2To, 9);
+		autofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Asc sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(c1, 10, c2, 10)];
+		wsView = getAutoFillRange(wsView, c1To, 10, c2To, 10, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 10, c2To, 10);
+		autofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Asc sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(c1, 11, c2, 11)];
+		wsView = getAutoFillRange(wsView, c1To, 11, c2To, 11, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 11, c2To, 11);
+		autofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Asc sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(c1, 12, c2, 12)];
+		wsView = getAutoFillRange(wsView, c1To, 12, c2To, 12, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 12, c2To, 12);
+		autofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Asc sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(c1, 13, c2, 13)];
+		wsView = getAutoFillRange(wsView, c1To, 13, c2To, 13, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 13, c2To, 13);
+		autofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Asc sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, c2To, 13);
+		// Reverse case
+		expectedDataCapitalized = ['Friday', 'Wednesday', 'Monday'];
+		expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		expectedDataShortCapitalized = ['Fri', 'Wed', 'Mon'];
+		expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+		//Fill handle direction and area
+		nHandleDirection = 0; // 0 - Horizontal, 1 - Vertical,
+		nFillHandleArea = 1; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		c1To = 3;
+		c2To = 0;
+		c1 = 3;
+		c2 = 11;
+
+		range = ws.getRange4(0,3);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(c1, 0, c2, 0)];
+		wsView = getAutoFillRange(wsView, c1To, 0, c2To, 0, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 0, c2To, 0);
+		reverseAutofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Reverse sequence  With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 1, c2, 1)];
+		wsView = getAutoFillRange(wsView, c1To, 1, c2To, 1, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 1, c2To, 1);
+		reverseAutofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Reverse sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(c1, 2, c2, 2)];
+		wsView = getAutoFillRange(wsView, c1To, 2, c2To, 2, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 2, c2To, 2);
+		reverseAutofillData(assert, autoFillRange, [expectedDataLower], 'Case: Reverse sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(c1, 3, c2, 3)];
+		wsView = getAutoFillRange(wsView, c1To, 3, c2To, 3, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 3, c2To, 3);
+		reverseAutofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Reverse sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 4, c2, 4)];
+		wsView = getAutoFillRange(wsView, c1To, 4, c2To, 4, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 4, c2To, 4);
+		reverseAutofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Reverse sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 5, c2, 5)];
+		wsView = getAutoFillRange(wsView, c1To, 5, c2To, 5, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 5, c2To, 5);
+		reverseAutofillData(assert, autoFillRange, [expectedDataLower], 'Case: Reverse sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(c1, 6, c2, 6)];
+		wsView = getAutoFillRange(wsView, c1To, 6, c2To, 6, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 6, c2To, 6);
+		reverseAutofillData(assert, autoFillRange, [expectedDataLower], 'Case: Reverse sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(c1, 7, c2, 7)];
+		wsView = getAutoFillRange(wsView, c1To, 7, c2To, 7, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 7, c2To, 7);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Reverse sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 8, c2,8)];
+		wsView = getAutoFillRange(wsView, c1To, 8, c2To, 8, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 8, c2To, 8);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Reverse sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(c1,9,c2,9)];
+		wsView = getAutoFillRange(wsView, c1To, 9, c2To, 9, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 9, c2To, 9);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Reverse sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(c1, 10, c2, 10)];
+		wsView = getAutoFillRange(wsView, c1To, 10, c2To, 10, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 10, c2To, 10);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Reverse sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(c1, 11, c2, 11)];
+		wsView = getAutoFillRange(wsView, c1To, 11, c2To, 11, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 11, c2To, 11);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Reverse sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(c1, 12, c2, 12)];
+		wsView = getAutoFillRange(wsView, c1To, 12, c2To, 12, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 12, c2To, 12);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Reverse sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(c1, 13, c2, 13)];
+		wsView = getAutoFillRange(wsView, c1To, 13, c2To, 13, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 13, c2To, 13);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Reverse sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, c2, 13);
+	});
+	QUnit.test('Autofill - Horizontal Odd sequence. Range 9 cells : Days of the weeks', function (assert) {
+		let testData = [
+			['Monday', 'Wednesday', 'Friday', 'Sunday', 'Tuesday', 'Thursday', 'Saturday', 'Monday', 'Wednesday'],
+			['MONDAY', 'WEDNESDAY', 'FRIDAY', 'SUNDAY', 'TUESDAY', 'THURSDAY', 'SATURDAY', 'MONDAY', 'WEDNESDAY'],
+			['monday', 'wednesday', 'friday', 'sunday', 'tuesday', 'thursday', 'saturday', 'monday', 'wednesday'],
+			['MoNdAy', 'WeDnEsDaY', 'FrIdAy', 'SuNdAy', 'TuEsDaY', 'ThUrSdAy', 'SaTuRdAy', 'MoNdAy', 'WeDnEsDaY'],
+			['MOnDAy', 'WEDnEsDAy', 'FRIday', 'SUnDAy', 'TUEsDAy', 'THUrsDAy', 'SATurday', 'MOnDAy', 'WEDnEsDAy'],
+			['mOnDaY', 'wEdNeSdAy', 'fRiDaY', 'sUnDaY', 'tUeSdAy', 'tHuRsDaY', 'sAtUrDaY', 'mOnDaY', 'wEdNeSdAy'],
+			['moNDay', 'weDNesday', 'frIDay', 'suNDay', 'tuESday','thURsday','saTUrday','moNDay','weDNesday'],
+			['Mon', 'Wed', 'Fri', 'Sun', 'Tue', 'Thu', 'Sat', 'Mon', 'Wed'],
+			['MON', 'WED', 'FRI', 'SUN', 'TUE', 'THU', 'SAT', 'MON', 'WED'],
+			['mon', 'wed', 'fri', 'sun', 'tue', 'thu', 'sat', 'mon', 'wed'],
+			['MoN', 'WeD', 'FrI', 'SuN', 'TuE', 'ThU', 'SaT', 'MoN', 'WeD'],
+			['MOn', 'WEd','FRi','SUn','TUe','THu','SAt','MOn','WEd'],
+			['mOn','wEd','fRi','sUn','tUe','tHu','sAt','mOn','wEd'],
+			['moN','weD','frI','suN','tuE','thU','saT','moN','weD']
+		];
+
+		//Asc sequence case
+		// Add expected Data after Autofill
+		let expectedDataCapitalized = ['Friday', 'Sunday', 'Tuesday'];
+		let expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		let expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		let expectedDataShortCapitalized = ['Fri', 'Sun', 'Tue'];
+		let expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		let expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+		//Fill handle direction and area
+		let nHandleDirection = 0; // 0 - Horizontal, 1 - Vertical,
+		let nFillHandleArea = 3; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		let c1To = 8;
+		let c2To = 11;
+		let c1 = 0;
+		let c2 = 8;
+
+		let range = ws.getRange4(0,0);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(c1, 0, c2, 0)];
+		wsView = getAutoFillRange(wsView, c1To, 0, c2To, 0, nHandleDirection, nFillHandleArea);
+		let autoFillRange = getRange(c1To + 1, 0, c2To, 0);
+		autofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Asc sequence  With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 1, c2, 1)];
+		wsView = getAutoFillRange(wsView, c1To, 1, c2To, 1, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 1, c2To, 1);
+		autofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Asc sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(c1, 2, c2, 2)];
+		wsView = getAutoFillRange(wsView, c1To, 2, c2To, 2, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 2, c2To, 2);
+		autofillData(assert, autoFillRange, [expectedDataLower], 'Case: Asc sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(c1, 3, c2, 3)];
+		wsView = getAutoFillRange(wsView, c1To, 3, c2To, 3, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 3, c2To, 3);
+		autofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Asc sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 4, c2, 4)];
+		wsView = getAutoFillRange(wsView, c1To, 4, c2To, 4, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 4, c2To, 4);
+		autofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Asc sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 5, c2, 5)];
+		wsView = getAutoFillRange(wsView, c1To, 5, c2To, 5, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 5, c2To, 5);
+		autofillData(assert, autoFillRange, [expectedDataLower], 'Case: Asc sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(c1, 6, c2, 6)];
+		wsView = getAutoFillRange(wsView, c1To, 6, c2To, 6, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 6, c2To, 6);
+		autofillData(assert, autoFillRange, [expectedDataLower], 'Case: Asc sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(c1, 7, c2, 7)];
+		wsView = getAutoFillRange(wsView, c1To, 7, c2To, 7, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 7, c2To, 7);
+		autofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Asc sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 8, c2,8)];
+		wsView = getAutoFillRange(wsView, c1To, 8, c2To, 8, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 8, c2To, 8);
+		autofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Asc sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(c1,9,c2,9)];
+		wsView = getAutoFillRange(wsView, c1To, 9, c2To, 9, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 9, c2To, 9);
+		autofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Asc sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(c1, 10, c2, 10)];
+		wsView = getAutoFillRange(wsView, c1To, 10, c2To, 10, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 10, c2To, 10);
+		autofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Asc sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(c1, 11, c2, 11)];
+		wsView = getAutoFillRange(wsView, c1To, 11, c2To, 11, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 11, c2To, 11);
+		autofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Asc sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(c1, 12, c2, 12)];
+		wsView = getAutoFillRange(wsView, c1To, 12, c2To, 12, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 12, c2To, 12);
+		autofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Asc sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(c1, 13, c2, 13)];
+		wsView = getAutoFillRange(wsView, c1To, 13, c2To, 13, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To + 1, 13, c2To, 13);
+		autofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Asc sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, c2To, 13);
+		// Reverse case
+		expectedDataCapitalized = ['Saturday', 'Thursday', 'Tuesday'];
+		expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		expectedDataShortCapitalized = ['Sat', 'Thu', 'Tue'];
+		expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+		//Fill handle direction and area
+		nHandleDirection = 0; // 0 - Horizontal, 1 - Vertical,
+		nFillHandleArea = 1; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		c1To = 3;
+		c2To = 0;
+		c1 = 3;
+		c2 = 11;
+
+		range = ws.getRange4(0,3);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(c1, 0, c2, 0)];
+		wsView = getAutoFillRange(wsView, c1To, 0, c2To, 0, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 0, c2To, 0);
+		reverseAutofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Reverse sequence  With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 1, c2, 1)];
+		wsView = getAutoFillRange(wsView, c1To, 1, c2To, 1, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 1, c2To, 1);
+		reverseAutofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Reverse sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(c1, 2, c2, 2)];
+		wsView = getAutoFillRange(wsView, c1To, 2, c2To, 2, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 2, c2To, 2);
+		reverseAutofillData(assert, autoFillRange, [expectedDataLower], 'Case: Reverse sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(c1, 3, c2, 3)];
+		wsView = getAutoFillRange(wsView, c1To, 3, c2To, 3, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 3, c2To, 3);
+		reverseAutofillData(assert, autoFillRange, [expectedDataCapitalized], 'Case: Reverse sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 4, c2, 4)];
+		wsView = getAutoFillRange(wsView, c1To, 4, c2To, 4, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 4, c2To, 4);
+		reverseAutofillData(assert, autoFillRange, [expectedDataUpper], 'Case: Reverse sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(c1, 5, c2, 5)];
+		wsView = getAutoFillRange(wsView, c1To, 5, c2To, 5, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 5, c2To, 5);
+		reverseAutofillData(assert, autoFillRange, [expectedDataLower], 'Case: Reverse sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(c1, 6, c2, 6)];
+		wsView = getAutoFillRange(wsView, c1To, 6, c2To, 6, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 6, c2To, 6);
+		reverseAutofillData(assert, autoFillRange, [expectedDataLower], 'Case: Reverse sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(c1, 7, c2, 7)];
+		wsView = getAutoFillRange(wsView, c1To, 7, c2To, 7, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 7, c2To, 7);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Reverse sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(c1, 8, c2,8)];
+		wsView = getAutoFillRange(wsView, c1To, 8, c2To, 8, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 8, c2To, 8);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Reverse sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(c1,9,c2,9)];
+		wsView = getAutoFillRange(wsView, c1To, 9, c2To, 9, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 9, c2To, 9);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Reverse sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(c1, 10, c2, 10)];
+		wsView = getAutoFillRange(wsView, c1To, 10, c2To, 10, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 10, c2To, 10);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortCapitalized], 'Case: Reverse sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(c1, 11, c2, 11)];
+		wsView = getAutoFillRange(wsView, c1To, 11, c2To, 11, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 11, c2To, 11);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortUpper], 'Case: Reverse sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(c1, 12, c2, 12)];
+		wsView = getAutoFillRange(wsView, c1To, 12, c2To, 12, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 12, c2To, 12);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Reverse sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(c1, 13, c2, 13)];
+		wsView = getAutoFillRange(wsView, c1To, 13, c2To, 13, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(c1To - 1, 13, c2To, 13);
+		reverseAutofillData(assert, autoFillRange, [expectedDataShortLower], 'Case: Reverse sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, c2, 13);
+	});
+	QUnit.test('Autofill - Vertical sequence. Range 9 cells: Days of the weeks', function (assert) {
+		let testData = [
+			['Sunday', 'SUNDAY', 'sunday', 'SuNdAy', 'SUnDaY','sUnDaY', 'suNDay', 'Sun', 'SUN', 'sun', 'SuN', 'SUn', 'suN', 'sUn'],
+			['Monday', 'MONDAY', 'monday', 'MoNdAy', 'MOnDaY','mOnDaY', 'moNDay', 'Mon', 'MON', 'mon', 'MoN', 'MOn', 'moN', 'mOn'],
+			['Tuesday', 'TUESDAY', 'tuesday', 'TuEsDaY', 'TUesDAy','tUeSdAy', 'tuESdaY', 'Tue', 'TUE', 'tue', 'TuE', 'TUe', 'tuE', 'tUe'],
+			['Wednesday', 'WEDNESDAY', 'wednesday', 'WeDnesdAy', 'WEdnesDaY','wEdnesDaY', 'weDneSdAy', 'Wed', 'WED', 'wed', 'WeD', 'WEd', 'weD', 'wEd'],
+			['Thursday', 'THURSDAY', 'thursday', 'ThUrsDaY', 'THursDaY','tHuRsDaY', 'thUrsDaY', 'Thu', 'THU', 'thu', 'ThU', 'THu', 'thU', 'tHu'],
+			['Friday', 'FRIDAY', 'friday', 'FrIdAy', 'FRidAy','fRIdAy', 'frIdAy', 'Fri', 'FRI', 'fri', 'FrI', 'FRi', 'frI', 'fRI'],
+			['Saturday', 'SATURDAY', 'saturday', 'SaTurDaY', 'SAturDaY','sAturDaY', 'saTurDaY', 'Sat', 'SAT', 'sat', 'SaT', 'SAt', 'saT', 'sAt'],
+			['Sunday', 'SUNDAY', 'sunday', 'SuNdAy', 'SUnDaY','sUnDaY', 'suNDay', 'Sun', 'SUN', 'sun', 'SuN', 'SUn', 'suN', 'sUn'],
+			['Monday', 'MONDAY', 'monday', 'MoNdAy', 'MOnDaY','mOnDaY', 'moNDay', 'Mon', 'MON', 'mon', 'MoN', 'MOn', 'moN', 'mOn']
+		];
+
+		//Asc case
+		// Add expected Data after Autofill
+		let expectedDataCapitalized = [['Tuesday'], ['Wednesday'], ['Thursday']];
+		let expectedDataShortCapitalized = [['Tue'], ['Wed'], ['Thu']];
+		let expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		let expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		let expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		let expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+
+		//Fill handle direction and area
+		let nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
+		let nFillHandleArea = 3; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		// Fill r1 & r2 for autofill range and ranges
+		let r1To = 8;
+		let r2To = 11;
+		let r1 = 0;
+		let r2 = 8;
+		let range = ws.getRange4(0,0);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(0, r1, 0, r2)];
+		wsView = getAutoFillRange(wsView, 0, r1To, 0, r2To, nHandleDirection, nFillHandleArea);
+		let autoFillRange = getRange(0, r1To + 1, 0, r2To);
+		autofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Asc sequence With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(1, r1, 1, r2)];
+		wsView = getAutoFillRange(wsView, 1, r1To, 1, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(1, r1To + 1, 1, r2To);
+		autofillData(assert, autoFillRange, expectedDataUpper, 'Case: Asc sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(2, r1,2, r2)];
+		wsView = getAutoFillRange(wsView, 2, r1To, 2, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(2, r1To + 1, 2, r2To);
+		autofillData(assert, autoFillRange, expectedDataLower, 'Case: Asc sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(3, r1, 3, r2)];
+		wsView = getAutoFillRange(wsView, 3, r1To, 3, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(3, r1To + 1, 3, r2To);
+		autofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Asc sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(4, r1, 4, r2)];
+		wsView = getAutoFillRange(wsView, 4, r1To, 4, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(4, r1To + 1, 4, r2To);
+		autofillData(assert, autoFillRange, expectedDataUpper, 'Case: Asc sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(5, r1, 5, r2)];
+		wsView = getAutoFillRange(wsView, 5, r1To, 5, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(5, r1To + 1, 5, r2To);
+		autofillData(assert, autoFillRange, expectedDataLower, 'Case: Asc sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(6, r1, 6, r2)];
+		wsView = getAutoFillRange(wsView, 6, r1To, 6, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(6, r1To + 1, 6, r2To);
+		autofillData(assert, autoFillRange, expectedDataLower, 'Case: Asc sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(7, r1, 7, r2)];
+		wsView = getAutoFillRange(wsView, 7, r1To, 7, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(7, r1To + 1, 7, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Asc sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(8, r1, 8, r2)];
+		wsView = getAutoFillRange(wsView, 8, r1To, 8, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(8, r1To + 1, 8, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Asc sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(9, r1, 9, r2)];
+		wsView = getAutoFillRange(wsView, 9, r1To, 9, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(9, r1To + 1, 9, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Asc sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(10, r1, 10, r2)];
+		wsView = getAutoFillRange(wsView, 10, r1To, 10, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(10, r1To + 1, 10, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Asc sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(11, r1, 11, r2)];
+		wsView = getAutoFillRange(wsView, 11, r1To, 11, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(11, r1To + 1, 11, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Asc sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(12, r1, 12, r2)];
+		wsView = getAutoFillRange(wsView, 12, r1To, 12, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(12, r1To + 1, 12, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Asc sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(13, r1, 13 ,r2)];
+		wsView = getAutoFillRange(wsView, 13, r1To, 13, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(13, r1To + 1, 13, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Asc sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, 13, 11);
+
+		//Reverse case
+		expectedDataCapitalized = [['Saturday'], ['Friday'], ['Thursday']];
+		expectedDataShortCapitalized = [['Sat'], ['Fri'], ['Thu']];
+		expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+
+		//Fill handle direction and area
+		nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
+		nFillHandleArea = 1; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		// Fill r1 ? r2 for autofill range and ranges
+		r1To = 3;
+		r2To = 0;
+		r1 = 3;
+		r2 = 11;
+
+		range = ws.getRange4(3,0);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(0, r1, 0, r2)];
+		wsView = getAutoFillRange(wsView, 0, r1To, 0, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(0, r1To - 1, 0, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Reverse sequence With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(1, r1, 1, r2)];
+		wsView = getAutoFillRange(wsView, 1, r1To, 1, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(1, r1To - 1, 1, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataUpper, 'Case: Reverse sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(2, r1,2, r2)];
+		wsView = getAutoFillRange(wsView, 2, r1To, 2, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(2, r1To - 1, 2, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataLower, 'Case: Reverse sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(3, r1, 3, r2)];
+		wsView = getAutoFillRange(wsView, 3, r1To, 3, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(3, r1To - 1, 3, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Reverse sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(4, r1, 4, r2)];
+		wsView = getAutoFillRange(wsView, 4, r1To, 4, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(4, r1To - 1, 4, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataUpper, 'Case: Reverse sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(5, r1, 5, r2)];
+		wsView = getAutoFillRange(wsView, 5, r1To, 5, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(5, r1To - 1, 5, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataLower, 'Case: Reverse sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(6, r1, 6, r2)];
+		wsView = getAutoFillRange(wsView, 6, r1To, 6, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(6, r1To - 1, 6, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataLower, 'Case: Reverse sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(7, r1, 7, r2)];
+		wsView = getAutoFillRange(wsView, 7, r1To, 7, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(7, r1To - 1, 7, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Reverse sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(8, r1, 8, r2)];
+		wsView = getAutoFillRange(wsView, 8, r1To, 8, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(8, r1To - 1, 8, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Reverse sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(9, r1, 9, r2)];
+		wsView = getAutoFillRange(wsView, 9, r1To, 9, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(9, r1To - 1, 9, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Reverse sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(10, r1, 10, r2)];
+		wsView = getAutoFillRange(wsView, 10, r1To, 10, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(10, r1To - 1, 10, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Reverse sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(11, r1, 11, r2)];
+		wsView = getAutoFillRange(wsView, 11, r1To, 11, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(11, r1To - 1, 11, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Reverse sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(12, r1, 12, r2)];
+		wsView = getAutoFillRange(wsView, 12, r1To, 12, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(12, r1To - 1, 12, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Reverse sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(13, r1, 13 ,r2)];
+		wsView = getAutoFillRange(wsView, 13, r1To, 13, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(13, r1To - 1, 13, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Reverse sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, 13, 11);
+	});
+	QUnit.test('Autofill - Vertical even sequence. Range 9 cell: Days of the weeks', function (assert) {
+		let testData = [
+			['Sunday', 'SUNDAY', 'sunday', 'SuNdAy', 'SUnDaY','sUnDaY', 'suNDay', 'Sun', 'SUN', 'sun', 'SuN', 'SUn', 'suN', 'sUn'],
+			['Tuesday', 'TUESDAY', 'tuesday', 'TuEsDaY', 'TUesDAy','tUeSdAy', 'tuESdaY', 'Tue', 'TUE', 'tue', 'TuE', 'TUe', 'tuE', 'tUe'],
+			['Thursday', 'THURSDAY', 'thursday', 'ThUrSdAy', 'THuRsDaY','tHuRsDaY','thURsday','Thu','THU','thu','ThU','THu','thU','tHu',],
+			['Saturday','SATURDAY','saturday','SaTuRdAy','SAtUrDaY','sAtUrDaY','saTUrday','Sat','SAT','sat','SaT','SAt','saT','sAt'],
+			['Monday', 'MONDAY', 'monday', 'MoNdAy', 'MOnDaY', 'mOnDaY', 'moNDay', 'Mon', 'MON', 'mon', 'MoN', 'MOn', 'moN', 'mOn'],
+			['Wednesday', 'WEDNESDAY', 'wednesday', 'WeDnEsDaY', 'WEdNeSDaY','wEdNeSdAy', 'weDNesday', 'Wed', 'WED', 'wed', 'WeD', 'WEd', 'weD', 'wEd'],
+			['Friday', 'FRIDAY', 'friday', 'FrIdAy', 'FRiDaY', 'fRIdaY', 'frIdAY', 'Fri', 'FRI', 'fri', 'FrI', 'FRi', 'fRI', 'frI'],
+			['Sunday','SUNDAY','sunday','SuNdAy','SUnDaY','sUnDaY','suNDay','Sun','SUN','sun','SuN','SUn','suN','sUn'],
+			['Tuesday', 'TUESDAY', 'tuesday', 'TuEsDaY', 'TUesDAy','tUeSdAy', 'tuESdaY', 'Tue', 'TUE', 'tue', 'TuE', 'TUe', 'tuE', 'tUe']
+		];
+
+		// Asc case
+		// Add expected Data after Autofill
+		let expectedDataCapitalized = [['Thursday'], ['Saturday'], ['Monday']];
+		let expectedDataShortCapitalized = [['Thu'], ['Sat'], ['Mon']];
+		let expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		let expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		let expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		let expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+
+
+		//Fill handle direction and area
+		let nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
+		let nFillHandleArea = 3; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		// Fill r1 ? r2 for autofill range and ranges
+		let r1To = 8;
+		let r2To = 11;
+		let r1 = 0;
+		let r2 = 8;
+
+		let range = ws.getRange4(0,0);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(0, r1, 0, r2)];
+		wsView = getAutoFillRange(wsView, 0, r1To, 0, r2To, nHandleDirection, nFillHandleArea);
+		let autoFillRange = getRange(0, r1To + 1, 0, r2To);
+		autofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Asc sequence With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(1, r1, 1, r2)];
+		wsView = getAutoFillRange(wsView, 1, r1To, 1, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(1, r1To + 1, 1, r2To);
+		autofillData(assert, autoFillRange, expectedDataUpper, 'Case: Asc sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(2, r1,2, r2)];
+		wsView = getAutoFillRange(wsView, 2, r1To, 2, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(2, r1To + 1, 2, r2To);
+		autofillData(assert, autoFillRange, expectedDataLower, 'Case: Asc sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(3, r1, 3, r2)];
+		wsView = getAutoFillRange(wsView, 3, r1To, 3, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(3, r1To + 1, 3, r2To);
+		autofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Asc sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(4, r1, 4, r2)];
+		wsView = getAutoFillRange(wsView, 4, r1To, 4, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(4, r1To + 1, 4, r2To);
+		autofillData(assert, autoFillRange, expectedDataUpper, 'Case: Asc sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(5, r1, 5, r2)];
+		wsView = getAutoFillRange(wsView, 5, r1To, 5, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(5, r1To + 1, 5, r2To);
+		autofillData(assert, autoFillRange, expectedDataLower, 'Case: Asc sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(6, r1, 6, r2)];
+		wsView = getAutoFillRange(wsView, 6, r1To, 6, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(6, r1To + 1, 6, r2To);
+		autofillData(assert, autoFillRange, expectedDataLower, 'Case: Asc sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(7, r1, 7, r2)];
+		wsView = getAutoFillRange(wsView, 7, r1To, 7, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(7, r1To + 1, 7, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Asc sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(8, r1, 8, r2)];
+		wsView = getAutoFillRange(wsView, 8, r1To, 8, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(8, r1To + 1, 8, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Asc sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(9, r1, 9, r2)];
+		wsView = getAutoFillRange(wsView, 9, r1To, 9, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(9, r1To + 1, 9, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Asc sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(10, r1, 10, r2)];
+		wsView = getAutoFillRange(wsView, 10, r1To, 10, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(10, r1To + 1, 10, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Asc sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(11, r1, 11, r2)];
+		wsView = getAutoFillRange(wsView, 11, r1To, 11, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(11, r1To + 1, 11, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Asc sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(12, r1, 12, r2)];
+		wsView = getAutoFillRange(wsView, 12, r1To, 12, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(12, r1To + 1, 12, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Asc sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(13, r1, 13 ,r2)];
+		wsView = getAutoFillRange(wsView, 13, r1To, 13, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(13, r1To + 1, 13, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Asc sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, 13, 11);
+
+		//Reverse case
+		expectedDataCapitalized = [['Friday'], ['Wednesday'], ['Monday']];
+		expectedDataShortCapitalized = [['Fri'], ['Wed'], ['Mon']];
+		expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+
+		//Fill handle direction and area
+		nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
+		nFillHandleArea = 1; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		// Fill r1 ? r2 for autofill range and ranges
+		r1To = 3;
+		r2To = 0;
+		r1 = 3;
+		r2 = 11;
+
+		range = ws.getRange4(3,0);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(0, r1, 0, r2)];
+		wsView = getAutoFillRange(wsView, 0, r1To, 0, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(0, r1To - 1, 0, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Reverse sequence With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(1, r1, 1, r2)];
+		wsView = getAutoFillRange(wsView, 1, r1To, 1, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(1, r1To - 1, 1, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataUpper, 'Case: Reverse sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(2, r1,2, r2)];
+		wsView = getAutoFillRange(wsView, 2, r1To, 2, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(2, r1To - 1, 2, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataLower, 'Case: Reverse sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(3, r1, 3, r2)];
+		wsView = getAutoFillRange(wsView, 3, r1To, 3, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(3, r1To - 1, 3, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Reverse sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(4, r1, 4, r2)];
+		wsView = getAutoFillRange(wsView, 4, r1To, 4, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(4, r1To - 1, 4, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataUpper, 'Case: Reverse sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(5, r1, 5, r2)];
+		wsView = getAutoFillRange(wsView, 5, r1To, 5, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(5, r1To - 1, 5, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataLower, 'Case: Reverse sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(6, r1, 6, r2)];
+		wsView = getAutoFillRange(wsView, 6, r1To, 6, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(6, r1To - 1, 6, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataLower, 'Case: Reverse sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(7, r1, 7, r2)];
+		wsView = getAutoFillRange(wsView, 7, r1To, 7, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(7, r1To - 1, 7, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Reverse sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(8, r1, 8, r2)];
+		wsView = getAutoFillRange(wsView, 8, r1To, 8, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(8, r1To - 1, 8, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Reverse sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(9, r1, 9, r2)];
+		wsView = getAutoFillRange(wsView, 9, r1To, 9, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(9, r1To - 1, 9, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Reverse sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(10, r1, 10, r2)];
+		wsView = getAutoFillRange(wsView, 10, r1To, 10, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(10, r1To - 1, 10, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Reverse sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(11, r1, 11, r2)];
+		wsView = getAutoFillRange(wsView, 11, r1To, 11, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(11, r1To - 1, 11, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Reverse sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(12, r1, 12, r2)];
+		wsView = getAutoFillRange(wsView, 12, r1To, 12, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(12, r1To - 1, 12, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Reverse sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(13, r1, 13 ,r2)];
+		wsView = getAutoFillRange(wsView, 13, r1To, 13, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(13, r1To - 1, 13, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Reverse sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, 13, 11)
+	});
+	QUnit.test('Autofill - Vertical odd sequence. Range 9 cells: Days of the weeks', function (assert) {
+		let testData = [
+			['Monday', 'MONDAY', 'monday', 'MoNdaY', 'MOnDaY','mOnDaY', 'moNDay', 'Mon', 'MON', 'mon', 'MoN', 'MOn', 'moN', 'mOn'],
+			['Wednesday', 'WEDNESDAY', 'wednesday', 'WeDnEsDaY', 'WEdNEsDAy','wEdNeSdAy', 'weDNesDAy', 'Wed', 'WED', 'wed', 'WeD', 'WEd', 'weD', 'wEd'],
+			['Friday','FRIDAY','friday','FrIdAy','FRiDaY','fRiDaY','frIDay','Fri','FRI','fri','FrI','FRi','frI','fRi'],
+			['Sunday','SUNDAY','sunday','SuNdAy','SUnDaY','sUnDaY','suNDay','Sun','SUN','sun','SuN','SUn','suN','sUn'],
+			['Tuesday', 'TUESDAY', 'tuesday', 'TuEsDaY', 'TUesDAy','tUeSdAy', 'tuESdaY', 'Tue', 'TUE', 'tue', 'TuE', 'TUe', 'tuE', 'tUe'],
+			['Thursday', 'THURSDAY', 'thursday', 'ThUrSdAy', 'THuRsDaY','tHuRsDaY','thURsday','Thu','THU','thu','ThU','THu','thU','tHu'],
+			['Saturday','SATURDAY','saturday','SaTuRdAy','SAtUrDaY','sAtUrDaY','saTUrday','Sat','SAT','sat','SaT','SAt','saT','sAt'],
+			['Monday', 'MONDAY', 'monday', 'MoNdaY', 'MOnDaY','mOnDaY', 'moNDay', 'Mon', 'MON', 'mon', 'MoN', 'MOn', 'moN', 'mOn'],
+			['Wednesday', 'WEDNESDAY', 'wednesday', 'WeDnEsDaY', 'WEdNEsDAy','wEdNeSdAy', 'weDNesDAy', 'Wed', 'WED', 'wed', 'WeD', 'WEd', 'weD', 'wEd']
+		];
+
+		// Asc case
+		// Add expected Data after Autofill
+		let expectedDataCapitalized = [['Friday'], ['Sunday'], ['Tuesday']];
+		let expectedDataShortCapitalized = [['Fri'], ['Sun'], ['Tue']];
+		let expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		let expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		let expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		let expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+
+
+		//Fill handle direction and area
+		let nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
+		let nFillHandleArea = 3; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		// Fill r1 ? r2 for autofill range and ranges
+		let r1To = 8;
+		let r2To = 11;
+		let r1 = 0;
+		let r2 = 8;
+		let range = ws.getRange4(0,0);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(0, r1, 0, r2)];
+		wsView = getAutoFillRange(wsView, 0, r1To, 0, r2To, nHandleDirection, nFillHandleArea);
+		let autoFillRange = getRange(0, r1To + 1, 0, r2To);
+		autofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Asc sequence With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(1, r1, 1, r2)];
+		wsView = getAutoFillRange(wsView, 1, r1To, 1, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(1, r1To + 1, 1, r2To);
+		autofillData(assert, autoFillRange, expectedDataUpper, 'Case: Asc sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(2, r1,2, r2)];
+		wsView = getAutoFillRange(wsView, 2, r1To, 2, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(2, r1To + 1, 2, r2To);
+		autofillData(assert, autoFillRange, expectedDataLower, 'Case: Asc sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(3, r1, 3, r2)];
+		wsView = getAutoFillRange(wsView, 3, r1To, 3, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(3, r1To + 1, 3, r2To);
+		autofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Asc sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(4, r1, 4, r2)];
+		wsView = getAutoFillRange(wsView, 4, r1To, 4, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(4, r1To + 1, 4, r2To);
+		autofillData(assert, autoFillRange, expectedDataUpper, 'Case: Asc sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(5, r1, 5, r2)];
+		wsView = getAutoFillRange(wsView, 5, r1To, 5, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(5, r1To + 1, 5, r2To);
+		autofillData(assert, autoFillRange, expectedDataLower, 'Case: Asc sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(6, r1, 6, r2)];
+		wsView = getAutoFillRange(wsView, 6, r1To, 6, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(6, r1To + 1, 6, r2To);
+		autofillData(assert, autoFillRange, expectedDataLower, 'Case: Asc sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(7, r1, 7, r2)];
+		wsView = getAutoFillRange(wsView, 7, r1To, 7, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(7, r1To + 1, 7, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Asc sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(8, r1, 8, r2)];
+		wsView = getAutoFillRange(wsView, 8, r1To, 8, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(8, r1To + 1, 8, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Asc sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(9, r1, 9, r2)];
+		wsView = getAutoFillRange(wsView, 9, r1To, 9, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(9, r1To + 1, 9, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Asc sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(10, r1, 10, r2)];
+		wsView = getAutoFillRange(wsView, 10, r1To, 10, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(10, r1To + 1, 10, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Asc sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(11, r1, 11, r2)];
+		wsView = getAutoFillRange(wsView, 11, r1To, 11, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(11, r1To + 1, 11, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Asc sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(12, r1, 12, r2)];
+		wsView = getAutoFillRange(wsView, 12, r1To, 12, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(12, r1To + 1, 12, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Asc sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(13, r1, 13 ,r2)];
+		wsView = getAutoFillRange(wsView, 13, r1To, 13, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(13, r1To + 1, 13, r2To);
+		autofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Asc sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, 13, 11);
+
+		//Reverse case
+		expectedDataCapitalized = [['Saturday'], ['Thursday'], ['Tuesday']];
+		expectedDataShortCapitalized = [['Sat'], ['Thu'], ['Tue']];
+		expectedDataUpper = updateDataToUpCase(expectedDataCapitalized);
+		expectedDataLower = updateDataToLowCase(expectedDataCapitalized);
+		expectedDataShortUpper = updateDataToUpCase(expectedDataShortCapitalized);
+		expectedDataShortLower = updateDataToLowCase(expectedDataShortCapitalized);
+
+		//Fill handle direction and area
+		nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
+		nFillHandleArea = 1; // 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		// Fill r1 ? r2 for autofill range and ranges
+		r1To = 3;
+		r2To = 0;
+		r1 = 3;
+		r2 = 11;
+
+		range = ws.getRange4(3,0);
+		range.fillData(testData);
+
+		// With capitalized
+		ws.selectionRange.ranges = [getRange(0, r1, 0, r2)];
+		wsView = getAutoFillRange(wsView, 0, r1To, 0, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(0, r1To - 1, 0, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Reverse sequence With capitalized start from Sunday');
+
+		//Upper-registry
+		ws.selectionRange.ranges = [getRange(1, r1, 1, r2)];
+		wsView = getAutoFillRange(wsView, 1, r1To, 1, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(1, r1To - 1, 1, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataUpper, 'Case: Reverse sequence Upper-registry start from Sunday');
+
+		// Lower-registry
+		ws.selectionRange.ranges = [getRange(2, r1,2, r2)];
+		wsView = getAutoFillRange(wsView, 2, r1To, 2, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(2, r1To - 1, 2, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataLower, 'Case: Reverse sequence Lower-registry start from Sunday');
+
+		// Camel-registry - SuNdAy
+		ws.selectionRange.ranges = [getRange(3, r1, 3, r2)];
+		wsView = getAutoFillRange(wsView, 3, r1To, 3, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(3, r1To - 1, 3, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataCapitalized, 'Case: Reverse sequence Camel-registry - Su. Start from Sunday');
+
+		// Camel-registry - SUnDaY
+		ws.selectionRange.ranges = [getRange(4, r1, 4, r2)];
+		wsView = getAutoFillRange(wsView, 4, r1To, 4, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(4, r1To - 1, 4, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataUpper, 'Case: Reverse sequence Camel-registry - SU. Start from Sunday');
+
+		// Camel-registry - sUnDaY
+		ws.selectionRange.ranges = [getRange(5, r1, 5, r2)];
+		wsView = getAutoFillRange(wsView, 5, r1To, 5, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(5, r1To - 1, 5, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataLower, 'Case: Reverse sequence Camel-registry - sU. Start from Sunday');
+
+		// Camel-registry - suNDay
+		ws.selectionRange.ranges = [getRange(6, r1, 6, r2)];
+		wsView = getAutoFillRange(wsView, 6, r1To, 6, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(6, r1To - 1, 6, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataLower, 'Case: Reverse sequence Camel-registry - su. Start from Sunday');
+
+		// Short name day of the week with capitalized
+		ws.selectionRange.ranges = [getRange(7, r1, 7, r2)];
+		wsView = getAutoFillRange(wsView, 7, r1To, 7, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(7, r1To - 1, 7, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Reverse sequence Short name with capitalized start from Sun');
+
+		// Short name day of the week Upper-registry
+		ws.selectionRange.ranges = [getRange(8, r1, 8, r2)];
+		wsView = getAutoFillRange(wsView, 8, r1To, 8, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(8, r1To - 1, 8, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Reverse sequence Short name Upper-registry start from Sun');
+
+		// Short name day of the week Lower-registry
+		ws.selectionRange.ranges = [getRange(9, r1, 9, r2)];
+		wsView = getAutoFillRange(wsView, 9, r1To, 9, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(9, r1To - 1, 9, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Reverse sequence Short name Lower-registry start from Sun');
+
+		// Short name  day of the week Camel-registry - SuN
+		ws.selectionRange.ranges = [getRange(10, r1, 10, r2)];
+		wsView = getAutoFillRange(wsView, 10, r1To, 10, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(10, r1To - 1, 10, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortCapitalized, 'Case: Reverse sequence Short name Camel-registry - Su. Start from Sun');
+
+		// Short name day of the week Camel-registry - SUn
+		ws.selectionRange.ranges = [getRange(11, r1, 11, r2)];
+		wsView = getAutoFillRange(wsView, 11, r1To, 11, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(11, r1To - 1, 11, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortUpper, 'Case: Reverse sequence Short name Camel-registry - SU. Start from Sun');
+
+		// Short name day of the week Camel-registry - sUn
+		ws.selectionRange.ranges = [getRange(12, r1, 12, r2)];
+		wsView = getAutoFillRange(wsView, 12, r1To, 12, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(12, r1To - 1, 12, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Reverse sequence Short name Camel-registry - sU. Start from Sun');
+
+		// Short name day of the week Camel-registry - suN
+		ws.selectionRange.ranges = [getRange(13, r1, 13 ,r2)];
+		wsView = getAutoFillRange(wsView, 13, r1To, 13, r2To, nHandleDirection, nFillHandleArea);
+		autoFillRange = getRange(13, r1To - 1, 13, r2To);
+		reverseAutofillData(assert, autoFillRange, expectedDataShortLower, 'Case: Reverse sequence Short name Camel-registry - su. Start from Sun');
+
+		clearData(0, 0, 13, 11)
+	});
 
 	QUnit.module("Sheet structure");
 });

@@ -17912,6 +17912,38 @@
 		sFormatedValue = sSlicedValue === sSlicedValue.toLowerCase() ? sValue : sValue[0] + sSlicedValue.toLowerCase();
 		return aTimePeriods.indexOf(sFormatedValue);
 	}
+	function _getRepeatTimePeriod(nRepeat, nPreviousVal, aTimePeriods, sValue) {
+		let bIsSequence = false;
+		let nDiff = 0;
+		let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
+		let nCurrentVal = nIndex;
+
+		if (nPreviousVal) {
+			// Defining is datas has asc sequence like Monday, Tuesday etc or even\odd sequence?
+			if (nIndex === 0 && nPreviousVal === 6) {
+				bIsSequence = true;
+			} else {
+				if (nRepeat > 0) nCurrentVal += 7 * nRepeat;
+				nDiff = nCurrentVal - nPreviousVal;
+				if (nDiff === 1) {
+					bIsSequence = true;
+				}
+			}
+			if (bIsSequence) {
+				return nIndex === 0 ? nRepeat + 1 : nRepeat;
+			} else if (nIndex === 0 || (nIndex === 1 && nPreviousVal >= 6)) {
+				return nRepeat + 1;
+			}
+		}
+
+		return nRepeat;
+	}
+	function _getNumberTimePeriod(aTimePeriods, sValue, nRepeat) {
+		let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
+		nIndex += 7 * nRepeat;
+
+		return nIndex;
+	}
 	function _promoteFromTo(from, wsFrom, to, wsTo, bIsPromote, oCanPromote, bCtrl, bVertical, nIndex) {
 		var wb = wsFrom.workbook;
 		const oDefaultCultureInfo = AscCommon.g_oDefaultCultureInfo;
@@ -18054,6 +18086,9 @@
 			let aInputShortDaysOfWeek = oDefaultCultureInfo.AbbreviatedDayNames.map(function(dayOfWeek) {
 				return dayOfWeek.toLowerCase();
 			});
+			let nPreviousVal = null;
+			let nRepeat = 0;
+			let nRepeatShort = 0;
 			fromRange._foreachNoEmpty(function(oCell, nRow0, nCol0, nRowStart0, nColStart0){
 				if(null != oCell)
 				{
@@ -18102,14 +18137,18 @@
 											// Update array of days of the week based on sValue
 											aTimePeriods = _updateATimePeriod(aInputDaysOfWeek, sValue);
 											// In nVal stores index of day in array
-											nVal = _getIndexATimePeriods(aTimePeriods, sValue);
+											nRepeat = _getRepeatTimePeriod(nRepeat, nPreviousVal, aTimePeriods, sValue);
+											nVal = _getNumberTimePeriod(aTimePeriods, sValue, nRepeat);
 											bIsTimePeriod = true;
 											bDate = true;
+											nPreviousVal = nVal;
 										} else if (aInputShortDaysOfWeek.includes(sValue.toLowerCase())) {
 											aTimePeriods = _updateATimePeriod(aInputShortDaysOfWeek, sValue);
-											nVal = _getIndexATimePeriods(aTimePeriods, sValue);
+											nRepeatShort = _getRepeatTimePeriod(nRepeatShort, nPreviousVal, aTimePeriods, sValue);
+											nVal = _getNumberTimePeriod(aTimePeriods, sValue, nRepeatShort);
 											bIsTimePeriod = true;
 											bDate = true;
+											nPreviousVal = nVal;
 										}
 									}
 								}
