@@ -105,6 +105,7 @@
 		
 		let self = this;
 		
+		let rStyleHidden = null;
 		let rStyle       = null;
 		let overAllCount = 0;
 		let overAllMax   = 10000;  // Не учитываем более 10000 ранов
@@ -113,18 +114,24 @@
 			if (undefined === rStyle || overAllCount >= overAllMax)
 				return true;
 			
-			let check = false;
+			let checkNormal = false;
+			let checkHidden = false;
 			for (let pos = startPos; pos < endPos; ++pos)
 			{
 				let item = run.GetElement(pos);
-				if (item.IsText() || item.IsSpace())
+				if (item.IsText())
 				{
-					check = true;
+					checkNormal = true;
 					++overAllCount;
+					break;
+				}
+				else
+				{
+					checkHidden = true;
 				}
 			}
 			
-			if (check)
+			if (checkNormal)
 			{
 				if (null === rStyle)
 					rStyle = self.GetRStyle(run);
@@ -132,8 +139,14 @@
 					rStyle = undefined;
 			}
 			
+			if (checkHidden && null === rStyleHidden)
+				rStyleHidden = self.GetRStyle(run);
+			
 			return (undefined === rStyle);
 		});
+		
+		if (null === rStyle && null !== rStyleHidden)
+			rStyle = rStyleHidden;
 		
 		this.PStyle = pStyle;
 		this.RStyle = rStyle;
