@@ -6982,8 +6982,12 @@
         }
 		let mergeType = fl.getMergeType();
         let align = c.getAlign();
-        let va = showFormulas ? Asc.c_oAscVAlign.Bottom : align.getAlignVertical();
-        let angle = align.getAngle();
+        let va = align.getAlignVertical();
+		if (va == null && showFormulas) {
+			va = Asc.c_oAscVAlign.Bottom;
+		}
+
+		let angle = align.getAngle();
         let indent = align.getIndent();
 		if (indent < 0) {
 			indent = 0;
@@ -7086,7 +7090,12 @@
         } else {
             str = getValue2Func.call(c);
         }
-        let alignH = showFormulas ? AscCommon.align_Left : align.getAlignHorizontal();
+
+        let alignH = align.getAlignHorizontal();
+		if (alignH == null && showFormulas) {
+			alignH = AscCommon.align_Left;
+		}
+
         let ha = c.getAlignHorizontalByValue(alignH);
         let maxW = fl.wrapText || fl.shrinkToFit || mergeType || asc.isFixedWidthCell(str) ?
           this._calcMaxWidth(col, row, mc) : undefined;
