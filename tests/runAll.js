@@ -55,7 +55,7 @@ const allTests = [
 	'word/styles/styleApplicator.html',
 	'word/plugins/pluginsApi.html',
 	'word/merge-documents/mergeDocuments.html',
-
+	'word/image-smartart-placeholder/smartartImagePlaceholders.html',
 
 	'oform/xml/oformXml.html'
 ];

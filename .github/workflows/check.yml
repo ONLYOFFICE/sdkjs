@@ -47,6 +47,7 @@ jobs:
           node-qunit-puppeteer tests/word/styles/styleApplicator.html
           node-qunit-puppeteer tests/word/plugins/pluginsApi.html
           node-qunit-puppeteer tests/word/merge-documents/mergeDocuments.html
+          node-qunit-puppeteer tests/word/image-smartart-placeholder/smartartImagePlaceholders.html
   builder-tests:
     runs-on: ubuntu-latest
     steps:
