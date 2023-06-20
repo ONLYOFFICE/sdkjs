@@ -10151,6 +10151,17 @@ Because of this, the display is sometimes not correct.
       return 'SmartArt';
     };
 
+	  SmartArt.prototype.getAllRasterImages = function (arrImages)
+	  {
+			const oBgFormat = this.getBg();
+			if (oBgFormat)
+			{
+				if (oBgFormat.fill && oBgFormat.fill.fill && typeof (oBgFormat.fill.fill.RasterImageId) === "string" && oBgFormat.fill.fill.RasterImageId.length > 0)
+					arrImages.push(oBgFormat.fill.fill.RasterImageId);
+			}
+		  CGroupShape.prototype.getAllRasterImages.call(this, arrImages);
+	  };
+
     SmartArt.prototype.hasSmartArt = function (bRetSmartArt) {
       return bRetSmartArt ? this : true;
     }
