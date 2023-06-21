@@ -44,15 +44,9 @@ $(function() {
 	Asc.spreadsheet_api.prototype._onEndLoadSdk = function () {
 		AscCommon.baseEditorsApi.prototype._onEndLoadSdk.call(this);
 	};
-	Asc.spreadsheet_api.prototype.initGlobalObjects = function(wbModel) {
-		AscCommonExcel.g_DefNameWorksheet = new AscCommonExcel.Worksheet(wbModel, -1);
-	};
 	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function() {
 	};
 	AscCommonExcel.WorkbookView.prototype.showWorksheet = function() {
-	};
-	AscCommonExcel.WorkbookView.prototype.getZoom = function() {
-		return 1;
 	};
 	AscCommonExcel.WorkbookView.prototype.changeZoom = function() {
 	};
@@ -67,9 +61,6 @@ $(function() {
 	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function() {
 		this.objectRender = new AscFormat.DrawingObjects();
 	};
-	AscCommonExcel.WorksheetView.prototype.getZoom = function() {
-		return 1;
-	};
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
 		AscFonts.g_fontApplication.Init();
 
@@ -78,6 +69,8 @@ $(function() {
 		this.FontLoader.put_Api(this);
 		this.ImageLoader.put_Api(this);
 		this.FontLoader.SetStandartFonts();
+
+		window.History = AscCommon.History;
 	};
 
 	Asc.spreadsheet_api.prototype.fAfterLoad = function(fonts, callback) {
@@ -94,8 +87,6 @@ $(function() {
 		startTests();
 	};
 
-	AscCommon.CHistory.prototype.Create_NewPoint = function() {
-	};
 
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
@@ -119,6 +110,15 @@ $(function() {
 		wsView.changeWorksheet("update", {reinitRanges: true});
 	}
 
+	function checkUndoRedo(fBefore, fAfter, desc) {
+		fAfter("after_action: " + desc);
+		AscCommon.History.Undo();
+		fBefore("after_undo: " + desc);
+		AscCommon.History.Redo();
+		fAfter("after_redo: " + desc);
+		AscCommon.History.Undo();
+	}
+
 	let wb, wsView, ws;
 	function testShowFormulasOption() {
 		QUnit.test("Test: show formulas option ", function(assert ) {
@@ -134,14 +134,17 @@ $(function() {
 
 			let range = ws.getRange4(0, 0);
 			range.fillData(testData);
-
 			updateView();
 
 			api.asc_setShowFormulas(true);
 
-			updateView();
+			checkUndoRedo(function (_desc) {
+				assert.strictEqual(!!api.asc_getShowFormulas(), false, _desc);
+			}, function (_desc) {
+				assert.strictEqual(!!api.asc_getShowFormulas(), true, _desc);
+			}, "_check show formulas flag");
 
-			assert.strictEqual("1", "1");
+			updateView();
 
 		});
 	}

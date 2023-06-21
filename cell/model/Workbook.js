@@ -5975,11 +5975,15 @@
 			view.showFormulas = value;
 
 			//TODO
-			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetDisplayHeadings);
+			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetShowFormulas);
 			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
 				this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
 			}
 		}
+	};
+	Worksheet.prototype.getShowFormulas = function () {
+		var view = this.sheetViews[0];
+		return view && view.showFormulas;
 	};
 	Worksheet.prototype.getRowsCount=function(){
 		var result = this.nRowsCount;

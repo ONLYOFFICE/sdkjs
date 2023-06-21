@@ -4374,6 +4374,11 @@ var editor;
 		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowFormulas, value);
 	};
 
+	spreadsheet_api.prototype.asc_getShowFormulas = function () {
+		let ws = this.wb.getWorksheet();
+		return ws.model && ws.model.getShowFormulas();
+	};
+
 	spreadsheet_api.prototype.asc_setDate1904 = function (value) {
 		this.wb.setDate1904(value);
 	};
