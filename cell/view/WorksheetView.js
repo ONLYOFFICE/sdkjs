@@ -7092,8 +7092,10 @@
         }
 
         let alignH = align.getAlignHorizontal();
-		if (alignH == null && showFormulas) {
-			alignH = AscCommon.align_Left;
+		if (showFormulas) {
+			if (alignH == null || fl.isNumberFormat) {
+				alignH = AscCommon.align_Left;
+			}
 		}
 
         let ha = c.getAlignHorizontalByValue(alignH);
