@@ -11202,6 +11202,8 @@
         if (bClip) {
             oGraphics.RestoreGrState();
         }
+
+        oSlide.getDrawingDocument().m_oWordControl.DemonstrationManager.CheckWatermarkInternal(oGraphics.m_oContext, oRect);
     };
     CAnimationDrawer.prototype.drawObject = function (oDrawing, oGraphics) {
         var sDrawingId = oDrawing.Get_Id();

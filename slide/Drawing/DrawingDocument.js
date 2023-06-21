@@ -5720,7 +5720,9 @@ function CSlideDrawer()
 			this.m_oWordControl.m_oLogicDocument.DrawPage(slideNum, g);
 		}
 
-		if (this.m_oWordControl.m_oApi.watermarkDraw)
+		if (this.m_oWordControl.m_oApi.watermarkDraw &&
+			!this.m_oWordControl.DemonstrationManager.Mode &&
+			!this.m_oWordControl.m_oDrawingDocument.TransitionSlide.IsPlaying())
 		{
 			this.m_oWordControl.m_oApi.watermarkDraw.Draw(outputCtx,
 				AscCommon.AscBrowser.convertToRetinaValue(_rect.left, true),
