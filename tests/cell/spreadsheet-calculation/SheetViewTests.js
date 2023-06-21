@@ -29,180 +29,128 @@
  * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
  */
+QUnit.config.autostart = false;
+$(function() {
 
-$(function () {
 
-	Asc.spreadsheet_api.prototype._init = function () {
+	Asc.spreadsheet_api.prototype._init = function() {
 		this._loadModules();
 	};
-	Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
-		callback();
+	Asc.spreadsheet_api.prototype.asyncImagesDocumentEndLoaded = function() {
 	};
-	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function () {
+	Asc.spreadsheet_api.prototype.onEndLoadFile = function(fonts, callback) {
+		openDocument();
 	};
-	AscCommonExcel.WorkbookView.prototype._init = function () {
+	Asc.spreadsheet_api.prototype._onEndLoadSdk = function () {
+		AscCommon.baseEditorsApi.prototype._onEndLoadSdk.call(this);
 	};
-	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function () {
+	Asc.spreadsheet_api.prototype.initGlobalObjects = function(wbModel) {
+		AscCommonExcel.g_DefNameWorksheet = new AscCommonExcel.Worksheet(wbModel, -1);
 	};
-	AscCommonExcel.WorkbookView.prototype.showWorksheet = function () {
+	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function() {
 	};
-	AscCommonExcel.WorksheetView.prototype._init = function () {
+	AscCommonExcel.WorkbookView.prototype.showWorksheet = function() {
 	};
-	AscCommonExcel.WorksheetView.prototype._onUpdateFormatTable = function () {
+	AscCommonExcel.WorkbookView.prototype.getZoom = function() {
+		return 1;
 	};
-	AscCommonExcel.WorksheetView.prototype.setSelection = function () {
+	AscCommonExcel.WorkbookView.prototype.changeZoom = function() {
 	};
-	AscCommonExcel.WorksheetView.prototype.draw = function () {
+	AscCommonExcel.WorksheetView.prototype.updateRanges = function() {
 	};
-	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function () {
+	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function() {
 	};
-	AscCommonExcel.WorksheetView.prototype._reinitializeScroll = function () {
+	AscCommonExcel.WorksheetView.prototype.setSelection = function() {
 	};
-	AscCommonExcel.WorksheetView.prototype.getZoom = function () {
+	AscCommonExcel.WorksheetView.prototype.draw = function() {
 	};
-	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
+	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function() {
+		this.objectRender = new AscFormat.DrawingObjects();
 	};
-	Asc.ReadDefTableStyles = function () {
+	AscCommonExcel.WorksheetView.prototype.getZoom = function() {
+		return 1;
+	};
+	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
+		AscFonts.g_fontApplication.Init();
+
+		this.FontLoader  = AscCommon.g_font_loader;
+		this.ImageLoader = AscCommon.g_image_loader;
+		this.FontLoader.put_Api(this);
+		this.ImageLoader.put_Api(this);
+		this.FontLoader.SetStandartFonts();
 	};
 
+	Asc.spreadsheet_api.prototype.fAfterLoad = function(fonts, callback) {
+		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
+			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
+		wb = api.wbModel;
+		wb.handlers.add("getSelectionState", function() {
+			return null;
+		});
+		wsView = api.wb.getWorksheet();
+		ws = api.wbModel.aWorksheets[0];
+
+		startTests();
+	};
+
+	AscCommon.CHistory.prototype.Create_NewPoint = function() {
+	};
 
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
 	});
-	api.FontLoader = {
-		LoadDocumentFonts: function () {
-		}
-	};
+
+	function openDocument(){
+		AscCommon.g_oTableId.init();
+		api._onEndLoadSdk();
+		api.isOpenOOXInBrowser = false;
+		api._openDocument(AscCommon.getEmpty());
+		api._openOnClient();
+	}
+
+	api.HtmlElement = document.createElement("div");
+	var curElem = document.getElementById("editor_sdk");
+	curElem.appendChild(api.HtmlElement);
 	window["Asc"]["editor"] = api;
-	AscCommon.g_oTableId.init();
-	api._onEndLoadSdk();
-	api.isOpenOOXInBrowser = false;
-	api._openDocument(AscCommon.getEmpty());
-	api._openOnClient();
-	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
-	api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
-		api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
-	var wb = api.wbModel;
-	wb.handlers.add("getSelectionState", function () {
-		return null;
-	});
-	wb.handlers.add("getLockDefNameManagerStatus", function () {
-		return true;
-	});
-	api.wb.cellCommentator = new AscCommonExcel.CCellCommentator({
-		model: api.wbModel.aWorksheets[0],
-		collaborativeEditing: null,
-		draw: function () {
-		},
-		handlers: {
-			trigger: function () {
-				return false;
-			}
-		}
-	});
 
-	AscCommonExcel.CCellCommentator.prototype.isLockedComment = function (oComment, callbackFunc) {
-		callbackFunc(true);
-	};
-	AscCommonExcel.CCellCommentator.prototype.drawCommentCells = function () {
-	};
-	AscCommonExcel.CCellCommentator.prototype.ascCvtRatio = function () {
-	};
+	function updateView () {
+		wsView._cleanCache(new Asc.Range(0, 0, wsView.cols.length - 1, wsView.rows.length - 1));
+		wsView.changeWorksheet("update", {reinitRanges: true});
+	}
 
-	var wsView = api.wb.getWorksheet(0);
-	wsView.handlers = api.handlers;
-	wsView.objectRender = new AscFormat.DrawingObjects();
-	var ws = api.wbModel.aWorksheets[0];
+	let wb, wsView, ws;
+	function testShowFormulasOption() {
+		QUnit.test("Test: show formulas option ", function(assert ) {
 
-	var getRange = function (c1, r1, c2, r2) {
-		return new window["Asc"].Range(c1, r1, c2, r2);
-	};
-	const getRangeWithData = function (ws, data) {
-		let range = ws.getRange4(0, 0);
+			let testData = [
+				["=1+1", "test1"],
+				["=2+1", "test2"],
+				["=3+1", "test3"],
+				["=4+1", "test4"],
+				["=5+1", "test5"],
+				["=6+1", "test6"]
+			];
 
-		range.fillData(data);
-		ws.selectionRange.ranges = [getRange(0, 0, 0, 0)];
+			let range = ws.getRange4(0, 0);
+			range.fillData(testData);
 
-		return ws;
-	};
+			updateView();
 
-	const clearData = function (c1, r1, c2, r2) {
-		ws.autoFilters.deleteAutoFilter(getRange(0, 0, 0, 0));
-		ws.removeRows(r1, r2, false);
-		ws.removeCols(c1, c2);
-	};
+			api.asc_setShowFormulas(true);
 
+			updateView();
 
-	QUnit.test("Test: \"show formulas option\"", function (assert) {
-		let testData = [
-			["=1+1", "test1"],
-			["=2+1", "test2"],
-			["=3+1", "test3"],
-			["=4+1", "test4"],
-			["=5+1", "test5"],
-			["=6+1", "test6"]
-		];
+			assert.strictEqual("1", "1");
 
-		let range = ws.getRange4(0, 0);
-		range.fillData(testData);
-		ws.selectionRange.ranges = [getRange(0, 0, 0, 0)];
+		});
+	}
 
-		let test = wsView
+	QUnit.module("Print");
 
-		api.asc_setShowFormulas(true);
+	function startTests() {
+		QUnit.start();
+		testShowFormulasOption();
+	}
 
-
-		/*assert.strictEqual(ws.getRowHidden(1), false, "check filter hidden values");
-		assert.strictEqual(ws.getRowHidden(2), true, "check filter hidden values");
-		assert.strictEqual(ws.getRowHidden(3), true, "check filter hidden values");
-		assert.strictEqual(ws.getRowHidden(4), false, "check filter hidden values");
-		assert.strictEqual(ws.getRowHidden(5), true, "check filter hidden values");
-		assert.strictEqual(ws.getRowHidden(6), false, "check filter hidden values");
-		assert.strictEqual(ws.getRowHidden(7), false, "check filter hidden values");
-		assert.strictEqual(ws.getRowHidden(8), true, "check filter hidden values");
-
-		autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 1, id: null});
-		autoFiltersOptions.values[0].asc_setVisible(false);//hide "44851"
-		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
-		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
-
-		assert.strictEqual(ws.getRowHidden(1), true, "check filter hidden values_2");
-		assert.strictEqual(ws.getRowHidden(2), true, "check filter hidden values_2");
-		assert.strictEqual(ws.getRowHidden(3), true, "check filter hidden values_2");
-		assert.strictEqual(ws.getRowHidden(4), false, "check filter hidden values_2");
-		assert.strictEqual(ws.getRowHidden(5), true, "check filter hidden values_2");
-		assert.strictEqual(ws.getRowHidden(6), true, "check filter hidden values_2");
-		assert.strictEqual(ws.getRowHidden(7), true, "check filter hidden values_2");
-		assert.strictEqual(ws.getRowHidden(8), true, "check filter hidden values_2");
-
-		ws.setRowHidden(false, 0, 8);
-
-		assert.strictEqual(ws.getRowHidden(1), false, "check hidden row");
-		assert.strictEqual(ws.getRowHidden(2), false, "check hidden row");
-		assert.strictEqual(ws.getRowHidden(3), false, "check hidden row");
-		assert.strictEqual(ws.getRowHidden(4), false, "check hidden row");
-		assert.strictEqual(ws.getRowHidden(5), false, "check hidden row");
-		assert.strictEqual(ws.getRowHidden(6), false, "check hidden row");
-		assert.strictEqual(ws.getRowHidden(7), false, "check hidden row");
-		assert.strictEqual(ws.getRowHidden(8), false, "check hidden row");
-
-		autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 1, id: null});
-		autoFiltersOptions.values[0].asc_setVisible(false);//hide "44851"
-		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
-		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
-
-		assert.strictEqual(ws.getRowHidden(1), true, "check filter hidden values_3");
-		assert.strictEqual(ws.getRowHidden(2), true, "check filter hidden values_3");
-		assert.strictEqual(ws.getRowHidden(3), true, "check filter hidden values_3");
-		assert.strictEqual(ws.getRowHidden(4), false, "check filter hidden values_3");
-		assert.strictEqual(ws.getRowHidden(5), true, "check filter hidden values_3");
-		assert.strictEqual(ws.getRowHidden(6), true, "check filter hidden values_3");
-		assert.strictEqual(ws.getRowHidden(7), true, "check filter hidden values_3");
-		assert.strictEqual(ws.getRowHidden(8), true, "check filter hidden values_3");
-
-		//Clearing data of sheet
-		clearData(0, 0, 1, 8);*/
-	});
-
-	QUnit.module("Filters");
 });
