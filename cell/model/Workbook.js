@@ -17912,10 +17912,9 @@
 		sFormatedValue = sSlicedValue === sSlicedValue.toLowerCase() ? sValue : sValue[0] + sSlicedValue.toLowerCase();
 		return aTimePeriods.indexOf(sFormatedValue);
 	}
-	function _getRepeatTimePeriod(nRepeat, nPreviousVal, aTimePeriods, sValue) {
+	function _getRepeatTimePeriod(nRepeat, nPreviousVal, nIndex) {
 		let bIsSequence = false;
 		let nDiff = 0;
-		let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
 		let nCurrentVal = nIndex;
 
 		if (nPreviousVal) {
@@ -17937,12 +17936,6 @@
 		}
 
 		return nRepeat;
-	}
-	function _getNumberTimePeriod(aTimePeriods, sValue, nRepeat) {
-		let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
-		nIndex += 7 * nRepeat;
-
-		return nIndex;
 	}
 	function _promoteFromTo(from, wsFrom, to, wsTo, bIsPromote, oCanPromote, bCtrl, bVertical, nIndex) {
 		var wb = wsFrom.workbook;
@@ -18136,16 +18129,19 @@
 										if (aInputDaysOfWeek.includes(sValue.toLowerCase())) {
 											// Update array of days of the week based on sValue
 											aTimePeriods = _updateATimePeriod(aInputDaysOfWeek, sValue);
-											// In nVal stores index of day in array
-											nRepeat = _getRepeatTimePeriod(nRepeat, nPreviousVal, aTimePeriods, sValue);
-											nVal = _getNumberTimePeriod(aTimePeriods, sValue, nRepeat);
+											let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
+											nRepeat = _getRepeatTimePeriod(nRepeat, nPreviousVal, nIndex);
+											// In nVal stores number of day. It calculates  like
+											// "index from array days of the week + 7 (count days in week) * count of repeat"
+											nVal = nIndex + 7 * nRepeat;
 											bIsTimePeriod = true;
 											bDate = true;
 											nPreviousVal = nVal;
 										} else if (aInputShortDaysOfWeek.includes(sValue.toLowerCase())) {
 											aTimePeriods = _updateATimePeriod(aInputShortDaysOfWeek, sValue);
-											nRepeatShort = _getRepeatTimePeriod(nRepeatShort, nPreviousVal, aTimePeriods, sValue);
-											nVal = _getNumberTimePeriod(aTimePeriods, sValue, nRepeatShort);
+											let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
+											nRepeatShort = _getRepeatTimePeriod(nRepeatShort, nPreviousVal, nIndex);
+											nVal = nIndex + 7 * nRepeatShort;
 											bIsTimePeriod = true;
 											bDate = true;
 											nPreviousVal = nVal;
