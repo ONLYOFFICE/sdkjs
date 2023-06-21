@@ -50,6 +50,8 @@ $(function() {
 	};
 	AscCommonExcel.WorkbookView.prototype.changeZoom = function() {
 	};
+	AscCommonExcel.WorkbookView.prototype.recalculateDrawingObjects = function() {
+	};
 	AscCommonExcel.WorksheetView.prototype.updateRanges = function() {
 	};
 	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function() {
@@ -60,6 +62,11 @@ $(function() {
 	};
 	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function() {
 		this.objectRender = new AscFormat.DrawingObjects();
+	};
+	Asc.spreadsheet_api.prototype.initGlobalObjects = function(wbModel) {
+		AscCommonExcel.g_DefNameWorksheet = new AscCommonExcel.Worksheet(wbModel, -1);
+		AscCommonExcel.g_oUndoRedoWorksheet = new AscCommonExcel.UndoRedoWoorksheet(wbModel);
+		History.init(wbModel);
 	};
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
 		AscFonts.g_fontApplication.Init();
@@ -73,11 +80,13 @@ $(function() {
 		window.History = AscCommon.History;
 	};
 
+
 	Asc.spreadsheet_api.prototype.fAfterLoad = function(fonts, callback) {
 		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		wb = api.wbModel;
+		wb.handlers = new AscCommonExcel.asc_CHandlersList();
 		wb.handlers.add("getSelectionState", function() {
 			return null;
 		});
