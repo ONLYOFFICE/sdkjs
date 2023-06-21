@@ -7137,7 +7137,7 @@
 			}
 		}
 
-        let cto = (mergeType || fl.wrapText || fl.shrinkToFit) ? {
+        let cto = (mergeType || fl.wrapText || fl.shrinkToFit || showFormulas) ? {
             maxWidth: maxW - this._getColumnWidthInner(col) + this._getColumnWidth(col), leftSide: 0, rightSide: 0
         } : this._calcCellTextOffset(col, row, ha, tm.width);
 
