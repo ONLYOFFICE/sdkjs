@@ -4508,6 +4508,12 @@
 	baseEditorsApi.prototype.isFormatPainterOn = function() {
 		return this.formatPainter.isOn();
 	};
+	baseEditorsApi.prototype.isFormatPainterMultiple = function() {
+		return this.formatPainter.isMultiple();
+	};
+	baseEditorsApi.prototype.canTurnOffFormatPainter = function() {
+		return this.isFormatPainterOn() && !this.isFormatPainterMultiple();
+	};
 	baseEditorsApi.prototype.checkFormatPainterData = function() {
 		return this.formatPainter.checkData();
 	};

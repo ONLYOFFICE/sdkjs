@@ -12049,6 +12049,9 @@
 	CFormatPainter.prototype.isOff = function() {
 		return this.state === AscCommon.c_oAscFormatPainterState.kOff;
 	};
+	CFormatPainter.prototype.isMultiple = function() {
+		return this.state === AscCommon.c_oAscFormatPainterState.kMultiple;
+	};
 	CFormatPainter.prototype.toggle = function() {
 		if(this.isOn()) {
 			this.changeState(AscCommon.c_oAscFormatPainterState.kOff);

@@ -10337,7 +10337,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 				this.FinalizeAction();
 			}
 
-			if (this.Api.isFormatPainterOn())
+			if (this.Api.canTurnOffFormatPainter())
 				this.Api.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
 		}
 		else if (true === this.Api.isMarkerFormat && true === this.IsTextSelectionUse())

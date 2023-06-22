@@ -1232,13 +1232,15 @@
 
 				checkFormatPainterOnMouseEvent: function () {
 					let oAPI = this.getEditorApi();
-					if (oAPI.isFormatPainterOn()) {
+					if (oAPI.isFormatPainterOn() ) {
 						let oData = oAPI.getFormatPainterData();
 						if (oData) {
 							if (oData.isDrawingData()) {
 								this.pasteFormattingWithPoint(oData.getDocData());
 								this.resetTracking();
-								oAPI.sendPaintFormatEvent(AscCommon.c_oAscFormatPainterState.kOff);
+								if(oAPI.canTurnOffFormatPainter()) {
+									oAPI.sendPaintFormatEvent(AscCommon.c_oAscFormatPainterState.kOff);
+								}
 								return true;
 							}
 						}

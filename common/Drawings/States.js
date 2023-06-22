@@ -2051,7 +2051,7 @@ TextAddState.prototype =
                 if(oApi.isFormatPainterOn())
                 {
                     this.drawingObjects.paragraphFormatPaste2();
-                    if (oApi.isFormatPainterOn())
+                    if (oApi.canTurnOffFormatPainter())
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
                         if(oPresentation)
