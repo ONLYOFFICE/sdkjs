@@ -11189,10 +11189,10 @@
             return;
         }
         var oGraphics = this.createGraphics(oCanvas, oRect);
-        oGraphics.m_oContext.clearRect(0, 0, oRect.width, oRect.height);
+        oGraphics.m_oContext.clearRect(oRect.x, oRect.y, oRect.w, oRect.h);
         var bClip = false;
         if (oRect.x !== 0 || oRect.y !== 0 ||
-            oRect.width !== oCanvas.width || oRect.height !== oCanvas.height) {
+            oRect.w !== oCanvas.width || oRect.h !== oCanvas.height) {
             oGraphics.SaveGrState();
             oGraphics.AddClipRect(0, 0, this.getSlideWidth(), this.getSlideHeight());
             bClip = true;
