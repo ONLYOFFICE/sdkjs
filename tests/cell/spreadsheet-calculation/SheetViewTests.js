@@ -125,8 +125,6 @@ $(function() {
 		AscCommon.History.Redo();
 		updateView();
 		fAfter("after_redo: " + desc);
-		AscCommon.History.Undo();
-		updateView();
 	}
 
 	let wb, wsView, ws;
@@ -146,22 +144,34 @@ $(function() {
 			range.fillData(testData);
 			updateView();
 
+			//action
 			api.asc_setShowFormulas(true);
+
+			checkUndoRedo(function (_desc) {
+				assert.strictEqual(!!api.asc_getShowFormulas(), false, _desc);
+			}, function (_desc) {
+				assert.strictEqual(!!api.asc_getShowFormulas(), true, _desc);
+			}, "_check show formulas flag");
+
 
 			let defaultColumnWidth = Asc.round(64 * wsView.getRetinaPixelRatio());
 			checkUndoRedo(function (_desc) {
-				assert.strictEqual(!!api.asc_getShowFormulas(), false, _desc);
-
 				assert.strictEqual(wsView.getColumnWidth(0), defaultColumnWidth, _desc + "_column_0_width_");
 				assert.strictEqual(wsView.getColumnWidth(1), defaultColumnWidth, _desc + "_column_1_width_");
 
 			}, function (_desc) {
-				assert.strictEqual(!!api.asc_getShowFormulas(), true, _desc);
-
 				assert.strictEqual(wsView.getColumnWidth(0), defaultColumnWidth * 2, _desc + "_column_0_width_");
 				assert.strictEqual(wsView.getColumnWidth(1), defaultColumnWidth * 2, _desc + "_column_1_width_");
-				
-			}, "_check show formulas flag");
+
+			}, "_check columns width");
+
+			assert.strictEqual(wsView._getCellTextCache(0,0).cellHA, AscCommon.align_Left, "align_horizonal_0_0");
+			assert.strictEqual(wsView._getCellTextCache(1,0).cellHA, AscCommon.align_Left, "align_horizonal_1_0");
+			assert.strictEqual(wsView._getCellTextCache(0,1).cellHA, AscCommon.align_Left, "align_horizonal_0_0");
+			assert.strictEqual(wsView._getCellTextCache(1,1).cellHA, AscCommon.align_Left, "align_horizonal_1_0");
+			assert.strictEqual(wsView._getCellTextCache(0,2).cellHA, AscCommon.align_Left, "align_horizonal_0_0");
+			assert.strictEqual(wsView._getCellTextCache(1,2).cellHA, AscCommon.align_Left, "align_horizonal_1_0");
+
 
 		});
 	}
