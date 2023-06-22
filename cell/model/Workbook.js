@@ -5971,7 +5971,7 @@
 		if (value !== view.showFormulas) {
 			History.Create_NewPoint();
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetShowFormulas,
-				this.getId(), null, new UndoRedoData_FromTo(view.showFormulas, value));
+				this.getId(), new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromTo(view.showFormulas, value));
 			view.showFormulas = value;
 
 			//TODO

@@ -76,8 +76,6 @@ $(function() {
 		this.FontLoader.put_Api(this);
 		this.ImageLoader.put_Api(this);
 		this.FontLoader.SetStandartFonts();
-
-		window.History = AscCommon.History;
 	};
 
 
@@ -122,10 +120,13 @@ $(function() {
 	function checkUndoRedo(fBefore, fAfter, desc) {
 		fAfter("after_action: " + desc);
 		AscCommon.History.Undo();
+		updateView();
 		fBefore("after_undo: " + desc);
 		AscCommon.History.Redo();
+		updateView();
 		fAfter("after_redo: " + desc);
 		AscCommon.History.Undo();
+		updateView();
 	}
 
 	let wb, wsView, ws;
@@ -147,18 +148,25 @@ $(function() {
 
 			api.asc_setShowFormulas(true);
 
+			let defaultColumnWidth = Asc.round(64 * wsView.getRetinaPixelRatio());
 			checkUndoRedo(function (_desc) {
 				assert.strictEqual(!!api.asc_getShowFormulas(), false, _desc);
+
+				assert.strictEqual(wsView.getColumnWidth(0), defaultColumnWidth, _desc + "_column_0_width_");
+				assert.strictEqual(wsView.getColumnWidth(1), defaultColumnWidth, _desc + "_column_1_width_");
+
 			}, function (_desc) {
 				assert.strictEqual(!!api.asc_getShowFormulas(), true, _desc);
-			}, "_check show formulas flag");
 
-			updateView();
+				assert.strictEqual(wsView.getColumnWidth(0), defaultColumnWidth * 2, _desc + "_column_0_width_");
+				assert.strictEqual(wsView.getColumnWidth(1), defaultColumnWidth * 2, _desc + "_column_1_width_");
+				
+			}, "_check show formulas flag");
 
 		});
 	}
 
-	QUnit.module("Print");
+	QUnit.module("Sheet view");
 
 	function startTests() {
 		QUnit.start();
