@@ -167,12 +167,10 @@ $(function() {
 
 			assert.strictEqual(wsView._getCellTextCache(0,0).cellHA, AscCommon.align_Left, "align_horizonal_0_0");
 			assert.strictEqual(wsView._getCellTextCache(1,0).cellHA, AscCommon.align_Left, "align_horizonal_1_0");
-			assert.strictEqual(wsView._getCellTextCache(0,1).cellHA, AscCommon.align_Left, "align_horizonal_0_0");
-			assert.strictEqual(wsView._getCellTextCache(1,1).cellHA, AscCommon.align_Left, "align_horizonal_1_0");
-			assert.strictEqual(wsView._getCellTextCache(0,2).cellHA, AscCommon.align_Left, "align_horizonal_0_0");
-			assert.strictEqual(wsView._getCellTextCache(1,2).cellHA, AscCommon.align_Left, "align_horizonal_1_0");
-
-
+			assert.strictEqual(wsView._getCellTextCache(0,1).cellHA, AscCommon.align_Left, "align_horizonal_0_1");
+			assert.strictEqual(wsView._getCellTextCache(1,1).cellHA, AscCommon.align_Left, "align_horizonal_1_1");
+			assert.strictEqual(wsView._getCellTextCache(0,2).cellHA, AscCommon.align_Left, "align_horizonal_0_2");
+			assert.strictEqual(wsView._getCellTextCache(1,2).cellHA, AscCommon.align_Left, "align_horizonal_1_2");
 		});
 	}
 
