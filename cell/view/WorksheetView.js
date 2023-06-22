@@ -540,7 +540,7 @@
 	WorksheetView.prototype._initWorksheetDefaultWidth = function () {
 		// Теперь рассчитываем число px
 		this.defaultColWidthChars = this.model.charCountToModelColWidth(this.model.getBaseColWidth());
-		this.defaultColWidthPx = this.model.modelColWidthToColWidth(this.defaultColWidthChars)/* * 2*/;
+		this.defaultColWidthPx = this.model.modelColWidthToColWidth(this.defaultColWidthChars);
 		// Делаем кратным 8 (http://support.microsoft.com/kb/214123)
 		this.defaultColWidthPx = asc_ceil(this.defaultColWidthPx / 8) * 8;
 		this.defaultColWidthChars = this.model.colWidthToCharCount(this.defaultColWidthPx);
@@ -1020,15 +1020,14 @@
         return this;
     };
 
-    WorksheetView.prototype.getZoom = function (test) {
+    WorksheetView.prototype.getZoom = function (checkShowFormulasZoom) {
 		let showFormulasKf = 1;
-		if (test) {
+		if (checkShowFormulasZoom) {
 			let viewSettings = this.model.getSheetView();
 			if (viewSettings && viewSettings.showFormulas) {
 				showFormulasKf = 2;
 			}
 		}
-
     	return this.drawingCtx.getZoom()* showFormulasKf;
     };
 
@@ -6958,12 +6957,12 @@
         }
 
 
-		let showFormulas = false;
-		let viewSettings = this.model.getSheetView();
-		if (viewSettings && viewSettings.showFormulas) {
-			showFormulas = true;
-		}
-		let getValue2Func = showFormulas ? c.getValueForEdit2 : c.getValue2;
+        let showFormulas = false;
+        let viewSettings = this.model.getSheetView();
+        if (viewSettings && viewSettings.showFormulas) {
+            showFormulas = true;
+        }
+        let getValue2Func = showFormulas ? c.getValueForEdit2 : c.getValue2;
 
         let str, tm, strCopy;
 
@@ -6980,12 +6979,12 @@
                 return mc.c2;
             }
         }
-		let mergeType = fl.getMergeType();
+        let mergeType = fl.getMergeType();
         let align = c.getAlign();
         let va = align.getAlignVertical();
-		if (va == null && showFormulas) {
-			va = Asc.c_oAscVAlign.Bottom;
-		}
+        if (va == null && showFormulas) {
+            va = Asc.c_oAscVAlign.Bottom;
+        }
 
 		let angle = align.getAngle();
         let indent = align.getIndent();
@@ -7092,11 +7091,11 @@
         }
 
         let alignH = align.getAlignHorizontal();
-		if (showFormulas) {
-			if (alignH == null || fl.isNumberFormat) {
-				alignH = AscCommon.align_Left;
-			}
-		}
+        if (showFormulas) {
+            if (alignH == null || fl.isNumberFormat) {
+            	alignH = AscCommon.align_Left;
+            }
+        }
 
         let ha = c.getAlignHorizontalByValue(alignH);
         let maxW = fl.wrapText || fl.shrinkToFit || mergeType || asc.isFixedWidthCell(str) ?
