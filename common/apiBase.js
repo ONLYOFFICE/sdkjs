@@ -1416,7 +1416,7 @@
 			return;
 		}
 		let api = this;
-		let localSize = History.GetLocalChangesSize ? History.GetLocalChangesSize() : 0;
+		let localSize = AscCommon.History.GetLocalChangesSize ? AscCommon.History.GetLocalChangesSize() : 0;
 		let serverSize = api.CoAuthoringApi.get_serverChangesSize();
 		if (localSize + serverSize > api.maxChangesSize) {
 			api.asc_stopSaving();
