@@ -7444,6 +7444,11 @@ CDocument.prototype.Internal_GetContentPosByXY = function(X, Y, nCurPage, Column
 };
 CDocument.prototype.RemoveSelection = function(bNoCheckDrawing)
 {
+	// Не отправляем во время действия, потому что во время некоторых действий это может происходить по нескольку раз
+	// Если появится необходимость, то это надо обработать на окончании действия
+	if (this.IsTextSelectionUse() && !this.Action.Start)
+		this.private_OnSelectionCancel();
+	
 	this.ResetWordSelection();
 	this.Controller.RemoveSelection(bNoCheckDrawing);
 };
@@ -16094,6 +16099,10 @@ CDocument.prototype.GetColumnSize = function()
 CDocument.prototype.private_OnSelectionEnd = function()
 {
 	this.Api.sendEvent("asc_onSelectionEnd");
+};
+CDocument.prototype.private_OnSelectionCancel = function()
+{
+	this.Api.sendEvent("asc_onSelectionCancel");
 };
 CDocument.prototype.AddPageCount = function()
 {
