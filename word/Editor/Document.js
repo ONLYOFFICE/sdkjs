@@ -1817,6 +1817,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
         if (DrawingDocument)
         	DrawingDocument.m_oLogicDocument = this;
     }
+	this.MainDocument = !!isMainLogicDocument;
     //__________________________________________________________________________________________________________________
 
     this.Id = this.IdCounter.Get_NewId();
@@ -8559,6 +8560,9 @@ CDocument.prototype.IsInContentControl = function(X, Y, nPageAbs)
 };
 CDocument.prototype.IsUseInDocument = function(Id)
 {
+	if (!this.MainDocument)
+		return false;
+	
 	if (undefined === Id || null === Id)
 		return true;
 
