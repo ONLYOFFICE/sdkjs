@@ -3858,15 +3858,26 @@ function CThumbnailsManager()
 					oThis.m_oWordControl.m_oApi.sync_ContextMenuCallback(_data);
 				}
 				
-				// нажатие на текущую звездочку, кнопку показа анимации слайда
-				if (global_mouseEvent.Button == 0 && oThis.m_oWordControl.m_oLogicDocument.CanStartAnimationPreview() && oThis.m_arrPages[pos.Page].starCords) 
+				// нажатие на текущую звездочку, кнопку предпросмотра анимаций, перехода слайда
+				if (global_mouseEvent.Button == 0 && oThis.m_arrPages[pos.Page].animateLabelRect) 
 				{
-					let starCords = oThis.m_arrPages[pos.Page].starCords;
-					if (pos.X >= starCords.minX && pos.X <= starCords.maxX && pos.Y >= starCords.minY && pos.Y <= starCords.maxY) {
-						if (oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview()) 
+					let animateLabelRect = oThis.m_arrPages[pos.Page].animateLabelRect;
+					if (pos.X >= animateLabelRect.minX && pos.X <= animateLabelRect.maxX && pos.Y >= animateLabelRect.minY && pos.Y <= animateLabelRect.maxY) {
+						if (oThis.TransitionSlide) {
+							console.log("test1", oThis.TransitionSlide.IsPlaying()) // false
+							console.log("test1", oThis.m_oWordControl.m_oDrawingDocument.TransitionSlide.IsPlaying()) // false
+							
+						}
+						console.log(oThis.m_oWordControl.m_oLogicDocument.Slides[0].transition)
+						if (oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview()) { // сюда добавить бы такуюже проверку для Transition
+							console.log("stop")
 							oThis.m_oWordControl.m_oApi.asc_StopAnimationPreview();
-						else 
-							oThis.m_oWordControl.m_oApi.asc_StartAnimationPreview();
+						}
+						else {
+							console.log("start")
+							oThis.TransitionSlide = oThis.m_oWordControl.m_oApi.SlideTransitionPlay(function(){ oThis.m_oWordControl.m_oApi.asc_StartAnimationPreview() });
+							console.log("test2", oThis.TransitionSlide.IsPlaying()) // true
+						}
 					}
 				}
 
@@ -4568,7 +4579,9 @@ function CThumbnailsManager()
 				let nY = _bounds.b + 3;
 				let oColor = text_color;
 				let resCords = this.DrawAnimLabel(g, nX, nY, oColor);
-				page.starCords = resCords
+				page.animateLabelRect = resCords
+			} else {
+				delete page.animateLabelRect;
 			}
 		}
 
