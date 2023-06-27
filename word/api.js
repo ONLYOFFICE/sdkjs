@@ -7998,9 +7998,7 @@ background-repeat: no-repeat;\
 				else
 				{
 					Document.RecalculateAllTables();
-					var data = {All : true};
-					Document.DrawingObjects.recalculate_(data);
-					Document.DrawingObjects.recalculateText_(data);
+					Document.DrawingObjects.recalculate();
 
 					if (!this.WordControl.IsReaderMode())
 						this.ChangeReaderMode();

@@ -3204,8 +3204,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 
     History.Reset_RecalcIndex();
 
-    this.DrawingObjects.recalculate_(RecalcData.Drawings);
-    this.DrawingObjects.recalculateText_(RecalcData.Drawings);
+    this.DrawingObjects.recalculate(RecalcData.Drawings);
 
     // 1. Пересчитываем все автофигуры, которые нужно пересчитать. Изменения в них ни на что не влияют.
     for (var GraphIndex = 0; GraphIndex < RecalcData.Flow.length; GraphIndex++)

@@ -85,8 +85,6 @@ function CGraphicObjects(document, drawingDocument, api)
     this.urlMap = [];
     this.recalcMap = {};
 
-    this.recalculateMap = {};
-
     this.selectedObjects = [];
     this.selection =
     {
@@ -595,92 +593,50 @@ CGraphicObjects.prototype =
         }, this, []);
 
     },
-
-    recalculate_: function(data)
-    {
-        if(data.All)
-        {
-            for(let nDrawing = 0; nDrawing < this.drawingObjects.length; ++nDrawing)
-            {
-                let oParaDrawing = this.drawingObjects[nDrawing];
-                if(oParaDrawing)
-                {
-                    let oSp = oParaDrawing.GraphicObj;
-                    if(oSp)
-                    {
-                        if(oSp.recalcText)
-                        {
-                            oSp.recalcText();
-                        }
-                        if(oSp.handleUpdateExtents)
-                        {
-                            oSp.handleUpdateExtents();
-                        }
-                        oSp.recalculate();
-                    }
-                }
-            }
-            for(let nDrawing = 0; nDrawing < this.drawingObjects.length; ++nDrawing)
-            {
-                let oParaDrawing = this.drawingObjects[nDrawing];
-                if(oParaDrawing)
-                {
-                    let oSp = oParaDrawing.GraphicObj;
-                    if(oSp)
-                    {
-                        if(oSp.recalculateText)
-                        {
-                            oSp.recalculateText();
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            let oDrawingsMap = data.Map;
-            for(let sId in oDrawingsMap)
-            {
-                if(oDrawingsMap.hasOwnProperty(sId))
-                {
-                    oDrawingsMap[sId].recalculate();
-                }
-            }
-        }
-    },
-
-    recalculateText_: function(data)
-    {
-        if(data.All)
-        {
-            //TODO
-        }
-        else
-        {
-            let oDrawingsMap = data.Map;
-            for(let sId in oDrawingsMap)
-            {
-                if(oDrawingsMap.hasOwnProperty(sId))
-                {
-                    let oDrawing = oDrawingsMap[sId];
-                    if(oDrawing.recalculateText)
-                    {
-                        oDrawing.recalculateText();
-                    }
-                }
-            }
-        }
-    },
-
-    recalculate: function()
-    {
-        for(var key in this.recalculateMap)
-        {
-            if(this.recalculateMap.hasOwnProperty(key))
-                this.recalculateMap[key].recalculate();
-        }
-        this.recalculateMap = {};
-    },
+	
+	recalculateAll : function()
+	{
+		for (let iDrawing = 0; iDrawing < this.drawingObjects.length; ++iDrawing)
+		{
+			let drawing = this.drawingObjects[iDrawing];
+			let shape   = drawing ? drawing.GraphicObj : null;
+			if (!shape)
+				continue;
+			
+			if (shape.recalcText)
+				shape.recalcText();
+			
+			if (shape.handleUpdateExtents)
+				shape.handleUpdateExtents();
+			
+			shape.recalculate();
+			
+			if (shape.recalculateText)
+				shape.recalculateText();
+		}
+	},
+	
+	recalculate : function(data)
+	{
+		if (!data || data.All || !data.Map)
+			return this.recalculateAll();
+		
+		let shapeMap = data.Map;
+		for (let id in shapeMap)
+		{
+			if (!shapeMap.hasOwnProperty(id))
+				continue;
+			
+			let shape = shapeMap[id];
+			if (!shape.IsUseInDocument())
+				continue;
+			
+			shape.recalculate();
+			
+			if (shape.recalculateText)
+				shape.recalculateText();
+		}
+	},
 
 
     selectObject: DrawingObjectsController.prototype.selectObject,
