@@ -3857,6 +3857,18 @@ function CThumbnailsManager()
 					_data.Y_abs = global_mouseEvent.Y - ((oThis.m_oWordControl.m_oThumbnails.AbsolutePosition.T * g_dKoef_mm_to_pix) >> 0) - oThis.m_oWordControl.Y;
 					oThis.m_oWordControl.m_oApi.sync_ContextMenuCallback(_data);
 				}
+				
+				// нажатие на текущую звездочку, кнопку показа анимации слайда
+				if (global_mouseEvent.Button == 0 && oThis.m_oWordControl.m_oLogicDocument.CanStartAnimationPreview() && oThis.m_arrPages[pos.Page].starCords) 
+				{
+					let starCords = oThis.m_arrPages[pos.Page].starCords;
+					if (pos.X >= starCords.minX && pos.X <= starCords.maxX && pos.Y >= starCords.minY && pos.Y <= starCords.maxY) {
+						if (oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview()) 
+							oThis.m_oWordControl.m_oApi.asc_StopAnimationPreview();
+						else 
+							oThis.m_oWordControl.m_oApi.asc_StartAnimationPreview();
+					}
+				}
 
 				return false;
 			}
@@ -4448,7 +4460,7 @@ function CThumbnailsManager()
 		oCtx.lineTo(fCX(10.5), fCY(4));
 		oCtx.closePath();
 		oCtx.fill();
-
+		
 		oCtx.beginPath();
 		oCtx.moveTo(fCX(6), fCY(5))
 		oCtx.lineTo(fCX(9), fCY(5));
@@ -4468,6 +4480,7 @@ function CThumbnailsManager()
 		oCtx.fill();
 		oCtx.beginPath();
 		oGraphics.RestoreGrState();
+		return {maxX: fCX(16), minX: fCX(4), maxY: fCY(15), minY: fCY(4)}
 	};
 
 	this.OnPaint = function()
@@ -4554,7 +4567,8 @@ function CThumbnailsManager()
 				let nX = (_bounds.x + _bounds.r) / 2 - AscCommon.AscBrowser.convertToRetinaValue(9.5, true);
 				let nY = _bounds.b + 3;
 				let oColor = text_color;
-				this.DrawAnimLabel(g, nX, nY, oColor);
+				let resCords = this.DrawAnimLabel(g, nX, nY, oColor);
+				page.starCords = resCords
 			}
 		}
 
