@@ -3838,8 +3838,24 @@ function CThumbnailsManager()
 
 			if (oThis.m_arrPages[pos.Page].IsSelected)
 			{
-				oThis.SelectPageEnabled = false;
-				oThis.m_oWordControl.GoToPage(pos.Page);
+				if (oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview() || (oThis.TransitionSlide && oThis.TransitionSlide.IsPlaying())) 
+				{
+					oThis.SelectPageEnabled = false;
+					oThis.m_oWordControl.GoToPage(pos.Page);
+					oThis.m_oWordControl.m_oApi.asc_StopAnimationPreview();
+				} else {
+					// нажатие на текущую звездочку, кнопку предпросмотра анимаций, перехода слайда
+					if (global_mouseEvent.Button == 0 && oThis.m_arrPages[pos.Page].animateLabelRect) 
+					{
+						let animateLabelRect = oThis.m_arrPages[pos.Page].animateLabelRect;
+						if (pos.X >= animateLabelRect.minX && pos.X <= animateLabelRect.maxX && pos.Y >= animateLabelRect.minY && pos.Y <= animateLabelRect.maxY) {
+							if (!(oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview() || (oThis.TransitionSlide && oThis.TransitionSlide.IsPlaying()))) {
+								oThis.TransitionSlide = oThis.m_oWordControl.m_oApi.SlideTransitionPlay(function(){ oThis.m_oWordControl.m_oApi.asc_StartAnimationPreview() });
+							}
+						}
+					}
+				}
+				
 				oThis.SelectPageEnabled = true;
 
 				if (oThis.m_oWordControl.m_oNotesApi.IsEmptyDraw)
@@ -3856,29 +3872,6 @@ function CThumbnailsManager()
 					_data.X_abs = global_mouseEvent.X - ((oThis.m_oWordControl.m_oThumbnails.AbsolutePosition.L * g_dKoef_mm_to_pix) >> 0) - oThis.m_oWordControl.X;
 					_data.Y_abs = global_mouseEvent.Y - ((oThis.m_oWordControl.m_oThumbnails.AbsolutePosition.T * g_dKoef_mm_to_pix) >> 0) - oThis.m_oWordControl.Y;
 					oThis.m_oWordControl.m_oApi.sync_ContextMenuCallback(_data);
-				}
-				
-				// нажатие на текущую звездочку, кнопку предпросмотра анимаций, перехода слайда
-				if (global_mouseEvent.Button == 0 && oThis.m_arrPages[pos.Page].animateLabelRect) 
-				{
-					let animateLabelRect = oThis.m_arrPages[pos.Page].animateLabelRect;
-					if (pos.X >= animateLabelRect.minX && pos.X <= animateLabelRect.maxX && pos.Y >= animateLabelRect.minY && pos.Y <= animateLabelRect.maxY) {
-						if (oThis.TransitionSlide) {
-							console.log("test1", oThis.TransitionSlide.IsPlaying()) // false
-							console.log("test1", oThis.m_oWordControl.m_oDrawingDocument.TransitionSlide.IsPlaying()) // false
-							
-						}
-						console.log(oThis.m_oWordControl.m_oLogicDocument.Slides[0].transition)
-						if (oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview()) { // сюда добавить бы такуюже проверку для Transition
-							console.log("stop")
-							oThis.m_oWordControl.m_oApi.asc_StopAnimationPreview();
-						}
-						else {
-							console.log("start")
-							oThis.TransitionSlide = oThis.m_oWordControl.m_oApi.SlideTransitionPlay(function(){ oThis.m_oWordControl.m_oApi.asc_StartAnimationPreview() });
-							console.log("test2", oThis.TransitionSlide.IsPlaying()) // true
-						}
-					}
 				}
 
 				return false;
@@ -3897,7 +3890,18 @@ function CThumbnailsManager()
 			oThis.SelectPageEnabled = false;
 			oThis.m_oWordControl.GoToPage(pos.Page);
 			oThis.SelectPageEnabled = true;
-
+			oThis.m_oWordControl.m_oApi.asc_StopAnimationPreview();
+			// нажатие на текущую звездочку, кнопку предпросмотра анимаций, перехода слайда
+			if (global_mouseEvent.Button == 0 && oThis.m_arrPages[pos.Page].animateLabelRect) 
+			{
+				let animateLabelRect = oThis.m_arrPages[pos.Page].animateLabelRect;
+				if (pos.X >= animateLabelRect.minX && pos.X <= animateLabelRect.maxX && pos.Y >= animateLabelRect.minY && pos.Y <= animateLabelRect.maxY) {
+					if (!(oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview() || (oThis.TransitionSlide && oThis.TransitionSlide.IsPlaying()))) {
+						oThis.TransitionSlide = oThis.m_oWordControl.m_oApi.SlideTransitionPlay(function(){ oThis.m_oWordControl.m_oApi.asc_StartAnimationPreview() });
+					}
+				}
+			}
+			
 			oThis.ShowPage(pos.Page);
 		}
 
