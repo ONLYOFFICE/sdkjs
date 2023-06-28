@@ -3724,7 +3724,7 @@ function CThumbnailsManager()
 			oThis.m_oWordControl.m_oApi.checkInterfaceElementBlur();
 			oThis.m_oWordControl.m_oApi.checkLastWork();
 		}
-
+		
 		AscCommon.stopEvent(e);
 
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
@@ -3838,25 +3838,28 @@ function CThumbnailsManager()
 
 			if (oThis.m_arrPages[pos.Page].IsSelected)
 			{
-				if (oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview() || (oThis.TransitionSlide && oThis.TransitionSlide.IsPlaying())) 
+				oThis.isStartedAnimPreview = (oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview() || (oThis.TransitionSlide && oThis.TransitionSlide.IsPlaying()))
+
+				if (global_mouseEvent.Button == 0 && oThis.m_arrPages[pos.Page].animateLabelRect) // click on the current star, preview animation button, slide transition
 				{
-					oThis.SelectPageEnabled = false;
-					oThis.m_oWordControl.GoToPage(pos.Page);
-					oThis.m_oWordControl.m_oApi.asc_StopAnimationPreview();
-				} else {
-					// нажатие на текущую звездочку, кнопку предпросмотра анимаций, перехода слайда
-					if (global_mouseEvent.Button == 0 && oThis.m_arrPages[pos.Page].animateLabelRect) 
+					let animateLabelRect = oThis.m_arrPages[pos.Page].animateLabelRect;
+					if (pos.X >= animateLabelRect.minX && pos.X <= animateLabelRect.maxX && pos.Y >= animateLabelRect.minY && pos.Y <= animateLabelRect.maxY) 
+						oThis.isMouseDownOnAnimPreview = true
+					else 
+						oThis.isMouseDownOnAnimPreview = false
+				}
+
+				oThis.SelectPageEnabled = false;
+				oThis.m_oWordControl.GoToPage(pos.Page);
+				oThis.SelectPageEnabled = true;
+				
+				if (!oThis.isStartedAnimPreview)
+				{
+					if (oThis.isMouseDownOnAnimPreview) 
 					{
-						let animateLabelRect = oThis.m_arrPages[pos.Page].animateLabelRect;
-						if (pos.X >= animateLabelRect.minX && pos.X <= animateLabelRect.maxX && pos.Y >= animateLabelRect.minY && pos.Y <= animateLabelRect.maxY) {
-							if (!(oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview() || (oThis.TransitionSlide && oThis.TransitionSlide.IsPlaying()))) {
-								oThis.TransitionSlide = oThis.m_oWordControl.m_oApi.SlideTransitionPlay(function(){ oThis.m_oWordControl.m_oApi.asc_StartAnimationPreview() });
-							}
-						}
+						oThis.TransitionSlide = oThis.m_oWordControl.m_oApi.SlideTransitionPlay(function(){ oThis.m_oWordControl.m_oApi.asc_StartAnimationPreview() });
 					}
 				}
-				
-				oThis.SelectPageEnabled = true;
 
 				if (oThis.m_oWordControl.m_oNotesApi.IsEmptyDraw)
 				{
@@ -3887,19 +3890,24 @@ function CThumbnailsManager()
 
 			oThis.OnUpdateOverlay();
 
+			oThis.isStartedAnimPreview = (oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview() || (oThis.TransitionSlide && oThis.TransitionSlide.IsPlaying()))
+
+			if (global_mouseEvent.Button == 0 && oThis.m_arrPages[pos.Page].animateLabelRect) // click on the current star, preview animation button, slide transition
+			{
+				let animateLabelRect = oThis.m_arrPages[pos.Page].animateLabelRect;
+				if (pos.X >= animateLabelRect.minX && pos.X <= animateLabelRect.maxX && pos.Y >= animateLabelRect.minY && pos.Y <= animateLabelRect.maxY) 
+					oThis.isMouseDownOnAnimPreview = true
+				else 
+					oThis.isMouseDownOnAnimPreview = false
+			}
+
 			oThis.SelectPageEnabled = false;
 			oThis.m_oWordControl.GoToPage(pos.Page);
 			oThis.SelectPageEnabled = true;
-			oThis.m_oWordControl.m_oApi.asc_StopAnimationPreview();
-			// нажатие на текущую звездочку, кнопку предпросмотра анимаций, перехода слайда
-			if (global_mouseEvent.Button == 0 && oThis.m_arrPages[pos.Page].animateLabelRect) 
+
+			if (oThis.isMouseDownOnAnimPreview) 
 			{
-				let animateLabelRect = oThis.m_arrPages[pos.Page].animateLabelRect;
-				if (pos.X >= animateLabelRect.minX && pos.X <= animateLabelRect.maxX && pos.Y >= animateLabelRect.minY && pos.Y <= animateLabelRect.maxY) {
-					if (!(oThis.m_oWordControl.m_oLogicDocument.IsStartedPreview() || (oThis.TransitionSlide && oThis.TransitionSlide.IsPlaying()))) {
-						oThis.TransitionSlide = oThis.m_oWordControl.m_oApi.SlideTransitionPlay(function(){ oThis.m_oWordControl.m_oApi.asc_StartAnimationPreview() });
-					}
-				}
+				oThis.TransitionSlide = oThis.m_oWordControl.m_oApi.SlideTransitionPlay(function(){ oThis.m_oWordControl.m_oApi.asc_StartAnimationPreview() });
 			}
 			
 			oThis.ShowPage(pos.Page);
@@ -3936,7 +3944,7 @@ function CThumbnailsManager()
 			return;
 		}
 
-		if (oThis.IsMouseDownTrack)
+		if (oThis.IsMouseDownTrack && !oThis.isMouseDownOnAnimPreview)
 		{
 			// это трек для перекидывания слайдов
 			if (oThis.IsMouseDownTrackSimple && !oThis.m_oWordControl.m_oApi.isViewMode)
@@ -4064,7 +4072,7 @@ function CThumbnailsManager()
 			//oThis.SelectPageEnabled = false;
 			//oThis.m_oWordControl.GoToPage(oThis.MouseDownTrackPage);
 			//oThis.SelectPageEnabled = true;
-		} else
+		} else if (!oThis.isMouseDownOnAnimPreview)
 		{
 			// это трек
 			oThis.MouseDownTrackPosition = oThis.ConvertCoords2(global_mouseEvent.X, global_mouseEvent.Y);
