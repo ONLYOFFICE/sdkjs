@@ -7766,7 +7766,7 @@ background-repeat: no-repeat;\
 			this.checkChangesSize();
 		}
 	};
-	asc_docs_api.prototype.SlideTransitionPlay   = function(callback)
+	asc_docs_api.prototype.SlideTransitionPlay   = function(endCallback)
 	{
 		var _count = this.WordControl.m_oDrawingDocument.SlidesCount;
 		var _cur   = this.WordControl.m_oDrawingDocument.SlideCurrent;
@@ -7779,7 +7779,7 @@ background-repeat: no-repeat;\
 		_tr.Param    = _transition.TransitionOption;
 		_tr.Duration = _transition.TransitionDuration;
 
-		_tr.Start(true, callback);
+		_tr.Start(true, endCallback);
 		return _tr;
 	};
 
