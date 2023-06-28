@@ -9865,7 +9865,7 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
-	function loadSmartArtBinary(fOnError) {
+	function loadSmartArtBinary(fOnSuccess, fOnError) {
 		if (window["NATIVE_EDITOR_ENJINE"]) {
 			return;
 		}
@@ -9886,6 +9886,7 @@
 					const nPosition = oFileStream.GetULong();
 					AscCommon.g_oBinarySmartArts.shifts[nType] = nPosition;
 				}
+				fOnSuccess && fOnSuccess();
 			} else {
 				fOnError(httpRequest);
 			}
