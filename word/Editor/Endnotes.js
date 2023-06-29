@@ -742,37 +742,26 @@ CEndnotesController.prototype.EndSelection = function(X, Y, nPageAbs, oMouseEven
 	var sEndId   = this.Selection.End.Endnote.GetId();
 
 	// Очищаем старый селект везде кроме начальной сноски
-	for (var sEndnoteId in this.Selection.Endnotes)
+	for (let sEndnoteId in this.Selection.Endnotes)
 	{
 		if (sEndnoteId !== sStartId)
 			this.Selection.Endnotes[sEndnoteId].RemoveSelection();
 	}
 
-	// Новый селект
 	if (this.Selection.Start.Endnote !== this.Selection.End.Endnote)
 	{
-		if (this.Selection.Start.Page > this.Selection.End.Page
-			|| (this.Selection.Start.Page === this.Selection.End.Page
-				&& (this.Selection.Start.Section > this.Selection.End.Section
-					|| (this.Selection.Start.Section === this.Selection.End.Section
-						&& (this.Selection.Start.Column > this.Selection.End.Column
-							|| (this.Selection.Start.Column === this.Selection.End.Column
-								&& this.Selection.Start.Index > this.Selection.End.Index))))))
-		{
-			this.Selection.Start.Endnote.Selection_SetEnd(-MEASUREMENT_MAX_MM_VALUE, -MEASUREMENT_MAX_MM_VALUE, 0, oMouseEvent);
-			this.Selection.End.Endnote.Selection_SetStart(MEASUREMENT_MAX_MM_VALUE, MEASUREMENT_MAX_MM_VALUE, this.Selection.End.Endnote.Pages.length - 1, oMouseEvent);
-			this.Selection.Direction = -1;
-		}
-		else
-		{
-			this.Selection.Start.Endnote.Selection_SetEnd(MEASUREMENT_MAX_MM_VALUE, MEASUREMENT_MAX_MM_VALUE, this.Selection.Start.Endnote.Pages.length - 1, oMouseEvent);
-			this.Selection.End.Endnote.Selection_SetStart(-MEASUREMENT_MAX_MM_VALUE, -MEASUREMENT_MAX_MM_VALUE, 0, oMouseEvent);
-			this.Selection.Direction = 1;
-		}
+		this.Selection.Direction = this.private_GetSelectionDirection();
+		
+		this.Selection.Start.Endnote.SetSelectionUse(true);
+		this.Selection.Start.Endnote.SetSelectionToBeginEnd(false, this.Selection.Direction < 0);
+		
+		this.Selection.End.Endnote.SetSelectionUse(true);
+		this.Selection.End.Endnote.SetSelectionToBeginEnd(true, this.Selection.Direction > 0);
+		
 		this.Selection.End.Endnote.Selection_SetEnd(X, Y, this.Selection.End.EndnotePageIndex, oMouseEvent);
-
+		
 		var oRange = this.private_GetEndnotesRange(this.Selection.Start, this.Selection.End);
-		for (var sEndnoteId in oRange)
+		for (let sEndnoteId in oRange)
 		{
 			if (sEndnoteId !== sStartId && sEndnoteId !== sEndId)
 			{
@@ -1372,6 +1361,25 @@ CEndnotesController.prototype.private_GetSelectionArray = function()
 		return this.private_GetEndnotesLogicRange(this.Selection.Start.Endnote, this.Selection.End.Endnote);
 	else
 		return this.private_GetEndnotesLogicRange(this.Selection.End.Endnote, this.Selection.Start.Endnote);
+};
+CEndnotesController.prototype.private_GetSelectionDirection = function()
+{
+	if (this.Selection.Start.Page > this.Selection.End.Page)
+		return -1;
+	else if (this.Selection.Start.Page < this.Selection.End.Page)
+		return 1;
+	
+	if (this.Selection.Start.Section > this.Selection.End.Section)
+		return -1;
+	else if (this.Selection.Start.Section < this.Selection.End.Section)
+		return 1;
+	
+	if (this.Selection.Start.Column > this.Selection.End.Column)
+		return -1;
+	else if (this.Selection.Start.Column < this.Selection.End.Column)
+		return 1;
+	
+	return this.Selection.Start.Index > this.Selection.End.Index ? -1 : 1;
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Controller area
