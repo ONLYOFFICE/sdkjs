@@ -5119,16 +5119,13 @@
 			ctx.closePath().fill();
 		};
 		const drawMiniTable = function (x, y, destCol, destRow, isTableLeft, isTableTop) {
-			// const paddingX = 1 * zoom * customScale > 6 * customScale ? 6 * customScale : 1 * zoom * customScale;
-			// const paddingY = (2 * zoom * customScale) > 6 * customScale ? 6 * customScale : 2 * zoom * customScale;
 			const paddingX = 8 * zoom * customScale;
 			const paddingY = 4 * zoom * customScale;
 			const tableWidth = 16 * zoom * customScale;
 			const tableHeight = 11 * zoom * customScale;
 			const cellWidth = tableWidth / 3;
 			const cellHeight = tableHeight / 3;
-			const cornerRadius = tableWidth * 0.05;
-			const lineWidth = 1.5 * zoom * customScale;
+			const lineWidth = 1 * zoom * customScale;
 			const cellStrokesColor = new CColor(0, 0, 0);
 
 			// Padding for a table inside the cell
@@ -5145,37 +5142,32 @@
 			ctx.setFillStyle(cellStrokesColor);
 			ctx.setStrokeStyle(cellStrokesColor);
 
-			// Draw a rounded stroke
-			// ctx.beginPath();
-			// TODO rounded corners do not fit into the pixel grid
-			// ctx.arc(x1 + cornerRadius, y1 + cornerRadius - lineWidth, cornerRadius, Math.PI, Math.PI + Math.PI / 2, false);
-			// ctx.lineHor(x1 + cornerRadius, y1 - lineWidth, x1 + tableWidth - cornerRadius);
-			// ctx.arc(x1 + tableWidth - cornerRadius, y1 + cornerRadius - lineWidth, cornerRadius, Math.PI + Math.PI / 2, Math.PI * 2, false);
-			// ctx.lineVer(x1 + tableWidth, y1 - lineWidth, y1 + tableHeight - cornerRadius);
-			// ctx.arc(x1 + tableWidth - cornerRadius, y1 + tableHeight - cornerRadius, cornerRadius, Math.PI * 2, Math.PI / 2, false);
-			// ctx.lineHor(x1 + cornerRadius, y1 + tableHeight, x1 + tableWidth - cornerRadius);
-			// ctx.arc(x1 + cornerRadius, y1 + tableHeight - cornerRadius, cornerRadius, Math.PI / 2, Math.PI, false);
-			// ctx.lineVer(x1, y1 + tableHeight - cornerRadius, y1 - lineWidth);
-			// // ctx.closePath();
-			// ctx.stroke();
-
 			ctx.beginPath();
-			ctx.lineHor(x1, y1 - lineWidth, x1 + tableWidth);
-			ctx.lineVer(x1 + tableWidth, y1 - lineWidth, y1 + tableHeight);
-			ctx.lineHor(x1, y1 + tableHeight, x1 + tableWidth);
-			ctx.lineVer(x1, y1 - lineWidth, y1 + tableHeight);
+			ctx.strokeRect(x1, y1 - lineWidth, tableWidth, tableHeight + lineWidth);
+			// ctx.moveTo(x1, y1);
+			// ctx.lineTo(x1 + tableWidth, y1);
+			// ctx.lineTo(x1 + tableWidth, y1 + tableHeight);
+			// ctx.lineTo(x1, y1 + tableHeight);
+			// ctx.lineTo(x1, y1);
+			// ctx.lineHor(x1, y1 - lineWidth, x1 + tableWidth);
+			// ctx.lineVer(x1 + tableWidth, y1 - lineWidth, y1 + tableHeight);
+			// ctx.lineHor(x1, y1 + tableHeight, x1 + tableWidth);
+			// ctx.lineVer(x1, y1 - lineWidth, y1 + tableHeight);
 			ctx.stroke();
 
 			// Draw additional rectangle
 			ctx.beginPath();
-			ctx.fillRect(x1, y1 - lineWidth, tableWidth, lineWidth * 1.5);
-			ctx.closePath().stroke();
+			ctx.fillRect(x1, y1 - lineWidth, tableWidth, lineWidth * 2);
+			ctx.stroke();
+			ctx.closePath().fill();
 
 			// Vertical lines
 			for (let i = 1; i < 3; i++) {
 				let x2 = i * cellWidth;
 				ctx.beginPath();
 				ctx.lineVer(x2 + x1, y1, y1 + tableHeight);
+				// ctx.moveTo(x2 + x1, y1);
+				// ctx.lineTo(x2 + x1, y1 + tableHeight);
 				ctx.stroke();
 			}
 
@@ -5184,6 +5176,8 @@
 				let y2 = j * cellHeight;
 				ctx.beginPath();
 				ctx.lineHor(x1, y1 + y2, x1 + tableWidth);
+				// ctx.moveTo(x1, y1 + y2);
+				// ctx.lineTo(x1 + tableWidth, y1 + y2);
 				ctx.stroke();
 			}
 		};
