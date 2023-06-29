@@ -13710,6 +13710,22 @@ QueryTableField.prototype.clone = function() {
 		this.init();
 	};
 
+	CHeaderFooter.prototype.isEmpty = function () {
+		if (this.alignWithMargins === null &&
+			this.differentFirst === null &&
+			this.differentOddEven === null &&
+			this.scaleWithDoc === null &&
+			this.evenFooter === null &&
+			this.evenHeader === null &&
+			this.firstFooter === null &&
+			this.firstHeader === null &&
+			this.oddFooter === null &&
+			this.oddHeader === null) {
+			return true;
+		}
+		return false;
+	};
+
 
 	function CHeaderFooterData(str) {
 		this.str = str;
