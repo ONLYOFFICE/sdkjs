@@ -15499,6 +15499,69 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	function CRowColBreaks(/*ws*/) {
+		this.count = null;
+		this.manualBreakCount = null;
+		this.breaks = [];
+
+		return this;
+	}
+	CRowColBreaks.prototype.clone = function () {
+		var res = new CRowColBreaks();
+		res.count = this.count;
+		res.manualBreakCount = this.count;
+
+		for (let i = 0 ; i < this.breaks.length; i++) {
+			res.breaks.push(this.breaks[i].clone());
+		}
+
+		return res;
+	};
+	CRowColBreaks.prototype.setCount = function (val) {
+		this.count = val;
+	};
+	CRowColBreaks.prototype.setManualBreakCount = function (val) {
+		this.manualBreakCount = val;
+	};
+	CRowColBreaks.prototype.pushBreak = function (val) {
+		this.breaks.push(val);
+	};
+
+
+	function CRowColBreak(/*ws*/) {
+		this.id = null;
+		this.man = null;
+		this.max = null;
+		this.min = null;
+		this.pt = null;
+
+		return this;
+	}
+	CRowColBreak.prototype.clone = function () {
+		var res = new CRowColBreak();
+		res.id = this.id;
+		res.man = this.man;
+		res.max = this.max;
+		res.min = this.min;
+		res.pt = this.pt;
+
+		return res;
+	};
+	CRowColBreak.prototype.setId = function (val) {
+		this.id = val;
+	};
+	CRowColBreak.prototype.setMan = function (val) {
+		this.man = val;
+	};
+	CRowColBreak.prototype.setMax = function (val) {
+		this.max = val;
+	};
+	CRowColBreak.prototype.setMin = function (val) {
+		this.min = val;
+	};
+	CRowColBreak.prototype.setPt = function (val) {
+		this.pt = val;
+	};
 
 
 
@@ -15972,6 +16035,9 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getCell"] = prot.asc_getCell;
 	prot["asc_getValue"] = prot.asc_getValue;
 	prot["asc_getFormula"] = prot.asc_getFormula;
+
+	window["AscCommonExcel"].CRowColBreaks = CRowColBreaks;
+	window["AscCommonExcel"].CRowColBreak = CRowColBreak;
 
 
 })(window);
