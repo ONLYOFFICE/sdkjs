@@ -9904,7 +9904,7 @@
 				val = this.stream.GetLong();
                 breaks.setManualBreakCount(val);
             } else if (c_oSer_RowColBreaks.Break === type) {
-                var brk = new AscCommonExcel.CRowColBreak();
+                var brk = new AscCommonExcel.CBreak();
                 res = this.bcr.Read1(length, function(t, l) {
                     return oThis.ReadRowColBreak(t, l, brk);
                 });

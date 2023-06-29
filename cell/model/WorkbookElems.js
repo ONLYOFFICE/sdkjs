@@ -15526,9 +15526,18 @@ QueryTableField.prototype.clone = function() {
 	CRowColBreaks.prototype.pushBreak = function (val) {
 		this.breaks.push(val);
 	};
+	CRowColBreaks.prototype.getCount = function () {
+		return this.count;
+	};
+	CRowColBreaks.prototype.getManualBreakCount = function () {
+		return this.manualBreakCount;
+	};
+	CRowColBreaks.prototype.getBreaks = function () {
+		return this.breaks;
+	};
 
 
-	function CRowColBreak(/*ws*/) {
+	function CBreak(/*ws*/) {
 		this.id = null;
 		this.man = null;
 		this.max = null;
@@ -15537,8 +15546,8 @@ QueryTableField.prototype.clone = function() {
 
 		return this;
 	}
-	CRowColBreak.prototype.clone = function () {
-		var res = new CRowColBreak();
+	CBreak.prototype.clone = function () {
+		var res = new CBreak();
 		res.id = this.id;
 		res.man = this.man;
 		res.max = this.max;
@@ -15547,20 +15556,35 @@ QueryTableField.prototype.clone = function() {
 
 		return res;
 	};
-	CRowColBreak.prototype.setId = function (val) {
+	CBreak.prototype.setId = function (val) {
 		this.id = val;
 	};
-	CRowColBreak.prototype.setMan = function (val) {
+	CBreak.prototype.setMan = function (val) {
 		this.man = val;
 	};
-	CRowColBreak.prototype.setMax = function (val) {
+	CBreak.prototype.setMax = function (val) {
 		this.max = val;
 	};
-	CRowColBreak.prototype.setMin = function (val) {
+	CBreak.prototype.setMin = function (val) {
 		this.min = val;
 	};
-	CRowColBreak.prototype.setPt = function (val) {
+	CBreak.prototype.setPt = function (val) {
 		this.pt = val;
+	};
+	CBreak.prototype.getId = function () {
+		return this.id;
+	};
+	CBreak.prototype.getMan = function () {
+		return this.man;
+	};
+	CBreak.prototype.getMax = function () {
+		return this.max;
+	};
+	CBreak.prototype.getMin = function () {
+		return this.min;
+	};
+	CBreak.prototype.getPt = function () {
+		return this.pt;
 	};
 
 
@@ -16037,7 +16061,7 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getFormula"] = prot.asc_getFormula;
 
 	window["AscCommonExcel"].CRowColBreaks = CRowColBreaks;
-	window["AscCommonExcel"].CRowColBreak = CRowColBreak;
+	window["AscCommonExcel"].CBreak = CBreak;
 
 
 })(window);
