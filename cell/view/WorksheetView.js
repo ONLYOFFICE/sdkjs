@@ -5121,12 +5121,16 @@
 		const drawMiniTable = function (x, y, destCol, destRow, isTableLeft, isTableTop) {
 			const paddingX = 8 * zoom * customScale;
 			const paddingY = 4 * zoom * customScale;
-			const tableWidth = 16 * zoom * customScale;
-			const tableHeight = 11 * zoom * customScale;
+			const tableWidth = 15 * zoom * customScale;
+			const tableHeight = 9 * zoom * customScale;
 			const cellWidth = tableWidth / 3;
 			const cellHeight = tableHeight / 3;
+			// const cellWidth = 4 * zoom * customScale;
+			// const cellHeight = 2 * zoom * customScale;
 			const lineWidth = 1 * zoom * customScale;
 			const cellStrokesColor = new CColor(0, 0, 0);
+			console.log(tableHeight);
+			console.log(cellHeight);
 
 			// Padding for a table inside the cell
 			const x1 = isTableLeft ? x - tableWidth - paddingX : x + paddingX;
@@ -5142,8 +5146,9 @@
 			ctx.setFillStyle(cellStrokesColor);
 			ctx.setStrokeStyle(cellStrokesColor);
 
+			// draw main rectangle
 			ctx.beginPath();
-			ctx.strokeRect(x1, y1 - lineWidth, tableWidth, tableHeight + lineWidth);
+			ctx.strokeRect(x1, y1, tableWidth, tableHeight);
 			// ctx.moveTo(x1, y1);
 			// ctx.lineTo(x1 + tableWidth, y1);
 			// ctx.lineTo(x1 + tableWidth, y1 + tableHeight);
@@ -5156,8 +5161,20 @@
 			ctx.stroke();
 
 			// Draw additional rectangle
+			// ctx.beginPath();
+			// let multiplier = zoom < 3 ? 1.5 : 1.2;
+			// ctx.fillRect(x1, y1, tableWidth + 0.5, lineWidth * multiplier);
+			// ctx.stroke();
+			// ctx.closePath().fill();
+
 			ctx.beginPath();
-			ctx.fillRect(x1, y1 - lineWidth, tableWidth, lineWidth * 2);
+			let multiplier = zoom < 3 ? 1.5 : 1.2;
+			if (zoom > 1.8) {
+				ctx.fillRect(x1 - 0.5, y1 - lineWidth, tableWidth + (lineWidth * 0.5), lineWidth * multiplier);
+			} else {
+				ctx.fillRect(x1, y1 - lineWidth, tableWidth + 0.5, lineWidth * multiplier);
+			}
+			ctx.strokeRect(x1, y1 - lineWidth, tableWidth, tableHeight + lineWidth);
 			ctx.stroke();
 			ctx.closePath().fill();
 
@@ -5166,18 +5183,17 @@
 				let x2 = i * cellWidth;
 				ctx.beginPath();
 				ctx.lineVer(x2 + x1, y1, y1 + tableHeight);
-				// ctx.moveTo(x2 + x1, y1);
-				// ctx.lineTo(x2 + x1, y1 + tableHeight);
 				ctx.stroke();
 			}
 
 			// Horizontal lines
 			for (let j = 1; j < 3; j++) {
 				let y2 = j * cellHeight;
+				// if (j === 1) {
+				// 	y2 = j * cellHeight + (zoom < 1.2 ? 0.5 : 0);
+				// }
 				ctx.beginPath();
 				ctx.lineHor(x1, y1 + y2, x1 + tableWidth);
-				// ctx.moveTo(x1, y1 + y2);
-				// ctx.lineTo(x1 + tableWidth, y1 + y2);
 				ctx.stroke();
 			}
 		};

@@ -41,6 +41,9 @@ function (window, undefined) {
 	 * Import
 	 * -----------------------------------------------------------------------------
 	 */
+	let asc = window["Asc"];
+
+	let asc_Range = asc.Range;
 
 	function TraceDependentsManager(ws) {
 		this.ws = ws;
@@ -104,9 +107,19 @@ function (window, undefined) {
 		}
 
 		let t = this;
+		let ws = this.ws.model;
 		let wb = this.ws.model.workbook;
 		let dependencyFormulas = wb.dependencyFormulas;
 		let cellAddress = AscCommonExcel.getFromCellIndex(cellIndex, true);
+
+		let currentCellRange = ws.getCell3(cellAddress.row, cellAddress.col);
+
+		// let cell = new Cell(ws);
+		// let res = cell.loadContent(row, col); // true|false
+		// if (!res) {
+		// 	ws._initCell(cell, row, col);
+		// }
+
 		const findCellListeners = function () {
 			const listeners = {};
 			if (curListener && curListener.areaMap) {
@@ -165,7 +178,6 @@ function (window, undefined) {
 
 			return indexes;
 		};
-
 		const getParentIndex = function (_parent, shared) {
 			let _parentCellIndex = AscCommonExcel.getCellIndex(_parent.nRow, _parent.nCol);
 			
@@ -194,7 +206,12 @@ function (window, undefined) {
 			}
 			return _parentCellIndex;
 		};
-
+		// const tempSharedIntersection = function (currentRange, shared) {
+		// 	// currentArea - ?
+		// 	let res = currentRange.bbox.getSharedIntersect(shared.ref, currentRange.bbox);
+		// };
+		// let changedRange = currentRange.getSharedIntersect(shared.ref, currentCellRange);
+		// currentRange.getSharedRange(sharedRef, col, row);
 		const cellListeners = findCellListeners();
 		if (cellListeners) {
 			if (!this.dependents[cellIndex]) {
@@ -222,6 +239,7 @@ function (window, undefined) {
 						if (cellListeners[i].shared !== null) {
 							let shared = cellListeners[i].getShared();
 							parentCellIndex = getParentIndex(parent, shared);
+							// tempSharedIntersection(currentCellRange, shared);
 						}
 
 						if (formula.includes(":") && !is3D) {
@@ -342,7 +360,9 @@ function (window, undefined) {
 				}
 			}
 			this.setPrecedentsAreasLoop(false);
-		} else {
+		}
+		// TODO maybe while? or get through the current precedentsAreas (...this.precedentsAreas)
+		// else {
 			let formulaParsed;
 			ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
 				formulaParsed = cell.formulaParsed;
@@ -352,7 +372,7 @@ function (window, undefined) {
 				this._calculatePrecedents(formulaParsed, row, col);
 				this.setPrecedentsCall();
 			}
-		}
+		// }
 	};
 	TraceDependentsManager.prototype._calculatePrecedents = function (formulaParsed, row, col) {
 		if (!this.precedents) {
@@ -364,9 +384,8 @@ function (window, undefined) {
 		if (!this.precedents[currentCellIndex]) {
 			let shared, base;
 			if (formulaParsed.shared !== null) {
-				// base cellIndex + diff between base and current
 				shared = formulaParsed.getShared();
-				base = shared.base;
+				base = shared.base;		// base index - where shared formula start
 			}
 			
 			if (formulaParsed.outStack) {
@@ -376,10 +395,12 @@ function (window, undefined) {
 					let elemType = elem.type ? elem.type : null;
 					if (elemType === AscCommonExcel.cElementType.cell || elemType === AscCommonExcel.cElementType.cellsRange || 
 						elemType === AscCommonExcel.cElementType.cell3D || elemType === AscCommonExcel.cElementType.cellsRange3D ||
-						elemType === AscCommonExcel.cElementType.name || elemType === AscCommonExcel.cElementType.name3D) {
+						elemType === AscCommonExcel.cElementType.name || elemType === AscCommonExcel.cElementType.name3D || 
+						elemType === AscCommonExcel.cElementType.table) {
 						let is3D = elemType === AscCommonExcel.cElementType.cell3D || elemType === AscCommonExcel.cElementType.cellsRange3D || elemType === AscCommonExcel.cElementType.name3D;
 						let isArea = elemType === AscCommonExcel.cElementType.cellsRange || elemType === AscCommonExcel.cElementType.name;
 						let isDefName = elemType === AscCommonExcel.cElementType.name || elemType === AscCommonExcel.cElementType.name3D;
+						let isTable = elemType === AscCommonExcel.cElementType.table;
 						let elemRange, elemCellIndex;
 
 						if (isDefName) {
@@ -395,12 +416,21 @@ function (window, undefined) {
 							} else if (elemRange.isOneCell()) {
 								isArea = false;
 							}
+						} else if (isTable) {
+							elemRange = elem.area.bbox ? elem.area.bbox : null;
 						} else {
 							elemRange = elem.range.bbox ? elem.range.bbox : elem.bbox;
 						}
 
+						if (!elemRange) {
+							return;
+						}
+
 						if (base) {
+							// if the shared formula make a shift relative to the base
 							elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
+							elemRange = new asc_Range(elemRange.c1 + (col - base.nCol), elemRange.r1 + (row - base.nRow), elemRange.c2 + (col - base.nCol), elemRange.r2 + (row - base.nRow));
+
 						} else {
 							elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1);
 						}
