@@ -595,6 +595,7 @@ function CMasterThumbnailDrawer()
     {
         var oTxStyles = _master.txStyles;
         var oTitleRunPr, oBodyRunPr;
+        let defaultClrMapId = _master.clrMap.color_map[15]
         if(oTxStyles)
         {
             if(bTitle)
@@ -603,6 +604,7 @@ function CMasterThumbnailDrawer()
                 if(oTitleStyle && oTitleStyle.levels[0])
                 {
                     oTitleRunPr = oTitleStyle.levels[0].DefaultRunPr;
+                    oTitleRunPr.Unifill.fill.color = _master.Theme.themeElements.clrScheme.colors[defaultClrMapId]
                     return oTitleRunPr;
                 }
             }
@@ -612,6 +614,7 @@ function CMasterThumbnailDrawer()
                 if(oBodyStyle && oBodyStyle.levels[0])
                 {
                     oBodyRunPr = oBodyStyle.levels[0].DefaultRunPr;
+                    oBodyRunPr.Unifill.fill.color = _master.Theme.themeElements.clrScheme.colors[defaultClrMapId]
                     return oBodyRunPr;
                 }
             }
