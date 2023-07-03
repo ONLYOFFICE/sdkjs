@@ -14717,12 +14717,20 @@
 		minR = Math.min(minR, oBBox.r2);
 		if (actionCell || actionRow) {
 			var itRow = new RowIterator();
+			let nextItRow = new RowIterator();
 			if (actionCell) {
 				itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.c2);
+				if (oBBox.r1 === oBBox.r2) {
+					nextItRow.init(this.worksheet, this.bbox.r1, this.bbox.c1 + 1, this.bbox.c2);
+				} else {
+					nextItRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.c2);
+				}
+
 			}
 			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
 			var excludedCount = 0;
 			var tempCell;
+			let nextTempCell;
 			var tempRow = new AscCommonExcel.Row(this.worksheet);
 			var allRow = this.worksheet.getAllRow();
 			var allRowHidden = allRow && allRow.getHidden();
@@ -14751,11 +14759,23 @@
 				}
 				if (actionCell) {
 					itRow.setRow(i);
+
+					if (oBBox.r1 === oBBox.r2) {
+						nextItRow.setRow(i);
+						nextTempCell = nextItRow.next();
+					} else {
+						let nextIt = i + 1;
+						if (nextIt <= minR) {
+							nextItRow.setRow(nextIt);
+							nextTempCell = nextItRow.next();
+						}
+					}
 					while (tempCell = itRow.next()) {
-						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
+						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount, nextTempCell);
 						if (null != oRes) {
 							if (actionCell) {
 								itRow.release();
+								nextItRow.release();
 							}
 							return oRes;
 						}
@@ -14764,6 +14784,7 @@
 			}
 			if (actionCell) {
 				itRow.release();
+				nextItRow.release();
 			}
 		}
 	};
@@ -17891,6 +17912,23 @@
 		}
 		_promoteFromTo(oBBox, this.worksheet, oCanPromote.to, this.worksheet, true, oCanPromote, bCtrl, bVertical, nIndex);
 	};
+	function _addATimePeriod(aTimePeriodName, bNeedSwapFirstLastElem) {
+		let aTimePeriod = aTimePeriodName.map(function (sTimePeriod) {
+			return sTimePeriod.toLowerCase();
+		});
+		const nLastIndex = aTimePeriod.length - 1;
+
+		if(!aTimePeriod[nLastIndex]) {
+			aTimePeriod.pop();
+		}
+
+		if (bNeedSwapFirstLastElem) {
+			let sLastElem = aTimePeriod.pop();
+			aTimePeriod.unshift(sLastElem);
+		}
+
+		return aTimePeriod;
+	}
 	function _updateATimePeriod (aTimePeriods, sValue) {
 		let sFirstSymbols = sValue.slice(0,2);
 
@@ -17931,17 +17969,18 @@
 		sFormatedValue = sSlicedValue === sSlicedValue.toLowerCase() ? sValue : sValue[0] + sSlicedValue.toLowerCase();
 		return aTimePeriods.indexOf(sFormatedValue);
 	}
-	function _getRepeatTimePeriod(nRepeat, nPreviousVal, nIndex) {
+	function _getRepeatTimePeriod(nRepeat, nPreviousVal, nIndex, nMaxTimePeriod) {
 		let bIsSequence = false;
 		let nDiff = 0;
 		let nCurrentVal = nIndex;
+		let nLastElement = nMaxTimePeriod - 1;
 
 		if (nPreviousVal) {
 			// Defining is datas has asc sequence like Monday, Tuesday etc or even\odd sequence?
-			if (nIndex === 0 && nPreviousVal === 6) {
+			if (nIndex === 0 && nPreviousVal === nLastElement) {
 				bIsSequence = true;
 			} else {
-				if (nRepeat > 0) nCurrentVal += 7 * nRepeat;
+				if (nRepeat > 0) nCurrentVal += nMaxTimePeriod * nRepeat;
 				nDiff = nCurrentVal - nPreviousVal;
 				if (nDiff === 1) {
 					bIsSequence = true;
@@ -17949,12 +17988,19 @@
 			}
 			if (bIsSequence) {
 				return nIndex === 0 ? nRepeat + 1 : nRepeat;
-			} else if (nIndex === 0 || (nIndex === 1 && nPreviousVal >= 6)) {
+			} else if (nIndex === 0 || (nIndex === 1 && nPreviousVal >= nLastElement)) {
 				return nRepeat + 1;
 			}
 		}
 
 		return nRepeat;
+	}
+	function _findAInputTimePeriod(aTimePeriodsList, sValue) {
+		let foundTimePeriod = aTimePeriodsList.find(function (aTimePeriod) {
+			return aTimePeriod.includes(sValue.toLowerCase());
+		});
+
+		return foundTimePeriod ? foundTimePeriod : [];
 	}
 	function _promoteFromTo(from, wsFrom, to, wsTo, bIsPromote, oCanPromote, bCtrl, bVertical, nIndex) {
 		var wb = wsFrom.workbook;
@@ -18092,16 +18138,16 @@
 			if(nIndex < 0)
 				bReverse = true;
 			var oPromoteHelper = new PromoteHelper(bVertical, bReverse, from);
-			let aInputDaysOfWeek = oDefaultCultureInfo.DayNames.map(function(dayOfWeek) {
-				return dayOfWeek.toLowerCase();
-			});
-			let aInputShortDaysOfWeek = oDefaultCultureInfo.AbbreviatedDayNames.map(function(dayOfWeek) {
-				return dayOfWeek.toLowerCase();
-			});
+			let aInputDaysOfWeek = _addATimePeriod(oDefaultCultureInfo.DayNames, false);
+			let aInputShortDaysOfWeek = _addATimePeriod(oDefaultCultureInfo.AbbreviatedDayNames, false);
+			let aInputMonths = _addATimePeriod(oDefaultCultureInfo.MonthNames, true);
+			let aInputMonthShort = _addATimePeriod(oDefaultCultureInfo.AbbreviatedMonthNames, true);
+			let aInputTimePeriodList = [aInputDaysOfWeek, aInputShortDaysOfWeek, aInputMonths, aInputMonthShort];
 			let nPreviousVal = null;
+			let aPrevInputTimePeriod = [];
 			let nRepeat = 0;
-			let nRepeatShort = 0;
-			fromRange._foreachNoEmpty(function(oCell, nRow0, nCol0, nRowStart0, nColStart0){
+
+			fromRange._foreachNoEmpty(function(oCell, nRow0, nCol0, nRowStart0, nColStart0, excludedCount, oNextCell){
 				if(null != oCell)
 				{
 					var nVal = null;
@@ -18111,11 +18157,15 @@
 					var bDate = false;
 					let bIsTimePeriod = false;
 					let aTimePeriods = [];
+					let aInputTimePeriod = [];
+					let sNextValue = '';
 					if(bIsPromote)
 					{
 						if (!oCell.isFormula())
 						{
 							var sValue = oCell.getValueWithoutFormat();
+							if (oNextCell)
+								sNextValue = oNextCell.getValueWithoutFormat();
 							if("" != sValue)
 							{
 								bDelimiter = true;
@@ -18144,26 +18194,32 @@
 											nVal = sNumber - 0;
 											padding = sNumber[0] === '0' ? sNumber.length : 0;
 										}
-										// Value of cell is it a day of week?
-										if (aInputDaysOfWeek.includes(sValue.toLowerCase())) {
-											// Update array of days of the week based on sValue
-											aTimePeriods = _updateATimePeriod(aInputDaysOfWeek, sValue);
+										// Value of cell is it a time period?
+										aInputTimePeriod = _findAInputTimePeriod(aInputTimePeriodList, sValue);
+										if (aInputTimePeriod.length) {
+											// Checking nearby cells if value has in both arrays (short and full names)
+											let sValueLowReg = sValue.toLowerCase();
+											if (aPrevInputTimePeriod.length && JSON.stringify(aInputTimePeriod) !== JSON.stringify(aPrevInputTimePeriod) && aPrevInputTimePeriod.includes(sValueLowReg)) {
+												aInputTimePeriod = aPrevInputTimePeriod;
+											} else if (!aPrevInputTimePeriod.length && sNextValue) { // doesn't check next cell if previous cell exist
+												let aNextInputTimePeriod = _findAInputTimePeriod(aInputTimePeriodList, sNextValue);
+												if (aNextInputTimePeriod.length && JSON.stringify(aInputTimePeriod) !== JSON.stringify(aNextInputTimePeriod) && aNextInputTimePeriod.includes(sValueLowReg)) {
+													aInputTimePeriod = aNextInputTimePeriod;
+												}
+											}
+
+											// Update array of a time period based on sValue
+											aTimePeriods = _updateATimePeriod(aInputTimePeriod, sValue);
+											let nMaxTimePeriod = aTimePeriods.length;
 											let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
-											nRepeat = _getRepeatTimePeriod(nRepeat, nPreviousVal, nIndex);
-											// In nVal stores number of day. It calculates  like
-											// "index from array days of the week + 7 (count days in week) * count of repeat"
-											nVal = nIndex + 7 * nRepeat;
+											nRepeat = _getRepeatTimePeriod(nRepeat, nPreviousVal, nIndex, nMaxTimePeriod);
+											// In nVal stores number of a time period.
+											// e.g. "index from array days of the week + 7 (count days in week) * count of repeat"
+											nVal = nIndex + nMaxTimePeriod * nRepeat;
 											bIsTimePeriod = true;
 											bDate = true;
 											nPreviousVal = nVal;
-										} else if (aInputShortDaysOfWeek.includes(sValue.toLowerCase())) {
-											aTimePeriods = _updateATimePeriod(aInputShortDaysOfWeek, sValue);
-											let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
-											nRepeatShort = _getRepeatTimePeriod(nRepeatShort, nPreviousVal, nIndex);
-											nVal = nIndex + 7 * nRepeatShort;
-											bIsTimePeriod = true;
-											bDate = true;
-											nPreviousVal = nVal;
+											aPrevInputTimePeriod = aInputTimePeriod;
 										}
 									}
 								}
@@ -18254,9 +18310,11 @@
 						var oFromCell = data.oAdditional;
 						var nRow = bRowFirst ? i : j;
 						var nCol = bRowFirst ? j : i;
+						let aTimePeriods = data.aTimePeriods;
 						let aReverseTimePeriods = [];
-						if (bReverse) {
-							aReverseTimePeriods = data.aTimePeriods.slice();
+
+						if (bReverse || data.nCurValue < 0) {
+							aReverseTimePeriods = aTimePeriods.slice();
 							aReverseTimePeriods.reverse();
 						}
 						wsTo._getCell(nRow, nCol, function(oCopyCell){
@@ -18276,11 +18334,11 @@
 										oCellValue.text = sVal;
 										oCellValue.type = CellValueType.String;
 									} else if (data.bIsTimePeriod) {
-										let nIndexDay = data.nCurValue % 7;
+										let nIndexDay = data.nCurValue % aTimePeriods.length;
 										if (nIndexDay < 0) {
 											oCellValue.text = aReverseTimePeriods[~nIndexDay];
 										} else {
-											oCellValue.text = data.aTimePeriods[nIndexDay];
+											oCellValue.text = aTimePeriods[nIndexDay];
 										}
 										oCellValue.type = CellValueType.String;
 									} else {
