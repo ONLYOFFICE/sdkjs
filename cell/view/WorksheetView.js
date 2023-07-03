@@ -2107,13 +2107,13 @@
             return;
         }
 
-        var vector_koef = AscCommonExcel.vector_koef / this.getZoom();
+        let vector_koef = AscCommonExcel.vector_koef / this.getZoom();
         if (AscCommon.AscBrowser.isCustomScaling()) {
 			//vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
 		}
 
-		var isOnlyFirstPage = adjustPrint && adjustPrint.isOnlyFirstPage;
-		var pageMargins, pageSetup, pageGridLines, pageHeadings;
+		let isOnlyFirstPage = adjustPrint && adjustPrint.isOnlyFirstPage;
+		let pageMargins, pageSetup, pageGridLines, pageHeadings;
         if (pageOptions) {
             pageMargins = pageOptions.asc_getPageMargins();
             pageSetup = pageOptions.asc_getPageSetup();
@@ -2121,9 +2121,9 @@
             pageHeadings = pageOptions.asc_getHeadings();
         }
 
-		var bFitToWidth = false;
-		var bFitToHeight = false;
-        var pageWidth, pageHeight, pageOrientation, scale;
+		let bFitToWidth = false;
+		let bFitToHeight = false;
+        let pageWidth, pageHeight, pageOrientation, scale;
         if (pageSetup instanceof asc_CPageSetup) {
             pageWidth = pageSetup.asc_getWidth();
             pageHeight = pageSetup.asc_getHeight();
@@ -2136,11 +2136,11 @@
 			scale = printScale / 100;
 		} else {
 			//scale пока всегда берём из модели
-			var pageSetupModel = this.model.PagePrintOptions ? this.model.PagePrintOptions.pageSetup : null;
+			let pageSetupModel = this.model.PagePrintOptions ? this.model.PagePrintOptions.pageSetup : null;
 			scale = pageSetupModel ? pageSetupModel.asc_getScale() / 100 : 1;
 		}
 
-        var pageLeftField, pageRightField, pageTopField, pageBottomField;
+        let pageLeftField, pageRightField, pageTopField, pageBottomField;
         if (pageMargins) {
             pageLeftField = Math.max(pageMargins.asc_getLeft(), c_oAscPrintDefaultSettings.MinPageLeftField);
             pageRightField = Math.max(pageMargins.asc_getRight(), c_oAscPrintDefaultSettings.MinPageRightField);
@@ -2148,17 +2148,17 @@
             pageBottomField = Math.max(pageMargins.asc_getBottom(), c_oAscPrintDefaultSettings.MinPageBottomField);
         }
 		
-        var t = this;
-        var _getColumnWidth = function (index) {
-			var defaultWidth = t._getWidthForPrint(index);
+        let t = this;
+        let _getColumnWidth = function (index) {
+			let defaultWidth = t._getWidthForPrint(index);
 			if (defaultWidth) {
 				return defaultWidth;
 			}
 			return t._getColumnWidth(index);
 		};
 
-		var _getRowHeight = function (index) {
-			var defaultHeight = t._getHeightForPrint(index);
+		let _getRowHeight = function (index) {
+			let defaultHeight = t._getHeightForPrint(index);
 			if (defaultHeight) {
 				return defaultHeight;
 			}
@@ -2197,17 +2197,17 @@
         }
 
         if (Asc.c_oAscPageOrientation.PageLandscape === pageOrientation) {
-            var tmp = pageWidth;
+            let tmp = pageWidth;
             pageWidth = pageHeight;
             pageHeight = tmp;
         }
 
-		var pageWidthWithFields = pageWidth - pageLeftField - pageRightField;
-		var pageHeightWithFields = pageHeight - pageTopField - pageBottomField;
-		var leftFieldInPx = pageLeftField / vector_koef + 1;
-		var topFieldInPx = pageTopField / vector_koef + 1;
+		let pageWidthWithFields = pageWidth - pageLeftField - pageRightField;
+		let pageHeightWithFields = pageHeight - pageTopField - pageBottomField;
+		let leftFieldInPx = pageLeftField / vector_koef + 1;
+		let topFieldInPx = pageTopField / vector_koef + 1;
 
-		var startPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
+		let startPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
 
 		let _retinaPixelRatio = this.getRetinaPixelRatio();
 		if (pageHeadings) {
@@ -2217,15 +2217,15 @@
 		}
 
 		//TODO при сравнении резальтатов рассчета страниц в зависимости от scale - LO выдаёт похожие результаты, MS - другие. Необходимо пересмотреть!
-		var pageWidthWithFieldsHeadings = ((pageWidth - pageRightField) / vector_koef - leftFieldInPx);
-		var pageHeightWithFieldsHeadings = ((pageHeight - pageBottomField) / vector_koef - topFieldInPx);
+		let pageWidthWithFieldsHeadings = ((pageWidth - pageRightField) / vector_koef - leftFieldInPx);
+		let pageHeightWithFieldsHeadings = ((pageHeight - pageBottomField) / vector_koef - topFieldInPx);
 
 		//PRINT TITLES
-		var tCol1, tCol2, tRow1, tRow2;
+		let tCol1, tCol2, tRow1, tRow2;
 		//первостепенно ориентируемся что в этих настройках
-		var printTitlesHeight = pageOptions.printTitlesHeight;
-		var printTitlesWidth = pageOptions.printTitlesWidth;
-		var _titleRange;
+		let printTitlesHeight = pageOptions.printTitlesHeight;
+		let printTitlesWidth = pageOptions.printTitlesWidth;
+		let _titleRange;
 		if (null !== printTitlesHeight) {
 			AscCommonExcel.executeInR1C1Mode(AscCommonExcel.g_R1C1Mode, function () {
 				_titleRange = AscCommonExcel.g_oRangeCache.getAscRange(printTitlesHeight);
@@ -2251,17 +2251,17 @@
 			}
 		}
 
-		//var titleWidth = 0, titleHeight = 0;
+		//let titleWidth = 0, titleHeight = 0;
 		if (!printTitlesHeight || !printTitlesWidth) {
-			var printTitles = this.model.workbook.getDefinesNames("Print_Titles", this.model.getId());
+			let printTitles = this.model.workbook.getDefinesNames("Print_Titles", this.model.getId());
 			if(printTitles) {
-				var printTitleRefs;
+				let printTitleRefs;
 				AscCommonExcel.executeInR1C1Mode(false, function () {
 					printTitleRefs = AscCommonExcel.getRangeByRef(printTitles.ref, t.model, true, true)
 				});
 				if(printTitleRefs && printTitleRefs.length) {
-					for(var i = 0; i < printTitleRefs.length; i++) {
-						var bbox = printTitleRefs[i].bbox;
+					for(let i = 0; i < printTitleRefs.length; i++) {
+						let bbox = printTitleRefs[i].bbox;
 						if(bbox) {
 							if(c_oAscSelectionType.RangeCol === bbox.getType() && null == printTitlesWidth) {
 								tCol1 = bbox.c1;
@@ -2276,32 +2276,32 @@
 			}
 		}
 
-		var currentColIndex = range.c1;
-		var currentWidth = 0;
-		var currentRowIndex = range.r1;
-		var currentHeight = 0;
-		var isCalcColumnsWidth = true;
+		let currentColIndex = range.c1;
+		let currentWidth = 0;
+		let currentRowIndex = range.r1;
+		let currentHeight = 0;
+		let isCalcColumnsWidth = true;
 
-		var currentHeightReal = 0;
-		var currentWidthReal = 0;
+		let currentHeightReal = 0;
+		let currentWidthReal = 0;
 
-		var bIsAddOffset = false;
-		var nCountOffset = 0;
-		var nCountPages = 0;
+		let bIsAddOffset = false;
+		let nCountOffset = 0;
+		let nCountPages = 0;
 
-		var curTitleWidth = 0, curTitleHeight = 0;
-		var addedTitleHeight = 0, addedTitleWidth = 0;
+		let curTitleWidth = 0, curTitleHeight = 0;
+		let addedTitleHeight = 0, addedTitleWidth = 0;
 
-		var startTitleArrRow = [];
+		let startTitleArrRow = [];
 
-		var j;
-		var baseTitleHeight = 0;
+		let j;
+		let baseTitleHeight = 0;
 		if (tRow1 < currentRowIndex) {
 			for (j = tRow1; j < Math.min(currentRowIndex, tRow2 + 1); j++) {
 				baseTitleHeight += _getRowHeight(j) * scale;
 			}
 		}
-		var baseTitleWidth = 0;
+		let baseTitleWidth = 0;
 		if (tCol1 < currentColIndex) {
 			for (j = tCol1; j < Math.min(currentColIndex, tCol2 + 1); j++) {
 				baseTitleWidth += _getColumnWidth(j) * scale;
@@ -2313,9 +2313,10 @@
 				break;
 			}
 
-			var newPagePrint = new asc_CPagePrint();
+			let newPagePrint = new asc_CPagePrint();
 
-			var colIndex = currentColIndex, rowIndex = currentRowIndex, pageRange;
+			let colIndex = currentColIndex, rowIndex = currentRowIndex, pageRange;
+			let rowBreak = false, colBreak = false;
 
 			newPagePrint.indexWorksheet = indexWorksheet;
 
@@ -2347,12 +2348,13 @@
 			newPagePrint.titleHeight = curTitleHeight;
 
 			for (rowIndex = currentRowIndex; rowIndex <= range.r2; ++rowIndex) {
-				var currentRowHeight = _getRowHeight(rowIndex) * scale;
-				var currentRowHeightReal = (t._getRowHeight(rowIndex)/this.getRetinaPixelRatio()) *scale;
-				if (currentHeight + currentRowHeight + curTitleHeight > pageHeightWithFieldsHeadings && rowIndex !== currentRowIndex) {
+				let currentRowHeight = _getRowHeight(rowIndex) * scale;
+				let currentRowHeightReal = (t._getRowHeight(rowIndex)/this.getRetinaPixelRatio()) *scale;
+				rowBreak = t.model.rowBreaks && t.model.rowBreaks.isBreak(rowIndex);
+				if ((currentHeight + currentRowHeight + curTitleHeight > pageHeightWithFieldsHeadings
+					&& rowIndex !== currentRowIndex) || rowBreak) {
 					// Закончили рисовать страницу
 					curTitleHeight = addedTitleHeight;
-					rowIndex = rowIndex;
 					break;
 				}
 				if (isCalcColumnsWidth) {
@@ -2369,17 +2371,18 @@
 					newPagePrint.titleWidth = curTitleWidth;
 
 					for (colIndex = currentColIndex; colIndex <= range.c2; ++colIndex) {
-						var currentColWidth = _getColumnWidth(colIndex) * scale;
-						var currentRowWidthReal = (t._getColumnWidth(colIndex)/this.getRetinaPixelRatio()) *scale;
+						let currentColWidth = _getColumnWidth(colIndex) * scale;
+						let currentRowWidthReal = (t._getColumnWidth(colIndex)/this.getRetinaPixelRatio()) *scale;
 						if (bIsAddOffset) {
 							newPagePrint.startOffset = ++nCountOffset;
 							newPagePrint.startOffsetPx = (pageWidthWithFieldsHeadings * newPagePrint.startOffset);
 							currentColWidth -= newPagePrint.startOffsetPx;
 						}
 
-						if (currentWidth + currentColWidth + curTitleWidth > pageWidthWithFieldsHeadings && colIndex !== currentColIndex) {
+						colBreak = t.model.colBreaks && t.model.colBreaks.isBreak(rowIndex);
+						if ((currentWidth + currentColWidth + curTitleWidth > pageWidthWithFieldsHeadings
+							&& colIndex !== currentColIndex) || colBreak) {
 							curTitleWidth = addedTitleWidth;
-							colIndex = colIndex;
 							break;
 						}
 
@@ -2472,7 +2475,7 @@
 				nCountOffset = 0;
 			}
 
-			if (colIndex <= range.c2) {
+			if (colIndex <= range.c2 && !rowBreak) {
 				// Мы еще не все колонки отрисовали
 				currentColIndex = colIndex;
 				currentHeight = 0;

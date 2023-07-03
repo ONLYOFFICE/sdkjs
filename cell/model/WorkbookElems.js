@@ -15551,6 +15551,16 @@ QueryTableField.prototype.clone = function() {
 	CRowColBreaks.prototype.getBreaks = function () {
 		return this.breaks;
 	};
+	CRowColBreaks.prototype.isBreak = function (index) {
+		if (this.count > 0) {
+			for (let i = 0; i < this.breaks.length; i++) {
+				if (this.breaks[i].isBreak(index)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
 
 
 	function CBreak(/*ws*/) {
@@ -15601,6 +15611,9 @@ QueryTableField.prototype.clone = function() {
 	};
 	CBreak.prototype.getPt = function () {
 		return this.pt;
+	};
+	CBreak.prototype.isBreak = function (index) {
+		return this.id === index;
 	};
 
 
