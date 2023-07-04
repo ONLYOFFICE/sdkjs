@@ -4849,13 +4849,18 @@
 			}
 
 			//draw pages break
+			let pageOptions = this.model.PagePrintOptions;
+			let pageSetup = pageOptions && pageOptions.asc_getPageSetup();
+			let bFitToWidth = pageSetup && pageSetup.asc_getFitToWidth();
+			let bFitToHeight = pageSetup && pageSetup.asc_getFitToHeight();
+
 			let widthLine = 3;
-			if (this.model.colBreaks) {
+			if (this.model.colBreaks && !bFitToWidth) {
 				this.model.colBreaks.forEach(function (colBreak) {
 					t._drawElements(t._drawLineBetweenRowCol, colBreak.id, null, color, allPagesRange, widthLine);
 				});
 			}
-			if (this.model.rowBreaks) {
+			if (this.model.rowBreaks && !bFitToHeight) {
 				this.model.rowBreaks.forEach(function (rowBreak) {
 					t._drawElements(t._drawLineBetweenRowCol, null, rowBreak.id, color, allPagesRange, widthLine);
 				});
@@ -8743,13 +8748,13 @@
 		let res = null;
 		let _range = null;
 		if (oPrintPages) {
-			let printRanges = this._getPageBreakPreviewRanges(oPrintPages);
+			let printRanges = this.pagesModeData.printPages;
 			if (printRanges) {
 				for (let i = 0; i < printRanges.length; i++) {
-					res = this._hitInRange(printRanges[i].range,
+					res = this._hitInRange(printRanges[i].page.pageRange,
 						AscCommonExcel.selectionLineType.Resize, vr, x, y, offsetX, offsetY, true);
 					if (res) {
-						_range = printRanges[i].range.clone();
+						_range = printRanges[i].page.pageRange.clone();
 						break;
 					}
 				}
@@ -9238,16 +9243,6 @@
                 return res;
             }
         }
-
-		if (this.model.colBreaks) {
-			cFrozen = this.topLeftFrozenCell.getCol0();
-			rFrozen = this.topLeftFrozenCell.getRow0();
-			widthDiff = this._getColLeft(cFrozen) - this._getColLeft(0);
-			heightDiff = this._getRowTop(rFrozen) - this._getRowTop(0);
-
-			offsetX = (x < this.cellsLeft + widthDiff) ? 0 : offsetX - widthDiff;
-			offsetY = (y < this.cellsTop + heightDiff) ? 0 : offsetY - heightDiff;
-		}
 
 		if (x > this.cellsLeft && y > this.cellsTop) {
 			c = this._findColUnderCursor(x, true);
