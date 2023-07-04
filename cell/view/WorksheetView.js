@@ -4849,14 +4849,15 @@
 			}
 
 			//draw pages break
+			let widthLine = 3;
 			if (this.model.colBreaks) {
 				this.model.colBreaks.forEach(function (colBreak) {
-					t._drawElements(t._drawLineBetweenRowCol, colBreak.id, null, color);
+					t._drawElements(t._drawLineBetweenRowCol, colBreak.id, null, color, allPagesRange, widthLine);
 				});
 			}
 			if (this.model.rowBreaks) {
 				this.model.rowBreaks.forEach(function (rowBreak) {
-					t._drawElements(t._drawLineBetweenRowCol, null, rowBreak.id, color);
+					t._drawElements(t._drawLineBetweenRowCol, null, rowBreak.id, color, allPagesRange, widthLine);
 				});
 			}
 		}
@@ -6309,14 +6310,22 @@
 		let col = args[0];
 		let row = args[1];
 		let strokeColor = args[2];
+		let range = args[3];
+		let widthLine = args[4] != null ? args[4] : 2;
 		let ctx = this.overlayCtx;
+
+		if (range) {
+			visibleRange = range.intersection(visibleRange);
+		}
+		if (!visibleRange) {
+			return;
+		}
 
 		let fHorLine, fVerLine;
 
 		fHorLine = ctx.lineHorPrevPx;
 		fVerLine = ctx.lineVerPrevPx;
 
-		let widthLine = 2;
 
 		if (AscBrowser.retinaPixelRatio === 2) {
 			widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
@@ -9230,6 +9239,16 @@
             }
         }
 
+		if (this.model.colBreaks) {
+			cFrozen = this.topLeftFrozenCell.getCol0();
+			rFrozen = this.topLeftFrozenCell.getRow0();
+			widthDiff = this._getColLeft(cFrozen) - this._getColLeft(0);
+			heightDiff = this._getRowTop(rFrozen) - this._getRowTop(0);
+
+			offsetX = (x < this.cellsLeft + widthDiff) ? 0 : offsetX - widthDiff;
+			offsetY = (y < this.cellsTop + heightDiff) ? 0 : offsetY - heightDiff;
+		}
+
 		if (x > this.cellsLeft && y > this.cellsTop) {
 			c = this._findColUnderCursor(x, true);
 			r = this._findRowUnderCursor(y, true);
@@ -9319,7 +9338,7 @@
 			}
 			
 			if (canEdit && readyMode) {
-				var _range = new asc_Range(c.col, r.row, c.col, r.row)
+				var _range = new asc_Range(c.col, r.row, c.col, r.row);
 				var pivotButtons = !this.model.inTopAutoFilter(_range) && this.model.getPivotTableButtons(_range);
 				var pivotButton = pivotButtons && pivotButtons.find(function (element) {
 					return element.row === r.row && element.col === c.col;
