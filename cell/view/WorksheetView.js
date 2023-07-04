@@ -2350,7 +2350,7 @@
 			for (rowIndex = currentRowIndex; rowIndex <= range.r2; ++rowIndex) {
 				let currentRowHeight = _getRowHeight(rowIndex) * scale;
 				let currentRowHeightReal = (t._getRowHeight(rowIndex)/this.getRetinaPixelRatio()) *scale;
-				rowBreak = t.model.rowBreaks && t.model.rowBreaks.isBreak(rowIndex);
+				rowBreak = !bFitToHeight && rowIndex !== currentRowIndex && t.model.rowBreaks && t.model.rowBreaks.isBreak(rowIndex);
 				if ((currentHeight + currentRowHeight + curTitleHeight > pageHeightWithFieldsHeadings
 					&& rowIndex !== currentRowIndex) || rowBreak) {
 					// Закончили рисовать страницу
@@ -2379,7 +2379,7 @@
 							currentColWidth -= newPagePrint.startOffsetPx;
 						}
 
-						colBreak = t.model.colBreaks && t.model.colBreaks.isBreak(rowIndex);
+						colBreak = !bFitToWidth && colIndex !== currentColIndex && t.model.colBreaks && t.model.colBreaks.isBreak(colIndex);
 						if ((currentWidth + currentColWidth + curTitleWidth > pageWidthWithFieldsHeadings
 							&& colIndex !== currentColIndex) || colBreak) {
 							curTitleWidth = addedTitleWidth;
@@ -2475,7 +2475,7 @@
 				nCountOffset = 0;
 			}
 
-			if (colIndex <= range.c2 && !rowBreak) {
+			if (colIndex <= range.c2) {
 				// Мы еще не все колонки отрисовали
 				currentColIndex = colIndex;
 				currentHeight = 0;
@@ -4827,6 +4827,7 @@
 			return;
 		}
 
+		let t = this;
 		let oPrintPages = this.pagesModeData;
 		let allPagesRange;
 		//рисуем страницы
@@ -4845,6 +4846,18 @@
 					}
 				}
 				this._drawElements(this._drawSelectionElement, allPagesRange, lineType, color, true);
+			}
+
+			//draw pages break
+			if (this.model.colBreaks) {
+				this.model.colBreaks.forEach(function (colBreak) {
+					t._drawElements(t._drawLineBetweenRowCol, colBreak.id, null, color);
+				});
+			}
+			if (this.model.rowBreaks) {
+				this.model.rowBreaks.forEach(function (rowBreak) {
+					t._drawElements(t._drawLineBetweenRowCol, null, rowBreak.id, color);
+				});
 			}
 		}
 	};

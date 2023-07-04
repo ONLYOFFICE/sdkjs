@@ -15561,6 +15561,11 @@ QueryTableField.prototype.clone = function() {
 		}
 		return false;
 	};
+	CRowColBreaks.prototype.forEach = function (callback) {
+		for (var i = 0, l = this.breaks.length; i < l; ++i) {
+			callback(this.breaks[i], i);
+		}
+	};
 
 
 	function CBreak(/*ws*/) {
