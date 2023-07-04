@@ -14717,7 +14717,6 @@
 		minR = Math.min(minR, oBBox.r2);
 		if (actionCell || actionRow) {
 			var itRow = new RowIterator();
-
 			if (actionCell) {
 				itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.c2);
 			}
@@ -14752,7 +14751,6 @@
 				}
 				if (actionCell) {
 					itRow.setRow(i);
-
 					while (tempCell = itRow.next()) {
 						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
 						if (null != oRes) {
@@ -18158,7 +18156,6 @@
 			let nPreviousVal = null;
 			let nPrevInputTimePeriod = null;
 			let nRepeat = 0;
-
 			fromRange._foreachNoEmpty(function(oCell, nRow0, nCol0, nRowStart0, nColStart0){
 				if(null != oCell)
 				{
@@ -18175,7 +18172,6 @@
 						nPreviousVal = nVal;
 						nPrevInputTimePeriod = nInputTimePeriod;
 					}
-
 					var nVal = null;
 					var bDelimiter = false;
 					var sPrefix = null;
@@ -18185,13 +18181,11 @@
 					let aInputTimePeriod = null;
 					let sNextValue = null;
 					let nInputTimePeriod = null;
-
 					if(bIsPromote)
 					{
 						if (!oCell.isFormula())
 						{
 							var sValue = oCell.getValueWithoutFormat();
-
 							if("" != sValue)
 							{
 								bDelimiter = true;
