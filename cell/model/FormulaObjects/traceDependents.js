@@ -95,13 +95,12 @@ function (window, undefined) {
 
 			let sheetListeners = depFormulas.sheetListeners;
 			let curListener = sheetListeners[ws.Id];
-			let allDefNamesListeners = depFormulas.defNameListeners;
 			let cellIndex = AscCommonExcel.getCellIndex(row, col);
-			this._calculateDependents(cellIndex, curListener, allDefNamesListeners);
+			this._calculateDependents(cellIndex, curListener);
 			this.setDependentsCall();
 		}
 	};
-	TraceDependentsManager.prototype._calculateDependents = function (cellIndex, curListener, allDefNamesListeners) {
+	TraceDependentsManager.prototype._calculateDependents = function (cellIndex, curListener) {
 		if (!this.dependents) {
 			this.dependents = {};
 		}
@@ -110,15 +109,9 @@ function (window, undefined) {
 		let ws = this.ws.model;
 		let wb = this.ws.model.workbook;
 		let dependencyFormulas = wb.dependencyFormulas;
+		let allDefNamesListeners = dependencyFormulas.defNameListeners;
 		let cellAddress = AscCommonExcel.getFromCellIndex(cellIndex, true);
-
-		let currentCellRange = ws.getCell3(cellAddress.row, cellAddress.col);
-
-		// let cell = new Cell(ws);
-		// let res = cell.loadContent(row, col); // true|false
-		// if (!res) {
-		// 	ws._initCell(cell, row, col);
-		// }
+		const currentCellInfo = {};
 
 		const findCellListeners = function () {
 			const listeners = {};
@@ -136,7 +129,6 @@ function (window, undefined) {
 					Object.assign(listeners, curListener.cellMap[cellIndex].listeners);
 				}
 			}
-			// TODO need to find all ranges referring to defName
 			if (curListener && curListener.defName3d) {
 				Object.assign(listeners, curListener.defName3d);
 			}
@@ -144,7 +136,7 @@ function (window, undefined) {
 		};
 		const setDefNameIndexes = function (defName) {
 			for (const i in allDefNamesListeners) {
-				if (allDefNamesListeners.hasOwnProperty(i) && i === defName) {
+				if (allDefNamesListeners.hasOwnProperty(i) && i.toLowerCase() === defName.toLowerCase()) {
 					for (const listener in allDefNamesListeners[i].listeners) {
 						// TODO возможно стоить добавить все слушатели сразу в curListener
 						let isArea = allDefNamesListeners[i].listeners[listener].ref ? !allDefNamesListeners[i].listeners[listener].ref.isOneCell() : false;
@@ -178,26 +170,8 @@ function (window, undefined) {
 
 			return indexes;
 		};
-		const getParentIndex = function (_parent, shared) {
+		const getParentIndex = function (_parent) {
 			let _parentCellIndex = AscCommonExcel.getCellIndex(_parent.nRow, _parent.nCol);
-			
-			if (shared) {
-				// ? temporary solution
-				let base = shared.base;
-				let isRowMode = (shared.ref.r2 - shared.ref.r1) !== 0 ? false : true,
-					isColumnMode = (shared.ref.c2 - shared.ref.c1) !== 0 ? false : true;
-
-				if (isRowMode && isColumnMode) {
-					// if single element, return base row col
-					_parentCellIndex = AscCommonExcel.getCellIndex(base.nRow, base.nCol);
-				} else if (isRowMode) {
-					let newCol = cellAddress.row === _parent.nRow ? _parent.nCol + (cellAddress.col + 1 - base.nCol) : _parent.nCol;
-					_parentCellIndex = AscCommonExcel.getCellIndex(_parent.nRow, newCol);
-				} else {
-					let newRow = cellAddress.col === _parent.nCol ? _parent.nRow + (cellAddress.row + 1 - base.nRow) : _parent.nRow;
-					_parentCellIndex = AscCommonExcel.getCellIndex(newRow, _parent.nCol);
-				}
-			}
 			//parent -> cell/defname
 			if (_parent.parsedRef/*parent instanceof AscCommonExcel.DefName*/) {
 				_parentCellIndex = null;
@@ -206,12 +180,25 @@ function (window, undefined) {
 			}
 			return _parentCellIndex;
 		};
-		// const tempSharedIntersection = function (currentRange, shared) {
-		// 	// currentArea - ?
-		// 	let res = currentRange.bbox.getSharedIntersect(shared.ref, currentRange.bbox);
-		// };
-		// let changedRange = currentRange.getSharedIntersect(shared.ref, currentCellRange);
-		// currentRange.getSharedRange(sharedRef, col, row);
+		const tempSharedIntersection = function (currentRange, shared) {
+			// get the cell is contained in one of the areaMap
+			// if contain, call getSharedIntersect with currentRange whom contain cell and sharedRange
+			if (curListener && curListener.areaMap) {
+				for (let j in curListener.areaMap) {
+					if (curListener.areaMap.hasOwnProperty(j)) {
+						if (curListener.areaMap[j] && curListener.areaMap[j].bbox.contains(cellAddress.col, cellAddress.row)) {
+							let res = curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);
+							// draw dependents to coords from res
+							if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
+								let index = AscCommonExcel.getCellIndex(res.r1, res.c1);
+								t._setDependents(cellIndex, index);
+							}
+						}
+					}
+				}
+			}
+		};
+
 		const cellListeners = findCellListeners();
 		if (cellListeners) {
 			if (!this.dependents[cellIndex]) {
@@ -224,6 +211,7 @@ function (window, undefined) {
 
 						let is3D = false;
 						if (parent.name) {
+							// TODO check external table ref
 							is3D = false;
 							setDefNameIndexes(parent.name);
 							continue;
@@ -238,8 +226,10 @@ function (window, undefined) {
 
 						if (cellListeners[i].shared !== null) {
 							let shared = cellListeners[i].getShared();
-							parentCellIndex = getParentIndex(parent, shared);
-							// tempSharedIntersection(currentCellRange, shared);
+							let currentCellRange = ws.getCell3(cellAddress.row, cellAddress.col);
+							// parentCellIndex = getParentIndex(parent, shared);
+							tempSharedIntersection(currentCellRange, shared);
+							continue;
 						}
 
 						if (formula.includes(":") && !is3D) {
@@ -417,7 +407,8 @@ function (window, undefined) {
 								isArea = false;
 							}
 						} else if (isTable) {
-							elemRange = elem.area.bbox ? elem.area.bbox : null;
+							// TODO check external table ref
+							elemRange = elem.area.bbox ? elem.area.bbox : (elem.area.range ? elem.area.range.bbox : null);
 						} else {
 							elemRange = elem.range.bbox ? elem.range.bbox : elem.bbox;
 						}

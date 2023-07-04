@@ -139,8 +139,8 @@ $(function() {
 			ws.getRange2("C101").setValue("=B101");
 	
 			// "click" on the button trace dependents
-			api.asc_setCellBold();
-			api.asc_setCellBold();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
 
 			// check the object with dependency cell numbers for compliance
 			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
@@ -154,7 +154,7 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(B101Index, C101Index), 1);
 			
 			// clear traces from canvas
-			api.asc_setCellItalic();
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
 		});
 		QUnit.test("Test: \"Dependents\"", function (assert) {
@@ -191,7 +191,7 @@ $(function() {
 				H201Index = AscCommonExcel.getCellIndex(ws.getRange2("H201").bbox.r1, ws.getRange2("H201").bbox.c1);
 
 			// first "click"
-			api.asc_setCellBold();
+			api.asc_TraceDependents();
 
 			// C10
 			assert.strictEqual(traceManager._getDependents(A1Index, C10Index), 1);
@@ -215,7 +215,7 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(E200Index, H201Index), undefined);
 
 			// second "click"
-			api.asc_setCellBold();
+			api.asc_TraceDependents();
 
 			// E200:E201
 			assert.strictEqual(traceManager._getDependents(C101Index, E200Index), 1);
@@ -226,14 +226,14 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(E200Index, H201Index), undefined);
 
 			// third "click"
-			api.asc_setCellBold();
+			api.asc_TraceDependents();
 
 			// H200:H201
 			assert.strictEqual(traceManager._getDependents(E200Index, H200Index), 1);
 			assert.strictEqual(traceManager._getDependents(E200Index, H201Index), 1);
 			
 			// clear traces
-			api.asc_setCellItalic();
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
 		});
 		QUnit.test("Test: \"External dependencies\"", function (assert) {
@@ -246,7 +246,7 @@ $(function() {
 			ws2.getRange2("A1").setValue("=Sheet1!A1");
 			ws2.getRange2("B1").setValue("=Sheet1!B1");
 	
-			api.asc_setCellBold();
+			api.asc_TraceDependents();
 
 			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
 				B1Index = AscCommonExcel.getCellIndex(ws.getRange2("B1").bbox.r1, ws.getRange2("B1").bbox.c1),
@@ -257,11 +257,11 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(A1Index, A1ExternalIndex), 1);
 			assert.strictEqual(traceManager._getDependents(B1Index, B1ExternalIndex), undefined);
 
-			api.asc_setCellBold();
+			api.asc_TraceDependents();
 
 			assert.strictEqual(traceManager._getDependents(B1Index, B1ExternalIndex), 1);
 			
-			api.asc_setCellItalic();
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
 		});
 		QUnit.test("Test: \"Base precedents test\"", function (assert) {
@@ -274,8 +274,8 @@ $(function() {
 			ws.getRange2("C101").setValue("1");
 	
 			// "click" on the button trace precedents
-			api.asc_setCellUnderline();
-			api.asc_setCellUnderline();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
 
 			// check the object with dependency cell numbers for compliance
 			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
@@ -289,7 +289,7 @@ $(function() {
 			assert.strictEqual(traceManager._getPrecedents(B101Index, C101Index), 1);
 
 			// clear traces from canvas
-			api.asc_setCellItalic();
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
 		QUnit.test("Test: \"Precedents\"", function (assert) {
 			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
@@ -307,7 +307,7 @@ $(function() {
 				C3ExternalIndex = AscCommonExcel.getCellIndex(ws2.getRange2("C3").bbox.r1, ws2.getRange2("C3").bbox.c1) + ";0";
 
 			// first "click"
-			api.asc_setCellUnderline();
+			api.asc_TracePrecedents();
 			
 			// A1
 			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1);
@@ -321,13 +321,13 @@ $(function() {
 			assert.strictEqual(traceManager._getPrecedents(C1Index, C3ExternalIndex), undefined);
 
 			// second "click"
-			api.asc_setCellUnderline();
+			api.asc_TracePrecedents();
 
 			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), 1);
 			assert.strictEqual(traceManager._getPrecedents(C1Index, C3ExternalIndex), 1);
 			
 			// clear traces
-			api.asc_setCellItalic();
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
 		});
 		QUnit.test("Test: \"DefName tests\"", function (assert) {
@@ -399,7 +399,7 @@ $(function() {
 			ws2.getRange2("A1:B2").setValue("1");
 
 			// first show precedents click on A1
-			api.asc_setCellUnderline();
+			api.asc_TracePrecedents();
 
 			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1);
 			assert.strictEqual(traceManager._getPrecedents(C1Index, C2Index), undefined);
@@ -422,7 +422,7 @@ $(function() {
 			// assert.strictEqual(traceManager._getPrecedents(F1Index, H1Index), 1);
 
 			// clear traces
-			api.asc_setCellItalic();
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 			/*
 			// change selection to A3
 			ws.selectionRange.ranges = [ws.getRange2("A3").getBBox0()];
@@ -495,7 +495,7 @@ $(function() {
 			ws.selectionRange.setActiveCell(ws.getRange2("B1").getBBox0().r1, ws.getRange2("B1").getBBox0().c1);
 
 			// trace precedents
-			api.asc_setCellUnderline();
+			api.asc_TracePrecedents();
 			// A1
 			assert.strictEqual(traceManager._getPrecedents(A1Index, A10ExternalIndex), undefined);
 			// B1
@@ -507,7 +507,7 @@ $(function() {
 			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), undefined);
 
 			// trace precedents
-			api.asc_setCellUnderline();
+			api.asc_TracePrecedents();
 			// A1
 			assert.strictEqual(traceManager._getPrecedents(A1Index, A10ExternalIndex), 1);
 			// B1
@@ -518,11 +518,11 @@ $(function() {
 			assert.strictEqual(traceManager._getPrecedents(C1Index, A1ExternalIndex), undefined);
 			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), undefined);
 			
-			api.asc_setCellUnderline();
-			api.asc_setCellUnderline();
-			api.asc_setCellUnderline();
-			api.asc_setCellUnderline();
-			api.asc_setCellUnderline();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
 			// A1
 			assert.strictEqual(traceManager._getPrecedents(A1Index, A10ExternalIndex), 1);
 			// B1
@@ -534,10 +534,10 @@ $(function() {
 			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), undefined);
 
 			// trace dependents
-			api.asc_setCellBold();
-			api.asc_setCellBold();
-			api.asc_setCellBold();
-			api.asc_setCellBold();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
 
 			// A1
 			assert.strictEqual(traceManager._getPrecedents(A1Index, A10ExternalIndex), 1);
@@ -550,18 +550,18 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(B1Index, C1Index), 1);
 
 			// clear traces
-			api.asc_setCellItalic();
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
 			ws.selectionRange.ranges = [ws.getRange2("C1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("C1").getBBox0().r1, ws.getRange2("C1").getBBox0().c1);
 
-			api.asc_setCellUnderline();
+			api.asc_TracePrecedents();
 
 			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
 
-			api.asc_setCellBold();
-			api.asc_setCellBold();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
 
 			// A1
 			assert.strictEqual(traceManager._getDependents(A1Index, B1Index), 1);
@@ -571,7 +571,7 @@ $(function() {
 			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), 1);
 
 			// clear traces
-			api.asc_setCellItalic();
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
 	}
 
