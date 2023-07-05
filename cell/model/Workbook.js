@@ -4057,7 +4057,9 @@
 					range.bbox.r2 = oRangeFrom.bbox.r1 + delta;
 				}
 				oDrawing.collectRefsInsideRange(oRangeFrom, aRefsToReplace);
-				oDrawing.collectRefsInsideRangeForInsertColRow(range, aRefsToResize, isInsertCol);
+				if (typeof isInsertCol != "undefined") {
+					oDrawing.collectRefsInsideRangeForInsertColRow(range, aRefsToResize, isInsertCol);
+				}
 				for(var nRef = 0; nRef < aRefsToResize.length; ++nRef) {
 					if (aRefsToReplace.filter(function(val){return val.Id === aRefsToResize[nRef].Id}).length === 0)
 						aRefsToReplace.push({ ref: aRefsToResize[nRef], resize: true, Id: aRefsToResize[nRef].Id })
