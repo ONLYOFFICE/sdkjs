@@ -577,7 +577,7 @@ function CDrawingDocument()
     this.LogicDocument          = null;
     this.m_bIsMouseLock         = false;
 
-    this.CanvasHitContext       = CreateHitControl();
+    this.CanvasHitContext       = CreateEmbedObject("CHitNativeEmbed");
 
     this.m_dTargetSize          = 0;
     this.m_lCurrentPage         = -1;

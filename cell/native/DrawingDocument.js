@@ -1324,7 +1324,7 @@ function CDrawingDocument()
     this.Native = window["native"];
     this.Api    = window.editor;
     this.m_oApi = this.Api;
-    this.CanvasHitContext = CreateHitControl();
+    this.CanvasHitContext = CreateEmbedObject("CHitNativeEmbed");
 
     this.IsLockObjectsEnable = false;
 
