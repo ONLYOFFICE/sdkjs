@@ -2393,6 +2393,66 @@ CDocumentContentBase.prototype.UpdateInterfaceTextPr = function()
 		oApi.UpdateTextPr(oTextPr);
 	}
 };
+CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
+{
+	let api = this.GetApi();
+	if (!api)
+		return;
+	
+	let paraPr = this.GetCalculatedParaPr();
+	if (!paraPr)
+		return;
+	
+	paraPr.CanAddDropCap = this.CanAddDropCap();
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+	{
+		let selectedInfo = logicDocument.GetSelectedElementsInfo({CheckAllSelection : true});
+
+		let math = selectedInfo.GetMath();
+		if (math)
+			paraPr.CanAddImage = false;
+		else if (false === paraPr.CanAddImage)
+			paraPr.CanAddImage = true;
+		
+		if (math && !math.IsInline())
+			paraPr.Jc = math.GetAlign();
+		
+		paraPr.CanDeleteBlockCC  = selectedInfo.CanDeleteBlockSdts();
+		paraPr.CanEditBlockCC    = selectedInfo.CanEditBlockSdts();
+		paraPr.CanDeleteInlineCC = selectedInfo.CanDeleteInlineSdts();
+		paraPr.CanEditInlineCC   = selectedInfo.CanEditInlineSdts();
+	}
+	
+	if (paraPr.Tabs)
+	{
+		let defaultTab = paraPr.DefaultTab != null ? paraPr.DefaultTab : AscCommonWord.Default_Tab_Stop;
+		api.Update_ParaTab(defaultTab, paraPr.Tabs);
+	}
+	
+	if (paraPr.Shd && paraPr.Shd.Unifill)
+		paraPr.Shd.Unifill.check(this.GetTheme(), this.GetColorMap());
+	
+	// Если мы находимся внутри автофигуры, тогда нам надо проверить лок параграфа, в котором находится автофигура
+	if (logicDocument
+		&& logicDocument.IsDocumentEditor()
+		&& docpostype_DrawingObjects === logicDocument.GetDocPosType()
+		&& true !== paraPr.Locked)
+	{
+		let drawing = logicDocument.GetDrawingObjects().getMajorParaDrawing();
+		if (drawing)
+			paraPr.Locked = drawing.Lock.Is_Locked();
+	}
+	
+	paraPr.StyleName = AscWord.DisplayStyleCalculator.CalculateName(this);
+	api.sync_ParaStyleName(paraPr.StyleName);
+	api.UpdateParagraphProp(paraPr);
+};
+CDocumentContentBase.prototype.CanAddDropCap = function()
+{
+	return false;
+};
 /**
  * Считаем количество элементов в рамке, начиная с заданного
  * @param nStartIndex
@@ -2517,5 +2577,41 @@ CDocumentContentBase.prototype.private_RecalculateNumbering = function(elements)
 			}
 		}
 	}
+};
+CDocumentContentBase.prototype.Get_Theme = function()
+{
+	if (this.Parent)
+		return this.Parent.Get_Theme();
+	
+	if (this.LogicDocument)
+		return this.LogicDocument.GetTheme();
+	
+	return AscFormat.GetDefaultTheme();
+};
+CDocumentContentBase.prototype.Get_ColorMap = function()
+{
+	if (this.Parent)
+		return this.Parent.Get_ColorMap();
+	
+	if (this.LogicDocument)
+		return this.LogicDocument.GetColorMap();
+	
+	return AscFormat.GetDefaultColorMap();
+};
+CDocumentContentBase.prototype.GetTheme = function()
+{
+	return this.Get_Theme();
+};
+CDocumentContentBase.prototype.GetColorMap = function()
+{
+	return this.Get_ColorMap();
+};
+CDocumentContentBase.prototype.GetSelectedParagraphs = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument)
+		return [];
+	
+	return logicDocument.GetSelectedParagraphs();
 };
 

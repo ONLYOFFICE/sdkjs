@@ -554,20 +554,12 @@ function CMasterThumbnailDrawer()
     {
         var aPhTypes = [AscFormat.phType_ctrTitle, AscFormat.phType_title];
         var oTextPr = this.GetPlaceholderTextProperties(_master, _layout, aPhTypes);
-        if(!oTextPr)
-        {
-            oTextPr = this.GetDefaultRunPr(_master, true)
-        }
         return this.GetTextColor(oTextPr, _master);
     };
     this.GetBodyTextColor = function (_master, _layout)
     {
         var aPhTypes = [AscFormat.phType_body, AscFormat.phType_subTitle, AscFormat.phType_obj];
         var oTextPr = this.GetPlaceholderTextProperties(_master, _layout, aPhTypes);
-        if(!oTextPr)
-        {
-            oTextPr = this.GetDefaultRunPr(_master, false)
-        }
         return this.GetTextColor(oTextPr, _master);
     };
     this.GetTextColor = function(oTextPr, _master)
@@ -576,49 +568,18 @@ function CMasterThumbnailDrawer()
         var oFormatColor;
         var _theme = _master.Theme;
         var RGBA = {R:0, G:0, B:0, A:255};
-        if(oTextPr && oTextPr.Unifill && oTextPr.Unifill.fill)
+        if(!oTextPr || !oTextPr.Unifill || !oTextPr.Unifill.fill)
         {
-            oTextPr.Unifill.calculate(_theme, null, null, _master, RGBA, null);
-            oFormatColor = oTextPr.Unifill.getRGBAColor();
-            oColor = new CDocumentColor(oFormatColor.R, oFormatColor.G, oFormatColor.B);
+            oTextPr = {}
+            oTextPr.Unifill = new AscFormat.CUniFill();
+            oTextPr.Unifill.fill = new AscFormat.CSolidFill();
+            oTextPr.Unifill.fill.color = AscFormat.builder_CreateSchemeColor('tx1');
         }
-        else
-        {
-            var _color = new AscFormat.CSchemeColor();
-            _color.id = 15;
-            _color.Calculate(_theme, null, null, _master, RGBA);
-            oColor = new CDocumentColor(_color.RGBA.R, _color.RGBA.G, _color.RGBA.B);
-        }
+        oTextPr.Unifill.calculate(_theme, null, null, _master, RGBA, null);
+        oFormatColor = oTextPr.Unifill.getRGBAColor();
+        oColor = new CDocumentColor(oFormatColor.R, oFormatColor.G, oFormatColor.B);
         return oColor;
     };
-    this.GetDefaultRunPr = function (_master, bTitle)
-    {
-        var oTxStyles = _master.txStyles;
-        var oTitleRunPr, oBodyRunPr;
-        if(oTxStyles)
-        {
-            if(bTitle)
-            {
-                var oTitleStyle = oTxStyles.titleStyle;
-                if(oTitleStyle && oTitleStyle.levels[0])
-                {
-                    oTitleRunPr = oTitleStyle.levels[0].DefaultRunPr;
-                    return oTitleRunPr;
-                }
-            }
-            else
-            {
-                var oBodyStyle = oTxStyles.bodyStyle;
-                if(oBodyStyle && oBodyStyle.levels[0])
-                {
-                    oBodyRunPr = oBodyStyle.levels[0].DefaultRunPr;
-                    return oBodyRunPr;
-                }
-            }
-        }
-        return null;
-    };
-
     this.Draw2 = function(g, _master, use_background, use_master_shapes, params) {
         var w_px = this.WidthPx;
         var h_px = this.HeightPx;

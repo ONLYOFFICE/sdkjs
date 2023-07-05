@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
+ * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -30,27 +30,39 @@
  *
  */
 
-//This file containes definition of object which used in api.js
-//It need to prevent minimize the name of object's method.
+"use strict";
+function IsCanvas(sName) {
+  return true;
+}
+(function(window, undefined){
 
-/**
- * @record
- */
-function SockJS() {};
+  function CreateControlContainer(name)
+  {
+    var ctrl = new AscCommon.CControlContainer();
+    ctrl.Name = name;
+    const oHtmlElement = document.createElement(IsCanvas(name) ? 'canvas' : 'div');
+    oHtmlElement.style.display = 'none';
+    oHtmlElement.style.width = '20px';
+    oHtmlElement.style.height = '20px';
+    document.body.appendChild(oHtmlElement);
+    ctrl.HtmlElement = oHtmlElement;
+    return ctrl;
+  }
+  function CreateControl(name)
+  {
+    var ctrl = new AscCommon.CControl();
+    ctrl.Name = name;
+    const oHtmlElement = document.createElement(IsCanvas(name) ? 'canvas' : 'div');
+    oHtmlElement.style.display = 'none';
+    oHtmlElement.style.width = '20px';
+    oHtmlElement.style.height = '20px';
+    document.body.appendChild(oHtmlElement);
+    ctrl.HtmlElement = oHtmlElement;
+    return ctrl;
+  }
 
-/**
- * @param code
- * @param reason
- */
-SockJS.prototype.close = function(code, reason) {};
-
-/**
- * @param data
- */
-SockJS.prototype.send = function(data) {};
-
-SockJS.prototype.open = function() {};
-
-function onopen(){}
-function onmessage(){}
-function onclose(){}
+  //--------------------------------------------------------export----------------------------------------------------
+  window['AscCommon'] = window['AscCommon'] || {};
+  window['AscCommon'].CreateControlContainer = CreateControlContainer;
+  window['AscCommon'].CreateControl = CreateControl;
+})(window);

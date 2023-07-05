@@ -1271,12 +1271,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.getValueByRowCol(0, 0);
 	};
 	cArea.prototype._getCol = function (colIndex) {
-		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+		let dimensions = this.getDimensions();
+		if (colIndex < 0 || colIndex > dimensions.col) {
 			return null;
 		}
 
 		let col = [];
-		for (let i = 0; i < this.getDimensions().row; i++) {
+		for (let i = 0; i < dimensions.row; i++) {
+			let valInRow = this.getValueByRowCol(i, colIndex);
 			let elem = this.getValueByRowCol(i, colIndex);
 			if (!elem) {
 				elem = new cEmpty();
@@ -1287,7 +1289,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return col;
 	};
 	cArea.prototype._getRow = function (rowIndex) {
-		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+		let dimensions = this.getDimensions();
+		if (rowIndex < 0 || rowIndex > dimensions.row) {
 			return null;
 		}
 
@@ -1674,12 +1677,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.getValueByRowCol(0, 0);
 	};
 	cArea3D.prototype._getCol = function (colIndex) {
-		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+		let dimensions = this.getDimensions();
+		if (colIndex < 0 || colIndex > dimensions.col) {
 			return null;
 		}
 
 		let col = [];
-		for (let i = 0; i < this.getDimensions().row; i++) {
+		for (let i = 0; i < dimensions.row; i++) {
+			let valInRow = this.getValueByRowCol(i, colIndex);
 			let elem = this.getValueByRowCol(i, colIndex);
 			if (!elem) {
 				elem = new cEmpty();
@@ -1690,7 +1695,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return col;
 	};
 	cArea3D.prototype._getRow = function (rowIndex) {
-		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+		let dimensions = this.getDimensions();
+		if (rowIndex < 0 || rowIndex > dimensions.row) {
 			return null;
 		}
 
@@ -8435,7 +8441,7 @@ function parserFormula( formula, parent, _ws ) {
 					values.push(value);
 				}
 
-				resultArr.addElement(func(true, values));
+				resultArr.addElement(func(values, true));
 			}
 		}
 

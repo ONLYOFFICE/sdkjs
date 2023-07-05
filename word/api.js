@@ -716,7 +716,7 @@
 						function()
 						{
 							var _api = window.g_asc_plugins.api;
-
+							_api.WordControl.m_oLogicDocument.Reassign_ImageUrls(window.g_asc_plugins.images_rename);
 							delete window.g_asc_plugins.images_rename;
 							_api.asc_Recalculate(true);
 							_api.WordControl.m_oLogicDocument.UnlockPanelStyles(true);
@@ -2340,13 +2340,6 @@ background-repeat: no-repeat;\
 		else if (undefined === ParaPr.Spacing.BeforeAutoSpacing)
 			ParaPr.Spacing.Before = AscCommonWord.UnknownValue;
 
-		if (-1 === ParaPr.PStyle)
-			ParaPr.StyleName = "";
-		else if (undefined === ParaPr.PStyle || undefined === this.WordControl.m_oLogicDocument.Styles.Style[ParaPr.PStyle])
-			ParaPr.StyleName = this.WordControl.m_oLogicDocument.Styles.Style[this.WordControl.m_oLogicDocument.Styles.Get_Default_Paragraph()].Name;
-		else
-			ParaPr.StyleName = this.WordControl.m_oLogicDocument.Styles.Style[ParaPr.PStyle].Name;
-
 		if (undefined !== ParaPr.FramePr && undefined !== ParaPr.FramePr.Wrap)
 		{
 			if (AscCommonWord.wrap_NotBeside === ParaPr.FramePr.Wrap)
@@ -2360,7 +2353,6 @@ background-repeat: no-repeat;\
 		this.sync_ParaSpacingLine(ParaPr.Spacing);
 		this.Update_ParaInd(ParaPr.Ind);
 		this.sync_PrAlignCallBack(ParaPr.Jc);
-		this.sync_ParaStyleName(ParaPr.StyleName);
 		this.sync_PrPropCallback(ParaPr);
 	};
 
@@ -12305,7 +12297,27 @@ background-repeat: no-repeat;\
 		return oLogicDocument.GetDrawingDocument();
 	}
 	asc_docs_api.prototype.getLogicDocument = asc_docs_api.prototype.private_GetLogicDocument;
-
+	asc_docs_api.prototype._createSmartArt = function (oSmartArt, oPlaceholder)
+	{
+		const oLogicDocument = this.getLogicDocument();
+		const oController = this.getGraphicController();
+		if (true === oLogicDocument.Selection.Use)
+		{
+			oLogicDocument.Remove(1, true);
+		}
+		oSmartArt.fitToPageSize();
+		oSmartArt.fitFontSize();
+		oSmartArt.recalculateBounds();
+		const oParaDrawing = oSmartArt.decorateParaDrawing(oController);
+		oSmartArt.setXfrmByParent();
+		if (oController)
+		{
+			oController.resetSelection2();
+			oLogicDocument.AddToParagraph(oParaDrawing);
+			oLogicDocument.Select_DrawingObject(oParaDrawing.Get_Id());
+			oLogicDocument.Recalculate();
+		}
+	};
 	asc_docs_api.prototype.asc_CompareDocumentFile_local = function (oOptions) {
 		var t = this;
 		window["AscDesktopEditor"]["OpenFilenameDialog"]("word", false, function(_file){

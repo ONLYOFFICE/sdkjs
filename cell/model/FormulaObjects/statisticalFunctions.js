@@ -5189,8 +5189,8 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.Calculate = function (arg) {
-		var i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
-		for (var k = 0; k < arg.length; k += 2) {
+		let i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
+		for (let k = 0; k < arg.length; k += 2) {
 			arg0 = arg[k];
 			arg1 = arg[k + 1];
 			if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
@@ -5212,7 +5212,11 @@ function (window, undefined) {
 
 			argNextDimension = arg0.getDimensions();
 			matchingInfo = AscCommonExcel.matchingValue(arg1);
-			arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
+			if (arg1.value === "") {
+				arg1Matrix = arg0.getMatrix();
+			} else {
+				arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
+			}
 			if (cElementType.cellsRange3D === arg0.type) {
 				arg1Matrix = arg1Matrix[0];
 			}

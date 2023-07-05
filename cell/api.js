@@ -3369,11 +3369,21 @@ var editor;
 			AscCommonExcel.c_oAscLockAddSheet, AscCommonExcel.c_oAscLockAddSheet);
 		this.collaborativeEditing.lock([lockInfo], callback);
 	};
-	spreadsheet_api.prototype._addWorksheets = function(arrNames, where) {
+	spreadsheet_api.prototype._addWorksheets = function(arrNames, where, opt_callback) {
+		if (this.asc_isProtectedWorkbook()) {
+			if (opt_callback) {
+				opt_callback([]);
+			}
+			return false;
+		}
 		var t = this;
-		this._isLockedAddWorksheets(function(res) {
+		this._isLockedAddWorksheets(function (res) {
+			var worksheets = [];
 			if (res) {
-				t._addWorksheetsWithoutLock(arrNames, where);
+				worksheets = t._addWorksheetsWithoutLock(arrNames, where);
+			}
+			if (opt_callback) {
+				opt_callback(worksheets);
 			}
 		});
 	};
@@ -3726,19 +3736,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_addWorksheet = function (name) {
-    if (this.asc_isProtectedWorkbook()) {
-      return false;
-    }
-
     var i = this.wbModel.getActive();
     this._addWorksheets([name], i + 1);
   };
 
   spreadsheet_api.prototype.asc_insertWorksheet = function (arrNames) {
-    if (this.asc_isProtectedWorkbook()) {
-      return false;
-    }
-
   	// Support old versions
     if (!Array.isArray(arrNames)) {
       arrNames = [arrNames];
@@ -4368,6 +4370,15 @@ var editor;
 		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowZeros, value);
 	};
 
+	spreadsheet_api.prototype.asc_setShowFormulas = function (value) {
+		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowFormulas, value);
+	};
+
+	spreadsheet_api.prototype.asc_getShowFormulas = function () {
+		let ws = this.wb.getWorksheet();
+		return ws.model && ws.model.getShowFormulas();
+	};
+
 	spreadsheet_api.prototype.asc_setDate1904 = function (value) {
 		this.wb.setDate1904(value);
 	};
@@ -4386,6 +4397,29 @@ var editor;
     }
     return false;
   };
+
+	spreadsheet_api.prototype._createSmartArt = function (oSmartArt, oPlaceholder)
+	{
+		const oController = this.getGraphicController();
+		const oDrawingObjects = this.getDrawingObjects();
+		if (!oDrawingObjects || !oController)
+		{
+			return;
+		}
+		oSmartArt.setDrawingObjects(oDrawingObjects);
+		const oWS = oDrawingObjects.getWorksheet();
+		const oWSModel = oWS.model;
+		oSmartArt.setWorksheet(oWSModel);
+		oSmartArt.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+		oSmartArt.checkDrawingBaseCoords();
+		oSmartArt.fitFontSize();
+		oController.checkChartTextSelection();
+		oController.resetSelection();
+		oSmartArt.select(oController, 0);
+		oWS.setSelectionShape(true);
+		oController.startRecalculate();
+		oDrawingObjects.sendGraphicObjectProps();
+	};
 
   spreadsheet_api.prototype.asc_getChartObject = function(bNoLock) {		// Return new or existing chart. For image return null
 
@@ -6003,12 +6037,20 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellAngle = function(angle) {
-    var ws = this.wb.getWorksheet();
-    if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellAngle) {
-      ws.objectRender.controller.setCellAngle(angle);
-    } else {
-      this.wb.getWorksheet().setSelectionInfo("angle", angle);
-      this.wb.restoreFocus();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    if (this.wb) {
+      var ws = this.wb.getWorksheet();
+      if (ws) {
+        if (ws.objectRender && ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellAngle) {
+            ws.objectRender.controller.setCellAngle(angle);
+        } else {
+            ws.setSelectionInfo("angle", angle);
+            this.wb.restoreFocus();
+      	}
+      }
     }
   };
 
@@ -6552,7 +6594,7 @@ var editor;
 	};
 
   spreadsheet_api.prototype.asc_nativeGetFile = function() {
-    var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
+	  var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
     return oBinaryFileWriter.Write();
   };
   spreadsheet_api.prototype.asc_nativeGetFile3 = function()
@@ -6562,6 +6604,8 @@ var editor;
       return { data: oBinaryFileWriter.Write(true, true), header: oBinaryFileWriter.WriteFileHeader(oBinaryFileWriter.Memory.GetCurPosition(), Asc.c_nVersionNoBase64) };
   };
   spreadsheet_api.prototype.asc_nativeGetFileData = function() {
+	  //calc to fix case where file has formulas with no cache values and no changes
+	  this.wbModel.dependencyFormulas.calcTree();
 	  if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
 		  let res;
 		  this.saveDocumentToZip(this.wb.model, this.editorId, function(data) {
@@ -6899,13 +6943,13 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_getPivotInfo = function(opt_pivotTable) {
-		var ws = this.wbModel.getActiveWs();
-		var activeCell = ws.selectionRange.activeCell;
-		var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
-		if (pivotTable) {
-			return pivotTable.getContextMenuInfo(ws.selectionRange);
-		}
-		return null;
+    var ws = this.wbModel.getActiveWs();
+    var activeCell = ws.selectionRange.activeCell;
+    var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+    if (pivotTable) {
+      return pivotTable.getContextMenuInfo(ws.selectionRange);
+    }
+    return null;
 	};
   // Uses for % of, difference from, % difference from, running total in, % running total in, % of parent
   spreadsheet_api.prototype.asc_getPivotShowValueAsInfo = function(showAs, opt_pivotTable) {
@@ -6971,6 +7015,59 @@ var editor;
     }
     return res;
   }
+	spreadsheet_api.prototype.asc_createSheetName = function () {
+		let sheetNames = [];
+		let wc = this.asc_getWorksheetsCount();
+		for(let i = 0; i < wc; i += 1) {
+			sheetNames.push(this.asc_getWorksheetName(i).toLowerCase());
+		}
+		let name = 'Sheet';
+		let i = 0;
+		while (i += 1) {
+			name = AscCommon.translateManager.getValue("Sheet") + i;
+			if (sheetNames.indexOf(name.toLowerCase()) < 0) {
+				break;
+			}
+		}
+		return name;
+	};
+	/**
+	* @param {CT_pivotTableDefinition} opt_pivotTable 
+	* @return {boolean} Success
+	*/
+	spreadsheet_api.prototype.asc_pivotShowDetails = function(opt_pivotTable) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+		let t = this;
+		let ws = this.wbModel.getActiveWs();
+		let activeCell = ws.selectionRange.activeCell;
+		let pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+		if (!pivotTable) {
+			return false;
+		}
+		this._addWorksheets([this.asc_createSheetName()],  this.wbModel.getActive(), function(worksheets){
+			let ws = worksheets[0];
+			if (!ws) {
+				return;
+			}
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			let lengths = pivotTable.showDetails(ws, activeCell.row, activeCell.col);
+
+			let range = new Asc.Range(0, 0, lengths.colLength, lengths.rowLength);
+			let ref = range.getAbsName();
+			let options = t.asc_getAddFormatTableOptions(ref);
+			let tableStyle = t.asc_getDefaultTableStyle();
+			t.asc_addAutoFilter(tableStyle, options);
+
+			History.EndTransaction();
+
+			t.handlers.trigger("setSelection", range.clone());
+		});
+		return true;
+	};
 
 	spreadsheet_api.prototype.asc_getAddPivotTableOptions = function(range) {
 		var ws = this.wb.getWorksheet();
@@ -8381,7 +8478,9 @@ var editor;
 		ws._updateVisibleRowsCount();
 
 		ws.handlers.trigger("selectionChanged");
-		ws.handlers.trigger("selectionMathInfoChanged", ws.getSelectionMathInfo());
+		ws.getSelectionMathInfo(function (info) {
+			ws.handlers.trigger("selectionMathInfoChanged", info);
+		});
 	};
 
 
@@ -8488,11 +8587,28 @@ var editor;
 		this.wb.updateExternalReferences(arr);
 	};
 
+	spreadsheet_api.prototype.asc_openExternalReference = function(externalReference) {
+		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
+		if (isLocalDesktop) {
+			alert("NEED SUPPORT LOCAL OPEN FILE");
+			return null;
+		} else {
+			return externalReference;
+		}
+	};
+
 	spreadsheet_api.prototype.asc_removeExternalReferences = function(arr) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return;
 		}
 		this.wb.removeExternalReferences(arr);
+	};
+
+	spreadsheet_api.prototype.asc_changeExternalReference = function(eR, to) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		this.wb.changeExternalReference(eR, to);
 	};
 
 	spreadsheet_api.prototype.asc_fillHandleDone = function(range) {
@@ -8818,6 +8934,8 @@ var editor;
   prot["asc_setDisplayGridlines"] = prot.asc_setDisplayGridlines;
   prot["asc_setDisplayHeadings"] = prot.asc_setDisplayHeadings;
   prot["asc_setShowZeros"] = prot.asc_setShowZeros;
+  prot["asc_setShowFormulas"] = prot.asc_setShowFormulas;
+
 
   // Defined Names
   prot["asc_getDefinedNames"] = prot.asc_getDefinedNames;
@@ -9104,6 +9222,7 @@ var editor;
   prot["asc_refreshAllPivots"] = prot.asc_refreshAllPivots;
   prot["asc_getPivotInfo"] = prot.asc_getPivotInfo;
   prot["asc_getPivotShowValueAsInfo"] = prot.asc_getPivotShowValueAsInfo;
+  prot["asc_pivotShowDetails"] = prot.asc_pivotShowDetails;
 	// signatures
   prot["asc_addSignatureLine"] 		     = prot.asc_addSignatureLine;
   prot["asc_CallSignatureDblClickEvent"] = prot.asc_CallSignatureDblClickEvent;
@@ -9197,6 +9316,9 @@ var editor;
   prot["asc_getExternalReferences"] = prot.asc_getExternalReferences;
   prot["asc_updateExternalReferences"] = prot.asc_updateExternalReferences;
   prot["asc_removeExternalReferences"] = prot.asc_removeExternalReferences;
+  prot["asc_openExternalReference"] = prot.asc_openExternalReference;
+  prot["asc_changeExternalReference"] = prot.asc_changeExternalReference;
+
 
   prot["asc_fillHandleDone"] = prot.asc_fillHandleDone;
   prot["asc_canFillHandle"]  = prot.asc_canFillHandle;

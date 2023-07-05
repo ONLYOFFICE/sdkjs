@@ -222,8 +222,9 @@ function CTransitionAnimation(htmlpage)
         }
     };
 
-    this.Start = function(isButtonPreview)
+    this.Start = function(isButtonPreview, endCallback)
     {
+        this.endCallback = endCallback
         this.StopIfPlaying();
 
         if (true == isButtonPreview)
@@ -306,6 +307,9 @@ function CTransitionAnimation(htmlpage)
 
         this.TimerId = null;
         this.Params = null;
+
+        if (this.endCallback)
+            this.endCallback()
 
         if (this.DemonstrationObject != null)
         {

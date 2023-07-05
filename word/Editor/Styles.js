@@ -9047,11 +9047,6 @@ CStyles.prototype =
         return this.Default.Paragraph;
     },
 
-    Get_Default_Character : function()
-    {
-        return this.Default.Character;
-    },
-
     Get_Default_Numbering : function()
     {
         return this.Default.Numbering;
@@ -10030,6 +10025,14 @@ CStyles.prototype.Is_DefaultStyleChanged = function(sStyleName)
 CStyles.prototype.GetDefaultParagraph = function()
 {
 	return this.Default.Paragraph;
+};
+/**
+ * Получаем идентификатор стиля по умолчанию для ранов
+ * @returns {string}
+ */
+CStyles.prototype.GetDefaultCharacter = function()
+{
+	return this.Default.Character;
 };
 CStyles.prototype.GetDefaultFootnoteText = function()
 {

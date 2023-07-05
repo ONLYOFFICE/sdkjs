@@ -5398,6 +5398,10 @@ Paragraph.prototype.Correct_ContentPos2 = function()
 
 	this.Content[this.CurPos.ContentPos].CorrectContentPos();
 };
+Paragraph.prototype.GetParaContentPos = function(selection, selectionStart, correctPosition)
+{
+	return this.Get_ParaContentPos(selection, selectionStart, correctPosition);
+};
 Paragraph.prototype.Get_ParaContentPos = function(bSelection, bStart, bUseCorrection)
 {
 	var ContentPos = new AscWord.CParagraphContentPos();
@@ -10960,7 +10964,7 @@ Paragraph.prototype.PasteFormatting = function(oData)
 };
 Paragraph.prototype.Style_Get = function()
 {
-	if (undefined != this.Pr.PStyle)
+	if (undefined !== this.Pr.PStyle)
 		return this.Pr.PStyle;
 
 	return undefined;
@@ -11024,6 +11028,9 @@ Paragraph.prototype.Style_Add = function(Id, bDoNotDeleteProps)
  */
 Paragraph.prototype.SetPStyle = function(styleId)
 {
+	if (!styleId)
+		styleId = undefined;
+	
 	if (this.Pr.PStyle === styleId)
 		return;
 	

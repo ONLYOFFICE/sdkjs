@@ -407,7 +407,7 @@
 
 	  if (!window["NATIVE_EDITOR_ENJINE"]) {
 		  // initialize events controller
-		  this.controller.init(this, this.element, /*this.canvasOverlay*/ this.canvasGraphicOverlay, /*handlers*/{
+		  this.controller && this.controller.init(this, this.element, /*this.canvasOverlay*/ this.canvasGraphicOverlay, /*handlers*/{
 			  "resize": function () {
 				  self.resize.apply(self, arguments);
 			  }, "gotFocus": function (hasFocus) {
@@ -1372,7 +1372,10 @@
     var isSelectOnShape = ws.getSelectionShape();
     if (!this._isEqualRange(ws.model.selectionRange, isSelectOnShape)) {
       this._onWSSelectionChanged();
-      this._onSelectionMathInfoChanged(ws.getSelectionMathInfo());
+      let t = this;
+      ws.getSelectionMathInfo(function (info) {
+		t._onSelectionMathInfoChanged(info);
+      });
       this.controller.lastTab = null;
     }
 
@@ -1574,6 +1577,14 @@
 			  ct.cursor = AscCommon.Cursors.CellCur;
 		  }
 	  }
+	    if (ct.target === c_oTargetType.Placeholder) {
+			    arrMouseMoveObjects.push(new asc_CMM({
+				    type: c_oAscMouseMoveType.Placeholder,
+				    x: AscCommon.AscBrowser.convertToRetinaValue(x),
+				    y: AscCommon.AscBrowser.convertToRetinaValue(y),
+				    placeholderType: ct.placeholderType
+			    }));
+	    }
 
 		// проверяем фильтр
 		if (ct.target === c_oTargetType.FilterObject) {
@@ -1631,6 +1642,10 @@
 	  if(oDrawingDocument.m_sLockedCursorType !== "") {
 		  ct.cursor = oDrawingDocument.m_sLockedCursorType;
 	  }
+
+      if (ws.startCellMoveRange && ws.startCellMoveRange.colRowMoveProps) {
+        ct.cursor = "grabbing";
+      }
 
       this._onUpdateCursor(ct.cursor);
       if (ct.target === c_oTargetType.ColumnHeader || ct.target === c_oTargetType.RowHeader) {
@@ -1710,9 +1725,9 @@
 
 
   // Обработка перемещения диапазона
-  WorkbookView.prototype._onMoveRangeHandle = function(x, y, callback) {
+  WorkbookView.prototype._onMoveRangeHandle = function(x, y, callback, colRowMoveProps) {
     var ws = this.getWorksheet();
-    var d = ws.changeSelectionMoveRangeHandle(x, y);
+    var d = ws.changeSelectionMoveRangeHandle(x, y, colRowMoveProps);
     asc_applyFunction(callback, d);
   };
 
@@ -1933,6 +1948,11 @@
 		  c_oTargetType.Corner === ct.target || c_oTargetType.FrozenAnchorH === ct.target ||
 		  c_oTargetType.FrozenAnchorV === ct.target || ws.objectRender.checkCursorDrawingObject(x, y)) {
         asc_applyFunction(callback);
+        return;
+      }
+      var pivotTable = ws.model.getPivotTable(ct.col, ct.row);
+      if (pivotTable && pivotTable.asc_canShowDetails(ct.row, ct.col)) {
+        this.Api.asc_pivotShowDetails(pivotTable);
         return;
       }
 
@@ -2352,7 +2372,11 @@
     if (!window["NATIVE_EDITOR_ENJINE"] || window["IS_NATIVE_EDITOR"]) {
       this._onSelectionNameChanged(ws.getSelectionName(/*bRangeText*/false));
       this._onWSSelectionChanged();
-      this._onSelectionMathInfoChanged(ws.getSelectionMathInfo());
+      let t = this;
+      ws.getSelectionMathInfo(function (info) {
+      	t._onSelectionMathInfoChanged(info);
+      });
+
     }
     this._onScrollReinitialize(AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal);
     // Zoom теперь на каждом листе одинаковый, не отправляем смену
@@ -3819,8 +3843,8 @@
         this.onShowDrawingObjects();
     };
 
-  WorkbookView.prototype.insertHyperlink = function(options) {
-    var ws = this.getWorksheet();
+  WorkbookView.prototype.insertHyperlink = function(options, sheetId) {
+    var ws = this.getWorksheet(sheetId);
     if (ws.objectRender.selectedGraphicObjectsExists()) {
       if (ws.objectRender.controller.canAddHyperlink()) {
         ws.objectRender.controller.insertHyperlink(options);
@@ -4134,7 +4158,7 @@
 		if (props) {
 			//None style
 			var emptyStyle = new Asc.CTableStyle();
-			emptyStyle.displayName = "None";
+			emptyStyle.displayName = AscCommon.translateManager.getValue("None");
 			emptyStyle.pivot = bPivotTable;
 			addStyles({null: emptyStyle}, AscCommon.c_oAscStyleImage.Default, true);
 		}
@@ -5120,7 +5144,7 @@
 		}
 
 		//TODO Replace_CompositeText
-		this.cellEditor.replaceText(curPos - maxShifts, maxShifts, newCodePoints)
+		this.cellEditor.replaceText(curPos - maxShifts, maxShifts, newCodePoints);
 
 		return true;
 	};
@@ -5131,6 +5155,19 @@
 
 	WorkbookView.prototype.addExternalReferences = function (arr) {
 		this.model.addExternalReferences(arr);
+	};
+
+	WorkbookView.prototype.changeExternalReference = function (eR, to) {
+		if (!eR || !eR.externalReference) {
+			return;
+		}
+
+		let index = this.model.getExternalLinkIndexByName(eR.externalReference.Id);
+		let toER = eR.externalReference.clone(true);
+		toER.initFromObj(to);
+
+		this.model.changeExternalReference(index, toER);
+		this.model.handlers && this.model.handlers.trigger("asc_onUpdateExternalReferenceList");
 	};
 
 	//external requests

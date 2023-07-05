@@ -4299,11 +4299,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         nX *= nPXtoMM;
         nY *= nPXtoMM;
 
-        const oRet = oDrawingDocument.placeholders.onPointerMove({X: nX, Y: nY, Page: nPage}, oRect, oContext.canvas.width * nPXtoMM, oContext.canvas.height * nPXtoMM);
-        if (oRet) {
-            return {cursor: "default"};
-        }
-        return null;
+        return oDrawingDocument.placeholders.onPointerMove({X: nX, Y: nY, Page: nPage}, oRect, oContext.canvas.width * nPXtoMM, oContext.canvas.height * nPXtoMM);
     };
     
     _this.checkCursorDrawingObject = function(x, y) {

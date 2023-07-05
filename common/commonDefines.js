@@ -1825,7 +1825,8 @@ window.AscCommon.g_cIsBeta = "false";
 		Footnote     : 3,
 		Form         : 4,
 		Review       : 5,
-		Eyedropper   : 6
+		Eyedropper   : 6,
+		Placeholder  : 7
 	};
 
 	// selection type
@@ -4821,6 +4822,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['Form']         = prot.Form;
 	prot['Review']       = prot.Review;
 	prot['Eyedropper']   = prot.Eyedropper;
+	prot['Placeholder']   = prot.Placeholder;
 
 	window['Asc']['c_oAscMaxTooltipLength'] = window['Asc'].c_oAscMaxTooltipLength = c_oAscMaxTooltipLength;
 	window['Asc']['c_oAscMaxCellOrCommentLength'] = window['Asc'].c_oAscMaxCellOrCommentLength = c_oAscMaxCellOrCommentLength;

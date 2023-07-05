@@ -2540,6 +2540,7 @@
 				aButtons.push(AscCommon.PlaceholderButtonType.Chart);
 				aButtons.push(AscCommon.PlaceholderButtonType.Image);
 				aButtons.push(AscCommon.PlaceholderButtonType.ImageUrl);
+				aButtons.push(AscCommon.PlaceholderButtonType.SmartArt);
 				if (isLocalDesktop) {
 					aButtons.push(AscCommon.PlaceholderButtonType.Video);
 					aButtons.push(AscCommon.PlaceholderButtonType.Audio);
@@ -2585,6 +2586,7 @@
 				aButtons.push(AscCommon.PlaceholderButtonType.Chart);
 				aButtons.push(AscCommon.PlaceholderButtonType.Image);
 				aButtons.push(AscCommon.PlaceholderButtonType.ImageUrl);
+				aButtons.push(AscCommon.PlaceholderButtonType.SmartArt);
 				if (isLocalDesktop) {
 					aButtons.push(AscCommon.PlaceholderButtonType.Video);
 					aButtons.push(AscCommon.PlaceholderButtonType.Audio);

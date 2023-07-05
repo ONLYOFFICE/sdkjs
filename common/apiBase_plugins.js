@@ -284,6 +284,7 @@
 
         _elem = document.createElement("div");
         _elem.id = "pmpastehtml";
+        _elem.style.color = "rgb(0,0,0)";
 
         if (this.editorId == AscCommon.c_oEditorId.Word || this.editorId == AscCommon.c_oEditorId.Presentation)
         {

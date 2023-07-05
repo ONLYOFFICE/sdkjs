@@ -484,22 +484,44 @@ CopyProcessor.prototype =
 				oSpan.addChild(new CopyElement(String.fromCharCode(0x09), true));
 				oTarget.addChild(oSpan);
 				break;
-            case para_NewLine:
+			case para_NewLine:
+				//page break -> <br clear=all style='mso-special-character:line-break;page-break-before:always'>
+				//column break -> <br clear=all style='mso-column-break-before:always'>
+				//section break(next page) -> <br clear=all style='page-break-before:always;mso-break-type:section-break'>
+				//section break(even page) -> <br clear=all style='page-break-before:left;mso-break-type:section-break'>
+				//section break(odd page)  -> <br clear=all style='page-break-before:right;mso-break-type:section-break'>
+
 				let oBr = new CopyElement("br");
-                if(ParaItem.IsPageBreak())
-                {
+
+				if (ParaItem.BreakType === window['AscWord'].break_Page) {
 					oBr.oAttributes["clear"] = "all";
 					oBr.oAttributes["style"] = "mso-special-character:line-break;page-break-before:always;";
-                }
-                else
+				} else if (ParaItem.BreakType === window['AscWord'].break_Column) {
+					oBr.oAttributes["clear"] = "all";
+					oBr.oAttributes["style"] = "mso-column-break-before:always;";
+				} /*else if (ParaItem.BreakType === window['AscWord'].break_Line) {
+					if (ParaItem.Clear === AscWord.break_Clear_All) {
+						oBr.oAttributes["clear"] = "all";
+						oBr.oAttributes["style"] = "page-break-before:always;mso-break-type:section-break;";
+					} else if (ParaItem.Clear === AscWord.break_Clear_Left) {
+						oBr.oAttributes["clear"] = "all";
+						oBr.oAttributes["style"] = "page-break-before:left;mso-break-type:section-break;";
+					} else if (ParaItem.Clear === AscWord.break_Clear_Right) {
+						oBr.oAttributes["clear"] = "all";
+						oBr.oAttributes["style"] = "page-break-before:right;mso-break-type:section-break;";
+					}
+				}*/ else {
 					oBr.oAttributes["style"] = "mso-special-character:line-break;";
+				}
+
+
 				oTarget.addChild(oBr);
 				//todo закончить этот параграф и начать новый
 				//добавил неразрвной пробел для того, чтобы информация попадала в буфер обмена
 				oSpan = new CopyElement("span");
 				oSpan.addChild(new CopyElement("&nbsp;", true));
 				oTarget.addChild(oSpan);
-                break;
+				break;
             case para_Drawing:
                 let oGraphicObj = ParaItem.GraphicObj;
                 let sSrc = oGraphicObj.getBase64Img();

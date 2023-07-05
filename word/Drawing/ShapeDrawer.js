@@ -1127,10 +1127,14 @@ CShapeDrawer.prototype =
         var isArrowsPresent = (arr != null && arr.length > 1 && this.IsCurrentPathCanArrows === true) ? true : false;
 
         var rgba = this.StrokeUniColor;
-		if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null && !isArrowsPresent)
-			rgba.A = this.Ln.Fill.transparent;
+        let nAlpha = 0xFF;
+        if(!isArrowsPresent && !this.IsArrowsDrawing)
+        {
+            if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null)
+                nAlpha = this.Ln.Fill.transparent;
+        }
 
-        this.Graphics.p_color(rgba.R, rgba.G, rgba.B, rgba.A);
+        this.Graphics.p_color(rgba.R, rgba.G, rgba.B, nAlpha);
 
         if (this.IsRectShape && this.Graphics.AddSmartRect !== undefined)
         {
@@ -1266,10 +1270,15 @@ CShapeDrawer.prototype =
                 }
 
                 var rgba = this.StrokeUniColor;
-				if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null && !isArrowsPresent)
-					rgba.A = this.Ln.Fill.transparent;
+                let nAlpha = 0xFF;
+                if(!isArrowsPresent && !this.IsArrowsDrawing)
+                {
+                    if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null)
+                        nAlpha = this.Ln.Fill.transparent;
+                }
 
-                this.Graphics.p_color(rgba.R, rgba.G, rgba.B, rgba.A);
+                this.Graphics.p_color(rgba.R, rgba.G, rgba.B, nAlpha);
+
             }
 
             if (fill_mode == "none" || this.bIsNoFillAttack)
