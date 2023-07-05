@@ -8748,13 +8748,55 @@
 		let res = null;
 		let _range = null;
 		if (oPrintPages) {
-			let printRanges = this.pagesModeData.printPages;
+			let printRanges = this._getPageBreakPreviewRanges(oPrintPages);
+			//hit in all pages area
 			if (printRanges) {
 				for (let i = 0; i < printRanges.length; i++) {
-					res = this._hitInRange(printRanges[i].page.pageRange,
+					res = this._hitInRange(printRanges[i].range,
 						AscCommonExcel.selectionLineType.Resize, vr, x, y, offsetX, offsetY, true);
 					if (res) {
-						_range = printRanges[i].page.pageRange.clone();
+						_range = printRanges[i].range.clone();
+						break;
+					}
+				}
+			}
+			//hit inside pages lines
+			if (!res) {
+				let printPages = this.pagesModeData.printPages;
+				if (printPages) {
+					for (let i = 0; i < printPages.length; i++) {
+						res = this._hitInRange(printPages[i].page.pageRange,
+							AscCommonExcel.selectionLineType.Resize, vr, x, y, offsetX, offsetY, true);
+						if (res) {
+							//_range = printRanges[i].page.pageRange.clone();
+							break;
+						}
+					}
+				}
+			}
+		}
+		return res ? {
+			cursor: res.cursor,
+			target: c_oTargetType.MoveResizeRange,
+			col: res.col,
+			row: res.row,
+			range: _range,
+			isPageBreakPreview: true
+		} : null;
+	};
+
+	WorksheetView.prototype._hitCursorPageBreakPreviewLines = function (vr, x, y, offsetX, offsetY) {
+		let oPrintPages = this.isPageBreakPreview(true) && this.pagesModeData;
+		let res = null;
+		let _range = null;
+		if (oPrintPages) {
+			let printRanges = this._getPageBreakPreviewRanges(oPrintPages);
+			if (printRanges) {
+				for (let i = 0; i < printRanges.length; i++) {
+					res = this._hitInRange(printRanges[i].range,
+						AscCommonExcel.selectionLineType.Resize, vr, x, y, offsetX, offsetY, true);
+					if (res) {
+						_range = printRanges[i].range.clone();
 						break;
 					}
 				}
@@ -9230,6 +9272,11 @@
 			this._drawElements(function (_vr, _offsetX, _offsetY) {
 				return (null === (res = this._hitCursorPageBreakPreviewRange(_vr, x, y, _offsetX, _offsetY)));
 			});
+			if (!res) {
+				this._drawElements(function (_vr, _offsetX, _offsetY) {
+					return (null === (res = this._hitCursorPageBreakPreviewLines(_vr, x, y, _offsetX, _offsetY)));
+				});
+			}
 			if (res) {
 				return res;
 			}
@@ -12296,6 +12343,7 @@
 			this.startCellMoveResizeRange = ar.clone(true);
 		} else {
 			this.startCellMoveResizeRange = ar.clone(true);
+
 			if (colByX < ar.c1) {
 				colByX = ar.c1;
 			} else if (colByX > ar.c2) {
@@ -12307,6 +12355,16 @@
 				rowByY = ar.r2;
 			}
 		}
+
+		if (this.startCellMoveRange.colRowMoveProps && !this.targetInfo.range) {
+			this.startCellMoveResizeRange.colRowMoveProps = {};
+			if (this.targetInfo.col !== -1) {
+				this.startCellMoveResizeRange.colRowMoveProps.colByX = this.targetInfo.col;
+			} else if (this.targetInfo.row !== -1) {
+				this.startCellMoveResizeRange.colRowMoveProps.rowByY = rowByY;
+			}
+		}
+
 		return null;
 	};
 
@@ -12390,17 +12448,17 @@
 	};
 	
 		WorksheetView.prototype.changeSelectionMoveResizeRangeHandle = function (x, y, targetInfo, editor) {
-        // Возвращаемый результат
-        if (!targetInfo) {
-            return null;
-        }
+			// Возвращаемый результат
+			if (!targetInfo) {
+				return null;
+			}
 
-        if (this.getFormulaEditMode()) {
-            editor.cleanSelectRange();
-        }
+			if (this.getFormulaEditMode()) {
+				editor.cleanSelectRange();
+			}
 
-				var index = targetInfo.indexFormulaRange;
-				var initialRange = this.oOtherRanges.ranges[index];
+			var index = targetInfo.indexFormulaRange;
+			var initialRange = this.oOtherRanges.ranges[index];
 
 			if (null === this.startCellMoveResizeRange) {
 				return this._startMoveResizeRangeHandle(x, y, targetInfo, initialRange);
