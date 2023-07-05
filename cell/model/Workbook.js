@@ -4035,16 +4035,34 @@
 		var oData = this.getChartSheetRenameData(oWorksheet, sOldName);
 		this.changeSheetNameInRefs(oData.refs, sOldName, sNewName);
 	};
-	Workbook.prototype.handleChartsOnMoveRange = function (oRangeFrom, oRangeTo) {
+	Workbook.prototype.handleChartsOnMoveRange = function (oRangeFrom, oRangeTo, isInsertCol) {
 		if(!History.CanAddChanges()) {
 			return;
 		}
+		var aRefsToResize = [];
 		var aRefsToReplace = [];
 		var aId = [];
 		this.handleDrawings(function(oDrawing) {
 			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 				var nPrevLength = aRefsToReplace.length;
+				let delta;
+				let range;
+				if (isInsertCol) {
+					delta = oRangeTo.bbox.c2 - oRangeTo.bbox.c1 - 1;
+					range = oRangeFrom.clone()
+					range.bbox.c2 = oRangeFrom.bbox.c1 + delta;
+				} else {
+					delta = oRangeTo.bbox.r2 - oRangeTo.bbox.r1 - 1;
+					range = oRangeFrom.clone()
+					range.bbox.r2 = oRangeFrom.bbox.r1 + delta;
+				}
 				oDrawing.collectRefsInsideRange(oRangeFrom, aRefsToReplace);
+				oDrawing.collectRefsInsideRangeForInsertColRow(range, aRefsToResize, isInsertCol);
+				for(var nRef = 0; nRef < aRefsToResize.length; ++nRef) {
+					if (aRefsToReplace.filter(function(val){return val.Id === aRefsToResize[nRef].Id}).length === 0)
+						aRefsToReplace.push({ ref: aRefsToResize[nRef], resize: true, Id: aRefsToResize[nRef].Id })
+				}
+
 				if(aRefsToReplace.length > nPrevLength) {
 					aId.push(oDrawing.Get_Id());
 				}
@@ -4053,7 +4071,10 @@
 		this.checkObjectsLock(aId, function(bNoLock) {
 			if(bNoLock) {
 				for(var nRef = 0; nRef < aRefsToReplace.length; ++nRef) {
-					aRefsToReplace[nRef].handleOnMoveRange(oRangeFrom, oRangeTo);
+					if (aRefsToReplace[nRef].resize)
+						aRefsToReplace[nRef].ref.handleOnMoveRange(oRangeFrom, oRangeTo, true);
+					else
+						aRefsToReplace[nRef].handleOnMoveRange(oRangeFrom, oRangeTo, false);
 				}
 				if(Asc.editor && Asc.editor.wb) {
 					Asc.editor.wb.recalculateDrawingObjects(null, false);
@@ -14635,6 +14656,12 @@
 	Range.prototype.containsRange=function(oRange){
 		if(this.worksheet === oRange.worksheet) {
 			return this.bbox.containsRange(oRange.bbox);
+		}
+		return false;
+	};
+	Range.prototype.isIntersectForInsertColRow=function(oRange, isInsertCol){
+		if(this.worksheet === oRange.worksheet) {
+			return this.bbox.isIntersectForInsertColRow(oRange.bbox, isInsertCol);
 		}
 		return false;
 	};

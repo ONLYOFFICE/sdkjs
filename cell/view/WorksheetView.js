@@ -16445,7 +16445,9 @@
 							if (changeFreezePane) {
 								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
 							}
-							Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo);
+							oRangeTo.bbox.r2 = oRangeTo.bbox.r1;
+							oRangeTo.bbox.c2 = oRangeTo.bbox.c1 + count;
+							Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo, true);
 							History.EndTransaction();
 							t.workbook.Api.onWorksheetChange({r1: 0, c1: checkRange.c1, r2: AscCommon.gc_nMaxRow0, c2: checkRange.c2});
 						};
@@ -16487,7 +16489,9 @@
 							if (changeFreezePane) {
 								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
 							}
-							Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo);
+							oRangeTo.bbox.r2 = oRangeTo.bbox.r1 + count;
+							oRangeTo.bbox.c2 = oRangeTo.bbox.c1;
+							Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo, false);
 							t.workbook.Api.onWorksheetChange({r1: checkRange.r1, c1 : 0, r2: checkRange.r2, c2: AscCommon.gc_nMaxCol0});
 						};
 

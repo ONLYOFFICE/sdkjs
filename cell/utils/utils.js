@@ -570,6 +570,19 @@
 			return bRes;
 		};
 
+		Range.prototype.isIntersectForInsertColRow = function (range, isInsertCol) {
+			var bRes = true;
+			if (range.r2 < this.r1 || this.r2 < range.r1)
+				bRes = false;
+			else if (range.c2 < this.c1 || this.c2 < range.c1) 
+				bRes = false;
+			else if (isInsertCol && (this.c1 >= range.c1))
+				bRes = false;
+			else if (!isInsertCol && (this.r1 >= range.r1))
+				bRes = false;
+			return bRes;
+		};
+
 		Range.prototype.isIntersectWithRanges = function (ranges, exceptionIndex) {
 			if (ranges) {
 				for (var i = 0; i < ranges.length; i++) {
