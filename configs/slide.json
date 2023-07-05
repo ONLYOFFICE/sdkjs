@@ -351,10 +351,10 @@
 			"common/Native/Wrappers/ShapeDrawer.js",
 			"common/Native/Wrappers/Overlay.js",
 
-			"slide/Native/Wrappers/api.js",
-			"slide/Native/Wrappers/HtmlPage.js",
-			"slide/Native/Wrappers/DrawingDocument.js",
-			"slide/Native/Wrappers/native.js"
+			"slide/Native/api.js",
+			"slide/Native/HtmlPage.js",
+			"slide/Native/DrawingDocument.js",
+			"slide/Native/native.js"
 		],
 		"exclude_mobile": [
 			"vendor/iscroll.js",
