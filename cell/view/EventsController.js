@@ -1839,7 +1839,7 @@
 
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
-				this._moveResizeRangeHandleDone(this.targetInfo && this.targetInfo.isPageBreakPreview);
+				this._moveResizeRangeHandleDone(this.targetInfo && this.targetInfo.pageBreakSelectionType);
 				return true;
 			}
 			// Режим установки закреплённых областей
