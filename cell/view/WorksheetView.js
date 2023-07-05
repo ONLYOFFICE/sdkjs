@@ -10760,8 +10760,12 @@
 	WorksheetView.prototype._drawPageBreakPreviewSelectionRange = function () {
 		var range = this.pageBreakPreviewSelectionRange;
 
-		this._drawElements(this._drawSelectionElement, range, AscCommonExcel.selectionLineType.ResizeRange,
-			this.settings.activeCellBorderColor);
+		if (this.pageBreakPreviewSelectionRange.pageBreakSelectionType === 2) {
+			this._drawElements(this._drawLineBetweenRowCol, range.colByX, range.rowByY, this.settings.activeCellBorderColor, range, 2);
+		} else {
+			this._drawElements(this._drawSelectionElement, range, AscCommonExcel.selectionLineType.ResizeRange,
+				this.settings.activeCellBorderColor);
+		}
 	};
 
 	WorksheetView.prototype.changeVisibleAreaStartPoint = function (x, y, isCtrl, isRelative) {
@@ -12301,6 +12305,7 @@
 		}
 		var _range = targetInfo.range;
 		this.pageBreakPreviewSelectionRange = _range;
+		this.pageBreakPreviewSelectionRange.pageBreakSelectionType = targetInfo.pageBreakSelectionType;
 		if (null === this.startCellMoveResizeRange) {
 			this.startCellMoveResizeRange = _range.clone(true);
 			return;
@@ -12317,45 +12322,56 @@
 
 		this.overlayCtx.clear();
 
-		if (targetInfo.cursor === kCurEWResize) {
-			if (this.startCellMoveResizeRange.c1 === targetInfo.col) {
-				//left border
-				ar.c1 = Math.min(colByX, this.startCellMoveResizeRange.c2);
-			} else if (this.startCellMoveResizeRange.c2 === targetInfo.col) {
-				//right border
-				ar.c2 = Math.max(colByX, this.startCellMoveResizeRange.c1);
+		if (targetInfo.pageBreakSelectionType === 2) {
+			if (targetInfo.cursor === kCurEWResize) {
+				range.colByX = colByX;
+				ar.colByX = colByX;
+			} else {
+				range.rowByY = rowByY;
+				ar.rowByY = rowByY;
 			}
-		} else if (targetInfo.cursor === kCurNSResize) {
-			if (this.startCellMoveResizeRange.r1 === targetInfo.row) {
-				//top border
-				ar.r1 = Math.min(rowByY, this.startCellMoveResizeRange.r2);
-			} else if (this.startCellMoveResizeRange.r2 === targetInfo.row) {
-				//bottom border
-				ar.r2 = Math.max(rowByY, this.startCellMoveResizeRange.r1);
-			}
-		} else if (targetInfo.cursor === kCurSEResize) {
-			//left up / right down
-			if (this.startCellMoveResizeRange.r1 === targetInfo.row) {
-				//right down
-				ar.c2 = Math.max(colByX, this.startCellMoveResizeRange.c1);
-				ar.r2 = Math.max(rowByY, this.startCellMoveResizeRange.r1);
-			} else if (this.startCellMoveResizeRange.r2 === targetInfo.row) {
-				//left up
-				ar.r1 = Math.min(rowByY, this.startCellMoveResizeRange.r2);
-				ar.c1 = Math.min(colByX, this.startCellMoveResizeRange.c2);
-			}
-		} else if (targetInfo.cursor === kCurNEResize) {
-			//right up / left down
-			if (this.startCellMoveResizeRange.r1 === targetInfo.row) {
-				//left down
-				ar.r2 = Math.max(rowByY, this.startCellMoveResizeRange.r1);
-				ar.c1 = Math.min(colByX, this.startCellMoveResizeRange.c2);
+		} else {
+			if (targetInfo.cursor === kCurEWResize) {
+				if (this.startCellMoveResizeRange.c1 === targetInfo.col) {
+					//left border
+					ar.c1 = Math.min(colByX, this.startCellMoveResizeRange.c2);
+				} else if (this.startCellMoveResizeRange.c2 === targetInfo.col) {
+					//right border
+					ar.c2 = Math.max(colByX, this.startCellMoveResizeRange.c1);
+				}
+			} else if (targetInfo.cursor === kCurNSResize) {
+				if (this.startCellMoveResizeRange.r1 === targetInfo.row) {
+					//top border
+					ar.r1 = Math.min(rowByY, this.startCellMoveResizeRange.r2);
+				} else if (this.startCellMoveResizeRange.r2 === targetInfo.row) {
+					//bottom border
+					ar.r2 = Math.max(rowByY, this.startCellMoveResizeRange.r1);
+				}
+			} else if (targetInfo.cursor === kCurSEResize) {
+				//left up / right down
+				if (this.startCellMoveResizeRange.r1 === targetInfo.row) {
+					//right down
+					ar.c2 = Math.max(colByX, this.startCellMoveResizeRange.c1);
+					ar.r2 = Math.max(rowByY, this.startCellMoveResizeRange.r1);
+				} else if (this.startCellMoveResizeRange.r2 === targetInfo.row) {
+					//left up
+					ar.r1 = Math.min(rowByY, this.startCellMoveResizeRange.r2);
+					ar.c1 = Math.min(colByX, this.startCellMoveResizeRange.c2);
+				}
+			} else if (targetInfo.cursor === kCurNEResize) {
+				//right up / left down
+				if (this.startCellMoveResizeRange.r1 === targetInfo.row) {
+					//left down
+					ar.r2 = Math.max(rowByY, this.startCellMoveResizeRange.r1);
+					ar.c1 = Math.min(colByX, this.startCellMoveResizeRange.c2);
 
-			} else if (this.startCellMoveResizeRange.r2 === targetInfo.row) {
-				//right up
-				ar.r1 = Math.min(rowByY, this.startCellMoveResizeRange.r2);
-				ar.c2 = Math.max(colByX, this.startCellMoveResizeRange.c1);
+				} else if (this.startCellMoveResizeRange.r2 === targetInfo.row) {
+					//right up
+					ar.r1 = Math.min(rowByY, this.startCellMoveResizeRange.r2);
+					ar.c2 = Math.max(colByX, this.startCellMoveResizeRange.c1);
+				}
 			}
+			ar = range.assign2(ar.clone(true));
 		}
 
 		if (y <= this.cellsTop + 2) {
@@ -12379,7 +12395,7 @@
 			d.col = 0;
 			d.row = 0;
 		}
-		ar = range.assign2(ar.clone(true));
+
 		this._drawSelection();
 
 		return {range: ar, delta: d};
