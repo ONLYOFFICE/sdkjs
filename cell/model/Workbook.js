@@ -18313,7 +18313,7 @@
 						let aTimePeriods = data.aTimePeriods;
 						let aReverseTimePeriods = [];
 
-						if (bReverse || data.nCurValue < 0) {
+						if (aTimePeriods && (bReverse || data.nCurValue < 0)) {
 							aReverseTimePeriods = aTimePeriods.slice();
 							aReverseTimePeriods.reverse();
 						}
@@ -18983,10 +18983,12 @@
 						var nColIndex = aSortIndex[j];
 						var data = row[nColIndex];
 						var bAddToSequence = false;
+						let sPrevTimePeriods = oPrevData && oPrevData.aTimePeriods ? oPrevData.aTimePeriods.join() : null;
+						let sTimePeriods = data.aTimePeriods ? data.aTimePeriods.join() : null;
 						if(null != data.nVal)
 						{
 							bAddToSequence = true;
-							if(null != oPrevData && (oPrevData.bDelimiter != data.bDelimiter || oPrevData.sPrefix != data.sPrefix || oPrevData.bDate != data.bDate || oPrevData.aTimePeriods.join() != data.aTimePeriods.join()))
+							if(null != oPrevData && (oPrevData.bDelimiter != data.bDelimiter || oPrevData.sPrefix != data.sPrefix || oPrevData.bDate != data.bDate || (sPrevTimePeriods != sTimePeriods)))
 							{
 								this._addSequenceToRow(nRowIndex, aSortRowIndex, row, aCurSequence);
 								aCurSequence = [];
