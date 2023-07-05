@@ -2125,15 +2125,15 @@ $(function () {
 	 */
 	QUnit.test('Autofill - Horizontal sequence.', function (assert) {
 		function getAutofillCase(aFrom, aTo, nFillHandleArea, sDescription, expectedData) {
-			const [с1From, с2From, rFrom] = aFrom;
-			const [с1To, с2To, rTo] = aTo;
+			const [c1From, c2From, rFrom] = aFrom;
+			const [c1To, c2To, rTo] = aTo;
 			const nHandleDirection = 0; // 0 - Horizontal, 1 - Vertical,
-			const autofillС1 =  nFillHandleArea === 3 ? с2From + 1 : с1From - 1;
+			const autofillC1 =  nFillHandleArea === 3 ? c2From + 1 : c1From - 1;
 			const autoFillAssert = nFillHandleArea === 3 ? autofillData : reverseAutofillData;
 
-			ws.selectionRange.ranges = [getRange(с1From, rFrom, с2From, rFrom)];
-			wsView = getAutoFillRange(wsView, с1To, rTo, с2To, rTo, nHandleDirection, nFillHandleArea);
-			let autoFillRange = getRange(autofillС1, rTo, с2To, rTo);
+			ws.selectionRange.ranges = [getRange(c1From, rFrom, c2From, rFrom)];
+			wsView = getAutoFillRange(wsView, c1To, rTo, c2To, rTo, nHandleDirection, nFillHandleArea);
+			let autoFillRange = getRange(autofillC1, rTo, c2To, rTo);
 			autoFillAssert(assert, autoFillRange, [expectedData], sDescription);
 		}
 		const testData = [
@@ -2151,7 +2151,7 @@ $(function () {
 			['01/01/2000', '01/02/2000'],
 			['01/02/2000', '01/04/2000'],
 			['01/01/2000', '01/03/2000']
-		]
+		];
 
 		// Asc cases
 		let range = ws.getRange4(0, 0);
@@ -2210,7 +2210,7 @@ $(function () {
 		const testData = [
 			['-1', '-1', '1', '2', 'Test', 'Test01', 'Test1', 'Test1', 'Test2', 'Test1', '01/01/2000', '01/01/2000', '01/02/2000', '01/01/2000'],
 			['', '0', '3', '4', '', '', '', 'Test3', 'Test4', 'T1', '', '01/02/2000', '01/04/2000', '01/03/2000']
-		]
+		];
 
 		// Asc cases
 		let range = ws.getRange4(0, 0);
