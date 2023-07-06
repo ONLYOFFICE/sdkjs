@@ -11402,11 +11402,14 @@ CPresentation.prototype.CanStartAnimationPreview = function () {
 	}
 	return oTiming.canStartDemo();
 };
-CPresentation.prototype.StartAnimationPreview = function () {
+CPresentation.prototype.StartAnimationPreview = function (isAllSlideAnimations) {
 	if (!this.CanStartAnimationPreview()) {
 		return false;
 	}
 	var oTiming = this.GetCurTiming();
+	if (isAllSlideAnimations) {
+		oTiming.resetSelection();
+	}
 	if (!oTiming) {
 		return false;
 	}

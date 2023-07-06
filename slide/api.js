@@ -4444,10 +4444,10 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.GetCurSlideObjectsNames();
 	};
-	asc_docs_api.prototype.asc_StartAnimationPreview = function()
+	asc_docs_api.prototype.asc_StartAnimationPreview = function(isAllSlideAnimations)
 	{
 		this.asc_StopAnimationPreview();
-		if(this.WordControl.m_oLogicDocument.StartAnimationPreview())
+		if(this.WordControl.m_oLogicDocument.StartAnimationPreview(isAllSlideAnimations))
 		{
 			this.sendEvent("asc_onAnimPreviewStarted");
 		}
