@@ -11813,8 +11813,26 @@
 	};
 
 	Worksheet.prototype.changeRowColBreaks = function (from, to, range, byCol, addToHistory) {
+		let min = null;
+		let max = byCol ? gc_nMaxCol0 : gc_nMaxRow0;
+
+		let printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
+		if (printArea) {
+			if (byCol) {
+				min = range.r1;
+				max = range.r2;
+			} else {
+				min = range.c1;
+				max = range.c2;
+			}
+		}
+
+		this._changeRowColBreaks(from, to, min, max, byCol, addToHistory);
+	};
+
+	Worksheet.prototype._changeRowColBreaks = function (from, to, min, max, byCol, addToHistory) {
 		let rowColBreaks, notContains;
-		if (byCol) {
+		if (!byCol) {
 			if (!this.rowBreaks) {
 				this.rowBreaks = new AscCommonExcel.CRowColBreaks();
 				notContains = true;
@@ -11828,10 +11846,12 @@
 			rowColBreaks = this.colBreaks;
 		}
 		if (!notContains && rowColBreaks.containsBreak(from)) {
-			rowColBreaks.changeBreak(from, to);
+			rowColBreaks.changeBreak(from, to, min, max, true, null, addToHistory);
 		} else {
-			rowColBreaks.addBreak(from, to)
+			rowColBreaks.addBreak(to, min, max, true, null, addToHistory)
 		}
+
+		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());
 	};
 
 	Worksheet.prototype.addCellWatch = function (ref, addToHistory) {

@@ -15608,8 +15608,8 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
-	CRowColBreaks.prototype.addBreak = function (newBreak) {
-		newBreak.push(newBreak);
+	CRowColBreaks.prototype._addBreak = function (newBreak) {
+		this.breaks.push(newBreak);
 		if (this.manualBreakCount === null) {
 			this.manualBreakCount = 0;
 		}
