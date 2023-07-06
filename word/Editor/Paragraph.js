@@ -5949,6 +5949,8 @@ Paragraph.prototype.GetCursorPosXY = function()
 };
 Paragraph.prototype.MoveCursorLeft = function(AddToSelect, Word)
 {
+	let isSelectAll = this.IsSelectedAll();
+	
 	if (true === this.Selection.Use)
 	{
 		var EndSelectionPos   = this.Get_ParaContentPos(true, false);
@@ -6045,6 +6047,10 @@ Paragraph.prototype.MoveCursorLeft = function(AddToSelect, Word)
 	{
 		var SelectionEndPos = this.Get_ParaContentPos(true, false);
 		this.Set_ParaContentPos(SelectionEndPos, false, -1, -1);
+		
+		// To have the ability to deselect a paragraph mark
+		if (!isSelectAll)
+			this.CheckSmartSelection();
 	}
 
 	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
@@ -6167,6 +6173,7 @@ Paragraph.prototype.MoveCursorRight = function(AddToSelect, Word)
 	{
 		var SelectionEndPos = this.Get_ParaContentPos(true, false);
 		this.Set_ParaContentPos(SelectionEndPos, false, -1, -1);
+		this.CheckSmartSelection();
 	}
 
 	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
@@ -8283,6 +8290,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 
 	// Выставляем селект
 	this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), SearchPosXY.Pos);
+	this.CheckSmartSelection();
 
 	var SelectionStartPos = this.Get_ParaContentPos(true, true);
 	var SelectionEndPos   = this.Get_ParaContentPos(true, false);
@@ -8386,6 +8394,41 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 Paragraph.prototype.StopSelection = function()
 {
 	this.Selection.Start = false;
+};
+Paragraph.prototype.CheckSmartSelection = function()
+{
+	// TODO: Add smart word selection when implementing
+	this.CheckSmartParagraphSelection();
+};
+/**
+ * If specified and whole paragraph is selected, add paragraph mark to selection
+ */
+Paragraph.prototype.CheckSmartParagraphSelection = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!this.Selection.Use
+		|| !logicDocument
+		|| !logicDocument.IsDocumentEditor()
+		|| !logicDocument.IsSmartParagraphSelection())
+		return;
+	
+	let direction = this.GetSelectDirection();
+	
+	let startPos = this.Get_ParaContentPos(true, direction > 0, false);
+	let endPos   = this.Get_ParaContentPos(true, direction < 0, false);
+	
+	if (this.GetPrevRunElement(startPos))
+		return;
+	
+	let nextElement = this.GetNextRunElement(endPos);
+	if (nextElement && !nextElement.IsParaEnd())
+		return;
+	
+	endPos = this.GetEndPos(true);
+	if (direction > 0)
+		this.SetSelectionContentPos(startPos, endPos, false);
+	else
+		this.SetSelectionContentPos(endPos, startPos, false);
 };
 Paragraph.prototype.RemoveSelection = function()
 {
@@ -8779,6 +8822,8 @@ Paragraph.prototype.Selection_SetBegEnd = function(StartSelection, StartPara)
 		this.Selection.EndManually = false;
 		this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), ContentPos);
 	}
+	
+	this.CheckSmartSelection();
 };
 Paragraph.prototype.SetSelectionUse = function(isUse)
 {

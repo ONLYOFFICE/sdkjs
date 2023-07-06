@@ -2037,6 +2037,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.ConcatParagraphsOnRemove  = false; // Во время удаления объединять ли первый и последний параграфы
 	this.StartCheckTextFormFormat  = false; // Флаг, что в данный момент мы уже проверяем формат текстовых форм, чтобы не вызывать повторно
 	this.CompileStyleOnLoad        = false; // Компилировать ли принудительно стили во время загрузки
+	this.SmartParagraphSelection   = true;  // Выделять ли автоматически знак параграфа, когда все содержимое параграфа выделено
 
 
 	this.DrawTableMode = {
@@ -24925,6 +24926,22 @@ CDocument.prototype.CheckFormAutoFit = function(oForm)
 		this.Action.Additional.FormAutoFit = [];
 
 	this.Action.Additional.FormAutoFit.push(oForm);
+};
+/**
+ * Выставляем настройку выделять знак параграфа, когда выделено все его содержимое
+ * @param {boolean} isUse
+ */
+CDocument.prototype.SetSmartParagraphSelection = function(isUse)
+{
+	this.SmartParagraphSelection = isUse;
+};
+/**
+ * Выделять ли знак параграфа, когда выделено все его содержимое
+ * @returns {boolean}
+ */
+CDocument.prototype.IsSmartParagraphSelection = function()
+{
+	return this.SmartParagraphSelection;
 };
 /**
  * Функция для рисования таблицы с помощью мыши
