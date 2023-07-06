@@ -12308,6 +12308,15 @@
 		this.pageBreakPreviewSelectionRange.pageBreakSelectionType = targetInfo.pageBreakSelectionType;
 		if (null === this.startCellMoveResizeRange) {
 			this.startCellMoveResizeRange = _range.clone(true);
+
+			if (targetInfo.pageBreakSelectionType === 2) {
+				if (targetInfo.cursor === kCurEWResize) {
+					this.startCellMoveResizeRange.colByX = targetInfo.col + 1;
+				} else {
+					this.startCellMoveResizeRange.rowByY = targetInfo.row + 1;
+				}
+			}
+
 			return;
 		}
 		return this._endResizePageBreakPreviewRangeHandle(x, y, targetInfo, _range).delta;
@@ -12600,12 +12609,26 @@
 	WorksheetView.prototype.applyResizePageBreakPreviewRangeHandle = function () {
 		let fromRange = this.startCellMoveResizeRange;
 		let toRange = this.pageBreakPreviewSelectionRange;
-		if (!this.getFormulaEditMode() && !fromRange.isEqual(toRange)) {
-			var printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
-			if(printArea && printArea.sheetId === this.model.getId()) {
-				this.changePrintArea(Asc.c_oAscChangePrintAreaType.change, [toRange], [fromRange])
-			} else {
-				this.changePrintArea(Asc.c_oAscChangePrintAreaType.set, [toRange]);
+		if (!this.getFormulaEditMode()) {
+			if (this.pageBreakPreviewSelectionRange.pageBreakSelectionType === 2) {
+				//change page breaks
+				if (toRange.colByX) {
+					if (toRange.colByX !== fromRange.colByX) {
+						this.changeRowColBreaks(fromRange.colByX, toRange.colByX, fromRange, true)
+					}
+				} else {
+					if (toRange.rowByY !== fromRange.rowByY) {
+						this.changeRowColBreaks(fromRange.rowByY, toRange.rowByY, fromRange)
+					}
+				}
+			} else if (!fromRange.isEqual(toRange)) {
+				//change all area
+				var printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
+				if(printArea && printArea.sheetId === this.model.getId()) {
+					this.changePrintArea(Asc.c_oAscChangePrintAreaType.change, [toRange], [fromRange])
+				} else {
+					this.changePrintArea(Asc.c_oAscChangePrintAreaType.set, [toRange]);
+				}
 			}
 		}
 
@@ -21364,6 +21387,32 @@
         }
 
 		return res;
+	};
+
+	WorksheetView.prototype.changeRowColBreaks = function (form, to, byCol, range) {
+		var t = this;
+
+		var onChangePrintTitles = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			//t._changePrintTitles(cols, rows);
+			//t.changeViewPrintLines(true);
+
+			if(t.viewPrintLines) {
+				t.updateSelection();
+			}
+			window["Asc"]["editor"]._onUpdateLayoutMenu(t.model.Id);
+
+			History.EndTransaction();
+		};
+
+		//лочу по аналогии со всеми опциями из print settings
+		this._isLockedLayoutOptions(onChangePrintTitles);
 	};
 
 	WorksheetView.prototype.changePrintTitles = function (cols, rows) {
