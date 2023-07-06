@@ -4857,12 +4857,34 @@
 			let widthLine = 3;
 			if (this.model.colBreaks && !bFitToWidth) {
 				this.model.colBreaks.forEach(function (colBreak) {
-					t._drawElements(t._drawLineBetweenRowCol, colBreak.id, null, color, allPagesRange, widthLine);
+					if (printRanges.length > 1) {
+						let _colBreakRange = new Asc.Range(colBreak.id, colBreak.min != null ? colBreak.min : 0, colBreak.id, colBreak.max != null ? colBreak.max : gc_nMaxCol0);
+						for (let i = 0; i < printRanges.length; i++) {
+							//if intersection with range between min/max -> draw line
+							if (printRanges[i].range.intersection(_colBreakRange)) {
+								t._drawElements(t._drawLineBetweenRowCol, colBreak.id, null, color, printRanges[i].range, widthLine);
+								break;
+							}
+						}
+					} else {
+						t._drawElements(t._drawLineBetweenRowCol, colBreak.id, null, color, allPagesRange, widthLine);
+					}
 				});
 			}
 			if (this.model.rowBreaks && !bFitToHeight) {
 				this.model.rowBreaks.forEach(function (rowBreak) {
-					t._drawElements(t._drawLineBetweenRowCol, null, rowBreak.id, color, allPagesRange, widthLine);
+					if (printRanges.length > 1) {
+						let _rowBreakRange = new Asc.Range(rowBreak.min != null ? rowBreak.min : 0, rowBreak.id, rowBreak.max != null ? rowBreak.max : gc_nMaxRow0, rowBreak.id);
+						for (let i = 0; i < printRanges.length; i++) {
+							//if intersection with range between min/max -> draw line
+							if (printRanges[i].range.intersection(_rowBreakRange)) {
+								t._drawElements(t._drawLineBetweenRowCol, null, rowBreak.id, color, printRanges[i].range, widthLine);
+								break;
+							}
+						}
+					} else {
+						t._drawElements(t._drawLineBetweenRowCol, null, rowBreak.id, color, allPagesRange, widthLine);
+					}
 				});
 			}
 		}
