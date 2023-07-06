@@ -11812,7 +11812,27 @@
 		return printProps.getJson(this);
 	};
 
-
+	Worksheet.prototype.changeRowColBreaks = function (from, to, range, byCol, addToHistory) {
+		let rowColBreaks, notContains;
+		if (byCol) {
+			if (!this.rowBreaks) {
+				this.rowBreaks = new AscCommonExcel.CRowColBreaks();
+				notContains = true;
+			}
+			rowColBreaks = this.rowBreaks;
+		} else {
+			if (!this.colBreaks) {
+				this.colBreaks = new AscCommonExcel.CRowColBreaks();
+				notContains = true;
+			}
+			rowColBreaks = this.colBreaks;
+		}
+		if (!notContains && rowColBreaks.containsBreak(from)) {
+			rowColBreaks.changeBreak(from, to);
+		} else {
+			rowColBreaks.addBreak(from, to)
+		}
+	};
 
 	Worksheet.prototype.addCellWatch = function (ref, addToHistory) {
 		for (var i = 0; i < this.aCellWatches.length; i++) {

@@ -15563,16 +15563,70 @@ QueryTableField.prototype.clone = function() {
 	};
 	CRowColBreaks.prototype.forEach = function (callback) {
 		for (var i = 0, l = this.breaks.length; i < l; ++i) {
-			callback(this.breaks[i], i);
+			if (callback(this.breaks[i], i)) {
+				break;
+			}
 		}
+	};
+	CRowColBreaks.prototype.containsBreak = function (id) {
+		let res = false;
+		this.forEach(function (breaksElem) {
+			if (breaksElem.id === id) {
+				res = true;
+				return true;
+			}
+		});
+		return res;
+	};
+	CRowColBreaks.prototype.getBreak = function (id) {
+		let res = null;
+		this.forEach(function (breaksElem) {
+			if (breaksElem.id === id) {
+				res = breaksElem;
+				return true;
+			}
+		});
+		return res;
+	};
+	CRowColBreaks.prototype.changeBreak = function (idFrom, idTo, min, max, man, pt, addToHistory) {
+		let breakElem = this.getBreak(idFrom);
+		if (breakElem) {
+			let isChanged = breakElem.set(idTo, min, max, man, pt);
+			if (isChanged && addToHistory) {
+
+			}
+		}
+	};
+	CRowColBreaks.prototype.addBreak = function (id, min, max, man, pt, addToHistory) {
+		let newBreak = new CBreak();
+		newBreak.set(id, min, max, man, pt);
+
+		this._addBreak(newBreak);
+
+		if (addToHistory) {
+
+		}
+	};
+
+	CRowColBreaks.prototype.addBreak = function (newBreak) {
+		newBreak.push(newBreak);
+		if (this.manualBreakCount === null) {
+			this.manualBreakCount = 0;
+		}
+		if (this.count === null) {
+			this.count = 0;
+		}
+		this.manualBreakCount++;
+		this.count++;
 	};
 
 
 	function CBreak(/*ws*/) {
 		this.id = null;
-		this.man = null;
-		this.max = null;
 		this.min = null;
+		this.max = null;
+
+		this.man = null;
 		this.pt = null;
 
 		return this;
@@ -15580,9 +15634,11 @@ QueryTableField.prototype.clone = function() {
 	CBreak.prototype.clone = function () {
 		var res = new CBreak();
 		res.id = this.id;
-		res.man = this.man;
-		res.max = this.max;
+
 		res.min = this.min;
+		res.max = this.max;
+
+		res.man = this.man;
 		res.pt = this.pt;
 
 		return res;
@@ -15619,6 +15675,30 @@ QueryTableField.prototype.clone = function() {
 	};
 	CBreak.prototype.isBreak = function (index) {
 		return this.id === index;
+	};
+	CBreak.prototype.set = function (id, min, max, man, pt) {
+		let isChanged = false;
+		if (id !== this.getId()) {
+			this.setId(id);
+			isChanged = true;
+		}
+		if (min !== this.getMin()) {
+			this.setMin(min);
+			isChanged = true;
+		}
+		if (max !== this.getMax()) {
+			this.setMax(max);
+			isChanged = true;
+		}
+		if (man !== this.getMan()) {
+			this.setMan(man);
+			isChanged = true;
+		}
+		if (pt !== this.getPt()) {
+			this.setPt(pt);
+			isChanged = true;
+		}
+		return isChanged;
 	};
 
 

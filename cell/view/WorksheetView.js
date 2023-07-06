@@ -21389,10 +21389,14 @@
 		return res;
 	};
 
-	WorksheetView.prototype.changeRowColBreaks = function (form, to, byCol, range) {
+	WorksheetView.prototype.changeRowColBreaks = function (from, to, range, byCol) {
 		var t = this;
 
-		var onChangePrintTitles = function (isSuccess) {
+		if (from === -1 || to === -1) {
+			return;
+		}
+
+		var onChangeCallback = function (isSuccess) {
 			if (false === isSuccess) {
 				return;
 			}
@@ -21400,8 +21404,8 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			//t._changePrintTitles(cols, rows);
-			//t.changeViewPrintLines(true);
+			t.model.changeRowColBreaks(from, to, range, byCol, true)
+			t.changeViewPrintLines(true);
 
 			if(t.viewPrintLines) {
 				t.updateSelection();
@@ -21411,8 +21415,8 @@
 			History.EndTransaction();
 		};
 
-		//лочу по аналогии со всеми опциями из print settings
-		this._isLockedLayoutOptions(onChangePrintTitles);
+		//do lock print settings
+		this._isLockedLayoutOptions(onChangeCallback);
 	};
 
 	WorksheetView.prototype.changePrintTitles = function (cols, rows) {
