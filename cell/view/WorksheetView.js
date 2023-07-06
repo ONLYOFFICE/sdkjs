@@ -4827,16 +4827,19 @@
 			return;
 		}
 
-		let t = this;
+		const t = this;
+
+		const color = new CColor(0, 0, 208);
+		const printRanges = this._getPageBreakPreviewRanges(oPrintPages);
+		const lineType = AscCommonExcel.selectionLineType.ResizeRange;
+		const dashLineType = AscCommonExcel.selectionLineType.Dash | lineType;
+		const widthLine = 3;
+
 		let oPrintPages = this.pagesModeData;
 		let allPagesRange;
 		//рисуем страницы
 		let printPages = oPrintPages && oPrintPages.printPages;
 		if(printPages && printPages.length) {
-			let color = new CColor(0, 0, 208);
-			let printRanges = this._getPageBreakPreviewRanges(oPrintPages);
-			let lineType = AscCommonExcel.selectionLineType.ResizeRange;
-			let dashLineType = AscCommonExcel.selectionLineType.Dash | lineType;
 			for (let i = 0; i < printRanges.length; i++) {
 				let oPrintRange = printRanges[i];
 				allPagesRange = oPrintRange.range;
@@ -4854,7 +4857,6 @@
 			let bFitToWidth = pageSetup && pageSetup.asc_getFitToWidth();
 			let bFitToHeight = pageSetup && pageSetup.asc_getFitToHeight();
 
-			let widthLine = 3;
 			if (this.model.colBreaks && !bFitToWidth) {
 				this.model.colBreaks.forEach(function (colBreak) {
 					if (printRanges.length > 1) {
