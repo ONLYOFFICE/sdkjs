@@ -9373,6 +9373,9 @@ var editor;
 
   prot["asc_ChangeTextCase"]   = prot.asc_ChangeTextCase;
 
+  prot["asc_InsertPageBreak"]   = prot.asc_InsertPageBreak;
+  prot["asc_RemovePageBreak"]   = prot.asc_RemovePageBreak;
+  prot["asc_ResetAllPageBreaks"]   = prot.asc_ResetAllPageBreaks;
 
 
 
