@@ -1163,6 +1163,20 @@ function CBinaryFileWriter()
 
         this.WriteRecord2(0, presentation.defaultTextStyle, this.WriteTextListStyle);
 
+        var oNotesSz = presentation.notesSz;
+        if(oNotesSz)
+        {
+            this.StartRecord(3);
+            this.WriteUChar(g_nodeAttributeStart);
+
+            this._WriteInt1(0, oNotesSz.cx);
+            this._WriteInt1(1, oNotesSz.cy);
+            this._WriteLimit2(2, oNotesSz.type);
+
+            this.WriteUChar(g_nodeAttributeEnd);
+            this.EndRecord();
+        }
+
         // 5
         var oSldSz = presentation.sldSz;
         if(oSldSz)
