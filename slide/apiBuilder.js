@@ -1285,7 +1285,7 @@
      */
      ApiPresentation.prototype.GetWidth = function() {
         if(this.Presentation){
-            this.Presentation.GetWidthEMU();
+            return this.Presentation.GetWidthEMU();
         }
     };
 
@@ -1297,7 +1297,7 @@
      */
     ApiPresentation.prototype.GetHeight = function() {
         if(this.Presentation){
-            this.Presentation.GetHeightEMU();
+            return this.Presentation.GetHeightEMU();
         }
     };
 
