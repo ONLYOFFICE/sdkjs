@@ -15551,10 +15551,10 @@ QueryTableField.prototype.clone = function() {
 	CRowColBreaks.prototype.getBreaks = function () {
 		return this.breaks;
 	};
-	CRowColBreaks.prototype.isBreak = function (index) {
+	CRowColBreaks.prototype.isBreak = function (index, opt_min, opt_max) {
 		if (this.count > 0) {
 			for (let i = 0; i < this.breaks.length; i++) {
-				if (this.breaks[i].isBreak(index)) {
+				if (this.breaks[i].isBreak(index, opt_min, opt_max)) {
 					return true;
 				}
 			}
@@ -15673,8 +15673,20 @@ QueryTableField.prototype.clone = function() {
 	CBreak.prototype.getPt = function () {
 		return this.pt;
 	};
-	CBreak.prototype.isBreak = function (index) {
-		return this.id === index;
+	CBreak.prototype.isBreak = function (index, opt_min, opt_max) {
+		let res = this.id === index;
+		if (res) {
+			if (opt_min != null && opt_max != null) {
+				if (this.min == null && this.max == null) {
+					res = false;
+				} else {
+					if (this.min > opt_max || this.max < opt_min) {
+						res = false;
+					}
+				}
+			}
+		}
+		return res;
 	};
 	CBreak.prototype.set = function (id, min, max, man, pt) {
 		let isChanged = false;

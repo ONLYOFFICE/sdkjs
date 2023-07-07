@@ -2101,7 +2101,7 @@
     };
 
     // ----- Drawing for print -----
-    WorksheetView.prototype._calcPagesPrint = function(range, pageOptions, indexWorksheet, arrPages, printScale, adjustPrint) {
+    WorksheetView.prototype._calcPagesPrint = function(range, pageOptions, indexWorksheet, arrPages, printScale, adjustPrint, bPrintArea) {
         if (0 > range.r2 || 0 > range.c2) {
 			// Ничего нет
             return;
@@ -2350,7 +2350,7 @@
 			for (rowIndex = currentRowIndex; rowIndex <= range.r2; ++rowIndex) {
 				let currentRowHeight = _getRowHeight(rowIndex) * scale;
 				let currentRowHeightReal = (t._getRowHeight(rowIndex)/this.getRetinaPixelRatio()) *scale;
-				rowBreak = !bFitToHeight && rowIndex !== currentRowIndex && t.model.rowBreaks && t.model.rowBreaks.isBreak(rowIndex);
+				rowBreak = !bFitToHeight && rowIndex !== currentRowIndex && t.model.rowBreaks && t.model.rowBreaks.isBreak(rowIndex, bPrintArea && range.c1, bPrintArea && range.c2);
 				if ((currentHeight + currentRowHeight + curTitleHeight > pageHeightWithFieldsHeadings
 					&& rowIndex !== currentRowIndex) || rowBreak) {
 					// Закончили рисовать страницу
@@ -2379,7 +2379,7 @@
 							currentColWidth -= newPagePrint.startOffsetPx;
 						}
 
-						colBreak = !bFitToWidth && colIndex !== currentColIndex && t.model.colBreaks && t.model.colBreaks.isBreak(colIndex);
+						colBreak = !bFitToWidth && colIndex !== currentColIndex && t.model.colBreaks && t.model.colBreaks.isBreak(colIndex, bPrintArea && range.r1, bPrintArea && range.r2);
 						if ((currentWidth + currentColWidth + curTitleWidth > pageWidthWithFieldsHeadings
 							&& colIndex !== currentColIndex) || colBreak) {
 							curTitleWidth = addedTitleWidth;
@@ -2650,7 +2650,7 @@
 				}
 
 				let _startPages = arrPages.length;
-				this._calcPagesPrint(range, pageOptions, indexWorksheet, arrPages, tempPrintScale, adjustPrint);
+				this._calcPagesPrint(range, pageOptions, indexWorksheet, arrPages, tempPrintScale, adjustPrint, true);
 
 				if(arrRanges) {
 					arrRanges.push({range: range, start: _startPages, end: arrPages.length});
@@ -4829,16 +4829,17 @@
 
 		const t = this;
 
+		const printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
+		const oPrintPages = this.pagesModeData;
+		const printPages = oPrintPages && oPrintPages.printPages;
 		const color = new CColor(0, 0, 208);
 		const printRanges = this._getPageBreakPreviewRanges(oPrintPages);
 		const lineType = AscCommonExcel.selectionLineType.ResizeRange;
 		const dashLineType = AscCommonExcel.selectionLineType.Dash | lineType;
 		const widthLine = 3;
 
-		let oPrintPages = this.pagesModeData;
 		let allPagesRange;
 		//рисуем страницы
-		let printPages = oPrintPages && oPrintPages.printPages;
 		if(printPages && printPages.length) {
 			for (let i = 0; i < printRanges.length; i++) {
 				let oPrintRange = printRanges[i];
@@ -4857,36 +4858,38 @@
 			let bFitToWidth = pageSetup && pageSetup.asc_getFitToWidth();
 			let bFitToHeight = pageSetup && pageSetup.asc_getFitToHeight();
 
+			let doDrawBreaks = function (_break, _byCol) {
+				if (!printArea) {
+					t._drawElements(t._drawLineBetweenRowCol, _byCol && _break.id, !_byCol && _break.id, color, allPagesRange, widthLine);
+					return;
+				}
+				if (_break.min === null && _break.max === null) {
+					return;
+				}
+
+				let _range;
+				if (_byCol) {
+					_range = new Asc.Range(_break.id, _break.min != null ? _break.min : 0, _break.id, _break.max != null ? _break.max : gc_nMaxCol0);
+				} else {
+					_range = new Asc.Range(_break.min != null ? _break.min : 0, _break.id, _break.max != null ? _break.max : gc_nMaxRow0, _break.id);
+				}
+
+				for (let i = 0; i < printRanges.length; i++) {
+					//if intersection with range between min/max -> draw line
+					if (printRanges[i].range.intersection(_range)) {
+						t._drawElements(t._drawLineBetweenRowCol, _byCol && _break.id, !_byCol && _break.id, color, printRanges[i].range, widthLine);
+					}
+				}
+			};
+
 			if (this.model.colBreaks && !bFitToWidth) {
 				this.model.colBreaks.forEach(function (colBreak) {
-					if (printRanges.length > 1) {
-						let _colBreakRange = new Asc.Range(colBreak.id, colBreak.min != null ? colBreak.min : 0, colBreak.id, colBreak.max != null ? colBreak.max : gc_nMaxCol0);
-						for (let i = 0; i < printRanges.length; i++) {
-							//if intersection with range between min/max -> draw line
-							if (printRanges[i].range.intersection(_colBreakRange)) {
-								t._drawElements(t._drawLineBetweenRowCol, colBreak.id, null, color, printRanges[i].range, widthLine);
-								break;
-							}
-						}
-					} else {
-						t._drawElements(t._drawLineBetweenRowCol, colBreak.id, null, color, allPagesRange, widthLine);
-					}
+					doDrawBreaks(colBreak, true);
 				});
 			}
 			if (this.model.rowBreaks && !bFitToHeight) {
 				this.model.rowBreaks.forEach(function (rowBreak) {
-					if (printRanges.length > 1) {
-						let _rowBreakRange = new Asc.Range(rowBreak.min != null ? rowBreak.min : 0, rowBreak.id, rowBreak.max != null ? rowBreak.max : gc_nMaxRow0, rowBreak.id);
-						for (let i = 0; i < printRanges.length; i++) {
-							//if intersection with range between min/max -> draw line
-							if (printRanges[i].range.intersection(_rowBreakRange)) {
-								t._drawElements(t._drawLineBetweenRowCol, null, rowBreak.id, color, printRanges[i].range, widthLine);
-								break;
-							}
-						}
-					} else {
-						t._drawElements(t._drawLineBetweenRowCol, null, rowBreak.id, color, allPagesRange, widthLine);
-					}
+					doDrawBreaks(rowBreak);
 				});
 			}
 		}
