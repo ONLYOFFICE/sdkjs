@@ -15568,7 +15568,7 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 	};
-	CRowColBreaks.prototype.containsBreak = function (id) {
+	CRowColBreaks.prototype.containsBreak = function (id, min, max) {
 		let res = false;
 		this.forEach(function (breaksElem) {
 			if (breaksElem.id === id) {
@@ -15618,6 +15618,19 @@ QueryTableField.prototype.clone = function() {
 		}
 		this.manualBreakCount++;
 		this.count++;
+	};
+
+	CRowColBreaks.prototype.removeBreak = function (id, min, max, addToHistory) {
+		for (let i = 0; i < this.breaks.length; i++) {
+			if (this.breaks[i].isBreak(id, min, max)) {
+				this.breaks.splice(i, 1);
+
+				if (addToHistory) {
+
+				}
+				break;
+			}
+		}
 	};
 
 

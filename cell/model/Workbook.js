@@ -11831,23 +11831,35 @@
 	};
 
 	Worksheet.prototype._changeRowColBreaks = function (from, to, min, max, byCol, addToHistory) {
-		let rowColBreaks, notContains;
-		if (!byCol) {
-			if (!this.rowBreaks) {
-				this.rowBreaks = new AscCommonExcel.CRowColBreaks();
-				notContains = true;
+		let t = this;
+		let rowColBreaks = !byCol ? t.rowBreaks : t.colBreaks;
+
+		let checkInit = function () {
+			if (!byCol) {
+				if (!t.rowBreaks) {
+					t.rowBreaks = new AscCommonExcel.CRowColBreaks();
+					rowColBreaks = t.rowBreaks;
+				}
+			} else {
+				if (!t.colBreaks) {
+					t.colBreaks = new AscCommonExcel.CRowColBreaks();
+					rowColBreaks = t.colBreaks;
+				}
 			}
-			rowColBreaks = this.rowBreaks;
-		} else {
-			if (!this.colBreaks) {
-				this.colBreaks = new AscCommonExcel.CRowColBreaks();
-				notContains = true;
+		};
+
+
+		if (rowColBreaks.containsBreak(from, min, max)) {
+			if (to) {
+				//change
+				checkInit();
+				rowColBreaks.changeBreak(from, to, min, max, true, null, addToHistory);
+			} else {
+				//delete
+				rowColBreaks && rowColBreaks.removeBreak(from, min, max, addToHistory);
 			}
-			rowColBreaks = this.colBreaks;
-		}
-		if (!notContains && rowColBreaks.containsBreak(from)) {
-			rowColBreaks.changeBreak(from, to, min, max, true, null, addToHistory);
-		} else {
+		} else if (to) {
+			//add
 			rowColBreaks.addBreak(to, min, max, true, null, addToHistory)
 		}
 

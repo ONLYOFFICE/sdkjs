@@ -21476,7 +21476,7 @@
 	WorksheetView.prototype.removePageBreak = function () {
 		let t = this;
 
-			
+
 
 		let onChangeCallback = function (isSuccess) {
 			if (false === isSuccess) {
@@ -21489,8 +21489,8 @@
 			let activeCell = t.model.getSelection().activeCell;
 			let range = t.model.getPrintAreaRangeByRowCol(activeCell.row, activeCell.col);
 
-			t.model.changeRowColBreaks(null, activeCell.row, range, null, true);
-			t.model.changeRowColBreaks(null, activeCell.col, range, true, true);
+			t.model.changeRowColBreaks(activeCell.row, null, range, null, true);
+			t.model.changeRowColBreaks(activeCell.col, null, range, true, true);
 
 			t.changeViewPrintLines(true);
 
