@@ -4552,9 +4552,10 @@ function CThumbnailsManager()
 			g.SetFont(font);
 
 			// меряем надпись номера слайда
-			var DrawNumSlide = i + 1;
+			let nSlideNumber = i + _logicDocument.getFirstSlideNumber();
+			var DrawNumSlide = nSlideNumber;
 			var num_slide_text_width = 0;
-			while (DrawNumSlide != 0)
+			while (DrawNumSlide !== 0)
 			{
 				var _last_dig = DrawNumSlide % 10;
 				num_slide_text_width += this.DigitWidths[_last_dig];
@@ -4572,7 +4573,7 @@ function CThumbnailsManager()
 
 			let dX = (_digit_distance - num_slide_text_width) / 2;
 			let dY = page.top * g_dKoef_pix_to_mm + 3 * AscCommon.AscBrowser.retinaPixelRatio;
-			let _bounds = g.t("" + (i + 1), dX, dY, true);
+			let _bounds = g.t("" + nSlideNumber, dX, dY, true);
 			if (_logicDocument.Slides[i] && !_logicDocument.Slides[i].isVisible())
 			{
 				context.lineWidth = 1;

@@ -186,10 +186,7 @@
                     var nFirstSlideNum = 1;
                     if(oStylesObject.presentation)
                     {
-                        if(AscFormat.isRealNumber(oStylesObject.presentation.firstSlideNum))
-                        {
-                            nFirstSlideNum = oStylesObject.presentation.firstSlideNum;
-                        }
+                        nFirstSlideNum = oStylesObject.presentation.getFirstSlideNumber();
                     }
                     if(oStylesObject.slide)
                     {

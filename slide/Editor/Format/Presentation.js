@@ -3087,10 +3087,20 @@ CPresentation.prototype.internalChangeSizes = function (nWidth, nHeight, nType) 
 	this.changeSlideSizeFunction();
 };
 
-CPresentation.prototype.changeSlideSize = function (width, height, nType) {
+CPresentation.prototype.changeSlideSize = function (width, height, nType, nFirstSlideNum) {
 	if (this.Document_Is_SelectionLocked(AscCommon.changestype_SlideSize) === false) {
 		History.Create_NewPoint(AscDFH.historydescription_Presentation_ChangeSlideSize);
 		this.internalChangeSizes(width, height, nType);
+		if(AscFormat.isRealNumber(nFirstSlideNum)) {
+			if(this.getFirstSlideNumber() !== nFirstSlideNum) {
+				if(nFirstSlideNum === 1) {
+					this.setFirstSlideNum(null);
+				}
+				else {
+					this.setFirstSlideNum(nFirstSlideNum);
+				}
+			}
+		}
 		this.Recalculate();
 		this.Document_UpdateInterfaceState();
 	}
@@ -4233,13 +4243,15 @@ CPresentation.prototype.addFieldToContent = function (fCallback) {
 		this.FinalizeAction(true);
 	}
 };
-
+CPresentation.prototype.getFirstSlideNumber = function() {
+	return AscFormat.isRealNumber(this.firstSlideNum) ? this.firstSlideNum : 1;
+};
 CPresentation.prototype.addSlideNumber = function () {
 	this.addFieldToContent(function (oParagraph) {
 		var oFld = new AscCommonWord.CPresentationField(oParagraph);
 		oFld.SetGuid(AscCommon.CreateGUID());
 		oFld.SetFieldType("slidenum");
-		var nFirstSlideNum = AscFormat.isRealNumber(this.firstSlideNum) ? this.firstSlideNum : 1;
+		var nFirstSlideNum = this.getFirstSlideNumber();
 		oFld.AddText("" + (this.CurPage + nFirstSlideNum));
 		return oFld;
 	});
@@ -10264,6 +10276,15 @@ CPresentation.prototype.Get_ParentObject_or_DocumentPos = function (Index) {
 CPresentation.prototype.Refresh_RecalcData = function (Data) {
 	var recalculateMaps, key;
 	switch (Data.Type) {
+		case AscDFH.historyitem_Presentation_SetFirstSlideNum: {
+			for (let nSld = 0; nSld < this.Slides.length; ++nSld) {
+				let oSlide = this.Slides[nSld];
+				if (oSlide) {
+					oSlide.refreshAllContentsFields();
+				}
+			}
+			break;
+		}
 		case AscDFH.historyitem_Presentation_AddSlide:
 		case AscDFH.historyitem_Presentation_RemoveSlide: {
 			for (let nSld = Data.Pos; nSld < this.Slides.length; ++nSld) {
