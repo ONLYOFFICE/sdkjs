@@ -134,15 +134,47 @@ function (window, undefined) {
 			}
 			return listeners;
 		};
-		const setDefNameIndexes = function (defName) {
+		// const checkIfHeader2 = function (parserF) {
+		// 	let area = parserF.outStack[0].area ? parserF.outStack[0].area : false;
+		// 	if (!area) {
+		// 		return false;
+		// 	}
+		// 	// let bbox = area.range ? area.range.bbox : area.bbox;
+		// 	let bbox = area.getBBox0();
+		// 	if (bbox.contains(cellAddress.col, cellAddress.row)) {
+		// 		return true;
+		// 	} else {
+		// 		return false;
+		// 	}
+		// };
+		const checkIfHeader = function (tableHeader) {
+			if (!tableHeader) {
+				return false;
+			}
+
+			return tableHeader.col === cellAddress.col && tableHeader.row === cellAddress.row;
+		};
+		const getHeader = function (table) {
+			if (!table.Ref) {
+				return false;
+			}
+
+			return {col: table.Ref.c1, row: table.Ref.r1};
+		};
+		const setDefNameIndexes = function (defName, isTable) {
+			let tableHeader = isTable ? getHeader(ws.getTableByName(defName)) : false;
+			let isCurrentCellHeader = isTable ? checkIfHeader(tableHeader) : false;
 			for (const i in allDefNamesListeners) {
 				if (allDefNamesListeners.hasOwnProperty(i) && i.toLowerCase() === defName.toLowerCase()) {
 					for (const listener in allDefNamesListeners[i].listeners) {
 						// TODO возможно стоить добавить все слушатели сразу в curListener
-						let isArea = allDefNamesListeners[i].listeners[listener].ref ? !allDefNamesListeners[i].listeners[listener].ref.isOneCell() : false;
-						if (isArea) {
+						let elem = allDefNamesListeners[i].listeners[listener];
+						let isArea = elem.ref ? !elem.ref.isOneCell() : false;
+						let is3D = elem.ws.Id ? elem.ws.Id !== ws.Id : false;
+						// let isCurrentHeader = isTable ? checkIfHeader(elem) : false;
+						if (isArea && !is3D && !isCurrentCellHeader) {
 							// decompose all elements into dependencies
-							let areaIndexes = getAllAreaIndexes(allDefNamesListeners[i].listeners[listener]);
+							let areaIndexes = getAllAreaIndexes(elem);
 							if (areaIndexes) {
 								for (let index of areaIndexes) {
 									t._setDependents(cellIndex, index);
@@ -150,8 +182,32 @@ function (window, undefined) {
 								continue;
 							}
 						}
-						let parentCellIndex = getParentIndex(allDefNamesListeners[i].listeners[listener].parent);
-						t._setDependents(cellIndex, parentCellIndex);
+						let parentCellIndex = getParentIndex(elem.parent);
+						if (isTable) {
+							// check Headers
+							// if current header and listener is header, make trace only with header
+							// check if current cell header or not
+							if (elem.Formula.includes("Headers")) {
+								if (isCurrentCellHeader) {
+									t._setDependents(cellIndex, parentCellIndex);
+								} else {
+									continue;
+								}
+								// continue;
+							} else if (!elem.Formula.includes("Headers") && isCurrentCellHeader) {
+								continue;
+							}
+							// shared checks
+							if (elem.shared !== null && !is3D) {
+								let currentCellRange = ws.getCell3(cellAddress.row, cellAddress.col);
+								setSharedTableIntersection(ws.getTableByName(defName).getRangeWithoutHeaderFooter(), currentCellRange, elem.shared);
+								continue;
+							}
+							t._setDependents(cellIndex, parentCellIndex);
+							continue;
+						} else {
+							t._setDependents(cellIndex, parentCellIndex);
+						}
 					}
 				}
 			}
@@ -180,14 +236,14 @@ function (window, undefined) {
 			}
 			return _parentCellIndex;
 		};
-		const tempSharedIntersection = function (currentRange, shared) {
+		const setSharedIntersection = function (currentRange, shared) {
 			// get the cell is contained in one of the areaMap
 			// if contain, call getSharedIntersect with currentRange whom contain cell and sharedRange
 			if (curListener && curListener.areaMap) {
 				for (let j in curListener.areaMap) {
 					if (curListener.areaMap.hasOwnProperty(j)) {
 						if (curListener.areaMap[j] && curListener.areaMap[j].bbox.contains(cellAddress.col, cellAddress.row)) {
-							let res = curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);
+							let res = curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);	// doesn't work with tables
 							// draw dependents to coords from res
 							if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
 								let index = AscCommonExcel.getCellIndex(res.r1, res.c1);
@@ -196,6 +252,72 @@ function (window, undefined) {
 						}
 					}
 				}
+			}
+		};
+		const setSharedTableIntersection = function (currentRange, currentCellRange, shared) {
+			// row mode || col mode
+			let isRowMode = currentRange.r1 === currentRange.r2,
+				isColumnMode = currentRange.c1 === currentRange.c2, res, tempRange;
+
+			if (isColumnMode && currentRange.r2 > shared.ref.r2) {
+				if (!shared.ref.containsRow(currentCellRange.bbox.r2)) {
+					return
+				}
+				if (currentCellRange.r2 > shared.ref.r2) {
+					return;
+				}
+				// do check with rest of the currentRange
+				tempRange = new asc_Range(currentRange.c1, currentRange.r1, currentRange.c2, shared.ref.r2);
+			} else if (isRowMode && currentRange.c2 > shared.ref.c2) {
+				// contains
+				if (!shared.ref.containsCol(currentCellRange.bbox.c2)) {
+					return
+				}
+				if (currentCellRange.c2 > shared.ref.c2) {
+					return;
+				}
+				tempRange = new asc_Range(currentRange.c1, currentRange.r1, shared.ref.c2, currentRange.r2);
+			}
+
+			if (tempRange) {
+				res = tempRange.getSharedIntersect(shared.ref, currentCellRange.bbox);
+			}
+
+			res = !res ? currentRange.getSharedIntersect(shared.ref, currentCellRange.bbox) : res;
+
+			if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
+				let index = AscCommonExcel.getCellIndex(res.r1, res.c1);
+				t._setDependents(cellIndex, index);
+			} else {
+				// split shared range on two parts
+				let split = currentRange.difference(shared.ref);
+
+				if (split.length > 1) {
+					// first part
+					res = currentRange.getSharedIntersect(split[0], currentCellRange.bbox);
+					if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
+						let index = AscCommonExcel.getCellIndex(res.r1, res.c1);
+						t._setDependents(cellIndex, index);
+					}
+
+					// second part
+					if (split[1]) {
+						let range = split[1], indexes = [];
+						for (let col = range.c1; col <= range.c2; col++) {
+							for (let row = range.r1; row <= range.r2; row++) {
+								let index = AscCommonExcel.getCellIndex(row, col);
+								indexes.push(index);
+							}
+						}
+						if (indexes.length > 0) {
+							for (let index of indexes) {
+								t._setDependents(cellIndex, index);
+							}
+						}
+					}
+				}
+
+ 				
 			}
 		};
 
@@ -207,36 +329,54 @@ function (window, undefined) {
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
 						let parent = cellListeners[i].parent;
+						let parentWsId = parent.ws ? parent.ws.Id : null;
+						let isTable = parent.parsedRef ? parent.parsedRef.isTable : false;
+						let isDefName = parent.name ? true : false;
 						let formula = cellListeners[i].Formula;
-
 						let is3D = false;
-						if (parent.name) {
+						const parentInfo = {
+							parent, 
+							parentWsId,
+							isTable,
+							isDefName
+						};
+
+
+						if (isDefName) {
 							// TODO check external table ref
-							is3D = false;
-							setDefNameIndexes(parent.name);
+							// if (isTable) {
+							// 	// check if 3D
+							// 	is3D = parent.parsedRef.outStack[0].wsFrom ? parent.parsedRef.outStack[0].wsFrom.Id !== parent.parsedRef.outStack[0].wsTo.Id : false;
+							// 	if (!is3D) {
+							// 		setDefNameIndexes(parent.name, is3D);
+							// 	} else {
+
+							// 	}
+							// } else {
+							// 	is3D = ws.Id !== parent.parsedRef.ws.Id ? true : false;	// doesn't work with tables
+							// 	setDefNameIndexes(parent.name, is3D);
+							// }
+							// is3D = ws.Id !== parent.parsedRef.ws.Id ? true : false;	// doesn't work with tables
+							// is3D = parent.parsedRef.outStack[0].wsFrom ? parent.parsedRef.outStack[0].wsFrom.Id !== parent.parsedRef.outStack[0].wsTo.Id : false;
+							// setDefNameIndexes(parent.name, is3D, isTable);
+							setDefNameIndexes(parent.name, isTable);
 							continue;
 						} else if (cellListeners[i].is3D) {
 							is3D = true;
 						}
-						let parentCellIndex = getParentIndex(parent);
-						
-						if (parentCellIndex === null) {
-							continue;
-						}
 
-						if (cellListeners[i].shared !== null) {
+						if (cellListeners[i].shared !== null && !is3D) {
+							// can be shared ref in otheer sheet
 							let shared = cellListeners[i].getShared();
 							let currentCellRange = ws.getCell3(cellAddress.row, cellAddress.col);
-							// parentCellIndex = getParentIndex(parent, shared);
-							tempSharedIntersection(currentCellRange, shared);
+							setSharedIntersection(currentCellRange, shared);
 							continue;
 						}
 
 						if (formula.includes(":") && !is3D) {
-							let areaIndexes;
 							// call splitAreaListeners which return cellIndexes of each element(this will be parentCellIndex)
 							// go through the values and set dependents for each
-							areaIndexes = getAllAreaIndexes(cellListeners[i]);
+							let areaIndexes = getAllAreaIndexes(cellListeners[i]);
 							if (areaIndexes) {
 								for (let index of areaIndexes) {
 									this._setDependents(cellIndex, index);
@@ -244,7 +384,12 @@ function (window, undefined) {
 								}
 								continue;
 							}
-						} 
+						}
+						let parentCellIndex = getParentIndex(parent);
+						
+						if (parentCellIndex === null) {
+							continue;
+						}
 						this._setDependents(cellIndex, parentCellIndex);
 					}
 				}
@@ -380,6 +525,7 @@ function (window, undefined) {
 			
 			if (formulaParsed.outStack) {
 				let currentWsIndex = formulaParsed.ws.index;
+				let ref = formulaParsed.ref;
 				// iterate and find all reference
 				for (const elem of formulaParsed.outStack) {
 					let elemType = elem.type ? elem.type : null;
@@ -407,8 +553,13 @@ function (window, undefined) {
 								isArea = false;
 							}
 						} else if (isTable) {
-							// TODO check external table ref
+							let currentWsId = elem.ws.Id,
+								elemWsId = elem.area.ws ? elem.area.ws.Id : elem.area.wsFrom.Id;
+							// elem.area can be cRef and cArea
+							is3D = currentWsId !== elemWsId ? true : false;
 							elemRange = elem.area.bbox ? elem.area.bbox : (elem.area.range ? elem.area.range.bbox : null);
+							isArea = ref ? true : (!elemRange.isOneCell() ? true : false);
+
 						} else {
 							elemRange = elem.range.bbox ? elem.range.bbox : elem.bbox;
 						}
@@ -417,11 +568,39 @@ function (window, undefined) {
 							return;
 						}
 
-						if (base) {
-							// if the shared formula make a shift relative to the base
-							elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
-							elemRange = new asc_Range(elemRange.c1 + (col - base.nCol), elemRange.r1 + (row - base.nRow), elemRange.c2 + (col - base.nCol), elemRange.r2 + (row - base.nRow));
+						if (shared) {
+							let cellRange = new asc_Range(col, row, col, row);
+							if (isTable) {
+								let isRowMode = shared.ref.r1 === shared.ref.r2,
+									isColumnMode = shared.ref.c1 === shared.ref.c2,
+									diff = [];
 
+								if ((isRowMode && (cellRange.c2 > elemRange.c2)) || (isColumnMode && (cellRange.r2 > elemRange.r2))) {
+									// regular link to main table
+									elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1);
+								} else {
+									diff = elemRange.difference(shared.ref);
+									if (diff.length > 1) {
+										let res = diff[0].getSharedIntersect(elemRange, cellRange);
+										if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
+											elemCellIndex = AscCommonExcel.getCellIndex(res.r1, res.c1);
+										} else {
+											elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
+										}
+									}
+								}
+							} else {
+								// TODO use getSharedIntersect instead
+								// if the shared formula make a shift relative to the base
+								// let res = shared.ref.getSharedIntersect(elemRange, cellRange);
+								// if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
+								// 	elemCellIndex = AscCommonExcel.getCellIndex(res.r1, res.c1);
+								// } else {
+								// 	elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
+								// }
+								elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
+								// elemRange = new asc_Range(elemRange.c1 + (col - base.nCol), elemRange.r1 + (row - base.nRow), elemRange.c2 + (col - base.nCol), elemRange.r2 + (row - base.nRow)); ???
+							}
 						} else {
 							elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1);
 						}

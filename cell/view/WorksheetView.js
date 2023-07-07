@@ -5129,8 +5129,6 @@
 			// const cellHeight = 2 * zoom * customScale;
 			const lineWidth = 1 * zoom * customScale;
 			const cellStrokesColor = new CColor(0, 0, 0);
-			console.log(tableHeight);
-			console.log(cellHeight);
 
 			// Padding for a table inside the cell
 			const x1 = isTableLeft ? x - tableWidth - paddingX : x + paddingX;
