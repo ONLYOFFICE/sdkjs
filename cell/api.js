@@ -5908,7 +5908,10 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellUnderline = function(isUnderline) {
-    var ws = this.wb.getWorksheet();
+	  this.asc_ResetAllPageBreaks()
+	  return;
+
+  	var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellUnderline) {
       ws.objectRender.controller.setCellUnderline(isUnderline);
     } else {
@@ -8794,7 +8797,15 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_ResetAllPageBreaks = function() {
-
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		var ws = this.wb.getWorksheet();
+		return ws.resetAllPageBreaks();
 	};
 
   /*

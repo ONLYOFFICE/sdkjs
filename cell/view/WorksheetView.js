@@ -21476,8 +21476,6 @@
 	WorksheetView.prototype.removePageBreak = function () {
 		let t = this;
 
-
-
 		let onChangeCallback = function (isSuccess) {
 			if (false === isSuccess) {
 				return;
@@ -21491,6 +21489,33 @@
 
 			t.model.changeRowColBreaks(activeCell.row, null, range, null, true);
 			t.model.changeRowColBreaks(activeCell.col, null, range, true, true);
+
+			t.changeViewPrintLines(true);
+
+			if(t.viewPrintLines) {
+				t.updateSelection();
+			}
+			window["Asc"]["editor"]._onUpdateLayoutMenu(t.model.Id);
+
+			History.EndTransaction();
+		};
+
+		//do lock print settings
+		this._isLockedLayoutOptions(onChangeCallback);
+	};
+
+	WorksheetView.prototype.resetAllPageBreaks = function () {
+		let t = this;
+
+		let onChangeCallback = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			t.model.resetAllPageBreaks();
 
 			t.changeViewPrintLines(true);
 

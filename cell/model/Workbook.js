@@ -11848,7 +11848,6 @@
 			}
 		};
 
-
 		if (rowColBreaks.containsBreak(from, min, max)) {
 			if (to) {
 				//change
@@ -11863,6 +11862,30 @@
 			rowColBreaks.addBreak(to, min, max, true, null, addToHistory)
 		}
 
+		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());
+	};
+
+	Worksheet.prototype.resetAllPageBreaks = function () {
+		let t = this;
+
+		let doRemoveBreaks = function(_breaks) {
+			if (!_breaks) {
+				return;
+			}
+			let aBreaks = _breaks.getBreaks();
+			for (let i = 0; i < aBreaks.length; i++) {
+				if (_breaks.removeBreak(aBreaks[i].id)) {
+					i--;
+				}
+			}
+		};
+
+		if (this.rowBreaks) {
+			doRemoveBreaks(this.rowBreaks);
+		}
+		if (this.colBreaks) {
+			doRemoveBreaks(this.colBreaks);
+		}
 		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());
 	};
 

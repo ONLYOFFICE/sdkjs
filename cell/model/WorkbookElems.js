@@ -15621,9 +15621,11 @@ QueryTableField.prototype.clone = function() {
 	};
 
 	CRowColBreaks.prototype.removeBreak = function (id, min, max, addToHistory) {
+		let isDeleted = false;
 		for (let i = 0; i < this.breaks.length; i++) {
 			if (this.breaks[i].isBreak(id, min, max)) {
 				this.breaks.splice(i, 1);
+				isDeleted = true;
 
 				if (addToHistory) {
 
@@ -15631,6 +15633,7 @@ QueryTableField.prototype.clone = function() {
 				break;
 			}
 		}
+		return isDeleted;
 	};
 
 
