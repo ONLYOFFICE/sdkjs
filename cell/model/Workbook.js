@@ -11817,7 +11817,7 @@
 		let max = byCol ? gc_nMaxCol0 : gc_nMaxRow0;
 
 		let printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
-		if (printArea) {
+		if (printArea && range) {
 			if (byCol) {
 				min = range.r1;
 				max = range.r2;
@@ -11852,6 +11852,27 @@
 		}
 
 		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());
+	};
+
+	Worksheet.prototype.getPrintAreaRangeByRowCol = function (row, col) {
+		let printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
+		let t = this;
+
+		if (printArea) {
+			let ranges;
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				ranges = AscCommonExcel.getRangeByRef(printArea.ref, t, true, true)
+			});
+			if (ranges) {
+				for (let i = 0; i < ranges.length; i++) {
+					if (ranges[i].bbox.contains(col, row)) {
+						return ranges[i].bbox;
+					}
+				}
+			}
+		}
+
+		return null;
 	};
 
 	Worksheet.prototype.addCellWatch = function (ref, addToHistory) {

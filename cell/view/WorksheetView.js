@@ -21425,7 +21425,73 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			t.model.changeRowColBreaks(from, to, range, byCol, true)
+			t.model.changeRowColBreaks(from, to, range, byCol, true);
+			t.changeViewPrintLines(true);
+
+			if(t.viewPrintLines) {
+				t.updateSelection();
+			}
+			window["Asc"]["editor"]._onUpdateLayoutMenu(t.model.Id);
+
+			History.EndTransaction();
+		};
+
+		//do lock print settings
+		this._isLockedLayoutOptions(onChangeCallback);
+	};
+
+	WorksheetView.prototype.insertPageBreak = function () {
+		let t = this;
+
+		//TODO check need change?(if added already by col and row)
+
+		let onChangeCallback = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			let activeCell = t.model.getSelection().activeCell;
+			let range = t.model.getPrintAreaRangeByRowCol(activeCell.row, activeCell.col);
+
+			t.model.changeRowColBreaks(null, activeCell.row, range, null, true);
+			t.model.changeRowColBreaks(null, activeCell.col, range, true, true);
+
+			t.changeViewPrintLines(true);
+
+			if(t.viewPrintLines) {
+				t.updateSelection();
+			}
+			window["Asc"]["editor"]._onUpdateLayoutMenu(t.model.Id);
+
+			History.EndTransaction();
+		};
+
+		//do lock print settings
+		this._isLockedLayoutOptions(onChangeCallback);
+	};
+
+	WorksheetView.prototype.removePageBreak = function () {
+		let t = this;
+
+			
+
+		let onChangeCallback = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			let activeCell = t.model.getSelection().activeCell;
+			let range = t.model.getPrintAreaRangeByRowCol(activeCell.row, activeCell.col);
+
+			t.model.changeRowColBreaks(null, activeCell.row, range, null, true);
+			t.model.changeRowColBreaks(null, activeCell.col, range, true, true);
+
 			t.changeViewPrintLines(true);
 
 			if(t.viewPrintLines) {
