@@ -8409,7 +8409,8 @@ Paragraph.prototype.CheckSmartParagraphSelection = function()
 	if (!this.Selection.Use
 		|| !logicDocument
 		|| !logicDocument.IsDocumentEditor()
-		|| !logicDocument.IsSmartParagraphSelection())
+		|| !logicDocument.IsSmartParagraphSelection()
+		|| this.IsEmpty())
 		return;
 	
 	let direction = this.GetSelectDirection();
