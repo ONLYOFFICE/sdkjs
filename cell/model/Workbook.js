@@ -18305,36 +18305,39 @@
 					}
 
 					var data = oPromoteHelper.getNext();
-					if(null != data && (data.oAdditional || (false == bCopy && null != data.nCurValue)))
+					if(null != data && (data.getAdditional() || (false == bCopy && null != data.getCurValue())))
 					{
-						var oFromCell = data.oAdditional;
+						var oFromCell = data.getAdditional();
 						var nRow = bRowFirst ? i : j;
 						var nCol = bRowFirst ? j : i;
-						let aTimePeriods = data.aTimePeriods;
+						let sPrefix = data.getPrefix();
+						let nCurValue = data.getCurValue();
+						let nPadding = data.getPadding();
+						let aTimePeriods = data.getTimePeriods();
 						let aReverseTimePeriods = [];
 
-						if (aTimePeriods && (bReverse || data.nCurValue < 0)) {
+						if (aTimePeriods && (bReverse || nCurValue < 0)) {
 							aReverseTimePeriods = aTimePeriods.slice();
 							aReverseTimePeriods.reverse();
 						}
 						wsTo._getCell(nRow, nCol, function(oCopyCell){
 							if(bIsPromote)
 							{
-								if(false == bCopy && null != data.nCurValue)
+								if(false === bCopy && null != nCurValue)
 								{
 									var oCellValue = new AscCommonExcel.CCellValue();
-									if (null != data.sPrefix) {
-										var sVal = data.sPrefix;
+									if (null != sPrefix) {
+										var sVal = sPrefix;
 										//toString enough, because nCurValue nave not decimal part
-										var sNumber = data.nCurValue.toString();
-										if (sNumber.length < data.padding) {
-											sNumber = '0'.repeat(data.padding - sNumber.length) + sNumber;
+										var sNumber = nCurValue.toString();
+										if (sNumber.length < nPadding) {
+											sNumber = '0'.repeat(nPadding - sNumber.length) + sNumber;
 										}
 										sVal += sNumber;
 										oCellValue.text = sVal;
 										oCellValue.type = CellValueType.String;
 									} else if (aTimePeriods) {
-										let nIndexDay = data.nCurValue % aTimePeriods.length;
+										let nIndexDay = nCurValue % aTimePeriods.length;
 										if (nIndexDay < 0) {
 											oCellValue.text = aReverseTimePeriods[~nIndexDay];
 										} else {
@@ -18342,7 +18345,7 @@
 										}
 										oCellValue.type = CellValueType.String;
 									} else {
-										oCellValue.number = data.nCurValue;
+										oCellValue.number = nCurValue;
 										oCellValue.type = CellValueType.Number;
 									}
 									oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
@@ -18698,8 +18701,7 @@
 	}
 	PromoteHelper.prototype = {
 		add: function(nRow, nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, aTimePeriods){
-			if(this.bVerical)
-			{
+			if(this.bVerical) {
 				//транспонируем для удобства
 				var temp = nRow;
 				nRow = nCol;
@@ -18708,25 +18710,21 @@
 			if(this.bReverse)
 				nCol = this.nColLength - nCol - 1;
 			var row = this.oDataRow[nRow];
-			if(null == row)
-			{
+			if(null == row) {
 				row = {};
 				this.oDataRow[nRow] = row;
 			}
-			row[nCol] = {nCol: nCol, nVal: nVal, bDelimiter: bDelimiter, sPrefix: sPrefix, padding: padding, bDate: bDate, aTimePeriods: aTimePeriods, oAdditional: oAdditional, oSequence: null, nCurValue: null};
+			row[nCol] = new cDataRow(nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, aTimePeriods);
 		},
 		isOnlyIntegerSequence: function(){
 			var bRes = true;
 			var bEmpty = true;
-			for(var i in this.oDataRow)
-			{
+			for(var i in this.oDataRow) {
 				var row = this.oDataRow[i];
-				for(var j in row)
-				{
+				for(var j in row) {
 					var data = row[j];
 					bEmpty = false;
-					if(!(null != data.nVal && true != data.bDate && null == data.sPrefix))
-					{
+					if(!(null != data.getVal() && true != data.getIsDate() && null == data.getPrefix())) {
 						bRes = false;
 						break;
 					}
@@ -18796,47 +18794,36 @@
 			return {a0: a0, a1: a1, nX: nX};
 		},
 		_addSequenceToRow : function(nRowIndex, aSortRowIndex, row, aCurSequence){
-			if(aCurSequence.length > 0)
-			{
+			if(aCurSequence.length > 0) {
 				var oFirstData = aCurSequence[0];
 				var bCanPromote = true;
 				//если последовательность состоит из одного числа и той же колонке есть еще последовательности, то надо копировать, а не автозаполнять
-				if(1 == aCurSequence.length)
-				{
+				if(1 == aCurSequence.length) {
 					var bVisitRowIndex = false;
 					var oVisitData = null;
-					for(var i = 0, length = aSortRowIndex.length; i < length; i++)
-					{
+					for(var i = 0, length = aSortRowIndex.length; i < length; i++) {
 						var nCurRowIndex = aSortRowIndex[i];
-						if(nRowIndex == nCurRowIndex)
-						{
+						if(nRowIndex == nCurRowIndex) {
 							bVisitRowIndex = true;
-							if(oVisitData && oFirstData.sPrefix == oVisitData.sPrefix && oFirstData.bDate == oVisitData.bDate)
-							{
+							if(oVisitData && prefixnDataCompare(oFirstData, oVisitData)) {
 								bCanPromote = false;
 								break;
 							}
 						}
-						else
-						{
+						else {
 							var oCurRow = this.oDataRow[nCurRowIndex];
-							if(oCurRow)
-							{
-								var data = oCurRow[oFirstData.nCol];
-								if(null != data)
-								{
-									if(null != data.nVal)
-									{
+							if(oCurRow) {
+								var data = oCurRow[oFirstData.getCol()];
+								if(null != data) {
+									if(null != data.getVal()) {
 										oVisitData = data;
-										if(bVisitRowIndex)
-										{
-											if(oFirstData.sPrefix == oVisitData.sPrefix && oFirstData.bDate == oVisitData.bDate)
+										if(bVisitRowIndex) {
+											if(prefixnDataCompare(oFirstData, oVisitData))
 												bCanPromote = false;
 											break;
 										}
 									}
-									else if(data.bDelimiter)
-									{
+									else if(data.getDelimiter()) {
 										oVisitData = null;
 										if(bVisitRowIndex)
 											break;
@@ -18846,8 +18833,7 @@
 						}
 					}
 				}
-				if(bCanPromote)
-				{
+				if(bCanPromote) {
 					var nMinIndex = null;
 					var nMaxIndex = null;
 					var bValidIndexDif = true;
@@ -18858,44 +18844,38 @@
 					var nMaxPadding = 0;
 					//анализируем последовательность, если числа расположены не на одинаковом расстоянии, то считаем их сплошной последовательностью
 					//последовательность с промежутками может быть только целочисленной
-					for(var i = 0, length = aCurSequence.length; i < length; i++)
-					{
+					for(var i = 0, length = aCurSequence.length; i < length; i++) {
 						var data = aCurSequence[i];
-						var nCurX = data.nCol;
+						var nCurX = data.getCol();
+						let nCurVal = data.getVal();
 						if(null == nMinIndex || null == nMaxIndex)
 							nMinIndex = nMaxIndex = nCurX;
-						else
-						{
+						else {
 							if(nCurX < nMinIndex)
 								nMinIndex = nCurX;
 							if(nCurX > nMaxIndex)
 								nMaxIndex = nCurX;
 						}
-						if(bValidIndexDif)
-						{
-							if(null != nPrevX && null != nPrevVal)
-							{
+						if(bValidIndexDif) {
+							if(null != nPrevX && null != nPrevVal) {
 								var nCurDif = nCurX - nPrevX;
-								var nCurValDif = data.nVal - nPrevVal;
-								if(null == nIndexDif || null == nCurValDif)
-								{
+								var nCurValDif = nCurVal - nPrevVal;
+								if(null == nIndexDif || null == nCurValDif) {
 									nIndexDif = nCurDif;
 									nValueDif = nCurValDif;
 								}
-								else if(nIndexDif != nCurDif || nValueDif != nCurValDif)
-								{
+								else if(nIndexDif != nCurDif || nValueDif != nCurValDif) {
 									nIndexDif = null;
 									bValidIndexDif = false;
 								}
 							}
 						}
-						nMaxPadding = Math.max(nMaxPadding, data.padding);
+						nMaxPadding = Math.max(nMaxPadding, data.getPadding());
 						nPrevX = nCurX;
-						nPrevVal = data.nVal;
+						nPrevVal = nCurVal;
 					}
 					var bWithSpace = false;
-					if(null != nIndexDif)
-					{
+					if(null != nIndexDif) {
 						nIndexDif = Math.abs(nIndexDif);
 						if(nIndexDif > 1)
 							bWithSpace = true;
@@ -18904,55 +18884,49 @@
 					var bExistSpace = false;
 					nPrevX = null;
 					var aDigits = [];
-					for(var i = 0, length = aCurSequence.length; i < length; i++)
-					{
+					for(var i = 0, length = aCurSequence.length; i < length; i++) {
 						var data = aCurSequence[i];
-						data.padding = nMaxPadding;
-						var nCurX = data.nCol;
+						data.setPadding(nMaxPadding);
+						var nCurX = data.getCol();
 						var x = nCurX - nMinIndex;
 						if(null != nIndexDif && nIndexDif > 0)
 							x /= nIndexDif;
 						if(null != nPrevX && nCurX - nPrevX > 1)
 							bExistSpace = true;
-						var y = data.nVal;
+						var y = data.getVal();
 						//даты автозаполняем только по целой части
-						if(data.bDate)
+						if(data.getIsDate())
 							y = parseInt(y);
 						aDigits.push({x: x, y: y});
 						nPrevX = nCurX;
 					}
-					if(aDigits.length > 0)
-					{
+					if(aDigits.length > 0) {
 						var oSequence = this._promoteSequence(aDigits);
-						if(1 == aDigits.length && this.bReverse)
-						{
+						if(1 == aDigits.length && this.bReverse) {
 							//меняем коэффициенты для случая одного числа в последовательности, иначе она в любую сторону будет возрастающей
 							oSequence.a1 *= -1;
 						}
 						var bIsIntegerSequence = oSequence.a1 != parseInt(oSequence.a1);
 						//для дат и чисел с префиксом автозаполняются только целочисленные последовательности
-						if(!((null != oFirstData.sPrefix || true == oFirstData.bDate) && bIsIntegerSequence))
-						{
-							if(false == bWithSpace && bExistSpace)
-							{
-								for(var i = nMinIndex; i <= nMaxIndex; i++)
-								{
+						let sPrefix = oFirstData.getPrefix();
+						let bDate = oFirstData.getIsDate();
+						let bDelimiter = oFirstData.getDelimiter();
+						if(!((null != sPrefix || true == bDate) && bIsIntegerSequence)) {
+							if(false == bWithSpace && bExistSpace) {
+								for(var i = nMinIndex; i <= nMaxIndex; i++) {
 									var data = row[i];
-									if(null == data)
-									{
-										data = {nCol: i, nVal: null, bDelimiter: oFirstData.bDelimiter, sPrefix: oFirstData.sPrefix, bDate: oFirstData.bDate, oAdditional: null, oSequence: null, nCurValue: null};
+									if(null == data) {
+										data = new cDataRow(i, null, bDelimiter, sPrefix, null, bDate);
 										row[i] = data;
 									}
-									data.oSequence = oSequence;
+									data.setSequence(oSequence);
 								}
 							}
-							else
-							{
-								for(var i = 0, length = aCurSequence.length; i < length; i++)
-								{
+							else {
+								for(var i = 0, length = aCurSequence.length; i < length; i++) {
 									var nCurX = aCurSequence[i].nCol;
 									if(null != nCurX)
-										row[nCurX].oSequence = oSequence;
+										row[nCurX].setSequence(oSequence);
 								}
 							}
 						}
@@ -18960,15 +18934,13 @@
 				}
 			}
 		},
-		finishAdd : function(bCopy){
-			if(true != bCopy)
-			{
+		finishAdd : function(bCopy) {
+			if(true != bCopy) {
 				var aSortRowIndex = [];
 				for(var i in this.oDataRow)
 					aSortRowIndex.push(i - 0);
 				aSortRowIndex.sort(fSortAscending);
-				for(var i = 0, length = aSortRowIndex.length; i < length; i++)
-				{
+				for(var i = 0, length = aSortRowIndex.length; i < length; i++) {
 					var nRowIndex = aSortRowIndex[i];
 					var row = this.oDataRow[nRowIndex];
 					//собираем информация о последовательностях в row
@@ -18977,33 +18949,29 @@
 						aSortIndex.push(j - 0);
 					aSortIndex.sort(fSortAscending);
 					var aCurSequence = [];
-					var oPrevData = null;
-					for(var j = 0, length2 = aSortIndex.length; j < length2; j++)
-					{
+					var oPrevRowData = null;
+					for(var j = 0, length2 = aSortIndex.length; j < length2; j++) {
 						var nColIndex = aSortIndex[j];
-						var data = row[nColIndex];
+						var rowData = row[nColIndex];
 						var bAddToSequence = false;
-						let sPrevTimePeriods = oPrevData && oPrevData.aTimePeriods ? oPrevData.aTimePeriods.join() : null;
-						let sTimePeriods = data.aTimePeriods ? data.aTimePeriods.join() : null;
-						if(null != data.nVal)
-						{
+						let nVal = rowData.getVal();
+						let bDelimiter = rowData.getDelimiter();
+						if(null != nVal) {
 							bAddToSequence = true;
-							if(null != oPrevData && (oPrevData.bDelimiter != data.bDelimiter || oPrevData.sPrefix != data.sPrefix || oPrevData.bDate != data.bDate || (sPrevTimePeriods != sTimePeriods)))
-							{
+							if(null != oPrevRowData && hasDifference(oPrevRowData, rowData)) {
 								this._addSequenceToRow(nRowIndex, aSortRowIndex, row, aCurSequence);
 								aCurSequence = [];
-								oPrevData = null;
+								oPrevRowData = null;
 							}
-							oPrevData = data;
+							oPrevRowData = rowData;
 						}
-						else if(data.bDelimiter)
-						{
+						else if(bDelimiter) {
 							this._addSequenceToRow(nRowIndex, aSortRowIndex, row, aCurSequence);
 							aCurSequence = [];
-							oPrevData = null;
+							oPrevRowData = null;
 						}
 						if(bAddToSequence)
-							aCurSequence.push(data);
+							aCurSequence.push(rowData);
 					}
 					this._addSequenceToRow(nRowIndex, aSortRowIndex, row, aCurSequence);
 				}
@@ -19017,20 +18985,17 @@
 		},
 		getNext: function(){
 			var oRes = null;
-			if(this.oCurRow)
-			{
+			if(this.oCurRow) {
 				var oRes = this.oCurRow[this.nCurColIndex];
-				if(null != oRes)
-				{
-					oRes.nCurValue = null;
-					if(null != oRes.oSequence)
-					{
-						var sequence = oRes.oSequence;
-						if((oRes.bDate && !oRes.aTimePeriods) || null != oRes.sPrefix)
-							oRes.nCurValue = Math.abs(sequence.a1 * sequence.nX + sequence.a0);
+				if(null != oRes) {
+					oRes.setCurValue(null);
+					if(null != oRes.getSequence()) {
+						var sequence = oRes.getSequence();
+						if((oRes.getIsDate() && !oRes.getTimePeriods()) || null != oRes.getPrefix())
+							oRes.setCurValue( Math.abs(sequence.a1 * sequence.nX + sequence.a0));
 						else
-							oRes.nCurValue = sequence.a1 * sequence.nX + sequence.a0;
-						sequence.nX ++;
+							oRes.setCurValue(sequence.a1 * sequence.nX + sequence.a0);
+						sequence.nX++;
 					}
 				}
 				this.nCurColIndex++;
@@ -19171,6 +19136,83 @@
 		}
 		return null;
 	}
+	//-------------------------------------------------------------------------------------------------
+	/**
+	 * @constructor
+	 */
+	function cDataRow(nCol, nVal, bDelimiter, sPrefix, nPadding, bDate, oAdditional, aTimePeriods) {
+		this.nCol = nCol;
+		this.nVal = nVal;
+		this.bDelimiter = bDelimiter;
+		this.sPrefix = sPrefix;
+		this.nPadding = nPadding;
+		this.bDate = bDate;
+		this.oAdditional = oAdditional;
+		this.aTimePeriods = aTimePeriods;
+		this.oSequence = null;
+		this.nCurValue = null;
+
+	}
+	cDataRow.prototype.getCol = function() {
+		return this.nCol;
+	}
+	cDataRow.prototype.getVal = function() {
+		return this.nVal;
+	}
+	cDataRow.prototype.getDelimiter = function() {
+		return this.bDelimiter;
+	}
+	cDataRow.prototype.getPrefix = function () {
+		return this.sPrefix;
+	}
+	cDataRow.prototype.getPadding = function() {
+		return this.nPadding;
+	}
+	cDataRow.prototype.setPadding = function(nPadding) {
+		this.nPadding = nPadding;
+	}
+	cDataRow.prototype.getIsDate = function() {
+		return this.bDate;
+	}
+	cDataRow.prototype.getAdditional = function() {
+		return this.oAdditional;
+	}
+	cDataRow.prototype.getTimePeriods = function () {
+		return this.aTimePeriods;
+	}
+	cDataRow.prototype.getSequence = function() {
+		return this.oSequence;
+	}
+	cDataRow.prototype.setSequence = function (oSequence) {
+		this.oSequence = oSequence;
+	}
+	cDataRow.prototype.getCurValue = function() {
+		return this.nCurValue;
+	}
+	cDataRow.prototype.setCurValue = function(nCurValue) {
+		this.nCurValue = nCurValue;
+	}
+	function hasDifference(oPrevRowData, oRowData) {
+		let sPrevTimePeriods =  oPrevRowData.getTimePeriods() ? oPrevRowData.getTimePeriods().join() : null;
+		let sTimePeriods = oRowData.getTimePeriods() ? oRowData.getTimePeriods().join() : null;
+		let bPrevDelimiter = oPrevRowData.getDelimiter();
+		let bDelimiter = oRowData.getDelimiter();
+		let sPrevPrefix = oPrevRowData.getPrefix();
+		let sPrefix = oRowData.getPrefix();
+		let bPrevDate = oPrevRowData.getIsDate();
+		let bDate = oRowData.getIsDate();
+
+		return bPrevDelimiter !== bDelimiter || sPrevPrefix !== sPrefix || bPrevDate !== bDate || sPrevTimePeriods !== sTimePeriods;
+	}
+
+	function prefixnDataCompare(oFirstRowData, oVisitRowData) {
+		let sFirstPrefix = oFirstRowData.getPrefix();
+		let sVisitedPrefix = oVisitRowData.getPrefix();
+		let bFirstDate = oFirstRowData.getIsDate();
+		let bVisitedDate = oVisitRowData.getIsDate();
+		return sFirstPrefix === sVisitedPrefix && bFirstDate === bVisitedDate;
+	}
+
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].g_nVerticalTextAngle = g_nVerticalTextAngle;

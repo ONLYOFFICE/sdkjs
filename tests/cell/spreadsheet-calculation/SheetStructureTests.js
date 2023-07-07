@@ -2127,7 +2127,7 @@ $(function () {
 		function getAutofillCase(aFrom, aTo, nFillHandleArea, sDescription, expectedData) {
 			const [c1From, c2From, rFrom] = aFrom;
 			const [c1To, c2To, rTo] = aTo;
-			const nHandleDirection = 0; // 0 - Horizontal, 1 - Vertical,
+			const nHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
 			const autofillC1 =  nFillHandleArea === 3 ? c2From + 1 : c1From - 1;
 			const autoFillAssert = nFillHandleArea === 3 ? autofillData : reverseAutofillData;
 
@@ -2198,7 +2198,7 @@ $(function () {
 		function getAutofillCase(aFrom, aTo, nFillHandleArea, sDescription, expectedData) {
 			const [r1From, r2From, cFrom] = aFrom;
 			const [r1To, r2To, cTo] = aTo;
-			const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical,
+			const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
 			const autofillR1 =  nFillHandleArea === 3 ? r2From + 1 : r1From - 1;
 			const autoFillAssert = nFillHandleArea === 3 ? autofillData : reverseAutofillData;
 
