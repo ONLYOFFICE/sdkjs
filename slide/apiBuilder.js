@@ -2669,6 +2669,35 @@
         return false;
     };
 
+
+    /**
+     * Returns the visibility to the current presentation slide.
+     * @memberOf ApiSlide
+     * @typeofeditors ["CPE"]
+     * @returns {boolean}
+     * */
+    ApiSlide.prototype.GetVisible = function(){
+        if(this.Slide){
+            return this.Slide.isVisible();
+        }
+        return false;
+    };
+
+    /**
+     * Sets the visibility to the current presentation slide.
+     * @memberOf ApiSlide
+     * @typeofeditors ["CPE"]
+     * @param {boolean} value - Value of visibility of slide.
+     * @returns {boolean}
+     * */
+    ApiSlide.prototype.SetVisible = function(value){
+        if(this.Slide){
+            this.Slide.setShow(value);
+            return true;
+        }
+        return false;
+    };
+
     /**
      * Returns the slide width in English measure units.
      * @typeofeditors ["CPE"]
