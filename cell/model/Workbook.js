@@ -18805,7 +18805,7 @@
 						var nCurRowIndex = aSortRowIndex[i];
 						if(nRowIndex == nCurRowIndex) {
 							bVisitRowIndex = true;
-							if(oVisitData && prefixnDataCompare(oFirstData, oVisitData)) {
+							if(oVisitData && oFirstData.prefixDataCompare(oVisitData)) {
 								bCanPromote = false;
 								break;
 							}
@@ -18818,7 +18818,7 @@
 									if(null != data.getVal()) {
 										oVisitData = data;
 										if(bVisitRowIndex) {
-											if(prefixnDataCompare(oFirstData, oVisitData))
+											if(oFirstData.prefixDataCompare(oVisitData))
 												bCanPromote = false;
 											break;
 										}
@@ -18958,7 +18958,7 @@
 						let bDelimiter = rowData.getDelimiter();
 						if(null != nVal) {
 							bAddToSequence = true;
-							if(null != oPrevRowData && hasDifference(oPrevRowData, rowData)) {
+							if(null != oPrevRowData && rowData.compare(oPrevRowData)) {
 								this._addSequenceToRow(nRowIndex, aSortRowIndex, row, aCurSequence);
 								aCurSequence = [];
 								oPrevRowData = null;
@@ -19192,25 +19192,26 @@
 	cDataRow.prototype.setCurValue = function(nCurValue) {
 		this.nCurValue = nCurValue;
 	}
-	function hasDifference(oPrevRowData, oRowData) {
-		let sPrevTimePeriods =  oPrevRowData.getTimePeriods() ? oPrevRowData.getTimePeriods().join() : null;
-		let sTimePeriods = oRowData.getTimePeriods() ? oRowData.getTimePeriods().join() : null;
-		let bPrevDelimiter = oPrevRowData.getDelimiter();
-		let bDelimiter = oRowData.getDelimiter();
-		let sPrevPrefix = oPrevRowData.getPrefix();
-		let sPrefix = oRowData.getPrefix();
-		let bPrevDate = oPrevRowData.getIsDate();
-		let bDate = oRowData.getIsDate();
+	cDataRow.prototype.compare = function(oComparedRowData) {
+		let sComparedTimePeriods =  oComparedRowData.getTimePeriods() ? oComparedRowData.getTimePeriods().join() : null;
+		let sTimePeriods = this.getTimePeriods() ? this.getTimePeriods().join() : null;
+		let bComparedDelimiter = oComparedRowData.getDelimiter();
+		let bDelimiter = this.getDelimiter();
+		let sComparedPrefix = oComparedRowData.getPrefix();
+		let sPrefix = this.getPrefix();
+		let bComparedDate = oComparedRowData.getIsDate();
+		let bDate = this.getIsDate();
 
-		return bPrevDelimiter !== bDelimiter || sPrevPrefix !== sPrefix || bPrevDate !== bDate || sPrevTimePeriods !== sTimePeriods;
+		return bComparedDelimiter !== bDelimiter || sComparedPrefix !== sPrefix || bComparedDate !== bDate || sComparedTimePeriods !== sTimePeriods;
 	}
 
-	function prefixnDataCompare(oFirstRowData, oVisitRowData) {
-		let sFirstPrefix = oFirstRowData.getPrefix();
-		let sVisitedPrefix = oVisitRowData.getPrefix();
-		let bFirstDate = oFirstRowData.getIsDate();
-		let bVisitedDate = oVisitRowData.getIsDate();
-		return sFirstPrefix === sVisitedPrefix && bFirstDate === bVisitedDate;
+	cDataRow.prototype.prefixDataCompare = function(oComparedRowData) {
+		let sComparedPrefix = oComparedRowData.getPrefix();
+		let sPrefix = this.getPrefix();
+		let bComparedDate = oComparedRowData.getIsDate();
+		let bDate = this.getIsDate();
+
+		return sComparedPrefix === sPrefix && bComparedDate === bDate;
 	}
 
 
