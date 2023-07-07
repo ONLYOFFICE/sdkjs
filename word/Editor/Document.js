@@ -2036,6 +2036,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.ForceDrawFormHighlight    = null;  // null - редактор решает рисовать или нет в зависимости от других параметров
 	this.ConcatParagraphsOnRemove  = false; // Во время удаления объединять ли первый и последний параграфы
 	this.StartCheckTextFormFormat  = false; // Флаг, что в данный момент мы уже проверяем формат текстовых форм, чтобы не вызывать повторно
+	this.StartCheckCCPlaceholder   = false; //
 	this.CompileStyleOnLoad        = false; // Компилировать ли принудительно стили во время загрузки
 	this.SmartParagraphSelection   = true;  // Выделять ли автоматически знак параграфа, когда все содержимое параграфа выделено
 
@@ -12025,7 +12026,10 @@ CDocument.prototype.UpdateContentControlFocusState = function(oCC)
 		return;
 
 	if (this.FocusCC)
+	{
 		this.CheckTextFormFormatOnBlur(this.FocusCC);
+		this.CheckContentControlPlaceholderOnBlur(this.FocusCC);
+	}
 
 	if (this.FocusCC && this.Api)
 		this.Api.asc_OnBlurContentControl(this.FocusCC);
@@ -12079,6 +12083,41 @@ CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
 	this.History.ClearFormFillingInfo();
 
 	this.StartCheckTextFormFormat = false;
+};
+CDocument.prototype.CheckContentControlPlaceholderOnBlur = function(contentControl)
+{
+	if (!contentControl
+		|| !contentControl.IsUseInDocument()
+		|| contentControl.IsForm()
+		|| contentControl.IsPlaceHolder()
+		|| !contentControl.IsEmpty()
+		|| this.StartCheckCCPlaceholder)
+		return;
+	
+	this.StartCheckCCPlaceholder = true;
+	
+	let state = this.SaveDocumentState();
+	contentControl.SelectContentControl();
+	contentControl.SkipSpecialContentControlLock(true);
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode()))
+	{
+		contentControl.SkipSpecialContentControlLock(false);
+		this.LoadDocumentState(state);
+		this.StartCheckCCPlaceholder = false;
+		return;
+	}
+	contentControl.SkipSpecialContentControlLock(false);
+	contentControl.MoveCursorToContentControl(true);
+	this.StartAction(AscDFH.historydescription_Document_FillContentControlPlaceholderOnBlur, this.GetSelectionState());
+	
+	contentControl.ReplaceContentWithPlaceHolder();
+	this.LoadDocumentState(state);
+	this.Recalculate();
+	this.UpdateInterface();
+	this.FinalizeAction();
+	
+	this.StartCheckCCPlaceholder = false;
 };
 CDocument.prototype.private_UpdateFormInnerText = function(form, text)
 {
