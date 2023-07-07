@@ -4867,17 +4867,11 @@
 					return;
 				}
 
-				let _range;
-				if (_byCol) {
-					_range = new Asc.Range(_break.id, _break.min != null ? _break.min : 0, _break.id, _break.max != null ? _break.max : gc_nMaxCol0);
-				} else {
-					_range = new Asc.Range(_break.min != null ? _break.min : 0, _break.id, _break.max != null ? _break.max : gc_nMaxRow0, _break.id);
-				}
-
 				for (let i = 0; i < printRanges.length; i++) {
 					//if intersection with range between min/max -> draw line
-					if (printRanges[i].range.intersection(_range)) {
-						t._drawElements(t._drawLineBetweenRowCol, _byCol && _break.id, !_byCol && _break.id, color, printRanges[i].range, widthLine);
+					let printRange = printRanges[i].range;
+					if (_break.isBreak(_break.id, _byCol ? printRange.r1 : printRange.c1, _byCol ? printRange.r2 : printRange.c2)) {
+						t._drawElements(t._drawLineBetweenRowCol, _byCol && _break.id, !_byCol && _break.id, color, printRange, widthLine);
 					}
 				}
 			};
