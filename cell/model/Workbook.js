@@ -18958,7 +18958,7 @@
 						let bDelimiter = rowData.getDelimiter();
 						if(null != nVal) {
 							bAddToSequence = true;
-							if(null != oPrevRowData && rowData.compare(oPrevRowData)) {
+							if(null != oPrevRowData && !rowData.compare(oPrevRowData)) {
 								this._addSequenceToRow(nRowIndex, aSortRowIndex, row, aCurSequence);
 								aCurSequence = [];
 								oPrevRowData = null;
@@ -19202,7 +19202,7 @@
 		let bComparedDate = oComparedRowData.getIsDate();
 		let bDate = this.getIsDate();
 
-		return bComparedDelimiter !== bDelimiter || sComparedPrefix !== sPrefix || bComparedDate !== bDate || sComparedTimePeriods !== sTimePeriods;
+		return bComparedDelimiter === bDelimiter && sComparedPrefix === sPrefix && bComparedDate === bDate && sComparedTimePeriods === sTimePeriods;
 	}
 
 	cDataRow.prototype.prefixDataCompare = function(oComparedRowData) {
