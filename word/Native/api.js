@@ -3558,7 +3558,6 @@ function initSpellCheckApi() {
 function NativeOpenFile3(_params, documentInfo)
 {
     window.NATIVE_DOCUMENT_TYPE = window["native"]["GetEditorType"]();
-    window.NATIVE_DOCUMENT_TYPE = window["native"]["GetEditorType"]();
     if (window.NATIVE_DOCUMENT_TYPE == "presentation" || window.NATIVE_DOCUMENT_TYPE == "document")
     {
         sdkCheck = documentInfo["sdkCheck"];
@@ -4520,7 +4519,7 @@ window["AscCommon"].sendImgUrls = function(api, images, callback)
 
 window["native"]["offline_of"] = function(_params, documentInfo) {NativeOpenFile3(_params, documentInfo);};
 
-function GetNativePageMeta(pageIndex)
+window["GetNativePageMeta"] = function(pageIndex)
 {
     return window["API"].GetNativePageMeta(pageIndex);
 }

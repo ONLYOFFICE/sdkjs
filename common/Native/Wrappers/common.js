@@ -119,7 +119,7 @@ window["NativeCorrectImageUrlOnCopy"] = function (url)
 	return window["native"]["CorrectImageUrlOnCopy"](url);
 };
 
-function NativeCalculateFile()
+window.NativeCalculateFile = function()
 {
     Asc.editor.asc_nativeCalculateFile();
 }
