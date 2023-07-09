@@ -1832,10 +1832,12 @@ var editor;
 
 			//workbook
 			wbPart = doc.getPartByRelationshipType(openXml.Types.workbook.relationType);
-			var contentWorkbook = wbPart.getDocumentContent();
-			wbXml = new AscCommonExcel.CT_Workbook(wb);
-			reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
-			wbXml.fromXml(reader);
+			if (wbPart) {
+				var contentWorkbook = wbPart.getDocumentContent();
+				wbXml = new AscCommonExcel.CT_Workbook(wb);
+				reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
+				wbXml.fromXml(reader);
+			}
 
 
 			if (t.isOpenOOXInBrowser) {
@@ -1854,7 +1856,7 @@ var editor;
 				//TODO oMediaArray
 
 				//external reference
-				if (wbXml.externalReferences) {
+				if (wbXml && wbXml.externalReferences) {
 					wbXml.externalReferences.forEach(function (externalReference) {
 						if (null !== externalReference) {
 							var externalWorkbookPart = wbPart.getPartById(externalReference);
@@ -1883,7 +1885,7 @@ var editor;
 				}
 
 				//extLxt(slicercache inside)
-				if (wbXml.extLst) {
+				if (wbXml && wbXml.extLst) {
 					wbXml.extLst.forEach(function (ext) {
 						if (ext.slicerCachesIds) {
 							ext.slicerCachesIds.forEach(function (slicerCacheId) {
@@ -1906,7 +1908,7 @@ var editor;
 				}
 
 				//not ext slicer caches
-				if (wbXml.slicerCachesIds) {
+				if (wbXml && wbXml.slicerCachesIds) {
 					wbXml.slicerCachesIds.forEach(function (slicerCacheId) {
 						if (null !== slicerCacheId) {
 							var slicerCacheWorkbookPart = wbPart.getPartById(slicerCacheId);
@@ -2007,7 +2009,7 @@ var editor;
 			}
 
 			//pivotCaches
-			if (wbXml.pivotCaches) {
+			if (wbXml && wbXml.pivotCaches) {
 				wbXml.pivotCaches.forEach(function (wbPivotCacheXml) {
 					var pivotTableCacheDefinitionPart;
 					if (null !== wbPivotCacheXml.cacheId && null !== wbPivotCacheXml.id) {
@@ -2084,7 +2086,7 @@ var editor;
 
 			//sheets
 			var wsParts = [];
-			if (t.isOpenOOXInBrowser && wbXml.sheets) {
+			if (t.isOpenOOXInBrowser && wbXml && wbXml.sheets) {
 				//вначале беру все листы, потом запрашиваю контент каждого из них.
 				//связано с проблемой внтури парсера, на примере файла Read_Only_part_of_lists.xlsx
 				wbXml.sheets.forEach(function (wbSheetXml) {
@@ -2209,7 +2211,7 @@ var editor;
 						}
 					}
 				});
-			} else if(wbXml.sheets) {
+			} else if(wbXml && wbXml.sheets) {
 				wsParts = [];
 
 				//вначале беру все листы, потом запрашиваю контент каждого из них.
@@ -2245,7 +2247,7 @@ var editor;
 
 			if (t.isOpenOOXInBrowser) {
 				//defined names
-				if (wbXml.newDefinedNames) {
+				if (wbXml && wbXml.newDefinedNames) {
 					xmlParserContext.InitOpenManager.oReadResult.defNames = wbXml.newDefinedNames;
 					xmlParserContext.InitOpenManager.PostLoadPrepareDefNames(wb);
 				}
@@ -2378,12 +2380,14 @@ var editor;
 
 			//workbook
 			wbPart = doc.getPartByRelationshipType(openXml.Types.workbook.relationType);
-			var contentWorkbook = wbPart.getDocumentContent();
-			AscCommonExcel.executeInR1C1Mode(false, function () {
-				wbXml = new AscCommonExcel.CT_Workbook(wb);
-				var reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
-				wbXml.fromXml(reader, {"sheets" : 1});
-			});
+			if (wbPart) {
+				var contentWorkbook = wbPart.getDocumentContent();
+				AscCommonExcel.executeInR1C1Mode(false, function () {
+					wbXml = new AscCommonExcel.CT_Workbook(wb);
+					var reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
+					wbXml.fromXml(reader, {"sheets" : 1});
+				});
+			}
 
 			//sharedString
 			var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
@@ -2397,7 +2401,7 @@ var editor;
 			}
 
 			//sheets
-			if (wbXml.sheets) {
+			if (wbXml && wbXml.sheets) {
 				var wsParts = [];
 
 				wbXml.sheets.forEach(function (wbSheetXml) {
