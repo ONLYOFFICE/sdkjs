@@ -4230,7 +4230,7 @@ var DocumentPageSize = new function()
     };
 };
 
-window["asc_docs_api"].prototype["asc_nativeOpenFile2"] = function(base64File, version)
+Asc["asc_docs_api"].prototype["asc_nativeOpenFile2"] = function(base64File, version)
 {
     this.SpellCheckUrl = '';
 
@@ -4382,7 +4382,7 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
     }, 40);
 };
 
-window["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
+Asc["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
 {
     var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
     var memory = oBinaryFileWriter.memory;
@@ -4418,7 +4418,7 @@ Asc['asc_docs_api'].prototype.asc_setSpellCheck = function(isOn)
 
 // The helper function, called from the native application,
 // returns information about the document as a JSON string.
-window["asc_docs_api"].prototype["asc_nativeGetCoreProps"] = function() {
+Asc["asc_docs_api"].prototype["asc_nativeGetCoreProps"] = function() {
     var props = (_api) ? _api.asc_getCoreProps() : null,
         value;
 
@@ -4450,7 +4450,7 @@ window["asc_docs_api"].prototype["asc_nativeGetCoreProps"] = function() {
 }
 
 // The helper function, wrap of asc_SetContentControlDatePickerDate
-window["asc_docs_api"].prototype["asc_nativeSetContentControlDatePickerDate"] = function(textDate, sId) {
+Asc["asc_docs_api"].prototype["asc_nativeSetContentControlDatePickerDate"] = function(textDate, sId) {
     var oLogicDocument = this.WordControl.m_oLogicDocument;
     if (!oLogicDocument)
         return;
@@ -4465,7 +4465,7 @@ window["asc_docs_api"].prototype["asc_nativeSetContentControlDatePickerDate"] = 
     _api.asc_SetContentControlDatePickerPr(oPr, sId, true);
 }
 
-window["Asc"]["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wrapWithSpaces) {
+Asc["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wrapWithSpaces) {
     var settings = new AscCommon.CAddTextSettings();
 
     if (wrapWithSpaces) {
@@ -4475,7 +4475,7 @@ window["Asc"]["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wr
     _api.asc_AddText(text, settings);
 }
 
-window["Asc"]["asc_docs_api"].prototype["asc_nativeGetDocumentProtection"] = function() {
+Asc["asc_docs_api"].prototype["asc_nativeGetDocumentProtection"] = function() {
     var props = (_api) ? _api.asc_getDocumentProtection() : null;
     if (props) {
         return {

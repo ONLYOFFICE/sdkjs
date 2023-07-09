@@ -682,7 +682,7 @@ Asc['asc_docs_api'].prototype["GetNativePageMeta"] = function(pageIndex, bTh, bI
     this.WordControl.m_oDrawingDocument.RenderPage(pageIndex, bTh, bIsPlayMode);
 };
 
-window["asc_docs_api"].prototype["asc_nativeOpenFile2"] = function(base64File, version)
+Asc["asc_docs_api"].prototype["asc_nativeOpenFile2"] = function(base64File, version)
 {
     this.SpellCheckUrl = '';
 
