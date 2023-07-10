@@ -48,7 +48,13 @@ $(function ()
 	{
 		let cc = new AscWord.CInlineLevelSdt();
 		cc.ApplyCheckBoxPr(new AscWord.CSdtCheckBoxPr(), new AscWord.CTextPr());
-		//cc.UpdateCheck
+		return cc;
+	}
+	
+	function CreatePictureContentControl()
+	{
+		let cc = new AscWord.CInlineLevelSdt();
+		cc.ApplyPicturePr(true);
 		return cc;
 	}
 	
@@ -138,6 +144,32 @@ $(function ()
 		// Тестируем удаление чекбокса, через двойное нажатие на backspace/delete
 		TestCheckBoxDeletion(true);
 		TestCheckBoxDeletion(false);
+		
+		function TestPictureDeletion(isFromStart)
+		{
+			let key = isFromStart ? AscTest.Key.delete : AscTest.Key.backspace;
+			
+			AscTest.ClearDocument();
+			let p = AddParagraph("");
+			let cc = CreatePictureContentControl();
+			assert.strictEqual(cc.IsUseInDocument(), false, "Create content control and check if it is being used in the document");
+			
+			p.AddToContent(0, new AscWord.CRun());
+			p.AddToContent(1, cc);
+			p.AddToContent(2, new AscWord.CRun());
+			
+			AscTest.MoveCursorToParagraph(p, isFromStart);
+			AscTest.PressKey(key);
+			
+			assert.strictEqual(cc.IsSelectedOnlyThis(), true, "Check if content control is being selected");
+			
+			AscTest.PressKey(key);
+			assert.strictEqual(cc.IsUseInDocument(), false, "Check if content control is not being used in the document");
+			assert.strictEqual(AscTest.GetParagraphText(p), "", "Check text of the paragraph after removing content control");
+		}
+		
+		TestPictureDeletion(true);
+		TestPictureDeletion(false);
 	});
 
 });
