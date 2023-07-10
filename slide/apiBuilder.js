@@ -1401,7 +1401,11 @@
             nPos = this.Master.sldLayoutLst.length;
 
         if (oLayout && oLayout.GetClassType && oLayout.GetClassType() === "layout")
+        {
             this.Master.addToSldLayoutLstToPos(nPos, oLayout.Layout);
+            this.Master.presentation.Recalculate()
+        }
+
         else 
             return false;
 
