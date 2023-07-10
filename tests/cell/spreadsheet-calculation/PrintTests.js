@@ -45,7 +45,33 @@ $(function() {
 		AscCommon.baseEditorsApi.prototype._onEndLoadSdk.call(this);
 	};
 	Asc.spreadsheet_api.prototype.initGlobalObjects = function(wbModel) {
+		AscCommonExcel.g_oUndoRedoCell = new AscCommonExcel.UndoRedoCell(wbModel);
+		AscCommonExcel.g_oUndoRedoWorksheet = new AscCommonExcel.UndoRedoWoorksheet(wbModel);
+		AscCommonExcel.g_oUndoRedoWorkbook = new AscCommonExcel.UndoRedoWorkbook(wbModel);
+		AscCommonExcel.g_oUndoRedoCol = new AscCommonExcel.UndoRedoRowCol(wbModel, false);
+		AscCommonExcel.g_oUndoRedoRow = new AscCommonExcel.UndoRedoRowCol(wbModel, true);
+		AscCommonExcel.g_oUndoRedoComment = new AscCommonExcel.UndoRedoComment(wbModel);
+		AscCommonExcel.g_oUndoRedoAutoFilters = new AscCommonExcel.UndoRedoAutoFilters(wbModel);
+		AscCommonExcel.g_oUndoRedoSparklines = new AscCommonExcel.UndoRedoSparklines(wbModel);
 		AscCommonExcel.g_DefNameWorksheet = new AscCommonExcel.Worksheet(wbModel, -1);
+		AscCommonExcel.g_oUndoRedoSharedFormula = new AscCommonExcel.UndoRedoSharedFormula(wbModel);
+		AscCommonExcel.g_oUndoRedoLayout = new AscCommonExcel.UndoRedoRedoLayout(wbModel);
+		AscCommonExcel.g_oUndoRedoHeaderFooter = new AscCommonExcel.UndoRedoHeaderFooter(wbModel);
+		AscCommonExcel.g_oUndoRedoArrayFormula = new AscCommonExcel.UndoRedoArrayFormula(wbModel);
+		AscCommonExcel.g_oUndoRedoSortState = new AscCommonExcel.UndoRedoSortState(wbModel);
+		AscCommonExcel.g_oUndoRedoSlicer = new AscCommonExcel.UndoRedoSlicer(wbModel);
+		AscCommonExcel.g_oUndoRedoPivotTables = new AscCommonExcel.UndoRedoPivotTables(wbModel);
+		AscCommonExcel.g_oUndoRedoPivotFields = new AscCommonExcel.UndoRedoPivotFields(wbModel);
+		AscCommonExcel.g_oUndoRedoCF = new AscCommonExcel.UndoRedoCF(wbModel);
+		AscCommonExcel.g_oUndoRedoProtectedRange = new AscCommonExcel.UndoRedoProtectedRange(wbModel);
+		AscCommonExcel.g_oUndoRedoProtectedSheet = new AscCommonExcel.UndoRedoProtectedSheet(wbModel);
+		AscCommonExcel.g_oUndoRedoProtectedWorkbook = new AscCommonExcel.UndoRedoProtectedWorkbook(wbModel);
+		AscCommonExcel.g_oUndoRedoNamedSheetViews = new AscCommonExcel.UndoRedoNamedSheetViews(wbModel);
+		AscCommonExcel.g_oUndoRedoUserProtectedRange = new AscCommonExcel.UndoRedoUserProtectedRange(wbModel);
+
+		History.init(wbModel);
+	};
+	Asc.spreadsheet_api.prototype._onUpdateDocumentCanSave = function() {
 	};
 	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function() {
 	};
@@ -93,7 +119,7 @@ $(function() {
 		startTests();
 	};
 
-	AscCommon.CHistory.prototype.Create_NewPoint = function() {
+	AscCommon.CHistory.prototype.UndoRedoEnd = function () {
 	};
 
 	var api = new Asc.spreadsheet_api({
@@ -132,6 +158,12 @@ $(function() {
 	function updateView () {
 		wsView._cleanCache(new Asc.Range(0, 0, wsView.cols.length - 1, wsView.rows.length - 1));
 		wsView.changeWorksheet("update", {reinitRanges: true});
+	}
+
+	function undoAll() {
+		for (let i = 0, length = History.Points.length; i < length; i++) {
+			AscCommon.History.Undo();
+		}
 	}
 
 	let wb, ws, wsView;
@@ -350,6 +382,43 @@ $(function() {
 			};
 
 			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page4: ");
+
+			undoAll();
+			updateView();
+
+			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 1");
+			page = printPagesData.arrPages[0];
+			referenceObj = {
+				indexWorksheet: 0,
+				leftFieldInPx: 38.79527559055118,
+				pageClipRectHeight: 700.7800000000003,
+				pageClipRectLeft: 37.79527559055118,
+				pageClipRectTop: 37.79527559055118,
+				pageClipRectWidth: 796.2399999999999,
+				pageGridLines: false,
+				pageHeadings: false,
+				pageHeight: 210,
+				pageWidth: 297,
+				scale: 0.74,
+				startOffset: 0,
+				startOffsetPx: 0,
+				titleColRange: null,
+				titleHeight: 0,
+				titleRowRange: null,
+				titleWidth: 0,
+				topFieldInPx: 38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 18,
+					r1: 0,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings 1:");
 		});
 	}
 
@@ -358,6 +427,7 @@ $(function() {
 	function startTests() {
 		QUnit.start();
 		testPrintFileSettings();
+		//testPageBreaks();
 	}
 
 

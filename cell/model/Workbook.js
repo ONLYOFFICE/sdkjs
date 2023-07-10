@@ -11848,7 +11848,7 @@
 			}
 		};
 
-		if (rowColBreaks.containsBreak(from, min, max)) {
+		if (rowColBreaks && rowColBreaks.containsBreak(from, min, max)) {
 			if (to) {
 				//change
 				checkInit();
@@ -11859,6 +11859,7 @@
 			}
 		} else if (to) {
 			//add
+			checkInit();
 			rowColBreaks.addBreak(to, min, max, true, null, addToHistory)
 		}
 
