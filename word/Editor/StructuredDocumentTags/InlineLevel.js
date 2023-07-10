@@ -858,6 +858,14 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		
 		return true;
 	}
+	
+	if ((this.IsCheckBox() || this.IsDropDownList() || this.IsPicture())
+		&& this.IsSelectedOnlyThis()
+		&& !bOnAddText)
+	{
+		this.RemoveThisFromParent(true);
+		return true;
+	}
 
 	let result = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
 	
