@@ -4450,8 +4450,8 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		this.SearchEngine.Clear();
 		this.SearchEngine.ClearOnRecalc = false;
 	}
-	var _RecalcData = RecalcData ? RecalcData : History.Get_RecalcData(), key, recalcMap, bSync = true, i,
-		bRedrawAllSlides = false, aToRedrawSlides = [], redrawSlideIndexMap = {}, slideIndex;
+	var _RecalcData = RecalcData ? RecalcData : History.Get_RecalcData(), key, recalcMap, bSync = true, i, j,
+		bRedrawAllSlides = false, aToRedrawSlides = [], redrawSlideIndexMap = {}, slideIndex, recalcShapesList, oShape;
 	var bAttack = undefined;
 	this.updateSlideIndexes();
 	var b_check_layout = false;
@@ -4462,11 +4462,42 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		for (key in recalcMap.masters) {
 			if (recalcMap.masters.hasOwnProperty(key)) {
 				recalcMap.masters[key].recalculate();
+				recalcShapesList = recalcMap.masters[key].cSld.spTree;
+				for (j in recalcShapesList) {
+					oShape = recalcShapesList[j]
+					oShape.recalculate();
+					if (oShape.parent instanceof AscCommonSlide.SlideLayout) {
+						oShape.parent.ImageBase64 = "";
+						b_check_layout = true;
+						bAttack = true;
+						for (i = 0; i < this.Slides.length; ++i) {
+							if (this.Slides[i].Layout === oShape.parent) {
+								if (redrawSlideIndexMap[i] !== true) {
+									redrawSlideIndexMap[i] = true;
+									aToRedrawSlides.push(i);
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 		for (key in recalcMap.layouts) {
 			if (recalcMap.layouts.hasOwnProperty(key)) {
 				recalcMap.layouts[key].recalculate();
+				if (recalcMap.layouts[key] instanceof AscCommonSlide.SlideLayout) {
+					recalcMap.layouts[key].ImageBase64 = "";
+					b_check_layout = true;
+					bAttack = true;
+					for (i = 0; i < this.Slides.length; ++i) {
+						if (this.Slides[i].Layout === recalcMap.layouts[key]) {
+							if (redrawSlideIndexMap[i] !== true) {
+								redrawSlideIndexMap[i] = true;
+								aToRedrawSlides.push(i);
+							}
+						}
+					}
+				}
 			}
 		}
 		this.bNeedUpdateChartPreview = true;
@@ -4565,8 +4596,8 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 				}
 			}
 		}
-		History.Reset_RecalcIndex();
 	}
+	History.Reset_RecalcIndex();
 	this.RecalculateCurPos();
 	if (bSync) {
 		let bEndRecalc = false;
