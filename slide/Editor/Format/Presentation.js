@@ -3374,11 +3374,11 @@ CPresentation.prototype.collectHFProps = function (oSlide) {
 				oContent.SetApplyToAll(true);
 				sText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
 				oContent.SetApplyToAll(false);
-				oSlideHF.put_Footer(sText);
+				oSlideHF.put_Header(sText);
 			}
 		}
 		oSlideHF.put_ShowOnTitleSlide(this.showSpecialPlsOnTitleSld !== false);
-		return oSlideHF
+		return oSlideHF;
 	}
 	return null;
 };
