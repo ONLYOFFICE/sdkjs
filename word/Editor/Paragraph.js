@@ -8420,6 +8420,12 @@ Paragraph.prototype.CheckSmartParagraphSelection = function()
 	let startPos = this.Get_ParaContentPos(true, direction > 0, false);
 	let endPos   = this.Get_ParaContentPos(true, direction < 0, false);
 	
+	if (0 === startPos.Compare(endPos))
+		return;
+	
+	// TODO: Надо заменить на функции GetPrevVisibleElement/GetNextVisibleElement
+	//       потому что MathEquation, в которой ничего не заполнено, ничего и не возвращает
+	//       хотя сама по себе уже является визуальным объектом
 	if (this.GetPrevRunElement(startPos))
 		return;
 	
