@@ -454,6 +454,8 @@ function (window, undefined) {
 
 		this.externalReference = 170;
 
+		this.RowColBreaks = 175;
+
 		this.Create = function (nType) {
 			switch (nType) {
 				case this.ValueMultiTextElem:
@@ -837,16 +839,12 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.from:
 				return this.from;
-				break;
 			case this.Properties.to:
 				return this.to;
-				break;
 			case this.Properties.copyRange:
 				return this.copyRange;
-				break;
 			case this.Properties.sheetIdTo:
 				return this.sheetIdTo;
-				break;
 		}
 		return null;
 	};
@@ -886,13 +884,10 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.from:
 				return this.from;
-				break;
 			case this.Properties.to:
 				return this.to;
-				break;
 			case this.Properties.hyperlink:
 				return this.hyperlink;
-				break;
 		}
 		return null;
 	};
@@ -930,10 +925,8 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.index:
 				return this.index;
-				break;
 			case this.Properties.oNewVal:
 				return this.oNewVal;
-				break;
 		}
 		return null;
 	};
@@ -995,22 +988,16 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.width:
 				return this.width;
-				break;
 			case this.Properties.hd:
 				return this.hd;
-				break;
 			case this.Properties.CustomWidth:
 				return this.CustomWidth;
-				break;
 			case this.Properties.BestFit:
 				return this.BestFit;
-				break;
 			case this.Properties.OutlineLevel:
 				return this.OutlineLevel;
-				break;
 			case this.Properties.Collapsed:
 				return this.Collapsed;
-				break;
 		}
 		return null;
 	};
@@ -1074,19 +1061,14 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.h:
 				return this.h;
-				break;
 			case this.Properties.hd:
 				return this.hd;
-				break;
 			case this.Properties.CustomHeight:
 				return this.CustomHeight;
-				break;
 			case this.Properties.OutlineLevel:
 				return this.OutlineLevel;
-				break;
 			case this.Properties.Collapsed:
 				return this.Collapsed;
-				break;
 		}
 		return null;
 	};
@@ -1137,16 +1119,12 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.c1:
 				return this.c1;
-				break;
 			case this.Properties.r1:
 				return this.r1;
-				break;
 			case this.Properties.c2:
 				return this.c2;
-				break;
 			case this.Properties.r2:
 				return this.r2;
-				break;
 		}
 		return null;
 	};
@@ -1229,13 +1207,10 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.bbox:
 				return this.bbox;
-				break;
 			case this.Properties.places:
 				return this.places;
-				break;
 			case this.Properties.sortByRow:
 				return this.sortByRow;
-				break;
 		}
 		return null;
 	};
@@ -1288,13 +1263,10 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.pivot:
 				return this.pivot;
-				break;
 			case this.Properties.from:
 				return this.from;
-				break;
 			case this.Properties.to:
 				return this.to;
-				break;
 		}
 		return null;
 	};
@@ -1340,16 +1312,12 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.pivot:
 				return this.pivot;
-				break;
 			case this.Properties.index:
 				return this.index;
-				break;
 			case this.Properties.from:
 				return this.from;
-				break;
 			case this.Properties.to:
 				return this.to;
-				break;
 		}
 		return null;
 	};
@@ -1452,10 +1420,8 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.from:
 				return this.from;
-				break;
 			case this.Properties.to:
 				return this.to;
-				break;
 		}
 		return null;
 	};
@@ -1557,10 +1523,8 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.sheetId:
 				return this.sheetId;
-				break;
 			case this.Properties.sheet:
 				return this.sheet;
-				break;
 		}
 		return null;
 	};
@@ -1596,19 +1560,14 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.name:
 				return this.name;
-				break;
 			case this.Properties.ref:
 				return this.ref;
-				break;
 			case this.Properties.sheetId:
 				return this.sheetId;
-				break;
 			case this.Properties.type:
 				return this.type;
-				break;
 			case this.Properties.isXLNM:
 				return this.isXLNM;
-				break;
 		}
 		return null;
 	};
@@ -1857,7 +1816,7 @@ function (window, undefined) {
 						tableCustomFunc: []
 					};
 
-					var table = new AscCommonExcel.TablePart();
+					table = new AscCommonExcel.TablePart();
 					var res = oBinaryTableReader.bcr.Read1(dstLen, function (t, l) {
 						return oBinaryTableReader.ReadTable(t, l, table);
 					});
@@ -1928,10 +1887,8 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.range:
 				return new UndoRedoData_BBox(this.range);
-				break;
 			case this.Properties.formula:
 				return this.formula;
-				break;
 		}
 
 		return null;
@@ -1966,7 +1923,6 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.elem:
 				return this.elem;
-				break;
 		}
 		return null;
 	};
@@ -1998,16 +1954,12 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.from:
 				return this.from;
-				break;
 			case this.Properties.to:
 				return this.to;
-				break;
 			case this.Properties.bFilter:
 				return this.bFilter;
-				break;
 			case this.Properties.tableName:
 				return this.tableName;
-				break;
 		}
 		return null;
 	};
@@ -2047,13 +1999,10 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.name:
 				return this.name;
-				break;
 			case this.Properties.from:
 				return this.from;
-				break;
 			case this.Properties.to:
 				return this.to;
-				break;
 		}
 		return null;
 	};
@@ -2090,13 +2039,10 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.id:
 				return this.id;
-				break;
 			case this.Properties.from:
 				return this.from;
-				break;
 			case this.Properties.to:
 				return this.to;
-				break;
 		}
 		return null;
 	};
@@ -2144,13 +2090,10 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.id:
 				return this.id;
-				break;
 			case this.Properties.from:
 				return this.from;
-				break;
 			case this.Properties.to:
 				return this.to;
-				break;
 		}
 		return null;
 	};
@@ -2187,13 +2130,10 @@ function (window, undefined) {
 		switch (nType) {
 			case this.Properties.id:
 				return this.id;
-				break;
 			case this.Properties.from:
 				return this.from;
-				break;
 			case this.Properties.to:
 				return this.to;
-				break;
 		}
 		return null;
 	};
@@ -2297,6 +2237,64 @@ function (window, undefined) {
 				break;
 			case this.Properties.to:
 				this.to = value;
+				break;
+		}
+	};
+
+	function UndoRedoData_RowColBreaks(from, to, min, max, man, pt) {
+		this.from = from;
+		this.to = to;
+		this.min = min;
+		this.max = max;
+		this.man = man;
+		this.pt = pt;
+	}
+
+	UndoRedoData_RowColBreaks.prototype.Properties = {
+		from: 0, to: 1, min: 2, max: 3, man: 4, pt: 5
+	};
+	UndoRedoData_RowColBreaks.prototype.getType = function () {
+		return UndoRedoDataTypes.RowColBreaks;
+	};
+	UndoRedoData_RowColBreaks.prototype.getProperties = function () {
+		return this.Properties;
+	};
+	UndoRedoData_RowColBreaks.prototype.getProperty = function (nType) {
+		switch (nType) {
+			case this.Properties.from:
+				return this.from;
+			case this.Properties.to:
+				return this.to;
+			case this.Properties.min:
+				return this.min;
+			case this.Properties.max:
+				return this.max;
+			case this.Properties.man:
+				return this.man;
+			case this.Properties.pt:
+				return this.pt;
+		}
+		return null;
+	};
+	UndoRedoData_RowColBreaks.prototype.setProperty = function (nType, value) {
+		switch (nType) {
+			case this.Properties.from:
+				this.from = value;
+				break;
+			case this.Properties.to:
+				this.to = value;
+				break;
+			case this.Properties.min:
+				this.min = value;
+				break;
+			case this.Properties.max:
+				this.min = value;
+				break;
+			case this.Properties.man:
+				this.min = value;
+				break;
+			case this.Properties.pt:
+				this.pt = value;
 				break;
 		}
 	};
@@ -3375,6 +3373,12 @@ function (window, undefined) {
 			//except - apply changes in other user
 			if (window["NATIVE_EDITOR_ENJINE"] || !wb.oApi.isDocumentLoadComplete || !wb.bCollaborativeChanges) {
 				ws.setSheetViewType(bUndo ? Data.from : Data.to);
+			}
+		} else if (historyitem_Worksheet_ChangeRowColBreaks === Type) {
+			if (bUndo) {
+				ws._changeRowColBreaks(Data.to, Data.from);
+			} else {
+				ws._changeRowColBreaks(Data.to, Data.from);
 			}
 		}
 	};
@@ -4947,6 +4951,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].UndoRedoData_CF = UndoRedoData_CF;
 	window['AscCommonExcel'].UndoRedoData_ProtectedRange = UndoRedoData_ProtectedRange;
 	window['AscCommonExcel'].UndoRedoData_UserProtectedRange = UndoRedoData_UserProtectedRange;
+	window['AscCommonExcel'].UndoRedoData_RowColBreaks = UndoRedoData_RowColBreaks;
 	window['AscCommonExcel'].UndoRedoWorkbook = UndoRedoWorkbook;
 	window['AscCommonExcel'].UndoRedoCell = UndoRedoCell;
 	window['AscCommonExcel'].UndoRedoWoorksheet = UndoRedoWoorksheet;

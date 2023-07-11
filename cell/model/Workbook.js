@@ -11848,19 +11848,27 @@
 			}
 		};
 
+		let isChanged = false;
 		if (rowColBreaks && rowColBreaks.containsBreak(from, min, max)) {
 			if (to) {
 				//change
 				checkInit();
-				rowColBreaks.changeBreak(from, to, min, max, true, null, addToHistory);
+				isChanged = rowColBreaks.changeBreak(from, to, min, max, true);
 			} else {
 				//delete
-				rowColBreaks && rowColBreaks.removeBreak(from, min, max, addToHistory);
+				isChanged = rowColBreaks && rowColBreaks.removeBreak(from, min, max);
 			}
 		} else if (to) {
 			//add
 			checkInit();
-			rowColBreaks.addBreak(to, min, max, true, null, addToHistory)
+			isChanged = rowColBreaks.addBreak(to, min, max, true, null)
+		}
+
+		if (isChanged && addToHistory) {
+			let fromData = new AscCommonExcel.UndoRedoData_RowColBreaks(from, to, min, max, man, pt);
+			let toData = new AscCommonExcel.UndoRedoData_RowColBreaks(from, to, min, max, man, pt);
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeRowColBreaks, this.getId(),
+				null, new AscCommonExcel.UndoRedoData_FromTo(fromData, toData));
 		}
 
 		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());

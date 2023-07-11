@@ -15588,24 +15588,18 @@ QueryTableField.prototype.clone = function() {
 		});
 		return res;
 	};
-	CRowColBreaks.prototype.changeBreak = function (idFrom, idTo, min, max, man, pt, addToHistory) {
+
+	CRowColBreaks.prototype.changeBreak = function (idFrom, idTo, min, max, man, pt) {
 		let breakElem = this.getBreak(idFrom);
 		if (breakElem) {
-			let isChanged = breakElem.set(idTo, min, max, man, pt);
-			if (isChanged && addToHistory) {
-
-			}
+			return breakElem.set(idTo, min, max, man, pt);
 		}
 	};
-	CRowColBreaks.prototype.addBreak = function (id, min, max, man, pt, addToHistory) {
+
+	CRowColBreaks.prototype.addBreak = function (id, min, max, man, pt) {
 		let newBreak = new CBreak();
 		newBreak.set(id, min, max, man, pt);
-
-		this._addBreak(newBreak);
-
-		if (addToHistory) {
-
-		}
+		return this._addBreak(newBreak);
 	};
 
 	CRowColBreaks.prototype._addBreak = function (newBreak) {
@@ -15618,18 +15612,15 @@ QueryTableField.prototype.clone = function() {
 		}
 		this.manualBreakCount++;
 		this.count++;
+		return true;
 	};
 
-	CRowColBreaks.prototype.removeBreak = function (id, min, max, addToHistory) {
+	CRowColBreaks.prototype.removeBreak = function (id, min, max) {
 		let isDeleted = false;
 		for (let i = 0; i < this.breaks.length; i++) {
 			if (this.breaks[i].isBreak(id, min, max)) {
 				this.breaks.splice(i, 1);
 				isDeleted = true;
-
-				if (addToHistory) {
-
-				}
 				break;
 			}
 		}
@@ -15726,7 +15717,7 @@ QueryTableField.prototype.clone = function() {
 			this.setPt(pt);
 			isChanged = true;
 		}
-		return isChanged;
+		return isChanged ? this : null;
 	};
 
 
