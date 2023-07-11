@@ -1,5 +1,11 @@
-name: check
-on: [push]
+name: common_check
+on:
+  push:
+    branches-ignore:
+      - develop
+  pull_request:
+    branches-ignore:
+      - develop
 jobs:
   code-style:
     runs-on: ubuntu-latest
