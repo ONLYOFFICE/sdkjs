@@ -417,6 +417,7 @@ $(function() {
 			};
 
 			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings 1:");
+			AscCommon.History.Clear();
 		});
 	}
 
@@ -810,7 +811,7 @@ $(function() {
 
 			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
 			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 1");
-			/*page = printPagesData.arrPages[0];
+			page = printPagesData.arrPages[0];
 			referenceObj = {
 				indexWorksheet: 0,
 				leftFieldInPx: 38.79527559055118,
@@ -840,7 +841,7 @@ $(function() {
 				}
 			};
 
-			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings after undo:");*/
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings after undo:");
 		});
 	}
 
