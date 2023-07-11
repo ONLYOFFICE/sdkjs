@@ -2620,7 +2620,7 @@
     CTiming.prototype.getEffectsForDemo = function () {
         var aEffectsForDemo, aCurEffects;
         var aSelectedEffects = this.getSelectedEffects();
-        if (aSelectedEffects.length > 0) {
+        if (aSelectedEffects.length > 0 && !this.isAllSlideAnimations) {
             aCurEffects = aSelectedEffects;
         } else {
             aCurEffects = this.getAllAnimEffects();

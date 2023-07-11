@@ -11407,12 +11407,10 @@ CPresentation.prototype.StartAnimationPreview = function (isAllSlideAnimations) 
 		return false;
 	}
 	var oTiming = this.GetCurTiming();
-	if (isAllSlideAnimations) {
-		oTiming.resetSelection();
-	}
 	if (!oTiming) {
 		return false;
 	}
+	oTiming.isAllSlideAnimations = isAllSlideAnimations
 	var oPlayer = oTiming.createDemoPlayer();
 	if (!oPlayer) {
 		return false;
