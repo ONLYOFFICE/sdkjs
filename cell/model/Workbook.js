@@ -11815,6 +11815,7 @@
 	Worksheet.prototype.changeRowColBreaks = function (from, to, range, byCol, addToHistory) {
 		let min = null;
 		let max = byCol ? gc_nMaxCol0 : gc_nMaxRow0;
+		let man = true, pt = null;
 
 		let printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
 		if (printArea && range) {
@@ -11827,10 +11828,10 @@
 			}
 		}
 
-		this._changeRowColBreaks(from, to, min, max, byCol, addToHistory);
+		this._changeRowColBreaks(from, to, min, max, man, pt, byCol, addToHistory);
 	};
 
-	Worksheet.prototype._changeRowColBreaks = function (from, to, min, max, byCol, addToHistory) {
+	Worksheet.prototype._changeRowColBreaks = function (from, to, min, max, man, pt, byCol, addToHistory) {
 		let t = this;
 		let rowColBreaks = !byCol ? t.rowBreaks : t.colBreaks;
 
@@ -11849,7 +11850,8 @@
 		};
 
 		let isChanged = false;
-		if (rowColBreaks && rowColBreaks.containsBreak(from, min, max)) {
+		let oFromBreak = rowColBreaks && rowColBreaks.containsBreak(from, min, max);
+		if (oFromBreak) {
 			if (to) {
 				//change
 				checkInit();
@@ -11865,8 +11867,9 @@
 		}
 
 		if (isChanged && addToHistory) {
-			let fromData = new AscCommonExcel.UndoRedoData_RowColBreaks(from, to, min, max, man, pt);
-			let toData = new AscCommonExcel.UndoRedoData_RowColBreaks(from, to, min, max, man, pt);
+			let fromData = oFromBreak && new AscCommonExcel.UndoRedoData_RowColBreaks(from, oFromBreak.min, oFromBreak.max, oFromBreak.man, oFromBreak.pt, byCol);
+			let toData = new AscCommonExcel.UndoRedoData_RowColBreaks(to, min, max, man, pt, byCol);
+
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeRowColBreaks, this.getId(),
 				null, new AscCommonExcel.UndoRedoData_FromTo(fromData, toData));
 		}

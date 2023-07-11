@@ -2241,17 +2241,17 @@ function (window, undefined) {
 		}
 	};
 
-	function UndoRedoData_RowColBreaks(from, to, min, max, man, pt) {
-		this.from = from;
-		this.to = to;
+	function UndoRedoData_RowColBreaks(id, min, max, man, pt, byCol) {
+		this.id = id;
 		this.min = min;
 		this.max = max;
 		this.man = man;
 		this.pt = pt;
+		this.byCol = byCol;
 	}
 
 	UndoRedoData_RowColBreaks.prototype.Properties = {
-		from: 0, to: 1, min: 2, max: 3, man: 4, pt: 5
+		id: 0, min: 1, max: 2, man: 3, pt: 4, byCol: 5
 	};
 	UndoRedoData_RowColBreaks.prototype.getType = function () {
 		return UndoRedoDataTypes.RowColBreaks;
@@ -2261,10 +2261,8 @@ function (window, undefined) {
 	};
 	UndoRedoData_RowColBreaks.prototype.getProperty = function (nType) {
 		switch (nType) {
-			case this.Properties.from:
-				return this.from;
-			case this.Properties.to:
-				return this.to;
+			case this.Properties.id:
+				return this.id;
 			case this.Properties.min:
 				return this.min;
 			case this.Properties.max:
@@ -2273,16 +2271,15 @@ function (window, undefined) {
 				return this.man;
 			case this.Properties.pt:
 				return this.pt;
+			case this.Properties.byCol:
+				return this.byCol;
 		}
 		return null;
 	};
 	UndoRedoData_RowColBreaks.prototype.setProperty = function (nType, value) {
 		switch (nType) {
-			case this.Properties.from:
-				this.from = value;
-				break;
-			case this.Properties.to:
-				this.to = value;
+			case this.Properties.id:
+				this.id = value;
 				break;
 			case this.Properties.min:
 				this.min = value;
@@ -2295,6 +2292,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.pt:
 				this.pt = value;
+				break;
+			case this.Properties.byCol:
+				this.byCol = value;
 				break;
 		}
 	};
@@ -3374,12 +3374,26 @@ function (window, undefined) {
 			if (window["NATIVE_EDITOR_ENJINE"] || !wb.oApi.isDocumentLoadComplete || !wb.bCollaborativeChanges) {
 				ws.setSheetViewType(bUndo ? Data.from : Data.to);
 			}
-		} else if (historyitem_Worksheet_ChangeRowColBreaks === Type) {
+		} else if (AscCH.historyitem_Worksheet_ChangeRowColBreaks === Type) {
+			let from, to, min, max, man, pt, byCol;
 			if (bUndo) {
-				ws._changeRowColBreaks(Data.to, Data.from);
+				from = Data.to && Data.to.id;
+				to = Data.from && Data.from.id;
+				min = Data.from && Data.from.min;
+				max = Data.from && Data.from.max;
+				man = Data.from && Data.from.man;
+				pt = Data.from && Data.from.pt;
+				byCol = Data.from && Data.from.byCol;
 			} else {
-				ws._changeRowColBreaks(Data.to, Data.from);
+				from = Data.from && Data.from.id;
+				to = Data.to && Data.to.id;
+				min = Data.to && Data.to.min;
+				max = Data.to && Data.to.max;
+				man = Data.to && Data.to.man;
+				pt = Data.to && Data.to.pt;
+				byCol = Data.to && Data.to.byCol;
 			}
+			ws._changeRowColBreaks(from, to, min, max, man, pt, byCol);
 		}
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {
