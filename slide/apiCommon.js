@@ -857,18 +857,25 @@ CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = functio
 
         oContext.fillStyle = "#FFFFFF";
         oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-        oContext.lineWidth = Math.round(rPR);
+        const rPR = AscCommon.AscBrowser.retinaPixelRatio;
+        const nLineWidth = Math.round(rPR);
+        oContext.lineWidth = nLineWidth;
         oContext.fillStyle = "#000000";
         if(Array.isArray(aSpTree)) {
             for(i = 0; i < aSpTree.length; ++i) {
                 oSp = aSpTree[i];
                 if(oSp.isPlaceholder()) {
                     oSp.recalculate();
-                    l = ((oSp.x / dWidth * oCanvas.width) >> 0) + Math.round(rPR);
-                    t = ((oSp.y / dHeight * oCanvas.height) >> 0) + Math.round(rPR);
+                    l = ((oSp.x / dWidth * oCanvas.width) >> 0) + nLineWidth;
+                    t = ((oSp.y / dHeight * oCanvas.height) >> 0) + nLineWidth;
                     r = (((oSp.x + oSp.extX)/ dWidth * oCanvas.width) >> 0);
                     b = (((oSp.y + oSp.extY)/ dHeight * oCanvas.height) >> 0);
+                    if(r <= oCanvas.width && r + nLineWidth > oCanvas.width) {
+                        r = oCanvas.width - nLineWidth;
+                    }
+                    if(b <= oCanvas.height && b + nLineWidth > oCanvas.height) {
+                        b = oCanvas.height - nLineWidth;
+                    }
                     nPhType = oSp.getPhType();
                     oContext.beginPath();
                     if(nPhType === AscFormat.phType_dt ||
