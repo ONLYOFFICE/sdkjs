@@ -8791,7 +8791,7 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 	this.Document_UpdateRulersState();
 	this.Document_UpdateCanAddHyperlinkState();
 
-	this.Api.sendEvent("asc_onPresentationSize", this.GetWidthEMU(), this.GetHeightEMU(), this.GetSizeType());
+	this.Api.sendEvent("asc_onPresentationSize", this.GetWidthEMU(), this.GetHeightEMU(), this.GetSizeType(), this.getFirstSlideNumber());
 	this.Api.sendEvent("asc_canIncreaseIndent", this.Can_IncreaseParagraphLevel(true));
 	this.Api.sendEvent("asc_canDecreaseIndent", this.Can_IncreaseParagraphLevel(false));
 	this.Api.sendEvent("asc_onCanGroup", this.canGroup());
