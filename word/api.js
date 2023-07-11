@@ -8015,6 +8015,7 @@ background-repeat: no-repeat;\
 		this.LoadedObject = null;
 
 		this.WordControl.InitControl();
+		
 
 		if (!this.isViewMode)
 		{
