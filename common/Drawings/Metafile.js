@@ -2455,12 +2455,23 @@
 			var nFlag = 0;
 
 			var oFormPr = oForm.GetFormPr();
-
-			var sFormKey = oFormPr.GetKey();
-			if (sFormKey)
+			
+			let formKey = null;
+			if (!oForm.IsMainForm())
+			{
+				let mainForm = oForm.GetMainForm();
+				let subIndex = oForm.GetSubFormIndex();
+				formKey = mainForm.GetFormKey() + "_" + subIndex;
+			}
+			else
+			{
+				formKey = oFormPr.GetKey();
+			}
+			
+			if (formKey)
 			{
 				nFlag |= 1;
-				this.Memory.WriteString(sFormKey);
+				this.Memory.WriteString(formKey);
 			}
 
 			var sHelpText = oFormPr.GetHelpText();
@@ -3256,6 +3267,61 @@
 			this._m(_x, y);
 			this._l(_x, b);
 
+			this.ds();
+		},
+		
+		DrawPolygon : function(oPath, lineWidth, shift)
+		{
+			this.p_width(lineWidth);
+			this._s();
+			
+			var Points = oPath.Points;
+			var nCount = Points.length;
+			// берем предпоследнюю точку, т.к. последняя совпадает с первой
+			var PrevX = Points[nCount - 2].X, PrevY = Points[nCount - 2].Y;
+			var _x    = Points[nCount - 2].X,    _y = Points[nCount - 2].Y;
+			var StartX, StartY;
+			
+			for (var nIndex = 0; nIndex < nCount; nIndex++)
+			{
+				if(PrevX > Points[nIndex].X)
+				{
+					_y = Points[nIndex].Y - shift;
+				}
+				else if(PrevX < Points[nIndex].X)
+				{
+					_y  = Points[nIndex].Y + shift;
+				}
+				
+				if(PrevY < Points[nIndex].Y)
+				{
+					_x = Points[nIndex].X - shift;
+				}
+				else if(PrevY > Points[nIndex].Y)
+				{
+					_x = Points[nIndex].X + shift;
+				}
+				
+				PrevX = Points[nIndex].X;
+				PrevY = Points[nIndex].Y;
+				
+				if(nIndex > 0)
+				{
+					if (1 == nIndex)
+					{
+						StartX = _x;
+						StartY = _y;
+						this._m(_x, _y);
+					}
+					else
+					{
+						this._l(_x, _y);
+					}
+				}
+			}
+			
+			this._l(StartX, StartY);
+			this._z();
 			this.ds();
 		},
 

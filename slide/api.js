@@ -2186,13 +2186,17 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.isSlideShow = function() {
+		return !!(this.WordControl && this.WordControl.DemonstrationManager && this.WordControl.DemonstrationManager.Mode);
+	};
+
 	asc_docs_api.prototype.asc_PasteData = function(_format, data1, data2, text_data)
 	{
 	    if (!this.canEdit())
     	    return;
 
 		//slide show
-		if(this.WordControl && this.WordControl.DemonstrationManager && this.WordControl.DemonstrationManager.Mode) {
+		if(this.isSlideShow()) {
 			return;
 		}
 
@@ -4443,7 +4447,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_StartAnimationPreview = function()
 	{
 		this.asc_StopAnimationPreview();
-		if(this.WordControl.m_oLogicDocument.StartAnimationPreview()) 
+		if(this.WordControl.m_oLogicDocument.StartAnimationPreview())
 		{
 			this.sendEvent("asc_onAnimPreviewStarted");
 		}
@@ -7762,7 +7766,7 @@ background-repeat: no-repeat;\
 			this.checkChangesSize();
 		}
 	};
-	asc_docs_api.prototype.SlideTransitionPlay   = function()
+	asc_docs_api.prototype.SlideTransitionPlay   = function(endCallback)
 	{
 		var _count = this.WordControl.m_oDrawingDocument.SlidesCount;
 		var _cur   = this.WordControl.m_oDrawingDocument.SlideCurrent;
@@ -7775,7 +7779,8 @@ background-repeat: no-repeat;\
 		_tr.Param    = _transition.TransitionOption;
 		_tr.Duration = _transition.TransitionDuration;
 
-		_tr.Start(true);
+		_tr.Start(true, endCallback);
+		return _tr;
 	};
 
 	asc_docs_api.prototype.asc_HideSlides   = function(isHide)

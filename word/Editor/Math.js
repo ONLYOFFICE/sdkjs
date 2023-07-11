@@ -2778,6 +2778,10 @@ ParaMath.prototype.Get_Align = function()
 
 	return Jc;
 };
+ParaMath.prototype.GetAlign = function()
+{
+	return this.Get_Align();
+};
 ParaMath.prototype.Set_Align = function(Align)
 {
 	if (this.Jc !== Align)

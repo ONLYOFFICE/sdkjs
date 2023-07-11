@@ -11276,9 +11276,9 @@
         oDataRefs.setRef(this);
         return oDataRefs;
     };
-    CChartRefBase.prototype.handleOnMoveRange = function(oRangeFrom, oRangeTo) {
+    CChartRefBase.prototype.handleOnMoveRange = function(oRangeFrom, oRangeTo, isResize) {
         var oDataRefs = this.getDataRefs();
-        oDataRefs.move(oRangeFrom, oRangeTo);
+        oDataRefs.move(oRangeFrom, oRangeTo, isResize);
         var sFormula = oDataRefs.getFormula();
         if(typeof sFormula === "string" && sFormula.length > 0) {
             this.setF(sFormula);
@@ -16717,6 +16717,17 @@
         }
         return false;
     };
+    CDataRefs.prototype.hasIntersectionForInsertColRow = function(oRange, isInsertCol) {
+        if(this.aRefs.length === 0) {
+            return false;
+        }
+        for(var nRange = 0; nRange < this.aRefs.length; ++nRange) {
+            if(!this.aRefs[nRange].isIntersectForInsertColRow(oRange, isInsertCol)) {
+                return false;
+            }
+        }
+        return true;
+    };
     CDataRefs.prototype.isInside = function(oRange) {
         if(this.aRefs.length === 0) {
             return false;
@@ -16746,16 +16757,23 @@
             }
         }
     };
-    CDataRefs.prototype.move = function(oRangeFrom, oRangeTo) {
+    CDataRefs.prototype.move = function(oRangeFrom, oRangeTo, isResize) {
         var nDiffR = oRangeTo.bbox.r1 - oRangeFrom.bbox.r1;
         var nDiffC = oRangeTo.bbox.c1 - oRangeFrom.bbox.c1;
+        var nDIffCRange = oRangeTo.bbox.c2 - oRangeTo.bbox.c1;
+        var nDIffRRange = oRangeTo.bbox.r2 - oRangeTo.bbox.r1;
         for(var nRef = 0; nRef < this.aRefs.length; ++nRef) {
             var oRef = this.aRefs[nRef];
             if(oRef.worksheet === oRangeFrom.worksheet) {
-                oRef.bbox.r1 += nDiffR;
                 oRef.bbox.r2 += nDiffR;
-                oRef.bbox.c1 += nDiffC;
                 oRef.bbox.c2 += nDiffC;
+                if (isResize) {
+                    oRef.bbox.r1 += nDiffR - nDIffRRange;
+                    oRef.bbox.c1 += nDiffC - nDIffCRange;
+                } else {
+                    oRef.bbox.r1 += nDiffR;
+                    oRef.bbox.c1 += nDiffC;
+                }
             }
         }
     };
@@ -16772,6 +16790,13 @@
     CDataRefs.prototype.collectRefsInsideRange = function(oRange, aRefs) {
         if(this.ref) {
             if(this.isInside(oRange)) {
+                aRefs.push(this.ref);
+            }
+        }
+    };
+    CDataRefs.prototype.collectRefsIntersectsForInsertColRow = function(oRange, aRefs, isInsertCol) {
+        if(this.ref) {
+            if(this.hasIntersectionForInsertColRow(oRange, isInsertCol)) {
                 aRefs.push(this.ref);
             }
         }
@@ -16978,6 +17003,9 @@
         this.tx.collectIntersectionRefs(aRanges, aCollectedRefs);
         this.errBarsMinus.collectIntersectionRefs(aRanges, aCollectedRefs);
         this.errBarsPlus.collectIntersectionRefs(aRanges, aCollectedRefs);
+    };
+    CSeriesDataRefs.prototype.collectIntersectionRefsForInsertColRow = function(oRange, aCollectedRefs, isInsertCol) {
+        this.val.collectRefsIntersectsForInsertColRow(oRange, aCollectedRefs, isInsertCol);
     };
     CSeriesDataRefs.prototype.getAscSeries = function() {
         var oSeria = new AscFormat.asc_CChartSeria();
@@ -17791,6 +17819,11 @@
         }
         for(var nLblRef = 0; nLblRef < this.labelsRefs.length; ++nLblRef) {
             this.labelsRefs[nLblRef].collectRefsInsideRange(oRange, aRefs);
+        }
+    };
+    CChartDataRefs.prototype.collectRefsInsideRangeForInsertColRow = function(oRange, aRefs, isInsertCol) {
+        for(var nSeries = 0; nSeries < this.seriesRefs.length; ++nSeries) {
+            this.seriesRefs[nSeries].collectIntersectionRefsForInsertColRow(oRange, aRefs, isInsertCol);
         }
     };
     CChartDataRefs.prototype.collectIntersectionRefs = function(aRanges, aCollectedRefs) {

@@ -133,7 +133,7 @@
 		{
 			if (!AscCommon.hashEngine) {
 				/** @suppress {checkVars} */
-				AscCommon.hashEngine = CreateNativeHash();
+				AscCommon.hashEngine = CreateEmbedObject("CHashEmbed");
 			}
 
 			let retArray = [];

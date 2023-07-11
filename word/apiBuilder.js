@@ -353,8 +353,6 @@
 					arrSelectedContent.push(new ApiParagraph(oTempElm));
 				else if (oTempElm instanceof ParaRun)
 					arrSelectedContent.push(new ApiRun(oTempElm));
-				else if (oTempElm instanceof ParaRun)
-					arrSelectedContent.push(new ApiRun(oTempElm));
 			}
 
 			for (nElm = 0; nElm < arrSelectedContent.length; nElm ++)
@@ -555,7 +553,7 @@
 					break;
 			}
 
-			if (nHeadingLvl)
+			if (nHeadingLvl !== -1)
 			{
 				// понижаем уровень заголовка, если указано в конфиге (h1 -> h2)
 				if (oCMarkdownConverter.Config.demoteHeadings && nHeadingLvl === 0)
@@ -655,15 +653,14 @@
 			return sOutputText;
 		}
 
-		if (!oPara.Next && oPara.GetText().trim() === '')
+		if (!oPara.Next && oPara.Paragraph.IsEmpty())
 		{
 			if (HaveSepLine(oPara.Paragraph) && this.Config.convertType === "html")
 				return "<hr>";
 			return '';
 		}
 			
-		if (oPara.Paragraph.IsTableCellContent())
-			this.isTableCellContent = true;
+		this.isTableCellContent = oPara.Paragraph.IsTableCellContent();
 
 		var oDocument  = private_GetLogicDocument();
 		var sNumId     = null;
@@ -736,7 +733,8 @@
 		if (HaveSepLine(oPara.Paragraph) && this.Config.convertType === "html")
 			sOutputText += "\n<hr>"
 
-		return sOutputText + '\n';
+		// Add \n\n for correct parsing
+		return sOutputText + '\n\n';
 	};
 	CMarkdownConverter.prototype.HandleHyperlink = function(oHyperlink, sType)
 	{
@@ -1158,7 +1156,8 @@
 			sOutputText += this.HandleChildElement(oTable.GetRow(nRow), this.Config.convertType);
 		}
 
-		sOutputText += '</table>\n';
+		// Add \n\n for correct parsing
+		sOutputText += '</table>\n\n';
 		return sOutputText;
 	};
 	CMarkdownConverter.prototype.HandleTableRow = function(oTableRow)
@@ -1175,7 +1174,10 @@
 	};
 	CMarkdownConverter.prototype.HandleTableCell = function(oTableCell)
 	{
-		var sOutputText = '   <td>\n';
+		// Add 'th' for the firs row
+		let symbol = (oTableCell.GetRowIndex() === 0) ? 'td' : 'td';
+		// Add \n\n for correct parsing
+		var sOutputText = '   <' + symbol + '>\n\n';
 		var apiCellContent = oTableCell.GetContent();
 
 		for (var nElm = 0, nElmsCount = apiCellContent.GetElementsCount(); nElm < nElmsCount; nElm++)
@@ -1183,7 +1185,7 @@
 			sOutputText += this.HandleChildElement(apiCellContent.GetElement(nElm), this.Config.convertType);
 		}
 
-		sOutputText += '</td>\n';
+		sOutputText += '</' + symbol + '>\n';
 		return sOutputText;
 	};
 	/**
@@ -5472,7 +5474,7 @@
 		else if ("table" === sStyleType)
 			return new ApiStyle(oStyles.Get(oStyles.Get_Default_Table()));
 		else if ("run" === sStyleType)
-			return new ApiStyle(oStyles.Get(oStyles.Get_Default_Character()));
+			return new ApiStyle(oStyles.Get(oStyles.GetDefaultCharacter()));
 		else if ("numbering" === sStyleType)
 			return new ApiStyle(oStyles.Get(oStyles.Get_Default_Numbering()));
 
@@ -18844,7 +18846,6 @@
 	Api.prototype["MailMerge"]                       = Api.prototype.MailMerge;
 	Api.prototype["ReplaceTextSmart"]				 = Api.prototype.ReplaceTextSmart;
 	Api.prototype["CoAuthoringChatSendMessage"]		 = Api.prototype.CoAuthoringChatSendMessage;
-	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["CreateTextPr"]		             = Api.prototype.CreateTextPr;
 	Api.prototype["CreateWordArt"]		             = Api.prototype.CreateWordArt;
 	Api.prototype["CreateOleObject"]		         = Api.prototype.CreateOleObject;

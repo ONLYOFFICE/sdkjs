@@ -182,6 +182,7 @@
 			"word/Editor/Paragraph/ComplexFields/FormText.js",
 			"word/Editor/Paragraph/ComplexFields/MergeField.js",
 			"word/Editor/Paragraph/ComplexField.js",
+			"word/Editor/Paragraph/DisplayStyleCalculator.js",
 			"word/Editor/Paragraph/FormulaParser.js",
 			"word/Editor/Paragraph/ParaRevisionMove.js",
 			"word/Editor/Paragraph/GraphemesCounter.js",
@@ -346,23 +347,28 @@
 		"mobile": [
 			"common/libfont/engine/fonts_native.js",
 			"common/Charts/ChartStyles.js",
-			"common/Native/Wrappers/HtmlPage.js",
+			
+			"common/Native/Wrappers/serialize.js",
 			"common/Native/Wrappers/DrawingStream.js",
 			"common/Native/Wrappers/ShapeDrawer.js",
 			"common/Native/Wrappers/Overlay.js",
-			"common/Native/Wrappers/DrawingDocument.js",
-			"common/Native/Wrappers/api.js"
+
+			"word/Native/HtmlPage.js",
+			"word/Native/DrawingDocument.js",
+			"word/Native/api.js"
 		],
 		"exclude_mobile": [
 			"vendor/iscroll.js",
-			"common/Scrolls/mobileTouchManagerBase.js",
 			"common/Overlay.js",
+			
+			"common/Scrolls/mobileTouchManagerBase.js",			
 			"word/Drawing/mobileTouchManager.js",
-			"word/Drawing/HtmlPage.js",
+
 			"word/Drawing/ShapeDrawer.js",
 			"word/Drawing/cachemanager.js",
-			"word/Drawing/stylespainter.js",
-			"word/Drawing/DrawingDocument.js"
+			"word/Drawing/HtmlPage.js",			
+			"word/Drawing/DrawingDocument.js",
+			"word/Drawing/stylespainter.js"
 		]
 	}
 }

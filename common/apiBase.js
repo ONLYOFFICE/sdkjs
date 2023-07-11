@@ -1391,7 +1391,7 @@
 			return;
 		}
 		let api = this;
-		let localSize = History.GetLocalChangesSize ? History.GetLocalChangesSize() : 0;
+		let localSize = AscCommon.History.GetLocalChangesSize ? AscCommon.History.GetLocalChangesSize() : 0;
 		let serverSize = api.CoAuthoringApi.get_serverChangesSize();
 		if (localSize + serverSize > api.maxChangesSize) {
 			api.asc_stopSaving();
@@ -2106,7 +2106,8 @@
 			//todo convert from asc_CAdjustPrint
 			jsonparams["spreadsheetLayout"] = {"ignorePrintArea": true, "scale": 100};
 			jsonparams["locale"] = this.asc_getLocale();
-			jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
+			//todo move cmd from header to body and uncomment
+			// jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
 			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
 			oAdditionalData["jsonparams"] = JSON.stringify(jsonparams);
 		}

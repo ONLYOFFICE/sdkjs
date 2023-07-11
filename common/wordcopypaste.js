@@ -6890,10 +6890,16 @@ PasteProcessor.prototype =
 		}
 
 		var _applyTextAlign = function () {
-			var text_align = t._getStyle(node, computedStyle, "text-align");
+			let text_align;
+			if (node.style && node.align && !node.style.textAlign) {
+				//some editors(LO) put old attr -> align, and skip text-align
+				text_align = node.align;
+			} else {
+				text_align = t._getStyle(node, computedStyle, "text-align");
+			}
 			if (text_align) {
 				//Может приходить -webkit-right
-				var Jc = null;
+				let Jc = null;
 				if (-1 !== text_align.indexOf('center')) {
 					Jc = align_Center;
 				} else if (-1 !== text_align.indexOf('right')) {
@@ -7053,12 +7059,14 @@ PasteProcessor.prototype =
 			_applyTextAlign();
 
 			//Spacing
+			//use not computedStyle -> html often comes with the font size set by the parent, the browser calculate
+			//the font to margin-top/margin-bottom
 			var Spacing = new CParaSpacing();
-			var margin_top = this._getStyle(node, computedStyle, "margin-top");
+			var margin_top = node.style.getPropertyValue("margin-top")/*this._getStyle(node, computedStyle, "margin-top")*/;
 			if (margin_top && null != (margin_top = AscCommon.valueToMm(margin_top)) && margin_top >= 0) {
 				Spacing.Before = margin_top;
 			}
-			var margin_bottom = this._getStyle(node, computedStyle, "margin-bottom");
+			var margin_bottom =  node.style.getPropertyValue("margin-bottom")/*this._getStyle(node, computedStyle, "margin-bottom")*/;
 			if (margin_bottom && null != (margin_bottom = AscCommon.valueToMm(margin_bottom)) && margin_bottom >= 0) {
 				Spacing.After = margin_bottom;
 			}
@@ -9832,6 +9840,38 @@ PasteProcessor.prototype =
 			}
 		};
 
+		let checkOnlyBr = function (aElems) {
+			if (!aElems) {
+				return false;
+			}
+			let res;
+			for (let i = 0; i < aElems.length; i++) {
+				if (!aElems[i]) {
+					continue;
+				}
+
+				var sNodeName = aElems[i].nodeName && aElems[i].nodeName.toLowerCase();
+				if (sNodeName === "br") {
+					if (res) {
+						res = false;
+						break;
+					}
+					res = true;
+				} else {
+					if (Node.TEXT_NODE === aElems[i].nodeType) {
+						if (aElems[i].nodeValue && "" !== aElems[i].nodeValue.replace(/(\r|\t|\n)/g, '')) {
+							res = false;
+							break;
+						}
+					} else {
+						res = false;
+						break;
+					}
+				}
+			}
+			return res;
+		};
+
 		var parseLineBreak = function () {
 			if (bPresentation) {
 				//Добавляем linebreak, если он не разделяет блочные элементы и до этого был блочный элемент
@@ -9909,7 +9949,14 @@ PasteProcessor.prototype =
 						oThis._AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page));
 					} else {
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph);
+
+						//exception - ignore 1 br tag
+						if (checkOnlyBr(node.parentNode.childNodes)) {
+							return bAddParagraph;
+						}
+
 						oThis._Commit_Br(0, node, pPr);
+
 						let breakLine = new AscWord.CRunBreak(AscWord.break_Line);
 						if (breakLine.Flags && oThis.pasteInExcel) {
 							//save mso flag for unite cell text with line breaks

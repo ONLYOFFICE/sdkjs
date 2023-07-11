@@ -499,7 +499,11 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 		this.FormPr.SetFixed(mainForm.IsFixedForm());
 		
 		if (mainForm !== oContentControl)
-			this.FormPr.SetAscBorder(oContentControl.GetFormPr().GetAscBorder());
+		{
+			let subFormPr = oContentControl.GetFormPr();
+			this.FormPr.SetAscBorder(subFormPr.GetAscBorder());
+			this.FormPr.SetShd(subFormPr.GetShd());
+		}
 	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)

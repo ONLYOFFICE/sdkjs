@@ -5698,24 +5698,24 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdatePageDataFieldsIndexes = 
 		var newIndex = pivotFieldsMap.get(oldDataField.fld);
 		if (undefined !== newIndex) {
 			oldDataField.fld = newIndex;
-		}
-		if (oldDataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfRunningTotal ||
-			oldDataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfParent ||
-			oldDataField.showDataAs === Asc.c_oAscShowDataAs.RankDescending ||
-			oldDataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
-			oldDataField.showDataAs === Asc.c_oAscShowDataAs.Difference ||
-			oldDataField.showDataAs === Asc.c_oAscShowDataAs.Percent ||
-			oldDataField.showDataAs === Asc.c_oAscShowDataAs.PercentDiff ||
-			oldDataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
-			oldDataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending) {
-				var newBaseField = pivotFieldsMap.get(oldDataField.baseField)
-				if (undefined !== newBaseField) {
-					oldDataField.baseField = newBaseField;
-				} else {
-					oldDataField.setDefaults();
+			if (oldDataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfRunningTotal ||
+				oldDataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfParent ||
+				oldDataField.showDataAs === Asc.c_oAscShowDataAs.RankDescending ||
+				oldDataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
+				oldDataField.showDataAs === Asc.c_oAscShowDataAs.Difference ||
+				oldDataField.showDataAs === Asc.c_oAscShowDataAs.Percent ||
+				oldDataField.showDataAs === Asc.c_oAscShowDataAs.PercentDiff ||
+				oldDataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
+				oldDataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending) {
+					var newBaseField = pivotFieldsMap.get(oldDataField.baseField)
+					if (undefined !== newBaseField) {
+						oldDataField.baseField = newBaseField;
+					} else {
+						oldDataField.setDefaults();
+					}
 				}
-			}
-		newFields.push(oldDataField);
+			newFields.push(oldDataField);
+		}
 	}
 };
 CT_pivotTableDefinition.prototype._updateCacheDataUpdateRowColFieldsIndexes = function(oldFields, newCTFields, newCTDataFields, pivotFieldsMap) {

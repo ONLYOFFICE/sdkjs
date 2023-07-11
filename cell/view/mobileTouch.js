@@ -117,7 +117,12 @@ function (window, undefined)
 	};
 	CMobileDelegateEditorCell.prototype.SetZoom = function(_value)
 	{
-		return this.Api.asc_setZoom(_value / 100);
+		if (!this.useDelayZoom)
+			return this.Api.asc_setZoom(_value / 100);
+
+		AscCommon.PaintMessageLoop.prototype.delayRun(this, function(){
+			this.Api.asc_setZoom(_value / 100);
+		});
 	};
 	CMobileDelegateEditorCell.prototype.GetScrollerSize = function()
 	{

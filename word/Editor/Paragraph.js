@@ -4019,6 +4019,16 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 				{
 					this.CurPos.ContentPos = StartPos;
 				}
+				
+				if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse())
+				{
+					// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для
+					//       этого отдельные методы
+					if (Direction < 0)
+						this.MoveCursorLeft(false, false);
+					else
+						this.MoveCursorRight(false, false);
+				}
 			}
 		}
 		else
@@ -5387,6 +5397,10 @@ Paragraph.prototype.Correct_ContentPos2 = function()
 	this.CurPos.ContentPos = CurPos;
 
 	this.Content[this.CurPos.ContentPos].CorrectContentPos();
+};
+Paragraph.prototype.GetParaContentPos = function(selection, selectionStart, correctPosition)
+{
+	return this.Get_ParaContentPos(selection, selectionStart, correctPosition);
 };
 Paragraph.prototype.Get_ParaContentPos = function(bSelection, bStart, bUseCorrection)
 {
@@ -10950,7 +10964,7 @@ Paragraph.prototype.PasteFormatting = function(oData)
 };
 Paragraph.prototype.Style_Get = function()
 {
-	if (undefined != this.Pr.PStyle)
+	if (undefined !== this.Pr.PStyle)
 		return this.Pr.PStyle;
 
 	return undefined;
@@ -11014,6 +11028,9 @@ Paragraph.prototype.Style_Add = function(Id, bDoNotDeleteProps)
  */
 Paragraph.prototype.SetPStyle = function(styleId)
 {
+	if (!styleId)
+		styleId = undefined;
+	
 	if (this.Pr.PStyle === styleId)
 		return;
 	

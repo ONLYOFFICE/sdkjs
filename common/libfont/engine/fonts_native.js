@@ -35,7 +35,7 @@
 window['AscFonts'] = window['AscFonts'] || {};
 var AscFonts = window['AscFonts'];
 
-var g_native_engine = CreateNativeTextMeasurer();
+var g_native_engine = CreateEmbedObject("CTextMeasurerEmbed");
 
 function CReturnObject()
 {

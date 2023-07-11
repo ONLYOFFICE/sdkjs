@@ -1195,18 +1195,18 @@ CChartsDrawer.prototype =
 
 	//TEST and change _calculateMarginLabels->_calculateMarginLabels2
 	_calculateMarginLabels: function (chartSpace) {
-		var left = 0, right = 0, bottom = 0, top = 0;
-		var leftDownPointX, leftDownPointY, rightUpPointX, rightUpPointY;
+		let left = 0, right = 0, bottom = 0, top = 0;
+		let leftDownPointX, leftDownPointY, rightUpPointX, rightUpPointY;
 
-		var crossBetween = chartSpace.getValAxisCrossType();
-		var horizontalAxes = this._getHorizontalAxes(chartSpace);
-		var verticalAxes = this._getVerticalAxes(chartSpace);
-		var horizontalAxis = horizontalAxes ? horizontalAxes[0] : null;
-		var verticalAxis = verticalAxes ? verticalAxes[0] : null;
+		let crossBetween = chartSpace.getValAxisCrossType();
+		let horizontalAxes = this._getHorizontalAxes(chartSpace);
+		let verticalAxes = this._getVerticalAxes(chartSpace);
+		let horizontalAxis = horizontalAxes ? horizontalAxes[0] : null;
+		let verticalAxis = verticalAxes ? verticalAxes[0] : null;
 
-		var diffPoints;
+		let diffPoints;
 		if(horizontalAxis && horizontalAxis.xPoints &&  horizontalAxis.xPoints.length) {
-			var orientationHorAxis = horizontalAxis.scaling.orientation === ORIENTATION_MIN_MAX;
+			let orientationHorAxis = horizontalAxis.scaling.orientation === ORIENTATION_MIN_MAX;
 			diffPoints = 0;
 			if((horizontalAxis instanceof AscFormat.CDateAx || horizontalAxis instanceof AscFormat.CCatAx) && crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
 				diffPoints = Math.abs((horizontalAxis.interval) / 2);
@@ -1219,7 +1219,7 @@ CChartsDrawer.prototype =
 				rightUpPointX = horizontalAxis.xPoints[0].pos + diffPoints;
 			}
 
-			if (verticalAxis.labels && !verticalAxis.bDelete) {
+			if (verticalAxis && verticalAxis.labels && !verticalAxis.bDelete) {
 				//подпись оси OY находится левее крайней левой точки
 				if (leftDownPointX >= verticalAxis.labels.x) {
 					left = leftDownPointX - verticalAxis.labels.x;
@@ -1231,7 +1231,7 @@ CChartsDrawer.prototype =
 		}
 
 		if(verticalAxis && verticalAxis.yPoints && verticalAxis.yPoints.length) {
-			var orientationVerAxis = verticalAxis.scaling.orientation === ORIENTATION_MIN_MAX;
+			let orientationVerAxis = verticalAxis.scaling.orientation === ORIENTATION_MIN_MAX;
 			diffPoints = 0;
 			if((verticalAxis instanceof AscFormat.CDateAx || verticalAxis instanceof AscFormat.CCatAx)&& crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
 				diffPoints = Math.abs((verticalAxis.interval) / 2);
@@ -1244,7 +1244,7 @@ CChartsDrawer.prototype =
 				rightUpPointY = verticalAxis.yPoints[0].pos - diffPoints;
 			}
 
-			if (horizontalAxis.labels && !horizontalAxis.bDelete) {
+			if (horizontalAxis && horizontalAxis.labels && !horizontalAxis.bDelete) {
 				//подпись оси OX находится ниже крайней нижней точки
 				if ((horizontalAxis.labels.y + horizontalAxis.labels.extY) >= leftDownPointY) {
 					bottom = (horizontalAxis.labels.y + horizontalAxis.labels.extY) - leftDownPointY;

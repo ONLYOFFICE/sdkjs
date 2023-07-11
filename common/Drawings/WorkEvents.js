@@ -819,6 +819,30 @@
 		this.id = setTimeout(this.step, this.interval);
 	};
 
+	PaintMessageLoop.prototype.delayRun = function(_this, _func)
+	{
+		if (window.requestAnimationFrame)
+		{
+			if (undefined !== _this._delayRunId)
+				window.cancelAnimationFrame(_this._delayRunId);
+
+			_this._delayRunId = window.requestAnimationFrame(function () {
+				_func.call(_this);
+				delete _this._delayRunId;
+			});
+		}
+		else
+		{
+			if (undefined !== _this._delayRunId)
+				clearTimeout(_this._delayRunId);
+
+			_this._delayRunId = setTimeout(function () {
+				_func.call(_this);
+				delete _this._delayRunId;
+			}, 40);
+		}
+	};
+
 	function isSupportDoublePx()
 	{
 		var isSupport = true;

@@ -148,7 +148,13 @@
 					this.api.isViewMode = true;
 					this.api.ShowParaMarks = false;
 
+					this.api.WordControl.m_oLogicDocument.SetupBeforeNativePrint({
+						"drawPlaceHolders" : false,
+						"drawFormHighlight" : false,
+						"isPrint" : true
+					}, g);
 					this.api.WordControl.m_oLogicDocument.DrawPage(this.page, g);
+					this.api.WordControl.m_oLogicDocument.RestoreAfterNativePrint();
 
 					this.api.isViewMode = oldViewMode;
 					this.api.ShowParaMarks = oldShowMarks;
