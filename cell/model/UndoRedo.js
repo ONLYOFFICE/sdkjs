@@ -3383,7 +3383,7 @@ function (window, undefined) {
 				max = Data.from && Data.from.max;
 				man = Data.from && Data.from.man;
 				pt = Data.from && Data.from.pt;
-				byCol = Data.from && Data.from.byCol;
+				byCol = (Data.from && Data.from.byCol) || (Data.to && Data.to.byCol);
 			} else {
 				from = Data.from && Data.from.id;
 				to = Data.to && Data.to.id;
@@ -3391,7 +3391,7 @@ function (window, undefined) {
 				max = Data.to && Data.to.max;
 				man = Data.to && Data.to.man;
 				pt = Data.to && Data.to.pt;
-				byCol = Data.to && Data.to.byCol;
+				byCol = (Data.from && Data.from.byCol) || (Data.to && Data.to.byCol);
 			}
 			ws._changeRowColBreaks(from, to, min, max, man, pt, byCol);
 		}

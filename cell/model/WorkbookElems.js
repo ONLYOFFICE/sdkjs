@@ -15621,6 +15621,8 @@ QueryTableField.prototype.clone = function() {
 			if (this.breaks[i].isBreak(id, min, max)) {
 				this.breaks.splice(i, 1);
 				isDeleted = true;
+				this.manualBreakCount--;
+				this.count--;
 				break;
 			}
 		}
