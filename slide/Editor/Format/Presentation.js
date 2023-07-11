@@ -4565,8 +4565,8 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 				}
 			}
 		}
+		History.Reset_RecalcIndex();
 	}
-	History.Reset_RecalcIndex();
 	this.RecalculateCurPos();
 	if (bSync) {
 		let bEndRecalc = false;
