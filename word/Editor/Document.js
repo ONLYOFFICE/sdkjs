@@ -22226,10 +22226,14 @@ CDocument.prototype.RemoveContentControl = function(Id)
 	var oContentControl = this.TableId.Get_ById(Id);
 	if (!oContentControl || !oContentControl.GetContentControlType)
 		return;
-
-	if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType() && oContentControl.Parent)
+	
+	// TODO: По хорошему надо сделать метод у CStdBase и перенести реализации в соответствующие классы
+	this.RemoveSelection();
+	if (oContentControl.IsBlockLevel())
 	{
-		this.RemoveSelection();
+		if (!oContentControl.Parent)
+			return;
+		
 		var oDocContent = oContentControl.Parent;
 		oDocContent.Update_ContentIndexing();
 		var nIndex = oContentControl.GetIndex();
@@ -22254,29 +22258,30 @@ CDocument.prototype.RemoveContentControl = function(Id)
 			oDocContent.CurPos.ContentPos = Math.max(0, Math.min(oDocContent.GetElementsCount() - 1, nCurPos - 1));
 		}
 	}
-	else if (c_oAscSdtLevelType.Inline === oContentControl.GetContentControlType())
+	else if (oContentControl.IsInlineLevel())
 	{
-		this.SelectContentControl(Id);
-		this.Remove(-1, false, false, false);
+		oContentControl.RemoveThisFromParent(true);
 	}
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
 {
 	if (!this.CanPerformAction())
 		return;
-
-	var oContentControl = this.TableId.Get_ById(Id);
-	if (!oContentControl)
+	
+	let contentControl = this.TableId.Get_ById(Id);
+	if (!contentControl)
 		return;
-
+	
 	this.StartAction();
-
-	if (oContentControl.IsForm())
-	{
-		oContentControl.RemoveFormPr();
-	}
-
-	oContentControl.RemoveContentControlWrapper();
+	
+	if (contentControl.IsForm())
+		contentControl.RemoveFormPr();
+	
+	if (contentControl.IsPlaceHolder())
+		this.RemoveContentControl(Id);
+	else
+		contentControl.RemoveContentControlWrapper();
+	
 	this.Recalculate();
 	this.UpdateInterface();
 	this.UpdateSelection();
