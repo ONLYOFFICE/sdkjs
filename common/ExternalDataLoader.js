@@ -57,13 +57,15 @@
 		let isForceSavePossible = true;
 		for (let i = 0; i < arrData.length; i++) {
 			const oData = arrData[i];
+			const sToken = oData['token'];
 			const sKey = oData['key'];
+
 			if (!sKey) {
 				//if don't have key, then don't have force save
 				isForceSavePossible = false;
 				break;
 			}
-			const sToken = oData['token'];
+
 			const oForceUpdatePromise = new Promise(function (fResolve) {
 				oThis.api.saveRelativeFromChanges(sKey, sToken, nTimeout, function (bTimeout, oResult) {
 					//oResult -> {code, inProgress, url}
@@ -79,6 +81,7 @@
 
 					if (!bTimeout && oResult["code"] === AscCommon.c_oAscServerCommandErrors.NoError) {
 						arrData[i]["url"] = oResult["url"];
+						arrData[i]["token"] = null;
 					}
 					fResolve();
 				});
