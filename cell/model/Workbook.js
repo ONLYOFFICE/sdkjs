@@ -4035,16 +4035,36 @@
 		var oData = this.getChartSheetRenameData(oWorksheet, sOldName);
 		this.changeSheetNameInRefs(oData.refs, sOldName, sNewName);
 	};
-	Workbook.prototype.handleChartsOnMoveRange = function (oRangeFrom, oRangeTo) {
+	Workbook.prototype.handleChartsOnMoveRange = function (oRangeFrom, oRangeTo, isInsertCol) {
 		if(!History.CanAddChanges()) {
 			return;
 		}
+		var aRefsToResize = [];
 		var aRefsToReplace = [];
 		var aId = [];
 		this.handleDrawings(function(oDrawing) {
 			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 				var nPrevLength = aRefsToReplace.length;
+				let delta;
+				let range;
+				if (isInsertCol) {
+					delta = oRangeTo.bbox.c2 - oRangeTo.bbox.c1 - 1;
+					range = oRangeFrom.clone()
+					range.bbox.c2 = oRangeFrom.bbox.c1 + delta;
+				} else {
+					delta = oRangeTo.bbox.r2 - oRangeTo.bbox.r1 - 1;
+					range = oRangeFrom.clone()
+					range.bbox.r2 = oRangeFrom.bbox.r1 + delta;
+				}
 				oDrawing.collectRefsInsideRange(oRangeFrom, aRefsToReplace);
+				if (typeof isInsertCol != "undefined") {
+					oDrawing.collectRefsInsideRangeForInsertColRow(range, aRefsToResize, isInsertCol);
+				}
+				for(var nRef = 0; nRef < aRefsToResize.length; ++nRef) {
+					if (aRefsToReplace.filter(function(val){return val.Id === aRefsToResize[nRef].Id}).length === 0)
+						aRefsToReplace.push({ ref: aRefsToResize[nRef], resize: true, Id: aRefsToResize[nRef].Id })
+				}
+
 				if(aRefsToReplace.length > nPrevLength) {
 					aId.push(oDrawing.Get_Id());
 				}
@@ -4053,7 +4073,10 @@
 		this.checkObjectsLock(aId, function(bNoLock) {
 			if(bNoLock) {
 				for(var nRef = 0; nRef < aRefsToReplace.length; ++nRef) {
-					aRefsToReplace[nRef].handleOnMoveRange(oRangeFrom, oRangeTo);
+					if (aRefsToReplace[nRef].resize)
+						aRefsToReplace[nRef].ref.handleOnMoveRange(oRangeFrom, oRangeTo, true);
+					else
+						aRefsToReplace[nRef].handleOnMoveRange(oRangeFrom, oRangeTo, false);
 				}
 				if(Asc.editor && Asc.editor.wb) {
 					Asc.editor.wb.recalculateDrawingObjects(null, false);
@@ -14638,6 +14661,12 @@
 		}
 		return false;
 	};
+	Range.prototype.isIntersectForInsertColRow=function(oRange, isInsertCol){
+		if(this.worksheet === oRange.worksheet) {
+			return this.bbox.isIntersectForInsertColRow(oRange.bbox, isInsertCol);
+		}
+		return false;
+	};
 	Range.prototype._foreach = function(action) {
 		if (null != action) {
 			var wb = this.worksheet.workbook;
@@ -17891,6 +17920,23 @@
 		}
 		_promoteFromTo(oBBox, this.worksheet, oCanPromote.to, this.worksheet, true, oCanPromote, bCtrl, bVertical, nIndex);
 	};
+	function _addAInputTimePeriod(aTimePeriodName, bNeedSwapFirstLastElem) {
+		let aTimePeriod = aTimePeriodName.map(function (sTimePeriod) {
+			return sTimePeriod.toLowerCase();
+		});
+		const nLastIndex = aTimePeriod.length - 1;
+
+		if(!aTimePeriod[nLastIndex]) {
+			aTimePeriod.pop();
+		}
+
+		if (bNeedSwapFirstLastElem) {
+			let sLastElem = aTimePeriod.pop();
+			aTimePeriod.unshift(sLastElem);
+		}
+
+		return aTimePeriod;
+	}
 	function _updateATimePeriod (aTimePeriods, sValue) {
 		let sFirstSymbols = sValue.slice(0,2);
 
@@ -17931,17 +17977,18 @@
 		sFormatedValue = sSlicedValue === sSlicedValue.toLowerCase() ? sValue : sValue[0] + sSlicedValue.toLowerCase();
 		return aTimePeriods.indexOf(sFormatedValue);
 	}
-	function _getRepeatTimePeriod(nRepeat, nPreviousVal, nIndex) {
+	function _getRepeatTimePeriod(nRepeat, nPreviousVal, nIndex, nMaxTimePeriod) {
 		let bIsSequence = false;
 		let nDiff = 0;
 		let nCurrentVal = nIndex;
+		let nLastElement = nMaxTimePeriod - 1;
 
 		if (nPreviousVal) {
 			// Defining is datas has asc sequence like Monday, Tuesday etc or even\odd sequence?
-			if (nIndex === 0 && nPreviousVal === 6) {
+			if (nIndex === 0 && nPreviousVal === nLastElement) {
 				bIsSequence = true;
 			} else {
-				if (nRepeat > 0) nCurrentVal += 7 * nRepeat;
+				if (nRepeat > 0) nCurrentVal += nMaxTimePeriod * nRepeat;
 				nDiff = nCurrentVal - nPreviousVal;
 				if (nDiff === 1) {
 					bIsSequence = true;
@@ -17949,12 +17996,50 @@
 			}
 			if (bIsSequence) {
 				return nIndex === 0 ? nRepeat + 1 : nRepeat;
-			} else if (nIndex === 0 || (nIndex === 1 && nPreviousVal >= 6)) {
+			} else if (nIndex === 0 || (nIndex === 1 && nPreviousVal >= nLastElement)) {
 				return nRepeat + 1;
 			}
 		}
 
 		return nRepeat;
+	}
+	function _findIndexAInputTimePeriod(aTimePeriodsList, sValue) {
+		return aTimePeriodsList.findIndex(function (aTimePeriod) {
+			return aTimePeriod.includes(sValue.toLowerCase());
+		});
+	}
+	function _getAInputTimePeriod(aInputTimePeriodList, nIndex, nPrevIndex, sValue, sNextValue) {
+		let aInputTimePeriod = aInputTimePeriodList[nIndex];
+		// Checking nearby cells if value has in both arrays (short and full names)
+		let sValueLowReg = sValue.toLowerCase();
+		let aPrevInputTimePeriod = nPrevIndex ? aInputTimePeriodList[nPrevIndex] : null;
+
+		if (aPrevInputTimePeriod && nIndex !== nPrevIndex && aPrevInputTimePeriod.includes(sValueLowReg)) {
+			aInputTimePeriod = aPrevInputTimePeriod;
+		} else if (!aPrevInputTimePeriod && sNextValue) { // doesn't check next cell if previous cell exist
+			let nNextIndex = _findIndexAInputTimePeriod(aInputTimePeriodList, sNextValue);
+			let aNextInputTimePeriod = aInputTimePeriodList[nNextIndex];
+			if (aNextInputTimePeriod && nIndex !== nNextIndex && aNextInputTimePeriod.includes(sValueLowReg)) {
+				aInputTimePeriod = aNextInputTimePeriod;
+			}
+		}
+
+		return aInputTimePeriod
+	}
+	function _getNextValue(wsFrom, oCell, bVertical, from) {
+		if (bVertical) {
+			let nNextItRow = oCell.nRow + 1;
+			if (nNextItRow <= from.r2) {
+				return wsFrom.getCell3(nNextItRow, oCell.nCol).getValueWithoutFormat();
+			}
+		} else {
+			let nNextItCol = oCell.nCol + 1;
+			if (nNextItCol <= from.c2) {
+				return wsFrom.getCell3(oCell.nRow, nNextItCol).getValueWithoutFormat();
+			}
+		}
+
+		return null;
 	}
 	function _promoteFromTo(from, wsFrom, to, wsTo, bIsPromote, oCanPromote, bCtrl, bVertical, nIndex) {
 		var wb = wsFrom.workbook;
@@ -18092,25 +18177,39 @@
 			if(nIndex < 0)
 				bReverse = true;
 			var oPromoteHelper = new PromoteHelper(bVertical, bReverse, from);
-			let aInputDaysOfWeek = oDefaultCultureInfo.DayNames.map(function(dayOfWeek) {
-				return dayOfWeek.toLowerCase();
-			});
-			let aInputShortDaysOfWeek = oDefaultCultureInfo.AbbreviatedDayNames.map(function(dayOfWeek) {
-				return dayOfWeek.toLowerCase();
-			});
+			let aInputDaysOfWeek = _addAInputTimePeriod(oDefaultCultureInfo.DayNames, false);
+			let aInputShortDaysOfWeek = _addAInputTimePeriod(oDefaultCultureInfo.AbbreviatedDayNames, false);
+			let aInputMonths = _addAInputTimePeriod(oDefaultCultureInfo.MonthNames, true);
+			let aInputMonthShort = _addAInputTimePeriod(oDefaultCultureInfo.AbbreviatedMonthNames, true);
+			let aInputTimePeriodList = [aInputDaysOfWeek, aInputShortDaysOfWeek, aInputMonths, aInputMonthShort];
 			let nPreviousVal = null;
+			let nPrevInputTimePeriod = null;
 			let nRepeat = 0;
-			let nRepeatShort = 0;
 			fromRange._foreachNoEmpty(function(oCell, nRow0, nCol0, nRowStart0, nColStart0){
 				if(null != oCell)
 				{
+					function calcTimePeriodValues() {
+						// Update array of a time period based on sValue
+						aTimePeriods = _updateATimePeriod(aInputTimePeriod, sValue);
+						let nMaxTimePeriod = aTimePeriods.length;
+						let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
+						nRepeat = _getRepeatTimePeriod(nRepeat, nPreviousVal, nIndex, nMaxTimePeriod);
+						// In nVal stores number of a time period.
+						// e.g. "index from array days of the week + 7 (count days in week) * count of repeat"
+						nVal = nIndex + nMaxTimePeriod * nRepeat;
+						bDate = true;
+						nPreviousVal = nVal;
+						nPrevInputTimePeriod = nInputTimePeriod;
+					}
 					var nVal = null;
 					var bDelimiter = false;
 					var sPrefix = null;
 					var padding = 0;
 					var bDate = false;
-					let bIsTimePeriod = false;
-					let aTimePeriods = [];
+					let aTimePeriods = null;
+					let aInputTimePeriod = null;
+					let sNextValue = null;
+					let nInputTimePeriod = null;
 					if(bIsPromote)
 					{
 						if (!oCell.isFormula())
@@ -18144,26 +18243,12 @@
 											nVal = sNumber - 0;
 											padding = sNumber[0] === '0' ? sNumber.length : 0;
 										}
-										// Value of cell is it a day of week?
-										if (aInputDaysOfWeek.includes(sValue.toLowerCase())) {
-											// Update array of days of the week based on sValue
-											aTimePeriods = _updateATimePeriod(aInputDaysOfWeek, sValue);
-											let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
-											nRepeat = _getRepeatTimePeriod(nRepeat, nPreviousVal, nIndex);
-											// In nVal stores number of day. It calculates  like
-											// "index from array days of the week + 7 (count days in week) * count of repeat"
-											nVal = nIndex + 7 * nRepeat;
-											bIsTimePeriod = true;
-											bDate = true;
-											nPreviousVal = nVal;
-										} else if (aInputShortDaysOfWeek.includes(sValue.toLowerCase())) {
-											aTimePeriods = _updateATimePeriod(aInputShortDaysOfWeek, sValue);
-											let nIndex = _getIndexATimePeriods(aTimePeriods, sValue);
-											nRepeatShort = _getRepeatTimePeriod(nRepeatShort, nPreviousVal, nIndex);
-											nVal = nIndex + 7 * nRepeatShort;
-											bIsTimePeriod = true;
-											bDate = true;
-											nPreviousVal = nVal;
+										// Value of cell is it a time period?
+										sNextValue = _getNextValue(wsFrom, oCell, bVertical, from);
+										nInputTimePeriod = _findIndexAInputTimePeriod(aInputTimePeriodList, sValue);
+										aInputTimePeriod = _getAInputTimePeriod(aInputTimePeriodList, nInputTimePeriod, nPrevInputTimePeriod, sValue, sNextValue);
+										if (aInputTimePeriod) {
+											calcTimePeriodValues();
 										}
 									}
 								}
@@ -18179,7 +18264,7 @@
 						else
 							bDelimiter = true;
 					}
-					oPromoteHelper.add(nRow0 - nRowStart0, nCol0 - nColStart0, nVal, bDelimiter, sPrefix, padding, bDate, oCell.duplicate(), bIsTimePeriod, aTimePeriods);
+					oPromoteHelper.add(nRow0 - nRowStart0, nCol0 - nColStart0, nVal, bDelimiter, sPrefix, padding, bDate, oCell.duplicate(), aTimePeriods);
 				}
 			});
 			var bCopy = false;
@@ -18249,42 +18334,47 @@
 					}
 
 					var data = oPromoteHelper.getNext();
-					if(null != data && (data.oAdditional || (false == bCopy && null != data.nCurValue)))
+					if(null != data && (data.getAdditional() || (false == bCopy && null != data.getCurValue())))
 					{
-						var oFromCell = data.oAdditional;
+						var oFromCell = data.getAdditional();
 						var nRow = bRowFirst ? i : j;
 						var nCol = bRowFirst ? j : i;
+						let sPrefix = data.getPrefix();
+						let nCurValue = data.getCurValue();
+						let nPadding = data.getPadding();
+						let aTimePeriods = data.getTimePeriods();
 						let aReverseTimePeriods = [];
-						if (bReverse) {
-							aReverseTimePeriods = data.aTimePeriods.slice();
+
+						if (aTimePeriods && (bReverse || nCurValue < 0)) {
+							aReverseTimePeriods = aTimePeriods.slice();
 							aReverseTimePeriods.reverse();
 						}
 						wsTo._getCell(nRow, nCol, function(oCopyCell){
 							if(bIsPromote)
 							{
-								if(false == bCopy && null != data.nCurValue)
+								if(false === bCopy && null != nCurValue)
 								{
 									var oCellValue = new AscCommonExcel.CCellValue();
-									if (null != data.sPrefix) {
-										var sVal = data.sPrefix;
+									if (null != sPrefix) {
+										var sVal = sPrefix;
 										//toString enough, because nCurValue nave not decimal part
-										var sNumber = data.nCurValue.toString();
-										if (sNumber.length < data.padding) {
-											sNumber = '0'.repeat(data.padding - sNumber.length) + sNumber;
+										var sNumber = nCurValue.toString();
+										if (sNumber.length < nPadding) {
+											sNumber = '0'.repeat(nPadding - sNumber.length) + sNumber;
 										}
 										sVal += sNumber;
 										oCellValue.text = sVal;
 										oCellValue.type = CellValueType.String;
-									} else if (data.bIsTimePeriod) {
-										let nIndexDay = data.nCurValue % 7;
+									} else if (aTimePeriods) {
+										let nIndexDay = nCurValue % aTimePeriods.length;
 										if (nIndexDay < 0) {
 											oCellValue.text = aReverseTimePeriods[~nIndexDay];
 										} else {
-											oCellValue.text = data.aTimePeriods[nIndexDay];
+											oCellValue.text = aTimePeriods[nIndexDay];
 										}
 										oCellValue.type = CellValueType.String;
 									} else {
-										oCellValue.number = data.nCurValue;
+										oCellValue.number = nCurValue;
 										oCellValue.type = CellValueType.Number;
 									}
 									oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
@@ -18639,9 +18729,8 @@
 		}
 	}
 	PromoteHelper.prototype = {
-		add: function(nRow, nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, bIsTimePeriod, aTimePeriods){
-			if(this.bVerical)
-			{
+		add: function(nRow, nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, aTimePeriods){
+			if(this.bVerical) {
 				//транспонируем для удобства
 				var temp = nRow;
 				nRow = nCol;
@@ -18650,25 +18739,21 @@
 			if(this.bReverse)
 				nCol = this.nColLength - nCol - 1;
 			var row = this.oDataRow[nRow];
-			if(null == row)
-			{
+			if(null == row) {
 				row = {};
 				this.oDataRow[nRow] = row;
 			}
-			row[nCol] = {nCol: nCol, nVal: nVal, bDelimiter: bDelimiter, sPrefix: sPrefix, padding: padding, bDate: bDate, bIsTimePeriod: bIsTimePeriod, aTimePeriods: aTimePeriods, oAdditional: oAdditional, oSequence: null, nCurValue: null};
+			row[nCol] = new cDataRow(nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, aTimePeriods);
 		},
 		isOnlyIntegerSequence: function(){
 			var bRes = true;
 			var bEmpty = true;
-			for(var i in this.oDataRow)
-			{
+			for(var i in this.oDataRow) {
 				var row = this.oDataRow[i];
-				for(var j in row)
-				{
+				for(var j in row) {
 					var data = row[j];
 					bEmpty = false;
-					if(!(null != data.nVal && true != data.bDate && null == data.sPrefix))
-					{
+					if(!(null != data.getVal() && true != data.getIsDate() && null == data.getPrefix())) {
 						bRes = false;
 						break;
 					}
@@ -18738,47 +18823,36 @@
 			return {a0: a0, a1: a1, nX: nX};
 		},
 		_addSequenceToRow : function(nRowIndex, aSortRowIndex, row, aCurSequence){
-			if(aCurSequence.length > 0)
-			{
+			if(aCurSequence.length > 0) {
 				var oFirstData = aCurSequence[0];
 				var bCanPromote = true;
 				//если последовательность состоит из одного числа и той же колонке есть еще последовательности, то надо копировать, а не автозаполнять
-				if(1 == aCurSequence.length)
-				{
+				if(1 == aCurSequence.length) {
 					var bVisitRowIndex = false;
 					var oVisitData = null;
-					for(var i = 0, length = aSortRowIndex.length; i < length; i++)
-					{
+					for(var i = 0, length = aSortRowIndex.length; i < length; i++) {
 						var nCurRowIndex = aSortRowIndex[i];
-						if(nRowIndex == nCurRowIndex)
-						{
+						if(nRowIndex == nCurRowIndex) {
 							bVisitRowIndex = true;
-							if(oVisitData && oFirstData.sPrefix == oVisitData.sPrefix && oFirstData.bDate == oVisitData.bDate)
-							{
+							if(oVisitData && oFirstData.prefixDataCompare(oVisitData)) {
 								bCanPromote = false;
 								break;
 							}
 						}
-						else
-						{
+						else {
 							var oCurRow = this.oDataRow[nCurRowIndex];
-							if(oCurRow)
-							{
-								var data = oCurRow[oFirstData.nCol];
-								if(null != data)
-								{
-									if(null != data.nVal)
-									{
+							if(oCurRow) {
+								var data = oCurRow[oFirstData.getCol()];
+								if(null != data) {
+									if(null != data.getVal()) {
 										oVisitData = data;
-										if(bVisitRowIndex)
-										{
-											if(oFirstData.sPrefix == oVisitData.sPrefix && oFirstData.bDate == oVisitData.bDate)
+										if(bVisitRowIndex) {
+											if(oFirstData.prefixDataCompare(oVisitData))
 												bCanPromote = false;
 											break;
 										}
 									}
-									else if(data.bDelimiter)
-									{
+									else if(data.getDelimiter()) {
 										oVisitData = null;
 										if(bVisitRowIndex)
 											break;
@@ -18788,8 +18862,7 @@
 						}
 					}
 				}
-				if(bCanPromote)
-				{
+				if(bCanPromote) {
 					var nMinIndex = null;
 					var nMaxIndex = null;
 					var bValidIndexDif = true;
@@ -18800,44 +18873,38 @@
 					var nMaxPadding = 0;
 					//анализируем последовательность, если числа расположены не на одинаковом расстоянии, то считаем их сплошной последовательностью
 					//последовательность с промежутками может быть только целочисленной
-					for(var i = 0, length = aCurSequence.length; i < length; i++)
-					{
+					for(var i = 0, length = aCurSequence.length; i < length; i++) {
 						var data = aCurSequence[i];
-						var nCurX = data.nCol;
+						var nCurX = data.getCol();
+						let nCurVal = data.getVal();
 						if(null == nMinIndex || null == nMaxIndex)
 							nMinIndex = nMaxIndex = nCurX;
-						else
-						{
+						else {
 							if(nCurX < nMinIndex)
 								nMinIndex = nCurX;
 							if(nCurX > nMaxIndex)
 								nMaxIndex = nCurX;
 						}
-						if(bValidIndexDif)
-						{
-							if(null != nPrevX && null != nPrevVal)
-							{
+						if(bValidIndexDif) {
+							if(null != nPrevX && null != nPrevVal) {
 								var nCurDif = nCurX - nPrevX;
-								var nCurValDif = data.nVal - nPrevVal;
-								if(null == nIndexDif || null == nCurValDif)
-								{
+								var nCurValDif = nCurVal - nPrevVal;
+								if(null == nIndexDif || null == nCurValDif) {
 									nIndexDif = nCurDif;
 									nValueDif = nCurValDif;
 								}
-								else if(nIndexDif != nCurDif || nValueDif != nCurValDif)
-								{
+								else if(nIndexDif != nCurDif || nValueDif != nCurValDif) {
 									nIndexDif = null;
 									bValidIndexDif = false;
 								}
 							}
 						}
-						nMaxPadding = Math.max(nMaxPadding, data.padding);
+						nMaxPadding = Math.max(nMaxPadding, data.getPadding());
 						nPrevX = nCurX;
-						nPrevVal = data.nVal;
+						nPrevVal = nCurVal;
 					}
 					var bWithSpace = false;
-					if(null != nIndexDif)
-					{
+					if(null != nIndexDif) {
 						nIndexDif = Math.abs(nIndexDif);
 						if(nIndexDif > 1)
 							bWithSpace = true;
@@ -18846,55 +18913,49 @@
 					var bExistSpace = false;
 					nPrevX = null;
 					var aDigits = [];
-					for(var i = 0, length = aCurSequence.length; i < length; i++)
-					{
+					for(var i = 0, length = aCurSequence.length; i < length; i++) {
 						var data = aCurSequence[i];
-						data.padding = nMaxPadding;
-						var nCurX = data.nCol;
+						data.setPadding(nMaxPadding);
+						var nCurX = data.getCol();
 						var x = nCurX - nMinIndex;
 						if(null != nIndexDif && nIndexDif > 0)
 							x /= nIndexDif;
 						if(null != nPrevX && nCurX - nPrevX > 1)
 							bExistSpace = true;
-						var y = data.nVal;
+						var y = data.getVal();
 						//даты автозаполняем только по целой части
-						if(data.bDate)
+						if(data.getIsDate())
 							y = parseInt(y);
 						aDigits.push({x: x, y: y});
 						nPrevX = nCurX;
 					}
-					if(aDigits.length > 0)
-					{
+					if(aDigits.length > 0) {
 						var oSequence = this._promoteSequence(aDigits);
-						if(1 == aDigits.length && this.bReverse)
-						{
+						if(1 == aDigits.length && this.bReverse) {
 							//меняем коэффициенты для случая одного числа в последовательности, иначе она в любую сторону будет возрастающей
 							oSequence.a1 *= -1;
 						}
 						var bIsIntegerSequence = oSequence.a1 != parseInt(oSequence.a1);
 						//для дат и чисел с префиксом автозаполняются только целочисленные последовательности
-						if(!((null != oFirstData.sPrefix || true == oFirstData.bDate) && bIsIntegerSequence))
-						{
-							if(false == bWithSpace && bExistSpace)
-							{
-								for(var i = nMinIndex; i <= nMaxIndex; i++)
-								{
+						let sPrefix = oFirstData.getPrefix();
+						let bDate = oFirstData.getIsDate();
+						let bDelimiter = oFirstData.getDelimiter();
+						if(!((null != sPrefix || true == bDate) && bIsIntegerSequence)) {
+							if(false == bWithSpace && bExistSpace) {
+								for(var i = nMinIndex; i <= nMaxIndex; i++) {
 									var data = row[i];
-									if(null == data)
-									{
-										data = {nCol: i, nVal: null, bDelimiter: oFirstData.bDelimiter, sPrefix: oFirstData.sPrefix, bDate: oFirstData.bDate, oAdditional: null, oSequence: null, nCurValue: null};
+									if(null == data) {
+										data = new cDataRow(i, null, bDelimiter, sPrefix, null, bDate);
 										row[i] = data;
 									}
-									data.oSequence = oSequence;
+									data.setSequence(oSequence);
 								}
 							}
-							else
-							{
-								for(var i = 0, length = aCurSequence.length; i < length; i++)
-								{
+							else {
+								for(var i = 0, length = aCurSequence.length; i < length; i++) {
 									var nCurX = aCurSequence[i].nCol;
 									if(null != nCurX)
-										row[nCurX].oSequence = oSequence;
+										row[nCurX].setSequence(oSequence);
 								}
 							}
 						}
@@ -18902,15 +18963,13 @@
 				}
 			}
 		},
-		finishAdd : function(bCopy){
-			if(true != bCopy)
-			{
+		finishAdd : function(bCopy) {
+			if(true != bCopy) {
 				var aSortRowIndex = [];
 				for(var i in this.oDataRow)
 					aSortRowIndex.push(i - 0);
 				aSortRowIndex.sort(fSortAscending);
-				for(var i = 0, length = aSortRowIndex.length; i < length; i++)
-				{
+				for(var i = 0, length = aSortRowIndex.length; i < length; i++) {
 					var nRowIndex = aSortRowIndex[i];
 					var row = this.oDataRow[nRowIndex];
 					//собираем информация о последовательностях в row
@@ -18919,31 +18978,29 @@
 						aSortIndex.push(j - 0);
 					aSortIndex.sort(fSortAscending);
 					var aCurSequence = [];
-					var oPrevData = null;
-					for(var j = 0, length2 = aSortIndex.length; j < length2; j++)
-					{
+					var oPrevRowData = null;
+					for(var j = 0, length2 = aSortIndex.length; j < length2; j++) {
 						var nColIndex = aSortIndex[j];
-						var data = row[nColIndex];
+						var rowData = row[nColIndex];
 						var bAddToSequence = false;
-						if(null != data.nVal)
-						{
+						let nVal = rowData.getVal();
+						let bDelimiter = rowData.getDelimiter();
+						if(null != nVal) {
 							bAddToSequence = true;
-							if(null != oPrevData && (oPrevData.bDelimiter != data.bDelimiter || oPrevData.sPrefix != data.sPrefix || oPrevData.bDate != data.bDate || oPrevData.aTimePeriods.join() != data.aTimePeriods.join()))
-							{
+							if(null != oPrevRowData && !rowData.compare(oPrevRowData)) {
 								this._addSequenceToRow(nRowIndex, aSortRowIndex, row, aCurSequence);
 								aCurSequence = [];
-								oPrevData = null;
+								oPrevRowData = null;
 							}
-							oPrevData = data;
+							oPrevRowData = rowData;
 						}
-						else if(data.bDelimiter)
-						{
+						else if(bDelimiter) {
 							this._addSequenceToRow(nRowIndex, aSortRowIndex, row, aCurSequence);
 							aCurSequence = [];
-							oPrevData = null;
+							oPrevRowData = null;
 						}
 						if(bAddToSequence)
-							aCurSequence.push(data);
+							aCurSequence.push(rowData);
 					}
 					this._addSequenceToRow(nRowIndex, aSortRowIndex, row, aCurSequence);
 				}
@@ -18957,20 +19014,17 @@
 		},
 		getNext: function(){
 			var oRes = null;
-			if(this.oCurRow)
-			{
+			if(this.oCurRow) {
 				var oRes = this.oCurRow[this.nCurColIndex];
-				if(null != oRes)
-				{
-					oRes.nCurValue = null;
-					if(null != oRes.oSequence)
-					{
-						var sequence = oRes.oSequence;
-						if((oRes.bDate && !oRes.bIsTimePeriod) || null != oRes.sPrefix)
-							oRes.nCurValue = Math.abs(sequence.a1 * sequence.nX + sequence.a0);
+				if(null != oRes) {
+					oRes.setCurValue(null);
+					if(null != oRes.getSequence()) {
+						var sequence = oRes.getSequence();
+						if((oRes.getIsDate() && !oRes.getTimePeriods()) || null != oRes.getPrefix())
+							oRes.setCurValue( Math.abs(sequence.a1 * sequence.nX + sequence.a0));
 						else
-							oRes.nCurValue = sequence.a1 * sequence.nX + sequence.a0;
-						sequence.nX ++;
+							oRes.setCurValue(sequence.a1 * sequence.nX + sequence.a0);
+						sequence.nX++;
 					}
 				}
 				this.nCurColIndex++;
@@ -19111,6 +19165,84 @@
 		}
 		return null;
 	}
+	//-------------------------------------------------------------------------------------------------
+	/**
+	 * @constructor
+	 */
+	function cDataRow(nCol, nVal, bDelimiter, sPrefix, nPadding, bDate, oAdditional, aTimePeriods) {
+		this.nCol = nCol;
+		this.nVal = nVal;
+		this.bDelimiter = bDelimiter;
+		this.sPrefix = sPrefix;
+		this.nPadding = nPadding;
+		this.bDate = bDate;
+		this.oAdditional = oAdditional;
+		this.aTimePeriods = aTimePeriods;
+		this.oSequence = null;
+		this.nCurValue = null;
+
+	}
+	cDataRow.prototype.getCol = function() {
+		return this.nCol;
+	}
+	cDataRow.prototype.getVal = function() {
+		return this.nVal;
+	}
+	cDataRow.prototype.getDelimiter = function() {
+		return this.bDelimiter;
+	}
+	cDataRow.prototype.getPrefix = function () {
+		return this.sPrefix;
+	}
+	cDataRow.prototype.getPadding = function() {
+		return this.nPadding;
+	}
+	cDataRow.prototype.setPadding = function(nPadding) {
+		this.nPadding = nPadding;
+	}
+	cDataRow.prototype.getIsDate = function() {
+		return this.bDate;
+	}
+	cDataRow.prototype.getAdditional = function() {
+		return this.oAdditional;
+	}
+	cDataRow.prototype.getTimePeriods = function () {
+		return this.aTimePeriods;
+	}
+	cDataRow.prototype.getSequence = function() {
+		return this.oSequence;
+	}
+	cDataRow.prototype.setSequence = function (oSequence) {
+		this.oSequence = oSequence;
+	}
+	cDataRow.prototype.getCurValue = function() {
+		return this.nCurValue;
+	}
+	cDataRow.prototype.setCurValue = function(nCurValue) {
+		this.nCurValue = nCurValue;
+	}
+	cDataRow.prototype.compare = function(oComparedRowData) {
+		let sComparedTimePeriods =  oComparedRowData.getTimePeriods() ? oComparedRowData.getTimePeriods().join() : null;
+		let sTimePeriods = this.getTimePeriods() ? this.getTimePeriods().join() : null;
+		let bComparedDelimiter = oComparedRowData.getDelimiter();
+		let bDelimiter = this.getDelimiter();
+		let sComparedPrefix = oComparedRowData.getPrefix();
+		let sPrefix = this.getPrefix();
+		let bComparedDate = oComparedRowData.getIsDate();
+		let bDate = this.getIsDate();
+
+		return bComparedDelimiter === bDelimiter && sComparedPrefix === sPrefix && bComparedDate === bDate && sComparedTimePeriods === sTimePeriods;
+	}
+
+	cDataRow.prototype.prefixDataCompare = function(oComparedRowData) {
+		let sComparedPrefix = oComparedRowData.getPrefix();
+		let sPrefix = this.getPrefix();
+		let bComparedDate = oComparedRowData.getIsDate();
+		let bDate = this.getIsDate();
+
+		return sComparedPrefix === sPrefix && bComparedDate === bDate;
+	}
+
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].g_nVerticalTextAngle = g_nVerticalTextAngle;

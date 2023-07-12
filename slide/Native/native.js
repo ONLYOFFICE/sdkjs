@@ -216,7 +216,7 @@ AscCommon.ChartPreviewManager.prototype.getChartPreviews = function(chartType)
 
 // The helper function, called from the native application,
 // returns information about the document as a JSON string.
-window["asc_docs_api"].prototype["asc_nativeGetCoreProps"] = function() {
+Asc["asc_docs_api"].prototype["asc_nativeGetCoreProps"] = function() {
     var props = (_api) ? _api.asc_getCoreProps() : null,
         value;
 

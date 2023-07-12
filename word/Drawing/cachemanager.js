@@ -73,6 +73,8 @@ CCacheManager.prototype.UnLock = function(_cache_image)
 
 CCacheManager.prototype.Lock = function (_w, _h, _drDocument)
 {
+	if (_w <= 0) _w = 1;
+	if (_h <= 0) _h = 1;
 	var backgroundColor = this.isSlides ? "#B0B0B0" : "#FFFFFF";
 	if (_drDocument)
 	{

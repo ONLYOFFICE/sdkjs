@@ -11402,7 +11402,7 @@ CPresentation.prototype.CanStartAnimationPreview = function () {
 	}
 	return oTiming.canStartDemo();
 };
-CPresentation.prototype.StartAnimationPreview = function () {
+CPresentation.prototype.StartAnimationPreview = function (isAllSlideAnimations) {
 	if (!this.CanStartAnimationPreview()) {
 		return false;
 	}
@@ -11410,6 +11410,7 @@ CPresentation.prototype.StartAnimationPreview = function () {
 	if (!oTiming) {
 		return false;
 	}
+	oTiming.isAllSlideAnimations = isAllSlideAnimations
 	var oPlayer = oTiming.createDemoPlayer();
 	if (!oPlayer) {
 		return false;

@@ -9303,7 +9303,7 @@
 			}
 			
 			if (canEdit && readyMode) {
-				var _range = new asc_Range(c.col, r.row, c.col, r.row)
+				var _range = new asc_Range(c.col, r.row, c.col, r.row);
 				var pivotButtons = !this.model.inTopAutoFilter(_range) && this.model.getPivotTableButtons(_range);
 				var pivotButton = pivotButtons && pivotButtons.find(function (element) {
 					return element.row === r.row && element.col === c.col;
@@ -16428,6 +16428,9 @@
 							return;
 						}
 
+						var oRangeFrom = new AscCommonExcel.Range(t.model, arn.r1, arn.c1, arn.r2, AscCommon.gc_nMaxCol0);
+                		var oRangeTo = new AscCommonExcel.Range(t.model, arn.r1, arn.c1 + count, arn.r2, arn.c2 + count);
+
 						functionModelAction = function () {
 							History.Create_NewPoint();
 							History.StartTransaction();
@@ -16442,6 +16445,9 @@
 							if (changeFreezePane) {
 								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
 							}
+							oRangeTo.bbox.r2 = oRangeTo.bbox.r1;
+							oRangeTo.bbox.c2 = oRangeTo.bbox.c1 + count;
+							Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo, true);
 							History.EndTransaction();
 							t.workbook.Api.onWorksheetChange({r1: 0, c1: checkRange.c1, r2: AscCommon.gc_nMaxRow0, c2: checkRange.c2});
 						};
@@ -16468,6 +16474,9 @@
 							return;
 						}
 
+						var oRangeFrom = new AscCommonExcel.Range(t.model, arn.r1, arn.c1, AscCommon.gc_nMaxRow0, arn.c2);
+                		var oRangeTo = new AscCommonExcel.Range(t.model, arn.r1 + count, arn.c1, arn.r2 + count, arn.c2);
+
 						functionModelAction = function () {
 							oRecalcType = AscCommonExcel.recalcType.full;
 							reinitRanges = true;
@@ -16480,6 +16489,9 @@
 							if (changeFreezePane) {
 								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
 							}
+							oRangeTo.bbox.r2 = oRangeTo.bbox.r1 + count;
+							oRangeTo.bbox.c2 = oRangeTo.bbox.c1;
+							Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo, false);
 							t.workbook.Api.onWorksheetChange({r1: checkRange.r1, c1 : 0, r2: checkRange.r2, c2: AscCommon.gc_nMaxCol0});
 						};
 
@@ -19775,14 +19787,14 @@
 		}
 
 		return this.model.AutoFilter && this.model.AutoFilter.Ref.contains(c, r) && this.model.AutoFilter.Ref.r1 === r;
-    };
+	};
 
-    WorksheetView.prototype.af_setDialogProp = function (filterProp, isReturnProps) {
-        if(!filterProp){
-            return;
-        }
+	WorksheetView.prototype.af_setDialogProp = function (filterProp, tooltipPreview) {
+		if (!filterProp) {
+			return;
+		}
 
-		if (!isReturnProps && this.model.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
+		if (!tooltipPreview && this.model.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
 			return;
 		}
 
@@ -19791,18 +19803,18 @@
 		let autoFilterObject = this.model.autoFilters.getAutoFiltersOptions(this.model, filterProp, function (r, c) {
 			rowButton = r;
 			colButton = c;
-		});
+		}, tooltipPreview);
 		if (autoFilterObject) {
 			let cellCoord = this.getCellCoord(colButton, rowButton);
 			autoFilterObject.asc_setCellCoord(cellCoord);
 		}
 
-        if (isReturnProps) {
-            return autoFilterObject;
-        } else {
-            this.handlers.trigger("setAutoFiltersDialog", autoFilterObject);
-        }
-    };
+		if (tooltipPreview) {
+			return autoFilterObject;
+		} else {
+			this.handlers.trigger("setAutoFiltersDialog", autoFilterObject);
+		}
+	};
 
     WorksheetView.prototype.af_changeSelectionTablePart = function (activeRange) {
         var t = this;

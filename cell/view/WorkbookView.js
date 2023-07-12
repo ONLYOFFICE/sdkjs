@@ -5163,7 +5163,7 @@
 		}
 
 		let index = this.model.getExternalLinkIndexByName(eR.externalReference.Id);
-		let toER = eR.externalReference.clone();
+		let toER = eR.externalReference.clone(true);
 		toER.initFromObj(to);
 
 		this.model.changeExternalReference(index, toER);

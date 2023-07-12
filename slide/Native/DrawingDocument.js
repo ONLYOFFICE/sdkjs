@@ -148,7 +148,7 @@ function CDrawingDocument()
     this.UpdateTargetFromPaint = false;
     this.TextMatrix = null;
 
-    this.CanvasHitContext = CreateHitControl();
+    this.CanvasHitContext = CreateEmbedObject("CHitNativeEmbed");
 
     this.TargetCursorColor = {R: 0, G: 0, B: 0};
 

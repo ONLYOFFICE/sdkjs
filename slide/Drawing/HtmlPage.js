@@ -2624,6 +2624,7 @@ function CEditorPage(api)
 
 		// remove media
 		this.m_oApi.hideVideoControl();
+		AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
 	};
 
 	// scrolls
@@ -4514,6 +4515,9 @@ function CEditorPage(api)
 
 		if (this.m_oDrawingDocument.TransitionSlide.IsPlaying())
 			this.m_oDrawingDocument.TransitionSlide.End(true);
+
+		if (this.m_oLogicDocument.IsStartedPreview())
+			this.m_oApi.asc_StopAnimationPreview();
 
 		if (lPageNum != -1 && (lPageNum < 0 || lPageNum >= drDoc.SlidesCount))
 			return;

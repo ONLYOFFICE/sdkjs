@@ -823,7 +823,8 @@
 		var arrIds = [];
 		for(var nIdx = 0; nIdx < arrObjects.length; ++nIdx)
 		{
-			arrIds.push(arrObjects[nIdx].InternalId);
+			let oOleObject = arrObjects[nIdx];
+			arrIds.push(oOleObject["InternalId"]);
 		}
 		this.WordControl.m_oLogicDocument.RemoveDrawingObjects(arrIds);
 	};

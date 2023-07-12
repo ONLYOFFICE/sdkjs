@@ -14664,7 +14664,7 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
-	ExternalReference.prototype.clone = function () {
+	ExternalReference.prototype.clone = function (needCloneSheets) {
 		var newObj = new ExternalReference();
 
 		if (this.DefinedNames) {
@@ -14688,6 +14688,15 @@ QueryTableField.prototype.clone = function() {
 			newObj.referenceData = {};
 			newObj.referenceData["fileKey"] = this.referenceData["fileKey"];
 			newObj.referenceData["instanceId"] = this.referenceData["instanceId"];
+		}
+
+		if (needCloneSheets) {
+			for (let i = 0; i < this.SheetNames.length; i++) {
+				newObj.SheetNames.push(this.SheetNames[i]);
+			}
+			for (let i in this.worksheets) {
+				newObj.worksheets[i] = this.worksheets[i];
+			}
 		}
 
 		return newObj;
