@@ -77,6 +77,9 @@
 
 					//url - file link
 
+					if (!bTimeout && oResult["code"] === AscCommon.c_oAscServerCommandErrors.NoError) {
+						arrData[i]["url"] = oResult["url"];
+					}
 					fResolve();
 				});
 			});
