@@ -243,9 +243,10 @@ MasterSlide.prototype.handleAllContents = Slide.prototype.handleAllContents;
 MasterSlide.prototype.getMatchingShape = Slide.prototype.getMatchingShape;
 MasterSlide.prototype.recalculate = function () {
     var _shapes = this.cSld.spTree;
-    var _shape_index;
+    var _shape_index, _slideLayout_index;
     var _shape_count = _shapes.length;
     var bRecalculateBounds = this.recalcInfo.recalculateBounds;
+    var bRecalculateSlideLayouts = this.recalcInfo.recalculateSlideLayouts;
     if (bRecalculateBounds) {
         this.bounds.reset(this.Width + 100.0, this.Height + 100.0, -100.0, -100.0);
     }
@@ -268,7 +269,12 @@ MasterSlide.prototype.recalculate = function () {
         }
         this.recalcInfo.recalculateBounds = false;
     }
-
+    if (bRecalculateSlideLayouts) {
+        for (_slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
+            this.sldLayoutLst[_slideLayout_index].recalculate()
+        }
+        this.recalcInfo.recalculateSlideLayouts = false;
+    }
 
 };
 MasterSlide.prototype.checkSlideSize = Slide.prototype.checkSlideSize
@@ -287,7 +293,8 @@ MasterSlide.prototype.needRecalc = function(){
     var recalcInfo = this.recalcInfo;
     return recalcInfo.recalculateBackground ||
         recalcInfo.recalculateSpTree ||
-        recalcInfo.recalculateBounds;
+        recalcInfo.recalculateBounds ||
+        recalcInfo.recalculateSlideLayouts;
 };
 MasterSlide.prototype.setSlideSize = function (w, h) {
     History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideMasterSetSize, new AscFormat.CDrawingBaseCoordsWritable(this.Width, this.Height), new AscFormat.CDrawingBaseCoordsWritable(w, h)));
@@ -374,6 +381,7 @@ MasterSlide.prototype.addToSldLayoutLstToPos = function (pos, obj) {
     History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterAddLayout, pos, [obj], true));
     this.sldLayoutLst.splice(pos, 0, obj);
     obj.setMaster(this);
+    this.recalcInfo.recalculateSlideLayouts = true;
 };
 MasterSlide.prototype.removeFromSldLayoutLstByPos = function (pos, count) {
     History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterRemoveLayout, pos, this.sldLayoutLst.slice(pos, pos + count), false));

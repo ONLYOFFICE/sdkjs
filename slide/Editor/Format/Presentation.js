@@ -4461,43 +4461,13 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		recalcMap = this.GetRecalculateMaps();
 		for (key in recalcMap.masters) {
 			if (recalcMap.masters.hasOwnProperty(key)) {
+				bAttack = recalcMap.masters[key].needRecalc();
 				recalcMap.masters[key].recalculate();
-				recalcShapesList = recalcMap.masters[key].cSld.spTree;
-				for (j in recalcShapesList) {
-					oShape = recalcShapesList[j]
-					oShape.recalculate();
-					if (oShape.parent instanceof AscCommonSlide.SlideLayout) {
-						oShape.parent.ImageBase64 = "";
-						b_check_layout = true;
-						bAttack = true;
-						for (i = 0; i < this.Slides.length; ++i) {
-							if (this.Slides[i].Layout === oShape.parent) {
-								if (redrawSlideIndexMap[i] !== true) {
-									redrawSlideIndexMap[i] = true;
-									aToRedrawSlides.push(i);
-								}
-							}
-						}
-					}
-				}
 			}
 		}
 		for (key in recalcMap.layouts) {
 			if (recalcMap.layouts.hasOwnProperty(key)) {
 				recalcMap.layouts[key].recalculate();
-				if (recalcMap.layouts[key] instanceof AscCommonSlide.SlideLayout) {
-					recalcMap.layouts[key].ImageBase64 = "";
-					b_check_layout = true;
-					bAttack = true;
-					for (i = 0; i < this.Slides.length; ++i) {
-						if (this.Slides[i].Layout === recalcMap.layouts[key]) {
-							if (redrawSlideIndexMap[i] !== true) {
-								redrawSlideIndexMap[i] = true;
-								aToRedrawSlides.push(i);
-							}
-						}
-					}
-				}
 			}
 		}
 		this.bNeedUpdateChartPreview = true;
