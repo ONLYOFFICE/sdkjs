@@ -10012,6 +10012,7 @@ background-repeat: no-repeat;\
 
 		if (oContentControl && oContentControl.GetContentControlType)
 		{
+			oContentControl.SkipSpecialContentControlLock(true);
 			if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType())
 			{
 				isLocked = oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
@@ -10039,6 +10040,7 @@ background-repeat: no-repeat;\
 			}
 
 			Id = oContentControl.GetId();
+			oContentControl.SkipSpecialContentControlLock(false);
 		}
 
 		if (false === isLocked)
