@@ -32,88 +32,73 @@
 
 "use strict";
 
-(function (window)
-{
+(function (window) {
 
-	function CPromiseIteratorBase()
-	{
+	function CPromiseIteratorBase() {
 	}
-	CPromiseIteratorBase.prototype.getPromise = function (nIndex)
-	{
+
+	CPromiseIteratorBase.prototype.getPromise = function (nIndex) {
 
 	};
-	CPromiseIteratorBase.prototype.forEachValue = function (fSuccess, fReject, fAfterAll)
-	{
+	CPromiseIteratorBase.prototype.forEachValue = function (fSuccess, fReject, fAfterAll) {
 		let nIndex = 0;
 		const oThis = this;
 
-		const resolveIndexPromise = function()
-		{
+		const resolveIndexPromise = function () {
 			const oPromise = oThis.getPromise(nIndex);
-			if (oPromise)
-			{
-				oPromise.then(function (oValue)
-				{
+			if (oPromise) {
+				oPromise.then(function (oValue) {
 					nIndex += 1;
 					fSuccess && fSuccess(oValue);
 					resolveIndexPromise();
-				}, function (reason)
-				{
+				}, function (reason) {
 					nIndex += 1;
 					fReject && fReject(reason);
 					resolveIndexPromise();
 				});
-			}
-			else
-			{
+			} else {
 				fAfterAll && fAfterAll();
 			}
 		};
 		resolveIndexPromise();
 	};
-	CPromiseIteratorBase.prototype.forAllSuccessValues = function (fCallback)
-	{
+	CPromiseIteratorBase.prototype.forAllSuccessValues = function (fCallback) {
 		const arrValues = [];
-		const fAfterAll = function ()
-		{
+		const fAfterAll = function () {
 			fCallback(arrValues);
-		}
-		this.forEachValue(function (oValue)
-		{
+		};
+		this.forEachValue(function (oValue) {
 			arrValues.push(oValue);
 		}, undefined, fAfterAll);
 	};
 
-	function CPromiseIterator(arrPromises)
-	{
+	function CPromiseIterator(arrPromises) {
 		CPromiseIteratorBase.call(this);
 		this.promises = arrPromises;
 	}
+
 	AscFormat.InitClassWithoutType(CPromiseIterator, CPromiseIteratorBase);
 
-	CPromiseIterator.prototype.getPromise = function (nIndex)
-	{
+	CPromiseIterator.prototype.getPromise = function (nIndex) {
 		return this.promises[nIndex];
 	};
 
-	function CPromiseGetterIterator(arrFPromiseGetters)
-	{
+	function CPromiseGetterIterator(arrFPromiseGetters) {
 		CPromiseIteratorBase.call(this);
 		this.promiseGetters = arrFPromiseGetters;
 	}
+
 	AscFormat.InitClassWithoutType(CPromiseGetterIterator, CPromiseIteratorBase);
 
-	CPromiseGetterIterator.prototype.getPromise = function (nIndex)
-	{
+	CPromiseGetterIterator.prototype.getPromise = function (nIndex) {
 		const fPromiseGetter = this.promiseGetters[nIndex];
-		if (fPromiseGetter)
-		{
+		if (fPromiseGetter) {
 			return fPromiseGetter();
 		}
 	};
 
 	AscCommon = window.AscCommon = window.AscCommon || {};
 	AscCommon.CPromiseGetterIterator = CPromiseGetterIterator;
-	AscCommon.CPromiseIterator       = CPromiseIterator;
+	AscCommon.CPromiseIterator = CPromiseIterator;
 
 })(window);
