@@ -16387,12 +16387,6 @@
 		oSpecProps = oSpecProps.Copy();
 		oSpecProps.Clear();
 
-		if (nIndex != nItemsCount)
-		{
-			let oTmpItem = oSpecProps.ListItems.splice(nItemsCount, 1)[0];
-			oSpecProps.ListItems.splice(nIndex, 0, oTmpItem);
-		}
-
 		if (isComboBox)
 			this.Sdt.SetComboBoxPr(oSpecProps);
 		else
@@ -16572,7 +16566,7 @@
 			this.Sdt.SetDropDownListPr(oSpecProps);
 
 		oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-		this.Item = oSpecProps.ListItems[nCurIdx];
+		this.Item = oSpecProps.ListItems[nIndex];
 
 		return true;
 	};
