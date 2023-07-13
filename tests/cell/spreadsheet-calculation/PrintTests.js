@@ -421,7 +421,7 @@ $(function() {
 		});
 	}
 
-	function testPageBreaks() {
+	function testPageBreaksSimple() {
 		QUnit.test("Test: page break settings ", function (assert) {
 			//change active cell and add page break
 			//C5
@@ -842,18 +842,23 @@ $(function() {
 			};
 
 			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings after undo:");
+			AscCommon.History.Clear();
+		});
+	}
 
+	function testPageBreaksAndTitles() {
+		QUnit.test("Test: page break and titles settings ", function (assert) {
 			api.asc_SetPrintScale(null, null, 100);
 			api.asc_changePrintTitles("$A:$D", "$1:$5", 0);
 			wsView.setSelection(new Asc.Range(1, 3, 1, 3));
 			api.asc_InsertPageBreak();
 
-			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			let printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
 			assert.strictEqual(printPagesData.arrPages.length, 9, "Compare pages length with print titles");
 
-			page = printPagesData.arrPages[0];
+			let page = printPagesData.arrPages[0];
 
-			referenceObj = {
+			let referenceObj = {
 				"pageWidth": 297,
 				"pageHeight": 210,
 				"pageClipRectLeft": 37.79527559055118,
@@ -1032,6 +1037,68 @@ $(function() {
 			};
 
 			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 8:");
+
+			undoAll();
+			updateView();
+
+			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 6 after undo");
+			page = printPagesData.arrPages[0];
+			referenceObj = {
+				indexWorksheet: 0,
+				leftFieldInPx: 38.79527559055118,
+				pageClipRectHeight: 700.7800000000003,
+				pageClipRectLeft: 37.79527559055118,
+				pageClipRectTop: 37.79527559055118,
+				pageClipRectWidth: 796.2399999999999,
+				pageGridLines: false,
+				pageHeadings: false,
+				pageHeight: 210,
+				pageWidth: 297,
+				scale: 0.74,
+				startOffset: 0,
+				startOffsetPx: 0,
+				titleColRange: null,
+				titleHeight: 0,
+				titleRowRange: null,
+				titleWidth: 0,
+				topFieldInPx: 38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 18,
+					r1: 0,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings after undo:");
+			AscCommon.History.Clear();
+		});
+	}
+
+	function testPageBreaksManipulation() {
+		QUnit.test("Test: page break manipulation ", function (assert) {
+			//add breaks
+			ws = api.wbModel.aWorksheets[0];
+
+			assert.strictEqual((ws.colBreaks == null || ws.colBreaks.getCount() === 0) ? null : 1, null, "colbreaks count before 1");
+			assert.strictEqual((ws.rowBreaks == null || ws.rowBreaks.getCount() === 0) ? null : 1, null, "rowBreaks count before 1");
+
+			let insertColBreakId = 1;
+			let insertRowBreakId = 3;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			assert.strictEqual(ws.colBreaks.getCount(), 1, "colbreaks count after 1");
+			assert.strictEqual(ws.rowBreaks.getCount(), 1, "rowBreaks count after 1");
+
+			assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, "colBreaks is null before add colbreaks");
+			assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, "rowBreaks is null before add rowBreaks");
+
+			AscCommon.History.Undo();
+
 		});
 	}
 
@@ -1040,7 +1107,9 @@ $(function() {
 	function startTests() {
 		QUnit.start();
 		testPrintFileSettings();
-		testPageBreaks();
+		testPageBreaksSimple();
+		testPageBreaksAndTitles();
+		testPageBreaksManipulation();
 	}
 
 
