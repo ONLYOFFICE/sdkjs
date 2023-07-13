@@ -16625,7 +16625,7 @@
 	};
 
 	/**
-	 * Deletes the specified item in a combo box or drop-down list content control..
+	 * Sets a String that represents the display text of a list item for a drop-down list or combo box content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText
@@ -16633,6 +16633,9 @@
 	 */
 	ApiContentControlListEntry.prototype.SetText = function(sText)
 	{
+		if (this.GetValue() == "")
+			return false;
+
 		if (typeof(sText) != "string" || sText == "")
 			return false;
 
