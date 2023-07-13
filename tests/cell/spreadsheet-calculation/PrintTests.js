@@ -140,7 +140,7 @@ $(function() {
 	function comparePrintPageSettings (assert, obj1, obj2, desc) {
 		for (let i in obj1) {
 			if (obj1.hasOwnProperty(i)) {
-				if (i === "pageRange") {
+				if (typeof(obj1[i]) === "object" && (i === "pageRange" || i === "titleRowRange" || i === "titleColRange")) {
 					for (let j in obj1[i]) {
 						if (obj1[i].hasOwnProperty(j)) {
 							assert.strictEqual(obj1[i][j], obj2[i][j], desc + j);
@@ -810,7 +810,7 @@ $(function() {
 			updateView();
 
 			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
-			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 1");
+			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 6 after undo");
 			page = printPagesData.arrPages[0];
 			referenceObj = {
 				indexWorksheet: 0,
@@ -842,6 +842,196 @@ $(function() {
 			};
 
 			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings after undo:");
+
+			api.asc_SetPrintScale(null, null, 100);
+			api.asc_changePrintTitles("$A:$D", "$1:$5", 0);
+			wsView.setSelection(new Asc.Range(1, 3, 1, 3));
+			api.asc_InsertPageBreak();
+
+			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 9, "Compare pages length with print titles");
+
+			page = printPagesData.arrPages[0];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 21,
+				"pageClipRectHeight": 45,
+				"pageRange": {"c1": 0, "r1": 0, "c2": 0, "r2": 2, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": null,
+				"titleColRange": null,
+				"titleWidth": 0,
+				"titleHeight": 0
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 1:");
+
+			page = printPagesData.arrPages[1];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 966,
+				"pageClipRectHeight": 45,
+				"pageRange": {"c1": 1, "r1": 0, "c2": 16, "r2": 2, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": null,
+				"titleColRange": {"c1": 0, "r1": 0, "c2": 0, "r2": 2, "refType1": 3, "refType2": 3},
+				"titleWidth": 21,
+				"titleHeight": 0
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 2:");
+
+			page = printPagesData.arrPages[2];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 89,
+				"pageClipRectHeight": 45,
+				"pageRange": {"c1": 17, "r1": 0, "c2": 18, "r2": 2, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": null,
+				"titleColRange": {"c1": 0, "r1": 0, "c2": 3, "r2": 2, "refType1": 3, "refType2": 3},
+				"titleWidth": 177,
+				"titleHeight": 0
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 3:");
+
+			page = printPagesData.arrPages[3];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 21,
+				"pageClipRectHeight": 662,
+				"pageRange": {"c1": 0, "r1": 3, "c2": 0, "r2": 45, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": {"c1": 0, "r1": 0, "c2": 0, "r2": 2, "refType1": 3, "refType2": 3},
+				"titleColRange": null,
+				"titleWidth": 0,
+				"titleHeight": 45
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 4:");
+
+			page = printPagesData.arrPages[4];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 966,
+				"pageClipRectHeight": 662,
+				"pageRange": {"c1": 1, "r1": 3, "c2": 16, "r2": 45, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": {"c1": 1, "r1": 0, "c2": 16, "r2": 2, "refType1": 3, "refType2": 3},
+				"titleColRange": {"c1": 0, "r1": 3, "c2": 0, "r2": 45, "refType1": 3, "refType2": 3},
+				"titleWidth": 21,
+				"titleHeight": 45
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 5:");
+
+			page = printPagesData.arrPages[5];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 89,
+				"pageClipRectHeight": 662,
+				"pageRange": {"c1": 17, "r1": 3, "c2": 18, "r2": 45, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": {"c1": 17, "r1": 0, "c2": 18, "r2": 2, "refType1": 3, "refType2": 3},
+				"titleColRange": {"c1": 0, "r1": 3, "c2": 3, "r2": 45, "refType1": 3, "refType2": 3},
+				"titleWidth": 177,
+				"titleHeight": 45
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 6:");
+
+			page = printPagesData.arrPages[7];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 966,
+				"pageClipRectHeight": 240,
+				"pageRange": {"c1": 1, "r1": 46, "c2": 16, "r2": 57, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": {"c1": 1, "r1": 0, "c2": 16, "r2": 4, "refType1": 3, "refType2": 3},
+				"titleColRange": {"c1": 0, "r1": 46, "c2": 0, "r2": 57, "refType1": 3, "refType2": 3},
+				"titleWidth": 21,
+				"titleHeight": 73
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 8:");
 		});
 	}
 
