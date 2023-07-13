@@ -3672,23 +3672,25 @@
 	}
 
 	/**
-	 * Class representing a list values of combobox/listbox content control.
+	 * Class representing a list values of combobox/dropdown list content control.
 	 * @constructor
 	 */
-	function ApiContentControlList(Sdt, aValues)
+	function ApiContentControlList(Parent)
 	{
-		this.Sdt = Sdt;
-		this.List = aValues;
+		this.Sdt    = Parent.Sdt;
+		this.Parent = Parent;
 	}
 
 	/**
-	 * Class representing an entry of a list values of combobox/listbox content control.
+	 * Class representing an entry of a list values of combobox/dropdown list content control.
 	 * @constructor
 	 */
-	function ApiContentControlListEntry(Sdt, SdtListItem)
+	function ApiContentControlListEntry(Sdt, Parent, Text, Value)
 	{
-		this.Sdt = Sdt;
-		this.Item = SdtListItem;
+		this.Sdt    = Sdt;
+		this.Parent = Parent;
+		this.Text   = Text;
+		this.Value  = Value;
 	}
 
 	/**
@@ -16268,11 +16270,14 @@
 	 * Checks if the content control is a form.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
+	 * @returns {ApiContentControlList}
 	 */
 	ApiInlineLvlSdt.prototype.GetDropdownList = function()
 	{
-		return new ApiContentControlList(this.Sdt);
+		if (!this.Sdt.IsComboBox() && !this.Sdt.IsDropDownList())
+			throw "Not a drop down content control";
+		
+		return new ApiContentControlList(this);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -16302,11 +16307,12 @@
 	{
 		let nCount	= this.GetElementsCount();
 		let aResult	= [];
-
-		for (let i = 0; i < nCount; i++) {
+		
+		for (let i = 0; i < nCount; ++i)
+		{
 			aResult.push(this.GetItem(i));
 		}
-
+		
 		return aResult;
 	};
 
@@ -16318,25 +16324,22 @@
 	 */
 	ApiContentControlList.prototype.GetElementsCount = function()
 	{
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		return oSpecProps.GetItemsCount();
+		return this.GetListPr().GetItemsCount();
 	};
 
 	/**
 	 * Gets parent content control.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiInlineLvlSdt}
+	 * @returns {ApiInlineLvlSdt | ApiBlockLvlSdt}
 	 */
 	ApiContentControlList.prototype.GetParent = function()
 	{
-		return new ApiInlineLvlSdt(this.Sdt);
+		return this.Parent;
 	};
 
 	/**
-	 * Adds the new value to list of values of combobox/listbox.
+	 * Adds the new value to list of values of combobox/dropdown list.
 	 * @memberof ApiContentControlList
 	 * @param {string} sText - Specifies the display text for the list item..
 	 * @param {string} [sValue=sText] - Specifies the value of the list item.
@@ -16347,71 +16350,55 @@
 	ApiContentControlList.prototype.Add = function(sText, sValue, nIndex)
 	{
 		let nItemsCount = this.GetElementsCount();
-
-		if (typeof(sText) != "string" || sText == "")
+		
+		sText = AscBuilder.GetStringParameter(sText, null);
+		if (!sText)
 			return false;
-		if (typeof(sValue) != "string" || sValue == "")
-			sValue = sText;
-		if (typeof(nIndex) != "number" || nIndex < 0 && nIndex > nItemsCount)
+		
+		sValue = AscBuilder.GetStringParameter(sValue, sText);
+		nIndex = AscBuilder.GetNumberParameter(nIndex, nItemsCount);
+		if (nIndex < 0 || nIndex > nItemsCount)
 			nIndex = nItemsCount;
 
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-		
-		oSpecProps = oSpecProps.Copy();
-		if (oSpecProps.AddItem(sText, sValue) == false)
+		let listPr = this.GetListPr().Copy();
+		if (!listPr.AddItem(sText, sValue, nIndex))
 			return false;
-
-		if (nIndex != nItemsCount)
-		{
-			let oTmpItem = oSpecProps.ListItems.splice(nItemsCount, 1)[0];
-			oSpecProps.ListItems.splice(nIndex, 0, oTmpItem);
-		}
-
-		if (isComboBox)
-			this.Sdt.SetComboBoxPr(oSpecProps);
-		else
-			this.Sdt.SetDropDownListPr(oSpecProps);
-
+		
+		this.SetListPr(listPr);
 		return true;
 	};
 
 	/**
-	 * Clears the list of values of combobox/listbox.
+	 * Clears the list of values of combobox/dropdown list.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
 	 */
 	ApiContentControlList.prototype.Clear = function()
 	{
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		oSpecProps = oSpecProps.Copy();
-		oSpecProps.Clear();
-
-		if (isComboBox)
-			this.Sdt.SetComboBoxPr(oSpecProps);
-		else
-			this.Sdt.SetDropDownListPr(oSpecProps);
-
+		let listPr = this.GetListPr().Copy();
+		listPr.Clear();
+		this.SetListPr(listPr)
 		this.Sdt.SelectListItem("");
 	};
 
 	/**
-	 * Gets the item of values of combobox/listbox.
+	 * Gets the item of values of combobox/dropdown list.
 	 * @memberof ApiContentControlList
 	 * @param {number} nIndex
 	 * @typeofeditors ["CDE"]
+	 * @returns {ApiContentControlListEntry}
 	 */
 	ApiContentControlList.prototype.GetItem = function(nIndex)
 	{
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		if (!oSpecProps.ListItems[nIndex])
-			return null;
-
-		return new ApiContentControlListEntry(this.Sdt, oSpecProps.ListItems[nIndex]);
+		let listPr = this.GetListPr();
+		
+		nIndex = AscBuilder.GetNumberParameter(nIndex, null);
+		if (null === nIndex)
+			throw "Index must be a number";
+		else if (nIndex < 0 || nIndex >= listPr.GetItemsCount())
+			throw "Index out of list range";
+		
+		return new ApiContentControlListEntry(this.Sdt, this, listPr.GetItemDisplayText(nIndex), listPr.GetItemValue(nIndex));
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -16439,11 +16426,10 @@
 	 */
 	ApiContentControlListEntry.prototype.GetParent = function()
 	{
-		let nCurIdx = this.GetIndex();
-		if (nCurIdx == -1)
+		if (-1 === this.GetIndex())
 			return null;
-
-		return new ApiContentControlList(this.Sdt);
+		
+		return this.Parent;
 	};
 
 	/**
@@ -16454,48 +16440,26 @@
 	 */
 	ApiContentControlListEntry.prototype.Select = function()
 	{
-		let nCurIdx = this.GetIndex();
-		if (nCurIdx == -1)
+		if (-1 === this.GetIndex())
 			return false;
-
-		let sValue = this.GetValue();
-
-		var oSpecProps = this.Sdt.IsComboBox() ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-		if (null == oSpecProps.GetTextByValue(sValue) && sValue != "")
-			return false;
-
-		this.Sdt.SelectListItem(sValue);
+		
+		this.Sdt.SelectListItem(this.GetValue());
 		return true;
 	};
 
 	/**
-	 * Moves an item in a drop-down list or combo box content control up one item, so that it is before the item that originally preceded it.
+	 * Moves the current item in the parent drop-down list or combo box content control up one element.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
 	ApiContentControlListEntry.prototype.MoveUp = function()
 	{
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		let nCurIdx = this.GetIndex();
-		if (nCurIdx === -1 || nCurIdx == 0)
+		let nCurIndex = this.GetIndex();
+		if (-1 === nCurIndex || 0 === nCurIndex)
 			return false;
-
-		oSpecProps = oSpecProps.Copy();
-		let oItem = oSpecProps.ListItems.splice(nCurIdx, 1)[0];
-		oSpecProps.ListItems.splice(nCurIdx - 1, 0, oItem);
-
-		if (isComboBox)
-			this.Sdt.SetComboBoxPr(oSpecProps);
-		else
-			this.Sdt.SetDropDownListPr(oSpecProps);
-
-		oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-		this.Item = oSpecProps.ListItems[nCurIdx - 1];
-
-		return true;
+		
+		return this.SetIndex(nCurIndex - 1);
 	};
 
 	/**
@@ -16506,26 +16470,12 @@
 	 */
 	ApiContentControlListEntry.prototype.MoveDown = function()
 	{
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		let nCurIdx = this.GetIndex();
-		if (nCurIdx === -1 || nCurIdx == this.GetParent().GetElementsCount() - 1)
+		let nCurIndex = this.GetIndex();
+		let nItemsCount = this.Parent.GetListPr().GetItemsCount();
+		if (-1 === nCurIndex || nCurIndex >= nItemsCount - 1)
 			return false;
-
-		oSpecProps = oSpecProps.Copy();
-		let oItem = oSpecProps.ListItems.splice(nCurIdx, 1)[0];
-		oSpecProps.ListItems.splice(nCurIdx + 1, 0, oItem);
-
-		if (isComboBox)
-			this.Sdt.SetComboBoxPr(oSpecProps);
-		else
-			this.Sdt.SetDropDownListPr(oSpecProps);
-
-		oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-		this.Item = oSpecProps.ListItems[nCurIdx + 1];
-
-		return true;
+		
+		return this.SetIndex(nCurIndex + 1);
 	};
 
 	/**
@@ -16536,10 +16486,8 @@
 	 */
 	ApiContentControlListEntry.prototype.GetIndex = function()
 	{
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		return oSpecProps.ListItems.indexOf(this.Item);
+		let listPr = this.Parent.GetListPr();
+		return listPr.GetIndex(this.Value);
 	};
 
 	/**
@@ -16551,25 +16499,17 @@
 	 */
 	ApiContentControlListEntry.prototype.SetIndex = function(nIndex)
 	{
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		let nCurIdx = this.GetIndex();
-		if (nCurIdx === -1)
+		let nCurIndex = this.GetIndex();
+		if (-1 === nCurIndex)
 			return false;
-
-		oSpecProps = oSpecProps.Copy();
-		let oItem = oSpecProps.ListItems.splice(nCurIdx, 1)[0];
-		oSpecProps.ListItems.splice(nIndex, 0, oItem);
-
-		if (isComboBox)
-			this.Sdt.SetComboBoxPr(oSpecProps);
-		else
-			this.Sdt.SetDropDownListPr(oSpecProps);
-
-		oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-		this.Item = oSpecProps.ListItems[nIndex];
-
+		else if (nIndex === nCurIndex)
+			return true;
+		
+		let listPr = this.Parent.GetListPr().Copy();
+		listPr.RemoveItem(nCurIndex);
+		listPr.AddItem(this.Text, this.Value, nIndex);
+		this.Parent.SetListPr(listPr);
+		
 		return true;
 	};
 
@@ -16581,27 +16521,23 @@
 	 */
 	ApiContentControlListEntry.prototype.Delete = function()
 	{
-		let oParent		= this.GetParent();
-		let isComboBox	= this.Sdt.IsComboBox();
-		let oSpecProps	= isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		let nCurIdx = this.GetIndex();
-		if (nCurIdx === -1)
+		let nCurIndex = this.GetIndex();
+		if (nCurIndex === -1)
 			return false;
-
-		oSpecProps = oSpecProps.Copy();
-		oSpecProps.ListItems.splice(nCurIdx, 1)[0];
-
-		if (isComboBox)
-			this.Sdt.SetComboBoxPr(oSpecProps);
+		
+		let listPr = this.Parent.GetListPr().Copy();
+		listPr.RemoveItem(nCurIndex);
+		this.Parent.SetListPr(listPr);
+		
+		if (listPr.GetItemsCount())
+		{
+			this.Parent.GetItem(0).Select();
+		}
 		else
-			this.Sdt.SetDropDownListPr(oSpecProps);
-
-		let oItemToSelect = oParent.GetItem(0);
-		if (oItemToSelect)
-			oItemToSelect.Select();
-		else
-			this.GetParent().GetParent().RemoveAllElements();
+		{
+			this.Sdt.SetShowingPlcHdr(true)
+			this.Sdt.ReplaceContentWithPlaceHolder();
+		}
 		
 		return true;
 	};
@@ -16614,14 +16550,7 @@
 	 */
 	ApiContentControlListEntry.prototype.GetText = function()
 	{
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		let nCurIdx = this.GetIndex();
-		if (nCurIdx === -1)
-			return "";
-		
-		return oSpecProps.GetItemDisplayText(nCurIdx)
+		return this.Text;
 	};
 
 	/**
@@ -16633,30 +16562,20 @@
 	 */
 	ApiContentControlListEntry.prototype.SetText = function(sText)
 	{
-		if (this.GetValue() == "")
+		let nCurIndex = this.GetIndex();
+		if (this.GetValue() === "" || -1 === nCurIndex)
 			return false;
-
-		if (typeof(sText) != "string" || sText == "")
+		
+		sText = AscBuilder.GetStringParameter(sText, null);
+		if (null === sText)
 			return false;
-
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		let nCurIdx = this.GetIndex();
-		if (nCurIdx === -1)
-			return false;
-
-		oSpecProps = oSpecProps.Copy();
-		oSpecProps.ListItems[nCurIdx].DisplayText = sText;
-
-		if (isComboBox)
-			this.Sdt.SetComboBoxPr(oSpecProps);
-		else
-			this.Sdt.SetDropDownListPr(oSpecProps);
-
-		oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-		this.Item = oSpecProps.ListItems[nCurIdx];
-
+		
+		this.Text = sText;
+		
+		let listPr = this.Parent.GetListPr().Copy();
+		listPr.RemoveItem(nCurIndex);
+		listPr.AddItem(this.Text, this.Value, nCurIndex);
+		this.Parent.SetListPr(listPr);
 		this.Select();
 		return true;
 	};
@@ -16669,53 +16588,38 @@
 	 */
 	ApiContentControlListEntry.prototype.GetValue = function()
 	{
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		let nCurIdx = this.GetIndex();
-		if (nCurIdx === -1)
-			return "";
-
-		return oSpecProps.GetItemValue(nCurIdx);
+		return this.Value;
 	};
 
 	/**
 	 * Sets a String that represents the value of a list item for a drop-down list or combo box content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText
+	 * @param {string} sValue
 	 * @returns {boolean}
 	 */
 	ApiContentControlListEntry.prototype.SetValue = function(sValue)
 	{
-		if (typeof(sValue) != "string" || sValue == "")
+		let nCurIndex = this.GetIndex();
+		sValue = AscBuilder.GetStringParameter(sValue, null);
+		
+		if (null === sValue
+			|| this.GetValue() === ""
+			|| this.GetValue() === sValue
+			|| -1 === nCurIndex
+			|| -1 !== this.Parent.GetListPr().GetIndex(sValue))
 			return false;
-
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-
-		let nCurIdx = this.GetIndex();
-		if (nCurIdx === -1)
-			return false;
-
-		if (oSpecProps.GetTextByValue(sValue) != null)
-			return false;
-
-		oSpecProps = oSpecProps.Copy();
-		oSpecProps.ListItems[nCurIdx].Value = sValue;
-				
-		if (isComboBox)
-			this.Sdt.SetComboBoxPr(oSpecProps);
-		else
-			this.Sdt.SetDropDownListPr(oSpecProps);
-
-		oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-		this.Item = oSpecProps.ListItems[nCurIdx];
-
+		
+		this.Value = sValue;
+		
+		let listPr = this.Parent.GetListPr().Copy();
+		listPr.RemoveItem(nCurIndex);
+		listPr.AddItem(this.Text, this.Value, nCurIndex);
+		this.Parent.SetListPr(listPr);
+		this.Select();
 		return true;
 	};
-
-
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiBlockLvlSdt
@@ -17441,7 +17345,20 @@
 		oDoc.AddCaption(oCapPr);
 		return true;
 	};
-
+	
+	/**
+	 * Checks if the content control is a form.
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiContentControlList}
+	 */
+	ApiBlockLvlSdt.prototype.GetDropdownList = function()
+	{
+		if (!this.Sdt.IsComboBox() && !this.Sdt.IsDropDownList())
+			throw "Not a drop down content control";
+		
+		return new ApiContentControlList(this);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFormBase
@@ -19997,7 +19914,7 @@
 	ApiInlineLvlSdt.prototype["SetPlaceholderText"]     = ApiInlineLvlSdt.prototype.SetPlaceholderText;
 	ApiInlineLvlSdt.prototype["IsForm"]                 = ApiInlineLvlSdt.prototype.IsForm;
 	ApiInlineLvlSdt.prototype["GetForm"]                = ApiInlineLvlSdt.prototype.GetForm;
-	ApiInlineLvlSdt.prototype["GetDropdownList"]		= ApiInlineLvlSdt.prototype.GetDropdownList;
+	ApiInlineLvlSdt.prototype["GetDropdownList"]        = ApiInlineLvlSdt.prototype.GetDropdownList;
 
 	ApiContentControlList.prototype["GetClassType"]		= ApiContentControlList.prototype.GetClassType;
 	ApiContentControlList.prototype["GetAllItems"]		= ApiContentControlList.prototype.GetAllItems;
@@ -20054,6 +19971,7 @@
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
 	ApiBlockLvlSdt.prototype["SetBackgroundColor"]      = ApiBlockLvlSdt.prototype.SetBackgroundColor;
 	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
+	ApiBlockLvlSdt.prototype["GetDropdownList"]         = ApiBlockLvlSdt.prototype.GetDropdownList;
 
 	ApiFormBase.prototype["GetClassType"]        = ApiFormBase.prototype.GetClassType;
 	ApiFormBase.prototype["GetFormType"]         = ApiFormBase.prototype.GetFormType;
@@ -21034,6 +20952,20 @@
 	ApiBlockLvlSdt.prototype.private_GetImpl = function()
 	{
 		return this.Sdt;
+	};
+	ApiContentControlList.prototype.GetListPr = function()
+	{
+		if (this.Sdt.IsComboBox())
+			return this.Sdt.GetComboBoxPr();
+		else
+			return this.Sdt.GetDropDownListPr();
+	};
+	ApiContentControlList.prototype.SetListPr = function(newPr)
+	{
+		if (this.Sdt.IsComboBox())
+			return this.Sdt.SetComboBoxPr(newPr);
+		else
+			return this.Sdt.SetDropDownListPr(newPr);
 	};
 
 	ApiFormBase.prototype.private_GetImpl = function()
