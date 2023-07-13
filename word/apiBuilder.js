@@ -16339,7 +16339,7 @@
 	 * Adds the new value to list of values of combobox/listbox.
 	 * @memberof ApiContentControlList
 	 * @param {string} sText - Specifies the display text for the list item..
-	 * @param {string} sValue - Specifies the value of the list item.
+	 * @param {string} [sValue=sText] - Specifies the value of the list item.
 	 * @param {number} [nIndex=this.GetElementsCount()] - position to add.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -16350,6 +16350,8 @@
 
 		if (typeof(sText) != "string" || sText == "")
 			return false;
+		if (typeof(sValue) != "string" || sValue == "")
+			sValue = sText;
 		if (typeof(nIndex) != "number" || nIndex < 0 && nIndex > nItemsCount)
 			nIndex = nItemsCount;
 
@@ -16683,7 +16685,7 @@
 	 */
 	ApiContentControlListEntry.prototype.SetValue = function(sValue)
 	{
-		if (typeof(sValue) != "string")
+		if (typeof(sValue) != "string" || sValue == "")
 			return false;
 
 		let isComboBox = this.Sdt.IsComboBox();
