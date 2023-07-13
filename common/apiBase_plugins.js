@@ -1599,13 +1599,14 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @param {string} id - The button ID.
      * @param {boolean} bShow - The flag specifies whether the button is shown (**true**) or hidden (**false**).
+     * @param {boolean} bRightPosition - The flag indicates whether the button will be displayed on the right side of the window or on the left (*false* by default).
      * @alias ShowButton 
      * @since 7.2.0
      */
-	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
+	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow, bRightPosition)
 	{
 		if (bShow) {
-			this.sendEvent("asc_onPluginShowButton", id);
+			this.sendEvent("asc_onPluginShowButton", id, bRightPosition);
 		} else {
 			this.sendEvent("asc_onPluginHideButton", id);
 		}
