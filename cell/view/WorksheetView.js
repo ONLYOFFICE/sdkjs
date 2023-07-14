@@ -12635,11 +12635,11 @@
 				//change page breaks
 				if (toRange.colByX) {
 					if (toRange.colByX !== fromRange.colByX) {
-						this.changeRowColBreaks(fromRange.colByX, toRange.colByX, fromRange, true)
+						this.changeRowColBreaks(fromRange.colByX, toRange.colByX, fromRange, true, true)
 					}
 				} else {
 					if (toRange.rowByY !== fromRange.rowByY) {
-						this.changeRowColBreaks(fromRange.rowByY, toRange.rowByY, fromRange)
+						this.changeRowColBreaks(fromRange.rowByY, toRange.rowByY, fromRange, null, true)
 					}
 				}
 			} else if (!fromRange.isEqual(toRange)) {
@@ -21410,7 +21410,7 @@
 		return res;
 	};
 
-	WorksheetView.prototype.changeRowColBreaks = function (from, to, range, byCol) {
+	WorksheetView.prototype.changeRowColBreaks = function (from, to, range, byCol, opt_handle_move) {
 		var t = this;
 
 		if (from === -1 || to === -1) {
@@ -21424,6 +21424,11 @@
 
 			History.Create_NewPoint();
 			History.StartTransaction();
+
+			//remove all breaks on path(from->to)
+			if (opt_handle_move) {
+
+			}
 
 			t.model.changeRowColBreaks(from, to, range, byCol, true);
 			t.changeViewPrintLines(true);

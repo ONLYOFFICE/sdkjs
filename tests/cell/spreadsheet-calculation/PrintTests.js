@@ -1252,6 +1252,32 @@ $(function() {
 		});
 	}
 
+	function testPageBreakMove() {
+		QUnit.test("Test: page break move ", function (assert) {
+			//add breaks
+			ws = api.wbModel.aWorksheets[0];
+
+			let beforeFunc = function(desc) {
+				assert.strictEqual((ws.colBreaks == null || ws.colBreaks.getCount() === 0) ? null : 1, null, desc);
+				assert.strictEqual((ws.rowBreaks == null || ws.rowBreaks.getCount() === 0) ? null : 1, null, desc);
+			};
+
+			let insertColBreakId = 1;
+			let insertRowBreakId = 3;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col1row3");
+
+		});
+	}
+
 	QUnit.module("Print");
 
 	function startTests() {
@@ -1260,6 +1286,7 @@ $(function() {
 		testPageBreaksSimple();
 		testPageBreaksAndTitles();
 		testPageBreaksManipulation();
+		//testPageBreakMove();
 	}
 
 
