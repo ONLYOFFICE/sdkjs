@@ -118,6 +118,7 @@ $(function() {
 	};
 
 	AscCommon.CHistory.prototype.UndoRedoEnd = function () {
+		this.TurnOn();
 	};
 
 	var api = new Asc.spreadsheet_api({
@@ -1078,27 +1079,170 @@ $(function() {
 		});
 	}
 
+	function checkUndoRedo(fBefore, fAfter, desc, skipLastUndo) {
+		fAfter("after_" + desc);
+		AscCommon.History.Undo();
+		fBefore("undo_" + desc);
+		AscCommon.History.Redo();
+		fAfter("redo_" + desc);
+		if (!skipLastUndo) {
+			AscCommon.History.Undo();
+		}
+	}
+
 	function testPageBreaksManipulation() {
 		QUnit.test("Test: page break manipulation ", function (assert) {
 			//add breaks
 			ws = api.wbModel.aWorksheets[0];
 
-			assert.strictEqual((ws.colBreaks == null || ws.colBreaks.getCount() === 0) ? null : 1, null, "colbreaks count before 1");
-			assert.strictEqual((ws.rowBreaks == null || ws.rowBreaks.getCount() === 0) ? null : 1, null, "rowBreaks count before 1");
+			let beforeFunc = function(desc) {
+				assert.strictEqual((ws.colBreaks == null || ws.colBreaks.getCount() === 0) ? null : 1, null, desc);
+				assert.strictEqual((ws.rowBreaks == null || ws.rowBreaks.getCount() === 0) ? null : 1, null, desc);
+			};
 
 			let insertColBreakId = 1;
 			let insertRowBreakId = 3;
 			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
 			api.asc_InsertPageBreak();
 
-			assert.strictEqual(ws.colBreaks.getCount(), 1, "colbreaks count after 1");
-			assert.strictEqual(ws.rowBreaks.getCount(), 1, "rowBreaks count after 1");
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
 
-			assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, "colBreaks is null before add colbreaks");
-			assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, "rowBreaks is null before add rowBreaks");
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col1row3");
 
-			AscCommon.History.Undo();
 
+			insertColBreakId = 5;
+			insertRowBreakId = 5;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col5row5");
+
+
+
+			insertColBreakId = 1;
+			insertRowBreakId = 1;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col1row1");
+
+			insertColBreakId = 0;
+			insertRowBreakId = 0;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 0, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 0, desc + " check row count");
+			}, "insert page break_col0row0");
+
+			insertColBreakId = 0;
+			insertRowBreakId = 1;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 0, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col0row1");
+
+			insertColBreakId = 1;
+			insertRowBreakId = 0;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 0, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+			}, "insert page break_col1row0");
+
+			insertColBreakId = 3;
+			insertRowBreakId = 3;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col3row3", true);
+
+			//remove
+			insertColBreakId = 4;
+			insertRowBreakId = 4;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_RemovePageBreak();
+
+			assert.strictEqual(ws.colBreaks.getCount(), 1, " check col count + remove1");
+			assert.strictEqual(ws.rowBreaks.getCount(), 1, " check row count + remove1");
+
+			assert.strictEqual(ws.colBreaks.containsBreak(3), true, " check col contains + remove1");
+			assert.strictEqual(ws.rowBreaks.containsBreak(3), true, " check row contains + remove1");
+
+
+			insertColBreakId = 3;
+			insertRowBreakId = 3;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_RemovePageBreak();
+
+			checkUndoRedo(function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, beforeFunc, "remove page break_col3row3");
+
+			assert.strictEqual(ws.colBreaks.getCount(), 1, " check col count + remove2");
+			assert.strictEqual(ws.rowBreaks.getCount(), 1, " check row count + remove2");
+
+			assert.strictEqual(ws.colBreaks.containsBreak(3), true, " check col contains + remove2");
+			assert.strictEqual(ws.rowBreaks.containsBreak(3), true, " check row contains + remove2");
+
+			insertColBreakId = 5;
+			insertRowBreakId = 5;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc);
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc);
+			}, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 2, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 2, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col5row5", true);
+
+			//reset all
+			api.asc_ResetAllPageBreaks();
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 2, desc);
+				assert.strictEqual(ws.rowBreaks.getCount(), 2, desc);
+			}, beforeFunc, "insert page break_col5row5", true);
 		});
 	}
 

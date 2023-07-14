@@ -15597,6 +15597,9 @@ QueryTableField.prototype.clone = function() {
 	};
 
 	CRowColBreaks.prototype.addBreak = function (id, min, max, man, pt) {
+		if (!id) {
+			return false;
+		}
 		let newBreak = new CBreak();
 		newBreak.set(id, min, max, man, pt);
 		return this._addBreak(newBreak);
