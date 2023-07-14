@@ -1242,7 +1242,13 @@ $(function() {
 			checkUndoRedo(function (desc) {
 				assert.strictEqual(ws.colBreaks.getCount(), 2, desc);
 				assert.strictEqual(ws.rowBreaks.getCount(), 2, desc);
-			}, beforeFunc, "insert page break_col5row5", true);
+
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains");
+
+			}, beforeFunc, "remove all page breaks", true);
 		});
 	}
 

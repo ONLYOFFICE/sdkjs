@@ -11880,13 +11880,16 @@
 	Worksheet.prototype.resetAllPageBreaks = function () {
 		let t = this;
 
-		let doRemoveBreaks = function(_breaks) {
+		let doRemoveBreaks = function(_breaks, byCol) {
 			if (!_breaks) {
 				return;
 			}
 			let aBreaks = _breaks.getBreaks();
 			for (let i = 0; i < aBreaks.length; i++) {
+				let fromData = new AscCommonExcel.UndoRedoData_RowColBreaks(aBreaks[i].id, aBreaks[i].min, aBreaks[i].max, aBreaks[i].man, aBreaks[i].pt, byCol);
 				if (_breaks.removeBreak(aBreaks[i].id)) {
+					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeRowColBreaks, t.getId(),
+						null, new AscCommonExcel.UndoRedoData_FromTo(fromData, null));
 					i--;
 				}
 			}
@@ -11896,7 +11899,7 @@
 			doRemoveBreaks(this.rowBreaks);
 		}
 		if (this.colBreaks) {
-			doRemoveBreaks(this.colBreaks);
+			doRemoveBreaks(this.colBreaks, true);
 		}
 		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());
 	};
