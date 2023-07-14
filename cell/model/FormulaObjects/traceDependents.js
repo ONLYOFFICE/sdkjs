@@ -51,17 +51,28 @@ function (window, undefined) {
 		this.precedentsExternal = null;
 		this.currentPrecedents = null;
 		this.dependents = null;
+		this.isDependetsCall = null;
 		this.inLoop = null;
 		this.isPrecedentsCall = null;
 		this.precedentsAreas = null;
 		this.inPrecedentsAreasLoop = null;
+		this.data = {
+			recLevel: 0,
+			maxRecLevel: 0,
+			recLevelBeforeFork: 0,
+			indices: {
+				// cellIndex: level
+			}
+		};
 	}
 
 	TraceDependentsManager.prototype.setPrecedentsCall = function () {
 		this.isPrecedentsCall = true;
+		this.isDependetsCall = false;
 	};
 	TraceDependentsManager.prototype.setDependentsCall = function () {
-		this.isPrecedentsCall = null;
+		this.isDependetsCall = true;
+		this.isPrecedentsCall = false;
 	};
 	TraceDependentsManager.prototype.setPrecedentExternal = function (cellIndex) {
 		if (!this.precedentsExternal) {
@@ -134,19 +145,6 @@ function (window, undefined) {
 			}
 			return listeners;
 		};
-		// const checkIfHeader2 = function (parserF) {
-		// 	let area = parserF.outStack[0].area ? parserF.outStack[0].area : false;
-		// 	if (!area) {
-		// 		return false;
-		// 	}
-		// 	// let bbox = area.range ? area.range.bbox : area.bbox;
-		// 	let bbox = area.getBBox0();
-		// 	if (bbox.contains(cellAddress.col, cellAddress.row)) {
-		// 		return true;
-		// 	} else {
-		// 		return false;
-		// 	}
-		// };
 		const checkIfHeader = function (tableHeader) {
 			if (!tableHeader) {
 				return false;
@@ -171,7 +169,6 @@ function (window, undefined) {
 						let elem = allDefNamesListeners[i].listeners[listener];
 						let isArea = elem.ref ? !elem.ref.isOneCell() : false;
 						let is3D = elem.ws.Id ? elem.ws.Id !== ws.Id : false;
-						// let isCurrentHeader = isTable ? checkIfHeader(elem) : false;
 						if (isArea && !is3D && !isCurrentCellHeader) {
 							// decompose all elements into dependencies
 							let areaIndexes = getAllAreaIndexes(elem);
@@ -190,6 +187,7 @@ function (window, undefined) {
 							if (elem.Formula.includes("Headers")) {
 								if (isCurrentCellHeader) {
 									t._setDependents(cellIndex, parentCellIndex);
+									t._setPrecedents(parentCellIndex, cellIndex);
 								} else {
 									continue;
 								}
@@ -197,6 +195,21 @@ function (window, undefined) {
 							} else if (!elem.Formula.includes("Headers") && isCurrentCellHeader) {
 								continue;
 							}
+							// ?additional check if the listener is in the same table, need to check if it is a listener of the main cell
+							if (elem.outStack) {
+								let arr = [];
+								// check each element of the stack for an occurrence in the original cell
+								for (let table in elem.outStack) {
+									if (elem.outStack[table].type !== AscCommonExcel.cElementType.table) {
+										continue;
+									}
+									arr.push(elem.outStack[table].area.bbox.contains2(cellAddress));
+								}
+								if (!arr.includes(true)) {
+									continue;
+								}
+							}
+
 							// shared checks
 							if (elem.shared !== null && !is3D) {
 								let currentCellRange = ws.getCell3(cellAddress.row, cellAddress.col);
@@ -204,9 +217,11 @@ function (window, undefined) {
 								continue;
 							}
 							t._setDependents(cellIndex, parentCellIndex);
+							t._setPrecedents(parentCellIndex, cellIndex);
 							continue;
 						} else {
 							t._setDependents(cellIndex, parentCellIndex);
+							t._setPrecedents(parentCellIndex, cellIndex);
 						}
 					}
 				}
@@ -243,11 +258,12 @@ function (window, undefined) {
 				for (let j in curListener.areaMap) {
 					if (curListener.areaMap.hasOwnProperty(j)) {
 						if (curListener.areaMap[j] && curListener.areaMap[j].bbox.contains(cellAddress.col, cellAddress.row)) {
-							let res = curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);	// doesn't work with tables
+							let res = curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);
 							// draw dependents to coords from res
 							if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
 								let index = AscCommonExcel.getCellIndex(res.r1, res.c1);
 								t._setDependents(cellIndex, index);
+								t._setPrecedents(index, cellIndex);
 							}
 						}
 					}
@@ -288,6 +304,7 @@ function (window, undefined) {
 			if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
 				let index = AscCommonExcel.getCellIndex(res.r1, res.c1);
 				t._setDependents(cellIndex, index);
+				t._setPrecedents(index, cellIndex);
 			} else {
 				// split shared range on two parts
 				let split = currentRange.difference(shared.ref);
@@ -298,6 +315,7 @@ function (window, undefined) {
 					if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
 						let index = AscCommonExcel.getCellIndex(res.r1, res.c1);
 						t._setDependents(cellIndex, index);
+						t._setPrecedents(index, cellIndex);
 					}
 
 					// second part
@@ -312,12 +330,11 @@ function (window, undefined) {
 						if (indexes.length > 0) {
 							for (let index of indexes) {
 								t._setDependents(cellIndex, index);
+								t._setPrecedents(index, cellIndex);
 							}
 						}
 					}
 				}
-
- 				
 			}
 		};
 
@@ -341,24 +358,8 @@ function (window, undefined) {
 							isDefName
 						};
 
-
 						if (isDefName) {
 							// TODO check external table ref
-							// if (isTable) {
-							// 	// check if 3D
-							// 	is3D = parent.parsedRef.outStack[0].wsFrom ? parent.parsedRef.outStack[0].wsFrom.Id !== parent.parsedRef.outStack[0].wsTo.Id : false;
-							// 	if (!is3D) {
-							// 		setDefNameIndexes(parent.name, is3D);
-							// 	} else {
-
-							// 	}
-							// } else {
-							// 	is3D = ws.Id !== parent.parsedRef.ws.Id ? true : false;	// doesn't work with tables
-							// 	setDefNameIndexes(parent.name, is3D);
-							// }
-							// is3D = ws.Id !== parent.parsedRef.ws.Id ? true : false;	// doesn't work with tables
-							// is3D = parent.parsedRef.outStack[0].wsFrom ? parent.parsedRef.outStack[0].wsFrom.Id !== parent.parsedRef.outStack[0].wsTo.Id : false;
-							// setDefNameIndexes(parent.name, is3D, isTable);
 							setDefNameIndexes(parent.name, isTable);
 							continue;
 						} else if (cellListeners[i].is3D) {
@@ -380,7 +381,7 @@ function (window, undefined) {
 							if (areaIndexes) {
 								for (let index of areaIndexes) {
 									this._setDependents(cellIndex, index);
-									// this._setPrecedents(index, cellIndex);
+									this._setPrecedents(index, cellIndex);
 								}
 								continue;
 							}
@@ -391,6 +392,7 @@ function (window, undefined) {
 							continue;
 						}
 						this._setDependents(cellIndex, parentCellIndex);
+						this._setPrecedents(parentCellIndex, cellIndex);
 					}
 				}
 			} else {
@@ -449,6 +451,131 @@ function (window, undefined) {
 		}
 		this.dependents[from][to] = 1;
 	};
+	TraceDependentsManager.prototype._setDefaultData = function () {
+		this.data = {
+			recLevel: 0,
+			recLevelBeforeFork: 0,
+			maxRecLevel: 0,
+			indices: {}
+		};
+	}
+	TraceDependentsManager.prototype.clearLastPrecedent = function (row, col) {
+		let ws = this.ws && this.ws.model;
+		if (!ws || !this.precedents) {
+			return;
+		}
+		if (Object.keys(this.precedents).length === 0) {
+			return;
+		}
+
+		const t = this;
+
+		if (row == null || col == null) {
+			let selection = ws.getSelection();
+			let activeCell = selection.activeCell;
+			row = activeCell.row;
+			col = activeCell.col;
+		}
+
+		const findMaxNesting = function (row, col) {
+			let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
+
+			let formulaParsed;
+			ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
+				formulaParsed = cell.formulaParsed;
+			});
+	
+			if (!formulaParsed) {
+				t.data.indices[currentCellIndex] = t.data.recLevel;
+				return;
+			}
+	
+			// t.dependets[currentCellIndex] - ?
+			if (t.precedents[currentCellIndex]) {
+				let interLevel, fork;
+				if (Object.keys(t.precedents[currentCellIndex]).length > 1) {
+					// t.data.recLevelBeforeFork = t.data.recLevel;
+					// t.data.recLevelBeforeFork = interLevel;
+					fork = true;
+				}
+
+				t.data.recLevel++;
+				t.data.maxRecLevel = t.data.recLevel > t.data.maxRecLevel ? t.data.recLevel : t.data.maxRecLevel;
+				interLevel = t.data.recLevel;
+				// interLevel = t.data.recLevel;
+				for (let j in t.precedents[currentCellIndex]) {
+					if (j.includes(";")) {
+						let uniqueIndex = j + "|" + currentCellIndex;
+						t.data.indices[uniqueIndex] = t.data.recLevel;
+						// t.data.indices[j] = t.data.recLevel;
+						continue;
+					}
+					// t.data.recLevelBeforeFork = fork ? interLevel : t.data.recLevelBeforeFork;
+					// t.data.recLevel = fork ? t.data.recLevelBeforeFork : t.data.recLevel;
+					let coords = AscCommonExcel.getFromCellIndex(j, true);
+					findMaxNesting(coords.row, coords.col);
+					t.data.recLevel = fork ? interLevel : t.data.recLevel;
+				}
+			} else {
+				t.data.indices[currentCellIndex] = t.data.recLevel;
+				return;
+			}
+		}
+
+		const filterAreas = function (areas, cell) {
+			let result = {}; 
+			for (let area in areas) {
+				if (areas.hasOwnProperty(area)) {
+					if (!areas[area].range.contains2(cell)) {
+						result[area] = Object.assign({}, areas[area]);
+					}
+				}
+			}
+			return result; 
+		}
+
+		findMaxNesting(row, col);
+
+		const maxLevel = this.data.maxRecLevel;
+
+		if (maxLevel === 0) {
+			this._setDefaultData();
+			return;
+		}
+
+		for (let [index, indexLevel] of Object.entries(this.data.indices)) {
+			// ? add is3D flag
+			if (indexLevel == maxLevel) {
+				let fromIndex;
+				if (index.includes(";")) {
+					let parts = index.split("|");
+					index = parts[0];
+					fromIndex = parts[1];
+				} else {
+					fromIndex = this.dependents && this.dependents[index] ?  Object.keys(this.dependents[index])[0] : null;
+				}
+				if (fromIndex) {
+					if (index.includes(";")) {
+						this._deleteDependent(index, fromIndex);
+						this._deletePrecedent(fromIndex, index);
+						continue;
+					}
+					// TODO check if index in area
+					let indexCoords = AscCommonExcel.getFromCellIndex(index, true);
+					if (this.precedentsAreas) {
+						// check all areas
+						let res = filterAreas(this.precedentsAreas, indexCoords);
+						this.precedentsAreas = res;
+					}
+
+					this._deleteDependent(index, fromIndex);
+					this._deletePrecedent(fromIndex, index);
+				}
+			}
+		}
+
+		this._setDefaultData();
+	};
 	TraceDependentsManager.prototype.calculatePrecedents = function (row, col, isSecondCall) {
 		//depend from row/col cell
 		let ws = this.ws && this.ws.model;
@@ -498,15 +625,15 @@ function (window, undefined) {
 		}
 		// TODO maybe while? or get through the current precedentsAreas (...this.precedentsAreas)
 		// else {
-			let formulaParsed;
-			ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
-				formulaParsed = cell.formulaParsed;
-			});
-	
-			if (formulaParsed) {
-				this._calculatePrecedents(formulaParsed, row, col);
-				this.setPrecedentsCall();
-			}
+		let formulaParsed;
+		ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
+			formulaParsed = cell.formulaParsed;
+		});
+
+		if (formulaParsed) {
+			this._calculatePrecedents(formulaParsed, row, col);
+			this.setPrecedentsCall();
+		}
 		// }
 	};
 	TraceDependentsManager.prototype._calculatePrecedents = function (formulaParsed, row, col) {
@@ -580,7 +707,7 @@ function (window, undefined) {
 									elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1);
 								} else {
 									diff = elemRange.difference(shared.ref);
-									if (diff.length > 1) {
+									if (diff.length > 0) {
 										let res = diff[0].getSharedIntersect(elemRange, cellRange);
 										if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
 											elemCellIndex = AscCommonExcel.getCellIndex(res.r1, res.c1);
@@ -602,6 +729,7 @@ function (window, undefined) {
 								// elemRange = new asc_Range(elemRange.c1 + (col - base.nCol), elemRange.r1 + (row - base.nRow), elemRange.c2 + (col - base.nCol), elemRange.r2 + (row - base.nRow)); ???
 							}
 						} else {
+							// TODO maybe use cross if not ref
 							elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1);
 						}
 						
@@ -620,7 +748,8 @@ function (window, undefined) {
 
 						if (is3D) {
 							elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
-							currentDependentsCellIndex += ";" + currentWsIndex
+							// currentDependentsCellIndex += ";" + currentWsIndex
+							this._setDependents(elemCellIndex, currentCellIndex);
 							this._setPrecedents(currentCellIndex, elemCellIndex);
 							this.setPrecedentExternal(currentCellIndex);
 						} else {
@@ -662,6 +791,22 @@ function (window, undefined) {
 	TraceDependentsManager.prototype._getPrecedents = function (from, to) {
 		return this.precedents[from] && this.precedents[from][to];
 	};
+	TraceDependentsManager.prototype._deleteDependent = function (from, to) {
+		if (this.dependents[from] && this.dependents[from][to]) {
+			delete this.dependents[from][to];
+			if (Object.keys(this.dependents[from]).length === 0) {
+				delete this.dependents[from];
+			}
+		}
+	};
+	TraceDependentsManager.prototype._deletePrecedent = function (from, to) {
+		if (this.precedents[from] && this.precedents[from][to]) {
+			delete this.precedents[from][to];
+			if (Object.keys(this.precedents[from]).length === 0) {
+				delete this.precedents[from];
+			}
+		}
+	};
 	TraceDependentsManager.prototype._setPrecedents = function (from, to) {
 		if (!this.precedents) {
 			this.precedents = {};
@@ -694,24 +839,50 @@ function (window, undefined) {
 			callback(i, this.dependents[i], this.isPrecedentsCall);
 		}
 	};
-	TraceDependentsManager.prototype.forEachPrecedents = function (callback) {
+	TraceDependentsManager.prototype.forEachExternalPrecedent = function (callback) {
 		for (let i in this.precedents) {
 			callback(i);
 		}
 	};
-	TraceDependentsManager.prototype.clear = function (type) {
+	TraceDependentsManager.prototype.clearOld = function (type) {
 		if (Asc.c_oAscRemoveArrowsType.all === type || Asc.c_oAscRemoveArrowsType.precedent === type) {
 			this.precedents = null;
 		}
 		if (Asc.c_oAscRemoveArrowsType.all === type || Asc.c_oAscRemoveArrowsType.dependent === type) {
 			this.dependents = null;
 		}
-		if (Asc.c_oAscRemoveArrowsType.all === type || Asc.c_oAscRemoveArrowsType.dependent === type) {
+		if (Asc.c_oAscRemoveArrowsType.all === type || Asc.c_oAscRemoveArrowsType.precedent === type) {
 			this.precedentsExternal = null;
 		}
-		if (Asc.c_oAscRemoveArrowsType.all === type || Asc.c_oAscRemoveArrowsType.dependent === type) {
+		if (Asc.c_oAscRemoveArrowsType.all === type || Asc.c_oAscRemoveArrowsType.precedent === type) {
 			this.precedentsAreas = null;
 		}
+	};
+	TraceDependentsManager.prototype.clear = function (type) {
+		if (Asc.c_oAscRemoveArrowsType.all === type) {
+			this.clearAll();
+		}
+		if (Asc.c_oAscRemoveArrowsType.dependent === type) {
+			this.clearLastDependent();
+		}
+		if (Asc.c_oAscRemoveArrowsType.precedent === type) {
+			this.clearLastPrecedent();
+		}
+	};
+	TraceDependentsManager.prototype.clearAll = function () {
+		this.precedents = null;
+		this.precedentsExternal = null;
+		this.currentPrecedents = null;
+		this.dependents = null;
+		this.isDependetsCall = null;
+		this.inLoop = null;
+		this.isPrecedentsCall = null;
+		this.precedentsAreas = null;
+		this.inPrecedentsAreasLoop = null;
+		this._setDefaultData();
+	};
+	TraceDependentsManager.prototype.clearLastDependent = function (row, col, type) {
+		
 	};
 
 

@@ -8779,8 +8779,7 @@ var editor;
 		if (!wb) {
 			return;
 		}
-
-		var ws = wb.getWorksheet();
+		let ws = wb.getWorksheet();
 		return ws.tracePrecedents();
 	};
 
@@ -8792,7 +8791,7 @@ var editor;
 		if (!wb) {
 			return;
 		}
-		var ws = wb.getWorksheet();
+		let ws = wb.getWorksheet();
 		return ws.traceDependents();
 	};
 
@@ -8804,7 +8803,7 @@ var editor;
 		if (!wb) {
 			return;
 		}
-		var ws = wb.getWorksheet();
+		let ws = wb.getWorksheet();
 		//c_oAscRemoveArrowsType
 		return ws.removeTraceArrows(type);
 	};

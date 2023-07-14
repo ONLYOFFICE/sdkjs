@@ -5085,6 +5085,7 @@
 			const xStep = dx / (dashCount);
 			const yStep = dy / (dashCount);
 
+			ctx.setLineWidth(widthLine);
 			ctx.beginPath();
 			ctx.setStrokeStyle(externalLineColor);
 			ctx.lineDiag(x1, y1, x2, y2);
@@ -5260,7 +5261,7 @@
 			}
 		});
 		// draw external line for precedents
-		traceManager.forEachPrecedents(function (from) {
+		traceManager.forEachExternalPrecedent(function (from) {
 			if (from) {
 				let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
 				// check if cellIndex exist in precedentExternal array
@@ -5270,7 +5271,6 @@
 			}
 		});
 		// draw area
-		// TODO make the arrow outgoing from cArea thicker
 		drawAreaStroke(traceManager._getPrecedentsAreas());
 	};
 
