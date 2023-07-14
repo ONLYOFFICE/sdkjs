@@ -59,7 +59,6 @@ function (window, undefined) {
 		this.data = {
 			recLevel: 0,
 			maxRecLevel: 0,
-			recLevelBeforeFork: 0,
 			indices: {
 				// cellIndex: level
 			}
@@ -85,6 +84,89 @@ function (window, undefined) {
 			return false;
 		}
 		return this.precedentsExternal.has(cellIndex);
+	};
+	TraceDependentsManager.prototype.clearLastDependent = function (row, col) {
+		let ws = this.ws && this.ws.model;
+		if (!ws || !this.dependents) {
+			return;
+		}
+		if (Object.keys(this.dependents).length === 0) {
+			return;
+		}
+
+		const t = this;
+
+		if (row == null || col == null) {
+			let selection = ws.getSelection();
+			let activeCell = selection.activeCell;
+			row = activeCell.row;
+			col = activeCell.col;
+		}
+
+		const findMaxNesting = function (row, col) {
+			let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
+
+			if (t.dependents[currentCellIndex]) {
+				let interLevel, fork;
+				if (Object.keys(t.dependents[currentCellIndex]).length > 1) {
+					fork = true;
+				}
+
+				t.data.recLevel++;
+				t.data.maxRecLevel = t.data.recLevel > t.data.maxRecLevel ? t.data.recLevel : t.data.maxRecLevel;
+				interLevel = t.data.recLevel;
+				for (let j in t.dependents[currentCellIndex]) {
+					if (j.includes(";")) {
+						let uniqueIndex = j + "|" + currentCellIndex;
+						t.data.indices[uniqueIndex] = t.data.recLevel;
+						continue;
+					}
+					let coords = AscCommonExcel.getFromCellIndex(j, true);
+					findMaxNesting(coords.row, coords.col);
+					t.data.recLevel = fork ? interLevel : t.data.recLevel;
+				}
+			} else {
+				t.data.indices[currentCellIndex] = t.data.recLevel;
+				return;
+			}
+		}
+
+		findMaxNesting(row, col);
+
+		const maxLevel = this.data.maxRecLevel;
+
+		if (maxLevel === 0) {
+			this._setDefaultData();
+			return;
+		}
+
+		for (let [index, indexLevel] of Object.entries(this.data.indices)) {
+			if (indexLevel == maxLevel) {
+				let fromIndex;
+				if (index.includes(";")) {
+					let parts = index.split("|");
+					index = parts[0];
+					fromIndex = parts[1];
+				} else {
+					// fromIndex = this.precedents && this.precedents[index] ?  Object.keys(this.precedents[index])[0] : null;
+					fromIndex = this.precedents && this.precedents[index] ?  this.precedents[index] : null;
+				}
+				if (fromIndex) {
+					if (typeof fromIndex === 'string' && index.includes(";")) {
+						this._deleteDependent(fromIndex, index);
+						this._deletePrecedent(index, fromIndex);
+						continue;
+					} else {
+						for (let i in fromIndex) {
+							this._deleteDependent(i, index);
+							this._deletePrecedent(index, i);
+						}
+					}
+				}
+			}
+		}
+
+		this._setDefaultData();
 	};
 	TraceDependentsManager.prototype.calculateDependents = function (row, col) {
 		let ws = this.ws && this.ws.model;
@@ -112,10 +194,6 @@ function (window, undefined) {
 		}
 	};
 	TraceDependentsManager.prototype._calculateDependents = function (cellIndex, curListener) {
-		if (!this.dependents) {
-			this.dependents = {};
-		}
-
 		let t = this;
 		let ws = this.ws.model;
 		let wb = this.ws.model.workbook;
@@ -339,7 +417,10 @@ function (window, undefined) {
 		};
 
 		const cellListeners = findCellListeners();
-		if (cellListeners) {
+		if (cellListeners && Object.keys(cellListeners).length > 0) {
+			if (!this.dependents) {
+				this.dependents = {};
+			}
 			if (!this.dependents[cellIndex]) {
 				// if dependents by cellIndex didn't exist, create it
 				this.dependents[cellIndex] = {};
@@ -454,7 +535,6 @@ function (window, undefined) {
 	TraceDependentsManager.prototype._setDefaultData = function () {
 		this.data = {
 			recLevel: 0,
-			recLevelBeforeFork: 0,
 			maxRecLevel: 0,
 			indices: {}
 		};
@@ -490,28 +570,21 @@ function (window, undefined) {
 				return;
 			}
 	
-			// t.dependets[currentCellIndex] - ?
 			if (t.precedents[currentCellIndex]) {
 				let interLevel, fork;
 				if (Object.keys(t.precedents[currentCellIndex]).length > 1) {
-					// t.data.recLevelBeforeFork = t.data.recLevel;
-					// t.data.recLevelBeforeFork = interLevel;
 					fork = true;
 				}
 
 				t.data.recLevel++;
 				t.data.maxRecLevel = t.data.recLevel > t.data.maxRecLevel ? t.data.recLevel : t.data.maxRecLevel;
 				interLevel = t.data.recLevel;
-				// interLevel = t.data.recLevel;
 				for (let j in t.precedents[currentCellIndex]) {
 					if (j.includes(";")) {
 						let uniqueIndex = j + "|" + currentCellIndex;
 						t.data.indices[uniqueIndex] = t.data.recLevel;
-						// t.data.indices[j] = t.data.recLevel;
 						continue;
 					}
-					// t.data.recLevelBeforeFork = fork ? interLevel : t.data.recLevelBeforeFork;
-					// t.data.recLevel = fork ? t.data.recLevelBeforeFork : t.data.recLevel;
 					let coords = AscCommonExcel.getFromCellIndex(j, true);
 					findMaxNesting(coords.row, coords.col);
 					t.data.recLevel = fork ? interLevel : t.data.recLevel;
@@ -880,9 +953,6 @@ function (window, undefined) {
 		this.precedentsAreas = null;
 		this.inPrecedentsAreasLoop = null;
 		this._setDefaultData();
-	};
-	TraceDependentsManager.prototype.clearLastDependent = function (row, col, type) {
-		
 	};
 
 

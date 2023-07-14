@@ -4901,7 +4901,6 @@
 		visibleRange = this.getVisibleRange();
 		let traceManager = this.traceDependentsManager;
 		let ctx = this.overlayCtx;
-
 		let widthLine = 2, 
 			customScale = AscBrowser.retinaPixelRatio,
 			zoom = this.getZoom();
@@ -5148,8 +5147,6 @@
 			const tableHeight = 9 * zoom * customScale;
 			const cellWidth = tableWidth / 3;
 			const cellHeight = tableHeight / 3;
-			// const cellWidth = 4 * zoom * customScale;
-			// const cellHeight = 2 * zoom * customScale;
 			const lineWidth = 1 * zoom * customScale;
 			const cellStrokesColor = new CColor(0, 0, 0);
 
