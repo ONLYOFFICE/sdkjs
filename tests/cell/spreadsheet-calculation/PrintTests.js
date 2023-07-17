@@ -1307,38 +1307,36 @@ $(function() {
 				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
 				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
 
-				assert.strictEqual(ws.colBreaks.containsBreak(12), true, desc + " check col contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(12), true, desc + " check col contains 12");
 				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
 				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
 				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 4");
 
-			}, "change page col break_from3to4");
-		});
-	}
+			}, "change page col break_from3to12");
 
-	function testPageBreakMove() {
-		QUnit.test("Test: page break move ", function (assert) {
-			//add breaks
-			ws = api.wbModel.aWorksheets[0];
+			wsView.changeRowColBreaks(3, 12, new Asc.Range(0, 0, 16, 57), null, true);
 
-			let beforeFunc = function(desc) {
-				assert.strictEqual((ws.colBreaks == null || ws.colBreaks.getCount() === 0) ? null : 1, null, desc);
-				assert.strictEqual((ws.rowBreaks == null || ws.rowBreaks.getCount() === 0) ? null : 1, null, desc);
-			};
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
 
-			let insertColBreakId = 1;
-			let insertRowBreakId = 3;
-			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
-			api.asc_InsertPageBreak();
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 3");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 3");
+			}, function (desc){
 
-			checkUndoRedo(beforeFunc, function (desc){
-				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
 				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
 
-				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
-				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
-			}, "insert page break_col1row3");
+				assert.strictEqual(ws.rowBreaks.containsBreak(12), true, desc + " check row contains 12");
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 4");
 
+			}, "change page row break_from3to12");
 
 		});
 	}
@@ -1351,7 +1349,6 @@ $(function() {
 		testPageBreaksSimple();
 		testPageBreaksAndTitles();
 		testPageBreaksManipulation();
-		//testPageBreakMove();
 	}
 
 
