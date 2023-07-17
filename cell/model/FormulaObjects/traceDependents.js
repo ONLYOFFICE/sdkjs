@@ -713,9 +713,9 @@ function (window, undefined) {
 		if (!this.precedents) {
 			this.precedents = {};
 		}
-
 		let t = this;
 		let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
+
 		if (!this.precedents[currentCellIndex]) {
 			let shared, base;
 			if (formulaParsed.shared !== null) {
@@ -790,16 +790,7 @@ function (window, undefined) {
 									}
 								}
 							} else {
-								// TODO use getSharedIntersect instead
-								// if the shared formula make a shift relative to the base
-								// let res = shared.ref.getSharedIntersect(elemRange, cellRange);
-								// if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
-								// 	elemCellIndex = AscCommonExcel.getCellIndex(res.r1, res.c1);
-								// } else {
-								// 	elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
-								// }
 								elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
-								// elemRange = new asc_Range(elemRange.c1 + (col - base.nCol), elemRange.r1 + (row - base.nRow), elemRange.c2 + (col - base.nCol), elemRange.r2 + (row - base.nRow)); ???
 							}
 						} else {
 							// TODO maybe use cross if not ref
@@ -954,6 +945,37 @@ function (window, undefined) {
 		this.inPrecedentsAreasLoop = null;
 		this._setDefaultData();
 	};
+	TraceDependentsManager.prototype.clearCellTraces = function (row, col) {
+		let ws = this.ws && this.ws.model;
+		if (!ws || row == null || col == null) {
+			return;
+		}
+
+		if (row == null || col == null) {
+			return;
+			let selection = ws.getSelection();
+			let activeCell = selection.activeCell;
+			row = activeCell.row;
+			col = activeCell.col;
+		}
+
+		let formulaParsed;
+		ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
+			formulaParsed = cell.formulaParsed;
+		});
+
+		if (!formulaParsed || !this.precedents || !this.dependents) {
+			return;
+		}
+		let cellIndex = AscCommonExcel.getCellIndex(row, col);
+
+		if (this.precedents[cellIndex]) {
+			for (let i in this.precedents[cellIndex]) {
+				this._deleteDependent(i, cellIndex);
+			}
+			delete this.precedents[cellIndex];
+		}
+	}
 
 
 
