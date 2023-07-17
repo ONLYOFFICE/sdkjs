@@ -3273,6 +3273,36 @@
 	 */
 
 	/**
+	 * Properties for make search.
+	 * @typedef SearchData
+	 * @param {string | undefined} What - The data to search for.
+	 * @param {ApiRange} After - The cell after which you want the search to begin. If this argument is not specified, the search starts after the cell in the upper-left corner of the range.
+	 * @param {XlFindLookIn} LookIn - Search data type (formulas or values).
+	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
+	 * @param {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
+	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
+	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
+	 */
+
+	/**
+	 * Properties for make search and replace.
+	 * @typedef ReplacehData
+	 * @param {string | undefined} What - The data to search for.
+	 * @param {string} Replacement - The replacement string.
+	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
+	 * @param {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
+	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
+	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
+	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
+	 */
+
+	/**
+	 * Finds specific information in the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {SearchData} oSearchData - The search data used to make search.
+	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
+	 * @also
 	 * Finds specific information in the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -3284,9 +3314,32 @@
 	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
 	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
 	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
-	 * 
 	 */
-	ApiRange.prototype.Find = function(What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase) {
+	ApiRange.prototype.Find = function(oSearchData) {
+		let What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase;
+
+		if (arguments.length === 1) {
+			if(AscCommon.isRealObject(oSearchData)) {
+				What = oSearchData['What'];
+				After = oSearchData['After'];
+				LookIn = oSearchData['LookIn'];
+				LookAt = oSearchData['LookAt'];
+				SearchOrder = oSearchData['SearchOrder'];
+				SearchDirection = oSearchData['SearchDirection'];
+				MatchCase = oSearchData['MatchCase'];
+			} else {
+				return null;
+			}
+		} else {
+			What = arguments[0];
+			After = arguments[1];
+			LookIn = arguments[2];
+			LookAt = arguments[3];
+			SearchOrder = arguments[4];
+			SearchDirection = arguments[5];
+			MatchCase = arguments[6];
+		}
+
 		if (typeof What === 'string' || What === undefined) {
 			let res = null;
 			let options = new Asc.asc_CFindOptions();
@@ -3404,6 +3457,12 @@
 	 * Replaces specific information to another one in a range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
+	 * @param {ReplacehData} oReplaceData - The data used to make search and replace.
+	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
+	 * @also
+	 * Replaces specific information to another one in a range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
 	 * @param {string | undefined} What - The data to search for.
 	 * @param {string} Replacement - The replacement string.
 	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
@@ -3413,7 +3472,31 @@
 	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
 	 * 
 	 */
-	ApiRange.prototype.Replace = function(What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll) {
+	ApiRange.prototype.Replace = function(oReplaceData) {
+		let What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll;
+		
+		if (arguments.length === 1) {
+			if(AscCommon.isRealObject(oReplaceData)) {
+				What = oReplaceData['What'];
+				Replacement = oReplaceData['Replacement'];
+				LookAt = oReplaceData['LookAt'];
+				SearchOrder = oReplaceData['SearchOrder'];
+				SearchDirection = oReplaceData['SearchDirection'];
+				MatchCase = oReplaceData['MatchCase'];
+				ReplaceAll = oReplaceData['ReplaceAll'];
+			} else {
+				return null;
+			}
+		} else {
+			What = arguments[0];
+			Replacement = arguments[1];
+			LookAt = arguments[2];
+			SearchOrder = arguments[3];
+			SearchDirection = arguments[4];
+			MatchCase = arguments[5];
+			ReplaceAll = arguments[6];
+		}
+
 		if (typeof What === 'string' && typeof Replacement === 'string') {
 			let options = new Asc.asc_CFindOptions();
 			options.asc_setFindWhat(What);
@@ -5505,7 +5588,7 @@
 	 * @returns {string | null}
 	 * @since 7.4.0
 	 */
-	 ApiFont.prototype.GetName = function () {
+	ApiFont.prototype.GetName = function () {
 		if (this._object instanceof ApiCharacters) {
 			let editor = this._object._parent.range.worksheet.workbook.oApi.wb.cellEditor;
 			let opt = this._object._options;
