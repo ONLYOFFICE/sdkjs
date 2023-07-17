@@ -34,7 +34,7 @@
 function CNativeGraphics()
 {
     /** @suppress {checkVars} */
-    this.Native = CreateNativeGraphics();
+    this.Native = CreateEmbedObject("CGraphicsEmbed");
 
     this.isNativeGraphics = true;
 

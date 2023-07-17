@@ -12544,43 +12544,21 @@ ParaRun.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 		var oItem = this.Content[nPos];
 		if (para_FieldChar === oItem.Type)
 		{
-			var oComplexField = oItem.GetComplexField();
-			if(oComplexField)
+			let complexField = oItem.GetComplexField();
+			let instruction  = complexField ? complexField.GetInstruction() : null;
+			if (instruction
+				&& instruction.Type === fieldtype_SEQ
+				&& instruction.CheckId(sType)
+				&& -1 === aFields.indexOf(complexField))
 			{
-				var oInstruction = oComplexField.Instruction;
-				if(oInstruction)
-				{
-					if(oInstruction.Type === fieldtype_SEQ)
-					{
-						if(oInstruction.Id === sType)
-						{
-							var isNeedAdd = true;
-							for (var nFieldIndex = 0, nFieldsCount = aFields.length; nFieldIndex < nFieldsCount; ++nFieldIndex)
-							{
-								if (oComplexField === aFields[nFieldIndex])
-								{
-									isNeedAdd = false;
-									break;
-								}
-							}
-							if (isNeedAdd)
-							{
-								aFields.push(oComplexField);
-							}
-						}
-					}
-				}
+				aFields.push(complexField);
 			}
 		}
-		else if(para_Field === oItem.Type)
+		else if (para_Field === oItem.Type
+			&& oItem.FieldType === fieldtype_SEQ
+			&& oItem.Arguments[0] === sType)
 		{
-			if(oItem.FieldType === fieldtype_SEQ)
-			{
-				if(oItem.Arguments[0] === sType)
-				{
-					aFields.push(oItem);
-				}
-			}
+			aFields.push(oItem);
 		}
 		else if (para_Drawing === oItem.Type)
 		{
@@ -12780,7 +12758,7 @@ ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, oSettings)
                         if (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
                             oSettings.IsForMathPart = -1;
                     }
-                    else
+                    else if (!oItem.IsParaEnd())
                     {
                         oSettings.bBreak = true;
                     }
@@ -12805,7 +12783,7 @@ ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, oSettings)
                         if (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
                             oSettings.IsForMathPart = -1;
                     }
-                    else
+                    else if (!oItem.IsParaEnd())
                     {
                         oSettings.bBreak = true;
                     }

@@ -1427,6 +1427,17 @@ function MoveInGroupState(drawingObjects, majorObject, group, startX, startY)
     {
         this.startPageIndex = this.group.parent.pageIndex;
     }
+	const arrTracks = this.drawingObjects.arrTrackObjects;
+	this.hasObjectInSmartArt = false;
+	for (let i = 0; i < arrTracks.length; i += 1)
+	{
+		const oGraphicObject = arrTracks[i].originalObject;
+		if (oGraphicObject.isObjectInSmartArt())
+		{
+			this.hasObjectInSmartArt = true;
+			break;
+		}
+	}
 }
 
 MoveInGroupState.prototype =
@@ -1456,7 +1467,7 @@ MoveInGroupState.prototype =
 			this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInGroup);
             var i;
             var tracks = this.drawingObjects.arrTrackObjects;
-            if(this instanceof MoveInGroupState && e.CtrlKey)
+            if(this instanceof MoveInGroupState && e.CtrlKey && !this.hasObjectInSmartArt)
             {
                 this.group.resetSelection();
                 for(i = 0; i < tracks.length; ++i)

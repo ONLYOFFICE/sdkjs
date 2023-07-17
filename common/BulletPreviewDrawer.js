@@ -911,6 +911,9 @@
 		this.m_oCanvas = this.getCanvas(this.m_sId);
 		this.m_oGraphics = this.getGraphics(this.m_oCanvas);
 		this.m_nScaleIndentsCoefficient = 0.55;
+		this.m_arrCalcNumberingInfo = null;
+		this.m_nCalcNumberingLvl = -1;
+		this.initNumberingInfo();
 	}
 	CBulletPreviewDrawerAdvancedOptions.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
 	CBulletPreviewDrawerAdvancedOptions.prototype.constructor = CBulletPreviewDrawerAdvancedOptions;
@@ -969,7 +972,16 @@
 	{
 		return CBulletPreviewDrawerBase.prototype.getHeadingTextInformation.call(this, oLvl, nTextXPosition, nTextYPosition, this.m_oPrimaryTextColor.Copy());
 	};
-
+	CBulletPreviewDrawerAdvancedOptions.prototype.getNumberingValue = function (nNumberIndex, nDrawingLvl, oLvl)
+	{
+		if (nDrawingLvl <= this.m_nCalcNumberingLvl && this.m_arrCalcNumberingInfo && this.m_arrCalcNumberingInfo[nDrawingLvl])
+		{
+			const nCalcValue = this.m_arrCalcNumberingInfo[nDrawingLvl];
+			const nStart = oLvl.GetStart();
+			return nCalcValue - nStart + nNumberIndex;
+		}
+		return nNumberIndex;
+	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.drawMultiLvlAdvancedOptions = function ()
 	{
 		const oCanvas = this.m_oCanvas;
@@ -1017,7 +1029,8 @@
 			}
 
 			const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nOffsetText, nTextYy);
-			const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, 1, this.m_oLang);
+			let nNumberIndex = this.getNumberingValue(1, i, oLvl);
+			const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, nNumberIndex, this.m_oLang);
 			if (typeof drawingContent === "string")
 			{
 				this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx,  nTextYy, nLineDistance, oGraphics, oParagraphTextOptions);
@@ -1053,6 +1066,19 @@
 			return nScaleCoefficient;
 		}
 		return 1;
+	};
+	CBulletPreviewDrawerAdvancedOptions.prototype.initNumberingInfo = function ()
+	{
+		var oParagraph = this.m_oLogicDocument.GetCurrentParagraph(true);
+		if (!oParagraph)
+			return;
+
+		const oNumbering = oParagraph.Numbering;
+		if (oNumbering)
+		{
+			this.m_arrCalcNumberingInfo = oNumbering.GetCalculatedNumInfo();
+			this.m_nCalcNumberingLvl = oNumbering.GetCalculatedNumberingLvl();
+		}
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.drawSingleLvlAdvancedOptions = function ()
 	{
@@ -1171,7 +1197,8 @@
 
 		for (let i = 0; i < arrTextYy.length; i += 1)
 		{
-			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, i + 1, this.m_oLang);
+			const nNumberIndex = this.getNumberingValue(i + 1, nCurrentLvl, oCurrentLvl);
+			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, nNumberIndex, this.m_oLang);
 			const nTextYy = arrTextYy[i];
 			if (typeof drawingContent === "string")
 			{

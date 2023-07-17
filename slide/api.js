@@ -2033,17 +2033,7 @@ background-repeat: no-repeat;\
 				startShapePos = drawingDocument.ConvertCoordsToCursorWR(fixPos.x - fixPos.w, fixPos.y - fixPos.h, fixPos.pageNum);
 			}
 
-			if(!notesFocus && curCoord._y > htmlElement.height - AscCommon.specialPasteElemHeight)
-			{
-				if(startShapePos && startShapePos.Y < htmlElement.height - AscCommon.specialPasteElemHeight)
-				{
-					curCoord._y = htmlElement.height - AscCommon.specialPasteElemHeight;
-				}
-				else
-				{
-					curCoord = new AscCommon.asc_CRect( -1, -1, 0, 0 );
-				}
-			}
+	
 
 			var thumbnailsLeft = this.WordControl.m_oMainParent.AbsolutePosition.L* AscCommon.g_dKoef_mm_to_pix;
 			if(!notesFocus && curCoord._x > htmlElement.width + thumbnailsLeft - AscCommon.specialPasteElemWidth)
@@ -4447,7 +4437,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_StartAnimationPreview = function()
 	{
 		this.asc_StopAnimationPreview();
-		if(this.WordControl.m_oLogicDocument.StartAnimationPreview())
+		if(this.WordControl.m_oLogicDocument.StartAnimationPreview(true))
 		{
 			this.sendEvent("asc_onAnimPreviewStarted");
 		}

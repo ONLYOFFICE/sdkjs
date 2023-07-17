@@ -2452,7 +2452,101 @@
 		let nC2B = nC2 & 0xFF;
 		let lab1 = this.RGB2LAB(nC1R, nC1G, nC1B);
 		let lab2 = this.RGB2LAB(nC2R, nC2G, nC2B);
-		return Math.abs(lab2[0] - lab1[0]) + Math.abs(lab2[1] - lab1[1]) + Math.abs(lab2[2] - lab1[2]);
+
+		const d2r = AscCommon.deg2rad;
+
+		const L1 = lab1[0];
+		const a1 = lab1[1];
+		const b1 = lab1[2];
+
+		const L2 = lab2[0];
+		const a2 = lab2[1];
+		const b2 = lab2[2];
+
+		const k_L = 1.0, k_C = 1.0, k_H = 1.0;
+		const deg360InRad = d2r(360.0);
+		const deg180InRad = d2r(180.0);
+		const pow25To7 = 6103515625.0; /* Math.pow(25, 7) */
+
+		let C1 = Math.sqrt((a1 * a1) + (b1 * b1));
+		let C2 = Math.sqrt((a2 * a2) + (b2 * b2));
+		let barC = (C1 + C2) / 2.0;
+		let G = 0.5 * (1 - Math.sqrt(Math.pow(barC, 7) / (Math.pow(barC, 7) + pow25To7)));
+		let a1Prime = (1.0 + G) * a1;
+		let a2Prime = (1.0 + G) * a2;
+		let CPrime1 = Math.sqrt((a1Prime * a1Prime) + (b1 * b1));
+		let CPrime2 = Math.sqrt((a2Prime * a2Prime) + (b2 * b2));
+		let hPrime1;
+		const fAE = function (a, b) {
+			return Math.abs(a - b) < 1e-15;
+		};
+		if (fAE(b1, 0.0) && fAE(a1Prime, 0.0))
+			hPrime1 = 0.0;
+		else {
+			hPrime1 = Math.atan2(b1, a1Prime);
+			if (hPrime1 < 0)
+				hPrime1 += deg360InRad;
+		}
+		let hPrime2;
+		if (fAE(b2, 0.0) && fAE(a2Prime, 0.0))
+			hPrime2 = 0.0;
+		else {
+			hPrime2 = Math.atan2(b2, a2Prime);
+			if (hPrime2 < 0)
+				hPrime2 += deg360InRad;
+		}
+
+		let deltaLPrime = L2 - L1;
+		let deltaCPrime = CPrime2 - CPrime1;
+		let deltahPrime;
+		let CPrimeProduct = CPrime1 * CPrime2;
+		if (fAE(CPrimeProduct, 0.0))
+			deltahPrime = 0;
+		else {
+			deltahPrime = hPrime2 - hPrime1;
+			if (deltahPrime < -deg180InRad)
+				deltahPrime += deg360InRad;
+			else if (deltahPrime > deg180InRad)
+				deltahPrime -= deg360InRad;
+		}
+		let deltaHPrime = 2.0 * Math.sqrt(CPrimeProduct) * Math.sin(deltahPrime / 2.0);
+
+		let barLPrime = (L1 + L2) / 2.0;
+		let barCPrime = (CPrime1 + CPrime2) / 2.0;
+		let barhPrime, hPrimeSum = hPrime1 + hPrime2;
+		if (fAE(CPrime1 * CPrime2, 0.0)) {
+			barhPrime = hPrimeSum;
+		} else {
+			if (Math.abs(hPrime1 - hPrime2) <= deg180InRad)
+				barhPrime = hPrimeSum / 2.0;
+			else {
+				if (hPrimeSum < deg360InRad)
+					barhPrime = (hPrimeSum + deg360InRad) / 2.0;
+				else
+					barhPrime = (hPrimeSum - deg360InRad) / 2.0;
+			}
+		}
+		let T = 1.0 - (0.17 * Math.cos(barhPrime - d2r(30.0))) +
+			(0.24 * Math.cos(2.0 * barhPrime)) +
+			(0.32 * Math.cos((3.0 * barhPrime) + d2r(6.0))) -
+			(0.20 * Math.cos((4.0 * barhPrime) - d2r(63.0)));
+		let deltaTheta = d2r(30.0) *
+			Math.exp(-Math.pow((barhPrime - d2r(275.0)) / d2r(25.0), 2.0));
+		let R_C = 2.0 * Math.sqrt(Math.pow(barCPrime, 7.0) /
+			(Math.pow(barCPrime, 7.0) + pow25To7));
+		let S_L = 1 + ((0.015 * Math.pow(barLPrime - 50.0, 2.0)) /
+			Math.sqrt(20 + Math.pow(barLPrime - 50.0, 2.0)));
+		let S_C = 1 + (0.045 * barCPrime);
+		let S_H = 1 + (0.015 * barCPrime * T);
+		let R_T = (-Math.sin(2.0 * deltaTheta)) * R_C;
+
+		let deltaE = Math.sqrt(
+			Math.pow(deltaLPrime / (k_L * S_L), 2.0) +
+			Math.pow(deltaCPrime / (k_C * S_C), 2.0) +
+			Math.pow(deltaHPrime / (k_H * S_H), 2.0) +
+			(R_T * (deltaCPrime / (k_C * S_C)) * (deltaHPrime / (k_H * S_H))));
+
+		return deltaE;
 	};
 	asc_CColor.prototype.RGB2LAB = function (R, G, B) {
 		let r, g, b, X, Y, Z, fx, fy, fz, xr, yr, zr;
@@ -6053,7 +6147,7 @@
 			"height" : 100, // mm
 			"rotate" : -45, // degrees
 			"margins" : [ 10, 10, 10, 10 ], // text margins
-			"fill" : [255, 0, 0], // [] => none
+			"fill" : [255, 0, 0], // [] => none // "image_url"
 			"stroke-width" : 1, // mm
 			"stroke" : [0, 0, 255], // [] => none
 			"align" : 1, // vertical text align (4 - top, 1 - center, 0 - bottom)
@@ -6097,6 +6191,9 @@
 		this.imageBase64 = undefined;
 		this.width = 0;
 		this.height = 0;
+
+		this.imageBackgroundUrl = "";
+		this.imageBackground = null;
 
 		this.transparent = 0.3;
 		this.zoom = 1;
@@ -6248,6 +6345,10 @@
 				if(obj['fill'] && obj['fill'].length === 3){
 					oShape.spPr.setFill(AscFormat.CreateSolidFillRGB(obj['fill'][0], obj['fill'][1], obj['fill'][2]));
 				}
+				else if (this.imageBackground) {
+					oApi.ImageLoader.map_image_index[this.imageBackgroundUrl] = { Image : this.imageBackground, Status : AscFonts.ImageLoadStatus.Complete };
+					oShape.spPr.setFill(AscFormat.builder_CreateBlipFill(this.imageBackgroundUrl, "stretch"));
+				}
 				if(AscFormat.isRealNumber(obj['stroke-width']) || Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
 					var oUnifill;
 					if(Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
@@ -6274,7 +6375,7 @@
 					oShape.setPaddings({Left: obj['margins'][0], Top: obj['margins'][1], Right: obj['margins'][2], Bottom: obj['margins'][3]});
 				}
 				var oContent = oShape.getDocContent();
-				var aParagraphsS = obj['paragraphs'];
+				var aParagraphsS = obj['paragraphs'] || [];
 				if(aParagraphsS.length > 0){
                     oContent.Content.length = 0;
 				}
@@ -6407,6 +6508,9 @@
 				if (false !== _oldTrackRevision)
 					oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(_oldTrackRevision);
 
+				if (this.imageBackground)
+					delete oApi.ImageLoader.map_image_index[this.imageBackgroundUrl];
+
 			}, this, [obj]);
 
 		};
@@ -6464,7 +6568,7 @@
             this.CheckParams();
 
             var fonts = [];
-            var pars = this.contentObjects['paragraphs'];
+            var pars = this.contentObjects['paragraphs'] || [];
             var i, j;
             for (i = 0; i < pars.length; i++)
             {
@@ -6482,19 +6586,43 @@
                 fonts[i] = new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(fonts[i]), 0, "", 0, null);
             }
 
+			if ("string" === typeof this.contentObjects["fill"])
+				this.imageBackgroundUrl = this.contentObjects["fill"];
+
 			if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
             {
-                this.onReady();
-                return false;
+                this.loadBackgroundImage();
+                return;
             }
 
             this.api.asyncMethodCallback = function() {
                 var oApi = Asc['editor'] || editor;
-                oApi.watermarkDraw.onReady();
+                oApi.watermarkDraw.loadBackgroundImage();
             };
 
             AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
-		}
+		};
+
+		this.loadBackgroundImage = function()
+		{
+			if ("" === this.imageBackgroundUrl)
+			{
+				this.onReady();
+				return;
+			}
+
+			this.imageBackground = new Image();
+			this.imageBackground.onload = function()
+			{
+				Asc["editor"].watermarkDraw.onReady();
+			};
+			this.imageBackground.onerror = function()
+			{
+				Asc["editor"].watermarkDraw.imageBackground = null;
+				Asc["editor"].watermarkDraw.onReady();
+			};
+			this.imageBackground.src = this.imageBackgroundUrl;
+		};
 	}
 
 	// ----------------------------- plugins ------------------------------- //

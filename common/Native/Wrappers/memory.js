@@ -80,8 +80,6 @@ function FT_Memory()
 }
 var g_memory = new FT_Memory();
 
-window["ftm"] = FT_Memory;
-
 function FT_Stream(data, size)
 {
     this.obj = null;

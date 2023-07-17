@@ -3666,15 +3666,6 @@
 	var MATRIX_ORDER_PREPEND = 0;
 	var MATRIX_ORDER_APPEND  = 1;
 
-	function deg2rad(deg)
-	{
-		return deg * Math.PI / 180.0;
-	}
-
-	function rad2deg(rad)
-	{
-		return rad * 180.0 / Math.PI;
-	}
 
 	function CMatrix()
 	{
@@ -3749,7 +3740,7 @@
 		Rotate          : function(a, order)
 		{
 			var m   = new CMatrix();
-			var rad = deg2rad(a);
+			var rad = AscCommon.deg2rad(a);
 			m.sx    = Math.cos(rad);
 			m.shx   = Math.sin(rad);
 			m.shy   = -Math.sin(rad);
@@ -3827,7 +3818,7 @@
 			}
 
 			var a = Math.atan2(_y, _x);
-			a     = rad2deg(a);
+			a     = AscCommon.rad2deg(a);
 			if (a < 0)
 				a += 360;
 			return a;
@@ -3923,7 +3914,7 @@
 		else
 		{
 			a = Math.atan2(_y, _x);
-			a = rad2deg(a);
+			a = AscCommon.rad2deg(a);
 		}
 
 		if (a < 0)
@@ -4314,8 +4305,6 @@
 	window['AscCommon'].CDocumentRenderer        = CDocumentRenderer;
 	window['AscCommon'].MATRIX_ORDER_PREPEND     = MATRIX_ORDER_PREPEND;
 	window['AscCommon'].MATRIX_ORDER_APPEND      = MATRIX_ORDER_APPEND;
-	window['AscCommon'].deg2rad                  = deg2rad;
-	window['AscCommon'].rad2deg                  = rad2deg;
 	window['AscCommon'].CMatrix                  = CMatrix;
 	window['AscCommon'].CMatrixL                 = CMatrixL;
 	window['AscCommon'].CGlobalMatrixTransformer = CGlobalMatrixTransformer;

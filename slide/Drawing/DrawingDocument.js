@@ -3723,6 +3723,9 @@ function CThumbnailsManager()
 		{
 			oThis.m_oWordControl.m_oApi.checkInterfaceElementBlur();
 			oThis.m_oWordControl.m_oApi.checkLastWork();
+
+			// после fullscreen возможно изменение X, Y после вызова Resize.
+			oThis.m_oWordControl.checkBodyOffset();
 		}
 		
 		AscCommon.stopEvent(e);
@@ -5194,7 +5197,6 @@ function CThumbnailsManager()
 			nX = oRect.X + oRect.W - AscCommon.specialPasteElemWidth;
 		}
 		nY = oRect.Y + oRect.H;
-		nY = Math.max(Math.min(oThContainer.GetCSS_height() - 25, nY), 0);
 		return {X: nX, Y: nY};
 	};
 
@@ -5754,7 +5756,9 @@ function CSlideDrawer()
 			this.m_oWordControl.m_oLogicDocument.DrawPage(slideNum, g);
 		}
 
-		if (this.m_oWordControl.m_oApi.watermarkDraw)
+		if (this.m_oWordControl.m_oApi.watermarkDraw &&
+			!this.m_oWordControl.DemonstrationManager.Mode &&
+			!this.m_oWordControl.m_oDrawingDocument.TransitionSlide.IsPlaying())
 		{
 			this.m_oWordControl.m_oApi.watermarkDraw.Draw(outputCtx,
 				AscCommon.AscBrowser.convertToRetinaValue(_rect.left, true),
@@ -6027,6 +6031,9 @@ function CNotesDrawer(page)
 	{
 		if (-1 == oThis.HtmlPage.m_oDrawingDocument.SlideCurrent)
 			return;
+
+		// после fullscreen возможно изменение X, Y после вызова Resize.
+		oThis.HtmlPage.checkBodyOffset();
 
 		AscCommon.check_MouseDownEvent(e, true);
 		global_mouseEvent.LockMouse();

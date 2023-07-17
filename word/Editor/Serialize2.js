@@ -8451,7 +8451,13 @@ function BinaryFileReader(doc, openParams)
 				}
 				var _elem = oReadResult.styles[_style.style];
 				if (_elem && _elem.style && _elem.style.BasedOn) {
-					var basedOnObj = {pPr: null, style: _elem.style.BasedOn};
+					
+					// TODO: Скорее всего pPr: null уже не нужно, и следует снаследовать данный объект от BinaryStyleUpdaterBase
+					var basedOnObj = {
+						pPr: null,
+						style: _elem.style.BasedOn,
+						setStyle: function(styleId) {}
+					};
 					container.push(basedOnObj);
 					putBasedOn(basedOnObj, container);
 				}

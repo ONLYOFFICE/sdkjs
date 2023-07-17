@@ -2413,7 +2413,7 @@ CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
 		let math = selectedInfo.GetMath();
 		if (math)
 			paraPr.CanAddImage = false;
-		else if (false === paraPr.CanAddImage)
+		else if (false !== paraPr.CanAddImage)
 			paraPr.CanAddImage = true;
 		
 		if (math && !math.IsInline())
