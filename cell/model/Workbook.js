@@ -11850,7 +11850,7 @@
 		};
 
 		let isChanged = false;
-		let oFromBreak = rowColBreaks && rowColBreaks.containsBreak(from, min, max);
+		let oFromBreak = rowColBreaks && rowColBreaks.getBreak(from, min, max);
 		if (oFromBreak) {
 			if (to) {
 				//change

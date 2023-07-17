@@ -1248,7 +1248,71 @@ $(function() {
 				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains");
 				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains");
 
-			}, beforeFunc, "remove all page breaks", true);
+			}, beforeFunc, "remove all page breaks");
+
+			//move
+			insertColBreakId = 8;
+			insertRowBreakId = 8;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 2, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 2, desc + " check row count");
+			}, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+			}, "insert page break_col8row8", true);
+
+			wsView.changeRowColBreaks(3, 4, new Asc.Range(0, 0, 16, 57), true, true);
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 3");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 3");
+			}, function (desc){
+
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(4), true, desc + " check col contains 4");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 4");
+
+			}, "change page col break_from3to4");
+
+			wsView.changeRowColBreaks(3, 12, new Asc.Range(0, 0, 16, 57), true, true);
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 3");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 3");
+			}, function (desc){
+
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(12), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 4");
+
+			}, "change page col break_from3to4");
 		});
 	}
 
@@ -1274,6 +1338,7 @@ $(function() {
 				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
 				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
 			}, "insert page break_col1row3");
+
 
 		});
 	}

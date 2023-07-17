@@ -21427,7 +21427,17 @@
 
 			//remove all breaks on path(from->to)
 			if (opt_handle_move) {
+				let reverse = from > to;
+				let firstIndex = !reverse ? from : to;
+				let lastIndex = !reverse ? to : from;
 
+				for (let i = firstIndex; i <= lastIndex; i++) {
+					if (i === from) {
+						continue;
+					}
+
+					t.model.changeRowColBreaks(i, null, range, byCol, true);
+				}
 			}
 
 			t.model.changeRowColBreaks(from, to, range, byCol, true);
