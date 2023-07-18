@@ -574,7 +574,7 @@ var c_oAscPopUpSelectorType = {
   var c_oAscPageBreaksDisableType = {
     none: 0,
   	all: 1,
-    insertRemove: 3,
+    insertRemove: 2,
     reset: 3
   };
 
