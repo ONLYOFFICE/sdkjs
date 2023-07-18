@@ -5899,10 +5899,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-  	this.asc_InsertPageBreak();
-  	return;
+  	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+  	}
 
-  	var ws = this.wb.getWorksheet();
+  	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {
@@ -5912,10 +5913,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
-	  this.asc_RemovePageBreak()
-	  return;
+  	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+  	}
 
-    var ws = this.wb.getWorksheet();
+  	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
       ws.objectRender.controller.setCellItalic(isItalic);
     } else {
@@ -5925,10 +5927,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellUnderline = function(isUnderline) {
-	  this.asc_ResetAllPageBreaks()
-	  return;
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
 
-  	var ws = this.wb.getWorksheet();
+  	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellUnderline) {
       ws.objectRender.controller.setCellUnderline(isUnderline);
     } else {
@@ -5938,7 +5941,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellStrikeout = function(isStrikeout) {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellStrikeout) {
       ws.objectRender.controller.setCellStrikeout(isStrikeout);
     } else {
@@ -5948,7 +5955,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellSubscript = function(isSubscript) {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellSubscript) {
       ws.objectRender.controller.setCellSubscript(isSubscript);
     } else {
@@ -5958,7 +5969,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellSuperscript = function(isSuperscript) {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+		  return;
+    }
+
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellSuperscript) {
       ws.objectRender.controller.setCellSuperscript(isSuperscript);
     } else {
@@ -5968,7 +5983,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellAlign = function(align) {
-    var ws = this.wb.getWorksheet();
+  	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+  	}
+
+  	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellAlign) {
       ws.objectRender.controller.setCellAlign(align);
     } else {
@@ -5978,7 +5997,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellVertAlign = function(align) {
-    var ws = this.wb.getWorksheet();
+  	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+  	}
+
+  	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellVertAlign) {
       ws.objectRender.controller.setCellVertAlign(align);
     } else {
