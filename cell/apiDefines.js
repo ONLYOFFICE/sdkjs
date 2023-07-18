@@ -973,12 +973,12 @@ var c_oAscPopUpSelectorType = {
   prot['link'] = prot.link;
   prot['path'] = prot.path;
 
-	window['Asc']['c_oAscPageBreaksDisableType'] = window['Asc'].c_oAscPageBreaksDisableType = c_oAscPageBreaksDisableType;
-	prot = c_oAscPageBreaksDisableType;
-	prot['none'] = prot.none;
-	prot['all'] = prot.all;
-	prot['insertRemove'] = prot.insertRemove;
-	prot['reset'] = prot.reset;
+  window['Asc']['c_oAscPageBreaksDisableType'] = window['Asc'].c_oAscPageBreaksDisableType = c_oAscPageBreaksDisableType;
+  prot = c_oAscPageBreaksDisableType;
+  prot['none'] = prot.none;
+  prot['all'] = prot.all;
+  prot['insertRemove'] = prot.insertRemove;
+  prot['reset'] = prot.reset;
 
 
 })(window);
