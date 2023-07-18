@@ -5813,8 +5813,21 @@ var editor;
           return oWorksheet.getActiveCellCoord(useUpRightMerge);
       }
     }
-
   };
+
+	// Получить координаты активной ячейки
+	spreadsheet_api.prototype.asc_getActiveCell = function() {
+		var oWorksheet = this.wb.getWorksheet();
+		if(oWorksheet){
+			if(oWorksheet.isSelectOnShape){
+				return null;
+			}
+			else{
+				return oWorksheet.getActiveCell();
+			}
+		}
+
+	};
 
   // Получить координаты для каких-либо действий (для общей схемы)
   spreadsheet_api.prototype.asc_getAnchorPosition = function() {
@@ -8820,15 +8833,33 @@ var editor;
 		return ws.resetAllPageBreaks();
 	};
 
-	spreadsheet_api.prototype.asc_isContainsPageBreaks = function (index) {
+	spreadsheet_api.prototype.asc_GetPageBreaksDisableType = function (index) {
 		if (!this.wbModel) {
 			return;
 		}
 		let sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
 		let ws = this.wbModel.getWorksheet(sheetIndex);
+		let res = Asc.c_oAscPageBreaksDisableType.none;
+		if (ws) {
+			let isPageBreaks = ws && ((ws.colBreaks && ws.colBreaks.getCount()) || (ws.rowBreaks && ws.rowBreaks.getCount()));
+			let activeCell = ws.selectionRange && ws.selectionRange.activeCell;
+			let isFirstActiveCell = activeCell && activeCell.col === 0 && activeCell.row === 0;
 
-		return ws && ((ws.colBreaks && ws.colBreaks.getCount()) || (ws.rowBreaks && ws.rowBreaks.getCount()));
+			if (isFirstActiveCell && !isPageBreaks) {
+				//disable all
+				res = Asc.c_oAscPageBreaksDisableType.all;
+			} else if (isFirstActiveCell && isPageBreaks) {
+				//disable insert/remove
+				res = Asc.c_oAscPageBreaksDisableType.insertRemove;
+			} else if (!isFirstActiveCell && !isPageBreaks) {
+				//disable reset
+				res = Asc.c_oAscPageBreaksDisableType.reset;
+			}
+		}
+
+		return res;
 	};
+
 
   /*
    * Export
@@ -9395,10 +9426,10 @@ var editor;
 
   prot["asc_ChangeTextCase"]   = prot.asc_ChangeTextCase;
 
-  prot["asc_InsertPageBreak"]   = prot.asc_InsertPageBreak;
-  prot["asc_RemovePageBreak"]   = prot.asc_RemovePageBreak;
-  prot["asc_ResetAllPageBreaks"]   = prot.asc_ResetAllPageBreaks;
-  prot["asc_isContainsPageBreaks"]   = prot.asc_isContainsPageBreaks;
+  prot["asc_InsertPageBreak"]         = prot.asc_InsertPageBreak;
+  prot["asc_RemovePageBreak"]         = prot.asc_RemovePageBreak;
+  prot["asc_ResetAllPageBreaks"]      = prot.asc_ResetAllPageBreaks;
+  prot["asc_GetPageBreaksDisableType"]= prot.asc_GetPageBreaksDisableType;
 
 
 

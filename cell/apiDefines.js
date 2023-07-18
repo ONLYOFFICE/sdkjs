@@ -571,7 +571,15 @@ var c_oAscPopUpSelectorType = {
     path: 2
   };
 
-  //----------------------------------------------------------export----------------------------------------------------
+  var c_oAscPageBreaksDisableType = {
+    none: 0,
+  	all: 1,
+    insertRemove: 3,
+    reset: 3
+  };
+
+
+	//----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
   window['AscCommonExcel'].c_oAscScrollType = c_oAscScrollType;
@@ -964,6 +972,13 @@ var c_oAscPopUpSelectorType = {
   prot['referenceData'] = prot.referenceData;
   prot['link'] = prot.link;
   prot['path'] = prot.path;
+
+	window['Asc']['c_oAscPageBreaksDisableType'] = window['Asc'].c_oAscPageBreaksDisableType = c_oAscPageBreaksDisableType;
+	prot = c_oAscPageBreaksDisableType;
+	prot['none'] = prot.none;
+	prot['all'] = prot.all;
+	prot['insertRemove'] = prot.insertRemove;
+	prot['reset'] = prot.reset;
 
 
 })(window);
