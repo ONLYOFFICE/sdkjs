@@ -5913,11 +5913,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
-  	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
-  	}
+    }
 
-  	let ws = this.wb.getWorksheet();
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
       ws.objectRender.controller.setCellItalic(isItalic);
     } else {
@@ -5931,7 +5931,7 @@ var editor;
       return;
     }
 
-  	let ws = this.wb.getWorksheet();
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellUnderline) {
       ws.objectRender.controller.setCellUnderline(isUnderline);
     } else {
@@ -5970,7 +5970,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_setCellSuperscript = function(isSuperscript) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
-		  return;
+      return;
     }
 
     let ws = this.wb.getWorksheet();
@@ -5983,11 +5983,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellAlign = function(align) {
-  	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
-  	}
+    }
 
-  	let ws = this.wb.getWorksheet();
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellAlign) {
       ws.objectRender.controller.setCellAlign(align);
     } else {
@@ -5997,11 +5997,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellVertAlign = function(align) {
-  	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
-  	}
+    }
 
-  	let ws = this.wb.getWorksheet();
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellVertAlign) {
       ws.objectRender.controller.setCellVertAlign(align);
     } else {
