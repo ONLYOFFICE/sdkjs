@@ -8820,6 +8820,16 @@ var editor;
 		return ws.resetAllPageBreaks();
 	};
 
+	spreadsheet_api.prototype.asc_isContainsPageBreaks = function (index) {
+		if (!this.wbModel) {
+			return;
+		}
+		let sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+		let ws = this.wbModel.getWorksheet(sheetIndex);
+
+		return ws && ((ws.colBreaks && ws.colBreaks.getCount()) || (ws.rowBreaks && ws.rowBreaks.getCount()));
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -9388,6 +9398,8 @@ var editor;
   prot["asc_InsertPageBreak"]   = prot.asc_InsertPageBreak;
   prot["asc_RemovePageBreak"]   = prot.asc_RemovePageBreak;
   prot["asc_ResetAllPageBreaks"]   = prot.asc_ResetAllPageBreaks;
+  prot["asc_isContainsPageBreaks"]   = prot.asc_isContainsPageBreaks;
+
 
 
 
