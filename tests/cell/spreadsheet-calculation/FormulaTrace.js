@@ -129,6 +129,8 @@ $(function() {
 
 	function traceTests() {
 		QUnit.test("Test: \"Base dependents test\"", function (assert) {
+			ws.getRange2("A1:J20").cleanAll();
+
 			// set active cell
 			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
@@ -158,6 +160,8 @@ $(function() {
 
 		});
 		QUnit.test("Test: \"Dependents\"", function (assert) {
+			ws.getRange2("A1:J20").cleanAll();
+			
 			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
 
@@ -237,6 +241,8 @@ $(function() {
 
 		});
 		QUnit.test("Test: \"External dependencies\"", function (assert) {
+			ws.getRange2("A1:J20").cleanAll();
+
 			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
 
@@ -265,6 +271,8 @@ $(function() {
 
 		});
 		QUnit.test("Test: \"Base precedents test\"", function (assert) {
+			ws.getRange2("A1:J20").cleanAll();
+
 			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
 
@@ -292,6 +300,8 @@ $(function() {
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
 		QUnit.test("Test: \"Precedents\"", function (assert) {
+			ws.getRange2("A1:J20").cleanAll();
+
 			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
 
@@ -331,7 +341,7 @@ $(function() {
 
 		});
 		QUnit.test("Test: \"DefName tests\"", function (assert) {
-			// debugger
+			ws.getRange2("A1:J20").cleanAll();
 			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
 
@@ -346,16 +356,16 @@ $(function() {
 				B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
 				B4Index = AscCommonExcel.getCellIndex(ws.getRange2("B4").bbox.r1, ws.getRange2("B4").bbox.c1);
 
-
 			let C1Index = AscCommonExcel.getCellIndex(ws.getRange2("C1").bbox.r1, ws.getRange2("C1").bbox.c1),
 				C2Index = AscCommonExcel.getCellIndex(ws.getRange2("C2").bbox.r1, ws.getRange2("C2").bbox.c1),
-				D2Index = AscCommonExcel.getCellIndex(ws.getRange2("D2").bbox.r1, ws.getRange2("D2").bbox.c1);
+				D2Index = AscCommonExcel.getCellIndex(ws.getRange2("D2").bbox.r1, ws.getRange2("D2").bbox.c1),
+				F1Index = AscCommonExcel.getCellIndex(ws.getRange2("F1").bbox.r1, ws.getRange2("F1").bbox.c1);
+
+			
 			ws.getRange2("C1").setValue("=C2");
 			ws.getRange2("C2").setValue("2");
 			ws.getRange2("D1").setValue("1");
 			ws.getRange2("D2").setValue("=F1");
-
-			let F1Index = AscCommonExcel.getCellIndex(ws.getRange2("F1").bbox.r1, ws.getRange2("F1").bbox.c1);
 
 			// first show precedents click on A1
 			api.asc_TracePrecedents();
@@ -383,17 +393,10 @@ $(function() {
 			// change selection to A3
 			ws.selectionRange.ranges = [ws.getRange2("A3").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("A3").getBBox0().r1, ws.getRange2("A3").getBBox0().c1);
-
 			let bbox = ws.getRange2("A3:B4").bbox;
-			let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
-			oParser = new parserFormula("a", cellWithFormula, ws);
-			oParser.setArrayFormulaRef(bbox);
-			oParser.parse();
-			oParser.calculate();
+			ws.getRange2("A3:B4").setValue("=a", undefined, undefined, bbox);
 
-			ws.getRange2("A3:B4").setValue("=a", undefined, undefined, bbox);	// ???
-
-			// show precedents click on A3
+			// show precedents click on A3	
 			api.asc_TracePrecedents();
 			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1);
 			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), undefined);
@@ -420,47 +423,239 @@ $(function() {
 			assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), undefined);
 
 			// change selection to B3
-			// ws.selectionRange.ranges = [ws.getRange2("B3").getBBox0()];
-			// ws.selectionRange.setActiveCell(ws.getRange2("B3").getBBox0().r1, ws.getRange2("B3").getBBox0().c1);
+			ws.selectionRange.ranges = [ws.getRange2("B3").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B3").getBBox0().r1, ws.getRange2("B3").getBBox0().c1);
 
-			// bbox = ws.getRange2("B3").bbox;
-			// cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
-			// oParser = new parserFormula("a", cellWithFormula, ws);
-			// oParser.setArrayFormulaRef(bbox);
-			// oParser.parse();
-			// oParser.calculate();
+			// show precedents click on B3
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), undefined);
 
-			// // show precedents click on B3
-			// api.asc_TracePrecedents();
-			// assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1);
-			// assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1);
-			// assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), 1);
-			// assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), undefined);
+			// change selection to B4
+			ws.selectionRange.ranges = [ws.getRange2("B4").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B4").getBBox0().r1, ws.getRange2("B4").getBBox0().c1);
 
-			// // change selection to B4
-			// ws.selectionRange.ranges = [ws.getRange2("B4").getBBox0()];
-			// ws.selectionRange.setActiveCell(ws.getRange2("B4").getBBox0().r1, ws.getRange2("B4").getBBox0().c1);
+			// show precedents click on B4
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), 1);
 
-			// bbox = ws.getRange2("B4").bbox;
-			// cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
-			// oParser = new parserFormula("a", cellWithFormula, ws);
-			// oParser.setArrayFormulaRef(bbox);
-			// oParser.parse();
-			// oParser.calculate();
-
-			// // show precedents click on B4
-			// api.asc_TracePrecedents();
-			// assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1);
-			// assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1);
-			// assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), 1);
-			// assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), 1);
+			// second trace precedents on B4
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(C1Index, C2Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(D2Index, F1Index), 1);
 
 			// clear traces
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
 		});
-		// QUnit.test("Test: \"Shared tests\"", function (assert) {
-		// });
+		QUnit.test("Test: \"Areas tests\"", function (assert) {
+			let bbox;
+			// precedents
+			ws.getRange2("A1:J20").cleanAll();
+
+			ws.selectionRange.ranges = [ws.getRange2("E13").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("E13").getBBox0().r1, ws.getRange2("E13").getBBox0().c1);
+
+			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
+				A2Index = AscCommonExcel.getCellIndex(ws.getRange2("A2").bbox.r1, ws.getRange2("A2").bbox.c1),
+				A3Index = AscCommonExcel.getCellIndex(ws.getRange2("A3").bbox.r1, ws.getRange2("A3").bbox.c1),
+				A4Index = AscCommonExcel.getCellIndex(ws.getRange2("A4").bbox.r1, ws.getRange2("A4").bbox.c1),
+				A5Index = AscCommonExcel.getCellIndex(ws.getRange2("A5").bbox.r1, ws.getRange2("A5").bbox.c1),
+				A6Index = AscCommonExcel.getCellIndex(ws.getRange2("A6").bbox.r1, ws.getRange2("A6").bbox.c1);
+			let A12Index = AscCommonExcel.getCellIndex(ws.getRange2("A12").bbox.r1, ws.getRange2("A12").bbox.c1);
+
+			ws.getRange2("A1").setValue("1");
+			ws.getRange2("A2").setValue("2");
+			ws.getRange2("A3").setValue("3");
+			ws.getRange2("A4").setValue("=A12");
+			ws.getRange2("A5").setValue("5");
+			ws.getRange2("A6").setValue("6");
+			ws.getRange2("A12").setValue("=B12");
+
+			let B1Index = AscCommonExcel.getCellIndex(ws.getRange2("B1").bbox.r1, ws.getRange2("B1").bbox.c1);
+			let B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
+				B4Index = AscCommonExcel.getCellIndex(ws.getRange2("B4").bbox.r1, ws.getRange2("B4").bbox.c1),
+				B5Index = AscCommonExcel.getCellIndex(ws.getRange2("B5").bbox.r1, ws.getRange2("B5").bbox.c1),
+				B6Index = AscCommonExcel.getCellIndex(ws.getRange2("B6").bbox.r1, ws.getRange2("B6").bbox.c1),
+				B7Index = AscCommonExcel.getCellIndex(ws.getRange2("B7").bbox.r1, ws.getRange2("B7").bbox.c1),
+				B8Index = AscCommonExcel.getCellIndex(ws.getRange2("B8").bbox.r1, ws.getRange2("B8").bbox.c1),
+				B9Index = AscCommonExcel.getCellIndex(ws.getRange2("B9").bbox.r1, ws.getRange2("B9").bbox.c1);
+			let	B10Index = AscCommonExcel.getCellIndex(ws.getRange2("B10").bbox.r1, ws.getRange2("B10").bbox.c1);
+			let B12Index = AscCommonExcel.getCellIndex(ws.getRange2("B12").bbox.r1, ws.getRange2("B12").bbox.c1);
+
+			ws.getRange2("B1").setValue("=A4");
+			bbox = ws.getRange2("B3:B9").bbox;
+			ws.getRange2("B3:B9").setValue("=A1:A6", undefined, undefined, bbox);
+			ws.getRange2("B10").setValue("=E6");
+			ws.getRange2("B12").setValue("0");
+
+			let C3Index = AscCommonExcel.getCellIndex(ws.getRange2("C3").bbox.r1, ws.getRange2("C3").bbox.c1),
+				C4Index = AscCommonExcel.getCellIndex(ws.getRange2("C4").bbox.r1, ws.getRange2("C4").bbox.c1),
+				C5Index = AscCommonExcel.getCellIndex(ws.getRange2("C5").bbox.r1, ws.getRange2("C5").bbox.c1),
+				C6Index = AscCommonExcel.getCellIndex(ws.getRange2("C6").bbox.r1, ws.getRange2("C6").bbox.c1);
+			let C14Index = AscCommonExcel.getCellIndex(ws.getRange2("C14").bbox.r1, ws.getRange2("C14").bbox.c1);
+
+			let E1Index = AscCommonExcel.getCellIndex(ws.getRange2("E1").bbox.r1, ws.getRange2("E1").bbox.c1),
+				E2Index = AscCommonExcel.getCellIndex(ws.getRange2("E2").bbox.r1, ws.getRange2("E2").bbox.c1),
+				E3Index = AscCommonExcel.getCellIndex(ws.getRange2("E3").bbox.r1, ws.getRange2("E3").bbox.c1),
+				E4Index = AscCommonExcel.getCellIndex(ws.getRange2("E4").bbox.r1, ws.getRange2("E4").bbox.c1),
+				E5Index = AscCommonExcel.getCellIndex(ws.getRange2("E5").bbox.r1, ws.getRange2("E5").bbox.c1),
+				E6Index = AscCommonExcel.getCellIndex(ws.getRange2("E6").bbox.r1, ws.getRange2("E6").bbox.c1);
+
+			ws.getRange2("E1").setValue("25");
+			bbox = ws.getRange2("E2:E6").bbox;
+			ws.getRange2("E2:E6").setValue("=B3:B7", undefined, undefined, bbox);
+
+			let	E9Index = AscCommonExcel.getCellIndex(ws.getRange2("E9").bbox.r1, ws.getRange2("E9").bbox.c1),
+				E10Index = AscCommonExcel.getCellIndex(ws.getRange2("E10").bbox.r1, ws.getRange2("E10").bbox.c1),
+				E11Index = AscCommonExcel.getCellIndex(ws.getRange2("E11").bbox.r1, ws.getRange2("E11").bbox.c1);
+
+			bbox = ws.getRange2("E9:E11").bbox;
+			ws.getRange2("E9:E11").setValue("=B3:B5", undefined, undefined, bbox);
+
+			let	E13Index = AscCommonExcel.getCellIndex(ws.getRange2("E13").bbox.r1, ws.getRange2("E13").bbox.c1),
+				E14Index = AscCommonExcel.getCellIndex(ws.getRange2("E14").bbox.r1, ws.getRange2("E14").bbox.c1);
+
+			bbox = ws.getRange2("E13:E14").bbox;
+			ws.getRange2("E13:E14").setValue("=B8:B10", undefined, undefined, bbox);
+			
+
+			let G1Index = AscCommonExcel.getCellIndex(ws.getRange2("G1").bbox.r1, ws.getRange2("G1").bbox.c1),
+				G2Index = AscCommonExcel.getCellIndex(ws.getRange2("G2").bbox.r1, ws.getRange2("G2").bbox.c1),
+				G3Index = AscCommonExcel.getCellIndex(ws.getRange2("G3").bbox.r1, ws.getRange2("G3").bbox.c1),
+				G4Index = AscCommonExcel.getCellIndex(ws.getRange2("G4").bbox.r1, ws.getRange2("G4").bbox.c1),
+				G5Index = AscCommonExcel.getCellIndex(ws.getRange2("G5").bbox.r1, ws.getRange2("G5").bbox.c1),
+				G6Index = AscCommonExcel.getCellIndex(ws.getRange2("G6").bbox.r1, ws.getRange2("G6").bbox.c1);
+
+			// precedents click on E13
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), undefined);
+
+			// precedents click on E13
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), undefined);
+
+
+			// precedents click on E13
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), undefined);
+
+			// precedents click on E13
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1);
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+		});
+		QUnit.test("Test: \"Shared tests\"", function (assert) {
+			let cellWithFormula, oParser, sharedRef, bbox;
+			ws.getRange2("A1:J20").cleanAll();
+
+			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
+				B1Index = AscCommonExcel.getCellIndex(ws.getRange2("B1").bbox.r1, ws.getRange2("B1").bbox.c1),
+				C1Index = AscCommonExcel.getCellIndex(ws.getRange2("C1").bbox.r1, ws.getRange2("C1").bbox.c1),
+				A3Index = AscCommonExcel.getCellIndex(ws.getRange2("A3").bbox.r1, ws.getRange2("A3").bbox.c1),
+				B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
+				C3Index = AscCommonExcel.getCellIndex(ws.getRange2("C3").bbox.r1, ws.getRange2("C3").bbox.c1),
+				A5Index = AscCommonExcel.getCellIndex(ws.getRange2("A5").bbox.r1, ws.getRange2("A5").bbox.c1),
+				B5Index = AscCommonExcel.getCellIndex(ws.getRange2("B5").bbox.r1, ws.getRange2("B5").bbox.c1),
+				C5Index = AscCommonExcel.getCellIndex(ws.getRange2("C5").bbox.r1, ws.getRange2("C5").bbox.c1),
+				D5Index = AscCommonExcel.getCellIndex(ws.getRange2("D5").bbox.r1, ws.getRange2("D5").bbox.c1),
+				E5Index = AscCommonExcel.getCellIndex(ws.getRange2("E5").bbox.r1, ws.getRange2("E5").bbox.c1);
+			
+			ws.getRange2("A1").setValue("=A3");
+			ws.getRange2("B1").setValue("=B3");
+			ws.getRange2("C1").setValue("=C3");
+			ws.getRange2("A3").setValue("1");
+			ws.getRange2("B3").setValue("2");
+			ws.getRange2("C3").setValue("3");
+			ws.getRange2("A5").setValue("=A3");
+			ws.getRange2("B5").setValue("=B3");
+			ws.getRange2("C5").setValue("=C3");
+			ws.getRange2("D5").setValue("=D3");
+			ws.getRange2("E5").setValue("=E3");
+
+			bbox = ws.getRange2("B1:C1").bbox;
+			cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			// oParser = new AscCommonExcel.parserFormula("B3", cellWithFormula, ws);
+			oParser = new parserFormula("B3", cellWithFormula, ws);
+			sharedRef = bbox.clone();
+			// sharedRef = new Asc.Range(cell.nCol, prevFormula.nRow, cell.nCol, cell.nRow);
+			oParser.setShared(sharedRef, cellWithFormula);
+			oParser.parse();	// ?
+			oParser.calculate();
+
+			ws.selectionRange.ranges = [ws.getRange2("B3").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B3").getBBox0().r1, ws.getRange2("B3").getBBox0().c1);
+
+			bbox = ws.getRange2("B5:E5").bbox;
+			cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			oParser = new parserFormula("B3", cellWithFormula, ws);
+			sharedRef = bbox.clone();
+			oParser.setShared(sharedRef, cellWithFormula);
+			oParser.parse();
+			oParser.calculate();
+
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(B3Index, B1Index), 1);
+			assert.strictEqual(traceManager._getDependents(B3Index, B5Index), 1);
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+		});
 		// QUnit.test("Test: \"Tables tests\"", function (assert) {
 		// });
 		QUnit.test("Test: \"Deletes tests\"", function (assert) {
@@ -468,7 +663,7 @@ $(function() {
 			ws.selectionRange.ranges = [ws.getRange2("I1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("I1").getBBox0().r1, ws.getRange2("I1").getBBox0().c1);
 
-			ws.getRange2("A1:J10").cleanAll();
+			ws.getRange2("A1:J20").cleanAll();
 
 			ws.getRange2("I1").setValue("=G1");
 			ws.getRange2("G1").setValue("=E1+G4");
@@ -723,6 +918,7 @@ $(function() {
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
 		QUnit.test("Test: \"Mixed tests\"", function (assert) {
+			ws.getRange2("A1:J20").cleanAll();
 			// TODO check formulas
 			ws.getRange2("A1").setValue("=Sheet2!A10+12");
 			ws.getRange2("B1").setValue("=Sheet2!A10+A1");
@@ -814,10 +1010,96 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(A1Index, B1Index), 1);
 			// C1
 			assert.strictEqual(traceManager._getPrecedents(C1Index, B1Index), 1);
-			// assert.strictEqual(traceManager._getDependents(C1Index, A1ExternalIndex), 1);	// ?
 			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), 1);
 
 			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+			ws.getRange2("A1:J20").cleanAll();
+			
+			ws.getRange2("A1").setValue("1");
+			ws.getRange2("C1").setValue("=A1+A2");
+			ws.getRange2("E1").setValue("=C1+E2");
+			ws.getRange2("G1").setValue("=E1");
+			ws.getRange2("A4").setValue("1");
+			ws.getRange2("C4").setValue("=A4+A5");
+			ws.getRange2("E4").setValue("=C4+E5");
+			ws.getRange2("G4").setValue("=E4");
+
+			let E1Index = AscCommonExcel.getCellIndex(ws.getRange2("E1").bbox.r1, ws.getRange2("E1").bbox.c1),
+				E2Index = AscCommonExcel.getCellIndex(ws.getRange2("E2").bbox.r1, ws.getRange2("E2").bbox.c1),
+				G1Index = AscCommonExcel.getCellIndex(ws.getRange2("G1").bbox.r1, ws.getRange2("G1").bbox.c1),
+				A2Index = AscCommonExcel.getCellIndex(ws.getRange2("A2").bbox.r1, ws.getRange2("A2").bbox.c1),
+				A4Index = AscCommonExcel.getCellIndex(ws.getRange2("A4").bbox.r1, ws.getRange2("A4").bbox.c1),
+				A5Index = AscCommonExcel.getCellIndex(ws.getRange2("A5").bbox.r1, ws.getRange2("A5").bbox.c1),
+				C4Index = AscCommonExcel.getCellIndex(ws.getRange2("C4").bbox.r1, ws.getRange2("C4").bbox.c1),
+				E4Index = AscCommonExcel.getCellIndex(ws.getRange2("E4").bbox.r1, ws.getRange2("E4").bbox.c1),
+				E5Index = AscCommonExcel.getCellIndex(ws.getRange2("E5").bbox.r1, ws.getRange2("E5").bbox.c1),
+				G4Index = AscCommonExcel.getCellIndex(ws.getRange2("G4").bbox.r1, ws.getRange2("G4").bbox.c1);
+
+			ws.selectionRange.ranges = [ws.getRange2("C1").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("C1").getBBox0().r1, ws.getRange2("C1").getBBox0().c1);
+
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(C1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(G1Index, E1Index), undefined);	// first line
+			assert.strictEqual(traceManager._getPrecedents(E1Index, E2Index), undefined);	// first line
+			assert.strictEqual(traceManager._getDependents(C4Index, E4Index), undefined);	// second line
+			assert.strictEqual(traceManager._getPrecedents(G4Index, E4Index), undefined);	// second line
+			assert.strictEqual(traceManager._getPrecedents(E4Index, E5Index), undefined);	// second line
+
+			ws.selectionRange.ranges = [ws.getRange2("G1").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("G1").getBBox0().r1, ws.getRange2("G1").getBBox0().c1);
+
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getDependents(C1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(G1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(E1Index, E2Index), undefined);	// first line
+			assert.strictEqual(traceManager._getDependents(C4Index, E4Index), undefined);	// second line
+			assert.strictEqual(traceManager._getPrecedents(G4Index, E4Index), undefined);	// second line
+			assert.strictEqual(traceManager._getPrecedents(E4Index, E5Index), undefined);	// second line
+
+			ws.selectionRange.ranges = [ws.getRange2("C4").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("C4").getBBox0().r1, ws.getRange2("C4").getBBox0().c1);
+
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(C1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(G1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(E1Index, E2Index), undefined);	// first line
+			assert.strictEqual(traceManager._getDependents(C4Index, E4Index), 1);			// second line
+			assert.strictEqual(traceManager._getPrecedents(G4Index, E4Index), undefined);	// second line
+			assert.strictEqual(traceManager._getPrecedents(E4Index, E5Index), undefined);	// second line
+
+			ws.selectionRange.ranges = [ws.getRange2("G4").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("G4").getBBox0().r1, ws.getRange2("G4").getBBox0().c1);
+
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getDependents(C1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(G1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(E1Index, E2Index), undefined);	// first line
+			assert.strictEqual(traceManager._getDependents(C4Index, E4Index), 1);			// second line
+			assert.strictEqual(traceManager._getPrecedents(G4Index, E4Index), 1);			// second line
+			assert.strictEqual(traceManager._getPrecedents(E4Index, E5Index), undefined);	// second line
+
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getDependents(C1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(G1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(E1Index, E2Index), undefined);	// first line
+			assert.strictEqual(traceManager._getDependents(C4Index, E4Index), 1);			// second line
+			assert.strictEqual(traceManager._getPrecedents(G4Index, E4Index), 1);			// second line
+			assert.strictEqual(traceManager._getPrecedents(E4Index, E5Index), 1);			// second line
+			assert.strictEqual(traceManager._getPrecedents(C4Index, A4Index), undefined);	// second line
+			assert.strictEqual(traceManager._getPrecedents(C4Index, A5Index), undefined);	// second line
+
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getDependents(C1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(G1Index, E1Index), 1);			// first line
+			assert.strictEqual(traceManager._getPrecedents(E1Index, E2Index), undefined);	// first line
+			assert.strictEqual(traceManager._getDependents(C4Index, E4Index), 1);			// second line
+			assert.strictEqual(traceManager._getPrecedents(G4Index, E4Index), 1);			// second line
+			assert.strictEqual(traceManager._getPrecedents(E4Index, E5Index), 1);			// second line
+			assert.strictEqual(traceManager._getPrecedents(C4Index, A4Index), 1);			// second line
+			assert.strictEqual(traceManager._getPrecedents(C4Index, A5Index), 1);			// second line
+			
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
 	}
